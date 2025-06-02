@@ -30,6 +30,9 @@ const (
 	// GlobalMinGasPrice is used in the AnteHandler to ensure
 	// that all transactions have a gas price greater than or equal to this value.
 	GlobalMinGasPrice = DefaultMinGasPrice
+
+	// MaxIBCCallbackGas should roughly be a couple orders of magnitude larger than needed.
+	MaxIBCCallbackGas = uint64(10_000_000)
 )
 
 var (

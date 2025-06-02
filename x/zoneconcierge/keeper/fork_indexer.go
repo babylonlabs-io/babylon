@@ -8,7 +8,7 @@ import (
 
 	sdkerrors "cosmossdk.io/errors"
 	"cosmossdk.io/store/prefix"
-	"github.com/babylonlabs-io/babylon/v2/x/zoneconcierge/types"
+	"github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -47,7 +47,7 @@ func (k Keeper) insertForkHeader(ctx context.Context, consumerID string, header 
 	return nil
 }
 
-// forkStore stores the forks for each CZ
+// forkStore stores the forks for each Consumer
 // prefix: ForkKey || consumerID
 // key: height that this fork starts from
 // value: a list of IndexedHeader, representing each header in the fork

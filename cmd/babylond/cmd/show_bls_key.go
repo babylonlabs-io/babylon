@@ -9,8 +9,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
 
-	"github.com/babylonlabs-io/babylon/v2/app"
-	appsigner "github.com/babylonlabs-io/babylon/v2/app/signer"
+	"github.com/babylonlabs-io/babylon/v4/app"
+	appsigner "github.com/babylonlabs-io/babylon/v4/app/signer"
 )
 
 // ShowBlsKeyCmd displays information about the BLS key
@@ -36,6 +36,12 @@ $ babylond show-bls-key --no-bls-password
 			if err != nil {
 				return fmt.Errorf("failed to get home directory: %w", err)
 			}
+
+			blsKeyFile, exist := appsigner.GetBlsKeyFileIfExist(homeDir, "")
+			if !exist {
+				return fmt.Errorf("BLS key file does not exist at %s", blsKeyFile)
+			}
+
 			noBlsPassword, err := cmd.Flags().GetBool(flagNoBlsPassword)
 			if err != nil {
 				return fmt.Errorf("failed to get noBlsPassword flag: %w", err)
@@ -60,7 +66,7 @@ $ babylond show-bls-key --no-bls-password
 				return fmt.Errorf("failed to determine BLS password: %w", err)
 			}
 
-			info, err := appsigner.ShowBlsKey(homeDir, password)
+			info, err := appsigner.ShowBlsKey(blsKeyFile, password)
 			if err != nil {
 				return fmt.Errorf("failed to show BLS key: %w", err)
 			}

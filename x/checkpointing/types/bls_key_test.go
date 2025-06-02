@@ -7,9 +7,9 @@ import (
 	"testing"
 	time "time"
 
-	"github.com/babylonlabs-io/babylon/v2/crypto/bls12381"
-	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
-	"github.com/babylonlabs-io/babylon/v2/x/checkpointing/types"
+	"github.com/babylonlabs-io/babylon/v4/crypto/bls12381"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	"github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
 
 	"github.com/test-go/testify/require"
 )
@@ -62,6 +62,52 @@ func TestValidatorWithBlsKeySetValidate(t *testing.T) {
 				require.Error(t, err)
 				require.Contains(t, err.Error(), tc.expectErr.Error())
 			}
+		})
+	}
+}
+
+func TestBlsKeyValidateBasic(t *testing.T) {
+	t.Parallel()
+
+	validBlsKey := datagen.GenerateGenesisKey().BlsKey
+	tcs := []struct {
+		title string
+
+		key    types.BlsKey
+		expErr error
+	}{
+		{
+			"valid",
+			*validBlsKey,
+			nil,
+		},
+		{
+			"invalid: nil pubkey",
+			types.BlsKey{
+				Pubkey: nil,
+				Pop:    validBlsKey.Pop,
+			},
+			errors.New("BLS Public key is nil"),
+		},
+		{
+			"invalid: nil pop",
+			types.BlsKey{
+				Pubkey: validBlsKey.Pubkey,
+				Pop:    nil,
+			},
+			errors.New("BLS Proof of Possession is nil"),
+		},
+	}
+
+	for _, tc := range tcs {
+		t.Run(tc.title, func(t *testing.T) {
+			t.Parallel()
+			actErr := tc.key.ValidateBasic()
+			if tc.expErr != nil {
+				require.EqualError(t, actErr, tc.expErr.Error())
+				return
+			}
+			require.NoError(t, actErr)
 		})
 	}
 }

@@ -1,9 +1,10 @@
 package types
 
 import (
+	"errors"
 	"fmt"
 
-	"github.com/babylonlabs-io/babylon/v2/crypto/bls12381"
+	"github.com/babylonlabs-io/babylon/v4/crypto/bls12381"
 )
 
 // Validate checks for duplicate ValidatorAddress or BlsPubKey entries.
@@ -30,6 +31,18 @@ func (vs ValidatorWithBlsKeySet) Validate() error {
 		if err := pk.Unmarshal(val.BlsPubKey); err != nil {
 			return err
 		}
+	}
+
+	return nil
+}
+
+// ValidateBasic stateless validate if the BlsKey is valid
+func (k BlsKey) ValidateBasic() error {
+	if k.Pop == nil {
+		return errors.New("BLS Proof of Possession is nil")
+	}
+	if k.Pubkey == nil {
+		return errors.New("BLS Public key is nil")
 	}
 
 	return nil

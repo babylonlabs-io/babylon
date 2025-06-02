@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/babylonlabs-io/babylon/v2/x/incentive/types"
+	"github.com/babylonlabs-io/babylon/v4/x/incentive/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	sdkmath "cosmossdk.io/math"
@@ -31,10 +31,9 @@ func (k Keeper) AddFinalityProviderRewardsForBtcDelegations(ctx context.Context,
 // the creation of a new period, which initializes the FP, creates
 // historical reward tracker, withdraw the BTC delegation rewards to gauge
 // and initializes a new delegation with the just ended period.
-func (k Keeper) BtcDelegationActivated(ctx context.Context, fp, del sdk.AccAddress, sat uint64) error {
-	amtSat := sdkmath.NewIntFromUint64(sat)
+func (k Keeper) BtcDelegationActivated(ctx context.Context, fp, del sdk.AccAddress, sat sdkmath.Int) error {
 	return k.btcDelegationModifiedWithPreInitDel(ctx, fp, del, func(ctx context.Context, fp, del sdk.AccAddress) error {
-		return k.addDelegationSat(ctx, fp, del, amtSat)
+		return k.addDelegationSat(ctx, fp, del, sat)
 	})
 }
 
@@ -44,10 +43,9 @@ func (k Keeper) BtcDelegationActivated(ctx context.Context, fp, del sdk.AccAddre
 // creationg of new historical reward, withdraw of rewards to gauge
 // and initialization of a new delegation.
 // It errors out if the unbond amount is higher than the total amount staked.
-func (k Keeper) BtcDelegationUnbonded(ctx context.Context, fp, del sdk.AccAddress, sat uint64) error {
-	amtSat := sdkmath.NewIntFromUint64(sat)
+func (k Keeper) BtcDelegationUnbonded(ctx context.Context, fp, del sdk.AccAddress, sat sdkmath.Int) error {
 	return k.btcDelegationModifiedWithPreInitDel(ctx, fp, del, func(ctx context.Context, fp, del sdk.AccAddress) error {
-		return k.subDelegationSat(ctx, fp, del, amtSat)
+		return k.subDelegationSat(ctx, fp, del, sat)
 	})
 }
 

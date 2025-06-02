@@ -4,21 +4,24 @@ import (
 	"encoding/json"
 	"fmt"
 
+	tokenfactorykeeper "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/keeper"
+
 	errorsmod "cosmossdk.io/errors"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
-	bbn "github.com/babylonlabs-io/babylon/v2/types"
-	"github.com/babylonlabs-io/babylon/v2/wasmbinding/bindings"
-	lcKeeper "github.com/babylonlabs-io/babylon/v2/x/btclightclient/keeper"
-	checkpointingkeeper "github.com/babylonlabs-io/babylon/v2/x/checkpointing/keeper"
-	epochingkeeper "github.com/babylonlabs-io/babylon/v2/x/epoching/keeper"
-	zckeeper "github.com/babylonlabs-io/babylon/v2/x/zoneconcierge/keeper"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	"github.com/babylonlabs-io/babylon/v4/wasmbinding/bindings"
+	lcKeeper "github.com/babylonlabs-io/babylon/v4/x/btclightclient/keeper"
+	checkpointingkeeper "github.com/babylonlabs-io/babylon/v4/x/checkpointing/keeper"
+	epochingkeeper "github.com/babylonlabs-io/babylon/v4/x/epoching/keeper"
+	zckeeper "github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/keeper"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 type QueryPlugin struct {
+	tokenfactoryKeeper  *tokenfactorykeeper.Keeper
 	epochingKeeper      *epochingkeeper.Keeper
 	checkpointingkeeper *checkpointingkeeper.Keeper
 	lcKeeper            *lcKeeper.Keeper
@@ -27,12 +30,14 @@ type QueryPlugin struct {
 
 // NewQueryPlugin returns a reference to a new QueryPlugin.
 func NewQueryPlugin(
+	tk *tokenfactorykeeper.Keeper,
 	ek *epochingkeeper.Keeper,
 	ch *checkpointingkeeper.Keeper,
 	lcKeeper *lcKeeper.Keeper,
 	zcKeeper *zckeeper.Keeper,
 ) *QueryPlugin {
 	return &QueryPlugin{
+		tokenfactoryKeeper:  tk,
 		epochingKeeper:      ek,
 		checkpointingkeeper: ch,
 		lcKeeper:            lcKeeper,
@@ -163,12 +168,13 @@ func CustomQuerier(qp *QueryPlugin) func(ctx sdk.Context, request json.RawMessag
 }
 
 func RegisterCustomPlugins(
+	tk *tokenfactorykeeper.Keeper,
 	ek *epochingkeeper.Keeper,
 	ck *checkpointingkeeper.Keeper,
 	lcKeeper *lcKeeper.Keeper,
 	zcKeeper *zckeeper.Keeper,
 ) []wasmkeeper.Option {
-	wasmQueryPlugin := NewQueryPlugin(ek, ck, lcKeeper, zcKeeper)
+	wasmQueryPlugin := NewQueryPlugin(tk, ek, ck, lcKeeper, zcKeeper)
 
 	queryPluginOpt := wasmkeeper.WithQueryPlugins(&wasmkeeper.QueryPlugins{
 		Custom: CustomQuerier(wasmQueryPlugin),

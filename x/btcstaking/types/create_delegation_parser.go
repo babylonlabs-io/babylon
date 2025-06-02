@@ -10,7 +10,7 @@ import (
 	"github.com/btcsuite/btcd/wire"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	bbn "github.com/babylonlabs-io/babylon/v2/types"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
 )
 
 type ParsedPublicKey struct {
@@ -164,6 +164,10 @@ func ParseCreateDelegationMessage(msg *MsgCreateBTCDelegation) (*ParsedCreateDel
 		return nil, fmt.Errorf("failed to deserialize staking tx: %v", err)
 	}
 
+	if msg.SlashingTx == nil {
+		return nil, fmt.Errorf("SlashingTx is nil")
+	}
+
 	stakingSlashingTx, err := NewBtcTransaction(msg.SlashingTx.MustMarshal())
 
 	if err != nil {
@@ -174,6 +178,10 @@ func ParseCreateDelegationMessage(msg *MsgCreateBTCDelegation) (*ParsedCreateDel
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to deserialize unbonding tx: %v", err)
+	}
+
+	if msg.UnbondingSlashingTx == nil {
+		return nil, fmt.Errorf("UnbondingSlashingTx is nil")
 	}
 
 	unbondingSlashingTx, err := NewBtcTransaction(msg.UnbondingSlashingTx.MustMarshal())

@@ -11,9 +11,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	txformat "github.com/babylonlabs-io/babylon/v2/btctxformatter"
-	"github.com/babylonlabs-io/babylon/v2/crypto/bls12381"
-	epochingtypes "github.com/babylonlabs-io/babylon/v2/x/epoching/types"
+	txformat "github.com/babylonlabs-io/babylon/v4/btctxformatter"
+	"github.com/babylonlabs-io/babylon/v4/crypto/bls12381"
+	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 )
 
 const (
@@ -26,6 +26,7 @@ const (
 type BlsSigner interface {
 	SignMsgWithBls(msg []byte) (bls12381.Signature, error)
 	BlsPubKey() (bls12381.PublicKey, error)
+	BlsKeyFilePath() string
 }
 
 type BlockHash []byte

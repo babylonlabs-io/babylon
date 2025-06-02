@@ -1,2 +1,54 @@
+build
+vendor
+Godep/
+.github
+.gitignore
+.golangci.yml
+.goreleaser.yml
+test/e2e/*.go
+test/e2e/bytecode
+test/e2e/configurer
+test/e2e/containers
+test/e2e/govProps
+test/e2e/scripts
+
+# IntelliJ
+.idea
+.idea_modules/
+out/
+### macOS ###
+# General
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Files that might appear in the root of a volume
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Directories potentially created on remote AFP share
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+### vscode ###
+.vscode
+*.code-workspace
+/.VSCodeCounter/
+
 .testnet
 .testnets
+/scripts/local/
+/x/incentives/keeper/babylon_testing/
+tools-stamp
+/tests/localbabylon/.babylond/*
+mytestnet/
+output/
+dist/

@@ -11,11 +11,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/v2/app"
-	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
-	testhelper "github.com/babylonlabs-io/babylon/v2/testutil/helper"
-	checkpointingkeeper "github.com/babylonlabs-io/babylon/v2/x/checkpointing/keeper"
-	"github.com/babylonlabs-io/babylon/v2/x/checkpointing/types"
+	"github.com/babylonlabs-io/babylon/v4/app"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	testhelper "github.com/babylonlabs-io/babylon/v4/testutil/helper"
+	checkpointingkeeper "github.com/babylonlabs-io/babylon/v4/x/checkpointing/keeper"
+	"github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
 )
 
 // FuzzQueryBLSKeySet does the following checks
@@ -60,7 +60,7 @@ func FuzzQueryBLSKeySet(f *testing.F) {
 
 		wcvMsgs := make([]*types.MsgWrappedCreateValidator, n)
 		for i := 0; i < n; i++ {
-			msg, err := buildMsgWrappedCreateValidator(addrs[i])
+			msg, err := datagen.BuildMsgWrappedCreateValidator(addrs[i])
 			require.NoError(t, err)
 			wcvMsgs[i] = msg
 			_, err = msgServer.WrappedCreateValidator(ctx, msg)

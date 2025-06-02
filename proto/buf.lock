@@ -19,8 +19,8 @@ deps:
   - remote: buf.build
     owner: cosmos
     repository: ibc
-    commit: d36f8a9d78034378bae26a8ebfd291cb
-    digest: shake256:12816035a3657aaf6edf901648033789b1c84bd5588213818fdeb8a7f2652a3ce4b916254b16c6131bbb985e4b5eb0fe3872a7213668ecf54d2b04b760e9c120
+    commit: be4750124cb54616b8f78e09e5cdfdfc
+    digest: shake256:c305a1f87aa3729f2f38967cb65bdf789da9f04b876860da09938b15f301110e9725dc33881c7fce97c57aae4cca4d81ac03ef3ff5394ad5cd64f39f62f3a1c2
   - remote: buf.build
     owner: cosmos
     repository: ics23

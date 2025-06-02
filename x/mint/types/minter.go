@@ -1,7 +1,9 @@
 package types
 
 import (
+	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"cosmossdk.io/math"
@@ -33,9 +35,13 @@ func (m Minter) Validate() error {
 	if m.AnnualProvisions.IsNegative() {
 		return fmt.Errorf("annual provisions %v should be positive", m.AnnualProvisions.String())
 	}
-	if m.BondDenom == "" {
-		return fmt.Errorf("bond denom should not be empty string")
+	if strings.TrimSpace(m.BondDenom) == "" {
+		return errors.New("bond denom cannot be empty")
 	}
+	if strings.ContainsAny(m.BondDenom, " \t\n\r") {
+		return errors.New("bond denom cannot contain whitespace")
+	}
+
 	return nil
 }
 
@@ -43,7 +49,7 @@ func (m Minter) Validate() error {
 // the current block height in context. The inflation rate is expected to
 // decrease every year according to the schedule specified in the README.
 func (m Minter) CalculateInflationRate(ctx sdk.Context, genesis time.Time) math.LegacyDec {
-	years := yearsSinceGenesis(genesis, ctx.BlockTime())
+	years := YearsSinceGenesis(genesis, ctx.BlockTime())
 	inflationRate := InitialInflationRateAsDec().Mul(math.LegacyOneDec().Sub(DisinflationRateAsDec()).Power(uint64(years)))
 
 	if inflationRate.LT(TargetInflationRateAsDec()) {
@@ -64,9 +70,9 @@ func (m Minter) CalculateBlockProvision(current time.Time, previous time.Time) (
 	return sdk.NewCoin(m.BondDenom, blockProvision.TruncateInt()), nil
 }
 
-// yearsSinceGenesis returns the number of years that have passed between
+// YearsSinceGenesis returns the number of years that have passed between
 // genesis and current (rounded down).
-func yearsSinceGenesis(genesis time.Time, current time.Time) (years int64) {
+func YearsSinceGenesis(genesis time.Time, current time.Time) (years int64) {
 	if current.Before(genesis) {
 		return 0
 	}

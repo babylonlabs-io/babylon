@@ -6,22 +6,24 @@ import (
 	"reflect"
 	"sort"
 
-	"github.com/babylonlabs-io/babylon/v2/types"
+	"github.com/babylonlabs-io/babylon/v4/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // DefaultGenesis returns the default genesis state
 func DefaultGenesis() *GenesisState {
 	return &GenesisState{
-		Params:                             DefaultParams(),
-		BtcStakingGauges:                   []BTCStakingGaugeEntry{},
-		RewardGauges:                       []RewardGaugeEntry{},
-		WithdrawAddresses:                  []WithdrawAddressEntry{},
-		RefundableMsgHashes:                []string{},
-		FinalityProvidersCurrentRewards:    []FinalityProviderCurrentRewardsEntry{},
-		FinalityProvidersHistoricalRewards: []FinalityProviderHistoricalRewardsEntry{},
-		BtcDelegationRewardsTrackers:       []BTCDelegationRewardsTrackerEntry{},
-		BtcDelegatorsToFps:                 []BTCDelegatorToFpEntry{},
+		Params:                                DefaultParams(),
+		BtcStakingGauges:                      []BTCStakingGaugeEntry{},
+		RewardGauges:                          []RewardGaugeEntry{},
+		WithdrawAddresses:                     []WithdrawAddressEntry{},
+		RefundableMsgHashes:                   []string{},
+		FinalityProvidersCurrentRewards:       []FinalityProviderCurrentRewardsEntry{},
+		FinalityProvidersHistoricalRewards:    []FinalityProviderHistoricalRewardsEntry{},
+		BtcDelegationRewardsTrackers:          []BTCDelegationRewardsTrackerEntry{},
+		BtcDelegatorsToFps:                    []BTCDelegatorToFpEntry{},
+		EventRewardTracker:                    []EventsPowerUpdateAtHeightEntry{},
+		LastProcessedHeightEventRewardTracker: 0,
 	}
 }
 
@@ -50,6 +52,10 @@ func (gs GenesisState) Validate() error {
 
 	if err := validateFPHistoricalRewards(gs.FinalityProvidersHistoricalRewards); err != nil {
 		return fmt.Errorf("invalid finality providers historical rewards: %w", err)
+	}
+
+	if err := validateEvtPowerUpdateEntries(gs.EventRewardTracker); err != nil {
+		return fmt.Errorf("invalid events from reward tracker: %w", err)
 	}
 
 	btcRewardsAddrMap, err := validateBTCDelegationsRewardsTrackers(gs.BtcDelegationRewardsTrackers)
@@ -160,6 +166,16 @@ func (bdt BTCDelegatorToFpEntry) Validate() error {
 		return fmt.Errorf("invalid delegator, error: %w", err)
 	}
 	return nil
+}
+
+func (evtPowedUpdEntry EventsPowerUpdateAtHeightEntry) Validate() error {
+	return evtPowedUpdEntry.Events.Validate()
+}
+
+func validateEvtPowerUpdateEntries(entries []EventsPowerUpdateAtHeightEntry) error {
+	return types.ValidateEntries(entries, func(e EventsPowerUpdateAtHeightEntry) uint64 {
+		return e.Height
+	})
 }
 
 func validateWithdrawAddresses(entries []WithdrawAddressEntry) error {
@@ -336,5 +352,9 @@ func SortData(gs *GenesisState) {
 			return gs.BtcDelegatorsToFps[i].FinalityProviderAddress < gs.BtcDelegatorsToFps[j].FinalityProviderAddress
 		}
 		return gs.BtcDelegatorsToFps[i].DelegatorAddress < gs.BtcDelegatorsToFps[j].DelegatorAddress
+	})
+
+	sort.Slice(gs.EventRewardTracker, func(i, j int) bool {
+		return gs.EventRewardTracker[i].Height < gs.EventRewardTracker[j].Height
 	})
 }

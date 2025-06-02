@@ -1,11 +1,16 @@
 package e2e
 
 import (
+	"encoding/json"
+	"fmt"
 	"strings"
 	"time"
 
-	"github.com/babylonlabs-io/babylon/v2/test/e2e/configurer"
+	sdkmath "cosmossdk.io/math"
+
+	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	pfmroutertypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward/types"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -16,6 +21,8 @@ type IBCTransferTestSuite struct {
 	addrA      string
 	addrB      string
 }
+
+const nativeDenom = "ubbn"
 
 func (s *IBCTransferTestSuite) SetupSuite() {
 	s.T().Log("setting up IBC test suite...")
@@ -55,10 +62,9 @@ func getFirstIBCDenom(balance sdk.Coins) string {
 }
 
 func (s *IBCTransferTestSuite) Test1IBCTransfer() {
-	denom := "ubbn"
-	amount := int64(1_000_000)
+	amount := int64(100_000)
 
-	transferCoin := sdk.NewInt64Coin(denom, amount)
+	transferCoin := sdk.NewInt64Coin(nativeDenom, amount)
 
 	bbnChainA := s.configurer.GetChainConfig(0)
 	bbnChainB := s.configurer.GetChainConfig(1)
@@ -81,7 +87,7 @@ func (s *IBCTransferTestSuite) Test1IBCTransfer() {
 	balanceBeforeSendAddrA, err := nA.QueryBalances(s.addrA)
 	s.Require().NoError(err)
 	// Confirm val on A has enough funds
-	s.Assert().GreaterOrEqual(balanceBeforeSendAddrA.AmountOf(denom).Int64(), amount)
+	s.Assert().GreaterOrEqual(balanceBeforeSendAddrA.AmountOf(nativeDenom).Int64(), amount)
 
 	balanceBeforeSendAddrB, err := nB.QueryBalances(s.addrB)
 	s.Require().NoError(err)
@@ -142,8 +148,6 @@ func (s *IBCTransferTestSuite) Test1IBCTransfer() {
 }
 
 func (s *IBCTransferTestSuite) Test2IBCTransferBack() {
-	nativeDenom := "ubbn"
-
 	bbnChainA := s.configurer.GetChainConfig(0)
 	bbnChainB := s.configurer.GetChainConfig(1)
 
@@ -158,7 +162,7 @@ func (s *IBCTransferTestSuite) Test2IBCTransferBack() {
 	s.Require().Len(balanceBeforeSendBackB, 2)
 	// Look for the ugly IBC one
 	denom := getFirstIBCDenom(balanceBeforeSendBackB)
-	amount := balanceBeforeSendBackB.AmountOf(denom).Int64() // have to pay gas fees
+	amount := int64(100_000)
 
 	transferCoin := sdk.NewInt64Coin(denom, amount)
 
@@ -218,4 +222,169 @@ func (s *IBCTransferTestSuite) Test2IBCTransferBack() {
 
 		return true
 	}, 1*time.Minute, 1*time.Second, "Transfer back B was not successful")
+}
+
+// TestPacketForwarding sends a packet from chainB to chainA, and forwards it
+// back to chainB
+func (s *IBCTransferTestSuite) Test3PacketForwarding() {
+	bbnChainA := s.configurer.GetChainConfig(0)
+	bbnChainB := s.configurer.GetChainConfig(1)
+
+	nA, err := bbnChainA.GetNodeAtIndex(0)
+	s.NoError(err)
+	nB, err := bbnChainB.GetNodeAtIndex(2)
+	s.NoError(err)
+
+	balanceBeforeSendBackB, err := nB.QueryBalances(s.addrB)
+	s.Require().NoError(err)
+
+	transferCoin := sdk.NewInt64Coin(nativeDenom, 100_000)
+
+	// Send transfer from val in chain-B (Node 3) to val in chain-A (Node 1)
+	balanceBeforeReceivingSendBackA, err := nA.QueryBalances(s.addrA)
+	s.Require().NoError(err)
+
+	// Generate the forward metadata back to original sender in chain B
+	forwardMetadata := pfmroutertypes.ForwardMetadata{
+		Receiver: s.addrB,
+		Port:     "transfer",
+		Channel:  "channel-0",
+	}
+	memoData := pfmroutertypes.PacketMetadata{Forward: &forwardMetadata}
+	forwardMemo, err := json.Marshal(memoData)
+	s.NoError(err)
+
+	txHash := nB.SendIBCTransfer(s.addrB, s.addrA, string(forwardMemo), transferCoin)
+
+	nB.WaitForNextBlock()
+
+	txRes, tx, err := nB.QueryTxWithError(txHash)
+	s.Require().NoError(err)
+	// check tx was successful
+	s.Require().Zero(txRes.Code, fmt.Sprintf("Tx response with non-zero code. Code: %d - Raw log: %s", txRes.Code, txRes.RawLog))
+	txFeesPaid := tx.AuthInfo.Fee.Amount
+
+	s.Require().Eventually(func() bool {
+		balanceAfterSendBackB, err := nB.QueryBalances(s.addrB)
+		if err != nil {
+			s.T().Logf("failed to query balances: %s", err.Error())
+			return false
+		}
+		// expected to have the same initial balance - fees
+		// because the pkg with funds makes a round trip
+		expectedAmt := balanceBeforeSendBackB.Sub(txFeesPaid...).String()
+		actualAmt := balanceAfterSendBackB.String()
+
+		if !strings.EqualFold(expectedAmt, actualAmt) {
+			s.T().Logf(
+				"BalanceBeforeSendBackB: %s; BalanceAfterSendBackB: %s, txFees: %s, coinTransfer: %s",
+				balanceBeforeSendBackB.String(), balanceAfterSendBackB.String(), txFeesPaid.String(), transferCoin.String(),
+			)
+			return false
+		}
+
+		return true
+	}, 1*time.Minute, 1*time.Second, "Transfer back A was not successful")
+
+	s.Require().Eventually(func() bool {
+		balanceAfterReceivingSendBackA, err := nA.QueryBalances(s.addrA)
+		if err != nil {
+			return false
+		}
+
+		// balance should remain unchanged on chain A
+		expectedAmt := balanceBeforeReceivingSendBackA.String()
+		actualAmt := balanceAfterReceivingSendBackA.String()
+
+		// Check that the balance of the native denom has increased
+		if !strings.EqualFold(expectedAmt, actualAmt) {
+			s.T().Logf(
+				"BalanceBeforeReceivingSendBackA: %s; BalanceAfterReceivingSendBackA: %s",
+				balanceBeforeReceivingSendBackA.String(), balanceAfterReceivingSendBackA.String(),
+			)
+			return false
+		}
+
+		return true
+	}, 1*time.Minute, 1*time.Second, "Transfer back B was not successful")
+}
+
+func (s *IBCTransferTestSuite) Test4E2EBelowThreshold() {
+	bbnChainA := s.configurer.GetChainConfig(0)
+	bbnChainB := s.configurer.GetChainConfig(1)
+
+	nA, err := bbnChainA.GetNodeAtIndex(0)
+	s.NoError(err)
+	nB, err := bbnChainB.GetNodeAtIndex(2)
+	s.NoError(err)
+
+	_, err = nB.QueryBalances(s.addrB)
+	s.Require().NoError(err)
+
+	transferCoin := sdk.NewInt64Coin(nativeDenom, 100)
+
+	balanceBeforeReceivingSendA, err := nA.QueryBalances(s.addrA)
+	s.Require().NoError(err)
+
+	txHash := nB.SendIBCTransfer(s.addrB, s.addrA, "channel-0", transferCoin)
+
+	nB.WaitForNextBlock()
+
+	txRes, _, err := nB.QueryTxWithError(txHash)
+	s.Require().NoError(err)
+	s.Require().Zero(txRes.Code, fmt.Sprintf("Tx response with non-zero code. Code: %d - Raw log: %s", txRes.Code, txRes.RawLog))
+
+	s.Require().Eventually(func() bool {
+		balanceAfterReceivingSendA, err := nA.QueryBalances(s.addrA)
+		if err != nil {
+			return false
+		}
+
+		before := balanceBeforeReceivingSendA.String()
+		after := balanceAfterReceivingSendA.String()
+
+		s.Require().NotEqual(before, after)
+
+		return true
+	}, 90*time.Second, 2*time.Second, "Transfer back B was not successful")
+}
+
+func (s *IBCTransferTestSuite) Test5RateLimitE2EAboveThreshold() {
+	bbnChainA := s.configurer.GetChainConfig(0)
+	bbnChainB := s.configurer.GetChainConfig(1)
+
+	nA, err := bbnChainA.GetNodeAtIndex(0)
+	s.NoError(err)
+	nB, err := bbnChainB.GetNodeAtIndex(2)
+	s.NoError(err)
+
+	balanceBeforeTransferA, err := nA.QueryBalances(s.addrA)
+	s.Require().NoError(err)
+	s.T().Logf("Balance before transfer for addrA: %s", balanceBeforeTransferA.String())
+
+	_, err = nB.QueryBalances(s.addrB)
+	s.Require().NoError(err)
+
+	packetAmount := sdkmath.NewInt(1_000_001) // above the threshold and should fail
+	channel := "channel-0"
+
+	transferCoin := sdk.NewCoin(nativeDenom, packetAmount)
+
+	s.T().Log("Attempting to send IBC transfer...")
+	txHash := nB.SendIBCTransfer(s.addrB, s.addrA, channel, transferCoin)
+	nB.WaitForNextBlock()
+
+	txRes, _, err := nB.QueryTxWithError(txHash)
+	s.Require().NoError(err)
+	s.Require().NotZero(txRes.Code, fmt.Sprintf("Tx was suppossed to fail. Code: %d", txRes.Code))
+	s.Require().Contains(txRes.RawLog, "quota exceeded")
+
+	if txHash != "" {
+		s.T().Logf("IBC transfer sent, txHash: %s", txHash)
+	}
+
+	balanceAfterReceivingSendBackA, err := nA.QueryBalances(s.addrA)
+	s.Require().NoError(err)
+
+	s.Require().Equal(balanceBeforeTransferA.String(), balanceAfterReceivingSendBackA.String(), "Balance should remain unchanged after failed transfer (only paid for fees)")
 }

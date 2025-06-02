@@ -11,11 +11,11 @@ import (
 	"cosmossdk.io/collections"
 	"cosmossdk.io/store/prefix"
 	storetypes "cosmossdk.io/store/types"
-	appparams "github.com/babylonlabs-io/babylon/v2/app/params"
-	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
-	keepertest "github.com/babylonlabs-io/babylon/v2/testutil/keeper"
-	"github.com/babylonlabs-io/babylon/v2/x/incentive/keeper"
-	"github.com/babylonlabs-io/babylon/v2/x/incentive/types"
+	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	keepertest "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
+	"github.com/babylonlabs-io/babylon/v4/x/incentive/keeper"
+	"github.com/babylonlabs-io/babylon/v4/x/incentive/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -126,6 +126,17 @@ func TestInitGenesis(t *testing.T) {
 						FinalityProviderAddress: acc2.Address,
 					},
 				},
+				EventRewardTracker: []types.EventsPowerUpdateAtHeightEntry{
+					types.EventsPowerUpdateAtHeightEntry{
+						Height: datagen.RandomInt(r, 100000) + 1,
+						Events: &types.EventsPowerUpdateAtHeight{
+							Events: []*types.EventPowerUpdate{
+								types.NewEventBtcDelegationActivated(acc1.Address, acc2.Address, datagen.RandomMathInt(r, 1000).AddRaw(20)),
+							},
+						},
+					},
+				},
+				LastProcessedHeightEventRewardTracker: 1,
 			},
 			akMockResp: func(m *types.MockAccountKeeper) {
 				// mock account keeper to return an account on GetAccount call
@@ -282,7 +293,11 @@ func FuzzTestExportGenesis(f *testing.F) {
 			fpAcc := sdk.MustAccAddressFromBech32(gs.BtcDelegatorsToFps[i].FinalityProviderAddress)
 			delStore := prefix.NewStore(st, delAcc.Bytes())
 			delStore.Set(fpAcc.Bytes(), []byte{0x00})
+
+			require.NoError(t, k.SetRewardTrackerEvent(ctx, gs.EventRewardTracker[i].Height, gs.EventRewardTracker[i].Events))
 		}
+
+		require.NoError(t, k.SetRewardTrackerEventLastProcessedHeight(ctx, gs.LastProcessedHeightEventRewardTracker))
 
 		// Run the ExportGenesis
 		exported, err := k.ExportGenesis(ctx)
@@ -331,7 +346,8 @@ func setupTest(t *testing.T, seed int64) (sdk.Context, *keeper.Keeper, *storetyp
 		fpHistRwd  = make([]types.FinalityProviderHistoricalRewardsEntry, l)
 		bdrt       = make([]types.BTCDelegationRewardsTrackerEntry, l)
 		d2fp       = make([]types.BTCDelegatorToFpEntry, l)
-		currHeight = datagen.RandomInt(r, 100000)
+		eventsRwd  = make([]types.EventsPowerUpdateAtHeightEntry, l)
+		currHeight = datagen.RandomInt(r, 100000) + 100
 	)
 	defer ctrl.Finish()
 	ctx = ctx.WithBlockHeight(int64(currHeight))
@@ -339,8 +355,9 @@ func setupTest(t *testing.T, seed int64) (sdk.Context, *keeper.Keeper, *storetyp
 	// make sure that BTC staking gauge are unique per height
 	usedHeights := make(map[uint64]bool)
 	for i := 0; i < l; i++ {
+		blkHeight := getUniqueHeight(currHeight, usedHeights)
 		bsg[i] = types.BTCStakingGaugeEntry{
-			Height: getUniqueHeight(currHeight, usedHeights),
+			Height: blkHeight,
 			Gauge:  datagen.GenRandomGauge(r),
 		}
 		acc1 := datagen.GenRandomAccount()
@@ -386,20 +403,30 @@ func setupTest(t *testing.T, seed int64) (sdk.Context, *keeper.Keeper, *storetyp
 			DelegatorAddress:        acc2.Address,
 			FinalityProviderAddress: acc1.Address,
 		}
+		eventsRwd[i] = types.EventsPowerUpdateAtHeightEntry{
+			Height: blkHeight,
+			Events: &types.EventsPowerUpdateAtHeight{
+				Events: []*types.EventPowerUpdate{
+					types.NewEventBtcDelegationActivated(acc2.Address, acc1.Address, datagen.RandomMathInt(r, 2000).AddRaw(100)),
+				},
+			},
+		}
 	}
 
 	gs := &types.GenesisState{
 		Params: types.Params{
 			BtcStakingPortion: datagen.RandomLegacyDec(r, 10, 1),
 		},
-		BtcStakingGauges:                   bsg,
-		RewardGauges:                       rg,
-		WithdrawAddresses:                  wa,
-		RefundableMsgHashes:                mh,
-		FinalityProvidersCurrentRewards:    fpCurrRwd,
-		FinalityProvidersHistoricalRewards: fpHistRwd,
-		BtcDelegationRewardsTrackers:       bdrt,
-		BtcDelegatorsToFps:                 d2fp,
+		BtcStakingGauges:                      bsg,
+		RewardGauges:                          rg,
+		WithdrawAddresses:                     wa,
+		RefundableMsgHashes:                   mh,
+		FinalityProvidersCurrentRewards:       fpCurrRwd,
+		FinalityProvidersHistoricalRewards:    fpHistRwd,
+		BtcDelegationRewardsTrackers:          bdrt,
+		BtcDelegatorsToFps:                    d2fp,
+		EventRewardTracker:                    eventsRwd,
+		LastProcessedHeightEventRewardTracker: currHeight,
 	}
 
 	require.NoError(t, gs.Validate())

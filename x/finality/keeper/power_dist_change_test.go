@@ -16,23 +16,23 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
-	babylonApp "github.com/babylonlabs-io/babylon/v2/app"
-	appparams "github.com/babylonlabs-io/babylon/v2/app/params"
-	"github.com/babylonlabs-io/babylon/v2/test/replay"
+	babylonApp "github.com/babylonlabs-io/babylon/v4/app"
+	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
+	"github.com/babylonlabs-io/babylon/v4/test/replay"
 
-	testutil "github.com/babylonlabs-io/babylon/v2/testutil/btcstaking-helper"
-	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
-	bbn "github.com/babylonlabs-io/babylon/v2/types"
-	btcctypes "github.com/babylonlabs-io/babylon/v2/x/btccheckpoint/types"
-	btclckeeper "github.com/babylonlabs-io/babylon/v2/x/btclightclient/keeper"
-	btclightclientkeeper "github.com/babylonlabs-io/babylon/v2/x/btclightclient/keeper"
-	btclctypes "github.com/babylonlabs-io/babylon/v2/x/btclightclient/types"
-	btcstakingkeeper "github.com/babylonlabs-io/babylon/v2/x/btcstaking/keeper"
-	bstypes "github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
-	btcstktypes "github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
-	finalitykeeper "github.com/babylonlabs-io/babylon/v2/x/finality/keeper"
-	"github.com/babylonlabs-io/babylon/v2/x/finality/types"
-	ftypes "github.com/babylonlabs-io/babylon/v2/x/finality/types"
+	testutil "github.com/babylonlabs-io/babylon/v4/testutil/btcstaking-helper"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	btcctypes "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
+	btclckeeper "github.com/babylonlabs-io/babylon/v4/x/btclightclient/keeper"
+	btclightclientkeeper "github.com/babylonlabs-io/babylon/v4/x/btclightclient/keeper"
+	btclctypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
+	btcstakingkeeper "github.com/babylonlabs-io/babylon/v4/x/btcstaking/keeper"
+	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+	btcstktypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+	finalitykeeper "github.com/babylonlabs-io/babylon/v4/x/finality/keeper"
+	"github.com/babylonlabs-io/babylon/v4/x/finality/types"
+	ftypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
 )
 
 func FuzzDistributionCache_BtcUndelegateSameBlockAsExpiration(f *testing.F) {
@@ -649,6 +649,96 @@ func FuzzProcessAllPowerDistUpdateEvents_SlashActiveFp(f *testing.F) {
 		require.Len(t, newDc.FinalityProviders, 0)
 		require.Equal(t, newDc.TotalVotingPower, uint64(0))
 	})
+}
+
+func TestApplyActiveFinalityProviders(t *testing.T) {
+	t.Parallel()
+
+	r := rand.New(rand.NewSource(time.Now().Unix()))
+	isSlashed := true
+
+	tcs := []struct {
+		title string
+
+		dc        *types.VotingPowerDistCache
+		maxActive uint32
+
+		expActiveFps uint32
+		expTotalVp   uint64
+	}{
+		{
+			title: "vp 150 2 active",
+
+			dc: &ftypes.VotingPowerDistCache{
+				FinalityProviders: []*ftypes.FinalityProviderDistInfo{
+					fp(t, r, 100, !isSlashed),
+					fp(t, r, 50, !isSlashed),
+				},
+			},
+
+			maxActive:    5,
+			expActiveFps: 2,
+			expTotalVp:   150,
+		},
+		{
+			title: "vp 250 6 active, 5 max",
+
+			dc: &ftypes.VotingPowerDistCache{
+				FinalityProviders: []*ftypes.FinalityProviderDistInfo{
+					fp(t, r, 50, !isSlashed),
+					fp(t, r, 50, !isSlashed),
+					fp(t, r, 50, !isSlashed),
+					fp(t, r, 50, !isSlashed),
+					fp(t, r, 50, !isSlashed),
+					fp(t, r, 50, !isSlashed),
+				},
+			},
+
+			maxActive:    5,
+			expActiveFps: 5,
+			expTotalVp:   250,
+		},
+		{
+			title: "vp 1000 2 active, 1 slash, 1 zero vp",
+
+			dc: &ftypes.VotingPowerDistCache{
+				FinalityProviders: []*ftypes.FinalityProviderDistInfo{
+					fp(t, r, 500, !isSlashed),
+					fp(t, r, 500, !isSlashed),
+					fp(t, r, 0, !isSlashed),
+					fp(t, r, 500, isSlashed),
+				},
+			},
+
+			maxActive:    5,
+			expActiveFps: 2,
+			expTotalVp:   1000,
+		},
+	}
+
+	for _, tc := range tcs {
+		t.Run(tc.title, func(t *testing.T) {
+			t.Parallel()
+
+			tc.dc.ApplyActiveFinalityProviders(tc.maxActive)
+
+			require.Equal(t, tc.expTotalVp, tc.dc.TotalVotingPower)
+			require.Equal(t, tc.expActiveFps, tc.dc.NumActiveFps)
+		})
+	}
+}
+
+func fp(t *testing.T, r *rand.Rand, totalVp uint64, isSlashed bool) *ftypes.FinalityProviderDistInfo {
+	btcPk, err := datagen.GenRandomBIP340PubKey(r)
+	require.NoError(t, err)
+
+	return &ftypes.FinalityProviderDistInfo{
+		TotalBondedSat: totalVp,
+		IsTimestamped:  true,
+		IsJailed:       false,
+		IsSlashed:      isSlashed,
+		BtcPk:          btcPk,
+	}
 }
 
 func FuzzSlashFinalityProviderEvent(f *testing.F) {
@@ -1402,7 +1492,7 @@ func TestHandleLivenessPanic(t *testing.T) {
 	finalityParams.MaxActiveFinalityProviders = 5
 	_ = finalityKeeper.SetParams(ctx, finalityParams)
 
-	epochingKeeper.InitEpoch(ctx)
+	require.NoError(t, epochingKeeper.InitEpoch(ctx, nil))
 	initHeader := ctx.HeaderInfo()
 	initHeader.Height = int64(1)
 	ctx = ctx.WithHeaderInfo(initHeader)

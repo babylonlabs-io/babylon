@@ -3,7 +3,7 @@ package schnorr_adaptor_signature
 import (
 	"fmt"
 
-	"github.com/babylonlabs-io/babylon/v2/crypto/common"
+	"github.com/babylonlabs-io/babylon/v4/crypto/common"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"

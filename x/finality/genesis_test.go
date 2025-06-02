@@ -5,10 +5,10 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	keepertest "github.com/babylonlabs-io/babylon/v2/testutil/keeper"
-	"github.com/babylonlabs-io/babylon/v2/testutil/nullify"
-	"github.com/babylonlabs-io/babylon/v2/x/finality"
-	"github.com/babylonlabs-io/babylon/v2/x/finality/types"
+	keepertest "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
+	"github.com/babylonlabs-io/babylon/v4/testutil/nullify"
+	"github.com/babylonlabs-io/babylon/v4/x/finality"
+	"github.com/babylonlabs-io/babylon/v4/x/finality/types"
 )
 
 func TestGenesis(t *testing.T) {

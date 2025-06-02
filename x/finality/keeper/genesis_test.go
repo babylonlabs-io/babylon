@@ -1,15 +1,17 @@
 package keeper_test
 
 import (
+	"fmt"
 	"math/rand"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
-	keepertest "github.com/babylonlabs-io/babylon/v2/testutil/keeper"
-	bbn "github.com/babylonlabs-io/babylon/v2/types"
-	"github.com/babylonlabs-io/babylon/v2/x/finality/types"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	keepertest "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	"github.com/babylonlabs-io/babylon/v4/x/finality/types"
 )
 
 func FuzzTestExportGenesis(f *testing.F) {
@@ -148,5 +150,28 @@ func FuzzTestExportGenesis(f *testing.F) {
 		for _, fpVp := range gs.VotingPowers {
 			require.Equal(t, vpFps[fpVp.FpBtcPk.MarshalHex()], fpVp)
 		}
+	})
+}
+
+func FuzzTestInitGenesis(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+		k, ctx := keepertest.FinalityKeeper(t, nil, nil, nil)
+		gs, err := datagen.GenRandomFinalityGenesisState(r)
+		require.NoError(t, err)
+
+		// Run the InitGenesis
+		err = k.InitGenesis(ctx, *gs)
+		require.NoError(t, err)
+
+		// get the current state
+		exported, err := k.ExportGenesis(ctx)
+		require.NoError(t, err)
+
+		types.SortData(gs)
+		types.SortData(exported)
+
+		require.Equal(t, gs, exported, fmt.Sprintf("Found diff: %s | seed %d", cmp.Diff(gs, exported), seed))
 	})
 }

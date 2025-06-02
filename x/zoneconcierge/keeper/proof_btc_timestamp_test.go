@@ -12,16 +12,16 @@ import (
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/wire"
 
-	"github.com/babylonlabs-io/babylon/v2/crypto/bls12381"
-	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
-	testhelper "github.com/babylonlabs-io/babylon/v2/testutil/helper"
-	testkeeper "github.com/babylonlabs-io/babylon/v2/testutil/keeper"
-	btcctypes "github.com/babylonlabs-io/babylon/v2/x/btccheckpoint/types"
-	checkpointingtypes "github.com/babylonlabs-io/babylon/v2/x/checkpointing/types"
-	zctypes "github.com/babylonlabs-io/babylon/v2/x/zoneconcierge/types"
+	"github.com/babylonlabs-io/babylon/v4/crypto/bls12381"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	testhelper "github.com/babylonlabs-io/babylon/v4/testutil/helper"
+	testkeeper "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
+	btcctypes "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
+	zctypes "github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/types"
 )
 
-func FuzzProofCZHeaderInEpoch(f *testing.F) {
+func FuzzProofConsumerHeaderInEpoch(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
@@ -61,11 +61,11 @@ func FuzzProofCZHeaderInEpoch(f *testing.F) {
 		h.NoError(err)
 
 		// generate inclusion proof
-		proof, err := zck.ProveCZHeaderInEpoch(h.Ctx, indexedHeader, epochWithHeader)
+		proof, err := zck.ProveConsumerHeaderInEpoch(h.Ctx, indexedHeader, epochWithHeader)
 		h.NoError(err)
 
 		// verify the inclusion proof
-		err = zctypes.VerifyCZHeaderInEpoch(indexedHeader, epochWithHeader, proof)
+		err = zctypes.VerifyConsumerHeaderInEpoch(indexedHeader, epochWithHeader, proof)
 		h.NoError(err)
 	})
 }

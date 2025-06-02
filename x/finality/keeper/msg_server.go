@@ -11,9 +11,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
-	bbn "github.com/babylonlabs-io/babylon/v2/types"
-	bstypes "github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
-	"github.com/babylonlabs-io/babylon/v2/x/finality/types"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/v4/x/finality/types"
 )
 
 type msgServer struct {
@@ -238,13 +238,8 @@ func (ms msgServer) ShouldAcceptSigForHeight(ctx context.Context, block *types.I
 func (ms msgServer) CommitPubRandList(goCtx context.Context, req *types.MsgCommitPubRandList) (*types.MsgCommitPubRandListResponse, error) {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), types.MetricsKeyCommitPubRandList)
 
-	// To avoid public randomness reset,
-	// check for overflow when doing (StartHeight + NumPubRand)
-	if req.StartHeight >= (req.StartHeight + req.NumPubRand) {
-		return nil, types.ErrOverflowInBlockHeight.Wrapf(
-			"public rand commit start block height: %d is equal or higher than (start height + num pub rand) %d",
-			req.StartHeight, req.StartHeight+req.NumPubRand,
-		)
+	if err := req.ValidateBasic(); err != nil {
+		return nil, err
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
@@ -394,11 +389,6 @@ func (ms msgServer) validateActivationHeight(ctx sdk.Context, height uint64) (ui
 func (ms msgServer) EquivocationEvidence(goCtx context.Context, req *types.MsgEquivocationEvidence) (*types.MsgEquivocationEvidenceResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	// validate the evidence
-	if err := validateEvidence(req); err != nil {
-		return &types.MsgEquivocationEvidenceResponse{}, err
-	}
-
 	// construct the evidence
 	evidence := &types.Evidence{
 		FpBtcPk:              req.FpBtcPk,
@@ -418,27 +408,4 @@ func (ms msgServer) EquivocationEvidence(goCtx context.Context, req *types.MsgEq
 	ms.SetEvidence(ctx, evidence)
 
 	return &types.MsgEquivocationEvidenceResponse{}, nil
-}
-
-// Helper function
-func validateEvidence(req *types.MsgEquivocationEvidence) error {
-	if req.FpBtcPk == nil {
-		return fmt.Errorf("empty FpBtcPk")
-	}
-	if req.PubRand == nil {
-		return fmt.Errorf("empty PubRand")
-	}
-	if len(req.CanonicalAppHash) != 32 {
-		return fmt.Errorf("malformed CanonicalAppHash")
-	}
-	if len(req.ForkAppHash) != 32 {
-		return fmt.Errorf("malformed ForkAppHash")
-	}
-	if req.ForkFinalitySig == nil {
-		return fmt.Errorf("empty ForkFinalitySig")
-	}
-	if req.CanonicalFinalitySig == nil {
-		return fmt.Errorf("empty CanonicalFinalitySig")
-	}
-	return nil
 }

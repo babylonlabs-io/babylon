@@ -3,7 +3,7 @@ package keeper
 import (
 	"context"
 
-	"github.com/babylonlabs-io/babylon/v2/x/zoneconcierge/types"
+	"github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -24,11 +24,11 @@ func (k Keeper) BroadcastBTCHeaders(ctx context.Context) error {
 	//   - If last segment valid: Returns headers from last sent to tip
 	//   - If last segment invalid (reorg): Returns last w+1 headers from tip
 	//
-	// TODO: Should use BSN base BTC header as starting point:
-	// - If no headers sent: Return from BSN base to tip
+	// TODO: Should use Consumer base BTC header as starting point:
+	// - If no headers sent: Return from Consumer base to tip
 	// - If headers previously sent:
 	//   - If last segment valid: Return from last sent header to tip
-	//   - If last segment invalid (reorg): Return from BSN base to tip
+	//   - If last segment invalid (reorg): Return from Consumer base to tip
 	headers := k.getHeadersToBroadcast(ctx)
 	if len(headers) == 0 {
 		k.Logger(sdkCtx).Info("skipping BTC header broadcast",

@@ -2,6 +2,7 @@ package types
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	errorsmod "cosmossdk.io/errors"
@@ -97,7 +98,9 @@ func (e Epoch) WithinBoundary(height uint64) bool {
 
 // ValidateBasic does sanity checks on Epoch
 func (e Epoch) ValidateBasic() error {
-	if e.CurrentEpochInterval < 2 {
+	// epoch 0 is created with CurrentEpochInterval = 1
+	// the rest of the epochs should comply with this condition
+	if e.EpochNumber > 0 && e.CurrentEpochInterval < 2 {
 		return ErrInvalidEpoch.Wrapf("CurrentEpochInterval (%d) < 2", e.CurrentEpochInterval)
 	}
 	return nil
@@ -205,4 +208,26 @@ func (qm *QueuedMessage) UnwrapToSdkMsg() sdk.Msg {
 		panic(errorsmod.Wrap(ErrInvalidQueuedMessageType, qm.String()))
 	}
 	return unwrappedMsgWithType
+}
+
+func (e Validator) Validate() error {
+	valAddrStr := sdk.ValAddress(e.Addr).String()
+	_, err := sdk.ValAddressFromBech32(valAddrStr)
+	return err
+}
+
+func (vl ValidatorLifecycle) Validate() error {
+	if len(vl.ValLife) == 0 {
+		return errors.New("validator lyfecycle is empty")
+	}
+	_, err := sdk.ValAddressFromBech32(vl.ValAddr)
+	return err
+}
+
+func (dl DelegationLifecycle) Validate() error {
+	if len(dl.DelLife) == 0 {
+		return errors.New("delegation lyfecycle is empty")
+	}
+	_, err := sdk.AccAddressFromBech32(dl.DelAddr)
+	return err
 }

@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"cosmossdk.io/log"
-	babylonApp "github.com/babylonlabs-io/babylon/v2/app"
-	appsigner "github.com/babylonlabs-io/babylon/v2/app/signer"
+	babylonApp "github.com/babylonlabs-io/babylon/v4/app"
+	appsigner "github.com/babylonlabs-io/babylon/v4/app/signer"
 	dbmc "github.com/cometbft/cometbft-db"
 	cs "github.com/cometbft/cometbft/consensus"
 	cometlog "github.com/cometbft/cometbft/libs/log"
@@ -21,6 +21,7 @@ import (
 type BlockReplayer struct {
 	BlockExec *sm.BlockExecutor
 	LastState sm.State
+	App       *babylonApp.BabylonApp
 }
 
 func NewBlockReplayer(t *testing.T, nodeDir string) *BlockReplayer {
@@ -98,6 +99,7 @@ func NewBlockReplayer(t *testing.T, nodeDir string) *BlockReplayer {
 	return &BlockReplayer{
 		BlockExec: blockExec,
 		LastState: state,
+		App:       tmpApp,
 	}
 }
 

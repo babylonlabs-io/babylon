@@ -6,6 +6,7 @@ on:
       - 'main'
       - 'release/v1.x'
       - 'release/v2.x'
+      - 'release/v4.x'
     tags:
       - '*'
 
@@ -24,7 +25,7 @@ jobs:
       run-lint: true
 
   docker_pipeline:
-    uses: babylonlabs-io/.github/.github/workflows/reusable_docker_pipeline.yml@v0.12.1
+    uses: babylonlabs-io/.github/.github/workflows/reusable_docker_pipeline.yml@v0.13.2
     needs: ["lint_test"]
     secrets: inherit
     permissions:
@@ -39,7 +40,7 @@ jobs:
       docker_scan: true
 
   docker_testnet_pipeline:
-    uses: babylonlabs-io/.github/.github/workflows/reusable_docker_pipeline.yml@v0.12.1
+    uses: babylonlabs-io/.github/.github/workflows/reusable_docker_pipeline.yml@v0.13.2
     needs: ["lint_test"]
     secrets: inherit
     if: startsWith(github.ref, 'refs/tags/')  # Run only on tag push

@@ -7,7 +7,7 @@ import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
 import "babylon/btcstkconsumer/v1/params.proto";
 
-option go_package = "github.com/babylonlabs-io/babylon/v2/x/btcstkconsumer/types";
+option go_package = "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types";
 
 // Msg defines the Msg service.
 service Msg {
@@ -16,7 +16,7 @@ service Msg {
   // UpdateParams defines a (governance) operation for updating the module
   // parameters. The authority defaults to the x/gov module account.
   rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
-  // RegisterConsumer registers a CZ consumer to the btcstkconsumer module.
+  // RegisterConsumer registers a Consumer to the btcstkconsumer module.
   rpc RegisterConsumer(MsgRegisterConsumer) returns (MsgRegisterConsumerResponse);
 }
 
@@ -41,7 +41,8 @@ message MsgUpdateParams {
 // MsgUpdateParams message.
 message MsgUpdateParamsResponse {}
 
-// MsgRegisterConsumer defines a message for registering CZ consumers to the btcstkconsumer module.
+// MsgRegisterConsumer defines a message for registering Consumers to the
+// btcstkconsumer module.
 message MsgRegisterConsumer {
   option (cosmos.msg.v1.signer) = "signer";
 
@@ -52,11 +53,15 @@ message MsgRegisterConsumer {
   string consumer_name = 3;
   // consumer_description is a description for the consumer (can be empty)
   string consumer_description = 4;
+  // max_multi_staked_fps is the maximum number of finality providers from this consumer
+  // that can be part of a single BTC delegation. Must be at least 2 to allow for at least
+  // one Babylon FP and one consumer FP.
+  uint32 max_multi_staked_fps = 5;
   // eth_l2_finality_contract_address is the Cosmos address of the
   // finality contract. The finality contract is deployed on Babylon and
   // serves as the data availability layer for finality signatures of the ETH L2.
   // (if set, then this means this is an ETH L2 integration)
-  string eth_l2_finality_contract_address = 5 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string eth_l2_finality_contract_address = 6 [(cosmos_proto.scalar) = "cosmos.AddressString"];
 }
 
 // MsgRegisterConsumerResponse is the response to the MsgRegisterConsumer message.

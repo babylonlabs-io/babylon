@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
@@ -9,7 +10,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/babylonlabs-io/babylon/v2/x/epoching/types"
+	"github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 )
 
 func (k Keeper) setEpochInfo(ctx context.Context, epochNumber uint64, epoch *types.Epoch) {
@@ -31,16 +32,24 @@ func (k Keeper) getEpochInfo(ctx context.Context, epochNumber uint64) (*types.Ep
 	return &epoch, nil
 }
 
-// InitEpoch sets the zero epoch number to DB
-func (k Keeper) InitEpoch(ctx context.Context) *types.Epoch {
+// InitEpoch sets the genesis epoch/s
+func (k Keeper) InitEpoch(ctx context.Context, genEpochs []*types.Epoch) error {
+	if len(genEpochs) > 0 {
+		for _, e := range genEpochs {
+			k.setEpochInfo(ctx, e.EpochNumber, e)
+		}
+		return nil
+	}
+
+	// if no genesis epochs provided, then initialize the epoch 0
 	header := sdk.UnwrapSDKContext(ctx).HeaderInfo()
 	if header.Height > 0 {
-		panic("InitEpoch can be invoked only at genesis")
+		return errors.New("InitEpoch can be invoked only at genesis")
 	}
 	genesisEpoch := types.NewEpoch(0, 1, 0, &header.Time)
 	k.setEpochInfo(ctx, 0, &genesisEpoch)
 
-	return &genesisEpoch
+	return nil
 }
 
 // GetEpoch fetches the current epoch

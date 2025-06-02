@@ -5,14 +5,15 @@ import (
 	"testing"
 
 	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	"github.com/stretchr/testify/require"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	appparams "github.com/babylonlabs-io/babylon/v2/app/params"
-	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
-	"github.com/babylonlabs-io/babylon/v2/testutil/store"
-	"github.com/babylonlabs-io/babylon/v2/x/incentive/types"
+	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	"github.com/babylonlabs-io/babylon/v4/testutil/store"
+	"github.com/babylonlabs-io/babylon/v4/x/incentive/types"
 )
 
 func FuzzCheckBtcDelegationActivated(f *testing.F) {
@@ -30,9 +31,9 @@ func FuzzCheckBtcDelegationActivated(f *testing.F) {
 		amtActivateBoth := datagen.RandomInt(r, 7) + 3
 
 		// delegates for both pairs (fp1, del1) (fp2, del1)
-		err := k.BtcDelegationActivated(ctx, fp1, del1, amtActivateFp1Del1)
+		err := k.BtcDelegationActivated(ctx, fp1, del1, sdkmath.NewIntFromUint64(amtActivateFp1Del1))
 		require.NoError(t, err)
-		err = k.BtcDelegationActivated(ctx, fp2, del1, amtActivateFp2Del1)
+		err = k.BtcDelegationActivated(ctx, fp2, del1, sdkmath.NewIntFromUint64(amtActivateFp2Del1))
 		require.NoError(t, err)
 
 		// verifies the amounts
@@ -45,9 +46,9 @@ func FuzzCheckBtcDelegationActivated(f *testing.F) {
 		require.Equal(t, fp2Del1RwdTracker.TotalActiveSat.Uint64(), amtActivateFp2Del1)
 
 		// delegates for both pairs again
-		err = k.BtcDelegationActivated(ctx, fp1, del1, amtActivateBoth)
+		err = k.BtcDelegationActivated(ctx, fp1, del1, sdkmath.NewIntFromUint64(amtActivateBoth))
 		require.NoError(t, err)
-		err = k.BtcDelegationActivated(ctx, fp2, del1, amtActivateBoth)
+		err = k.BtcDelegationActivated(ctx, fp2, del1, sdkmath.NewIntFromUint64(amtActivateBoth))
 		require.NoError(t, err)
 
 		// verifies the amounts
@@ -73,21 +74,21 @@ func FuzzCheckBtcDelegationUnbonded(f *testing.F) {
 
 		amtToActivate := datagen.RandomInt(r, 10) + 5
 		fp1Del1ToUnbond := datagen.RandomInt(r, int(amtToActivate)-1) + 1
-		err := k.BtcDelegationUnbonded(ctx, fp1, del1, fp1Del1ToUnbond)
+		err := k.BtcDelegationUnbonded(ctx, fp1, del1, sdkmath.NewIntFromUint64(fp1Del1ToUnbond))
 		require.EqualError(t, err, types.ErrBTCDelegationRewardsTrackerNotFound.Error())
 
 		// delegates for both pairs (fp1, del1) (fp2, del1)
-		err = k.BtcDelegationActivated(ctx, fp1, del1, amtToActivate)
+		err = k.BtcDelegationActivated(ctx, fp1, del1, sdkmath.NewIntFromUint64(amtToActivate))
 		require.NoError(t, err)
-		err = k.BtcDelegationActivated(ctx, fp2, del1, amtToActivate)
+		err = k.BtcDelegationActivated(ctx, fp2, del1, sdkmath.NewIntFromUint64(amtToActivate))
 		require.NoError(t, err)
 
 		// unbonds more than it has, should error
-		err = k.BtcDelegationUnbonded(ctx, fp1, del1, amtToActivate+1)
+		err = k.BtcDelegationUnbonded(ctx, fp1, del1, sdkmath.NewIntFromUint64(amtToActivate+1))
 		require.EqualError(t, err, types.ErrBTCDelegationRewardsTrackerNegativeAmount.Error())
 
 		// normally unbonds only part of it
-		err = k.BtcDelegationUnbonded(ctx, fp1, del1, fp1Del1ToUnbond)
+		err = k.BtcDelegationUnbonded(ctx, fp1, del1, sdkmath.NewIntFromUint64(fp1Del1ToUnbond))
 		require.NoError(t, err)
 
 		fp1Del1RwdTracker, err := k.GetBTCDelegationRewardsTracker(ctx, fp1, del1)
@@ -95,7 +96,7 @@ func FuzzCheckBtcDelegationUnbonded(f *testing.F) {
 		require.Equal(t, fp1Del1RwdTracker.TotalActiveSat.Uint64(), amtToActivate-fp1Del1ToUnbond)
 
 		// unbonds all
-		err = k.BtcDelegationUnbonded(ctx, fp2, del1, amtToActivate)
+		err = k.BtcDelegationUnbonded(ctx, fp2, del1, sdkmath.NewIntFromUint64(amtToActivate))
 		require.NoError(t, err)
 
 		fp2Del1RwdTracker, err := k.GetBTCDelegationRewardsTracker(ctx, fp2, del1)

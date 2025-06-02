@@ -7,8 +7,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
 
-	"github.com/babylonlabs-io/babylon/v2/app"
-	appsigner "github.com/babylonlabs-io/babylon/v2/app/signer"
+	"github.com/babylonlabs-io/babylon/v4/app"
+	appsigner "github.com/babylonlabs-io/babylon/v4/app/signer"
 )
 
 func CreateBlsKeyCmd() *cobra.Command {
@@ -35,6 +35,14 @@ $ babylond create-bls-key --no-bls-password
 			if err != nil {
 				return fmt.Errorf("failed to get home directory: %w", err)
 			}
+
+			// If bls_key.json already exists,
+			// return error with message that Users should delete the existing file first
+			blsKeyFile, exist := appsigner.GetBlsKeyFileIfExist(homeDir, "")
+			if exist {
+				return fmt.Errorf("BLS key already exists at %s. If you need to generate a new key, please manually delete the existing file first", blsKeyFile)
+			}
+
 			noBlsPassword, err := cmd.Flags().GetBool(flagNoBlsPassword)
 			if err != nil {
 				return fmt.Errorf("failed to get noBlsPassword flag: %w", err)
@@ -51,7 +59,7 @@ $ babylond create-bls-key --no-bls-password
 			}
 
 			// Generate BLS key using the refactored function with explicit password
-			return appsigner.CreateBlsKey(homeDir, password, passwordFile, cmd)
+			return appsigner.CreateBlsKey(blsKeyFile, password, passwordFile, cmd)
 		},
 	}
 

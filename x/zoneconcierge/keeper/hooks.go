@@ -5,9 +5,9 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	checkpointingtypes "github.com/babylonlabs-io/babylon/v2/x/checkpointing/types"
-	epochingtypes "github.com/babylonlabs-io/babylon/v2/x/epoching/types"
-	"github.com/babylonlabs-io/babylon/v2/x/zoneconcierge/types"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
+	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
+	"github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/types"
 )
 
 type Hooks struct {
@@ -21,7 +21,7 @@ var _ epochingtypes.EpochingHooks = Hooks{}
 func (k Keeper) Hooks() Hooks { return Hooks{k} }
 
 func (h Hooks) AfterEpochEnds(ctx context.Context, epoch uint64) {
-	// upon an epoch has ended, index the current chain info for each CZ
+	// upon an epoch has ended, index the current chain info for each Consumer
 	// TODO: do this together when epoch is sealed?
 	for _, consumerID := range h.k.GetAllConsumerIDs(ctx) {
 		h.k.recordEpochChainInfo(ctx, consumerID, epoch)

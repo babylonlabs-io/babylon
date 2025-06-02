@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	btcckpttypes "github.com/babylonlabs-io/babylon/v2/x/btccheckpoint/types"
+	btcckpttypes "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
 
 	errorsmod "cosmossdk.io/errors"
 	"github.com/btcsuite/btcd/btcec/v2"
@@ -19,9 +19,9 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/babylonlabs-io/babylon/v2/btcstaking"
-	bbn "github.com/babylonlabs-io/babylon/v2/types"
-	"github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/v4/btcstaking"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	"github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 )
 
 type msgServer struct {
@@ -217,8 +217,9 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	// - are not slashed, and
 	// - their registered epochs are finalised
 	// and then check whether the BTC stake is restaked to FPs of consumers
-	// TODO: ensure the BTC delegation does not restake to too many finality providers
-	// (pending concrete design)
+	// The total number of finality providers in a delegation must be less than the minimum
+	// of all consumers' max_multi_staked_fps limits. Only one finality provider per
+	// consumer is allowed in a delegation.
 	restakedToConsumers, err := ms.validateRestakedFPs(ctx, parsedMsg.FinalityProviderKeys.PublicKeysBbnFormat)
 	if err != nil {
 		return nil, err

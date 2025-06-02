@@ -4,8 +4,8 @@ import (
 	"context"
 	"math/rand"
 
-	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
-	zckeeper "github.com/babylonlabs-io/babylon/v2/x/zoneconcierge/keeper"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	zckeeper "github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/keeper"
 	ibctmtypes "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
 )
 

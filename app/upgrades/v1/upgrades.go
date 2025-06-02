@@ -25,20 +25,20 @@ import (
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 
-	"github.com/babylonlabs-io/babylon/v2/app/keepers"
-	appparams "github.com/babylonlabs-io/babylon/v2/app/params"
-	"github.com/babylonlabs-io/babylon/v2/app/upgrades"
-	bbn "github.com/babylonlabs-io/babylon/v2/types"
-	btclightkeeper "github.com/babylonlabs-io/babylon/v2/x/btclightclient/keeper"
-	btclighttypes "github.com/babylonlabs-io/babylon/v2/x/btclightclient/types"
-	btcstkkeeper "github.com/babylonlabs-io/babylon/v2/x/btcstaking/keeper"
-	btcstktypes "github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
-	finalitykeeper "github.com/babylonlabs-io/babylon/v2/x/finality/keeper"
-	finalitytypes "github.com/babylonlabs-io/babylon/v2/x/finality/types"
-	incentivekeeper "github.com/babylonlabs-io/babylon/v2/x/incentive/keeper"
-	incentivetypes "github.com/babylonlabs-io/babylon/v2/x/incentive/types"
-	mintkeeper "github.com/babylonlabs-io/babylon/v2/x/mint/keeper"
-	minttypes "github.com/babylonlabs-io/babylon/v2/x/mint/types"
+	"github.com/babylonlabs-io/babylon/v4/app/keepers"
+	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
+	"github.com/babylonlabs-io/babylon/v4/app/upgrades"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	btclightkeeper "github.com/babylonlabs-io/babylon/v4/x/btclightclient/keeper"
+	btclighttypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
+	btcstkkeeper "github.com/babylonlabs-io/babylon/v4/x/btcstaking/keeper"
+	btcstktypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+	finalitykeeper "github.com/babylonlabs-io/babylon/v4/x/finality/keeper"
+	finalitytypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
+	incentivekeeper "github.com/babylonlabs-io/babylon/v4/x/incentive/keeper"
+	incentivetypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
+	mintkeeper "github.com/babylonlabs-io/babylon/v4/x/mint/keeper"
+	minttypes "github.com/babylonlabs-io/babylon/v4/x/mint/types"
 )
 
 type ParamUpgradeFn func(ctx sdk.Context, k *keepers.AppKeepers) error
@@ -135,8 +135,10 @@ func upgradeMint(
 	if err != nil {
 		return err
 	}
+	minter := minttypes.DefaultMinter()
+	minter.BondDenom = bondedDenom
 	k.InitGenesis(ctx, ak, &minttypes.GenesisState{
-		BondDenom: bondedDenom,
+		Minter: &minter,
 	})
 	return nil
 }

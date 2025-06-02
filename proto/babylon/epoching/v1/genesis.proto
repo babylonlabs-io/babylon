@@ -3,8 +3,45 @@ package babylon.epoching.v1;
 
 import "gogoproto/gogo.proto";
 import "babylon/epoching/v1/params.proto";
+import "babylon/epoching/v1/epoching.proto";
 
-option go_package = "github.com/babylonlabs-io/babylon/v2/x/epoching/types";
+option go_package = "github.com/babylonlabs-io/babylon/v4/x/epoching/types";
 
 // GenesisState defines the epoching module's genesis state.
-message GenesisState { Params params = 1 [ (gogoproto.nullable) = false ]; }
+message GenesisState {
+  // params are the current params of the state.
+  Params params = 1 [ (gogoproto.nullable) = false ];
+  // epochs contains all the epochs info
+  repeated Epoch epochs = 2;
+  // queues contains all the epochs' queue
+  repeated EpochQueue queues = 3;
+  // validator_sets is a slice containing all the
+  // stored epochs' validator sets
+  repeated EpochValidatorSet validator_sets = 4;
+  // slashed_validator_sets is a slice containing all the
+  // stored epochs' slashed validator sets
+  repeated EpochValidatorSet slashed_validator_sets = 5;
+  // validators_lifecycle contains the lifecyle of all validators
+  repeated ValidatorLifecycle validators_lifecycle = 6;
+  // delegations_lifecycle contains the lifecyle of all delegations
+  repeated DelegationLifecycle delegations_lifecycle = 7;
+}
+
+// EpochQueue defines a genesis state entry for
+// the epochs' message queue
+message EpochQueue {
+  // epoch_number is the epoch's identifier
+  uint64 epoch_number = 1;
+  // msgs is a slice containing all the epochs' queued messages
+  repeated QueuedMessage msgs = 2;
+}
+
+// EpochValidatorSet contains the epoch number and the validators corresponding
+// to that epoch number
+message EpochValidatorSet {
+  // epoch_number is the epoch's identifier
+  uint64 epoch_number = 1;
+  // validators is a slice containing the validators of the
+  // epoch's validator set
+  repeated Validator validators = 2;
+}

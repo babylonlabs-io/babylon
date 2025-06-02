@@ -6,10 +6,10 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/babylonlabs-io/babylon/v2/x/zoneconcierge/types"
+	"github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/types"
 )
 
-// HandleHeaderWithValidCommit handles a CZ header with a valid QC
+// HandleHeaderWithValidCommit handles a Consumer header with a valid QC
 func (k Keeper) HandleHeaderWithValidCommit(ctx context.Context, txHash []byte, header *types.HeaderInfo, isOnFork bool) {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	babylonHeader := sdkCtx.HeaderInfo()

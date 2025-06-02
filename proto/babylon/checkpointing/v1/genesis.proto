@@ -5,7 +5,7 @@ import "cosmos/crypto/ed25519/keys.proto";
 import "babylon/checkpointing/v1/bls_key.proto";
 import "babylon/checkpointing/v1/checkpoint.proto";
 
-option go_package = "github.com/babylonlabs-io/babylon/v2/x/checkpointing/types";
+option go_package = "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types";
 
 // GenesisState defines the checkpointing module's genesis state.
 message GenesisState {

@@ -7,11 +7,11 @@ import (
 	"testing"
 
 	storetypes "cosmossdk.io/store/types"
-	appparams "github.com/babylonlabs-io/babylon/v2/app/params"
-	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
-	keepertest "github.com/babylonlabs-io/babylon/v2/testutil/keeper"
-	"github.com/babylonlabs-io/babylon/v2/x/btccheckpoint/keeper"
-	"github.com/babylonlabs-io/babylon/v2/x/btccheckpoint/types"
+	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	keepertest "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
+	"github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/keeper"
+	"github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/google/go-cmp/cmp"
@@ -19,7 +19,7 @@ import (
 )
 
 func FuzzTestExportGenesis(f *testing.F) {
-	datagen.AddRandomSeedsToFuzzer(f, 1)
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		ctx, k, sk, gs := setupTest(t, seed)
 
@@ -95,10 +95,10 @@ func setupTest(t *testing.T, seed int64) (sdk.Context, *keeper.Keeper, *storetyp
 		s[i] = randomSubmissionEntry(r)
 	}
 
-	chkptFinTimeout := datagen.RandomUInt32(r, 10000)
+	chkptFinTimeout := datagen.RandomUInt32(r, 10000) + 5
 	gs := &types.GenesisState{
 		Params: types.Params{
-			BtcConfirmationDepth:          datagen.RandomUInt32(r, chkptFinTimeout-1),
+			BtcConfirmationDepth:          datagen.RandomUInt32(r, chkptFinTimeout-1) + 1,
 			CheckpointFinalizationTimeout: chkptFinTimeout,
 			CheckpointTag:                 datagen.GenRandomHexStr(r, 4),
 		},

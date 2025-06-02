@@ -1,7 +1,32 @@
 syntax = "proto3";
 package babylon.monitor.v1;
 
-option go_package = "github.com/babylonlabs-io/babylon/v2/x/monitor/types";
+option go_package = "github.com/babylonlabs-io/babylon/v4/x/monitor/types";
 
 // GenesisState defines the monitor module's genesis state.
-message GenesisState {}
+message GenesisState {
+  // epoch_end_records contain the epoch number and its
+  // corresponding end height of the BTC light client
+  repeated EpochEndLightClient epoch_end_records = 1;
+  // checkpoints_reported contain the checkpoint hash and its
+  // corresponding reported height of the BTC light client
+  repeated CheckpointReportedLightClient checkpoints_reported = 2;
+}
+
+// EpochEndLightClient contains the epoch number and its
+// corresponding end height of the BTC light client
+message EpochEndLightClient {
+  // epoch number
+  uint64 epoch = 1;
+  // height of btc light client when epoch ended
+  uint64 btc_light_client_height = 2;
+}
+
+// CheckpointReportedLightClient contains the checkpoint hash and its
+// corresponding end height of the BTC light client
+message CheckpointReportedLightClient {
+  // ckpt_hash is hex encoded byte string of the hash of the checkpoint
+  string ckpt_hash = 1;
+  // height of btc light client when checkpoint reported
+  uint64 btc_light_client_height = 2;
+}

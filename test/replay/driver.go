@@ -13,13 +13,12 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
-	"github.com/babylonlabs-io/babylon/v2/btctxformatter"
-	bbn "github.com/babylonlabs-io/babylon/v2/types"
-	btckckpttypes "github.com/babylonlabs-io/babylon/v2/x/btccheckpoint/types"
-	ckpttypes "github.com/babylonlabs-io/babylon/v2/x/checkpointing/types"
+	"github.com/babylonlabs-io/babylon/v4/btctxformatter"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	btckckpttypes "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
+	btcstkconsumertypes "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
 
 	"cosmossdk.io/log"
-	"cosmossdk.io/math"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/wire"
@@ -48,18 +47,18 @@ import (
 	xauthsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
+	v1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	gogoprotoio "github.com/cosmos/gogoproto/io"
 	"github.com/otiai10/copy"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/v2/app"
-	babylonApp "github.com/babylonlabs-io/babylon/v2/app"
-	appsigner "github.com/babylonlabs-io/babylon/v2/app/signer"
-	"github.com/babylonlabs-io/babylon/v2/test/e2e/initialization"
-	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
-	btclighttypes "github.com/babylonlabs-io/babylon/v2/x/btclightclient/types"
-	bstypes "github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
-	checkpointingtypes "github.com/babylonlabs-io/babylon/v2/x/checkpointing/types"
+	babylonApp "github.com/babylonlabs-io/babylon/v4/app"
+	appsigner "github.com/babylonlabs-io/babylon/v4/app/signer"
+	"github.com/babylonlabs-io/babylon/v4/test/e2e/initialization"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	btclighttypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
+	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+	ckpttypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
 )
 
 var validatorConfig = &initialization.NodeConfig{
@@ -78,10 +77,11 @@ const (
 	defaultGasLimit = 750000
 	defaultFee      = 500000
 	epochLength     = 10
+	blkTime         = time.Second * 5
 )
 
 var (
-	defaultFeeCoin                 = sdk.NewCoin("ubbn", math.NewInt(defaultFee))
+	defaultFeeCoin                 = sdk.NewCoin("ubbn", sdkmath.NewInt(defaultFee))
 	BtcParams                      = &chaincfg.SimNetParams
 	covenantSKs, _, CovenantQuorum = bstypes.DefaultCovenantCommittee()
 )
@@ -131,8 +131,8 @@ type BabylonAppDriver struct {
 	*SenderInfo
 	r                *rand.Rand
 	t                *testing.T
-	App              *app.BabylonApp
-	BlsSigner        checkpointingtypes.BlsSigner
+	App              *babylonApp.BabylonApp
+	BlsSigner        ckpttypes.BlsSigner
 	BlockExec        *sm.BlockExecutor
 	BlockStore       *store.BlockStore
 	StateStore       sm.Store
@@ -143,6 +143,14 @@ type BabylonAppDriver struct {
 	CurrentTime      time.Time
 }
 
+// NewBabylonAppDriverTmpDir initializes Babylon driver for block creation with
+// temporary directories
+func NewBabylonAppDriverTmpDir(r *rand.Rand, t *testing.T) *BabylonAppDriver {
+	driverTempDir := t.TempDir()
+	replayerTempDir := t.TempDir()
+	return NewBabylonAppDriver(r, t, driverTempDir, replayerTempDir)
+}
+
 // Inititializes Babylon driver for block creation
 func NewBabylonAppDriver(
 	r *rand.Rand,
@@ -150,12 +158,14 @@ func NewBabylonAppDriver(
 	dir string,
 	copyDir string,
 ) *BabylonAppDriver {
+	expeditedVotingPeriod := blkTime + time.Second
+
 	chain, err := initialization.InitChain(
 		chainID,
 		dir,
 		[]*initialization.NodeConfig{validatorConfig},
-		3*time.Minute,
-		1*time.Minute,
+		expeditedVotingPeriod*2, // voting period
+		expeditedVotingPeriod,   // expedited
 		1,
 		[]*btclighttypes.BTCHeaderInfo{},
 	)
@@ -270,6 +280,10 @@ func NewBabylonAppDriver(
 		// initiate time to current time
 		CurrentTime: time.Now(),
 	}
+}
+
+func (d *BabylonAppDriver) Ctx() sdk.Context {
+	return d.GetContextForLastFinalizedBlock()
 }
 
 func (d *BabylonAppDriver) GetLastFinalizedBlock() *FinalizedBlock {
@@ -405,6 +419,20 @@ func SendTxWithMessagesSuccess(
 	require.Equal(t, result.Code, uint32(0))
 }
 
+func SendTxWithMessages(
+	t *testing.T,
+	app *babylonApp.BabylonApp,
+	senderInfo *SenderInfo,
+	msgs ...sdk.Msg,
+) (*abci.ResponseCheckTx, error) {
+	txBytes := createTx(t, app.TxConfig(), senderInfo, defaultGasLimit, defaultFeeCoin, msgs...)
+
+	return app.CheckTx(&abci.RequestCheckTx{
+		Tx:   txBytes,
+		Type: abci.CheckTxType_New,
+	})
+}
+
 func DefaultSendTxWithMessagesSuccess(
 	t *testing.T,
 	app *babylonApp.BabylonApp,
@@ -491,7 +519,7 @@ func (d *BabylonAppDriver) GenerateNewBlock() *abci.ResponseFinalizeBlock {
 	// ApplyBlock
 	// add slepp to avoid zero duration for minting
 	// Simulate 5s block time
-	newTime := d.CurrentTime.Add(5 * time.Second)
+	newTime := d.CurrentTime.Add(blkTime)
 	extCommitSig := cmttypes.ExtendedCommitSig{
 		CommitSig: cmttypes.CommitSig{
 			BlockIDFlag:      cmttypes.BlockIDFlagCommit,
@@ -563,6 +591,13 @@ func (d *BabylonAppDriver) GetLastState() sm.State {
 	return lastState
 }
 
+func (d *BabylonAppDriver) GenerateBlocksUntilHeight(untilBlock uint64) {
+	blkHeight := d.Ctx().BlockHeader().Height
+	for i := blkHeight; i < int64(untilBlock); i++ {
+		d.GenerateNewBlockAssertExecutionSuccess()
+	}
+}
+
 func (d *BabylonAppDriver) GenerateNewBlockAssertExecutionSuccess() {
 	response := d.GenerateNewBlock()
 
@@ -574,6 +609,23 @@ func (d *BabylonAppDriver) GenerateNewBlockAssertExecutionSuccess() {
 
 		require.Equal(d.t, tx.Code, uint32(0), tx.Log)
 	}
+}
+
+func (d *BabylonAppDriver) GenerateNewBlockAssertExecutionFailure() []*abci.ExecTxResult {
+	response := d.GenerateNewBlock()
+	var txResults []*abci.ExecTxResult
+
+	for _, tx := range response.TxResults {
+		// ignore checkpoint txs
+		if tx.GasWanted == 0 {
+			continue
+		}
+
+		require.NotEqual(d.t, tx.Code, uint32(0), tx.Log)
+		txResults = append(txResults, tx)
+	}
+
+	return txResults
 }
 
 func (d *BabylonAppDriver) GetDriverAccountAddress() sdk.AccAddress {
@@ -753,7 +805,8 @@ func (d *BabylonAppDriver) WaitTillAllFpsJailed(t *testing.T) {
 // execution was successful. It assumes that there will only be one tx in the block.
 func (d *BabylonAppDriver) SendTxWithMsgsFromDriverAccount(
 	t *testing.T,
-	msgs ...sdk.Msg) {
+	msgs ...sdk.Msg,
+) {
 	d.SendTxWithMessagesSuccess(
 		t,
 		d.SenderInfo,
@@ -902,4 +955,72 @@ func (d *BabylonAppDriver) CreateCovenantSender() *CovenantSender {
 		d:   d,
 		app: d.App,
 	}
+}
+
+func (d *BabylonAppDriver) GovPropAndVote(msgInGovProp sdk.Msg) (lastPropId uint64) {
+	msgToSend := d.NewGovProp(msgInGovProp)
+	d.SendTxWithMsgsFromDriverAccount(d.t, msgToSend)
+
+	props := d.GovProposals()
+	lastPropId = props[len(props)-1].Id
+
+	d.GovVote(lastPropId)
+	return lastPropId
+}
+
+func (d *BabylonAppDriver) GovPropWaitPass(msgInGovProp sdk.Msg) {
+	propId := d.GovPropAndVote(msgInGovProp)
+
+	for {
+		prop := d.GovProposal(propId)
+
+		if prop.Status == v1.ProposalStatus_PROPOSAL_STATUS_FAILED {
+			d.t.Fatalf("prop %d failed due to: %s", propId, prop.FailedReason)
+		}
+
+		if prop.Status == v1.ProposalStatus_PROPOSAL_STATUS_PASSED {
+			break
+		}
+
+		d.GenerateNewBlockAssertExecutionSuccess()
+	}
+}
+
+// Consumer represents a registered consumer chain
+type Consumer struct {
+	ID                string
+	MaxMultiStakedFps uint32
+}
+
+// RegisterConsumer registers a new consumer with the given max_multi_staked_fps limit
+func (d *BabylonAppDriver) RegisterConsumer(consumerID string, maxMultiStakedFps uint32, ethL2ContractAddr ...string) *Consumer {
+	msg := &btcstkconsumertypes.MsgRegisterConsumer{
+		Signer:              d.GetDriverAccountAddress().String(),
+		ConsumerId:          consumerID,
+		ConsumerName:        "Test Consumer " + consumerID,
+		ConsumerDescription: "Test consumer for replay tests",
+		MaxMultiStakedFps:   maxMultiStakedFps,
+	}
+
+	// If ETH L2 contract address is provided, set it
+	if len(ethL2ContractAddr) > 0 {
+		msg.EthL2FinalityContractAddress = ethL2ContractAddr[0]
+	}
+
+	d.SendTxWithMsgsFromDriverAccount(d.t, msg)
+
+	return &Consumer{
+		ID:                consumerID,
+		MaxMultiStakedFps: maxMultiStakedFps,
+	}
+}
+
+// CreateFinalityProviderForConsumer creates a finality provider for the given consumer
+func (d *BabylonAppDriver) CreateFinalityProviderForConsumer(consumer *Consumer) *FinalityProvider {
+	fp := d.CreateNFinalityProviderAccounts(1)[0]
+
+	// Register the finality provider with the consumer ID
+	fp.RegisterFinalityProvider(consumer.ID)
+
+	return fp
 }

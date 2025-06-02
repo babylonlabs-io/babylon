@@ -1,26 +1,29 @@
 package types
 
-import "errors"
-
 // NewGenesisState creates a new GenesisState object
-func NewGenesisState(bondDenom string) *GenesisState {
+func NewGenesisState(minter Minter, genTime GenesisTime) *GenesisState {
 	return &GenesisState{
-		BondDenom: bondDenom,
+		Minter:      &minter,
+		GenesisTime: &genTime,
 	}
 }
 
-// DefaultGenesisState creates a default GenesisState object
+// DefaultGenesisState creates a default GenesisState object.
+// By leaving GenesisTime as nil, on InitGenesis will be populated with the ctx.BlockTime()
 func DefaultGenesisState() *GenesisState {
+	dm := DefaultMinter()
 	return &GenesisState{
-		BondDenom: DefaultBondDenom,
+		Minter: &dm,
 	}
 }
 
 // ValidateGenesis validates the provided genesis state to ensure the
 // expected invariants holds.
-func ValidateGenesis(data GenesisState) error {
-	if data.BondDenom == "" {
-		return errors.New("bond denom cannot be empty")
+func (gs GenesisState) Validate() error {
+	if gs.Minter != nil {
+		if err := gs.Minter.Validate(); err != nil {
+			return err
+		}
 	}
 	return nil
 }

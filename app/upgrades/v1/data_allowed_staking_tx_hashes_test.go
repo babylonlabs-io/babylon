@@ -3,7 +3,7 @@ package v1_test
 import (
 	"testing"
 
-	v1 "github.com/babylonlabs-io/babylon/v2/app/upgrades/v1"
+	v1 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v1"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/stretchr/testify/require"
 )

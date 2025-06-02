@@ -10,13 +10,13 @@ import (
 	"github.com/btcsuite/btcd/wire"
 	"github.com/stretchr/testify/require"
 
-	txformat "github.com/babylonlabs-io/babylon/v2/btctxformatter"
-	"github.com/babylonlabs-io/babylon/v2/crypto/bls12381"
-	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
-	testhelper "github.com/babylonlabs-io/babylon/v2/testutil/helper"
-	btcctypes "github.com/babylonlabs-io/babylon/v2/x/btccheckpoint/types"
-	checkpointingtypes "github.com/babylonlabs-io/babylon/v2/x/checkpointing/types"
-	"github.com/babylonlabs-io/babylon/v2/x/zoneconcierge/types"
+	txformat "github.com/babylonlabs-io/babylon/v4/btctxformatter"
+	"github.com/babylonlabs-io/babylon/v4/crypto/bls12381"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	testhelper "github.com/babylonlabs-io/babylon/v4/testutil/helper"
+	btcctypes "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
+	"github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/types"
 )
 
 func signBLSWithBitmap(blsSKs []bls12381.PrivateKey, bm bitmap.Bitmap, msg []byte) (bls12381.Signature, error) {
@@ -49,7 +49,7 @@ func FuzzBTCTimestamp(f *testing.F) {
 		// chain is at height 1 thus epoch 1
 
 		/*
-			generate CZ header and its inclusion proof to an epoch
+			generate Consumer header and its inclusion proof to an epoch
 		*/
 		// enter block 11, 1st block of epoch 2
 		epochInterval := ek.GetParams(h.Ctx).EpochInterval
@@ -82,12 +82,12 @@ func FuzzBTCTimestamp(f *testing.F) {
 		h.NoError(err)
 
 		// generate inclusion proof
-		proof, err := zck.ProveCZHeaderInEpoch(h.Ctx, indexedHeader, epochWithHeader)
+		proof, err := zck.ProveConsumerHeaderInEpoch(h.Ctx, indexedHeader, epochWithHeader)
 		h.NoError(err)
 
 		btcTs.EpochInfo = epochWithHeader
 		btcTs.Header = indexedHeader
-		btcTs.Proof.ProofCzHeaderInEpoch = proof
+		btcTs.Proof.ProofConsumerHeaderInEpoch = proof
 
 		/*
 			seal the epoch and generate ProofEpochSealed

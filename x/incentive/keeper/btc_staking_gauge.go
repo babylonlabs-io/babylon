@@ -9,8 +9,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	ftypes "github.com/babylonlabs-io/babylon/v2/x/finality/types"
-	"github.com/babylonlabs-io/babylon/v2/x/incentive/types"
+	ftypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
+	"github.com/babylonlabs-io/babylon/v4/x/incentive/types"
 )
 
 // RewardBTCStaking distributes rewards to finality providers/delegations at a given height according
@@ -32,6 +32,14 @@ func (k Keeper) RewardBTCStaking(ctx context.Context, height uint64, dc *ftypes.
 		if _, ok := voters[fp.BtcPk.MarshalHex()]; ok {
 			totalVotingPowerOfVoters += fp.TotalBondedSat
 		}
+	}
+
+	// process all the events for reward tracker until that block height
+	err := k.ProcessRewardTrackerEvents(ctx, height)
+	if err != nil {
+		msg := fmt.Sprintf("failed to process reward tracker events at height %d: %s", height, err.Error())
+		k.Logger(sdk.UnwrapSDKContext(ctx)).Error(msg)
+		panic(msg)
 	}
 
 	// distribute rewards according to voting power portions for voters

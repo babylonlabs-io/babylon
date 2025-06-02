@@ -8,8 +8,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	bbn "github.com/babylonlabs-io/babylon/v2/types"
-	"github.com/babylonlabs-io/babylon/v2/x/zoneconcierge/types"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	"github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/types"
 )
 
 // GetEpochChainInfo gets the latest chain info of a given epoch for a given chain ID
@@ -112,14 +112,14 @@ func (k Keeper) recordEpochChainInfoProofs(ctx context.Context, epochNumber uint
 
 		lastHeaderInEpoch := chainInfo.ChainInfo.LatestHeader
 		if lastHeaderInEpoch.BabylonEpoch == curEpoch.EpochNumber {
-			// get proofCZHeaderInEpoch
-			proofCZHeaderInEpoch, err := k.ProveCZHeaderInEpoch(ctx, lastHeaderInEpoch, curEpoch)
+			// get proofConsumerHeaderInEpoch
+			proofConsumerHeaderInEpoch, err := k.ProveConsumerHeaderInEpoch(ctx, lastHeaderInEpoch, curEpoch)
 			if err != nil {
 				// only programming error is possible here
-				panic(fmt.Errorf("failed to generate proofCZHeaderInEpoch for consumer %s: %w", consumerID, err))
+				panic(fmt.Errorf("failed to generate proofConsumerHeaderInEpoch for consumer %s: %w", consumerID, err))
 			}
 
-			chainInfo.ProofHeaderInEpoch = proofCZHeaderInEpoch
+			chainInfo.ProofHeaderInEpoch = proofConsumerHeaderInEpoch
 
 			// set chain info with proof back
 			k.setEpochChainInfo(ctx, consumerID, epochNumber, chainInfo)
@@ -127,7 +127,7 @@ func (k Keeper) recordEpochChainInfoProofs(ctx context.Context, epochNumber uint
 	}
 }
 
-// epochChainInfoStore stores each epoch's latest ChainInfo for a CZ
+// epochChainInfoStore stores each epoch's latest ChainInfo for a Consumer
 // prefix: EpochChainInfoKey || consumerID
 // key: epochNumber
 // value: ChainInfoWithProof

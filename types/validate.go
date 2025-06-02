@@ -7,8 +7,8 @@ type Validator interface {
 	Validate() error
 }
 
-// ValidateEntries checks for duplicates based on a key extracted by keyFunc and validates each entry.
-func ValidateEntries[T Validator, K comparable](entries []T, keyFunc func(T) K) error {
+// ValidateEntries checks for duplicates based on a key extracted by keyFunc and validates each entry if it implements Validator.
+func ValidateEntries[T any, K comparable](entries []T, keyFunc func(T) K) error {
 	keyMap := make(map[K]bool)
 	for _, entry := range entries {
 		key := keyFunc(entry)
@@ -17,8 +17,11 @@ func ValidateEntries[T Validator, K comparable](entries []T, keyFunc func(T) K) 
 		}
 		keyMap[key] = true
 
-		if err := entry.Validate(); err != nil {
-			return err
+		// Conditionally call Validate if implemented
+		if v, ok := any(entry).(Validator); ok {
+			if err := v.Validate(); err != nil {
+				return err
+			}
 		}
 	}
 	return nil

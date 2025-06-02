@@ -4,7 +4,7 @@
 
 golangci_lint_cmd=golangci-lint
 
-lint:
+lint-help:
 	@echo "Available linting commands:"
 	@echo ""
 	@echo "Usage:"

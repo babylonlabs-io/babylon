@@ -6,10 +6,11 @@ import (
 	"testing"
 
 	"cosmossdk.io/math"
-	appparams "github.com/babylonlabs-io/babylon/v2/app/params"
-	"github.com/babylonlabs-io/babylon/v2/testutil/coins"
-	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
-	"github.com/babylonlabs-io/babylon/v2/x/incentive/types"
+	sdkmath "cosmossdk.io/math"
+	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
+	"github.com/babylonlabs-io/babylon/v4/testutil/coins"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	"github.com/babylonlabs-io/babylon/v4/x/incentive/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 )
@@ -32,16 +33,16 @@ func FuzzCheckFpSlashed(f *testing.F) {
 		// for fp1 30% for del1 and 70% for del 2
 		del1Fp1Percentage := uint64(30)
 		del2Fp1Percentage := uint64(70)
-		err = k.BtcDelegationActivated(ctx, fp1, del1, del1Fp1Percentage)
+		err = k.BtcDelegationActivated(ctx, fp1, del1, sdkmath.NewIntFromUint64(del1Fp1Percentage))
 		require.NoError(t, err)
-		err = k.BtcDelegationActivated(ctx, fp1, del2, del2Fp1Percentage)
+		err = k.BtcDelegationActivated(ctx, fp1, del2, sdkmath.NewIntFromUint64(del2Fp1Percentage))
 		require.NoError(t, err)
 
 		// for fp2 50/50% for each del
 		eachDelFp2Percentage := uint64(50)
-		err = k.BtcDelegationActivated(ctx, fp2, del1, eachDelFp2Percentage)
+		err = k.BtcDelegationActivated(ctx, fp2, del1, sdkmath.NewIntFromUint64(eachDelFp2Percentage))
 		require.NoError(t, err)
-		err = k.BtcDelegationActivated(ctx, fp2, del2, eachDelFp2Percentage)
+		err = k.BtcDelegationActivated(ctx, fp2, del2, sdkmath.NewIntFromUint64(eachDelFp2Percentage))
 		require.NoError(t, err)
 
 		rwdFp1 := datagen.GenRandomCoins(r)
@@ -132,16 +133,16 @@ func FuzzCheckSendAllBtcRewardsToGauge(f *testing.F) {
 		// for fp1 30% for del1 and 70% for del 2
 		del1Fp1Percentage := uint64(30)
 		del2Fp1Percentage := uint64(70)
-		err = k.BtcDelegationActivated(ctx, fp1, del1, del1Fp1Percentage)
+		err = k.BtcDelegationActivated(ctx, fp1, del1, sdkmath.NewIntFromUint64(del1Fp1Percentage))
 		require.NoError(t, err)
-		err = k.BtcDelegationActivated(ctx, fp1, del2, del2Fp1Percentage)
+		err = k.BtcDelegationActivated(ctx, fp1, del2, sdkmath.NewIntFromUint64(del2Fp1Percentage))
 		require.NoError(t, err)
 
 		// for fp2 50/50% for each del
 		eachDelFp2Percentage := uint64(50)
-		err = k.BtcDelegationActivated(ctx, fp2, del1, eachDelFp2Percentage)
+		err = k.BtcDelegationActivated(ctx, fp2, del1, sdkmath.NewIntFromUint64(eachDelFp2Percentage))
 		require.NoError(t, err)
-		err = k.BtcDelegationActivated(ctx, fp2, del2, eachDelFp2Percentage)
+		err = k.BtcDelegationActivated(ctx, fp2, del2, sdkmath.NewIntFromUint64(eachDelFp2Percentage))
 		require.NoError(t, err)
 
 		rwdFp1 := datagen.GenRandomCoins(r)
@@ -214,7 +215,7 @@ func FuzzCheckBtcDelegationModifiedWithPreInitDel(f *testing.F) {
 		err := k.btcDelegationModifiedWithPreInitDel(ctx, fp, del, fCount)
 		require.EqualError(t, err, types.ErrBTCDelegationRewardsTrackerNotFound.Error())
 
-		err = k.BtcDelegationActivated(ctx, fp, del, datagen.RandomInt(r, 1000)+10)
+		err = k.BtcDelegationActivated(ctx, fp, del, sdkmath.NewIntFromUint64(datagen.RandomInt(r, 1000)+10))
 		require.NoError(t, err)
 
 		delRwdGauge := k.GetRewardGauge(ctx, types.BTC_STAKER, del)

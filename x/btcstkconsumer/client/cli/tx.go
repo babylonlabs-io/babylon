@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -10,7 +11,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/spf13/cobra"
 
-	"github.com/babylonlabs-io/babylon/v2/x/btcstkconsumer/types"
+	"github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
 )
 
 // GetTxCmd returns the transaction commands for this module
@@ -32,12 +33,14 @@ func GetTxCmd() *cobra.Command {
 
 func NewRegisterConsumerCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "register-consumer <consumer-id> <name> <description> [eth-l2-address]",
-		Args:  cobra.MinimumNArgs(3),
+		Use:   "register-consumer <consumer-id> <name> <description> <max-multi-staked-fps> [eth-l2-address]",
+		Args:  cobra.MinimumNArgs(4),
 		Short: "Registers a consumer",
 		Long: strings.TrimSpace(
 			`Registers a consumer with Babylon. The consumer-id must be unique and will be used to identify this consumer.
-			The name and optional description help identify the purpose of this consumer.`,
+			The name and optional description help identify the purpose of this consumer.
+			The max-multi-staked-fps specifies the maximum number of finality providers from this consumer that can be part of a single BTC delegation.
+			Must be at least 2 to allow for at least one Babylon FP and one consumer FP.`,
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
@@ -47,19 +50,26 @@ func NewRegisterConsumerCmd() *cobra.Command {
 
 			consumerId := args[0]
 			if consumerId == "" {
-				return fmt.Errorf("consumer's id cannot be empty")
+				return types.ErrEmptyConsumerId
 			}
 			name := args[1]
 			if name == "" {
-				return fmt.Errorf("consumer's name cannot be empty")
+				return types.ErrEmptyConsumerName
 			}
 			description := args[2]
 			if description == "" {
-				return fmt.Errorf("consumer's description cannot be empty")
+				return types.ErrEmptyConsumerDescription
+			}
+			maxMultiStakedFps, err := strconv.ParseUint(args[3], 10, 32)
+			if err != nil {
+				return fmt.Errorf("invalid max-multi-staked-fps: %w", err)
+			}
+			if maxMultiStakedFps < 2 {
+				return types.ErrInvalidMaxMultiStakedFps
 			}
 			ethL2Address := ""
-			if len(args) > 3 {
-				ethL2Address = args[3]
+			if len(args) > 4 {
+				ethL2Address = args[4]
 			}
 
 			msg := types.MsgRegisterConsumer{
@@ -67,6 +77,7 @@ func NewRegisterConsumerCmd() *cobra.Command {
 				ConsumerId:                   consumerId,
 				ConsumerName:                 name,
 				ConsumerDescription:          description,
+				MaxMultiStakedFps:            uint32(maxMultiStakedFps),
 				EthL2FinalityContractAddress: ethL2Address,
 			}
 

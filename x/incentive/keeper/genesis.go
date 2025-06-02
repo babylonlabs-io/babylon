@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"cosmossdk.io/store/prefix"
-	"github.com/babylonlabs-io/babylon/v2/x/incentive/types"
+	"github.com/babylonlabs-io/babylon/v4/x/incentive/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -106,6 +106,16 @@ func (k Keeper) InitGenesis(ctx context.Context, gs types.GenesisState) error {
 		}
 	}
 
+	for _, entry := range gs.EventRewardTracker {
+		if err := k.SetRewardTrackerEvent(ctx, entry.Height, entry.Events); err != nil {
+			return fmt.Errorf("failed to set the reward tracker events to height: %d: %w", entry.Height, err)
+		}
+	}
+
+	if err := k.SetRewardTrackerEventLastProcessedHeight(ctx, gs.LastProcessedHeightEventRewardTracker); err != nil {
+		return fmt.Errorf("failed to set the latest processed block height: %d: %w", gs.LastProcessedHeightEventRewardTracker, err)
+	}
+
 	// NOTE: no need to store the entries on gs.BtcDelegatorsToFps because these are stored with the setBTCDelegationRewardsTracker
 	// call in the lines above
 
@@ -153,16 +163,28 @@ func (k Keeper) ExportGenesis(ctx context.Context) (*types.GenesisState, error) 
 		return nil, err
 	}
 
+	evtsRwdTracker, err := k.rewardTrackerEventsEntry(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	lastProcessedBlkHeightEvtsRwdTracker, err := k.GetRewardTrackerEventLastProcessedHeight(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	return &types.GenesisState{
-		Params:                             k.GetParams(ctx),
-		BtcStakingGauges:                   bsg,
-		RewardGauges:                       rg,
-		WithdrawAddresses:                  wa,
-		RefundableMsgHashes:                rmh,
-		FinalityProvidersCurrentRewards:    fpCurrentRwd,
-		FinalityProvidersHistoricalRewards: fpHistRwd,
-		BtcDelegationRewardsTrackers:       bdrt,
-		BtcDelegatorsToFps:                 d2fp,
+		Params:                                k.GetParams(ctx),
+		BtcStakingGauges:                      bsg,
+		RewardGauges:                          rg,
+		WithdrawAddresses:                     wa,
+		RefundableMsgHashes:                   rmh,
+		FinalityProvidersCurrentRewards:       fpCurrentRwd,
+		FinalityProvidersHistoricalRewards:    fpHistRwd,
+		BtcDelegationRewardsTrackers:          bdrt,
+		BtcDelegatorsToFps:                    d2fp,
+		EventRewardTracker:                    evtsRwdTracker,
+		LastProcessedHeightEventRewardTracker: lastProcessedBlkHeightEvtsRwdTracker,
 	}, nil
 }
 
@@ -417,6 +439,37 @@ func (k Keeper) btcDelegatorsToFps(ctx context.Context) ([]types.BTCDelegatorToF
 			return nil, err
 		}
 
+		entries = append(entries, entry)
+	}
+
+	return entries, nil
+}
+
+func (k Keeper) rewardTrackerEventsEntry(ctx context.Context) ([]types.EventsPowerUpdateAtHeightEntry, error) {
+	entries := make([]types.EventsPowerUpdateAtHeightEntry, 0)
+
+	iter, err := k.rewardTrackerEvents.Iterate(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer iter.Close()
+
+	for ; iter.Valid(); iter.Next() {
+		height, err := iter.Key()
+		if err != nil {
+			return nil, err
+		}
+		v, err := iter.Value()
+		if err != nil {
+			return nil, err
+		}
+		entry := types.EventsPowerUpdateAtHeightEntry{
+			Height: height,
+			Events: &v,
+		}
+		if err := entry.Validate(); err != nil {
+			return nil, err
+		}
 		entries = append(entries, entry)
 	}
 

@@ -6,7 +6,7 @@ import (
 	"encoding/hex"
 	"testing"
 
-	"github.com/babylonlabs-io/babylon/v2/crypto/ecdsa"
+	"github.com/babylonlabs-io/babylon/v4/crypto/ecdsa"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/stretchr/testify/require"
 )

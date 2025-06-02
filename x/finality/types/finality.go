@@ -7,7 +7,7 @@ import (
 	"github.com/btcsuite/btcd/btcec/v2"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/babylonlabs-io/babylon/v2/crypto/eots"
+	"github.com/babylonlabs-io/babylon/v4/crypto/eots"
 )
 
 func (c *PubRandCommit) IsInRange(height uint64) bool {
@@ -41,6 +41,13 @@ func (c *PubRandCommit) ToResponse() *PubRandCommitResponse {
 	}
 }
 
+func (c *PubRandCommit) Validate() error {
+	if len(c.Commitment) == 0 {
+		return ErrInvalidPubRandCommit.Wrap("empty commitment")
+	}
+	return nil
+}
+
 // msgToSignForVote returns the message for an EOTS signature
 // The EOTS signature on a block will be (blockHeight || blockHash)
 func msgToSignForVote(blockHeight uint64, blockHash []byte) []byte {
@@ -60,6 +67,13 @@ func (ib *IndexedBlock) Equal(ib2 *IndexedBlock) bool {
 
 func (ib *IndexedBlock) MsgToSign() []byte {
 	return msgToSignForVote(ib.Height, ib.AppHash)
+}
+
+func (ib IndexedBlock) Validate() error {
+	if ib.Height > 0 && len(ib.AppHash) == 0 {
+		return fmt.Errorf("invalid indexed block. Empty app hash")
+	}
+	return nil
 }
 
 func (e *Evidence) canonicalMsgToSign() []byte {

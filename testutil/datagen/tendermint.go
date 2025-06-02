@@ -9,14 +9,14 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ibctmtypes "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
 
-	zctypes "github.com/babylonlabs-io/babylon/v2/x/zoneconcierge/types"
+	zctypes "github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/types"
 )
 
 func GenRandomTMHeader(r *rand.Rand, chainID string, height uint64) *cmtproto.Header {
 	return &cmtproto.Header{
 		ChainID: chainID,
 		Height:  int64(height),
-		Time:    time.Now(),
+		Time:    time.Now().UTC(),
 		AppHash: GenRandomByteArray(r, 32),
 	}
 }

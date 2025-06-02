@@ -19,13 +19,14 @@ import (
 	staketypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/gogoproto/proto"
 
-	"github.com/babylonlabs-io/babylon/v2/test/e2e/util"
-	bbn "github.com/babylonlabs-io/babylon/v2/types"
-	btccheckpointtypes "github.com/babylonlabs-io/babylon/v2/x/btccheckpoint/types"
-	blctypes "github.com/babylonlabs-io/babylon/v2/x/btclightclient/types"
-	btclighttypes "github.com/babylonlabs-io/babylon/v2/x/btclightclient/types"
-	finalitytypes "github.com/babylonlabs-io/babylon/v2/x/finality/types"
-	minttypes "github.com/babylonlabs-io/babylon/v2/x/mint/types"
+	"github.com/babylonlabs-io/babylon/v4/test/e2e/util"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	btccheckpointtypes "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
+	blctypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
+	btclighttypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
+	finalitytypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
+	minttypes "github.com/babylonlabs-io/babylon/v4/x/mint/types"
+	ratelimiter "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/types"
 )
 
 // NodeConfig is a configuration for the node supplied from the test runner
@@ -257,6 +258,11 @@ func initGenesis(
 		return err
 	}
 
+	err = updateModuleGenesis(appGenState, ratelimiter.ModuleName, &ratelimiter.GenesisState{}, applyRateLimitsToChainConfig)
+	if err != nil {
+		return fmt.Errorf("failed to update rate limiter genesis state: %w", err)
+	}
+
 	bz, err := json.MarshalIndent(appGenState, "", "  ")
 	if err != nil {
 		return err
@@ -296,13 +302,14 @@ func updateBankGenesis(bankGenState *banktypes.GenesisState) {
 func updateGovGenesis(votingPeriod, expeditedVotingPeriod time.Duration) func(govGenState *govv1.GenesisState) {
 	return func(govGenState *govv1.GenesisState) {
 		govGenState.Params.MinDeposit = sdk.NewCoins(sdk.NewCoin(BabylonDenom, sdkmath.NewInt(100)))
+		govGenState.Params.ExpeditedMinDeposit = sdk.NewCoins(sdk.NewCoin(BabylonDenom, sdkmath.NewInt(1000)))
 		govGenState.Params.VotingPeriod = &votingPeriod
 		govGenState.Params.ExpeditedVotingPeriod = &expeditedVotingPeriod
 	}
 }
 
 func updateMintGenesis(mintGenState *minttypes.GenesisState) {
-	mintGenState.BondDenom = BabylonDenom
+	mintGenState.Minter.BondDenom = BabylonDenom
 }
 
 func updateStakeGenesis(stakeGenState *staketypes.GenesisState) {
@@ -382,4 +389,29 @@ func updateGenUtilGenesis(c *internalChain) func(*genutiltypes.GenesisState) {
 		}
 		genUtilGenState.GenTxs = genTxs
 	}
+}
+
+func applyRateLimitsToChainConfig(rateLimiterGenState *ratelimiter.GenesisState) {
+	path := &ratelimiter.Path{
+		Denom:     "ubbn",
+		ChannelId: "channel-0",
+	}
+
+	quota := &ratelimiter.Quota{
+		MaxPercentSend: sdkmath.NewInt(90),
+		MaxPercentRecv: sdkmath.NewInt(90),
+		DurationHours:  24,
+	}
+
+	rateLimit := ratelimiter.RateLimit{
+		Path:  path,
+		Quota: quota,
+		Flow: &ratelimiter.Flow{
+			Inflow:       sdkmath.NewInt(0),
+			Outflow:      sdkmath.NewInt(0),
+			ChannelValue: sdkmath.NewInt(1_000_000),
+		},
+	}
+
+	rateLimiterGenState.RateLimits = append(rateLimiterGenState.RateLimits, rateLimit)
 }

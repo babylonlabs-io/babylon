@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/babylonlabs-io/babylon/v2/btcstaking"
-	btctest "github.com/babylonlabs-io/babylon/v2/testutil/bitcoin"
-	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
+	"github.com/babylonlabs-io/babylon/v4/btcstaking"
+	btctest "github.com/babylonlabs-io/babylon/v4/testutil/bitcoin"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/btcutil"

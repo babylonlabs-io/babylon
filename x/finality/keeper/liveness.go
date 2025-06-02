@@ -6,8 +6,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/babylonlabs-io/babylon/v2/types"
-	finalitytypes "github.com/babylonlabs-io/babylon/v2/x/finality/types"
+	"github.com/babylonlabs-io/babylon/v4/types"
+	finalitytypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
 )
 
 // HandleLiveness handles liveness of each active finality provider for a given height
@@ -58,7 +58,7 @@ func (k Keeper) HandleFinalityProviderLiveness(ctx context.Context, fpPk *types.
 		return nil
 	}
 
-	updated, signInfo, err := k.updateSigningInfo(ctx, fpPk, missed, height)
+	updated, signInfo, err := k.UpdateSigningInfo(ctx, fpPk, missed, height)
 	if err != nil {
 		return err
 	}
@@ -111,7 +111,7 @@ func (k Keeper) HandleFinalityProviderLiveness(ctx context.Context, fpPk *types.
 	return nil
 }
 
-func (k Keeper) updateSigningInfo(
+func (k Keeper) UpdateSigningInfo(
 	ctx context.Context,
 	fpPk *types.BIP340PubKey,
 	missed bool,

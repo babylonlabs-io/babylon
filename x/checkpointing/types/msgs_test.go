@@ -1,13 +1,11 @@
 package types_test
 
 import (
+	"errors"
 	"testing"
 
-	sdkmath "cosmossdk.io/math"
-	appparams "github.com/babylonlabs-io/babylon/v2/app/params"
-	appsigner "github.com/babylonlabs-io/babylon/v2/app/signer"
-	"github.com/babylonlabs-io/babylon/v2/crypto/bls12381"
-	"github.com/babylonlabs-io/babylon/v2/x/checkpointing/types"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	"github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
 	"github.com/cometbft/cometbft/crypto/ed25519"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -30,7 +28,7 @@ func TestMsgDecode(t *testing.T) {
 	cdc := codec.NewProtoCodec(registry)
 
 	// build MsgWrappedCreateValidator
-	msg, err := buildMsgWrappedCreateValidatorWithAmount(
+	msg, err := datagen.BuildMsgWrappedCreateValidatorWithAmount(
 		sdk.AccAddress(valAddr1),
 		sdk.TokensFromConsensusPower(10, sdk.DefaultPowerReduction),
 	)
@@ -53,29 +51,66 @@ func TestMsgDecode(t *testing.T) {
 	require.NotNil(t, msgWithType.MsgCreateValidator.Pubkey.GetCachedValue())
 }
 
-func buildMsgWrappedCreateValidatorWithAmount(addr sdk.AccAddress, bondTokens sdkmath.Int) (*types.MsgWrappedCreateValidator, error) {
-	tmValPrivkey := ed25519.GenPrivKey()
-	bondCoin := sdk.NewCoin(appparams.DefaultBondDenom, bondTokens)
-	description := stakingtypes.NewDescription("foo_moniker", "", "", "", "")
-	commission := stakingtypes.NewCommissionRates(sdkmath.LegacyZeroDec(), sdkmath.LegacyZeroDec(), sdkmath.LegacyZeroDec())
+func TestMsgWrappedCreateValidatorValidateBasic(t *testing.T) {
+	t.Parallel()
 
-	pk, err := cryptocodec.FromCmtPubKeyInterface(tmValPrivkey.PubKey())
-	if err != nil {
-		return nil, err
+	valid, err := datagen.BuildMsgWrappedCreateValidator(datagen.GenRandomAddress())
+	require.NoError(t, err)
+
+	tcs := []struct {
+		title string
+
+		msg    types.MsgWrappedCreateValidator
+		expErr error
+	}{
+		{
+			"valid",
+			*valid,
+			nil,
+		},
+		{
+			"invalid: nil MsgCreateValidator",
+			types.MsgWrappedCreateValidator{
+				Key:                valid.Key,
+				MsgCreateValidator: nil,
+			},
+			errors.New("MsgCreateValidator is nil"),
+		},
+		{
+			"invalid: nil bls",
+			types.MsgWrappedCreateValidator{
+				Key:                nil,
+				MsgCreateValidator: valid.MsgCreateValidator,
+			},
+			errors.New("BLS key is nil"),
+		},
+		{
+			"invalid: MsgCreateValidator missing something",
+			types.MsgWrappedCreateValidator{
+				Key:                valid.Key,
+				MsgCreateValidator: &stakingtypes.MsgCreateValidator{},
+			},
+			errors.New("invalid validator address: empty address string is not allowed: invalid address"),
+		},
+		{
+			"invalid: bls missing pop",
+			types.MsgWrappedCreateValidator{
+				Key:                &types.BlsKey{},
+				MsgCreateValidator: valid.MsgCreateValidator,
+			},
+			errors.New("BLS Proof of Possession is nil"),
+		},
 	}
 
-	createValidatorMsg, err := stakingtypes.NewMsgCreateValidator(
-		sdk.ValAddress(addr).String(), pk, bondCoin, description, commission, sdkmath.OneInt(),
-	)
-	if err != nil {
-		return nil, err
+	for _, tc := range tcs {
+		t.Run(tc.title, func(t *testing.T) {
+			t.Parallel()
+			actErr := tc.msg.ValidateBasic()
+			if tc.expErr != nil {
+				require.EqualError(t, actErr, tc.expErr.Error())
+				return
+			}
+			require.NoError(t, actErr)
+		})
 	}
-	blsPrivKey := bls12381.GenPrivKey()
-	pop, err := appsigner.BuildPoP(tmValPrivkey, blsPrivKey)
-	if err != nil {
-		return nil, err
-	}
-	blsPubKey := blsPrivKey.PubKey()
-
-	return types.NewMsgWrappedCreateValidator(createValidatorMsg, &blsPubKey, pop)
 }

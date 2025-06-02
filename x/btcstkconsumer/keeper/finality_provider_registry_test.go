@@ -4,11 +4,11 @@ import (
 	"math/rand"
 	"testing"
 
-	btcstaking "github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
-	"github.com/babylonlabs-io/babylon/v2/x/btcstkconsumer/types"
+	btcstaking "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
 
-	"github.com/babylonlabs-io/babylon/v2/app"
-	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
+	"github.com/babylonlabs-io/babylon/v4/app"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
 	"github.com/stretchr/testify/require"
 )
 
@@ -36,12 +36,15 @@ func FuzzFPRegistry(f *testing.F) {
 		consumerName := datagen.GenRandomHexStr(r, 5)
 		// Create a random consumer description
 		consumerDesc := "Consumer description: " + datagen.GenRandomHexStr(r, 15)
+		// Generate random max_multi_staked_fps between 1 and 10
+		maxMultiStakedFps := uint32(r.Intn(10) + 1)
 
 		// Populate ConsumerRegister object
 		consumerRegister := &types.ConsumerRegister{
 			ConsumerId:          consumerID,
 			ConsumerName:        consumerName,
 			ConsumerDescription: consumerDesc,
+			MaxMultiStakedFps:   maxMultiStakedFps,
 		}
 
 		// Register the consumer

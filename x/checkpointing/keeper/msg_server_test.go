@@ -5,21 +5,16 @@ import (
 	"testing"
 
 	"cosmossdk.io/math"
-	"github.com/cometbft/cometbft/crypto/ed25519"
-	"github.com/cosmos/cosmos-sdk/crypto/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/v2/app"
-	appparams "github.com/babylonlabs-io/babylon/v2/app/params"
-	appsigner "github.com/babylonlabs-io/babylon/v2/app/signer"
-	"github.com/babylonlabs-io/babylon/v2/crypto/bls12381"
-	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
-	testhelper "github.com/babylonlabs-io/babylon/v2/testutil/helper"
-	checkpointingkeeper "github.com/babylonlabs-io/babylon/v2/x/checkpointing/keeper"
-	"github.com/babylonlabs-io/babylon/v2/x/checkpointing/types"
-	epochingtypes "github.com/babylonlabs-io/babylon/v2/x/epoching/types"
+	"github.com/babylonlabs-io/babylon/v4/app"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	testhelper "github.com/babylonlabs-io/babylon/v4/testutil/helper"
+	checkpointingkeeper "github.com/babylonlabs-io/babylon/v4/x/checkpointing/keeper"
+	"github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
+	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 )
 
 // FuzzWrappedCreateValidator_InsufficientTokens tests adding new validators with zero voting power
@@ -49,7 +44,7 @@ func FuzzWrappedCreateValidator_InsufficientTokens(f *testing.F) {
 		// add n new validators with zero voting power via MsgWrappedCreateValidator
 		wcvMsgs := make([]*types.MsgWrappedCreateValidator, n)
 		for i := 0; i < n; i++ {
-			msg, err := buildMsgWrappedCreateValidatorWithAmount(addrs[i], sdk.DefaultPowerReduction.SubRaw(1))
+			msg, err := datagen.BuildMsgWrappedCreateValidatorWithAmount(addrs[i], sdk.DefaultPowerReduction.SubRaw(1))
 			require.NoError(t, err)
 			wcvMsgs[i] = msg
 			_, err = msgServer.WrappedCreateValidator(ctx, msg)
@@ -127,7 +122,7 @@ func FuzzWrappedCreateValidator_InsufficientBalance(f *testing.F) {
 		for i := 0; i < n; i++ {
 			// make sure the value is more than the balance
 			value := math.NewInt(balance).Add(math.NewInt(r.Int63n(100)))
-			msg, err := buildMsgWrappedCreateValidatorWithAmount(addrs[i], value)
+			msg, err := datagen.BuildMsgWrappedCreateValidatorWithAmount(addrs[i], value)
 			require.NoError(t, err)
 			wcvMsgs[i] = msg
 			_, err = msgServer.WrappedCreateValidator(ctx, msg)
@@ -165,7 +160,7 @@ func FuzzWrappedCreateValidator(f *testing.F) {
 
 		wcvMsgs := make([]*types.MsgWrappedCreateValidator, n)
 		for i := 0; i < n; i++ {
-			msg, err := buildMsgWrappedCreateValidator(addrs[i])
+			msg, err := datagen.BuildMsgWrappedCreateValidator(addrs[i])
 			require.NoError(t, err)
 			wcvMsgs[i] = msg
 			_, err = msgServer.WrappedCreateValidator(ctx, msg)
@@ -200,36 +195,4 @@ func FuzzWrappedCreateValidator(f *testing.F) {
 			require.True(t, found)
 		}
 	})
-}
-
-func buildMsgWrappedCreateValidator(addr sdk.AccAddress) (*types.MsgWrappedCreateValidator, error) {
-	bondTokens := sdk.TokensFromConsensusPower(10, sdk.DefaultPowerReduction)
-	return buildMsgWrappedCreateValidatorWithAmount(addr, bondTokens)
-}
-
-func buildMsgWrappedCreateValidatorWithAmount(addr sdk.AccAddress, bondTokens math.Int) (*types.MsgWrappedCreateValidator, error) {
-	cmtValPrivkey := ed25519.GenPrivKey()
-	bondCoin := sdk.NewCoin(appparams.DefaultBondDenom, bondTokens)
-	description := stakingtypes.NewDescription("foo_moniker", "", "", "", "")
-	commission := stakingtypes.NewCommissionRates(math.LegacyZeroDec(), math.LegacyZeroDec(), math.LegacyZeroDec())
-
-	pk, err := codec.FromCmtPubKeyInterface(cmtValPrivkey.PubKey())
-	if err != nil {
-		return nil, err
-	}
-
-	createValidatorMsg, err := stakingtypes.NewMsgCreateValidator(
-		sdk.ValAddress(addr).String(), pk, bondCoin, description, commission, math.OneInt(),
-	)
-	if err != nil {
-		return nil, err
-	}
-	blsPrivKey := bls12381.GenPrivKey()
-	pop, err := appsigner.BuildPoP(cmtValPrivkey, blsPrivKey)
-	if err != nil {
-		return nil, err
-	}
-	blsPubKey := blsPrivKey.PubKey()
-
-	return types.NewMsgWrappedCreateValidator(createValidatorMsg, &blsPubKey, pop)
 }

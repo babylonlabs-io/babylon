@@ -10,16 +10,16 @@ import (
 	cmtcrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	txformat "github.com/babylonlabs-io/babylon/v2/btctxformatter"
-	"github.com/babylonlabs-io/babylon/v2/crypto/bls12381"
-	bbn "github.com/babylonlabs-io/babylon/v2/types"
-	btcctypes "github.com/babylonlabs-io/babylon/v2/x/btccheckpoint/types"
-	btclckeeper "github.com/babylonlabs-io/babylon/v2/x/btclightclient/keeper"
-	checkpointingtypes "github.com/babylonlabs-io/babylon/v2/x/checkpointing/types"
-	epochingtypes "github.com/babylonlabs-io/babylon/v2/x/epoching/types"
+	txformat "github.com/babylonlabs-io/babylon/v4/btctxformatter"
+	"github.com/babylonlabs-io/babylon/v4/crypto/bls12381"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	btcctypes "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
+	btclckeeper "github.com/babylonlabs-io/babylon/v4/x/btclightclient/keeper"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
+	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 )
 
-func GetCZHeaderKey(consumerID string, height uint64) []byte {
+func GetConsumerHeaderKey(consumerID string, height uint64) []byte {
 	key := CanonicalChainKey
 	key = append(key, []byte(consumerID)...)
 	key = append(key, sdk.Uint64ToBigEndian(height)...)
@@ -150,7 +150,7 @@ func VerifyEpochSealed(epoch *epochingtypes.Epoch, rawCkpt *checkpointingtypes.R
 	return nil
 }
 
-func VerifyCZHeaderInEpoch(header *IndexedHeader, epoch *epochingtypes.Epoch, proof *cmtcrypto.ProofOps) error {
+func VerifyConsumerHeaderInEpoch(header *IndexedHeader, epoch *epochingtypes.Epoch, proof *cmtcrypto.ProofOps) error {
 	// nil check
 	switch {
 	case header == nil:
@@ -162,13 +162,13 @@ func VerifyCZHeaderInEpoch(header *IndexedHeader, epoch *epochingtypes.Epoch, pr
 	}
 
 	// sanity check
-	if err := header.ValidateBasic(); err != nil {
+	if err := header.Validate(); err != nil {
 		return err
 	} else if err := epoch.ValidateBasic(); err != nil {
 		return err
 	}
 
-	// ensure epoch number is same in epoch and CZ header
+	// ensure epoch number is the same in the epoch and the Consumer header
 	if epoch.EpochNumber != header.BabylonEpoch {
 		return fmt.Errorf("epoch.EpochNumber (%d) is not equal to header.BabylonEpoch (%d)", epoch.EpochNumber, header.BabylonEpoch)
 	}
@@ -182,8 +182,8 @@ func VerifyCZHeaderInEpoch(header *IndexedHeader, epoch *epochingtypes.Epoch, pr
 		return err
 	}
 
-	if err := VerifyStore(root, StoreKey, GetCZHeaderKey(header.ConsumerId, header.Height), headerBytes, proof); err != nil {
-		return errorsmod.Wrapf(ErrInvalidMerkleProof, "invalid inclusion proof for CZ header: %v", err)
+	if err := VerifyStore(root, StoreKey, GetConsumerHeaderKey(header.ConsumerId, header.Height), headerBytes, proof); err != nil {
+		return errorsmod.Wrapf(ErrInvalidMerkleProof, "invalid inclusion proof for Consumer header: %v", err)
 	}
 
 	return nil
@@ -331,8 +331,8 @@ func (ts *BTCTimestamp) VerifyStateless(
 		return err
 	}
 
-	// verify CZ header is committed to the epoch
-	if err := VerifyCZHeaderInEpoch(ts.Header, ts.EpochInfo, ts.Proof.ProofCzHeaderInEpoch); err != nil {
+	// verify the Consumer header is committed to the epoch
+	if err := VerifyConsumerHeaderInEpoch(ts.Header, ts.EpochInfo, ts.Proof.ProofConsumerHeaderInEpoch); err != nil {
 		return err
 	}
 

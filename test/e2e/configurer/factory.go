@@ -7,11 +7,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/babylonlabs-io/babylon/v2/test/e2e/configurer/chain"
-	"github.com/babylonlabs-io/babylon/v2/test/e2e/containers"
-	"github.com/babylonlabs-io/babylon/v2/test/e2e/initialization"
-	bbn "github.com/babylonlabs-io/babylon/v2/types"
-	btclighttypes "github.com/babylonlabs-io/babylon/v2/x/btclightclient/types"
+	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer/chain"
+	"github.com/babylonlabs-io/babylon/v4/test/e2e/containers"
+	"github.com/babylonlabs-io/babylon/v4/test/e2e/initialization"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	btclighttypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
 )
 
 type Configurer interface {
@@ -31,6 +31,10 @@ type Configurer interface {
 	RunCosmosRelayerIBC() error
 
 	RunIBCTransferChannel() error
+	// CompleteIBCChannelHandshake completes the channel handshake in cases when ChanOpenInit was initiated
+	// by some transaction that was previously executed on the chain. For example,
+	// ICA MsgRegisterInterchainAccount will perform ChanOpenInit during its execution.
+	CompleteIBCChannelHandshake(srcChain, dstChain, srcConnection, dstConnection, srcPort, dstPort, srcChannel, dstChannel string) error
 }
 
 const (
@@ -151,8 +155,8 @@ func NewIBCTransferConfigurer(t *testing.T, isDebugLogEnabled bool) (Configurer,
 	), nil
 }
 
-// NewBTCStakingConfigurer returns a new Configurer for BTC staking service
-func NewBTCStakingConfigurer(t *testing.T, isDebugLogEnabled bool) (Configurer, error) {
+// NewBabylonConfigurer returns a new Configurer for BTC staking service
+func NewBabylonConfigurer(t *testing.T, isDebugLogEnabled bool) (Configurer, error) {
 	identifier := identifierName(t)
 	containerManager, err := containers.NewManager(identifier, isDebugLogEnabled, false, false)
 	if err != nil {
@@ -205,6 +209,23 @@ func NewSoftwareUpgradeConfigurer(t *testing.T, isDebugLogEnabled bool, upgradeP
 		upgradePath,
 		0,
 		preUpgradeFunc,
+	), nil
+}
+
+// NewFinalityContractConfigurer returns a new Configurer for finality contract tests.
+func NewFinalityContractConfigurer(t *testing.T, isDebugLogEnabled bool) (Configurer, error) {
+	identifier := identifierName(t)
+	containerManager, err := containers.NewManager(identifier, isDebugLogEnabled, false, false)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewCurrentBranchConfigurer(t,
+		[]*chain.Config{
+			chain.New(t, containerManager, initialization.ChainAID, updateNodeConfigNameWithIdentifier(validatorConfigsChainA, identifier), nil),
+		},
+		baseSetup, // base setup
+		containerManager,
 	), nil
 }
 

@@ -33,7 +33,7 @@ jobs:
           make proto-lint
 
   docker_pipeline:
-    uses: babylonlabs-io/.github/.github/workflows/reusable_docker_pipeline.yml@v0.7.0
+    uses: babylonlabs-io/.github/.github/workflows/reusable_docker_pipeline.yml@v0.13.2
     secrets: inherit
     with:
      publish: false
@@ -216,11 +216,8 @@ jobs:
         run: |
           make test-e2e-cache-btc-staking-pre-approval
 
-  # Disable this test because v1 upgrade does not cover integration features
-  # TODO: Reenable this test after having v2 upgrade
-  e2e-run-upgrade-v1:
-    if: false
-    needs: [e2e-docker-build-babylon, e2e-docker-build-e2e-init-chain]
+  e2e-run-ica:
+    needs: [e2e-docker-build-babylon]
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout repository
@@ -230,26 +227,35 @@ jobs:
         with:
           name: babylond-${{ github.sha }}
           path: /tmp
-      - name: Download init-chain artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: init-chain
-          path: /tmp
       - name: Docker load babylond
         run: |
           docker load < /tmp/docker-babylond.tar.gz
-
-      - name: Docker load init chain
-        run: |
-          docker load < /tmp/docker-init-chain.tar.gz
-
       - name: Cache Go
         uses: actions/setup-go@v5
         with:
           go-version: 1.23
-      - name: Run e2e TestSoftwareUpgradeV1TestnetTestSuite
+      - name: Run e2e TestICATestSuite
         run: |
-          sudo make test-e2e-cache-upgrade-v1
-      - name: Dump docker logs on failure
-        if: failure()
-        uses: jwalton/gh-docker-logs@v2
+          make test-e2e-cache-ica
+
+  e2e-run-finality-contract:
+    needs: [e2e-docker-build-babylon]
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Download babylon artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: babylond-${{ github.sha }}
+          path: /tmp
+      - name: Docker load babylond
+        run: |
+          docker load < /tmp/docker-babylond.tar.gz
+      - name: Cache Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.23
+      - name: Run e2e TestFinalityContractTestSuite
+        run: |
+          make test-e2e-cache-finality-contract

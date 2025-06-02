@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
-	"github.com/babylonlabs-io/babylon/v2/x/incentive/types"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	"github.com/babylonlabs-io/babylon/v4/x/incentive/types"
 	"github.com/stretchr/testify/require"
 )
 
@@ -16,6 +16,7 @@ func TestGenesisState_Validate(t *testing.T) {
 	addrStr1 := datagen.GenRandomAddress().String()
 	addrStr2 := datagen.GenRandomAddress().String()
 	hashStr := datagen.GenRandomHexStr(r, 32)
+	height := datagen.RandomInt(r, 100) + 5
 	tests := []struct {
 		desc     string
 		genState *types.GenesisState
@@ -42,6 +43,7 @@ func TestGenesisState_Validate(t *testing.T) {
 				FinalityProvidersHistoricalRewards: []types.FinalityProviderHistoricalRewardsEntry{},
 				BtcDelegationRewardsTrackers:       []types.BTCDelegationRewardsTrackerEntry{},
 				BtcDelegatorsToFps:                 []types.BTCDelegatorToFpEntry{},
+				EventRewardTracker:                 []types.EventsPowerUpdateAtHeightEntry{},
 			},
 			valid: true,
 		},
@@ -60,6 +62,7 @@ func TestGenesisState_Validate(t *testing.T) {
 				FinalityProvidersHistoricalRewards: []types.FinalityProviderHistoricalRewardsEntry{},
 				BtcDelegationRewardsTrackers:       []types.BTCDelegationRewardsTrackerEntry{},
 				BtcDelegatorsToFps:                 []types.BTCDelegatorToFpEntry{},
+				EventRewardTracker:                 []types.EventsPowerUpdateAtHeightEntry{},
 			},
 			valid:  false,
 			errMsg: fmt.Sprintf("duplicate reward gauge for address: %s", addrStr1),
@@ -79,6 +82,7 @@ func TestGenesisState_Validate(t *testing.T) {
 				FinalityProvidersHistoricalRewards: []types.FinalityProviderHistoricalRewardsEntry{},
 				BtcDelegationRewardsTrackers:       []types.BTCDelegationRewardsTrackerEntry{},
 				BtcDelegatorsToFps:                 []types.BTCDelegatorToFpEntry{},
+				EventRewardTracker:                 []types.EventsPowerUpdateAtHeightEntry{},
 			},
 			valid:  false,
 			errMsg: "invalid BTC staking gauges: duplicate entry for key: 100",
@@ -104,6 +108,7 @@ func TestGenesisState_Validate(t *testing.T) {
 				FinalityProvidersHistoricalRewards: []types.FinalityProviderHistoricalRewardsEntry{},
 				BtcDelegationRewardsTrackers:       []types.BTCDelegationRewardsTrackerEntry{},
 				BtcDelegatorsToFps:                 []types.BTCDelegatorToFpEntry{},
+				EventRewardTracker:                 []types.EventsPowerUpdateAtHeightEntry{},
 			},
 			valid:  false,
 			errMsg: fmt.Sprintf("invalid withdraw addresses: duplicate entry for key: %s", addrStr1),
@@ -120,6 +125,7 @@ func TestGenesisState_Validate(t *testing.T) {
 				FinalityProvidersHistoricalRewards: []types.FinalityProviderHistoricalRewardsEntry{},
 				BtcDelegationRewardsTrackers:       []types.BTCDelegationRewardsTrackerEntry{},
 				BtcDelegatorsToFps:                 []types.BTCDelegatorToFpEntry{},
+				EventRewardTracker:                 []types.EventsPowerUpdateAtHeightEntry{},
 			},
 			valid:  false,
 			errMsg: "empty hash",
@@ -136,6 +142,7 @@ func TestGenesisState_Validate(t *testing.T) {
 				FinalityProvidersHistoricalRewards: []types.FinalityProviderHistoricalRewardsEntry{},
 				BtcDelegationRewardsTrackers:       []types.BTCDelegationRewardsTrackerEntry{},
 				BtcDelegatorsToFps:                 []types.BTCDelegatorToFpEntry{},
+				EventRewardTracker:                 []types.EventsPowerUpdateAtHeightEntry{},
 			},
 			valid:  false,
 			errMsg: fmt.Sprintf("duplicate hash: %s", hashStr),
@@ -167,6 +174,7 @@ func TestGenesisState_Validate(t *testing.T) {
 				FinalityProvidersHistoricalRewards: []types.FinalityProviderHistoricalRewardsEntry{},
 				BtcDelegationRewardsTrackers:       []types.BTCDelegationRewardsTrackerEntry{},
 				BtcDelegatorsToFps:                 []types.BTCDelegatorToFpEntry{},
+				EventRewardTracker:                 []types.EventsPowerUpdateAtHeightEntry{},
 			},
 			valid:  false,
 			errMsg: fmt.Sprintf("invalid finality providers current rewards: duplicate entry for key: %s", addrStr1),
@@ -200,6 +208,7 @@ func TestGenesisState_Validate(t *testing.T) {
 				},
 				BtcDelegationRewardsTrackers: []types.BTCDelegationRewardsTrackerEntry{},
 				BtcDelegatorsToFps:           []types.BTCDelegatorToFpEntry{},
+				EventRewardTracker:           []types.EventsPowerUpdateAtHeightEntry{},
 			},
 			valid: true,
 		},
@@ -232,6 +241,7 @@ func TestGenesisState_Validate(t *testing.T) {
 				},
 				BtcDelegationRewardsTrackers: []types.BTCDelegationRewardsTrackerEntry{},
 				BtcDelegatorsToFps:           []types.BTCDelegatorToFpEntry{},
+				EventRewardTracker:           []types.EventsPowerUpdateAtHeightEntry{},
 			},
 			valid:  false,
 			errMsg: fmt.Sprintf("duplicate historical rewards for address: %s and period: 1", addrStr1),
@@ -257,6 +267,7 @@ func TestGenesisState_Validate(t *testing.T) {
 					},
 				},
 				BtcDelegatorsToFps: []types.BTCDelegatorToFpEntry{},
+				EventRewardTracker: []types.EventsPowerUpdateAtHeightEntry{},
 			},
 			valid:  false,
 			errMsg: "BTC delegators to finality providers map is not equal to the btc delegations data",
@@ -293,6 +304,7 @@ func TestGenesisState_Validate(t *testing.T) {
 					FinalityProviderAddress: addrStr1,
 					DelegatorAddress:        addrStr2,
 				}},
+				EventRewardTracker: []types.EventsPowerUpdateAtHeightEntry{},
 			},
 			valid:  false,
 			errMsg: fmt.Sprintf("duplicate btc delegation rewards tracker for finality provider: %s and delegator: %s", addrStr1, addrStr2),
@@ -327,13 +339,76 @@ func TestGenesisState_Validate(t *testing.T) {
 						DelegatorAddress:        addrStr2,
 					},
 				},
+				EventRewardTracker: []types.EventsPowerUpdateAtHeightEntry{},
 			},
 			valid:  false,
 			errMsg: fmt.Sprintf("duplicate entry with finality provider: %s and delegator: %s", addrStr1, addrStr2),
 		},
+		{
+			desc: "Genesis with duplicated block height entry",
+			genState: &types.GenesisState{
+				Params:                             types.DefaultParams(),
+				BtcStakingGauges:                   []types.BTCStakingGaugeEntry{},
+				RewardGauges:                       []types.RewardGaugeEntry{},
+				WithdrawAddresses:                  []types.WithdrawAddressEntry{},
+				RefundableMsgHashes:                []string{},
+				FinalityProvidersCurrentRewards:    []types.FinalityProviderCurrentRewardsEntry{},
+				FinalityProvidersHistoricalRewards: []types.FinalityProviderHistoricalRewardsEntry{},
+				BtcDelegationRewardsTrackers:       []types.BTCDelegationRewardsTrackerEntry{},
+				BtcDelegatorsToFps:                 []types.BTCDelegatorToFpEntry{},
+				EventRewardTracker: []types.EventsPowerUpdateAtHeightEntry{
+					{
+						Height: height,
+						Events: &types.EventsPowerUpdateAtHeight{},
+					},
+					{
+						Height: height,
+						Events: &types.EventsPowerUpdateAtHeight{},
+					},
+				},
+			},
+			valid:  false,
+			errMsg: fmt.Sprintf("invalid events from reward tracker: duplicate entry for key: %d", height),
+		},
+		{
+			desc: "Genesis with valid voting power update events",
+			genState: &types.GenesisState{
+				Params:                             types.DefaultParams(),
+				BtcStakingGauges:                   []types.BTCStakingGaugeEntry{},
+				RewardGauges:                       []types.RewardGaugeEntry{},
+				WithdrawAddresses:                  []types.WithdrawAddressEntry{},
+				RefundableMsgHashes:                []string{},
+				FinalityProvidersCurrentRewards:    []types.FinalityProviderCurrentRewardsEntry{},
+				FinalityProvidersHistoricalRewards: []types.FinalityProviderHistoricalRewardsEntry{},
+				BtcDelegationRewardsTrackers:       []types.BTCDelegationRewardsTrackerEntry{},
+				BtcDelegatorsToFps:                 []types.BTCDelegatorToFpEntry{},
+				EventRewardTracker: []types.EventsPowerUpdateAtHeightEntry{
+					{
+						Height: height,
+						Events: &types.EventsPowerUpdateAtHeight{
+							Events: []*types.EventPowerUpdate{
+								types.NewEventBtcDelegationActivated(addrStr1, addrStr2, datagen.RandomMathInt(r, 100).AddRaw(3000)),
+								types.NewEventBtcDelegationUnboned(addrStr1, addrStr2, datagen.RandomMathInt(r, 100).AddRaw(1)),
+							},
+						},
+					},
+					{
+						Height: height + 1,
+						Events: &types.EventsPowerUpdateAtHeight{
+							Events: []*types.EventPowerUpdate{
+								types.NewEventBtcDelegationActivated(addrStr2, addrStr1, datagen.RandomMathInt(r, 100).AddRaw(1)),
+							},
+						},
+					},
+				},
+			},
+			valid: true,
+		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {
+			t.Parallel()
+
 			err := tc.genState.Validate()
 			if tc.valid {
 				require.NoError(t, err)

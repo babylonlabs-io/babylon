@@ -1,11 +1,12 @@
 package keeper_test
 
 import (
-	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
-	testkeeper "github.com/babylonlabs-io/babylon/v2/testutil/keeper"
-	"github.com/babylonlabs-io/babylon/v2/x/incentive/types"
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	testkeeper "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
+	"github.com/babylonlabs-io/babylon/v4/x/incentive/types"
+	"github.com/stretchr/testify/require"
 )
 
 func TestDelegatorAddressQuery(t *testing.T) {

@@ -24,6 +24,12 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 // GenesisState defines the monitor module's genesis state.
 type GenesisState struct {
+	// epoch_end_records contain the epoch number and its
+	// corresponding end height of the BTC light client
+	EpochEndRecords []*EpochEndLightClient `protobuf:"bytes,1,rep,name=epoch_end_records,json=epochEndRecords,proto3" json:"epoch_end_records,omitempty"`
+	// checkpoints_reported contain the checkpoint hash and its
+	// corresponding reported height of the BTC light client
+	CheckpointsReported []*CheckpointReportedLightClient `protobuf:"bytes,2,rep,name=checkpoints_reported,json=checkpointsReported,proto3" json:"checkpoints_reported,omitempty"`
 }
 
 func (m *GenesisState) Reset()         { *m = GenesisState{} }
@@ -59,24 +65,163 @@ func (m *GenesisState) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_GenesisState proto.InternalMessageInfo
 
+func (m *GenesisState) GetEpochEndRecords() []*EpochEndLightClient {
+	if m != nil {
+		return m.EpochEndRecords
+	}
+	return nil
+}
+
+func (m *GenesisState) GetCheckpointsReported() []*CheckpointReportedLightClient {
+	if m != nil {
+		return m.CheckpointsReported
+	}
+	return nil
+}
+
+// EpochEndLightClient contains the epoch number and its
+// corresponding end height of the BTC light client
+type EpochEndLightClient struct {
+	// epoch number
+	Epoch uint64 `protobuf:"varint,1,opt,name=epoch,proto3" json:"epoch,omitempty"`
+	// height of btc light client when epoch ended
+	BtcLightClientHeight uint64 `protobuf:"varint,2,opt,name=btc_light_client_height,json=btcLightClientHeight,proto3" json:"btc_light_client_height,omitempty"`
+}
+
+func (m *EpochEndLightClient) Reset()         { *m = EpochEndLightClient{} }
+func (m *EpochEndLightClient) String() string { return proto.CompactTextString(m) }
+func (*EpochEndLightClient) ProtoMessage()    {}
+func (*EpochEndLightClient) Descriptor() ([]byte, []int) {
+	return fileDescriptor_fb844fd916189e7b, []int{1}
+}
+func (m *EpochEndLightClient) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *EpochEndLightClient) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_EpochEndLightClient.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *EpochEndLightClient) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EpochEndLightClient.Merge(m, src)
+}
+func (m *EpochEndLightClient) XXX_Size() int {
+	return m.Size()
+}
+func (m *EpochEndLightClient) XXX_DiscardUnknown() {
+	xxx_messageInfo_EpochEndLightClient.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_EpochEndLightClient proto.InternalMessageInfo
+
+func (m *EpochEndLightClient) GetEpoch() uint64 {
+	if m != nil {
+		return m.Epoch
+	}
+	return 0
+}
+
+func (m *EpochEndLightClient) GetBtcLightClientHeight() uint64 {
+	if m != nil {
+		return m.BtcLightClientHeight
+	}
+	return 0
+}
+
+// CheckpointReportedLightClient contains the checkpoint hash and its
+// corresponding end height of the BTC light client
+type CheckpointReportedLightClient struct {
+	// ckpt_hash is hex encoded byte string of the hash of the checkpoint
+	CkptHash string `protobuf:"bytes,1,opt,name=ckpt_hash,json=ckptHash,proto3" json:"ckpt_hash,omitempty"`
+	// height of btc light client when checkpoint reported
+	BtcLightClientHeight uint64 `protobuf:"varint,2,opt,name=btc_light_client_height,json=btcLightClientHeight,proto3" json:"btc_light_client_height,omitempty"`
+}
+
+func (m *CheckpointReportedLightClient) Reset()         { *m = CheckpointReportedLightClient{} }
+func (m *CheckpointReportedLightClient) String() string { return proto.CompactTextString(m) }
+func (*CheckpointReportedLightClient) ProtoMessage()    {}
+func (*CheckpointReportedLightClient) Descriptor() ([]byte, []int) {
+	return fileDescriptor_fb844fd916189e7b, []int{2}
+}
+func (m *CheckpointReportedLightClient) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *CheckpointReportedLightClient) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_CheckpointReportedLightClient.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *CheckpointReportedLightClient) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CheckpointReportedLightClient.Merge(m, src)
+}
+func (m *CheckpointReportedLightClient) XXX_Size() int {
+	return m.Size()
+}
+func (m *CheckpointReportedLightClient) XXX_DiscardUnknown() {
+	xxx_messageInfo_CheckpointReportedLightClient.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_CheckpointReportedLightClient proto.InternalMessageInfo
+
+func (m *CheckpointReportedLightClient) GetCkptHash() string {
+	if m != nil {
+		return m.CkptHash
+	}
+	return ""
+}
+
+func (m *CheckpointReportedLightClient) GetBtcLightClientHeight() uint64 {
+	if m != nil {
+		return m.BtcLightClientHeight
+	}
+	return 0
+}
+
 func init() {
 	proto.RegisterType((*GenesisState)(nil), "babylon.monitor.v1.GenesisState")
+	proto.RegisterType((*EpochEndLightClient)(nil), "babylon.monitor.v1.EpochEndLightClient")
+	proto.RegisterType((*CheckpointReportedLightClient)(nil), "babylon.monitor.v1.CheckpointReportedLightClient")
 }
 
 func init() { proto.RegisterFile("babylon/monitor/v1/genesis.proto", fileDescriptor_fb844fd916189e7b) }
 
 var fileDescriptor_fb844fd916189e7b = []byte{
-	// 149 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x52, 0x48, 0x4a, 0x4c, 0xaa,
-	0xcc, 0xc9, 0xcf, 0xd3, 0xcf, 0xcd, 0xcf, 0xcb, 0x2c, 0xc9, 0x2f, 0xd2, 0x2f, 0x33, 0xd4, 0x4f,
-	0x4f, 0xcd, 0x4b, 0x2d, 0xce, 0x2c, 0xd6, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x12, 0x82, 0xaa,
-	0xd0, 0x83, 0xaa, 0xd0, 0x2b, 0x33, 0x54, 0xe2, 0xe3, 0xe2, 0x71, 0x87, 0x28, 0x0a, 0x2e, 0x49,
-	0x2c, 0x49, 0x75, 0xf2, 0x3b, 0xf1, 0x48, 0x8e, 0xf1, 0xc2, 0x23, 0x39, 0xc6, 0x07, 0x8f, 0xe4,
-	0x18, 0x27, 0x3c, 0x96, 0x63, 0xb8, 0xf0, 0x58, 0x8e, 0xe1, 0xc6, 0x63, 0x39, 0x86, 0x28, 0x93,
-	0xf4, 0xcc, 0x92, 0x8c, 0xd2, 0x24, 0xbd, 0xe4, 0xfc, 0x5c, 0x7d, 0xa8, 0x41, 0x39, 0x89, 0x49,
-	0xc5, 0xba, 0x99, 0xf9, 0x30, 0xae, 0x7e, 0x99, 0x91, 0x7e, 0x05, 0xdc, 0xfa, 0x92, 0xca, 0x82,
-	0xd4, 0xe2, 0x24, 0x36, 0xb0, 0xd5, 0xc6, 0x80, 0x00, 0x00, 0x00, 0xff, 0xff, 0xcb, 0x8d, 0xa3,
-	0x49, 0x9e, 0x00, 0x00, 0x00,
+	// 331 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x92, 0xcf, 0x4a, 0xf3, 0x40,
+	0x14, 0xc5, 0x3b, 0xfd, 0x3e, 0xc5, 0x8e, 0x82, 0x38, 0x2d, 0x18, 0x10, 0x43, 0xe9, 0xc6, 0x6e,
+	0x4c, 0xa8, 0xd6, 0x17, 0xb0, 0x14, 0xbb, 0x10, 0x17, 0xe9, 0xce, 0xcd, 0x90, 0x99, 0x5c, 0x9a,
+	0xa1, 0xe9, 0x4c, 0xc8, 0x5c, 0x8b, 0x7d, 0x0b, 0x1f, 0x4b, 0x77, 0x5d, 0xba, 0x94, 0xf6, 0x45,
+	0x24, 0x7f, 0x5a, 0x0a, 0x16, 0x17, 0x2e, 0xcf, 0xbd, 0xbf, 0x39, 0xe7, 0x30, 0x5c, 0xda, 0x16,
+	0xa1, 0x58, 0x24, 0x46, 0xfb, 0x33, 0xa3, 0x15, 0x9a, 0xcc, 0x9f, 0xf7, 0xfc, 0x09, 0x68, 0xb0,
+	0xca, 0x7a, 0x69, 0x66, 0xd0, 0x30, 0x56, 0x11, 0x5e, 0x45, 0x78, 0xf3, 0x5e, 0xe7, 0x83, 0xd0,
+	0x93, 0x87, 0x92, 0x1a, 0x63, 0x88, 0xc0, 0xc6, 0xf4, 0x0c, 0x52, 0x23, 0x63, 0x0e, 0x3a, 0xe2,
+	0x19, 0x48, 0x93, 0x45, 0xd6, 0x21, 0xed, 0x7f, 0xdd, 0xe3, 0x9b, 0x2b, 0xef, 0xa7, 0x81, 0x37,
+	0xcc, 0xe1, 0xa1, 0x8e, 0x1e, 0xd5, 0x24, 0xc6, 0x41, 0xa2, 0x40, 0x63, 0x70, 0x0a, 0xd5, 0x30,
+	0x28, 0xdf, 0xb3, 0x88, 0xb6, 0x64, 0x0c, 0x72, 0x9a, 0x1a, 0xa5, 0xd1, 0xf2, 0x0c, 0x52, 0x93,
+	0x21, 0x44, 0x4e, 0xbd, 0xf0, 0xed, 0xed, 0xf3, 0x1d, 0x6c, 0xf9, 0xa0, 0xa2, 0x77, 0x13, 0x9a,
+	0x3b, 0x76, 0x9b, 0x7d, 0x47, 0xd0, 0xe6, 0x9e, 0x36, 0xac, 0x45, 0x0f, 0x8a, 0x3e, 0x0e, 0x69,
+	0x93, 0xee, 0xff, 0xa0, 0x14, 0xec, 0x8e, 0x9e, 0x0b, 0x94, 0x3c, 0xc9, 0x41, 0x2e, 0x0b, 0x92,
+	0xc7, 0x90, 0x2b, 0xa7, 0x5e, 0x70, 0x2d, 0x81, 0x72, 0xc7, 0x66, 0x54, 0xec, 0x3a, 0x96, 0x5e,
+	0xfe, 0xda, 0x8c, 0x5d, 0xd0, 0x86, 0x9c, 0xa6, 0xc8, 0xe3, 0xd0, 0x96, 0x89, 0x8d, 0xe0, 0x28,
+	0x1f, 0x8c, 0x42, 0xfb, 0xd7, 0xd0, 0xfb, 0xa7, 0xf7, 0x95, 0x4b, 0x96, 0x2b, 0x97, 0x7c, 0xad,
+	0x5c, 0xf2, 0xb6, 0x76, 0x6b, 0xcb, 0xb5, 0x5b, 0xfb, 0x5c, 0xbb, 0xb5, 0xe7, 0xfe, 0x44, 0x61,
+	0xfc, 0x22, 0x3c, 0x69, 0x66, 0x7e, 0xf5, 0x89, 0x49, 0x28, 0xec, 0xb5, 0x32, 0x1b, 0xe9, 0xcf,
+	0xfb, 0xfe, 0xeb, 0xf6, 0x26, 0x70, 0x91, 0x82, 0x15, 0x87, 0xc5, 0x3d, 0xdc, 0x7e, 0x07, 0x00,
+	0x00, 0xff, 0xff, 0xca, 0x44, 0x35, 0xb8, 0x33, 0x02, 0x00, 0x00,
 }
 
 func (m *GenesisState) Marshal() (dAtA []byte, err error) {
@@ -99,6 +244,102 @@ func (m *GenesisState) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
+	if len(m.CheckpointsReported) > 0 {
+		for iNdEx := len(m.CheckpointsReported) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.CheckpointsReported[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintGenesis(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x12
+		}
+	}
+	if len(m.EpochEndRecords) > 0 {
+		for iNdEx := len(m.EpochEndRecords) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.EpochEndRecords[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintGenesis(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0xa
+		}
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *EpochEndLightClient) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *EpochEndLightClient) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *EpochEndLightClient) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.BtcLightClientHeight != 0 {
+		i = encodeVarintGenesis(dAtA, i, uint64(m.BtcLightClientHeight))
+		i--
+		dAtA[i] = 0x10
+	}
+	if m.Epoch != 0 {
+		i = encodeVarintGenesis(dAtA, i, uint64(m.Epoch))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *CheckpointReportedLightClient) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *CheckpointReportedLightClient) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *CheckpointReportedLightClient) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.BtcLightClientHeight != 0 {
+		i = encodeVarintGenesis(dAtA, i, uint64(m.BtcLightClientHeight))
+		i--
+		dAtA[i] = 0x10
+	}
+	if len(m.CkptHash) > 0 {
+		i -= len(m.CkptHash)
+		copy(dAtA[i:], m.CkptHash)
+		i = encodeVarintGenesis(dAtA, i, uint64(len(m.CkptHash)))
+		i--
+		dAtA[i] = 0xa
+	}
 	return len(dAtA) - i, nil
 }
 
@@ -119,6 +360,49 @@ func (m *GenesisState) Size() (n int) {
 	}
 	var l int
 	_ = l
+	if len(m.EpochEndRecords) > 0 {
+		for _, e := range m.EpochEndRecords {
+			l = e.Size()
+			n += 1 + l + sovGenesis(uint64(l))
+		}
+	}
+	if len(m.CheckpointsReported) > 0 {
+		for _, e := range m.CheckpointsReported {
+			l = e.Size()
+			n += 1 + l + sovGenesis(uint64(l))
+		}
+	}
+	return n
+}
+
+func (m *EpochEndLightClient) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Epoch != 0 {
+		n += 1 + sovGenesis(uint64(m.Epoch))
+	}
+	if m.BtcLightClientHeight != 0 {
+		n += 1 + sovGenesis(uint64(m.BtcLightClientHeight))
+	}
+	return n
+}
+
+func (m *CheckpointReportedLightClient) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.CkptHash)
+	if l > 0 {
+		n += 1 + l + sovGenesis(uint64(l))
+	}
+	if m.BtcLightClientHeight != 0 {
+		n += 1 + sovGenesis(uint64(m.BtcLightClientHeight))
+	}
 	return n
 }
 
@@ -157,6 +441,263 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 			return fmt.Errorf("proto: GenesisState: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field EpochEndRecords", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.EpochEndRecords = append(m.EpochEndRecords, &EpochEndLightClient{})
+			if err := m.EpochEndRecords[len(m.EpochEndRecords)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CheckpointsReported", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.CheckpointsReported = append(m.CheckpointsReported, &CheckpointReportedLightClient{})
+			if err := m.CheckpointsReported[len(m.CheckpointsReported)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipGenesis(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *EpochEndLightClient) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowGenesis
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: EpochEndLightClient: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: EpochEndLightClient: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Epoch", wireType)
+			}
+			m.Epoch = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Epoch |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field BtcLightClientHeight", wireType)
+			}
+			m.BtcLightClientHeight = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.BtcLightClientHeight |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		default:
+			iNdEx = preIndex
+			skippy, err := skipGenesis(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *CheckpointReportedLightClient) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowGenesis
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: CheckpointReportedLightClient: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: CheckpointReportedLightClient: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CkptHash", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.CkptHash = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field BtcLightClientHeight", wireType)
+			}
+			m.BtcLightClientHeight = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.BtcLightClientHeight |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skipGenesis(dAtA[iNdEx:])

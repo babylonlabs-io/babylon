@@ -7,9 +7,9 @@ import (
 	wasmapp "github.com/CosmWasm/wasmd/app"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-	bbn "github.com/babylonlabs-io/babylon/v2/types"
-	btcckeeper "github.com/babylonlabs-io/babylon/v2/x/btccheckpoint/keeper"
-	epochingkeeper "github.com/babylonlabs-io/babylon/v2/x/epoching/keeper"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	btcckeeper "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/keeper"
+	epochingkeeper "github.com/babylonlabs-io/babylon/v4/x/epoching/keeper"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
@@ -67,6 +67,7 @@ func NewAnteHandler(
 	mempoolOpts := NewMempoolOptions(appOpts)
 	anteHandler := sdk.ChainAnteDecorators(
 		NewGasLimitDecorator(mempoolOpts),
+		NewIBCMsgSizeDecorator(),
 		NewWrappedAnteHandler(authAnteHandler),
 		NewBtcValidationDecorator(btcConfig, btccKeeper),
 		NewPriorityDecorator(),

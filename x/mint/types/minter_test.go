@@ -1,4 +1,4 @@
-package types
+package types_test
 
 import (
 	"math/rand"
@@ -11,10 +11,12 @@ import (
 
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/babylonlabs-io/babylon/v4/x/mint/types"
 )
 
 func TestCalculateInflationRate(t *testing.T) {
-	minter := DefaultMinter()
+	minter := types.DefaultMinter()
 	genesisTime := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
 
 	type testCase struct {
@@ -67,7 +69,7 @@ func TestCalculateInflationRate(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		years := time.Duration(tc.year * NanosecondsPerYear * int64(time.Nanosecond))
+		years := time.Duration(tc.year * types.NanosecondsPerYear * int64(time.Nanosecond))
 		blockTime := genesisTime.Add(years)
 		ctx := sdk.NewContext(nil, tmproto.Header{}, false, nil).WithBlockTime(blockTime)
 		inflationRate := minter.CalculateInflationRate(ctx, genesisTime)
@@ -78,11 +80,11 @@ func TestCalculateInflationRate(t *testing.T) {
 }
 
 func TestCalculateBlockProvision(t *testing.T) {
-	minter := DefaultMinter()
+	minter := types.DefaultMinter()
 	current := time.Date(2023, 1, 2, 0, 0, 0, 0, time.UTC)
 	blockInterval := 15 * time.Second
-	totalSupply := math.LegacyNewDec(1_000_000_000_000)              // 1 trillion ubbn
-	annualProvisions := totalSupply.Mul(InitialInflationRateAsDec()) // 80 billion ubbn
+	totalSupply := math.LegacyNewDec(1_000_000_000_000)                    // 1 trillion ubbn
+	annualProvisions := totalSupply.Mul(types.InitialInflationRateAsDec()) // 80 billion ubbn
 
 	type testCase struct {
 		name             string
@@ -100,7 +102,7 @@ func TestCalculateBlockProvision(t *testing.T) {
 			current:          current,
 			previous:         current.Add(-blockInterval),
 			// 80 billion ubbn (annual provisions) * 15 (seconds) / 31,556,952 (seconds per year) = 38026.48620817 which truncates to 38026 ubbn
-			want: sdk.NewCoin(DefaultBondDenom, math.NewInt(38026)),
+			want: sdk.NewCoin(types.DefaultBondDenom, math.NewInt(38026)),
 		},
 		{
 			name:             "one 30 second block during the first year",
@@ -108,7 +110,7 @@ func TestCalculateBlockProvision(t *testing.T) {
 			current:          current,
 			previous:         current.Add(-2 * blockInterval),
 			// 80 billion ubbn (annual provisions) * 30 (seconds) / 31,556,952 (seconds per year) = 76052.97241635 which truncates to 76052 ubbn
-			want: sdk.NewCoin(DefaultBondDenom, math.NewInt(76052)),
+			want: sdk.NewCoin(types.DefaultBondDenom, math.NewInt(76052)),
 		},
 		{
 			name:             "want error when current time is before previous time",
@@ -133,13 +135,13 @@ func TestCalculateBlockProvision(t *testing.T) {
 // TestCalculateBlockProvisionError verifies that the error for total block
 // provisions in a year is less than .01
 func TestCalculateBlockProvisionError(t *testing.T) {
-	minter := DefaultMinter()
+	minter := types.DefaultMinter()
 	current := time.Date(2023, 1, 2, 0, 0, 0, 0, time.UTC)
-	oneYear := time.Duration(NanosecondsPerYear)
+	oneYear := time.Duration(types.NanosecondsPerYear)
 	end := current.Add(oneYear)
 
-	totalSupply := math.LegacyNewDec(1_000_000_000_000)              // 1 trillion ubbn
-	annualProvisions := totalSupply.Mul(InitialInflationRateAsDec()) // 80 billion ubbn
+	totalSupply := math.LegacyNewDec(1_000_000_000_000)                    // 1 trillion ubbn
+	annualProvisions := totalSupply.Mul(types.InitialInflationRateAsDec()) // 80 billion ubbn
 	minter.AnnualProvisions = annualProvisions
 	totalBlockProvisions := math.LegacyNewDec(0)
 	for current.Before(end) {
@@ -169,7 +171,7 @@ func randInRange(min int64, max int64) int64 {
 
 func BenchmarkCalculateBlockProvision(b *testing.B) {
 	b.ReportAllocs()
-	minter := DefaultMinter()
+	minter := types.DefaultMinter()
 
 	s1 := rand.NewSource(100)
 	r1 := rand.New(s1)
@@ -185,7 +187,7 @@ func BenchmarkCalculateBlockProvision(b *testing.B) {
 
 func BenchmarkCalculateInflationRate(b *testing.B) {
 	b.ReportAllocs()
-	minter := DefaultMinter()
+	minter := types.DefaultMinter()
 	genesisTime := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
 
 	for n := 0; n < b.N; n++ {
@@ -206,7 +208,7 @@ func Test_yearsSinceGenesis(t *testing.T) {
 	assert.NoError(t, err)
 	oneWeek := oneDay * 7
 	oneMonth := oneDay * 30
-	oneYear := time.Duration(NanosecondsPerYear)
+	oneYear := time.Duration(types.NanosecondsPerYear)
 	twoYears := 2 * oneYear
 	tenYears := 10 * oneYear
 	tenYearsOneMonth := tenYears + oneMonth
@@ -255,7 +257,74 @@ func Test_yearsSinceGenesis(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		got := yearsSinceGenesis(genesis, tc.current)
+		got := types.YearsSinceGenesis(genesis, tc.current)
 		assert.Equal(t, tc.want, got, tc.name)
+	}
+}
+
+func TestMinterValidate(t *testing.T) {
+	validTime := time.Now().UTC().Add(-time.Hour)
+	testCases := []struct {
+		name    string
+		minter  types.Minter
+		wantErr string
+	}{
+		{
+			name: "valid minter",
+			minter: types.Minter{
+				InflationRate:     math.LegacyMustNewDecFromStr("0.05"),
+				AnnualProvisions:  math.LegacyMustNewDecFromStr("1000000"),
+				BondDenom:         types.DefaultBondDenom,
+				PreviousBlockTime: &validTime,
+			},
+		},
+		{
+			name: "negative inflation rate",
+			minter: types.Minter{
+				InflationRate:    math.LegacyMustNewDecFromStr("-0.01"),
+				AnnualProvisions: math.LegacyMustNewDecFromStr("1000000"),
+				BondDenom:        types.DefaultBondDenom,
+			},
+			wantErr: "inflation rate -0.010000000000000000 should be positive",
+		},
+		{
+			name: "negative annual provisions",
+			minter: types.Minter{
+				InflationRate:    math.LegacyMustNewDecFromStr("0.01"),
+				AnnualProvisions: math.LegacyMustNewDecFromStr("-1000"),
+				BondDenom:        types.DefaultBondDenom,
+			},
+			wantErr: "annual provisions -1000.000000000000000000 should be positive",
+		},
+		{
+			name: "empty bond denom",
+			minter: types.Minter{
+				InflationRate:    math.LegacyMustNewDecFromStr("0.01"),
+				AnnualProvisions: math.LegacyMustNewDecFromStr("1000"),
+				BondDenom:        "  ",
+			},
+			wantErr: "bond denom cannot be empty",
+		},
+		{
+			name: "bond denom with whitespace",
+			minter: types.Minter{
+				InflationRate:    math.LegacyMustNewDecFromStr("0.01"),
+				AnnualProvisions: math.LegacyMustNewDecFromStr("1000"),
+				BondDenom:        "ub bn",
+			},
+			wantErr: "bond denom cannot contain whitespace",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := tc.minter.Validate()
+			if tc.wantErr == "" {
+				require.NoError(t, err)
+				return
+			}
+			require.Error(t, err)
+			require.ErrorContains(t, err, tc.wantErr)
+		})
 	}
 }
