@@ -1,10 +1,12 @@
 package keeper_test
 
 import (
+	"fmt"
 	"math/rand"
 	"testing"
 	"time"
 
+	"cosmossdk.io/core/header"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
@@ -209,6 +211,26 @@ func TestHandleResumeFinalityProposalWithJailedAndSlashedFp(t *testing.T) {
 			}
 		}
 	}
+}
+
+func TestHandleResumeFinalityWithBadHaltingHeight(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	k, ctx := keepertest.FinalityKeeper(t, nil, nil, nil)
+	ctx = ctx.WithHeaderInfo(header.Info{
+		Height: 35,
+	})
+	actErr := k.HandleResumeFinalityProposal(ctx, []string{}, 50)
+	require.EqualError(t, actErr, fmt.Sprintf("finality halting height %d is in the future, current height %d", 50, 35))
+
+	p := k.GetParams(ctx)
+	p.FinalityActivationHeight = 20
+	err := k.SetParams(ctx, p)
+	require.NoError(t, err)
+
+	actErr = k.HandleResumeFinalityProposal(ctx, []string{}, 16)
+	require.EqualError(t, actErr, fmt.Sprintf("finality halting height %d cannot be lower than finality activation height %d", 16, 20))
 }
 
 func TestHandleResumeFinalityProposalMissingSigningInfo(t *testing.T) {

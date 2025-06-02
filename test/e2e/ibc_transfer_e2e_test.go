@@ -162,7 +162,7 @@ func (s *IBCTransferTestSuite) Test2IBCTransferBack() {
 	s.Require().Len(balanceBeforeSendBackB, 2)
 	// Look for the ugly IBC one
 	denom := getFirstIBCDenom(balanceBeforeSendBackB)
-	amount := balanceBeforeSendBackB.AmountOf(denom).Int64() // have to pay gas fees
+	amount := int64(100_000)
 
 	transferCoin := sdk.NewInt64Coin(denom, amount)
 
@@ -226,7 +226,7 @@ func (s *IBCTransferTestSuite) Test2IBCTransferBack() {
 
 // TestPacketForwarding sends a packet from chainB to chainA, and forwards it
 // back to chainB
-func (s *IBCTransferTestSuite) TestPacketForwarding() {
+func (s *IBCTransferTestSuite) Test3PacketForwarding() {
 	bbnChainA := s.configurer.GetChainConfig(0)
 	bbnChainB := s.configurer.GetChainConfig(1)
 
@@ -309,7 +309,7 @@ func (s *IBCTransferTestSuite) TestPacketForwarding() {
 	}, 1*time.Minute, 1*time.Second, "Transfer back B was not successful")
 }
 
-func (s *IBCTransferTestSuite) TestE2EBelowThreshold() {
+func (s *IBCTransferTestSuite) Test4E2EBelowThreshold() {
 	bbnChainA := s.configurer.GetChainConfig(0)
 	bbnChainB := s.configurer.GetChainConfig(1)
 
@@ -349,7 +349,7 @@ func (s *IBCTransferTestSuite) TestE2EBelowThreshold() {
 	}, 1*time.Minute, 1*time.Second, "Transfer back B was not successful")
 }
 
-func (s *IBCTransferTestSuite) TestRateLimitE2EAboveThreshold() {
+func (s *IBCTransferTestSuite) Test5RateLimitE2EAboveThreshold() {
 	bbnChainA := s.configurer.GetChainConfig(0)
 	bbnChainB := s.configurer.GetChainConfig(1)
 
