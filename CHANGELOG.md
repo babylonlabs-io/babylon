@@ -83,6 +83,7 @@ check of rewards
 `TestIBCTransferSuite`
 - [#993](https://github.com/babylonlabs-io/babylon/pull/993) Remove async-icq
   module.
+- [#1013](https://github.com/babylonlabs-io/babylon/pull/1013) Update to ibc rate limit `v8.1.0`
 
 ### State Machine Breaking
 

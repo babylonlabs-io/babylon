@@ -180,7 +180,7 @@ require (
 	github.com/containerd/continuity v0.3.0 // indirect
 	github.com/cosmos/gogogateway v1.2.0 // indirect
 	github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8 v8.2.0
-	github.com/cosmos/ibc-apps/modules/rate-limiting/v8 v8.0.1-0.20250531081246-bbaf34163614
+	github.com/cosmos/ibc-apps/modules/rate-limiting/v8 v8.1.0
 	github.com/cosmos/ics23/go v0.11.0 // indirect
 	github.com/creachadair/atomicfile v0.3.1 // indirect
 	github.com/creachadair/tomledit v0.0.24 // indirect
