@@ -1,0 +1,25 @@
+syntax = "proto3";
+package babylon.btcstkconsumer.v1;
+
+option go_package = "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types";
+
+import "amino/amino.proto";
+import "babylon/btcstkconsumer/v1/btcstkconsumer.proto";
+
+// EventConsumerRegistered is the event emitted when a consumer is registered
+message EventConsumerRegistered {
+  // consumer_id is the id of the consumer
+  string consumer_id = 1  [(amino.dont_omitempty) = true];
+  // consumer_name is the name of the consumer
+  string consumer_name = 2  [(amino.dont_omitempty) = true];
+  // consumer_description is a description for the consumer
+  string consumer_description = 3  [(amino.dont_omitempty) = true];
+  // max_multi_staked_fps is the maximum number of finality providers from this consumer
+  // that can be part of a single BTC delegation.
+  uint32 max_multi_staked_fps = 4;
+  // consumer_type is the type of the consumer
+  ConsumerType consumer_type = 5 [(amino.dont_omitempty) = true];
+  // consumer_metadata is necessary metadata of the consumer, and the data
+  // depends on the type of integration
+  ETHL2ConsumerMetadata rollup_consumer_metadata = 6;
+}
