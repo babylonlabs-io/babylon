@@ -23,7 +23,10 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+<<<<<<< HEAD
 	ratelimiter "github.com/babylonlabs-io/babylon/v3/x/rate-limiting"
+=======
+>>>>>>> 5a0cc9d (chore: ibcratelimit `v8.1.0` begin blocker fix (#1013))
 	abci "github.com/cometbft/cometbft/abci/types"
 	cmtos "github.com/cometbft/cometbft/libs/os"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
@@ -81,6 +84,7 @@ import (
 	"github.com/cosmos/gogoproto/proto"
 	pfmrouter "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward"
 	pfmroutertypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward/types"
+	ratelimiter "github.com/cosmos/ibc-apps/modules/rate-limiting/v8"
 	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/types"
 	"github.com/cosmos/ibc-go/modules/capability"
 	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
