@@ -1,16 +1,9 @@
 package types
 
 import (
-<<<<<<< HEAD
+	"errors"
 	"fmt"
 	"sort"
-
-	"github.com/babylonlabs-io/babylon/v2/types"
-=======
-	"errors"
-	fmt "fmt"
-	"sort"
->>>>>>> bdb62ff (chore: update genesis validations in x/mint and x/btccheckpoint (#1018))
 )
 
 // DefaultGenesis returns the default Capability genesis state
