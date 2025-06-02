@@ -39,8 +39,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
-<<<<<<< HEAD
-=======
 - [#970](https://github.com/babylonlabs-io/babylon/pull/970) Add finality contract e2e tests follup-up.
 - [#946](https://github.com/babylonlabs-io/babylon/pull/946) Add finality contract e2e tests follup-up.
 - [#945](https://github.com/babylonlabs-io/babylon/pull/945) Add finality contract e2e tests.
@@ -85,6 +83,7 @@ check of rewards
 `TestIBCTransferSuite`
 - [#993](https://github.com/babylonlabs-io/babylon/pull/993) Remove async-icq
   module.
+- [#994](https://github.com/babylonlabs-io/babylon/pull/994) Soft fork ibcratelimit to call `BeginBlock`
 
 ### State Machine Breaking
 
@@ -100,13 +99,30 @@ This PR contains a series of PRs on multi-staking support and BTC staking integr
 - [#525](https://github.com/babylonlabs-io/babylon/pull/525) fix: add back `NewIBCHeaderDecorator` post handler
 - [#964](https://github.com/babylonlabs-io/babylon/pull/964) fix: stateless validation `ValidateBasic` of
 `MsgWrappedCreateValidator` to avoid panic in transaction submission
-- [#994](https://github.com/babylonlabs-io/babylon/pull/994) Soft fork ibcratelimit to call `BeginBlock`
+- [#927](https://github.com/babylonlabs-io/babylon/pull/927) Add Mergify configuration file to improve PR backporting.
+- [#931](https://github.com/babylonlabs-io/babylon/pull/931) Add darwin and linux-arm64 build
+- [#955](https://github.com/babylonlabs-io/babylon/pull/955) Update Mergify rules
+- [#967](https://github.com/babylonlabs-io/babylon/pull/967) Add `ValidateBasic` in `MsgInsertBTCSpvProof` (`x/btccheckpoint`)
+- [#969](https://github.com/babylonlabs-io/babylon/pull/969) Add `ValidateBasic` to `MsgSelectiveSlashingEvidence` in `x/btcstaking` module
+- [#977](https://github.com/babylonlabs-io/babylon/pull/977) Update `ValidateBasic` in `x/finality` module messages
+- [#981](https://github.com/babylonlabs-io/babylon/pull/981) Set IBC rate limit for `ubbn` to 10%
+- [#988](https://github.com/babylonlabs-io/babylon/pull/988) Fix flaky e2e ibc test
+`TestIBCTransferSuite`
+- [#992](https://github.com/babylonlabs-io/babylon/pull/992) Add checks for bad halting height in `HandleResumeFinalityProposal`
+
+### State Machine Breaking
+
+- [#947](https://github.com/babylonlabs-io/babylon/pull/947) Improve signing info update upon fp activated
+
+### Bug fixes
+
+- [#964](https://github.com/babylonlabs-io/babylon/pull/964) fix: stateless validation `ValidateBasic` of
+`MsgWrappedCreateValidator` to avoid panic in transaction submission
 
 ## v2.0.0-rc.0
 
 ### Improvements
 
->>>>>>> 16ea240 (chore: soft fork ibc rate limit (#994))
 - [#850](https://github.com/babylonlabs-io/babylon/pull/850) Add BLS improvement including permission and verification
 - [#841](https://github.com/babylonlabs-io/babylon/pull/841) chore: upgrade the make file: release
 - [#909](https://github.com/babylonlabs-io/babylon/pull/909) Update tokenfactory upgrade fee params to `ubbn`.
@@ -125,22 +141,11 @@ transfer stack
 - [#897](https://github.com/babylonlabs-io/babylon/pull/897) Add Interchain Accounts (ICA) and Interchain Queries (ICQ) modules.
 - [#902](https://github.com/babylonlabs-io/babylon/pull/902) Add IBC rate limiter to IBC transfer module
 - [#913](https://github.com/babylonlabs-io/babylon/pull/913) Remove IBC-fee module.
-- [#927](https://github.com/babylonlabs-io/babylon/pull/927) Add Mergify configuration file to improve PR backporting.
-- [#931](https://github.com/babylonlabs-io/babylon/pull/931) Add darwin and linux-arm64 build
-- [#955](https://github.com/babylonlabs-io/babylon/pull/955) Update Mergify rules
-- [#967](https://github.com/babylonlabs-io/babylon/pull/967) Add `ValidateBasic` in `MsgInsertBTCSpvProof` (`x/btccheckpoint`)
-- [#969](https://github.com/babylonlabs-io/babylon/pull/969) Add `ValidateBasic` to `MsgSelectiveSlashingEvidence` in `x/btcstaking` module
-- [#977](https://github.com/babylonlabs-io/babylon/pull/977) Update `ValidateBasic` in `x/finality` module messages
 
 ### State Machine Breaking
 
 - [#877](https://github.com/babylonlabs-io/babylon/pull/877) fix: BTC reward tracker are stored as events and updated only
-- [#947](https://github.com/babylonlabs-io/babylon/pull/947) Improve signing info update upon fp activated
-
-### Bug fixes
-
-- [#964](https://github.com/babylonlabs-io/babylon/pull/964) fix: stateless validation `ValidateBasic` of
-`MsgWrappedCreateValidator` to avoid panic in transaction submission
+when the babylon block is being BTC rewarded.
 
 ## v1.1.0
 
