@@ -21,14 +21,20 @@ func (k Keeper) HandleResumeFinalityProposal(ctx sdk.Context, fpPksHex []string,
 	// TODO introduce a parameter to define the finality has been halting for at least some heights
 
 	params := k.GetParams(ctx)
-	currentHeight := ctx.HeaderInfo().Height
-	currentTime := ctx.HeaderInfo().Time
-	voters := k.GetVoters(ctx, uint64(haltingHeight))
+	header := ctx.HeaderInfo()
+	currentHeight := header.Height
+	currentTime := header.Time
 
 	if uint64(haltingHeight) < params.FinalityActivationHeight {
 		return fmt.Errorf("finality halting height %d cannot be lower than finality activation height %d",
 			haltingHeight, params.FinalityActivationHeight)
 	}
+
+	if int64(haltingHeight) > currentHeight {
+		return fmt.Errorf("finality halting height %d is in the future, current height %d", haltingHeight, currentHeight)
+	}
+
+	voters := k.GetVoters(ctx, uint64(haltingHeight))
 
 	// jail the given finality providers
 	fpPksToJail := make(map[string]struct{}, len(fpPksHex))

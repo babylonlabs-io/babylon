@@ -734,11 +734,7 @@ func (ak *AppKeepers) InitKeepers(
 	icaHostStack := icahost.NewIBCModule(*ak.ICAHostKeeper)
 
 	// Create static IBC router, add ibc-transfer module route,
-<<<<<<< HEAD
-	// and the other routes (ICA, ICQ, wasm), then set and seal it
-=======
 	// and the other routes (ICA, wasm, zoneconcierge), then set and seal it
->>>>>>> a34969a (chore: Remove async-icq module (#993))
 	ibcRouter := porttypes.NewRouter().
 		AddRoute(ibctransfertypes.ModuleName, transferStack).
 		AddRoute(wasmtypes.ModuleName, wasmStack).
