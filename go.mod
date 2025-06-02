@@ -1,7 +1,5 @@
 go 1.23.6
 
-toolchain go1.24.3
-
 module github.com/babylonlabs-io/babylon/v3
 
 require (

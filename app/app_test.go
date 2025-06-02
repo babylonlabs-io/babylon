@@ -39,7 +39,6 @@ var (
 		incentivetypes.ModuleName:    nil, // this line is needed to create an account for incentive module
 		tokenfactorytypes.ModuleName: {authtypes.Minter, authtypes.Burner},
 		icatypes.ModuleName:          nil,
-		//icqtypes.ModuleName:          nil,
 	}
 )
 

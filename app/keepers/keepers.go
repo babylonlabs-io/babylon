@@ -166,8 +166,7 @@ type AppKeepers struct {
 	PFMRouterKeeper     *pfmrouterkeeper.Keeper     // Packet Forwarding Middleware
 	ICAHostKeeper       *icahostkeeper.Keeper       // Interchain Accounts host
 	ICAControllerKeeper *icacontrollerkeeper.Keeper // Interchain Accounts controller
-	//ICQKeeper           *icqkeeper.Keeper           // Interchain Queries
-	RatelimitKeeper ratelimitkeeper.Keeper
+	RatelimitKeeper     ratelimitkeeper.Keeper
 
 	// BTC staking related modules
 	BTCStakingKeeper btcstakingkeeper.Keeper
@@ -228,7 +227,6 @@ func (ak *AppKeepers) InitKeepers(
 		pfmroutertypes.StoreKey,
 		icahosttypes.StoreKey,
 		icacontrollertypes.StoreKey,
-		//icqtypes.StoreKey,
 		ratelimittypes.StoreKey,
 		// BTC staking related modules
 		btcstakingtypes.StoreKey,
@@ -636,19 +634,6 @@ func (ak *AppKeepers) InitKeepers(
 	)
 	ak.ICAControllerKeeper = &icaControllerKeeper
 
-	// ICQ Keeper
-	//icqKeeper := icqkeeper.NewKeeper(
-	//	appCodec,
-	//	ak.keys[icqtypes.StoreKey],
-	//	ak.IBCKeeper.ChannelKeeper,
-	//	ak.IBCKeeper.ChannelKeeper,
-	//	ak.IBCKeeper.PortKeeper,
-	//	bApp.GRPCQueryRouter(),
-	//	bApp.ScopedKeeper,
-	//	authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-	//)
-	//ak.ICQKeeper = &icqKeeper
-
 	// Create all supported IBC routes
 	var wasmStack porttypes.IBCModule
 	wasmStackIBCHandler := wasm.NewIBCHandler(ak.WasmKeeper, ak.IBCKeeper.ChannelKeeper, ak.IBCKeeper.ChannelKeeper)
@@ -708,17 +693,13 @@ func (ak *AppKeepers) InitKeepers(
 	// channel.RecvPacket -> fee.OnRecvPacket -> icaHost.OnRecvPacket
 	icaHostStack := icahost.NewIBCModule(*ak.ICAHostKeeper)
 
-	// Create Async ICQ module stack
-	//icqStack := icq.NewIBCModule(*ak.ICQKeeper)
-
 	// Create static IBC router, add ibc-transfer module route,
-	// and the other routes (ICA, ICQ, wasm, zoneconcierge), then set and seal it
+	// and the other routes (ICA, wasm, zoneconcierge), then set and seal it
 	ibcRouter := porttypes.NewRouter().
 		AddRoute(ibctransfertypes.ModuleName, transferStack).
 		AddRoute(wasmtypes.ModuleName, wasmStack).
 		AddRoute(icacontrollertypes.SubModuleName, icaControllerStack).
 		AddRoute(icahosttypes.SubModuleName, icaHostStack)
-	//AddRoute(icqtypes.ModuleName, icqStack)
 
 	// Setting Router will finalize all routes by sealing router
 	// No more routes can be added

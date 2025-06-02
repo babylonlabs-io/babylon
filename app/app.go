@@ -82,8 +82,6 @@ import (
 	"github.com/cosmos/gogoproto/proto"
 	pfmrouter "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v10/packetforward"
 	pfmroutertypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v10/packetforward/types"
-	//icq "github.com/cosmos/ibc-apps/modules/async-icq/v8"
-	//icqtypes "github.com/cosmos/ibc-apps/modules/async-icq/v8/types"
 	ratelimiter "github.com/cosmos/ibc-apps/modules/rate-limiting/v10"
 	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/types"
 	ibcwasm "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/v10"
@@ -163,7 +161,6 @@ var (
 		incentivetypes.ModuleName:      nil, // this line is needed to create an account for incentive module
 		tokenfactorytypes.ModuleName:   {authtypes.Minter, authtypes.Burner},
 		icatypes.ModuleName:            nil,
-		//icqtypes.ModuleName:            nil,
 	}
 
 	// software upgrades and forks
@@ -319,7 +316,6 @@ func NewBabylonApp(
 		tokenfactory.NewAppModule(app.TokenFactoryKeeper, app.AccountKeeper, app.BankKeeper, app.GetSubspace(tokenfactorytypes.ModuleName)),
 		ratelimiter.NewAppModule(appCodec, app.RatelimitKeeper),
 		ica.NewAppModule(app.ICAControllerKeeper, app.ICAHostKeeper),
-		//icq.NewAppModule(*app.ICQKeeper, app.GetSubspace(icqtypes.ModuleName)),
 		// Babylon modules - btc timestamping
 		epoching.NewAppModule(appCodec, app.EpochingKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper),
 		btclightclient.NewAppModule(appCodec, app.BTCLightClientKeeper),
@@ -449,7 +445,6 @@ func NewBabylonApp(
 		ratelimittypes.ModuleName,
 		wasmtypes.ModuleName,
 		icatypes.ModuleName,
-		//icqtypes.ModuleName,
 		pfmroutertypes.ModuleName,
 		// BTC staking related modules
 		btcstakingtypes.ModuleName,
