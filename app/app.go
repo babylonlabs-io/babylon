@@ -23,10 +23,6 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-<<<<<<< HEAD
-	ratelimiter "github.com/babylonlabs-io/babylon/v2/x/rate-limiting"
-=======
->>>>>>> 5a0cc9d (chore: ibcratelimit `v8.1.0` begin blocker fix (#1013))
 	abci "github.com/cometbft/cometbft/abci/types"
 	cmtos "github.com/cometbft/cometbft/libs/os"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
