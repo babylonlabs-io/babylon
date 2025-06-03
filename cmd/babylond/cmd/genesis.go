@@ -25,8 +25,8 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	ibcexported "github.com/cosmos/ibc-go/v8/modules/core/exported"
-	ibctypes "github.com/cosmos/ibc-go/v8/modules/core/types"
+	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
+	ibctypes "github.com/cosmos/ibc-go/v10/modules/core/types"
 	"github.com/spf13/cobra"
 
 	appparams "github.com/babylonlabs-io/babylon/v3/app/params"

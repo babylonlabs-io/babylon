@@ -10,13 +10,13 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
-	pfmroutertypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward/types"
-	ratelimitkeeper "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/keeper"
-	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/types"
-	icacontrollertypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/controller/types"
-	icahosttypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/host/types"
-	ibcfeetypes "github.com/cosmos/ibc-go/v8/modules/apps/29-fee/types"
-	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
+	pfmroutertypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v10/packetforward/types"
+
+	ratelimitkeeper "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/keeper"
+	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/types"
+	icacontrollertypes "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/controller/types"
+	icahosttypes "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/host/types"
+	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	tokenfactorytypes "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/types"
 
 	"github.com/babylonlabs-io/babylon/v3/app/keepers"
@@ -46,6 +46,8 @@ const (
 	//
 	// To fully decouple from the module now, we hardcode the store name here.
 	InterchainQueryStoreName = "interchainquery"
+	// FeeMiddlewareStoreName defines the hardcoded store name for the fee middleware
+	FeeMiddlewareStoreName = "feeibc"
 )
 
 var (
@@ -67,7 +69,7 @@ func CreateUpgrade(includeAsyncICQ bool) upgrades.Upgrade {
 		CreateUpgradeHandler: CreateUpgradeHandler,
 		StoreUpgrades: store.StoreUpgrades{
 			Added:   addedStoreUpgrades,
-			Deleted: []string{ibcfeetypes.StoreKey},
+			Deleted: []string{FeeMiddlewareStoreName},
 		},
 	}
 }
@@ -87,7 +89,7 @@ func CreateUpgradeHandler(mm *module.Manager, configurator module.Configurator, 
 			return nil, err
 		}
 
-		// By default, ICQ allowed queries are empty. So no queries will be allowed until
+		// By default, allowed queries are empty. So no queries will be allowed until
 		// the allowed list is populated via gov proposal.
 		// For ICA host, by default all messages are allowed (using '*' wildcard),
 		// so we set allow list to empty and messages can be added later when needed via gov proposal
@@ -136,11 +138,12 @@ func addRateLimits(ctx sdk.Context, chk transfertypes.ChannelKeeper, rlk ratelim
 
 func addRateLimit(ctx sdk.Context, k ratelimitkeeper.Keeper, denom, channel string, percent sdkmath.Int, durationHours uint64) error {
 	addRateLimitMsg := ratelimittypes.MsgAddRateLimit{
-		ChannelId:      channel,
-		Denom:          denom,
-		MaxPercentSend: percent,
-		MaxPercentRecv: percent,
-		DurationHours:  durationHours,
+		Authority:         appparams.AccGov.String(),
+		Denom:             denom,
+		ChannelOrClientId: channel,
+		MaxPercentSend:    percent,
+		MaxPercentRecv:    percent,
+		DurationHours:     durationHours,
 	}
 
 	err := k.AddRateLimit(ctx, &addRateLimitMsg)
