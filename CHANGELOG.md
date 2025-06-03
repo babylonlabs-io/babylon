@@ -37,7 +37,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
-<<<<<<< HEAD
 ### Improvements
 
 - [#927](https://github.com/babylonlabs-io/babylon/pull/927) Add Mergify configuration file to improve PR backporting.
@@ -50,6 +49,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 `TestIBCTransferSuite`
 - [#1013](https://github.com/babylonlabs-io/babylon/pull/1013) Update to ibc rate limit `v8.1.0`
 - [#1018](https://github.com/babylonlabs-io/babylon/pull/1018) Improve genesis validations in `x/mint` and `x/btccheckpoint`
+- [#1030](https://github.com/babylonlabs-io/babylon/pull/1030) Update upgrade handler name to v2rc2
 
 ### Bug fixes
 
@@ -57,8 +57,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 `MsgWrappedCreateValidator` to avoid panic in transaction submission
 
 ## v2.0.0-rc.1
-=======
->>>>>>> a56b327 (chore: rename upgrade from v2rc1 to v2rc2 (#1030))
 
 ### Improvements
 
@@ -66,14 +64,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#992](https://github.com/babylonlabs-io/babylon/pull/992) Add checks for bad halting height in `HandleResumeFinalityProposal`
 - [#993](https://github.com/babylonlabs-io/babylon/pull/993) Remove async-icq
   module.
-<<<<<<< HEAD
-=======
-- [#1000](https://github.com/babylonlabs-io/babylon/pull/1000) Add multi-staking replay test
-- [#1013](https://github.com/babylonlabs-io/babylon/pull/1013) Update to ibc rate limit `v8.1.0`
-- [#1018](https://github.com/babylonlabs-io/babylon/pull/1018) Improve genesis validations in `x/mint` and `x/btccheckpoint`
-- [#702](https://github.com/babylonlabs-io/babylon/pull/702) Add test for small rewards in fee collector
-- [#1030](https://github.com/babylonlabs-io/babylon/pull/1030) Update upgrade handler name to v2rc2
->>>>>>> a56b327 (chore: rename upgrade from v2rc1 to v2rc2 (#1030))
 
 ### State Machine Breaking
 
