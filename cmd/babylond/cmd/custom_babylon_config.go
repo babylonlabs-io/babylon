@@ -73,6 +73,9 @@ func DefaultBabylonAppConfig() *BabylonAppConfig {
 	// The SDK's default minimum gas price is set to "0.002ubbn" (empty value) inside
 	// app.toml, in order to avoid spamming attacks due to transactions with 0 gas price.
 	baseConfig.MinGasPrices = fmt.Sprintf("%f%s", appparams.GlobalMinGasPrice, appparams.BaseCoinUnit)
+
+	jsonRPCConfig := *evmserverconfig.DefaultJSONRPCConfig()
+	jsonRPCConfig.Enable = true
 	return &BabylonAppConfig{
 		Config:               baseConfig,
 		Wasm:                 wasmtypes.DefaultNodeConfig(),
@@ -80,7 +83,7 @@ func DefaultBabylonAppConfig() *BabylonAppConfig {
 		BlsConfig:            defaultBabylonBlsConfig(),
 		BabylonMempoolConfig: defaultBabylonMempoolConfig(),
 		EVM:                  *evmserverconfig.DefaultEVMConfig(),
-		JSONRPC:              *evmserverconfig.DefaultJSONRPCConfig(),
+		JSONRPC:              jsonRPCConfig,
 		TLS:                  *evmserverconfig.DefaultTLSConfig(),
 	}
 }

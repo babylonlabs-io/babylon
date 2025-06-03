@@ -50,7 +50,7 @@ var (
 
 func init() {
 	SetAddressPrefixes()
-	RegisterDenoms()
+	//RegisterDenoms()
 }
 
 func RegisterDenoms() {

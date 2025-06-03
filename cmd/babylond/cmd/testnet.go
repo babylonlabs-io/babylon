@@ -204,6 +204,7 @@ func InitTestnet(
 	// Update babylonConfig to include Ethereum JSON-RPC settings
 	babylonConfig.EVM = *servercfg.DefaultEVMConfig()
 	babylonConfig.JSONRPC = *servercfg.DefaultJSONRPCConfig()
+	babylonConfig.JSONRPC.Enable = true
 
 	// Disable IAVL cache by default as Babylon leaf nodes can be large, and in case
 	// of big cache values, Babylon node can run out of memory.

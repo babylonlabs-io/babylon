@@ -25,9 +25,9 @@ var sealed = false
 // chain id
 var ChainsCoinInfo = map[uint64]evmtypes.EvmCoinInfo{
 	EVMChainID: {
-		Denom:         BaseEVMDenom,
+		Denom:         BaseCosmosDenom,
 		ExtendedDenom: BaseEVMDenom,
-		DisplayDenom:  BaseEVMDenom,
+		DisplayDenom:  DisplayDenom,
 		Decimals:      evmtypes.SixDecimals,
 	},
 }
@@ -44,10 +44,10 @@ func EVMAppOptions(chainID uint64) error {
 		return fmt.Errorf("unknown chain id: %d", chainID)
 	}
 
-	//// set the denom info for the chain
-	//if err := setBaseDenom(coinInfo); err != nil {
-	//	return err
-	//}
+	// set the denom info for the chain
+	if err := setBaseDenom(coinInfo); err != nil {
+		return err
+	}
 
 	ethCfg := evmtypes.DefaultChainConfig(chainID)
 
