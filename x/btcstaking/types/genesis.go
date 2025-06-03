@@ -3,12 +3,15 @@ package types
 import (
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"slices"
 	"sort"
 
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/cosmos/cosmos-sdk/codec"
+
+	"github.com/babylonlabs-io/babylon/v2/types"
 )
 
 // DefaultGenesis returns the default genesis state
@@ -27,7 +30,6 @@ func (gs GenesisState) Validate() error {
 	}
 
 	heightToVersionMap := NewHeightToVersionMap()
-	// TODO: add validation to other properties of genstate.
 	for i, params := range gs.Params {
 		if err := params.Validate(); err != nil {
 			return err
@@ -41,6 +43,36 @@ func (gs GenesisState) Validate() error {
 		if err != nil {
 			return err
 		}
+	}
+
+	if err := types.ValidateEntries(gs.FinalityProviders, func(f *FinalityProvider) string {
+		return f.BtcPk.MarshalHex()
+	}); err != nil {
+		return err
+	}
+
+	for _, d := range gs.BtcDelegations {
+		if err := d.ValidateBasic(); err != nil {
+			return err
+		}
+	}
+
+	for _, d := range gs.BtcDelegators {
+		if err := d.Validate(); err != nil {
+			return err
+		}
+	}
+
+	if err := types.ValidateEntries(gs.BlockHeightChains, func(bh *BlockHeightBbnToBtc) uint64 {
+		return bh.BlockHeightBbn
+	}); err != nil {
+		return err
+	}
+
+	if err := types.ValidateEntries(gs.Events, func(e *EventIndex) string {
+		return fmt.Sprintf("%d-%d", e.BlockHeightBtc, e.Idx)
+	}); err != nil {
+		return err
 	}
 
 	if gs.LargestBtcReorg != nil {
@@ -94,6 +126,31 @@ func (gs GenesisState) validateAllowedStakingTxHashes() error {
 		}
 	}
 	return nil
+}
+
+func (d BTCDelegator) Validate() error {
+	if d.FpBtcPk == nil {
+		return errors.New("null FP BTC PubKey")
+	}
+
+	if d.DelBtcPk == nil {
+		return errors.New("null Delegator BTC PubKey")
+	}
+
+	if d.Idx == nil {
+		return errors.New("null Index")
+	}
+
+	// validate BIP340PubKey length
+	if d.FpBtcPk.Size() != types.BIP340PubKeyLen {
+		return fmt.Errorf("invalid FP BTC PubKey. Expected length %d, got %d", types.BIP340PubKeyLen, d.FpBtcPk.Size())
+	}
+
+	if d.DelBtcPk.Size() != types.BIP340PubKeyLen {
+		return fmt.Errorf("invalid Delegator BTC PubKey. Expected length %d, got %d", types.BIP340PubKeyLen, d.DelBtcPk.Size())
+	}
+
+	return d.Idx.Validate()
 }
 
 // Helper function to sort slices to get a deterministic

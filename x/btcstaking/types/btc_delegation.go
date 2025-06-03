@@ -214,13 +214,23 @@ func (d *BTCDelegation) ValidateBasic() error {
 	if d.BtcPk == nil {
 		return fmt.Errorf("empty BTC public key")
 	}
+	if _, err := d.BtcPk.ToBTCPK(); err != nil {
+		return fmt.Errorf("BtcPk is not correctly formatted: %w", err)
+	}
 	if d.Pop == nil {
 		return fmt.Errorf("empty proof of possession")
+	}
+	if err := d.Pop.ValidateBasic(); err != nil {
+		return err
 	}
 	if len(d.FpBtcPkList) == 0 {
 		return fmt.Errorf("empty list of finality provider PKs")
 	}
-	if ExistsDup(d.FpBtcPkList) {
+	duplicate, err := ExistsDup(d.FpBtcPkList)
+	if err != nil {
+		return fmt.Errorf("list of finality provider PKs has an error: %w", err)
+	}
+	if duplicate {
 		return fmt.Errorf("list of finality provider PKs has duplication")
 	}
 	if d.StakingTx == nil {
@@ -235,7 +245,21 @@ func (d *BTCDelegation) ValidateBasic() error {
 
 	// ensure staking tx is correctly formatted
 	if _, err := bbn.NewBTCTxFromBytes(d.StakingTx); err != nil {
-		return err
+		return fmt.Errorf("failed to deserialize staking tx: %v", err)
+	}
+
+	// ensure slashing tx is correctly formatted
+	if _, err := bbn.NewBTCTxFromBytes(d.SlashingTx.MustMarshal()); err != nil {
+		return fmt.Errorf("failed to deserialize slashing tx: %v", err)
+	}
+
+	// Check all timelocks
+	if d.UnbondingTime > math.MaxUint16 {
+		return fmt.Errorf("unbonding time %d must be lower than %d", d.UnbondingTime, math.MaxUint16)
+	}
+
+	if d.StakingTime > math.MaxUint16 {
+		return fmt.Errorf("staking time %d must be lower than %d", d.StakingTime, math.MaxUint16)
 	}
 
 	return nil
@@ -495,6 +519,16 @@ func NewBTCDelegatorDelegationIndex() *BTCDelegatorDelegationIndex {
 	return &BTCDelegatorDelegationIndex{
 		StakingTxHashList: [][]byte{},
 	}
+}
+
+func (i *BTCDelegatorDelegationIndex) Validate() error {
+	for _, bz := range i.StakingTxHashList {
+		// NewHash validates hash size
+		if _, err := chainhash.NewHash(bz); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (i *BTCDelegatorDelegationIndex) Has(stakingTxHash chainhash.Hash) bool {

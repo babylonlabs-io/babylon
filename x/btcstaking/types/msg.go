@@ -28,13 +28,7 @@ func (m *MsgCreateFinalityProvider) ValidateBasic() error {
 	if err := m.Commission.Validate(); err != nil {
 		return err
 	}
-	if m.Description == nil {
-		return fmt.Errorf("empty description")
-	}
-	if len(m.Description.Moniker) == 0 {
-		return fmt.Errorf("empty moniker")
-	}
-	if _, err := m.Description.EnsureLength(); err != nil {
+	if err := validateDescription(m.Description); err != nil {
 		return err
 	}
 	if m.BtcPk == nil {

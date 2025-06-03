@@ -183,8 +183,6 @@ func TestSetLargestBtcReorg(t *testing.T) {
 
 	for _, tc := range tcs {
 		t.Run(tc.title, func(t *testing.T) {
-			t.Parallel()
-
 			k, ctx := keepertest.BTCStakingKeeper(t, nil, nil, nil)
 
 			if tc.setNewLargestFirst {

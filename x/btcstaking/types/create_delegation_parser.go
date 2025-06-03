@@ -227,7 +227,11 @@ func ParseCreateDelegationMessage(msg *MsgCreateBTCDelegation) (*ParsedCreateDel
 		return nil, fmt.Errorf("failed to parse finality provider public keys: %v", err)
 	}
 
-	if ExistsDup(fpPKs.PublicKeysBbnFormat) {
+	duplicate, err := ExistsDup(fpPKs.PublicKeysBbnFormat)
+	if err != nil {
+		return nil, fmt.Errorf("error in FPs public keys: %v", err)
+	}
+	if duplicate {
 		return nil, ErrDuplicatedFp
 	}
 
