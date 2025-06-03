@@ -41,7 +41,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 - [#909](https://github.com/babylonlabs-io/babylon/pull/909) Update tokenfactory upgrade fee params to `ubbn` .
 - [#884](https://github.com/babylonlabs-io/babylon/pull/884) Bump tokenfactory version to v0.50.6.
-- [#884](https://github.com/babylonlabs-io/babylon/pull/884) Bump tokenfactory version to v0.50.6
 - [#879](https://github.com/babylonlabs-io/babylon/pull/879) Add v2 e2e upgrade test.
 - [#869](https://github.com/babylonlabs-io/babylon/pull/869) Rename CZ to Consumer in btcstkconsumer and zoneconcierge.
 - [#837](https://github.com/babylonlabs-io/babylon/pull/837) Bump repository to v2.
@@ -70,18 +69,16 @@ check of rewards
 - [#933](https://github.com/babylonlabs-io/babylon/pull/933) Update repository version to `v4`.
 - [#935](https://github.com/babylonlabs-io/babylon/pull/935) Add `release/v4` branch to docker publish workflow.
 - [#937](https://github.com/babylonlabs-io/babylon/pull/937) Remove Zoneconcierge module.
+- [#943](https://github.com/babylonlabs-io/babylon/pull/943) Adds consumer event in `x/btcstakingconsumer` module
 - [#955](https://github.com/babylonlabs-io/babylon/pull/955) Update Mergify rules
 - [#967](https://github.com/babylonlabs-io/babylon/pull/967) Add `ValidateBasic` in `MsgInsertBTCSpvProof` (`x/btccheckpoint`)
 - [#969](https://github.com/babylonlabs-io/babylon/pull/969) Add `ValidateBasic` to `MsgSelectiveSlashingEvidence` in `x/btcstaking` module
 - [#977](https://github.com/babylonlabs-io/babylon/pull/977) Update `ValidateBasic` in `x/finality` module messages
-- [#981](https://github.com/babylonlabs-io/babylon/pull/981) Set IBC rate limit for `ubbn` to 10%
 - [#988](https://github.com/babylonlabs-io/babylon/pull/988) Fix flaky e2e ibc test
 `TestIBCTransferSuite`
-- [#943](https://github.com/babylonlabs-io/babylon/pull/943) Adds consumer event in `x/btcstakingconsumer` module
 - [#1000](https://github.com/babylonlabs-io/babylon/pull/1000) Add multi-staking replay test
-- [#1013](https://github.com/babylonlabs-io/babylon/pull/1013) Update to ibc rate limit `v8.1.0`
-- [#1018](https://github.com/babylonlabs-io/babylon/pull/1018) Improve genesis validations in `x/mint` and `x/btccheckpoint`
-- [#1030](https://github.com/babylonlabs-io/babylon/pull/1030) Update upgrade handler name to v2rc2
+- [#702](https://github.com/babylonlabs-io/babylon/pull/702) Add test for small rewards in fee collector
+- [#1034](https://github.com/babylonlabs-io/babylon/pull/1034) Remove redundant `ValidateBasic` call in `x/btcstaking` message server
 
 ### State Machine Breaking
 
@@ -96,6 +93,15 @@ This PR contains a series of PRs on multi-staking support and BTC staking integr
 - [#525](https://github.com/babylonlabs-io/babylon/pull/525) fix: add back `NewIBCHeaderDecorator` post handler
 - [#964](https://github.com/babylonlabs-io/babylon/pull/964) fix: stateless validation `ValidateBasic` of
 `MsgWrappedCreateValidator` to avoid panic in transaction submission
+
+## v2.0.0-rc.2
+
+### Improvements
+
+- [#981](https://github.com/babylonlabs-io/babylon/pull/981) Set IBC rate limit for `ubbn` to 10%
+- [#1013](https://github.com/babylonlabs-io/babylon/pull/1013) Update to ibc rate limit `v8.1.0`
+- [#1018](https://github.com/babylonlabs-io/babylon/pull/1018) Improve genesis validations in `x/mint` and `x/btccheckpoint`
+- [#1030](https://github.com/babylonlabs-io/babylon/pull/1030) Update upgrade handler name to v2rc2
 
 ## v2.0.0-rc.1
 
