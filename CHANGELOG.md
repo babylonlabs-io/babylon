@@ -82,6 +82,7 @@ check of rewards
 - [#1000](https://github.com/babylonlabs-io/babylon/pull/1000) Add multi-staking replay test
 - [#702](https://github.com/babylonlabs-io/babylon/pull/702) Add test for small rewards in fee collector
 - [#1034](https://github.com/babylonlabs-io/babylon/pull/1034) Remove redundant `ValidateBasic` call in `x/btcstaking` message server
+- [#1046](https://github.com/babylonlabs-io/babylon/pull/1046) Update genesis & validations `x/btcstaking` module
 
 ### State Machine Breaking
 
