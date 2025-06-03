@@ -38,11 +38,9 @@ var _ types.MsgServer = msgServer{}
 
 // UpdateParams updates the params
 func (ms msgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdateParams) (*types.MsgUpdateParamsResponse, error) {
+	// req.Params validation is done in ValidateBasic
 	if ms.authority != req.Authority {
 		return nil, errorsmod.Wrapf(govtypes.ErrInvalidSigner, "invalid authority; expected %s, got %s", ms.authority, req.Authority)
-	}
-	if err := req.Params.Validate(); err != nil {
-		return nil, govtypes.ErrInvalidProposalMsg.Wrapf("invalid parameter: %v", err)
 	}
 
 	// ensure the min unbonding time is always larger than the checkpoint finalization timeout
@@ -67,12 +65,6 @@ func (ms msgServer) CreateFinalityProvider(goCtx context.Context, req *types.Msg
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), types.MetricsKeyCreateFinalityProvider)
 
 	// ensure the finality provider address does not already exist
-	ctx := sdk.UnwrapSDKContext(goCtx)
-	// basic stateless checks
-	if err := req.ValidateBasic(); err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-
 	fpAddr, err := sdk.AccAddressFromBech32(req.Addr)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid address %s: %v", req.Addr, err)
@@ -83,6 +75,7 @@ func (ms msgServer) CreateFinalityProvider(goCtx context.Context, req *types.Msg
 		return nil, status.Errorf(codes.InvalidArgument, "invalid proof of possession: %v", err)
 	}
 
+	ctx := sdk.UnwrapSDKContext(goCtx)
 	if err := ms.AddFinalityProvider(ctx, req); err != nil {
 		return nil, err
 	}
@@ -91,12 +84,6 @@ func (ms msgServer) CreateFinalityProvider(goCtx context.Context, req *types.Msg
 
 // EditFinalityProvider edits an existing finality provider
 func (ms msgServer) EditFinalityProvider(goCtx context.Context, req *types.MsgEditFinalityProvider) (*types.MsgEditFinalityProviderResponse, error) {
-	// basic stateless checks
-	// NOTE: after this, description is guaranteed to be valid
-	if err := req.ValidateBasic(); err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-
 	fpAddr, err := sdk.AccAddressFromBech32(req.Addr)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid address %s: %v", req.Addr, err)
@@ -430,11 +417,6 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), types.MetricsKeyAddCovenantSigs)
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	// basic stateless checks
-	if err := req.ValidateBasic(); err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-
 	btcDel, params, err := ms.getBTCDelWithParams(ctx, req.StakingTxHash)
 
 	if err != nil {
@@ -613,11 +595,6 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), types.MetricsKeyBTCUndelegate)
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	// basic stateless checks
-	if err := req.ValidateBasic(); err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-
 	btcDel, bsParams, err := ms.getBTCDelWithParams(ctx, req.StakingTxHash)
 
 	if err != nil {
