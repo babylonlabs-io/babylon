@@ -12255,6 +12255,20 @@ paths:
                       integration, i.e.,
 
                       requiring governance proposal to approve new integrations.
+                  max_multi_staked_fps:
+                    type: integer
+                    format: int64
+                    description: >-
+                      max_multi_staked_fps is the maximum number of finality
+                      providers (both Babylon and consumer)
+
+                      that can be part of a single BTC delegation. This limit is
+                      enforced by Babylon - delegations
+
+                      with total FP count exceeding this limit will be rejected.
+                      Must be at least 2 to allow for
+
+                      at least one Babylon FP and one consumer FP.
             description: >-
               QueryParamsResponse is response type for the Query/Params RPC
               method.
@@ -23206,6 +23220,20 @@ definitions:
           i.e.,
 
           requiring governance proposal to approve new integrations.
+      max_multi_staked_fps:
+        type: integer
+        format: int64
+        description: >-
+          max_multi_staked_fps is the maximum number of finality providers (both
+          Babylon and consumer)
+
+          that can be part of a single BTC delegation. This limit is enforced by
+          Babylon - delegations
+
+          with total FP count exceeding this limit will be rejected. Must be at
+          least 2 to allow for
+
+          at least one Babylon FP and one consumer FP.
     description: Params defines the parameters for the module.
   babylon.btcstkconsumer.v1.QueryConsumerRegistryListResponse:
     type: object
@@ -23612,6 +23640,20 @@ definitions:
               integration, i.e.,
 
               requiring governance proposal to approve new integrations.
+          max_multi_staked_fps:
+            type: integer
+            format: int64
+            description: >-
+              max_multi_staked_fps is the maximum number of finality providers
+              (both Babylon and consumer)
+
+              that can be part of a single BTC delegation. This limit is
+              enforced by Babylon - delegations
+
+              with total FP count exceeding this limit will be rejected. Must be
+              at least 2 to allow for
+
+              at least one Babylon FP and one consumer FP.
     description: QueryParamsResponse is response type for the Query/Params RPC method.
   babylon.incentive.BTCStakingGaugeResponse:
     type: object
