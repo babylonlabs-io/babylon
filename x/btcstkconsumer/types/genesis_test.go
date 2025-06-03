@@ -39,9 +39,10 @@ func TestGenesisState_Validate(t *testing.T) {
 			valid:    true,
 		},
 		{
-			desc:     "valid genesis state - empty",
+			desc:     "invalid genesis state - empty",
 			genState: &types.GenesisState{},
-			valid:    true,
+			valid:    false,
+			errMsg:   types.ErrInvalidMaxMultiStakedFps.Error(),
 		},
 		{
 			desc: "valid genesis state",
@@ -72,7 +73,7 @@ func TestGenesisState_Validate(t *testing.T) {
 			errMsg: "finality provider consumer is not registered",
 		},
 		{
-			desc: "invalid max_multi_staked_fps (zero)",
+			desc: "invalid consumer max_multi_staked_fps (zero)",
 			genState: &types.GenesisState{
 				Consumers: []*types.ConsumerRegister{
 					{
@@ -89,6 +90,44 @@ func TestGenesisState_Validate(t *testing.T) {
 			},
 			valid:  false,
 			errMsg: types.ErrInvalidMaxMultiStakedFps.Error(),
+		},
+		{
+			desc: "invalid babylon params max_multi_staked_fps (zero)",
+			genState: &types.GenesisState{
+				Params: types.Params{
+					PermissionedIntegration: false,
+					MaxMultiStakedFps:       0, // Invalid Babylon param
+				},
+				Consumers:         []*types.ConsumerRegister{},
+				FinalityProviders: []*btcstaking.FinalityProvider{},
+			},
+			valid:  false,
+			errMsg: types.ErrInvalidMaxMultiStakedFps.Error(),
+		},
+		{
+			desc: "invalid babylon params max_multi_staked_fps (one)",
+			genState: &types.GenesisState{
+				Params: types.Params{
+					PermissionedIntegration: false,
+					MaxMultiStakedFps:       1, // Invalid Babylon param
+				},
+				Consumers:         []*types.ConsumerRegister{},
+				FinalityProviders: []*btcstaking.FinalityProvider{},
+			},
+			valid:  false,
+			errMsg: types.ErrInvalidMaxMultiStakedFps.Error(),
+		},
+		{
+			desc: "valid babylon params max_multi_staked_fps",
+			genState: &types.GenesisState{
+				Params: types.Params{
+					PermissionedIntegration: false,
+					MaxMultiStakedFps:       5, // Valid Babylon param
+				},
+				Consumers:         []*types.ConsumerRegister{},
+				FinalityProviders: []*btcstaking.FinalityProvider{},
+			},
+			valid: true,
 		},
 	}
 	for _, tc := range tests {

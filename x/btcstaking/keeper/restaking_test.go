@@ -8,6 +8,7 @@ import (
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
 	btclctypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
 	"github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+	btcstkconsumertypes "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
@@ -76,7 +77,7 @@ func FuzzRestaking_RestakedBTCDelegation(f *testing.F) {
 		/*
 			Test multiple consumers with different max_multi_staked_fps values
 		*/
-		// Test case 1: Valid delegation with 1 Babylon FP and 1 FP from each consumer (total 4 FPs)
+		// Test case 1: Invalid delegation with 1 Babylon FP and 1 FP from each consumer (total 4 FPs)
 		// This should fail because min(max_multi_staked_fps) = 2, but we're trying to use 4 FPs
 		_, _, _, _, _, _, err = h.CreateDelegationWithBtcBlockHeight(
 			r,
@@ -147,6 +148,102 @@ func FuzzRestaking_RestakedBTCDelegation(f *testing.F) {
 		)
 		h.Error(err)
 		require.ErrorIs(t, err, types.ErrTooManyFPsFromSameConsumer)
+
+		// Test case 5: Invalid delegation with 2 Babylon FPs (should fail with ErrTooManyBabylonFPs)
+		// Create a second Babylon finality provider
+		_, fpPK2, _ := h.CreateFinalityProvider(r)
+		_, _, _, _, _, _, err = h.CreateDelegationWithBtcBlockHeight(
+			r,
+			delSK,
+			[]*btcec.PublicKey{fpPK, fpPK2}, // 2 Babylon FPs
+			stakingValue,
+			1000,
+			0,
+			0,
+			false,
+			false,
+			10,
+			30,
+		)
+		h.Error(err)
+		require.ErrorIs(t, err, types.ErrTooManyBabylonFPs)
+
+		/*
+			Test Babylon's max_multi_staked_fps parameter with values >= 2
+		*/
+		// Test with Babylon's limit set to 4
+		err = h.BTCStkConsumerKeeper.SetParams(h.Ctx, btcstkconsumertypes.Params{
+			PermissionedIntegration: false,
+			MaxMultiStakedFps:       4, // Babylon allows max 4 FPs per delegation
+		})
+		require.NoError(t, err)
+
+		// Verify Babylon's limit is set correctly
+		babylonParams := h.BTCStkConsumerKeeper.GetParams(h.Ctx)
+		require.Equal(t, uint32(4), babylonParams.MaxMultiStakedFps)
+
+		// Test case 6: Valid delegation with 4 FPs (1 Babylon + 3 consumer)
+		// This should succeed because it equals Babylon's limit of 4
+		_, _, _, _, _, _, err = h.CreateDelegationWithBtcBlockHeight(
+			r,
+			delSK,
+			[]*btcec.PublicKey{fpPK, consumerFPPK1, consumerFPPK2, consumerFPPK3},
+			stakingValue,
+			1000,
+			0,
+			0,
+			false,
+			false,
+			10,
+			30,
+		)
+		h.NoError(err)
+
+		// Test case 7: Invalid delegation with 5 FPs (1 Babylon + 4 consumer)
+		// This should fail because it exceeds Babylon's limit of 4
+		_, consumerFPPK1_2, _, err = h.CreateConsumerFinalityProvider(r, consumerRegister1.ConsumerId)
+		h.NoError(err)
+		_, _, _, _, _, _, err = h.CreateDelegationWithBtcBlockHeight(
+			r,
+			delSK,
+			[]*btcec.PublicKey{fpPK, consumerFPPK1, consumerFPPK1_2, consumerFPPK2, consumerFPPK3},
+			stakingValue,
+			1000,
+			0,
+			0,
+			false,
+			false,
+			10,
+			30,
+		)
+		h.Error(err)
+		require.ErrorIs(t, err, types.ErrTooManyFPs)
+
+		// Test case 8: Test that Babylon's limit takes precedence when changed
+		// Set Babylon's limit to 3 (more restrictive than some consumer limits)
+		err = h.BTCStkConsumerKeeper.SetParams(h.Ctx, btcstkconsumertypes.Params{
+			PermissionedIntegration: false,
+			MaxMultiStakedFps:       3, // Babylon now allows max 3 FPs per delegation
+		})
+		require.NoError(t, err)
+
+		// Test case 9: Invalid delegation with 4 FPs that was valid before
+		// This should now fail because Babylon's new limit is 3
+		_, _, _, _, _, _, err = h.CreateDelegationWithBtcBlockHeight(
+			r,
+			delSK,
+			[]*btcec.PublicKey{fpPK, consumerFPPK1, consumerFPPK2, consumerFPPK3},
+			stakingValue,
+			1000,
+			0,
+			0,
+			false,
+			false,
+			10,
+			30,
+		)
+		h.Error(err)
+		require.ErrorIs(t, err, types.ErrTooManyFPs)
 
 		/*
 			happy case -- restaking to a Babylon fp and a consumer fp

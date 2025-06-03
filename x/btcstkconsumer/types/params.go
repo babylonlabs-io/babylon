@@ -15,6 +15,7 @@ func ParamKeyTable() paramtypes.KeyTable {
 func DefaultParams() Params {
 	return Params{
 		PermissionedIntegration: false,
+		MaxMultiStakedFps:       2, // Allow up to 2 FPs per delegation by default
 	}
 }
 
@@ -25,5 +26,8 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 
 // Validate validates the set of params
 func (p Params) Validate() error {
+	if p.MaxMultiStakedFps < 2 {
+		return ErrInvalidMaxMultiStakedFps
+	}
 	return nil
 }
