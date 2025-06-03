@@ -10,11 +10,11 @@ import (
 // EVMOptionsFn defines a function type for setting app options specifically for
 // the app. The function should receive the chainID and return an error if
 // any.
-type EVMOptionsFn func(string) error
+type EVMOptionsFn func(uint642 uint64) error
 
 // NoOpEVMOptions is a no-op function that can be used when the app does not
 // need any specific configuration.
-func NoOpEVMOptions(_ string) error {
+func NoOpEVMOptions(_ uint64) error {
 	return nil
 }
 
