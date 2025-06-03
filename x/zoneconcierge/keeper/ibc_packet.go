@@ -10,10 +10,10 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	"github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/types"
 	"github.com/cosmos/cosmos-sdk/telemetry"
-	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types" //nolint:staticcheck
-	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
-	host "github.com/cosmos/ibc-go/v8/modules/core/24-host"
-	coretypes "github.com/cosmos/ibc-go/v8/modules/core/types"
+	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types" //nolint:staticcheck
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+	host "github.com/cosmos/ibc-go/v10/modules/core/24-host"
+	coretypes "github.com/cosmos/ibc-go/v10/modules/core/types"
 	"github.com/hashicorp/go-metrics"
 )
 

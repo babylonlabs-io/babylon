@@ -17,10 +17,10 @@ import (
 	types5 "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 	types6 "github.com/cosmos/cosmos-sdk/types"
 	types7 "github.com/cosmos/ibc-go/modules/capability/types"
-	types8 "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
-	types9 "github.com/cosmos/ibc-go/v8/modules/core/03-connection/types"
-	types10 "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
-	exported "github.com/cosmos/ibc-go/v8/modules/core/exported"
+	types8 "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
+	types9 "github.com/cosmos/ibc-go/v10/modules/core/03-connection/types"
+	types10 "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+	exported "github.com/cosmos/ibc-go/v10/modules/core/exported"
 	gomock "github.com/golang/mock/gomock"
 )
 

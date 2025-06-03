@@ -9,7 +9,7 @@ import (
 	finalitytypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
 	"github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 )
 
 // BroadcastBTCStakingConsumerEvents retrieves all BTC staking consumer events from the event store,

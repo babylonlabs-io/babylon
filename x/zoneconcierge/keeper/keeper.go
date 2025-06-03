@@ -10,8 +10,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
-	host "github.com/cosmos/ibc-go/v8/modules/core/24-host"
-	ibcexported "github.com/cosmos/ibc-go/v8/modules/core/exported"
+	host "github.com/cosmos/ibc-go/v10/modules/core/24-host"
+	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
 )
 
 type (
@@ -34,7 +34,6 @@ type (
 		// used in BTC staking
 		bsKeeper     types.BTCStakingKeeper
 		btcStkKeeper types.BTCStkConsumerKeeper
-		scopedKeeper types.ScopedKeeper
 		// The address capable of executing a MsgUpdateParams message.
 		// Typically, this should be the x/gov module account.
 		authority string
@@ -58,7 +57,6 @@ func NewKeeper(
 	storeQuerier storetypes.Queryable,
 	bsKeeper types.BTCStakingKeeper,
 	btcStkKeeper types.BTCStkConsumerKeeper,
-	scopedKeeper types.ScopedKeeper,
 	authority string,
 ) *Keeper {
 	return &Keeper{
@@ -78,7 +76,6 @@ func NewKeeper(
 		storeQuerier:        storeQuerier,
 		bsKeeper:            bsKeeper,
 		btcStkKeeper:        btcStkKeeper,
-		scopedKeeper:        scopedKeeper,
 		authority:           authority,
 	}
 }

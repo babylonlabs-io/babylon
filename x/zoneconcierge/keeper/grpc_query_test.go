@@ -7,7 +7,7 @@ import (
 	"github.com/babylonlabs-io/babylon/v4/app"
 	btclightclienttypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
-	ibctmtypes "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
+	ibctmtypes "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 

@@ -15,8 +15,8 @@ import (
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/types"
-	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
+	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/types"
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 
 	"github.com/babylonlabs-io/babylon/v4/app"
 	v2 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v2"
