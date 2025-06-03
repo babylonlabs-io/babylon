@@ -11,8 +11,14 @@ import (
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types" //nolint:staticcheck
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
-	coretypes "github.com/cosmos/ibc-go/v10/modules/core/types"
 	"github.com/hashicorp/go-metrics"
+)
+
+const (
+	// LabelDestinationPort label for the metric for destination port
+	LabelDestinationPort = "destination_port"
+	// LabelDestinationChannel label for the metric for destination channel
+	LabelDestinationChannel = "destination_channel"
 )
 
 // SendIBCPacket sends an IBC packet to a channel
@@ -47,8 +53,8 @@ func (k Keeper) SendIBCPacket(ctx context.Context, channel channeltypes.Identifi
 
 	// metrics stuff
 	labels := []metrics.Label{
-		telemetry.NewLabel(coretypes.LabelDestinationPort, destinationPort),
-		telemetry.NewLabel(coretypes.LabelDestinationChannel, destinationChannel),
+		telemetry.NewLabel(LabelDestinationPort, destinationPort),
+		telemetry.NewLabel(LabelDestinationChannel, destinationChannel),
 	}
 	defer func() {
 		telemetry.IncrCounterWithLabels(

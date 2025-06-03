@@ -394,9 +394,8 @@ func FuzzFinalizedChainInfo(f *testing.F) {
 		// mock channel/port keeper
 		channelKeeper := zctypes.NewMockChannelKeeper(ctrl)
 		channelKeeper.EXPECT().GetAllChannels(gomock.Any()).Return(nil).AnyTimes()
-		portKeeper := zctypes.NewMockPortKeeper(ctrl)
 
-		zcKeeper, ctx := testkeeper.ZoneConciergeKeeper(t, channelKeeper, portKeeper, btclcKeeper, checkpointingKeeper, btccKeeper, epochingKeeper, nil, nil)
+		zcKeeper, ctx := testkeeper.ZoneConciergeKeeper(t, channelKeeper, btclcKeeper, checkpointingKeeper, btccKeeper, epochingKeeper, nil, nil)
 		hooks := zcKeeper.Hooks()
 
 		var (

@@ -38,7 +38,6 @@ func (zoneconciergeStoreQuerier) Query(req *storetypes.RequestQuery) (*storetype
 func ZoneConciergeKeeper(
 	t testing.TB,
 	channelKeeper types.ChannelKeeper,
-	portKeeper types.PortKeeper,
 	btclcKeeper types.BTCLightClientKeeper,
 	checkpointingKeeper types.CheckpointingKeeper,
 	btccKeeper types.BtcCheckpointKeeper,
@@ -50,7 +49,6 @@ func ZoneConciergeKeeper(
 		t,
 		nil,
 		channelKeeper,
-		portKeeper,
 		btclcKeeper,
 		checkpointingKeeper,
 		btccKeeper,
@@ -64,7 +62,6 @@ func ZoneConciergeKeeperWithStoreKey(
 	t testing.TB,
 	storeKey *storetypes.KVStoreKey,
 	channelKeeper types.ChannelKeeper,
-	portKeeper types.PortKeeper,
 	btclcKeeper types.BTCLightClientKeeper,
 	checkpointingKeeper types.CheckpointingKeeper,
 	btccKeeper types.BtcCheckpointKeeper,
@@ -93,7 +90,6 @@ func ZoneConciergeKeeperWithStoreKey(
 		nil, // TODO: mock this keeper
 		nil, // TODO: mock this keeper
 		channelKeeper,
-		portKeeper,
 		nil, // TODO: mock this keeper
 		nil, // TODO: mock this keeper
 		btclcKeeper,

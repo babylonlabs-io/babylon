@@ -11,7 +11,6 @@ import (
 	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
 	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
 	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types" //nolint:staticcheck
 	connectiontypes "github.com/cosmos/ibc-go/v10/modules/core/03-connection/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
@@ -63,14 +62,6 @@ type ClientKeeper interface {
 // ConnectionKeeper defines the expected IBC connection keeper
 type ConnectionKeeper interface {
 	GetConnection(ctx sdk.Context, connectionID string) (connection connectiontypes.ConnectionEnd, found bool)
-}
-
-// ScopedKeeper defines the expected x/capability scoped keeper interface
-type ScopedKeeper interface {
-	GetCapability(ctx sdk.Context, name string) (*capabilitytypes.Capability, bool)
-	AuthenticateCapability(ctx sdk.Context, cap *capabilitytypes.Capability, name string) bool
-	LookupModules(ctx sdk.Context, name string) ([]string, *capabilitytypes.Capability, error)
-	ClaimCapability(ctx sdk.Context, cap *capabilitytypes.Capability, name string) error
 }
 
 type BTCLightClientKeeper interface {

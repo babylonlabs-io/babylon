@@ -20,7 +20,6 @@ import (
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	porttypes "github.com/cosmos/ibc-go/v10/modules/core/05-port/types"
 )
 
 var (
@@ -28,7 +27,6 @@ var (
 	_ appmodule.HasBeginBlocker = AppModule{}
 	_ module.HasABCIEndBlock    = AppModule{}
 	_ module.AppModuleBasic     = AppModuleBasic{}
-	_ porttypes.IBCModule       = IBCModule{}
 )
 
 // ----------------------------------------------------------------------------
