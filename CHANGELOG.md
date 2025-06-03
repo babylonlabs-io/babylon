@@ -90,7 +90,7 @@ check of rewards
 - [#1018](https://github.com/babylonlabs-io/babylon/pull/1018) Improve genesis validations in `x/mint` and `x/btccheckpoint`
 - [#702](https://github.com/babylonlabs-io/babylon/pull/702) Add test for small rewards in fee collector
 - [#1030](https://github.com/babylonlabs-io/babylon/pull/1030) Update upgrade handler name to v2rc2
-- [#xxx](https://github.com/babylonlabs-io/babylon/pull/xxx) Remove redundant `ValidateBasic` call in `x/btcstaking` message server
+- [#1034](https://github.com/babylonlabs-io/babylon/pull/1034) Remove redundant `ValidateBasic` call in `x/btcstaking` message server
 
 ### State Machine Breaking
 
