@@ -2,6 +2,7 @@ package chain
 
 import (
 	"encoding/json"
+	"fmt"
 
 	cmtcrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 
@@ -11,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func (n *NodeConfig) CommitPubRandListRollup(finalityContractAddr string, fpBtcPk *types.BIP340PubKey, startHeight uint64, numPubRand uint64, commitment []byte, sig *types.BIP340Signature) {
+func (n *NodeConfig) CommitPubRandListRollup(walletAddrOrName, finalityContractAddr string, fpBtcPk *types.BIP340PubKey, startHeight uint64, numPubRand uint64, commitment []byte, sig *types.BIP340Signature) {
 	// Prepare the command to commit the public randomness list
 	n.LogActionF("Committing public randomness list to finality contract %s", finalityContractAddr)
 	// Prepare the command to commit the public randomness list
@@ -31,7 +32,7 @@ func (n *NodeConfig) CommitPubRandListRollup(finalityContractAddr string, fpBtcP
 	cmd := []string{"babylond", "tx", "wasm", "execute", finalityContractAddr, string(msg)}
 
 	// specify used key
-	cmd = append(cmd, "--from=val")
+	cmd = append(cmd, fmt.Sprintf("--from=%s", walletAddrOrName))
 
 	// gas
 	cmd = append(cmd, "--gas=500000")
@@ -41,6 +42,7 @@ func (n *NodeConfig) CommitPubRandListRollup(finalityContractAddr string, fpBtcP
 }
 
 func (n *NodeConfig) AddFinalitySigRollup(
+	walletAddrOrName,
 	finalityContractAddr string,
 	fpBtcPk *types.BIP340PubKey,
 	blockHeight uint64,
@@ -75,7 +77,7 @@ func (n *NodeConfig) AddFinalitySigRollup(
 	cmd := []string{"babylond", "tx", "wasm", "execute", finalityContractAddr, string(msg)}
 
 	// specify used key
-	cmd = append(cmd, "--from=val")
+	cmd = append(cmd, fmt.Sprintf("--from=%s", walletAddrOrName))
 
 	// gas
 	cmd = append(cmd, "--gas=500000")

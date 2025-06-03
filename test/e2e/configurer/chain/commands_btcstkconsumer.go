@@ -60,7 +60,7 @@ func (n *NodeConfig) CreateConsumerFinalityProvider(walletAddrOrName string, con
 	n.LogActionF("Successfully created %s finality provider", consumer)
 }
 
-func (n *NodeConfig) CommitPubRandListConsumer(consumerId string, fpBtcPk *bbn.BIP340PubKey, startHeight uint64, numPubRand uint64, commitment []byte, sig *bbn.BIP340Signature) {
+func (n *NodeConfig) CommitPubRandListConsumer(walletAddrOrName, consumerId string, fpBtcPk *bbn.BIP340PubKey, startHeight uint64, numPubRand uint64, commitment []byte, sig *bbn.BIP340Signature) {
 	if consumerId == "" {
 		// Use the chain ID as the consumer
 		consumerId = n.chainId
@@ -88,11 +88,13 @@ func (n *NodeConfig) CommitPubRandListConsumer(consumerId string, fpBtcPk *bbn.B
 		n.t.Fatalf("Finality contract address for consumer %s is not set", consumerId)
 	}
 
-	n.CommitPubRandListRollup(finalityContractAddr, fpBtcPk, startHeight, numPubRand, commitment, sig)
+	n.CommitPubRandListRollup(walletAddrOrName, finalityContractAddr, fpBtcPk, startHeight, numPubRand, commitment, sig)
 	n.LogActionF("Successfully committed public randomness list")
 }
 
-func (n *NodeConfig) AddFinalitySigConsumer(consumerId string,
+func (n *NodeConfig) AddFinalitySigConsumer(
+	walletAddrOrName,
+	consumerId string,
 	fpBTCPK *bbn.BIP340PubKey,
 	blockHeight uint64,
 	pubRand *bbn.SchnorrPubRand,
@@ -128,6 +130,6 @@ func (n *NodeConfig) AddFinalitySigConsumer(consumerId string,
 		n.t.Fatalf("Finality contract address for consumer %s is not set", consumerId)
 	}
 
-	n.AddFinalitySigRollup(finalityContractAddr, fpBTCPK, blockHeight, pubRand, proof, appHash, finalitySig, overallFlags...)
+	n.AddFinalitySigRollup(walletAddrOrName, finalityContractAddr, fpBTCPK, blockHeight, pubRand, proof, appHash, finalitySig, overallFlags...)
 	n.LogActionF("Successfully added finality signature")
 }

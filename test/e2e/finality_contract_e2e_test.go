@@ -347,6 +347,7 @@ func (s *FinalityContractTestSuite) Test5CommitPublicRandomness() {
 	s.NoError(err)
 
 	nonValidatorNode.CommitPubRandListConsumer(
+		initialization.ValidatorWalletName,
 		ConsumerID,
 		msgCommitPubRandList.FpBtcPk,
 		msgCommitPubRandList.StartHeight,
@@ -392,7 +393,7 @@ func (s *FinalityContractTestSuite) Test6SubmitFinalitySignatura() {
 	s.NoError(err)
 	eotsSig := bbn.NewSchnorrEOTSSigFromModNScalar(sig)
 
-	nonValidatorNode.AddFinalitySigConsumer(ConsumerID, s.consumerFp.BtcPk, startHeight, &s.randListInfo.PRList[idx], *s.randListInfo.ProofList[idx].ToProto(), appHash, eotsSig)
+	nonValidatorNode.AddFinalitySigConsumer(initialization.ValidatorWalletName, ConsumerID, s.consumerFp.BtcPk, startHeight, &s.randListInfo.PRList[idx], *s.randListInfo.ProofList[idx].ToProto(), appHash, eotsSig)
 
 	// Query the finality signature from the finality contract
 
