@@ -431,8 +431,6 @@ func (ak *AppKeepers) InitKeepers(
 		appparams.AccGov.String(),
 	)
 
-	ak.IBCKeeper.ConnectionKeeper.GetParams()
-
 	// Create the TokenFactory Keeper
 	ak.TokenFactoryKeeper = tokenfactorykeeper.NewKeeper(
 		appCodec,
