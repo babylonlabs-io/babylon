@@ -115,7 +115,11 @@ func validateMinCommissionRate(rate sdkmath.LegacyDec) error {
 
 // validateCovenantPks checks whether the covenants list contains any duplicates
 func validateCovenantPks(covenantPks []bbn.BIP340PubKey) error {
-	if ExistsDup(covenantPks) {
+	duplicate, err := ExistsDup(covenantPks)
+	if err != nil {
+		return err
+	}
+	if duplicate {
 		return fmt.Errorf("duplicate covenant key")
 	}
 	return nil

@@ -45,22 +45,46 @@ func (fp *FinalityProvider) ValidateBasic() error {
 		return fmt.Errorf("PoP is not valid: %w", err)
 	}
 
+	if err := validateDescription(fp.Description); err != nil {
+		return err
+	}
+
+	if fp.Commission == nil {
+		return fmt.Errorf("empty commission")
+	}
+
+	if fp.CommissionInfo == nil {
+		return fmt.Errorf("empty commission info")
+	}
+
+	if err := NewCommissionRates(
+		*fp.Commission,
+		fp.CommissionInfo.MaxRate,
+		fp.CommissionInfo.MaxChangeRate,
+	).Validate(); err != nil {
+		return err
+	}
+
 	return nil
 }
 
-func ExistsDup(btcPKs []bbn.BIP340PubKey) bool {
+func ExistsDup(btcPKs []bbn.BIP340PubKey) (bool, error) {
 	seen := make(map[string]struct{})
 
 	for _, btcPK := range btcPKs {
+		if _, err := btcPK.ToBTCPK(); err != nil {
+			return false, err
+		}
+
 		pkStr := string(btcPK)
 		if _, found := seen[pkStr]; found {
-			return true
+			return true, nil
 		} else {
 			seen[pkStr] = struct{}{}
 		}
 	}
 
-	return false
+	return false, nil
 }
 
 func NewSignatureInfo(pk *bbn.BIP340PubKey, sig *bbn.BIP340Signature) *SignatureInfo {
@@ -177,5 +201,18 @@ func (cr CommissionInfo) Validate() error {
 		return stktypes.ErrCommissionChangeRateGTMaxRate
 	}
 
+	return nil
+}
+
+func validateDescription(d *stktypes.Description) error {
+	if d == nil {
+		return fmt.Errorf("empty description")
+	}
+	if len(d.Moniker) == 0 {
+		return fmt.Errorf("empty moniker")
+	}
+	if _, err := d.EnsureLength(); err != nil {
+		return err
+	}
 	return nil
 }
