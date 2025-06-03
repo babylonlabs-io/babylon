@@ -170,9 +170,9 @@ message ConsumerRegisterResponse {
   // cosmos_channel_id is the IBC channel ID for the consumer
   // set only for Cosmos integration
   string cosmos_channel_id = 4;
-  // eth_l2_finality_contract_address is the address of the finality contract
-  // set only for ETH L2 integration
-  string eth_l2_finality_contract_address = 5 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  // rollup_finality_contract_address is the address of the finality contract
+  // set only for rollup integration
+  string rollup_finality_contract_address = 5 [(cosmos_proto.scalar) = "cosmos.AddressString"];
   // max_multi_staked_fps is the maximum number of finality providers from this consumer
   // that can be part of a single BTC delegation. Must be at least 2 to allow for at least
   // one Babylon FP and one consumer FP.

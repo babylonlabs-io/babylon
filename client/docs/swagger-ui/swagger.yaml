@@ -10695,13 +10695,13 @@ paths:
                       title: |-
                         cosmos_channel_id is the IBC channel ID for the consumer
                         set only for Cosmos integration
-                    eth_l2_finality_contract_address:
+                    rollup_finality_contract_address:
                       type: string
                       title: >-
-                        eth_l2_finality_contract_address is the address of the
+                        rollup_finality_contract_address is the address of the
                         finality contract
 
-                        set only for ETH L2 integration
+                        set only for rollup integration
                     max_multi_staked_fps:
                       type: integer
                       format: int64
@@ -11047,13 +11047,13 @@ paths:
                       title: |-
                         cosmos_channel_id is the IBC channel ID for the consumer
                         set only for Cosmos integration
-                    eth_l2_finality_contract_address:
+                    rollup_finality_contract_address:
                       type: string
                       title: >-
-                        eth_l2_finality_contract_address is the address of the
+                        rollup_finality_contract_address is the address of the
                         finality contract
 
-                        set only for ETH L2 integration
+                        set only for rollup integration
                     max_multi_staked_fps:
                       type: integer
                       format: int64
@@ -23079,13 +23079,13 @@ definitions:
         title: |-
           cosmos_channel_id is the IBC channel ID for the consumer
           set only for Cosmos integration
-      eth_l2_finality_contract_address:
+      rollup_finality_contract_address:
         type: string
         title: >-
-          eth_l2_finality_contract_address is the address of the finality
+          rollup_finality_contract_address is the address of the finality
           contract
 
-          set only for ETH L2 integration
+          set only for rollup integration
       max_multi_staked_fps:
         type: integer
         format: int64
@@ -23239,13 +23239,13 @@ definitions:
               title: |-
                 cosmos_channel_id is the IBC channel ID for the consumer
                 set only for Cosmos integration
-            eth_l2_finality_contract_address:
+            rollup_finality_contract_address:
               type: string
               title: >-
-                eth_l2_finality_contract_address is the address of the finality
+                rollup_finality_contract_address is the address of the finality
                 contract
 
-                set only for ETH L2 integration
+                set only for rollup integration
             max_multi_staked_fps:
               type: integer
               format: int64
@@ -23327,13 +23327,13 @@ definitions:
               title: |-
                 cosmos_channel_id is the IBC channel ID for the consumer
                 set only for Cosmos integration
-            eth_l2_finality_contract_address:
+            rollup_finality_contract_address:
               type: string
               title: >-
-                eth_l2_finality_contract_address is the address of the finality
+                rollup_finality_contract_address is the address of the finality
                 contract
 
-                set only for ETH L2 integration
+                set only for rollup integration
             max_multi_staked_fps:
               type: integer
               format: int64
