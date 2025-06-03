@@ -1,6 +1,7 @@
 package app
 
 import (
+	"cosmossdk.io/math"
 	"encoding/json"
 	"fmt"
 	srvflags "github.com/cosmos/evm/server/flags"
@@ -47,7 +48,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/server/api"
 	"github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
-	"github.com/cosmos/cosmos-sdk/std"
 	"github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/mempool"
@@ -183,6 +183,9 @@ var (
 )
 
 func init() {
+	sdk.DefaultPowerReduction = cosmosevmtypes.MicroPowerReduction
+	stakingtypes.DefaultMinCommissionRate = math.LegacyZeroDec()
+
 	// Note: If this changes, the home directory under x/checkpointing/client/cli/tx.go needs to change as well
 	userHomeDir, err := os.UserHomeDir()
 	if err != nil {
@@ -250,8 +253,9 @@ func NewBabylonApp(
 	appCodec := encCfg.Codec
 	legacyAmino := encCfg.Amino
 	txConfig := encCfg.TxConfig
-	std.RegisterLegacyAminoCodec(legacyAmino)
-	std.RegisterInterfaces(interfaceRegistry)
+
+	//std.RegisterLegacyAminoCodec(legacyAmino)
+	//std.RegisterInterfaces(interfaceRegistry)
 
 	bApp := baseapp.NewBaseApp(appName, logger, db, txConfig.TxDecoder(), baseAppOptions...)
 	bApp.SetCommitMultiStoreTracer(traceStore)
@@ -260,7 +264,7 @@ func NewBabylonApp(
 	bApp.SetTxEncoder(txConfig.TxEncoder())
 
 	// Add after encoder has been set:
-	if err := evmAppOptions(bApp.ChainID()); err != nil {
+	if err := evmAppOptions(evmChainID); err != nil {
 		// Initialize the EVM application configuration
 		panic(fmt.Errorf("failed to initialize EVM app configuration: %w", err))
 	}
@@ -385,6 +389,7 @@ func NewBabylonApp(
 	// NOTE: upgrade module is required to be prioritized
 	app.ModuleManager.SetOrderPreBlockers(
 		upgradetypes.ModuleName,
+		authtypes.ModuleName,
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that

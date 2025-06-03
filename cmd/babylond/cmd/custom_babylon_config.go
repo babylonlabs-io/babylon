@@ -61,9 +61,9 @@ type BabylonAppConfig struct {
 	BabylonMempoolConfig BabylonMempoolConfig `mapstructure:"babylon-mempool"`
 
 	// EVM config
-	EVM     evmserverconfig.EVMConfig
-	JSONRPC evmserverconfig.JSONRPCConfig
-	TLS     evmserverconfig.TLSConfig
+	EVM     evmserverconfig.EVMConfig     `mapstructure:"evm"`
+	JSONRPC evmserverconfig.JSONRPCConfig `mapstructure:"json-rpc"`
+	TLS     evmserverconfig.TLSConfig     `mapstructure:"tls"`
 }
 
 func DefaultBabylonAppConfig() *BabylonAppConfig {

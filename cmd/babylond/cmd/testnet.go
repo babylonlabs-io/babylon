@@ -42,6 +42,8 @@ import (
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
+	evmtypes "github.com/cosmos/evm/crypto/hd"
+	servercfg "github.com/cosmos/evm/server/config"
 )
 
 var (
@@ -70,6 +72,8 @@ Example:
 	`,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
+			clientCtx = clientCtx.WithKeyringOptions(evmtypes.EthSecp256k1Option())
+
 			if err != nil {
 				return err
 			}
@@ -197,6 +201,10 @@ func InitTestnet(
 	babylonConfig.GRPC.Enable = true
 	babylonConfig.GRPC.Address = "0.0.0.0:9090"
 
+	// Update babylonConfig to include Ethereum JSON-RPC settings
+	babylonConfig.EVM = *servercfg.DefaultEVMConfig()
+	babylonConfig.JSONRPC = *servercfg.DefaultJSONRPCConfig()
+
 	// Disable IAVL cache by default as Babylon leaf nodes can be large, and in case
 	// of big cache values, Babylon node can run out of memory.
 	babylonConfig.IAVLCacheSize = 0
@@ -243,7 +251,7 @@ func InitTestnet(
 		}
 
 		// generate account key
-		kb, err := keyring.New(sdk.KeyringServiceName(), keyringBackend, nodeDir, inBuf, clientCtx.Codec)
+		kb, err := keyring.New(sdk.KeyringServiceName(), keyringBackend, nodeDir, inBuf, clientCtx.Codec, evmtypes.EthSecp256k1Option())
 
 		if err != nil {
 			return err

@@ -10,7 +10,7 @@ import (
 // EVMOptionsFn defines a function type for setting app options specifically for
 // the app. The function should receive the chainID and return an error if
 // any.
-type EVMOptionsFn func(uint642 uint64) error
+type EVMOptionsFn func(uint64 uint64) error
 
 // NoOpEVMOptions is a no-op function that can be used when the app does not
 // need any specific configuration.
@@ -25,9 +25,9 @@ var sealed = false
 // chain id
 var ChainsCoinInfo = map[uint64]evmtypes.EvmCoinInfo{
 	EVMChainID: {
-		Denom:         BaseCosmosDenom,
+		Denom:         BaseEVMDenom,
 		ExtendedDenom: BaseEVMDenom,
-		DisplayDenom:  DisplayDenom,
+		DisplayDenom:  BaseEVMDenom,
 		Decimals:      evmtypes.SixDecimals,
 	},
 }
@@ -44,10 +44,10 @@ func EVMAppOptions(chainID uint64) error {
 		return fmt.Errorf("unknown chain id: %d", chainID)
 	}
 
-	// set the denom info for the chain
-	if err := setBaseDenom(coinInfo); err != nil {
-		return err
-	}
+	//// set the denom info for the chain
+	//if err := setBaseDenom(coinInfo); err != nil {
+	//	return err
+	//}
 
 	ethCfg := evmtypes.DefaultChainConfig(chainID)
 

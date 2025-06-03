@@ -470,16 +470,6 @@ func (ak *AppKeepers) InitKeepers(
 		),
 	)
 
-	ak.EVMTransferKeeper = evmtransferkeeper.NewKeeper(
-		appCodec, runtime.NewKVStoreService(keys[evmtypes.ModuleName]),
-		ak.GetSubspace(ibctransfertypes.ModuleName),
-		ak.IBCKeeper.ChannelKeeper, // ICS4Wrapper
-		ak.IBCKeeper.ChannelKeeper,
-		bApp.MsgServiceRouter(), ak.AccountKeeper, ak.BankKeeper,
-		ak.Erc20Keeper, // Add ERC20 Keeper for ERC20 transfers
-		appparams.AccGov.String(),
-	)
-
 	ak.IBCKeeper = ibckeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[ibcexported.StoreKey]),
@@ -489,6 +479,16 @@ func (ak *AppKeepers) InitKeepers(
 		// `MsgIBCSoftwareUpgrade` and `MsgRecoverClient`
 		// https://github.com/cosmos/ibc-go/releases/tag/v8.0.0
 		// Gov is the proper authority for those types of messages
+		appparams.AccGov.String(),
+	)
+
+	ak.EVMTransferKeeper = evmtransferkeeper.NewKeeper(
+		appCodec, runtime.NewKVStoreService(keys[evmtypes.ModuleName]),
+		ak.GetSubspace(ibctransfertypes.ModuleName),
+		ak.IBCKeeper.ChannelKeeper, // ICS4Wrapper
+		ak.IBCKeeper.ChannelKeeper,
+		bApp.MsgServiceRouter(), ak.AccountKeeper, ak.BankKeeper,
+		ak.Erc20Keeper, // Add ERC20 Keeper for ERC20 transfers
 		appparams.AccGov.String(),
 	)
 
