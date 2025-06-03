@@ -493,9 +493,9 @@ func NewBabylonApp(
 	app.sm.RegisterStoreDecoders()
 
 	// initialize stores
-	app.BaseApp.MountKVStores(app.GetKVStoreKeys())
-	app.BaseApp.MountTransientStores(app.GetTransientStoreKeys())
-	app.BaseApp.MountMemoryStores(app.GetMemoryStoreKeys())
+	app.MountKVStores(app.GetKVStoreKeys())
+	app.MountTransientStores(app.GetTransientStoreKeys())
+	app.MountMemoryStores(app.GetMemoryStoreKeys())
 
 	// initialize AnteHandler for the app
 	anteHandler := ante.NewAnteHandler(
