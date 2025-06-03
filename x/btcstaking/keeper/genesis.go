@@ -30,6 +30,15 @@ func (k Keeper) InitGenesis(ctx context.Context, gs types.GenesisState) error {
 	}
 
 	for _, btcDel := range gs.BtcDelegations {
+		// make sure fp is not slashed
+		fp, err := k.GetFinalityProvider(ctx, *btcDel.BtcPk)
+		if err != nil {
+			return fmt.Errorf("error getting BTC delegation finality provider: %w", err)
+		}
+		// ensure the finality provider is not slashed
+		if fp.IsSlashed() {
+			return types.ErrFpAlreadySlashed.Wrapf("finality key: %s", btcDel.BtcPk.MarshalHex())
+		}
 		k.setBTCDelegation(ctx, btcDel)
 	}
 

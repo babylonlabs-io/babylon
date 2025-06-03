@@ -23,10 +23,6 @@ func (k Keeper) AddBTCDelegation(
 	ctx sdk.Context,
 	btcDel *types.BTCDelegation,
 ) error {
-	if err := btcDel.ValidateBasic(); err != nil {
-		return err
-	}
-
 	// get staking tx hash
 	stakingTxHash, err := btcDel.GetStakingTxHash()
 	if err != nil {

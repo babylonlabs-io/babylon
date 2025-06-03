@@ -29,7 +29,6 @@ func (gs GenesisState) Validate() error {
 	}
 
 	heightToVersionMap := NewHeightToVersionMap()
-	// TODO: add validation to other properties of genstate.
 	for i, params := range gs.Params {
 		if err := params.Validate(); err != nil {
 			return err
@@ -45,6 +44,12 @@ func (gs GenesisState) Validate() error {
 		}
 	}
 
+	if err := types.ValidateEntries(gs.FinalityProviders, func(f *FinalityProvider) string {
+		return f.BtcPk.MarshalHex()
+	}); err != nil {
+		return err
+	}
+
 	for _, d := range gs.BtcDelegations {
 		if err := d.ValidateBasic(); err != nil {
 			return err
@@ -55,6 +60,18 @@ func (gs GenesisState) Validate() error {
 		if err := d.Validate(); err != nil {
 			return err
 		}
+	}
+
+	if err := types.ValidateEntries(gs.BlockHeightChains, func(bh *BlockHeightBbnToBtc) uint64 {
+		return bh.BlockHeightBbn
+	}); err != nil {
+		return err
+	}
+
+	if err := types.ValidateEntries(gs.Events, func(e *EventIndex) string {
+		return fmt.Sprintf("%d-%d", e.BlockHeightBtc, e.Idx)
+	}); err != nil {
+		return err
 	}
 
 	if gs.LargestBtcReorg != nil {
