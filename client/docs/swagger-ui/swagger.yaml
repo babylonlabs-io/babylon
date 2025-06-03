@@ -10679,8 +10679,8 @@ paths:
                         - for Cosmos SDK chains, the consumer ID will be the IBC
                         client ID
 
-                        - for ETH L2 chains, the consumer ID will be the chain
-                        ID of the ETH L2
+                        - for rollup chains, the consumer ID will be the chain
+                        ID of the rollup
                           chain
                     consumer_name:
                       type: string
@@ -11031,8 +11031,8 @@ paths:
                         - for Cosmos SDK chains, the consumer ID will be the IBC
                         client ID
 
-                        - for ETH L2 chains, the consumer ID will be the chain
-                        ID of the ETH L2
+                        - for rollup chains, the consumer ID will be the chain
+                        ID of the rollup
                           chain
                     consumer_name:
                       type: string
@@ -23065,8 +23065,8 @@ definitions:
 
           - for Cosmos SDK chains, the consumer ID will be the IBC client ID
 
-          - for ETH L2 chains, the consumer ID will be the chain ID of the ETH
-          L2
+          - for rollup chains, the consumer ID will be the chain ID of the
+          rollup
             chain
       consumer_name:
         type: string
@@ -23223,8 +23223,8 @@ definitions:
                 - for Cosmos SDK chains, the consumer ID will be the IBC client
                 ID
 
-                - for ETH L2 chains, the consumer ID will be the chain ID of the
-                ETH L2
+                - for rollup chains, the consumer ID will be the chain ID of the
+                rollup
                   chain
             consumer_name:
               type: string
@@ -23311,8 +23311,8 @@ definitions:
                 - for Cosmos SDK chains, the consumer ID will be the IBC client
                 ID
 
-                - for ETH L2 chains, the consumer ID will be the chain ID of the
-                ETH L2
+                - for rollup chains, the consumer ID will be the chain ID of the
+                rollup
                   chain
             consumer_name:
               type: string

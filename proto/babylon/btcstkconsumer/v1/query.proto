@@ -160,7 +160,7 @@ message QueryFinalityProviderConsumerResponse {
 message ConsumerRegisterResponse {
   // consumer_id is the ID of the consumer
   // - for Cosmos SDK chains, the consumer ID will be the IBC client ID
-  // - for ETH L2 chains, the consumer ID will be the chain ID of the ETH L2
+  // - for rollup chains, the consumer ID will be the chain ID of the rollup
   //   chain
   string consumer_id = 1;
   // consumer_name is the name of the consumer

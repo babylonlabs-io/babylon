@@ -738,7 +738,7 @@ func (m *QueryFinalityProviderConsumerResponse) GetConsumerId() string {
 type ConsumerRegisterResponse struct {
 	// consumer_id is the ID of the consumer
 	// - for Cosmos SDK chains, the consumer ID will be the IBC client ID
-	// - for ETH L2 chains, the consumer ID will be the chain ID of the ETH L2
+	// - for rollup chains, the consumer ID will be the chain ID of the rollup
 	//   chain
 	ConsumerId string `protobuf:"bytes,1,opt,name=consumer_id,json=consumerId,proto3" json:"consumer_id,omitempty"`
 	// consumer_name is the name of the consumer
