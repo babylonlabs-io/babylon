@@ -37,7 +37,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
-
 ### Improvements
 
 - [#1015](https://github.com/babylonlabs-io/babylon/pull/1015) Add finality contract e2e tests follup-up.
@@ -90,6 +89,7 @@ check of rewards
 - [#1018](https://github.com/babylonlabs-io/babylon/pull/1018) Improve genesis validations in `x/mint` and `x/btccheckpoint`
 - [#702](https://github.com/babylonlabs-io/babylon/pull/702) Add test for small rewards in fee collector
 - [#1030](https://github.com/babylonlabs-io/babylon/pull/1030) Update upgrade handler name to v2rc2
+- [#1036](https://github.com/babylonlabs-io/babylon/pull/1036) Remove token factory `enable_admin_sudo_mint` capability
 
 ### State Machine Breaking
 
