@@ -108,9 +108,6 @@ var tokenFactoryCapabilities = []string{
 	tokenfactorytypes.EnableBurnFrom,
 	tokenfactorytypes.EnableForceTransfer,
 	tokenfactorytypes.EnableSetMetadata,
-	// SudoMint allows addresses of your choosing to mint tokens based on specific conditions.
-	// via the IsSudoAdminFunc
-	tokenfactorytypes.EnableSudoMint,
 	// CommunityPoolFeeFunding sends tokens to the community pool when a new fee is charged (if one is set in params).
 	// This is useful for ICS chains, or networks who wish to just have the fee tokens burned (not gas fees, just the extra on top).
 	tokenfactorytypes.EnableCommunityPoolFeeFunding,
