@@ -3,9 +3,11 @@ package app
 import (
 	"encoding/json"
 	"fmt"
+	srvflags "github.com/cosmos/evm/server/flags"
 	"github.com/cosmos/evm/x/erc20"
 	erc20types "github.com/cosmos/evm/x/erc20/types"
 	"github.com/cosmos/evm/x/feemarket"
+	"github.com/ethereum/go-ethereum/core/vm"
 	"io"
 	"os"
 	"path/filepath"
@@ -125,6 +127,9 @@ import (
 	minttypes "github.com/babylonlabs-io/babylon/v3/x/mint/types"
 	"github.com/babylonlabs-io/babylon/v3/x/monitor"
 	monitortypes "github.com/babylonlabs-io/babylon/v3/x/monitor/types"
+	evmencoding "github.com/cosmos/evm/encoding"
+	cosmosevmtypes "github.com/cosmos/evm/types"
+	evmutils "github.com/cosmos/evm/utils"
 	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
 	evm "github.com/cosmos/evm/x/vm"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
@@ -168,6 +173,7 @@ var (
 		tokenfactorytypes.ModuleName:   {authtypes.Minter, authtypes.Burner},
 		icatypes.ModuleName:            nil,
 		evmtypes.ModuleName:            {authtypes.Minter, authtypes.Burner},
+		erc20types.ModuleName:          {authtypes.Minter, authtypes.Burner}, // Allows erc20 module to mint/burn for token pairs
 		feemarkettypes.ModuleName:      nil,
 	}
 
@@ -226,6 +232,8 @@ func NewBabylonApp(
 	invCheckPeriod uint,
 	blsSigner *checkpointingtypes.BlsSigner,
 	appOpts servertypes.AppOptions,
+	evmChainID uint64,
+	evmAppOptions EVMOptionsFn,
 	wasmOpts []wasmkeeper.Option,
 	baseAppOptions ...func(*baseapp.BaseApp),
 ) *BabylonApp {
@@ -237,7 +245,7 @@ func NewBabylonApp(
 		homePath = DefaultNodeHome
 	}
 
-	encCfg := appparams.DefaultEncodingConfig()
+	encCfg := evmencoding.MakeConfig(evmChainID)
 	interfaceRegistry := encCfg.InterfaceRegistry
 	appCodec := encCfg.Codec
 	legacyAmino := encCfg.Amino
@@ -250,6 +258,13 @@ func NewBabylonApp(
 	bApp.SetVersion(version.Version)
 	bApp.SetInterfaceRegistry(interfaceRegistry)
 	bApp.SetTxEncoder(txConfig.TxEncoder())
+
+	// Add after encoder has been set:
+	if err := evmAppOptions(bApp.ChainID()); err != nil {
+		// Initialize the EVM application configuration
+		panic(fmt.Errorf("failed to initialize EVM app configuration: %w", err))
+	}
+
 	bApp.SetMempool(getAppMempool(appOpts))
 
 	wasmConfig, err := wasm.ReadNodeConfig(appOpts)
@@ -405,9 +420,9 @@ func NewBabylonApp(
 		btcstakingtypes.ModuleName,
 		finalitytypes.ModuleName,
 		// Cosmos EVM
-		evmtypes.ModuleName,
-		feemarkettypes.ModuleName,
 		erc20types.ModuleName,
+		feemarkettypes.ModuleName,
+		evmtypes.ModuleName, // NOTE: EVM BeginBlocker must come after FeeMarket BeginBlocker
 	)
 	// TODO: there will be an architecture design on whether to modify slashing/evidence, specifically
 	// - how many validators can we slash in a single epoch and
@@ -536,6 +551,9 @@ func NewBabylonApp(
 		&btcConfig,
 		&app.BtcCheckpointKeeper,
 		runtime.NewKVStoreService(app.AppKeepers.GetKey(wasmtypes.StoreKey)),
+		app.FeemarketKeeper,
+		app.EVMKeeper,
+		cast.ToUint64(appOpts.Get(srvflags.EVMMaxTxGasWanted)),
 	)
 
 	// set proposal extension
@@ -702,7 +720,7 @@ func (app *BabylonApp) EndBlocker(ctx sdk.Context) (sdk.EndBlock, error) {
 
 // InitChainer application update at chain initialization
 func (app *BabylonApp) InitChainer(ctx sdk.Context, req *abci.RequestInitChain) (*abci.ResponseInitChain, error) {
-	var genesisState GenesisState
+	var genesisState cosmosevmtypes.GenesisState
 	if err := json.Unmarshal(req.AppStateBytes, &genesisState); err != nil {
 		panic(err)
 	}
@@ -812,7 +830,25 @@ func (app *BabylonApp) RegisterNodeService(clientCtx client.Context, cfg config.
 
 // DefaultGenesis returns a default genesis from the registered AppModuleBasic's.
 func (a *BabylonApp) DefaultGenesis() map[string]json.RawMessage {
-	return a.BasicModuleManager.DefaultGenesis(a.appCodec)
+	genesis := a.BasicModuleManager.DefaultGenesis(a.appCodec)
+
+	// TODO: Do we need this min denom ?
+	//mintGenState := minttypes.DefaultGenesisState()
+	//mintGenState.Params.MintDenom = BaseDenom
+	//genesis[minttypes.ModuleName] = a.appCodec.MustMarshalJSON(mintGenState)
+
+	// Add EVM genesis configuration
+	evmGenState := evmtypes.DefaultGenesisState()
+	evmGenState.Params.ActiveStaticPrecompiles = evmtypes.AvailableStaticPrecompiles
+	genesis[evmtypes.ModuleName] = a.appCodec.MustMarshalJSON(evmGenState)
+
+	// Add ERC20 genesis configuration
+	erc20GenState := erc20types.DefaultGenesisState()
+	erc20GenState.TokenPairs = ExampleTokenPairs
+	erc20GenState.Params.NativePrecompiles = append(erc20GenState.Params.NativePrecompiles, WTokenContractMainnet)
+	genesis[erc20types.ModuleName] = a.appCodec.MustMarshalJSON(erc20GenState)
+
+	return genesis
 }
 
 func (app *BabylonApp) TxConfig() client.TxConfig {
@@ -884,15 +920,24 @@ func GetMaccPerms() map[string][]string {
 
 // BlockedAddresses returns all the app's blocked account addresses.
 func BlockedAddresses() map[string]bool {
-	modAccAddrs := make(map[string]bool)
+	blockedAddrs := make(map[string]bool)
 	for acc := range GetMaccPerms() {
-		modAccAddrs[authtypes.NewModuleAddress(acc).String()] = true
+		blockedAddrs[authtypes.NewModuleAddress(acc).String()] = true
 	}
 
 	// allow the following addresses to receive funds
-	delete(modAccAddrs, appparams.AccGov.String())
+	delete(blockedAddrs, appparams.AccGov.String())
 
-	return modAccAddrs
+	// Block precompiled contracts
+	blockedPrecompilesHex := evmtypes.AvailableStaticPrecompiles
+	for _, addr := range vm.PrecompiledAddressesBerlin {
+		blockedPrecompilesHex = append(blockedPrecompilesHex, addr.Hex())
+	}
+
+	for _, precompile := range blockedPrecompilesHex {
+		blockedAddrs[evmutils.EthHexToCosmosAddr(precompile).String()] = true
+	}
+	return blockedAddrs
 }
 
 // getAppMempool returns the corresponding application mempool according to the

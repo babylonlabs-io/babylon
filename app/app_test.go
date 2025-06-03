@@ -97,6 +97,8 @@ func TestBabylonBlockedAddrs(t *testing.T) {
 		0,
 		&blsSigner,
 		appOpts,
+		babylonApp.EVMChainID,
+		babylonApp.EVMAppOptions,
 		babylonApp.EmptyWasmOpts,
 	)
 	_, err = app2.ExportAppStateAndValidators(false, []string{}, []string{})

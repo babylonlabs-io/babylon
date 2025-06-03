@@ -15,6 +15,8 @@ import (
 
 	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
+
+	evmserverconfig "github.com/cosmos/evm/server/config"
 )
 
 type BtcConfig struct {
@@ -57,6 +59,11 @@ type BabylonAppConfig struct {
 	BlsConfig BlsConfig `mapstructure:"bls-config"`
 
 	BabylonMempoolConfig BabylonMempoolConfig `mapstructure:"babylon-mempool"`
+
+	// EVM config
+	EVM     evmserverconfig.EVMConfig
+	JSONRPC evmserverconfig.JSONRPCConfig
+	TLS     evmserverconfig.TLSConfig
 }
 
 func DefaultBabylonAppConfig() *BabylonAppConfig {
@@ -72,11 +79,14 @@ func DefaultBabylonAppConfig() *BabylonAppConfig {
 		BtcConfig:            defaultBabylonBtcConfig(),
 		BlsConfig:            defaultBabylonBlsConfig(),
 		BabylonMempoolConfig: defaultBabylonMempoolConfig(),
+		EVM:                  *evmserverconfig.DefaultEVMConfig(),
+		JSONRPC:              *evmserverconfig.DefaultJSONRPCConfig(),
+		TLS:                  *evmserverconfig.DefaultTLSConfig(),
 	}
 }
 
 func DefaultBabylonTemplate() string {
-	return serverconfig.DefaultConfigTemplate + wasmtypes.DefaultConfigTemplate() + `
+	return serverconfig.DefaultConfigTemplate + evmserverconfig.DefaultEVMConfigTemplate + wasmtypes.DefaultConfigTemplate() + `
 ###############################################################################
 ###                        BLS configuration                                ###
 ###############################################################################

@@ -2,6 +2,7 @@ package keepers
 
 import (
 	"fmt"
+	"github.com/cosmos/cosmos-sdk/codec"
 	"maps"
 
 	evidencekeeper "cosmossdk.io/x/evidence/keeper"
@@ -24,12 +25,15 @@ const bech32PrecompileBaseGas = 6_000
 // NewAvailableStaticPrecompiles adds the static precompiles to the EVM
 // TODO: Add custom staking wrapper precompile here, IBC precompile and distribution precompile
 func NewAvailableStaticPrecompiles(
+	cdc codec.Codec,
 	bankKeeper bankkeeper.Keeper,
 	erc20Keeper erc20Keeper.Keeper,
 	govKeeper govkeeper.Keeper,
 	slashingKeeper slashingkeeper.Keeper,
 	evidenceKeeper evidencekeeper.Keeper,
 ) map[common.Address]vm.PrecompiledContract {
+	// TODO: We can add more custom precompiles here for Babylon Modules
+
 	// Clone the mapping from the latest EVM fork.
 	precompiles := maps.Clone(vm.PrecompiledContractsBerlin)
 
@@ -46,7 +50,7 @@ func NewAvailableStaticPrecompiles(
 		panic(fmt.Errorf("failed to instantiate bank precompile: %w", err))
 	}
 
-	govPrecompile, err := govprecompile.NewPrecompile(govKeeper)
+	govPrecompile, err := govprecompile.NewPrecompile(govKeeper, cdc)
 	if err != nil {
 		panic(fmt.Errorf("failed to instantiate gov precompile: %w", err))
 	}

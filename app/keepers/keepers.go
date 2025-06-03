@@ -50,6 +50,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/runtime"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdktestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
 	authcodec "github.com/cosmos/cosmos-sdk/x/auth/codec"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -78,6 +79,7 @@ import (
 	erc20types "github.com/cosmos/evm/x/erc20/types"
 	feemarketkeeper "github.com/cosmos/evm/x/feemarket/keeper"
 	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
+	evmtransferkeeper "github.com/cosmos/evm/x/ibc/transfer/keeper"
 	evmkeeper "github.com/cosmos/evm/x/vm/keeper"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
 	pfmrouter "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v10/packetforward"
@@ -188,23 +190,23 @@ type AppKeepers struct {
 	IncentiveKeeper incentivekeeper.Keeper
 
 	// Cosmos EVM modules
-	EVMKeeper       *evmkeeper.Keeper
-	FeemarketKeeper feemarketkeeper.Keeper
-	Erc20Keeper     erc20keeper.Keeper
-	//EVMTransferKeeper evmtransferkeeper.Keeper // TODO: Add with ibc-go v10 bump
+	EVMKeeper         *evmkeeper.Keeper
+	FeemarketKeeper   feemarketkeeper.Keeper
+	Erc20Keeper       erc20keeper.Keeper
+	EVMTransferKeeper evmtransferkeeper.Keeper
 
 	// keys to access the substores
 	keys    map[string]*storetypes.KVStoreKey
 	tkeys   map[string]*storetypes.TransientStoreKey
 	memKeys map[string]*storetypes.MemoryStoreKey
 
-	EncCfg *appparams.EncodingConfig
+	EncCfg sdktestutil.TestEncodingConfig
 }
 
 func (ak *AppKeepers) InitKeepers(
 	logger log.Logger,
 	btcConfig *bbn.BtcConfig,
-	encodingConfig *appparams.EncodingConfig,
+	encodingConfig sdktestutil.TestEncodingConfig,
 	bApp *baseapp.BaseApp,
 	maccPerms map[string][]string,
 	homePath string,
@@ -430,7 +432,8 @@ func (ak *AppKeepers) InitKeepers(
 
 	// Create Ethermint keepers
 	ak.FeemarketKeeper = feemarketkeeper.NewKeeper(
-		appCodec, authtypes.NewModuleAddress(govtypes.ModuleName),
+		appCodec,
+		authtypes.NewModuleAddress(govtypes.ModuleName),
 		keys[feemarkettypes.StoreKey],
 		ak.tkeys[feemarkettypes.TransientKey],
 	)
@@ -453,11 +456,12 @@ func (ak *AppKeepers) InitKeepers(
 	ak.Erc20Keeper = erc20keeper.NewKeeper(
 		ak.keys[erc20types.StoreKey], appCodec, authtypes.NewModuleAddress(govtypes.ModuleName),
 		ak.AccountKeeper, ak.BankKeeper, ak.EVMKeeper, ak.StakingKeeper,
-		nil, // TransferKeeper once we bump IBC-go to v10
+		&ak.EVMTransferKeeper,
 	)
 
 	ak.EVMKeeper.WithStaticPrecompiles(
 		NewAvailableStaticPrecompiles(
+			appCodec,
 			ak.BankKeeper,
 			ak.Erc20Keeper,
 			ak.GovKeeper,
@@ -465,16 +469,16 @@ func (ak *AppKeepers) InitKeepers(
 			ak.EvidenceKeeper,
 		),
 	)
-	// TODO: Use this once we bump ibc-go to v10
-	//ak.EVMTransferKeeper = evmtransferkeeper.NewKeeper(
-	//	appCodec, runtime.NewKVStoreService(keys[evmtypes.ModuleName]),
-	//	ak.GetSubspace(ibctransfertypes.ModuleName),
-	//	ak.IBCKeeper.ChannelKeeper, // ICS4Wrapper
-	//	ak.IBCKeeper.ChannelKeeper,
-	//	bApp.MsgServiceRouter(), ak.AccountKeeper, ak.BankKeeper,
-	//	ak.Erc20Keeper, // Add ERC20 Keeper for ERC20 transfers
-	//	appparams.AccGov.String(),
-	//)
+
+	ak.EVMTransferKeeper = evmtransferkeeper.NewKeeper(
+		appCodec, runtime.NewKVStoreService(keys[evmtypes.ModuleName]),
+		ak.GetSubspace(ibctransfertypes.ModuleName),
+		ak.IBCKeeper.ChannelKeeper, // ICS4Wrapper
+		ak.IBCKeeper.ChannelKeeper,
+		bApp.MsgServiceRouter(), ak.AccountKeeper, ak.BankKeeper,
+		ak.Erc20Keeper, // Add ERC20 Keeper for ERC20 transfers
+		appparams.AccGov.String(),
+	)
 
 	ak.IBCKeeper = ibckeeper.NewKeeper(
 		appCodec,
@@ -792,6 +796,11 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
 	paramsKeeper.Subspace(tokenfactorytypes.ModuleName)
 	paramsKeeper.Subspace(ratelimittypes.ModuleName)
+
+	// Subspaces for EVM modules
+	paramsKeeper.Subspace(evmtypes.ModuleName)
+	paramsKeeper.Subspace(feemarkettypes.ModuleName)
+	paramsKeeper.Subspace(erc20types.ModuleName)
 
 	return paramsKeeper
 }
