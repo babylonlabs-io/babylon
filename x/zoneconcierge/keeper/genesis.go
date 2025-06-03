@@ -8,7 +8,6 @@ import (
 
 // InitGenesis initializes the keeper state from a provided initial genesis state.
 func (k Keeper) InitGenesis(ctx context.Context, gs types.GenesisState) error {
-
 	k.SetPort(ctx, gs.PortId)
 
 	for _, ci := range gs.ChainsInfo {
