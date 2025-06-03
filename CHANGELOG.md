@@ -37,10 +37,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
-<<<<<<< HEAD
-=======
-
->>>>>>> a56b327 (chore: rename upgrade from v2rc1 to v2rc2 (#1030))
 ### Improvements
 
 - [#909](https://github.com/babylonlabs-io/babylon/pull/909) Update tokenfactory upgrade fee params to `ubbn` .
@@ -85,11 +81,7 @@ check of rewards
 - [#1000](https://github.com/babylonlabs-io/babylon/pull/1000) Add multi-staking replay test
 - [#1013](https://github.com/babylonlabs-io/babylon/pull/1013) Update to ibc rate limit `v8.1.0`
 - [#1018](https://github.com/babylonlabs-io/babylon/pull/1018) Improve genesis validations in `x/mint` and `x/btccheckpoint`
-<<<<<<< HEAD
-=======
-- [#702](https://github.com/babylonlabs-io/babylon/pull/702) Add test for small rewards in fee collector
 - [#1030](https://github.com/babylonlabs-io/babylon/pull/1030) Update upgrade handler name to v2rc2
->>>>>>> a56b327 (chore: rename upgrade from v2rc1 to v2rc2 (#1030))
 
 ### State Machine Breaking
 
