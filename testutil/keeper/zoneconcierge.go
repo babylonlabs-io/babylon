@@ -17,7 +17,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	capabilitykeeper "github.com/cosmos/ibc-go/modules/capability/keeper"
 	"github.com/stretchr/testify/require"
 
 	"github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/keeper"
@@ -87,7 +86,6 @@ func ZoneConciergeKeeperWithStoreKey(
 
 	registry := codectypes.NewInterfaceRegistry()
 	appCodec := codec.NewProtoCodec(registry)
-	capabilityKeeper := capabilitykeeper.NewKeeper(appCodec, storeKey, memStoreKey)
 	k := keeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(storeKey),
@@ -105,7 +103,6 @@ func ZoneConciergeKeeperWithStoreKey(
 		zoneconciergeStoreQuerier{},
 		bsKeeper,
 		btcStkKeeper,
-		capabilityKeeper.ScopeToModule("ZoneconciergeScopedKeeper"),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 

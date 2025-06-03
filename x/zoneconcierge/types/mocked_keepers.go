@@ -391,43 +391,6 @@ func (mr *MockConnectionKeeperMockRecorder) GetConnection(ctx, connectionID inte
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetConnection", reflect.TypeOf((*MockConnectionKeeper)(nil).GetConnection), ctx, connectionID)
 }
 
-// MockPortKeeper is a mock of PortKeeper interface.
-type MockPortKeeper struct {
-	ctrl     *gomock.Controller
-	recorder *MockPortKeeperMockRecorder
-}
-
-// MockPortKeeperMockRecorder is the mock recorder for MockPortKeeper.
-type MockPortKeeperMockRecorder struct {
-	mock *MockPortKeeper
-}
-
-// NewMockPortKeeper creates a new mock instance.
-func NewMockPortKeeper(ctrl *gomock.Controller) *MockPortKeeper {
-	mock := &MockPortKeeper{ctrl: ctrl}
-	mock.recorder = &MockPortKeeperMockRecorder{mock}
-	return mock
-}
-
-// EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockPortKeeper) EXPECT() *MockPortKeeperMockRecorder {
-	return m.recorder
-}
-
-// BindPort mocks base method.
-func (m *MockPortKeeper) BindPort(ctx types6.Context, portID string) *types7.Capability {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "BindPort", ctx, portID)
-	ret0, _ := ret[0].(*types7.Capability)
-	return ret0
-}
-
-// BindPort indicates an expected call of BindPort.
-func (mr *MockPortKeeperMockRecorder) BindPort(ctx, portID interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BindPort", reflect.TypeOf((*MockPortKeeper)(nil).BindPort), ctx, portID)
-}
-
 // MockScopedKeeper is a mock of ScopedKeeper interface.
 type MockScopedKeeper struct {
 	ctrl     *gomock.Controller

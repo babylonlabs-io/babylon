@@ -46,7 +46,6 @@ import (
 	minttypes "github.com/babylonlabs-io/babylon/v4/x/mint/types"
 	monitorkeeper "github.com/babylonlabs-io/babylon/v4/x/monitor/keeper"
 	monitortypes "github.com/babylonlabs-io/babylon/v4/x/monitor/types"
-	"github.com/babylonlabs-io/babylon/v4/x/zoneconcierge"
 	zckeeper "github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/keeper"
 	zctypes "github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -603,7 +602,6 @@ func (ak *AppKeepers) InitKeepers(
 		ak.IBCKeeper.ClientKeeper,
 		ak.IBCKeeper.ConnectionKeeper,
 		ak.IBCKeeper.ChannelKeeper,
-		ak.IBCKeeper.PortKeeper,
 		ak.AccountKeeper,
 		ak.BankKeeper,
 		&btclightclientKeeper,
@@ -732,8 +730,6 @@ func (ak *AppKeepers) InitKeepers(
 	)
 	transferStackV2 = ratelimitv2.NewIBCMiddleware(ak.RatelimitKeeper, transferStackV2)
 
-	zoneConciergeStack := zoneconcierge.NewIBCModule(ak.ZoneConciergeKeeper)
-
 	// Create Interchain Accounts Controller Stack
 	// SendPacket Path:
 	// SendPacket -> Callbacks -> ICA Controller -> IBC core
@@ -755,7 +751,6 @@ func (ak *AppKeepers) InitKeepers(
 	// and the other routes (ICA, wasm, zoneconcierge), then set and seal it
 	ibcRouter := porttypes.NewRouter().
 		AddRoute(ibctransfertypes.ModuleName, transferStack).
-		AddRoute(zctypes.ModuleName, zoneConciergeStack).
 		AddRoute(wasmtypes.ModuleName, wasmStack).
 		AddRoute(icacontrollertypes.SubModuleName, icaControllerStack).
 		AddRoute(icahosttypes.SubModuleName, icaHostStack)

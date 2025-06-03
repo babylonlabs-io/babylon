@@ -7,12 +7,10 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	errorsmod "cosmossdk.io/errors"
 	"github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/types"
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types" //nolint:staticcheck
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
-	host "github.com/cosmos/ibc-go/v10/modules/core/24-host"
 	coretypes "github.com/cosmos/ibc-go/v10/modules/core/types"
 	"github.com/hashicorp/go-metrics"
 )
@@ -24,15 +22,8 @@ func (k Keeper) SendIBCPacket(ctx context.Context, channel channeltypes.Identifi
 	// get src/dst ports and channels
 	sourcePort := channel.PortId
 	sourceChannel := channel.ChannelId
-	destinationPort := channel.Counterparty.GetPortID()
-	destinationChannel := channel.Counterparty.GetChannelID()
-
-	// begin createOutgoingPacket logic
-	// See spec for this logic: https://github.com/cosmos/ibc/tree/master/spec/app/ics-020-fungible-token-transfer#packet-relay
-	channelCap, ok := k.scopedKeeper.GetCapability(sdkCtx, host.ChannelCapabilityPath(sourcePort, sourceChannel))
-	if !ok {
-		return errorsmod.Wrapf(channeltypes.ErrChannelCapabilityNotFound, "module does not own channel capability: sourcePort: %s, sourceChannel: %s", sourcePort, sourceChannel)
-	}
+	destinationPort := channel.Counterparty.PortId
+	destinationChannel := channel.Counterparty.ChannelId
 
 	// timeout
 	timeoutPeriod := time.Duration(k.GetParams(sdkCtx).IbcPacketTimeoutSeconds) * time.Second
@@ -41,7 +32,6 @@ func (k Keeper) SendIBCPacket(ctx context.Context, channel channeltypes.Identifi
 
 	seq, err := k.ics4Wrapper.SendPacket(
 		sdkCtx,
-		channelCap,
 		sourcePort,
 		sourceChannel,
 		zeroheight,  // no need to set timeout height if timeout timestamp is set

@@ -38,7 +38,6 @@ type BankKeeper interface {
 type ICS4Wrapper interface {
 	SendPacket(
 		ctx sdk.Context,
-		channelCap *capabilitytypes.Capability,
 		sourcePort string,
 		sourceChannel string,
 		timeoutHeight clienttypes.Height,
@@ -64,11 +63,6 @@ type ClientKeeper interface {
 // ConnectionKeeper defines the expected IBC connection keeper
 type ConnectionKeeper interface {
 	GetConnection(ctx sdk.Context, connectionID string) (connection connectiontypes.ConnectionEnd, found bool)
-}
-
-// PortKeeper defines the expected IBC port keeper
-type PortKeeper interface {
-	BindPort(ctx sdk.Context, portID string) *capabilitytypes.Capability
 }
 
 // ScopedKeeper defines the expected x/capability scoped keeper interface
