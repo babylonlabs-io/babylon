@@ -27,7 +27,7 @@ func (fp *FinalityProvider) Address() sdk.AccAddress {
 	return sdk.MustAccAddressFromBech32(fp.Addr)
 }
 
-func (fp *FinalityProvider) ValidateBasic() error {
+func (fp *FinalityProvider) Validate() error {
 	// ensure fields are non-empty and well-formatted
 	if _, err := sdk.AccAddressFromBech32(fp.Addr); err != nil {
 		return fmt.Errorf("invalid finality provider address: %s - %w", fp.Addr, err)

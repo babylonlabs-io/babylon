@@ -521,6 +521,16 @@ func NewBTCDelegatorDelegationIndex() *BTCDelegatorDelegationIndex {
 	}
 }
 
+func (i *BTCDelegatorDelegationIndex) Validate() error {
+	for _, bz := range i.StakingTxHashList {
+		// NewHash validates hash size
+		if _, err := chainhash.NewHash(bz); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (i *BTCDelegatorDelegationIndex) Has(stakingTxHash chainhash.Hash) bool {
 	for _, hash := range i.StakingTxHashList {
 		if bytes.Equal(stakingTxHash[:], hash) {

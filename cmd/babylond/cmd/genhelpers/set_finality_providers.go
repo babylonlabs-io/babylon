@@ -79,7 +79,7 @@ Possible content of 'finality_providers.json' is
 
 			newFps := make([]*btcstktypes.FinalityProvider, 0, len(inputFps.FinalityProviders))
 			for _, fp := range inputFps.FinalityProviders {
-				if err := fp.ValidateBasic(); err != nil {
+				if err := fp.Validate(); err != nil {
 					return fmt.Errorf("failed to validate basic finality provider: %w", err)
 				}
 
