@@ -1,6 +1,9 @@
 package e2e
 
 import (
+	"github.com/babylonlabs-io/babylon/v4/crypto/eots"
+	ftypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"math"
 	"math/rand"
 	"strconv"
@@ -12,7 +15,6 @@ import (
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 	bsctypes "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
-
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
@@ -33,6 +35,7 @@ type FinalityContractTestSuite struct {
 	net            *chaincfg.Params
 	delBtcSk       *btcec.PrivateKey
 	babylonFp      *bstypes.FinalityProvider
+	consumerBtcSk  *btcec.PrivateKey
 	consumerFp     *bstypes.FinalityProvider
 	covenantSks    []*btcec.PrivateKey
 	covenantQuorum uint32
@@ -40,7 +43,8 @@ type FinalityContractTestSuite struct {
 	configurer     configurer.Configurer
 
 	// Cross-test config data
-	FinalityContractAddr string
+	randListInfo         *datagen.RandListInfo
+	finalityContractAddr string
 }
 
 func (s *FinalityContractTestSuite) SetupSuite() {
@@ -116,8 +120,8 @@ func (s *FinalityContractTestSuite) Test1InstantiateFinalityContract() {
 		contracts, err = nonValidatorNode.QueryContractsFromId(latestWasmId)
 		return err == nil && len(contracts) == 1
 	}, time.Second*10, time.Second)
-	s.FinalityContractAddr = contracts[0]
-	s.T().Log("Finality gadget contract address: ", s.FinalityContractAddr)
+	s.finalityContractAddr = contracts[0]
+	s.T().Log("Finality gadget contract address: ", s.finalityContractAddr)
 }
 
 func (s *FinalityContractTestSuite) Test2RegisterRollupConsumer() {
@@ -136,7 +140,7 @@ func (s *FinalityContractTestSuite) Test2RegisterRollupConsumer() {
 	require.NoError(s.T(), err)
 
 	// TODO: Register the Consumer through a gov proposal
-	validatorNode.RegisterRollupConsumerChain(initialization.ValidatorWalletName, registeredConsumer.ConsumerId, registeredConsumer.ConsumerName, registeredConsumer.ConsumerDescription, s.FinalityContractAddr, 3)
+	validatorNode.RegisterRollupConsumerChain(initialization.ValidatorWalletName, registeredConsumer.ConsumerId, registeredConsumer.ConsumerName, registeredConsumer.ConsumerDescription, s.finalityContractAddr, 3)
 
 	nonValidatorNode, err := s.configurer.GetChainConfig(0).GetNodeAtIndex(2)
 	require.NoError(s.T(), err)
@@ -179,14 +183,14 @@ func (s *FinalityContractTestSuite) Test3CreateConsumerFPAndDelegation() {
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
 	require.NoError(s.T(), err)
 	// Create and register a Consumer FP next
-	consumerFpSk, _, err := datagen.GenRandomBTCKeyPair(s.r)
+	s.consumerBtcSk, _, err = datagen.GenRandomBTCKeyPair(s.r)
 	s.Require().NoError(err)
 
 	s.consumerFp = chain.CreateConsumerFpFromNodeAddr(
 		s.T(),
 		s.r,
 		ConsumerID,
-		consumerFpSk,
+		s.consumerBtcSk,
 		nonValidatorNode,
 	)
 	s.Require().NotNil(s.consumerFp)
@@ -325,4 +329,85 @@ func (s *FinalityContractTestSuite) Test4SubmitCovenantSignature() {
 
 	activeDel := activeDels.Dels[0]
 	s.True(activeDel.HasCovenantQuorums(s.covenantQuorum))
+}
+
+func (s *FinalityContractTestSuite) Test5CommitPublicRandomness() {
+	chainA := s.configurer.GetChainConfig(0)
+	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
+	s.NoError(err)
+
+	/*
+		commit some amount of public randomness
+	*/
+	// commit public randomness list
+	numPubRand := uint64(100)
+	commitStartHeight := uint64(1)
+	var msgCommitPubRandList *ftypes.MsgCommitPubRandList
+	s.randListInfo, msgCommitPubRandList, err = datagen.GenRandomMsgCommitPubRandList(s.r, s.consumerBtcSk, commitStartHeight, numPubRand)
+	s.NoError(err)
+
+	nonValidatorNode.CommitPubRandListConsumer(
+		initialization.ValidatorWalletName,
+		ConsumerID,
+		msgCommitPubRandList.FpBtcPk,
+		msgCommitPubRandList.StartHeight,
+		msgCommitPubRandList.NumPubRand,
+		msgCommitPubRandList.Commitment,
+		msgCommitPubRandList.Sig,
+	)
+
+	// Query the public randomness commitment from the finality contract
+	s.Eventually(func() bool {
+		commitment := nonValidatorNode.QueryLastPublicRandCommitRollup(s.finalityContractAddr, s.consumerFp.BtcPk.MustToBTCPK())
+		if commitment == nil {
+			return false
+		}
+		s.Equal(msgCommitPubRandList.StartHeight, commitment.StartHeight)
+		s.Equal(msgCommitPubRandList.NumPubRand, commitment.NumPubRand)
+		s.Equal(s.randListInfo.Commitment, commitment.Commitment)
+		s.T().Logf("Public randomness commitment found: StartHeight=%d, NumPubRand=%d, Commitment=%s",
+			commitment.StartHeight,
+			commitment.NumPubRand,
+			commitment.Commitment,
+		)
+		return true
+	}, time.Second*10, time.Second, "Public randomness commitment was not found within the expected time")
+}
+
+func (s *FinalityContractTestSuite) Test6SubmitFinalitySignatura() {
+	chainA := s.configurer.GetChainConfig(0)
+	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
+	s.NoError(err)
+
+	// Get blocks to vote
+	// Mock a block with start height 1
+	startHeight := uint64(1)
+	blockToVote := datagen.GenRandomBlockWithHeight(s.r, startHeight)
+
+	appHash := blockToVote.AppHash
+
+	idx := 0
+	msgToSign := append(sdk.Uint64ToBigEndian(startHeight), appHash...)
+	// Generate EOTS signature
+	sig, err := eots.Sign(s.consumerBtcSk, s.randListInfo.SRList[idx], msgToSign)
+	s.NoError(err)
+	eotsSig := bbn.NewSchnorrEOTSSigFromModNScalar(sig)
+
+	nonValidatorNode.AddFinalitySigConsumer(initialization.ValidatorWalletName, ConsumerID, s.consumerFp.BtcPk, startHeight, &s.randListInfo.PRList[idx], *s.randListInfo.ProofList[idx].ToProto(), appHash, eotsSig)
+
+	// Query the finality signature from the finality contract
+
+	s.Eventually(func() bool {
+		blockVoters := nonValidatorNode.QueryBlockVotersRollup(s.finalityContractAddr, blockToVote.Height, blockToVote.AppHash)
+		if blockVoters == nil {
+			return false
+		}
+		s.Equal(1, len(blockVoters))
+		s.Equal(s.consumerFp.BtcPk.MarshalHex(), blockVoters[0])
+		s.T().Logf("Finality signature found for block height %d with app hash %x: voter %s",
+			blockToVote.Height,
+			blockToVote.AppHash,
+			s.consumerFp.BtcPk.MarshalHex())
+		return true
+	}, time.Second*10, time.Second, "Voters for the block were not found within the expected time")
 }
