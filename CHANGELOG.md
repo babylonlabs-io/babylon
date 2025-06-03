@@ -40,6 +40,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ### Improvements
 
 - [#1034](https://github.com/babylonlabs-io/babylon/pull/1034) Remove redundant `ValidateBasic` call in `x/btcstaking` message server
+- [#1036](https://github.com/babylonlabs-io/babylon/pull/1036) Remove token factory `enable_admin_sudo_mint` capability
 
 ## v2.0.0-rc.2
 
