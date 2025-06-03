@@ -1,6 +1,7 @@
 package types
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/babylonlabs-io/babylon/v3/crypto/bls12381"
@@ -30,6 +31,18 @@ func (vs ValidatorWithBlsKeySet) Validate() error {
 		if err := pk.Unmarshal(val.BlsPubKey); err != nil {
 			return err
 		}
+	}
+
+	return nil
+}
+
+// ValidateBasic stateless validate if the BlsKey is valid
+func (k BlsKey) ValidateBasic() error {
+	if k.Pop == nil {
+		return errors.New("BLS Proof of Possession is nil")
+	}
+	if k.Pubkey == nil {
+		return errors.New("BLS Public key is nil")
 	}
 
 	return nil

@@ -15,6 +15,9 @@ var (
 	// Ensure that MsgInsertBTCSpvProof implements all functions of the Msg interface
 	_ sdk.Msg = (*MsgInsertBTCSpvProof)(nil)
 	_ sdk.Msg = (*MsgUpdateParams)(nil)
+	// Ensure all msgs implement ValidateBasic
+	_ sdk.HasValidateBasic = (*MsgUpdateParams)(nil)
+	_ sdk.HasValidateBasic = (*MsgInsertBTCSpvProof)(nil)
 )
 
 // ParseTwoProofs Parse and Validate transactions which should contain OP_RETURN data.
@@ -118,5 +121,23 @@ func (m *MsgUpdateParams) ValidateBasic() error {
 		return err
 	}
 
+	return nil
+}
+
+// ValidateBasic performs stateless checks.
+func (m *MsgInsertBTCSpvProof) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(m.Submitter); err != nil {
+		return fmt.Errorf("invalid submitter address: %w", err)
+	}
+
+	if len(m.Proofs) == 0 {
+		return errors.New("at least one proof must be provided")
+	}
+
+	for i, proof := range m.Proofs {
+		if err := proof.Validate(); err != nil {
+			return fmt.Errorf("proof[%d]: %w", i, err)
+		}
+	}
 	return nil
 }

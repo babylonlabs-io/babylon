@@ -26,6 +26,7 @@ import (
 
 	"github.com/babylonlabs-io/babylon/v3/app"
 	"github.com/babylonlabs-io/babylon/v3/app/params"
+	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
 	appsigner "github.com/babylonlabs-io/babylon/v3/app/signer"
 	testutilcli "github.com/babylonlabs-io/babylon/v3/testutil/cli"
 	checkpointcli "github.com/babylonlabs-io/babylon/v3/x/checkpointing/client/cli"
@@ -120,7 +121,7 @@ func (s *CLITestSuite) TestCmdWrappedCreateValidator() {
 	filePV.LastSignState.Save()
 
 	appsigner.GenBls(blsKeyFile, blsPasswordFile, "password")
-	cmd := checkpointcli.CmdWrappedCreateValidator(authcodec.NewBech32Codec("cosmosvaloper"))
+	cmd := checkpointcli.CmdWrappedCreateValidator(authcodec.NewBech32Codec(appparams.Bech32PrefixValAddr))
 
 	consPrivKey := filePV.Key.PrivKey
 	consPubKey, err := cryptocodec.FromCmtPubKeyInterface(consPrivKey.PubKey())
