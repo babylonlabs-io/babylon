@@ -35,6 +35,19 @@ pull_request_rules:
       backport:
         branches:
           - release/v2.x
+<<<<<<< HEAD
+=======
+          - release/v3.x
+          - release/v4.x
+  - name: backport changes to v2.x branch
+    conditions:
+      - base=main
+      - label=backport-to-release/v2.x-only
+    actions:
+      backport:
+        branches:
+          - release/v2.x
+>>>>>>> 48ac747 (F/op e2e 4 (#1015))
   - name: automerge to main with label automerge and branch protection passing
     conditions: []
     actions:
