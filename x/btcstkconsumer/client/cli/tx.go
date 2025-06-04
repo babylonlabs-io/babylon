@@ -33,7 +33,7 @@ func GetTxCmd() *cobra.Command {
 
 func NewRegisterConsumerCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "register-consumer <consumer-id> <name> <description> <max-multi-staked-fps> [eth-l2-address]",
+		Use:   "register-consumer <consumer-id> <name> <description> <max-multi-staked-fps> [rollup-address]",
 		Args:  cobra.MinimumNArgs(4),
 		Short: "Registers a consumer",
 		Long: strings.TrimSpace(
@@ -67,18 +67,18 @@ func NewRegisterConsumerCmd() *cobra.Command {
 			if maxMultiStakedFps < 2 {
 				return types.ErrInvalidMaxMultiStakedFps
 			}
-			ethL2Address := ""
+			rollupAddress := ""
 			if len(args) > 4 {
-				ethL2Address = args[4]
+				rollupAddress = args[4]
 			}
 
 			msg := types.MsgRegisterConsumer{
-				Signer:                       clientCtx.FromAddress.String(),
-				ConsumerId:                   consumerId,
-				ConsumerName:                 name,
-				ConsumerDescription:          description,
-				MaxMultiStakedFps:            uint32(maxMultiStakedFps),
-				EthL2FinalityContractAddress: ethL2Address,
+				Signer:                        clientCtx.FromAddress.String(),
+				ConsumerId:                    consumerId,
+				ConsumerName:                  name,
+				ConsumerDescription:           description,
+				MaxMultiStakedFps:             uint32(maxMultiStakedFps),
+				RollupFinalityContractAddress: rollupAddress,
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)

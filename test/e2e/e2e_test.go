@@ -49,7 +49,7 @@ func TestSoftwareUpgradeV2TestSuite(t *testing.T) {
 	suite.Run(t, new(SoftwareUpgradeV2TestSuite))
 }
 
-// TestFinalityContractTestSuite tests ETH L2 finality contracts integration
+// TestFinalityContractTestSuite tests rollup finality contracts integration
 func TestFinalityContractTestSuite(t *testing.T) {
 	suite.Run(t, new(FinalityContractTestSuite))
 }
