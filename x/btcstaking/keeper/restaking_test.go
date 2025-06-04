@@ -6,7 +6,6 @@ import (
 
 	testutil "github.com/babylonlabs-io/babylon/v4/testutil/btcstaking-helper"
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
-	btclctypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
 	"github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 	btcstkconsumertypes "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
 	"github.com/btcsuite/btcd/btcec/v2"
@@ -293,8 +292,6 @@ func FuzzFinalityProviderDelegations_RestakingConsumers(f *testing.F) {
 			h.NoError(err)
 			expectedBtcDelsMap[btcDel.BtcPk.MarshalHex()] = btcDel
 		}
-
-		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: 30}).AnyTimes()
 
 		// Test nil request
 		resp, err := h.BTCStakingKeeper.FinalityProviderDelegations(h.Ctx, nil)
