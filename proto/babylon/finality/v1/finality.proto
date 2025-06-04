@@ -86,7 +86,7 @@ message PubRandCommitIndexValue {
   option (gogoproto.goproto_getters) = false;
   // A list of start heights corresponding to committed public randomness
   // ranges.
-  repeated uint64 heights = 1 [ (gogoproto.nullable) = false ];
+  repeated uint64 heights = 1;
 }
 
 // Evidence is the evidence that a finality provider has signed finality

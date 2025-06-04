@@ -90,7 +90,7 @@ func FuzzTestExportGenesis(f *testing.F) {
 			NumPubRand:  numPubRand,
 			Commitment:  randListInfo.Commitment,
 		}
-		k.SetPubRandCommit(ctx, fpBTCPK, prc)
+		require.NoError(t, k.SetPubRandCommit(ctx, fpBTCPK, prc))
 
 		numSigningInfo := datagen.RandomInt(r, 100) + 10
 		fpSigningInfos := map[string]*types.FinalityProviderSigningInfo{}
