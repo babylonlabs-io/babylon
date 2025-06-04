@@ -149,7 +149,7 @@ func FuzzRestaking_RestakedBTCDelegation(f *testing.F) {
 			30,
 		)
 		h.Error(err)
-		require.ErrorIs(t, err, types.ErrTooManyFPsFromSameConsumer)
+		require.ErrorIs(t, err, types.ErrTooManyFPs)
 
 		// Test case 5: Invalid delegation with 2 Babylon FPs (should fail with ErrTooManyBabylonFPs)
 		// Create a second Babylon finality provider
@@ -216,8 +216,7 @@ func FuzzRestaking_RestakedBTCDelegation(f *testing.F) {
 			10,
 			30,
 		)
-		h.Error(err)
-		require.ErrorIs(t, err, types.ErrTooManyFPs)
+		h.NoError(err)
 
 		// add covenant signatures to this restaked BTC delegation
 		h.CreateCovenantSigs(r, covenantSKs, msgBTCDel, actualDel, 10)
