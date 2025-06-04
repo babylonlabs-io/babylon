@@ -14,9 +14,9 @@ message EventConsumerRegistered {
   string consumer_name = 2  [(amino.dont_omitempty) = true];
   // consumer_description is a description for the consumer
   string consumer_description = 3  [(amino.dont_omitempty) = true];
-  // max_multi_staked_fps is the maximum number of finality providers from this consumer
-  // that can be part of a single BTC delegation.
-  uint32 max_multi_staked_fps = 4;
+  // consumer_max_multi_staked_fps is the maximum total number of finality providers (from all sources: 
+  // Babylon + all consumers) that this consumer will accept in a BTC delegation.
+  uint32 consumer_max_multi_staked_fps = 4;
   // consumer_type is the type of the consumer
   ConsumerType consumer_type = 5 [(amino.dont_omitempty) = true];
   // consumer_metadata is necessary metadata of the consumer, and the data

@@ -10702,17 +10702,21 @@ paths:
                         finality contract
 
                         set only for rollup integration
-                    max_multi_staked_fps:
+                    consumer_max_multi_staked_fps:
                       type: integer
                       format: int64
                       description: >-
-                        max_multi_staked_fps is the maximum number of finality
-                        providers from this consumer
+                        consumer_max_multi_staked_fps is the maximum total
+                        number of finality providers (from all sources: 
 
-                        that can be part of a single BTC delegation. Must be at
-                        least 2 to allow for at least
+                        Babylon + all consumers) that this consumer will accept
+                        in a BTC delegation. This is a limit 
 
-                        one Babylon FP and one consumer FP.
+                        imposed by the consumer to control the complexity/risk
+                        of multi-staked delegations they participate in.
+
+                        Must be at least 2 to allow for at least one Babylon FP
+                        and one consumer FP.
                   title: >-
                     ConsumerRegisterResponse contains the information for a
                     registered consumer
@@ -11054,17 +11058,21 @@ paths:
                         finality contract
 
                         set only for rollup integration
-                    max_multi_staked_fps:
+                    consumer_max_multi_staked_fps:
                       type: integer
                       format: int64
                       description: >-
-                        max_multi_staked_fps is the maximum number of finality
-                        providers from this consumer
+                        consumer_max_multi_staked_fps is the maximum total
+                        number of finality providers (from all sources: 
 
-                        that can be part of a single BTC delegation. Must be at
-                        least 2 to allow for at least
+                        Babylon + all consumers) that this consumer will accept
+                        in a BTC delegation. This is a limit 
 
-                        one Babylon FP and one consumer FP.
+                        imposed by the consumer to control the complexity/risk
+                        of multi-staked delegations they participate in.
+
+                        Must be at least 2 to allow for at least one Babylon FP
+                        and one consumer FP.
                   title: >-
                     ConsumerRegisterResponse contains the information for a
                     registered consumer
@@ -23100,17 +23108,21 @@ definitions:
           contract
 
           set only for rollup integration
-      max_multi_staked_fps:
+      consumer_max_multi_staked_fps:
         type: integer
         format: int64
         description: >-
-          max_multi_staked_fps is the maximum number of finality providers from
-          this consumer
+          consumer_max_multi_staked_fps is the maximum total number of finality
+          providers (from all sources: 
 
-          that can be part of a single BTC delegation. Must be at least 2 to
-          allow for at least
+          Babylon + all consumers) that this consumer will accept in a BTC
+          delegation. This is a limit 
 
-          one Babylon FP and one consumer FP.
+          imposed by the consumer to control the complexity/risk of multi-staked
+          delegations they participate in.
+
+          Must be at least 2 to allow for at least one Babylon FP and one
+          consumer FP.
     title: >-
       ConsumerRegisterResponse contains the information for a registered
       consumer
@@ -23274,17 +23286,21 @@ definitions:
                 contract
 
                 set only for rollup integration
-            max_multi_staked_fps:
+            consumer_max_multi_staked_fps:
               type: integer
               format: int64
               description: >-
-                max_multi_staked_fps is the maximum number of finality providers
-                from this consumer
+                consumer_max_multi_staked_fps is the maximum total number of
+                finality providers (from all sources: 
 
-                that can be part of a single BTC delegation. Must be at least 2
-                to allow for at least
+                Babylon + all consumers) that this consumer will accept in a BTC
+                delegation. This is a limit 
 
-                one Babylon FP and one consumer FP.
+                imposed by the consumer to control the complexity/risk of
+                multi-staked delegations they participate in.
+
+                Must be at least 2 to allow for at least one Babylon FP and one
+                consumer FP.
           title: >-
             ConsumerRegisterResponse contains the information for a registered
             consumer
@@ -23362,17 +23378,21 @@ definitions:
                 contract
 
                 set only for rollup integration
-            max_multi_staked_fps:
+            consumer_max_multi_staked_fps:
               type: integer
               format: int64
               description: >-
-                max_multi_staked_fps is the maximum number of finality providers
-                from this consumer
+                consumer_max_multi_staked_fps is the maximum total number of
+                finality providers (from all sources: 
 
-                that can be part of a single BTC delegation. Must be at least 2
-                to allow for at least
+                Babylon + all consumers) that this consumer will accept in a BTC
+                delegation. This is a limit 
 
-                one Babylon FP and one consumer FP.
+                imposed by the consumer to control the complexity/risk of
+                multi-staked delegations they participate in.
+
+                Must be at least 2 to allow for at least one Babylon FP and one
+                consumer FP.
           title: >-
             ConsumerRegisterResponse contains the information for a registered
             consumer

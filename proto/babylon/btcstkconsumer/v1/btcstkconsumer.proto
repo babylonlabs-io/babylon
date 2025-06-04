@@ -24,10 +24,11 @@ message ConsumerRegister {
   string consumer_name = 2;
   // consumer_description is a description for the consumer (can be empty)
   string consumer_description = 3;
-  // max_multi_staked_fps is the maximum number of finality providers from this consumer
-  // that can be part of a single BTC delegation. Must be at least 2 to allow for at least
-  // one Babylon FP and one consumer FP.
-  uint32 max_multi_staked_fps = 4;
+  // consumer_max_multi_staked_fps is the maximum total number of finality providers (from all sources: 
+  // Babylon + all consumers) that this consumer will accept in a BTC delegation. This is a limit 
+  // imposed by the consumer to control the complexity/risk of multi-staked delegations they participate in.
+  // Must be at least 2 to allow for at least one Babylon FP and one consumer FP.
+  uint32 consumer_max_multi_staked_fps = 4;
   // consumer_metadata is necessary metadata of the consumer, and the data
   // depends on the type of integration
   oneof consumer_metadata {
