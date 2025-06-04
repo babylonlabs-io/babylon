@@ -41,15 +41,12 @@ func TestParamsValidation(t *testing.T) {
 		errMsg  string
 	}{
 		{
-			name: "valid params with default values",
-			params: types.Params{
-				PermissionedIntegration: false,
-				MaxMultiStakedFps:       2,
-			},
+			name: "valid params with default MaxMultiStakedFps",
+			params: types.DefaultParams(),
 			wantErr: false,
 		},
 		{
-			name: "valid params with minimum allowed value",
+			name: "valid params with acceptable MaxMultiStakedFps (> 2)",
 			params: types.Params{
 				PermissionedIntegration: true,
 				MaxMultiStakedFps:       4,
@@ -66,7 +63,7 @@ func TestParamsValidation(t *testing.T) {
 			errMsg:  types.ErrInvalidMaxMultiStakedFps.Error(),
 		},
 		{
-			name: "invalid params with MaxMultiStakedFps zero",
+			name: "invalid params with MaxMultiStakedFps too low (0)",
 			params: types.Params{
 				PermissionedIntegration: false,
 				MaxMultiStakedFps:       0,
