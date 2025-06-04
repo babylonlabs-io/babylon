@@ -21,5 +21,5 @@ message EventConsumerRegistered {
   ConsumerType consumer_type = 5 [(amino.dont_omitempty) = true];
   // consumer_metadata is necessary metadata of the consumer, and the data
   // depends on the type of integration
-  ETHL2ConsumerMetadata rollup_consumer_metadata = 6;
+  RollupConsumerMetadata rollup_consumer_metadata = 6;
 }
