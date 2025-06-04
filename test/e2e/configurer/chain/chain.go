@@ -8,7 +8,7 @@ import (
 	"time"
 
 	govv1 "cosmossdk.io/api/cosmos/gov/v1"
-	ibctesting "github.com/cosmos/ibc-go/v8/testing"
+	ibctesting "github.com/cosmos/ibc-go/v10/testing"
 
 	coretypes "github.com/cometbft/cometbft/rpc/core/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
