@@ -28,7 +28,7 @@ func (k Keeper) GetPubRandCommitForHeight(ctx context.Context, fpBtcPK *bbn.BIP3
 	if err == nil {
 		return commit, nil
 	}
-	// error ocurred on index
+	// error occurred on index
 	// log it with WARN level and proceed with fallback
 	logger := k.Logger(sdk.UnwrapSDKContext(ctx))
 	logger.Warn("getPubRandCommitByIndex failed. Fallback to reverse iterator", "error", err.Error())
