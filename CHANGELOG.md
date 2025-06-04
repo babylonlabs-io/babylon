@@ -48,17 +48,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 `TestIBCTransferSuite`
 - [#1034](https://github.com/babylonlabs-io/babylon/pull/1034) Remove redundant `ValidateBasic` call in `x/btcstaking` message server
 - [#1036](https://github.com/babylonlabs-io/babylon/pull/1036) Remove token factory `enable_admin_sudo_mint` capability
-<<<<<<< HEAD
-=======
-- [#1046](https://github.com/babylonlabs-io/babylon/pull/1046) Update genesis & validations `x/btcstaking` module
 - [#1050](https://github.com/babylonlabs-io/babylon/pull/1050) Add query to get btc delegations at specific block height
-
-### State Machine Breaking
-
-- [#402](https://github.com/babylonlabs-io/babylon/pull/402) **Babylon multi-staking support**.
-This PR contains a series of PRs on multi-staking support and BTC staking integration.
-- [#944](https://github.com/babylonlabs-io/babylon/pull/944) Add max_multi_staked_fps validation and single FP per consumer constraint in BTC delegations.
->>>>>>> a095732 (chore: add btc delegations at some specific blk height (#1050))
 
 ### Bug fixes
 
