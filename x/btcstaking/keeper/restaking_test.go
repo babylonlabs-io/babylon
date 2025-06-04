@@ -28,11 +28,6 @@ func FuzzRestaking_RestakedBTCDelegation(f *testing.F) {
 
 		// set all parameters
 		covenantSKs, _ := h.GenAndApplyParams(r)
-
-		// Explicitly set btcstkconsumer params to ensure default value is used
-		err := h.BTCStkConsumerKeeper.SetParams(h.Ctx, btcstkconsumertypes.DefaultParams())
-		require.NoError(t, err)
-
 		bsParams := h.BTCStakingKeeper.GetParams(h.Ctx)
 
 		// generate and insert new Babylon finality provider
@@ -99,42 +94,8 @@ func FuzzRestaking_RestakedBTCDelegation(f *testing.F) {
 		h.Error(err)
 		require.ErrorIs(t, err, types.ErrTooManyFPs)
 
-		// Test case 2: Valid delegation with 1 Babylon FP and 1 FP from consumer1 (total 2 FPs)
-		// This should succeed because it's within the minimum max_multi_staked_fps (2)
-		_, msgBTCDel, actualDel, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
-			r,
-			delSK,
-			[]*btcec.PublicKey{fpPK, consumerFPPK1},
-			stakingValue,
-			1000,
-			0,
-			0,
-			false,
-			false,
-			10,
-			30,
-		)
-		h.NoError(err)
-
-		// Test case 3: Valid delegation with 1 Babylon FP and 1 FP from consumer2 (total 2 FPs)
-		// This should succeed because it's within the minimum max_multi_staked_fps (2)
-		_, _, _, _, _, _, err = h.CreateDelegationWithBtcBlockHeight(
-			r,
-			delSK,
-			[]*btcec.PublicKey{fpPK, consumerFPPK2},
-			stakingValue,
-			1000,
-			0,
-			0,
-			false,
-			false,
-			10,
-			30,
-		)
-		h.NoError(err)
-
-		// Test case 4: Invalid delegation with 1 Babylon FP and 2 FPs from consumer1 (total 3 FPs)
-		// This should fail because it exceeds the minimum max_multi_staked_fps (2)
+		// Test case 2: Invalid delegation with 1 Babylon FP and 2 FPs from consumer1 (total 3 FPs)
+		// This should fail because min(max_multi_staked_fps) = 2, but we're trying to use 3 FPs
 		_, _, _, _, _, _, err = h.CreateDelegationWithBtcBlockHeight(
 			r,
 			delSK,
@@ -151,7 +112,7 @@ func FuzzRestaking_RestakedBTCDelegation(f *testing.F) {
 		h.Error(err)
 		require.ErrorIs(t, err, types.ErrTooManyFPs)
 
-		// Test case 5: Invalid delegation with 2 Babylon FPs (should fail with ErrTooManyBabylonFPs)
+		// Test case 3: Invalid delegation with 2 Babylon FPs (should fail with ErrTooManyBabylonFPs)
 		// Create a second Babylon finality provider
 		_, fpPK2, _ := h.CreateFinalityProvider(r)
 		_, _, _, _, _, _, err = h.CreateDelegationWithBtcBlockHeight(
@@ -170,7 +131,7 @@ func FuzzRestaking_RestakedBTCDelegation(f *testing.F) {
 		h.Error(err)
 		require.ErrorIs(t, err, types.ErrTooManyBabylonFPs)
 
-		// Test case 6: Invalid delegation with 1 Babylon FP and 1 FP from consumer2 and 1 FP from consumer3 (total 3 FPs)
+		// Test case 4: Invalid delegation with 1 Babylon FP and 1 FP from consumer2 and 1 FP from consumer3 (total 3 FPs)
 		// Although it satisfies the min consumer's max_multi_staked_fps (2), it exceeds the Babylon's max_multi_staked_fps (2)
 		_, _, _, _, _, _, err = h.CreateDelegationWithBtcBlockHeight(
 			r,
@@ -202,11 +163,45 @@ func FuzzRestaking_RestakedBTCDelegation(f *testing.F) {
 		babylonParams := h.BTCStkConsumerKeeper.GetParams(h.Ctx)
 		require.Equal(t, uint32(3), babylonParams.MaxMultiStakedFps)
 
-		// The same test should pass now because Babylon's max_multi_staked_fps is 3
+		// Test case 5: The same test should pass now because Babylon's max_multi_staked_fps is 3
 		_, _, _, _, _, _, err = h.CreateDelegationWithBtcBlockHeight(
 			r,
 			delSK,
 			[]*btcec.PublicKey{fpPK, consumerFPPK2, consumerFPPK3},
+			stakingValue,
+			1000,
+			0,
+			0,
+			false,
+			false,
+			10,
+			30,
+		)
+		h.NoError(err)
+
+		// Test case 6: Valid delegation with 1 Babylon FP and 1 FP from consumer1 (total 2 FPs)
+		// This should succeed because it's within the minimum max_multi_staked_fps (2)
+		_, msgBTCDel, actualDel, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
+			r,
+			delSK,
+			[]*btcec.PublicKey{fpPK, consumerFPPK1},
+			stakingValue,
+			1000,
+			0,
+			0,
+			false,
+			false,
+			10,
+			30,
+		)
+		h.NoError(err)
+
+		// Test case 7: Valid delegation with 1 Babylon FP and 1 FP from consumer2 (total 2 FPs)
+		// This should succeed because it's within the minimum max_multi_staked_fps (2)
+		_, _, _, _, _, _, err = h.CreateDelegationWithBtcBlockHeight(
+			r,
+			delSK,
+			[]*btcec.PublicKey{fpPK, consumerFPPK2},
 			stakingValue,
 			1000,
 			0,
