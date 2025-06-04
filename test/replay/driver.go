@@ -45,8 +45,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	xauthsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	v1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	gogoprotoio "github.com/cosmos/gogoproto/io"
 	"github.com/otiai10/copy"
@@ -1023,4 +1025,19 @@ func (d *BabylonAppDriver) CreateFinalityProviderForConsumer(consumer *Consumer)
 	fp.RegisterFinalityProvider(consumer.ID)
 
 	return fp
+}
+
+// UpdateBabylonMaxMultiStakedFps updates Babylon's max_multi_staked_fps parameter via governance
+func (d *BabylonAppDriver) UpdateBabylonMaxMultiStakedFps(newLimit uint32) {
+	// Create the update params message
+	updateParamsMsg := &btcstkconsumertypes.MsgUpdateParams{
+		Authority: authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		Params: btcstkconsumertypes.Params{
+			PermissionedIntegration: false,
+			MaxMultiStakedFps:       newLimit,
+		},
+	}
+
+	// Submit via governance and wait for it to pass
+	d.GovPropWaitPass(updateParamsMsg)
 }
