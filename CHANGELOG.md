@@ -39,7 +39,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 - [#1028](https://github.com/babylonlabs-io/babylon/pull/1028) Bump ibc-go to `v10` and wire up IBC `v2`.
 
-## v2.0.0-rc.1
 
 ### Improvements
 
