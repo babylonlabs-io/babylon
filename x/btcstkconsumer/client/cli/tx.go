@@ -33,13 +33,13 @@ func GetTxCmd() *cobra.Command {
 
 func NewRegisterConsumerCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "register-consumer <consumer-id> <name> <description> <max-multi-staked-fps> [rollup-address]",
+		Use:   "register-consumer <consumer-id> <name> <description> <consumer-max-multi-staked-fps> [rollup-address]",
 		Args:  cobra.MinimumNArgs(4),
 		Short: "Registers a consumer",
 		Long: strings.TrimSpace(
 			`Registers a consumer with Babylon. The consumer-id must be unique and will be used to identify this consumer.
 			The name and optional description help identify the purpose of this consumer.
-			The max-multi-staked-fps specifies the maximum number of finality providers from this consumer that can be part of a single BTC delegation.
+			The consumer-max-multi-staked-fps specifies the maximum total number of finality providers (from all sources: Babylon + all consumers) that this consumer will accept in a BTC delegation. This is a limit imposed by the consumer to control the complexity/risk of multi-staked delegations they participate in.
 			Must be at least 2 to allow for at least one Babylon FP and one consumer FP.`,
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -60,11 +60,11 @@ func NewRegisterConsumerCmd() *cobra.Command {
 			if description == "" {
 				return types.ErrEmptyConsumerDescription
 			}
-			maxMultiStakedFps, err := strconv.ParseUint(args[3], 10, 32)
+			consumerMaxMultiStakedFps, err := strconv.ParseUint(args[3], 10, 32)
 			if err != nil {
 				return fmt.Errorf("invalid max-multi-staked-fps: %w", err)
 			}
-			if maxMultiStakedFps < 2 {
+			if consumerMaxMultiStakedFps < 2 {
 				return types.ErrInvalidMaxMultiStakedFps
 			}
 			rollupAddress := ""
@@ -77,7 +77,7 @@ func NewRegisterConsumerCmd() *cobra.Command {
 				ConsumerId:                    consumerId,
 				ConsumerName:                  name,
 				ConsumerDescription:           description,
-				MaxMultiStakedFps:             uint32(maxMultiStakedFps),
+				ConsumerMaxMultiStakedFps:     uint32(consumerMaxMultiStakedFps),
 				RollupFinalityContractAddress: rollupAddress,
 			}
 

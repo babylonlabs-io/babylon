@@ -73,30 +73,31 @@ func FuzzRegisterConsumer(f *testing.F) {
 		babylonApp.IBCKeeper.ClientKeeper.SetClientState(ctx, consumerRegister.ConsumerId, &ibctmtypes.ClientState{})
 		// Register the consumer
 		_, err = msgServer.RegisterConsumer(ctx, &types.MsgRegisterConsumer{
-			ConsumerId:          consumerRegister.ConsumerId,
-			ConsumerName:        consumerRegister.ConsumerName,
-			ConsumerDescription: consumerRegister.ConsumerDescription,
-			MaxMultiStakedFps:   consumerRegister.MaxMultiStakedFps,
+			ConsumerId:                consumerRegister.ConsumerId,
+			ConsumerName:              consumerRegister.ConsumerName,
+			ConsumerDescription:       consumerRegister.ConsumerDescription,
+			ConsumerMaxMultiStakedFps: consumerRegister.ConsumerMaxMultiStakedFps,
 		})
 		require.NoError(t, err)
 		// check that the consumer is registered
 		consumerRegister2, err := bscKeeper.GetConsumerRegister(ctx, consumerRegister.ConsumerId)
 		require.NoError(t, err)
 		require.Equal(t, consumerRegister.String(), consumerRegister2.String())
+		require.Equal(t, types.ConsumerType_COSMOS, consumerRegister2.Type())
 
 		/*
-			Test registering consumer with invalid max_multi_staked_fps (zero)
+			Test registering consumer with invalid consumer_max_multi_staked_fps (zero)
 		*/
 		// generate a random consumer register
 		consumerRegister = datagen.GenRandomCosmosConsumerRegister(r)
 		// mock IBC light client
 		babylonApp.IBCKeeper.ClientKeeper.SetClientState(ctx, consumerRegister.ConsumerId, &ibctmtypes.ClientState{})
-		// Register the consumer with zero max_multi_staked_fps
+		// Register the consumer with zero consumer_max_multi_staked_fps
 		_, err = msgServer.RegisterConsumer(ctx, &types.MsgRegisterConsumer{
-			ConsumerId:          consumerRegister.ConsumerId,
-			ConsumerName:        consumerRegister.ConsumerName,
-			ConsumerDescription: consumerRegister.ConsumerDescription,
-			MaxMultiStakedFps:   0,
+			ConsumerId:                consumerRegister.ConsumerId,
+			ConsumerName:              consumerRegister.ConsumerName,
+			ConsumerDescription:       consumerRegister.ConsumerDescription,
+			ConsumerMaxMultiStakedFps: 0,
 		})
 		require.Error(t, err)
 		require.ErrorIs(t, err, types.ErrInvalidMaxMultiStakedFps)
@@ -113,7 +114,7 @@ func FuzzRegisterConsumer(f *testing.F) {
 			ConsumerId:                    consumerRegister.ConsumerId,
 			ConsumerName:                  consumerRegister.ConsumerName,
 			ConsumerDescription:           consumerRegister.ConsumerDescription,
-			MaxMultiStakedFps:             consumerRegister.MaxMultiStakedFps,
+			ConsumerMaxMultiStakedFps:     consumerRegister.ConsumerMaxMultiStakedFps,
 			RollupFinalityContractAddress: contractAddr.String(),
 		})
 		require.NoError(t, err)
@@ -122,7 +123,7 @@ func FuzzRegisterConsumer(f *testing.F) {
 		require.NoError(t, err)
 		require.Equal(t, consumerRegister.String(), consumerRegister2.String())
 		require.Equal(t, types.ConsumerType_ROLLUP, consumerRegister2.Type())
-		require.Equal(t, consumerRegister.MaxMultiStakedFps, consumerRegister2.MaxMultiStakedFps)
+		require.Equal(t, consumerRegister.ConsumerMaxMultiStakedFps, consumerRegister2.ConsumerMaxMultiStakedFps)
 	})
 }
 

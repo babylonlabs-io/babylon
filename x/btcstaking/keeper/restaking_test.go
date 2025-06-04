@@ -44,7 +44,7 @@ func FuzzRestaking_RestakedBTCDelegation(f *testing.F) {
 
 		// Register a consumer with limit = 5 (higher than Babylon's 2)
 		consumer := datagen.GenRandomCosmosConsumerRegister(r)
-		consumer.MaxMultiStakedFps = 5
+		consumer.ConsumerMaxMultiStakedFps = 5
 		err = h.BTCStkConsumerKeeper.RegisterConsumer(h.Ctx, consumer)
 		require.NoError(t, err)
 		_, consumerFPPK, _, err := h.CreateConsumerFinalityProvider(r, consumer.ConsumerId)
@@ -83,7 +83,7 @@ func FuzzRestaking_RestakedBTCDelegation(f *testing.F) {
 }
 
 func FuzzRestaking_BabylonParamValidation(f *testing.F) {
-	datagen.AddRandomSeedsToFuzzer(f, 1)
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 		ctrl := gomock.NewController(t)
@@ -102,14 +102,14 @@ func FuzzRestaking_BabylonParamValidation(f *testing.F) {
 
 		// Register consumers with HIGH limits (won't be the bottleneck)
 		consumer1 := datagen.GenRandomCosmosConsumerRegister(r)
-		consumer1.MaxMultiStakedFps = 10
+		consumer1.ConsumerMaxMultiStakedFps = 10
 		err = h.BTCStkConsumerKeeper.RegisterConsumer(h.Ctx, consumer1)
 		require.NoError(t, err)
 		_, consumerFPPK1, _, err := h.CreateConsumerFinalityProvider(r, consumer1.ConsumerId)
 		h.NoError(err)
 
 		consumer2 := datagen.GenRandomCosmosConsumerRegister(r)
-		consumer2.MaxMultiStakedFps = 10
+		consumer2.ConsumerMaxMultiStakedFps = 10
 		err = h.BTCStkConsumerKeeper.RegisterConsumer(h.Ctx, consumer2)
 		require.NoError(t, err)
 		_, consumerFPPK2, _, err := h.CreateConsumerFinalityProvider(r, consumer2.ConsumerId)
@@ -196,14 +196,14 @@ func FuzzRestaking_ConsumerParamValidation(f *testing.F) {
 
 		// Register consumers with RESTRICTIVE limits
 		restrictiveConsumer := datagen.GenRandomCosmosConsumerRegister(r)
-		restrictiveConsumer.MaxMultiStakedFps = 2 // This will be the bottleneck
+		restrictiveConsumer.ConsumerMaxMultiStakedFps = 2 // This will be the bottleneck
 		err = h.BTCStkConsumerKeeper.RegisterConsumer(h.Ctx, restrictiveConsumer)
 		require.NoError(t, err)
 		_, restrictiveFPPK, _, err := h.CreateConsumerFinalityProvider(r, restrictiveConsumer.ConsumerId)
 		h.NoError(err)
 
 		permissiveConsumer := datagen.GenRandomCosmosConsumerRegister(r)
-		permissiveConsumer.MaxMultiStakedFps = 5
+		permissiveConsumer.ConsumerMaxMultiStakedFps = 5
 		err = h.BTCStkConsumerKeeper.RegisterConsumer(h.Ctx, permissiveConsumer)
 		require.NoError(t, err)
 		_, permissiveFPPK, _, err := h.CreateConsumerFinalityProvider(r, permissiveConsumer.ConsumerId)

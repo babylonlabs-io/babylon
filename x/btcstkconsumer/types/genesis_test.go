@@ -77,10 +77,10 @@ func TestGenesisState_Validate(t *testing.T) {
 			genState: &types.GenesisState{
 				Consumers: []*types.ConsumerRegister{
 					{
-						ConsumerId:          "consumer1",
-						ConsumerName:        "Consumer One",
-						ConsumerDescription: "A valid consumer",
-						MaxMultiStakedFps:   0,
+						ConsumerId:                "consumer1",
+						ConsumerName:              "Consumer One",
+						ConsumerDescription:       "A valid consumer",
+						ConsumerMaxMultiStakedFps: 0,
 						ConsumerMetadata: &types.ConsumerRegister_CosmosConsumerMetadata{
 							CosmosConsumerMetadata: &types.CosmosConsumerMetadata{},
 						},

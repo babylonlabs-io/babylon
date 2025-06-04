@@ -54,7 +54,7 @@ func (ms msgServer) RegisterConsumer(goCtx context.Context, req *types.MsgRegist
 			req.ConsumerName,
 			req.ConsumerDescription,
 			req.RollupFinalityContractAddress,
-			req.MaxMultiStakedFps,
+			req.ConsumerMaxMultiStakedFps,
 		)
 		if err := ms.Keeper.RegisterConsumer(goCtx, consumerRegister); err != nil {
 			return nil, err
@@ -74,7 +74,7 @@ func (ms msgServer) RegisterConsumer(goCtx context.Context, req *types.MsgRegist
 			req.ConsumerId,
 			req.ConsumerName,
 			req.ConsumerDescription,
-			req.MaxMultiStakedFps,
+			req.ConsumerMaxMultiStakedFps,
 		)
 		if err := ms.Keeper.RegisterConsumer(goCtx, consumerRegister); err != nil {
 			return nil, err
@@ -89,7 +89,7 @@ func (ms msgServer) RegisterConsumer(goCtx context.Context, req *types.MsgRegist
 			req.ConsumerDescription,
 			consumerType,
 			req.RollupFinalityContractAddress,
-			req.MaxMultiStakedFps)); err != nil {
+			req.ConsumerMaxMultiStakedFps)); err != nil {
 		panic(fmt.Errorf("failed to emit NewConsumerRegisteredEvent event: %w", err))
 	}
 

@@ -10,30 +10,30 @@ func (m *MsgRegisterConsumer) ValidateBasic() error {
 	if len(m.ConsumerDescription) == 0 {
 		return ErrEmptyConsumerDescription
 	}
-	if m.MaxMultiStakedFps < 2 {
+	if m.ConsumerMaxMultiStakedFps < 2 {
 		return ErrInvalidMaxMultiStakedFps
 	}
 	return nil
 }
 
-func NewCosmosConsumerRegister(consumerId, consumerName, consumerDescription string, maxMultiStakedFps uint32) *ConsumerRegister {
+func NewCosmosConsumerRegister(consumerId, consumerName, consumerDescription string, consumerMaxMultiStakedFps uint32) *ConsumerRegister {
 	return &ConsumerRegister{
-		ConsumerId:          consumerId,
-		ConsumerName:        consumerName,
-		ConsumerDescription: consumerDescription,
-		MaxMultiStakedFps:   maxMultiStakedFps,
+		ConsumerId:                consumerId,
+		ConsumerName:              consumerName,
+		ConsumerDescription:       consumerDescription,
+		ConsumerMaxMultiStakedFps: consumerMaxMultiStakedFps,
 		ConsumerMetadata: &ConsumerRegister_CosmosConsumerMetadata{
 			CosmosConsumerMetadata: &CosmosConsumerMetadata{},
 		},
 	}
 }
 
-func NewRollupConsumerRegister(consumerId, consumerName, consumerDescription string, rollupFinalityContractAddress string, maxMultiStakedFps uint32) *ConsumerRegister {
+func NewRollupConsumerRegister(consumerId, consumerName, consumerDescription string, rollupFinalityContractAddress string, consumerMaxMultiStakedFps uint32) *ConsumerRegister {
 	return &ConsumerRegister{
-		ConsumerId:          consumerId,
-		ConsumerName:        consumerName,
-		ConsumerDescription: consumerDescription,
-		MaxMultiStakedFps:   maxMultiStakedFps,
+		ConsumerId:                consumerId,
+		ConsumerName:              consumerName,
+		ConsumerDescription:       consumerDescription,
+		ConsumerMaxMultiStakedFps: consumerMaxMultiStakedFps,
 		ConsumerMetadata: &ConsumerRegister_RollupConsumerMetadata{
 			RollupConsumerMetadata: &RollupConsumerMetadata{
 				FinalityContractAddress: rollupFinalityContractAddress,
@@ -51,10 +51,10 @@ func (cr *ConsumerRegister) Type() ConsumerType {
 
 func (cr *ConsumerRegister) ToResponse() *ConsumerRegisterResponse {
 	resp := &ConsumerRegisterResponse{
-		ConsumerId:          cr.ConsumerId,
-		ConsumerName:        cr.ConsumerName,
-		ConsumerDescription: cr.ConsumerDescription,
-		MaxMultiStakedFps:   cr.MaxMultiStakedFps,
+		ConsumerId:                cr.ConsumerId,
+		ConsumerName:              cr.ConsumerName,
+		ConsumerDescription:       cr.ConsumerDescription,
+		ConsumerMaxMultiStakedFps: cr.ConsumerMaxMultiStakedFps,
 	}
 	if cr.ConsumerMetadata != nil {
 		switch md := cr.ConsumerMetadata.(type) {
@@ -77,7 +77,7 @@ func (cr *ConsumerRegister) Validate() error {
 	if len(cr.ConsumerDescription) == 0 {
 		return ErrEmptyConsumerDescription
 	}
-	if cr.MaxMultiStakedFps < 2 {
+	if cr.ConsumerMaxMultiStakedFps < 2 {
 		return ErrInvalidMaxMultiStakedFps
 	}
 	return nil

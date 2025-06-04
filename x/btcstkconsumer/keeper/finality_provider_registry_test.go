@@ -36,15 +36,15 @@ func FuzzFPRegistry(f *testing.F) {
 		consumerName := datagen.GenRandomHexStr(r, 5)
 		// Create a random consumer description
 		consumerDesc := "Consumer description: " + datagen.GenRandomHexStr(r, 15)
-		// Generate random max_multi_staked_fps between 1 and 10
-		maxMultiStakedFps := uint32(r.Intn(10) + 1)
+		// Generate random consumer_max_multi_staked_fps between 2 and 11
+		consumerMaxMultiStakedFps := uint32(r.Intn(10) + 2)
 
 		// Populate ConsumerRegister object
 		consumerRegister := &types.ConsumerRegister{
-			ConsumerId:          consumerID,
-			ConsumerName:        consumerName,
-			ConsumerDescription: consumerDesc,
-			MaxMultiStakedFps:   maxMultiStakedFps,
+			ConsumerId:                consumerID,
+			ConsumerName:              consumerName,
+			ConsumerDescription:       consumerDesc,
+			ConsumerMaxMultiStakedFps: consumerMaxMultiStakedFps,
 		}
 
 		// Register the consumer
