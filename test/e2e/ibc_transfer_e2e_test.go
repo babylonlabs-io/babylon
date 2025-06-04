@@ -346,7 +346,7 @@ func (s *IBCTransferTestSuite) Test4E2EBelowThreshold() {
 		s.Require().NotEqual(before, after)
 
 		return true
-	}, 1*time.Minute, 1*time.Second, "Transfer back B was not successful")
+	}, 90*time.Second, 2*time.Second, "Transfer back B was not successful")
 }
 
 func (s *IBCTransferTestSuite) Test5RateLimitE2EAboveThreshold() {

@@ -109,12 +109,19 @@ func (s *BtcRewardsDistribution) SetupSuite() {
 	covenantSKs, _, _ := bstypes.DefaultCovenantCommittee()
 	s.covenantSKs = covenantSKs
 
-	s.configurer, err = configurer.NewBTCStakingConfigurer(s.T(), true)
+	s.configurer, err = configurer.NewBabylonConfigurer(s.T(), true)
 	s.NoError(err)
 	err = s.configurer.ConfigureChains()
 	s.NoError(err)
 	err = s.configurer.RunSetup()
 	s.NoError(err)
+}
+
+func (s *BtcRewardsDistribution) TearDownSuite() {
+	err := s.configurer.ClearResources()
+	if err != nil {
+		s.T().Logf("error to clear resources %s", err.Error())
+	}
 }
 
 // Test1CreateFinalityProviders creates all finality providers
