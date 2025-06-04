@@ -45,7 +45,7 @@ func TestRefundToCorrectRecipient(t *testing.T) {
 
 	bankKeeper := types.NewMockBankKeeper(ctrl)
 
-	iKeeper, ctx := keepertest.IncentiveKeeper(t, bankKeeper, nil, nil)
+	iKeeper, ctx := keepertest.IncentiveKeeper(t, bankKeeper, nil, nil, nil)
 
 	// Create test addresses
 	feePayer := []byte("feePayer")

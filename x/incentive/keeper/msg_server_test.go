@@ -14,7 +14,7 @@ import (
 )
 
 func setupMsgServer(t testing.TB) (types.MsgServer, context.Context) {
-	k, ctx := testkeeper.IncentiveKeeper(t, nil, nil, nil)
+	k, ctx := testkeeper.IncentiveKeeper(t, nil, nil, nil, nil)
 	return keeper.NewMsgServerImpl(*k), ctx
 }
 
@@ -35,7 +35,7 @@ func FuzzWithdrawReward(f *testing.F) {
 		// mock bank keeper
 		bk := types.NewMockBankKeeper(ctrl)
 
-		ik, ctx := testkeeper.IncentiveKeeper(t, bk, nil, nil)
+		ik, ctx := testkeeper.IncentiveKeeper(t, bk, nil, nil, nil)
 		ms := keeper.NewMsgServerImpl(*ik)
 
 		// generate and set a random reward gauge with a random set of withdrawable coins
@@ -83,7 +83,7 @@ func FuzzSetWithdrawAddr(f *testing.F) {
 		// mock bank keeper
 		bk := types.NewMockBankKeeper(ctrl)
 
-		ik, ctx := testkeeper.IncentiveKeeper(t, bk, nil, nil)
+		ik, ctx := testkeeper.IncentiveKeeper(t, bk, nil, nil, nil)
 		ms := keeper.NewMsgServerImpl(*ik)
 
 		// generate and set a random reward gauge with a random set of withdrawable coins

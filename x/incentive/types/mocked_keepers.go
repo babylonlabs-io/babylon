@@ -8,6 +8,7 @@ import (
 	context "context"
 	reflect "reflect"
 
+	feegrant "cosmossdk.io/x/feegrant"
 	types "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 	types0 "github.com/cosmos/cosmos-sdk/types"
 	gomock "github.com/golang/mock/gomock"
@@ -85,6 +86,20 @@ func NewMockBankKeeper(ctrl *gomock.Controller) *MockBankKeeper {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockBankKeeper) EXPECT() *MockBankKeeperMockRecorder {
 	return m.recorder
+}
+
+// BlockedAddr mocks base method.
+func (m *MockBankKeeper) BlockedAddr(addr types0.AccAddress) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "BlockedAddr", addr)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// BlockedAddr indicates an expected call of BlockedAddr.
+func (mr *MockBankKeeperMockRecorder) BlockedAddr(addr interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BlockedAddr", reflect.TypeOf((*MockBankKeeper)(nil).BlockedAddr), addr)
 }
 
 // GetAllBalances mocks base method.
@@ -178,4 +193,70 @@ func (m *MockEpochingKeeper) GetEpoch(ctx context.Context) *types.Epoch {
 func (mr *MockEpochingKeeperMockRecorder) GetEpoch(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEpoch", reflect.TypeOf((*MockEpochingKeeper)(nil).GetEpoch), ctx)
+}
+
+// MockFeegrantKeeper is a mock of FeegrantKeeper interface.
+type MockFeegrantKeeper struct {
+	ctrl     *gomock.Controller
+	recorder *MockFeegrantKeeperMockRecorder
+}
+
+// MockFeegrantKeeperMockRecorder is the mock recorder for MockFeegrantKeeper.
+type MockFeegrantKeeperMockRecorder struct {
+	mock *MockFeegrantKeeper
+}
+
+// NewMockFeegrantKeeper creates a new mock instance.
+func NewMockFeegrantKeeper(ctrl *gomock.Controller) *MockFeegrantKeeper {
+	mock := &MockFeegrantKeeper{ctrl: ctrl}
+	mock.recorder = &MockFeegrantKeeperMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockFeegrantKeeper) EXPECT() *MockFeegrantKeeperMockRecorder {
+	return m.recorder
+}
+
+// GetAllowance mocks base method.
+func (m *MockFeegrantKeeper) GetAllowance(ctx context.Context, granter, grantee types0.AccAddress) (feegrant.FeeAllowanceI, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAllowance", ctx, granter, grantee)
+	ret0, _ := ret[0].(feegrant.FeeAllowanceI)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAllowance indicates an expected call of GetAllowance.
+func (mr *MockFeegrantKeeperMockRecorder) GetAllowance(ctx, granter, grantee interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllowance", reflect.TypeOf((*MockFeegrantKeeper)(nil).GetAllowance), ctx, granter, grantee)
+}
+
+// GrantAllowance mocks base method.
+func (m *MockFeegrantKeeper) GrantAllowance(ctx context.Context, granter, grantee types0.AccAddress, feeAllowance feegrant.FeeAllowanceI) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GrantAllowance", ctx, granter, grantee, feeAllowance)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// GrantAllowance indicates an expected call of GrantAllowance.
+func (mr *MockFeegrantKeeperMockRecorder) GrantAllowance(ctx, granter, grantee, feeAllowance interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GrantAllowance", reflect.TypeOf((*MockFeegrantKeeper)(nil).GrantAllowance), ctx, granter, grantee, feeAllowance)
+}
+
+// UpdateAllowance mocks base method.
+func (m *MockFeegrantKeeper) UpdateAllowance(ctx context.Context, granter, grantee types0.AccAddress, feeAllowance feegrant.FeeAllowanceI) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateAllowance", ctx, granter, grantee, feeAllowance)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateAllowance indicates an expected call of UpdateAllowance.
+func (mr *MockFeegrantKeeperMockRecorder) UpdateAllowance(ctx, granter, grantee, feeAllowance interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateAllowance", reflect.TypeOf((*MockFeegrantKeeper)(nil).UpdateAllowance), ctx, granter, grantee, feeAllowance)
 }

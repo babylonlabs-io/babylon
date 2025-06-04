@@ -213,7 +213,7 @@ func TestInitGenesis(t *testing.T) {
 			var (
 				ctrl   = gomock.NewController(t)
 				ak     = types.NewMockAccountKeeper(ctrl)
-				k, ctx = keepertest.IncentiveKeeper(t, nil, ak, nil)
+				k, ctx = keepertest.IncentiveKeeper(t, nil, ak, nil, nil)
 			)
 			defer ctrl.Finish()
 			tc.akMockResp(ak)
@@ -336,7 +336,7 @@ func setupTest(t *testing.T, seed int64) (sdk.Context, *keeper.Keeper, *storetyp
 		r          = rand.New(rand.NewSource(seed))
 		ak         = types.NewMockAccountKeeper(ctrl)
 		storeKey   = storetypes.NewKVStoreKey(types.StoreKey)
-		k, ctx     = keepertest.IncentiveKeeperWithStoreKey(t, storeKey, nil, ak, nil)
+		k, ctx     = keepertest.IncentiveKeeperWithStoreKey(t, storeKey, nil, ak, nil, nil)
 		l          = int(math.Abs(float64(r.Int() % 50))) // cap it to 50 entries
 		bsg        = make([]types.BTCStakingGaugeEntry, l)
 		rg         = make([]types.RewardGaugeEntry, l)

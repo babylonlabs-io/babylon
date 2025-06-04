@@ -1,31 +1,110 @@
 package keeper
 
 import (
+	"bytes"
 	"context"
+	"fmt"
+	"time"
+
+	errorsmod "cosmossdk.io/errors"
+	"cosmossdk.io/x/feegrant"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/cosmos/gogoproto/proto"
 
 	"github.com/babylonlabs-io/babylon/v4/x/incentive/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// getRecipient returns the address that should receive the refund.
-func getRecipient(feeTx sdk.FeeTx) sdk.AccAddress {
-	if feeGranter := feeTx.FeeGranter(); feeGranter != nil {
-		return feeGranter
-	}
-	return feeTx.FeePayer()
-}
-
-// RefundTx refunds the given tx by sending the fee back to the fee payer.
+// RefundTx refunds the transaction fee to the appropriate party.
+// If a fee grant was used, it restores the granted allowance.
+// Otherwise, it sends the fee back to the original fee payer.
 func (k Keeper) RefundTx(ctx context.Context, tx sdk.FeeTx) error {
 	txFee := tx.GetFee()
 	if txFee.IsZero() {
-		// not possible with the global min gas price mechanism
-		// but having this check for compatibility in the future
 		return nil
 	}
-	txFeePayer := getRecipient(tx)
 
-	return k.bankKeeper.SendCoinsFromModuleToAccount(ctx, k.feeCollectorName, txFeePayer, txFee)
+	feeGranter := tx.FeeGranter()
+	feePayer := tx.FeePayer()
+
+	if feeGranter != nil && !bytes.Equal(feeGranter, feePayer) {
+		return k.refundToFeeGranter(ctx, feeGranter, feePayer, txFee, tx)
+	}
+
+	// refund to fee payer
+	return k.bankKeeper.SendCoinsFromModuleToAccount(ctx, k.feeCollectorName, feePayer, txFee)
+}
+
+// refundToFeeGranter restores the fee grant allowance by increasing the spend limit or restoring the deleted grant.
+func (k Keeper) refundToFeeGranter(ctx context.Context, feeGranter, feePayer sdk.AccAddress, refund sdk.Coins, tx sdk.FeeTx) error {
+	allowance, err := k.feegrantKeeper.GetAllowance(ctx, feeGranter, feePayer)
+
+	if err != nil || allowance == nil {
+		return k.restoreDeletedFeeGrant(ctx, feeGranter, feePayer, refund, tx)
+	}
+
+	// Existing allowance still present — just increase spend limit
+	updatedAllowance, err := restoreAllowanceUsed(allowance, refund)
+	if err != nil {
+		return err
+	}
+
+	if err := k.feegrantKeeper.UpdateAllowance(ctx, feeGranter, feePayer, updatedAllowance); err != nil {
+		return fmt.Errorf("failed to update fee allowance: %w", err)
+	}
+
+	return nil
+}
+
+// restoreDeletedFeeGrant restores the fee grant scoped to the used messages
+// and a 2 day expiration
+func (k Keeper) restoreDeletedFeeGrant(ctx context.Context, feeGranter, feePayer sdk.AccAddress, refund sdk.Coins, tx sdk.Tx) error {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+
+	// Set expiration time (48 hours from current block time)
+	expiration := sdkCtx.BlockTime().Add(48 * time.Hour)
+
+	// Create the basic allowance
+	basic := &feegrant.BasicAllowance{
+		SpendLimit: refund,
+		Expiration: &expiration,
+	}
+
+	// Use a set to collect unique msg type URLs
+	msgTypeSet := make(map[string]struct{})
+	for _, msg := range tx.GetMsgs() {
+		typeURL := sdk.MsgTypeURL(msg)
+		msgTypeSet[typeURL] = struct{}{}
+	}
+
+	// Convert the set into a slice
+	var msgTypeURLs []string
+	for typeURL := range msgTypeSet {
+		msgTypeURLs = append(msgTypeURLs, typeURL)
+	}
+
+	// Wrap it in an AllowedMsgAllowance
+	any, err := codectypes.NewAnyWithValue(basic)
+	if err != nil {
+		return fmt.Errorf("failed to wrap allowance: %w", err)
+	}
+
+	allowed := &feegrant.AllowedMsgAllowance{
+		Allowance:       any,
+		AllowedMessages: msgTypeURLs,
+	}
+
+	if err := allowed.ValidateBasic(); err != nil {
+		return fmt.Errorf("invalid restored allowance: %w", err)
+	}
+
+	// Grant it
+	if err := k.feegrantKeeper.GrantAllowance(ctx, feeGranter, feePayer, allowed); err != nil {
+		return fmt.Errorf("failed to re-grant fee allowance: %w", err)
+	}
+
+	return nil
 }
 
 // IndexRefundableMsg indexes the given refundable message by its hash.
@@ -52,4 +131,79 @@ func (k Keeper) RemoveRefundableMsg(ctx context.Context, msgHash []byte) {
 	if err != nil {
 		panic(err) // encoding issue; this can only be a programming error
 	}
+}
+
+// restoreAllowanceUsed increases the spend limit of a fee grant allowance.
+func restoreAllowanceUsed(original feegrant.FeeAllowanceI, refund sdk.Coins) (feegrant.FeeAllowanceI, error) {
+	var restoredAllowance feegrant.FeeAllowanceI
+	switch a := original.(type) {
+	case *feegrant.BasicAllowance:
+		newLimit := a.SpendLimit.Add(refund...)
+		restoredAllowance = &feegrant.BasicAllowance{
+			SpendLimit: newLimit,
+			Expiration: a.Expiration,
+		}
+
+	case *feegrant.PeriodicAllowance:
+		// Initialize new SpendLimit only if the original was not nil
+		var newSpendLimit sdk.Coins
+		if a.Basic.SpendLimit != nil {
+			newSpendLimit = a.Basic.SpendLimit.Add(refund...)
+		} else {
+			newSpendLimit = refund
+		}
+
+		// Always add refund to PeriodCanSpend
+		newCanSpend := a.PeriodCanSpend.Add(refund...)
+
+		// Create a new BasicAllowance with copied expiration
+		newBasic := feegrant.BasicAllowance{
+			SpendLimit: newSpendLimit,
+			Expiration: a.Basic.Expiration,
+		}
+
+		restoredAllowance = &feegrant.PeriodicAllowance{
+			Basic:            newBasic,
+			Period:           a.Period,
+			PeriodSpendLimit: a.PeriodSpendLimit,
+			PeriodCanSpend:   newCanSpend,
+			PeriodReset:      a.PeriodReset,
+		}
+	case *feegrant.AllowedMsgAllowance:
+		// Unpack the inner allowance
+		inner, err := a.GetAllowance()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get inner allowance: %w", err)
+		}
+
+		// Recursively restore it
+		restoredInner, err := restoreAllowanceUsed(inner, refund)
+		if err != nil {
+			return nil, err
+		}
+
+		// Repack into Any
+		msg, ok := restoredInner.(proto.Message)
+		if !ok {
+			return nil, errorsmod.Wrapf(sdkerrors.ErrPackAny, "cannot proto marshal %T", msg)
+		}
+		any, err := codectypes.NewAnyWithValue(msg)
+		if err != nil {
+			return nil, fmt.Errorf("failed to rewrap restored allowance: %w", err)
+		}
+
+		restoredAllowance = &feegrant.AllowedMsgAllowance{
+			Allowance:       any,
+			AllowedMessages: a.AllowedMessages,
+		}
+
+	default:
+		return nil, fmt.Errorf("unsupported fee grant type: %T", original)
+	}
+
+	if err := restoredAllowance.ValidateBasic(); err != nil {
+		return nil, fmt.Errorf("error on restored allowance ValidateBasic: %w", err)
+	}
+
+	return restoredAllowance, nil
 }

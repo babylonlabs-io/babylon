@@ -30,6 +30,7 @@ func IncentiveKeeperWithStore(
 	bankKeeper types.BankKeeper,
 	accountKeeper types.AccountKeeper,
 	epochingKeeper types.EpochingKeeper,
+	feegrantKeeper types.FeegrantKeeper,
 ) (*keeper.Keeper, sdk.Context) {
 	if storeKey == nil {
 		storeKey = storetypes.NewKVStoreKey(types.StoreKey)
@@ -47,6 +48,7 @@ func IncentiveKeeperWithStore(
 		bankKeeper,
 		accountKeeper,
 		epochingKeeper,
+		feegrantKeeper,
 		appparams.AccGov.String(),
 		authtypes.FeeCollectorName,
 	)
@@ -57,8 +59,8 @@ func IncentiveKeeperWithStore(
 	return &k, ctx
 }
 
-func IncentiveKeeper(t testing.TB, bankKeeper types.BankKeeper, accountKeeper types.AccountKeeper, epochingKeeper types.EpochingKeeper) (*keeper.Keeper, sdk.Context) {
-	return IncentiveKeeperWithStoreKey(t, nil, bankKeeper, accountKeeper, epochingKeeper)
+func IncentiveKeeper(t testing.TB, bankKeeper types.BankKeeper, accountKeeper types.AccountKeeper, epochingKeeper types.EpochingKeeper, feegrantKeeper types.FeegrantKeeper) (*keeper.Keeper, sdk.Context) {
+	return IncentiveKeeperWithStoreKey(t, nil, bankKeeper, accountKeeper, epochingKeeper, feegrantKeeper)
 }
 
 func IncentiveKeeperWithStoreKey(
@@ -67,11 +69,12 @@ func IncentiveKeeperWithStoreKey(
 	bankKeeper types.BankKeeper,
 	accountKeeper types.AccountKeeper,
 	epochingKeeper types.EpochingKeeper,
+	feegrantKeeper types.FeegrantKeeper,
 ) (*keeper.Keeper, sdk.Context) {
 	db := dbm.NewMemDB()
 	stateStore := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
 
-	k, ctx := IncentiveKeeperWithStore(t, db, stateStore, storeKey, bankKeeper, accountKeeper, epochingKeeper)
+	k, ctx := IncentiveKeeperWithStore(t, db, stateStore, storeKey, bankKeeper, accountKeeper, epochingKeeper, feegrantKeeper)
 
 	// Initialize params
 	if err := k.SetParams(ctx, types.DefaultParams()); err != nil {
