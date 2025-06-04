@@ -993,7 +993,7 @@ type Consumer struct {
 }
 
 // RegisterConsumer registers a new consumer with the given max_multi_staked_fps limit
-func (d *BabylonAppDriver) RegisterConsumer(consumerID string, maxMultiStakedFps uint32, ethL2ContractAddr ...string) *Consumer {
+func (d *BabylonAppDriver) RegisterConsumer(consumerID string, maxMultiStakedFps uint32, rollupContractAddr ...string) *Consumer {
 	msg := &btcstkconsumertypes.MsgRegisterConsumer{
 		Signer:              d.GetDriverAccountAddress().String(),
 		ConsumerId:          consumerID,
@@ -1002,9 +1002,9 @@ func (d *BabylonAppDriver) RegisterConsumer(consumerID string, maxMultiStakedFps
 		MaxMultiStakedFps:   maxMultiStakedFps,
 	}
 
-	// If ETH L2 contract address is provided, set it
-	if len(ethL2ContractAddr) > 0 {
-		msg.EthL2FinalityContractAddress = ethL2ContractAddr[0]
+	// If rollup contract address is provided, set it
+	if len(rollupContractAddr) > 0 {
+		msg.RollupFinalityContractAddress = rollupContractAddr[0]
 	}
 
 	d.SendTxWithMsgsFromDriverAccount(d.t, msg)
