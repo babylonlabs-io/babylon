@@ -212,6 +212,23 @@ func NewSoftwareUpgradeConfigurer(t *testing.T, isDebugLogEnabled bool, upgradeP
 	), nil
 }
 
+// NewFinalityContractConfigurer returns a new Configurer for finality contract tests.
+func NewFinalityContractConfigurer(t *testing.T, isDebugLogEnabled bool) (Configurer, error) {
+	identifier := identifierName(t)
+	containerManager, err := containers.NewManager(identifier, isDebugLogEnabled, false, false)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewCurrentBranchConfigurer(t,
+		[]*chain.Config{
+			chain.New(t, containerManager, initialization.ChainAID, updateNodeConfigNameWithIdentifier(validatorConfigsChainA, identifier), nil),
+		},
+		baseSetup, // base setup
+		containerManager,
+	), nil
+}
+
 func identifierName(t *testing.T) string {
 	str := strings.ToLower(t.Name())
 	str = strings.ReplaceAll(str, "/", "-")
