@@ -134,7 +134,7 @@ func (k Keeper) SetRewardTrackerEventLastProcessedHeight(ctx context.Context, bl
 	return k.rewardTrackerEventsLastProcessedHeight.Set(ctx, blkHeight)
 }
 
-// SetRewardTrackerEvent stores the events with the provided height
+// SetRewardTrackerEvent returns a new reward tracker if it doesn't exists for that block height
 func (k Keeper) SetRewardTrackerEvent(ctx context.Context, height uint64, ev *types.EventsPowerUpdateAtHeight) error {
 	return k.rewardTrackerEvents.Set(ctx, height, *ev)
 }

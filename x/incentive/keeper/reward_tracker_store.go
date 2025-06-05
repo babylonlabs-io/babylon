@@ -179,7 +179,6 @@ func (k Keeper) subFinalityProviderStaked(ctx context.Context, fp sdk.AccAddress
 	}
 
 	fpCurrentRwd.SubTotalActiveSat(amt)
-
 	return k.setFinalityProviderCurrentRewards(ctx, fp, fpCurrentRwd)
 }
 
