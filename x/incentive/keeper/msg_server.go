@@ -6,6 +6,7 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	"github.com/babylonlabs-io/babylon/v3/x/incentive/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -79,6 +80,11 @@ func (ms msgServer) SetWithdrawAddress(ctx context.Context, msg *types.MsgSetWit
 	withdrawAddress, err := sdk.AccAddressFromBech32(msg.WithdrawAddress)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	// make sure withdrawAddress it is not blocked address
+	if ms.bankKeeper.BlockedAddr(withdrawAddress) {
+		return nil, errorsmod.Wrapf(sdkerrors.ErrUnauthorized, "%s is not allowed to receive external funds", withdrawAddress)
 	}
 
 	err = ms.SetWithdrawAddr(ctx, delegatorAddress, withdrawAddress)

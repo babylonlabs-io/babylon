@@ -9,6 +9,8 @@ import (
 	testkeeper "github.com/babylonlabs-io/babylon/v3/testutil/keeper"
 	"github.com/babylonlabs-io/babylon/v3/x/incentive/keeper"
 	"github.com/babylonlabs-io/babylon/v3/x/incentive/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 )
@@ -95,11 +97,22 @@ func FuzzSetWithdrawAddr(f *testing.F) {
 
 		ik.SetRewardGauge(ctx, sType, sAddr, rg)
 
+		// Try to set a blocked address as withdrawer
+		// mock BlockAddress response
+		bk.EXPECT().BlockedAddr(authtypes.NewModuleAddress(authtypes.ModuleName)).Times(1).Return(true)
+		_, err := ms.SetWithdrawAddress(ctx, &types.MsgSetWithdrawAddress{
+			DelegatorAddress: sAddr.String(),
+			WithdrawAddress:  authtypes.NewModuleAddress(authtypes.ModuleName).String(),
+		})
+		require.Error(t, err)
+		require.ErrorContains(t, err, "not allowed to receive external funds")
+
 		// mock transfer of withdrawable coins
 		withdrawableCoins := rg.GetWithdrawableCoins()
 		bk.EXPECT().SendCoinsFromModuleToAccount(gomock.Any(), gomock.Eq(types.ModuleName), gomock.Eq(withdrawalAddr), gomock.Eq(withdrawableCoins)).Times(1)
+		bk.EXPECT().BlockedAddr(withdrawalAddr).Times(1).Return(false)
 
-		_, err := ms.SetWithdrawAddress(ctx, &types.MsgSetWithdrawAddress{
+		_, err = ms.SetWithdrawAddress(ctx, &types.MsgSetWithdrawAddress{
 			DelegatorAddress: sAddr.String(),
 			WithdrawAddress:  withdrawalAddr.String(),
 		})
