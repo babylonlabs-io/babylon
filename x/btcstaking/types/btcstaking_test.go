@@ -1,20 +1,12 @@
 package types_test
 
 import (
-<<<<<<< HEAD
-	"math/rand"
-	"testing"
-	time "time"
-
-	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
-	"github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
-=======
-	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
-	"github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 	"math/rand"
 	"testing"
 	"time"
->>>>>>> e7155ea (chore: validate block diff (#1089))
+
+	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
+	"github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
 )
 
 func TestLargestBtcReOrg_Validate(t *testing.T) {
