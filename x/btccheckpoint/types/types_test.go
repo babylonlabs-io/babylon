@@ -6,15 +6,10 @@ import (
 	"testing"
 	"time"
 
-<<<<<<< HEAD
 	"github.com/babylonlabs-io/babylon/v3/btctxformatter"
+	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
+	bbntypes "github.com/babylonlabs-io/babylon/v3/types"
 	"github.com/babylonlabs-io/babylon/v3/x/btccheckpoint/types"
-=======
-	"github.com/babylonlabs-io/babylon/v4/btctxformatter"
-	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
-	bbntypes "github.com/babylonlabs-io/babylon/v4/types"
-	"github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
->>>>>>> ef9df06 (chore: Add validation on the txkey in btcstaking (#1069))
 	"github.com/stretchr/testify/require"
 )
 
