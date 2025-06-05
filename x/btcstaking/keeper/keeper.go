@@ -102,3 +102,10 @@ func (k Keeper) BeginBlocker(ctx context.Context) error {
 
 	return nil
 }
+
+func (k Keeper) BtccKeeper() types.BtcCheckpointKeeper {
+	if k.btccKeeper == nil {
+		panic("BtcCheckpointKeeper is not set")
+	}
+	return k.btccKeeper
+}
