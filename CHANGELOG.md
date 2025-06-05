@@ -100,7 +100,6 @@ check of rewards
 - [#1089](https://github.com/babylonlabs-io/babylon/pull/1089) chore: validate block diff
 - [#1096](https://github.com/babylonlabs-io/babylon/pull/1096) chore: validate stats positive
 - [#1097](https://github.com/babylonlabs-io/babylon/pull/1097) Update `Evidence.ValidateBasic` function
-- [#1096](https://github.com/babylonlabs-io/babylon/pull/1096) chore: validate stats positive
 
 ### State Machine Breaking
 
