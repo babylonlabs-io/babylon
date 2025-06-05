@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/babylonlabs-io/babylon/v4/btctxformatter"
+	bbntypes "github.com/babylonlabs-io/babylon/v4/types"
 	"github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
 	"github.com/stretchr/testify/require"
 )
@@ -85,6 +86,51 @@ func TestCheckpointAddresses_Validate(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.addresses.Validate()
+			if tt.wantErr != nil {
+				require.Error(t, err)
+				require.EqualError(t, err, tt.wantErr.Error())
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestTransactionKey_Validate(t *testing.T) {
+	tests := []struct {
+		name    string
+		key     types.TransactionKey
+		wantErr error
+	}{
+		{
+			name: "valid key",
+			key: types.TransactionKey{
+				Index: 0,
+				Hash:  &bbntypes.BTCHeaderHashBytes{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "invalid hash",
+			key: types.TransactionKey{
+				Index: 0,
+				Hash:  nil,
+			},
+			wantErr: fmt.Errorf("transaction hash cannot be nil"),
+		},
+		{
+			name: "invalid hash length",
+			key: types.TransactionKey{
+				Index: 0,
+				Hash:  &bbntypes.BTCHeaderHashBytes{},
+			},
+			wantErr: fmt.Errorf("invalid transaction hash length: expected 32, got 0"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.key.Validate()
 			if tt.wantErr != nil {
 				require.Error(t, err)
 				require.EqualError(t, err, tt.wantErr.Error())
