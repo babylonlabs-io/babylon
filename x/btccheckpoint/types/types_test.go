@@ -101,6 +101,8 @@ func TestCheckpointAddresses_Validate(t *testing.T) {
 }
 
 func TestTransactionKey_Validate(t *testing.T) {
+	t.Parallel()
+	header := datagen.GenRandomBTCHeaderInfo(r)
 	tests := []struct {
 		name    string
 		key     types.TransactionKey
@@ -111,6 +113,14 @@ func TestTransactionKey_Validate(t *testing.T) {
 			key: types.TransactionKey{
 				Index: 0,
 				Hash:  datagen.GenRandomBTCHeaderPrevBlock(r),
+			},
+			wantErr: nil,
+		},
+		{
+			name: "valid key random",
+			key: types.TransactionKey{
+				Index: 0,
+				Hash:  header.Hash,
 			},
 			wantErr: nil,
 		},
