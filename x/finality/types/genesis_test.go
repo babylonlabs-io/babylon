@@ -22,11 +22,10 @@ func TestGenesisState_Validate(t *testing.T) {
 	// Create a valid finality provider for testing
 	btcPk, err := datagen.GenRandomBIP340PubKey(r)
 	require.NoError(t, err)
-	addr := datagen.GenRandomSecp256k1Address().String()
 	validComm = sdkmath.LegacyMustNewDecFromStr("0.5")
 	fpDistInfo := &types.FinalityProviderDistInfo{
 		BtcPk:          btcPk,
-		Addr:           []byte(addr),
+		Addr:           fpAddr1,
 		TotalBondedSat: 100,
 		IsTimestamped:  true,
 		Commission:     &validComm,
