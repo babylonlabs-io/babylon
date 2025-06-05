@@ -155,6 +155,8 @@ func (vpdc VotingPowerDistCache) Validate() error {
 		fpMap = make(map[string]struct{})
 	)
 
+	SortFinalityProvidersWithZeroedVotingPower(vpdc.FinalityProviders)
+
 	for _, fp := range vpdc.FinalityProviders {
 		if _, exists := fpMap[fp.BtcPk.MarshalHex()]; exists {
 			return fmt.Errorf("invalid voting power distribution cache. Duplicate finality provider entry with BTC PK %s", fp.BtcPk.MarshalHex())
@@ -164,6 +166,18 @@ func (vpdc VotingPowerDistCache) Validate() error {
 		if err := fp.Validate(); err != nil {
 			return err
 		}
+
+		// take only into account active finality providers
+		if !fp.IsTimestamped {
+			continue
+		}
+		if fp.IsJailed {
+			continue
+		}
+		if fp.IsSlashed {
+			continue
+		}
+
 		accVP += fp.TotalBondedSat
 	}
 
