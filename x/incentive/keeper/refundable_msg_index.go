@@ -41,12 +41,25 @@ func (k Keeper) RefundTx(ctx context.Context, tx sdk.FeeTx) error {
 func (k Keeper) refundToFeeGranter(ctx context.Context, feeGranter, feePayer sdk.AccAddress, refund sdk.Coins) error {
 	allowance, err := k.feegrantKeeper.GetAllowance(ctx, feeGranter, feePayer)
 
-	if err != nil || allowance == nil {
-		return k.restoreDeletedFeeGrant(ctx, feeGranter, feePayer, refund)
+	if err != nil {
+		if errorsmod.IsOf(err, sdkerrors.ErrNotFound) || errorsmod.IsOf(err, feegrant.ErrNoAllowance) {
+			// Allowance was totally depleted and deleted
+			// Need to restore it
+			err := k.restoreDeletedFeeGrant(ctx, feeGranter, feePayer, refund)
+			if err != nil {
+				return err
+			}
+		} else {
+			// got another error
+			return err
+		}
+		// restored fee grant,
+		// send refund to feeGranter
+		return k.bankKeeper.SendCoinsFromModuleToAccount(ctx, k.feeCollectorName, feeGranter, refund)
 	}
 
 	// Existing allowance still present — just increase spend limit
-	updatedAllowance, err := restoreAllowanceUsed(allowance, refund)
+	updatedAllowance, err := restoreAllowanceSpent(allowance, refund)
 	if err != nil {
 		return err
 	}
@@ -109,8 +122,8 @@ func (k Keeper) RemoveRefundableMsg(ctx context.Context, msgHash []byte) {
 	}
 }
 
-// restoreAllowanceUsed increases the spend limit of a fee grant allowance.
-func restoreAllowanceUsed(original feegrant.FeeAllowanceI, refund sdk.Coins) (feegrant.FeeAllowanceI, error) {
+// restoreAllowanceSpent increases the spend limit of a fee grant allowance.
+func restoreAllowanceSpent(original feegrant.FeeAllowanceI, refund sdk.Coins) (feegrant.FeeAllowanceI, error) {
 	var restoredAllowance feegrant.FeeAllowanceI
 	switch a := original.(type) {
 	case *feegrant.BasicAllowance:
@@ -153,7 +166,7 @@ func restoreAllowanceUsed(original feegrant.FeeAllowanceI, refund sdk.Coins) (fe
 		}
 
 		// Recursively restore it
-		restoredInner, err := restoreAllowanceUsed(inner, refund)
+		restoredInner, err := restoreAllowanceSpent(inner, refund)
 		if err != nil {
 			return nil, err
 		}

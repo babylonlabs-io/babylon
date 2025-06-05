@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"testing"
+	"time"
 
 	"cosmossdk.io/core/header"
 	"cosmossdk.io/log"
@@ -53,7 +54,14 @@ func IncentiveKeeperWithStore(
 		authtypes.FeeCollectorName,
 	)
 
-	ctx := sdk.NewContext(stateStore, cmtproto.Header{}, false, log.NewNopLogger())
+	ctx := sdk.NewContext(
+		stateStore,
+		cmtproto.Header{
+			Time: time.Now().UTC(),
+		},
+		false,
+		log.NewNopLogger(),
+	)
 	ctx = ctx.WithHeaderInfo(header.Info{})
 
 	return &k, ctx
