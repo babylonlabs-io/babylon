@@ -4,6 +4,7 @@ import (
 	"math/rand"
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/btcsuite/btcd/btcec/v2"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
@@ -18,8 +19,11 @@ var (
 	fpPrivKey2, _ = btcec.NewPrivateKey()
 	fpPubKey1     = bbn.NewBIP340PubKeyFromBTCPK(fpPrivKey1.PubKey())
 	fpPubKey2     = bbn.NewBIP340PubKeyFromBTCPK(fpPrivKey2.PubKey())
-	fpAddr1       = datagen.GenRandomAccount().GetAddress().String()
-	fpAddr2       = datagen.GenRandomAccount().GetAddress().String()
+	fpAddr1       = datagen.GenRandomSecp256k1Address().String()
+	fpAddr2       = datagen.GenRandomSecp256k1Address().String()
+	negComm       = sdkmath.LegacyNewDec(-1)
+	highComm      = sdkmath.LegacyNewDec(2)
+	validComm     = sdkmath.LegacyMustNewDecFromStr("0.5")
 )
 
 func TestVotingPowerDistCache(t *testing.T) {
@@ -391,11 +395,13 @@ func TestVotingPowerDistCache_Validate(t *testing.T) {
 						BtcPk:          fpPubKey1,
 						TotalBondedSat: 100,
 						Addr:           []byte(fpAddr1),
+						Commission:     &validComm,
 					},
 					{
 						BtcPk:          fpPubKey1,
 						TotalBondedSat: 200,
 						Addr:           []byte(fpAddr1),
+						Commission:     &validComm,
 					},
 				},
 				NumActiveFps:     2,
@@ -411,6 +417,7 @@ func TestVotingPowerDistCache_Validate(t *testing.T) {
 						BtcPk:          &bbn.BIP340PubKey{},
 						TotalBondedSat: 100,
 						Addr:           []byte(fpAddr1),
+						Commission:     &validComm,
 					},
 				},
 				NumActiveFps:     1,
@@ -426,11 +433,13 @@ func TestVotingPowerDistCache_Validate(t *testing.T) {
 						BtcPk:          fpPubKey1,
 						TotalBondedSat: 100,
 						Addr:           []byte(fpAddr1),
+						Commission:     &validComm,
 					},
 					{
 						BtcPk:          fpPubKey2,
 						TotalBondedSat: 100,
 						Addr:           []byte(fpAddr2),
+						Commission:     &validComm,
 					},
 				},
 				NumActiveFps:     2,
@@ -442,10 +451,28 @@ func TestVotingPowerDistCache_Validate(t *testing.T) {
 			name: "no address",
 			vpdc: types.VotingPowerDistCache{
 				FinalityProviders: []*types.FinalityProviderDistInfo{
-					{BtcPk: fpPubKey1, TotalBondedSat: 100},
+					{BtcPk: fpPubKey1, TotalBondedSat: 100, Commission: &validComm},
 				},
 			},
 			expErrMsg: "invalid fp dist info. empty finality provider address",
+		},
+		{
+			name: "commission lower than 0",
+			vpdc: types.VotingPowerDistCache{
+				FinalityProviders: []*types.FinalityProviderDistInfo{
+					{BtcPk: fpPubKey1, TotalBondedSat: 100, Commission: &negComm, Addr: []byte(fpAddr1)},
+				},
+			},
+			expErrMsg: "invalid fp dist info. commission is negative",
+		},
+		{
+			name: "commission greater than 1",
+			vpdc: types.VotingPowerDistCache{
+				FinalityProviders: []*types.FinalityProviderDistInfo{
+					{BtcPk: fpPubKey1, TotalBondedSat: 100, Commission: &highComm, Addr: []byte(fpAddr1)},
+				},
+			},
+			expErrMsg: "invalid fp dist info. commission is greater than 1",
 		},
 		{
 			name: "valid case",
@@ -455,11 +482,13 @@ func TestVotingPowerDistCache_Validate(t *testing.T) {
 						BtcPk:          fpPubKey1,
 						TotalBondedSat: 100,
 						Addr:           []byte(fpAddr1),
+						Commission:     &validComm,
 					},
 					{
 						BtcPk:          fpPubKey2,
 						TotalBondedSat: 200,
 						Addr:           []byte(fpAddr2),
+						Commission:     &validComm,
 					},
 				},
 				NumActiveFps:     2,

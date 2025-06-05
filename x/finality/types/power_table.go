@@ -218,6 +218,17 @@ func (fpdi FinalityProviderDistInfo) Validate() error {
 		return fmt.Errorf("invalid bech32 address: %w", err)
 	}
 
+	if fpdi.Commission == nil {
+		return fmt.Errorf("invalid fp dist info. commission is nil")
+	}
+
+	if fpdi.Commission.LT(sdkmath.LegacyZeroDec()) {
+		return fmt.Errorf("invalid fp dist info. commission is negative")
+	}
+
+	if fpdi.Commission.GT(sdkmath.LegacyOneDec()) {
+		return fmt.Errorf("invalid fp dist info. commission is greater than 1")
+	}
 	return nil
 }
 
