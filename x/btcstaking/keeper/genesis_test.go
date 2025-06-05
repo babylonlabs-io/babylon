@@ -135,7 +135,7 @@ func setupTest(t *testing.T) (sdk.Context, *helper.Helper, *types.GenesisState) 
 	blkHeight := uint64(r.Int63n(1000)) + math.MaxUint16
 	totalDelegations := 0
 
-	latestBtcReOrg := &types.LargestBtcReOrg{RollbackFrom: datagen.GenRandomBTCHeaderInfoWithHeight(r, 150), RollbackTo: datagen.GenRandomBTCHeaderInfoWithHeight(r, 100)}
+	latestBtcReOrg := &types.LargestBtcReOrg{RollbackFrom: datagen.GenRandomBTCHeaderInfoWithHeight(r, 150), RollbackTo: datagen.GenRandomBTCHeaderInfoWithHeight(r, 100), BlockDiff: 50}
 
 	for i := range fps {
 		stakingValue := r.Int31n(200000) + 10000
