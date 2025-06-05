@@ -46,6 +46,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#1050](https://github.com/babylonlabs-io/babylon/pull/1050) Add query to get btc delegations at specific block height
 - [#1061](https://github.com/babylonlabs-io/babylon/pull/1061) Add size and hex decode in
 `RefundableMsgHashes` validate genesis
+- [#1071](https://github.com/babylonlabs-io/babylon/pull/1071) Update `FinalityProviderDistInfo` validations
 - [#1069](https://github.com/babylonlabs-io/babylon/pull/1069) Add validation on the txkey in btcstaking
 - [#1070](https://github.com/babylonlabs-io/babylon/pull/1070) fix: validation for vp dist cache
 - [#1078](https://github.com/babylonlabs-io/babylon/pull/1078) fix: enforce check ibc msg size in `finalizeBlockState`
