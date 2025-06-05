@@ -29,19 +29,20 @@ func (k Keeper) RefundTx(ctx context.Context, tx sdk.FeeTx) error {
 	feePayer := tx.FeePayer()
 
 	if feeGranter != nil && !bytes.Equal(feeGranter, feePayer) {
-		return k.refundToFeeGranter(ctx, feeGranter, feePayer, txFee, tx)
+		return k.refundToFeeGranter(ctx, feeGranter, feePayer, txFee)
 	}
 
 	// refund to fee payer
 	return k.bankKeeper.SendCoinsFromModuleToAccount(ctx, k.feeCollectorName, feePayer, txFee)
 }
 
-// refundToFeeGranter restores the fee grant allowance by increasing the spend limit or restoring the deleted grant.
-func (k Keeper) refundToFeeGranter(ctx context.Context, feeGranter, feePayer sdk.AccAddress, refund sdk.Coins, tx sdk.FeeTx) error {
+// refundToFeeGranter restores the fee grant allowance by increasing the spend limit or restoring the deleted grant
+// and sends the refund to the fee granter
+func (k Keeper) refundToFeeGranter(ctx context.Context, feeGranter, feePayer sdk.AccAddress, refund sdk.Coins) error {
 	allowance, err := k.feegrantKeeper.GetAllowance(ctx, feeGranter, feePayer)
 
 	if err != nil || allowance == nil {
-		return k.restoreDeletedFeeGrant(ctx, feeGranter, feePayer, refund, tx)
+		return k.restoreDeletedFeeGrant(ctx, feeGranter, feePayer, refund)
 	}
 
 	// Existing allowance still present — just increase spend limit
@@ -54,53 +55,28 @@ func (k Keeper) refundToFeeGranter(ctx context.Context, feeGranter, feePayer sdk
 		return fmt.Errorf("failed to update fee allowance: %w", err)
 	}
 
-	return nil
+	return k.bankKeeper.SendCoinsFromModuleToAccount(ctx, k.feeCollectorName, feeGranter, refund)
 }
 
-// restoreDeletedFeeGrant restores the fee grant scoped to the used messages
-// and a 2 day expiration
-func (k Keeper) restoreDeletedFeeGrant(ctx context.Context, feeGranter, feePayer sdk.AccAddress, refund sdk.Coins, tx sdk.Tx) error {
+// restoreDeletedFeeGrant restores the fee grant as a basic allowance
+// with a 2 day expiration
+func (k Keeper) restoreDeletedFeeGrant(ctx context.Context, feeGranter, feePayer sdk.AccAddress, refund sdk.Coins) error {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
 	// Set expiration time (48 hours from current block time)
 	expiration := sdkCtx.BlockTime().Add(48 * time.Hour)
 
-	// Create the basic allowance
-	basic := &feegrant.BasicAllowance{
+	// Create a basic allowance
+	allowance := &feegrant.BasicAllowance{
 		SpendLimit: refund,
 		Expiration: &expiration,
 	}
 
-	// Use a set to collect unique msg type URLs
-	msgTypeSet := make(map[string]struct{})
-	for _, msg := range tx.GetMsgs() {
-		typeURL := sdk.MsgTypeURL(msg)
-		msgTypeSet[typeURL] = struct{}{}
-	}
-
-	// Convert the set into a slice
-	var msgTypeURLs []string
-	for typeURL := range msgTypeSet {
-		msgTypeURLs = append(msgTypeURLs, typeURL)
-	}
-
-	// Wrap it in an AllowedMsgAllowance
-	any, err := codectypes.NewAnyWithValue(basic)
-	if err != nil {
-		return fmt.Errorf("failed to wrap allowance: %w", err)
-	}
-
-	allowed := &feegrant.AllowedMsgAllowance{
-		Allowance:       any,
-		AllowedMessages: msgTypeURLs,
-	}
-
-	if err := allowed.ValidateBasic(); err != nil {
+	if err := allowance.ValidateBasic(); err != nil {
 		return fmt.Errorf("invalid restored allowance: %w", err)
 	}
 
-	// Grant it
-	if err := k.feegrantKeeper.GrantAllowance(ctx, feeGranter, feePayer, allowed); err != nil {
+	if err := k.feegrantKeeper.GrantAllowance(ctx, feeGranter, feePayer, allowance); err != nil {
 		return fmt.Errorf("failed to re-grant fee allowance: %w", err)
 	}
 
