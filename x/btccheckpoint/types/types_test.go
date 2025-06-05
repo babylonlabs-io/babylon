@@ -2,9 +2,12 @@ package types_test
 
 import (
 	"fmt"
+	"math/rand"
 	"testing"
+	"time"
 
 	"github.com/babylonlabs-io/babylon/v4/btctxformatter"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
 	bbntypes "github.com/babylonlabs-io/babylon/v4/types"
 	"github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
 	"github.com/stretchr/testify/require"
@@ -97,11 +100,22 @@ func TestCheckpointAddresses_Validate(t *testing.T) {
 }
 
 func TestTransactionKey_Validate(t *testing.T) {
+	r := rand.New(rand.NewSource(time.Now().Unix()))
+	header := datagen.GenRandomBTCHeaderInfo(r)
+
 	tests := []struct {
 		name    string
 		key     types.TransactionKey
 		wantErr error
 	}{
+		{
+			name: "valid key random",
+			key: types.TransactionKey{
+				Index: 0,
+				Hash:  header.Hash,
+			},
+			wantErr: nil,
+		},
 		{
 			name: "valid key",
 			key: types.TransactionKey{
