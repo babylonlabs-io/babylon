@@ -98,6 +98,8 @@ check of rewards
 - [#1084](https://github.com/babylonlabs-io/babylon/pull/1084) Check for negative amount in `TotalActiveSat` in `subFinalityProviderStaked`
 - [#1085](https://github.com/babylonlabs-io/babylon/pull/1085) Update comment in `SetRewardTrackerEvent` function
 - [#1097](https://github.com/babylonlabs-io/babylon/pull/1097) Update `Evidence.ValidateBasic` function
+- [#1096](https://github.com/babylonlabs-io/babylon/pull/1096) chore: validate stats positive
+- [#1089](https://github.com/babylonlabs-io/babylon/pull/1089) chore: validate block diff
 - [#1102](https://github.com/babylonlabs-io/babylon/pull/1102) Handle empty `BTCStakingGauge` when no fees are intercepted
 
 ### State Machine Breaking
