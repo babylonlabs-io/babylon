@@ -179,9 +179,7 @@ func (k Keeper) subFinalityProviderStaked(ctx context.Context, fp sdk.AccAddress
 	}
 
 	fpCurrentRwd.SubTotalActiveSat(amt)
-	if fpCurrentRwd.TotalActiveSat.IsNegative() {
-		return types.ErrFPCurrentRewardsTrackerNegativeAmount
-	}
+
 	return k.setFinalityProviderCurrentRewards(ctx, fp, fpCurrentRwd)
 }
 
