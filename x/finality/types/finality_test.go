@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
-	bbntypes "github.com/babylonlabs-io/babylon/v2/types"
-	"github.com/babylonlabs-io/babylon/v2/x/finality/types"
+	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
+	bbntypes "github.com/babylonlabs-io/babylon/v3/types"
+	"github.com/babylonlabs-io/babylon/v3/x/finality/types"
 
 	"github.com/stretchr/testify/require"
 )
