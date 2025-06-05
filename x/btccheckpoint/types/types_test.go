@@ -2,9 +2,12 @@ package types_test
 
 import (
 	"fmt"
+	"math/rand"
 	"testing"
+	"time"
 
 	"github.com/babylonlabs-io/babylon/v4/btctxformatter"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
 	bbntypes "github.com/babylonlabs-io/babylon/v4/types"
 	"github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
 	"github.com/stretchr/testify/require"
@@ -17,6 +20,7 @@ var (
 	shortAddr = make([]byte, validAddrLen-1)
 	longAddr  = make([]byte, validAddrLen+1)
 	emptyAddr = []byte{}
+	r         = rand.New(rand.NewSource(time.Now().UnixNano()))
 )
 
 func TestCheckpointAddresses_Validate(t *testing.T) {
@@ -106,7 +110,7 @@ func TestTransactionKey_Validate(t *testing.T) {
 			name: "valid key",
 			key: types.TransactionKey{
 				Index: 0,
-				Hash:  &bbntypes.BTCHeaderHashBytes{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+				Hash:  datagen.GenRandomBTCHeaderPrevBlock(r),
 			},
 			wantErr: nil,
 		},
