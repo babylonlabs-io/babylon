@@ -99,6 +99,7 @@ check of rewards
 - [#1085](https://github.com/babylonlabs-io/babylon/pull/1085) Update comment in `SetRewardTrackerEvent` function
 - [#1097](https://github.com/babylonlabs-io/babylon/pull/1097) Update `Evidence.ValidateBasic` function
 - [#1096](https://github.com/babylonlabs-io/babylon/pull/1096) chore: validate stats positive
+- [#1089](https://github.com/babylonlabs-io/babylon/pull/1089) chore: validate block diff
 
 ### State Machine Breaking
 
