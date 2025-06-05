@@ -2,7 +2,7 @@
 
 Babylon launched as Phase-1 without a cosmos chain running
 to collect BTC staking prior to decentralize the finality provider
-set of operators. The first upgrade of Babylon Genesis Chain to start
+set of operators. The first upgrade of Babylon Genesis chain to start
 receiving BTC delegations will include the BTC headers created
 during Phase-1 and upgrade, tokens distribution for the active users
 and operators that participated and need to finish their actions and
