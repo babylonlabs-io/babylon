@@ -23,6 +23,7 @@ var (
 	fpPubKey3     = bbn.NewBIP340PubKeyFromBTCPK(fpPrivKey3.PubKey())
 	fpAddr1       = datagen.GenRandomSecp256k1Address().String()
 	fpAddr2       = datagen.GenRandomSecp256k1Address().String()
+	fpAddr3       = datagen.GenRandomSecp256k1Address().String()
 	negComm       = sdkmath.LegacyNewDec(-1)
 	highComm      = sdkmath.LegacyNewDec(2)
 	validComm     = sdkmath.LegacyMustNewDecFromStr("0.5")
@@ -486,17 +487,23 @@ func TestVotingPowerDistCache_Validate(t *testing.T) {
 						BtcPk:          fpPubKey1,
 						TotalBondedSat: 100,
 						IsTimestamped:  true,
+						Addr:           []byte(fpAddr1),
+						Commission:     &validComm,
 					},
 					{
 						BtcPk:          fpPubKey2,
 						TotalBondedSat: 200,
 						IsTimestamped:  true,
+						Addr:           []byte(fpAddr2),
+						Commission:     &validComm,
 					},
 					{
 						BtcPk:          fpPubKey3,
 						TotalBondedSat: 100,
 						IsTimestamped:  true,
 						IsJailed:       true,
+						Addr:           []byte(fpAddr3),
+						Commission:     &validComm,
 					},
 				},
 				NumActiveFps:     2,
