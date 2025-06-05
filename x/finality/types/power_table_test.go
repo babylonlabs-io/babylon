@@ -419,10 +419,12 @@ func TestVotingPowerDistCache_Validate(t *testing.T) {
 					{
 						BtcPk:          fpPubKey1,
 						TotalBondedSat: 100,
+						IsTimestamped:  true,
 					},
 					{
 						BtcPk:          fpPubKey2,
 						TotalBondedSat: 100,
+						IsTimestamped:  true,
 					},
 				},
 				NumActiveFps:     2,
@@ -436,11 +438,15 @@ func TestVotingPowerDistCache_Validate(t *testing.T) {
 				FinalityProviders: []*types.FinalityProviderDistInfo{
 					{
 						BtcPk:          fpPubKey1,
+						Addr:           nil,
+						Commission:     nil,
 						TotalBondedSat: 100,
+						IsTimestamped:  true,
 					},
 					{
 						BtcPk:          fpPubKey2,
 						TotalBondedSat: 200,
+						IsTimestamped:  true,
 					},
 				},
 				NumActiveFps:     2,

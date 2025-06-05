@@ -164,13 +164,13 @@ func (vpdc VotingPowerDistCache) Validate() error {
 
 		// take only into account active finality providers
 		if !fp.IsTimestamped {
-			break
+			continue
 		}
 		if fp.IsJailed {
-			break
+			continue
 		}
 		if fp.IsSlashed {
-			break
+			continue
 		}
 
 		accVP += fp.TotalBondedSat
