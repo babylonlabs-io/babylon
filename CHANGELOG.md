@@ -94,6 +94,7 @@ check of rewards
 - [#1082](https://github.com/babylonlabs-io/babylon/pull/1082) chore: val sequential epoch
 - [#1084](https://github.com/babylonlabs-io/babylon/pull/1084) Check for negative amount in `TotalActiveSat` in `subFinalityProviderStaked`
 - [#1085](https://github.com/babylonlabs-io/babylon/pull/1085) Update comment in `SetRewardTrackerEvent` function
+- [#xxx](https://github.com/babylonlabs-io/babylon/pull/xxx) Set empty `BTCStakingGauge` when no fees are intercepted
 
 ### State Machine Breaking
 
