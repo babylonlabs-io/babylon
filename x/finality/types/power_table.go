@@ -228,7 +228,7 @@ func (fpdi FinalityProviderDistInfo) Validate() error {
 		return fmt.Errorf("invalid fp dist info. empty finality provider address")
 	}
 
-	if _, err := sdk.AccAddressFromBech32(string(fpdi.Addr)); err != nil {
+	if _, err := sdk.AccAddressFromBech32(sdk.AccAddress(fpdi.Addr).String()); err != nil {
 		return fmt.Errorf("invalid bech32 address: %w", err)
 	}
 
