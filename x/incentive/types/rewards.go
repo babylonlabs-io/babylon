@@ -143,6 +143,9 @@ func (evtPowerUpdt *EventsPowerUpdateAtHeight) Validate() error {
 			if err := validateAddrStr(evt.BtcDelAddr); err != nil {
 				return fmt.Errorf("invalid event activated btc delegator, error: %w", err)
 			}
+			if !evt.TotalSat.IsPositive() {
+				return fmt.Errorf("invalid event activated total_sat: must be positive, got %s", evt.TotalSat.String())
+			}
 		case *EventPowerUpdate_BtcUnbonded:
 			evt := typedEvt.BtcUnbonded
 			if err := validateAddrStr(evt.FpAddr); err != nil {
@@ -150,6 +153,9 @@ func (evtPowerUpdt *EventsPowerUpdateAtHeight) Validate() error {
 			}
 			if err := validateAddrStr(evt.BtcDelAddr); err != nil {
 				return fmt.Errorf("invalid event unbonded btc delegator, error: %w", err)
+			}
+			if !evt.TotalSat.IsPositive() {
+				return fmt.Errorf("invalid event activated total_sat: must be positive, got %s", evt.TotalSat.String())
 			}
 		}
 	}
