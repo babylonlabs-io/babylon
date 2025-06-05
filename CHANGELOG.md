@@ -39,6 +39,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
+- [#1064](https://github.com/babylonlabs-io/babylon/pull/1064) Signing info validation for `StartHeight` and `MissedBlockCounter`.
 - [#927](https://github.com/babylonlabs-io/babylon/pull/927) Add Mergify configuration file to improve PR backporting.
 - [#955](https://github.com/babylonlabs-io/babylon/pull/955) Update Mergify rules
 - [#967](https://github.com/babylonlabs-io/babylon/pull/967) Add `ValidateBasic` in `MsgInsertBTCSpvProof` (`x/btccheckpoint`)
