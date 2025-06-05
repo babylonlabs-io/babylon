@@ -209,6 +209,15 @@ func (fpdi FinalityProviderDistInfo) Validate() error {
 	if fpdi.BtcPk.Size() != bbn.BIP340PubKeyLen {
 		return fmt.Errorf("invalid fp dist info. finality provider BTC public key length: got %d, want %d", fpdi.BtcPk.Size(), bbn.BIP340PubKeyLen)
 	}
+
+	if fpdi.Addr == nil {
+		return fmt.Errorf("invalid fp dist info. empty finality provider address")
+	}
+
+	if _, err := sdk.AccAddressFromBech32(string(fpdi.Addr)); err != nil {
+		return fmt.Errorf("invalid bech32 address: %w", err)
+	}
+
 	return nil
 }
 

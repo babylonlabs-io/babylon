@@ -18,6 +18,8 @@ var (
 	fpPrivKey2, _ = btcec.NewPrivateKey()
 	fpPubKey1     = bbn.NewBIP340PubKeyFromBTCPK(fpPrivKey1.PubKey())
 	fpPubKey2     = bbn.NewBIP340PubKeyFromBTCPK(fpPrivKey2.PubKey())
+	fpAddr1       = datagen.GenRandomAccount().GetAddress().String()
+	fpAddr2       = datagen.GenRandomAccount().GetAddress().String()
 )
 
 func TestVotingPowerDistCache(t *testing.T) {
@@ -373,6 +375,7 @@ func TestVotingPowerDistCache_Validate(t *testing.T) {
 					{
 						BtcPk:          fpPubKey1,
 						TotalBondedSat: 100,
+						Addr:           []byte(fpAddr1),
 					},
 				},
 				NumActiveFps:     2,
@@ -387,10 +390,12 @@ func TestVotingPowerDistCache_Validate(t *testing.T) {
 					{
 						BtcPk:          fpPubKey1,
 						TotalBondedSat: 100,
+						Addr:           []byte(fpAddr1),
 					},
 					{
 						BtcPk:          fpPubKey1,
 						TotalBondedSat: 200,
+						Addr:           []byte(fpAddr1),
 					},
 				},
 				NumActiveFps:     2,
@@ -405,6 +410,7 @@ func TestVotingPowerDistCache_Validate(t *testing.T) {
 					{
 						BtcPk:          &bbn.BIP340PubKey{},
 						TotalBondedSat: 100,
+						Addr:           []byte(fpAddr1),
 					},
 				},
 				NumActiveFps:     1,
@@ -419,10 +425,12 @@ func TestVotingPowerDistCache_Validate(t *testing.T) {
 					{
 						BtcPk:          fpPubKey1,
 						TotalBondedSat: 100,
+						Addr:           []byte(fpAddr1),
 					},
 					{
 						BtcPk:          fpPubKey2,
 						TotalBondedSat: 100,
+						Addr:           []byte(fpAddr2),
 					},
 				},
 				NumActiveFps:     2,
@@ -431,16 +439,27 @@ func TestVotingPowerDistCache_Validate(t *testing.T) {
 			expErrMsg: "invalid voting power distribution cache. Provided TotalVotingPower 150 is different than FPs accumulated voting power 200",
 		},
 		{
+			name: "no address",
+			vpdc: types.VotingPowerDistCache{
+				FinalityProviders: []*types.FinalityProviderDistInfo{
+					{BtcPk: fpPubKey1, TotalBondedSat: 100},
+				},
+			},
+			expErrMsg: "invalid fp dist info. empty finality provider address",
+		},
+		{
 			name: "valid case",
 			vpdc: types.VotingPowerDistCache{
 				FinalityProviders: []*types.FinalityProviderDistInfo{
 					{
 						BtcPk:          fpPubKey1,
 						TotalBondedSat: 100,
+						Addr:           []byte(fpAddr1),
 					},
 					{
 						BtcPk:          fpPubKey2,
 						TotalBondedSat: 200,
+						Addr:           []byte(fpAddr2),
 					},
 				},
 				NumActiveFps:     2,
