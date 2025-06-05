@@ -24,20 +24,17 @@ func NewIBCMsgSizeDecorator() IBCMsgSizeDecorator {
 
 // AnteHandle checks that IBC messages size is within the accepted size
 func (IBCMsgSizeDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
-	// Local mempool filter for improper ibc packets
-	if ctx.IsCheckTx() {
-		for _, msg := range tx.GetMsgs() {
-			var err error
-			switch msg := msg.(type) {
-			case *ibctransfertypes.MsgTransfer:
-				err = validateIBCMsgTransfer(msg)
-			// If one of the msgs is from ICA, limit it's size due to current spam potential.
-			case *icacontrollertypes.MsgSendTx:
-				err = validateICAMsgSendTx(msg)
-			}
-			if err != nil {
-				return ctx, err
-			}
+	for _, msg := range tx.GetMsgs() {
+		var err error
+		switch msg := msg.(type) {
+		case *ibctransfertypes.MsgTransfer:
+			err = validateIBCMsgTransfer(msg)
+		// If one of the msgs is from ICA, limit it's size due to current spam potential.
+		case *icacontrollertypes.MsgSendTx:
+			err = validateICAMsgSendTx(msg)
+		}
+		if err != nil {
+			return ctx, err
 		}
 	}
 	return next(ctx, tx, simulate)

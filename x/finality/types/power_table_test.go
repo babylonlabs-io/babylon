@@ -17,8 +17,10 @@ import (
 var (
 	fpPrivKey1, _ = btcec.NewPrivateKey()
 	fpPrivKey2, _ = btcec.NewPrivateKey()
+	fpPrivKey3, _ = btcec.NewPrivateKey()
 	fpPubKey1     = bbn.NewBIP340PubKeyFromBTCPK(fpPrivKey1.PubKey())
 	fpPubKey2     = bbn.NewBIP340PubKeyFromBTCPK(fpPrivKey2.PubKey())
+  fpPubKey3     = bbn.NewBIP340PubKeyFromBTCPK(fpPrivKey3.PubKey())
 	fpAddr1       = datagen.GenRandomSecp256k1Address().String()
 	fpAddr2       = datagen.GenRandomSecp256k1Address().String()
 	negComm       = sdkmath.LegacyNewDec(-1)
@@ -434,12 +436,14 @@ func TestVotingPowerDistCache_Validate(t *testing.T) {
 						TotalBondedSat: 100,
 						Addr:           []byte(fpAddr1),
 						Commission:     &validComm,
+						IsTimestamped:  true,
 					},
 					{
 						BtcPk:          fpPubKey2,
 						TotalBondedSat: 100,
 						Addr:           []byte(fpAddr2),
 						Commission:     &validComm,
+						IsTimestamped:  true,
 					},
 				},
 				NumActiveFps:     2,
@@ -473,6 +477,29 @@ func TestVotingPowerDistCache_Validate(t *testing.T) {
 				},
 			},
 			expErrMsg: "invalid fp dist info. commission is greater than 1",
+			name: "one inactive case",
+			vpdc: types.VotingPowerDistCache{
+				FinalityProviders: []*types.FinalityProviderDistInfo{
+					{
+						BtcPk:          fpPubKey1,
+						TotalBondedSat: 100,
+						IsTimestamped:  true,
+					},
+					{
+						BtcPk:          fpPubKey2,
+						TotalBondedSat: 200,
+						IsTimestamped:  true,
+					},
+					{
+						BtcPk:          fpPubKey3,
+						TotalBondedSat: 100,
+						IsTimestamped:  true,
+						IsJailed:       true,
+					},
+				},
+				NumActiveFps:     2,
+				TotalVotingPower: 300,
+			},
 		},
 		{
 			name: "valid case",
@@ -483,12 +510,15 @@ func TestVotingPowerDistCache_Validate(t *testing.T) {
 						TotalBondedSat: 100,
 						Addr:           []byte(fpAddr1),
 						Commission:     &validComm,
+						IsTimestamped:  true,
 					},
 					{
 						BtcPk:          fpPubKey2,
 						TotalBondedSat: 200,
 						Addr:           []byte(fpAddr2),
 						Commission:     &validComm,
+						IsTimestamped:  true,
+
 					},
 				},
 				NumActiveFps:     2,
