@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"slices"
 	"sort"
+	"strings"
 
 	types "github.com/babylonlabs-io/babylon/v4/types"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
@@ -50,16 +51,13 @@ func (gs GenesisState) Validate() error {
 		return err
 	}
 
-	for _, d := range gs.BtcDelegations {
-		if err := d.ValidateBasic(); err != nil {
-			return err
-		}
+	expDelegatorIdx, err := validateBTCDelegations(gs.BtcDelegations)
+	if err != nil {
+		return err
 	}
 
-	for _, d := range gs.BtcDelegators {
-		if err := d.Validate(); err != nil {
-			return err
-		}
+	if err := validateDelegatorIdx(gs.BtcDelegators, expDelegatorIdx); err != nil {
+		return err
 	}
 
 	if err := types.ValidateEntries(gs.BlockHeightChains, func(bh *BlockHeightBbnToBtc) uint64 {
@@ -183,6 +181,73 @@ func (e ConsumerEvent) Validate() error {
 	return nil
 }
 
+// validateBTCDelegations validates the BTC delegation and returns the
+// expected delegation index to compare with the provided on genesis state
+func validateBTCDelegations(delegations []*BTCDelegation) (map[string]*BTCDelegatorDelegationIndex, error) {
+	// prevent duplicate staking tx hashes
+	keyMap := make(map[string]struct{})
+
+	// map from (fpBtcPk || delBtcPk) -> delegation index
+	indexMap := make(map[string]*BTCDelegatorDelegationIndex)
+
+	for _, d := range delegations {
+		stakingTxHash := d.MustGetStakingTxHash()
+		key := stakingTxHash.String()
+
+		if _, exists := keyMap[key]; exists {
+			return nil, fmt.Errorf("duplicate entry for key: %v", key)
+		}
+		keyMap[key] = struct{}{}
+
+		if err := d.ValidateBasic(); err != nil {
+			return nil, err
+		}
+
+		// create or update index for each (fpBtcPk, delBtcPk) pair
+		for _, fpBTCPK := range d.FpBtcPkList {
+			mapKey := buildDelegationIndexKey(&fpBTCPK, d.BtcPk)
+
+			idx, ok := indexMap[mapKey]
+			if !ok {
+				idx = NewBTCDelegatorDelegationIndex()
+				indexMap[mapKey] = idx
+			}
+
+			if err := idx.Add(stakingTxHash); err != nil {
+				return nil, fmt.Errorf("error adding staking tx hash to index: %w", err)
+			}
+		}
+	}
+
+	return indexMap, nil
+}
+
+// validateDelegatorIdx validates the provided genesis state delegator index
+// with the expected index got from the provided BTC delegations in the genesis state
+func validateDelegatorIdx(gsEntries []*BTCDelegator, expIdx map[string]*BTCDelegatorDelegationIndex) error {
+	for _, del := range gsEntries {
+		if del.FpBtcPk == nil || del.DelBtcPk == nil {
+			return fmt.Errorf("missing FpBtcPk or DelBtcPk in BTCDelegator")
+		}
+
+		mapKey := buildDelegationIndexKey(del.FpBtcPk, del.DelBtcPk)
+
+		expectedIdx, exists := expIdx[mapKey]
+		if !exists {
+			return fmt.Errorf("expected index for key (fpBtcPk::delBtcPk) %s not found", mapKey)
+		}
+
+		if expectedIdx.String() != del.Idx.String() {
+			return fmt.Errorf("mismatched index for key %s: expected %s, got  %s", mapKey, expectedIdx, del.Idx)
+		}
+		if err := del.Validate(); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 // Helper function to sort slices to get a deterministic
 // result on the tests
 func SortData(gs *GenesisState) {
@@ -215,4 +280,24 @@ func SortData(gs *GenesisState) {
 	})
 
 	slices.Sort(gs.AllowedStakingTxHashes)
+}
+
+func buildDelegationIndexKey(fp, del *types.BIP340PubKey) string {
+	return fp.MarshalHex() + "::" + del.MarshalHex()
+}
+
+func parseDelegationIndexKey(s string) (*types.BIP340PubKey, *types.BIP340PubKey, error) {
+	parts := strings.SplitN(s, "::", 2)
+	if len(parts) != 2 {
+		return nil, nil, errors.New("invalid delegation index key")
+	}
+	fp, err := types.NewBIP340PubKeyFromHex(parts[0])
+	if err != nil {
+		return nil, nil, err
+	}
+	del, err := types.NewBIP340PubKeyFromHex(parts[1])
+	if err != nil {
+		return nil, nil, err
+	}
+	return fp, del, nil
 }
