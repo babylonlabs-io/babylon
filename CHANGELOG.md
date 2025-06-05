@@ -39,6 +39,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
+- [#1064](https://github.com/babylonlabs-io/babylon/pull/1064) Signing info validation for `StartHeight` and `MissedBlockCounter`.
 - [#1015](https://github.com/babylonlabs-io/babylon/pull/1015) Add finality contract e2e tests follup-up.
 - [#970](https://github.com/babylonlabs-io/babylon/pull/970) Add finality contract e2e tests follup-up.
 - [#946](https://github.com/babylonlabs-io/babylon/pull/946) Add finality contract e2e tests follup-up.
@@ -89,6 +90,11 @@ check of rewards
 - [#1061](https://github.com/babylonlabs-io/babylon/pull/1061) Add size and hex decode in
 `RefundableMsgHashes` validate genesis
 - [#1069](https://github.com/babylonlabs-io/babylon/pull/1069) Add validation on the txkey in btcstaking
+- [#1070](https://github.com/babylonlabs-io/babylon/pull/1070) fix: validation for vp dist cache
+- [#1078](https://github.com/babylonlabs-io/babylon/pull/1078) fix: enforce check ibc msg size in `finalizeBlockState`
+- [#1082](https://github.com/babylonlabs-io/babylon/pull/1082) chore: val sequential epoch
+- [#1084](https://github.com/babylonlabs-io/babylon/pull/1084) Check for negative amount in `TotalActiveSat` in `subFinalityProviderStaked`
+- [#1085](https://github.com/babylonlabs-io/babylon/pull/1085) Update comment in `SetRewardTrackerEvent` function
 
 ### State Machine Breaking
 
