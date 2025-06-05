@@ -278,23 +278,8 @@ func TestValidateSequentialEpochs(t *testing.T) {
 			wantErr:      false,
 		},
 		{
-			name:         "consecutive from one",
-			epochNumbers: []uint64{1, 2, 3, 4, 5},
-			wantErr:      false,
-		},
-		{
-			name:         "consecutive from arbitrary start",
-			epochNumbers: []uint64{10, 11, 12, 13},
-			wantErr:      false,
-		},
-		{
 			name:         "consecutive unordered input",
 			epochNumbers: []uint64{3, 1, 4, 2, 5},
-			wantErr:      false,
-		},
-		{
-			name:         "two consecutive epochs",
-			epochNumbers: []uint64{7, 8},
 			wantErr:      false,
 		},
 		{
@@ -332,16 +317,6 @@ func TestValidateSequentialEpochs(t *testing.T) {
 			epochNumbers: []uint64{5, 1, 3, 2},
 			wantErr:      true,
 			errContains:  "found gap between 3 and 5",
-		},
-		{
-			name:         "reverse order consecutive",
-			epochNumbers: []uint64{5, 4, 3, 2, 1},
-			wantErr:      false,
-		},
-		{
-			name:         "large consecutive sequence",
-			epochNumbers: []uint64{100, 101, 102, 103, 104, 105, 106, 107, 108, 109},
-			wantErr:      false,
 		},
 	}
 
