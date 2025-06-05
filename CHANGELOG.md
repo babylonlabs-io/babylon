@@ -61,8 +61,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#1083](https://github.com/babylonlabs-io/babylon/pull/1083) Check if `WithdrawAddress` is a blocked address in `SetWithdrawAddress`
 - [#1084](https://github.com/babylonlabs-io/babylon/pull/1084) Check for negative amount in `TotalActiveSat` in `subFinalityProviderStaked`
 - [#1085](https://github.com/babylonlabs-io/babylon/pull/1085) Update comment in `SetRewardTrackerEvent` function
-- [#1097](https://github.com/babylonlabs-io/babylon/pull/1097) Update `Evidence.ValidateBasic` function
+- [#1089](https://github.com/babylonlabs-io/babylon/pull/1089) chore: validate block diff
 - [#1096](https://github.com/babylonlabs-io/babylon/pull/1096) chore: validate stats positive
+- [#1097](https://github.com/babylonlabs-io/babylon/pull/1097) Update `Evidence.ValidateBasic` function
 
 ### Bug fixes
 
