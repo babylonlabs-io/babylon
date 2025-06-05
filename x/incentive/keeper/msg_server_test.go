@@ -5,20 +5,12 @@ import (
 	"math/rand"
 	"testing"
 
-<<<<<<< HEAD
 	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
 	testkeeper "github.com/babylonlabs-io/babylon/v2/testutil/keeper"
 	"github.com/babylonlabs-io/babylon/v2/x/incentive/keeper"
 	"github.com/babylonlabs-io/babylon/v2/x/incentive/types"
-=======
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
-	testkeeper "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
-	"github.com/babylonlabs-io/babylon/v4/x/incentive/keeper"
-	"github.com/babylonlabs-io/babylon/v4/x/incentive/types"
-
->>>>>>> 27d06f6 (imp(incentive): check if withdraw addr is blocked addr (#1083))
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 )
@@ -72,7 +64,7 @@ func FuzzWithdrawReward(f *testing.F) {
 		require.NotNil(t, newRg)
 		require.True(t, newRg.IsFullyWithdrawn())
 
-		// should fail with invalid stakeholder type 
+		// should fail with invalid stakeholder type
 		_, err = ms.WithdrawReward(ctx, &types.MsgWithdrawReward{
 			Type:    "invalid_type",
 			Address: sAddr.String(),
