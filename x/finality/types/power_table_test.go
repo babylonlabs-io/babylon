@@ -443,7 +443,6 @@ func TestVotingPowerDistCache_Validate(t *testing.T) {
 						TotalBondedSat: 100,
 						IsTimestamped:  true,
 					},
-
 					{
 						BtcPk:          fpPubKey2,
 						TotalBondedSat: 200,
