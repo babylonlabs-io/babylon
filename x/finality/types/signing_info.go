@@ -47,5 +47,11 @@ func (fpsi FinalityProviderSigningInfo) Validate() error {
 	if fpsi.FpBtcPk.Size() != bbntypes.BIP340PubKeyLen {
 		return fmt.Errorf("invalid signing info. finality provider BTC public key length: got %d, want %d", fpsi.FpBtcPk.Size(), bbntypes.BIP340PubKeyLen)
 	}
+	if fpsi.StartHeight < 0 {
+		return fmt.Errorf("invalid start height")
+	}
+	if fpsi.MissedBlocksCounter < 0 {
+		return fmt.Errorf("invalid missed blocks counter")
+	}
 	return nil
 }
