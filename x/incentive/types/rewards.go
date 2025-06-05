@@ -134,6 +134,12 @@ func (hr *FinalityProviderHistoricalRewards) Validate() error {
 
 func (evtPowerUpdt *EventsPowerUpdateAtHeight) Validate() error {
 	for _, untypedEvt := range evtPowerUpdt.Events {
+		if untypedEvt == nil {
+			return errors.New("nil event in EventsPowerUpdateAtHeight")
+		}
+		if untypedEvt.Ev == nil {
+			return errors.New("nil event type in EventsPowerUpdateAtHeight")
+		}
 		switch typedEvt := untypedEvt.Ev.(type) {
 		case *EventPowerUpdate_BtcActivated:
 			evt := typedEvt.BtcActivated
