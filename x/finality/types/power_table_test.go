@@ -466,8 +466,6 @@ func TestVotingPowerDistCache_Validate(t *testing.T) {
 				FinalityProviders: []*types.FinalityProviderDistInfo{
 					{
 						BtcPk:          fpPubKey1,
-						Addr:           nil,
-						Commission:     nil,
 						TotalBondedSat: 100,
 						IsTimestamped:  true,
 					},
