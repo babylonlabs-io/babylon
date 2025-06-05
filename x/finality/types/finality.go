@@ -7,7 +7,12 @@ import (
 	"github.com/btcsuite/btcd/btcec/v2"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+<<<<<<< HEAD
 	"github.com/babylonlabs-io/babylon/v3/crypto/eots"
+=======
+	"github.com/babylonlabs-io/babylon/v4/crypto/eots"
+	"github.com/babylonlabs-io/babylon/v4/types"
+>>>>>>> c9f87be (imp(finality): update Evidence ValidateBasic (#1097))
 )
 
 func (c *PubRandCommit) IsInRange(height uint64) bool {
@@ -88,6 +93,9 @@ func (e *Evidence) ValidateBasic() error {
 	if e.FpBtcPk == nil {
 		return fmt.Errorf("empty FpBtcPk")
 	}
+	if _, err := e.FpBtcPk.ToBTCPK(); err != nil {
+		return err
+	}
 	if e.PubRand == nil {
 		return fmt.Errorf("empty PubRand")
 	}
@@ -100,6 +108,10 @@ func (e *Evidence) ValidateBasic() error {
 	if e.ForkFinalitySig == nil {
 		return fmt.Errorf("empty ForkFinalitySig")
 	}
+	if e.ForkFinalitySig.Size() != types.SchnorrEOTSSigLen {
+		return fmt.Errorf("malformed ForkFinalitySig")
+	}
+
 	return nil
 }
 
