@@ -93,6 +93,7 @@ check of rewards
 - [#1078](https://github.com/babylonlabs-io/babylon/pull/1078) fix: enforce check ibc msg size in `finalizeBlockState`
 - [#1082](https://github.com/babylonlabs-io/babylon/pull/1082) chore: val sequential epoch
 - [#1085](https://github.com/babylonlabs-io/babylon/pull/1085) Update comment in `SetRewardTrackerEvent` function
+- [#1097](https://github.com/babylonlabs-io/babylon/pull/1097) Update `Evidence.ValidateBasic` function
 
 ### State Machine Breaking
 
