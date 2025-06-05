@@ -1,11 +1,17 @@
 package types
 
 import (
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"reflect"
 	"sort"
 
+<<<<<<< HEAD
+=======
+	"github.com/babylonlabs-io/babylon/v4/types"
+	"github.com/cometbft/cometbft/crypto/tmhash"
+>>>>>>> 719a2e8 (chore: add validation of msg hashes size and decode (#1061))
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/babylonlabs-io/babylon/v2/types"
@@ -228,6 +234,13 @@ func validateMsgHashes(hashes []string) error {
 	for _, hash := range hashes {
 		if hash == "" {
 			return errors.New("empty hash")
+		}
+		bz, err := hex.DecodeString(hash)
+		if err != nil {
+			return fmt.Errorf("error decoding msg hash: %w", err)
+		}
+		if len(bz) != tmhash.Size {
+			return fmt.Errorf("hash size should be %d characters: %s", tmhash.Size, hash)
 		}
 		if _, exists := hashMap[hash]; exists {
 			return fmt.Errorf("duplicate hash: %s", hash)
