@@ -1,9 +1,14 @@
 package cmd
 
 import (
+	"cosmossdk.io/math"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/babylonlabs-io/babylon/v3/app"
+	erc20types "github.com/cosmos/evm/x/erc20/types"
+	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 	"time"
 
 	sdkmath "cosmossdk.io/math"
@@ -223,6 +228,24 @@ func PrepareGenesis(
 	authGenState := authtypes.DefaultGenesisState()
 	authGenState.Accounts = genesisParams.AuthAccounts
 	genesisState[authtypes.ModuleName] = cdc.MustMarshalJSON(authGenState)
+
+	// Add EVM genesis configuration
+	evmGenState := evmtypes.DefaultGenesisState()
+	evmGenState.Params.ActiveStaticPrecompiles = evmtypes.AvailableStaticPrecompiles
+	evmGenState.Params.EvmDenom = app.BaseCosmosDenom
+	genesisState[evmtypes.ModuleName] = cdc.MustMarshalJSON(evmGenState)
+
+	// Add ERC20 genesis configuration
+	erc20GenState := erc20types.DefaultGenesisState()
+	erc20GenState.TokenPairs = app.TokenPairs
+	erc20GenState.Params.NativePrecompiles = append(erc20GenState.Params.NativePrecompiles, app.WTokenContractMainnet)
+	genesisState[erc20types.ModuleName] = cdc.MustMarshalJSON(erc20GenState)
+
+	feemarketGenState := feemarkettypes.DefaultGenesisState()
+	feemarketGenState.Params.NoBaseFee = false
+	feemarketGenState.Params.BaseFee = math.LegacyMustNewDecFromStr("0.01")
+	feemarketGenState.Params.MinGasPrice = feemarketGenState.Params.BaseFee
+	genesisState[feemarkettypes.ModuleName] = cdc.MustMarshalJSON(feemarketGenState)
 
 	// bank module genesis
 	bankGenState := banktypes.DefaultGenesisState()

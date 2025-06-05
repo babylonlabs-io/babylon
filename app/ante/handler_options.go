@@ -2,6 +2,7 @@ package ante
 
 import (
 	"context"
+	precisebankkeeper "github.com/cosmos/evm/x/precisebank/keeper"
 	"time"
 
 	addresscodec "cosmossdk.io/core/address"
@@ -52,9 +53,10 @@ type HandlerOptions struct {
 	SigGasConsumer         func(meter storetypes.GasMeter, sig signing.SignatureV2, params authtypes.Params) error
 	TxFeeChecker           ante.TxFeeChecker // safe to be nil
 
-	MaxTxGasWanted  uint64
-	FeeMarketKeeper anteinterfaces.FeeMarketKeeper
-	EvmKeeper       anteinterfaces.EVMKeeper
+	MaxTxGasWanted    uint64
+	FeeMarketKeeper   anteinterfaces.FeeMarketKeeper
+	EvmKeeper         anteinterfaces.EVMKeeper
+	PreciseBankKeeper *precisebankkeeper.Keeper
 
 	IBCKeeper     *ibckeeper.Keeper
 	CircuitKeeper *circuitkeeper.Keeper
@@ -68,6 +70,9 @@ func (options HandlerOptions) Validate() error {
 	if options.AccountKeeper == nil {
 		return errorsmod.Wrap(errortypes.ErrLogic, "account keeper is required for AnteHandler")
 	}
+	if options.PreciseBankKeeper == nil {
+		return errorsmod.Wrap(errortypes.ErrLogic, "precise bank keeper is required for EVM AnteHandler")
+	}
 	if options.BankKeeper == nil {
 		return errorsmod.Wrap(errortypes.ErrLogic, "bank keeper is required for AnteHandler")
 	}
@@ -80,7 +85,6 @@ func (options HandlerOptions) Validate() error {
 	if options.CircuitKeeper == nil {
 		return errorsmod.Wrap(errortypes.ErrLogic, "circuit keeper is required for ante builder")
 	}
-
 	if options.TxFeeChecker == nil {
 		return errorsmod.Wrap(errortypes.ErrLogic, "tx fee checker is required for AnteHandler")
 	}

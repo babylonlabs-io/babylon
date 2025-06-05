@@ -13,6 +13,7 @@ import (
 
 	"cosmossdk.io/log"
 	storetypes "cosmossdk.io/store/types"
+
 	circuitkeeper "cosmossdk.io/x/circuit/keeper"
 	circuittypes "cosmossdk.io/x/circuit/types"
 	evidencekeeper "cosmossdk.io/x/evidence/keeper"
@@ -80,6 +81,8 @@ import (
 	feemarketkeeper "github.com/cosmos/evm/x/feemarket/keeper"
 	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
 	evmtransferkeeper "github.com/cosmos/evm/x/ibc/transfer/keeper"
+	precisebankkeeper "github.com/cosmos/evm/x/precisebank/keeper"
+	precisebanktypes "github.com/cosmos/evm/x/precisebank/types"
 	evmkeeper "github.com/cosmos/evm/x/vm/keeper"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
 	pfmrouter "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v10/packetforward"
@@ -194,6 +197,7 @@ type AppKeepers struct {
 	FeemarketKeeper   feemarketkeeper.Keeper
 	Erc20Keeper       erc20keeper.Keeper
 	EVMTransferKeeper evmtransferkeeper.Keeper
+	PreciseBankKeeper precisebankkeeper.Keeper
 
 	// keys to access the substores
 	keys    map[string]*storetypes.KVStoreKey
@@ -257,6 +261,7 @@ func (ak *AppKeepers) InitKeepers(
 		evmtypes.StoreKey,
 		feemarkettypes.StoreKey,
 		erc20types.StoreKey,
+		precisebanktypes.StoreKey,
 	)
 	ak.keys = keys
 
@@ -438,13 +443,20 @@ func (ak *AppKeepers) InitKeepers(
 		ak.tkeys[feemarkettypes.TransientKey],
 	)
 
+	ak.PreciseBankKeeper = precisebankkeeper.NewKeeper(
+		appCodec,
+		keys[precisebanktypes.StoreKey],
+		ak.BankKeeper,
+		ak.AccountKeeper,
+	)
+
 	evmKeeper := evmkeeper.NewKeeper(
 		appCodec,
 		keys[evmtypes.ModuleName],
 		ak.tkeys[evmtypes.TransientKey],
 		authtypes.NewModuleAddress(govtypes.ModuleName),
 		accountKeeper,
-		bankKeeper,
+		ak.PreciseBankKeeper,
 		stakingKeeper,
 		ak.FeemarketKeeper,
 		&ak.Erc20Keeper,
@@ -462,7 +474,7 @@ func (ak *AppKeepers) InitKeepers(
 	ak.EVMKeeper.WithStaticPrecompiles(
 		NewAvailableStaticPrecompiles(
 			appCodec,
-			ak.BankKeeper,
+			ak.PreciseBankKeeper,
 			ak.Erc20Keeper,
 			ak.GovKeeper,
 			ak.SlashingKeeper,

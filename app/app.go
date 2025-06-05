@@ -1,13 +1,13 @@
 package app
 
 import (
-	"cosmossdk.io/math"
 	"encoding/json"
 	"fmt"
 	srvflags "github.com/cosmos/evm/server/flags"
 	"github.com/cosmos/evm/x/erc20"
 	erc20types "github.com/cosmos/evm/x/erc20/types"
 	"github.com/cosmos/evm/x/feemarket"
+	"github.com/cosmos/evm/x/precisebank"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"io"
 	"os"
@@ -84,6 +84,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	precisebanktypes "github.com/cosmos/evm/x/precisebank/types"
 	"github.com/cosmos/gogoproto/proto"
 	pfmrouter "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v10/packetforward"
 	pfmroutertypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v10/packetforward/types"
@@ -175,6 +176,7 @@ var (
 		evmtypes.ModuleName:            {authtypes.Minter, authtypes.Burner},
 		erc20types.ModuleName:          {authtypes.Minter, authtypes.Burner}, // Allows erc20 module to mint/burn for token pairs
 		feemarkettypes.ModuleName:      nil,
+		precisebanktypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
 	}
 
 	// software upgrades and forks
@@ -183,8 +185,9 @@ var (
 )
 
 func init() {
-	sdk.DefaultPowerReduction = cosmosevmtypes.MicroPowerReduction
-	stakingtypes.DefaultMinCommissionRate = math.LegacyZeroDec()
+	// TODO: Double check if this is needed
+	//sdk.DefaultPowerReduction = cosmosevmtypes.MicroPowerReduction
+	//stakingtypes.DefaultMinCommissionRate = math.LegacyZeroDec()
 
 	// Note: If this changes, the home directory under x/checkpointing/client/cli/tx.go needs to change as well
 	userHomeDir, err := os.UserHomeDir()
@@ -364,6 +367,7 @@ func NewBabylonApp(
 		// Babylon modules - tokenomics
 		incentive.NewAppModule(appCodec, app.IncentiveKeeper, app.AccountKeeper, app.BankKeeper),
 		// Cosmos EVM modules
+		precisebank.NewAppModule(app.PreciseBankKeeper, app.BankKeeper, app.AccountKeeper),
 		evm.NewAppModule(app.EVMKeeper, app.AccountKeeper),
 		feemarket.NewAppModule(app.FeemarketKeeper),
 		erc20.NewAppModule(app.Erc20Keeper, app.AccountKeeper),
@@ -428,6 +432,7 @@ func NewBabylonApp(
 		erc20types.ModuleName,
 		feemarkettypes.ModuleName,
 		evmtypes.ModuleName, // NOTE: EVM BeginBlocker must come after FeeMarket BeginBlocker
+		precisebanktypes.ModuleName,
 	)
 	// TODO: there will be an architecture design on whether to modify slashing/evidence, specifically
 	// - how many validators can we slash in a single epoch and
@@ -464,6 +469,7 @@ func NewBabylonApp(
 		evmtypes.ModuleName,
 		feemarkettypes.ModuleName,
 		erc20types.ModuleName,
+		precisebanktypes.ModuleName,
 	)
 	// Babylon does not want EndBlock processing in staking
 	app.ModuleManager.OrderEndBlockers = append(app.ModuleManager.OrderEndBlockers[:2], app.ModuleManager.OrderEndBlockers[2+1:]...) // remove stakingtypes.ModuleName
@@ -504,6 +510,7 @@ func NewBabylonApp(
 		evmtypes.ModuleName,
 		feemarkettypes.ModuleName,
 		erc20types.ModuleName,
+		precisebanktypes.ModuleName,
 	}
 	app.ModuleManager.SetOrderInitGenesis(genesisModuleOrder...)
 	app.ModuleManager.SetOrderExportGenesis(genesisModuleOrder...)
@@ -558,6 +565,7 @@ func NewBabylonApp(
 		runtime.NewKVStoreService(app.AppKeepers.GetKey(wasmtypes.StoreKey)),
 		app.FeemarketKeeper,
 		app.EVMKeeper,
+		app.PreciseBankKeeper,
 		cast.ToUint64(appOpts.Get(srvflags.EVMMaxTxGasWanted)),
 	)
 
@@ -849,7 +857,7 @@ func (a *BabylonApp) DefaultGenesis() map[string]json.RawMessage {
 
 	// Add ERC20 genesis configuration
 	erc20GenState := erc20types.DefaultGenesisState()
-	erc20GenState.TokenPairs = ExampleTokenPairs
+	erc20GenState.TokenPairs = TokenPairs
 	erc20GenState.Params.NativePrecompiles = append(erc20GenState.Params.NativePrecompiles, WTokenContractMainnet)
 	genesis[erc20types.ModuleName] = a.appCodec.MustMarshalJSON(erc20GenState)
 

@@ -3,10 +3,10 @@ package keepers
 import (
 	"fmt"
 	"github.com/cosmos/cosmos-sdk/codec"
+	precisebankkeeper "github.com/cosmos/evm/x/precisebank/keeper"
 	"maps"
 
 	evidencekeeper "cosmossdk.io/x/evidence/keeper"
-	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
 	slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
 	bankprecompile "github.com/cosmos/evm/precompiles/bank"
@@ -26,7 +26,7 @@ const bech32PrecompileBaseGas = 6_000
 // TODO: Add custom staking wrapper precompile here, IBC precompile and distribution precompile
 func NewAvailableStaticPrecompiles(
 	cdc codec.Codec,
-	bankKeeper bankkeeper.Keeper,
+	bankKeeper precisebankkeeper.Keeper,
 	erc20Keeper erc20Keeper.Keeper,
 	govKeeper govkeeper.Keeper,
 	slashingKeeper slashingkeeper.Keeper,

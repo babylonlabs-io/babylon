@@ -57,6 +57,8 @@ var (
 	flagTimeBetweenBlocks       = "time-between-blocks-seconds"
 )
 
+const DEV0_MNEMONIC = "doll midnight silk carpet brush boring pluck office gown inquiry duck chief aim exit gain never tennis crime fragile ship cloud surface exotic patch"
+
 // TestnetCmd initializes all files for tendermint testnet and application
 func TestnetCmd(mbm module.BasicManager, genBalIterator banktypes.GenesisBalancesIterator) *cobra.Command {
 	cmd := &cobra.Command{
@@ -415,11 +417,53 @@ func InitTestnet(
 		}
 	}
 
+	// EVM Dev0 account creation
+	nodeDirName := fmt.Sprintf("%s%d", nodeDirPrefix, 0)
+	nodeDir := filepath.Join(outputDir, nodeDirName, nodeDaemonHome)
+	// Create keyring for the custom account
+	kb, err := keyring.New(
+		sdk.KeyringServiceName(),
+		keyringBackend,
+		nodeDir, // Use main output dir for this key
+		inBuf,
+		clientCtx.Codec,
+		evmtypes.EthSecp256k1Option(),
+	)
+	if err != nil {
+		return err
+	}
+
+	keyringAlgos, _ := kb.SupportedAlgorithms()
+	algo, err := keyring.NewSigningAlgoFromString("eth_secp256k1", keyringAlgos)
+	if err != nil {
+		return err
+	}
+
+	addr, _, err := testutil.GenerateSaveCoinKey(
+		kb,
+		"dev0",
+		DEV0_MNEMONIC,
+		true,
+		algo,
+	)
+
+	if err != nil {
+		_ = os.RemoveAll(outputDir)
+		return err
+	}
+
+	coins := sdk.Coins{
+		sdk.NewCoin("ubbn", math.NewInt(10e6)),
+	}
+
+	genBalances = append(genBalances, banktypes.Balance{Address: addr.String(), Coins: coins.Sort()})
+	genAccounts = append(genAccounts, authtypes.NewBaseAccount(addr, nil, 0, 0))
+
 	if err := initGenFiles(clientCtx, mbm, chainID, genAccounts, genBalances, genFiles, numValidators, genesisParams); err != nil {
 		return err
 	}
 
-	err := collectGenFiles(
+	err = collectGenFiles(
 		clientCtx, nodeConfig, chainID, nodeIDs, genKeys, numValidators,
 		outputDir, nodeDirPrefix, nodeDaemonHome, genBalIterator,
 	)
@@ -465,6 +509,7 @@ func initGenFiles(
 			return err
 		}
 	}
+
 	return nil
 }
 

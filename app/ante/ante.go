@@ -17,6 +17,7 @@ import (
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	feemarketkeeper "github.com/cosmos/evm/x/feemarket/keeper"
+	precisebankkeeper "github.com/cosmos/evm/x/precisebank/keeper"
 	evmkeeper "github.com/cosmos/evm/x/vm/keeper"
 	ibckeeper "github.com/cosmos/ibc-go/v10/modules/core/keeper"
 )
@@ -38,6 +39,7 @@ func NewAnteHandler(
 	txCounterStoreService store.KVStoreService,
 	feeMarketKeeper feemarketkeeper.Keeper,
 	evmKeeper *evmkeeper.Keeper,
+	preciseBankKeeper precisebankkeeper.Keeper,
 	maxTxGasWanted uint64,
 ) sdk.AnteHandler {
 	// initialize AnteHandler, which includes
@@ -92,7 +94,7 @@ func NewAnteHandler(
 				switch typeURL := opts[0].GetTypeUrl(); typeURL {
 				case "/cosmos.evm.vm.v1.ExtensionOptionsEthereumTx":
 					// handle as *evmtypes.MsgEthereumTx
-					anteHandler = newMonoEVMAnteHandler(accountKeeper, feeMarketKeeper, evmKeeper, maxTxGasWanted)
+					anteHandler = newMonoEVMAnteHandler(accountKeeper, feeMarketKeeper, evmKeeper, maxTxGasWanted, preciseBankKeeper)
 				case "/cosmos.evm.types.v1.ExtensionOptionDynamicFeeTx":
 					// cosmos-sdk tx with dynamic fee extension
 					anteHandler = cosmosAnteHandler
