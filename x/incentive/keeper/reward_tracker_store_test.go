@@ -4,6 +4,7 @@ import (
 	"math/rand"
 	"testing"
 
+	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
 	sdkmath "cosmossdk.io/math"
 	"github.com/stretchr/testify/require"
@@ -377,6 +378,11 @@ func FuzzCheckSubFinalityProviderStaked(f *testing.F) {
 		fp2CurrentRwd, err := k.GetFinalityProviderCurrentRewards(ctx, fp2)
 		require.NoError(t, err)
 		require.True(t, fp2CurrentRwd.TotalActiveSat.IsZero())
+
+		// subTotalActiveSat returns negative value - should fail
+		err = k.subFinalityProviderStaked(ctx, fp2, math.NewInt(1000))
+		require.Error(t, err)
+		require.True(t, errorsmod.IsOf(err, types.ErrFPCurrentRewardsTrackerNegativeAmount))
 	})
 }
 
