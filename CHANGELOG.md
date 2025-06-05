@@ -91,6 +91,7 @@ check of rewards
 `RefundableMsgHashes` validate genesis
 - [#1070](https://github.com/babylonlabs-io/babylon/pull/1070) fix: validation for vp dist cache
 - [#1078](https://github.com/babylonlabs-io/babylon/pull/1078) fix: enforce check ibc msg size in `finalizeBlockState`
+- [#1082](https://github.com/babylonlabs-io/babylon/pull/1082) chore: val sequential epoch
 - [#1085](https://github.com/babylonlabs-io/babylon/pull/1085) Update comment in `SetRewardTrackerEvent` function
 
 ### State Machine Breaking
