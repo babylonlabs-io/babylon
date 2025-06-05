@@ -20,7 +20,7 @@ var (
 	fpPrivKey3, _ = btcec.NewPrivateKey()
 	fpPubKey1     = bbn.NewBIP340PubKeyFromBTCPK(fpPrivKey1.PubKey())
 	fpPubKey2     = bbn.NewBIP340PubKeyFromBTCPK(fpPrivKey2.PubKey())
-  fpPubKey3     = bbn.NewBIP340PubKeyFromBTCPK(fpPrivKey3.PubKey())
+	fpPubKey3     = bbn.NewBIP340PubKeyFromBTCPK(fpPrivKey3.PubKey())
 	fpAddr1       = datagen.GenRandomSecp256k1Address().String()
 	fpAddr2       = datagen.GenRandomSecp256k1Address().String()
 	negComm       = sdkmath.LegacyNewDec(-1)
@@ -477,6 +477,8 @@ func TestVotingPowerDistCache_Validate(t *testing.T) {
 				},
 			},
 			expErrMsg: "invalid fp dist info. commission is greater than 1",
+		},
+		{
 			name: "one inactive case",
 			vpdc: types.VotingPowerDistCache{
 				FinalityProviders: []*types.FinalityProviderDistInfo{
@@ -518,7 +520,6 @@ func TestVotingPowerDistCache_Validate(t *testing.T) {
 						Addr:           []byte(fpAddr2),
 						Commission:     &validComm,
 						IsTimestamped:  true,
-
 					},
 				},
 				NumActiveFps:     2,
