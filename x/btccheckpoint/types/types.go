@@ -208,6 +208,11 @@ func (tk TransactionKey) Validate() error {
 	if tk.Hash == nil {
 		return fmt.Errorf("transaction hash cannot be nil")
 	}
+
+	if len(*tk.Hash) != types.BTCHeaderHashLen {
+		return fmt.Errorf("invalid transaction hash length: expected %d, got %d", types.BTCHeaderHashLen, len(*tk.Hash))
+	}
+
 	return nil
 }
 
