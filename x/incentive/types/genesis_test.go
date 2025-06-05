@@ -7,14 +7,9 @@ import (
 	"testing"
 	"time"
 
-<<<<<<< HEAD
 	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
 	"github.com/babylonlabs-io/babylon/v2/x/incentive/types"
-=======
-	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
-	"github.com/babylonlabs-io/babylon/v4/x/incentive/types"
 	"github.com/cometbft/cometbft/crypto/tmhash"
->>>>>>> 719a2e8 (chore: add validation of msg hashes size and decode (#1061))
 	"github.com/stretchr/testify/require"
 )
 
