@@ -90,6 +90,7 @@ check of rewards
 - [#1061](https://github.com/babylonlabs-io/babylon/pull/1061) Add size and hex decode in
 `RefundableMsgHashes` validate genesis
 - [#1070](https://github.com/babylonlabs-io/babylon/pull/1070) fix: validation for vp dist cache
+- [#1078](https://github.com/babylonlabs-io/babylon/pull/1078) fix: enforce check ibc msg size in `finalizeBlockState`
 
 ### State Machine Breaking
 
