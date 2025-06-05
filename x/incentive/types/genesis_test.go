@@ -1,6 +1,7 @@
 package types_test
 
 import (
+	"encoding/hex"
 	"fmt"
 	"math/rand"
 	"testing"
@@ -8,6 +9,7 @@ import (
 
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
 	"github.com/babylonlabs-io/babylon/v4/x/incentive/types"
+	"github.com/cometbft/cometbft/crypto/tmhash"
 	"github.com/stretchr/testify/require"
 )
 
@@ -16,6 +18,11 @@ func TestGenesisState_Validate(t *testing.T) {
 	addrStr1 := datagen.GenRandomAddress().String()
 	addrStr2 := datagen.GenRandomAddress().String()
 	hashStr := datagen.GenRandomHexStr(r, 32)
+	msgHash := types.HashMsg(&types.MsgWithdrawReward{
+		Address: "address",
+	})
+	validMsgHash := hex.EncodeToString(msgHash)
+	badHashStr := datagen.GenRandomHexStr(r, 34)
 	height := datagen.RandomInt(r, 100) + 5
 	tests := []struct {
 		desc     string
@@ -114,6 +121,23 @@ func TestGenesisState_Validate(t *testing.T) {
 			errMsg: fmt.Sprintf("invalid withdraw addresses: duplicate entry for key: %s", addrStr1),
 		},
 		{
+			desc: "Genesis valid MsgHashes",
+			genState: &types.GenesisState{
+				Params:                             types.DefaultParams(),
+				BtcStakingGauges:                   []types.BTCStakingGaugeEntry{},
+				RewardGauges:                       []types.RewardGaugeEntry{},
+				WithdrawAddresses:                  []types.WithdrawAddressEntry{},
+				RefundableMsgHashes:                []string{validMsgHash},
+				FinalityProvidersCurrentRewards:    []types.FinalityProviderCurrentRewardsEntry{},
+				FinalityProvidersHistoricalRewards: []types.FinalityProviderHistoricalRewardsEntry{},
+				BtcDelegationRewardsTrackers:       []types.BTCDelegationRewardsTrackerEntry{},
+				BtcDelegatorsToFps:                 []types.BTCDelegatorToFpEntry{},
+				EventRewardTracker:                 []types.EventsPowerUpdateAtHeightEntry{},
+			},
+			valid:  true,
+			errMsg: "",
+		},
+		{
 			desc: "Genesis with empty string in MsgHashes",
 			genState: &types.GenesisState{
 				Params:                             types.DefaultParams(),
@@ -146,6 +170,40 @@ func TestGenesisState_Validate(t *testing.T) {
 			},
 			valid:  false,
 			errMsg: fmt.Sprintf("duplicate hash: %s", hashStr),
+		},
+		{
+			desc: "Genesis with bad hash len in MsgHashes",
+			genState: &types.GenesisState{
+				Params:                             types.DefaultParams(),
+				BtcStakingGauges:                   []types.BTCStakingGaugeEntry{},
+				RewardGauges:                       []types.RewardGaugeEntry{},
+				WithdrawAddresses:                  []types.WithdrawAddressEntry{},
+				RefundableMsgHashes:                []string{badHashStr},
+				FinalityProvidersCurrentRewards:    []types.FinalityProviderCurrentRewardsEntry{},
+				FinalityProvidersHistoricalRewards: []types.FinalityProviderHistoricalRewardsEntry{},
+				BtcDelegationRewardsTrackers:       []types.BTCDelegationRewardsTrackerEntry{},
+				BtcDelegatorsToFps:                 []types.BTCDelegatorToFpEntry{},
+				EventRewardTracker:                 []types.EventsPowerUpdateAtHeightEntry{},
+			},
+			valid:  false,
+			errMsg: fmt.Sprintf("hash size should be %d characters: %s", tmhash.Size, badHashStr),
+		},
+		{
+			desc: "Genesis with bad decoded msg in MsgHashes",
+			genState: &types.GenesisState{
+				Params:                             types.DefaultParams(),
+				BtcStakingGauges:                   []types.BTCStakingGaugeEntry{},
+				RewardGauges:                       []types.RewardGaugeEntry{},
+				WithdrawAddresses:                  []types.WithdrawAddressEntry{},
+				RefundableMsgHashes:                []string{"ças"},
+				FinalityProvidersCurrentRewards:    []types.FinalityProviderCurrentRewardsEntry{},
+				FinalityProvidersHistoricalRewards: []types.FinalityProviderHistoricalRewardsEntry{},
+				BtcDelegationRewardsTrackers:       []types.BTCDelegationRewardsTrackerEntry{},
+				BtcDelegatorsToFps:                 []types.BTCDelegatorToFpEntry{},
+				EventRewardTracker:                 []types.EventsPowerUpdateAtHeightEntry{},
+			},
+			valid:  false,
+			errMsg: fmt.Sprintf("error decoding msg hash: %s", `encoding/hex: invalid byte: U+00C3 'Ã'`),
 		},
 		{
 			desc: "Genesis with 2 current rewards for same finality provider",
