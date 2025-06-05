@@ -95,6 +95,7 @@ check of rewards
 - [#1082](https://github.com/babylonlabs-io/babylon/pull/1082) chore: val sequential epoch
 - [#1084](https://github.com/babylonlabs-io/babylon/pull/1084) Check for negative amount in `TotalActiveSat` in `subFinalityProviderStaked`
 - [#1085](https://github.com/babylonlabs-io/babylon/pull/1085) Update comment in `SetRewardTrackerEvent` function
+- [#1097](https://github.com/babylonlabs-io/babylon/pull/1097) Update `Evidence.ValidateBasic` function
 
 ### State Machine Breaking
 
