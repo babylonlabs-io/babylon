@@ -358,10 +358,8 @@ func TestValidateSequentialEpochs(t *testing.T) {
 				if tt.errContains != "" && !strings.Contains(err.Error(), tt.errContains) {
 					t.Errorf("validateSequentialEpochs() error = %v, expected to contain %q", err, tt.errContains)
 				}
-			} else {
-				if err != nil {
-					t.Errorf("validateSequentialEpochs() unexpected error = %v", err)
-				}
+			} else if err != nil {
+				t.Errorf("validateSequentialEpochs() unexpected error = %v", err)
 			}
 		})
 	}
