@@ -16,8 +16,10 @@ import (
 var (
 	fpPrivKey1, _ = btcec.NewPrivateKey()
 	fpPrivKey2, _ = btcec.NewPrivateKey()
+	fpPrivKey3, _ = btcec.NewPrivateKey()
 	fpPubKey1     = bbn.NewBIP340PubKeyFromBTCPK(fpPrivKey1.PubKey())
 	fpPubKey2     = bbn.NewBIP340PubKeyFromBTCPK(fpPrivKey2.PubKey())
+	fpPubKey3     = bbn.NewBIP340PubKeyFromBTCPK(fpPrivKey3.PubKey())
 )
 
 func TestVotingPowerDistCache(t *testing.T) {
@@ -431,6 +433,32 @@ func TestVotingPowerDistCache_Validate(t *testing.T) {
 				TotalVotingPower: 150,
 			},
 			expErrMsg: "invalid voting power distribution cache. Provided TotalVotingPower 150 is different than FPs accumulated voting power 200",
+		},
+		{
+			name: "one inactive case",
+			vpdc: types.VotingPowerDistCache{
+				FinalityProviders: []*types.FinalityProviderDistInfo{
+					{
+						BtcPk:          fpPubKey1,
+						TotalBondedSat: 100,
+						IsTimestamped:  true,
+					},
+
+					{
+						BtcPk:          fpPubKey2,
+						TotalBondedSat: 200,
+						IsTimestamped:  true,
+					},
+					{
+						BtcPk:          fpPubKey3,
+						TotalBondedSat: 100,
+						IsTimestamped:  true,
+						IsJailed:       true,
+					},
+				},
+				NumActiveFps:     2,
+				TotalVotingPower: 300,
+			},
 		},
 		{
 			name: "valid case",
