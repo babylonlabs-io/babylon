@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"slices"
 	"sort"
-	"strings"
 
 	types "github.com/babylonlabs-io/babylon/v4/types"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
@@ -284,20 +283,4 @@ func SortData(gs *GenesisState) {
 
 func buildDelegationIndexKey(fp, del *types.BIP340PubKey) string {
 	return fp.MarshalHex() + "::" + del.MarshalHex()
-}
-
-func parseDelegationIndexKey(s string) (*types.BIP340PubKey, *types.BIP340PubKey, error) {
-	parts := strings.SplitN(s, "::", 2)
-	if len(parts) != 2 {
-		return nil, nil, errors.New("invalid delegation index key")
-	}
-	fp, err := types.NewBIP340PubKeyFromHex(parts[0])
-	if err != nil {
-		return nil, nil, err
-	}
-	del, err := types.NewBIP340PubKeyFromHex(parts[1])
-	if err != nil {
-		return nil, nil, err
-	}
-	return fp, del, nil
 }
