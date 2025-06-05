@@ -3,8 +3,6 @@ package keeper
 import (
 	"context"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	"github.com/babylonlabs-io/babylon/v4/x/incentive/types"
 )
 
@@ -23,11 +21,6 @@ func (k Keeper) HandleCoinsInFeeCollector(ctx context.Context) {
 
 	// don't intercept if there is no fee in fee collector account
 	if !feesCollectedInt.IsAllPositive() {
-		// set an empty reward gauge to avoid panic when calling the rewarding logic
-		height := uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
-		rewards := sdk.Coins{}
-		gauge := types.NewGauge(rewards...)
-		k.SetBTCStakingGauge(ctx, height, gauge)
 		return
 	}
 
