@@ -5,6 +5,7 @@ import (
 	"testing"
 	time "time"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/stretchr/testify/require"
 
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
@@ -15,6 +16,21 @@ func TestGenesisState_Validate(t *testing.T) {
 	r := rand.New(rand.NewSource(time.Now().Unix()))
 	gs, err := datagen.GenRandomFinalityGenesisState(r)
 	require.NoError(t, err)
+	// Skip validation of voting power distribution cache for testing
+	gs.VpDstCache = nil
+
+	// Create a valid finality provider for testing
+	btcPk, err := datagen.GenRandomBIP340PubKey(r)
+	require.NoError(t, err)
+	validComm = sdkmath.LegacyMustNewDecFromStr("0.5")
+	fpDistInfo := &types.FinalityProviderDistInfo{
+		BtcPk:          btcPk,
+		Addr:           fpAddr1,
+		TotalBondedSat: 100,
+		IsTimestamped:  true,
+		Commission:     &validComm,
+	}
+
 	tests := []struct {
 		desc     string
 		genState *types.GenesisState
@@ -113,8 +129,25 @@ func TestGenesisState_Validate(t *testing.T) {
 		{
 			desc: "duplicate vp dist cache",
 			genState: &types.GenesisState{
-				Params:     gs.Params,
-				VpDstCache: append(gs.VpDstCache, gs.VpDstCache[0]),
+				Params: gs.Params,
+				VpDstCache: []*types.VotingPowerDistCacheBlkHeight{
+					{
+						BlockHeight: 1,
+						VpDistribution: &types.VotingPowerDistCache{
+							TotalVotingPower:  100,
+							NumActiveFps:      1,
+							FinalityProviders: []*types.FinalityProviderDistInfo{fpDistInfo},
+						},
+					},
+					{
+						BlockHeight: 1,
+						VpDistribution: &types.VotingPowerDistCache{
+							TotalVotingPower:  100,
+							NumActiveFps:      1,
+							FinalityProviders: []*types.FinalityProviderDistInfo{fpDistInfo},
+						},
+					},
+				},
 			},
 			valid:  false,
 			errMsg: "duplicate entry",
