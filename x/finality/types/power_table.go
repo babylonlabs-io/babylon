@@ -228,6 +228,26 @@ func (fpdi FinalityProviderDistInfo) Validate() error {
 	if fpdi.BtcPk.Size() != bbn.BIP340PubKeyLen {
 		return fmt.Errorf("invalid fp dist info. finality provider BTC public key length: got %d, want %d", fpdi.BtcPk.Size(), bbn.BIP340PubKeyLen)
 	}
+
+	if fpdi.Addr == nil {
+		return fmt.Errorf("invalid fp dist info. empty finality provider address")
+	}
+
+	if _, err := sdk.AccAddressFromBech32(sdk.AccAddress(fpdi.Addr).String()); err != nil {
+		return fmt.Errorf("invalid bech32 address: %w", err)
+	}
+
+	if fpdi.Commission == nil {
+		return fmt.Errorf("invalid fp dist info. commission is nil")
+	}
+
+	if fpdi.Commission.LT(sdkmath.LegacyZeroDec()) {
+		return fmt.Errorf("invalid fp dist info. commission is negative")
+	}
+
+	if fpdi.Commission.GT(sdkmath.LegacyOneDec()) {
+		return fmt.Errorf("invalid fp dist info. commission is greater than 1")
+	}
 	return nil
 }
 
