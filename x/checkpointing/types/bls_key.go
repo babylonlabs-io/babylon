@@ -30,7 +30,26 @@ func (vs ValidatorWithBlsKeySet) Validate() error {
 		if err := pk.Unmarshal(val.BlsPubKey); err != nil {
 			return err
 		}
+
+		if err := pk.ValidateBasic(); err != nil {
+			return err
+		}
 	}
 
 	return nil
 }
+<<<<<<< HEAD
+=======
+
+// ValidateBasic stateless validate if the BlsKey is valid
+func (k BlsKey) ValidateBasic() error {
+	if k.Pop == nil {
+		return errors.New("BLS Proof of Possession is nil")
+	}
+	if k.Pubkey == nil {
+		return errors.New("BLS Public key is nil")
+	}
+
+	return k.Pubkey.ValidateBasic()
+}
+>>>>>>> f1dbaaf (chore: add bls key validation (#1126))
