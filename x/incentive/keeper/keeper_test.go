@@ -72,6 +72,7 @@ func (s *RefundTxTestSuite) TestRefundTx() {
 		feePayer   = []byte("feePayer")
 		feeGranter = []byte("feeGranter")
 		period     = 24 * time.Hour
+		zeroCoins  = sdk.NewCoins()
 	)
 
 	tests := []struct {
@@ -91,7 +92,7 @@ func (s *RefundTxTestSuite) TestRefundTx() {
 			preRefund: func() {
 				// expect fee payer to have 0 balance before refund
 				balance := s.app.BankKeeper.GetAllBalances(s.ctx, feePayer)
-				s.Equal(sdk.NewCoins(), balance)
+				s.Equal(zeroCoins, balance)
 			},
 			postRefund: func() {
 				// expect fee payer to have been refunded refund
@@ -110,7 +111,7 @@ func (s *RefundTxTestSuite) TestRefundTx() {
 			preRefund: func() {
 				// expect fee granter to have 0 balance before refund
 				balance := s.app.BankKeeper.GetAllBalances(s.ctx, feeGranter)
-				s.Equal(sdk.NewCoins(), balance)
+				s.Equal(zeroCoins, balance)
 
 				// set allowance
 				expiration := s.ctx.BlockHeader().Time.Add(48 * time.Hour)
@@ -148,7 +149,7 @@ func (s *RefundTxTestSuite) TestRefundTx() {
 			preRefund: func() {
 				// expect fee granter to have 0 balance before refund
 				balance := s.app.BankKeeper.GetAllBalances(s.ctx, feeGranter)
-				s.Equal(sdk.NewCoins(), balance)
+				s.Equal(zeroCoins, balance)
 
 				// set PeriodicAllowance
 				expiration := s.ctx.BlockHeader().Time.Add(48 * time.Hour)
@@ -199,7 +200,7 @@ func (s *RefundTxTestSuite) TestRefundTx() {
 			preRefund: func() {
 				// expect fee granter to have 0 balance before refund
 				balance := s.app.BankKeeper.GetAllBalances(s.ctx, feeGranter)
-				s.Equal(sdk.NewCoins(), balance)
+				s.Equal(zeroCoins, balance)
 
 				expiration := s.ctx.BlockHeader().Time.Add(48 * time.Hour)
 				inner := &feegrant.BasicAllowance{
@@ -250,11 +251,10 @@ func (s *RefundTxTestSuite) TestRefundTx() {
 			preRefund: func() {
 				// expect fee granter to have 0 balance before refund
 				balance := s.app.BankKeeper.GetAllBalances(s.ctx, feeGranter)
-				s.Equal(sdk.NewCoins(), balance)
+				s.Equal(zeroCoins, balance)
 
 				_, err := s.app.FeeGrantKeeper.GetAllowance(s.ctx, feeGranter, feePayer)
 				s.True(errorsmod.IsOf(err, sdkerrors.ErrNotFound))
-
 			},
 			postRefund: func() {
 				expiration := s.ctx.BlockHeader().Time.Add(48 * time.Hour)
@@ -275,18 +275,18 @@ func (s *RefundTxTestSuite) TestRefundTx() {
 		{
 			name: "zero fee, no refund",
 			tx: mockFeeTx{
-				fee:      sdk.NewCoins(), // no fee
+				fee:      zeroCoins, // no fee
 				feePayer: feePayer,
 				granter:  nil,
 			},
 			preRefund: func() {
 				balance := s.app.BankKeeper.GetAllBalances(s.ctx, feePayer)
-				s.Equal(sdk.NewCoins(), balance)
+				s.Equal(zeroCoins, balance)
 			},
 			postRefund: func() {
 				// no refund triggered
 				balance := s.app.BankKeeper.GetAllBalances(s.ctx, feePayer)
-				s.Equal(sdk.NewCoins(), balance)
+				s.Equal(zeroCoins, balance)
 			},
 			expectError: false,
 		},
