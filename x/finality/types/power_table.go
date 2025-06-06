@@ -140,6 +140,7 @@ func (dc *VotingPowerDistCache) GetInactiveFinalityProviderSet() map[string]*Fin
 }
 
 func (vpdc VotingPowerDistCache) Validate() error {
+<<<<<<< HEAD
 	fpsCount := len(vpdc.FinalityProviders)
 	if fpsCount == 0 {
 		return errors.New("invalid voting power distribution cache. Empty finality providers")
@@ -149,6 +150,8 @@ func (vpdc VotingPowerDistCache) Validate() error {
 		return fmt.Errorf("invalid voting power distribution cache. NumActiveFps %d is higher than FPs count %d", vpdc.NumActiveFps, fpsCount)
 	}
 
+=======
+>>>>>>> eb1a22c (chore: vp dist cache count active fps (#1147))
 	// check fps are unique and total voting power is correct
 	var (
 		accVP uint64
@@ -156,6 +159,7 @@ func (vpdc VotingPowerDistCache) Validate() error {
 	)
 
 	SortFinalityProvidersWithZeroedVotingPower(vpdc.FinalityProviders)
+	numActiveFPs := uint32(0)
 
 	for _, fp := range vpdc.FinalityProviders {
 		if _, exists := fpMap[fp.BtcPk.MarshalHex()]; exists {
@@ -179,10 +183,15 @@ func (vpdc VotingPowerDistCache) Validate() error {
 		}
 
 		accVP += fp.TotalBondedSat
+		numActiveFPs++
 	}
 
 	if vpdc.TotalVotingPower != accVP {
 		return fmt.Errorf("invalid voting power distribution cache. Provided TotalVotingPower %d is different than FPs accumulated voting power %d", vpdc.TotalVotingPower, accVP)
+	}
+
+	if vpdc.NumActiveFps != numActiveFPs {
+		return fmt.Errorf("invalid voting power distribution cache. NumActiveFps %d is higher than active FPs count %d", vpdc.NumActiveFps, numActiveFPs)
 	}
 
 	return nil
