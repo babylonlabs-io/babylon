@@ -1,6 +1,10 @@
 package types
 
-import "fmt"
+import (
+	"fmt"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+)
 
 // Validator is an interface for types that have a Validate method.
 type Validator interface {
@@ -20,6 +24,13 @@ func ValidateEntries[T any, K comparable](entries []T, keyFunc func(T) K) error 
 		// Conditionally call Validate if implemented
 		if v, ok := any(entry).(Validator); ok {
 			if err := v.Validate(); err != nil {
+				return err
+			}
+		}
+
+		// Conditionally call ValidateBasic if implemented
+		if v, ok := any(entry).(sdk.HasValidateBasic); ok {
+			if err := v.ValidateBasic(); err != nil {
 				return err
 			}
 		}
