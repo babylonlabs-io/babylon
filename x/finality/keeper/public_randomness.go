@@ -44,13 +44,14 @@ func (k Keeper) getPubRandCommitByIndex(ctx context.Context, fpBtcPK *bbn.BIP340
 		return nil, err
 	}
 	heights := index.Heights
-	if len(heights) == 0 {
+	heightsCount := len(heights)
+	if heightsCount == 0 {
 		return nil, types.ErrPubRandNotFound.Wrap("empty index")
 	}
 
 	// Binary search for the largest startHeight <= height
 	// This Search func finds and returns the smallest index i in [0, n) at which f(i) is true,
-	i := sort.Search(len(heights), func(i int) bool {
+	i := sort.Search(heightsCount, func(i int) bool {
 		return heights[i] > height
 	})
 	if i == 0 {
