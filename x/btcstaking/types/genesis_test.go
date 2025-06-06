@@ -2,26 +2,22 @@ package types_test
 
 import (
 	"encoding/hex"
+	"fmt"
 	"math/rand"
 	"testing"
 	time "time"
 
 	sdkmath "cosmossdk.io/math"
 
-<<<<<<< HEAD
 	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
+	bbn "github.com/babylonlabs-io/babylon/v2/types"
+	bbntypes "github.com/babylonlabs-io/babylon/v2/types"
+	btcctypes "github.com/babylonlabs-io/babylon/v2/x/btccheckpoint/types"
 	"github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
-=======
-	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
-	bbn "github.com/babylonlabs-io/babylon/v4/types"
-	bbntypes "github.com/babylonlabs-io/babylon/v4/types"
-	btcctypes "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
-	"github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/txscript"
 
->>>>>>> d100b25 (imp: extend ValidateEntries func (#1098))
 	"github.com/stretchr/testify/require"
 )
 
@@ -238,8 +234,6 @@ func TestAllowedStakingTxHashStr_Validate(t *testing.T) {
 		})
 	}
 }
-<<<<<<< HEAD
-=======
 
 func TestBTCDelegatorValidate(t *testing.T) {
 	validLen := bbntypes.BIP340PubKeyLen
@@ -317,87 +311,6 @@ func TestBTCDelegatorValidate(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			err := tc.delegator.Validate()
-			if tc.expectErr == "" {
-				require.NoError(t, err)
-			} else {
-				require.ErrorContains(t, err, tc.expectErr)
-			}
-		})
-	}
-}
-
-func TestConsumerEventValidate(t *testing.T) {
-	testCases := []struct {
-		name      string
-		event     types.ConsumerEvent
-		expectErr string
-	}{
-		{
-			name:      "empty Consumer ID",
-			event:     types.ConsumerEvent{},
-			expectErr: "empty Consumer ID",
-		},
-		{
-			name: "nil Events",
-			event: types.ConsumerEvent{
-				ConsumerId: "consumer1",
-				Events:     nil,
-			},
-			expectErr: "null Events",
-		},
-		{
-			name: "empty Events fields",
-			event: types.ConsumerEvent{
-				ConsumerId: "consumer1",
-				Events:     &types.BTCStakingIBCPacket{},
-			},
-			expectErr: "empty Events",
-		},
-		{
-			name: "valid NewFp event",
-			event: types.ConsumerEvent{
-				ConsumerId: "consumer1",
-				Events: &types.BTCStakingIBCPacket{
-					NewFp: []*types.NewFinalityProvider{{}},
-				},
-			},
-			expectErr: "",
-		},
-		{
-			name: "valid ActiveDel event",
-			event: types.ConsumerEvent{
-				ConsumerId: "consumer1",
-				Events: &types.BTCStakingIBCPacket{
-					ActiveDel: []*types.ActiveBTCDelegation{{}},
-				},
-			},
-			expectErr: "",
-		},
-		{
-			name: "valid SlashedDel event",
-			event: types.ConsumerEvent{
-				ConsumerId: "consumer1",
-				Events: &types.BTCStakingIBCPacket{
-					SlashedDel: []*types.SlashedBTCDelegation{{}},
-				},
-			},
-			expectErr: "",
-		},
-		{
-			name: "valid UnbondedDel event",
-			event: types.ConsumerEvent{
-				ConsumerId: "consumer1",
-				Events: &types.BTCStakingIBCPacket{
-					UnbondedDel: []*types.UnbondedBTCDelegation{{}},
-				},
-			},
-			expectErr: "",
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			err := tc.event.Validate()
 			if tc.expectErr == "" {
 				require.NoError(t, err)
 			} else {
@@ -548,4 +461,3 @@ func TestGenesisStateValidateBTCDelegationAndDelegator(t *testing.T) {
 		})
 	}
 }
->>>>>>> d100b25 (imp: extend ValidateEntries func (#1098))
