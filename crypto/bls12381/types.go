@@ -148,6 +148,17 @@ func (pk *PublicKey) Unmarshal(data []byte) error {
 	return nil
 }
 
+func (pk *PublicKey) ValidateBasic() error {
+	// check the public key is a valid point on the BLS12-318 curve
+	p2Affine := new(blst.P2Affine).Uncompress(*pk)
+
+	if !p2Affine.KeyValidate() {
+		return fmt.Errorf("invalid BLS public key point on the bls12-381 curve")
+	}
+
+	return nil
+}
+
 func (pk PublicKey) Equal(k PublicKey) bool {
 	return string(pk) == string(k)
 }

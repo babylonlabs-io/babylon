@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"math/rand"
 	"testing"
-	time "time"
+	"time"
 
 	"github.com/babylonlabs-io/babylon/v4/crypto/bls12381"
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
@@ -48,6 +48,17 @@ func TestValidatorWithBlsKeySetValidate(t *testing.T) {
 				vs.ValSet[0].BlsPubKey = []byte{0x01, 0x02}
 			},
 			expectErr: fmt.Errorf("invalid BLS public key length, got 2, expected 96"),
+		},
+		{
+			name: "invalid BLS pub key - not a valid point on curve",
+			setup: func(vs *types.ValidatorWithBlsKeySet, pks []bls12381.PrivateKey) {
+				// Create an invalid point by modifying a valid public key
+				invalidKey := make([]byte, bls12381.PubKeySize)
+				copy(invalidKey, pks[0].PubKey().Bytes())
+				invalidKey[len(invalidKey)-1] ^= 0xFF
+				vs.ValSet[0].BlsPubKey = invalidKey
+			},
+			expectErr: errors.New("invalid BLS public key point on the bls12-381 curve"),
 		},
 	}
 
@@ -96,6 +107,24 @@ func TestBlsKeyValidateBasic(t *testing.T) {
 				Pop:    nil,
 			},
 			errors.New("BLS Proof of Possession is nil"),
+		},
+		{
+			"invalid: not a valid point on curve",
+			types.BlsKey{
+				Pubkey: func() *bls12381.PublicKey {
+					invalidKey := make([]byte, bls12381.PubKeySize)
+					copy(invalidKey, validBlsKey.Pubkey.Bytes())
+					invalidKey[len(invalidKey)-1] ^= 0xFF
+					pk := new(bls12381.PublicKey)
+					err := pk.Unmarshal(invalidKey)
+					if err != nil {
+						return nil
+					}
+					return pk
+				}(),
+				Pop: validBlsKey.Pop,
+			},
+			errors.New("invalid BLS public key point on the bls12-381 curve"),
 		},
 	}
 
