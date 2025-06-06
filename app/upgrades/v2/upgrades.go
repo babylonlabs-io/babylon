@@ -52,7 +52,16 @@ var (
 	// durations in hours
 	DailyDurationHours uint64 = 24
 	// limits (percentages)
-	DefaultDailyLimit = sdkmath.NewInt(10)
+	DefaultDailyLimit     = sdkmath.NewInt(10)
+	WhitelistedChannelsID = map[string]struct{}{
+		"channel-0": struct{}{},
+		"channel-1": struct{}{},
+		"channel-2": struct{}{},
+		"channel-3": struct{}{},
+		"channel-4": struct{}{},
+		"channel-5": struct{}{},
+		"channel-6": struct{}{},
+	}
 )
 
 func CreateUpgrade(includeAsyncICQ bool) upgrades.Upgrade {
@@ -126,6 +135,11 @@ func addRateLimits(ctx sdk.Context, chk transfertypes.ChannelKeeper, rlk ratelim
 	channels := chk.GetAllChannelsWithPortPrefix(ctx, transfertypes.PortID)
 	logger.Info("adding limits to channels", "channels_count", len(channels))
 	for _, ch := range channels {
+		_, isWhitelisted := WhitelistedChannelsID[ch.ChannelId]
+		if !isWhitelisted {
+			continue
+		}
+
 		if err := addRateLimit(ctx, rlk, appparams.DefaultBondDenom, ch.ChannelId, DefaultDailyLimit, DailyDurationHours); err != nil {
 			return err
 		}

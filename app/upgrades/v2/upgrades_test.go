@@ -3,6 +3,7 @@ package v2_test
 import (
 	_ "embed"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -25,12 +26,16 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-const DummyUpgradeHeight = 5
+const (
+	DummyUpgradeHeight      = 5
+	NotWhitelistedChannelID = "channel-156"
+)
 
 var usedChannels = []channeltypes.IdentifiedChannel{
 	{ChannelId: "channel-0"},
 	{ChannelId: "channel-1"},
 	{ChannelId: "channel-5"},
+	{ChannelId: NotWhitelistedChannelID},
 }
 
 type UpgradeTestSuite struct {
@@ -138,9 +143,12 @@ func (s *UpgradeTestSuite) PostUpgrade() {
 	res, err := s.app.RatelimitKeeper.AllRateLimits(s.ctx, &ratelimittypes.QueryAllRateLimitsRequest{})
 	s.Require().NoError(err)
 	s.Require().NotNil(res)
-	s.Require().Len(res.RateLimits, len(usedChannels))
+	s.Require().Len(res.RateLimits, len(usedChannels)-1) // one is not whitelisted and was not rate limited
 
 	for _, rl := range res.RateLimits {
+		if strings.EqualFold(rl.Path.ChannelId, NotWhitelistedChannelID) {
+			s.Require().FailNowf("channel ID: %s shouldn't have a rate limit", rl.Path.ChannelId)
+		}
 		s.Require().Equal(v2.DefaultDailyLimit, rl.Quota.MaxPercentRecv)
 		s.Require().Equal(v2.DefaultDailyLimit, rl.Quota.MaxPercentSend)
 		s.Require().Equal(v2.DailyDurationHours, rl.Quota.DurationHours)
