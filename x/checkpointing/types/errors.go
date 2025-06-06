@@ -22,4 +22,8 @@ var (
 	ErrValAddrDoesNotExist     = errorsmod.Register(ModuleName, 1216, "Validator address does not exist")
 	ErrNilPoP                  = errorsmod.Register(ModuleName, 1217, "proof-of-possession is nil")
 	ErrNilValPubKey            = errorsmod.Register(ModuleName, 1218, "validator pub key is nil")
+	ErrNilBlockTime            = errorsmod.Register(ModuleName, 1219, "block time is nil")
+	ErrZeroBlockHeight         = errorsmod.Register(ModuleName, 1220, "block height is zero")
+	ErrNilCkpt                 = errorsmod.Register(ModuleName, 1221, "checkpoint is nil")
+	ErrNilBlsAggrPk            = errorsmod.Register(ModuleName, 1222, "BLS aggregated pub key is nil")
 )
