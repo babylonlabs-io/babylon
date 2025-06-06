@@ -1,6 +1,7 @@
 package types
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/babylonlabs-io/babylon/v2/crypto/bls12381"
@@ -38,8 +39,6 @@ func (vs ValidatorWithBlsKeySet) Validate() error {
 
 	return nil
 }
-<<<<<<< HEAD
-=======
 
 // ValidateBasic stateless validate if the BlsKey is valid
 func (k BlsKey) ValidateBasic() error {
@@ -52,4 +51,3 @@ func (k BlsKey) ValidateBasic() error {
 
 	return k.Pubkey.ValidateBasic()
 }
->>>>>>> f1dbaaf (chore: add bls key validation (#1126))

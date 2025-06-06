@@ -77,8 +77,6 @@ func TestValidatorWithBlsKeySetValidate(t *testing.T) {
 		})
 	}
 }
-<<<<<<< HEAD
-=======
 
 func TestBlsKeyValidateBasic(t *testing.T) {
 	t.Parallel()
@@ -142,4 +140,3 @@ func TestBlsKeyValidateBasic(t *testing.T) {
 		})
 	}
 }
->>>>>>> f1dbaaf (chore: add bls key validation (#1126))
