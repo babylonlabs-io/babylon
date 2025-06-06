@@ -52,10 +52,9 @@ func TestValidatorWithBlsKeySetValidate(t *testing.T) {
 		{
 			name: "invalid BLS pub key - not a valid point on curve",
 			setup: func(vs *types.ValidatorWithBlsKeySet, pks []bls12381.PrivateKey) {
-				// Create an invalid point by modifying a valid public key
+				// Create a random invalid key
 				invalidKey := make([]byte, bls12381.PubKeySize)
-				copy(invalidKey, pks[0].PubKey().Bytes())
-				invalidKey[len(invalidKey)-1] ^= 0xFF
+				rand.Read(invalidKey)
 				vs.ValSet[0].BlsPubKey = invalidKey
 			},
 			expectErr: errors.New("invalid BLS public key point on the bls12-381 curve"),
@@ -101,30 +100,28 @@ func TestBlsKeyValidateBasic(t *testing.T) {
 			errors.New("BLS Proof of Possession is nil"),
 		},
 		{
-			"invalid: not a valid point on curve",
-			types.BlsKey{
-				Pubkey: func() *bls12381.PublicKey {
-					invalidKey := make([]byte, bls12381.PubKeySize)
-					copy(invalidKey, validBlsKey.Pubkey.Bytes())
-					invalidKey[len(invalidKey)-1] ^= 0xFF
-					pk := new(bls12381.PublicKey)
-					err := pk.Unmarshal(invalidKey)
-					if err != nil {
-						panic(err)
-					}
-					return pk
-				}(),
-				Pop: validBlsKey.Pop,
-			},
-			errors.New("invalid BLS public key point on the bls12-381 curve"),
-		},
-		{
 			"invalid: nil pubkey",
 			types.BlsKey{
 				Pubkey: nil,
 				Pop:    validBlsKey.Pop,
 			},
 			errors.New("BLS Public key is nil"),
+		},
+		{
+			"invalid: not a valid point on curve",
+			types.BlsKey{
+				Pubkey: func() *bls12381.PublicKey {
+					// Create a random invalid key
+					invalidKey := make([]byte, bls12381.PubKeySize)
+					rand.Read(invalidKey)
+					pk := new(bls12381.PublicKey)
+					err := pk.Unmarshal(invalidKey)
+					require.NoError(t, err)
+					return pk
+				}(),
+				Pop: validBlsKey.Pop,
+			},
+			errors.New("invalid BLS public key point on the bls12-381 curve"),
 		},
 	}
 

@@ -153,10 +153,12 @@ func (pk *PublicKey) ValidateBasic() error {
 		return fmt.Errorf("invalid BLS public key length, got %d, expected %d", len(*pk), PubKeySize)
 	}
 
-	// check the public key is a valid point on the BLS12-318 curve
-	p2Affine := new(blst.P2Affine).Uncompress(*pk)
-
-	if !p2Affine.KeyValidate() {
+	// uncompress will validate the BLS public key including
+	// 1. The point is on the curve
+	// 2. The point is in the correct subgroup
+	// 3. The point is not at infinity
+	BlsPk := new(BlsPubKey).Uncompress(*pk)
+	if BlsPk == nil {
 		return fmt.Errorf("invalid BLS public key point on the bls12-381 curve")
 	}
 
