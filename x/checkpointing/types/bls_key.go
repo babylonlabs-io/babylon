@@ -31,6 +31,10 @@ func (vs ValidatorWithBlsKeySet) Validate() error {
 		if err := pk.Unmarshal(val.BlsPubKey); err != nil {
 			return err
 		}
+
+		if err := pk.ValidateBasic(); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -45,5 +49,5 @@ func (k BlsKey) ValidateBasic() error {
 		return errors.New("BLS Public key is nil")
 	}
 
-	return nil
+	return k.Pubkey.ValidateBasic()
 }
