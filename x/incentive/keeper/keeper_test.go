@@ -119,6 +119,7 @@ func (s *RefundTxTestSuite) TestRefundTx() {
 					SpendLimit: fee,
 					Expiration: &expiration,
 				}
+				s.NoError(original.ValidateBasic())
 				err := s.app.FeeGrantKeeper.GrantAllowance(s.ctx, feeGranter, feePayer, original)
 				s.NoError(err)
 			},
@@ -163,6 +164,7 @@ func (s *RefundTxTestSuite) TestRefundTx() {
 					PeriodCanSpend:   fee,
 					PeriodReset:      s.ctx.BlockTime().Add(period),
 				}
+				s.NoError(original.ValidateBasic())
 
 				err := s.app.FeeGrantKeeper.GrantAllowance(s.ctx, feeGranter, feePayer, original)
 				s.NoError(err)
@@ -213,6 +215,7 @@ func (s *RefundTxTestSuite) TestRefundTx() {
 					Allowance:       anyInner,
 					AllowedMessages: []string{"*"},
 				}
+				s.NoError(original.ValidateBasic())
 
 				err = s.app.FeeGrantKeeper.GrantAllowance(s.ctx, feeGranter, feePayer, original)
 				s.NoError(err)
