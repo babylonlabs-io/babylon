@@ -93,14 +93,6 @@ func TestBlsKeyValidateBasic(t *testing.T) {
 			nil,
 		},
 		{
-			"invalid: nil pubkey",
-			types.BlsKey{
-				Pubkey: nil,
-				Pop:    validBlsKey.Pop,
-			},
-			errors.New("BLS Public key is nil"),
-		},
-		{
 			"invalid: nil pop",
 			types.BlsKey{
 				Pubkey: validBlsKey.Pubkey,
@@ -118,13 +110,21 @@ func TestBlsKeyValidateBasic(t *testing.T) {
 					pk := new(bls12381.PublicKey)
 					err := pk.Unmarshal(invalidKey)
 					if err != nil {
-						return nil
+						panic(err)
 					}
 					return pk
 				}(),
 				Pop: validBlsKey.Pop,
 			},
 			errors.New("invalid BLS public key point on the bls12-381 curve"),
+		},
+		{
+			"invalid: nil pubkey",
+			types.BlsKey{
+				Pubkey: nil,
+				Pop:    validBlsKey.Pop,
+			},
+			errors.New("BLS Public key is nil"),
 		},
 	}
 

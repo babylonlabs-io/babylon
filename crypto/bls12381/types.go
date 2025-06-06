@@ -149,6 +149,10 @@ func (pk *PublicKey) Unmarshal(data []byte) error {
 }
 
 func (pk *PublicKey) ValidateBasic() error {
+	if len(*pk) != PubKeySize {
+		return fmt.Errorf("invalid BLS public key length, got %d, expected %d", len(*pk), PubKeySize)
+	}
+
 	// check the public key is a valid point on the BLS12-318 curve
 	p2Affine := new(blst.P2Affine).Uncompress(*pk)
 
