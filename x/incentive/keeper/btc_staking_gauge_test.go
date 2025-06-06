@@ -30,9 +30,17 @@ func FuzzRewardBTCStaking(f *testing.F) {
 		height := datagen.RandomInt(r, 1000)
 		ctx = datagen.WithCtxHeight(ctx, height)
 
-		// set a random gauge
-		gauge := datagen.GenRandomGauge(r)
-		k.SetBTCStakingGauge(ctx, height, gauge)
+		var gauge *types.Gauge
+		if height%2 == 0 {
+			// Case 1: use a randomly generated gauge and store it via keeper
+			gauge = datagen.GenRandomGauge(r)
+			k.SetBTCStakingGauge(ctx, height, gauge)
+		} else {
+			// Case 2: no gauge is stored - no fees to intercept
+			gauge = types.NewGauge(sdk.NewCoins()...)
+			g := k.GetBTCStakingGauge(ctx, height)
+			require.Nil(t, g)
+		}
 
 		// generate a random voting power distribution cache
 		dc, btcTotalSatByDelAddressByFpAddress, err := datagen.GenRandomVotingPowerDistCache(r, 100)
