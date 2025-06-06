@@ -1,6 +1,7 @@
 package types_test
 
 import (
+	crypto_rand "crypto/rand"
 	"errors"
 	"fmt"
 	"math/rand"
@@ -54,7 +55,8 @@ func TestValidatorWithBlsKeySetValidate(t *testing.T) {
 			setup: func(vs *types.ValidatorWithBlsKeySet, pks []bls12381.PrivateKey) {
 				// Create a random invalid key
 				invalidKey := make([]byte, bls12381.PubKeySize)
-				rand.Read(invalidKey)
+				_, err := crypto_rand.Read(invalidKey)
+				require.NoError(t, err)
 				vs.ValSet[0].BlsPubKey = invalidKey
 			},
 			expectErr: errors.New("invalid BLS public key point on the bls12-381 curve"),
@@ -113,9 +115,10 @@ func TestBlsKeyValidateBasic(t *testing.T) {
 				Pubkey: func() *bls12381.PublicKey {
 					// Create a random invalid key
 					invalidKey := make([]byte, bls12381.PubKeySize)
-					rand.Read(invalidKey)
+					_, err := crypto_rand.Read(invalidKey)
+					require.NoError(t, err)
 					pk := new(bls12381.PublicKey)
-					err := pk.Unmarshal(invalidKey)
+					err = pk.Unmarshal(invalidKey)
 					require.NoError(t, err)
 					return pk
 				}(),
