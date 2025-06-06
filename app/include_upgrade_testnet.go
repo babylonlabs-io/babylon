@@ -19,7 +19,7 @@ import (
 func init() {
 	Upgrades = []upgrades.Upgrade{
 		v2rc2.Upgrade,
-		v2.CreateUpgrade(true),
+		v2.CreateUpgrade(true, map[string]struct{}{}),
 		v1_1.Upgrade,
 		v1.CreateUpgrade(v1.UpgradeDataString{
 			BtcStakingParamsStr:       testnet.BtcStakingParamsStr,
