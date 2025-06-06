@@ -103,6 +103,7 @@ check of rewards
 - [#1096](https://github.com/babylonlabs-io/babylon/pull/1096) chore: validate stats positive
 - [#1097](https://github.com/babylonlabs-io/babylon/pull/1097) Update `Evidence.ValidateBasic` function
 - [#1098](https://github.com/babylonlabs-io/babylon/pull/1098) Support `HasValidateBasic` interface in `ValidateEntries` function
+- [#1102](https://github.com/babylonlabs-io/babylon/pull/1102) Handle empty `BTCStakingGauge` when no fees are intercepted
 - [#1118](https://github.com/babylonlabs-io/babylon/pull/1118) Update `RawCheckpointWithMeta` and `BlsMultiSig` validations
 - [#1126](https://github.com/babylonlabs-io/babylon/pull/1126) chore: add bls key validation
 - [#1135](https://github.com/babylonlabs-io/babylon/pull/1135) Add validation to `LastProcessedHeightEventRewardTracker` on `InitGenesis`
