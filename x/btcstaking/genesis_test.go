@@ -6,6 +6,7 @@ import (
 	"cosmossdk.io/log"
 	"cosmossdk.io/store"
 	storemetrics "cosmossdk.io/store/metrics"
+
 	keepertest "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
 	"github.com/babylonlabs-io/babylon/v4/testutil/nullify"
 	btcctypes "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
@@ -29,6 +30,7 @@ func TestGenesis(t *testing.T) {
 	btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
 
 	btccKeeper.EXPECT().GetParams(gomock.Any()).AnyTimes().Return(btcctypes.DefaultParams())
+
 	k, ctx := keepertest.BTCStakingKeeperWithStore(t, db, stateStore, nil, nil, btccKeeper, nil)
 
 	btcstaking.InitGenesis(ctx, *k, genesisState)
