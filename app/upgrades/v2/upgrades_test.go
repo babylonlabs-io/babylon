@@ -3,6 +3,7 @@ package v2_test
 import (
 	_ "embed"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -25,12 +26,16 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-const DummyUpgradeHeight = 5
+const (
+	DummyUpgradeHeight      = 5
+	NotWhitelistedChannelID = "channel-156"
+)
 
 var usedChannels = []channeltypes.IdentifiedChannel{
 	{ChannelId: "channel-0"},
 	{ChannelId: "channel-1"},
 	{ChannelId: "channel-5"},
+	{ChannelId: NotWhitelistedChannelID},
 }
 
 type UpgradeTestSuite struct {
@@ -46,47 +51,91 @@ func TestUpgradeTestSuite(t *testing.T) {
 }
 
 func (s *UpgradeTestSuite) TestUpgrade() {
+	mainnetWhitelistedChannels := make(map[string]struct{}, 0)
+	for _, c := range usedChannels {
+		if strings.EqualFold(c.ChannelId, NotWhitelistedChannelID) {
+			continue
+		}
+		mainnetWhitelistedChannels[c.ChannelId] = struct{}{}
+	}
+
 	testCases := []struct {
-		msg             string
-		baseBtcHeader   *btclighttypes.BTCHeaderInfo
-		preUpgrade      func()
-		upgrade         func()
-		postUpgrade     func()
-		includeAsyncICQ bool
+		msg                     string
+		baseBtcHeader           *btclighttypes.BTCHeaderInfo
+		preUpgrade              func()
+		upgrade                 func()
+		postUpgrade             func()
+		includeAsyncICQ         bool
+		whitelistedChannelsByID map[string]struct{}
 	}{
 		{
-			"Test launch software upgrade v2 with async ICQ not included",
+			"Test launch software upgrade v2 with async ICQ not included and mainnet whitelisted rate limit channels",
 			sample.MainnetBtcHeader854784(s.T()),
 			s.PreUpgrade,
 			s.Upgrade,
 			func() {
 				s.PostUpgrade()
+
+				// check rate limits are set
+				res, err := s.app.RatelimitKeeper.AllRateLimits(s.ctx, &ratelimittypes.QueryAllRateLimitsRequest{})
+				s.Require().NoError(err)
+				s.Require().NotNil(res)
+				s.Require().Len(res.RateLimits, len(usedChannels)-1) // one is not whitelisted and was not rate limited
+
+				for _, rl := range res.RateLimits {
+					if strings.EqualFold(rl.Path.ChannelId, NotWhitelistedChannelID) {
+						s.Require().FailNowf("channel ID: %s shouldn't have a rate limit", rl.Path.ChannelId)
+					}
+					s.Require().Equal(v2.DefaultDailyLimit, rl.Quota.MaxPercentRecv)
+					s.Require().Equal(v2.DefaultDailyLimit, rl.Quota.MaxPercentSend)
+					s.Require().Equal(v2.DailyDurationHours, rl.Quota.DurationHours)
+					s.Require().Zero(rl.Flow.Inflow.Int64())
+					s.Require().Zero(rl.Flow.Outflow.Int64())
+				}
+
 				// check the reward tracker event last processed height
 				lastProcessedHeight, err := s.app.IncentiveKeeper.GetRewardTrackerEventLastProcessedHeight(s.ctx)
 				s.NoError(err)
 				s.EqualValues(DummyUpgradeHeight-1, lastProcessedHeight)
 			},
 			false,
+			mainnetWhitelistedChannels,
 		},
 		{
-			"Test launch software upgrade v2 with async ICQ included",
+			"Test launch software upgrade v2 with async ICQ included and empty whitelisted (all channels should rate limit)",
 			sample.MainnetBtcHeader854784(s.T()),
 			s.PreUpgrade,
 			s.Upgrade,
 			func() {
 				s.PostUpgrade()
+
+				// check rate limits are set
+				res, err := s.app.RatelimitKeeper.AllRateLimits(s.ctx, &ratelimittypes.QueryAllRateLimitsRequest{})
+				s.Require().NoError(err)
+				s.Require().NotNil(res)
+				s.Require().Len(res.RateLimits, len(usedChannels))
+
+				for _, rl := range res.RateLimits {
+					s.Require().Equal(v2.DefaultDailyLimit, rl.Quota.MaxPercentRecv)
+					s.Require().Equal(v2.DefaultDailyLimit, rl.Quota.MaxPercentSend)
+					s.Require().Equal(v2.DailyDurationHours, rl.Quota.DurationHours)
+					s.Require().Zero(rl.Flow.Inflow.Int64())
+					s.Require().Zero(rl.Flow.Outflow.Int64())
+				}
+
 				// check the reward tracker event last processed height
 				lastProcessedHeight, err := s.app.IncentiveKeeper.GetRewardTrackerEventLastProcessedHeight(s.ctx)
 				s.NoError(err)
 				s.EqualValues(DummyUpgradeHeight-1, lastProcessedHeight)
 			},
 			true,
+			map[string]struct{}{},
 		},
 	}
 
 	for _, tc := range testCases {
 		s.Run(fmt.Sprintf("Case %s", tc.msg), func() {
-			s.SetupTest(tc.includeAsyncICQ) // reset
+			s.SetupTest(tc.includeAsyncICQ, tc.whitelistedChannelsByID) // reset
 
 			tc.preUpgrade()
 			tc.upgrade()
@@ -95,9 +144,9 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	}
 }
 
-func (s *UpgradeTestSuite) SetupTest(includeAsyncICQ bool) {
+func (s *UpgradeTestSuite) SetupTest(includeAsyncICQ bool, whitelistedChannelsByID map[string]struct{}) {
 	// add the upgrade plan
-	app.Upgrades = []upgrades.Upgrade{v2.CreateUpgrade(includeAsyncICQ)}
+	app.Upgrades = []upgrades.Upgrade{v2.CreateUpgrade(includeAsyncICQ, whitelistedChannelsByID)}
 
 	// set up app
 	s.app = app.SetupWithBitcoinConf(s.T(), false, bbn.BtcSignet)
@@ -134,20 +183,6 @@ func (s *UpgradeTestSuite) Upgrade() {
 }
 
 func (s *UpgradeTestSuite) PostUpgrade() {
-	// check rate limits are set
-	res, err := s.app.RatelimitKeeper.AllRateLimits(s.ctx, &ratelimittypes.QueryAllRateLimitsRequest{})
-	s.Require().NoError(err)
-	s.Require().NotNil(res)
-	s.Require().Len(res.RateLimits, len(usedChannels))
-
-	for _, rl := range res.RateLimits {
-		s.Require().Equal(v2.DefaultDailyLimit, rl.Quota.MaxPercentRecv)
-		s.Require().Equal(v2.DefaultDailyLimit, rl.Quota.MaxPercentSend)
-		s.Require().Equal(v2.DailyDurationHours, rl.Quota.DurationHours)
-		s.Require().Zero(rl.Flow.Inflow.Int64())
-		s.Require().Zero(rl.Flow.Outflow.Int64())
-	}
-
 	// crisis store and module name are the same
 	_, found := s.app.ModuleManager.Modules[v2.CrisisStoreName]
 	s.Require().False(found, "x/crisis modules shouldn't be found")
