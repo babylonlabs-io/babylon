@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"time"
 
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/x/feegrant"
@@ -44,18 +43,12 @@ func (k Keeper) refundToFeeGranter(ctx context.Context, feeGranter, feePayer sdk
 	if err != nil {
 		if errorsmod.IsOf(err, sdkerrors.ErrNotFound) || errorsmod.IsOf(err, feegrant.ErrNoAllowance) {
 			// Allowance was totally depleted and deleted
-			// Need to restore it
-			err := k.restoreDeletedFeeGrant(ctx, feeGranter, feePayer, refund)
-			if err != nil {
-				return err
-			}
-		} else {
-			// got another error
-			return err
+			// The allowance will not be restored in this case
+			// Only send refund to fee granter
+			return k.bankKeeper.SendCoinsFromModuleToAccount(ctx, k.feeCollectorName, feeGranter, refund)
 		}
-		// restored fee grant,
-		// send refund to feeGranter
-		return k.bankKeeper.SendCoinsFromModuleToAccount(ctx, k.feeCollectorName, feeGranter, refund)
+		// got another error
+		return err
 	}
 
 	// Existing allowance still present — just increase spend limit
@@ -69,31 +62,6 @@ func (k Keeper) refundToFeeGranter(ctx context.Context, feeGranter, feePayer sdk
 	}
 
 	return k.bankKeeper.SendCoinsFromModuleToAccount(ctx, k.feeCollectorName, feeGranter, refund)
-}
-
-// restoreDeletedFeeGrant restores the fee grant as a basic allowance
-// with a 2 day expiration
-func (k Keeper) restoreDeletedFeeGrant(ctx context.Context, feeGranter, feePayer sdk.AccAddress, refund sdk.Coins) error {
-	sdkCtx := sdk.UnwrapSDKContext(ctx)
-
-	// Set expiration time (48 hours from current block time)
-	expiration := sdkCtx.BlockHeader().Time.Add(48 * time.Hour)
-
-	// Create a basic allowance
-	allowance := &feegrant.BasicAllowance{
-		SpendLimit: refund,
-		Expiration: &expiration,
-	}
-
-	if err := allowance.ValidateBasic(); err != nil {
-		return fmt.Errorf("invalid restored allowance: %w", err)
-	}
-
-	if err := k.feegrantKeeper.GrantAllowance(ctx, feeGranter, feePayer, allowance); err != nil {
-		return fmt.Errorf("failed to re-grant fee allowance: %w", err)
-	}
-
-	return nil
 }
 
 // IndexRefundableMsg indexes the given refundable message by its hash.

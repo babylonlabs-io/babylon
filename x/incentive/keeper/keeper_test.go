@@ -245,7 +245,7 @@ func (s *RefundTxTestSuite) TestRefundTx() {
 			expectError: false,
 		},
 		{
-			name: "refund to fee granter with missing allowance (create new)",
+			name: "refund to fee granter with depleted allowance (should not be restored)",
 			tx: mockFeeTx{
 				fee:      fee,
 				feePayer: feePayer,
@@ -260,14 +260,9 @@ func (s *RefundTxTestSuite) TestRefundTx() {
 				s.True(errorsmod.IsOf(err, sdkerrors.ErrNotFound))
 			},
 			postRefund: func() {
-				expiration := s.ctx.BlockHeader().Time.Add(48 * time.Hour)
-				expected := &feegrant.BasicAllowance{
-					SpendLimit: fee,
-					Expiration: &expiration,
-				}
-				restoredGrant, err := s.app.FeeGrantKeeper.GetAllowance(s.ctx, feeGranter, feePayer)
-				s.NoError(err)
-				s.Equal(expected, restoredGrant)
+				// expect not to restore the allowance
+				_, err := s.app.FeeGrantKeeper.GetAllowance(s.ctx, feeGranter, feePayer)
+				s.True(errorsmod.IsOf(err, sdkerrors.ErrNotFound))
 
 				// expect fee granter to have been refunded refund
 				balance := s.app.BankKeeper.GetAllBalances(s.ctx, feeGranter)
