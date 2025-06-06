@@ -110,7 +110,8 @@ check of rewards
 - [#1136](https://github.com/babylonlabs-io/babylon/pull/1136) Fix `SubmissionEntry` duplicate validation in `InitGenesis`
 - [#1147](https://github.com/babylonlabs-io/babylon/pull/1147) chore: vp dist cache count active fps
 - [#1151](https://github.com/babylonlabs-io/babylon/pull/1151) Add whitelisted channels to add rate limit in `v2` upgrade.
-- [#1152](https://github.com/babylonlabs-io/babylon/pull/1152) chore: validate power non negative
+- [#1152](https://github.com/babylonlabs-io/babylon/pull/1152) chore: validate power non negative.
+- [#1171](https://github.com/babylonlabs-io/babylon/pull/1171) chore: add validation of `DelegationLifecycle`.
 
 ### State Machine Breaking
 
