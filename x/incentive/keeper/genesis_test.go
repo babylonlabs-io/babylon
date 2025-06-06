@@ -344,11 +344,11 @@ func setupTest(t *testing.T, seed int64) (sdk.Context, *keeper.Keeper, *storetyp
 		wa         = make([]types.WithdrawAddressEntry, l)
 		mh         = make([]string, l)
 		fpCurrRwd  = make([]types.FinalityProviderCurrentRewardsEntry, l)
-		fpHistRwd  = make([]types.FinalityProviderHistoricalRewardsEntry, l)
 		bdrt       = make([]types.BTCDelegationRewardsTrackerEntry, l)
 		d2fp       = make([]types.BTCDelegatorToFpEntry, l)
 		eventsRwd  = make([]types.EventsPowerUpdateAtHeightEntry, l)
 		currHeight = datagen.RandomInt(r, 100000) + 100
+		fpHistRwd  []types.FinalityProviderHistoricalRewardsEntry
 	)
 	defer ctrl.Finish()
 	ctx = ctx.WithBlockHeight(int64(currHeight))
