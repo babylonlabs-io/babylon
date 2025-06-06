@@ -58,7 +58,7 @@ var (
 	DefaultDailyLimit = sdkmath.NewInt(10)
 )
 
-func CreateUpgrade(includeAsyncICQ bool) upgrades.Upgrade {
+func CreateUpgrade(includeAsyncICQ bool, whitelistedChannelsByID map[string]struct{}) upgrades.Upgrade {
 	addedStoreUpgrades := []string{tokenfactorytypes.StoreKey, pfmroutertypes.StoreKey, icacontrollertypes.StoreKey, icahosttypes.StoreKey, ratelimittypes.StoreKey}
 
 	if includeAsyncICQ {
@@ -67,7 +67,7 @@ func CreateUpgrade(includeAsyncICQ bool) upgrades.Upgrade {
 
 	return upgrades.Upgrade{
 		UpgradeName:          UpgradeName,
-		CreateUpgradeHandler: CreateUpgradeHandler,
+		CreateUpgradeHandler: CreateUpgradeHandler(whitelistedChannelsByID),
 		StoreUpgrades: store.StoreUpgrades{
 			Added:   addedStoreUpgrades,
 			Deleted: []string{ibcfeetypes.StoreKey, CrisisStoreName},
@@ -75,60 +75,71 @@ func CreateUpgrade(includeAsyncICQ bool) upgrades.Upgrade {
 	}
 }
 
-func CreateUpgradeHandler(mm *module.Manager, configurator module.Configurator, keepers *keepers.AppKeepers) upgradetypes.UpgradeHandler {
-	return func(ctx context.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
-		// Run migrations before applying any other state changes.
-		migrations, err := mm.RunMigrations(ctx, configurator, fromVM)
-		if err != nil {
-			return nil, err
+func CreateUpgradeHandler(whitelistedChannelsByID map[string]struct{}) upgrades.UpgradeHandlerCreator {
+	return func(mm *module.Manager, configurator module.Configurator, keepers *keepers.AppKeepers) upgradetypes.UpgradeHandler {
+		return func(ctx context.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
+			// Run migrations before applying any other state changes.
+			migrations, err := mm.RunMigrations(ctx, configurator, fromVM)
+			if err != nil {
+				return nil, err
+			}
+
+			sdkCtx := sdk.UnwrapSDKContext(ctx)
+
+			// Add a default rate limit to existing channels on port 'transfer'
+			if err := addRateLimits(sdkCtx, keepers.IBCKeeper.ChannelKeeper, keepers.RatelimitKeeper, whitelistedChannelsByID); err != nil {
+				return nil, err
+			}
+
+			// By default, ICQ allowed queries are empty. So no queries will be allowed until
+			// the allowed list is populated via gov proposal.
+			// For ICA host, by default all messages are allowed (using '*' wildcard),
+			// so we set allow list to empty and messages can be added later when needed via gov proposal
+			icaHostParams := icahosttypes.DefaultParams()
+			icaHostParams.AllowMessages = nil
+			if err := icaHostParams.Validate(); err != nil {
+				return nil, err
+			}
+			keepers.ICAHostKeeper.SetParams(sdkCtx, icaHostParams)
+
+			// update reward distribution events
+			err = UpdateRewardTrackerEventLastProcessedHeight(ctx, keepers.IncentiveKeeper)
+			if err != nil {
+				return nil, err
+			}
+
+			// Set the denom creation fee to ubbn
+			params := tokenfactorytypes.DefaultParams()
+			params.DenomCreationFee = sdk.NewCoins(sdk.NewInt64Coin(minttypes.DefaultBondDenom, 10_000_000))
+
+			if err := params.Validate(); err != nil {
+				return nil, err
+			}
+
+			if err := keepers.TokenFactoryKeeper.SetParams(ctx, params); err != nil {
+				return nil, err
+			}
+
+			return migrations, nil
 		}
-
-		sdkCtx := sdk.UnwrapSDKContext(ctx)
-
-		// Add a default rate limit to existing channels on port 'transfer'
-		if err := addRateLimits(sdkCtx, keepers.IBCKeeper.ChannelKeeper, keepers.RatelimitKeeper); err != nil {
-			return nil, err
-		}
-
-		// By default, ICQ allowed queries are empty. So no queries will be allowed until
-		// the allowed list is populated via gov proposal.
-		// For ICA host, by default all messages are allowed (using '*' wildcard),
-		// so we set allow list to empty and messages can be added later when needed via gov proposal
-		icaHostParams := icahosttypes.DefaultParams()
-		icaHostParams.AllowMessages = nil
-		if err := icaHostParams.Validate(); err != nil {
-			return nil, err
-		}
-		keepers.ICAHostKeeper.SetParams(sdkCtx, icaHostParams)
-
-		// update reward distribution events
-		err = UpdateRewardTrackerEventLastProcessedHeight(ctx, keepers.IncentiveKeeper)
-		if err != nil {
-			return nil, err
-		}
-
-		// Set the denom creation fee to ubbn
-		params := tokenfactorytypes.DefaultParams()
-		params.DenomCreationFee = sdk.NewCoins(sdk.NewInt64Coin(minttypes.DefaultBondDenom, 10_000_000))
-
-		if err := params.Validate(); err != nil {
-			return nil, err
-		}
-
-		if err := keepers.TokenFactoryKeeper.SetParams(ctx, params); err != nil {
-			return nil, err
-		}
-
-		return migrations, nil
 	}
 }
 
 // addRateLimits adds rate limit to the native denom ('ubbn') to all channels registered on the channel keeper
-func addRateLimits(ctx sdk.Context, chk transfertypes.ChannelKeeper, rlk ratelimitkeeper.Keeper) error {
+func addRateLimits(ctx sdk.Context, chk transfertypes.ChannelKeeper, rlk ratelimitkeeper.Keeper, whitelistedChannelsByID map[string]struct{}) error {
 	logger := ctx.Logger().With("upgrade", UpgradeName)
 	channels := chk.GetAllChannelsWithPortPrefix(ctx, transfertypes.PortID)
 	logger.Info("adding limits to channels", "channels_count", len(channels))
 	for _, ch := range channels {
+		// if there is no whitelisted channel it sets to all the available transfer channels
+		if len(whitelistedChannelsByID) != 0 {
+			_, isWhitelisted := whitelistedChannelsByID[ch.ChannelId]
+			if !isWhitelisted {
+				continue
+			}
+		}
+
+		logger.Info("adding limits to whitelist channel", "channel_id", ch.ChannelId)
 		if err := addRateLimit(ctx, rlk, appparams.DefaultBondDenom, ch.ChannelId, DefaultDailyLimit, DailyDurationHours); err != nil {
 			return err
 		}
