@@ -57,13 +57,16 @@ func validateEpochs(epochs []EpochEntry) (map[uint64]struct{}, error) {
 }
 
 func validateSubmissions(submissions []SubmissionEntry, epochsMap map[uint64]struct{}) error {
-	keyMap := make(map[*SubmissionKey]struct{})
+	keyMap := make(map[string]struct{})
 	for _, s := range submissions {
 		if err := s.Validate(); err != nil {
 			return err
 		}
-
-		key := s.SubmissionKey
+		bz, err := s.Marshal()
+		if err != nil {
+			return err
+		}
+		key := string(bz)
 		if _, exists := keyMap[key]; exists {
 			return fmt.Errorf("duplicate entry for key: %v", key)
 		}
