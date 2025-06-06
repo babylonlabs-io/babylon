@@ -112,6 +112,7 @@ check of rewards
 - [#1040](https://github.com/babylonlabs-io/babylon/pull/1040) Rename ETH L2 to rollup
 - [#1151](https://github.com/babylonlabs-io/babylon/pull/1151) Add whitelisted channels to add rate limit in `v2` upgrade.
 - [#1152](https://github.com/babylonlabs-io/babylon/pull/1152) chore: validate power non negative
+- [#1168](https://github.com/babylonlabs-io/babylon/pull/1168) chore: removed duplicated addr len check in `SetAddressVerifier`
 
 ### State Machine Breaking
 
