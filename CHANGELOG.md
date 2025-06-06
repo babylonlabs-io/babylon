@@ -109,6 +109,7 @@ check of rewards
 - [#1135](https://github.com/babylonlabs-io/babylon/pull/1135) Add validation to `LastProcessedHeightEventRewardTracker` on `InitGenesis`
 - [#1147](https://github.com/babylonlabs-io/babylon/pull/1147) chore: vp dist cache count active fps
 - [#1040](https://github.com/babylonlabs-io/babylon/pull/1040) Rename ETH L2 to rollup
+- [#1152](https://github.com/babylonlabs-io/babylon/pull/1152) chore: validate power non negative
 
 ### State Machine Breaking
 
