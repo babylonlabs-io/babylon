@@ -87,8 +87,8 @@ func TestFinalityProviderCurrentRewards_Validate(t *testing.T) {
 				Period:         0,
 				TotalActiveSat: math.NewInt(0),
 			},
-			expectError: true,
-			expectedErrMsg: "fp current rewards period must be positive"
+			expectError:    true,
+			expectedErrMsg: "fp current rewards period must be positive",
 		},
 	}
 
