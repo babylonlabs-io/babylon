@@ -1,186 +1,113 @@
 package types_test
 
 import (
+<<<<<<< HEAD
 	"cosmossdk.io/math"
 	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
 	"github.com/babylonlabs-io/babylon/v2/x/incentive/types"
 	"github.com/stretchr/testify/require"
+=======
+>>>>>>> b2b37f4 (fix: add check for rewards period (#1065))
 	"testing"
+
+	"cosmossdk.io/math"
+	"github.com/stretchr/testify/require"
+
+	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
+	"github.com/babylonlabs-io/babylon/v4/x/incentive/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func TestEventsPowerUpdateAtHeight_Validate(t *testing.T) {
-	t.Parallel()
-	testCases := []struct {
-		name    string
-		events  *types.EventsPowerUpdateAtHeight
-		wantErr string
+func TestFinalityProviderCurrentRewards_Validate(t *testing.T) {
+	validCoins := sdk.NewCoins(sdk.NewInt64Coin(appparams.DefaultBondDenom, 100))
+	validTotalActiveSat := math.NewInt(1000)
+
+	tests := []struct {
+		name           string
+		rewards        types.FinalityProviderCurrentRewards
+		expectError    bool
+		expectedErrMsg string
 	}{
 		{
-			name: "valid - empty events",
-			events: &types.EventsPowerUpdateAtHeight{
-				Events: nil,
+			name: "valid finality provider current rewards",
+			rewards: types.FinalityProviderCurrentRewards{
+				CurrentRewards: validCoins,
+				Period:         5,
+				TotalActiveSat: validTotalActiveSat,
 			},
-			wantErr: "",
+			expectError: false,
 		},
 		{
-			name: "valid - single BTC activated event",
-			events: &types.EventsPowerUpdateAtHeight{
-				Events: []*types.EventPowerUpdate{
-					{
-						Ev: &types.EventPowerUpdate_BtcActivated{
-							BtcActivated: &types.EventBTCDelegationActivated{
-								FpAddr:     datagen.GenRandomAddress().String(),
-								BtcDelAddr: datagen.GenRandomAddress().String(),
-								TotalSat:   math.NewInt(1000),
-							},
-						},
-					},
-				},
+			name: "invalid coins - negative amount",
+			rewards: types.FinalityProviderCurrentRewards{
+				CurrentRewards: sdk.Coins{{Denom: appparams.DefaultBondDenom, Amount: math.NewInt(-100)}},
+				Period:         5,
+				TotalActiveSat: validTotalActiveSat,
 			},
-			wantErr: "",
+			expectError:    true,
+			expectedErrMsg: "current rewards has invalid coins",
 		},
 		{
-			name: "valid - single BTC unbonded event",
-			events: &types.EventsPowerUpdateAtHeight{
-				Events: []*types.EventPowerUpdate{
-					{
-						Ev: &types.EventPowerUpdate_BtcUnbonded{
-							BtcUnbonded: &types.EventBTCDelegationUnbonded{
-								FpAddr:     datagen.GenRandomAddress().String(),
-								BtcDelAddr: datagen.GenRandomAddress().String(),
-								TotalSat:   math.NewInt(1000),
-							},
-						},
-					},
-				},
+			name: "nil coins",
+			rewards: types.FinalityProviderCurrentRewards{
+				CurrentRewards: sdk.Coins{sdk.Coin{}}, // This creates a nil coin
+				Period:         5,
+				TotalActiveSat: validTotalActiveSat,
 			},
-			wantErr: "",
+			expectError:    true,
+			expectedErrMsg: "current rewards has invalid coins",
 		},
 		{
-			name: "valid - multiple mixed events",
-			events: &types.EventsPowerUpdateAtHeight{
-				Events: []*types.EventPowerUpdate{
-					{
-						Ev: &types.EventPowerUpdate_BtcActivated{
-							BtcActivated: &types.EventBTCDelegationActivated{
-								FpAddr:     datagen.GenRandomAddress().String(),
-								BtcDelAddr: datagen.GenRandomAddress().String(),
-								TotalSat:   math.NewInt(1000),
-							},
-						},
-					},
-					{
-						Ev: &types.EventPowerUpdate_BtcUnbonded{
-							BtcUnbonded: &types.EventBTCDelegationUnbonded{
-								FpAddr:     datagen.GenRandomAddress().String(),
-								BtcDelAddr: datagen.GenRandomAddress().String(),
-								TotalSat:   math.NewInt(2000),
-							},
-						},
-					},
-				},
+			name: "empty coins",
+			rewards: types.FinalityProviderCurrentRewards{
+				CurrentRewards: sdk.NewCoins(),
+				Period:         5,
+				TotalActiveSat: validTotalActiveSat,
 			},
-			wantErr: "",
+			expectError:    true,
+			expectedErrMsg: "current rewards has no coins",
 		},
 		{
-			name: "invalid - empty FP address in activated event",
-			events: &types.EventsPowerUpdateAtHeight{
-				Events: []*types.EventPowerUpdate{
-					{
-						Ev: &types.EventPowerUpdate_BtcActivated{
-							BtcActivated: &types.EventBTCDelegationActivated{
-								FpAddr:     "",
-								BtcDelAddr: datagen.GenRandomAddress().String(),
-								TotalSat:   math.NewInt(1000),
-							},
-						},
-					},
-				},
+			name: "nil total active sat",
+			rewards: types.FinalityProviderCurrentRewards{
+				CurrentRewards: validCoins,
+				Period:         5,
+				TotalActiveSat: math.Int{}, // This creates a nil Int
 			},
-			wantErr: "empty address",
+			expectError:    true,
+			expectedErrMsg: "current rewards has no total active satoshi delegated",
 		},
 		{
-			name: "invalid - empty delegator address in unbonded event",
-			events: &types.EventsPowerUpdateAtHeight{
-				Events: []*types.EventPowerUpdate{
-					{
-						Ev: &types.EventPowerUpdate_BtcUnbonded{
-							BtcUnbonded: &types.EventBTCDelegationUnbonded{
-								FpAddr:     datagen.GenRandomAddress().String(),
-								BtcDelAddr: "",
-								TotalSat:   math.NewInt(1000),
-							},
-						},
-					},
-				},
+			name: "negative total active sat",
+			rewards: types.FinalityProviderCurrentRewards{
+				CurrentRewards: validCoins,
+				Period:         5,
+				TotalActiveSat: math.NewInt(-1000),
 			},
-			wantErr: "empty address",
+			expectError:    true,
+			expectedErrMsg: "current rewards has a negative total active satoshi delegated value",
 		},
 		{
-			name: "invalid - negative total sat in activated event",
-			events: &types.EventsPowerUpdateAtHeight{
-				Events: []*types.EventPowerUpdate{
-					{
-						Ev: &types.EventPowerUpdate_BtcActivated{
-							BtcActivated: &types.EventBTCDelegationActivated{
-								FpAddr:     datagen.GenRandomAddress().String(),
-								BtcDelAddr: datagen.GenRandomAddress().String(),
-								TotalSat:   math.NewInt(-1000),
-							},
-						},
-					},
-				},
+			name: "zero values are invalid",
+			rewards: types.FinalityProviderCurrentRewards{
+				CurrentRewards: sdk.NewCoins(sdk.NewInt64Coin(appparams.DefaultBondDenom, 1)), // At least one coin
+				Period:         0,
+				TotalActiveSat: math.NewInt(0),
 			},
-			wantErr: "must be positive",
-		},
-		{
-			name: "invalid - zero total sat in unbonded event",
-			events: &types.EventsPowerUpdateAtHeight{
-				Events: []*types.EventPowerUpdate{
-					{
-						Ev: &types.EventPowerUpdate_BtcUnbonded{
-							BtcUnbonded: &types.EventBTCDelegationUnbonded{
-								FpAddr:     datagen.GenRandomAddress().String(),
-								BtcDelAddr: datagen.GenRandomAddress().String(),
-								TotalSat:   math.NewInt(0),
-							},
-						},
-					},
-				},
-			},
-			wantErr: "must be positive",
-		},
-		{
-			name: "invalid - nil event in list",
-			events: &types.EventsPowerUpdateAtHeight{
-				Events: []*types.EventPowerUpdate{
-					nil,
-				},
-			},
-			wantErr: "nil event",
-		},
-		{
-			name: "invalid - nil event type",
-			events: &types.EventsPowerUpdateAtHeight{
-				Events: []*types.EventPowerUpdate{
-					{
-						Ev: nil,
-					},
-				},
-			},
-			wantErr: "nil event type",
+			expectError:    true,
+			expectedErrMsg: "fp current rewards period must be positive",
 		},
 	}
 
-	for _, tc := range testCases {
+	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-			err := tc.events.Validate()
-			if tc.wantErr == "" {
-				require.NoError(t, err)
-			} else {
+			err := tc.rewards.Validate()
+
+			if tc.expectError {
 				require.Error(t, err)
-				require.Contains(t, err.Error(), tc.wantErr)
+				require.Contains(t, err.Error(), tc.expectedErrMsg)
+			} else {
+				require.NoError(t, err)
 			}
 		})
 	}
