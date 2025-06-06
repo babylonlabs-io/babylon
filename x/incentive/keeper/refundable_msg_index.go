@@ -35,7 +35,7 @@ func (k Keeper) RefundTx(ctx context.Context, tx sdk.FeeTx) error {
 	return k.bankKeeper.SendCoinsFromModuleToAccount(ctx, k.feeCollectorName, feePayer, txFee)
 }
 
-// refundToFeeGranter restores the fee grant allowance by increasing the spend limit or restoring the deleted grant
+// refundToFeeGranter restores the fee grant allowance by increasing the spend limit
 // and sends the refund to the fee granter
 func (k Keeper) refundToFeeGranter(ctx context.Context, feeGranter, feePayer sdk.AccAddress, refund sdk.Coins) error {
 	allowance, err := k.feegrantKeeper.GetAllowance(ctx, feeGranter, feePayer)
