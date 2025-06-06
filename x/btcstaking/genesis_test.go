@@ -6,7 +6,6 @@ import (
 	"cosmossdk.io/log"
 	"cosmossdk.io/store"
 	storemetrics "cosmossdk.io/store/metrics"
-	dbm "github.com/cosmos/cosmos-db"
 
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/stretchr/testify/require"
@@ -16,6 +15,7 @@ import (
 	btcctypes "github.com/babylonlabs-io/babylon/v2/x/btccheckpoint/types"
 	"github.com/babylonlabs-io/babylon/v2/x/btcstaking"
 	"github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
+	dbm "github.com/cosmos/cosmos-db"
 )
 
 func TestGenesis(t *testing.T) {
