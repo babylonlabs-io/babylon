@@ -190,7 +190,11 @@ func validateBTCDelegations(delegations []*BTCDelegation) (map[string]*BTCDelega
 	indexMap := make(map[string]*BTCDelegatorDelegationIndex)
 
 	for _, d := range delegations {
-		stakingTxHash := d.MustGetStakingTxHash()
+		stakingTxHash, err := d.GetStakingTxHash()
+		if err != nil {
+			return nil, err
+		}
+
 		key := stakingTxHash.String()
 
 		if _, exists := keyMap[key]; exists {
