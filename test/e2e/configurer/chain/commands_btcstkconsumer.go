@@ -82,7 +82,7 @@ func (n *NodeConfig) CommitPubRandListConsumer(walletAddrOrName, consumerId stri
 		n.t.Fatalf("Consumer %s is not registered on %s", consumerId, n.chainId)
 	}
 
-	finalityContractAddr := consumer.ConsumerRegisters[0].EthL2FinalityContractAddress
+	finalityContractAddr := consumer.ConsumerRegisters[0].RollupFinalityContractAddress
 	// TODO: Support Cosmos Consumers
 	if finalityContractAddr == "" {
 		n.t.Fatalf("Finality contract address for consumer %s is not set", consumerId)
@@ -124,7 +124,7 @@ func (n *NodeConfig) AddFinalitySigConsumer(
 		n.t.Fatalf("Consumer %s is not registered on %s", consumerId, n.chainId)
 	}
 
-	finalityContractAddr := consumer.ConsumerRegisters[0].EthL2FinalityContractAddress
+	finalityContractAddr := consumer.ConsumerRegisters[0].RollupFinalityContractAddress
 	// TODO: Support Cosmos Consumers
 	if finalityContractAddr == "" {
 		n.t.Fatalf("Finality contract address for consumer %s is not set", consumerId)

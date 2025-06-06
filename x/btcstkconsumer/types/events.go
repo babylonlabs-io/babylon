@@ -8,7 +8,7 @@ func NewConsumerRegisteredEvent(consumerId, consumerName, consumerDescription st
 		ConsumerDescription: consumerDescription,
 		ConsumerType:        consumerType,
 		MaxMultiStakedFps:   maxMultiStakedFps,
-		RollupConsumerMetadata: &ETHL2ConsumerMetadata{
+		RollupConsumerMetadata: &RollupConsumerMetadata{
 			FinalityContractAddress: rollupFinalityContractAddress,
 		},
 	}
