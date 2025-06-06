@@ -1,6 +1,7 @@
 package types_test
 
 import (
+	"encoding/hex"
 	"fmt"
 	"math/rand"
 	"testing"
@@ -8,6 +9,7 @@ import (
 
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
 	"github.com/babylonlabs-io/babylon/v4/x/incentive/types"
+	"github.com/cometbft/cometbft/crypto/tmhash"
 	"github.com/stretchr/testify/require"
 )
 
@@ -16,6 +18,11 @@ func TestGenesisState_Validate(t *testing.T) {
 	addrStr1 := datagen.GenRandomAddress().String()
 	addrStr2 := datagen.GenRandomAddress().String()
 	hashStr := datagen.GenRandomHexStr(r, 32)
+	msgHash := types.HashMsg(&types.MsgWithdrawReward{
+		Address: "address",
+	})
+	validMsgHash := hex.EncodeToString(msgHash)
+	badHashStr := datagen.GenRandomHexStr(r, 34)
 	height := datagen.RandomInt(r, 100) + 5
 	tests := []struct {
 		desc     string
@@ -114,6 +121,23 @@ func TestGenesisState_Validate(t *testing.T) {
 			errMsg: fmt.Sprintf("invalid withdraw addresses: duplicate entry for key: %s", addrStr1),
 		},
 		{
+			desc: "Genesis valid MsgHashes",
+			genState: &types.GenesisState{
+				Params:                             types.DefaultParams(),
+				BtcStakingGauges:                   []types.BTCStakingGaugeEntry{},
+				RewardGauges:                       []types.RewardGaugeEntry{},
+				WithdrawAddresses:                  []types.WithdrawAddressEntry{},
+				RefundableMsgHashes:                []string{validMsgHash},
+				FinalityProvidersCurrentRewards:    []types.FinalityProviderCurrentRewardsEntry{},
+				FinalityProvidersHistoricalRewards: []types.FinalityProviderHistoricalRewardsEntry{},
+				BtcDelegationRewardsTrackers:       []types.BTCDelegationRewardsTrackerEntry{},
+				BtcDelegatorsToFps:                 []types.BTCDelegatorToFpEntry{},
+				EventRewardTracker:                 []types.EventsPowerUpdateAtHeightEntry{},
+			},
+			valid:  true,
+			errMsg: "",
+		},
+		{
 			desc: "Genesis with empty string in MsgHashes",
 			genState: &types.GenesisState{
 				Params:                             types.DefaultParams(),
@@ -146,6 +170,40 @@ func TestGenesisState_Validate(t *testing.T) {
 			},
 			valid:  false,
 			errMsg: fmt.Sprintf("duplicate hash: %s", hashStr),
+		},
+		{
+			desc: "Genesis with bad hash len in MsgHashes",
+			genState: &types.GenesisState{
+				Params:                             types.DefaultParams(),
+				BtcStakingGauges:                   []types.BTCStakingGaugeEntry{},
+				RewardGauges:                       []types.RewardGaugeEntry{},
+				WithdrawAddresses:                  []types.WithdrawAddressEntry{},
+				RefundableMsgHashes:                []string{badHashStr},
+				FinalityProvidersCurrentRewards:    []types.FinalityProviderCurrentRewardsEntry{},
+				FinalityProvidersHistoricalRewards: []types.FinalityProviderHistoricalRewardsEntry{},
+				BtcDelegationRewardsTrackers:       []types.BTCDelegationRewardsTrackerEntry{},
+				BtcDelegatorsToFps:                 []types.BTCDelegatorToFpEntry{},
+				EventRewardTracker:                 []types.EventsPowerUpdateAtHeightEntry{},
+			},
+			valid:  false,
+			errMsg: fmt.Sprintf("hash size should be %d characters: %s", tmhash.Size, badHashStr),
+		},
+		{
+			desc: "Genesis with bad decoded msg in MsgHashes",
+			genState: &types.GenesisState{
+				Params:                             types.DefaultParams(),
+				BtcStakingGauges:                   []types.BTCStakingGaugeEntry{},
+				RewardGauges:                       []types.RewardGaugeEntry{},
+				WithdrawAddresses:                  []types.WithdrawAddressEntry{},
+				RefundableMsgHashes:                []string{"ças"},
+				FinalityProvidersCurrentRewards:    []types.FinalityProviderCurrentRewardsEntry{},
+				FinalityProvidersHistoricalRewards: []types.FinalityProviderHistoricalRewardsEntry{},
+				BtcDelegationRewardsTrackers:       []types.BTCDelegationRewardsTrackerEntry{},
+				BtcDelegatorsToFps:                 []types.BTCDelegatorToFpEntry{},
+				EventRewardTracker:                 []types.EventsPowerUpdateAtHeightEntry{},
+			},
+			valid:  false,
+			errMsg: fmt.Sprintf("error decoding msg hash: %s", `encoding/hex: invalid byte: U+00C3 'Ã'`),
 		},
 		{
 			desc: "Genesis with 2 current rewards for same finality provider",
@@ -182,13 +240,30 @@ func TestGenesisState_Validate(t *testing.T) {
 		{
 			desc: "Genesis with 2 historical rewards for same finality provider and different period",
 			genState: &types.GenesisState{
-				Params:                          types.DefaultParams(),
-				BtcStakingGauges:                []types.BTCStakingGaugeEntry{},
-				RewardGauges:                    []types.RewardGaugeEntry{},
-				WithdrawAddresses:               []types.WithdrawAddressEntry{},
-				RefundableMsgHashes:             []string{},
-				FinalityProvidersCurrentRewards: []types.FinalityProviderCurrentRewardsEntry{},
+				Params:              types.DefaultParams(),
+				BtcStakingGauges:    []types.BTCStakingGaugeEntry{},
+				RewardGauges:        []types.RewardGaugeEntry{},
+				WithdrawAddresses:   []types.WithdrawAddressEntry{},
+				RefundableMsgHashes: []string{},
+				FinalityProvidersCurrentRewards: []types.FinalityProviderCurrentRewardsEntry{
+					{
+						Address: addrStr1,
+						Rewards: func() *types.FinalityProviderCurrentRewards {
+							r := datagen.GenRandomFinalityProviderCurrentRewards(r)
+							r.Period = 3
+							return &r
+						}(),
+					},
+				},
 				FinalityProvidersHistoricalRewards: []types.FinalityProviderHistoricalRewardsEntry{
+					{
+						Address: addrStr1,
+						Period:  0,
+						Rewards: func() *types.FinalityProviderHistoricalRewards {
+							v := datagen.GenRandomFPHistRwdWithDecimals(r)
+							return &v
+						}(),
+					},
 					{
 						Address: addrStr1,
 						Period:  1,
@@ -248,46 +323,104 @@ func TestGenesisState_Validate(t *testing.T) {
 		},
 		{
 			desc: "Genesis with valid BTC delegation rewards tracker but no delegator to fps data",
-			genState: &types.GenesisState{
-				Params:                             types.DefaultParams(),
-				BtcStakingGauges:                   []types.BTCStakingGaugeEntry{},
-				RewardGauges:                       []types.RewardGaugeEntry{},
-				WithdrawAddresses:                  []types.WithdrawAddressEntry{},
-				RefundableMsgHashes:                []string{},
-				FinalityProvidersCurrentRewards:    []types.FinalityProviderCurrentRewardsEntry{},
-				FinalityProvidersHistoricalRewards: []types.FinalityProviderHistoricalRewardsEntry{},
-				BtcDelegationRewardsTrackers: []types.BTCDelegationRewardsTrackerEntry{
-					{
-						FinalityProviderAddress: datagen.GenRandomAccount().Address,
-						DelegatorAddress:        datagen.GenRandomAccount().Address,
-						Tracker: func() *types.BTCDelegationRewardsTracker {
-							v := datagen.GenRandomBTCDelegationRewardsTracker(r)
-							return &v
-						}(),
+			genState: func() *types.GenesisState {
+				fpAddr := datagen.GenRandomAccount().Address
+				delAddr := datagen.GenRandomAccount().Address
+				return &types.GenesisState{
+					Params:              types.DefaultParams(),
+					BtcStakingGauges:    []types.BTCStakingGaugeEntry{},
+					RewardGauges:        []types.RewardGaugeEntry{},
+					WithdrawAddresses:   []types.WithdrawAddressEntry{},
+					RefundableMsgHashes: []string{},
+					FinalityProvidersCurrentRewards: []types.FinalityProviderCurrentRewardsEntry{
+						{
+							Address: fpAddr,
+							Rewards: func() *types.FinalityProviderCurrentRewards {
+								r := datagen.GenRandomFinalityProviderCurrentRewards(r)
+								r.Period = 2
+								return &r
+							}(),
+						},
 					},
-				},
-				BtcDelegatorsToFps: []types.BTCDelegatorToFpEntry{},
-				EventRewardTracker: []types.EventsPowerUpdateAtHeightEntry{},
-			},
+					FinalityProvidersHistoricalRewards: []types.FinalityProviderHistoricalRewardsEntry{
+						{
+							Address: fpAddr,
+							Period:  0,
+							Rewards: func() *types.FinalityProviderHistoricalRewards {
+								v := datagen.GenRandomFPHistRwdWithDecimals(r)
+								return &v
+							}(),
+						},
+						{
+							Address: fpAddr,
+							Period:  1,
+							Rewards: func() *types.FinalityProviderHistoricalRewards {
+								v := datagen.GenRandomFPHistRwdWithDecimals(r)
+								return &v
+							}(),
+						},
+					},
+					BtcDelegationRewardsTrackers: []types.BTCDelegationRewardsTrackerEntry{
+						{
+							FinalityProviderAddress: fpAddr,
+							DelegatorAddress:        delAddr,
+							Tracker: func() *types.BTCDelegationRewardsTracker {
+								v := datagen.GenRandomBTCDelegationRewardsTracker(r)
+								v.StartPeriodCumulativeReward = 0
+								return &v
+							}(),
+						},
+					},
+					BtcDelegatorsToFps: []types.BTCDelegatorToFpEntry{},
+					EventRewardTracker: []types.EventsPowerUpdateAtHeightEntry{},
+				}
+			}(),
 			valid:  false,
 			errMsg: "BTC delegators to finality providers map is not equal to the btc delegations data",
 		},
 		{
 			desc: "Genesis with duplicated BTC delegation rewards tracker",
 			genState: &types.GenesisState{
-				Params:                             types.DefaultParams(),
-				BtcStakingGauges:                   []types.BTCStakingGaugeEntry{},
-				RewardGauges:                       []types.RewardGaugeEntry{},
-				WithdrawAddresses:                  []types.WithdrawAddressEntry{},
-				RefundableMsgHashes:                []string{},
-				FinalityProvidersCurrentRewards:    []types.FinalityProviderCurrentRewardsEntry{},
-				FinalityProvidersHistoricalRewards: []types.FinalityProviderHistoricalRewardsEntry{},
+				Params:              types.DefaultParams(),
+				BtcStakingGauges:    []types.BTCStakingGaugeEntry{},
+				RewardGauges:        []types.RewardGaugeEntry{},
+				WithdrawAddresses:   []types.WithdrawAddressEntry{},
+				RefundableMsgHashes: []string{},
+				FinalityProvidersCurrentRewards: []types.FinalityProviderCurrentRewardsEntry{
+					{
+						Address: addrStr1,
+						Rewards: func() *types.FinalityProviderCurrentRewards {
+							r := datagen.GenRandomFinalityProviderCurrentRewards(r)
+							r.Period = 2
+							return &r
+						}(),
+					},
+				},
+				FinalityProvidersHistoricalRewards: []types.FinalityProviderHistoricalRewardsEntry{
+					{
+						Address: addrStr1,
+						Period:  0,
+						Rewards: func() *types.FinalityProviderHistoricalRewards {
+							v := datagen.GenRandomFPHistRwdWithDecimals(r)
+							return &v
+						}(),
+					},
+					{
+						Address: addrStr1,
+						Period:  1,
+						Rewards: func() *types.FinalityProviderHistoricalRewards {
+							v := datagen.GenRandomFPHistRwdWithDecimals(r)
+							return &v
+						}(),
+					},
+				},
 				BtcDelegationRewardsTrackers: []types.BTCDelegationRewardsTrackerEntry{
 					{
 						FinalityProviderAddress: addrStr1,
 						DelegatorAddress:        addrStr2,
 						Tracker: func() *types.BTCDelegationRewardsTracker {
 							v := datagen.GenRandomBTCDelegationRewardsTracker(r)
+							v.StartPeriodCumulativeReward = 0
 							return &v
 						}(),
 					},
@@ -296,6 +429,7 @@ func TestGenesisState_Validate(t *testing.T) {
 						DelegatorAddress:        addrStr2,
 						Tracker: func() *types.BTCDelegationRewardsTracker {
 							v := datagen.GenRandomBTCDelegationRewardsTracker(r)
+							v.StartPeriodCumulativeReward = 0
 							return &v
 						}(),
 					},
@@ -312,19 +446,46 @@ func TestGenesisState_Validate(t *testing.T) {
 		{
 			desc: "Genesis with duplicated BTC delegator to fp entry",
 			genState: &types.GenesisState{
-				Params:                             types.DefaultParams(),
-				BtcStakingGauges:                   []types.BTCStakingGaugeEntry{},
-				RewardGauges:                       []types.RewardGaugeEntry{},
-				WithdrawAddresses:                  []types.WithdrawAddressEntry{},
-				RefundableMsgHashes:                []string{},
-				FinalityProvidersCurrentRewards:    []types.FinalityProviderCurrentRewardsEntry{},
-				FinalityProvidersHistoricalRewards: []types.FinalityProviderHistoricalRewardsEntry{},
+				Params:              types.DefaultParams(),
+				BtcStakingGauges:    []types.BTCStakingGaugeEntry{},
+				RewardGauges:        []types.RewardGaugeEntry{},
+				WithdrawAddresses:   []types.WithdrawAddressEntry{},
+				RefundableMsgHashes: []string{},
+				FinalityProvidersCurrentRewards: []types.FinalityProviderCurrentRewardsEntry{
+					{
+						Address: addrStr1,
+						Rewards: func() *types.FinalityProviderCurrentRewards {
+							r := datagen.GenRandomFinalityProviderCurrentRewards(r)
+							r.Period = 2
+							return &r
+						}(),
+					},
+				},
+				FinalityProvidersHistoricalRewards: []types.FinalityProviderHistoricalRewardsEntry{
+					{
+						Address: addrStr1,
+						Period:  0,
+						Rewards: func() *types.FinalityProviderHistoricalRewards {
+							v := datagen.GenRandomFPHistRwdWithDecimals(r)
+							return &v
+						}(),
+					},
+					{
+						Address: addrStr1,
+						Period:  1,
+						Rewards: func() *types.FinalityProviderHistoricalRewards {
+							v := datagen.GenRandomFPHistRwdWithDecimals(r)
+							return &v
+						}(),
+					},
+				},
 				BtcDelegationRewardsTrackers: []types.BTCDelegationRewardsTrackerEntry{
 					{
 						FinalityProviderAddress: addrStr1,
 						DelegatorAddress:        addrStr2,
 						Tracker: func() *types.BTCDelegationRewardsTracker {
 							v := datagen.GenRandomBTCDelegationRewardsTracker(r)
+							v.StartPeriodCumulativeReward = 0
 							return &v
 						}(),
 					},
@@ -401,6 +562,351 @@ func TestGenesisState_Validate(t *testing.T) {
 						},
 					},
 				},
+			},
+			valid: true,
+		},
+		{
+			desc: "Genesis with FP current rewards but missing historical rewards",
+			genState: &types.GenesisState{
+				Params:              types.DefaultParams(),
+				BtcStakingGauges:    []types.BTCStakingGaugeEntry{},
+				RewardGauges:        []types.RewardGaugeEntry{},
+				WithdrawAddresses:   []types.WithdrawAddressEntry{},
+				RefundableMsgHashes: []string{},
+				FinalityProvidersCurrentRewards: []types.FinalityProviderCurrentRewardsEntry{
+					{
+						Address: addrStr1,
+						Rewards: func() *types.FinalityProviderCurrentRewards {
+							r := datagen.GenRandomFinalityProviderCurrentRewards(r)
+							r.Period = 3
+							return &r
+						}(),
+					},
+				},
+				FinalityProvidersHistoricalRewards: []types.FinalityProviderHistoricalRewardsEntry{},
+				BtcDelegationRewardsTrackers:       []types.BTCDelegationRewardsTrackerEntry{},
+				BtcDelegatorsToFps:                 []types.BTCDelegatorToFpEntry{},
+				EventRewardTracker:                 []types.EventsPowerUpdateAtHeightEntry{},
+			},
+			valid:  false,
+			errMsg: fmt.Sprintf("finality provider %s has current rewards with period 3 but no historical rewards", addrStr1),
+		},
+		{
+			desc: "Genesis with FP missing some historical reward periods",
+			genState: &types.GenesisState{
+				Params:              types.DefaultParams(),
+				BtcStakingGauges:    []types.BTCStakingGaugeEntry{},
+				RewardGauges:        []types.RewardGaugeEntry{},
+				WithdrawAddresses:   []types.WithdrawAddressEntry{},
+				RefundableMsgHashes: []string{},
+				FinalityProvidersCurrentRewards: []types.FinalityProviderCurrentRewardsEntry{
+					{
+						Address: addrStr1,
+						Rewards: func() *types.FinalityProviderCurrentRewards {
+							r := datagen.GenRandomFinalityProviderCurrentRewards(r)
+							r.Period = 3
+							return &r
+						}(),
+					},
+				},
+				FinalityProvidersHistoricalRewards: []types.FinalityProviderHistoricalRewardsEntry{
+					{
+						Address: addrStr1,
+						Period:  0,
+						Rewards: func() *types.FinalityProviderHistoricalRewards {
+							v := datagen.GenRandomFPHistRwdWithDecimals(r)
+							return &v
+						}(),
+					},
+					{
+						Address: addrStr1,
+						Period:  2,
+						Rewards: func() *types.FinalityProviderHistoricalRewards {
+							v := datagen.GenRandomFPHistRwdWithDecimals(r)
+							return &v
+						}(),
+					},
+				},
+				BtcDelegationRewardsTrackers: []types.BTCDelegationRewardsTrackerEntry{},
+				BtcDelegatorsToFps:           []types.BTCDelegatorToFpEntry{},
+				EventRewardTracker:           []types.EventsPowerUpdateAtHeightEntry{},
+			},
+			valid:  false,
+			errMsg: fmt.Sprintf("finality provider %s is missing historical rewards for period 1 (current period is 3)", addrStr1),
+		},
+		{
+			desc: "Genesis with FP historical rewards beyond current period",
+			genState: &types.GenesisState{
+				Params:              types.DefaultParams(),
+				BtcStakingGauges:    []types.BTCStakingGaugeEntry{},
+				RewardGauges:        []types.RewardGaugeEntry{},
+				WithdrawAddresses:   []types.WithdrawAddressEntry{},
+				RefundableMsgHashes: []string{},
+				FinalityProvidersCurrentRewards: []types.FinalityProviderCurrentRewardsEntry{
+					{
+						Address: addrStr1,
+						Rewards: func() *types.FinalityProviderCurrentRewards {
+							r := datagen.GenRandomFinalityProviderCurrentRewards(r)
+							r.Period = 2
+							return &r
+						}(),
+					},
+				},
+				FinalityProvidersHistoricalRewards: []types.FinalityProviderHistoricalRewardsEntry{
+					{
+						Address: addrStr1,
+						Period:  0,
+						Rewards: func() *types.FinalityProviderHistoricalRewards {
+							v := datagen.GenRandomFPHistRwdWithDecimals(r)
+							return &v
+						}(),
+					},
+					{
+						Address: addrStr1,
+						Period:  1,
+						Rewards: func() *types.FinalityProviderHistoricalRewards {
+							v := datagen.GenRandomFPHistRwdWithDecimals(r)
+							return &v
+						}(),
+					},
+					{
+						Address: addrStr1,
+						Period:  3,
+						Rewards: func() *types.FinalityProviderHistoricalRewards {
+							v := datagen.GenRandomFPHistRwdWithDecimals(r)
+							return &v
+						}(),
+					},
+				},
+				BtcDelegationRewardsTrackers: []types.BTCDelegationRewardsTrackerEntry{},
+				BtcDelegatorsToFps:           []types.BTCDelegatorToFpEntry{},
+				EventRewardTracker:           []types.EventsPowerUpdateAtHeightEntry{},
+			},
+			valid:  false,
+			errMsg: fmt.Sprintf("finality provider %s has historical rewards for period 3 which is >= current period 2", addrStr1),
+		},
+		{
+			desc: "Genesis with FP historical rewards but no current rewards",
+			genState: &types.GenesisState{
+				Params:                          types.DefaultParams(),
+				BtcStakingGauges:                []types.BTCStakingGaugeEntry{},
+				RewardGauges:                    []types.RewardGaugeEntry{},
+				WithdrawAddresses:               []types.WithdrawAddressEntry{},
+				RefundableMsgHashes:             []string{},
+				FinalityProvidersCurrentRewards: []types.FinalityProviderCurrentRewardsEntry{},
+				FinalityProvidersHistoricalRewards: []types.FinalityProviderHistoricalRewardsEntry{
+					{
+						Address: addrStr1,
+						Period:  0,
+						Rewards: func() *types.FinalityProviderHistoricalRewards {
+							v := datagen.GenRandomFPHistRwdWithDecimals(r)
+							return &v
+						}(),
+					},
+				},
+				BtcDelegationRewardsTrackers: []types.BTCDelegationRewardsTrackerEntry{},
+				BtcDelegatorsToFps:           []types.BTCDelegatorToFpEntry{},
+				EventRewardTracker:           []types.EventsPowerUpdateAtHeightEntry{},
+			},
+			valid:  false,
+			errMsg: fmt.Sprintf("finality provider %s has historical rewards but no current rewards", addrStr1),
+		},
+		{
+			desc: "Genesis with complete and valid FP rewards",
+			genState: &types.GenesisState{
+				Params:              types.DefaultParams(),
+				BtcStakingGauges:    []types.BTCStakingGaugeEntry{},
+				RewardGauges:        []types.RewardGaugeEntry{},
+				WithdrawAddresses:   []types.WithdrawAddressEntry{},
+				RefundableMsgHashes: []string{},
+				FinalityProvidersCurrentRewards: []types.FinalityProviderCurrentRewardsEntry{
+					{
+						Address: addrStr1,
+						Rewards: func() *types.FinalityProviderCurrentRewards {
+							r := datagen.GenRandomFinalityProviderCurrentRewards(r)
+							r.Period = 3
+							return &r
+						}(),
+					},
+				},
+				FinalityProvidersHistoricalRewards: []types.FinalityProviderHistoricalRewardsEntry{
+					{
+						Address: addrStr1,
+						Period:  0,
+						Rewards: func() *types.FinalityProviderHistoricalRewards {
+							v := datagen.GenRandomFPHistRwdWithDecimals(r)
+							return &v
+						}(),
+					},
+					{
+						Address: addrStr1,
+						Period:  1,
+						Rewards: func() *types.FinalityProviderHistoricalRewards {
+							v := datagen.GenRandomFPHistRwdWithDecimals(r)
+							return &v
+						}(),
+					},
+					{
+						Address: addrStr1,
+						Period:  2,
+						Rewards: func() *types.FinalityProviderHistoricalRewards {
+							v := datagen.GenRandomFPHistRwdWithDecimals(r)
+							return &v
+						}(),
+					},
+				},
+				BtcDelegationRewardsTrackers: []types.BTCDelegationRewardsTrackerEntry{},
+				BtcDelegatorsToFps:           []types.BTCDelegatorToFpEntry{},
+				EventRewardTracker:           []types.EventsPowerUpdateAtHeightEntry{},
+			},
+			valid: true,
+		},
+		{
+			desc: "Genesis with delegation tracker for FP without current rewards",
+			genState: &types.GenesisState{
+				Params:                             types.DefaultParams(),
+				BtcStakingGauges:                   []types.BTCStakingGaugeEntry{},
+				RewardGauges:                       []types.RewardGaugeEntry{},
+				WithdrawAddresses:                  []types.WithdrawAddressEntry{},
+				RefundableMsgHashes:                []string{},
+				FinalityProvidersCurrentRewards:    []types.FinalityProviderCurrentRewardsEntry{},
+				FinalityProvidersHistoricalRewards: []types.FinalityProviderHistoricalRewardsEntry{},
+				BtcDelegationRewardsTrackers: []types.BTCDelegationRewardsTrackerEntry{
+					{
+						FinalityProviderAddress: addrStr1,
+						DelegatorAddress:        addrStr2,
+						Tracker: func() *types.BTCDelegationRewardsTracker {
+							v := datagen.GenRandomBTCDelegationRewardsTracker(r)
+							v.StartPeriodCumulativeReward = 1
+							return &v
+						}(),
+					},
+				},
+				BtcDelegatorsToFps: []types.BTCDelegatorToFpEntry{{
+					FinalityProviderAddress: addrStr1,
+					DelegatorAddress:        addrStr2,
+				}},
+				EventRewardTracker: []types.EventsPowerUpdateAtHeightEntry{},
+			},
+			valid:  false,
+			errMsg: fmt.Sprintf("delegation tracker for finality provider %s exists but FP has no current rewards", addrStr1),
+		},
+		{
+			desc: "Genesis with delegation tracker StartPeriodCumulativeReward >= FP current period",
+			genState: &types.GenesisState{
+				Params:              types.DefaultParams(),
+				BtcStakingGauges:    []types.BTCStakingGaugeEntry{},
+				RewardGauges:        []types.RewardGaugeEntry{},
+				WithdrawAddresses:   []types.WithdrawAddressEntry{},
+				RefundableMsgHashes: []string{},
+				FinalityProvidersCurrentRewards: []types.FinalityProviderCurrentRewardsEntry{
+					{
+						Address: addrStr1,
+						Rewards: func() *types.FinalityProviderCurrentRewards {
+							r := datagen.GenRandomFinalityProviderCurrentRewards(r)
+							r.Period = 2
+							return &r
+						}(),
+					},
+				},
+				FinalityProvidersHistoricalRewards: []types.FinalityProviderHistoricalRewardsEntry{
+					{
+						Address: addrStr1,
+						Period:  0,
+						Rewards: func() *types.FinalityProviderHistoricalRewards {
+							v := datagen.GenRandomFPHistRwdWithDecimals(r)
+							return &v
+						}(),
+					},
+					{
+						Address: addrStr1,
+						Period:  1,
+						Rewards: func() *types.FinalityProviderHistoricalRewards {
+							v := datagen.GenRandomFPHistRwdWithDecimals(r)
+							return &v
+						}(),
+					},
+				},
+				BtcDelegationRewardsTrackers: []types.BTCDelegationRewardsTrackerEntry{
+					{
+						FinalityProviderAddress: addrStr1,
+						DelegatorAddress:        addrStr2,
+						Tracker: func() *types.BTCDelegationRewardsTracker {
+							v := datagen.GenRandomBTCDelegationRewardsTracker(r)
+							v.StartPeriodCumulativeReward = 2
+							return &v
+						}(),
+					},
+				},
+				BtcDelegatorsToFps: []types.BTCDelegatorToFpEntry{{
+					FinalityProviderAddress: addrStr1,
+					DelegatorAddress:        addrStr2,
+				}},
+				EventRewardTracker: []types.EventsPowerUpdateAtHeightEntry{},
+			},
+			valid:  false,
+			errMsg: fmt.Sprintf("delegation tracker for FP %s and delegator %s has StartPeriodCumulativeReward 2 >= FP's current period 2", addrStr1, addrStr2),
+		},
+		{
+			desc: "Genesis with valid delegation tracker",
+			genState: &types.GenesisState{
+				Params:              types.DefaultParams(),
+				BtcStakingGauges:    []types.BTCStakingGaugeEntry{},
+				RewardGauges:        []types.RewardGaugeEntry{},
+				WithdrawAddresses:   []types.WithdrawAddressEntry{},
+				RefundableMsgHashes: []string{},
+				FinalityProvidersCurrentRewards: []types.FinalityProviderCurrentRewardsEntry{
+					{
+						Address: addrStr1,
+						Rewards: func() *types.FinalityProviderCurrentRewards {
+							r := datagen.GenRandomFinalityProviderCurrentRewards(r)
+							r.Period = 3
+							return &r
+						}(),
+					},
+				},
+				FinalityProvidersHistoricalRewards: []types.FinalityProviderHistoricalRewardsEntry{
+					{
+						Address: addrStr1,
+						Period:  0,
+						Rewards: func() *types.FinalityProviderHistoricalRewards {
+							v := datagen.GenRandomFPHistRwdWithDecimals(r)
+							return &v
+						}(),
+					},
+					{
+						Address: addrStr1,
+						Period:  1,
+						Rewards: func() *types.FinalityProviderHistoricalRewards {
+							v := datagen.GenRandomFPHistRwdWithDecimals(r)
+							return &v
+						}(),
+					},
+					{
+						Address: addrStr1,
+						Period:  2,
+						Rewards: func() *types.FinalityProviderHistoricalRewards {
+							v := datagen.GenRandomFPHistRwdWithDecimals(r)
+							return &v
+						}(),
+					},
+				},
+				BtcDelegationRewardsTrackers: []types.BTCDelegationRewardsTrackerEntry{
+					{
+						FinalityProviderAddress: addrStr1,
+						DelegatorAddress:        addrStr2,
+						Tracker: func() *types.BTCDelegationRewardsTracker {
+							v := datagen.GenRandomBTCDelegationRewardsTracker(r)
+							v.StartPeriodCumulativeReward = 1
+							return &v
+						}(),
+					},
+				},
+				BtcDelegatorsToFps: []types.BTCDelegatorToFpEntry{{
+					FinalityProviderAddress: addrStr1,
+					DelegatorAddress:        addrStr2,
+				}},
+				EventRewardTracker: []types.EventsPowerUpdateAtHeightEntry{},
 			},
 			valid: true,
 		},

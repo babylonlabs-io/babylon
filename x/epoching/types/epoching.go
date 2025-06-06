@@ -3,6 +3,7 @@ package types
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	errorsmod "cosmossdk.io/errors"
@@ -211,6 +212,10 @@ func (qm *QueuedMessage) UnwrapToSdkMsg() sdk.Msg {
 }
 
 func (e Validator) Validate() error {
+	if e.Power < 0 {
+		return fmt.Errorf("validator power cannot be negative: got %d", e.Power)
+	}
+
 	valAddrStr := sdk.ValAddress(e.Addr).String()
 	_, err := sdk.ValAddressFromBech32(valAddrStr)
 	return err
