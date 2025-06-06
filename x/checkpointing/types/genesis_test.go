@@ -85,7 +85,7 @@ func TestGenesisStateValidate(t *testing.T) {
 				},
 			},
 			valid:  false,
-			errMsg: "null checkpoint",
+			errMsg: types.ErrNilCkpt.Error(),
 		},
 		{
 			name: "valid full genesis state",

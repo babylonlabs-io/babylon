@@ -62,8 +62,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#1084](https://github.com/babylonlabs-io/babylon/pull/1084) Check for negative amount in `TotalActiveSat` in `subFinalityProviderStaked`
 - [#1085](https://github.com/babylonlabs-io/babylon/pull/1085) Update comment in `SetRewardTrackerEvent` function
 - [#1089](https://github.com/babylonlabs-io/babylon/pull/1089) chore: validate block diff
+<<<<<<< HEAD
 - [#1096](https://github.com/babylonlabs-io/babylon/pull/1096) chore: validate stats positive
 - [#1097](https://github.com/babylonlabs-io/babylon/pull/1097) Update `Evidence.ValidateBasic` function
+=======
+- [#1118](https://github.com/babylonlabs-io/babylon/pull/1118) Update `RawCheckpointWithMeta` and `BlsMultiSig` validations
+
+### State Machine Breaking
+
+- [#402](https://github.com/babylonlabs-io/babylon/pull/402) **Babylon multi-staking support**.
+This PR contains a series of PRs on multi-staking support and BTC staking integration.
+- [#944](https://github.com/babylonlabs-io/babylon/pull/944) Add max_multi_staked_fps validation and single FP per consumer constraint in BTC delegations.
+>>>>>>> 91d5342 (chore(checkpointing): update validations (#1118))
 
 ### Bug fixes
 
