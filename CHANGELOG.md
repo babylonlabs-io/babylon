@@ -103,6 +103,7 @@ check of rewards
 - [#1098](https://github.com/babylonlabs-io/babylon/pull/1098) Support `HasValidateBasic` interface in `ValidateEntries` function
 - [#1118](https://github.com/babylonlabs-io/babylon/pull/1118) Update `RawCheckpointWithMeta` and `BlsMultiSig` validations
 - [#1126](https://github.com/babylonlabs-io/babylon/pull/1126) chore: add bls key validation
+- [#xxx](https://github.com/babylonlabs-io/babylon/pull/xxx) Add validation to `LastProcessedHeightEventRewardTracker` on `InitGenesis`
 
 ### State Machine Breaking
 

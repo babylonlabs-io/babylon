@@ -112,6 +112,12 @@ func (k Keeper) InitGenesis(ctx context.Context, gs types.GenesisState) error {
 		}
 	}
 
+	// make sure LastProcessedHeightEventRewardTracker <= current height
+	currentHeight := sdk.UnwrapSDKContext(ctx).BlockHeight()
+	if gs.LastProcessedHeightEventRewardTracker > uint64(currentHeight) {
+		return fmt.Errorf("invalid latest processed block height. Value %d is higher than current block height %d", gs.LastProcessedHeightEventRewardTracker, currentHeight)
+	}
+
 	if err := k.SetRewardTrackerEventLastProcessedHeight(ctx, gs.LastProcessedHeightEventRewardTracker); err != nil {
 		return fmt.Errorf("failed to set the latest processed block height: %d: %w", gs.LastProcessedHeightEventRewardTracker, err)
 	}
