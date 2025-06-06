@@ -74,6 +74,8 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 			s.PreUpgrade,
 			s.Upgrade,
 			func() {
+				s.PostUpgrade()
+
 				// check rate limits are set
 				res, err := s.app.RatelimitKeeper.AllRateLimits(s.ctx, &ratelimittypes.QueryAllRateLimitsRequest{})
 				s.Require().NoError(err)
@@ -105,6 +107,8 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 			s.PreUpgrade,
 			s.Upgrade,
 			func() {
+				s.PostUpgrade()
+
 				// check rate limits are set
 				res, err := s.app.RatelimitKeeper.AllRateLimits(s.ctx, &ratelimittypes.QueryAllRateLimitsRequest{})
 				s.Require().NoError(err)
@@ -176,4 +180,10 @@ func (s *UpgradeTestSuite) Upgrade() {
 		_, err := s.preModule.PreBlock(s.ctx)
 		s.Require().NoError(err)
 	})
+}
+
+func (s *UpgradeTestSuite) PostUpgrade() {
+	// crisis store and module name are the same
+	_, found := s.app.ModuleManager.Modules[v2.CrisisStoreName]
+	s.Require().False(found, "x/crisis modules shouldn't be found")
 }
