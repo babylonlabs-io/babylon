@@ -145,7 +145,7 @@ A finality provider _must_ submit a vote if:
 - Loses power → `INACTIVE`
 - Double-signs → `SLASHED` (permanently)
 
-## Checkpoint State Transitions
+### Checkpoint State Transitions
 
 Checkpoints progress through Bitcoin confirmation states as defined in:
 
