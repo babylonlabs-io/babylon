@@ -77,7 +77,7 @@ func (k Keeper) restoreDeletedFeeGrant(ctx context.Context, feeGranter, feePayer
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
 	// Set expiration time (48 hours from current block time)
-	expiration := sdkCtx.BlockTime().Add(48 * time.Hour)
+	expiration := sdkCtx.BlockHeader().Time.Add(48 * time.Hour)
 
 	// Create a basic allowance
 	allowance := &feegrant.BasicAllowance{
