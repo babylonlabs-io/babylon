@@ -76,7 +76,7 @@ func TestValidator_Validate(t *testing.T) {
 			valid: true,
 		},
 		{
-			name: "valid address, negative power", // ?? Should this be allowed ??
+			name: "valid address, negative power",
 			validator: types.Validator{
 				Addr:  validAddr,
 				Power: -10,
