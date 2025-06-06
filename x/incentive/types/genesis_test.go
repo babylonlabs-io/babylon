@@ -250,7 +250,7 @@ func TestGenesisState_Validate(t *testing.T) {
 						Address: addrStr1,
 						Rewards: func() *types.FinalityProviderCurrentRewards {
 							r := datagen.GenRandomFinalityProviderCurrentRewards(r)
-							r.Period = 3 // Current period is 3, so historical periods 1 and 2 are valid
+							r.Period = 3
 							return &r
 						}(),
 					},
