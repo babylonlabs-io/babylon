@@ -67,24 +67,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#1147](https://github.com/babylonlabs-io/babylon/pull/1147) chore: vp dist cache count active fps
 - [#1152](https://github.com/babylonlabs-io/babylon/pull/1152) chore: validate power non negative
 
-<<<<<<< HEAD
-=======
 ### State Machine Breaking
 
-- [#402](https://github.com/babylonlabs-io/babylon/pull/402) **Babylon multi-staking support**.
-This PR contains a series of PRs on multi-staking support and BTC staking integration.
-- [#944](https://github.com/babylonlabs-io/babylon/pull/944) Add max_multi_staked_fps validation and single FP per consumer constraint in BTC delegations.
 - [#1146](https://github.com/babylonlabs-io/babylon/pull/1146) Remove deprecated `x/crisis` module.
 
-### Bug fixes
-
-- [#796](https://github.com/babylonlabs-io/babylon/pull/796) fix: goreleaser add `mainnet` build flag to generated binary
-- [#741](https://github.com/babylonlabs-io/babylon/pull/741) chore: fix register consumer CLI
-- [#525](https://github.com/babylonlabs-io/babylon/pull/525) fix: add back `NewIBCHeaderDecorator` post handler
-- [#964](https://github.com/babylonlabs-io/babylon/pull/964) fix: stateless validation `ValidateBasic` of
-`MsgWrappedCreateValidator` to avoid panic in transaction submission
-
->>>>>>> 79b8948 (chore: remove `x/crisis` (#1146))
 ## v2.0.0-rc.2
 
 ### Improvements
