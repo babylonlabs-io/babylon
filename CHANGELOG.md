@@ -64,6 +64,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#1089](https://github.com/babylonlabs-io/babylon/pull/1089) chore: validate block diff
 - [#1096](https://github.com/babylonlabs-io/babylon/pull/1096) chore: validate stats positive
 - [#1097](https://github.com/babylonlabs-io/babylon/pull/1097) Update `Evidence.ValidateBasic` function
+- [#1118](https://github.com/babylonlabs-io/babylon/pull/1118) Update `RawCheckpointWithMeta` and `BlsMultiSig` validations
 
 ### Bug fixes
 
