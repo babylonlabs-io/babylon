@@ -7,15 +7,15 @@ import (
 	"cosmossdk.io/store"
 	storemetrics "cosmossdk.io/store/metrics"
 
+	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/stretchr/testify/require"
+
 	keepertest "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
 	"github.com/babylonlabs-io/babylon/v4/testutil/nullify"
 	btcctypes "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
 	"github.com/babylonlabs-io/babylon/v4/x/btcstaking"
 	"github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 	dbm "github.com/cosmos/cosmos-db"
-
-	"github.com/golang/mock/gomock"
-	"github.com/stretchr/testify/require"
 )
 
 func TestGenesis(t *testing.T) {
@@ -25,13 +25,14 @@ func TestGenesis(t *testing.T) {
 	}
 	db := dbm.NewMemDB()
 	stateStore := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-	btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
 
-	btccKeeper.EXPECT().GetParams(gomock.Any()).AnyTimes().Return(btcctypes.DefaultParams())
+	lc := btcctypes.NewMockBTCLightClientKeeper()
+	cc := btcctypes.NewMockCheckpointingKeeper()
+	ic := btcctypes.NewMockIncentiveKeeper()
 
-	k, ctx := keepertest.BTCStakingKeeperWithStore(t, db, stateStore, nil, nil, btccKeeper, nil)
+	btcCkpK, _ := keepertest.NewBTCChkptKeeperWithStoreKeys(t, db, nil, nil, stateStore, lc, cc, ic, chaincfg.SimNetParams.PowLimit)
+
+	k, ctx := keepertest.BTCStakingKeeperWithStore(t, db, stateStore, nil, nil, btcCkpK, nil)
 
 	btcstaking.InitGenesis(ctx, *k, genesisState)
 	got := btcstaking.ExportGenesis(ctx, *k)
