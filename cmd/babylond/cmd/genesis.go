@@ -18,7 +18,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
@@ -214,11 +213,6 @@ func PrepareGenesis(
 	govGenState.Params = &genesisParams.GovParams
 	genesisState[govtypes.ModuleName] = cdc.MustMarshalJSON(govGenState)
 
-	// crisis module genesis
-	crisisGenState := crisistypes.DefaultGenesisState()
-	crisisGenState.ConstantFee = genesisParams.CrisisConstantFee
-	genesisState[crisistypes.ModuleName] = cdc.MustMarshalJSON(crisisGenState)
-
 	// auth module genesis
 	authGenState := authtypes.DefaultGenesisState()
 	authGenState.Accounts = genesisParams.AuthAccounts
@@ -254,7 +248,6 @@ type GenesisParams struct {
 	DistributionParams distributiontypes.Params
 	GovParams          govv1.Params
 
-	CrisisConstantFee    sdk.Coin
 	AuthAccounts         []*cdctypes.Any
 	BankGenBalances      []banktypes.Balance
 	CheckpointingGenKeys []*checkpointingtypes.GenesisKey
@@ -345,11 +338,6 @@ func TestnetGenesisParams(
 		genParams.NativeCoinMetadatas[0].Base,
 		sdkmath.NewInt(10_000_000_000),
 	))
-
-	genParams.CrisisConstantFee = sdk.NewCoin(
-		genParams.NativeCoinMetadatas[0].Base,
-		sdkmath.NewInt(500_000_000_000),
-	)
 
 	genParams.BtccheckpointParams = btccheckpointtypes.DefaultParams()
 	genParams.BtccheckpointParams.BtcConfirmationDepth = btcConfirmationDepth

@@ -1,12 +1,14 @@
 package types
 
 import (
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"reflect"
 	"sort"
 
 	"github.com/babylonlabs-io/babylon/v4/types"
+	"github.com/cometbft/cometbft/crypto/tmhash"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -50,7 +52,13 @@ func (gs GenesisState) Validate() error {
 		return fmt.Errorf("invalid finality providers current rewards: %w", err)
 	}
 
-	if err := validateFPHistoricalRewards(gs.FinalityProvidersHistoricalRewards); err != nil {
+	// Create a map of FP addresses to their current periods for validation
+	fpCurrentPeriods := make(map[string]uint64)
+	for _, fpcr := range gs.FinalityProvidersCurrentRewards {
+		fpCurrentPeriods[fpcr.Address] = fpcr.Rewards.Period
+	}
+
+	if err := validateFPHistoricalRewards(gs.FinalityProvidersHistoricalRewards, fpCurrentPeriods); err != nil {
 		return fmt.Errorf("invalid finality providers historical rewards: %w", err)
 	}
 
@@ -58,7 +66,7 @@ func (gs GenesisState) Validate() error {
 		return fmt.Errorf("invalid events from reward tracker: %w", err)
 	}
 
-	btcRewardsAddrMap, err := validateBTCDelegationsRewardsTrackers(gs.BtcDelegationRewardsTrackers)
+	btcRewardsAddrMap, err := validateBTCDelegationsRewardsTrackers(gs.BtcDelegationRewardsTrackers, fpCurrentPeriods)
 	if err != nil {
 		return fmt.Errorf("invalid BTC delegations rewards trackers: %w", err)
 	}
@@ -228,6 +236,13 @@ func validateMsgHashes(hashes []string) error {
 		if hash == "" {
 			return errors.New("empty hash")
 		}
+		bz, err := hex.DecodeString(hash)
+		if err != nil {
+			return fmt.Errorf("error decoding msg hash: %w", err)
+		}
+		if len(bz) != tmhash.Size {
+			return fmt.Errorf("hash size should be %d characters: %s", tmhash.Size, hash)
+		}
 		if _, exists := hashMap[hash]; exists {
 			return fmt.Errorf("duplicate hash: %s", hash)
 		}
@@ -242,7 +257,7 @@ func validateFPCurrentRewards(entries []FinalityProviderCurrentRewardsEntry) err
 	})
 }
 
-func validateFPHistoricalRewards(entries []FinalityProviderHistoricalRewardsEntry) error {
+func validateFPHistoricalRewards(entries []FinalityProviderHistoricalRewardsEntry, fpCurrentPeriods map[string]uint64) error {
 	addressPeriodMap := make(map[string]map[uint64]bool) // Map of FpAddr -> map of period
 
 	for _, entry := range entries {
@@ -260,10 +275,41 @@ func validateFPHistoricalRewards(entries []FinalityProviderHistoricalRewardsEntr
 			return err
 		}
 	}
+
+	// Validate that each FP with current rewards has all historical periods from 0 to currentPeriod-1
+	for fpAddr, currentPeriod := range fpCurrentPeriods {
+		if currentPeriod > 0 {
+			periods, exists := addressPeriodMap[fpAddr]
+			if !exists {
+				return fmt.Errorf("finality provider %s has current rewards with period %d but no historical rewards", fpAddr, currentPeriod)
+			}
+
+			// Check for all periods from 0 to currentPeriod-1
+			for period := uint64(0); period < currentPeriod; period++ {
+				if !periods[period] {
+					return fmt.Errorf("finality provider %s is missing historical rewards for period %d (current period is %d)", fpAddr, period, currentPeriod)
+				}
+			}
+		}
+	}
+
+	// Check that no FP has historical rewards beyond their current period
+	for fpAddr, periods := range addressPeriodMap {
+		currentPeriod, exists := fpCurrentPeriods[fpAddr]
+		if !exists {
+			return fmt.Errorf("finality provider %s has historical rewards but no current rewards", fpAddr)
+		}
+
+		for period := range periods {
+			if period >= currentPeriod {
+				return fmt.Errorf("finality provider %s has historical rewards for period %d which is >= current period %d", fpAddr, period, currentPeriod)
+			}
+		}
+	}
 	return nil
 }
 
-func validateBTCDelegationsRewardsTrackers(entries []BTCDelegationRewardsTrackerEntry) (map[string]map[string]bool, error) {
+func validateBTCDelegationsRewardsTrackers(entries []BTCDelegationRewardsTrackerEntry, fpCurrentPeriods map[string]uint64) (map[string]map[string]bool, error) {
 	addressAddressMap := make(map[string]map[string]bool) // Map of FpAddr -> map of delAddr
 
 	for _, entry := range entries {
@@ -279,6 +325,17 @@ func validateBTCDelegationsRewardsTrackers(entries []BTCDelegationRewardsTracker
 
 		if err := entry.Validate(); err != nil {
 			return nil, err
+		}
+
+		// Validate that the tracker's StartPeriodCumulativeReward is less than the FP's current period
+		currentPeriod, exists := fpCurrentPeriods[entry.FinalityProviderAddress]
+		if !exists {
+			return nil, fmt.Errorf("delegation tracker for finality provider %s exists but FP has no current rewards", entry.FinalityProviderAddress)
+		}
+
+		if entry.Tracker.StartPeriodCumulativeReward >= currentPeriod {
+			return nil, fmt.Errorf("delegation tracker for FP %s and delegator %s has StartPeriodCumulativeReward %d >= FP's current period %d",
+				entry.FinalityProviderAddress, entry.DelegatorAddress, entry.Tracker.StartPeriodCumulativeReward, currentPeriod)
 		}
 	}
 	return addressAddressMap, nil

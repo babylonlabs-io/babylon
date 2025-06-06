@@ -39,6 +39,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
+- [#1065](https://github.com/babylonlabs-io/babylon/pull/1065) Add check for period of current rewards to be larger than zero.
+- [#1128](https://github.com/babylonlabs-io/babylon/pull/1128) Validate genesis fp historic reward entries.
+- [#1064](https://github.com/babylonlabs-io/babylon/pull/1064) Signing info validation for `StartHeight` and `MissedBlockCounter`.
 - [#1015](https://github.com/babylonlabs-io/babylon/pull/1015) Add finality contract e2e tests follup-up.
 - [#970](https://github.com/babylonlabs-io/babylon/pull/970) Add finality contract e2e tests follup-up.
 - [#946](https://github.com/babylonlabs-io/babylon/pull/946) Add finality contract e2e tests follup-up.
@@ -86,6 +89,28 @@ check of rewards
 - [#1046](https://github.com/babylonlabs-io/babylon/pull/1046) Update genesis & validations `x/btcstaking` module
 - [#1050](https://github.com/babylonlabs-io/babylon/pull/1050) Add query to get btc delegations at specific block height
 - [#1040](https://github.com/babylonlabs-io/babylon/pull/1040) Rename ETH L2 to rollup
+- [#1061](https://github.com/babylonlabs-io/babylon/pull/1061) Add size and hex decode in
+`RefundableMsgHashes` validate genesis
+- [#1071](https://github.com/babylonlabs-io/babylon/pull/1071) Update `FinalityProviderDistInfo` validations
+- [#1069](https://github.com/babylonlabs-io/babylon/pull/1069) Add validation on the txkey in btcstaking
+- [#1070](https://github.com/babylonlabs-io/babylon/pull/1070) fix: validation for vp dist cache
+- [#1078](https://github.com/babylonlabs-io/babylon/pull/1078) fix: enforce check ibc msg size in `finalizeBlockState`
+- [#1082](https://github.com/babylonlabs-io/babylon/pull/1082) chore: val sequential epoch
+- [#1083](https://github.com/babylonlabs-io/babylon/pull/1083) Check if `WithdrawAddress` is a blocked address in `SetWithdrawAddress`
+- [#1084](https://github.com/babylonlabs-io/babylon/pull/1084) Check for negative amount in `TotalActiveSat` in `subFinalityProviderStaked`
+- [#1085](https://github.com/babylonlabs-io/babylon/pull/1085) Update comment in `SetRewardTrackerEvent` function
+- [#1089](https://github.com/babylonlabs-io/babylon/pull/1089) chore: validate block diff
+- [#1096](https://github.com/babylonlabs-io/babylon/pull/1096) chore: validate stats positive
+- [#1097](https://github.com/babylonlabs-io/babylon/pull/1097) Update `Evidence.ValidateBasic` function
+- [#1098](https://github.com/babylonlabs-io/babylon/pull/1098) Support `HasValidateBasic` interface in `ValidateEntries` function
+- [#1102](https://github.com/babylonlabs-io/babylon/pull/1102) Handle empty `BTCStakingGauge` when no fees are intercepted
+- [#1118](https://github.com/babylonlabs-io/babylon/pull/1118) Update `RawCheckpointWithMeta` and `BlsMultiSig` validations
+- [#1126](https://github.com/babylonlabs-io/babylon/pull/1126) chore: add bls key validation
+- [#1135](https://github.com/babylonlabs-io/babylon/pull/1135) Add validation to `LastProcessedHeightEventRewardTracker` on `InitGenesis`
+- [#1136](https://github.com/babylonlabs-io/babylon/pull/1136) Fix `SubmissionEntry` duplicate validation in `InitGenesis`
+- [#1147](https://github.com/babylonlabs-io/babylon/pull/1147) chore: vp dist cache count active fps
+- [#1151](https://github.com/babylonlabs-io/babylon/pull/1151) Add whitelisted channels to add rate limit in `v2` upgrade.
+- [#1152](https://github.com/babylonlabs-io/babylon/pull/1152) chore: validate power non negative
 - [#1060](https://github.com/babylonlabs-io/babylon/pull/1060) Optimize `PubRandCommit` lookup in `x/finality` module
 
 ### State Machine Breaking
@@ -93,6 +118,7 @@ check of rewards
 - [#402](https://github.com/babylonlabs-io/babylon/pull/402) **Babylon multi-staking support**.
 This PR contains a series of PRs on multi-staking support and BTC staking integration.
 - [#944](https://github.com/babylonlabs-io/babylon/pull/944) Add max_multi_staked_fps validation and single FP per consumer constraint in BTC delegations.
+- [#1146](https://github.com/babylonlabs-io/babylon/pull/1146) Remove deprecated `x/crisis` module.
 
 ### Bug fixes
 
