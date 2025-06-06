@@ -100,7 +100,7 @@ func (f *FinalityProviderCurrentRewards) Validate() error {
 
 	//nolint:staticcheck
 	if f.Period <= 0 {
-		return fmt.Errorf("period cannot be negative")
+		return fmt.Errorf("fp current rewards period must be positive")
 	}
 
 	return nil

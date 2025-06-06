@@ -81,13 +81,14 @@ func TestFinalityProviderCurrentRewards_Validate(t *testing.T) {
 			expectedErrMsg: "current rewards has a negative total active satoshi delegated value",
 		},
 		{
-			name: "zero values are valid",
+			name: "zero values are invalid",
 			rewards: types.FinalityProviderCurrentRewards{
 				CurrentRewards: sdk.NewCoins(sdk.NewInt64Coin(appparams.DefaultBondDenom, 1)), // At least one coin
 				Period:         0,
 				TotalActiveSat: math.NewInt(0),
 			},
-			expectError: false,
+			expectError: true,
+			expectedErrMsg: "fp current rewards period must be positive"
 		},
 	}
 
