@@ -149,27 +149,6 @@ func (d BTCDelegator) Validate() error {
 	return d.Idx.Validate()
 }
 
-<<<<<<< HEAD
-=======
-func (e ConsumerEvent) Validate() error {
-	if e.ConsumerId == "" {
-		return errors.New("empty Consumer ID")
-	}
-
-	if e.Events == nil {
-		return errors.New("null Events")
-	}
-
-	if len(e.Events.NewFp) == 0 &&
-		len(e.Events.ActiveDel) == 0 &&
-		len(e.Events.SlashedDel) == 0 &&
-		len(e.Events.UnbondedDel) == 0 {
-		return errors.New("empty Events")
-	}
-
-	return nil
-}
-
 // validateBTCDelegations validates the BTC delegation and returns the
 // expected delegation index to compare with the provided on genesis state
 func validateBTCDelegations(delegations []*BTCDelegation) (map[string]*BTCDelegatorDelegationIndex, error) {
@@ -241,7 +220,6 @@ func validateDelegatorIdx(gsEntries []*BTCDelegator, expIdx map[string]*BTCDeleg
 	return nil
 }
 
->>>>>>> d100b25 (imp: extend ValidateEntries func (#1098))
 // Helper function to sort slices to get a deterministic
 // result on the tests
 func SortData(gs *GenesisState) {
