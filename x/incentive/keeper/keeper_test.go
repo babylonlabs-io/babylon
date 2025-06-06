@@ -62,7 +62,7 @@ func (tx mockFeeTx) GetMsgsV2() ([]protoreflect.ProtoMessage, error) {
 	return nil, nil
 }
 
-func TestKeeperTestSuite(t *testing.T) {
+func KeeperTestSuite(t *testing.T) {
 	suite.Run(t, new(RefundTxTestSuite))
 }
 
