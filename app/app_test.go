@@ -2,6 +2,9 @@ package app_test
 
 import (
 	"fmt"
+	erc20types "github.com/cosmos/evm/x/erc20/types"
+	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 	"testing"
 
 	tokenfactorytypes "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/types"
@@ -15,8 +18,8 @@ import (
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	stktypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	icatypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/types"
-	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
+	icatypes "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 
 	babylonApp "github.com/babylonlabs-io/babylon/v3/app"
 	testsigner "github.com/babylonlabs-io/babylon/v3/testutil/signer"
@@ -39,6 +42,9 @@ var (
 		incentivetypes.ModuleName:    nil, // this line is needed to create an account for incentive module
 		tokenfactorytypes.ModuleName: {authtypes.Minter, authtypes.Burner},
 		icatypes.ModuleName:          nil,
+		evmtypes.ModuleName:          {authtypes.Minter, authtypes.Burner},
+		erc20types.ModuleName:        {authtypes.Minter, authtypes.Burner},
+		feemarkettypes.ModuleName:    nil,
 	}
 )
 
@@ -97,6 +103,8 @@ func TestBabylonBlockedAddrs(t *testing.T) {
 		0,
 		&blsSigner,
 		appOpts,
+		babylonApp.EVMChainID,
+		babylonApp.EVMAppOptions,
 		babylonApp.EmptyWasmOpts,
 	)
 	_, err = app2.ExportAppStateAndValidators(false, []string{}, []string{})

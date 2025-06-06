@@ -2,6 +2,7 @@ package ante
 
 import (
 	"cosmossdk.io/core/store"
+	errorsmod "cosmossdk.io/errors"
 	circuitkeeper "cosmossdk.io/x/circuit/keeper"
 	txsigning "cosmossdk.io/x/tx/signing"
 	wasmapp "github.com/CosmWasm/wasmd/app"
@@ -12,15 +13,19 @@ import (
 	epochingkeeper "github.com/babylonlabs-io/babylon/v3/x/epoching/keeper"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	ibckeeper "github.com/cosmos/ibc-go/v8/modules/core/keeper"
+	feemarketkeeper "github.com/cosmos/evm/x/feemarket/keeper"
+	precisebankkeeper "github.com/cosmos/evm/x/precisebank/keeper"
+	evmkeeper "github.com/cosmos/evm/x/vm/keeper"
+	ibckeeper "github.com/cosmos/ibc-go/v10/modules/core/keeper"
 )
 
 // NewAnteHandler creates a new AnteHandler for the Babylon chain.
 func NewAnteHandler(
 	appOpts servertypes.AppOptions,
-	accountKeeper authante.AccountKeeper,
+	accountKeeper AccountKeeper,
 	bankKeeper authtypes.BankKeeper,
 	feegrantKeeper authante.FeegrantKeeper,
 	signModeHandler *txsigning.HandlerMap,
@@ -32,6 +37,10 @@ func NewAnteHandler(
 	btcConfig *bbn.BtcConfig,
 	btccKeeper *btcckeeper.Keeper,
 	txCounterStoreService store.KVStoreService,
+	feeMarketKeeper feemarketkeeper.Keeper,
+	evmKeeper *evmkeeper.Keeper,
+	preciseBankKeeper precisebankkeeper.Keeper,
+	maxTxGasWanted uint64,
 ) sdk.AnteHandler {
 	// initialize AnteHandler, which includes
 	// - authAnteHandler
@@ -65,7 +74,7 @@ func NewAnteHandler(
 	}
 
 	mempoolOpts := NewMempoolOptions(appOpts)
-	anteHandler := sdk.ChainAnteDecorators(
+	cosmosAnteHandler := sdk.ChainAnteDecorators(
 		NewGasLimitDecorator(mempoolOpts),
 		NewIBCMsgSizeDecorator(),
 		NewWrappedAnteHandler(authAnteHandler),
@@ -73,7 +82,43 @@ func NewAnteHandler(
 		NewPriorityDecorator(),
 	)
 
-	return anteHandler
+	return func(
+		ctx sdk.Context, tx sdk.Tx, sim bool,
+	) (newCtx sdk.Context, err error) {
+		var anteHandler sdk.AnteHandler
+
+		txWithExtensions, ok := tx.(authante.HasExtensionOptionsTx)
+		if ok {
+			opts := txWithExtensions.GetExtensionOptions()
+			if len(opts) > 0 {
+				switch typeURL := opts[0].GetTypeUrl(); typeURL {
+				case "/cosmos.evm.vm.v1.ExtensionOptionsEthereumTx":
+					// handle as *evmtypes.MsgEthereumTx
+					anteHandler = newMonoEVMAnteHandler(accountKeeper, feeMarketKeeper, evmKeeper, maxTxGasWanted, preciseBankKeeper)
+				case "/cosmos.evm.types.v1.ExtensionOptionDynamicFeeTx":
+					// cosmos-sdk tx with dynamic fee extension
+					anteHandler = cosmosAnteHandler
+				default:
+					return ctx, errorsmod.Wrapf(
+						errortypes.ErrUnknownExtensionOptions,
+						"rejecting tx with unsupported extension option: %s", typeURL,
+					)
+				}
+
+				return anteHandler(ctx, tx, sim)
+			}
+		}
+
+		// normal Cosmos SDK tx routes back to cosmosAnteHandler
+		switch tx.(type) {
+		case sdk.Tx:
+			anteHandler = cosmosAnteHandler
+		default:
+			return ctx, errorsmod.Wrapf(errortypes.ErrUnknownRequest, "invalid transaction type: %T", tx)
+		}
+
+		return anteHandler(ctx, tx, sim)
+	}
 }
 
 // WrappedAnteHandler is the wrapped AnteHandler that implements the `AnteDecorator` interface, which has a single function `AnteHandle`.

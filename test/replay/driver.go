@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-
 	"math/rand"
 	"path/filepath"
 	"testing"
@@ -217,6 +216,8 @@ func NewBabylonAppDriver(
 		0,
 		blsSigner,
 		appOptions,
+		app.EVMChainID,
+		app.EVMAppOptions,
 		babylonApp.EmptyWasmOpts,
 		baseAppOptions...,
 	)

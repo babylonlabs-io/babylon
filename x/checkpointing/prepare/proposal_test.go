@@ -3,6 +3,8 @@ package prepare_test
 import (
 	"bytes"
 	"fmt"
+	"github.com/babylonlabs-io/babylon/v3/app"
+	evmencoding "github.com/cosmos/evm/encoding"
 	"math/rand"
 	"sort"
 	"testing"
@@ -28,7 +30,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/babylonlabs-io/babylon/v3/app/ante"
-	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
 	"github.com/babylonlabs-io/babylon/v3/crypto/bls12381"
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
 	"github.com/babylonlabs-io/babylon/v3/testutil/helper"
@@ -476,7 +477,7 @@ func newTxVerifier(txEnc client.TxEncodingConfig) baseapp.ProposalTxVerifier {
 func TestPrepareProposalAtVoteExtensionHeight(t *testing.T) {
 	var (
 		r               = rand.New(rand.NewSource(time.Now().UnixNano()))
-		encCfg          = appparams.DefaultEncodingConfig()
+		encCfg          = evmencoding.MakeConfig(app.EVMChainID)
 		regularTxCount  = int(datagen.RandomInt(r, 10))
 		livenessTxCount = int(datagen.RandomInt(r, 10))
 	)

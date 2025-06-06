@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	sdktestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
 	"sort"
 
 	sdkmath "cosmossdk.io/math"
@@ -237,7 +238,7 @@ func upgradeFinalityParameters(
 // - Insert new BTC Headers
 func upgradeLaunch(
 	ctx sdk.Context,
-	encCfg *appparams.EncodingConfig,
+	encCfg sdktestutil.TestEncodingConfig,
 	btcLigthK *btclightkeeper.Keeper,
 	btcK *btcstkkeeper.Keeper,
 	bankK bankkeeper.SendKeeper,
