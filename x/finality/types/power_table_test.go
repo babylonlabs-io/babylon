@@ -373,9 +373,8 @@ func TestVotingPowerDistCache_Validate(t *testing.T) {
 		expErrMsg string
 	}{
 		{
-			name:      "empty finality providers",
-			vpdc:      types.VotingPowerDistCache{},
-			expErrMsg: "invalid voting power distribution cache. Empty finality providers",
+			name: "empty finality providers - valid",
+			vpdc: types.VotingPowerDistCache{},
 		},
 		{
 			name: "NumActiveFps exceeds number of providers",
@@ -385,12 +384,14 @@ func TestVotingPowerDistCache_Validate(t *testing.T) {
 						BtcPk:          fpPubKey1,
 						TotalBondedSat: 100,
 						Addr:           fpAddr1,
+						Commission:     &validComm,
+						IsTimestamped:  true,
 					},
 				},
 				NumActiveFps:     2,
 				TotalVotingPower: 100,
 			},
-			expErrMsg: "invalid voting power distribution cache. NumActiveFps 2 is higher than FPs count 1",
+			expErrMsg: "invalid voting power distribution cache. NumActiveFps 2 is higher than active FPs count 1",
 		},
 		{
 			name: "duplicate finality providers",
