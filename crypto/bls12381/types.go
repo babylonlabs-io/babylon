@@ -148,6 +148,23 @@ func (pk *PublicKey) Unmarshal(data []byte) error {
 	return nil
 }
 
+func (pk *PublicKey) ValidateBasic() error {
+	if len(*pk) != PubKeySize {
+		return fmt.Errorf("invalid BLS public key length, got %d, expected %d", len(*pk), PubKeySize)
+	}
+
+	// uncompress will validate the BLS public key including
+	// 1. The point is on the curve
+	// 2. The point is in the correct subgroup
+	// 3. The point is not at infinity
+	BlsPk := new(BlsPubKey).Uncompress(*pk)
+	if BlsPk == nil {
+		return fmt.Errorf("invalid BLS public key point on the bls12-381 curve")
+	}
+
+	return nil
+}
+
 func (pk PublicKey) Equal(k PublicKey) bool {
 	return string(pk) == string(k)
 }
