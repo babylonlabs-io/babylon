@@ -11,7 +11,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
@@ -233,11 +232,6 @@ func initGenesis(
 		return err
 	}
 
-	err = updateModuleGenesis(appGenState, crisistypes.ModuleName, &crisistypes.GenesisState{}, updateCrisisGenesis)
-	if err != nil {
-		return err
-	}
-
 	err = updateModuleGenesis(appGenState, genutiltypes.ModuleName, &genutiltypes.GenesisState{}, updateGenUtilGenesis(chain))
 	if err != nil {
 		return err
@@ -321,10 +315,6 @@ func updateStakeGenesis(stakeGenState *staketypes.GenesisState) {
 		UnbondingTime:     staketypes.DefaultUnbondingTime,
 		MinCommissionRate: sdkmath.LegacyZeroDec(),
 	}
-}
-
-func updateCrisisGenesis(crisisGenState *crisistypes.GenesisState) {
-	crisisGenState.ConstantFee.Denom = BabylonDenom
 }
 
 func updateBtcLightClientGenesis(btcHeaders []*btclighttypes.BTCHeaderInfo) func(blcGenState *blctypes.GenesisState) {

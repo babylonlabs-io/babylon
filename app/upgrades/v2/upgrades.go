@@ -46,6 +46,9 @@ const (
 	//
 	// To fully decouple from the module now, we hardcode the store name here.
 	InterchainQueryStoreName = "interchainquery"
+	// CrisisStoreName `x/crisis` module is deprecated at cosmos-sdk v0.53 and
+	// will be removed in the next release.
+	CrisisStoreName = "crisis"
 )
 
 var (
@@ -67,7 +70,7 @@ func CreateUpgrade(includeAsyncICQ bool) upgrades.Upgrade {
 		CreateUpgradeHandler: CreateUpgradeHandler,
 		StoreUpgrades: store.StoreUpgrades{
 			Added:   addedStoreUpgrades,
-			Deleted: []string{ibcfeetypes.StoreKey},
+			Deleted: []string{ibcfeetypes.StoreKey, CrisisStoreName},
 		},
 	}
 }
