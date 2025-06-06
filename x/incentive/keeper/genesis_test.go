@@ -136,7 +136,7 @@ func TestInitGenesis(t *testing.T) {
 						},
 					},
 				},
-				LastProcessedHeightEventRewardTracker: 1,
+				LastProcessedHeightEventRewardTracker: 0, // current block height is zero
 			},
 			akMockResp: func(m *types.MockAccountKeeper) {
 				// mock account keeper to return an account on GetAccount call
@@ -205,6 +205,22 @@ func TestInitGenesis(t *testing.T) {
 			akMockResp: func(m *types.MockAccountKeeper) {},
 			expectErr:  true,
 			errMsg:     "error decoding msg hash",
+		},
+		{
+			name: "Invalid block height (future height)",
+			gs: types.GenesisState{
+				Params: types.DefaultParams(),
+				BtcStakingGauges: []types.BTCStakingGaugeEntry{
+					{
+						Height: uint64(0),
+						Gauge:  datagen.GenRandomGauge(r),
+					},
+				},
+				LastProcessedHeightEventRewardTracker: 10, // current block height is zero
+			},
+			akMockResp: func(m *types.MockAccountKeeper) {},
+			expectErr:  true,
+			errMsg:     "invalid latest processed block height",
 		},
 	}
 
