@@ -187,9 +187,15 @@ func (ckpt RawCheckpoint) ValidateBasic() error {
 	if ckpt.Bitmap == nil {
 		return ErrInvalidRawCheckpoint.Wrapf("bitmap cannot be empty")
 	}
+	if ckpt.BlockHash == nil {
+		return ErrInvalidRawCheckpoint.Wrap("empty BlockHash")
+	}
 	err := ckpt.BlockHash.ValidateBasic()
 	if err != nil {
 		return ErrInvalidRawCheckpoint.Wrapf("error validating block hash: %s", err.Error())
+	}
+	if ckpt.BlsMultiSig == nil {
+		return ErrInvalidRawCheckpoint.Wrap("empty BLSMultiSig")
 	}
 	err = ckpt.BlsMultiSig.ValidateBasic()
 	if err != nil {

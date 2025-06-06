@@ -50,9 +50,10 @@ func GetRandomRawBtcCheckpoint(r *rand.Rand) *txformat.RawBtcCheckpoint {
 
 func GenRandomRawCheckpointWithMeta(r *rand.Rand) *types.RawCheckpointWithMeta {
 	ckptWithMeta := &types.RawCheckpointWithMeta{
-		Ckpt:     GenRandomRawCheckpoint(r),
-		Status:   GenRandomStatus(r),
-		PowerSum: 0,
+		Ckpt:      GenRandomRawCheckpoint(r),
+		Status:    GenRandomStatus(r),
+		PowerSum:  0,
+		BlsAggrPk: GenerateGenesisKey().BlsKey.Pubkey,
 	}
 	return ckptWithMeta
 }
