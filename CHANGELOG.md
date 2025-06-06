@@ -75,6 +75,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#1147](https://github.com/babylonlabs-io/babylon/pull/1147) chore: vp dist cache count active fps
 - [#1152](https://github.com/babylonlabs-io/babylon/pull/1152) chore: validate power non negative
 
+### State Machine Breaking
+
+- [#1146](https://github.com/babylonlabs-io/babylon/pull/1146) Remove deprecated `x/crisis` module.
+
 ### Bug fixes
 
 - [#964](https://github.com/babylonlabs-io/babylon/pull/964) fix: stateless validation `ValidateBasic` of

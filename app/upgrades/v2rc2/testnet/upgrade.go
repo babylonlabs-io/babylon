@@ -18,7 +18,7 @@ var Upgrade = upgrades.Upgrade{
 	CreateUpgradeHandler: CreateUpgradeHandler,
 	StoreUpgrades: store.StoreUpgrades{
 		Added:   []string{},
-		Deleted: []string{v2.InterchainQueryStoreName},
+		Deleted: []string{v2.InterchainQueryStoreName, v2.CrisisStoreName},
 	},
 }
 
