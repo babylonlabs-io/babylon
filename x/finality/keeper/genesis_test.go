@@ -91,6 +91,12 @@ func FuzzTestExportGenesis(f *testing.F) {
 			Commitment:  randListInfo.Commitment,
 		}
 		require.NoError(t, k.SetPubRandCommit(ctx, fpBTCPK, prc))
+		pubRandCommitIdx := &types.PubRandCommitIdx{
+			FpBtcPk: fpBTCPK,
+			Index: &types.PubRandCommitIndexValue{
+				Heights: []uint64{startHeight},
+			},
+		}
 
 		numSigningInfo := datagen.RandomInt(r, 100) + 10
 		fpSigningInfos := map[string]*types.FinalityProviderSigningInfo{}
@@ -140,6 +146,7 @@ func FuzzTestExportGenesis(f *testing.F) {
 		require.Equal(t, allEvidences, gs.Evidences)
 		require.Equal(t, allPublicRandomness, gs.PublicRandomness)
 		require.Equal(t, prc, gs.PubRandCommit[0].PubRandCommit)
+		require.Equal(t, pubRandCommitIdx, gs.PubRandCommitIndexes[0])
 		require.Equal(t, len(fpPks), len(gs.SigningInfos))
 		for _, info := range gs.SigningInfos {
 			require.Equal(t, fpSigningInfos[info.FpBtcPk.MarshalHex()].MissedBlocksCounter, info.FpSigningInfo.MissedBlocksCounter)
