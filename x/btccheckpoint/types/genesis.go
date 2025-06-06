@@ -62,7 +62,7 @@ func validateSubmissions(submissions []SubmissionEntry, epochsMap map[uint64]str
 		if err := s.Validate(); err != nil {
 			return err
 		}
-		bz, err := s.Marshal()
+		bz, err := s.SubmissionKey.Marshal()
 		if err != nil {
 			return err
 		}
