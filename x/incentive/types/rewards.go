@@ -98,9 +98,8 @@ func (f *FinalityProviderCurrentRewards) Validate() error {
 		return fmt.Errorf("current rewards has a negative total active satoshi delegated value: %s", f.TotalActiveSat.String())
 	}
 
-	//nolint:staticcheck
-	if f.Period < 0 {
-		return fmt.Errorf("period cannot be negative")
+	if f.Period == 0 {
+		return fmt.Errorf("fp current rewards period must be positive")
 	}
 
 	return nil
