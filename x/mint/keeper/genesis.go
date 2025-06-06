@@ -11,6 +11,11 @@ func (k Keeper) InitGenesis(ctx sdk.Context, ak types.AccountKeeper, gs *types.G
 		dm := types.DefaultMinter()
 		gs.Minter = &dm
 	}
+
+	if err := gs.Validate(); err != nil {
+		panic(err)
+	}
+
 	if err := k.SetMinter(ctx, *gs.Minter); err != nil {
 		panic(err)
 	}
