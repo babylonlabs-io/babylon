@@ -23,7 +23,7 @@ import (
 	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
 	"github.com/babylonlabs-io/babylon/v3/app/upgrades"
 	incentivekeeper "github.com/babylonlabs-io/babylon/v3/x/incentive/keeper"
-	"github.com/babylonlabs-io/babylon/v3/x/mint/types"
+	minttypes "github.com/babylonlabs-io/babylon/v3/x/mint/types"
 )
 
 const (
@@ -122,47 +122,6 @@ func CreateUpgradeHandler(whitelistedChannelsByID map[string]struct{}) upgrades.
 
 			return migrations, nil
 		}
-<<<<<<< HEAD
-
-		sdkCtx := sdk.UnwrapSDKContext(ctx)
-
-		// Add a default rate limit to existing channels on port 'transfer'
-		if err := addRateLimits(sdkCtx, keepers.IBCKeeper.ChannelKeeper, keepers.RatelimitKeeper); err != nil {
-			return nil, err
-		}
-
-		// By default, ICQ allowed queries are empty. So no queries will be allowed until
-		// the allowed list is populated via gov proposal.
-		// For ICA host, by default all messages are allowed (using '*' wildcard),
-		// so we set allow list to empty and messages can be added later when needed via gov proposal
-		icaHostParams := icahosttypes.DefaultParams()
-		icaHostParams.AllowMessages = nil
-		if err := icaHostParams.Validate(); err != nil {
-			return nil, err
-		}
-		keepers.ICAHostKeeper.SetParams(sdkCtx, icaHostParams)
-
-		// update reward distribution events
-		err = UpdateRewardTrackerEventLastProcessedHeight(ctx, keepers.IncentiveKeeper)
-		if err != nil {
-			return nil, err
-		}
-
-		// Set the denom creation fee to ubbn
-		params := tokenfactorytypes.DefaultParams()
-		params.DenomCreationFee = sdk.NewCoins(sdk.NewInt64Coin(types.DefaultBondDenom, 10_000_000))
-
-		if err := params.Validate(); err != nil {
-			return nil, err
-		}
-
-		if err := keepers.TokenFactoryKeeper.SetParams(ctx, params); err != nil {
-			return nil, err
-		}
-
-		return migrations, nil
-=======
->>>>>>> 62c719b (chore: add whitelisted channels to add rate limit (#1151))
 	}
 }
 
