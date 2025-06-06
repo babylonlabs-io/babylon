@@ -81,7 +81,7 @@ func TestValidator_Validate(t *testing.T) {
 				Addr:  validAddr,
 				Power: -10,
 			},
-			valid: true,
+			valid: false,
 		},
 	}
 
