@@ -147,4 +147,8 @@ func (s *UpgradeTestSuite) PostUpgrade() {
 		s.Require().Zero(rl.Flow.Inflow.Int64())
 		s.Require().Zero(rl.Flow.Outflow.Int64())
 	}
+
+	// crisis store and module name are the same
+	_, found := s.app.ModuleManager.Modules[v2.CrisisStoreName]
+	s.Require().False(found, "x/crisis modules shouldn't be found")
 }
