@@ -287,7 +287,9 @@ func (ms msgServer) CommitPubRandList(goCtx context.Context, req *types.MsgCommi
 	// this finality provider has not commit any public randomness,
 	// commit the given public randomness list and return
 	if lastPrCommit == nil {
-		ms.SetPubRandCommit(ctx, req.FpBtcPk, prCommit)
+		if err := ms.SetPubRandCommit(ctx, req.FpBtcPk, prCommit); err != nil {
+			return nil, err
+		}
 		return &types.MsgCommitPubRandListResponse{}, nil
 	}
 
@@ -298,7 +300,9 @@ func (ms msgServer) CommitPubRandList(goCtx context.Context, req *types.MsgCommi
 	}
 
 	// all good, commit the given public randomness list
-	ms.SetPubRandCommit(ctx, req.FpBtcPk, prCommit)
+	if err := ms.SetPubRandCommit(ctx, req.FpBtcPk, prCommit); err != nil {
+		return nil, err
+	}
 	return &types.MsgCommitPubRandListResponse{}, nil
 }
 

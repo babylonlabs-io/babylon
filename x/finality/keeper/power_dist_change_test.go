@@ -113,7 +113,7 @@ func FuzzDistributionCache_BtcUndelegateSameBlockAsExpiration(f *testing.F) {
 			Commitment:  randListInfo.Commitment,
 		}
 
-		finalityK.SetPubRandCommit(ctx, fpMsg.BtcPk, prc)
+		require.NoError(t, finalityK.SetPubRandCommit(ctx, fpMsg.BtcPk, prc))
 
 		ctx = ProduceBlock(t, r, app, ctx)
 
@@ -268,7 +268,7 @@ func FuzzDistributionCacheVpCheck_FpSlashedBeforeInclusionProof(f *testing.F) {
 				Commitment:  randListInfo.Commitment,
 			}
 
-			finalityK.SetPubRandCommit(ctx, fpMsg.BtcPk, prc)
+			require.NoError(t, finalityK.SetPubRandCommit(ctx, fpMsg.BtcPk, prc))
 		}
 
 		ctx = ProduceBlock(t, r, app, ctx)
