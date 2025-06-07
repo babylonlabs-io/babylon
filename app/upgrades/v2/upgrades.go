@@ -42,7 +42,7 @@ const (
 	// As a result, we decided to remove the async-icq dependency.
 	// However, to preserve a record of all upgrades applied to the testnet,
 	// we retain the v2rc0 upgrade in our codebase and plan to remove async-icq
-	// entirely in the subsequent v2rc2 upgrade.
+	// entirely in the subsequent v2rc3 upgrade.
 	//
 	// To fully decouple from the module now, we hardcode the store name here.
 	InterchainQueryStoreName = "interchainquery"
