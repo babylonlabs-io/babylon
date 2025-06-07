@@ -39,9 +39,39 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
+<<<<<<< HEAD
 - [#1065](https://github.com/babylonlabs-io/babylon/pull/1065) Add check for period of current rewards to be larger than zero.
 - [#1128](https://github.com/babylonlabs-io/babylon/pull/1128) Validate genesis fp historic reward entries.
 - [#1064](https://github.com/babylonlabs-io/babylon/pull/1064) Signing info validation for `StartHeight` and `MissedBlockCounter`.
+=======
+- [#1015](https://github.com/babylonlabs-io/babylon/pull/1015) Add finality contract e2e tests follup-up.
+- [#970](https://github.com/babylonlabs-io/babylon/pull/970) Add finality contract e2e tests follup-up.
+- [#946](https://github.com/babylonlabs-io/babylon/pull/946) Add finality contract e2e tests follup-up.
+- [#945](https://github.com/babylonlabs-io/babylon/pull/945) Add finality contract e2e tests.
+- [#879](https://github.com/babylonlabs-io/babylon/pull/879) Add v2 e2e upgrade test.
+- [#869](https://github.com/babylonlabs-io/babylon/pull/869) Rename CZ to Consumer in btcstkconsumer and zoneconcierge.
+- [#837](https://github.com/babylonlabs-io/babylon/pull/837) Bump repository to v2.
+- [#675](https://github.com/babylonlabs-io/babylon/pull/675) Add no-retries option to babylon client send msg.
+- [#623](https://github.com/babylonlabs-io/babylon/pull/623) Add check for empty string in `bls` loading.
+- [#536](https://github.com/babylonlabs-io/babylon/pull/536) Improve protobuf vs. json error msgs / types
+- [#513](https://github.com/babylonlabs-io/babylon/pull/513) Suport datagen BTC delegation creation from Consumers
+- [#470](https://github.com/babylonlabs-io/babylon/pull/470) Return full consumer info and remove DB object
+usage in `x/btcstkconsumer` queries
+- [#391](https://github.com/babylonlabs-io/babylon/pull/391) Fix e2e `TestBTCRewardsDistribution` flunky
+check of rewards
+- [#480](https://github.com/babylonlabs-io/babylon/pull/480) Improve IBC packet structure
+- [#516](https://github.com/babylonlabs-io/babylon/pull/516) Add `HasGenesis` interface to `epoching` module
+- [#504](https://github.com/babylonlabs-io/babylon/pull/504) Add `btc-headers` IBC packet
+- [#575](https://github.com/babylonlabs-io/babylon/pull/575) Add `ConsumerId` field in `FinalityProviderResponse` in `x/btcstaking` module
+- [#624](https://github.com/babylonlabs-io/babylon/pull/624) Make keeper's collections private in `x/incentive` module
+- [#643](https://github.com/babylonlabs-io/babylon/pull/643) Fix flaky test `FuzzBTCDelegation`
+- [#696](https://github.com/babylonlabs-io/babylon/pull/696) Restore zoneconcierge queries in query client
+- [#822](https://github.com/babylonlabs-io/babylon/pull/822) chore: upgrade the make file: protobuf
+- [#831](https://github.com/babylonlabs-io/babylon/pull/831) Add `BtcConsumerDelegators` and `ConsumerEvents` to import/export genesis logic in `x/btcstaking` module
+- [#836](https://github.com/babylonlabs-io/babylon/pull/836) Add import/export genesis logic in `x/btcstakingconsumer` module
+- [#871](https://github.com/babylonlabs-io/babylon/pull/871) create `update-bls-password` cmd
+- [#887](https://github.com/babylonlabs-io/babylon/pull/887) Update init/export genesis logic in `x/zoneconcierge` module
+>>>>>>> d4e2345 (chore: add v2.0.0-rc.3 to cl (#1186))
 - [#927](https://github.com/babylonlabs-io/babylon/pull/927) Add Mergify configuration file to improve PR backporting.
 - [#955](https://github.com/babylonlabs-io/babylon/pull/955) Update Mergify rules
 - [#967](https://github.com/babylonlabs-io/babylon/pull/967) Add `ValidateBasic` in `MsgInsertBTCSpvProof` (`x/btccheckpoint`)
@@ -49,6 +79,34 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#977](https://github.com/babylonlabs-io/babylon/pull/977) Update `ValidateBasic` in `x/finality` module messages
 - [#988](https://github.com/babylonlabs-io/babylon/pull/988) Fix flaky e2e ibc test
 `TestIBCTransferSuite`
+<<<<<<< HEAD
+=======
+- [#1000](https://github.com/babylonlabs-io/babylon/pull/1000) Add multi-staking replay test
+- [#702](https://github.com/babylonlabs-io/babylon/pull/702) Add test for small rewards in fee collector
+- [#1040](https://github.com/babylonlabs-io/babylon/pull/1040) Rename ETH L2 to rollup
+
+### State Machine Breaking
+
+- [#402](https://github.com/babylonlabs-io/babylon/pull/402) **Babylon multi-staking support**.
+This PR contains a series of PRs on multi-staking support and BTC staking integration.
+- [#944](https://github.com/babylonlabs-io/babylon/pull/944) Add max_multi_staked_fps validation and single FP per consumer constraint in BTC delegations.
+
+### Bug fixes
+
+- [#796](https://github.com/babylonlabs-io/babylon/pull/796) fix: goreleaser add `mainnet` build flag to generated binary
+- [#741](https://github.com/babylonlabs-io/babylon/pull/741) chore: fix register consumer CLI
+- [#525](https://github.com/babylonlabs-io/babylon/pull/525) fix: add back `NewIBCHeaderDecorator` post handler
+- [#964](https://github.com/babylonlabs-io/babylon/pull/964) fix: stateless validation `ValidateBasic` of
+`MsgWrappedCreateValidator` to avoid panic in transaction submission
+
+## v2.0.0-rc.3
+
+### Improvements
+
+- [#1065](https://github.com/babylonlabs-io/babylon/pull/1065) Add check for period of current rewards to be larger than zero.
+- [#1128](https://github.com/babylonlabs-io/babylon/pull/1128) Validate genesis fp historic reward entries.
+- [#1064](https://github.com/babylonlabs-io/babylon/pull/1064) Signing info validation for `StartHeight` and `MissedBlockCounter`.
+>>>>>>> d4e2345 (chore: add v2.0.0-rc.3 to cl (#1186))
 - [#1034](https://github.com/babylonlabs-io/babylon/pull/1034) Remove redundant `ValidateBasic` call in `x/btcstaking` message server
 - [#1036](https://github.com/babylonlabs-io/babylon/pull/1036) Remove token factory `enable_admin_sudo_mint` capability
 - [#1046](https://github.com/babylonlabs-io/babylon/pull/1046) Update genesis & validations `x/btcstaking` module
@@ -84,11 +142,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 - [#1146](https://github.com/babylonlabs-io/babylon/pull/1146) Remove deprecated `x/crisis` module.
 
+<<<<<<< HEAD
 ### Bug fixes
 
 - [#964](https://github.com/babylonlabs-io/babylon/pull/964) fix: stateless validation `ValidateBasic` of
 `MsgWrappedCreateValidator` to avoid panic in transaction submission
 
+=======
+>>>>>>> d4e2345 (chore: add v2.0.0-rc.3 to cl (#1186))
 ## v2.0.0-rc.2
 
 ### Improvements
