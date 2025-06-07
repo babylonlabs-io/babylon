@@ -71,6 +71,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#1168](https://github.com/babylonlabs-io/babylon/pull/1168) chore: removed duplicated addr len check in `SetAddressVerifier`.
 - [#1171](https://github.com/babylonlabs-io/babylon/pull/1171) chore: add validation of `DelegationLifecycle`.
 - [#1174](https://github.com/babylonlabs-io/babylon/pull/1174) chore: reduced ibc `MaxAddressSize` to max value of bech 32 addr (90).
+- [#1181](https://github.com/babylonlabs-io/babylon/pull/1181) Update upgrade handler name to v2rc3
 
 ### State Machine Breaking
 
