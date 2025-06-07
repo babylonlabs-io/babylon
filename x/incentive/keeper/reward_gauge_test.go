@@ -44,7 +44,7 @@ func (st StakeholderType) Bytes() []byte {
 func TestSetGetRewardGauge(t *testing.T) {
 	r := rand.New(rand.NewSource(time.Now().Unix()))
 	storeKey := storetypes.NewKVStoreKey(types.StoreKey)
-	k, ctx := keepertest.IncentiveKeeperWithStoreKey(t, storeKey, nil, nil, nil)
+	k, ctx := keepertest.IncentiveKeeperWithStoreKey(t, storeKey, nil, nil, nil, nil)
 	encCfg := appparams.DefaultEncodingConfig()
 
 	storeService := runtime.NewKVStoreService(storeKey)

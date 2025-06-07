@@ -3,8 +3,10 @@ package types
 import (
 	"context"
 
-	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
+	"cosmossdk.io/x/feegrant"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 )
 
 type AccountKeeper interface {
@@ -22,4 +24,10 @@ type BankKeeper interface {
 
 type EpochingKeeper interface {
 	GetEpoch(ctx context.Context) *epochingtypes.Epoch
+}
+
+type FeegrantKeeper interface {
+	GrantAllowance(ctx context.Context, granter, grantee sdk.AccAddress, feeAllowance feegrant.FeeAllowanceI) error
+	GetAllowance(ctx context.Context, granter, grantee sdk.AccAddress) (feegrant.FeeAllowanceI, error)
+	UpdateAllowance(ctx context.Context, granter, grantee sdk.AccAddress, feeAllowance feegrant.FeeAllowanceI) error
 }

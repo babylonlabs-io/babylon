@@ -91,6 +91,7 @@ check of rewards
 - [#1040](https://github.com/babylonlabs-io/babylon/pull/1040) Rename ETH L2 to rollup
 - [#1061](https://github.com/babylonlabs-io/babylon/pull/1061) Add size and hex decode in
 `RefundableMsgHashes` validate genesis
+- [#1062](https://github.com/babylonlabs-io/babylon/pull/1062) Restore allowance used in refund tx logic (`x/incentive`)
 - [#1071](https://github.com/babylonlabs-io/babylon/pull/1071) Update `FinalityProviderDistInfo` validations
 - [#1069](https://github.com/babylonlabs-io/babylon/pull/1069) Add validation on the txkey in btcstaking
 - [#1070](https://github.com/babylonlabs-io/babylon/pull/1070) fix: validation for vp dist cache
