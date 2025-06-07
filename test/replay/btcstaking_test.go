@@ -571,7 +571,7 @@ func MakeInnerMsg(t *testing.T) *stakingtypes.MsgCreateValidator {
 	return msg
 }
 
-func TestMultiConsumerDelegation(t *testing.T) {
+func TestMaxMultiStakedFpsValidation(t *testing.T) {
 	t.Parallel()
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	driverTempDir := t.TempDir()
@@ -609,9 +609,11 @@ func TestMultiConsumerDelegation(t *testing.T) {
 	driver.GenerateNewBlockAssertExecutionSuccess()
 	staker := driver.CreateNStakerAccounts(1)[0]
 
-	// 4. Create a delegation with three consumer FPs and one Babylon FP - should fail because total FPs (4) > min(max_multi_staked_fps) which is 2
+	// 4. Test Babylon's max_multi_staked_fps limit (default = 2)
+	// Create a delegation with 3 FPs - should fail because Babylon's limit is 2
+	// Effective limit = min(babylon=2, consumer1=3, consumer2=4) = 2
 	staker.CreatePreApprovalDelegation(
-		[]*bbn.BIP340PubKey{fp1s[0].BTCPublicKey(), fp2.BTCPublicKey(), fp3.BTCPublicKey(), babylonFp.BTCPublicKey()},
+		[]*bbn.BIP340PubKey{babylonFp.BTCPublicKey(), fp1s[0].BTCPublicKey(), fp2.BTCPublicKey()},
 		1000,
 		100000000,
 	)
@@ -620,7 +622,22 @@ func TestMultiConsumerDelegation(t *testing.T) {
 	require.Equal(t, uint32(1129), txResults[0].Code)
 	require.Contains(t, txResults[0].Log, btcstakingtypes.ErrTooManyFPs.Error())
 
-	// 5. Create a delegation with multiple FPs from the same consumer - should fail because there should be atmost 1 FP from each consumer
+	// 5. Increase Babylon's limit to 5 using governance - effective limit becomes min(5, 3, 4, 5) = 3
+	driver.UpdateBabylonMaxMultiStakedFps(5)
+	driver.GenerateNewBlockAssertExecutionSuccess()
+
+	// 6. Create a delegation with four consumer FPs and one Babylon FP - should fail because total FPs (5) > consumer1 limit of 3
+	staker.CreatePreApprovalDelegation(
+		[]*bbn.BIP340PubKey{fp1s[0].BTCPublicKey(), fp2.BTCPublicKey(), fp3.BTCPublicKey(), babylonFp.BTCPublicKey()},
+		1000,
+		100000000,
+	)
+	txResults = driver.GenerateNewBlockAssertExecutionFailure()
+	require.Len(t, txResults, 1)
+	require.Equal(t, uint32(1129), txResults[0].Code)
+	require.Contains(t, txResults[0].Log, btcstakingtypes.ErrTooManyFPs.Error())
+
+	// 7. Create a delegation with multiple FPs from the same consumer - should fail regardless of limits
 	staker.CreatePreApprovalDelegation(
 		[]*bbn.BIP340PubKey{fp1s[0].BTCPublicKey(), fp1s[1].BTCPublicKey(), babylonFp.BTCPublicKey()},
 		1000,
@@ -631,7 +648,30 @@ func TestMultiConsumerDelegation(t *testing.T) {
 	require.Equal(t, uint32(1130), txResults[0].Code)
 	require.Contains(t, txResults[0].Log, btcstakingtypes.ErrTooManyFPsFromSameConsumer.Error())
 
-	// 6. Create a valid delegation with 2 FPs (including Babylon FP)
+	// 8. Create a valid delegation with 3 FPs (respects current effective limit = 3)
+	staker.CreatePreApprovalDelegation(
+		[]*bbn.BIP340PubKey{babylonFp.BTCPublicKey(), fp1s[0].BTCPublicKey(), fp2.BTCPublicKey()},
+		1000,
+		100000000,
+	)
+	driver.GenerateNewBlockAssertExecutionSuccess()
+
+	// 9. Reduce Babylon's limit back to 2 - effective limit becomes min(2, 3, 4, 5) = 2 again
+	driver.UpdateBabylonMaxMultiStakedFps(2)
+	driver.GenerateNewBlockAssertExecutionSuccess()
+
+	// 10. Try the same 3 FP delegation again - should now fail because Babylon limit = 2
+	staker.CreatePreApprovalDelegation(
+		[]*bbn.BIP340PubKey{babylonFp.BTCPublicKey(), fp1s[0].BTCPublicKey(), fp2.BTCPublicKey()},
+		1000,
+		100000000,
+	)
+	txResults = driver.GenerateNewBlockAssertExecutionFailure()
+	require.Len(t, txResults, 1)
+	require.Equal(t, uint32(1129), txResults[0].Code)
+	require.Contains(t, txResults[0].Log, btcstakingtypes.ErrTooManyFPs.Error())
+
+	// 11. Create a valid delegation with 2 FPs (respects final limit = 2)
 	staker.CreatePreApprovalDelegation(
 		[]*bbn.BIP340PubKey{babylonFp.BTCPublicKey(), fp1s[0].BTCPublicKey()},
 		1000,
@@ -639,7 +679,7 @@ func TestMultiConsumerDelegation(t *testing.T) {
 	)
 	driver.GenerateNewBlockAssertExecutionSuccess()
 
-	// 7. Replay all blocks and verify state
+	// 12. Replay all blocks and verify state
 	replayer := NewBlockReplayer(t, replayerTempDir)
 
 	// Set up IBC client states in the replayer before replaying blocks

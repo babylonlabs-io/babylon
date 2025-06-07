@@ -82,6 +82,7 @@ check of rewards
 - [#1000](https://github.com/babylonlabs-io/babylon/pull/1000) Add multi-staking replay test
 - [#702](https://github.com/babylonlabs-io/babylon/pull/702) Add test for small rewards in fee collector
 - [#1040](https://github.com/babylonlabs-io/babylon/pull/1040) Rename ETH L2 to rollup
+- [#1059](https://github.com/babylonlabs-io/babylon/pull/1059) Add max_multi_staked_fps in btcstkconsumer module params
 
 ### State Machine Breaking
 
