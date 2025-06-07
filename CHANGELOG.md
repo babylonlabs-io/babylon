@@ -67,8 +67,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#1136](https://github.com/babylonlabs-io/babylon/pull/1136) Fix `SubmissionEntry` duplicate validation in `InitGenesis`
 - [#1147](https://github.com/babylonlabs-io/babylon/pull/1147) chore: vp dist cache count active fps
 - [#1151](https://github.com/babylonlabs-io/babylon/pull/1151) Add whitelisted channels to add rate limit in `v2` upgrade.
-- [#1152](https://github.com/babylonlabs-io/babylon/pull/1152) chore: validate power non negative
-- [#1168](https://github.com/babylonlabs-io/babylon/pull/1168) chore: removed duplicated addr len check in `SetAddressVerifier`
+- [#1152](https://github.com/babylonlabs-io/babylon/pull/1152) chore: validate power non negative.
+- [#1168](https://github.com/babylonlabs-io/babylon/pull/1168) chore: removed duplicated addr len check in `SetAddressVerifier`.
+- [#1174](https://github.com/babylonlabs-io/babylon/pull/1174) chore: reduced ibc `MaxAddressSize` to max value of bech 32 addr (90).
 
 ### State Machine Breaking
 
