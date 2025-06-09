@@ -693,5 +693,5 @@ func TestBadUnbondingFeeParams(t *testing.T) {
 	txResults := d.GenerateNewBlockAssertExecutionFailure()
 	require.Len(t, txResults, 1)
 	require.Equal(t, uint32(12), txResults[0].Code)
-	require.Contains(t, txResults[0].Log, btcstaking.ErrInvalidUnbondingFee)
+	require.Contains(t, txResults[0].Log, btcstaking.ErrInvalidUnbondingFee.Error())
 }
