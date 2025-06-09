@@ -10,7 +10,7 @@ import (
 	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/v4/app/ante"
+	"github.com/babylonlabs-io/babylon/v3/app/ante"
 )
 
 func TestIBCMsgSizeDecorator(t *testing.T) {

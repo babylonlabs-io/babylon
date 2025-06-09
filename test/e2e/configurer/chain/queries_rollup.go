@@ -3,15 +3,16 @@ package chain
 import (
 	"encoding/hex"
 	"encoding/json"
+	"strings"
+
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/stretchr/testify/require"
-	"strings"
 
 	"github.com/btcsuite/btcd/btcec/v2"
 
-	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	bbn "github.com/babylonlabs-io/babylon/v3/types"
 
-	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer/rollup"
+	"github.com/babylonlabs-io/babylon/v3/test/e2e/configurer/rollup"
 )
 
 // QueryLastPublicRandCommitRollup returns the last public randomness

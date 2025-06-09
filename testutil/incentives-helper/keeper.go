@@ -14,15 +14,15 @@ import (
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/golang/mock/gomock"
 
-	btcstkhelper "github.com/babylonlabs-io/babylon/v4/testutil/btcstaking-helper"
-	testutil "github.com/babylonlabs-io/babylon/v4/testutil/btcstaking-helper"
-	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
-	keepertest "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
-	btclctypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
-	"github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
-	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
-	ftypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
-	"github.com/babylonlabs-io/babylon/v4/x/incentive/keeper"
+	btcstkhelper "github.com/babylonlabs-io/babylon/v3/testutil/btcstaking-helper"
+	testutil "github.com/babylonlabs-io/babylon/v3/testutil/btcstaking-helper"
+	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
+	keepertest "github.com/babylonlabs-io/babylon/v3/testutil/keeper"
+	btclctypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
+	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
+	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
+	ftypes "github.com/babylonlabs-io/babylon/v3/x/finality/types"
+	"github.com/babylonlabs-io/babylon/v3/x/incentive/keeper"
 )
 
 type IncentiveHelper struct {

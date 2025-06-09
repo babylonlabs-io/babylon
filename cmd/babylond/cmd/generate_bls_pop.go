@@ -7,9 +7,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
 
-	"github.com/babylonlabs-io/babylon/v4/app"
-	appsigner "github.com/babylonlabs-io/babylon/v4/app/signer"
-	"github.com/babylonlabs-io/babylon/v4/crypto/bls12381"
+	"github.com/babylonlabs-io/babylon/v3/app"
+	appsigner "github.com/babylonlabs-io/babylon/v3/app/signer"
+	"github.com/babylonlabs-io/babylon/v3/crypto/bls12381"
 	cmtcrypto "github.com/cometbft/cometbft/crypto"
 )
 

@@ -36,7 +36,6 @@ pull_request_rules:
         branches:
           - release/v2.x
           - release/v3.x
-          - release/v4.x
   - name: backport changes to v2.x branch
     conditions:
       - base=main

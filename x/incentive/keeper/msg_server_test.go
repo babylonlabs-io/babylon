@@ -7,10 +7,10 @@ import (
 
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
-	testkeeper "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
-	"github.com/babylonlabs-io/babylon/v4/x/incentive/keeper"
-	"github.com/babylonlabs-io/babylon/v4/x/incentive/types"
+	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
+	testkeeper "github.com/babylonlabs-io/babylon/v3/testutil/keeper"
+	"github.com/babylonlabs-io/babylon/v3/x/incentive/keeper"
+	"github.com/babylonlabs-io/babylon/v3/x/incentive/types"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"

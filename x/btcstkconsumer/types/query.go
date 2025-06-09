@@ -1,6 +1,6 @@
 package types
 
-import btcstaking "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+import btcstaking "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 
 // NewFinalityProviderResponse creates a new finality provider response for Consumer registered FPs.
 // Note that slashing info, voting power and height are zero, as these FPs are not active here

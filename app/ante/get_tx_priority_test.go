@@ -3,7 +3,7 @@ package ante
 import (
 	"testing"
 
-	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
+	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/assert"
 )
