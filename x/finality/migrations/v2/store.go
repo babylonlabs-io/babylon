@@ -2,6 +2,7 @@ package v2
 
 import (
 	"context"
+	"fmt"
 
 	"cosmossdk.io/store/prefix"
 	storetypes "cosmossdk.io/store/types"
@@ -22,6 +23,9 @@ func MigrateStore(ctx sdk.Context, s storetypes.KVStore, upsertPubRandCommitIdx 
 	for ; iter.Valid(); iter.Next() {
 		// key is <fpBtcPK><startHeight>
 		keyBz := iter.Key()
+		if len(keyBz) <= bbn.BIP340PubKeyLen {
+			return fmt.Errorf("store key with smaller length (%d) than expected (>%d)", len(keyBz), bbn.BIP340PubKeyLen)
+		}
 		fpBtcPK := bbn.BIP340PubKey(keyBz[:bbn.BIP340PubKeyLen])
 		startHeight := sdk.BigEndianToUint64(keyBz[bbn.BIP340PubKeyLen:])
 		if err := upsertPubRandCommitIdx(ctx, &fpBtcPK, startHeight); err != nil {
