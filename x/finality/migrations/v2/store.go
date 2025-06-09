@@ -8,7 +8,6 @@ import (
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	bbntypes "github.com/babylonlabs-io/babylon/v4/types"
 	"github.com/babylonlabs-io/babylon/v4/x/finality/types"
 )
 
@@ -23,8 +22,8 @@ func MigrateStore(ctx sdk.Context, s storetypes.KVStore, upsertPubRandCommitIdx 
 	for ; iter.Valid(); iter.Next() {
 		// key is <fpBtcPK><startHeight>
 		keyBz := iter.Key()
-		fpBtcPK := bbntypes.BIP340PubKey(keyBz[:bbntypes.BIP340PubKeyLen])
-		startHeight := sdk.BigEndianToUint64(keyBz[bbntypes.BIP340PubKeyLen:])
+		fpBtcPK := bbn.BIP340PubKey(keyBz[:bbn.BIP340PubKeyLen])
+		startHeight := sdk.BigEndianToUint64(keyBz[bbn.BIP340PubKeyLen:])
 		if err := upsertPubRandCommitIdx(ctx, &fpBtcPK, startHeight); err != nil {
 			return err
 		}
