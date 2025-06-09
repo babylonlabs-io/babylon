@@ -25,6 +25,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// BenchmarkCompareIndexVsReverse benchmarks the GetPubRandCommitForHeight
+// function for the 2 possible paths:
+// - using an index of the PubRandCommit startHeights
+// - using the reverse iterator (fallback & legacy method)
 func BenchmarkCompareIndexVsReverse(b *testing.B) {
 	benchmarkGetPubRandCommit(b, 100)
 	benchmarkGetPubRandCommit(b, 1000)
