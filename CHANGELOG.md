@@ -49,6 +49,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#702](https://github.com/babylonlabs-io/babylon/pull/702) Add test for small rewards in fee collector
 - [#1040](https://github.com/babylonlabs-io/babylon/pull/1040) Rename ETH L2 to rollup
 - [#1191](https://github.com/babylonlabs-io/babylon/pull/1191) fix: update fp commission
+- [#1109](https://github.com/babylonlabs-io/babylon/pull/1190) Use glibc for goreleaser
 
 ### State Machine Breaking
 
