@@ -22,5 +22,5 @@ func NewMigrator(keeper Keeper) Migrator {
 // Migrate1to2 migrates from version 1 to 2.
 func (m Migrator) Migrate1to2(ctx sdk.Context) error {
 	store := runtime.KVStoreAdapter(m.keeper.storeService.OpenKVStore(ctx))
-	return v2.MigrateStore(ctx, store, m.keeper.cdc)
+	return v2.MigrateStore(ctx, store, m.keeper.upsertPubRandCommitIdx)
 }
