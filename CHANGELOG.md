@@ -84,6 +84,7 @@ check of rewards
 - [#993](https://github.com/babylonlabs-io/babylon/pull/993) Remove async-icq
   module.
 - [#1000](https://github.com/babylonlabs-io/babylon/pull/1000) Add multi-staking replay test
+- [#1109](https://github.com/babylonlabs-io/babylon/pull/1190) Use glibc for goreleaser
 
 ### State Machine Breaking
 
