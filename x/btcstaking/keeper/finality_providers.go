@@ -229,9 +229,15 @@ func (k Keeper) UpdateFinalityProviderCommission(goCtx context.Context, newCommi
 			minCommission)
 	}
 
+	if newCommission.GT(fp.CommissionInfo.MaxRate) {
+		return stktypes.ErrCommissionGTMaxRate.Wrapf(
+			"cannot set finality provider commission to more than max rate of %s",
+			fp.CommissionInfo.MaxRate.String())
+	}
+
 	// check that the change rate does not exceed the max change rate allowed
 	// new rate % points change cannot be greater than the max change rate
-	if newCommission.Sub(*fp.Commission).GT(fp.CommissionInfo.MaxChangeRate) {
+	if newCommission.Sub(*fp.Commission).Abs().GT(fp.CommissionInfo.MaxChangeRate) {
 		return stktypes.ErrCommissionGTMaxChangeRate
 	}
 
