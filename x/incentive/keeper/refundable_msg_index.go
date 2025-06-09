@@ -95,7 +95,10 @@ func restoreAllowanceSpent(original feegrant.FeeAllowanceI, refund sdk.Coins) (f
 	var restoredAllowance feegrant.FeeAllowanceI
 	switch a := original.(type) {
 	case *feegrant.BasicAllowance:
-		newLimit := a.SpendLimit.Add(refund...)
+		var newLimit sdk.Coins
+		if a.SpendLimit != nil {
+			newLimit = a.SpendLimit.Add(refund...)
+		}
 		restoredAllowance = &feegrant.BasicAllowance{
 			SpendLimit: newLimit,
 			Expiration: a.Expiration,
@@ -106,8 +109,6 @@ func restoreAllowanceSpent(original feegrant.FeeAllowanceI, refund sdk.Coins) (f
 		var newSpendLimit sdk.Coins
 		if a.Basic.SpendLimit != nil {
 			newSpendLimit = a.Basic.SpendLimit.Add(refund...)
-		} else {
-			newSpendLimit = refund
 		}
 
 		// Always add refund to PeriodCanSpend

@@ -62,7 +62,7 @@ func (tx mockFeeTx) GetMsgsV2() ([]protoreflect.ProtoMessage, error) {
 	return nil, nil
 }
 
-func KeeperTestSuite(t *testing.T) {
+func TestKeeperSuite(t *testing.T) {
 	suite.Run(t, new(RefundTxTestSuite))
 }
 
@@ -141,6 +141,82 @@ func (s *RefundTxTestSuite) TestRefundTx() {
 			expectError: false,
 		},
 		{
+			name: "refund to fee granter with BasicAllowance - nil spend limit",
+			tx: mockFeeTx{
+				fee:      fee,
+				feePayer: feePayer,
+				granter:  feeGranter,
+			},
+			preRefund: func() {
+				// expect fee granter to have 0 balance before refund
+				balance := s.app.BankKeeper.GetAllBalances(s.ctx, feeGranter)
+				s.Equal(zeroCoins, balance)
+
+				// set allowance
+				expiration := s.ctx.BlockHeader().Time.Add(48 * time.Hour)
+				original := &feegrant.BasicAllowance{
+					SpendLimit: nil,
+					Expiration: &expiration,
+				}
+				s.NoError(original.ValidateBasic())
+				err := s.app.FeeGrantKeeper.GrantAllowance(s.ctx, feeGranter, feePayer, original)
+				s.NoError(err)
+			},
+			postRefund: func() {
+				expiration := s.ctx.BlockHeader().Time.Add(48 * time.Hour)
+				expected := &feegrant.BasicAllowance{
+					SpendLimit: nil,
+					Expiration: &expiration,
+				}
+
+				updatedGrant, err := s.app.FeeGrantKeeper.GetAllowance(s.ctx, feeGranter, feePayer)
+				s.NoError(err)
+				s.Equal(expected, updatedGrant)
+
+				// expect fee granter to have been refunded refund
+				balance := s.app.BankKeeper.GetAllBalances(s.ctx, feeGranter)
+				s.Equal(fee, balance)
+			},
+			expectError: false,
+		},
+		{
+			name: "refund to fee granter with BasicAllowance - nil spend limit & expiration",
+			tx: mockFeeTx{
+				fee:      fee,
+				feePayer: feePayer,
+				granter:  feeGranter,
+			},
+			preRefund: func() {
+				// expect fee granter to have 0 balance before refund
+				balance := s.app.BankKeeper.GetAllBalances(s.ctx, feeGranter)
+				s.Equal(zeroCoins, balance)
+
+				// set allowance
+				original := &feegrant.BasicAllowance{
+					SpendLimit: nil,
+					Expiration: nil,
+				}
+				s.NoError(original.ValidateBasic())
+				err := s.app.FeeGrantKeeper.GrantAllowance(s.ctx, feeGranter, feePayer, original)
+				s.NoError(err)
+			},
+			postRefund: func() {
+				expected := &feegrant.BasicAllowance{
+					SpendLimit: nil,
+					Expiration: nil,
+				}
+
+				updatedGrant, err := s.app.FeeGrantKeeper.GetAllowance(s.ctx, feeGranter, feePayer)
+				s.NoError(err)
+				s.Equal(expected, updatedGrant)
+
+				// expect fee granter to have been refunded refund
+				balance := s.app.BankKeeper.GetAllBalances(s.ctx, feeGranter)
+				s.Equal(fee, balance)
+			},
+			expectError: false,
+		},
+		{
 			name: "refund to fee granter with PeriodicAllowance",
 			tx: mockFeeTx{
 				fee:      fee,
@@ -174,6 +250,58 @@ func (s *RefundTxTestSuite) TestRefundTx() {
 				expected := &feegrant.PeriodicAllowance{
 					Basic: feegrant.BasicAllowance{
 						SpendLimit: fee.Add(fee...),
+						Expiration: &expiration,
+					},
+					Period:           period,
+					PeriodSpendLimit: fee,
+					PeriodCanSpend:   fee.Add(fee...),
+					PeriodReset:      s.ctx.BlockTime().Add(period),
+				}
+
+				updatedGrant, err := s.app.FeeGrantKeeper.GetAllowance(s.ctx, feeGranter, feePayer)
+				s.NoError(err)
+				s.Equal(expected, updatedGrant)
+
+				// expect fee granter to have been refunded refund
+				balance := s.app.BankKeeper.GetAllBalances(s.ctx, feeGranter)
+				s.Equal(fee, balance)
+			},
+			expectError: false,
+		},
+		{
+			name: "refund to fee granter with PeriodicAllowance - nil spend limit",
+			tx: mockFeeTx{
+				fee:      fee,
+				feePayer: feePayer,
+				granter:  feeGranter,
+			},
+			preRefund: func() {
+				// expect fee granter to have 0 balance before refund
+				balance := s.app.BankKeeper.GetAllBalances(s.ctx, feeGranter)
+				s.Equal(zeroCoins, balance)
+
+				// set PeriodicAllowance
+				expiration := s.ctx.BlockHeader().Time.Add(48 * time.Hour)
+				original := &feegrant.PeriodicAllowance{
+					Basic: feegrant.BasicAllowance{
+						SpendLimit: nil,
+						Expiration: &expiration,
+					},
+					Period:           period,
+					PeriodSpendLimit: fee,
+					PeriodCanSpend:   fee,
+					PeriodReset:      s.ctx.BlockTime().Add(period),
+				}
+				s.NoError(original.ValidateBasic())
+
+				err := s.app.FeeGrantKeeper.GrantAllowance(s.ctx, feeGranter, feePayer, original)
+				s.NoError(err)
+			},
+			postRefund: func() {
+				expiration := s.ctx.BlockHeader().Time.Add(48 * time.Hour)
+				expected := &feegrant.PeriodicAllowance{
+					Basic: feegrant.BasicAllowance{
+						SpendLimit: nil,
 						Expiration: &expiration,
 					},
 					Period:           period,
