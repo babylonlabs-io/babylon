@@ -59,7 +59,7 @@ func benchmarkGetPubRandCommit(b *testing.B, numRecords int) {
 	})
 
 	// Remove index to force reverse scan
-	require.NoError(b, deleteIndex(ctx, storeService.OpenKVStore(ctx), fpBtcPK))
+	require.NoError(b, deleteIndex(storeService.OpenKVStore(ctx), fpBtcPK))
 
 	b.Run(fmt.Sprintf("ReversePath_%d", numRecords), func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
@@ -84,7 +84,7 @@ func populateCommits(b *testing.B, ctx context.Context, fKeeper *keeper.Keeper, 
 	}
 }
 
-func deleteIndex(ctx context.Context, store corestore.KVStore, fpBtcPK *bbn.BIP340PubKey) error {
+func deleteIndex(store corestore.KVStore, fpBtcPK *bbn.BIP340PubKey) error {
 	bytesKey, err := collections.EncodeKeyWithPrefix(types.PubRandCommitIndexKeyPrefix.Bytes(), collections.BytesKey, fpBtcPK.MustMarshal())
 	if err != nil {
 		return err
