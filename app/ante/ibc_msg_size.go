@@ -12,7 +12,7 @@ import (
 const (
 	MaxMsgSize     = 500_000 // 500 KB
 	MaxMemoSize    = 400_000 // 400 KB
-	MaxAddressSize = 65_000  // 65 KB
+	MaxAddressSize = 90      // 90 chars
 )
 
 // IBCMsgSizeDecorator checks that IBC messages size is within the accepted size

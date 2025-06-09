@@ -11,14 +11,14 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 )
 
-const UpgradeName = "v2rc2"
+const UpgradeName = "v2rc3"
 
 var Upgrade = upgrades.Upgrade{
 	UpgradeName:          UpgradeName,
 	CreateUpgradeHandler: CreateUpgradeHandler,
 	StoreUpgrades: store.StoreUpgrades{
 		Added:   []string{},
-		Deleted: []string{v2.InterchainQueryStoreName},
+		Deleted: []string{v2.InterchainQueryStoreName, v2.CrisisStoreName},
 	},
 }
 
