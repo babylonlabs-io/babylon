@@ -37,8 +37,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
-<<<<<<< HEAD
-=======
 ### Improvements
 
 - [#1015](https://github.com/babylonlabs-io/babylon/pull/1015) Add finality contract e2e tests follup-up.
@@ -100,7 +98,7 @@ This PR contains a series of PRs on multi-staking support and BTC staking integr
 - [#964](https://github.com/babylonlabs-io/babylon/pull/964) fix: stateless validation `ValidateBasic` of
 `MsgWrappedCreateValidator` to avoid panic in transaction submission
 
->>>>>>> 52355fa (fix: update fp commission (#1191))
+
 ## v2.0.0-rc.3
 
 ### Improvements
