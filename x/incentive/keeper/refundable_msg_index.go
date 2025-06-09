@@ -105,23 +105,24 @@ func restoreAllowanceSpent(original feegrant.FeeAllowanceI, refund sdk.Coins) (f
 		}
 
 	case *feegrant.PeriodicAllowance:
-		// Initialize new SpendLimit only if the original was not nil
-		var newSpendLimit sdk.Coins
-		if a.Basic.SpendLimit != nil {
-			newSpendLimit = a.Basic.SpendLimit.Add(refund...)
-		}
-
 		// Always add refund to PeriodCanSpend
 		newCanSpend := a.PeriodCanSpend.Add(refund...)
 
 		// Create a new BasicAllowance with copied expiration
-		newBasic := feegrant.BasicAllowance{
-			SpendLimit: newSpendLimit,
-			Expiration: a.Basic.Expiration,
+		// and restored spend limit
+		restoredBasic, err := restoreAllowanceSpent(&a.Basic, refund)
+		if err != nil {
+			return nil, fmt.Errorf("failed to restored Basic allowance in PeriodicAllowance: %w", err)
+		}
+
+		newBasic, ok := restoredBasic.(*feegrant.BasicAllowance)
+		// safety check. This would never be false
+		if !ok {
+			return nil, fmt.Errorf("incorrect type in PeriodicAllowance: %T", restoredBasic)
 		}
 
 		restoredAllowance = &feegrant.PeriodicAllowance{
-			Basic:            newBasic,
+			Basic:            *newBasic,
 			Period:           a.Period,
 			PeriodSpendLimit: a.PeriodSpendLimit,
 			PeriodCanSpend:   newCanSpend,
