@@ -2,6 +2,7 @@ package testnet
 
 import (
 	"context"
+
 	store "cosmossdk.io/store/types"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 	"github.com/babylonlabs-io/babylon/v4/app/keepers"
@@ -10,14 +11,14 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 )
 
-const UpgradeName = "v2rc1"
+const UpgradeName = "v2rc3"
 
 var Upgrade = upgrades.Upgrade{
 	UpgradeName:          UpgradeName,
 	CreateUpgradeHandler: CreateUpgradeHandler,
 	StoreUpgrades: store.StoreUpgrades{
 		Added:   []string{},
-		Deleted: []string{v2.InterchainQueryStoreName},
+		Deleted: []string{v2.InterchainQueryStoreName, v2.CrisisStoreName},
 	},
 }
 

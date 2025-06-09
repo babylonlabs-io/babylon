@@ -82,7 +82,7 @@ func setupTest(t *testing.T, seed int64) (sdk.Context, *keeper.Keeper, *storetyp
 		r        = rand.New(rand.NewSource(seed))
 		powLimit = datagen.RandomMathInt(r, 1000).BigInt()
 		storeKey = storetypes.NewKVStoreKey(types.StoreKey)
-		k, ctx   = keepertest.NewBTCChkptKeeperWithStoreKeys(t, storeKey, nil, nil, nil, nil, powLimit)
+		k, ctx   = keepertest.NewBTCChkptKeeperWithStoreKeys(t, nil, storeKey, nil, nil, nil, nil, nil, powLimit)
 		l        = int(math.Abs(float64(r.Int()%50 + 1))) // cap it to 50 entries
 		e        = make([]types.EpochEntry, l)
 		s        = make([]types.SubmissionEntry, l)
@@ -93,6 +93,7 @@ func setupTest(t *testing.T, seed int64) (sdk.Context, *keeper.Keeper, *storetyp
 		epochNum := uint64(i + 1)
 		e[i] = randomEpochEntry(r, epochNum)
 		s[i] = randomSubmissionEntry(r)
+		s[i].Data.Epoch = epochNum
 	}
 
 	chkptFinTimeout := datagen.RandomUInt32(r, 10000) + 5

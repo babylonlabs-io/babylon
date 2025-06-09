@@ -2,9 +2,14 @@ package query
 
 import (
 	"context"
+	"strconv"
+
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 
 	btcstakingtypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 	"github.com/cosmos/cosmos-sdk/client"
+	grpctypes "github.com/cosmos/cosmos-sdk/types/grpc"
 	sdkquerytypes "github.com/cosmos/cosmos-sdk/types/query"
 )
 
@@ -105,6 +110,31 @@ func (c *QueryClient) BTCDelegations(status btcstakingtypes.BTCDelegationStatus,
 	})
 
 	return resp, err
+}
+
+// BTCDelegationsAtHeight queries the BTCStaking module for all delegations under a given status of an specific block height
+func (c *QueryClient) BTCDelegationsAtHeight(status btcstakingtypes.BTCDelegationStatus, blockHeightState uint64, pagination *sdkquerytypes.PageRequest) (*btcstakingtypes.QueryBTCDelegationsResponse, *metadata.MD, error) {
+	var (
+		resp   *btcstakingtypes.QueryBTCDelegationsResponse
+		header *metadata.MD
+	)
+
+	err := c.QueryBTCStaking(func(ctx context.Context, queryClient btcstakingtypes.QueryClient) error {
+		var err error
+		req := &btcstakingtypes.QueryBTCDelegationsRequest{
+			Status:     status,
+			Pagination: pagination,
+		}
+
+		resp, err = queryClient.BTCDelegations(
+			metadata.AppendToOutgoingContext(ctx, grpctypes.GRPCBlockHeightHeader, strconv.FormatUint(blockHeightState, 10)),
+			req,
+			grpc.Header(header),
+		)
+		return err
+	})
+
+	return resp, header, err
 }
 
 // BTCDelegation queries the BTCStaking module to retrieve delegation by corresponding staking tx hash

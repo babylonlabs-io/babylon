@@ -3,6 +3,7 @@ package types
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	errorsmod "cosmossdk.io/errors"
@@ -211,6 +212,10 @@ func (qm *QueuedMessage) UnwrapToSdkMsg() sdk.Msg {
 }
 
 func (e Validator) Validate() error {
+	if e.Power < 0 {
+		return fmt.Errorf("validator power cannot be negative: got %d", e.Power)
+	}
+
 	valAddrStr := sdk.ValAddress(e.Addr).String()
 	_, err := sdk.ValAddressFromBech32(valAddrStr)
 	return err
@@ -220,8 +225,36 @@ func (vl ValidatorLifecycle) Validate() error {
 	if len(vl.ValLife) == 0 {
 		return errors.New("validator lyfecycle is empty")
 	}
+
+	for _, vsu := range vl.ValLife {
+		if err := vsu.Validate(); err != nil {
+			return err
+		}
+	}
+
 	_, err := sdk.ValAddressFromBech32(vl.ValAddr)
 	return err
+}
+
+func (v ValStateUpdate) Validate() error {
+	return ValidateBondState(v.State)
+}
+
+func ValidateBondState(bs BondState) error {
+	switch bs {
+	case BondState_CREATED:
+		return nil
+	case BondState_BONDED:
+		return nil
+	case BondState_UNBONDING:
+		return nil
+	case BondState_UNBONDED:
+		return nil
+	case BondState_REMOVED:
+		return nil
+	default:
+		return fmt.Errorf("invalid bond state: %d", bs)
+	}
 }
 
 func (dl DelegationLifecycle) Validate() error {
@@ -229,5 +262,21 @@ func (dl DelegationLifecycle) Validate() error {
 		return errors.New("delegation lyfecycle is empty")
 	}
 	_, err := sdk.AccAddressFromBech32(dl.DelAddr)
+
+	for _, vsu := range dl.DelLife {
+		if err := vsu.Validate(); err != nil {
+			return err
+		}
+	}
+
+	return err
+}
+
+func (d DelegationStateUpdate) Validate() error {
+	if err := ValidateBondState(d.State); err != nil {
+		return err
+	}
+
+	_, err := sdk.ValAddressFromBech32(d.ValAddr)
 	return err
 }

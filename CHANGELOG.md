@@ -39,6 +39,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
+- [#1015](https://github.com/babylonlabs-io/babylon/pull/1015) Add finality contract e2e tests follup-up.
 - [#970](https://github.com/babylonlabs-io/babylon/pull/970) Add finality contract e2e tests follup-up.
 - [#946](https://github.com/babylonlabs-io/babylon/pull/946) Add finality contract e2e tests follup-up.
 - [#945](https://github.com/babylonlabs-io/babylon/pull/945) Add finality contract e2e tests.
@@ -70,27 +71,24 @@ check of rewards
 - [#926](https://github.com/babylonlabs-io/babylon/pull/926) Update genesis initialization validations.
 - [#933](https://github.com/babylonlabs-io/babylon/pull/933) Update repository version to `v4`.
 - [#935](https://github.com/babylonlabs-io/babylon/pull/935) Add `release/v4` branch to docker publish workflow.
-- [#931](https://github.com/babylonlabs-io/babylon/pull/931) Add darwin and linux-arm64 build
 - [#943](https://github.com/babylonlabs-io/babylon/pull/943) Adds consumer event in `x/btcstakingconsumer` module
 - [#955](https://github.com/babylonlabs-io/babylon/pull/955) Update Mergify rules
 - [#967](https://github.com/babylonlabs-io/babylon/pull/967) Add `ValidateBasic` in `MsgInsertBTCSpvProof` (`x/btccheckpoint`)
 - [#969](https://github.com/babylonlabs-io/babylon/pull/969) Add `ValidateBasic` to `MsgSelectiveSlashingEvidence` in `x/btcstaking` module
 - [#974](https://github.com/babylonlabs-io/babylon/pull/974) Update Mergify rules for automatic backport changes to `v2`, `v3` and `v4`
 - [#977](https://github.com/babylonlabs-io/babylon/pull/977) Update `ValidateBasic` in `x/finality` module messages
-- [#981](https://github.com/babylonlabs-io/babylon/pull/981) Set IBC rate limit for `ubbn` to 10%
-- [#992](https://github.com/babylonlabs-io/babylon/pull/992) Add checks for bad halting height in `HandleResumeFinalityProposal`
 - [#988](https://github.com/babylonlabs-io/babylon/pull/988) Fix flaky e2e ibc test
 `TestIBCTransferSuite`
-- [#993](https://github.com/babylonlabs-io/babylon/pull/993) Remove async-icq
-  module.
 - [#1000](https://github.com/babylonlabs-io/babylon/pull/1000) Add multi-staking replay test
+- [#702](https://github.com/babylonlabs-io/babylon/pull/702) Add test for small rewards in fee collector
+- [#1040](https://github.com/babylonlabs-io/babylon/pull/1040) Rename ETH L2 to rollup
+- [#1191](https://github.com/babylonlabs-io/babylon/pull/1191) fix: update fp commission
 - [#1109](https://github.com/babylonlabs-io/babylon/pull/1190) Use glibc for goreleaser
 
 ### State Machine Breaking
 
 - [#402](https://github.com/babylonlabs-io/babylon/pull/402) **Babylon multi-staking support**.
 This PR contains a series of PRs on multi-staking support and BTC staking integration.
-- [#947](https://github.com/babylonlabs-io/babylon/pull/947) Improve signing info update upon fp activated
 - [#944](https://github.com/babylonlabs-io/babylon/pull/944) Add max_multi_staked_fps validation and single FP per consumer constraint in BTC delegations.
 
 ### Bug fixes
@@ -100,6 +98,70 @@ This PR contains a series of PRs on multi-staking support and BTC staking integr
 - [#525](https://github.com/babylonlabs-io/babylon/pull/525) fix: add back `NewIBCHeaderDecorator` post handler
 - [#964](https://github.com/babylonlabs-io/babylon/pull/964) fix: stateless validation `ValidateBasic` of
 `MsgWrappedCreateValidator` to avoid panic in transaction submission
+
+## v2.0.0-rc.3
+
+### Improvements
+
+- [#1065](https://github.com/babylonlabs-io/babylon/pull/1065) Add check for period of current rewards to be larger than zero.
+- [#1128](https://github.com/babylonlabs-io/babylon/pull/1128) Validate genesis fp historic reward entries.
+- [#1064](https://github.com/babylonlabs-io/babylon/pull/1064) Signing info validation for `StartHeight` and `MissedBlockCounter`.
+- [#1034](https://github.com/babylonlabs-io/babylon/pull/1034) Remove redundant `ValidateBasic` call in `x/btcstaking` message server
+- [#1036](https://github.com/babylonlabs-io/babylon/pull/1036) Remove token factory `enable_admin_sudo_mint` capability
+- [#1046](https://github.com/babylonlabs-io/babylon/pull/1046) Update genesis & validations `x/btcstaking` module
+- [#1050](https://github.com/babylonlabs-io/babylon/pull/1050) Add query to get btc delegations at specific block height
+- [#1061](https://github.com/babylonlabs-io/babylon/pull/1061) Add size and hex decode in
+`RefundableMsgHashes` validate genesis
+- [#1071](https://github.com/babylonlabs-io/babylon/pull/1071) Update `FinalityProviderDistInfo` validations
+- [#1069](https://github.com/babylonlabs-io/babylon/pull/1069) Add validation on the txkey in btcstaking
+- [#1070](https://github.com/babylonlabs-io/babylon/pull/1070) fix: validation for vp dist cache
+- [#1078](https://github.com/babylonlabs-io/babylon/pull/1078) fix: enforce check ibc msg size in `finalizeBlockState`
+- [#1082](https://github.com/babylonlabs-io/babylon/pull/1082) chore: val sequential epoch
+- [#1083](https://github.com/babylonlabs-io/babylon/pull/1083) Check if `WithdrawAddress` is a blocked address in `SetWithdrawAddress`
+- [#1084](https://github.com/babylonlabs-io/babylon/pull/1084) Check for negative amount in `TotalActiveSat` in `subFinalityProviderStaked`
+- [#1085](https://github.com/babylonlabs-io/babylon/pull/1085) Update comment in `SetRewardTrackerEvent` function
+- [#1089](https://github.com/babylonlabs-io/babylon/pull/1089) chore: validate block diff
+- [#1096](https://github.com/babylonlabs-io/babylon/pull/1096) chore: validate stats positive
+- [#1097](https://github.com/babylonlabs-io/babylon/pull/1097) Update `Evidence.ValidateBasic` function
+- [#1098](https://github.com/babylonlabs-io/babylon/pull/1098) Support `HasValidateBasic` interface in `ValidateEntries` function
+- [#1102](https://github.com/babylonlabs-io/babylon/pull/1102) Handle empty `BTCStakingGauge` when no fees are intercepted
+- [#1118](https://github.com/babylonlabs-io/babylon/pull/1118) Update `RawCheckpointWithMeta` and `BlsMultiSig` validations
+- [#1126](https://github.com/babylonlabs-io/babylon/pull/1126) chore: add bls key validation
+- [#1135](https://github.com/babylonlabs-io/babylon/pull/1135) Add validation to `LastProcessedHeightEventRewardTracker` on `InitGenesis`
+- [#1136](https://github.com/babylonlabs-io/babylon/pull/1136) Fix `SubmissionEntry` duplicate validation in `InitGenesis`
+- [#1147](https://github.com/babylonlabs-io/babylon/pull/1147) chore: vp dist cache count active fps
+- [#1151](https://github.com/babylonlabs-io/babylon/pull/1151) Add whitelisted channels to add rate limit in `v2` upgrade.
+- [#1152](https://github.com/babylonlabs-io/babylon/pull/1152) chore: validate power non negative.
+- [#1168](https://github.com/babylonlabs-io/babylon/pull/1168) chore: removed duplicated addr len check in `SetAddressVerifier`.
+- [#1171](https://github.com/babylonlabs-io/babylon/pull/1171) chore: add validation of `DelegationLifecycle`.
+- [#1174](https://github.com/babylonlabs-io/babylon/pull/1174) chore: reduced ibc `MaxAddressSize` to max value of bech 32 addr (90).
+- [#1181](https://github.com/babylonlabs-io/babylon/pull/1181) Update upgrade handler name to v2rc3
+
+### State Machine Breaking
+
+- [#1146](https://github.com/babylonlabs-io/babylon/pull/1146) Remove deprecated `x/crisis` module.
+
+## v2.0.0-rc.2
+
+### Improvements
+
+- [#981](https://github.com/babylonlabs-io/babylon/pull/981) Set IBC rate limit for `ubbn` to 10%
+- [#1013](https://github.com/babylonlabs-io/babylon/pull/1013) Update to ibc rate limit `v8.1.0`
+- [#1018](https://github.com/babylonlabs-io/babylon/pull/1018) Improve genesis validations in `x/mint` and `x/btccheckpoint`
+- [#1030](https://github.com/babylonlabs-io/babylon/pull/1030) Update upgrade handler name to v2rc2
+
+## v2.0.0-rc.1
+
+### Improvements
+
+- [#931](https://github.com/babylonlabs-io/babylon/pull/931) Add darwin and linux-arm64 build
+- [#992](https://github.com/babylonlabs-io/babylon/pull/992) Add checks for bad halting height in `HandleResumeFinalityProposal`
+- [#993](https://github.com/babylonlabs-io/babylon/pull/993) Remove async-icq
+  module.
+
+### State Machine Breaking
+
+- [#947](https://github.com/babylonlabs-io/babylon/pull/947) Improve signing info update upon fp activated
 - [#994](https://github.com/babylonlabs-io/babylon/pull/994) Soft fork ibcratelimit to call `BeginBlock`
 
 ## v2.0.0-rc.0
