@@ -83,6 +83,7 @@ check of rewards
 - [#702](https://github.com/babylonlabs-io/babylon/pull/702) Add test for small rewards in fee collector
 - [#1040](https://github.com/babylonlabs-io/babylon/pull/1040) Rename ETH L2 to rollup
 - [#1191](https://github.com/babylonlabs-io/babylon/pull/1191) fix: update fp commission
+- [#1197](https://github.com/babylonlabs-io/babylon/pull/1197) fix: add validate of bad unbonding fee in btcstaking params.
 
 ### State Machine Breaking
 
