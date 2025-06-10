@@ -850,6 +850,40 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 			errParsing:    nil,
 			errValidation: types.ErrInvalidUnbondingTx.Wrap("the unbonding output value is not expected"),
 		},
+		{
+			name: "Msg.UnbondingTx does not have required fee",
+			fn: func(r *rand.Rand, t *testing.T) (*types.MsgCreateBTCDelegation, *types.Params, *btcckpttypes.Params) {
+				params := testStakingParams(r, t)
+				checkpointParams := testCheckpointParams()
+				msg, delSk := createMsgDelegationForParams(r, t, params)
+
+				currentUnbondingTx, err := bbn.NewBTCTxFromBytes(msg.UnbondingTx)
+				require.NoError(t, err)
+
+				// generate unbonding info with invalid staking idx
+				newUnbondingInfdo := generateUnbondingInfo(
+					r,
+					t,
+					delSk,
+					msg.FpBtcPkList[0].MustToBTCPK(),
+					currentUnbondingTx.TxIn[0].PreviousOutPoint.Hash,
+					currentUnbondingTx.TxIn[0].PreviousOutPoint.Index,
+					uint16(msg.UnbondingTime),
+					msg.StakingValue+1,
+					params,
+				)
+
+				// to cause the unbonding value mismatch with the unbonding tx output value
+				msg.UnbondingValue = msg.StakingValue + 1
+				msg.UnbondingTx = newUnbondingInfdo.serializedUnbondingTx
+				msg.UnbondingSlashingTx = newUnbondingInfdo.unbondingSlashingTx
+				msg.DelegatorUnbondingSlashingSig = newUnbondingInfdo.unbondingSlashinSig
+
+				return msg, params, checkpointParams
+			},
+			errParsing:    nil,
+			errValidation: types.ErrInvalidUnbondingTx.Wrapf("unbonding tx fee must be larger that 0"),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
