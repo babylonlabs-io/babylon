@@ -62,6 +62,7 @@ This PR contains a series of PRs on multi-staking support and BTC staking integr
 
 - [#964](https://github.com/babylonlabs-io/babylon/pull/964) fix: stateless validation `ValidateBasic` of
 `MsgWrappedCreateValidator` to avoid panic in transaction submission
+- [#1196](https://github.com/babylonlabs-io/babylon/pull/1196) fix: add pagination in `QueryBlsPublicKeyListRequest`.
 
 ## v2.0.0-rc.3
 

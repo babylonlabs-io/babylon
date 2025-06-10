@@ -4,7 +4,12 @@ import (
 	"errors"
 	"fmt"
 
+<<<<<<< HEAD
 	"github.com/babylonlabs-io/babylon/v3/crypto/bls12381"
+=======
+	"github.com/babylonlabs-io/babylon/v4/crypto/bls12381"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+>>>>>>> 6ed4afe (fix: checks for pagination in `QueryBlsPublicKeyListRequest` (#1196))
 )
 
 // Validate checks for duplicate ValidatorAddress or BlsPubKey entries.
@@ -38,6 +43,10 @@ func (vs ValidatorWithBlsKeySet) Validate() error {
 	}
 
 	return nil
+}
+
+func (v ValidatorWithBlsKey) Addr() (sdk.ValAddress, error) {
+	return sdk.ValAddressFromBech32(v.ValidatorAddress)
 }
 
 // ValidateBasic stateless validate if the BlsKey is valid
