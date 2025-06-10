@@ -11,14 +11,14 @@ import (
 	v1rc8 "github.com/babylonlabs-io/babylon/v3/app/upgrades/v1rc8/testnet"
 	v1rc9 "github.com/babylonlabs-io/babylon/v3/app/upgrades/v1rc9/testnet"
 	v2 "github.com/babylonlabs-io/babylon/v3/app/upgrades/v2"
-	v2rc3 "github.com/babylonlabs-io/babylon/v3/app/upgrades/v2rc3/testnet"
+	v2rc4 "github.com/babylonlabs-io/babylon/v3/app/upgrades/v2rc4/testnet"
 )
 
 // init is used to include v1 upgrade testnet data
 // it is also used for e2e testing
 func init() {
 	Upgrades = []upgrades.Upgrade{
-		v2rc3.Upgrade,
+		v2rc4.Upgrade,
 		v2.CreateUpgrade(true, map[string]struct{}{}),
 		v1_1.Upgrade,
 		v1.CreateUpgrade(v1.UpgradeDataString{
