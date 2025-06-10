@@ -57,6 +57,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#402](https://github.com/babylonlabs-io/babylon/pull/402) **Babylon multi-staking support**.
 This PR contains a series of PRs on multi-staking support and BTC staking integration.
 - [#944](https://github.com/babylonlabs-io/babylon/pull/944) Add max_multi_staked_fps validation and single FP per consumer constraint in BTC delegations.
+- [#1207](https://github.com/babylonlabs-io/babylon/pull/1207) Update wasmd to [v0.54.1](https://github.com/CosmWasm/wasmd/releases/tag/v0.54.1)
 
 ### Bug fixes
 
