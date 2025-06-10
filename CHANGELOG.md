@@ -83,10 +83,14 @@ check of rewards
 - [#1000](https://github.com/babylonlabs-io/babylon/pull/1000) Add multi-staking replay test
 - [#702](https://github.com/babylonlabs-io/babylon/pull/702) Add test for small rewards in fee collector
 - [#1040](https://github.com/babylonlabs-io/babylon/pull/1040) Rename ETH L2 to rollup
+<<<<<<< HEAD
 - [#1191](https://github.com/babylonlabs-io/babylon/pull/1191) fix: update fp commission
 - [#1109](https://github.com/babylonlabs-io/babylon/pull/1190) Use glibc for goreleaser
 - [#1197](https://github.com/babylonlabs-io/babylon/pull/1197) fix: add validate of bad unbonding fee in btcstaking params.
 - [#1211](https://github.com/babylonlabs-io/babylon/pull/1211) Update upgrade handler name to v2rc4
+=======
+- [#1195](https://github.com/babylonlabs-io/babylon/pull/1195) Update repository version to `v3`.
+>>>>>>> 1a05ecd (chore(mod): update repo to v3 (#1195))
 
 ### State Machine Breaking
 

@@ -31,15 +31,15 @@ import (
 	"github.com/cosmos/go-bip39"
 	"github.com/spf13/viper"
 
-	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
 
 	"github.com/cometbft/cometbft/privval"
 
-	babylonApp "github.com/babylonlabs-io/babylon/v4/app"
-	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
-	appsigner "github.com/babylonlabs-io/babylon/v4/app/signer"
-	"github.com/babylonlabs-io/babylon/v4/cmd/babylond/cmd"
-	"github.com/babylonlabs-io/babylon/v4/test/e2e/util"
+	babylonApp "github.com/babylonlabs-io/babylon/v3/app"
+	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
+	appsigner "github.com/babylonlabs-io/babylon/v3/app/signer"
+	"github.com/babylonlabs-io/babylon/v3/cmd/babylond/cmd"
+	"github.com/babylonlabs-io/babylon/v3/test/e2e/util"
 )
 
 type internalNode struct {

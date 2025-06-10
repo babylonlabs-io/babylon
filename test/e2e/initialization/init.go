@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	appkeepers "github.com/babylonlabs-io/babylon/v4/app/keepers"
-	btclighttypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
+	appkeepers "github.com/babylonlabs-io/babylon/v3/app/keepers"
+	btclighttypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
 )
 
 func InitChain(

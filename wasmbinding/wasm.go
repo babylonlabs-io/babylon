@@ -9,11 +9,20 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
+<<<<<<< HEAD
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	"github.com/babylonlabs-io/babylon/v4/wasmbinding/bindings"
 	lcKeeper "github.com/babylonlabs-io/babylon/v4/x/btclightclient/keeper"
 	checkpointingkeeper "github.com/babylonlabs-io/babylon/v4/x/checkpointing/keeper"
 	epochingkeeper "github.com/babylonlabs-io/babylon/v4/x/epoching/keeper"
+=======
+	bbn "github.com/babylonlabs-io/babylon/v3/types"
+	"github.com/babylonlabs-io/babylon/v3/wasmbinding/bindings"
+	lcKeeper "github.com/babylonlabs-io/babylon/v3/x/btclightclient/keeper"
+	checkpointingkeeper "github.com/babylonlabs-io/babylon/v3/x/checkpointing/keeper"
+	epochingkeeper "github.com/babylonlabs-io/babylon/v3/x/epoching/keeper"
+	zckeeper "github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/keeper"
+>>>>>>> 1a05ecd (chore(mod): update repo to v3 (#1195))
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"

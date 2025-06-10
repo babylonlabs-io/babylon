@@ -7,9 +7,9 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
-	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
-	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
-	btcstkconsumertypes "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
+	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
+	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
+	btcstkconsumertypes "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/stretchr/testify/require"
 

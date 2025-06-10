@@ -4,8 +4,8 @@ import (
 	"context"
 
 	store "cosmossdk.io/store/types"
-	"github.com/babylonlabs-io/babylon/v4/app/keepers"
-	"github.com/babylonlabs-io/babylon/v4/app/upgrades"
+	"github.com/babylonlabs-io/babylon/v3/app/keepers"
+	"github.com/babylonlabs-io/babylon/v3/app/upgrades"
 
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 	"github.com/cosmos/cosmos-sdk/types/module"

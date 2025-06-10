@@ -7,11 +7,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer/chain"
-	"github.com/babylonlabs-io/babylon/v4/test/e2e/containers"
-	"github.com/babylonlabs-io/babylon/v4/test/e2e/initialization"
-	bbn "github.com/babylonlabs-io/babylon/v4/types"
-	btclighttypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
+	"github.com/babylonlabs-io/babylon/v3/test/e2e/configurer/chain"
+	"github.com/babylonlabs-io/babylon/v3/test/e2e/containers"
+	"github.com/babylonlabs-io/babylon/v3/test/e2e/initialization"
+	bbn "github.com/babylonlabs-io/babylon/v3/types"
+	btclighttypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
 )
 
 type Configurer interface {

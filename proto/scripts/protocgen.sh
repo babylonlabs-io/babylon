@@ -19,7 +19,7 @@ cd ..
 # move proto files to the right places
 #
 # Note: Proto files are suffixed with the current binary version.
-cp -r github.com/babylonlabs-io/babylon/v4/* ./
+cp -r github.com/babylonlabs-io/babylon/v3/* ./
 
 rm -rf github.com
 go mod tidy

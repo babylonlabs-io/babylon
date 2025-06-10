@@ -7,10 +7,10 @@ import (
 	"testing"
 	"time"
 
-	v2 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v2"
+	v2 "github.com/babylonlabs-io/babylon/v3/app/upgrades/v2"
 
-	"github.com/babylonlabs-io/babylon/v4/app"
-	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer/config"
+	"github.com/babylonlabs-io/babylon/v3/app"
+	"github.com/babylonlabs-io/babylon/v3/test/e2e/configurer/config"
 	"github.com/stretchr/testify/require"
 )
 

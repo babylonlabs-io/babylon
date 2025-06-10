@@ -14,7 +14,7 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/require"
 
-	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
+	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
 )
 
 func BankKeeper(

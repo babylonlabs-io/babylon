@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	sdkmath "cosmossdk.io/math"
-	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
+	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
 	sec256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
