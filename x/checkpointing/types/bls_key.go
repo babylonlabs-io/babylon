@@ -4,12 +4,8 @@ import (
 	"errors"
 	"fmt"
 
-<<<<<<< HEAD
 	"github.com/babylonlabs-io/babylon/v2/crypto/bls12381"
-=======
-	"github.com/babylonlabs-io/babylon/v4/crypto/bls12381"
 	sdk "github.com/cosmos/cosmos-sdk/types"
->>>>>>> 6ed4afe (fix: checks for pagination in `QueryBlsPublicKeyListRequest` (#1196))
 )
 
 // Validate checks for duplicate ValidatorAddress or BlsPubKey entries.

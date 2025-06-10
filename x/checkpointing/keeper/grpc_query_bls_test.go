@@ -14,22 +14,14 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
-<<<<<<< HEAD
 	"github.com/babylonlabs-io/babylon/v2/app"
 	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
 	testhelper "github.com/babylonlabs-io/babylon/v2/testutil/helper"
+	testkeeper "github.com/babylonlabs-io/babylon/v2/testutil/keeper"
+	"github.com/babylonlabs-io/babylon/v2/testutil/mocks"
 	checkpointingkeeper "github.com/babylonlabs-io/babylon/v2/x/checkpointing/keeper"
 	"github.com/babylonlabs-io/babylon/v2/x/checkpointing/types"
-=======
-	"github.com/babylonlabs-io/babylon/v4/app"
-	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
-	testhelper "github.com/babylonlabs-io/babylon/v4/testutil/helper"
-	testkeeper "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
-	"github.com/babylonlabs-io/babylon/v4/testutil/mocks"
-	checkpointingkeeper "github.com/babylonlabs-io/babylon/v4/x/checkpointing/keeper"
-	"github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
-	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
->>>>>>> 6ed4afe (fix: checks for pagination in `QueryBlsPublicKeyListRequest` (#1196))
+	epochingtypes "github.com/babylonlabs-io/babylon/v2/x/epoching/types"
 )
 
 // FuzzQueryBLSKeySet does the following checks
