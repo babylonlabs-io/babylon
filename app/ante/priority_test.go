@@ -8,9 +8,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/v4/app/ante"
-	btclctypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
-	ftypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
+	"github.com/babylonlabs-io/babylon/v3/app/ante"
+	btclctypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
+	ftypes "github.com/babylonlabs-io/babylon/v3/x/finality/types"
 )
 
 func TestPriorityDecorator(t *testing.T) {

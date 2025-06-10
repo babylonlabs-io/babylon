@@ -10,11 +10,11 @@ import (
 	"time"
 
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer"
-	"github.com/babylonlabs-io/babylon/v4/test/e2e/initialization"
-	bbn "github.com/babylonlabs-io/babylon/v4/types"
-	ct "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
-	itypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
+	"github.com/babylonlabs-io/babylon/v3/test/e2e/configurer"
+	"github.com/babylonlabs-io/babylon/v3/test/e2e/initialization"
+	bbn "github.com/babylonlabs-io/babylon/v3/types"
+	ct "github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
+	itypes "github.com/babylonlabs-io/babylon/v3/x/incentive/types"
 	"github.com/stretchr/testify/suite"
 )
 

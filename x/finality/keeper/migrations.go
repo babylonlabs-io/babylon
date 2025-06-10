@@ -4,7 +4,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	v2 "github.com/babylonlabs-io/babylon/v4/x/finality/migrations/v2"
+	v2 "github.com/babylonlabs-io/babylon/v3/x/finality/migrations/v2"
 )
 
 // Migrator is a struct for handling in-place store migrations.

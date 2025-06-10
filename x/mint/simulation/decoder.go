@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/babylonlabs-io/babylon/v4/x/mint/types"
+	"github.com/babylonlabs-io/babylon/v3/x/mint/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/types/kv"
 )

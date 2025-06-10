@@ -17,12 +17,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/runtime"
 
-	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
-	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
-	keepertest "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
-	bbn "github.com/babylonlabs-io/babylon/v4/types"
-	"github.com/babylonlabs-io/babylon/v4/x/finality/keeper"
-	"github.com/babylonlabs-io/babylon/v4/x/finality/types"
+	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
+	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
+	keepertest "github.com/babylonlabs-io/babylon/v3/testutil/keeper"
+	bbn "github.com/babylonlabs-io/babylon/v3/types"
+	"github.com/babylonlabs-io/babylon/v3/x/finality/keeper"
+	"github.com/babylonlabs-io/babylon/v3/x/finality/types"
 
 	"github.com/stretchr/testify/require"
 )
