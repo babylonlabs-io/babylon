@@ -45,8 +45,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	xauthsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	v1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	gogoprotoio "github.com/cosmos/gogoproto/io"
 	"github.com/otiai10/copy"
@@ -993,13 +995,13 @@ type Consumer struct {
 }
 
 // RegisterConsumer registers a new consumer with the given max_multi_staked_fps limit
-func (d *BabylonAppDriver) RegisterConsumer(consumerID string, maxMultiStakedFps uint32, rollupContractAddr ...string) *Consumer {
+func (d *BabylonAppDriver) RegisterConsumer(consumerID string, consumerMaxMultiStakedFps uint32, rollupContractAddr ...string) *Consumer {
 	msg := &btcstkconsumertypes.MsgRegisterConsumer{
-		Signer:              d.GetDriverAccountAddress().String(),
-		ConsumerId:          consumerID,
-		ConsumerName:        "Test Consumer " + consumerID,
-		ConsumerDescription: "Test consumer for replay tests",
-		MaxMultiStakedFps:   maxMultiStakedFps,
+		Signer:                    d.GetDriverAccountAddress().String(),
+		ConsumerId:                consumerID,
+		ConsumerName:              "Test Consumer " + consumerID,
+		ConsumerDescription:       "Test consumer for replay tests",
+		ConsumerMaxMultiStakedFps: consumerMaxMultiStakedFps,
 	}
 
 	// If rollup contract address is provided, set it
@@ -1011,7 +1013,7 @@ func (d *BabylonAppDriver) RegisterConsumer(consumerID string, maxMultiStakedFps
 
 	return &Consumer{
 		ID:                consumerID,
-		MaxMultiStakedFps: maxMultiStakedFps,
+		MaxMultiStakedFps: consumerMaxMultiStakedFps,
 	}
 }
 
@@ -1023,4 +1025,19 @@ func (d *BabylonAppDriver) CreateFinalityProviderForConsumer(consumer *Consumer)
 	fp.RegisterFinalityProvider(consumer.ID)
 
 	return fp
+}
+
+// UpdateBabylonMaxMultiStakedFps updates Babylon's max_multi_staked_fps parameter via governance
+func (d *BabylonAppDriver) UpdateBabylonMaxMultiStakedFps(newLimit uint32) {
+	// Create the update params message
+	updateParamsMsg := &btcstkconsumertypes.MsgUpdateParams{
+		Authority: authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		Params: btcstkconsumertypes.Params{
+			PermissionedIntegration: false,
+			MaxMultiStakedFps:       newLimit,
+		},
+	}
+
+	// Submit via governance and wait for it to pass
+	d.GovPropWaitPass(updateParamsMsg)
 }

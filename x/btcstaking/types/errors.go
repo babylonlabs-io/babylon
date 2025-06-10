@@ -37,4 +37,5 @@ var (
 	ErrLargestBtcReorgNotFound    = errorsmod.Register(ModuleName, 1128, "there is no BTC reorg currently set")
 	ErrTooManyFPs                 = errorsmod.Register(ModuleName, 1129, "too many finality providers for consumer")
 	ErrTooManyFPsFromSameConsumer = errorsmod.Register(ModuleName, 1130, "too many finality providers from same consumer")
+	ErrTooManyBabylonFPs          = errorsmod.Register(ModuleName, 1131, "too many Babylon finality providers, only exactly 1 allowed per delegation")
 )

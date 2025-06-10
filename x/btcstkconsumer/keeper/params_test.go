@@ -16,3 +16,72 @@ func TestGetParams(t *testing.T) {
 	require.NoError(t, k.SetParams(ctx, params))
 	require.EqualValues(t, params, k.GetParams(ctx))
 }
+
+func TestGetMaxMultiStakedFps(t *testing.T) {
+	k, ctx := keepertest.BTCStkConsumerKeeper(t)
+
+	// Test default value
+	expectedDefault := uint32(2)
+	require.Equal(t, expectedDefault, k.GetMaxMultiStakedFps(ctx))
+
+	// Test setting custom value
+	params := types.Params{
+		PermissionedIntegration: false,
+		MaxMultiStakedFps:       5,
+	}
+	require.NoError(t, k.SetParams(ctx, params))
+	require.Equal(t, uint32(5), k.GetMaxMultiStakedFps(ctx))
+}
+
+func TestParamsValidation(t *testing.T) {
+	tests := []struct {
+		name    string
+		params  types.Params
+		wantErr bool
+		errMsg  string
+	}{
+		{
+			name: "valid params with default MaxMultiStakedFps",
+			params: types.DefaultParams(),
+			wantErr: false,
+		},
+		{
+			name: "valid params with acceptable MaxMultiStakedFps (> 2)",
+			params: types.Params{
+				PermissionedIntegration: true,
+				MaxMultiStakedFps:       4,
+			},
+			wantErr: false,
+		},
+		{
+			name: "invalid params with MaxMultiStakedFps too low (1)",
+			params: types.Params{
+				PermissionedIntegration: false,
+				MaxMultiStakedFps:       1,
+			},
+			wantErr: true,
+			errMsg:  types.ErrInvalidMaxMultiStakedFps.Error(),
+		},
+		{
+			name: "invalid params with MaxMultiStakedFps too low (0)",
+			params: types.Params{
+				PermissionedIntegration: false,
+				MaxMultiStakedFps:       0,
+			},
+			wantErr: true,
+			errMsg:  types.ErrInvalidMaxMultiStakedFps.Error(),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.params.Validate()
+			if tt.wantErr {
+				require.Error(t, err)
+				require.ErrorIs(t, err, types.ErrInvalidMaxMultiStakedFps)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}

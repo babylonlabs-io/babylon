@@ -40,6 +40,6 @@ func FuzzConsumerRegistry(f *testing.F) {
 		require.Equal(t, validConsumer.ConsumerId, retrievedConsumer.ConsumerId)
 		require.Equal(t, validConsumer.ConsumerName, retrievedConsumer.ConsumerName)
 		require.Equal(t, validConsumer.ConsumerDescription, retrievedConsumer.ConsumerDescription)
-		require.Equal(t, validConsumer.MaxMultiStakedFps, retrievedConsumer.MaxMultiStakedFps)
+		require.Equal(t, validConsumer.ConsumerMaxMultiStakedFps, retrievedConsumer.ConsumerMaxMultiStakedFps)
 	})
 }
