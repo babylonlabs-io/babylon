@@ -86,7 +86,6 @@ func DefaultBabylonConfig() BabylonConfig {
 }
 
 // defaultBabylonHome returns the default Babylon node directory, which is $HOME/.babylond
-// copied from https://github.com/babylonlabs-io/babylon/v3/blob/648b804bc492ded2cb826ba261d7164b4614d78a/app/app.go#L205-L210
 func defaultBabylonHome() string {
 	userHomeDir, err := os.UserHomeDir()
 	if err != nil {
