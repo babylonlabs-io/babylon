@@ -7,6 +7,7 @@ import (
 	"cosmossdk.io/math"
 	bbn "github.com/babylonlabs-io/babylon/v2/types"
 	"github.com/btcsuite/btcd/blockchain"
+	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -22,7 +23,20 @@ var (
 	_ sdk.Msg = &MsgAddCovenantSigs{}
 	_ sdk.Msg = &MsgBTCUndelegate{}
 	_ sdk.Msg = &MsgAddBTCDelegationInclusionProof{}
+	// Ensure msgs implement ValidateBasic
+	_ sdk.HasValidateBasic = &MsgUpdateParams{}
+	_ sdk.HasValidateBasic = &MsgCreateFinalityProvider{}
+	_ sdk.HasValidateBasic = &MsgEditFinalityProvider{}
+	_ sdk.HasValidateBasic = &MsgCreateBTCDelegation{}
+	_ sdk.HasValidateBasic = &MsgAddCovenantSigs{}
+	_ sdk.HasValidateBasic = &MsgBTCUndelegate{}
+	_ sdk.HasValidateBasic = &MsgAddBTCDelegationInclusionProof{}
+	_ sdk.HasValidateBasic = &MsgSelectiveSlashingEvidence{}
 )
+
+func (m MsgUpdateParams) ValidateBasic() error {
+	return m.Params.Validate()
+}
 
 func (m *MsgCreateFinalityProvider) ValidateBasic() error {
 	if err := m.Commission.Validate(); err != nil {
@@ -161,6 +175,21 @@ func (m *MsgAddBTCDelegationInclusionProof) ValidateBasic() error {
 
 	if _, err := sdk.AccAddressFromBech32(m.Signer); err != nil {
 		return fmt.Errorf("invalid signer addr: %s - %v", m.Signer, err)
+	}
+
+	return nil
+}
+
+func (m *MsgSelectiveSlashingEvidence) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(m.Signer); err != nil {
+		return fmt.Errorf("invalid signer addr: %s - %v", m.Signer, err)
+	}
+	if len(m.StakingTxHash) != chainhash.MaxHashStringSize {
+		return fmt.Errorf("staking tx hash is not %d", chainhash.MaxHashStringSize)
+	}
+
+	if len(m.RecoveredFpBtcSk) != btcec.PrivKeyBytesLen {
+		return fmt.Errorf("malformed BTC SK. Expected length: %d, got %d", btcec.PrivKeyBytesLen, len(m.RecoveredFpBtcSk))
 	}
 
 	return nil
