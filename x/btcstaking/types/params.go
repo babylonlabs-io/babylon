@@ -5,6 +5,7 @@ import (
 	"math"
 	"sort"
 
+	"cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
@@ -227,6 +228,11 @@ func (p Params) Validate() error {
 
 	if !btcstaking.IsSlashingRateValid(p.SlashingRate) {
 		return btcstaking.ErrInvalidSlashingRate
+	}
+
+	if p.UnbondingFeeSat <= 0 || p.UnbondingFeeSat >= p.MinStakingValueSat {
+		// Unbonding fee must be positive and cannot be greater than the minimum staking amount
+		return errors.Wrapf(btcstaking.ErrInvalidUnbondingFee, "(%d) is not a valid unbonding fee value", p.UnbondingFeeSat)
 	}
 
 	if err := validateNoDustSlashingOutput(&p); err != nil {
