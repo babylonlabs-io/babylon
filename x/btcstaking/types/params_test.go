@@ -5,12 +5,8 @@ import (
 
 	"cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
-<<<<<<< HEAD
+	"github.com/babylonlabs-io/babylon/v2/btcstaking"
 	"github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
-=======
-	"github.com/babylonlabs-io/babylon/v4/btcstaking"
-	"github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
->>>>>>> eadc02e (fix: bad ubd fee in btcstaking Params (#1197))
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"

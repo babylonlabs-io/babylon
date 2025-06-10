@@ -5,19 +5,18 @@ import (
 	"testing"
 	"time"
 
-<<<<<<< HEAD
-=======
 	"cosmossdk.io/math"
 	sdkmath "cosmossdk.io/math"
-	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
-	"github.com/babylonlabs-io/babylon/v4/btcstaking"
-	btcstktypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+	appparams "github.com/babylonlabs-io/babylon/v2/app/params"
+	"github.com/babylonlabs-io/babylon/v2/btcstaking"
+	bbn "github.com/babylonlabs-io/babylon/v2/types"
+	btcstktypes "github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/v2/x/checkpointing/types"
 	"github.com/cometbft/cometbft/crypto/ed25519"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
->>>>>>> eadc02e (fix: bad ubd fee in btcstaking Params (#1197))
 	"github.com/stretchr/testify/require"
 
 	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
@@ -539,8 +538,6 @@ func TestJailingFinalityProvider(t *testing.T) {
 	activeFps := driver.GetActiveFpsAtCurrentHeight(t)
 	require.Equal(t, 1, len(activeFps))
 }
-<<<<<<< HEAD
-=======
 
 func TestBadWrappedCreateValidator(t *testing.T) {
 	t.Parallel()
@@ -702,4 +699,3 @@ func TestBadUnbondingFeeParams(t *testing.T) {
 	require.Equal(t, uint32(12), txResults[0].Code)
 	require.Contains(t, txResults[0].Log, btcstaking.ErrInvalidUnbondingFee.Error())
 }
->>>>>>> eadc02e (fix: bad ubd fee in btcstaking Params (#1197))
