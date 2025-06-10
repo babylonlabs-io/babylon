@@ -421,6 +421,20 @@ func SendTxWithMessagesSuccess(
 	require.Equal(t, result.Code, uint32(0))
 }
 
+func SendTxWithMessages(
+	t *testing.T,
+	app *babylonApp.BabylonApp,
+	senderInfo *SenderInfo,
+	msgs ...sdk.Msg,
+) (*abci.ResponseCheckTx, error) {
+	txBytes := createTx(t, app.TxConfig(), senderInfo, defaultGasLimit, defaultFeeCoin, msgs...)
+
+	return app.CheckTx(&abci.RequestCheckTx{
+		Tx:   txBytes,
+		Type: abci.CheckTxType_New,
+	})
+}
+
 func DefaultSendTxWithMessagesSuccess(
 	t *testing.T,
 	app *babylonApp.BabylonApp,
@@ -597,6 +611,23 @@ func (d *BabylonAppDriver) GenerateNewBlockAssertExecutionSuccess() {
 
 		require.Equal(d.t, tx.Code, uint32(0), tx.Log)
 	}
+}
+
+func (d *BabylonAppDriver) GenerateNewBlockAssertExecutionFailure() []*abci.ExecTxResult {
+	response := d.GenerateNewBlock()
+	var txResults []*abci.ExecTxResult
+
+	for _, tx := range response.TxResults {
+		// ignore checkpoint txs
+		if tx.GasWanted == 0 {
+			continue
+		}
+
+		require.NotEqual(d.t, tx.Code, uint32(0), tx.Log)
+		txResults = append(txResults, tx)
+	}
+
+	return txResults
 }
 
 func (d *BabylonAppDriver) GetDriverAccountAddress() sdk.AccAddress {
