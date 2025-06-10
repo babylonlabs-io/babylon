@@ -7,10 +7,10 @@ import (
 
 	corestoretypes "cosmossdk.io/core/store"
 
-	ckpttypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
+	ckpttypes "github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
 
 	"cosmossdk.io/log"
-	"github.com/babylonlabs-io/babylon/v4/x/monitor/types"
+	"github.com/babylonlabs-io/babylon/v3/x/monitor/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

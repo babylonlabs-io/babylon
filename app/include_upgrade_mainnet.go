@@ -3,11 +3,11 @@
 package app
 
 import (
-	"github.com/babylonlabs-io/babylon/v4/app/upgrades"
-	v1 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v1"
-	"github.com/babylonlabs-io/babylon/v4/app/upgrades/v1/mainnet"
-	v1_1 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v1_1"
-	v2 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v2"
+	"github.com/babylonlabs-io/babylon/v3/app/upgrades"
+	v1 "github.com/babylonlabs-io/babylon/v3/app/upgrades/v1"
+	"github.com/babylonlabs-io/babylon/v3/app/upgrades/v1/mainnet"
+	v1_1 "github.com/babylonlabs-io/babylon/v3/app/upgrades/v1_1"
+	v2 "github.com/babylonlabs-io/babylon/v3/app/upgrades/v2"
 )
 
 var WhitelistedChannelsID = map[string]struct{}{

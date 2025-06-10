@@ -7,7 +7,7 @@ import (
 	"strconv"
 
 	"cosmossdk.io/store/rootmulti"
-	"github.com/babylonlabs-io/babylon/v4/types"
+	"github.com/babylonlabs-io/babylon/v3/types"
 	"github.com/cometbft/cometbft/crypto/merkle"
 	cmtcrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 )

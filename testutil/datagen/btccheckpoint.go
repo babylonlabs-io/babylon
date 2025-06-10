@@ -3,7 +3,7 @@ package datagen
 import (
 	"math/rand"
 
-	"github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
+	"github.com/babylonlabs-io/babylon/v3/x/btccheckpoint/types"
 )
 
 func RandomTxKey(r *rand.Rand) *types.TransactionKey {
