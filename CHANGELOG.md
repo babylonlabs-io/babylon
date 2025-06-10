@@ -82,10 +82,6 @@ check of rewards
 - [#1000](https://github.com/babylonlabs-io/babylon/pull/1000) Add multi-staking replay test
 - [#702](https://github.com/babylonlabs-io/babylon/pull/702) Add test for small rewards in fee collector
 - [#1040](https://github.com/babylonlabs-io/babylon/pull/1040) Rename ETH L2 to rollup
-- [#1191](https://github.com/babylonlabs-io/babylon/pull/1191) fix: update fp commission
-- [#1109](https://github.com/babylonlabs-io/babylon/pull/1190) Use glibc for goreleaser
-- [#1197](https://github.com/babylonlabs-io/babylon/pull/1197) fix: add validate of bad unbonding fee in btcstaking params.
-- [#1211](https://github.com/babylonlabs-io/babylon/pull/1211) Update upgrade handler name to v2rc4
 - [#1060](https://github.com/babylonlabs-io/babylon/pull/1060) Optimize `PubRandCommit` lookup in `x/finality` module
 
 ### State Machine Breaking
@@ -93,7 +89,6 @@ check of rewards
 - [#402](https://github.com/babylonlabs-io/babylon/pull/402) **Babylon multi-staking support**.
 This PR contains a series of PRs on multi-staking support and BTC staking integration.
 - [#944](https://github.com/babylonlabs-io/babylon/pull/944) Add max_multi_staked_fps validation and single FP per consumer constraint in BTC delegations.
-- [#1207](https://github.com/babylonlabs-io/babylon/pull/1207) Update wasmd to [v0.54.1](https://github.com/CosmWasm/wasmd/releases/tag/v0.54.1)
 
 ### Bug fixes
 
@@ -102,6 +97,22 @@ This PR contains a series of PRs on multi-staking support and BTC staking integr
 - [#525](https://github.com/babylonlabs-io/babylon/pull/525) fix: add back `NewIBCHeaderDecorator` post handler
 - [#964](https://github.com/babylonlabs-io/babylon/pull/964) fix: stateless validation `ValidateBasic` of
 `MsgWrappedCreateValidator` to avoid panic in transaction submission
+
+## v2.0.0-rc.4
+
+### Improvements
+
+- [#1191](https://github.com/babylonlabs-io/babylon/pull/1191) fix: update fp commission
+- [#1109](https://github.com/babylonlabs-io/babylon/pull/1109) Use glibc for goreleaser
+- [#1197](https://github.com/babylonlabs-io/babylon/pull/1197) fix: add validate of bad unbonding fee in btcstaking params.
+- [#1211](https://github.com/babylonlabs-io/babylon/pull/1211) Update upgrade handler name to v2rc4
+
+### State Machine Breaking
+
+- [#1207](https://github.com/babylonlabs-io/babylon/pull/1207) Update wasmd to [v0.54.1](https://github.com/CosmWasm/wasmd/releases/tag/v0.54.1)
+
+### Bug fixes
+
 - [#1196](https://github.com/babylonlabs-io/babylon/pull/1196) fix: add pagination in `QueryBlsPublicKeyListRequest`.
 
 ## v2.0.0-rc.3
