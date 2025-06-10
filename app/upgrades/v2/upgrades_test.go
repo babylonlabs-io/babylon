@@ -83,8 +83,8 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 				s.Require().Len(res.RateLimits, len(usedChannels)-1) // one is not whitelisted and was not rate limited
 
 				for _, rl := range res.RateLimits {
-					if strings.EqualFold(rl.Path.ChannelId, NotWhitelistedChannelID) {
-						s.Require().FailNowf("channel ID: %s shouldn't have a rate limit", rl.Path.ChannelId)
+					if strings.EqualFold(rl.Path.ChannelOrClientId, NotWhitelistedChannelID) {
+						s.Require().FailNowf("channel ID: %s shouldn't have a rate limit", rl.Path.ChannelOrClientId)
 					}
 					s.Require().Equal(v2.DefaultDailyLimit, rl.Quota.MaxPercentRecv)
 					s.Require().Equal(v2.DefaultDailyLimit, rl.Quota.MaxPercentSend)

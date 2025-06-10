@@ -2,6 +2,10 @@ package app_test
 
 import (
 	"fmt"
+	erc20types "github.com/cosmos/evm/x/erc20/types"
+	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
+	precisebanktypes "github.com/cosmos/evm/x/precisebank/types"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 	"testing"
 
 	tokenfactorytypes "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/types"
@@ -39,6 +43,10 @@ var (
 		incentivetypes.ModuleName:    nil, // this line is needed to create an account for incentive module
 		tokenfactorytypes.ModuleName: {authtypes.Minter, authtypes.Burner},
 		icatypes.ModuleName:          nil,
+		evmtypes.ModuleName:          {authtypes.Minter, authtypes.Burner},
+		erc20types.ModuleName:        {authtypes.Minter, authtypes.Burner},
+		feemarkettypes.ModuleName:    nil,
+		precisebanktypes.ModuleName:  {authtypes.Minter, authtypes.Burner},
 	}
 )
 
@@ -97,6 +105,8 @@ func TestBabylonBlockedAddrs(t *testing.T) {
 		0,
 		&blsSigner,
 		appOpts,
+		babylonApp.EVMChainID,
+		babylonApp.EVMAppOptions,
 		babylonApp.EmptyWasmOpts,
 	)
 	_, err = app2.ExportAppStateAndValidators(false, []string{}, []string{})

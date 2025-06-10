@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	servercfg "github.com/cosmos/evm/server/config"
 	"net"
 	"os"
 	"path/filepath"
@@ -32,6 +33,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	evmtypes "github.com/cosmos/evm/crypto/hd"
 	"github.com/spf13/cobra"
 
 	appkeepers "github.com/babylonlabs-io/babylon/v4/app/keepers"
@@ -55,6 +57,8 @@ var (
 	flagTimeBetweenBlocks       = "time-between-blocks-seconds"
 )
 
+const DEV0_MNEMONIC = "doll midnight silk carpet brush boring pluck office gown inquiry duck chief aim exit gain never tennis crime fragile ship cloud surface exotic patch"
+
 // TestnetCmd initializes all files for tendermint testnet and application
 func TestnetCmd(mbm module.BasicManager, genBalIterator banktypes.GenesisBalancesIterator) *cobra.Command {
 	cmd := &cobra.Command{
@@ -70,6 +74,8 @@ Example:
 	`,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
+			clientCtx = clientCtx.WithKeyringOptions(evmtypes.EthSecp256k1Option())
+
 			if err != nil {
 				return err
 			}
@@ -197,6 +203,11 @@ func InitTestnet(
 	babylonConfig.GRPC.Enable = true
 	babylonConfig.GRPC.Address = "0.0.0.0:9090"
 
+	// Update babylonConfig to include Ethereum JSON-RPC settings
+	babylonConfig.EVM = *servercfg.DefaultEVMConfig()
+	babylonConfig.JSONRPC = *servercfg.DefaultJSONRPCConfig()
+	babylonConfig.JSONRPC.Enable = true
+
 	// Disable IAVL cache by default as Babylon leaf nodes can be large, and in case
 	// of big cache values, Babylon node can run out of memory.
 	babylonConfig.IAVLCacheSize = 0
@@ -243,7 +254,7 @@ func InitTestnet(
 		}
 
 		// generate account key
-		kb, err := keyring.New(sdk.KeyringServiceName(), keyringBackend, nodeDir, inBuf, clientCtx.Codec)
+		kb, err := keyring.New(sdk.KeyringServiceName(), keyringBackend, nodeDir, inBuf, clientCtx.Codec, evmtypes.EthSecp256k1Option())
 
 		if err != nil {
 			return err
@@ -406,11 +417,53 @@ func InitTestnet(
 		}
 	}
 
+	// EVM Dev0 account creation
+	nodeDirName := fmt.Sprintf("%s%d", nodeDirPrefix, 0)
+	nodeDir := filepath.Join(outputDir, nodeDirName, nodeDaemonHome)
+	// Create keyring for the custom account
+	kb, err := keyring.New(
+		sdk.KeyringServiceName(),
+		keyringBackend,
+		nodeDir, // Use main output dir for this key
+		inBuf,
+		clientCtx.Codec,
+		evmtypes.EthSecp256k1Option(),
+	)
+	if err != nil {
+		return err
+	}
+
+	keyringAlgos, _ := kb.SupportedAlgorithms()
+	algo, err := keyring.NewSigningAlgoFromString("eth_secp256k1", keyringAlgos)
+	if err != nil {
+		return err
+	}
+
+	addr, _, err := testutil.GenerateSaveCoinKey(
+		kb,
+		"dev0",
+		DEV0_MNEMONIC,
+		true,
+		algo,
+	)
+
+	if err != nil {
+		_ = os.RemoveAll(outputDir)
+		return err
+	}
+
+	coins := sdk.Coins{
+		sdk.NewCoin("ubbn", math.NewInt(10e6)),
+	}
+
+	genBalances = append(genBalances, banktypes.Balance{Address: addr.String(), Coins: coins.Sort()})
+	genAccounts = append(genAccounts, authtypes.NewBaseAccount(addr, nil, 0, 0))
+
 	if err := initGenFiles(clientCtx, mbm, chainID, genAccounts, genBalances, genFiles, numValidators, genesisParams); err != nil {
 		return err
 	}
 
-	err := collectGenFiles(
+	err = collectGenFiles(
 		clientCtx, nodeConfig, chainID, nodeIDs, genKeys, numValidators,
 		outputDir, nodeDirPrefix, nodeDaemonHome, genBalIterator,
 	)
