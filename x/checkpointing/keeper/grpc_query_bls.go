@@ -6,7 +6,7 @@ import (
 
 	"github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/jinzhu/copier"
+	"github.com/cosmos/cosmos-sdk/types/query"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -21,34 +21,26 @@ func (k Keeper) BlsPublicKeyList(c context.Context, req *types.QueryBlsPublicKey
 		return nil, err
 	}
 
-	if req.Pagination == nil {
-		return &types.QueryBlsPublicKeyListResponse{
-			ValidatorWithBlsKeys: convertToBlsPublicKeyListResponse(valBLSKeys),
-		}, nil
+	total := uint64(len(valBLSKeys))
+	offset := req.Pagination.GetOffset()
+	limit := req.Pagination.GetLimit()
+
+	if offset > total {
+		return nil, status.Errorf(codes.InvalidArgument, "pagination offset out of range: offset %d higher than total %d", offset, total)
 	}
 
-	total := uint64(len(valBLSKeys))
-	start := req.Pagination.Offset
-	if start > total-1 {
-		return nil, status.Error(codes.InvalidArgument, "pagination offset out of range")
-	}
-	var end uint64
-	if req.Pagination.Limit == 0 {
-		end = total
-	} else {
-		end = req.Pagination.Limit + start
-	}
-	if end > total {
+	end := offset + limit
+	if limit == 0 || end > total {
 		end = total
 	}
-	var copiedValBLSKeys []*types.ValidatorWithBlsKey
-	err = copier.Copy(&copiedValBLSKeys, valBLSKeys[start:end])
-	if err != nil {
-		return nil, err
-	}
+
+	paginated := valBLSKeys[offset:end]
 
 	return &types.QueryBlsPublicKeyListResponse{
-		ValidatorWithBlsKeys: convertToBlsPublicKeyListResponse(copiedValBLSKeys),
+		ValidatorWithBlsKeys: convertToBlsPublicKeyListResponse(paginated),
+		Pagination: &query.PageResponse{
+			Total: total,
+		},
 	}, nil
 }
 

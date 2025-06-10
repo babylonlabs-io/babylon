@@ -6,10 +6,15 @@ import (
 	"time"
 
 	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
+	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
+	"github.com/babylonlabs-io/babylon/v4/btcstaking"
+	btcstktypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 	"github.com/cometbft/cometbft/crypto/ed25519"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+
 	"github.com/stretchr/testify/require"
 
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
@@ -653,4 +658,40 @@ func TestMultiConsumerDelegation(t *testing.T) {
 	// After replay we should have the same apphash and last block height
 	require.Equal(t, driver.GetLastState().LastBlockHeight, replayer.LastState.LastBlockHeight)
 	require.Equal(t, driver.GetLastState().AppHash, replayer.LastState.AppHash)
+}
+
+func TestBadUnbondingFeeParams(t *testing.T) {
+	t.Parallel()
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	d := NewBabylonAppDriverTmpDir(r, t)
+	d.GenerateNewBlock()
+
+	numBlocksFinalized := uint64(2)
+	scn := NewStandardScenario(d)
+	scn.InitScenario(2, 1)
+
+	scn.FinalityFinalizeBlocksAllVotes(scn.activationHeight, numBlocksFinalized)
+
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	btcStkK := d.App.BTCStakingKeeper
+	p := btcStkK.GetParams(d.Ctx())
+
+	// bad param creation
+	p.BtcActivationHeight += 10
+	p.MinStakingValueSat = 100000
+	p.UnbondingFeeSat = -1
+	p.SlashingRate = sdkmath.LegacyNewDecWithPrec(1, 1)
+
+	prop := btcstktypes.MsgUpdateParams{
+		Authority: appparams.AccGov.String(),
+		Params:    p,
+	}
+	msgToSend := d.NewGovProp(&prop)
+	d.SendTxWithMessagesSuccess(t, d.SenderInfo, defaultGasLimit, defaultFeeCoin, msgToSend)
+
+	txResults := d.GenerateNewBlockAssertExecutionFailure()
+	require.Len(t, txResults, 1)
+	require.Equal(t, uint32(12), txResults[0].Code)
+	require.Contains(t, txResults[0].Log, btcstaking.ErrInvalidUnbondingFee.Error())
 }

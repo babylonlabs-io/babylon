@@ -6,16 +6,22 @@ import (
 	"testing"
 
 	"cosmossdk.io/math"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/types/query"
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/babylonlabs-io/babylon/v4/app"
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
 	testhelper "github.com/babylonlabs-io/babylon/v4/testutil/helper"
+	testkeeper "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
+	"github.com/babylonlabs-io/babylon/v4/testutil/mocks"
 	checkpointingkeeper "github.com/babylonlabs-io/babylon/v4/x/checkpointing/keeper"
 	"github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
+	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 )
 
 // FuzzQueryBLSKeySet does the following checks
@@ -111,4 +117,152 @@ func FuzzQueryBLSKeySet(f *testing.F) {
 		require.NoError(t, err)
 		require.Len(t, resp.ValidatorWithBlsKeys, n)
 	})
+}
+
+func TestBlsPublicKeyList(t *testing.T) {
+	epochWithVals := uint64(1)
+	epochWithoutVals := epochWithVals + 10
+	expTotalVals := uint64(4)
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	vals, _ := datagen.GenerateValidatorSetWithBLSPrivKeys(int(expTotalVals))
+	expReturn := make([]epochingtypes.Validator, len(vals.ValSet))
+	for i, v := range vals.ValSet {
+		valAddr, err := v.Addr()
+		require.NoError(t, err)
+
+		expReturn[i] = epochingtypes.Validator{
+			Addr:  valAddr,
+			Power: int64(v.VotingPower),
+		}
+	}
+
+	ek := mocks.NewMockEpochingKeeper(ctrl)
+	ek.EXPECT().GetValidatorSet(gomock.Any(), epochWithVals).Return(expReturn).AnyTimes()
+	ek.EXPECT().GetValidatorSet(gomock.Any(), epochWithoutVals).Return(epochingtypes.ValidatorSet{}).AnyTimes()
+
+	k, ctx, _ := testkeeper.CheckpointingKeeper(t, ek, nil)
+
+	for _, v := range vals.ValSet {
+		valAddr, err := v.Addr()
+		require.NoError(t, err)
+
+		k.RegistrationState(ctx).CreateRegistration(v.BlsPubKey, valAddr)
+	}
+
+	tcs := []struct {
+		name        string
+		req         *types.QueryBlsPublicKeyListRequest
+		expectErr   error
+		expectCount uint64
+		offset      uint64
+		total       uint64
+	}{
+		{
+			name: "no pagination",
+			req: &types.QueryBlsPublicKeyListRequest{
+				EpochNum:   1,
+				Pagination: nil,
+			},
+			expectErr:   nil,
+			expectCount: expTotalVals,
+			total:       expTotalVals,
+		},
+		{
+			name: "limit 2 offset 0",
+			req: &types.QueryBlsPublicKeyListRequest{
+				EpochNum: epochWithVals,
+				Pagination: &query.PageRequest{
+					Limit:  2,
+					Offset: 0,
+				},
+			},
+			expectErr:   nil,
+			expectCount: 2,
+			offset:      0,
+			total:       expTotalVals,
+		},
+		{
+			name: "limit 2 offset 2",
+			req: &types.QueryBlsPublicKeyListRequest{
+				EpochNum: epochWithVals,
+				Pagination: &query.PageRequest{
+					Limit:  2,
+					Offset: 2,
+				},
+			},
+			expectErr:   nil,
+			expectCount: 2,
+			offset:      2,
+			total:       expTotalVals,
+		},
+		{
+			name: "offset beyond total",
+			req: &types.QueryBlsPublicKeyListRequest{
+				EpochNum: epochWithVals,
+				Pagination: &query.PageRequest{
+					Limit:  2,
+					Offset: 10,
+				},
+			},
+			expectErr: status.Errorf(codes.InvalidArgument, "pagination offset out of range: offset %d higher than total %d", 10, expTotalVals),
+		},
+		{
+			name: "limit zero returns all from offset",
+			req: &types.QueryBlsPublicKeyListRequest{
+				EpochNum: epochWithVals,
+				Pagination: &query.PageRequest{
+					Limit:  0,
+					Offset: 1,
+				},
+			},
+			expectErr:   nil,
+			expectCount: 3,
+			offset:      1,
+			total:       expTotalVals,
+		},
+		{
+			name: "offset equal than total",
+			req: &types.QueryBlsPublicKeyListRequest{
+				EpochNum: epochWithVals,
+				Pagination: &query.PageRequest{
+					Offset: expTotalVals,
+				},
+			},
+			expectErr:   nil,
+			expectCount: 0, // set the offset to the limit
+			offset:      expTotalVals,
+			total:       expTotalVals,
+		},
+		{
+			name: "epoch without vals",
+			req: &types.QueryBlsPublicKeyListRequest{
+				EpochNum: epochWithoutVals,
+			},
+			expectErr:   nil,
+			expectCount: 0,
+			offset:      0,
+			total:       expTotalVals,
+		},
+	}
+
+	for _, tc := range tcs {
+		t.Run(tc.name, func(t *testing.T) {
+			resp, err := k.BlsPublicKeyList(ctx, tc.req)
+			if tc.expectErr != nil {
+				require.EqualError(t, err, tc.expectErr.Error())
+				return
+			}
+
+			require.NoError(t, err)
+			require.Len(t, resp.ValidatorWithBlsKeys, int(tc.expectCount))
+
+			if tc.req.Pagination != nil {
+				require.NotNil(t, resp.Pagination)
+				require.Equal(t, tc.total, resp.Pagination.Total)
+			}
+		})
+	}
 }
