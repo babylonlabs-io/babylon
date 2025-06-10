@@ -42,6 +42,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#1191](https://github.com/babylonlabs-io/babylon/pull/1191) fix: update fp commission
 - [#1109](https://github.com/babylonlabs-io/babylon/pull/1190) Use glibc for goreleaser
 
+<<<<<<< HEAD
+=======
+### State Machine Breaking
+
+- [#402](https://github.com/babylonlabs-io/babylon/pull/402) **Babylon multi-staking support**.
+This PR contains a series of PRs on multi-staking support and BTC staking integration.
+- [#944](https://github.com/babylonlabs-io/babylon/pull/944) Add max_multi_staked_fps validation and single FP per consumer constraint in BTC delegations.
+
+### Bug fixes
+
+- [#796](https://github.com/babylonlabs-io/babylon/pull/796) fix: goreleaser add `mainnet` build flag to generated binary
+- [#741](https://github.com/babylonlabs-io/babylon/pull/741) chore: fix register consumer CLI
+- [#525](https://github.com/babylonlabs-io/babylon/pull/525) fix: add back `NewIBCHeaderDecorator` post handler
+- [#964](https://github.com/babylonlabs-io/babylon/pull/964) fix: stateless validation `ValidateBasic` of
+`MsgWrappedCreateValidator` to avoid panic in transaction submission
+- [#1196](https://github.com/babylonlabs-io/babylon/pull/1196) fix: add pagination in `QueryBlsPublicKeyListRequest`.
+
+>>>>>>> 6ed4afe (fix: checks for pagination in `QueryBlsPublicKeyListRequest` (#1196))
 ## v2.0.0-rc.3
 
 ### Improvements
