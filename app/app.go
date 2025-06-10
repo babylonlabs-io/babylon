@@ -94,38 +94,6 @@ import (
 	ibctm "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
 	"github.com/spf13/cast"
 
-<<<<<<< HEAD
-	"github.com/babylonlabs-io/babylon/v4/app/ante"
-	appkeepers "github.com/babylonlabs-io/babylon/v4/app/keepers"
-	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
-	"github.com/babylonlabs-io/babylon/v4/app/upgrades"
-	"github.com/babylonlabs-io/babylon/v4/client/docs"
-	bbn "github.com/babylonlabs-io/babylon/v4/types"
-	"github.com/babylonlabs-io/babylon/v4/x/btccheckpoint"
-	btccheckpointtypes "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
-	"github.com/babylonlabs-io/babylon/v4/x/btclightclient"
-	btclightclienttypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
-	"github.com/babylonlabs-io/babylon/v4/x/btcstaking"
-	btcstakingtypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
-	"github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer"
-	bsctypes "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
-	btcstkconsumertypes "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
-	"github.com/babylonlabs-io/babylon/v4/x/checkpointing"
-	"github.com/babylonlabs-io/babylon/v4/x/checkpointing/prepare"
-	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
-	"github.com/babylonlabs-io/babylon/v4/x/checkpointing/vote_extensions"
-	"github.com/babylonlabs-io/babylon/v4/x/epoching"
-	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
-	"github.com/babylonlabs-io/babylon/v4/x/finality"
-	finalitytypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
-	"github.com/babylonlabs-io/babylon/v4/x/incentive"
-	incentivekeeper "github.com/babylonlabs-io/babylon/v4/x/incentive/keeper"
-	incentivetypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
-	"github.com/babylonlabs-io/babylon/v4/x/mint"
-	minttypes "github.com/babylonlabs-io/babylon/v4/x/mint/types"
-	"github.com/babylonlabs-io/babylon/v4/x/monitor"
-	monitortypes "github.com/babylonlabs-io/babylon/v4/x/monitor/types"
-=======
 	"github.com/babylonlabs-io/babylon/v3/app/ante"
 	appkeepers "github.com/babylonlabs-io/babylon/v3/app/keepers"
 	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
@@ -140,7 +108,6 @@ import (
 	btcstakingtypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 	"github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer"
 	bsctypes "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
-	btcstkconsumertypes "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
 	"github.com/babylonlabs-io/babylon/v3/x/checkpointing"
 	"github.com/babylonlabs-io/babylon/v3/x/checkpointing/prepare"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
@@ -156,10 +123,6 @@ import (
 	minttypes "github.com/babylonlabs-io/babylon/v3/x/mint/types"
 	"github.com/babylonlabs-io/babylon/v3/x/monitor"
 	monitortypes "github.com/babylonlabs-io/babylon/v3/x/monitor/types"
-	"github.com/babylonlabs-io/babylon/v3/x/zoneconcierge"
-	zckeeper "github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/keeper"
-	zctypes "github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
->>>>>>> 1a05ecd (chore(mod): update repo to v3 (#1195))
 	"github.com/strangelove-ventures/tokenfactory/x/tokenfactory"
 	tokenfactorytypes "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/types"
 )
@@ -418,7 +381,6 @@ func NewBabylonApp(
 		ratelimittypes.ModuleName,
 		// Integration related modules
 		bsctypes.ModuleName,
-		btcstkconsumertypes.ModuleName,
 		// BTC staking related modules
 		btcstakingtypes.ModuleName,
 		finalitytypes.ModuleName,
@@ -451,7 +413,6 @@ func NewBabylonApp(
 		ratelimittypes.ModuleName,
 		// Integration related modules
 		bsctypes.ModuleName,
-		btcstkconsumertypes.ModuleName,
 		// BTC staking related modules
 		btcstakingtypes.ModuleName,
 		finalitytypes.ModuleName,
@@ -490,7 +451,6 @@ func NewBabylonApp(
 		pfmroutertypes.ModuleName,
 		// Integration related modules
 		bsctypes.ModuleName,
-		btcstkconsumertypes.ModuleName,
 		// BTC staking related modules
 		btcstakingtypes.ModuleName,
 		finalitytypes.ModuleName,

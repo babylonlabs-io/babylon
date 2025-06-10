@@ -8,11 +8,6 @@ import (
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ibctmtypes "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
-<<<<<<< HEAD
-=======
-
-	zctypes "github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
->>>>>>> 1a05ecd (chore(mod): update repo to v3 (#1195))
 )
 
 func GenRandomTMHeader(r *rand.Rand, chainID string, height uint64) *cmtproto.Header {
