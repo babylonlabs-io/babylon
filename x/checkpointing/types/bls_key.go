@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/babylonlabs-io/babylon/v2/crypto/bls12381"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // Validate checks for duplicate ValidatorAddress or BlsPubKey entries.
@@ -38,6 +39,10 @@ func (vs ValidatorWithBlsKeySet) Validate() error {
 	}
 
 	return nil
+}
+
+func (v ValidatorWithBlsKey) Addr() (sdk.ValAddress, error) {
+	return sdk.ValAddressFromBech32(v.ValidatorAddress)
 }
 
 // ValidateBasic stateless validate if the BlsKey is valid

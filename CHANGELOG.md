@@ -42,6 +42,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#1191](https://github.com/babylonlabs-io/babylon/pull/1191) fix: update fp commission
 - [#1109](https://github.com/babylonlabs-io/babylon/pull/1190) Use glibc for goreleaser
 
+### Bug fixes
+
+- [#1196](https://github.com/babylonlabs-io/babylon/pull/1196) fix: add pagination in `QueryBlsPublicKeyListRequest`.
+
 ## v2.0.0-rc.3
 
 ### Improvements
