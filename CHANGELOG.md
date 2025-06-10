@@ -84,6 +84,7 @@ check of rewards
 - [#1040](https://github.com/babylonlabs-io/babylon/pull/1040) Rename ETH L2 to rollup
 - [#1191](https://github.com/babylonlabs-io/babylon/pull/1191) fix: update fp commission
 - [#1109](https://github.com/babylonlabs-io/babylon/pull/1190) Use glibc for goreleaser
+- [#1197](https://github.com/babylonlabs-io/babylon/pull/1197) fix: add validate of bad unbonding fee in btcstaking params.
 
 ### State Machine Breaking
 
