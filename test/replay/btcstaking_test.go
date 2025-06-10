@@ -5,11 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"cosmossdk.io/math"
 	sdkmath "cosmossdk.io/math"
-	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
-	"github.com/babylonlabs-io/babylon/v4/btcstaking"
-	btcstktypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 	"github.com/cometbft/cometbft/crypto/ed25519"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -17,6 +13,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
+	"github.com/babylonlabs-io/babylon/v3/btcstaking"
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
 	btcstakingtypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
@@ -565,12 +563,12 @@ func MakeInnerMsg(t *testing.T) *stakingtypes.MsgCreateValidator {
 	msg, err := stakingtypes.NewMsgCreateValidator(
 		valAddr.String(),
 		consPub,
-		sdk.NewCoin("ubbn", math.NewInt(1)), // 1 ubbn
+		sdk.NewCoin("ubbn", sdkmath.NewInt(1)), // 1 ubbn
 		stakingtypes.NewDescription("t", "", "", "", ""),
 		stakingtypes.NewCommissionRates(
-			math.LegacyZeroDec(), math.LegacyZeroDec(), math.LegacyZeroDec(),
+			sdkmath.LegacyZeroDec(), sdkmath.LegacyZeroDec(), sdkmath.LegacyZeroDec(),
 		),
-		math.NewInt(1), // minSelfDelegation = 1
+		sdkmath.NewInt(1), // minSelfDelegation = 1
 	)
 	require.NoError(t, err)
 	return msg
@@ -683,7 +681,7 @@ func TestBadUnbondingFeeParams(t *testing.T) {
 	p.UnbondingFeeSat = -1
 	p.SlashingRate = sdkmath.LegacyNewDecWithPrec(1, 1)
 
-	prop := btcstktypes.MsgUpdateParams{
+	prop := btcstakingtypes.MsgUpdateParams{
 		Authority: appparams.AccGov.String(),
 		Params:    p,
 	}
