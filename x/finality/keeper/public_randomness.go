@@ -21,24 +21,9 @@ import (
 */
 
 // GetPubRandCommitForHeight finds the public randomness commitment that includes the given
-// height for the given finality provider. It tries binary search over the indexed heights,
-// and falls back to reverse iteration if the index is not found.
+// height for the given finality provider. 
+// Uses binary search on the indexed start heights to find the commitment.
 func (k Keeper) GetPubRandCommitForHeight(ctx context.Context, fpBtcPK *bbn.BIP340PubKey, height uint64) (*types.PubRandCommit, error) {
-	commit, err := k.getPubRandCommitByIndex(ctx, fpBtcPK, height)
-	if err == nil {
-		return commit, nil
-	}
-	// error occurred on index
-	// log it with WARN level and proceed with fallback
-	logger := k.Logger(sdk.UnwrapSDKContext(ctx))
-	logger.Warn("getPubRandCommitByIndex failed. Fallback to reverse iterator", "error", err.Error())
-
-	// Fallback to legacy reverse iteration
-	return k.getPubRandCommitByReverseScan(ctx, fpBtcPK, height)
-}
-
-// getPubRandCommitByIndex uses binary search on the indexed start heights to find the commitment.
-func (k Keeper) getPubRandCommitByIndex(ctx context.Context, fpBtcPK *bbn.BIP340PubKey, height uint64) (*types.PubRandCommit, error) {
 	index, err := k.pubRandCommitIndex.Get(ctx, fpBtcPK.MustMarshal())
 	if err != nil {
 		return nil, err
@@ -78,21 +63,6 @@ func (k Keeper) getPubRandCommitByIndex(ctx context.Context, fpBtcPK *bbn.BIP340
 	return &prCommit, nil
 }
 
-// getPubRandCommitByReverseScan performs the legacy reverse scan to find the commitment.
-func (k Keeper) getPubRandCommitByReverseScan(ctx context.Context, fpBtcPK *bbn.BIP340PubKey, height uint64) (*types.PubRandCommit, error) {
-	store := k.pubRandCommitFpStore(ctx, fpBtcPK)
-	iter := store.ReverseIterator(nil, nil)
-	defer iter.Close()
-
-	var prCommit types.PubRandCommit
-	for ; iter.Valid(); iter.Next() {
-		k.cdc.MustUnmarshal(iter.Value(), &prCommit)
-		if prCommit.IsInRange(height) {
-			return &prCommit, nil
-		}
-	}
-	return nil, types.ErrPubRandNotFound
-}
 
 // GetTimestampedPubRandCommitForHeight finds the public randomness commitment that includes the given
 // height for the given finality provider
