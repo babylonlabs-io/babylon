@@ -613,6 +613,23 @@ func (d *BabylonAppDriver) GenerateNewBlockAssertExecutionSuccess() {
 	}
 }
 
+func (d *BabylonAppDriver) GenerateNewBlockAssertExecutionFailure() []*abci.ExecTxResult {
+	response := d.GenerateNewBlock()
+	var txResults []*abci.ExecTxResult
+
+	for _, tx := range response.TxResults {
+		// ignore checkpoint txs
+		if tx.GasWanted == 0 {
+			continue
+		}
+
+		require.NotEqual(d.t, tx.Code, uint32(0), tx.Log)
+		txResults = append(txResults, tx)
+	}
+
+	return txResults
+}
+
 func (d *BabylonAppDriver) GetDriverAccountAddress() sdk.AccAddress {
 	return sdk.AccAddress(d.SenderInfo.privKey.PubKey().Address())
 }

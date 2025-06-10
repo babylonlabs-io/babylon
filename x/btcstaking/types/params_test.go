@@ -3,7 +3,9 @@ package types_test
 import (
 	"testing"
 
+	"cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
+	"github.com/babylonlabs-io/babylon/v3/btcstaking"
 	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
@@ -195,6 +197,15 @@ func TestParamsValidateNoDustSlashing(t *testing.T) {
 				p.SlashingRate = sdkmath.LegacyNewDecWithPrec(1, 3) // 0.001 (0.1%)
 			},
 			expectedError: "",
+		},
+		{
+			name: "negative UnbondingFeeSat",
+			modifyParams: func(p *types.Params) {
+				p.MinStakingValueSat = 100000                       // 0.001 BTC
+				p.UnbondingFeeSat = -1                              // Incorrect value
+				p.SlashingRate = sdkmath.LegacyNewDecWithPrec(1, 1) // 0.1 (10%)
+			},
+			expectedError: errors.Wrapf(btcstaking.ErrInvalidUnbondingFee, "(%d) is not a valid unbonding fee value", -1).Error(),
 		},
 	}
 
