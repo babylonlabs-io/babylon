@@ -43,6 +43,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#1109](https://github.com/babylonlabs-io/babylon/pull/1190) Use glibc for goreleaser
 - [#1197](https://github.com/babylonlabs-io/babylon/pull/1197) fix: add validate of bad unbonding fee in btcstaking params.
 
+<<<<<<< HEAD
+=======
+### State Machine Breaking
+
+- [#402](https://github.com/babylonlabs-io/babylon/pull/402) **Babylon multi-staking support**.
+This PR contains a series of PRs on multi-staking support and BTC staking integration.
+- [#944](https://github.com/babylonlabs-io/babylon/pull/944) Add max_multi_staked_fps validation and single FP per consumer constraint in BTC delegations.
+- [#1207](https://github.com/babylonlabs-io/babylon/pull/1207) Update wasmd to [v0.54.1](https://github.com/CosmWasm/wasmd/releases/tag/v0.54.1)
+
+>>>>>>> a4d84b4 (chore: update wasmd to v0.54.1 (#1207))
 ### Bug fixes
 
 - [#1196](https://github.com/babylonlabs-io/babylon/pull/1196) fix: add pagination in `QueryBlsPublicKeyListRequest`.
