@@ -76,12 +76,12 @@ func TestValidator_Validate(t *testing.T) {
 			valid: true,
 		},
 		{
-			name: "valid address, negative power", // ?? Should this be allowed ??
+			name: "valid address, negative power",
 			validator: types.Validator{
 				Addr:  validAddr,
 				Power: -10,
 			},
-			valid: true,
+			valid: false,
 		},
 	}
 
@@ -171,7 +171,11 @@ func TestValidatorLifecycle_Validate(t *testing.T) {
 func TestDelegationLifecycle_Validate(t *testing.T) {
 	// Generate a valid delegator address
 	validDelAddr := datagen.GenRandomAddress().String()
-	dummyDelState := &types.DelegationStateUpdate{} // Assuming an empty update is valid for testing
+	validValAddr := datagen.GenRandomValidatorAddress().String()
+	dummyDelState := &types.DelegationStateUpdate{
+		State:   types.BondState_BONDED,
+		ValAddr: validValAddr,
+	}
 
 	testCases := []struct {
 		name   string
@@ -231,6 +235,33 @@ func TestDelegationLifecycle_Validate(t *testing.T) {
 			},
 			valid:  false,
 			errMsg: "delegation lyfecycle is empty",
+		},
+		{
+			name: "invalid ValAddr",
+			input: types.DelegationLifecycle{
+				DelAddr: validDelAddr,
+				DelLife: []*types.DelegationStateUpdate{
+					&types.DelegationStateUpdate{
+						ValAddr: "bad",
+					},
+				},
+			},
+			valid:  false,
+			errMsg: "decoding bech32 failed: invalid bech32 string length 3",
+		},
+		{
+			name: "invalid State",
+			input: types.DelegationLifecycle{
+				DelAddr: validDelAddr,
+				DelLife: []*types.DelegationStateUpdate{
+					&types.DelegationStateUpdate{
+						ValAddr: validValAddr,
+						State:   types.BondState(4654),
+					},
+				},
+			},
+			valid:  false,
+			errMsg: "invalid bond state: 465",
 		},
 	}
 

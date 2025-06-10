@@ -28,15 +28,15 @@ func NewCosmosConsumerRegister(consumerId, consumerName, consumerDescription str
 	}
 }
 
-func NewETHL2ConsumerRegister(consumerId, consumerName, consumerDescription string, ethL2FinalityContractAddress string, maxMultiStakedFps uint32) *ConsumerRegister {
+func NewRollupConsumerRegister(consumerId, consumerName, consumerDescription string, rollupFinalityContractAddress string, maxMultiStakedFps uint32) *ConsumerRegister {
 	return &ConsumerRegister{
 		ConsumerId:          consumerId,
 		ConsumerName:        consumerName,
 		ConsumerDescription: consumerDescription,
 		MaxMultiStakedFps:   maxMultiStakedFps,
-		ConsumerMetadata: &ConsumerRegister_EthL2ConsumerMetadata{
-			EthL2ConsumerMetadata: &ETHL2ConsumerMetadata{
-				FinalityContractAddress: ethL2FinalityContractAddress,
+		ConsumerMetadata: &ConsumerRegister_RollupConsumerMetadata{
+			RollupConsumerMetadata: &RollupConsumerMetadata{
+				FinalityContractAddress: rollupFinalityContractAddress,
 			},
 		},
 	}
@@ -46,7 +46,7 @@ func (cr *ConsumerRegister) Type() ConsumerType {
 	if _, ok := cr.ConsumerMetadata.(*ConsumerRegister_CosmosConsumerMetadata); ok {
 		return ConsumerType_COSMOS
 	}
-	return ConsumerType_ETH_L2
+	return ConsumerType_ROLLUP
 }
 
 func (cr *ConsumerRegister) ToResponse() *ConsumerRegisterResponse {
@@ -60,8 +60,8 @@ func (cr *ConsumerRegister) ToResponse() *ConsumerRegisterResponse {
 		switch md := cr.ConsumerMetadata.(type) {
 		case *ConsumerRegister_CosmosConsumerMetadata:
 			resp.CosmosChannelId = md.CosmosConsumerMetadata.ChannelId
-		case *ConsumerRegister_EthL2ConsumerMetadata:
-			resp.EthL2FinalityContractAddress = md.EthL2ConsumerMetadata.FinalityContractAddress
+		case *ConsumerRegister_RollupConsumerMetadata:
+			resp.RollupFinalityContractAddress = md.RollupConsumerMetadata.FinalityContractAddress
 		}
 	}
 	return resp

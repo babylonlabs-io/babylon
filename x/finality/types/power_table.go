@@ -139,16 +139,14 @@ func (dc *VotingPowerDistCache) GetInactiveFinalityProviderSet() map[string]*Fin
 }
 
 func (vpdc VotingPowerDistCache) Validate() error {
-	fpsCount := len(vpdc.FinalityProviders)
-	if vpdc.NumActiveFps > uint32(fpsCount) {
-		return fmt.Errorf("invalid voting power distribution cache. NumActiveFps %d is higher than FPs count %d", vpdc.NumActiveFps, fpsCount)
-	}
-
 	// check fps are unique and total voting power is correct
 	var (
 		accVP uint64
 		fpMap = make(map[string]struct{})
 	)
+
+	SortFinalityProvidersWithZeroedVotingPower(vpdc.FinalityProviders)
+	numActiveFPs := uint32(0)
 
 	for _, fp := range vpdc.FinalityProviders {
 		if _, exists := fpMap[fp.BtcPk.MarshalHex()]; exists {
@@ -159,11 +157,28 @@ func (vpdc VotingPowerDistCache) Validate() error {
 		if err := fp.Validate(); err != nil {
 			return err
 		}
+
+		// take only into account active finality providers
+		if !fp.IsTimestamped {
+			continue
+		}
+		if fp.IsJailed {
+			continue
+		}
+		if fp.IsSlashed {
+			continue
+		}
+
 		accVP += fp.TotalBondedSat
+		numActiveFPs++
 	}
 
 	if vpdc.TotalVotingPower != accVP {
 		return fmt.Errorf("invalid voting power distribution cache. Provided TotalVotingPower %d is different than FPs accumulated voting power %d", vpdc.TotalVotingPower, accVP)
+	}
+
+	if vpdc.NumActiveFps != numActiveFPs {
+		return fmt.Errorf("invalid voting power distribution cache. NumActiveFps %d is higher than active FPs count %d", vpdc.NumActiveFps, numActiveFPs)
 	}
 
 	return nil
@@ -208,6 +223,26 @@ func (fpdi FinalityProviderDistInfo) Validate() error {
 	}
 	if fpdi.BtcPk.Size() != bbn.BIP340PubKeyLen {
 		return fmt.Errorf("invalid fp dist info. finality provider BTC public key length: got %d, want %d", fpdi.BtcPk.Size(), bbn.BIP340PubKeyLen)
+	}
+
+	if fpdi.Addr == nil {
+		return fmt.Errorf("invalid fp dist info. empty finality provider address")
+	}
+
+	if _, err := sdk.AccAddressFromBech32(sdk.AccAddress(fpdi.Addr).String()); err != nil {
+		return fmt.Errorf("invalid bech32 address: %w", err)
+	}
+
+	if fpdi.Commission == nil {
+		return fmt.Errorf("invalid fp dist info. commission is nil")
+	}
+
+	if fpdi.Commission.LT(sdkmath.LegacyZeroDec()) {
+		return fmt.Errorf("invalid fp dist info. commission is negative")
+	}
+
+	if fpdi.Commission.GT(sdkmath.LegacyOneDec()) {
+		return fmt.Errorf("invalid fp dist info. commission is greater than 1")
 	}
 	return nil
 }

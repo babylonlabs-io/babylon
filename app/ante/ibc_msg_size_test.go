@@ -74,6 +74,17 @@ func TestIBCMsgSizeDecorator(t *testing.T) {
 			errMsg:    "memo is too large",
 		},
 		{
+			name: "MsgTransfer memo too long without check tx",
+			msgs: []sdk.Msg{
+				&ibctransfertypes.MsgTransfer{
+					Memo:     longMemo,
+					Receiver: validReceiver,
+				},
+			},
+			isCheckTx: false,
+			errMsg:    "memo is too large",
+		},
+		{
 			name: "MsgTransfer receiver address too long",
 			msgs: []sdk.Msg{
 				&ibctransfertypes.MsgTransfer{

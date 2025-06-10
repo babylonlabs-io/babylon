@@ -102,26 +102,26 @@ func FuzzRegisterConsumer(f *testing.F) {
 		require.ErrorIs(t, err, types.ErrInvalidMaxMultiStakedFps)
 
 		/*
-			Test registering ETH L2 consumer
+			Test registering rollup consumer
 		*/
 		// mock the wasm contract
 		contractAddr := mockSmartContract(t, ctx, babylonApp)
 		// generate a random consumer register
-		consumerRegister = datagen.GenRandomETHL2Register(r, contractAddr.String())
+		consumerRegister = datagen.GenRandomRollupRegister(r, contractAddr.String())
 		// Register the consumer
 		_, err = msgServer.RegisterConsumer(ctx, &types.MsgRegisterConsumer{
-			ConsumerId:                   consumerRegister.ConsumerId,
-			ConsumerName:                 consumerRegister.ConsumerName,
-			ConsumerDescription:          consumerRegister.ConsumerDescription,
-			MaxMultiStakedFps:            consumerRegister.MaxMultiStakedFps,
-			EthL2FinalityContractAddress: contractAddr.String(),
+			ConsumerId:                    consumerRegister.ConsumerId,
+			ConsumerName:                  consumerRegister.ConsumerName,
+			ConsumerDescription:           consumerRegister.ConsumerDescription,
+			MaxMultiStakedFps:             consumerRegister.MaxMultiStakedFps,
+			RollupFinalityContractAddress: contractAddr.String(),
 		})
 		require.NoError(t, err)
 		// check that the consumer is registered
 		consumerRegister2, err = bscKeeper.GetConsumerRegister(ctx, consumerRegister.ConsumerId)
 		require.NoError(t, err)
 		require.Equal(t, consumerRegister.String(), consumerRegister2.String())
-		require.Equal(t, types.ConsumerType_ETH_L2, consumerRegister2.Type())
+		require.Equal(t, types.ConsumerType_ROLLUP, consumerRegister2.Type())
 		require.Equal(t, consumerRegister.MaxMultiStakedFps, consumerRegister2.MaxMultiStakedFps)
 	})
 }

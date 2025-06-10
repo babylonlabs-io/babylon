@@ -13,4 +13,5 @@ var (
 	ErrFPHistoricalRewardsNotFound               = errorsmod.Register(ModuleName, 1104, "finality provider historical rewards not found")
 	ErrBTCDelegationRewardsTrackerNotFound       = errorsmod.Register(ModuleName, 1105, "BTC delegation rewards tracker not found")
 	ErrBTCDelegationRewardsTrackerNegativeAmount = errorsmod.Register(ModuleName, 1106, "BTC delegation rewards tracker has a negative amount of TotalActiveSat")
+	ErrFPCurrentRewardsTrackerNegativeAmount     = errorsmod.Register(ModuleName, 1107, "FP current rewards tracker has a negative amount of TotalActiveSat")
 )
