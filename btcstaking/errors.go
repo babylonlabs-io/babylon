@@ -7,4 +7,5 @@ var (
 	ErrDustOutputFound            = errors.New("transaction contains a dust output")
 	ErrInsufficientSlashingAmount = errors.New("insufficient slashing amount")
 	ErrInsufficientChangeAmount   = errors.New("insufficient change amount")
+	ErrInvalidUnbondingFee        = errors.New("invalid unbonding fee")
 )

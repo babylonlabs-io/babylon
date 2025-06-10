@@ -5,6 +5,11 @@ import (
 	"testing"
 	"time"
 
+	sdkmath "cosmossdk.io/math"
+	appparams "github.com/babylonlabs-io/babylon/v2/app/params"
+	"github.com/babylonlabs-io/babylon/v2/btcstaking"
+	btcstktypes "github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
+
 	"github.com/stretchr/testify/require"
 
 	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
@@ -525,4 +530,40 @@ func TestJailingFinalityProvider(t *testing.T) {
 
 	activeFps := driver.GetActiveFpsAtCurrentHeight(t)
 	require.Equal(t, 1, len(activeFps))
+}
+
+func TestBadUnbondingFeeParams(t *testing.T) {
+	t.Parallel()
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	d := NewBabylonAppDriverTmpDir(r, t)
+	d.GenerateNewBlock()
+
+	numBlocksFinalized := uint64(2)
+	scn := NewStandardScenario(d)
+	scn.InitScenario(2, 1)
+
+	scn.FinalityFinalizeBlocksAllVotes(scn.activationHeight, numBlocksFinalized)
+
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	btcStkK := d.App.BTCStakingKeeper
+	p := btcStkK.GetParams(d.Ctx())
+
+	// bad param creation
+	p.BtcActivationHeight += 10
+	p.MinStakingValueSat = 100000
+	p.UnbondingFeeSat = -1
+	p.SlashingRate = sdkmath.LegacyNewDecWithPrec(1, 1)
+
+	prop := btcstktypes.MsgUpdateParams{
+		Authority: appparams.AccGov.String(),
+		Params:    p,
+	}
+	msgToSend := d.NewGovProp(&prop)
+	d.SendTxWithMessagesSuccess(t, d.SenderInfo, defaultGasLimit, defaultFeeCoin, msgToSend)
+
+	txResults := d.GenerateNewBlockAssertExecutionFailure()
+	require.Len(t, txResults, 1)
+	require.Equal(t, uint32(12), txResults[0].Code)
+	require.Contains(t, txResults[0].Log, btcstaking.ErrInvalidUnbondingFee.Error())
 }
