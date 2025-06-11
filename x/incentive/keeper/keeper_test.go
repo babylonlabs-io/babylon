@@ -12,7 +12,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/babylonlabs-io/babylon/v3/app"
 	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
@@ -32,34 +31,6 @@ type RefundTxTestSuite struct {
 	app *app.BabylonApp
 }
 
-var _ sdk.FeeTx = mockFeeTx{}
-
-// mockFeeTx implements the sdk.FeeTx interface for testing
-type mockFeeTx struct {
-	fee      sdk.Coins
-	feePayer []byte
-	granter  []byte
-}
-
-func (tx mockFeeTx) GetFee() sdk.Coins {
-	return tx.fee
-}
-
-func (tx mockFeeTx) FeePayer() []byte {
-	return tx.feePayer
-}
-
-func (tx mockFeeTx) FeeGranter() []byte {
-	return tx.granter
-}
-
-// Additional methods required by sdk.FeeTx interface
-func (tx mockFeeTx) GetGas() uint64     { return 0 }
-func (tx mockFeeTx) GetMsgs() []sdk.Msg { return nil }
-func (tx mockFeeTx) GetMsgsV2() ([]protoreflect.ProtoMessage, error) {
-	return nil, nil
-}
-
 func TestKeeperSuite(t *testing.T) {
 	suite.Run(t, new(RefundTxTestSuite))
 }
@@ -74,17 +45,17 @@ func (s *RefundTxTestSuite) TestRefundTx() {
 
 	tests := []struct {
 		name        string
-		tx          mockFeeTx
+		tx          sdk.FeeTx
 		preRefund   func()
 		postRefund  func()
 		expectError bool
 	}{
 		{
 			name: "refund to fee payer",
-			tx: mockFeeTx{
-				fee:      fee,
-				feePayer: feePayer,
-				granter:  nil,
+			tx: &mockFeeTx{
+				fee:        fee,
+				feePayer:   feePayer,
+				feeGranter: nil,
 			},
 			preRefund: func() {
 				// expect fee payer to have 0 balance before refund
@@ -100,10 +71,10 @@ func (s *RefundTxTestSuite) TestRefundTx() {
 		},
 		{
 			name: "refund to fee granter",
-			tx: mockFeeTx{
-				fee:      fee,
-				feePayer: feePayer,
-				granter:  feeGranter,
+			tx: &mockFeeTx{
+				fee:        fee,
+				feePayer:   feePayer,
+				feeGranter: feeGranter,
 			},
 			preRefund: func() {
 				// expect fee granter to have 0 balance before refund
@@ -126,10 +97,10 @@ func (s *RefundTxTestSuite) TestRefundTx() {
 		},
 		{
 			name: "zero fee, no refund",
-			tx: mockFeeTx{
-				fee:      zeroCoins, // no fee
-				feePayer: feePayer,
-				granter:  nil,
+			tx: &mockFeeTx{
+				fee:        zeroCoins, // no fee
+				feePayer:   feePayer,
+				feeGranter: nil,
 			},
 			preRefund: func() {
 				balance := s.app.BankKeeper.GetAllBalances(s.ctx, feePayer)

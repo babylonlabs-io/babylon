@@ -16,9 +16,9 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
-var _ sdk.FeeTx = &TestTx{}
+var _ sdk.FeeTx = &mockFeeTx{}
 
-type TestTx struct {
+type mockFeeTx struct {
 	Msgs       []sdk.Msg
 	feePayer   []byte
 	feeGranter []byte
@@ -26,18 +26,18 @@ type TestTx struct {
 	gas        uint64
 }
 
-func (tx *TestTx) GetMsgs() []sdk.Msg {
+func (tx *mockFeeTx) GetMsgs() []sdk.Msg {
 	return tx.Msgs
 }
 
-func (tx *TestTx) GetMsgsV2() ([]protoreflect.ProtoMessage, error) {
+func (tx *mockFeeTx) GetMsgsV2() ([]protoreflect.ProtoMessage, error) {
 	return nil, nil
 }
 
-func (tx *TestTx) FeePayer() []byte   { return tx.feePayer }
-func (tx *TestTx) FeeGranter() []byte { return tx.feeGranter }
-func (tx *TestTx) GetFee() sdk.Coins  { return tx.fee }
-func (tx *TestTx) GetGas() uint64     { return tx.gas }
+func (tx *mockFeeTx) FeePayer() []byte   { return tx.feePayer }
+func (tx *mockFeeTx) FeeGranter() []byte { return tx.feeGranter }
+func (tx *mockFeeTx) GetFee() sdk.Coins  { return tx.fee }
+func (tx *mockFeeTx) GetGas() uint64     { return tx.gas }
 
 func TestCheckTxAndClearIndex(t *testing.T) {
 	ctrl := gomock.NewController(t)
@@ -62,7 +62,7 @@ func TestCheckTxAndClearIndex(t *testing.T) {
 				}
 				iKeeper.IndexRefundableMsg(ctx, &msg1)
 				iKeeper.IndexRefundableMsg(ctx, &msg2)
-				return &TestTx{Msgs: []sdk.Msg{&msg1, &msg2}}
+				return &mockFeeTx{Msgs: []sdk.Msg{&msg1, &msg2}}
 			},
 			expected: true,
 		},
@@ -76,7 +76,7 @@ func TestCheckTxAndClearIndex(t *testing.T) {
 					Address: "address2",
 				}
 				iKeeper.IndexRefundableMsg(ctx, &msg1)
-				return &TestTx{Msgs: []sdk.Msg{&msg1, &msg2}}
+				return &mockFeeTx{Msgs: []sdk.Msg{&msg1, &msg2}}
 			},
 			expected: false,
 		},
@@ -95,7 +95,7 @@ func TestCheckTxAndClearIndex(t *testing.T) {
 				iKeeper.IndexRefundableMsg(ctx, &msg)
 				iKeeper.IndexRefundableMsg(ctx, &msg2)
 				iKeeper.IndexRefundableMsg(ctx, &msg3)
-				return &TestTx{Msgs: []sdk.Msg{&msg, &msg2, &msg3}}
+				return &mockFeeTx{Msgs: []sdk.Msg{&msg, &msg2, &msg3}}
 			},
 			expected: false,
 		},
@@ -175,7 +175,7 @@ func TestRefundTxDecorator_AnteHandle(t *testing.T) {
 			decorator := keeper.NewRefundTxDecorator(nil)
 
 			// Create a mock FeeTx
-			tx := &TestTx{
+			tx := &mockFeeTx{
 				Msgs:       tc.msgs,
 				feePayer:   tc.feeInfo.feePayer,
 				feeGranter: tc.feeInfo.feeGranter,
