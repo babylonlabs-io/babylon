@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/babylonlabs-io/babylon/v4/test/e2e/initialization"
-	btclighttypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
+	"github.com/babylonlabs-io/babylon/v3/test/e2e/initialization"
+	btclighttypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
 )
 
 func main() {

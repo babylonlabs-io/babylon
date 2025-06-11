@@ -13,9 +13,9 @@ import (
 
 	abci "github.com/cometbft/cometbft/abci/types"
 
-	"github.com/babylonlabs-io/babylon/v4/x/monitor/client/cli"
-	"github.com/babylonlabs-io/babylon/v4/x/monitor/keeper"
-	"github.com/babylonlabs-io/babylon/v4/x/monitor/types"
+	"github.com/babylonlabs-io/babylon/v3/x/monitor/client/cli"
+	"github.com/babylonlabs-io/babylon/v3/x/monitor/keeper"
+	"github.com/babylonlabs-io/babylon/v3/x/monitor/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"

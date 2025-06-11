@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/babylonlabs-io/babylon/v4/crypto/bls12381"
+	"github.com/babylonlabs-io/babylon/v3/crypto/bls12381"
 	"github.com/cometbft/cometbft/libs/tempfile"
 	"github.com/test-go/testify/require"
 )

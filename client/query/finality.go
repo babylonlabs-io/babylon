@@ -6,7 +6,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	sdkquerytypes "github.com/cosmos/cosmos-sdk/types/query"
 
-	finalitytypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
+	finalitytypes "github.com/babylonlabs-io/babylon/v3/x/finality/types"
 )
 
 // QueryFinality queries the Finality module of the Babylon node according to the given function

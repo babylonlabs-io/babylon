@@ -18,13 +18,13 @@ import (
 	staketypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/gogoproto/proto"
 
-	"github.com/babylonlabs-io/babylon/v4/test/e2e/util"
-	bbn "github.com/babylonlabs-io/babylon/v4/types"
-	btccheckpointtypes "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
-	blctypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
-	btclighttypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
-	finalitytypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
-	minttypes "github.com/babylonlabs-io/babylon/v4/x/mint/types"
+	"github.com/babylonlabs-io/babylon/v3/test/e2e/util"
+	bbn "github.com/babylonlabs-io/babylon/v3/types"
+	btccheckpointtypes "github.com/babylonlabs-io/babylon/v3/x/btccheckpoint/types"
+	blctypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
+	btclighttypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
+	finalitytypes "github.com/babylonlabs-io/babylon/v3/x/finality/types"
+	minttypes "github.com/babylonlabs-io/babylon/v3/x/mint/types"
 	ratelimiter "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/types"
 )
 

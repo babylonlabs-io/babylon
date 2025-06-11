@@ -11,9 +11,9 @@ import (
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/v4/app"
-	v1 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v1"
-	testutilk "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
+	"github.com/babylonlabs-io/babylon/v3/app"
+	v1 "github.com/babylonlabs-io/babylon/v3/app/upgrades/v1"
+	testutilk "github.com/babylonlabs-io/babylon/v3/testutil/keeper"
 )
 
 func TestHardCodedBtcStakingParamsAreValid(t *testing.T) {
