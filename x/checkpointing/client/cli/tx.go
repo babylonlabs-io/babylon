@@ -9,14 +9,14 @@ import (
 	"cosmossdk.io/core/address"
 	authcodec "github.com/cosmos/cosmos-sdk/x/auth/codec"
 
-	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
+	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	cosmoscli "github.com/cosmos/cosmos-sdk/x/staking/client/cli"
 	"github.com/spf13/cobra"
 
-	"github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
+	"github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
 	"github.com/cosmos/cosmos-sdk/client"
 )
 

@@ -3,9 +3,9 @@ package types
 import (
 	"context"
 
-	bbn "github.com/babylonlabs-io/babylon/v4/types"
-	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
-	etypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
+	bbn "github.com/babylonlabs-io/babylon/v3/types"
+	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
+	etypes "github.com/babylonlabs-io/babylon/v3/x/epoching/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 

@@ -10,10 +10,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/types/query"
 
-	"github.com/babylonlabs-io/babylon/v4/app/keepers"
-	"github.com/babylonlabs-io/babylon/v4/app/upgrades"
-	btcstakingkeeper "github.com/babylonlabs-io/babylon/v4/x/btcstaking/keeper"
-	btcstakingtypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/v3/app/keepers"
+	"github.com/babylonlabs-io/babylon/v3/app/upgrades"
+	btcstakingkeeper "github.com/babylonlabs-io/babylon/v3/x/btcstaking/keeper"
+	btcstakingtypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 )
 
 const (

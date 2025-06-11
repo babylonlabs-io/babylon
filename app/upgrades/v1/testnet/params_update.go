@@ -7,8 +7,8 @@ import (
 
 	"cosmossdk.io/math"
 	sdkmath "cosmossdk.io/math"
-	"github.com/babylonlabs-io/babylon/v4/app/keepers"
-	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
+	"github.com/babylonlabs-io/babylon/v3/app/keepers"
+	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 

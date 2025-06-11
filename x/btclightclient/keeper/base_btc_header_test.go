@@ -4,8 +4,8 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
-	"github.com/babylonlabs-io/babylon/v4/testutil/keeper"
+	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
+	"github.com/babylonlabs-io/babylon/v3/testutil/keeper"
 )
 
 func FuzzKeeperBaseBTCHeader(f *testing.F) {

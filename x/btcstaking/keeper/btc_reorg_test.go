@@ -5,10 +5,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
-	keepertest "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
-	btccheckpointtypes "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
-	"github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
+	keepertest "github.com/babylonlabs-io/babylon/v3/testutil/keeper"
+	btccheckpointtypes "github.com/babylonlabs-io/babylon/v3/x/btccheckpoint/types"
+	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 )

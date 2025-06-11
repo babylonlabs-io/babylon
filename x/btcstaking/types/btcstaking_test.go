@@ -1,11 +1,12 @@
 package types_test
 
 import (
-	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
-	"github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 	"math/rand"
 	"testing"
 	"time"
+
+	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
+	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 )
 
 func TestLargestBtcReOrg_Validate(t *testing.T) {

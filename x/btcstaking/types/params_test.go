@@ -5,8 +5,8 @@ import (
 
 	"cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
-	"github.com/babylonlabs-io/babylon/v4/btcstaking"
-	"github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/v3/btcstaking"
+	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"

@@ -11,14 +11,6 @@ queue_rules:
       {{ body }}
     merge_method: squash
 pull_request_rules:
-  - name: backport changes to v4.x branch
-    conditions:
-      - base=main
-      - label=backport-to-release/v4.x
-    actions:
-      backport:
-        branches:
-          - release/v4.x
   - name: backport changes to v3.x branch
     conditions:
       - base=main
@@ -36,7 +28,6 @@ pull_request_rules:
         branches:
           - release/v2.x
           - release/v3.x
-          - release/v4.x
   - name: backport changes to v2.x branch
     conditions:
       - base=main

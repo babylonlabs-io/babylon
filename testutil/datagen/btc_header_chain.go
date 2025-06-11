@@ -4,8 +4,8 @@ import (
 	"math/rand"
 
 	sdkmath "cosmossdk.io/math"
-	bbn "github.com/babylonlabs-io/babylon/v4/types"
-	"github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
+	bbn "github.com/babylonlabs-io/babylon/v3/types"
+	"github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/wire"
 )

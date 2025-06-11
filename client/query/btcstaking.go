@@ -7,7 +7,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 
-	btcstakingtypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+	btcstakingtypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	grpctypes "github.com/cosmos/cosmos-sdk/types/grpc"
 	sdkquerytypes "github.com/cosmos/cosmos-sdk/types/query"

@@ -5,11 +5,11 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
-	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
+	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/v4/x/epoching/types"
+	"github.com/babylonlabs-io/babylon/v3/x/epoching/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"

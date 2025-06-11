@@ -11,8 +11,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	bbn "github.com/babylonlabs-io/babylon/v4/types"
-	"github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+	bbn "github.com/babylonlabs-io/babylon/v3/types"
+	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 )
 
 var _ types.QueryServer = Keeper{}

@@ -12,7 +12,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client"
 
-	"github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
+	"github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
 )
 
 // GetQueryCmd returns the cli query commands for this module

@@ -7,8 +7,8 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	bbn "github.com/babylonlabs-io/babylon/v4/types"
-	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+	bbn "github.com/babylonlabs-io/babylon/v3/types"
+	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 )
 
 func NewVotingPowerDistCache() *VotingPowerDistCache {
