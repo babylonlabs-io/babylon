@@ -3,6 +3,9 @@ package keepers
 import (
 	"context"
 	"fmt"
+	"path/filepath"
+	"strings"
+
 	srvflags "github.com/cosmos/evm/server/flags"
 	erc20types "github.com/cosmos/evm/x/erc20/types"
 	feemarketkeeper "github.com/cosmos/evm/x/feemarket/keeper"
@@ -16,8 +19,6 @@ import (
 	transferv2 "github.com/cosmos/ibc-go/v10/modules/apps/transfer/v2"
 	ibcapi "github.com/cosmos/ibc-go/v10/modules/core/api"
 	"github.com/spf13/cast"
-	"path/filepath"
-	"strings"
 
 	"cosmossdk.io/log"
 	storetypes "cosmossdk.io/store/types"
@@ -427,53 +428,45 @@ func (ak *AppKeepers) InitKeepers(
 	)
 
 	// Cosmos EVM Keepers
-	tracer := cast.ToString(appOpts.Get(srvflags.EVMTracer))
-
-	// Create Ethermint keepers
+	// Create Feemarket keepers
 	ak.FeemarketKeeper = feemarketkeeper.NewKeeper(
 		appCodec,
 		authtypes.NewModuleAddress(govtypes.ModuleName),
-		keys[feemarkettypes.StoreKey],
+		ak.keys[feemarkettypes.StoreKey],
 		ak.tkeys[feemarkettypes.TransientKey],
 	)
 
 	ak.PreciseBankKeeper = precisebankkeeper.NewKeeper(
 		appCodec,
-		keys[precisebanktypes.StoreKey],
+		ak.keys[precisebanktypes.StoreKey],
 		ak.BankKeeper,
 		ak.AccountKeeper,
 	)
 
-	evmKeeper := evmkeeper.NewKeeper(
+	tracer := cast.ToString(appOpts.Get(srvflags.EVMTracer))
+
+	ak.EVMKeeper = evmkeeper.NewKeeper(
 		appCodec,
-		keys[evmtypes.ModuleName],
+		ak.keys[evmtypes.ModuleName],
 		ak.tkeys[evmtypes.TransientKey],
 		authtypes.NewModuleAddress(govtypes.ModuleName),
-		accountKeeper,
+		ak.AccountKeeper,
 		ak.PreciseBankKeeper,
-		stakingKeeper,
+		ak.StakingKeeper,
 		ak.FeemarketKeeper,
 		&ak.Erc20Keeper,
 		tracer,
 	)
 
-	ak.EVMKeeper = evmKeeper
-
 	ak.Erc20Keeper = erc20keeper.NewKeeper(
-		ak.keys[erc20types.StoreKey], appCodec, authtypes.NewModuleAddress(govtypes.ModuleName),
-		ak.AccountKeeper, ak.BankKeeper, ak.EVMKeeper, ak.StakingKeeper,
+		ak.keys[erc20types.StoreKey],
+		appCodec,
+		authtypes.NewModuleAddress(govtypes.ModuleName),
+		ak.AccountKeeper,
+		ak.BankKeeper,
+		ak.EVMKeeper,
+		ak.StakingKeeper,
 		&ak.EVMTransferKeeper,
-	)
-
-	ak.EVMKeeper.WithStaticPrecompiles(
-		NewAvailableStaticPrecompiles(
-			appCodec,
-			ak.PreciseBankKeeper,
-			ak.Erc20Keeper,
-			ak.GovKeeper,
-			ak.SlashingKeeper,
-			ak.EvidenceKeeper,
-		),
 	)
 
 	ak.IBCKeeper = ibckeeper.NewKeeper(
@@ -498,6 +491,16 @@ func (ak *AppKeepers) InitKeepers(
 		appparams.AccGov.String(),
 	)
 
+	ak.EVMKeeper.WithStaticPrecompiles(
+		NewAvailableStaticPrecompiles(
+			appCodec,
+			ak.PreciseBankKeeper,
+			ak.Erc20Keeper,
+			ak.GovKeeper,
+			ak.SlashingKeeper,
+			ak.EvidenceKeeper,
+		),
+	)
 	// Create the TokenFactory Keeper
 	ak.TokenFactoryKeeper = tokenfactorykeeper.NewKeeper(
 		appCodec,
@@ -846,6 +849,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(ratelimittypes.ModuleName)
 
 	// Subspaces for EVM modules
+	// TODO: We probably don't need this.
 	paramsKeeper.Subspace(evmtypes.ModuleName)
 	paramsKeeper.Subspace(feemarkettypes.ModuleName)
 	paramsKeeper.Subspace(erc20types.ModuleName)

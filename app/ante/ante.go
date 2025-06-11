@@ -16,14 +16,13 @@ import (
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	feemarketkeeper "github.com/cosmos/evm/x/feemarket/keeper"
-	evmkeeper "github.com/cosmos/evm/x/vm/keeper"
 	ibckeeper "github.com/cosmos/ibc-go/v10/modules/core/keeper"
 )
 
 // NewAnteHandler creates a new AnteHandler for the Babylon chain.
 func NewAnteHandler(
 	appOpts servertypes.AppOptions,
+	evmHandlerOptions EVMHandlerOptions,
 	accountKeeper AccountKeeper,
 	bankKeeper authtypes.BankKeeper,
 	feegrantKeeper authante.FeegrantKeeper,
@@ -36,17 +35,14 @@ func NewAnteHandler(
 	btcConfig *bbn.BtcConfig,
 	btccKeeper *btcckeeper.Keeper,
 	txCounterStoreService store.KVStoreService,
-	feeMarketKeeper feemarketkeeper.Keeper,
-	evmKeeper *evmkeeper.Keeper,
-	maxTxGasWanted uint64,
 ) sdk.AnteHandler {
 	// initialize AnteHandler, which includes
 	// - authAnteHandler
 	// - custom wasm ante handler NewLimitSimulationGasDecorator and NewCountTXDecorator
 	// - Extra decorators introduced in Babylon, such as DropValidatorMsgDecorator that delays validator-related messages
 	//
-	// We are using constructor from wasmapp as it introduces custom wasm ante handle decorators
-	// early in chain of ante handlers.
+	//We are using constructor from wasmapp as it introduces custom wasm ante handle decorators
+	//early in chain of ante handlers.
 	authAnteHandler, err := wasmapp.NewAnteHandler(
 		wasmapp.HandlerOptions{
 			HandlerOptions: authante.HandlerOptions{
@@ -92,7 +88,7 @@ func NewAnteHandler(
 				switch typeURL := opts[0].GetTypeUrl(); typeURL {
 				case "/cosmos.evm.vm.v1.ExtensionOptionsEthereumTx":
 					// handle as *evmtypes.MsgEthereumTx
-					anteHandler = newMonoEVMAnteHandler(accountKeeper, feeMarketKeeper, evmKeeper, maxTxGasWanted)
+					anteHandler = newMonoEVMAnteHandler(evmHandlerOptions)
 				case "/cosmos.evm.types.v1.ExtensionOptionDynamicFeeTx":
 					// cosmos-sdk tx with dynamic fee extension
 					anteHandler = cosmosAnteHandler

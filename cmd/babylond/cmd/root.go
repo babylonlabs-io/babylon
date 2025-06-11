@@ -22,6 +22,7 @@ import (
 	authtxconfig "github.com/cosmos/cosmos-sdk/x/auth/tx/config"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
+	evmkeyring "github.com/cosmos/evm/crypto/keyring"
 	evmserver "github.com/cosmos/evm/server"
 	srvflags "github.com/cosmos/evm/server/flags"
 
@@ -30,7 +31,6 @@ import (
 	"cosmossdk.io/log"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
 	"github.com/cosmos/cosmos-sdk/server"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
@@ -48,7 +48,6 @@ import (
 	"github.com/babylonlabs-io/babylon/v4/cmd/babylond/cmd/genhelpers"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
 	evmcmd "github.com/cosmos/evm/client"
-	evmkeyring "github.com/cosmos/evm/crypto/keyring"
 	evmtypes "github.com/cosmos/evm/types"
 )
 
@@ -134,6 +133,12 @@ func NewRootCmd() *cobra.Command {
 	}
 
 	initRootCmd(rootCmd, tempApp.TxConfig(), tempApp.BasicModuleManager)
+
+	if initClientCtx.ChainID != "" {
+		if err := app.EVMAppOptions(app.EVMChainID); err != nil {
+			panic(err)
+		}
+	}
 
 	// add keyring to autocli opts
 	autoCliOpts := tempApp.AutoCliOpts()
@@ -245,7 +250,7 @@ func initRootCmd(rootCmd *cobra.Command, txConfig client.TxEncodingConfig, basic
 		server.StatusCommand(),
 		queryCommand(),
 		txCommand(),
-		keys.Commands(),
+		//keys.Commands(), // TODO: Should be removed but new accounts will be ethcsecp only
 		evmcmd.KeyCommands(app.DefaultNodeHome, true),
 	)
 

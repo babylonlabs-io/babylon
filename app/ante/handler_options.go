@@ -2,13 +2,11 @@ package ante
 
 import (
 	"context"
-	precisebankkeeper "github.com/cosmos/evm/x/precisebank/keeper"
 	"time"
 
 	addresscodec "cosmossdk.io/core/address"
 	errorsmod "cosmossdk.io/errors"
 	storetypes "cosmossdk.io/store/types"
-	circuitkeeper "cosmossdk.io/x/circuit/keeper"
 	txsigning "cosmossdk.io/x/tx/signing"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -45,21 +43,17 @@ type AccountKeeper interface {
 // AnteHandler decorators.
 type EVMHandlerOptions struct {
 	Cdc                    codec.BinaryCodec
-	AccountKeeper          AccountKeeper
-	BankKeeper             BankKeeper
+	AccountKeeper          anteinterfaces.AccountKeeper
+	BankKeeper             anteinterfaces.BankKeeper
+	IBCKeeper              *ibckeeper.Keeper
+	FeeMarketKeeper        anteinterfaces.FeeMarketKeeper
+	EvmKeeper              anteinterfaces.EVMKeeper
 	FeegrantKeeper         ante.FeegrantKeeper
 	ExtensionOptionChecker ante.ExtensionOptionChecker
 	SignModeHandler        *txsigning.HandlerMap
 	SigGasConsumer         func(meter storetypes.GasMeter, sig signing.SignatureV2, params authtypes.Params) error
-	TxFeeChecker           ante.TxFeeChecker // safe to be nil
-
-	MaxTxGasWanted    uint64
-	FeeMarketKeeper   anteinterfaces.FeeMarketKeeper
-	EvmKeeper         anteinterfaces.EVMKeeper
-	PreciseBankKeeper *precisebankkeeper.Keeper
-
-	IBCKeeper     *ibckeeper.Keeper
-	CircuitKeeper *circuitkeeper.Keeper
+	MaxTxGasWanted         uint64
+	TxFeeChecker           ante.TxFeeChecker
 }
 
 // Validate checks if the keepers are defined
@@ -70,9 +64,6 @@ func (options EVMHandlerOptions) Validate() error {
 	if options.AccountKeeper == nil {
 		return errorsmod.Wrap(errortypes.ErrLogic, "account keeper is required for AnteHandler")
 	}
-	if options.PreciseBankKeeper == nil {
-		return errorsmod.Wrap(errortypes.ErrLogic, "precise bank keeper is required for EVM AnteHandler")
-	}
 	if options.BankKeeper == nil {
 		return errorsmod.Wrap(errortypes.ErrLogic, "bank keeper is required for AnteHandler")
 	}
@@ -81,9 +72,6 @@ func (options EVMHandlerOptions) Validate() error {
 	}
 	if options.SignModeHandler == nil {
 		return errorsmod.Wrap(errortypes.ErrLogic, "sign mode handler is required for AnteHandler")
-	}
-	if options.CircuitKeeper == nil {
-		return errorsmod.Wrap(errortypes.ErrLogic, "circuit keeper is required for ante builder")
 	}
 	if options.TxFeeChecker == nil {
 		return errorsmod.Wrap(errortypes.ErrLogic, "tx fee checker is required for AnteHandler")

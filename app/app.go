@@ -3,6 +3,8 @@ package app
 import (
 	"encoding/json"
 	"fmt"
+
+	"cosmossdk.io/math"
 	evmencoding "github.com/cosmos/evm/encoding"
 	srvflags "github.com/cosmos/evm/server/flags"
 	cosmosevmtypes "github.com/cosmos/evm/types"
@@ -13,6 +15,7 @@ import (
 	evm "github.com/cosmos/evm/x/vm"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
 	"github.com/ethereum/go-ethereum/core/vm"
+
 	"io"
 	"os"
 	"path/filepath"
@@ -166,7 +169,7 @@ var (
 	DefaultNodeHome string
 	// fee collector account, module accounts and their permissions
 	maccPerms = map[string][]string{
-		authtypes.FeeCollectorName:     nil, // fee collector account
+		authtypes.FeeCollectorName:     {authtypes.Burner}, // fee collector account
 		distrtypes.ModuleName:          nil,
 		minttypes.ModuleName:           {authtypes.Minter},
 		stakingtypes.BondedPoolName:    {authtypes.Burner, authtypes.Staking},
@@ -177,8 +180,8 @@ var (
 		tokenfactorytypes.ModuleName:   {authtypes.Minter, authtypes.Burner},
 		icatypes.ModuleName:            nil,
 		evmtypes.ModuleName:            {authtypes.Minter, authtypes.Burner},
-		erc20types.ModuleName:          {authtypes.Minter, authtypes.Burner}, // Allows erc20 module to mint/burn for token pairs
 		feemarkettypes.ModuleName:      nil,
+		erc20types.ModuleName:          {authtypes.Minter, authtypes.Burner}, // Allows erc20 module to mint/burn for token pairs
 		precisebanktypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
 	}
 
@@ -188,6 +191,10 @@ var (
 )
 
 func init() {
+	// Replace defaults
+	// manually update the power reduction by replacing micro (u) -> atto (a)
+	sdk.DefaultPowerReduction = cosmosevmtypes.MicroPowerReduction
+	stakingtypes.DefaultMinCommissionRate = math.LegacyZeroDec()
 	// Note: If this changes, the home directory under x/checkpointing/client/cli/tx.go needs to change as well
 	userHomeDir, err := os.UserHomeDir()
 	if err != nil {
@@ -363,7 +370,7 @@ func NewBabylonApp(
 		// Babylon modules - tokenomics
 		incentive.NewAppModule(appCodec, app.IncentiveKeeper, app.AccountKeeper, app.BankKeeper),
 		// Cosmos EVM modules
-		evm.NewAppModule(app.EVMKeeper, app.AccountKeeper),
+		evm.NewAppModule(app.EVMKeeper, app.AccountKeeper, app.AccountKeeper.AddressCodec()),
 		feemarket.NewAppModule(app.FeemarketKeeper),
 		erc20.NewAppModule(app.Erc20Keeper, app.AccountKeeper),
 		precisebank.NewAppModule(app.PreciseBankKeeper, app.BankKeeper, app.AccountKeeper),
@@ -401,6 +408,10 @@ func NewBabylonApp(
 		// NOTE: incentive module's BeginBlock has to be after mint but before distribution
 		// so that it can intercept a part of new inflation to reward BTC staking stakeholders
 		minttypes.ModuleName, incentivetypes.ModuleName, distrtypes.ModuleName,
+		// Cosmos EVM
+		erc20types.ModuleName,
+		feemarkettypes.ModuleName,
+		evmtypes.ModuleName, // NOTE: EVM BeginBlocker must come after FeeMarket BeginBlocker
 		slashingtypes.ModuleName,
 		evidencetypes.ModuleName, stakingtypes.ModuleName,
 		authtypes.ModuleName, banktypes.ModuleName, govtypes.ModuleName, genutiltypes.ModuleName,
@@ -427,10 +438,6 @@ func NewBabylonApp(
 		// BTC staking related modules
 		btcstakingtypes.ModuleName,
 		finalitytypes.ModuleName,
-		// Cosmos EVM
-		erc20types.ModuleName,
-		feemarkettypes.ModuleName,
-		evmtypes.ModuleName, // NOTE: EVM BeginBlocker must come after FeeMarket BeginBlocker
 		precisebanktypes.ModuleName,
 	)
 	// TODO: there will be an architecture design on whether to modify slashing/evidence, specifically
@@ -470,8 +477,8 @@ func NewBabylonApp(
 		incentivetypes.ModuleName, // EndBlock of incentive module does not matter
 		// Cosmos EVM
 		evmtypes.ModuleName,
-		feemarkettypes.ModuleName,
 		erc20types.ModuleName,
+		feemarkettypes.ModuleName,
 		precisebanktypes.ModuleName,
 	)
 	// Babylon does not want EndBlock processing in staking
@@ -484,6 +491,12 @@ func NewBabylonApp(
 	genesisModuleOrder := []string{
 		authtypes.ModuleName, banktypes.ModuleName, distrtypes.ModuleName, stakingtypes.ModuleName,
 		slashingtypes.ModuleName, govtypes.ModuleName, minttypes.ModuleName,
+		// Cosmos EVM modules
+		// NOTE: feemarket module needs to be initialized before genutil module
+		evmtypes.ModuleName,
+		feemarkettypes.ModuleName,
+		erc20types.ModuleName,
+		precisebanktypes.ModuleName,
 		genutiltypes.ModuleName, evidencetypes.ModuleName, authz.ModuleName,
 		feegrant.ModuleName,
 		paramstypes.ModuleName, upgradetypes.ModuleName, vestingtypes.ModuleName, consensusparamtypes.ModuleName, circuittypes.ModuleName,
@@ -512,11 +525,6 @@ func NewBabylonApp(
 		finalitytypes.ModuleName,
 		// tokenomics-related modules
 		incentivetypes.ModuleName,
-		// Cosmos EVM
-		evmtypes.ModuleName,
-		feemarkettypes.ModuleName,
-		erc20types.ModuleName,
-		precisebanktypes.ModuleName,
 	}
 	app.ModuleManager.SetOrderInitGenesis(genesisModuleOrder...)
 	app.ModuleManager.SetOrderExportGenesis(genesisModuleOrder...)
@@ -553,9 +561,16 @@ func NewBabylonApp(
 	app.MountTransientStores(app.GetTransientStoreKeys())
 	app.MountMemoryStores(app.GetMemoryStoreKeys())
 
+	maxGasWanted := cast.ToUint64(appOpts.Get(srvflags.EVMMaxTxGasWanted))
+	evmHandlerOpts := NewEVMAnteHandlerOptionsFromApp(app, txConfig, maxGasWanted)
+	if err := evmHandlerOpts.Validate(); err != nil {
+		panic(err)
+	}
+
 	// initialize AnteHandler for the app
 	anteHandler := ante.NewAnteHandler(
 		appOpts,
+		evmHandlerOpts.Options(),
 		&app.AccountKeeper,
 		app.BankKeeper,
 		&app.FeeGrantKeeper,
@@ -568,9 +583,6 @@ func NewBabylonApp(
 		&btcConfig,
 		&app.BtcCheckpointKeeper,
 		runtime.NewKVStoreService(app.AppKeepers.GetKey(wasmtypes.StoreKey)),
-		app.FeemarketKeeper,
-		app.EVMKeeper,
-		cast.ToUint64(appOpts.Get(srvflags.EVMMaxTxGasWanted)),
 	)
 
 	// set proposal extension
@@ -858,6 +870,7 @@ func (a *BabylonApp) DefaultGenesis() map[string]json.RawMessage {
 	// Add EVM genesis configuration
 	evmGenState := evmtypes.DefaultGenesisState()
 	evmGenState.Params.ActiveStaticPrecompiles = evmtypes.AvailableStaticPrecompiles
+	evmGenState.Params.EvmDenom = BaseCosmosDenom
 	genesis[evmtypes.ModuleName] = a.appCodec.MustMarshalJSON(evmGenState)
 
 	// Add ERC20 genesis configuration
@@ -953,7 +966,7 @@ func BlockedAddresses() map[string]bool {
 	}
 
 	for _, precompile := range blockedPrecompilesHex {
-		blockedAddrs[evmutils.EthHexToCosmosAddr(precompile).String()] = true
+		blockedAddrs[evmutils.Bech32StringFromHexAddress(precompile)] = true
 	}
 	return blockedAddrs
 }

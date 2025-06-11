@@ -2,23 +2,18 @@ package ante
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	evmante "github.com/cosmos/evm/ante/evm"
-	feemarketkeeper "github.com/cosmos/evm/x/feemarket/keeper"
-	evmkeeper "github.com/cosmos/evm/x/vm/keeper"
+	evmmonoante "github.com/cosmos/evm/ante/evm"
 )
 
 func newMonoEVMAnteHandler(
-	accountKeeper AccountKeeper,
-	feemarketKeeper feemarketkeeper.Keeper,
-	evmKeeper *evmkeeper.Keeper,
-	maxTxGasWanted uint64,
+	options EVMHandlerOptions,
 ) sdk.AnteHandler {
 	return sdk.ChainAnteDecorators(
-		evmante.NewEVMMonoDecorator(
-			accountKeeper,
-			feemarketKeeper,
-			evmKeeper,
-			maxTxGasWanted,
+		evmmonoante.NewEVMMonoDecorator(
+			options.AccountKeeper,
+			options.FeeMarketKeeper,
+			options.EvmKeeper,
+			options.MaxTxGasWanted,
 		),
 	)
 }

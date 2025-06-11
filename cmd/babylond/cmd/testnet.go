@@ -4,11 +4,13 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	servercfg "github.com/cosmos/evm/server/config"
 	"net"
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/babylonlabs-io/babylon/v4/app"
+	servercfg "github.com/cosmos/evm/server/config"
 
 	"cosmossdk.io/math"
 	cmtconfig "github.com/cometbft/cometbft/config"
@@ -203,10 +205,13 @@ func InitTestnet(
 	babylonConfig.GRPC.Enable = true
 	babylonConfig.GRPC.Address = "0.0.0.0:9090"
 
-	// Update babylonConfig to include Ethereum JSON-RPC settings
+	// Update babylonConfig to include Ethereum JSON-RPC settings and other settings
+	babylonConfig.Mempool.MaxTxs = -1 // No-op mempool required
 	babylonConfig.EVM = *servercfg.DefaultEVMConfig()
 	babylonConfig.JSONRPC = *servercfg.DefaultJSONRPCConfig()
+	babylonConfig.JSONRPC.API = []string{"eth", "net", "web3", "debug"} // debug enabled
 	babylonConfig.JSONRPC.Enable = true
+	babylonConfig.EVM.EVMChainID = app.EVMChainID
 
 	// Disable IAVL cache by default as Babylon leaf nodes can be large, and in case
 	// of big cache values, Babylon node can run out of memory.
@@ -421,14 +426,7 @@ func InitTestnet(
 	nodeDirName := fmt.Sprintf("%s%d", nodeDirPrefix, 0)
 	nodeDir := filepath.Join(outputDir, nodeDirName, nodeDaemonHome)
 	// Create keyring for the custom account
-	kb, err := keyring.New(
-		sdk.KeyringServiceName(),
-		keyringBackend,
-		nodeDir, // Use main output dir for this key
-		inBuf,
-		clientCtx.Codec,
-		evmtypes.EthSecp256k1Option(),
-	)
+	kb, err := keyring.New(sdk.KeyringServiceName(), keyringBackend, nodeDir, inBuf, clientCtx.Codec, evmtypes.EthSecp256k1Option())
 	if err != nil {
 		return err
 	}
@@ -452,12 +450,24 @@ func InitTestnet(
 		return err
 	}
 
+	// Get the public key for the ETH_SECP account
+	keyInfo, err := kb.Key("dev0")
+	if err != nil {
+		_ = os.RemoveAll(outputDir)
+		return err
+	}
+	pubKey, err := keyInfo.GetPubKey()
+	if err != nil {
+		_ = os.RemoveAll(outputDir)
+		return err
+	}
+
 	coins := sdk.Coins{
 		sdk.NewCoin("ubbn", math.NewInt(10e6)),
 	}
 
 	genBalances = append(genBalances, banktypes.Balance{Address: addr.String(), Coins: coins.Sort()})
-	genAccounts = append(genAccounts, authtypes.NewBaseAccount(addr, nil, 0, 0))
+	genAccounts = append(genAccounts, authtypes.NewBaseAccount(addr, pubKey, 0, 0))
 
 	if err := initGenFiles(clientCtx, mbm, chainID, genAccounts, genBalances, genFiles, numValidators, genesisParams); err != nil {
 		return err
