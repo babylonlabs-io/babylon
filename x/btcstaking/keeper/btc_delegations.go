@@ -332,6 +332,10 @@ func (k Keeper) GetBTCDelegation(ctx context.Context, stakingTxHashStr string) (
 	return btcDel, nil
 }
 
+func (k Keeper) IsBtcDelegationActive(ctx context.Context, stakingTxHashHex string) (bool, error) {
+	return false, nil
+}
+
 func (k Keeper) getBTCDelegation(ctx context.Context, stakingTxHash chainhash.Hash) *types.BTCDelegation {
 	store := k.btcDelegationStore(ctx)
 	btcDelBytes := store.Get(stakingTxHash[:])

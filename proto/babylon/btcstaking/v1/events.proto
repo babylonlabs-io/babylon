@@ -182,6 +182,9 @@ message EventBTCDelegationCreated {
   string new_state = 9 [(amino.dont_omitempty) = true];
   // staker Babylon address
   string staker_addr = 10 [(amino.dont_omitempty) = true];
+  // previous_staking_tx_hash_hex is the hex encoded of the hash of the staking tx
+  // that was used as input to the stake expansion, if empty it is NOT a stake expansion.
+  string previous_staking_tx_hash_hex = 11;
 }
 
 // EventCovenantSignatureReceived is the event emitted when a covenant committee

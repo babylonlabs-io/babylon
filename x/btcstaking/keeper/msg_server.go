@@ -614,7 +614,6 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 	}
 
 	stakeSpendingTx, err := bbn.NewBTCTxFromBytes(req.StakeSpendingTx)
-
 	if err != nil {
 		return nil, types.ErrInvalidBTCUndelegateReq.Wrapf("failed to parse staking spending tx: %v", err)
 	}
@@ -668,6 +667,22 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 		stakeSpendingTx,
 	); err != nil {
 		return nil, types.ErrInvalidBTCUndelegateReq.Wrapf("failed to verify stake spending tx staker signature: %s", err)
+	}
+
+	stakeExpansionDel := ms.getBTCDelegation(ctx, stakeSpendingTx.TxHash())
+	if stakeExpansionDel != nil { // stake expansion flow
+		btcCkptParams := ms.btccKeeper.GetParams(ctx)
+		tip := ms.btclcKeeper.GetTipInfo(ctx)
+
+		stkExpDeep := tip.Height - stakerSpendigTxHeader.Height
+		if stkExpDeep < btcCkptParams.BtcConfirmationDepth { // checks k deep
+			return nil, fmt.Errorf("stake expansion is %d deep, it needs to be at least %d", stkExpDeep, btcCkptParams.BtcConfirmationDepth)
+		}
+
+		// EmitUnexpectedUnbondingTxEvent btc undelegate
+		// btc activate stk expansion
+
+		return &types.MsgBTCUndelegateResponse{}, nil
 	}
 
 	registeredUnbondingTx := btcDel.MustGetUnbondingTx()
@@ -779,4 +794,18 @@ func (ms msgServer) SelectiveSlashingEvidence(goCtx context.Context, req *types.
 	ms.iKeeper.IndexRefundableMsg(ctx, req)
 
 	return &types.MsgSelectiveSlashingEvidenceResponse{}, nil
+}
+
+// BtcStakeExpand creates a BTCDelegation from a previous active staking transaction.
+func (ms msgServer) BtcStakeExpand(goCtx context.Context, req *types.MsgBtcStakeExpand) (*types.MsgBtcStakeExpandResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	isPreviousStkActive, err := ms.IsBtcDelegationActive(ctx, req.PreviousStakingTxHash)
+	if !isPreviousStkActive {
+		return nil, err
+	}
+
+	// executes same flow as MsgCreateBTCDelegation pre-approval
+
+	return &types.MsgBtcStakeExpandResponse{}, nil
 }
