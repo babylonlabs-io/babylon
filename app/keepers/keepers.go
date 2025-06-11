@@ -46,7 +46,6 @@ import (
 	minttypes "github.com/babylonlabs-io/babylon/v3/x/mint/types"
 	monitorkeeper "github.com/babylonlabs-io/babylon/v3/x/monitor/keeper"
 	monitortypes "github.com/babylonlabs-io/babylon/v3/x/monitor/types"
-	"github.com/babylonlabs-io/babylon/v3/x/zoneconcierge"
 	zckeeper "github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/keeper"
 	zctypes "github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
