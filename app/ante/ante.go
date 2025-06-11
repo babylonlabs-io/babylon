@@ -71,8 +71,8 @@ func NewAnteHandler(
 		NewIBCMsgSizeDecorator(),
 		NewWrappedAnteHandler(authAnteHandler),
 		NewBtcValidationDecorator(btcConfig, btccKeeper),
-		NewPriorityDecorator(),
 		incentivekeeper.NewRefundTxDecorator(nil),
+		NewPriorityDecorator(),
 	)
 
 	return anteHandler
