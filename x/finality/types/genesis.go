@@ -261,6 +261,9 @@ func SortData(gs *GenesisState) {
 	sort.Slice(gs.PubRandCommit, func(i, j int) bool {
 		return gs.PubRandCommit[i].FpBtcPk.MarshalHex() < gs.PubRandCommit[j].FpBtcPk.MarshalHex()
 	})
+	sort.Slice(gs.PubRandCommitIndexes, func(i, j int) bool {
+		return gs.PubRandCommitIndexes[i].FpBtcPk.MarshalHex() < gs.PubRandCommitIndexes[j].FpBtcPk.MarshalHex()
+	})
 	sort.Slice(gs.SigningInfos, func(i, j int) bool {
 		return gs.SigningInfos[i].FpBtcPk.MarshalHex() < gs.SigningInfos[j].FpBtcPk.MarshalHex()
 	})
