@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	bbntypes "github.com/babylonlabs-io/babylon/v4/types"
-	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+	bbntypes "github.com/babylonlabs-io/babylon/v3/types"
+	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 )
 
 // NewFinalityProviderSigningInfo creates a new FinalityProviderSigningInfo instance

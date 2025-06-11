@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/babylonlabs-io/babylon/v4/types"
+	"github.com/babylonlabs-io/babylon/v3/types"
 	host "github.com/cosmos/ibc-go/v10/modules/core/24-host"
 )
 

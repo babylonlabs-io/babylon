@@ -15,11 +15,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/v4/btcstaking"
-	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
-	bbn "github.com/babylonlabs-io/babylon/v4/types"
-	btcckpttypes "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
-	"github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/v3/btcstaking"
+	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
+	bbn "github.com/babylonlabs-io/babylon/v3/types"
+	btcckpttypes "github.com/babylonlabs-io/babylon/v3/x/btccheckpoint/types"
+	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 )
 
 // testStakingParams generates valid staking parameters with randomized
@@ -849,6 +849,40 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 			},
 			errParsing:    nil,
 			errValidation: types.ErrInvalidUnbondingTx.Wrap("the unbonding output value is not expected"),
+		},
+		{
+			name: "Msg.UnbondingTx does not have required fee",
+			fn: func(r *rand.Rand, t *testing.T) (*types.MsgCreateBTCDelegation, *types.Params, *btcckpttypes.Params) {
+				params := testStakingParams(r, t)
+				checkpointParams := testCheckpointParams()
+				msg, delSk := createMsgDelegationForParams(r, t, params)
+
+				currentUnbondingTx, err := bbn.NewBTCTxFromBytes(msg.UnbondingTx)
+				require.NoError(t, err)
+
+				// generate unbonding info with invalid staking idx
+				newUnbondingInfdo := generateUnbondingInfo(
+					r,
+					t,
+					delSk,
+					msg.FpBtcPkList[0].MustToBTCPK(),
+					currentUnbondingTx.TxIn[0].PreviousOutPoint.Hash,
+					currentUnbondingTx.TxIn[0].PreviousOutPoint.Index,
+					uint16(msg.UnbondingTime),
+					msg.StakingValue+1,
+					params,
+				)
+
+				// to cause the unbonding value mismatch with the unbonding tx output value
+				msg.UnbondingValue = msg.StakingValue + 1
+				msg.UnbondingTx = newUnbondingInfdo.serializedUnbondingTx
+				msg.UnbondingSlashingTx = newUnbondingInfdo.unbondingSlashingTx
+				msg.DelegatorUnbondingSlashingSig = newUnbondingInfdo.unbondingSlashinSig
+
+				return msg, params, checkpointParams
+			},
+			errParsing:    nil,
+			errValidation: types.ErrInvalidUnbondingTx.Wrapf("unbonding tx fee must be larger that 0"),
 		},
 	}
 	for _, tt := range tests {
