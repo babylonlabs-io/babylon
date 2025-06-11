@@ -10,7 +10,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/babylonlabs-io/babylon/v4/x/finality/types"
+	"github.com/babylonlabs-io/babylon/v3/x/finality/types"
 )
 
 type (
@@ -29,6 +29,10 @@ type (
 		FinalityProviderSigningTracker collections.Map[[]byte, types.FinalityProviderSigningInfo]
 		// FinalityProviderMissedBlockBitmap key: BIP340PubKey bytes | value: byte key for a finality provider's missed block bitmap chunk
 		FinalityProviderMissedBlockBitmap collections.Map[collections.Pair[[]byte, uint64], []byte]
+
+		// pubRandCommitIndex key: BIP340PubKey bytes | value: PubRandCommitIndexValue (ordered start heights of commitments)
+		// This index is useful for retrieving PubRandCommits using binary search 
+		pubRandCommitIndex collections.Map[[]byte, types.PubRandCommitIndexValue]
 	}
 )
 
@@ -62,6 +66,13 @@ func NewKeeper(
 			"finality_provider_missed_block_bitmap",
 			collections.PairKeyCodec(collections.BytesKey, collections.Uint64Key),
 			collections.BytesValue,
+		),
+		pubRandCommitIndex: collections.NewMap(
+			sb,
+			types.PubRandCommitIndexKeyPrefix,
+			"pub_rand_commit_idx",
+			collections.BytesKey,
+			codec.CollValue[types.PubRandCommitIndexValue](cdc),
 		),
 	}
 }

@@ -12,7 +12,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/gogoproto/proto"
 
-	"github.com/babylonlabs-io/babylon/v4/x/incentive/types"
+	"github.com/babylonlabs-io/babylon/v3/x/incentive/types"
 )
 
 // RefundTx refunds the transaction fee to the appropriate party.

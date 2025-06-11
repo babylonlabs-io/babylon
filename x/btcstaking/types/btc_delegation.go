@@ -14,9 +14,9 @@ import (
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/wire"
 
-	"github.com/babylonlabs-io/babylon/v4/btcstaking"
-	asig "github.com/babylonlabs-io/babylon/v4/crypto/schnorr-adaptor-signature"
-	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	"github.com/babylonlabs-io/babylon/v3/btcstaking"
+	asig "github.com/babylonlabs-io/babylon/v3/crypto/schnorr-adaptor-signature"
+	bbn "github.com/babylonlabs-io/babylon/v3/types"
 )
 
 func NewBTCDelegationStatusFromString(statusStr string) (BTCDelegationStatus, error) {

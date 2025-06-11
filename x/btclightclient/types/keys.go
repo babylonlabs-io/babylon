@@ -1,7 +1,7 @@
 package types
 
 import (
-	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	bbn "github.com/babylonlabs-io/babylon/v3/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 

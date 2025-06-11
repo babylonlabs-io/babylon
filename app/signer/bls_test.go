@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/test-go/testify/assert"
 
-	"github.com/babylonlabs-io/babylon/v4/crypto/bls12381"
+	"github.com/babylonlabs-io/babylon/v3/crypto/bls12381"
 )
 
 // Global command instance for tests that need it

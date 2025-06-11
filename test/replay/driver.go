@@ -13,10 +13,10 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
-	"github.com/babylonlabs-io/babylon/v4/btctxformatter"
-	bbn "github.com/babylonlabs-io/babylon/v4/types"
-	btckckpttypes "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
-	btcstkconsumertypes "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
+	"github.com/babylonlabs-io/babylon/v3/btctxformatter"
+	bbn "github.com/babylonlabs-io/babylon/v3/types"
+	btckckpttypes "github.com/babylonlabs-io/babylon/v3/x/btccheckpoint/types"
+	btcstkconsumertypes "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
 
 	"cosmossdk.io/log"
 	"github.com/btcsuite/btcd/btcec/v2"
@@ -52,13 +52,13 @@ import (
 	"github.com/otiai10/copy"
 	"github.com/stretchr/testify/require"
 
-	babylonApp "github.com/babylonlabs-io/babylon/v4/app"
-	appsigner "github.com/babylonlabs-io/babylon/v4/app/signer"
-	"github.com/babylonlabs-io/babylon/v4/test/e2e/initialization"
-	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
-	btclighttypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
-	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
-	ckpttypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
+	babylonApp "github.com/babylonlabs-io/babylon/v3/app"
+	appsigner "github.com/babylonlabs-io/babylon/v3/app/signer"
+	"github.com/babylonlabs-io/babylon/v3/test/e2e/initialization"
+	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
+	btclighttypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
+	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
+	ckpttypes "github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
 )
 
 var validatorConfig = &initialization.NodeConfig{

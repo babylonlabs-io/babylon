@@ -7,7 +7,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client"
 
-	"github.com/babylonlabs-io/babylon/v4/x/monitor/types"
+	"github.com/babylonlabs-io/babylon/v3/x/monitor/types"
 )
 
 // GetQueryCmd returns the cli query commands for this module

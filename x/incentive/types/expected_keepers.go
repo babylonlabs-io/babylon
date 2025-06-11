@@ -6,7 +6,7 @@ import (
 	"cosmossdk.io/x/feegrant"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
+	epochingtypes "github.com/babylonlabs-io/babylon/v3/x/epoching/types"
 )
 
 type AccountKeeper interface {

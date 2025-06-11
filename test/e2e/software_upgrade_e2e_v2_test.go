@@ -1,18 +1,18 @@
 package e2e
 
 import (
-	"github.com/babylonlabs-io/babylon/v4/x/mint/types"
+	"github.com/babylonlabs-io/babylon/v3/x/mint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
-	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
-	v2 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v2"
-	"github.com/babylonlabs-io/babylon/v4/testutil/sample"
-	btclighttypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
+	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
+	v2 "github.com/babylonlabs-io/babylon/v3/app/upgrades/v2"
+	"github.com/babylonlabs-io/babylon/v3/testutil/sample"
+	btclighttypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
 
-	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer"
-	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer/chain"
-	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer/config"
+	"github.com/babylonlabs-io/babylon/v3/test/e2e/configurer"
+	"github.com/babylonlabs-io/babylon/v3/test/e2e/configurer/chain"
+	"github.com/babylonlabs-io/babylon/v3/test/e2e/configurer/config"
 )
 
 const (

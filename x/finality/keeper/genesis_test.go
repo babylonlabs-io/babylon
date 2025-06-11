@@ -8,10 +8,10 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
-	keepertest "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
-	bbn "github.com/babylonlabs-io/babylon/v4/types"
-	"github.com/babylonlabs-io/babylon/v4/x/finality/types"
+	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
+	keepertest "github.com/babylonlabs-io/babylon/v3/testutil/keeper"
+	bbn "github.com/babylonlabs-io/babylon/v3/types"
+	"github.com/babylonlabs-io/babylon/v3/x/finality/types"
 )
 
 func FuzzTestExportGenesis(f *testing.F) {
@@ -90,7 +90,13 @@ func FuzzTestExportGenesis(f *testing.F) {
 			NumPubRand:  numPubRand,
 			Commitment:  randListInfo.Commitment,
 		}
-		k.SetPubRandCommit(ctx, fpBTCPK, prc)
+		require.NoError(t, k.SetPubRandCommit(ctx, fpBTCPK, prc))
+		pubRandCommitIdx := &types.PubRandCommitIdx{
+			FpBtcPk: fpBTCPK,
+			Index: &types.PubRandCommitIndexValue{
+				Heights: []uint64{startHeight},
+			},
+		}
 
 		numSigningInfo := datagen.RandomInt(r, 100) + 10
 		fpSigningInfos := map[string]*types.FinalityProviderSigningInfo{}
@@ -140,6 +146,7 @@ func FuzzTestExportGenesis(f *testing.F) {
 		require.Equal(t, allEvidences, gs.Evidences)
 		require.Equal(t, allPublicRandomness, gs.PublicRandomness)
 		require.Equal(t, prc, gs.PubRandCommit[0].PubRandCommit)
+		require.Equal(t, pubRandCommitIdx, gs.PubRandCommitIndexes[0])
 		require.Equal(t, len(fpPks), len(gs.SigningInfos))
 		for _, info := range gs.SigningInfos {
 			require.Equal(t, fpSigningInfos[info.FpBtcPk.MarshalHex()].MissedBlocksCounter, info.FpSigningInfo.MissedBlocksCounter)

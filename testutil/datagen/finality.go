@@ -9,9 +9,9 @@ import (
 	"github.com/cometbft/cometbft/crypto/merkle"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/babylonlabs-io/babylon/v4/crypto/eots"
-	bbn "github.com/babylonlabs-io/babylon/v4/types"
-	ftypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
+	"github.com/babylonlabs-io/babylon/v3/crypto/eots"
+	bbn "github.com/babylonlabs-io/babylon/v3/types"
+	ftypes "github.com/babylonlabs-io/babylon/v3/x/finality/types"
 )
 
 type RandListInfo struct {
@@ -155,17 +155,18 @@ func GenRandomFinalitySig(r *rand.Rand) (*bbn.SchnorrEOTSSig, error) {
 
 func GenRandomFinalityGenesisState(r *rand.Rand) (*ftypes.GenesisState, error) {
 	var (
-		entriesCount = int(RandomIntOtherThan(r, 0, 20)) + 1 // make sure there's always at least one entry
-		blocks       = make([]*ftypes.IndexedBlock, entriesCount)
-		evidences    = make([]*ftypes.Evidence, entriesCount)
-		votes        = make([]*ftypes.VoteSig, entriesCount)
-		pubRand      = make([]*ftypes.PublicRandomness, entriesCount)
-		pubRandComm  = make([]*ftypes.PubRandCommitWithPK, entriesCount)
-		signInfo     = make([]ftypes.SigningInfo, entriesCount)
-		missedBlocks = make([]ftypes.FinalityProviderMissedBlocks, entriesCount)
-		votingPowers = make([]*ftypes.VotingPowerFP, entriesCount)
-		vpDistCache  = make([]*ftypes.VotingPowerDistCacheBlkHeight, entriesCount)
-		params       = ftypes.DefaultParams()
+		entriesCount   = int(RandomIntOtherThan(r, 0, 20)) + 1 // make sure there's always at least one entry
+		blocks         = make([]*ftypes.IndexedBlock, entriesCount)
+		evidences      = make([]*ftypes.Evidence, entriesCount)
+		votes          = make([]*ftypes.VoteSig, entriesCount)
+		pubRand        = make([]*ftypes.PublicRandomness, entriesCount)
+		pubRandComm    = make([]*ftypes.PubRandCommitWithPK, entriesCount)
+		pubRandCommIdx = make([]*ftypes.PubRandCommitIdx, entriesCount)
+		signInfo       = make([]ftypes.SigningInfo, entriesCount)
+		missedBlocks   = make([]ftypes.FinalityProviderMissedBlocks, entriesCount)
+		votingPowers   = make([]*ftypes.VotingPowerFP, entriesCount)
+		vpDistCache    = make([]*ftypes.VotingPowerDistCacheBlkHeight, entriesCount)
+		params         = ftypes.DefaultParams()
 	)
 
 	for i := range entriesCount {
@@ -220,6 +221,13 @@ func GenRandomFinalityGenesisState(r *rand.Rand) (*ftypes.GenesisState, error) {
 			},
 		}
 
+		pubRandCommIdx[i] = &ftypes.PubRandCommitIdx{
+			FpBtcPk: btcPk,
+			Index: &ftypes.PubRandCommitIndexValue{
+				Heights: []uint64{blockHeight},
+			},
+		}
+
 		// populate signing info
 		signInfo[i] = ftypes.SigningInfo{
 			FpBtcPk:       btcPk,
@@ -266,5 +274,6 @@ func GenRandomFinalityGenesisState(r *rand.Rand) (*ftypes.GenesisState, error) {
 		VpDstCache:           vpDistCache,
 		NextHeightToFinalize: uint64(entriesCount),
 		NextHeightToReward:   uint64(entriesCount),
+		PubRandCommitIndexes: pubRandCommIdx,
 	}, nil
 }

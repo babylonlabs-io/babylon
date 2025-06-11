@@ -3,7 +3,7 @@ package types_test
 import (
 	"testing"
 
-	"github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
+	"github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
 	"github.com/stretchr/testify/require"
 )
 

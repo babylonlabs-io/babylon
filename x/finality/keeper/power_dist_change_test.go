@@ -16,23 +16,23 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
-	babylonApp "github.com/babylonlabs-io/babylon/v4/app"
-	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
-	"github.com/babylonlabs-io/babylon/v4/test/replay"
+	babylonApp "github.com/babylonlabs-io/babylon/v3/app"
+	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
+	"github.com/babylonlabs-io/babylon/v3/test/replay"
 
-	testutil "github.com/babylonlabs-io/babylon/v4/testutil/btcstaking-helper"
-	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
-	bbn "github.com/babylonlabs-io/babylon/v4/types"
-	btcctypes "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
-	btclckeeper "github.com/babylonlabs-io/babylon/v4/x/btclightclient/keeper"
-	btclightclientkeeper "github.com/babylonlabs-io/babylon/v4/x/btclightclient/keeper"
-	btclctypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
-	btcstakingkeeper "github.com/babylonlabs-io/babylon/v4/x/btcstaking/keeper"
-	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
-	btcstktypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
-	finalitykeeper "github.com/babylonlabs-io/babylon/v4/x/finality/keeper"
-	"github.com/babylonlabs-io/babylon/v4/x/finality/types"
-	ftypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
+	testutil "github.com/babylonlabs-io/babylon/v3/testutil/btcstaking-helper"
+	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
+	bbn "github.com/babylonlabs-io/babylon/v3/types"
+	btcctypes "github.com/babylonlabs-io/babylon/v3/x/btccheckpoint/types"
+	btclckeeper "github.com/babylonlabs-io/babylon/v3/x/btclightclient/keeper"
+	btclightclientkeeper "github.com/babylonlabs-io/babylon/v3/x/btclightclient/keeper"
+	btclctypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
+	btcstakingkeeper "github.com/babylonlabs-io/babylon/v3/x/btcstaking/keeper"
+	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
+	btcstktypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
+	finalitykeeper "github.com/babylonlabs-io/babylon/v3/x/finality/keeper"
+	"github.com/babylonlabs-io/babylon/v3/x/finality/types"
+	ftypes "github.com/babylonlabs-io/babylon/v3/x/finality/types"
 )
 
 func FuzzDistributionCache_BtcUndelegateSameBlockAsExpiration(f *testing.F) {
@@ -113,7 +113,7 @@ func FuzzDistributionCache_BtcUndelegateSameBlockAsExpiration(f *testing.F) {
 			Commitment:  randListInfo.Commitment,
 		}
 
-		finalityK.SetPubRandCommit(ctx, fpMsg.BtcPk, prc)
+		require.NoError(t, finalityK.SetPubRandCommit(ctx, fpMsg.BtcPk, prc))
 
 		ctx = ProduceBlock(t, r, app, ctx)
 
@@ -268,7 +268,7 @@ func FuzzDistributionCacheVpCheck_FpSlashedBeforeInclusionProof(f *testing.F) {
 				Commitment:  randListInfo.Commitment,
 			}
 
-			finalityK.SetPubRandCommit(ctx, fpMsg.BtcPk, prc)
+			require.NoError(t, finalityK.SetPubRandCommit(ctx, fpMsg.BtcPk, prc))
 		}
 
 		ctx = ProduceBlock(t, r, app, ctx)
