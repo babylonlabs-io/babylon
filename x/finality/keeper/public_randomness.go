@@ -57,7 +57,7 @@ func (k Keeper) GetPubRandCommitForHeight(ctx context.Context, fpBtcPK *bbn.BIP3
 	var prCommit types.PubRandCommit
 	k.cdc.MustUnmarshal(bz, &prCommit)
 	if !prCommit.IsInRange(height) {
-		return nil, types.ErrPubRandNotFound.Wrapf("height %d is not in range of found PubRandCommit with startHeight %d and num_pub_rand %d", height, startHeight, prCommit.NumPubRand)
+		return nil, types.ErrPubRandNotFound.Wrapf("height %d is not in range of found PubRandCommit with startHeight %d and NumPubRand %d", height, startHeight, prCommit.NumPubRand)
 	}
 
 	return &prCommit, nil
