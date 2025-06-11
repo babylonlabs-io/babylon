@@ -38,16 +38,17 @@ const (
 )
 
 var (
-	BlockKey                                   = []byte{0x01}             // key prefix for blocks
-	VoteKey                                    = []byte{0x02}             // key prefix for votes
-	PubRandKey                                 = []byte{0x03}             // key prefix for public randomness
-	PubRandCommitKey                           = []byte{0x04}             // key prefix for commitment of public randomness
-	ParamsKey                                  = []byte{0x05}             // key prefix for the parameters
-	EvidenceKey                                = []byte{0x06}             // key prefix for evidences
-	NextHeightToFinalizeKey                    = []byte{0x07}             // key prefix for next height to finalise
-	FinalityProviderSigningInfoKeyPrefix       = collections.NewPrefix(8) // key prefix for signing info
-	FinalityProviderMissedBlockBitmapKeyPrefix = collections.NewPrefix(9) // key prefix for missed block bitmap
-	VotingPowerKey                             = []byte{0x10}             // key prefix for the voting power
-	VotingPowerDistCacheKey                    = []byte{0x11}             // key prefix for voting power distribution cache
-	NextHeightToRewardKey                      = []byte{0x012}            // key prefix for next height to reward
+	BlockKey                                   = []byte{0x01}              // key prefix for blocks
+	VoteKey                                    = []byte{0x02}              // key prefix for votes
+	PubRandKey                                 = []byte{0x03}              // key prefix for public randomness
+	PubRandCommitKey                           = []byte{0x04}              // key prefix for commitment of public randomness
+	ParamsKey                                  = []byte{0x05}              // key prefix for the parameters
+	EvidenceKey                                = []byte{0x06}              // key prefix for evidences
+	NextHeightToFinalizeKey                    = []byte{0x07}              // key prefix for next height to finalise
+	FinalityProviderSigningInfoKeyPrefix       = collections.NewPrefix(8)  // key prefix for signing info
+	FinalityProviderMissedBlockBitmapKeyPrefix = collections.NewPrefix(9)  // key prefix for missed block bitmap
+	VotingPowerKey                             = []byte{0x10}              // key prefix for the voting power
+	VotingPowerDistCacheKey                    = []byte{0x11}              // key prefix for voting power distribution cache
+	NextHeightToRewardKey                      = []byte{0x012}             // key prefix for next height to reward
+	PubRandCommitIndexKeyPrefix                = collections.NewPrefix(13) // key prefix for the index with the start height of the PubRandCommitments
 )
