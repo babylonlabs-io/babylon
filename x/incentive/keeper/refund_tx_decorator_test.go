@@ -30,7 +30,7 @@ func TestCheckTxAndClearIndex(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	iKeeper, ctx := keepertest.IncentiveKeeper(t, nil, nil, nil, nil)
+	iKeeper, ctx := keepertest.IncentiveKeeper(t, nil, nil, nil)
 	decorator := keeper.NewRefundTxDecorator(iKeeper)
 
 	testCases := []struct {

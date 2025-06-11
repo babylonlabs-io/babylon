@@ -443,7 +443,6 @@ func (s *RefundTxTestSuite) SetupTest(t *testing.T) {
 		s.app.BankKeeper,
 		s.app.AccountKeeper,
 		&s.app.EpochingKeeper,
-		s.app.FeeGrantKeeper,
 		appparams.AccGov.String(),
 		authtypes.FeeCollectorName,
 	)

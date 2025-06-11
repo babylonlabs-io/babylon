@@ -20,7 +20,6 @@ type (
 		bankKeeper     types.BankKeeper
 		accountKeeper  types.AccountKeeper
 		epochingKeeper types.EpochingKeeper
-		feegrantKeeper types.FeegrantKeeper
 
 		// RefundableMsgKeySet is the set of hashes of messages that can be refunded
 		// Each key is a hash of the message bytes
@@ -54,7 +53,6 @@ func NewKeeper(
 	bankKeeper types.BankKeeper,
 	accountKeeper types.AccountKeeper,
 	epochingKeeper types.EpochingKeeper,
-	feegrantKeeper types.FeegrantKeeper,
 	authority string,
 	feeCollectorName string,
 ) Keeper {
@@ -66,7 +64,6 @@ func NewKeeper(
 		bankKeeper:     bankKeeper,
 		accountKeeper:  accountKeeper,
 		epochingKeeper: epochingKeeper,
-		feegrantKeeper: feegrantKeeper,
 		RefundableMsgKeySet: collections.NewKeySet(
 			sb,
 			types.RefundableMsgKeySetPrefix,

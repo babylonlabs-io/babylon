@@ -41,9 +41,7 @@ func FuzzInterceptFeeCollector(f *testing.F) {
 		// mock epoching keeper
 		epochingKeeper := types.NewMockEpochingKeeper(ctrl)
 
-		feegrantKeeper := types.NewMockFeegrantKeeper(ctrl)
-
-		keeper, ctx := testkeeper.IncentiveKeeper(t, bankKeeper, accountKeeper, epochingKeeper, feegrantKeeper)
+		keeper, ctx := testkeeper.IncentiveKeeper(t, bankKeeper, accountKeeper, epochingKeeper)
 		height := datagen.RandomInt(r, 1000)
 		ctx = datagen.WithCtxHeight(ctx, height)
 
@@ -86,9 +84,7 @@ func TestInterceptFeeCollectorWithSmallAmount(t *testing.T) {
 	// mock epoching keeper
 	epochingKeeper := types.NewMockEpochingKeeper(ctrl)
 
-	feegrantKeeper := types.NewMockFeegrantKeeper(ctrl)
-
-	keeper, ctx := testkeeper.IncentiveKeeper(t, bankKeeper, accountKeeper, epochingKeeper, feegrantKeeper)
+	keeper, ctx := testkeeper.IncentiveKeeper(t, bankKeeper, accountKeeper, epochingKeeper)
 	height := datagen.RandomInt(r, 1000)
 	ctx = datagen.WithCtxHeight(ctx, height)
 
