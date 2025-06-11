@@ -16,9 +16,7 @@ func getRecipient(feeTx sdk.FeeTx) sdk.AccAddress {
 	return feeTx.FeePayer()
 }
 
-// RefundTx refunds the transaction fee to the appropriate party.
-// If a fee grant was used, it restores the granted allowance.
-// Otherwise, it sends the fee back to the original fee payer.
+// RefundTx refunds the given tx by sending the fee back to the fee payer.
 func (k Keeper) RefundTx(ctx context.Context, tx sdk.FeeTx) error {
 	txFee := tx.GetFee()
 	if txFee.IsZero() {
@@ -26,7 +24,6 @@ func (k Keeper) RefundTx(ctx context.Context, tx sdk.FeeTx) error {
 		// but having this check for compatibility in the future
 		return nil
 	}
-
 	txFeePayer := getRecipient(tx)
 
 	return k.bankKeeper.SendCoinsFromModuleToAccount(ctx, k.feeCollectorName, txFeePayer, txFee)
