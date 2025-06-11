@@ -42,6 +42,7 @@ chains via IBC packets:
     - [Sending BTC timestamps upon `AfterRawCheckpointFinalized`](#sending-btc-timestamps-upon-afterrawcheckpointfinalized)
   - [Messages and Queries](#messages-and-queries)
   - [Consumer Chain Integration](#consumer-chain-integration)
+    - [IBC Communication Protocol](#ibc-communication-protocol)
     - [Relaying BTC Headers](#relaying-btc-headers)
       - [Broadcasting headers](#broadcasting-headers)
       - [Selecting headers to be broadcast](#selecting-headers-to-be-broadcast)
@@ -55,7 +56,6 @@ chains via IBC packets:
       - [Processing event flow](#processing-event-flow)
       - [Registering consumers](#registering-consumers)
       - [Handling slashing](#handling-slashing)
-    - [IBC Communication Protocol](#ibc-communication-protocol)
 
 ## Concepts
 
@@ -328,6 +328,17 @@ The Zone Concierge module connects Babylon and consumer chains, relaying three
 types of information through IBC: BTC headers, BTC timestamps, and BTC staking
 events.
 
+### IBC Communication Protocol
+
+Channel Configuration:
+- Port: `zoneconcierge`
+- Ordering: `ORDERED`
+- Version: `zoneconcierge-1`
+
+Packet Types:
+- Outbound: `BTCHeaders`, `BTCTimestamp`, `BTCStakingConsumerEvent`
+- Inbound: `ConsumerSlashingIBCPacket`
+
 ### Relaying BTC Headers
 
 Zone Concierge relays BTC headers from Babylon's BTC light client to consumer
@@ -419,18 +430,3 @@ relevant consumer chains.
 - Updates the finality provider's status and propagates slashing to other
   consumers
 - Emits `EventSlashedFinalityProvider` for external slashing mechanisms
-
-### IBC Communication Protocol
-
-Zone Concierge uses ordered IBC channels to ensure reliable, sequenced
-communication with consumer chains.
-
-Channel Configuration:
-- Port: `zoneconcierge`
-- Ordering: `ORDERED`
-- Version: `zoneconcierge-1`
-
-Packet Types:
-- Outbound: `BTCHeaders`, `BTCTimestamp`, `BTCStakingConsumerEvent`
-- Inbound: `ConsumerSlashingIBCPacket`
-
