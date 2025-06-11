@@ -33,7 +33,7 @@ import (
 
 var (
 	expectedMaccPerms = map[string][]string{
-		authtypes.FeeCollectorName:   nil, // fee collector account
+		authtypes.FeeCollectorName:   {authtypes.Burner}, // fee collector account
 		distrtypes.ModuleName:        nil,
 		minttypes.ModuleName:         {authtypes.Minter},
 		stktypes.BondedPoolName:      {authtypes.Burner, authtypes.Staking},

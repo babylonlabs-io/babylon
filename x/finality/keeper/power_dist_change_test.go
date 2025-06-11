@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	storetypes "cosmossdk.io/store/types"
 	"math/rand"
 	"strings"
 	"testing"
@@ -43,7 +44,7 @@ func FuzzDistributionCache_BtcUndelegateSameBlockAsExpiration(f *testing.F) {
 		r := rand.New(rand.NewSource(seed))
 
 		app := babylonApp.Setup(t, false)
-		ctx := app.BaseApp.NewContext(false)
+		ctx := app.BaseApp.NewContext(false).WithBlockGasMeter(storetypes.NewInfiniteGasMeter())
 
 		initHeader := ctx.HeaderInfo()
 		initHeader.Height = int64(1)
@@ -192,7 +193,7 @@ func FuzzDistributionCacheVpCheck_FpSlashedBeforeInclusionProof(f *testing.F) {
 		r := rand.New(rand.NewSource(seed))
 
 		app := babylonApp.Setup(t, false)
-		ctx := app.BaseApp.NewContext(false)
+		ctx := app.BaseApp.NewContext(false).WithBlockGasMeter(storetypes.NewInfiniteGasMeter())
 
 		initHeader := ctx.HeaderInfo()
 		initHeader.Height = int64(1)
@@ -1474,7 +1475,7 @@ func TestHandleLivenessPanic(t *testing.T) {
 	// Initial setup
 	r := rand.New(rand.NewSource(12312312312))
 	app := babylonApp.Setup(t, false)
-	ctx := app.BaseApp.NewContext(false)
+	ctx := app.BaseApp.NewContext(false).WithBlockGasMeter(storetypes.NewInfiniteGasMeter())
 
 	defaultStakingKeeper := app.StakingKeeper
 	btcStakingKeeper := app.BTCStakingKeeper
