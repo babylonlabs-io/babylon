@@ -248,11 +248,6 @@ func (ak *AppKeepers) InitKeepers(
 	// set transient store keys
 	ak.tkeys = storetypes.NewTransientStoreKeys(paramstypes.TStoreKey, btccheckpointtypes.TStoreKey)
 
-	// set memory store keys
-	// NOTE: The testingkey is just mounted for testing purposes. Actual applications should
-	// not include this key.
-	ak.memKeys = storetypes.NewMemoryStoreKeys("testingkey")
-
 	accountKeeper := authkeeper.NewAccountKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[authtypes.StoreKey]),
