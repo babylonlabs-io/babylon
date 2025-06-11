@@ -439,8 +439,8 @@ github.com/cosmos/ibc-go/modules/light-clients/08-wasm/v10 v10.1.1 h1:mbdtYhi77o
 github.com/cosmos/ibc-go/modules/light-clients/08-wasm/v10 v10.1.1/go.mod h1:KkndDnWkEY1c1VnX0cpES7dDJzm7PKlBMdKLDZB3Ww8=
 github.com/cosmos/ibc-go/v10 v10.1.1 h1:Mtl0Ydr9dVdOrPqmxCAG49RmX2/VDYeKYdwv3G2y0g8=
 github.com/cosmos/ibc-go/v10 v10.1.1/go.mod h1:0pJCkgEYRMygqkvUcwy6Kuf5wPfIsObRoxFU2DJEil4=
-github.com/cosmos/ibc-go/v8 v8.7.0 h1:HqhVOkO8bDpClXE81DFQgFjroQcTvtpm0tCS7SQVKVY=
-github.com/cosmos/ibc-go/v8 v8.7.0/go.mod h1:G2z+Q6ZQSMcyHI2+BVcJdvfOupb09M2h/tgpXOEdY6k=
+github.com/cosmos/ibc-go/v8 v8.2.0 h1:7oCzyy1sZCcgpeQLnHxC56brsSz3KWwQGKXalXwXFzE=
+github.com/cosmos/ibc-go/v8 v8.2.0/go.mod h1:wj3qx75iC/XNnsMqbPDCIGs0G6Y3E/lo3bdqCyoCy+8=
 github.com/cosmos/ics23/go v0.11.0 h1:jk5skjT0TqX5e5QJbEnwXIS2yI2vnmLOgpQPeM5RtnU=
 github.com/cosmos/ics23/go v0.11.0/go.mod h1:A8OjxPE67hHST4Icw94hOxxFEJMBG031xIGF/JHNIY0=
 github.com/cosmos/keyring v1.2.0 h1:8C1lBP9xhImmIabyXW4c3vFjjLiBdGCmfLUfeZlV1Yo=
