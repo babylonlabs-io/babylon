@@ -47,6 +47,7 @@ builds:
     tags:
       - ledger
       - muslc
+      - mainnet
 
   - id: babylond-linux-arm64
     main: ./cmd/babylond/main.go
