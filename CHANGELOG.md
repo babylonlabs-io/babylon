@@ -39,6 +39,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
+- [#1222](https://github.com/babylonlabs-io/babylon/pull/1222) doc: revise zone concierge doc (round 1)
 - [#1015](https://github.com/babylonlabs-io/babylon/pull/1015) Add finality contract e2e tests follup-up.
 - [#970](https://github.com/babylonlabs-io/babylon/pull/970) Add finality contract e2e tests follup-up.
 - [#946](https://github.com/babylonlabs-io/babylon/pull/946) Add finality contract e2e tests follup-up.
@@ -80,10 +81,12 @@ check of rewards
 - [#988](https://github.com/babylonlabs-io/babylon/pull/988) Fix flaky e2e ibc test
 `TestIBCTransferSuite`
 - [#1000](https://github.com/babylonlabs-io/babylon/pull/1000) Add multi-staking replay test
+- [#1028](https://github.com/babylonlabs-io/babylon/pull/1028) Bump ibc-go to `v10` and wire up IBC `v2`.
 - [#702](https://github.com/babylonlabs-io/babylon/pull/702) Add test for small rewards in fee collector
 - [#1040](https://github.com/babylonlabs-io/babylon/pull/1040) Rename ETH L2 to rollup
 - [#1195](https://github.com/babylonlabs-io/babylon/pull/1195) Update repository version to `v3`.
 - [#1060](https://github.com/babylonlabs-io/babylon/pull/1060) Optimize `PubRandCommit` lookup in `x/finality` module
+- [#1223](https://github.com/babylonlabs-io/babylon/pull/1223) Bump Cosmos SDK to `v0.53.0`
 
 ### State Machine Breaking
 

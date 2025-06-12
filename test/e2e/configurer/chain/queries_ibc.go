@@ -5,7 +5,7 @@ import (
 	"net/url"
 
 	"github.com/babylonlabs-io/babylon/v3/test/e2e/util"
-	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 )
 
 func (n *NodeConfig) QueryIBCChannels() (*channeltypes.QueryChannelsResponse, error) {
