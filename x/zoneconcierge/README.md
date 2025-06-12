@@ -2,25 +2,25 @@
 
 The Zone Concierge module is responsible for providing BTC staking integration
 functionalities for other Bitcoin Supercharged Networks (BSNs).  
-It leverages the IBC protocol to receive consumer chains' headers, and propagate BTC timestamps of those headers
+It leverages the IBC protocol to receive BSNs' headers, and propagate BTC timestamps of those headers
 and information associated with the BTC staking protocol (e.g., finality providers, BTC stakes, and more).  
 The Zone Concierge module synchronises the following information with consumer
 chains via IBC packets:
 
-- **BTC Headers:** Babylon Genesis forwards BTC headers to consumer chains to keep their
+- **BTC Headers:** Babylon Genesis forwards BTC headers to BSNs to keep their
   BTC light clients in sync with Babylon's BTC light client. This allows
-  consumer chains to independently verify BTC timestamps.
+  BSNs to independently verify BTC timestamps.
 - **BTC Timestamps:** When a Babylon epoch is finalised, Babylon sends BTC
-  timestamps to consumer chains. Each BTC timestamp contains:
-  - The latest consumer chain header that was checkpointed in the finalised
+  timestamps to BSNs. Each BTC timestamp contains:
+  - The latest BSN header that was checkpointed in the finalised
     epoch
   - Recent BTC headers that extend the consumer's BTC light client
   - The finalised epoch's metadata and raw checkpoint
   - Proofs that the consumer header was included in the epoch and the epoch was
     properly sealed and submitted to Bitcoin
-- **BTC Staking:** Babylon enables trustless Bitcoin staking for consumer chains
+- **BTC Staking:** Babylon enables trustless Bitcoin staking for BSNs
   by synchronising staking-related information between Bitcoin, Babylon and
-  consumer chains. This allows BTC holders to stake their BTC to secure consumer
+  BSNs. This allows BTC holders to stake their BTC to secure consumer
   chains without requiring any custodial solutions.
 
 ## Table of contents
@@ -39,7 +39,7 @@ chains via IBC packets:
     - [Indexing headers upon `AfterEpochEnds`](#indexing-headers-upon-afterepochends)
     - [Sending BTC timestamps upon `AfterRawCheckpointFinalized`](#sending-btc-timestamps-upon-afterrawcheckpointfinalized)
   - [Messages and Queries](#messages-and-queries)
-  - [Consumer Chain Integration](#consumer-chain-integration)
+  - [BSN Integration](#bsn-integration)
     - [IBC Communication Protocol](#ibc-communication-protocol)
     - [Relaying BTC Headers](#relaying-btc-headers)
       - [Broadcasting headers](#broadcasting-headers)
@@ -193,16 +193,16 @@ works as follows.
 
 The Zone Concierge module subscribes to the Epoching module's `AfterEpochEnds`
 [hook](../epoching/types/hooks.go) for indexing the epochs when receiving
-headers from consumer chains, and the Checkpointing module's
+headers from BSNs, and the Checkpointing module's
 `AfterRawCheckpointFinalized` [hook](../checkpointing/types/hooks.go) for
-sending BTC timestamps to consumer chains.
+sending BTC timestamps to BSNs.
 
 ### Indexing headers upon `AfterEpochEnds`
 
 The `AfterEpochEnds` hook is triggered when an epoch is ended, i.e., the last
 block in this epoch has been committed by CometBFT. Upon `AfterEpochEnds`, the
 Zone Concierge will save the current `ChainInfo` to the `EpochChainInfo` storage
-for each consumer chain.
+for each BSN.
 
 ### Sending BTC timestamps upon `AfterRawCheckpointFinalized`
 
@@ -213,7 +213,7 @@ Bitcoin's canonical chain, where `w` is the `checkpoint_finalization_timeout`
 [BTCCheckpoint](../btccheckpoint/) module.
 
 Upon `AfterRawCheckpointFinalized`, the Zone Concierge module will prepare and
-send a BTC timestamp to each consumer chain.  
+send a BTC timestamp to each BSN.  
 The [BTCTimestamp](../../proto/babylon/zoneconcierge/v1/packet.proto) structure  
 includes a header and a set of proofs that the header is checkpointed by
 Bitcoin.
@@ -275,7 +275,7 @@ message ProofFinalizedChainInfo {
 ```
 
 When `AfterRawCheckpointFinalized` is triggered, the Zone Concierge module will
-send an IBC packet including a `BTCTimestamp` to each consumer chain. The logic
+send an IBC packet including a `BTCTimestamp` to each BSN. The logic
 is defined at [x/zoneconcierge/keeper/hooks.go](./keeper/hooks.go) and works as
 follows:
 
@@ -318,9 +318,9 @@ It provides a set of queries about the status of checkpointed PoS blockchains,
 listed at
 [docs.babylonlabs.io](https://docs.babylonlabs.io/docs/developer-guides/grpcrestapi#tag/ZoneConcierge).
 
-## Consumer Chain Integration
+## BSN Integration
 
-The Zone Concierge module connects Babylon and consumer chains, relaying three
+The Zone Concierge module connects Babylon and BSNs, relaying three
 types of information through IBC: BTC headers, BTC timestamps, and BTC staking
 events.
 
@@ -358,7 +358,7 @@ channels.
 
 ### Relaying BTC Timestamps
 
-Zone Concierge sends BTC timestamps to consumer chains when a Babylon epoch
+Zone Concierge sends BTC timestamps to BSNs when a Babylon epoch
 becomes BTC-finalised.
 
 #### Triggering timestamp relay
@@ -395,13 +395,13 @@ open IBC channels.
 
 ### Propagating BTC Staking Events
 
-Zone Concierge propagates BTC staking events from Babylon to consumer chains to
+Zone Concierge propagates BTC staking events from Babylon to BSNs to
 enable trustless BTC staking.
 
 #### Broadcasting staking events
 
 The `BroadcastBTCStakingConsumerEvents` function sends staking events to
-relevant consumer chains.
+relevant BSNs.
 
 #### Processing event flow
 
@@ -421,7 +421,7 @@ relevant consumer chains.
 
 #### Handling slashing
 
-- `HandleConsumerSlashing` processes slashing reports from consumer chains
+- `HandleConsumerSlashing` processes slashing reports from BSNs
 - Validates the slashing evidence and finality provider association
 - Updates the finality provider's status and propagates slashing to other
   consumers
