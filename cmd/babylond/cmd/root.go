@@ -250,12 +250,12 @@ func initRootCmd(rootCmd *cobra.Command, txConfig client.TxEncodingConfig, basic
 		server.StatusCommand(),
 		queryCommand(),
 		txCommand(),
-		//keys.Commands(), // TODO: Should be removed but new accounts will be ethcsecp only
+		// keys.Commands(), // TODO: Should be removed but new accounts will be ethcsecp only
 		evmcmd.KeyCommands(app.DefaultNodeHome, true),
 	)
 
 	var err error
-	rootCmd, err = srvflags.AddTxFlags(rootCmd)
+	_, err = srvflags.AddTxFlags(rootCmd)
 	if err != nil {
 		panic(err)
 	}

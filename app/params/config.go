@@ -49,7 +49,7 @@ var (
 
 func init() {
 	SetAddressPrefixes()
-	//RegisterDenoms()
+	// RegisterDenoms() // TODO: moved to evm_config.go
 }
 
 func RegisterDenoms() {

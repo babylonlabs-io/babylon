@@ -41,8 +41,8 @@ func NewAnteHandler(
 	// - custom wasm ante handler NewLimitSimulationGasDecorator and NewCountTXDecorator
 	// - Extra decorators introduced in Babylon, such as DropValidatorMsgDecorator that delays validator-related messages
 	//
-	//We are using constructor from wasmapp as it introduces custom wasm ante handle decorators
-	//early in chain of ante handlers.
+	// We are using constructor from wasmapp as it introduces custom wasm ante handle decorators
+	// early in chain of ante handlers.
 	authAnteHandler, err := wasmapp.NewAnteHandler(
 		wasmapp.HandlerOptions{
 			HandlerOptions: authante.HandlerOptions{
