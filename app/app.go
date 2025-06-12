@@ -255,14 +255,11 @@ func NewBabylonApp(
 		homePath = DefaultNodeHome
 	}
 
-	// encCfg := appparams.DefaultEncodingConfig()
 	encCfg := evmencoding.MakeConfig(evmChainID)
 	interfaceRegistry := encCfg.InterfaceRegistry
 	appCodec := encCfg.Codec
 	legacyAmino := encCfg.Amino
 	txConfig := encCfg.TxConfig
-	// std.RegisterLegacyAminoCodec(legacyAmino)
-	// std.RegisterInterfaces(interfaceRegistry)
 
 	bApp := baseapp.NewBaseApp(appName, logger, db, txConfig.TxDecoder(), baseAppOptions...)
 	bApp.SetCommitMultiStoreTracer(traceStore)
@@ -436,7 +433,6 @@ func NewBabylonApp(
 		// BTC staking related modules
 		btcstakingtypes.ModuleName,
 		finalitytypes.ModuleName,
-		precisebanktypes.ModuleName,
 	)
 	// TODO: there will be an architecture design on whether to modify slashing/evidence, specifically
 	// - how many validators can we slash in a single epoch and
@@ -477,7 +473,6 @@ func NewBabylonApp(
 		evmtypes.ModuleName,
 		erc20types.ModuleName,
 		feemarkettypes.ModuleName,
-		precisebanktypes.ModuleName,
 	)
 	// Babylon does not want EndBlock processing in staking
 	app.ModuleManager.OrderEndBlockers = append(app.ModuleManager.OrderEndBlockers[:2], app.ModuleManager.OrderEndBlockers[2+1:]...) // remove stakingtypes.ModuleName
@@ -868,7 +863,7 @@ func (a *BabylonApp) DefaultGenesis() map[string]json.RawMessage {
 
 	// Add ERC20 genesis configuration
 	erc20GenState := erc20types.DefaultGenesisState()
-	erc20GenState.TokenPairs = TokenPairs
+	erc20GenState.TokenPairs = DefaultTokenPairs
 	erc20GenState.Params.NativePrecompiles = append(erc20GenState.Params.NativePrecompiles, WTokenContractMainnet)
 	genesis[erc20types.ModuleName] = a.appCodec.MustMarshalJSON(erc20GenState)
 
@@ -954,7 +949,7 @@ func BlockedAddresses() map[string]bool {
 
 	// Block precompiled contracts
 	blockedPrecompilesHex := evmtypes.AvailableStaticPrecompiles
-	for _, addr := range vm.PrecompiledAddressesBerlin {
+	for _, addr := range vm.PrecompiledAddressesPrague {
 		blockedPrecompilesHex = append(blockedPrecompilesHex, addr.Hex())
 	}
 
