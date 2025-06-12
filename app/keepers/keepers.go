@@ -3,10 +3,6 @@ package keepers
 import (
 	"context"
 	"fmt"
-	ratelimitv2 "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/v2"
-	ibccallbacksv2 "github.com/cosmos/ibc-go/v10/modules/apps/callbacks/v2"
-	transferv2 "github.com/cosmos/ibc-go/v10/modules/apps/transfer/v2"
-	ibcapi "github.com/cosmos/ibc-go/v10/modules/core/api"
 	"path/filepath"
 	"strings"
 

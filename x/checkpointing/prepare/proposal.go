@@ -13,7 +13,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/mempool"
 	sdktestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
 
-	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
 	ckpttypes "github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
 )
 

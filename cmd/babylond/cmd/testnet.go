@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/babylonlabs-io/babylon/v4/app"
+	"github.com/babylonlabs-io/babylon/v3/app"
 	servercfg "github.com/cosmos/evm/server/config"
 
 	"cosmossdk.io/math"
@@ -206,7 +206,7 @@ func InitTestnet(
 	babylonConfig.GRPC.Address = "0.0.0.0:9090"
 
 	// Update babylonConfig to include Ethereum JSON-RPC settings and other settings
-	babylonConfig.Mempool.MaxTxs = -1 // No-op mempool required
+	babylonConfig.Mempool.MaxTxs = -1 // NOTE: No-op mempool required
 	babylonConfig.EVM = *servercfg.DefaultEVMConfig()
 	babylonConfig.JSONRPC = *servercfg.DefaultJSONRPCConfig()
 	babylonConfig.JSONRPC.API = []string{"eth", "net", "web3", "debug"} // debug enabled
