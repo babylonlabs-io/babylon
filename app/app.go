@@ -860,11 +860,6 @@ func (app *BabylonApp) RegisterNodeService(clientCtx client.Context, cfg config.
 // DefaultGenesis returns a default genesis from the registered AppModuleBasic's.
 func (a *BabylonApp) DefaultGenesis() map[string]json.RawMessage {
 	genesis := a.BasicModuleManager.DefaultGenesis(a.appCodec)
-	// TODO: Do we need this min denom ?
-	// mintGenState := minttypes.DefaultGenesisState()
-	// mintGenState.Params.MintDenom = BaseDenom
-	// genesis[minttypes.ModuleName] = a.appCodec.MustMarshalJSON(mintGenState)
-
 	// Add EVM genesis configuration
 	evmGenState := evmtypes.DefaultGenesisState()
 	evmGenState.Params.ActiveStaticPrecompiles = evmtypes.AvailableStaticPrecompiles

@@ -37,9 +37,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
-- [#1028](https://github.com/babylonlabs-io/babylon/pull/1028) Bump ibc-go to `v10` and wire up IBC `v2`.
-
-
 ### Improvements
 
 - [#1222](https://github.com/babylonlabs-io/babylon/pull/1222) doc: revise zone concierge doc (round 1)
@@ -90,6 +87,7 @@ check of rewards
 - [#1195](https://github.com/babylonlabs-io/babylon/pull/1195) Update repository version to `v3`.
 - [#1060](https://github.com/babylonlabs-io/babylon/pull/1060) Optimize `PubRandCommit` lookup in `x/finality` module
 - [#1223](https://github.com/babylonlabs-io/babylon/pull/1223) Bump Cosmos SDK to `v0.53.0`
+- [#1229](https://github.com/babylonlabs-io/babylon/pull/1229) Wire up EVM.
 
 ### State Machine Breaking
 

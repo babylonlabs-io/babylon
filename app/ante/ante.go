@@ -76,6 +76,14 @@ func NewAnteHandler(
 		NewPriorityDecorator(),
 	)
 
+	return routeAnteHandler(evmHandlerOptions, cosmosAnteHandler)
+}
+
+// routeAnteHandler routes transactions to the appropriate ante handler based on extension options
+func routeAnteHandler(
+	evmHandlerOptions EVMHandlerOptions,
+	cosmosAnteHandler sdk.AnteHandler,
+) sdk.AnteHandler {
 	return func(
 		ctx sdk.Context, tx sdk.Tx, sim bool,
 	) (newCtx sdk.Context, err error) {
