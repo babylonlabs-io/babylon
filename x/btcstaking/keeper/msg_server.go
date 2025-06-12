@@ -117,169 +117,46 @@ func (ms msgServer) EditFinalityProvider(goCtx context.Context, req *types.MsgEd
 	return &types.MsgEditFinalityProviderResponse{}, nil
 }
 
-// isAllowListEnabled checks if the allow list is enabled at the given height
-// allow list is enabled if AllowListExpirationHeight is larger than 0,
-// and current block height is less than AllowListExpirationHeight
-func (ms msgServer) isAllowListEnabled(ctx sdk.Context, p *types.Params) bool {
-	return p.AllowListExpirationHeight > 0 && uint64(ctx.BlockHeight()) < p.AllowListExpirationHeight
-}
-
-func (ms msgServer) getTimeInfoAndParams(
-	ctx sdk.Context,
-	parsedMsg *types.ParsedCreateDelegationMessage,
-) (*DelegationTimeRangeInfo, *types.Params, uint32, error) {
-	if parsedMsg.IsIncludedOnBTC() {
-		// staking tx is already included on BTC
-		// 1. Validate inclusion proof and retrieve inclusion height
-		// 2. Get params for the validated inclusion height
-		btccParams := ms.btccKeeper.GetParams(ctx)
-
-		timeInfo, err := ms.VerifyInclusionProofAndGetHeight(
-			ctx,
-			btcutil.NewTx(parsedMsg.StakingTx.Transaction),
-			btccParams.BtcConfirmationDepth,
-			uint32(parsedMsg.StakingTime),
-			uint32(parsedMsg.UnbondingTime),
-			parsedMsg.StakingTxProofOfInclusion,
-		)
-
-		if err != nil {
-			return nil, nil, 0, fmt.Errorf("invalid inclusion proof: %w", err)
-		}
-
-		paramsByHeight, version, err := ms.GetParamsForBtcHeight(ctx, uint64(timeInfo.StartHeight))
-		if err != nil {
-			// this error can happen if we receive delegations which is included before
-			// first activation height we support
-			return nil, nil, 0, err
-		}
-
-		return timeInfo, paramsByHeight, version, nil
-	}
-	// staking tx is not included on BTC, retrieve params for the current tip height
-	// and return info about the tip
-	btcTip := ms.btclcKeeper.GetTipInfo(ctx)
-
-	paramsByHeight, version, err := ms.GetParamsForBtcHeight(ctx, uint64(btcTip.Height))
-	if err != nil {
-		return nil, nil, 0, err
-	}
-
-	return &DelegationTimeRangeInfo{
-		StartHeight: 0,
-		EndHeight:   0,
-		TipHeight:   btcTip.Height,
-	}, paramsByHeight, version, nil
-}
-
 // CreateBTCDelegation creates a BTC delegation
 func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCreateBTCDelegation) (*types.MsgCreateBTCDelegationResponse, error) {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), types.MetricsKeyCreateBTCDelegation)
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	// 1. Parse the message into better domain format
-	parsedMsg, err := types.ParseCreateDelegationMessage(req)
+	// Parses the message into better domain format
+	parsedMsg, err := req.ToParsed()
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	// 2. Basic stateless checks
-	// - verify proof of possession
-	if err := parsedMsg.ParsedPop.Verify(parsedMsg.StakerAddress, parsedMsg.StakerPK.BIP340PubKey, ms.btcNet); err != nil {
-		return nil, types.ErrInvalidProofOfPossession.Wrap(err.Error())
-	}
-
-	// 3. Check if it is not duplicated staking tx
-	stakingTxHash := parsedMsg.StakingTx.Transaction.TxHash()
-	delegation := ms.getBTCDelegation(ctx, stakingTxHash)
-	if delegation != nil {
-		return nil, types.ErrReusedStakingTx.Wrapf("duplicated tx hash: %s", stakingTxHash.String())
-	}
-
-	// Ensure all finality providers
-	// - are known to Babylon,
-	// - at least 1 one of them is a Babylon finality provider,
-	// - are not slashed, and
-	// - their registered epochs are finalised
-	// and then check whether the BTC stake is restaked to FPs of consumers
-	// The total number of finality providers in a delegation must be less than the minimum
-	// of all consumers' max_multi_staked_fps limits. Only one finality provider per
-	// consumer is allowed in a delegation.
-	restakedToConsumers, err := ms.validateRestakedFPs(ctx, parsedMsg.FinalityProviderKeys.PublicKeysBbnFormat)
-	if err != nil {
+	if err := ms.Keeper.CreateBTCDelegation(ctx, parsedMsg); err != nil {
 		return nil, err
-	}
-
-	// 5. Get params for the validated inclusion height either tip or inclusion height
-	timeInfo, params, paramsVersion, err := ms.getTimeInfoAndParams(ctx, parsedMsg)
-	if err != nil {
-		return nil, err
-	}
-
-	// 6. Validate the staking tx against the params
-	paramsValidationResult, err := types.ValidateParsedMessageAgainstTheParams(parsedMsg, params, ms.btcNet)
-	if err != nil {
-		return nil, err
-	}
-
-	// 7. if allow list is enabled we need to check whether staking transactions hash
-	// is in the allow list
-	if ms.isAllowListEnabled(ctx, params) {
-		if !ms.IsStakingTransactionAllowed(ctx, &stakingTxHash) {
-			return nil, types.ErrInvalidStakingTx.Wrapf("staking tx hash: %s, is not in the allow list", stakingTxHash.String())
-		}
-	}
-
-	// everything is good, if the staking tx is not included on BTC consume additinal
-	// gas
-	if !parsedMsg.IsIncludedOnBTC() {
-		ctx.GasMeter().ConsumeGas(params.DelegationCreationBaseGasFee, "delegation creation fee")
-	}
-
-	// 7.all good, construct BTCDelegation and insert BTC delegation
-	// NOTE: the BTC delegation does not have voting power yet. It will
-	// have voting power only when it receives a covenant signatures
-	newBTCDel := &types.BTCDelegation{
-		StakerAddr:       parsedMsg.StakerAddress.String(),
-		BtcPk:            parsedMsg.StakerPK.BIP340PubKey,
-		Pop:              parsedMsg.ParsedPop,
-		FpBtcPkList:      parsedMsg.FinalityProviderKeys.PublicKeysBbnFormat,
-		StakingTime:      uint32(parsedMsg.StakingTime),
-		StartHeight:      timeInfo.StartHeight,
-		EndHeight:        timeInfo.EndHeight,
-		TotalSat:         uint64(parsedMsg.StakingValue),
-		StakingTx:        parsedMsg.StakingTx.TransactionBytes,
-		StakingOutputIdx: paramsValidationResult.StakingOutputIdx,
-		SlashingTx:       types.NewBtcSlashingTxFromBytes(parsedMsg.StakingSlashingTx.TransactionBytes),
-		DelegatorSig:     parsedMsg.StakerStakingSlashingTxSig.BIP340Signature,
-		UnbondingTime:    uint32(parsedMsg.UnbondingTime),
-		CovenantSigs:     nil, // NOTE: covenant signature will be submitted in a separate msg by covenant
-		BtcUndelegation: &types.BTCUndelegation{
-			UnbondingTx:              parsedMsg.UnbondingTx.TransactionBytes,
-			SlashingTx:               types.NewBtcSlashingTxFromBytes(parsedMsg.UnbondingSlashingTx.TransactionBytes),
-			DelegatorSlashingSig:     parsedMsg.StakerUnbondingSlashingSig.BIP340Signature,
-			CovenantSlashingSigs:     nil, // NOTE: covenant signature will be submitted in a separate msg by covenant
-			CovenantUnbondingSigList: nil, // NOTE: covenant signature will be submitted in a separate msg by covenant
-			DelegatorUnbondingInfo:   nil,
-		},
-		ParamsVersion: paramsVersion,      // version of the params against which delegation was validated
-		BtcTipHeight:  timeInfo.TipHeight, // height of the BTC light client tip at the time of the delegation creation
-	}
-
-	// add this BTC delegation, and emit corresponding events
-	if err := ms.AddBTCDelegation(ctx, newBTCDel); err != nil {
-		panic(fmt.Errorf("failed to add BTC delegation that has passed verification: %w", err))
-	}
-	// if this BTC delegation is restaked to consumers' FPs, add it to btcstkconsumer indexes
-	// TODO: revisit the relationship between BTC staking module and BTC staking consumer module
-	if restakedToConsumers {
-		if err := ms.indexBTCConsumerDelegation(ctx, newBTCDel); err != nil {
-			panic(fmt.Errorf("failed to add BTC delegation restaked to consumers' finality providers despite it has passed verification: %w", err))
-		}
 	}
 
 	return &types.MsgCreateBTCDelegationResponse{}, nil
+}
+
+// BtcStakeExpand creates a BTCDelegation using a previous active staking transaction as one of inputs.
+func (ms msgServer) BtcStakeExpand(goCtx context.Context, req *types.MsgBtcStakeExpand) (*types.MsgBtcStakeExpandResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	isPreviousStkActive, err := ms.IsBtcDelegationActive(ctx, req.PreviousStakingTxHash)
+	if !isPreviousStkActive {
+		return nil, err
+	}
+
+	// Parses the message into better domain format
+	parsedMsg, err := req.ToParsed()
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	// executes same flow as MsgCreateBTCDelegation pre-approval
+	if err := ms.Keeper.CreateBTCDelegation(ctx, parsedMsg); err != nil {
+		return nil, err
+	}
+
+	return &types.MsgBtcStakeExpandResponse{}, nil
 }
 
 // AddBTCDelegationInclusionProof adds inclusion proof of the given delegation on BTC chain
@@ -695,18 +572,4 @@ func (ms msgServer) SelectiveSlashingEvidence(goCtx context.Context, req *types.
 	ms.iKeeper.IndexRefundableMsg(ctx, req)
 
 	return &types.MsgSelectiveSlashingEvidenceResponse{}, nil
-}
-
-// BtcStakeExpand creates a BTCDelegation from a previous active staking transaction.
-func (ms msgServer) BtcStakeExpand(goCtx context.Context, req *types.MsgBtcStakeExpand) (*types.MsgBtcStakeExpandResponse, error) {
-	ctx := sdk.UnwrapSDKContext(goCtx)
-
-	isPreviousStkActive, err := ms.IsBtcDelegationActive(ctx, req.PreviousStakingTxHash)
-	if !isPreviousStkActive {
-		return nil, err
-	}
-
-	// executes same flow as MsgCreateBTCDelegation pre-approval
-
-	return &types.MsgBtcStakeExpandResponse{}, nil
 }
