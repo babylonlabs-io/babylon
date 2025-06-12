@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/cosmos/cosmos-sdk/codec"
 	precisebankkeeper "github.com/cosmos/evm/x/precisebank/keeper"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 	"maps"
 
 	evidencekeeper "cosmossdk.io/x/evidence/keeper"
@@ -21,6 +22,19 @@ import (
 )
 
 const bech32PrecompileBaseGas = 6_000
+
+// BabylonAvailableStaticPrecompiles defines the full list of all available EVM extension addresses on Babylon.
+//
+// NOTE: To be explicit, this list does not include the dynamically registered EVM extensions
+// like the ERC-20 extensions.
+var BabylonAvailableStaticPrecompiles = []string{
+	evmtypes.P256PrecompileAddress,
+	evmtypes.Bech32PrecompileAddress,
+	evmtypes.BankPrecompileAddress,
+	evmtypes.GovPrecompileAddress,
+	evmtypes.SlashingPrecompileAddress,
+	evmtypes.EvidencePrecompileAddress,
+}
 
 // NewAvailableStaticPrecompiles adds the static precompiles to the EVM
 // TODO: Add custom staking wrapper precompile here, IBC precompile and distribution precompile

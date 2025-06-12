@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/babylonlabs-io/babylon/v3/app"
+	"github.com/babylonlabs-io/babylon/v3/app/keepers"
 	erc20types "github.com/cosmos/evm/x/erc20/types"
 	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
@@ -225,7 +226,7 @@ func PrepareGenesis(
 
 	// Add EVM genesis configuration
 	evmGenState := evmtypes.DefaultGenesisState()
-	evmGenState.Params.ActiveStaticPrecompiles = evmtypes.AvailableStaticPrecompiles
+	evmGenState.Params.ActiveStaticPrecompiles = keepers.BabylonAvailableStaticPrecompiles
 	evmGenState.Params.EvmDenom = appparams.BaseCosmosDenom
 	genesisState[evmtypes.ModuleName] = cdc.MustMarshalJSON(evmGenState)
 

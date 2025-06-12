@@ -68,18 +68,23 @@ type BabylonAppConfig struct {
 func DefaultBabylonAppConfig() *BabylonAppConfig {
 	baseConfig := *serverconfig.DefaultConfig()
 	// Update the default Mempool.MaxTxs to be 0 to make sure the PriorityNonceMempool is used
-	baseConfig.Mempool.MaxTxs = 0
+	// TODO: Using no-op mempool for EVM until issue with mempool support is resolved
+	baseConfig.Mempool.MaxTxs = -1
 	// The SDK's default minimum gas price is set to "0.002ubbn" (empty value) inside
 	// app.toml, in order to avoid spamming attacks due to transactions with 0 gas price.
 	baseConfig.MinGasPrices = fmt.Sprintf("%f%s", appparams.GlobalMinGasPrice, appparams.BaseCoinUnit)
+	evmConfig := *evmserverconfig.DefaultEVMConfig()
+	evmConfig.EVMChainID = appparams.EVMChainID
+	jsonRPCConfig := *evmserverconfig.DefaultJSONRPCConfig()
+	jsonRPCConfig.Enable = true
 	return &BabylonAppConfig{
 		Config:               baseConfig,
 		Wasm:                 wasmtypes.DefaultNodeConfig(),
 		BtcConfig:            defaultBabylonBtcConfig(),
 		BlsConfig:            defaultBabylonBlsConfig(),
 		BabylonMempoolConfig: defaultBabylonMempoolConfig(),
-		EVM:                  *evmserverconfig.DefaultEVMConfig(),
-		JSONRPC:              *evmserverconfig.DefaultJSONRPCConfig(),
+		EVM:                  evmConfig,
+		JSONRPC:              jsonRPCConfig,
 		TLS:                  *evmserverconfig.DefaultTLSConfig(),
 	}
 }

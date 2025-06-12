@@ -3,6 +3,7 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"github.com/cosmos/evm/crypto/hd"
 	"io"
 	"os"
 	"strings"
@@ -69,7 +70,7 @@ func NewRootCmd() *cobra.Command {
 		WithHomeDir(app.DefaultNodeHome).
 		WithViper(""). // In app, we don't use any prefix for env variables.
 		WithBroadcastMode(flags.FlagBroadcastMode).
-		WithKeyringOptions(evmkeyring.Option()).
+		WithKeyringOptions(evmkeyring.Option(), hd.EthSecp256k1Option()).
 		WithLedgerHasProtobuf(true)
 
 	cfg := sdk.GetConfig()
@@ -245,7 +246,6 @@ func initRootCmd(rootCmd *cobra.Command, txConfig client.TxEncodingConfig, basic
 		server.StatusCommand(),
 		queryCommand(),
 		txCommand(),
-		// keys.Commands(), // TODO: Should be removed but new accounts will be ethcsecp only
 		evmcmd.KeyCommands(app.DefaultNodeHome, false),
 	)
 
