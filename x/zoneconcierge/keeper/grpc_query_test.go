@@ -7,7 +7,7 @@ import (
 	"github.com/babylonlabs-io/babylon/v3/app"
 	btclightclienttypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
-	ibctmtypes "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
+	ibctmtypes "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
@@ -394,9 +394,8 @@ func FuzzFinalizedChainInfo(f *testing.F) {
 		// mock channel/port keeper
 		channelKeeper := zctypes.NewMockChannelKeeper(ctrl)
 		channelKeeper.EXPECT().GetAllChannels(gomock.Any()).Return(nil).AnyTimes()
-		portKeeper := zctypes.NewMockPortKeeper(ctrl)
 
-		zcKeeper, ctx := testkeeper.ZoneConciergeKeeper(t, channelKeeper, portKeeper, btclcKeeper, checkpointingKeeper, btccKeeper, epochingKeeper, nil, nil)
+		zcKeeper, ctx := testkeeper.ZoneConciergeKeeper(t, channelKeeper, btclcKeeper, checkpointingKeeper, btccKeeper, epochingKeeper, nil, nil)
 		hooks := zcKeeper.Hooks()
 
 		var (

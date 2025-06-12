@@ -25,7 +25,7 @@ import (
 	btclighttypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
 	finalitytypes "github.com/babylonlabs-io/babylon/v3/x/finality/types"
 	minttypes "github.com/babylonlabs-io/babylon/v3/x/mint/types"
-	ratelimiter "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/types"
+	ratelimiter "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/types"
 )
 
 // NodeConfig is a configuration for the node supplied from the test runner
@@ -383,8 +383,8 @@ func updateGenUtilGenesis(c *internalChain) func(*genutiltypes.GenesisState) {
 
 func applyRateLimitsToChainConfig(rateLimiterGenState *ratelimiter.GenesisState) {
 	path := &ratelimiter.Path{
-		Denom:     "ubbn",
-		ChannelId: "channel-0",
+		Denom:             "ubbn",
+		ChannelOrClientId: "channel-0",
 	}
 
 	quota := &ratelimiter.Quota{
