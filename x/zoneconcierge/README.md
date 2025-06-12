@@ -1,14 +1,13 @@
 # ZoneConcierge
 
 The Zone Concierge module is responsible for providing BTC staking integration
-functionalities for other consumer chains. It leverages the IBC protocol to
-receive consumer chains' headers, and propagate BTC timestamps of those headers
-and BTC-staking related information.
-
+functionalities for other Bitcoin Supercharged Networks (BSNs).  
+It leverages the IBC protocol to receive consumer chains' headers, and propagate BTC timestamps of those headers
+and information associated with the BTC staking protocol (e.g., finality providers, BTC stakes, and more).  
 The Zone Concierge module synchronises the following information with consumer
 chains via IBC packets:
 
-- **BTC Headers:** Babylon forwards BTC headers to consumer chains to keep their
+- **BTC Headers:** Babylon Genesis forwards BTC headers to consumer chains to keep their
   BTC light clients in sync with Babylon's BTC light client. This allows
   consumer chains to independently verify BTC timestamps.
 - **BTC Timestamps:** When a Babylon epoch is finalised, Babylon sends BTC
@@ -28,7 +27,6 @@ chains via IBC packets:
 
 - [ZoneConcierge](#zoneconcierge)
   - [Table of contents](#table-of-contents)
-  - [Concepts](#concepts)
   - [State](#state)
     - [Parameters](#parameters)
     - [ChainInfo](#chaininfo)
@@ -57,9 +55,7 @@ chains via IBC packets:
       - [Registering consumers](#registering-consumers)
       - [Handling slashing](#handling-slashing)
 
-## Concepts
-
-TODO: describe BTC staking integration
+<!-- TODO: concept section for describing BTC staking integration -->
 
 ## State
 
