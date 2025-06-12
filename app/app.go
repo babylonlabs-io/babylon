@@ -167,7 +167,7 @@ var (
 	DefaultNodeHome string
 	// fee collector account, module accounts and their permissions
 	maccPerms = map[string][]string{
-		authtypes.FeeCollectorName:     {authtypes.Burner}, // fee collector account
+		authtypes.FeeCollectorName:     {authtypes.Burner}, // fee collector account, needs Burner role for feemarket burning of BaseFee
 		distrtypes.ModuleName:          nil,
 		minttypes.ModuleName:           {authtypes.Minter},
 		stakingtypes.BondedPoolName:    {authtypes.Burner, authtypes.Staking},
