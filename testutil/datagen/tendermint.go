@@ -7,7 +7,13 @@ import (
 	"cosmossdk.io/core/header"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+<<<<<<< HEAD
 	ibctmtypes "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
+=======
+	ibctmtypes "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
+
+	zctypes "github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
+>>>>>>> 1072573 (chore: Bump IBC to V2 (#1028))
 )
 
 func GenRandomTMHeader(r *rand.Rand, chainID string, height uint64) *cmtproto.Header {

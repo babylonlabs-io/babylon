@@ -81,6 +81,7 @@ check of rewards
 - [#988](https://github.com/babylonlabs-io/babylon/pull/988) Fix flaky e2e ibc test
 `TestIBCTransferSuite`
 - [#1000](https://github.com/babylonlabs-io/babylon/pull/1000) Add multi-staking replay test
+- [#1028](https://github.com/babylonlabs-io/babylon/pull/1028) Bump ibc-go to `v10` and wire up IBC `v2`.
 - [#702](https://github.com/babylonlabs-io/babylon/pull/702) Add test for small rewards in fee collector
 - [#1040](https://github.com/babylonlabs-io/babylon/pull/1040) Rename ETH L2 to rollup
 - [#1195](https://github.com/babylonlabs-io/babylon/pull/1195) Update repository version to `v3`.

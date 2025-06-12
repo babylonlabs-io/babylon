@@ -16,8 +16,8 @@ import (
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/types"
-	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
+	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/types"
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 
 	"github.com/babylonlabs-io/babylon/v3/app"
 	v2 "github.com/babylonlabs-io/babylon/v3/app/upgrades/v2"
@@ -83,8 +83,8 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 				s.Require().Len(res.RateLimits, len(usedChannels)-1) // one is not whitelisted and was not rate limited
 
 				for _, rl := range res.RateLimits {
-					if strings.EqualFold(rl.Path.ChannelId, NotWhitelistedChannelID) {
-						s.Require().FailNowf("channel ID: %s shouldn't have a rate limit", rl.Path.ChannelId)
+					if strings.EqualFold(rl.Path.ChannelOrClientId, NotWhitelistedChannelID) {
+						s.Require().FailNowf("channel ID: %s shouldn't have a rate limit", rl.Path.ChannelOrClientId)
 					}
 					s.Require().Equal(v2.DefaultDailyLimit, rl.Quota.MaxPercentRecv)
 					s.Require().Equal(v2.DefaultDailyLimit, rl.Quota.MaxPercentSend)
