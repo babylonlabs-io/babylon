@@ -1,6 +1,9 @@
 package app
 
-import erc20types "github.com/cosmos/evm/x/erc20/types"
+import (
+	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
+	erc20types "github.com/cosmos/evm/x/erc20/types"
+)
 
 // WTokenContractMainnet is the WrappedToken contract address for mainnet
 const WTokenContractMainnet = "0xD4949664cD82660AaE99bEdc034a0deA8A0bd517"
@@ -10,7 +13,7 @@ const WTokenContractMainnet = "0xD4949664cD82660AaE99bEdc034a0deA8A0bd517"
 var TokenPairs = []erc20types.TokenPair{
 	{
 		Erc20Address:  WTokenContractMainnet,
-		Denom:         BaseCosmosDenom,
+		Denom:         appparams.BaseCosmosDenom,
 		Enabled:       true,
 		ContractOwner: erc20types.OWNER_MODULE,
 	},

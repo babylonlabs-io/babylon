@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
 
 	"math/rand"
 	"path/filepath"
@@ -215,7 +216,7 @@ func NewBabylonAppDriver(
 		0,
 		blsSigner,
 		appOptions,
-		babylonApp.EVMChainID,
+		appparams.EVMChainID,
 		babylonApp.EVMAppOptions,
 		babylonApp.EmptyWasmOpts,
 		baseAppOptions...,

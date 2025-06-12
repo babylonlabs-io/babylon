@@ -2,6 +2,7 @@ package app_test
 
 import (
 	"fmt"
+	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
 	erc20types "github.com/cosmos/evm/x/erc20/types"
 	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
 	precisebanktypes "github.com/cosmos/evm/x/precisebank/types"
@@ -105,7 +106,7 @@ func TestBabylonBlockedAddrs(t *testing.T) {
 		0,
 		&blsSigner,
 		appOpts,
-		babylonApp.EVMChainID,
+		appparams.EVMChainID,
 		babylonApp.EVMAppOptions,
 		babylonApp.EmptyWasmOpts,
 	)

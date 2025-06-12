@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/babylonlabs-io/babylon/v3/app"
 	servercfg "github.com/cosmos/evm/server/config"
 
 	"cosmossdk.io/math"
@@ -211,7 +210,7 @@ func InitTestnet(
 	babylonConfig.JSONRPC = *servercfg.DefaultJSONRPCConfig()
 	babylonConfig.JSONRPC.API = []string{"eth", "net", "web3", "debug"} // debug enabled
 	babylonConfig.JSONRPC.Enable = true
-	babylonConfig.EVM.EVMChainID = app.EVMChainID
+	babylonConfig.EVM.EVMChainID = appparams.EVMChainID
 
 	// Disable IAVL cache by default as Babylon leaf nodes can be large, and in case
 	// of big cache values, Babylon node can run out of memory.

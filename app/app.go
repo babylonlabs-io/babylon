@@ -863,7 +863,7 @@ func (a *BabylonApp) DefaultGenesis() map[string]json.RawMessage {
 	// Add EVM genesis configuration
 	evmGenState := evmtypes.DefaultGenesisState()
 	evmGenState.Params.ActiveStaticPrecompiles = evmtypes.AvailableStaticPrecompiles
-	evmGenState.Params.EvmDenom = BaseCosmosDenom
+	evmGenState.Params.EvmDenom = appparams.BaseCosmosDenom
 	genesis[evmtypes.ModuleName] = a.appCodec.MustMarshalJSON(evmGenState)
 
 	// Add ERC20 genesis configuration

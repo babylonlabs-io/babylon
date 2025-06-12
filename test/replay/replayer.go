@@ -1,6 +1,7 @@
 package replay
 
 import (
+	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
 	"testing"
 
 	"cosmossdk.io/log"
@@ -56,7 +57,7 @@ func NewBlockReplayer(t *testing.T, nodeDir string) *BlockReplayer {
 		0,
 		blsSigner,
 		appOptions,
-		babylonApp.EVMChainID,
+		appparams.EVMChainID,
 		babylonApp.EVMAppOptions,
 		babylonApp.EmptyWasmOpts,
 		baseAppOptions...,

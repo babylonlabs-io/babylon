@@ -11,6 +11,7 @@ import (
 	confixcmd "cosmossdk.io/tools/confix/cmd"
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
 	cmtcfg "github.com/cometbft/cometbft/config"
 	cmtcli "github.com/cometbft/cometbft/libs/cli"
 	dbm "github.com/cosmos/cosmos-db"
@@ -135,7 +136,7 @@ func NewRootCmd() *cobra.Command {
 	initRootCmd(rootCmd, tempApp.TxConfig(), tempApp.BasicModuleManager)
 
 	if initClientCtx.ChainID != "" {
-		if err := app.EVMAppOptions(app.EVMChainID); err != nil {
+		if err := app.EVMAppOptions(appparams.EVMChainID); err != nil {
 			panic(err)
 		}
 	}
@@ -360,7 +361,7 @@ func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, appOpts serverty
 		cast.ToUint(appOpts.Get(server.FlagInvCheckPeriod)),
 		&blsSigner,
 		appOpts,
-		app.EVMChainID,
+		appparams.EVMChainID,
 		app.EVMAppOptions,
 		wasmOpts,
 		baseappOptions...,
@@ -393,13 +394,13 @@ func appExport(
 	blsSigner := checkpointingtypes.BlsSigner(ck.Bls)
 
 	if height != -1 {
-		babylonApp = app.NewBabylonApp(logger, db, traceStore, false, map[int64]bool{}, uint(1), &blsSigner, appOpts, app.EVMChainID, app.EVMAppOptions, app.EmptyWasmOpts)
+		babylonApp = app.NewBabylonApp(logger, db, traceStore, false, map[int64]bool{}, uint(1), &blsSigner, appOpts, appparams.EVMChainID, app.EVMAppOptions, app.EmptyWasmOpts)
 
 		if err = babylonApp.LoadHeight(height); err != nil {
 			return servertypes.ExportedApp{}, fmt.Errorf("failed to load height: %w", err)
 		}
 	} else {
-		babylonApp = app.NewBabylonApp(logger, db, traceStore, true, map[int64]bool{}, uint(1), &blsSigner, appOpts, app.EVMChainID, app.EVMAppOptions, app.EmptyWasmOpts)
+		babylonApp = app.NewBabylonApp(logger, db, traceStore, true, map[int64]bool{}, uint(1), &blsSigner, appOpts, appparams.EVMChainID, app.EVMAppOptions, app.EmptyWasmOpts)
 	}
 
 	return babylonApp.ExportAppStateAndValidators(forZeroHeight, jailAllowedAddrs, modulesToExport)

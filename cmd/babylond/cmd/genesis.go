@@ -226,7 +226,7 @@ func PrepareGenesis(
 	// Add EVM genesis configuration
 	evmGenState := evmtypes.DefaultGenesisState()
 	evmGenState.Params.ActiveStaticPrecompiles = evmtypes.AvailableStaticPrecompiles
-	evmGenState.Params.EvmDenom = app.BaseCosmosDenom
+	evmGenState.Params.EvmDenom = appparams.BaseCosmosDenom
 	genesisState[evmtypes.ModuleName] = cdc.MustMarshalJSON(evmGenState)
 
 	// Add ERC20 genesis configuration

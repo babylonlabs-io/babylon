@@ -3,6 +3,7 @@ package app
 import (
 	"cosmossdk.io/math"
 	"fmt"
+	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
@@ -24,10 +25,10 @@ var sealed = false
 // that allows initializing the app with different coin info based on the
 // chain id
 var ChainsCoinInfo = map[uint64]evmtypes.EvmCoinInfo{
-	EVMChainID: {
-		Denom:         BaseCosmosDenom,
-		ExtendedDenom: BaseEVMDenom,
-		DisplayDenom:  DisplayDenom,
+	appparams.EVMChainID: {
+		Denom:         appparams.BaseCosmosDenom,
+		ExtendedDenom: appparams.BaseEVMDenom,
+		DisplayDenom:  appparams.DisplayDenom,
 		Decimals:      evmtypes.SixDecimals,
 	},
 }
@@ -36,7 +37,7 @@ var ChainsCoinInfo = map[uint64]evmtypes.EvmCoinInfo{
 // for the chain.
 func EVMAppOptions(chainID uint64) error {
 	if sealed {
-		return nil
+		return fmt.Errorf("evm config already sealed")
 	}
 
 	coinInfo, found := ChainsCoinInfo[chainID]
