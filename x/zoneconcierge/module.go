@@ -1,4 +1,4 @@
-package incentive
+package zoneconcierge
 
 import (
 	"context"
@@ -7,17 +7,20 @@ import (
 
 	"cosmossdk.io/core/appmodule"
 
-	"github.com/babylonlabs-io/babylon/v3/x/incentive/client/cli"
-	"github.com/babylonlabs-io/babylon/v3/x/incentive/keeper"
-	"github.com/babylonlabs-io/babylon/v3/x/incentive/types"
+	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"github.com/spf13/cobra"
+
 	abci "github.com/cometbft/cometbft/abci/types"
+
+	"github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/client/cli"
+	"github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/keeper"
+	"github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	"github.com/grpc-ecosystem/grpc-gateway/runtime"
-	"github.com/spf13/cobra"
+	porttypes "github.com/cosmos/ibc-go/v8/modules/core/05-port/types"
 )
 
 var (
@@ -25,6 +28,7 @@ var (
 	_ appmodule.HasBeginBlocker = AppModule{}
 	_ module.HasABCIEndBlock    = AppModule{}
 	_ module.AppModuleBasic     = AppModuleBasic{}
+	_ porttypes.IBCModule       = IBCModule{}
 )
 
 // ----------------------------------------------------------------------------
@@ -71,9 +75,7 @@ func (AppModuleBasic) ValidateGenesis(cdc codec.JSONCodec, config client.TxEncod
 
 // RegisterGRPCGatewayRoutes registers the gRPC Gateway routes for the module
 func (AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, mux *runtime.ServeMux) {
-	if err := types.RegisterQueryHandlerClient(context.Background(), mux, types.NewQueryClient(clientCtx)); err != nil {
-		panic(err)
-	}
+	types.RegisterQueryHandlerClient(context.Background(), mux, types.NewQueryClient(clientCtx)) //nolint:errcheck // either we propagate the error up the stack, or don't check here.
 }
 
 // GetTxCmd returns the root Tx command for the module. The subcommands of this root command are used by end-users to generate new transactions containing messages defined in the module
@@ -113,6 +115,9 @@ func NewAppModule(
 	}
 }
 
+// Deprecated: use RegisterServices
+func (AppModule) QuerierRoute() string { return types.RouterKey }
+
 // RegisterServices registers a gRPC query service to respond to the module-specific gRPC queries
 func (am AppModule) RegisterServices(cfg module.Configurator) {
 	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServerImpl(am.keeper))
@@ -141,10 +146,12 @@ func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.Raw
 // ConsensusVersion is a sequence number for state-breaking change of the module. It should be incremented on each consensus-breaking change introduced by the module. To avoid wrong/empty versions, the initial version should be set to 1
 func (AppModule) ConsensusVersion() uint64 { return 1 }
 
+// BeginBlock contains the logic that is automatically triggered at the beginning of each block
 func (am AppModule) BeginBlock(ctx context.Context) error {
 	return BeginBlocker(ctx, am.keeper)
 }
 
+// EndBlock contains the logic that is automatically triggered at the end of each block
 func (am AppModule) EndBlock(ctx context.Context) ([]abci.ValidatorUpdate, error) {
 	return EndBlocker(ctx, am.keeper)
 }
