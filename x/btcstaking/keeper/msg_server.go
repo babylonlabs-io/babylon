@@ -180,7 +180,6 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 
 	// 1. Parse the message into better domain format
 	parsedMsg, err := types.ParseCreateDelegationMessage(req)
-
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
@@ -220,7 +219,6 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 
 	// 6. Validate the staking tx against the params
 	paramsValidationResult, err := types.ValidateParsedMessageAgainstTheParams(parsedMsg, params, ms.btcNet)
-
 	if err != nil {
 		return nil, err
 	}
@@ -297,6 +295,10 @@ func (ms msgServer) AddBTCDelegationInclusionProof(
 	btcDel, err := ms.GetBTCDelegation(ctx, req.StakingTxHash)
 	if err != nil {
 		return nil, err
+	}
+
+	if btcDel.IsStakeExpansion() {
+		return nil, fmt.Errorf("the BTC delegation %s is a stake expansion, use MsgBTCUndelegate to include the proof", req.StakingTxHash)
 	}
 
 	// Creates events and updates the btc del if all the checks are valid

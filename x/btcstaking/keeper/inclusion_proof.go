@@ -81,8 +81,15 @@ func (k Keeper) VerifyInclusionProofAndGetHeight(
 }
 
 // AddBTCDelegationInclusionProof adds the inclusion proof of the given
-// BTC delegation verifying
-// 1. the delegation
+// BTC delegation realizing checks and updates in the store.
+// 1. The given delegation and inclusion proof are not nil
+// 2. The btcDel doesn't already have inclusion proof
+// 3. Has enough covenant votes
+// 4. It is not unbonded
+// 5. Verify inclusion proof
+// 6. The BTC start height of the BTC tx inclusion is higher or equal the informed tip of the btc del
+// 7. Updates start and end height
+// 8. Emit active event
 func (k Keeper) AddBTCDelegationInclusionProof(
 	ctx sdk.Context,
 	btcDel *types.BTCDelegation,

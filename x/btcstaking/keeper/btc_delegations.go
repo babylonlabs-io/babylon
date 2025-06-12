@@ -332,13 +332,27 @@ func (k Keeper) GetBTCDelegation(ctx context.Context, stakingTxHashStr string) (
 	return btcDel, nil
 }
 
-func (k Keeper) IsBtcDelegationActive(ctx context.Context, stakingTxHashHex string) (bool, error) {
-	return false, nil
+// IsBtcDelegationActive returns true and no error if the BTC delegation is active.
+// If it is not active it returns false and the reason as an error
+func (k Keeper) IsBtcDelegationActive(ctx context.Context, stakingTxHash string) (bool, error) {
+	btcDel, bsParams, err := k.getBTCDelWithParams(ctx, stakingTxHash)
+	if err != nil {
+		return false, err
+	}
+
+	btcTip := k.btclcKeeper.GetTipInfo(ctx)
+	status := btcDel.GetStatus(btcTip.Height, bsParams.CovenantQuorum)
+	if status != types.BTCDelegationStatus_ACTIVE {
+		return false, fmt.Errorf("BTC delegation %s is not active, current status is %s", stakingTxHash, status.String())
+	}
+
+	return true, nil
 }
 
 func (k Keeper) getBTCDelWithParams(
 	ctx context.Context,
-	stakingTxHash string) (*types.BTCDelegation, *types.Params, error) {
+	stakingTxHash string,
+) (*types.BTCDelegation, *types.Params, error) {
 	btcDel, err := k.GetBTCDelegation(ctx, stakingTxHash)
 	if err != nil {
 		return nil, nil, err
