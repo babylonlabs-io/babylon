@@ -2,27 +2,13 @@ package keeper
 
 import (
 	"context"
-	"fmt"
-
 	"github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // InitGenesis initializes the keeper state from a provided initial genesis state.
 func (k Keeper) InitGenesis(ctx context.Context, gs types.GenesisState) error {
-	sdkCtx := sdk.UnwrapSDKContext(ctx)
-
 	k.SetPort(ctx, gs.PortId)
-	// Only try to bind to port if it is not already bound, since we may already own
-	// port capability from capability InitGenesis
-	if !k.IsBound(sdkCtx, gs.PortId) {
-		// module binds to the port on InitChain
-		// and claims the returned capability
-		err := k.BindPort(sdkCtx, gs.PortId)
-		if err != nil {
-			return fmt.Errorf("could not claim port capability: %w", err)
-		}
-	}
 
 	for _, ci := range gs.ChainsInfo {
 		k.setChainInfo(ctx, ci)
