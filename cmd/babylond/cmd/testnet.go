@@ -38,14 +38,14 @@ import (
 	evmtypes "github.com/cosmos/evm/crypto/hd"
 	"github.com/spf13/cobra"
 
-	appkeepers "github.com/babylonlabs-io/babylon/v4/app/keepers"
-	"github.com/babylonlabs-io/babylon/v4/cmd/babylond/cmd/genhelpers"
+	appkeepers "github.com/babylonlabs-io/babylon/v3/app/keepers"
+	"github.com/babylonlabs-io/babylon/v3/cmd/babylond/cmd/genhelpers"
 
-	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
-	appsigner "github.com/babylonlabs-io/babylon/v4/app/signer"
-	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
-	bbn "github.com/babylonlabs-io/babylon/v4/types"
-	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
+	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
+	appsigner "github.com/babylonlabs-io/babylon/v3/app/signer"
+	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
+	bbn "github.com/babylonlabs-io/babylon/v3/types"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
 )
 
 var (

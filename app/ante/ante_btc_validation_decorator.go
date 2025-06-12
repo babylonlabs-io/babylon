@@ -1,10 +1,10 @@
 package ante
 
 import (
-	bbn "github.com/babylonlabs-io/babylon/v4/types"
-	btccheckpointkeeper "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/keeper"
-	btccheckpointtypes "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
-	btclightclient "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
+	bbn "github.com/babylonlabs-io/babylon/v3/types"
+	btccheckpointkeeper "github.com/babylonlabs-io/babylon/v3/x/btccheckpoint/keeper"
+	btccheckpointtypes "github.com/babylonlabs-io/babylon/v3/x/btccheckpoint/types"
+	btclightclient "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 

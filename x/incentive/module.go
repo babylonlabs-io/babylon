@@ -7,9 +7,9 @@ import (
 
 	"cosmossdk.io/core/appmodule"
 
-	"github.com/babylonlabs-io/babylon/v4/x/incentive/client/cli"
-	"github.com/babylonlabs-io/babylon/v4/x/incentive/keeper"
-	"github.com/babylonlabs-io/babylon/v4/x/incentive/types"
+	"github.com/babylonlabs-io/babylon/v3/x/incentive/client/cli"
+	"github.com/babylonlabs-io/babylon/v3/x/incentive/keeper"
+	"github.com/babylonlabs-io/babylon/v3/x/incentive/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -120,6 +120,7 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 }
 
 // RegisterInvariants registers the invariants of the module. If an invariant deviates from its predicted value, the InvariantRegistry triggers appropriate logic (most often the chain will be halted)
+// nolint staticcheck
 func (am AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
 
 // InitGenesis performs the module's genesis initialization. It returns no validator updates.

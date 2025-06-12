@@ -16,9 +16,9 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 
-	"github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/client/cli"
-	"github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/keeper"
-	"github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
+	"github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/client/cli"
+	"github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/keeper"
+	"github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
 )
 
 var (
@@ -135,6 +135,7 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 }
 
 // RegisterInvariants registers the capability module's invariants.
+// nolint staticcheck
 func (am AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
 
 // InitGenesis performs the capability module's genesis initialization It returns

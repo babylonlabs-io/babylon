@@ -26,7 +26,7 @@ import (
 	evmserver "github.com/cosmos/evm/server"
 	srvflags "github.com/cosmos/evm/server/flags"
 
-	appsigner "github.com/babylonlabs-io/babylon/v4/app/signer"
+	appsigner "github.com/babylonlabs-io/babylon/v3/app/signer"
 
 	"cosmossdk.io/log"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -43,10 +43,10 @@ import (
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
 
-	"github.com/babylonlabs-io/babylon/v4/app"
-	"github.com/babylonlabs-io/babylon/v4/app/params"
-	"github.com/babylonlabs-io/babylon/v4/cmd/babylond/cmd/genhelpers"
-	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
+	"github.com/babylonlabs-io/babylon/v3/app"
+	"github.com/babylonlabs-io/babylon/v3/app/params"
+	"github.com/babylonlabs-io/babylon/v3/cmd/babylond/cmd/genhelpers"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
 	evmcmd "github.com/cosmos/evm/client"
 	evmtypes "github.com/cosmos/evm/types"
 )

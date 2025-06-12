@@ -9,7 +9,7 @@ import "babylon/epoching/v1/epoching.proto";
 import "babylon/zoneconcierge/v1/zoneconcierge.proto";
 import "babylon/finality/v1/finality.proto";
 
-option go_package = "github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/types";
+option go_package = "github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types";
 
 // OutboundPacket represents packets sent from Babylon to other chains
 message OutboundPacket {
@@ -39,7 +39,7 @@ message BTCHeaders {
 // It includes a number of BTC headers, a raw checkpoint, an epoch metadata, and
 // a Cosmos Consumer header if there exists Cosmos Consumer headers checkpointed to this epoch.
 // Upon a newly finalised epoch in Babylon, Babylon will send a BTC timestamp to each
-// Cosmos zone that has phase-2 integration with Babylon via IBC.
+// consumer chain via IBC.
 message BTCTimestamp {
   // header is the last Cosmos Consumer header in the finalized Babylon epoch
   babylon.zoneconcierge.v1.IndexedHeader header = 1;

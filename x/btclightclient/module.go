@@ -13,9 +13,9 @@ import (
 
 	abci "github.com/cometbft/cometbft/abci/types"
 
-	"github.com/babylonlabs-io/babylon/v4/x/btclightclient/client/cli"
-	"github.com/babylonlabs-io/babylon/v4/x/btclightclient/keeper"
-	"github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
+	"github.com/babylonlabs-io/babylon/v3/x/btclightclient/client/cli"
+	"github.com/babylonlabs-io/babylon/v3/x/btclightclient/keeper"
+	"github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -133,6 +133,7 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 }
 
 // RegisterInvariants registers the capability module's invariants.
+// nolint staticcheck
 func (am AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
 
 // InitGenesis performs the btclightclient module's genesis initialization It returns

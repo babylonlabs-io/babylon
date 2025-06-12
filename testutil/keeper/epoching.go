@@ -16,9 +16,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
-	"github.com/babylonlabs-io/babylon/v4/x/epoching/keeper"
-	"github.com/babylonlabs-io/babylon/v4/x/epoching/types"
+	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
+	"github.com/babylonlabs-io/babylon/v3/x/epoching/keeper"
+	"github.com/babylonlabs-io/babylon/v3/x/epoching/types"
 
 	"github.com/stretchr/testify/require"
 )

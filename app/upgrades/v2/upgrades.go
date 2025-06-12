@@ -18,11 +18,11 @@ import (
 	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	tokenfactorytypes "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/types"
 
-	"github.com/babylonlabs-io/babylon/v4/app/keepers"
-	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
-	"github.com/babylonlabs-io/babylon/v4/app/upgrades"
-	incentivekeeper "github.com/babylonlabs-io/babylon/v4/x/incentive/keeper"
-	minttypes "github.com/babylonlabs-io/babylon/v4/x/mint/types"
+	"github.com/babylonlabs-io/babylon/v3/app/keepers"
+	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
+	"github.com/babylonlabs-io/babylon/v3/app/upgrades"
+	incentivekeeper "github.com/babylonlabs-io/babylon/v3/x/incentive/keeper"
+	minttypes "github.com/babylonlabs-io/babylon/v3/x/mint/types"
 )
 
 const (
@@ -41,7 +41,7 @@ const (
 	// As a result, we decided to remove the async-icq dependency.
 	// However, to preserve a record of all upgrades applied to the testnet,
 	// we retain the v2rc0 upgrade in our codebase and plan to remove async-icq
-	// entirely in the subsequent v2rc3 upgrade.
+	// entirely in the subsequent v2rc4 upgrade.
 	//
 	// To fully decouple from the module now, we hardcode the store name here.
 	InterchainQueryStoreName = "interchainquery"

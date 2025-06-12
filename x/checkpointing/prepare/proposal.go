@@ -13,7 +13,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/mempool"
 	sdktestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
 
-	ckpttypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
+	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
+	ckpttypes "github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
 )
 
 const defaultInjectedTxIndex = 0

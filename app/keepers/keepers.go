@@ -3,6 +3,10 @@ package keepers
 import (
 	"context"
 	"fmt"
+	ratelimitv2 "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/v2"
+	ibccallbacksv2 "github.com/cosmos/ibc-go/v10/modules/apps/callbacks/v2"
+	transferv2 "github.com/cosmos/ibc-go/v10/modules/apps/transfer/v2"
+	ibcapi "github.com/cosmos/ibc-go/v10/modules/core/api"
 	"path/filepath"
 	"strings"
 
@@ -33,31 +37,31 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
-	bbn "github.com/babylonlabs-io/babylon/v4/types"
-	owasm "github.com/babylonlabs-io/babylon/v4/wasmbinding"
-	btccheckpointkeeper "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/keeper"
-	btccheckpointtypes "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
-	btclightclientkeeper "github.com/babylonlabs-io/babylon/v4/x/btclightclient/keeper"
-	btclightclienttypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
-	btcstakingkeeper "github.com/babylonlabs-io/babylon/v4/x/btcstaking/keeper"
-	btcstakingtypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
-	bsckeeper "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/keeper"
-	bsctypes "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
-	checkpointingkeeper "github.com/babylonlabs-io/babylon/v4/x/checkpointing/keeper"
-	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
-	epochingkeeper "github.com/babylonlabs-io/babylon/v4/x/epoching/keeper"
-	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
-	finalitykeeper "github.com/babylonlabs-io/babylon/v4/x/finality/keeper"
-	finalitytypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
-	incentivekeeper "github.com/babylonlabs-io/babylon/v4/x/incentive/keeper"
-	incentivetypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
-	mintkeeper "github.com/babylonlabs-io/babylon/v4/x/mint/keeper"
-	minttypes "github.com/babylonlabs-io/babylon/v4/x/mint/types"
-	monitorkeeper "github.com/babylonlabs-io/babylon/v4/x/monitor/keeper"
-	monitortypes "github.com/babylonlabs-io/babylon/v4/x/monitor/types"
-	zckeeper "github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/keeper"
-	zctypes "github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/types"
+	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
+	bbn "github.com/babylonlabs-io/babylon/v3/types"
+	owasm "github.com/babylonlabs-io/babylon/v3/wasmbinding"
+	btccheckpointkeeper "github.com/babylonlabs-io/babylon/v3/x/btccheckpoint/keeper"
+	btccheckpointtypes "github.com/babylonlabs-io/babylon/v3/x/btccheckpoint/types"
+	btclightclientkeeper "github.com/babylonlabs-io/babylon/v3/x/btclightclient/keeper"
+	btclightclienttypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
+	btcstakingkeeper "github.com/babylonlabs-io/babylon/v3/x/btcstaking/keeper"
+	btcstakingtypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
+	bsckeeper "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/keeper"
+	bsctypes "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
+	checkpointingkeeper "github.com/babylonlabs-io/babylon/v3/x/checkpointing/keeper"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
+	epochingkeeper "github.com/babylonlabs-io/babylon/v3/x/epoching/keeper"
+	epochingtypes "github.com/babylonlabs-io/babylon/v3/x/epoching/types"
+	finalitykeeper "github.com/babylonlabs-io/babylon/v3/x/finality/keeper"
+	finalitytypes "github.com/babylonlabs-io/babylon/v3/x/finality/types"
+	incentivekeeper "github.com/babylonlabs-io/babylon/v3/x/incentive/keeper"
+	incentivetypes "github.com/babylonlabs-io/babylon/v3/x/incentive/types"
+	mintkeeper "github.com/babylonlabs-io/babylon/v3/x/mint/keeper"
+	minttypes "github.com/babylonlabs-io/babylon/v3/x/mint/types"
+	monitorkeeper "github.com/babylonlabs-io/babylon/v3/x/monitor/keeper"
+	monitortypes "github.com/babylonlabs-io/babylon/v3/x/monitor/types"
+	zckeeper "github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/keeper"
+	zctypes "github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/runtime"
@@ -153,7 +157,7 @@ type AppKeepers struct {
 	DistrKeeper           distrkeeper.Keeper
 	GovKeeper             govkeeper.Keeper
 	UpgradeKeeper         *upgradekeeper.Keeper
-	ParamsKeeper          paramskeeper.Keeper
+	ParamsKeeper          paramskeeper.Keeper //nolint:staticcheck
 	AuthzKeeper           authzkeeper.Keeper
 	EvidenceKeeper        evidencekeeper.Keeper
 	FeeGrantKeeper        feegrantkeeper.Keeper
@@ -272,11 +276,6 @@ func (ak *AppKeepers) InitKeepers(
 
 	// set transient store keys
 	ak.tkeys = storetypes.NewTransientStoreKeys(paramstypes.TStoreKey, btccheckpointtypes.TStoreKey, evmtypes.TransientKey, feemarkettypes.TransientKey)
-
-	// set memory store keys
-	// NOTE: The testingkey is just mounted for testing purposes. Actual applications should
-	// not include this key.
-	ak.memKeys = storetypes.NewMemoryStoreKeys("testingkey")
 
 	accountKeeper := authkeeper.NewAccountKeeper(
 		appCodec,
@@ -837,8 +836,10 @@ func (ak *AppKeepers) InitKeepers(
 }
 
 // initParamsKeeper init params keeper and its subspaces
+//
+//nolint:staticcheck
 func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino, key, tkey storetypes.StoreKey) paramskeeper.Keeper {
-	paramsKeeper := paramskeeper.NewKeeper(appCodec, legacyAmino, key, tkey)
+	paramsKeeper := paramskeeper.NewKeeper(appCodec, legacyAmino, key, tkey) //nolint:staticcheck
 
 	// TODO: Only modules which did not migrate yet to new way of hanldling params
 	// are the IBC-related modules. Once they are migrated, we can remove this and

@@ -3,8 +3,8 @@ package keeper
 import (
 	"context"
 
-	btcstktypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
-	"github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
+	btcstktypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
 )
 
 // InitGenesis initializes the module's state from a provided genesis state.
