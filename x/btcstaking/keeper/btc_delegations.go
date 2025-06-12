@@ -336,6 +336,22 @@ func (k Keeper) IsBtcDelegationActive(ctx context.Context, stakingTxHashHex stri
 	return false, nil
 }
 
+func (k Keeper) getBTCDelWithParams(
+	ctx context.Context,
+	stakingTxHash string) (*types.BTCDelegation, *types.Params, error) {
+	btcDel, err := k.GetBTCDelegation(ctx, stakingTxHash)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	bsParams := k.GetParamsByVersion(ctx, btcDel.ParamsVersion)
+	if bsParams == nil {
+		panic("params version in BTC delegation is not found")
+	}
+
+	return btcDel, bsParams, nil
+}
+
 func (k Keeper) getBTCDelegation(ctx context.Context, stakingTxHash chainhash.Hash) *types.BTCDelegation {
 	store := k.btcDelegationStore(ctx)
 	btcDelBytes := store.Get(stakingTxHash[:])

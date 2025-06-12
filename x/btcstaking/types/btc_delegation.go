@@ -515,6 +515,12 @@ func (d *BTCDelegation) BuildUnbondingSlashingTxWithWitness(bsParams *Params, bt
 	return slashingMsgTxWithWitness, nil
 }
 
+// IsStakeExpansion returns true if the BTC delegation was created
+// using a previous staking transaction
+func (d *BTCDelegation) IsStakeExpansion() bool {
+	return len(d.PreviousStakingTxHash) > 0
+}
+
 func NewBTCDelegatorDelegationIndex() *BTCDelegatorDelegationIndex {
 	return &BTCDelegatorDelegationIndex{
 		StakingTxHashList: [][]byte{},
