@@ -37,7 +37,7 @@ var ChainsCoinInfo = map[uint64]evmtypes.EvmCoinInfo{
 // for the chain.
 func EVMAppOptions(chainID uint64) error {
 	if sealed {
-		return fmt.Errorf("evm config already sealed")
+		return nil
 	}
 
 	coinInfo, found := ChainsCoinInfo[chainID]
