@@ -87,6 +87,7 @@ check of rewards
 - [#1195](https://github.com/babylonlabs-io/babylon/pull/1195) Update repository version to `v3`.
 - [#1060](https://github.com/babylonlabs-io/babylon/pull/1060) Optimize `PubRandCommit` lookup in `x/finality` module
 - [#1223](https://github.com/babylonlabs-io/babylon/pull/1223) Bump Cosmos SDK to `v0.53.0`
+- [#1062](https://github.com/babylonlabs-io/babylon/pull/1062) Add `anteHandler` to avoid fee grants on refundable tx (`x/incentive`)
 
 ### State Machine Breaking
 

@@ -3,22 +3,23 @@
 ## Table of Contents
 
 1. [Distribution for BTC Stakers and Finality Providers](#1-distribution-for-btc-stakers-and-finality-providers)
-    1. [Overview of x/distribution logic](#overview-of-xdistribution-logic)
-    2. [Reward Distribution for BABY Stakers](#reward-distribution-for-baby-stakers)
-    3. [What is the inflation mechanism and how are rewards distributed](#what-is-the-inflation-mechanism-and-how-are-rewards-distributed)
+   1. [Overview of x/distribution logic](#overview-of-xdistribution-logic)
+   2. [Reward Distribution for BABY Stakers](#reward-distribution-for-baby-stakers)
+   3. [What is the inflation mechanism and how are rewards distributed](#what-is-the-inflation-mechanism-and-how-are-rewards-distributed)
 2. [States](#2-states)
-    1. [Parameters](#21-parameters)
-    2. [Gauge](#22-gauge)
-    3. [Reward Gauge](#23-reward-gauge)
-    4. [FinalityProviderHistoricalRewards](#24-finalityproviderhistoricalrewards)
-    5. [FinalityProviderCurrentRewards](#25-finalityprovidercurrentrewards)
-    6. [BTCDelegationRewardsTracker](#26-btcdelegationrewardstracker)
+   1. [Parameters](#21-parameters)
+   2. [Gauge](#22-gauge)
+   3. [Reward Gauge](#23-reward-gauge)
+   4. [FinalityProviderHistoricalRewards](#24-finalityproviderhistoricalrewards)
+   5. [FinalityProviderCurrentRewards](#25-finalityprovidercurrentrewards)
+   6. [BTCDelegationRewardsTracker](#26-btcdelegationrewardstracker)
 3. [Messages](#3-messages)
-    1. [MsgUpdateParams](#31-msgupdateparams)
-    2. [MsgSetWithdrawAddress](#32-msgsetwithdrawaddress)
-    3. [MsgWithdrawReward](#33-msgwithdrawreward)
+   1. [MsgUpdateParams](#31-msgupdateparams)
+   2. [MsgSetWithdrawAddress](#32-msgsetwithdrawaddress)
+   3. [MsgWithdrawReward](#33-msgwithdrawreward)
 4. [BeginBlocker and EndBlocker](#4-beginblocker-and-endblocker)
 5. [Queries](#5-queries)
+6. [AnteHandler for refundable transactions](#6-antehandler-decorator-for-refundable-transactions)
 
 ## 1. Distribution for BTC Stakers and Finality Providers
 
@@ -67,7 +68,7 @@ There are 2 messages available through CLI
 
 - `MsgWithdrawRewards` - withdraw rewards for a delegator or finality provider
 - `MsgSetWithdrawAddress` - set a new withdraw address for a delegator or
-    finality provider
+  finality provider
 
 ### Overview of x/distribution logic
 
@@ -77,7 +78,7 @@ and finality providers, the `x/distribution` module is called in `app.go`. The
 delegators and validators by rewards accumulating in global pool until withdrawals
 (e.g. `MsgWithdrawDelegatorReward`) or a delegation state change such as bonding,
 unbonding or re-delegation and this would trigger a full reward withdrawal
- for that delegation before the state change.
+for that delegation before the state change.
 
 So, while rewards continuously accrue, they are actually distributed
 (when transferred out of the pool) only when a withdrawal is executed
@@ -115,25 +116,25 @@ The Checkpointing module maintains the following KV stores.
 ### Prefixes
 
 - `DelegatorWithdrawAddrPrefix`: Used for storing the withdraw address for each
-    delegator.
+  delegator.
 - `RefundableMsgKeySetPrefix`: Used for storing the set of hashes of messages
-    that can be refunded.
+  that can be refunded.
 - `FinalityProviderCurrentRewardsKeyPrefix`: Used for storing the Current
-    rewards of finality provider by address.
+  rewards of finality provider by address.
 - `BTCDelegationRewardsTrackerKeyPrefix`: Used for for BTC delegation rewards
-    tracker info
+  tracker info
 - `FinalityProviderHistoricalRewardsKeyPrefix`: Used for storing the Historical
-    rewards of finality provider by address and period.
+  rewards of finality provider by address and period.
 
 ### Keys
 
 - `ParamsKey`: Used for storing the parameters of the Incentive module.
 - `BTCStakingGaugeKey`: Used for storing the BTC staking gauge at each block
-    height.
+  height.
 - `RewardGaugeKey`: Used for storing the reward gauge for a given stakeholder
-    in a given type.
+  in a given type.
 - `BTCDelegatorToFPKey`: Used for storing the map reference from a delegator
-    to a finality provider.
+  to a finality provider.
 
 ### 2.1. Parameters
 
@@ -331,7 +332,7 @@ Upon receiving `MsgUpdateParams`, a Babylon node will execute as follows:
 
 1. Verify that the sender is authorized to update the parameters.
 2. Validate the new parameters to ensure they are within acceptable ranges.
-    - Update the module's parameters with the new values.
+   - Update the module's parameters with the new values.
 3. Emit an event indicating the successful update of parameters.
 
 ### 3.2. MsgSetWithdrawAddress
@@ -350,7 +351,7 @@ message MsgSetWithdrawAddress {
 Upon receiving `MsgSetWithdrawAddress`, a Babylon node will execute as follows:
 
 1. Verify that the sender is the delegator or has the authority to set the
-    withdraw address.
+   withdraw address.
 2. Update the withdraw address for the delegator in the state.
 
 ### 3.3. MsgWithdrawReward
@@ -378,7 +379,7 @@ message MsgWithdrawReward {
 Upon receiving `MsgWithdrawReward`, a Babylon node will execute as follows:
 
 1. Verify that the sender is the delegator or has the authority to withdraw
-    rewards.
+   rewards.
 2. Calculate the rewards owed to the delegator based on the current state.
 3. Transfer the calculated rewards to the delegator's withdraw address.
 
@@ -414,14 +415,40 @@ initializes the finality provider, creates historical reward trackers,
 and withdraws BTC delegation rewards to the gauge. While
 `BtcDelegationActivated` is not directly invoked by the `EndBlocker`,
 it is closely linked to it. The invocation of `BtcDelegationActivated` is
- event-driven, responding to specific transactions related to BTC staking,
- such as when a user delegates BTC to a finality provider.
+event-driven, responding to specific transactions related to BTC staking,
+such as when a user delegates BTC to a finality provider.
 
 ## 5. Queries
 
-| **Endpoint**                                                          | **Description**                                                                  |
-|-----------------------------------------------------------------------|----------------------------------------------------------------------------------|
-| `/babylon/incentive/v1/params`                                          | Queries the current parameters of the Incentive module.                         |
-| `/babylon/incentive/v1/btc_staking_gauge/{height}`                      | Retrieves the BTC staking gauge information for a specific block height.         |
-| `/babylon/incentive/v1/reward_gauges`                                   | Retrieves the reward gauges for all stakeholders.                              |
-| `/babylon/incentive/v1/delegators/{delegator_address}/withdraw_address` | Queries the withdraw address of a specific delegator.                           |
+| **Endpoint**                                                            | **Description**                                                          |
+| ----------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `/babylon/incentive/v1/params`                                          | Queries the current parameters of the Incentive module.                  |
+| `/babylon/incentive/v1/btc_staking_gauge/{height}`                      | Retrieves the BTC staking gauge information for a specific block height. |
+| `/babylon/incentive/v1/reward_gauges`                                   | Retrieves the reward gauges for all stakeholders.                        |
+| `/babylon/incentive/v1/delegators/{delegator_address}/withdraw_address` | Queries the withdraw address of a specific delegator.                    |
+
+## 6. AnteHandler Decorator for Refundable Transactions
+
+In order to prevent misuse of fee grants on refundable transactions,
+the module includes a custom `AnteHandler` decorator.
+This decorator detects refundable messages and forbids the use of fee grants for those transactions,
+ensuring that transaction fees are paid directly by the sender and not by a grantor.
+After the transaction is processed, the fees are refunded to the fee payer according to the `PostHandler` logic.
+
+This is necessary to avoid over-complicating the refund logic.
+
+### Logic Summary
+
+- The decorator inspects messages in a transaction.
+- If the transaction is marked as _refundable_, the decorator rejects the use of a fee grant.
+- This behavior applies at the ante-handling phase, before the message is processed by the application.
+
+At the moment, a transaction is considered refundable if **all** messages it contains are within these:
+
+- `btclctypes.MsgInsertHeaders`
+- `btcctypes.MsgInsertBTCSpvProof`
+- `bstypes.MsgAddCovenantSigs`
+- `bstypes.MsgBTCUndelegate`
+- `bstypes.MsgSelectiveSlashingEvidence`
+- `bstypes.MsgAddBTCDelegationInclusionProof`
+- `ftypes.MsgAddFinalitySig`
