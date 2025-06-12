@@ -251,7 +251,7 @@ func initRootCmd(rootCmd *cobra.Command, txConfig client.TxEncodingConfig, basic
 		queryCommand(),
 		txCommand(),
 		// keys.Commands(), // TODO: Should be removed but new accounts will be ethcsecp only
-		evmcmd.KeyCommands(app.DefaultNodeHome, true),
+		evmcmd.KeyCommands(app.DefaultNodeHome, false),
 	)
 
 	var err error
