@@ -262,6 +262,8 @@ func (d *BTCDelegation) ValidateBasic() error {
 		return fmt.Errorf("staking time %d must be lower than %d", d.StakingTime, math.MaxUint16)
 	}
 
+	// TODO(rafilx): add validation for stake expansion and covd signatures
+
 	return nil
 }
 
@@ -513,6 +515,12 @@ func (d *BTCDelegation) BuildUnbondingSlashingTxWithWitness(bsParams *Params, bt
 	}
 
 	return slashingMsgTxWithWitness, nil
+}
+
+// IsStakeExpansion returns true if the BTC delegation was created
+// using a previous staking transaction
+func (d *BTCDelegation) IsStakeExpansion() bool {
+	return len(d.PreviousStakingTxHash) > 0
 }
 
 func NewBTCDelegatorDelegationIndex() *BTCDelegatorDelegationIndex {
