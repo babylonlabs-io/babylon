@@ -137,10 +137,8 @@ func NewRootCmd() *cobra.Command {
 	initRootCmd(rootCmd, tempApp.TxConfig(), tempApp.BasicModuleManager)
 
 	// If the regular chain id set, ensure we also set an EVM specific chain id.
-	if initClientCtx.ChainID != "" {
-		if err := app.EVMAppOptions(appparams.EVMChainID); err != nil {
-			panic(err)
-		}
+	if err := app.EVMAppOptions(appparams.EVMChainID); err != nil {
+		panic(err)
 	}
 
 	// add keyring to autocli opts
