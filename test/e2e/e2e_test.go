@@ -9,6 +9,10 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
+func TestVoteExtensionTestSuite(t *testing.T) {
+	suite.Run(t, new(VoteExtensionTestSuite))
+}
+
 // IBCTransferTestSuite tests IBC transfer end-to-end
 func TestIBCTranferTestSuite(t *testing.T) {
 	suite.Run(t, new(IBCTransferTestSuite))

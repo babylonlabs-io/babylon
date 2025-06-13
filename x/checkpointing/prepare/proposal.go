@@ -68,6 +68,8 @@ func (h *ProposalHandler) SetHandlers(bApp *baseapp.BaseApp) {
 // therefore we only return error when something really wrong happened
 func (h *ProposalHandler) PrepareProposal() sdk.PrepareProposalHandler {
 	return func(ctx sdk.Context, req *abci.RequestPrepareProposal) (*abci.ResponsePrepareProposal, error) {
+		h.logger.Info("START PrepareProposal")
+		h.logger.Info(fmt.Sprintf("votes received=%d", len(req.LocalLastCommit.Votes)))
 		// call default handler first to do basic validation
 		res, err := h.defaultPrepareProposalHandler(ctx, req)
 		if err != nil {
@@ -116,13 +118,17 @@ func (h *ProposalHandler) PrepareProposal() sdk.PrepareProposalHandler {
 
 		err = proposalTxs.SetOrReplaceCheckpointTx(injectedVoteExtTx)
 		if err != nil {
+			h.logger.Info("targeted PrepareProposal error was reached")
 			return &EmptyProposalRes, fmt.Errorf("failed to inject checkpoint tx into the proposal: %w", err)
 		}
+		h.logger.Info("targeted PrepareProposal error was NOT reached")
 
 		err = proposalTxs.ReplaceOtherTxs(res.Txs)
 		if err != nil {
 			return &EmptyProposalRes, fmt.Errorf("failed to add other txs into the proposal: %w", err)
 		}
+
+		h.logger.Info("END PrepareProposal")
 
 		return &abci.ResponsePrepareProposal{
 			Txs: proposalTxs.GetTxsInOrder(),
@@ -325,6 +331,7 @@ func (h *ProposalHandler) ProcessProposal() sdk.ProcessProposalHandler {
 			// Note: this is needed because LastBlockID is not available here so that
 			// we can't verify whether the injected checkpoint is signing the correct
 			// LastBlockID
+			h.logger.Info(fmt.Sprintf("ProcessProposal: votes received=%d", len(injectedCkpt.ExtendedCommitInfo.Votes)))
 			ckpt, err := h.buildCheckpointFromVoteExtensions(ctx, epoch.EpochNumber, injectedCkpt.ExtendedCommitInfo.Votes)
 			if err != nil {
 				// should not return error here as error will cause panic

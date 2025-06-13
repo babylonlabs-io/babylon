@@ -30,7 +30,7 @@ func NewPrepareProposalTxs(
 	}
 
 	return PrepareProposalTxs{
-		MaxBytes:  uint64(req.MaxTxBytes),
+		MaxBytes:  1008600, // uint64(req.MaxTxBytes),
 		UsedBytes: 0,
 	}, nil
 }

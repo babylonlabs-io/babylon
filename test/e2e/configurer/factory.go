@@ -116,6 +116,68 @@ var (
 
 const MaxIndetifierSize = 10
 
+// NewVoteExtensionConfigurer returns a new Configurer for BTC staking service
+func NewVoteExtensionConfigurer(t *testing.T, isDebugLogEnabled bool) (Configurer, error) {
+	identifier := identifierName(t)
+	validatorConfigs := []*initialization.NodeConfig{
+		{
+			// this is a node that is used to state-sync from so its snapshot-interval
+			// is frequent.
+			Name:               "babylon-default-a-1",
+			Pruning:            "default",
+			PruningKeepRecent:  "0",
+			PruningInterval:    "0",
+			SnapshotInterval:   25,
+			SnapshotKeepRecent: 10,
+			IsValidator:        true,
+			BtcNetwork:         btcNetworkStr,
+		},
+		{
+			Name:               "babylon-default-a-2",
+			Pruning:            "nothing",
+			PruningKeepRecent:  "0",
+			PruningInterval:    "0",
+			SnapshotInterval:   1500,
+			SnapshotKeepRecent: 2,
+			IsValidator:        true,
+			BtcNetwork:         btcNetworkStr,
+		},
+		{
+			Name:               "babylon-default-a-3",
+			Pruning:            "nothing",
+			PruningKeepRecent:  "0",
+			PruningInterval:    "0",
+			SnapshotInterval:   1500,
+			SnapshotKeepRecent: 2,
+			IsValidator:        true,
+			BtcNetwork:         btcNetworkStr,
+		},
+		{
+			Name:               "babylon-default-a-4",
+			Pruning:            "nothing",
+			PruningKeepRecent:  "0",
+			PruningInterval:    "0",
+			SnapshotInterval:   1500,
+			SnapshotKeepRecent: 2,
+			IsValidator:        true,
+			BtcNetwork:         btcNetworkStr,
+		},
+	}
+	containerManager, err := containers.NewManager(identifier, isDebugLogEnabled, false, false)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewCurrentBranchConfigurer(t,
+		[]*chain.Config{
+			// we only need 1 chain for testing BTC staking
+			chain.New(t, containerManager, initialization.ChainAID, updateNodeConfigNameWithIdentifier(validatorConfigs, identifier), nil),
+		},
+		baseSetup, // base set up
+		containerManager,
+	), nil
+}
+
 // NewBTCTimestampingConfigurer returns a new Configurer for BTC timestamping service.
 // TODO currently only one configuration is available. Consider testing upgrades
 // when necessary
