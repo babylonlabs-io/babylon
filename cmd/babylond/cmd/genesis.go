@@ -227,7 +227,7 @@ func PrepareGenesis(
 	// Add EVM genesis configuration
 	evmGenState := evmtypes.DefaultGenesisState()
 	evmGenState.Params.ActiveStaticPrecompiles = keepers.BabylonAvailableStaticPrecompiles
-	evmGenState.Params.EvmDenom = appparams.BaseCosmosDenom
+	evmGenState.Params.EvmDenom = appparams.BaseCoinUnit
 	genesisState[evmtypes.ModuleName] = cdc.MustMarshalJSON(evmGenState)
 
 	// Add ERC20 genesis configuration

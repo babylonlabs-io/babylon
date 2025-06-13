@@ -11,19 +11,14 @@ import (
 const (
 	HumanCoinUnit = "bbn"
 	BaseCoinUnit  = "ubbn"
-	BbnExponent   = 6
-
-	DefaultBondDenom = BaseCoinUnit
-
-	// Bech32PrefixAccAddr defines the Bech32 prefix of an account's address.
-	Bech32PrefixAccAddr = "bbn"
-
-	// BaseCosmosDenom is the base denomination for 6 decimals.
-	BaseCosmosDenom = "ubbn"
 	// BaseEVMDenom is the base denomination for 18 decimals.
 	BaseEVMDenom = "abbn"
-	// DisplayDenom is the display denom of the Cosmos EVM
-	DisplayDenom = "bbn"
+
+	BbnExponent = 6
+
+	DefaultBondDenom = BaseCoinUnit
+	// Bech32PrefixAccAddr defines the Bech32 prefix of an account's address.
+	Bech32PrefixAccAddr = "bbn"
 	// EVMChainID is the EVM compatible chain id
 	EVMChainID = 6901
 )

@@ -26,9 +26,9 @@ var sealed = false
 // chain id
 var ChainsCoinInfo = map[uint64]evmtypes.EvmCoinInfo{
 	appparams.EVMChainID: {
-		Denom:         appparams.BaseCosmosDenom,
+		Denom:         appparams.BaseCoinUnit,
 		ExtendedDenom: appparams.BaseEVMDenom,
-		DisplayDenom:  appparams.DisplayDenom,
+		DisplayDenom:  appparams.HumanCoinUnit,
 		Decimals:      evmtypes.SixDecimals,
 	},
 }

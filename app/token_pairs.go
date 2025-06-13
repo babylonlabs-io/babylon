@@ -14,7 +14,7 @@ const WTokenContractMainnet = "0xD4949664cD82660AaE99bEdc034a0deA8A0bd517"
 var DefaultTokenPairs = []erc20types.TokenPair{
 	{
 		Erc20Address:  WTokenContractMainnet,
-		Denom:         appparams.BaseCosmosDenom,
+		Denom:         appparams.BaseCoinUnit,
 		Enabled:       true,
 		ContractOwner: erc20types.OWNER_MODULE,
 	},

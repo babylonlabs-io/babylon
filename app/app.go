@@ -77,7 +77,6 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	evmencoding "github.com/cosmos/evm/encoding"
 	srvflags "github.com/cosmos/evm/server/flags"
-	cosmosevmtypes "github.com/cosmos/evm/types"
 	evmutils "github.com/cosmos/evm/utils"
 	"github.com/cosmos/evm/x/erc20"
 	"github.com/cosmos/evm/x/feemarket"
@@ -189,10 +188,6 @@ var (
 )
 
 func init() {
-	// Replace defaults
-	// manually update the power reduction by replacing micro (u) -> atto (a)
-	sdk.DefaultPowerReduction = cosmosevmtypes.MicroPowerReduction
-	stakingtypes.DefaultMinCommissionRate = math.LegacyZeroDec()
 	// Note: If this changes, the home directory under x/checkpointing/client/cli/tx.go needs to change as well
 	userHomeDir, err := os.UserHomeDir()
 	if err != nil {
@@ -744,7 +739,7 @@ func (app *BabylonApp) EndBlocker(ctx sdk.Context) (sdk.EndBlock, error) {
 
 // InitChainer application update at chain initialization
 func (app *BabylonApp) InitChainer(ctx sdk.Context, req *abci.RequestInitChain) (*abci.ResponseInitChain, error) {
-	var genesisState cosmosevmtypes.GenesisState
+	var genesisState GenesisState
 	if err := json.Unmarshal(req.AppStateBytes, &genesisState); err != nil {
 		panic(err)
 	}
@@ -858,7 +853,7 @@ func (a *BabylonApp) DefaultGenesis() map[string]json.RawMessage {
 	// Add EVM genesis configuration
 	evmGenState := evmtypes.DefaultGenesisState()
 	evmGenState.Params.ActiveStaticPrecompiles = evmtypes.AvailableStaticPrecompiles
-	evmGenState.Params.EvmDenom = appparams.BaseCosmosDenom
+	evmGenState.Params.EvmDenom = appparams.BaseCoinUnit
 	genesis[evmtypes.ModuleName] = a.appCodec.MustMarshalJSON(evmGenState)
 
 	// Add ERC20 genesis configuration
@@ -866,6 +861,12 @@ func (a *BabylonApp) DefaultGenesis() map[string]json.RawMessage {
 	erc20GenState.TokenPairs = DefaultTokenPairs
 	erc20GenState.Params.NativePrecompiles = append(erc20GenState.Params.NativePrecompiles, WTokenContractMainnet)
 	genesis[erc20types.ModuleName] = a.appCodec.MustMarshalJSON(erc20GenState)
+
+	feemarketGenState := feemarkettypes.DefaultGenesisState()
+	feemarketGenState.Params.NoBaseFee = false
+	feemarketGenState.Params.BaseFee = math.LegacyMustNewDecFromStr("0.01")
+	feemarketGenState.Params.MinGasPrice = feemarketGenState.Params.BaseFee
+	genesis[feemarkettypes.ModuleName] = a.appCodec.MustMarshalJSON(feemarketGenState)
 
 	return genesis
 }
