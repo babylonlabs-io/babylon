@@ -3,12 +3,22 @@ package keepers
 import (
 	"context"
 	"fmt"
+	"path/filepath"
+	"strings"
+
+	srvflags "github.com/cosmos/evm/server/flags"
+	erc20types "github.com/cosmos/evm/x/erc20/types"
+	feemarketkeeper "github.com/cosmos/evm/x/feemarket/keeper"
+	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
+	precisebankkeeper "github.com/cosmos/evm/x/precisebank/keeper"
+	precisebanktypes "github.com/cosmos/evm/x/precisebank/types"
+	evmkeeper "github.com/cosmos/evm/x/vm/keeper"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 	ratelimitv2 "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/v2"
 	ibccallbacksv2 "github.com/cosmos/ibc-go/v10/modules/apps/callbacks/v2"
 	transferv2 "github.com/cosmos/ibc-go/v10/modules/apps/transfer/v2"
 	ibcapi "github.com/cosmos/ibc-go/v10/modules/core/api"
-	"path/filepath"
-	"strings"
+	"github.com/spf13/cast"
 
 	"cosmossdk.io/log"
 	storetypes "cosmossdk.io/store/types"
@@ -80,6 +90,9 @@ import (
 	tokenfactorykeeper "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/keeper"
 	tokenfactorytypes "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/types"
 
+	sdktestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
+	erc20keeper "github.com/cosmos/evm/x/erc20/keeper"
+	evmtransferkeeper "github.com/cosmos/evm/x/ibc/transfer/keeper"
 	pfmrouter "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v10/packetforward"
 	pfmrouterkeeper "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v10/packetforward/keeper"
 	pfmroutertypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v10/packetforward/types"
@@ -180,18 +193,25 @@ type AppKeepers struct {
 	// tokenomics-related modules
 	IncentiveKeeper incentivekeeper.Keeper
 
+	// Cosmos EVM modules
+	EVMKeeper         *evmkeeper.Keeper
+	FeemarketKeeper   feemarketkeeper.Keeper
+	Erc20Keeper       erc20keeper.Keeper
+	EVMTransferKeeper evmtransferkeeper.Keeper
+	PreciseBankKeeper precisebankkeeper.Keeper
+
 	// keys to access the substores
 	keys    map[string]*storetypes.KVStoreKey
 	tkeys   map[string]*storetypes.TransientStoreKey
 	memKeys map[string]*storetypes.MemoryStoreKey
 
-	EncCfg *appparams.EncodingConfig
+	EncCfg sdktestutil.TestEncodingConfig
 }
 
 func (ak *AppKeepers) InitKeepers(
 	logger log.Logger,
 	btcConfig *bbn.BtcConfig,
-	encodingConfig *appparams.EncodingConfig,
+	encodingConfig sdktestutil.TestEncodingConfig,
 	bApp *baseapp.BaseApp,
 	maccPerms map[string][]string,
 	homePath string,
@@ -242,11 +262,16 @@ func (ak *AppKeepers) InitKeepers(
 		wasmtypes.StoreKey,
 		// tokenomics-related modules
 		incentivetypes.StoreKey,
+		// EVM
+		evmtypes.StoreKey,
+		feemarkettypes.StoreKey,
+		erc20types.StoreKey,
+		precisebanktypes.StoreKey,
 	)
 	ak.keys = keys
 
 	// set transient store keys
-	ak.tkeys = storetypes.NewTransientStoreKeys(paramstypes.TStoreKey, btccheckpointtypes.TStoreKey)
+	ak.tkeys = storetypes.NewTransientStoreKeys(paramstypes.TStoreKey, btccheckpointtypes.TStoreKey, evmtypes.TransientKey, feemarkettypes.TransientKey)
 
 	accountKeeper := authkeeper.NewAccountKeeper(
 		appCodec,
@@ -397,6 +422,48 @@ func (ak *AppKeepers) InitKeepers(
 		ak.AccountKeeper,
 	)
 
+	// Cosmos EVM Keepers
+	// Create Feemarket keepers
+	ak.FeemarketKeeper = feemarketkeeper.NewKeeper(
+		appCodec,
+		authtypes.NewModuleAddress(govtypes.ModuleName),
+		ak.keys[feemarkettypes.StoreKey],
+		ak.tkeys[feemarkettypes.TransientKey],
+	)
+
+	ak.PreciseBankKeeper = precisebankkeeper.NewKeeper(
+		appCodec,
+		ak.keys[precisebanktypes.StoreKey],
+		ak.BankKeeper,
+		ak.AccountKeeper,
+	)
+
+	tracer := cast.ToString(appOpts.Get(srvflags.EVMTracer))
+
+	ak.EVMKeeper = evmkeeper.NewKeeper(
+		appCodec,
+		ak.keys[evmtypes.ModuleName],
+		ak.tkeys[evmtypes.TransientKey],
+		authtypes.NewModuleAddress(govtypes.ModuleName),
+		ak.AccountKeeper,
+		ak.PreciseBankKeeper,
+		ak.StakingKeeper,
+		ak.FeemarketKeeper,
+		&ak.Erc20Keeper,
+		tracer,
+	)
+
+	ak.Erc20Keeper = erc20keeper.NewKeeper(
+		ak.keys[erc20types.StoreKey],
+		appCodec,
+		authtypes.NewModuleAddress(govtypes.ModuleName),
+		ak.AccountKeeper,
+		ak.BankKeeper,
+		ak.EVMKeeper,
+		ak.StakingKeeper,
+		&ak.EVMTransferKeeper,
+	)
+
 	ak.IBCKeeper = ibckeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[ibcexported.StoreKey]),
@@ -409,6 +476,26 @@ func (ak *AppKeepers) InitKeepers(
 		appparams.AccGov.String(),
 	)
 
+	ak.EVMTransferKeeper = evmtransferkeeper.NewKeeper(
+		appCodec, runtime.NewKVStoreService(keys[evmtypes.ModuleName]),
+		ak.GetSubspace(ibctransfertypes.ModuleName),
+		ak.IBCKeeper.ChannelKeeper, // ICS4Wrapper
+		ak.IBCKeeper.ChannelKeeper,
+		bApp.MsgServiceRouter(), ak.AccountKeeper, ak.BankKeeper,
+		ak.Erc20Keeper, // Add ERC20 Keeper for ERC20 transfers
+		appparams.AccGov.String(),
+	)
+
+	ak.EVMKeeper.WithStaticPrecompiles(
+		NewAvailableStaticPrecompiles(
+			appCodec,
+			ak.PreciseBankKeeper,
+			ak.Erc20Keeper,
+			ak.GovKeeper,
+			ak.SlashingKeeper,
+			ak.EvidenceKeeper,
+		),
+	)
 	// Create the TokenFactory Keeper
 	ak.TokenFactoryKeeper = tokenfactorykeeper.NewKeeper(
 		appCodec,
