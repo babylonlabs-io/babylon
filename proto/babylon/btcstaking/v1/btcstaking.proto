@@ -164,6 +164,12 @@ message BTCDelegation {
   // previous_staking_tx_hash is the hash of the staking tx that was used as
   // input to the stake expansion, if empty it is NOT a stake expansion.
   bytes previous_staking_tx_hash = 18;
+  // previous_stk_covenant_sigs is a list of signatures on the spending of
+  // the previous btc staking transaction {previous_staking_tx_hash}
+  // by each covenant member
+  // It must be provided to allow the previous staking tx to be spent as
+  // an transaction input of another BTC staking transaction.
+  repeated SignatureInfo previous_stk_covenant_sigs = 19;
 }
 
 // DelegatorUnbondingInfo contains the information about transaction which spent

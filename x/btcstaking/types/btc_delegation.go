@@ -262,6 +262,8 @@ func (d *BTCDelegation) ValidateBasic() error {
 		return fmt.Errorf("staking time %d must be lower than %d", d.StakingTime, math.MaxUint16)
 	}
 
+	// TODO(rafilx): add validation for stake expansion and covd signatures
+
 	return nil
 }
 
