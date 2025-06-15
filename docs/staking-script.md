@@ -65,13 +65,15 @@ The Bitcoin Staking protocol involves the following stakeholders:
   A finality provider is identified by their EOTS public
   key (`<FinalityProviderPk>`) and participates in the finality
   voting round of a specific BSN.
-  The selection of a finality provider also implicitly determines
-  the BSN they secure, as each provider may only secure one BSN.
-  Bitcoin stakers specify their chosen finality provider by including
-  their EOTS key in the staking script.
-  > ⚠️ Currently, only a single finality provider securing the Babylon Genesis chain
-  > can be selected. Future protocol versions will support additional BSNs and allow
-  > BTC stakers to delegate to providers securing those networks.
+ The selection of finality providers determines which BSNs they secure,
+ as each provider may only secure one BSN. Bitcoin stakers can now delegate
+ to multiple finality providers across different BSNs by including their
+ EOTS keys in the staking script.
+> ⚡ Multi-staking across BSNs is now supported. The system enforces that
+> at least one finality provider must secure the Babylon Genesis chain,
+> with at most one finality provider per consumer chain/BSN. This allows
+> BTC stakers to provide security to multiple networks simultaneously
+> while maintaining proper validation constraints.
 * **Covenant Committee**:
   The role of the covenant committee (identified
   by the Bitcoin public keys of its members `CovenantPk1..CovenantPkN`)
@@ -238,16 +240,16 @@ The staking output can be spent through one of the following three script paths:
    * `StakerPK` is the BTC staker's public key.
    * `FinalityProviderPk` is the public key of the finality provider
      to which the stake is delegated.
-     > ⚡ At the moment, only a single finality provider is supported.
-     > Once multi-staking is enabled, the script will be modified to accommodate
-     > more finality providers.
+     > ⚡ Multi-staking to finality providers across different BSNs is now supported.
+     > The system enforces that at least one finality provider must secure the Babylon Genesis chain,
+     > with at most one finality provider per consumer chain/BSN.
    * `CovenantPk1..CovenantPkN` are the lexicographically sorted public keys of the
      covenant committee as defined in the
      [Babylon Genesis parameters](./register-bitcoin-stake.md#32-babylon-chain-btc-staking-parameters).
    * `CovenantThreshold` is a Babylon parameter specifying the number of how many
      covenant committee member signatures are required. It is defined in the
      [Babylon Genesis parameters](./register-bitcoin-stake.md#32-babylon-chain-btc-staking-parameters).
-   
+
    This path can only be executed with the collaboration of the BTC staker, finality provider,
    and covenant committee. The staker is required to submit a pre-signature
    for spending the slashing path in order for their stake to be accepted.
@@ -257,7 +259,7 @@ The staking output can be spent through one of the following three script paths:
    [registering Bitcoin stakes documentation](./register-bitcoin-stake.md).
 
 > **⚡ Key Difference Between the Unbonding and Slashing Paths**
-> 
+>
 > The main difference lies in the presence of `<FinalityProviderPk>` in
 > the slashing path which has the following implications:
 > * For a staking request to become active, the BTC staker must include
@@ -312,7 +314,7 @@ The unbonding output can be spent through one of the following two script paths:
    * `StakerPK` is the BTC staker's public key.
    * `FinalityProviderPk` is the public key of the finality provider
      to which the stake is delegated.
-     > ⚡ At the moment, only a single finality provider is supported.
+     > ⚡
      > Once multi-staking is enabled, the script will be modified to accommodate
      > more finality providers.
    * `CovenantPk1..CovenantPkN` are the lexicographically sorted public keys of the
@@ -323,7 +325,7 @@ The unbonding output can be spent through one of the following two script paths:
      [Babylon Genesis parameters](./register-bitcoin-stake.md#32-babylon-chain-btc-staking-parameters).
 
 > **⚡ Slashing Path in the Unbonding Output**
-> 
+>
 > The presence of the slashing path in the unbonding output ensures that a BTC staker
 > can still be slashed during the unbonding period,
 > if their delegated finality provider double-signs.
