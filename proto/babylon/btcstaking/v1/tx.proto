@@ -300,6 +300,12 @@ message MsgAddCovenantSigs {
   // the order of sigs should respect the order of finality providers
   // of the corresponding delegation
   repeated bytes slashing_unbonding_tx_sigs = 6;
+  // stake_expansion_tx_sig is the signature of the covenant to spend the
+  // previous staking transaction to create a new BTC delegation
+  // submitted to babylon. The signature follows encoding in BIP-340 spec
+  bytes stake_expansion_tx_sig = 7
+      [ (gogoproto.customtype) =
+            "github.com/babylonlabs-io/babylon/v3/types.BIP340Signature" ];
 }
 // MsgAddCovenantSigsResponse is the response for MsgAddCovenantSigs
 message MsgAddCovenantSigsResponse {}
