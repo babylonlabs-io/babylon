@@ -140,9 +140,13 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 func (ms msgServer) BtcStakeExpand(goCtx context.Context, req *types.MsgBtcStakeExpand) (*types.MsgBtcStakeExpandResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	isPreviousStkActive, err := ms.IsBtcDelegationActive(ctx, req.PreviousStakingTxHash)
+	previousBtcDel, isPreviousStkActive, err := ms.IsBtcDelegationActive(ctx, req.PreviousStakingTxHash)
 	if !isPreviousStkActive {
 		return nil, err
+	}
+
+	if !bbn.IsSubsetBip340Pks(previousBtcDel.FpBtcPkList, req.FpBtcPkList) {
+		return nil, fmt.Errorf("the previous BTC staking transaction FPs: %+v are not a subset of the stake expansion FPs %+v", previousBtcDel.FpBtcPkList, req.FpBtcPkList)
 	}
 
 	// Parses the message into better domain format
