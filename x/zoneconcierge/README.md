@@ -181,7 +181,15 @@ Concierge module. The key is `PortKey` and the value is the port ID string.
 
 The [last sent BTC segment storage](./keeper/epochs.go) maintains information
 about the last BTC chain segment that was broadcast to other light clients. The
-key is `LastSentBTCSegmentKey` and the value is a `BTCChainSegment` object.
+key is `LastSentBTCSegmentKey` and the value is a `BTCChainSegment` object,
+defined as follows.
+
+```protobuf
+// Btc light client chain segment grown during last finalized epoch
+message BTCChainSegment {
+  repeated babylon.btclightclient.v1.BTCHeaderInfo btc_headers = 1;
+}
+```
 
 ### SealedEpochProof
 
