@@ -91,10 +91,11 @@ multiple finality providers across different networks.
 
 ### 2.1.1 BSN and Finality Provider Selection
 
-The multi-FP (multiple finality provider) selection process is
+The multiple finality provider selection process is
 controlled by the `validateRestakedFPs` function, which enforces specific
-constraints on finality provider selection. The function validates the following:
+constraints on finality provider selection.
 
+The function validates the following:
 - All finality providers are known to Babylon and not slashed
 - At least one finality provider must be a Babylon finality provider
 - The delegation respects multi-staking rules across consumer chains

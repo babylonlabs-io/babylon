@@ -314,9 +314,9 @@ The unbonding output can be spent through one of the following two script paths:
    * `StakerPK` is the BTC staker's public key.
    * `FinalityProviderPk` is the public key of the finality provider
      to which the stake is delegated.
-     > ⚡
-     > Once multi-staking is enabled, the script will be modified to accommodate
-     > more finality providers.
+     > ⚡ Multi-staking to finality providers across different BSNs is now supported.
+     > The system enforces that at least one finality provider must secure the Babylon Genesis chain,
+     > with at most one finality provider per consumer chain/BSN.
    * `CovenantPk1..CovenantPkN` are the lexicographically sorted public keys of the
      covenant committee as defined in the
      [Babylon Genesis parameters](./register-bitcoin-stake.md#32-babylon-chain-btc-staking-parameters).
