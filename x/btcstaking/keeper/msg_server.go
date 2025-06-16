@@ -203,7 +203,6 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	btcDel, params, err := ms.getBTCDelWithParams(ctx, req.StakingTxHash)
-
 	if err != nil {
 		return nil, err
 	}
@@ -221,8 +220,7 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 	}
 
 	// ensure BTC delegation is still pending, i.e., not unbonded
-	btcTipHeight := ms.btclcKeeper.GetTipInfo(ctx).Height
-	status := btcDel.GetStatus(btcTipHeight, params.CovenantQuorum)
+	status, btcTip := ms.BtcDelStatusWithTip(ctx, btcDel, params.CovenantQuorum)
 	if status == types.BTCDelegationStatus_UNBONDED || status == types.BTCDelegationStatus_EXPIRED {
 		ms.Logger(ctx).Debug("Received covenant signature after the BTC delegation is already unbonded", "covenant pk", req.Pk.MarshalHex())
 		return nil, types.ErrInvalidCovenantSig.Wrap("the BTC delegation is already unbonded")
@@ -326,7 +324,7 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 		req.UnbondingTxSig,
 		parsedUnbondingSlashingAdaptorSignatures,
 		params,
-		btcTipHeight,
+		btcTip.Height,
 	)
 
 	// at this point, the covenant signatures are verified and are not duplicated.
@@ -381,19 +379,12 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	btcDel, bsParams, err := ms.getBTCDelWithParams(ctx, req.StakingTxHash)
-
 	if err != nil {
 		return nil, err
 	}
 
 	// ensure the BTC delegation with the given staking tx hash is active
-	btcTip := ms.btclcKeeper.GetTipInfo(ctx)
-
-	btcDelStatus := btcDel.GetStatus(
-		btcTip.Height,
-		bsParams.CovenantQuorum,
-	)
-
+	btcDelStatus, _ := ms.BtcDelStatusWithTip(ctx, btcDel, bsParams.CovenantQuorum)
 	if btcDelStatus == types.BTCDelegationStatus_UNBONDED || btcDelStatus == types.BTCDelegationStatus_EXPIRED {
 		return nil, types.ErrInvalidBTCUndelegateReq.Wrap("cannot unbond an unbonded BTC delegation")
 	}
@@ -519,16 +510,14 @@ func (ms msgServer) SelectiveSlashingEvidence(goCtx context.Context, req *types.
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	btcDel, bsParams, err := ms.getBTCDelWithParams(ctx, req.StakingTxHash)
-
 	if err != nil {
 		return nil, err
 	}
 
 	// ensure the BTC delegation is active, or its BTC undelegation receives an
 	// unbonding signature from the staker
-	btcTip := ms.btclcKeeper.GetTipInfo(ctx)
-	covQuorum := bsParams.CovenantQuorum
-	if btcDel.GetStatus(btcTip.Height, covQuorum) != types.BTCDelegationStatus_ACTIVE && !btcDel.IsUnbondedEarly() {
+	status, _ := ms.BtcDelStatusWithTip(ctx, btcDel, bsParams.CovenantQuorum)
+	if status != types.BTCDelegationStatus_ACTIVE && !btcDel.IsUnbondedEarly() {
 		return nil, types.ErrBTCDelegationNotFound.Wrap("a BTC delegation that is not active or unbonding early cannot be slashed")
 	}
 

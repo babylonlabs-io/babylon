@@ -120,7 +120,8 @@ func (k Keeper) AddBTCDelegationInclusionProof(
 	}
 
 	// 3. check if the delegation has received a quorum of covenant sigs
-	if !btcDel.HasCovenantQuorums(params.CovenantQuorum) {
+	hasQuorum := k.BtcDelHasCovenantQuorums(ctx, btcDel, params.CovenantQuorum)
+	if !hasQuorum {
 		return fmt.Errorf("the delegation %s has not received a quorum of covenant signatures", stakingTxHashStr)
 	}
 

@@ -15,6 +15,7 @@ import (
 
 	asig "github.com/babylonlabs-io/babylon/v3/crypto/schnorr-adaptor-signature"
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
+	btclctypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
 	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 )
 
@@ -206,7 +207,8 @@ func (k Keeper) addCovenantSigsToBTCDelegation(
 	params *types.Params,
 	btcTipHeight uint32,
 ) {
-	hadQuorum := btcDel.HasCovenantQuorums(params.CovenantQuorum)
+	quorumPreviousStk := k.BtcDelPreviousStkQuorum(ctx, btcDel)
+	hadQuorum := btcDel.HasCovenantQuorums(params.CovenantQuorum, quorumPreviousStk)
 
 	// All is fine add received signatures to the BTC delegation and BtcUndelegation
 	btcDel.AddCovenantSigs(
@@ -231,7 +233,7 @@ func (k Keeper) addCovenantSigsToBTCDelegation(
 	// active. Then, record and emit this event
 	// We only emit power distribution events, and external quorum events if it
 	// is the first time the quorum is reached
-	if !hadQuorum && btcDel.HasCovenantQuorums(params.CovenantQuorum) {
+	if !hadQuorum && btcDel.HasCovenantQuorums(params.CovenantQuorum, quorumPreviousStk) {
 		if btcDel.HasInclusionProof() {
 			quorumReachedEvent := types.NewCovenantQuorumReachedEvent(
 				btcDel,
@@ -507,8 +509,7 @@ func (k Keeper) IsBtcDelegationActive(ctx context.Context, stakingTxHash string)
 		return nil, false, err
 	}
 
-	btcTip := k.btclcKeeper.GetTipInfo(ctx)
-	status := btcDel.GetStatus(btcTip.Height, bsParams.CovenantQuorum)
+	status, _ := k.BtcDelStatusWithTip(ctx, btcDel, bsParams.CovenantQuorum)
 	if status != types.BTCDelegationStatus_ACTIVE {
 		return nil, false, fmt.Errorf("BTC delegation %s is not active, current status is %s", stakingTxHash, status.String())
 	}
@@ -551,4 +552,52 @@ func (k Keeper) getBTCDelegation(ctx context.Context, stakingTxHash chainhash.Ha
 func (k Keeper) btcDelegationStore(ctx context.Context) prefix.Store {
 	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
 	return prefix.NewStore(storeAdapter, types.BTCDelegationKey)
+}
+
+func (k Keeper) BtcDelStatusWithTip(
+	ctx context.Context,
+	btcDel *types.BTCDelegation,
+	covenantQuorum uint32,
+) (status types.BTCDelegationStatus, btcTip *btclctypes.BTCHeaderInfo) {
+	btcTip = k.btclcKeeper.GetTipInfo(ctx)
+	return k.BtcDelStatus(ctx, btcDel, covenantQuorum, btcTip.Height), btcTip
+}
+
+func (k Keeper) BtcDelStatus(
+	ctx context.Context,
+	btcDel *types.BTCDelegation,
+	covenantQuorum uint32,
+	btcTipHeight uint32,
+) (status types.BTCDelegationStatus) {
+	quorumPreviousStk := k.BtcDelPreviousStkQuorum(ctx, btcDel)
+
+	return btcDel.GetStatus(
+		btcTipHeight,
+		covenantQuorum,
+		quorumPreviousStk,
+	)
+}
+
+func (k Keeper) BtcDelPreviousStkQuorum(
+	ctx context.Context,
+	btcDel *types.BTCDelegation,
+) uint32 {
+	if btcDel.IsStakeExpansion() {
+		_, params, err := k.getBTCDelWithParams(ctx, btcDel.MustGetStakeExpansionTxHash().String())
+		if err != nil {
+			panic(fmt.Errorf("failed to get previous active BTC delegation: %w", err))
+		}
+		return params.CovenantQuorum
+	}
+
+	return 0
+}
+
+func (k Keeper) BtcDelHasCovenantQuorums(
+	ctx context.Context,
+	btcDel *types.BTCDelegation,
+	quorum uint32,
+) bool {
+	quorumPreviousStk := k.BtcDelPreviousStkQuorum(ctx, btcDel)
+	return btcDel.HasCovenantQuorums(quorum, quorumPreviousStk)
 }

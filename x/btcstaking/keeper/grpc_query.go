@@ -4,7 +4,6 @@ import (
 	"context"
 
 	errorsmod "cosmossdk.io/errors"
-	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
@@ -110,7 +109,7 @@ func (k Keeper) BTCDelegations(ctx context.Context, req *types.QueryBTCDelegatio
 		params := k.GetParamsByVersion(ctx, btcDel.ParamsVersion)
 
 		// hit if the queried status is ANY or matches the BTC delegation status
-		status := btcDel.GetStatus(btcTipHeight, params.CovenantQuorum)
+		status := k.BtcDelStatus(ctx, &btcDel, params.CovenantQuorum, btcTipHeight)
 		if req.Status == types.BTCDelegationStatus_ANY || status == req.Status {
 			if accumulate {
 				resp := types.NewBTCDelegationResponse(&btcDel, status)
@@ -170,10 +169,7 @@ func (k Keeper) FinalityProviderDelegations(ctx context.Context, req *types.Quer
 			for i, btcDel := range curBTCDels.Dels {
 				params := k.GetParamsByVersion(sdkCtx, btcDel.ParamsVersion)
 
-				status := btcDel.GetStatus(
-					btcHeight,
-					params.CovenantQuorum,
-				)
+				status := k.BtcDelStatus(ctx, btcDel, params.CovenantQuorum, btcHeight)
 				btcDelsResp[i] = types.NewBTCDelegationResponse(btcDel, status)
 			}
 
@@ -207,25 +203,12 @@ func (k Keeper) BTCDelegation(ctx context.Context, req *types.QueryBTCDelegation
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}
 
-	// decode staking tx hash
-	stakingTxHash, err := chainhash.NewHashFromStr(req.StakingTxHashHex)
+	btcDel, params, err := k.getBTCDelWithParams(ctx, req.StakingTxHashHex)
 	if err != nil {
 		return nil, err
 	}
 
-	// find BTC delegation
-	btcDel := k.getBTCDelegation(ctx, *stakingTxHash)
-	if btcDel == nil {
-		return nil, types.ErrBTCDelegationNotFound
-	}
-
-	params := k.GetParamsByVersion(ctx, btcDel.ParamsVersion)
-
-	status := btcDel.GetStatus(
-		k.btclcKeeper.GetTipInfo(ctx).Height,
-		params.CovenantQuorum,
-	)
-
+	status, _ := k.BtcDelStatusWithTip(ctx, btcDel, params.CovenantQuorum)
 	return &types.QueryBTCDelegationResponse{
 		BtcDelegation: types.NewBTCDelegationResponse(btcDel, status),
 	}, nil

@@ -69,9 +69,9 @@ func (d *BTCDelegation) Address() sdk.AccAddress {
 func (d *BTCDelegation) GetCovSlashingAdaptorSig(
 	covBTCPK *bbn.BIP340PubKey,
 	valIdx int,
-	quorum uint32,
+	quorum, quorumPreviousStk uint32,
 ) (*asig.AdaptorSignature, error) {
-	if !d.HasCovenantQuorums(quorum) {
+	if !d.HasCovenantQuorums(quorum, quorumPreviousStk) {
 		return nil, ErrInvalidDelegationState.Wrap("BTC delegation does not have a covenant quorum yet")
 	}
 	for _, covASigs := range d.CovenantSigs {
@@ -115,14 +115,14 @@ func (d *BTCDelegation) FinalityProviderKeys() []string {
 // BTC delegation has received a signature on unbonding tx from the delegator
 func (d *BTCDelegation) GetStatus(
 	btcHeight uint32,
-	covenantQuorum uint32,
+	covenantQuorum, quorumPreviousStk uint32,
 ) BTCDelegationStatus {
 	if d.IsUnbondedEarly() {
 		return BTCDelegationStatus_UNBONDED
 	}
 
 	// we are still pending covenant quorum
-	if !d.HasCovenantQuorums(covenantQuorum) {
+	if !d.HasCovenantQuorums(covenantQuorum, quorumPreviousStk) {
 		return BTCDelegationStatus_PENDING
 	}
 
@@ -160,8 +160,8 @@ func (d *BTCDelegation) GetStatus(
 
 // VotingPower returns the voting power of the BTC delegation at a given BTC height
 // The BTC delegation d has voting power iff it is active.
-func (d *BTCDelegation) VotingPower(btcHeight uint32, covenantQuorum uint32) uint64 {
-	if d.GetStatus(btcHeight, covenantQuorum) != BTCDelegationStatus_ACTIVE {
+func (d *BTCDelegation) VotingPower(btcHeight uint32, covenantQuorum, quorumPreviousStk uint32) uint64 {
+	if d.GetStatus(btcHeight, covenantQuorum, quorumPreviousStk) != BTCDelegationStatus_ACTIVE {
 		return 0
 	}
 	return d.GetTotalSat()
@@ -205,6 +205,18 @@ func (d *BTCDelegation) MustGetUnbondingTx() *wire.MsgTx {
 	}
 
 	return unbondingTx
+}
+
+func (d *BTCDelegation) StakeExpansionTxHash() (*chainhash.Hash, error) {
+	return chainhash.NewHash(d.PreviousStakingTxHash)
+}
+
+func (d *BTCDelegation) MustGetStakeExpansionTxHash() *chainhash.Hash {
+	txHash, err := chainhash.NewHash(d.PreviousStakingTxHash)
+	if err != nil {
+		panic(fmt.Errorf("failed to parse %+v as chain hash", d.PreviousStakingTxHash))
+	}
+	return txHash
 }
 
 func (d *BTCDelegation) ValidateBasic() error {
@@ -272,8 +284,12 @@ func (d *BTCDelegation) ValidateBasic() error {
 // - adaptor signatures on slashing tx
 // - Schnorr signatures on unbonding tx
 // - adaptor signatrues on unbonding slashing tx
-func (d *BTCDelegation) HasCovenantQuorums(quorum uint32) bool {
-	return len(d.CovenantSigs) >= int(quorum) && d.BtcUndelegation.HasCovenantQuorums(quorum)
+func (d *BTCDelegation) HasCovenantQuorums(quorum, quorumPreviousStk uint32) bool {
+	hasQuorum := len(d.CovenantSigs) >= int(quorum) && d.BtcUndelegation.HasCovenantQuorums(quorum)
+	if d.IsStakeExpansion() {
+		return hasQuorum && len(d.PreviousStkCovenantSigs) >= int(quorumPreviousStk)
+	}
+	return hasQuorum
 }
 
 // IsSignedByCovMember checks whether the given covenant PK has signed the delegation
