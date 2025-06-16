@@ -700,6 +700,57 @@ func VerifyTransactionSigWithOutput(
 	return nil
 }
 
+// VerifyTransactionSigStkExp verifies that:
+// - provided signature is valid schnorr BIP340 signature
+// - provided signature is signing whole provided transaction	(SigHashDefault)
+func VerifyTransactionSigStkExp(
+	stkSpendTx *wire.MsgTx,
+	fundingOutput *wire.TxOut,
+	script []byte,
+	pubKey *btcec.PublicKey,
+	signatureOverPrevStkSpend []byte,
+) error {
+	if fundingOutput == nil {
+		return fmt.Errorf("funding output must not be nil")
+	}
+
+	if stkSpendTx == nil {
+		return fmt.Errorf("tx to verify not be nil")
+	}
+
+	if pubKey == nil {
+		return fmt.Errorf("public key must not be nil")
+	}
+
+	tapLeaf := txscript.NewBaseTapLeaf(script)
+
+	inputFetcher := txscript.NewCannedPrevOutputFetcher(
+		fundingOutput.PkScript,
+		fundingOutput.Value,
+	)
+
+	sigHashes := txscript.NewTxSigHashes(stkSpendTx, inputFetcher)
+
+	sigHash, err := txscript.CalcTapscriptSignaturehash(
+		sigHashes, txscript.SigHashDefault, stkSpendTx, 0, inputFetcher, tapLeaf,
+	)
+	if err != nil {
+		return err
+	}
+
+	parsedSig, err := schnorr.ParseSignature(signatureOverPrevStkSpend)
+	if err != nil {
+		return err
+	}
+
+	valid := parsedSig.Verify(sigHash, pubKey)
+	if !valid {
+		return fmt.Errorf("signature is not valid")
+	}
+
+	return nil
+}
+
 // EncVerifyTransactionSigWithOutput verifies that:
 // - provided transaction has exactly one input
 // - provided signature is valid adaptor signature

@@ -313,6 +313,7 @@ func (d *BTCDelegation) AddCovenantSigs(
 	stakingSlashingSigs []asig.AdaptorSignature,
 	unbondingSig *bbn.BIP340Signature,
 	unbondingSlashingSigs []asig.AdaptorSignature,
+	stkExpSig *bbn.BIP340Signature,
 ) {
 	adaptorSigs := make([][]byte, 0, len(stakingSlashingSigs))
 	for _, s := range stakingSlashingSigs {
@@ -323,6 +324,11 @@ func (d *BTCDelegation) AddCovenantSigs(
 	d.CovenantSigs = append(d.CovenantSigs, covSigs)
 	// add unbonding sig and unbonding slashing adaptor sig
 	d.BtcUndelegation.addCovenantSigs(covPk, unbondingSig, unbondingSlashingSigs)
+
+	if d.IsStakeExpansion() {
+		prevStkCovSigs := &SignatureInfo{Pk: covPk, Sig: stkExpSig}
+		d.PreviousStkCovenantSigs = append(d.PreviousStkCovenantSigs, prevStkCovSigs)
+	}
 }
 
 // GetStakingInfo returns the staking info of the BTC delegation

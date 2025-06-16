@@ -105,8 +105,10 @@ func (k Keeper) CreateBTCDelegation(ctx sdk.Context, parsedMsg *types.ParsedCrea
 			CovenantUnbondingSigList: nil, // NOTE: covenant signature will be submitted in a separate msg by covenant
 			DelegatorUnbondingInfo:   nil,
 		},
-		ParamsVersion: paramsVersion,      // version of the params against which delegation was validated
-		BtcTipHeight:  timeInfo.TipHeight, // height of the BTC light client tip at the time of the delegation creation
+		ParamsVersion:           paramsVersion,      // version of the params against which delegation was validated
+		BtcTipHeight:            timeInfo.TipHeight, // height of the BTC light client tip at the time of the delegation creation
+		PreviousStakingTxHash:   nil,
+		PreviousStkCovenantSigs: nil,
 	}
 
 	if parsedMsg.PreviousActiveStkTxHash != nil { // stake expansion being set
@@ -204,6 +206,7 @@ func (k Keeper) addCovenantSigsToBTCDelegation(
 	parsedSlashingAdaptorSignatures []asig.AdaptorSignature,
 	unbondingTxSig *bbn.BIP340Signature,
 	parsedUnbondingSlashingAdaptorSignatures []asig.AdaptorSignature,
+	stakeExpansionTxSig *bbn.BIP340Signature,
 	params *types.Params,
 	btcTipHeight uint32,
 ) {
@@ -216,6 +219,7 @@ func (k Keeper) addCovenantSigsToBTCDelegation(
 		parsedSlashingAdaptorSignatures,
 		unbondingTxSig,
 		parsedUnbondingSlashingAdaptorSignatures,
+		stakeExpansionTxSig,
 	)
 
 	// set BTC delegation back to KV store

@@ -314,6 +314,25 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 		return nil, types.ErrInvalidCovenantSig.Wrapf("err: %v", err)
 	}
 
+	if btcDel.IsStakeExpansion() {
+		if req.StakeExpansionTxSig == nil {
+			return nil, fmt.Errorf("empty stake expansion covenant signature")
+		}
+
+		// checks if the stake expansion sig was sent and it is valid
+		// TODO: how to validate the covenant new stk expansion signature
+		err := btcstaking.VerifyTransactionSigStkExp(
+			btcDel.MustGetStakingTx(),
+			stakingInfo.StakingOutput,
+			stakingInfo.GetPkScript(),
+			req.Pk.MustToBTCPK(),
+			*req.StakeExpansionTxSig,
+		)
+		if err != nil {
+			return nil, types.ErrInvalidCovenantSig.Wrapf("bad covenant signature of stake expansion: %s", err.Error())
+		}
+	}
+
 	// All is fine add received signatures to the BTC delegation and BtcUndelegation
 	// and emit corresponding events
 	ms.addCovenantSigsToBTCDelegation(
@@ -323,6 +342,7 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 		parsedSlashingAdaptorSignatures,
 		req.UnbondingTxSig,
 		parsedUnbondingSlashingAdaptorSignatures,
+		req.StakeExpansionTxSig,
 		params,
 		btcTip.Height,
 	)
