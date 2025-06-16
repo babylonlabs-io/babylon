@@ -34,21 +34,19 @@ chains via IBC packets:
     - [CanonicalChain](#canonicalchain)
     - [Fork](#fork)
     - [Params](#params)
+    - [Port](#port)
+    - [LastSentBTCSegment](#lastsentbtcsegment)
+    - [SealedEpochProof](#sealedepochproof)
   - [PostHandler for intercepting IBC headers](#posthandler-for-intercepting-ibc-headers)
   - [Hooks](#hooks)
     - [Indexing headers upon `AfterEpochEnds`](#indexing-headers-upon-afterepochends)
+    - [Recording proofs upon `AfterRawCheckpointSealed`](#recording-proofs-upon-afterrawcheckpointsealed)
     - [Sending BTC timestamps upon `AfterRawCheckpointFinalized`](#sending-btc-timestamps-upon-afterrawcheckpointfinalized)
   - [Messages and Queries](#messages-and-queries)
   - [BSN Integration](#bsn-integration)
     - [IBC Communication Protocol](#ibc-communication-protocol)
     - [Relaying BTC Headers](#relaying-btc-headers)
-      - [Broadcasting headers](#broadcasting-headers)
-      - [Selecting headers to be broadcast](#selecting-headers-to-be-broadcast)
     - [Relaying BTC Timestamps](#relaying-btc-timestamps)
-      - [Triggering timestamp relay](#triggering-timestamp-relay)
-      - [Broadcasting timestamps](#broadcasting-timestamps)
-      - [Assembling timestamps](#assembling-timestamps)
-      - [Cryptographic Proofs](#cryptographic-proofs)
     - [Propagating BTC Staking Events](#propagating-btc-staking-events)
       - [Broadcasting staking events](#broadcasting-staking-events)
       - [Processing event flow](#processing-event-flow)
@@ -172,6 +170,18 @@ message Params {
 }
 ```
 
+### Port
+
+The [port storage](./keeper/keeper.go) maintains the port ID for the Zone Concierge module. The key is `PortKey` and the value is the port ID string.
+
+### LastSentBTCSegment
+
+The [last sent BTC segment storage](./keeper/epochs.go) maintains information about the last BTC chain segment that was broadcast to other light clients. The key is `LastSentBTCSegmentKey` and the value is a `BTCChainSegment` object.
+
+### SealedEpochProof
+
+The [sealed epoch proof storage](./keeper/epochs.go) maintains proofs that epochs were properly sealed. The key is `SealedEpochProofKey` plus the epoch number, and the value is a `ProofEpochSealed` object.
+
 ## PostHandler for intercepting IBC headers
 
 The Zone Concierge module implements a
@@ -179,23 +189,28 @@ The Zone Concierge module implements a
 `IBCHeaderDecorator` to intercept headers sent to the [IBC client
 module](https://github.com/cosmos/ibc-go/tree/v8.0.0/modules/core/02-client).
 The `IBCHeaderDecorator` PostHandler is defined at
-[x/zoneconcierge/keeper/header_handler.go](./keeper/header_handler.go), and
-works as follows.
+[x/zoneconcierge/keeper/ibc_header_decorator.go](./keeper/ibc_header_decorator.go).
 
-1. If the PoS blockchain hosting the header is not known to Babylon, initialize
-   `ChainInfo` storage for the PoS blockchain.
-2. If the header is on a fork, insert the header to the fork storage and update
-   `ChainInfo`.
-3. If the header is canonical, insert the header to the canonical chain storage
-   and update `ChainInfo`.
+For each IBC client update message in the transaction, the PostHandler executes as follows:
+1. Extract header info and client state from the message
+2. Determine if the header is on a fork by checking if the client is frozen 
+3. Call `HandleHeaderWithValidCommit` to process the header appropriately
+4. If the PoS blockchain hosting the header is not known to Babylon, initialize
+   `ChainInfo` storage for the PoS blockchain
+5. If the header is on a fork, insert the header to the fork storage and update
+   `ChainInfo`
+6. If the header is canonical, insert the header to the canonical chain storage
+   and update `ChainInfo`
+7. Unfreeze the client if it was frozen due to a fork header
 
 ## Hooks
 
 The Zone Concierge module subscribes to the Epoching module's `AfterEpochEnds`
 [hook](../epoching/types/hooks.go) for indexing the epochs when receiving
-headers from BSNs, and the Checkpointing module's
-`AfterRawCheckpointFinalized` [hook](../checkpointing/types/hooks.go) for
-sending BTC timestamps to BSNs.
+headers from BSNs, the Checkpointing module's `AfterRawCheckpointSealed`
+[hook](../checkpointing/types/hooks.go) for recording epoch chain info proofs,
+and the Checkpointing module's `AfterRawCheckpointFinalized`
+[hook](../checkpointing/types/hooks.go) for sending BTC timestamps to BSNs.
 
 ### Indexing headers upon `AfterEpochEnds`
 
@@ -203,6 +218,15 @@ The `AfterEpochEnds` hook is triggered when an epoch is ended, i.e., the last
 block in this epoch has been committed by CometBFT. Upon `AfterEpochEnds`, the
 Zone Concierge will save the current `ChainInfo` to the `EpochChainInfo` storage
 for each BSN.
+
+### Recording proofs upon `AfterRawCheckpointSealed`
+
+The `AfterRawCheckpointSealed` hook is triggered when an epoch's raw checkpoint
+is sealed by validator signatures. Upon `AfterRawCheckpointSealed`, the Zone
+Concierge will:
+
+1. Record epoch chain info with inclusion proofs for each consumer
+2. Generate and store the proof that the epoch is sealed
 
 ### Sending BTC timestamps upon `AfterRawCheckpointFinalized`
 
@@ -212,8 +236,6 @@ Bitcoin's canonical chain, where `w` is the `checkpoint_finalization_timeout`
 [parameter](../../proto/babylon/btccheckpoint/v1/params.proto) in the
 [BTCCheckpoint](../btccheckpoint/) module.
 
-Upon `AfterRawCheckpointFinalized`, the Zone Concierge module will prepare and
-send a BTC timestamp to each BSN.  
 The [BTCTimestamp](../../proto/babylon/zoneconcierge/v1/packet.proto) structure  
 includes a header and a set of proofs that the header is checkpointed by
 Bitcoin.
@@ -279,34 +301,21 @@ send an IBC packet including a `BTCTimestamp` to each BSN. The logic
 is defined at [x/zoneconcierge/keeper/hooks.go](./keeper/hooks.go) and works as
 follows:
 
-1. Find all open IBC channels with Babylon's Zone Concierge module. The
-   counterparty at each IBC channel is a PoS blockchain.
-2. Get all BTC headers to be sent in BTC timestamps. Specifically,
-   1. Find the segment of BTC headers sent upon the last time
-      `AfterRawCheckpointFinalized` is triggered.
-   2. If all BTC headers in the segment are no longer canonical, the BTC headers
-      to be sent will be the last `w+1` ones in the BTC light client, where `w`
-      is the `checkpoint_finalization_timeout`
-      [parameter](../../proto/babylon/btccheckpoint/v1/params.proto) in the
-      [BTCCheckpoint](../btccheckpoint/) module.
-   3. Otherwise, the BTC headers to be sent will be from the latest header that
-      is still canonical in the segment to the current tip of the BTC light
-      client.
-3. For each of these IBC channels:
-   1. Find the `ConsumerID` of the counterparty chain (i.e., the PoS blockchain)
-      in the IBC channel.
-   2. Get the `ChainInfo` of the `ConsumerID` at the last finalised epoch.
-   3. Get the metadata of the last finalised epoch and its corresponding raw
-      checkpoint.
-   4. Generate the proof that the last PoS blockchain's canonical header is
-      committed to the epoch's metadata.
-        5. Generate the proof that the epoch is sealed, i.e., receives a BLS
-        multisignature generated by validators with >2/3 total voting power at
-        the last finalised epoch.
-   6. Generate the proof that the epoch's checkpoint is submitted, i.e., encoded
-      in transactions on Bitcoin.
-   7. Assemble all the above and the BTC headers obtained in step 2 as
-      `BTCTimestamp`, and send it to the IBC channel in an IBC packet.
+1. **Determine BTC headers to broadcast**: Get all BTC headers to be sent in BTC timestamps by:
+   - Finding the segment of BTC headers sent upon the last time `AfterRawCheckpointFinalized` was triggered
+   - If all BTC headers in the segment are no longer canonical (due to Bitcoin reorg), send the last `w+1` BTC headers from the current tip, where `w` is the `checkpoint_finalization_timeout` [parameter](../../proto/babylon/btccheckpoint/v1/params.proto) in the [BTCCheckpoint](../btccheckpoint/) module
+   - Otherwise, send BTC headers from the latest header that is still canonical in the segment to the current tip of the BTC light client
+
+2. **Broadcast BTC timestamps to all open channels**: For each open IBC channel with Babylon's Zone Concierge module:
+   - Find the `ConsumerID` of the counterparty chain (i.e., the PoS blockchain) in the IBC channel
+   - Get the `ChainInfo` of the `ConsumerID` at the last finalised epoch
+   - Get the metadata of the last finalised epoch and its corresponding raw checkpoint
+   - Generate the proof that the last PoS blockchain's canonical header is committed to the epoch's metadata (if applicable)
+   - Generate the proof that the epoch is sealed, i.e., receives a BLS multisignature generated by validators with >2/3 total voting power at the last finalised epoch
+   - Generate the proof that the epoch's checkpoint is submitted, i.e., encoded in transactions on Bitcoin
+   - Assemble all the above and the BTC headers obtained in step 1 as `BTCTimestamp`, and send it to the IBC channel in an IBC packet
+
+3. **Update last sent segment**: If headers were broadcast, update the last sent BTC segment for future reference
 
 
 ## Messages and Queries
@@ -338,60 +347,26 @@ Packet Types:
 ### Relaying BTC Headers
 
 Zone Concierge relays BTC headers from Babylon's BTC light client to consumer
-chains to keep their BTC light clients synchronised with Bitcoin's canonical
-chain.
+chains in two scenarios:
 
-#### Broadcasting headers
+1. When a new BTC timestamp is being sent (triggered by `AfterRawCheckpointFinalized`, see [Sending BTC Timestamps](#sending-btc-timestamps-upon-afterrawcheckpointfinalized))
+2. Periodically via the `BroadcastBTCHeaders` function which is called upon `EndBlock`
 
-The `BroadcastBTCHeaders` function broadcasts BTC headers to all open IBC
-channels.
-
-#### Selecting headers to be broadcast
-
-- If no headers have been sent previously: Send the last `w+1` BTC headers from
-  the tip, where `w` is the checkpoint finalisation timeout
-- If headers have been sent previously:
-  - If the last sent segment is still valid (no Bitcoin reorg): Send headers
-    from the last sent header to the current tip
-  - If the last sent segment is invalid (Bitcoin reorg occurred): Send the last
-    `w+1` headers from the current tip
+This ensures consumer chains can keep their BTC light clients synchronized with 
+Bitcoin's canonical chain. The headers are sent through IBC packets to all open 
+channels between Babylon and the consumer chains.
 
 ### Relaying BTC Timestamps
 
-Zone Concierge sends BTC timestamps to BSNs when a Babylon epoch
-becomes BTC-finalised.
+Zone Concierge sends BTC timestamps to BSNs when a Babylon epoch becomes BTC-finalised. The `AfterRawCheckpointFinalized` hook is triggered when an epoch's checkpoint becomes `w`-deep in Bitcoin's canonical chain, which then broadcasts `BTCTimestamp` packets to all open IBC channels.
 
-#### Triggering timestamp relay
+Each `BTCTimestamp` includes:
 
-The `AfterRawCheckpointFinalized` hook is called when an epoch's checkpoint
-becomes `w`-deep in Bitcoin's canonical chain.
+- BTC headers to keep consumer light clients synchronised
+- Epoch metadata and raw checkpoint
+- Proofs that the epoch is finalized
 
-#### Broadcasting timestamps
-
-The `BroadcastBTCTimestamps` function creates and sends BTC timestamps to all
-open IBC channels.
-
-#### Assembling timestamps
-
-1. `getFinalizedInfo` collects shared finalisation data:
-   - Epoch metadata and raw checkpoint
-   - BTC submission key and proofs
-   - Proof that the epoch was sealed by validators
-   - Proof that the epoch's checkpoint was submitted to Bitcoin
-2. `createBTCTimestamp` constructs individual timestamps for each consumer:
-   - If the channel is uninitialized: Include Bitcoin headers from tip to
-     `(w+1+len(headersToBroadcast))`-deep
-   - If the channel is initialized: Include only the headers from
-     `headersToBroadcast`
-   - If the consumer has a header checkpointed in the finalised epoch: Include
-     the consumer header and proof
-
-#### Cryptographic Proofs
-
-- `ProofEpochSealed`: Proves >2/3 validators signed the epoch
-- `ProofEpochSubmitted`: Proves the checkpoint was submitted to Bitcoin
-- `ProofConsumerHeaderInEpoch`: Proves the consumer header was timestamped in
-  the epoch (if applicable)
+The [Hooks section](#sending-btc-timestamps-upon-afterrawcheckpointfinalized) provides details of assembling and broadcasting BTC timestamps.
 
 ### Propagating BTC Staking Events
 
