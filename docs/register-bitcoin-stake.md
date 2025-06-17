@@ -95,7 +95,7 @@ A BTC delegation can delegate to multiple finality providers through the
 1. Query available BSNs: Using the consumer [registry endpoints](https://github.com/babylonlabs-io/babylon/blob/main/proto/babylon/btcstkconsumer/v1/query.proto)
    to find the list of BSNs.
 2. Check BSN constraints: Check each BSN for `max_multi_staked_fps` limit to
-  understand constraints. This field can be found by [quering](https://github.com/babylonlabs-io/babylon/blob/main/proto/babylon/btcstkconsumer/v1/query.proto)
+  understand constraints. This field can be found by [querying](https://github.com/babylonlabs-io/babylon/blob/main/proto/babylon/btcstkconsumer/v1/query.proto)
   consumer registry response
 3. Query selected finality providers for each BSN: Gather the `fp_btc_pk` for the
   finality provider selected by [querying](https://github.com/babylonlabs-io/babylon/blob/main/proto/babylon/btcstkconsumer/v1/query.proto)
