@@ -112,7 +112,7 @@ Steps to multi-stake:
 > - The system will validate your selection against all multi-staking
 > - constraints before accepting the delegation
 
-### 2.2. Post-Staking Registration
+### 2.3. Post-Staking Registration
 
 This flow applies to stakers whose BTC staking transaction has already
 been confirmed in a Bitcoin block that is `k`-deep
@@ -147,7 +147,7 @@ Steps:
 > slashed before your stake is registered, your stake may become stuck. This is
 > particularly important when delegating across multiple BSNs.
 
-### 2.3. Pre-Staking Registration
+### 2.4. Pre-Staking Registration
 
 The Pre-staking registration flow is for stakers who seek
 verification from the Babylon chain before submitting their
