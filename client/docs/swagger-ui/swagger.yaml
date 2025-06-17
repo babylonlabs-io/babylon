@@ -3956,6 +3956,14 @@ paths:
                     type: integer
                     format: int64
                     title: params version used to validate delegation
+                  previous_staking_tx_hash_hex:
+                    type: string
+                    description: >-
+                      previous_staking_tx_hash_hex is the hash of the staking tx
+                      that was used as
+
+                      input to the stake expansion, if empty it is NOT a stake
+                      expansion.
             title: >-
               QueryBTCDelegationResponse is response type matching
 
@@ -4418,6 +4426,14 @@ paths:
                       type: integer
                       format: int64
                       title: params version used to validate delegation
+                    previous_staking_tx_hash_hex:
+                      type: string
+                      description: >-
+                        previous_staking_tx_hash_hex is the hash of the staking
+                        tx that was used as
+
+                        input to the stake expansion, if empty it is NOT a stake
+                        expansion.
                   description: >-
                     BTCDelegationResponse is the client needed information from
                     a BTCDelegation
@@ -5423,6 +5439,14 @@ paths:
                             type: integer
                             format: int64
                             title: params version used to validate delegation
+                          previous_staking_tx_hash_hex:
+                            type: string
+                            description: >-
+                              previous_staking_tx_hash_hex is the hash of the
+                              staking tx that was used as
+
+                              input to the stake expansion, if empty it is NOT a
+                              stake expansion.
                         description: >-
                           BTCDelegationResponse is the client needed information
                           from a BTCDelegation
@@ -18772,6 +18796,13 @@ definitions:
         type: integer
         format: int64
         title: params version used to validate delegation
+      previous_staking_tx_hash_hex:
+        type: string
+        description: >-
+          previous_staking_tx_hash_hex is the hash of the staking tx that was
+          used as
+
+          input to the stake expansion, if empty it is NOT a stake expansion.
     description: >-
       BTCDelegationResponse is the client needed information from a
       BTCDelegation
@@ -19054,6 +19085,14 @@ definitions:
               type: integer
               format: int64
               title: params version used to validate delegation
+            previous_staking_tx_hash_hex:
+              type: string
+              description: >-
+                previous_staking_tx_hash_hex is the hash of the staking tx that
+                was used as
+
+                input to the stake expansion, if empty it is NOT a stake
+                expansion.
           description: >-
             BTCDelegationResponse is the client needed information from a
             BTCDelegation
@@ -19734,6 +19773,14 @@ definitions:
             type: integer
             format: int64
             title: params version used to validate delegation
+          previous_staking_tx_hash_hex:
+            type: string
+            description: >-
+              previous_staking_tx_hash_hex is the hash of the staking tx that
+              was used as
+
+              input to the stake expansion, if empty it is NOT a stake
+              expansion.
     title: |-
       QueryBTCDelegationResponse is response type matching
       QueryBTCDelegationRequest and containing BTC delegation information
@@ -19971,6 +20018,14 @@ definitions:
               type: integer
               format: int64
               title: params version used to validate delegation
+            previous_staking_tx_hash_hex:
+              type: string
+              description: >-
+                previous_staking_tx_hash_hex is the hash of the staking tx that
+                was used as
+
+                input to the stake expansion, if empty it is NOT a stake
+                expansion.
           description: >-
             BTCDelegationResponse is the client needed information from a
             BTCDelegation
@@ -20252,6 +20307,14 @@ definitions:
                     type: integer
                     format: int64
                     title: params version used to validate delegation
+                  previous_staking_tx_hash_hex:
+                    type: string
+                    description: >-
+                      previous_staking_tx_hash_hex is the hash of the staking tx
+                      that was used as
+
+                      input to the stake expansion, if empty it is NOT a stake
+                      expansion.
                 description: >-
                   BTCDelegationResponse is the client needed information from a
                   BTCDelegation

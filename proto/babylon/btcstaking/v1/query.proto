@@ -252,6 +252,9 @@ message BTCDelegationResponse {
   BTCUndelegationResponse undelegation_response = 16;
   // params version used to validate delegation
   uint32 params_version = 17;
+  // previous_staking_tx_hash_hex is the hash of the staking tx that was used as
+  // input to the stake expansion, if empty it is NOT a stake expansion.
+  string previous_staking_tx_hash_hex = 18;
 }
 
 // DelegatorUnbondingInfoResponse provides all necessary info about transaction
