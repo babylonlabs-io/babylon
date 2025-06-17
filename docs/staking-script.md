@@ -65,13 +65,13 @@ The Bitcoin Staking protocol involves the following stakeholders:
   A finality provider is identified by their EOTS public
   key (`<FinalityProviderPk>`) and participates in the finality
   voting round of a specific BSN.
- The selection of finality providers determines which BSNs they secure,
- as each provider may only secure one BSN. Bitcoin stakers can now delegate
+ The selection of finality providers determines which BSNs the stake will secure,
+ as each finality provider may only secure one BSN. Bitcoin stakers can delegate
  to multiple finality providers across different BSNs by including their
  EOTS keys in the staking script.
 > ⚡ Multi-staking across BSNs is now supported. The system enforces that
 > at least one finality provider must secure the Babylon Genesis chain,
-> with at most one finality provider per consumer chain/BSN. This allows
+> with at most one finality provider per BSN. This allows
 > BTC stakers to provide security to multiple networks simultaneously
 > while maintaining proper validation constraints.
 * **Covenant Committee**:
@@ -240,9 +240,10 @@ The staking output can be spent through one of the following three script paths:
    * `StakerPK` is the BTC staker's public key.
    * `FinalityProviderPk` is the public key of the finality provider
      to which the stake is delegated.
-     > ⚡ Multi-staking to finality providers across different BSNs is now supported.
+     > ⚡ Multi-staking to finality providers across different BSNs is now is
+     > supported from v3 of the Babylon Genesis node.
      > The system enforces that at least one finality provider must secure the Babylon Genesis chain,
-     > with at most one finality provider per consumer chain/BSN.
+     > with at most one finality provider per BSN.
    * `CovenantPk1..CovenantPkN` are the lexicographically sorted public keys of the
      covenant committee as defined in the
      [Babylon Genesis parameters](./register-bitcoin-stake.md#32-babylon-chain-btc-staking-parameters).
