@@ -92,6 +92,8 @@ A BTC delegation can delegate to multiple finality providers through the
 `fp_btc_pk_list` field. This is a field in which is populated when building
 [MsgCreateBTCDelegation](#34-the-msgcreatebtcdelegation-babylon-message).
 
+Steps to multi-stake:
+
 1. Query available BSNs: Using the consumer [registry endpoints](../proto/babylon/btcstkconsumer/v1/query.proto)
    to find the list of BSNs.
 2. Check BSN constraints: Check each BSN for `max_multi_staked_fps` limit to
