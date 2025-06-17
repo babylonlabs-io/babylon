@@ -703,7 +703,7 @@ refer to:
 ### 4.3. Withdrawing Remaining Funds after Slashing
 
 A Bitcoin stake is slashed if one of the Finality Providers to
-which it is delegated double-signs. When delegating across multiple
+which it is delegated to double-signs. When delegating across multiple
 BSNs, slashing can be triggered by misbehavior from any
 finality provider in the delegation set. Slashing involves
 broadcasting a [slashing transaction](./staking-script.md)
