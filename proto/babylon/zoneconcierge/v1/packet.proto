@@ -1,0 +1,78 @@
+syntax = "proto3";
+package babylon.zoneconcierge.v1;
+
+import "babylon/btccheckpoint/v1/btccheckpoint.proto";
+import "babylon/btclightclient/v1/btclightclient.proto";
+import "babylon/btcstaking/v1/packet.proto";
+import "babylon/checkpointing/v1/checkpoint.proto";
+import "babylon/epoching/v1/epoching.proto";
+import "babylon/zoneconcierge/v1/zoneconcierge.proto";
+import "babylon/finality/v1/finality.proto";
+
+option go_package = "github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types";
+
+// OutboundPacket represents packets sent from Babylon to other chains
+message OutboundPacket {
+  // packet is the actual message carried in the IBC packet
+  oneof packet {
+    BTCTimestamp btc_timestamp = 1;
+    babylon.btcstaking.v1.BTCStakingIBCPacket btc_staking = 2;
+    BTCHeaders btc_headers = 3;
+  }
+}
+
+// InboundPacket represents packets received by Babylon from other chains
+message InboundPacket {
+  // packet is the actual message carried in the IBC packet
+  oneof packet {
+    ConsumerSlashingIBCPacket consumer_slashing = 1;
+  }
+}
+
+// BTCHeaders contains BTC headers that have been verified and inserted into Babylon's BTC light client
+// These headers are forwarded to consumer chains to keep their light clients in sync with Babylon
+message BTCHeaders {
+    repeated babylon.btclightclient.v1.BTCHeaderInfo headers = 1;
+}
+
+// BTCTimestamp is a BTC timestamp that carries information of a BTC-finalised epoch.
+// It includes a number of BTC headers, a raw checkpoint, an epoch metadata, and
+// a Cosmos Consumer header if there exists Cosmos Consumer headers checkpointed to this epoch.
+// Upon a newly finalised epoch in Babylon, Babylon will send a BTC timestamp to each
+// consumer chain via IBC.
+message BTCTimestamp {
+  // header is the last Cosmos Consumer header in the finalized Babylon epoch
+  babylon.zoneconcierge.v1.IndexedHeader header = 1;
+
+  /*
+     Data for BTC light client
+  */
+  // btc_headers is BTC headers between
+  // - the block AFTER the common ancestor of BTC tip at epoch `lastFinalizedEpoch-1` and BTC tip at epoch `lastFinalizedEpoch`
+  // - BTC tip at epoch `lastFinalizedEpoch`
+  // where `lastFinalizedEpoch` is the last finalised epoch in Babylon
+  BTCHeaders btc_headers = 2;
+
+  /*
+     Data for Babylon epoch chain
+  */
+  // epoch_info is the metadata of the sealed epoch
+  babylon.epoching.v1.Epoch epoch_info = 3;
+  // raw_checkpoint is the raw checkpoint that seals this epoch
+  babylon.checkpointing.v1.RawCheckpoint raw_checkpoint = 4;
+  // btc_submission_key is position of two BTC txs that include the raw checkpoint of this epoch
+  babylon.btccheckpoint.v1.SubmissionKey btc_submission_key = 5;
+
+  /*
+     Proofs that the header is finalized
+  */
+  babylon.zoneconcierge.v1.ProofFinalizedChainInfo proof = 6;
+}
+
+// ConsumerSlashingIBCPacket defines the slashing information that a Consumer sends to Babylon's ZoneConcierge upon a
+// Consumer slashing event.
+// It includes the FP public key, the Consumer block height at the slashing event, and the double sign evidence.
+message ConsumerSlashingIBCPacket {
+  /// evidence is the FP slashing evidence that the Consumer sends to Babylon
+  babylon.finality.v1.Evidence evidence = 1;
+}
