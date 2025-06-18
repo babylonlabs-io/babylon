@@ -1,18 +1,23 @@
 package ante
 
 import (
-	epochingk "github.com/babylonlabs-io/babylon/v2/x/epoching/keeper"
+	"context"
+
 	epochingtypes "github.com/babylonlabs-io/babylon/v2/x/epoching/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	slashtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 )
 
+type ExpectedEpochKeeper interface {
+	GetEpoch(ctx context.Context) *epochingtypes.Epoch
+}
+
 type BlockValsetUpdateAtEndOfEpoch struct {
-	epochK *epochingk.Keeper
+	epochK ExpectedEpochKeeper
 }
 
 func NewBlockValsetUpdateAtEndOfEpoch(
-	k *epochingk.Keeper,
+	k ExpectedEpochKeeper,
 ) BlockValsetUpdateAtEndOfEpoch {
 	return BlockValsetUpdateAtEndOfEpoch{
 		epochK: k,
