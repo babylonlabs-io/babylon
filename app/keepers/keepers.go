@@ -46,11 +46,6 @@ import (
 	minttypes "github.com/babylonlabs-io/babylon/v3/x/mint/types"
 	monitorkeeper "github.com/babylonlabs-io/babylon/v3/x/monitor/keeper"
 	monitortypes "github.com/babylonlabs-io/babylon/v3/x/monitor/types"
-<<<<<<< HEAD
-=======
-	zckeeper "github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/keeper"
-	zctypes "github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
->>>>>>> 1072573 (chore: Bump IBC to V2 (#1028))
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/runtime"
@@ -182,14 +177,6 @@ type AppKeepers struct {
 	// tokenomics-related modules
 	IncentiveKeeper incentivekeeper.Keeper
 
-<<<<<<< HEAD
-	// make scoped keepers public for test purposes
-	ScopedIBCKeeper      capabilitykeeper.ScopedKeeper
-	ScopedTransferKeeper capabilitykeeper.ScopedKeeper
-	ScopedWasmKeeper     capabilitykeeper.ScopedKeeper
-
-=======
->>>>>>> 1072573 (chore: Bump IBC to V2 (#1028))
 	// keys to access the substores
 	keys    map[string]*storetypes.KVStoreKey
 	tkeys   map[string]*storetypes.TransientStoreKey
@@ -324,26 +311,6 @@ func (ak *AppKeepers) InitKeepers(
 	)
 	bApp.SetParamStore(ak.ConsensusParamsKeeper.ParamsStore)
 
-<<<<<<< HEAD
-	ak.CapabilityKeeper = capabilitykeeper.NewKeeper(
-		appCodec,
-		keys[capabilitytypes.StoreKey],
-		ak.memKeys[capabilitytypes.MemStoreKey],
-	)
-
-	// grant capabilities for the ibc and ibc-transfer modules
-	scopedIBCKeeper := ak.CapabilityKeeper.ScopeToModule(ibcexported.ModuleName)
-	scopedTransferKeeper := ak.CapabilityKeeper.ScopeToModule(ibctransfertypes.ModuleName)
-	scopedWasmKeeper := ak.CapabilityKeeper.ScopeToModule(wasmtypes.ModuleName)
-	scopedICAHostKeeper := ak.CapabilityKeeper.ScopeToModule(icahosttypes.SubModuleName)
-	scopedICAControllerKeeper := ak.CapabilityKeeper.ScopeToModule(icacontrollertypes.SubModuleName)
-
-	// Applications that wish to enforce statically created ScopedKeepers should call `Seal` after creating
-	// their scoped modules in `NewApp` with `ScopeToModule`
-	ak.CapabilityKeeper.Seal()
-
-=======
->>>>>>> 1072573 (chore: Bump IBC to V2 (#1028))
 	// add keepers
 	ak.AccountKeeper = accountKeeper
 
@@ -597,36 +564,7 @@ func (ak *AppKeepers) InitKeepers(
 		&btclightclientKeeper,
 	)
 
-<<<<<<< HEAD
-	// make Monitor to subscribe to the epoching's hooks
-=======
-	// create querier for KVStore
-	storeQuerier, ok := bApp.CommitMultiStore().(storetypes.Queryable)
-	if !ok {
-		panic(fmt.Errorf("multistore doesn't support queries"))
-	}
-
-	zcKeeper := zckeeper.NewKeeper(
-		appCodec,
-		runtime.NewKVStoreService(keys[zctypes.StoreKey]),
-		ak.IBCKeeper.ChannelKeeper,
-		ak.IBCKeeper.ClientKeeper,
-		ak.IBCKeeper.ConnectionKeeper,
-		ak.IBCKeeper.ChannelKeeper,
-		ak.AccountKeeper,
-		ak.BankKeeper,
-		&btclightclientKeeper,
-		&checkpointingKeeper,
-		&btcCheckpointKeeper,
-		epochingKeeper,
-		storeQuerier,
-		&ak.BTCStakingKeeper,
-		&ak.BTCStkConsumerKeeper,
-		appparams.AccGov.String(),
-	)
-
 	// make ZoneConcierge and Monitor to subscribe to the epoching's hooks
->>>>>>> 1072573 (chore: Bump IBC to V2 (#1028))
 	epochingKeeper.SetHooks(
 		epochingtypes.NewMultiEpochingHooks(monitorKeeper.Hooks()),
 	)
@@ -729,8 +667,6 @@ func (ak *AppKeepers) InitKeepers(
 	transferStack = ratelimiter.NewIBCMiddleware(ak.RatelimitKeeper, transferStack)
 	ak.TransferKeeper.WithICS4Wrapper(cbStack)
 
-<<<<<<< HEAD
-=======
 	// Transfer Stack for IBC V2
 	var transferStackV2 ibcapi.IBCModule
 	transferStackV2 = transferv2.NewIBCModule(ak.TransferKeeper)
@@ -743,7 +679,6 @@ func (ak *AppKeepers) InitKeepers(
 	)
 	transferStackV2 = ratelimitv2.NewIBCMiddleware(ak.RatelimitKeeper, transferStackV2)
 
->>>>>>> 1072573 (chore: Bump IBC to V2 (#1028))
 	// Create Interchain Accounts Controller Stack
 	// SendPacket Path:
 	// SendPacket -> Callbacks -> ICA Controller -> IBC core
