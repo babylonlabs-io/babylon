@@ -27,7 +27,7 @@ func NewBlockValsetUpdateAtEndOfEpoch(
 func (b BlockValsetUpdateAtEndOfEpoch) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (newCtx sdk.Context, err error) {
 	epoch := b.epochK.GetEpoch(ctx)
 
-	if epoch.IsLastBlock(ctx) { // only validate if it is the last epoch block
+	if epoch != nil && epoch.IsLastBlock(ctx) { // only validate if it is the last epoch block
 		for _, m := range tx.GetMsgs() {
 			switch m.(type) {
 			case *slashtypes.MsgUnjail:

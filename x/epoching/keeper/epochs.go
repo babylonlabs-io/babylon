@@ -57,6 +57,10 @@ func (k Keeper) GetEpoch(ctx context.Context) *types.Epoch {
 	store := k.epochInfoStore(ctx)
 	iter := store.ReverseIterator(nil, nil)
 	defer iter.Close()
+
+	if !iter.Valid() {
+		return nil
+	}
 	epochBytes := iter.Value()
 	var epoch types.Epoch
 	k.cdc.MustUnmarshal(epochBytes, &epoch)
