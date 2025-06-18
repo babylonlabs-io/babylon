@@ -75,10 +75,8 @@ require (
 	github.com/cncf/xds/go v0.0.0-20250121191232-2f005788dc42 // indirect
 	github.com/envoyproxy/go-control-plane/envoy v1.32.4 // indirect
 	github.com/envoyproxy/protoc-gen-validate v1.2.1 // indirect
-	github.com/ethereum/go-ethereum v1.15.5 // indirect
 	github.com/go-jose/go-jose/v4 v4.0.4 // indirect
 	github.com/go-viper/mapstructure/v2 v2.2.1 // indirect
-	github.com/holiman/uint256 v1.3.2 // indirect
 	github.com/iancoleman/orderedmap v0.3.0 // indirect
 	github.com/mdp/qrterminal/v3 v3.2.1 // indirect
 	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10 // indirect
