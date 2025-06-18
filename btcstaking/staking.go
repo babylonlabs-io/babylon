@@ -893,3 +893,12 @@ func EncVerifyTransactionSigWithOutput(
 
 	return signature.EncVerify(pubKey, encKey, sigHash)
 }
+
+func SerializeTxOut(txOut *wire.TxOut) ([]byte, error) {
+	var buf bytes.Buffer
+	err := wire.WriteTxOut(&buf)
+	if err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
