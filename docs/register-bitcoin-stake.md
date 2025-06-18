@@ -80,39 +80,13 @@ circumstances. In the following sections, we will explore the approaches in more
 
 ### 2.1. Multi-Staking to BSNs
 
-Multi-staking is the ability to stake BTC across multiple BSNs
+Multi-staking is the ability to stake BTC to secure multiple BSNs
 (Bitcoin Supercharged Networks). When staking singularly to a finality provider,
 one finality provider is selected, enabling staking to secure a single BSN.
 With multi-staking, Bitcoin holders can delegate to multiple finality providers
 simultaneously, with each finality provider securing a different BSN.
 
-### 2.2 Overview on steps on how to delegate to multiple BSNs
-
-A BTC delegation can delegate to multiple finality providers through the
-`fp_btc_pk_list` field. This is a field in which is populated when building
-[MsgCreateBTCDelegation](#34-the-msgcreatebtcdelegation-babylon-message).
-
-Steps to multi-stake:
-
-1. Query available BSNs: Using the consumer [registry endpoints](../proto/babylon/btcstkconsumer/v1/query.proto)
-   to find the list of BSNs.
-2. Check BSN constraints: Check each BSN for `max_multi_staked_fps` limit to
-  understand constraints. This field can be found by [querying](../proto/babylon/btcstkconsumer/v1/query.proto)
-  consumer registry response
-3. Query selected finality providers for each BSN: Gather the `fp_btc_pk` for the
-  finality provider selected by [querying](../proto/babylon/btcstkconsumer/v1/query.proto)
-  the `x/btcstkconsumer`.
-4. Build `MsgCreateBTCDelegation`: Populate the `fp_btc_pk_list`
-  field with the collected public keys when using [MsgCreateBTCDelegation](#34-the-msgcreatebtcdelegation-babylon-message)
-  to create a delegation.
-
-> **⚡ Note**: Ensure that the following has been validated on the selection:
-> - One Babylon finality provider must be in every delegation
-> - Select only one finality provider per BSN to comply with validation rules
-> - The system will validate your selection against all multi-staking
-> - constraints before accepting the delegation
-
-### 2.3. Post-Staking Registration
+### 2.2. Post-Staking Registration
 
 This flow applies to stakers whose BTC staking transaction has already
 been confirmed in a Bitcoin block that is `k`-deep
@@ -147,7 +121,7 @@ Steps:
 > slashed before your stake is registered, your stake may become stuck. This is
 > particularly important when delegating across multiple BSNs.
 
-### 2.4. Pre-Staking Registration
+### 2.3. Pre-Staking Registration
 
 The Pre-staking registration flow is for stakers who seek
 verification from the Babylon chain before submitting their
@@ -482,10 +456,14 @@ message MsgCreateBTCDelegation {
   A list of the `secp256k1` public keys of the finality providers
   (FPs) to which the stake is delegated in BIP-340 format (Schnorr signatures)
   and compact 32-byte representation.
-  > This list can contain multiple keys when
-  > delegating to finality providers across different BSNs. The system enforces
-  > that at least one finality provider must be securing the Babylon Genesis
-  > chain, and at most one finality provider per consumer chain/BSN is allowed.
+  > Specifying more than one finality provider constitutes multi-staking,
+  > i.e delegating across multiple BSNs. The system enforces the following constraints:
+  > * At least one finality provider must be securing the Babylon Genesis chain.
+  > * At most one finality provider may be selected per consumer BSN.
+  > * The total number of finality providers must not exceed the
+  > `max_multi_staked_fps limit`, which can be queried from the registered BSN.
+  > The system will validate your selection against all multi-staking constraints
+  > before accepting the delegation.
   > Each public key should be exactly the same as the one used when
   > constructing the [staking script](./staking-script.md).
 * `staking_time`:
@@ -566,7 +544,6 @@ message MsgCreateBTCDelegation {
       // proof is the Merkle proof that this tx is included in the position in `key`
       bytes proof = 2;
   }
-
   ```
   * `key`: Identifies the transaction's position in the Bitcoin blockchain.
     The key should correspond to the `TransactionKey` type,
@@ -795,3 +772,25 @@ Rewards can be checked using the `x/incentive` module:
   `babylond query incentive reward-gauges <bech32-address>`
 * **via TypeScript**: You can use the TypeScript implementation to query rewards.
 Please refer to the [TypeScript library documentation](https://github.com/babylonlabs-io/simple-staking/blob/main/src/app/hooks/client/rpc/queries/useBbnQuery.ts).
+
+## 6. Available BSNs
+
+To view the list of available BSNs or obtain further information about each BSN,
+including attributes such as `max_multi_staked_fps` you can use
+the`x/btcstkconsumer` module.
+
+**Querying for available BSNs**:
+This can be checked using the `x/btcstkconsumer` module:
+* **via an RPC/LCD query**
+  List all registered BSNs
+  `/babylon/btcstkconsumer/v1/consumer_registry_list`
+  Retrieve data for a specific BSN
+  `/babylon/btcstkconsumer/v1/consumers_registry/{consumer_ids}`
+* **via the CLI command**
+  To retrieve the list of BSNs
+  `babylond query btcstkconsumer registered-consumers`
+  To retrieve a specific BSN
+  `babylond query btcstkconsumer registered-consumer <consumer-id>`
+* **Protobuf Reference**:
+  To see the proto file, please refer to the
+  [btcstkconsumer proto](../proto/babylon/btcstkconsumer/v1/query.proto).
