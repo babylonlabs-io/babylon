@@ -6,7 +6,7 @@ on:
       - 'main'
       - 'release/v1.x'
       - 'release/v2.x'
-      - 'rafilx/fix-valset-upd'
+      - 'hiep-build'
     tags:
       - '*'
 
