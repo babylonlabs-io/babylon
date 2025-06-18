@@ -71,6 +71,7 @@ func NewAnteHandler(
 		NewWrappedAnteHandler(authAnteHandler),
 		NewBtcValidationDecorator(btcConfig, btccKeeper),
 		NewPriorityDecorator(),
+		NewBlockValsetUpdateAtEndOfEpoch(epochingKeeper),
 	)
 
 	return anteHandler
