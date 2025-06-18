@@ -105,10 +105,9 @@ func (k Keeper) CreateBTCDelegation(ctx sdk.Context, parsedMsg *types.ParsedCrea
 			CovenantUnbondingSigList: nil, // NOTE: covenant signature will be submitted in a separate msg by covenant
 			DelegatorUnbondingInfo:   nil,
 		},
-		ParamsVersion:           paramsVersion,      // version of the params against which delegation was validated
-		BtcTipHeight:            timeInfo.TipHeight, // height of the BTC light client tip at the time of the delegation creation
-		PreviousStakingTxHash:   nil,
-		PreviousStkCovenantSigs: nil,
+		ParamsVersion: paramsVersion,      // version of the params against which delegation was validated
+		BtcTipHeight:  timeInfo.TipHeight, // height of the BTC light client tip at the time of the delegation creation
+		StkExp:        nil,
 	}
 
 	if parsedMsg.PreviousActiveStkTxHash != nil { // stake expansion being set

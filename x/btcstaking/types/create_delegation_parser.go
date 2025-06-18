@@ -30,7 +30,7 @@ type ExpMsgParseBtcCreation interface {
 	GetPop() *ProofOfPossessionBTC
 	GetStakingValue() int64
 	GetUnbondingValue() int64
-	GetPreviousActiveStkTxHash() *chainhash.Hash
+	GetStakeExpansion() *ParsedCreateDelStkExp
 }
 
 type ParsedPublicKey struct {
@@ -159,10 +159,22 @@ type ParsedCreateDelegationMessage struct {
 	StakerUnbondingSlashingSig *ParsedBIP340Signature
 	FinalityProviderKeys       *ParsedPublicKeyList
 	ParsedPop                  *ProofOfPossessionBTC
+	// StkExp is an optional field. If this filed is nil,
+	// this BTC delegation is not an stake expansion. If
+	// it is fulfilled it is a stake expansion and should
+	// contain the necessary information to validate and
+	// create the BTC delegation as a stake expansion.
+	StkExp *ParsedCreateDelStkExp
+}
+
+type ParsedCreateDelStkExp struct {
 	// PreviousActiveStkTxHash is the staking transaction hash of an
 	// active BTC delegation that is being used as one of inputs to compose
 	// this BTC Delegation, field is optional.
 	PreviousActiveStkTxHash *chainhash.Hash
+	// OtherInput that was used to pay for fees and optionally increase the
+	// amount of BTC staked.
+	OtherInput *wire.TxIn
 }
 
 // ParseCreateDelegationMessage parses a MsgCreateBTCDelegation message and performs some basic
@@ -289,7 +301,7 @@ func ParseCreateDelegationMessage(msg ExpMsgParseBtcCreation) (*ParsedCreateDele
 		StakerUnbondingSlashingSig: stakerUnbondingSlashingSig,
 		FinalityProviderKeys:       fpPKs,
 		ParsedPop:                  msg.GetPop(),
-		PreviousActiveStkTxHash:    msg.GetPreviousActiveStkTxHash(),
+		StkExp:                     msg.GetStakeExpansion(),
 	}, nil
 }
 
