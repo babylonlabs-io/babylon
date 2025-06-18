@@ -376,7 +376,7 @@ message MsgCreateBTCDelegation {
   ProofOfPossessionBTC pop = 2;
   // btc_pk is the Bitcoin secp256k1 PK of the BTC delegator
   bytes btc_pk = 3 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey" ];
-    // fp_btc_pk_list is the list of Bitcoin secp256k1 PKs of the finality providers across different BSNs.
+  // fp_btc_pk_list is the list of Bitcoin secp256k1 PKs of the finality providers across different BSNs.
   // If there is more than one finality provider pk, it means the delegation is multi-staked
   // across multiple BSNs, with at most one finality provider per BSN allowed.
   repeated bytes fp_btc_pk_list = 4 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey" ];
