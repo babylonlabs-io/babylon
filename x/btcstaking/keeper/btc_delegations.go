@@ -110,8 +110,16 @@ func (k Keeper) CreateBTCDelegation(ctx sdk.Context, parsedMsg *types.ParsedCrea
 		StkExp:        nil,
 	}
 
-	if parsedMsg.PreviousActiveStkTxHash != nil { // stake expansion being set
-		newBTCDel.PreviousStakingTxHash = parsedMsg.PreviousActiveStkTxHash[:]
+	stkExp := parsedMsg.StkExp
+	if stkExp != nil { // stake expansion being set
+
+		// stkExp.OtherInput.
+
+		newBTCDel.StkExp = &types.StakeExpansion{
+			PreviousStakingTxHash: stkExp.PreviousActiveStkTxHash[:],
+			// TxInput: TODO(rafilx),
+			PreviousStkCovenantSigs: nil,
+		}
 	}
 
 	// add this BTC delegation, and emit corresponding events

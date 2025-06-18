@@ -173,11 +173,12 @@ message StakeExpansion {
   // input to the stake expansion.
   bytes previous_staking_tx_hash = 1;
 
-  // tx_input is the other input (TxIn) which was used to construct the BTC delegation
-  // that is created from a previous active stake. The stake expansion has a set of
-  // 2 inputs, the first input is the previous staking transaction and the second
-  // input is to pay for fees and optionally to add more stake to the BTC delegation.
-  bytes tx_input = 2;
+  // other_funding_tx_out is the other funding output (TxOut) which was used
+  // as input to construct the BTC delegation. The stake expansion has a set of
+  // 2 inputs, the first input is the previous staking transaction and the
+  // second input (this one) is to pay for fees and optionally to add more
+  // stake to the BTC delegation.
+  bytes other_funding_tx_out = 2;
 
   // previous_stk_covenant_sigs is a list of signatures on the spending of
   // the previous btc staking transaction {previous_staking_tx_hash}

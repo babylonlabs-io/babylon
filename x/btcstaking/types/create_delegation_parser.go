@@ -30,7 +30,7 @@ type ExpMsgParseBtcCreation interface {
 	GetPop() *ProofOfPossessionBTC
 	GetStakingValue() int64
 	GetUnbondingValue() int64
-	GetStakeExpansion() *ParsedCreateDelStkExp
+	GetStakeExpansion() (*ParsedCreateDelStkExp, error)
 }
 
 type ParsedPublicKey struct {
@@ -172,9 +172,9 @@ type ParsedCreateDelStkExp struct {
 	// active BTC delegation that is being used as one of inputs to compose
 	// this BTC Delegation, field is optional.
 	PreviousActiveStkTxHash *chainhash.Hash
-	// OtherInput that was used to pay for fees and optionally increase the
+	// OtherFundingOutput that was used to pay for fees and optionally increase the
 	// amount of BTC staked.
-	OtherInput *wire.TxIn
+	OtherFundingOutput *wire.TxOut
 }
 
 // ParseCreateDelegationMessage parses a MsgCreateBTCDelegation message and performs some basic
@@ -285,6 +285,11 @@ func ParseCreateDelegationMessage(msg ExpMsgParseBtcCreation) (*ParsedCreateDele
 		return nil, fmt.Errorf("unbonding value must be positive")
 	}
 
+	stkExp, err := msg.GetStakeExpansion()
+	if err != nil {
+		return nil, fmt.Errorf("getting stake expansion: %w", err)
+	}
+
 	return &ParsedCreateDelegationMessage{
 		StakerAddress:              stakerAddr,
 		StakingTx:                  stakingTx,
@@ -301,7 +306,7 @@ func ParseCreateDelegationMessage(msg ExpMsgParseBtcCreation) (*ParsedCreateDele
 		StakerUnbondingSlashingSig: stakerUnbondingSlashingSig,
 		FinalityProviderKeys:       fpPKs,
 		ParsedPop:                  msg.GetPop(),
-		StkExp:                     msg.GetStakeExpansion(),
+		StkExp:                     stkExp,
 	}, nil
 }
 

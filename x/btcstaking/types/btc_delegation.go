@@ -208,13 +208,13 @@ func (d *BTCDelegation) MustGetUnbondingTx() *wire.MsgTx {
 }
 
 func (d *BTCDelegation) StakeExpansionTxHash() (*chainhash.Hash, error) {
-	return chainhash.NewHash(d.PreviousStakingTxHash)
+	return d.StkExp.StakeExpansionTxHash()
 }
 
 func (d *BTCDelegation) MustGetStakeExpansionTxHash() *chainhash.Hash {
-	txHash, err := chainhash.NewHash(d.PreviousStakingTxHash)
+	txHash, err := d.StakeExpansionTxHash()
 	if err != nil {
-		panic(fmt.Errorf("failed to parse %+v as chain hash", d.PreviousStakingTxHash))
+		panic(fmt.Errorf("failed to parse %+v as chain hash", d.StkExp.PreviousStakingTxHash))
 	}
 	return txHash
 }
@@ -287,7 +287,7 @@ func (d *BTCDelegation) ValidateBasic() error {
 func (d *BTCDelegation) HasCovenantQuorums(quorum, quorumPreviousStk uint32) bool {
 	hasQuorum := len(d.CovenantSigs) >= int(quorum) && d.BtcUndelegation.HasCovenantQuorums(quorum)
 	if d.IsStakeExpansion() {
-		return hasQuorum && len(d.PreviousStkCovenantSigs) >= int(quorumPreviousStk)
+		return hasQuorum && d.StkExp.HasCovenantQuorums(quorumPreviousStk)
 	}
 	return hasQuorum
 }
@@ -326,8 +326,7 @@ func (d *BTCDelegation) AddCovenantSigs(
 	d.BtcUndelegation.addCovenantSigs(covPk, unbondingSig, unbondingSlashingSigs)
 
 	if d.IsStakeExpansion() {
-		prevStkCovSigs := &SignatureInfo{Pk: covPk, Sig: stkExpSig}
-		d.PreviousStkCovenantSigs = append(d.PreviousStkCovenantSigs, prevStkCovSigs)
+		d.StkExp.AddCovenantSigs(covPk, stkExpSig)
 	}
 }
 
@@ -542,7 +541,23 @@ func (d *BTCDelegation) BuildUnbondingSlashingTxWithWitness(bsParams *Params, bt
 // IsStakeExpansion returns true if the BTC delegation was created
 // using a previous staking transaction
 func (d *BTCDelegation) IsStakeExpansion() bool {
-	return len(d.PreviousStakingTxHash) > 0
+	return d.StkExp != nil
+}
+
+func (s *StakeExpansion) AddCovenantSigs(
+	covPk *bbn.BIP340PubKey,
+	stkExpSig *bbn.BIP340Signature,
+) {
+	prevStkCovSigs := &SignatureInfo{Pk: covPk, Sig: stkExpSig}
+	s.PreviousStkCovenantSigs = append(s.PreviousStkCovenantSigs, prevStkCovSigs)
+}
+
+func (s *StakeExpansion) StakeExpansionTxHash() (*chainhash.Hash, error) {
+	return chainhash.NewHash(s.PreviousStakingTxHash)
+}
+
+func (s *StakeExpansion) HasCovenantQuorums(quorumPreviousStk uint32) bool {
+	return len(s.PreviousStkCovenantSigs) >= int(quorumPreviousStk)
 }
 
 func NewBTCDelegatorDelegationIndex() *BTCDelegatorDelegationIndex {

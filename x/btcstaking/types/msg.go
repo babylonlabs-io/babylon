@@ -122,9 +122,9 @@ func (m *MsgCreateBTCDelegation) GetBtcPk() *bbn.BIP340PubKey {
 	return m.BtcPk
 }
 
-// GetPreviousActiveStkTxHash returns an nil previous active stk tx hash
-func (m *MsgCreateBTCDelegation) GetPreviousActiveStkTxHash() *chainhash.Hash {
-	return nil
+// GetStakeExpansion returns the stake expansion
+func (m *MsgCreateBTCDelegation) GetStakeExpansion() (*ParsedCreateDelStkExp, error) {
+	return nil, nil
 }
 
 // ToParsed returns a parsed ParsedCreateDelegationMessage or error if it fails
@@ -174,14 +174,46 @@ func (m *MsgBtcStakeExpand) GetBtcPk() *bbn.BIP340PubKey {
 	return m.BtcPk
 }
 
-// GetPreviousActiveStkTxHash returns the previous active staking transaction hash
-func (m *MsgBtcStakeExpand) GetPreviousActiveStkTxHash() *chainhash.Hash {
+// GetStakeExpansion returns the parsed stake expansion
+func (m *MsgBtcStakeExpand) GetStakeExpansion() (*ParsedCreateDelStkExp, error) {
 	previousActiveStkTxHash, err := chainhash.NewHashFromStr(m.PreviousStakingTxHash)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
-	return previousActiveStkTxHash
+	stkExpandTx, err := bbn.NewBTCTxFromBytes(m.StakingTx)
+	if err != nil {
+		return nil, err
+	}
+
+	fundingTx, err := bbn.NewBTCTxFromBytes(m.FundingTx)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(stkExpandTx.TxIn) != 2 {
+		return nil, fmt.Errorf("stake expansion must have 2 inputs (TxIn)")
+	}
+
+	if !stkExpandTx.TxIn[0].PreviousOutPoint.Hash.IsEqual(previousActiveStkTxHash) {
+		return nil, fmt.Errorf("stake expansion first input must be the previous staking transaction hash %s", m.PreviousStakingTxHash)
+	}
+
+	fundingTxHash := fundingTx.TxHash()
+	if !stkExpandTx.TxIn[1].PreviousOutPoint.Hash.IsEqual(&fundingTxHash) {
+		return nil, fmt.Errorf("stake expansion seccond input must be the given funding tx hash %s", fundingTxHash.String())
+	}
+	idxOtherInput := stkExpandTx.TxIn[1].PreviousOutPoint.Index
+
+	if len(fundingTx.TxOut) > int(idxOtherInput) {
+		return nil, fmt.Errorf("the given funding tx doesn't have the expected output %s", fundingTxHash.String())
+	}
+	otherOutput := fundingTx.TxOut[idxOtherInput]
+
+	return &ParsedCreateDelStkExp{
+		PreviousActiveStkTxHash: previousActiveStkTxHash,
+		OtherFundingOutput:      otherOutput,
+	}, nil
 }
 
 // ToParsed returns a parsed ParsedCreateDelegationMessage or error if it fails
