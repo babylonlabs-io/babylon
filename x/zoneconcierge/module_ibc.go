@@ -8,7 +8,6 @@ import (
 	"github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 	porttypes "github.com/cosmos/ibc-go/v10/modules/core/05-port/types"
 	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
@@ -31,8 +30,6 @@ func (im IBCModule) OnChanOpenInit(
 	connectionHops []string,
 	portID string,
 	channelID string,
-	chanCap *capabilitytypes.Capability,
-	counterparty channeltypes.Counterparty,
 	version string,
 ) (string, error) {
 	// the IBC channel has to be ordered
@@ -73,8 +70,6 @@ func (im IBCModule) OnChanOpenTry(
 	connectionHops []string,
 	portID,
 	channelID string,
-	chanCap *capabilitytypes.Capability,
-	counterparty channeltypes.Counterparty,
 	counterpartyVersion string,
 ) (string, error) {
 	// the IBC channel has to be ordered

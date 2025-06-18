@@ -3,6 +3,9 @@ package app
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/babylonlabs-io/babylon/v3/x/zoneconcierge"
+	zckeeper "github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/keeper"
+	zctypes "github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
 	"io"
 	"os"
 	"path/filepath"
@@ -327,6 +330,7 @@ func NewBabylonApp(
 		monitor.NewAppModule(appCodec, app.MonitorKeeper),
 		// Babylon modules - integration
 		btcstkconsumer.NewAppModule(appCodec, app.BTCStkConsumerKeeper, app.AccountKeeper, app.BankKeeper),
+		zoneconcierge.NewAppModule(appCodec, app.ZoneConciergeKeeper, app.AccountKeeper, app.BankKeeper),
 		// Babylon modules - btc staking
 		btcstaking.NewAppModule(appCodec, app.BTCStakingKeeper),
 		finality.NewAppModule(appCodec, app.FinalityKeeper),
@@ -387,6 +391,7 @@ func NewBabylonApp(
 		ratelimittypes.ModuleName,
 		// Integration related modules
 		bsctypes.ModuleName,
+		zctypes.ModuleName,
 		// BTC staking related modules
 		btcstakingtypes.ModuleName,
 		finalitytypes.ModuleName,
@@ -419,6 +424,7 @@ func NewBabylonApp(
 		ratelimittypes.ModuleName,
 		// Integration related modules
 		bsctypes.ModuleName,
+		zctypes.ModuleName,
 		// BTC staking related modules
 		btcstakingtypes.ModuleName,
 		finalitytypes.ModuleName,
@@ -456,6 +462,7 @@ func NewBabylonApp(
 		pfmroutertypes.ModuleName,
 		// Integration related modules
 		bsctypes.ModuleName,
+		zctypes.ModuleName,
 		// BTC staking related modules
 		btcstakingtypes.ModuleName,
 		finalitytypes.ModuleName,
@@ -545,6 +552,7 @@ func NewBabylonApp(
 	// set postHandler
 	postHandler := sdk.ChainPostDecorators(
 		incentivekeeper.NewRefundTxDecorator(&app.IncentiveKeeper),
+		zckeeper.NewIBCHeaderDecorator(&app.ZoneConciergeKeeper),
 	)
 	app.SetPostHandler(postHandler)
 

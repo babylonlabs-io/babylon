@@ -3,6 +3,7 @@ package wasmbinding
 import (
 	"encoding/json"
 	"fmt"
+	zckeeper "github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/keeper"
 
 	tokenfactorykeeper "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/keeper"
 
@@ -24,6 +25,7 @@ type QueryPlugin struct {
 	epochingKeeper      *epochingkeeper.Keeper
 	checkpointingkeeper *checkpointingkeeper.Keeper
 	lcKeeper            *lcKeeper.Keeper
+	zcKeeper            *zckeeper.Keeper
 }
 
 // NewQueryPlugin returns a reference to a new QueryPlugin.
@@ -32,12 +34,14 @@ func NewQueryPlugin(
 	ek *epochingkeeper.Keeper,
 	ch *checkpointingkeeper.Keeper,
 	lcKeeper *lcKeeper.Keeper,
+	zcKeeper *zckeeper.Keeper,
 ) *QueryPlugin {
 	return &QueryPlugin{
 		tokenfactoryKeeper:  tk,
 		epochingKeeper:      ek,
 		checkpointingkeeper: ch,
 		lcKeeper:            lcKeeper,
+		zcKeeper:            zcKeeper,
 	}
 }
 
@@ -168,8 +172,9 @@ func RegisterCustomPlugins(
 	ek *epochingkeeper.Keeper,
 	ck *checkpointingkeeper.Keeper,
 	lcKeeper *lcKeeper.Keeper,
+	zcKeeper *zckeeper.Keeper,
 ) []wasmkeeper.Option {
-	wasmQueryPlugin := NewQueryPlugin(tk, ek, ck, lcKeeper)
+	wasmQueryPlugin := NewQueryPlugin(tk, ek, ck, lcKeeper, zcKeeper)
 
 	queryPluginOpt := wasmkeeper.WithQueryPlugins(&wasmkeeper.QueryPlugins{
 		Custom: CustomQuerier(wasmQueryPlugin),

@@ -16,7 +16,6 @@ import (
 	types4 "github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
 	types5 "github.com/babylonlabs-io/babylon/v3/x/epoching/types"
 	types6 "github.com/cosmos/cosmos-sdk/types"
-	types7 "github.com/cosmos/ibc-go/modules/capability/types"
 	types8 "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 	types9 "github.com/cosmos/ibc-go/v10/modules/core/03-connection/types"
 	types10 "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
@@ -206,9 +205,9 @@ func (m *MockICS4Wrapper) EXPECT() *MockICS4WrapperMockRecorder {
 }
 
 // SendPacket mocks base method.
-func (m *MockICS4Wrapper) SendPacket(ctx types6.Context, channelCap *types7.Capability, sourcePort, sourceChannel string, timeoutHeight types8.Height, timeoutTimestamp uint64, data []byte) (uint64, error) {
+func (m *MockICS4Wrapper) SendPacket(ctx types6.Context, sourcePort, sourceChannel string, timeoutHeight types8.Height, timeoutTimestamp uint64, data []byte) (uint64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SendPacket", ctx, channelCap, sourcePort, sourceChannel, timeoutHeight, timeoutTimestamp, data)
+	ret := m.ctrl.Call(m, "SendPacket", ctx, sourcePort, sourceChannel, timeoutHeight, timeoutTimestamp, data)
 	ret0, _ := ret[0].(uint64)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
