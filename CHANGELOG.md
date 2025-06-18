@@ -37,9 +37,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+- [#1243](https://github.com/babylonlabs-io/babylon/pull/1243) fix: add ante handler to reject
+potential valset update messages at the end of epoch
+
 ## v2.0.0
 
-- [#12226](https://github.com/babylonlabs-io/babylon/pull/1191](https://github.com/babylonlabs-io/babylon/pull/1226) chore: Revert goreleaser to use musl
+- [#1226](https://github.com/babylonlabs-io/babylon/pull/1226) chore: Revert goreleaser to use musl
 
 ## v2.0.0-rc.4
 
