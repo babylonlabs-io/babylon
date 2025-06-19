@@ -20,26 +20,25 @@ func FuzzConsumerRegistry(f *testing.F) {
 		ctx := babylonApp.NewContext(false)
 
 		// generate a random consumer register
-		validConsumer := datagen.GenRandomCosmosConsumerRegister(r)
+		consumerRegister := datagen.GenRandomCosmosConsumerRegister(r)
 
 		// check that the consumer is not registered
-		isRegistered := bscKeeper.IsConsumerRegistered(ctx, validConsumer.ConsumerId)
+		isRegistered := bscKeeper.IsConsumerRegistered(ctx, consumerRegister.ConsumerId)
 		require.False(t, isRegistered)
 
 		// Check that the consumer is not registered
-		retrievedConsumer, err := bscKeeper.GetConsumerRegister(ctx, validConsumer.ConsumerId)
+		consumerRegister2, err := bscKeeper.GetConsumerRegister(ctx, consumerRegister.ConsumerId)
 		require.Error(t, err)
-		require.Nil(t, retrievedConsumer)
+		require.Nil(t, consumerRegister2)
 
 		// Register the consumer
-		err = bscKeeper.RegisterConsumer(ctx, validConsumer)
+		err = bscKeeper.RegisterConsumer(ctx, consumerRegister)
 		require.NoError(t, err)
 		// check that the consumer is registered
-		retrievedConsumer, err = bscKeeper.GetConsumerRegister(ctx, validConsumer.ConsumerId)
+		consumerRegister2, err = bscKeeper.GetConsumerRegister(ctx, consumerRegister.ConsumerId)
 		require.NoError(t, err)
-		require.Equal(t, validConsumer.ConsumerId, retrievedConsumer.ConsumerId)
-		require.Equal(t, validConsumer.ConsumerName, retrievedConsumer.ConsumerName)
-		require.Equal(t, validConsumer.ConsumerDescription, retrievedConsumer.ConsumerDescription)
-		require.Equal(t, validConsumer.MaxMultiStakedFps, retrievedConsumer.MaxMultiStakedFps)
+		require.Equal(t, consumerRegister.ConsumerId, consumerRegister2.ConsumerId)
+		require.Equal(t, consumerRegister.ConsumerName, consumerRegister2.ConsumerName)
+		require.Equal(t, consumerRegister.ConsumerDescription, consumerRegister2.ConsumerDescription)
 	})
 }

@@ -134,7 +134,6 @@ func (s *FinalityContractTestSuite) Test2RegisterRollupConsumer() {
 		ConsumerID,
 		datagen.GenRandomHexStr(s.r, 5),
 		"Chain description: "+datagen.GenRandomHexStr(s.r, 15),
-		3,
 	)
 
 	validatorNode, err := s.configurer.GetChainConfig(0).GetNodeAtIndex(0)
