@@ -2,27 +2,30 @@
 
 The Zone Concierge module is responsible for providing BTC staking integration
 functionalities for Bitcoin Supercharged Networks (BSNs) connecting  
-to Babylon Genesis through IBC. 
-It leverages the IBC protocol to receive BSNs' headers, and propagate BTC
-timestamps of those headers and information associated with the BTC staking
-protocol (e.g., finality providers, BTC stakes, and more).  
+to Babylon Genesis through IBC. It leverages the IBC protocol to receive BSNs'
+headers, and propagate BTC timestamps of those headers and information
+associated with the BTC staking protocol (e.g., finality providers, BTC stakes,
+and more).  
 The Zone Concierge module synchronises the following information with BSNs (aka
 consumers) via IBC packets:
 
-- **BTC Headers:** Babylon Genesis forwards the BTC headers maintained by its BTC light client to BSNs.  
-   This allows BSNs to maintain an image of the Bitcoin chain and verify information included in it through  
-   inclusion proofs (e.g., an inclusion proof of a BTC Timestamp containing BSN headers).
-- **BTC Timestamps:** When a Babylon Genesis epoch is finalized, the Babylon Genesis chain sends BTC
-  timestamps to BSNs. Each BTC timestamp contains:
+- **BTC Headers:** Babylon Genesis forwards the BTC headers maintained by its
+  BTC light client to BSNs.  
+   This allows BSNs to maintain an image of the Bitcoin chain and verify
+   information included in it through  
+   inclusion proofs (e.g., an inclusion proof of a BTC Timestamp containing BSN
+   headers).
+- **BTC Timestamps:** When a Babylon Genesis epoch is finalized, the Babylon
+  Genesis chain sends BTC timestamps to BSNs. Each BTC timestamp contains:
   - The latest BSN header that was checkpointed in the finalised epoch
   - Recent BTC headers that extend the BSN's BTC light client
   - The finalised epoch's metadata and raw checkpoint
   - Proofs that the BSN header was included in the epoch and the epoch was
     properly sealed and submitted to Bitcoin
 - **BTC Staking:** Babylon Genesis enables trustless Bitcoin staking for BSNs by
-  synchronising staking-related information between Bitcoin, Babylon Genesis and BSNs.
-  This allows BTC holders to stake their BTC to secure BSNs without requiring
-  any custodial solutions.
+  synchronising staking-related information between Bitcoin, Babylon Genesis and
+  BSNs. This allows BTC holders to stake their BTC to secure BSNs without
+  requiring any custodial solutions.
 
 ## Table of contents
 
@@ -212,8 +215,8 @@ as follows:
 1. Extract header info and client state from the message
 2. Determine if the header is on a fork by checking if the client is frozen 
 3. Call `HandleHeaderWithValidCommit` to process the header appropriately
-4. If the PoS blockchain hosting the header is not known to Babylon Genesis, initialize
-   `ChainInfo` storage for the PoS blockchain
+4. If the PoS blockchain hosting the header is not known to Babylon Genesis,
+   initialize `ChainInfo` storage for the PoS blockchain
 5. If the header is on a fork, insert the header to the fork storage and update
    `ChainInfo`
 6. If the header is canonical, insert the header to the canonical chain storage
@@ -450,8 +453,12 @@ received from BSNs through IBC packets, with the following workflow:
      provider's voting power
    - Identifies all BTC delegations associated with the slashed finality
      provider
+   - Identifies all affected BSNs, where "affected" means there exists a slashed
+     BTC delegation that multi-stakes to a finality provider in this BSN
    - Creates slashed BTC delegation events for each affected BSN
-   - Propagates the slashing event to each BSN
+   - Propagates the slashing event to each BSN such that the BSN will update the
+     status of affected BTC delegations and update the voting power of affected
+     BSN finality providers.
 3. **Event Emission**: Emits a `EventSlashedFinalityProvider` event for external
    slashing mechanisms (e.g., BTC slasher/vigilante)
 
@@ -467,8 +474,9 @@ listed at
 
 ## BSN Integration
 
-The Zone Concierge module connects Babylon Genesis and BSNs, relaying three types of
-information through IBC: BTC headers, BTC timestamps, and BTC staking events.
+The Zone Concierge module connects Babylon Genesis and BSNs, relaying three
+types of information through IBC: BTC headers, BTC timestamps, and BTC staking
+events.
 
 ### IBC Communication Protocol
 | Configuration Type | Value |
@@ -484,8 +492,8 @@ information through IBC: BTC headers, BTC timestamps, and BTC staking events.
 
 ### Relaying BTC Headers
 
-Zone Concierge relays BTC headers from Babylon Genesis' BTC light client to BSNs in two
-scenarios:
+Zone Concierge relays BTC headers from Babylon Genesis' BTC light client to BSNs
+in two scenarios:
 
 1. When a new BTC timestamp is being sent (triggered by
    `AfterRawCheckpointFinalized`, see [Sending BTC
@@ -515,8 +523,8 @@ provides details of assembling and broadcasting BTC timestamps.
 
 ### Relaying BTC Staking Events
 
-Zone Concierge relays BTC staking events between Babylon Genesis and BSNs to enable
-trustless BTC staking. The module handles:
+Zone Concierge relays BTC staking events between Babylon Genesis and BSNs to
+enable trustless BTC staking. The module handles:
 
 - Broadcasting staking events to BSNs via `BroadcastBTCStakingConsumerEvents`
   during EndBlock
