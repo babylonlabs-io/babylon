@@ -510,16 +510,8 @@ func SignTxWithOneScriptSpendInputFromTapLeaf(
 	privKey *btcec.PrivateKey,
 	tapLeaf txscript.TapLeaf,
 ) (*schnorr.Signature, error) {
-	if txToSign == nil {
-		return nil, fmt.Errorf("tx to sign must not be nil")
-	}
-
-	if fundingOutput == nil {
-		return nil, fmt.Errorf("funding output must not be nil")
-	}
-
-	if privKey == nil {
-		return nil, fmt.Errorf("private key must not be nil")
+	if err := validateSignTxScriptSpendInput(txToSign, fundingOutput, privKey); err != nil {
+		return nil, err
 	}
 
 	if len(txToSign.TxIn) != 1 {
@@ -534,6 +526,26 @@ func SignTxWithOneScriptSpendInputFromTapLeaf(
 	)
 }
 
+func validateSignTxScriptSpendInput(
+	txToSign *wire.MsgTx,
+	fundingOutput *wire.TxOut,
+	privKey *btcec.PrivateKey,
+) error {
+	if txToSign == nil {
+		return fmt.Errorf("tx to sign must not be nil")
+	}
+
+	if fundingOutput == nil {
+		return fmt.Errorf("funding output must not be nil")
+	}
+
+	if privKey == nil {
+		return fmt.Errorf("private key must not be nil")
+	}
+
+	return nil
+}
+
 // SignTxWithOneScriptSpendInputFromScript signs transaction with one input coming
 // from script spend output with provided script.
 // It does not do any validations, expect that txToSign has exactly one input.
@@ -545,6 +557,93 @@ func SignTxWithOneScriptSpendInputFromScript(
 ) (*schnorr.Signature, error) {
 	tapLeaf := txscript.NewBaseTapLeaf(script)
 	return SignTxWithOneScriptSpendInputFromTapLeaf(txToSign, fundingOutput, privKey, tapLeaf)
+}
+
+// GetSignatureForFirstScriptSpendWithTwoInputsFromScript signs transaction with two input coming
+// from script spend output with provided script.
+// It does not do any validations, expect that txToSign has exactly two inputs.
+// In the context of a stake expansion the idx 0 `fundingOutputToSignIdx0`
+// funding output would be the previous active staking transaciton that
+// needs the covenant signatures to spend the BTC and the other funding
+// output `fundingOutputIdx1` would be an TxOut responsible to pay for fees
+// and optionally increasing the amount staked to that delegation.
+func GetSignatureForFirstScriptSpendWithTwoInputsFromScript(
+	txToSign *wire.MsgTx,
+	fundingOutputToSignIdx0 *wire.TxOut,
+	fundingOutputIdx1 *wire.TxOut,
+	privKey *btcec.PrivateKey,
+	script []byte,
+) (*schnorr.Signature, error) {
+	tapLeaf := txscript.NewBaseTapLeaf(script)
+	return GetSignatureForFirstScriptSpendWithTwoInputsFromTapLeaf(txToSign, fundingOutputToSignIdx0, fundingOutputIdx1, privKey, tapLeaf)
+}
+
+// GetSignatureForFirstScriptSpendWithTwoInputsFromTapLeaf signs transaction with two inputs coming
+// from script spend output.
+// It does not do any validations, expect that txToSign has exactly two inputs.
+func GetSignatureForFirstScriptSpendWithTwoInputsFromTapLeaf(
+	txToSign *wire.MsgTx,
+	fundingOutputToSignIdx0 *wire.TxOut,
+	fundingOutputIdx1 *wire.TxOut,
+	privKey *btcec.PrivateKey,
+	tapLeaf txscript.TapLeaf,
+) (*schnorr.Signature, error) {
+	if err := validateSignTxScriptSpendInput(txToSign, fundingOutputToSignIdx0, privKey); err != nil {
+		return nil, err
+	}
+
+	if fundingOutputIdx1 == nil {
+		return nil, fmt.Errorf("funding output of idx 1 must not be nil")
+	}
+
+	if len(txToSign.TxIn) != 2 {
+		return nil, fmt.Errorf("tx to sign must have exactly two inputs")
+	}
+
+	return getSignatureForFirstScriptSpendWithTwoInputsFromTapLeafInternal(
+		txToSign,
+		fundingOutputToSignIdx0,
+		fundingOutputIdx1,
+		privKey,
+		tapLeaf,
+	)
+}
+
+// getSignatureForFirstScriptSpendWithTwoInputsFromTapLeafInternal returns
+// the schnorr signature of the signature over the idx zero of the inputs
+// of the message to sign. In the context of a stake expansion the idx 0
+// funding output would be the previous active staking transaciton that
+// needs the covenant signatures to spend the BTC and the other funding
+// output `fundingOutputIdx1` would be an TxOut responsible to pay for fees
+// and optionally increasing the amount staked to that delegation.
+func getSignatureForFirstScriptSpendWithTwoInputsFromTapLeafInternal(
+	txToSign *wire.MsgTx,
+	fundingOutputToSignIdx0 *wire.TxOut,
+	fundingOutputIdx1 *wire.TxOut,
+	privKey *btcec.PrivateKey,
+	tapLeaf txscript.TapLeaf,
+) (*schnorr.Signature, error) {
+	inputFetcher := txscript.NewMultiPrevOutFetcher(nil)
+	inputFetcher.AddPrevOut(txToSign.TxIn[0].PreviousOutPoint, fundingOutputToSignIdx0)
+	inputFetcher.AddPrevOut(txToSign.TxIn[1].PreviousOutPoint, fundingOutputIdx1)
+
+	sigHashes := txscript.NewTxSigHashes(txToSign, inputFetcher)
+
+	sig, err := txscript.RawTxInTapscriptSignature(
+		txToSign, sigHashes, 0, fundingOutputToSignIdx0.Value,
+		fundingOutputToSignIdx0.PkScript, tapLeaf, txscript.SigHashDefault,
+		privKey,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	parsedSig, err := schnorr.ParseSignature(sig)
+	if err != nil {
+		return nil, err
+	}
+
+	return parsedSig, nil
 }
 
 // SignTxWithOneScriptSpendInputStrict signs transaction with one input coming
@@ -700,6 +799,57 @@ func VerifyTransactionSigWithOutput(
 	return nil
 }
 
+// VerifyTransactionSigStkExp verifies that:
+// - provided signature is valid schnorr BIP340 signature
+// - provided signature is signing whole provided transaction	(SigHashDefault)
+func VerifyTransactionSigStkExp(
+	stkSpendTx *wire.MsgTx,
+	fundingOutput *wire.TxOut,
+	script []byte,
+	pubKey *btcec.PublicKey,
+	signatureOverPrevStkSpend []byte,
+) error {
+	if fundingOutput == nil {
+		return fmt.Errorf("funding output must not be nil")
+	}
+
+	if stkSpendTx == nil {
+		return fmt.Errorf("tx to verify not be nil")
+	}
+
+	if pubKey == nil {
+		return fmt.Errorf("public key must not be nil")
+	}
+
+	tapLeaf := txscript.NewBaseTapLeaf(script)
+
+	inputFetcher := txscript.NewCannedPrevOutputFetcher(
+		fundingOutput.PkScript,
+		fundingOutput.Value,
+	)
+
+	sigHashes := txscript.NewTxSigHashes(stkSpendTx, inputFetcher)
+
+	sigHash, err := txscript.CalcTapscriptSignaturehash(
+		sigHashes, txscript.SigHashDefault, stkSpendTx, 0, inputFetcher, tapLeaf,
+	)
+	if err != nil {
+		return err
+	}
+
+	parsedSig, err := schnorr.ParseSignature(signatureOverPrevStkSpend)
+	if err != nil {
+		return err
+	}
+
+	valid := parsedSig.Verify(sigHash, pubKey)
+	if !valid {
+		return fmt.Errorf("signature is not valid")
+	}
+
+	return nil
+}
+
 // EncVerifyTransactionSigWithOutput verifies that:
 // - provided transaction has exactly one input
 // - provided signature is valid adaptor signature
@@ -742,4 +892,28 @@ func EncVerifyTransactionSigWithOutput(
 	}
 
 	return signature.EncVerify(pubKey, encKey, sigHash)
+}
+
+// SerializeTxOut serializes a wire.TxOut to a byte slice.
+func SerializeTxOut(txOut *wire.TxOut) ([]byte, error) {
+	var buf bytes.Buffer
+
+	err := wire.WriteTxOut(&buf, 0, 0, txOut)
+	if err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
+
+// DeserializeTxOut deserializes a byte slice into a wire.TxOut.
+func DeserializeTxOut(serializedBytes []byte) (*wire.TxOut, error) {
+	var txOut wire.TxOut
+	reader := bytes.NewReader(serializedBytes)
+
+	err := wire.ReadTxOut(reader, 0, 0, &txOut)
+	if err != nil {
+		return nil, err
+	}
+
+	return &txOut, nil
 }
