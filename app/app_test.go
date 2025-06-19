@@ -2,6 +2,7 @@ package app_test
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	tokenfactorytypes "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/types"
@@ -41,6 +42,32 @@ var (
 		icatypes.ModuleName:          nil,
 	}
 )
+
+func TestBabylonCheckRemovedStakingEndBlocker(t *testing.T) {
+	db := dbm.NewMemDB()
+
+	tbs, err := testsigner.SetupTestBlsSigner()
+	require.NoError(t, err)
+	blsSigner := checkpointingtypes.BlsSigner(tbs)
+
+	logger := log.NewTestLogger(t)
+	appOpts, cleanup := babylonApp.TmpAppOptions()
+	defer cleanup()
+
+	app := babylonApp.NewBabylonAppWithCustomOptions(t, false, blsSigner, babylonApp.SetupOptions{
+		Logger:             logger,
+		DB:                 db,
+		InvCheckPeriod:     0,
+		SkipUpgradeHeights: map[int64]bool{},
+		AppOpts:            appOpts,
+	})
+
+	for _, m := range app.ModuleManager.OrderEndBlockers {
+		if strings.EqualFold(m, stktypes.ModuleName) {
+			t.Error("the staking module is active to execute end blocker")
+		}
+	}
+}
 
 func TestBabylonBlockedAddrs(t *testing.T) {
 	db := dbm.NewMemDB()

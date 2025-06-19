@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
 	autocliv1 "cosmossdk.io/api/cosmos/autocli/v1"
 	reflectionv1 "cosmossdk.io/api/cosmos/reflection/v1"
@@ -412,7 +413,13 @@ func NewBabylonApp(
 		incentivetypes.ModuleName, // EndBlock of incentive module does not matter
 	)
 	// Babylon does not want EndBlock processing in staking
-	app.ModuleManager.OrderEndBlockers = append(app.ModuleManager.OrderEndBlockers[:2], app.ModuleManager.OrderEndBlockers[2+1:]...) // remove stakingtypes.ModuleName
+	app.ModuleManager.OrderEndBlockers = append(app.ModuleManager.OrderEndBlockers[:1], app.ModuleManager.OrderEndBlockers[1+1:]...) // remove stakingtypes.ModuleName
+
+	for _, m := range app.ModuleManager.OrderEndBlockers {
+		if strings.EqualFold(m, stakingtypes.ModuleName) {
+			panic("staking module endblocker is active")
+		}
+	}
 
 	// NOTE: The genutils module must occur after staking so that pools are
 	// properly initialized with tokens from genesis accounts.

@@ -37,9 +37,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+- [#1244](https://github.com/babylonlabs-io/babylon/pull/1244) fix: remove staking module from app end blocker order
+
 ## v2.0.0
 
-- [#12226](https://github.com/babylonlabs-io/babylon/pull/1191](https://github.com/babylonlabs-io/babylon/pull/1226) chore: Revert goreleaser to use musl
+- [#1226](https://github.com/babylonlabs-io/babylon/pull/1226) chore: Revert goreleaser to use musl
 
 ## v2.0.0-rc.4
 
