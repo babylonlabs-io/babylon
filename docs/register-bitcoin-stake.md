@@ -118,18 +118,10 @@ Steps:
 > **the rejection of any subsequent staking registrations of it**.
 > In those cases, the stake will have to be unbonded and staked again.
 >
-<<<<<<< HEAD
-> **⚠️ Important Warning about Finality Providers**: Be cautious when selecting a
-> finality provider for your stake. If the finality provider you delegate to gets
-> slashed before your stake is registered, your stake may become stuck. This is
-> particularly important for Phase-1 stake that is in the process of being
->registered.
-=======
 > **⚠️ Important Warning about Finality Providers**: Be cautious when selecting
 > Finality Providers for your stake. If the Finality Providers you delegate to get
 > slashed before your stake is registered, your stake may become stuck. This is
 > particularly important when delegating across multiple BSNs.
->>>>>>> 1c1c399 (docs: updates to `register-bitcoin-stake.md` and `staking-script.md` for multistaking  (#1233))
 
 ### 2.3. Pre-Staking Registration
 
@@ -202,18 +194,10 @@ Steps:
 > (this parameter will be detailed in
 > [Section 3.2.](#32-babylon-chain-btc-staking-parameters)).
 >
-<<<<<<< HEAD
-> **⚠️ Important Warning about Finality Providers**: Be cautious when selecting a
-> finality provider for your stake. If the finality provider you delegate to gets
-> slashed before your stake is registered, your stake may become stuck. This is
-> particularly important for Phase-1 stake that is in the process of being
->registered.
-=======
 > **⚠️ Important Warning about Finality Providers**: Be cautious when selecting
 > Finality Providers for your stake. If the Finality Providers you delegate to get
 > slashed before your stake is registered, your stake may become stuck. This is
 > particularly important when delegating across multiple BSNs.
->>>>>>> 1c1c399 (docs: updates to `register-bitcoin-stake.md` and `staking-script.md` for multistaking  (#1233))
 
 ## 3. Bitcoin Stake Registration
 
@@ -234,13 +218,8 @@ Babylon registration transaction.
   and co-signed by the covenants upon verification.
 * **Slashing Transactions**: Two staker pre-signed slashing transactions
   (one for staking, one for unbonding) that ensure enforcement
-<<<<<<< HEAD
-  of slashing if the finality provider to which the stake is delegated to
-  double-signs. They are submitted to the Babylon chain and co-signed
-=======
   of slashing if the Finality Providers to which the stake is delegated to
   double-signs. They are submitted to the Babylon Genesis chain and co-signed
->>>>>>> 1c1c399 (docs: updates to `register-bitcoin-stake.md` and `staking-script.md` for multistaking  (#1233))
   by the covenants upon verification.
 * **Proof of Possession**: Confirms ownership of the Bitcoin key
   by the Babylon account used for stake registration.
@@ -258,18 +237,10 @@ Babylon registration transaction.
 > transactions can be found in the
 > [Bitcoin Staking script specification](./staking-script.md).
 >
-<<<<<<< HEAD
-> **⚠️ Important Warning about Finality Providers**: Be cautious when selecting a
-> finality provider for your stake. If the finality provider you delegate to gets
-> slashed before your stake is registered, your stake may become stuck. This is
-> particularly important for Phase-1 stake that is in the process of being
-> registered.
-=======
 > **⚠️ Important Warning about Finality Providers**: Be cautious when selecting
 > Finality Providers for your stake. If the Finality Providers you delegate to get
 > slashed before your stake is registered, your stake may become stuck. This is
 > particularly important when delegating across multiple BSNs.
->>>>>>> 1c1c399 (docs: updates to `register-bitcoin-stake.md` and `staking-script.md` for multistaking  (#1233))
 
 Once assembled, this data is packaged into a Babylon chain transaction and
 broadcast to the network. The process differs based on whether the staker
@@ -711,15 +682,10 @@ refer to:
 
 ### 4.3. Withdrawing Remaining Funds after Slashing
 
-<<<<<<< HEAD
-Bitcoin stake is slashed if the finality provider to
-which it was delegated to double-signs. Slashing involves
-=======
 A Bitcoin stake is slashed if one of the Finality Providers to
 which it is delegated to double-signs. When delegating across multiple
 BSNs, slashing can be triggered by misbehavior from any
 finality provider in the delegation set. Slashing involves
->>>>>>> 1c1c399 (docs: updates to `register-bitcoin-stake.md` and `staking-script.md` for multistaking  (#1233))
 broadcasting a [slashing transaction](./staking-script.md)
 that sends a portion of the slashed funds to a burn address
 (as defined in the staking params in [Section 3.2.](#32-babylon-chain-btc-staking-parameters)),
@@ -731,15 +697,10 @@ To determine the slashing timelock, refer to the `unbonding_time_blocks`
 parameter in the [Babylon Chain BTC Staking Parameters](32-babylon-chain-btc-staking-parameters). Babylon ensures that the timelock on the change output of a slashing
 transaction matches the unbonding time. Therefore, the unbonding time
 parameter effectively represents your slashing timelock. The reasoning behind
-<<<<<<< HEAD
-the timelock is that we want to avoid situation in which some finality providers
-could use slashing as a way to unbond instantly.
-=======
 the timelock is that we want to avoid situations in which finality providers
 could use slashing as a way to unbond instantly. Note that when delegated to
 multiple finality providers across BSNs, slashing affects the entire
 delegation regardless of which specific finality provider misbehaved.
->>>>>>> 1c1c399 (docs: updates to `register-bitcoin-stake.md` and `staking-script.md` for multistaking  (#1233))
 
 ## 5. Bitcoin Staking Rewards
 
@@ -757,30 +718,18 @@ The rewards are distributed as follows:
   * Community pool
 
   The allocation is controlled by specific parameters:
-<<<<<<< HEAD
-  * **Bitcoin Stakers Portion**: Defined by the `btc_staking_portion` parameter,
-    which specifies the portion of rewards allocated to Bitcoin stakers. This is
-    calculated based on the voting power and commission rate of the finality
-    provider the stake has been delegated to.
-=======
   * **Bitcoin Stakers Portion**: Defined by the `btc_staking_portion`
     parameter, which specifies the portion  of rewards allocated to Bitcoin
     stakers. This is calculated based on the voting power and commission rate
     of the Finality Provider the stake has been delegated to.
     <!-- TODO: add updated rewards distribution section -->
->>>>>>> 1c1c399 (docs: updates to `register-bitcoin-stake.md` and `staking-script.md` for multistaking  (#1233))
   * **Community Pool Portion**: Typically defined in the `x/distribution`
     module of the Cosmos SDK, often referred to as the community tax.
   * **Native Stakers Portion**: The remaining rewards, after allocations to
     Bitcoin stakers and the community pool, are distributed to native stakers.
 
-<<<<<<< HEAD
-* Rewards for Bitcoin stakers are further distributed based on the voting power
-  and commission rate of the finality provider the stake has been delegated to.
-=======
 * Rewards for Bitcoin stakers are distributed based on the voting power
   and commission rates of all finality providers in their delegation set.
->>>>>>> 1c1c399 (docs: updates to `register-bitcoin-stake.md` and `staking-script.md` for multistaking  (#1233))
   The rewards are entered into a gauge, which stakers can query and withdraw
   from through a transaction submission.
   <!-- TODO: add updated rewards distribution section -->
