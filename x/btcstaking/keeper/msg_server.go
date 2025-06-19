@@ -323,6 +323,9 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 			return nil, fmt.Errorf("empty stake expansion covenant signature")
 		}
 
+		// TODO: check if the btc pk was a covenant at the parameters version
+		// of the previous active staking transaction
+
 		// checks if the stake expansion sig was sent and it is valid
 		// TODO: how to validate the covenant new stk expansion signature
 		err := btcstaking.VerifyTransactionSigStkExp(
@@ -427,7 +430,7 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 	spendStakeTxHash := stakeSpendingTx.TxHash()
 
 	stakeExpansionDel := ms.getBTCDelegation(ctx, spendStakeTxHash)
-	isStakeExpansion := stakeExpansionDel != nil && stakeExpansionDel.IsStakeExpansion()
+	isStakeExpansion := stakeExpansionDel != nil && btcDel.IsStakeExpansion()
 
 	// 1. Verify stake spending tx inclusion proof
 	if !isStakeExpansion {
