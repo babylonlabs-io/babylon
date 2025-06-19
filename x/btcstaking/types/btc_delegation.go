@@ -2,6 +2,7 @@ package types
 
 import (
 	"bytes"
+	"encoding/hex"
 	"fmt"
 	"math"
 
@@ -562,6 +563,20 @@ func (s *StakeExpansion) FundingTxOut() (*wire.TxOut, error) {
 
 func (s *StakeExpansion) HasCovenantQuorums(quorumPreviousStk uint32) bool {
 	return len(s.PreviousStkCovenantSigs) >= int(quorumPreviousStk)
+}
+
+func (s *StakeExpansion) ToResponse() *StakeExpansionResponse {
+	previousStk, err := s.StakeExpansionTxHash()
+	if err != nil {
+		return nil
+	}
+
+	otherFundingTxOutHex := hex.EncodeToString(s.OtherFundingTxOut)
+
+	return &StakeExpansionResponse{
+		PreviousStakingTxHashHex: previousStk.String(),
+		OtherFundingTxOutHex:     otherFundingTxOutHex,
+	}
 }
 
 func NewBTCDelegatorDelegationIndex() *BTCDelegatorDelegationIndex {

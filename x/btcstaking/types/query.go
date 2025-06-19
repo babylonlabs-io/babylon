@@ -46,7 +46,7 @@ func NewBTCDelegationResponse(btcDel *BTCDelegation, status BTCDelegationStatus)
 	}
 
 	if btcDel.IsStakeExpansion() {
-		resp.PreviousStakingTxHashHex = btcDel.MustGetStakeExpansionTxHash().String()
+		resp.StkExp = btcDel.StkExp.ToResponse()
 	}
 
 	return resp

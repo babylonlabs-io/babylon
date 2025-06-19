@@ -3956,14 +3956,35 @@ paths:
                     type: integer
                     format: int64
                     title: params version used to validate delegation
-                  previous_staking_tx_hash_hex:
-                    type: string
+                  stk_exp:
                     description: >-
-                      previous_staking_tx_hash_hex is the hash of the staking tx
-                      that was used as
+                      stk_exp contains the stake expansion information, if nil
+                      it is NOT a stake expansion.
+                    type: object
+                    properties:
+                      previous_staking_tx_hash_hex:
+                        type: string
+                        description: >-
+                          previous_staking_tx_hash is the hex hash of the
+                          staking tx that was used as
 
-                      input to the stake expansion, if empty it is NOT a stake
-                      expansion.
+                          input to the stake expansion.
+                      other_funding_tx_out_hex:
+                        type: string
+                        description: >-
+                          other_funding_tx_out is the other funding output
+                          (TxOut) which was used
+
+                          as input to construct the BTC delegation. The stake
+                          expansion has a set of
+
+                          2 inputs, the first input is the previous staking
+                          transaction and the
+
+                          second input (this one) is to pay for fees and
+                          optionally to add more
+
+                          stake to the BTC delegation.
             title: >-
               QueryBTCDelegationResponse is response type matching
 
@@ -4426,14 +4447,35 @@ paths:
                       type: integer
                       format: int64
                       title: params version used to validate delegation
-                    previous_staking_tx_hash_hex:
-                      type: string
+                    stk_exp:
                       description: >-
-                        previous_staking_tx_hash_hex is the hash of the staking
-                        tx that was used as
+                        stk_exp contains the stake expansion information, if nil
+                        it is NOT a stake expansion.
+                      type: object
+                      properties:
+                        previous_staking_tx_hash_hex:
+                          type: string
+                          description: >-
+                            previous_staking_tx_hash is the hex hash of the
+                            staking tx that was used as
 
-                        input to the stake expansion, if empty it is NOT a stake
-                        expansion.
+                            input to the stake expansion.
+                        other_funding_tx_out_hex:
+                          type: string
+                          description: >-
+                            other_funding_tx_out is the other funding output
+                            (TxOut) which was used
+
+                            as input to construct the BTC delegation. The stake
+                            expansion has a set of
+
+                            2 inputs, the first input is the previous staking
+                            transaction and the
+
+                            second input (this one) is to pay for fees and
+                            optionally to add more
+
+                            stake to the BTC delegation.
                   description: >-
                     BTCDelegationResponse is the client needed information from
                     a BTCDelegation
@@ -5439,14 +5481,35 @@ paths:
                             type: integer
                             format: int64
                             title: params version used to validate delegation
-                          previous_staking_tx_hash_hex:
-                            type: string
+                          stk_exp:
                             description: >-
-                              previous_staking_tx_hash_hex is the hash of the
-                              staking tx that was used as
+                              stk_exp contains the stake expansion information,
+                              if nil it is NOT a stake expansion.
+                            type: object
+                            properties:
+                              previous_staking_tx_hash_hex:
+                                type: string
+                                description: >-
+                                  previous_staking_tx_hash is the hex hash of
+                                  the staking tx that was used as
 
-                              input to the stake expansion, if empty it is NOT a
-                              stake expansion.
+                                  input to the stake expansion.
+                              other_funding_tx_out_hex:
+                                type: string
+                                description: >-
+                                  other_funding_tx_out is the other funding
+                                  output (TxOut) which was used
+
+                                  as input to construct the BTC delegation. The
+                                  stake expansion has a set of
+
+                                  2 inputs, the first input is the previous
+                                  staking transaction and the
+
+                                  second input (this one) is to pay for fees and
+                                  optionally to add more
+
+                                  stake to the BTC delegation.
                         description: >-
                           BTCDelegationResponse is the client needed information
                           from a BTCDelegation
@@ -18796,13 +18859,35 @@ definitions:
         type: integer
         format: int64
         title: params version used to validate delegation
-      previous_staking_tx_hash_hex:
-        type: string
+      stk_exp:
         description: >-
-          previous_staking_tx_hash_hex is the hash of the staking tx that was
-          used as
+          stk_exp contains the stake expansion information, if nil it is NOT a
+          stake expansion.
+        type: object
+        properties:
+          previous_staking_tx_hash_hex:
+            type: string
+            description: >-
+              previous_staking_tx_hash is the hex hash of the staking tx that
+              was used as
 
-          input to the stake expansion, if empty it is NOT a stake expansion.
+              input to the stake expansion.
+          other_funding_tx_out_hex:
+            type: string
+            description: >-
+              other_funding_tx_out is the other funding output (TxOut) which was
+              used
+
+              as input to construct the BTC delegation. The stake expansion has
+              a set of
+
+              2 inputs, the first input is the previous staking transaction and
+              the
+
+              second input (this one) is to pay for fees and optionally to add
+              more
+
+              stake to the BTC delegation.
     description: >-
       BTCDelegationResponse is the client needed information from a
       BTCDelegation
@@ -19085,14 +19170,35 @@ definitions:
               type: integer
               format: int64
               title: params version used to validate delegation
-            previous_staking_tx_hash_hex:
-              type: string
+            stk_exp:
               description: >-
-                previous_staking_tx_hash_hex is the hash of the staking tx that
-                was used as
+                stk_exp contains the stake expansion information, if nil it is
+                NOT a stake expansion.
+              type: object
+              properties:
+                previous_staking_tx_hash_hex:
+                  type: string
+                  description: >-
+                    previous_staking_tx_hash is the hex hash of the staking tx
+                    that was used as
 
-                input to the stake expansion, if empty it is NOT a stake
-                expansion.
+                    input to the stake expansion.
+                other_funding_tx_out_hex:
+                  type: string
+                  description: >-
+                    other_funding_tx_out is the other funding output (TxOut)
+                    which was used
+
+                    as input to construct the BTC delegation. The stake
+                    expansion has a set of
+
+                    2 inputs, the first input is the previous staking
+                    transaction and the
+
+                    second input (this one) is to pay for fees and optionally to
+                    add more
+
+                    stake to the BTC delegation.
           description: >-
             BTCDelegationResponse is the client needed information from a
             BTCDelegation
@@ -19773,14 +19879,35 @@ definitions:
             type: integer
             format: int64
             title: params version used to validate delegation
-          previous_staking_tx_hash_hex:
-            type: string
+          stk_exp:
             description: >-
-              previous_staking_tx_hash_hex is the hash of the staking tx that
-              was used as
+              stk_exp contains the stake expansion information, if nil it is NOT
+              a stake expansion.
+            type: object
+            properties:
+              previous_staking_tx_hash_hex:
+                type: string
+                description: >-
+                  previous_staking_tx_hash is the hex hash of the staking tx
+                  that was used as
 
-              input to the stake expansion, if empty it is NOT a stake
-              expansion.
+                  input to the stake expansion.
+              other_funding_tx_out_hex:
+                type: string
+                description: >-
+                  other_funding_tx_out is the other funding output (TxOut) which
+                  was used
+
+                  as input to construct the BTC delegation. The stake expansion
+                  has a set of
+
+                  2 inputs, the first input is the previous staking transaction
+                  and the
+
+                  second input (this one) is to pay for fees and optionally to
+                  add more
+
+                  stake to the BTC delegation.
     title: |-
       QueryBTCDelegationResponse is response type matching
       QueryBTCDelegationRequest and containing BTC delegation information
@@ -20018,14 +20145,35 @@ definitions:
               type: integer
               format: int64
               title: params version used to validate delegation
-            previous_staking_tx_hash_hex:
-              type: string
+            stk_exp:
               description: >-
-                previous_staking_tx_hash_hex is the hash of the staking tx that
-                was used as
+                stk_exp contains the stake expansion information, if nil it is
+                NOT a stake expansion.
+              type: object
+              properties:
+                previous_staking_tx_hash_hex:
+                  type: string
+                  description: >-
+                    previous_staking_tx_hash is the hex hash of the staking tx
+                    that was used as
 
-                input to the stake expansion, if empty it is NOT a stake
-                expansion.
+                    input to the stake expansion.
+                other_funding_tx_out_hex:
+                  type: string
+                  description: >-
+                    other_funding_tx_out is the other funding output (TxOut)
+                    which was used
+
+                    as input to construct the BTC delegation. The stake
+                    expansion has a set of
+
+                    2 inputs, the first input is the previous staking
+                    transaction and the
+
+                    second input (this one) is to pay for fees and optionally to
+                    add more
+
+                    stake to the BTC delegation.
           description: >-
             BTCDelegationResponse is the client needed information from a
             BTCDelegation
@@ -20307,14 +20455,35 @@ definitions:
                     type: integer
                     format: int64
                     title: params version used to validate delegation
-                  previous_staking_tx_hash_hex:
-                    type: string
+                  stk_exp:
                     description: >-
-                      previous_staking_tx_hash_hex is the hash of the staking tx
-                      that was used as
+                      stk_exp contains the stake expansion information, if nil
+                      it is NOT a stake expansion.
+                    type: object
+                    properties:
+                      previous_staking_tx_hash_hex:
+                        type: string
+                        description: >-
+                          previous_staking_tx_hash is the hex hash of the
+                          staking tx that was used as
 
-                      input to the stake expansion, if empty it is NOT a stake
-                      expansion.
+                          input to the stake expansion.
+                      other_funding_tx_out_hex:
+                        type: string
+                        description: >-
+                          other_funding_tx_out is the other funding output
+                          (TxOut) which was used
+
+                          as input to construct the BTC delegation. The stake
+                          expansion has a set of
+
+                          2 inputs, the first input is the previous staking
+                          transaction and the
+
+                          second input (this one) is to pay for fees and
+                          optionally to add more
+
+                          stake to the BTC delegation.
                 description: >-
                   BTCDelegationResponse is the client needed information from a
                   BTCDelegation
@@ -21322,6 +21491,35 @@ definitions:
         type: string
         format: byte
     title: SignatureInfo is a BIP-340 signature together with its signer's BIP-340 PK
+  babylon.btcstaking.v1.StakeExpansionResponse:
+    type: object
+    properties:
+      previous_staking_tx_hash_hex:
+        type: string
+        description: >-
+          previous_staking_tx_hash is the hex hash of the staking tx that was
+          used as
+
+          input to the stake expansion.
+      other_funding_tx_out_hex:
+        type: string
+        description: >-
+          other_funding_tx_out is the other funding output (TxOut) which was
+          used
+
+          as input to construct the BTC delegation. The stake expansion has a
+          set of
+
+          2 inputs, the first input is the previous staking transaction and the
+
+          second input (this one) is to pay for fees and optionally to add more
+
+          stake to the BTC delegation.
+    description: >-
+      StakeExpansionResponse stores information necessary to construct the
+      expanded BTC staking
+
+      transaction created from a previous BTC staking.
   babylon.btcstaking.v1.StoredParams:
     type: object
     properties:
