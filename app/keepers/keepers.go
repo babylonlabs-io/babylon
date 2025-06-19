@@ -253,8 +253,6 @@ func (ak *AppKeepers) InitKeepers(
 		icahosttypes.StoreKey,
 		icacontrollertypes.StoreKey,
 		ratelimittypes.StoreKey,
-		// ZoneConcierge
-		zctypes.StoreKey,
 		// Integration related modules
 		bsctypes.ModuleName,
 		zctypes.ModuleName,
@@ -851,6 +849,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
 	paramsKeeper.Subspace(tokenfactorytypes.ModuleName)
 	paramsKeeper.Subspace(ratelimittypes.ModuleName)
+	paramsKeeper.Subspace(zctypes.ModuleName)
 
 	return paramsKeeper
 }
