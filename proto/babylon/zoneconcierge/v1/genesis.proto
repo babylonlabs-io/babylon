@@ -1,0 +1,48 @@
+syntax = "proto3";
+package babylon.zoneconcierge.v1;
+
+import "gogoproto/gogo.proto";
+import "babylon/zoneconcierge/v1/params.proto";
+import "babylon/zoneconcierge/v1/zoneconcierge.proto";
+
+option go_package = "github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types";
+
+// GenesisState defines the zoneconcierge module's genesis state.
+message GenesisState {
+  // port identification
+  string port_id = 1;
+  // params holds the zoneconcierge module's parameters
+  Params params = 2 [ (gogoproto.nullable) = false ];
+  // chains_info contains all the registered chains information
+  repeated ChainInfo chains_info = 3;
+  // chains_indexed_headers contains the canonical chains
+  // of the consumer chains, formed as a list of IndexedHeaders
+  repeated IndexedHeader chains_indexed_headers = 4;
+  // chains_forks contains the forks for each consumer chain
+  repeated Forks chains_forks = 5;
+  // chains_epochs_info contains the epochs' latest ChainInfo for a consumer
+  // chain
+  repeated EpochChainInfoEntry chains_epochs_info = 6;
+  // last_sent_segment is the last BTC chain segment
+  // which was broadcasted to the other light clients
+  BTCChainSegment last_sent_segment = 7;
+  // sealed_epochs_proofs contains the proofs that each epoch is sealed
+  repeated SealedEpochProofEntry sealed_epochs_proofs = 8;
+}
+
+// EpochChainInfoEntry contains each epoch's latest ChainInfo for a consumer
+// chain
+message EpochChainInfoEntry {
+  // epoch_number is the number of the epoch
+  uint64 epoch_number = 1;
+  // chain_info contains the last consumer chain info of the epoch
+  ChainInfoWithProof chain_info = 2;
+}
+
+// SealedEpochProofEntry contains each epoch's proof that it is sealed
+message SealedEpochProofEntry {
+  // epoch_number is the number of the epoch
+  uint64 epoch_number = 1;
+  // proof is the proof that an epoch is sealed by the sealer header
+  ProofEpochSealed proof = 2;
+}

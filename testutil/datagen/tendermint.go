@@ -1,6 +1,7 @@
 package datagen
 
 import (
+	zctypes "github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
 	"math/rand"
 	"time"
 
@@ -28,6 +29,16 @@ func GenRandomIBCTMHeader(r *rand.Rand, height uint64) *ibctmtypes.Header {
 				AppHash: GenRandomByteArray(r, 32),
 			},
 		},
+	}
+}
+
+func NewZCHeaderInfo(header *ibctmtypes.Header, clientID string) *zctypes.HeaderInfo {
+	return &zctypes.HeaderInfo{
+		ClientId: clientID,
+		AppHash:  header.Header.AppHash,
+		ChainId:  header.Header.ChainID,
+		Time:     header.Header.Time,
+		Height:   uint64(header.Header.Height),
 	}
 }
 

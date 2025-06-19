@@ -3,6 +3,8 @@ package keepers
 import (
 	"context"
 	"fmt"
+	zckeeper "github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/keeper"
+	zctypes "github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
 	ratelimitv2 "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/v2"
 	ibccallbacksv2 "github.com/cosmos/ibc-go/v10/modules/apps/callbacks/v2"
 	transferv2 "github.com/cosmos/ibc-go/v10/modules/apps/transfer/v2"
@@ -166,6 +168,7 @@ type AppKeepers struct {
 
 	// Integration-related modules
 	BTCStkConsumerKeeper bsckeeper.Keeper
+	ZoneConciergeKeeper  zckeeper.Keeper
 
 	// BTC staking related modules
 	BTCStakingKeeper btcstakingkeeper.Keeper
@@ -231,6 +234,7 @@ func (ak *AppKeepers) InitKeepers(
 		ratelimittypes.StoreKey,
 		// Integration related modules
 		bsctypes.ModuleName,
+		zctypes.ModuleName,
 		// BTC staking related modules
 		btcstakingtypes.StoreKey,
 		finalitytypes.StoreKey,
@@ -418,7 +422,7 @@ func (ak *AppKeepers) InitKeepers(
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
-	wasmOpts = append(owasm.RegisterCustomPlugins(&ak.TokenFactoryKeeper, &epochingKeeper, &ak.CheckpointingKeeper, &ak.BTCLightClientKeeper), wasmOpts...)
+	wasmOpts = append(owasm.RegisterCustomPlugins(&ak.TokenFactoryKeeper, &epochingKeeper, &ak.CheckpointingKeeper, &ak.BTCLightClientKeeper, &ak.ZoneConciergeKeeper), wasmOpts...)
 	wasmOpts = append(owasm.RegisterGrpcQueries(*bApp.GRPCQueryRouter(), appCodec), wasmOpts...)
 
 	ak.WasmKeeper = wasmkeeper.NewKeeper(
@@ -564,13 +568,38 @@ func (ak *AppKeepers) InitKeepers(
 		&btclightclientKeeper,
 	)
 
+	// create querier for KVStore
+	storeQuerier, ok := bApp.CommitMultiStore().(storetypes.Queryable)
+	if !ok {
+		panic(fmt.Errorf("multistore doesn't support queries"))
+	}
+
+	zcKeeper := zckeeper.NewKeeper(
+		appCodec,
+		runtime.NewKVStoreService(keys[zctypes.StoreKey]),
+		ak.IBCKeeper.ChannelKeeper,
+		ak.IBCKeeper.ClientKeeper,
+		ak.IBCKeeper.ConnectionKeeper,
+		ak.IBCKeeper.ChannelKeeper,
+		ak.AccountKeeper,
+		ak.BankKeeper,
+		&btclightclientKeeper,
+		&checkpointingKeeper,
+		&btcCheckpointKeeper,
+		epochingKeeper,
+		storeQuerier,
+		&ak.BTCStakingKeeper,
+		&ak.BTCStkConsumerKeeper,
+		appparams.AccGov.String(),
+	)
+
 	// make ZoneConcierge and Monitor to subscribe to the epoching's hooks
 	epochingKeeper.SetHooks(
-		epochingtypes.NewMultiEpochingHooks(monitorKeeper.Hooks()),
+		epochingtypes.NewMultiEpochingHooks(zcKeeper.Hooks(), monitorKeeper.Hooks()),
 	)
 	// set up Checkpointing, BTCCheckpoint, and BTCLightclient keepers
 	checkpointingKeeper.SetHooks(
-		checkpointingtypes.NewMultiCheckpointingHooks(epochingKeeper.Hooks(), monitorKeeper.Hooks()),
+		checkpointingtypes.NewMultiCheckpointingHooks(epochingKeeper.Hooks(), zcKeeper.Hooks(), monitorKeeper.Hooks()),
 	)
 	btclightclientKeeper.SetHooks(
 		btclightclienttypes.NewMultiBTCLightClientHooks(btcCheckpointKeeper.Hooks(), ak.BTCStakingKeeper.Hooks()),
@@ -582,6 +611,7 @@ func (ak *AppKeepers) InitKeepers(
 	ak.CheckpointingKeeper = checkpointingKeeper
 	ak.BtcCheckpointKeeper = btcCheckpointKeeper
 	ak.MonitorKeeper = monitorKeeper
+	ak.ZoneConciergeKeeper = *zcKeeper
 
 	// create evidence keeper with router
 	evidenceKeeper := evidencekeeper.NewKeeper(
