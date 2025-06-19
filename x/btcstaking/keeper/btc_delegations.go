@@ -112,12 +112,14 @@ func (k Keeper) CreateBTCDelegation(ctx sdk.Context, parsedMsg *types.ParsedCrea
 
 	stkExp := parsedMsg.StkExp
 	if stkExp != nil { // stake expansion being set
-
-		// stkExp.OtherInput.
+		fundingOut, err := stkExp.SerializeOtherFundingOutput()
+		if err != nil {
+			panic(fmt.Errorf("failed to serialize tx out for other funding output: %w", err))
+		}
 
 		newBTCDel.StkExp = &types.StakeExpansion{
-			PreviousStakingTxHash: stkExp.PreviousActiveStkTxHash[:],
-			// TxInput: TODO(rafilx),
+			PreviousStakingTxHash:   stkExp.PreviousActiveStkTxHash[:],
+			OtherFundingTxOut:       fundingOut,
 			PreviousStkCovenantSigs: nil,
 		}
 	}

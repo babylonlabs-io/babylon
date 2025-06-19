@@ -894,11 +894,26 @@ func EncVerifyTransactionSigWithOutput(
 	return signature.EncVerify(pubKey, encKey, sigHash)
 }
 
+// SerializeTxOut serializes a wire.TxOut to a byte slice.
 func SerializeTxOut(txOut *wire.TxOut) ([]byte, error) {
 	var buf bytes.Buffer
-	err := wire.WriteTxOut(&buf)
+
+	err := wire.WriteTxOut(&buf, 0, 0, txOut)
 	if err != nil {
 		return nil, err
 	}
 	return buf.Bytes(), nil
+}
+
+// DeserializeTxOut deserializes a byte slice into a wire.TxOut.
+func DeserializeTxOut(serializedBytes []byte) (*wire.TxOut, error) {
+	var txOut wire.TxOut
+	reader := bytes.NewReader(serializedBytes)
+
+	err := wire.ReadTxOut(reader, 0, 0, &txOut)
+	if err != nil {
+		return nil, err
+	}
+
+	return &txOut, nil
 }

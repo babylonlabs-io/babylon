@@ -11,6 +11,7 @@ import (
 	"github.com/btcsuite/btcd/wire"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/babylonlabs-io/babylon/v3/btcstaking"
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
 )
 
@@ -312,4 +313,8 @@ func ParseCreateDelegationMessage(msg ExpMsgParseBtcCreation) (*ParsedCreateDele
 
 func (msg *ParsedCreateDelegationMessage) IsIncludedOnBTC() bool {
 	return msg.StakingTxProofOfInclusion != nil
+}
+
+func (msg *ParsedCreateDelStkExp) SerializeOtherFundingOutput() ([]byte, error) {
+	return btcstaking.SerializeTxOut(msg.OtherFundingOutput)
 }

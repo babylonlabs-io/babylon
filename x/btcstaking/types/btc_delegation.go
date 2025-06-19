@@ -556,6 +556,10 @@ func (s *StakeExpansion) StakeExpansionTxHash() (*chainhash.Hash, error) {
 	return chainhash.NewHash(s.PreviousStakingTxHash)
 }
 
+func (s *StakeExpansion) FundingTxOut() (*wire.TxOut, error) {
+	return btcstaking.DeserializeTxOut(s.OtherFundingTxOut)
+}
+
 func (s *StakeExpansion) HasCovenantQuorums(quorumPreviousStk uint32) bool {
 	return len(s.PreviousStkCovenantSigs) >= int(quorumPreviousStk)
 }
