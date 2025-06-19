@@ -183,7 +183,7 @@ func (ms msgServer) AddBTCDelegationInclusionProof(
 	}
 
 	if btcDel.IsStakeExpansion() {
-		return nil, fmt.Errorf("the BTC delegation %s is a stake expansion, use MsgBTCUndelegate to include the proof", req.StakingTxHash)
+		return nil, fmt.Errorf("the BTC delegation %s is a stake expansion, use MsgBTCUndelegate to set the inclusion proof", req.StakingTxHash)
 	}
 
 	// Creates events and updates the btc del if all the checks are valid
