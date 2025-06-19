@@ -145,6 +145,10 @@ func (ms msgServer) BtcStakeExpand(goCtx context.Context, req *types.MsgBtcStake
 		return nil, err
 	}
 
+	if !strings.EqualFold(previousBtcDel.StakerAddr, req.StakerAddr) {
+		return nil, fmt.Errorf("the previous BTC staking transaction staker address: %s does not match with current staker address: %s", previousBtcDel.StakerAddr, req.StakerAddr)
+	}
+
 	if !bbn.IsSubsetBip340Pks(previousBtcDel.FpBtcPkList, req.FpBtcPkList) {
 		return nil, fmt.Errorf("the previous BTC staking transaction FPs: %+v are not a subset of the stake expansion FPs %+v", previousBtcDel.FpBtcPkList, req.FpBtcPkList)
 	}
