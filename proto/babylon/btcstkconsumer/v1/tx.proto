@@ -53,15 +53,11 @@ message MsgRegisterConsumer {
   string consumer_name = 3;
   // consumer_description is a description for the consumer (can be empty)
   string consumer_description = 4;
-  // max_multi_staked_fps is the maximum number of finality providers from this consumer
-  // that can be part of a single BTC delegation. Must be at least 2 to allow for at least
-  // one Babylon FP and one consumer FP.
-  uint32 max_multi_staked_fps = 5;
-  // rollup_finality_contract_address is the Cosmos address of the
+  // eth_l2_finality_contract_address is the Cosmos address of the
   // finality contract. The finality contract is deployed on Babylon and
   // serves as the data availability layer for finality signatures of the rollup.
   // (if set, then this means this is a rollup integration)
-  string rollup_finality_contract_address = 6 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string rollup_finality_contract_address = 5 [(cosmos_proto.scalar) = "cosmos.AddressString"];
 }
 
 // MsgRegisterConsumerResponse is the response to the MsgRegisterConsumer message.

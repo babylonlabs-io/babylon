@@ -1,11 +1,13 @@
 package keeper_test
 
 import (
+	"errors"
 	"math/rand"
 	"testing"
 
 	testutil "github.com/babylonlabs-io/babylon/v3/testutil/btcstaking-helper"
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
+	bbn "github.com/babylonlabs-io/babylon/v3/types"
 	btclctypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
 	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 	"github.com/btcsuite/btcd/btcec/v2"
@@ -44,44 +46,33 @@ func FuzzRestaking_RestakedBTCDelegation(f *testing.F) {
 		h.Error(err)
 
 		/*
-			register multiple consumers with different max_multi_staked_fps values
-			and create finality providers under them
+			register a new consumer and create a new finality provider under it
+			ensure it's correctly generated
 		*/
-		// Consumer 1 with max_multi_staked_fps = 2
-		consumerRegister1 := datagen.GenRandomCosmosConsumerRegister(r)
-		consumerRegister1.MaxMultiStakedFps = 2
-		err = h.BTCStkConsumerKeeper.RegisterConsumer(h.Ctx, consumerRegister1)
+		consumerRegister := datagen.GenRandomCosmosConsumerRegister(r)
+		err = h.BTCStkConsumerKeeper.RegisterConsumer(h.Ctx, consumerRegister)
 		require.NoError(t, err)
-		_, consumerFPPK1, _, err := h.CreateConsumerFinalityProvider(r, consumerRegister1.ConsumerId)
+		_, consumerFPPK, consumerFP, err := h.CreateConsumerFinalityProvider(r, consumerRegister.ConsumerId)
 		h.NoError(err)
-
-		// Consumer 2 with max_multi_staked_fps = 3
-		consumerRegister2 := datagen.GenRandomCosmosConsumerRegister(r)
-		consumerRegister2.MaxMultiStakedFps = 3
-		err = h.BTCStkConsumerKeeper.RegisterConsumer(h.Ctx, consumerRegister2)
-		require.NoError(t, err)
-		_, consumerFPPK2, _, err := h.CreateConsumerFinalityProvider(r, consumerRegister2.ConsumerId)
+		consumerFPBTCPK := bbn.NewBIP340PubKeyFromBTCPK(consumerFPPK)
+		consumerFP2, err := h.BTCStkConsumerKeeper.GetConsumerFinalityProvider(h.Ctx, consumerRegister.ConsumerId, consumerFPBTCPK)
 		h.NoError(err)
-
-		// Consumer 3 with max_multi_staked_fps = 4
-		consumerRegister3 := datagen.GenRandomCosmosConsumerRegister(r)
-		consumerRegister3.MaxMultiStakedFps = 4
-		err = h.BTCStkConsumerKeeper.RegisterConsumer(h.Ctx, consumerRegister3)
-		require.NoError(t, err)
-		_, consumerFPPK3, _, err := h.CreateConsumerFinalityProvider(r, consumerRegister3.ConsumerId)
-		h.NoError(err)
-
-		stakingValue := int64(2 * 10e8)
+		// on finality provider creation, the commission update time is set to the
+		// current block time. The consumerFP is randomly generated with update time = 0,
+		// so we need to update it to the block time to make it equal
+		consumerFP.CommissionInfo.UpdateTime = h.Ctx.BlockTime().UTC()
+		require.Equal(t, consumerFP, consumerFP2)
 
 		/*
-			Test multiple consumers with different max_multi_staked_fps values
+			ensure BTC delegation request will fail if some fp PK does not exist
 		*/
-		// Test case 1: Valid delegation with 1 Babylon FP and 1 FP from each consumer (total 4 FPs)
-		// This should fail because min(max_multi_staked_fps) = 2, but we're trying to use 4 FPs
+		stakingValue := int64(2 * 10e8)
+		_, randomFPPK, err := datagen.GenRandomBTCKeyPair(r)
+		h.NoError(err)
 		_, _, _, _, _, _, err = h.CreateDelegationWithBtcBlockHeight(
 			r,
 			delSK,
-			[]*btcec.PublicKey{fpPK, consumerFPPK1, consumerFPPK2, consumerFPPK3},
+			[]*btcec.PublicKey{fpPK, randomFPPK},
 			stakingValue,
 			1000,
 			0,
@@ -92,50 +83,15 @@ func FuzzRestaking_RestakedBTCDelegation(f *testing.F) {
 			30,
 		)
 		h.Error(err)
-		require.ErrorIs(t, err, types.ErrTooManyFPs)
+		require.True(t, errors.Is(err, types.ErrFpNotFound))
 
-		// Test case 2: Valid delegation with 1 Babylon FP and 1 FP from consumer1 (total 2 FPs)
-		// This should succeed because it's within the minimum max_multi_staked_fps (2)
-		_, msgBTCDel, actualDel, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
-			r,
-			delSK,
-			[]*btcec.PublicKey{fpPK, consumerFPPK1},
-			stakingValue,
-			1000,
-			0,
-			0,
-			false,
-			false,
-			10,
-			30,
-		)
-		h.NoError(err)
-
-		// Test case 3: Valid delegation with 1 Babylon FP and 1 FP from consumer2 (total 2 FPs)
-		// This should succeed because it's within the minimum max_multi_staked_fps (2)
+		/*
+			ensure BTC delegation request will fail if no PK corresponds to a Babylon fp
+		*/
 		_, _, _, _, _, _, err = h.CreateDelegationWithBtcBlockHeight(
 			r,
 			delSK,
-			[]*btcec.PublicKey{fpPK, consumerFPPK2},
-			stakingValue,
-			1000,
-			0,
-			0,
-			false,
-			false,
-			10,
-			30,
-		)
-		h.NoError(err)
-
-		// Test case 4: Invalid delegation with 1 Babylon FP and 2 FPs from consumer1 (total 3 FPs)
-		// This should fail because it exceeds the minimum max_multi_staked_fps (2)
-		_, consumerFPPK1_2, _, err := h.CreateConsumerFinalityProvider(r, consumerRegister1.ConsumerId)
-		h.NoError(err)
-		_, _, _, _, _, _, err = h.CreateDelegationWithBtcBlockHeight(
-			r,
-			delSK,
-			[]*btcec.PublicKey{fpPK, consumerFPPK1, consumerFPPK1_2},
+			[]*btcec.PublicKey{consumerFPPK},
 			stakingValue,
 			1000,
 			0,
@@ -146,11 +102,27 @@ func FuzzRestaking_RestakedBTCDelegation(f *testing.F) {
 			30,
 		)
 		h.Error(err)
-		require.ErrorIs(t, err, types.ErrTooManyFPsFromSameConsumer)
+		require.True(t, errors.Is(err, types.ErrNoBabylonFPRestaked), err)
 
 		/*
 			happy case -- restaking to a Babylon fp and a consumer fp
 		*/
+
+		_, msgBTCDel, actualDel, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
+			r,
+			delSK,
+			[]*btcec.PublicKey{fpPK, consumerFPPK},
+			stakingValue,
+			1000,
+			0,
+			0,
+			false,
+			false,
+			10,
+			30,
+		)
+		h.NoError(err)
+
 		// add covenant signatures to this restaked BTC delegation
 		h.CreateCovenantSigs(r, covenantSKs, msgBTCDel, actualDel, 10)
 
