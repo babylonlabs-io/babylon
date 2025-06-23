@@ -2,12 +2,14 @@ package app_test
 
 import (
 	"fmt"
+	"strings"
+	"testing"
+
 	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
 	erc20types "github.com/cosmos/evm/x/erc20/types"
 	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
 	precisebanktypes "github.com/cosmos/evm/x/precisebank/types"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
-	"testing"
 
 	tokenfactorytypes "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/types"
 
