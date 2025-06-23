@@ -70,11 +70,8 @@ func (k Keeper) GetBTCConsumerDelegatorDelegationsResponses(
 		btcDelsResp := make([]*bstypes.BTCDelegationResponse, len(curBTCDels.Dels))
 		for i, btcDel := range curBTCDels.Dels {
 			params := k.GetParamsByVersion(ctx, btcDel.ParamsVersion)
+			status := k.BtcDelStatus(ctx, btcDel, params.CovenantQuorum, btcHeight)
 
-			status := btcDel.GetStatus(
-				btcHeight,
-				params.CovenantQuorum,
-			)
 			btcDelsResp[i] = bstypes.NewBTCDelegationResponse(btcDel, status)
 		}
 
