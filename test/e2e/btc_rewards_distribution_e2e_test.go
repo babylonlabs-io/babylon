@@ -245,7 +245,7 @@ func (s *BtcRewardsDistribution) Test4CommitPublicRandomnessAndSealed() {
 	// commit public randomness list
 	commitStartHeight := uint64(5)
 
-	randCommitContext := signingcontext.FpFinVoteContextV0(n1.ChainID(), appparams.AccFinality.String())
+	randCommitContext := signingcontext.FpRandCommitContextV0(n1.ChainID(), appparams.AccFinality.String())
 
 	fp1RandListInfo, fp1CommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(s.r, s.fp1BTCSK, randCommitContext, commitStartHeight, numPubRand)
 	s.NoError(err)
