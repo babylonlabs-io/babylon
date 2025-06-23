@@ -103,6 +103,14 @@ This PR contains a series of PRs on multi-staking support and BTC staking integr
 - [#964](https://github.com/babylonlabs-io/babylon/pull/964) fix: stateless validation `ValidateBasic` of
 `MsgWrappedCreateValidator` to avoid panic in transaction submission
 
+## v2.1.0
+
+- [#1244](https://github.com/babylonlabs-io/babylon/pull/1244) fix: remove staking module from app end blocker order
+
+## v2.0.0
+
+- [#1226](https://github.com/babylonlabs-io/babylon/pull/1226) chore: Revert goreleaser to use musl
+
 ## v2.0.0-rc.4
 
 ### Improvements
