@@ -17,8 +17,9 @@ import (
 
 type (
 	Keeper struct {
-		cdc          codec.BinaryCodec
-		storeService corestoretypes.KVStoreService
+		cdc                     codec.BinaryCodec
+		storeService            corestoretypes.KVStoreService
+		btcStakingModuleAddress string
 
 		btclcKeeper types.BTCLightClientKeeper
 		btccKeeper  types.BtcCheckpointKeeper
@@ -49,18 +50,19 @@ func NewKeeper(
 	iKeeper types.IncentiveKeeper,
 
 	btcNet *chaincfg.Params,
+	btcStakingModuleAddress string,
 	authority string,
 ) Keeper {
 	sb := collections.NewSchemaBuilder(storeService)
 
 	k := Keeper{
-		cdc:          cdc,
-		storeService: storeService,
-
-		btclcKeeper: btclcKeeper,
-		btccKeeper:  btccKeeper,
-		BscKeeper:   bscKeeper,
-		iKeeper:     iKeeper,
+		cdc:                     cdc,
+		storeService:            storeService,
+		btcStakingModuleAddress: btcStakingModuleAddress,
+		btclcKeeper:             btclcKeeper,
+		btccKeeper:              btccKeeper,
+		BscKeeper:               bscKeeper,
+		iKeeper:                 iKeeper,
 
 		AllowedStakingTxHashesKeySet: collections.NewKeySet(
 			sb,

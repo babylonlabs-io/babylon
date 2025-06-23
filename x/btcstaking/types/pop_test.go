@@ -12,13 +12,17 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/babylonlabs-io/babylon/v3/app/params"
+	"github.com/babylonlabs-io/babylon/v3/app/signingcontext"
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
 	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 )
 
 var (
-	net = &chaincfg.TestNet3Params
+	net              = &chaincfg.TestNet3Params
+	testChainID      = "test-5"
+	testModulAddress = params.AccBTCStaking
 )
 
 func newInvalidBIP340PoP(r *rand.Rand) *types.ProofOfPossessionBTC {
@@ -28,17 +32,44 @@ func newInvalidBIP340PoP(r *rand.Rand) *types.ProofOfPossessionBTC {
 	}
 }
 
+func RandomSigningContext(r *rand.Rand) string {
+	randomModuleAddress := datagen.GenRandomAccount().GetAddress().String()
+	ruint32 := datagen.RandomUInt32(r, 4)
+	if ruint32 == 0 {
+		return signingcontext.HashedHexContext(
+			signingcontext.FpFinVoteContextV0(testChainID, randomModuleAddress),
+		)
+	} else if ruint32 == 1 {
+		return signingcontext.HashedHexContext(
+			signingcontext.FpRandCommitContextV0(testChainID, randomModuleAddress),
+		)
+	} else if ruint32 == 2 {
+		return signingcontext.HashedHexContext(
+			signingcontext.StakerPopContextV0(testChainID, randomModuleAddress),
+		)
+	} else {
+		return signingcontext.HashedHexContext(
+			signingcontext.FpPopContextV0(testChainID, randomModuleAddress),
+		)
+	}
+}
+
 func Fuzz_MsgToSignBIP322(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		accAddr := datagen.GenRandomAccount().GetAddress()
-
 		addrStr := accAddr.String()
 		strUtf8Valid := utf8.ValidString(addrStr)
 		require.True(t, strUtf8Valid)
 
-		bz := types.MsgToSignBIP322(accAddr)
+		radnomModuleAddress := datagen.GenRandomAccount().GetAddress().String()
+
+		signingContext := signingcontext.HashedHexContext(
+			signingcontext.StakerPopContextV0(testChainID, radnomModuleAddress),
+		)
+
+		bz := types.MsgToSignBIP322(signingContext, accAddr)
 		require.Equal(t, []byte(addrStr), bz)
 
 		bzUtf8Valid := utf8.Valid(bz)
@@ -58,16 +89,16 @@ func FuzzPoP_BIP340(f *testing.F) {
 		bip340PK := bbn.NewBIP340PubKeyFromBTCPK(btcPK)
 
 		accAddr := datagen.GenRandomAccount().GetAddress()
-
+		signingContext := RandomSigningContext(r)
 		// generate and verify PoP, correct case
-		pop, err := datagen.NewPoPBTC(accAddr, btcSK)
+		pop, err := datagen.NewPoPBTC(signingContext, accAddr, btcSK)
 		require.NoError(t, err)
-		err = pop.VerifyBIP340(accAddr, bip340PK)
+		err = pop.VerifyBIP340(signingContext, accAddr, bip340PK)
 		require.NoError(t, err)
 
 		// generate and verify PoP, invalid case
 		invalidPoP := newInvalidBIP340PoP(r)
-		err = invalidPoP.VerifyBIP340(accAddr, bip340PK)
+		err = invalidPoP.VerifyBIP340(signingContext, accAddr, bip340PK)
 		require.Error(t, err)
 	})
 }
@@ -84,11 +115,12 @@ func FuzzPoP_ECDSA(f *testing.F) {
 		bip340PK := bbn.NewBIP340PubKeyFromBTCPK(btcPK)
 
 		accAddr := datagen.GenRandomAccount().GetAddress()
+		signingContext := RandomSigningContext(r)
 
 		// generate and verify PoP, correct case
-		pop, err := datagen.NewPoPBTCWithECDSABTCSig(accAddr, btcSK)
+		pop, err := datagen.NewPoPBTCWithECDSABTCSig(signingContext, accAddr, btcSK)
 		require.NoError(t, err)
-		err = pop.VerifyECDSA(accAddr, bip340PK)
+		err = pop.VerifyECDSA(signingContext+accAddr.String(), bip340PK)
 		require.NoError(t, err)
 	})
 }
@@ -106,10 +138,12 @@ func FuzzPoP_BIP322_P2WPKH(f *testing.F) {
 
 		accAddr := datagen.GenRandomAccount().GetAddress()
 
+		signingContext := RandomSigningContext(r)
+
 		// generate and verify PoP, correct case
-		pop, err := datagen.NewPoPBTCWithBIP322P2WPKHSig(accAddr, btcSK, net)
+		pop, err := datagen.NewPoPBTCWithBIP322P2WPKHSig(signingContext, accAddr, btcSK, net)
 		require.NoError(t, err)
-		err = pop.VerifyBIP322(accAddr, bip340PK, net)
+		err = pop.VerifyBIP322(signingContext, accAddr, bip340PK, net)
 		require.NoError(t, err)
 	})
 }
@@ -127,10 +161,12 @@ func FuzzPoP_BIP322_P2Tr_BIP86(f *testing.F) {
 
 		accAddr := datagen.GenRandomAccount().GetAddress()
 
+		signingContext := RandomSigningContext(r)
+
 		// generate and verify PoP, correct case
-		pop, err := datagen.NewPoPBTCWithBIP322P2TRBIP86Sig(accAddr, btcSK, net)
+		pop, err := datagen.NewPoPBTCWithBIP322P2TRBIP86Sig(signingContext, accAddr, btcSK, net)
 		require.NoError(t, err)
-		err = pop.VerifyBIP322(accAddr, bip340PK, net)
+		err = pop.VerifyBIP322(signingContext, accAddr, bip340PK, net)
 		require.NoError(t, err)
 	})
 }
@@ -152,20 +188,22 @@ func FuzzPop_ValidBip322SigNotMatchingBip340PubKey(f *testing.F) {
 
 		accAddr := datagen.GenRandomAccount().GetAddress()
 
+		signingContext := RandomSigningContext(r)
+
 		// generate valid bip322 P2WPKH pop
-		pop, err := datagen.NewPoPBTCWithBIP322P2WPKHSig(accAddr, btcSK, net)
+		pop, err := datagen.NewPoPBTCWithBIP322P2WPKHSig(signingContext, accAddr, btcSK, net)
 		require.NoError(t, err)
 
 		// verify bip322 pop with incorrect staker key
-		err = pop.VerifyBIP322(accAddr, bip340PK1, net)
+		err = pop.VerifyBIP322(signingContext, accAddr, bip340PK1, net)
 		require.Error(t, err)
 
 		// generate valid bip322 P2Tr pop
-		pop, err = datagen.NewPoPBTCWithBIP322P2TRBIP86Sig(accAddr, btcSK, net)
+		pop, err = datagen.NewPoPBTCWithBIP322P2TRBIP86Sig(signingContext, accAddr, btcSK, net)
 		require.NoError(t, err)
 
 		// verify bip322 pop with incorrect staker key
-		err = pop.VerifyBIP322(accAddr, bip340PK1, net)
+		err = pop.VerifyBIP322(signingContext, accAddr, bip340PK1, net)
 		require.Error(t, err)
 	})
 }
@@ -178,13 +216,15 @@ func TestPoPBTCValidateBasic(t *testing.T) {
 
 	addrToSign := sdk.MustAccAddressFromBech32(datagen.GenRandomAccount().Address)
 
-	popBip340, err := datagen.NewPoPBTC(addrToSign, btcSK)
+	signingContext := RandomSigningContext(r)
+
+	popBip340, err := datagen.NewPoPBTC(signingContext, addrToSign, btcSK)
 	require.NoError(t, err)
 
-	popBip322, err := datagen.NewPoPBTCWithBIP322P2WPKHSig(addrToSign, btcSK, &chaincfg.MainNetParams)
+	popBip322, err := datagen.NewPoPBTCWithBIP322P2WPKHSig(signingContext, addrToSign, btcSK, &chaincfg.MainNetParams)
 	require.NoError(t, err)
 
-	popECDSA, err := datagen.NewPoPBTCWithECDSABTCSig(addrToSign, btcSK)
+	popECDSA, err := datagen.NewPoPBTCWithECDSABTCSig(signingContext, addrToSign, btcSK)
 	require.NoError(t, err)
 
 	tcs := []struct {
@@ -264,24 +304,28 @@ func TestPoPBTCVerify(t *testing.T) {
 
 	netParams := &chaincfg.MainNetParams
 
-	popBip340, err := datagen.NewPoPBTC(addrToSign, btcSK)
+	signingContext := RandomSigningContext(r)
+
+	popBip340, err := datagen.NewPoPBTC(signingContext, addrToSign, btcSK)
 	require.NoError(t, err)
 
-	popBip322, err := datagen.NewPoPBTCWithBIP322P2WPKHSig(addrToSign, btcSK, netParams)
+	popBip322, err := datagen.NewPoPBTCWithBIP322P2WPKHSig(signingContext, addrToSign, btcSK, netParams)
 	require.NoError(t, err)
 
-	popECDSA, err := datagen.NewPoPBTCWithECDSABTCSig(addrToSign, btcSK)
+	popECDSA, err := datagen.NewPoPBTCWithECDSABTCSig(signingContext, addrToSign, btcSK)
 	require.NoError(t, err)
 
 	tcs := []struct {
-		title  string
-		staker sdk.AccAddress
-		btcPK  *bbn.BIP340PubKey
-		pop    *types.ProofOfPossessionBTC
-		expErr error
+		title          string
+		signingContext string
+		staker         sdk.AccAddress
+		btcPK          *bbn.BIP340PubKey
+		pop            *types.ProofOfPossessionBTC
+		expErr         error
 	}{
 		{
 			"valid: BIP340",
+			signingContext,
 			addrToSign,
 			bip340PK,
 			popBip340,
@@ -289,6 +333,7 @@ func TestPoPBTCVerify(t *testing.T) {
 		},
 		{
 			"valid: BIP322",
+			signingContext,
 			addrToSign,
 			bip340PK,
 			popBip322,
@@ -296,6 +341,7 @@ func TestPoPBTCVerify(t *testing.T) {
 		},
 		{
 			"valid: ECDSA",
+			signingContext,
 			addrToSign,
 			bip340PK,
 			popECDSA,
@@ -303,6 +349,7 @@ func TestPoPBTCVerify(t *testing.T) {
 		},
 		{
 			"invalid: BIP340 - bad addr",
+			signingContext,
 			randomAddr,
 			bip340PK,
 			popBip340,
@@ -310,6 +357,7 @@ func TestPoPBTCVerify(t *testing.T) {
 		},
 		{
 			"invalid: BIP322 - bad addr",
+			signingContext,
 			randomAddr,
 			bip340PK,
 			popBip322,
@@ -317,6 +365,7 @@ func TestPoPBTCVerify(t *testing.T) {
 		},
 		{
 			"invalid: ECDSA - bad addr",
+			signingContext,
 			randomAddr,
 			bip340PK,
 			popECDSA,
@@ -324,6 +373,7 @@ func TestPoPBTCVerify(t *testing.T) {
 		},
 		{
 			"invalid: SigType",
+			signingContext,
 			nil,
 			nil,
 			&types.ProofOfPossessionBTC{
@@ -333,6 +383,7 @@ func TestPoPBTCVerify(t *testing.T) {
 		},
 		{
 			"invalid: nil sig",
+			signingContext,
 			randomAddr,
 			bip340PK,
 			&types.ProofOfPossessionBTC{
@@ -343,6 +394,7 @@ func TestPoPBTCVerify(t *testing.T) {
 		},
 		{
 			"invalid: nil signed msg",
+			signingContext,
 			nil,
 			bip340PK,
 			popBip340,
@@ -353,7 +405,7 @@ func TestPoPBTCVerify(t *testing.T) {
 	for _, tc := range tcs {
 		tc := tc
 		t.Run(tc.title, func(t *testing.T) {
-			actErr := tc.pop.Verify(tc.staker, tc.btcPK, netParams)
+			actErr := tc.pop.Verify(tc.signingContext, tc.staker, tc.btcPK, netParams)
 			if tc.expErr != nil {
 				require.EqualError(t, actErr, tc.expErr.Error())
 				return

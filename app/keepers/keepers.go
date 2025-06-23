@@ -637,6 +637,7 @@ func (ak *AppKeepers) InitKeepers(
 		&ak.BTCStkConsumerKeeper,
 		&ak.IncentiveKeeper,
 		btcNetParams,
+		appparams.AccBTCStaking.String(),
 		appparams.AccGov.String(),
 	)
 
@@ -647,6 +648,7 @@ func (ak *AppKeepers) InitKeepers(
 		ak.BTCStakingKeeper,
 		ak.IncentiveKeeper,
 		&checkpointingKeeper,
+		appparams.AccFinality.String(),
 		appparams.AccGov.String(),
 	)
 
