@@ -138,8 +138,8 @@ func NewPoPBTC(
 	// generate pop.BtcSig = schnorr_sign(sk_BTC, hash(bbnAddress))
 	// NOTE: *schnorr.Sign has to take the hash of the message.
 	// So we have to hash the address before signing
-	contextBytes := []byte(signingContext)
-	msgToSign := append(contextBytes, addr.Bytes()...)
+	msgToSign := []byte(signingContext)
+	msgToSign = append(msgToSign, addr.Bytes()...)
 	hash := tmhash.Sum(msgToSign)
 	btcSig, err := schnorr.Sign(btcSK, hash)
 	if err != nil {

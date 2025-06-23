@@ -534,9 +534,9 @@ func (n *NodeConfig) AddFinalitySignatureToBlock(
 
 	fpFinVoteContext := signingcontext.FpFinVoteContextV0(n.chainId, appparams.AccFinality.String())
 
-	var msgToSign []byte
-	msgToSign = append(msgToSign, []byte(fpFinVoteContext)...)
-	msgToSign = append(sdk.Uint64ToBigEndian(blockHeight), appHash...)
+	msgToSign := []byte(fpFinVoteContext)
+	msgToSign = append(msgToSign, sdk.Uint64ToBigEndian(blockHeight)...)
+	msgToSign = append(msgToSign, appHash...)
 
 	// generate EOTS signature
 	fp1Sig, err := eots.Sign(fpBTCSK, privateRand, msgToSign)

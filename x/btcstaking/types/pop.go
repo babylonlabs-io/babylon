@@ -92,8 +92,8 @@ func VerifyBIP340(sigType BTCSigType, btcSigRaw []byte, bip340PK *bbn.BIP340PubK
 // VerifyBIP340 verifies the validity of PoP where Bitcoin signature is in BIP-340
 // 1. verify(sig=sig_btc, pubkey=pk_btc, msg=staker_addr)?
 func (pop *ProofOfPossessionBTC) VerifyBIP340(contextString string, stakerAddr sdk.AccAddress, bip340PK *bbn.BIP340PubKey) error {
-	contextBytes := []byte(contextString)
-	msgToSign := append(contextBytes, stakerAddr.Bytes()...)
+	msgToSign := []byte(contextString)
+	msgToSign = append(msgToSign, stakerAddr.Bytes()...)
 	return VerifyBIP340(pop.BtcSigType, pop.BtcSig, bip340PK, msgToSign)
 }
 

@@ -12,7 +12,6 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/babylonlabs-io/babylon/v3/app/params"
 	"github.com/babylonlabs-io/babylon/v3/app/signingcontext"
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
@@ -20,9 +19,8 @@ import (
 )
 
 var (
-	net              = &chaincfg.TestNet3Params
-	testChainID      = "test-5"
-	testModulAddress = params.AccBTCStaking
+	net         = &chaincfg.TestNet3Params
+	testChainID = "test-5"
 )
 
 func newInvalidBIP340PoP(r *rand.Rand) *types.ProofOfPossessionBTC {
@@ -35,13 +33,15 @@ func newInvalidBIP340PoP(r *rand.Rand) *types.ProofOfPossessionBTC {
 func RandomSigningContext(r *rand.Rand) string {
 	randomModuleAddress := datagen.GenRandomAccount().GetAddress().String()
 	ruint32 := datagen.RandomUInt32(r, 4)
-	if ruint32 == 0 {
+
+	switch ruint32 {
+	case 0:
 		return signingcontext.FpFinVoteContextV0(testChainID, randomModuleAddress)
-	} else if ruint32 == 1 {
+	case 1:
 		return signingcontext.FpRandCommitContextV0(testChainID, randomModuleAddress)
-	} else if ruint32 == 2 {
+	case 2:
 		return signingcontext.StakerPopContextV0(testChainID, randomModuleAddress)
-	} else {
+	default:
 		return signingcontext.FpPopContextV0(testChainID, randomModuleAddress)
 	}
 }
