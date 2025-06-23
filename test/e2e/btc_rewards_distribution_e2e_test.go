@@ -530,7 +530,12 @@ func (s *BtcRewardsDistribution) Test8SlashFp() {
 	appHash := blockToVote.AppHash
 
 	// generate bad EOTS signature with a diff block height to vote
-	msgToSign := append(sdk.Uint64ToBigEndian(s.finalityBlockHeightVoted), appHash...)
+	fpFinVoteContext := signingcontext.FpFinVoteContextV0(n2.ChainID(), appparams.AccFinality.String())
+
+	msgToSign := []byte(fpFinVoteContext)
+	msgToSign = append(msgToSign, sdk.Uint64ToBigEndian(s.finalityBlockHeightVoted)...)
+	msgToSign = append(msgToSign, appHash...)
+
 	fp1Sig, err := eots.Sign(s.fp2BTCSK, s.fp2RandListInfo.SRList[s.finalityIdx], msgToSign)
 	s.NoError(err)
 
