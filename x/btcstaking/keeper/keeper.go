@@ -111,3 +111,7 @@ func (k Keeper) BtccKeeper() types.BtcCheckpointKeeper {
 	}
 	return k.btccKeeper
 }
+
+func (k Keeper) ModuleAddress() string {
+	return k.btcStakingModuleAddress
+}

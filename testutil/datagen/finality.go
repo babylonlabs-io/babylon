@@ -52,7 +52,6 @@ func GenRandomMsgCommitPubRandList(
 	signingContext string,
 	startHeight uint64,
 	numPubRand uint64,
-	chainID string,
 ) (*RandListInfo, *ftypes.MsgCommitPubRandList, error) {
 	randListInfo, err := GenRandomPubRandList(r, numPubRand)
 	if err != nil {

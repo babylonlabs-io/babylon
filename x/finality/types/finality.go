@@ -50,9 +50,17 @@ func (c *PubRandCommit) Validate() error {
 }
 
 // msgToSignForVote returns the message for an EOTS signature
-// The EOTS signature on a block will be (blockHeight || blockHash)
-func msgToSignForVote(blockHeight uint64, blockHash []byte) []byte {
-	return append(sdk.Uint64ToBigEndian(blockHeight), blockHash...)
+// The EOTS signature on a block will be (context || blockHeight || blockHash)
+func msgToSignForVote(
+	context string,
+	blockHeight uint64,
+	blockHash []byte,
+) []byte {
+	if len(context) == 0 {
+		return append(sdk.Uint64ToBigEndian(blockHeight), blockHash...)
+	}
+
+	return append([]byte(context), append(sdk.Uint64ToBigEndian(blockHeight), blockHash...)...)
 }
 
 func (ib *IndexedBlock) Equal(ib2 *IndexedBlock) bool {
@@ -66,10 +74,6 @@ func (ib *IndexedBlock) Equal(ib2 *IndexedBlock) bool {
 	return true
 }
 
-func (ib *IndexedBlock) MsgToSign() []byte {
-	return msgToSignForVote(ib.Height, ib.AppHash)
-}
-
 func (ib IndexedBlock) Validate() error {
 	if ib.Height > 0 && len(ib.AppHash) == 0 {
 		return fmt.Errorf("invalid indexed block. Empty app hash")
@@ -77,12 +81,12 @@ func (ib IndexedBlock) Validate() error {
 	return nil
 }
 
-func (e *Evidence) canonicalMsgToSign() []byte {
-	return msgToSignForVote(e.BlockHeight, e.CanonicalAppHash)
+func (e *Evidence) canonicalMsgToSign(context string) []byte {
+	return msgToSignForVote(context, e.BlockHeight, e.CanonicalAppHash)
 }
 
-func (e *Evidence) forkMsgToSign() []byte {
-	return msgToSignForVote(e.BlockHeight, e.ForkAppHash)
+func (e *Evidence) forkMsgToSign(context string) []byte {
+	return msgToSignForVote(context, e.BlockHeight, e.ForkAppHash)
 }
 
 func (e *Evidence) ValidateBasic() error {
@@ -122,7 +126,8 @@ func (e *Evidence) IsSlashable() bool {
 }
 
 // ExtractBTCSK extracts the BTC SK given the data in the evidence
-func (e *Evidence) ExtractBTCSK() (*btcec.PrivateKey, error) {
+// It is up to the caller to pass correct context string for the given chain and height
+func (e *Evidence) ExtractBTCSK(context string) (*btcec.PrivateKey, error) {
 	if !e.IsSlashable() {
 		return nil, fmt.Errorf("the evidence lacks some fields so does not allow extracting BTC SK")
 	}
@@ -132,7 +137,7 @@ func (e *Evidence) ExtractBTCSK() (*btcec.PrivateKey, error) {
 	}
 	return eots.Extract(
 		btcPK, e.PubRand.ToFieldValNormalized(),
-		e.canonicalMsgToSign(), e.CanonicalFinalitySig.ToModNScalar(), // msg and sig for canonical block
-		e.forkMsgToSign(), e.ForkFinalitySig.ToModNScalar(), // msg and sig for fork block
+		e.canonicalMsgToSign(context), e.CanonicalFinalitySig.ToModNScalar(), // msg and sig for canonical block
+		e.forkMsgToSign(context), e.ForkFinalitySig.ToModNScalar(), // msg and sig for fork block
 	)
 }

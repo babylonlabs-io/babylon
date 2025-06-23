@@ -114,3 +114,7 @@ func (k Keeper) IsFinalityActive(ctx context.Context) (activated bool) {
 	_, err := k.GetBTCStakingActivatedHeight(ctx)
 	return err == nil
 }
+
+func (k Keeper) ModuleAddress() string {
+	return k.finalityModuleAddress
+}

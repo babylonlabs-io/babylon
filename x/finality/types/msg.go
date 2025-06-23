@@ -34,8 +34,7 @@ var (
 const ExpectedCommitmentLengthBytes = 32
 
 func (m *MsgAddFinalitySig) MsgToSign(signingContext string) []byte {
-	contextBytes := []byte(signingContext)
-	return append(contextBytes, msgToSignForVote(m.BlockHeight, m.BlockAppHash)...)
+	return msgToSignForVote(signingContext, m.BlockHeight, m.BlockAppHash)
 }
 
 func (m *MsgAddFinalitySig) ValidateBasic() error {

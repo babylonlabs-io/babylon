@@ -137,9 +137,7 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 		return nil, err
 	}
 
-	signingContext := signingcontext.HashedHexContext(
-		signingcontext.FpFinVoteContextV0(ctx.ChainID(), ms.finalityModuleAddress),
-	)
+	signingContext := signingcontext.FpFinVoteContextV0(ctx.ChainID(), ms.finalityModuleAddress)
 
 	// verify the finality signature message w.r.t. the public randomness commitment
 	// including the public randomness inclusion proof and the finality signature
@@ -278,9 +276,7 @@ func (ms msgServer) CommitPubRandList(goCtx context.Context, req *types.MsgCommi
 		return nil, bstypes.ErrFpNotFound.Wrapf("the finality provider with BTC PK %v is not registered", fpBTCPKBytes)
 	}
 
-	signingContext := signingcontext.HashedHexContext(
-		signingcontext.FpRandCommitContextV0(ctx.ChainID(), ms.finalityModuleAddress),
-	)
+	signingContext := signingcontext.FpRandCommitContextV0(ctx.ChainID(), ms.finalityModuleAddress)
 
 	// verify signature over the public randomness commitment
 	if err := req.VerifySig(signingContext); err != nil {

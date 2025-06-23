@@ -36,21 +36,13 @@ func RandomSigningContext(r *rand.Rand) string {
 	randomModuleAddress := datagen.GenRandomAccount().GetAddress().String()
 	ruint32 := datagen.RandomUInt32(r, 4)
 	if ruint32 == 0 {
-		return signingcontext.HashedHexContext(
-			signingcontext.FpFinVoteContextV0(testChainID, randomModuleAddress),
-		)
+		return signingcontext.FpFinVoteContextV0(testChainID, randomModuleAddress)
 	} else if ruint32 == 1 {
-		return signingcontext.HashedHexContext(
-			signingcontext.FpRandCommitContextV0(testChainID, randomModuleAddress),
-		)
+		return signingcontext.FpRandCommitContextV0(testChainID, randomModuleAddress)
 	} else if ruint32 == 2 {
-		return signingcontext.HashedHexContext(
-			signingcontext.StakerPopContextV0(testChainID, randomModuleAddress),
-		)
+		return signingcontext.StakerPopContextV0(testChainID, randomModuleAddress)
 	} else {
-		return signingcontext.HashedHexContext(
-			signingcontext.FpPopContextV0(testChainID, randomModuleAddress),
-		)
+		return signingcontext.FpPopContextV0(testChainID, randomModuleAddress)
 	}
 }
 
@@ -65,12 +57,10 @@ func Fuzz_MsgToSignBIP322(f *testing.F) {
 
 		radnomModuleAddress := datagen.GenRandomAccount().GetAddress().String()
 
-		signingContext := signingcontext.HashedHexContext(
-			signingcontext.StakerPopContextV0(testChainID, radnomModuleAddress),
-		)
+		signingContext := signingcontext.StakerPopContextV0(testChainID, radnomModuleAddress)
 
 		bz := types.MsgToSignBIP322(signingContext, accAddr)
-		require.Equal(t, []byte(addrStr), bz)
+		require.Equal(t, []byte(signingContext+addrStr), bz)
 
 		bzUtf8Valid := utf8.Valid(bz)
 		require.True(t, bzUtf8Valid)

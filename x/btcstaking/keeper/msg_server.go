@@ -72,9 +72,7 @@ func (ms msgServer) CreateFinalityProvider(goCtx context.Context, req *types.Msg
 	}
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	signingContext := signingcontext.HashedHexContext(
-		signingcontext.FpPopContextV0(ctx.ChainID(), ms.btcStakingModuleAddress),
-	)
+	signingContext := signingcontext.FpPopContextV0(ctx.ChainID(), ms.btcStakingModuleAddress)
 
 	// verify proof of possession
 	if err := req.Pop.Verify(signingContext, fpAddr, req.BtcPk, ms.btcNet); err != nil {
@@ -190,9 +188,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		return nil, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	signingContext := signingcontext.HashedHexContext(
-		signingcontext.StakerPopContextV0(ctx.ChainID(), ms.btcStakingModuleAddress),
-	)
+	signingContext := signingcontext.StakerPopContextV0(ctx.ChainID(), ms.btcStakingModuleAddress)
 
 	// 2. Basic stateless checks
 	// - verify proof of possession
