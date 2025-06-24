@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+
 	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
 
 	"math/rand"
@@ -739,6 +740,51 @@ func (d *BabylonAppDriver) ActivateVerifiedDelegations(expectedVerifiedDelegatio
 
 	acitvationMsgs := blockWithProofsToActivationMessages(block, d.GetDriverAccountAddress())
 	d.SendTxWithMsgsFromDriverAccount(d.t, acitvationMsgs...)
+}
+
+// ConfirmStakingTransactionOnBTC confirms staking transactions included in the
+// provided messages on the simulated BTC chain. Afterwards, it fills inclusion
+// proof in the provided messages. It is up to the caller to send the messages
+// to the mempool.
+func (d *BabylonAppDriver) ConfirmStakingTransactionOnBTC(
+	msg []*bstypes.MsgCreateBTCDelegation,
+) {
+	require.NotEmpty(d.t, msg)
+
+	btcCheckpointParams := d.GetBTCCkptParams(d.t)
+
+	tip, _ := d.GetBTCLCTip()
+	var transactions []*wire.MsgTx
+	for _, m := range msg {
+		stakingTx, err := bbn.NewBTCTxFromBytes(m.StakingTx)
+		require.NoError(d.t, err)
+		transactions = append(transactions, stakingTx)
+	}
+
+	block := datagen.GenRandomBtcdBlockWithTransactions(d.r, transactions, tip)
+
+	headers := BlocksWithProofsToHeaderBytes([]*datagen.BlockWithProofs{block})
+
+	confirmationBLocks := datagen.GenNEmptyBlocks(
+		d.r,
+		uint64(btcCheckpointParams.BtcConfirmationDepth),
+		&block.Block.Header,
+	)
+	confirmationHeaders := BlocksWithProofsToHeaderBytes(confirmationBLocks)
+
+	headers = append(headers, confirmationHeaders...)
+
+	// extend our light client so that all stakers are confirmed
+	d.SendTxWithMsgsFromDriverAccount(d.t, &btclighttypes.MsgInsertHeaders{
+		Signer:  d.GetDriverAccountAddress().String(),
+		Headers: headers,
+	})
+
+	// iterate over all transactions except coinbase, and set inclusion proof in message
+	// to the proof from the block
+	for i := 1; i < len(block.Transactions); i++ {
+		msg[i-1].StakingTxInclusionProof = bstypes.NewInclusionProofFromSpvProof(block.Proofs[i])
+	}
 }
 
 func (d *BabylonAppDriver) GenCkptForEpoch(r *rand.Rand, t *testing.T, epochNumber uint64) {

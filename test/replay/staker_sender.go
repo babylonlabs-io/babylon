@@ -29,7 +29,11 @@ func (s *Staker) BTCPublicKey() *bbn.BIP340PubKey {
 	return pk
 }
 
-func (s *Staker) CreatePreApprovalDelegation(
+// CreateDelegationMessage creates all data required to create a delegation and pack
+// it into MsgCreateBTCDelegation, message is not sent to the mempool.
+// Message does not contain Inclusion proof as produced staking tx is not yet sent
+// to the BTC chain.
+func (s *Staker) CreateDelegationMessage(
 	fpKeys []*bbn.BIP340PubKey,
 	stakingTime uint32,
 	totalSat int64,
@@ -128,15 +132,31 @@ func (s *Staker) CreatePreApprovalDelegation(
 		DelegatorUnbondingSlashingSig: delSlashingTxSig,
 	}
 
+	return msg
+}
+
+func (s *Staker) CreatePreApprovalDelegation(
+	fpKeys []*bbn.BIP340PubKey,
+	stakingTime uint32,
+	totalSat int64,
+) *bstypes.MsgCreateBTCDelegation {
+	msg := s.CreateDelegationMessage(fpKeys, stakingTime, totalSat)
+
+	s.SendCreateDelegationMessage(msg)
+
+	return msg
+}
+
+func (s *Staker) SendCreateDelegationMessage(
+	msg *bstypes.MsgCreateBTCDelegation,
+) {
 	DefaultSendTxWithMessagesSuccess(
 		s.t,
 		s.app,
 		s.SenderInfo,
 		msg,
 	)
-
 	s.IncSeq()
-	return msg
 }
 
 func StakingTransaction(t *testing.T, msg *bstypes.MsgCreateBTCDelegation) *wire.MsgTx {
