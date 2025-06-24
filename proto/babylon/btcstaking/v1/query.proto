@@ -66,6 +66,11 @@ service Query {
   rpc LargestBtcReOrg(QueryLargestBtcReOrgRequest) returns (QueryLargestBtcReOrgResponse) {
     option (google.api.http).get = "/babylon/btcstaking/v1/largest_btc_reorg";
   }
+
+  // BtcBlockAtBabylon retrieves the btc tip at that babylon block height
+  rpc BtcBlockAtBabylon(QueryBtcBlockAtBabylonRequest) returns (QueryBtcBlockAtBabylonResponse) {
+    option (google.api.http).get = "/babylon/btcstaking/v1/btc_block_at_babylon";
+  }
 }
 
 // QueryParamsRequest is request type for the Query/Params RPC method.
@@ -172,6 +177,22 @@ message QueryFinalityProviderDelegationsResponse {
 
   // pagination defines the pagination in the response.
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryBtcBlockAtBabylonRequest is the request type to retrieve the btc tip at
+// certain babylon block
+message QueryBtcBlockAtBabylonRequest {
+  // BabylonBlock
+  uint64 babylon_block = 1;
+}
+
+// QueryBtcBlockAtBabylonResponse is response type matching QueryBtcBlockAtBabylonRequest
+// and containing BTC block info
+message QueryBtcBlockAtBabylonResponse {
+  // BtcBlockHeight the BTC block height at the queried babylon block.
+  uint32 btc_block_height = 1;
+  // BabylonBlockHeight the babylon block height at the BTC block height.
+  uint64 babylon_block_height = 2;
 }
 
 // QueryBTCDelegationRequest is the request type to retrieve a BTC delegation by

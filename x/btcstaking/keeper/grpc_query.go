@@ -17,6 +17,22 @@ import (
 
 var _ types.QueryServer = Keeper{}
 
+// BtcBlockAtBabylon implements types.QueryServer.
+func (k Keeper) BtcBlockAtBabylon(c context.Context, req *types.QueryBtcBlockAtBabylonRequest) (*types.QueryBtcBlockAtBabylonResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
+
+	ctx := sdk.UnwrapSDKContext(c)
+
+	btcHeightAtBabylonHeight := k.GetBTCHeightAtBabylonHeight(ctx, req.BabylonBlock)
+
+	return &types.QueryBtcBlockAtBabylonResponse{
+		BtcBlockHeight:     btcHeightAtBabylonHeight,
+		BabylonBlockHeight: req.BabylonBlock,
+	}, nil
+}
+
 // FinalityProviders returns a paginated list of all Babylon maintained finality providers
 func (k Keeper) FinalityProviders(c context.Context, req *types.QueryFinalityProvidersRequest) (*types.QueryFinalityProvidersResponse, error) {
 	if req == nil {
