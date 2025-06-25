@@ -612,7 +612,7 @@ func TestMultiConsumerDelegation(t *testing.T) {
 	driver.GenerateNewBlockAssertExecutionSuccess()
 	staker := driver.CreateNStakerAccounts(1)[0]
 
-	// 4. Create a delegation with three consumer FPs and one Babylon FP - should fail because total FPs (4) > min(max_multi_staked_fps) which is 2
+	// 4. Create a delegation with three consumer FPs and one Babylon FP
 	staker.CreatePreApprovalDelegation(
 		[]*bbn.BIP340PubKey{fp1s[0].BTCPublicKey(), fp2.BTCPublicKey(), fp3.BTCPublicKey(), babylonFp.BTCPublicKey()},
 		1000,
