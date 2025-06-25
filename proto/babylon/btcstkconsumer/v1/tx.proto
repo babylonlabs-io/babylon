@@ -53,7 +53,7 @@ message MsgRegisterConsumer {
   string consumer_name = 3;
   // consumer_description is a description for the consumer (can be empty)
   string consumer_description = 4;
-  // eth_l2_finality_contract_address is the Cosmos address of the
+  // rollup_finality_contract_address is the address of the
   // finality contract. The finality contract is deployed on Babylon and
   // serves as the data availability layer for finality signatures of the rollup.
   // (if set, then this means this is a rollup integration)

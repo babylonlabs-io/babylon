@@ -136,7 +136,7 @@ type MsgRegisterConsumer struct {
 	ConsumerName string `protobuf:"bytes,3,opt,name=consumer_name,json=consumerName,proto3" json:"consumer_name,omitempty"`
 	// consumer_description is a description for the consumer (can be empty)
 	ConsumerDescription string `protobuf:"bytes,4,opt,name=consumer_description,json=consumerDescription,proto3" json:"consumer_description,omitempty"`
-	// eth_l2_finality_contract_address is the Cosmos address of the
+	// rollup_finality_contract_address is the address of the
 	// finality contract. The finality contract is deployed on Babylon and
 	// serves as the data availability layer for finality signatures of the rollup.
 	// (if set, then this means this is a rollup integration)
