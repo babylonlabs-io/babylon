@@ -14,4 +14,9 @@ message Params {
   // permissioned_integration is a flag to enable permissioned integration, i.e.,
   // requiring governance proposal to approve new integrations.
   bool permissioned_integration = 1;
+  // max_multi_staked_fps is the maximum number of finality providers (both Babylon and consumer)
+  // that can be part of a single BTC delegation. This limit is enforced by Babylon - delegations
+  // with total FP count exceeding this limit will be rejected. Must be at least 2 to allow for
+  // at least one Babylon FP and one consumer FP.
+  uint32 max_multi_staked_fps = 2;
 }

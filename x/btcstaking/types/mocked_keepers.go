@@ -223,6 +223,20 @@ func (mr *MockBTCStkConsumerKeeperMockRecorder) GetConsumerRegistryMaxMultiStake
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetConsumerRegistryMaxMultiStakedFps", reflect.TypeOf((*MockBTCStkConsumerKeeper)(nil).GetConsumerRegistryMaxMultiStakedFps), ctx, consumerID)
 }
 
+// GetMaxMultiStakedFps mocks base method.
+func (m *MockBTCStkConsumerKeeper) GetMaxMultiStakedFps(ctx context.Context) uint32 {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetMaxMultiStakedFps", ctx)
+	ret0, _ := ret[0].(uint32)
+	return ret0
+}
+
+// GetMaxMultiStakedFps indicates an expected call of GetMaxMultiStakedFps.
+func (mr *MockBTCStkConsumerKeeperMockRecorder) GetMaxMultiStakedFps(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMaxMultiStakedFps", reflect.TypeOf((*MockBTCStkConsumerKeeper)(nil).GetMaxMultiStakedFps), ctx)
+}
+
 // HasConsumerFinalityProvider mocks base method.
 func (m *MockBTCStkConsumerKeeper) HasConsumerFinalityProvider(ctx context.Context, fpBTCPK *types.BIP340PubKey) bool {
 	m.ctrl.T.Helper()

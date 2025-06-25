@@ -224,16 +224,25 @@ func (k Keeper) setBTCDelegation(ctx context.Context, btcDel *types.BTCDelegatio
 // validateRestakedFPs ensures all finality providers are known to Babylon and at least
 // one of them is a Babylon finality provider. It also checks whether the BTC stake is
 // restaked to FPs of consumer chains. It enforces:
-// 1. Total number of FPs <= min of all consumers' max_multi_staked_fps
+// 1. Total number of FPs <= min of all consumers' max_multi_staked_fps AND Babylon's max_multi_staked_fps
 // 2. At most 1 FP per consumer/BSN
+// 3. Exactly 1 Babylon FP
 func (k Keeper) validateRestakedFPs(ctx context.Context, fpBTCPKs []bbn.BIP340PubKey) (bool, error) {
 	restakedToBabylon := false
 	restakedToConsumers := false
 
 	// Track FPs per consumer to enforce at-most-1-FP-per-consumer
 	consumerFPs := make(map[string]struct{})
-	// Track min max_multi_staked_fps across all consumers
+	// Track Babylon FP count to ensure exactly 1
+	babylonFPCount := 0
+	// Track min max_multi_staked_fps across all consumers AND Babylon
 	minMaxMultiStakedFPs := ^uint32(0) // Initialize with MaxUint32
+
+	// Get Babylon's max_multi_staked_fps from btcstkconsumer params
+	babylonMaxMultiStakedFps := k.BscKeeper.GetMaxMultiStakedFps(ctx)
+	if babylonMaxMultiStakedFps < minMaxMultiStakedFPs {
+		minMaxMultiStakedFPs = babylonMaxMultiStakedFps
+	}
 
 	for i := range fpBTCPKs {
 		fpBTCPK := fpBTCPKs[i]
@@ -243,6 +252,10 @@ func (k Keeper) validateRestakedFPs(ctx context.Context, fpBTCPKs []bbn.BIP340Pu
 			// ensure the finality provider is not slashed
 			if fp.IsSlashed() {
 				return false, types.ErrFpAlreadySlashed
+			}
+			babylonFPCount++
+			if babylonFPCount > 1 {
+				return false, types.ErrTooManyBabylonFPs.Wrapf("delegation can only have exactly 1 Babylon FP, found %d", babylonFPCount)
 			}
 			restakedToBabylon = true
 			continue
@@ -282,7 +295,7 @@ func (k Keeper) validateRestakedFPs(ctx context.Context, fpBTCPKs []bbn.BIP340Pu
 		return false, types.ErrNoBabylonFPRestaked
 	}
 
-	// Check if total number of FPs exceeds min max_multi_staked_fps
+	// Check if total number of FPs exceeds min max_multi_staked_fps (considering both consumers and Babylon)
 	if minMaxMultiStakedFPs > 0 && uint32(len(fpBTCPKs)) > minMaxMultiStakedFPs {
 		return false, types.ErrTooManyFPs.Wrapf("total FPs %d exceeds min max_multi_staked_fps %d", len(fpBTCPKs), minMaxMultiStakedFPs)
 	}

@@ -124,6 +124,8 @@ func NewHelperWithStoreAndIncentive(
 	require.NoError(t, err)
 	err = fk.SetParams(ctx, ftypes.DefaultParams())
 	require.NoError(t, err)
+	err = bscKeeper.SetParams(ctx, bsctypes.DefaultParams())
+	require.NoError(t, err)
 
 	ctx = ctx.WithHeaderInfo(header.Info{Height: 1, Time: time.Now()}).WithBlockHeight(1).WithBlockTime(time.Now())
 

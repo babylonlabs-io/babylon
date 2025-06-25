@@ -84,6 +84,7 @@ check of rewards
 - [#1028](https://github.com/babylonlabs-io/babylon/pull/1028) Bump ibc-go to `v10` and wire up IBC `v2`.
 - [#702](https://github.com/babylonlabs-io/babylon/pull/702) Add test for small rewards in fee collector
 - [#1040](https://github.com/babylonlabs-io/babylon/pull/1040) Rename ETH L2 to rollup
+- [#1059](https://github.com/babylonlabs-io/babylon/pull/1059) Add max_multi_staked_fps in btcstkconsumer module params
 - [#1195](https://github.com/babylonlabs-io/babylon/pull/1195) Update repository version to `v3`.
 - [#1060](https://github.com/babylonlabs-io/babylon/pull/1060) Optimize `PubRandCommit` lookup in `x/finality` module
 - [#1223](https://github.com/babylonlabs-io/babylon/pull/1223) Bump Cosmos SDK to `v0.53.0`

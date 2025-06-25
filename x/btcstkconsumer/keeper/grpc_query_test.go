@@ -43,7 +43,7 @@ func FuzzConsumerRegistryList(f *testing.F) {
 			err := bscKeeper.RegisterConsumer(ctx, &types.ConsumerRegister{
 				ConsumerId:        consumerID,
 				ConsumerName:      datagen.GenRandomHexStr(r, 5),
-				MaxMultiStakedFps: maxFps,
+				ConsumerMaxMultiStakedFps: maxFps,
 			})
 			require.NoError(t, err)
 		}
@@ -63,7 +63,7 @@ func FuzzConsumerRegistryList(f *testing.F) {
 		for i := uint64(0); i < limit; i++ {
 			consumerID := actualConsumerRegisters[i].ConsumerId
 			require.Contains(t, allConsumerIDs, consumerID)
-			require.Equal(t, consumerMaxFps[consumerID], actualConsumerRegisters[i].MaxMultiStakedFps)
+			require.Equal(t, consumerMaxFps[consumerID], actualConsumerRegisters[i].ConsumerMaxMultiStakedFps)
 		}
 	})
 }
@@ -98,7 +98,7 @@ func FuzzConsumersRegistry(f *testing.F) {
 			err := bscKeeper.RegisterConsumer(ctx, &types.ConsumerRegister{
 				ConsumerId:        consumerID,
 				ConsumerName:      datagen.GenRandomHexStr(r, 5),
-				MaxMultiStakedFps: maxFps,
+				ConsumerMaxMultiStakedFps: maxFps,
 			})
 			require.NoError(t, err)
 		}
@@ -110,7 +110,7 @@ func FuzzConsumersRegistry(f *testing.F) {
 
 		for i, respData := range resp.ConsumerRegisters {
 			require.Equal(t, consumersRegister[i].consumerID, respData.ConsumerId)
-			require.Equal(t, maxMultiStakedFps[i], respData.MaxMultiStakedFps)
+			require.Equal(t, maxMultiStakedFps[i], respData.ConsumerMaxMultiStakedFps)
 		}
 	})
 }
