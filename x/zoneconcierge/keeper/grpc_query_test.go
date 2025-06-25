@@ -4,18 +4,18 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/babylonlabs-io/babylon/v4/app"
-	btclightclienttypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
+	"github.com/babylonlabs-io/babylon/v3/app"
+	btclightclienttypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
-	ibctmtypes "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
+	ibctmtypes "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
-	testkeeper "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
-	btcctypes "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
-	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
-	zctypes "github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/types"
+	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
+	testkeeper "github.com/babylonlabs-io/babylon/v3/testutil/keeper"
+	btcctypes "github.com/babylonlabs-io/babylon/v3/x/btccheckpoint/types"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
+	zctypes "github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
 )
 
 type chainInfo struct {
@@ -394,9 +394,8 @@ func FuzzFinalizedChainInfo(f *testing.F) {
 		// mock channel/port keeper
 		channelKeeper := zctypes.NewMockChannelKeeper(ctrl)
 		channelKeeper.EXPECT().GetAllChannels(gomock.Any()).Return(nil).AnyTimes()
-		portKeeper := zctypes.NewMockPortKeeper(ctrl)
 
-		zcKeeper, ctx := testkeeper.ZoneConciergeKeeper(t, channelKeeper, portKeeper, btclcKeeper, checkpointingKeeper, btccKeeper, epochingKeeper, nil, nil)
+		zcKeeper, ctx := testkeeper.ZoneConciergeKeeper(t, channelKeeper, btclcKeeper, checkpointingKeeper, btccKeeper, epochingKeeper, nil, nil)
 		hooks := zcKeeper.Hooks()
 
 		var (

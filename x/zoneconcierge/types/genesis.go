@@ -5,8 +5,8 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/babylonlabs-io/babylon/v4/types"
-	host "github.com/cosmos/ibc-go/v8/modules/core/24-host"
+	"github.com/babylonlabs-io/babylon/v3/types"
+	host "github.com/cosmos/ibc-go/v10/modules/core/24-host"
 )
 
 // DefaultGenesis returns the default genesis state

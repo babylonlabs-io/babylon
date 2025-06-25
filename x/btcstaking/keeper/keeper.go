@@ -12,7 +12,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 )
 
 type (
@@ -101,4 +101,11 @@ func (k Keeper) BeginBlocker(ctx context.Context) error {
 	k.IndexBTCHeight(ctx)
 
 	return nil
+}
+
+func (k Keeper) BtccKeeper() types.BtcCheckpointKeeper {
+	if k.btccKeeper == nil {
+		panic("BtcCheckpointKeeper is not set")
+	}
+	return k.btccKeeper
 }

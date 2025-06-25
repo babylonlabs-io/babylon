@@ -97,6 +97,12 @@ func (f *FinalityProviderCurrentRewards) Validate() error {
 	if f.TotalActiveSat.IsNegative() {
 		return fmt.Errorf("current rewards has a negative total active satoshi delegated value: %s", f.TotalActiveSat.String())
 	}
+
+	//nolint:staticcheck
+	if f.Period <= 0 {
+		return fmt.Errorf("fp current rewards period must be positive")
+	}
+
 	return nil
 }
 
@@ -134,6 +140,12 @@ func (hr *FinalityProviderHistoricalRewards) Validate() error {
 
 func (evtPowerUpdt *EventsPowerUpdateAtHeight) Validate() error {
 	for _, untypedEvt := range evtPowerUpdt.Events {
+		if untypedEvt == nil {
+			return errors.New("nil event in EventsPowerUpdateAtHeight")
+		}
+		if untypedEvt.Ev == nil {
+			return errors.New("nil event type in EventsPowerUpdateAtHeight")
+		}
 		switch typedEvt := untypedEvt.Ev.(type) {
 		case *EventPowerUpdate_BtcActivated:
 			evt := typedEvt.BtcActivated
@@ -143,6 +155,9 @@ func (evtPowerUpdt *EventsPowerUpdateAtHeight) Validate() error {
 			if err := validateAddrStr(evt.BtcDelAddr); err != nil {
 				return fmt.Errorf("invalid event activated btc delegator, error: %w", err)
 			}
+			if !evt.TotalSat.IsPositive() {
+				return fmt.Errorf("invalid event activated total_sat: must be positive, got %s", evt.TotalSat.String())
+			}
 		case *EventPowerUpdate_BtcUnbonded:
 			evt := typedEvt.BtcUnbonded
 			if err := validateAddrStr(evt.FpAddr); err != nil {
@@ -150,6 +165,9 @@ func (evtPowerUpdt *EventsPowerUpdateAtHeight) Validate() error {
 			}
 			if err := validateAddrStr(evt.BtcDelAddr); err != nil {
 				return fmt.Errorf("invalid event unbonded btc delegator, error: %w", err)
+			}
+			if !evt.TotalSat.IsPositive() {
+				return fmt.Errorf("invalid event activated total_sat: must be positive, got %s", evt.TotalSat.String())
 			}
 		}
 	}

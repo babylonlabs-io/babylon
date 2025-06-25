@@ -5,12 +5,12 @@ import (
 
 	sdktestdata "github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	icacontrollertypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/controller/types"
-	icatypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/types"
-	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
+	icacontrollertypes "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/controller/types"
+	icatypes "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/types"
+	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/v4/app/ante"
+	"github.com/babylonlabs-io/babylon/v3/app/ante"
 )
 
 func TestIBCMsgSizeDecorator(t *testing.T) {
@@ -71,6 +71,17 @@ func TestIBCMsgSizeDecorator(t *testing.T) {
 				},
 			},
 			isCheckTx: true,
+			errMsg:    "memo is too large",
+		},
+		{
+			name: "MsgTransfer memo too long without check tx",
+			msgs: []sdk.Msg{
+				&ibctransfertypes.MsgTransfer{
+					Memo:     longMemo,
+					Receiver: validReceiver,
+				},
+			},
+			isCheckTx: false,
 			errMsg:    "memo is too large",
 		},
 		{

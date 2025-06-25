@@ -15,17 +15,17 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
-	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
-	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
-	testutil "github.com/babylonlabs-io/babylon/v4/testutil/incentives-helper"
-	keepertest "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
-	bbn "github.com/babylonlabs-io/babylon/v4/types"
-	btclctypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
-	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
-	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
-	"github.com/babylonlabs-io/babylon/v4/x/finality/keeper"
-	"github.com/babylonlabs-io/babylon/v4/x/finality/types"
-	ictvtypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
+	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
+	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
+	testutil "github.com/babylonlabs-io/babylon/v3/testutil/incentives-helper"
+	keepertest "github.com/babylonlabs-io/babylon/v3/testutil/keeper"
+	bbn "github.com/babylonlabs-io/babylon/v3/types"
+	btclctypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
+	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
+	epochingtypes "github.com/babylonlabs-io/babylon/v3/x/epoching/types"
+	"github.com/babylonlabs-io/babylon/v3/x/finality/keeper"
+	"github.com/babylonlabs-io/babylon/v3/x/finality/types"
+	ictvtypes "github.com/babylonlabs-io/babylon/v3/x/incentive/types"
 )
 
 func setupMsgServer(t testing.TB) (*keeper.Keeper, types.MsgServer, context.Context) {
@@ -116,6 +116,14 @@ func FuzzCommitPubRandList(f *testing.F) {
 		_, err = ms.CommitPubRandList(ctx, msg)
 		require.Error(t, err)
 		require.ErrorContains(t, err, types.ErrOverflowInBlockHeight.Error())
+
+		// Case 7: commit a pubrand list with startHeight too far into the future
+		startHeight = 500_000
+		_, msg, err = datagen.GenRandomMsgCommitPubRandList(r, btcSK, startHeight, numPubRand)
+		require.NoError(t, err)
+		_, err = ms.CommitPubRandList(ctx, msg)
+		require.Error(t, err)
+		require.ErrorContains(t, err, fmt.Sprintf("start height %d is too far into the future", startHeight))
 	})
 }
 

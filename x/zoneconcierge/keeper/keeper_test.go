@@ -4,9 +4,9 @@ import (
 	"context"
 	"math/rand"
 
-	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
-	zckeeper "github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/keeper"
-	ibctmtypes "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
+	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
+	zckeeper "github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/keeper"
+	ibctmtypes "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
 )
 
 // SimulateNewHeaders generates a non-zero number of canonical headers

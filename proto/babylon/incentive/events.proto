@@ -4,7 +4,7 @@ package babylon.incentive;
 import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/babylonlabs-io/babylon/v4/x/incentive/types";
+option go_package = "github.com/babylonlabs-io/babylon/v3/x/incentive/types";
 
 // EventsPowerUpdateAtHeight stores a slice of events happened at
 // some specific block height, indexed by the block height.

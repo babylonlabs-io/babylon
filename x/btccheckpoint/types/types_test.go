@@ -2,10 +2,14 @@ package types_test
 
 import (
 	"fmt"
+	"math/rand"
 	"testing"
+	"time"
 
-	"github.com/babylonlabs-io/babylon/v4/btctxformatter"
-	"github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
+	"github.com/babylonlabs-io/babylon/v3/btctxformatter"
+	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
+	bbntypes "github.com/babylonlabs-io/babylon/v3/types"
+	"github.com/babylonlabs-io/babylon/v3/x/btccheckpoint/types"
 	"github.com/stretchr/testify/require"
 )
 
@@ -16,6 +20,7 @@ var (
 	shortAddr = make([]byte, validAddrLen-1)
 	longAddr  = make([]byte, validAddrLen+1)
 	emptyAddr = []byte{}
+	r         = rand.New(rand.NewSource(time.Now().UnixNano()))
 )
 
 func TestCheckpointAddresses_Validate(t *testing.T) {
@@ -85,6 +90,61 @@ func TestCheckpointAddresses_Validate(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.addresses.Validate()
+			if tt.wantErr != nil {
+				require.Error(t, err)
+				require.EqualError(t, err, tt.wantErr.Error())
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestTransactionKey_Validate(t *testing.T) {
+	t.Parallel()
+	header := datagen.GenRandomBTCHeaderInfo(r)
+	tests := []struct {
+		name    string
+		key     types.TransactionKey
+		wantErr error
+	}{
+		{
+			name: "valid key",
+			key: types.TransactionKey{
+				Index: 0,
+				Hash:  datagen.GenRandomBTCHeaderPrevBlock(r),
+			},
+			wantErr: nil,
+		},
+		{
+			name: "valid key random",
+			key: types.TransactionKey{
+				Index: 0,
+				Hash:  header.Hash,
+			},
+			wantErr: nil,
+		},
+		{
+			name: "invalid hash",
+			key: types.TransactionKey{
+				Index: 0,
+				Hash:  nil,
+			},
+			wantErr: fmt.Errorf("transaction hash cannot be nil"),
+		},
+		{
+			name: "invalid hash length",
+			key: types.TransactionKey{
+				Index: 0,
+				Hash:  &bbntypes.BTCHeaderHashBytes{},
+			},
+			wantErr: fmt.Errorf("invalid transaction hash length: expected 32, got 0"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.key.Validate()
 			if tt.wantErr != nil {
 				require.Error(t, err)
 				require.EqualError(t, err, tt.wantErr.Error())

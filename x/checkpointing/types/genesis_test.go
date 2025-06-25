@@ -5,8 +5,8 @@ import (
 	"testing"
 	time "time"
 
-	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
-	"github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
+	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
+	"github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
 
 	"github.com/stretchr/testify/require"
 )
@@ -85,7 +85,7 @@ func TestGenesisStateValidate(t *testing.T) {
 				},
 			},
 			valid:  false,
-			errMsg: "null checkpoint",
+			errMsg: types.ErrNilCkpt.Error(),
 		},
 		{
 			name: "valid full genesis state",

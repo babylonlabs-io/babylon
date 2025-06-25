@@ -10,7 +10,7 @@ import (
 	"github.com/btcsuite/btcd/wire"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	bbn "github.com/babylonlabs-io/babylon/v3/types"
 )
 
 type ParsedPublicKey struct {

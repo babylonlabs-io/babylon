@@ -8,7 +8,7 @@ import (
 	context "context"
 	reflect "reflect"
 
-	types "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
+	types "github.com/babylonlabs-io/babylon/v3/x/epoching/types"
 	types0 "github.com/cosmos/cosmos-sdk/types"
 	gomock "github.com/golang/mock/gomock"
 )
@@ -85,6 +85,20 @@ func NewMockBankKeeper(ctrl *gomock.Controller) *MockBankKeeper {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockBankKeeper) EXPECT() *MockBankKeeperMockRecorder {
 	return m.recorder
+}
+
+// BlockedAddr mocks base method.
+func (m *MockBankKeeper) BlockedAddr(addr types0.AccAddress) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "BlockedAddr", addr)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// BlockedAddr indicates an expected call of BlockedAddr.
+func (mr *MockBankKeeperMockRecorder) BlockedAddr(addr interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BlockedAddr", reflect.TypeOf((*MockBankKeeper)(nil).BlockedAddr), addr)
 }
 
 // GetAllBalances mocks base method.

@@ -5,16 +5,17 @@ import (
 	"path/filepath"
 	"strconv"
 
-	"github.com/babylonlabs-io/babylon/v4/app/ante"
-	"github.com/babylonlabs-io/babylon/v4/app/signer"
+	"github.com/babylonlabs-io/babylon/v3/app/ante"
+	"github.com/babylonlabs-io/babylon/v3/app/signer"
 	cmtcfg "github.com/cometbft/cometbft/config"
 
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 
 	serverconfig "github.com/cosmos/cosmos-sdk/server/config"
 
-	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
-	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
+	bbn "github.com/babylonlabs-io/babylon/v3/types"
+	evmserverconfig "github.com/cosmos/evm/server/config"
 )
 
 type BtcConfig struct {
@@ -57,26 +58,39 @@ type BabylonAppConfig struct {
 	BlsConfig BlsConfig `mapstructure:"bls-config"`
 
 	BabylonMempoolConfig BabylonMempoolConfig `mapstructure:"babylon-mempool"`
+
+	// EVM config
+	EVM     evmserverconfig.EVMConfig     `mapstructure:"evm"`
+	JSONRPC evmserverconfig.JSONRPCConfig `mapstructure:"json-rpc"`
+	TLS     evmserverconfig.TLSConfig     `mapstructure:"tls"`
 }
 
 func DefaultBabylonAppConfig() *BabylonAppConfig {
 	baseConfig := *serverconfig.DefaultConfig()
 	// Update the default Mempool.MaxTxs to be 0 to make sure the PriorityNonceMempool is used
-	baseConfig.Mempool.MaxTxs = 0
+	// TODO: Using no-op mempool for EVM until issue with mempool support is resolved
+	baseConfig.Mempool.MaxTxs = -1
 	// The SDK's default minimum gas price is set to "0.002ubbn" (empty value) inside
 	// app.toml, in order to avoid spamming attacks due to transactions with 0 gas price.
 	baseConfig.MinGasPrices = fmt.Sprintf("%f%s", appparams.GlobalMinGasPrice, appparams.BaseCoinUnit)
+	evmConfig := *evmserverconfig.DefaultEVMConfig()
+	evmConfig.EVMChainID = appparams.EVMChainID
+	jsonRPCConfig := *evmserverconfig.DefaultJSONRPCConfig()
+	jsonRPCConfig.Enable = true
 	return &BabylonAppConfig{
 		Config:               baseConfig,
 		Wasm:                 wasmtypes.DefaultNodeConfig(),
 		BtcConfig:            defaultBabylonBtcConfig(),
 		BlsConfig:            defaultBabylonBlsConfig(),
 		BabylonMempoolConfig: defaultBabylonMempoolConfig(),
+		EVM:                  evmConfig,
+		JSONRPC:              jsonRPCConfig,
+		TLS:                  *evmserverconfig.DefaultTLSConfig(),
 	}
 }
 
 func DefaultBabylonTemplate() string {
-	return serverconfig.DefaultConfigTemplate + wasmtypes.DefaultConfigTemplate() + `
+	return serverconfig.DefaultConfigTemplate + evmserverconfig.DefaultEVMConfigTemplate + wasmtypes.DefaultConfigTemplate() + `
 ###############################################################################
 ###                        BLS configuration                                ###
 ###############################################################################

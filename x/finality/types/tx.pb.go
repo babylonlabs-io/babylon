@@ -6,7 +6,7 @@ package types
 import (
 	context "context"
 	fmt "fmt"
-	github_com_babylonlabs_io_babylon_v4_types "github.com/babylonlabs-io/babylon/v4/types"
+	github_com_babylonlabs_io_babylon_v3_types "github.com/babylonlabs-io/babylon/v3/types"
 	crypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 	_ "github.com/cosmos/cosmos-proto"
 	_ "github.com/cosmos/cosmos-sdk/types/msgservice"
@@ -36,7 +36,7 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 type MsgCommitPubRandList struct {
 	Signer string `protobuf:"bytes,1,opt,name=signer,proto3" json:"signer,omitempty"`
 	// fp_btc_pk is the BTC PK of the finality provider that commits the public randomness
-	FpBtcPk *github_com_babylonlabs_io_babylon_v4_types.BIP340PubKey `protobuf:"bytes,2,opt,name=fp_btc_pk,json=fpBtcPk,proto3,customtype=github.com/babylonlabs-io/babylon/v4/types.BIP340PubKey" json:"fp_btc_pk,omitempty"`
+	FpBtcPk *github_com_babylonlabs_io_babylon_v3_types.BIP340PubKey `protobuf:"bytes,2,opt,name=fp_btc_pk,json=fpBtcPk,proto3,customtype=github.com/babylonlabs-io/babylon/v3/types.BIP340PubKey" json:"fp_btc_pk,omitempty"`
 	// start_height is the start block height of the list of public randomness
 	StartHeight uint64 `protobuf:"varint,3,opt,name=start_height,json=startHeight,proto3" json:"start_height,omitempty"`
 	// num_pub_rand is the number of public randomness committed
@@ -49,7 +49,7 @@ type MsgCommitPubRandList struct {
 	// randomness on behalf of fp_btc_pk
 	// TODO: another option is to restrict signer to correspond to fp_btc_pk. This restricts
 	// the tx submitter to be the holder of fp_btc_pk. Decide this later
-	Sig *github_com_babylonlabs_io_babylon_v4_types.BIP340Signature `protobuf:"bytes,6,opt,name=sig,proto3,customtype=github.com/babylonlabs-io/babylon/v4/types.BIP340Signature" json:"sig,omitempty"`
+	Sig *github_com_babylonlabs_io_babylon_v3_types.BIP340Signature `protobuf:"bytes,6,opt,name=sig,proto3,customtype=github.com/babylonlabs-io/babylon/v3/types.BIP340Signature" json:"sig,omitempty"`
 }
 
 func (m *MsgCommitPubRandList) Reset()         { *m = MsgCommitPubRandList{} }
@@ -154,11 +154,11 @@ var xxx_messageInfo_MsgCommitPubRandListResponse proto.InternalMessageInfo
 type MsgAddFinalitySig struct {
 	Signer string `protobuf:"bytes,1,opt,name=signer,proto3" json:"signer,omitempty"`
 	// fp_btc_pk is the BTC PK of the finality provider that casts this vote
-	FpBtcPk *github_com_babylonlabs_io_babylon_v4_types.BIP340PubKey `protobuf:"bytes,2,opt,name=fp_btc_pk,json=fpBtcPk,proto3,customtype=github.com/babylonlabs-io/babylon/v4/types.BIP340PubKey" json:"fp_btc_pk,omitempty"`
+	FpBtcPk *github_com_babylonlabs_io_babylon_v3_types.BIP340PubKey `protobuf:"bytes,2,opt,name=fp_btc_pk,json=fpBtcPk,proto3,customtype=github.com/babylonlabs-io/babylon/v3/types.BIP340PubKey" json:"fp_btc_pk,omitempty"`
 	// block_height is the height of the voted block
 	BlockHeight uint64 `protobuf:"varint,3,opt,name=block_height,json=blockHeight,proto3" json:"block_height,omitempty"`
 	// pub_rand is the public randomness committed at this height
-	PubRand *github_com_babylonlabs_io_babylon_v4_types.SchnorrPubRand `protobuf:"bytes,4,opt,name=pub_rand,json=pubRand,proto3,customtype=github.com/babylonlabs-io/babylon/v4/types.SchnorrPubRand" json:"pub_rand,omitempty"`
+	PubRand *github_com_babylonlabs_io_babylon_v3_types.SchnorrPubRand `protobuf:"bytes,4,opt,name=pub_rand,json=pubRand,proto3,customtype=github.com/babylonlabs-io/babylon/v3/types.SchnorrPubRand" json:"pub_rand,omitempty"`
 	// proof is the proof that the given public randomness is committed under the commitment
 	Proof *crypto.Proof `protobuf:"bytes,5,opt,name=proof,proto3" json:"proof,omitempty"`
 	// block_app_hash is the AppHash of the voted block
@@ -167,7 +167,7 @@ type MsgAddFinalitySig struct {
 	// where finality signature is an EOTS signature, i.e.,
 	// the `s` in a Schnorr signature `(r, s)`
 	// `r` is the public randomness that is already committed by the finality provider
-	FinalitySig *github_com_babylonlabs_io_babylon_v4_types.SchnorrEOTSSig `protobuf:"bytes,7,opt,name=finality_sig,json=finalitySig,proto3,customtype=github.com/babylonlabs-io/babylon/v4/types.SchnorrEOTSSig" json:"finality_sig,omitempty"`
+	FinalitySig *github_com_babylonlabs_io_babylon_v3_types.SchnorrEOTSSig `protobuf:"bytes,7,opt,name=finality_sig,json=finalitySig,proto3,customtype=github.com/babylonlabs-io/babylon/v3/types.SchnorrEOTSSig" json:"finality_sig,omitempty"`
 }
 
 func (m *MsgAddFinalitySig) Reset()         { *m = MsgAddFinalitySig{} }
@@ -369,7 +369,7 @@ var xxx_messageInfo_MsgUpdateParamsResponse proto.InternalMessageInfo
 type MsgUnjailFinalityProvider struct {
 	Signer string `protobuf:"bytes,1,opt,name=signer,proto3" json:"signer,omitempty"`
 	// fp_btc_pk is the BTC PK of the finality provider that commits the public randomness
-	FpBtcPk *github_com_babylonlabs_io_babylon_v4_types.BIP340PubKey `protobuf:"bytes,2,opt,name=fp_btc_pk,json=fpBtcPk,proto3,customtype=github.com/babylonlabs-io/babylon/v4/types.BIP340PubKey" json:"fp_btc_pk,omitempty"`
+	FpBtcPk *github_com_babylonlabs_io_babylon_v3_types.BIP340PubKey `protobuf:"bytes,2,opt,name=fp_btc_pk,json=fpBtcPk,proto3,customtype=github.com/babylonlabs-io/babylon/v3/types.BIP340PubKey" json:"fp_btc_pk,omitempty"`
 }
 
 func (m *MsgUnjailFinalityProvider) Reset()         { *m = MsgUnjailFinalityProvider{} }
@@ -446,11 +446,11 @@ var xxx_messageInfo_MsgUnjailFinalityProviderResponse proto.InternalMessageInfo
 type MsgEquivocationEvidence struct {
 	Signer string `protobuf:"bytes,1,opt,name=signer,proto3" json:"signer,omitempty"`
 	// fp_btc_pk is the BTC PK of the finality provider that casts this vote
-	FpBtcPk *github_com_babylonlabs_io_babylon_v4_types.BIP340PubKey `protobuf:"bytes,2,opt,name=fp_btc_pk,json=fpBtcPk,proto3,customtype=github.com/babylonlabs-io/babylon/v4/types.BIP340PubKey" json:"fp_btc_pk,omitempty"`
+	FpBtcPk *github_com_babylonlabs_io_babylon_v3_types.BIP340PubKey `protobuf:"bytes,2,opt,name=fp_btc_pk,json=fpBtcPk,proto3,customtype=github.com/babylonlabs-io/babylon/v3/types.BIP340PubKey" json:"fp_btc_pk,omitempty"`
 	// block_height is the height of the conflicting blocks
 	BlockHeight uint64 `protobuf:"varint,3,opt,name=block_height,json=blockHeight,proto3" json:"block_height,omitempty"`
 	// pub_rand is the public randomness the finality provider has committed to
-	PubRand *github_com_babylonlabs_io_babylon_v4_types.SchnorrPubRand `protobuf:"bytes,4,opt,name=pub_rand,json=pubRand,proto3,customtype=github.com/babylonlabs-io/babylon/v4/types.SchnorrPubRand" json:"pub_rand,omitempty"`
+	PubRand *github_com_babylonlabs_io_babylon_v3_types.SchnorrPubRand `protobuf:"bytes,4,opt,name=pub_rand,json=pubRand,proto3,customtype=github.com/babylonlabs-io/babylon/v3/types.SchnorrPubRand" json:"pub_rand,omitempty"`
 	// canonical_app_hash is the AppHash of the canonical block
 	CanonicalAppHash []byte `protobuf:"bytes,5,opt,name=canonical_app_hash,json=canonicalAppHash,proto3" json:"canonical_app_hash,omitempty"`
 	// fork_app_hash is the AppHash of the fork block
@@ -459,10 +459,10 @@ type MsgEquivocationEvidence struct {
 	// where finality signature is an EOTS signature, i.e.,
 	// the `s` in a Schnorr signature `(r, s)`
 	// `r` is the public randomness that is already committed by the finality provider
-	CanonicalFinalitySig *github_com_babylonlabs_io_babylon_v4_types.SchnorrEOTSSig `protobuf:"bytes,7,opt,name=canonical_finality_sig,json=canonicalFinalitySig,proto3,customtype=github.com/babylonlabs-io/babylon/v4/types.SchnorrEOTSSig" json:"canonical_finality_sig,omitempty"`
+	CanonicalFinalitySig *github_com_babylonlabs_io_babylon_v3_types.SchnorrEOTSSig `protobuf:"bytes,7,opt,name=canonical_finality_sig,json=canonicalFinalitySig,proto3,customtype=github.com/babylonlabs-io/babylon/v3/types.SchnorrEOTSSig" json:"canonical_finality_sig,omitempty"`
 	// fork_finality_sig is the finality signature to the fork block
 	// where finality signature is an EOTS signature
-	ForkFinalitySig *github_com_babylonlabs_io_babylon_v4_types.SchnorrEOTSSig `protobuf:"bytes,8,opt,name=fork_finality_sig,json=forkFinalitySig,proto3,customtype=github.com/babylonlabs-io/babylon/v4/types.SchnorrEOTSSig" json:"fork_finality_sig,omitempty"`
+	ForkFinalitySig *github_com_babylonlabs_io_babylon_v3_types.SchnorrEOTSSig `protobuf:"bytes,8,opt,name=fork_finality_sig,json=forkFinalitySig,proto3,customtype=github.com/babylonlabs-io/babylon/v3/types.SchnorrEOTSSig" json:"fork_finality_sig,omitempty"`
 }
 
 func (m *MsgEquivocationEvidence) Reset()         { *m = MsgEquivocationEvidence{} }
@@ -689,7 +689,7 @@ var fileDescriptor_2dd6da066b6baf1d = []byte{
 	// 972 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe4, 0x56, 0xcf, 0x6f, 0x1b, 0x45,
 	0x14, 0xf6, 0xc6, 0xf9, 0xf9, 0xec, 0x24, 0x64, 0xb1, 0x52, 0xc7, 0x0d, 0xb6, 0x63, 0x0a, 0x0a,
-	0x55, 0xbb, 0x4b, 0xd2, 0x50, 0xd4, 0x20, 0x90, 0x62, 0x94, 0x2a, 0x08, 0xa2, 0x5a, 0x6b, 0x2a,
+	0x55, 0xbb, 0x4b, 0x92, 0x52, 0xd4, 0x20, 0x90, 0x62, 0x94, 0x2a, 0x08, 0xa2, 0x5a, 0x6b, 0x2a,
 	0x10, 0x97, 0x65, 0x76, 0xbd, 0xde, 0x1d, 0xec, 0x9d, 0x99, 0xee, 0xcc, 0x5a, 0x31, 0xa7, 0x8a,
 	0x13, 0x47, 0x0e, 0x5c, 0x91, 0x38, 0x72, 0xec, 0x81, 0xbf, 0x01, 0x55, 0xe2, 0x40, 0xc5, 0x09,
 	0xe5, 0x10, 0xa1, 0xe4, 0xd0, 0x7f, 0x03, 0xed, 0x0f, 0xff, 0x4a, 0x76, 0x51, 0x02, 0x15, 0x1c,
@@ -704,7 +704,7 @@ var fileDescriptor_2dd6da066b6baf1d = []byte{
 	0xc4, 0xf2, 0x8a, 0x52, 0x55, 0xda, 0x5c, 0xd0, 0xe2, 0x95, 0xfc, 0x19, 0x2c, 0xb4, 0x99, 0x6e,
 	0x08, 0x53, 0x67, 0x9d, 0xe2, 0x54, 0x55, 0xda, 0xcc, 0xd7, 0xdf, 0x3b, 0x3e, 0xa9, 0xbc, 0x6b,
 	0x63, 0xe1, 0xf8, 0x86, 0x62, 0x52, 0x57, 0x8d, 0x93, 0x76, 0x91, 0xc1, 0x6f, 0x63, 0x3a, 0x58,
-	0xaa, 0xbd, 0x1d, 0x55, 0xf4, 0x99, 0xc5, 0x95, 0xfa, 0x47, 0x8d, 0x3b, 0x3b, 0x6f, 0x37, 0x7c,
+	0xaa, 0xbd, 0x1d, 0x55, 0xf4, 0x99, 0xc5, 0x95, 0xfa, 0x47, 0x8d, 0x9d, 0x3b, 0x6f, 0x37, 0x7c,
 	0xe3, 0x63, 0xab, 0xaf, 0xcd, 0xb5, 0x59, 0x5d, 0x98, 0x8d, 0x8e, 0xbc, 0x01, 0x79, 0x2e, 0x90,
 	0x27, 0x74, 0xc7, 0xc2, 0xb6, 0x23, 0x8a, 0xd9, 0xaa, 0xb4, 0x39, 0xad, 0xe5, 0xc2, 0xbd, 0x83,
 	0x70, 0x4b, 0xae, 0x42, 0x9e, 0xf8, 0xae, 0xce, 0x7c, 0x43, 0xf7, 0x10, 0x69, 0x15, 0xa7, 0x43,
@@ -743,11 +743,11 @@ var fileDescriptor_2dd6da066b6baf1d = []byte{
 	0x32, 0x20, 0x3f, 0x31, 0x93, 0x6f, 0xa4, 0x9d, 0x1f, 0x47, 0x95, 0x6e, 0x5d, 0x06, 0x35, 0xcc,
 	0xf1, 0x58, 0x82, 0xd5, 0x94, 0x31, 0x9a, 0x4a, 0x37, 0x19, 0x5f, 0xba, 0x7b, 0x35, 0xfc, 0x04,
 	0x85, 0x14, 0x61, 0xa6, 0x52, 0x48, 0xc6, 0xa7, 0x53, 0xf8, 0x7b, 0x39, 0xc9, 0x5f, 0x43, 0x21,
-	0x71, 0x0c, 0xa7, 0xd6, 0x32, 0x09, 0x5d, 0xda, 0xb9, 0x0a, 0x7a, 0x90, 0xbb, 0x34, 0xf3, 0xf8,
-	0xf9, 0x93, 0x9b, 0x52, 0xfd, 0xc1, 0xd3, 0xd3, 0xb2, 0xf4, 0xec, 0xb4, 0x2c, 0xfd, 0x79, 0x5a,
-	0x96, 0xbe, 0x3b, 0x2b, 0x67, 0x9e, 0x9d, 0x95, 0x33, 0x7f, 0x9c, 0x95, 0x33, 0x5f, 0xbc, 0x73,
-	0xa9, 0xb9, 0x71, 0x34, 0xfa, 0x66, 0x0e, 0x47, 0x88, 0x31, 0x1b, 0x7e, 0x30, 0xdf, 0xf9, 0x2b,
-	0x00, 0x00, 0xff, 0xff, 0x0b, 0x20, 0xaa, 0x06, 0xf0, 0x0b, 0x00, 0x00,
+	0x71, 0x0c, 0xa7, 0xd6, 0x32, 0x09, 0x5d, 0xba, 0x73, 0x15, 0xf4, 0x20, 0x77, 0x69, 0xe6, 0xf1,
+	0xf3, 0x27, 0x37, 0xa5, 0xfa, 0x83, 0xa7, 0xa7, 0x65, 0xe9, 0xd9, 0x69, 0x59, 0xfa, 0xf3, 0xb4,
+	0x2c, 0x7d, 0x77, 0x56, 0xce, 0x3c, 0x3b, 0x2b, 0x67, 0xfe, 0x38, 0x2b, 0x67, 0xbe, 0x78, 0xe7,
+	0x52, 0x73, 0xe3, 0x68, 0xf4, 0xcd, 0x1c, 0x8e, 0x10, 0x63, 0x36, 0xfc, 0x60, 0xde, 0xf9, 0x2b,
+	0x00, 0x00, 0xff, 0xff, 0x04, 0xd0, 0x76, 0x22, 0xf0, 0x0b, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -1870,7 +1870,7 @@ func (m *MsgCommitPubRandList) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			var v github_com_babylonlabs_io_babylon_v4_types.BIP340PubKey
+			var v github_com_babylonlabs_io_babylon_v3_types.BIP340PubKey
 			m.FpBtcPk = &v
 			if err := m.FpBtcPk.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -1977,7 +1977,7 @@ func (m *MsgCommitPubRandList) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			var v github_com_babylonlabs_io_babylon_v4_types.BIP340Signature
+			var v github_com_babylonlabs_io_babylon_v3_types.BIP340Signature
 			m.Sig = &v
 			if err := m.Sig.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -2144,7 +2144,7 @@ func (m *MsgAddFinalitySig) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			var v github_com_babylonlabs_io_babylon_v4_types.BIP340PubKey
+			var v github_com_babylonlabs_io_babylon_v3_types.BIP340PubKey
 			m.FpBtcPk = &v
 			if err := m.FpBtcPk.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -2198,7 +2198,7 @@ func (m *MsgAddFinalitySig) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			var v github_com_babylonlabs_io_babylon_v4_types.SchnorrPubRand
+			var v github_com_babylonlabs_io_babylon_v3_types.SchnorrPubRand
 			m.PubRand = &v
 			if err := m.PubRand.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -2303,7 +2303,7 @@ func (m *MsgAddFinalitySig) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			var v github_com_babylonlabs_io_babylon_v4_types.SchnorrEOTSSig
+			var v github_com_babylonlabs_io_babylon_v3_types.SchnorrEOTSSig
 			m.FinalitySig = &v
 			if err := m.FinalitySig.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -2635,7 +2635,7 @@ func (m *MsgUnjailFinalityProvider) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			var v github_com_babylonlabs_io_babylon_v4_types.BIP340PubKey
+			var v github_com_babylonlabs_io_babylon_v3_types.BIP340PubKey
 			m.FpBtcPk = &v
 			if err := m.FpBtcPk.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -2802,7 +2802,7 @@ func (m *MsgEquivocationEvidence) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			var v github_com_babylonlabs_io_babylon_v4_types.BIP340PubKey
+			var v github_com_babylonlabs_io_babylon_v3_types.BIP340PubKey
 			m.FpBtcPk = &v
 			if err := m.FpBtcPk.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -2856,7 +2856,7 @@ func (m *MsgEquivocationEvidence) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			var v github_com_babylonlabs_io_babylon_v4_types.SchnorrPubRand
+			var v github_com_babylonlabs_io_babylon_v3_types.SchnorrPubRand
 			m.PubRand = &v
 			if err := m.PubRand.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -2959,7 +2959,7 @@ func (m *MsgEquivocationEvidence) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			var v github_com_babylonlabs_io_babylon_v4_types.SchnorrEOTSSig
+			var v github_com_babylonlabs_io_babylon_v3_types.SchnorrEOTSSig
 			m.CanonicalFinalitySig = &v
 			if err := m.CanonicalFinalitySig.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -2994,7 +2994,7 @@ func (m *MsgEquivocationEvidence) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			var v github_com_babylonlabs_io_babylon_v4_types.SchnorrEOTSSig
+			var v github_com_babylonlabs_io_babylon_v3_types.SchnorrEOTSSig
 			m.ForkFinalitySig = &v
 			if err := m.ForkFinalitySig.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err

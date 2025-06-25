@@ -3,7 +3,7 @@ package keeper
 import (
 	"context"
 
-	"github.com/babylonlabs-io/babylon/v4/x/mint/types"
+	"github.com/babylonlabs-io/babylon/v3/x/mint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 

@@ -7,11 +7,11 @@ import (
 	"testing"
 
 	storetypes "cosmossdk.io/store/types"
-	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
-	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
-	keepertest "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
-	"github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/keeper"
-	"github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
+	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
+	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
+	keepertest "github.com/babylonlabs-io/babylon/v3/testutil/keeper"
+	"github.com/babylonlabs-io/babylon/v3/x/btccheckpoint/keeper"
+	"github.com/babylonlabs-io/babylon/v3/x/btccheckpoint/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/google/go-cmp/cmp"
@@ -82,7 +82,7 @@ func setupTest(t *testing.T, seed int64) (sdk.Context, *keeper.Keeper, *storetyp
 		r        = rand.New(rand.NewSource(seed))
 		powLimit = datagen.RandomMathInt(r, 1000).BigInt()
 		storeKey = storetypes.NewKVStoreKey(types.StoreKey)
-		k, ctx   = keepertest.NewBTCChkptKeeperWithStoreKeys(t, storeKey, nil, nil, nil, nil, powLimit)
+		k, ctx   = keepertest.NewBTCChkptKeeperWithStoreKeys(t, nil, storeKey, nil, nil, nil, nil, nil, powLimit)
 		l        = int(math.Abs(float64(r.Int()%50 + 1))) // cap it to 50 entries
 		e        = make([]types.EpochEntry, l)
 		s        = make([]types.SubmissionEntry, l)

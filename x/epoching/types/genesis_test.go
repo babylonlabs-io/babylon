@@ -2,14 +2,15 @@ package types_test
 
 import (
 	"math/rand"
+	"strings"
 	"testing"
 	"time"
 
-	"github.com/babylonlabs-io/babylon/v4/app"
-	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
-	"github.com/babylonlabs-io/babylon/v4/testutil/nullify"
-	"github.com/babylonlabs-io/babylon/v4/x/epoching"
-	"github.com/babylonlabs-io/babylon/v4/x/epoching/types"
+	"github.com/babylonlabs-io/babylon/v3/app"
+	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
+	"github.com/babylonlabs-io/babylon/v3/testutil/nullify"
+	"github.com/babylonlabs-io/babylon/v3/x/epoching"
+	"github.com/babylonlabs-io/babylon/v3/x/epoching/types"
 	"github.com/stretchr/testify/require"
 )
 
@@ -244,6 +245,97 @@ func TestEpochQueue_Validate(t *testing.T) {
 			}
 			require.Error(t, err)
 			require.ErrorContains(t, err, tc.errorMsg)
+		})
+	}
+}
+
+func TestValidateSequentialEpochs(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name         string
+		epochNumbers []uint64
+		wantErr      bool
+		errContains  string
+	}{
+		{
+			name:         "empty slice",
+			epochNumbers: []uint64{},
+			wantErr:      false,
+		},
+		{
+			name:         "single epoch",
+			epochNumbers: []uint64{0},
+			wantErr:      false,
+		},
+		{
+			name:         "single epoch non-zero",
+			epochNumbers: []uint64{5},
+			wantErr:      false,
+		},
+		{
+			name:         "consecutive from zero",
+			epochNumbers: []uint64{0, 1, 2, 3, 4},
+			wantErr:      false,
+		},
+		{
+			name:         "consecutive unordered input",
+			epochNumbers: []uint64{3, 1, 4, 2, 5},
+			wantErr:      false,
+		},
+		{
+			name:         "gap at beginning",
+			epochNumbers: []uint64{0, 2, 3, 4},
+			wantErr:      true,
+			errContains:  "found gap between 0 and 2",
+		},
+		{
+			name:         "gap in middle",
+			epochNumbers: []uint64{1, 2, 4, 5},
+			wantErr:      true,
+			errContains:  "found gap between 2 and 4",
+		},
+		{
+			name:         "gap at end",
+			epochNumbers: []uint64{1, 2, 3, 6},
+			wantErr:      true,
+			errContains:  "found gap between 3 and 6",
+		},
+		{
+			name:         "multiple gaps",
+			epochNumbers: []uint64{1, 3, 5, 7},
+			wantErr:      true,
+			errContains:  "found gap between 1 and 3",
+		},
+		{
+			name:         "large gap",
+			epochNumbers: []uint64{1, 2, 100},
+			wantErr:      true,
+			errContains:  "found gap between 2 and 100",
+		},
+		{
+			name:         "unordered with gap",
+			epochNumbers: []uint64{5, 1, 3, 2},
+			wantErr:      true,
+			errContains:  "found gap between 3 and 5",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			err := types.ValidateSequentialEpochs(tt.epochNumbers)
+
+			if tt.wantErr {
+				if err == nil {
+					t.Errorf("validateSequentialEpochs() expected error but got nil")
+					return
+				}
+				if tt.errContains != "" && !strings.Contains(err.Error(), tt.errContains) {
+					t.Errorf("validateSequentialEpochs() error = %v, expected to contain %q", err, tt.errContains)
+				}
+			} else if err != nil {
+				t.Errorf("validateSequentialEpochs() unexpected error = %v", err)
+			}
 		})
 	}
 }

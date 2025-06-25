@@ -4,7 +4,7 @@ import (
 	"context"
 
 	sdkmath "cosmossdk.io/math"
-	"github.com/babylonlabs-io/babylon/v4/x/incentive/types"
+	"github.com/babylonlabs-io/babylon/v3/x/incentive/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -134,7 +134,7 @@ func (k Keeper) SetRewardTrackerEventLastProcessedHeight(ctx context.Context, bl
 	return k.rewardTrackerEventsLastProcessedHeight.Set(ctx, blkHeight)
 }
 
-// SetRewardTrackerEvent returns a new reward tracker if it doesn't exists for that block height
+// SetRewardTrackerEvent stores the events with the provided height
 func (k Keeper) SetRewardTrackerEvent(ctx context.Context, height uint64, ev *types.EventsPowerUpdateAtHeight) error {
 	return k.rewardTrackerEvents.Set(ctx, height, *ev)
 }

@@ -11,7 +11,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
@@ -19,14 +18,14 @@ import (
 	staketypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/gogoproto/proto"
 
-	"github.com/babylonlabs-io/babylon/v4/test/e2e/util"
-	bbn "github.com/babylonlabs-io/babylon/v4/types"
-	btccheckpointtypes "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
-	blctypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
-	btclighttypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
-	finalitytypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
-	minttypes "github.com/babylonlabs-io/babylon/v4/x/mint/types"
-	ratelimiter "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/types"
+	"github.com/babylonlabs-io/babylon/v3/test/e2e/util"
+	bbn "github.com/babylonlabs-io/babylon/v3/types"
+	btccheckpointtypes "github.com/babylonlabs-io/babylon/v3/x/btccheckpoint/types"
+	blctypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
+	btclighttypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
+	finalitytypes "github.com/babylonlabs-io/babylon/v3/x/finality/types"
+	minttypes "github.com/babylonlabs-io/babylon/v3/x/mint/types"
+	ratelimiter "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/types"
 )
 
 // NodeConfig is a configuration for the node supplied from the test runner
@@ -233,11 +232,6 @@ func initGenesis(
 		return err
 	}
 
-	err = updateModuleGenesis(appGenState, crisistypes.ModuleName, &crisistypes.GenesisState{}, updateCrisisGenesis)
-	if err != nil {
-		return err
-	}
-
 	err = updateModuleGenesis(appGenState, genutiltypes.ModuleName, &genutiltypes.GenesisState{}, updateGenUtilGenesis(chain))
 	if err != nil {
 		return err
@@ -323,10 +317,6 @@ func updateStakeGenesis(stakeGenState *staketypes.GenesisState) {
 	}
 }
 
-func updateCrisisGenesis(crisisGenState *crisistypes.GenesisState) {
-	crisisGenState.ConstantFee.Denom = BabylonDenom
-}
-
 func updateBtcLightClientGenesis(btcHeaders []*btclighttypes.BTCHeaderInfo) func(blcGenState *blctypes.GenesisState) {
 	return func(blcGenState *btclighttypes.GenesisState) {
 		if len(btcHeaders) > 0 {
@@ -393,8 +383,8 @@ func updateGenUtilGenesis(c *internalChain) func(*genutiltypes.GenesisState) {
 
 func applyRateLimitsToChainConfig(rateLimiterGenState *ratelimiter.GenesisState) {
 	path := &ratelimiter.Path{
-		Denom:     "ubbn",
-		ChannelId: "channel-0",
+		Denom:             "ubbn",
+		ChannelOrClientId: "channel-0",
 	}
 
 	quota := &ratelimiter.Quota{

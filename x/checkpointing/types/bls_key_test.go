@@ -1,15 +1,16 @@
 package types_test
 
 import (
+	crypto_rand "crypto/rand"
 	"errors"
 	"fmt"
 	"math/rand"
 	"testing"
-	time "time"
+	"time"
 
-	"github.com/babylonlabs-io/babylon/v4/crypto/bls12381"
-	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
-	"github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
+	"github.com/babylonlabs-io/babylon/v3/crypto/bls12381"
+	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
+	"github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
 
 	"github.com/test-go/testify/require"
 )
@@ -49,6 +50,17 @@ func TestValidatorWithBlsKeySetValidate(t *testing.T) {
 			},
 			expectErr: fmt.Errorf("invalid BLS public key length, got 2, expected 96"),
 		},
+		{
+			name: "invalid BLS pub key - not a valid point on curve",
+			setup: func(vs *types.ValidatorWithBlsKeySet, pks []bls12381.PrivateKey) {
+				// Create a random invalid key
+				invalidKey := make([]byte, bls12381.PubKeySize)
+				_, err := crypto_rand.Read(invalidKey)
+				require.NoError(t, err)
+				vs.ValSet[0].BlsPubKey = invalidKey
+			},
+			expectErr: errors.New("invalid BLS public key point on the bls12-381 curve"),
+		},
 	}
 
 	for _, tc := range testCases {
@@ -82,6 +94,14 @@ func TestBlsKeyValidateBasic(t *testing.T) {
 			nil,
 		},
 		{
+			"invalid: nil pop",
+			types.BlsKey{
+				Pubkey: validBlsKey.Pubkey,
+				Pop:    nil,
+			},
+			errors.New("BLS Proof of Possession is nil"),
+		},
+		{
 			"invalid: nil pubkey",
 			types.BlsKey{
 				Pubkey: nil,
@@ -90,12 +110,21 @@ func TestBlsKeyValidateBasic(t *testing.T) {
 			errors.New("BLS Public key is nil"),
 		},
 		{
-			"invalid: nil pop",
+			"invalid: not a valid point on curve",
 			types.BlsKey{
-				Pubkey: validBlsKey.Pubkey,
-				Pop:    nil,
+				Pubkey: func() *bls12381.PublicKey {
+					// Create a random invalid key
+					invalidKey := make([]byte, bls12381.PubKeySize)
+					_, err := crypto_rand.Read(invalidKey)
+					require.NoError(t, err)
+					pk := new(bls12381.PublicKey)
+					err = pk.Unmarshal(invalidKey)
+					require.NoError(t, err)
+					return pk
+				}(),
+				Pop: validBlsKey.Pop,
 			},
-			errors.New("BLS Proof of Possession is nil"),
+			errors.New("invalid BLS public key point on the bls12-381 curve"),
 		},
 	}
 

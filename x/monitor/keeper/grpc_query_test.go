@@ -8,13 +8,13 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/v4/app"
-	"github.com/babylonlabs-io/babylon/v4/btctxformatter"
-	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
-	"github.com/babylonlabs-io/babylon/v4/testutil/mocks"
-	ckpttypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
-	types2 "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
-	"github.com/babylonlabs-io/babylon/v4/x/monitor/types"
+	"github.com/babylonlabs-io/babylon/v3/app"
+	"github.com/babylonlabs-io/babylon/v3/btctxformatter"
+	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
+	"github.com/babylonlabs-io/babylon/v3/testutil/mocks"
+	ckpttypes "github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
+	types2 "github.com/babylonlabs-io/babylon/v3/x/epoching/types"
+	"github.com/babylonlabs-io/babylon/v3/x/monitor/types"
 )
 
 func FuzzQueryEndedEpochBtcHeight(f *testing.F) {

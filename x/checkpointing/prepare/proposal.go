@@ -11,9 +11,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/mempool"
+	sdktestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
 
-	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
-	ckpttypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
+	ckpttypes "github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
 )
 
 const defaultInjectedTxIndex = 0
@@ -40,7 +40,7 @@ func NewProposalHandler(
 	ckptKeeper CheckpointingKeeper,
 	mp mempool.Mempool,
 	bApp *baseapp.BaseApp,
-	encCfg *appparams.EncodingConfig,
+	encCfg sdktestutil.TestEncodingConfig,
 ) *ProposalHandler {
 	defaultHandler := baseapp.NewDefaultProposalHandler(mp, bApp)
 	ckpttypes.RegisterInterfaces(encCfg.InterfaceRegistry)

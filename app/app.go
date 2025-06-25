@@ -6,12 +6,14 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
 	autocliv1 "cosmossdk.io/api/cosmos/autocli/v1"
 	reflectionv1 "cosmossdk.io/api/cosmos/reflection/v1"
 	"cosmossdk.io/client/v2/autocli"
 	"cosmossdk.io/core/appmodule"
 	"cosmossdk.io/log"
+	"cosmossdk.io/math"
 	"cosmossdk.io/x/circuit"
 	circuittypes "cosmossdk.io/x/circuit/types"
 	"cosmossdk.io/x/evidence"
@@ -40,7 +42,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/server/api"
 	"github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
-	"github.com/cosmos/cosmos-sdk/std"
 	"github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/mempool"
@@ -60,8 +61,6 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/cosmos-sdk/x/consensus"
 	consensusparamtypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
-	"github.com/cosmos/cosmos-sdk/x/crisis"
-	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
 	distr "github.com/cosmos/cosmos-sdk/x/distribution"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
@@ -77,58 +76,68 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	evmencoding "github.com/cosmos/evm/encoding"
+	srvflags "github.com/cosmos/evm/server/flags"
+	evmutils "github.com/cosmos/evm/utils"
+	"github.com/cosmos/evm/x/erc20"
+	"github.com/cosmos/evm/x/feemarket"
+	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
+	"github.com/cosmos/evm/x/precisebank"
+	precisebanktypes "github.com/cosmos/evm/x/precisebank/types"
+	evm "github.com/cosmos/evm/x/vm"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 	"github.com/cosmos/gogoproto/proto"
-	pfmrouter "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward"
-	pfmroutertypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward/types"
-	ratelimiter "github.com/cosmos/ibc-apps/modules/rate-limiting/v8"
-	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v8/types"
-	"github.com/cosmos/ibc-go/modules/capability"
-	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
-	ibcwasm "github.com/cosmos/ibc-go/modules/light-clients/08-wasm"
-	ibcwasmkeeper "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/keeper"
-	ibcwasmtypes "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/types"
-	ica "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts"
-	icatypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/types"
-	"github.com/cosmos/ibc-go/v8/modules/apps/transfer"
-	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
-	ibc "github.com/cosmos/ibc-go/v8/modules/core" // ibc module puts types under `ibchost` rather than `ibctypes`
-	ibcexported "github.com/cosmos/ibc-go/v8/modules/core/exported"
-	ibctm "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
+	pfmrouter "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v10/packetforward"
+	pfmroutertypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v10/packetforward/types"
+	ratelimiter "github.com/cosmos/ibc-apps/modules/rate-limiting/v10"
+	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/types"
+	ibcwasm "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/v10"
+	ibcwasmkeeper "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/v10/keeper"
+	ibcwasmtypes "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/v10/types"
+	ica "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts"
+	icatypes "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/types"
+	"github.com/cosmos/ibc-go/v10/modules/apps/transfer"
+	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
+	ibc "github.com/cosmos/ibc-go/v10/modules/core" // ibc module puts types under `ibchost` rather than `ibctypes`
+	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
+	ibctm "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
+	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/spf13/cast"
 
-	"github.com/babylonlabs-io/babylon/v4/app/ante"
-	appkeepers "github.com/babylonlabs-io/babylon/v4/app/keepers"
-	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
-	"github.com/babylonlabs-io/babylon/v4/app/upgrades"
-	"github.com/babylonlabs-io/babylon/v4/client/docs"
-	bbn "github.com/babylonlabs-io/babylon/v4/types"
-	"github.com/babylonlabs-io/babylon/v4/x/btccheckpoint"
-	btccheckpointtypes "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
-	"github.com/babylonlabs-io/babylon/v4/x/btclightclient"
-	btclightclienttypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
-	"github.com/babylonlabs-io/babylon/v4/x/btcstaking"
-	btcstakingtypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
-	"github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer"
-	bsctypes "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
-	btcstkconsumertypes "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
-	"github.com/babylonlabs-io/babylon/v4/x/checkpointing"
-	"github.com/babylonlabs-io/babylon/v4/x/checkpointing/prepare"
-	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
-	"github.com/babylonlabs-io/babylon/v4/x/checkpointing/vote_extensions"
-	"github.com/babylonlabs-io/babylon/v4/x/epoching"
-	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
-	"github.com/babylonlabs-io/babylon/v4/x/finality"
-	finalitytypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
-	"github.com/babylonlabs-io/babylon/v4/x/incentive"
-	incentivekeeper "github.com/babylonlabs-io/babylon/v4/x/incentive/keeper"
-	incentivetypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
-	"github.com/babylonlabs-io/babylon/v4/x/mint"
-	minttypes "github.com/babylonlabs-io/babylon/v4/x/mint/types"
-	"github.com/babylonlabs-io/babylon/v4/x/monitor"
-	monitortypes "github.com/babylonlabs-io/babylon/v4/x/monitor/types"
-	"github.com/babylonlabs-io/babylon/v4/x/zoneconcierge"
-	zckeeper "github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/keeper"
-	zctypes "github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/types"
+	"github.com/babylonlabs-io/babylon/v3/app/ante"
+	appkeepers "github.com/babylonlabs-io/babylon/v3/app/keepers"
+	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
+	"github.com/babylonlabs-io/babylon/v3/app/upgrades"
+	"github.com/babylonlabs-io/babylon/v3/client/docs"
+	bbn "github.com/babylonlabs-io/babylon/v3/types"
+	"github.com/babylonlabs-io/babylon/v3/x/btccheckpoint"
+	btccheckpointtypes "github.com/babylonlabs-io/babylon/v3/x/btccheckpoint/types"
+	"github.com/babylonlabs-io/babylon/v3/x/btclightclient"
+	btclightclienttypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
+	"github.com/babylonlabs-io/babylon/v3/x/btcstaking"
+	btcstakingtypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer"
+	bsctypes "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
+	btcstkconsumertypes "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
+	"github.com/babylonlabs-io/babylon/v3/x/checkpointing"
+	"github.com/babylonlabs-io/babylon/v3/x/checkpointing/prepare"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
+	"github.com/babylonlabs-io/babylon/v3/x/checkpointing/vote_extensions"
+	"github.com/babylonlabs-io/babylon/v3/x/epoching"
+	epochingtypes "github.com/babylonlabs-io/babylon/v3/x/epoching/types"
+	"github.com/babylonlabs-io/babylon/v3/x/finality"
+	finalitytypes "github.com/babylonlabs-io/babylon/v3/x/finality/types"
+	"github.com/babylonlabs-io/babylon/v3/x/incentive"
+	incentivekeeper "github.com/babylonlabs-io/babylon/v3/x/incentive/keeper"
+	incentivetypes "github.com/babylonlabs-io/babylon/v3/x/incentive/types"
+	"github.com/babylonlabs-io/babylon/v3/x/mint"
+	minttypes "github.com/babylonlabs-io/babylon/v3/x/mint/types"
+	"github.com/babylonlabs-io/babylon/v3/x/monitor"
+	monitortypes "github.com/babylonlabs-io/babylon/v3/x/monitor/types"
+	"github.com/babylonlabs-io/babylon/v3/x/zoneconcierge"
+	zckeeper "github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/keeper"
+	zctypes "github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
+	erc20types "github.com/cosmos/evm/x/erc20/types"
 	"github.com/strangelove-ventures/tokenfactory/x/tokenfactory"
 	tokenfactorytypes "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/types"
 )
@@ -158,7 +167,7 @@ var (
 	DefaultNodeHome string
 	// fee collector account, module accounts and their permissions
 	maccPerms = map[string][]string{
-		authtypes.FeeCollectorName:     nil, // fee collector account
+		authtypes.FeeCollectorName:     {authtypes.Burner}, // fee collector account, needs Burner role for feemarket burning of BaseFee
 		distrtypes.ModuleName:          nil,
 		minttypes.ModuleName:           {authtypes.Minter},
 		stakingtypes.BondedPoolName:    {authtypes.Burner, authtypes.Staking},
@@ -168,6 +177,10 @@ var (
 		incentivetypes.ModuleName:      nil, // this line is needed to create an account for incentive module
 		tokenfactorytypes.ModuleName:   {authtypes.Minter, authtypes.Burner},
 		icatypes.ModuleName:            nil,
+		evmtypes.ModuleName:            {authtypes.Minter, authtypes.Burner},
+		feemarkettypes.ModuleName:      nil,
+		erc20types.ModuleName:          {authtypes.Minter, authtypes.Burner}, // Allows erc20 module to mint/burn for token pairs
+		precisebanktypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
 	}
 
 	// software upgrades and forks
@@ -225,6 +238,8 @@ func NewBabylonApp(
 	invCheckPeriod uint,
 	blsSigner *checkpointingtypes.BlsSigner,
 	appOpts servertypes.AppOptions,
+	evmChainID uint64,
+	evmAppOptions EVMOptionsFn,
 	wasmOpts []wasmkeeper.Option,
 	baseAppOptions ...func(*baseapp.BaseApp),
 ) *BabylonApp {
@@ -236,13 +251,11 @@ func NewBabylonApp(
 		homePath = DefaultNodeHome
 	}
 
-	encCfg := appparams.DefaultEncodingConfig()
+	encCfg := evmencoding.MakeConfig(evmChainID)
 	interfaceRegistry := encCfg.InterfaceRegistry
 	appCodec := encCfg.Codec
 	legacyAmino := encCfg.Amino
 	txConfig := encCfg.TxConfig
-	std.RegisterLegacyAminoCodec(legacyAmino)
-	std.RegisterInterfaces(interfaceRegistry)
 
 	bApp := baseapp.NewBaseApp(appName, logger, db, txConfig.TxDecoder(), baseAppOptions...)
 	bApp.SetCommitMultiStoreTracer(traceStore)
@@ -250,6 +263,12 @@ func NewBabylonApp(
 	bApp.SetInterfaceRegistry(interfaceRegistry)
 	bApp.SetTxEncoder(txConfig.TxEncoder())
 	bApp.SetMempool(getAppMempool(appOpts))
+
+	// Add after encoder has been set:
+	if err := evmAppOptions(evmChainID); err != nil {
+		// Initialize the EVM application configuration
+		panic(fmt.Errorf("failed to initialize EVM app configuration: %w", err))
+	}
 
 	wasmConfig, err := wasm.ReadNodeConfig(appOpts)
 	if err != nil {
@@ -282,11 +301,16 @@ func NewBabylonApp(
 		BlockedAddresses(),
 	)
 
-	/****  Module Options ****/
+	// Create IBC Tendermint Light Client Stack
+	clientKeeper := app.IBCKeeper.ClientKeeper
+	tmLightClientModule := ibctm.NewLightClientModule(appCodec, clientKeeper.GetStoreProvider())
+	clientKeeper.AddRoute(ibctm.ModuleName, &tmLightClientModule)
 
-	// NOTE: we may consider parsing `appOpts` inside module constructors. For the moment
-	// we prefer to be more strict in what arguments the modules expect.
-	var skipGenesisInvariants = cast.ToBool(appOpts.Get(crisis.FlagSkipGenesisInvariants))
+	// TODO: Do we we need this ?
+	// wasmLightClientModule := ibcwasm.NewLightClientModule(app.WasmClientKeeper, clientKeeper.GetStoreProvider())
+	// clientKeeper.AddRoute(ibcwasmtypes.ModuleName, &wasmLightClientModule)
+
+	/****  Module Options ****/
 
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.
@@ -300,7 +324,6 @@ func NewBabylonApp(
 		auth.NewAppModule(appCodec, app.AccountKeeper, authsims.RandomGenesisAccounts, app.GetSubspace(authtypes.ModuleName)),
 		vesting.NewAppModule(app.AccountKeeper, app.BankKeeper),
 		bank.NewAppModule(appCodec, app.BankKeeper, app.AccountKeeper, app.GetSubspace(banktypes.ModuleName)),
-		crisis.NewAppModule(app.CrisisKeeper, skipGenesisInvariants, app.GetSubspace(crisistypes.ModuleName)),
 		feegrantmodule.NewAppModule(appCodec, app.AccountKeeper, app.BankKeeper, app.FeeGrantKeeper, app.interfaceRegistry),
 		gov.NewAppModule(appCodec, &app.GovKeeper, app.AccountKeeper, app.BankKeeper, app.GetSubspace(govtypes.ModuleName)),
 		mint.NewAppModule(appCodec, app.MintKeeper, app.AccountKeeper),
@@ -309,12 +332,11 @@ func NewBabylonApp(
 		staking.NewAppModule(appCodec, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.GetSubspace(stakingtypes.ModuleName)),
 		upgrade.NewAppModule(app.UpgradeKeeper, app.AccountKeeper.AddressCodec()),
 		evidence.NewAppModule(app.EvidenceKeeper),
-		params.NewAppModule(app.ParamsKeeper),
+		params.NewAppModule(app.ParamsKeeper), //nolint:staticcheck
 		consensus.NewAppModule(appCodec, app.ConsensusParamsKeeper),
 		circuit.NewAppModule(appCodec, app.CircuitKeeper),
 		authzmodule.NewAppModule(appCodec, app.AuthzKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
 		// non sdk modules
-		capability.NewAppModule(appCodec, *app.CapabilityKeeper, false),
 		wasm.NewAppModule(appCodec, &app.WasmKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.MsgServiceRouter(), app.GetSubspace(wasmtypes.ModuleName)),
 		ibc.NewAppModule(app.IBCKeeper),
 		transfer.NewAppModule(app.TransferKeeper),
@@ -338,6 +360,11 @@ func NewBabylonApp(
 		finality.NewAppModule(appCodec, app.FinalityKeeper),
 		// Babylon modules - tokenomics
 		incentive.NewAppModule(appCodec, app.IncentiveKeeper, app.AccountKeeper, app.BankKeeper),
+		// Cosmos EVM modules
+		evm.NewAppModule(app.EVMKeeper, app.AccountKeeper, app.AccountKeeper.AddressCodec()),
+		feemarket.NewAppModule(app.FeemarketKeeper),
+		erc20.NewAppModule(app.Erc20Keeper, app.AccountKeeper),
+		precisebank.NewAppModule(app.PreciseBankKeeper, app.BankKeeper, app.AccountKeeper),
 	)
 
 	// BasicModuleManager defines the module BasicManager which is in charge of setting up basic,
@@ -360,21 +387,25 @@ func NewBabylonApp(
 	// NOTE: upgrade module is required to be prioritized
 	app.ModuleManager.SetOrderPreBlockers(
 		upgradetypes.ModuleName,
+		authtypes.ModuleName,
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
 	// there is nothing left over in the validator fee pool, so as to keep the
 	// CanWithdrawInvariant invariant.
 	// NOTE: staking module is required if HistoricalEntries param > 0
-	// NOTE: capability module's beginblocker must come before any modules using capabilities (e.g. IBC)
 	app.ModuleManager.SetOrderBeginBlockers(
-		upgradetypes.ModuleName, capabilitytypes.ModuleName,
+		upgradetypes.ModuleName,
 		// NOTE: incentive module's BeginBlock has to be after mint but before distribution
 		// so that it can intercept a part of new inflation to reward BTC staking stakeholders
 		minttypes.ModuleName, incentivetypes.ModuleName, distrtypes.ModuleName,
+		// Cosmos EVM
+		erc20types.ModuleName,
+		feemarkettypes.ModuleName,
+		evmtypes.ModuleName, // NOTE: EVM BeginBlocker must come after FeeMarket BeginBlocker
 		slashingtypes.ModuleName,
 		evidencetypes.ModuleName, stakingtypes.ModuleName,
-		authtypes.ModuleName, banktypes.ModuleName, govtypes.ModuleName, crisistypes.ModuleName, genutiltypes.ModuleName,
+		authtypes.ModuleName, banktypes.ModuleName, govtypes.ModuleName, genutiltypes.ModuleName,
 		authz.ModuleName, feegrant.ModuleName,
 		paramstypes.ModuleName, vestingtypes.ModuleName, consensusparamtypes.ModuleName, circuittypes.ModuleName,
 		// Token factory
@@ -405,8 +436,8 @@ func NewBabylonApp(
 	// app.mm.OrderBeginBlockers = append(app.mm.OrderBeginBlockers[:4], app.mm.OrderBeginBlockers[4+1:]...) // remove slashingtypes.ModuleName
 	// app.mm.OrderBeginBlockers = append(app.mm.OrderBeginBlockers[:4], app.mm.OrderBeginBlockers[4+1:]...) // remove evidencetypes.ModuleName
 
-	app.ModuleManager.SetOrderEndBlockers(crisistypes.ModuleName, govtypes.ModuleName, stakingtypes.ModuleName,
-		capabilitytypes.ModuleName, authtypes.ModuleName, banktypes.ModuleName, distrtypes.ModuleName,
+	app.ModuleManager.SetOrderEndBlockers(govtypes.ModuleName, stakingtypes.ModuleName,
+		authtypes.ModuleName, banktypes.ModuleName, distrtypes.ModuleName,
 		slashingtypes.ModuleName, minttypes.ModuleName,
 		genutiltypes.ModuleName, evidencetypes.ModuleName, authz.ModuleName,
 		feegrant.ModuleName,
@@ -434,18 +465,33 @@ func NewBabylonApp(
 		finalitytypes.ModuleName,
 		// tokenomics related modules
 		incentivetypes.ModuleName, // EndBlock of incentive module does not matter
+		// Cosmos EVM
+		evmtypes.ModuleName,
+		erc20types.ModuleName,
+		feemarkettypes.ModuleName,
 	)
 	// Babylon does not want EndBlock processing in staking
-	app.ModuleManager.OrderEndBlockers = append(app.ModuleManager.OrderEndBlockers[:2], app.ModuleManager.OrderEndBlockers[2+1:]...) // remove stakingtypes.ModuleName
+	app.ModuleManager.OrderEndBlockers = append(app.ModuleManager.OrderEndBlockers[:1], app.ModuleManager.OrderEndBlockers[1+1:]...) // remove stakingtypes.ModuleName
+
+	for _, m := range app.ModuleManager.OrderEndBlockers {
+		if strings.EqualFold(m, stakingtypes.ModuleName) {
+			panic("staking module endblocker is active")
+		}
+	}
 
 	// NOTE: The genutils module must occur after staking so that pools are
 	// properly initialized with tokens from genesis accounts.
-	// NOTE: Capability module must occur first so that it can initialize any capabilities
 	// so that other modules that want to create or claim capabilities afterwards in InitChain
 	// can do so safely.
 	genesisModuleOrder := []string{
-		capabilitytypes.ModuleName, authtypes.ModuleName, banktypes.ModuleName, distrtypes.ModuleName, stakingtypes.ModuleName,
-		slashingtypes.ModuleName, govtypes.ModuleName, minttypes.ModuleName, crisistypes.ModuleName,
+		authtypes.ModuleName, banktypes.ModuleName, distrtypes.ModuleName, stakingtypes.ModuleName,
+		slashingtypes.ModuleName, govtypes.ModuleName, minttypes.ModuleName,
+		// Cosmos EVM modules
+		// NOTE: feemarket module needs to be initialized before genutil module
+		evmtypes.ModuleName,
+		feemarkettypes.ModuleName,
+		erc20types.ModuleName,
+		precisebanktypes.ModuleName,
 		genutiltypes.ModuleName, evidencetypes.ModuleName, authz.ModuleName,
 		feegrant.ModuleName,
 		paramstypes.ModuleName, upgradetypes.ModuleName, vestingtypes.ModuleName, consensusparamtypes.ModuleName, circuittypes.ModuleName,
@@ -481,7 +527,6 @@ func NewBabylonApp(
 	// Uncomment if you want to set a custom migration order here.
 	// app.mm.SetOrderMigrations(custom order)
 
-	app.ModuleManager.RegisterInvariants(app.CrisisKeeper)
 	app.configurator = module.NewConfigurator(app.appCodec, app.MsgServiceRouter(), app.GRPCQueryRouter())
 	app.RegisterServicesWithoutStaking()
 	autocliv1.RegisterQueryServer(app.GRPCQueryRouter(), runtimeservices.NewAutoCLIQueryService(app.ModuleManager.Modules))
@@ -511,9 +556,16 @@ func NewBabylonApp(
 	app.MountTransientStores(app.GetTransientStoreKeys())
 	app.MountMemoryStores(app.GetMemoryStoreKeys())
 
+	maxGasWanted := cast.ToUint64(appOpts.Get(srvflags.EVMMaxTxGasWanted))
+	evmHandlerOpts := NewEVMAnteHandlerOptionsFromApp(app, txConfig, maxGasWanted)
+	if err := evmHandlerOpts.Validate(); err != nil {
+		panic(err)
+	}
+
 	// initialize AnteHandler for the app
 	anteHandler := ante.NewAnteHandler(
 		appOpts,
+		evmHandlerOpts.Options(),
 		&app.AccountKeeper,
 		app.BankKeeper,
 		&app.FeeGrantKeeper,
@@ -804,7 +856,26 @@ func (app *BabylonApp) RegisterNodeService(clientCtx client.Context, cfg config.
 
 // DefaultGenesis returns a default genesis from the registered AppModuleBasic's.
 func (a *BabylonApp) DefaultGenesis() map[string]json.RawMessage {
-	return a.BasicModuleManager.DefaultGenesis(a.appCodec)
+	genesis := a.BasicModuleManager.DefaultGenesis(a.appCodec)
+	// Add EVM genesis configuration
+	evmGenState := evmtypes.DefaultGenesisState()
+	evmGenState.Params.ActiveStaticPrecompiles = evmtypes.AvailableStaticPrecompiles
+	evmGenState.Params.EvmDenom = appparams.BaseCoinUnit
+	genesis[evmtypes.ModuleName] = a.appCodec.MustMarshalJSON(evmGenState)
+
+	// Add ERC20 genesis configuration
+	erc20GenState := erc20types.DefaultGenesisState()
+	erc20GenState.TokenPairs = DefaultTokenPairs
+	erc20GenState.Params.NativePrecompiles = append(erc20GenState.Params.NativePrecompiles, WTokenContractMainnet)
+	genesis[erc20types.ModuleName] = a.appCodec.MustMarshalJSON(erc20GenState)
+
+	feemarketGenState := feemarkettypes.DefaultGenesisState()
+	feemarketGenState.Params.NoBaseFee = false
+	feemarketGenState.Params.BaseFee = math.LegacyMustNewDecFromStr("0.01")
+	feemarketGenState.Params.MinGasPrice = feemarketGenState.Params.BaseFee
+	genesis[feemarkettypes.ModuleName] = a.appCodec.MustMarshalJSON(feemarketGenState)
+
+	return genesis
 }
 
 func (app *BabylonApp) TxConfig() client.TxConfig {
@@ -876,15 +947,24 @@ func GetMaccPerms() map[string][]string {
 
 // BlockedAddresses returns all the app's blocked account addresses.
 func BlockedAddresses() map[string]bool {
-	modAccAddrs := make(map[string]bool)
+	blockedAddrs := make(map[string]bool)
 	for acc := range GetMaccPerms() {
-		modAccAddrs[authtypes.NewModuleAddress(acc).String()] = true
+		blockedAddrs[authtypes.NewModuleAddress(acc).String()] = true
 	}
 
 	// allow the following addresses to receive funds
-	delete(modAccAddrs, appparams.AccGov.String())
+	delete(blockedAddrs, appparams.AccGov.String())
 
-	return modAccAddrs
+	// Block precompiled contracts
+	blockedPrecompilesHex := evmtypes.AvailableStaticPrecompiles
+	for _, addr := range vm.PrecompiledAddressesPrague {
+		blockedPrecompilesHex = append(blockedPrecompilesHex, addr.Hex())
+	}
+
+	for _, precompile := range blockedPrecompilesHex {
+		blockedAddrs[evmutils.Bech32StringFromHexAddress(precompile)] = true
+	}
+	return blockedAddrs
 }
 
 // getAppMempool returns the corresponding application mempool according to the

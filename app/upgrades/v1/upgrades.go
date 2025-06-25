@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	sdktestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
 	"sort"
 
 	sdkmath "cosmossdk.io/math"
@@ -25,20 +26,20 @@ import (
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 
-	"github.com/babylonlabs-io/babylon/v4/app/keepers"
-	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
-	"github.com/babylonlabs-io/babylon/v4/app/upgrades"
-	bbn "github.com/babylonlabs-io/babylon/v4/types"
-	btclightkeeper "github.com/babylonlabs-io/babylon/v4/x/btclightclient/keeper"
-	btclighttypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
-	btcstkkeeper "github.com/babylonlabs-io/babylon/v4/x/btcstaking/keeper"
-	btcstktypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
-	finalitykeeper "github.com/babylonlabs-io/babylon/v4/x/finality/keeper"
-	finalitytypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
-	incentivekeeper "github.com/babylonlabs-io/babylon/v4/x/incentive/keeper"
-	incentivetypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
-	mintkeeper "github.com/babylonlabs-io/babylon/v4/x/mint/keeper"
-	minttypes "github.com/babylonlabs-io/babylon/v4/x/mint/types"
+	"github.com/babylonlabs-io/babylon/v3/app/keepers"
+	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
+	"github.com/babylonlabs-io/babylon/v3/app/upgrades"
+	bbn "github.com/babylonlabs-io/babylon/v3/types"
+	btclightkeeper "github.com/babylonlabs-io/babylon/v3/x/btclightclient/keeper"
+	btclighttypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
+	btcstkkeeper "github.com/babylonlabs-io/babylon/v3/x/btcstaking/keeper"
+	btcstktypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
+	finalitykeeper "github.com/babylonlabs-io/babylon/v3/x/finality/keeper"
+	finalitytypes "github.com/babylonlabs-io/babylon/v3/x/finality/types"
+	incentivekeeper "github.com/babylonlabs-io/babylon/v3/x/incentive/keeper"
+	incentivetypes "github.com/babylonlabs-io/babylon/v3/x/incentive/types"
+	mintkeeper "github.com/babylonlabs-io/babylon/v3/x/mint/keeper"
+	minttypes "github.com/babylonlabs-io/babylon/v3/x/mint/types"
 )
 
 type ParamUpgradeFn func(ctx sdk.Context, k *keepers.AppKeepers) error
@@ -237,7 +238,7 @@ func upgradeFinalityParameters(
 // - Insert new BTC Headers
 func upgradeLaunch(
 	ctx sdk.Context,
-	encCfg *appparams.EncodingConfig,
+	encCfg sdktestutil.TestEncodingConfig,
 	btcLigthK *btclightkeeper.Keeper,
 	btcK *btcstkkeeper.Keeper,
 	bankK bankkeeper.SendKeeper,

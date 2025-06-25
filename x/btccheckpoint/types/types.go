@@ -8,8 +8,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/babylonlabs-io/babylon/v4/btctxformatter"
-	"github.com/babylonlabs-io/babylon/v4/types"
+	"github.com/babylonlabs-io/babylon/v3/btctxformatter"
+	"github.com/babylonlabs-io/babylon/v3/types"
 )
 
 // RawCheckpointSubmission Semantically valid checkpoint submission with:
@@ -208,6 +208,11 @@ func (tk TransactionKey) Validate() error {
 	if tk.Hash == nil {
 		return fmt.Errorf("transaction hash cannot be nil")
 	}
+
+	if len(*tk.Hash) != types.BTCHeaderHashLen {
+		return fmt.Errorf("invalid transaction hash length: expected %d, got %d", types.BTCHeaderHashLen, len(*tk.Hash))
+	}
+
 	return nil
 }
 

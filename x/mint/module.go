@@ -10,9 +10,9 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 
-	"github.com/babylonlabs-io/babylon/v4/x/mint/client/cli"
-	"github.com/babylonlabs-io/babylon/v4/x/mint/keeper"
-	"github.com/babylonlabs-io/babylon/v4/x/mint/types"
+	"github.com/babylonlabs-io/babylon/v3/x/mint/client/cli"
+	"github.com/babylonlabs-io/babylon/v3/x/mint/keeper"
+	"github.com/babylonlabs-io/babylon/v3/x/mint/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -100,6 +100,7 @@ func (AppModule) Name() string {
 }
 
 // RegisterInvariants registers the mint module invariants.
+// nolint staticcheck
 func (am AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
 
 // QuerierRoute returns the mint module's querier route name.
@@ -118,10 +119,6 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, data json.RawMessage) []abci.ValidatorUpdate {
 	var genesisState types.GenesisState
 	cdc.MustUnmarshalJSON(data, &genesisState)
-
-	if err := genesisState.Validate(); err != nil {
-		panic(err)
-	}
 
 	am.keeper.InitGenesis(ctx, am.authKeeper, &genesisState)
 	return []abci.ValidatorUpdate{}

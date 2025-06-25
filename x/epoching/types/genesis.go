@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/babylonlabs-io/babylon/v4/types"
+	"github.com/babylonlabs-io/babylon/v3/types"
 )
 
 // DefaultGenesis returns the default Capability genesis state
@@ -78,15 +78,23 @@ func (ev EpochValidatorSet) Validate() error {
 }
 
 func validateEpochs(epochs []*Epoch) error {
+	if len(epochs) == 0 {
+		return nil
+	}
+
 	epochNumberSet := make(map[uint64]struct{})
 	firstBlockHeightSet := make(map[uint64]struct{})
 	sealerBlockHashSet := make(map[string]struct{})
+
+	// Collect all epoch numbers for sequential validation
+	epochNumbers := make([]uint64, 0, len(epochs))
 
 	for _, e := range epochs {
 		if _, exists := epochNumberSet[e.EpochNumber]; exists {
 			return fmt.Errorf("duplicate EpochNumber: %d", e.EpochNumber)
 		}
 		epochNumberSet[e.EpochNumber] = struct{}{}
+		epochNumbers = append(epochNumbers, e.EpochNumber)
 
 		if _, exists := firstBlockHeightSet[e.FirstBlockHeight]; exists {
 			return fmt.Errorf("duplicate FirstBlockHeight: %d", e.FirstBlockHeight)
@@ -100,8 +108,33 @@ func validateEpochs(epochs []*Epoch) error {
 			}
 			sealerBlockHashSet[hashKey] = struct{}{}
 		}
+
 		if err := e.ValidateBasic(); err != nil {
 			return err
+		}
+	}
+
+	if err := ValidateSequentialEpochs(epochNumbers); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// ValidateSequentialEpochs ensures epoch numbers form a consecutive sequence
+func ValidateSequentialEpochs(epochNumbers []uint64) error {
+	if len(epochNumbers) <= 1 {
+		return nil
+	}
+
+	sort.Slice(epochNumbers, func(i, j int) bool {
+		return epochNumbers[i] < epochNumbers[j]
+	})
+
+	for i := 1; i < len(epochNumbers); i++ {
+		if epochNumbers[i] != epochNumbers[i-1]+1 {
+			return fmt.Errorf("epoch numbers are not consecutive: found gap between %d and %d",
+				epochNumbers[i-1], epochNumbers[i])
 		}
 	}
 

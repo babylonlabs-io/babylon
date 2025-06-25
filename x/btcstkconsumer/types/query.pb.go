@@ -7,8 +7,8 @@ import (
 	context "context"
 	cosmossdk_io_math "cosmossdk.io/math"
 	fmt "fmt"
-	github_com_babylonlabs_io_babylon_v4_types "github.com/babylonlabs-io/babylon/v4/types"
-	types1 "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+	github_com_babylonlabs_io_babylon_v3_types "github.com/babylonlabs-io/babylon/v3/types"
+	types1 "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 	_ "github.com/cosmos/cosmos-proto"
 	query "github.com/cosmos/cosmos-sdk/types/query"
 	_ "github.com/cosmos/cosmos-sdk/types/tx/amino"
@@ -532,7 +532,7 @@ type FinalityProviderResponse struct {
 	Addr string `protobuf:"bytes,3,opt,name=addr,proto3" json:"addr,omitempty"`
 	// btc_pk is the Bitcoin secp256k1 PK of this finality provider
 	// the PK follows encoding in BIP-340 spec
-	BtcPk *github_com_babylonlabs_io_babylon_v4_types.BIP340PubKey `protobuf:"bytes,4,opt,name=btc_pk,json=btcPk,proto3,customtype=github.com/babylonlabs-io/babylon/v4/types.BIP340PubKey" json:"btc_pk,omitempty"`
+	BtcPk *github_com_babylonlabs_io_babylon_v3_types.BIP340PubKey `protobuf:"bytes,4,opt,name=btc_pk,json=btcPk,proto3,customtype=github.com/babylonlabs-io/babylon/v3/types.BIP340PubKey" json:"btc_pk,omitempty"`
 	// pop is the proof of possession of babylon_pk and btc_pk
 	Pop *types1.ProofOfPossessionBTC `protobuf:"bytes,5,opt,name=pop,proto3" json:"pop,omitempty"`
 	// slashed_babylon_height indicates the Babylon height when
@@ -3182,7 +3182,7 @@ func (m *FinalityProviderResponse) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			var v github_com_babylonlabs_io_babylon_v4_types.BIP340PubKey
+			var v github_com_babylonlabs_io_babylon_v3_types.BIP340PubKey
 			m.BtcPk = &v
 			if err := m.BtcPk.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err

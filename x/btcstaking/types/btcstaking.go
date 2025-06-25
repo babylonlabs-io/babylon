@@ -9,9 +9,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stktypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	asig "github.com/babylonlabs-io/babylon/v4/crypto/schnorr-adaptor-signature"
-	bbn "github.com/babylonlabs-io/babylon/v4/types"
-	btclightclienttypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
+	asig "github.com/babylonlabs-io/babylon/v3/crypto/schnorr-adaptor-signature"
+	bbn "github.com/babylonlabs-io/babylon/v3/types"
+	btclightclienttypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
 )
 
 func (fp *FinalityProvider) IsSlashed() bool {
@@ -165,6 +165,12 @@ func (lbr LargestBtcReOrg) Validate() error {
 
 	if lbr.RollbackFrom.Height <= lbr.RollbackTo.Height {
 		return fmt.Errorf("rollback_from height %d is lower or equal than rollback_to height %d", lbr.RollbackFrom.Height, lbr.RollbackTo.Height)
+	}
+
+	expectedBlockDiff := lbr.RollbackFrom.Height - lbr.RollbackTo.Height
+	if expectedBlockDiff != lbr.BlockDiff {
+		return fmt.Errorf("block_diff %d does not match the difference between rollback_from height %d and rollback_to height %d (expected %d)",
+			lbr.BlockDiff, lbr.RollbackFrom.Height, lbr.RollbackTo.Height, expectedBlockDiff)
 	}
 
 	return nil

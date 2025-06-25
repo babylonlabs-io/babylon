@@ -8,16 +8,16 @@ import (
 	"time"
 
 	govv1 "cosmossdk.io/api/cosmos/gov/v1"
-	ibctesting "github.com/cosmos/ibc-go/v8/testing"
+	ibctesting "github.com/cosmos/ibc-go/v10/testing"
 
 	coretypes "github.com/cometbft/cometbft/rpc/core/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer/config"
-	"github.com/babylonlabs-io/babylon/v4/test/e2e/containers"
-	"github.com/babylonlabs-io/babylon/v4/test/e2e/initialization"
-	btclighttypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
+	"github.com/babylonlabs-io/babylon/v3/test/e2e/configurer/config"
+	"github.com/babylonlabs-io/babylon/v3/test/e2e/containers"
+	"github.com/babylonlabs-io/babylon/v3/test/e2e/initialization"
+	btclighttypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
 )
 
 type Config struct {

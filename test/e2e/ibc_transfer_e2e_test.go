@@ -8,9 +8,9 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer"
+	"github.com/babylonlabs-io/babylon/v3/test/e2e/configurer"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	pfmroutertypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward/types"
+	pfmroutertypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v10/packetforward/types"
 	"github.com/stretchr/testify/suite"
 )
 

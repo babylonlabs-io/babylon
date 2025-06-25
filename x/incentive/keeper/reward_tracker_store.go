@@ -7,7 +7,7 @@ import (
 	"cosmossdk.io/collections"
 	sdkmath "cosmossdk.io/math"
 	"cosmossdk.io/store/prefix"
-	"github.com/babylonlabs-io/babylon/v4/x/incentive/types"
+	"github.com/babylonlabs-io/babylon/v3/x/incentive/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -179,6 +179,9 @@ func (k Keeper) subFinalityProviderStaked(ctx context.Context, fp sdk.AccAddress
 	}
 
 	fpCurrentRwd.SubTotalActiveSat(amt)
+	if fpCurrentRwd.TotalActiveSat.IsNegative() {
+		return types.ErrFPCurrentRewardsTrackerNegativeAmount
+	}
 	return k.setFinalityProviderCurrentRewards(ctx, fp, fpCurrentRwd)
 }
 

@@ -4,7 +4,7 @@ import (
 	"github.com/cometbft/cometbft/crypto/ed25519"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 
-	"github.com/babylonlabs-io/babylon/v4/crypto/bls12381"
+	"github.com/babylonlabs-io/babylon/v3/crypto/bls12381"
 )
 
 // IsValid verifies the validity of PoP

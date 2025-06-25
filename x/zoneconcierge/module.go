@@ -12,15 +12,14 @@ import (
 
 	abci "github.com/cometbft/cometbft/abci/types"
 
-	"github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/client/cli"
-	"github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/keeper"
-	"github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/types"
+	"github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/client/cli"
+	"github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/keeper"
+	"github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	porttypes "github.com/cosmos/ibc-go/v8/modules/core/05-port/types"
 )
 
 var (
@@ -28,7 +27,6 @@ var (
 	_ appmodule.HasBeginBlocker = AppModule{}
 	_ module.HasABCIEndBlock    = AppModule{}
 	_ module.AppModuleBasic     = AppModuleBasic{}
-	_ porttypes.IBCModule       = IBCModule{}
 )
 
 // ----------------------------------------------------------------------------
@@ -125,6 +123,7 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 }
 
 // RegisterInvariants registers the invariants of the module. If an invariant deviates from its predicted value, the InvariantRegistry triggers appropriate logic (most often the chain will be halted)
+// nolint staticcheck
 func (am AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
 
 // InitGenesis performs the module's genesis initialization. It returns no validator updates.

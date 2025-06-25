@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"cosmossdk.io/store/prefix"
-	"github.com/babylonlabs-io/babylon/v4/x/incentive/types"
+	"github.com/babylonlabs-io/babylon/v3/x/incentive/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -110,6 +110,12 @@ func (k Keeper) InitGenesis(ctx context.Context, gs types.GenesisState) error {
 		if err := k.SetRewardTrackerEvent(ctx, entry.Height, entry.Events); err != nil {
 			return fmt.Errorf("failed to set the reward tracker events to height: %d: %w", entry.Height, err)
 		}
+	}
+
+	// make sure LastProcessedHeightEventRewardTracker <= current height
+	currentHeight := sdk.UnwrapSDKContext(ctx).BlockHeader().Height
+	if gs.LastProcessedHeightEventRewardTracker > uint64(currentHeight) {
+		return fmt.Errorf("invalid latest processed block height. Value %d is higher than current block height %d", gs.LastProcessedHeightEventRewardTracker, currentHeight)
 	}
 
 	if err := k.SetRewardTrackerEventLastProcessedHeight(ctx, gs.LastProcessedHeightEventRewardTracker); err != nil {

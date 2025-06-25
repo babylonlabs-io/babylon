@@ -3,8 +3,8 @@ package keeper_test
 import (
 	"testing"
 
-	keepertest "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
-	ltypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
+	keepertest "github.com/babylonlabs-io/babylon/v3/testutil/keeper"
+	ltypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
 	"github.com/stretchr/testify/require"
 )
 

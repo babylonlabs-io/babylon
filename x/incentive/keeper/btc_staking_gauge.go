@@ -9,8 +9,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	ftypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
-	"github.com/babylonlabs-io/babylon/v4/x/incentive/types"
+	ftypes "github.com/babylonlabs-io/babylon/v3/x/finality/types"
+	"github.com/babylonlabs-io/babylon/v3/x/incentive/types"
 )
 
 // RewardBTCStaking distributes rewards to finality providers/delegations at a given height according
@@ -19,8 +19,10 @@ import (
 func (k Keeper) RewardBTCStaking(ctx context.Context, height uint64, dc *ftypes.VotingPowerDistCache, voters map[string]struct{}) {
 	gauge := k.GetBTCStakingGauge(ctx, height)
 	if gauge == nil {
-		// failing to get a reward gauge at previous height is a programming error
-		panic("failed to get a reward gauge at previous height")
+		// can happen that there were no fees to intercept, so no staking gauge was stored
+		// Anyways, it is a weird case, and we log it
+		k.Logger(sdk.UnwrapSDKContext(ctx)).Warn("failed to get a reward gauge. Proceeding with empty gauge", "height", height)
+		gauge = types.NewGauge(sdk.NewCoins()...)
 	}
 
 	// calculate total voting power of voters

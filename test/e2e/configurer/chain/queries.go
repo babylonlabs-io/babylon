@@ -23,14 +23,14 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
-	icacontrollertypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/controller/types"
+	icacontrollertypes "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/controller/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/v4/test/e2e/util"
-	blc "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
-	ct "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
-	etypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
-	mtypes "github.com/babylonlabs-io/babylon/v4/x/monitor/types"
+	"github.com/babylonlabs-io/babylon/v3/test/e2e/util"
+	blc "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
+	ct "github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
+	etypes "github.com/babylonlabs-io/babylon/v3/x/epoching/types"
+	mtypes "github.com/babylonlabs-io/babylon/v3/x/monitor/types"
 )
 
 func (n *NodeConfig) QueryGRPCGateway(path string, queryParams url.Values) ([]byte, error) {

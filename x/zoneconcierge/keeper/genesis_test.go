@@ -7,14 +7,12 @@ import (
 
 	"cosmossdk.io/store/prefix"
 	storetypes "cosmossdk.io/store/types"
+	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
+	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
+	keepertest "github.com/babylonlabs-io/babylon/v3/testutil/keeper"
+	"github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
-
-	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
-	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
-	keepertest "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
-	"github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/types"
 
 	"github.com/golang/mock/gomock"
 	"github.com/google/go-cmp/cmp"
@@ -27,14 +25,12 @@ func FuzzTestExportGenesis(f *testing.F) {
 		var (
 			r            = rand.New(rand.NewSource(seed))
 			ctrl         = gomock.NewController(t)
-			portKeeper   = types.NewMockPortKeeper(ctrl)
 			storeKey     = storetypes.NewKVStoreKey(types.StoreKey)
-			k, ctx       = keepertest.ZoneConciergeKeeperWithStoreKey(t, storeKey, nil, portKeeper, nil, nil, nil, nil, nil, nil)
+			k, ctx       = keepertest.ZoneConciergeKeeperWithStoreKey(t, storeKey, nil, nil, nil, nil, nil, nil, nil)
 			storeService = runtime.NewKVStoreService(storeKey)
 			storeAdapter = runtime.KVStoreAdapter(storeService.OpenKVStore(ctx))
 			cdc          = appparams.DefaultEncodingConfig().Codec
 		)
-		portKeeper.EXPECT().BindPort(gomock.Any(), gomock.Any()).Return(&capabilitytypes.Capability{}).AnyTimes()
 		defer ctrl.Finish()
 
 		gs := datagen.GenRandomZoneconciergeGenState(r)
@@ -43,7 +39,6 @@ func FuzzTestExportGenesis(f *testing.F) {
 		require.NoError(t, k.SetParams(ctx, gs.Params))
 
 		k.SetPort(ctx, gs.PortId)
-		require.NoError(t, k.BindPort(ctx, gs.PortId))
 
 		ciStore := prefix.NewStore(storeAdapter, types.ChainInfoKey)
 		for _, ci := range gs.ChainsInfo {
@@ -105,10 +100,7 @@ func FuzzTestInitGenesis(f *testing.F) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		portKeeper := types.NewMockPortKeeper(ctrl)
-		portKeeper.EXPECT().BindPort(gomock.Any(), gomock.Any()).Return(&capabilitytypes.Capability{}).AnyTimes()
-
-		k, ctx := keepertest.ZoneConciergeKeeper(t, nil, portKeeper, nil, nil, nil, nil, nil, nil)
+		k, ctx := keepertest.ZoneConciergeKeeper(t, nil, nil, nil, nil, nil, nil, nil)
 		gs := datagen.GenRandomZoneconciergeGenState(r)
 
 		// Run the InitGenesis

@@ -11,11 +11,11 @@ import (
 	"cosmossdk.io/collections"
 	"cosmossdk.io/store/prefix"
 	storetypes "cosmossdk.io/store/types"
-	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
-	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
-	keepertest "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
-	"github.com/babylonlabs-io/babylon/v4/x/incentive/keeper"
-	"github.com/babylonlabs-io/babylon/v4/x/incentive/types"
+	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
+	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
+	keepertest "github.com/babylonlabs-io/babylon/v3/testutil/keeper"
+	"github.com/babylonlabs-io/babylon/v3/x/incentive/keeper"
+	"github.com/babylonlabs-io/babylon/v3/x/incentive/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -136,7 +136,7 @@ func TestInitGenesis(t *testing.T) {
 						},
 					},
 				},
-				LastProcessedHeightEventRewardTracker: 1,
+				LastProcessedHeightEventRewardTracker: 0, // current block height is zero
 			},
 			akMockResp: func(m *types.MockAccountKeeper) {
 				// mock account keeper to return an account on GetAccount call
@@ -206,6 +206,22 @@ func TestInitGenesis(t *testing.T) {
 			expectErr:  true,
 			errMsg:     "error decoding msg hash",
 		},
+		{
+			name: "Invalid block height (future height)",
+			gs: types.GenesisState{
+				Params: types.DefaultParams(),
+				BtcStakingGauges: []types.BTCStakingGaugeEntry{
+					{
+						Height: uint64(0),
+						Gauge:  datagen.GenRandomGauge(r),
+					},
+				},
+				LastProcessedHeightEventRewardTracker: 10, // current block height is zero
+			},
+			akMockResp: func(m *types.MockAccountKeeper) {},
+			expectErr:  true,
+			errMsg:     "invalid latest processed block height",
+		},
 	}
 
 	for _, tc := range tests {
@@ -261,19 +277,6 @@ func FuzzTestExportGenesis(f *testing.F) {
 			require.NoError(t, err)
 			require.NoError(t, store.Set(fpCurrRwdKeyBz, currRwdBz))
 
-			// FP historical rewards
-			fphrKey := collections.Join(
-				sdk.MustAccAddressFromBech32(gs.FinalityProvidersHistoricalRewards[i].Address).Bytes(),
-				gs.FinalityProvidersHistoricalRewards[i].Period,
-			)
-
-			fphrKeyBz, err := collections.EncodeKeyWithPrefix(types.FinalityProviderHistoricalRewardsKeyPrefix.Bytes(), collections.PairKeyCodec(collections.BytesKey, collections.Uint64Key), fphrKey)
-			require.NoError(t, err)
-
-			histRwdBz, err := codec.CollValue[types.FinalityProviderHistoricalRewards](encConfig.Codec).Encode(*gs.FinalityProvidersHistoricalRewards[i].Rewards)
-			require.NoError(t, err)
-			require.NoError(t, store.Set(fphrKeyBz, histRwdBz))
-
 			// BTCDelegationRewardsTracker
 			bdrtKey := collections.Join(
 				sdk.MustAccAddressFromBech32(gs.BtcDelegationRewardsTrackers[i].FinalityProviderAddress).Bytes(),
@@ -295,6 +298,20 @@ func FuzzTestExportGenesis(f *testing.F) {
 			delStore.Set(fpAcc.Bytes(), []byte{0x00})
 
 			require.NoError(t, k.SetRewardTrackerEvent(ctx, gs.EventRewardTracker[i].Height, gs.EventRewardTracker[i].Events))
+		}
+
+		for _, fpHistRwd := range gs.FinalityProvidersHistoricalRewards {
+			fphrKey := collections.Join(
+				sdk.MustAccAddressFromBech32(fpHistRwd.Address).Bytes(),
+				fpHistRwd.Period,
+			)
+
+			fphrKeyBz, err := collections.EncodeKeyWithPrefix(types.FinalityProviderHistoricalRewardsKeyPrefix.Bytes(), collections.PairKeyCodec(collections.BytesKey, collections.Uint64Key), fphrKey)
+			require.NoError(t, err)
+
+			histRwdBz, err := codec.CollValue[types.FinalityProviderHistoricalRewards](encConfig.Codec).Encode(*fpHistRwd.Rewards)
+			require.NoError(t, err)
+			require.NoError(t, store.Set(fphrKeyBz, histRwdBz))
 		}
 
 		require.NoError(t, k.SetRewardTrackerEventLastProcessedHeight(ctx, gs.LastProcessedHeightEventRewardTracker))
@@ -343,28 +360,43 @@ func setupTest(t *testing.T, seed int64) (sdk.Context, *keeper.Keeper, *storetyp
 		wa         = make([]types.WithdrawAddressEntry, l)
 		mh         = make([]string, l)
 		fpCurrRwd  = make([]types.FinalityProviderCurrentRewardsEntry, l)
-		fpHistRwd  = make([]types.FinalityProviderHistoricalRewardsEntry, l)
 		bdrt       = make([]types.BTCDelegationRewardsTrackerEntry, l)
 		d2fp       = make([]types.BTCDelegatorToFpEntry, l)
 		eventsRwd  = make([]types.EventsPowerUpdateAtHeightEntry, l)
 		currHeight = datagen.RandomInt(r, 100000) + 100
+		fpHistRwd  []types.FinalityProviderHistoricalRewardsEntry
 	)
 	defer ctrl.Finish()
 	ctx = ctx.WithBlockHeight(int64(currHeight))
 
 	// make sure that BTC staking gauge are unique per height
 	usedHeights := make(map[uint64]bool)
+
+	// Pre-generate all current periods to ensure consistency
+	currentPeriods := make([]uint64, l)
+	totalHistoricalRewards := 0
+	for i := 0; i < l; i++ {
+		currentPeriods[i] = uint64(r.Intn(4)) + 1
+		totalHistoricalRewards += int(currentPeriods[i])
+	}
+
+	fpHistRwd = make([]types.FinalityProviderHistoricalRewardsEntry, totalHistoricalRewards)
+
+	histIdx := 0
 	for i := 0; i < l; i++ {
 		blkHeight := getUniqueHeight(currHeight, usedHeights)
+		acc1 := datagen.GenRandomAccount()
+		acc2 := datagen.GenRandomAccount()
+		currentPeriod := currentPeriods[i]
+
+		// mock account keeper to return an account on GetAccount calls
+		ak.EXPECT().GetAccount(gomock.Any(), acc1.GetAddress()).Return(acc1).AnyTimes()
+		ak.EXPECT().GetAccount(gomock.Any(), acc2.GetAddress()).Return(acc2).AnyTimes()
+
 		bsg[i] = types.BTCStakingGaugeEntry{
 			Height: blkHeight,
 			Gauge:  datagen.GenRandomGauge(r),
 		}
-		acc1 := datagen.GenRandomAccount()
-		acc2 := datagen.GenRandomAccount()
-		// mock account keeper to return an account on GetAccount calls
-		ak.EXPECT().GetAccount(gomock.Any(), acc1.GetAddress()).Return(acc1).AnyTimes()
-		ak.EXPECT().GetAccount(gomock.Any(), acc2.GetAddress()).Return(acc2).AnyTimes()
 
 		rg[i] = types.RewardGaugeEntry{
 			StakeholderType: datagen.GenRandomStakeholderType(r),
@@ -376,26 +408,38 @@ func setupTest(t *testing.T, seed int64) (sdk.Context, *keeper.Keeper, *storetyp
 			WithdrawAddress:  datagen.GenRandomAccount().Address,
 		}
 		mh[i] = genRandomMsgHashStr()
+
 		fpCurrRwd[i] = types.FinalityProviderCurrentRewardsEntry{
 			Address: acc1.Address,
 			Rewards: func() *types.FinalityProviderCurrentRewards {
 				val := datagen.GenRandomFinalityProviderCurrentRewards(r)
+				val.Period = currentPeriod
 				return &val
 			}(),
 		}
-		fpHistRwd[i] = types.FinalityProviderHistoricalRewardsEntry{
-			Address: acc1.Address,
-			Period:  getUniqueHeight(currHeight, usedHeights),
-			Rewards: func() *types.FinalityProviderHistoricalRewards {
-				val := datagen.GenRandomFPHistRwd(r)
-				return &val
-			}(),
+
+		for period := uint64(0); period < currentPeriod; period++ {
+			fpHistRwd[histIdx] = types.FinalityProviderHistoricalRewardsEntry{
+				Address: acc1.Address,
+				Period:  period,
+				Rewards: func() *types.FinalityProviderHistoricalRewards {
+					val := datagen.GenRandomFPHistRwd(r)
+					return &val
+				}(),
+			}
+			histIdx++
 		}
+
 		bdrt[i] = types.BTCDelegationRewardsTrackerEntry{
 			FinalityProviderAddress: acc1.Address,
 			DelegatorAddress:        acc2.Address,
 			Tracker: func() *types.BTCDelegationRewardsTracker {
 				val := datagen.GenRandomBTCDelegationRewardsTracker(r)
+				if currentPeriod > 0 {
+					val.StartPeriodCumulativeReward = uint64(r.Intn(int(currentPeriod)))
+				} else {
+					val.StartPeriodCumulativeReward = 0
+				}
 				return &val
 			}(),
 		}

@@ -5,20 +5,20 @@ import (
 
 	store "cosmossdk.io/store/types"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
-	"github.com/babylonlabs-io/babylon/v4/app/keepers"
-	"github.com/babylonlabs-io/babylon/v4/app/upgrades"
-	v2 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v2"
+	"github.com/babylonlabs-io/babylon/v3/app/keepers"
+	"github.com/babylonlabs-io/babylon/v3/app/upgrades"
+	v2 "github.com/babylonlabs-io/babylon/v3/app/upgrades/v2"
 	"github.com/cosmos/cosmos-sdk/types/module"
 )
 
-const UpgradeName = "v2rc2"
+const UpgradeName = "v2rc4"
 
 var Upgrade = upgrades.Upgrade{
 	UpgradeName:          UpgradeName,
 	CreateUpgradeHandler: CreateUpgradeHandler,
 	StoreUpgrades: store.StoreUpgrades{
 		Added:   []string{},
-		Deleted: []string{v2.InterchainQueryStoreName},
+		Deleted: []string{v2.InterchainQueryStoreName, v2.CrisisStoreName},
 	},
 }
 

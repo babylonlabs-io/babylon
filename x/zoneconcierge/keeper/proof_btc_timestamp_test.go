@@ -12,13 +12,13 @@ import (
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/wire"
 
-	"github.com/babylonlabs-io/babylon/v4/crypto/bls12381"
-	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
-	testhelper "github.com/babylonlabs-io/babylon/v4/testutil/helper"
-	testkeeper "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
-	btcctypes "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
-	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
-	zctypes "github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/types"
+	"github.com/babylonlabs-io/babylon/v3/crypto/bls12381"
+	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
+	testhelper "github.com/babylonlabs-io/babylon/v3/testutil/helper"
+	testkeeper "github.com/babylonlabs-io/babylon/v3/testutil/keeper"
+	btcctypes "github.com/babylonlabs-io/babylon/v3/x/btccheckpoint/types"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
+	zctypes "github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
 )
 
 func FuzzProofConsumerHeaderInEpoch(f *testing.F) {
@@ -139,10 +139,9 @@ func FuzzProofEpochSealed_BLSSig(f *testing.F) {
 		// mock channel/port keeper
 		channelKeeper := zctypes.NewMockChannelKeeper(ctrl)
 		channelKeeper.EXPECT().GetAllChannels(gomock.Any()).Return(nil).AnyTimes()
-		portKeeper := zctypes.NewMockPortKeeper(ctrl)
 
 		// create zcKeeper and ctx
-		zcKeeper, ctx := testkeeper.ZoneConciergeKeeper(t, channelKeeper, portKeeper, nil, checkpointingKeeper, nil, epochingKeeper, nil, nil)
+		zcKeeper, ctx := testkeeper.ZoneConciergeKeeper(t, channelKeeper, nil, checkpointingKeeper, nil, epochingKeeper, nil, nil)
 
 		// prove
 		proof, err := zcKeeper.ProveEpochSealed(ctx, epoch.EpochNumber)

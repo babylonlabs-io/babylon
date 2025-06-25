@@ -8,8 +8,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
-	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
+	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
+	epochingtypes "github.com/babylonlabs-io/babylon/v3/x/epoching/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
@@ -115,12 +115,22 @@ func GenRandomEpochingGenesisState(r *rand.Rand) *epochingtypes.GenesisState {
 
 		valsLc[i] = &epochingtypes.ValidatorLifecycle{
 			ValAddr: GenRandomValidatorAddress().String(),
-			ValLife: []*epochingtypes.ValStateUpdate{{}},
+			ValLife: []*epochingtypes.ValStateUpdate{
+				&epochingtypes.ValStateUpdate{
+					State:       epochingtypes.BondState_BONDED,
+					BlockHeight: 0,
+				},
+			},
 		}
 
 		delsLc[i] = &epochingtypes.DelegationLifecycle{
 			DelAddr: GenRandomAddress().String(),
-			DelLife: []*epochingtypes.DelegationStateUpdate{{}},
+			DelLife: []*epochingtypes.DelegationStateUpdate{
+				&epochingtypes.DelegationStateUpdate{
+					State:   epochingtypes.BondState_BONDED,
+					ValAddr: GenRandomValidatorAddress().String(),
+				},
+			},
 		}
 	}
 

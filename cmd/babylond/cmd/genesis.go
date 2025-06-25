@@ -1,14 +1,20 @@
 package cmd
 
 import (
+	"cosmossdk.io/math"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/babylonlabs-io/babylon/v3/app"
+	"github.com/babylonlabs-io/babylon/v3/app/keepers"
+	erc20types "github.com/cosmos/evm/x/erc20/types"
+	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 	"time"
 
 	sdkmath "cosmossdk.io/math"
 
-	minttypes "github.com/babylonlabs-io/babylon/v4/x/mint/types"
+	minttypes "github.com/babylonlabs-io/babylon/v3/x/mint/types"
 	comettypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -18,25 +24,24 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
 	distributiontypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	ibcexported "github.com/cosmos/ibc-go/v8/modules/core/exported"
-	ibctypes "github.com/cosmos/ibc-go/v8/modules/core/types"
+	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
+	ibctypes "github.com/cosmos/ibc-go/v10/modules/core/types"
 	"github.com/spf13/cobra"
 
-	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
-	bbn "github.com/babylonlabs-io/babylon/v4/types"
-	btccheckpointtypes "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
-	btclightclienttypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
-	btcstakingtypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
-	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
-	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
-	finalitytypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
+	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
+	bbn "github.com/babylonlabs-io/babylon/v3/types"
+	btccheckpointtypes "github.com/babylonlabs-io/babylon/v3/x/btccheckpoint/types"
+	btclightclienttypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
+	btcstakingtypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
+	epochingtypes "github.com/babylonlabs-io/babylon/v3/x/epoching/types"
+	finalitytypes "github.com/babylonlabs-io/babylon/v3/x/finality/types"
 )
 
 func PrepareGenesisCmd(defaultNodeHome string, mbm module.BasicManager) *cobra.Command {
@@ -214,15 +219,28 @@ func PrepareGenesis(
 	govGenState.Params = &genesisParams.GovParams
 	genesisState[govtypes.ModuleName] = cdc.MustMarshalJSON(govGenState)
 
-	// crisis module genesis
-	crisisGenState := crisistypes.DefaultGenesisState()
-	crisisGenState.ConstantFee = genesisParams.CrisisConstantFee
-	genesisState[crisistypes.ModuleName] = cdc.MustMarshalJSON(crisisGenState)
-
 	// auth module genesis
 	authGenState := authtypes.DefaultGenesisState()
 	authGenState.Accounts = genesisParams.AuthAccounts
 	genesisState[authtypes.ModuleName] = cdc.MustMarshalJSON(authGenState)
+
+	// Add EVM genesis configuration
+	evmGenState := evmtypes.DefaultGenesisState()
+	evmGenState.Params.ActiveStaticPrecompiles = keepers.BabylonAvailableStaticPrecompiles
+	evmGenState.Params.EvmDenom = appparams.BaseCoinUnit
+	genesisState[evmtypes.ModuleName] = cdc.MustMarshalJSON(evmGenState)
+
+	// Add ERC20 genesis configuration
+	erc20GenState := erc20types.DefaultGenesisState()
+	erc20GenState.TokenPairs = app.DefaultTokenPairs
+	erc20GenState.Params.NativePrecompiles = []string{app.WTokenContractMainnet}
+	genesisState[erc20types.ModuleName] = cdc.MustMarshalJSON(erc20GenState)
+
+	feemarketGenState := feemarkettypes.DefaultGenesisState()
+	feemarketGenState.Params.NoBaseFee = false
+	feemarketGenState.Params.BaseFee = math.LegacyMustNewDecFromStr("0.01")
+	feemarketGenState.Params.MinGasPrice = feemarketGenState.Params.BaseFee
+	genesisState[feemarkettypes.ModuleName] = cdc.MustMarshalJSON(feemarketGenState)
 
 	// bank module genesis
 	bankGenState := banktypes.DefaultGenesisState()
@@ -254,7 +272,6 @@ type GenesisParams struct {
 	DistributionParams distributiontypes.Params
 	GovParams          govv1.Params
 
-	CrisisConstantFee    sdk.Coin
 	AuthAccounts         []*cdctypes.Any
 	BankGenBalances      []banktypes.Balance
 	CheckpointingGenKeys []*checkpointingtypes.GenesisKey
@@ -345,11 +362,6 @@ func TestnetGenesisParams(
 		genParams.NativeCoinMetadatas[0].Base,
 		sdkmath.NewInt(10_000_000_000),
 	))
-
-	genParams.CrisisConstantFee = sdk.NewCoin(
-		genParams.NativeCoinMetadatas[0].Base,
-		sdkmath.NewInt(500_000_000_000),
-	)
 
 	genParams.BtccheckpointParams = btccheckpointtypes.DefaultParams()
 	genParams.BtccheckpointParams.BtcConfirmationDepth = btcConfirmationDepth

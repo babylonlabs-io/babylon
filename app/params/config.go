@@ -2,7 +2,6 @@ package params
 
 import (
 	"cosmossdk.io/math"
-	"github.com/cosmos/cosmos-sdk/types/address"
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -12,12 +11,16 @@ import (
 const (
 	HumanCoinUnit = "bbn"
 	BaseCoinUnit  = "ubbn"
-	BbnExponent   = 6
+	// BaseEVMDenom is the base denomination for 18 decimals.
+	BaseEVMDenom = "abbn"
+
+	BbnExponent = 6
 
 	DefaultBondDenom = BaseCoinUnit
-
 	// Bech32PrefixAccAddr defines the Bech32 prefix of an account's address.
 	Bech32PrefixAccAddr = "bbn"
+	// EVMChainID is the EVM compatible chain id
+	EVMChainID = 6901
 )
 
 // taken from https://github.com/celestiaorg/celestia-app/pull/2985
@@ -50,7 +53,7 @@ var (
 
 func init() {
 	SetAddressPrefixes()
-	RegisterDenoms()
+	// RegisterDenoms() // TODO: moved to evm_config.go
 }
 
 func RegisterDenoms() {
@@ -77,11 +80,6 @@ func SetAddressPrefixes() {
 			return errorsmod.Wrap(sdkerrors.ErrUnknownAddress, "addresses cannot be empty")
 		}
 
-		if len(bytes) > address.MaxAddrLen {
-			return errorsmod.Wrapf(sdkerrors.ErrUnknownAddress, "address max length is %d, got %d", address.MaxAddrLen, len(bytes))
-		}
-
-		// TODO: Do we want to allow addresses of lengths other than 20 and 32 bytes?
 		if len(bytes) != 20 && len(bytes) != 32 {
 			return errorsmod.Wrapf(sdkerrors.ErrUnknownAddress, "address length must be 20 or 32 bytes, got %d", len(bytes))
 		}

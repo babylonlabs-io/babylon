@@ -16,12 +16,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/babylonlabs-io/babylon/v4/app"
-	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
-	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer/chain"
-	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer/config"
-	"github.com/babylonlabs-io/babylon/v4/test/e2e/containers"
-	"github.com/babylonlabs-io/babylon/v4/test/e2e/initialization"
+	"github.com/babylonlabs-io/babylon/v3/app"
+	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
+	"github.com/babylonlabs-io/babylon/v3/test/e2e/configurer/chain"
+	"github.com/babylonlabs-io/babylon/v3/test/e2e/configurer/config"
+	"github.com/babylonlabs-io/babylon/v3/test/e2e/containers"
+	"github.com/babylonlabs-io/babylon/v3/test/e2e/initialization"
 )
 
 type UpgradeSettings struct {
