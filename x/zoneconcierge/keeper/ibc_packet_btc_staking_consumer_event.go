@@ -127,10 +127,7 @@ func (k Keeper) HandleConsumerSlashing(
 		return fmt.Errorf("consumer slashing evidence is nil")
 	}
 
-	// TODO: for now pass empty, to calculate context for consumer we need to know:
-	// - consumer chain chain-id
-	// - address of the finality contract which which ingest signature
-	slashedFpBTCSK, err := evidence.ExtractBTCSK("")
+	slashedFpBTCSK, err := evidence.ExtractBTCSK()
 	if err != nil {
 		return fmt.Errorf("failed to extract BTCSK: %w", err)
 	}

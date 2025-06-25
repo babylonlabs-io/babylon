@@ -127,7 +127,7 @@ func (e *Evidence) IsSlashable() bool {
 
 // ExtractBTCSK extracts the BTC SK given the data in the evidence
 // It is up to the caller to pass correct context string for the given chain and height
-func (e *Evidence) ExtractBTCSK(context string) (*btcec.PrivateKey, error) {
+func (e *Evidence) ExtractBTCSK() (*btcec.PrivateKey, error) {
 	if !e.IsSlashable() {
 		return nil, fmt.Errorf("the evidence lacks some fields so does not allow extracting BTC SK")
 	}
@@ -137,7 +137,7 @@ func (e *Evidence) ExtractBTCSK(context string) (*btcec.PrivateKey, error) {
 	}
 	return eots.Extract(
 		btcPK, e.PubRand.ToFieldValNormalized(),
-		e.canonicalMsgToSign(context), e.CanonicalFinalitySig.ToModNScalar(), // msg and sig for canonical block
-		e.forkMsgToSign(context), e.ForkFinalitySig.ToModNScalar(), // msg and sig for fork block
+		e.canonicalMsgToSign(e.SigningContext), e.CanonicalFinalitySig.ToModNScalar(), // msg and sig for canonical block
+		e.forkMsgToSign(e.SigningContext), e.ForkFinalitySig.ToModNScalar(), // msg and sig for fork block
 	)
 }

@@ -160,6 +160,7 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 			CanonicalFinalitySig: nil,
 			ForkAppHash:          req.BlockAppHash,
 			ForkFinalitySig:      req.FinalitySig,
+			SigningContext:       signingContext,
 		}
 
 		// if this finality provider has also signed canonical block, slash it
@@ -412,6 +413,7 @@ func (ms msgServer) EquivocationEvidence(goCtx context.Context, req *types.MsgEq
 		CanonicalFinalitySig: req.CanonicalFinalitySig,
 		ForkAppHash:          req.ForkAppHash,
 		ForkFinalitySig:      req.ForkFinalitySig,
+		SigningContext:       req.SigningContext,
 	}
 
 	// slash this finality provider, including setting its voting power to

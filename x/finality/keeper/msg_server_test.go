@@ -254,7 +254,7 @@ func FuzzAddFinalitySig(f *testing.F) {
 		require.Equal(t, msg2.BlockAppHash, evidence.ForkAppHash)
 		require.Equal(t, msg2.FinalitySig.MustMarshal(), evidence.ForkFinalitySig.MustMarshal())
 		// extract the SK and assert the extracted SK is correct
-		btcSK2, err := evidence.ExtractBTCSK(finalitySigContext)
+		btcSK2, err := evidence.ExtractBTCSK()
 		require.NoError(t, err)
 		// ensure btcSK and btcSK2 are same or inverse, AND correspond to the same PK
 		// NOTE: it's possible that different SKs derive to the same PK
