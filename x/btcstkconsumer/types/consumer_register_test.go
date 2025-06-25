@@ -4,14 +4,14 @@ import (
 	"testing"
 
 	"github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
-	"github.com/stretchr/testify/require"
+	"github.com/test-go/testify/require"
 )
 
 func TestConsumerRegisterValidate(t *testing.T) {
 	testCases := []struct {
 		desc        string
 		input       types.ConsumerRegister
-		expectedErr error
+		expectedErr string
 	}{
 		{
 			desc: "valid consumer",
@@ -19,7 +19,6 @@ func TestConsumerRegisterValidate(t *testing.T) {
 				ConsumerId:          "c1",
 				ConsumerName:        "Consumer One",
 				ConsumerDescription: "A valid consumer",
-				MaxMultiStakedFps:   2,
 			},
 		},
 		{
@@ -28,9 +27,8 @@ func TestConsumerRegisterValidate(t *testing.T) {
 				ConsumerId:          "",
 				ConsumerName:        "Consumer One",
 				ConsumerDescription: "A valid consumer",
-				MaxMultiStakedFps:   2,
 			},
-			expectedErr: types.ErrEmptyConsumerId,
+			expectedErr: "ConsumerId must be non-empty",
 		},
 		{
 			desc: "missing ConsumerName",
@@ -38,9 +36,8 @@ func TestConsumerRegisterValidate(t *testing.T) {
 				ConsumerId:          "c1",
 				ConsumerName:        "",
 				ConsumerDescription: "A valid consumer",
-				MaxMultiStakedFps:   2,
 			},
-			expectedErr: types.ErrEmptyConsumerName,
+			expectedErr: "ConsumerName must be non-empty",
 		},
 		{
 			desc: "missing ConsumerDescription",
@@ -48,49 +45,19 @@ func TestConsumerRegisterValidate(t *testing.T) {
 				ConsumerId:          "c1",
 				ConsumerName:        "Consumer One",
 				ConsumerDescription: "",
-				MaxMultiStakedFps:   2,
 			},
-			expectedErr: types.ErrEmptyConsumerDescription,
-		},
-		{
-			desc: "MaxMultiStakedFps too small (0)",
-			input: types.ConsumerRegister{
-				ConsumerId:          "c1",
-				ConsumerName:        "Consumer One",
-				ConsumerDescription: "A valid consumer",
-				MaxMultiStakedFps:   0,
-			},
-			expectedErr: types.ErrInvalidMaxMultiStakedFps,
-		},
-		{
-			desc: "MaxMultiStakedFps too small (1)",
-			input: types.ConsumerRegister{
-				ConsumerId:          "c1",
-				ConsumerName:        "Consumer One",
-				ConsumerDescription: "A valid consumer",
-				MaxMultiStakedFps:   1,
-			},
-			expectedErr: types.ErrInvalidMaxMultiStakedFps,
-		},
-		{
-			desc: "valid MaxMultiStakedFps (3)",
-			input: types.ConsumerRegister{
-				ConsumerId:          "c1",
-				ConsumerName:        "Consumer One",
-				ConsumerDescription: "A valid consumer",
-				MaxMultiStakedFps:   3,
-			},
+			expectedErr: "ConsumerDescription must be non-empty",
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
 			err := tc.input.Validate()
-			if tc.expectedErr == nil {
+			if tc.expectedErr == "" {
 				require.NoError(t, err)
 			} else {
 				require.Error(t, err)
-				require.ErrorIs(t, err, tc.expectedErr)
+				require.EqualError(t, err, tc.expectedErr)
 			}
 		})
 	}

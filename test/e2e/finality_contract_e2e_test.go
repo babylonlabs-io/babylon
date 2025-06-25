@@ -134,14 +134,13 @@ func (s *FinalityContractTestSuite) Test2RegisterRollupConsumer() {
 		ConsumerID,
 		datagen.GenRandomHexStr(s.r, 5),
 		"Chain description: "+datagen.GenRandomHexStr(s.r, 15),
-		3,
 	)
 
 	validatorNode, err := s.configurer.GetChainConfig(0).GetNodeAtIndex(0)
 	require.NoError(s.T(), err)
 
 	// TODO: Register the Consumer through a gov proposal
-	validatorNode.RegisterRollupConsumerChain(initialization.ValidatorWalletName, registeredConsumer.ConsumerId, registeredConsumer.ConsumerName, registeredConsumer.ConsumerDescription, s.finalityContractAddr, 3)
+	validatorNode.RegisterRollupConsumerChain(initialization.ValidatorWalletName, registeredConsumer.ConsumerId, registeredConsumer.ConsumerName, registeredConsumer.ConsumerDescription, s.finalityContractAddr)
 
 	nonValidatorNode, err := s.configurer.GetChainConfig(0).GetNodeAtIndex(2)
 	require.NoError(s.T(), err)

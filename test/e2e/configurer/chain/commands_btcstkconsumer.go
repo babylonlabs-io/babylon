@@ -2,7 +2,6 @@ package chain
 
 import (
 	"fmt"
-	"strconv"
 
 	sdkmath "cosmossdk.io/math"
 
@@ -16,15 +15,15 @@ import (
 
 // RegisterConsumerChain registers a Consumer chain
 // TODO: Add support for other types of consumer chains
-func (n *NodeConfig) RegisterConsumerChain(walletAddrOrName, id, name, description string, maxMultiStaked int) {
-	n.RegisterRollupConsumerChain(walletAddrOrName, id, name, description, "", maxMultiStaked)
+func (n *NodeConfig) RegisterConsumerChain(walletAddrOrName, id, name, description string) {
+	n.RegisterRollupConsumerChain(walletAddrOrName, id, name, description, "")
 }
 
 // RegisterRollupConsumerChain registers a Rollup (Eth L2) Consumer chain
-func (n *NodeConfig) RegisterRollupConsumerChain(walletAddrOrName, id, name, description, finalityContractAddr string, maxMultiStaked int) {
+func (n *NodeConfig) RegisterRollupConsumerChain(walletAddrOrName, id, name, description, finalityContractAddr string) {
 	n.LogActionF("Registering consumer chain")
 	cmd := []string{
-		"babylond", "tx", "btcstkconsumer", "register-consumer", id, name, description, strconv.Itoa(maxMultiStaked), finalityContractAddr,
+		"babylond", "tx", "btcstkconsumer", "register-consumer", id, name, description, finalityContractAddr,
 		fmt.Sprintf("--from=%s", walletAddrOrName),
 	}
 	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
