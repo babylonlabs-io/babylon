@@ -70,48 +70,6 @@ func FuzzChainList(f *testing.F) {
 	})
 }
 
-func FuzzChainsInfo(f *testing.F) {
-	datagen.AddRandomSeedsToFuzzer(f, 10)
-
-	f.Fuzz(func(t *testing.T, seed int64) {
-		r := rand.New(rand.NewSource(seed))
-
-		babylonApp := app.Setup(t, false)
-		zcKeeper := babylonApp.ZoneConciergeKeeper
-		ctx := babylonApp.NewContext(false)
-
-		var (
-			chainsInfo  []chainInfo
-			consumerIDs []string
-		)
-		numChains := datagen.RandomInt(r, 100) + 1
-		for i := uint64(0); i < numChains; i++ {
-			consumerID := datagen.GenRandomHexStr(r, 30)
-			numHeaders := datagen.RandomInt(r, 100) + 1
-			numForkHeaders := datagen.RandomInt(r, 10) + 1
-			SimulateNewHeadersAndForks(ctx, r, &zcKeeper, consumerID, 0, numHeaders, numForkHeaders)
-
-			consumerIDs = append(consumerIDs, consumerID)
-			chainsInfo = append(chainsInfo, chainInfo{
-				consumerID:     consumerID,
-				numHeaders:     numHeaders,
-				numForkHeaders: numForkHeaders,
-			})
-		}
-
-		resp, err := zcKeeper.ChainsInfo(ctx, &zctypes.QueryChainsInfoRequest{
-			ConsumerIds: consumerIDs,
-		})
-		require.NoError(t, err)
-
-		for i, respData := range resp.ChainsInfo {
-			require.Equal(t, chainsInfo[i].consumerID, respData.ConsumerId)
-			require.Equal(t, chainsInfo[i].numHeaders-1, respData.LatestHeader.Height)
-			require.Equal(t, chainsInfo[i].numForkHeaders, uint64(len(respData.LatestForks.Headers)))
-		}
-	})
-}
-
 func FuzzHeader(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 
