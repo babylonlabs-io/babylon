@@ -8,9 +8,6 @@ import (
 	"strings"
 	"testing"
 
-	appparams "github.com/babylonlabs-io/babylon/v2/app/params"
-	"github.com/babylonlabs-io/babylon/v2/app/signingcontext"
-
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/stretchr/testify/require"
 
@@ -413,8 +410,9 @@ func (n *NodeConfig) CreateBTCDelegationAndCheck(
 	delAddr string,
 	stakingTimeBlocks uint16,
 	stakingSatAmt int64,
+	signingContext string,
 ) (testStakingInfo *datagen.TestStakingSlashingInfo) {
-	testStakingInfo = n.CreateBTCDel(r, t, btcNet, walletNameSender, fp, btcStakerSK, delAddr, stakingTimeBlocks, stakingSatAmt)
+	testStakingInfo = n.CreateBTCDel(r, t, btcNet, walletNameSender, fp, btcStakerSK, delAddr, stakingTimeBlocks, stakingSatAmt, signingContext)
 
 	// wait for a block so that above txs take effect
 	n.WaitForNextBlock()
@@ -438,6 +436,7 @@ func (n *NodeConfig) CreateBTCDel(
 	delAddr string,
 	stakingTimeBlocks uint16,
 	stakingSatAmt int64,
+	signingContext string,
 ) (testStakingInfo *datagen.TestStakingSlashingInfo) {
 	// BTC staking params, BTC delegation key pairs and PoP
 	params := n.QueryBTCStakingParams()
@@ -445,9 +444,7 @@ func (n *NodeConfig) CreateBTCDel(
 	// NOTE: we use the node's address for the BTC delegation
 	del1Addr := sdk.MustAccAddressFromBech32(delAddr)
 
-	stakerPopContext := signingcontext.StakerPopContextV0(n.chainId, appparams.AccBTCStaking.String())
-
-	popDel1, err := datagen.NewPoPBTC(stakerPopContext, del1Addr, btcStakerSK)
+	popDel1, err := datagen.NewPoPBTC(signingContext, del1Addr, btcStakerSK)
 	require.NoError(t, err)
 
 	testStakingInfo, stakingTx, inclusionProof, testUnbondingInfo, delegatorSig := n.BTCStakingUnbondSlashInfo(r, t, btcNet, params, fp, btcStakerSK, stakingTimeBlocks, stakingSatAmt)
@@ -485,15 +482,14 @@ func (n *NodeConfig) AddFinalitySignatureToBlock(
 	privateRand *secp256k1.ModNScalar,
 	pubRand *bbn.SchnorrPubRand,
 	proof cmtcrypto.Proof,
+	signingContext string,
 	overallFlags ...string,
 ) (blockVotedAppHash bytes.HexBytes) {
 	blockToVote, err := n.QueryBlock(int64(blockHeight))
 	require.NoError(n.t, err)
 	appHash := blockToVote.AppHash
 
-	fpFinVoteContext := signingcontext.FpFinVoteContextV0(n.chainId, appparams.AccFinality.String())
-
-	msgToSign := []byte(fpFinVoteContext)
+	msgToSign := []byte(signingContext)
 	msgToSign = append(msgToSign, sdk.Uint64ToBigEndian(blockHeight)...)
 	msgToSign = append(msgToSign, appHash...)
 

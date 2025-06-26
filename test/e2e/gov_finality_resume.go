@@ -103,6 +103,7 @@ func (s *GovFinalityResume) Test1CreateFpAndDel() {
 		nonValidatorNode.PublicAddress,
 		stakingTimeBlocks,
 		s.stakingValue,
+		signingcontext.StakerPopContextV0(nonValidatorNode.ChainID(), appparams.AccBTCStaking.String()),
 	)
 
 	pendingDelSet := nonValidatorNode.QueryFinalityProviderDelegations(s.cacheFP.BtcPk.MarshalHex())

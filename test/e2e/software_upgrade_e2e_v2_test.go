@@ -182,6 +182,7 @@ func (s *SoftwareUpgradeV2TestSuite) preUpgradeCreateFp1(n *chain.NodeConfig) {
 		s.fp1BTCSK,
 		n,
 		s.fp1Addr,
+		"",
 	)
 	s.NotNil(s.fp1)
 
@@ -198,9 +199,9 @@ func (s *SoftwareUpgradeV2TestSuite) preUpgradeCreateBtcDels(n *chain.NodeConfig
 	n.WaitForNextBlock()
 
 	// fp1Del1
-	n.CreateBTCDel(s.r, s.T(), s.net, wDel1, s.fp1, s.del1BTCSK, s.del1Addr, stakingTimeBlocks, s.fp1Del1StakingAmt)
+	n.CreateBTCDel(s.r, s.T(), s.net, wDel1, s.fp1, s.del1BTCSK, s.del1Addr, stakingTimeBlocks, s.fp1Del1StakingAmt, "")
 	// fp1Del2
-	n.CreateBTCDel(s.r, s.T(), s.net, wDel2, s.fp1, s.del2BTCSK, s.del2Addr, stakingTimeBlocks, s.fp1Del2StakingAmt)
+	n.CreateBTCDel(s.r, s.T(), s.net, wDel2, s.fp1, s.del2BTCSK, s.del2Addr, stakingTimeBlocks, s.fp1Del2StakingAmt, "")
 
 	n.WaitForNextBlocks(2)
 	resp := n.QueryBtcDelegations(bstypes.BTCDelegationStatus_ANY)
@@ -235,9 +236,7 @@ func (s *SoftwareUpgradeV2TestSuite) preUpgradeAddFinalitySigs(n *chain.NodeConf
 	// commit public randomness list
 	commitStartHeight := uint64(5)
 
-	commitRandContext := signingcontext.FpRandCommitContextV0(n.ChainID(), appparams.AccFinality.String())
-
-	fp1RandListInfo, fp1CommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(s.r, s.fp1BTCSK, commitRandContext, commitStartHeight, numPubRand)
+	fp1RandListInfo, fp1CommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(s.r, s.fp1BTCSK, "", commitStartHeight, numPubRand)
 	s.NoError(err)
 	s.fp1RandListInfo = fp1RandListInfo
 
@@ -301,6 +300,7 @@ func (s *SoftwareUpgradeV2TestSuite) preUpgradeAddFinalitySigs(n *chain.NodeConf
 
 	n.WaitForNextBlockWithSleep50ms()
 
+	// pre-upgrade there is no context, so we pass an empty string
 	appHash := n.AddFinalitySignatureToBlock(
 		s.fp1BTCSK,
 		s.fp1.BtcPk,
@@ -308,6 +308,7 @@ func (s *SoftwareUpgradeV2TestSuite) preUpgradeAddFinalitySigs(n *chain.NodeConf
 		s.fp1RandListInfo.SRList[s.finalityIdx],
 		&s.fp1RandListInfo.PRList[s.finalityIdx],
 		*s.fp1RandListInfo.ProofList[s.finalityIdx].ToProto(),
+		"",
 		fmt.Sprintf("--from=%s", wFp1),
 	)
 
@@ -487,6 +488,7 @@ func (s *SoftwareUpgradeV2TestSuite) AddFinalityVote(n *chain.NodeConfig, flagsF
 		s.fp1RandListInfo.SRList[s.finalityIdx],
 		&s.fp1RandListInfo.PRList[s.finalityIdx],
 		*s.fp1RandListInfo.ProofList[s.finalityIdx].ToProto(),
+		signingcontext.FpFinVoteContextV0(n.ChainID(), appparams.AccFinality.String()),
 		flagsFp1...,
 	)
 

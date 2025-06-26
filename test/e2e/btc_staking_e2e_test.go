@@ -106,6 +106,7 @@ func (s *BTCStakingTestSuite) Test1CreateFinalityProviderAndDelegation() {
 		nonValidatorNode.PublicAddress,
 		stakingTimeBlocks,
 		s.stakingValue,
+		signingcontext.StakerPopContextV0(nonValidatorNode.ChainID(), appparams.AccBTCStaking.String()),
 	)
 
 	pendingDelSet := nonValidatorNode.QueryFinalityProviderDelegations(s.cacheFP.BtcPk.MarshalHex())
@@ -822,14 +823,13 @@ func CreateNodeFP(
 	fpSk *btcec.PrivateKey,
 	node *chain.NodeConfig,
 	fpAddr string,
+	signingContext string,
 ) (newFP *bstypes.FinalityProvider) {
 	// the node is the new FP
 	nodeAddr, err := sdk.AccAddressFromBech32(fpAddr)
 	require.NoError(t, err)
 
-	fpPopContext := signingcontext.FpPopContextV0(node.ChainID(), appparams.AccBTCStaking.String())
-
-	newFP, err = datagen.GenCustomFinalityProvider(r, fpSk, fpPopContext, nodeAddr)
+	newFP, err = datagen.GenCustomFinalityProvider(r, fpSk, signingContext, nodeAddr)
 	require.NoError(t, err)
 
 	previousFps := node.QueryFinalityProviders()

@@ -145,6 +145,7 @@ func (s *BtcRewardsDistribution) Test1CreateFinalityProviders() {
 		s.fp1BTCSK,
 		n1,
 		s.fp1Addr,
+		signingcontext.FpPopContextV0(n1.ChainID(), appparams.AccBTCStaking.String()),
 	)
 	s.NotNil(s.fp1)
 
@@ -154,6 +155,7 @@ func (s *BtcRewardsDistribution) Test1CreateFinalityProviders() {
 		s.fp2BTCSK,
 		n2,
 		s.fp2Addr,
+		signingcontext.FpPopContextV0(n2.ChainID(), appparams.AccBTCStaking.String()),
 	)
 	s.NotNil(s.fp2)
 
@@ -313,6 +315,7 @@ func (s *BtcRewardsDistribution) Test4CommitPublicRandomnessAndSealed() {
 			s.fp1RandListInfo.SRList[s.finalityIdx],
 			&s.fp1RandListInfo.PRList[s.finalityIdx],
 			*s.fp1RandListInfo.ProofList[s.finalityIdx].ToProto(),
+			signingcontext.FpRandCommitContextV0(n1.ChainID(), appparams.AccFinality.String()),
 			fmt.Sprintf("--from=%s", wFp1),
 		)
 	}()
@@ -326,6 +329,7 @@ func (s *BtcRewardsDistribution) Test4CommitPublicRandomnessAndSealed() {
 			s.fp2RandListInfo.SRList[s.finalityIdx],
 			&s.fp2RandListInfo.PRList[s.finalityIdx],
 			*s.fp2RandListInfo.ProofList[s.finalityIdx].ToProto(),
+			signingcontext.FpRandCommitContextV0(n2.ChainID(), appparams.AccFinality.String()),
 			fmt.Sprintf("--from=%s", wFp2),
 		)
 	}()
@@ -636,6 +640,7 @@ func (s *BtcRewardsDistribution) AddFinalityVote(flagsN1, flagsN2 []string) (app
 		s.fp1RandListInfo.SRList[s.finalityIdx],
 		&s.fp1RandListInfo.PRList[s.finalityIdx],
 		*s.fp1RandListInfo.ProofList[s.finalityIdx].ToProto(),
+		signingcontext.FpFinVoteContextV0(n1.ChainID(), appparams.AccFinality.String()),
 		flagsN1...,
 	)
 
@@ -646,6 +651,7 @@ func (s *BtcRewardsDistribution) AddFinalityVote(flagsN1, flagsN2 []string) (app
 		s.fp2RandListInfo.SRList[s.finalityIdx],
 		&s.fp2RandListInfo.PRList[s.finalityIdx],
 		*s.fp2RandListInfo.ProofList[s.finalityIdx].ToProto(),
+		signingcontext.FpFinVoteContextV0(n2.ChainID(), appparams.AccFinality.String()),
 		flagsN2...,
 	)
 
@@ -724,7 +730,18 @@ func (s *BtcRewardsDistribution) CreateBTCDelegationAndCheck(
 	delAddr string,
 	stakingSatAmt int64,
 ) {
-	n.CreateBTCDelegationAndCheck(s.r, s.T(), s.net, wDel, fp, btcStakerSK, delAddr, stakingTimeBlocks, stakingSatAmt)
+	n.CreateBTCDelegationAndCheck(
+		s.r,
+		s.T(),
+		s.net,
+		wDel,
+		fp,
+		btcStakerSK,
+		delAddr,
+		stakingTimeBlocks,
+		stakingSatAmt,
+		signingcontext.StakerPopContextV0(n.ChainID(), appparams.AccBTCStaking.String()),
+	)
 }
 
 // CheckWithdrawReward withdraw rewards for one delegation and check the balance
