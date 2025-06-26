@@ -22,6 +22,7 @@ import (
 
 	"github.com/babylonlabs-io/babylon/v3/app"
 	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
+	"github.com/babylonlabs-io/babylon/v3/app/signingcontext"
 	"github.com/babylonlabs-io/babylon/v3/crypto/bls12381"
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
@@ -139,6 +140,22 @@ func (h *Helper) Error(err error) {
 
 func (h *Helper) EqualError(err, expected error) {
 	require.EqualError(h.t, err, expected.Error())
+}
+
+func (h *Helper) StakerPopContext() string {
+	return signingcontext.StakerPopContextV0(h.App.ChainID(), h.App.BTCStakingKeeper.ModuleAddress())
+}
+
+func (h *Helper) FpPopContext() string {
+	return signingcontext.FpPopContextV0(h.App.ChainID(), h.App.BTCStakingKeeper.ModuleAddress())
+}
+
+func (h *Helper) FpFinVoteContext() string {
+	return signingcontext.FpFinVoteContextV0(h.App.ChainID(), h.App.FinalityKeeper.ModuleAddress())
+}
+
+func (h *Helper) FpRandCommitContext() string {
+	return signingcontext.FpRandCommitContextV0(h.App.ChainID(), h.App.FinalityKeeper.ModuleAddress())
 }
 
 func (h *Helper) getExtendedVotesFromValSet(

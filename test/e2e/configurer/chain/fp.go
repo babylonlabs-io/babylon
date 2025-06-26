@@ -7,6 +7,8 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
+	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
+	"github.com/babylonlabs-io/babylon/v3/app/signingcontext"
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
 	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 	btcstkconsumertypes "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
@@ -27,7 +29,9 @@ func CreateFpFromNodeAddr(
 	nodeAddr, err := sdk.AccAddressFromBech32(node.PublicAddress)
 	require.NoError(t, err)
 
-	newFP, err = datagen.GenCustomFinalityProvider(r, fpSk, nodeAddr, "")
+	fpPopContext := signingcontext.FpPopContextV0(node.chainId, appparams.AccBTCStaking.String())
+
+	newFP, err = datagen.GenCustomFinalityProvider(r, fpSk, fpPopContext, nodeAddr, "")
 	require.NoError(t, err)
 
 	previousFps := node.QueryFinalityProviders()
@@ -72,7 +76,9 @@ func CreateConsumerFpFromNodeAddr(
 	nodeAddr, err := sdk.AccAddressFromBech32(node.PublicAddress)
 	require.NoError(t, err)
 
-	newFP, err = datagen.GenCustomFinalityProvider(r, fpSk, nodeAddr, consumerId)
+	fpPopContext := signingcontext.FpPopContextV0(node.chainId, appparams.AccBTCStaking.String())
+
+	newFP, err = datagen.GenCustomFinalityProvider(r, fpSk, fpPopContext, nodeAddr, consumerId)
 	require.NoError(t, err)
 
 	previousFps := node.QueryConsumerFinalityProviders(consumerId)

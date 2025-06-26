@@ -43,7 +43,7 @@ func FuzzRewardBTCStaking(f *testing.F) {
 		}
 
 		// generate a random voting power distribution cache
-		dc, btcTotalSatByDelAddressByFpAddress, err := datagen.GenRandomVotingPowerDistCache(r, 100)
+		dc, btcTotalSatByDelAddressByFpAddress, err := datagen.GenRandomVotingPowerDistCache(r, 100, "")
 		require.NoError(t, err)
 
 		// randomly select some FPs as voters
