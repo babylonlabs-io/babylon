@@ -20,6 +20,7 @@ import (
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/stretchr/testify/require"
 
+<<<<<<< HEAD
 	"github.com/babylonlabs-io/babylon/v2/app"
 	appparams "github.com/babylonlabs-io/babylon/v2/app/params"
 	"github.com/babylonlabs-io/babylon/v2/crypto/bls12381"
@@ -29,6 +30,18 @@ import (
 	checkpointingtypes "github.com/babylonlabs-io/babylon/v2/x/checkpointing/types"
 	"github.com/babylonlabs-io/babylon/v2/x/epoching/keeper"
 	"github.com/babylonlabs-io/babylon/v2/x/epoching/types"
+=======
+	"github.com/babylonlabs-io/babylon/v3/app"
+	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
+	"github.com/babylonlabs-io/babylon/v3/app/signingcontext"
+	"github.com/babylonlabs-io/babylon/v3/crypto/bls12381"
+	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
+	bbn "github.com/babylonlabs-io/babylon/v3/types"
+	btcstakingtypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
+	"github.com/babylonlabs-io/babylon/v3/x/epoching/keeper"
+	"github.com/babylonlabs-io/babylon/v3/x/epoching/types"
+>>>>>>> 2b02d75 (Implement context separator signing (#1252))
 )
 
 // Helper is a structure which wraps the entire app and exposes functionalities for testing the epoching module
@@ -139,6 +152,22 @@ func (h *Helper) Error(err error) {
 
 func (h *Helper) EqualError(err, expected error) {
 	require.EqualError(h.t, err, expected.Error())
+}
+
+func (h *Helper) StakerPopContext() string {
+	return signingcontext.StakerPopContextV0(h.App.ChainID(), h.App.BTCStakingKeeper.ModuleAddress())
+}
+
+func (h *Helper) FpPopContext() string {
+	return signingcontext.FpPopContextV0(h.App.ChainID(), h.App.BTCStakingKeeper.ModuleAddress())
+}
+
+func (h *Helper) FpFinVoteContext() string {
+	return signingcontext.FpFinVoteContextV0(h.App.ChainID(), h.App.FinalityKeeper.ModuleAddress())
+}
+
+func (h *Helper) FpRandCommitContext() string {
+	return signingcontext.FpRandCommitContextV0(h.App.ChainID(), h.App.FinalityKeeper.ModuleAddress())
 }
 
 func (h *Helper) getExtendedVotesFromValSet(

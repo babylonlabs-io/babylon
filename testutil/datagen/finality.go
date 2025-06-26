@@ -46,7 +46,13 @@ func GenRandomPubRandList(r *rand.Rand, numPubRand uint64) (*RandListInfo, error
 	return &RandListInfo{srList, prList, commitment, proofList}, nil
 }
 
-func GenRandomMsgCommitPubRandList(r *rand.Rand, sk *btcec.PrivateKey, startHeight uint64, numPubRand uint64) (*RandListInfo, *ftypes.MsgCommitPubRandList, error) {
+func GenRandomMsgCommitPubRandList(
+	r *rand.Rand,
+	sk *btcec.PrivateKey,
+	signingContext string,
+	startHeight uint64,
+	numPubRand uint64,
+) (*RandListInfo, *ftypes.MsgCommitPubRandList, error) {
 	randListInfo, err := GenRandomPubRandList(r, numPubRand)
 	if err != nil {
 		return nil, nil, err
@@ -59,7 +65,7 @@ func GenRandomMsgCommitPubRandList(r *rand.Rand, sk *btcec.PrivateKey, startHeig
 		NumPubRand:  numPubRand,
 		Commitment:  randListInfo.Commitment,
 	}
-	hash, err := msg.HashToSign()
+	hash, err := msg.HashToSign(signingContext)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -74,6 +80,7 @@ func GenRandomMsgCommitPubRandList(r *rand.Rand, sk *btcec.PrivateKey, startHeig
 func NewMsgAddFinalitySig(
 	signer string,
 	sk *btcec.PrivateKey,
+	signingContext string,
 	startHeight uint64,
 	blockHeight uint64,
 	randListInfo *RandListInfo,
@@ -90,7 +97,7 @@ func NewMsgAddFinalitySig(
 		BlockAppHash: blockAppHash,
 		FinalitySig:  nil,
 	}
-	msgToSign := msg.MsgToSign()
+	msgToSign := msg.MsgToSign(signingContext)
 	sig, err := eots.Sign(sk, randListInfo.SRList[idx], msgToSign)
 	if err != nil {
 		return nil, err
@@ -153,7 +160,7 @@ func GenRandomFinalitySig(r *rand.Rand) (*bbn.SchnorrEOTSSig, error) {
 	return bbn.NewSchnorrEOTSSigFromModNScalar(&modNScalar), nil
 }
 
-func GenRandomFinalityGenesisState(r *rand.Rand) (*ftypes.GenesisState, error) {
+func GenRandomFinalityGenesisState(r *rand.Rand, signingContext string) (*ftypes.GenesisState, error) {
 	var (
 		entriesCount = int(RandomIntOtherThan(r, 0, 20)) + 1 // make sure there's always at least one entry
 		blocks       = make([]*ftypes.IndexedBlock, entriesCount)
@@ -243,7 +250,7 @@ func GenRandomFinalityGenesisState(r *rand.Rand) (*ftypes.GenesisState, error) {
 		}
 
 		// populate voting powers dist cache
-		vpDistr, _, err := GenRandomVotingPowerDistCache(r, 100)
+		vpDistr, _, err := GenRandomVotingPowerDistCache(r, 100, signingContext)
 		if err != nil {
 			return nil, err
 		}

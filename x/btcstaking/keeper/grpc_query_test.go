@@ -39,7 +39,7 @@ func FuzzFinalityProviders(f *testing.F) {
 		// Generate random finality providers and add them to kv store
 		fpsMap := make(map[string]*types.FinalityProvider)
 		for i := 0; i < int(datagen.RandomInt(r, 10)+1); i++ {
-			fp, err := datagen.GenRandomFinalityProvider(r)
+			fp, err := datagen.GenRandomFinalityProvider(r, "")
 			require.NoError(t, err)
 
 			AddFinalityProvider(t, ctx, *keeper, fp)
@@ -104,9 +104,8 @@ func FuzzFinalityProvider(f *testing.F) {
 		// Generate random finality providers and add them to kv store
 		fpsMap := make(map[string]*types.FinalityProvider)
 		for i := 0; i < int(datagen.RandomInt(r, 10)+1); i++ {
-			fp, err := datagen.GenRandomFinalityProvider(r)
+			fp, err := datagen.GenRandomFinalityProvider(r, "")
 			require.NoError(t, err)
-
 			AddFinalityProvider(t, ctx, *keeper, fp)
 			fp.HighestVotedHeight = uint32(datagen.RandomInt(r, 1000) + 1)
 			err = keeper.UpdateFinalityProvider(ctx, fp)
@@ -137,7 +136,7 @@ func FuzzFinalityProvider(f *testing.F) {
 		}
 
 		// check some random non-existing guy
-		fp, err := datagen.GenRandomFinalityProvider(r)
+		fp, err := datagen.GenRandomFinalityProvider(r, "")
 		require.NoError(t, err)
 		req := types.QueryFinalityProviderRequest{FpBtcPkHex: fp.BtcPk.MarshalHex()}
 		respNonExists, err := keeper.FinalityProvider(ctx, &req)
@@ -176,7 +175,7 @@ func FuzzFinalityProviderDelegations(f *testing.F) {
 		slashingRate := sdkmath.LegacyNewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2)
 
 		// Generate a finality provider
-		fp, err := datagen.GenRandomFinalityProvider(r)
+		fp, err := datagen.GenRandomFinalityProvider(r, "")
 		require.NoError(t, err)
 		AddFinalityProvider(t, ctx, *keeper, fp)
 
@@ -196,6 +195,7 @@ func FuzzFinalityProviderDelegations(f *testing.F) {
 				net,
 				[]bbn.BIP340PubKey{*fp.BtcPk},
 				delSK,
+				"",
 				covenantSKs,
 				covenantPKs,
 				covenantQuorum,
@@ -294,7 +294,7 @@ func FuzzPendingBTCDelegations(f *testing.F) {
 		numFps := datagen.RandomInt(r, 5) + 1
 		fps := []*types.FinalityProvider{}
 		for i := uint64(0); i < numFps; i++ {
-			fp, err := datagen.GenRandomFinalityProvider(r)
+			fp, err := datagen.GenRandomFinalityProvider(r, "")
 			require.NoError(t, err)
 			AddFinalityProvider(t, ctx, *keeper, fp)
 			fps = append(fps, fp)
@@ -322,6 +322,7 @@ func FuzzPendingBTCDelegations(f *testing.F) {
 					net,
 					[]bbn.BIP340PubKey{*fp.BtcPk},
 					delSK,
+					"",
 					covenantSKs,
 					covenantPKs,
 					covenantQuorum,
@@ -396,7 +397,12 @@ func constructRequestWithLimit(r *rand.Rand, limit uint64) *query.PageRequest {
 	return constructRequestWithKeyAndLimit(r, nil, limit)
 }
 
-func AddFinalityProvider(t *testing.T, goCtx context.Context, k btcstakingkeeper.Keeper, fp *types.FinalityProvider) {
+func AddFinalityProvider(
+	t *testing.T,
+	goCtx context.Context,
+	k btcstakingkeeper.Keeper,
+	fp *types.FinalityProvider,
+) {
 	err := k.AddFinalityProvider(goCtx, &types.MsgCreateFinalityProvider{
 		Addr:        fp.Addr,
 		Description: fp.Description,
@@ -436,7 +442,7 @@ func TestCorrectParamsVersionIsUsed(t *testing.T) {
 	// this is already covered in FuzzGeneratingValidStakingSlashingTx
 	slashingRate := sdkmath.LegacyNewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2)
 
-	fp, err := datagen.GenRandomFinalityProvider(r)
+	fp, err := datagen.GenRandomFinalityProvider(r, "")
 	require.NoError(t, err)
 	AddFinalityProvider(t, ctx, *keeper, fp)
 
@@ -453,6 +459,7 @@ func TestCorrectParamsVersionIsUsed(t *testing.T) {
 		net,
 		[]bbn.BIP340PubKey{*fp.BtcPk},
 		delSK,
+		"",
 		covenantSKs,
 		covenantPKs,
 		covenantQuorum,

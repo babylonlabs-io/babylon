@@ -30,8 +30,13 @@ func (f *FinalityProvider) BTCPublicKey() *bbn.BIP340PubKey {
 	return pk
 }
 
+<<<<<<< HEAD
 func (f *FinalityProvider) RegisterFinalityProvider() {
 	pop, err := datagen.NewPoPBTC(f.Address(), f.BTCPrivateKey)
+=======
+func (f *FinalityProvider) RegisterFinalityProvider(consumerID string) {
+	pop, err := datagen.NewPoPBTC(f.d.FpPopContext(), f.Address(), f.BTCPrivateKey)
+>>>>>>> 2b02d75 (Implement context separator signing (#1252))
 	require.NoError(f.t, err)
 
 	msg := &bstypes.MsgCreateFinalityProvider{
@@ -61,6 +66,7 @@ func (f *FinalityProvider) CommitRandomness() {
 	randListInfo, msg, err := datagen.GenRandomMsgCommitPubRandList(
 		f.r,
 		f.BTCPrivateKey,
+		f.d.FpRandCommitContext(),
 		1,
 		10000,
 	)
@@ -91,6 +97,7 @@ func (f *FinalityProvider) CastVoteForHash(height uint64, blkAppHash []byte) {
 	msg, err := datagen.NewMsgAddFinalitySig(
 		f.AddressString(),
 		f.BTCPrivateKey,
+		f.d.FpFinVoteContext(),
 		1,
 		height,
 		f.randListInfo,

@@ -9,6 +9,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
+<<<<<<< HEAD
 	babylonApp "github.com/babylonlabs-io/babylon/v2/app"
 	testutil "github.com/babylonlabs-io/babylon/v2/testutil/btcstaking-helper"
 	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
@@ -17,6 +18,17 @@ import (
 	btcstakingkeeper "github.com/babylonlabs-io/babylon/v2/x/btcstaking/keeper"
 	bstypes "github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
 	"github.com/babylonlabs-io/babylon/v2/x/finality/types"
+=======
+	babylonApp "github.com/babylonlabs-io/babylon/v3/app"
+	"github.com/babylonlabs-io/babylon/v3/app/signingcontext"
+	testutil "github.com/babylonlabs-io/babylon/v3/testutil/btcstaking-helper"
+	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
+	keepertest "github.com/babylonlabs-io/babylon/v3/testutil/keeper"
+	btclctypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
+	btcstakingkeeper "github.com/babylonlabs-io/babylon/v3/x/btcstaking/keeper"
+	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/v3/x/finality/types"
+>>>>>>> 2b02d75 (Implement context separator signing (#1252))
 )
 
 func FuzzHandleLiveness(f *testing.F) {
@@ -221,10 +233,12 @@ func TestMissedBlockCounterGoesNegativeWithBitmapResetNew(t *testing.T) {
 	btcStkK, finalityK := app.BTCStakingKeeper, app.FinalityKeeper
 	msgSrvrBtcStk := btcstakingkeeper.NewMsgServerImpl(btcStkK)
 
+	signingContext := signingcontext.FpPopContextV0(ctx.ChainID(), app.BTCStakingKeeper.ModuleAddress())
+
 	// Create finality provider
 	fpBtcSK, _, err := datagen.GenRandomBTCKeyPair(r)
 	require.NoError(t, err)
-	fpMsg, err := datagen.GenRandomCreateFinalityProviderMsgWithBTCBabylonSKs(r, fpBtcSK, datagen.GenRandomAddress())
+	fpMsg, err := datagen.GenRandomCreateFinalityProviderMsgWithBTCBabylonSKs(r, fpBtcSK, signingContext, datagen.GenRandomAddress())
 	require.NoError(t, err)
 	_, err = msgSrvrBtcStk.CreateFinalityProvider(ctx, fpMsg)
 	require.NoError(t, err)

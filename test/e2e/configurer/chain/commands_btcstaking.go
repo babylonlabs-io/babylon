@@ -8,6 +8,8 @@ import (
 	"strings"
 	"testing"
 
+	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
+
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/stretchr/testify/require"
 
@@ -22,6 +24,7 @@ import (
 	cmtcrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+<<<<<<< HEAD
 	"github.com/babylonlabs-io/babylon/v2/crypto/eots"
 	asig "github.com/babylonlabs-io/babylon/v2/crypto/schnorr-adaptor-signature"
 	"github.com/babylonlabs-io/babylon/v2/test/e2e/containers"
@@ -29,6 +32,16 @@ import (
 	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
 	bbn "github.com/babylonlabs-io/babylon/v2/types"
 	bstypes "github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
+=======
+	"github.com/babylonlabs-io/babylon/v3/app/signingcontext"
+	"github.com/babylonlabs-io/babylon/v3/crypto/eots"
+	asig "github.com/babylonlabs-io/babylon/v3/crypto/schnorr-adaptor-signature"
+	"github.com/babylonlabs-io/babylon/v3/test/e2e/containers"
+	"github.com/babylonlabs-io/babylon/v3/test/e2e/initialization"
+	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
+	bbn "github.com/babylonlabs-io/babylon/v3/types"
+	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
+>>>>>>> 2b02d75 (Implement context separator signing (#1252))
 )
 
 func (n *NodeConfig) CreateFinalityProvider(walletAddrOrName string, btcPK *bbn.BIP340PubKey, pop *bstypes.ProofOfPossessionBTC, moniker, identity, website, securityContract, details string, commission *sdkmath.LegacyDec, commissionMaxRate, commissionMaxRateChange sdkmath.LegacyDec) {
@@ -441,7 +454,10 @@ func (n *NodeConfig) CreateBTCDel(
 
 	// NOTE: we use the node's address for the BTC delegation
 	del1Addr := sdk.MustAccAddressFromBech32(delAddr)
-	popDel1, err := datagen.NewPoPBTC(del1Addr, btcStakerSK)
+
+	stakerPopContext := signingcontext.StakerPopContextV0(n.chainId, appparams.AccBTCStaking.String())
+
+	popDel1, err := datagen.NewPoPBTC(stakerPopContext, del1Addr, btcStakerSK)
 	require.NoError(t, err)
 
 	testStakingInfo, stakingTx, inclusionProof, testUnbondingInfo, delegatorSig := n.BTCStakingUnbondSlashInfo(r, t, btcNet, params, fp, btcStakerSK, stakingTimeBlocks, stakingSatAmt)
@@ -485,7 +501,12 @@ func (n *NodeConfig) AddFinalitySignatureToBlock(
 	require.NoError(n.t, err)
 	appHash := blockToVote.AppHash
 
-	msgToSign := append(sdk.Uint64ToBigEndian(blockHeight), appHash...)
+	fpFinVoteContext := signingcontext.FpFinVoteContextV0(n.chainId, appparams.AccFinality.String())
+
+	msgToSign := []byte(fpFinVoteContext)
+	msgToSign = append(msgToSign, sdk.Uint64ToBigEndian(blockHeight)...)
+	msgToSign = append(msgToSign, appHash...)
+
 	// generate EOTS signature
 	fp1Sig, err := eots.Sign(fpBTCSK, privateRand, msgToSign)
 	require.NoError(n.t, err)

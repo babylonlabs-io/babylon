@@ -48,6 +48,7 @@ func BTCStakingKeeperWithStore(
 		btccKeeper,
 		iKeeper,
 		&chaincfg.SimNetParams,
+		appparams.AccBTCStaking.String(),
 		appparams.AccGov.String(),
 	)
 

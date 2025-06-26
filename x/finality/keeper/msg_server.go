@@ -11,9 +11,16 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
+<<<<<<< HEAD
 	bbn "github.com/babylonlabs-io/babylon/v2/types"
 	bstypes "github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
 	"github.com/babylonlabs-io/babylon/v2/x/finality/types"
+=======
+	"github.com/babylonlabs-io/babylon/v3/app/signingcontext"
+	bbn "github.com/babylonlabs-io/babylon/v3/types"
+	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/v3/x/finality/types"
+>>>>>>> 2b02d75 (Implement context separator signing (#1252))
 )
 
 type msgServer struct {
@@ -136,9 +143,11 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 		return nil, err
 	}
 
+	signingContext := signingcontext.FpFinVoteContextV0(ctx.ChainID(), ms.finalityModuleAddress)
+
 	// verify the finality signature message w.r.t. the public randomness commitment
 	// including the public randomness inclusion proof and the finality signature
-	if err := types.VerifyFinalitySig(req, prCommit); err != nil {
+	if err := types.VerifyFinalitySig(req, prCommit, signingContext); err != nil {
 		return nil, err
 	}
 	// the public randomness is good, set the public randomness
@@ -157,6 +166,7 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 			CanonicalFinalitySig: nil,
 			ForkAppHash:          req.BlockAppHash,
 			ForkFinalitySig:      req.FinalitySig,
+			SigningContext:       signingContext,
 		}
 
 		// if this finality provider has also signed canonical block, slash it
@@ -268,8 +278,10 @@ func (ms msgServer) CommitPubRandList(goCtx context.Context, req *types.MsgCommi
 		return nil, bstypes.ErrFpNotFound.Wrapf("the finality provider with BTC PK %v is not registered", fpBTCPKBytes)
 	}
 
+	signingContext := signingcontext.FpRandCommitContextV0(ctx.ChainID(), ms.finalityModuleAddress)
+
 	// verify signature over the public randomness commitment
-	if err := req.VerifySig(); err != nil {
+	if err := req.VerifySig(signingContext); err != nil {
 		return nil, types.ErrInvalidPubRand.Wrapf("invalid signature over the public randomness list: %v", err)
 	}
 
@@ -379,3 +391,32 @@ func (ms msgServer) validateActivationHeight(ctx sdk.Context, height uint64) (ui
 	}
 	return activationHeight, nil
 }
+<<<<<<< HEAD
+=======
+
+// EquivocationEvidence handles the evidence of equivocation message sent from the finality gadget cw contract
+func (ms msgServer) EquivocationEvidence(goCtx context.Context, req *types.MsgEquivocationEvidence) (*types.MsgEquivocationEvidenceResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// construct the evidence
+	evidence := &types.Evidence{
+		FpBtcPk:              req.FpBtcPk,
+		BlockHeight:          req.BlockHeight,
+		PubRand:              req.PubRand,
+		CanonicalAppHash:     req.CanonicalAppHash,
+		CanonicalFinalitySig: req.CanonicalFinalitySig,
+		ForkAppHash:          req.ForkAppHash,
+		ForkFinalitySig:      req.ForkFinalitySig,
+		SigningContext:       req.SigningContext,
+	}
+
+	// slash this finality provider, including setting its voting power to
+	// zero, extracting its BTC SK, and emit an event
+	ms.slashFinalityProvider(ctx, evidence.FpBtcPk, evidence)
+
+	// save evidence
+	ms.SetEvidence(ctx, evidence)
+
+	return &types.MsgEquivocationEvidenceResponse{}, nil
+}
+>>>>>>> 2b02d75 (Implement context separator signing (#1252))

@@ -15,8 +15,9 @@ import (
 
 type (
 	Keeper struct {
-		cdc          codec.BinaryCodec
-		storeService corestoretypes.KVStoreService
+		cdc                   codec.BinaryCodec
+		storeService          corestoretypes.KVStoreService
+		finalityModuleAddress string
 
 		BTCStakingKeeper    types.BTCStakingKeeper
 		IncentiveKeeper     types.IncentiveKeeper
@@ -29,6 +30,13 @@ type (
 		FinalityProviderSigningTracker collections.Map[[]byte, types.FinalityProviderSigningInfo]
 		// FinalityProviderMissedBlockBitmap key: BIP340PubKey bytes | value: byte key for a finality provider's missed block bitmap chunk
 		FinalityProviderMissedBlockBitmap collections.Map[collections.Pair[[]byte, uint64], []byte]
+<<<<<<< HEAD
+=======
+
+		// pubRandCommitIndex key: BIP340PubKey bytes | value: PubRandCommitIndexValue (ordered start heights of commitments)
+		// This index is useful for retrieving PubRandCommits using binary search
+		pubRandCommitIndex collections.Map[[]byte, types.PubRandCommitIndexValue]
+>>>>>>> 2b02d75 (Implement context separator signing (#1252))
 	}
 )
 
@@ -38,12 +46,14 @@ func NewKeeper(
 	btcstakingKeeper types.BTCStakingKeeper,
 	incentiveKeeper types.IncentiveKeeper,
 	checkpointingKeeper types.CheckpointingKeeper,
+	finalityModuleAddress string,
 	authority string,
 ) Keeper {
 	sb := collections.NewSchemaBuilder(storeService)
 	return Keeper{
-		cdc:          cdc,
-		storeService: storeService,
+		cdc:                   cdc,
+		storeService:          storeService,
+		finalityModuleAddress: finalityModuleAddress,
 
 		BTCStakingKeeper:    btcstakingKeeper,
 		IncentiveKeeper:     incentiveKeeper,
@@ -99,4 +109,8 @@ func (k Keeper) IsFinalityActive(ctx context.Context) (activated bool) {
 
 	_, err := k.GetBTCStakingActivatedHeight(ctx)
 	return err == nil
+}
+
+func (k Keeper) ModuleAddress() string {
+	return k.finalityModuleAddress
 }

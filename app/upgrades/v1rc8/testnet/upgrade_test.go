@@ -37,7 +37,7 @@ func FuzzMigrateFinalityProviders(f *testing.F) {
 		// slice of the expected finality providers after the migration
 		expFps := make([]btcstakingtypes.FinalityProvider, fpCount)
 		for i := range expFps {
-			fp, err := datagen.GenRandomFinalityProvider(r)
+			fp, err := datagen.GenRandomFinalityProvider(r, "")
 			require.NoError(t, err)
 			// make sure commission info is nil when seeding the store
 			fp.CommissionInfo = nil

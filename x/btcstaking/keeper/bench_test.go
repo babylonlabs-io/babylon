@@ -32,7 +32,7 @@ func benchBeginBlock(b *testing.B, numFPs int, numDelsUnderFP int) {
 	// generate new finality providers
 	fps := []*types.FinalityProvider{}
 	for i := 0; i < numFPs; i++ {
-		fp, err := datagen.GenRandomFinalityProvider(r)
+		fp, err := datagen.GenRandomFinalityProvider(r, h.FpPopContext())
 		h.NoError(err)
 		msg := &types.MsgCreateFinalityProvider{
 			Addr:        fp.Addr,

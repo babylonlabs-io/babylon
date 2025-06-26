@@ -19,6 +19,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
+<<<<<<< HEAD
 	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
 	keepertest "github.com/babylonlabs-io/babylon/v2/testutil/keeper"
 	bbn "github.com/babylonlabs-io/babylon/v2/types"
@@ -29,6 +30,21 @@ import (
 	epochingtypes "github.com/babylonlabs-io/babylon/v2/x/epoching/types"
 	fkeeper "github.com/babylonlabs-io/babylon/v2/x/finality/keeper"
 	ftypes "github.com/babylonlabs-io/babylon/v2/x/finality/types"
+=======
+	"github.com/babylonlabs-io/babylon/v3/app/signingcontext"
+	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
+	keepertest "github.com/babylonlabs-io/babylon/v3/testutil/keeper"
+	bbn "github.com/babylonlabs-io/babylon/v3/types"
+	btcctypes "github.com/babylonlabs-io/babylon/v3/x/btccheckpoint/types"
+	btclctypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
+	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/keeper"
+	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
+	bsckeeper "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/keeper"
+	bsctypes "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
+	epochingtypes "github.com/babylonlabs-io/babylon/v3/x/epoching/types"
+	fkeeper "github.com/babylonlabs-io/babylon/v3/x/finality/keeper"
+	ftypes "github.com/babylonlabs-io/babylon/v3/x/finality/types"
+>>>>>>> 2b02d75 (Implement context separator signing (#1252))
 )
 
 var (
@@ -152,6 +168,22 @@ func (h *Helper) Error(err error, msgAndArgs ...any) {
 	require.Error(h.t, err, msgAndArgs...)
 }
 
+func (h *Helper) StakerPopContext() string {
+	return signingcontext.StakerPopContextV0(h.Ctx.ChainID(), h.BTCStakingKeeper.ModuleAddress())
+}
+
+func (h *Helper) FpPopContext() string {
+	return signingcontext.FpPopContextV0(h.Ctx.ChainID(), h.BTCStakingKeeper.ModuleAddress())
+}
+
+func (h *Helper) FpRandCommitContext() string {
+	return signingcontext.FpRandCommitContextV0(h.Ctx.ChainID(), h.FinalityKeeper.ModuleAddress())
+}
+
+func (h *Helper) FpFinVoteContext() string {
+	return signingcontext.FpFinVoteContextV0(h.Ctx.ChainID(), h.FinalityKeeper.ModuleAddress())
+}
+
 func (h *Helper) BeginBlocker() {
 	err := h.BTCStakingKeeper.BeginBlocker(h.Ctx)
 	h.NoError(err)
@@ -210,6 +242,7 @@ func (h *Helper) GenAndApplyCustomParams(
 	return covenantSKs, covenantPKs
 }
 
+<<<<<<< HEAD
 func CreateFinalityProvider(r *rand.Rand, t *testing.T) *types.FinalityProvider {
 	fpSK, _, err := datagen.GenRandomBTCKeyPair(r)
 	require.NoError(t, err)
@@ -229,6 +262,12 @@ func (h *Helper) CreateFinalityProvider(r *rand.Rand) (*btcec.PrivateKey, *btcec
 	fpSK, fpPK, err := datagen.GenRandomBTCKeyPair(r)
 	h.NoError(err)
 	fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, fpSK)
+=======
+func (h *Helper) CreateFinalityProvider(r *rand.Rand) (*btcec.PrivateKey, *btcec.PublicKey, *types.FinalityProvider) {
+	fpSK, fpPK, err := datagen.GenRandomBTCKeyPair(r)
+	h.NoError(err)
+	fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, fpSK, h.FpPopContext(), "")
+>>>>>>> 2b02d75 (Implement context separator signing (#1252))
 	h.NoError(err)
 	msgNewFp := types.MsgCreateFinalityProvider{
 		Addr:        fp.Addr,
@@ -247,6 +286,38 @@ func (h *Helper) CreateFinalityProvider(r *rand.Rand) (*btcec.PrivateKey, *btcec
 	return fpSK, fpPK, fp
 }
 
+<<<<<<< HEAD
+=======
+func (h *Helper) CreateConsumerFinalityProvider(r *rand.Rand, consumerID string) (*btcec.PrivateKey, *btcec.PublicKey, *types.FinalityProvider, error) {
+	fpSK, fpPK, err := datagen.GenRandomBTCKeyPair(r)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, fpSK, h.FpPopContext(), consumerID)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	msgNewFp := types.MsgCreateFinalityProvider{
+		Addr:        fp.Addr,
+		Description: fp.Description,
+		Commission: types.NewCommissionRates(
+			*fp.Commission,
+			fp.CommissionInfo.MaxRate,
+			fp.CommissionInfo.MaxChangeRate,
+		),
+		BtcPk:      fp.BtcPk,
+		Pop:        fp.Pop,
+		ConsumerId: fp.ConsumerId,
+	}
+	_, err = h.MsgServer.CreateFinalityProvider(h.Ctx, &msgNewFp)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	return fpSK, fpPK, fp, nil
+}
+
+>>>>>>> 2b02d75 (Implement context separator signing (#1252))
 func (h *Helper) CreateDelegation(
 	r *rand.Rand,
 	delSK *btcec.PrivateKey,
@@ -314,7 +385,7 @@ func (h *Helper) CreateDelegationWithBtcBlockHeight(
 	staker := sdk.MustAccAddressFromBech32(datagen.GenRandomAccount().Address)
 
 	// PoP
-	pop, err := datagen.NewPoPBTC(staker, delSK)
+	pop, err := datagen.NewPoPBTC(h.StakerPopContext(), staker, delSK)
 	h.NoError(err)
 	// generate staking tx info
 	prevBlock, _ := datagen.GenRandomBtcdBlock(r, 0, nil)
@@ -603,7 +674,13 @@ func (h *Helper) CommitPubRandList(
 	numPubRand uint64,
 	timestamped bool,
 ) *datagen.RandListInfo {
-	randListInfo, msg, err := datagen.GenRandomMsgCommitPubRandList(r, fpSK, startHeight, numPubRand)
+	randListInfo, msg, err := datagen.GenRandomMsgCommitPubRandList(
+		r,
+		fpSK,
+		h.FpRandCommitContext(),
+		startHeight,
+		numPubRand,
+	)
 	h.NoError(err)
 
 	// if timestamped, use the timestamped epoch, otherwise use the next epoch

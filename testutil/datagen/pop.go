@@ -126,7 +126,11 @@ type bip322Sign[A btcutil.Address] func(sg []byte,
 // NewPoPBTC generates a new proof of possession that sk_BTC and the address are held by the same person
 // a proof of possession contains only one signature
 // - pop.BtcSig = schnorr_sign(sk_BTC, bbnAddress)
-func NewPoPBTC(addr sdk.AccAddress, btcSK *btcec.PrivateKey) (*bstypes.ProofOfPossessionBTC, error) {
+func NewPoPBTC(
+	signingContext string,
+	addr sdk.AccAddress,
+	btcSK *btcec.PrivateKey,
+) (*bstypes.ProofOfPossessionBTC, error) {
 	pop := bstypes.ProofOfPossessionBTC{
 		BtcSigType: bstypes.BTCSigType_BIP340, // by default, we use BIP-340 encoding for BTC signature
 	}
@@ -134,7 +138,9 @@ func NewPoPBTC(addr sdk.AccAddress, btcSK *btcec.PrivateKey) (*bstypes.ProofOfPo
 	// generate pop.BtcSig = schnorr_sign(sk_BTC, hash(bbnAddress))
 	// NOTE: *schnorr.Sign has to take the hash of the message.
 	// So we have to hash the address before signing
-	hash := tmhash.Sum(addr.Bytes())
+	msgToSign := []byte(signingContext)
+	msgToSign = append(msgToSign, addr.Bytes()...)
+	hash := tmhash.Sum(msgToSign)
 	btcSig, err := schnorr.Sign(btcSK, hash)
 	if err != nil {
 		return nil, err
@@ -148,7 +154,11 @@ func NewPoPBTC(addr sdk.AccAddress, btcSK *btcec.PrivateKey) (*bstypes.ProofOfPo
 // NewPoPWithECDSABTCSig generates a new proof of possession where Bitcoin signature is in ECDSA format
 // a proof of possession contains two signatures:
 // - pop.BtcSig = ecdsa_sign(sk_BTC, addr)
-func NewPoPBTCWithECDSABTCSig(addr sdk.AccAddress, btcSK *btcec.PrivateKey) (*bstypes.ProofOfPossessionBTC, error) {
+func NewPoPBTCWithECDSABTCSig(
+	signingContext string,
+	addr sdk.AccAddress,
+	btcSK *btcec.PrivateKey,
+) (*bstypes.ProofOfPossessionBTC, error) {
 	pop := bstypes.ProofOfPossessionBTC{
 		BtcSigType: bstypes.BTCSigType_ECDSA,
 	}
@@ -157,13 +167,14 @@ func NewPoPBTCWithECDSABTCSig(addr sdk.AccAddress, btcSK *btcec.PrivateKey) (*bs
 	// NOTE: ecdsa.Sign has to take the message as string.
 	// So we have to convert the address to bech32 string before signing
 	addrBech32 := addr.String()
-	btcSig := ecdsa.Sign(btcSK, addrBech32)
+	btcSig := ecdsa.Sign(btcSK, signingContext+addrBech32)
 	pop.BtcSig = btcSig
 
 	return &pop, nil
 }
 
 func newPoPBTCWithBIP322Sig[A btcutil.Address](
+	signingContext string,
 	addressToSign sdk.AccAddress,
 	btcSK *btcec.PrivateKey,
 	net *chaincfg.Params,
@@ -173,7 +184,7 @@ func newPoPBTCWithBIP322Sig[A btcutil.Address](
 		BtcSigType: bstypes.BTCSigType_BIP322,
 	}
 
-	bzToSign := bstypes.MsgToSignBIP322(addressToSign)
+	bzToSign := bstypes.MsgToSignBIP322(signingContext, addressToSign)
 	bip322SigEncoded, err := newBIP322Sig(bzToSign, btcSK, net, bip322SignFn)
 	if err != nil {
 		return nil, err
@@ -209,17 +220,19 @@ func newBIP322Sig[A btcutil.Address](
 // NewPoPBTCWithBIP322P2WPKHSig creates a proof of possession of type BIP322
 // that signs the address with the BTC secret key.
 func NewPoPBTCWithBIP322P2WPKHSig(
+	signingContext string,
 	addr sdk.AccAddress,
 	btcSK *btcec.PrivateKey,
 	net *chaincfg.Params,
 ) (*bstypes.ProofOfPossessionBTC, error) {
-	return newPoPBTCWithBIP322Sig(addr, btcSK, net, SignWithP2WPKHAddress)
+	return newPoPBTCWithBIP322Sig(signingContext, addr, btcSK, net, SignWithP2WPKHAddress)
 }
 
 func NewPoPBTCWithBIP322P2TRBIP86Sig(
+	signingContext string,
 	addrToSign sdk.AccAddress,
 	btcSK *btcec.PrivateKey,
 	net *chaincfg.Params,
 ) (*bstypes.ProofOfPossessionBTC, error) {
-	return newPoPBTCWithBIP322Sig(addrToSign, btcSK, net, SignWithP2TrSpendAddress)
+	return newPoPBTCWithBIP322Sig(signingContext, addrToSign, btcSK, net, SignWithP2TrSpendAddress)
 }

@@ -18,6 +18,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"golang.org/x/sync/errgroup"
 
+<<<<<<< HEAD
 	"github.com/babylonlabs-io/babylon/v2/crypto/eots"
 	"github.com/babylonlabs-io/babylon/v2/test/e2e/configurer"
 	"github.com/babylonlabs-io/babylon/v2/test/e2e/configurer/chain"
@@ -27,6 +28,19 @@ import (
 	bstypes "github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
 	ftypes "github.com/babylonlabs-io/babylon/v2/x/finality/types"
 	itypes "github.com/babylonlabs-io/babylon/v2/x/incentive/types"
+=======
+	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
+	"github.com/babylonlabs-io/babylon/v3/app/signingcontext"
+	"github.com/babylonlabs-io/babylon/v3/crypto/eots"
+	"github.com/babylonlabs-io/babylon/v3/test/e2e/configurer"
+	"github.com/babylonlabs-io/babylon/v3/test/e2e/configurer/chain"
+	"github.com/babylonlabs-io/babylon/v3/testutil/coins"
+	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
+	bbn "github.com/babylonlabs-io/babylon/v3/types"
+	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
+	ftypes "github.com/babylonlabs-io/babylon/v3/x/finality/types"
+	itypes "github.com/babylonlabs-io/babylon/v3/x/incentive/types"
+>>>>>>> 2b02d75 (Implement context separator signing (#1252))
 )
 
 const (
@@ -223,11 +237,13 @@ func (s *BtcRewardsDistribution) Test4CommitPublicRandomnessAndSealed() {
 	// commit public randomness list
 	commitStartHeight := uint64(5)
 
-	fp1RandListInfo, fp1CommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(s.r, s.fp1BTCSK, commitStartHeight, numPubRand)
+	randCommitContext := signingcontext.FpRandCommitContextV0(n1.ChainID(), appparams.AccFinality.String())
+
+	fp1RandListInfo, fp1CommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(s.r, s.fp1BTCSK, randCommitContext, commitStartHeight, numPubRand)
 	s.NoError(err)
 	s.fp1RandListInfo = fp1RandListInfo
 
-	fp2RandListInfo, fp2CommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(s.r, s.fp2BTCSK, commitStartHeight, numPubRand)
+	fp2RandListInfo, fp2CommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(s.r, s.fp2BTCSK, randCommitContext, commitStartHeight, numPubRand)
 	s.NoError(err)
 	s.fp2RandListInfo = fp2RandListInfo
 
@@ -506,7 +522,12 @@ func (s *BtcRewardsDistribution) Test8SlashFp() {
 	appHash := blockToVote.AppHash
 
 	// generate bad EOTS signature with a diff block height to vote
-	msgToSign := append(sdk.Uint64ToBigEndian(s.finalityBlockHeightVoted), appHash...)
+	fpFinVoteContext := signingcontext.FpFinVoteContextV0(n2.ChainID(), appparams.AccFinality.String())
+
+	msgToSign := []byte(fpFinVoteContext)
+	msgToSign = append(msgToSign, sdk.Uint64ToBigEndian(s.finalityBlockHeightVoted)...)
+	msgToSign = append(msgToSign, appHash...)
+
 	fp1Sig, err := eots.Sign(s.fp2BTCSK, s.fp2RandListInfo.SRList[s.finalityIdx], msgToSign)
 	s.NoError(err)
 

@@ -27,8 +27,8 @@ var (
 
 const ExpectedCommitmentLengthBytes = 32
 
-func (m *MsgAddFinalitySig) MsgToSign() []byte {
-	return msgToSignForVote(m.BlockHeight, m.BlockAppHash)
+func (m *MsgAddFinalitySig) MsgToSign(signingContext string) []byte {
+	return msgToSignForVote(signingContext, m.BlockHeight, m.BlockAppHash)
 }
 
 func (m *MsgAddFinalitySig) ValidateBasic() error {
@@ -59,7 +59,11 @@ func (m *MsgAddFinalitySig) ValidateBasic() error {
 // public randomness commitment. The verification includes
 // - verifying the proof of inclusion of the given public randomness
 // - verifying the finality signature w.r.t. the given block height/hash
-func VerifyFinalitySig(m *MsgAddFinalitySig, prCommit *PubRandCommit) error {
+func VerifyFinalitySig(
+	m *MsgAddFinalitySig,
+	prCommit *PubRandCommit,
+	signingContext string,
+) error {
 	// verify the index of the public randomness
 	heightOfProof := prCommit.StartHeight + uint64(m.Proof.Index)
 	if m.BlockHeight != heightOfProof {
@@ -79,7 +83,7 @@ func VerifyFinalitySig(m *MsgAddFinalitySig, prCommit *PubRandCommit) error {
 	}
 
 	// public randomness is good, verify finality signature
-	msgToSign := m.MsgToSign()
+	msgToSign := m.MsgToSign(signingContext)
 	pk, err := m.FpBtcPk.ToBTCPK()
 	if err != nil {
 		return err
@@ -87,10 +91,13 @@ func VerifyFinalitySig(m *MsgAddFinalitySig, prCommit *PubRandCommit) error {
 	return eots.Verify(pk, m.PubRand.ToFieldValNormalized(), msgToSign, m.FinalitySig.ToModNScalar())
 }
 
-// HashToSign returns a 32-byte hash of (start_height || num_pub_rand || commitment)
+// HashToSign returns a 32-byte hash of signing_context || (start_height || num_pub_rand || commitment)
 // The signature in MsgCommitPubRandList will be on this hash
-func (m *MsgCommitPubRandList) HashToSign() ([]byte, error) {
+func (m *MsgCommitPubRandList) HashToSign(signingContext string) ([]byte, error) {
 	hasher := tmhash.New()
+	if _, err := hasher.Write([]byte(signingContext)); err != nil {
+		return nil, err
+	}
 	if _, err := hasher.Write(sdk.Uint64ToBigEndian(m.StartHeight)); err != nil {
 		return nil, err
 	}
@@ -103,8 +110,8 @@ func (m *MsgCommitPubRandList) HashToSign() ([]byte, error) {
 	return hasher.Sum(nil), nil
 }
 
-func (m *MsgCommitPubRandList) VerifySig() error {
-	msgHash, err := m.HashToSign()
+func (m *MsgCommitPubRandList) VerifySig(signingContext string) error {
+	msgHash, err := m.HashToSign(signingContext)
 	if err != nil {
 		return err
 	}

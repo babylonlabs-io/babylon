@@ -7,6 +7,12 @@ import (
 	"encoding/json"
 	"fmt"
 
+<<<<<<< HEAD
+=======
+	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
+	"github.com/babylonlabs-io/babylon/v3/app/signingcontext"
+
+>>>>>>> 2b02d75 (Implement context separator signing (#1252))
 	"math/rand"
 	"path/filepath"
 	"testing"
@@ -987,3 +993,58 @@ func (d *BabylonAppDriver) GovPropWaitPass(msgInGovProp sdk.Msg) {
 		d.GenerateNewBlockAssertExecutionSuccess()
 	}
 }
+<<<<<<< HEAD
+=======
+
+// Consumer represents a registered consumer chain
+type Consumer struct {
+	ID string
+}
+
+// RegisterConsumer registers a new consumer
+func (d *BabylonAppDriver) RegisterConsumer(consumerID string, rollupContractAddr ...string) *Consumer {
+	msg := &btcstkconsumertypes.MsgRegisterConsumer{
+		Signer:              d.GetDriverAccountAddress().String(),
+		ConsumerId:          consumerID,
+		ConsumerName:        "Test Consumer " + consumerID,
+		ConsumerDescription: "Test consumer for replay tests",
+	}
+
+	// If rollup contract address is provided, set it
+	if len(rollupContractAddr) > 0 {
+		msg.RollupFinalityContractAddress = rollupContractAddr[0]
+	}
+
+	d.SendTxWithMsgsFromDriverAccount(d.t, msg)
+
+	return &Consumer{
+		ID: consumerID,
+	}
+}
+
+// CreateFinalityProviderForConsumer creates a finality provider for the given consumer
+func (d *BabylonAppDriver) CreateFinalityProviderForConsumer(consumer *Consumer) *FinalityProvider {
+	fp := d.CreateNFinalityProviderAccounts(1)[0]
+
+	// Register the finality provider with the consumer ID
+	fp.RegisterFinalityProvider(consumer.ID)
+
+	return fp
+}
+
+func (d *BabylonAppDriver) FpPopContext() string {
+	return signingcontext.FpPopContextV0(d.App.ChainID(), d.App.BTCStakingKeeper.ModuleAddress())
+}
+
+func (d *BabylonAppDriver) StakerPopContext() string {
+	return signingcontext.StakerPopContextV0(d.App.ChainID(), d.App.BTCStakingKeeper.ModuleAddress())
+}
+
+func (d *BabylonAppDriver) FpRandCommitContext() string {
+	return signingcontext.FpRandCommitContextV0(d.App.ChainID(), d.App.FinalityKeeper.ModuleAddress())
+}
+
+func (d *BabylonAppDriver) FpFinVoteContext() string {
+	return signingcontext.FpFinVoteContextV0(d.App.ChainID(), d.App.FinalityKeeper.ModuleAddress())
+}
+>>>>>>> 2b02d75 (Implement context separator signing (#1252))

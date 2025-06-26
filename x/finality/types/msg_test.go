@@ -6,11 +6,23 @@ import (
 	"time"
 
 	errorsmod "cosmossdk.io/errors"
+<<<<<<< HEAD
 	"github.com/babylonlabs-io/babylon/v2/crypto/eots"
 	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
 	"github.com/babylonlabs-io/babylon/v2/x/finality/types"
+=======
+	"github.com/babylonlabs-io/babylon/v3/app/signingcontext"
+	"github.com/babylonlabs-io/babylon/v3/crypto/eots"
+	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
+	bbntypes "github.com/babylonlabs-io/babylon/v3/types"
+	"github.com/babylonlabs-io/babylon/v3/x/finality/types"
+>>>>>>> 2b02d75 (Implement context separator signing (#1252))
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
+)
+
+const (
+	testChainID = "test-1"
 )
 
 func FuzzMsgAddFinalitySig(f *testing.F) {
@@ -31,7 +43,12 @@ func FuzzMsgAddFinalitySig(f *testing.F) {
 		blockHash := datagen.GenRandomByteArray(r, 32)
 
 		signer := datagen.GenRandomAccount().Address
-		msg, err := datagen.NewMsgAddFinalitySig(signer, sk, startHeight, blockHeight, randListInfo, blockHash)
+
+		randomModuleAddress := datagen.GenRandomAddress().String()
+
+		voteContext := signingcontext.FpFinVoteContextV0(testChainID, randomModuleAddress)
+
+		msg, err := datagen.NewMsgAddFinalitySig(signer, sk, voteContext, startHeight, blockHeight, randListInfo, blockHash)
 		require.NoError(t, err)
 
 		prCommit := &types.PubRandCommit{
@@ -41,7 +58,7 @@ func FuzzMsgAddFinalitySig(f *testing.F) {
 		}
 
 		// verify the finality signature message
-		err = types.VerifyFinalitySig(msg, prCommit)
+		err = types.VerifyFinalitySig(msg, prCommit, voteContext)
 		require.NoError(t, err)
 	})
 }
@@ -57,11 +74,15 @@ func FuzzMsgCommitPubRandList(f *testing.F) {
 
 		startHeight := datagen.RandomInt(r, 10)
 		numPubRand := datagen.RandomInt(r, 100) + 1
-		_, msg, err := datagen.GenRandomMsgCommitPubRandList(r, sk, startHeight, numPubRand)
+
+		randomModuleAddress := datagen.GenRandomAddress().String()
+		commitContext := signingcontext.FpRandCommitContextV0(testChainID, randomModuleAddress)
+
+		_, msg, err := datagen.GenRandomMsgCommitPubRandList(r, sk, commitContext, startHeight, numPubRand)
 		require.NoError(t, err)
 
 		// sanity checks, including verifying signature
-		err = msg.VerifySig()
+		err = msg.VerifySig(commitContext)
 		require.NoError(t, err)
 	})
 }
@@ -70,6 +91,9 @@ func TestMsgCommitPubRandListValidateBasic(t *testing.T) {
 	r := rand.New(rand.NewSource(1))
 	sk, _, err := datagen.GenRandomBTCKeyPair(r)
 	require.NoError(t, err)
+
+	randomModuleAddress := datagen.GenRandomAddress().String()
+	commitContext := signingcontext.FpRandCommitContextV0(testChainID, randomModuleAddress)
 
 	tests := []struct {
 		name        string
@@ -112,7 +136,7 @@ func TestMsgCommitPubRandListValidateBasic(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			startHeight := datagen.RandomInt(r, 10)
 			numPubRand := datagen.RandomInt(r, 100) + 1
-			_, msg, err := datagen.GenRandomMsgCommitPubRandList(r, sk, startHeight, numPubRand)
+			_, msg, err := datagen.GenRandomMsgCommitPubRandList(r, sk, commitContext, startHeight, numPubRand)
 			require.NoError(t, err)
 
 			tc.msgModifier(msg)
@@ -129,6 +153,302 @@ func TestMsgCommitPubRandListValidateBasic(t *testing.T) {
 	}
 }
 
+<<<<<<< HEAD
+=======
+func TestMsgAddFinalitySig_ValidateBasic(t *testing.T) {
+	r := rand.New(rand.NewSource(10))
+
+	sk, err := eots.KeyGen(r)
+	require.NoError(t, err)
+
+	numPubRand := uint64(100)
+	randListInfo, err := datagen.GenRandomPubRandList(r, numPubRand)
+	require.NoError(t, err)
+
+	startHeight := datagen.RandomInt(r, 10)
+	blockHeight := startHeight + datagen.RandomInt(r, 10)
+	blockHash := datagen.GenRandomByteArray(r, 32)
+
+	signer := datagen.GenRandomAccount().Address
+
+	randomModuleAddress := datagen.GenRandomAddress().String()
+	voteContext := signingcontext.FpFinVoteContextV0(testChainID, randomModuleAddress)
+
+	testCases := []struct {
+		name        string
+		msgModifier func(*types.MsgAddFinalitySig)
+		expErr      string
+	}{
+		{
+			name:        "valid message",
+			msgModifier: func(*types.MsgAddFinalitySig) {},
+		},
+		{
+			name: "invalid signer address",
+			msgModifier: func(m *types.MsgAddFinalitySig) {
+				m.Signer = "invalid-address"
+			},
+			expErr: "invalid signer address",
+		},
+		{
+			name: "nil BTC public key",
+			msgModifier: func(m *types.MsgAddFinalitySig) {
+				m.FpBtcPk = nil
+			},
+			expErr: "empty Finality Provider BTC PubKey",
+		},
+		{
+			name: "invalid BTC public key size",
+			msgModifier: func(m *types.MsgAddFinalitySig) {
+				k := bbntypes.BIP340PubKey([]byte{0x01})
+				m.FpBtcPk = &k
+			},
+			expErr: "invalid finality provider BTC public key length",
+		},
+		{
+			name: "nil PubRand",
+			msgModifier: func(m *types.MsgAddFinalitySig) {
+				m.PubRand = nil
+			},
+			expErr: "empty Public Randomness",
+		},
+		{
+			name: "invalid PubRand length",
+			msgModifier: func(m *types.MsgAddFinalitySig) {
+				pr := bbntypes.SchnorrPubRand([]byte{0x02})
+				m.PubRand = &pr
+			},
+			expErr: "invalind public randomness length",
+		},
+		{
+			name: "nil proof",
+			msgModifier: func(m *types.MsgAddFinalitySig) {
+				m.Proof = nil
+			},
+			expErr: "empty inclusion proof",
+		},
+		{
+			name: "nil finality sig",
+			msgModifier: func(m *types.MsgAddFinalitySig) {
+				m.FinalitySig = nil
+			},
+			expErr: "empty finality signature",
+		},
+		{
+			name: "invalid finality sig length",
+			msgModifier: func(m *types.MsgAddFinalitySig) {
+				sig := bbntypes.SchnorrEOTSSig([]byte{0x03})
+				m.FinalitySig = &sig
+			},
+			expErr: "invalid finality signature length",
+		},
+		{
+			name: "invalid block app hash length",
+			msgModifier: func(m *types.MsgAddFinalitySig) {
+				m.BlockAppHash = []byte{0x01}
+			},
+			expErr: "invalid block app hash length",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			msg, err := datagen.NewMsgAddFinalitySig(signer, sk, voteContext, startHeight, blockHeight, randListInfo, blockHash)
+			require.NoError(t, err)
+			tc.msgModifier(msg)
+			err = msg.ValidateBasic()
+			if tc.expErr == "" {
+				require.NoError(t, err)
+				return
+			}
+			require.Error(t, err)
+			require.Contains(t, err.Error(), tc.expErr)
+		})
+	}
+}
+
+func TestMsgUnjailFinalityProvider_ValidateBasic(t *testing.T) {
+	validAddr := datagen.GenRandomAddress().String()
+	validPk := bbntypes.BIP340PubKey(make([]byte, bbntypes.BIP340PubKeyLen))
+
+	testCases := []struct {
+		name   string
+		msg    types.MsgUnjailFinalityProvider
+		expErr string
+	}{
+		{
+			name: "valid message",
+			msg: types.MsgUnjailFinalityProvider{
+				Signer:  validAddr,
+				FpBtcPk: &validPk,
+			},
+			expErr: "",
+		},
+		{
+			name: "invalid signer address",
+			msg: types.MsgUnjailFinalityProvider{
+				Signer:  "invalid-address",
+				FpBtcPk: &validPk,
+			},
+			expErr: "invalid signer address",
+		},
+		{
+			name: "nil BTC public key",
+			msg: types.MsgUnjailFinalityProvider{
+				Signer:  validAddr,
+				FpBtcPk: nil,
+			},
+			expErr: "empty FP BTC PubKey",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := tc.msg.ValidateBasic()
+			if tc.expErr == "" {
+				require.NoError(t, err)
+				return
+			}
+			require.Error(t, err)
+			require.Contains(t, err.Error(), tc.expErr)
+		})
+	}
+}
+
+func TestMsgEquivocationEvidence_ValidateBasic(t *testing.T) {
+	var (
+		validAddr        = datagen.GenRandomAddress().String()
+		validPk          = bbntypes.BIP340PubKey(make([]byte, bbntypes.BIP340PubKeyLen))
+		validPubRand     = bbntypes.SchnorrPubRand(make([]byte, bbntypes.SchnorrPubRandLen))
+		validFinalitySig = bbntypes.SchnorrEOTSSig(make([]byte, bbntypes.SchnorrEOTSSigLen))
+		validHash        = make([]byte, 32)
+	)
+
+	testCases := []struct {
+		name   string
+		msg    types.MsgEquivocationEvidence
+		expErr string
+	}{
+		{
+			name: "valid message",
+			msg: types.MsgEquivocationEvidence{
+				Signer:               validAddr,
+				FpBtcPk:              &validPk,
+				PubRand:              &validPubRand,
+				CanonicalAppHash:     validHash,
+				ForkAppHash:          validHash,
+				CanonicalFinalitySig: &validFinalitySig,
+				ForkFinalitySig:      &validFinalitySig,
+			},
+			expErr: "",
+		},
+		{
+			name: "invalid signer",
+			msg: types.MsgEquivocationEvidence{
+				Signer:               "invalid-address",
+				FpBtcPk:              &validPk,
+				PubRand:              &validPubRand,
+				CanonicalAppHash:     validHash,
+				ForkAppHash:          validHash,
+				CanonicalFinalitySig: &validFinalitySig,
+				ForkFinalitySig:      &validFinalitySig,
+			},
+			expErr: "invalid signer address",
+		},
+		{
+			name: "nil FpBtcPk",
+			msg: types.MsgEquivocationEvidence{
+				Signer:               validAddr,
+				FpBtcPk:              nil,
+				PubRand:              &validPubRand,
+				CanonicalAppHash:     validHash,
+				ForkAppHash:          validHash,
+				CanonicalFinalitySig: &validFinalitySig,
+				ForkFinalitySig:      &validFinalitySig,
+			},
+			expErr: "empty FpBtcPk",
+		},
+		{
+			name: "nil PubRand",
+			msg: types.MsgEquivocationEvidence{
+				Signer:               validAddr,
+				FpBtcPk:              &validPk,
+				PubRand:              nil,
+				CanonicalAppHash:     validHash,
+				ForkAppHash:          validHash,
+				CanonicalFinalitySig: &validFinalitySig,
+				ForkFinalitySig:      &validFinalitySig,
+			},
+			expErr: "empty PubRand",
+		},
+		{
+			name: "invalid CanonicalAppHash length",
+			msg: types.MsgEquivocationEvidence{
+				Signer:               validAddr,
+				FpBtcPk:              &validPk,
+				PubRand:              &validPubRand,
+				CanonicalAppHash:     []byte("short"),
+				ForkAppHash:          validHash,
+				CanonicalFinalitySig: &validFinalitySig,
+				ForkFinalitySig:      &validFinalitySig,
+			},
+			expErr: "malformed CanonicalAppHash",
+		},
+		{
+			name: "invalid ForkAppHash length",
+			msg: types.MsgEquivocationEvidence{
+				Signer:               validAddr,
+				FpBtcPk:              &validPk,
+				PubRand:              &validPubRand,
+				CanonicalAppHash:     validHash,
+				ForkAppHash:          []byte("short"),
+				CanonicalFinalitySig: &validFinalitySig,
+				ForkFinalitySig:      &validFinalitySig,
+			},
+			expErr: "malformed ForkAppHash",
+		},
+		{
+			name: "nil ForkFinalitySig",
+			msg: types.MsgEquivocationEvidence{
+				Signer:               validAddr,
+				FpBtcPk:              &validPk,
+				PubRand:              &validPubRand,
+				CanonicalAppHash:     validHash,
+				ForkAppHash:          validHash,
+				CanonicalFinalitySig: &validFinalitySig,
+				ForkFinalitySig:      nil,
+			},
+			expErr: "empty ForkFinalitySig",
+		},
+		{
+			name: "nil CanonicalFinalitySig",
+			msg: types.MsgEquivocationEvidence{
+				Signer:               validAddr,
+				FpBtcPk:              &validPk,
+				PubRand:              &validPubRand,
+				CanonicalAppHash:     validHash,
+				ForkAppHash:          validHash,
+				CanonicalFinalitySig: nil,
+				ForkFinalitySig:      &validFinalitySig,
+			},
+			expErr: "empty CanonicalFinalitySig",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := tc.msg.ValidateBasic()
+			if tc.expErr == "" {
+				require.NoError(t, err)
+				return
+			}
+			require.Error(t, err)
+			require.Contains(t, err.Error(), tc.expErr)
+		})
+	}
+}
+
+>>>>>>> 2b02d75 (Implement context separator signing (#1252))
 func TestMsgResumeFinalityProposal_ValidateBasic(t *testing.T) {
 	t.Parallel()
 	r := rand.New(rand.NewSource(time.Now().Unix()))

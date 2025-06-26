@@ -215,3 +215,7 @@ func (n *NodeConfig) Status() (*coretypes.ResultStatus, error) {
 
 	return &r, nil
 }
+
+func (n *NodeConfig) ChainID() string {
+	return n.chainId
+}
