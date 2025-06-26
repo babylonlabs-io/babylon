@@ -35,21 +35,6 @@ func (c *QueryClient) FinalizedConnectedChainsInfo(consumerIds []string) (*zctyp
 	return resp, err
 }
 
-// ConnectedChainsInfo queries the zoneconcierge module to get information for a connected chain
-func (c *QueryClient) ConnectedChainsInfo(consumerIds []string) (*zctypes.QueryChainsInfoResponse, error) {
-	var resp *zctypes.QueryChainsInfoResponse
-	err := c.QueryZoneConcierge(func(ctx context.Context, queryClient zctypes.QueryClient) error {
-		var err error
-		req := &zctypes.QueryChainsInfoRequest{
-			ConsumerIds: consumerIds,
-		}
-		resp, err = queryClient.ChainsInfo(ctx, req)
-		return err
-	})
-
-	return resp, err
-}
-
 // ConnectedChainList queries the zoneconierge module for the chain IDs of the connected chains
 func (c *QueryClient) ConnectedChainList() (*zctypes.QueryChainListResponse, error) {
 	var resp *zctypes.QueryChainListResponse

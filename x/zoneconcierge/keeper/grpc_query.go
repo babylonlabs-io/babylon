@@ -13,8 +13,6 @@ import (
 
 var _ types.QueryServer = Keeper{}
 
-const maxQueryChainsInfoLimit = 100
-
 func (k Keeper) Params(c context.Context, req *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
@@ -46,43 +44,6 @@ func (k Keeper) ChainList(c context.Context, req *types.QueryChainListRequest) (
 		ConsumerIds: ConsumerIds,
 		Pagination:  pageRes,
 	}
-	return resp, nil
-}
-
-// ChainsInfo returns the latest info for a given list of chains
-func (k Keeper) ChainsInfo(c context.Context, req *types.QueryChainsInfoRequest) (*types.QueryChainsInfoResponse, error) {
-	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid request")
-	}
-
-	// return if no chain IDs are provided
-	if len(req.ConsumerIds) == 0 {
-		return nil, status.Error(codes.InvalidArgument, "consumer IDs cannot be empty")
-	}
-
-	// return if chain IDs exceed the limit
-	if len(req.ConsumerIds) > maxQueryChainsInfoLimit {
-		return nil, status.Errorf(codes.InvalidArgument, "cannot query more than %d chains", maxQueryChainsInfoLimit)
-	}
-
-	// return if chain IDs contain duplicates or empty strings
-	if err := bbntypes.CheckForDuplicatesAndEmptyStrings(req.ConsumerIds); err != nil {
-		return nil, status.Error(codes.InvalidArgument, types.ErrInvalidConsumerIDs.Wrap(err.Error()).Error())
-	}
-
-	ctx := sdk.UnwrapSDKContext(c)
-	var chainsInfo []*types.ChainInfo
-	// TODO: paginate this for loop
-	for _, ConsumerId := range req.ConsumerIds {
-		chainInfo, err := k.GetChainInfo(ctx, ConsumerId)
-		if err != nil {
-			return nil, err
-		}
-
-		chainsInfo = append(chainsInfo, chainInfo)
-	}
-
-	resp := &types.QueryChainsInfoResponse{ChainsInfo: chainsInfo}
 	return resp, nil
 }
 
@@ -120,11 +81,6 @@ func (k Keeper) EpochChainsInfo(c context.Context, req *types.QueryEpochChainsIn
 	// return if no chain IDs are provided
 	if len(req.ConsumerIds) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "consumer IDs cannot be empty")
-	}
-
-	// return if chain IDs exceed the limit
-	if len(req.ConsumerIds) > maxQueryChainsInfoLimit {
-		return nil, status.Errorf(codes.InvalidArgument, "cannot query more than %d chains", maxQueryChainsInfoLimit)
 	}
 
 	// return if chain IDs contain duplicates or empty strings
@@ -224,11 +180,6 @@ func (k Keeper) FinalizedChainsInfo(c context.Context, req *types.QueryFinalized
 	// return if no chain IDs are provided
 	if len(req.ConsumerIds) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "chain ID cannot be empty")
-	}
-
-	// return if chain IDs exceed the limit
-	if len(req.ConsumerIds) > maxQueryChainsInfoLimit {
-		return nil, status.Errorf(codes.InvalidArgument, "cannot query more than %d chains", maxQueryChainsInfoLimit)
 	}
 
 	// return if chain IDs contain duplicates or empty strings
