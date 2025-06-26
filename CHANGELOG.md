@@ -107,6 +107,8 @@ when the babylon block is being BTC rewarded.
 - [#964](https://github.com/babylonlabs-io/babylon/pull/964) fix: stateless validation `ValidateBasic` of
 `MsgWrappedCreateValidator` to avoid panic in transaction submission
 - [#1247](https://github.com/babylonlabs-io/babylon/pull/1247) fix: zoneconcierge ibc router
+- [#1252](https://github.com/babylonlabs-io/babylon/pull/1252) Implement context separation
+between different signing operations
 
 ## v2.1.0
 

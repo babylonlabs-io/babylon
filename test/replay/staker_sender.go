@@ -104,7 +104,7 @@ func (s *Staker) CreateDelegationMessage(
 	delSlashingTxSig, err := unbondingSlashingInfo.GenDelSlashingTxSig(s.BTCPrivateKey)
 	require.NoError(s.t, err)
 
-	pop, err := datagen.NewPoPBTC(s.Address(), s.BTCPrivateKey)
+	pop, err := datagen.NewPoPBTC(s.d.StakerPopContext(), s.Address(), s.BTCPrivateKey)
 	require.NoError(s.t, err)
 
 	// Convert []*BIP340PubKey to []BIP340PubKey
