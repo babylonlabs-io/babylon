@@ -89,6 +89,7 @@ check of rewards
 - [#1060](https://github.com/babylonlabs-io/babylon/pull/1060) Optimize `PubRandCommit` lookup in `x/finality` module
 - [#1223](https://github.com/babylonlabs-io/babylon/pull/1223) Bump Cosmos SDK to `v0.53.0`
 - [#1229](https://github.com/babylonlabs-io/babylon/pull/1229) Wire up EVM.
+- [#xxx](https://github.com/babylonlabs-io/babylon/pull/xxx) Allow `ubbn` only as fee denom.
 
 ### State Machine Breaking
 
