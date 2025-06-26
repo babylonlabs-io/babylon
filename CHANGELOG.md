@@ -92,7 +92,10 @@ check of rewards
 
 - [#402](https://github.com/babylonlabs-io/babylon/pull/402) **Babylon multi-staking support**.
 This PR contains a series of PRs on multi-staking support and BTC staking integration.
-- [#944](https://github.com/babylonlabs-io/babylon/pull/944) Add max_multi_staked_fps validation and single FP per consumer constraint in BTC delegations.
+- [#847](https://github.com/babylonlabs-io/babylon/pull/847) Add ibc callbacks to
+transfer stack
+- [#877](https://github.com/babylonlabs-io/babylon/pull/877) fix: BTC reward tracker are stored as events and updated only
+when the babylon block is being BTC rewarded.
 
 ### Bug fixes
 

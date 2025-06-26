@@ -214,9 +214,9 @@ func (m *MockICS4Wrapper) SendPacket(ctx types6.Context, sourcePort, sourceChann
 }
 
 // SendPacket indicates an expected call of SendPacket.
-func (mr *MockICS4WrapperMockRecorder) SendPacket(ctx, channelCap, sourcePort, sourceChannel, timeoutHeight, timeoutTimestamp, data interface{}) *gomock.Call {
+func (mr *MockICS4WrapperMockRecorder) SendPacket(ctx, sourcePort, sourceChannel, timeoutHeight, timeoutTimestamp, data interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendPacket", reflect.TypeOf((*MockICS4Wrapper)(nil).SendPacket), ctx, channelCap, sourcePort, sourceChannel, timeoutHeight, timeoutTimestamp, data)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendPacket", reflect.TypeOf((*MockICS4Wrapper)(nil).SendPacket), ctx, sourcePort, sourceChannel, timeoutHeight, timeoutTimestamp, data)
 }
 
 // MockChannelKeeper is a mock of ChannelKeeper interface.

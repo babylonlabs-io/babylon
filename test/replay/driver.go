@@ -988,18 +988,16 @@ func (d *BabylonAppDriver) GovPropWaitPass(msgInGovProp sdk.Msg) {
 
 // Consumer represents a registered consumer chain
 type Consumer struct {
-	ID                string
-	MaxMultiStakedFps uint32
+	ID string
 }
 
-// RegisterConsumer registers a new consumer with the given max_multi_staked_fps limit
-func (d *BabylonAppDriver) RegisterConsumer(consumerID string, maxMultiStakedFps uint32, rollupContractAddr ...string) *Consumer {
+// RegisterConsumer registers a new consumer
+func (d *BabylonAppDriver) RegisterConsumer(consumerID string, rollupContractAddr ...string) *Consumer {
 	msg := &btcstkconsumertypes.MsgRegisterConsumer{
 		Signer:              d.GetDriverAccountAddress().String(),
 		ConsumerId:          consumerID,
 		ConsumerName:        "Test Consumer " + consumerID,
 		ConsumerDescription: "Test consumer for replay tests",
-		MaxMultiStakedFps:   maxMultiStakedFps,
 	}
 
 	// If rollup contract address is provided, set it
@@ -1010,8 +1008,7 @@ func (d *BabylonAppDriver) RegisterConsumer(consumerID string, maxMultiStakedFps
 	d.SendTxWithMsgsFromDriverAccount(d.t, msg)
 
 	return &Consumer{
-		ID:                consumerID,
-		MaxMultiStakedFps: maxMultiStakedFps,
+		ID: consumerID,
 	}
 }
 
