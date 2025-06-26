@@ -17,6 +17,7 @@ import (
 	"github.com/babylonlabs-io/babylon/v3/btcstaking"
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
+	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 	btcstakingtypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 	"github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
 	ibctmtypes "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
@@ -677,4 +678,48 @@ func TestBadUnbondingFeeParams(t *testing.T) {
 	require.Len(t, txResults, 1)
 	require.Equal(t, uint32(12), txResults[0].Code)
 	require.Contains(t, txResults[0].Log, btcstaking.ErrInvalidUnbondingFee.Error())
+}
+
+func TestPostRegistrationDelegation(t *testing.T) {
+	t.Parallel()
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	driverTempDir := t.TempDir()
+	replayerTempDir := t.TempDir()
+	driver := NewBabylonAppDriver(r, t, driverTempDir, replayerTempDir)
+	driver.GenerateNewBlock()
+
+	covSender := driver.CreateCovenantSender()
+	infos := driver.CreateNFinalityProviderAccounts(1)
+	fp1 := infos[0]
+
+	sinfos := driver.CreateNStakerAccounts(1)
+	s1 := sinfos[0]
+	require.NotNil(t, s1)
+
+	fp1.RegisterFinalityProvider("")
+	driver.GenerateNewBlockAssertExecutionSuccess()
+	fp1.CommitRandomness()
+	driver.GenerateNewBlockAssertExecutionSuccess()
+
+	// Randomness timestamped
+	currnetEpochNunber := driver.GetEpoch().EpochNumber
+	driver.ProgressTillFirstBlockTheNextEpoch()
+	driver.FinializeCkptForEpoch(currnetEpochNunber)
+
+	// Send post-registration delegation i.e first on BTC, then to Babylon
+	msg := s1.CreateDelegationMessage(
+		[]*bbn.BIP340PubKey{fp1.BTCPublicKey()},
+		1000,
+		100000000,
+	)
+	driver.ConfirmStakingTransactionOnBTC([]*bstypes.MsgCreateBTCDelegation{msg})
+	require.NotNil(t, msg.StakingTxInclusionProof)
+	s1.SendCreateDelegationMessage(msg)
+	driver.GenerateNewBlockAssertExecutionSuccess()
+	// Activate through covenant signatures
+	covSender.SendCovenantSignatures()
+	driver.GenerateNewBlockAssertExecutionSuccess()
+
+	activeDelegations := driver.GetActiveBTCDelegations(t)
+	require.Len(t, activeDelegations, 1)
 }
