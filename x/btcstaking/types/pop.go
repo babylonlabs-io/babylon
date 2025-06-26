@@ -54,7 +54,7 @@ func (pop *ProofOfPossessionBTC) Verify(
 	case BTCSigType_BIP322:
 		return pop.VerifyBIP322(signingContext, address, bip340PK, net)
 	case BTCSigType_ECDSA:
-		return pop.VerifyECDSA(signingContext+stakerBech32Addr, bip340PK)
+		return pop.VerifyECDSA(signingContext, stakerBech32Addr, bip340PK)
 	default:
 		return fmt.Errorf("invalid BTC signature type")
 	}
@@ -281,7 +281,7 @@ func MsgToSignBIP322(contextString string, addr sdk.AccAddress) []byte {
 
 // VerifyECDSA verifies the validity of PoP where Bitcoin signature is in ECDSA encoding
 // 1. verify(sig=sig_btc, pubkey=pk_btc, msg=msg)?
-func VerifyECDSA(sigType BTCSigType, btcSigRaw []byte, bip340PK *bbn.BIP340PubKey, msg string) error {
+func VerifyECDSA(sigType BTCSigType, btcSigRaw []byte, bip340PK *bbn.BIP340PubKey, signingContext string, msg string) error {
 	if sigType != BTCSigType_ECDSA {
 		return fmt.Errorf("the Bitcoin signature in this proof of possession is not using ECDSA encoding")
 	}
@@ -293,7 +293,7 @@ func VerifyECDSA(sigType BTCSigType, btcSigRaw []byte, bip340PK *bbn.BIP340PubKe
 	}
 
 	// we ignore ignore is compressed flag as we only care about comparing X coordinates
-	recoveredPK, _, err := ecdsa.RecoverPublicKey(msg, btcSigRaw)
+	recoveredPK, _, err := ecdsa.RecoverPublicKey(signingContext+msg, btcSigRaw)
 	if err != nil {
 		return fmt.Errorf("failed to recover btc public key when verifying ECDSA PoP: %w", err)
 	}
@@ -317,8 +317,8 @@ func VerifyECDSA(sigType BTCSigType, btcSigRaw []byte, bip340PK *bbn.BIP340PubKe
 
 // VerifyECDSA verifies the validity of PoP where Bitcoin signature is in ECDSA encoding
 // 1. verify(sig=sig_btc, pubkey=pk_btc, msg=addr)?
-func (pop *ProofOfPossessionBTC) VerifyECDSA(msg string, bip340PK *bbn.BIP340PubKey) error {
-	return VerifyECDSA(pop.BtcSigType, pop.BtcSig, bip340PK, msg)
+func (pop *ProofOfPossessionBTC) VerifyECDSA(signingContext string, msg string, bip340PK *bbn.BIP340PubKey) error {
+	return VerifyECDSA(pop.BtcSigType, pop.BtcSig, bip340PK, signingContext, msg)
 }
 
 // ValidateBasic checks if there is a BTC Signature.

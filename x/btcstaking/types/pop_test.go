@@ -110,7 +110,7 @@ func FuzzPoP_ECDSA(f *testing.F) {
 		// generate and verify PoP, correct case
 		pop, err := datagen.NewPoPBTCWithECDSABTCSig(signingContext, accAddr, btcSK)
 		require.NoError(t, err)
-		err = pop.VerifyECDSA(signingContext+accAddr.String(), bip340PK)
+		err = pop.VerifyECDSA(signingContext, accAddr.String(), bip340PK)
 		require.NoError(t, err)
 	})
 }
