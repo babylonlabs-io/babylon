@@ -31,52 +31,16 @@ const (
 	UnbondingTxFee = int64(1000)
 )
 
-<<<<<<< HEAD
-func GenRandomFinalityProvider(r *rand.Rand) (*bstypes.FinalityProvider, error) {
-	// key pairs
-=======
 func GenRandomFinalityProvider(
 	r *rand.Rand,
 	signingContext string,
 ) (*bstypes.FinalityProvider, error) {
 	// BTC key pairs
->>>>>>> 2b02d75 (Implement context separator signing (#1252))
 	btcSK, _, err := GenRandomBTCKeyPair(r)
 	if err != nil {
 		return nil, err
 	}
-<<<<<<< HEAD
-	return GenRandomFinalityProviderWithBTCSK(r, btcSK)
-}
-
-func GenCustomFinalityProvider(r *rand.Rand, btcSK *btcec.PrivateKey, fpAddr sdk.AccAddress) (*bstypes.FinalityProvider, error) {
-	// commission
-	commission := GenRandomCommission(r)
-	// description
-	description := GenRandomDescription(r)
-	// key pairs
-	btcPK := btcSK.PubKey()
-	bip340PK := bbn.NewBIP340PubKeyFromBTCPK(btcPK)
-	// pop
-	pop, err := NewPoPBTC(fpAddr, btcSK)
-	if err != nil {
-		return nil, err
-	}
-	return &bstypes.FinalityProvider{
-		Description: description,
-		Commission:  &commission,
-		BtcPk:       bip340PK,
-		Addr:        fpAddr.String(),
-		Pop:         pop,
-		CommissionInfo: bstypes.NewCommissionInfoWithTime(
-			sdkmath.LegacyOneDec(),
-			sdkmath.LegacyOneDec(),
-			time.Unix(0, 0).UTC(),
-		),
-	}, nil
-=======
-	return GenRandomFinalityProviderWithBTCSK(r, btcSK, signingContext, "")
->>>>>>> 2b02d75 (Implement context separator signing (#1252))
+	return GenRandomFinalityProviderWithBTCSK(r, btcSK, signingContext)
 }
 
 func GenRandomMsgCreateFinalityProvider(
@@ -106,18 +70,12 @@ func CreateNFinalityProviders(
 	return fps
 }
 
-<<<<<<< HEAD
-func GenRandomFinalityProviderWithBTCSK(r *rand.Rand, btcSK *btcec.PrivateKey) (*bstypes.FinalityProvider, error) {
-	return GenRandomFinalityProviderWithBTCBabylonSKs(r, btcSK, GenRandomAccount().GetAddress())
-=======
 func GenRandomFinalityProviderWithBTCSK(
 	r *rand.Rand,
 	btcSK *btcec.PrivateKey,
 	signingContext string,
-	consumerID string,
 ) (*bstypes.FinalityProvider, error) {
-	return GenCustomFinalityProvider(r, btcSK, signingContext, GenRandomAccount().GetAddress(), consumerID)
->>>>>>> 2b02d75 (Implement context separator signing (#1252))
+	return GenCustomFinalityProvider(r, btcSK, signingContext, GenRandomAccount().GetAddress())
 }
 
 func GenRandomCommission(r *rand.Rand) sdkmath.LegacyDec {
@@ -128,19 +86,11 @@ func GenRandomDescription(r *rand.Rand) *stakingtypes.Description {
 	return &stakingtypes.Description{Moniker: GenRandomHexStr(r, 10)}
 }
 
-<<<<<<< HEAD
-func GenRandomFinalityProviderWithBTCBabylonSKs(
-	r *rand.Rand,
-	btcSK *btcec.PrivateKey,
-	fpAddr sdk.AccAddress,
-=======
 func GenCustomFinalityProvider(
 	r *rand.Rand,
 	btcSK *btcec.PrivateKey,
 	signingContext string,
 	fpAddr sdk.AccAddress,
-	consumerID string,
->>>>>>> 2b02d75 (Implement context separator signing (#1252))
 ) (*bstypes.FinalityProvider, error) {
 	// commission
 	commission := GenRandomCommission(r)
@@ -174,11 +124,7 @@ func GenRandomCreateFinalityProviderMsgWithBTCBabylonSKs(
 	signingContext string,
 	fpAddr sdk.AccAddress,
 ) (*bstypes.MsgCreateFinalityProvider, error) {
-<<<<<<< HEAD
-	fp, err := GenRandomFinalityProviderWithBTCBabylonSKs(r, btcSK, fpAddr)
-=======
-	fp, err := GenCustomFinalityProvider(r, btcSK, signingContext, fpAddr, "")
->>>>>>> 2b02d75 (Implement context separator signing (#1252))
+	fp, err := GenCustomFinalityProvider(r, btcSK, signingContext, fpAddr)
 	if err != nil {
 		return nil, err
 	}
@@ -264,11 +210,7 @@ func GenRandomBTCDelegation(
 	require.NoError(t, err)
 	w := uint16(100) // TODO: parameterise w
 
-<<<<<<< HEAD
-	pop, err := NewPoPBTC(sdk.MustAccAddressFromBech32(staker.Address), delSK)
-=======
-	pop, err := NewPoPBTC(signingContext, stakerAddress, delSK)
->>>>>>> 2b02d75 (Implement context separator signing (#1252))
+	pop, err := NewPoPBTC(signingContext, staker.GetAddress(), delSK)
 	require.NoError(t, err)
 
 	del := &bstypes.BTCDelegation{

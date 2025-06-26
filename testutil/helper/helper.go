@@ -20,9 +20,9 @@ import (
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/stretchr/testify/require"
 
-<<<<<<< HEAD
 	"github.com/babylonlabs-io/babylon/v2/app"
 	appparams "github.com/babylonlabs-io/babylon/v2/app/params"
+	"github.com/babylonlabs-io/babylon/v2/app/signingcontext"
 	"github.com/babylonlabs-io/babylon/v2/crypto/bls12381"
 	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
 	bbn "github.com/babylonlabs-io/babylon/v2/types"
@@ -30,18 +30,6 @@ import (
 	checkpointingtypes "github.com/babylonlabs-io/babylon/v2/x/checkpointing/types"
 	"github.com/babylonlabs-io/babylon/v2/x/epoching/keeper"
 	"github.com/babylonlabs-io/babylon/v2/x/epoching/types"
-=======
-	"github.com/babylonlabs-io/babylon/v3/app"
-	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
-	"github.com/babylonlabs-io/babylon/v3/app/signingcontext"
-	"github.com/babylonlabs-io/babylon/v3/crypto/bls12381"
-	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
-	bbn "github.com/babylonlabs-io/babylon/v3/types"
-	btcstakingtypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
-	checkpointingtypes "github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
-	"github.com/babylonlabs-io/babylon/v3/x/epoching/keeper"
-	"github.com/babylonlabs-io/babylon/v3/x/epoching/types"
->>>>>>> 2b02d75 (Implement context separator signing (#1252))
 )
 
 // Helper is a structure which wraps the entire app and exposes functionalities for testing the epoching module

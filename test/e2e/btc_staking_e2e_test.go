@@ -11,12 +11,8 @@ import (
 	govv1 "cosmossdk.io/api/cosmos/gov/v1"
 	sdkmath "cosmossdk.io/math"
 	feegrantcli "cosmossdk.io/x/feegrant/client/cli"
-<<<<<<< HEAD
 	appparams "github.com/babylonlabs-io/babylon/v2/app/params"
-=======
-	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
-	"github.com/babylonlabs-io/babylon/v3/app/signingcontext"
->>>>>>> 2b02d75 (Implement context separator signing (#1252))
+	"github.com/babylonlabs-io/babylon/v2/app/signingcontext"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
@@ -831,13 +827,9 @@ func CreateNodeFP(
 	nodeAddr, err := sdk.AccAddressFromBech32(fpAddr)
 	require.NoError(t, err)
 
-<<<<<<< HEAD
-	newFP, err = datagen.GenRandomFinalityProviderWithBTCBabylonSKs(r, fpSk, nodeAddr)
-=======
 	fpPopContext := signingcontext.FpPopContextV0(node.ChainID(), appparams.AccBTCStaking.String())
 
-	newFP, err = datagen.GenCustomFinalityProvider(r, fpSk, fpPopContext, nodeAddr, "")
->>>>>>> 2b02d75 (Implement context separator signing (#1252))
+	newFP, err = datagen.GenCustomFinalityProvider(r, fpSk, fpPopContext, nodeAddr)
 	require.NoError(t, err)
 
 	previousFps := node.QueryFinalityProviders()

@@ -12,16 +12,10 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-<<<<<<< HEAD
+	"github.com/babylonlabs-io/babylon/v2/app/signingcontext"
 	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
 	bbn "github.com/babylonlabs-io/babylon/v2/types"
 	"github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
-=======
-	"github.com/babylonlabs-io/babylon/v3/app/signingcontext"
-	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
-	bbn "github.com/babylonlabs-io/babylon/v3/types"
-	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
->>>>>>> 2b02d75 (Implement context separator signing (#1252))
 )
 
 var (

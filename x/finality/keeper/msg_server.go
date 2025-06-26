@@ -11,16 +11,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
-<<<<<<< HEAD
+	"github.com/babylonlabs-io/babylon/v2/app/signingcontext"
 	bbn "github.com/babylonlabs-io/babylon/v2/types"
 	bstypes "github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
 	"github.com/babylonlabs-io/babylon/v2/x/finality/types"
-=======
-	"github.com/babylonlabs-io/babylon/v3/app/signingcontext"
-	bbn "github.com/babylonlabs-io/babylon/v3/types"
-	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
-	"github.com/babylonlabs-io/babylon/v3/x/finality/types"
->>>>>>> 2b02d75 (Implement context separator signing (#1252))
 )
 
 type msgServer struct {
@@ -391,32 +385,3 @@ func (ms msgServer) validateActivationHeight(ctx sdk.Context, height uint64) (ui
 	}
 	return activationHeight, nil
 }
-<<<<<<< HEAD
-=======
-
-// EquivocationEvidence handles the evidence of equivocation message sent from the finality gadget cw contract
-func (ms msgServer) EquivocationEvidence(goCtx context.Context, req *types.MsgEquivocationEvidence) (*types.MsgEquivocationEvidenceResponse, error) {
-	ctx := sdk.UnwrapSDKContext(goCtx)
-
-	// construct the evidence
-	evidence := &types.Evidence{
-		FpBtcPk:              req.FpBtcPk,
-		BlockHeight:          req.BlockHeight,
-		PubRand:              req.PubRand,
-		CanonicalAppHash:     req.CanonicalAppHash,
-		CanonicalFinalitySig: req.CanonicalFinalitySig,
-		ForkAppHash:          req.ForkAppHash,
-		ForkFinalitySig:      req.ForkFinalitySig,
-		SigningContext:       req.SigningContext,
-	}
-
-	// slash this finality provider, including setting its voting power to
-	// zero, extracting its BTC SK, and emit an event
-	ms.slashFinalityProvider(ctx, evidence.FpBtcPk, evidence)
-
-	// save evidence
-	ms.SetEvidence(ctx, evidence)
-
-	return &types.MsgEquivocationEvidenceResponse{}, nil
-}
->>>>>>> 2b02d75 (Implement context separator signing (#1252))

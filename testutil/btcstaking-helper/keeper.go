@@ -19,7 +19,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
-<<<<<<< HEAD
+	"github.com/babylonlabs-io/babylon/v2/app/signingcontext"
 	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
 	keepertest "github.com/babylonlabs-io/babylon/v2/testutil/keeper"
 	bbn "github.com/babylonlabs-io/babylon/v2/types"
@@ -30,21 +30,6 @@ import (
 	epochingtypes "github.com/babylonlabs-io/babylon/v2/x/epoching/types"
 	fkeeper "github.com/babylonlabs-io/babylon/v2/x/finality/keeper"
 	ftypes "github.com/babylonlabs-io/babylon/v2/x/finality/types"
-=======
-	"github.com/babylonlabs-io/babylon/v3/app/signingcontext"
-	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
-	keepertest "github.com/babylonlabs-io/babylon/v3/testutil/keeper"
-	bbn "github.com/babylonlabs-io/babylon/v3/types"
-	btcctypes "github.com/babylonlabs-io/babylon/v3/x/btccheckpoint/types"
-	btclctypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
-	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/keeper"
-	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
-	bsckeeper "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/keeper"
-	bsctypes "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
-	epochingtypes "github.com/babylonlabs-io/babylon/v3/x/epoching/types"
-	fkeeper "github.com/babylonlabs-io/babylon/v3/x/finality/keeper"
-	ftypes "github.com/babylonlabs-io/babylon/v3/x/finality/types"
->>>>>>> 2b02d75 (Implement context separator signing (#1252))
 )
 
 var (
@@ -242,32 +227,10 @@ func (h *Helper) GenAndApplyCustomParams(
 	return covenantSKs, covenantPKs
 }
 
-<<<<<<< HEAD
-func CreateFinalityProvider(r *rand.Rand, t *testing.T) *types.FinalityProvider {
-	fpSK, _, err := datagen.GenRandomBTCKeyPair(r)
-	require.NoError(t, err)
-	fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, fpSK)
-	require.NoError(t, err)
-
-	return &types.FinalityProvider{
-		Description: fp.Description,
-		Commission:  fp.Commission,
-		Addr:        fp.Addr,
-		BtcPk:       fp.BtcPk,
-		Pop:         fp.Pop,
-	}
-}
-
 func (h *Helper) CreateFinalityProvider(r *rand.Rand) (*btcec.PrivateKey, *btcec.PublicKey, *types.FinalityProvider) {
 	fpSK, fpPK, err := datagen.GenRandomBTCKeyPair(r)
 	h.NoError(err)
-	fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, fpSK)
-=======
-func (h *Helper) CreateFinalityProvider(r *rand.Rand) (*btcec.PrivateKey, *btcec.PublicKey, *types.FinalityProvider) {
-	fpSK, fpPK, err := datagen.GenRandomBTCKeyPair(r)
-	h.NoError(err)
-	fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, fpSK, h.FpPopContext(), "")
->>>>>>> 2b02d75 (Implement context separator signing (#1252))
+	fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, fpSK, h.FpPopContext())
 	h.NoError(err)
 	msgNewFp := types.MsgCreateFinalityProvider{
 		Addr:        fp.Addr,
@@ -286,38 +249,6 @@ func (h *Helper) CreateFinalityProvider(r *rand.Rand) (*btcec.PrivateKey, *btcec
 	return fpSK, fpPK, fp
 }
 
-<<<<<<< HEAD
-=======
-func (h *Helper) CreateConsumerFinalityProvider(r *rand.Rand, consumerID string) (*btcec.PrivateKey, *btcec.PublicKey, *types.FinalityProvider, error) {
-	fpSK, fpPK, err := datagen.GenRandomBTCKeyPair(r)
-	if err != nil {
-		return nil, nil, nil, err
-	}
-	fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, fpSK, h.FpPopContext(), consumerID)
-	if err != nil {
-		return nil, nil, nil, err
-	}
-
-	msgNewFp := types.MsgCreateFinalityProvider{
-		Addr:        fp.Addr,
-		Description: fp.Description,
-		Commission: types.NewCommissionRates(
-			*fp.Commission,
-			fp.CommissionInfo.MaxRate,
-			fp.CommissionInfo.MaxChangeRate,
-		),
-		BtcPk:      fp.BtcPk,
-		Pop:        fp.Pop,
-		ConsumerId: fp.ConsumerId,
-	}
-	_, err = h.MsgServer.CreateFinalityProvider(h.Ctx, &msgNewFp)
-	if err != nil {
-		return nil, nil, nil, err
-	}
-	return fpSK, fpPK, fp, nil
-}
-
->>>>>>> 2b02d75 (Implement context separator signing (#1252))
 func (h *Helper) CreateDelegation(
 	r *rand.Rand,
 	delSK *btcec.PrivateKey,

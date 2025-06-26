@@ -11,20 +11,12 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
-<<<<<<< HEAD
+	"github.com/babylonlabs-io/babylon/v2/app/signingcontext"
 	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
 	keepertest "github.com/babylonlabs-io/babylon/v2/testutil/keeper"
 	bbn "github.com/babylonlabs-io/babylon/v2/types"
 	"github.com/babylonlabs-io/babylon/v2/x/finality/keeper"
 	"github.com/babylonlabs-io/babylon/v2/x/finality/types"
-=======
-	"github.com/babylonlabs-io/babylon/v3/app/signingcontext"
-	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
-	keepertest "github.com/babylonlabs-io/babylon/v3/testutil/keeper"
-	bbn "github.com/babylonlabs-io/babylon/v3/types"
-	"github.com/babylonlabs-io/babylon/v3/x/finality/keeper"
-	"github.com/babylonlabs-io/babylon/v3/x/finality/types"
->>>>>>> 2b02d75 (Implement context separator signing (#1252))
 )
 
 func benchmarkAddFinalitySig(b *testing.B) {
@@ -42,17 +34,13 @@ func benchmarkAddFinalitySig(b *testing.B) {
 	require.NoError(b, err)
 	fpBTCPK := bbn.NewBIP340PubKeyFromBTCPK(btcPK)
 	fpBTCPKBytes := fpBTCPK.MustMarshal()
-<<<<<<< HEAD
-	fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, btcSK)
-=======
 	require.NoError(b, err)
 
 	fpPopContext := signingcontext.FpPopContextV0(ctx.ChainID(), fKeeper.ModuleAddress())
 	randCommitContext := signingcontext.FpRandCommitContextV0(ctx.ChainID(), fKeeper.ModuleAddress())
 	finalitySigContext := signingcontext.FpPopContextV0(ctx.ChainID(), fKeeper.ModuleAddress())
 
-	fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, btcSK, fpPopContext, "")
->>>>>>> 2b02d75 (Implement context separator signing (#1252))
+	fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, btcSK, fpPopContext)
 	require.NoError(b, err)
 
 	// register the finality provider

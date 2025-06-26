@@ -6,12 +6,8 @@ import (
 	"strings"
 	"time"
 
-<<<<<<< HEAD
+	"github.com/babylonlabs-io/babylon/v2/app/signingcontext"
 	btcckpttypes "github.com/babylonlabs-io/babylon/v2/x/btccheckpoint/types"
-=======
-	"github.com/babylonlabs-io/babylon/v3/app/signingcontext"
-	btcckpttypes "github.com/babylonlabs-io/babylon/v3/x/btccheckpoint/types"
->>>>>>> 2b02d75 (Implement context separator signing (#1252))
 
 	errorsmod "cosmossdk.io/errors"
 	"github.com/btcsuite/btcd/btcec/v2"

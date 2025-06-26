@@ -9,13 +9,13 @@ import (
 	"path/filepath"
 	"time"
 
-	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
+	appparams "github.com/babylonlabs-io/babylon/v2/app/params"
+	"github.com/babylonlabs-io/babylon/v2/app/signingcontext"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/stretchr/testify/suite"
 
 	govv1 "cosmossdk.io/api/cosmos/gov/v1"
-<<<<<<< HEAD
 	"github.com/babylonlabs-io/babylon/v2/app"
 	"github.com/babylonlabs-io/babylon/v2/crypto/eots"
 	"github.com/babylonlabs-io/babylon/v2/test/e2e/configurer"
@@ -26,19 +26,6 @@ import (
 	bstypes "github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
 	ftypes "github.com/babylonlabs-io/babylon/v2/x/finality/types"
 	itypes "github.com/babylonlabs-io/babylon/v2/x/incentive/types"
-=======
-	"github.com/babylonlabs-io/babylon/v3/app"
-	"github.com/babylonlabs-io/babylon/v3/app/signingcontext"
-	"github.com/babylonlabs-io/babylon/v3/crypto/eots"
-	"github.com/babylonlabs-io/babylon/v3/test/e2e/configurer"
-	"github.com/babylonlabs-io/babylon/v3/test/e2e/configurer/chain"
-	"github.com/babylonlabs-io/babylon/v3/test/e2e/configurer/config"
-	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
-	bbn "github.com/babylonlabs-io/babylon/v3/types"
-	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
-	ftypes "github.com/babylonlabs-io/babylon/v3/x/finality/types"
-	itypes "github.com/babylonlabs-io/babylon/v3/x/incentive/types"
->>>>>>> 2b02d75 (Implement context separator signing (#1252))
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	v1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"

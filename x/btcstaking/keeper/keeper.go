@@ -54,22 +54,13 @@ func NewKeeper(
 	sb := collections.NewSchemaBuilder(storeService)
 
 	k := Keeper{
-<<<<<<< HEAD
-		cdc:          cdc,
-		storeService: storeService,
+		cdc:                     cdc,
+		storeService:            storeService,
+		btcStakingModuleAddress: btcStakingModuleAddress,
 
 		btclcKeeper: btclcKeeper,
 		btccKeeper:  btccKeeper,
 		iKeeper:     iKeeper,
-=======
-		cdc:                     cdc,
-		storeService:            storeService,
-		btcStakingModuleAddress: btcStakingModuleAddress,
-		btclcKeeper:             btclcKeeper,
-		btccKeeper:              btccKeeper,
-		BscKeeper:               bscKeeper,
-		iKeeper:                 iKeeper,
->>>>>>> 2b02d75 (Implement context separator signing (#1252))
 
 		AllowedStakingTxHashesKeySet: collections.NewKeySet(
 			sb,

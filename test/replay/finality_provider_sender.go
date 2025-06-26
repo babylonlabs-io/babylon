@@ -30,13 +30,8 @@ func (f *FinalityProvider) BTCPublicKey() *bbn.BIP340PubKey {
 	return pk
 }
 
-<<<<<<< HEAD
 func (f *FinalityProvider) RegisterFinalityProvider() {
-	pop, err := datagen.NewPoPBTC(f.Address(), f.BTCPrivateKey)
-=======
-func (f *FinalityProvider) RegisterFinalityProvider(consumerID string) {
 	pop, err := datagen.NewPoPBTC(f.d.FpPopContext(), f.Address(), f.BTCPrivateKey)
->>>>>>> 2b02d75 (Implement context separator signing (#1252))
 	require.NoError(f.t, err)
 
 	msg := &bstypes.MsgCreateFinalityProvider{

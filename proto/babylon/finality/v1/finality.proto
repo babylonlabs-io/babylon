@@ -77,36 +77,16 @@ message PubRandCommit {
 // Evidence is the evidence that a finality provider has signed finality
 // signatures with correct public randomness on two conflicting Babylon headers
 message Evidence {
-<<<<<<< HEAD
-    // fp_btc_pk is the BTC PK of the finality provider that casts this vote
-    bytes fp_btc_pk = 1 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/v2/types.BIP340PubKey" ];
-    // block_height is the height of the conflicting blocks
-    uint64 block_height = 2;
-    // pub_rand is the public randomness the finality provider has committed to
-    bytes pub_rand = 3 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/v2/types.SchnorrPubRand" ];
-    // canonical_app_hash is the AppHash of the canonical block
-    bytes canonical_app_hash = 4;
-    // fork_app_hash is the AppHash of the fork block
-    bytes fork_app_hash = 5;
-    // canonical_finality_sig is the finality signature to the canonical block
-    // where finality signature is an EOTS signature, i.e.,
-    // the `s` in a Schnorr signature `(r, s)`
-    // `r` is the public randomness that is already committed by the finality provider
-    bytes canonical_finality_sig = 6 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/v2/types.SchnorrEOTSSig" ];
-    // fork_finality_sig is the finality signature to the fork block
-    // where finality signature is an EOTS signature
-    bytes fork_finality_sig = 7 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/v2/types.SchnorrEOTSSig" ];
-=======
   // fp_btc_pk is the BTC PK of the finality provider that casts this vote
   bytes fp_btc_pk = 1
       [ (gogoproto.customtype) =
-            "github.com/babylonlabs-io/babylon/v3/types.BIP340PubKey" ];
+            "github.com/babylonlabs-io/babylon/v2/types.BIP340PubKey" ];
   // block_height is the height of the conflicting blocks
   uint64 block_height = 2;
   // pub_rand is the public randomness the finality provider has committed to
   bytes pub_rand = 3
       [ (gogoproto.customtype) =
-            "github.com/babylonlabs-io/babylon/v3/types.SchnorrPubRand" ];
+            "github.com/babylonlabs-io/babylon/v2/types.SchnorrPubRand" ];
   // canonical_app_hash is the AppHash of the canonical block
   bytes canonical_app_hash = 4;
   // fork_app_hash is the AppHash of the fork block
@@ -118,16 +98,15 @@ message Evidence {
   // provider
   bytes canonical_finality_sig = 6
       [ (gogoproto.customtype) =
-            "github.com/babylonlabs-io/babylon/v3/types.SchnorrEOTSSig" ];
+            "github.com/babylonlabs-io/babylon/v2/types.SchnorrEOTSSig" ];
   // fork_finality_sig is the finality signature to the fork block
   // where finality signature is an EOTS signature
   bytes fork_finality_sig = 7
       [ (gogoproto.customtype) =
-            "github.com/babylonlabs-io/babylon/v3/types.SchnorrEOTSSig" ];
+            "github.com/babylonlabs-io/babylon/v2/types.SchnorrEOTSSig" ];
   // signing_context is the context in which the finality signatures were used.
   // It must be hex encoded 32 bytes, of the sha256 hash of the context string
   string signing_context = 8;
->>>>>>> 2b02d75 (Implement context separator signing (#1252))
 }
 
 // FinalityProviderSigningInfo defines a finality provider's signing info for monitoring their

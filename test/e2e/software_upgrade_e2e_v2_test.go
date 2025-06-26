@@ -17,6 +17,8 @@ import (
 	"github.com/stretchr/testify/suite"
 	"golang.org/x/sync/errgroup"
 
+	appparams "github.com/babylonlabs-io/babylon/v2/app/params"
+	"github.com/babylonlabs-io/babylon/v2/app/signingcontext"
 	v2 "github.com/babylonlabs-io/babylon/v2/app/upgrades/v2"
 	"github.com/babylonlabs-io/babylon/v2/testutil/coins"
 	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
@@ -233,7 +235,9 @@ func (s *SoftwareUpgradeV2TestSuite) preUpgradeAddFinalitySigs(n *chain.NodeConf
 	// commit public randomness list
 	commitStartHeight := uint64(5)
 
-	fp1RandListInfo, fp1CommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(s.r, s.fp1BTCSK, commitStartHeight, numPubRand)
+	commitRandContext := signingcontext.FpRandCommitContextV0(n.ChainID(), appparams.AccFinality.String())
+
+	fp1RandListInfo, fp1CommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(s.r, s.fp1BTCSK, commitRandContext, commitStartHeight, numPubRand)
 	s.NoError(err)
 	s.fp1RandListInfo = fp1RandListInfo
 

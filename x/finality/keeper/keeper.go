@@ -30,13 +30,6 @@ type (
 		FinalityProviderSigningTracker collections.Map[[]byte, types.FinalityProviderSigningInfo]
 		// FinalityProviderMissedBlockBitmap key: BIP340PubKey bytes | value: byte key for a finality provider's missed block bitmap chunk
 		FinalityProviderMissedBlockBitmap collections.Map[collections.Pair[[]byte, uint64], []byte]
-<<<<<<< HEAD
-=======
-
-		// pubRandCommitIndex key: BIP340PubKey bytes | value: PubRandCommitIndexValue (ordered start heights of commitments)
-		// This index is useful for retrieving PubRandCommits using binary search
-		pubRandCommitIndex collections.Map[[]byte, types.PubRandCommitIndexValue]
->>>>>>> 2b02d75 (Implement context separator signing (#1252))
 	}
 )
 

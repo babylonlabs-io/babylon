@@ -15,8 +15,8 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
-<<<<<<< HEAD
 	appparams "github.com/babylonlabs-io/babylon/v2/app/params"
+	"github.com/babylonlabs-io/babylon/v2/app/signingcontext"
 	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
 	testutil "github.com/babylonlabs-io/babylon/v2/testutil/incentives-helper"
 	keepertest "github.com/babylonlabs-io/babylon/v2/testutil/keeper"
@@ -27,20 +27,6 @@ import (
 	"github.com/babylonlabs-io/babylon/v2/x/finality/keeper"
 	"github.com/babylonlabs-io/babylon/v2/x/finality/types"
 	ictvtypes "github.com/babylonlabs-io/babylon/v2/x/incentive/types"
-=======
-	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
-	"github.com/babylonlabs-io/babylon/v3/app/signingcontext"
-	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
-	testutil "github.com/babylonlabs-io/babylon/v3/testutil/incentives-helper"
-	keepertest "github.com/babylonlabs-io/babylon/v3/testutil/keeper"
-	bbn "github.com/babylonlabs-io/babylon/v3/types"
-	btclctypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
-	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
-	epochingtypes "github.com/babylonlabs-io/babylon/v3/x/epoching/types"
-	"github.com/babylonlabs-io/babylon/v3/x/finality/keeper"
-	"github.com/babylonlabs-io/babylon/v3/x/finality/types"
-	ictvtypes "github.com/babylonlabs-io/babylon/v3/x/incentive/types"
->>>>>>> 2b02d75 (Implement context separator signing (#1252))
 )
 
 func setupMsgServer(t testing.TB) (*keeper.Keeper, types.MsgServer, context.Context) {
@@ -133,17 +119,6 @@ func FuzzCommitPubRandList(f *testing.F) {
 		_, err = ms.CommitPubRandList(ctx, msg)
 		require.Error(t, err)
 		require.ErrorContains(t, err, types.ErrOverflowInBlockHeight.Error())
-<<<<<<< HEAD
-=======
-
-		// Case 7: commit a pubrand list with startHeight too far into the future
-		startHeight = 500_000
-		_, msg, err = datagen.GenRandomMsgCommitPubRandList(r, btcSK, signingContext, startHeight, numPubRand)
-		require.NoError(t, err)
-		_, err = ms.CommitPubRandList(ctx, msg)
-		require.Error(t, err)
-		require.ErrorContains(t, err, fmt.Sprintf("start height %d is too far into the future", startHeight))
->>>>>>> 2b02d75 (Implement context separator signing (#1252))
 	})
 }
 
@@ -169,11 +144,7 @@ func FuzzAddFinalitySig(f *testing.F) {
 		// create and register a random finality provider
 		btcSK, btcPK, err := datagen.GenRandomBTCKeyPair(r)
 		require.NoError(t, err)
-<<<<<<< HEAD
-		fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, btcSK)
-=======
-		fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, btcSK, "", "")
->>>>>>> 2b02d75 (Implement context separator signing (#1252))
+		fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, btcSK, "")
 		require.NoError(t, err)
 		fpBTCPK := bbn.NewBIP340PubKeyFromBTCPK(btcPK)
 		fpBTCPKBytes := fpBTCPK.MustMarshal()
@@ -324,11 +295,7 @@ func FuzzUnjailFinalityProvider(f *testing.F) {
 		// create and register a random finality provider
 		btcSK, btcPK, err := datagen.GenRandomBTCKeyPair(r)
 		require.NoError(t, err)
-<<<<<<< HEAD
-		fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, btcSK)
-=======
-		fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, btcSK, fpPopContext, "")
->>>>>>> 2b02d75 (Implement context separator signing (#1252))
+		fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, btcSK, fpPopContext)
 		require.NoError(t, err)
 		fpBTCPK := bbn.NewBIP340PubKeyFromBTCPK(btcPK)
 		fpBTCPKBytes := fpBTCPK.MustMarshal()
@@ -391,16 +358,12 @@ func TestVoteForConflictingHashShouldRetrieveEvidenceAndSlash(t *testing.T) {
 	// create and register a random finality provider
 	btcSK, btcPK, err := datagen.GenRandomBTCKeyPair(r)
 	require.NoError(t, err)
-<<<<<<< HEAD
-	fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, btcSK)
-=======
 
 	fpPopContext := signingcontext.FpPopContextV0(ctx.ChainID(), fKeeper.ModuleAddress())
 	commitRandContext := signingcontext.FpRandCommitContextV0(ctx.ChainID(), fKeeper.ModuleAddress())
 	finalitySigContext := signingcontext.FpFinVoteContextV0(ctx.ChainID(), fKeeper.ModuleAddress())
 
-	fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, btcSK, fpPopContext, "")
->>>>>>> 2b02d75 (Implement context separator signing (#1252))
+	fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, btcSK, fpPopContext)
 	require.NoError(t, err)
 	fpBTCPK := bbn.NewBIP340PubKeyFromBTCPK(btcPK)
 	fpBTCPKBytes := fpBTCPK.MustMarshal()
@@ -474,16 +437,12 @@ func TestDoNotPanicOnNilProof(t *testing.T) {
 	// create and register a random finality provider
 	btcSK, btcPK, err := datagen.GenRandomBTCKeyPair(r)
 	require.NoError(t, err)
-<<<<<<< HEAD
-	fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, btcSK)
-=======
 
 	fpPopContext := signingcontext.FpPopContextV0(ctx.ChainID(), fKeeper.ModuleAddress())
 	commitRandContext := signingcontext.FpRandCommitContextV0(ctx.ChainID(), fKeeper.ModuleAddress())
 	finalitySigContext := signingcontext.FpPopContextV0(ctx.ChainID(), fKeeper.ModuleAddress())
 
-	fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, btcSK, fpPopContext, "")
->>>>>>> 2b02d75 (Implement context separator signing (#1252))
+	fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, btcSK, fpPopContext)
 	require.NoError(t, err)
 	fpBTCPK := bbn.NewBIP340PubKeyFromBTCPK(btcPK)
 	fpBTCPKBytes := fpBTCPK.MustMarshal()
@@ -584,126 +543,6 @@ func TestVerifyActivationHeight(t *testing.T) {
 	).Error())
 }
 
-<<<<<<< HEAD
-=======
-func FuzzEquivocationEvidence(f *testing.F) {
-	datagen.AddRandomSeedsToFuzzer(f, 10)
-
-	f.Fuzz(func(t *testing.T, seed int64) {
-		r := rand.New(rand.NewSource(seed))
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-
-		bsKeeper := types.NewMockBTCStakingKeeper(ctrl)
-		cKeeper := types.NewMockCheckpointingKeeper(ctrl)
-		iKeeper := types.NewMockIncentiveKeeper(ctrl)
-		iKeeper.EXPECT().IndexRefundableMsg(gomock.Any(), gomock.Any()).AnyTimes()
-		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper)
-		ms := keeper.NewMsgServerImpl(*fKeeper)
-
-		// set params with activation height
-		err := fKeeper.SetParams(ctx, types.DefaultParams())
-		require.NoError(t, err)
-		activationHeight := fKeeper.GetParams(ctx).FinalityActivationHeight
-
-		// create and register a random finality provider
-		btcSK, btcPK, err := datagen.GenRandomBTCKeyPair(r)
-		require.NoError(t, err)
-
-		fpPopContext := signingcontext.FpPopContextV0(ctx.ChainID(), fKeeper.ModuleAddress())
-		commitRandContext := signingcontext.FpRandCommitContextV0(ctx.ChainID(), fKeeper.ModuleAddress())
-
-		fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, btcSK, fpPopContext, "")
-		require.NoError(t, err)
-		fpBTCPK := bbn.NewBIP340PubKeyFromBTCPK(btcPK)
-		fpBTCPKBytes := fpBTCPK.MustMarshal()
-
-		// test invalid case - without PubRand field in MsgEquivocationEvidence
-		invalidMsg := &types.MsgEquivocationEvidence{
-			Signer:               datagen.GenRandomAccount().Address,
-			FpBtcPk:              fpBTCPK,
-			BlockHeight:          activationHeight,
-			CanonicalAppHash:     datagen.GenRandomByteArray(r, 32),
-			ForkAppHash:          datagen.GenRandomByteArray(r, 32),
-			CanonicalFinalitySig: &bbn.SchnorrEOTSSig{},
-			ForkFinalitySig:      &bbn.SchnorrEOTSSig{},
-		}
-
-		err = invalidMsg.ValidateBasic()
-		require.ErrorContains(t, err, "empty PubRand")
-
-		// test valid case
-		blockHeight := activationHeight + datagen.RandomInt(r, 100)
-
-		// generate proper pub rand data
-		startHeight := blockHeight
-		numPubRand := uint64(200)
-		randListInfo, _, err := datagen.GenRandomMsgCommitPubRandList(r, btcSK, commitRandContext, startHeight, numPubRand)
-		require.NoError(t, err)
-
-		// mock pub rand for evidence
-		pubRand := &randListInfo.PRList[0]
-
-		// mock canonical and fork app hash
-		canonicalAppHash := datagen.GenRandomByteArray(r, 32)
-		forkAppHash := datagen.GenRandomByteArray(r, 32)
-
-		// mock canonical signature
-		canonicalBytes := datagen.GenRandomByteArray(r, 32)
-		var canonicalModNScalar btcec.ModNScalar
-		overflowed := canonicalModNScalar.SetByteSlice(canonicalBytes)
-		require.False(t, overflowed)
-		canonicalSig := bbn.NewSchnorrEOTSSigFromModNScalar(&canonicalModNScalar)
-
-		// mock fork signature
-		forkBytes := datagen.GenRandomByteArray(r, 32)
-		var forkModNScalar btcec.ModNScalar
-		overflowed = forkModNScalar.SetByteSlice(forkBytes)
-		require.False(t, overflowed)
-		forkSig := bbn.NewSchnorrEOTSSigFromModNScalar(&forkModNScalar)
-
-		msg := &types.MsgEquivocationEvidence{
-			Signer:               datagen.GenRandomAccount().Address,
-			FpBtcPk:              fpBTCPK,
-			BlockHeight:          blockHeight,
-			PubRand:              pubRand,
-			CanonicalAppHash:     canonicalAppHash,
-			ForkAppHash:          forkAppHash,
-			CanonicalFinalitySig: canonicalSig,
-			ForkFinalitySig:      forkSig,
-		}
-		err = msg.ValidateBasic()
-		require.NoError(t, err)
-
-		// set block height in context to be >= evidence height
-		blockAppHash := datagen.GenRandomByteArray(r, 32)
-		ctx = ctx.WithHeaderInfo(header.Info{Height: int64(blockHeight), AppHash: blockAppHash})
-		fKeeper.IndexBlock(ctx)
-		bsKeeper.EXPECT().GetFinalityProvider(gomock.Any(), gomock.Eq(fpBTCPKBytes)).Return(fp, nil).AnyTimes()
-
-		// mock voting power
-		fKeeper.SetVotingPower(ctx, fpBTCPKBytes, blockHeight, 1)
-
-		// mock slashing interface
-		bsKeeper.EXPECT().SlashFinalityProvider(gomock.Any(), gomock.Eq(fpBTCPKBytes)).Return(nil)
-		bsKeeper.EXPECT().PropagateFPSlashingToConsumers(gomock.Any(), gomock.Eq(fpBTCPK)).Return(nil)
-
-		_, err = ms.EquivocationEvidence(ctx, msg)
-		require.NoError(t, err)
-
-		storedEvidence, err := fKeeper.GetEvidence(ctx, fpBTCPK, blockHeight)
-		require.NoError(t, err)
-		require.Equal(t, msg.FpBtcPk, storedEvidence.FpBtcPk)
-		require.Equal(t, msg.BlockHeight, storedEvidence.BlockHeight)
-		require.Equal(t, msg.PubRand, storedEvidence.PubRand)
-		require.Equal(t, msg.CanonicalAppHash, storedEvidence.CanonicalAppHash)
-		require.Equal(t, msg.ForkAppHash, storedEvidence.ForkAppHash)
-		require.Equal(t, msg.CanonicalFinalitySig, storedEvidence.CanonicalFinalitySig)
-		require.Equal(t, msg.ForkFinalitySig, storedEvidence.ForkFinalitySig)
-	})
-}
-
->>>>>>> 2b02d75 (Implement context separator signing (#1252))
 func TestBtcDelegationRewards(t *testing.T) {
 	r := rand.New(rand.NewSource(time.Now().Unix()))
 	ctrl := gomock.NewController(t)

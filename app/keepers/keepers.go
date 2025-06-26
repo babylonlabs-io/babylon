@@ -549,12 +549,8 @@ func (ak *AppKeepers) InitKeepers(
 		runtime.NewKVStoreService(keys[finalitytypes.StoreKey]),
 		ak.BTCStakingKeeper,
 		ak.IncentiveKeeper,
-<<<<<<< HEAD
-		ak.CheckpointingKeeper,
-=======
 		&checkpointingKeeper,
 		appparams.AccFinality.String(),
->>>>>>> 2b02d75 (Implement context separator signing (#1252))
 		appparams.AccGov.String(),
 	)
 

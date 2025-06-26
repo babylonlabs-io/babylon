@@ -10,6 +10,7 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
+	appparams "github.com/babylonlabs-io/babylon/v2/app/params"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/cometbft/cometbft/libs/bytes"
@@ -18,7 +19,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"golang.org/x/sync/errgroup"
 
-<<<<<<< HEAD
+	"github.com/babylonlabs-io/babylon/v2/app/signingcontext"
 	"github.com/babylonlabs-io/babylon/v2/crypto/eots"
 	"github.com/babylonlabs-io/babylon/v2/test/e2e/configurer"
 	"github.com/babylonlabs-io/babylon/v2/test/e2e/configurer/chain"
@@ -28,19 +29,6 @@ import (
 	bstypes "github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
 	ftypes "github.com/babylonlabs-io/babylon/v2/x/finality/types"
 	itypes "github.com/babylonlabs-io/babylon/v2/x/incentive/types"
-=======
-	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
-	"github.com/babylonlabs-io/babylon/v3/app/signingcontext"
-	"github.com/babylonlabs-io/babylon/v3/crypto/eots"
-	"github.com/babylonlabs-io/babylon/v3/test/e2e/configurer"
-	"github.com/babylonlabs-io/babylon/v3/test/e2e/configurer/chain"
-	"github.com/babylonlabs-io/babylon/v3/testutil/coins"
-	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
-	bbn "github.com/babylonlabs-io/babylon/v3/types"
-	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
-	ftypes "github.com/babylonlabs-io/babylon/v3/x/finality/types"
-	itypes "github.com/babylonlabs-io/babylon/v3/x/incentive/types"
->>>>>>> 2b02d75 (Implement context separator signing (#1252))
 )
 
 const (

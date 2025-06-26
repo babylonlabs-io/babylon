@@ -6,8 +6,6 @@ import (
 	"testing"
 	"time"
 
-	storetypes "cosmossdk.io/store/types"
-
 	sdkmath "cosmossdk.io/math"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/chaincfg"
@@ -18,17 +16,10 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
-<<<<<<< HEAD
 	babylonApp "github.com/babylonlabs-io/babylon/v2/app"
 	appparams "github.com/babylonlabs-io/babylon/v2/app/params"
+	"github.com/babylonlabs-io/babylon/v2/app/signingcontext"
 	"github.com/babylonlabs-io/babylon/v2/test/replay"
-=======
-	babylonApp "github.com/babylonlabs-io/babylon/v3/app"
-	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
-	"github.com/babylonlabs-io/babylon/v3/app/signingcontext"
-	"github.com/babylonlabs-io/babylon/v3/test/replay"
->>>>>>> 2b02d75 (Implement context separator signing (#1252))
-
 	testutil "github.com/babylonlabs-io/babylon/v2/testutil/btcstaking-helper"
 	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
 	bbn "github.com/babylonlabs-io/babylon/v2/types"
@@ -37,7 +28,6 @@ import (
 	btclightclientkeeper "github.com/babylonlabs-io/babylon/v2/x/btclightclient/keeper"
 	btclctypes "github.com/babylonlabs-io/babylon/v2/x/btclightclient/types"
 	btcstakingkeeper "github.com/babylonlabs-io/babylon/v2/x/btcstaking/keeper"
-	bstypes "github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
 	btcstktypes "github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
 	finalitykeeper "github.com/babylonlabs-io/babylon/v2/x/finality/keeper"
 	"github.com/babylonlabs-io/babylon/v2/x/finality/types"
@@ -63,7 +53,7 @@ func FuzzDistributionCache_BtcUndelegateSameBlockAsExpiration(f *testing.F) {
 		btcNet := app.BTCLightClientKeeper.GetBTCNet()
 		btcStkParams, btcCheckParams := btcStkK.GetParams(ctx), btcCheckK.GetParams(ctx)
 
-		covenantSKs, _, _ := bstypes.DefaultCovenantCommittee()
+		covenantSKs, _, _ := btcstktypes.DefaultCovenantCommittee()
 		btcCheckParams.BtcConfirmationDepth = 2
 		btcCheckParams.CheckpointFinalizationTimeout = 5
 
@@ -140,9 +130,9 @@ func FuzzDistributionCache_BtcUndelegateSameBlockAsExpiration(f *testing.F) {
 		AddNBtcBlock(t, r, app, ctx, uint(btcCheckParams.BtcConfirmationDepth))
 		ctx = ProduceBlock(t, r, app, ctx)
 
-		inclusionProof := bstypes.NewInclusionProofFromSpvProof(block.Proofs[1])
+		inclusionProof := btcstktypes.NewInclusionProofFromSpvProof(block.Proofs[1])
 		// send proofs
-		msgSrvrBtcStk.AddBTCDelegationInclusionProof(ctx, &bstypes.MsgAddBTCDelegationInclusionProof{
+		msgSrvrBtcStk.AddBTCDelegationInclusionProof(ctx, &btcstktypes.MsgAddBTCDelegationInclusionProof{
 			Signer:                  datagen.GenRandomAccount().Address,
 			StakingTxHash:           stakingTransactions[0].TxHash().String(),
 			StakingTxInclusionProof: inclusionProof,
@@ -171,20 +161,20 @@ func FuzzDistributionCache_BtcUndelegateSameBlockAsExpiration(f *testing.F) {
 		ctx = ProduceBlock(t, r, app, ctx)                               // updates tip header
 
 		block = AddBtcBlockWithTxs(t, r, app, ctx, delCreationInfo.UnbondingTx)
-		inclusionProof = bstypes.NewInclusionProofFromSpvProof(block.Proofs[1])
+		inclusionProof = btcstktypes.NewInclusionProofFromSpvProof(block.Proofs[1])
 
 		_, err = app.BeginBlocker(ctx) // process voting power dis change events, setting to expired
 		require.NoError(t, err)
 
 		// sends unbond del
-		msgUndelegate := &bstypes.MsgBTCUndelegate{
+		msgUndelegate := &btcstktypes.MsgBTCUndelegate{
 			Signer:                        datagen.GenRandomAccount().Address,
 			StakingTxHash:                 delCreationInfo.StakingTxHash,
 			StakeSpendingTx:               delCreationInfo.MsgCreateBTCDelegation.UnbondingTx,
 			StakeSpendingTxInclusionProof: inclusionProof,
 		}
 		_, err = msgSrvrBtcStk.BTCUndelegate(ctx, msgUndelegate) // fails to unbond, since the BTC was expired
-		require.EqualError(t, err, bstypes.ErrInvalidBTCUndelegateReq.Wrap("cannot unbond an unbonded BTC delegation").Error(), "should error out")
+		require.EqualError(t, err, btcstktypes.ErrInvalidBTCUndelegateReq.Wrap("cannot unbond an unbonded BTC delegation").Error(), "should error out")
 
 		// produce block
 		_, err = app.EndBlocker(ctx)
@@ -220,7 +210,7 @@ func FuzzDistributionCacheVpCheck_FpSlashedBeforeInclusionProof(f *testing.F) {
 		stakerPopContext := signingcontext.StakerPopContextV0(ctx.ChainID(), btcStkK.ModuleAddress())
 		commitRandContext := signingcontext.FpRandCommitContextV0(ctx.ChainID(), finalityK.ModuleAddress())
 
-		covenantSKs, _, _ := bstypes.DefaultCovenantCommittee()
+		covenantSKs, _, _ := btcstktypes.DefaultCovenantCommittee()
 
 		createdFps := datagen.RandomInt(r, 4) + 2
 		numDelsPerFp := datagen.RandomInt(r, 3) + 2
@@ -301,10 +291,10 @@ func FuzzDistributionCacheVpCheck_FpSlashedBeforeInclusionProof(f *testing.F) {
 
 		// send proofs
 		for i, stakingTx := range stakingTransactions {
-			msgSrvrBtcStk.AddBTCDelegationInclusionProof(ctx, &bstypes.MsgAddBTCDelegationInclusionProof{
+			msgSrvrBtcStk.AddBTCDelegationInclusionProof(ctx, &btcstktypes.MsgAddBTCDelegationInclusionProof{
 				Signer:                  datagen.GenRandomAccount().Address,
 				StakingTxHash:           stakingTx.TxHash().String(),
-				StakingTxInclusionProof: bstypes.NewInclusionProofFromSpvProof(block.Proofs[i+1]),
+				StakingTxInclusionProof: btcstktypes.NewInclusionProofFromSpvProof(block.Proofs[i+1]),
 			})
 		}
 
@@ -353,10 +343,10 @@ func FuzzDistributionCacheVpCheck_FpSlashedBeforeInclusionProof(f *testing.F) {
 
 		// send proofs
 		for i, stakingTx := range stakingSlashedTx {
-			msgSrvrBtcStk.AddBTCDelegationInclusionProof(ctx, &bstypes.MsgAddBTCDelegationInclusionProof{
+			msgSrvrBtcStk.AddBTCDelegationInclusionProof(ctx, &btcstktypes.MsgAddBTCDelegationInclusionProof{
 				Signer:                  datagen.GenRandomAccount().Address,
 				StakingTxHash:           stakingTx.TxHash().String(),
-				StakingTxInclusionProof: bstypes.NewInclusionProofFromSpvProof(block.Proofs[i+1]),
+				StakingTxInclusionProof: btcstktypes.NewInclusionProofFromSpvProof(block.Proofs[i+1]),
 			})
 		}
 
@@ -402,7 +392,7 @@ func FuzzProcessAllPowerDistUpdateEvents_Determinism(f *testing.F) {
 		}
 
 		// empty dist cache
-		dc := ftypes.NewVotingPowerDistCache()
+		dc := types.NewVotingPowerDistCache()
 
 		stakingValue := int64(2 * 10e8)
 
@@ -527,7 +517,7 @@ func FuzzProcessAllPowerDistUpdateEvents_ActiveAndSlashTogether(f *testing.F) {
 		eventSlash := btcstktypes.NewEventPowerDistUpdateWithSlashedFP(&del.FpBtcPkList[0])
 		events := []*btcstktypes.EventPowerDistUpdate{eventActive, eventSlash}
 
-		dc := ftypes.NewVotingPowerDistCache()
+		dc := types.NewVotingPowerDistCache()
 		newDc := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, dc, events)
 		require.Len(t, newDc.FinalityProviders, 0)
 	})
@@ -546,7 +536,7 @@ func FuzzProcessAllPowerDistUpdateEvents_PreApprovalWithSlahedFP(f *testing.F) {
 			NewState:      btcstktypes.BTCDelegationStatus_ACTIVE,
 		})
 
-		newDc := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, ftypes.NewVotingPowerDistCache(), []*btcstktypes.EventPowerDistUpdate{eventActive})
+		newDc := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, types.NewVotingPowerDistCache(), []*btcstktypes.EventPowerDistUpdate{eventActive})
 		// updates as if that fp is timestamping
 		for _, fp := range newDc.FinalityProviders {
 			fp.IsTimestamped = true
@@ -632,7 +622,7 @@ func FuzzProcessAllPowerDistUpdateEvents_ActiveAndJailTogether(f *testing.F) {
 		eventJailed := btcstktypes.NewEventPowerDistUpdateWithJailedFP(&del.FpBtcPkList[0])
 		events := []*btcstktypes.EventPowerDistUpdate{eventActive, eventJailed}
 
-		newDc := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, ftypes.NewVotingPowerDistCache(), events)
+		newDc := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, types.NewVotingPowerDistCache(), events)
 		for _, fp := range newDc.FinalityProviders {
 			fp.IsTimestamped = true
 		}
@@ -692,8 +682,8 @@ func TestApplyActiveFinalityProviders(t *testing.T) {
 		{
 			title: "vp 150 2 active",
 
-			dc: &ftypes.VotingPowerDistCache{
-				FinalityProviders: []*ftypes.FinalityProviderDistInfo{
+			dc: &types.VotingPowerDistCache{
+				FinalityProviders: []*types.FinalityProviderDistInfo{
 					fp(t, r, 100, !isSlashed),
 					fp(t, r, 50, !isSlashed),
 				},
@@ -706,8 +696,8 @@ func TestApplyActiveFinalityProviders(t *testing.T) {
 		{
 			title: "vp 250 6 active, 5 max",
 
-			dc: &ftypes.VotingPowerDistCache{
-				FinalityProviders: []*ftypes.FinalityProviderDistInfo{
+			dc: &types.VotingPowerDistCache{
+				FinalityProviders: []*types.FinalityProviderDistInfo{
 					fp(t, r, 50, !isSlashed),
 					fp(t, r, 50, !isSlashed),
 					fp(t, r, 50, !isSlashed),
@@ -1574,11 +1564,7 @@ func TestHandleLivenessPanic(t *testing.T) {
 		// Create FP externally and pass it when called
 		fpSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		require.NoError(t, err)
-<<<<<<< HEAD
-		fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, fpSK)
-=======
-		fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, fpSK, fpPopContext, "")
->>>>>>> 2b02d75 (Implement context separator signing (#1252))
+		fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, fpSK, fpPopContext)
 		require.NoError(t, err)
 		// Save when i is 5
 		if i == 1 {
@@ -1623,11 +1609,7 @@ func TestHandleLivenessPanic(t *testing.T) {
 			// Create FP externally and pass it when called
 			newfpSK, _, err := datagen.GenRandomBTCKeyPair(r)
 			require.NoError(t, err)
-<<<<<<< HEAD
-			newfp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, newfpSK)
-=======
-			newfp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, newfpSK, fpPopContext, "")
->>>>>>> 2b02d75 (Implement context separator signing (#1252))
+			newfp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, newfpSK, fpPopContext)
 			require.NoError(t, err)
 
 			createDelegationWithFinalityProvider(

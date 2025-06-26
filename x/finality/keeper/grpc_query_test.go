@@ -11,7 +11,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
-<<<<<<< HEAD
+	"github.com/babylonlabs-io/babylon/v2/app/signingcontext"
 	testutil "github.com/babylonlabs-io/babylon/v2/testutil/btcstaking-helper"
 	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
 	testkeeper "github.com/babylonlabs-io/babylon/v2/testutil/keeper"
@@ -21,18 +21,6 @@ import (
 	epochingtypes "github.com/babylonlabs-io/babylon/v2/x/epoching/types"
 	"github.com/babylonlabs-io/babylon/v2/x/finality/keeper"
 	"github.com/babylonlabs-io/babylon/v2/x/finality/types"
-=======
-	"github.com/babylonlabs-io/babylon/v3/app/signingcontext"
-	testutil "github.com/babylonlabs-io/babylon/v3/testutil/btcstaking-helper"
-	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
-	testkeeper "github.com/babylonlabs-io/babylon/v3/testutil/keeper"
-	bbn "github.com/babylonlabs-io/babylon/v3/types"
-	btclctypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
-	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
-	epochingtypes "github.com/babylonlabs-io/babylon/v3/x/epoching/types"
-	"github.com/babylonlabs-io/babylon/v3/x/finality/keeper"
-	"github.com/babylonlabs-io/babylon/v3/x/finality/types"
->>>>>>> 2b02d75 (Implement context separator signing (#1252))
 )
 
 func FuzzActivatedHeight(f *testing.F) {
@@ -416,11 +404,7 @@ func FuzzListPubRandCommit(f *testing.F) {
 		require.NoError(t, err)
 
 		// register finality provider
-<<<<<<< HEAD
-		fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, sk)
-=======
-		fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, sk, "", "")
->>>>>>> 2b02d75 (Implement context separator signing (#1252))
+		fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, sk, "")
 		require.NoError(t, err)
 		bsKeeper.EXPECT().GetFinalityProvider(gomock.Any(), gomock.Eq(bip340PK.MustMarshal())).Return(fp, nil).AnyTimes()
 		bsKeeper.EXPECT().HasFinalityProvider(gomock.Any(), gomock.Eq(bip340PK.MustMarshal())).Return(true).AnyTimes()
