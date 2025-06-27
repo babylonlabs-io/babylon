@@ -12,8 +12,8 @@ querying their information, and enforcing integration policies defined by the Ba
 
 1.  [Concepts](#1-concepts)
 *   [1.1. Consumer/BSN](#11-consumerbsn)
-*   [1.2. Consumer Registration](#12-consumer-registration)
-*   [1.3. Consumer Types](#13-consumer-types)
+*   [1.2. Consumer Registration](#12-consumerbsn-registration)
+*   [1.3. Consumer Types](#13-consumerbsn-types)
 *   [1.4. Finality Provider Registry](#14-finality-provider-registry)
 *   [1.5. Permissioned vs. Permissionless Integration](#15-permissioned-vs-permissionless-integration)
 2.  [State](#2-state)
