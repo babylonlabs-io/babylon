@@ -1,4 +1,4 @@
-# BTC Staking Consumer Module (`btcstkconsumer`)
+# BTC Staking Consumer
 
 The `btcstkconsumer` module is a core component of the Babylon protocol responsible for managing the registration and
 lifecycle of external blockchains, known as consumers or BSNs (Bitcoin-Secured Networks). These BSNs leverage
@@ -11,7 +11,7 @@ querying their information, and enforcing integration policies defined by the Ba
 ## Table of Contents
 
 1.  [Concepts](#1-concepts)
-*   [1.1. Consumer](#11-consumer)
+*   [1.1. Consumer/BSN](#11-consumerbsn)
 *   [1.2. Consumer Registration](#12-consumer-registration)
 *   [1.3. Consumer Types](#13-consumer-types)
 *   [1.4. Finality Provider Registry](#14-finality-provider-registry)
@@ -35,7 +35,7 @@ querying their information, and enforcing integration policies defined by the Ba
 
 ### 1.1. Consumer/BSN
 
-{{/*TO DO: change all instances of consumer to bsn when code changed */}}
+<!--TO DO: change all instances of consumer to bsn when code changed -->
 
 A **Consumer/BSN** is any external blockchain or rollup that registers with Babylon to utilise its security services. The
 `btcstkconsumer` module maintains a unique record for each consumer.
@@ -223,7 +223,7 @@ babylond tx btcstkconsumer register-consumer "07-tendermint-0" "My Cosmos Chain"
 babylond tx btcstkconsumer register-consumer "my-rollup" "My Rollup" "A sample rollup" "wasm1..." --from <key-name>
         ```
 
-### 3.2. `MsgUpdateParams`
+### 3.2. MsgUpdateParams
 
 This message is used to update the module's parameters. It is a governance-gated operation. It is defined in `x/btcstkconsumer/types/tx.pb.go`.
 
@@ -254,7 +254,7 @@ at the beginning or end of a block.
 
 The module emits events upon successful execution of certain messages.
 
-### 5.1. `EventConsumerRegistered`
+### 5.1. EventConsumerRegistered
 
 This event is emitted after a new consumer is successfully registered via `MsgRegisterConsumer`. It is defined in `x/btcstkconsumer/types/events.pb.go`.
 
