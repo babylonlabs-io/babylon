@@ -18,7 +18,6 @@ import (
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
 	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
-	btcstakingtypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 	"github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
 	ibctmtypes "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
 )
@@ -667,7 +666,7 @@ func TestBadUnbondingFeeParams(t *testing.T) {
 	p.UnbondingFeeSat = -1
 	p.SlashingRate = sdkmath.LegacyNewDecWithPrec(1, 1)
 
-	prop := btcstakingtypes.MsgUpdateParams{
+	prop := bstypes.MsgUpdateParams{
 		Authority: appparams.AccGov.String(),
 		Params:    p,
 	}
@@ -702,9 +701,9 @@ func TestPostRegistrationDelegation(t *testing.T) {
 	driver.GenerateNewBlockAssertExecutionSuccess()
 
 	// Randomness timestamped
-	currnetEpochNunber := driver.GetEpoch().EpochNumber
+	currentEpochNumber := driver.GetEpoch().EpochNumber
 	driver.ProgressTillFirstBlockTheNextEpoch()
-	driver.FinializeCkptForEpoch(currnetEpochNunber)
+	driver.FinializeCkptForEpoch(currentEpochNumber)
 
 	// Send post-registration delegation i.e first on BTC, then to Babylon
 	msg := s1.CreateDelegationMessage(
