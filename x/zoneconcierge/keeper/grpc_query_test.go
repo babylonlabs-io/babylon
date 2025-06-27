@@ -7,7 +7,6 @@ import (
 	"github.com/babylonlabs-io/babylon/v3/app"
 	btclightclienttypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
-	ibctmtypes "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
@@ -23,51 +22,6 @@ type chainInfo struct {
 	numHeaders        uint64
 	numForkHeaders    uint64
 	headerStartHeight uint64
-}
-
-func FuzzChainList(f *testing.F) {
-	datagen.AddRandomSeedsToFuzzer(f, 10)
-
-	f.Fuzz(func(t *testing.T, seed int64) {
-		r := rand.New(rand.NewSource(seed))
-
-		babylonApp := app.Setup(t, false)
-		zcKeeper := babylonApp.ZoneConciergeKeeper
-		ctx := babylonApp.NewContext(false)
-
-		// invoke the hook a random number of times with random chain IDs
-		numHeaders := datagen.RandomInt(r, 100) + 1
-		allConsumerIDs := []string{}
-		for i := uint64(0); i < numHeaders; i++ {
-			var consumerID string
-			// simulate the scenario that some headers belong to the same chain
-			if i > 0 && datagen.OneInN(r, 2) {
-				consumerID = allConsumerIDs[r.Intn(len(allConsumerIDs))]
-			} else {
-				consumerID = datagen.GenRandomHexStr(r, 30)
-				allConsumerIDs = append(allConsumerIDs, consumerID)
-			}
-			header := datagen.GenRandomIBCTMHeader(r, 0)
-			zcKeeper.HandleHeaderWithValidCommit(ctx, datagen.GenRandomByteArray(r, 32), datagen.NewZCHeaderInfo(header, consumerID), false)
-		}
-
-		limit := datagen.RandomInt(r, len(allConsumerIDs)) + 1
-
-		// make query to get actual chain IDs
-		resp, err := zcKeeper.ChainList(ctx, &zctypes.QueryChainListRequest{
-			Pagination: &query.PageRequest{
-				Limit: limit,
-			},
-		})
-		require.NoError(t, err)
-		actualConsumerIDs := resp.ConsumerIds
-
-		require.Equal(t, limit, uint64(len(actualConsumerIDs)))
-		allConsumerIDs = zcKeeper.GetAllConsumerIDs(ctx)
-		for i := uint64(0); i < limit; i++ {
-			require.Equal(t, allConsumerIDs[i], actualConsumerIDs[i])
-		}
-	})
 }
 
 func FuzzHeader(f *testing.F) {
@@ -228,78 +182,6 @@ func FuzzListHeaders(f *testing.F) {
 		require.Equal(t, int(limit), len(resp.Headers))
 		for i := uint64(0); i < limit; i++ {
 			require.Equal(t, headers[i].Header.AppHash, resp.Headers[i].Hash)
-		}
-	})
-}
-
-func FuzzListEpochHeaders(f *testing.F) {
-	datagen.AddRandomSeedsToFuzzer(f, 10)
-
-	f.Fuzz(func(t *testing.T, seed int64) {
-		r := rand.New(rand.NewSource(seed))
-
-		babylonApp := app.Setup(t, false)
-		zcKeeper := babylonApp.ZoneConciergeKeeper
-		epochingKeeper := babylonApp.EpochingKeeper
-		ctx := babylonApp.NewContext(false)
-
-		hooks := zcKeeper.Hooks()
-
-		numReqs := datagen.RandomInt(r, 5) + 1
-
-		epochNumList := []uint64{datagen.RandomInt(r, 10) + 1}
-		nextHeightList := []uint64{0}
-		numHeadersList := []uint64{}
-		expectedHeadersMap := map[uint64][]*ibctmtypes.Header{}
-		numForkHeadersList := []uint64{}
-
-		// we test the scenario of ending an epoch for multiple times, in order to ensure that
-		// consecutive epoch infos do not affect each other.
-		for i := uint64(0); i < numReqs; i++ {
-			epochNum := epochNumList[i]
-			// enter a random epoch
-			if i == 0 {
-				for j := uint64(1); j < epochNum; j++ { // starting from epoch 1
-					epochingKeeper.IncEpoch(ctx)
-				}
-			} else {
-				for j := uint64(0); j < epochNum-epochNumList[i-1]; j++ {
-					epochingKeeper.IncEpoch(ctx)
-				}
-			}
-
-			// generate a random number of headers and fork headers
-			numHeadersList = append(numHeadersList, datagen.RandomInt(r, 100)+1)
-			numForkHeadersList = append(numForkHeadersList, datagen.RandomInt(r, 10)+1)
-			// trigger hooks to append these headers and fork headers
-			expectedHeaders, _ := SimulateNewHeadersAndForks(ctx, r, &zcKeeper, consumerID, nextHeightList[i], numHeadersList[i], numForkHeadersList[i])
-			expectedHeadersMap[epochNum] = expectedHeaders
-			// prepare nextHeight for the next request
-			nextHeightList = append(nextHeightList, nextHeightList[i]+numHeadersList[i])
-
-			// simulate the scenario that a random epoch has ended
-			hooks.AfterEpochEnds(ctx, epochNum)
-			// prepare epochNum for the next request
-			epochNumList = append(epochNumList, epochNum+datagen.RandomInt(r, 10)+1)
-		}
-
-		// attest the correctness of epoch info for each tested epoch
-		for i := uint64(0); i < numReqs; i++ {
-			epochNum := epochNumList[i]
-			// make request
-			req := &zctypes.QueryListEpochHeadersRequest{
-				ConsumerId: consumerID,
-				EpochNum:   epochNum,
-			}
-			resp, err := zcKeeper.ListEpochHeaders(ctx, req)
-			require.NoError(t, err)
-
-			// check if the headers are same as expected
-			headers := resp.Headers
-			require.Equal(t, len(expectedHeadersMap[epochNum]), len(headers))
-			for j := 0; j < len(expectedHeadersMap[epochNum]); j++ {
-				require.Equal(t, expectedHeadersMap[epochNum][j].Header.AppHash, headers[j].Hash)
-			}
 		}
 	})
 }
