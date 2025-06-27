@@ -218,12 +218,15 @@ string rollup_finality_contract_address = 5;
 ```bash
 # Register a Cosmos consumer
 babylond tx btcstkconsumer register-consumer "07-tendermint-0" "My Cosmos Chain" "A sample Cosmos chain" --from <key-name>
+```
 
 # Register a Rollup consumer
-babylond tx btcstkconsumer register-consumer "my-rollup" "My Rollup" "A sample rollup" "wasm1..." --from <key-name>
-        ```
 
-### 3.2. MsgUpdateParams
+``` bash
+babylond tx btcstkconsumer register-consumer "my-rollup" "My Rollup" "A sample rollup" "wasm1..." --from <key-name>
+```
+
+### 3.2. `MsgUpdateParams`
 
 This message is used to update the module's parameters. It is a governance-gated operation. It is defined in `x/btcstkconsumer/types/tx.pb.go`.
 
