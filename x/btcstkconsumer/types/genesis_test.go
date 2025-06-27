@@ -21,7 +21,7 @@ func TestGenesisState_Validate(t *testing.T) {
 	for range entriesCount {
 		consumer := datagen.GenRandomCosmosConsumerRegister(r)
 		consumers = append(consumers, consumer)
-		fp, err := datagen.GenRandomFinalityProvider(r)
+		fp, err := datagen.GenRandomFinalityProvider(r, "")
 		require.NoError(t, err)
 		fp.ConsumerId = consumer.ConsumerId
 		fps = append(fps, fp)

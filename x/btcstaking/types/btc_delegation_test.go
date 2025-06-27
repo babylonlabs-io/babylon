@@ -117,6 +117,7 @@ func FuzzBTCDelegation_SlashingTx(f *testing.F) {
 			&chaincfg.SimNetParams,
 			fpBTCPKs,
 			delSK,
+			"",
 			covenantSigners,
 			covenantPKs,
 			covenantQuorum,

@@ -444,7 +444,7 @@ func TestGenesisStateValidateBTCDelegationAndDelegator(t *testing.T) {
 	slashingPkScript, err := txscript.PayToAddrScript(slashingAddress)
 	require.NoError(t, err)
 
-	fp, err := datagen.GenRandomFinalityProvider(r)
+	fp, err := datagen.GenRandomFinalityProvider(r, "")
 	require.NoError(t, err)
 
 	startHeight := uint32(datagen.RandomInt(r, 100)) + 1
@@ -462,6 +462,7 @@ func TestGenesisStateValidateBTCDelegationAndDelegator(t *testing.T) {
 		&chaincfg.RegressionNetParams,
 		[]bbn.BIP340PubKey{*fp.BtcPk},
 		delSK,
+		"",
 		covenantSKs,
 		covenantPKs,
 		covenantQuorum,

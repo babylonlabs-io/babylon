@@ -26,12 +26,12 @@ func FuzzTestExportGenesis(f *testing.F) {
 		fpBTCPK := bbn.NewBIP340PubKeyFromBTCPK(btcPK)
 		blkHeight, startHeight, numPubRand := uint64(1), uint64(0), uint64(5)
 
-		randListInfo, _, err := datagen.GenRandomMsgCommitPubRandList(r, btcSK, startHeight, numPubRand)
+		randListInfo, _, err := datagen.GenRandomMsgCommitPubRandList(r, btcSK, "", startHeight, numPubRand)
 		require.NoError(t, err)
 
 		blockHash := datagen.GenRandomByteArray(r, 32)
 		signer := datagen.GenRandomAccount().Address
-		msgAddFinalitySig, err := datagen.NewMsgAddFinalitySig(signer, btcSK, startHeight, blkHeight, randListInfo, blockHash)
+		msgAddFinalitySig, err := datagen.NewMsgAddFinalitySig(signer, btcSK, "", startHeight, blkHeight, randListInfo, blockHash)
 		require.NoError(t, err)
 
 		allVotes := make([]*types.VoteSig, numPubRand)
@@ -119,7 +119,7 @@ func FuzzTestExportGenesis(f *testing.F) {
 		}
 
 		numFps := datagen.RandomInt(r, 10) + 1
-		fps := datagen.CreateNFinalityProviders(r, t, int(numFps))
+		fps := datagen.CreateNFinalityProviders(r, t, "", int(numFps))
 		vpFps := make(map[string]*types.VotingPowerFP, 0)
 		for _, fp := range fps {
 			vp := datagen.RandomInt(r, 1000000)
@@ -165,7 +165,7 @@ func FuzzTestInitGenesis(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 		k, ctx := keepertest.FinalityKeeper(t, nil, nil, nil)
-		gs, err := datagen.GenRandomFinalityGenesisState(r)
+		gs, err := datagen.GenRandomFinalityGenesisState(r, "")
 		require.NoError(t, err)
 
 		// Run the InitGenesis

@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	babylonApp "github.com/babylonlabs-io/babylon/v3/app"
+	"github.com/babylonlabs-io/babylon/v3/app/signingcontext"
 	testutil "github.com/babylonlabs-io/babylon/v3/testutil/btcstaking-helper"
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
 	keepertest "github.com/babylonlabs-io/babylon/v3/testutil/keeper"
@@ -222,10 +223,12 @@ func TestMissedBlockCounterGoesNegativeWithBitmapResetNew(t *testing.T) {
 	btcStkK, finalityK := app.BTCStakingKeeper, app.FinalityKeeper
 	msgSrvrBtcStk := btcstakingkeeper.NewMsgServerImpl(btcStkK)
 
+	signingContext := signingcontext.FpPopContextV0(ctx.ChainID(), app.BTCStakingKeeper.ModuleAddress())
+
 	// Create finality provider
 	fpBtcSK, _, err := datagen.GenRandomBTCKeyPair(r)
 	require.NoError(t, err)
-	fpMsg, err := datagen.GenRandomCreateFinalityProviderMsgWithBTCBabylonSKs(r, fpBtcSK, datagen.GenRandomAddress())
+	fpMsg, err := datagen.GenRandomCreateFinalityProviderMsgWithBTCBabylonSKs(r, fpBtcSK, signingContext, datagen.GenRandomAddress())
 	require.NoError(t, err)
 	_, err = msgSrvrBtcStk.CreateFinalityProvider(ctx, fpMsg)
 	require.NoError(t, err)

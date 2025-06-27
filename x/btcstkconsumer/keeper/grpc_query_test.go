@@ -117,7 +117,7 @@ func FuzzFinalityProviders(f *testing.F) {
 		consumerID := datagen.GenRandomHexStr(r, 30)
 		fpsMap := make(map[string]*btcstaking.FinalityProvider)
 		for i := 0; i < int(datagen.RandomInt(r, 10)+1); i++ {
-			fp, err := datagen.GenRandomFinalityProvider(r)
+			fp, err := datagen.GenRandomFinalityProvider(r, "")
 			require.NoError(t, err)
 			fp.ConsumerId = consumerID
 
@@ -186,7 +186,7 @@ func FuzzFinalityProvider(f *testing.F) {
 		consumerID := datagen.GenRandomHexStr(r, 30)
 		var existingFp string
 		for i := 0; i < int(datagen.RandomInt(r, 10)+1); i++ {
-			fp, err := datagen.GenRandomFinalityProvider(r)
+			fp, err := datagen.GenRandomFinalityProvider(r, "")
 			require.NoError(t, err)
 			fp.ConsumerId = consumerID
 
@@ -217,7 +217,7 @@ func FuzzFinalityProvider(f *testing.F) {
 		}
 
 		// check some random non-existing guy
-		fp, err := datagen.GenRandomFinalityProvider(r)
+		fp, err := datagen.GenRandomFinalityProvider(r, "")
 		require.NoError(t, err)
 		req := types.QueryFinalityProviderRequest{ConsumerId: consumerID, FpBtcPkHex: fp.BtcPk.MarshalHex()}
 		respNonExists, err := bscKeeper.FinalityProvider(ctx, &req)
@@ -249,7 +249,7 @@ func FuzzFinalityProviderConsumer(f *testing.F) {
 		consumerID := datagen.GenRandomHexStr(r, 30)
 		var existingFp string
 		for i := 0; i < int(datagen.RandomInt(r, 10)+1); i++ {
-			fp, err := datagen.GenRandomFinalityProvider(r)
+			fp, err := datagen.GenRandomFinalityProvider(r, "")
 			require.NoError(t, err)
 			fp.ConsumerId = consumerID
 
@@ -277,7 +277,7 @@ func FuzzFinalityProviderConsumer(f *testing.F) {
 		require.Equal(t, consumerID, resp.ConsumerId)
 
 		// check some random non-existing guy
-		fp, err := datagen.GenRandomFinalityProvider(r)
+		fp, err := datagen.GenRandomFinalityProvider(r, "")
 		require.NoError(t, err)
 		req = types.QueryFinalityProviderConsumerRequest{FpBtcPkHex: fp.BtcPk.MarshalHex()}
 		respNonExists, err := bscKeeper.FinalityProviderConsumer(ctx, &req)

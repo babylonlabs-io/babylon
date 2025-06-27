@@ -343,7 +343,7 @@ func (s *FinalityContractTestSuite) Test5CommitPublicRandomness() {
 	numPubRand := uint64(100)
 	commitStartHeight := uint64(1)
 	var msgCommitPubRandList *ftypes.MsgCommitPubRandList
-	s.randListInfo, msgCommitPubRandList, err = datagen.GenRandomMsgCommitPubRandList(s.r, s.consumerBtcSk, commitStartHeight, numPubRand)
+	s.randListInfo, msgCommitPubRandList, err = datagen.GenRandomMsgCommitPubRandList(s.r, s.consumerBtcSk, "", commitStartHeight, numPubRand)
 	s.NoError(err)
 
 	nonValidatorNode.CommitPubRandListConsumer(

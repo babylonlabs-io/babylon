@@ -14,7 +14,7 @@ import (
 
 func TestGenesisState_Validate(t *testing.T) {
 	r := rand.New(rand.NewSource(time.Now().Unix()))
-	gs, err := datagen.GenRandomFinalityGenesisState(r)
+	gs, err := datagen.GenRandomFinalityGenesisState(r, "")
 	require.NoError(t, err)
 	// Skip validation of voting power distribution cache for testing
 	gs.VpDstCache = nil

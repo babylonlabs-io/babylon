@@ -7,6 +7,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/babylonlabs-io/babylon/v3/app/signingcontext"
+
 	"math/rand"
 	"path/filepath"
 	"testing"
@@ -1065,4 +1067,20 @@ func (d *BabylonAppDriver) CreateFinalityProviderForConsumer(consumer *Consumer)
 	fp.RegisterFinalityProvider(consumer.ID)
 
 	return fp
+}
+
+func (d *BabylonAppDriver) FpPopContext() string {
+	return signingcontext.FpPopContextV0(d.App.ChainID(), d.App.BTCStakingKeeper.ModuleAddress())
+}
+
+func (d *BabylonAppDriver) StakerPopContext() string {
+	return signingcontext.StakerPopContextV0(d.App.ChainID(), d.App.BTCStakingKeeper.ModuleAddress())
+}
+
+func (d *BabylonAppDriver) FpRandCommitContext() string {
+	return signingcontext.FpRandCommitContextV0(d.App.ChainID(), d.App.FinalityKeeper.ModuleAddress())
+}
+
+func (d *BabylonAppDriver) FpFinVoteContext() string {
+	return signingcontext.FpFinVoteContextV0(d.App.ChainID(), d.App.FinalityKeeper.ModuleAddress())
 }

@@ -131,6 +131,9 @@ message MsgEquivocationEvidence {
     // fork_finality_sig is the finality signature to the fork block
     // where finality signature is an EOTS signature
     bytes fork_finality_sig = 8 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/v3/types.SchnorrEOTSSig" ];
+    // signing_context is the context in which the finality signatures were used.
+    // It must be hex encoded 32 bytes, of the sha256 hash of the context string
+    string signing_context = 9;
 }
 
 // MsgEquivocationEvidenceResponse is the response for MsgEquivocationEvidence

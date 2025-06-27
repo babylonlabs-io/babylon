@@ -9,12 +9,14 @@ import (
 	"path/filepath"
 	"time"
 
+	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/stretchr/testify/suite"
 
 	govv1 "cosmossdk.io/api/cosmos/gov/v1"
 	"github.com/babylonlabs-io/babylon/v3/app"
+	"github.com/babylonlabs-io/babylon/v3/app/signingcontext"
 	"github.com/babylonlabs-io/babylon/v3/crypto/eots"
 	"github.com/babylonlabs-io/babylon/v3/test/e2e/configurer"
 	"github.com/babylonlabs-io/babylon/v3/test/e2e/configurer/chain"
@@ -247,7 +249,10 @@ func (s *GovFinalityResume) Test3CommitPublicRandomnessAndSubmitFinalitySignatur
 	// commit public randomness list
 	numPubRand := uint64(100)
 	commitStartHeight := uint64(1)
-	randListInfo, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(s.r, s.fptBTCSK, commitStartHeight, numPubRand)
+
+	commitRandContext := signingcontext.FpRandCommitContextV0(nonValidatorNode.ChainID(), appparams.AccFinality.String())
+
+	randListInfo, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(s.r, s.fptBTCSK, commitRandContext, commitStartHeight, numPubRand)
 	s.NoError(err)
 	nonValidatorNode.CommitPubRandList(
 		msgCommitPubRandList.FpBtcPk,
@@ -295,7 +300,13 @@ func (s *GovFinalityResume) Test3CommitPublicRandomnessAndSubmitFinalitySignatur
 	appHash := blockToVote.AppHash
 
 	idx := activatedHeight - commitStartHeight
-	msgToSign := append(sdk.Uint64ToBigEndian(activatedHeight), appHash...)
+
+	var msgToSign []byte
+	voteContextBytes := []byte(signingcontext.FpFinVoteContextV0(nonValidatorNode.ChainID(), appparams.AccFinality.String()))
+	msgToSign = append(msgToSign, voteContextBytes...)
+	msgToSign = append(msgToSign, sdk.Uint64ToBigEndian(activatedHeight)...)
+	msgToSign = append(msgToSign, appHash...)
+
 	// generate EOTS signature
 	sig, err := eots.Sign(s.fptBTCSK, randListInfo.SRList[idx], msgToSign)
 	s.NoError(err)
