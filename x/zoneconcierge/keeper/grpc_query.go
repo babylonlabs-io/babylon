@@ -22,31 +22,6 @@ func (k Keeper) Params(c context.Context, req *types.QueryParamsRequest) (*types
 	return &types.QueryParamsResponse{Params: k.GetParams(ctx)}, nil
 }
 
-func (k Keeper) ChainList(c context.Context, req *types.QueryChainListRequest) (*types.QueryChainListResponse, error) {
-	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid request")
-	}
-
-	ctx := sdk.UnwrapSDKContext(c)
-
-	ConsumerIds := []string{}
-	store := k.chainInfoStore(ctx)
-	pageRes, err := query.Paginate(store, req.Pagination, func(key, value []byte) error {
-		ConsumerId := string(key)
-		ConsumerIds = append(ConsumerIds, ConsumerId)
-		return nil
-	})
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
-	resp := &types.QueryChainListResponse{
-		ConsumerIds: ConsumerIds,
-		Pagination:  pageRes,
-	}
-	return resp, nil
-}
-
 // Header returns the header and fork headers at a given height
 func (k Keeper) Header(c context.Context, req *types.QueryHeaderRequest) (*types.QueryHeaderResponse, error) {
 	if req == nil {

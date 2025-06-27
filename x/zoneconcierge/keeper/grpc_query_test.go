@@ -24,51 +24,6 @@ type chainInfo struct {
 	headerStartHeight uint64
 }
 
-func FuzzChainList(f *testing.F) {
-	datagen.AddRandomSeedsToFuzzer(f, 10)
-
-	f.Fuzz(func(t *testing.T, seed int64) {
-		r := rand.New(rand.NewSource(seed))
-
-		babylonApp := app.Setup(t, false)
-		zcKeeper := babylonApp.ZoneConciergeKeeper
-		ctx := babylonApp.NewContext(false)
-
-		// invoke the hook a random number of times with random chain IDs
-		numHeaders := datagen.RandomInt(r, 100) + 1
-		allConsumerIDs := []string{}
-		for i := uint64(0); i < numHeaders; i++ {
-			var consumerID string
-			// simulate the scenario that some headers belong to the same chain
-			if i > 0 && datagen.OneInN(r, 2) {
-				consumerID = allConsumerIDs[r.Intn(len(allConsumerIDs))]
-			} else {
-				consumerID = datagen.GenRandomHexStr(r, 30)
-				allConsumerIDs = append(allConsumerIDs, consumerID)
-			}
-			header := datagen.GenRandomIBCTMHeader(r, 0)
-			zcKeeper.HandleHeaderWithValidCommit(ctx, datagen.GenRandomByteArray(r, 32), datagen.NewZCHeaderInfo(header, consumerID), false)
-		}
-
-		limit := datagen.RandomInt(r, len(allConsumerIDs)) + 1
-
-		// make query to get actual chain IDs
-		resp, err := zcKeeper.ChainList(ctx, &zctypes.QueryChainListRequest{
-			Pagination: &query.PageRequest{
-				Limit: limit,
-			},
-		})
-		require.NoError(t, err)
-		actualConsumerIDs := resp.ConsumerIds
-
-		require.Equal(t, limit, uint64(len(actualConsumerIDs)))
-		allConsumerIDs = zcKeeper.GetAllConsumerIDs(ctx)
-		for i := uint64(0); i < limit; i++ {
-			require.Equal(t, allConsumerIDs[i], actualConsumerIDs[i])
-		}
-	})
-}
-
 func FuzzHeader(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 
