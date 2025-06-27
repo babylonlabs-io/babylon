@@ -6,11 +6,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-<<<<<<< HEAD
-=======
-
-	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
->>>>>>> 4b5d1ea (add post-registration flow to replay tests (#1254))
 
 	"math/rand"
 	"path/filepath"
