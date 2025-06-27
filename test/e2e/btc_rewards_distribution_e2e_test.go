@@ -315,7 +315,7 @@ func (s *BtcRewardsDistribution) Test4CommitPublicRandomnessAndSealed() {
 			s.fp1RandListInfo.SRList[s.finalityIdx],
 			&s.fp1RandListInfo.PRList[s.finalityIdx],
 			*s.fp1RandListInfo.ProofList[s.finalityIdx].ToProto(),
-			signingcontext.FpRandCommitContextV0(n1.ChainID(), appparams.AccFinality.String()),
+			signingcontext.FpFinVoteContextV0(n1.ChainID(), appparams.AccFinality.String()),
 			fmt.Sprintf("--from=%s", wFp1),
 		)
 	}()
@@ -329,7 +329,7 @@ func (s *BtcRewardsDistribution) Test4CommitPublicRandomnessAndSealed() {
 			s.fp2RandListInfo.SRList[s.finalityIdx],
 			&s.fp2RandListInfo.PRList[s.finalityIdx],
 			*s.fp2RandListInfo.ProofList[s.finalityIdx].ToProto(),
-			signingcontext.FpRandCommitContextV0(n2.ChainID(), appparams.AccFinality.String()),
+			signingcontext.FpFinVoteContextV0(n2.ChainID(), appparams.AccFinality.String()),
 			fmt.Sprintf("--from=%s", wFp2),
 		)
 	}()
