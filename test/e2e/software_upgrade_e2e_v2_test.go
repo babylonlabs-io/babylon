@@ -366,7 +366,7 @@ func (s *SoftwareUpgradeV2TestSuite) preUpgradeWithdrawRewardsBtcDel(n *chain.No
 	CheckWithdrawReward(s.T(), n, wDel1, s.del1Addr)
 	CheckWithdrawReward(s.T(), n, wDel2, s.del2Addr)
 
-	s.AddFinalityVoteUntilCurrentHeight(n)
+	s.AddFinalityVoteUntilCurrentHeight(n, "")
 }
 
 // QueryRewardGauges returns the rewards available for fp1, fp2, del1, del2
@@ -424,7 +424,7 @@ func (s *SoftwareUpgradeV2TestSuite) QueryRewardGauges(n *chain.NodeConfig) (
 	return fp1RewardGauge, btcDel1RewardGauge, btcDel2RewardGauge
 }
 
-func (s *SoftwareUpgradeV2TestSuite) GetRewardDifferences(blocksDiff uint64) (
+func (s *SoftwareUpgradeV2TestSuite) GetRewardDifferences(blocksDiff uint64, signingContext string) (
 	fp1DiffRewards, del1DiffRewards, del2DiffRewards sdk.Coins,
 ) {
 	chainA := s.configurer.GetChainConfig(0)
@@ -435,7 +435,7 @@ func (s *SoftwareUpgradeV2TestSuite) GetRewardDifferences(blocksDiff uint64) (
 	// wait a few block of rewards to calculate the difference
 	for i := 1; i <= int(blocksDiff); i++ {
 		if i%2 == 0 {
-			s.AddFinalityVoteUntilCurrentHeight(n1)
+			s.AddFinalityVoteUntilCurrentHeight(n1, signingContext)
 		}
 		n1.WaitForNextBlock()
 	}
@@ -451,11 +451,11 @@ func (s *SoftwareUpgradeV2TestSuite) GetRewardDifferences(blocksDiff uint64) (
 	del1DiffRewards = btcDel1RewardGauge.Coins.Sub(btcDel1RewardGaugePrev.Coins...)
 	del2DiffRewards = btcDel2RewardGauge.Coins.Sub(btcDel2RewardGaugePrev.Coins...)
 
-	s.AddFinalityVoteUntilCurrentHeight(n1)
+	s.AddFinalityVoteUntilCurrentHeight(n1, signingContext)
 	return fp1DiffRewards, del1DiffRewards, del2DiffRewards
 }
 
-func (s *SoftwareUpgradeV2TestSuite) AddFinalityVoteUntilCurrentHeight(n *chain.NodeConfig) {
+func (s *SoftwareUpgradeV2TestSuite) AddFinalityVoteUntilCurrentHeight(n *chain.NodeConfig, signingContext string) {
 	currentBlock := n.LatestBlockNumber()
 
 	accN1, err := n.QueryAccount(s.fp1.Addr)
@@ -471,13 +471,13 @@ func (s *SoftwareUpgradeV2TestSuite) AddFinalityVoteUntilCurrentHeight(n *chain.
 			fmt.Sprintf("--sequence=%d", accSequenceN1),
 			fmt.Sprintf("--from=%s", wFp1),
 		}
-		s.AddFinalityVote(n, n1Flags)
+		s.AddFinalityVote(n, n1Flags, signingContext)
 
 		accSequenceN1++
 	}
 }
 
-func (s *SoftwareUpgradeV2TestSuite) AddFinalityVote(n *chain.NodeConfig, flagsFp1 []string) (appHash bytes.HexBytes) {
+func (s *SoftwareUpgradeV2TestSuite) AddFinalityVote(n *chain.NodeConfig, flagsFp1 []string, signingContext string) (appHash bytes.HexBytes) {
 	s.finalityIdx++
 	s.finalityBlockHeightVoted++
 
@@ -488,7 +488,7 @@ func (s *SoftwareUpgradeV2TestSuite) AddFinalityVote(n *chain.NodeConfig, flagsF
 		s.fp1RandListInfo.SRList[s.finalityIdx],
 		&s.fp1RandListInfo.PRList[s.finalityIdx],
 		*s.fp1RandListInfo.ProofList[s.finalityIdx].ToProto(),
-		signingcontext.FpFinVoteContextV0(n.ChainID(), appparams.AccFinality.String()),
+		signingContext,
 		flagsFp1...,
 	)
 
@@ -501,8 +501,10 @@ func (s *SoftwareUpgradeV2TestSuite) Test2CheckRewardsAfterUpgrade() {
 	n1, err := s.configurer.GetChainConfig(0).GetNodeAtIndex(1)
 	s.NoError(err)
 
+	signingContext := signingcontext.FpFinVoteContextV0(n1.ChainID(), appparams.AccFinality.String())
+
 	n1.WaitForNextBlock()
-	s.AddFinalityVoteUntilCurrentHeight(n1)
+	s.AddFinalityVoteUntilCurrentHeight(n1, signingContext)
 
 	// Current setup of voting power
 	// (fp1, del1) => 2_00000000
@@ -514,7 +516,7 @@ func (s *SoftwareUpgradeV2TestSuite) Test2CheckRewardsAfterUpgrade() {
 	// (del2) => 4_00000000
 
 	// gets the difference in rewards in 4 blocks range
-	fp1DiffRewards, del1DiffRewards, del2DiffRewards := s.GetRewardDifferences(4)
+	fp1DiffRewards, del1DiffRewards, del2DiffRewards := s.GetRewardDifferences(4, signingContext)
 
 	// Check the difference in the delegators
 	// the del1 should receive ~50% of the rewards received by del2
