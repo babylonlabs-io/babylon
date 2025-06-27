@@ -38,15 +38,15 @@ querying their information, and enforcing integration policies defined by the Ba
 <!--TO DO: change all instances of consumer to bsn when code changed -->
 
 A **Consumer/BSN** is any external blockchain or rollup that registers with Babylon to utilise its security services. The
-`btcstkconsumer` module maintains a unique record for each consumer.
+`btcstkconsumer` module maintains a unique record for each BSN.
 
-### 1.2. Consumer Registration
+### 1.2. Consumer/BSN Registration
 
-This is the process by which a new consumer/BSN is officially recognised by Babylon. The registration process
-captures essential metadata about the consumer, which varies depending on its integration type. This process is initiated
+This is the process by which a new BSN is officially recognised by Babylon. The registration process
+captures essential metadata about the BSN, which varies depending on its integration type. This process is initiated
 via a `MsgRegisterConsumer` transaction.
 
-### 1.3. Consumer Types
+### 1.3. Consumer/BSN Types
 
 The module supports two primary types of BSN integrations:
 
@@ -54,35 +54,35 @@ The module supports two primary types of BSN integrations:
 
 *   **Description**: A blockchain built with the Cosmos SDK that integrates with Babylon via an IBC channel.
 *   **Identifier (`consumer_id`)**: The IBC Client ID (`e.g., 07-cometbft-0`) that Babylon uses to track the state of
-the consumer chain.
+    the BSN chain.
 *   **Integration Logic**: The module verifies the existence of the specified IBC client on Babylon before completing
-the registration.
+    the registration.
 
 #### 1.3.2. Rollup Consumer/BSN
 
 *   **Description**: A rollup (e.g., an optimistic or ZK-rollup) that uses a smart contract on Babylon for its data
-availability or finality needs.
+    availability or finality needs.
 *   **Identifier (`consumer_id`)**: A unique, human-readable string that identifies the rollup (e.g., `my-rollup-chain-1`).
 *   **Integration Logic**: The registration requires the address of a `RollupFinalityContractAddress`,
-which must be a valid, deployed CosmWasm contract on the Babylon chain. The module verifies the contract's existence.
+    which must be a valid, deployed CosmWasm contract on the Babylon chain. The module verifies the contract's existence.
 
 ### 1.4. Finality Provider Registry
 
 While the main `x/btcstaking` module manages the global set of Finality Providers (FPs), the `btcstkconsumer` module
-maintains a separate, crucial mapping: it links each FP to the specific consumer it serves. This ensures that rewards,
-slashing, and other operations can be correctly attributed to the consumer that an FP is securing.
+maintains a separate, crucial mapping: it links each FP to the specific BSN it serves. This ensures that rewards,
+slashing, and other operations can be correctly attributed to the BSN that an FP is securing.
 
 The registry is designed for efficient lookups:
-1.  Query all FPs for a given consumer.
-2.  Query the consumer that a specific FP is registered to.
+1.  Query all FPs for a given BSN.
+2.  Query the BSN that a specific FP is registered to.
 
 ### 1.5. Permissioned vs. Permissionless Integration
 
 The module can operate in two modes, controlled by the `PermissionedIntegration` parameter:
 
-*   **Permissionless (Default)**: Any user can submit a `MsgRegisterConsumer` transaction to register a new consumer,
+*   **Permissionless (Default)**: Any user can submit a `MsgRegisterConsumer` transaction to register a new BSN,
 provided the integration requirements (e.g., existing IBC client or Wasm contract) are met.
-*   **Permissioned**: New consumer registrations can only be executed through a governance proposal. The `signer` of
+*   **Permissioned**: New BSN registrations can only be executed through a governance proposal. The `signer` of
 the `MsgRegisterConsumer` must be the governance module's account address. This allows the Babylon DAO to curate
 which chains can connect.
 
@@ -109,9 +109,9 @@ bool permissioned_integration = 1;
 }
 ```
 
-| Parameter | Type | Default | Description |
-| :--- | :--- | :--- | :--- |
-| `PermissionedIntegration` | `bool` | `false` | If `true`, new consumer registration requires a governance proposal. |
+| Parameter | Type | Default | Description                                                     |
+| :--- | :--- | :--- |:----------------------------------------------------------------|
+| `PermissionedIntegration` | `bool` | `false` | If `true`, new BSN registration requires a governance proposal. |
 
 ### 2.2. Consumer Registry
 
@@ -122,7 +122,7 @@ A registry of all consumers that have been successfully onboarded to Babylon.
 *   **Value**: Marshaled `ConsumerRegister` object.
 
 The `ConsumerRegister` object, defined in `x/btcstkconsumer/types/btcstkconsumer.pb.go`, captures the core information
-about a consumer.
+about a BSN.
 
 ```protobuf
 // x/btcstkconsumer/types/btcstkconsumer.pb.go
@@ -159,24 +159,24 @@ string finality_contract_address = 1;
 
 ### 2.3. Finality Provider Mappings
 
-The module maintains two stores to manage the relationship between consumers and their dedicated finality providers.
+The module maintains two stores to manage the relationship between BSNs and their dedicated finality providers.
 
-#### 2.3.1. Finality Providers per Consumer
+#### 2.3.1. Finality Providers per Consumer/BSN
 
-This store maps a consumer to its set of finality providers.
+This store maps a BSNs to its set of finality providers.
 
 *   **State Object**: `btcstaking.FinalityProvider`
 *   **Store Key**: `types.ConsumerFinalityProviderKey (0x02) | []byte(consumerID) | fpBTCPK.MustMarshal()`
 *   **Value**: Marshaled `FinalityProvider` object.
-*   **Description**: Allows for efficient retrieval of all FPs registered to a specific consumer.
+*   **Description**: Allows for efficient retrieval of all FPs registered to a specific BSN.
 
-#### 2.3.2. Consumer per Finality Provider
+#### 2.3.2. Consumer/BSN per Finality Provider
 
-This store serves as a reverse index to quickly find which consumer a given finality provider belongs to.
+This store serves as a reverse index to quickly find which BSN a given finality provider belongs to.
 
 *   **Store Key**: `types.ConsumerFinalityProviderChainKey (0x03) | fpBTCPK.MustMarshal()`
 *   **Value**: `[]byte(consumerID)`
-*   **Description**: Crucial for operations that start with an FP and need to identify its consumer context.
+*   **Description**: Crucial for operations that start with an FP and need to identify its BSN context.
 
 ## 3. Messages
 
@@ -184,12 +184,12 @@ The module exposes the following messages to trigger state transitions.
 
 ### 3.1. `MsgRegisterConsumer`
 
-This message is used to register a new consumer chain with Babylon. It is defined in `x/btcstkconsumer/types/tx.pb.go`.
+This message is used to register a new BSN chain with Babylon. It is defined in `x/btcstkconsumer/types/tx.pb.go`.
 
 ```protobuf
 // x/btcstkconsumer/types/tx.pb.go
 
-// MsgRegisterConsumer defines a message for registering Consumers to the btcstkconsumer module.
+// MsgRegisterConsumer defines a message for registering BSNs to the btcstkconsumer module.
 message MsgRegisterConsumer {
 string signer = 1;
 // consumer_id is the ID of the consumer
@@ -207,24 +207,12 @@ string rollup_finality_contract_address = 5;
 **Validation & Logic:**
 1.  The `ConsumerId`, `ConsumerName`, and `ConsumerDescription` fields cannot be empty.
 2.  If `PermissionedIntegration` is `true`, the `Signer` must be the governance module's authority address.
-3.  If `RollupFinalityContractAddress` is provided, the message is handled as a **Rollup Consumer**:
+3.  If `RollupFinalityContractAddress` is provided, the message is handled as a **Rollup Consumer/BSN**:
 *   The module verifies that the address corresponds to an existing CosmWasm contract.
-4.  If `RollupFinalityContractAddress` is empty, it is handled as a **Cosmos Consumer**:
+4.  If `RollupFinalityContractAddress` is empty, it is handled as a **Cosmos Consumer/BSN**:
 *   The module verifies that `ConsumerId` corresponds to an existing IBC client state.
 5.  It checks that the `ConsumerId` is not already registered to prevent duplicates.
 6.  On success, it persists the `ConsumerRegister` object and emits an `EventConsumerRegistered`.
-
-**CLI Usage:**
-```bash
-# Register a Cosmos consumer
-babylond tx btcstkconsumer register-consumer "07-tendermint-0" "My Cosmos Chain" "A sample Cosmos chain" --from <key-name>
-```
-
-# Register a Rollup consumer
-
-``` bash
-babylond tx btcstkconsumer register-consumer "my-rollup" "My Rollup" "A sample rollup" "wasm1..." --from <key-name>
-```
 
 ### 3.2. `MsgUpdateParams`
 
@@ -259,7 +247,8 @@ The module emits events upon successful execution of certain messages.
 
 ### 5.1. EventConsumerRegistered
 
-This event is emitted after a new consumer is successfully registered via `MsgRegisterConsumer`. It is defined in `x/btcstkconsumer/types/events.pb.go`.
+This event is emitted after a new consumer/BSN is successfully registered via `MsgRegisterConsumer`. It is defined in 
+`x/btcstkconsumer/types/events.pb.go`.
 
 ```protobuf
 // x/btcstkconsumer/types/events.pb.go
@@ -279,7 +268,7 @@ RollupConsumerMetadata rollup_consumer_metadata = 5;
 }
 ```
 
-*   `consumer_type`: Indicates whether the consumer is `COSMOS` (0) or `ROLLUP` (1).
+*   `consumer_type`: Indicates whether the BSN is `COSMOS` (0) or `ROLLUP` (1).
 *   `rollup_consumer_metadata`: Contains the rollup's finality contract address if the type is `ROLLUP`.
 
 ## 6. Queries
@@ -298,9 +287,9 @@ Retrieves the current parameters of the module.
 
 ### 6.2. Consumer Queries
 
-#### List All Registered Consumers
+#### List All Registered Consumers/BSNs
 
-Returns a paginated list of all consumers registered with Babylon.
+Returns a paginated list of all Bsns registered with Babylon.
 
 | Interface | Method/Endpoint/Command |
 | :--- | :--- |
@@ -308,7 +297,7 @@ Returns a paginated list of all consumers registered with Babylon.
 | **REST** | `GET /babylon/btcstkconsumer/v1/consumer_registry_list` |
 | **CLI** | `babylond query btcstkconsumer registered-consumers` |
 
-#### Get a Specific Consumer's Information
+#### Get a Specific Consumer/BSN's Information
 
 Returns the registration details for one or more specified consumer IDs.
 
@@ -320,9 +309,9 @@ Returns the registration details for one or more specified consumer IDs.
 
 ### 6.3. Finality Provider Queries
 
-#### List Finality Providers for a Consumer
+#### List Finality Providers for a Consumer/BSN
 
-Returns a paginated list of all finality providers registered to a specific consumer.
+Returns a paginated list of all finality providers registered to a specific BSN.
 
 | Interface | Method/Endpoint/Command |
 | :--- | :--- |
@@ -333,7 +322,7 @@ Returns a paginated list of all finality providers registered to a specific cons
 #### Get a Specific Finality Provider for a Consumer
 
 Returns the details for a single finality provider, identified by its BTC public key, within the context of a specific
-consumer.
+BSN.
 
 | Interface | Method/Endpoint/Command |
 | :--- | :--- |
@@ -343,7 +332,7 @@ consumer.
 
 #### Find the Consumer for a Finality Provider
 
-Returns the consumer ID that a specific finality provider (identified by its BTC public key) is registered to.
+Returns the BSN ID that a specific finality provider (identified by its BTC public key) is registered to.
 
 | Interface | Method/Endpoint/Command |
 | :--- | :--- |
