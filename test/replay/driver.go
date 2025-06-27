@@ -7,12 +7,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-<<<<<<< HEAD
-=======
-	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
 	"github.com/babylonlabs-io/babylon/v3/app/signingcontext"
 
->>>>>>> 2b02d75 (Implement context separator signing (#1252))
 	"math/rand"
 	"path/filepath"
 	"testing"
