@@ -15,8 +15,9 @@ import (
 
 type (
 	Keeper struct {
-		cdc          codec.BinaryCodec
-		storeService corestoretypes.KVStoreService
+		cdc                   codec.BinaryCodec
+		storeService          corestoretypes.KVStoreService
+		finalityModuleAddress string
 
 		BTCStakingKeeper    types.BTCStakingKeeper
 		IncentiveKeeper     types.IncentiveKeeper
@@ -38,12 +39,14 @@ func NewKeeper(
 	btcstakingKeeper types.BTCStakingKeeper,
 	incentiveKeeper types.IncentiveKeeper,
 	checkpointingKeeper types.CheckpointingKeeper,
+	finalityModuleAddress string,
 	authority string,
 ) Keeper {
 	sb := collections.NewSchemaBuilder(storeService)
 	return Keeper{
-		cdc:          cdc,
-		storeService: storeService,
+		cdc:                   cdc,
+		storeService:          storeService,
+		finalityModuleAddress: finalityModuleAddress,
 
 		BTCStakingKeeper:    btcstakingKeeper,
 		IncentiveKeeper:     incentiveKeeper,
@@ -99,4 +102,8 @@ func (k Keeper) IsFinalityActive(ctx context.Context) (activated bool) {
 
 	_, err := k.GetBTCStakingActivatedHeight(ctx)
 	return err == nil
+}
+
+func (k Keeper) ModuleAddress() string {
+	return k.finalityModuleAddress
 }

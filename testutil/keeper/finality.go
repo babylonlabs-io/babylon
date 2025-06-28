@@ -43,6 +43,7 @@ func FinalityKeeperWithStore(
 		bsKeeper,
 		iKeeper,
 		ckptKeeper,
+		appparams.AccFinality.String(),
 		appparams.AccGov.String(),
 	)
 

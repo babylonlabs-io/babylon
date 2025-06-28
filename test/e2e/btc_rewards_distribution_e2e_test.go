@@ -10,6 +10,7 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
+	appparams "github.com/babylonlabs-io/babylon/v2/app/params"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/cometbft/cometbft/libs/bytes"
@@ -18,6 +19,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"golang.org/x/sync/errgroup"
 
+	"github.com/babylonlabs-io/babylon/v2/app/signingcontext"
 	"github.com/babylonlabs-io/babylon/v2/crypto/eots"
 	"github.com/babylonlabs-io/babylon/v2/test/e2e/configurer"
 	"github.com/babylonlabs-io/babylon/v2/test/e2e/configurer/chain"
@@ -143,6 +145,7 @@ func (s *BtcRewardsDistribution) Test1CreateFinalityProviders() {
 		s.fp1BTCSK,
 		n1,
 		s.fp1Addr,
+		signingcontext.FpPopContextV0(n1.ChainID(), appparams.AccBTCStaking.String()),
 	)
 	s.NotNil(s.fp1)
 
@@ -152,6 +155,7 @@ func (s *BtcRewardsDistribution) Test1CreateFinalityProviders() {
 		s.fp2BTCSK,
 		n2,
 		s.fp2Addr,
+		signingcontext.FpPopContextV0(n2.ChainID(), appparams.AccBTCStaking.String()),
 	)
 	s.NotNil(s.fp2)
 
@@ -223,11 +227,13 @@ func (s *BtcRewardsDistribution) Test4CommitPublicRandomnessAndSealed() {
 	// commit public randomness list
 	commitStartHeight := uint64(5)
 
-	fp1RandListInfo, fp1CommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(s.r, s.fp1BTCSK, commitStartHeight, numPubRand)
+	randCommitContext := signingcontext.FpRandCommitContextV0(n1.ChainID(), appparams.AccFinality.String())
+
+	fp1RandListInfo, fp1CommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(s.r, s.fp1BTCSK, randCommitContext, commitStartHeight, numPubRand)
 	s.NoError(err)
 	s.fp1RandListInfo = fp1RandListInfo
 
-	fp2RandListInfo, fp2CommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(s.r, s.fp2BTCSK, commitStartHeight, numPubRand)
+	fp2RandListInfo, fp2CommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(s.r, s.fp2BTCSK, randCommitContext, commitStartHeight, numPubRand)
 	s.NoError(err)
 	s.fp2RandListInfo = fp2RandListInfo
 
@@ -309,6 +315,7 @@ func (s *BtcRewardsDistribution) Test4CommitPublicRandomnessAndSealed() {
 			s.fp1RandListInfo.SRList[s.finalityIdx],
 			&s.fp1RandListInfo.PRList[s.finalityIdx],
 			*s.fp1RandListInfo.ProofList[s.finalityIdx].ToProto(),
+			signingcontext.FpFinVoteContextV0(n1.ChainID(), appparams.AccFinality.String()),
 			fmt.Sprintf("--from=%s", wFp1),
 		)
 	}()
@@ -322,6 +329,7 @@ func (s *BtcRewardsDistribution) Test4CommitPublicRandomnessAndSealed() {
 			s.fp2RandListInfo.SRList[s.finalityIdx],
 			&s.fp2RandListInfo.PRList[s.finalityIdx],
 			*s.fp2RandListInfo.ProofList[s.finalityIdx].ToProto(),
+			signingcontext.FpFinVoteContextV0(n2.ChainID(), appparams.AccFinality.String()),
 			fmt.Sprintf("--from=%s", wFp2),
 		)
 	}()
@@ -506,7 +514,12 @@ func (s *BtcRewardsDistribution) Test8SlashFp() {
 	appHash := blockToVote.AppHash
 
 	// generate bad EOTS signature with a diff block height to vote
-	msgToSign := append(sdk.Uint64ToBigEndian(s.finalityBlockHeightVoted), appHash...)
+	fpFinVoteContext := signingcontext.FpFinVoteContextV0(n2.ChainID(), appparams.AccFinality.String())
+
+	msgToSign := []byte(fpFinVoteContext)
+	msgToSign = append(msgToSign, sdk.Uint64ToBigEndian(s.finalityBlockHeightVoted)...)
+	msgToSign = append(msgToSign, appHash...)
+
 	fp1Sig, err := eots.Sign(s.fp2BTCSK, s.fp2RandListInfo.SRList[s.finalityIdx], msgToSign)
 	s.NoError(err)
 
@@ -627,6 +640,7 @@ func (s *BtcRewardsDistribution) AddFinalityVote(flagsN1, flagsN2 []string) (app
 		s.fp1RandListInfo.SRList[s.finalityIdx],
 		&s.fp1RandListInfo.PRList[s.finalityIdx],
 		*s.fp1RandListInfo.ProofList[s.finalityIdx].ToProto(),
+		signingcontext.FpFinVoteContextV0(n1.ChainID(), appparams.AccFinality.String()),
 		flagsN1...,
 	)
 
@@ -637,6 +651,7 @@ func (s *BtcRewardsDistribution) AddFinalityVote(flagsN1, flagsN2 []string) (app
 		s.fp2RandListInfo.SRList[s.finalityIdx],
 		&s.fp2RandListInfo.PRList[s.finalityIdx],
 		*s.fp2RandListInfo.ProofList[s.finalityIdx].ToProto(),
+		signingcontext.FpFinVoteContextV0(n2.ChainID(), appparams.AccFinality.String()),
 		flagsN2...,
 	)
 
@@ -715,7 +730,18 @@ func (s *BtcRewardsDistribution) CreateBTCDelegationAndCheck(
 	delAddr string,
 	stakingSatAmt int64,
 ) {
-	n.CreateBTCDelegationAndCheck(s.r, s.T(), s.net, wDel, fp, btcStakerSK, delAddr, stakingTimeBlocks, stakingSatAmt)
+	n.CreateBTCDelegationAndCheck(
+		s.r,
+		s.T(),
+		s.net,
+		wDel,
+		fp,
+		btcStakerSK,
+		delAddr,
+		stakingTimeBlocks,
+		stakingSatAmt,
+		signingcontext.StakerPopContextV0(n.ChainID(), appparams.AccBTCStaking.String()),
+	)
 }
 
 // CheckWithdrawReward withdraw rewards for one delegation and check the balance

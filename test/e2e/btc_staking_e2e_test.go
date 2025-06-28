@@ -12,6 +12,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	feegrantcli "cosmossdk.io/x/feegrant/client/cli"
 	appparams "github.com/babylonlabs-io/babylon/v2/app/params"
+	"github.com/babylonlabs-io/babylon/v2/app/signingcontext"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
@@ -105,6 +106,7 @@ func (s *BTCStakingTestSuite) Test1CreateFinalityProviderAndDelegation() {
 		nonValidatorNode.PublicAddress,
 		stakingTimeBlocks,
 		s.stakingValue,
+		signingcontext.StakerPopContextV0(nonValidatorNode.ChainID(), appparams.AccBTCStaking.String()),
 	)
 
 	pendingDelSet := nonValidatorNode.QueryFinalityProviderDelegations(s.cacheFP.BtcPk.MarshalHex())
@@ -244,7 +246,10 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 	// commit public randomness list
 	numPubRand := uint64(100)
 	commitStartHeight := uint64(1)
-	randListInfo, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(s.r, s.fptBTCSK, commitStartHeight, numPubRand)
+
+	commitRandContext := signingcontext.FpRandCommitContextV0(nonValidatorNode.ChainID(), appparams.AccFinality.String())
+
+	randListInfo, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(s.r, s.fptBTCSK, commitRandContext, commitStartHeight, numPubRand)
 	s.NoError(err)
 	nonValidatorNode.CommitPubRandList(
 		msgCommitPubRandList.FpBtcPk,
@@ -277,7 +282,13 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 	appHash := blockToVote.AppHash
 
 	idx := activatedHeight - commitStartHeight
-	msgToSign := append(sdk.Uint64ToBigEndian(activatedHeight), appHash...)
+
+	fpFinVoteContext := signingcontext.FpFinVoteContextV0(nonValidatorNode.ChainID(), appparams.AccFinality.String())
+
+	msgToSign := []byte(fpFinVoteContext)
+	msgToSign = append(msgToSign, sdk.Uint64ToBigEndian(activatedHeight)...)
+	msgToSign = append(msgToSign, appHash...)
+
 	// generate EOTS signature
 	sig, err := eots.Sign(s.fptBTCSK, randListInfo.SRList[idx], msgToSign)
 	s.NoError(err)
@@ -424,7 +435,10 @@ func (s *BTCStakingTestSuite) Test6MultisigBTCDelegation() {
 
 	// NOTE: we use the multisig address for the BTC delegation
 	multisigStakerAddr := sdk.MustAccAddressFromBech32(multisigAddr)
-	pop, err := datagen.NewPoPBTC(multisigStakerAddr, s.delBTCSK)
+
+	stakerPopContext := signingcontext.StakerPopContextV0(nonValidatorNode.ChainID(), appparams.AccBTCStaking.String())
+
+	pop, err := datagen.NewPoPBTC(stakerPopContext, multisigStakerAddr, s.delBTCSK)
 	s.NoError(err)
 
 	// generate staking tx and slashing tx
@@ -493,8 +507,10 @@ func (s *BTCStakingTestSuite) Test7BTCDelegationFeeGrant() {
 	// required unbonding time
 	unbondingTime := btcStkParams.UnbondingTimeBlocks
 
+	stakerPopContext := signingcontext.StakerPopContextV0(nonValidatorNode.ChainID(), appparams.AccBTCStaking.String())
+
 	// NOTE: we use the grantee staker address for the BTC delegation PoP
-	pop, err := datagen.NewPoPBTC(granteeStakerAddr, s.delBTCSK)
+	pop, err := datagen.NewPoPBTC(stakerPopContext, granteeStakerAddr, s.delBTCSK)
 	s.NoError(err)
 
 	// generate staking tx and slashing tx
@@ -585,8 +601,10 @@ func (s *BTCStakingTestSuite) Test8BTCDelegationFeeGrantTyped() {
 	// required unbonding time
 	unbondingTime := btcStkParams.UnbondingTimeBlocks
 
+	stakerPopContext := signingcontext.StakerPopContextV0(node.ChainID(), appparams.AccBTCStaking.String())
+
 	// NOTE: we use the grantee staker address for the BTC delegation PoP
-	pop, err := datagen.NewPoPBTC(granteeStakerAddr, s.delBTCSK)
+	pop, err := datagen.NewPoPBTC(stakerPopContext, granteeStakerAddr, s.delBTCSK)
 	s.NoError(err)
 
 	// generate staking tx and slashing tx
@@ -723,8 +741,10 @@ func (s *BTCStakingTestSuite) Test9BlockBankSendAndBTCDelegate() {
 	// required unbonding time
 	unbondingTime := btcStkParams.UnbondingTimeBlocks
 
+	stakerPopContext := signingcontext.StakerPopContextV0(n.ChainID(), appparams.AccBTCStaking.String())
+
 	// NOTE: we use the grantee staker address for the BTC delegation PoP
-	pop, err := datagen.NewPoPBTC(sdk.MustAccAddressFromBech32(stakerNoFundsAddr), s.delBTCSK)
+	pop, err := datagen.NewPoPBTC(stakerPopContext, sdk.MustAccAddressFromBech32(stakerNoFundsAddr), s.delBTCSK)
 	s.NoError(err)
 
 	// generate staking tx and slashing tx
@@ -803,12 +823,13 @@ func CreateNodeFP(
 	fpSk *btcec.PrivateKey,
 	node *chain.NodeConfig,
 	fpAddr string,
+	signingContext string,
 ) (newFP *bstypes.FinalityProvider) {
 	// the node is the new FP
 	nodeAddr, err := sdk.AccAddressFromBech32(fpAddr)
 	require.NoError(t, err)
 
-	newFP, err = datagen.GenRandomFinalityProviderWithBTCBabylonSKs(r, fpSk, nodeAddr)
+	newFP, err = datagen.GenCustomFinalityProvider(r, fpSk, signingContext, nodeAddr)
 	require.NoError(t, err)
 
 	previousFps := node.QueryFinalityProviders()

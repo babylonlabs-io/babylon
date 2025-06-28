@@ -6,11 +6,16 @@ import (
 	"time"
 
 	errorsmod "cosmossdk.io/errors"
+	"github.com/babylonlabs-io/babylon/v2/app/signingcontext"
 	"github.com/babylonlabs-io/babylon/v2/crypto/eots"
 	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
 	"github.com/babylonlabs-io/babylon/v2/x/finality/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
+)
+
+const (
+	testChainID = "test-1"
 )
 
 func FuzzMsgAddFinalitySig(f *testing.F) {
@@ -31,7 +36,12 @@ func FuzzMsgAddFinalitySig(f *testing.F) {
 		blockHash := datagen.GenRandomByteArray(r, 32)
 
 		signer := datagen.GenRandomAccount().Address
-		msg, err := datagen.NewMsgAddFinalitySig(signer, sk, startHeight, blockHeight, randListInfo, blockHash)
+
+		randomModuleAddress := datagen.GenRandomAddress().String()
+
+		voteContext := signingcontext.FpFinVoteContextV0(testChainID, randomModuleAddress)
+
+		msg, err := datagen.NewMsgAddFinalitySig(signer, sk, voteContext, startHeight, blockHeight, randListInfo, blockHash)
 		require.NoError(t, err)
 
 		prCommit := &types.PubRandCommit{
@@ -41,7 +51,7 @@ func FuzzMsgAddFinalitySig(f *testing.F) {
 		}
 
 		// verify the finality signature message
-		err = types.VerifyFinalitySig(msg, prCommit)
+		err = types.VerifyFinalitySig(msg, prCommit, voteContext)
 		require.NoError(t, err)
 	})
 }
@@ -57,11 +67,15 @@ func FuzzMsgCommitPubRandList(f *testing.F) {
 
 		startHeight := datagen.RandomInt(r, 10)
 		numPubRand := datagen.RandomInt(r, 100) + 1
-		_, msg, err := datagen.GenRandomMsgCommitPubRandList(r, sk, startHeight, numPubRand)
+
+		randomModuleAddress := datagen.GenRandomAddress().String()
+		commitContext := signingcontext.FpRandCommitContextV0(testChainID, randomModuleAddress)
+
+		_, msg, err := datagen.GenRandomMsgCommitPubRandList(r, sk, commitContext, startHeight, numPubRand)
 		require.NoError(t, err)
 
 		// sanity checks, including verifying signature
-		err = msg.VerifySig()
+		err = msg.VerifySig(commitContext)
 		require.NoError(t, err)
 	})
 }
@@ -70,6 +84,9 @@ func TestMsgCommitPubRandListValidateBasic(t *testing.T) {
 	r := rand.New(rand.NewSource(1))
 	sk, _, err := datagen.GenRandomBTCKeyPair(r)
 	require.NoError(t, err)
+
+	randomModuleAddress := datagen.GenRandomAddress().String()
+	commitContext := signingcontext.FpRandCommitContextV0(testChainID, randomModuleAddress)
 
 	tests := []struct {
 		name        string
@@ -112,7 +129,7 @@ func TestMsgCommitPubRandListValidateBasic(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			startHeight := datagen.RandomInt(r, 10)
 			numPubRand := datagen.RandomInt(r, 100) + 1
-			_, msg, err := datagen.GenRandomMsgCommitPubRandList(r, sk, startHeight, numPubRand)
+			_, msg, err := datagen.GenRandomMsgCommitPubRandList(r, sk, commitContext, startHeight, numPubRand)
 			require.NoError(t, err)
 
 			tc.msgModifier(msg)

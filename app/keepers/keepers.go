@@ -535,6 +535,7 @@ func (ak *AppKeepers) InitKeepers(
 		&btcCheckpointKeeper,
 		&ak.IncentiveKeeper,
 		btcNetParams,
+		appparams.AccBTCStaking.String(),
 		appparams.AccGov.String(),
 	)
 
@@ -548,7 +549,8 @@ func (ak *AppKeepers) InitKeepers(
 		runtime.NewKVStoreService(keys[finalitytypes.StoreKey]),
 		ak.BTCStakingKeeper,
 		ak.IncentiveKeeper,
-		ak.CheckpointingKeeper,
+		&checkpointingKeeper,
+		appparams.AccFinality.String(),
 		appparams.AccGov.String(),
 	)
 

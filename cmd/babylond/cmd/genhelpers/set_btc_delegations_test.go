@@ -45,7 +45,7 @@ func FuzzCmdSetBtcDels(f *testing.F) {
 		qntBtcDels := int(datagen.RandomInt(r, 10)) + 1
 		btcDelsToAdd := make([]*btcstktypes.BTCDelegation, qntBtcDels)
 
-		fp, err := datagen.GenRandomFinalityProvider(r)
+		fp, err := datagen.GenRandomFinalityProvider(r, "")
 		require.NoError(t, err)
 
 		// write fp to genesis
@@ -84,6 +84,7 @@ func FuzzCmdSetBtcDels(f *testing.F) {
 				&chaincfg.RegressionNetParams,
 				[]bbn.BIP340PubKey{*fp.BtcPk},
 				delSK,
+				"",
 				covenantSKs,
 				covenantPKs,
 				covenantQuorum,
@@ -141,7 +142,7 @@ func FuzzCmdSetBtcDels(f *testing.F) {
 		require.EqualError(t, err, fmt.Errorf("error: btc delegation: %+v\nwas already set on genesis, or contains the same staking tx hash %s than another btc delegation", btcDel, key).Error())
 
 		// checks trying to insert a new btc delegation with an finality provider that is not present in genesis. It should error out
-		notInGenFp, err := datagen.GenRandomFinalityProvider(r)
+		notInGenFp, err := datagen.GenRandomFinalityProvider(r, "")
 		require.NoError(t, err)
 
 		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
@@ -153,6 +154,7 @@ func FuzzCmdSetBtcDels(f *testing.F) {
 			&chaincfg.RegressionNetParams,
 			[]bbn.BIP340PubKey{*notInGenFp.BtcPk},
 			delSK,
+			"",
 			covenantSKs,
 			covenantPKs,
 			covenantQuorum,

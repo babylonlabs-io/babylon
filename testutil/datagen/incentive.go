@@ -81,13 +81,16 @@ func GenRandomAddrAndSat(r *rand.Rand) (string, uint64) {
 	return GenRandomAccount().Address, RandomInt(r, 1000) + 1
 }
 
-func GenRandomFinalityProviderDistInfo(r *rand.Rand) (
+func GenRandomFinalityProviderDistInfo(
+	r *rand.Rand,
+	signingContext string,
+) (
 	fpDistInfo *ftypes.FinalityProviderDistInfo,
 	btcTotalSatByAddress map[string]uint64,
 	err error,
 ) {
 	// create finality provider with random commission
-	fp, err := GenRandomFinalityProvider(r)
+	fp, err := GenRandomFinalityProvider(r, signingContext)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -105,7 +108,7 @@ func GenRandomFinalityProviderDistInfo(r *rand.Rand) (
 	return fpDistInfo, btcTotalSatByAddress, nil
 }
 
-func GenRandomVotingPowerDistCache(r *rand.Rand, maxFPs uint32) (
+func GenRandomVotingPowerDistCache(r *rand.Rand, maxFPs uint32, signingContext string) (
 	dc *ftypes.VotingPowerDistCache,
 	// fpAddr => delAddr => totalSat
 	btcTotalSatByDelAddressByFpAddress map[string]map[string]uint64,
@@ -117,7 +120,7 @@ func GenRandomVotingPowerDistCache(r *rand.Rand, maxFPs uint32) (
 
 	btcTotalSatByDelAddressByFpAddress = make(map[string]map[string]uint64, numFps)
 	for i := uint64(0); i < numFps; i++ {
-		v, btcTotalSatByAddress, err := GenRandomFinalityProviderDistInfo(r)
+		v, btcTotalSatByAddress, err := GenRandomFinalityProviderDistInfo(r, signingContext)
 		if err != nil {
 			return nil, nil, err
 		}

@@ -16,6 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	appparams "github.com/babylonlabs-io/babylon/v2/app/params"
+	"github.com/babylonlabs-io/babylon/v2/app/signingcontext"
 	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
 	testutil "github.com/babylonlabs-io/babylon/v2/testutil/incentives-helper"
 	keepertest "github.com/babylonlabs-io/babylon/v2/testutil/keeper"
@@ -60,11 +61,13 @@ func FuzzCommitPubRandList(f *testing.F) {
 		fpBTCPK := bbn.NewBIP340PubKeyFromBTCPK(btcPK)
 		fpBTCPKBytes := fpBTCPK.MustMarshal()
 
+		signingContext := signingcontext.FpRandCommitContextV0(ctx.ChainID(), fKeeper.ModuleAddress())
+
 		// Case 1: fail if the finality provider is not registered
 		bsKeeper.EXPECT().HasFinalityProvider(gomock.Any(), gomock.Eq(fpBTCPKBytes)).Return(false).Times(1)
 		startHeight := datagen.RandomInt(r, 10)
 		numPubRand := uint64(200)
-		_, msg, err := datagen.GenRandomMsgCommitPubRandList(r, btcSK, startHeight, numPubRand)
+		_, msg, err := datagen.GenRandomMsgCommitPubRandList(r, btcSK, signingContext, startHeight, numPubRand)
 		require.NoError(t, err)
 		_, err = ms.CommitPubRandList(ctx, msg)
 		require.Error(t, err)
@@ -74,7 +77,7 @@ func FuzzCommitPubRandList(f *testing.F) {
 		// Case 2: commit a list of <minPubRand pubrand and it should fail
 		startHeight = datagen.RandomInt(r, 10)
 		numPubRand = datagen.RandomInt(r, int(fKeeper.GetParams(ctx).MinPubRand))
-		_, msg, err = datagen.GenRandomMsgCommitPubRandList(r, btcSK, startHeight, numPubRand)
+		_, msg, err = datagen.GenRandomMsgCommitPubRandList(r, btcSK, signingContext, startHeight, numPubRand)
 		require.NoError(t, err)
 		_, err = ms.CommitPubRandList(ctx, msg)
 		require.Error(t, err)
@@ -82,7 +85,7 @@ func FuzzCommitPubRandList(f *testing.F) {
 		// Case 3: when the finality provider commits pubrand list and it should succeed
 		startHeight = datagen.RandomInt(r, 10)
 		numPubRand = 100 + datagen.RandomInt(r, int(fKeeper.GetParams(ctx).MinPubRand))
-		_, msg, err = datagen.GenRandomMsgCommitPubRandList(r, btcSK, startHeight, numPubRand)
+		_, msg, err = datagen.GenRandomMsgCommitPubRandList(r, btcSK, signingContext, startHeight, numPubRand)
 		require.NoError(t, err)
 		_, err = ms.CommitPubRandList(ctx, msg)
 		require.NoError(t, err)
@@ -97,21 +100,21 @@ func FuzzCommitPubRandList(f *testing.F) {
 
 		// Case 4: commit a pubrand list with overlap of the existing pubrand in KVStore and it should fail
 		overlappedStartHeight := startHeight + numPubRand - 1 - datagen.RandomInt(r, 5)
-		_, msg, err = datagen.GenRandomMsgCommitPubRandList(r, btcSK, overlappedStartHeight, numPubRand)
+		_, msg, err = datagen.GenRandomMsgCommitPubRandList(r, btcSK, signingContext, overlappedStartHeight, numPubRand)
 		require.NoError(t, err)
 		_, err = ms.CommitPubRandList(ctx, msg)
 		require.Error(t, err)
 
 		// Case 5: commit a pubrand list that has no overlap with existing pubrand and it should succeed
 		nonOverlappedStartHeight := startHeight + numPubRand + datagen.RandomInt(r, 5)
-		_, msg, err = datagen.GenRandomMsgCommitPubRandList(r, btcSK, nonOverlappedStartHeight, numPubRand)
+		_, msg, err = datagen.GenRandomMsgCommitPubRandList(r, btcSK, signingContext, nonOverlappedStartHeight, numPubRand)
 		require.NoError(t, err)
 		_, err = ms.CommitPubRandList(ctx, msg)
 		require.NoError(t, err)
 
 		// Case 6: commit a pubrand list that overflows when adding startHeight + numPubRand
 		overflowStartHeight := math.MaxUint64 - datagen.RandomInt(r, 5)
-		_, msg, err = datagen.GenRandomMsgCommitPubRandList(r, btcSK, overflowStartHeight, numPubRand)
+		_, msg, err = datagen.GenRandomMsgCommitPubRandList(r, btcSK, signingContext, overflowStartHeight, numPubRand)
 		require.NoError(t, err)
 		_, err = ms.CommitPubRandList(ctx, msg)
 		require.Error(t, err)
@@ -135,10 +138,13 @@ func FuzzAddFinalitySig(f *testing.F) {
 		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper)
 		ms := keeper.NewMsgServerImpl(*fKeeper)
 
+		commitRandContext := signingcontext.FpRandCommitContextV0(ctx.ChainID(), fKeeper.ModuleAddress())
+		finalitySigContext := signingcontext.FpFinVoteContextV0(ctx.ChainID(), fKeeper.ModuleAddress())
+
 		// create and register a random finality provider
 		btcSK, btcPK, err := datagen.GenRandomBTCKeyPair(r)
 		require.NoError(t, err)
-		fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, btcSK)
+		fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, btcSK, "")
 		require.NoError(t, err)
 		fpBTCPK := bbn.NewBIP340PubKeyFromBTCPK(btcPK)
 		fpBTCPKBytes := fpBTCPK.MustMarshal()
@@ -152,7 +158,7 @@ func FuzzAddFinalitySig(f *testing.F) {
 		// commit some public randomness
 		startHeight := uint64(0)
 		numPubRand := uint64(200)
-		randListInfo, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(r, btcSK, startHeight, numPubRand)
+		randListInfo, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(r, btcSK, commitRandContext, startHeight, numPubRand)
 		require.NoError(t, err)
 		_, err = ms.CommitPubRandList(ctx, msgCommitPubRandList)
 		require.NoError(t, err)
@@ -161,7 +167,7 @@ func FuzzAddFinalitySig(f *testing.F) {
 		blockHeight := startHeight + uint64(1)
 		blockAppHash := datagen.GenRandomByteArray(r, 32)
 		signer := datagen.GenRandomAccount().Address
-		msg, err := datagen.NewMsgAddFinalitySig(signer, btcSK, startHeight, blockHeight, randListInfo, blockAppHash)
+		msg, err := datagen.NewMsgAddFinalitySig(signer, btcSK, finalitySigContext, startHeight, blockHeight, randListInfo, blockAppHash)
 		require.NoError(t, err)
 		ctx = ctx.WithHeaderInfo(header.Info{Height: int64(blockHeight)})
 		fKeeper.IndexBlock(ctx)
@@ -220,7 +226,7 @@ func FuzzAddFinalitySig(f *testing.F) {
 
 		// Case 5: the finality provider is slashed if it votes for a fork
 		blockAppHash2 := datagen.GenRandomByteArray(r, 32)
-		msg2, err := datagen.NewMsgAddFinalitySig(signer, btcSK, startHeight, blockHeight, randListInfo, blockAppHash2)
+		msg2, err := datagen.NewMsgAddFinalitySig(signer, btcSK, finalitySigContext, startHeight, blockHeight, randListInfo, blockAppHash2)
 		require.NoError(t, err)
 		bsKeeper.EXPECT().GetFinalityProvider(gomock.Any(), gomock.Eq(fpBTCPKBytes)).Return(fp, nil).Times(1)
 		// mock slashing interface
@@ -284,10 +290,12 @@ func FuzzUnjailFinalityProvider(f *testing.F) {
 		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, nil, cKeeper)
 		ms := keeper.NewMsgServerImpl(*fKeeper)
 
+		fpPopContext := signingcontext.FpPopContextV0(ctx.ChainID(), fKeeper.ModuleAddress())
+
 		// create and register a random finality provider
 		btcSK, btcPK, err := datagen.GenRandomBTCKeyPair(r)
 		require.NoError(t, err)
-		fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, btcSK)
+		fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, btcSK, fpPopContext)
 		require.NoError(t, err)
 		fpBTCPK := bbn.NewBIP340PubKeyFromBTCPK(btcPK)
 		fpBTCPKBytes := fpBTCPK.MustMarshal()
@@ -350,7 +358,12 @@ func TestVoteForConflictingHashShouldRetrieveEvidenceAndSlash(t *testing.T) {
 	// create and register a random finality provider
 	btcSK, btcPK, err := datagen.GenRandomBTCKeyPair(r)
 	require.NoError(t, err)
-	fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, btcSK)
+
+	fpPopContext := signingcontext.FpPopContextV0(ctx.ChainID(), fKeeper.ModuleAddress())
+	commitRandContext := signingcontext.FpRandCommitContextV0(ctx.ChainID(), fKeeper.ModuleAddress())
+	finalitySigContext := signingcontext.FpFinVoteContextV0(ctx.ChainID(), fKeeper.ModuleAddress())
+
+	fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, btcSK, fpPopContext)
 	require.NoError(t, err)
 	fpBTCPK := bbn.NewBIP340PubKeyFromBTCPK(btcPK)
 	fpBTCPKBytes := fpBTCPK.MustMarshal()
@@ -363,7 +376,7 @@ func TestVoteForConflictingHashShouldRetrieveEvidenceAndSlash(t *testing.T) {
 	startHeight := uint64(0)
 	numPubRand := uint64(200)
 	randListInfo, msgCommitPubRandList, err :=
-		datagen.GenRandomMsgCommitPubRandList(r, btcSK, startHeight,
+		datagen.GenRandomMsgCommitPubRandList(r, btcSK, commitRandContext, startHeight,
 			numPubRand)
 	require.NoError(t, err)
 	_, err = ms.CommitPubRandList(ctx, msgCommitPubRandList)
@@ -383,7 +396,7 @@ func TestVoteForConflictingHashShouldRetrieveEvidenceAndSlash(t *testing.T) {
 	// (2) Vote for a different block at height 1, this will make us have
 	// some "evidence"
 	ctx = ctx.WithHeaderInfo(header.Info{Height: int64(blockHeight), AppHash: forkHash})
-	msg1, err := datagen.NewMsgAddFinalitySig(signer, btcSK, startHeight, blockHeight, randListInfo, forkHash)
+	msg1, err := datagen.NewMsgAddFinalitySig(signer, btcSK, finalitySigContext, startHeight, blockHeight, randListInfo, forkHash)
 	require.NoError(t, err)
 	fKeeper.SetVotingPower(ctx, fpBTCPKBytes, blockHeight, 1)
 	cKeeper.EXPECT().GetEpochByHeight(gomock.Any(), gomock.Any()).Return(uint64(1)).AnyTimes()
@@ -392,7 +405,7 @@ func TestVoteForConflictingHashShouldRetrieveEvidenceAndSlash(t *testing.T) {
 	_, err = ms.AddFinalitySig(ctx, msg1)
 	require.NoError(t, err)
 	// (3) Now vote for the canonical block at height 1. This should slash Finality provider
-	msg, err := datagen.NewMsgAddFinalitySig(signer, btcSK, startHeight, blockHeight, randListInfo, canonicalHash)
+	msg, err := datagen.NewMsgAddFinalitySig(signer, btcSK, finalitySigContext, startHeight, blockHeight, randListInfo, canonicalHash)
 	ctx = ctx.WithHeaderInfo(header.Info{Height: int64(blockHeight), AppHash: canonicalHash})
 	require.NoError(t, err)
 	fKeeper.SetVotingPower(ctx, fpBTCPKBytes, blockHeight, 1)
@@ -424,7 +437,12 @@ func TestDoNotPanicOnNilProof(t *testing.T) {
 	// create and register a random finality provider
 	btcSK, btcPK, err := datagen.GenRandomBTCKeyPair(r)
 	require.NoError(t, err)
-	fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, btcSK)
+
+	fpPopContext := signingcontext.FpPopContextV0(ctx.ChainID(), fKeeper.ModuleAddress())
+	commitRandContext := signingcontext.FpRandCommitContextV0(ctx.ChainID(), fKeeper.ModuleAddress())
+	finalitySigContext := signingcontext.FpPopContextV0(ctx.ChainID(), fKeeper.ModuleAddress())
+
+	fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, btcSK, fpPopContext)
 	require.NoError(t, err)
 	fpBTCPK := bbn.NewBIP340PubKeyFromBTCPK(btcPK)
 	fpBTCPKBytes := fpBTCPK.MustMarshal()
@@ -438,7 +456,7 @@ func TestDoNotPanicOnNilProof(t *testing.T) {
 	// commit some public randomness
 	startHeight := uint64(0)
 	numPubRand := uint64(200)
-	randListInfo, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(r, btcSK, startHeight, numPubRand)
+	randListInfo, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(r, btcSK, commitRandContext, startHeight, numPubRand)
 	require.NoError(t, err)
 	_, err = ms.CommitPubRandList(ctx, msgCommitPubRandList)
 	require.NoError(t, err)
@@ -450,6 +468,7 @@ func TestDoNotPanicOnNilProof(t *testing.T) {
 	msg, err := datagen.NewMsgAddFinalitySig(
 		signer,
 		btcSK,
+		finalitySigContext,
 		startHeight,
 		blockHeight,
 		randListInfo,
@@ -489,7 +508,11 @@ func TestVerifyActivationHeight(t *testing.T) {
 	require.NoError(t, err)
 	startHeight := activationHeight - 1
 	numPubRand := uint64(200)
-	randListInfo, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(r, btcSK, startHeight, numPubRand)
+
+	commitRandContext := signingcontext.FpRandCommitContextV0(ctx.ChainID(), fKeeper.ModuleAddress())
+	finalitySigContext := signingcontext.FpPopContextV0(ctx.ChainID(), fKeeper.ModuleAddress())
+
+	randListInfo, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(r, btcSK, commitRandContext, startHeight, numPubRand)
 	require.NoError(t, err)
 
 	_, err = ms.CommitPubRandList(ctx, msgCommitPubRandList)
@@ -505,6 +528,7 @@ func TestVerifyActivationHeight(t *testing.T) {
 	msgFinality, err := datagen.NewMsgAddFinalitySig(
 		signer,
 		btcSK,
+		finalitySigContext,
 		startHeight,
 		blockHeight,
 		randListInfo,

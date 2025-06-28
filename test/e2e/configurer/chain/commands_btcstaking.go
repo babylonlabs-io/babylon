@@ -410,8 +410,9 @@ func (n *NodeConfig) CreateBTCDelegationAndCheck(
 	delAddr string,
 	stakingTimeBlocks uint16,
 	stakingSatAmt int64,
+	signingContext string,
 ) (testStakingInfo *datagen.TestStakingSlashingInfo) {
-	testStakingInfo = n.CreateBTCDel(r, t, btcNet, walletNameSender, fp, btcStakerSK, delAddr, stakingTimeBlocks, stakingSatAmt)
+	testStakingInfo = n.CreateBTCDel(r, t, btcNet, walletNameSender, fp, btcStakerSK, delAddr, stakingTimeBlocks, stakingSatAmt, signingContext)
 
 	// wait for a block so that above txs take effect
 	n.WaitForNextBlock()
@@ -435,13 +436,15 @@ func (n *NodeConfig) CreateBTCDel(
 	delAddr string,
 	stakingTimeBlocks uint16,
 	stakingSatAmt int64,
+	signingContext string,
 ) (testStakingInfo *datagen.TestStakingSlashingInfo) {
 	// BTC staking params, BTC delegation key pairs and PoP
 	params := n.QueryBTCStakingParams()
 
 	// NOTE: we use the node's address for the BTC delegation
 	del1Addr := sdk.MustAccAddressFromBech32(delAddr)
-	popDel1, err := datagen.NewPoPBTC(del1Addr, btcStakerSK)
+
+	popDel1, err := datagen.NewPoPBTC(signingContext, del1Addr, btcStakerSK)
 	require.NoError(t, err)
 
 	testStakingInfo, stakingTx, inclusionProof, testUnbondingInfo, delegatorSig := n.BTCStakingUnbondSlashInfo(r, t, btcNet, params, fp, btcStakerSK, stakingTimeBlocks, stakingSatAmt)
@@ -479,13 +482,17 @@ func (n *NodeConfig) AddFinalitySignatureToBlock(
 	privateRand *secp256k1.ModNScalar,
 	pubRand *bbn.SchnorrPubRand,
 	proof cmtcrypto.Proof,
+	signingContext string,
 	overallFlags ...string,
 ) (blockVotedAppHash bytes.HexBytes) {
 	blockToVote, err := n.QueryBlock(int64(blockHeight))
 	require.NoError(n.t, err)
 	appHash := blockToVote.AppHash
 
-	msgToSign := append(sdk.Uint64ToBigEndian(blockHeight), appHash...)
+	msgToSign := []byte(signingContext)
+	msgToSign = append(msgToSign, sdk.Uint64ToBigEndian(blockHeight)...)
+	msgToSign = append(msgToSign, appHash...)
+
 	// generate EOTS signature
 	fp1Sig, err := eots.Sign(fpBTCSK, privateRand, msgToSign)
 	require.NoError(n.t, err)

@@ -41,6 +41,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 - [GHSA-56j4-446m-qrf6](https://github.com/babylonlabs-io/babylon-ghsa-56j4-446m-qrf6/pull/1) Add bank restriction for fee collector account
 
+- [#1252](https://github.com/babylonlabs-io/babylon/pull/1252) Implement context separation
+between different signing operations
+
 ## v2.1.0
 
 - [#1244](https://github.com/babylonlabs-io/babylon/pull/1244) fix: remove staking module from app end blocker order
