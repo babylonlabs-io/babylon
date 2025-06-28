@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"cosmossdk.io/errors"
 	"cosmossdk.io/log"
 	storetypes "cosmossdk.io/store/types"
 	circuitkeeper "cosmossdk.io/x/circuit/keeper"
@@ -93,8 +94,7 @@ import (
 	tokenfactorytypes "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/types"
 )
 
-var errBankRestrictionDistribution = fmt.Errorf("the distribution address %s can only receive bond denom %s",
-	appparams.AccDistribution.String(), appparams.DefaultBondDenom)
+var errBankRestriction = fmt.Errorf("can only receive bond denom %s", appparams.DefaultBondDenom)
 
 // Enable all default present capabilities.
 var tokenFactoryCapabilities = []string{
@@ -722,9 +722,9 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	return paramsKeeper
 }
 
-// bankSendRestrictionOnlyBondDenomToDistribution restricts that only the default bond denom should be allowed to send to distribution mod acc.
+// bankSendRestrictionOnlyBondDenomToDistribution restricts that only the default bond denom should be allowed to send to distribution and fee collector mod accs.
 func bankSendRestrictionOnlyBondDenomToDistribution(ctx context.Context, fromAddr, toAddr sdk.AccAddress, amt sdk.Coins) (newToAddr sdk.AccAddress, err error) {
-	if toAddr.Equals(appparams.AccDistribution) {
+	if toAddr.Equals(appparams.AccDistribution) || toAddr.Equals(appparams.AccFeeCollector) {
 		denoms := amt.Denoms()
 		switch len(denoms) {
 		case 0:
@@ -732,10 +732,10 @@ func bankSendRestrictionOnlyBondDenomToDistribution(ctx context.Context, fromAdd
 		case 1:
 			denom := denoms[0]
 			if !strings.EqualFold(denom, appparams.DefaultBondDenom) {
-				return nil, errBankRestrictionDistribution
+				return nil, errors.Wrapf(errBankRestriction, "address %s", toAddr)
 			}
 		default: // more than one length
-			return nil, errBankRestrictionDistribution
+			return nil, errors.Wrapf(errBankRestriction, "address %s", toAddr)
 		}
 	}
 

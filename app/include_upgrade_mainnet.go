@@ -8,6 +8,7 @@ import (
 	"github.com/babylonlabs-io/babylon/v2/app/upgrades/v1/mainnet"
 	v1_1 "github.com/babylonlabs-io/babylon/v2/app/upgrades/v1_1"
 	v2 "github.com/babylonlabs-io/babylon/v2/app/upgrades/v2"
+	v22 "github.com/babylonlabs-io/babylon/v2/app/upgrades/v2_2"
 )
 
 var WhitelistedChannelsID = map[string]struct{}{
@@ -20,15 +21,19 @@ var WhitelistedChannelsID = map[string]struct{}{
 	"channel-6": struct{}{},
 }
 
-// init is used to include v1 upgrade for mainnet data
+// init is used to include v2.2 upgrade for mainnet data
 func init() {
-	Upgrades = []upgrades.Upgrade{v2.CreateUpgrade(false, WhitelistedChannelsID), v1_1.Upgrade, v1.CreateUpgrade(v1.UpgradeDataString{
-		BtcStakingParamsStr:       mainnet.BtcStakingParamsStr,
-		FinalityParamStr:          mainnet.FinalityParamStr,
-		IncentiveParamStr:         mainnet.IncentiveParamStr,
-		CosmWasmParamStr:          mainnet.CosmWasmParamStr,
-		NewBtcHeadersStr:          mainnet.NewBtcHeadersStr,
-		TokensDistributionStr:     mainnet.TokensDistributionStr,
-		AllowedStakingTxHashesStr: mainnet.AllowedStakingTxHashesStr,
-	}, mainnet.ParamUpgrade)}
+	Upgrades = []upgrades.Upgrade{
+		v22.Upgrade,
+		v2.CreateUpgrade(false, WhitelistedChannelsID),
+		v1_1.Upgrade,
+		v1.CreateUpgrade(v1.UpgradeDataString{
+			BtcStakingParamsStr:       mainnet.BtcStakingParamsStr,
+			FinalityParamStr:          mainnet.FinalityParamStr,
+			IncentiveParamStr:         mainnet.IncentiveParamStr,
+			CosmWasmParamStr:          mainnet.CosmWasmParamStr,
+			NewBtcHeadersStr:          mainnet.NewBtcHeadersStr,
+			TokensDistributionStr:     mainnet.TokensDistributionStr,
+			AllowedStakingTxHashesStr: mainnet.AllowedStakingTxHashesStr,
+		}, mainnet.ParamUpgrade)}
 }

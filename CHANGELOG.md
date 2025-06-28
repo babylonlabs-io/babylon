@@ -35,7 +35,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
-## Unreleased
+## v2.2.0
+
+### Improvements
+
+- [GHSA-56j4-446m-qrf6](https://github.com/babylonlabs-io/babylon-ghsa-56j4-446m-qrf6/pull/1) Add bank restriction for fee collector account
 
 ## v2.1.0
 
