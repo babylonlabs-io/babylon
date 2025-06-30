@@ -19,8 +19,8 @@ consumers) via IBC packets:
   - The latest BSN header that was checkpointed in the finalised epoch
   - Recent BTC headers that extend the BSN's BTC light client
   - The finalised epoch's metadata and raw checkpoint
-  - Proofs that the BSN header was included in the epoch and the epoch was
-    properly sealed and submitted to Bitcoin
+  - Proofs that a BSN header was included in an epoch and the epoch was
+  timestamped on the Bitcoin chain.
 - **BTC Staking:** Babylon Genesis enables trustless Bitcoin staking for BSNs by
   synchronising staking-related information between Bitcoin, Babylon Genesis and
   BSNs. This allows BTC holders to stake their BTC to secure BSNs without
