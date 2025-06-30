@@ -13,6 +13,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
+	"github.com/babylonlabs-io/babylon/v3/app/signingcontext"
 	"github.com/babylonlabs-io/babylon/v3/crypto/eots"
 	"github.com/babylonlabs-io/babylon/v3/test/e2e/configurer"
 	"github.com/babylonlabs-io/babylon/v3/test/e2e/configurer/chain"
@@ -96,7 +98,10 @@ func (s *BTCStakingPreApprovalTestSuite) Test1CreateFinalityProviderAndDelegatio
 
 	// NOTE: we use the node's address for the BTC delegation
 	stakerAddr := sdk.MustAccAddressFromBech32(nonValidatorNode.PublicAddress)
-	pop, err := datagen.NewPoPBTC(stakerAddr, s.delBTCSK)
+
+	stakerPopContext := signingcontext.StakerPopContextV0(nonValidatorNode.ChainID(), appparams.AccBTCStaking.String())
+
+	pop, err := datagen.NewPoPBTC(stakerPopContext, stakerAddr, s.delBTCSK)
 	s.NoError(err)
 
 	// generate staking tx and slashing tx
@@ -300,7 +305,10 @@ func (s *BTCStakingPreApprovalTestSuite) Test4CommitPublicRandomnessAndSubmitFin
 	// commit public randomness list
 	numPubRand := uint64(100)
 	commitStartHeight := uint64(1)
-	randListInfo, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(s.r, s.fptBTCSK, commitStartHeight, numPubRand)
+
+	commitRandContext := signingcontext.FpRandCommitContextV0(nonValidatorNode.ChainID(), appparams.AccFinality.String())
+
+	randListInfo, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(s.r, s.fptBTCSK, commitRandContext, commitStartHeight, numPubRand)
 	s.NoError(err)
 	nonValidatorNode.CommitPubRandList(
 		msgCommitPubRandList.FpBtcPk,
@@ -362,7 +370,13 @@ func (s *BTCStakingPreApprovalTestSuite) Test4CommitPublicRandomnessAndSubmitFin
 	appHash := blockToVote.AppHash
 
 	idx := activatedHeight - commitStartHeight
-	msgToSign := append(sdk.Uint64ToBigEndian(activatedHeight), appHash...)
+
+	fpFinVoteContext := signingcontext.FpFinVoteContextV0(nonValidatorNode.ChainID(), appparams.AccFinality.String())
+
+	msgToSign := []byte(fpFinVoteContext)
+	msgToSign = append(msgToSign, sdk.Uint64ToBigEndian(activatedHeight)...)
+	msgToSign = append(msgToSign, appHash...)
+
 	// generate EOTS signature
 	sig, err := eots.Sign(s.fptBTCSK, randListInfo.SRList[idx], msgToSign)
 	s.NoError(err)

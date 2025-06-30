@@ -119,6 +119,9 @@ message Evidence {
   bytes fork_finality_sig = 7
       [ (gogoproto.customtype) =
             "github.com/babylonlabs-io/babylon/v3/types.SchnorrEOTSSig" ];
+  // signing_context is the context in which the finality signatures were used.
+  // It must be hex encoded 32 bytes, of the sha256 hash of the context string
+  string signing_context = 8;
 }
 
 // FinalityProviderSigningInfo defines a finality provider's signing info for

@@ -2,12 +2,14 @@ package app_test
 
 import (
 	"fmt"
+	"strings"
+	"testing"
+
 	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
 	erc20types "github.com/cosmos/evm/x/erc20/types"
 	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
 	precisebanktypes "github.com/cosmos/evm/x/precisebank/types"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
-	"testing"
 
 	tokenfactorytypes "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/types"
 
@@ -50,6 +52,32 @@ var (
 		precisebanktypes.ModuleName:  {authtypes.Minter, authtypes.Burner},
 	}
 )
+
+func TestBabylonCheckRemovedStakingEndBlocker(t *testing.T) {
+	db := dbm.NewMemDB()
+
+	tbs, err := testsigner.SetupTestBlsSigner()
+	require.NoError(t, err)
+	blsSigner := checkpointingtypes.BlsSigner(tbs)
+
+	logger := log.NewTestLogger(t)
+	appOpts, cleanup := babylonApp.TmpAppOptions()
+	defer cleanup()
+
+	app := babylonApp.NewBabylonAppWithCustomOptions(t, false, blsSigner, babylonApp.SetupOptions{
+		Logger:             logger,
+		DB:                 db,
+		InvCheckPeriod:     0,
+		SkipUpgradeHeights: map[int64]bool{},
+		AppOpts:            appOpts,
+	})
+
+	for _, m := range app.ModuleManager.OrderEndBlockers {
+		if strings.EqualFold(m, stktypes.ModuleName) {
+			t.Error("the staking module is active to execute end blocker")
+		}
+	}
+}
 
 func TestBabylonBlockedAddrs(t *testing.T) {
 	db := dbm.NewMemDB()

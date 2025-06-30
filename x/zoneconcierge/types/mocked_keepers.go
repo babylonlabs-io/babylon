@@ -16,10 +16,9 @@ import (
 	types4 "github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
 	types5 "github.com/babylonlabs-io/babylon/v3/x/epoching/types"
 	types6 "github.com/cosmos/cosmos-sdk/types"
-	types7 "github.com/cosmos/ibc-go/modules/capability/types"
-	types8 "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
-	types9 "github.com/cosmos/ibc-go/v10/modules/core/03-connection/types"
-	types10 "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+	types7 "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
+	types8 "github.com/cosmos/ibc-go/v10/modules/core/03-connection/types"
+	types9 "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 	exported "github.com/cosmos/ibc-go/v10/modules/core/exported"
 	gomock "github.com/golang/mock/gomock"
 )
@@ -206,18 +205,18 @@ func (m *MockICS4Wrapper) EXPECT() *MockICS4WrapperMockRecorder {
 }
 
 // SendPacket mocks base method.
-func (m *MockICS4Wrapper) SendPacket(ctx types6.Context, channelCap *types7.Capability, sourcePort, sourceChannel string, timeoutHeight types8.Height, timeoutTimestamp uint64, data []byte) (uint64, error) {
+func (m *MockICS4Wrapper) SendPacket(ctx types6.Context, sourcePort, sourceChannel string, timeoutHeight types7.Height, timeoutTimestamp uint64, data []byte) (uint64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SendPacket", ctx, channelCap, sourcePort, sourceChannel, timeoutHeight, timeoutTimestamp, data)
+	ret := m.ctrl.Call(m, "SendPacket", ctx, sourcePort, sourceChannel, timeoutHeight, timeoutTimestamp, data)
 	ret0, _ := ret[0].(uint64)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // SendPacket indicates an expected call of SendPacket.
-func (mr *MockICS4WrapperMockRecorder) SendPacket(ctx, channelCap, sourcePort, sourceChannel, timeoutHeight, timeoutTimestamp, data interface{}) *gomock.Call {
+func (mr *MockICS4WrapperMockRecorder) SendPacket(ctx, sourcePort, sourceChannel, timeoutHeight, timeoutTimestamp, data interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendPacket", reflect.TypeOf((*MockICS4Wrapper)(nil).SendPacket), ctx, channelCap, sourcePort, sourceChannel, timeoutHeight, timeoutTimestamp, data)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendPacket", reflect.TypeOf((*MockICS4Wrapper)(nil).SendPacket), ctx, sourcePort, sourceChannel, timeoutHeight, timeoutTimestamp, data)
 }
 
 // MockChannelKeeper is a mock of ChannelKeeper interface.
@@ -244,10 +243,10 @@ func (m *MockChannelKeeper) EXPECT() *MockChannelKeeperMockRecorder {
 }
 
 // GetAllChannels mocks base method.
-func (m *MockChannelKeeper) GetAllChannels(ctx types6.Context) []types10.IdentifiedChannel {
+func (m *MockChannelKeeper) GetAllChannels(ctx types6.Context) []types9.IdentifiedChannel {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAllChannels", ctx)
-	ret0, _ := ret[0].([]types10.IdentifiedChannel)
+	ret0, _ := ret[0].([]types9.IdentifiedChannel)
 	return ret0
 }
 
@@ -258,10 +257,10 @@ func (mr *MockChannelKeeperMockRecorder) GetAllChannels(ctx interface{}) *gomock
 }
 
 // GetChannel mocks base method.
-func (m *MockChannelKeeper) GetChannel(ctx types6.Context, srcPort, srcChan string) (types10.Channel, bool) {
+func (m *MockChannelKeeper) GetChannel(ctx types6.Context, srcPort, srcChan string) (types9.Channel, bool) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetChannel", ctx, srcPort, srcChan)
-	ret0, _ := ret[0].(types10.Channel)
+	ret0, _ := ret[0].(types9.Channel)
 	ret1, _ := ret[1].(bool)
 	return ret0, ret1
 }
@@ -377,10 +376,10 @@ func (m *MockConnectionKeeper) EXPECT() *MockConnectionKeeperMockRecorder {
 }
 
 // GetConnection mocks base method.
-func (m *MockConnectionKeeper) GetConnection(ctx types6.Context, connectionID string) (types9.ConnectionEnd, bool) {
+func (m *MockConnectionKeeper) GetConnection(ctx types6.Context, connectionID string) (types8.ConnectionEnd, bool) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetConnection", ctx, connectionID)
-	ret0, _ := ret[0].(types9.ConnectionEnd)
+	ret0, _ := ret[0].(types8.ConnectionEnd)
 	ret1, _ := ret[1].(bool)
 	return ret0, ret1
 }

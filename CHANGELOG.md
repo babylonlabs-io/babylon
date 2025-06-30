@@ -40,6 +40,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ### Improvements
 
 - [#1234](https://github.com/babylonlabs-io/babylon/pull/1234) doc: revise zone concierge doc (round 2)
+- [#1256](https://github.com/babylonlabs-io/babylon/pull/1256) remove query chains info request from `x/zoneconcierge` 
 - [#1222](https://github.com/babylonlabs-io/babylon/pull/1222) doc: revise zone concierge doc (round 1)
 - [#1015](https://github.com/babylonlabs-io/babylon/pull/1015) Add finality contract e2e tests follup-up.
 - [#970](https://github.com/babylonlabs-io/babylon/pull/970) Add finality contract e2e tests follup-up.
@@ -94,7 +95,10 @@ check of rewards
 
 - [#402](https://github.com/babylonlabs-io/babylon/pull/402) **Babylon multi-staking support**.
 This PR contains a series of PRs on multi-staking support and BTC staking integration.
-- [#944](https://github.com/babylonlabs-io/babylon/pull/944) Add max_multi_staked_fps validation and single FP per consumer constraint in BTC delegations.
+- [#847](https://github.com/babylonlabs-io/babylon/pull/847) Add ibc callbacks to
+transfer stack
+- [#877](https://github.com/babylonlabs-io/babylon/pull/877) fix: BTC reward tracker are stored as events and updated only
+when the babylon block is being BTC rewarded.
 
 ### Bug fixes
 
@@ -103,6 +107,17 @@ This PR contains a series of PRs on multi-staking support and BTC staking integr
 - [#525](https://github.com/babylonlabs-io/babylon/pull/525) fix: add back `NewIBCHeaderDecorator` post handler
 - [#964](https://github.com/babylonlabs-io/babylon/pull/964) fix: stateless validation `ValidateBasic` of
 `MsgWrappedCreateValidator` to avoid panic in transaction submission
+- [#1247](https://github.com/babylonlabs-io/babylon/pull/1247) fix: zoneconcierge ibc router
+- [#1252](https://github.com/babylonlabs-io/babylon/pull/1252) Implement context separation
+between different signing operations
+
+## v2.1.0
+
+- [#1244](https://github.com/babylonlabs-io/babylon/pull/1244) fix: remove staking module from app end blocker order
+
+## v2.0.0
+
+- [#1226](https://github.com/babylonlabs-io/babylon/pull/1226) chore: Revert goreleaser to use musl
 
 ## v2.0.0-rc.4
 
