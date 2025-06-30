@@ -11,10 +11,9 @@ consumers) via IBC packets:
 
 - **BTC Headers:** Babylon Genesis forwards the BTC headers maintained by its
   BTC light client to BSNs.  
-   This allows BSNs to maintain an image of the Bitcoin chain and verify
-   information included in it through  
-   inclusion proofs (e.g., an inclusion proof of a BTC Timestamp containing BSN
-   headers).
+  This allows BSNs to maintain an image of the Bitcoin chain and verify
+  information included in it through   inclusion proofs (e.g., an inclusion
+  proof of a BTC Timestamp containing BSN headers).
 - **BTC Timestamps:** When a Babylon Genesis epoch is finalized, the Babylon
   Genesis chain sends BTC timestamps to BSNs. Each BTC timestamp contains:
   - The latest BSN header that was checkpointed in the finalised epoch
@@ -209,8 +208,8 @@ module](https://github.com/cosmos/ibc-go/tree/v8.0.0/modules/core/02-client).
 The `IBCHeaderDecorator` PostHandler is defined at
 [x/zoneconcierge/keeper/ibc_header_decorator.go](./keeper/ibc_header_decorator.go).
 
-For each IBC client update message in the transaction, the `PostHandler` executes
-as follows:
+For each IBC client update message in the transaction, the `PostHandler`
+executes as follows:
 
 1. Extract the header info and the client state from the message
 2. Determine if the header is on a fork by checking if the client is frozen
