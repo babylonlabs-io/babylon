@@ -209,12 +209,12 @@ module](https://github.com/cosmos/ibc-go/tree/v8.0.0/modules/core/02-client).
 The `IBCHeaderDecorator` PostHandler is defined at
 [x/zoneconcierge/keeper/ibc_header_decorator.go](./keeper/ibc_header_decorator.go).
 
-For each IBC client update message in the transaction, the PostHandler executes
+For each IBC client update message in the transaction, the `PostHandler` executes
 as follows:
 
-1. Extract header info and client state from the message
+1. Extract the header info and the client state from the message
 2. Determine if the header is on a fork by checking if the client is frozen
-3. Call `HandleHeaderWithValidCommit` to process the header appropriately
+3. Call `HandleHeaderWithValidCommit` to process the header
 4. If the PoS system hosting the header is not known to Babylon Genesis,
    initialize `ChainInfo` storage for the PoS system
 5. If the header is on a fork, insert the header to the fork storage and update
@@ -254,7 +254,7 @@ The `AfterRawCheckpointFinalized` hook is triggered upon a checkpoint becoming
 *finalised*, i.e., Bitcoin transactions of the checkpoint become `w`-deep in
 Bitcoin's canonical chain, where `w` is the `checkpoint_finalization_timeout`
 [parameter](../../proto/babylon/btccheckpoint/v1/params.proto) in the
-[BTCCheckpoint](../btccheckpoint/) module.
+[BTCCheckpoint module](../btccheckpoint/).
 
 The [BTCTimestamp](../../proto/babylon/zoneconcierge/v1/packet.proto) structure  
 includes a header and a set of proofs that the header is checkpointed by
@@ -324,7 +324,7 @@ at [x/zoneconcierge/keeper/hooks.go](./keeper/hooks.go) and works as follows:
    timestamps by:
    - Finding the segment of BTC headers sent upon the last time
      `AfterRawCheckpointFinalized` was triggered
-   - If all BTC headers in the segment are no longer canonical (due to Bitcoin
+   - If all BTC headers in the segment are no longer canonical (due to a Bitcoin
      reorg), send the last `w+1` BTC headers from the current tip, where `w` is
      the `checkpoint_finalization_timeout`
      [parameter](../../proto/babylon/btccheckpoint/v1/params.proto) in the
