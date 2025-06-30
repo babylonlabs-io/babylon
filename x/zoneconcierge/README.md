@@ -12,7 +12,7 @@ consumers) via IBC packets:
 - **BTC Headers:** Babylon Genesis forwards the BTC headers maintained by its
   BTC light client to BSNs.  
   This allows BSNs to maintain an image of the Bitcoin chain and verify
-  information included in it through   inclusion proofs (e.g., an inclusion
+  information included in it through inclusion proofs (e.g., an inclusion
   proof of a BTC Timestamp containing BSN headers).
 - **BTC Timestamps:** When a Babylon Genesis epoch is finalized, the Babylon
   Genesis chain sends BTC timestamps to BSNs. Each BTC timestamp contains:
