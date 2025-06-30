@@ -11,6 +11,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
+	"github.com/babylonlabs-io/babylon/v3/app/signingcontext"
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
 	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 	"github.com/babylonlabs-io/babylon/v3/x/finality/types"
@@ -136,9 +137,11 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 		return nil, err
 	}
 
+	signingContext := signingcontext.FpFinVoteContextV0(ctx.ChainID(), ms.finalityModuleAddress)
+
 	// verify the finality signature message w.r.t. the public randomness commitment
 	// including the public randomness inclusion proof and the finality signature
-	if err := types.VerifyFinalitySig(req, prCommit); err != nil {
+	if err := types.VerifyFinalitySig(req, prCommit, signingContext); err != nil {
 		return nil, err
 	}
 	// the public randomness is good, set the public randomness
@@ -157,6 +160,7 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 			CanonicalFinalitySig: nil,
 			ForkAppHash:          req.BlockAppHash,
 			ForkFinalitySig:      req.FinalitySig,
+			SigningContext:       signingContext,
 		}
 
 		// if this finality provider has also signed canonical block, slash it
@@ -273,8 +277,10 @@ func (ms msgServer) CommitPubRandList(goCtx context.Context, req *types.MsgCommi
 		return nil, bstypes.ErrFpNotFound.Wrapf("the finality provider with BTC PK %v is not registered", fpBTCPKBytes)
 	}
 
+	signingContext := signingcontext.FpRandCommitContextV0(ctx.ChainID(), ms.finalityModuleAddress)
+
 	// verify signature over the public randomness commitment
-	if err := req.VerifySig(); err != nil {
+	if err := req.VerifySig(signingContext); err != nil {
 		return nil, types.ErrInvalidPubRand.Wrapf("invalid signature over the public randomness list: %v", err)
 	}
 
@@ -407,6 +413,7 @@ func (ms msgServer) EquivocationEvidence(goCtx context.Context, req *types.MsgEq
 		CanonicalFinalitySig: req.CanonicalFinalitySig,
 		ForkAppHash:          req.ForkAppHash,
 		ForkFinalitySig:      req.ForkFinalitySig,
+		SigningContext:       req.SigningContext,
 	}
 
 	// slash this finality provider, including setting its voting power to
