@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 	"fmt"
+	"sort"
 
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
 	bsctypes "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
@@ -39,7 +40,18 @@ func (k Keeper) BroadcastBTCStakingConsumerEvents(
 
 	// Iterate through all consumer events and send them to the corresponding open IBC channel.
 	consumerIBCPacketMap := k.bsKeeper.GetAllBTCStakingConsumerIBCPackets(ctx)
-	for consumerID, ibcPacket := range consumerIBCPacketMap {
+
+	// Extract keys and sort them for deterministic iteration
+	consumerIDs := make([]string, 0, len(consumerIBCPacketMap))
+	for consumerID := range consumerIBCPacketMap {
+		consumerIDs = append(consumerIDs, consumerID)
+	}
+	sort.Strings(consumerIDs)
+
+	// Iterate through consumer IDs in sorted order
+	for _, consumerID := range consumerIDs {
+		ibcPacket := consumerIBCPacketMap[consumerID]
+
 		// Check if there are open channels for the current consumer ID.
 		channels, ok := consumerChannelMap[consumerID]
 		if !ok {

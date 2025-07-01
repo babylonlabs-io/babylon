@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"math"
+	"sort"
 
 	"cosmossdk.io/store/prefix"
 	"github.com/cosmos/cosmos-sdk/runtime"
@@ -273,9 +274,19 @@ func (k Keeper) consumerEvents(ctx context.Context) []*types.ConsumerEvent {
 	eventsMap := k.GetAllBTCStakingConsumerIBCPackets(ctx)
 	entriesCount := len(eventsMap)
 	res := make([]*types.ConsumerEvent, 0, entriesCount)
-	for consumerId, events := range eventsMap {
+
+	// Extract keys and sort them for deterministic iteration
+	consumerIDs := make([]string, 0, entriesCount)
+	for consumerID := range eventsMap {
+		consumerIDs = append(consumerIDs, consumerID)
+	}
+	sort.Strings(consumerIDs)
+
+	// Iterate through consumer IDs in sorted order
+	for _, consumerID := range consumerIDs {
+		events := eventsMap[consumerID]
 		res = append(res, &types.ConsumerEvent{
-			ConsumerId: consumerId,
+			ConsumerId: consumerID,
 			Events:     events,
 		})
 	}
