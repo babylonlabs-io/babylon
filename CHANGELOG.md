@@ -39,6 +39,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
+- [#1273](https://github.com/babylonlabs-io/babylon/pull/1273) Deterministic iteration of maps in `x/zoneconcierge`.
 - [#1256](https://github.com/babylonlabs-io/babylon/pull/1256) remove query chains info request from `x/zoneconcierge`
 - [#1222](https://github.com/babylonlabs-io/babylon/pull/1222) doc: revise zone concierge doc (round 1)
 - [#1234](https://github.com/babylonlabs-io/babylon/pull/1234) doc: revise zone concierge doc (round 2)
