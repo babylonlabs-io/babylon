@@ -180,9 +180,19 @@ func (h *IncentiveHelper) CtxAddBlkHeight(blocksToAdd int64) {
 	h.Ctx = h.Ctx.WithHeaderInfo(headerInfo)
 }
 
-func (h *IncentiveHelper) FpAddPubRand(r *rand.Rand, sk *btcec.PrivateKey, startHeight uint64) *datagen.RandListInfo {
+func (h *IncentiveHelper) FpAddPubRand(
+	r *rand.Rand,
+	sk *btcec.PrivateKey,
+	startHeight uint64,
+) *datagen.RandListInfo {
 	numPubRand := uint64(200)
-	randListInfo, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(r, sk, startHeight, numPubRand)
+	randListInfo, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(
+		r,
+		sk,
+		h.FpRandCommitContext(),
+		startHeight,
+		numPubRand,
+	)
 	h.NoError(err)
 
 	_, err = h.FMsgServer.CommitPubRandList(h.Ctx, msgCommitPubRandList)

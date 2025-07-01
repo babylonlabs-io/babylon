@@ -133,11 +133,11 @@ func (m *MsgCreateBTCDelegation) ToParsed() (*ParsedCreateDelegationMessage, err
 		return nil, fmt.Errorf("cannot parse nil MsgCreateBTCDelegation")
 	}
 
-	return ParseCreateDelegationMessage(m)
+	return parseCreateDelegationMessage(m)
 }
 
 func (m *MsgCreateBTCDelegation) ValidateBasic() error {
-	if _, err := ParseCreateDelegationMessage(m); err != nil {
+	if _, err := parseCreateDelegationMessage(m); err != nil {
 		return err
 	}
 
@@ -222,7 +222,7 @@ func (m *MsgBtcStakeExpand) ToParsed() (*ParsedCreateDelegationMessage, error) {
 		return nil, fmt.Errorf("cannot parse nil MsgCreateBTCDelegation")
 	}
 
-	return ParseCreateDelegationMessage(m)
+	return parseCreateDelegationMessage(m)
 }
 
 // ValidateBasic does all the checks as MsgCreateBTCDelegation
@@ -233,7 +233,7 @@ func (m *MsgBtcStakeExpand) ValidateBasic() error {
 		return err
 	}
 
-	if _, err := ParseCreateDelegationMessage(m); err != nil {
+	if _, err := parseCreateDelegationMessage(m); err != nil {
 		return err
 	}
 

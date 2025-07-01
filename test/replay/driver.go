@@ -7,6 +7,9 @@ import (
 	"encoding/json"
 	"fmt"
 
+	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
+	"github.com/babylonlabs-io/babylon/v3/app/signingcontext"
+
 	"math/rand"
 	"path/filepath"
 	"testing"
@@ -215,6 +218,8 @@ func NewBabylonAppDriver(
 		0,
 		blsSigner,
 		appOptions,
+		appparams.EVMChainID,
+		babylonApp.EVMAppOptions,
 		babylonApp.EmptyWasmOpts,
 		baseAppOptions...,
 	)
@@ -738,6 +743,51 @@ func (d *BabylonAppDriver) ActivateVerifiedDelegations(expectedVerifiedDelegatio
 	d.SendTxWithMsgsFromDriverAccount(d.t, acitvationMsgs...)
 }
 
+// ConfirmStakingTransactionOnBTC confirms staking transactions included in the
+// provided messages on the simulated BTC chain. Afterwards, it fills inclusion
+// proof in the provided messages. It is up to the caller to send the messages
+// to the mempool.
+func (d *BabylonAppDriver) ConfirmStakingTransactionOnBTC(
+	msg []*bstypes.MsgCreateBTCDelegation,
+) {
+	require.NotEmpty(d.t, msg)
+
+	btcCheckpointParams := d.GetBTCCkptParams(d.t)
+
+	tip, _ := d.GetBTCLCTip()
+	var transactions []*wire.MsgTx
+	for _, m := range msg {
+		stakingTx, err := bbn.NewBTCTxFromBytes(m.StakingTx)
+		require.NoError(d.t, err)
+		transactions = append(transactions, stakingTx)
+	}
+
+	block := datagen.GenRandomBtcdBlockWithTransactions(d.r, transactions, tip)
+
+	headers := BlocksWithProofsToHeaderBytes([]*datagen.BlockWithProofs{block})
+
+	confirmationBLocks := datagen.GenNEmptyBlocks(
+		d.r,
+		uint64(btcCheckpointParams.BtcConfirmationDepth),
+		&block.Block.Header,
+	)
+	confirmationHeaders := BlocksWithProofsToHeaderBytes(confirmationBLocks)
+
+	headers = append(headers, confirmationHeaders...)
+
+	// extend our light client so that all stakers are confirmed
+	d.SendTxWithMsgsFromDriverAccount(d.t, &btclighttypes.MsgInsertHeaders{
+		Signer:  d.GetDriverAccountAddress().String(),
+		Headers: headers,
+	})
+
+	// iterate over all transactions except coinbase, and set inclusion proof in message
+	// to the proof from the block
+	for i := 1; i < len(block.Transactions); i++ {
+		msg[i-1].StakingTxInclusionProof = bstypes.NewInclusionProofFromSpvProof(block.Proofs[i])
+	}
+}
+
 func (d *BabylonAppDriver) GenCkptForEpoch(r *rand.Rand, t *testing.T, epochNumber uint64) {
 	ckptWithMeta := d.GetCheckpoint(t, epochNumber)
 	subAddress := d.GetDriverAccountAddress()
@@ -988,18 +1038,16 @@ func (d *BabylonAppDriver) GovPropWaitPass(msgInGovProp sdk.Msg) {
 
 // Consumer represents a registered consumer chain
 type Consumer struct {
-	ID                string
-	MaxMultiStakedFps uint32
+	ID string
 }
 
-// RegisterConsumer registers a new consumer with the given max_multi_staked_fps limit
-func (d *BabylonAppDriver) RegisterConsumer(consumerID string, maxMultiStakedFps uint32, rollupContractAddr ...string) *Consumer {
+// RegisterConsumer registers a new consumer
+func (d *BabylonAppDriver) RegisterConsumer(consumerID string, rollupContractAddr ...string) *Consumer {
 	msg := &btcstkconsumertypes.MsgRegisterConsumer{
 		Signer:              d.GetDriverAccountAddress().String(),
 		ConsumerId:          consumerID,
 		ConsumerName:        "Test Consumer " + consumerID,
 		ConsumerDescription: "Test consumer for replay tests",
-		MaxMultiStakedFps:   maxMultiStakedFps,
 	}
 
 	// If rollup contract address is provided, set it
@@ -1010,8 +1058,7 @@ func (d *BabylonAppDriver) RegisterConsumer(consumerID string, maxMultiStakedFps
 	d.SendTxWithMsgsFromDriverAccount(d.t, msg)
 
 	return &Consumer{
-		ID:                consumerID,
-		MaxMultiStakedFps: maxMultiStakedFps,
+		ID: consumerID,
 	}
 }
 
@@ -1023,4 +1070,20 @@ func (d *BabylonAppDriver) CreateFinalityProviderForConsumer(consumer *Consumer)
 	fp.RegisterFinalityProvider(consumer.ID)
 
 	return fp
+}
+
+func (d *BabylonAppDriver) FpPopContext() string {
+	return signingcontext.FpPopContextV0(d.App.ChainID(), d.App.BTCStakingKeeper.ModuleAddress())
+}
+
+func (d *BabylonAppDriver) StakerPopContext() string {
+	return signingcontext.StakerPopContextV0(d.App.ChainID(), d.App.BTCStakingKeeper.ModuleAddress())
+}
+
+func (d *BabylonAppDriver) FpRandCommitContext() string {
+	return signingcontext.FpRandCommitContextV0(d.App.ChainID(), d.App.FinalityKeeper.ModuleAddress())
+}
+
+func (d *BabylonAppDriver) FpFinVoteContext() string {
+	return signingcontext.FpFinVoteContextV0(d.App.ChainID(), d.App.FinalityKeeper.ModuleAddress())
 }

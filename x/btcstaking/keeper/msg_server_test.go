@@ -88,7 +88,7 @@ func FuzzMsgCreateFinalityProvider(f *testing.F) {
 		// generate new finality providers
 		fps := []*types.FinalityProvider{}
 		for i := 0; i < int(datagen.RandomInt(r, 10)); i++ {
-			fp, err := datagen.GenRandomFinalityProvider(r)
+			fp, err := datagen.GenRandomFinalityProvider(r, h.FpPopContext())
 			require.NoError(t, err)
 			msg := &types.MsgCreateFinalityProvider{
 				Addr:        fp.Addr,
@@ -1165,7 +1165,7 @@ func TestDoNotAllowDelegationWithoutFinalityProvider(t *testing.T) {
 	// We only generate a finality provider, but not insert it into KVStore. So later
 	// insertion of delegation should fail.
 
-	fp, err := datagen.GenRandomFinalityProvider(r)
+	fp, err := datagen.GenRandomFinalityProvider(r, h.FpPopContext())
 	require.NoError(t, err)
 
 	/*
@@ -1198,7 +1198,7 @@ func TestDoNotAllowDelegationWithoutFinalityProvider(t *testing.T) {
 	stakerAddr := sdk.MustAccAddressFromBech32(acc.Address)
 
 	// PoP
-	pop, err := datagen.NewPoPBTC(stakerAddr, delSK)
+	pop, err := datagen.NewPoPBTC(h.StakerPopContext(), stakerAddr, delSK)
 	require.NoError(t, err)
 	// generate staking tx info
 	prevBlock, _ := datagen.GenRandomBtcdBlock(r, 0, nil)
@@ -1438,6 +1438,7 @@ func TestAllowList(t *testing.T) {
 func createNDelegationsForFinalityProvider(
 	r *rand.Rand,
 	t *testing.T,
+	signingContext string,
 	fpPK *btcec.PublicKey,
 	stakingValue int64,
 	numDelegations int,
@@ -1466,6 +1467,7 @@ func createNDelegationsForFinalityProvider(
 			net,
 			[]bbn.BIP340PubKey{*bbn.NewBIP340PubKeyFromBTCPK(fpPK)},
 			delSK,
+			signingContext,
 			covenatnSks,
 			covenantPks,
 			quorum,
@@ -1527,7 +1529,7 @@ func FuzzDeterminismBtcstakingBeginBlocker(f *testing.F) {
 		// Number of finality providers from 10 to maxFinalityProviders + 10
 		numFinalityProviders := int(r.Int31n(maxFinalityProviders) + 10)
 
-		fps := datagen.CreateNFinalityProviders(r, t, numFinalityProviders)
+		fps := datagen.CreateNFinalityProviders(r, t, h.FpPopContext(), numFinalityProviders)
 
 		// Fill the database of both apps with the same finality providers and delegations
 		for _, fp := range fps {
@@ -1550,6 +1552,7 @@ func FuzzDeterminismBtcstakingBeginBlocker(f *testing.F) {
 			delegations := createNDelegationsForFinalityProvider(
 				r,
 				t,
+				h.StakerPopContext(),
 				fp.BtcPk.MustToBTCPK(),
 				int64(stakingValue),
 				int(numDelegations),

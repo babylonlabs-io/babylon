@@ -178,11 +178,11 @@ type ParsedCreateDelStkExp struct {
 	OtherFundingOutput *wire.TxOut
 }
 
-// ParseCreateDelegationMessage parses a MsgCreateBTCDelegation message and performs some basic
+// parseCreateDelegationMessage parses a MsgCreateBTCDelegation message and performs some basic
 // stateless checks:
 // - unbonding transaction is a simple transfer
 // - there is no duplicated keys in the finality provider key list
-func ParseCreateDelegationMessage(msg ExpMsgParseBtcCreation) (*ParsedCreateDelegationMessage, error) {
+func parseCreateDelegationMessage(msg ExpMsgParseBtcCreation) (*ParsedCreateDelegationMessage, error) {
 	if msg == nil {
 		return nil, fmt.Errorf("cannot parse nil MsgCreateBTCDelegation")
 	}

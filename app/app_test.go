@@ -2,7 +2,14 @@ package app_test
 
 import (
 	"fmt"
+	"strings"
 	"testing"
+
+	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
+	erc20types "github.com/cosmos/evm/x/erc20/types"
+	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
+	precisebanktypes "github.com/cosmos/evm/x/precisebank/types"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 
 	tokenfactorytypes "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/types"
 
@@ -29,7 +36,7 @@ import (
 
 var (
 	expectedMaccPerms = map[string][]string{
-		authtypes.FeeCollectorName:   nil, // fee collector account
+		authtypes.FeeCollectorName:   {authtypes.Burner}, // fee collector account
 		distrtypes.ModuleName:        nil,
 		minttypes.ModuleName:         {authtypes.Minter},
 		stktypes.BondedPoolName:      {authtypes.Burner, authtypes.Staking},
@@ -39,8 +46,38 @@ var (
 		incentivetypes.ModuleName:    nil, // this line is needed to create an account for incentive module
 		tokenfactorytypes.ModuleName: {authtypes.Minter, authtypes.Burner},
 		icatypes.ModuleName:          nil,
+		evmtypes.ModuleName:          {authtypes.Minter, authtypes.Burner},
+		erc20types.ModuleName:        {authtypes.Minter, authtypes.Burner},
+		feemarkettypes.ModuleName:    nil,
+		precisebanktypes.ModuleName:  {authtypes.Minter, authtypes.Burner},
 	}
 )
+
+func TestBabylonCheckRemovedStakingEndBlocker(t *testing.T) {
+	db := dbm.NewMemDB()
+
+	tbs, err := testsigner.SetupTestBlsSigner()
+	require.NoError(t, err)
+	blsSigner := checkpointingtypes.BlsSigner(tbs)
+
+	logger := log.NewTestLogger(t)
+	appOpts, cleanup := babylonApp.TmpAppOptions()
+	defer cleanup()
+
+	app := babylonApp.NewBabylonAppWithCustomOptions(t, false, blsSigner, babylonApp.SetupOptions{
+		Logger:             logger,
+		DB:                 db,
+		InvCheckPeriod:     0,
+		SkipUpgradeHeights: map[int64]bool{},
+		AppOpts:            appOpts,
+	})
+
+	for _, m := range app.ModuleManager.OrderEndBlockers {
+		if strings.EqualFold(m, stktypes.ModuleName) {
+			t.Error("the staking module is active to execute end blocker")
+		}
+	}
+}
 
 func TestBabylonBlockedAddrs(t *testing.T) {
 	db := dbm.NewMemDB()
@@ -97,6 +134,8 @@ func TestBabylonBlockedAddrs(t *testing.T) {
 		0,
 		&blsSigner,
 		appOpts,
+		appparams.EVMChainID,
+		babylonApp.EVMAppOptions,
 		babylonApp.EmptyWasmOpts,
 	)
 	_, err = app2.ExportAppStateAndValidators(false, []string{}, []string{})

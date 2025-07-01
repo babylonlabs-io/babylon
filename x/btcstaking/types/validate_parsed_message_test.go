@@ -137,7 +137,7 @@ func createMsgDelegationForParams(
 	require.NoError(t, err)
 	stPk := bbn.NewBIP340PubKeyFromBTCPK(delPK)
 	staker := sdk.MustAccAddressFromBech32(datagen.GenRandomAccount().Address)
-	pop, err := datagen.NewPoPBTC(staker, delSK)
+	pop, err := datagen.NewPoPBTC("", staker, delSK)
 	require.NoError(t, err)
 	// finality provider related data
 	_, fpPk, err := datagen.GenRandomBTCKeyPair(r)
@@ -891,7 +891,7 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 
 			msg, params, _ := tt.fn(r, t)
 
-			parsed, err := types.ParseCreateDelegationMessage(msg)
+			parsed, err := msg.ToParsed()
 
 			if tt.errParsing != nil {
 				require.Error(t, err)

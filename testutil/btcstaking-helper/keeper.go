@@ -19,6 +19,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/babylonlabs-io/babylon/v3/app/signingcontext"
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
 	keepertest "github.com/babylonlabs-io/babylon/v3/testutil/keeper"
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
@@ -163,6 +164,22 @@ func (h *Helper) Error(err error, msgAndArgs ...any) {
 	require.Error(h.t, err, msgAndArgs...)
 }
 
+func (h *Helper) StakerPopContext() string {
+	return signingcontext.StakerPopContextV0(h.Ctx.ChainID(), h.BTCStakingKeeper.ModuleAddress())
+}
+
+func (h *Helper) FpPopContext() string {
+	return signingcontext.FpPopContextV0(h.Ctx.ChainID(), h.BTCStakingKeeper.ModuleAddress())
+}
+
+func (h *Helper) FpRandCommitContext() string {
+	return signingcontext.FpRandCommitContextV0(h.Ctx.ChainID(), h.FinalityKeeper.ModuleAddress())
+}
+
+func (h *Helper) FpFinVoteContext() string {
+	return signingcontext.FpFinVoteContextV0(h.Ctx.ChainID(), h.FinalityKeeper.ModuleAddress())
+}
+
 func (h *Helper) BeginBlocker() {
 	err := h.BTCStakingKeeper.BeginBlocker(h.Ctx)
 	h.NoError(err)
@@ -221,26 +238,10 @@ func (h *Helper) GenAndApplyCustomParams(
 	return covenantSKs, covenantPKs
 }
 
-func CreateFinalityProvider(r *rand.Rand, t *testing.T) *types.FinalityProvider {
-	fpSK, _, err := datagen.GenRandomBTCKeyPair(r)
-	require.NoError(t, err)
-
-	fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, fpSK, "")
-	require.NoError(t, err)
-
-	return &types.FinalityProvider{
-		Description: fp.Description,
-		Commission:  fp.Commission,
-		Addr:        fp.Addr,
-		BtcPk:       fp.BtcPk,
-		Pop:         fp.Pop,
-	}
-}
-
 func (h *Helper) CreateFinalityProvider(r *rand.Rand) (*btcec.PrivateKey, *btcec.PublicKey, *types.FinalityProvider) {
 	fpSK, fpPK, err := datagen.GenRandomBTCKeyPair(r)
 	h.NoError(err)
-	fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, fpSK, "")
+	fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, fpSK, h.FpPopContext(), "")
 	h.NoError(err)
 	msgNewFp := types.MsgCreateFinalityProvider{
 		Addr:        fp.Addr,
@@ -265,7 +266,7 @@ func (h *Helper) CreateConsumerFinalityProvider(r *rand.Rand, consumerID string)
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, fpSK, consumerID)
+	fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, fpSK, h.FpPopContext(), consumerID)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -356,7 +357,7 @@ func (h *Helper) CreateDelegationWithBtcBlockHeight(
 	staker := sdk.MustAccAddressFromBech32(datagen.GenRandomAccount().Address)
 
 	// PoP
-	pop, err := datagen.NewPoPBTC(staker, delSK)
+	pop, err := datagen.NewPoPBTC(h.StakerPopContext(), staker, delSK)
 	h.NoError(err)
 	// generate staking tx info
 	prevBlock, _ := datagen.GenRandomBtcdBlock(r, 0, nil)
@@ -651,7 +652,13 @@ func (h *Helper) CommitPubRandList(
 	numPubRand uint64,
 	timestamped bool,
 ) *datagen.RandListInfo {
-	randListInfo, msg, err := datagen.GenRandomMsgCommitPubRandList(r, fpSK, startHeight, numPubRand)
+	randListInfo, msg, err := datagen.GenRandomMsgCommitPubRandList(
+		r,
+		fpSK,
+		h.FpRandCommitContext(),
+		startHeight,
+		numPubRand,
+	)
 	h.NoError(err)
 
 	// if timestamped, use the timestamped epoch, otherwise use the next epoch
