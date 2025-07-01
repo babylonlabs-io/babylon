@@ -385,15 +385,17 @@ func (s *IBCTransferTestSuite) Test4MultiCoinFee() {
 
 	feeCollectorAddr := "bbn17xpfvakm2amg962yls6f84z3kell8c5l88j35y"
 	txHash := nA.SendIBCTransfer(s.addrA, feeCollectorAddr, "transfer", transferCoin)
-	nA.WaitForNextBlocks(3)
+	nA.WaitForNextBlock()
 
 	_, txResp := nA.QueryTx(txHash)
 	txFeesPaid := txResp.AuthInfo.Fee.Amount
 	// Make sure only fees were deducted from sender
 	// The tx should have failed
-	balanceAfterAddrA, err := nA.QueryBalances(s.addrA)
-	s.Require().NoError(err)
-	s.Require().Equal(balanceAfterAddrA, balanceBeforeAddrA.Sub(txFeesPaid...))
+	s.Require().Eventually(func() bool {
+		balanceAfterAddrA, err := nA.QueryBalances(s.addrA)
+		s.Require().NoError(err)
+		return balanceAfterAddrA.Equal(balanceBeforeAddrA.Sub(txFeesPaid...))
+	}, 90*time.Second, 2*time.Second)
 }
 
 func (s *IBCTransferTestSuite) Test5E2EBelowThreshold() {
