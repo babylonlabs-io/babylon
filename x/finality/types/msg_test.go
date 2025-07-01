@@ -324,7 +324,7 @@ func TestMsgUnjailFinalityProvider_ValidateBasic(t *testing.T) {
 	}
 }
 
-func TestMsgEquivocationEvidence_ValidateBasic(t *testing.T) {
+func TestMsgEquivocationEvidence(t *testing.T) {
 	var (
 		validAddr           = datagen.GenRandomAddress().String()
 		validPkHex          = hex.EncodeToString(make([]byte, bbntypes.BIP340PubKeyLen))
@@ -375,7 +375,7 @@ func TestMsgEquivocationEvidence_ValidateBasic(t *testing.T) {
 				CanonicalFinalitySigHex: validFinalitySigHex,
 				ForkFinalitySigHex:      validFinalitySigHex,
 			},
-			expErr: "empty FpBtcPk",
+			expErr: "invalid FP BTC PK",
 		},
 		{
 			name: "nil PubRand",
@@ -388,7 +388,7 @@ func TestMsgEquivocationEvidence_ValidateBasic(t *testing.T) {
 				CanonicalFinalitySigHex: validFinalitySigHex,
 				ForkFinalitySigHex:      validFinalitySigHex,
 			},
-			expErr: "empty PubRand",
+			expErr: "invalid PubRand",
 		},
 		{
 			name: "invalid CanonicalAppHash length",
@@ -427,7 +427,7 @@ func TestMsgEquivocationEvidence_ValidateBasic(t *testing.T) {
 				CanonicalFinalitySigHex: validFinalitySigHex,
 				ForkFinalitySigHex:      "",
 			},
-			expErr: "empty ForkFinalitySig",
+			expErr: "invalid ForkFinalitySig",
 		},
 		{
 			name: "nil CanonicalFinalitySig",
@@ -440,7 +440,7 @@ func TestMsgEquivocationEvidence_ValidateBasic(t *testing.T) {
 				CanonicalFinalitySigHex: "",
 				ForkFinalitySigHex:      validFinalitySigHex,
 			},
-			expErr: "empty CanonicalFinalitySig",
+			expErr: "invalid CanonicalFinalitySig",
 		},
 	}
 
