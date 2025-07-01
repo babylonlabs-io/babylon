@@ -419,10 +419,7 @@ func TestDeterministicOrdering(t *testing.T) {
 		sort.Strings(consumerIDKeys)
 
 		// Iterate through consumer IDs in sorted order
-		for _, consumerID := range consumerIDKeys {
-			// Simulate processing each consumer's packets
-			processOrder1 = append(processOrder1, consumerID)
-		}
+		processOrder1 = append(processOrder1, consumerIDKeys...)
 	}
 
 	// 3. Repeat the same process to ensure consistent ordering
@@ -438,9 +435,7 @@ func TestDeterministicOrdering(t *testing.T) {
 		sort.Strings(consumerIDKeys)
 
 		// Iterate through consumer IDs in sorted order
-		for _, consumerID := range consumerIDKeys {
-			processOrder2 = append(processOrder2, consumerID)
-		}
+		processOrder2 = append(processOrder2, consumerIDKeys...)
 	}
 
 	// Verify that both processing orders are identical
