@@ -12801,8 +12801,7 @@ paths:
                       format: byte
       tags:
         - Query
-<<<<<<< HEAD
-=======
+
   /babylon/zoneconcierge/v1/chain_info/{consumer_id}/header/{height}:
     get:
       summary: Header queries the Consumer header and fork headers at a given height
@@ -15681,7 +15680,6 @@ paths:
                         }
       tags:
         - Query
->>>>>>> 9be0b19 (chore(zoneconcierge): Remove `ListEpochHeaders` and `QueryChainList`  query (#1265))
 definitions:
   babylon.btccheckpoint.v1.BTCCheckpointInfoResponse:
     type: object
@@ -22816,8 +22814,6 @@ definitions:
     title: |-
       RewardGaugesResponse is an object that stores rewards distributed to a BTC
       staking stakeholder
-<<<<<<< HEAD
-=======
   babylon.btccheckpoint.v1.SubmissionKey:
     type: object
     properties:
