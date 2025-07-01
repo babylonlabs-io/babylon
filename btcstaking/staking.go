@@ -563,7 +563,7 @@ func SignTxWithOneScriptSpendInputFromScript(
 // from script spend output with provided script.
 // It does not do any validations, expect that txToSign has exactly two inputs.
 // In the context of a stake expansion the idx 0 `fundingOutputToSignIdx0`
-// funding output would be the previous active staking transaciton that
+// funding output would be the previous active staking transaction that
 // needs the covenant signatures to spend the BTC and the other funding
 // output `fundingOutputIdx1` would be an TxOut responsible to pay for fees
 // and optionally increasing the amount staked to that delegation.
@@ -612,7 +612,7 @@ func GetSignatureForFirstScriptSpendWithTwoInputsFromTapLeaf(
 // getSignatureForFirstScriptSpendWithTwoInputsFromTapLeafInternal returns
 // the schnorr signature of the signature over the idx zero of the inputs
 // of the message to sign. In the context of a stake expansion the idx 0
-// funding output would be the previous active staking transaciton that
+// funding output would be the previous active staking transaction that
 // needs the covenant signatures to spend the BTC and the other funding
 // output `fundingOutputIdx1` would be an TxOut responsible to pay for fees
 // and optionally increasing the amount staked to that delegation.
