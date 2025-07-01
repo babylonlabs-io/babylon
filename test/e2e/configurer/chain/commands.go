@@ -33,6 +33,10 @@ const (
 	flagKeyringTest = "--keyring-backend=test"
 )
 
+func (n *NodeConfig) GetChainID() string {
+	return n.chainId
+}
+
 func (n *NodeConfig) GetWallet(walletName string) string {
 	n.LogActionF("retrieving wallet %s", walletName)
 	cmd := []string{"babylond", "keys", "show", walletName, flagKeyringTest, containers.FlagHome}
@@ -43,6 +47,11 @@ func (n *NodeConfig) GetWallet(walletName string) string {
 	walletAddr = strings.TrimSuffix(walletAddr, "\n")
 	n.LogActionF("wallet %s found, wallet address - %s", walletName, walletAddr)
 	return walletAddr
+}
+
+func (n *NodeConfig) ExecRawCmd(cmd []string) (bytes.Buffer, bytes.Buffer,
+	error) {
+	return n.containerManager.ExecCmd(n.t, n.Name, cmd, "")
 }
 
 // KeysAdd creates a new key in the keyring

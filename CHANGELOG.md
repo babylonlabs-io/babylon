@@ -35,6 +35,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## Unreleased
+
+### Improvements
+
+- [#1269](https://github.com/babylonlabs-io/babylon/pull/1269) Add fee collector e2e tests.
+
 ## v2.2.0
 
 ### Improvements
