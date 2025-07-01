@@ -21,7 +21,7 @@ func TestGenesisState_Validate(t *testing.T) {
 	for range entriesCount {
 		consumer := datagen.GenRandomCosmosConsumerRegister(r)
 		consumers = append(consumers, consumer)
-		fp, err := datagen.GenRandomFinalityProvider(r)
+		fp, err := datagen.GenRandomFinalityProvider(r, "")
 		require.NoError(t, err)
 		fp.ConsumerId = consumer.ConsumerId
 		fps = append(fps, fp)
@@ -70,25 +70,6 @@ func TestGenesisState_Validate(t *testing.T) {
 			},
 			valid:  false,
 			errMsg: "finality provider consumer is not registered",
-		},
-		{
-			desc: "invalid max_multi_staked_fps (zero)",
-			genState: &types.GenesisState{
-				Consumers: []*types.ConsumerRegister{
-					{
-						ConsumerId:          "consumer1",
-						ConsumerName:        "Consumer One",
-						ConsumerDescription: "A valid consumer",
-						MaxMultiStakedFps:   0,
-						ConsumerMetadata: &types.ConsumerRegister_CosmosConsumerMetadata{
-							CosmosConsumerMetadata: &types.CosmosConsumerMetadata{},
-						},
-					},
-				},
-				FinalityProviders: []*btcstaking.FinalityProvider{},
-			},
-			valid:  false,
-			errMsg: types.ErrInvalidMaxMultiStakedFps.Error(),
 		},
 	}
 	for _, tc := range tests {

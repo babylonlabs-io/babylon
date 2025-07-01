@@ -74,7 +74,7 @@ func setupTest(t *testing.T, seed int64) (sdk.Context, *keeper.Keeper, *types.Ge
 
 	for i := 0; i < l; i++ {
 		cs[i] = datagen.GenRandomCosmosConsumerRegister(r)
-		fp, err := datagen.GenRandomFinalityProvider(r)
+		fp, err := datagen.GenRandomFinalityProvider(r, "")
 		require.NoError(t, err)
 		fp.ConsumerId = cs[i].ConsumerId
 		fps[i] = fp

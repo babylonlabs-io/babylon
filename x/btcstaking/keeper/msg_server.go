@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/babylonlabs-io/babylon/v3/app/signingcontext"
 	btcckpttypes "github.com/babylonlabs-io/babylon/v3/x/btccheckpoint/types"
 
 	errorsmod "cosmossdk.io/errors"
@@ -69,13 +70,15 @@ func (ms msgServer) CreateFinalityProvider(goCtx context.Context, req *types.Msg
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid address %s: %v", req.Addr, err)
 	}
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	signingContext := signingcontext.FpPopContextV0(ctx.ChainID(), ms.btcStakingModuleAddress)
 
 	// verify proof of possession
-	if err := req.Pop.Verify(fpAddr, req.BtcPk, ms.btcNet); err != nil {
+	if err := req.Pop.Verify(signingContext, fpAddr, req.BtcPk, ms.btcNet); err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid proof of possession: %v", err)
 	}
 
-	ctx := sdk.UnwrapSDKContext(goCtx)
 	if err := ms.AddFinalityProvider(ctx, req); err != nil {
 		return nil, err
 	}
@@ -185,9 +188,11 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		return nil, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
+	signingContext := signingcontext.StakerPopContextV0(ctx.ChainID(), ms.btcStakingModuleAddress)
+
 	// 2. Basic stateless checks
 	// - verify proof of possession
-	if err := parsedMsg.ParsedPop.Verify(parsedMsg.StakerAddress, parsedMsg.StakerPK.BIP340PubKey, ms.btcNet); err != nil {
+	if err := parsedMsg.ParsedPop.Verify(signingContext, parsedMsg.StakerAddress, parsedMsg.StakerPK.BIP340PubKey, ms.btcNet); err != nil {
 		return nil, types.ErrInvalidProofOfPossession.Wrap(err.Error())
 	}
 
@@ -204,9 +209,8 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	// - are not slashed, and
 	// - their registered epochs are finalised
 	// and then check whether the BTC stake is restaked to FPs of consumers
-	// The total number of finality providers in a delegation must be less than the minimum
-	// of all consumers' max_multi_staked_fps limits. Only one finality provider per
-	// consumer is allowed in a delegation.
+	// TODO: ensure the BTC delegation does not restake to too many finality providers
+	// (pending concrete design)
 	restakedToConsumers, err := ms.validateRestakedFPs(ctx, parsedMsg.FinalityProviderKeys.PublicKeysBbnFormat)
 	if err != nil {
 		return nil, err

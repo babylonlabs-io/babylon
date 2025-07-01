@@ -3,6 +3,7 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"github.com/cosmos/evm/crypto/hd"
 	"io"
 	"os"
 	"strings"
@@ -11,6 +12,7 @@ import (
 	confixcmd "cosmossdk.io/tools/confix/cmd"
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
 	cmtcfg "github.com/cometbft/cometbft/config"
 	cmtcli "github.com/cometbft/cometbft/libs/cli"
 	dbm "github.com/cosmos/cosmos-db"
@@ -22,13 +24,15 @@ import (
 	authtxconfig "github.com/cosmos/cosmos-sdk/x/auth/tx/config"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
+	evmkeyring "github.com/cosmos/evm/crypto/keyring"
+	evmserver "github.com/cosmos/evm/server"
+	srvflags "github.com/cosmos/evm/server/flags"
 
 	appsigner "github.com/babylonlabs-io/babylon/v3/app/signer"
 
 	"cosmossdk.io/log"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
 	"github.com/cosmos/cosmos-sdk/server"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
@@ -45,6 +49,8 @@ import (
 	"github.com/babylonlabs-io/babylon/v3/app/params"
 	"github.com/babylonlabs-io/babylon/v3/cmd/babylond/cmd/genhelpers"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
+	evmcmd "github.com/cosmos/evm/client"
+	evmtypes "github.com/cosmos/evm/types"
 )
 
 // NewRootCmd creates a new root command for babylond. It is called once in the
@@ -62,7 +68,15 @@ func NewRootCmd() *cobra.Command {
 		WithInput(os.Stdin).
 		WithAccountRetriever(types.AccountRetriever{}).
 		WithHomeDir(app.DefaultNodeHome).
-		WithViper("") // In app, we don't use any prefix for env variables.
+		WithViper(""). // In app, we don't use any prefix for env variables.
+		WithBroadcastMode(flags.FlagBroadcastMode).
+		WithKeyringOptions(evmkeyring.Option(), hd.EthSecp256k1Option()).
+		WithLedgerHasProtobuf(true)
+
+	cfg := sdk.GetConfig()
+	cfg.SetCoinType(evmtypes.Bip44CoinType)
+	cfg.SetPurpose(sdk.Purpose)
+	cfg.Seal()
 
 	rootCmd := &cobra.Command{
 		Use:   "babylond",
@@ -121,6 +135,11 @@ func NewRootCmd() *cobra.Command {
 	}
 
 	initRootCmd(rootCmd, tempApp.TxConfig(), tempApp.BasicModuleManager)
+
+	// If the regular chain id set, ensure we also set an EVM specific chain id.
+	if err := app.EVMAppOptions(appparams.EVMChainID); err != nil {
+		panic(err)
+	}
 
 	// add keyring to autocli opts
 	autoCliOpts := tempApp.AutoCliOpts()
@@ -220,15 +239,26 @@ func initRootCmd(rootCmd *cobra.Command, txConfig client.TxEncodingConfig, basic
 		confixcmd.ConfigCommand(),
 	)
 
-	server.AddCommands(rootCmd, app.DefaultNodeHome, newApp, appExport, addModuleInitFlags)
+	evmserver.AddCommands(
+		rootCmd,
+		evmserver.NewDefaultStartOptions(newApp, app.DefaultNodeHome),
+		appExport,
+		addModuleInitFlags,
+	)
 
 	// add keybase, auxiliary RPC, query, and tx child commands
 	rootCmd.AddCommand(
 		server.StatusCommand(),
 		queryCommand(),
 		txCommand(),
-		keys.Commands(),
+		evmcmd.KeyCommands(app.DefaultNodeHome, false),
 	)
+
+	var err error
+	_, err = srvflags.AddTxFlags(rootCmd)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func addModuleInitFlags(startCmd *cobra.Command) {
@@ -330,6 +360,8 @@ func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, appOpts serverty
 		cast.ToUint(appOpts.Get(server.FlagInvCheckPeriod)),
 		&blsSigner,
 		appOpts,
+		appparams.EVMChainID,
+		app.EVMAppOptions,
 		wasmOpts,
 		baseappOptions...,
 	)
@@ -361,13 +393,13 @@ func appExport(
 	blsSigner := checkpointingtypes.BlsSigner(ck.Bls)
 
 	if height != -1 {
-		babylonApp = app.NewBabylonApp(logger, db, traceStore, false, map[int64]bool{}, uint(1), &blsSigner, appOpts, app.EmptyWasmOpts)
+		babylonApp = app.NewBabylonApp(logger, db, traceStore, false, map[int64]bool{}, uint(1), &blsSigner, appOpts, appparams.EVMChainID, app.EVMAppOptions, app.EmptyWasmOpts)
 
 		if err = babylonApp.LoadHeight(height); err != nil {
 			return servertypes.ExportedApp{}, fmt.Errorf("failed to load height: %w", err)
 		}
 	} else {
-		babylonApp = app.NewBabylonApp(logger, db, traceStore, true, map[int64]bool{}, uint(1), &blsSigner, appOpts, app.EmptyWasmOpts)
+		babylonApp = app.NewBabylonApp(logger, db, traceStore, true, map[int64]bool{}, uint(1), &blsSigner, appOpts, appparams.EVMChainID, app.EVMAppOptions, app.EmptyWasmOpts)
 	}
 
 	return babylonApp.ExportAppStateAndValidators(forZeroHeight, jailAllowedAddrs, modulesToExport)

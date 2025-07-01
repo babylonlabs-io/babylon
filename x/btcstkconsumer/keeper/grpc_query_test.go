@@ -33,17 +33,13 @@ func FuzzConsumerRegistryList(f *testing.F) {
 		// invoke the consumer registration a random number of times with random consumer IDs
 		numRegistrations := datagen.RandomInt(r, 100) + 1
 		var allConsumerIDs []string
-		consumerMaxFps := make(map[string]uint32) // Track max_multi_staked_fps for each consumer
 		for i := uint64(0); i < numRegistrations; i++ {
 			var consumerID = datagen.GenRandomHexStr(r, 30)
-			maxFps := uint32(datagen.RandomInt(r, 10) + 2)
 			allConsumerIDs = append(allConsumerIDs, consumerID)
-			consumerMaxFps[consumerID] = maxFps
 
 			err := bscKeeper.RegisterConsumer(ctx, &types.ConsumerRegister{
-				ConsumerId:        consumerID,
-				ConsumerName:      datagen.GenRandomHexStr(r, 5),
-				MaxMultiStakedFps: maxFps,
+				ConsumerId:   consumerID,
+				ConsumerName: datagen.GenRandomHexStr(r, 5),
 			})
 			require.NoError(t, err)
 		}
@@ -61,9 +57,7 @@ func FuzzConsumerRegistryList(f *testing.F) {
 
 		require.Equal(t, limit, uint64(len(actualConsumerRegisters)))
 		for i := uint64(0); i < limit; i++ {
-			consumerID := actualConsumerRegisters[i].ConsumerId
-			require.Contains(t, allConsumerIDs, consumerID)
-			require.Equal(t, consumerMaxFps[consumerID], actualConsumerRegisters[i].MaxMultiStakedFps)
+			require.Contains(t, allConsumerIDs, actualConsumerRegisters[i].ConsumerId)
 		}
 	})
 }
@@ -81,24 +75,20 @@ func FuzzConsumersRegistry(f *testing.F) {
 		var (
 			consumersRegister []consumerRegister
 			consumerIDs       []string
-			maxMultiStakedFps []uint32
 		)
 		// invoke the consumer registration a random number of times with random consumer IDs
 		numConsumers := datagen.RandomInt(r, 100) + 1
 		for i := uint64(0); i < numConsumers; i++ {
 			consumerID := datagen.GenRandomHexStr(r, 30)
-			maxFps := uint32(datagen.RandomInt(r, 10) + 2)
 
 			consumerIDs = append(consumerIDs, consumerID)
-			maxMultiStakedFps = append(maxMultiStakedFps, maxFps)
 			consumersRegister = append(consumersRegister, consumerRegister{
 				consumerID: consumerID,
 			})
 
 			err := bscKeeper.RegisterConsumer(ctx, &types.ConsumerRegister{
-				ConsumerId:        consumerID,
-				ConsumerName:      datagen.GenRandomHexStr(r, 5),
-				MaxMultiStakedFps: maxFps,
+				ConsumerId:   consumerID,
+				ConsumerName: datagen.GenRandomHexStr(r, 5),
 			})
 			require.NoError(t, err)
 		}
@@ -110,7 +100,6 @@ func FuzzConsumersRegistry(f *testing.F) {
 
 		for i, respData := range resp.ConsumerRegisters {
 			require.Equal(t, consumersRegister[i].consumerID, respData.ConsumerId)
-			require.Equal(t, maxMultiStakedFps[i], respData.MaxMultiStakedFps)
 		}
 	})
 }
@@ -128,7 +117,7 @@ func FuzzFinalityProviders(f *testing.F) {
 		consumerID := datagen.GenRandomHexStr(r, 30)
 		fpsMap := make(map[string]*btcstaking.FinalityProvider)
 		for i := 0; i < int(datagen.RandomInt(r, 10)+1); i++ {
-			fp, err := datagen.GenRandomFinalityProvider(r)
+			fp, err := datagen.GenRandomFinalityProvider(r, "")
 			require.NoError(t, err)
 			fp.ConsumerId = consumerID
 
@@ -197,7 +186,7 @@ func FuzzFinalityProvider(f *testing.F) {
 		consumerID := datagen.GenRandomHexStr(r, 30)
 		var existingFp string
 		for i := 0; i < int(datagen.RandomInt(r, 10)+1); i++ {
-			fp, err := datagen.GenRandomFinalityProvider(r)
+			fp, err := datagen.GenRandomFinalityProvider(r, "")
 			require.NoError(t, err)
 			fp.ConsumerId = consumerID
 
@@ -228,7 +217,7 @@ func FuzzFinalityProvider(f *testing.F) {
 		}
 
 		// check some random non-existing guy
-		fp, err := datagen.GenRandomFinalityProvider(r)
+		fp, err := datagen.GenRandomFinalityProvider(r, "")
 		require.NoError(t, err)
 		req := types.QueryFinalityProviderRequest{ConsumerId: consumerID, FpBtcPkHex: fp.BtcPk.MarshalHex()}
 		respNonExists, err := bscKeeper.FinalityProvider(ctx, &req)
@@ -260,7 +249,7 @@ func FuzzFinalityProviderConsumer(f *testing.F) {
 		consumerID := datagen.GenRandomHexStr(r, 30)
 		var existingFp string
 		for i := 0; i < int(datagen.RandomInt(r, 10)+1); i++ {
-			fp, err := datagen.GenRandomFinalityProvider(r)
+			fp, err := datagen.GenRandomFinalityProvider(r, "")
 			require.NoError(t, err)
 			fp.ConsumerId = consumerID
 
@@ -288,7 +277,7 @@ func FuzzFinalityProviderConsumer(f *testing.F) {
 		require.Equal(t, consumerID, resp.ConsumerId)
 
 		// check some random non-existing guy
-		fp, err := datagen.GenRandomFinalityProvider(r)
+		fp, err := datagen.GenRandomFinalityProvider(r, "")
 		require.NoError(t, err)
 		req = types.QueryFinalityProviderConsumerRequest{FpBtcPkHex: fp.BtcPk.MarshalHex()}
 		respNonExists, err := bscKeeper.FinalityProviderConsumer(ctx, &req)

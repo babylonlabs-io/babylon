@@ -17,6 +17,7 @@ import (
 	"github.com/babylonlabs-io/babylon/v3/btcstaking"
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
+	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 	btcstakingtypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 	"github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
 	ibctmtypes "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
@@ -592,10 +593,10 @@ func TestMultiConsumerDelegation(t *testing.T) {
 	driver.App.IBCKeeper.ClientKeeper.SetClientState(ctx, consumerID3, &ibctmtypes.ClientState{})
 	driver.GenerateNewBlock()
 
-	// 2. Register consumers with different max_multi_staked_fps limits
-	consumer1 := driver.RegisterConsumer(consumerID1, 3)
-	consumer2 := driver.RegisterConsumer(consumerID2, 4)
-	consumer3 := driver.RegisterConsumer(consumerID3, 5)
+	// 2. Register consumers
+	consumer1 := driver.RegisterConsumer(consumerID1)
+	consumer2 := driver.RegisterConsumer(consumerID2)
+	consumer3 := driver.RegisterConsumer(consumerID3)
 	// Create a Babylon FP (registered without consumer ID)
 	babylonFp := driver.CreateNFinalityProviderAccounts(1)[0]
 	babylonFp.RegisterFinalityProvider("")
@@ -612,29 +613,14 @@ func TestMultiConsumerDelegation(t *testing.T) {
 	driver.GenerateNewBlockAssertExecutionSuccess()
 	staker := driver.CreateNStakerAccounts(1)[0]
 
-	// 4. Create a delegation with three consumer FPs and one Babylon FP - should fail because total FPs (4) > min(max_multi_staked_fps) which is 2
+	// 4. Create a delegation with three consumer FPs and one Babylon FP
 	staker.CreatePreApprovalDelegation(
 		[]*bbn.BIP340PubKey{fp1s[0].BTCPublicKey(), fp2.BTCPublicKey(), fp3.BTCPublicKey(), babylonFp.BTCPublicKey()},
 		1000,
 		100000000,
 	)
-	txResults := driver.GenerateNewBlockAssertExecutionFailure()
-	require.Len(t, txResults, 1)
-	require.Equal(t, uint32(1129), txResults[0].Code)
-	require.Contains(t, txResults[0].Log, btcstakingtypes.ErrTooManyFPs.Error())
 
-	// 5. Create a delegation with multiple FPs from the same consumer - should fail because there should be atmost 1 FP from each consumer
-	staker.CreatePreApprovalDelegation(
-		[]*bbn.BIP340PubKey{fp1s[0].BTCPublicKey(), fp1s[1].BTCPublicKey(), babylonFp.BTCPublicKey()},
-		1000,
-		100000000,
-	)
-	txResults = driver.GenerateNewBlockAssertExecutionFailure()
-	require.Len(t, txResults, 1)
-	require.Equal(t, uint32(1130), txResults[0].Code)
-	require.Contains(t, txResults[0].Log, btcstakingtypes.ErrTooManyFPsFromSameConsumer.Error())
-
-	// 6. Create a valid delegation with 2 FPs (including Babylon FP)
+	// 5. Create a valid delegation with 2 FPs (including Babylon FP)
 	staker.CreatePreApprovalDelegation(
 		[]*bbn.BIP340PubKey{babylonFp.BTCPublicKey(), fp1s[0].BTCPublicKey()},
 		1000,
@@ -642,7 +628,7 @@ func TestMultiConsumerDelegation(t *testing.T) {
 	)
 	driver.GenerateNewBlockAssertExecutionSuccess()
 
-	// 7. Replay all blocks and verify state
+	// 6. Replay all blocks and verify state
 	replayer := NewBlockReplayer(t, replayerTempDir)
 
 	// Set up IBC client states in the replayer before replaying blocks
@@ -692,4 +678,48 @@ func TestBadUnbondingFeeParams(t *testing.T) {
 	require.Len(t, txResults, 1)
 	require.Equal(t, uint32(12), txResults[0].Code)
 	require.Contains(t, txResults[0].Log, btcstaking.ErrInvalidUnbondingFee.Error())
+}
+
+func TestPostRegistrationDelegation(t *testing.T) {
+	t.Parallel()
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	driverTempDir := t.TempDir()
+	replayerTempDir := t.TempDir()
+	driver := NewBabylonAppDriver(r, t, driverTempDir, replayerTempDir)
+	driver.GenerateNewBlock()
+
+	covSender := driver.CreateCovenantSender()
+	infos := driver.CreateNFinalityProviderAccounts(1)
+	fp1 := infos[0]
+
+	sinfos := driver.CreateNStakerAccounts(1)
+	s1 := sinfos[0]
+	require.NotNil(t, s1)
+
+	fp1.RegisterFinalityProvider("")
+	driver.GenerateNewBlockAssertExecutionSuccess()
+	fp1.CommitRandomness()
+	driver.GenerateNewBlockAssertExecutionSuccess()
+
+	// Randomness timestamped
+	currnetEpochNunber := driver.GetEpoch().EpochNumber
+	driver.ProgressTillFirstBlockTheNextEpoch()
+	driver.FinializeCkptForEpoch(currnetEpochNunber)
+
+	// Send post-registration delegation i.e first on BTC, then to Babylon
+	msg := s1.CreateDelegationMessage(
+		[]*bbn.BIP340PubKey{fp1.BTCPublicKey()},
+		1000,
+		100000000,
+	)
+	driver.ConfirmStakingTransactionOnBTC([]*bstypes.MsgCreateBTCDelegation{msg})
+	require.NotNil(t, msg.StakingTxInclusionProof)
+	s1.SendCreateDelegationMessage(msg)
+	driver.GenerateNewBlockAssertExecutionSuccess()
+	// Activate through covenant signatures
+	covSender.SendCovenantSignatures()
+	driver.GenerateNewBlockAssertExecutionSuccess()
+
+	activeDelegations := driver.GetActiveBTCDelegations(t)
+	require.Len(t, activeDelegations, 1)
 }

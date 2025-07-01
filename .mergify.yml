@@ -19,23 +19,25 @@ pull_request_rules:
       backport:
         branches:
           - release/v3.x
-  - name: backport changes to v2.x, v3.x and v4.x branches
+  - name: backport changes to v2.1.x, v2.2.x, v3.x
     conditions:
       - base=main
-      - label=backport-to-release/v2.x
+      - label=backport-to-release/v2.1.x
     actions:
       backport:
         branches:
-          - release/v2.x
+          - release/v2.1.x
+          - release/v2.2.x
           - release/v3.x
-  - name: backport changes to v2.x branch
+  - name: backport changes to v2.2.x, v3.x
     conditions:
       - base=main
-      - label=backport-to-release/v2.x-only
+      - label=backport-to-release/v2.2.x
     actions:
       backport:
         branches:
-          - release/v2.x
+          - release/v2.2.x
+          - release/v3.x
   - name: automerge to main with label automerge and branch protection passing
     conditions: []
     actions:
