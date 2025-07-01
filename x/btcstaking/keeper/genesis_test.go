@@ -129,7 +129,7 @@ func setupTest(t *testing.T) (sdk.Context, *helper.Helper, *types.GenesisState) 
 	k, ctx := h.App.BTCStakingKeeper, h.Ctx
 	numFps := 3
 
-	fps := datagen.CreateNFinalityProviders(r, t, numFps)
+	fps := datagen.CreateNFinalityProviders(r, t, h.FpPopContext(), numFps)
 	params := k.GetParams(ctx)
 
 	chainsHeight := make([]*types.BlockHeightBbnToBtc, 0)
@@ -156,6 +156,7 @@ func setupTest(t *testing.T) (sdk.Context, *helper.Helper, *types.GenesisState) 
 		delegations := createNDelegationsForFinalityProvider(
 			r,
 			t,
+			h.StakerPopContext(),
 			fps[i].BtcPk.MustToBTCPK(),
 			int64(stakingValue),
 			int(numDelegations),
