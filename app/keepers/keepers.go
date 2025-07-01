@@ -510,8 +510,37 @@ func (ak *AppKeepers) InitKeepers(
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
-	wasmOpts = append(owasm.RegisterCustomPlugins(&ak.TokenFactoryKeeper, &epochingKeeper, &ak.CheckpointingKeeper, &ak.BTCLightClientKeeper, &ak.ZoneConciergeKeeper), wasmOpts...)
-	wasmOpts = append(owasm.RegisterGrpcQueries(*bApp.GRPCQueryRouter(), appCodec), wasmOpts...)
+	// Register custom plugins for the wasm module
+	wasmOpts = append(
+		owasm.RegisterCustomPlugins(
+			&ak.TokenFactoryKeeper,
+			&epochingKeeper,
+			&ak.CheckpointingKeeper,
+			&ak.BTCLightClientKeeper,
+			&ak.ZoneConciergeKeeper,
+		),
+		wasmOpts...,
+	)
+
+	// Register gRPC queries for the wasm module
+	wasmOpts = append(
+		owasm.RegisterGrpcQueries(*bApp.GRPCQueryRouter(), appCodec),
+		wasmOpts...,
+	)
+
+	// Register message handlers for the wasm module
+	wasmOpts = append(
+		wasmOpts,
+		owasm.RegisterMessageHandler(
+			&ak.WasmKeeper,
+			bApp.MsgServiceRouter(),
+			ak.IBCKeeper.ChannelKeeper,
+			ak.IBCKeeper.ChannelKeeper,
+			ak.BankKeeper,
+			appCodec,
+			ak.TransferKeeper,
+		)...,
+	)
 
 	ak.WasmKeeper = wasmkeeper.NewKeeper(
 		appCodec,

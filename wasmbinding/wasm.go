@@ -8,6 +8,7 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+	"github.com/CosmWasm/wasmd/x/wasm/types"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
 	"github.com/babylonlabs-io/babylon/v3/wasmbinding/bindings"
@@ -194,5 +195,31 @@ func RegisterGrpcQueries(queryRouter baseapp.GRPCQueryRouter, codec codec.Codec)
 
 	return []wasmkeeper.Option{
 		queryPluginOpt,
+	}
+}
+
+func RegisterMessageHandler(
+	keeper *wasmkeeper.Keeper,
+	router wasmkeeper.MessageRouter,
+	ics4Wrapper types.ICS4Wrapper,
+	channelKeeper types.ChannelKeeper,
+	bankKeeper types.Burner,
+	cdc codec.Codec,
+	portSource types.ICS20TransferPortSource,
+) []wasmkeeper.Option {
+	msgHandler := wasmkeeper.NewDefaultMessageHandler(
+		keeper,
+		router,
+		ics4Wrapper,
+		channelKeeper,
+		bankKeeper,
+		cdc,
+		portSource,
+	)
+
+	return []wasmkeeper.Option{
+		wasmkeeper.WithMessageHandlerDecorator(func(old wasmkeeper.Messenger) wasmkeeper.Messenger {
+			return msgHandler
+		}),
 	}
 }

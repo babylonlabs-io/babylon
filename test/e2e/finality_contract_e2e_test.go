@@ -393,7 +393,16 @@ func (s *FinalityContractTestSuite) Test6SubmitFinalitySignature() {
 	s.NoError(err)
 	eotsSig := bbn.NewSchnorrEOTSSigFromModNScalar(sig)
 
-	nonValidatorNode.AddFinalitySigConsumer(initialization.ValidatorWalletName, ConsumerID, s.consumerFp.BtcPk, startHeight, &s.randListInfo.PRList[idx], *s.randListInfo.ProofList[idx].ToProto(), appHash, eotsSig)
+	nonValidatorNode.AddFinalitySigConsumer(
+		initialization.ValidatorWalletName,
+		ConsumerID,
+		s.consumerFp.BtcPk,
+		startHeight,
+		&s.randListInfo.PRList[idx],
+		*s.randListInfo.ProofList[idx].ToProto(),
+		appHash,
+		eotsSig,
+	)
 
 	// Query the finality signature from the finality contract
 
@@ -430,8 +439,8 @@ func (s *FinalityContractTestSuite) Test7SubmitEquivocatingFinalitySignature() {
 	s.NoError(err)
 	eotsSig := bbn.NewSchnorrEOTSSigFromModNScalar(sig)
 
-	// Submit the first finality signature
-	nonValidatorNode.AddFinalitySigConsumer(
+	// Submit the equivocating finality signature
+	txHash := nonValidatorNode.AddFinalitySigConsumer(
 		initialization.ValidatorWalletName,
 		ConsumerID,
 		s.consumerFp.BtcPk,
@@ -445,23 +454,16 @@ func (s *FinalityContractTestSuite) Test7SubmitEquivocatingFinalitySignature() {
 	s.T().Logf("Submitted equivocating finality signature for FP %s at height %d",
 		s.consumerFp.BtcPk.MarshalHex(), equivocationHeight)
 
-	// Verify that equivocation evidence is created and FP is slashed
-	s.Eventually(func() bool {
-		// Query for equivocation evidence
-		fpResp := nonValidatorNode.QueryFinalityProvider(s.consumerFp.BtcPk.MarshalHex())
-		if fpResp == nil {
-			return false
-		}
+	nonValidatorNode.WaitForNextBlock()
+	txResp, tx, err := nonValidatorNode.QueryTxWithError(txHash)
+	s.T().Logf("txResp: %+v, tx: %+v, err: %v", txResp, tx, err)
 
-		// Check if the finality provider is slashed due to equivocation
-		// A slashed FP should have non-zero slashed heights
-		isSlashed := fpResp.SlashedBabylonHeight > 0
+	// Ensure the FP is slashed
+	fpResp := nonValidatorNode.QueryFinalityProvider(s.consumerFp.BtcPk.MarshalHex())
+	s.NotNil(fpResp)
+	s.Greater(fpResp.SlashedBabylonHeight, uint64(0))
 
-		if isSlashed {
-			s.T().Logf("Finality provider %s has been slashed due to equivocation, slashed at Babylon height %d",
-				s.consumerFp.BtcPk.MarshalHex(), fpResp.SlashedBabylonHeight)
-		}
-
-		return isSlashed
-	}, time.Second*30, time.Second*2, "Equivocation evidence was not processed within the expected time")
+	// Ensure the equivocation evidence is created
+	equivocationEvidence := nonValidatorNode.QueryListEvidences(0)
+	s.Len(equivocationEvidence, 1)
 }
