@@ -48,12 +48,7 @@ import (
 	minttypes "github.com/babylonlabs-io/babylon/v3/x/mint/types"
 	monitorkeeper "github.com/babylonlabs-io/babylon/v3/x/monitor/keeper"
 	monitortypes "github.com/babylonlabs-io/babylon/v3/x/monitor/types"
-<<<<<<< HEAD
-=======
 	zoneconcierge "github.com/babylonlabs-io/babylon/v3/x/zoneconcierge"
-	zckeeper "github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/keeper"
-	zctypes "github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
->>>>>>> e616715 (fix: zoneconcierge ibc router (#1247))
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/runtime"
