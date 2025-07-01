@@ -41,9 +41,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 - [#1256](https://github.com/babylonlabs-io/babylon/pull/1256) remove query chains info request from `x/zoneconcierge`
 - [#1265](https://github.com/babylonlabs-io/babylon/pull/1265) Remove `ListEpochHeaders` and `QueryChainList` query.
-- [#1256](https://github.com/babylonlabs-io/babylon/pull/1256) remove query chains info request from `x/zoneconcierge` 
-- [#1222](https://github.com/babylonlabs-io/babylon/pull/1222) doc: revise zone concierge doc (round 1)
-- [#1234](https://github.com/babylonlabs-io/babylon/pull/1234) doc: revise zone concierge doc (round 2)
+- [#1256](https://github.com/babylonlabs-io/babylon/pull/1256) remove query chains info request from `x/zoneconcierge`
 - [#1015](https://github.com/babylonlabs-io/babylon/pull/1015) Add finality contract e2e tests follup-up.
 - [#970](https://github.com/babylonlabs-io/babylon/pull/970) Add finality contract e2e tests follup-up.
 - [#946](https://github.com/babylonlabs-io/babylon/pull/946) Add finality contract e2e tests follup-up.
