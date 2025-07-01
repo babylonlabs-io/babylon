@@ -366,7 +366,7 @@ func (s *IBCTransferTestSuite) Test4MultiCoinFee() {
 	cmd := []string{
 		"babylond", "tx", "bank", "send",
 		s.addrB, to, transferCoin.String(),
-		fmt.Sprintf("--from=%s", nB.WalletName),
+		fmt.Sprintf("--from=%s", s.addrB),
 		fmt.Sprintf("--fees=%s", feesStr),
 		fmt.Sprintf("--chain-id=%s", nB.GetChainID()),
 		"--yes",
@@ -385,7 +385,7 @@ func (s *IBCTransferTestSuite) Test4MultiCoinFee() {
 
 	feeCollectorAddr := "bbn17xpfvakm2amg962yls6f84z3kell8c5l88j35y"
 	txHash := nA.SendIBCTransfer(s.addrA, feeCollectorAddr, "transfer", transferCoin)
-	nA.WaitForNextBlocks(5)
+	nA.WaitForNextBlocks(3)
 
 	_, txResp := nA.QueryTx(txHash)
 	txFeesPaid := txResp.AuthInfo.Fee.Amount
