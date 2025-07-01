@@ -530,16 +530,10 @@ func (ak *AppKeepers) InitKeepers(
 
 	// Register message handlers for the wasm module
 	wasmOpts = append(
-		wasmOpts,
 		owasm.RegisterMessageHandler(
-			&ak.WasmKeeper,
-			bApp.MsgServiceRouter(),
-			ak.IBCKeeper.ChannelKeeper,
-			ak.IBCKeeper.ChannelKeeper,
-			ak.BankKeeper,
-			appCodec,
-			ak.TransferKeeper,
-		)...,
+			&ak.FinalityKeeper,
+		),
+		wasmOpts...,
 	)
 
 	ak.WasmKeeper = wasmkeeper.NewKeeper(

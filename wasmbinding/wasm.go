@@ -4,21 +4,21 @@ import (
 	"encoding/json"
 	"fmt"
 
-	tokenfactorykeeper "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/keeper"
-
 	errorsmod "cosmossdk.io/errors"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-	"github.com/CosmWasm/wasmd/x/wasm/types"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
 	"github.com/babylonlabs-io/babylon/v3/wasmbinding/bindings"
 	lcKeeper "github.com/babylonlabs-io/babylon/v3/x/btclightclient/keeper"
 	checkpointingkeeper "github.com/babylonlabs-io/babylon/v3/x/checkpointing/keeper"
 	epochingkeeper "github.com/babylonlabs-io/babylon/v3/x/epoching/keeper"
+	fkeeper "github.com/babylonlabs-io/babylon/v3/x/finality/keeper"
 	zckeeper "github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/keeper"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	tokenfactorykeeper "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/keeper"
 )
 
 type QueryPlugin struct {
@@ -197,29 +197,52 @@ func RegisterGrpcQueries(queryRouter baseapp.GRPCQueryRouter, codec codec.Codec)
 		queryPluginOpt,
 	}
 }
-
 func RegisterMessageHandler(
-	keeper *wasmkeeper.Keeper,
-	router wasmkeeper.MessageRouter,
-	ics4Wrapper types.ICS4Wrapper,
-	channelKeeper types.ChannelKeeper,
-	bankKeeper types.Burner,
-	cdc codec.Codec,
-	portSource types.ICS20TransferPortSource,
+	fKeeper *fkeeper.Keeper,
 ) []wasmkeeper.Option {
-	msgHandler := wasmkeeper.NewDefaultMessageHandler(
-		keeper,
-		router,
-		ics4Wrapper,
-		channelKeeper,
-		bankKeeper,
-		cdc,
-		portSource,
-	)
-
 	return []wasmkeeper.Option{
-		wasmkeeper.WithMessageHandlerDecorator(func(old wasmkeeper.Messenger) wasmkeeper.Messenger {
-			return msgHandler
-		}),
+		wasmkeeper.WithMessageHandlerDecorator(CustomMessageDecorator(fKeeper)),
 	}
+}
+
+// CustomMessageDecorator returns decorator for custom CosmWasm bindings messages
+func CustomMessageDecorator(fKeeper *fkeeper.Keeper) func(wasmkeeper.Messenger) wasmkeeper.Messenger {
+	return func(old wasmkeeper.Messenger) wasmkeeper.Messenger {
+		return &CustomMessenger{
+			wrapped: old,
+			fKeeper: fKeeper,
+		}
+	}
+}
+
+type CustomMessenger struct {
+	wrapped wasmkeeper.Messenger
+	fKeeper *fkeeper.Keeper
+}
+
+var _ wasmkeeper.Messenger = (*CustomMessenger)(nil)
+
+// DispatchMsg executes on the contractMsg.
+func (m *CustomMessenger) DispatchMsg(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) ([]sdk.Event, [][]byte, [][]*codectypes.Any, error) {
+	if msg.Custom != nil {
+		var customMsg bindings.BabylonMsg
+		if err := json.Unmarshal(msg.Custom, &customMsg); err != nil {
+			return nil, nil, nil, errorsmod.Wrap(err, "failed to unmarshal custom message")
+		}
+
+		if customMsg.MsgEquivocationEvidence != nil {
+			resp, err := m.fKeeper.HandleEquivocationEvidence(ctx, customMsg.MsgEquivocationEvidence)
+			if err != nil {
+				return nil, nil, nil, errorsmod.Wrap(err, "failed to handle evidence")
+			}
+
+			encodedResp, err := codectypes.NewAnyWithValue(resp)
+			if err != nil {
+				return nil, nil, nil, errorsmod.Wrap(err, "failed to encode response")
+			}
+
+			return nil, nil, [][]*codectypes.Any{[]*codectypes.Any{encodedResp}}, nil
+		}
+	}
+	return m.wrapped.DispatchMsg(ctx, contractAddr, contractIBCPortID, msg)
 }
