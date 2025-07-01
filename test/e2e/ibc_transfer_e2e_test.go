@@ -7,17 +7,10 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
-<<<<<<< HEAD
-
 	"github.com/babylonlabs-io/babylon/v2/test/e2e/configurer"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	pfmroutertypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward/types"
-=======
-	"github.com/babylonlabs-io/babylon/v3/test/e2e/configurer"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	pfmroutertypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v10/packetforward/types"
->>>>>>> bfd9f30 (chore(tests): add fee collector tests (#1269))
+	pfmroutertypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward/types"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -316,9 +309,6 @@ func (s *IBCTransferTestSuite) TestPacketForwarding() {
 	}, 1*time.Minute, 1*time.Second, "Transfer back B was not successful")
 }
 
-<<<<<<< HEAD
-func (s *IBCTransferTestSuite) TestE2EBelowThreshold() {
-=======
 func (s *IBCTransferTestSuite) Test4MultiCoinFee() {
 	amount := int64(1_000)
 
@@ -409,7 +399,6 @@ func (s *IBCTransferTestSuite) Test4MultiCoinFee() {
 }
 
 func (s *IBCTransferTestSuite) Test5E2EBelowThreshold() {
->>>>>>> bfd9f30 (chore(tests): add fee collector tests (#1269))
 	bbnChainA := s.configurer.GetChainConfig(0)
 	bbnChainB := s.configurer.GetChainConfig(1)
 
@@ -449,11 +438,7 @@ func (s *IBCTransferTestSuite) Test5E2EBelowThreshold() {
 	}, 1*time.Minute, 1*time.Second, "Transfer back B was not successful")
 }
 
-<<<<<<< HEAD
-func (s *IBCTransferTestSuite) TestRateLimitE2EAboveThreshold() {
-=======
 func (s *IBCTransferTestSuite) Test6RateLimitE2EAboveThreshold() {
->>>>>>> bfd9f30 (chore(tests): add fee collector tests (#1269))
 	bbnChainA := s.configurer.GetChainConfig(0)
 	bbnChainB := s.configurer.GetChainConfig(1)
 
