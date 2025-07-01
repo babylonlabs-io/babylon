@@ -88,7 +88,7 @@ func (s *FinalityContractTestSuite) Test1InstantiateFinalityContract() {
 	chainA := s.configurer.GetChainConfig(0)
 	chainA.WaitUntilHeight(1)
 
-	contractPath := "/bytecode/op_finality_gadget.wasm"
+	contractPath := "/bytecode/finality.wasm"
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
 
@@ -374,7 +374,7 @@ func (s *FinalityContractTestSuite) Test5CommitPublicRandomness() {
 	}, time.Second*10, time.Second, "Public randomness commitment was not found within the expected time")
 }
 
-func (s *FinalityContractTestSuite) Test6SubmitFinalitySignatura() {
+func (s *FinalityContractTestSuite) Test6SubmitFinalitySignature() {
 	chainA := s.configurer.GetChainConfig(0)
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
@@ -410,4 +410,58 @@ func (s *FinalityContractTestSuite) Test6SubmitFinalitySignatura() {
 			s.consumerFp.BtcPk.MarshalHex())
 		return true
 	}, time.Second*10, time.Second, "Voters for the block were not found within the expected time")
+}
+
+func (s *FinalityContractTestSuite) Test7SubmitEquivocatingFinalitySignature() {
+	chainA := s.configurer.GetChainConfig(0)
+	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
+	s.NoError(err)
+
+	// Create a fork block at the same height to create an equivocation
+	equivocationHeight := uint64(1)
+	forkBlock := datagen.GenRandomBlockWithHeight(s.r, equivocationHeight)
+
+	// Use the same randomness index for both signatures
+	idx := 0
+
+	// Sign the fork block
+	msgToSign1 := append(sdk.Uint64ToBigEndian(equivocationHeight), forkBlock.AppHash...)
+	sig, err := eots.Sign(s.consumerBtcSk, s.randListInfo.SRList[idx], msgToSign1)
+	s.NoError(err)
+	eotsSig := bbn.NewSchnorrEOTSSigFromModNScalar(sig)
+
+	// Submit the first finality signature
+	nonValidatorNode.AddFinalitySigConsumer(
+		initialization.ValidatorWalletName,
+		ConsumerID,
+		s.consumerFp.BtcPk,
+		equivocationHeight,
+		&s.randListInfo.PRList[idx],
+		*s.randListInfo.ProofList[idx].ToProto(),
+		forkBlock.AppHash,
+		eotsSig,
+	)
+
+	s.T().Logf("Submitted equivocating finality signature for FP %s at height %d",
+		s.consumerFp.BtcPk.MarshalHex(), equivocationHeight)
+
+	// Verify that equivocation evidence is created and FP is slashed
+	s.Eventually(func() bool {
+		// Query for equivocation evidence
+		fpResp := nonValidatorNode.QueryFinalityProvider(s.consumerFp.BtcPk.MarshalHex())
+		if fpResp == nil {
+			return false
+		}
+
+		// Check if the finality provider is slashed due to equivocation
+		// A slashed FP should have non-zero slashed heights
+		isSlashed := fpResp.SlashedBabylonHeight > 0
+
+		if isSlashed {
+			s.T().Logf("Finality provider %s has been slashed due to equivocation, slashed at Babylon height %d",
+				s.consumerFp.BtcPk.MarshalHex(), fpResp.SlashedBabylonHeight)
+		}
+
+		return isSlashed
+	}, time.Second*30, time.Second*2, "Equivocation evidence was not processed within the expected time")
 }
