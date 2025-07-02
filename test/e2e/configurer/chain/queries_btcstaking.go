@@ -220,6 +220,19 @@ func (n *NodeConfig) QueryFinalityProvidersDelegations(fpsBTCPK ...string) []*bs
 	return pendingDelsResp
 }
 
+func (n *NodeConfig) QueryListEvidences(startHeight uint64) []*ftypes.EvidenceResponse {
+	values := url.Values{}
+	values.Set("start_height", fmt.Sprintf("%d", startHeight))
+	bz, err := n.QueryGRPCGateway("/babylon/finality/v1/evidences", values)
+	require.NoError(n.t, err)
+
+	var resp ftypes.QueryListEvidencesResponse
+	err = util.Cdc.UnmarshalJSON(bz, &resp)
+	require.NoError(n.t, err)
+
+	return resp.Evidences
+}
+
 // ParseRespBTCDelToBTCDel parses an BTC delegation response to BTC Delegation
 func ParseRespBTCDelToBTCDel(resp *bstypes.BTCDelegationResponse) (btcDel *bstypes.BTCDelegation, err error) {
 	stakingTx, err := hex.DecodeString(resp.StakingTxHex)

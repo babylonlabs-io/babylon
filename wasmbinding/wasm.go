@@ -5,8 +5,6 @@ import (
 	"fmt"
 	zckeeper "github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/keeper"
 
-	tokenfactorykeeper "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/keeper"
-
 	errorsmod "cosmossdk.io/errors"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
@@ -15,9 +13,16 @@ import (
 	lcKeeper "github.com/babylonlabs-io/babylon/v3/x/btclightclient/keeper"
 	checkpointingkeeper "github.com/babylonlabs-io/babylon/v3/x/checkpointing/keeper"
 	epochingkeeper "github.com/babylonlabs-io/babylon/v3/x/epoching/keeper"
+<<<<<<< HEAD
+=======
+	fkeeper "github.com/babylonlabs-io/babylon/v3/x/finality/keeper"
+	zckeeper "github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/keeper"
+>>>>>>> 6bcf242 (rollup: equivocation e2e test for rollup BSN (#1271))
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	tokenfactorykeeper "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/keeper"
 )
 
 type QueryPlugin struct {
@@ -195,4 +200,53 @@ func RegisterGrpcQueries(queryRouter baseapp.GRPCQueryRouter, codec codec.Codec)
 	return []wasmkeeper.Option{
 		queryPluginOpt,
 	}
+}
+func RegisterMessageHandler(
+	fKeeper *fkeeper.Keeper,
+) []wasmkeeper.Option {
+	return []wasmkeeper.Option{
+		wasmkeeper.WithMessageHandlerDecorator(CustomMessageDecorator(fKeeper)),
+	}
+}
+
+// CustomMessageDecorator returns decorator for custom CosmWasm bindings messages
+func CustomMessageDecorator(fKeeper *fkeeper.Keeper) func(wasmkeeper.Messenger) wasmkeeper.Messenger {
+	return func(old wasmkeeper.Messenger) wasmkeeper.Messenger {
+		return &CustomMessenger{
+			wrapped: old,
+			fKeeper: fKeeper,
+		}
+	}
+}
+
+type CustomMessenger struct {
+	wrapped wasmkeeper.Messenger
+	fKeeper *fkeeper.Keeper
+}
+
+var _ wasmkeeper.Messenger = (*CustomMessenger)(nil)
+
+// DispatchMsg executes on the contractMsg.
+func (m *CustomMessenger) DispatchMsg(ctx sdk.Context, contractAddr sdk.AccAddress, contractIBCPortID string, msg wasmvmtypes.CosmosMsg) ([]sdk.Event, [][]byte, [][]*codectypes.Any, error) {
+	if msg.Custom != nil {
+		var customMsg bindings.BabylonMsg
+		if err := json.Unmarshal(msg.Custom, &customMsg); err != nil {
+			return nil, nil, nil, errorsmod.Wrap(err, "failed to unmarshal custom message")
+		}
+
+		if customMsg.MsgEquivocationEvidence != nil {
+			resp, err := m.fKeeper.HandleEquivocationEvidence(ctx, customMsg.MsgEquivocationEvidence)
+			if err != nil {
+				return nil, nil, nil, errorsmod.Wrap(err, "failed to handle evidence")
+			}
+
+			encodedResp, err := codectypes.NewAnyWithValue(resp)
+			if err != nil {
+				return nil, nil, nil, errorsmod.Wrap(err, "failed to encode response")
+			}
+
+			return nil, nil, [][]*codectypes.Any{[]*codectypes.Any{encodedResp}}, nil
+		}
+	}
+	return m.wrapped.DispatchMsg(ctx, contractAddr, contractIBCPortID, msg)
 }

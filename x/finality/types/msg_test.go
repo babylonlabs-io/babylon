@@ -1,6 +1,7 @@
 package types_test
 
 import (
+	"encoding/hex"
 	"math/rand"
 	"testing"
 	"time"
@@ -323,13 +324,13 @@ func TestMsgUnjailFinalityProvider_ValidateBasic(t *testing.T) {
 	}
 }
 
-func TestMsgEquivocationEvidence_ValidateBasic(t *testing.T) {
+func TestMsgEquivocationEvidence(t *testing.T) {
 	var (
-		validAddr        = datagen.GenRandomAddress().String()
-		validPk          = bbntypes.BIP340PubKey(make([]byte, bbntypes.BIP340PubKeyLen))
-		validPubRand     = bbntypes.SchnorrPubRand(make([]byte, bbntypes.SchnorrPubRandLen))
-		validFinalitySig = bbntypes.SchnorrEOTSSig(make([]byte, bbntypes.SchnorrEOTSSigLen))
-		validHash        = make([]byte, 32)
+		validAddr           = datagen.GenRandomAddress().String()
+		validPkHex          = hex.EncodeToString(make([]byte, bbntypes.BIP340PubKeyLen))
+		validPubRandHex     = hex.EncodeToString(make([]byte, bbntypes.SchnorrPubRandLen))
+		validFinalitySigHex = hex.EncodeToString(make([]byte, bbntypes.SchnorrEOTSSigLen))
+		validHashHex        = hex.EncodeToString(make([]byte, 32))
 	)
 
 	testCases := []struct {
@@ -340,112 +341,112 @@ func TestMsgEquivocationEvidence_ValidateBasic(t *testing.T) {
 		{
 			name: "valid message",
 			msg: types.MsgEquivocationEvidence{
-				Signer:               validAddr,
-				FpBtcPk:              &validPk,
-				PubRand:              &validPubRand,
-				CanonicalAppHash:     validHash,
-				ForkAppHash:          validHash,
-				CanonicalFinalitySig: &validFinalitySig,
-				ForkFinalitySig:      &validFinalitySig,
+				Signer:                  validAddr,
+				FpBtcPkHex:              validPkHex,
+				PubRandHex:              validPubRandHex,
+				CanonicalAppHashHex:     validHashHex,
+				ForkAppHashHex:          validHashHex,
+				CanonicalFinalitySigHex: validFinalitySigHex,
+				ForkFinalitySigHex:      validFinalitySigHex,
 			},
 			expErr: "",
 		},
 		{
 			name: "invalid signer",
 			msg: types.MsgEquivocationEvidence{
-				Signer:               "invalid-address",
-				FpBtcPk:              &validPk,
-				PubRand:              &validPubRand,
-				CanonicalAppHash:     validHash,
-				ForkAppHash:          validHash,
-				CanonicalFinalitySig: &validFinalitySig,
-				ForkFinalitySig:      &validFinalitySig,
+				Signer:                  "invalid-address",
+				FpBtcPkHex:              validPkHex,
+				PubRandHex:              validPubRandHex,
+				CanonicalAppHashHex:     validHashHex,
+				ForkAppHashHex:          validHashHex,
+				CanonicalFinalitySigHex: validFinalitySigHex,
+				ForkFinalitySigHex:      validFinalitySigHex,
 			},
 			expErr: "invalid signer address",
 		},
 		{
 			name: "nil FpBtcPk",
 			msg: types.MsgEquivocationEvidence{
-				Signer:               validAddr,
-				FpBtcPk:              nil,
-				PubRand:              &validPubRand,
-				CanonicalAppHash:     validHash,
-				ForkAppHash:          validHash,
-				CanonicalFinalitySig: &validFinalitySig,
-				ForkFinalitySig:      &validFinalitySig,
+				Signer:                  validAddr,
+				FpBtcPkHex:              "",
+				PubRandHex:              validPubRandHex,
+				CanonicalAppHashHex:     validHashHex,
+				ForkAppHashHex:          validHashHex,
+				CanonicalFinalitySigHex: validFinalitySigHex,
+				ForkFinalitySigHex:      validFinalitySigHex,
 			},
-			expErr: "empty FpBtcPk",
+			expErr: "invalid FP BTC PK",
 		},
 		{
 			name: "nil PubRand",
 			msg: types.MsgEquivocationEvidence{
-				Signer:               validAddr,
-				FpBtcPk:              &validPk,
-				PubRand:              nil,
-				CanonicalAppHash:     validHash,
-				ForkAppHash:          validHash,
-				CanonicalFinalitySig: &validFinalitySig,
-				ForkFinalitySig:      &validFinalitySig,
+				Signer:                  validAddr,
+				FpBtcPkHex:              validPkHex,
+				PubRandHex:              "",
+				CanonicalAppHashHex:     validHashHex,
+				ForkAppHashHex:          validHashHex,
+				CanonicalFinalitySigHex: validFinalitySigHex,
+				ForkFinalitySigHex:      validFinalitySigHex,
 			},
-			expErr: "empty PubRand",
+			expErr: "invalid PubRand",
 		},
 		{
 			name: "invalid CanonicalAppHash length",
 			msg: types.MsgEquivocationEvidence{
-				Signer:               validAddr,
-				FpBtcPk:              &validPk,
-				PubRand:              &validPubRand,
-				CanonicalAppHash:     []byte("short"),
-				ForkAppHash:          validHash,
-				CanonicalFinalitySig: &validFinalitySig,
-				ForkFinalitySig:      &validFinalitySig,
+				Signer:                  validAddr,
+				FpBtcPkHex:              validPkHex,
+				PubRandHex:              validPubRandHex,
+				CanonicalAppHashHex:     hex.EncodeToString([]byte("short")),
+				ForkAppHashHex:          validHashHex,
+				CanonicalFinalitySigHex: validFinalitySigHex,
+				ForkFinalitySigHex:      validFinalitySigHex,
 			},
 			expErr: "malformed CanonicalAppHash",
 		},
 		{
 			name: "invalid ForkAppHash length",
 			msg: types.MsgEquivocationEvidence{
-				Signer:               validAddr,
-				FpBtcPk:              &validPk,
-				PubRand:              &validPubRand,
-				CanonicalAppHash:     validHash,
-				ForkAppHash:          []byte("short"),
-				CanonicalFinalitySig: &validFinalitySig,
-				ForkFinalitySig:      &validFinalitySig,
+				Signer:                  validAddr,
+				FpBtcPkHex:              validPkHex,
+				PubRandHex:              validPubRandHex,
+				CanonicalAppHashHex:     validHashHex,
+				ForkAppHashHex:          hex.EncodeToString([]byte("short")),
+				CanonicalFinalitySigHex: validFinalitySigHex,
+				ForkFinalitySigHex:      validFinalitySigHex,
 			},
 			expErr: "malformed ForkAppHash",
 		},
 		{
 			name: "nil ForkFinalitySig",
 			msg: types.MsgEquivocationEvidence{
-				Signer:               validAddr,
-				FpBtcPk:              &validPk,
-				PubRand:              &validPubRand,
-				CanonicalAppHash:     validHash,
-				ForkAppHash:          validHash,
-				CanonicalFinalitySig: &validFinalitySig,
-				ForkFinalitySig:      nil,
+				Signer:                  validAddr,
+				FpBtcPkHex:              validPkHex,
+				PubRandHex:              validPubRandHex,
+				CanonicalAppHashHex:     validHashHex,
+				ForkAppHashHex:          validHashHex,
+				CanonicalFinalitySigHex: validFinalitySigHex,
+				ForkFinalitySigHex:      "",
 			},
-			expErr: "empty ForkFinalitySig",
+			expErr: "invalid ForkFinalitySig",
 		},
 		{
 			name: "nil CanonicalFinalitySig",
 			msg: types.MsgEquivocationEvidence{
-				Signer:               validAddr,
-				FpBtcPk:              &validPk,
-				PubRand:              &validPubRand,
-				CanonicalAppHash:     validHash,
-				ForkAppHash:          validHash,
-				CanonicalFinalitySig: nil,
-				ForkFinalitySig:      &validFinalitySig,
+				Signer:                  validAddr,
+				FpBtcPkHex:              validPkHex,
+				PubRandHex:              validPubRandHex,
+				CanonicalAppHashHex:     validHashHex,
+				ForkAppHashHex:          validHashHex,
+				CanonicalFinalitySigHex: "",
+				ForkFinalitySigHex:      validFinalitySigHex,
 			},
-			expErr: "empty CanonicalFinalitySig",
+			expErr: "invalid CanonicalFinalitySig",
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := tc.msg.ValidateBasic()
+			_, err := tc.msg.ParseToEvidence()
 			if tc.expErr == "" {
 				require.NoError(t, err)
 				return

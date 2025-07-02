@@ -170,7 +170,9 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 			evidence.CanonicalFinalitySig = canonicalSig
 			// slash this finality provider, including setting its voting power to
 			// zero, extracting its BTC SK, and emit an event
-			ms.slashFinalityProvider(ctx, req.FpBtcPk, evidence)
+			if err := ms.slashFinalityProvider(ctx, req.FpBtcPk, evidence); err != nil {
+				return nil, err
+			}
 		}
 
 		// save evidence
@@ -211,7 +213,9 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 
 		// slash this finality provider, including setting its voting power to
 		// zero, extracting its BTC SK, and emit an event
-		ms.slashFinalityProvider(ctx, req.FpBtcPk, evidence)
+		if err := ms.slashFinalityProvider(ctx, req.FpBtcPk, evidence); err != nil {
+			return nil, err
+		}
 
 		// NOTE: we should NOT return error here, otherwise the state change triggered in this tx
 		// (including the evidence and slashing) will be rolled back
@@ -367,22 +371,24 @@ func (ms msgServer) UnjailFinalityProvider(ctx context.Context, req *types.MsgUn
 // slashFinalityProvider slashes a finality provider with the given evidence
 // including setting its voting power to zero, extracting its BTC SK,
 // and emit an event
-func (k Keeper) slashFinalityProvider(ctx context.Context, fpBtcPk *bbn.BIP340PubKey, evidence *types.Evidence) {
+func (k Keeper) slashFinalityProvider(ctx context.Context, fpBtcPk *bbn.BIP340PubKey, evidence *types.Evidence) error {
 	// slash this finality provider, i.e., set its voting power to zero
 	if err := k.BTCStakingKeeper.SlashFinalityProvider(ctx, fpBtcPk.MustMarshal()); err != nil {
-		panic(fmt.Errorf("failed to slash finality provider: %v", err))
+		return fmt.Errorf("failed to slash finality provider: %v", err)
 	}
 
 	// Propagate slashing information to consumer chains
 	if err := k.BTCStakingKeeper.PropagateFPSlashingToConsumers(ctx, fpBtcPk); err != nil {
-		panic(fmt.Errorf("failed to propagate finality provider slashing to consumers: %w", err))
+		return fmt.Errorf("failed to propagate finality provider slashing to consumers: %w", err)
 	}
 
 	// emit slashing event
 	eventSlashing := types.NewEventSlashedFinalityProvider(evidence)
 	if err := sdk.UnwrapSDKContext(ctx).EventManager().EmitTypedEvent(eventSlashing); err != nil {
-		panic(fmt.Errorf("failed to emit EventSlashedFinalityProvider event: %w", err))
+		return fmt.Errorf("failed to emit EventSlashedFinalityProvider event: %w", err)
 	}
+
+	return nil
 }
 
 // validateActivationHeight returns error if the height received is lower than the finality
@@ -402,26 +408,5 @@ func (ms msgServer) validateActivationHeight(ctx sdk.Context, height uint64) (ui
 
 // EquivocationEvidence handles the evidence of equivocation message sent from the finality gadget cw contract
 func (ms msgServer) EquivocationEvidence(goCtx context.Context, req *types.MsgEquivocationEvidence) (*types.MsgEquivocationEvidenceResponse, error) {
-	ctx := sdk.UnwrapSDKContext(goCtx)
-
-	// construct the evidence
-	evidence := &types.Evidence{
-		FpBtcPk:              req.FpBtcPk,
-		BlockHeight:          req.BlockHeight,
-		PubRand:              req.PubRand,
-		CanonicalAppHash:     req.CanonicalAppHash,
-		CanonicalFinalitySig: req.CanonicalFinalitySig,
-		ForkAppHash:          req.ForkAppHash,
-		ForkFinalitySig:      req.ForkFinalitySig,
-		SigningContext:       req.SigningContext,
-	}
-
-	// slash this finality provider, including setting its voting power to
-	// zero, extracting its BTC SK, and emit an event
-	ms.slashFinalityProvider(ctx, evidence.FpBtcPk, evidence)
-
-	// save evidence
-	ms.SetEvidence(ctx, evidence)
-
-	return &types.MsgEquivocationEvidenceResponse{}, nil
+	return ms.HandleEquivocationEvidence(goCtx, req)
 }

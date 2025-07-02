@@ -113,24 +113,24 @@ message MsgEquivocationEvidence {
     option (cosmos.msg.v1.signer) = "signer";
 
     string signer = 1;
-    // fp_btc_pk is the BTC PK of the finality provider that casts this vote
-    bytes fp_btc_pk = 2 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/v3/types.BIP340PubKey" ];
+    // fp_btc_pk_hex is the BTC PK of the finality provider that casts this vote
+    string fp_btc_pk_hex = 2;
     // block_height is the height of the conflicting blocks
     uint64 block_height = 3;
-    // pub_rand is the public randomness the finality provider has committed to
-    bytes pub_rand = 4 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/v3/types.SchnorrPubRand" ];
-    // canonical_app_hash is the AppHash of the canonical block
-    bytes canonical_app_hash = 5;
-    // fork_app_hash is the AppHash of the fork block
-    bytes fork_app_hash = 6;
-    // canonical_finality_sig is the finality signature to the canonical block
+    // pub_rand_hex is the public randomness the finality provider has committed to
+    string pub_rand_hex = 4;
+    // canonical_app_hash_hex is the AppHash of the canonical block
+    string canonical_app_hash_hex = 5;
+    // fork_app_hash_hex is the AppHash of the fork block
+    string fork_app_hash_hex = 6;
+    // canonical_finality_sig_hex is the finality signature to the canonical block
     // where finality signature is an EOTS signature, i.e.,
     // the `s` in a Schnorr signature `(r, s)`
     // `r` is the public randomness that is already committed by the finality provider
-    bytes canonical_finality_sig = 7 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/v3/types.SchnorrEOTSSig" ];
-    // fork_finality_sig is the finality signature to the fork block
+    string canonical_finality_sig_hex = 7;
+    // fork_finality_sig_hex is the finality signature to the fork block
     // where finality signature is an EOTS signature
-    bytes fork_finality_sig = 8 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/v3/types.SchnorrEOTSSig" ];
+    string fork_finality_sig_hex = 8;
     // signing_context is the context in which the finality signatures were used.
     // It must be hex encoded 32 bytes, of the sha256 hash of the context string
     string signing_context = 9;
