@@ -10,6 +10,7 @@ import (
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
 	btcckeeper "github.com/babylonlabs-io/babylon/v3/x/btccheckpoint/keeper"
 	epochingkeeper "github.com/babylonlabs-io/babylon/v3/x/epoching/keeper"
+	incentivekeeper "github.com/babylonlabs-io/babylon/v3/x/incentive/keeper"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
@@ -70,6 +71,7 @@ func NewAnteHandler(
 		NewIBCMsgSizeDecorator(),
 		NewWrappedAnteHandler(authAnteHandler),
 		NewBtcValidationDecorator(btcConfig, btccKeeper),
+		incentivekeeper.NewRefundTxDecorator(nil),
 		NewPriorityDecorator(),
 	)
 

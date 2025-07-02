@@ -91,6 +91,7 @@ check of rewards
 - [#1060](https://github.com/babylonlabs-io/babylon/pull/1060) Optimize `PubRandCommit` lookup in `x/finality` module
 - [#1223](https://github.com/babylonlabs-io/babylon/pull/1223) Bump Cosmos SDK to `v0.53.0`
 - [#1269](https://github.com/babylonlabs-io/babylon/pull/1269) Add fee collector e2e tests.
+- [#1062](https://github.com/babylonlabs-io/babylon/pull/1062) Add `anteHandler` to avoid fee grants on refundable tx (`x/incentive`)
 
 ### State Machine Breaking
 
