@@ -2,74 +2,152 @@ package keeper_test
 
 import (
 	"testing"
+	"time"
 
+	errorsmod "cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
-	keepertest "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
-	"github.com/babylonlabs-io/babylon/v4/x/incentive/types"
-	"github.com/golang/mock/gomock"
-	"github.com/stretchr/testify/require"
-
+	storetypes "cosmossdk.io/store/types"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"google.golang.org/protobuf/reflect/protoreflect"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+
+	"github.com/babylonlabs-io/babylon/v4/app"
+	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	"github.com/babylonlabs-io/babylon/v4/x/incentive/keeper"
+	"github.com/babylonlabs-io/babylon/v4/x/incentive/types"
+	minttypes "github.com/babylonlabs-io/babylon/v4/x/mint/types"
+
+	"github.com/stretchr/testify/require"
+	"github.com/test-go/testify/suite"
 )
 
-// mockFeeTx implements the sdk.FeeTx interface for testing
-type mockFeeTx struct {
-	fee      sdk.Coins
-	feePayer []byte
-	granter  []byte
+type RefundTxTestSuite struct {
+	suite.Suite
+
+	ctx sdk.Context
+	app *app.BabylonApp
 }
 
-func (tx mockFeeTx) GetFee() sdk.Coins {
-	return tx.fee
+func TestKeeperSuite(t *testing.T) {
+	suite.Run(t, new(RefundTxTestSuite))
 }
 
-func (tx mockFeeTx) FeePayer() []byte {
-	return tx.feePayer
-}
+func (s *RefundTxTestSuite) TestRefundTx() {
+	var (
+		fee        = sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(100)))
+		feePayer   = []byte("feePayer")
+		feeGranter = []byte("feeGranter")
+		zeroCoins  = sdk.NewCoins()
+	)
 
-func (tx mockFeeTx) FeeGranter() []byte {
-	return tx.granter
-}
+	tests := []struct {
+		name        string
+		tx          sdk.FeeTx
+		preRefund   func()
+		postRefund  func()
+		expectError bool
+	}{
+		{
+			name: "refund to fee payer",
+			tx: &mockFeeTx{
+				fee:        fee,
+				feePayer:   feePayer,
+				feeGranter: nil,
+			},
+			preRefund: func() {
+				// expect fee payer to have 0 balance before refund
+				balance := s.app.BankKeeper.GetAllBalances(s.ctx, feePayer)
+				s.Equal(zeroCoins, balance)
+			},
+			postRefund: func() {
+				// expect fee payer to have been refunded refund
+				balance := s.app.BankKeeper.GetAllBalances(s.ctx, feePayer)
+				s.Equal(fee, balance)
+			},
+			expectError: false,
+		},
+		{
+			name: "refund to fee granter",
+			tx: &mockFeeTx{
+				fee:        fee,
+				feePayer:   feePayer,
+				feeGranter: feeGranter,
+			},
+			preRefund: func() {
+				// expect fee granter to have 0 balance before refund
+				balance := s.app.BankKeeper.GetAllBalances(s.ctx, feeGranter)
+				s.Equal(zeroCoins, balance)
 
-// Additional methods required by sdk.FeeTx interface
-func (tx mockFeeTx) GetGas() uint64     { return 0 }
-func (tx mockFeeTx) GetMsgs() []sdk.Msg { return nil }
-func (tx mockFeeTx) GetMsgsV2() ([]protoreflect.ProtoMessage, error) {
-	return nil, nil
-}
+				_, err := s.app.FeeGrantKeeper.GetAllowance(s.ctx, feeGranter, feePayer)
+				s.True(errorsmod.IsOf(err, sdkerrors.ErrNotFound))
+			},
+			postRefund: func() {
+				// expect not to restore the allowance
+				_, err := s.app.FeeGrantKeeper.GetAllowance(s.ctx, feeGranter, feePayer)
+				s.True(errorsmod.IsOf(err, sdkerrors.ErrNotFound))
 
-func TestRefundToCorrectRecipient(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	bankKeeper := types.NewMockBankKeeper(ctrl)
-
-	iKeeper, ctx := keepertest.IncentiveKeeper(t, bankKeeper, nil, nil)
-
-	// Create test addresses
-	feePayer := []byte("feePayer")
-	feeGranter := []byte("feeGranter")
-
-	mockFeeTxPayer := mockFeeTx{
-		fee:      sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(100))),
-		feePayer: feePayer,
-		granter:  nil,
+				// expect fee granter to have been refunded refund
+				balance := s.app.BankKeeper.GetAllBalances(s.ctx, feeGranter)
+				s.Equal(fee, balance)
+			},
+			expectError: false,
+		},
+		{
+			name: "zero fee, no refund",
+			tx: &mockFeeTx{
+				fee:        zeroCoins, // no fee
+				feePayer:   feePayer,
+				feeGranter: nil,
+			},
+			preRefund: func() {
+				balance := s.app.BankKeeper.GetAllBalances(s.ctx, feePayer)
+				s.Equal(zeroCoins, balance)
+			},
+			postRefund: func() {
+				// no refund triggered
+				balance := s.app.BankKeeper.GetAllBalances(s.ctx, feePayer)
+				s.Equal(zeroCoins, balance)
+			},
+			expectError: false,
+		},
 	}
 
-	bankKeeper.EXPECT().SendCoinsFromModuleToAccount(gomock.Any(), gomock.Any(), feePayer, gomock.Any()).Return(nil)
-
-	err := iKeeper.RefundTx(ctx, mockFeeTxPayer)
-	require.NoError(t, err)
-
-	mockFeeTxGranter := mockFeeTx{
-		fee:      sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(100))),
-		feePayer: feePayer,
-		granter:  feeGranter,
+	for _, tc := range tests {
+		s.T().Run(tc.name, func(t *testing.T) {
+			s.SetupTest(t)
+			tc.preRefund()
+			err := s.app.IncentiveKeeper.RefundTx(s.ctx, tc.tx)
+			tc.postRefund()
+			if tc.expectError {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+		})
 	}
+}
 
-	bankKeeper.EXPECT().SendCoinsFromModuleToAccount(gomock.Any(), gomock.Any(), feeGranter, gomock.Any()).Return(nil)
+func (s *RefundTxTestSuite) SetupTest(t *testing.T) {
+	// set up app and keepers
+	s.app = app.SetupWithBitcoinConf(s.T(), false, bbn.BtcSignet)
+	s.app.FeeGrantKeeper = s.app.FeeGrantKeeper.SetBankKeeper(s.app.BankKeeper)
+	s.app.IncentiveKeeper = keeper.NewKeeper(
+		s.app.AppCodec(),
+		runtime.NewKVStoreService(storetypes.NewKVStoreKey(types.StoreKey)),
+		s.app.BankKeeper,
+		s.app.AccountKeeper,
+		&s.app.EpochingKeeper,
+		appparams.AccGov.String(),
+		authtypes.FeeCollectorName,
+	)
+	s.ctx = s.app.BaseApp.NewContextLegacy(false, tmproto.Header{Height: 1, ChainID: "babylon-1", Time: time.Now().UTC()})
 
-	err = iKeeper.RefundTx(ctx, mockFeeTxGranter)
-	require.NoError(t, err)
+	// send some funds to fee collector to refund the payer
+	coins := sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(100)))
+	err := s.app.BankKeeper.MintCoins(s.ctx, minttypes.ModuleName, coins)
+	s.NoError(err)
+	s.app.BankKeeper.SendCoinsFromModuleToModule(s.ctx, minttypes.ModuleName, authtypes.FeeCollectorName, coins)
 }

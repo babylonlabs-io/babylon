@@ -42,6 +42,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#1734] Bump repository version to `v4`
 - [#1404](https://github.com/babylonlabs-io/babylon/pull/1404) Refactor power dist event processing.
 - [#1736](https://github.com/babylonlabs-io/babylon/pull/1736) bump cosmos-sdk to `v0.53.2`
+- [#1062](https://github.com/babylonlabs-io/babylon/pull/1062) Add `anteHandler` to avoid fee grants on refundable tx (`x/incentive`)
 
 ## v2.3.0
 

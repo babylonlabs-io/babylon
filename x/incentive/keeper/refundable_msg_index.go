@@ -3,8 +3,9 @@ package keeper
 import (
 	"context"
 
-	"github.com/babylonlabs-io/babylon/v4/x/incentive/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/babylonlabs-io/babylon/v4/x/incentive/types"
 )
 
 // getRecipient returns the address that should receive the refund.
