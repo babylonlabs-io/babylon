@@ -579,6 +579,17 @@ func (s *StakeExpansion) ToResponse() *StakeExpansionResponse {
 	}
 }
 
+// IsSignedByCovMember checks whether the given covenant PK has signed the delegation
+func (d *StakeExpansion) IsSignedByCovMember(covPk *bbn.BIP340PubKey) bool {
+	for _, sigInfo := range d.PreviousStkCovenantSigs {
+		if covPk.Equals(sigInfo.Pk) {
+			return true
+		}
+	}
+
+	return false
+}
+
 func NewBTCDelegatorDelegationIndex() *BTCDelegatorDelegationIndex {
 	return &BTCDelegatorDelegationIndex{
 		StakingTxHashList: [][]byte{},

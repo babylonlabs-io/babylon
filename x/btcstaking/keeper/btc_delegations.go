@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"slices"
 
@@ -514,7 +515,7 @@ func (k Keeper) getBTCDelWithParams(
 
 	bsParams := k.GetParamsByVersion(ctx, btcDel.ParamsVersion)
 	if bsParams == nil {
-		panic("params version in BTC delegation is not found")
+		return nil, nil, errors.New("params version in BTC delegation is not found")
 	}
 
 	return btcDel, bsParams, nil

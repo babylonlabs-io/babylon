@@ -325,26 +325,8 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 		return nil, types.ErrInvalidCovenantSig.Wrapf("err: %v", err)
 	}
 
-	if btcDel.IsStakeExpansion() {
-		if req.StakeExpansionTxSig == nil {
-			return nil, fmt.Errorf("empty stake expansion covenant signature")
-		}
-
-		// TODO: check if the btc pk was a covenant at the parameters version
-		// of the previous active staking transaction
-
-		// checks if the stake expansion sig was sent and it is valid
-		// TODO: how to validate the covenant new stk expansion signature
-		err := btcstaking.VerifyTransactionSigStkExp(
-			btcDel.MustGetStakingTx(),
-			stakingInfo.StakingOutput,
-			stakingInfo.GetPkScript(),
-			req.Pk.MustToBTCPK(),
-			*req.StakeExpansionTxSig,
-		)
-		if err != nil {
-			return nil, types.ErrInvalidCovenantSig.Wrapf("bad covenant signature of stake expansion: %s", err.Error())
-		}
+	if err := ms.validateStakeExpansionSig(ctx, btcDel, req, stakingInfo); err != nil {
+		return nil, types.ErrInvalidCovenantSig.Wrapf("error validating stake expansion signatures: %v", err)
 	}
 
 	// All is fine add received signatures to the BTC delegation and BtcUndelegation
@@ -370,6 +352,63 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 	ms.iKeeper.IndexRefundableMsg(ctx, req)
 
 	return &types.MsgAddCovenantSigsResponse{}, nil
+}
+
+// validateStakeExpansionSig validates the covenant signature for a stake expansion.
+//
+// It performs the following checks:
+//   - Ensures that the stake expansion signature is not nil.
+//   - Verifies that the signature has not already been received for the given covenant public key.
+//   - Validates the signature against the stake expansion transaction.
+//
+// It returns an error if any of the checks fail.
+func (ms msgServer) validateStakeExpansionSig(
+	ctx sdk.Context,
+	btcDel *types.BTCDelegation,
+	req *types.MsgAddCovenantSigs,
+	stakingInfo *btcstaking.StakingInfo,
+) error {
+	if !btcDel.IsStakeExpansion() {
+		return nil
+	}
+
+	if req.StakeExpansionTxSig == nil {
+		return fmt.Errorf("empty stake expansion covenant signature")
+	}
+
+	if btcDel.StkExp.IsSignedByCovMember(req.Pk) {
+		ms.Logger(ctx).Debug("Received duplicated covenant signature in stake expansion transaction",
+			"covenant pk", req.Pk.MarshalHex())
+		return errorsmod.Wrapf(types.ErrDuplicatedCovenantSig, "stake expansion transaction")
+	}
+
+	// check if the btc pk was a covenant at the parameters version
+	// of the previous active staking transaction
+	prevTxHash, err := btcDel.StakeExpansionTxHash()
+	if err != nil {
+		return err
+	}
+	prevBtcDel, prevParams, err := ms.getBTCDelWithParams(ctx, prevTxHash.String())
+	if err != nil {
+		return err
+	}
+	if !prevParams.HasCovenantPK(req.Pk) {
+		return errorsmod.Wrapf(types.ErrInvalidCovenantSig, "covenant with pk %s not found in params (version %d)", req.Pk.MarshalHex(), prevBtcDel.ParamsVersion)
+	}
+
+	// TODO: how to validate the covenant new stk expansion signature
+	err = btcstaking.VerifyTransactionSigStkExp(
+		btcDel.MustGetStakingTx(),
+		stakingInfo.StakingOutput,
+		stakingInfo.GetPkScript(),
+		req.Pk.MustToBTCPK(),
+		*req.StakeExpansionTxSig,
+	)
+	if err != nil {
+		return fmt.Errorf("bad covenant signature of stake expansion: %w", err)
+	}
+
+	return nil
 }
 
 func findInputIdx(
