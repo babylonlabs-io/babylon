@@ -4,8 +4,13 @@
 package types
 
 import (
-	cosmossdk_io_math "cosmossdk.io/math"
 	fmt "fmt"
+	io "io"
+	math "math"
+	math_bits "math/bits"
+	time "time"
+
+	cosmossdk_io_math "cosmossdk.io/math"
 	github_com_babylonlabs_io_babylon_v3_types "github.com/babylonlabs-io/babylon/v3/types"
 	types1 "github.com/babylonlabs-io/babylon/v3/x/btccheckpoint/types"
 	types2 "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
@@ -16,10 +21,6 @@ import (
 	proto "github.com/cosmos/gogoproto/proto"
 	github_com_cosmos_gogoproto_types "github.com/cosmos/gogoproto/types"
 	_ "google.golang.org/protobuf/types/known/timestamppb"
-	io "io"
-	math "math"
-	math_bits "math/bits"
-	time "time"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -582,56 +583,56 @@ type StakeExpansion struct {
 	PreviousStkCovenantSigs []*SignatureInfo `protobuf:"bytes,3,rep,name=previous_stk_covenant_sigs,json=previousStkCovenantSigs,proto3" json:"previous_stk_covenant_sigs,omitempty"`
 }
 
-func (m *StakeExpansion) Reset()         { *m = StakeExpansion{} }
-func (m *StakeExpansion) String() string { return proto.CompactTextString(m) }
+func (s *StakeExpansion) Reset()         { *s = StakeExpansion{} }
+func (s *StakeExpansion) String() string { return proto.CompactTextString(s) }
 func (*StakeExpansion) ProtoMessage()    {}
 func (*StakeExpansion) Descriptor() ([]byte, []int) {
 	return fileDescriptor_3851ae95ccfaf7db, []int{4}
 }
-func (m *StakeExpansion) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
+func (s *StakeExpansion) XXX_Unmarshal(b []byte) error {
+	return s.Unmarshal(b)
 }
-func (m *StakeExpansion) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (s *StakeExpansion) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_StakeExpansion.Marshal(b, m, deterministic)
+		return xxx_messageInfo_StakeExpansion.Marshal(b, s, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
+		n, err := s.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
 		return b[:n], nil
 	}
 }
-func (m *StakeExpansion) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_StakeExpansion.Merge(m, src)
+func (s *StakeExpansion) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_StakeExpansion.Merge(s, src)
 }
-func (m *StakeExpansion) XXX_Size() int {
-	return m.Size()
+func (s *StakeExpansion) XXX_Size() int {
+	return s.Size()
 }
-func (m *StakeExpansion) XXX_DiscardUnknown() {
-	xxx_messageInfo_StakeExpansion.DiscardUnknown(m)
+func (s *StakeExpansion) XXX_DiscardUnknown() {
+	xxx_messageInfo_StakeExpansion.DiscardUnknown(s)
 }
 
 var xxx_messageInfo_StakeExpansion proto.InternalMessageInfo
 
-func (m *StakeExpansion) GetPreviousStakingTxHash() []byte {
-	if m != nil {
-		return m.PreviousStakingTxHash
+func (s *StakeExpansion) GetPreviousStakingTxHash() []byte {
+	if s != nil {
+		return s.PreviousStakingTxHash
 	}
 	return nil
 }
 
-func (m *StakeExpansion) GetOtherFundingTxOut() []byte {
-	if m != nil {
-		return m.OtherFundingTxOut
+func (s *StakeExpansion) GetOtherFundingTxOut() []byte {
+	if s != nil {
+		return s.OtherFundingTxOut
 	}
 	return nil
 }
 
-func (m *StakeExpansion) GetPreviousStkCovenantSigs() []*SignatureInfo {
-	if m != nil {
-		return m.PreviousStkCovenantSigs
+func (s *StakeExpansion) GetPreviousStkCovenantSigs() []*SignatureInfo {
+	if s != nil {
+		return s.PreviousStkCovenantSigs
 	}
 	return nil
 }
@@ -1740,30 +1741,30 @@ func (m *BTCDelegation) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *StakeExpansion) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
+func (s *StakeExpansion) Marshal() (dAtA []byte, err error) {
+	size := s.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	n, err := s.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
 	return dAtA[:n], nil
 }
 
-func (m *StakeExpansion) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
+func (s *StakeExpansion) MarshalTo(dAtA []byte) (int, error) {
+	size := s.Size()
+	return s.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *StakeExpansion) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (s *StakeExpansion) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if len(m.PreviousStkCovenantSigs) > 0 {
-		for iNdEx := len(m.PreviousStkCovenantSigs) - 1; iNdEx >= 0; iNdEx-- {
+	if len(s.PreviousStkCovenantSigs) > 0 {
+		for iNdEx := len(s.PreviousStkCovenantSigs) - 1; iNdEx >= 0; iNdEx-- {
 			{
-				size, err := m.PreviousStkCovenantSigs[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				size, err := s.PreviousStkCovenantSigs[iNdEx].MarshalToSizedBuffer(dAtA[:i])
 				if err != nil {
 					return 0, err
 				}
@@ -1774,17 +1775,17 @@ func (m *StakeExpansion) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 			dAtA[i] = 0x1a
 		}
 	}
-	if len(m.OtherFundingTxOut) > 0 {
-		i -= len(m.OtherFundingTxOut)
-		copy(dAtA[i:], m.OtherFundingTxOut)
-		i = encodeVarintBtcstaking(dAtA, i, uint64(len(m.OtherFundingTxOut)))
+	if len(s.OtherFundingTxOut) > 0 {
+		i -= len(s.OtherFundingTxOut)
+		copy(dAtA[i:], s.OtherFundingTxOut)
+		i = encodeVarintBtcstaking(dAtA, i, uint64(len(s.OtherFundingTxOut)))
 		i--
 		dAtA[i] = 0x12
 	}
-	if len(m.PreviousStakingTxHash) > 0 {
-		i -= len(m.PreviousStakingTxHash)
-		copy(dAtA[i:], m.PreviousStakingTxHash)
-		i = encodeVarintBtcstaking(dAtA, i, uint64(len(m.PreviousStakingTxHash)))
+	if len(s.PreviousStakingTxHash) > 0 {
+		i -= len(s.PreviousStakingTxHash)
+		copy(dAtA[i:], s.PreviousStakingTxHash)
+		i = encodeVarintBtcstaking(dAtA, i, uint64(len(s.PreviousStakingTxHash)))
 		i--
 		dAtA[i] = 0xa
 	}
@@ -2401,22 +2402,22 @@ func (m *BTCDelegation) Size() (n int) {
 	return n
 }
 
-func (m *StakeExpansion) Size() (n int) {
-	if m == nil {
+func (s *StakeExpansion) Size() (n int) {
+	if s == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	l = len(m.PreviousStakingTxHash)
+	l = len(s.PreviousStakingTxHash)
 	if l > 0 {
 		n += 1 + l + sovBtcstaking(uint64(l))
 	}
-	l = len(m.OtherFundingTxOut)
+	l = len(s.OtherFundingTxOut)
 	if l > 0 {
 		n += 1 + l + sovBtcstaking(uint64(l))
 	}
-	if len(m.PreviousStkCovenantSigs) > 0 {
-		for _, e := range m.PreviousStkCovenantSigs {
+	if len(s.PreviousStkCovenantSigs) > 0 {
+		for _, e := range s.PreviousStkCovenantSigs {
 			l = e.Size()
 			n += 1 + l + sovBtcstaking(uint64(l))
 		}
@@ -3875,7 +3876,7 @@ func (m *BTCDelegation) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *StakeExpansion) Unmarshal(dAtA []byte) error {
+func (s *StakeExpansion) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -3933,9 +3934,9 @@ func (m *StakeExpansion) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.PreviousStakingTxHash = append(m.PreviousStakingTxHash[:0], dAtA[iNdEx:postIndex]...)
-			if m.PreviousStakingTxHash == nil {
-				m.PreviousStakingTxHash = []byte{}
+			s.PreviousStakingTxHash = append(s.PreviousStakingTxHash[:0], dAtA[iNdEx:postIndex]...)
+			if s.PreviousStakingTxHash == nil {
+				s.PreviousStakingTxHash = []byte{}
 			}
 			iNdEx = postIndex
 		case 2:
@@ -3967,9 +3968,9 @@ func (m *StakeExpansion) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.OtherFundingTxOut = append(m.OtherFundingTxOut[:0], dAtA[iNdEx:postIndex]...)
-			if m.OtherFundingTxOut == nil {
-				m.OtherFundingTxOut = []byte{}
+			s.OtherFundingTxOut = append(s.OtherFundingTxOut[:0], dAtA[iNdEx:postIndex]...)
+			if s.OtherFundingTxOut == nil {
+				s.OtherFundingTxOut = []byte{}
 			}
 			iNdEx = postIndex
 		case 3:
@@ -4001,8 +4002,8 @@ func (m *StakeExpansion) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.PreviousStkCovenantSigs = append(m.PreviousStkCovenantSigs, &SignatureInfo{})
-			if err := m.PreviousStkCovenantSigs[len(m.PreviousStkCovenantSigs)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			s.PreviousStkCovenantSigs = append(s.PreviousStkCovenantSigs, &SignatureInfo{})
+			if err := s.PreviousStkCovenantSigs[len(s.PreviousStkCovenantSigs)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex

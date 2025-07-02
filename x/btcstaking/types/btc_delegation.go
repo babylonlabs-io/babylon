@@ -275,7 +275,11 @@ func (d *BTCDelegation) ValidateBasic() error {
 		return fmt.Errorf("staking time %d must be lower than %d", d.StakingTime, math.MaxUint16)
 	}
 
-	// TODO(rafilx): add validation for stake expansion and covd signatures
+	if d.IsStakeExpansion() {
+		if err := d.StkExp.Validate(); err != nil {
+			return err
+		}
+	}
 
 	return nil
 }
@@ -579,15 +583,61 @@ func (s *StakeExpansion) ToResponse() *StakeExpansionResponse {
 	}
 }
 
+func (s *StakeExpansion) Validate() error {
+	if len(s.PreviousStakingTxHash) == 0 {
+		return fmt.Errorf("PreviousStakingTxHash is required")
+	}
+
+	if _, err := s.StakeExpansionTxHash(); err != nil {
+		return err
+	}
+
+	if len(s.OtherFundingTxOut) == 0 {
+		return fmt.Errorf("OtherFundingTxOut is required")
+	}
+
+	if _, err := s.FundingTxOut(); err != nil {
+		return err
+	}
+	for i, sig := range s.PreviousStkCovenantSigs {
+		if sig == nil {
+			return fmt.Errorf("PreviousStkCovenantSigs[%d] is nil", i)
+		}
+		if err := sig.Validate(); err != nil {
+			return fmt.Errorf("invalid signature at index %d: %w", i, err)
+		}
+	}
+
+	return nil
+}
+
 // IsSignedByCovMember checks whether the given covenant PK has signed the delegation
-func (d *StakeExpansion) IsSignedByCovMember(covPk *bbn.BIP340PubKey) bool {
-	for _, sigInfo := range d.PreviousStkCovenantSigs {
+func (s *StakeExpansion) IsSignedByCovMember(covPk *bbn.BIP340PubKey) bool {
+	for _, sigInfo := range s.PreviousStkCovenantSigs {
 		if covPk.Equals(sigInfo.Pk) {
 			return true
 		}
 	}
 
 	return false
+}
+
+func (si *SignatureInfo) Validate() error {
+	if si.Pk == nil {
+		return fmt.Errorf("public key is nil")
+	}
+	if si.Pk.Size() != schnorr.PubKeyBytesLen {
+		return fmt.Errorf("public key is invalid")
+	}
+
+	if si.Sig == nil {
+		return fmt.Errorf("signature is nil")
+	}
+	if si.Sig.Size() != schnorr.SignatureSize {
+		return fmt.Errorf("signature is invalid")
+	}
+
+	return nil
 }
 
 func NewBTCDelegatorDelegationIndex() *BTCDelegatorDelegationIndex {
