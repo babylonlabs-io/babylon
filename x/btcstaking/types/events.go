@@ -100,7 +100,7 @@ func NewInclusionProofEvent(
 func NewBtcDelCreationEvent(
 	btcDel *BTCDelegation,
 ) *EventBTCDelegationCreated {
-	return &EventBTCDelegationCreated{
+	e := &EventBTCDelegationCreated{
 		StakingTxHex:              hex.EncodeToString(btcDel.StakingTx),
 		StakingOutputIndex:        strconv.FormatUint(uint64(btcDel.StakingOutputIdx), 10),
 		ParamsVersion:             strconv.FormatUint(uint64(btcDel.ParamsVersion), 10),
@@ -112,6 +112,10 @@ func NewBtcDelCreationEvent(
 		NewState:                  BTCDelegationStatus_PENDING.String(),
 		StakerAddr:                btcDel.StakerAddr,
 	}
+	if btcDel.IsStakeExpansion() {
+		e.PreviousStakingTxHashHex = btcDel.MustGetStakeExpansionTxHash().String()
+	}
+	return e
 }
 
 func NewCovenantSignatureReceivedEvent(
