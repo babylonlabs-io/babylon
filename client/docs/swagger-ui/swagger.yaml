@@ -25578,4 +25578,3 @@ definitions:
             The data could be arbitrary format, providing nessecary data
             for example neighbouring node hash
     title: ProofOps is Merkle proof defined by the list of ProofOps
->>>>>>> 9be0b19 (chore(zoneconcierge): Remove `ListEpochHeaders` and `QueryChainList`  query (#1265))

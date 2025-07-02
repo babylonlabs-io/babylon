@@ -49,6 +49,7 @@ import (
 	minttypes "github.com/babylonlabs-io/babylon/v3/x/mint/types"
 	monitorkeeper "github.com/babylonlabs-io/babylon/v3/x/monitor/keeper"
 	monitortypes "github.com/babylonlabs-io/babylon/v3/x/monitor/types"
+	zoneconcierge "github.com/babylonlabs-io/babylon/v3/x/zoneconcierge"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/runtime"
@@ -751,10 +752,14 @@ func (ak *AppKeepers) InitKeepers(
 	// channel.RecvPacket -> fee.OnRecvPacket -> icaHost.OnRecvPacket
 	icaHostStack := icahost.NewIBCModule(*ak.ICAHostKeeper)
 
+	// Create ZoneConcierge IBC module
+	zoneConciergeIBCModule := zoneconcierge.NewIBCModule(ak.ZoneConciergeKeeper)
+
 	// Create static IBC router, add ibc-transfer module route,
 	// and the other routes (ICA, wasm, zoneconcierge), then set and seal it
 	ibcRouter := porttypes.NewRouter().
 		AddRoute(ibctransfertypes.ModuleName, transferStack).
+		AddRoute(zctypes.PortID, zoneConciergeIBCModule).
 		AddRoute(wasmtypes.ModuleName, wasmStack).
 		AddRoute(icacontrollertypes.SubModuleName, icaControllerStack).
 		AddRoute(icahosttypes.SubModuleName, icaHostStack)
@@ -782,6 +787,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
 	paramsKeeper.Subspace(tokenfactorytypes.ModuleName)
 	paramsKeeper.Subspace(ratelimittypes.ModuleName)
+	paramsKeeper.Subspace(zctypes.ModuleName)
 
 	return paramsKeeper
 }
