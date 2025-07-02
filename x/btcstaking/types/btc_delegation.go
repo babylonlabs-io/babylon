@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math"
 
+	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/btcsuite/btcd/btcec/v2"
@@ -585,26 +586,26 @@ func (s *StakeExpansion) ToResponse() *StakeExpansionResponse {
 
 func (s *StakeExpansion) Validate() error {
 	if len(s.PreviousStakingTxHash) == 0 {
-		return fmt.Errorf("PreviousStakingTxHash is required")
+		return errorsmod.Wrapf(ErrInvalidStakeExpansion, "PreviousStakingTxHash is required")
 	}
 
 	if _, err := s.StakeExpansionTxHash(); err != nil {
-		return err
+		return errorsmod.Wrapf(ErrInvalidStakeExpansion, err.Error())
 	}
 
 	if len(s.OtherFundingTxOut) == 0 {
-		return fmt.Errorf("OtherFundingTxOut is required")
+		return errorsmod.Wrapf(ErrInvalidStakeExpansion, "OtherFundingTxOut is required")
 	}
 
 	if _, err := s.FundingTxOut(); err != nil {
-		return err
+		return errorsmod.Wrapf(ErrInvalidStakeExpansion, err.Error())
 	}
 	for i, sig := range s.PreviousStkCovenantSigs {
 		if sig == nil {
-			return fmt.Errorf("PreviousStkCovenantSigs[%d] is nil", i)
+			return errorsmod.Wrapf(ErrInvalidStakeExpansion, "PreviousStkCovenantSigs[%d] is nil", i)
 		}
 		if err := sig.Validate(); err != nil {
-			return fmt.Errorf("invalid signature at index %d: %w", i, err)
+			return errorsmod.Wrapf(ErrInvalidStakeExpansion, "invalid signature at index %d: %v", i, err)
 		}
 	}
 
