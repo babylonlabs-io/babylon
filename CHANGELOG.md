@@ -95,6 +95,7 @@ check of rewards
 
 ### State Machine Breaking
 
+- [#1271](https://github.com/babylonlabs-io/babylon/pull/1271) Add equivocation e2e test for rollup BSN.
 - [#402](https://github.com/babylonlabs-io/babylon/pull/402) **Babylon multi-staking support**.
 This PR contains a series of PRs on multi-staking support and BTC staking integration.
 - [#847](https://github.com/babylonlabs-io/babylon/pull/847) Add ibc callbacks to

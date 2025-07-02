@@ -107,33 +107,47 @@ func (k Keeper) GetFinalityProvider(ctx context.Context, fpBTCPK []byte) (*types
 
 // SlashFinalityProvider slashes a finality provider with the given PK
 // A slashed finality provider will not have voting power
+// This function handles both Babylon FPs and consumer FPs
 func (k Keeper) SlashFinalityProvider(ctx context.Context, fpBTCPK []byte) error {
-	// ensure finality provider exists
-	fp, err := k.GetFinalityProvider(ctx, fpBTCPK)
+	fpBTCPKObj, err := bbn.NewBIP340PubKey(fpBTCPK)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to parse BTC PK: %w", err)
 	}
 
-	// ensure finality provider is not slashed yet
-	if fp.IsSlashed() {
-		return types.ErrFpAlreadySlashed
+	// First try to get as Babylon finality provider
+	fp, err := k.GetFinalityProvider(ctx, *fpBTCPKObj)
+	if err == nil {
+		// It's a Babylon FP, slash it using the existing logic
+		// ensure finality provider is not slashed yet
+		if fp.IsSlashed() {
+			return types.ErrFpAlreadySlashed
+		}
+
+		// set finality provider to be slashed
+		fp.SlashedBabylonHeight = uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
+		btcTip := k.btclcKeeper.GetTipInfo(ctx)
+		if btcTip == nil {
+			return fmt.Errorf("failed to get current BTC tip")
+		}
+		fp.SlashedBtcHeight = btcTip.Height
+		k.setFinalityProvider(ctx, fp)
+
+		// record slashed event. The next `BeginBlock` will consume this
+		// event for updating the finality provider set
+		powerUpdateEvent := types.NewEventPowerDistUpdateWithSlashedFP(fp.BtcPk)
+		k.addPowerDistUpdateEvent(ctx, btcTip.Height, powerUpdateEvent)
+
+		return nil
 	}
 
-	// set finality provider to be slashed
-	fp.SlashedBabylonHeight = uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
-	btcTip := k.btclcKeeper.GetTipInfo(ctx)
-	if btcTip == nil {
-		return fmt.Errorf("failed to get current BTC tip")
+	// Then try to get as consumer finality provider
+	// Get the consumer ID for this finality provider
+	consumerID, err := k.BscKeeper.GetConsumerOfFinalityProvider(ctx, fpBTCPKObj)
+	if err != nil {
+		return fmt.Errorf("failed to get consumer of finality provider: %w", err)
 	}
-	fp.SlashedBtcHeight = btcTip.Height
-	k.setFinalityProvider(ctx, fp)
-
-	// record slashed event. The next `BeginBlock` will consume this
-	// event for updating the finality provider set
-	powerUpdateEvent := types.NewEventPowerDistUpdateWithSlashedFP(fp.BtcPk)
-	k.addPowerDistUpdateEvent(ctx, btcTip.Height, powerUpdateEvent)
-
-	return nil
+	// Use the existing SlashConsumerFinalityProvider function
+	return k.SlashConsumerFinalityProvider(ctx, consumerID, fpBTCPKObj)
 }
 
 // SlashConsumerFinalityProvider slashes a consumer finality provider with the given PK

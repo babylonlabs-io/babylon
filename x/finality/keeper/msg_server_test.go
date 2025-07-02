@@ -2,6 +2,7 @@ package keeper_test
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 	"math"
 	"math/rand"
@@ -17,6 +18,7 @@ import (
 
 	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
 	"github.com/babylonlabs-io/babylon/v3/app/signingcontext"
+	"github.com/babylonlabs-io/babylon/v3/crypto/eots"
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
 	testutil "github.com/babylonlabs-io/babylon/v3/testutil/incentives-helper"
 	keepertest "github.com/babylonlabs-io/babylon/v3/testutil/keeper"
@@ -589,17 +591,17 @@ func FuzzEquivocationEvidence(f *testing.F) {
 
 		// test invalid case - without PubRand field in MsgEquivocationEvidence
 		invalidMsg := &types.MsgEquivocationEvidence{
-			Signer:               datagen.GenRandomAccount().Address,
-			FpBtcPk:              fpBTCPK,
-			BlockHeight:          activationHeight,
-			CanonicalAppHash:     datagen.GenRandomByteArray(r, 32),
-			ForkAppHash:          datagen.GenRandomByteArray(r, 32),
-			CanonicalFinalitySig: &bbn.SchnorrEOTSSig{},
-			ForkFinalitySig:      &bbn.SchnorrEOTSSig{},
+			Signer:                  datagen.GenRandomAccount().Address,
+			FpBtcPkHex:              fpBTCPK.MarshalHex(),
+			BlockHeight:             activationHeight,
+			CanonicalAppHashHex:     hex.EncodeToString(datagen.GenRandomByteArray(r, 32)),
+			ForkAppHashHex:          hex.EncodeToString(datagen.GenRandomByteArray(r, 32)),
+			CanonicalFinalitySigHex: "",
+			ForkFinalitySigHex:      "",
 		}
 
-		err = invalidMsg.ValidateBasic()
-		require.ErrorContains(t, err, "empty PubRand")
+		_, err = invalidMsg.ParseToEvidence()
+		require.Error(t, err)
 
 		// test valid case
 		blockHeight := activationHeight + datagen.RandomInt(r, 100)
@@ -617,31 +619,33 @@ func FuzzEquivocationEvidence(f *testing.F) {
 		canonicalAppHash := datagen.GenRandomByteArray(r, 32)
 		forkAppHash := datagen.GenRandomByteArray(r, 32)
 
-		// mock canonical signature
-		canonicalBytes := datagen.GenRandomByteArray(r, 32)
-		var canonicalModNScalar btcec.ModNScalar
-		overflowed := canonicalModNScalar.SetByteSlice(canonicalBytes)
-		require.False(t, overflowed)
-		canonicalSig := bbn.NewSchnorrEOTSSigFromModNScalar(&canonicalModNScalar)
+		// generate proper EOTS signatures using the same private key and randomness
+		// but different messages (canonical vs fork) - this is what allows secret key extraction
+		// Use the private randomness that corresponds to the public randomness already generated
+		sr := randListInfo.SRList[0]
 
-		// mock fork signature
-		forkBytes := datagen.GenRandomByteArray(r, 32)
-		var forkModNScalar btcec.ModNScalar
-		overflowed = forkModNScalar.SetByteSlice(forkBytes)
-		require.False(t, overflowed)
-		forkSig := bbn.NewSchnorrEOTSSigFromModNScalar(&forkModNScalar)
+		// Create canonical message (height || canonical app hash)
+		canonicalMsg := append(sdk.Uint64ToBigEndian(blockHeight), canonicalAppHash...)
+		canonicalSig, err := eots.Sign(btcSK, sr, canonicalMsg)
+		require.NoError(t, err)
+
+		// Create fork message (height || fork app hash) using SAME key and randomness
+		forkMsg := append(sdk.Uint64ToBigEndian(blockHeight), forkAppHash...)
+		forkSig, err := eots.Sign(btcSK, sr, forkMsg)
+		require.NoError(t, err)
 
 		msg := &types.MsgEquivocationEvidence{
-			Signer:               datagen.GenRandomAccount().Address,
-			FpBtcPk:              fpBTCPK,
-			BlockHeight:          blockHeight,
-			PubRand:              pubRand,
-			CanonicalAppHash:     canonicalAppHash,
-			ForkAppHash:          forkAppHash,
-			CanonicalFinalitySig: canonicalSig,
-			ForkFinalitySig:      forkSig,
+			Signer:                  datagen.GenRandomAccount().Address,
+			FpBtcPkHex:              fpBTCPK.MarshalHex(),
+			BlockHeight:             blockHeight,
+			PubRandHex:              pubRand.MarshalHex(),
+			CanonicalAppHashHex:     hex.EncodeToString(canonicalAppHash),
+			ForkAppHashHex:          hex.EncodeToString(forkAppHash),
+			CanonicalFinalitySigHex: hex.EncodeToString(bbn.NewSchnorrEOTSSigFromModNScalar(canonicalSig).MustMarshal()),
+			ForkFinalitySigHex:      hex.EncodeToString(bbn.NewSchnorrEOTSSigFromModNScalar(forkSig).MustMarshal()),
+			SigningContext:          "", // TODO: test using actual context
 		}
-		err = msg.ValidateBasic()
+		_, err = msg.ParseToEvidence()
 		require.NoError(t, err)
 
 		// set block height in context to be >= evidence height
@@ -662,13 +666,13 @@ func FuzzEquivocationEvidence(f *testing.F) {
 
 		storedEvidence, err := fKeeper.GetEvidence(ctx, fpBTCPK, blockHeight)
 		require.NoError(t, err)
-		require.Equal(t, msg.FpBtcPk, storedEvidence.FpBtcPk)
+		require.Equal(t, msg.FpBtcPkHex, storedEvidence.FpBtcPk.MarshalHex())
 		require.Equal(t, msg.BlockHeight, storedEvidence.BlockHeight)
-		require.Equal(t, msg.PubRand, storedEvidence.PubRand)
-		require.Equal(t, msg.CanonicalAppHash, storedEvidence.CanonicalAppHash)
-		require.Equal(t, msg.ForkAppHash, storedEvidence.ForkAppHash)
-		require.Equal(t, msg.CanonicalFinalitySig, storedEvidence.CanonicalFinalitySig)
-		require.Equal(t, msg.ForkFinalitySig, storedEvidence.ForkFinalitySig)
+		require.Equal(t, msg.PubRandHex, storedEvidence.PubRand.MarshalHex())
+		require.Equal(t, msg.CanonicalAppHashHex, hex.EncodeToString(storedEvidence.CanonicalAppHash))
+		require.Equal(t, msg.ForkAppHashHex, hex.EncodeToString(storedEvidence.ForkAppHash))
+		require.Equal(t, msg.CanonicalFinalitySigHex, hex.EncodeToString(storedEvidence.CanonicalFinalitySig.MustMarshal()))
+		require.Equal(t, msg.ForkFinalitySigHex, hex.EncodeToString(storedEvidence.ForkFinalitySig.MustMarshal()))
 	})
 }
 
