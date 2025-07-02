@@ -88,7 +88,7 @@ func (s *FinalityContractTestSuite) Test1InstantiateFinalityContract() {
 	chainA := s.configurer.GetChainConfig(0)
 	chainA.WaitUntilHeight(1)
 
-	contractPath := "/bytecode/op_finality_gadget.wasm"
+	contractPath := "/bytecode/finality.wasm"
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
 
@@ -374,7 +374,7 @@ func (s *FinalityContractTestSuite) Test5CommitPublicRandomness() {
 	}, time.Second*10, time.Second, "Public randomness commitment was not found within the expected time")
 }
 
-func (s *FinalityContractTestSuite) Test6SubmitFinalitySignatura() {
+func (s *FinalityContractTestSuite) Test6SubmitFinalitySignature() {
 	chainA := s.configurer.GetChainConfig(0)
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
@@ -393,7 +393,16 @@ func (s *FinalityContractTestSuite) Test6SubmitFinalitySignatura() {
 	s.NoError(err)
 	eotsSig := bbn.NewSchnorrEOTSSigFromModNScalar(sig)
 
-	nonValidatorNode.AddFinalitySigConsumer(initialization.ValidatorWalletName, ConsumerID, s.consumerFp.BtcPk, startHeight, &s.randListInfo.PRList[idx], *s.randListInfo.ProofList[idx].ToProto(), appHash, eotsSig)
+	nonValidatorNode.AddFinalitySigConsumer(
+		initialization.ValidatorWalletName,
+		ConsumerID,
+		s.consumerFp.BtcPk,
+		startHeight,
+		&s.randListInfo.PRList[idx],
+		*s.randListInfo.ProofList[idx].ToProto(),
+		appHash,
+		eotsSig,
+	)
 
 	// Query the finality signature from the finality contract
 
@@ -410,4 +419,51 @@ func (s *FinalityContractTestSuite) Test6SubmitFinalitySignatura() {
 			s.consumerFp.BtcPk.MarshalHex())
 		return true
 	}, time.Second*10, time.Second, "Voters for the block were not found within the expected time")
+}
+
+func (s *FinalityContractTestSuite) Test7SubmitEquivocatingFinalitySignature() {
+	chainA := s.configurer.GetChainConfig(0)
+	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
+	s.NoError(err)
+
+	// Create a fork block at the same height to create an equivocation
+	equivocationHeight := uint64(1)
+	forkBlock := datagen.GenRandomBlockWithHeight(s.r, equivocationHeight)
+
+	// Use the same randomness index for both signatures
+	idx := 0
+
+	// Sign the fork block
+	msgToSign1 := append(sdk.Uint64ToBigEndian(equivocationHeight), forkBlock.AppHash...)
+	sig, err := eots.Sign(s.consumerBtcSk, s.randListInfo.SRList[idx], msgToSign1)
+	s.NoError(err)
+	eotsSig := bbn.NewSchnorrEOTSSigFromModNScalar(sig)
+
+	// Submit the equivocating finality signature
+	txHash := nonValidatorNode.AddFinalitySigConsumer(
+		initialization.ValidatorWalletName,
+		ConsumerID,
+		s.consumerFp.BtcPk,
+		equivocationHeight,
+		&s.randListInfo.PRList[idx],
+		*s.randListInfo.ProofList[idx].ToProto(),
+		forkBlock.AppHash,
+		eotsSig,
+	)
+
+	s.T().Logf("Submitted equivocating finality signature for FP %s at height %d",
+		s.consumerFp.BtcPk.MarshalHex(), equivocationHeight)
+
+	nonValidatorNode.WaitForNextBlock()
+	txResp, tx, err := nonValidatorNode.QueryTxWithError(txHash)
+	s.T().Logf("txResp: %+v, tx: %+v, err: %v", txResp, tx, err)
+
+	// Ensure the FP is slashed
+	fpResp := nonValidatorNode.QueryFinalityProvider(s.consumerFp.BtcPk.MarshalHex())
+	s.NotNil(fpResp)
+	s.Greater(fpResp.SlashedBabylonHeight, uint64(0))
+
+	// Ensure the equivocation evidence is created
+	equivocationEvidence := nonValidatorNode.QueryListEvidences(0)
+	s.Len(equivocationEvidence, 1)
 }

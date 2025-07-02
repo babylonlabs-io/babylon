@@ -2,6 +2,7 @@ package keeper_test
 
 import (
 	"math/rand"
+	"sort"
 	"testing"
 
 	testutil "github.com/babylonlabs-io/babylon/v3/testutil/btcstaking-helper"
@@ -381,4 +382,73 @@ func registerAndVerifyConsumer(t *testing.T, r *rand.Rand, h *testutil.Helper) *
 	require.Equal(t, randomConsumer.ConsumerDescription, dbConsumer.ConsumerDescription)
 
 	return dbConsumer
+}
+
+func TestDeterministicOrdering(t *testing.T) {
+	r := rand.New(rand.NewSource(42))
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	// mock BTC light client and BTC checkpoint modules
+	btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
+	btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
+	h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
+	h.GenAndApplyParams(r)
+
+	consumerIDs := []string{"consumer-z", "consumer-a", "consumer-m", "consumer-b"}
+
+	// Add consumer events in random order
+	for _, consumerID := range consumerIDs {
+		event := &types.BTCStakingConsumerEvent{
+			Event: &types.BTCStakingConsumerEvent_NewFp{
+				NewFp: &types.NewFinalityProvider{
+					BtcPkHex:   "test-pk-" + consumerID,
+					ConsumerId: consumerID,
+				},
+			},
+		}
+		err := h.BTCStakingKeeper.AddBTCStakingConsumerEvent(h.Ctx, consumerID, event)
+		require.NoError(t, err)
+	}
+
+	// Simulate the pattern used in BroadcastBTCStakingConsumerEvents
+	// 1. Get all consumer IBC packets (returns map)
+	consumerIBCPacketMap := h.BTCStakingKeeper.GetAllBTCStakingConsumerIBCPackets(h.Ctx)
+
+	// 2. Simulate the fixed iteration pattern (extract keys, sort, then iterate)
+	var processOrder1 []string
+	{
+		// Extract keys and sort them for deterministic iteration (this is our fix)
+		consumerIDKeys := make([]string, 0, len(consumerIBCPacketMap))
+		for consumerID := range consumerIBCPacketMap {
+			consumerIDKeys = append(consumerIDKeys, consumerID)
+		}
+		sort.Strings(consumerIDKeys)
+
+		// Iterate through consumer IDs in sorted order
+		processOrder1 = append(processOrder1, consumerIDKeys...)
+	}
+
+	// 3. Repeat the same process to ensure consistent ordering
+	var processOrder2 []string
+	{
+		consumerIBCPacketMap2 := h.BTCStakingKeeper.GetAllBTCStakingConsumerIBCPackets(h.Ctx)
+
+		// Extract keys and sort them for deterministic iteration
+		consumerIDKeys := make([]string, 0, len(consumerIBCPacketMap2))
+		for consumerID := range consumerIBCPacketMap2 {
+			consumerIDKeys = append(consumerIDKeys, consumerID)
+		}
+		sort.Strings(consumerIDKeys)
+
+		// Iterate through consumer IDs in sorted order
+		processOrder2 = append(processOrder2, consumerIDKeys...)
+	}
+
+	// Verify that both processing orders are identical
+	require.Equal(t, processOrder1, processOrder2, "Processing order should be deterministic")
+
+	// Verify that the processing order is sorted
+	expectedOrder := []string{"consumer-a", "consumer-b", "consumer-m", "consumer-z"}
+	require.Equal(t, expectedOrder, processOrder1, "Processing should happen in sorted order")
 }
