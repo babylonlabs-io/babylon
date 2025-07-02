@@ -123,7 +123,8 @@ func FuzzSetBTCStakingEventStore_ActiveDel(f *testing.F) {
 		// delegation related assertions
 		actualDel, err := h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
 		h.NoError(err)
-		hasQuorum := h.BTCStakingKeeper.BtcDelHasCovenantQuorums(h.Ctx, actualDel, h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum)
+		hasQuorum, err := h.BTCStakingKeeper.BtcDelHasCovenantQuorums(h.Ctx, actualDel, h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum)
+		h.NoError(err)
 		require.False(t, hasQuorum)
 		// create cov sigs to activate the delegation
 		msgs := h.GenerateCovenantSignaturesMessages(r, covenantSKs, msgCreateBTCDel, actualDel)
@@ -138,7 +139,8 @@ func FuzzSetBTCStakingEventStore_ActiveDel(f *testing.F) {
 		// ensure the BTC delegation now has voting power as it has been activated
 		actualDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
 		h.NoError(err)
-		quorumPreviousStk := h.BTCStakingKeeper.BtcDelPreviousStkQuorum(h.Ctx, actualDel)
+		quorumPreviousStk, err := h.BTCStakingKeeper.BtcDelPreviousStkQuorum(h.Ctx, actualDel)
+		h.NoError(err)
 		require.True(t, actualDel.HasCovenantQuorums(h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum, quorumPreviousStk))
 		require.True(t, actualDel.BtcUndelegation.HasCovenantQuorums(h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum))
 		votingPower := actualDel.VotingPower(
@@ -226,7 +228,8 @@ func FuzzSetBTCStakingEventStore_UnbondedDel(f *testing.F) {
 		actualDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
 		h.NoError(err)
 		btcTip := uint32(30)
-		status := h.BTCStakingKeeper.BtcDelStatus(h.Ctx, actualDel, bsParams.CovenantQuorum, btcTip)
+		status, err := h.BTCStakingKeeper.BtcDelStatus(h.Ctx, actualDel, bsParams.CovenantQuorum, btcTip)
+		h.NoError(err)
 		require.Equal(t, types.BTCDelegationStatus_ACTIVE, status)
 
 		msg := &types.MsgBTCUndelegate{
@@ -278,7 +281,8 @@ func FuzzSetBTCStakingEventStore_UnbondedDel(f *testing.F) {
 		actualDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
 		h.NoError(err)
 
-		status = h.BTCStakingKeeper.BtcDelStatus(h.Ctx, actualDel, bsParams.CovenantQuorum, btcTip)
+		status, err = h.BTCStakingKeeper.BtcDelStatus(h.Ctx, actualDel, bsParams.CovenantQuorum, btcTip)
+		h.NoError(err)
 		require.Equal(t, types.BTCDelegationStatus_UNBONDED, status)
 
 		// event store related assertions

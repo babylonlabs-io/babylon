@@ -131,7 +131,8 @@ func FuzzRestaking_RestakedBTCDelegation(f *testing.F) {
 		actualDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash.String())
 		h.NoError(err)
 		btcTip := h.BTCLightClientKeeper.GetTipInfo(h.Ctx).Height
-		status := h.BTCStakingKeeper.BtcDelStatus(h.Ctx, actualDel, bsParams.CovenantQuorum, btcTip)
+		status, err := h.BTCStakingKeeper.BtcDelStatus(h.Ctx, actualDel, bsParams.CovenantQuorum, btcTip)
+		h.NoError(err)
 		require.Equal(t, types.BTCDelegationStatus_ACTIVE, status)
 	})
 }

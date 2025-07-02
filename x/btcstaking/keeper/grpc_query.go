@@ -109,7 +109,10 @@ func (k Keeper) BTCDelegations(ctx context.Context, req *types.QueryBTCDelegatio
 		params := k.GetParamsByVersion(ctx, btcDel.ParamsVersion)
 
 		// hit if the queried status is ANY or matches the BTC delegation status
-		status := k.BtcDelStatus(ctx, &btcDel, params.CovenantQuorum, btcTipHeight)
+		status, err := k.BtcDelStatus(ctx, &btcDel, params.CovenantQuorum, btcTipHeight)
+		if err != nil {
+			return true, err
+		}
 		if req.Status == types.BTCDelegationStatus_ANY || status == req.Status {
 			if accumulate {
 				resp := types.NewBTCDelegationResponse(&btcDel, status)
@@ -169,7 +172,10 @@ func (k Keeper) FinalityProviderDelegations(ctx context.Context, req *types.Quer
 			for i, btcDel := range curBTCDels.Dels {
 				params := k.GetParamsByVersion(sdkCtx, btcDel.ParamsVersion)
 
-				status := k.BtcDelStatus(ctx, btcDel, params.CovenantQuorum, btcHeight)
+				status, err := k.BtcDelStatus(ctx, btcDel, params.CovenantQuorum, btcHeight)
+				if err != nil {
+					return err
+				}
 				btcDelsResp[i] = types.NewBTCDelegationResponse(btcDel, status)
 			}
 
@@ -208,7 +214,10 @@ func (k Keeper) BTCDelegation(ctx context.Context, req *types.QueryBTCDelegation
 		return nil, err
 	}
 
-	status, _ := k.BtcDelStatusWithTip(ctx, btcDel, params.CovenantQuorum)
+	status, _, err := k.BtcDelStatusWithTip(ctx, btcDel, params.CovenantQuorum)
+	if err != nil {
+		return nil, err
+	}
 	return &types.QueryBTCDelegationResponse{
 		BtcDelegation: types.NewBTCDelegationResponse(btcDel, status),
 	}, nil
