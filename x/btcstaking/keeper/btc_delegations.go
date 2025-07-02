@@ -52,7 +52,7 @@ func (k Keeper) CreateBTCDelegation(ctx sdk.Context, parsedMsg *types.ParsedCrea
 	// of all consumers' max_multi_staked_fps limits. Only one finality provider per
 	// consumer is allowed in a delegation.
 	// TODO: ensure the BTC delegation does not restake to too many finality providers
-	// (pending concrete design)	
+	// (pending concrete design)
 	restakedToConsumers, err := k.validateRestakedFPs(ctx, parsedMsg.FinalityProviderKeys.PublicKeysBbnFormat)
 	if err != nil {
 		return err
@@ -112,32 +112,22 @@ func (k Keeper) CreateBTCDelegation(ctx sdk.Context, parsedMsg *types.ParsedCrea
 		},
 		ParamsVersion: paramsVersion,      // version of the params against which delegation was validated
 		BtcTipHeight:  timeInfo.TipHeight, // height of the BTC light client tip at the time of the delegation creation
-		StkExp:        nil,
 	}
 
-	stkExp := parsedMsg.StkExp
-	if stkExp != nil { // stake expansion being set
-		fundingOut, err := stkExp.SerializeOtherFundingOutput()
-		if err != nil {
-			panic(fmt.Errorf("failed to serialize tx out for other funding output: %w", err))
-		}
-
-		newBTCDel.StkExp = &types.StakeExpansion{
-			PreviousStakingTxHash:   stkExp.PreviousActiveStkTxHash[:],
-			OtherFundingTxOut:       fundingOut,
-			PreviousStkCovenantSigs: nil,
-		}
+	newBTCDel.StkExp, err = buildStakeExpansion(parsedMsg.StkExp)
+	if err != nil {
+		return fmt.Errorf("error building stake expansion: %w", err)
 	}
 
 	// add this BTC delegation, and emit corresponding events
 	if err := k.AddBTCDelegation(ctx, newBTCDel); err != nil {
-		panic(fmt.Errorf("failed to add BTC delegation that has passed verification: %w", err))
+		return fmt.Errorf("failed to add BTC delegation that has passed verification: %w", err)
 	}
 	// if this BTC delegation is restaked to consumers' FPs, add it to btcstkconsumer indexes
 	// TODO: revisit the relationship between BTC staking module and BTC staking consumer module
 	if restakedToConsumers {
 		if err := k.indexBTCConsumerDelegation(ctx, newBTCDel); err != nil {
-			panic(fmt.Errorf("failed to add BTC delegation restaked to consumers' finality providers despite it has passed verification: %w", err))
+			return fmt.Errorf("failed to add BTC delegation restaked to consumers' finality providers despite it has passed verification: %w", err)
 		}
 	}
 
@@ -589,4 +579,21 @@ func (k Keeper) BtcDelHasCovenantQuorums(
 ) bool {
 	quorumPreviousStk := k.BtcDelPreviousStkQuorum(ctx, btcDel)
 	return btcDel.HasCovenantQuorums(quorum, quorumPreviousStk)
+}
+
+func buildStakeExpansion(stkExp *types.ParsedCreateDelStkExp) (*types.StakeExpansion, error) {
+	if stkExp == nil {
+		return nil, nil
+	}
+
+	fundingOut, err := stkExp.SerializeOtherFundingOutput()
+	if err != nil {
+		return nil, fmt.Errorf("failed to serialize tx out for other funding output: %w", err)
+	}
+
+	return &types.StakeExpansion{
+		PreviousStakingTxHash:   stkExp.PreviousActiveStkTxHash[:],
+		OtherFundingTxOut:       fundingOut,
+		PreviousStkCovenantSigs: nil,
+	}, nil
 }
