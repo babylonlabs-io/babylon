@@ -124,6 +124,45 @@ func TestExportGenesis(t *testing.T) {
 	// TODO: vp dst cache
 }
 
+func TestConsumerEventsDeterministicOrder(t *testing.T) {
+	ctx, h, _ := setupTest(t)
+	k := h.App.BTCStakingKeeper
+
+	unsortedConsumerIDs := []string{"consumer-z", "consumer-a", "consumer-m", "consumer-b"}
+
+	for _, consumerID := range unsortedConsumerIDs {
+		event := &types.BTCStakingConsumerEvent{
+			Event: &types.BTCStakingConsumerEvent_NewFp{
+				NewFp: &types.NewFinalityProvider{
+					BtcPkHex:   hex.EncodeToString([]byte("test-pk-" + consumerID)),
+					ConsumerId: consumerID,
+				},
+			},
+		}
+		err := k.AddBTCStakingConsumerEvent(ctx, consumerID, event)
+		require.NoError(t, err)
+	}
+
+	var results []*types.GenesisState
+	for i := 0; i < 5; i++ {
+		gs, err := k.ExportGenesis(ctx)
+		require.NoError(t, err)
+		results = append(results, gs)
+	}
+
+	for i := 1; i < len(results); i++ {
+		require.Equal(t, results[0].ConsumerEvents, results[i].ConsumerEvents, "ExportGenesis should return deterministic consumer events order")
+	}
+
+	events := results[0].ConsumerEvents
+	require.Len(t, events, len(unsortedConsumerIDs))
+
+	expectedSortedIDs := []string{"consumer-a", "consumer-b", "consumer-m", "consumer-z"}
+	for i, event := range events {
+		require.Equal(t, expectedSortedIDs[i], event.ConsumerId, "Consumer events should be sorted by consumer ID")
+	}
+}
+
 func setupTest(t *testing.T) (sdk.Context, *helper.Helper, *types.GenesisState) {
 	r, h := rand.New(rand.NewSource(11)), helper.NewHelper(t)
 	k, ctx := h.App.BTCStakingKeeper, h.Ctx

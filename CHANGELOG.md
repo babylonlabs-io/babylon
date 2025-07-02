@@ -39,6 +39,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
+- [#1273](https://github.com/babylonlabs-io/babylon/pull/1273) Deterministic iteration of maps in `x/zoneconcierge`.
 - [#1265](https://github.com/babylonlabs-io/babylon/pull/1265) Remove `ListEpochHeaders` and `QueryChainList` query.
 - [#1256](https://github.com/babylonlabs-io/babylon/pull/1256) remove query chains info request from `x/zoneconcierge` 
 - [#1222](https://github.com/babylonlabs-io/babylon/pull/1222) doc: revise zone concierge doc (round 1)
@@ -92,10 +93,12 @@ check of rewards
 - [#1223](https://github.com/babylonlabs-io/babylon/pull/1223) Bump Cosmos SDK to `v0.53.0`
 - [#1229](https://github.com/babylonlabs-io/babylon/pull/1229) Wire up EVM.
 - [#1269](https://github.com/babylonlabs-io/babylon/pull/1269) Add fee collector e2e tests.
+- [#1062](https://github.com/babylonlabs-io/babylon/pull/1062) Add `anteHandler` to avoid fee grants on refundable tx (`x/incentive`)
 - [#1231](https://github.com/babylonlabs-io/babylon/pull/1231) Add BTC stake expansion.
 
 ### State Machine Breaking
 
+- [#1271](https://github.com/babylonlabs-io/babylon/pull/1271) Add equivocation e2e test for rollup BSN.
 - [#402](https://github.com/babylonlabs-io/babylon/pull/402) **Babylon multi-staking support**.
 This PR contains a series of PRs on multi-staking support and BTC staking integration.
 - [#847](https://github.com/babylonlabs-io/babylon/pull/847) Add ibc callbacks to

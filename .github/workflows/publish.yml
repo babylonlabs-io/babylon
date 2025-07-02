@@ -6,13 +6,13 @@ on:
       - 'main'
       - 'release/v1.x'
       - 'release/v2.x'
-      - 'release/v4.x'
+      - 'release/v3.x'
     tags:
       - '*'
 
 permissions:
   contents: read
-  
+
 jobs:
   lint_test:
     uses: babylonlabs-io/.github/.github/workflows/reusable_go_lint_test.yml@v0.7.0
