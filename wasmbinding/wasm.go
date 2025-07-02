@@ -3,7 +3,6 @@ package wasmbinding
 import (
 	"encoding/json"
 	"fmt"
-	zckeeper "github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/keeper"
 
 	errorsmod "cosmossdk.io/errors"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
@@ -13,11 +12,8 @@ import (
 	lcKeeper "github.com/babylonlabs-io/babylon/v3/x/btclightclient/keeper"
 	checkpointingkeeper "github.com/babylonlabs-io/babylon/v3/x/checkpointing/keeper"
 	epochingkeeper "github.com/babylonlabs-io/babylon/v3/x/epoching/keeper"
-<<<<<<< HEAD
-=======
 	fkeeper "github.com/babylonlabs-io/babylon/v3/x/finality/keeper"
 	zckeeper "github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/keeper"
->>>>>>> 6bcf242 (rollup: equivocation e2e test for rollup BSN (#1271))
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
