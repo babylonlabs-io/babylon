@@ -39,11 +39,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
-<<<<<<< HEAD
-- [#1256](https://github.com/babylonlabs-io/babylon/pull/1256) remove query chains info request from `x/zoneconcierge`
-=======
 - [#1273](https://github.com/babylonlabs-io/babylon/pull/1273) Deterministic iteration of maps in `x/zoneconcierge`.
->>>>>>> 88bb845 (fix(zoneconcierge): sort map keys before iterating to avoid AppHash errors (#1273))
 - [#1265](https://github.com/babylonlabs-io/babylon/pull/1265) Remove `ListEpochHeaders` and `QueryChainList` query.
 - [#1256](https://github.com/babylonlabs-io/babylon/pull/1256) remove query chains info request from `x/zoneconcierge`
 - [#1015](https://github.com/babylonlabs-io/babylon/pull/1015) Add finality contract e2e tests follup-up.
