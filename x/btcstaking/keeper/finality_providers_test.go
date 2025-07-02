@@ -8,8 +8,10 @@ import (
 	"cosmossdk.io/math"
 	testutil "github.com/babylonlabs-io/babylon/v3/testutil/btcstaking-helper"
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
+	btclctypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
 	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 	stktypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/golang/mock/gomock"
 
 	"github.com/stretchr/testify/require"
 )
@@ -187,4 +189,53 @@ func TestUpdateFinalityProviderCommission(t *testing.T) {
 			}
 		})
 	}
+}
+
+func FuzzSlashConsumerFinalityProvider(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		t.Parallel()
+
+		r := rand.New(rand.NewSource(seed))
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		// mock BTC light client and BTC checkpoint modules
+		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
+		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
+		h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
+		h.GenAndApplyParams(r)
+
+		// register a random consumer on Babylon
+		randomConsumer := registerAndVerifyConsumer(t, r, h)
+
+		// create a consumer finality provider
+		_, _, fp, err := h.CreateConsumerFinalityProvider(r, randomConsumer.ConsumerId)
+		require.NoError(t, err)
+		fpBTCPK := fp.BtcPk
+
+		// Verify consumer FP exists and is not slashed initially
+		retrievedConsumerFP, err := h.BTCStkConsumerKeeper.GetConsumerFinalityProvider(h.Ctx, randomConsumer.ConsumerId, fpBTCPK)
+		require.NoError(t, err)
+		require.False(t, retrievedConsumerFP.IsSlashed())
+
+		// Set up BTC tip info for slashing
+		btcTip := &btclctypes.BTCHeaderInfo{
+			Height: 100,
+		}
+		btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(btcTip).AnyTimes()
+
+		// Slash the consumer finality provider using SlashFinalityProvider
+		// This tests the fix for issue #948 - SlashFinalityProvider should handle consumer FPs
+		err = h.BTCStakingKeeper.SlashFinalityProvider(h.Ctx, fpBTCPK.MustMarshal())
+		require.NoError(t, err)
+
+		// Verify the consumer FP is slashed
+		slashedConsumerFP, err := h.BTCStkConsumerKeeper.GetConsumerFinalityProvider(h.Ctx, randomConsumer.ConsumerId, fpBTCPK)
+		require.NoError(t, err)
+		require.True(t, slashedConsumerFP.IsSlashed())
+		require.Greater(t, slashedConsumerFP.SlashedBabylonHeight, uint64(0))
+		require.Equal(t, btcTip.Height, slashedConsumerFP.SlashedBtcHeight)
+	})
 }
