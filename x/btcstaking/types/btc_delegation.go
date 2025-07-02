@@ -590,7 +590,7 @@ func (s *StakeExpansion) Validate() error {
 	}
 
 	if _, err := s.StakeExpansionTxHash(); err != nil {
-		return errorsmod.Wrapf(ErrInvalidStakeExpansion, err.Error())
+		return errorsmod.Wrap(ErrInvalidStakeExpansion, err.Error())
 	}
 
 	if len(s.OtherFundingTxOut) == 0 {
@@ -598,7 +598,7 @@ func (s *StakeExpansion) Validate() error {
 	}
 
 	if _, err := s.FundingTxOut(); err != nil {
-		return errorsmod.Wrapf(ErrInvalidStakeExpansion, err.Error())
+		return errorsmod.Wrap(ErrInvalidStakeExpansion, err.Error())
 	}
 	for i, sig := range s.PreviousStkCovenantSigs {
 		if sig == nil {
