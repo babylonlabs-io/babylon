@@ -51,7 +51,7 @@ func (n *NodeConfig) AddFinalitySigRollup(
 	appHash []byte,
 	finalitySig *types.SchnorrEOTSSig,
 	overallFlags ...string,
-) {
+) string {
 	// Prepare the command to submit the finality signature
 	n.LogActionF("Submitting finality signature to finality contract %s", finalityContractAddr)
 	// Prepare the command to commit the public randomness list
@@ -82,6 +82,8 @@ func (n *NodeConfig) AddFinalitySigRollup(
 	// gas
 	cmd = append(cmd, "--gas=500000")
 
-	_, _, err = n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
+	outBuf, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
 	require.NoError(n.t, err)
+
+	return GetTxHashFromOutput(outBuf.String())
 }
