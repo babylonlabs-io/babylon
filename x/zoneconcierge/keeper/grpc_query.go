@@ -47,50 +47,6 @@ func (k Keeper) Header(c context.Context, req *types.QueryHeaderRequest) (*types
 	return resp, nil
 }
 
-// EpochChainsInfo returns the latest info for list of chains in a given epoch
-func (k Keeper) EpochChainsInfo(c context.Context, req *types.QueryEpochChainsInfoRequest) (*types.QueryEpochChainsInfoResponse, error) {
-	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid request")
-	}
-
-	// return if no chain IDs are provided
-	if len(req.ConsumerIds) == 0 {
-		return nil, status.Error(codes.InvalidArgument, "consumer IDs cannot be empty")
-	}
-
-	// return if chain IDs contain duplicates or empty strings
-	if err := bbntypes.CheckForDuplicatesAndEmptyStrings(req.ConsumerIds); err != nil {
-		return nil, status.Error(codes.InvalidArgument, types.ErrInvalidConsumerIDs.Wrap(err.Error()).Error())
-	}
-
-	ctx := sdk.UnwrapSDKContext(c)
-	var chainsInfo []*types.ChainInfo
-	// TODO: paginate this for loop
-	for _, ConsumerId := range req.ConsumerIds {
-		// check if chain ID is valid
-		if !k.HasChainInfo(ctx, ConsumerId) {
-			return nil, status.Error(codes.InvalidArgument, types.ErrChainInfoNotFound.Wrapf("chain ID %s", ConsumerId).Error())
-		}
-
-		// if the chain info is not found in the given epoch, return with empty fields
-		if !k.EpochChainInfoExists(ctx, ConsumerId, req.EpochNum) {
-			chainsInfo = append(chainsInfo, &types.ChainInfo{ConsumerId: ConsumerId})
-			continue
-		}
-
-		// find the chain info of the given epoch
-		chainInfoWithProof, err := k.GetEpochChainInfo(ctx, ConsumerId, req.EpochNum)
-		if err != nil {
-			return nil, err
-		}
-
-		chainsInfo = append(chainsInfo, chainInfoWithProof.ChainInfo)
-	}
-
-	resp := &types.QueryEpochChainsInfoResponse{ChainsInfo: chainsInfo}
-	return resp, nil
-}
-
 // ListHeaders returns all headers of a chain with given ID, with pagination support
 func (k Keeper) ListHeaders(c context.Context, req *types.QueryListHeadersRequest) (*types.QueryListHeadersResponse, error) {
 	if req == nil {
@@ -239,8 +195,6 @@ func (k Keeper) FinalizedChainInfoUntilHeight(c context.Context, req *types.Quer
 		finalizedEpoch = chainInfo.LatestHeader.BabylonEpoch
 	}
 
-	resp.FinalizedChainInfo = chainInfo
-
 	if chainInfo.LatestHeader.Height <= req.Height { // the requested height is after the last finalised chain info
 		// find and assign the epoch metadata of the finalised epoch
 		resp.EpochInfo, err = k.epochingKeeper.GetHistoricalEpoch(ctx, finalizedEpoch)
@@ -269,11 +223,6 @@ func (k Keeper) FinalizedChainInfoUntilHeight(c context.Context, req *types.Quer
 		}
 		// assign the finalizedEpoch, and retrieve epoch info, raw ckpt and submission key
 		finalizedEpoch = closestHeader.BabylonEpoch
-		chainInfoWithProof, err := k.GetEpochChainInfo(ctx, req.ConsumerId, finalizedEpoch)
-		if err != nil {
-			return nil, err
-		}
-		resp.FinalizedChainInfo = chainInfoWithProof.ChainInfo
 		resp.EpochInfo, err = k.epochingKeeper.GetHistoricalEpoch(ctx, finalizedEpoch)
 		if err != nil {
 			return nil, err

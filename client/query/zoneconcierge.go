@@ -50,19 +50,3 @@ func (c *QueryClient) ConnectedChainHeaders(consumerID string, pagination *sdkqu
 
 	return resp, err
 }
-
-// ConnectedChainsEpochInfo queries the zoneconcierge module for the chain information of a connected chain at a particular epoch
-func (c *QueryClient) ConnectedChainsEpochInfo(consumerIds []string, epochNum uint64) (*zctypes.QueryEpochChainsInfoResponse, error) {
-	var resp *zctypes.QueryEpochChainsInfoResponse
-	err := c.QueryZoneConcierge(func(ctx context.Context, queryClient zctypes.QueryClient) error {
-		var err error
-		req := &zctypes.QueryEpochChainsInfoRequest{
-			ConsumerIds: consumerIds,
-			EpochNum:    epochNum,
-		}
-		resp, err = queryClient.EpochChainsInfo(ctx, req)
-		return err
-	})
-
-	return resp, err
-}
