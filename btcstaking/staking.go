@@ -807,6 +807,10 @@ func VerifyTransactionSigStkExp(
 		return fmt.Errorf("public key must not be nil")
 	}
 
+	if len(stkSpendTx.TxIn) != 2 {
+		return fmt.Errorf("stake spend tx must have exactly two inputs")
+	}
+
 	return verifyTaprootScriptSpendSignature(
 		stkSpendTx,
 		0,

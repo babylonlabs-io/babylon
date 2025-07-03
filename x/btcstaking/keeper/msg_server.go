@@ -401,10 +401,15 @@ func (ms msgServer) validateStakeExpansionSig(
 		return errorsmod.Wrapf(types.ErrInvalidCovenantSig, "covenant signature for pk %s not found in previous delegation", req.Pk.MarshalHex())
 	}
 
-	// TODO: how to validate the covenant new stk expansion signature
+	otherFundingTxOut, err := btcDel.StkExp.FundingTxOut()
+	if err != nil {
+		return fmt.Errorf("failed to deserialize other funding txout: %w", err)
+	}
+
 	err = btcstaking.VerifyTransactionSigStkExp(
 		btcDel.MustGetStakingTx(), // this is the staking expansion tx
 		stakingInfo.StakingOutput,
+		otherFundingTxOut,
 		stakingInfo.GetPkScript(),
 		req.Pk.MustToBTCPK(),
 		*req.StakeExpansionTxSig,
