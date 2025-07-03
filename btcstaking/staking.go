@@ -600,50 +600,78 @@ func GetSignatureForFirstScriptSpendWithTwoInputsFromTapLeaf(
 		return nil, fmt.Errorf("tx to sign must have exactly two inputs")
 	}
 
-	return getSignatureForFirstScriptSpendWithTwoInputsFromTapLeafInternal(
+	// returns the schnorr signature of the signature over the idx zero of the inputs
+	// of the message to sign. In the context of a stake expansion the idx 0
+	// funding output would be the previous active staking transaction that
+	// needs the covenant signatures to spend the BTC and the other funding
+	// output `fundingOutputIdx1` would be an TxOut responsible to pay for fees
+	// and optionally increasing the amount staked to that delegation.
+	return signTaprootScriptSpendInput(
 		txToSign,
-		fundingOutputToSignIdx0,
-		fundingOutputIdx1,
+		0,
+		map[wire.OutPoint]*wire.TxOut{
+			txToSign.TxIn[0].PreviousOutPoint: fundingOutputToSignIdx0,
+			txToSign.TxIn[1].PreviousOutPoint: fundingOutputIdx1,
+		},
 		privKey,
 		tapLeaf,
+		txscript.SigHashDefault,
 	)
 }
 
-// getSignatureForFirstScriptSpendWithTwoInputsFromTapLeafInternal returns
-// the schnorr signature of the signature over the idx zero of the inputs
-// of the message to sign. In the context of a stake expansion the idx 0
-// funding output would be the previous active staking transaction that
-// needs the covenant signatures to spend the BTC and the other funding
-// output `fundingOutputIdx1` would be an TxOut responsible to pay for fees
-// and optionally increasing the amount staked to that delegation.
-func getSignatureForFirstScriptSpendWithTwoInputsFromTapLeafInternal(
+// signTaprootScriptSpendInput generates a Schnorr signature for a specific input of a transaction,
+// using Taproot script path spending (via a provided TapLeaf).
+//
+// It supports signing arbitrary inputs, as long as their corresponding previous outputs are supplied
+// via the `prevOutputs` map. The signature is generated using BIP-340 rules and is suitable for spending
+// Taproot outputs via a control block and leaf script.
+//
+// Parameters:
+//   - txToSign: The transaction to sign.
+//   - inputIdxToSign: Index of the input to sign (0-based).
+//   - prevOutputs: A map of previous outputs indexed by their OutPoints. This must include the prevout
+//     corresponding to the input being signed.
+//   - privKey: The private key used to generate the Schnorr signature.
+//   - tapLeaf: The TapLeaf representing the script path being used to authorize the spend.
+//   - sigHashType: The signature hash type (e.g., txscript.SigHashDefault).
+//
+// Returns:
+//   - A parsed Schnorr signature for the specified input.
+//   - An error if the signing process fails or required inputs are missing.
+func signTaprootScriptSpendInput(
 	txToSign *wire.MsgTx,
-	fundingOutputToSignIdx0 *wire.TxOut,
-	fundingOutputIdx1 *wire.TxOut,
+	inputIdxToSign int,
+	prevOutputs map[wire.OutPoint]*wire.TxOut,
 	privKey *btcec.PrivateKey,
 	tapLeaf txscript.TapLeaf,
+	sigHashType txscript.SigHashType,
 ) (*schnorr.Signature, error) {
+	if inputIdxToSign < 0 || inputIdxToSign >= len(txToSign.TxIn) {
+		return nil, fmt.Errorf("input index %d out of range", inputIdxToSign)
+	}
+
 	inputFetcher := txscript.NewMultiPrevOutFetcher(nil)
-	inputFetcher.AddPrevOut(txToSign.TxIn[0].PreviousOutPoint, fundingOutputToSignIdx0)
-	inputFetcher.AddPrevOut(txToSign.TxIn[1].PreviousOutPoint, fundingOutputIdx1)
+	for outpoint, txOut := range prevOutputs {
+		inputFetcher.AddPrevOut(outpoint, txOut)
+	}
+
+	inputToSign := txToSign.TxIn[inputIdxToSign]
+	prevOut, ok := prevOutputs[inputToSign.PreviousOutPoint]
+	if !ok {
+		return nil, fmt.Errorf("missing prev output for input %d", inputIdxToSign)
+	}
 
 	sigHashes := txscript.NewTxSigHashes(txToSign, inputFetcher)
 
 	sig, err := txscript.RawTxInTapscriptSignature(
-		txToSign, sigHashes, 0, fundingOutputToSignIdx0.Value,
-		fundingOutputToSignIdx0.PkScript, tapLeaf, txscript.SigHashDefault,
-		privKey,
+		txToSign, sigHashes, inputIdxToSign, prevOut.Value,
+		prevOut.PkScript, tapLeaf, sigHashType, privKey,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	parsedSig, err := schnorr.ParseSignature(sig)
-	if err != nil {
-		return nil, err
-	}
-
-	return parsedSig, nil
+	return schnorr.ParseSignature(sig)
 }
 
 // SignTxWithOneScriptSpendInputStrict signs transaction with one input coming

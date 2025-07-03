@@ -403,7 +403,7 @@ func (ms msgServer) validateStakeExpansionSig(
 
 	// TODO: how to validate the covenant new stk expansion signature
 	err = btcstaking.VerifyTransactionSigStkExp(
-		btcDel.MustGetStakingTx(),
+		btcDel.MustGetStakingTx(), // this is the staking expansion tx
 		stakingInfo.StakingOutput,
 		stakingInfo.GetPkScript(),
 		req.Pk.MustToBTCPK(),
