@@ -141,9 +141,7 @@ func (k Keeper) createBTCTimestamp(
 }
 
 // getDeepEnoughBTCHeaders returns the last k+1 BTC headers for fork scenarios,
-// where k is the confirmation depth. This provides sufficient safety against reorgs
-// while being more efficient than using the finalization timeout w.
-// For normal broadcasting (non-fork), this uses k instead of w for efficiency.
+// where k is the confirmation depth. This provides sufficient safety against reorgs.
 func (k Keeper) getDeepEnoughBTCHeaders(ctx context.Context) []*btclctypes.BTCHeaderInfo {
 	kValue := k.btccKeeper.GetParams(ctx).BtcConfirmationDepth
 	startHeight := k.btclcKeeper.GetTipInfo(ctx).Height - kValue
