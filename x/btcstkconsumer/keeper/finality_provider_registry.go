@@ -14,12 +14,12 @@ import (
 
 // SetConsumerFinalityProvider adds the given finality provider to Consumer chains KVStore
 func (k Keeper) SetConsumerFinalityProvider(ctx context.Context, fp *btcstaking.FinalityProvider) {
-	store := k.finalityProviderStore(ctx, fp.ConsumerId)
+	store := k.finalityProviderStore(ctx, fp.BsnId)
 	fpBytes := k.cdc.MustMarshal(fp)
 	store.Set(fp.BtcPk.MustMarshal(), fpBytes)
 	// Update the finality provider chain store
 	fpChainStore := k.finalityProviderChainStore(ctx)
-	fpChainStore.Set(fp.BtcPk.MustMarshal(), []byte(fp.ConsumerId))
+	fpChainStore.Set(fp.BtcPk.MustMarshal(), []byte(fp.BsnId))
 }
 
 // GetConsumerFinalityProvider gets the finality provider in the chain id with the given finality provider Bitcoin PK

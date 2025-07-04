@@ -13,6 +13,6 @@ func NewFinalityProviderResponse(f *btcstaking.FinalityProvider) *FinalityProvid
 		Pop:                  f.Pop,
 		SlashedBabylonHeight: f.SlashedBabylonHeight,
 		SlashedBtcHeight:     f.SlashedBtcHeight,
-		ConsumerId:           f.ConsumerId,
+		BsnId:                f.BsnId,
 	}
 }
