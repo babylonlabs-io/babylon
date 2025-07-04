@@ -170,7 +170,8 @@ func (h *IncentiveHelper) EqualBtcDelegationStatus(
 
 	covenantQuorum := h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum
 
-	status := actualDel.GetStatus(tipHeight, covenantQuorum)
+	status, err := h.BTCStakingKeeper.BtcDelStatus(h.Ctx, actualDel, covenantQuorum, tipHeight)
+	h.NoError(err)
 	h.Equal(expectedStatus, status)
 }
 

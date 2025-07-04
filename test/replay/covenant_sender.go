@@ -1,6 +1,7 @@
 package replay
 
 import (
+	"encoding/hex"
 	"math/rand"
 	"testing"
 
@@ -132,6 +133,8 @@ func (c *CovenantSender) SendCovenantSignatures() {
 		)
 		require.NoError(c.t, err)
 
+		isStakeExpansion := del.StkExp != nil
+
 		for i := 0; i < len(infos.CovenantPks); i++ {
 			msgAddCovenantSig := &bstypes.MsgAddCovenantSigs{
 				Signer:                  c.AddressString(),
@@ -141,6 +144,12 @@ func (c *CovenantSender) SendCovenantSignatures() {
 				UnbondingTxSig:          covUnbondingSigs[i].Sig,
 				SlashingUnbondingTxSigs: covUnbondingSlashingSigs[i].AdaptorSigs,
 			}
+
+			// if is stake expansion, add StakeExpansionTxSig
+			if isStakeExpansion {
+				msgAddCovenantSig.StakeExpansionTxSig = signStakeExpansionTx(c.t, covenantSKs[i], del, infos)
+			}
+
 			// send each message with different transactions
 			DefaultSendTxWithMessagesSuccess(
 				c.t,
@@ -152,4 +161,22 @@ func (c *CovenantSender) SendCovenantSignatures() {
 			c.IncSeq()
 		}
 	}
+}
+
+func signStakeExpansionTx(t *testing.T, covenantSK *btcec.PrivateKey, del *bstypes.BTCDelegationResponse, infos *StakingInfos) *types.BIP340Signature {
+	fundingTxBz, err := hex.DecodeString(del.StkExp.OtherFundingTxOutHex)
+	require.NoError(t, err)
+	otherFundingTxOut, err := btcstaking.DeserializeTxOut(fundingTxBz)
+	require.NoError(t, err)
+
+	sig, err := btcstaking.SignTxForFirstScriptSpendWithTwoInputsFromScript(
+		infos.StakingSlashingInfo.StakingTx,
+		infos.StakingSlashingInfo.StakingInfo.StakingOutput,
+		otherFundingTxOut,
+		covenantSK,
+		infos.StakingSlashingInfo.StakingInfo.GetPkScript(),
+	)
+	require.NoError(t, err)
+
+	return types.NewBIP340SignatureFromBTCSig(sig)
 }

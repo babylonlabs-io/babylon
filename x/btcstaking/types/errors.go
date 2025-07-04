@@ -35,4 +35,5 @@ var (
 	ErrNoBabylonFPRestaked       = errorsmod.Register(ModuleName, 1126, "BTC delegation must include at least one Babylon Genesis finality provider in its multi-staking selection")
 	ErrEmptyCommissionRates      = errorsmod.Register(ModuleName, 1127, "empty commission")
 	ErrLargestBtcReorgNotFound   = errorsmod.Register(ModuleName, 1128, "there is no BTC reorg currently set")
+	ErrInvalidStakeExpansion     = errorsmod.Register(ModuleName, 1129, "invalid stake expansion")
 )

@@ -253,7 +253,7 @@ func (s *BTCStakingPreApprovalTestSuite) Test2SubmitCovenantSignature() {
 	s.Len(activeDels.Dels, 1)
 
 	activeDel := activeDels.Dels[0]
-	s.True(activeDel.HasCovenantQuorums(s.covenantQuorum))
+	s.True(activeDel.HasCovenantQuorums(s.covenantQuorum, 0))
 }
 
 func (s *BTCStakingPreApprovalTestSuite) Test3SendStakingTransctionInclusionProof() {
@@ -267,7 +267,7 @@ func (s *BTCStakingPreApprovalTestSuite) Test3SendStakingTransctionInclusionProo
 
 	btcDel, err := chain.ParseRespBTCDelToBTCDel(verifiedDelegations[0])
 	s.NoError(err)
-	s.True(btcDel.HasCovenantQuorums(s.covenantQuorum))
+	s.True(btcDel.HasCovenantQuorums(s.covenantQuorum, 0))
 
 	// staking tx hash
 	stakingMsgTx, err := bbn.NewBTCTxFromBytes(btcDel.StakingTx)

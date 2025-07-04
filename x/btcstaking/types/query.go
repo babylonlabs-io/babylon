@@ -45,6 +45,10 @@ func NewBTCDelegationResponse(btcDel *BTCDelegation, status BTCDelegationStatus)
 		resp.UndelegationResponse = btcDel.BtcUndelegation.ToResponse()
 	}
 
+	if btcDel.IsStakeExpansion() {
+		resp.StkExp = btcDel.StkExp.ToResponse()
+	}
+
 	return resp
 }
 
