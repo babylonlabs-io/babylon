@@ -9,11 +9,28 @@ import (
 	"github.com/cosmos/cosmos-sdk/runtime"
 )
 
+// AddBTCStakingConsumerEvent adds event that must be sent to cosmos consumer zones
+// if the provided consumer is not a cosmos consumer this function will be noop
+// Consumer must be already registered in btcstkconsumer module, if not, function will panic.
 func (k Keeper) AddBTCStakingConsumerEvent(ctx context.Context, consumerID string, event *types.BTCStakingConsumerEvent) error {
 	return k.AddBTCStakingConsumerEvents(ctx, consumerID, []*types.BTCStakingConsumerEvent{event})
 }
 
+// AddBTCStakingConsumerEvents adds events that must be sent to cosmos consumer zones
+// if the provided consumer is not a cosmos consumer this function will be noop
+// Consumer must be already registered in btcstkconsumer module, if not, function will panic.
 func (k Keeper) AddBTCStakingConsumerEvents(ctx context.Context, consumerID string, events []*types.BTCStakingConsumerEvent) error {
+	cosmosConsumer, err := k.BscKeeper.IsCosmosConsumer(ctx, consumerID)
+
+	if err != nil {
+		// panic if consumer is not registered in btcstkconsumer module
+		panic(fmt.Errorf("failed to check if consumer %s is a cosmos consumer: %w", consumerID, err))
+	}
+
+	if !cosmosConsumer {
+		return nil
+	}
+
 	store := k.btcStakingConsumerEventStore(ctx)
 	storeKey := []byte(consumerID)
 

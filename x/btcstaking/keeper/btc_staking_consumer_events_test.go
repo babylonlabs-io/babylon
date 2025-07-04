@@ -390,6 +390,19 @@ func TestDeterministicOrdering(t *testing.T) {
 
 	consumerIDs := []string{"consumer-z", "consumer-a", "consumer-m", "consumer-b"}
 
+	// register consumers as cosmos consumers
+	for _, consumerID := range consumerIDs {
+		consumerRegister := &bsctypes.ConsumerRegister{
+			ConsumerId: consumerID,
+			ConsumerMetadata: &bsctypes.ConsumerRegister_CosmosConsumerMetadata{
+				CosmosConsumerMetadata: &bsctypes.CosmosConsumerMetadata{
+					ChannelId: consumerID,
+				},
+			},
+		}
+		h.BTCStkConsumerKeeper.RegisterConsumer(h.Ctx, consumerRegister)
+	}
+
 	// Add consumer events in random order
 	for _, consumerID := range consumerIDs {
 		event := &types.BTCStakingConsumerEvent{

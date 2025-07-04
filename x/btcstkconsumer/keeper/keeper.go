@@ -57,3 +57,8 @@ func (k Keeper) GetAuthority() string {
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
+
+// SetWasmKeeper is used for testing purposes only
+func (k *Keeper) SetWasmKeeper(wasmKeeper types.WasmKeeper) {
+	k.wasmKeeper = wasmKeeper
+}
