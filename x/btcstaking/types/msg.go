@@ -193,16 +193,8 @@ func (m *MsgBtcStakeExpand) ToParsed() (*ParsedCreateDelegationMessage, error) {
 // ValidateBasic does all the checks as MsgCreateBTCDelegation
 // and verifies if the previous staking tx hash is valid
 func (m *MsgBtcStakeExpand) ValidateBasic() error {
-	_, err := chainhash.NewHashFromStr(m.PreviousStakingTxHash)
-	if err != nil {
-		return err
-	}
-
-	if _, err := parseBtcExpandMessage(m); err != nil {
-		return err
-	}
-
-	return nil
+	_, err := parseBtcExpandMessage(m)
+	return err
 }
 
 func (m *MsgAddCovenantSigs) ValidateBasic() error {

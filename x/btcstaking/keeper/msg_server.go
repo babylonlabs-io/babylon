@@ -156,6 +156,17 @@ func (ms msgServer) BtcStakeExpand(goCtx context.Context, req *types.MsgBtcStake
 		return nil, fmt.Errorf("the previous BTC staking transaction FPs: %+v are not a subset of the stake expansion FPs %+v", previousBtcDel.FpBtcPkList, req.FpBtcPkList)
 	}
 
+	// check FundingTx is not a staking tx
+	// ATM is not possible to combine 2 staking txs into one
+	fundingTx, err := bbn.NewBTCTxFromBytes(req.FundingTx)
+	if err != nil {
+		return nil, err
+	}
+	fundingTxDel := ms.getBTCDelegation(ctx, fundingTx.TxHash())
+	if fundingTxDel != nil {
+		return nil, status.Error(codes.InvalidArgument, "the funding tx cannot be a staking transaction")
+	}
+
 	// Parses the message into better domain format
 	parsedMsg, err := req.ToParsed()
 	if err != nil {
