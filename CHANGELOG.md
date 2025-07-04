@@ -43,6 +43,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 `consumer_id` to `bsn_id` for finality providers
 - [#1292](https://github.com/babylonlabs-io/babylon/pull/1292) Use correct
   multi-staking terminology instead of restaking
+- [#1294](https://github.com/babylonlabs-io/babylon/pull/1294) Remove unused fields from btcstkconsumer
+finality provider response
 - [#1285](https://github.com/babylonlabs-io/babylon/pull/1285) Optimize BTC header forwarding in `x/zoneconcierge` 
 by using `k` instead of `w` headers.
 - [#1273](https://github.com/babylonlabs-io/babylon/pull/1273) Deterministic iteration of maps in `x/zoneconcierge`.
