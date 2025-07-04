@@ -68,7 +68,7 @@ type PubRandCommitResponse struct {
 type BlockVoters struct {
 	Height uint64 `json:"height"`
 	// The block app hash is expected to be in hex format, without the 0x prefix
-	Hash string `json:"hash"`
+	HashHex string `json:"hash_hex"`
 }
 
 // List of finality provider public keys who voted for the block

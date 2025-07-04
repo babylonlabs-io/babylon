@@ -46,8 +46,8 @@ func (n *NodeConfig) QueryLastPublicRandCommitRollup(finalityContractAddr string
 func (n *NodeConfig) QueryBlockVotersRollup(finalityContractAddr string, blockHeight uint64, blockAppHash []byte) []string {
 	queryMsg := &rollup.QueryMsg{
 		BlockVoters: &rollup.BlockVoters{
-			Height: blockHeight,
-			Hash:   strings.TrimPrefix(hex.EncodeToString(blockAppHash), "0x"),
+			Height:  blockHeight,
+			HashHex: strings.TrimPrefix(hex.EncodeToString(blockAppHash), "0x"),
 		},
 	}
 
