@@ -796,7 +796,7 @@ func TestExpandBTCDelegation(t *testing.T) {
 
 	// Send MsgBTCUndelegate for the first delegation
 	// to activate stake expansion
-	spendingTx, _, err := bbn.NewBTCTxFromHex(verifiedDels[0].StakingTxHex)
+	spendingTx, err := bbn.NewBTCTxFromBytes(btcExpMsg.StakingTx)
 	require.NoError(t, err)
 
 	fundingTx, err := bbn.NewBTCTxFromBytes(btcExpMsg.FundingTx)
