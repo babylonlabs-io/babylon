@@ -209,7 +209,6 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	// - are not slashed, and
 	// - their registered epochs are finalised
 	// and then check whether the BTC stake is multi-staked to FPs of consumers
-	// TODO: ensure the BTC delegation does not multi-stake to too many finality providers
 	multiStakedToConsumers, err := ms.validateMultiStakedFPs(ctx, parsedMsg.FinalityProviderKeys.PublicKeysBbnFormat)
 	if err != nil {
 		return nil, err
