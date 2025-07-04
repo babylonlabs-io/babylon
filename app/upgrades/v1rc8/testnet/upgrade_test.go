@@ -56,7 +56,7 @@ func FuzzMigrateFinalityProviders(f *testing.F) {
 				SlashedBtcHeight:     fp.SlashedBtcHeight,
 				Jailed:               fp.Jailed,
 				HighestVotedHeight:   fp.HighestVotedHeight,
-				ConsumerId:           fp.ConsumerId,
+				BsnId:                fp.BsnId,
 				CommissionInfo: btcstakingtypes.NewCommissionInfoWithTime(
 					sdkmath.LegacyMustNewDecFromStr("0.2"),
 					sdkmath.LegacyMustNewDecFromStr("0.01"),

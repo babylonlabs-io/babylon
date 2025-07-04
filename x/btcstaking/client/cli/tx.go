@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	FlagConsumerId      = "consumer-id"
+	FlagBsnId           = "bsn-id"
 	FlagMoniker         = "moniker"
 	FlagIdentity        = "identity"
 	FlagWebsite         = "website"
@@ -72,7 +72,7 @@ func NewCreateFinalityProviderCmd() *cobra.Command {
 			fs := cmd.Flags()
 
 			// get description
-			consumerID, _ := fs.GetString(FlagConsumerId)
+			bsnID, _ := fs.GetString(FlagBsnId)
 			moniker, _ := fs.GetString(FlagMoniker)
 			identity, _ := fs.GetString(FlagIdentity)
 			website, _ := fs.GetString(FlagWebsite)
@@ -109,7 +109,7 @@ func NewCreateFinalityProviderCmd() *cobra.Command {
 				Commission:  commission,
 				BtcPk:       btcPK,
 				Pop:         pop,
-				ConsumerId:  consumerID,
+				BsnId:       bsnID,
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
@@ -117,7 +117,7 @@ func NewCreateFinalityProviderCmd() *cobra.Command {
 	}
 
 	fs := cmd.Flags()
-	fs.String(FlagConsumerId, "", "The finality provider's consumer ID, if any")
+	fs.String(FlagBsnId, "", "The finality provider's BSN ID, if any")
 	fs.String(FlagMoniker, "", "The finality provider's (optional) moniker")
 	fs.String(FlagWebsite, "", "The finality provider's (optional) website")
 	fs.String(FlagSecurityContact, "", "The finality provider's (optional) security contact email")
