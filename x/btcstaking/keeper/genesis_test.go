@@ -22,6 +22,7 @@ import (
 	testutilk "github.com/babylonlabs-io/babylon/v3/testutil/keeper"
 	btclightclientt "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
 	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
+	bsctypes "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
 )
 
 func TestInitGenesisWithSetParams(t *testing.T) {
@@ -102,6 +103,19 @@ func TestExportGenesis(t *testing.T) {
 		k.IndexBTCHeight(ctx)
 	}
 
+	// register consumers as cosmos consumers
+	for _, ev := range consumerEvents {
+		consumerRegister := &bsctypes.ConsumerRegister{
+			ConsumerId: ev.ConsumerId,
+			ConsumerMetadata: &bsctypes.ConsumerRegister_CosmosConsumerMetadata{
+				CosmosConsumerMetadata: &bsctypes.CosmosConsumerMetadata{
+					ChannelId: ev.ConsumerId,
+				},
+			},
+		}
+		h.App.BTCStkConsumerKeeper.RegisterConsumer(h.Ctx, consumerRegister)
+	}
+
 	// store consumer events
 	for _, e := range consumerEvents {
 		event := &types.BTCStakingConsumerEvent{
@@ -138,6 +152,16 @@ func TestConsumerEventsDeterministicOrder(t *testing.T) {
 			},
 		},
 		}
+
+		h.App.BTCStkConsumerKeeper.RegisterConsumer(h.Ctx, &bsctypes.ConsumerRegister{
+			ConsumerId: consumerID,
+			ConsumerMetadata: &bsctypes.ConsumerRegister_CosmosConsumerMetadata{
+				CosmosConsumerMetadata: &bsctypes.CosmosConsumerMetadata{
+					ChannelId: consumerID,
+				},
+			},
+		})
+
 		err := k.AddBTCStakingConsumerEvent(ctx, bsnID, event)
 		require.NoError(t, err)
 	}
