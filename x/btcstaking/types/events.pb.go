@@ -606,8 +606,10 @@ func (m *EventPowerDistUpdate_EventSlashedFinalityProvider) XXX_DiscardUnknown()
 
 var xxx_messageInfo_EventPowerDistUpdate_EventSlashedFinalityProvider proto.InternalMessageInfo
 
-// EventSlashedBTCDelegation is emitted for each BTC delegation that restakes to a slashed consumer finality provider.
-// It indicates that the voting power of affected Babylon finality providers will be discounted for this delegation.
+// EventSlashedBTCDelegation is emitted for each BTC delegation that multi-stakes
+// to a slashed consumer finality provider.
+// It indicates that the voting power of affected Babylon finality providers
+// will be discounted for this delegation.
 type EventPowerDistUpdate_EventSlashedBTCDelegation struct {
 	// staking_tx_hash is the hash of the staking tx.
 	// It uniquely identifies a BTC delegation

@@ -22,7 +22,7 @@ func (k Keeper) indexBTCConsumerDelegation(ctx sdk.Context, btcDel *bstypes.BTCD
 		return err
 	}
 
-	// for each finality provider the delegation restakes to, update its index
+	// for each finality provider the delegation multi-stakes to, update its index
 	for i := range btcDel.FpBtcPkList {
 		fpBTCPK := btcDel.FpBtcPkList[i]
 

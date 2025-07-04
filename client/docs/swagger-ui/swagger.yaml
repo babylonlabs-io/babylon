@@ -3806,9 +3806,12 @@ paths:
                             format: byte
                           title: >-
                             adaptor_sigs is a list of adaptor signatures, each
-                            encrypted by a restaked
+                            encrypted
 
-                            BTC finality provider's public key
+                            by the finality provider public keys involved in the
+                            multi-staking
+
+                            procedure
                       title: >-
                         CovenantAdaptorSignatures is a list adaptor signatures
                         signed by the
@@ -3914,9 +3917,12 @@ paths:
                                 format: byte
                               title: >-
                                 adaptor_sigs is a list of adaptor signatures,
-                                each encrypted by a restaked
+                                each encrypted
 
-                                BTC finality provider's public key
+                                by the finality provider public keys involved in
+                                the multi-staking
+
+                                procedure
                           title: >-
                             CovenantAdaptorSignatures is a list adaptor
                             signatures signed by the
@@ -4268,9 +4274,12 @@ paths:
                               format: byte
                             title: >-
                               adaptor_sigs is a list of adaptor signatures, each
-                              encrypted by a restaked
+                              encrypted
 
-                              BTC finality provider's public key
+                              by the finality provider public keys involved in
+                              the multi-staking
+
+                              procedure
                         title: >-
                           CovenantAdaptorSignatures is a list adaptor signatures
                           signed by the
@@ -4376,9 +4385,12 @@ paths:
                                   format: byte
                                 title: >-
                                   adaptor_sigs is a list of adaptor signatures,
-                                  each encrypted by a restaked
+                                  each encrypted
 
-                                  BTC finality provider's public key
+                                  by the finality provider public keys involved
+                                  in the multi-staking
+
+                                  procedure
                             title: >-
                               CovenantAdaptorSignatures is a list adaptor
                               signatures signed by the
@@ -5267,9 +5279,12 @@ paths:
                                     format: byte
                                   title: >-
                                     adaptor_sigs is a list of adaptor
-                                    signatures, each encrypted by a restaked
+                                    signatures, each encrypted
 
-                                    BTC finality provider's public key
+                                    by the finality provider public keys
+                                    involved in the multi-staking
+
+                                    procedure
                               title: >-
                                 CovenantAdaptorSignatures is a list adaptor
                                 signatures signed by the
@@ -5376,9 +5391,12 @@ paths:
                                         format: byte
                                       title: >-
                                         adaptor_sigs is a list of adaptor
-                                        signatures, each encrypted by a restaked
+                                        signatures, each encrypted
 
-                                        BTC finality provider's public key
+                                        by the finality provider public keys
+                                        involved in the multi-staking
+
+                                        procedure
                                   title: >-
                                     CovenantAdaptorSignatures is a list adaptor
                                     signatures signed by the
@@ -17609,10 +17627,12 @@ definitions:
                 type: string
                 format: byte
               title: >-
-                adaptor_sigs is a list of adaptor signatures, each encrypted by
-                a restaked
+                adaptor_sigs is a list of adaptor signatures, each encrypted
 
-                BTC finality provider's public key
+                by the finality provider public keys involved in the
+                multi-staking
+
+                procedure
           title: >-
             CovenantAdaptorSignatures is a list adaptor signatures signed by the
 
@@ -17703,9 +17723,11 @@ definitions:
                     format: byte
                   title: >-
                     adaptor_sigs is a list of adaptor signatures, each encrypted
-                    by a restaked
 
-                    BTC finality provider's public key
+                    by the finality provider public keys involved in the
+                    multi-staking
+
+                    procedure
               title: >-
                 CovenantAdaptorSignatures is a list adaptor signatures signed by
                 the
@@ -17878,9 +17900,12 @@ definitions:
                       format: byte
                     title: >-
                       adaptor_sigs is a list of adaptor signatures, each
-                      encrypted by a restaked
+                      encrypted
 
-                      BTC finality provider's public key
+                      by the finality provider public keys involved in the
+                      multi-staking
+
+                      procedure
                 title: >-
                   CovenantAdaptorSignatures is a list adaptor signatures signed
                   by the
@@ -17981,9 +18006,12 @@ definitions:
                           format: byte
                         title: >-
                           adaptor_sigs is a list of adaptor signatures, each
-                          encrypted by a restaked
+                          encrypted
 
-                          BTC finality provider's public key
+                          by the finality provider public keys involved in the
+                          multi-staking
+
+                          procedure
                     title: >-
                       CovenantAdaptorSignatures is a list adaptor signatures
                       signed by the
@@ -18106,10 +18134,12 @@ definitions:
                 type: string
                 format: byte
               title: >-
-                adaptor_sigs is a list of adaptor signatures, each encrypted by
-                a restaked
+                adaptor_sigs is a list of adaptor signatures, each encrypted
 
-                BTC finality provider's public key
+                by the finality provider public keys involved in the
+                multi-staking
+
+                procedure
           title: >-
             CovenantAdaptorSignatures is a list adaptor signatures signed by the
 
@@ -18175,11 +18205,10 @@ definitions:
         items:
           type: string
           format: byte
-        title: >-
-          adaptor_sigs is a list of adaptor signatures, each encrypted by a
-          restaked
-
-          BTC finality provider's public key
+        title: |-
+          adaptor_sigs is a list of adaptor signatures, each encrypted
+          by the finality provider public keys involved in the multi-staking
+          procedure
     title: |-
       CovenantAdaptorSignatures is a list adaptor signatures signed by the
       covenant with different finality provider's public keys as encryption keys
@@ -18562,9 +18591,11 @@ definitions:
                     format: byte
                   title: >-
                     adaptor_sigs is a list of adaptor signatures, each encrypted
-                    by a restaked
 
-                    BTC finality provider's public key
+                    by the finality provider public keys involved in the
+                    multi-staking
+
+                    procedure
               title: >-
                 CovenantAdaptorSignatures is a list adaptor signatures signed by
                 the
@@ -18658,9 +18689,12 @@ definitions:
                         format: byte
                       title: >-
                         adaptor_sigs is a list of adaptor signatures, each
-                        encrypted by a restaked
+                        encrypted
 
-                        BTC finality provider's public key
+                        by the finality provider public keys involved in the
+                        multi-staking
+
+                        procedure
                   title: >-
                     CovenantAdaptorSignatures is a list adaptor signatures
                     signed by the
@@ -18789,9 +18823,12 @@ definitions:
                       format: byte
                     title: >-
                       adaptor_sigs is a list of adaptor signatures, each
-                      encrypted by a restaked
+                      encrypted
 
-                      BTC finality provider's public key
+                      by the finality provider public keys involved in the
+                      multi-staking
+
+                      procedure
                 title: >-
                   CovenantAdaptorSignatures is a list adaptor signatures signed
                   by the
@@ -18892,9 +18929,12 @@ definitions:
                           format: byte
                         title: >-
                           adaptor_sigs is a list of adaptor signatures, each
-                          encrypted by a restaked
+                          encrypted
 
-                          BTC finality provider's public key
+                          by the finality provider public keys involved in the
+                          multi-staking
+
+                          procedure
                     title: >-
                       CovenantAdaptorSignatures is a list adaptor signatures
                       signed by the
@@ -19064,9 +19104,12 @@ definitions:
                             format: byte
                           title: >-
                             adaptor_sigs is a list of adaptor signatures, each
-                            encrypted by a restaked
+                            encrypted
 
-                            BTC finality provider's public key
+                            by the finality provider public keys involved in the
+                            multi-staking
+
+                            procedure
                       title: >-
                         CovenantAdaptorSignatures is a list adaptor signatures
                         signed by the
@@ -19172,9 +19215,12 @@ definitions:
                                 format: byte
                               title: >-
                                 adaptor_sigs is a list of adaptor signatures,
-                                each encrypted by a restaked
+                                each encrypted
 
-                                BTC finality provider's public key
+                                by the finality provider public keys involved in
+                                the multi-staking
+
+                                procedure
                           title: >-
                             CovenantAdaptorSignatures is a list adaptor
                             signatures signed by the

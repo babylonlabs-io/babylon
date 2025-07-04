@@ -208,10 +208,8 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	// - at least 1 one of them is a Babylon finality provider,
 	// - are not slashed, and
 	// - their registered epochs are finalised
-	// and then check whether the BTC stake is restaked to FPs of consumers
-	// TODO: ensure the BTC delegation does not restake to too many finality providers
-	// (pending concrete design)
-	restakedToConsumers, err := ms.validateRestakedFPs(ctx, parsedMsg.FinalityProviderKeys.PublicKeysBbnFormat)
+	// and then check whether the BTC stake is multi-staked to FPs of consumers
+	multiStakedToConsumers, err := ms.validateMultiStakedFPs(ctx, parsedMsg.FinalityProviderKeys.PublicKeysBbnFormat)
 	if err != nil {
 		return nil, err
 	}
@@ -277,11 +275,11 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	if err := ms.AddBTCDelegation(ctx, newBTCDel); err != nil {
 		panic(fmt.Errorf("failed to add BTC delegation that has passed verification: %w", err))
 	}
-	// if this BTC delegation is restaked to consumers' FPs, add it to btcstkconsumer indexes
+	// if this BTC delegation is multi-staked to consumers' FPs, add it to btcstkconsumer indexes
 	// TODO: revisit the relationship between BTC staking module and BTC staking consumer module
-	if restakedToConsumers {
+	if multiStakedToConsumers {
 		if err := ms.indexBTCConsumerDelegation(ctx, newBTCDel); err != nil {
-			panic(fmt.Errorf("failed to add BTC delegation restaked to consumers' finality providers despite it has passed verification: %w", err))
+			panic(fmt.Errorf("failed to add BTC delegation multi-staked to consumers' finality providers despite it has passed verification: %w", err))
 		}
 	}
 
