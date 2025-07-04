@@ -224,6 +224,7 @@ func TestActivatingDelegation(t *testing.T) {
 	covSender.SendCovenantSignatures()
 	driver.GenerateNewBlockAssertExecutionSuccess()
 
+	// This one takes 150k gas
 	driver.ActivateVerifiedDelegations(1)
 	activeDelegations := driver.GetActiveBTCDelegations(t)
 	require.Len(t, activeDelegations, 1)
@@ -722,4 +723,72 @@ func TestPostRegistrationDelegation(t *testing.T) {
 
 	activeDelegations := driver.GetActiveBTCDelegations(t)
 	require.Len(t, activeDelegations, 1)
+}
+
+func TestMultiConsumerDelegationRepro(t *testing.T) {
+	t.Parallel()
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	driverTempDir := t.TempDir()
+	replayerTempDir := t.TempDir()
+	driver := NewBabylonAppDriver(r, t, driverTempDir, replayerTempDir)
+
+	consumerID1 := "consumer1"
+	consumerID2 := "consumer2"
+	consumerID3 := "consumer3"
+	// consumerID4 := "consumer4"
+
+	// 1. Set up mock IBC clients for each consumer before registering consumers
+	ctx := driver.App.BaseApp.NewContext(false)
+	driver.App.IBCKeeper.ClientKeeper.SetClientState(ctx, consumerID1, &ibctmtypes.ClientState{})
+	driver.App.IBCKeeper.ClientKeeper.SetClientState(ctx, consumerID2, &ibctmtypes.ClientState{})
+	driver.App.IBCKeeper.ClientKeeper.SetClientState(ctx, consumerID3, &ibctmtypes.ClientState{})
+	driver.GenerateNewBlock()
+
+	// 2. Register consumers
+	consumer1 := driver.RegisterConsumer(consumerID1)
+	require.NotNil(t, consumer1)
+	consumer2 := driver.RegisterConsumer(consumerID2)
+	require.NotNil(t, consumer2)
+	consumer3 := driver.RegisterConsumer(consumerID3)
+	require.NotNil(t, consumer3)
+	// consumer4 := driver.RegisterConsumer(consumerID4)
+	// require.NotNil(t, consumer4)
+	driver.GenerateNewBlockAssertExecutionSuccess()
+
+	// Create a Babylon FP (registered without consumer ID)
+	babylonFp := driver.CreateNFinalityProviderAccounts(1)[0]
+	babylonFp.RegisterFinalityProvider("")
+	driver.GenerateNewBlockAssertExecutionSuccess()
+
+	// 3. Create finality providers for each consumer
+	fp1s := []*FinalityProvider{
+		// Create 2 FPs for consumer1
+		driver.CreateFinalityProviderForConsumer(consumer1),
+		driver.CreateFinalityProviderForConsumer(consumer1),
+	}
+	require.NotNil(t, fp1s[0])
+	require.NotNil(t, fp1s[1])
+	fp2 := driver.CreateFinalityProviderForConsumer(consumer2)
+	require.NotNil(t, fp2)
+	fp3 := driver.CreateFinalityProviderForConsumer(consumer3)
+	require.NotNil(t, fp3)
+	// Generate blocks to process registrations
+	driver.GenerateNewBlockAssertExecutionSuccess()
+
+	staker := driver.CreateNStakerAccounts(1)[0]
+	staker.CreatePreApprovalDelegation(
+		[]*bbn.BIP340PubKey{fp1s[0].BTCPublicKey(), fp2.BTCPublicKey(), fp3.BTCPublicKey(), babylonFp.BTCPublicKey()},
+		1000,
+		100000000,
+	)
+	driver.GenerateNewBlockAssertExecutionSuccess()
+
+	covSender := driver.CreateCovenantSender()
+	require.NotNil(t, covSender)
+
+	covSender.SendCovenantSignatures()
+	driver.GenerateNewBlockAssertExecutionSuccess()
+
+	// This one takes 750k gas
+	driver.ActivateVerifiedDelegations(1)
 }
