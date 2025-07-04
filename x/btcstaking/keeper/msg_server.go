@@ -469,12 +469,13 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), types.MetricsKeyBTCUndelegate)
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// 1. Check previous delegation exists and is active
 	btcDel, bsParams, err := ms.getBTCDelWithParams(ctx, req.StakingTxHash)
 	if err != nil {
 		return nil, err
 	}
 
-	// ensure the BTC delegation with the given staking tx hash is active
 	btcDelStatus, _, err := ms.BtcDelStatusWithTip(ctx, btcDel, bsParams.CovenantQuorum)
 	if err != nil {
 		return nil, err
@@ -499,9 +500,14 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 	stakeExpansionDel := ms.getBTCDelegation(ctx, spendStakeTxHash)
 	isStakeExpansion := stakeExpansionDel != nil && stakeExpansionDel.IsStakeExpansion()
 
-	// 1. Verify stake spending tx inclusion proof
-	if !isStakeExpansion {
-		// inclusion proof of stake expansion is done later
+	// 2. Verify stake spending tx inclusion proof
+	if isStakeExpansion {
+		// Add inclusion proof for stake expansion delegation if stake expansion tx is 'k' deep
+		// If successful, this will set stake expansion delegation as active
+		if err := ms.Keeper.AddBTCDelegationInclusionProof(ctx, stakeExpansionDel, req.StakeSpendingTxInclusionProof); err != nil {
+			return nil, types.ErrInvalidBTCUndelegateReq.Wrapf("failed to handle stake expansion inclusion: %s", err)
+		}
+	} else {
 		proofValid := btcckpttypes.VerifyInclusionProof(
 			btcutil.NewTx(stakeSpendingTx),
 			&btcHeader.MerkleRoot,
@@ -515,10 +521,9 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 	}
 
 	stakingTx := btcDel.MustGetStakingTx()
-
 	stakingTxHash := stakingTx.TxHash()
 
-	// 2. Verify stake spending tx spends staking output
+	// 3. Verify stake spending tx spends staking output
 	stakingTxInputIdx, err := findInputIdx(
 		stakeSpendingTx,
 		&stakingTxHash,
@@ -535,7 +540,7 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 		return nil, types.ErrInvalidBTCUndelegateReq.Wrapf("failed to parse funding transactions: %s", err)
 	}
 
-	// 3. Verify staker signature on stake spending tx
+	// 4. Verify staker signature on stake spending tx
 	if err := VerifySpendStakeTxStakerSig(
 		btcDel.BtcPk.MustToBTCPK(),
 		stakingTx.TxOut[btcDel.StakingOutputIdx],
@@ -547,28 +552,24 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 	}
 
 	registeredUnbondingTx := btcDel.MustGetUnbondingTx()
-
 	registeredUnbondingTxHash := registeredUnbondingTx.TxHash()
 
 	var delegatorUnbondingInfo *types.DelegatorUnbondingInfo
 
-	// Check if stake spending tx is already registered unbonding tx. If so, we do
-	// not need to save it in database
-	if spendStakeTxHash.IsEqual(&registeredUnbondingTxHash) {
+	switch {
+	case spendStakeTxHash.IsEqual(&registeredUnbondingTxHash):
 		delegatorUnbondingInfo = &types.DelegatorUnbondingInfo{
 			// if the stake spending tx is the same as the registered unbonding tx,
 			// we do not need to save it in the database
 			SpendStakeTx: []byte{},
 		}
-
 		types.EmitEarlyUnbondedEvent(ctx, btcDel.MustGetStakingTxHash().String(), stakerSpendigTxHeader.Height)
-	} else {
+	default:
 		// spend staking tx is not the registered unbonding tx, we need to save it in the database
 		// and emit an event
 		delegatorUnbondingInfo = &types.DelegatorUnbondingInfo{
 			SpendStakeTx: req.StakeSpendingTx,
 		}
-
 		types.EmitUnexpectedUnbondingTxEvent(ctx,
 			btcDel.MustGetStakingTxHash().String(),
 			spendStakeTxHash.String(),
@@ -580,14 +581,6 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 	// all good, add the signature to BTC delegation's undelegation
 	// and set back
 	ms.btcUndelegate(ctx, btcDel, delegatorUnbondingInfo, req.StakeSpendingTx, req.StakeSpendingTxInclusionProof)
-
-	if isStakeExpansion {
-		// if there is something wrong with the stake expansion inclusion proof
-		// it will error out and not commit the store changes of this msg
-		if err := ms.Keeper.AddBTCDelegationInclusionProof(ctx, stakeExpansionDel, req.StakeSpendingTxInclusionProof); err != nil {
-			return nil, types.ErrInvalidBTCUndelegateReq.Wrapf("failed to handle stake expansion inclusion: %s", err)
-		}
-	}
 
 	// At this point, the unbonding signature is verified.
 	// Thus, we can safely consider this message as refundable
