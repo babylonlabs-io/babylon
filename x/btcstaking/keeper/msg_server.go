@@ -191,19 +191,19 @@ func (ms msgServer) AddBTCDelegationInclusionProof(
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// 1. make sure the delegation exists
-	btcDel, err := ms.GetBTCDelegation(ctx, req.StakingTxHash)
+	delInfo, err := ms.getBTCDelWithParams(ctx, req.StakingTxHash)
 	if err != nil {
 		return nil, err
 	}
 
-	if btcDel.IsStakeExpansion() {
+	if delInfo.Delegation.IsStakeExpansion() {
 		return nil, fmt.Errorf("the BTC delegation %s is a stake expansion, use MsgBTCUndelegate to set the inclusion proof", req.StakingTxHash)
 	}
 
 	// Creates events and updates the btc del if all the checks are valid
 	// already has inclusion proof, quorum, wasn't unbonded, if the inclusion proof is valid,
 	// k-deep, staking time > unbonding time blocks.
-	if err := ms.Keeper.AddBTCDelegationInclusionProof(ctx, btcDel, req.StakingTxInclusionProof); err != nil {
+	if err := ms.Keeper.AddBTCDelegationInclusionProof(ctx, delInfo, req.StakingTxInclusionProof); err != nil {
 		return nil, err
 	}
 
@@ -220,10 +220,11 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), types.MetricsKeyAddCovenantSigs)
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	btcDel, params, err := ms.getBTCDelWithParams(ctx, req.StakingTxHash)
+	delInfo, err := ms.getBTCDelWithParams(ctx, req.StakingTxHash)
 	if err != nil {
 		return nil, err
 	}
+	btcDel, params := delInfo.Delegation, delInfo.Params
 
 	// ensure that the given covenant PK is in the parameter
 	if !params.HasCovenantPK(req.Pk) {
@@ -238,7 +239,7 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 	}
 
 	// ensure BTC delegation is still pending, i.e., not unbonded
-	status, btcTip, err := ms.BtcDelStatusWithTip(ctx, btcDel, params.CovenantQuorum)
+	status, btcTip, err := ms.BtcDelStatusWithTip(ctx, delInfo)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get BTC delegation status: %w", err)
 	}
@@ -336,7 +337,7 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 		return nil, types.ErrInvalidCovenantSig.Wrapf("err: %v", err)
 	}
 
-	if err := ms.validateStakeExpansionSig(ctx, btcDel, req, stakingInfo, params); err != nil {
+	if err := ms.validateStakeExpansionSig(ctx, delInfo, req, stakingInfo); err != nil {
 		return nil, types.ErrInvalidCovenantSig.Wrapf("error validating stake expansion signatures: %v", err)
 	}
 
@@ -344,13 +345,12 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 	// and emit corresponding events
 	ms.addCovenantSigsToBTCDelegation(
 		ctx,
-		btcDel,
+		delInfo,
 		req.Pk,
 		parsedSlashingAdaptorSignatures,
 		req.UnbondingTxSig,
 		parsedUnbondingSlashingAdaptorSignatures,
 		req.StakeExpansionTxSig,
-		params,
 		btcTip.Height,
 	)
 
@@ -375,11 +375,15 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 // It returns an error if any of the checks fail.
 func (ms msgServer) validateStakeExpansionSig(
 	ctx sdk.Context,
-	btcDel *types.BTCDelegation,
+	delInfo *btcDelegationWithParams,
 	req *types.MsgAddCovenantSigs,
 	stakingInfo *btcstaking.StakingInfo,
-	params *types.Params, // current params
 ) error {
+	if delInfo == nil {
+		return fmt.Errorf("nil BTC delegation with params")
+	}
+	btcDel, params := delInfo.Delegation, delInfo.Params
+
 	if !btcDel.IsStakeExpansion() {
 		return nil
 	}
@@ -396,11 +400,7 @@ func (ms msgServer) validateStakeExpansionSig(
 
 	// check if the btc pk was a covenant at the parameters version
 	// of the previous active staking transaction and signed it
-	prevTxHash := btcDel.MustGetStakeExpansionTxHash()
-	prevBtcDel, prevParams, err := ms.getBTCDelWithParams(ctx, prevTxHash.String())
-	if err != nil {
-		return err
-	}
+	prevBtcDel, prevParams := delInfo.PrevDel, delInfo.PrevParams
 
 	if !prevParams.HasCovenantPK(req.Pk) {
 		return errorsmod.Wrapf(types.ErrInvalidCovenantSig, "covenant with pk %s was not a member at params (version %d) of the previous stake", req.Pk.MarshalHex(), prevBtcDel.ParamsVersion)
@@ -479,12 +479,12 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// 1. Check previous delegation exists and is active
-	btcDel, bsParams, err := ms.getBTCDelWithParams(ctx, req.StakingTxHash)
+	delInfo, err := ms.getBTCDelWithParams(ctx, req.StakingTxHash)
 	if err != nil {
 		return nil, err
 	}
 
-	btcDelStatus, _, err := ms.BtcDelStatusWithTip(ctx, btcDel, bsParams.CovenantQuorum)
+	btcDelStatus, _, err := ms.BtcDelStatusWithTip(ctx, delInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -512,7 +512,7 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 	if isStakeExpansion {
 		// Add inclusion proof for stake expansion delegation if stake expansion tx is 'k' deep
 		// If successful, this will set stake expansion delegation as active
-		if err := ms.Keeper.AddBTCDelegationInclusionProof(ctx, stakeExpansionDel, req.StakeSpendingTxInclusionProof); err != nil {
+		if err := ms.Keeper.AddBTCDelegationInclusionProof(ctx, delInfo, req.StakeSpendingTxInclusionProof); err != nil {
 			return nil, types.ErrInvalidBTCUndelegateReq.Wrapf("failed to handle stake expansion inclusion: %s", err)
 		}
 	} else {
@@ -528,6 +528,7 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 		}
 	}
 
+	btcDel := delInfo.Delegation
 	stakingTx := btcDel.MustGetStakingTx()
 	stakingTxHash := stakingTx.TxHash()
 
@@ -604,17 +605,19 @@ func (ms msgServer) SelectiveSlashingEvidence(goCtx context.Context, req *types.
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	btcDel, bsParams, err := ms.getBTCDelWithParams(ctx, req.StakingTxHash)
+	delInfo, err := ms.getBTCDelWithParams(ctx, req.StakingTxHash)
 	if err != nil {
 		return nil, err
 	}
 
 	// ensure the BTC delegation is active, or its BTC undelegation receives an
 	// unbonding signature from the staker
-	status, _, err := ms.BtcDelStatusWithTip(ctx, btcDel, bsParams.CovenantQuorum)
+	status, _, err := ms.BtcDelStatusWithTip(ctx, delInfo)
 	if err != nil {
 		return nil, err
 	}
+
+	btcDel := delInfo.Delegation
 	if status != types.BTCDelegationStatus_ACTIVE && !btcDel.IsUnbondedEarly() {
 		return nil, types.ErrBTCDelegationNotFound.Wrap("a BTC delegation that is not active or unbonding early cannot be slashed")
 	}

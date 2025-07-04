@@ -201,27 +201,22 @@ func (k Keeper) AddBTCDelegation(
 // to the given BTC delegation
 func (k Keeper) addCovenantSigsToBTCDelegation(
 	ctx sdk.Context,
-	btcDel *types.BTCDelegation,
+	delInfo *btcDelegationWithParams,
 	covPK *bbn.BIP340PubKey,
 	parsedSlashingAdaptorSignatures []asig.AdaptorSignature,
 	unbondingTxSig *bbn.BIP340Signature,
 	parsedUnbondingSlashingAdaptorSignatures []asig.AdaptorSignature,
 	stakeExpansionTxSig *bbn.BIP340Signature,
-	params *types.Params,
 	btcTipHeight uint32,
 ) {
-	var (
-		quorumPreviousStk uint32
-		err               error
-	)
-	// If the BTC delegation is stake expansion, we need to get the previous staking tx quorum
+	btcDel := delInfo.Delegation
+	var quorumPreviousStk uint32
 	if btcDel.IsStakeExpansion() {
-		quorumPreviousStk, err = k.BtcDelPreviousStkQuorum(ctx, btcDel)
-		if err != nil {
-			panic(fmt.Errorf("failed to get BTC delegation previous staking tx quorum: %w", err))
-		}
+		// if this is stake expansion, we need to get the previous staking tx quorum
+		quorumPreviousStk = delInfo.PrevParams.CovenantQuorum
 	}
-	hadQuorum := btcDel.HasCovenantQuorums(params.CovenantQuorum, quorumPreviousStk)
+
+	hadQuorum := btcDel.HasCovenantQuorums(delInfo.Params.CovenantQuorum, quorumPreviousStk)
 
 	// All is fine add received signatures to the BTC delegation and BtcUndelegation
 	btcDel.AddCovenantSigs(
@@ -247,7 +242,7 @@ func (k Keeper) addCovenantSigsToBTCDelegation(
 	// active. Then, record and emit this event
 	// We only emit power distribution events, and external quorum events if it
 	// is the first time the quorum is reached
-	if !hadQuorum && btcDel.HasCovenantQuorums(params.CovenantQuorum, quorumPreviousStk) {
+	if !hadQuorum && btcDel.HasCovenantQuorums(delInfo.Params.CovenantQuorum, quorumPreviousStk) {
 		if btcDel.HasInclusionProof() {
 			quorumReachedEvent := types.NewCovenantQuorumReachedEvent(
 				btcDel,
@@ -489,12 +484,12 @@ func (k Keeper) GetBTCDelegation(ctx context.Context, stakingTxHashStr string) (
 // IsBtcDelegationActive returns true and no error if the BTC delegation is active.
 // If it is not active it returns false and the reason as an error
 func (k Keeper) IsBtcDelegationActive(ctx context.Context, stakingTxHash string) (*types.BTCDelegation, bool, error) {
-	btcDel, bsParams, err := k.getBTCDelWithParams(ctx, stakingTxHash)
+	delWithParams, err := k.getBTCDelWithParams(ctx, stakingTxHash)
 	if err != nil {
 		return nil, false, err
 	}
 
-	status, _, err := k.BtcDelStatusWithTip(ctx, btcDel, bsParams.CovenantQuorum)
+	status, _, err := k.BtcDelStatusWithTip(ctx, delWithParams)
 	if err != nil {
 		return nil, false, err
 	}
@@ -503,24 +498,46 @@ func (k Keeper) IsBtcDelegationActive(ctx context.Context, stakingTxHash string)
 		return nil, false, fmt.Errorf("BTC delegation %s is not active, current status is %s", stakingTxHash, status.String())
 	}
 
-	return btcDel, true, nil
+	return delWithParams.Delegation, true, nil
+}
+
+type btcDelegationWithParams struct {
+	Delegation *types.BTCDelegation
+	Params     *types.Params
+	// Stake expansion fields
+	PrevDel    *types.BTCDelegation // previous BTC delegation for stake expansion
+	PrevParams *types.Params        // params of the previous BTC delegation for stake expansion
 }
 
 func (k Keeper) getBTCDelWithParams(
 	ctx context.Context,
 	stakingTxHash string,
-) (*types.BTCDelegation, *types.Params, error) {
+) (*btcDelegationWithParams, error) {
 	btcDel, err := k.GetBTCDelegation(ctx, stakingTxHash)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	bsParams := k.GetParamsByVersion(ctx, btcDel.ParamsVersion)
 	if bsParams == nil {
-		return nil, nil, errors.New("params version in BTC delegation is not found")
+		return nil, errors.New("params version in BTC delegation is not found")
 	}
 
-	return btcDel, bsParams, nil
+	res := &btcDelegationWithParams{Delegation: btcDel, Params: bsParams}
+	if !btcDel.IsStakeExpansion() {
+		return res, nil
+	}
+
+	// get stake expansion params and delegation
+	stkExpInfo, err := k.getBTCDelWithParams(ctx, btcDel.MustGetStakeExpansionTxHash().String())
+	if err != nil {
+		return nil, fmt.Errorf("failed to get previous BTC delegation for stake expansion %s: %w", btcDel.MustGetStakeExpansionTxHash().String(), err)
+	}
+
+	res.PrevDel = stkExpInfo.Delegation
+	res.PrevParams = stkExpInfo.Params
+
+	return res, nil
 }
 
 func (k Keeper) getBTCDelegation(ctx context.Context, stakingTxHash chainhash.Hash) *types.BTCDelegation {
@@ -545,14 +562,24 @@ func (k Keeper) btcDelegationStore(ctx context.Context) prefix.Store {
 
 func (k Keeper) BtcDelStatusWithTip(
 	ctx context.Context,
-	btcDel *types.BTCDelegation,
-	covenantQuorum uint32,
+	delInfo *btcDelegationWithParams,
 ) (status types.BTCDelegationStatus, btcTip *btclctypes.BTCHeaderInfo, err error) {
-	btcTip = k.btclcKeeper.GetTipInfo(ctx)
-	status, err = k.BtcDelStatus(ctx, btcDel, covenantQuorum, btcTip.Height)
-	if err != nil {
-		return 0, nil, err
+	if delInfo == nil || delInfo.Delegation == nil {
+		return 0, nil, errors.New("BTC delegation is nil")
 	}
+
+	btcTip = k.btclcKeeper.GetTipInfo(ctx)
+	// in case is stake expansion, we need to get the previous staking tx quorum
+	// to get the delegation status
+	var prevStkCovenantQuorum uint32
+	if delInfo.Delegation.IsStakeExpansion() {
+		prevStkCovenantQuorum = delInfo.PrevParams.CovenantQuorum
+	}
+	status = delInfo.Delegation.GetStatus(
+		btcTip.Height,
+		delInfo.Params.CovenantQuorum,
+		prevStkCovenantQuorum,
+	)
 	return status, btcTip, err
 }
 
@@ -564,30 +591,17 @@ func (k Keeper) BtcDelStatus(
 ) (status types.BTCDelegationStatus, err error) {
 	var quorumPreviousStk uint32
 	if btcDel.IsStakeExpansion() {
-		quorumPreviousStk, err = k.BtcDelPreviousStkQuorum(ctx, btcDel)
+		delInfo, err := k.getBTCDelWithParams(ctx, btcDel.MustGetStakeExpansionTxHash().String())
 		if err != nil {
 			return 0, err
 		}
+		quorumPreviousStk = delInfo.Params.CovenantQuorum
 	}
 	return btcDel.GetStatus(
 		btcTipHeight,
 		covenantQuorum,
 		quorumPreviousStk,
 	), nil
-}
-
-func (k Keeper) BtcDelPreviousStkQuorum(
-	ctx context.Context,
-	btcDel *types.BTCDelegation,
-) (uint32, error) {
-	if !btcDel.IsStakeExpansion() {
-		return 0, errors.New("previous staking quorum is only available for stake expansion delegations")
-	}
-	_, params, err := k.getBTCDelWithParams(ctx, btcDel.MustGetStakeExpansionTxHash().String())
-	if err != nil {
-		return 0, fmt.Errorf("failed to get previous active BTC delegation: %w", err)
-	}
-	return params.CovenantQuorum, nil
 }
 
 func (k Keeper) BtcDelHasCovenantQuorums(
@@ -597,10 +611,11 @@ func (k Keeper) BtcDelHasCovenantQuorums(
 ) (hasQuorum bool, err error) {
 	var quorumPreviousStk uint32
 	if btcDel.IsStakeExpansion() {
-		quorumPreviousStk, err = k.BtcDelPreviousStkQuorum(ctx, btcDel)
+		delInfo, err := k.getBTCDelWithParams(ctx, btcDel.MustGetStakeExpansionTxHash().String())
 		if err != nil {
 			return false, err
 		}
+		quorumPreviousStk = delInfo.Params.CovenantQuorum
 	}
 	return btcDel.HasCovenantQuorums(quorum, quorumPreviousStk), nil
 }
