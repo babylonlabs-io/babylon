@@ -336,7 +336,7 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 		return nil, types.ErrInvalidCovenantSig.Wrapf("err: %v", err)
 	}
 
-	if err := ms.validateStakeExpansionSig(ctx, btcDel, req, stakingInfo); err != nil {
+	if err := ms.validateStakeExpansionSig(ctx, btcDel, req, stakingInfo, params); err != nil {
 		return nil, types.ErrInvalidCovenantSig.Wrapf("error validating stake expansion signatures: %v", err)
 	}
 
@@ -378,6 +378,7 @@ func (ms msgServer) validateStakeExpansionSig(
 	btcDel *types.BTCDelegation,
 	req *types.MsgAddCovenantSigs,
 	stakingInfo *btcstaking.StakingInfo,
+	params *types.Params, // current params
 ) error {
 	if !btcDel.IsStakeExpansion() {
 		return nil
@@ -407,6 +408,13 @@ func (ms msgServer) validateStakeExpansionSig(
 
 	if !prevBtcDel.IsSignedByCovMember(req.Pk) {
 		return errorsmod.Wrapf(types.ErrInvalidCovenantSig, "covenant signature for pk %s not found in previous delegation", req.Pk.MarshalHex())
+	}
+
+	// Covenant committee members can rotate, so we need to check
+	// that there is enough overlap in the covenant committee members
+	if !hasSufficientCovenantOverlap(prevParams.CovenantPks, params.CovenantPks, prevParams.CovenantQuorum) {
+		return errorsmod.Wrapf(types.ErrInvalidCovenantSig,
+			"not enough overlap in covenant committee members for stake expansion: quorum=%d", prevParams.CovenantQuorum)
 	}
 
 	otherFundingTxOut, err := btcDel.StkExp.FundingTxOut()
@@ -655,4 +663,36 @@ func (ms msgServer) SelectiveSlashingEvidence(goCtx context.Context, req *types.
 	ms.iKeeper.IndexRefundableMsg(ctx, req)
 
 	return &types.MsgSelectiveSlashingEvidenceResponse{}, nil
+}
+
+// hasSufficientCovenantOverlap returns true if the intersection of CovCommittee1 and CovCommittee2
+// contains more members than the required overlap.
+func hasSufficientCovenantOverlap(
+	covCommittee1,
+	covCommittee2 []bbn.BIP340PubKey,
+	requiredOverlap uint32,
+) bool {
+	if requiredOverlap == 0 || len(covCommittee1) == 0 || len(covCommittee2) == 0 {
+		return false
+	}
+
+	// Build a lookup set for newCommittee for efficient membership checks
+	newSet := make(map[string]struct{}, len(covCommittee2))
+	for _, pk := range covCommittee2 {
+		newSet[pk.MarshalHex()] = struct{}{}
+	}
+
+	// Count overlapping keys and exit early when quorum is exceeded
+	intersection := 0
+	for _, oldPk := range covCommittee1 {
+		_, found := newSet[oldPk.MarshalHex()]
+		if found {
+			intersection++
+			if uint32(intersection) > requiredOverlap {
+				return true
+			}
+		}
+	}
+
+	return false
 }
