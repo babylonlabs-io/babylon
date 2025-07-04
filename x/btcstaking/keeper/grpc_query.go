@@ -108,7 +108,7 @@ func (k Keeper) BTCDelegations(ctx context.Context, req *types.QueryBTCDelegatio
 
 		params := k.GetParamsByVersion(ctx, btcDel.ParamsVersion)
 
-		// hit if the queried status is ANY or matches the BTC delegation status)
+		// hit if the queried status is ANY or matches the BTC delegation status
 		status, err := k.BtcDelStatus(ctx, &btcDel, params.CovenantQuorum, btcTipHeight)
 		if err != nil {
 			return true, err
