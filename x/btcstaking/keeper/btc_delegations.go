@@ -29,7 +29,7 @@ func (k Keeper) AddBTCDelegation(
 		return err
 	}
 
-	// for each finality provider the delegation restakes to, update its index
+	// for each finality provider the delegation multi-stakes to, update its index
 	for _, fpBTCPK := range btcDel.FpBtcPkList {
 		fpBTCPK := fpBTCPK // remove when update to go1.22
 		// get BTC delegation index under this finality provider
@@ -155,15 +155,15 @@ func (k Keeper) addCovenantSigsToBTCDelegation(
 
 func (k Keeper) notifyConsumersOnActiveBTCDel(ctx context.Context, btcDel *types.BTCDelegation) {
 	// get consumer ids of only non-Babylon finality providers
-	restakedFPConsumerIDs, err := k.restakedFPConsumerIDs(ctx, btcDel.FpBtcPkList)
+	multiStakedFPConsumerIDs, err := k.multiStakedFPConsumerIDs(ctx, btcDel.FpBtcPkList)
 	if err != nil {
-		panic(fmt.Errorf("failed to get consumer ids for the restaked BTC delegation: %w", err))
+		panic(fmt.Errorf("failed to get consumer ids for the multi-staked BTC delegation: %w", err))
 	}
 	consumerEvent, err := types.CreateActiveBTCDelegationEvent(btcDel)
 	if err != nil {
 		panic(fmt.Errorf("failed to create active BTC delegation event: %w", err))
 	}
-	for _, consumerID := range restakedFPConsumerIDs {
+	for _, consumerID := range multiStakedFPConsumerIDs {
 		if err := k.AddBTCStakingConsumerEvent(ctx, consumerID, consumerEvent); err != nil {
 			panic(fmt.Errorf("failed to add active BTC delegation event: %w", err))
 		}
@@ -198,16 +198,16 @@ func (k Keeper) btcUndelegate(
 	k.addPowerDistUpdateEvent(ctx, btcTip.Height, unbondedEvent)
 
 	// get consumer ids of only non-Babylon finality providers
-	restakedFPConsumerIDs, err := k.restakedFPConsumerIDs(ctx, btcDel.FpBtcPkList)
+	multiStakedFPConsumerIDs, err := k.multiStakedFPConsumerIDs(ctx, btcDel.FpBtcPkList)
 	if err != nil {
-		panic(fmt.Errorf("failed to get consumer ids for the restaked BTC delegation: %w", err))
+		panic(fmt.Errorf("failed to get consumer ids for the multi-staked BTC delegation: %w", err))
 	}
 	// create consumer event for unbonded BTC delegation and add it to the consumer's event store
 	consumerEvent, err := types.CreateUnbondedBTCDelegationEvent(btcDel, stakeSpendingTx, proof)
 	if err != nil {
 		panic(fmt.Errorf("failed to create unbonded BTC delegation event: %w", err))
 	}
-	for _, consumerID := range restakedFPConsumerIDs {
+	for _, consumerID := range multiStakedFPConsumerIDs {
 		if err = k.AddBTCStakingConsumerEvent(ctx, consumerID, consumerEvent); err != nil {
 			panic(fmt.Errorf("failed to add active BTC delegation event: %w", err))
 		}
@@ -221,12 +221,12 @@ func (k Keeper) setBTCDelegation(ctx context.Context, btcDel *types.BTCDelegatio
 	store.Set(stakingTxHash[:], btcDelBytes)
 }
 
-// validateRestakedFPs ensures all finality providers are known to Babylon and at least
+// validateMultiStakedFPs ensures all finality providers are known to Babylon and at least
 // one of them is a Babylon finality provider. It also checks whether the BTC stake is
-// restaked to FPs of consumer chains
-func (k Keeper) validateRestakedFPs(ctx context.Context, fpBTCPKs []bbn.BIP340PubKey) (bool, error) {
-	restakedToBabylon := false
-	restakedToConsumers := false
+// multi-staked to FPs of consumer chains
+func (k Keeper) validateMultiStakedFPs(ctx context.Context, fpBTCPKs []bbn.BIP340PubKey) (bool, error) {
+	multiStakedToBabylon := false
+	multiStakedToConsumers := false
 
 	for i := range fpBTCPKs {
 		fpBTCPK := fpBTCPKs[i]
@@ -237,7 +237,7 @@ func (k Keeper) validateRestakedFPs(ctx context.Context, fpBTCPKs []bbn.BIP340Pu
 			if fp.IsSlashed() {
 				return false, types.ErrFpAlreadySlashed
 			}
-			restakedToBabylon = true
+			multiStakedToBabylon = true
 			continue
 		} else if consumerID, err := k.BscKeeper.GetConsumerOfFinalityProvider(ctx, &fpBTCPK); err == nil {
 			fp, err := k.BscKeeper.GetConsumerFinalityProvider(ctx, consumerID, &fpBTCPK)
@@ -248,22 +248,22 @@ func (k Keeper) validateRestakedFPs(ctx context.Context, fpBTCPKs []bbn.BIP340Pu
 			if fp.IsSlashed() {
 				return false, types.ErrFpAlreadySlashed
 			}
-			restakedToConsumers = true
+			multiStakedToConsumers = true
 			continue
 		} else {
 			return false, types.ErrFpNotFound.Wrapf("finality provider pk %s is not found", fpBTCPK.MarshalHex())
 		}
 	}
-	if !restakedToBabylon {
+	if !multiStakedToBabylon {
 		// a BTC delegation has to stake to at least 1 Babylon finality provider
 		return false, types.ErrNoBabylonFPRestaked
 	}
-	return restakedToConsumers, nil
+	return multiStakedToConsumers, nil
 }
 
-// restakedFPConsumerIDs returns the unique consumer IDs of non-Babylon finality providers
+// multiStakedFPConsumerIDs returns the unique consumer IDs of non-Babylon finality providers
 // The returned list is sorted in order to make sure the function is deterministic
-func (k Keeper) restakedFPConsumerIDs(ctx context.Context, fpBTCPKs []bbn.BIP340PubKey) ([]string, error) {
+func (k Keeper) multiStakedFPConsumerIDs(ctx context.Context, fpBTCPKs []bbn.BIP340PubKey) ([]string, error) {
 	consumerIDMap := make(map[string]struct{})
 
 	for i := range fpBTCPKs {

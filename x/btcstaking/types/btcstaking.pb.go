@@ -384,8 +384,7 @@ type BTCDelegation struct {
 	Pop *ProofOfPossessionBTC `protobuf:"bytes,3,opt,name=pop,proto3" json:"pop,omitempty"`
 	// fp_btc_pk_list is the list of BIP-340 PKs of the finality providers that
 	// this BTC delegation delegates to
-	// If there is more than 1 PKs, then this means the delegation is restaked
-	// to multiple finality providers
+	// If there are more than 1 PKs, then this means the delegation is multi-staked
 	FpBtcPkList []github_com_babylonlabs_io_babylon_v3_types.BIP340PubKey `protobuf:"bytes,4,rep,name=fp_btc_pk_list,json=fpBtcPkList,proto3,customtype=github.com/babylonlabs-io/babylon/v3/types.BIP340PubKey" json:"fp_btc_pk_list,omitempty"`
 	// staking_time is the number of blocks for which the delegation is locked on
 	// BTC chain
@@ -828,8 +827,9 @@ type CovenantAdaptorSignatures struct {
 	// cov_pk is the public key of the covenant emulator, used as the public key
 	// of the adaptor signature
 	CovPk *github_com_babylonlabs_io_babylon_v3_types.BIP340PubKey `protobuf:"bytes,1,opt,name=cov_pk,json=covPk,proto3,customtype=github.com/babylonlabs-io/babylon/v3/types.BIP340PubKey" json:"cov_pk,omitempty"`
-	// adaptor_sigs is a list of adaptor signatures, each encrypted by a restaked
-	// BTC finality provider's public key
+	// adaptor_sigs is a list of adaptor signatures, each encrypted
+	// by the finality provider public keys involved in the multi-staking
+	// procedure
 	AdaptorSigs [][]byte `protobuf:"bytes,2,rep,name=adaptor_sigs,json=adaptorSigs,proto3" json:"adaptor_sigs,omitempty"`
 }
 
