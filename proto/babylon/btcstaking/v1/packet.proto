@@ -118,9 +118,9 @@ message BTCUndelegationInfo {
     DelegatorUnbondingInfo delegator_unbonding_info = 6;
 }
 
-// SlashedBTCDelegation is an IBC packet sent from Babylon to consumer
-// about a slashed BTC delegation restaked to >=1 of this consumer's 
-// finality provider
+// SlashedBTCDelegation is an IBC packet sent from Babylon Genesis to consumer
+// about a slashed BTC delegation multi-staked to a finality provider
+// securing the consumer.
 message SlashedBTCDelegation {
   // staking tx hash of the BTC delegation. It uniquely identifies a BTC delegation
   string staking_tx_hash = 1;

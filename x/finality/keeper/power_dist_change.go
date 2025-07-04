@@ -212,7 +212,7 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 			switch delEvent.NewState {
 			case types.BTCDelegationStatus_ACTIVE:
 				// newly active BTC delegation
-				// add the BTC delegation to each restaked finality provider
+				// add the BTC delegation to each multi-staked finality provider
 				for _, fpBTCPK := range btcDel.FpBtcPkList {
 					fpBTCPKHex := fpBTCPK.MarshalHex()
 					if !k.BTCStakingKeeper.HasFinalityProvider(ctx, fpBTCPK) {
