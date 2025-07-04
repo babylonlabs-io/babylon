@@ -128,18 +128,17 @@ func TestConsumerEventsDeterministicOrder(t *testing.T) {
 	ctx, h, _ := setupTest(t)
 	k := h.App.BTCStakingKeeper
 
-	unsortedConsumerIDs := []string{"consumer-z", "consumer-a", "consumer-m", "consumer-b"}
+	unsortedBsnIDs := []string{"bsn-z", "bsn-a", "bsn-m", "bsn-b"}
 
-	for _, consumerID := range unsortedConsumerIDs {
-		event := &types.BTCStakingConsumerEvent{
-			Event: &types.BTCStakingConsumerEvent_NewFp{
-				NewFp: &types.NewFinalityProvider{
-					BtcPkHex:   hex.EncodeToString([]byte("test-pk-" + consumerID)),
-					ConsumerId: consumerID,
-				},
+	for _, bsnID := range unsortedBsnIDs {
+		event := &types.BTCStakingConsumerEvent{Event: &types.BTCStakingConsumerEvent_NewFp{
+			NewFp: &types.NewFinalityProvider{
+				BtcPkHex: hex.EncodeToString([]byte("test-pk-" + bsnID)),
+				BsnId:    bsnID,
 			},
+		},
 		}
-		err := k.AddBTCStakingConsumerEvent(ctx, consumerID, event)
+		err := k.AddBTCStakingConsumerEvent(ctx, bsnID, event)
 		require.NoError(t, err)
 	}
 
@@ -155,9 +154,9 @@ func TestConsumerEventsDeterministicOrder(t *testing.T) {
 	}
 
 	events := results[0].ConsumerEvents
-	require.Len(t, events, len(unsortedConsumerIDs))
+	require.Len(t, events, len(unsortedBsnIDs))
 
-	expectedSortedIDs := []string{"consumer-a", "consumer-b", "consumer-m", "consumer-z"}
+	expectedSortedIDs := []string{"bsn-a", "bsn-b", "bsn-m", "bsn-z"}
 	for i, event := range events {
 		require.Equal(t, expectedSortedIDs[i], event.ConsumerId, "Consumer events should be sorted by consumer ID")
 	}

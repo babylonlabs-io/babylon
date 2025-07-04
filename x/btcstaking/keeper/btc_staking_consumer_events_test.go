@@ -69,7 +69,7 @@ func FuzzSetBTCStakingEventStore_NewFp(f *testing.F) {
 			require.Equal(t, fp.Commission.String(), evFp.Commission)
 			require.Equal(t, fp.BtcPk.MarshalHex(), evFp.BtcPkHex)
 			require.Equal(t, fp.Pop, evFp.Pop)
-			require.Equal(t, fp.ConsumerId, evFp.ConsumerId)
+			require.Equal(t, fp.BsnId, evFp.BsnId)
 		}
 	})
 }
@@ -395,19 +395,19 @@ func TestDeterministicOrdering(t *testing.T) {
 	h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
 	h.GenAndApplyParams(r)
 
-	consumerIDs := []string{"consumer-z", "consumer-a", "consumer-m", "consumer-b"}
+	bsnIds := []string{"bsn-z", "bsn-a", "bsn-m", "bsn-b"}
 
 	// Add consumer events in random order
-	for _, consumerID := range consumerIDs {
+	for _, bsnId := range bsnIds {
 		event := &types.BTCStakingConsumerEvent{
 			Event: &types.BTCStakingConsumerEvent_NewFp{
 				NewFp: &types.NewFinalityProvider{
-					BtcPkHex:   "test-pk-" + consumerID,
-					ConsumerId: consumerID,
+					BtcPkHex: "test-pk-" + bsnId,
+					BsnId:    bsnId,
 				},
 			},
 		}
-		err := h.BTCStakingKeeper.AddBTCStakingConsumerEvent(h.Ctx, consumerID, event)
+		err := h.BTCStakingKeeper.AddBTCStakingConsumerEvent(h.Ctx, bsnId, event)
 		require.NoError(t, err)
 	}
 
@@ -449,6 +449,6 @@ func TestDeterministicOrdering(t *testing.T) {
 	require.Equal(t, processOrder1, processOrder2, "Processing order should be deterministic")
 
 	// Verify that the processing order is sorted
-	expectedOrder := []string{"consumer-a", "consumer-b", "consumer-m", "consumer-z"}
+	expectedOrder := []string{"bsn-a", "bsn-b", "bsn-m", "bsn-z"}
 	require.Equal(t, expectedOrder, processOrder1, "Processing should happen in sorted order")
 }

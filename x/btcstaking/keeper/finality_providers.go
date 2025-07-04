@@ -39,11 +39,11 @@ func (k Keeper) AddFinalityProvider(goCtx context.Context, msg *types.MsgCreateF
 		return types.ErrFpRegistered
 	}
 
-	// default consumer ID is Babylon's chain ID
-	consumerID := msg.GetConsumerId()
-	if consumerID == "" {
+	// default BSN ID is Babylon's chain ID
+	bsnID := msg.GetBsnId()
+	if bsnID == "" {
 		// Babylon chain ID
-		consumerID = ctx.ChainID()
+		bsnID = ctx.ChainID()
 	}
 
 	// all good, add this finality provider
@@ -53,14 +53,14 @@ func (k Keeper) AddFinalityProvider(goCtx context.Context, msg *types.MsgCreateF
 		Addr:           msg.Addr,
 		BtcPk:          msg.BtcPk,
 		Pop:            msg.Pop,
-		ConsumerId:     consumerID,
+		BsnId:          bsnID,
 		CommissionInfo: commissionInfo,
 	}
 
-	if consumerID == ctx.ChainID() {
+	if bsnID == ctx.ChainID() {
 		k.setFinalityProvider(ctx, &fp)
 	} else {
-		if err := k.SetConsumerFinalityProvider(ctx, &fp, consumerID); err != nil {
+		if err := k.SetConsumerFinalityProvider(ctx, &fp, bsnID); err != nil {
 			return err
 		}
 	}

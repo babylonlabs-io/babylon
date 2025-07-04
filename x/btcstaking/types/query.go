@@ -87,6 +87,6 @@ func NewFinalityProviderResponse(f *FinalityProvider, bbnBlockHeight uint64) *Fi
 		Height:               bbnBlockHeight,
 		HighestVotedHeight:   f.HighestVotedHeight,
 		CommissionInfo:       f.CommissionInfo,
-		ConsumerId:           f.ConsumerId,
+		BsnId:                f.BsnId,
 	}
 }

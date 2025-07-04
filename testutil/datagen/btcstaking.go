@@ -93,7 +93,7 @@ func GenCustomFinalityProvider(
 	btcSK *btcec.PrivateKey,
 	signingContext string,
 	fpAddr sdk.AccAddress,
-	consumerID string,
+	bsnId string,
 ) (*bstypes.FinalityProvider, error) {
 	// commission
 	commission := GenRandomCommission(r)
@@ -113,7 +113,7 @@ func GenCustomFinalityProvider(
 		BtcPk:       bip340PK,
 		Addr:        fpAddr.String(),
 		Pop:         pop,
-		ConsumerId:  consumerID,
+		BsnId:       bsnId,
 		CommissionInfo: bstypes.NewCommissionInfoWithTime(
 			sdkmath.LegacyOneDec(),
 			sdkmath.LegacyOneDec(),

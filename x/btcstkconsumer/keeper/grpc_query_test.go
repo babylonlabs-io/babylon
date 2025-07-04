@@ -119,7 +119,7 @@ func FuzzFinalityProviders(f *testing.F) {
 		for i := 0; i < int(datagen.RandomInt(r, 10)+1); i++ {
 			fp, err := datagen.GenRandomFinalityProvider(r, "")
 			require.NoError(t, err)
-			fp.ConsumerId = consumerID
+			fp.BsnId = consumerID
 
 			bscKeeper.SetConsumerFinalityProvider(ctx, fp)
 			fpsMap[fp.BtcPk.MarshalHex()] = fp
@@ -183,12 +183,12 @@ func FuzzFinalityProvider(f *testing.F) {
 
 		// Generate random finality providers and add them to kv store under a consumer id
 		fpsMap := make(map[string]*btcstaking.FinalityProvider)
-		consumerID := datagen.GenRandomHexStr(r, 30)
+		bsnId := datagen.GenRandomHexStr(r, 30)
 		var existingFp string
 		for i := 0; i < int(datagen.RandomInt(r, 10)+1); i++ {
 			fp, err := datagen.GenRandomFinalityProvider(r, "")
 			require.NoError(t, err)
-			fp.ConsumerId = consumerID
+			fp.BsnId = bsnId
 
 			bscKeeper.SetConsumerFinalityProvider(ctx, fp)
 			existingFp = fp.BtcPk.MarshalHex()
@@ -202,7 +202,7 @@ func FuzzFinalityProvider(f *testing.F) {
 
 		for k, v := range fpsMap {
 			// Generate a request with a valid key
-			req := types.QueryFinalityProviderRequest{ConsumerId: consumerID, FpBtcPkHex: k}
+			req := types.QueryFinalityProviderRequest{ConsumerId: bsnId, FpBtcPkHex: k}
 			resp, err := bscKeeper.FinalityProvider(ctx, &req)
 			if err != nil {
 				t.Errorf("Valid request led to an error %s", err)
@@ -219,7 +219,7 @@ func FuzzFinalityProvider(f *testing.F) {
 		// check some random non-existing guy
 		fp, err := datagen.GenRandomFinalityProvider(r, "")
 		require.NoError(t, err)
-		req := types.QueryFinalityProviderRequest{ConsumerId: consumerID, FpBtcPkHex: fp.BtcPk.MarshalHex()}
+		req := types.QueryFinalityProviderRequest{ConsumerId: bsnId, FpBtcPkHex: fp.BtcPk.MarshalHex()}
 		respNonExists, err := bscKeeper.FinalityProvider(ctx, &req)
 		require.Error(t, err)
 		require.Nil(t, respNonExists)
@@ -246,12 +246,12 @@ func FuzzFinalityProviderConsumer(f *testing.F) {
 
 		// Generate random finality providers and add them to kv store under a consumer id
 		fpsMap := make(map[string]*btcstaking.FinalityProvider)
-		consumerID := datagen.GenRandomHexStr(r, 30)
+		bsnId := datagen.GenRandomHexStr(r, 30)
 		var existingFp string
 		for i := 0; i < int(datagen.RandomInt(r, 10)+1); i++ {
 			fp, err := datagen.GenRandomFinalityProvider(r, "")
 			require.NoError(t, err)
-			fp.ConsumerId = consumerID
+			fp.BsnId = bsnId
 
 			bscKeeper.SetConsumerFinalityProvider(ctx, fp)
 			existingFp = fp.BtcPk.MarshalHex()
@@ -274,7 +274,7 @@ func FuzzFinalityProviderConsumer(f *testing.F) {
 		}
 
 		// check keys from map matches those in returned response
-		require.Equal(t, consumerID, resp.ConsumerId)
+		require.Equal(t, bsnId, resp.ConsumerId)
 
 		// check some random non-existing guy
 		fp, err := datagen.GenRandomFinalityProvider(r, "")

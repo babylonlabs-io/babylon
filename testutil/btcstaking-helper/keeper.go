@@ -251,9 +251,9 @@ func (h *Helper) CreateFinalityProvider(r *rand.Rand) (*btcec.PrivateKey, *btcec
 			fp.CommissionInfo.MaxRate,
 			fp.CommissionInfo.MaxChangeRate,
 		),
-		BtcPk:      fp.BtcPk,
-		Pop:        fp.Pop,
-		ConsumerId: "",
+		BtcPk: fp.BtcPk,
+		Pop:   fp.Pop,
+		BsnId: "",
 	}
 
 	_, err = h.MsgServer.CreateFinalityProvider(h.Ctx, &msgNewFp)
@@ -279,9 +279,9 @@ func (h *Helper) CreateConsumerFinalityProvider(r *rand.Rand, consumerID string)
 			fp.CommissionInfo.MaxRate,
 			fp.CommissionInfo.MaxChangeRate,
 		),
-		BtcPk:      fp.BtcPk,
-		Pop:        fp.Pop,
-		ConsumerId: fp.ConsumerId,
+		BtcPk: fp.BtcPk,
+		Pop:   fp.Pop,
+		BsnId: fp.BsnId,
 	}
 	_, err = h.MsgServer.CreateFinalityProvider(h.Ctx, &msgNewFp)
 	if err != nil {

@@ -349,10 +349,8 @@ message FinalityProviderResponse {
   // commission_info contains information details of the finality provider
   // commission.
   CommissionInfo commission_info = 11;
-  // consumer_id is the ID of the consumer the finality provider is operating
-  // on. If it's missing / empty, it's assumed the finality provider is
-  // operating in the Babylon chain.
-  string consumer_id = 12;
+  // bsn_id is the ID of the BSN the finality provider is securing
+  string bsn_id = 12;
 }
 
 // QueryLargestBtcReOrgRequest query request of the largest BTC reorg request
