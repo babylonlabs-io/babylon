@@ -113,7 +113,8 @@ func TestExportGenesis(t *testing.T) {
 				},
 			},
 		}
-		h.App.BTCStkConsumerKeeper.RegisterConsumer(h.Ctx, consumerRegister)
+		err := h.App.BTCStkConsumerKeeper.RegisterConsumer(h.Ctx, consumerRegister)
+		require.NoError(t, err)
 	}
 
 	// store consumer events
@@ -154,7 +155,7 @@ func TestConsumerEventsDeterministicOrder(t *testing.T) {
 			},
 		}
 
-		h.App.BTCStkConsumerKeeper.RegisterConsumer(h.Ctx, &bsctypes.ConsumerRegister{
+		err := h.App.BTCStkConsumerKeeper.RegisterConsumer(h.Ctx, &bsctypes.ConsumerRegister{
 			ConsumerId: consumerID,
 			ConsumerMetadata: &bsctypes.ConsumerRegister_CosmosConsumerMetadata{
 				CosmosConsumerMetadata: &bsctypes.CosmosConsumerMetadata{
@@ -162,8 +163,9 @@ func TestConsumerEventsDeterministicOrder(t *testing.T) {
 				},
 			},
 		})
+		require.NoError(t, err)
 
-		err := k.AddBTCStakingConsumerEvent(ctx, consumerID, event)
+		err = k.AddBTCStakingConsumerEvent(ctx, consumerID, event)
 		require.NoError(t, err)
 	}
 

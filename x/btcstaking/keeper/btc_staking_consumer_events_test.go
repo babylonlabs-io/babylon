@@ -400,7 +400,8 @@ func TestDeterministicOrdering(t *testing.T) {
 				},
 			},
 		}
-		h.BTCStkConsumerKeeper.RegisterConsumer(h.Ctx, consumerRegister)
+		err := h.BTCStkConsumerKeeper.RegisterConsumer(h.Ctx, consumerRegister)
+		require.NoError(t, err)
 	}
 
 	// Add consumer events in random order
