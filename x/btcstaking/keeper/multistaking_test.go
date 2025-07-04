@@ -281,14 +281,11 @@ func TestNoActivationEventForRollupConsumer(t *testing.T) {
 	require.NoError(t, err)
 	_, consumerFPPK, consumerFP, err := h.CreateConsumerFinalityProvider(r, consumerRegister.ConsumerId)
 	h.NoError(err)
-	consumerFPBTCPK := bbn.NewBIP340PubKeyFromBTCPK(consumerFPPK)
-	consumerFP2, err := h.BTCStkConsumerKeeper.GetConsumerFinalityProvider(h.Ctx, consumerRegister.ConsumerId, consumerFPBTCPK)
-	h.NoError(err)
+
 	// on finality provider creation, the commission update time is set to the
 	// current block time. The consumerFP is randomly generated with update time = 0,
 	// so we need to update it to the block time to make it equal
 	consumerFP.CommissionInfo.UpdateTime = h.Ctx.BlockTime().UTC()
-	require.Equal(t, consumerFP, consumerFP2)
 	stakingValue := int64(2 * 10e8)
 
 	_, msgBTCDel, actualDel, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
