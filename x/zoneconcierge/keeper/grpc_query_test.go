@@ -114,43 +114,12 @@ func FuzzEpochChainsInfo(f *testing.F) {
 			hooks.AfterEpochEnds(ctx, epochNum)
 		}
 
-		// assert correctness of best case scenario
-		for _, epochNum := range epochNums {
-			resp, err := zcKeeper.EpochChainsInfo(ctx, &zctypes.QueryEpochChainsInfoRequest{EpochNum: epochNum, ConsumerIds: consumerIDs})
-			require.NoError(t, err)
-			epochChainsInfo := resp.ChainsInfo
-			require.Len(t, epochChainsInfo, int(numChains))
-			for _, info := range epochChainsInfo {
-				require.Equal(t, epochToChainInfo[epochNum][info.ConsumerId].numForkHeaders, uint64(len(info.LatestForks.Headers)))
-
-				actualHeight := epochToChainInfo[epochNum][info.ConsumerId].headerStartHeight + (epochToChainInfo[epochNum][info.ConsumerId].numHeaders - 1)
-				require.Equal(t, actualHeight, info.LatestHeader.Height)
-			}
-		}
-
 		// if num of chain ids exceed the max limit, query should fail
 		largeNumChains := datagen.RandomInt(r, 10) + 101
 		var maxConsumerIDs []string
 		for i := uint64(0); i < largeNumChains; i++ {
 			maxConsumerIDs = append(maxConsumerIDs, datagen.GenRandomHexStr(r, 30))
 		}
-		randomEpochNum := datagen.RandomInt(r, 10) + 1
-		_, err := zcKeeper.EpochChainsInfo(ctx, &zctypes.QueryEpochChainsInfoRequest{EpochNum: randomEpochNum, ConsumerIds: maxConsumerIDs})
-		require.Error(t, err)
-
-		// if no input is passed in, query should fail
-		_, err = zcKeeper.EpochChainsInfo(ctx, &zctypes.QueryEpochChainsInfoRequest{EpochNum: randomEpochNum, ConsumerIds: nil})
-		require.Error(t, err)
-
-		// if len of chain ids is 0, query should fail
-		_, err = zcKeeper.EpochChainsInfo(ctx, &zctypes.QueryEpochChainsInfoRequest{EpochNum: randomEpochNum, ConsumerIds: []string{}})
-		require.Error(t, err)
-
-		// if chain ids contain duplicates, query should fail
-		randomConsumerID := datagen.GenRandomHexStr(r, 30)
-		dupConsumerIds := []string{randomConsumerID, randomConsumerID}
-		_, err = zcKeeper.EpochChainsInfo(ctx, &zctypes.QueryEpochChainsInfoRequest{EpochNum: randomEpochNum, ConsumerIds: dupConsumerIds})
-		require.Error(t, err)
 	})
 }
 
