@@ -367,10 +367,10 @@ func TestSpendingSlashingPathCovenant35MultiSig(t *testing.T) {
 	btctest.AssertEngineExecution(t, 0, true, newEngine)
 }
 
-func TestSpendingSlashingPathCovenant35MultiSigFinalityProviderRestaking(t *testing.T) {
+func TestSpendingSlashingPathCovenant35MultiSigFinalityProviderMultiStaking(t *testing.T) {
 	r := rand.New(rand.NewSource(time.Now().Unix()))
 
-	// we have 3 out of 5 covenant committee, and we are restaking to 2 finality providers
+	// we have 3 out of 5 covenant committee, and we are multi-staking to 2 finality providers
 	scenario := GenerateTestScenario(
 		r,
 		t,

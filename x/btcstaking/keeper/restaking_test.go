@@ -15,7 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func FuzzRestaking_RestakedBTCDelegation(f *testing.F) {
+func FuzzMultiStaking_MultiStakedBTCDelegation(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
@@ -123,10 +123,10 @@ func FuzzRestaking_RestakedBTCDelegation(f *testing.F) {
 		)
 		h.NoError(err)
 
-		// add covenant signatures to this restaked BTC delegation
+		// add covenant signatures to this multi-staked BTC delegation
 		h.CreateCovenantSigs(r, covenantSKs, msgBTCDel, actualDel, 10)
 
-		// ensure the restaked BTC delegation is bonded right now
+		// ensure the multi-staked BTC delegation is bonded right now
 		stakingTxHash := actualDel.MustGetStakingTxHash()
 		actualDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash.String())
 		h.NoError(err)

@@ -65,7 +65,7 @@ func (ud *BTCUndelegation) GetCovSlashingAdaptorSig(
 
 // AddCovenantSigs adds a Schnorr signature on the unbonding tx, and
 // a list of adaptor signatures on the unbonding slashing tx, each encrypted
-// by a finality provider's PK this BTC delegation restakes to, from the given
+// by a finality provider's PK this BTC delegation multi-stakes to, from the given
 // covenant
 // It is up to the caller to ensure that given adaptor signatures are valid or
 // that they were not added before
