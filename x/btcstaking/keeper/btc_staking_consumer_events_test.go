@@ -140,13 +140,11 @@ func FuzzSetBTCStakingEventStore_ActiveDel(f *testing.F) {
 		// ensure the BTC delegation now has voting power as it has been activated
 		actualDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
 		h.NoError(err)
-		quorumPreviousStk, err := h.BTCStakingKeeper.BtcDelPreviousStkQuorum(h.Ctx, actualDel)
-		h.NoError(err)
-		require.True(t, actualDel.HasCovenantQuorums(h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum, quorumPreviousStk))
+		require.True(t, actualDel.HasCovenantQuorums(h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum, 0))
 		require.True(t, actualDel.BtcUndelegation.HasCovenantQuorums(h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum))
 		votingPower := actualDel.VotingPower(
 			h.BTCLightClientKeeper.GetTipInfo(h.Ctx).Height,
-			h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum, quorumPreviousStk,
+			h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum, 0,
 		)
 		require.Equal(t, uint64(stakingValue), votingPower)
 

@@ -210,9 +210,16 @@ func (k Keeper) addCovenantSigsToBTCDelegation(
 	params *types.Params,
 	btcTipHeight uint32,
 ) {
-	quorumPreviousStk, err := k.BtcDelPreviousStkQuorum(ctx, btcDel)
-	if err != nil {
-		panic(fmt.Errorf("failed to get BTC delegation previous staking tx quorum: %w", err))
+	var (
+		quorumPreviousStk uint32
+		err               error
+	)
+	// If the BTC delegation is stake expansion, we need to get the previous staking tx quorum
+	if btcDel.IsStakeExpansion() {
+		quorumPreviousStk, err = k.BtcDelPreviousStkQuorum(ctx, btcDel)
+		if err != nil {
+			panic(fmt.Errorf("failed to get BTC delegation previous staking tx quorum: %w", err))
+		}
 	}
 	hadQuorum := btcDel.HasCovenantQuorums(params.CovenantQuorum, quorumPreviousStk)
 
@@ -555,9 +562,12 @@ func (k Keeper) BtcDelStatus(
 	covenantQuorum uint32,
 	btcTipHeight uint32,
 ) (status types.BTCDelegationStatus, err error) {
-	quorumPreviousStk, err := k.BtcDelPreviousStkQuorum(ctx, btcDel)
-	if err != nil {
-		return 0, err
+	var quorumPreviousStk uint32
+	if btcDel.IsStakeExpansion() {
+		quorumPreviousStk, err = k.BtcDelPreviousStkQuorum(ctx, btcDel)
+		if err != nil {
+			return 0, err
+		}
 	}
 	return btcDel.GetStatus(
 		btcTipHeight,
@@ -570,25 +580,27 @@ func (k Keeper) BtcDelPreviousStkQuorum(
 	ctx context.Context,
 	btcDel *types.BTCDelegation,
 ) (uint32, error) {
-	if btcDel.IsStakeExpansion() {
-		_, params, err := k.getBTCDelWithParams(ctx, btcDel.MustGetStakeExpansionTxHash().String())
-		if err != nil {
-			return 0, fmt.Errorf("failed to get previous active BTC delegation: %w", err)
-		}
-		return params.CovenantQuorum, nil
+	if !btcDel.IsStakeExpansion() {
+		return 0, errors.New("previous staking quorum is only available for stake expansion delegations")
 	}
-
-	return 0, nil
+	_, params, err := k.getBTCDelWithParams(ctx, btcDel.MustGetStakeExpansionTxHash().String())
+	if err != nil {
+		return 0, fmt.Errorf("failed to get previous active BTC delegation: %w", err)
+	}
+	return params.CovenantQuorum, nil
 }
 
 func (k Keeper) BtcDelHasCovenantQuorums(
 	ctx context.Context,
 	btcDel *types.BTCDelegation,
 	quorum uint32,
-) (bool, error) {
-	quorumPreviousStk, err := k.BtcDelPreviousStkQuorum(ctx, btcDel)
-	if err != nil {
-		return false, err
+) (hasQuorum bool, err error) {
+	var quorumPreviousStk uint32
+	if btcDel.IsStakeExpansion() {
+		quorumPreviousStk, err = k.BtcDelPreviousStkQuorum(ctx, btcDel)
+		if err != nil {
+			return false, err
+		}
 	}
 	return btcDel.HasCovenantQuorums(quorum, quorumPreviousStk), nil
 }
