@@ -4869,16 +4869,11 @@ paths:
                           description: >-
                             update_time is the last time the commission rate was
                             changed.
-                    consumer_id:
+                    bsn_id:
                       type: string
-                      description: >-
-                        consumer_id is the ID of the consumer the finality
-                        provider is operating
-
-                        on. If it's missing / empty, it's assumed the finality
-                        provider is
-
-                        operating in the Babylon chain.
+                      title: >-
+                        bsn_id is the ID of the BSN the finality provider is
+                        securing
                   description: >-
                     FinalityProviderResponse defines a finality provider with
                     voting power
@@ -5874,16 +5869,11 @@ paths:
                         description: >-
                           update_time is the last time the commission rate was
                           changed.
-                  consumer_id:
+                  bsn_id:
                     type: string
-                    description: >-
-                      consumer_id is the ID of the consumer the finality
-                      provider is operating
-
-                      on. If it's missing / empty, it's assumed the finality
-                      provider is
-
-                      operating in the Babylon chain.
+                    title: >-
+                      bsn_id is the ID of the BSN the finality provider is
+                      securing
                 description: >-
                   FinalityProviderResponse defines a finality provider with
                   voting power
@@ -11367,11 +11357,11 @@ paths:
                     title: >-
                       voting_power is the voting power of this finality provider
                       at the given height
-                  consumer_id:
+                  bsn_id:
                     type: string
                     title: >-
-                      consumer_id is the consumer id this finality provider is
-                      registered to
+                      bsn_id is the bsn id this finality provider is registered
+                      to
                 description: >-
                   FinalityProviderResponse defines a finality provider with
                   voting power information.
@@ -11924,10 +11914,10 @@ paths:
                       title: >-
                         voting_power is the voting power of this finality
                         provider at the given height
-                    consumer_id:
+                    bsn_id:
                       type: string
                       title: >-
-                        consumer_id is the consumer id this finality provider is
+                        bsn_id is the bsn id this finality provider is
                         registered to
                   description: >-
                     FinalityProviderResponse defines a finality provider with
@@ -18327,15 +18317,9 @@ definitions:
             type: string
             format: date-time
             description: update_time is the last time the commission rate was changed.
-      consumer_id:
+      bsn_id:
         type: string
-        description: >-
-          consumer_id is the ID of the consumer the finality provider is
-          operating
-
-          on. If it's missing / empty, it's assumed the finality provider is
-
-          operating in the Babylon chain.
+        title: bsn_id is the ID of the BSN the finality provider is securing
     description: |-
       FinalityProviderResponse defines a finality provider with voting power
       information.
@@ -19389,15 +19373,9 @@ definitions:
                 type: string
                 format: date-time
                 description: update_time is the last time the commission rate was changed.
-          consumer_id:
+          bsn_id:
             type: string
-            description: >-
-              consumer_id is the ID of the consumer the finality provider is
-              operating
-
-              on. If it's missing / empty, it's assumed the finality provider is
-
-              operating in the Babylon chain.
+            title: bsn_id is the ID of the BSN the finality provider is securing
         description: |-
           FinalityProviderResponse defines a finality provider with voting power
           information.
@@ -19535,16 +19513,9 @@ definitions:
                   description: >-
                     update_time is the last time the commission rate was
                     changed.
-            consumer_id:
+            bsn_id:
               type: string
-              description: >-
-                consumer_id is the ID of the consumer the finality provider is
-                operating
-
-                on. If it's missing / empty, it's assumed the finality provider
-                is
-
-                operating in the Babylon chain.
+              title: bsn_id is the ID of the BSN the finality provider is securing
           description: >-
             FinalityProviderResponse defines a finality provider with voting
             power
@@ -22157,9 +22128,9 @@ definitions:
         title: >-
           voting_power is the voting power of this finality provider at the
           given height
-      consumer_id:
+      bsn_id:
         type: string
-        title: consumer_id is the consumer id this finality provider is registered to
+        title: bsn_id is the bsn id this finality provider is registered to
     description: >-
       FinalityProviderResponse defines a finality provider with voting power
       information.
@@ -22404,11 +22375,9 @@ definitions:
             title: >-
               voting_power is the voting power of this finality provider at the
               given height
-          consumer_id:
+          bsn_id:
             type: string
-            title: >-
-              consumer_id is the consumer id this finality provider is
-              registered to
+            title: bsn_id is the bsn id this finality provider is registered to
         description: >-
           FinalityProviderResponse defines a finality provider with voting power
           information.
@@ -22512,11 +22481,9 @@ definitions:
               title: >-
                 voting_power is the voting power of this finality provider at
                 the given height
-            consumer_id:
+            bsn_id:
               type: string
-              title: >-
-                consumer_id is the consumer id this finality provider is
-                registered to
+              title: bsn_id is the bsn id this finality provider is registered to
           description: >-
             FinalityProviderResponse defines a finality provider with voting
             power information.

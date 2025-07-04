@@ -23,7 +23,7 @@ func TestGenesisState_Validate(t *testing.T) {
 		consumers = append(consumers, consumer)
 		fp, err := datagen.GenRandomFinalityProvider(r, "")
 		require.NoError(t, err)
-		fp.ConsumerId = consumer.ConsumerId
+		fp.BsnId = consumer.ConsumerId
 		fps = append(fps, fp)
 	}
 
