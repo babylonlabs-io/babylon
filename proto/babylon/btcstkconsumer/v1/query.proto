@@ -134,12 +134,8 @@ message FinalityProviderResponse {
   // the finality provider is slashed.
   // if it's 0 then the finality provider is not slashed
   uint32 slashed_btc_height = 7;
-  // height is the queried Babylon height
-  uint64 height = 8;
-  // voting_power is the voting power of this finality provider at the given height
-  uint64 voting_power = 9;
   // bsn_id is the bsn id this finality provider is registered to
-  string bsn_id = 10;
+  string bsn_id = 8;
 }
 
 // QueryFinalityProviderConsumerRequest requests the consumer id a Consumer finality

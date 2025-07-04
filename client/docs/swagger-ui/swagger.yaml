@@ -11365,16 +11365,6 @@ paths:
                       slashed_btc_height indicates the BTC height when
                       the finality provider is slashed.
                       if it's 0 then the finality provider is not slashed
-                  height:
-                    type: string
-                    format: uint64
-                    title: height is the queried Babylon height
-                  voting_power:
-                    type: string
-                    format: uint64
-                    title: >-
-                      voting_power is the voting power of this finality provider
-                      at the given height
                   bsn_id:
                     type: string
                     title: >-
@@ -11922,16 +11912,6 @@ paths:
                         slashed_btc_height indicates the BTC height when
                         the finality provider is slashed.
                         if it's 0 then the finality provider is not slashed
-                    height:
-                      type: string
-                      format: uint64
-                      title: height is the queried Babylon height
-                    voting_power:
-                      type: string
-                      format: uint64
-                      title: >-
-                        voting_power is the voting power of this finality
-                        provider at the given height
                     bsn_id:
                       type: string
                       title: >-
@@ -22163,16 +22143,6 @@ definitions:
           slashed_btc_height indicates the BTC height when
           the finality provider is slashed.
           if it's 0 then the finality provider is not slashed
-      height:
-        type: string
-        format: uint64
-        title: height is the queried Babylon height
-      voting_power:
-        type: string
-        format: uint64
-        title: >-
-          voting_power is the voting power of this finality provider at the
-          given height
       bsn_id:
         type: string
         title: bsn_id is the bsn id this finality provider is registered to
@@ -22410,16 +22380,6 @@ definitions:
               slashed_btc_height indicates the BTC height when
               the finality provider is slashed.
               if it's 0 then the finality provider is not slashed
-          height:
-            type: string
-            format: uint64
-            title: height is the queried Babylon height
-          voting_power:
-            type: string
-            format: uint64
-            title: >-
-              voting_power is the voting power of this finality provider at the
-              given height
           bsn_id:
             type: string
             title: bsn_id is the bsn id this finality provider is registered to
@@ -22516,16 +22476,6 @@ definitions:
                 slashed_btc_height indicates the BTC height when
                 the finality provider is slashed.
                 if it's 0 then the finality provider is not slashed
-            height:
-              type: string
-              format: uint64
-              title: height is the queried Babylon height
-            voting_power:
-              type: string
-              format: uint64
-              title: >-
-                voting_power is the voting power of this finality provider at
-                the given height
             bsn_id:
               type: string
               title: bsn_id is the bsn id this finality provider is registered to
