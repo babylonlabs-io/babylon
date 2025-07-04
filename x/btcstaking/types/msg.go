@@ -201,11 +201,11 @@ func (m *MsgBtcStakeExpand) GetStakeExpansion() (*ParsedCreateDelStkExp, error) 
 
 	fundingTxHash := fundingTx.TxHash()
 	if !stkExpandTx.TxIn[1].PreviousOutPoint.Hash.IsEqual(&fundingTxHash) {
-		return nil, fmt.Errorf("stake expansion seccond input must be the given funding tx hash %s", fundingTxHash.String())
+		return nil, fmt.Errorf("stake expansion second input must be the given funding tx hash %s", fundingTxHash.String())
 	}
 	idxOtherInput := stkExpandTx.TxIn[1].PreviousOutPoint.Index
 
-	if len(fundingTx.TxOut) > int(idxOtherInput) {
+	if len(fundingTx.TxOut) <= int(idxOtherInput) {
 		return nil, fmt.Errorf("the given funding tx doesn't have the expected output %s", fundingTxHash.String())
 	}
 	otherOutput := fundingTx.TxOut[idxOtherInput]

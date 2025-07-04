@@ -532,7 +532,7 @@ func SignTxWithOneScriptSpendInputFromScript(
 	return SignTxWithOneScriptSpendInputFromTapLeaf(txToSign, fundingOutput, privKey, tapLeaf)
 }
 
-// GetSignatureForFirstScriptSpendWithTwoInputsFromScript signs transaction with two input coming
+// SignTxForFirstScriptSpendWithTwoInputsFromScript signs transaction with two input coming
 // from script spend output with provided script.
 // It does not do any validations, expect that txToSign has exactly two inputs.
 // In the context of a stake expansion the idx 0 `fundingOutputToSignIdx0`
@@ -540,7 +540,7 @@ func SignTxWithOneScriptSpendInputFromScript(
 // needs the covenant signatures to spend the BTC and the other funding
 // output `fundingOutputIdx1` would be an TxOut responsible to pay for fees
 // and optionally increasing the amount staked to that delegation.
-func GetSignatureForFirstScriptSpendWithTwoInputsFromScript(
+func SignTxForFirstScriptSpendWithTwoInputsFromScript(
 	txToSign *wire.MsgTx,
 	fundingOutputToSignIdx0 *wire.TxOut,
 	fundingOutputIdx1 *wire.TxOut,
@@ -548,13 +548,13 @@ func GetSignatureForFirstScriptSpendWithTwoInputsFromScript(
 	script []byte,
 ) (*schnorr.Signature, error) {
 	tapLeaf := txscript.NewBaseTapLeaf(script)
-	return GetSignatureForFirstScriptSpendWithTwoInputsFromTapLeaf(txToSign, fundingOutputToSignIdx0, fundingOutputIdx1, privKey, tapLeaf)
+	return SignTxForFirstScriptSpendWithTwoInputsFromTapLeaf(txToSign, fundingOutputToSignIdx0, fundingOutputIdx1, privKey, tapLeaf)
 }
 
-// GetSignatureForFirstScriptSpendWithTwoInputsFromTapLeaf signs transaction with two inputs coming
+// SignTxForFirstScriptSpendWithTwoInputsFromTapLeaf signs transaction with two inputs coming
 // from script spend output.
 // It does not do any validations, expect that txToSign has exactly two inputs.
-func GetSignatureForFirstScriptSpendWithTwoInputsFromTapLeaf(
+func SignTxForFirstScriptSpendWithTwoInputsFromTapLeaf(
 	txToSign *wire.MsgTx,
 	fundingOutputToSignIdx0 *wire.TxOut,
 	fundingOutputIdx1 *wire.TxOut,

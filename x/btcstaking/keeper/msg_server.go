@@ -489,7 +489,7 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 	spendStakeTxHash := stakeSpendingTx.TxHash()
 
 	stakeExpansionDel := ms.getBTCDelegation(ctx, spendStakeTxHash)
-	isStakeExpansion := stakeExpansionDel != nil && btcDel.IsStakeExpansion()
+	isStakeExpansion := stakeExpansionDel != nil && stakeExpansionDel.IsStakeExpansion()
 
 	// 1. Verify stake spending tx inclusion proof
 	if !isStakeExpansion {
