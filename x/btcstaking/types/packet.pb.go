@@ -523,9 +523,9 @@ func (m *BTCUndelegationInfo) GetDelegatorUnbondingInfo() *DelegatorUnbondingInf
 	return nil
 }
 
-// SlashedBTCDelegation is an IBC packet sent from Babylon to consumer
-// about a slashed BTC delegation restaked to >=1 of this consumer's
-// finality provider
+// SlashedBTCDelegation is an IBC packet sent from Babylon Genesis to consumer
+// about a slashed BTC delegation multi-staked to a finality provider
+// securing the consumer.
 type SlashedBTCDelegation struct {
 	// staking tx hash of the BTC delegation. It uniquely identifies a BTC delegation
 	StakingTxHash string `protobuf:"bytes,1,opt,name=staking_tx_hash,json=stakingTxHash,proto3" json:"staking_tx_hash,omitempty"`

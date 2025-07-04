@@ -78,14 +78,14 @@ func FuzzBTCDelegation_SlashingTx(f *testing.F) {
 		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		require.NoError(t, err)
 
-		// restaked to a random number of finality providers
-		numRestakedFPs := int(datagen.RandomInt(r, 10) + 1)
-		fpSKs, fpPKs, err := datagen.GenRandomBTCKeyPairs(r, numRestakedFPs)
+		// multi-staked to a random number of finality providers
+		numMultiStakedFPs := int(datagen.RandomInt(r, 10) + 1)
+		fpSKs, fpPKs, err := datagen.GenRandomBTCKeyPairs(r, numMultiStakedFPs)
 		require.NoError(t, err)
 		fpBTCPKs := bbn.NewBIP340PKsFromBTCPKs(fpPKs)
 
 		// a random finality provider gets slashed
-		slashedFPIdx := int(datagen.RandomInt(r, numRestakedFPs))
+		slashedFPIdx := int(datagen.RandomInt(r, numMultiStakedFPs))
 		fpSK := fpSKs[slashedFPIdx]
 
 		// (3, 5) covenant committee

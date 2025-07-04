@@ -54,7 +54,7 @@ func (d *BTCDelegation) HasInclusionProof() bool {
 }
 
 // GetFpIdx returns the index of the finality provider in the list of finality providers
-// that the BTC delegation is restaked to
+// that the BTC delegation is multi-staked to
 func (d *BTCDelegation) GetFpIdx(fpBTCPK *bbn.BIP340PubKey) int {
 	for i := 0; i < len(d.FpBtcPkList); i++ {
 		if d.FpBtcPkList[i].Equals(fpBTCPK) {
@@ -315,7 +315,7 @@ func (d *BTCDelegation) IsSignedByCovMember(covPk *bbn.BIP340PubKey) bool {
 
 // AddCovenantSigs adds signatures on the slashing tx from the given
 // covenant, where each signature is an adaptor signature encrypted by
-// each finality provider's PK this BTC delegation restakes to
+// each finality provider's PK this BTC delegation multi-stakes to
 // It is up to the caller to ensure that given adaptor signatures are valid or
 // that they were not added before
 func (d *BTCDelegation) AddCovenantSigs(
@@ -433,7 +433,7 @@ func (d *BTCDelegation) GetUnbondingInfo(bsParams *Params, btcNet *chaincfg.Para
 }
 
 // findFPIdx returns the index of the given finality provider
-// among all restaked finality providers
+// among all multi-staked finality providers
 func (d *BTCDelegation) findFPIdx(fpBTCPK *bbn.BIP340PubKey) (int, error) {
 	for i, pk := range d.FpBtcPkList {
 		if pk.Equals(fpBTCPK) {

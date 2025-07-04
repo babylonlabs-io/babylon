@@ -293,8 +293,8 @@ message BTCDelegation {
     ProofOfPossessionBTC pop = 3;
     // fp_btc_pk_list is the list of BIP-340 PKs of the finality providers that
     // this BTC delegation delegates to
-    // If there is more than 1 PKs, then this means the delegation is restaked
-    // to multiple finality providers
+    // If there is more than 1 PKs, then this means the delegation is
+    // multi-staked to multiple finality providers
     repeated bytes fp_btc_pk_list = 4 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/types.BIP340PubKey" ];
     // staking_time is the number of blocks for which the delegation is locked on BTC chain
     uint32 staking_time = 5;
