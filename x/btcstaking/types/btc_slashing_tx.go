@@ -189,7 +189,7 @@ func (tx *BTCSlashingTx) EncVerifyAdaptorSignature(
 }
 
 // ParseEncVerifyAdaptorSignatures verifies a list of adaptor signatures, each
-// encrypted by a restaked validator PK and signed by the given PK, w.r.t. the
+// encrypted by a multi-staked finality provider PK and signed by the given PK, w.r.t. the
 // given funding output (in staking or unbonding tx), slashing spend info and
 // slashing tx
 // It returns a list of parsed adaptor signatures in case of successful verification
@@ -227,7 +227,7 @@ func (tx *BTCSlashingTx) ParseEncVerifyAdaptorSignatures(
 }
 
 // EncVerifyAdaptorSignatures verifies a list of adaptor signatures, each
-// encrypted by a restaked validator PK and signed by the given PK, w.r.t. the
+// encrypted by a multi-staked finality provider PK and signed by the given PK, w.r.t. the
 // given funding output (in staking or unbonding tx), slashing spend info and
 // slashing tx
 func (tx *BTCSlashingTx) EncVerifyAdaptorSignatures(
@@ -263,7 +263,7 @@ func findFPIdxInWitness(fpSK *btcec.PrivateKey, fpBTCPKs []bbn.BIP340PubKey) (in
 
 // BuildSlashingTxWithWitness builds the witness for the slashing tx, including
 // - a (covenant_quorum, covenant_committee_size) multisig from covenant committee
-// - a (1, num_restaked_finality_providers) multisig from the slashed finality provider
+// - a (1, numMultiStakedFPs) multisig from the slashed finality provider
 // - 1 Schnorr signature from the staker
 func (tx *BTCSlashingTx) BuildSlashingTxWithWitness(
 	fpSK *btcec.PrivateKey,
@@ -310,7 +310,7 @@ func (tx *BTCSlashingTx) BuildSlashingTxWithWitness(
 
 	/*
 		construct finality providers' part of witness, i.e.,
-		1 out of numRestakedFPs signature
+		1 out of numMultiStakedFPs signature
 	*/
 	fpIdxInWitness, err := findFPIdxInWitness(fpSK, fpBTCPKs)
 	if err != nil {

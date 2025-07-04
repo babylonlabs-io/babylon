@@ -115,8 +115,7 @@ message BTCDelegation {
   ProofOfPossessionBTC pop = 3;
   // fp_btc_pk_list is the list of BIP-340 PKs of the finality providers that
   // this BTC delegation delegates to
-  // If there is more than 1 PKs, then this means the delegation is restaked
-  // to multiple finality providers
+  // If there are more than 1 PKs, then this means the delegation is multi-staked
   repeated bytes fp_btc_pk_list = 4
       [ (gogoproto.customtype) =
             "github.com/babylonlabs-io/babylon/v3/types.BIP340PubKey" ];
@@ -257,8 +256,9 @@ message CovenantAdaptorSignatures {
   bytes cov_pk = 1
       [ (gogoproto.customtype) =
             "github.com/babylonlabs-io/babylon/v3/types.BIP340PubKey" ];
-  // adaptor_sigs is a list of adaptor signatures, each encrypted by a restaked
-  // BTC finality provider's public key
+  // adaptor_sigs is a list of adaptor signatures, each encrypted
+  // by the finality provider public keys involved in the multi-staking
+  // procedure
   repeated bytes adaptor_sigs = 2;
 }
 
