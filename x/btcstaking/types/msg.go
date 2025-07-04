@@ -92,41 +92,6 @@ func (m *MsgEditFinalityProvider) ValidateBasic() error {
 	return nil
 }
 
-// GetSlashingTx returns the slashing tx
-func (m *MsgCreateBTCDelegation) GetSlashingTx() *BTCSlashingTx {
-	return m.SlashingTx
-}
-
-// GetUnbondingSlashingTx returns the unbond slashing tx
-func (m *MsgCreateBTCDelegation) GetUnbondingSlashingTx() *BTCSlashingTx {
-	return m.UnbondingSlashingTx
-}
-
-// GetDelegatorSlashingSig returns the slashing signature
-func (m *MsgCreateBTCDelegation) GetDelegatorSlashingSig() *bbn.BIP340Signature {
-	return m.DelegatorSlashingSig
-}
-
-// GetDelegatorUnbondingSlashingSig returns the unbonding slashing signature
-func (m *MsgCreateBTCDelegation) GetDelegatorUnbondingSlashingSig() *bbn.BIP340Signature {
-	return m.DelegatorUnbondingSlashingSig
-}
-
-// GetFpBtcPkList returns the list of FP BTC PK
-func (m *MsgCreateBTCDelegation) GetFpBtcPkList() []bbn.BIP340PubKey {
-	return m.FpBtcPkList
-}
-
-// GetBtcPk returns the btc delegator BTC PK
-func (m *MsgCreateBTCDelegation) GetBtcPk() *bbn.BIP340PubKey {
-	return m.BtcPk
-}
-
-// GetStakeExpansion returns the stake expansion
-func (m *MsgCreateBTCDelegation) GetStakeExpansion() (*ParsedCreateDelStkExp, error) {
-	return nil, nil
-}
-
 // ToParsed returns a parsed ParsedCreateDelegationMessage or error if it fails
 func (m *MsgCreateBTCDelegation) ToParsed() (*ParsedCreateDelegationMessage, error) {
 	if m == nil {
@@ -222,7 +187,7 @@ func (m *MsgBtcStakeExpand) ToParsed() (*ParsedCreateDelegationMessage, error) {
 		return nil, fmt.Errorf("cannot parse nil MsgCreateBTCDelegation")
 	}
 
-	return parseCreateDelegationMessage(m)
+	return parseBtcExpandMessage(m)
 }
 
 // ValidateBasic does all the checks as MsgCreateBTCDelegation
@@ -233,7 +198,7 @@ func (m *MsgBtcStakeExpand) ValidateBasic() error {
 		return err
 	}
 
-	if _, err := parseCreateDelegationMessage(m); err != nil {
+	if _, err := parseBtcExpandMessage(m); err != nil {
 		return err
 	}
 

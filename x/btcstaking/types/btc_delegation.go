@@ -3,6 +3,7 @@ package types
 import (
 	"bytes"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"math"
 
@@ -210,6 +211,9 @@ func (d *BTCDelegation) MustGetUnbondingTx() *wire.MsgTx {
 }
 
 func (d *BTCDelegation) StakeExpansionTxHash() (*chainhash.Hash, error) {
+	if !d.IsStakeExpansion() {
+		return nil, errors.New("stake expansion not found. This is not a stake expansion delegation")
+	}
 	return d.StkExp.StakeExpansionTxHash()
 }
 

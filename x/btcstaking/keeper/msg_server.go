@@ -384,10 +384,7 @@ func (ms msgServer) validateStakeExpansionSig(
 
 	// check if the btc pk was a covenant at the parameters version
 	// of the previous active staking transaction and signed it
-	prevTxHash, err := btcDel.StakeExpansionTxHash()
-	if err != nil {
-		return err
-	}
+	prevTxHash := btcDel.MustGetStakeExpansionTxHash()
 	prevBtcDel, prevParams, err := ms.getBTCDelWithParams(ctx, prevTxHash.String())
 	if err != nil {
 		return err

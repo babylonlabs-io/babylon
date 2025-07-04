@@ -15,25 +15,6 @@ import (
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
 )
 
-type ExpMsgParseBtcCreation interface {
-	GetStakingTx() []byte
-	GetSlashingTx() *BTCSlashingTx
-	GetUnbondingTx() []byte
-	GetStakingTxInclusionProof() *InclusionProof
-	GetUnbondingSlashingTx() *BTCSlashingTx
-	GetDelegatorSlashingSig() *bbn.BIP340Signature
-	GetDelegatorUnbondingSlashingSig() *bbn.BIP340Signature
-	GetFpBtcPkList() []bbn.BIP340PubKey
-	GetBtcPk() *bbn.BIP340PubKey
-	GetStakingTime() uint32
-	GetUnbondingTime() uint32
-	GetStakerAddr() string
-	GetPop() *ProofOfPossessionBTC
-	GetStakingValue() int64
-	GetUnbondingValue() int64
-	GetStakeExpansion() (*ParsedCreateDelStkExp, error)
-}
-
 type ParsedPublicKey struct {
 	*btcec.PublicKey
 	*bbn.BIP340PubKey
@@ -178,15 +159,11 @@ type ParsedCreateDelStkExp struct {
 	OtherFundingOutput *wire.TxOut
 }
 
-// parseCreateDelegationMessage parses a MsgCreateBTCDelegation message and performs some basic
+// parseCreateDelegationMessage parses MsgCreateBTCDelegation message and performs some basic
 // stateless checks:
 // - unbonding transaction is a simple transfer
 // - there is no duplicated keys in the finality provider key list
-func parseCreateDelegationMessage(msg ExpMsgParseBtcCreation) (*ParsedCreateDelegationMessage, error) {
-	if msg == nil {
-		return nil, fmt.Errorf("cannot parse nil MsgCreateBTCDelegation")
-	}
-
+func parseCreateDelegationMessage(msg *MsgCreateBTCDelegation) (*ParsedCreateDelegationMessage, error) {
 	// NOTE: stakingTxProofOfInclusion could be nil as we allow msg.StakingTxInclusionProof to be nil
 	stakingTxProofOfInclusion, err := NewParsedProofOfInclusion(msg.GetStakingTxInclusionProof())
 	if err != nil {
@@ -199,11 +176,11 @@ func parseCreateDelegationMessage(msg ExpMsgParseBtcCreation) (*ParsedCreateDele
 		return nil, fmt.Errorf("failed to deserialize staking tx: %v", err)
 	}
 
-	if msg.GetSlashingTx() == nil {
+	if msg.SlashingTx == nil {
 		return nil, fmt.Errorf("SlashingTx is nil")
 	}
 
-	stakingSlashingTx, err := NewBtcTransaction(msg.GetSlashingTx().MustMarshal())
+	stakingSlashingTx, err := NewBtcTransaction(msg.SlashingTx.MustMarshal())
 	if err != nil {
 		return nil, fmt.Errorf("failed to deserialize staking slashing tx: %v", err)
 	}
@@ -213,11 +190,11 @@ func parseCreateDelegationMessage(msg ExpMsgParseBtcCreation) (*ParsedCreateDele
 		return nil, fmt.Errorf("failed to deserialize unbonding tx: %v", err)
 	}
 
-	if msg.GetUnbondingSlashingTx() == nil {
+	if msg.UnbondingSlashingTx == nil {
 		return nil, fmt.Errorf("UnbondingSlashingTx is nil")
 	}
 
-	unbondingSlashingTx, err := NewBtcTransaction(msg.GetUnbondingSlashingTx().MustMarshal())
+	unbondingSlashingTx, err := NewBtcTransaction(msg.UnbondingSlashingTx.MustMarshal())
 	if err != nil {
 		return nil, fmt.Errorf("failed to deserialize unbonding slashing tx: %v", err)
 	}
@@ -247,18 +224,18 @@ func parseCreateDelegationMessage(msg ExpMsgParseBtcCreation) (*ParsedCreateDele
 	}
 
 	// 5. Parse signatures for slashing transaction
-	stakerStakingSlashingTxSig, err := NewParsedBIP340Signature(msg.GetDelegatorSlashingSig())
+	stakerStakingSlashingTxSig, err := NewParsedBIP340Signature(msg.DelegatorSlashingSig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse staker staking slashing signature: %v", err)
 	}
 
-	stakerUnbondingSlashingSig, err := NewParsedBIP340Signature(msg.GetDelegatorUnbondingSlashingSig())
+	stakerUnbondingSlashingSig, err := NewParsedBIP340Signature(msg.DelegatorUnbondingSlashingSig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse staker unbonding slashing signature: %v", err)
 	}
 
 	// 6. Parse finality provider public keys and check for duplicates
-	fpPKs, err := NewParsedPublicKeyList(msg.GetFpBtcPkList())
+	fpPKs, err := NewParsedPublicKeyList(msg.FpBtcPkList)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse finality provider public keys: %v", err)
 	}
@@ -272,7 +249,7 @@ func parseCreateDelegationMessage(msg ExpMsgParseBtcCreation) (*ParsedCreateDele
 	}
 
 	// 7. Parse staker public key
-	stakerPK, err := NewParsedPublicKey(msg.GetBtcPk())
+	stakerPK, err := NewParsedPublicKey(msg.BtcPk)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse staker public key: %v", err)
 	}
@@ -284,11 +261,6 @@ func parseCreateDelegationMessage(msg ExpMsgParseBtcCreation) (*ParsedCreateDele
 
 	if msg.GetUnbondingValue() < 0 {
 		return nil, fmt.Errorf("unbonding value must be positive")
-	}
-
-	stkExp, err := msg.GetStakeExpansion()
-	if err != nil {
-		return nil, fmt.Errorf("getting stake expansion: %w", err)
 	}
 
 	return &ParsedCreateDelegationMessage{
@@ -307,8 +279,42 @@ func parseCreateDelegationMessage(msg ExpMsgParseBtcCreation) (*ParsedCreateDele
 		StakerUnbondingSlashingSig: stakerUnbondingSlashingSig,
 		FinalityProviderKeys:       fpPKs,
 		ParsedPop:                  msg.GetPop(),
-		StkExp:                     stkExp,
 	}, nil
+}
+
+// parseBtcExpandMessage parses MsgBtcStakeExpand message and performs some basic
+// stateless checks:
+// - unbonding transaction is a simple transfer
+// - there is no duplicated keys in the finality provider key list
+func parseBtcExpandMessage(msg *MsgBtcStakeExpand) (*ParsedCreateDelegationMessage, error) {
+	// reuse parseCreateDelegationMessage cause MsgBtcStakeExpand has
+	// same fields as MsgCreateBTCDelegation (plus 2 more related to stake expansion)
+	parsed, err := parseCreateDelegationMessage(&MsgCreateBTCDelegation{
+		StakerAddr:                    msg.StakerAddr,
+		Pop:                           msg.Pop,
+		BtcPk:                         msg.BtcPk,
+		FpBtcPkList:                   msg.FpBtcPkList,
+		StakingTime:                   msg.StakingTime,
+		StakingValue:                  msg.StakingValue,
+		StakingTx:                     msg.StakingTx,
+		StakingTxInclusionProof:       msg.StakingTxInclusionProof,
+		SlashingTx:                    msg.SlashingTx,
+		DelegatorSlashingSig:          msg.DelegatorSlashingSig,
+		UnbondingTime:                 msg.UnbondingTime,
+		UnbondingTx:                   msg.UnbondingTx,
+		UnbondingValue:                msg.UnbondingValue,
+		UnbondingSlashingTx:           msg.UnbondingSlashingTx,
+		DelegatorUnbondingSlashingSig: msg.DelegatorUnbondingSlashingSig,
+	})
+	if err != nil {
+		return nil, err
+	}
+	stkExp, err := msg.GetStakeExpansion()
+	if err != nil {
+		return nil, err
+	}
+	parsed.StkExp = stkExp
+	return parsed, nil
 }
 
 func (msg *ParsedCreateDelegationMessage) IsIncludedOnBTC() bool {
