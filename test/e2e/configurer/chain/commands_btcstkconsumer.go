@@ -51,7 +51,7 @@ func (n *NodeConfig) CreateConsumerFinalityProvider(walletAddrOrName string, con
 		fmt.Sprintf("--from=%s", walletAddrOrName), "--moniker", moniker, "--identity", identity, "--website", website,
 		"--security-contact", securityContract, "--details", details, "--commission-rate", commission.String(),
 		"--commission-max-rate", commissionMaxRate.String(), "--commission-max-change-rate", commissionMaxRateChange.String(),
-		"--consumer-id", consumerID,
+		"--bsn-id", consumerID,
 	}
 
 	_, _, err = n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
