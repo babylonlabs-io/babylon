@@ -92,11 +92,9 @@ func (k Keeper) VerifyInclusionProofAndGetHeight(
 // 8. Emit active event
 func (k Keeper) AddBTCDelegationInclusionProof(
 	ctx sdk.Context,
-	delInfo *btcDelegationWithParams,
+	btcDel *types.BTCDelegation,
 	stakingTxInclusionProof *types.InclusionProof,
 ) error {
-	btcDel, params := delInfo.Delegation, delInfo.Params
-
 	// 1. sanity check the given params
 	if btcDel == nil {
 		return types.ErrBTCDelegationNotFound
@@ -116,12 +114,17 @@ func (k Keeper) AddBTCDelegationInclusionProof(
 		return fmt.Errorf("the delegation %s already has inclusion proof", stakingTxHashStr)
 	}
 
-	// 3. check if the delegation has received a quorum of covenant sigs
-	var quorumPreviousStk uint32
-	if btcDel.IsStakeExpansion() {
-		quorumPreviousStk = delInfo.PrevParams.CovenantQuorum
+	params := k.GetParamsByVersion(ctx, btcDel.ParamsVersion)
+	if params == nil {
+		panic("params version in BTC delegation is not found")
 	}
-	if !btcDel.HasCovenantQuorums(params.CovenantQuorum, quorumPreviousStk) {
+
+	// 3. check if the delegation has received a quorum of covenant sigs
+	hasQuorum, err := k.BtcDelHasCovenantQuorums(ctx, btcDel, params.CovenantQuorum)
+	if err != nil {
+		return err
+	}
+	if !hasQuorum {
 		return fmt.Errorf("the delegation %s has not received a quorum of covenant signatures", stakingTxHashStr)
 	}
 

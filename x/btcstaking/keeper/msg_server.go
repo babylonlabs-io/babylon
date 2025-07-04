@@ -191,19 +191,19 @@ func (ms msgServer) AddBTCDelegationInclusionProof(
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// 1. make sure the delegation exists
-	delInfo, err := ms.getBTCDelWithParams(ctx, req.StakingTxHash)
+	btcDel, err := ms.GetBTCDelegation(ctx, req.StakingTxHash)
 	if err != nil {
 		return nil, err
 	}
 
-	if delInfo.Delegation.IsStakeExpansion() {
+	if btcDel.IsStakeExpansion() {
 		return nil, fmt.Errorf("the BTC delegation %s is a stake expansion, use MsgBTCUndelegate to set the inclusion proof", req.StakingTxHash)
 	}
 
 	// Creates events and updates the btc del if all the checks are valid
 	// already has inclusion proof, quorum, wasn't unbonded, if the inclusion proof is valid,
 	// k-deep, staking time > unbonding time blocks.
-	if err := ms.Keeper.AddBTCDelegationInclusionProof(ctx, delInfo, req.StakingTxInclusionProof); err != nil {
+	if err := ms.Keeper.AddBTCDelegationInclusionProof(ctx, btcDel, req.StakingTxInclusionProof); err != nil {
 		return nil, err
 	}
 
@@ -512,7 +512,7 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 	if isStakeExpansion {
 		// Add inclusion proof for stake expansion delegation if stake expansion tx is 'k' deep
 		// If successful, this will set stake expansion delegation as active
-		if err := ms.Keeper.AddBTCDelegationInclusionProof(ctx, delInfo, req.StakeSpendingTxInclusionProof); err != nil {
+		if err := ms.Keeper.AddBTCDelegationInclusionProof(ctx, stakeExpansionDel, req.StakeSpendingTxInclusionProof); err != nil {
 			return nil, types.ErrInvalidBTCUndelegateReq.Wrapf("failed to handle stake expansion inclusion: %s", err)
 		}
 	} else {
