@@ -142,7 +142,7 @@ func FuzzFinalityProvider(f *testing.F) {
 			require.Equal(t, v.HighestVotedHeight, resp.FinalityProvider.HighestVotedHeight)
 			require.Equal(t, v.CommissionInfo.MaxRate, resp.FinalityProvider.CommissionInfo.MaxRate)
 			require.Equal(t, v.CommissionInfo.MaxChangeRate, resp.FinalityProvider.CommissionInfo.MaxChangeRate)
-			require.Equal(t, v.ConsumerId, resp.FinalityProvider.ConsumerId)
+			require.Equal(t, v.BsnId, resp.FinalityProvider.BsnId)
 		}
 
 		// check some random non-existing guy
@@ -421,9 +421,9 @@ func AddFinalityProvider(
 			fp.CommissionInfo.MaxRate,
 			fp.CommissionInfo.MaxChangeRate,
 		),
-		BtcPk:      fp.BtcPk,
-		Pop:        fp.Pop,
-		ConsumerId: fp.ConsumerId,
+		BtcPk: fp.BtcPk,
+		Pop:   fp.Pop,
+		BsnId: fp.BsnId,
 	})
 	require.NoError(t, err)
 }
