@@ -39,6 +39,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
+- [#1300](https://github.com/babylonlabs-io/babylon/pull/1300) x/btcstaking handles fp ops
 - [#1295](https://github.com/babylonlabs-io/babylon/pull/1295) Rename
 `consumer_id` to `bsn_id` for finality providers
 - [#1292](https://github.com/babylonlabs-io/babylon/pull/1292) Use correct

@@ -119,7 +119,7 @@ func FuzzTestExportGenesis(f *testing.F) {
 		}
 
 		numFps := datagen.RandomInt(r, 10) + 1
-		fps := datagen.CreateNFinalityProviders(r, t, "", int(numFps))
+		fps := datagen.CreateNFinalityProviders(r, t, "", "", int(numFps))
 		vpFps := make(map[string]*types.VotingPowerFP, 0)
 		for _, fp := range fps {
 			vp := datagen.RandomInt(r, 1000000)

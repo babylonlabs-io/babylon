@@ -2,7 +2,7 @@ package wasmbinding
 
 import (
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-	bsctypes "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
+	btcstakingtypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 	epochtypes "github.com/babylonlabs-io/babylon/v3/x/epoching/types"
 	ftypes "github.com/babylonlabs-io/babylon/v3/x/finality/types"
 	"github.com/cosmos/gogoproto/proto"
@@ -12,8 +12,8 @@ import (
 func WhitelistedGrpcQuery() wasmkeeper.AcceptedQueries {
 	return wasmkeeper.AcceptedQueries{
 		// btcstkconsumer
-		"/babylon.btcstkconsumer.v1.Query/FinalityProvider": func() proto.Message {
-			return &bsctypes.QueryFinalityProviderResponse{}
+		"/babylon.btcstaking.v1.Query/FinalityProvider": func() proto.Message {
+			return &btcstakingtypes.QueryFinalityProviderResponse{}
 		},
 		// btcstaking
 		"/babylon.btcstaking.v1.Query/FinalityProviderCurrentPower": func() proto.Message {

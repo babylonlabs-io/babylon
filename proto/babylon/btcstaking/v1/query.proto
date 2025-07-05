@@ -43,7 +43,7 @@ service Query {
   // FinalityProviders queries all finality providers
   rpc FinalityProviders(QueryFinalityProvidersRequest)
       returns (QueryFinalityProvidersResponse) {
-    option (google.api.http).get = "/babylon/btcstaking/v1/finality_providers";
+    option (google.api.http).get = "/babylon/btcstaking/v1/finality_providers/{bsn_id}";
   }
 
   // FinalityProvider info about one finality provider
@@ -78,6 +78,11 @@ service Query {
   // LargestBtcReOrg retrieves the largest BTC reorg
   rpc LargestBtcReOrg(QueryLargestBtcReOrgRequest) returns (QueryLargestBtcReOrgResponse) {
     option (google.api.http).get = "/babylon/btcstaking/v1/largest_btc_reorg";
+  }
+
+  // FinalityProviderBSNId info about one finality provider's BSN id
+  rpc FinalityProviderBSNId(QueryFinalityProviderBSNIdRequest) returns (QueryFinalityProviderBSNIdResponse) {
+    option (google.api.http).get = "/babylon/btcstaking/v1/finality_provider_bsn_id/{fp_btc_pk_hex}";
   }
 }
 
@@ -118,6 +123,9 @@ message QueryParamsByBTCHeightResponse {
 message QueryFinalityProvidersRequest {
   // pagination defines an optional pagination for the request.
   cosmos.base.query.v1beta1.PageRequest pagination = 1;
+  // bsn_id allows to specify for which BSN to return finality providers for.
+  // Defaults to the Babylon Genesis BSN ID
+  string bsn_id = 2;
 }
 
 // QueryFinalityProvidersResponse is the response type for the
@@ -350,6 +358,18 @@ message QueryLargestBtcReOrgResponse {
   babylon.btclightclient.v1.BTCHeaderInfoResponse rollback_to = 3;
 }
 
+// QueryFinalityProviderBSNIdRequest requests the id of the BSN
+// that a finality provider secures
+message QueryFinalityProviderBSNIdRequest {
+  // fp_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the finality provider
+  string fp_btc_pk_hex = 1;
+}
+
+// QueryFinalityProviderBSNIdResponse returns the BSN id
+// secured by the finality provider
+message QueryFinalityProviderBSNIdResponse {
+  string bsn_id = 1;
+}
 
 // QueryParamsVersionsRequest is the request type for the
 // Query/ParamsVersions RPC method.

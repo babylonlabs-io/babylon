@@ -45,6 +45,11 @@ func (k Keeper) AddFinalityProvider(goCtx context.Context, msg *types.MsgCreateF
 		// Babylon chain ID
 		bsnID = ctx.ChainID()
 	}
+	// If this is a consumer finality provider, ensure the consumer is registered
+	if bsnID != ctx.ChainID() && !k.BscKeeper.IsConsumerRegistered(ctx, bsnID) {
+		// if BSN ID is provided and it's not Babylon's chain ID, ensure it's a registered consumer
+		return types.ErrFpBSNIdNotRegistered
+	}
 
 	// all good, add this finality provider
 	fp := types.FinalityProvider{
@@ -57,10 +62,13 @@ func (k Keeper) AddFinalityProvider(goCtx context.Context, msg *types.MsgCreateF
 		CommissionInfo: commissionInfo,
 	}
 
-	if bsnID == ctx.ChainID() {
-		k.setFinalityProvider(ctx, &fp)
-	} else {
-		if err := k.SetConsumerFinalityProvider(ctx, &fp, bsnID); err != nil {
+	k.setFinalityProvider(ctx, &fp)
+	k.bsnIndexFinalityProvider(ctx, &fp)
+
+	// Create BTC Staking Consumer Event for the new finality provider
+	// TODO: examine whether these events are really needed
+	if !fp.SecuresBabylonGenesis(ctx) {
+		if err := k.AddBTCStakingConsumerEvent(ctx, fp.BsnId, types.CreateNewFinalityProviderEvent(&fp)); err != nil {
 			return err
 		}
 	}
@@ -74,6 +82,12 @@ func (k Keeper) setFinalityProvider(ctx context.Context, fp *types.FinalityProvi
 	store := k.finalityProviderStore(ctx)
 	fpBytes := k.cdc.MustMarshal(fp)
 	store.Set(fp.BtcPk.MustMarshal(), fpBytes)
+}
+
+func (k Keeper) bsnIndexFinalityProvider(ctx context.Context, fp *types.FinalityProvider) {
+	indexStore := k.finalityProviderBsnIndexStore(ctx)
+	bsnKey := types.BuildBsnIndexKey(fp.BsnId, fp.BtcPk)
+	indexStore.Set(bsnKey, []byte{}) // Empty value, just for existence
 }
 
 // UpdateFinalityProvider update the given finality provider to KVStore
@@ -116,71 +130,39 @@ func (k Keeper) SlashFinalityProvider(ctx context.Context, fpBTCPK []byte) error
 
 	// First try to get as Babylon finality provider
 	fp, err := k.GetFinalityProvider(ctx, *fpBTCPKObj)
-	if err == nil {
-		// It's a Babylon FP, slash it using the existing logic
-		// ensure finality provider is not slashed yet
-		if fp.IsSlashed() {
-			return types.ErrFpAlreadySlashed
-		}
-
-		// set finality provider to be slashed
-		fp.SlashedBabylonHeight = uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
-		btcTip := k.btclcKeeper.GetTipInfo(ctx)
-		if btcTip == nil {
-			return fmt.Errorf("failed to get current BTC tip")
-		}
-		fp.SlashedBtcHeight = btcTip.Height
-		k.setFinalityProvider(ctx, fp)
-
-		// record slashed event. The next `BeginBlock` will consume this
-		// event for updating the finality provider set
-		powerUpdateEvent := types.NewEventPowerDistUpdateWithSlashedFP(fp.BtcPk)
-		k.addPowerDistUpdateEvent(ctx, btcTip.Height, powerUpdateEvent)
-
-		return nil
-	}
-
-	// Then try to get as consumer finality provider
-	// Get the consumer ID for this finality provider
-	consumerID, err := k.BscKeeper.GetConsumerOfFinalityProvider(ctx, fpBTCPKObj)
-	if err != nil {
-		return fmt.Errorf("failed to get consumer of finality provider: %w", err)
-	}
-	// Use the existing SlashConsumerFinalityProvider function
-	return k.SlashConsumerFinalityProvider(ctx, consumerID, fpBTCPKObj)
-}
-
-// SlashConsumerFinalityProvider slashes a consumer finality provider with the given PK
-func (k Keeper) SlashConsumerFinalityProvider(ctx context.Context, consumerID string, fpBTCPK *bbn.BIP340PubKey) error {
-	// Get consumer finality provider
-	fp, err := k.BscKeeper.GetConsumerFinalityProvider(ctx, consumerID, fpBTCPK)
 	if err != nil {
 		return err
 	}
 
-	// Return error if already slashed
 	if fp.IsSlashed() {
 		return types.ErrFpAlreadySlashed
 	}
 
-	// Set slashed height
+	// set finality provider to be slashed
 	fp.SlashedBabylonHeight = uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
 	btcTip := k.btclcKeeper.GetTipInfo(ctx)
 	if btcTip == nil {
 		return fmt.Errorf("failed to get current BTC tip")
 	}
 	fp.SlashedBtcHeight = btcTip.Height
-	k.BscKeeper.SetConsumerFinalityProvider(ctx, fp)
+	k.setFinalityProvider(ctx, fp)
 
-	// Process all delegations for this consumer finality provider and record slashed events
-	err = k.HandleFPBTCDelegations(ctx, fpBTCPK, func(btcDel *types.BTCDelegation) error {
-		stakingTxHash := btcDel.MustGetStakingTxHash().String()
-		eventSlashedBTCDelegation := types.NewEventPowerDistUpdateWithSlashedBTCDelegation(stakingTxHash)
-		k.addPowerDistUpdateEvent(ctx, btcTip.Height, eventSlashedBTCDelegation)
-		return nil
-	})
-	if err != nil {
-		return fmt.Errorf("failed to handle BTC delegations: %w", err)
+	if fp.SecuresBabylonGenesis(sdk.UnwrapSDKContext(ctx)) {
+		// record slashed event. The next `BeginBlock` will consume this
+		// event for updating the finality provider set
+		powerUpdateEvent := types.NewEventPowerDistUpdateWithSlashedFP(fp.BtcPk)
+		k.addPowerDistUpdateEvent(ctx, btcTip.Height, powerUpdateEvent)
+	} else {
+		// Process all delegations for this consumer finality provider and record slashed events
+		err = k.HandleFPBTCDelegations(ctx, fp.BtcPk, func(btcDel *types.BTCDelegation) error {
+			stakingTxHash := btcDel.MustGetStakingTxHash().String()
+			eventSlashedBTCDelegation := types.NewEventPowerDistUpdateWithSlashedBTCDelegation(stakingTxHash)
+			k.addPowerDistUpdateEvent(ctx, btcTip.Height, eventSlashedBTCDelegation)
+			return nil
+		})
+		if err != nil {
+			return fmt.Errorf("failed to handle BTC delegations: %w", err)
+		}
 	}
 
 	return nil
@@ -215,31 +197,21 @@ func (k Keeper) PropagateFPSlashingToConsumers(ctx context.Context, fpBTCPK *bbn
 	err := k.HandleFPBTCDelegations(ctx, fpBTCPK, func(delegation *types.BTCDelegation) error {
 		consumerEvent := types.CreateSlashedBTCDelegationEvent(delegation)
 
-		// Track consumers seen for this delegation
-		seenConsumers := make(map[string]struct{})
-
 		for _, delegationFPBTCPK := range delegation.FpBtcPkList {
 			fpBTCPKHex := delegationFPBTCPK.MarshalHex()
-			consumerID, exists := fpToConsumerMap[fpBTCPKHex]
-			if !exists {
-				// If not in map, check if it's a Babylon FP or get its consumer
-				// TODO: avoid querying GetFinalityProvider again by passing the result
-				// https://github.com/babylonlabs-io/babylon/v3/blob/873f1232365573a97032037af4ac99b5e3fcada8/x/btcstaking/keeper/btc_delegators.go#L79 to this function
-				if _, err := k.GetFinalityProvider(ctx, delegationFPBTCPK); err == nil {
-					continue // It's a Babylon FP, skip
-				} else if consumerID, err = k.BscKeeper.GetConsumerOfFinalityProvider(ctx, &delegationFPBTCPK); err == nil {
-					// Found consumer, add to map
-					fpToConsumerMap[fpBTCPKHex] = consumerID
-				} else {
-					return types.ErrFpNotFound.Wrapf("finality provider pk %s is not found", fpBTCPKHex)
+			if _, ok := fpToConsumerMap[fpBTCPKHex]; !ok {
+				fp, err := k.GetFinalityProvider(ctx, delegationFPBTCPK)
+				if err != nil {
+					return err
 				}
+				if fp.SecuresBabylonGenesis(sdk.UnwrapSDKContext(ctx)) {
+					continue
+				}
+				fpToConsumerMap[fpBTCPKHex] = fp.BsnId
 			}
 
 			// Only add event once per consumer per delegation
-			if _, ok := seenConsumers[consumerID]; !ok {
-				consumerEvents[consumerID] = append(consumerEvents[consumerID], consumerEvent)
-				seenConsumers[consumerID] = struct{}{}
-			}
+			consumerEvents[fpToConsumerMap[fpBTCPKHex]] = append(consumerEvents[fpToConsumerMap[fpBTCPKHex]], consumerEvent)
 		}
 		return nil
 	})
@@ -330,6 +302,15 @@ func (k Keeper) UnjailFinalityProvider(ctx context.Context, fpBTCPK []byte) erro
 func (k Keeper) finalityProviderStore(ctx context.Context) prefix.Store {
 	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
 	return prefix.NewStore(storeAdapter, types.FinalityProviderKey)
+}
+
+// finalityProviderBsnIndexStore returns the KVStore of the finality provider BSN index
+// prefix: FinalityProviderBsnIndexKey
+// key: BSN ID || Bitcoin secp256k1 PK
+// value: empty
+func (k Keeper) finalityProviderBsnIndexStore(ctx context.Context) prefix.Store {
+	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
+	return prefix.NewStore(storeAdapter, types.FinalityProviderBsnIndexKey)
 }
 
 // UpdateFinalityProviderCommission performs stateful validation checks of a new commission

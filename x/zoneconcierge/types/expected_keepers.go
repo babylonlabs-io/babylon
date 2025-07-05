@@ -94,14 +94,12 @@ type BTCStakingKeeper interface {
 	GetAllBTCStakingConsumerIBCPackets(ctx context.Context) map[string]*bstypes.BTCStakingIBCPacket
 	DeleteBTCStakingConsumerIBCPacket(ctx context.Context, consumerID string)
 	PropagateFPSlashingToConsumers(ctx context.Context, fpBTCPK *bbn.BIP340PubKey) error
-	SlashConsumerFinalityProvider(ctx context.Context, consumerID string, fpBTCPK *bbn.BIP340PubKey) error
+	SlashFinalityProvider(ctx context.Context, fpBTCPK []byte) error
+	GetFinalityProvider(ctx context.Context, fpBTCPK []byte) (*bstypes.FinalityProvider, error)
 }
 
 type BTCStkConsumerKeeper interface {
 	RegisterConsumer(ctx context.Context, consumerRegister *btcstkconsumertypes.ConsumerRegister) error
 	UpdateConsumer(ctx context.Context, consumerRegister *btcstkconsumertypes.ConsumerRegister) error
 	GetConsumerRegister(ctx context.Context, consumerID string) (*btcstkconsumertypes.ConsumerRegister, error)
-	GetConsumerOfFinalityProvider(ctx context.Context, fpBTCPK *bbn.BIP340PubKey) (string, error)
-	GetConsumerFinalityProvider(ctx context.Context, consumerID string, fpBTCPK *bbn.BIP340PubKey) (*bstypes.FinalityProvider, error)
-	SetConsumerFinalityProvider(ctx context.Context, fp *bstypes.FinalityProvider)
 }
