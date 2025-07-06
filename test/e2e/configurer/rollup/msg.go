@@ -12,11 +12,6 @@ type CommitPublicRandomnessMsgParams struct {
 	Signature   []byte `json:"signature"`
 }
 
-// TODO: need to update based on contract implementation
-type CommitPublicRandomnessResponse struct {
-	Result bool `json:"result"`
-}
-
 type SubmitFinalitySignatureMsg struct {
 	SubmitFinalitySignature SubmitFinalitySignatureMsgParams `json:"submit_finality_signature"`
 }
@@ -28,11 +23,6 @@ type SubmitFinalitySignatureMsgParams struct {
 	Proof       Proof  `json:"proof"`
 	BlockHash   []byte `json:"block_hash"`
 	Signature   []byte `json:"signature"`
-}
-
-// TODO: need to update based on contract implementation
-type SubmitFinalitySignatureResponse struct {
-	Result bool `json:"result"`
 }
 
 type QueryMsg struct {
