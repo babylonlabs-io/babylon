@@ -144,6 +144,10 @@ func (ms msgServer) BtcStakeExpand(goCtx context.Context, req *types.MsgBtcStake
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	previousBtcDel, isPreviousStkActive, err := ms.IsBtcDelegationActive(ctx, req.PreviousStakingTxHash)
+	if err != nil {
+		return nil, err
+	}
+
 	if !isPreviousStkActive {
 		return nil, err
 	}
@@ -171,6 +175,35 @@ func (ms msgServer) BtcStakeExpand(goCtx context.Context, req *types.MsgBtcStake
 	parsedMsg, err := req.ToParsed()
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	stkExpandTx := parsedMsg.StakingTx.Transaction
+	// Check that the input index matches the previous delegation's staking output index
+	if previousBtcDel.StakingOutputIdx != stkExpandTx.TxIn[0].PreviousOutPoint.Index {
+		return nil, fmt.Errorf("staking expansion tx input index %d does not match previous delegation staking output index %d",
+			stkExpandTx.TxIn[0].PreviousOutPoint.Index, previousBtcDel.StakingOutputIdx)
+	}
+
+	// Check that the new delegation staking output amount is >= old delegation staking output amount
+	// Assume staking output index is the same as previousBtcDel.StakingOutputIdx
+	if int(previousBtcDel.StakingOutputIdx) >= len(stkExpandTx.TxOut) {
+		return nil, fmt.Errorf("staking expansion tx does not have expected output index %d", previousBtcDel.StakingOutputIdx)
+	}
+
+	newStakingAmt := stkExpandTx.TxOut[previousBtcDel.StakingOutputIdx].Value
+	oldStakingAmt := int64(previousBtcDel.TotalSat)
+	if newStakingAmt < oldStakingAmt {
+		return nil, fmt.Errorf("staking expansion output amount %d is less than previous delegation amount %d", newStakingAmt, oldStakingAmt)
+	}
+
+	// Check covenant committee overlap: ensure at least old_quorum covenant members from old params are still active in new params
+	oldParams := ms.GetParamsByVersion(ctx, previousBtcDel.ParamsVersion)
+	if oldParams == nil {
+		return nil, fmt.Errorf("params version %d for previous delegation not found", previousBtcDel.ParamsVersion)
+	}
+	currentParams := ms.GetParams(ctx)
+	if !hasSufficientCovenantOverlap(oldParams.CovenantPks, currentParams.CovenantPks, oldParams.CovenantQuorum) {
+		return nil, fmt.Errorf("insufficient covenant committee overlap: need at least %d members from old committee in new committee", oldParams.CovenantQuorum)
 	}
 
 	// executes same flow as MsgCreateBTCDelegation pre-approval
