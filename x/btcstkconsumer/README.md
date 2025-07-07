@@ -265,7 +265,8 @@ message EventConsumerRegistered {
 ```
 
 *   `consumer_type`: Indicates whether the BSN is `COSMOS` (0) or `ROLLUP` (1).
-*   `rollup_consumer_metadata`: Contains the rollup's finality contract address if the type is `ROLLUP`.
+*   `rollup_consumer_metadata`: Contains the rollup's finality contract address if the type is `ROLLUP`. 
+     Note: `rollup_consumer_metadata` will be empty and/or appear where the Cosmos metadata is shown in the event payload.
 
 ## 6. Queries
 
