@@ -800,7 +800,10 @@ func (ak *AppKeepers) InitKeepers(
 	var transferStack porttypes.IBCModule
 	transferStack = transfer.NewIBCModule(ak.TransferKeeper)
 
-	cbStack := ibccallbacks.NewIBCMiddleware(transferStack, ak.PFMRouterKeeper, wasmStackIBCHandler, appparams.MaxIBCCallbackGas)
+	// Add incentive callback middleware for BSN fee collection
+	cbStack := ibccallbacks.NewIBCMiddleware(transferStack, ak.PFMRouterKeeper, &ak.IncentiveKeeper, appparams.MaxIBCCallbackGas)
+	// Add WASM callback middleware for existing WASM contracts
+	//cbStack = ibccallbacks.NewIBCMiddleware(cbStack, ak.IBCKeeper.ChannelKeeper, wasmStackIBCHandler, appparams.MaxIBCCallbackGas)
 	transferStack = pfmrouter.NewIBCMiddleware(
 		cbStack,
 		ak.PFMRouterKeeper,
@@ -808,15 +811,18 @@ func (ak *AppKeepers) InitKeepers(
 		pfmrouterkeeper.DefaultForwardTransferPacketTimeoutTimestamp,
 	)
 	transferStack = ratelimiter.NewIBCMiddleware(ak.RatelimitKeeper, transferStack)
+
+	// Set the ICS4Wrapper to use the outermost callback stack
 	ak.TransferKeeper.WithICS4Wrapper(cbStack)
 
 	// Transfer Stack for IBC V2
 	var transferStackV2 ibcapi.IBCModule
 	transferStackV2 = transferv2.NewIBCModule(ak.TransferKeeper)
+	// Add incentive callback middleware for BSN fee collection (IBC v2)
 	transferStackV2 = ibccallbacksv2.NewIBCMiddleware(
 		transferStackV2,
 		ak.IBCKeeper.ChannelKeeperV2,
-		wasmStackIBCHandler,
+		&ak.IncentiveKeeper,
 		ak.IBCKeeper.ChannelKeeperV2,
 		appparams.MaxIBCCallbackGas,
 	)

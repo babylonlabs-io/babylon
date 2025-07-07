@@ -167,20 +167,21 @@ var (
 	DefaultNodeHome string
 	// fee collector account, module accounts and their permissions
 	maccPerms = map[string][]string{
-		authtypes.FeeCollectorName:     {authtypes.Burner}, // fee collector account, needs Burner role for feemarket burning of BaseFee
-		distrtypes.ModuleName:          nil,
-		minttypes.ModuleName:           {authtypes.Minter},
-		stakingtypes.BondedPoolName:    {authtypes.Burner, authtypes.Staking},
-		stakingtypes.NotBondedPoolName: {authtypes.Burner, authtypes.Staking},
-		govtypes.ModuleName:            {authtypes.Burner},
-		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
-		incentivetypes.ModuleName:      nil, // this line is needed to create an account for incentive module
-		tokenfactorytypes.ModuleName:   {authtypes.Minter, authtypes.Burner},
-		icatypes.ModuleName:            nil,
-		evmtypes.ModuleName:            {authtypes.Minter, authtypes.Burner},
-		feemarkettypes.ModuleName:      nil,
-		erc20types.ModuleName:          {authtypes.Minter, authtypes.Burner}, // Allows erc20 module to mint/burn for token pairs
-		precisebanktypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
+		authtypes.FeeCollectorName:         {authtypes.Burner}, // fee collector account, needs Burner role for feemarket burning of BaseFee
+		distrtypes.ModuleName:              nil,
+		minttypes.ModuleName:               {authtypes.Minter},
+		stakingtypes.BondedPoolName:        {authtypes.Burner, authtypes.Staking},
+		stakingtypes.NotBondedPoolName:     {authtypes.Burner, authtypes.Staking},
+		govtypes.ModuleName:                {authtypes.Burner},
+		ibctransfertypes.ModuleName:        {authtypes.Minter, authtypes.Burner},
+		incentivetypes.ModuleName:          nil, // this line is needed to create an account for incentive module
+		incentivetypes.BSNFeeCollectorName: nil, // module account for collecting BSN fees from IBC transfers
+		tokenfactorytypes.ModuleName:       {authtypes.Minter, authtypes.Burner},
+		icatypes.ModuleName:                nil,
+		evmtypes.ModuleName:                {authtypes.Minter, authtypes.Burner},
+		feemarkettypes.ModuleName:          nil,
+		erc20types.ModuleName:              {authtypes.Minter, authtypes.Burner}, // Allows erc20 module to mint/burn for token pairs
+		precisebanktypes.ModuleName:        {authtypes.Minter, authtypes.Burner},
 	}
 
 	// software upgrades and forks
@@ -954,6 +955,9 @@ func BlockedAddresses() map[string]bool {
 
 	// allow the following addresses to receive funds
 	delete(blockedAddrs, appparams.AccGov.String())
+	// Allow BSN fee collector to receive IBC transfer funds
+	delete(blockedAddrs, authtypes.NewModuleAddress(incentivetypes.BSNFeeCollectorName).String())
+	delete(blockedAddrs, authtypes.NewModuleAddress(distrtypes.ModuleName).String())
 
 	// Block precompiled contracts
 	blockedPrecompilesHex := evmtypes.AvailableStaticPrecompiles
