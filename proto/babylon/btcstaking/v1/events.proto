@@ -264,3 +264,17 @@ message EventUnexpectedUnbondingTx {
   // spend_stake_tx_block_index is the spend_stake_tx index in the block
   uint32 spend_stake_tx_block_index = 4 [(amino.dont_omitempty) = true];
 }
+
+// EventStakeExpansionActivated is the event emitted when a stake expansion
+// delegation becomes active through the BTCUndelegate method.
+message EventStakeExpansionActivated {
+  // previous_staking_tx_hash uniquely identifies the original BTC delegation
+  string previous_staking_tx_hash = 1 [(amino.dont_omitempty) = true];
+  // stake_expansion_tx_hash is the hash of the stake expansion transaction
+  string stake_expansion_tx_hash = 2 [(amino.dont_omitempty) = true];
+  // stake_expansion_tx_header_hash is the hash of the header of the block that
+  // includes the stake expansion tx
+  string stake_expansion_tx_header_hash = 3 [(amino.dont_omitempty) = true];
+  // stake_expansion_tx_block_index is the stake expansion tx index in the block
+  uint32 stake_expansion_tx_block_index = 4 [(amino.dont_omitempty) = true];
+}
