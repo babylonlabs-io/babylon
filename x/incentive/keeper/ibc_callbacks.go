@@ -19,6 +19,7 @@ var _ types.ContractKeeper = (*Keeper)(nil)
 
 const (
 	// BSNRewardDistributionMemo is the memo string indicating BSN reward distribution
+	// TODO: we should use this to check if the correct memo is used in the transfer
 	BSNRewardDistributionMemo = "bsn_reward_distribution"
 )
 
