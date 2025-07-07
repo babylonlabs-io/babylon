@@ -63,6 +63,7 @@ The module supports two primary types of BSN integrations:
 *   **Description**: A rollup (e.g., an optimistic or ZK-rollup) that uses a smart contract on Babylon for its data
     availability or finality needs.
 *   **Identifier (`consumer_id`)**: A unique, human-readable string that identifies the rollup (e.g., `my-rollup-chain-1`).
+    Note: The consumer ID for rollup BSNs can be any unique string chosen arbitrarily.
 *   **Integration Logic**: The registration requires the address of a `RollupFinalityContractAddress`,
     which must be a valid, deployed CosmWasm contract on the Babylon chain. The module verifies the contract's existence.
 
@@ -100,12 +101,11 @@ The module's behavior is governed by a set of parameters, stored as a single obj
 
 ```protobuf
 // x/btcstkconsumer/types/params.pb.go
-
 // Params defines the parameters for the module.
 message Params {
-// permissioned_integration is a flag to enable permissioned integration, i.e.,
-// requiring governance proposal to approve new integrations.
-bool permissioned_integration = 1;
+    // permissioned_integration is a flag to enable permissioned integration, i.e.,
+    // requiring governance proposal to approve new integrations.
+    bool permissioned_integration = 1;
 }
 ```
 
@@ -126,34 +126,33 @@ about a BSN.
 
 ```protobuf
 // x/btcstkconsumer/types/btcstkconsumer.pb.go
-
 // ConsumerRegister is the registration information of a consumer
 message ConsumerRegister {
-// consumer_id is the ID of the consumer
-string consumer_id = 1;
-// consumer_name is the name of the consumer
-string consumer_name = 2;
-// consumer_description is a description for the consumer (can be empty)
-string consumer_description = 3;
-
-// consumer_metadata is necessary metadata of the consumer
-oneof consumer_metadata {
-CosmosConsumerMetadata cosmos_consumer_metadata = 4;
-RollupConsumerMetadata rollup_consumer_metadata = 5;
-}
-}
-
-// CosmosConsumerMetadata is the metadata for the Cosmos integration
-message CosmosConsumerMetadata {
-// channel_id defines the IBC channel ID for the consumer chain
-string channel_id = 1;
-}
-
-// RollupConsumerMetadata is the metadata for the rollup integration
-message RollupConsumerMetadata {
-// finality_contract_address is the address of the finality contract for
-// the rollup integration
-string finality_contract_address = 1;
+    // consumer_id is the ID of the consumer
+    string consumer_id = 1;
+    // consumer_name is the name of the consumer
+    string consumer_name = 2;
+    // consumer_description is a description for the consumer (can be empty)
+    string consumer_description = 3;
+    
+    // consumer_metadata is necessary metadata of the consumer
+    oneof consumer_metadata {
+    CosmosConsumerMetadata cosmos_consumer_metadata = 4;
+    RollupConsumerMetadata rollup_consumer_metadata = 5;
+    }
+    }
+    
+    // CosmosConsumerMetadata is the metadata for the Cosmos integration
+    message CosmosConsumerMetadata {
+    // channel_id defines the IBC channel ID for the consumer chain
+    string channel_id = 1;
+    }
+    
+    // RollupConsumerMetadata is the metadata for the rollup integration
+    message RollupConsumerMetadata {
+    // finality_contract_address is the address of the finality contract for
+    // the rollup integration
+    string finality_contract_address = 1;
 }
 ```
 
@@ -188,19 +187,18 @@ This message is used to register a new BSN chain with Babylon. It is defined in 
 
 ```protobuf
 // x/btcstkconsumer/types/tx.pb.go
-
 // MsgRegisterConsumer defines a message for registering BSNs to the btcstkconsumer module.
 message MsgRegisterConsumer {
-string signer = 1;
-// consumer_id is the ID of the consumer
-string consumer_id = 2;
-// consumer_name is the name of the consumer
-string consumer_name = 3;
-// consumer_description is a description for the consumer (can be empty)
-string consumer_description = 4;
-// rollup_finality_contract_address is the address of the finality contract.
-// (if set, then this means this is a rollup integration)
-string rollup_finality_contract_address = 5;
+    string signer = 1;
+    // consumer_id is the ID of the consumer
+    string consumer_id = 2;
+    // consumer_name is the name of the consumer
+    string consumer_name = 3;
+    // consumer_description is a description for the consumer (can be empty)
+    string consumer_description = 4;
+    // rollup_finality_contract_address is the address of the finality contract.
+    // (if set, then this means this is a rollup integration)
+    string rollup_finality_contract_address = 5;
 }
 ```
 
@@ -220,13 +218,12 @@ This message is used to update the module's parameters. It is a governance-gated
 
 ```protobuf
 // x/btcstkconsumer/types/tx.pb.go
-
 // MsgUpdateParams is the Msg/UpdateParams request type.
 message MsgUpdateParams {
-// authority is the address that controls the module (defaults to x/gov unless overwritten).
-string authority = 1;
-// params defines the module parameters to update.
-Params params = 2;
+    // authority is the address that controls the module (defaults to x/gov unless overwritten).
+    string authority = 1;
+    // params defines the module parameters to update.
+    Params params = 2;
 }
 ```
 
@@ -252,19 +249,18 @@ This event is emitted after a new consumer/BSN is successfully registered via `M
 
 ```protobuf
 // x/btcstkconsumer/types/events.pb.go
-
 // EventConsumerRegistered is the event emitted when a consumer is registered
 message EventConsumerRegistered {
-// consumer_id is the id of the consumer
-string consumer_id = 1;
-// consumer_name is the name of the consumer
-string consumer_name = 2;
-// consumer_description is a description for the consumer
-string consumer_description = 3;
-// consumer_type is the type of the consumer
-ConsumerType consumer_type = 4;
-// consumer_metadata is necessary metadata of the consumer
-RollupConsumerMetadata rollup_consumer_metadata = 5;
+    // consumer_id is the id of the consumer
+    string consumer_id = 1;
+    // consumer_name is the name of the consumer
+    string consumer_name = 2;
+    // consumer_description is a description for the consumer
+    string consumer_description = 3;
+    // consumer_type is the type of the consumer
+    ConsumerType consumer_type = 4;
+    // consumer_metadata is necessary metadata of the consumer
+    RollupConsumerMetadata rollup_consumer_metadata = 5;
 }
 ```
 
