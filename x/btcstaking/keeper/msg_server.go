@@ -199,7 +199,11 @@ func (ms msgServer) BtcStakeExpand(goCtx context.Context, req *types.MsgBtcStake
 
 	// Check covenant committee overlap: ensure at least old_quorum covenant members from old params are still active in new params
 	oldParams := delInfo.Params
-	currentParams := ms.GetParams(ctx)
+	btcTip := ms.btclcKeeper.GetTipInfo(ctx)
+	currentParams, _, err := ms.GetParamsForBtcHeight(ctx, uint64(btcTip.Height))
+	if err != nil {
+		return nil, err
+	}
 	if !hasSufficientCovenantOverlap(oldParams.CovenantPks, currentParams.CovenantPks, oldParams.CovenantQuorum) {
 		return nil, fmt.Errorf("insufficient covenant committee overlap: need at least %d members from old committee in new committee", oldParams.CovenantQuorum)
 	}
