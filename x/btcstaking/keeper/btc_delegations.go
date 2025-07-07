@@ -49,7 +49,7 @@ func (k Keeper) CreateBTCDelegation(ctx sdk.Context, parsedMsg *types.ParsedCrea
 	// - are not slashed, and
 	// - their registered epochs are finalised
 	// and then check whether the BTC stake is restaked to FPs of consumers
-	multiStakedToConsumers, err := k.validateMultiStakedFPs(ctx, parsedMsg.FinalityProviderKeys.PublicKeysBbnFormat)
+	err := k.validateMultiStakedFPs(ctx, parsedMsg.FinalityProviderKeys.PublicKeysBbnFormat)
 	if err != nil {
 		return err
 	}
@@ -118,13 +118,6 @@ func (k Keeper) CreateBTCDelegation(ctx sdk.Context, parsedMsg *types.ParsedCrea
 	// add this BTC delegation, and emit corresponding events
 	if err := k.AddBTCDelegation(ctx, newBTCDel); err != nil {
 		return fmt.Errorf("failed to add BTC delegation that has passed verification: %w", err)
-	}
-	// if this BTC delegation is multi-staked to consumers' FPs, add it to btcstkconsumer indexes
-	// TODO: revisit the relationship between BTC staking module and BTC staking consumer module
-	if multiStakedToConsumers {
-		if err := k.indexBTCConsumerDelegation(ctx, newBTCDel); err != nil {
-			return fmt.Errorf("failed to add BTC delegation multi-staked to consumers' finality providers despite it has passed verification: %w", err)
-		}
 	}
 
 	return nil
@@ -402,41 +395,28 @@ func (k Keeper) setBTCDelegation(ctx context.Context, btcDel *types.BTCDelegatio
 // validateMultiStakedFPs ensures all finality providers are known to Babylon and at least
 // one of them is a Babylon finality provider. It also checks whether the BTC stake is
 // multi-staked to FPs of consumer chains
-func (k Keeper) validateMultiStakedFPs(ctx context.Context, fpBTCPKs []bbn.BIP340PubKey) (bool, error) {
+func (k Keeper) validateMultiStakedFPs(ctx sdk.Context, fpBTCPKs []bbn.BIP340PubKey) error {
 	multiStakedToBabylon := false
-	multiStakedToConsumers := false
 
 	for i := range fpBTCPKs {
 		fpBTCPK := fpBTCPKs[i]
 
-		// find the fp and determine whether it's Babylon fp or consumer chain fp
-		if fp, err := k.GetFinalityProvider(ctx, fpBTCPK); err == nil {
-			// ensure the finality provider is not slashed
-			if fp.IsSlashed() {
-				return false, types.ErrFpAlreadySlashed
-			}
+		fp, err := k.GetFinalityProvider(ctx, fpBTCPK)
+		if err != nil {
+			return types.ErrFpNotFound.Wrapf("finality provider pk %s is not found: %v", fpBTCPK.MarshalHex(), err)
+		}
+		if fp.IsSlashed() {
+			return types.ErrFpAlreadySlashed
+		}
+		if fp.SecuresBabylonGenesis(ctx) {
 			multiStakedToBabylon = true
-			continue
-		} else if consumerID, err := k.BscKeeper.GetConsumerOfFinalityProvider(ctx, &fpBTCPK); err == nil {
-			fp, err := k.BscKeeper.GetConsumerFinalityProvider(ctx, consumerID, &fpBTCPK)
-			if err != nil {
-				return false, err
-			}
-			// ensure the finality provider is not slashed
-			if fp.IsSlashed() {
-				return false, types.ErrFpAlreadySlashed
-			}
-			multiStakedToConsumers = true
-			continue
-		} else {
-			return false, types.ErrFpNotFound.Wrapf("finality provider pk %s is not found", fpBTCPK.MarshalHex())
 		}
 	}
 	if !multiStakedToBabylon {
 		// a BTC delegation has to stake to at least 1 Babylon finality provider
-		return false, types.ErrNoBabylonFPRestaked
+		return types.ErrNoBabylonFPRestaked
 	}
-	return multiStakedToConsumers, nil
+	return nil
 }
 
 // multiStakedFPConsumerIDs returns the unique consumer IDs of non-Babylon finality providers
@@ -446,12 +426,12 @@ func (k Keeper) multiStakedFPConsumerIDs(ctx context.Context, fpBTCPKs []bbn.BIP
 
 	for i := range fpBTCPKs {
 		fpBTCPK := fpBTCPKs[i]
-		if _, err := k.GetFinalityProvider(ctx, fpBTCPK); err == nil {
-			continue
-		} else if consumerID, err := k.BscKeeper.GetConsumerOfFinalityProvider(ctx, &fpBTCPK); err == nil {
-			consumerIDMap[consumerID] = struct{}{}
-		} else {
-			return nil, types.ErrFpNotFound.Wrapf("finality provider pk %s is not found", fpBTCPK.MarshalHex())
+		fp, err := k.GetFinalityProvider(ctx, fpBTCPK)
+		if err != nil {
+			return nil, err
+		}
+		if !fp.SecuresBabylonGenesis(sdk.UnwrapSDKContext(ctx)) {
+			consumerIDMap[fp.BsnId] = struct{}{}
 		}
 	}
 

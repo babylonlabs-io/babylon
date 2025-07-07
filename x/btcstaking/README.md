@@ -1,5 +1,8 @@
 # BTCStaking
 
+<!-- TODO: Update docs for phase-3:
+https://github.com/babylonlabs-io/babylon/issues/1307 -->
+
 The BTC staking module is responsible for maintaining the set of finality
 providers and BTC delegations under them. This includes:
 

@@ -43,7 +43,7 @@ service Query {
   // FinalityProviders queries all finality providers
   rpc FinalityProviders(QueryFinalityProvidersRequest)
       returns (QueryFinalityProvidersResponse) {
-    option (google.api.http).get = "/babylon/btcstaking/v1/finality_providers";
+    option (google.api.http).get = "/babylon/btcstaking/v1/finality_providers/{bsn_id}";
   }
 
   // FinalityProvider info about one finality provider
@@ -118,6 +118,9 @@ message QueryParamsByBTCHeightResponse {
 message QueryFinalityProvidersRequest {
   // pagination defines an optional pagination for the request.
   cosmos.base.query.v1beta1.PageRequest pagination = 1;
+  // bsn_id allows to specify for which BSN to return finality providers for.
+  // Defaults to the Babylon Genesis BSN ID
+  string bsn_id = 2;
 }
 
 // QueryFinalityProvidersResponse is the response type for the
@@ -366,7 +369,6 @@ message QueryLargestBtcReOrgResponse {
   // RollbackTo is the BTC block header which we rollback to
   babylon.btclightclient.v1.BTCHeaderInfoResponse rollback_to = 3;
 }
-
 
 // QueryParamsVersionsRequest is the request type for the
 // Query/ParamsVersions RPC method.

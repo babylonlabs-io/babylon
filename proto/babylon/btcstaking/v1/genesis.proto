@@ -28,11 +28,8 @@ message GenesisState {
   repeated string allowed_staking_tx_hashes = 8;
   // largest BTC block reorg
   LargestBtcReOrg largest_btc_reorg = 9;
-  // btc_consumer_delegators contains all the btc delegators
-  // with the associated finality provider of a consumer chain
-  repeated BTCDelegator btc_consumer_delegators = 10;
   // all consumer chain events
-  repeated ConsumerEvent consumer_events = 11;
+  repeated ConsumerEvent consumer_events = 10;
 }
 
 // BlockHeightBbnToBtc stores the btc <-> bbn block.

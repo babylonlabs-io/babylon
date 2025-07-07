@@ -93,9 +93,9 @@ func CmdDelegation() *cobra.Command {
 
 func CmdFinalityProviders() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "finality-providers",
-		Short: "retrieve all finality providers",
-		Args:  cobra.NoArgs,
+		Use:   "finality-providers [bsn-id]",
+		Short: "retrieve all finality providers for a given BSN ID (defaults to Babylon BSN ID if not provided)",
+		Args:  cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
 
@@ -106,7 +106,14 @@ func CmdFinalityProviders() *cobra.Command {
 				return err
 			}
 
+			// Extract BSN ID from args if provided
+			var bsnId string
+			if len(args) > 0 {
+				bsnId = args[0]
+			}
+
 			res, err := queryClient.FinalityProviders(cmd.Context(), &types.QueryFinalityProvidersRequest{
+				BsnId:      bsnId,
 				Pagination: pageReq,
 			})
 			if err != nil {
@@ -116,7 +123,6 @@ func CmdFinalityProviders() *cobra.Command {
 			return clientCtx.PrintProto(res)
 		},
 	}
-
 	flags.AddQueryFlagsToCmd(cmd)
 	flags.AddPaginationFlagsToCmd(cmd, "finality-providers")
 

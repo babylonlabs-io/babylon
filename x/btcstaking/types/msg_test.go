@@ -24,7 +24,7 @@ func TestMsgCreateFinalityProviderValidateBasic(t *testing.T) {
 
 	bigBtcPK := datagen.GenRandomByteArray(r, 100)
 
-	fp, err := datagen.GenRandomFinalityProvider(r, "")
+	fp, err := datagen.GenRandomFinalityProvider(r, "", "")
 	require.NoError(t, err)
 
 	invalidAddr := "bbnbadaddr"
