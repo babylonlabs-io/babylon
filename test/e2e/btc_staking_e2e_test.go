@@ -857,7 +857,7 @@ func CreateNodeFP(
 	newFP, err = datagen.GenCustomFinalityProvider(r, fpSk, fpPopContext, nodeAddr, "")
 	require.NoError(t, err)
 
-	previousFps := node.QueryFinalityProviders()
+	previousFps := node.QueryFinalityProviders("")
 
 	// use a higher commission to ensure the reward is more than tx fee of a finality sig
 	commission := sdkmath.LegacyNewDecWithPrec(20, 2)
@@ -868,7 +868,7 @@ func CreateNodeFP(
 	node.WaitForNextBlock()
 
 	// query the existence of finality provider and assert equivalence
-	actualFps := node.QueryFinalityProviders()
+	actualFps := node.QueryFinalityProviders("")
 	require.Len(t, actualFps, len(previousFps)+1)
 
 	// get chain ID to assert equality with the BsnId field

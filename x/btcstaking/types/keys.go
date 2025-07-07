@@ -1,6 +1,9 @@
 package types
 
-import "cosmossdk.io/collections"
+import (
+	"cosmossdk.io/collections"
+	bbn "github.com/babylonlabs-io/babylon/v3/types"
+)
 
 const (
 	// ModuleName defines the module name
@@ -24,10 +27,19 @@ var (
 	// 0x05 was used for something else in the past
 	BTCHeightKey = []byte{0x06} // key prefix for the BTC heights
 	// 0x07 was used for something else in the past
-	PowerDistUpdateKey        = []byte{0x08}              // key prefix for power distribution update events
-	AllowedStakingTxHashesKey = collections.NewPrefix(9)  // key prefix for allowed staking tx hashes
-	HeightToVersionMapKey     = []byte{0x10}              // key prefix for height to version map
-	BTCConsumerDelegatorKey   = []byte{0x11}              // key prefix for the Consumer BTC delegators
-	BTCStakingEventKey        = []byte{0x12}              // key prefix for the BTC staking events
-	LargestBtcReorgInBlocks   = collections.NewPrefix(13) // key prefix for the BTC block height difference of the largest reorg
+	PowerDistUpdateKey          = []byte{0x08}              // key prefix for power distribution update events
+	AllowedStakingTxHashesKey   = collections.NewPrefix(9)  // key prefix for allowed staking tx hashes
+	HeightToVersionMapKey       = []byte{0x10}              // key prefix for height to version map
+	BTCConsumerDelegatorKey     = []byte{0x11}              // key prefix for the Consumer BTC delegators
+	BTCStakingEventKey          = []byte{0x12}              // key prefix for the BTC staking events
+	LargestBtcReorgInBlocks     = collections.NewPrefix(13) // key prefix for the BTC block height difference of the largest reorg
+	FinalityProviderBsnIndexKey = []byte{0x14}              // key prefix for the finality provider BSN index
 )
+
+func BuildBsnIndexKey(bsnId string, btcPK *bbn.BIP340PubKey) []byte {
+	return append([]byte(bsnId), btcPK.MustMarshal()...)
+}
+
+func BuildBsnIndexPrefix(bsnId string) []byte {
+	return []byte(bsnId)
+}

@@ -77,12 +77,6 @@ func (gs GenesisState) Validate() error {
 		}
 	}
 
-	for _, d := range gs.BtcConsumerDelegators {
-		if err := d.Validate(); err != nil {
-			return err
-		}
-	}
-
 	if err := types.ValidateEntries(gs.ConsumerEvents, func(e *ConsumerEvent) string {
 		return e.ConsumerId
 	}); err != nil {
@@ -272,10 +266,6 @@ func SortData(gs *GenesisState) {
 
 	sort.Slice(gs.Events, func(i, j int) bool {
 		return gs.Events[i].Idx < gs.Events[j].Idx
-	})
-
-	sort.Slice(gs.BtcConsumerDelegators, func(i, j int) bool {
-		return gs.BtcConsumerDelegators[i].String() < gs.BtcConsumerDelegators[j].String()
 	})
 
 	sort.Slice(gs.ConsumerEvents, func(i, j int) bool {

@@ -276,7 +276,7 @@ func FuzzNewFinalityProviderDistInfo(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 
-		fp, err := datagen.GenRandomFinalityProvider(r, "")
+		fp, err := datagen.GenRandomFinalityProvider(r, "", "")
 		require.NoError(t, err)
 
 		if r.Int31n(10) > 5 {

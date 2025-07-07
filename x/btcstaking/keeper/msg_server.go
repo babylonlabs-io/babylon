@@ -209,7 +209,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	// - are not slashed, and
 	// - their registered epochs are finalised
 	// and then check whether the BTC stake is multi-staked to FPs of consumers
-	multiStakedToConsumers, err := ms.validateMultiStakedFPs(ctx, parsedMsg.FinalityProviderKeys.PublicKeysBbnFormat)
+	err = ms.validateMultiStakedFPs(ctx, parsedMsg.FinalityProviderKeys.PublicKeysBbnFormat)
 	if err != nil {
 		return nil, err
 	}
@@ -274,13 +274,6 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	// add this BTC delegation, and emit corresponding events
 	if err := ms.AddBTCDelegation(ctx, newBTCDel); err != nil {
 		panic(fmt.Errorf("failed to add BTC delegation that has passed verification: %w", err))
-	}
-	// if this BTC delegation is multi-staked to consumers' FPs, add it to btcstkconsumer indexes
-	// TODO: revisit the relationship between BTC staking module and BTC staking consumer module
-	if multiStakedToConsumers {
-		if err := ms.indexBTCConsumerDelegation(ctx, newBTCDel); err != nil {
-			panic(fmt.Errorf("failed to add BTC delegation multi-staked to consumers' finality providers despite it has passed verification: %w", err))
-		}
 	}
 
 	return &types.MsgCreateBTCDelegationResponse{}, nil

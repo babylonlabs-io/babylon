@@ -25,10 +25,6 @@ type FinalityKeeper interface {
 
 type BTCStkConsumerKeeper interface {
 	IsConsumerRegistered(ctx context.Context, consumerID string) bool
-	HasConsumerFinalityProvider(ctx context.Context, fpBTCPK *bbn.BIP340PubKey) bool
-	GetConsumerOfFinalityProvider(ctx context.Context, fpBTCPK *bbn.BIP340PubKey) (string, error)
-	GetConsumerFinalityProvider(ctx context.Context, consumerID string, fpBTCPK *bbn.BIP340PubKey) (*FinalityProvider, error)
-	SetConsumerFinalityProvider(ctx context.Context, fp *FinalityProvider)
 }
 
 type IncentiveKeeper interface {
