@@ -429,7 +429,8 @@ func (s *FinalityContractTestSuite) Test6SubmitFinalitySignature() {
 			return false
 		}
 		s.Equal(1, len(blockVoters))
-		s.Equal(s.consumerFp.BtcPk.MarshalHex(), blockVoters[0])
+		s.Equal(s.consumerFp.BtcPk.MarshalHex(), blockVoters[0].FpBtcPkHex)
+		s.Equal(blockToVote.AppHash, blockVoters[0].FinalitySignature.BlockHash)
 		s.T().Logf("Finality signature found for block height %d with app hash %x: voter %s",
 			blockToVote.Height,
 			blockToVote.AppHash,
