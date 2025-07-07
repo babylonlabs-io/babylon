@@ -43,7 +43,7 @@ func (n *NodeConfig) QueryLastPublicRandCommitRollup(finalityContractAddr string
 
 // QueryBlockVotersRollup returns the block voters from a rollup's finality
 // contract
-func (n *NodeConfig) QueryBlockVotersRollup(finalityContractAddr string, blockHeight uint64, blockAppHash []byte) []string {
+func (n *NodeConfig) QueryBlockVotersRollup(finalityContractAddr string, blockHeight uint64, blockAppHash []byte) rollup.BlockVotersResponse {
 	queryMsg := &rollup.QueryMsg{
 		BlockVoters: &rollup.BlockVoters{
 			Height:  blockHeight,
