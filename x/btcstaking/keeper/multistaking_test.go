@@ -55,7 +55,7 @@ func FuzzMultiStaking_MultiStakedBTCDelegation(f *testing.F) {
 		_, consumerFPPK, consumerFP, err := h.CreateConsumerFinalityProvider(r, consumerRegister.ConsumerId)
 		h.NoError(err)
 		consumerFPBTCPK := bbn.NewBIP340PubKeyFromBTCPK(consumerFPPK)
-		consumerFP2, err := h.BTCStkConsumerKeeper.GetConsumerFinalityProvider(h.Ctx, consumerRegister.ConsumerId, consumerFPBTCPK)
+		consumerFP2, err := h.BTCStakingKeeper.GetFinalityProvider(h.Ctx, consumerFPBTCPK.MustMarshal())
 		h.NoError(err)
 		// on finality provider creation, the commission update time is set to the
 		// current block time. The consumerFP is randomly generated with update time = 0,
@@ -105,7 +105,7 @@ func FuzzMultiStaking_MultiStakedBTCDelegation(f *testing.F) {
 		require.True(t, errors.Is(err, types.ErrNoBabylonFPRestaked), err)
 
 		/*
-			happy case -- restaking to a Babylon fp and a consumer fp
+			happy case -- multi-staking to a Babylon fp and a consumer fp
 		*/
 
 		_, msgBTCDel, actualDel, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(

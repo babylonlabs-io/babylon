@@ -16,6 +16,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
+	testutil "github.com/babylonlabs-io/babylon/v3/testutil/btcstaking-helper"
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
 	testkeeper "github.com/babylonlabs-io/babylon/v3/testutil/keeper"
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
@@ -31,65 +32,190 @@ func FuzzFinalityProviders(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
 
-		// Setup keeper and context
-		keeper, ctx := testkeeper.BTCStakingKeeper(t, nil, nil, nil)
-		ctx = sdk.UnwrapSDKContext(ctx)
+		// Setup keeper and context with mocks for BSN consumer functionality
+		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
+		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
+		h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
+		h.GenAndApplyParams(r)
+
+		// Define BSN IDs for Babylon (test context setup)
+		babylonBsnId := h.Ctx.ChainID()
+		if babylonBsnId == "" {
+			babylonBsnId = "babylon-test-chain" // Fallback for test context
+			// Update the context to have this chain ID
+			h.Ctx = h.Ctx.WithChainID(babylonBsnId)
+		}
+
+		registeredBsnId := "registered-bsn-" + datagen.GenRandomHexStr(r, 10)
+
+		// Register one additional BSN (consumer)
+		consumerRegister := datagen.GenRandomCosmosConsumerRegister(r)
+		// Use a custom BSN ID for testing
+		consumerRegister.ConsumerId = registeredBsnId
+		err := h.BTCStkConsumerKeeper.RegisterConsumer(h.Ctx, consumerRegister)
+		require.NoError(t, err)
 
 		// Generate random finality providers and add them to kv store
-		fpsMap := make(map[string]*types.FinalityProvider)
-		for i := 0; i < int(datagen.RandomInt(r, 10)+1); i++ {
-			fp, err := datagen.GenRandomFinalityProvider(r, "")
+		// Randomly distribute them across different BSNs
+		fpsMapByBsn := make(map[string]map[string]*types.FinalityProvider) // bsnId -> fpPkHex -> FP
+		allFpsMap := make(map[string]*types.FinalityProvider)
+
+		numTotalFPs := int(datagen.RandomInt(r, 20) + 1) // 1 to 20 FPs total
+
+		for i := 0; i < numTotalFPs; i++ {
+			fpSK, _, err := datagen.GenRandomBTCKeyPair(r)
 			require.NoError(t, err)
 
-			AddFinalityProvider(t, ctx, *keeper, fp)
-			fpsMap[fp.BtcPk.MarshalHex()] = fp
+			// Randomly choose BSN ID to test both Babylon and consumer cases
+			var bsnId string
+			randomChoice := datagen.RandomInt(r, 3)
+			switch randomChoice {
+			case 0:
+				bsnId = "" // Empty string defaults to Babylon
+			case 1:
+				bsnId = babylonBsnId
+			case 2:
+				bsnId = registeredBsnId // Use registered consumer BSN ID
+			}
+
+			fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, fpSK, h.FpPopContext(), bsnId)
+			require.NoError(t, err)
+
+			// Add the finality provider
+			err = h.BTCStakingKeeper.AddFinalityProvider(h.Ctx, &types.MsgCreateFinalityProvider{
+				Addr:        fp.Addr,
+				Description: fp.Description,
+				Commission: types.NewCommissionRates(
+					*fp.Commission,
+					fp.CommissionInfo.MaxRate,
+					fp.CommissionInfo.MaxChangeRate,
+				),
+				BtcPk: fp.BtcPk,
+				Pop:   fp.Pop,
+				BsnId: fp.BsnId,
+			})
+			require.NoError(t, err)
+
+			// Store in maps, resolving empty BSN ID to Babylon
+			actualBsnId := bsnId
+			if actualBsnId == "" {
+				actualBsnId = babylonBsnId
+			}
+
+			// Update the FP object to have the resolved BSN ID
+			fp.BsnId = actualBsnId
+
+			if fpsMapByBsn[actualBsnId] == nil {
+				fpsMapByBsn[actualBsnId] = make(map[string]*types.FinalityProvider)
+			}
+			fpsMapByBsn[actualBsnId][fp.BtcPk.MarshalHex()] = fp
+			allFpsMap[fp.BtcPk.MarshalHex()] = fp
 		}
-		numOfFpsInStore := len(fpsMap)
 
 		// Test nil request
-		resp, err := keeper.FinalityProviders(ctx, nil)
-		if resp != nil {
-			t.Errorf("Nil input led to a non-nil response")
-		}
-		if err == nil {
-			t.Errorf("Nil input led to a nil error")
+		resp, err := h.BTCStakingKeeper.FinalityProviders(h.Ctx, nil)
+		require.Error(t, err)
+		require.Nil(t, resp)
+
+		// Test 1: Query without BSN ID (should default to Babylon BSN)
+		babylonFpsMap := fpsMapByBsn[babylonBsnId]
+
+		if len(babylonFpsMap) > 0 {
+			// Generate a page request with a limit and a nil key
+			limit := datagen.RandomInt(r, len(babylonFpsMap)) + 1
+			pagination := constructRequestWithLimit(r, limit)
+
+			req := types.QueryFinalityProvidersRequest{
+				Pagination: pagination,
+				// BsnId not provided, should default to Babylon
+			}
+
+			// Test pagination through all Babylon FPs
+			fpsFound := make(map[string]bool)
+			for {
+				resp, err = h.BTCStakingKeeper.FinalityProviders(h.Ctx, &req)
+				require.NoError(t, err)
+				require.NotNil(t, resp)
+
+				for _, fp := range resp.FinalityProviders {
+					// Should be Babylon FPs only
+					require.Equal(t, babylonBsnId, fp.BsnId)
+
+					// Check if the pk exists in the babylon map
+					if _, ok := babylonFpsMap[fp.BtcPk.MarshalHex()]; !ok {
+						t.Fatalf("rpc returned a finality provider that was not created for Babylon BSN")
+					}
+					fpsFound[fp.BtcPk.MarshalHex()] = true
+				}
+
+				// Break if no more pages
+				if resp.Pagination.NextKey == nil {
+					break
+				}
+
+				// Construct the next page request
+				pagination = constructRequestWithKeyAndLimit(r, resp.Pagination.NextKey, limit)
+				req = types.QueryFinalityProvidersRequest{
+					Pagination: pagination,
+					// BsnId still not provided
+				}
+			}
+
+			if len(fpsFound) != len(babylonFpsMap) {
+				t.Errorf("Some Babylon finality providers were missed. Got %d while %d were expected", len(fpsFound), len(babylonFpsMap))
+			}
 		}
 
-		// Generate a page request with a limit and a nil key
-		limit := datagen.RandomInt(r, numOfFpsInStore) + 1
-		pagination := constructRequestWithLimit(r, limit)
-		// Generate the initial query
-		req := types.QueryFinalityProvidersRequest{Pagination: pagination}
-		// Construct a mapping from the finality providers found to a boolean value
-		// Will be used later to evaluate whether all the finality providers were returned
-		fpsFound := make(map[string]bool, 0)
+		// Test 2: Query with explicit Babylon BSN ID (same as empty BSN ID)
+		if len(babylonFpsMap) > 0 {
+			req := types.QueryFinalityProvidersRequest{
+				BsnId: "", // Empty string defaults to Babylon BSN
+			}
 
-		for i := uint64(0); i < uint64(numOfFpsInStore); i += limit {
-			resp, err = keeper.FinalityProviders(ctx, &req)
-			if err != nil {
-				t.Errorf("Valid request led to an error %s", err)
-			}
-			if resp == nil {
-				t.Fatalf("Valid request led to a nil response")
-			}
+			resp, err = h.BTCStakingKeeper.FinalityProviders(h.Ctx, &req)
+			require.NoError(t, err)
+			require.NotNil(t, resp)
+			require.Len(t, resp.FinalityProviders, len(babylonFpsMap))
 
 			for _, fp := range resp.FinalityProviders {
-				// Check if the pk exists in the map
-				if _, ok := fpsMap[fp.BtcPk.MarshalHex()]; !ok {
-					t.Fatalf("rpc returned a finality provider that was not created")
-				}
-				fpsFound[fp.BtcPk.MarshalHex()] = true
+				require.Equal(t, babylonBsnId, fp.BsnId)
+				_, exists := babylonFpsMap[fp.BtcPk.MarshalHex()]
+				require.True(t, exists)
+			}
+		}
+
+		// Test 3: Query with registered consumer BSN ID
+		consumerFpsMap := fpsMapByBsn[registeredBsnId]
+		if len(consumerFpsMap) > 0 {
+			req := types.QueryFinalityProvidersRequest{
+				BsnId: registeredBsnId,
 			}
 
-			// Construct the next page request
-			pagination = constructRequestWithKeyAndLimit(r, resp.Pagination.NextKey, limit)
-			req = types.QueryFinalityProvidersRequest{Pagination: pagination}
+			resp, err = h.BTCStakingKeeper.FinalityProviders(h.Ctx, &req)
+			require.NoError(t, err)
+			require.NotNil(t, resp)
+			require.Len(t, resp.FinalityProviders, len(consumerFpsMap))
+
+			for _, fp := range resp.FinalityProviders {
+				require.Equal(t, registeredBsnId, fp.BsnId)
+				_, exists := consumerFpsMap[fp.BtcPk.MarshalHex()]
+				require.True(t, exists)
+			}
 		}
 
-		if len(fpsFound) != len(fpsMap) {
-			t.Errorf("Some finality providers were missed. Got %d while %d were expected", len(fpsFound), len(fpsMap))
+		// Test 4: Query with non-existent BSN ID (should return empty)
+		nonExistentBsnId := "non-existent-bsn-" + datagen.GenRandomHexStr(r, 8)
+		req := types.QueryFinalityProvidersRequest{
+			BsnId: nonExistentBsnId,
 		}
+
+		resp, err = h.BTCStakingKeeper.FinalityProviders(h.Ctx, &req)
+		require.NoError(t, err)
+		require.NotNil(t, resp)
+		require.Empty(t, resp.FinalityProviders)
 	})
 }
 
@@ -104,7 +230,7 @@ func FuzzFinalityProvider(f *testing.F) {
 		// Generate random finality providers and add them to kv store
 		fpsMap := make(map[string]*types.FinalityProvider)
 		for i := 0; i < int(datagen.RandomInt(r, 10)+1); i++ {
-			fp, err := datagen.GenRandomFinalityProvider(r, "")
+			fp, err := datagen.GenRandomFinalityProvider(r, "", "")
 			require.NoError(t, err)
 			AddFinalityProvider(t, ctx, *keeper, fp)
 			fp.HighestVotedHeight = uint32(datagen.RandomInt(r, 1000) + 1)
@@ -146,7 +272,7 @@ func FuzzFinalityProvider(f *testing.F) {
 		}
 
 		// check some random non-existing guy
-		fp, err := datagen.GenRandomFinalityProvider(r, "")
+		fp, err := datagen.GenRandomFinalityProvider(r, "", "")
 		require.NoError(t, err)
 		req := types.QueryFinalityProviderRequest{FpBtcPkHex: fp.BtcPk.MarshalHex()}
 		respNonExists, err := keeper.FinalityProvider(ctx, &req)
@@ -185,7 +311,7 @@ func FuzzFinalityProviderDelegations(f *testing.F) {
 		slashingRate := sdkmath.LegacyNewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2)
 
 		// Generate a finality provider
-		fp, err := datagen.GenRandomFinalityProvider(r, "")
+		fp, err := datagen.GenRandomFinalityProvider(r, "", "")
 		require.NoError(t, err)
 		AddFinalityProvider(t, ctx, *keeper, fp)
 
@@ -304,7 +430,7 @@ func FuzzPendingBTCDelegations(f *testing.F) {
 		numFps := datagen.RandomInt(r, 5) + 1
 		fps := []*types.FinalityProvider{}
 		for i := uint64(0); i < numFps; i++ {
-			fp, err := datagen.GenRandomFinalityProvider(r, "")
+			fp, err := datagen.GenRandomFinalityProvider(r, "", "")
 			require.NoError(t, err)
 			AddFinalityProvider(t, ctx, *keeper, fp)
 			fps = append(fps, fp)
@@ -453,7 +579,7 @@ func TestCorrectParamsVersionIsUsed(t *testing.T) {
 	// this is already covered in FuzzGeneratingValidStakingSlashingTx
 	slashingRate := sdkmath.LegacyNewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2)
 
-	fp, err := datagen.GenRandomFinalityProvider(r, "")
+	fp, err := datagen.GenRandomFinalityProvider(r, "", "")
 	require.NoError(t, err)
 	AddFinalityProvider(t, ctx, *keeper, fp)
 

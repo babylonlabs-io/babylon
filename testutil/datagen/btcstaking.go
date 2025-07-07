@@ -35,13 +35,14 @@ const (
 func GenRandomFinalityProvider(
 	r *rand.Rand,
 	signingContext string,
+	bsnId string,
 ) (*bstypes.FinalityProvider, error) {
 	// BTC key pairs
 	btcSK, _, err := GenRandomBTCKeyPair(r)
 	if err != nil {
 		return nil, err
 	}
-	return GenRandomFinalityProviderWithBTCSK(r, btcSK, signingContext, "")
+	return GenRandomFinalityProviderWithBTCSK(r, btcSK, signingContext, bsnId)
 }
 
 func GenRandomMsgCreateFinalityProvider(
@@ -60,11 +61,12 @@ func CreateNFinalityProviders(
 	r *rand.Rand,
 	t *testing.T,
 	signingContext string,
+	bsnId string,
 	n int,
 ) []*bstypes.FinalityProvider {
 	fps := make([]*bstypes.FinalityProvider, n)
 	for i := 0; i < n; i++ {
-		fp, err := GenRandomFinalityProvider(r, signingContext)
+		fp, err := GenRandomFinalityProvider(r, signingContext, bsnId)
 		require.NoError(t, err)
 		fps[i] = fp
 	}
@@ -75,9 +77,9 @@ func GenRandomFinalityProviderWithBTCSK(
 	r *rand.Rand,
 	btcSK *btcec.PrivateKey,
 	signingContext string,
-	consumerID string,
+	bsnId string,
 ) (*bstypes.FinalityProvider, error) {
-	return GenCustomFinalityProvider(r, btcSK, signingContext, GenRandomAccount().GetAddress(), consumerID)
+	return GenCustomFinalityProvider(r, btcSK, signingContext, GenRandomAccount().GetAddress(), bsnId)
 }
 
 func GenRandomCommission(r *rand.Rand) sdkmath.LegacyDec {

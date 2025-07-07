@@ -33,17 +33,24 @@ func FuzzMigrateFinalityProviders(f *testing.F) {
 		// seed the store with finality providers without commission info
 		storeAdapter := runtime.KVStoreAdapter(storeService.OpenKVStore(ctx))
 		store := prefix.NewStore(storeAdapter, btcstakingtypes.FinalityProviderKey)
+		bsnIndexStore := prefix.NewStore(storeAdapter, btcstakingtypes.FinalityProviderBsnIndexKey)
 		fpCount := rand.Intn(300)
 		// slice of the expected finality providers after the migration
 		expFps := make([]btcstakingtypes.FinalityProvider, fpCount)
 		for i := range expFps {
-			fp, err := datagen.GenRandomFinalityProvider(r, "")
+			fp, err := datagen.GenRandomFinalityProvider(r, "", "")
 			require.NoError(t, err)
+			// Set BSN ID to chain ID (since datagen creates empty BSN ID)
+			fp.BsnId = ctx.ChainID()
 			// make sure commission info is nil when seeding the store
 			fp.CommissionInfo = nil
 			// use store directly to store the fps
 			fpBytes := encConf.Codec.MustMarshal(fp)
 			store.Set(fp.BtcPk.MustMarshal(), fpBytes)
+
+			// Create BSN index entry
+			bsnKey := btcstakingtypes.BuildBsnIndexKey(fp.BsnId, fp.BtcPk)
+			bsnIndexStore.Set(bsnKey, []byte{})
 
 			// Add the expected fp with the commission info defined
 			expFps[i] = btcstakingtypes.FinalityProvider{
