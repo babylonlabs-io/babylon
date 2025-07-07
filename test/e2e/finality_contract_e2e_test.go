@@ -383,7 +383,7 @@ func (s *FinalityContractTestSuite) Test5CommitPublicRandomness() {
 
 	endEpoch, err := nonValidatorNode.QueryRawCheckpoint(currentEpoch)
 	s.NoError(err)
-	s.Equal(endEpoch.Status, ct.Finalized)
+	s.Equal(ct.Finalized, endEpoch.Status)
 
 	// Wait for a some time to ensure that the checkpoint is included in the chain
 	time.Sleep(20 * time.Second)
