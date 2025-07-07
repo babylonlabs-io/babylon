@@ -229,34 +229,6 @@ func (k Keeper) LargestBtcReOrg(ctx context.Context, _ *types.QueryLargestBtcReO
 	}, nil
 }
 
-// FinalityProviderBSNId returns the BSN ID for the finality provider with the specified finality provider BTC PK
-func (k Keeper) FinalityProviderBSNId(ctx context.Context, req *types.QueryFinalityProviderBSNIdRequest) (*types.QueryFinalityProviderBSNIdResponse, error) {
-	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "empty request")
-	}
-
-	if len(req.FpBtcPkHex) == 0 {
-		return nil, errorsmod.Wrapf(
-			sdkerrors.ErrInvalidRequest, "finality provider BTC public key cannot be empty")
-	}
-
-	fpPK, err := bbn.NewBIP340PubKeyFromHex(req.FpBtcPkHex)
-	if err != nil {
-		return nil, err
-	}
-	fpPkBytes, err := fpPK.Marshal()
-	if err != nil {
-		return nil, err
-	}
-
-	fp, err := k.GetFinalityProvider(ctx, fpPkBytes)
-	if err != nil {
-		return nil, err
-	}
-
-	return &types.QueryFinalityProviderBSNIdResponse{BsnId: fp.BsnId}, nil
-}
-
 // ParamsVersions iterates over all the versioned parameters in the store.
 func (k Keeper) ParamsVersions(c context.Context, req *types.QueryParamsVersionsRequest) (*types.QueryParamsVersionsResponse, error) {
 	if req == nil {

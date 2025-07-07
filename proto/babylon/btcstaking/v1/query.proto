@@ -79,11 +79,6 @@ service Query {
   rpc LargestBtcReOrg(QueryLargestBtcReOrgRequest) returns (QueryLargestBtcReOrgResponse) {
     option (google.api.http).get = "/babylon/btcstaking/v1/largest_btc_reorg";
   }
-
-  // FinalityProviderBSNId info about one finality provider's BSN id
-  rpc FinalityProviderBSNId(QueryFinalityProviderBSNIdRequest) returns (QueryFinalityProviderBSNIdResponse) {
-    option (google.api.http).get = "/babylon/btcstaking/v1/finality_provider_bsn_id/{fp_btc_pk_hex}";
-  }
 }
 
 // QueryParamsRequest is request type for the Query/Params RPC method.
@@ -356,19 +351,6 @@ message QueryLargestBtcReOrgResponse {
   babylon.btclightclient.v1.BTCHeaderInfoResponse rollback_from = 2;
   // RollbackTo is the BTC block header which we rollback to
   babylon.btclightclient.v1.BTCHeaderInfoResponse rollback_to = 3;
-}
-
-// QueryFinalityProviderBSNIdRequest requests the id of the BSN
-// that a finality provider secures
-message QueryFinalityProviderBSNIdRequest {
-  // fp_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the finality provider
-  string fp_btc_pk_hex = 1;
-}
-
-// QueryFinalityProviderBSNIdResponse returns the BSN id
-// secured by the finality provider
-message QueryFinalityProviderBSNIdResponse {
-  string bsn_id = 1;
 }
 
 // QueryParamsVersionsRequest is the request type for the
