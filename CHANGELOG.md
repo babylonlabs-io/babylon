@@ -44,7 +44,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 `consumer_id` to `bsn_id` for finality providers
 - [#1292](https://github.com/babylonlabs-io/babylon/pull/1292) Use correct
   multi-staking terminology instead of restaking
-- [#1285](https://github.com/babylonlabs-io/babylon/pull/1285) Optimize BTC header forwarding in `x/zoneconcierge` 
+- [#1285](https://github.com/babylonlabs-io/babylon/pull/1285) Optimize BTC header forwarding in `x/zoneconcierge`
 by using `k` instead of `w` headers.
 - [#1273](https://github.com/babylonlabs-io/babylon/pull/1273) Deterministic iteration of maps in `x/zoneconcierge`.
 - [#1265](https://github.com/babylonlabs-io/babylon/pull/1265) Remove `ListEpochHeaders` and `QueryChainList` query.
@@ -109,6 +109,8 @@ This PR contains a series of PRs on multi-staking support and BTC staking integr
 transfer stack
 - [#877](https://github.com/babylonlabs-io/babylon/pull/877) fix: BTC reward tracker are stored as events and updated only
 when the babylon block is being BTC rewarded.
+- [#1296](https://github.com/babylonlabs-io/babylon/pull/1296) IBC events are only
+queued for cosmos bsns
 
 ### Bug fixes
 
