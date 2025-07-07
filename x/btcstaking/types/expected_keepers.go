@@ -25,6 +25,7 @@ type FinalityKeeper interface {
 
 type BTCStkConsumerKeeper interface {
 	IsConsumerRegistered(ctx context.Context, consumerID string) bool
+	IsCosmosConsumer(ctx context.Context, consumerID string) (bool, error)
 }
 
 type IncentiveKeeper interface {
