@@ -150,26 +150,26 @@ func (ms msgServer) BtcStakeExpand(goCtx context.Context, req *types.MsgBtcStake
 	prevBtcDel := delInfo.Delegation
 
 	if !isPreviousStkActive {
-		return nil, fmt.Errorf("previous staking transaction is not active")
+		return nil, status.Errorf(codes.InvalidArgument, "previous staking transaction is not active")
 	}
 
 	if prevBtcDel.IsStakeExpansion() {
-		return nil, fmt.Errorf("the previous BTC staking transaction %s is already a stake expansion", req.PreviousStakingTxHash)
+		return nil, status.Errorf(codes.InvalidArgument, "the previous BTC staking transaction %s is already a stake expansion", req.PreviousStakingTxHash)
 	}
 
 	if !strings.EqualFold(prevBtcDel.StakerAddr, req.StakerAddr) {
-		return nil, fmt.Errorf("the previous BTC staking transaction staker address: %s does not match with current staker address: %s", prevBtcDel.StakerAddr, req.StakerAddr)
+		return nil, status.Errorf(codes.InvalidArgument, "the previous BTC staking transaction staker address: %s does not match with current staker address: %s", prevBtcDel.StakerAddr, req.StakerAddr)
 	}
 
 	if !bbn.IsSubsetBip340Pks(prevBtcDel.FpBtcPkList, req.FpBtcPkList) {
-		return nil, fmt.Errorf("the previous BTC staking transaction FPs: %+v are not a subset of the stake expansion FPs %+v", prevBtcDel.FpBtcPkList, req.FpBtcPkList)
+		return nil, status.Errorf(codes.InvalidArgument, "the previous BTC staking transaction FPs: %+v are not a subset of the stake expansion FPs %+v", prevBtcDel.FpBtcPkList, req.FpBtcPkList)
 	}
 
 	// check FundingTx is not a staking tx
 	// ATM is not possible to combine 2 staking txs into one
 	fundingTx, err := bbn.NewBTCTxFromBytes(req.FundingTx)
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	fundingTxDel := ms.getBTCDelegation(ctx, fundingTx.TxHash())
 	if fundingTxDel != nil {
@@ -185,21 +185,21 @@ func (ms msgServer) BtcStakeExpand(goCtx context.Context, req *types.MsgBtcStake
 	stkExpandTx := parsedMsg.StakingTx.Transaction
 	// Check that the input index matches the previous delegation's staking output index
 	if prevBtcDel.StakingOutputIdx != stkExpandTx.TxIn[0].PreviousOutPoint.Index {
-		return nil, fmt.Errorf("staking expansion tx input index %d does not match previous delegation staking output index %d",
+		return nil, status.Errorf(codes.InvalidArgument, "staking expansion tx input index %d does not match previous delegation staking output index %d",
 			stkExpandTx.TxIn[0].PreviousOutPoint.Index, prevBtcDel.StakingOutputIdx)
 	}
 
 	// Check that the new delegation staking output amount is >= old delegation staking output amount
 	// Assume staking output index is the same as previousBtcDel.StakingOutputIdx
 	if int(prevBtcDel.StakingOutputIdx) >= len(stkExpandTx.TxOut) {
-		return nil, fmt.Errorf("staking expansion tx does not have expected output index %d", prevBtcDel.StakingOutputIdx)
+		return nil, status.Errorf(codes.InvalidArgument, "staking expansion tx does not have expected output index %d", prevBtcDel.StakingOutputIdx)
 	}
 
 	// Validate expansion amount
 	newStakingAmt := stkExpandTx.TxOut[prevBtcDel.StakingOutputIdx].Value
 	oldStakingAmt := int64(prevBtcDel.TotalSat)
 	if err := validateStakeExpansionAmt(parsedMsg, newStakingAmt, oldStakingAmt); err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
 	// Check covenant committee overlap: ensure at least old_quorum covenant members from old params are still active in new params
