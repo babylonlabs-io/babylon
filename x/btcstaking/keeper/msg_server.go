@@ -778,16 +778,9 @@ func validateStakeExpansionAmt(
 
 	// Calculate implied fee
 	impliedFee := totalInputValue - totalOutputValue
-	if impliedFee < 0 {
-		return fmt.Errorf("invalid transaction fee: inputs %d < outputs %d",
+	if impliedFee <= 0 {
+		return fmt.Errorf("invalid transaction fee: inputs %d <= outputs %d",
 			totalInputValue, totalOutputValue)
-	}
-
-	// Ensure minimum fee to prevent spam
-	minReasonableFee := int64(546) // Bitcoin dust threshold
-	if impliedFee < minReasonableFee {
-		return fmt.Errorf("transaction fee %d is below minimum %d",
-			impliedFee, minReasonableFee)
 	}
 
 	return nil
