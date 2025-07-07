@@ -150,7 +150,7 @@ func (ms msgServer) BtcStakeExpand(goCtx context.Context, req *types.MsgBtcStake
 	prevBtcDel := delInfo.Delegation
 
 	if !isPreviousStkActive {
-		return nil, err
+		return nil, fmt.Errorf("previous staking transaction is not active")
 	}
 
 	if prevBtcDel.IsStakeExpansion() {
@@ -183,11 +183,6 @@ func (ms msgServer) BtcStakeExpand(goCtx context.Context, req *types.MsgBtcStake
 	}
 
 	stkExpandTx := parsedMsg.StakingTx.Transaction
-	// Check that the input index matches the previous delegation's staking output index
-	if prevBtcDel.StakingOutputIdx != stkExpandTx.TxIn[0].PreviousOutPoint.Index {
-		return nil, fmt.Errorf("staking expansion tx input index %d does not match previous delegation staking output index %d",
-			stkExpandTx.TxIn[0].PreviousOutPoint.Index, prevBtcDel.StakingOutputIdx)
-	}
 
 	// Check that the new delegation staking output amount is >= old delegation staking output amount
 	// Assume staking output index is the same as previousBtcDel.StakingOutputIdx
@@ -195,10 +190,11 @@ func (ms msgServer) BtcStakeExpand(goCtx context.Context, req *types.MsgBtcStake
 		return nil, fmt.Errorf("staking expansion tx does not have expected output index %d", prevBtcDel.StakingOutputIdx)
 	}
 
+	// Validate expansion amount
 	newStakingAmt := stkExpandTx.TxOut[prevBtcDel.StakingOutputIdx].Value
 	oldStakingAmt := int64(prevBtcDel.TotalSat)
-	if newStakingAmt < oldStakingAmt {
-		return nil, fmt.Errorf("staking expansion output amount %d is less than previous delegation amount %d", newStakingAmt, oldStakingAmt)
+	if err := validateStakeExpansionAmt(parsedMsg, newStakingAmt, oldStakingAmt); err != nil {
+		return nil, err
 	}
 
 	// Check covenant committee overlap: ensure at least old_quorum covenant members from old params are still active in new params
@@ -744,4 +740,46 @@ func hasSufficientCovenantOverlap(
 	}
 
 	return false
+}
+
+// validateStakeExpansionAmt ensures the inputs and outputs balance correctly
+func validateStakeExpansionAmt(
+	parsedMsg *types.ParsedCreateDelegationMessage,
+	newStakingAmt int64,
+	oldStakingAmt int64,
+) error {
+	if parsedMsg.StkExp == nil {
+		return fmt.Errorf("missing stake expansion data")
+	}
+
+	if newStakingAmt < oldStakingAmt {
+		return fmt.Errorf("staking expansion output amount %d is less than previous delegation amount %d", newStakingAmt, oldStakingAmt)
+	}
+
+	// Calculate expected input value
+	fundingInputValue := parsedMsg.StkExp.OtherFundingOutput.Value
+	totalInputValue := oldStakingAmt + fundingInputValue
+
+	// Calculate total output value
+	stakeExpandTx := parsedMsg.StakingTx.Transaction
+	var totalOutputValue int64
+	for _, output := range stakeExpandTx.TxOut {
+		totalOutputValue += output.Value
+	}
+
+	// Calculate implied fee
+	impliedFee := totalInputValue - totalOutputValue
+	if impliedFee < 0 {
+		return fmt.Errorf("invalid transaction fee: inputs %d < outputs %d",
+			totalInputValue, totalOutputValue)
+	}
+
+	// Ensure minimum fee to prevent spam
+	minReasonableFee := int64(546) // Bitcoin dust threshold
+	if impliedFee < minReasonableFee {
+		return fmt.Errorf("transaction fee %d is below minimum %d",
+			impliedFee, minReasonableFee)
+	}
+
+	return nil
 }
