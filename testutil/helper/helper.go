@@ -337,6 +337,7 @@ func (h *Helper) AddFinalityProvider(fp *btcstakingtypes.FinalityProvider) {
 		),
 		BtcPk: fp.BtcPk,
 		Pop:   fp.Pop,
+		BsnId: fp.BsnId,
 	})
 	h.NoError(err)
 }

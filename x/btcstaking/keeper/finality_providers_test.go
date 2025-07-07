@@ -216,7 +216,7 @@ func FuzzSlashConsumerFinalityProvider(f *testing.F) {
 		fpBTCPK := fp.BtcPk
 
 		// Verify consumer FP exists and is not slashed initially
-		retrievedConsumerFP, err := h.BTCStkConsumerKeeper.GetConsumerFinalityProvider(h.Ctx, randomConsumer.ConsumerId, fpBTCPK)
+		retrievedConsumerFP, err := h.BTCStakingKeeper.GetFinalityProvider(h.Ctx, fpBTCPK.MustMarshal())
 		require.NoError(t, err)
 		require.False(t, retrievedConsumerFP.IsSlashed())
 
@@ -232,7 +232,7 @@ func FuzzSlashConsumerFinalityProvider(f *testing.F) {
 		require.NoError(t, err)
 
 		// Verify the consumer FP is slashed
-		slashedConsumerFP, err := h.BTCStkConsumerKeeper.GetConsumerFinalityProvider(h.Ctx, randomConsumer.ConsumerId, fpBTCPK)
+		slashedConsumerFP, err := h.BTCStakingKeeper.GetFinalityProvider(h.Ctx, fpBTCPK.MustMarshal())
 		require.NoError(t, err)
 		require.True(t, slashedConsumerFP.IsSlashed())
 		require.Greater(t, slashedConsumerFP.SlashedBabylonHeight, uint64(0))

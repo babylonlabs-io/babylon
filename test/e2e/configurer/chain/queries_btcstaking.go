@@ -47,8 +47,9 @@ func (n *NodeConfig) QueryFinalityParams() *ftypes.Params {
 	return &resp.Params
 }
 
-func (n *NodeConfig) QueryFinalityProviders() []*bstypes.FinalityProviderResponse {
-	bz, err := n.QueryGRPCGateway("/babylon/btcstaking/v1/finality_providers", url.Values{})
+func (n *NodeConfig) QueryFinalityProviders(bsnId string) []*bstypes.FinalityProviderResponse {
+	path := fmt.Sprintf("/babylon/btcstaking/v1/finality_providers/%s", bsnId)
+	bz, err := n.QueryGRPCGateway(path, url.Values{})
 	require.NoError(n.t, err)
 
 	var resp bstypes.QueryFinalityProvidersResponse
