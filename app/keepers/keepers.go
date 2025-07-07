@@ -803,7 +803,7 @@ func (ak *AppKeepers) InitKeepers(
 	// Add incentive callback middleware for BSN fee collection
 	cbStack := ibccallbacks.NewIBCMiddleware(transferStack, ak.PFMRouterKeeper, &ak.IncentiveKeeper, appparams.MaxIBCCallbackGas)
 	// Add WASM callback middleware for existing WASM contracts
-	//cbStack = ibccallbacks.NewIBCMiddleware(cbStack, ak.IBCKeeper.ChannelKeeper, wasmStackIBCHandler, appparams.MaxIBCCallbackGas)
+	// cbStack = ibccallbacks.NewIBCMiddleware(cbStack, ak.IBCKeeper.ChannelKeeper, wasmStackIBCHandler, appparams.MaxIBCCallbackGas)
 	transferStack = pfmrouter.NewIBCMiddleware(
 		cbStack,
 		ak.PFMRouterKeeper,

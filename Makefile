@@ -243,11 +243,15 @@ test-e2e-cache:
 	$(MAKE) test-e2e-cache-btc-staking-pre-approval
 	$(MAKE) test-e2e-cache-ibc-transfer
 	$(MAKE) test-e2e-cache-finality-contract
+	$(MAKE) test-e2e-cache-bsn-fee-collection
 #	$(MAKE) test-e2e-cache-upgrade-v2
 
 clean-e2e:
 	docker container rm -f $(shell docker container ls -a -q) || true
 	docker network prune -f || true
+
+test-e2e-cache-bsn-fee-collection:
+	go test -run TestBSNFeeCollectionTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
 
 test-e2e-cache-btc-timestamping:
 	go test -run TestBTCTimestampingTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
