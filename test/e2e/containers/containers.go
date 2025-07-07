@@ -275,7 +275,7 @@ func (m *Manager) RunNodeResource(chainId string, containerName, valCondifDir st
 			// Use the following for debugging purposes:
 			// TODO: Parameterise the log level
 			//"export BABYLON_BLS_PASSWORD=password && babylond start " + FlagHome + " --log_level trace --trace",
-			"export BABYLON_BLS_PASSWORD=password && babylond start " + FlagHome
+			"export BABYLON_BLS_PASSWORD=password && babylond start " + FlagHome,
 			// Alternative option: use --no-bls-password flag
 			// "babylond start " + FlagHome + " --no-bls-password",
 		},
