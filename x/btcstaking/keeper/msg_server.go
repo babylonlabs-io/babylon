@@ -183,6 +183,11 @@ func (ms msgServer) BtcStakeExpand(goCtx context.Context, req *types.MsgBtcStake
 	}
 
 	stkExpandTx := parsedMsg.StakingTx.Transaction
+	// Check that the input index matches the previous delegation's staking output index
+	if prevBtcDel.StakingOutputIdx != stkExpandTx.TxIn[0].PreviousOutPoint.Index {
+		return nil, fmt.Errorf("staking expansion tx input index %d does not match previous delegation staking output index %d",
+			stkExpandTx.TxIn[0].PreviousOutPoint.Index, prevBtcDel.StakingOutputIdx)
+	}
 
 	// Check that the new delegation staking output amount is >= old delegation staking output amount
 	// Assume staking output index is the same as previousBtcDel.StakingOutputIdx
