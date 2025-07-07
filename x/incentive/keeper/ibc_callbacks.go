@@ -90,7 +90,7 @@ func (k Keeper) IBCReceivePacketCallback(
 	// Parse packet data as ICS20 transfer first (before checking ack success)
 	transferData, err := k.parseTransferData(packet)
 	if err != nil {
-		return nil
+		return err
 	}
 
 	// Early return if acknowledgement is not successful
@@ -101,7 +101,7 @@ func (k Keeper) IBCReceivePacketCallback(
 	// Check for JSON callback format
 	var callbackMemo CallbackMemo
 	if err := json.Unmarshal([]byte(transferData.Memo), &callbackMemo); err != nil {
-		return nil
+		return err
 	}
 
 	// TODO: Here we can directly distribute to BTC stakers and do whatever with the rest.
