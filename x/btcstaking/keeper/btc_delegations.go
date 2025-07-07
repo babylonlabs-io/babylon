@@ -483,7 +483,7 @@ func (k Keeper) GetBTCDelegation(ctx context.Context, stakingTxHashStr string) (
 
 // IsBtcDelegationActive returns true and no error if the BTC delegation is active.
 // If it is not active it returns false and the reason as an error
-func (k Keeper) IsBtcDelegationActive(ctx context.Context, stakingTxHash string) (*types.BTCDelegation, bool, error) {
+func (k Keeper) IsBtcDelegationActive(ctx context.Context, stakingTxHash string) (*btcDelegationWithParams, bool, error) {
 	delWithParams, err := k.getBTCDelWithParams(ctx, stakingTxHash)
 	if err != nil {
 		return nil, false, err
@@ -498,7 +498,7 @@ func (k Keeper) IsBtcDelegationActive(ctx context.Context, stakingTxHash string)
 		return nil, false, fmt.Errorf("BTC delegation %s is not active, current status is %s", stakingTxHash, status.String())
 	}
 
-	return delWithParams.Delegation, true, nil
+	return delWithParams, true, nil
 }
 
 type btcDelegationWithParams struct {

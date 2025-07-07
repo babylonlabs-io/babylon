@@ -143,21 +143,26 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 func (ms msgServer) BtcStakeExpand(goCtx context.Context, req *types.MsgBtcStakeExpand) (*types.MsgBtcStakeExpandResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	previousBtcDel, isPreviousStkActive, err := ms.IsBtcDelegationActive(ctx, req.PreviousStakingTxHash)
+	delInfo, isPreviousStkActive, err := ms.IsBtcDelegationActive(ctx, req.PreviousStakingTxHash)
 	if err != nil {
 		return nil, err
 	}
+	prevBtcDel := delInfo.Delegation
 
 	if !isPreviousStkActive {
 		return nil, err
 	}
 
-	if !strings.EqualFold(previousBtcDel.StakerAddr, req.StakerAddr) {
-		return nil, fmt.Errorf("the previous BTC staking transaction staker address: %s does not match with current staker address: %s", previousBtcDel.StakerAddr, req.StakerAddr)
+	if prevBtcDel.IsStakeExpansion() {
+		return nil, fmt.Errorf("the previous BTC staking transaction %s is already a stake expansion", req.PreviousStakingTxHash)
 	}
 
-	if !bbn.IsSubsetBip340Pks(previousBtcDel.FpBtcPkList, req.FpBtcPkList) {
-		return nil, fmt.Errorf("the previous BTC staking transaction FPs: %+v are not a subset of the stake expansion FPs %+v", previousBtcDel.FpBtcPkList, req.FpBtcPkList)
+	if !strings.EqualFold(prevBtcDel.StakerAddr, req.StakerAddr) {
+		return nil, fmt.Errorf("the previous BTC staking transaction staker address: %s does not match with current staker address: %s", prevBtcDel.StakerAddr, req.StakerAddr)
+	}
+
+	if !bbn.IsSubsetBip340Pks(prevBtcDel.FpBtcPkList, req.FpBtcPkList) {
+		return nil, fmt.Errorf("the previous BTC staking transaction FPs: %+v are not a subset of the stake expansion FPs %+v", prevBtcDel.FpBtcPkList, req.FpBtcPkList)
 	}
 
 	// check FundingTx is not a staking tx
@@ -179,28 +184,25 @@ func (ms msgServer) BtcStakeExpand(goCtx context.Context, req *types.MsgBtcStake
 
 	stkExpandTx := parsedMsg.StakingTx.Transaction
 	// Check that the input index matches the previous delegation's staking output index
-	if previousBtcDel.StakingOutputIdx != stkExpandTx.TxIn[0].PreviousOutPoint.Index {
+	if prevBtcDel.StakingOutputIdx != stkExpandTx.TxIn[0].PreviousOutPoint.Index {
 		return nil, fmt.Errorf("staking expansion tx input index %d does not match previous delegation staking output index %d",
-			stkExpandTx.TxIn[0].PreviousOutPoint.Index, previousBtcDel.StakingOutputIdx)
+			stkExpandTx.TxIn[0].PreviousOutPoint.Index, prevBtcDel.StakingOutputIdx)
 	}
 
 	// Check that the new delegation staking output amount is >= old delegation staking output amount
 	// Assume staking output index is the same as previousBtcDel.StakingOutputIdx
-	if int(previousBtcDel.StakingOutputIdx) >= len(stkExpandTx.TxOut) {
-		return nil, fmt.Errorf("staking expansion tx does not have expected output index %d", previousBtcDel.StakingOutputIdx)
+	if int(prevBtcDel.StakingOutputIdx) >= len(stkExpandTx.TxOut) {
+		return nil, fmt.Errorf("staking expansion tx does not have expected output index %d", prevBtcDel.StakingOutputIdx)
 	}
 
-	newStakingAmt := stkExpandTx.TxOut[previousBtcDel.StakingOutputIdx].Value
-	oldStakingAmt := int64(previousBtcDel.TotalSat)
+	newStakingAmt := stkExpandTx.TxOut[prevBtcDel.StakingOutputIdx].Value
+	oldStakingAmt := int64(prevBtcDel.TotalSat)
 	if newStakingAmt < oldStakingAmt {
 		return nil, fmt.Errorf("staking expansion output amount %d is less than previous delegation amount %d", newStakingAmt, oldStakingAmt)
 	}
 
 	// Check covenant committee overlap: ensure at least old_quorum covenant members from old params are still active in new params
-	oldParams := ms.GetParamsByVersion(ctx, previousBtcDel.ParamsVersion)
-	if oldParams == nil {
-		return nil, fmt.Errorf("params version %d for previous delegation not found", previousBtcDel.ParamsVersion)
-	}
+	oldParams := delInfo.Params
 	currentParams := ms.GetParams(ctx)
 	if !hasSufficientCovenantOverlap(oldParams.CovenantPks, currentParams.CovenantPks, oldParams.CovenantQuorum) {
 		return nil, fmt.Errorf("insufficient covenant committee overlap: need at least %d members from old committee in new committee", oldParams.CovenantQuorum)
