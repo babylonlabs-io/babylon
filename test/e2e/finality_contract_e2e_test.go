@@ -1,6 +1,7 @@
 package e2e
 
 import (
+	ct "github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
 	"math"
 	"math/rand"
 	"strconv"
@@ -372,6 +373,22 @@ func (s *FinalityContractTestSuite) Test5CommitPublicRandomness() {
 		)
 		return true
 	}, time.Second*10, time.Second, "Public randomness commitment was not found within the expected time")
+
+	// Wait until Babylon has finalized the current epoch
+	currentEpoch, err := nonValidatorNode.QueryCurrentEpoch()
+	s.NoError(err)
+	s.T().Logf("Wait until Babylon has finalized the current epoch: %d", currentEpoch)
+	const startEpoch uint64 = 1
+	nonValidatorNode.WaitUntilCurrentEpochIsSealedAndFinalized(startEpoch)
+
+	endEpoch, err := nonValidatorNode.QueryRawCheckpoint(currentEpoch)
+	s.NoError(err)
+	s.Equal(endEpoch.Status, ct.Finalized)
+
+	// Wait for a some time to ensure that the checkpoint is included in the chain
+	time.Sleep(20 * time.Second)
+	// Wait for the next block
+	nonValidatorNode.WaitForNextBlock()
 }
 
 func (s *FinalityContractTestSuite) Test6SubmitFinalitySignature() {
