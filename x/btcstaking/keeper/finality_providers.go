@@ -66,7 +66,6 @@ func (k Keeper) AddFinalityProvider(goCtx context.Context, msg *types.MsgCreateF
 	k.bsnIndexFinalityProvider(ctx, &fp)
 
 	// Create BTC Staking Consumer Event for the new finality provider
-	// TODO: examine whether these events are really needed
 	if !fp.SecuresBabylonGenesis(ctx) {
 		if err := k.AddBTCStakingConsumerEvent(ctx, fp.BsnId, types.CreateNewFinalityProviderEvent(&fp)); err != nil {
 			return err
@@ -84,6 +83,8 @@ func (k Keeper) setFinalityProvider(ctx context.Context, fp *types.FinalityProvi
 	store.Set(fp.BtcPk.MustMarshal(), fpBytes)
 }
 
+// TODO: Examine collections and upgrade handler for this store
+// https://github.com/babylonlabs-io/babylon/issues/1308
 func (k Keeper) bsnIndexFinalityProvider(ctx context.Context, fp *types.FinalityProvider) {
 	indexStore := k.finalityProviderBsnIndexStore(ctx)
 	bsnKey := types.BuildBsnIndexKey(fp.BsnId, fp.BtcPk)
