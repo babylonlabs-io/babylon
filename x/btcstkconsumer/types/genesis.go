@@ -24,9 +24,9 @@ func (gs GenesisState) Validate() error {
 		if err := fp.ValidateBasic(); err != nil {
 			return err
 		}
-		// validate that FP's consumerId is registered
-		if _, exists := consumersMap[fp.ConsumerId]; !exists {
-			return fmt.Errorf("finality provider consumer is not registered. Consumer id : %s, BTC pk: %s", fp.ConsumerId, fp.BtcPk.MarshalHex())
+		// validate that FP's bsnId is registered
+		if _, exists := consumersMap[fp.BsnId]; !exists {
+			return fmt.Errorf("finality provider consumer is not registered. Consumer id : %s, BTC pk: %s", fp.BsnId, fp.BtcPk.MarshalHex())
 		}
 	}
 

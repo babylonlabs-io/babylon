@@ -3806,9 +3806,12 @@ paths:
                             format: byte
                           title: >-
                             adaptor_sigs is a list of adaptor signatures, each
-                            encrypted by a restaked
+                            encrypted
 
-                            BTC finality provider's public key
+                            by the finality provider public keys involved in the
+                            multi-staking
+
+                            procedure
                       title: >-
                         CovenantAdaptorSignatures is a list adaptor signatures
                         signed by the
@@ -3914,9 +3917,12 @@ paths:
                                 format: byte
                               title: >-
                                 adaptor_sigs is a list of adaptor signatures,
-                                each encrypted by a restaked
+                                each encrypted
 
-                                BTC finality provider's public key
+                                by the finality provider public keys involved in
+                                the multi-staking
+
+                                procedure
                           title: >-
                             CovenantAdaptorSignatures is a list adaptor
                             signatures signed by the
@@ -4268,9 +4274,12 @@ paths:
                               format: byte
                             title: >-
                               adaptor_sigs is a list of adaptor signatures, each
-                              encrypted by a restaked
+                              encrypted
 
-                              BTC finality provider's public key
+                              by the finality provider public keys involved in
+                              the multi-staking
+
+                              procedure
                         title: >-
                           CovenantAdaptorSignatures is a list adaptor signatures
                           signed by the
@@ -4376,9 +4385,12 @@ paths:
                                   format: byte
                                 title: >-
                                   adaptor_sigs is a list of adaptor signatures,
-                                  each encrypted by a restaked
+                                  each encrypted
 
-                                  BTC finality provider's public key
+                                  by the finality provider public keys involved
+                                  in the multi-staking
+
+                                  procedure
                             title: >-
                               CovenantAdaptorSignatures is a list adaptor
                               signatures signed by the
@@ -4869,16 +4881,11 @@ paths:
                           description: >-
                             update_time is the last time the commission rate was
                             changed.
-                    consumer_id:
+                    bsn_id:
                       type: string
-                      description: >-
-                        consumer_id is the ID of the consumer the finality
-                        provider is operating
-
-                        on. If it's missing / empty, it's assumed the finality
-                        provider is
-
-                        operating in the Babylon chain.
+                      title: >-
+                        bsn_id is the ID of the BSN the finality provider is
+                        securing
                   description: >-
                     FinalityProviderResponse defines a finality provider with
                     voting power
@@ -5272,9 +5279,12 @@ paths:
                                     format: byte
                                   title: >-
                                     adaptor_sigs is a list of adaptor
-                                    signatures, each encrypted by a restaked
+                                    signatures, each encrypted
 
-                                    BTC finality provider's public key
+                                    by the finality provider public keys
+                                    involved in the multi-staking
+
+                                    procedure
                               title: >-
                                 CovenantAdaptorSignatures is a list adaptor
                                 signatures signed by the
@@ -5381,9 +5391,12 @@ paths:
                                         format: byte
                                       title: >-
                                         adaptor_sigs is a list of adaptor
-                                        signatures, each encrypted by a restaked
+                                        signatures, each encrypted
 
-                                        BTC finality provider's public key
+                                        by the finality provider public keys
+                                        involved in the multi-staking
+
+                                        procedure
                                   title: >-
                                     CovenantAdaptorSignatures is a list adaptor
                                     signatures signed by the
@@ -5874,16 +5887,11 @@ paths:
                         description: >-
                           update_time is the last time the commission rate was
                           changed.
-                  consumer_id:
+                  bsn_id:
                     type: string
-                    description: >-
-                      consumer_id is the ID of the consumer the finality
-                      provider is operating
-
-                      on. If it's missing / empty, it's assumed the finality
-                      provider is
-
-                      operating in the Babylon chain.
+                    title: >-
+                      bsn_id is the ID of the BSN the finality provider is
+                      securing
                 description: >-
                   FinalityProviderResponse defines a finality provider with
                   voting power
@@ -11367,11 +11375,11 @@ paths:
                     title: >-
                       voting_power is the voting power of this finality provider
                       at the given height
-                  consumer_id:
+                  bsn_id:
                     type: string
                     title: >-
-                      consumer_id is the consumer id this finality provider is
-                      registered to
+                      bsn_id is the bsn id this finality provider is registered
+                      to
                 description: >-
                   FinalityProviderResponse defines a finality provider with
                   voting power information.
@@ -11924,10 +11932,10 @@ paths:
                       title: >-
                         voting_power is the voting power of this finality
                         provider at the given height
-                    consumer_id:
+                    bsn_id:
                       type: string
                       title: >-
-                        consumer_id is the consumer id this finality provider is
+                        bsn_id is the bsn id this finality provider is
                         registered to
                   description: >-
                     FinalityProviderResponse defines a finality provider with
@@ -17618,10 +17626,12 @@ definitions:
                 type: string
                 format: byte
               title: >-
-                adaptor_sigs is a list of adaptor signatures, each encrypted by
-                a restaked
+                adaptor_sigs is a list of adaptor signatures, each encrypted
 
-                BTC finality provider's public key
+                by the finality provider public keys involved in the
+                multi-staking
+
+                procedure
           title: >-
             CovenantAdaptorSignatures is a list adaptor signatures signed by the
 
@@ -17712,9 +17722,11 @@ definitions:
                     format: byte
                   title: >-
                     adaptor_sigs is a list of adaptor signatures, each encrypted
-                    by a restaked
 
-                    BTC finality provider's public key
+                    by the finality provider public keys involved in the
+                    multi-staking
+
+                    procedure
               title: >-
                 CovenantAdaptorSignatures is a list adaptor signatures signed by
                 the
@@ -17887,9 +17899,12 @@ definitions:
                       format: byte
                     title: >-
                       adaptor_sigs is a list of adaptor signatures, each
-                      encrypted by a restaked
+                      encrypted
 
-                      BTC finality provider's public key
+                      by the finality provider public keys involved in the
+                      multi-staking
+
+                      procedure
                 title: >-
                   CovenantAdaptorSignatures is a list adaptor signatures signed
                   by the
@@ -17990,9 +18005,12 @@ definitions:
                           format: byte
                         title: >-
                           adaptor_sigs is a list of adaptor signatures, each
-                          encrypted by a restaked
+                          encrypted
 
-                          BTC finality provider's public key
+                          by the finality provider public keys involved in the
+                          multi-staking
+
+                          procedure
                     title: >-
                       CovenantAdaptorSignatures is a list adaptor signatures
                       signed by the
@@ -18115,10 +18133,12 @@ definitions:
                 type: string
                 format: byte
               title: >-
-                adaptor_sigs is a list of adaptor signatures, each encrypted by
-                a restaked
+                adaptor_sigs is a list of adaptor signatures, each encrypted
 
-                BTC finality provider's public key
+                by the finality provider public keys involved in the
+                multi-staking
+
+                procedure
           title: >-
             CovenantAdaptorSignatures is a list adaptor signatures signed by the
 
@@ -18184,11 +18204,10 @@ definitions:
         items:
           type: string
           format: byte
-        title: >-
-          adaptor_sigs is a list of adaptor signatures, each encrypted by a
-          restaked
-
-          BTC finality provider's public key
+        title: |-
+          adaptor_sigs is a list of adaptor signatures, each encrypted
+          by the finality provider public keys involved in the multi-staking
+          procedure
     title: |-
       CovenantAdaptorSignatures is a list adaptor signatures signed by the
       covenant with different finality provider's public keys as encryption keys
@@ -18326,15 +18345,9 @@ definitions:
             type: string
             format: date-time
             description: update_time is the last time the commission rate was changed.
-      consumer_id:
+      bsn_id:
         type: string
-        description: >-
-          consumer_id is the ID of the consumer the finality provider is
-          operating
-
-          on. If it's missing / empty, it's assumed the finality provider is
-
-          operating in the Babylon chain.
+        title: bsn_id is the ID of the BSN the finality provider is securing
     description: |-
       FinalityProviderResponse defines a finality provider with voting power
       information.
@@ -18577,9 +18590,11 @@ definitions:
                     format: byte
                   title: >-
                     adaptor_sigs is a list of adaptor signatures, each encrypted
-                    by a restaked
 
-                    BTC finality provider's public key
+                    by the finality provider public keys involved in the
+                    multi-staking
+
+                    procedure
               title: >-
                 CovenantAdaptorSignatures is a list adaptor signatures signed by
                 the
@@ -18673,9 +18688,12 @@ definitions:
                         format: byte
                       title: >-
                         adaptor_sigs is a list of adaptor signatures, each
-                        encrypted by a restaked
+                        encrypted
 
-                        BTC finality provider's public key
+                        by the finality provider public keys involved in the
+                        multi-staking
+
+                        procedure
                   title: >-
                     CovenantAdaptorSignatures is a list adaptor signatures
                     signed by the
@@ -18804,9 +18822,12 @@ definitions:
                       format: byte
                     title: >-
                       adaptor_sigs is a list of adaptor signatures, each
-                      encrypted by a restaked
+                      encrypted
 
-                      BTC finality provider's public key
+                      by the finality provider public keys involved in the
+                      multi-staking
+
+                      procedure
                 title: >-
                   CovenantAdaptorSignatures is a list adaptor signatures signed
                   by the
@@ -18907,9 +18928,12 @@ definitions:
                           format: byte
                         title: >-
                           adaptor_sigs is a list of adaptor signatures, each
-                          encrypted by a restaked
+                          encrypted
 
-                          BTC finality provider's public key
+                          by the finality provider public keys involved in the
+                          multi-staking
+
+                          procedure
                     title: >-
                       CovenantAdaptorSignatures is a list adaptor signatures
                       signed by the
@@ -19079,9 +19103,12 @@ definitions:
                             format: byte
                           title: >-
                             adaptor_sigs is a list of adaptor signatures, each
-                            encrypted by a restaked
+                            encrypted
 
-                            BTC finality provider's public key
+                            by the finality provider public keys involved in the
+                            multi-staking
+
+                            procedure
                       title: >-
                         CovenantAdaptorSignatures is a list adaptor signatures
                         signed by the
@@ -19187,9 +19214,12 @@ definitions:
                                 format: byte
                               title: >-
                                 adaptor_sigs is a list of adaptor signatures,
-                                each encrypted by a restaked
+                                each encrypted
 
-                                BTC finality provider's public key
+                                by the finality provider public keys involved in
+                                the multi-staking
+
+                                procedure
                           title: >-
                             CovenantAdaptorSignatures is a list adaptor
                             signatures signed by the
@@ -19388,15 +19418,9 @@ definitions:
                 type: string
                 format: date-time
                 description: update_time is the last time the commission rate was changed.
-          consumer_id:
+          bsn_id:
             type: string
-            description: >-
-              consumer_id is the ID of the consumer the finality provider is
-              operating
-
-              on. If it's missing / empty, it's assumed the finality provider is
-
-              operating in the Babylon chain.
+            title: bsn_id is the ID of the BSN the finality provider is securing
         description: |-
           FinalityProviderResponse defines a finality provider with voting power
           information.
@@ -19534,16 +19558,9 @@ definitions:
                   description: >-
                     update_time is the last time the commission rate was
                     changed.
-            consumer_id:
+            bsn_id:
               type: string
-              description: >-
-                consumer_id is the ID of the consumer the finality provider is
-                operating
-
-                on. If it's missing / empty, it's assumed the finality provider
-                is
-
-                operating in the Babylon chain.
+              title: bsn_id is the ID of the BSN the finality provider is securing
           description: >-
             FinalityProviderResponse defines a finality provider with voting
             power
@@ -22156,9 +22173,9 @@ definitions:
         title: >-
           voting_power is the voting power of this finality provider at the
           given height
-      consumer_id:
+      bsn_id:
         type: string
-        title: consumer_id is the consumer id this finality provider is registered to
+        title: bsn_id is the bsn id this finality provider is registered to
     description: >-
       FinalityProviderResponse defines a finality provider with voting power
       information.
@@ -22403,11 +22420,9 @@ definitions:
             title: >-
               voting_power is the voting power of this finality provider at the
               given height
-          consumer_id:
+          bsn_id:
             type: string
-            title: >-
-              consumer_id is the consumer id this finality provider is
-              registered to
+            title: bsn_id is the bsn id this finality provider is registered to
         description: >-
           FinalityProviderResponse defines a finality provider with voting power
           information.
@@ -22511,11 +22526,9 @@ definitions:
               title: >-
                 voting_power is the voting power of this finality provider at
                 the given height
-            consumer_id:
+            bsn_id:
               type: string
-              title: >-
-                consumer_id is the consumer id this finality provider is
-                registered to
+              title: bsn_id is the bsn id this finality provider is registered to
           description: >-
             FinalityProviderResponse defines a finality provider with voting
             power information.

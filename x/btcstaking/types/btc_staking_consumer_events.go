@@ -11,7 +11,7 @@ func CreateNewFinalityProviderEvent(fp *FinalityProvider) *BTCStakingConsumerEve
 				Addr:        fp.Addr,
 				BtcPkHex:    fp.BtcPk.MarshalHex(),
 				Pop:         fp.Pop,
-				ConsumerId:  fp.ConsumerId,
+				BsnId:       fp.BsnId,
 			},
 		},
 	}

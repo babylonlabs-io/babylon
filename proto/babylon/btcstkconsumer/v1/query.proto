@@ -138,8 +138,8 @@ message FinalityProviderResponse {
   uint64 height = 8;
   // voting_power is the voting power of this finality provider at the given height
   uint64 voting_power = 9;
-  // consumer_id is the consumer id this finality provider is registered to
-  string consumer_id = 10;
+  // bsn_id is the bsn id this finality provider is registered to
+  string bsn_id = 10;
 }
 
 // QueryFinalityProviderConsumerRequest requests the consumer id a Consumer finality
