@@ -1,11 +1,13 @@
 package keeper
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/btcsuite/btcd/btcutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	btcckpttypes "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
 	"github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 )
@@ -76,4 +78,129 @@ func (k Keeper) VerifyInclusionProofAndGetHeight(
 		EndHeight:   endHeight,
 		TipHeight:   btcTip.Height,
 	}, nil
+}
+
+// AddBTCDelegationInclusionProof adds the inclusion proof of the given
+// BTC delegation realizing checks and updates in the store.
+// 1. The given delegation and inclusion proof are not nil
+// 2. The btcDel doesn't already have inclusion proof
+// 3. Has enough covenant votes
+// 4. It is not unbonded
+// 5. Verify inclusion proof
+// 6. The BTC start height of the BTC tx inclusion is higher or equal the informed tip of the btc del
+// 7. Updates start and end height
+// 8. Emit active event
+func (k Keeper) AddBTCDelegationInclusionProof(
+	ctx sdk.Context,
+	btcDel *types.BTCDelegation,
+	stakingTxInclusionProof *types.InclusionProof,
+) error {
+	// 1. sanity check the given params
+	if btcDel == nil {
+		return types.ErrBTCDelegationNotFound
+	}
+	if stakingTxInclusionProof == nil {
+		return errors.New("nil inclusion proof")
+	}
+
+	stakingTxHash, err := btcDel.GetStakingTxHash()
+	if err != nil {
+		return err
+	}
+	stakingTxHashStr := stakingTxHash.String()
+
+	// 2. check if the delegation already has inclusion proof
+	if btcDel.HasInclusionProof() {
+		return fmt.Errorf("the delegation %s already has inclusion proof", stakingTxHashStr)
+	}
+
+	params := k.GetParamsByVersion(ctx, btcDel.ParamsVersion)
+	if params == nil {
+		panic("params version in BTC delegation is not found")
+	}
+
+	// 3. check if the delegation has received a quorum of covenant sigs
+	hasQuorum, err := k.BtcDelHasCovenantQuorums(ctx, btcDel, params.CovenantQuorum)
+	if err != nil {
+		return err
+	}
+	if !hasQuorum {
+		return fmt.Errorf("the delegation %s has not received a quorum of covenant signatures", stakingTxHashStr)
+	}
+
+	// 4. check if the delegation is already unbonded
+	if btcDel.BtcUndelegation.DelegatorUnbondingInfo != nil {
+		return fmt.Errorf("the delegation %s is already unbonded", stakingTxHashStr)
+	}
+
+	// 5. verify inclusion proof
+	parsedInclusionProof, err := types.NewParsedProofOfInclusion(stakingTxInclusionProof)
+	if err != nil {
+		return err
+	}
+	stakingTx, err := bbn.NewBTCTxFromBytes(btcDel.StakingTx)
+	if err != nil {
+		return err
+	}
+
+	btccParams := k.btccKeeper.GetParams(ctx)
+
+	timeInfo, err := k.VerifyInclusionProofAndGetHeight(
+		ctx,
+		btcutil.NewTx(stakingTx),
+		btccParams.BtcConfirmationDepth,
+		btcDel.StakingTime,
+		params.UnbondingTimeBlocks,
+		parsedInclusionProof,
+	)
+
+	if err != nil {
+		return fmt.Errorf("invalid inclusion proof: %w", err)
+	}
+
+	// 6. check if the staking tx is included after the BTC tip height at the time of the delegation creation
+	if timeInfo.StartHeight < btcDel.BtcTipHeight {
+		return types.ErrStakingTxIncludedTooEarly.Wrapf(
+			"btc tip height at the time of the delegation creation: %d, staking tx inclusion height: %d",
+			btcDel.BtcTipHeight,
+			timeInfo.StartHeight,
+		)
+	}
+
+	// 7. set start height and end height and save it to db
+	btcDel.StartHeight = timeInfo.StartHeight
+	btcDel.EndHeight = timeInfo.EndHeight
+	k.setBTCDelegation(ctx, btcDel)
+
+	// 8. emit events
+	newInclusionProofEvent := types.NewInclusionProofEvent(
+		stakingTxHash.String(),
+		btcDel.StartHeight,
+		btcDel.EndHeight,
+		types.BTCDelegationStatus_ACTIVE,
+	)
+
+	if err := ctx.EventManager().EmitTypedEvents(newInclusionProofEvent); err != nil {
+		panic(fmt.Errorf("failed to emit events for the new active BTC delegation: %w", err))
+	}
+
+	activeEvent := types.NewEventPowerDistUpdateWithBTCDel(
+		&types.EventBTCDelegationStateUpdate{
+			StakingTxHash: stakingTxHash.String(),
+			NewState:      types.BTCDelegationStatus_ACTIVE,
+		},
+	)
+
+	k.addPowerDistUpdateEvent(ctx, timeInfo.TipHeight, activeEvent)
+
+	// record event that the BTC delegation will become unbonded at EndHeight-w
+	expiredEvent := types.NewEventPowerDistUpdateWithBTCDel(&types.EventBTCDelegationStateUpdate{
+		StakingTxHash: stakingTxHashStr,
+		NewState:      types.BTCDelegationStatus_EXPIRED,
+	})
+
+	// NOTE: we should have verified that EndHeight > btcTip.Height + min_unbonding_time
+	k.addPowerDistUpdateEvent(ctx, btcDel.EndHeight-params.UnbondingTimeBlocks, expiredEvent)
+
+	return nil
 }
