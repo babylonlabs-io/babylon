@@ -67,7 +67,7 @@ func TestPropagateFPSlashingToConsumersFillSlashingEventProperly(t *testing.T) {
 	require.NotNil(t, packet)
 	require.NotEmpty(t, packet.SlashedDel)
 
-	// Assert slsahing event contains correct data
+	// Assert slashing event contains correct data
 	slashedDel := packet.SlashedDel[0]
 	require.Equal(t, actualDel.MustGetStakingTxHash().String(), slashedDel.StakingTxHash)
 	require.Equal(t, hex.EncodeToString(consumerSk.Serialize()), slashedDel.RecoveredFpBtcSk)
