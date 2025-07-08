@@ -6,6 +6,7 @@ import (
 
 	"cosmossdk.io/math"
 	"cosmossdk.io/store/prefix"
+	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stktypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -182,11 +183,16 @@ func (k Keeper) SlashFinalityProvider(ctx context.Context, fpBTCPK []byte) error
 //
 // Parameters:
 // - ctx: The context for the operation.
-// - fpBTCPK: The Bitcoin public key of the finality provider being slashed.
+// - fpBTCSK: Extracted Bitcoin private key of the finality provider being slashed.
 //
 // Returns:
 // - An error if any operation fails, nil otherwise.
-func (k Keeper) PropagateFPSlashingToConsumers(ctx context.Context, fpBTCPK *bbn.BIP340PubKey) error {
+func (k Keeper) PropagateFPSlashingToConsumers(
+	ctx context.Context,
+	fpBTCSK *btcec.PrivateKey,
+) error {
+	fpBTCPK := bbn.NewBIP340PubKeyFromBTCPK(fpBTCSK.PubKey())
+
 	// Map to collect events for each consumer
 	consumerEvents := make(map[string][]*types.BTCStakingConsumerEvent)
 	// Create a map to store FP to consumer ID mappings
@@ -196,7 +202,7 @@ func (k Keeper) PropagateFPSlashingToConsumers(ctx context.Context, fpBTCPK *bbn
 	// for each consumer chain. Ensures that each consumer receives only one event per
 	// delegation, even if multiple finality providers in the delegation belong to the same consumer.
 	err := k.HandleFPBTCDelegations(ctx, fpBTCPK, func(delegation *types.BTCDelegation) error {
-		consumerEvent := types.CreateSlashedBTCDelegationEvent(delegation)
+		consumerEvent := types.CreateSlashedBTCDelegationEvent(delegation, fpBTCSK)
 
 		for _, delegationFPBTCPK := range delegation.FpBtcPkList {
 			fpBTCPKHex := delegationFPBTCPK.MarshalHex()

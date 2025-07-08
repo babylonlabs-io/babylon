@@ -126,6 +126,8 @@ queued for cosmos bsns
 - [#1247](https://github.com/babylonlabs-io/babylon/pull/1247) fix: zoneconcierge ibc router
 - [#1252](https://github.com/babylonlabs-io/babylon/pull/1252) Implement context separation
 between different signing operations
+- [#1318](https://github.com/babylonlabs-io/babylon/pull/1318) fix: propagation of
+secret key in slashing
 
 ## v2.2.0
 

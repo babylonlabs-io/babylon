@@ -1,6 +1,11 @@
 package types
 
-import "fmt"
+import (
+	"encoding/hex"
+	"fmt"
+
+	"github.com/btcsuite/btcd/btcec/v2"
+)
 
 func CreateNewFinalityProviderEvent(fp *FinalityProvider) *BTCStakingConsumerEvent {
 	event := &BTCStakingConsumerEvent{
@@ -98,11 +103,14 @@ func CreateUnbondedBTCDelegationEvent(unbondedDel *BTCDelegation, stakeSpendingT
 	return event, nil
 }
 
-func CreateSlashedBTCDelegationEvent(slashedDel *BTCDelegation) *BTCStakingConsumerEvent {
+func CreateSlashedBTCDelegationEvent(slashedDel *BTCDelegation, fpBTCSK *btcec.PrivateKey) *BTCStakingConsumerEvent {
+	serializedHexKey := hex.EncodeToString(fpBTCSK.Serialize())
+
 	return &BTCStakingConsumerEvent{
 		Event: &BTCStakingConsumerEvent_SlashedDel{
 			SlashedDel: &SlashedBTCDelegation{
-				StakingTxHash: slashedDel.MustGetStakingTxHash().String(),
+				StakingTxHash:    slashedDel.MustGetStakingTxHash().String(),
+				RecoveredFpBtcSk: serializedHexKey,
 			},
 		},
 	}
