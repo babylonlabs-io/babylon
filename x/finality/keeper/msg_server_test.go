@@ -241,7 +241,10 @@ func FuzzAddFinalitySig(f *testing.F) {
 		bsKeeper.EXPECT().GetFinalityProvider(gomock.Any(), gomock.Eq(fpBTCPKBytes)).Return(fp, nil).Times(1)
 		// mock slashing interface
 		bsKeeper.EXPECT().SlashFinalityProvider(gomock.Any(), gomock.Eq(fpBTCPKBytes)).Return(nil).Times(1)
-		bsKeeper.EXPECT().PropagateFPSlashingToConsumers(gomock.Any(), gomock.Eq(fpBTCPK)).Return(nil).Times(1)
+
+		// We need to use `gomock.Any()` as second argument as we may derive SK or
+		// negation of the SK when extracting the SK from the evidence
+		bsKeeper.EXPECT().PropagateFPSlashingToConsumers(gomock.Any(), gomock.Any()).Return(nil).Times(1)
 
 		// NOTE: even though this finality provider is slashed, the msg should be successful
 		// Otherwise the saved evidence will be rolled back
@@ -422,17 +425,31 @@ func TestVoteForConflictingHashShouldRetrieveEvidenceAndSlash(t *testing.T) {
 	require.NoError(t, err)
 	fKeeper.SetVotingPower(ctx, fpBTCPKBytes, blockHeight, 1)
 	bsKeeper.EXPECT().GetFinalityProvider(gomock.Any(),
-		gomock.Eq(fpBTCPKBytes)).Return(fp, nil).Times(1)
+		gomock.Any()).Return(fp, nil).Times(1)
 	bsKeeper.EXPECT().SlashFinalityProvider(gomock.Any(),
 		gomock.Eq(fpBTCPKBytes)).Return(nil).Times(1)
 	bsKeeper.EXPECT().PropagateFPSlashingToConsumers(gomock.Any(),
-		gomock.Eq(fpBTCPK)).Return(nil).Times(1)
+		gomock.Any()).Return(nil).Times(1)
 	_, err = ms.AddFinalitySig(ctx, msg)
 	require.NoError(t, err)
 	sig, err := fKeeper.GetSig(ctx, blockHeight, fpBTCPK)
 	require.NoError(t, err)
 	require.Equal(t, msg.FinalitySig.MustMarshal(),
 		sig.MustMarshal())
+
+	// ensure the evidence has been stored
+	evidence, err := fKeeper.GetEvidence(ctx, fpBTCPK, blockHeight)
+	require.NoError(t, err)
+	// extract the SK and assert the extracted SK is correct
+	btcSK2, err := evidence.ExtractBTCSK()
+	require.NoError(t, err)
+	// ensure btcSK and btcSK2 are same or inverse, AND correspond to the same PK
+	// NOTE: it's possible that different SKs derive to the same PK
+	// In this scenario, signature of any of these SKs can be verified with this PK
+	// exclude the first byte here since it denotes the y axis of PubKey, which does
+	// not affect verification
+	require.True(t, btcSK.Key.Equals(&btcSK2.Key) || btcSK.Key.Negate().Equals(&btcSK2.Key))
+	require.Equal(t, btcSK.PubKey().SerializeCompressed()[1:], btcSK2.PubKey().SerializeCompressed()[1:])
 }
 
 func TestDoNotPanicOnNilProof(t *testing.T) {
@@ -645,7 +662,10 @@ func FuzzEquivocationEvidence(f *testing.F) {
 			ForkFinalitySigHex:      hex.EncodeToString(bbn.NewSchnorrEOTSSigFromModNScalar(forkSig).MustMarshal()),
 			SigningContext:          "", // TODO: test using actual context
 		}
-		_, err = msg.ParseToEvidence()
+		ev, err := msg.ParseToEvidence()
+		require.NoError(t, err)
+
+		sk, err := ev.ExtractBTCSK()
 		require.NoError(t, err)
 
 		// set block height in context to be >= evidence height
@@ -659,7 +679,7 @@ func FuzzEquivocationEvidence(f *testing.F) {
 
 		// mock slashing interface
 		bsKeeper.EXPECT().SlashFinalityProvider(gomock.Any(), gomock.Eq(fpBTCPKBytes)).Return(nil)
-		bsKeeper.EXPECT().PropagateFPSlashingToConsumers(gomock.Any(), gomock.Eq(fpBTCPK)).Return(nil)
+		bsKeeper.EXPECT().PropagateFPSlashingToConsumers(gomock.Any(), gomock.Eq(sk)).Return(nil)
 
 		_, err = ms.EquivocationEvidence(ctx, msg)
 		require.NoError(t, err)
