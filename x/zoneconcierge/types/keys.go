@@ -28,14 +28,15 @@ const (
 )
 
 var (
-	PortKey               = []byte{0x11} // PortKey defines the key to store the port ID in store
-	ChainInfoKey          = []byte{0x12} // ChainInfoKey defines the key to store the chain info for each Consumer in store
-	CanonicalChainKey     = []byte{0x13} // CanonicalChainKey defines the key to store the canonical chain for each Consumer in store
-	ForkKey               = []byte{0x14} // ForkKey defines the key to store the forks for each Consumer in store
-	EpochChainInfoKey     = []byte{0x15} // EpochChainInfoKey defines the key to store each epoch's latests chain info for each Consumer in store
-	LastSentBTCSegmentKey = []byte{0x16} // LastSentBTCSegmentKey is key holding last btc light client segment sent to other cosmos zones
-	ParamsKey             = []byte{0x17} // key prefix for the parameters
-	SealedEpochProofKey   = []byte{0x18} // key prefix for proof of sealed epochs
+	PortKey                  = []byte{0x11} // PortKey defines the key to store the port ID in store
+	ChainInfoKey             = []byte{0x12} // ChainInfoKey defines the key to store the chain info for each Consumer in store
+	CanonicalChainKey        = []byte{0x13} // CanonicalChainKey defines the key to store the canonical chain for each Consumer in store
+	ForkKey                  = []byte{0x14} // ForkKey defines the key to store the forks for each Consumer in store
+	EpochChainInfoKey        = []byte{0x15} // EpochChainInfoKey defines the key to store each epoch's latests chain info for each Consumer in store
+	LastSentBTCSegmentKey    = []byte{0x16} // LastSentBTCSegmentKey is key holding last btc light client segment sent to other cosmos zones
+	ParamsKey                = []byte{0x17} // key prefix for the parameters
+	SealedEpochProofKey      = []byte{0x18} // key prefix for proof of sealed epochs
+	ConsumerBaseBTCHeaderKey = []byte{0x19} // key prefix for Consumer base BTC headers
 )
 
 func KeyPrefix(p string) []byte {

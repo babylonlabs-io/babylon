@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 
+	btclctypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
 	"github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -18,35 +19,47 @@ func (k Keeper) BroadcastBTCHeaders(ctx context.Context) error {
 		return nil
 	}
 
-	// Current behavior:
-	// - If no headers sent: Returns last w+1 headers from tip
-	// - If headers previously sent:
-	//   - If last segment valid: Returns headers from last sent to tip
-	//   - If last segment invalid (reorg): Returns last w+1 headers from tip
-	//
-	// TODO: Should use Consumer base BTC header as starting point:
-	// - If no headers sent: Return from Consumer base to tip
-	// - If headers previously sent:
-	//   - If last segment valid: Return from last sent header to tip
-	//   - If last segment invalid (reorg): Return from Consumer base to tip
-	headers := k.getHeadersToBroadcast(ctx)
-	if len(headers) == 0 {
-		k.Logger(sdkCtx).Info("skipping BTC header broadcast",
-			"reason", "no headers to broadcast",
-		)
-		return nil
-	}
+	// New behavior using Consumer-specific base headers:
+	// - If no Consumer base header exists: fallback to sending k+1 from tip
+	// - If Consumer base header exists but no headers sent: from Consumer base to tip
+	// - If headers previously sent: from child of most recent valid header to tip
+	// - If reorg detected: from Consumer base to tip
 
-	packet := types.NewBTCHeadersPacketData(&types.BTCHeaders{Headers: headers})
+	// Keep track of headers sent for updating last sent segment
+	var lastHeadersSent []*btclctypes.BTCHeaderInfo
+
 	for _, channel := range openZCChannels {
+		consumerID, err := k.getClientID(ctx, channel)
+		if err != nil {
+			return err
+		}
+
+		headers := k.getHeadersToBroadcastForConsumer(ctx, consumerID)
+		if len(headers) == 0 {
+			k.Logger(sdkCtx).Debug("skipping BTC header broadcast for consumer, no headers to broadcast",
+				"consumerID", consumerID,
+			)
+			continue
+		}
+
+		packet := types.NewBTCHeadersPacketData(&types.BTCHeaders{Headers: headers})
 		if err := k.SendIBCPacket(ctx, channel, packet); err != nil {
 			return err
 		}
+
+		// Use the first consumer's headers for updating last sent segment
+		// This maintains backward compatibility with the global last sent segment
+		if lastHeadersSent == nil {
+			lastHeadersSent = headers
+		}
 	}
 
-	k.setLastSentSegment(ctx, &types.BTCChainSegment{
-		BtcHeaders: headers,
-	})
+	// Update last sent segment if any headers were sent
+	if lastHeadersSent != nil {
+		k.setLastSentSegment(ctx, &types.BTCChainSegment{
+			BtcHeaders: lastHeadersSent,
+		})
+	}
 
 	return nil
 }
