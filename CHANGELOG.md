@@ -102,6 +102,7 @@ check of rewards
 - [#1229](https://github.com/babylonlabs-io/babylon/pull/1229) Wire up EVM.
 - [#1269](https://github.com/babylonlabs-io/babylon/pull/1269) Add fee collector e2e tests.
 - [#1062](https://github.com/babylonlabs-io/babylon/pull/1062) Add `anteHandler` to avoid fee grants on refundable tx (`x/incentive`)
+- [#1231](https://github.com/babylonlabs-io/babylon/pull/1231) Add BTC stake expansion.
 
 ### State Machine Breaking
 

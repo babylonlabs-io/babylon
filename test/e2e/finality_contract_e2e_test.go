@@ -329,7 +329,7 @@ func (s *FinalityContractTestSuite) Test4SubmitCovenantSignature() {
 	s.Len(activeDels.Dels, 1)
 
 	activeDel := activeDels.Dels[0]
-	s.True(activeDel.HasCovenantQuorums(s.covenantQuorum))
+	s.True(activeDel.HasCovenantQuorums(s.covenantQuorum, 0))
 }
 
 func (s *FinalityContractTestSuite) Test5CommitPublicRandomness() {
