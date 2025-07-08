@@ -234,7 +234,7 @@ func (s *BTCStakingTestSuite) Test2SubmitCovenantSignature() {
 	s.Len(activeDels.Dels, 1)
 
 	activeDel := activeDels.Dels[0]
-	s.True(activeDel.HasCovenantQuorums(s.covenantQuorum))
+	s.True(activeDel.HasCovenantQuorums(s.covenantQuorum, 0))
 }
 
 // Test3CommitPublicRandomnessAndSubmitFinalitySignature is an end-to-end
