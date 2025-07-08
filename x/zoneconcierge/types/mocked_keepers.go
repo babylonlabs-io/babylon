@@ -15,6 +15,7 @@ import (
 	types3 "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
 	types4 "github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
 	types5 "github.com/babylonlabs-io/babylon/v3/x/epoching/types"
+	btcec "github.com/btcsuite/btcd/btcec/v2"
 	types6 "github.com/cosmos/cosmos-sdk/types"
 	types8 "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 	types9 "github.com/cosmos/ibc-go/v10/modules/core/03-connection/types"
@@ -749,17 +750,17 @@ func (mr *MockBTCStakingKeeperMockRecorder) GetFinalityProvider(ctx, fpBTCPK int
 }
 
 // PropagateFPSlashingToConsumers mocks base method.
-func (m *MockBTCStakingKeeper) PropagateFPSlashingToConsumers(ctx context.Context, fpBTCPK *types.BIP340PubKey) error {
+func (m *MockBTCStakingKeeper) PropagateFPSlashingToConsumers(ctx context.Context, fpBTCSK *btcec.PrivateKey) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "PropagateFPSlashingToConsumers", ctx, fpBTCPK)
+	ret := m.ctrl.Call(m, "PropagateFPSlashingToConsumers", ctx, fpBTCSK)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // PropagateFPSlashingToConsumers indicates an expected call of PropagateFPSlashingToConsumers.
-func (mr *MockBTCStakingKeeperMockRecorder) PropagateFPSlashingToConsumers(ctx, fpBTCPK interface{}) *gomock.Call {
+func (mr *MockBTCStakingKeeperMockRecorder) PropagateFPSlashingToConsumers(ctx, fpBTCSK interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PropagateFPSlashingToConsumers", reflect.TypeOf((*MockBTCStakingKeeper)(nil).PropagateFPSlashingToConsumers), ctx, fpBTCPK)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PropagateFPSlashingToConsumers", reflect.TypeOf((*MockBTCStakingKeeper)(nil).PropagateFPSlashingToConsumers), ctx, fpBTCSK)
 }
 
 // SlashFinalityProvider mocks base method.
