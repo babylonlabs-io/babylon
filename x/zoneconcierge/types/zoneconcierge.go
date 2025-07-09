@@ -4,10 +4,8 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"strconv"
 
 	"cosmossdk.io/store/rootmulti"
-	"github.com/babylonlabs-io/babylon/v3/types"
 	"github.com/cometbft/cometbft/crypto/merkle"
 	cmtcrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 )
@@ -102,14 +100,6 @@ func (ci *ChainInfo) Equal(ci2 *ChainInfo) bool {
 	if !ci.LatestHeader.Equal(ci2.LatestHeader) {
 		return false
 	}
-	if len(ci.LatestForks.Headers) != len(ci2.LatestForks.Headers) {
-		return false
-	}
-	for i := 0; i < len(ci.LatestForks.Headers); i++ {
-		if !ci.LatestForks.Headers[i].Equal(ci2.LatestForks.Headers[i]) {
-			return false
-		}
-	}
 	return ci.TimestampedHeadersCount == ci2.TimestampedHeadersCount
 }
 
@@ -119,33 +109,11 @@ func (ci *ChainInfo) Validate() error {
 		return ErrInvalidChainInfo.Wrap("ConsumerId is empty")
 	case ci.LatestHeader == nil:
 		return ErrInvalidChainInfo.Wrap("LatestHeader is nil")
-	case ci.LatestForks == nil:
-		return ErrInvalidChainInfo.Wrap("LatestForks is nil")
 	}
 	if err := ci.LatestHeader.Validate(); err != nil {
 		return err
 	}
-	for _, forkHeader := range ci.LatestForks.Headers {
-		if err := forkHeader.Validate(); err != nil {
-			return err
-		}
-	}
 
-	return nil
-}
-
-func (f *Forks) Validate() error {
-	if len(f.Headers) == 0 {
-		return errors.New("invalid forks. empty headers")
-	}
-	if err := types.ValidateEntries(
-		f.Headers,
-		func(ih *IndexedHeader) string {
-			// unique key is consumer id + epoch number
-			return ih.ConsumerId + strconv.FormatUint(ih.BabylonEpoch, 10)
-		}); err != nil {
-		return err
-	}
 	return nil
 }
 

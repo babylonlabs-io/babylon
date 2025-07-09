@@ -18,7 +18,7 @@ service Query {
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
     option (google.api.http).get = "/babylon/zoneconcierge/v1/params";
   }
-  // Header queries the Consumer header and fork headers at a given height
+  // Header queries the Consumer header at a given height
   rpc Header(QueryHeaderRequest) returns (QueryHeaderResponse) {
     option (google.api.http).get =
         "/babylon/zoneconcierge/v1/chain_info/{consumer_id}/header/{height}";
@@ -70,7 +70,6 @@ message QueryHeaderRequest {
 // QueryHeaderResponse is response type for the Query/Header RPC method.
 message QueryHeaderResponse {
   babylon.zoneconcierge.v1.IndexedHeader header = 1;
-  babylon.zoneconcierge.v1.Forks fork_headers = 2;
 }
 
 // QueryEpochChainsInfoRequest is request type for the Query/EpochChainsInfo RPC

@@ -44,16 +44,7 @@ func (k Keeper) HandleHeaderWithValidCommit(ctx context.Context, txHash []byte, 
 		}
 	}
 
-	if isOnFork {
-		// insert header to fork index
-		if err := k.insertForkHeader(ctx, indexedHeader.ConsumerId, &indexedHeader); err != nil {
-			panic(err)
-		}
-		// update the latest fork in chain info
-		if err := k.tryToUpdateLatestForkHeader(ctx, indexedHeader.ConsumerId, &indexedHeader); err != nil {
-			panic(err)
-		}
-	} else {
+	if !isOnFork {
 		// ensure the header is the latest one, otherwise ignore it
 		// NOTE: while an old header is considered acceptable in IBC-Go (see Case_valid_past_update), but
 		// ZoneConcierge should not checkpoint it since Babylon requires monotonic checkpointing

@@ -31,8 +31,7 @@ func FuzzEpochChainInfoIndexer(f *testing.F) {
 
 		// invoke the hook a random number of times to simulate a random number of blocks
 		numHeaders := datagen.RandomInt(r, 100) + 1
-		numForkHeaders := datagen.RandomInt(r, 10) + 1
-		SimulateNewHeadersAndForks(ctx, r, &zcKeeper, consumerID, 0, numHeaders, numForkHeaders)
+		SimulateNewHeaders(ctx, r, &zcKeeper, consumerID, 0, numHeaders)
 
 		// end this epoch
 		hooks.AfterEpochEnds(ctx, epochNum)
@@ -43,7 +42,6 @@ func FuzzEpochChainInfoIndexer(f *testing.F) {
 		require.NoError(t, err)
 		require.Equal(t, numHeaders-1, chainInfo.LatestHeader.Height)
 		require.Equal(t, numHeaders, chainInfo.TimestampedHeadersCount)
-		require.Equal(t, numForkHeaders, uint64(len(chainInfo.LatestForks.Headers)))
 	})
 }
 
@@ -64,7 +62,6 @@ func FuzzGetEpochHeaders(f *testing.F) {
 		nextHeightList := []uint64{0}
 		numHeadersList := []uint64{}
 		expectedHeadersMap := map[uint64][]*ibctmtypes.Header{}
-		numForkHeadersList := []uint64{}
 
 		// we test the scenario of ending an epoch for multiple times, in order to ensure that
 		// consecutive epoch infos do not affect each other.
@@ -81,11 +78,10 @@ func FuzzGetEpochHeaders(f *testing.F) {
 				}
 			}
 
-			// generate a random number of headers and fork headers
+			// generate a random number of headers
 			numHeadersList = append(numHeadersList, datagen.RandomInt(r, 100)+1)
-			numForkHeadersList = append(numForkHeadersList, datagen.RandomInt(r, 10)+1)
-			// trigger hooks to append these headers and fork headers
-			expectedHeaders, _ := SimulateNewHeadersAndForks(ctx, r, &zcKeeper, consumerID, nextHeightList[i], numHeadersList[i], numForkHeadersList[i])
+			// trigger hooks to append these headers
+			expectedHeaders := SimulateNewHeaders(ctx, r, &zcKeeper, consumerID, nextHeightList[i], numHeadersList[i])
 			expectedHeadersMap[epochNum] = expectedHeaders
 			// prepare nextHeight for the next request
 			nextHeightList = append(nextHeightList, nextHeightList[i]+numHeadersList[i])
