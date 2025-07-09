@@ -399,6 +399,7 @@ func convertToEvidenceResponse(evidence *types.Evidence) *types.EvidenceResponse
 		ForkAppHash:          evidence.ForkAppHash,
 		CanonicalFinalitySig: evidence.CanonicalFinalitySig,
 		ForkFinalitySig:      evidence.ForkFinalitySig,
+		SigningContext:       evidence.SigningContext,
 	}
 }
 
