@@ -2,7 +2,8 @@
 set -o errexit -o nounset -o pipefail
 command -v shellcheck >/dev/null && shellcheck "$0"
 
-LOCAL_REPO="../../../../rollup-bsn-contracts"
+BASE=$(dirname "$0")
+LOCAL_REPO="$BASE/../../../../rollup-bsn-contracts"
 CONTRACTS="finality"
 OUTPUT_FOLDER="$(dirname "$0")/../bytecode"
 mkdir -p "$OUTPUT_FOLDER"
@@ -15,5 +16,5 @@ done
 
 cd "${LOCAL_REPO}"
 TAG=$(git rev-parse HEAD)
-cd - 2>/dev/null
+cd - >/dev/null 2>&1
 echo "$TAG" >"$OUTPUT_FOLDER/finality_contract_version.txt"
