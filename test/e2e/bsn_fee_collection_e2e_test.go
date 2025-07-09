@@ -2,7 +2,9 @@ package e2e
 
 import (
 	"crypto/sha256"
+	"encoding/json"
 	"fmt"
+	"github.com/babylonlabs-io/babylon/v3/x/incentive/keeper"
 	"time"
 
 	sdkmath "cosmossdk.io/math"
@@ -107,14 +109,16 @@ func (s *BSNFeeCollectionTestSuite) TestBSNFeeCollectionWithCorrectMemo() {
 	transferCoin := sdk.NewInt64Coin(customDenom, transferAmount)
 
 	// Create JSON callback memo for IBC callback middleware with BSN action
-	callbackMemo := fmt.Sprintf(`{
-		"dest_callback": {
-			"address": "%s"
-		},
-		"action": "%s"
-	}`, bsnFeeCollectorAddr.String(), bsnRewardDistributionMemo)
+	callbackMemo := keeper.CallbackMemo{
+		DestCallback: &keeper.CallbackInfo{Address: bsnFeeCollectorAddr.String()},
+		Action:       bsnRewardDistributionMemo,
+	}
+	// Convert struct to JSON string
+	callbackMemoJSON, err := json.Marshal(callbackMemo)
+	s.Require().NoError(err)
+	callbackMemoString := string(callbackMemoJSON)
 
-	txHash := nA.SendIBCTransfer(s.senderAddr, bsnFeeCollectorAddr.String(), callbackMemo, transferCoin)
+	txHash := nA.SendIBCTransfer(s.senderAddr, bsnFeeCollectorAddr.String(), callbackMemoString, transferCoin)
 	nA.WaitForNextBlock()
 
 	// Query transaction to ensure it was successful
