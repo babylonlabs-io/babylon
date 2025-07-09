@@ -571,9 +571,9 @@ type StakeExpansion struct {
 	// second input (this one) is to pay for fees and optionally to add more
 	// stake to the BTC delegation.
 	OtherFundingTxOut []byte `protobuf:"bytes,2,opt,name=other_funding_tx_out,json=otherFundingTxOut,proto3" json:"other_funding_tx_out,omitempty"`
-	// previous_stk_covenant_sigs is a list of signatures on the spending of
-	// the previous btc staking transaction {previous_staking_tx_hash}
-	// by each covenant member
+	// previous_stk_covenant_sigs is a list of signatures on the stake expansion
+	// transaction (i.e., the transaction spending the previous staking transaction
+	// {previous_staking_tx_hash}) by each covenant member.
 	// It must be provided to allow the previous staking tx to be spent as
 	// an transaction input of another BTC staking transaction.
 	PreviousStkCovenantSigs []*SignatureInfo `protobuf:"bytes,3,rep,name=previous_stk_covenant_sigs,json=previousStkCovenantSigs,proto3" json:"previous_stk_covenant_sigs,omitempty"`

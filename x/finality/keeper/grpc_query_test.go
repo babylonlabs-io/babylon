@@ -651,6 +651,7 @@ func convertToEvidence(er *types.EvidenceResponse) *types.Evidence {
 		ForkAppHash:          er.ForkAppHash,
 		CanonicalFinalitySig: er.CanonicalFinalitySig,
 		ForkFinalitySig:      er.ForkFinalitySig,
+		SigningContext:       er.SigningContext,
 	}
 }
 
