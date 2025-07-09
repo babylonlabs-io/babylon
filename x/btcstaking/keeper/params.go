@@ -216,3 +216,20 @@ func (k Keeper) GetParamsForBtcHeight(ctx context.Context, height uint64) (*type
 
 	return k.GetParamsByVersion(ctx, version), version, nil
 }
+
+func (k Keeper) IterateAndModifyParams(ctx context.Context, f func(ctx context.Context, p *types.Params) error) error {
+	paramsStore := k.paramsStore(ctx)
+	it := paramsStore.Iterator(nil, nil)
+	defer it.Close()
+
+	for ; it.Valid(); it.Next() {
+		var sp types.StoredParams
+		k.cdc.MustUnmarshal(it.Value(), &sp)
+		if err := f(ctx, &sp.Params); err != nil {
+			return err
+		}
+		paramsStore.Set(it.Key(), k.cdc.MustMarshal(&sp))
+	}
+
+	return nil
+}
