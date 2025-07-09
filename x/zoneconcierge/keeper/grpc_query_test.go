@@ -79,13 +79,6 @@ func FuzzEpochChainsInfo(f *testing.F) {
 			// simulate the scenario that a random epoch has ended
 			hooks.AfterEpochEnds(ctx, epochNum)
 		}
-
-		// if num of chain ids exceed the max limit, query should fail
-		largeNumChains := datagen.RandomInt(r, 10) + 101
-		var maxConsumerIDs []string
-		for i := uint64(0); i < largeNumChains; i++ {
-			maxConsumerIDs = append(maxConsumerIDs, datagen.GenRandomHexStr(r, 30))
-		}
 	})
 }
 
