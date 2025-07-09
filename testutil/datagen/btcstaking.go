@@ -35,13 +35,14 @@ const (
 func GenRandomFinalityProvider(
 	r *rand.Rand,
 	signingContext string,
+	bsnId string,
 ) (*bstypes.FinalityProvider, error) {
 	// BTC key pairs
 	btcSK, _, err := GenRandomBTCKeyPair(r)
 	if err != nil {
 		return nil, err
 	}
-	return GenRandomFinalityProviderWithBTCSK(r, btcSK, signingContext, "")
+	return GenRandomFinalityProviderWithBTCSK(r, btcSK, signingContext, bsnId)
 }
 
 func GenRandomMsgCreateFinalityProvider(
@@ -60,11 +61,12 @@ func CreateNFinalityProviders(
 	r *rand.Rand,
 	t *testing.T,
 	signingContext string,
+	bsnId string,
 	n int,
 ) []*bstypes.FinalityProvider {
 	fps := make([]*bstypes.FinalityProvider, n)
 	for i := 0; i < n; i++ {
-		fp, err := GenRandomFinalityProvider(r, signingContext)
+		fp, err := GenRandomFinalityProvider(r, signingContext, bsnId)
 		require.NoError(t, err)
 		fps[i] = fp
 	}
@@ -75,9 +77,9 @@ func GenRandomFinalityProviderWithBTCSK(
 	r *rand.Rand,
 	btcSK *btcec.PrivateKey,
 	signingContext string,
-	consumerID string,
+	bsnId string,
 ) (*bstypes.FinalityProvider, error) {
-	return GenCustomFinalityProvider(r, btcSK, signingContext, GenRandomAccount().GetAddress(), consumerID)
+	return GenCustomFinalityProvider(r, btcSK, signingContext, GenRandomAccount().GetAddress(), bsnId)
 }
 
 func GenRandomCommission(r *rand.Rand) sdkmath.LegacyDec {
@@ -498,6 +500,40 @@ func GenBTCStakingSlashingInfoWithOutPoint(
 	slashingRate sdkmath.LegacyDec,
 	slashingChangeLockTime uint16,
 ) *TestStakingSlashingInfo {
+	return GenBTCStakingSlashingInfoWithInputs(
+		r,
+		t,
+		btcNet,
+		[]*wire.OutPoint{outPoint},
+		stakerSK,
+		fpPKs,
+		covenantPKs,
+		covenantQuorum,
+		stakingTimeBlocks,
+		stakingValue,
+		slashingPkScript,
+		slashingRate,
+		slashingChangeLockTime,
+	)
+}
+
+func GenBTCStakingSlashingInfoWithInputs(
+	r *rand.Rand,
+	t testing.TB,
+	btcNet *chaincfg.Params,
+	outPoints []*wire.OutPoint,
+	stakerSK *btcec.PrivateKey,
+	fpPKs []*btcec.PublicKey,
+	covenantPKs []*btcec.PublicKey,
+	covenantQuorum uint32,
+	stakingTimeBlocks uint16,
+	stakingValue int64,
+	slashingPkScript []byte,
+	slashingRate sdkmath.LegacyDec,
+	slashingChangeLockTime uint16,
+) *TestStakingSlashingInfo {
+	require.NotEmpty(t, outPoints)
+
 	stakingInfo, err := btcstaking.BuildStakingInfo(
 		stakerSK.PubKey(),
 		fpPKs,
@@ -507,21 +543,26 @@ func GenBTCStakingSlashingInfoWithOutPoint(
 		btcutil.Amount(stakingValue),
 		btcNet,
 	)
-
 	require.NoError(t, err)
+
 	tx := wire.NewMsgTx(2)
-	// add the given tx input
-	txIn := wire.NewTxIn(outPoint, nil, nil)
-	tx.AddTxIn(txIn)
+
+	// Add all given inputs
+	for _, outPoint := range outPoints {
+		tx.AddTxIn(wire.NewTxIn(outPoint, nil, nil))
+	}
+
+	// Add staking output
 	tx.AddTxOut(stakingInfo.StakingOutput)
 
-	// 2 outputs for changes and staking output
-	changeAddrScript, err := GenRandomPubKeyHashScript(r, btcNet)
+	// Add dummy change output
+	changeScript, err := GenRandomPubKeyHashScript(r, btcNet)
 	require.NoError(t, err)
-	require.False(t, txscript.GetScriptClass(changeAddrScript) == txscript.NonStandardTy)
+	require.False(t, txscript.GetScriptClass(changeScript) == txscript.NonStandardTy)
 
-	tx.AddTxOut(wire.NewTxOut(10000, changeAddrScript)) // output for change
+	tx.AddTxOut(wire.NewTxOut(10000, changeScript))
 
+	// Build slashing tx
 	slashingMsgTx, err := btcstaking.BuildSlashingTxFromStakingTxStrict(
 		tx,
 		StakingOutIdx,
@@ -530,8 +571,10 @@ func GenBTCStakingSlashingInfoWithOutPoint(
 		slashingChangeLockTime,
 		2000,
 		slashingRate,
-		btcNet)
+		btcNet,
+	)
 	require.NoError(t, err)
+
 	slashingTx, err := bstypes.NewBTCSlashingTxFromMsgTx(slashingMsgTx)
 	require.NoError(t, err)
 
@@ -755,6 +798,46 @@ func GenerateSignatures(
 	return sigs
 }
 
+func GenerateSignaturesForStakeExpansion(
+	t *testing.T,
+	keys []*btcec.PrivateKey,
+	tx *wire.MsgTx,
+	stakingOutput *wire.TxOut,
+	fundingOutput *wire.TxOut,
+	leaf txscript.TapLeaf,
+) []*schnorr.Signature {
+	var si []*SignatureInfo
+
+	for _, key := range keys {
+		pubKey := key.PubKey()
+		sig, err := btcstaking.SignTxForFirstScriptSpendWithTwoInputsFromTapLeaf(
+			tx,
+			stakingOutput,
+			fundingOutput,
+			key,
+			leaf,
+		)
+		require.NoError(t, err)
+		info := NewSignatureInfo(
+			pubKey,
+			sig,
+		)
+		si = append(si, info)
+	}
+
+	// sort signatures by public key
+	sortedSigInfo := sortSignatureInfo(si)
+
+	var sigs []*schnorr.Signature = make([]*schnorr.Signature, len(sortedSigInfo))
+
+	for i, sigInfo := range sortedSigInfo {
+		sig := sigInfo
+		sigs[i] = sig.Signature
+	}
+
+	return sigs
+}
+
 func AddWitnessToUnbondingTx(
 	t *testing.T,
 	stakingOutput *wire.TxOut,
@@ -818,4 +901,102 @@ func AddWitnessToUnbondingTx(
 	require.NoError(t, err)
 
 	return serializedUnbondingTxWithWitness, unbondingTx
+}
+
+func AddWitnessToStakeExpTx(
+	t *testing.T,
+	stakingOutput *wire.TxOut,
+	fundingOutput *wire.TxOut,
+	stakerSk *btcec.PrivateKey,
+	covenantSks []*btcec.PrivateKey,
+	covenantQuorum uint32,
+	finalityProviderPKs []*btcec.PublicKey,
+	stakingTime uint16,
+	stakingValue int64,
+	spendingTx *wire.MsgTx, // this is the stake expansion transaction
+	net *chaincfg.Params,
+) ([]byte, *wire.MsgTx) {
+	var covenatnPks []*btcec.PublicKey
+	for _, sk := range covenantSks {
+		covenatnPks = append(covenatnPks, sk.PubKey())
+	}
+
+	stakingInfo, err := stk.BuildStakingInfo(
+		stakerSk.PubKey(),
+		finalityProviderPKs,
+		covenatnPks,
+		covenantQuorum,
+		stakingTime,
+		btcutil.Amount(stakingValue),
+		net,
+	)
+	require.NoError(t, err)
+
+	// sanity check that what we re-build is the same as what we have in the BTC delegation
+	require.Equal(t, stakingOutput, stakingInfo.StakingOutput)
+
+	unbondingSpendInfo, err := stakingInfo.UnbondingPathSpendInfo()
+	require.NoError(t, err)
+
+	unbondingScirpt := unbondingSpendInfo.RevealedLeaf.Script
+	require.NotNil(t, unbondingScirpt)
+
+	covenantSigs := GenerateSignaturesForStakeExpansion(
+		t,
+		covenantSks,
+		spendingTx,
+		stakingOutput,
+		fundingOutput,
+		unbondingSpendInfo.RevealedLeaf,
+	)
+	require.NoError(t, err)
+
+	stakerSig, err := stk.SignTxForFirstScriptSpendWithTwoInputsFromTapLeaf(
+		spendingTx,
+		stakingOutput,
+		fundingOutput,
+		stakerSk,
+		unbondingSpendInfo.RevealedLeaf,
+	)
+	require.NoError(t, err)
+
+	ubWitness, err := unbondingSpendInfo.CreateUnbondingPathWitness(covenantSigs, stakerSig)
+	require.NoError(t, err)
+
+	spendingTx.TxIn[0].Witness = ubWitness
+
+	serializedUnbondingTxWithWitness, err := bbn.SerializeBTCTx(spendingTx)
+	require.NoError(t, err)
+
+	return serializedUnbondingTxWithWitness, spendingTx
+}
+
+func GenFundingTx(
+	t *testing.T,
+	r *rand.Rand,
+	btcNet *chaincfg.Params,
+	outPoint *wire.OutPoint,
+	outAmount int64,
+	stakingOutput *wire.TxOut,
+) *wire.MsgTx {
+	// Create funding tx that spends the provided outPoint
+	fundingTx := wire.NewMsgTx(2)
+
+	// Input: from given outPoint
+	txIn := wire.NewTxIn(outPoint, nil, nil)
+	fundingTx.AddTxIn(txIn)
+
+	// Output: stake expansion output (same as original stakingOutput)
+	fundingTx.AddTxOut(wire.NewTxOut(stakingOutput.Value, stakingOutput.PkScript))
+
+	// Add change output if needed
+	change := outAmount - stakingOutput.Value
+	if change > 1000 {
+		changeScript, err := GenRandomPubKeyHashScript(r, btcNet)
+		require.NoError(t, err)
+		require.False(t, txscript.GetScriptClass(changeScript) == txscript.NonStandardTy)
+		fundingTx.AddTxOut(wire.NewTxOut(change, changeScript))
+	}
+
+	return fundingTx
 }

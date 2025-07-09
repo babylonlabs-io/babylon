@@ -22,6 +22,7 @@ import (
 	testutilk "github.com/babylonlabs-io/babylon/v3/testutil/keeper"
 	btclightclientt "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
 	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
+	bsctypes "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
 )
 
 func TestInitGenesisWithSetParams(t *testing.T) {
@@ -102,6 +103,20 @@ func TestExportGenesis(t *testing.T) {
 		k.IndexBTCHeight(ctx)
 	}
 
+	// register consumers as cosmos consumers
+	for _, ev := range consumerEvents {
+		consumerRegister := &bsctypes.ConsumerRegister{
+			ConsumerId: ev.ConsumerId,
+			ConsumerMetadata: &bsctypes.ConsumerRegister_CosmosConsumerMetadata{
+				CosmosConsumerMetadata: &bsctypes.CosmosConsumerMetadata{
+					ChannelId: ev.ConsumerId,
+				},
+			},
+		}
+		err := h.App.BTCStkConsumerKeeper.RegisterConsumer(h.Ctx, consumerRegister)
+		require.NoError(t, err)
+	}
+
 	// store consumer events
 	for _, e := range consumerEvents {
 		event := &types.BTCStakingConsumerEvent{
@@ -138,7 +153,18 @@ func TestConsumerEventsDeterministicOrder(t *testing.T) {
 			},
 		},
 		}
-		err := k.AddBTCStakingConsumerEvent(ctx, bsnID, event)
+
+		err := h.App.BTCStkConsumerKeeper.RegisterConsumer(h.Ctx, &bsctypes.ConsumerRegister{
+			ConsumerId: bsnID,
+			ConsumerMetadata: &bsctypes.ConsumerRegister_CosmosConsumerMetadata{
+				CosmosConsumerMetadata: &bsctypes.CosmosConsumerMetadata{
+					ChannelId: bsnID,
+				},
+			},
+		})
+		require.NoError(t, err)
+
+		err = k.AddBTCStakingConsumerEvent(ctx, bsnID, event)
 		require.NoError(t, err)
 	}
 
@@ -167,7 +193,7 @@ func setupTest(t *testing.T) (sdk.Context, *helper.Helper, *types.GenesisState) 
 	k, ctx := h.App.BTCStakingKeeper, h.Ctx
 	numFps := 3
 
-	fps := datagen.CreateNFinalityProviders(r, t, h.FpPopContext(), numFps)
+	fps := datagen.CreateNFinalityProviders(r, t, h.FpPopContext(), "", numFps)
 	params := k.GetParams(ctx)
 
 	chainsHeight := make([]*types.BlockHeightBbnToBtc, 0)
@@ -180,7 +206,6 @@ func setupTest(t *testing.T) (sdk.Context, *helper.Helper, *types.GenesisState) 
 	events := make([]*types.EventIndex, 0)
 	btcDelegators := make([]*types.BTCDelegator, 0)
 	allowedStkTxHashes := make([]string, 0)
-	consumerBtcDelegators := make([]*types.BTCDelegator, 0)
 	consumerEvents := make([]*types.ConsumerEvent, 0)
 
 	blkHeight := uint64(r.Int63n(1000)) + math.MaxUint16
@@ -265,7 +290,6 @@ func setupTest(t *testing.T) (sdk.Context, *helper.Helper, *types.GenesisState) 
 		Events:                 events,
 		AllowedStakingTxHashes: allowedStkTxHashes,
 		LargestBtcReorg:        latestBtcReOrg,
-		BtcConsumerDelegators:  consumerBtcDelegators,
 		ConsumerEvents:         consumerEvents,
 	}
 	require.NoError(t, gs.Validate())

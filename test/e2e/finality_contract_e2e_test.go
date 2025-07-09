@@ -1,6 +1,7 @@
 package e2e
 
 import (
+	ct "github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
 	"math"
 	"math/rand"
 	"strconv"
@@ -328,7 +329,7 @@ func (s *FinalityContractTestSuite) Test4SubmitCovenantSignature() {
 	s.Len(activeDels.Dels, 1)
 
 	activeDel := activeDels.Dels[0]
-	s.True(activeDel.HasCovenantQuorums(s.covenantQuorum))
+	s.True(activeDel.HasCovenantQuorums(s.covenantQuorum, 0))
 }
 
 func (s *FinalityContractTestSuite) Test5CommitPublicRandomness() {
@@ -372,6 +373,22 @@ func (s *FinalityContractTestSuite) Test5CommitPublicRandomness() {
 		)
 		return true
 	}, time.Second*10, time.Second, "Public randomness commitment was not found within the expected time")
+
+	// Wait until Babylon has finalized the current epoch
+	currentEpoch, err := nonValidatorNode.QueryCurrentEpoch()
+	s.NoError(err)
+	s.T().Logf("Wait until Babylon has finalized the current epoch: %d", currentEpoch)
+	const startEpoch uint64 = 1
+	nonValidatorNode.WaitUntilCurrentEpochIsSealedAndFinalized(startEpoch)
+
+	endEpoch, err := nonValidatorNode.QueryRawCheckpoint(currentEpoch)
+	s.NoError(err)
+	s.Equal(ct.Finalized, endEpoch.Status)
+
+	// Wait for a some time to ensure that the checkpoint is included in the chain
+	time.Sleep(20 * time.Second)
+	// Wait for the next block
+	nonValidatorNode.WaitForNextBlock()
 }
 
 func (s *FinalityContractTestSuite) Test6SubmitFinalitySignature() {
@@ -412,7 +429,8 @@ func (s *FinalityContractTestSuite) Test6SubmitFinalitySignature() {
 			return false
 		}
 		s.Equal(1, len(blockVoters))
-		s.Equal(s.consumerFp.BtcPk.MarshalHex(), blockVoters[0])
+		s.Equal(s.consumerFp.BtcPk.MarshalHex(), blockVoters[0].FpBtcPkHex)
+		s.Equal(blockToVote.AppHash, blockVoters[0].FinalitySignature.BlockHash)
 		s.T().Logf("Finality signature found for block height %d with app hash %x: voter %s",
 			blockToVote.Height,
 			blockToVote.AppHash,

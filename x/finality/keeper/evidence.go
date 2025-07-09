@@ -35,7 +35,7 @@ func (k Keeper) HandleEquivocationEvidence(ctx context.Context, req *types.MsgEq
 	// slash this finality provider, including setting its voting power to
 	// zero, extracting its BTC SK, and emit an event
 	// NOTE: this function checks if the finality provider exists and is not slashed
-	if err := k.slashFinalityProvider(ctx, evidence.FpBtcPk, evidence); err != nil {
+	if err := k.slashFinalityProvider(ctx, sk, evidence); err != nil {
 		return nil, err
 	}
 
