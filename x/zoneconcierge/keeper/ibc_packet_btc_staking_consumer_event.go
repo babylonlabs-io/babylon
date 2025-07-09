@@ -121,12 +121,15 @@ func (k Keeper) HandleIBCChannelCreation(
 		return fmt.Errorf("failed to update consumer register: %w", err)
 	}
 
-	// NOTE: We no longer automatically initialize Consumer base BTC header
-	// BSNs should inform Babylon about their preferred base BTC header via BSNBaseBTCHeaderIBCPacket
+	// Initialize Consumer base BTC header to current tip
+	if err := k.initializeConsumerBaseBTCHeader(ctx, clientID); err != nil {
+		return fmt.Errorf("failed to initialize consumer base BTC header: %w", err)
+	}
+
 	k.Logger(ctx).Info("IBC channel created successfully",
 		"consumerID", clientID,
 		"channelID", channelID,
-		"note", "BSN should send BSNBaseBTCHeaderIBCPacket to inform base BTC header",
+		"note", "Consumer base BTC header initialized to current tip",
 	)
 
 	return nil

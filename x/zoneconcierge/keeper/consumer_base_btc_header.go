@@ -40,7 +40,7 @@ func (k Keeper) consumerBaseBTCHeaderStore(ctx context.Context) prefix.Store {
 
 // initializeConsumerBaseBTCHeader initializes the base BTC header for a Consumer
 // This is called when a new IBC channel is created to set the starting point for BTC header synchronization
-// NOTE: This function is currently unused as BSNs should report their own base headers via BSNBaseBTCHeaderIBCPacket
+// The base header is set to the current BTC tip, and BSNs can later update it via BSNBaseBTCHeaderIBCPacket
 func (k Keeper) initializeConsumerBaseBTCHeader(ctx context.Context, consumerID string) error {
 	// Check if Consumer base header already exists
 	if existingHeader := k.GetConsumerBaseBTCHeader(ctx, consumerID); existingHeader != nil {
