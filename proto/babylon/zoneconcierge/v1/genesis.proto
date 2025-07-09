@@ -18,16 +18,14 @@ message GenesisState {
   // chains_indexed_headers contains the canonical chains
   // of the consumer chains, formed as a list of IndexedHeaders
   repeated IndexedHeader chains_indexed_headers = 4;
-  // chains_forks contains the forks for each consumer chain
-  repeated Forks chains_forks = 5;
   // chains_epochs_info contains the epochs' latest ChainInfo for a consumer
   // chain
-  repeated EpochChainInfoEntry chains_epochs_info = 6;
+  repeated EpochChainInfoEntry chains_epochs_info = 5;
   // last_sent_segment is the last BTC chain segment
   // which was broadcasted to the other light clients
-  BTCChainSegment last_sent_segment = 7;
+  BTCChainSegment last_sent_segment = 6;
   // sealed_epochs_proofs contains the proofs that each epoch is sealed
-  repeated SealedEpochProofEntry sealed_epochs_proofs = 8;
+  repeated SealedEpochProofEntry sealed_epochs_proofs = 7;
 }
 
 // EpochChainInfoEntry contains each epoch's latest ChainInfo for a consumer
