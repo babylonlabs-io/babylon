@@ -5,7 +5,6 @@ import (
 
 	zctypes "github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
 	"github.com/cosmos/cosmos-sdk/client"
-	sdkquerytypes "github.com/cosmos/cosmos-sdk/types/query"
 )
 
 // QueryZoneConcierge queries the ZoneConcierge module of the Babylon node
@@ -29,22 +28,6 @@ func (c *QueryClient) FinalizedConnectedChainsInfo(consumerIds []string) (*zctyp
 			ConsumerIds: consumerIds,
 		}
 		resp, err = queryClient.FinalizedChainsInfo(ctx, req)
-		return err
-	})
-
-	return resp, err
-}
-
-// ConnectedChainHeaders queries the zoneconcierge module for the headers of a connected chain
-func (c *QueryClient) ConnectedChainHeaders(consumerID string, pagination *sdkquerytypes.PageRequest) (*zctypes.QueryListHeadersResponse, error) {
-	var resp *zctypes.QueryListHeadersResponse
-	err := c.QueryZoneConcierge(func(ctx context.Context, queryClient zctypes.QueryClient) error {
-		var err error
-		req := &zctypes.QueryListHeadersRequest{
-			ConsumerId: consumerID,
-			Pagination: pagination,
-		}
-		resp, err = queryClient.ListHeaders(ctx, req)
 		return err
 	})
 

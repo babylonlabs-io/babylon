@@ -6,7 +6,6 @@ import (
 	bbntypes "github.com/babylonlabs-io/babylon/v3/types"
 	"github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/query"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -20,62 +19,6 @@ func (k Keeper) Params(c context.Context, req *types.QueryParamsRequest) (*types
 	ctx := sdk.UnwrapSDKContext(c)
 
 	return &types.QueryParamsResponse{Params: k.GetParams(ctx)}, nil
-}
-
-// Header returns the header and fork headers at a given height
-func (k Keeper) Header(c context.Context, req *types.QueryHeaderRequest) (*types.QueryHeaderResponse, error) {
-	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid request")
-	}
-
-	if len(req.ConsumerId) == 0 {
-		return nil, status.Error(codes.InvalidArgument, "chain ID cannot be empty")
-	}
-
-	ctx := sdk.UnwrapSDKContext(c)
-
-	header, err := k.GetHeader(ctx, req.ConsumerId, req.Height)
-	if err != nil {
-		return nil, err
-	}
-	forks := k.GetForks(ctx, req.ConsumerId, req.Height)
-	resp := &types.QueryHeaderResponse{
-		Header:      header,
-		ForkHeaders: forks,
-	}
-
-	return resp, nil
-}
-
-// ListHeaders returns all headers of a chain with given ID, with pagination support
-func (k Keeper) ListHeaders(c context.Context, req *types.QueryListHeadersRequest) (*types.QueryListHeadersResponse, error) {
-	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid request")
-	}
-
-	if len(req.ConsumerId) == 0 {
-		return nil, status.Error(codes.InvalidArgument, "chain ID cannot be empty")
-	}
-
-	ctx := sdk.UnwrapSDKContext(c)
-
-	headers := []*types.IndexedHeader{}
-	store := k.canonicalChainStore(ctx, req.ConsumerId)
-	pageRes, err := query.Paginate(store, req.Pagination, func(key, value []byte) error {
-		var header types.IndexedHeader
-		k.cdc.MustUnmarshal(value, &header)
-		headers = append(headers, &header)
-		return nil
-	})
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
-	resp := &types.QueryListHeadersResponse{
-		Headers:    headers,
-		Pagination: pageRes,
-	}
-	return resp, nil
 }
 
 // FinalizedChainsInfo returns the finalized info for a given list of chains

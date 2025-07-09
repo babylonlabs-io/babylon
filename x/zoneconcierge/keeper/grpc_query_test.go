@@ -6,7 +6,6 @@ import (
 
 	"github.com/babylonlabs-io/babylon/v3/app"
 	btclightclienttypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
-	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
@@ -22,39 +21,6 @@ type chainInfo struct {
 	numHeaders        uint64
 	numForkHeaders    uint64
 	headerStartHeight uint64
-}
-
-func FuzzHeader(f *testing.F) {
-	datagen.AddRandomSeedsToFuzzer(f, 10)
-
-	f.Fuzz(func(t *testing.T, seed int64) {
-		r := rand.New(rand.NewSource(seed))
-
-		babylonApp := app.Setup(t, false)
-		zcKeeper := babylonApp.ZoneConciergeKeeper
-		ctx := babylonApp.NewContext(false)
-
-		// invoke the hook a random number of times to simulate a random number of blocks
-		numHeaders := datagen.RandomInt(r, 100) + 2
-		numForkHeaders := datagen.RandomInt(r, 10) + 1
-		headers, forkHeaders := SimulateNewHeadersAndForks(ctx, r, &zcKeeper, consumerID, 0, numHeaders, numForkHeaders)
-
-		// find header at a random height and assert correctness against the expected header
-		randomHeight := datagen.RandomInt(r, int(numHeaders-1))
-		resp, err := zcKeeper.Header(ctx, &zctypes.QueryHeaderRequest{ConsumerId: consumerID, Height: randomHeight})
-		require.NoError(t, err)
-		require.Equal(t, headers[randomHeight].Header.AppHash, resp.Header.Hash)
-		require.Len(t, resp.ForkHeaders.Headers, 0)
-
-		// find the last header and fork headers then assert correctness
-		resp, err = zcKeeper.Header(ctx, &zctypes.QueryHeaderRequest{ConsumerId: consumerID, Height: numHeaders - 1})
-		require.NoError(t, err)
-		require.Equal(t, headers[numHeaders-1].Header.AppHash, resp.Header.Hash)
-		require.Len(t, resp.ForkHeaders.Headers, int(numForkHeaders))
-		for i := 0; i < int(numForkHeaders); i++ {
-			require.Equal(t, forkHeaders[i].Header.AppHash, resp.ForkHeaders.Headers[i].Hash)
-		}
-	})
 }
 
 func FuzzEpochChainsInfo(f *testing.F) {
@@ -119,38 +85,6 @@ func FuzzEpochChainsInfo(f *testing.F) {
 		var maxConsumerIDs []string
 		for i := uint64(0); i < largeNumChains; i++ {
 			maxConsumerIDs = append(maxConsumerIDs, datagen.GenRandomHexStr(r, 30))
-		}
-	})
-}
-
-func FuzzListHeaders(f *testing.F) {
-	datagen.AddRandomSeedsToFuzzer(f, 10)
-
-	f.Fuzz(func(t *testing.T, seed int64) {
-		r := rand.New(rand.NewSource(seed))
-
-		babylonApp := app.Setup(t, false)
-		zcKeeper := babylonApp.ZoneConciergeKeeper
-		ctx := babylonApp.NewContext(false)
-
-		// invoke the hook a random number of times to simulate a random number of blocks
-		numHeaders := datagen.RandomInt(r, 100) + 1
-		numForkHeaders := datagen.RandomInt(r, 10) + 1
-		headers, _ := SimulateNewHeadersAndForks(ctx, r, &zcKeeper, consumerID, 0, numHeaders, numForkHeaders)
-
-		// a request with randomised pagination
-		limit := datagen.RandomInt(r, int(numHeaders)) + 1
-		req := &zctypes.QueryListHeadersRequest{
-			ConsumerId: consumerID,
-			Pagination: &query.PageRequest{
-				Limit: limit,
-			},
-		}
-		resp, err := zcKeeper.ListHeaders(ctx, req)
-		require.NoError(t, err)
-		require.Equal(t, int(limit), len(resp.Headers))
-		for i := uint64(0); i < limit; i++ {
-			require.Equal(t, headers[i].Header.AppHash, resp.Headers[i].Hash)
 		}
 	})
 }
