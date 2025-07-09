@@ -26,11 +26,8 @@ func (k Keeper) InitChainInfo(ctx context.Context, consumerID string) (*types.Ch
 	}
 
 	chainInfo := &types.ChainInfo{
-		ConsumerId:   consumerID,
-		LatestHeader: nil,
-		LatestForks: &types.Forks{
-			Headers: []*types.IndexedHeader{},
-		},
+		ConsumerId:              consumerID,
+		LatestHeader:            nil,
 		TimestampedHeadersCount: 0,
 	}
 
@@ -78,42 +75,6 @@ func (k Keeper) updateLatestHeader(ctx context.Context, consumerId string, heade
 	}
 	chainInfo.LatestHeader = header     // replace the old latest header with the given one
 	chainInfo.TimestampedHeadersCount++ // increment the number of timestamped headers
-
-	k.setChainInfo(ctx, chainInfo)
-	return nil
-}
-
-// tryToUpdateLatestForkHeader tries to update the chainInfo w.r.t. the given fork header
-// - If no fork exists, add this fork header as the latest one
-// - If there is a fork header at the same height, add this fork to the set of latest fork headers
-// - If this fork header is newer than the previous one, replace the old fork headers with this fork header
-// - If this fork header is older than the current latest fork, ignore
-func (k Keeper) tryToUpdateLatestForkHeader(ctx context.Context, consumerId string, header *types.IndexedHeader) error {
-	if header == nil {
-		return errorsmod.Wrapf(types.ErrInvalidHeader, "header is nil")
-	}
-
-	chainInfo, err := k.GetChainInfo(ctx, consumerId)
-	if err != nil {
-		return errorsmod.Wrapf(types.ErrChainInfoNotFound, "cannot insert fork header when chain info is not initialized")
-	}
-
-	switch {
-	case len(chainInfo.LatestForks.Headers) == 0:
-		// no fork at the moment, add this fork header as the latest one
-		chainInfo.LatestForks.Headers = append(chainInfo.LatestForks.Headers, header)
-	case chainInfo.LatestForks.Headers[0].Height == header.Height:
-		// there exists fork headers at the same height, add this fork header to the set of latest fork headers
-		chainInfo.LatestForks.Headers = append(chainInfo.LatestForks.Headers, header)
-	case chainInfo.LatestForks.Headers[0].Height < header.Height:
-		// this fork header is newer than the previous one, replace the old fork headers with this fork header
-		chainInfo.LatestForks = &types.Forks{
-			Headers: []*types.IndexedHeader{header},
-		}
-	default:
-		// this fork header is older than the current latest fork, don't record this fork header in chain info
-		return nil
-	}
 
 	k.setChainInfo(ctx, chainInfo)
 	return nil
