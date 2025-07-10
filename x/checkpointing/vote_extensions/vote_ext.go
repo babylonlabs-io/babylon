@@ -41,7 +41,6 @@ func (h *VoteExtensionHandler) SetHandlers(bApp *baseapp.BaseApp) {
 // TODO: revisit panicking if the CometBFT issue is resolved
 func (h *VoteExtensionHandler) ExtendVote() sdk.ExtendVoteHandler {
 	return func(ctx sdk.Context, req *abci.RequestExtendVote) (*abci.ResponseExtendVote, error) {
-		ctx.HeaderInfo()
 		k := h.ckptKeeper
 		// the returned response MUST not be nil
 		emptyRes := &abci.ResponseExtendVote{VoteExtension: []byte{}}
