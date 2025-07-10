@@ -1,6 +1,7 @@
 package types
 
 import (
+	"encoding/hex"
 	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
@@ -28,7 +29,6 @@ var (
 	_ sdk.HasValidateBasic = &MsgResumeFinalityProposal{}
 	_ sdk.HasValidateBasic = &MsgCommitPubRandList{}
 	_ sdk.HasValidateBasic = &MsgUnjailFinalityProvider{}
-	_ sdk.HasValidateBasic = &MsgEquivocationEvidence{}
 )
 
 const ExpectedCommitmentLengthBytes = 32
@@ -229,27 +229,50 @@ func (m *MsgResumeFinalityProposal) ValidateBasic() error {
 	return nil
 }
 
-func (m *MsgEquivocationEvidence) ValidateBasic() error {
+// ToEvidence converts MsgEquivocationEvidence to Evidence
+func (m *MsgEquivocationEvidence) ParseToEvidence() (*Evidence, error) {
 	if _, err := sdk.AccAddressFromBech32(m.Signer); err != nil {
-		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid signer address (%s)", err)
+		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid signer address (%s)", err)
 	}
-	if m.FpBtcPk == nil {
-		return ErrInvalidEquivocationEvidence.Wrap("empty FpBtcPk")
+
+	fpBtcPk, err := bbntypes.NewBIP340PubKeyFromHex(m.FpBtcPkHex)
+	if err != nil {
+		return nil, ErrInvalidEquivocationEvidence.Wrapf("invalid FP BTC PK: %s", err)
 	}
-	if m.PubRand == nil {
-		return ErrInvalidEquivocationEvidence.Wrap("empty PubRand")
+
+	pubRand, err := bbntypes.NewSchnorrPubRandFromHex(m.PubRandHex)
+	if err != nil {
+		return nil, ErrInvalidEquivocationEvidence.Wrapf("invalid PubRand: %s", err)
 	}
-	if len(m.CanonicalAppHash) != 32 {
-		return ErrInvalidEquivocationEvidence.Wrap("malformed CanonicalAppHash")
+
+	canonicalAppHash, err := hex.DecodeString(m.CanonicalAppHashHex)
+	if err != nil || len(canonicalAppHash) != 32 {
+		return nil, ErrInvalidEquivocationEvidence.Wrap("malformed CanonicalAppHash")
 	}
-	if len(m.ForkAppHash) != 32 {
-		return ErrInvalidEquivocationEvidence.Wrap("malformed ForkAppHash")
+
+	forkAppHash, err := hex.DecodeString(m.ForkAppHashHex)
+	if err != nil || len(forkAppHash) != 32 {
+		return nil, ErrInvalidEquivocationEvidence.Wrap("malformed ForkAppHash")
 	}
-	if m.ForkFinalitySig == nil {
-		return ErrInvalidEquivocationEvidence.Wrap("empty ForkFinalitySig")
+
+	canonicalFinalitySig, err := bbntypes.NewSchnorrEOTSSigFromHex(m.CanonicalFinalitySigHex)
+	if err != nil {
+		return nil, ErrInvalidEquivocationEvidence.Wrapf("invalid CanonicalFinalitySig: %s", err)
 	}
-	if m.CanonicalFinalitySig == nil {
-		return ErrInvalidEquivocationEvidence.Wrap("empty CanonicalFinalitySig")
+
+	forkFinalitySig, err := bbntypes.NewSchnorrEOTSSigFromHex(m.ForkFinalitySigHex)
+	if err != nil {
+		return nil, ErrInvalidEquivocationEvidence.Wrapf("invalid ForkFinalitySig: %s", err)
 	}
-	return nil
+
+	return &Evidence{
+		FpBtcPk:              fpBtcPk,
+		BlockHeight:          m.BlockHeight,
+		PubRand:              pubRand,
+		CanonicalAppHash:     canonicalAppHash,
+		ForkAppHash:          forkAppHash,
+		CanonicalFinalitySig: canonicalFinalitySig,
+		ForkFinalitySig:      forkFinalitySig,
+		SigningContext:       m.SigningContext,
+	}, nil
 }

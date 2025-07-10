@@ -22,7 +22,6 @@ func NewGenesis(
 	params Params,
 	chainsInfo []*ChainInfo,
 	indexedHeaders []*IndexedHeader,
-	forks []*Forks,
 	epochsInfo []*EpochChainInfoEntry,
 	lastSentSegment *BTCChainSegment,
 	sealedEpochs []*SealedEpochProofEntry,
@@ -32,7 +31,6 @@ func NewGenesis(
 		Params:               params,
 		ChainsInfo:           chainsInfo,
 		ChainsIndexedHeaders: indexedHeaders,
-		ChainsForks:          forks,
 		ChainsEpochsInfo:     epochsInfo,
 		LastSentSegment:      lastSentSegment,
 		SealedEpochsProofs:   sealedEpochs,
@@ -57,12 +55,6 @@ func (gs GenesisState) Validate() error {
 			return ih.ConsumerId + strconv.FormatUint(ih.BabylonEpoch, 10)
 		}); err != nil {
 		return err
-	}
-
-	for _, f := range gs.ChainsForks {
-		if err := f.Validate(); err != nil {
-			return err
-		}
 	}
 
 	if err := types.ValidateEntries(
@@ -114,9 +106,6 @@ func SortData(gs *GenesisState) {
 	})
 	sort.Slice(gs.ChainsIndexedHeaders, func(i, j int) bool {
 		return gs.ChainsIndexedHeaders[i].ConsumerId < gs.ChainsIndexedHeaders[j].ConsumerId
-	})
-	sort.Slice(gs.ChainsForks, func(i, j int) bool {
-		return gs.ChainsForks[i].Headers[0].ConsumerId < gs.ChainsForks[j].Headers[0].ConsumerId
 	})
 	sort.Slice(gs.ChainsEpochsInfo, func(i, j int) bool {
 		if gs.ChainsEpochsInfo[i].EpochNumber != gs.ChainsEpochsInfo[j].EpochNumber {

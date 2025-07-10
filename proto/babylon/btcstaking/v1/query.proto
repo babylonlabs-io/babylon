@@ -43,7 +43,7 @@ service Query {
   // FinalityProviders queries all finality providers
   rpc FinalityProviders(QueryFinalityProvidersRequest)
       returns (QueryFinalityProvidersResponse) {
-    option (google.api.http).get = "/babylon/btcstaking/v1/finality_providers";
+    option (google.api.http).get = "/babylon/btcstaking/v1/finality_providers/{bsn_id}";
   }
 
   // FinalityProvider info about one finality provider
@@ -118,6 +118,9 @@ message QueryParamsByBTCHeightResponse {
 message QueryFinalityProvidersRequest {
   // pagination defines an optional pagination for the request.
   cosmos.base.query.v1beta1.PageRequest pagination = 1;
+  // bsn_id allows to specify for which BSN to return finality providers for.
+  // Defaults to the Babylon Genesis BSN ID
+  string bsn_id = 2;
 }
 
 // QueryFinalityProvidersResponse is the response type for the
@@ -252,6 +255,23 @@ message BTCDelegationResponse {
   BTCUndelegationResponse undelegation_response = 16;
   // params version used to validate delegation
   uint32 params_version = 17;
+  // stk_exp contains the stake expansion information, if nil it is NOT a stake expansion.
+  StakeExpansionResponse stk_exp = 18;
+}
+
+// StakeExpansionResponse stores information necessary to construct the expanded BTC staking
+// transaction created from a previous BTC staking.
+message StakeExpansionResponse {
+  // previous_staking_tx_hash is the hex hash of the staking tx that was used as
+  // input to the stake expansion.
+  string previous_staking_tx_hash_hex = 1;
+
+  // other_funding_tx_out is the other funding output (TxOut) which was used
+  // as input to construct the BTC delegation. The stake expansion has a set of
+  // 2 inputs, the first input is the previous staking transaction and the
+  // second input (this one) is to pay for fees and optionally to add more
+  // stake to the BTC delegation.
+  string other_funding_tx_out_hex = 2;
 }
 
 // DelegatorUnbondingInfoResponse provides all necessary info about transaction
@@ -332,10 +352,8 @@ message FinalityProviderResponse {
   // commission_info contains information details of the finality provider
   // commission.
   CommissionInfo commission_info = 11;
-  // consumer_id is the ID of the consumer the finality provider is operating
-  // on. If it's missing / empty, it's assumed the finality provider is
-  // operating in the Babylon chain.
-  string consumer_id = 12;
+  // bsn_id is the ID of the BSN the finality provider is securing
+  string bsn_id = 12;
 }
 
 // QueryLargestBtcReOrgRequest query request of the largest BTC reorg request
@@ -351,7 +369,6 @@ message QueryLargestBtcReOrgResponse {
   // RollbackTo is the BTC block header which we rollback to
   babylon.btclightclient.v1.BTCHeaderInfoResponse rollback_to = 3;
 }
-
 
 // QueryParamsVersionsRequest is the request type for the
 // Query/ParamsVersions RPC method.

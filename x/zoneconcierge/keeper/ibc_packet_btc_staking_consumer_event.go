@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 	"fmt"
+	"sort"
 
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
 	bsctypes "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
@@ -39,7 +40,18 @@ func (k Keeper) BroadcastBTCStakingConsumerEvents(
 
 	// Iterate through all consumer events and send them to the corresponding open IBC channel.
 	consumerIBCPacketMap := k.bsKeeper.GetAllBTCStakingConsumerIBCPackets(ctx)
-	for consumerID, ibcPacket := range consumerIBCPacketMap {
+
+	// Extract keys and sort them for deterministic iteration
+	consumerIDs := make([]string, 0, len(consumerIBCPacketMap))
+	for consumerID := range consumerIBCPacketMap {
+		consumerIDs = append(consumerIDs, consumerID)
+	}
+	sort.Strings(consumerIDs)
+
+	// Iterate through consumer IDs in sorted order
+	for _, consumerID := range consumerIDs {
+		ibcPacket := consumerIBCPacketMap[consumerID]
+
 		// Check if there are open channels for the current consumer ID.
 		channels, ok := consumerChannelMap[consumerID]
 		if !ok {
@@ -138,25 +150,29 @@ func (k Keeper) HandleConsumerSlashing(
 		return fmt.Errorf("slashed FP BTC PK does not match with the one in the evidence")
 	}
 
-	// Check if the finality provider is associated with a consumer
-	consumerID, err := k.btcStkKeeper.GetConsumerOfFinalityProvider(ctx, slashedFpBTCPK)
+	// Get the finality provider associated with slashing
+	fp, err := k.bsKeeper.GetFinalityProvider(ctx, evidence.FpBtcPk.MustMarshal())
 	if err != nil {
-		return fmt.Errorf("failed to get consumer of finality provider: %w", err)
+		return fmt.Errorf("failed to get finality provider: %w", err)
 	}
 
+	if fp == nil {
+		return fmt.Errorf("finality provider not found")
+	}
+	// Check if the finality provider is associated with a consumer
 	// Verify that the consumer ID matches the client ID
-	if consumerID != clientID {
-		return fmt.Errorf("consumer ID (%s) does not match client ID (%s)", consumerID, clientID)
+	if fp.BsnId != clientID {
+		return fmt.Errorf("consumer ID (%s) does not match client ID (%s)", fp.BsnId, clientID)
 	}
 
 	// Update the consumer finality provider's slashed height and
 	// send power distribution update event so the affected Babylon FP's voting power can be adjusted
-	if err := k.bsKeeper.SlashConsumerFinalityProvider(ctx, consumerID, slashedFpBTCPK); err != nil {
-		return fmt.Errorf("failed to slash consumer finality provider: %w", err)
+	if err := k.bsKeeper.SlashFinalityProvider(ctx, slashedFpBTCPK.MustMarshal()); err != nil {
+		return fmt.Errorf("failed to slash finality provider: %w", err)
 	}
 
 	// Send slashing event to other involved consumers
-	if err := k.bsKeeper.PropagateFPSlashingToConsumers(ctx, slashedFpBTCPK); err != nil {
+	if err := k.bsKeeper.PropagateFPSlashingToConsumers(ctx, slashedFpBTCSK); err != nil {
 		return fmt.Errorf("failed to propagate slashing to consumers: %w", err)
 	}
 

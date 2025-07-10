@@ -51,7 +51,7 @@ func (n *NodeConfig) CreateConsumerFinalityProvider(walletAddrOrName string, con
 		fmt.Sprintf("--from=%s", walletAddrOrName), "--moniker", moniker, "--identity", identity, "--website", website,
 		"--security-contact", securityContract, "--details", details, "--commission-rate", commission.String(),
 		"--commission-max-rate", commissionMaxRate.String(), "--commission-max-change-rate", commissionMaxRateChange.String(),
-		"--consumer-id", consumerID,
+		"--bsn-id", consumerID,
 	}
 
 	_, _, err = n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
@@ -101,7 +101,7 @@ func (n *NodeConfig) AddFinalitySigConsumer(
 	appHash []byte,
 	finalitySig *bbn.SchnorrEOTSSig,
 	overallFlags ...string,
-) {
+) string {
 	if consumerId == "" {
 		// Use the chain ID as the consumer
 		consumerId = n.chainId
@@ -110,7 +110,7 @@ func (n *NodeConfig) AddFinalitySigConsumer(
 
 	if consumerId == n.chainId {
 		n.AddFinalitySig(fpBTCPK, blockHeight, pubRand, proof, appHash, finalitySig, overallFlags...)
-		return
+		return ""
 	}
 
 	// Get the consumer registration data
@@ -129,6 +129,8 @@ func (n *NodeConfig) AddFinalitySigConsumer(
 		n.t.Fatalf("Finality contract address for consumer %s is not set", consumerId)
 	}
 
-	n.AddFinalitySigRollup(walletAddrOrName, finalityContractAddr, fpBTCPK, blockHeight, pubRand, proof, appHash, finalitySig, overallFlags...)
+	txHash := n.AddFinalitySigRollup(walletAddrOrName, finalityContractAddr, fpBTCPK, blockHeight, pubRand, proof, appHash, finalitySig, overallFlags...)
 	n.LogActionF("Successfully added finality signature")
+
+	return txHash
 }

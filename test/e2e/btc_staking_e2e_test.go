@@ -234,7 +234,7 @@ func (s *BTCStakingTestSuite) Test2SubmitCovenantSignature() {
 	s.Len(activeDels.Dels, 1)
 
 	activeDel := activeDels.Dels[0]
-	s.True(activeDel.HasCovenantQuorums(s.covenantQuorum))
+	s.True(activeDel.HasCovenantQuorums(s.covenantQuorum, 0))
 }
 
 // Test3CommitPublicRandomnessAndSubmitFinalitySignature is an end-to-end
@@ -857,7 +857,7 @@ func CreateNodeFP(
 	newFP, err = datagen.GenCustomFinalityProvider(r, fpSk, fpPopContext, nodeAddr, "")
 	require.NoError(t, err)
 
-	previousFps := node.QueryFinalityProviders()
+	previousFps := node.QueryFinalityProviders("")
 
 	// use a higher commission to ensure the reward is more than tx fee of a finality sig
 	commission := sdkmath.LegacyNewDecWithPrec(20, 2)
@@ -868,13 +868,13 @@ func CreateNodeFP(
 	node.WaitForNextBlock()
 
 	// query the existence of finality provider and assert equivalence
-	actualFps := node.QueryFinalityProviders()
+	actualFps := node.QueryFinalityProviders("")
 	require.Len(t, actualFps, len(previousFps)+1)
 
-	// get chain ID to assert equality with the ConsumerId field
+	// get chain ID to assert equality with the BsnId field
 	status, err := node.Status()
 	require.NoError(t, err)
-	newFP.ConsumerId = status.NodeInfo.Network
+	newFP.BsnId = status.NodeInfo.Network
 
 	for _, fpResp := range actualFps {
 		if !strings.EqualFold(fpResp.Addr, newFP.Addr) {

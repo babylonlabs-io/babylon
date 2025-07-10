@@ -30,8 +30,8 @@ message EventFinalityProviderCreated {
   string security_contact = 7;
   // details define other optional details.
   string details = 8;
-  // consumer_id is the id of the consumer chain
-  string consumer_id = 9 [(amino.dont_omitempty) = true];
+  // bsn_id is the id of the BSN
+  string bsn_id = 9 [(amino.dont_omitempty) = true];
 }
 
 // EventFinalityProviderEdited is the event emitted when a finality provider is edited
@@ -83,8 +83,10 @@ message EventPowerDistUpdate {
     bytes pk = 1 [(gogoproto.customtype) = "github.com/babylonlabs-io/babylon/v3/types.BIP340PubKey"];
   }
 
-  // EventSlashedBTCDelegation is emitted for each BTC delegation that restakes to a slashed consumer finality provider.
-  // It indicates that the voting power of affected Babylon finality providers will be discounted for this delegation.
+  // EventSlashedBTCDelegation is emitted for each BTC delegation that multi-stakes
+  // to a slashed consumer finality provider.
+  // It indicates that the voting power of affected Babylon finality providers
+  // will be discounted for this delegation.
   message EventSlashedBTCDelegation {
     // staking_tx_hash is the hash of the staking tx.
     // It uniquely identifies a BTC delegation
@@ -182,6 +184,9 @@ message EventBTCDelegationCreated {
   string new_state = 9 [(amino.dont_omitempty) = true];
   // staker Babylon address
   string staker_addr = 10 [(amino.dont_omitempty) = true];
+  // previous_staking_tx_hash_hex is the hex encoded of the hash of the staking tx
+  // that was used as input to the stake expansion, if empty it is NOT a stake expansion.
+  string previous_staking_tx_hash_hex = 11;
 }
 
 // EventCovenantSignatureReceived is the event emitted when a covenant committee
@@ -258,4 +263,18 @@ message EventUnexpectedUnbondingTx {
   string spend_stake_tx_header_hash = 3 [(amino.dont_omitempty) = true];
   // spend_stake_tx_block_index is the spend_stake_tx index in the block
   uint32 spend_stake_tx_block_index = 4 [(amino.dont_omitempty) = true];
+}
+
+// EventStakeExpansionActivated is the event emitted when a stake expansion
+// delegation becomes active through the BTCUndelegate method.
+message EventStakeExpansionActivated {
+  // previous_staking_tx_hash uniquely identifies the original BTC delegation
+  string previous_staking_tx_hash = 1 [(amino.dont_omitempty) = true];
+  // stake_expansion_tx_hash is the hash of the stake expansion transaction
+  string stake_expansion_tx_hash = 2 [(amino.dont_omitempty) = true];
+  // stake_expansion_tx_header_hash is the hash of the header of the block that
+  // includes the stake expansion tx
+  string stake_expansion_tx_header_hash = 3 [(amino.dont_omitempty) = true];
+  // stake_expansion_tx_block_index is the stake expansion tx index in the block
+  uint32 stake_expansion_tx_block_index = 4 [(amino.dont_omitempty) = true];
 }

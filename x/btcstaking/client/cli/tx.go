@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	FlagConsumerId      = "consumer-id"
+	FlagBsnId           = "bsn-id"
 	FlagMoniker         = "moniker"
 	FlagIdentity        = "identity"
 	FlagWebsite         = "website"
@@ -50,6 +50,7 @@ func GetTxCmd() *cobra.Command {
 		NewBTCUndelegateCmd(),
 		NewSelectiveSlashingEvidenceCmd(),
 		NewAddBTCDelegationInclusionProofCmd(),
+		NewBTCStakeExpandCmd(),
 	)
 
 	return cmd
@@ -72,7 +73,7 @@ func NewCreateFinalityProviderCmd() *cobra.Command {
 			fs := cmd.Flags()
 
 			// get description
-			consumerID, _ := fs.GetString(FlagConsumerId)
+			bsnID, _ := fs.GetString(FlagBsnId)
 			moniker, _ := fs.GetString(FlagMoniker)
 			identity, _ := fs.GetString(FlagIdentity)
 			website, _ := fs.GetString(FlagWebsite)
@@ -109,7 +110,7 @@ func NewCreateFinalityProviderCmd() *cobra.Command {
 				Commission:  commission,
 				BtcPk:       btcPK,
 				Pop:         pop,
-				ConsumerId:  consumerID,
+				BsnId:       bsnID,
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
@@ -117,7 +118,7 @@ func NewCreateFinalityProviderCmd() *cobra.Command {
 	}
 
 	fs := cmd.Flags()
-	fs.String(FlagConsumerId, "", "The finality provider's consumer ID, if any")
+	fs.String(FlagBsnId, "", "The finality provider's BSN ID, if any")
 	fs.String(FlagMoniker, "", "The finality provider's (optional) moniker")
 	fs.String(FlagWebsite, "", "The finality provider's (optional) website")
 	fs.String(FlagSecurityContact, "", "The finality provider's (optional) security contact email")
@@ -213,116 +214,66 @@ func NewCreateBTCDelegationCmd() *cobra.Command {
 				return err
 			}
 
-			// staker pk
-			btcPK, err := bbn.NewBIP340PubKeyFromHex(args[0])
-
+			msg, err := parseArgsIntoMsgCreateBTCDelegation(args)
 			if err != nil {
 				return err
 			}
 
-			// get PoP
-			pop, err := types.NewPoPBTCFromHex(args[1])
+			msg.StakerAddr = clientCtx.FromAddress.String()
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+func NewBTCStakeExpandCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "btc-stake-expand [btc_pk] [pop_hex] [staking_tx] [inclusion_proof] [fp_pk1],[fp_pk2],... [staking_time] [staking_value] [slashing_tx] [delegator_slashing_sig] [unbonding_tx] [unbonding_slashing_tx] [unbonding_time] [unbonding_value] [delegator_unbonding_slashing_sig] [previous_staking_tx_hash] [funding_tx]",
+		Args:  cobra.ExactArgs(16),
+		Short: "Expand a BTC delegation",
+		Long: strings.TrimSpace(
+			`Expand a BTC delegation.`,
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
 			}
 
-			// get staking tx bytes
-			stakingTx, err := hex.DecodeString(args[2])
+			parsed, err := parseArgsIntoMsgCreateBTCDelegation(args)
 			if err != nil {
 				return err
 			}
 
-			var inclusionProof *types.InclusionProof
-			// inclusionProof can be nil if empty argument is provided
-			if len(args[3]) > 0 {
-				inclusionProof, err = types.NewInclusionProofFromHex(args[3])
-				if err != nil {
-					return err
-				}
-			}
-
-			// get finality provider PKs
-			fpPKStrs := strings.Split(args[4], ",")
-			fpPKs := make([]bbn.BIP340PubKey, len(fpPKStrs))
-			for i := range fpPKStrs {
-				fpPK, err := bbn.NewBIP340PubKeyFromHex(fpPKStrs[i])
-				if err != nil {
-					return err
-				}
-				fpPKs[i] = *fpPK
-			}
-
-			// get staking time
-			stakingTime, err := parseLockTime(args[5])
+			fundingTx, err := hex.DecodeString(args[15])
 			if err != nil {
 				return err
 			}
 
-			stakingValue, err := parseBtcAmount(args[6])
-			if err != nil {
-				return err
-			}
-
-			// get slashing tx
-			slashingTx, err := types.NewBTCSlashingTxFromHex(args[7])
-			if err != nil {
-				return err
-			}
-
-			// get delegator sig on slashing tx
-			delegatorSlashingSig, err := bbn.NewBIP340SignatureFromHex(args[8])
-			if err != nil {
-				return err
-			}
-
-			// get unbonding tx
-			_, unbondingTxBytes, err := bbn.NewBTCTxFromHex(args[9])
-			if err != nil {
-				return err
-			}
-
-			// get unbonding slashing tx
-			unbondingSlashingTx, err := types.NewBTCSlashingTxFromHex(args[10])
-			if err != nil {
-				return err
-			}
-
-			// get staking time
-			unbondingTime, err := parseLockTime(args[11])
-			if err != nil {
-				return err
-			}
-
-			unbondingValue, err := parseBtcAmount(args[12])
-			if err != nil {
-				return err
-			}
-
-			// get delegator sig on unbonding slashing tx
-			delegatorUnbondingSlashingSig, err := bbn.NewBIP340SignatureFromHex(args[13])
-			if err != nil {
-				return err
-			}
-
-			msg := types.MsgCreateBTCDelegation{
+			msg := &types.MsgBtcStakeExpand{
 				StakerAddr:                    clientCtx.FromAddress.String(),
-				BtcPk:                         btcPK,
-				FpBtcPkList:                   fpPKs,
-				Pop:                           pop,
-				StakingTime:                   uint32(stakingTime),
-				StakingValue:                  int64(stakingValue),
-				StakingTx:                     stakingTx,
-				StakingTxInclusionProof:       inclusionProof,
-				SlashingTx:                    slashingTx,
-				DelegatorSlashingSig:          delegatorSlashingSig,
-				UnbondingTx:                   unbondingTxBytes,
-				UnbondingTime:                 uint32(unbondingTime),
-				UnbondingValue:                int64(unbondingValue),
-				UnbondingSlashingTx:           unbondingSlashingTx,
-				DelegatorUnbondingSlashingSig: delegatorUnbondingSlashingSig,
+				BtcPk:                         parsed.BtcPk,
+				FpBtcPkList:                   parsed.FpBtcPkList,
+				Pop:                           parsed.Pop,
+				StakingTime:                   parsed.StakingTime,
+				StakingValue:                  parsed.StakingValue,
+				StakingTx:                     parsed.StakingTx,
+				SlashingTx:                    parsed.SlashingTx,
+				DelegatorSlashingSig:          parsed.DelegatorSlashingSig,
+				UnbondingTx:                   parsed.UnbondingTx,
+				UnbondingTime:                 parsed.UnbondingTime,
+				UnbondingValue:                parsed.UnbondingValue,
+				UnbondingSlashingTx:           parsed.UnbondingSlashingTx,
+				DelegatorUnbondingSlashingSig: parsed.DelegatorUnbondingSlashingSig,
+				PreviousStakingTxHash:         args[14],
+				FundingTx:                     fundingTx,
 			}
 
-			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
 
@@ -370,8 +321,8 @@ func NewAddBTCDelegationInclusionProofCmd() *cobra.Command {
 
 func NewAddCovenantSigsCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "add-covenant-sigs [covenant_pk] [staking_tx_hash] [slashing_tx_sig1],[slashing_tx_sig2],... [unbonding_tx_sig] [slashing_unbonding_tx_sig1],[slashing_unbonding_tx_sig2],...",
-		Args:  cobra.ExactArgs(5),
+		Use:   "add-covenant-sigs [covenant_pk] [staking_tx_hash] [slashing_tx_sig1],[slashing_tx_sig2],... [unbonding_tx_sig] [slashing_unbonding_tx_sig1],[slashing_unbonding_tx_sig2],... [stake_expansion_tx_sig]",
+		Args:  cobra.RangeArgs(5, 6),
 		Short: "Add a covenant signature",
 		Long: strings.TrimSpace(
 			`Add a covenant signature.`, // TODO: example
@@ -423,6 +374,15 @@ func NewAddCovenantSigsCmd() *cobra.Command {
 				SlashingTxSigs:          slashingTxSigs,
 				UnbondingTxSig:          unbondingTxSig,
 				SlashingUnbondingTxSigs: unbondingSlashingSigs,
+			}
+
+			// stake expansion
+			if len(args) == 6 {
+				stkExpSig, err := bbn.NewBIP340SignatureFromHex(args[5])
+				if err != nil {
+					return err
+				}
+				msg.StakeExpansionTxSig = stkExpSig
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
@@ -553,4 +513,114 @@ func getCommissionRates(fs *pflag.FlagSet) (commission types.CommissionRates, er
 		return commission, fmt.Errorf("invalid commission-max-change-rate: %w", err)
 	}
 	return types.NewCommissionRates(rate, maxRate, maxRateChange), nil
+}
+
+func parseArgsIntoMsgCreateBTCDelegation(args []string) (*types.MsgCreateBTCDelegation, error) {
+	// staker pk
+	btcPK, err := bbn.NewBIP340PubKeyFromHex(args[0])
+
+	if err != nil {
+		return nil, err
+	}
+
+	// get PoP
+	pop, err := types.NewPoPBTCFromHex(args[1])
+	if err != nil {
+		return nil, err
+	}
+
+	// get staking tx bytes
+	stakingTx, err := hex.DecodeString(args[2])
+	if err != nil {
+		return nil, err
+	}
+
+	var inclusionProof *types.InclusionProof
+	// inclusionProof can be nil if empty argument is provided
+	if len(args[3]) > 0 {
+		inclusionProof, err = types.NewInclusionProofFromHex(args[3])
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// get finality provider PKs
+	fpPKStrs := strings.Split(args[4], ",")
+	fpPKs := make([]bbn.BIP340PubKey, len(fpPKStrs))
+	for i := range fpPKStrs {
+		fpPK, err := bbn.NewBIP340PubKeyFromHex(fpPKStrs[i])
+		if err != nil {
+			return nil, err
+		}
+		fpPKs[i] = *fpPK
+	}
+
+	// get staking time
+	stakingTime, err := parseLockTime(args[5])
+	if err != nil {
+		return nil, err
+	}
+
+	stakingValue, err := parseBtcAmount(args[6])
+	if err != nil {
+		return nil, err
+	}
+
+	// get slashing tx
+	slashingTx, err := types.NewBTCSlashingTxFromHex(args[7])
+	if err != nil {
+		return nil, err
+	}
+
+	// get delegator sig on slashing tx
+	delegatorSlashingSig, err := bbn.NewBIP340SignatureFromHex(args[8])
+	if err != nil {
+		return nil, err
+	}
+
+	// get unbonding tx
+	_, unbondingTxBytes, err := bbn.NewBTCTxFromHex(args[9])
+	if err != nil {
+		return nil, err
+	}
+
+	// get unbonding slashing tx
+	unbondingSlashingTx, err := types.NewBTCSlashingTxFromHex(args[10])
+	if err != nil {
+		return nil, err
+	}
+
+	// get staking time
+	unbondingTime, err := parseLockTime(args[11])
+	if err != nil {
+		return nil, err
+	}
+
+	unbondingValue, err := parseBtcAmount(args[12])
+	if err != nil {
+		return nil, err
+	}
+
+	// get delegator sig on unbonding slashing tx
+	delegatorUnbondingSlashingSig, err := bbn.NewBIP340SignatureFromHex(args[13])
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.MsgCreateBTCDelegation{
+		BtcPk:                         btcPK,
+		FpBtcPkList:                   fpPKs,
+		Pop:                           pop,
+		StakingTime:                   uint32(stakingTime),
+		StakingValue:                  int64(stakingValue),
+		StakingTx:                     stakingTx,
+		StakingTxInclusionProof:       inclusionProof,
+		SlashingTx:                    slashingTx,
+		DelegatorSlashingSig:          delegatorSlashingSig,
+		UnbondingTx:                   unbondingTxBytes,
+		UnbondingTime:                 uint32(unbondingTime),
+		UnbondingValue:                int64(unbondingValue),
+		UnbondingSlashingTx:           unbondingSlashingTx,
+		DelegatorUnbondingSlashingSig: delegatorUnbondingSlashingSig,
+	}, nil
 }

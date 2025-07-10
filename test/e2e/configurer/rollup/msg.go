@@ -12,11 +12,6 @@ type CommitPublicRandomnessMsgParams struct {
 	Signature   []byte `json:"signature"`
 }
 
-// TODO: need to update based on contract implementation
-type CommitPublicRandomnessResponse struct {
-	Result bool `json:"result"`
-}
-
 type SubmitFinalitySignatureMsg struct {
 	SubmitFinalitySignature SubmitFinalitySignatureMsgParams `json:"submit_finality_signature"`
 }
@@ -28,11 +23,6 @@ type SubmitFinalitySignatureMsgParams struct {
 	Proof       Proof  `json:"proof"`
 	BlockHash   []byte `json:"block_hash"`
 	Signature   []byte `json:"signature"`
-}
-
-// TODO: need to update based on contract implementation
-type SubmitFinalitySignatureResponse struct {
-	Result bool `json:"result"`
 }
 
 type QueryMsg struct {
@@ -68,8 +58,20 @@ type PubRandCommitResponse struct {
 type BlockVoters struct {
 	Height uint64 `json:"height"`
 	// The block app hash is expected to be in hex format, without the 0x prefix
-	Hash string `json:"hash"`
+	HashHex string `json:"hash_hex"`
 }
 
 // List of finality provider public keys who voted for the block
-type BlockVotersResponse []string
+type BlockVotersResponse []BlockVoterInfo
+type BlockVoterInfo struct {
+	FpBtcPkHex        string          `json:"fp_btc_pk_hex"`
+	PubRand           []byte          `json:"pub_rand"`
+	FinalitySignature FinalitySigInfo `json:"finality_signature"`
+}
+
+type FinalitySigInfo struct {
+	/// the finality signature
+	FinalitySig []byte `json:"finality_sig"`
+	/// the block hash that the finality signature is for
+	BlockHash []byte `json:"block_hash"`
+}

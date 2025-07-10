@@ -45,6 +45,10 @@ func NewBTCDelegationResponse(btcDel *BTCDelegation, status BTCDelegationStatus)
 		resp.UndelegationResponse = btcDel.BtcUndelegation.ToResponse()
 	}
 
+	if btcDel.IsStakeExpansion() {
+		resp.StkExp = btcDel.StkExp.ToResponse()
+	}
+
 	return resp
 }
 
@@ -83,6 +87,6 @@ func NewFinalityProviderResponse(f *FinalityProvider, bbnBlockHeight uint64) *Fi
 		Height:               bbnBlockHeight,
 		HighestVotedHeight:   f.HighestVotedHeight,
 		CommissionInfo:       f.CommissionInfo,
-		ConsumerId:           f.ConsumerId,
+		BsnId:                f.BsnId,
 	}
 }

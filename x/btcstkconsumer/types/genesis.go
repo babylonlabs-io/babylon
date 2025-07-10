@@ -15,39 +15,27 @@ func DefaultGenesis() *GenesisState {
 // Validate performs basic genesis state validation returning an error upon any
 // failure.
 func (gs GenesisState) Validate() error {
-	consumersMap, err := getConsumersMap(gs.Consumers)
+	err := validateConsumers(gs.Consumers)
 	if err != nil {
 		return err
 	}
-
-	for _, fp := range gs.FinalityProviders {
-		if err := fp.ValidateBasic(); err != nil {
-			return err
-		}
-		// validate that FP's consumerId is registered
-		if _, exists := consumersMap[fp.ConsumerId]; !exists {
-			return fmt.Errorf("finality provider consumer is not registered. Consumer id : %s, BTC pk: %s", fp.ConsumerId, fp.BtcPk.MarshalHex())
-		}
-	}
-
 	return gs.Params.Validate()
 }
 
-// getConsumersMap validates the consumers
-// and returns a map with the consumer ids
-func getConsumersMap(consumers []*ConsumerRegister) (map[string]bool, error) {
+// validateConsumers validates the consumers
+func validateConsumers(consumers []*ConsumerRegister) error {
 	consumersMap := make(map[string]bool)
 	for _, c := range consumers {
 		if _, exists := consumersMap[c.ConsumerId]; exists {
-			return consumersMap, fmt.Errorf("duplicate consumer id: %s", c.ConsumerId)
+			return fmt.Errorf("duplicate consumer id: %s", c.ConsumerId)
 		}
 		consumersMap[c.ConsumerId] = true
 
 		if err := c.Validate(); err != nil {
-			return consumersMap, err
+			return err
 		}
 	}
-	return consumersMap, nil
+	return nil
 }
 
 // Helper function to sort slices to get a deterministic
@@ -55,9 +43,5 @@ func getConsumersMap(consumers []*ConsumerRegister) (map[string]bool, error) {
 func SortData(gs *GenesisState) {
 	sort.Slice(gs.Consumers, func(i, j int) bool {
 		return gs.Consumers[i].ConsumerId < gs.Consumers[j].ConsumerId
-	})
-
-	sort.Slice(gs.FinalityProviders, func(i, j int) bool {
-		return gs.FinalityProviders[i].Addr < gs.FinalityProviders[j].Addr
 	})
 }

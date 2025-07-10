@@ -3,6 +3,7 @@ package types_test
 import (
 	"fmt"
 	"math/rand"
+	reflect "reflect"
 	"testing"
 
 	"cosmossdk.io/errors"
@@ -23,7 +24,7 @@ func TestMsgCreateFinalityProviderValidateBasic(t *testing.T) {
 
 	bigBtcPK := datagen.GenRandomByteArray(r, 100)
 
-	fp, err := datagen.GenRandomFinalityProvider(r, "")
+	fp, err := datagen.GenRandomFinalityProvider(r, "", "")
 	require.NoError(t, err)
 
 	invalidAddr := "bbnbadaddr"
@@ -354,5 +355,52 @@ func TestMsgSelectiveSlashingEvidence_ValidateBasic(t *testing.T) {
 			require.Error(t, err)
 			require.Contains(t, err.Error(), tc.expErr)
 		})
+	}
+}
+
+func TestStructFieldConsistency(t *testing.T) {
+	createType := reflect.TypeOf(types.MsgCreateBTCDelegation{})
+	expandType := reflect.TypeOf(types.MsgBtcStakeExpand{})
+
+	// Forward check: all fields in MsgCreateBTCDelegation are in MsgBtcStakeExpand
+	// except StakingTxInclusionProof which was removed from MsgBtcStakeExpand
+	var missingFromExpand []string
+	for i := 0; i < createType.NumField(); i++ {
+		createField := createType.Field(i)
+		// Skip StakingTxInclusionProof field as it was intentionally removed from MsgBtcStakeExpand
+		if createField.Name == "StakingTxInclusionProof" {
+			continue
+		}
+		expandField, ok := expandType.FieldByName(createField.Name)
+		if !ok {
+			missingFromExpand = append(missingFromExpand, createField.Name)
+			continue
+		}
+		if createField.Type != expandField.Type {
+			t.Errorf("Field %s has different type in MsgBtcStakeExpand: %v != %v",
+				createField.Name, createField.Type, expandField.Type)
+		}
+	}
+
+	// Reverse check: all fields in MsgBtcStakeExpand (except last two: PreviousStakingTxHash and FundingTx) must be in MsgCreateBTCDelegation
+	var missingFromCreate []string
+	for i := 0; i < expandType.NumField()-2; i++ {
+		expandField := expandType.Field(i)
+		createField, ok := createType.FieldByName(expandField.Name)
+		if !ok {
+			missingFromCreate = append(missingFromCreate, expandField.Name)
+			continue
+		}
+		if expandField.Type != createField.Type {
+			t.Errorf("Field %s has different type in MsgCreateBTCDelegation: %v != %v",
+				expandField.Name, expandField.Type, createField.Type)
+		}
+	}
+
+	if len(missingFromExpand) > 0 {
+		t.Errorf("MsgBtcStakeExpand is missing fields from MsgCreateBTCDelegation: %v", missingFromExpand)
+	}
+	if len(missingFromCreate) > 0 {
+		t.Errorf("MsgCreateBTCDelegation is missing fields (except final 2) from MsgBtcStakeExpand: %v", missingFromCreate)
 	}
 }

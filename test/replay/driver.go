@@ -421,7 +421,7 @@ func SendTxWithMessagesSuccess(
 	})
 
 	require.NoError(t, err)
-	require.Equal(t, result.Code, uint32(0))
+	require.Equal(t, result.Code, uint32(0), result.Log)
 }
 
 func SendTxWithMessages(
@@ -705,6 +705,14 @@ func blockWithProofsToActivationMessages(
 // 1. First block extends light client so that all stakers are confirmed
 // 2. Second block activates all verified delegations
 func (d *BabylonAppDriver) ActivateVerifiedDelegations(expectedVerifiedDelegations int) {
+	block := d.IncludeVerifiedStakingTxInBTC(expectedVerifiedDelegations)
+	acitvationMsgs := blockWithProofsToActivationMessages(block, d.GetDriverAccountAddress())
+	d.SendTxWithMsgsFromDriverAccount(d.t, acitvationMsgs...)
+}
+
+// IncludeVerifiedStakingTxInBTC extends light client so that all staking txs are confirmed (k deep).
+// Returns the block with the transactions
+func (d *BabylonAppDriver) IncludeVerifiedStakingTxInBTC(expectedVerifiedDelegations int) *datagen.BlockWithProofs {
 	verifiedDelegations := d.GetVerifiedBTCDelegations(d.t)
 	btcCheckpointParams := d.GetBTCCkptParams(d.t)
 
@@ -739,8 +747,7 @@ func (d *BabylonAppDriver) ActivateVerifiedDelegations(expectedVerifiedDelegatio
 		Headers: headers,
 	})
 
-	acitvationMsgs := blockWithProofsToActivationMessages(block, d.GetDriverAccountAddress())
-	d.SendTxWithMsgsFromDriverAccount(d.t, acitvationMsgs...)
+	return block
 }
 
 // ConfirmStakingTransactionOnBTC confirms staking transactions included in the

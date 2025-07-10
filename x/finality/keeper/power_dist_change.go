@@ -212,7 +212,7 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 			switch delEvent.NewState {
 			case types.BTCDelegationStatus_ACTIVE:
 				// newly active BTC delegation
-				// add the BTC delegation to each restaked finality provider
+				// add the BTC delegation to each multi-staked finality provider
 				for _, fpBTCPK := range btcDel.FpBtcPkList {
 					fpBTCPKHex := fpBTCPK.MarshalHex()
 					if !k.BTCStakingKeeper.HasFinalityProvider(ctx, fpBTCPK) {
@@ -230,7 +230,11 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 			case types.BTCDelegationStatus_UNBONDED:
 				// In case of delegation transtioning from phase-1 it is possible that
 				// somebody unbonds before receiving the required covenant signatures.
-				if btcDel.HasCovenantQuorums(delParams.CovenantQuorum) {
+				hasQuorum, err := k.BTCStakingKeeper.BtcDelHasCovenantQuorums(ctx, btcDel, delParams.CovenantQuorum)
+				if err != nil {
+					panic(err)
+				}
+				if hasQuorum {
 					// add the unbonded BTC delegation to the map
 					k.processPowerDistUpdateEventUnbond(ctx, fpByBtcPkHex, btcDel, unbondedSatsByFpBtcPk)
 				}
@@ -239,7 +243,11 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 				// We process expired event if:
 				// - it hasn't unbonded early
 				// - it has all required covenant signatures
-				if !btcDel.IsUnbondedEarly() && btcDel.HasCovenantQuorums(delParams.CovenantQuorum) {
+				hasQuorum, err := k.BTCStakingKeeper.BtcDelHasCovenantQuorums(ctx, btcDel, delParams.CovenantQuorum)
+				if err != nil {
+					panic(err)
+				}
+				if !btcDel.IsUnbondedEarly() && hasQuorum {
 					// only adds to the new unbonded list if it hasn't
 					// previously unbonded with types.BTCDelegationStatus_UNBONDED
 					k.processPowerDistUpdateEventUnbond(ctx, fpByBtcPkHex, btcDel, unbondedSatsByFpBtcPk)

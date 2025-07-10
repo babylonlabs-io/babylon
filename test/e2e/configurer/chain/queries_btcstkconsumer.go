@@ -43,39 +43,3 @@ func (n *NodeConfig) QueryBTCStkConsumerConsumer(consumerID string) *bstkconsume
 
 	return &resp
 }
-
-func (n *NodeConfig) QueryConsumerFinalityProviders(consumerId string) []*bstkconsumertypes.FinalityProviderResponse {
-	path := fmt.Sprintf("/babylon/btcstkconsumer/v1/finality_providers/%s", consumerId)
-	bz, err := n.QueryGRPCGateway(path, url.Values{})
-	require.NoError(n.t, err)
-
-	var resp bstkconsumertypes.QueryFinalityProvidersResponse
-	err = util.Cdc.UnmarshalJSON(bz, &resp)
-	require.NoError(n.t, err)
-
-	return resp.FinalityProviders
-}
-
-func (n *NodeConfig) QueryConsumerFinalityProvider(consumerID, btcPkHex string) *bstkconsumertypes.FinalityProviderResponse {
-	path := fmt.Sprintf("/babylon/btcstkconsumer/v1/finality_provider/%s/%s", consumerID, btcPkHex)
-	bz, err := n.QueryGRPCGateway(path, url.Values{})
-	require.NoError(n.t, err)
-
-	var resp bstkconsumertypes.QueryFinalityProviderResponse
-	err = util.Cdc.UnmarshalJSON(bz, &resp)
-	require.NoError(n.t, err)
-
-	return resp.FinalityProvider
-}
-
-func (n *NodeConfig) QueryConsumerFinalityProviderConsumer(btcPkHex string) *bstkconsumertypes.FinalityProviderResponse {
-	path := fmt.Sprintf("/babylon/btcstkconsumer/v1/finality_provider_consumer/%s", btcPkHex)
-	bz, err := n.QueryGRPCGateway(path, url.Values{})
-	require.NoError(n.t, err)
-
-	var resp bstkconsumertypes.QueryFinalityProviderResponse
-	err = util.Cdc.UnmarshalJSON(bz, &resp)
-	require.NoError(n.t, err)
-
-	return resp.FinalityProvider
-}

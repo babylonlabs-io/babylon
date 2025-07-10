@@ -37,7 +37,7 @@ func FuzzActivatedHeight(f *testing.F) {
 		require.Error(t, err)
 
 		randomActivatedHeight := datagen.RandomInt(r, 100) + 1
-		fp, err := datagen.GenRandomFinalityProvider(r, "")
+		fp, err := datagen.GenRandomFinalityProvider(r, "", "")
 		require.NoError(t, err)
 		keeper.SetVotingPower(ctx, fp.BtcPk.MustMarshal(), randomActivatedHeight, uint64(10))
 
@@ -60,7 +60,7 @@ func FuzzFinalityProviderPowerAtHeight(f *testing.F) {
 		keeper, ctx := testkeeper.FinalityKeeper(t, bk, nil, nil)
 
 		// random finality provider
-		fp, err := datagen.GenRandomFinalityProvider(r, "")
+		fp, err := datagen.GenRandomFinalityProvider(r, "", "")
 		require.NoError(t, err)
 		// set random voting power at random height
 		randomHeight := datagen.RandomInt(r, 100) + 1
@@ -114,7 +114,7 @@ func FuzzFinalityProviderCurrentVotingPower(f *testing.F) {
 		keeper, ctx := testkeeper.FinalityKeeper(t, bk, nil, nil)
 
 		// random finality provider
-		fp, err := datagen.GenRandomFinalityProvider(r, "")
+		fp, err := datagen.GenRandomFinalityProvider(r, "", "")
 		require.NoError(t, err)
 		// set random voting power at random height
 		randomHeight := datagen.RandomInt(r, 100) + 1
@@ -651,6 +651,7 @@ func convertToEvidence(er *types.EvidenceResponse) *types.Evidence {
 		ForkAppHash:          er.ForkAppHash,
 		CanonicalFinalitySig: er.CanonicalFinalitySig,
 		ForkFinalitySig:      er.ForkFinalitySig,
+		SigningContext:       er.SigningContext,
 	}
 }
 

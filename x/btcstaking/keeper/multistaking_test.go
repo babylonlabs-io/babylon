@@ -4,6 +4,7 @@ import (
 	"errors"
 	"math/rand"
 	"testing"
+	"time"
 
 	testutil "github.com/babylonlabs-io/babylon/v3/testutil/btcstaking-helper"
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
@@ -15,7 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func FuzzRestaking_RestakedBTCDelegation(f *testing.F) {
+func FuzzMultiStaking_MultiStakedBTCDelegation(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
@@ -55,7 +56,7 @@ func FuzzRestaking_RestakedBTCDelegation(f *testing.F) {
 		_, consumerFPPK, consumerFP, err := h.CreateConsumerFinalityProvider(r, consumerRegister.ConsumerId)
 		h.NoError(err)
 		consumerFPBTCPK := bbn.NewBIP340PubKeyFromBTCPK(consumerFPPK)
-		consumerFP2, err := h.BTCStkConsumerKeeper.GetConsumerFinalityProvider(h.Ctx, consumerRegister.ConsumerId, consumerFPBTCPK)
+		consumerFP2, err := h.BTCStakingKeeper.GetFinalityProvider(h.Ctx, consumerFPBTCPK.MustMarshal())
 		h.NoError(err)
 		// on finality provider creation, the commission update time is set to the
 		// current block time. The consumerFP is randomly generated with update time = 0,
@@ -105,7 +106,7 @@ func FuzzRestaking_RestakedBTCDelegation(f *testing.F) {
 		require.True(t, errors.Is(err, types.ErrNoBabylonFPRestaked), err)
 
 		/*
-			happy case -- restaking to a Babylon fp and a consumer fp
+			happy case -- multi-staking to a Babylon fp and a consumer fp
 		*/
 
 		_, msgBTCDel, actualDel, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
@@ -123,15 +124,16 @@ func FuzzRestaking_RestakedBTCDelegation(f *testing.F) {
 		)
 		h.NoError(err)
 
-		// add covenant signatures to this restaked BTC delegation
+		// add covenant signatures to this multi-staked BTC delegation
 		h.CreateCovenantSigs(r, covenantSKs, msgBTCDel, actualDel, 10)
 
-		// ensure the restaked BTC delegation is bonded right now
+		// ensure the multi-staked BTC delegation is bonded right now
 		stakingTxHash := actualDel.MustGetStakingTxHash()
 		actualDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash.String())
 		h.NoError(err)
 		btcTip := h.BTCLightClientKeeper.GetTipInfo(h.Ctx).Height
-		status := actualDel.GetStatus(btcTip, bsParams.CovenantQuorum)
+		status, err := h.BTCStakingKeeper.BtcDelStatus(h.Ctx, actualDel, bsParams.CovenantQuorum, btcTip)
+		h.NoError(err)
 		require.Equal(t, types.BTCDelegationStatus_ACTIVE, status)
 	})
 }
@@ -242,4 +244,76 @@ func FuzzFinalityProviderDelegations_RestakingConsumers(f *testing.F) {
 		}
 		require.Equal(t, len(btcDelsFound), len(expectedBtcDelsMap))
 	})
+}
+
+func TestNoActivationEventForRollupConsumer(t *testing.T) {
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	// mock BTC light client and BTC checkpoint modules
+	btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
+	btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
+	h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
+
+	// set all parameters
+	covenantSKs, _ := h.GenAndApplyParams(r)
+
+	// generate and insert new Babylon finality provider
+	_, fpPK, _ := h.CreateFinalityProvider(r)
+
+	delSK, _, err := datagen.GenRandomBTCKeyPair(r)
+	h.NoError(err)
+
+	/*
+		ensure that registering a consumer finality provider with non-existing
+		consumer ID will fail
+	*/
+	_, _, _, err = h.CreateConsumerFinalityProvider(r, "non-existing chain ID")
+	h.Error(err)
+
+	/*
+		register a new consumer and create a new finality provider under it
+		ensure it's correctly generated
+	*/
+	randomAddress := datagen.GenRandomAddress()
+	consumerRegister := datagen.GenRandomRollupRegister(r, randomAddress.String())
+	err = h.BTCStkConsumerKeeper.RegisterConsumer(h.Ctx, consumerRegister)
+	require.NoError(t, err)
+	_, consumerFPPK, consumerFP, err := h.CreateConsumerFinalityProvider(r, consumerRegister.ConsumerId)
+	h.NoError(err)
+
+	// on finality provider creation, the commission update time is set to the
+	// current block time. The consumerFP is randomly generated with update time = 0,
+	// so we need to update it to the block time to make it equal
+	consumerFP.CommissionInfo.UpdateTime = h.Ctx.BlockTime().UTC()
+	stakingValue := int64(2 * 10e8)
+
+	_, msgBTCDel, actualDel, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
+		r,
+		delSK,
+		[]*btcec.PublicKey{fpPK, consumerFPPK},
+		stakingValue,
+		1000,
+		0,
+		0,
+		false,
+		false,
+		10,
+		30,
+	)
+	h.NoError(err)
+
+	// add covenant signatures to this multi-staked BTC delegation
+	h.CreateCovenantSigs(r, covenantSKs, msgBTCDel, actualDel, 10)
+
+	// ensure the multi-staked BTC delegation is bonded right now
+	stakingTxHash := actualDel.MustGetStakingTxHash()
+	actualDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash.String())
+	h.NoError(err)
+	require.NotNil(t, actualDel)
+
+	// No activation packets should be present for rollup consumers
+	ibcPackets := h.BTCStakingKeeper.GetAllBTCStakingConsumerIBCPackets(h.Ctx)
+	require.Empty(t, ibcPackets)
 }

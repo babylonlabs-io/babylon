@@ -1,11 +1,22 @@
 package keeper
 
 import (
-	"github.com/babylonlabs-io/babylon/v3/x/incentive/types"
+	"bytes"
+	"errors"
+
+	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
+	btcctypes "github.com/babylonlabs-io/babylon/v3/x/btccheckpoint/types"
+	btclctypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
+	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
+	ftypes "github.com/babylonlabs-io/babylon/v3/x/finality/types"
+	"github.com/babylonlabs-io/babylon/v3/x/incentive/types"
 )
 
 var _ sdk.PostDecorator = &RefundTxDecorator{}
+var _ sdk.AnteDecorator = &RefundTxDecorator{}
 
 type RefundTxDecorator struct {
 	k *Keeper
@@ -16,6 +27,29 @@ func NewRefundTxDecorator(k *Keeper) *RefundTxDecorator {
 	return &RefundTxDecorator{
 		k: k,
 	}
+}
+
+// Makes sure there's no fee granter assigned in refundable txs
+// so there's no need to restore allowances
+func (d *RefundTxDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
+	if !isRefundTx(tx) {
+		return next(ctx, tx, simulate)
+	}
+	feeTx, ok := tx.(sdk.FeeTx)
+	if !ok {
+		return ctx, errorsmod.Wrap(sdkerrors.ErrTxDecode, "Tx must be a FeeTx")
+	}
+
+	// If there's a fee granter, don't allow to perform this tx
+	feePayer := feeTx.FeePayer()
+	feeGranter := feeTx.FeeGranter()
+	if feeGranter != nil {
+		if !bytes.Equal(feeGranter, feePayer) {
+			return ctx, errors.New("it is not possible to use a fee grant in a refundable transaction")
+		}
+	}
+
+	return next(ctx, tx, simulate)
 }
 
 func (d *RefundTxDecorator) PostHandle(ctx sdk.Context, tx sdk.Tx, simulate, success bool, next sdk.PostHandler) (sdk.Context, error) {
@@ -75,4 +109,30 @@ func (d *RefundTxDecorator) CheckTxAndClearIndex(ctx sdk.Context, tx sdk.Tx) boo
 	}
 
 	return refundable
+}
+
+// isRefundTx returns true if ALL its messages are refundable
+func isRefundTx(tx sdk.Tx) bool {
+	if len(tx.GetMsgs()) == 0 {
+		return false
+	}
+
+	for _, msg := range tx.GetMsgs() {
+		switch msg.(type) {
+		case *btclctypes.MsgInsertHeaders, // BTC light client
+			// BTC timestamping
+			*btcctypes.MsgInsertBTCSpvProof,
+			// BTC staking
+			*bstypes.MsgAddCovenantSigs,
+			*bstypes.MsgBTCUndelegate,
+			*bstypes.MsgSelectiveSlashingEvidence,
+			*bstypes.MsgAddBTCDelegationInclusionProof,
+			// BTC staking finality
+			*ftypes.MsgAddFinalitySig:
+			continue
+		default:
+			return false
+		}
+	}
+	return true
 }

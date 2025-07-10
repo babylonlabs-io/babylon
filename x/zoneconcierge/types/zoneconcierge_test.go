@@ -38,30 +38,10 @@ func TestChainInfo_Validate(t *testing.T) {
 			expectError: "LatestHeader is nil",
 		},
 		{
-			name: "Nil LatestForks",
-			chainInfo: types.ChainInfo{
-				ConsumerId:   "chain-A",
-				LatestHeader: validHeader,
-			},
-			expectError: "LatestForks is nil",
-		},
-		{
 			name: "Invalid LatestHeader",
 			chainInfo: types.ChainInfo{
 				ConsumerId:   "chain-A",
 				LatestHeader: &types.IndexedHeader{},
-				LatestForks:  &types.Forks{},
-			},
-			expectError: "empty ConsumerID",
-		},
-		{
-			name: "Invalid ForkHeader",
-			chainInfo: types.ChainInfo{
-				ConsumerId:   "chain-A",
-				LatestHeader: validHeader,
-				LatestForks: &types.Forks{
-					Headers: []*types.IndexedHeader{&types.IndexedHeader{}},
-				},
 			},
 			expectError: "empty ConsumerID",
 		},
@@ -70,9 +50,6 @@ func TestChainInfo_Validate(t *testing.T) {
 			chainInfo: types.ChainInfo{
 				ConsumerId:   "chain-A",
 				LatestHeader: validHeader,
-				LatestForks: &types.Forks{
-					Headers: []*types.IndexedHeader{validHeader},
-				},
 			},
 		},
 	}
@@ -90,73 +67,16 @@ func TestChainInfo_Validate(t *testing.T) {
 	}
 }
 
-func TestForks_Validate(t *testing.T) {
-	r := rand.New(rand.NewSource(time.Now().Unix()))
-	testCases := []struct {
-		name        string
-		forks       types.Forks
-		expectError string
-	}{
-		{
-			name: "Single valid header",
-			forks: types.Forks{
-				Headers: []*types.IndexedHeader{
-					datagen.GenRandomIndexedHeaderWithConsumerAndEpoch(r, "chain-A", 1),
-				},
-			},
-		},
-		{
-			name: "Multiple unique headers",
-			forks: types.Forks{
-				Headers: []*types.IndexedHeader{
-					datagen.GenRandomIndexedHeaderWithConsumerAndEpoch(r, "chain-A", 1),
-					datagen.GenRandomIndexedHeaderWithConsumerAndEpoch(r, "chain-B", 2),
-					datagen.GenRandomIndexedHeaderWithConsumerAndEpoch(r, "chain-A", 2),
-				},
-			},
-		},
-		{
-			name:        "Empty headers",
-			forks:       types.Forks{Headers: []*types.IndexedHeader{}},
-			expectError: "empty headers",
-		},
-		{
-			name: "Duplicate ConsumerId + Epoch",
-			forks: types.Forks{
-				Headers: []*types.IndexedHeader{
-					datagen.GenRandomIndexedHeaderWithConsumerAndEpoch(r, "chain-A", 1),
-					datagen.GenRandomIndexedHeaderWithConsumerAndEpoch(r, "chain-A", 1),
-				},
-			},
-			expectError: "duplicate entry",
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			err := tc.forks.Validate()
-			if tc.expectError == "" {
-				require.NoError(t, err)
-				return
-			}
-			require.Error(t, err)
-			require.ErrorContains(t, err, tc.expectError)
-		})
-	}
-}
-
 func TestChainInfoWithProof_Validate(t *testing.T) {
 	r := rand.New(rand.NewSource(time.Now().Unix()))
 	validChainInfo := &types.ChainInfo{
 		ConsumerId:   "chain-A",
 		LatestHeader: datagen.GenRandomIndexedHeader(r),
-		LatestForks:  &types.Forks{},
 	}
 
 	invalidChainInfo := &types.ChainInfo{
 		ConsumerId:   "",
 		LatestHeader: nil,
-		LatestForks:  nil,
 	}
 
 	testCases := []struct {

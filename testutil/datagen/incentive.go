@@ -90,7 +90,7 @@ func GenRandomFinalityProviderDistInfo(
 	err error,
 ) {
 	// create finality provider with random commission
-	fp, err := GenRandomFinalityProvider(r, signingContext)
+	fp, err := GenRandomFinalityProvider(r, signingContext, "")
 	if err != nil {
 		return nil, nil, err
 	}

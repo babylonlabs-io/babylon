@@ -73,20 +73,11 @@ func (k Keeper) getBTCDelegatorDelegations(ctx context.Context, fpBTCPK *bbn.BIP
 // Returns:
 // - An error if the finality provider is not found or if there's an issue processing the delegations
 func (k Keeper) HandleFPBTCDelegations(ctx context.Context, fpBTCPK *bbn.BIP340PubKey, handler func(*types.BTCDelegation) error) error {
-	var store prefix.Store
-	// Determine which store to use based on the finality provider type
-	switch {
-	case k.HasFinalityProvider(ctx, *fpBTCPK):
-		// Babylon finality provider
-		store = k.btcDelegatorFpStore(ctx, fpBTCPK)
-	case k.BscKeeper.HasConsumerFinalityProvider(ctx, fpBTCPK):
-		// Consumer finality provider
-		store = k.btcConsumerDelegatorStore(ctx, fpBTCPK)
-	default:
-		// if not found in either store, return error
+	if !k.HasFinalityProvider(ctx, fpBTCPK.MustMarshal()) {
 		return types.ErrFpNotFound
 	}
 
+	store := k.btcDelegatorFpStore(ctx, fpBTCPK)
 	iterator := store.Iterator(nil, nil)
 	defer iterator.Close()
 

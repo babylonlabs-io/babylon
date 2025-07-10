@@ -47,8 +47,9 @@ func (n *NodeConfig) QueryFinalityParams() *ftypes.Params {
 	return &resp.Params
 }
 
-func (n *NodeConfig) QueryFinalityProviders() []*bstypes.FinalityProviderResponse {
-	bz, err := n.QueryGRPCGateway("/babylon/btcstaking/v1/finality_providers", url.Values{})
+func (n *NodeConfig) QueryFinalityProviders(bsnId string) []*bstypes.FinalityProviderResponse {
+	path := fmt.Sprintf("/babylon/btcstaking/v1/finality_providers/%s", bsnId)
+	bz, err := n.QueryGRPCGateway(path, url.Values{})
 	require.NoError(n.t, err)
 
 	var resp bstypes.QueryFinalityProvidersResponse
@@ -218,6 +219,19 @@ func (n *NodeConfig) QueryFinalityProvidersDelegations(fpsBTCPK ...string) []*bs
 		}
 	}
 	return pendingDelsResp
+}
+
+func (n *NodeConfig) QueryListEvidences(startHeight uint64) []*ftypes.EvidenceResponse {
+	values := url.Values{}
+	values.Set("start_height", fmt.Sprintf("%d", startHeight))
+	bz, err := n.QueryGRPCGateway("/babylon/finality/v1/evidences", values)
+	require.NoError(n.t, err)
+
+	var resp ftypes.QueryListEvidencesResponse
+	err = util.Cdc.UnmarshalJSON(bz, &resp)
+	require.NoError(n.t, err)
+
+	return resp.Evidences
 }
 
 // ParseRespBTCDelToBTCDel parses an BTC delegation response to BTC Delegation

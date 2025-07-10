@@ -3,8 +3,8 @@ set -o errexit -o nounset -o pipefail
 command -v shellcheck >/dev/null && shellcheck "$0"
 
 OWNER="babylonlabs-io"
-REPO="op-finality-gadget"
-CONTRACTS="op_finality_gadget"
+REPO="rollup-bsn-contracts"
+CONTRACTS="finality"
 OUTPUT_FOLDER="$(dirname "$0")/../bytecode"
 mkdir -p "$OUTPUT_FOLDER"
 
@@ -13,8 +13,7 @@ type wget >&2
 
 TAG="$1"
 
-for CONTRACT in $CONTRACTS
-do
+for CONTRACT in $CONTRACTS; do
   echo -n "Downloading $CONTRACT..." >&2
   FILE="$CONTRACT.wasm.zip"
   URL="https://github.com/$OWNER/$REPO/releases/download/$TAG/$FILE"
@@ -23,4 +22,4 @@ do
   rm -f "$OUTPUT_FOLDER/$FILE"
   echo "done." >&2
 done
-echo "$TAG" >"$OUTPUT_FOLDER/finality_gadget_version.txt"
+echo "$TAG" >"$OUTPUT_FOLDER/finality_contract_version.txt"

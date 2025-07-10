@@ -87,11 +87,11 @@ func (k Keeper) createBTCTimestamp(
 ) (*types.BTCTimestamp, error) {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	// if the Babylon contract in this channel has not been initialised, get headers from
-	// the tip to (w+1+len(finalizedInfo.BTCHeaders))-deep header
+	// the tip to (k+1+len(finalizedInfo.BTCHeaders))-deep header for efficient initialization
 	var btcHeaders []*btclctypes.BTCHeaderInfo
 	if k.isChannelUninitialized(ctx, channel) {
-		w := k.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
-		depth := w + 1 + uint32(len(finalizedInfo.BTCHeaders))
+		kValue := k.btccKeeper.GetParams(ctx).BtcConfirmationDepth
+		depth := kValue + 1 + uint32(len(finalizedInfo.BTCHeaders))
 
 		btcHeaders = k.btclcKeeper.GetMainChainUpTo(ctx, depth)
 		if btcHeaders == nil {
@@ -140,13 +140,11 @@ func (k Keeper) createBTCTimestamp(
 	return btcTimestamp, nil
 }
 
-// getDeepEnoughBTCHeaders returns the last w+1 BTC headers, in which the 1st BTC header
-// must be in the canonical chain assuming w-long reorg will never happen
-// This function will only be triggered upon a finalised epoch, where w-deep BTC checkpoint
-// is guaranteed. Thus the function is safe to be called upon generating BTC timestamps
+// getDeepEnoughBTCHeaders returns the last k+1 BTC headers for fork scenarios,
+// where k is the confirmation depth. This provides sufficient safety against reorgs.
 func (k Keeper) getDeepEnoughBTCHeaders(ctx context.Context) []*btclctypes.BTCHeaderInfo {
-	wValue := k.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
-	startHeight := k.btclcKeeper.GetTipInfo(ctx).Height - wValue
+	kValue := k.btccKeeper.GetParams(ctx).BtcConfirmationDepth
+	startHeight := k.btclcKeeper.GetTipInfo(ctx).Height - kValue
 	return k.btclcKeeper.GetMainChainFrom(ctx, startHeight)
 }
 
@@ -158,9 +156,9 @@ func (k Keeper) getHeadersToBroadcast(ctx context.Context) []*btclctypes.BTCHead
 	lastSegment := k.GetLastSentSegment(ctx)
 
 	if lastSegment == nil {
-		// we did not send any headers yet, so we need to send the last w+1 BTC headers
-		// where w+1 is imposed by Babylon contract. This ensures that the first BTC header
-		// in Babylon contract will be w-deep
+		// we did not send any headers yet, so we need to send the last k+1 BTC headers
+		// where k is the confirmation depth. This provides sufficient safety for BSNs
+		// while being more efficient than using the finalization timeout w.
 		return k.getDeepEnoughBTCHeaders(ctx)
 	}
 
@@ -179,7 +177,8 @@ func (k Keeper) getHeadersToBroadcast(ctx context.Context) []*btclctypes.BTCHead
 
 	if initHeader == nil {
 		// if initHeader is nil, then this means a reorg happens such that all headers
-		// in the last segment are reverted. In this case, send the last w+1 BTC headers
+		// in the last segment are reverted. In this case, send the last k+1 BTC headers
+		// using confirmation depth k instead of finalization timeout w for efficiency
 		return k.getDeepEnoughBTCHeaders(ctx)
 	}
 

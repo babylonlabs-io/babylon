@@ -1,17 +1,19 @@
 package replay
 
 import (
+	"crypto/sha256"
 	"math/rand"
 	"testing"
 
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
-	"github.com/babylonlabs-io/babylon/v3/types"
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
 	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
 	babylonApp "github.com/babylonlabs-io/babylon/v3/app"
 	"github.com/btcsuite/btcd/btcec/v2"
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/wire"
 )
 
@@ -135,6 +137,130 @@ func (s *Staker) CreateDelegationMessage(
 	return msg
 }
 
+func (s *Staker) CreateBtcExpandMessage(
+	fpKeys []*bbn.BIP340PubKey,
+	stakingTime uint32,
+	totalSat int64,
+	prevStakeTxHash string,
+	fundingTx *wire.MsgTx,
+) *bstypes.MsgBtcStakeExpand {
+	params := s.d.GetBTCStakingParams(s.t)
+
+	// Convert fpKeys to btcec.PublicKey
+	var fpBTCPKs []*btcec.PublicKey
+	for _, fpKey := range fpKeys {
+		fpBTCPKs = append(fpBTCPKs, fpKey.MustToBTCPK())
+	}
+
+	// Convert covenant keys
+	var covenantPks []*btcec.PublicKey
+	for _, pk := range params.CovenantPks {
+		covenantPks = append(covenantPks, pk.MustToBTCPK())
+	}
+
+	// Convert prevStakeTxHash string to OutPoint
+	prevHash, err := chainhash.NewHashFromStr(prevStakeTxHash)
+	require.NoError(s.t, err)
+	prevStakingOutPoint := wire.NewOutPoint(prevHash, datagen.StakingOutIdx)
+
+	// Convert fundingTxHash to OutPoint
+	fundingTxHash := fundingTx.TxHash()
+	fundingOutPoint := wire.NewOutPoint(&fundingTxHash, 0)
+	outPoints := []*wire.OutPoint{prevStakingOutPoint, fundingOutPoint}
+
+	// Generate staking slashing info using multiple inputs
+	stakingSlashingInfo := datagen.GenBTCStakingSlashingInfoWithInputs(
+		s.r,
+		s.t,
+		BtcParams,
+		outPoints,
+		s.BTCPrivateKey,
+		fpBTCPKs,
+		covenantPks,
+		params.CovenantQuorum,
+		uint16(stakingTime),
+		totalSat,
+		params.SlashingPkScript,
+		params.SlashingRate,
+		uint16(params.UnbondingTimeBlocks),
+	)
+
+	slashingPathSpendInfo, err := stakingSlashingInfo.StakingInfo.SlashingPathSpendInfo()
+	require.NoError(s.t, err)
+
+	// Sign the slashing tx with delegator key
+	delegatorSig, err := stakingSlashingInfo.SlashingTx.Sign(
+		stakingSlashingInfo.StakingTx,
+		datagen.StakingOutIdx,
+		slashingPathSpendInfo.GetPkScriptPath(),
+		s.BTCPrivateKey,
+	)
+	require.NoError(s.t, err)
+
+	// Serialize the staking tx bytes
+	serializedStakingTx, err := bbn.SerializeBTCTx(stakingSlashingInfo.StakingTx)
+	require.NoError(s.t, err)
+
+	stkTxHash := stakingSlashingInfo.StakingTx.TxHash()
+	unbondingValue := uint64(totalSat) - uint64(params.UnbondingFeeSat)
+
+	// Generate unbonding slashing info for the stake expand
+	unbondingSlashingInfo := datagen.GenBTCUnbondingSlashingInfo(
+		s.r,
+		s.t,
+		BtcParams,
+		s.BTCPrivateKey,
+		fpBTCPKs,
+		covenantPks,
+		params.CovenantQuorum,
+		wire.NewOutPoint(&stkTxHash, datagen.StakingOutIdx),
+		uint16(params.UnbondingTimeBlocks),
+		int64(unbondingValue),
+		params.SlashingPkScript,
+		params.SlashingRate,
+		uint16(params.UnbondingTimeBlocks),
+	)
+
+	unbondingTxBytes, err := bbn.SerializeBTCTx(unbondingSlashingInfo.UnbondingTx)
+	require.NoError(s.t, err)
+
+	delSlashingTxSig, err := unbondingSlashingInfo.GenDelSlashingTxSig(s.BTCPrivateKey)
+	require.NoError(s.t, err)
+
+	pop, err := datagen.NewPoPBTC(s.d.StakerPopContext(), s.Address(), s.BTCPrivateKey)
+	require.NoError(s.t, err)
+
+	// Convert []*BIP340PubKey to []BIP340PubKey slice
+	fpBtcPkList := make([]bbn.BIP340PubKey, len(fpKeys))
+	for i, pk := range fpKeys {
+		fpBtcPkList[i] = *pk
+	}
+
+	fundingTxBz, err := bbn.SerializeBTCTx(fundingTx)
+	require.NoError(s.t, err)
+
+	msg := &bstypes.MsgBtcStakeExpand{
+		StakerAddr:                    s.AddressString(),
+		Pop:                           pop,
+		BtcPk:                         s.BTCPublicKey(),
+		FpBtcPkList:                   fpBtcPkList,
+		StakingTime:                   stakingTime,
+		StakingValue:                  totalSat,
+		StakingTx:                     serializedStakingTx,
+		SlashingTx:                    stakingSlashingInfo.SlashingTx,
+		DelegatorSlashingSig:          delegatorSig,
+		UnbondingValue:                int64(unbondingValue),
+		UnbondingTime:                 params.UnbondingTimeBlocks,
+		UnbondingTx:                   unbondingTxBytes,
+		UnbondingSlashingTx:           unbondingSlashingInfo.SlashingTx,
+		DelegatorUnbondingSlashingSig: delSlashingTxSig,
+		PreviousStakingTxHash:         prevStakeTxHash,
+		FundingTx:                     fundingTxBz,
+	}
+
+	return msg
+}
+
 func (s *Staker) CreatePreApprovalDelegation(
 	fpKeys []*bbn.BIP340PubKey,
 	stakingTime uint32,
@@ -142,13 +268,43 @@ func (s *Staker) CreatePreApprovalDelegation(
 ) *bstypes.MsgCreateBTCDelegation {
 	msg := s.CreateDelegationMessage(fpKeys, stakingTime, totalSat)
 
-	s.SendCreateDelegationMessage(msg)
+	s.SendMessage(msg)
 
 	return msg
 }
 
-func (s *Staker) SendCreateDelegationMessage(
-	msg *bstypes.MsgCreateBTCDelegation,
+func (s *Staker) CreateBtcStakeExpand(
+	fpKeys []*bbn.BIP340PubKey,
+	stakingTime uint32,
+	totalSat int64,
+	prevStkTx *wire.MsgTx,
+) *bstypes.MsgBtcStakeExpand {
+	stakingOutput := prevStkTx.TxOut[0]
+
+	// Create a fake outPoint for funding
+	dummyData := sha256.Sum256([]byte("dummy funding tx"))
+	dummyOutPoint := &wire.OutPoint{
+		Hash:  chainhash.Hash(dummyData),
+		Index: 0,
+	}
+
+	// Generate funding tx for stake expansion
+	fundingTx := datagen.GenFundingTx(
+		s.t,
+		s.r,
+		s.app.BTCLightClientKeeper.GetBTCNet(),
+		dummyOutPoint,
+		totalSat,
+		stakingOutput,
+	)
+
+	msg := s.CreateBtcExpandMessage(fpKeys, stakingTime, totalSat, prevStkTx.TxHash().String(), fundingTx)
+	s.SendMessage(msg)
+	return msg
+}
+
+func (s *Staker) SendMessage(
+	msg sdk.Msg,
 ) {
 	DefaultSendTxWithMessagesSuccess(
 		s.t,
@@ -157,10 +313,4 @@ func (s *Staker) SendCreateDelegationMessage(
 		msg,
 	)
 	s.IncSeq()
-}
-
-func StakingTransaction(t *testing.T, msg *bstypes.MsgCreateBTCDelegation) *wire.MsgTx {
-	stakingTx, err := types.NewBTCTxFromBytes(msg.StakingTx)
-	require.NoError(t, err)
-	return stakingTx
 }

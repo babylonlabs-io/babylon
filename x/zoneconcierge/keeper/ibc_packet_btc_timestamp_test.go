@@ -54,8 +54,8 @@ func FuzzGetHeadersToBroadcast(f *testing.F) {
 		hooks := zcKeeper.Hooks()
 
 		// insert a random number of BTC headers to BTC light client
-		wValue := babylonApp.BtcCheckpointKeeper.GetParams(ctx).CheckpointFinalizationTimeout
-		chainLength := uint32(datagen.RandomInt(r, 10)) + wValue
+		kValue := babylonApp.BtcCheckpointKeeper.GetParams(ctx).BtcConfirmationDepth
+		chainLength := uint32(datagen.RandomInt(r, 10)) + kValue
 		genRandomChain(
 			t,
 			r,
@@ -71,11 +71,11 @@ func FuzzGetHeadersToBroadcast(f *testing.F) {
 		require.NoError(t, err)
 		// current tip
 		btcTip := btclcKeeper.GetTipInfo(ctx)
-		// assert the last segment is the last w+1 BTC headers
+		// assert the last segment is the last k+1 BTC headers (using confirmation depth)
 		lastSegment := zcKeeper.GetLastSentSegment(ctx)
-		require.Len(t, lastSegment.BtcHeaders, int(wValue)+1)
+		require.Len(t, lastSegment.BtcHeaders, int(kValue)+1)
 		for i := range lastSegment.BtcHeaders {
-			require.Equal(t, btclcKeeper.GetHeaderByHeight(ctx, btcTip.Height-wValue+uint32(i)), lastSegment.BtcHeaders[i])
+			require.Equal(t, btclcKeeper.GetHeaderByHeight(ctx, btcTip.Height-kValue+uint32(i)), lastSegment.BtcHeaders[i])
 		}
 
 		// finalise another epoch, during which a small number of new BTC headers are inserted
@@ -123,14 +123,14 @@ func FuzzGetHeadersToBroadcast(f *testing.F) {
 		require.NoError(t, err)
 		// current tip
 		btcTip = btclcKeeper.GetTipInfo(ctx)
-		// assert the last segment is the last w+1 BTC headers
+		// assert the last segment is the last k+1 BTC headers (using confirmation depth)
 		lastSegment = zcKeeper.GetLastSentSegment(ctx)
 		if revertedChainLength >= lastSegmentLength {
-			// the entire last segment is reverted, the last w+1 BTC headers should be sent
-			require.Len(t, lastSegment.BtcHeaders, int(wValue)+1)
-			// assert the consistency of w+1 sent BTC headers
+			// the entire last segment is reverted, the last k+1 BTC headers should be sent
+			require.Len(t, lastSegment.BtcHeaders, int(kValue)+1)
+			// assert the consistency of k+1 sent BTC headers
 			for i := range lastSegment.BtcHeaders {
-				expectedHeight := btcTip.Height - wValue + uint32(i)
+				expectedHeight := btcTip.Height - kValue + uint32(i)
 				require.Equal(t, btclcKeeper.GetHeaderByHeight(ctx, expectedHeight), lastSegment.BtcHeaders[i])
 			}
 		} else {

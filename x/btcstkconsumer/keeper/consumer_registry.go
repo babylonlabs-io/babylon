@@ -51,6 +51,14 @@ func (k Keeper) GetConsumerRegister(ctx context.Context, consumerID string) (*ty
 	return &consumerRegister, nil
 }
 
+func (k Keeper) IsCosmosConsumer(ctx context.Context, consumerID string) (bool, error) {
+	consumerRegister, err := k.GetConsumerRegister(ctx, consumerID)
+	if err != nil {
+		return false, err
+	}
+	return consumerRegister.GetCosmosConsumerMetadata() != nil, nil
+}
+
 // GetAllRegisteredConsumerIDs gets all consumer IDs that registered to Babylon
 func (k Keeper) GetAllRegisteredConsumerIDs(ctx context.Context) []string {
 	consumerIDs := []string{}

@@ -1,6 +1,7 @@
 package e2e
 
 import (
+	ct "github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
 	"math"
 	"math/rand"
 	"strconv"
@@ -26,7 +27,7 @@ import (
 )
 
 const (
-	ConsumerID = "optimism-1234"
+	BsnId = "optimism-1234"
 )
 
 type FinalityContractTestSuite struct {
@@ -88,7 +89,7 @@ func (s *FinalityContractTestSuite) Test1InstantiateFinalityContract() {
 	chainA := s.configurer.GetChainConfig(0)
 	chainA.WaitUntilHeight(1)
 
-	contractPath := "/bytecode/op_finality_gadget.wasm"
+	contractPath := "/bytecode/finality.wasm"
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
 
@@ -110,8 +111,7 @@ func (s *FinalityContractTestSuite) Test1InstantiateFinalityContract() {
 		strconv.Itoa(latestWasmId),
 		`{
 			"admin": "`+adminAddr+`",
-			"consumer_id": "`+ConsumerID+`",
-			"is_enabled": true
+			"bsn_id": "`+BsnId+`"
 		}`,
 		initialization.ValidatorWalletName,
 	)
@@ -126,12 +126,12 @@ func (s *FinalityContractTestSuite) Test1InstantiateFinalityContract() {
 }
 
 func (s *FinalityContractTestSuite) Test2RegisterRollupConsumer() {
-	var registeredConsumer *bsctypes.ConsumerRegister
+	var registeredBsn *bsctypes.ConsumerRegister
 	var err error
 
-	// Register the consumer id on Babylon
-	registeredConsumer = bsctypes.NewCosmosConsumerRegister(
-		ConsumerID,
+	// Register the BSN id on Babylon
+	registeredBsn = bsctypes.NewCosmosConsumerRegister(
+		BsnId,
 		datagen.GenRandomHexStr(s.r, 5),
 		"Chain description: "+datagen.GenRandomHexStr(s.r, 15),
 	)
@@ -139,28 +139,28 @@ func (s *FinalityContractTestSuite) Test2RegisterRollupConsumer() {
 	validatorNode, err := s.configurer.GetChainConfig(0).GetNodeAtIndex(0)
 	require.NoError(s.T(), err)
 
-	// TODO: Register the Consumer through a gov proposal
-	validatorNode.RegisterRollupConsumerChain(initialization.ValidatorWalletName, registeredConsumer.ConsumerId, registeredConsumer.ConsumerName, registeredConsumer.ConsumerDescription, s.finalityContractAddr)
+	// TODO: Register the BSN through a gov proposal
+	validatorNode.RegisterRollupConsumerChain(initialization.ValidatorWalletName, registeredBsn.ConsumerId, registeredBsn.ConsumerName, registeredBsn.ConsumerDescription, s.finalityContractAddr)
 
 	nonValidatorNode, err := s.configurer.GetChainConfig(0).GetNodeAtIndex(2)
 	require.NoError(s.T(), err)
 
 	// Confirm the consumer is registered
 	s.Eventually(func() bool {
-		consumerRegistryResp := nonValidatorNode.QueryBTCStkConsumerConsumer(ConsumerID)
+		consumerRegistryResp := nonValidatorNode.QueryBTCStkConsumerConsumer(BsnId)
 		s.Require().NotNil(consumerRegistryResp)
 		s.Require().Len(consumerRegistryResp.ConsumerRegisters, 1)
-		s.Require().Equal(registeredConsumer.ConsumerId, consumerRegistryResp.ConsumerRegisters[0].ConsumerId)
-		s.Require().Equal(registeredConsumer.ConsumerName, consumerRegistryResp.ConsumerRegisters[0].ConsumerName)
-		s.Require().Equal(registeredConsumer.ConsumerDescription, consumerRegistryResp.ConsumerRegisters[0].ConsumerDescription)
+		s.Require().Equal(registeredBsn.ConsumerId, consumerRegistryResp.ConsumerRegisters[0].ConsumerId)
+		s.Require().Equal(registeredBsn.ConsumerName, consumerRegistryResp.ConsumerRegisters[0].ConsumerName)
+		s.Require().Equal(registeredBsn.ConsumerDescription, consumerRegistryResp.ConsumerRegisters[0].ConsumerDescription)
 
 		return true
 	}, 10*time.Second, 2*time.Second, "Consumer was not registered within the expected time")
 
 	s.T().Logf("Consumer registered: ID=%s, Name=%s, Description=%s",
-		registeredConsumer.ConsumerId,
-		registeredConsumer.ConsumerName,
-		registeredConsumer.ConsumerDescription)
+		registeredBsn.ConsumerId,
+		registeredBsn.ConsumerName,
+		registeredBsn.ConsumerDescription)
 }
 
 func (s *FinalityContractTestSuite) Test3CreateConsumerFPAndDelegation() {
@@ -189,7 +189,7 @@ func (s *FinalityContractTestSuite) Test3CreateConsumerFPAndDelegation() {
 	s.consumerFp = chain.CreateConsumerFpFromNodeAddr(
 		s.T(),
 		s.r,
-		ConsumerID,
+		BsnId,
 		s.consumerBtcSk,
 		nonValidatorNode,
 	)
@@ -328,7 +328,7 @@ func (s *FinalityContractTestSuite) Test4SubmitCovenantSignature() {
 	s.Len(activeDels.Dels, 1)
 
 	activeDel := activeDels.Dels[0]
-	s.True(activeDel.HasCovenantQuorums(s.covenantQuorum))
+	s.True(activeDel.HasCovenantQuorums(s.covenantQuorum, 0))
 }
 
 func (s *FinalityContractTestSuite) Test5CommitPublicRandomness() {
@@ -348,7 +348,7 @@ func (s *FinalityContractTestSuite) Test5CommitPublicRandomness() {
 
 	nonValidatorNode.CommitPubRandListConsumer(
 		initialization.ValidatorWalletName,
-		ConsumerID,
+		BsnId,
 		msgCommitPubRandList.FpBtcPk,
 		msgCommitPubRandList.StartHeight,
 		msgCommitPubRandList.NumPubRand,
@@ -372,9 +372,25 @@ func (s *FinalityContractTestSuite) Test5CommitPublicRandomness() {
 		)
 		return true
 	}, time.Second*10, time.Second, "Public randomness commitment was not found within the expected time")
+
+	// Wait until Babylon has finalized the current epoch
+	currentEpoch, err := nonValidatorNode.QueryCurrentEpoch()
+	s.NoError(err)
+	s.T().Logf("Wait until Babylon has finalized the current epoch: %d", currentEpoch)
+	const startEpoch uint64 = 1
+	nonValidatorNode.WaitUntilCurrentEpochIsSealedAndFinalized(startEpoch)
+
+	endEpoch, err := nonValidatorNode.QueryRawCheckpoint(currentEpoch)
+	s.NoError(err)
+	s.Equal(ct.Finalized, endEpoch.Status)
+
+	// Wait for a some time to ensure that the checkpoint is included in the chain
+	time.Sleep(20 * time.Second)
+	// Wait for the next block
+	nonValidatorNode.WaitForNextBlock()
 }
 
-func (s *FinalityContractTestSuite) Test6SubmitFinalitySignatura() {
+func (s *FinalityContractTestSuite) Test6SubmitFinalitySignature() {
 	chainA := s.configurer.GetChainConfig(0)
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
@@ -393,7 +409,16 @@ func (s *FinalityContractTestSuite) Test6SubmitFinalitySignatura() {
 	s.NoError(err)
 	eotsSig := bbn.NewSchnorrEOTSSigFromModNScalar(sig)
 
-	nonValidatorNode.AddFinalitySigConsumer(initialization.ValidatorWalletName, ConsumerID, s.consumerFp.BtcPk, startHeight, &s.randListInfo.PRList[idx], *s.randListInfo.ProofList[idx].ToProto(), appHash, eotsSig)
+	nonValidatorNode.AddFinalitySigConsumer(
+		initialization.ValidatorWalletName,
+		BsnId,
+		s.consumerFp.BtcPk,
+		startHeight,
+		&s.randListInfo.PRList[idx],
+		*s.randListInfo.ProofList[idx].ToProto(),
+		appHash,
+		eotsSig,
+	)
 
 	// Query the finality signature from the finality contract
 
@@ -403,11 +428,59 @@ func (s *FinalityContractTestSuite) Test6SubmitFinalitySignatura() {
 			return false
 		}
 		s.Equal(1, len(blockVoters))
-		s.Equal(s.consumerFp.BtcPk.MarshalHex(), blockVoters[0])
+		s.Equal(s.consumerFp.BtcPk.MarshalHex(), blockVoters[0].FpBtcPkHex)
+		s.Equal(blockToVote.AppHash, blockVoters[0].FinalitySignature.BlockHash)
 		s.T().Logf("Finality signature found for block height %d with app hash %x: voter %s",
 			blockToVote.Height,
 			blockToVote.AppHash,
 			s.consumerFp.BtcPk.MarshalHex())
 		return true
 	}, time.Second*10, time.Second, "Voters for the block were not found within the expected time")
+}
+
+func (s *FinalityContractTestSuite) Test7SubmitEquivocatingFinalitySignature() {
+	chainA := s.configurer.GetChainConfig(0)
+	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
+	s.NoError(err)
+
+	// Create a fork block at the same height to create an equivocation
+	equivocationHeight := uint64(1)
+	forkBlock := datagen.GenRandomBlockWithHeight(s.r, equivocationHeight)
+
+	// Use the same randomness index for both signatures
+	idx := 0
+
+	// Sign the fork block
+	msgToSign1 := append(sdk.Uint64ToBigEndian(equivocationHeight), forkBlock.AppHash...)
+	sig, err := eots.Sign(s.consumerBtcSk, s.randListInfo.SRList[idx], msgToSign1)
+	s.NoError(err)
+	eotsSig := bbn.NewSchnorrEOTSSigFromModNScalar(sig)
+
+	// Submit the equivocating finality signature
+	txHash := nonValidatorNode.AddFinalitySigConsumer(
+		initialization.ValidatorWalletName,
+		BsnId,
+		s.consumerFp.BtcPk,
+		equivocationHeight,
+		&s.randListInfo.PRList[idx],
+		*s.randListInfo.ProofList[idx].ToProto(),
+		forkBlock.AppHash,
+		eotsSig,
+	)
+
+	s.T().Logf("Submitted equivocating finality signature for FP %s at height %d",
+		s.consumerFp.BtcPk.MarshalHex(), equivocationHeight)
+
+	nonValidatorNode.WaitForNextBlock()
+	txResp, tx, err := nonValidatorNode.QueryTxWithError(txHash)
+	s.T().Logf("txResp: %+v, tx: %+v, err: %v", txResp, tx, err)
+
+	// Ensure the FP is slashed
+	fpResp := nonValidatorNode.QueryFinalityProvider(s.consumerFp.BtcPk.MarshalHex())
+	s.NotNil(fpResp)
+	s.Greater(fpResp.SlashedBabylonHeight, uint64(0))
+
+	// Ensure the equivocation evidence is created
+	equivocationEvidence := nonValidatorNode.QueryListEvidences(0)
+	s.Len(equivocationEvidence, 1)
 }

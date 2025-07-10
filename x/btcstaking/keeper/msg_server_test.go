@@ -29,6 +29,7 @@ import (
 	btclctypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
 	"github.com/babylonlabs-io/babylon/v3/x/btcstaking"
 	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
+	btcsctypes "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
 )
 
 func FuzzMsgServer_UpdateParams(f *testing.F) {
@@ -85,10 +86,54 @@ func FuzzMsgCreateFinalityProvider(f *testing.F) {
 		// set all parameters
 		h.GenAndApplyParams(r)
 
-		// generate new finality providers
+		// Define BSN IDs
+		unregisteredBsnId := "unregistered-bsn-" + datagen.GenRandomHexStr(r, 10)
+		registeredBsnId := "registered-bsn-" + datagen.GenRandomHexStr(r, 10)
+		babylonBsnId := h.Ctx.ChainID()
+
+		// Register one additional BSN
+		// TODO: Use a mock BSC keeper instead of creating real consumers
+		// Create a random consumer name
+		consumerName := datagen.GenRandomHexStr(r, 5)
+		// Create a random consumer description
+		consumerDesc := "Consumer description: " + datagen.GenRandomHexStr(r, 15)
+
+		// Populate ConsumerRegister object
+		consumerRegister := &btcsctypes.ConsumerRegister{
+			ConsumerId:          registeredBsnId,
+			ConsumerName:        consumerName,
+			ConsumerDescription: consumerDesc,
+		}
+
+		// Register the consumer
+		err := h.BTCStkConsumerKeeper.RegisterConsumer(h.Ctx, consumerRegister)
+		require.NoError(t, err)
+
+		// Register a finality provider to an unregistered BSN should fail
+		fpUnregisteredBsn, err := datagen.GenRandomFinalityProvider(r, h.FpPopContext(), unregisteredBsnId)
+		require.NoError(t, err)
+		msgUnregisteredBsn := &types.MsgCreateFinalityProvider{
+			Addr:        fpUnregisteredBsn.Addr,
+			Description: fpUnregisteredBsn.Description,
+			Commission: types.NewCommissionRates(
+				*fpUnregisteredBsn.Commission,
+				fpUnregisteredBsn.CommissionInfo.MaxRate,
+				fpUnregisteredBsn.CommissionInfo.MaxChangeRate,
+			),
+			BtcPk: fpUnregisteredBsn.BtcPk,
+			Pop:   fpUnregisteredBsn.Pop,
+			BsnId: unregisteredBsnId,
+		}
+		_, err = h.MsgServer.CreateFinalityProvider(h.Ctx, msgUnregisteredBsn)
+		require.Error(t, err)
+
 		fps := []*types.FinalityProvider{}
-		for i := 0; i < int(datagen.RandomInt(r, 10)); i++ {
-			fp, err := datagen.GenRandomFinalityProvider(r, h.FpPopContext())
+		for i := 0; i < int(datagen.RandomInt(r, 20)); i++ {
+			bsnId := ""
+			if datagen.RandomInt(r, 2) == 0 {
+				bsnId = registeredBsnId
+			}
+			fp, err := datagen.GenRandomFinalityProvider(r, h.FpPopContext(), bsnId)
 			require.NoError(t, err)
 			msg := &types.MsgCreateFinalityProvider{
 				Addr:        fp.Addr,
@@ -100,19 +145,32 @@ func FuzzMsgCreateFinalityProvider(f *testing.F) {
 				),
 				BtcPk: fp.BtcPk,
 				Pop:   fp.Pop,
+				BsnId: fp.BsnId,
 			}
 			_, err = h.MsgServer.CreateFinalityProvider(h.Ctx, msg)
 			require.NoError(t, err)
 
 			fps = append(fps, fp)
 		}
+
 		// assert these finality providers exist in KVStore
 		for _, fp := range fps {
-			btcPK := *fp.BtcPk
+			btcPK := fp.BtcPk.MustMarshal()
 			require.True(t, h.BTCStakingKeeper.HasFinalityProvider(h.Ctx, btcPK))
+			// Ensure that the if a finality provider creation message does not
+			// contain a bsnId, then we default to the Babylon Genesis chain id.
+			bsnId := fp.BsnId
+			if bsnId == "" {
+				bsnId = babylonBsnId
+			}
+			actualFp, err := h.BTCStakingKeeper.GetFinalityProvider(h.Ctx, fp.BtcPk.MustMarshal())
+			require.NoError(t, err)
+			require.Equal(t, bsnId, actualFp.BsnId)
 		}
 
 		// duplicated finality providers should not pass
+		// this also implicitly tests the case in which
+		// the finality provider is registered to a different BSN
 		for _, fp2 := range fps {
 			msg := &types.MsgCreateFinalityProvider{
 				Addr:        fp2.Addr,
@@ -130,7 +188,6 @@ func FuzzMsgCreateFinalityProvider(f *testing.F) {
 		}
 	})
 }
-
 func FuzzMsgEditFinalityProvider(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 
@@ -260,7 +317,9 @@ func FuzzCreateBTCDelegation(f *testing.F) {
 		err = actualDel.ValidateBasic()
 		h.NoError(err)
 		// delegation is not activated by covenant yet
-		require.False(h.T(), actualDel.HasCovenantQuorums(h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum))
+		hasQuorum, err := h.BTCStakingKeeper.BtcDelHasCovenantQuorums(h.Ctx, actualDel, h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum)
+		h.NoError(err)
+		require.False(h.T(), hasQuorum)
 
 		if usePreApproval {
 			require.Zero(h.T(), actualDel.StartHeight)
@@ -630,8 +689,8 @@ func TestRejectActivationThatShouldNotUsePreApprovalFlow(t *testing.T) {
 
 	tipHeight := uint32(1)
 	covenantQuorum := h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum
-
-	status := actualDel.GetStatus(tipHeight, covenantQuorum)
+	status, err := h.BTCStakingKeeper.BtcDelStatus(h.Ctx, actualDel, covenantQuorum, tipHeight)
+	h.NoError(err)
 	require.Equal(t, types.BTCDelegationStatus_VERIFIED, status)
 
 	msg := &types.MsgAddBTCDelegationInclusionProof{
@@ -696,7 +755,9 @@ func FuzzAddCovenantSigs(f *testing.F) {
 		actualDel, err := h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
 		h.NoError(err)
 		// delegation is not activated by covenant yet
-		require.False(h.T(), actualDel.HasCovenantQuorums(h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum))
+		hasQuorum, err := h.BTCStakingKeeper.BtcDelHasCovenantQuorums(h.Ctx, actualDel, h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum)
+		h.NoError(err)
+		require.False(h.T(), hasQuorum)
 
 		msgs := h.GenerateCovenantSignaturesMessages(r, covenantSKs, msgCreateBTCDel, actualDel)
 		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: 30}).AnyTimes()
@@ -717,13 +778,16 @@ func FuzzAddCovenantSigs(f *testing.F) {
 		// ensure the BTC delegation now has voting power
 		actualDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
 		h.NoError(err)
-		require.True(h.T(), actualDel.HasCovenantQuorums(h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum))
+		hasQuorum, err = h.BTCStakingKeeper.BtcDelHasCovenantQuorums(h.Ctx, actualDel, h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum)
+		h.NoError(err)
+		require.True(h.T(), hasQuorum)
 		require.True(h.T(), actualDel.BtcUndelegation.HasCovenantQuorums(h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum))
 
 		tipHeight := uint32(30)
 		covenantQuorum := h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum
-		status := actualDel.GetStatus(tipHeight, covenantQuorum)
-		votingPower := actualDel.VotingPower(tipHeight, covenantQuorum)
+		status, err := h.BTCStakingKeeper.BtcDelStatus(h.Ctx, actualDel, covenantQuorum, tipHeight)
+		h.NoError(err)
+		votingPower := actualDel.VotingPower(tipHeight, covenantQuorum, 0)
 
 		if usePreApproval {
 			require.Equal(t, status, types.BTCDelegationStatus_VERIFIED)
@@ -783,8 +847,9 @@ func FuzzAddBTCDelegationInclusionProof(f *testing.F) {
 		tipHeight := uint32(10)
 
 		covenantQuorum := h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum
-		status := actualDel.GetStatus(tipHeight, covenantQuorum)
-		votingPower := actualDel.VotingPower(tipHeight, covenantQuorum)
+		status, err := h.BTCStakingKeeper.BtcDelStatus(h.Ctx, actualDel, covenantQuorum, tipHeight)
+		h.NoError(err)
+		votingPower := actualDel.VotingPower(tipHeight, covenantQuorum, 0)
 
 		require.Equal(t, status, types.BTCDelegationStatus_VERIFIED)
 		require.Zero(t, votingPower)
@@ -796,8 +861,9 @@ func FuzzAddBTCDelegationInclusionProof(f *testing.F) {
 
 		actualDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
 		h.NoError(err)
-		status = actualDel.GetStatus(tipHeight, covenantQuorum)
-		votingPower = actualDel.VotingPower(tipHeight, covenantQuorum)
+		status, err = h.BTCStakingKeeper.BtcDelStatus(h.Ctx, actualDel, covenantQuorum, tipHeight)
+		h.NoError(err)
+		votingPower = actualDel.VotingPower(tipHeight, covenantQuorum, 0)
 
 		require.Equal(t, status, types.BTCDelegationStatus_ACTIVE)
 		require.Equal(t, uint64(stakingValue), votingPower)
@@ -854,7 +920,9 @@ func FuzzBTCUndelegate(f *testing.F) {
 		// ensure the BTC delegation is bonded right now
 		actualDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
 		h.NoError(err)
-		status := actualDel.GetStatus(btcTip, bsParams.CovenantQuorum)
+
+		status, err := h.BTCStakingKeeper.BtcDelStatus(h.Ctx, actualDel, bsParams.CovenantQuorum, btcTip)
+		h.NoError(err)
 		require.Equal(t, types.BTCDelegationStatus_ACTIVE, status)
 
 		unbondingTx := actualDel.MustGetUnbondingTx()
@@ -897,7 +965,8 @@ func FuzzBTCUndelegate(f *testing.F) {
 		// ensure the BTC delegation is unbonded
 		actualDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
 		h.NoError(err)
-		status = actualDel.GetStatus(btcTip, bsParams.CovenantQuorum)
+		status, err = h.BTCStakingKeeper.BtcDelStatus(h.Ctx, actualDel, bsParams.CovenantQuorum, btcTip)
+		h.NoError(err)
 		require.Equal(t, types.BTCDelegationStatus_UNBONDED, status)
 	})
 }
@@ -951,7 +1020,8 @@ func FuzzBTCUndelegateExpired(f *testing.F) {
 		// ensure the BTC delegation is bonded right now
 		actualDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
 		h.NoError(err)
-		status := actualDel.GetStatus(btcTip, bsParams.CovenantQuorum)
+		status, err := h.BTCStakingKeeper.BtcDelStatus(h.Ctx, actualDel, bsParams.CovenantQuorum, btcTip)
+		h.NoError(err)
 		require.Equal(t, types.BTCDelegationStatus_ACTIVE, status)
 
 		msg := &types.MsgBTCUndelegate{
@@ -1017,7 +1087,9 @@ func FuzzSelectiveSlashing(f *testing.F) {
 		// now BTC delegation has all covenant signatures
 		actualDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
 		h.NoError(err)
-		require.True(t, actualDel.HasCovenantQuorums(bsParams.CovenantQuorum))
+		hasQuorum, err := h.BTCStakingKeeper.BtcDelHasCovenantQuorums(h.Ctx, actualDel, bsParams.CovenantQuorum)
+		h.NoError(err)
+		require.True(t, hasQuorum)
 
 		// construct message for the evidence of selective slashing
 		msg := &types.MsgSelectiveSlashingEvidence{
@@ -1092,7 +1164,7 @@ func FuzzSelectiveSlashing_StakingTx(f *testing.F) {
 		// now BTC delegation has all covenant signatures
 		actualDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
 		h.NoError(err)
-		require.True(t, actualDel.HasCovenantQuorums(bsParams.CovenantQuorum))
+		require.True(t, actualDel.HasCovenantQuorums(bsParams.CovenantQuorum, 0))
 
 		// finality provider pulls off selective slashing by decrypting covenant's adaptor signature
 		// on the slashing tx
@@ -1100,7 +1172,7 @@ func FuzzSelectiveSlashing_StakingTx(f *testing.F) {
 		covIdx := datagen.RandomInt(r, int(bsParams.CovenantQuorum))
 		covPK := bbn.NewBIP340PubKeyFromBTCPK(covenantSKs[covIdx].PubKey())
 		fpIdx := datagen.RandomInt(r, len(actualDel.FpBtcPkList))
-		covASig, err := actualDel.GetCovSlashingAdaptorSig(covPK, int(fpIdx), bsParams.CovenantQuorum)
+		covASig, err := actualDel.GetCovSlashingAdaptorSig(covPK, int(fpIdx), bsParams.CovenantQuorum, 0)
 		h.NoError(err)
 
 		// finality provider decrypts the covenant signature
@@ -1157,7 +1229,7 @@ func TestDoNotAllowDelegationWithoutFinalityProvider(t *testing.T) {
 	// We only generate a finality provider, but not insert it into KVStore. So later
 	// insertion of delegation should fail.
 
-	fp, err := datagen.GenRandomFinalityProvider(r, h.FpPopContext())
+	fp, err := datagen.GenRandomFinalityProvider(r, h.FpPopContext(), "")
 	require.NoError(t, err)
 
 	/*
@@ -1521,7 +1593,7 @@ func FuzzDeterminismBtcstakingBeginBlocker(f *testing.F) {
 		// Number of finality providers from 10 to maxFinalityProviders + 10
 		numFinalityProviders := int(r.Int31n(maxFinalityProviders) + 10)
 
-		fps := datagen.CreateNFinalityProviders(r, t, h.FpPopContext(), numFinalityProviders)
+		fps := datagen.CreateNFinalityProviders(r, t, h.FpPopContext(), "", numFinalityProviders)
 
 		// Fill the database of both apps with the same finality providers and delegations
 		for _, fp := range fps {
