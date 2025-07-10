@@ -219,8 +219,11 @@ func (k Keeper) HandleBSNBaseBTCHeader(
 	// Verify that the base BTC header exists in Babylon's BTC light client
 	// This ensures the BSN is not trying to set a base header that Babylon doesn't know about
 	existingHeader, err := k.btclcKeeper.GetHeaderByHash(ctx, baseBTCHeader.Hash)
-	if err != nil || existingHeader == nil {
-		return fmt.Errorf("base BTC header not found in Babylon's BTC light client: %w", err)
+	if err != nil {
+		return fmt.Errorf("failed to retrieve base BTC header from Babylon's BTC light client: %w", err)
+	}
+	if existingHeader == nil {
+		return fmt.Errorf("base BTC header not found in Babylon's BTC light client: %v", baseBTCHeader.Hash)
 	}
 
 	// Store the BSN's reported base BTC header
