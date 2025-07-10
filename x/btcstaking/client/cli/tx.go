@@ -262,7 +262,6 @@ func NewBTCStakeExpandCmd() *cobra.Command {
 				StakingTime:                   parsed.StakingTime,
 				StakingValue:                  parsed.StakingValue,
 				StakingTx:                     parsed.StakingTx,
-				StakingTxInclusionProof:       parsed.StakingTxInclusionProof,
 				SlashingTx:                    parsed.SlashingTx,
 				DelegatorSlashingSig:          parsed.DelegatorSlashingSig,
 				UnbondingTx:                   parsed.UnbondingTx,
