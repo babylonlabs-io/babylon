@@ -10,6 +10,7 @@ import (
 	btcstkconsumertypes "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
 	epochingtypes "github.com/babylonlabs-io/babylon/v3/x/epoching/types"
+	"github.com/btcsuite/btcd/btcec/v2"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types" //nolint:staticcheck
 	connectiontypes "github.com/cosmos/ibc-go/v10/modules/core/03-connection/types"
@@ -93,7 +94,7 @@ type EpochingKeeper interface {
 type BTCStakingKeeper interface {
 	GetAllBTCStakingConsumerIBCPackets(ctx context.Context) map[string]*bstypes.BTCStakingIBCPacket
 	DeleteBTCStakingConsumerIBCPacket(ctx context.Context, consumerID string)
-	PropagateFPSlashingToConsumers(ctx context.Context, fpBTCPK *bbn.BIP340PubKey) error
+	PropagateFPSlashingToConsumers(ctx context.Context, fpBTCSK *btcec.PrivateKey) error
 	SlashFinalityProvider(ctx context.Context, fpBTCPK []byte) error
 	GetFinalityProvider(ctx context.Context, fpBTCPK []byte) (*bstypes.FinalityProvider, error)
 }

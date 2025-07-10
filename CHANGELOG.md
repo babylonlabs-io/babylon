@@ -102,6 +102,7 @@ check of rewards
 - [#1229](https://github.com/babylonlabs-io/babylon/pull/1229) Wire up EVM.
 - [#1269](https://github.com/babylonlabs-io/babylon/pull/1269) Add fee collector e2e tests.
 - [#1062](https://github.com/babylonlabs-io/babylon/pull/1062) Add `anteHandler` to avoid fee grants on refundable tx (`x/incentive`)
+- [#1231](https://github.com/babylonlabs-io/babylon/pull/1231) Add BTC stake expansion.
 
 ### State Machine Breaking
 
@@ -125,6 +126,9 @@ queued for cosmos bsns
 - [#1247](https://github.com/babylonlabs-io/babylon/pull/1247) fix: zoneconcierge ibc router
 - [#1252](https://github.com/babylonlabs-io/babylon/pull/1252) Implement context separation
 between different signing operations
+- [#1318](https://github.com/babylonlabs-io/babylon/pull/1318) fix: propagation of
+secret key in slashing
+- [#1325](https://github.com/babylonlabs-io/babylon/pull/1325) fix: add signing context to `EvidenceResponse` message
 
 ## v2.2.0
 
@@ -161,6 +165,7 @@ between different signing operations
 
 ### Improvements
 
+- [#1324](https://github.com/babylonlabs-io/babylon/pull/1324) Remove fork logic from `x/zoneconcierge`.
 - [#1065](https://github.com/babylonlabs-io/babylon/pull/1065) Add check for period of current rewards to be larger than zero.
 - [#1128](https://github.com/babylonlabs-io/babylon/pull/1128) Validate genesis fp historic reward entries.
 - [#1064](https://github.com/babylonlabs-io/babylon/pull/1064) Signing info validation for `StartHeight` and `MissedBlockCounter`.

@@ -132,7 +132,8 @@ func FuzzMultiStaking_MultiStakedBTCDelegation(f *testing.F) {
 		actualDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash.String())
 		h.NoError(err)
 		btcTip := h.BTCLightClientKeeper.GetTipInfo(h.Ctx).Height
-		status := actualDel.GetStatus(btcTip, bsParams.CovenantQuorum)
+		status, err := h.BTCStakingKeeper.BtcDelStatus(h.Ctx, actualDel, bsParams.CovenantQuorum, btcTip)
+		h.NoError(err)
 		require.Equal(t, types.BTCDelegationStatus_ACTIVE, status)
 	})
 }

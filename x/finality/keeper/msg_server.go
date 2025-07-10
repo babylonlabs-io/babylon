@@ -7,6 +7,7 @@ import (
 	"time"
 
 	errorsmod "cosmossdk.io/errors"
+	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
@@ -168,9 +169,15 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 		if err == nil {
 			// set canonial sig
 			evidence.CanonicalFinalitySig = canonicalSig
+
+			fpBTCSK, err := evidence.ExtractBTCSK()
+			if err != nil {
+				return nil, err
+			}
+
 			// slash this finality provider, including setting its voting power to
 			// zero, extracting its BTC SK, and emit an event
-			if err := ms.slashFinalityProvider(ctx, req.FpBtcPk, evidence); err != nil {
+			if err := ms.slashFinalityProvider(ctx, fpBTCSK, evidence); err != nil {
 				return nil, err
 			}
 		}
@@ -211,9 +218,14 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 		evidence.CanonicalFinalitySig = req.FinalitySig
 		ms.SetEvidence(ctx, evidence)
 
+		fpBTCSK, err := evidence.ExtractBTCSK()
+		if err != nil {
+			return nil, err
+		}
+
 		// slash this finality provider, including setting its voting power to
 		// zero, extracting its BTC SK, and emit an event
-		if err := ms.slashFinalityProvider(ctx, req.FpBtcPk, evidence); err != nil {
+		if err := ms.slashFinalityProvider(ctx, fpBTCSK, evidence); err != nil {
 			return nil, err
 		}
 
@@ -371,14 +383,20 @@ func (ms msgServer) UnjailFinalityProvider(ctx context.Context, req *types.MsgUn
 // slashFinalityProvider slashes a finality provider with the given evidence
 // including setting its voting power to zero, extracting its BTC SK,
 // and emit an event
-func (k Keeper) slashFinalityProvider(ctx context.Context, fpBtcPk *bbn.BIP340PubKey, evidence *types.Evidence) error {
+func (k Keeper) slashFinalityProvider(
+	ctx context.Context,
+	fpBTCSK *btcec.PrivateKey,
+	evidence *types.Evidence,
+) error {
+	fpBtcPk := bbn.NewBIP340PubKeyFromBTCPK(fpBTCSK.PubKey())
+
 	// slash this finality provider, i.e., set its voting power to zero
 	if err := k.BTCStakingKeeper.SlashFinalityProvider(ctx, fpBtcPk.MustMarshal()); err != nil {
 		return fmt.Errorf("failed to slash finality provider: %v", err)
 	}
 
 	// Propagate slashing information to consumer chains
-	if err := k.BTCStakingKeeper.PropagateFPSlashingToConsumers(ctx, fpBtcPk); err != nil {
+	if err := k.BTCStakingKeeper.PropagateFPSlashingToConsumers(ctx, fpBTCSK); err != nil {
 		return fmt.Errorf("failed to propagate finality provider slashing to consumers: %w", err)
 	}
 

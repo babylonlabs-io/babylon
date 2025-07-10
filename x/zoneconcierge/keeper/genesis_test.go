@@ -52,18 +52,6 @@ func FuzzTestExportGenesis(f *testing.F) {
 			store.Set(sdk.Uint64ToBigEndian(h.Height), cdc.MustMarshal(h))
 		}
 
-		forkStore := prefix.NewStore(storeAdapter, types.ForkKey)
-		for _, f := range gs.ChainsForks {
-			for _, h := range f.Headers {
-				forks := k.GetForks(ctx, h.ConsumerId, h.Height)
-				consumerIDBytes := []byte(h.ConsumerId)
-				store := prefix.NewStore(forkStore, consumerIDBytes)
-				forks.Headers = append(forks.Headers, h)
-				forksBytes := cdc.MustMarshal(forks)
-				store.Set(sdk.Uint64ToBigEndian(h.Height), forksBytes)
-			}
-		}
-
 		epochChainInfoStore := prefix.NewStore(storeAdapter, types.EpochChainInfoKey)
 		for _, ei := range gs.ChainsEpochsInfo {
 			consumerIDBytes := []byte(ei.ChainInfo.ChainInfo.ConsumerId)
