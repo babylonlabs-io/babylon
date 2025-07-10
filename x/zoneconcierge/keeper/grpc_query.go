@@ -22,7 +22,7 @@ func (k Keeper) Params(c context.Context, req *types.QueryParamsRequest) (*types
 	return &types.QueryParamsResponse{Params: k.GetParams(ctx)}, nil
 }
 
-// Header returns the header and fork headers at a given height
+// Header returns the header at a given height
 func (k Keeper) Header(c context.Context, req *types.QueryHeaderRequest) (*types.QueryHeaderResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
@@ -38,10 +38,8 @@ func (k Keeper) Header(c context.Context, req *types.QueryHeaderRequest) (*types
 	if err != nil {
 		return nil, err
 	}
-	forks := k.GetForks(ctx, req.ConsumerId, req.Height)
 	resp := &types.QueryHeaderResponse{
-		Header:      header,
-		ForkHeaders: forks,
+		Header: header,
 	}
 
 	return resp, nil

@@ -192,6 +192,21 @@ func (mr *MockBTCStkConsumerKeeperMockRecorder) IsConsumerRegistered(ctx, consum
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsConsumerRegistered", reflect.TypeOf((*MockBTCStkConsumerKeeper)(nil).IsConsumerRegistered), ctx, consumerID)
 }
 
+// IsCosmosConsumer mocks base method.
+func (m *MockBTCStkConsumerKeeper) IsCosmosConsumer(ctx context.Context, consumerID string) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsCosmosConsumer", ctx, consumerID)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// IsCosmosConsumer indicates an expected call of IsCosmosConsumer.
+func (mr *MockBTCStkConsumerKeeperMockRecorder) IsCosmosConsumer(ctx, consumerID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsCosmosConsumer", reflect.TypeOf((*MockBTCStkConsumerKeeper)(nil).IsCosmosConsumer), ctx, consumerID)
+}
+
 // MockIncentiveKeeper is a mock of IncentiveKeeper interface.
 type MockIncentiveKeeper struct {
 	ctrl     *gomock.Controller

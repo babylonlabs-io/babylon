@@ -27,7 +27,7 @@ import (
 )
 
 const (
-	ConsumerID = "optimism-1234"
+	BsnId = "optimism-1234"
 )
 
 type FinalityContractTestSuite struct {
@@ -111,8 +111,7 @@ func (s *FinalityContractTestSuite) Test1InstantiateFinalityContract() {
 		strconv.Itoa(latestWasmId),
 		`{
 			"admin": "`+adminAddr+`",
-			"consumer_id": "`+ConsumerID+`",
-			"is_enabled": true
+			"bsn_id": "`+BsnId+`"
 		}`,
 		initialization.ValidatorWalletName,
 	)
@@ -127,12 +126,12 @@ func (s *FinalityContractTestSuite) Test1InstantiateFinalityContract() {
 }
 
 func (s *FinalityContractTestSuite) Test2RegisterRollupConsumer() {
-	var registeredConsumer *bsctypes.ConsumerRegister
+	var registeredBsn *bsctypes.ConsumerRegister
 	var err error
 
-	// Register the consumer id on Babylon
-	registeredConsumer = bsctypes.NewCosmosConsumerRegister(
-		ConsumerID,
+	// Register the BSN id on Babylon
+	registeredBsn = bsctypes.NewCosmosConsumerRegister(
+		BsnId,
 		datagen.GenRandomHexStr(s.r, 5),
 		"Chain description: "+datagen.GenRandomHexStr(s.r, 15),
 	)
@@ -140,28 +139,28 @@ func (s *FinalityContractTestSuite) Test2RegisterRollupConsumer() {
 	validatorNode, err := s.configurer.GetChainConfig(0).GetNodeAtIndex(0)
 	require.NoError(s.T(), err)
 
-	// TODO: Register the Consumer through a gov proposal
-	validatorNode.RegisterRollupConsumerChain(initialization.ValidatorWalletName, registeredConsumer.ConsumerId, registeredConsumer.ConsumerName, registeredConsumer.ConsumerDescription, s.finalityContractAddr)
+	// TODO: Register the BSN through a gov proposal
+	validatorNode.RegisterRollupConsumerChain(initialization.ValidatorWalletName, registeredBsn.ConsumerId, registeredBsn.ConsumerName, registeredBsn.ConsumerDescription, s.finalityContractAddr)
 
 	nonValidatorNode, err := s.configurer.GetChainConfig(0).GetNodeAtIndex(2)
 	require.NoError(s.T(), err)
 
 	// Confirm the consumer is registered
 	s.Eventually(func() bool {
-		consumerRegistryResp := nonValidatorNode.QueryBTCStkConsumerConsumer(ConsumerID)
+		consumerRegistryResp := nonValidatorNode.QueryBTCStkConsumerConsumer(BsnId)
 		s.Require().NotNil(consumerRegistryResp)
 		s.Require().Len(consumerRegistryResp.ConsumerRegisters, 1)
-		s.Require().Equal(registeredConsumer.ConsumerId, consumerRegistryResp.ConsumerRegisters[0].ConsumerId)
-		s.Require().Equal(registeredConsumer.ConsumerName, consumerRegistryResp.ConsumerRegisters[0].ConsumerName)
-		s.Require().Equal(registeredConsumer.ConsumerDescription, consumerRegistryResp.ConsumerRegisters[0].ConsumerDescription)
+		s.Require().Equal(registeredBsn.ConsumerId, consumerRegistryResp.ConsumerRegisters[0].ConsumerId)
+		s.Require().Equal(registeredBsn.ConsumerName, consumerRegistryResp.ConsumerRegisters[0].ConsumerName)
+		s.Require().Equal(registeredBsn.ConsumerDescription, consumerRegistryResp.ConsumerRegisters[0].ConsumerDescription)
 
 		return true
 	}, 10*time.Second, 2*time.Second, "Consumer was not registered within the expected time")
 
 	s.T().Logf("Consumer registered: ID=%s, Name=%s, Description=%s",
-		registeredConsumer.ConsumerId,
-		registeredConsumer.ConsumerName,
-		registeredConsumer.ConsumerDescription)
+		registeredBsn.ConsumerId,
+		registeredBsn.ConsumerName,
+		registeredBsn.ConsumerDescription)
 }
 
 func (s *FinalityContractTestSuite) Test3CreateConsumerFPAndDelegation() {
@@ -190,7 +189,7 @@ func (s *FinalityContractTestSuite) Test3CreateConsumerFPAndDelegation() {
 	s.consumerFp = chain.CreateConsumerFpFromNodeAddr(
 		s.T(),
 		s.r,
-		ConsumerID,
+		BsnId,
 		s.consumerBtcSk,
 		nonValidatorNode,
 	)
@@ -329,7 +328,7 @@ func (s *FinalityContractTestSuite) Test4SubmitCovenantSignature() {
 	s.Len(activeDels.Dels, 1)
 
 	activeDel := activeDels.Dels[0]
-	s.True(activeDel.HasCovenantQuorums(s.covenantQuorum))
+	s.True(activeDel.HasCovenantQuorums(s.covenantQuorum, 0))
 }
 
 func (s *FinalityContractTestSuite) Test5CommitPublicRandomness() {
@@ -349,7 +348,7 @@ func (s *FinalityContractTestSuite) Test5CommitPublicRandomness() {
 
 	nonValidatorNode.CommitPubRandListConsumer(
 		initialization.ValidatorWalletName,
-		ConsumerID,
+		BsnId,
 		msgCommitPubRandList.FpBtcPk,
 		msgCommitPubRandList.StartHeight,
 		msgCommitPubRandList.NumPubRand,
@@ -412,7 +411,7 @@ func (s *FinalityContractTestSuite) Test6SubmitFinalitySignature() {
 
 	nonValidatorNode.AddFinalitySigConsumer(
 		initialization.ValidatorWalletName,
-		ConsumerID,
+		BsnId,
 		s.consumerFp.BtcPk,
 		startHeight,
 		&s.randListInfo.PRList[idx],
@@ -460,7 +459,7 @@ func (s *FinalityContractTestSuite) Test7SubmitEquivocatingFinalitySignature() {
 	// Submit the equivocating finality signature
 	txHash := nonValidatorNode.AddFinalitySigConsumer(
 		initialization.ValidatorWalletName,
-		ConsumerID,
+		BsnId,
 		s.consumerFp.BtcPk,
 		equivocationHeight,
 		&s.randListInfo.PRList[idx],

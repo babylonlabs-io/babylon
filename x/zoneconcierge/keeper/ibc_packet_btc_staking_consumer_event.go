@@ -184,7 +184,7 @@ func (k Keeper) HandleConsumerSlashing(
 	}
 
 	// Send slashing event to other involved consumers
-	if err := k.bsKeeper.PropagateFPSlashingToConsumers(ctx, slashedFpBTCPK); err != nil {
+	if err := k.bsKeeper.PropagateFPSlashingToConsumers(ctx, slashedFpBTCSK); err != nil {
 		return fmt.Errorf("failed to propagate slashing to consumers: %w", err)
 	}
 
