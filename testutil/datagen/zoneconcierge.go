@@ -62,9 +62,6 @@ func GenRandomChainInfoWithConsumerId(r *rand.Rand, consumerId string) *types.Ch
 	return &types.ChainInfo{
 		ConsumerId:   consumerId,
 		LatestHeader: GenRandomIndexedHeaderWithConsumerId(r, consumerId),
-		LatestForks: &types.Forks{
-			Headers: []*types.IndexedHeader{GenRandomIndexedHeaderWithConsumerId(r, consumerId)},
-		},
 	}
 }
 
@@ -112,7 +109,6 @@ func GenRandomZoneconciergeGenState(r *rand.Rand) *types.GenesisState {
 		entriesCount     = int(RandomIntOtherThan(r, 0, 20)) + 1 // make sure there's always at least one entry
 		chainsInfo       = make([]*types.ChainInfo, entriesCount)
 		idxHeaders       = make([]*types.IndexedHeader, entriesCount)
-		forks            = make([]*types.Forks, entriesCount)
 		chainsEpochsInfo = make([]*types.EpochChainInfoEntry, entriesCount)
 		sealedEpochs     = make([]*types.SealedEpochProofEntry, entriesCount)
 	)
@@ -123,10 +119,6 @@ func GenRandomZoneconciergeGenState(r *rand.Rand) *types.GenesisState {
 		chainsInfo[i] = ci
 
 		idxHeaders[i] = GenRandomIndexedHeaderWithConsumerAndEpoch(r, ci.ConsumerId, epochNum)
-
-		forks[i] = &types.Forks{
-			Headers: []*types.IndexedHeader{GenRandomIndexedHeaderWithConsumerAndEpoch(r, ci.ConsumerId, epochNum)},
-		}
 
 		chainsEpochsInfo[i] = &types.EpochChainInfoEntry{
 			EpochNumber: epochNum,
@@ -145,7 +137,6 @@ func GenRandomZoneconciergeGenState(r *rand.Rand) *types.GenesisState {
 		},
 		chainsInfo,
 		idxHeaders,
-		forks,
 		chainsEpochsInfo,
 		GenRandomBTCChainSegment(r),
 		sealedEpochs,

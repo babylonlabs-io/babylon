@@ -39,9 +39,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
+- [#1304](https://github.com/babylonlabs-io/babylon/pull/304) Update rollup finality e2e tests
+- [#1300](https://github.com/babylonlabs-io/babylon/pull/1300) x/btcstaking handles fp ops
+- [#1295](https://github.com/babylonlabs-io/babylon/pull/1295) Rename
+`consumer_id` to `bsn_id` for finality providers
+- [#1292](https://github.com/babylonlabs-io/babylon/pull/1292) Use correct
+  multi-staking terminology instead of restaking
+- [#1285](https://github.com/babylonlabs-io/babylon/pull/1285) Optimize BTC header forwarding in `x/zoneconcierge`
+by using `k` instead of `w` headers.
 - [#1273](https://github.com/babylonlabs-io/babylon/pull/1273) Deterministic iteration of maps in `x/zoneconcierge`.
 - [#1265](https://github.com/babylonlabs-io/babylon/pull/1265) Remove `ListEpochHeaders` and `QueryChainList` query.
-- [#1256](https://github.com/babylonlabs-io/babylon/pull/1256) remove query chains info request from `x/zoneconcierge` 
+- [#1256](https://github.com/babylonlabs-io/babylon/pull/1256) remove query chains info request from `x/zoneconcierge`
 - [#1222](https://github.com/babylonlabs-io/babylon/pull/1222) doc: revise zone concierge doc (round 1)
 - [#1234](https://github.com/babylonlabs-io/babylon/pull/1234) doc: revise zone concierge doc (round 2)
 - [#1015](https://github.com/babylonlabs-io/babylon/pull/1015) Add finality contract e2e tests follup-up.
@@ -94,6 +102,7 @@ check of rewards
 - [#1229](https://github.com/babylonlabs-io/babylon/pull/1229) Wire up EVM.
 - [#1269](https://github.com/babylonlabs-io/babylon/pull/1269) Add fee collector e2e tests.
 - [#1062](https://github.com/babylonlabs-io/babylon/pull/1062) Add `anteHandler` to avoid fee grants on refundable tx (`x/incentive`)
+- [#1231](https://github.com/babylonlabs-io/babylon/pull/1231) Add BTC stake expansion.
 
 ### State Machine Breaking
 
@@ -104,6 +113,8 @@ This PR contains a series of PRs on multi-staking support and BTC staking integr
 transfer stack
 - [#877](https://github.com/babylonlabs-io/babylon/pull/877) fix: BTC reward tracker are stored as events and updated only
 when the babylon block is being BTC rewarded.
+- [#1296](https://github.com/babylonlabs-io/babylon/pull/1296) IBC events are only
+queued for cosmos bsns
 
 ### Bug fixes
 
@@ -115,6 +126,9 @@ when the babylon block is being BTC rewarded.
 - [#1247](https://github.com/babylonlabs-io/babylon/pull/1247) fix: zoneconcierge ibc router
 - [#1252](https://github.com/babylonlabs-io/babylon/pull/1252) Implement context separation
 between different signing operations
+- [#1318](https://github.com/babylonlabs-io/babylon/pull/1318) fix: propagation of
+secret key in slashing
+- [#1325](https://github.com/babylonlabs-io/babylon/pull/1325) fix: add signing context to `EvidenceResponse` message
 
 ## v2.2.0
 
@@ -151,6 +165,7 @@ between different signing operations
 
 ### Improvements
 
+- [#1324](https://github.com/babylonlabs-io/babylon/pull/1324) Remove fork logic from `x/zoneconcierge`.
 - [#1288](https://github.com/babylonlabs-io/babylon/pull/1288) Remove old `x/zoneconcierge` queries.
 - [#1065](https://github.com/babylonlabs-io/babylon/pull/1065) Add check for period of current rewards to be larger than zero.
 - [#1128](https://github.com/babylonlabs-io/babylon/pull/1128) Validate genesis fp historic reward entries.

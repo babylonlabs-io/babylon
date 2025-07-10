@@ -142,3 +142,21 @@ func SortBIP340PKs(keys []BIP340PubKey) []BIP340PubKey {
 	})
 	return sortedPKs
 }
+
+// isSubset checks if all keys in listA are present in listB
+func IsSubsetBip340Pks(subset, containerList []BIP340PubKey) bool {
+	setB := make(map[string]struct{}, len(containerList))
+	for _, pk := range containerList {
+		key := hex.EncodeToString(pk[:])
+		setB[key] = struct{}{}
+	}
+
+	for _, pk := range subset {
+		key := hex.EncodeToString(pk[:])
+		if _, exists := setB[key]; !exists {
+			return false
+		}
+	}
+
+	return true
+}

@@ -10,7 +10,6 @@ import (
 
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
 	keepertest "github.com/babylonlabs-io/babylon/v3/testutil/keeper"
-	btcstktypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 	"github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/keeper"
 	"github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
 
@@ -28,8 +27,6 @@ func FuzzTestExportGenesis(f *testing.F) {
 		for i := 0; i < l; i++ {
 			// set consumers
 			require.NoError(t, k.RegisterConsumer(ctx, gs.Consumers[i]))
-			// set FPs
-			k.SetConsumerFinalityProvider(ctx, gs.FinalityProviders[i])
 		}
 
 		// Run the ExportGenesis
@@ -69,21 +66,15 @@ func setupTest(t *testing.T, seed int64) (sdk.Context, *keeper.Keeper, *types.Ge
 		k, ctx = keepertest.BTCStkConsumerKeeper(t)
 		l      = r.Intn(50)
 		cs     = make([]*types.ConsumerRegister, l)
-		fps    = make([]*btcstktypes.FinalityProvider, l)
 	)
 
 	for i := 0; i < l; i++ {
 		cs[i] = datagen.GenRandomCosmosConsumerRegister(r)
-		fp, err := datagen.GenRandomFinalityProvider(r, "")
-		require.NoError(t, err)
-		fp.ConsumerId = cs[i].ConsumerId
-		fps[i] = fp
 	}
 
 	gs := &types.GenesisState{
-		Params:            types.DefaultParams(),
-		Consumers:         cs,
-		FinalityProviders: fps,
+		Params:    types.DefaultParams(),
+		Consumers: cs,
 	}
 
 	require.NoError(t, gs.Validate())

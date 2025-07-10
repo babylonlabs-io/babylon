@@ -42,13 +42,13 @@ func FuzzSlashingTx_VerifySigAndASig(f *testing.F) {
 		// this is already covered in FuzzGeneratingValidStakingSlashingTx
 		slashingRate := sdkmath.LegacyNewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2)
 
-		// restaked to a random number of finality providers
-		numRestakedFPs := int(datagen.RandomInt(r, 10) + 1)
-		fpSKs, fpPKs, err := datagen.GenRandomBTCKeyPairs(r, numRestakedFPs)
+		// multi-staked to a random number of finality providers
+		numMultiStakedFPs := int(datagen.RandomInt(r, 10) + 1)
+		fpSKs, fpPKs, err := datagen.GenRandomBTCKeyPairs(r, numMultiStakedFPs)
 		require.NoError(t, err)
 
 		// use a random fp SK/PK
-		fpIdx := int(datagen.RandomInt(r, numRestakedFPs))
+		fpIdx := int(datagen.RandomInt(r, numMultiStakedFPs))
 		fpSK, fpPK := fpSKs[fpIdx], fpPKs[fpIdx]
 		decKey, err := asig.NewDecryptionKeyFromBTCSK(fpSK)
 		require.NoError(t, err)
@@ -141,14 +141,14 @@ func FuzzSlashingTxWithWitness(f *testing.F) {
 		// this is already covered in FuzzGeneratingValidStakingSlashingTx
 		slashingRate := sdkmath.LegacyNewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2)
 
-		// restaked to a random number of finality providers
-		numRestakedFPs := int(datagen.RandomInt(r, 10) + 1)
-		fpSKs, fpPKs, err := datagen.GenRandomBTCKeyPairs(r, numRestakedFPs)
+		// multi-staked to a random number of finality providers
+		numMultiStakedFPs := int(datagen.RandomInt(r, 10) + 1)
+		fpSKs, fpPKs, err := datagen.GenRandomBTCKeyPairs(r, numMultiStakedFPs)
 		require.NoError(t, err)
 		fpBTCPKs := bbn.NewBIP340PKsFromBTCPKs(fpPKs)
 
 		// a random finality provider gets slashed
-		fpIdx := int(datagen.RandomInt(r, numRestakedFPs))
+		fpIdx := int(datagen.RandomInt(r, numMultiStakedFPs))
 		fpSK, fpPK := fpSKs[fpIdx], fpPKs[fpIdx]
 		encKey, err := asig.NewEncryptionKeyFromBTCPK(fpPK)
 		require.NoError(t, err)

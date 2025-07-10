@@ -22,6 +22,7 @@ import (
 	testutilk "github.com/babylonlabs-io/babylon/v3/testutil/keeper"
 	btclightclientt "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
 	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
+	bsctypes "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
 )
 
 func TestInitGenesisWithSetParams(t *testing.T) {
@@ -102,6 +103,20 @@ func TestExportGenesis(t *testing.T) {
 		k.IndexBTCHeight(ctx)
 	}
 
+	// register consumers as cosmos consumers
+	for _, ev := range consumerEvents {
+		consumerRegister := &bsctypes.ConsumerRegister{
+			ConsumerId: ev.ConsumerId,
+			ConsumerMetadata: &bsctypes.ConsumerRegister_CosmosConsumerMetadata{
+				CosmosConsumerMetadata: &bsctypes.CosmosConsumerMetadata{
+					ChannelId: ev.ConsumerId,
+				},
+			},
+		}
+		err := h.App.BTCStkConsumerKeeper.RegisterConsumer(h.Ctx, consumerRegister)
+		require.NoError(t, err)
+	}
+
 	// store consumer events
 	for _, e := range consumerEvents {
 		event := &types.BTCStakingConsumerEvent{
@@ -128,18 +143,28 @@ func TestConsumerEventsDeterministicOrder(t *testing.T) {
 	ctx, h, _ := setupTest(t)
 	k := h.App.BTCStakingKeeper
 
-	unsortedConsumerIDs := []string{"consumer-z", "consumer-a", "consumer-m", "consumer-b"}
+	unsortedBsnIDs := []string{"bsn-z", "bsn-a", "bsn-m", "bsn-b"}
 
-	for _, consumerID := range unsortedConsumerIDs {
-		event := &types.BTCStakingConsumerEvent{
-			Event: &types.BTCStakingConsumerEvent_NewFp{
-				NewFp: &types.NewFinalityProvider{
-					BtcPkHex:   hex.EncodeToString([]byte("test-pk-" + consumerID)),
-					ConsumerId: consumerID,
+	for _, bsnID := range unsortedBsnIDs {
+		event := &types.BTCStakingConsumerEvent{Event: &types.BTCStakingConsumerEvent_NewFp{
+			NewFp: &types.NewFinalityProvider{
+				BtcPkHex: hex.EncodeToString([]byte("test-pk-" + bsnID)),
+				BsnId:    bsnID,
+			},
+		},
+		}
+
+		err := h.App.BTCStkConsumerKeeper.RegisterConsumer(h.Ctx, &bsctypes.ConsumerRegister{
+			ConsumerId: bsnID,
+			ConsumerMetadata: &bsctypes.ConsumerRegister_CosmosConsumerMetadata{
+				CosmosConsumerMetadata: &bsctypes.CosmosConsumerMetadata{
+					ChannelId: bsnID,
 				},
 			},
-		}
-		err := k.AddBTCStakingConsumerEvent(ctx, consumerID, event)
+		})
+		require.NoError(t, err)
+
+		err = k.AddBTCStakingConsumerEvent(ctx, bsnID, event)
 		require.NoError(t, err)
 	}
 
@@ -155,9 +180,9 @@ func TestConsumerEventsDeterministicOrder(t *testing.T) {
 	}
 
 	events := results[0].ConsumerEvents
-	require.Len(t, events, len(unsortedConsumerIDs))
+	require.Len(t, events, len(unsortedBsnIDs))
 
-	expectedSortedIDs := []string{"consumer-a", "consumer-b", "consumer-m", "consumer-z"}
+	expectedSortedIDs := []string{"bsn-a", "bsn-b", "bsn-m", "bsn-z"}
 	for i, event := range events {
 		require.Equal(t, expectedSortedIDs[i], event.ConsumerId, "Consumer events should be sorted by consumer ID")
 	}
@@ -168,7 +193,7 @@ func setupTest(t *testing.T) (sdk.Context, *helper.Helper, *types.GenesisState) 
 	k, ctx := h.App.BTCStakingKeeper, h.Ctx
 	numFps := 3
 
-	fps := datagen.CreateNFinalityProviders(r, t, h.FpPopContext(), numFps)
+	fps := datagen.CreateNFinalityProviders(r, t, h.FpPopContext(), "", numFps)
 	params := k.GetParams(ctx)
 
 	chainsHeight := make([]*types.BlockHeightBbnToBtc, 0)
@@ -181,7 +206,6 @@ func setupTest(t *testing.T) (sdk.Context, *helper.Helper, *types.GenesisState) 
 	events := make([]*types.EventIndex, 0)
 	btcDelegators := make([]*types.BTCDelegator, 0)
 	allowedStkTxHashes := make([]string, 0)
-	consumerBtcDelegators := make([]*types.BTCDelegator, 0)
 	consumerEvents := make([]*types.ConsumerEvent, 0)
 
 	blkHeight := uint64(r.Int63n(1000)) + math.MaxUint16
@@ -266,7 +290,6 @@ func setupTest(t *testing.T) (sdk.Context, *helper.Helper, *types.GenesisState) 
 		Events:                 events,
 		AllowedStakingTxHashes: allowedStkTxHashes,
 		LargestBtcReorg:        latestBtcReOrg,
-		BtcConsumerDelegators:  consumerBtcDelegators,
 		ConsumerEvents:         consumerEvents,
 	}
 	require.NoError(t, gs.Validate())

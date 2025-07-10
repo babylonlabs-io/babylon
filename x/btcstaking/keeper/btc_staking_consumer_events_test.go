@@ -69,7 +69,7 @@ func FuzzSetBTCStakingEventStore_NewFp(f *testing.F) {
 			require.Equal(t, fp.Commission.String(), evFp.Commission)
 			require.Equal(t, fp.BtcPk.MarshalHex(), evFp.BtcPkHex)
 			require.Equal(t, fp.Pop, evFp.Pop)
-			require.Equal(t, fp.ConsumerId, evFp.ConsumerId)
+			require.Equal(t, fp.BsnId, evFp.BsnId)
 		}
 	})
 }
@@ -100,7 +100,7 @@ func FuzzSetBTCStakingEventStore_ActiveDel(f *testing.F) {
 		// create new Babylon finality provider
 		_, babylonFpPK, _ := h.CreateFinalityProvider(r)
 
-		// generate and insert new BTC delegation, restake to 1 consumer fp and 1 babylon fp
+		// generate and insert new BTC delegation, multi-stake to 1 consumer fp and 1 babylon fp
 		stakingValue := int64(2 * 10e8)
 		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		h.NoError(err)
@@ -124,7 +124,9 @@ func FuzzSetBTCStakingEventStore_ActiveDel(f *testing.F) {
 		// delegation related assertions
 		actualDel, err := h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
 		h.NoError(err)
-		require.False(t, actualDel.HasCovenantQuorums(h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum))
+		hasQuorum, err := h.BTCStakingKeeper.BtcDelHasCovenantQuorums(h.Ctx, actualDel, h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum)
+		h.NoError(err)
+		require.False(t, hasQuorum)
 		// create cov sigs to activate the delegation
 		msgs := h.GenerateCovenantSignaturesMessages(r, covenantSKs, msgCreateBTCDel, actualDel)
 		bogusMsg := *msgs[0]
@@ -138,11 +140,11 @@ func FuzzSetBTCStakingEventStore_ActiveDel(f *testing.F) {
 		// ensure the BTC delegation now has voting power as it has been activated
 		actualDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
 		h.NoError(err)
-		require.True(t, actualDel.HasCovenantQuorums(h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum))
+		require.True(t, actualDel.HasCovenantQuorums(h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum, 0))
 		require.True(t, actualDel.BtcUndelegation.HasCovenantQuorums(h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum))
 		votingPower := actualDel.VotingPower(
 			h.BTCLightClientKeeper.GetTipInfo(h.Ctx).Height,
-			h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum,
+			h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum, 0,
 		)
 		require.Equal(t, uint64(stakingValue), votingPower)
 
@@ -225,7 +227,8 @@ func FuzzSetBTCStakingEventStore_UnbondedDel(f *testing.F) {
 		actualDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
 		h.NoError(err)
 		btcTip := uint32(30)
-		status := actualDel.GetStatus(btcTip, bsParams.CovenantQuorum)
+		status, err := h.BTCStakingKeeper.BtcDelStatus(h.Ctx, actualDel, bsParams.CovenantQuorum, btcTip)
+		h.NoError(err)
 		require.Equal(t, types.BTCDelegationStatus_ACTIVE, status)
 
 		msg := &types.MsgBTCUndelegate{
@@ -276,7 +279,9 @@ func FuzzSetBTCStakingEventStore_UnbondedDel(f *testing.F) {
 		// ensure the BTC delegation is unbonded
 		actualDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
 		h.NoError(err)
-		status = actualDel.GetStatus(btcTip, bsParams.CovenantQuorum)
+
+		status, err = h.BTCStakingKeeper.BtcDelStatus(h.Ctx, actualDel, bsParams.CovenantQuorum, btcTip)
+		h.NoError(err)
 		require.Equal(t, types.BTCDelegationStatus_UNBONDED, status)
 
 		// event store related assertions
@@ -388,19 +393,33 @@ func TestDeterministicOrdering(t *testing.T) {
 	h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
 	h.GenAndApplyParams(r)
 
-	consumerIDs := []string{"consumer-z", "consumer-a", "consumer-m", "consumer-b"}
+	bsnIds := []string{"bsn-z", "bsn-a", "bsn-m", "bsn-b"}
 
-	// Add consumer events in random order
-	for _, consumerID := range consumerIDs {
-		event := &types.BTCStakingConsumerEvent{
-			Event: &types.BTCStakingConsumerEvent_NewFp{
-				NewFp: &types.NewFinalityProvider{
-					BtcPkHex:   "test-pk-" + consumerID,
-					ConsumerId: consumerID,
+	// register consumers as cosmos consumers
+	for _, bsnId := range bsnIds {
+		consumerRegister := &bsctypes.ConsumerRegister{
+			ConsumerId: bsnId,
+			ConsumerMetadata: &bsctypes.ConsumerRegister_CosmosConsumerMetadata{
+				CosmosConsumerMetadata: &bsctypes.CosmosConsumerMetadata{
+					ChannelId: bsnId,
 				},
 			},
 		}
-		err := h.BTCStakingKeeper.AddBTCStakingConsumerEvent(h.Ctx, consumerID, event)
+		err := h.BTCStkConsumerKeeper.RegisterConsumer(h.Ctx, consumerRegister)
+		require.NoError(t, err)
+	}
+
+	// Add consumer events in random order
+	for _, bsnId := range bsnIds {
+		event := &types.BTCStakingConsumerEvent{
+			Event: &types.BTCStakingConsumerEvent_NewFp{
+				NewFp: &types.NewFinalityProvider{
+					BtcPkHex: "test-pk-" + bsnId,
+					BsnId:    bsnId,
+				},
+			},
+		}
+		err := h.BTCStakingKeeper.AddBTCStakingConsumerEvent(h.Ctx, bsnId, event)
 		require.NoError(t, err)
 	}
 
@@ -442,6 +461,6 @@ func TestDeterministicOrdering(t *testing.T) {
 	require.Equal(t, processOrder1, processOrder2, "Processing order should be deterministic")
 
 	// Verify that the processing order is sorted
-	expectedOrder := []string{"consumer-a", "consumer-b", "consumer-m", "consumer-z"}
+	expectedOrder := []string{"bsn-a", "bsn-b", "bsn-m", "bsn-z"}
 	require.Equal(t, expectedOrder, processOrder1, "Processing should happen in sorted order")
 }

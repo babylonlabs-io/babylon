@@ -11,7 +11,6 @@ import (
 	"github.com/babylonlabs-io/babylon/v3/app/signingcontext"
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
 	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
-	btcstkconsumertypes "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/stretchr/testify/require"
 
@@ -34,24 +33,29 @@ func CreateFpFromNodeAddr(
 	newFP, err = datagen.GenCustomFinalityProvider(r, fpSk, fpPopContext, nodeAddr, "")
 	require.NoError(t, err)
 
-	previousFps := node.QueryFinalityProviders()
+	// empty defaults to Babylon Genesis
+	previousFps := node.QueryFinalityProviders("")
 
 	// use a higher commission to ensure the reward is more than tx fee of a finality sig
 	commission := sdkmath.LegacyNewDecWithPrec(20, 2)
 	newFP.Commission = &commission
-	node.CreateFinalityProvider(newFP.Addr, newFP.BtcPk, newFP.Pop, newFP.Description.Moniker, newFP.Description.Identity, newFP.Description.Website, newFP.Description.SecurityContact, newFP.Description.Details, newFP.Commission, newFP.CommissionInfo.MaxRate, newFP.CommissionInfo.MaxChangeRate)
+	node.CreateFinalityProvider(newFP.Addr, newFP.BtcPk, newFP.Pop,
+		newFP.Description.Moniker, newFP.Description.Identity,
+		newFP.Description.Website, newFP.Description.SecurityContact,
+		newFP.Description.Details, newFP.Commission, newFP.CommissionInfo.MaxRate,
+		newFP.CommissionInfo.MaxChangeRate)
 
 	// wait for a block so that above txs take effect
 	node.WaitForNextBlock()
 
 	// query the existence of finality provider and assert equivalence
-	actualFps := node.QueryFinalityProviders()
+	actualFps := node.QueryFinalityProviders("")
 	require.Len(t, actualFps, len(previousFps)+1)
 
-	// get chain ID to assert equality with the ConsumerId field
+	// get chain ID to assert equality with the BsnId field
 	status, err := node.Status()
 	require.NoError(t, err)
-	newFP.ConsumerId = status.NodeInfo.Network
+	newFP.BsnId = status.NodeInfo.Network
 
 	for _, fpResp := range actualFps {
 		if !strings.EqualFold(fpResp.Addr, newFP.Addr) {
@@ -81,7 +85,7 @@ func CreateConsumerFpFromNodeAddr(
 	newFP, err = datagen.GenCustomFinalityProvider(r, fpSk, fpPopContext, nodeAddr, consumerId)
 	require.NoError(t, err)
 
-	previousFps := node.QueryConsumerFinalityProviders(consumerId)
+	previousFps := node.QueryFinalityProviders(consumerId)
 
 	// use a higher commission to ensure the reward is more than tx fee of a
 	// finality sig
@@ -96,11 +100,11 @@ func CreateConsumerFpFromNodeAddr(
 	if consumerId == "" {
 		status, err := node.Status()
 		require.NoError(t, err)
-		newFP.ConsumerId = status.NodeInfo.Network
+		newFP.BsnId = status.NodeInfo.Network
 	}
 
 	// query the existence of finality provider and assert equivalence
-	actualFps := node.QueryConsumerFinalityProviders(consumerId)
+	actualFps := node.QueryFinalityProviders(consumerId)
 	require.Len(t, actualFps, len(previousFps)+1)
 
 	for _, fpResp := range actualFps {
@@ -122,7 +126,7 @@ func EqualFinalityProviderResp(t *testing.T, fp *bstypes.FinalityProvider, fpRes
 	require.Equal(t, fp.Pop, fpResp.Pop)
 	require.Equal(t, fp.SlashedBabylonHeight, fpResp.SlashedBabylonHeight)
 	require.Equal(t, fp.SlashedBtcHeight, fpResp.SlashedBtcHeight)
-	require.Equal(t, fp.ConsumerId, fpResp.ConsumerId)
+	require.Equal(t, fp.BsnId, fpResp.BsnId)
 	require.Equal(t, fp.CommissionInfo.MaxRate, fpResp.CommissionInfo.MaxRate)
 	require.Equal(t, fp.CommissionInfo.MaxChangeRate, fpResp.CommissionInfo.MaxChangeRate)
 	// UpdateTime field is set to the
@@ -131,7 +135,7 @@ func EqualFinalityProviderResp(t *testing.T, fp *bstypes.FinalityProvider, fpRes
 	require.GreaterOrEqual(t, fpResp.CommissionInfo.UpdateTime, time.Now().UTC().Add(-15*time.Second))
 }
 
-func EqualConsumerFinalityProviderResp(t *testing.T, fp *bstypes.FinalityProvider, fpResp *btcstkconsumertypes.FinalityProviderResponse) {
+func EqualConsumerFinalityProviderResp(t *testing.T, fp *bstypes.FinalityProvider, fpResp *bstypes.FinalityProviderResponse) {
 	require.Equal(t, fp.Description, fpResp.Description)
 	require.Equal(t, fp.Commission, fpResp.Commission)
 	require.Equal(t, fp.Addr, fpResp.Addr)
@@ -139,5 +143,5 @@ func EqualConsumerFinalityProviderResp(t *testing.T, fp *bstypes.FinalityProvide
 	require.Equal(t, fp.Pop, fpResp.Pop)
 	require.Equal(t, fp.SlashedBabylonHeight, fpResp.SlashedBabylonHeight)
 	require.Equal(t, fp.SlashedBtcHeight, fpResp.SlashedBtcHeight)
-	require.Equal(t, fp.ConsumerId, fpResp.ConsumerId)
+	require.Equal(t, fp.BsnId, fpResp.BsnId)
 }

@@ -30,7 +30,7 @@ func FuzzCmdSetFp(f *testing.F) {
 		qntFps := int(datagen.RandomInt(r, 10)) + 1
 		fpsToAdd := make([]*btcstktypes.FinalityProvider, qntFps)
 		for i := 0; i < qntFps; i++ {
-			fp, err := datagen.GenRandomFinalityProvider(r, "")
+			fp, err := datagen.GenRandomFinalityProvider(r, "", "")
 			require.NoError(t, err)
 			fpsToAdd[i] = fp
 		}
