@@ -150,7 +150,7 @@ func (c *CovenantSender) SendCovenantSignatures() {
 				prevDel := c.d.GetBTCDelegation(c.t, del.StkExp.PreviousStakingTxHashHex)
 				prevDelInfos := parseInfos(c.t, prevDel, params)
 				require.NotNil(c.t, prevDel, "previous delegation should not be nil")
-				msgAddCovenantSig.StakeExpansionTxSig = signStakeExpansionTx(c.t, covenantSKs[i], del, prevDel, infos, prevDelInfos)
+				msgAddCovenantSig.StakeExpansionTxSig = signStakeExpansionTx(c.t, covenantSKs[i], del, infos, prevDelInfos)
 			}
 
 			// send each message with different transactions
@@ -166,7 +166,7 @@ func (c *CovenantSender) SendCovenantSignatures() {
 	}
 }
 
-func signStakeExpansionTx(t *testing.T, covenantSK *btcec.PrivateKey, del, prevDel *bstypes.BTCDelegationResponse, infos, prevDelInfos *StakingInfos) *types.BIP340Signature {
+func signStakeExpansionTx(t *testing.T, covenantSK *btcec.PrivateKey, del *bstypes.BTCDelegationResponse, infos, prevDelInfos *StakingInfos) *types.BIP340Signature {
 	fundingTxBz, err := hex.DecodeString(del.StkExp.OtherFundingTxOutHex)
 	require.NoError(t, err)
 	otherFundingTxOut, err := btcstaking.DeserializeTxOut(fundingTxBz)
