@@ -20,14 +20,6 @@ func (k Keeper) InitGenesis(ctx context.Context, gs types.GenesisState) error {
 		}
 	}
 
-	for _, f := range gs.ChainsForks {
-		for _, h := range f.Headers {
-			if err := k.insertForkHeader(ctx, h.ConsumerId, h); err != nil {
-				return err
-			}
-		}
-	}
-
 	for _, ei := range gs.ChainsEpochsInfo {
 		k.setEpochChainInfo(ctx, ei.ChainInfo.ChainInfo.ConsumerId, ei.EpochNumber, ei.ChainInfo)
 	}
@@ -55,11 +47,6 @@ func (k Keeper) ExportGenesis(ctx context.Context) (*types.GenesisState, error) 
 		return nil, err
 	}
 
-	f, err := k.chainsForks(ctx, consumerIDs)
-	if err != nil {
-		return nil, err
-	}
-
 	ei, err := k.chainsEpochsInfo(ctx, consumerIDs)
 	if err != nil {
 		return nil, err
@@ -75,7 +62,6 @@ func (k Keeper) ExportGenesis(ctx context.Context) (*types.GenesisState, error) 
 		PortId:               k.GetPort(ctx),
 		ChainsInfo:           ci,
 		ChainsIndexedHeaders: h,
-		ChainsForks:          f,
 		ChainsEpochsInfo:     ei,
 		LastSentSegment:      k.GetLastSentSegment(ctx),
 		SealedEpochsProofs:   se,
@@ -166,37 +152,6 @@ func (k Keeper) epochsInfoByChain(ctx context.Context, consumerID string) ([]*ty
 		entries = append(entries, entry)
 	}
 	return entries, nil
-}
-
-func (k Keeper) chainsForks(ctx context.Context, consumerIDs []string) ([]*types.Forks, error) {
-	forks := make([]*types.Forks, 0)
-	for _, cID := range consumerIDs {
-		fs, err := k.forksByChain(ctx, cID)
-		if err != nil {
-			return nil, err
-		}
-		forks = append(forks, fs...)
-	}
-	return forks, nil
-}
-
-func (k Keeper) forksByChain(ctx context.Context, consumerID string) ([]*types.Forks, error) {
-	forks := make([]*types.Forks, 0)
-	iter := k.forkStore(ctx, consumerID).Iterator(nil, nil)
-	defer iter.Close()
-
-	for ; iter.Valid(); iter.Next() {
-		var f types.Forks
-		if err := k.cdc.Unmarshal(iter.Value(), &f); err != nil {
-			return nil, err
-		}
-
-		if err := f.Validate(); err != nil {
-			return nil, err
-		}
-		forks = append(forks, &f)
-	}
-	return forks, nil
 }
 
 func (k Keeper) sealedEpochsProofs(ctx context.Context) ([]*types.SealedEpochProofEntry, error) {
