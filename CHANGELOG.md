@@ -164,6 +164,7 @@ secret key in slashing
 ### Improvements
 
 - [#1324](https://github.com/babylonlabs-io/babylon/pull/1324) Remove fork logic from `x/zoneconcierge`.
+- [#1288](https://github.com/babylonlabs-io/babylon/pull/1288) Remove old `x/zoneconcierge` queries.
 - [#1065](https://github.com/babylonlabs-io/babylon/pull/1065) Add check for period of current rewards to be larger than zero.
 - [#1128](https://github.com/babylonlabs-io/babylon/pull/1128) Validate genesis fp historic reward entries.
 - [#1064](https://github.com/babylonlabs-io/babylon/pull/1064) Signing info validation for `StartHeight` and `MissedBlockCounter`.
