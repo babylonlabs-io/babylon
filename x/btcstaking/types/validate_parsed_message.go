@@ -101,7 +101,7 @@ func ValidateParsedMessageAgainstTheParams(
 		pm.StakerPK.PublicKey,
 		pm.StakerStakingSlashingTxSig.BIP340Signature.MustMarshal(),
 	); err != nil {
-		return nil, ErrInvalidSlashingTx.Wrapf("invalid staking slashing transaction signature: %v", err)
+		return nil, ErrInvalidSlashingTx.Wrapf("invalid staking slashing signature: %v", err)
 	}
 
 	// 3. Validate all data related to unbonding tx:
@@ -167,7 +167,7 @@ func ValidateParsedMessageAgainstTheParams(
 		pm.StakerPK.PublicKey,
 		pm.StakerUnbondingSlashingSig.BIP340Signature.MustMarshal(),
 	); err != nil {
-		return nil, ErrInvalidSlashingTx.Wrapf("invalid unbonding slashing transaction signature: %v", err)
+		return nil, ErrInvalidSlashingTx.Wrapf("invalid unbonding slashing signature: %v", err)
 	}
 
 	// 4. Check that unbonding tx input is pointing to staking tx

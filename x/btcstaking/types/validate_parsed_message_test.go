@@ -884,6 +884,54 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 			errParsing:    nil,
 			errValidation: types.ErrInvalidUnbondingTx.Wrapf("unbonding tx fee must be larger that 0"),
 		},
+		{
+			name: "Msg.DelegatorSlashingSig is invalid signature with specific error message",
+			fn: func(r *rand.Rand, t *testing.T) (*types.MsgCreateBTCDelegation, *types.Params, *btcckpttypes.Params) {
+				params := testStakingParams(r, t)
+				checkpointParams := testCheckpointParams()
+				msg, _ := createMsgDelegationForParams(r, t, params)
+
+				sigInMessage := msg.DelegatorSlashingSig.MustMarshal()
+
+				invalidSlashingSig := make([]byte, len(sigInMessage))
+				copy(invalidSlashingSig, sigInMessage)
+				// change last byte is sig
+				invalidSlashingSig[63]++
+
+				newSig, err := bbn.NewBIP340Signature(invalidSlashingSig)
+				require.NoError(t, err)
+
+				msg.DelegatorSlashingSig = newSig
+
+				return msg, params, checkpointParams
+			},
+			errParsing:    nil,
+			errValidation: types.ErrInvalidSlashingTx.Wrapf("invalid staking slashing signature: signature is not valid"),
+		},
+		{
+			name: "Msg.DelegatorUnbondingSlashingSig is invalid signature with specific error message",
+			fn: func(r *rand.Rand, t *testing.T) (*types.MsgCreateBTCDelegation, *types.Params, *btcckpttypes.Params) {
+				params := testStakingParams(r, t)
+				checkpointParams := testCheckpointParams()
+				msg, _ := createMsgDelegationForParams(r, t, params)
+
+				sigInMessage := msg.DelegatorUnbondingSlashingSig.MustMarshal()
+
+				invalidSlashingSig := make([]byte, len(sigInMessage))
+				copy(invalidSlashingSig, sigInMessage)
+				// change last byte is sig
+				invalidSlashingSig[63]++
+
+				newSig, err := bbn.NewBIP340Signature(invalidSlashingSig)
+				require.NoError(t, err)
+
+				msg.DelegatorUnbondingSlashingSig = newSig
+
+				return msg, params, checkpointParams
+			},
+			errParsing:    nil,
+			errValidation: types.ErrInvalidSlashingTx.Wrapf("invalid unbonding slashing signature: signature is not valid"),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
