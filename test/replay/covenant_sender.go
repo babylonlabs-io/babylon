@@ -147,7 +147,10 @@ func (c *CovenantSender) SendCovenantSignatures() {
 
 			// if is stake expansion, add StakeExpansionTxSig
 			if isStakeExpansion {
-				msgAddCovenantSig.StakeExpansionTxSig = signStakeExpansionTx(c.t, covenantSKs[i], del, infos)
+				prevDel := c.d.GetBTCDelegation(c.t, del.StkExp.PreviousStakingTxHashHex)
+				prevDelInfos := parseInfos(c.t, prevDel, params)
+				require.NotNil(c.t, prevDel, "previous delegation should not be nil")
+				msgAddCovenantSig.StakeExpansionTxSig = signStakeExpansionTx(c.t, covenantSKs[i], del, infos, prevDelInfos)
 			}
 
 			// send each message with different transactions
@@ -163,18 +166,21 @@ func (c *CovenantSender) SendCovenantSignatures() {
 	}
 }
 
-func signStakeExpansionTx(t *testing.T, covenantSK *btcec.PrivateKey, del *bstypes.BTCDelegationResponse, infos *StakingInfos) *types.BIP340Signature {
+func signStakeExpansionTx(t *testing.T, covenantSK *btcec.PrivateKey, del *bstypes.BTCDelegationResponse, infos, prevDelInfos *StakingInfos) *types.BIP340Signature {
 	fundingTxBz, err := hex.DecodeString(del.StkExp.OtherFundingTxOutHex)
 	require.NoError(t, err)
 	otherFundingTxOut, err := btcstaking.DeserializeTxOut(fundingTxBz)
 	require.NoError(t, err)
 
+	prevDelUnbondPathSpendInfo, err := prevDelInfos.StakingSlashingInfo.StakingInfo.UnbondingPathSpendInfo()
+	require.NoError(t, err)
+
 	sig, err := btcstaking.SignTxForFirstScriptSpendWithTwoInputsFromScript(
 		infos.StakingSlashingInfo.StakingTx,
-		infos.StakingSlashingInfo.StakingInfo.StakingOutput,
+		prevDelInfos.StakingSlashingInfo.StakingTx.TxOut[0],
 		otherFundingTxOut,
 		covenantSK,
-		infos.StakingSlashingInfo.StakingInfo.GetPkScript(),
+		prevDelUnbondPathSpendInfo.GetPkScriptPath(),
 	)
 	require.NoError(t, err)
 
