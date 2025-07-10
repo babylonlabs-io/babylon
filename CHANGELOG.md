@@ -103,7 +103,7 @@ check of rewards
 - [#1269](https://github.com/babylonlabs-io/babylon/pull/1269) Add fee collector e2e tests.
 - [#1062](https://github.com/babylonlabs-io/babylon/pull/1062) Add `anteHandler` to avoid fee grants on refundable tx (`x/incentive`)
 - [#1231](https://github.com/babylonlabs-io/babylon/pull/1231) Add BTC stake expansion.
-- [#xxx](https://github.com/babylonlabs-io/babylon/pull/xxx) Tweaks on BTC stake expansion feature.
+- [#1335](https://github.com/babylonlabs-io/babylon/pull/1335) Tweaks on BTC stake expansion feature.
 
 ### State Machine Breaking
 
