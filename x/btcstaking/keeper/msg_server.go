@@ -377,7 +377,7 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 		return nil, types.ErrInvalidCovenantSig.Wrapf("err: %v", err)
 	}
 
-	if err := ms.validateStakeExpansionSig(ctx, delInfo, req, stakingInfo); err != nil {
+	if err := ms.validateStakeExpansionSig(ctx, delInfo, req); err != nil {
 		return nil, types.ErrInvalidCovenantSig.Wrapf("error validating stake expansion signatures: %v", err)
 	}
 
@@ -417,7 +417,6 @@ func (ms msgServer) validateStakeExpansionSig(
 	ctx sdk.Context,
 	delInfo *btcDelegationWithParams,
 	req *types.MsgAddCovenantSigs,
-	stakingInfo *btcstaking.StakingInfo,
 ) error {
 	if delInfo == nil {
 		return fmt.Errorf("nil BTC delegation with params")
@@ -462,11 +461,21 @@ func (ms msgServer) validateStakeExpansionSig(
 		return fmt.Errorf("failed to deserialize other funding txout: %w", err)
 	}
 
+	// build staking info of prev delegation
+	prevDelStakingInfo, err := prevBtcDel.GetStakingInfo(prevParams, ms.btcNet)
+	if err != nil {
+		return fmt.Errorf("failed to get staking info of previous delegation: %w", err)
+	}
+	prevDelUnbondingPathSpendInfo, err := prevDelStakingInfo.UnbondingPathSpendInfo()
+	if err != nil {
+		return fmt.Errorf("failed to get unbonding path spend info: %w", err)
+	}
+
 	err = btcstaking.VerifyTransactionSigStkExp(
 		btcDel.MustGetStakingTx(), // this is the staking expansion tx
-		stakingInfo.StakingOutput,
+		prevBtcDel.MustGetStakingTx().TxOut[prevBtcDel.StakingOutputIdx],
 		otherFundingTxOut,
-		stakingInfo.GetPkScript(),
+		prevDelUnbondingPathSpendInfo.GetPkScriptPath(),
 		req.Pk.MustToBTCPK(),
 		*req.StakeExpansionTxSig,
 	)
@@ -720,7 +729,7 @@ func (ms msgServer) SelectiveSlashingEvidence(goCtx context.Context, req *types.
 }
 
 // hasSufficientCovenantOverlap returns true if the intersection of CovCommittee1 and CovCommittee2
-// contains more members than the required overlap.
+// contains more or equal members than the required overlap.
 func hasSufficientCovenantOverlap(
 	covCommittee1,
 	covCommittee2 []bbn.BIP340PubKey,
@@ -742,7 +751,7 @@ func hasSufficientCovenantOverlap(
 		_, found := newSet[oldPk.MarshalHex()]
 		if found {
 			intersection++
-			if uint32(intersection) > requiredOverlap {
+			if uint32(intersection) >= requiredOverlap {
 				return true
 			}
 		}
