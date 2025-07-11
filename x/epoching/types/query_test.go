@@ -118,7 +118,7 @@ func makeQueuedMessage(msg sdk.Msg, msgType string, time time.Time) (types.Queue
 		delegator = m.DelegatorAddress
 		validator = m.ValidatorAddress
 	default:
-		fmt.Printf("unrecognised message type: %T\n", msg)
+		fmt.Errorf("unrecognised message type: %T\n", msg)
 	}
 
 	qmr := types.QueuedMessageResponse{
