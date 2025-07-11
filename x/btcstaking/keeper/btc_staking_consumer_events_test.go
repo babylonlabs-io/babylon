@@ -90,7 +90,7 @@ func FuzzSetBTCStakingEventStore_ActiveDel(f *testing.F) {
 		h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
 
 		// set all parameters
-		covenantSKs, _ := h.GenAndApplyParams(r)
+		covenantSKs, _ := h.GenAndApplyCustomParams(r, 100, 200, 0, 2)
 
 		// register a random consumer on Babylon
 		randomConsumer := registerAndVerifyConsumer(t, r, h)
@@ -188,7 +188,7 @@ func FuzzSetBTCStakingEventStore_UnbondedDel(f *testing.F) {
 		h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
 
 		// set all parameters
-		covenantSKs, _ := h.GenAndApplyParams(r)
+		covenantSKs, _ := h.GenAndApplyCustomParams(r, 100, 200, 0, 2)
 
 		bsParams := h.BTCStakingKeeper.GetParams(h.Ctx)
 

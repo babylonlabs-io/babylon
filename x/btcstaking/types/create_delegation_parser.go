@@ -81,6 +81,11 @@ type ParsedPublicKeyList struct {
 	PublicKeysBbnFormat []bbn.BIP340PubKey
 }
 
+func (p ParsedPublicKeyList) Len() int {
+	// we can check only one list as len(p.PublicKeys) == len(p.PublicKeysBbnFormat)
+	return len(p.PublicKeys)
+}
+
 func NewParsedPublicKeyList(pks []bbn.BIP340PubKey) (*ParsedPublicKeyList, error) {
 	if len(pks) == 0 {
 		return nil, fmt.Errorf("cannot parse empty list of *bbn.BIP340PubKey")
