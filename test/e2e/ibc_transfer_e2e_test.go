@@ -376,7 +376,7 @@ func (s *IBCTransferTestSuite) Test4MultiCoinFee() {
 	// Tx should fail
 	outBuf, _, err := nB.ExecRawCmd(cmd)
 	s.Require().NoError(err)
-	s.Require().Contains(outBuf.String(), fmt.Sprintf("can only receive bond\n  denom %s", nativeDenom))
+	s.Require().Contains(outBuf.String(), fmt.Sprintf("only %s denom is allowed", nativeDenom))
 	nA.WaitForNextBlock()
 
 	// Try to send funds to fee_collector
