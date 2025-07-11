@@ -182,45 +182,6 @@ func BuildSlashingTxFromStakingTxStrict(
 		slashingRate)
 }
 
-// IsTransferTx Transfer transaction is a transaction which:
-// - has exactly one input
-// - has exactly one output
-func IsTransferTx(tx *wire.MsgTx) error {
-	if tx == nil {
-		return fmt.Errorf("transfer transaction must have cannot be nil")
-	}
-
-	if len(tx.TxIn) != 1 {
-		return fmt.Errorf("transfer transaction must have exactly one input")
-	}
-
-	if len(tx.TxOut) != 1 {
-		return fmt.Errorf("transfer transaction must have exactly one output")
-	}
-
-	return nil
-}
-
-// IsSimpleTransfer Simple transfer transaction is a transaction which:
-// - has exactly one input
-// - has exactly one output
-// - is not replaceable
-// - does not have any locktime
-func IsSimpleTransfer(tx *wire.MsgTx) error {
-	if err := IsTransferTx(tx); err != nil {
-		return fmt.Errorf("invalid simple transfer tx: %w", err)
-	}
-
-	if tx.TxIn[0].Sequence != wire.MaxTxInSequenceNum {
-		return fmt.Errorf("simple transfer tx must not be replaceable")
-	}
-
-	if tx.LockTime != 0 {
-		return fmt.Errorf("simple transfer tx must not have locktime")
-	}
-	return nil
-}
-
 // CheckPreSignedTxSanity performs basic checks on a pre-signed transaction:
 // - the transaction is not nil.
 // - the transaction obeys basic BTC rules.
