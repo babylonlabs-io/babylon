@@ -1,18 +1,16 @@
 package keepers
 
 import (
-	"context"
 	"fmt"
+	"path/filepath"
+
 	zckeeper "github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/keeper"
 	zctypes "github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
 	ratelimitv2 "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/v2"
 	ibccallbacksv2 "github.com/cosmos/ibc-go/v10/modules/apps/callbacks/v2"
 	transferv2 "github.com/cosmos/ibc-go/v10/modules/apps/transfer/v2"
 	ibcapi "github.com/cosmos/ibc-go/v10/modules/core/api"
-	"path/filepath"
-	"strings"
 
-	"cosmossdk.io/errors"
 	"cosmossdk.io/log"
 	storetypes "cosmossdk.io/store/types"
 	circuitkeeper "cosmossdk.io/x/circuit/keeper"
@@ -54,7 +52,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	authcodec "github.com/cosmos/cosmos-sdk/x/auth/codec"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -101,8 +98,6 @@ import (
 	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	porttypes "github.com/cosmos/ibc-go/v10/modules/core/05-port/types" // ibc module puts types under `ibchost` rather than `ibctypes`
 )
-
-var errBankRestriction = fmt.Errorf("can only receive bond denom %s", appparams.DefaultBondDenom)
 
 // Enable all default present capabilities.
 var tokenFactoryCapabilities = []string{
@@ -267,7 +262,6 @@ func (ak *AppKeepers) InitKeepers(
 		appparams.AccGov.String(),
 		logger,
 	)
-	bankKeeper.AppendSendRestriction(bankSendRestrictionOnlyBondDenomToDistribution)
 
 	stakingKeeper := stakingkeeper.NewKeeper(
 		appCodec,
@@ -790,24 +784,4 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(zctypes.ModuleName)
 
 	return paramsKeeper
-}
-
-// bankSendRestrictionOnlyBondDenomToDistribution restricts that only the default bond denom should be allowed to send to distribution and fee collector mod accs.
-func bankSendRestrictionOnlyBondDenomToDistribution(ctx context.Context, fromAddr, toAddr sdk.AccAddress, amt sdk.Coins) (newToAddr sdk.AccAddress, err error) {
-	if toAddr.Equals(appparams.AccDistribution) || toAddr.Equals(appparams.AccFeeCollector) {
-		denoms := amt.Denoms()
-		switch len(denoms) {
-		case 0:
-			return toAddr, nil
-		case 1:
-			denom := denoms[0]
-			if !strings.EqualFold(denom, appparams.DefaultBondDenom) {
-				return nil, errors.Wrapf(errBankRestriction, "address %s", toAddr)
-			}
-		default: // more than one length
-			return nil, errors.Wrapf(errBankRestriction, "address %s", toAddr)
-		}
-	}
-
-	return toAddr, nil
 }

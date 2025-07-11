@@ -119,6 +119,8 @@ when the babylon block is being BTC rewarded.
 queued for cosmos bsns
 - [#1328](https://github.com/babylonlabs-io/babylon/pull/1328) Add global limit
 for multistaking fps
+- [#1344](https://github.com/babylonlabs-io/babylon/pull/1344) Bump cosmos-sdk and
+remove send restrictions
 
 ### Bug fixes
 
