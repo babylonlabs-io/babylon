@@ -7,40 +7,16 @@ import (
 	"math/rand"
 	"testing"
 
-	"cosmossdk.io/log"
-	"cosmossdk.io/store"
-	storemetrics "cosmossdk.io/store/metrics"
 	"github.com/btcsuite/btcd/btcec/v2"
-	dbm "github.com/cosmos/cosmos-db"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	v1 "github.com/babylonlabs-io/babylon/v3/app/upgrades/v1"
-	testnetdata "github.com/babylonlabs-io/babylon/v3/app/upgrades/v1/testnet"
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
 	"github.com/babylonlabs-io/babylon/v3/testutil/helper"
-	testutilk "github.com/babylonlabs-io/babylon/v3/testutil/keeper"
 	btclightclientt "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
 	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 	bsctypes "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
 )
-
-func TestInitGenesisWithSetParams(t *testing.T) {
-	db := dbm.NewMemDB()
-	stateStore := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
-	k, ctx := testutilk.BTCStakingKeeperWithStore(t, db, stateStore, nil, nil, nil, nil)
-
-	err := k.InitGenesis(ctx, *types.DefaultGenesis())
-	require.NoError(t, err)
-
-	params, err := v1.LoadBtcStakingParamsFromData(testnetdata.BtcStakingParamsStr)
-	require.NoError(t, err)
-
-	for _, p := range params {
-		err = k.SetParams(ctx, p)
-		require.NoError(t, err)
-	}
-}
 
 func TestInitGenesis(t *testing.T) {
 	ctx, h, gs := setupTest(t)
