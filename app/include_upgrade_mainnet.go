@@ -4,9 +4,6 @@ package app
 
 import (
 	"github.com/babylonlabs-io/babylon/v3/app/upgrades"
-	v1 "github.com/babylonlabs-io/babylon/v3/app/upgrades/v1"
-	"github.com/babylonlabs-io/babylon/v3/app/upgrades/v1/mainnet"
-	v1_1 "github.com/babylonlabs-io/babylon/v3/app/upgrades/v1_1"
 	v2 "github.com/babylonlabs-io/babylon/v3/app/upgrades/v2"
 	v22 "github.com/babylonlabs-io/babylon/v3/app/upgrades/v2_2"
 )
@@ -26,14 +23,5 @@ func init() {
 	Upgrades = []upgrades.Upgrade{
 		v22.Upgrade,
 		v2.CreateUpgrade(false, WhitelistedChannelsID),
-		v1_1.Upgrade,
-		v1.CreateUpgrade(v1.UpgradeDataString{
-			BtcStakingParamsStr:       mainnet.BtcStakingParamsStr,
-			FinalityParamStr:          mainnet.FinalityParamStr,
-			IncentiveParamStr:         mainnet.IncentiveParamStr,
-			CosmWasmParamStr:          mainnet.CosmWasmParamStr,
-			NewBtcHeadersStr:          mainnet.NewBtcHeadersStr,
-			TokensDistributionStr:     mainnet.TokensDistributionStr,
-			AllowedStakingTxHashesStr: mainnet.AllowedStakingTxHashesStr,
-		}, mainnet.ParamUpgrade)}
+	}
 }
