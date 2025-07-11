@@ -21,8 +21,9 @@ func (e *Epoch) ToResponse() *EpochResponse {
 // ToResponse parses a QueuedMessage into a query response queued message struct.
 func (q *QueuedMessage) ToResponse() *QueuedMessageResponse {
 	var enriched *EnrichedMsg
+	sdkMsg := q.UnwrapToSdkMsg()
 
-	switch msg := q.UnwrapToSdkMsg().(type) {
+	switch msg := sdkMsg.(type) {
 	case *stakingtypes.MsgDelegate:
 		enriched = &EnrichedMsg{
 			Type:      "MsgDelegate",
