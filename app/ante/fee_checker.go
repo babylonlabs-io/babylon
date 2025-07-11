@@ -15,6 +15,8 @@ const (
 	priorityScalingFactor = 1_000_000
 )
 
+var errInvalidFee = fmt.Errorf("invalid fee")
+
 // CheckTxFeeWithGlobalMinGasPrices implements the default fee logic, where the minimum price per
 // unit of gas is fixed and set globally, and the tx priority is computed from the gas price.
 // adapted from https://github.com/celestiaorg/celestia-app/pull/2985
@@ -26,7 +28,16 @@ func CheckTxFeeWithGlobalMinGasPrices(ctx sdk.Context, tx sdk.Tx) (sdk.Coins, in
 
 	denom := appparams.DefaultBondDenom
 
-	fee := feeTx.GetFee().AmountOf(denom)
+	feeCoins := feeTx.GetFee()
+	if feeCoins.Empty() {
+		return nil, 0, errors.Wrap(errInvalidFee, "empty coins")
+	}
+
+	found, fee := feeCoins.Find(denom)
+	if !found || feeCoins.Len() > 1 {
+		return nil, 0, errors.Wrapf(errInvalidFee, "only %s denom is allowed. Got: %s", denom, feeCoins)
+	}
+
 	gas := feeTx.GetGas()
 
 	// convert the global minimum gas price to a big.Int
@@ -38,8 +49,8 @@ func CheckTxFeeWithGlobalMinGasPrices(ctx sdk.Context, tx sdk.Tx) (sdk.Coins, in
 	gasInt := sdkmath.NewIntFromUint64(gas)
 	minFee := globalMinGasPrice.MulInt(gasInt).RoundInt()
 
-	if !fee.GTE(minFee) {
-		return nil, 0, errors.Wrapf(sdkerror.ErrInsufficientFee, "insufficient fees; got: %s required: %s", fee, minFee)
+	if !fee.Amount.GTE(minFee) {
+		return nil, 0, errors.Wrapf(sdkerror.ErrInsufficientFee, "insufficient fees; got: %s required: %s", fee.Amount, minFee)
 	}
 
 	priority := getTxPriority(feeTx.GetFee(), int64(gas))
