@@ -102,6 +102,8 @@ check of rewards
 - [#1062](https://github.com/babylonlabs-io/babylon/pull/1062) Add `anteHandler` to avoid fee grants on refundable tx (`x/incentive`)
 - [#1231](https://github.com/babylonlabs-io/babylon/pull/1231) Add BTC stake expansion.
 - [#1335](https://github.com/babylonlabs-io/babylon/pull/1335) Tweaks on BTC stake expansion feature.
+- [#1343](https://github.com/babylonlabs-io/babylon/pull/1343) Adjust `testnet`
+command to modify `max-finality-providers` parameter.
 
 ### State Machine Breaking
 

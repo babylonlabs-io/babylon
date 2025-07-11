@@ -5,6 +5,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
+<<<<<<< HEAD
+=======
+
+	"cosmossdk.io/math"
+	"github.com/babylonlabs-io/babylon/v3/app"
+	"github.com/babylonlabs-io/babylon/v3/app/keepers"
+	erc20types "github.com/cosmos/evm/x/erc20/types"
+	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
+>>>>>>> a0fa936 (add max params to external commands (#1343))
 
 	sdkmath "cosmossdk.io/math"
 
@@ -92,6 +102,7 @@ Example:
 					genesisCliArgs.MinSlashingTransactionFeeSat,
 					genesisCliArgs.MinCommissionRate,
 					genesisCliArgs.SlashingRate,
+					genesisCliArgs.MaxFinalityProvidersInScript,
 					genesisCliArgs.MaxActiveFinalityProviders,
 					genesisCliArgs.UnbondingTime,
 					genesisCliArgs.UnbondingFeeSat,
@@ -281,6 +292,7 @@ func TestnetGenesisParams(
 	minSlashingFee int64,
 	minCommissionRate sdkmath.LegacyDec,
 	slashingRate sdkmath.LegacyDec,
+	maxFinalityProvidersInScript uint32,
 	maxActiveFinalityProviders uint32,
 	unbondingTime uint16,
 	unbondingFeeSat int64,
@@ -392,6 +404,7 @@ func TestnetGenesisParams(
 	genParams.BtcstakingParams.SlashingRate = slashingRate
 	genParams.BtcstakingParams.UnbondingTimeBlocks = uint32(unbondingTime)
 	genParams.BtcstakingParams.UnbondingFeeSat = unbondingFeeSat
+	genParams.BtcstakingParams.MaxFinalityProviders = maxFinalityProvidersInScript
 	if err := genParams.BtcstakingParams.Validate(); err != nil {
 		panic(err)
 	}
