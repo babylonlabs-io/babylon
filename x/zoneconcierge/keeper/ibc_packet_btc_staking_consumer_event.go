@@ -6,6 +6,7 @@ import (
 	"sort"
 
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
+	btclctypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
 	bsctypes "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
 	finalitytypes "github.com/babylonlabs-io/babylon/v3/x/finality/types"
 	"github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
@@ -120,6 +121,17 @@ func (k Keeper) HandleIBCChannelCreation(
 		return fmt.Errorf("failed to update consumer register: %w", err)
 	}
 
+	// Initialize Consumer base BTC header to current tip
+	if err := k.initializeConsumerBaseBTCHeader(ctx, clientID); err != nil {
+		return fmt.Errorf("failed to initialize consumer base BTC header: %w", err)
+	}
+
+	k.Logger(ctx).Info("IBC channel created successfully",
+		"consumerID", clientID,
+		"channelID", channelID,
+		"note", "Consumer base BTC header initialized to current tip",
+	)
+
 	return nil
 }
 
@@ -181,6 +193,41 @@ func (k Keeper) HandleConsumerSlashing(
 	if err := sdk.UnwrapSDKContext(ctx).EventManager().EmitTypedEvent(eventSlashing); err != nil {
 		return fmt.Errorf("failed to emit EventSlashedFinalityProvider event: %w", err)
 	}
+
+	return nil
+}
+
+// HandleBSNBaseBTCHeader processes a BSN base BTC header received.
+// This allows BSNs to inform Babylon about which BTC header they consider as their base
+func (k Keeper) HandleBSNBaseBTCHeader(
+	ctx sdk.Context,
+	portID string,
+	channelID string,
+	baseBTCHeader *btclctypes.BTCHeaderInfo,
+) error {
+	// Get the client ID from the channel to identify the BSN
+	clientID, _, err := k.channelKeeper.GetChannelClientState(ctx, portID, channelID)
+	if err != nil {
+		return fmt.Errorf("failed to get client state: %w", err)
+	}
+
+	// Validate the base BTC header
+	if baseBTCHeader == nil {
+		return fmt.Errorf("base BTC header is nil")
+	}
+
+	// Verify that the base BTC header exists in Babylon's BTC light client
+	// This ensures the BSN is not trying to set a base header that Babylon doesn't know about
+	existingHeader, err := k.btclcKeeper.GetHeaderByHash(ctx, baseBTCHeader.Hash)
+	if err != nil {
+		return fmt.Errorf("failed to retrieve base BTC header from Babylon's BTC light client: %w", err)
+	}
+	if existingHeader == nil {
+		return fmt.Errorf("base BTC header not found in Babylon's BTC light client: %v", baseBTCHeader.Hash)
+	}
+
+	// Store the BSN's reported base BTC header
+	k.SetConsumerBaseBTCHeader(ctx, clientID, baseBTCHeader)
 
 	return nil
 }
