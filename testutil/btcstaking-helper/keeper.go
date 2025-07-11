@@ -189,7 +189,7 @@ func (h *Helper) BeginBlocker() {
 
 func (h *Helper) GenAndApplyParams(r *rand.Rand) ([]*btcec.PrivateKey, []*btcec.PublicKey) {
 	// ensure that unbonding_time is larger than finalizationTimeout
-	return h.GenAndApplyCustomParams(r, 100, 200, 0)
+	return h.GenAndApplyCustomParams(r, 100, 200, 0, 1)
 }
 
 func (h *Helper) SetCtxHeight(height uint64) {
@@ -201,6 +201,7 @@ func (h *Helper) GenAndApplyCustomParams(
 	finalizationTimeout uint32,
 	unbondingTime uint32,
 	allowListExpirationHeight uint64,
+	maxFinalityProviders uint32,
 ) ([]*btcec.PrivateKey, []*btcec.PublicKey) {
 	// mock base header
 	baseHeader := btclctypes.SimnetGenesisBlock()
@@ -233,6 +234,7 @@ func (h *Helper) GenAndApplyCustomParams(
 		UnbondingFeeSat:           1000,
 		AllowListExpirationHeight: allowListExpirationHeight,
 		BtcActivationHeight:       1,
+		MaxFinalityProviders:      maxFinalityProviders,
 	})
 	h.NoError(err)
 	return covenantSKs, covenantPKs

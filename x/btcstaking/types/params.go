@@ -84,6 +84,9 @@ func DefaultParams() Params {
 		// Allow list can only be enabled by upgrade
 		AllowListExpirationHeight: 0,
 		BtcActivationHeight:       0,
+		// Default max finality providers is 1, which means that only one finality provider can be used in staking script.
+		// Multi-staking is disabled with this setting.
+		MaxFinalityProviders: 1,
 	}
 }
 
