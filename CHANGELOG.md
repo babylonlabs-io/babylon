@@ -130,6 +130,7 @@ between different signing operations
 - [#1318](https://github.com/babylonlabs-io/babylon/pull/1318) fix: propagation of
 secret key in slashing
 - [#1325](https://github.com/babylonlabs-io/babylon/pull/1325) fix: add signing context to `EvidenceResponse` message
+- [#1337](https://github.com/babylonlabs-io/babylon/pull/1337) fix: update proto gen
 
 ## v2.2.0
 
