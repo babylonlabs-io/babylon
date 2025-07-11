@@ -53,3 +53,8 @@ func TestSoftwareUpgradeV2TestSuite(t *testing.T) {
 func TestFinalityContractTestSuite(t *testing.T) {
 	suite.Run(t, new(FinalityContractTestSuite))
 }
+
+// TestBSNFeeCollectionTestSuite tests BSN fee collection via IBC callbacks end-to-end
+func TestBSNFeeCollectionTestSuite(t *testing.T) {
+	suite.Run(t, new(BSNFeeCollectionTestSuite))
+}
