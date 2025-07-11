@@ -210,6 +210,10 @@ func (p Params) Validate() error {
 		return fmt.Errorf("covenant quorum size has to be more than 1/2 of the covenant committee size")
 	}
 
+	if p.MaxFinalityProviders == 0 {
+		return fmt.Errorf("MaxFinalityProviders must be greater than zero")
+	}
+
 	if err := validateStakingAmout(p.MinStakingValueSat, p.MaxStakingValueSat); err != nil {
 		return err
 	}

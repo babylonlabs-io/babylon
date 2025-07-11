@@ -69,6 +69,7 @@ func TestGenesisState_Validate(t *testing.T) {
 							MinCommissionRate:    sdkmath.LegacyMustNewDecFromStr("0.5"),
 							SlashingRate:         sdkmath.LegacyMustNewDecFromStr("0.1"),
 							UnbondingFeeSat:      types.DefaultParams().UnbondingFeeSat,
+							MaxFinalityProviders: 1,
 						},
 					},
 					AllowedStakingTxHashes: txHashes,
