@@ -278,7 +278,7 @@ message StakeExpansionResponse {
   // {previous_staking_tx_hash}) by each covenant member.
   // It must be provided to allow the previous staking tx to be spent as
   // an transaction input of another BTC staking transaction.
-  repeated SignatureInfo previous_stk_covenant_sigs = 3;  
+  repeated SignatureInfo previous_stk_covenant_sigs = 3;
 }
 
 // DelegatorUnbondingInfoResponse provides all necessary info about transaction
