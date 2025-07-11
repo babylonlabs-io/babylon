@@ -1,14 +1,15 @@
 syntax = "proto3";
 package babylon.epoching.v1;
 
-import "gogoproto/gogo.proto";
-import "google/protobuf/timestamp.proto";
-import "google/api/annotations.proto";
-import "cosmos/base/query/v1beta1/pagination.proto";
-import "babylon/epoching/v1/params.proto";
 import "babylon/epoching/v1/epoching.proto";
+import "babylon/epoching/v1/params.proto";
+import "cosmos/base/query/v1beta1/pagination.proto";
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/babylonlabs-io/babylon/v3/x/epoching/types";
+option (gogoproto.goproto_getters_all) = false;
 
 // Query defines the gRPC querier service.
 service Query {
@@ -224,6 +225,21 @@ message QueuedMessageResponse {
   // msg is the actual message that is sent by a user and is queued by the
   // epoching module as string.
   string msg = 5;
+  // enriched_msg contains a parsed, structured version of the original message
+  EnrichedMsg enriched_msg = 6;
+}
+
+// EnrichedMsg is a message that contains a parsed, structured version of the
+// original message
+message EnrichedMsg {
+  option (gogoproto.marshaler) = true;
+  option (gogoproto.unmarshaler) = true;
+  option (gogoproto.sizer) = true;
+
+  string type = 1;
+  string delegator = 2;
+  string validator = 3;
+  string amount = 4;
 }
 
 // QueuedMessageList is a message that contains a list of staking-related
