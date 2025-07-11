@@ -211,7 +211,7 @@ func (p Params) Validate() error {
 	}
 
 	if p.MaxFinalityProviders == 0 {
-		return fmt.Errorf("max finality providers in script has to be positive")
+		return fmt.Errorf("MaxFinalityProviders must be greater than zero")
 	}
 
 	if err := validateStakingAmout(p.MinStakingValueSat, p.MaxStakingValueSat); err != nil {
