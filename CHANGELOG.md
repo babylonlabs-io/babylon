@@ -39,7 +39,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
-- [#1304](https://github.com/babylonlabs-io/babylon/pull/304) Update rollup finality e2e tests
+- [#1348](https://github.com/babylonlabs-io/babylon/pull/1348) Remove IsSimpleTransfer and IsTransferTx
+- [#1304](https://github.com/babylonlabs-io/babylon/pull/1304) Update rollup finality e2e tests
 - [#1300](https://github.com/babylonlabs-io/babylon/pull/1300) x/btcstaking handles fp ops
 - [#1295](https://github.com/babylonlabs-io/babylon/pull/1295) Rename
 `consumer_id` to `bsn_id` for finality providers
