@@ -2,7 +2,6 @@ package types_test
 
 import (
 	"encoding/hex"
-	"fmt"
 	"testing"
 	"time"
 
@@ -118,7 +117,11 @@ func makeQueuedMessage(msg sdk.Msg, msgType string, time time.Time) (types.Queue
 		delegator = m.DelegatorAddress
 		validator = m.ValidatorAddress
 	default:
-		fmt.Errorf("unrecognised message type: %T\n", msg)
+		return qm, types.QueuedMessageResponse{
+			EnrichedMsg: &types.EnrichedMsg{
+				Type: "Unknown",
+			},
+		}
 	}
 
 	qmr := types.QueuedMessageResponse{
