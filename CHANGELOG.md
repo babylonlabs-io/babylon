@@ -116,7 +116,7 @@ when the babylon block is being BTC rewarded.
 - [#1296](https://github.com/babylonlabs-io/babylon/pull/1296) IBC events are only
 queued for cosmos bsns
 - [#1328](https://github.com/babylonlabs-io/babylon/pull/1328) Add global limit
-for mulistaking fps
+for multistaking fps
 
 ### Bug fixes
 
