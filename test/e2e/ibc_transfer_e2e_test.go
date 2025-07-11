@@ -309,7 +309,96 @@ func (s *IBCTransferTestSuite) Test3PacketForwarding() {
 	}, 1*time.Minute, 1*time.Second, "Transfer back B was not successful")
 }
 
-func (s *IBCTransferTestSuite) Test4E2EBelowThreshold() {
+func (s *IBCTransferTestSuite) Test4MultiCoinFee() {
+	amount := int64(1_000)
+
+	transferCoin := sdk.NewInt64Coin(nativeDenom, amount)
+
+	bbnChainA := s.configurer.GetChainConfig(0)
+	bbnChainB := s.configurer.GetChainConfig(1)
+
+	nA, err := bbnChainA.GetNodeAtIndex(2)
+	s.NoError(err)
+	nB, err := bbnChainB.GetNodeAtIndex(2)
+	s.NoError(err)
+
+	// Check balance
+	balanceBeforeSendAddrB, err := nB.QueryBalances(s.addrB)
+	s.Require().NoError(err)
+
+	// Send transfer from val in chain-A (Node 3) to val in chain-B (Node 3)
+	nA.SendIBCTransfer(s.addrA, s.addrB, "transfer", transferCoin)
+	nA.WaitForNextBlock()
+
+	var ibcDenomB string
+	s.Require().Eventually(func() bool {
+		balanceAfterSendAddrB, err := nB.QueryBalances(s.addrB)
+		if err != nil {
+			s.T().Logf("failed to query balances: %s", err.Error())
+			return false
+		}
+		// Check that there are now two denoms in B
+		if len(balanceAfterSendAddrB) != 2 {
+			return false
+		}
+
+		ibcDenomB = getFirstIBCDenom(balanceAfterSendAddrB)
+		if ibcDenomB == "" {
+			return false
+		}
+		expAmt := balanceBeforeSendAddrB.AmountOf(ibcDenomB).Add(transferCoin.Amount)
+		if !balanceAfterSendAddrB.AmountOf(ibcDenomB).Equal(expAmt) {
+			s.T().Logf(
+				"BalanceBeforeSendAddrB: %s; BbalanceAfterSendAddrB: %s, coinTransfer: %s",
+				balanceBeforeSendAddrB.String(), balanceAfterSendAddrB.String(), transferCoin.String(),
+			)
+			return false
+		}
+
+		return true
+	}, 1*time.Minute, 1*time.Second, "Transfer was not successful")
+
+	// Send some funds to new address
+	// using as fees other denom than the native denom
+	to := nB.KeysAdd("new-addr")
+	feesStr := fmt.Sprintf("%d%s,%d%s", 400, nativeDenom, 1, ibcDenomB)
+	nB.LogActionF("bank sending %s from wallet %s to %s. Fees: %s", transferCoin, s.addrB, to, feesStr)
+	cmd := []string{
+		"babylond", "tx", "bank", "send",
+		s.addrB, to, transferCoin.String(),
+		fmt.Sprintf("--from=%s", s.addrB),
+		fmt.Sprintf("--fees=%s", feesStr),
+		fmt.Sprintf("--chain-id=%s", nB.GetChainID()),
+		"--yes",
+		"--keyring-backend=test", "--log_format=json", "--home=/home/babylon/babylondata",
+	}
+
+	// Tx should fail
+	outBuf, _, err := nB.ExecRawCmd(cmd)
+	s.Require().NoError(err)
+	s.Require().Contains(outBuf.String(), fmt.Sprintf("can only receive bond\n  denom %s", nativeDenom))
+	nA.WaitForNextBlock()
+
+	// Try to send funds to fee_collector
+	balanceBeforeAddrA, err := nA.QueryBalances(s.addrA)
+	s.Require().NoError(err)
+
+	feeCollectorAddr := "bbn17xpfvakm2amg962yls6f84z3kell8c5l88j35y"
+	txHash := nA.SendIBCTransfer(s.addrA, feeCollectorAddr, "transfer", transferCoin)
+	nA.WaitForNextBlock()
+
+	_, txResp := nA.QueryTx(txHash)
+	txFeesPaid := txResp.AuthInfo.Fee.Amount
+	// Make sure only fees were deducted from sender
+	// The tx should have failed
+	s.Require().Eventually(func() bool {
+		balanceAfterAddrA, err := nA.QueryBalances(s.addrA)
+		s.Require().NoError(err)
+		return balanceAfterAddrA.Equal(balanceBeforeAddrA.Sub(txFeesPaid...))
+	}, 90*time.Second, 2*time.Second)
+}
+
+func (s *IBCTransferTestSuite) Test5E2EBelowThreshold() {
 	bbnChainA := s.configurer.GetChainConfig(0)
 	bbnChainB := s.configurer.GetChainConfig(1)
 
@@ -349,7 +438,7 @@ func (s *IBCTransferTestSuite) Test4E2EBelowThreshold() {
 	}, 90*time.Second, 2*time.Second, "Transfer back B was not successful")
 }
 
-func (s *IBCTransferTestSuite) Test5RateLimitE2EAboveThreshold() {
+func (s *IBCTransferTestSuite) Test6RateLimitE2EAboveThreshold() {
 	bbnChainA := s.configurer.GetChainConfig(0)
 	bbnChainB := s.configurer.GetChainConfig(1)
 
