@@ -28,6 +28,12 @@ func ValidateParsedMessageAgainstTheParams(
 			pm.UnbondingTime, parameters.UnbondingTimeBlocks)
 	}
 
+	// 2. Validate finality provider is below or equal to max finality providers
+	if pm.FinalityProviderKeys.Len() > int(parameters.MaxFinalityProviders) {
+		return nil, ErrInvalidStakingTx.Wrapf("number of finality providers %d is greater than max finality providers %d",
+			pm.FinalityProviderKeys.Len(), parameters.MaxFinalityProviders)
+	}
+
 	stakingTxHash := pm.StakingTx.Transaction.TxHash()
 	covenantPks := parameters.MustGetCovenantPks()
 
