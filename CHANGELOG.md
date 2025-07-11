@@ -40,6 +40,45 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ### Improvements
 
 - [#1269](https://github.com/babylonlabs-io/babylon/pull/1269) Add fee collector e2e tests.
+<<<<<<< HEAD
+=======
+- [#1062](https://github.com/babylonlabs-io/babylon/pull/1062) Add `anteHandler` to avoid fee grants on refundable tx (`x/incentive`)
+- [#1231](https://github.com/babylonlabs-io/babylon/pull/1231) Add BTC stake expansion.
+- [#1335](https://github.com/babylonlabs-io/babylon/pull/1335) Tweaks on BTC stake expansion feature.
+- [#1343](https://github.com/babylonlabs-io/babylon/pull/1343) Adjust `testnet`
+command to modify `max-finality-providers` parameter.
+
+### State Machine Breaking
+
+- [#1271](https://github.com/babylonlabs-io/babylon/pull/1271) Add equivocation e2e test for rollup BSN.
+- [#402](https://github.com/babylonlabs-io/babylon/pull/402) **Babylon multi-staking support**.
+This PR contains a series of PRs on multi-staking support and BTC staking integration.
+- [#847](https://github.com/babylonlabs-io/babylon/pull/847) Add ibc callbacks to
+transfer stack
+- [#877](https://github.com/babylonlabs-io/babylon/pull/877) fix: BTC reward tracker are stored as events and updated only
+when the babylon block is being BTC rewarded.
+- [#1296](https://github.com/babylonlabs-io/babylon/pull/1296) IBC events are only
+queued for cosmos bsns
+- [#1328](https://github.com/babylonlabs-io/babylon/pull/1328) Add global limit
+for multistaking fps
+- [#1344](https://github.com/babylonlabs-io/babylon/pull/1344) Bump cosmos-sdk and
+remove send restrictions
+
+### Bug fixes
+
+- [#796](https://github.com/babylonlabs-io/babylon/pull/796) fix: goreleaser add `mainnet` build flag to generated binary
+- [#741](https://github.com/babylonlabs-io/babylon/pull/741) chore: fix register consumer CLI
+- [#525](https://github.com/babylonlabs-io/babylon/pull/525) fix: add back `NewIBCHeaderDecorator` post handler
+- [#964](https://github.com/babylonlabs-io/babylon/pull/964) fix: stateless validation `ValidateBasic` of
+`MsgWrappedCreateValidator` to avoid panic in transaction submission
+- [#1247](https://github.com/babylonlabs-io/babylon/pull/1247) fix: zoneconcierge ibc router
+- [#1252](https://github.com/babylonlabs-io/babylon/pull/1252) Implement context separation
+between different signing operations
+- [#1318](https://github.com/babylonlabs-io/babylon/pull/1318) fix: propagation of
+secret key in slashing
+- [#1325](https://github.com/babylonlabs-io/babylon/pull/1325) fix: add signing context to `EvidenceResponse` message
+- [#1337](https://github.com/babylonlabs-io/babylon/pull/1337) fix: update proto gen
+>>>>>>> fd32964 (fix: bump cosmos-sdk and remove send restrictions (#1344))
 
 ## v2.2.0
 
