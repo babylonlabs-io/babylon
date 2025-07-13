@@ -7,15 +7,8 @@ require (
 	github.com/btcsuite/btcd v0.24.2
 	github.com/cometbft/cometbft v0.38.17
 	github.com/cometbft/cometbft-db v0.15.0
-<<<<<<< HEAD
-	github.com/cosmos/cosmos-sdk v0.50.13
+	github.com/cosmos/cosmos-sdk v0.50.14
 	github.com/cosmos/ibc-go/modules/light-clients/08-wasm v0.0.0-20240429153234-e1e6da7e4ead
-=======
-	github.com/cosmos/cosmos-sdk v0.53.3
-	github.com/cosmos/evm v1.0.0-rc0.0.20250602235914-3eb2135b9103
-	github.com/cosmos/ibc-go/modules/light-clients/08-wasm/v10 v10.1.1
-	github.com/ethereum/go-ethereum v1.15.10
->>>>>>> fd32964 (fix: bump cosmos-sdk and remove send restrictions (#1344))
 	github.com/gorilla/mux v1.8.1
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0
 	github.com/pkg/errors v0.9.1

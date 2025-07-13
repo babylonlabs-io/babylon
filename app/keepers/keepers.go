@@ -1,27 +1,8 @@
 package keepers
 
 import (
-	"fmt"
 	"path/filepath"
 
-<<<<<<< HEAD
-	"cosmossdk.io/errors"
-=======
-	srvflags "github.com/cosmos/evm/server/flags"
-	erc20types "github.com/cosmos/evm/x/erc20/types"
-	feemarketkeeper "github.com/cosmos/evm/x/feemarket/keeper"
-	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
-	precisebankkeeper "github.com/cosmos/evm/x/precisebank/keeper"
-	precisebanktypes "github.com/cosmos/evm/x/precisebank/types"
-	evmkeeper "github.com/cosmos/evm/x/vm/keeper"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
-	ratelimitv2 "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/v2"
-	ibccallbacksv2 "github.com/cosmos/ibc-go/v10/modules/apps/callbacks/v2"
-	transferv2 "github.com/cosmos/ibc-go/v10/modules/apps/transfer/v2"
-	ibcapi "github.com/cosmos/ibc-go/v10/modules/core/api"
-	"github.com/spf13/cast"
-
->>>>>>> fd32964 (fix: bump cosmos-sdk and remove send restrictions (#1344))
 	"cosmossdk.io/log"
 	storetypes "cosmossdk.io/store/types"
 	circuitkeeper "cosmossdk.io/x/circuit/keeper"
