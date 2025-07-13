@@ -31,3 +31,8 @@ type BTCStkConsumerKeeper interface {
 type IncentiveKeeper interface {
 	IndexRefundableMsg(ctx context.Context, msg sdk.Msg)
 }
+
+type BankKeeper interface {
+	SpendableCoins(ctx context.Context, addr sdk.AccAddress) sdk.Coins
+	SendCoinsFromAccountToModule(ctx context.Context, senderAddr sdk.AccAddress, recipientModule string, amt sdk.Coins) error
+}

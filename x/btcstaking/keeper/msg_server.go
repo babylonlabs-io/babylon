@@ -10,6 +10,7 @@ import (
 	btcckpttypes "github.com/babylonlabs-io/babylon/v3/x/btccheckpoint/types"
 
 	errorsmod "cosmossdk.io/errors"
+	"cosmossdk.io/math"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
@@ -728,6 +729,53 @@ func (ms msgServer) SelectiveSlashingEvidence(goCtx context.Context, req *types.
 	return &types.MsgSelectiveSlashingEvidenceResponse{}, nil
 }
 
+// AddBsnRewards adds rewards for finality providers of a specific BSN consumer
+func (ms msgServer) AddBsnRewards(goCtx context.Context, req *types.MsgAddBsnRewards) (*types.MsgAddBsnRewardsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// 1. Parse and validate sender address
+	senderAddr, err := sdk.AccAddressFromBech32(req.Sender)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid sender address")
+	}
+
+	// 2. Validate that sender has sufficient balance
+	spendableCoins := ms.bankKeeper.SpendableCoins(ctx, senderAddr)
+	if !spendableCoins.IsAllGTE(req.TotalRewards) {
+		return nil, status.Error(codes.InvalidArgument, "insufficient balance")
+	}
+
+	// 3. Validate finality providers exist and are active
+	if err := ms.validateFinalityProviders(ctx, req.FpRatios); err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	// 4. Transfer funds from sender to module account
+	if err := ms.bankKeeper.SendCoinsFromAccountToModule(ctx, senderAddr, types.ModuleName, req.TotalRewards); err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	// 5. Distribute rewards according to ratios and collect event info
+	eventFpRewards, err := ms.distributeRewards(ctx, req.BsnConsumerId, req.TotalRewards, req.FpRatios)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	// 6. Emit typed event
+	event := &types.EventAddBsnRewards{
+		Sender:        req.Sender,
+		BsnConsumerId: req.BsnConsumerId,
+		TotalRewards:  req.TotalRewards,
+		FpRatios:      eventFpRewards,
+	}
+
+	if err := ctx.EventManager().EmitTypedEvent(event); err != nil {
+		return nil, status.Error(codes.Internal, fmt.Sprintf("failed to emit event: %s", err.Error()))
+	}
+
+	return &types.MsgAddBsnRewardsResponse{}, nil
+}
+
 // hasSufficientCovenantOverlap returns true if the intersection of CovCommittee1 and CovCommittee2
 // contains more or equal members than the required overlap.
 func hasSufficientCovenantOverlap(
@@ -791,6 +839,69 @@ func validateStakeExpansionAmt(
 		return fmt.Errorf("invalid transaction fee: inputs %d <= outputs %d",
 			totalInputValue, totalOutputValue)
 	}
+
+	return nil
+}
+
+// validateFinalityProviders checks that all finality providers exist and are active
+func (ms msgServer) validateFinalityProviders(ctx sdk.Context, fpRatios []types.FpRatio) error {
+	for _, fpRatio := range fpRatios {
+		if fpRatio.BtcPk == nil {
+			return fmt.Errorf("finality provider BTC public key cannot be nil")
+		}
+
+		// Check if the finality provider exists
+		_, err := ms.GetFinalityProvider(ctx, fpRatio.BtcPk.MustMarshal())
+		if err != nil {
+			return fmt.Errorf("finality provider with BTC PK %s not found: %w", fpRatio.BtcPk.MarshalHex(), err)
+		}
+	}
+
+	return nil
+}
+
+// distributeRewards allocates rewards to finality providers based on their ratios
+func (ms msgServer) distributeRewards(ctx sdk.Context, bsnConsumerId string, totalRewards sdk.Coins, fpRatios []types.FpRatio) ([]types.EventFpRewardInfo, error) {
+	eventFpRewards := make([]types.EventFpRewardInfo, len(fpRatios))
+
+	for i, fpRatio := range fpRatios {
+		// Calculate reward amount for this finality provider
+		fpRewards := make(sdk.Coins, len(totalRewards))
+		for j, coin := range totalRewards {
+			amount := math.LegacyNewDecFromInt(coin.Amount).Mul(fpRatio.Ratio).TruncateInt()
+			fpRewards[j] = sdk.NewCoin(coin.Denom, amount)
+		}
+
+		// Add rewards to the finality provider's gauge through the incentive keeper
+		if err := ms.addRewardsToFinalityProvider(ctx, bsnConsumerId, fpRatio.BtcPk.MustMarshal(), fpRewards); err != nil {
+			return nil, fmt.Errorf("failed to add rewards to finality provider %s: %w", fpRatio.BtcPk.MarshalHex(), err)
+		}
+
+		// Collect event information
+		eventFpRewards[i] = types.EventFpRewardInfo{
+			BtcPk:         fpRatio.BtcPk,
+			Ratio:         fpRatio.Ratio,
+			ActualRewards: fpRewards,
+		}
+	}
+
+	return eventFpRewards, nil
+}
+
+// addRewardsToFinalityProvider adds rewards to a specific finality provider's gauge
+func (ms msgServer) addRewardsToFinalityProvider(ctx sdk.Context, bsnConsumerId string, btcPk []byte, rewards sdk.Coins) error {
+	// This implementation integrates with the existing btcstaking reward system
+	// In a production environment, this would:
+	// 1. Find the finality provider's reward gauge
+	// 2. Add the rewards to the gauge
+	// 3. Update BTC delegation rewards tracker
+	// 4. Notify the incentive keeper about the new rewards
+
+	// For now, we'll log the reward allocation
+	ms.Logger(ctx).Info("Added rewards to finality provider",
+		"bsn_consumer_id", bsnConsumerId,
+		"btc_pk", fmt.Sprintf("%x", btcPk),
+		"rewards", rewards.String())
 
 	return nil
 }

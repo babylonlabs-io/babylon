@@ -659,6 +659,7 @@ func (ak *AppKeepers) InitKeepers(
 		&btcCheckpointKeeper,
 		&ak.BTCStkConsumerKeeper,
 		&ak.IncentiveKeeper,
+		bankKeeper,
 		btcNetParams,
 		appparams.AccBTCStaking.String(),
 		appparams.AccGov.String(),

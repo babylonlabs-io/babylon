@@ -24,6 +24,7 @@ var (
 	_ sdk.Msg = &MsgBTCUndelegate{}
 	_ sdk.Msg = &MsgAddBTCDelegationInclusionProof{}
 	_ sdk.Msg = &MsgSelectiveSlashingEvidence{}
+	_ sdk.Msg = &MsgAddBsnRewards{}
 	// Ensure msgs implement ValidateBasic
 	_ sdk.HasValidateBasic = &MsgUpdateParams{}
 	_ sdk.HasValidateBasic = &MsgCreateFinalityProvider{}
@@ -33,6 +34,7 @@ var (
 	_ sdk.HasValidateBasic = &MsgBTCUndelegate{}
 	_ sdk.HasValidateBasic = &MsgAddBTCDelegationInclusionProof{}
 	_ sdk.HasValidateBasic = &MsgSelectiveSlashingEvidence{}
+	_ sdk.HasValidateBasic = &MsgAddBsnRewards{}
 )
 
 func (m MsgUpdateParams) ValidateBasic() error {
@@ -304,6 +306,73 @@ func (m *MsgSelectiveSlashingEvidence) ValidateBasic() error {
 
 	if len(m.RecoveredFpBtcSk) != btcec.PrivKeyBytesLen {
 		return fmt.Errorf("malformed BTC SK. Expected length: %d, got %d", btcec.PrivKeyBytesLen, len(m.RecoveredFpBtcSk))
+	}
+
+	return nil
+}
+
+// ValidateBasic performs basic validation for MsgAddBsnRewards
+func (m *MsgAddBsnRewards) ValidateBasic() error {
+	// 1. Validate sender address
+	if _, err := sdk.AccAddressFromBech32(m.Sender); err != nil {
+		return fmt.Errorf("invalid sender address: %s - %v", m.Sender, err)
+	}
+
+	// 2. Validate BSN consumer ID
+	if len(m.BsnConsumerId) == 0 {
+		return fmt.Errorf("empty BSN consumer ID")
+	}
+
+	// 3. Validate total rewards
+	if len(m.TotalRewards) == 0 {
+		return fmt.Errorf("empty total rewards")
+	}
+	if err := m.TotalRewards.Validate(); err != nil {
+		return fmt.Errorf("invalid total rewards: %w", err)
+	}
+	if !m.TotalRewards.IsAllPositive() {
+		return fmt.Errorf("total rewards must be positive")
+	}
+
+	// 4. Validate FP ratios
+	if len(m.FpRatios) == 0 {
+		return fmt.Errorf("empty finality provider ratios")
+	}
+
+	// 5. Validate each FP ratio and ensure sum equals 1.0
+	ratioSum := math.LegacyZeroDec()
+	for i, fpRatio := range m.FpRatios {
+		if err := fpRatio.ValidateBasic(); err != nil {
+			return fmt.Errorf("finality provider %d: %w", i, err)
+		}
+		ratioSum = ratioSum.Add(fpRatio.Ratio)
+	}
+
+	// 6. Ensure ratios sum to 1.0 (with small tolerance for precision)
+	tolerance := math.LegacyNewDecWithPrec(1, 10) // 1e-10
+	if !ratioSum.Sub(math.LegacyOneDec()).Abs().LTE(tolerance) {
+		return fmt.Errorf("finality provider ratios must sum to 1.0, got %s", ratioSum.String())
+	}
+
+	return nil
+}
+
+// ValidateBasic performs basic validation for FpRatio
+func (f *FpRatio) ValidateBasic() error {
+	// 1. Validate BTC public key
+	if f.BtcPk == nil {
+		return fmt.Errorf("BTC public key cannot be nil")
+	}
+
+	// 2. Validate ratio
+	if f.Ratio.IsNegative() {
+		return fmt.Errorf("ratio cannot be negative")
+	}
+	if f.Ratio.GT(math.LegacyOneDec()) {
+		return fmt.Errorf("ratio cannot be greater than 1.0")
+	}
+	if f.Ratio.IsZero() {
+		return fmt.Errorf("ratio cannot be zero")
 	}
 
 	return nil
