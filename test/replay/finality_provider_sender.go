@@ -129,13 +129,6 @@ func (f *FinalityProvider) CastVoteForHash(height uint64, blkAppHash []byte) {
 }
 
 func (f *FinalityProvider) SendSelectiveSlashingEvidence() {
-	ctx := f.d.GetContextForLastFinalizedBlock()
-
-	resp, err := f.app.BTCStakingKeeper.FinalityProviderDelegations(ctx, &bstypes.QueryFinalityProviderDelegationsRequest{
-		FpBtcPkHex: f.BTCPublicKey().MarshalHex(),
-	})
-	require.NoError(f.t, err)
-
 	msg := &bstypes.MsgSelectiveSlashingEvidence{
 		Signer:           f.AddressString(),
 		RecoveredFpBtcSk: f.BTCPrivateKey.Serialize(),
