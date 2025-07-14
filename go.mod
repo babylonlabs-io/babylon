@@ -7,7 +7,7 @@ require (
 	github.com/btcsuite/btcd v0.24.2
 	github.com/cometbft/cometbft v0.38.17
 	github.com/cometbft/cometbft-db v0.15.0
-	github.com/cosmos/cosmos-sdk v0.50.13
+	github.com/cosmos/cosmos-sdk v0.50.14
 	github.com/cosmos/ibc-go/modules/light-clients/08-wasm v0.0.0-20240429153234-e1e6da7e4ead
 	github.com/gorilla/mux v1.8.1
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0
