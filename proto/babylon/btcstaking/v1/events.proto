@@ -292,8 +292,18 @@ message EventAddBsnRewards {
     (gogoproto.nullable) = false,
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
   ];
+  // BabylonCommission is the amount of commission collected by Babylon
+  repeated cosmos.base.v1beta1.Coin babylon_commission = 4 [
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
+  // DistributedRewards is the amount distributed to finality providers after Babylon commission
+  repeated cosmos.base.v1beta1.Coin distributed_rewards = 5 [
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
   // FpRatios contains the finality providers and their respective reward ratios
-  repeated EventFpRewardInfo fp_ratios = 4 [(gogoproto.nullable) = false];
+  repeated EventFpRewardInfo fp_ratios = 6 [(gogoproto.nullable) = false];
 }
 
 // EventFpRewardInfo contains finality provider reward information for events
@@ -305,8 +315,18 @@ message EventFpRewardInfo {
     (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable) = false
   ];
-  // ActualRewards is the actual amount of rewards this finality provider received
-  repeated cosmos.base.v1beta1.Coin actual_rewards = 3 [
+  // TotalAllocated is the total amount allocated to this finality provider
+  repeated cosmos.base.v1beta1.Coin total_allocated = 3 [
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
+  // FpCommission is the commission amount that goes to the finality provider
+  repeated cosmos.base.v1beta1.Coin fp_commission = 4 [
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
+  // DelegatorRewards is the amount that goes to BTC delegators
+  repeated cosmos.base.v1beta1.Coin delegator_rewards = 5 [
     (gogoproto.nullable) = false,
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
   ];

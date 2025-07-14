@@ -1,6 +1,7 @@
 package testutil
 
 import (
+	"context"
 	"math/rand"
 	"testing"
 	"time"
@@ -39,6 +40,26 @@ var (
 	timestampedEpoch = uint64(10)
 )
 
+type IctvKeeperI interface {
+	ftypes.IncentiveKeeper
+	types.IncentiveKeeper
+}
+
+// IctvKeeperK this structure is only test usefull
+// It wraps two instances of the incentive keeper to create the test suite
+type IctvKeeperK struct {
+	ftypes.IncentiveKeeper
+	mockBtcStk types.IncentiveKeeper
+}
+
+func (i IctvKeeperK) AccumulateRewardGaugeForFP(ctx context.Context, addr sdk.AccAddress, reward sdk.Coins) {
+	i.mockBtcStk.AccumulateRewardGaugeForFP(ctx, addr, reward)
+}
+
+func (i IctvKeeperK) AddFinalityProviderRewardsForBtcDelegations(ctx context.Context, fp sdk.AccAddress, rwd sdk.Coins) error {
+	return i.mockBtcStk.AddFinalityProviderRewardsForBtcDelegations(ctx, fp, rwd)
+}
+
 type Helper struct {
 	t testing.TB
 
@@ -71,10 +92,17 @@ func NewHelper(
 	ctrl := gomock.NewController(t)
 
 	// mock refundable messages
-	iKeeper := ftypes.NewMockIncentiveKeeper(ctrl)
-	iKeeper.EXPECT().IndexRefundableMsg(gomock.Any(), gomock.Any()).AnyTimes()
-	iKeeper.EXPECT().AddEventBtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
-	iKeeper.EXPECT().AddEventBtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	ictvFinalK := ftypes.NewMockIncentiveKeeper(ctrl)
+	ictvFinalK.EXPECT().IndexRefundableMsg(gomock.Any(), gomock.Any()).AnyTimes()
+	ictvFinalK.EXPECT().AddEventBtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	ictvFinalK.EXPECT().AddEventBtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+
+	ictvBstkK := types.NewMockIncentiveKeeper(ctrl)
+
+	ictvK := IctvKeeperK{
+		IncentiveKeeper: ictvFinalK,
+		mockBtcStk:      ictvBstkK,
+	}
 
 	db := dbm.NewMemDB()
 	stateStore := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
@@ -82,7 +110,7 @@ func NewHelper(
 	ckptKeeper := ftypes.NewMockCheckpointingKeeper(ctrl)
 	ckptKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(timestampedEpoch).AnyTimes()
 
-	return NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKeeper, ckptKeeper, iKeeper)
+	return NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKeeper, ckptKeeper, ictvK)
 }
 
 func NewHelperNoMocksCalls(
@@ -93,13 +121,19 @@ func NewHelperNoMocksCalls(
 	ctrl := gomock.NewController(t)
 
 	// mock refundable messages
-	iKeeper := ftypes.NewMockIncentiveKeeper(ctrl)
+	ictvFinalK := ftypes.NewMockIncentiveKeeper(ctrl)
+	ictvBstkK := types.NewMockIncentiveKeeper(ctrl)
+
+	ictvK := IctvKeeperK{
+		IncentiveKeeper: ictvFinalK,
+		mockBtcStk:      ictvBstkK,
+	}
 	db := dbm.NewMemDB()
 	stateStore := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
 
 	ckptKeeper := ftypes.NewMockCheckpointingKeeper(ctrl)
 
-	return NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKeeper, ckptKeeper, iKeeper)
+	return NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKeeper, ckptKeeper, ictvK)
 }
 
 func NewHelperWithStoreAndIncentive(
@@ -109,7 +143,7 @@ func NewHelperWithStoreAndIncentive(
 	btclcKeeper *types.MockBTCLightClientKeeper,
 	btccKForBtcStaking *types.MockBtcCheckpointKeeper,
 	btccKForFinality *ftypes.MockCheckpointingKeeper,
-	ictvKeeper ftypes.IncentiveKeeper,
+	ictvKeeper IctvKeeperI,
 ) *Helper {
 	k, _ := keepertest.BTCStakingKeeperWithStore(t, db, stateStore, nil, btclcKeeper, btccKForBtcStaking, ictvKeeper)
 	msgSrvr := keeper.NewMsgServerImpl(*k)

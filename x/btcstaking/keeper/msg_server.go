@@ -10,7 +10,6 @@ import (
 	btcckpttypes "github.com/babylonlabs-io/babylon/v3/x/btccheckpoint/types"
 
 	errorsmod "cosmossdk.io/errors"
-	"cosmossdk.io/math"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
@@ -24,6 +23,7 @@ import (
 	"github.com/babylonlabs-io/babylon/v3/btcstaking"
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
 	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
+	ictvtypes "github.com/babylonlabs-io/babylon/v3/x/incentive/types"
 )
 
 type msgServer struct {
@@ -750,23 +750,25 @@ func (ms msgServer) AddBsnRewards(goCtx context.Context, req *types.MsgAddBsnRew
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	// 4. Transfer funds from sender to module account
-	if err := ms.bankKeeper.SendCoinsFromAccountToModule(ctx, senderAddr, types.ModuleName, req.TotalRewards); err != nil {
+	// 4. Transfer funds from sender to incentives module account
+	if err := ms.bankKeeper.SendCoinsFromAccountToModule(ctx, senderAddr, ictvtypes.ModuleName, req.TotalRewards); err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	// 5. Distribute rewards according to ratios and collect event info
-	eventFpRewards, err := ms.distributeRewards(ctx, req.BsnConsumerId, req.TotalRewards, req.FpRatios)
+	eventFpRewards, babylonCommission, distributedRewards, err := ms.DistributeRewards(ctx, req.BsnConsumerId, req.TotalRewards, req.FpRatios)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	// 6. Emit typed event
 	event := &types.EventAddBsnRewards{
-		Sender:        req.Sender,
-		BsnConsumerId: req.BsnConsumerId,
-		TotalRewards:  req.TotalRewards,
-		FpRatios:      eventFpRewards,
+		Sender:             req.Sender,
+		BsnConsumerId:      req.BsnConsumerId,
+		TotalRewards:       req.TotalRewards,
+		BabylonCommission:  babylonCommission,
+		DistributedRewards: distributedRewards,
+		FpRatios:           eventFpRewards,
 	}
 
 	if err := ctx.EventManager().EmitTypedEvent(event); err != nil {
@@ -860,48 +862,56 @@ func (ms msgServer) validateFinalityProviders(ctx sdk.Context, fpRatios []types.
 	return nil
 }
 
-// distributeRewards allocates rewards to finality providers based on their ratios
-func (ms msgServer) distributeRewards(ctx sdk.Context, bsnConsumerId string, totalRewards sdk.Coins, fpRatios []types.FpRatio) ([]types.EventFpRewardInfo, error) {
+// DistributeRewards allocates rewards to finality providers based on their ratios with Babylon commission
+func (ms msgServer) DistributeRewards(ctx sdk.Context, bsnConsumerId string, totalRewards sdk.Coins, fpRatios []types.FpRatio) ([]types.EventFpRewardInfo, sdk.Coins, sdk.Coins, error) {
+	// 1. Get BSN consumer register and validate
+	consumerRegister, err := ms.BscKeeper.GetConsumerRegister(ctx, bsnConsumerId)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("BSN consumer not found: %w", err)
+	}
+
+	// 2. Calculate and collect Babylon commission
+	babylonCommission := ictvtypes.GetCoinsPortion(totalRewards, consumerRegister.BabylonRewardsCommission)
+	if err := ms.bankKeeper.SendCoinsFromModuleToModule(ctx, types.ModuleName, types.AccCommissionCollectorBSN, babylonCommission); err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to collect Babylon commission: %w", err)
+	}
+
+	// 3. Remaining rewards after Babylon commission
+	remainingRewards := totalRewards.Sub(babylonCommission...)
+
 	eventFpRewards := make([]types.EventFpRewardInfo, len(fpRatios))
 
 	for i, fpRatio := range fpRatios {
-		// Calculate reward amount for this finality provider
-		fpRewards := make(sdk.Coins, len(totalRewards))
-		for j, coin := range totalRewards {
-			amount := math.LegacyNewDecFromInt(coin.Amount).Mul(fpRatio.Ratio).TruncateInt()
-			fpRewards[j] = sdk.NewCoin(coin.Denom, amount)
+		// 4. Calculate this FP's total allocation from remaining rewards
+		fpTotalRewards := ictvtypes.GetCoinsPortion(remainingRewards, fpRatio.Ratio)
+
+		// 5. Get finality provider for commission rate
+		fp, err := ms.GetFinalityProvider(ctx, fpRatio.BtcPk.MustMarshal())
+		if err != nil {
+			return nil, nil, nil, fmt.Errorf("finality provider not found: %w", err)
 		}
 
-		// Add rewards to the finality provider's gauge through the incentive keeper
-		if err := ms.addRewardsToFinalityProvider(ctx, bsnConsumerId, fpRatio.BtcPk.MustMarshal(), fpRewards); err != nil {
-			return nil, fmt.Errorf("failed to add rewards to finality provider %s: %w", fpRatio.BtcPk.MarshalHex(), err)
+		// 6. Calculate FP commission using existing logic
+		fpCommission := ictvtypes.GetCoinsPortion(fpTotalRewards, *fp.Commission)
+
+		// 7. Add FP commission to existing reward gauge system via incentive module
+		ms.iKeeper.AccumulateRewardGaugeForFP(ctx, fp.Address(), fpCommission)
+
+		// 8. Remaining goes to BTC delegations via existing F1 system
+		delegatorRewards := fpTotalRewards.Sub(fpCommission...)
+		if err := ms.iKeeper.AddFinalityProviderRewardsForBtcDelegations(ctx, fp.Address(), delegatorRewards); err != nil {
+			return nil, nil, nil, fmt.Errorf("failed to add delegator rewards: %w", err)
 		}
 
-		// Collect event information
+		// 9. Collect event data
 		eventFpRewards[i] = types.EventFpRewardInfo{
-			BtcPk:         fpRatio.BtcPk,
-			Ratio:         fpRatio.Ratio,
-			ActualRewards: fpRewards,
+			BtcPk:            fpRatio.BtcPk,
+			Ratio:            fpRatio.Ratio,
+			TotalAllocated:   fpTotalRewards,
+			FpCommission:     fpCommission,
+			DelegatorRewards: delegatorRewards,
 		}
 	}
 
-	return eventFpRewards, nil
-}
-
-// addRewardsToFinalityProvider adds rewards to a specific finality provider's gauge
-func (ms msgServer) addRewardsToFinalityProvider(ctx sdk.Context, bsnConsumerId string, btcPk []byte, rewards sdk.Coins) error {
-	// This implementation integrates with the existing btcstaking reward system
-	// In a production environment, this would:
-	// 1. Find the finality provider's reward gauge
-	// 2. Add the rewards to the gauge
-	// 3. Update BTC delegation rewards tracker
-	// 4. Notify the incentive keeper about the new rewards
-
-	// For now, we'll log the reward allocation
-	ms.Logger(ctx).Info("Added rewards to finality provider",
-		"bsn_consumer_id", bsnConsumerId,
-		"btc_pk", fmt.Sprintf("%x", btcPk),
-		"rewards", rewards.String())
-
-	return nil
+	return eventFpRewards, babylonCommission, remainingRewards, nil
 }

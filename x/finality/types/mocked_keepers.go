@@ -8,6 +8,7 @@ import (
 	context "context"
 	reflect "reflect"
 
+	math "cosmossdk.io/math"
 	types "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 	types0 "github.com/babylonlabs-io/babylon/v3/x/epoching/types"
 	v2 "github.com/btcsuite/btcd/btcec/v2"
@@ -363,6 +364,34 @@ func (m *MockIncentiveKeeper) AddEventBtcDelegationUnbonded(ctx context.Context,
 func (mr *MockIncentiveKeeperMockRecorder) AddEventBtcDelegationUnbonded(ctx, height, fp, del, sat interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddEventBtcDelegationUnbonded", reflect.TypeOf((*MockIncentiveKeeper)(nil).AddEventBtcDelegationUnbonded), ctx, height, fp, del, sat)
+}
+
+// BtcDelegationActivated mocks base method.
+func (m *MockIncentiveKeeper) BtcDelegationActivated(ctx context.Context, fp, del types1.AccAddress, sat math.Int) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "BtcDelegationActivated", ctx, fp, del, sat)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// BtcDelegationActivated indicates an expected call of BtcDelegationActivated.
+func (mr *MockIncentiveKeeperMockRecorder) BtcDelegationActivated(ctx, fp, del, sat interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BtcDelegationActivated", reflect.TypeOf((*MockIncentiveKeeper)(nil).BtcDelegationActivated), ctx, fp, del, sat)
+}
+
+// BtcDelegationUnbonded mocks base method.
+func (m *MockIncentiveKeeper) BtcDelegationUnbonded(ctx context.Context, fp, del types1.AccAddress, sat math.Int) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "BtcDelegationUnbonded", ctx, fp, del, sat)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// BtcDelegationUnbonded indicates an expected call of BtcDelegationUnbonded.
+func (mr *MockIncentiveKeeperMockRecorder) BtcDelegationUnbonded(ctx, fp, del, sat interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BtcDelegationUnbonded", reflect.TypeOf((*MockIncentiveKeeper)(nil).BtcDelegationUnbonded), ctx, fp, del, sat)
 }
 
 // IndexRefundableMsg mocks base method.
