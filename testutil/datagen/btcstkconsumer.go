@@ -3,6 +3,7 @@ package datagen
 import (
 	"math/rand"
 
+	sdkmath "cosmossdk.io/math"
 	bsctypes "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
 )
 
@@ -15,6 +16,7 @@ func GenRandomCosmosConsumerRegister(r *rand.Rand) *bsctypes.ConsumerRegister {
 		ConsumerMetadata: &bsctypes.ConsumerRegister_CosmosConsumerMetadata{
 			CosmosConsumerMetadata: &bsctypes.CosmosConsumerMetadata{},
 		},
+		BabylonRewardsCommission: GenBabylonRewardsCommission(r),
 	}
 }
 
@@ -29,5 +31,10 @@ func GenRandomRollupRegister(r *rand.Rand, contractAddress string) *bsctypes.Con
 				FinalityContractAddress: contractAddress,
 			},
 		},
+		BabylonRewardsCommission: GenBabylonRewardsCommission(r),
 	}
+}
+
+func GenBabylonRewardsCommission(r *rand.Rand) sdkmath.LegacyDec {
+	return sdkmath.LegacyNewDecWithPrec(int64(RandomInt(r, 9)+1), 2)
 }

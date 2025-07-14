@@ -2,6 +2,8 @@ package types
 
 import (
 	"fmt"
+
+	"cosmossdk.io/math"
 )
 
 func (m *MsgRegisterConsumer) ValidateBasic() error {
@@ -14,25 +16,33 @@ func (m *MsgRegisterConsumer) ValidateBasic() error {
 	if len(m.ConsumerDescription) == 0 {
 		return fmt.Errorf("ConsumerDescription must be non-empty")
 	}
+	if m.BabylonCommission.IsNegative() {
+		return fmt.Errorf("babylon commission cannot be negative")
+	}
+	if m.BabylonCommission.GT(math.LegacyOneDec()) {
+		return fmt.Errorf("babylon commission cannot be greater than 1.0")
+	}
 	return nil
 }
 
-func NewCosmosConsumerRegister(consumerId, consumerName, consumerDescription string) *ConsumerRegister {
+func NewCosmosConsumerRegister(consumerId, consumerName, consumerDescription string, babylonCommission math.LegacyDec) *ConsumerRegister {
 	return &ConsumerRegister{
-		ConsumerId:          consumerId,
-		ConsumerName:        consumerName,
-		ConsumerDescription: consumerDescription,
+		ConsumerId:               consumerId,
+		ConsumerName:             consumerName,
+		ConsumerDescription:      consumerDescription,
+		BabylonRewardsCommission: babylonCommission,
 		ConsumerMetadata: &ConsumerRegister_CosmosConsumerMetadata{
 			CosmosConsumerMetadata: &CosmosConsumerMetadata{},
 		},
 	}
 }
 
-func NewRollupConsumerRegister(consumerId, consumerName, consumerDescription string, rollupFinalityContractAddress string) *ConsumerRegister {
+func NewRollupConsumerRegister(consumerId, consumerName, consumerDescription string, rollupFinalityContractAddress string, babylonCommission math.LegacyDec) *ConsumerRegister {
 	return &ConsumerRegister{
-		ConsumerId:          consumerId,
-		ConsumerName:        consumerName,
-		ConsumerDescription: consumerDescription,
+		ConsumerId:               consumerId,
+		ConsumerName:             consumerName,
+		ConsumerDescription:      consumerDescription,
+		BabylonRewardsCommission: babylonCommission,
 		ConsumerMetadata: &ConsumerRegister_RollupConsumerMetadata{
 			RollupConsumerMetadata: &RollupConsumerMetadata{
 				FinalityContractAddress: rollupFinalityContractAddress,

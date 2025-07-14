@@ -54,6 +54,7 @@ func (ms msgServer) RegisterConsumer(goCtx context.Context, req *types.MsgRegist
 			req.ConsumerName,
 			req.ConsumerDescription,
 			req.RollupFinalityContractAddress,
+			req.BabylonCommission,
 		)
 		if err := ms.Keeper.RegisterConsumer(goCtx, consumerRegister); err != nil {
 			return nil, err
@@ -73,6 +74,7 @@ func (ms msgServer) RegisterConsumer(goCtx context.Context, req *types.MsgRegist
 			req.ConsumerId,
 			req.ConsumerName,
 			req.ConsumerDescription,
+			req.BabylonCommission,
 		)
 		if err := ms.Keeper.RegisterConsumer(goCtx, consumerRegister); err != nil {
 			return nil, err
