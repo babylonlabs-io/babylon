@@ -454,7 +454,7 @@ func NewBTCUndelegateCmd() *cobra.Command {
 func NewSelectiveSlashingEvidenceCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "selective-slashing-evidence [recovered_fp_btc_sk]",
-		Args:  cobra.ExactArgs(2),
+		Args:  cobra.ExactArgs(1),
 		Short: "Add the recovered BTC SK of a finality provider that launched selective slashing offence.",
 		Long: strings.TrimSpace(
 			`Add the recovered BTC SK of a finality provider that launched selective slashing offence. The SK is recovered from a pair of Schnorr/adaptor signatures`, // TODO: example
