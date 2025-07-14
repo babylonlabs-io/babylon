@@ -136,13 +136,8 @@ func (f *FinalityProvider) SendSelectiveSlashingEvidence() {
 	})
 	require.NoError(f.t, err)
 
-	stkTxHex := resp.BtcDelegatorDelegations[0].Dels[0].StakingTxHex
-	tx, _, err := bbn.NewBTCTxFromHex(stkTxHex)
-	require.NoError(f.t, err)
-
 	msg := &bstypes.MsgSelectiveSlashingEvidence{
 		Signer:           f.AddressString(),
-		StakingTxHash:    tx.TxHash().String(),
 		RecoveredFpBtcSk: f.BTCPrivateKey.Serialize(),
 	}
 

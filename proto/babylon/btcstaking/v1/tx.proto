@@ -346,12 +346,7 @@ message MsgSelectiveSlashingEvidence {
   string signer = 1;
   // staking_tx_hash is the hash of the staking tx.
   // It uniquely identifies a BTC delegation
-  string staking_tx_hash = 2;
-  // recovered_fp_btc_sk is the BTC SK of the finality provider who
-  // launches the selective slashing offence. The SK is recovered by
-  // using a covenant adaptor signature and the corresponding Schnorr
-  // signature
-  bytes recovered_fp_btc_sk = 3;
+  bytes recovered_fp_btc_sk = 2;
 }
 // MsgSelectiveSlashingEvidenceResponse is the response for
 // MsgSelectiveSlashingEvidence

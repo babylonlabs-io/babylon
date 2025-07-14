@@ -292,18 +292,15 @@ message CovenantAdaptorSignatures {
 // equivocation. But such behaviour does not affect the system's security
 // or gives any benefit for the adversary
 message SelectiveSlashingEvidence {
-  // staking_tx_hash is the hash of the staking tx.
-  // It uniquely identifies a BTC delegation
-  string staking_tx_hash = 1;
   // fp_btc_pk is the BTC PK of the finality provider who
   // launches the selective slashing offence
-  bytes fp_btc_pk = 2
+  bytes fp_btc_pk = 1
       [ (gogoproto.customtype) =
             "github.com/babylonlabs-io/babylon/v3/types.BIP340PubKey" ];
   // recovered_fp_btc_sk is the finality provider's BTC SK recovered from
   // the covenant adaptor/Schnorr signature pair. It is the consequence
   // of selective slashing.
-  bytes recovered_fp_btc_sk = 3;
+  bytes recovered_fp_btc_sk = 2;
 }
 
 // InclusionProof proves the existence of tx on BTC blockchain

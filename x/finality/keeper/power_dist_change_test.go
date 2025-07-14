@@ -310,18 +310,8 @@ func FuzzDistributionCacheVpCheck_FpSlashedBeforeInclusionProof(f *testing.F) {
 		activeFps := vpDstCache.GetActiveFinalityProviderSet()
 		require.Equal(t, len(activeFps), int(createdFps))
 
-		// gets any active delegation from the fp to be slashed
-		var delSlashed *datagen.CreateDelegationInfo
-		for _, activeDel := range delegationInfosToIncludeProof {
-			if strings.EqualFold(fpToBeSlashed.BtcPk.MarshalHex(), activeDel.MsgCreateBTCDelegation.FpBtcPkList[0].MarshalHex()) {
-				delSlashed = activeDel
-				break
-			}
-		}
-
 		_, err := msgSrvrBtcStk.SelectiveSlashingEvidence(ctx, &btcstktypes.MsgSelectiveSlashingEvidence{
 			Signer:           datagen.GenRandomAddress().String(),
-			StakingTxHash:    delSlashed.StakingTxHash,
 			RecoveredFpBtcSk: fpSlashedSK.Serialize(),
 		})
 		require.NoError(t, err)
