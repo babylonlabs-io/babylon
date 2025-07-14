@@ -31,7 +31,7 @@ func TestCheckTxFeeWithGlobalMinGasPrices(t *testing.T) {
 	require.NoError(t, err)
 
 	feeAmount := int64(1000)
-	ctx := sdk.Context{}
+	ctx := sdk.Context{}.WithBlockHeight(10)
 
 	testCases := []struct {
 		name       string
