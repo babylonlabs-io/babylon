@@ -499,7 +499,7 @@ func TestMsgAddBsnRewardsValidateBasic(t *testing.T) {
 				TotalRewards:  sdk.NewCoins(sdk.NewCoin("ubbn", math.NewInt(0))),
 				FpRatios:      validFpRatios,
 			},
-			expected: fmt.Errorf("total rewards must be positive"),
+			expected: fmt.Errorf("empty total rewards"),
 		},
 		{
 			name: "negative total rewards",
@@ -509,7 +509,7 @@ func TestMsgAddBsnRewardsValidateBasic(t *testing.T) {
 				TotalRewards:  sdk.Coins{sdk.Coin{Denom: "ubbn", Amount: math.NewInt(-100)}},
 				FpRatios:      validFpRatios,
 			},
-			expected: fmt.Errorf("total rewards must be positive"),
+			expected: fmt.Errorf("invalid total rewards: coin -100ubbn amount is not positive"),
 		},
 		{
 			name: "invalid coin denomination",
@@ -717,6 +717,46 @@ func TestMsgAddBsnRewardsValidateBasic(t *testing.T) {
 				},
 			},
 			expected: fmt.Errorf("duplicate finality provider BTC public key at index 2: %s", validBtcPk1.MarshalHex()),
+		},
+		{
+			name: "rewards with different denominations",
+			msg: &types.MsgAddBsnRewards{
+				Sender:        validAddr,
+				BsnConsumerId: validBsnConsumerId,
+				TotalRewards: sdk.NewCoins(
+					sdk.NewCoin("ubbn", math.NewInt(1000000)),
+					sdk.NewCoin("uatom", math.NewInt(500000)),
+					sdk.NewCoin("ustake", math.NewInt(250000)),
+				),
+				FpRatios: validFpRatios,
+			},
+			expected: nil,
+		},
+		{
+			name: "rewards with mixed valid and invalid denominations",
+			msg: &types.MsgAddBsnRewards{
+				Sender:        validAddr,
+				BsnConsumerId: validBsnConsumerId,
+				TotalRewards: sdk.Coins{
+					sdk.NewCoin("ubbn", math.NewInt(1000000)),
+					sdk.Coin{Denom: "invalid-denom!", Amount: math.NewInt(500000)}, // Invalid denom with special char
+				},
+				FpRatios: validFpRatios,
+			},
+			expected: fmt.Errorf("invalid total rewards: invalid denom: invalid-denom!"),
+		},
+		{
+			name: "rewards with empty denomination",
+			msg: &types.MsgAddBsnRewards{
+				Sender:        validAddr,
+				BsnConsumerId: validBsnConsumerId,
+				TotalRewards: sdk.Coins{
+					sdk.NewCoin("ubbn", math.NewInt(1000000)),
+					sdk.Coin{Denom: "", Amount: math.NewInt(500000)},
+				},
+				FpRatios: validFpRatios,
+			},
+			expected: fmt.Errorf("invalid total rewards: invalid denom: "),
 		},
 	}
 

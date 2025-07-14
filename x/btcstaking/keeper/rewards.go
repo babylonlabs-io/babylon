@@ -2,12 +2,52 @@ package keeper
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/babylonlabs-io/babylon/v3/app/params"
+	bbntypes "github.com/babylonlabs-io/babylon/v3/types"
 	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 	ictvtypes "github.com/babylonlabs-io/babylon/v3/x/incentive/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
+
+// DistributeComissionAndBsnRewards allocates rewards to finality providers based on their ratios with Babylon commission
+func (k Keeper) DistributeComissionAndBsnRewards(
+	ctx sdk.Context,
+	bsnConsumerId string,
+	totalRewards sdk.Coins,
+	fpRatios []types.FpRatio,
+) (evtFpRatios []types.EventFpRewardInfo, bbnCommission sdk.Coins, err error) {
+	// 1. Calculate and collect Babylon commission
+	babylonCommission, remainingRewards, err := k.CollectBabylonCommission(ctx, bsnConsumerId, totalRewards)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	evtFpRewards := make([]types.EventFpRewardInfo, len(fpRatios))
+
+	for i, fpRatio := range fpRatios {
+		// 2. Calculate this FP's total allocation from remaining rewards
+		fpRewards := ictvtypes.GetCoinsPortion(remainingRewards, fpRatio.Ratio)
+
+		// 3. Distribute FP commission and delegator rewards
+		fpCommission, delegatorRewards, err := k.DistributeFpCommissionAndBtcDelRewards(ctx, bsnConsumerId, *fpRatio.BtcPk, fpRewards)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		// 4. Collect event data
+		evtFpRewards[i] = types.EventFpRewardInfo{
+			BtcPk:            fpRatio.BtcPk,
+			Ratio:            fpRatio.Ratio,
+			TotalAllocated:   fpRewards,
+			FpCommission:     fpCommission,
+			DelegatorRewards: delegatorRewards,
+		}
+	}
+
+	return evtFpRewards, babylonCommission, nil
+}
 
 // CollectBabylonCommission calculates and collects Babylon commission
 // based on the commission set in the BSN consumer registry, sends it to the
@@ -39,64 +79,32 @@ func (k Keeper) CollectBabylonCommission(
 // splitting between FP commission and delegator rewards
 func (k Keeper) DistributeFpCommissionAndBtcDelRewards(
 	ctx sdk.Context,
-	fpRatio types.FpRatio,
+	bsnConsumerId string,
+	fpBtcPk bbntypes.BIP340PubKey,
 	fpRewards sdk.Coins,
 ) (fpCommission sdk.Coins, delegatorRewards sdk.Coins, err error) {
 	// 1. Get finality provider for commission rate
-	fp, err := k.GetFinalityProvider(ctx, fpRatio.BtcPk.MustMarshal())
+	fp, err := k.GetFinalityProvider(ctx, fpBtcPk.MustMarshal())
 	if err != nil {
 		return nil, nil, fmt.Errorf("finality provider not found: %w", err)
 	}
 
-	// 2. Calculate FP commission using existing logic
+	// 2. Validate that FP belongs to the specified BSN consumer
+	if !strings.EqualFold(fp.BsnId, bsnConsumerId) {
+		return nil, nil, fmt.Errorf("finality provider %s belongs to BSN consumer %s, not %s", fpBtcPk.MarshalHex(), fp.BsnId, bsnConsumerId)
+	}
+
+	// 3. Calculate FP commission
 	fpCommission = ictvtypes.GetCoinsPortion(fpRewards, *fp.Commission)
 
-	// 3. Add FP commission to existing reward gauge system via incentive module
+	// 4. Add FP commission to existing reward gauge system via incentive module
 	k.ictvKeeper.AccumulateRewardGaugeForFP(ctx, fp.Address(), fpCommission)
 
-	// 4. Remaining goes to BTC delegations via existing F1 system
+	// 5. Remaining goes to BTC delegations via existing F1 system
 	delegatorRewards = fpRewards.Sub(fpCommission...)
 	if err := k.ictvKeeper.AddFinalityProviderRewardsForBtcDelegations(ctx, fp.Address(), delegatorRewards); err != nil {
 		return nil, nil, fmt.Errorf("failed to add delegator rewards: %w", err)
 	}
 
 	return fpCommission, delegatorRewards, nil
-}
-
-// DistributeComissionAndBsnRewards allocates rewards to finality providers based on their ratios with Babylon commission
-func (k Keeper) DistributeComissionAndBsnRewards(
-	ctx sdk.Context,
-	bsnConsumerId string,
-	totalRewards sdk.Coins,
-	fpRatios []types.FpRatio,
-) (evtFpRatios []types.EventFpRewardInfo, bbnCommission sdk.Coins, err error) {
-	// 1. Calculate and collect Babylon commission
-	babylonCommission, remainingRewards, err := k.CollectBabylonCommission(ctx, bsnConsumerId, totalRewards)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	evtFpRewards := make([]types.EventFpRewardInfo, len(fpRatios))
-
-	for i, fpRatio := range fpRatios {
-		// 2. Calculate this FP's total allocation from remaining rewards
-		fpRewards := ictvtypes.GetCoinsPortion(remainingRewards, fpRatio.Ratio)
-
-		// 3. Distribute FP commission and delegator rewards
-		fpCommission, delegatorRewards, err := k.DistributeFpCommissionAndBtcDelRewards(ctx, fpRatio, fpRewards)
-		if err != nil {
-			return nil, nil, err
-		}
-
-		// 4. Collect event data
-		evtFpRewards[i] = types.EventFpRewardInfo{
-			BtcPk:            fpRatio.BtcPk,
-			Ratio:            fpRatio.Ratio,
-			TotalAllocated:   fpRewards,
-			FpCommission:     fpCommission,
-			DelegatorRewards: delegatorRewards,
-		}
-	}
-
-	return evtFpRewards, babylonCommission, nil
 }
