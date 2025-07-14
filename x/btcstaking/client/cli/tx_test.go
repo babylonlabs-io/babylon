@@ -1,6 +1,7 @@
 package cli_test
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"math/rand"
@@ -8,6 +9,12 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
+	abci "github.com/cometbft/cometbft/abci/types"
+	cmtbytes "github.com/cometbft/cometbft/libs/bytes"
+	rpcclient "github.com/cometbft/cometbft/rpc/client"
+	rpcclientmock "github.com/cometbft/cometbft/rpc/client/mock"
+	coretypes "github.com/cometbft/cometbft/rpc/core/types"
+	cmttypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
@@ -22,16 +29,41 @@ import (
 	btcstakingcli "github.com/babylonlabs-io/babylon/v3/x/btcstaking/client/cli"
 )
 
+type mockCometRPC struct {
+	rpcclientmock.Client
+	responseQuery abci.ResponseQuery
+}
+
+func newMockCometRPC(respQuery abci.ResponseQuery) mockCometRPC {
+	return mockCometRPC{responseQuery: respQuery}
+}
+
+func (mockCometRPC) BroadcastTxSync(_ context.Context, _ cmttypes.Tx) (*coretypes.ResultBroadcastTx, error) {
+	return &coretypes.ResultBroadcastTx{}, nil
+}
+
+func (m mockCometRPC) ABCIQueryWithOptions(
+	_ context.Context,
+	_ string, _ cmtbytes.HexBytes,
+	_ rpcclient.ABCIQueryOptions,
+) (*coretypes.ResultABCIQuery, error) {
+	return &coretypes.ResultABCIQuery{Response: m.responseQuery}, nil
+}
+
 // setupClientCtx creates a test client context for CLI testing
 func setupClientCtx(t *testing.T) (client.Context, []sdk.AccAddress) {
 	t.Helper()
 	encCfg := app.GetEncodingConfig()
 	kr := keyring.NewInMemory(encCfg.Codec)
 
+	bz, _ := encCfg.Codec.Marshal(&sdk.TxResponse{})
+	c := newMockCometRPC(abci.ResponseQuery{Value: bz})
+
 	clientCtx := client.Context{}.
 		WithKeyring(kr).
 		WithTxConfig(encCfg.TxConfig).
 		WithCodec(encCfg.Codec).
+		WithClient(c).
 		WithAccountRetriever(client.MockAccountRetriever{}).
 		WithOutput(io.Discard).
 		WithChainID("test-chain")
