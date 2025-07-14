@@ -39,7 +39,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
-- [#1304](https://github.com/babylonlabs-io/babylon/pull/304) Update rollup finality e2e tests
+- [#1348](https://github.com/babylonlabs-io/babylon/pull/1348) Remove IsSimpleTransfer and IsTransferTx
+- [#1304](https://github.com/babylonlabs-io/babylon/pull/1304) Update rollup finality e2e tests
 - [#1300](https://github.com/babylonlabs-io/babylon/pull/1300) x/btcstaking handles fp ops
 - [#1295](https://github.com/babylonlabs-io/babylon/pull/1295) Rename
 `consumer_id` to `bsn_id` for finality providers
@@ -104,6 +105,9 @@ check of rewards
 - [#1062](https://github.com/babylonlabs-io/babylon/pull/1062) Add `anteHandler` to avoid fee grants on refundable tx (`x/incentive`)
 - [#1231](https://github.com/babylonlabs-io/babylon/pull/1231) Add BTC stake expansion.
 - [#1335](https://github.com/babylonlabs-io/babylon/pull/1335) Tweaks on BTC stake expansion feature.
+- [#1343](https://github.com/babylonlabs-io/babylon/pull/1343) Adjust `testnet`
+command to modify `max-finality-providers` parameter.
+- [#1352](https://github.com/babylonlabs-io/babylon/pull/1352) Add stake expansion signatures in BTC delegation query response
 
 ### State Machine Breaking
 
@@ -116,6 +120,10 @@ transfer stack
 when the babylon block is being BTC rewarded.
 - [#1296](https://github.com/babylonlabs-io/babylon/pull/1296) IBC events are only
 queued for cosmos bsns
+- [#1328](https://github.com/babylonlabs-io/babylon/pull/1328) Add global limit
+for multistaking fps
+- [#1344](https://github.com/babylonlabs-io/babylon/pull/1344) Bump cosmos-sdk and
+remove send restrictions
 
 ### Bug fixes
 
@@ -130,6 +138,8 @@ between different signing operations
 - [#1318](https://github.com/babylonlabs-io/babylon/pull/1318) fix: propagation of
 secret key in slashing
 - [#1325](https://github.com/babylonlabs-io/babylon/pull/1325) fix: add signing context to `EvidenceResponse` message
+- [#1337](https://github.com/babylonlabs-io/babylon/pull/1337) fix: update proto gen
+- [#1355](https://github.com/babylonlabs-io/babylon/pull/1355) Allow empty fees on genesis transactions
 
 ## v2.2.0
 

@@ -23,6 +23,7 @@ import (
 	btccheckpointtypes "github.com/babylonlabs-io/babylon/v3/x/btccheckpoint/types"
 	blctypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
 	btclighttypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
+	btcstktypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 	finalitytypes "github.com/babylonlabs-io/babylon/v3/x/finality/types"
 	minttypes "github.com/babylonlabs-io/babylon/v3/x/mint/types"
 	ratelimiter "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/types"
@@ -257,6 +258,11 @@ func initGenesis(
 		return fmt.Errorf("failed to update rate limiter genesis state: %w", err)
 	}
 
+	err = updateModuleGenesis(appGenState, btcstktypes.ModuleName, &btcstktypes.GenesisState{}, updateBtcStakingGenesis)
+	if err != nil {
+		return fmt.Errorf("failed to update rate limiter genesis state: %w", err)
+	}
+
 	bz, err := json.MarshalIndent(appGenState, "", "  ")
 	if err != nil {
 		return err
@@ -346,6 +352,11 @@ func updateFinalityGenesis(finalityGenState *finalitytypes.GenesisState) {
 	finalityGenState.Params.FinalityActivationHeight = 0
 	finalityGenState.Params.FinalitySigTimeout = 4
 	finalityGenState.Params.SignedBlocksWindow = 300
+}
+
+func updateBtcStakingGenesis(btcStakingGenState *btcstktypes.GenesisState) {
+	// bump max finality providers to 5 in e2e and replay tests
+	btcStakingGenState.Params[0].MaxFinalityProviders = 5
 }
 
 func updateGenUtilGenesis(c *internalChain) func(*genutiltypes.GenesisState) {
