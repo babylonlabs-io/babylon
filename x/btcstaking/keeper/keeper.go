@@ -24,7 +24,7 @@ type (
 		btclcKeeper types.BTCLightClientKeeper
 		btccKeeper  types.BtcCheckpointKeeper
 		BscKeeper   types.BTCStkConsumerKeeper
-		iKeeper     types.IncentiveKeeper
+		ictvKeeper  types.IncentiveKeeper
 		bankKeeper  types.BankKeeper
 
 		Schema                       collections.Schema
@@ -64,7 +64,7 @@ func NewKeeper(
 		btclcKeeper:             btclcKeeper,
 		btccKeeper:              btccKeeper,
 		BscKeeper:               bscKeeper,
-		iKeeper:                 iKeeper,
+		ictvKeeper:              iKeeper,
 		bankKeeper:              bankKeeper,
 
 		AllowedStakingTxHashesKeySet: collections.NewKeySet(

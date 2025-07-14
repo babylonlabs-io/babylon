@@ -339,9 +339,18 @@ func (m *MsgAddBsnRewards) ValidateBasic() error {
 		return fmt.Errorf("empty finality provider ratios")
 	}
 
-	// 5. Validate each FP ratio and ensure sum equals 1.0
+	// 5. Validate each FP ratio, check for duplicates, and ensure sum equals 1.0
+	btcPkSet := make(map[string]struct{})
 	ratioSum := math.LegacyZeroDec()
 	for i, fpRatio := range m.FpRatios {
+		// Check for duplicate finality providers
+		btcPkHex := fpRatio.BtcPk.MarshalHex()
+		if _, exists := btcPkSet[btcPkHex]; exists {
+			return fmt.Errorf("duplicate finality provider BTC public key at index %d: %s", i, btcPkHex)
+		}
+		btcPkSet[btcPkHex] = struct{}{}
+
+		// Validate individual FP ratio
 		if err := fpRatio.ValidateBasic(); err != nil {
 			return fmt.Errorf("finality provider %d: %w", i, err)
 		}

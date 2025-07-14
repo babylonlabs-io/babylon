@@ -297,13 +297,8 @@ message EventAddBsnRewards {
     (gogoproto.nullable) = false,
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
   ];
-  // DistributedRewards is the amount distributed to finality providers after Babylon commission
-  repeated cosmos.base.v1beta1.Coin distributed_rewards = 5 [
-    (gogoproto.nullable) = false,
-    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
-  ];
   // FpRatios contains the finality providers and their respective reward ratios
-  repeated EventFpRewardInfo fp_ratios = 6 [(gogoproto.nullable) = false];
+  repeated EventFpRewardInfo fp_ratios = 5 [(gogoproto.nullable) = false];
 }
 
 // EventFpRewardInfo contains finality provider reward information for events

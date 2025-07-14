@@ -17,9 +17,6 @@ const (
 
 	// MemStoreKey defines the in-memory store key
 	MemStoreKey = "mem_btcstaking"
-
-	// AccCommissionCollectorBSN is the module account that collects Babylon's commission from BSN rewards
-	AccCommissionCollectorBSN = "commission_collector_bsn"
 )
 
 var (

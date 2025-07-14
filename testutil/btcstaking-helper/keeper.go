@@ -45,7 +45,7 @@ type IctvKeeperI interface {
 	types.IncentiveKeeper
 }
 
-// IctvKeeperK this structure is only test usefull
+// IctvKeeperK this structure is only test useful
 // It wraps two instances of the incentive keeper to create the test suite
 type IctvKeeperK struct {
 	ftypes.IncentiveKeeper

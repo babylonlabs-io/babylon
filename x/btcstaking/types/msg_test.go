@@ -676,6 +676,48 @@ func TestMsgAddBsnRewardsValidateBasic(t *testing.T) {
 			},
 			expected: nil,
 		},
+		{
+			name: "duplicate finality provider BTC public keys",
+			msg: &types.MsgAddBsnRewards{
+				Sender:        validAddr,
+				BsnConsumerId: validBsnConsumerId,
+				TotalRewards:  validTotalRewards,
+				FpRatios: []types.FpRatio{
+					{
+						BtcPk: validBtcPk1,
+						Ratio: math.LegacyNewDecWithPrec(5, 1), // 0.5
+					},
+					{
+						BtcPk: validBtcPk1, // Same BTC public key as above
+						Ratio: math.LegacyNewDecWithPrec(5, 1), // 0.5
+					},
+				},
+			},
+			expected: fmt.Errorf("duplicate finality provider BTC public key at index 1: %s", validBtcPk1.MarshalHex()),
+		},
+		{
+			name: "duplicate finality provider with three FPs (duplicate at index 2)",
+			msg: &types.MsgAddBsnRewards{
+				Sender:        validAddr,
+				BsnConsumerId: validBsnConsumerId,
+				TotalRewards:  validTotalRewards,
+				FpRatios: []types.FpRatio{
+					{
+						BtcPk: validBtcPk1,
+						Ratio: math.LegacyNewDecWithPrec(4, 1), // 0.4
+					},
+					{
+						BtcPk: validBtcPk2,
+						Ratio: math.LegacyNewDecWithPrec(3, 1), // 0.3
+					},
+					{
+						BtcPk: validBtcPk1, // Duplicate of first FP
+						Ratio: math.LegacyNewDecWithPrec(3, 1), // 0.3
+					},
+				},
+			},
+			expected: fmt.Errorf("duplicate finality provider BTC public key at index 2: %s", validBtcPk1.MarshalHex()),
+		},
 	}
 
 	for _, tc := range testCases {

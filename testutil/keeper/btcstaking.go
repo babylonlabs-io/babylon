@@ -67,7 +67,7 @@ func BTCStakingKeeperWithStore(
 		btccKeeper,
 		bscKeeper,
 		iKeeper,
-		BankKeeper(t, db, stateStore, AccountKeeper(t, db, stateStore)),
+		nil,
 
 		&chaincfg.SimNetParams,
 		appparams.AccBTCStaking.String(),
