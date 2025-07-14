@@ -1,35 +1,34 @@
-# BTC Staking Consumer
+BTC Staking Consumer
 
 The `btcstkconsumer` module is a core component of the Babylon protocol responsible for managing the registration and
 lifecycle of external blockchains, known as consumers or BSNs (Bitcoin-Secured Networks). These BSNs leverage
 Babylon's Bitcoin-staked security to enhance their own economic guarantees.
 
-This module acts as a central registry, maintaining a canonical list of all BSNs, their metadata, and the
-finality providers associated with them. It provides the necessary logic for registering new BSNs,
-querying their information, and enforcing integration policies defined by the Babylon network's governance.
+This module acts as a central registry, maintaining a canonical list of all BSNs and their metadata. It provides the
+necessary logic for registering new BSNs, querying their information, and enforcing integration policies defined by 
+the Babylon network's governance. All logic related to the Finality Providers (FPs) that secure these BSNs is 
+handled by the `x/btcstaking` module.
 
 ## Table of Contents
 
 1.  [Concepts](#1-concepts)
-*   [1.1. Consumer/BSN](#11-consumerbsn)
-*   [1.2. Consumer Registration](#12-consumerbsn-registration)
-*   [1.3. Consumer Types](#13-consumerbsn-types)
-*   [1.4. Finality Provider Registry](#14-finality-provider-registry)
-*   [1.5. Permissioned vs. Permissionless Integration](#15-permissioned-vs-permissionless-integration)
+    *   [1.1. Consumer/BSN](#11-consumerbsn)
+    *   [1.2. Consumer/BSN Registration](#12-consumerbsn-registration)
+    *   [1.3. Consumer/BSN Types](#13-consumerbsn-types)
+    *   [1.4. Finality Provider Management](#14-finality-provider-management)
+    *   [1.5. Permissioned vs. Permissionless Integration](#15-permissioned-vs-permissionless-integration)
 2.  [State](#2-state)
-*   [2.1. Parameters](#21-parameters)
-*   [2.2. Consumer Registry](#22-consumer-registry)
-*   [2.3. Finality Provider Mappings](#23-finality-provider-mappings)
+    *   [2.1. Parameters](#21-parameters)
+    *   [2.2. Consumer Registry](#22-consumer-registry)
 3.  [Messages](#3-messages)
-*   [3.1. `MsgRegisterConsumer`](#31-msgregisterconsumer)
-*   [3.2. `MsgUpdateParams`](#32-msgupdateparams)
+    *   [3.1. `MsgRegisterConsumer`](#31-msgregisterconsumer)
+    *   [3.2. `MsgUpdateParams`](#32-msgupdateparams)
 4.  [BeginBlocker / EndBlocker](#4-beginblocker--endblocker)
 5.  [Events](#5-events)
-*   [5.1. `EventConsumerRegistered`](#51-eventconsumerregistered)
+    *   [5.1. `EventConsumerRegistered`](#51-eventconsumerregistered)
 6.  [Queries](#6-queries)
-*   [6.1. Parameters Queries](#61-parameters-queries)
-*   [6.2. Consumer Queries](#62-consumer-queries)
-*   [6.3. Finality Provider Queries](#63-finality-provider-queries)
+    *   [6.1. Parameters Queries](#61-parameters-queries)
+    *   [6.2. Consumer Queries](#62-consumer-queries)
 
 ## 1. Concepts
 
@@ -55,7 +54,7 @@ The module supports two primary types of BSN integrations:
 *   **Description**: A blockchain built with the Cosmos SDK that integrates with Babylon via an IBC channel.
 *   **Identifier (`consumer_id`)**: The IBC Client ID (`e.g., 07-cometbft-0`) that Babylon uses to track the state of
     the BSN chain.
-*   **Integration Logic**: The module verifies the existence of the specified IBC client on Babylon before completing
+*   **Integration Logic**: The module verifies the existence of the specified IBC client on Babylon before completing 
     the registration.
 
 #### 1.3.2. Rollup Consumer/BSN
@@ -67,25 +66,26 @@ The module supports two primary types of BSN integrations:
 *   **Integration Logic**: The registration requires the address of a `RollupFinalityContractAddress`,
     which must be a valid, deployed CosmWasm contract on the Babylon chain. The module verifies the contract's existence.
 
-### 1.4. Finality Provider Registry
+### 1.4. Finality Provider Management
 
-While the main `x/btcstaking` module manages the global set of Finality Providers (FPs), the `btcstkconsumer` module
-maintains a separate, crucial mapping: it links each FP to the specific BSN it serves. This ensures that rewards,
-slashing, and other operations can be correctly attributed to the BSN that an FP is securing.
+The `x/btcstaking` module is solely responsible for managing the global set of Finality Providers (FPs), including both
+Babylon's genesis FPs and those that secure consumer BSNs. It maintains the crucial mapping that links each FP to the
+specific BSN it serves. This centralization ensures that all logic related to FP registration, rewards, and slashing
+is handled in a single module.
 
-The registry is designed for efficient lookups:
-1.  Query all FPs for a given BSN.
-2.  Query the BSN that a specific FP is registered to.
+The `btcstkconsumer` module does **not** store any information about finality providers; it only serves as a registry
+for BSN metadata. All queries related to which FPs are securing a BSN, or which BSN an FP is securing, must be
+directed to the `x/btcstaking` module.
 
 ### 1.5. Permissioned vs. Permissionless Integration
 
 The module can operate in two modes, controlled by the `PermissionedIntegration` parameter:
 
 *   **Permissionless (Default)**: Any user can submit a `MsgRegisterConsumer` transaction to register a new BSN,
-provided the integration requirements (e.g., existing IBC client or Wasm contract) are met.
+    provided the integration requirements (e.g., existing IBC client or Wasm contract) are met.
 *   **Permissioned**: New BSN registrations can only be executed through a governance proposal. The `signer` of
-the `MsgRegisterConsumer` must be the governance module's account address. This allows the Babylon DAO to curate
-which chains can connect.
+    the `MsgRegisterConsumer` must be the governance module's account address. This allows the Babylon DAO to curate
+    which chains can connect.
 
 ## 2. State
 
@@ -101,7 +101,6 @@ The module's behavior is governed by a set of parameters, stored as a single obj
 
 ```protobuf
 // x/btcstkconsumer/types/params.pb.go
-// Params defines the parameters for the module.
 message Params {
     // permissioned_integration is a flag to enable permissioned integration, i.e.,
     // requiring governance proposal to approve new integrations.
@@ -109,8 +108,8 @@ message Params {
 }
 ```
 
-| Parameter | Type | Default | Description                                                     |
-| :--- | :--- | :--- |:----------------------------------------------------------------|
+| Parameter               | Type   | Default | Description                                                     |
+| :---------------------- | :----- | :------ | :-------------------------------------------------------------- |
 | `PermissionedIntegration` | `bool` | `false` | If `true`, new BSN registration requires a governance proposal. |
 
 ### 2.2. Consumer Registry
@@ -126,56 +125,24 @@ about a BSN.
 
 ```protobuf
 // x/btcstkconsumer/types/btcstkconsumer.pb.go
-// ConsumerRegister is the registration information of a consumer
 message ConsumerRegister {
-    // consumer_id is the ID of the consumer
-    string consumer_id = 1;
-    // consumer_name is the name of the consumer
-    string consumer_name = 2;
-    // consumer_description is a description for the consumer (can be empty)
-    string consumer_description = 3;
-    
-    // consumer_metadata is necessary metadata of the consumer
-    oneof consumer_metadata {
+  // consumer_id is the ID of the consumer
+  // - for Cosmos SDK chains, the consumer ID will be the IBC client ID
+  // - for rollup chains, the consumer ID will be the chain ID of the rollup
+  //   chain
+  string consumer_id = 1;
+  // consumer_name is the name of the consumer
+  string consumer_name = 2;
+  // consumer_description is a description for the consumer (can be empty)
+  string consumer_description = 3;
+  // consumer_metadata is necessary metadata of the consumer, and the data
+  // depends on the type of integration
+  oneof consumer_metadata {
     CosmosConsumerMetadata cosmos_consumer_metadata = 4;
     RollupConsumerMetadata rollup_consumer_metadata = 5;
-    }
-    }
-    
-    // CosmosConsumerMetadata is the metadata for the Cosmos integration
-    message CosmosConsumerMetadata {
-    // channel_id defines the IBC channel ID for the consumer chain
-    string channel_id = 1;
-    }
-    
-    // RollupConsumerMetadata is the metadata for the rollup integration
-    message RollupConsumerMetadata {
-    // finality_contract_address is the address of the finality contract for
-    // the rollup integration
-    string finality_contract_address = 1;
+  };
 }
 ```
-
-### 2.3. Finality Provider Mappings
-
-The module maintains two stores to manage the relationship between BSNs and their dedicated finality providers.
-
-#### 2.3.1. Finality Providers per Consumer/BSN
-
-This store maps a BSNs to its set of finality providers.
-
-*   **State Object**: `btcstaking.FinalityProvider`
-*   **Store Key**: `types.ConsumerFinalityProviderKey (0x02) | []byte(consumerID) | fpBTCPK.MustMarshal()`
-*   **Value**: Marshaled `FinalityProvider` object.
-*   **Description**: Allows for efficient retrieval of all FPs registered to a specific BSN.
-
-#### 2.3.2. Consumer/BSN per Finality Provider
-
-This store serves as a reverse index to quickly find which BSN a given finality provider belongs to.
-
-*   **Store Key**: `types.ConsumerFinalityProviderChainKey (0x03) | fpBTCPK.MustMarshal()`
-*   **Value**: `[]byte(consumerID)`
-*   **Description**: Crucial for operations that start with an FP and need to identify its BSN context.
 
 ## 3. Messages
 
@@ -187,47 +154,63 @@ This message is used to register a new BSN chain with Babylon. It is defined in 
 
 ```protobuf
 // x/btcstkconsumer/types/tx.pb.go
-// MsgRegisterConsumer defines a message for registering BSNs to the btcstkconsumer module.
+// MsgRegisterConsumer defines a message for registering Consumers to the
+// btcstkconsumer module.
 message MsgRegisterConsumer {
-    string signer = 1;
-    // consumer_id is the ID of the consumer
-    string consumer_id = 2;
-    // consumer_name is the name of the consumer
-    string consumer_name = 3;
-    // consumer_description is a description for the consumer (can be empty)
-    string consumer_description = 4;
-    // rollup_finality_contract_address is the address of the finality contract.
-    // (if set, then this means this is a rollup integration)
-    string rollup_finality_contract_address = 5;
+  option (cosmos.msg.v1.signer) = "signer";
+
+  string signer = 1;
+  // consumer_id is the ID of the consumer
+  string consumer_id = 2;
+  // consumer_name is the name of the consumer
+  string consumer_name = 3;
+  // consumer_description is a description for the consumer (can be empty)
+  string consumer_description = 4;
+  // rollup_finality_contract_address is the address of the
+  // finality contract. The finality contract is deployed on Babylon and
+  // serves as the data availability layer for finality signatures of the rollup.
+  // (if set, then this means this is a rollup integration)
+  string rollup_finality_contract_address = 5 [(cosmos_proto.scalar) = "cosmos.AddressString"];
 }
 ```
 
 **Validation & Logic:**
+
 1.  The `ConsumerId`, `ConsumerName`, and `ConsumerDescription` fields cannot be empty.
 2.  If `PermissionedIntegration` is `true`, the `Signer` must be the governance module's authority address.
 3.  If `RollupFinalityContractAddress` is provided, the message is handled as a **Rollup Consumer/BSN**:
-*   The module verifies that the address corresponds to an existing CosmWasm contract.
+    *   The module verifies that the address corresponds to an existing CosmWasm contract.
 4.  If `RollupFinalityContractAddress` is empty, it is handled as a **Cosmos Consumer/BSN**:
-*   The module verifies that `ConsumerId` corresponds to an existing IBC client state.
+    *   The module verifies that `ConsumerId` corresponds to an existing IBC client state.
 5.  It checks that the `ConsumerId` is not already registered to prevent duplicates.
 6.  On success, it persists the `ConsumerRegister` object and emits an `EventConsumerRegistered`.
 
 ### 3.2. `MsgUpdateParams`
 
-This message is used to update the module's parameters. It is a governance-gated operation. It is defined in `x/btcstkconsumer/types/tx.pb.go`.
+This message is used to update the module's parameters. It is a governance-gated operation. It is defined in
+`x/btcstkconsumer/types/tx.pb.go`.
 
 ```protobuf
 // x/btcstkconsumer/types/tx.pb.go
-// MsgUpdateParams is the Msg/UpdateParams request type.
 message MsgUpdateParams {
-    // authority is the address that controls the module (defaults to x/gov unless overwritten).
-    string authority = 1;
-    // params defines the module parameters to update.
-    Params params = 2;
+  option (cosmos.msg.v1.signer) = "authority";
+  option (amino.name) = "babylon/x/btcstkconsumer/v1/MsgUpdateParams";
+
+  // authority is the address that controls the module (defaults to x/gov unless overwritten).
+  string authority = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // params defines the module parameters to update.
+  //
+  // NOTE: All parameters must be supplied.
+  Params params = 2 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
 }
 ```
 
 **Validation & Logic:**
+
 1.  The `Authority` field must match the module's configured authority address (the governance module account).
 2.  The provided `Params` are validated.
 3.  On success, the new parameters are persisted in the state.
@@ -244,29 +227,32 @@ The module emits events upon successful execution of certain messages.
 
 ### 5.1. EventConsumerRegistered
 
-This event is emitted after a new consumer/BSN is successfully registered via `MsgRegisterConsumer`. It is defined in 
+This event is emitted after a new consumer/BSN is successfully registered via `MsgRegisterConsumer`. It is defined in
 `x/btcstkconsumer/types/events.pb.go`.
 
 ```protobuf
 // x/btcstkconsumer/types/events.pb.go
 // EventConsumerRegistered is the event emitted when a consumer is registered
 message EventConsumerRegistered {
-    // consumer_id is the id of the consumer
-    string consumer_id = 1;
-    // consumer_name is the name of the consumer
-    string consumer_name = 2;
-    // consumer_description is a description for the consumer
-    string consumer_description = 3;
-    // consumer_type is the type of the consumer
-    ConsumerType consumer_type = 4;
-    // consumer_metadata is necessary metadata of the consumer
-    RollupConsumerMetadata rollup_consumer_metadata = 5;
+  // consumer_id is the id of the consumer
+  string consumer_id = 1  [(amino.dont_omitempty) = true];
+  // consumer_name is the name of the consumer
+  string consumer_name = 2  [(amino.dont_omitempty) = true];
+  // consumer_description is a description for the consumer
+  string consumer_description = 3  [(amino.dont_omitempty) = true];
+  // consumer_type is the type of the consumer
+  ConsumerType consumer_type = 4 [(amino.dont_omitempty) = true];
+  // consumer_metadata is necessary metadata of the consumer, and the data
+  // depends on the type of integration
+  RollupConsumerMetadata rollup_consumer_metadata = 5;
 }
 ```
 
 *   `consumer_type`: Indicates whether the BSN is `COSMOS` (0) or `ROLLUP` (1).
-*   `rollup_consumer_metadata`: Contains the rollup's finality contract address if the type is `ROLLUP`. 
-     Note: `rollup_consumer_metadata` will be empty and/or appear where the Cosmos metadata is shown in the event payload.
+*   `rollup_consumer_metadata`: This field is always present. For `ROLLUP` 
+    consumers, it contains the finality contract address. For `COSMOS`
+    consumers, it is present but its `finality_contract_address` field will be an empty string.
+    Note: `rollup_consumer_metadata` will be empty and/or appear where the Cosmos metadata is shown in the event payload.
 
 ## 6. Queries
 
@@ -276,63 +262,30 @@ The module provides gRPC, REST, and CLI interfaces for querying its state.
 
 Retrieves the current parameters of the module.
 
-| Interface | Method/Endpoint/Command |
-| :--- | :--- |
-| **gRPC** | `babylon.btcstkconsumer.v1.Query.Params` |
-| **REST** | `GET /babylon/btcstkconsumer/v1/params` |
-| **CLI** | `babylond query btcstkconsumer params` |
+| Interface | Method/Endpoint/Command                  |
+| :-------- | :--------------------------------------- |
+| **gRPC**  | `babylon.btcstkconsumer.v1.Query.Params` |
+| **REST**  | `GET /babylon/btcstkconsumer/v1/params`  |
+| **CLI**   | `babylond query btcstkconsumer params`   |
 
 ### 6.2. Consumer Queries
 
 #### List All Registered Consumers/BSNs
 
-Returns a paginated list of all Bsns registered with Babylon.
+Returns a paginated list of all BSNs registered with Babylon.
 
-| Interface | Method/Endpoint/Command |
-| :--- | :--- |
-| **gRPC** | `babylon.btcstkconsumer.v1.Query.ConsumerRegistryList` |
-| **REST** | `GET /babylon/btcstkconsumer/v1/consumer_registry_list` |
-| **CLI** | `babylond query btcstkconsumer registered-consumers` |
+| Interface | Method/Endpoint/Command                                |
+| :-------- | :----------------------------------------------------- |
+| **gRPC**  | `babylon.btcstkconsumer.v1.Query.ConsumerRegistryList` |
+| **REST**  | `GET /babylon/btcstkconsumer/v1/consumer_registry_list`|
+| **CLI**   | `babylond query btcstkconsumer registered-consumers`   |
 
 #### Get a Specific Consumer/BSN's Information
 
 Returns the registration details for one or more specified consumer IDs.
 
-| Interface | Method/Endpoint/Command |
-| :--- | :--- |
-| **gRPC** | `babylon.btcstkconsumer.v1.Query.ConsumersRegistry` |
-| **REST** | `GET /babylon/btcstkconsumer/v1/consumers_registry/{consumer_ids}` |
-| **CLI** | `babylond query btcstkconsumer registered-consumer <consumer-id>` |
-
-### 6.3. Finality Provider Queries
-
-#### List Finality Providers for a Consumer/BSN
-
-Returns a paginated list of all finality providers registered to a specific BSN.
-
-| Interface | Method/Endpoint/Command |
-| :--- | :--- |
-| **gRPC** | `babylon.btcstkconsumer.v1.Query.FinalityProviders` |
-| **REST** | `GET /babylon/btcstkconsumer/v1/finality_providers/{consumer_id}` |
-| **CLI** | `babylond query btcstkconsumer finality-providers <consumer-id>` |
-
-#### Get a Specific Finality Provider for a Consumer
-
-Returns the details for a single finality provider, identified by its BTC public key, within the context of a specific
-BSN.
-
-| Interface | Method/Endpoint/Command |
-| :--- | :--- |
-| **gRPC** | `babylon.btcstkconsumer.v1.Query.FinalityProvider` |
-| **REST** | `GET /babylon/btcstkconsumer/v1/finality_provider/{consumer_id}/{fp_btc_pk_hex}` |
-| **CLI** | `babylond query btcstkconsumer finality-provider <consumer-id> <fp_btc_pk_hex>` |
-
-#### Find the Consumer for a Finality Provider
-
-Returns the BSN ID that a specific finality provider (identified by its BTC public key) is registered to.
-
-| Interface | Method/Endpoint/Command |
-| :--- | :--- |
-| **gRPC** | `babylon.btcstkconsumer.v1.Query.FinalityProviderConsumer` |
-| **REST** | `GET /babylon/btcstkconsumer/v1/finality_provider_consumer/{fp_btc_pk_hex}` |
-| **CLI** | `babylond query btcstkconsumer finality-provider-consumer <fp_btc_pk_hex>` |
+| Interface | Method/Endpoint/Command                                       |
+| :-------- | :------------------------------------------------------------ |
+| **gRPC**  | `babylon.btcstkconsumer.v1.Query.ConsumersRegistry`           |
+| **REST**  | `GET /babylon/btcstkconsumer/v1/consumers_registry/{consumer_ids}` |
+| **CLI**   | `babylond query btcstkconsumer registered-consumer <consumer-id>` |
