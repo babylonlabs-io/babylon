@@ -29,6 +29,9 @@ func CheckTxFeeWithGlobalMinGasPrices(ctx sdk.Context, tx sdk.Tx) (sdk.Coins, in
 	denom := appparams.DefaultBondDenom
 
 	feeCoins := feeTx.GetFee()
+	if ctx.BlockHeight() == 0 {
+		return feeCoins, 1, nil
+	}
 	if feeCoins.Empty() {
 		return nil, 0, errors.Wrap(errInvalidFee, "empty coins")
 	}
