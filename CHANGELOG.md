@@ -137,6 +137,7 @@ between different signing operations
 secret key in slashing
 - [#1325](https://github.com/babylonlabs-io/babylon/pull/1325) fix: add signing context to `EvidenceResponse` message
 - [#1337](https://github.com/babylonlabs-io/babylon/pull/1337) fix: update proto gen
+- [#1355](https://github.com/babylonlabs-io/babylon/pull/1355) Allow empty fees on genesis transactions
 
 ## v2.2.0
 
