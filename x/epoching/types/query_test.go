@@ -2,141 +2,108 @@ package types_test
 
 import (
 	"encoding/hex"
+	"github.com/cosmos/gogoproto/proto"
 	"testing"
-	"time"
 
-	"cosmossdk.io/math"
 	"github.com/babylonlabs-io/babylon/v3/x/epoching/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
 )
 
-type testcase struct {
-	name        string
-	input       types.QueuedMessage
-	expected    types.QueuedMessageResponse
-	expectedErr bool
-}
-
 func TestQueuedMessage_ToResponse(t *testing.T) {
-	tm := time.Now()
+	msgDelegate := &stakingtypes.MsgDelegate{}
+	msgUndelegate := &stakingtypes.MsgUndelegate{}
+	msgRedelegate := &stakingtypes.MsgBeginRedelegate{}
+	msgCancelUnbonding := &stakingtypes.MsgCancelUnbondingDelegation{}
+	msgCreateValidator := &stakingtypes.MsgCreateValidator{}
+	msgBeginRedelegate := &stakingtypes.MsgBeginRedelegate{}
+	unknownMsg := &stakingtypes.MsgEditValidator{}
 
-	delMsg := &stakingtypes.MsgDelegate{
-		DelegatorAddress: "delegator1",
-		ValidatorAddress: "validator1",
-		Amount:           sdk.NewCoin("ubbn", math.NewInt(1000000)),
-	}
-
-	undelMsg := &stakingtypes.MsgUndelegate{
-		DelegatorAddress: "delegator1",
-		ValidatorAddress: "validator1",
-		Amount:           sdk.NewCoin("ubbn", math.NewInt(1000000)),
-	}
-
-	dmsg, dmsgr := makeQueuedMessage(delMsg, "MsgDelegate", tm)
-	undmsg, undmsgr := makeQueuedMessage(undelMsg, "MsgUndelegate", tm)
-
-	testcases := []testcase{
+	testcases := []struct {
+		name                string
+		inputQueuedMessage  types.QueuedMessage
+		expectQueuedMsgType string
+		expectPanic         bool
+	}{
 		{
-			name:        "MsgDelegate",
-			input:       dmsg,
-			expected:    dmsgr,
-			expectedErr: false,
+			name: "MsgDelegate",
+			inputQueuedMessage: types.QueuedMessage{
+				TxId:  []byte("tx1"),
+				MsgId: []byte("msg1"),
+				Msg:   &types.QueuedMessage_MsgDelegate{MsgDelegate: msgDelegate},
+			},
+			expectQueuedMsgType: proto.MessageName(msgDelegate),
 		},
 		{
-			name:        "MsgUnDelegate",
-			input:       undmsg,
-			expected:    undmsgr,
-			expectedErr: false,
+			name: "MsgUndelegate",
+			inputQueuedMessage: types.QueuedMessage{
+				TxId:  []byte("tx2"),
+				MsgId: []byte("msg2"),
+				Msg:   &types.QueuedMessage_MsgUndelegate{MsgUndelegate: msgUndelegate},
+			},
+			expectQueuedMsgType: proto.MessageName(msgUndelegate),
+		},
+		{
+			name: "MsgBeginRedelegate",
+			inputQueuedMessage: types.QueuedMessage{
+				TxId:  []byte("tx3"),
+				MsgId: []byte("msg3"),
+				Msg:   &types.QueuedMessage_MsgBeginRedelegate{MsgBeginRedelegate: msgRedelegate},
+			},
+			expectQueuedMsgType: proto.MessageName(msgBeginRedelegate),
+		},
+		{
+			name: "MsgCancelUnbondingDelegation",
+			inputQueuedMessage: types.QueuedMessage{
+				TxId:  []byte("tx4"),
+				MsgId: []byte("msg4"),
+				Msg:   &types.QueuedMessage_MsgCancelUnbondingDelegation{MsgCancelUnbondingDelegation: msgCancelUnbonding},
+			},
+			expectQueuedMsgType: proto.MessageName(msgCancelUnbonding),
+		},
+		{
+			name: "MsgCreateValidator",
+			inputQueuedMessage: types.QueuedMessage{
+				TxId:  []byte("tx5"),
+				MsgId: []byte("msg5"),
+				Msg:   &types.QueuedMessage_MsgCreateValidator{MsgCreateValidator: msgCreateValidator},
+			},
+			expectQueuedMsgType: proto.MessageName(msgCreateValidator),
 		},
 		{
 			name: "unknown message type",
-			input: types.QueuedMessage{
-				Msg: &types.QueuedMessage_MsgUpdateParams{
-					MsgUpdateParams: &stakingtypes.MsgUpdateParams{},
-				},
+			inputQueuedMessage: types.QueuedMessage{
+				TxId:  []byte("tx6"),
+				MsgId: []byte("msg6"),
+				Msg:   &types.QueuedMessage_MsgEditValidator{MsgEditValidator: unknownMsg},
 			},
-			expected: types.QueuedMessageResponse{
-				EnrichedMsg: &types.EnrichedMsg{Type: "Unknown"},
-			},
-			expectedErr: true,
+			expectQueuedMsgType: proto.MessageName(unknownMsg),
 		},
 		{
-			name: "nil",
-			input: types.QueuedMessage{
+			name: "nil message",
+			inputQueuedMessage: types.QueuedMessage{
 				Msg: nil,
 			},
-			expected: types.QueuedMessageResponse{
-				EnrichedMsg: &types.EnrichedMsg{Type: "Unknown"},
-			},
-			expectedErr: true,
+			expectPanic: true,
 		},
 	}
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			if tc.expectedErr && tc.name == "unknown message type" {
-				resp := tc.input.ToResponse()
-				require.Equal(t, "Unknown", resp.EnrichedMsg.Type, "expected unrecognized message to return 'Unknown'")
-			} else if tc.expectedErr && tc.name == "nil" {
+			if tc.expectPanic {
 				require.Panics(t, func() {
-					_ = tc.input.ToResponse()
-				}, "panic: : invalid message type of a QueuedMessage")
+					_ = tc.inputQueuedMessage.ToResponse()
+				})
 				return
 			}
-			resp := tc.input.ToResponse()
-			require.Equal(t, tc.expected.EnrichedMsg.Type, resp.EnrichedMsg.Type)
-			require.Equal(t, tc.expected.EnrichedMsg.Amount, resp.EnrichedMsg.Amount)
-			require.Equal(t, tc.expected.EnrichedMsg.Delegator, resp.EnrichedMsg.Delegator)
-			require.Equal(t, tc.expected.TxId, resp.TxId)
-			require.Equal(t, tc.expected.MsgId, resp.MsgId)
+
+			resp := tc.inputQueuedMessage.ToResponse()
+
+			require.NotNil(t, resp)
+			require.Equal(t, tc.expectQueuedMsgType, resp.QueuedMsgType)
+			require.Equal(t, hex.EncodeToString(tc.inputQueuedMessage.TxId), resp.TxId)
+			require.Equal(t, hex.EncodeToString(tc.inputQueuedMessage.MsgId), resp.MsgId)
+			require.Equal(t, tc.inputQueuedMessage.UnwrapToSdkMsg().String(), resp.Msg)
 		})
 	}
-}
-
-func makeQueuedMessage(msg sdk.Msg, msgType string, time time.Time) (types.QueuedMessage, types.QueuedMessageResponse) {
-	qm := types.QueuedMessage{
-		TxId:        []byte("tx1"),
-		MsgId:       []byte("msgid1"),
-		BlockHeight: 5,
-		BlockTime:   &time,
-	}
-
-	var amount, delegator, validator string
-
-	switch m := msg.(type) {
-	case *stakingtypes.MsgDelegate:
-		qm.Msg = &types.QueuedMessage_MsgDelegate{MsgDelegate: m}
-		amount = m.Amount.Amount.String()
-		delegator = m.DelegatorAddress
-		validator = m.ValidatorAddress
-	case *stakingtypes.MsgUndelegate:
-		qm.Msg = &types.QueuedMessage_MsgUndelegate{MsgUndelegate: m}
-		amount = m.Amount.Amount.String()
-		delegator = m.DelegatorAddress
-		validator = m.ValidatorAddress
-	default:
-		return qm, types.QueuedMessageResponse{
-			EnrichedMsg: &types.EnrichedMsg{
-				Type: "Unknown",
-			},
-		}
-	}
-
-	qmr := types.QueuedMessageResponse{
-		TxId:        hex.EncodeToString(qm.TxId),
-		MsgId:       hex.EncodeToString(qm.MsgId),
-		BlockHeight: 5,
-		BlockTime:   &time,
-		Msg:         msg.String(),
-		EnrichedMsg: &types.EnrichedMsg{
-			Type:      msgType,
-			Amount:    amount + "ubbn",
-			Delegator: delegator,
-			Validator: validator,
-		},
-	}
-
-	return qm, qmr
 }

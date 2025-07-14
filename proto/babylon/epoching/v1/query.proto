@@ -226,20 +226,7 @@ message QueuedMessageResponse {
   // epoching module as string.
   string msg = 5;
   // enriched_msg contains a parsed, structured version of the original message
-  EnrichedMsg enriched_msg = 6;
-}
-
-// EnrichedMsg is a message that contains a parsed, structured version of the
-// original message
-message EnrichedMsg {
-  option (gogoproto.marshaler) = true;
-  option (gogoproto.unmarshaler) = true;
-  option (gogoproto.sizer) = true;
-
-  string type = 1;
-  string delegator = 2;
-  string validator = 3;
-  string amount = 4;
+  string queued_msg_type = 6;
 }
 
 // QueuedMessageList is a message that contains a list of staking-related
