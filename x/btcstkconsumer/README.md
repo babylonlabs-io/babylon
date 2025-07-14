@@ -1,4 +1,4 @@
-BTC Staking Consumer
+# BTC Staking Consumer
 
 The `btcstkconsumer` module is a core component of the Babylon protocol responsible for managing the registration and
 lifecycle of external blockchains, known as consumers or BSNs (Bitcoin-Secured Networks). These BSNs leverage
