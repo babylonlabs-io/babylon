@@ -43,6 +43,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#1344](https://github.com/babylonlabs-io/babylon/pull/1344) Bump cosmos-sdk and
 remove send restrictions
 
+<<<<<<< HEAD
+=======
+### Bug fixes
+
+- [#796](https://github.com/babylonlabs-io/babylon/pull/796) fix: goreleaser add `mainnet` build flag to generated binary
+- [#741](https://github.com/babylonlabs-io/babylon/pull/741) chore: fix register consumer CLI
+- [#525](https://github.com/babylonlabs-io/babylon/pull/525) fix: add back `NewIBCHeaderDecorator` post handler
+- [#964](https://github.com/babylonlabs-io/babylon/pull/964) fix: stateless validation `ValidateBasic` of
+`MsgWrappedCreateValidator` to avoid panic in transaction submission
+- [#1247](https://github.com/babylonlabs-io/babylon/pull/1247) fix: zoneconcierge ibc router
+- [#1252](https://github.com/babylonlabs-io/babylon/pull/1252) Implement context separation
+between different signing operations
+- [#1318](https://github.com/babylonlabs-io/babylon/pull/1318) fix: propagation of
+secret key in slashing
+- [#1325](https://github.com/babylonlabs-io/babylon/pull/1325) fix: add signing context to `EvidenceResponse` message
+- [#1337](https://github.com/babylonlabs-io/babylon/pull/1337) fix: update proto gen
+- [#1355](https://github.com/babylonlabs-io/babylon/pull/1355) Allow empty fees on genesis transactions
+
+>>>>>>> ecb3a6d (fix: allow empty fees on gentx (#1355))
 ## v2.2.0
 
 ### Improvements
