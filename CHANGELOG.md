@@ -143,6 +143,8 @@ secret key in slashing
 - [#1361](https://github.com/babylonlabs-io/babylon/pull/1361) Fix typo on makefile
 - [#1366](https://github.com/babylonlabs-io/babylon/pull/1366) fix: not add consumer fps
 to Babylon voting power table
+- [#1369](https://github.com/babylonlabs-io/babylon/pull/1369) fix: update stake expansion validation to allow expanding
+already expanded delegations
 
 ## v2.2.0
 
