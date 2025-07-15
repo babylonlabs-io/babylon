@@ -289,8 +289,10 @@ func (ms msgServer) CommitPubRandList(goCtx context.Context, req *types.MsgCommi
 		return nil, types.ErrInvalidPubRand.Wrap("empty finality provider public key")
 	}
 	fpBTCPKBytes := req.FpBtcPk.MustMarshal()
-	if !ms.BTCStakingKeeper.HasFinalityProvider(ctx, fpBTCPKBytes) {
-		return nil, bstypes.ErrFpNotFound.Wrapf("the finality provider with BTC PK %v is not registered", fpBTCPKBytes)
+
+	isBabylonFp := ms.BTCStakingKeeper.BabylonFinalityProviderExists(ctx, fpBTCPKBytes)
+	if !isBabylonFp {
+		return nil, types.ErrInvalidPubRand.Wrapf("the finality provider with BTC PK %s is not a Babylon Genesis finality provider", req.FpBtcPk.MarshalHex())
 	}
 
 	signingContext := signingcontext.FpRandCommitContextV0(ctx.ChainID(), ms.finalityModuleAddress)
