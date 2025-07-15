@@ -5,6 +5,8 @@ option go_package = "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types
 
 import "amino/amino.proto";
 import "babylon/btcstkconsumer/v1/btcstkconsumer.proto";
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
 
 // EventConsumerRegistered is the event emitted when a consumer is registered
 message EventConsumerRegistered {
@@ -19,4 +21,12 @@ message EventConsumerRegistered {
   // consumer_metadata is necessary metadata of the consumer, and the data
   // depends on the type of integration
   RollupConsumerMetadata rollup_consumer_metadata = 5;
+  // babylon_rewards_commission is the commission rate that Babylon takes from rewards
+  // distributed to finality providers for this BSN consumer
+  string babylon_rewards_commission = 6 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true
+  ];
 }

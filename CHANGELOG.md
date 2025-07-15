@@ -125,6 +125,7 @@ queued for cosmos bsns
 for multistaking fps
 - [#1344](https://github.com/babylonlabs-io/babylon/pull/1344) Bump cosmos-sdk and
 remove send restrictions
+- [#1364](https://github.com/babylonlabs-io/babylon/pull/1364) Add babylon commission as legacy dec `[0...1]` to Consumer Registry.
 
 ### Bug fixes
 
