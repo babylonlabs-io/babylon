@@ -6,6 +6,7 @@ import (
 	"github.com/babylonlabs-io/babylon/v3/app/upgrades"
 	v2 "github.com/babylonlabs-io/babylon/v3/app/upgrades/v2"
 	v22 "github.com/babylonlabs-io/babylon/v3/app/upgrades/v2_2"
+	v3 "github.com/babylonlabs-io/babylon/v3/app/upgrades/v3"
 )
 
 var WhitelistedChannelsID = map[string]struct{}{
@@ -21,6 +22,7 @@ var WhitelistedChannelsID = map[string]struct{}{
 // init is used to include v2.2 upgrade for mainnet data
 func init() {
 	Upgrades = []upgrades.Upgrade{
+		v3.Upgrade,
 		v22.Upgrade,
 		v2.CreateUpgrade(false, WhitelistedChannelsID),
 	}
