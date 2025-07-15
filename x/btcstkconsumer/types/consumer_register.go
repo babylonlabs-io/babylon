@@ -16,10 +16,10 @@ func (m *MsgRegisterConsumer) ValidateBasic() error {
 	if len(m.ConsumerDescription) == 0 {
 		return fmt.Errorf("ConsumerDescription must be non-empty")
 	}
-	if m.BabylonCommission.IsNegative() {
+	if m.BabylonRewardsCommission.IsNegative() {
 		return fmt.Errorf("babylon commission cannot be negative")
 	}
-	if m.BabylonCommission.GT(math.LegacyOneDec()) {
+	if m.BabylonRewardsCommission.GT(math.LegacyOneDec()) {
 		return fmt.Errorf("babylon commission cannot be greater than 1.0")
 	}
 	return nil
@@ -60,9 +60,10 @@ func (cr *ConsumerRegister) Type() ConsumerType {
 
 func (cr *ConsumerRegister) ToResponse() *ConsumerRegisterResponse {
 	resp := &ConsumerRegisterResponse{
-		ConsumerId:          cr.ConsumerId,
-		ConsumerName:        cr.ConsumerName,
-		ConsumerDescription: cr.ConsumerDescription,
+		ConsumerId:               cr.ConsumerId,
+		ConsumerName:             cr.ConsumerName,
+		ConsumerDescription:      cr.ConsumerDescription,
+		BabylonRewardsCommission: cr.BabylonRewardsCommission,
 	}
 	if cr.ConsumerMetadata != nil {
 		switch md := cr.ConsumerMetadata.(type) {

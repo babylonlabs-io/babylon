@@ -107,6 +107,7 @@ check of rewards
 - [#1335](https://github.com/babylonlabs-io/babylon/pull/1335) Tweaks on BTC stake expansion feature.
 - [#1343](https://github.com/babylonlabs-io/babylon/pull/1343) Adjust `testnet`
 command to modify `max-finality-providers` parameter.
+- [#1344](https://github.com/babylonlabs-io/babylon/pull/1344) Add `MsgType` field to `QueuedMessageResponse` message.
 - [#1352](https://github.com/babylonlabs-io/babylon/pull/1352) Add stake expansion signatures in BTC delegation query response
 
 ### State Machine Breaking
@@ -124,6 +125,7 @@ queued for cosmos bsns
 for multistaking fps
 - [#1344](https://github.com/babylonlabs-io/babylon/pull/1344) Bump cosmos-sdk and
 remove send restrictions
+- [#1364](https://github.com/babylonlabs-io/babylon/pull/1364) Add babylon commission as legacy dec `[0...1]` to Consumer Registry.
 
 ### Bug fixes
 

@@ -2268,6 +2268,11 @@ paths:
                         queued by the
 
                         epoching module as string.
+                    msg_type:
+                      type: string
+                      description: >-
+                        msg_type is a string that identifies the type of the
+                        underlying message.
                   title: >-
                     QueuedMessageResponse is a message that can change the
                     validator set and is delayed
@@ -2941,6 +2946,11 @@ paths:
                               and is queued by the
 
                               epoching module as string.
+                          msg_type:
+                            type: string
+                            description: >-
+                              msg_type is a string that identifies the type of
+                              the underlying message.
                         title: >-
                           QueuedMessageResponse is a message that can change the
                           validator set and is delayed
@@ -10939,6 +10949,13 @@ paths:
                         finality contract
 
                         set only for rollup integration
+                    babylon_rewards_commission:
+                      type: string
+                      title: >-
+                        babylon_rewards_commission is the commission rate that
+                        Babylon takes from rewards
+
+                        distributed to finality providers for this BSN consumer
                   title: >-
                     ConsumerRegisterResponse contains the information for a
                     registered consumer
@@ -11108,6 +11125,13 @@ paths:
                         finality contract
 
                         set only for rollup integration
+                    babylon_rewards_commission:
+                      type: string
+                      title: >-
+                        babylon_rewards_commission is the commission rate that
+                        Babylon takes from rewards
+
+                        distributed to finality providers for this BSN consumer
                   title: >-
                     ConsumerRegisterResponse contains the information for a
                     registered consumer
@@ -14424,6 +14448,11 @@ definitions:
                 by the
 
                 epoching module as string.
+            msg_type:
+              type: string
+              description: >-
+                msg_type is a string that identifies the type of the underlying
+                message.
           title: >-
             QueuedMessageResponse is a message that can change the validator set
             and is delayed
@@ -14640,6 +14669,11 @@ definitions:
                       queued by the
 
                       epoching module as string.
+                  msg_type:
+                    type: string
+                    description: >-
+                      msg_type is a string that identifies the type of the
+                      underlying message.
                 title: >-
                   QueuedMessageResponse is a message that can change the
                   validator set and is delayed
@@ -14757,6 +14791,11 @@ definitions:
                 by the
 
                 epoching module as string.
+            msg_type:
+              type: string
+              description: >-
+                msg_type is a string that identifies the type of the underlying
+                message.
           title: >-
             QueuedMessageResponse is a message that can change the validator set
             and is delayed
@@ -14789,6 +14828,11 @@ definitions:
         description: |-
           msg is the actual message that is sent by a user and is queued by the
           epoching module as string.
+      msg_type:
+        type: string
+        description: >-
+          msg_type is a string that identifies the type of the underlying
+          message.
     title: >-
       QueuedMessageResponse is a message that can change the validator set and
       is delayed
@@ -19774,6 +19818,13 @@ definitions:
           contract
 
           set only for rollup integration
+      babylon_rewards_commission:
+        type: string
+        title: >-
+          babylon_rewards_commission is the commission rate that Babylon takes
+          from rewards
+
+          distributed to finality providers for this BSN consumer
     title: >-
       ConsumerRegisterResponse contains the information for a registered
       consumer
@@ -19829,6 +19880,13 @@ definitions:
                 contract
 
                 set only for rollup integration
+            babylon_rewards_commission:
+              type: string
+              title: >-
+                babylon_rewards_commission is the commission rate that Babylon
+                takes from rewards
+
+                distributed to finality providers for this BSN consumer
           title: >-
             ConsumerRegisterResponse contains the information for a registered
             consumer
@@ -19906,6 +19964,13 @@ definitions:
                 contract
 
                 set only for rollup integration
+            babylon_rewards_commission:
+              type: string
+              title: >-
+                babylon_rewards_commission is the commission rate that Babylon
+                takes from rewards
+
+                distributed to finality providers for this BSN consumer
           title: >-
             ConsumerRegisterResponse contains the information for a registered
             consumer
