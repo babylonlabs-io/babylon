@@ -1,6 +1,7 @@
 package replay
 
 import (
+	"fmt"
 	"math/rand"
 	"testing"
 	"time"
@@ -343,7 +344,10 @@ func TestOnlyBabylonFpCanCommitRandomness(t *testing.T) {
 
 	consumerFp.CommitRandomness()
 
+	msg := fmt.Sprintf("failed to execute message; message index: 0: the finality provider with BTC PK %s is not a Babylon Genesis finality provider: the public randomness list is invalid", consumerFp.BTCPublicKey().MarshalHex())
+
 	txResults := driver.GenerateNewBlockAssertExecutionFailure()
 	require.Len(t, txResults, 1)
-	require.NotEqual(t, txResults[0].Code, uint32(0))
+	require.Equal(t, txResults[0].Code, uint32(1106))
+	require.Contains(t, txResults[0].Log, msg)
 }
