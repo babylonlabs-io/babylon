@@ -511,7 +511,6 @@ func _Msg_SetWithdrawAddress_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
-var Msg_serviceDesc = _Msg_serviceDesc
 var _Msg_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "babylon.incentive.Msg",
 	HandlerType: (*MsgServer)(nil),

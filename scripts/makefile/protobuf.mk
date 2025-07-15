@@ -29,11 +29,11 @@ proto-all: proto-gen proto-swagger-gen
 
 proto-gen: proto-lint
 	@echo "Generating Protobuf files..."
-	@$(protoImage) bash ./proto/scripts/protocgen.sh
+	@$(protoImage) sh ./proto/scripts/protocgen.sh
 
 proto-swagger-gen:
 	@echo "Generating Protobuf Swagger"
-	@$(protoImage) bash ./proto/scripts/protoc-swagger-gen.sh
+	@$(protoImage) sh ./proto/scripts/protoc-swagger-gen.sh
 
 proto-format:
 	@$(protoImage) find ./ -name "*.proto" -exec clang-format -i {} \;

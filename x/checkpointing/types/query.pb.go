@@ -1433,7 +1433,6 @@ func _Query_LastCheckpointWithStatus_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
-var Query_serviceDesc = _Query_serviceDesc
 var _Query_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "babylon.checkpointing.v1.Query",
 	HandlerType: (*QueryServer)(nil),

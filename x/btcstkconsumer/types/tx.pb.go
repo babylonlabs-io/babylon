@@ -409,7 +409,6 @@ func _Msg_RegisterConsumer_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
-var Msg_serviceDesc = _Msg_serviceDesc
 var _Msg_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "babylon.btcstkconsumer.v1.Msg",
 	HandlerType: (*MsgServer)(nil),
