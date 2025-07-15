@@ -119,6 +119,7 @@ Example:
 				genesisCliArgs.MinSlashingTransactionFeeSat,
 				genesisCliArgs.MinCommissionRate,
 				genesisCliArgs.SlashingRate,
+				genesisCliArgs.MaxFinalityProvidersInScript,
 				genesisCliArgs.MaxActiveFinalityProviders,
 				genesisCliArgs.UnbondingTime,
 				genesisCliArgs.UnbondingFeeSat,

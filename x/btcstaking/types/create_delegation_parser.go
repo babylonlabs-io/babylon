@@ -81,6 +81,11 @@ type ParsedPublicKeyList struct {
 	PublicKeysBbnFormat []bbn.BIP340PubKey
 }
 
+func (p ParsedPublicKeyList) Len() int {
+	// we can check only one list as len(p.PublicKeys) == len(p.PublicKeysBbnFormat)
+	return len(p.PublicKeys)
+}
+
 func NewParsedPublicKeyList(pks []bbn.BIP340PubKey) (*ParsedPublicKeyList, error) {
 	if len(pks) == 0 {
 		return nil, fmt.Errorf("cannot parse empty list of *bbn.BIP340PubKey")
@@ -297,7 +302,6 @@ func parseBtcExpandMessage(msg *MsgBtcStakeExpand) (*ParsedCreateDelegationMessa
 		StakingTime:                   msg.StakingTime,
 		StakingValue:                  msg.StakingValue,
 		StakingTx:                     msg.StakingTx,
-		StakingTxInclusionProof:       msg.StakingTxInclusionProof,
 		SlashingTx:                    msg.SlashingTx,
 		DelegatorSlashingSig:          msg.DelegatorSlashingSig,
 		UnbondingTime:                 msg.UnbondingTime,

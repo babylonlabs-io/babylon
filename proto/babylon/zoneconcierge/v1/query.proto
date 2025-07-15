@@ -3,7 +3,6 @@ package babylon.zoneconcierge.v1;
 
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
-import "cosmos/base/query/v1beta1/pagination.proto";
 import "babylon/btccheckpoint/v1/btccheckpoint.proto";
 import "babylon/checkpointing/v1/checkpoint.proto";
 import "babylon/epoching/v1/epoching.proto";
@@ -17,24 +16,6 @@ service Query {
   // Params queries the parameters of the module.
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
     option (google.api.http).get = "/babylon/zoneconcierge/v1/params";
-  }
-  // Header queries the Consumer header and fork headers at a given height
-  rpc Header(QueryHeaderRequest) returns (QueryHeaderResponse) {
-    option (google.api.http).get =
-        "/babylon/zoneconcierge/v1/chain_info/{consumer_id}/header/{height}";
-  }
-  // EpochChainsInfo queries the latest info for a list of chains
-  // in a given epoch in Babylon's view
-  rpc EpochChainsInfo(QueryEpochChainsInfoRequest)
-      returns (QueryEpochChainsInfoResponse) {
-    option (google.api.http).get =
-        "/babylon/zoneconcierge/v1/epoch_chains_info";
-  }
-  // ListHeaders queries the headers of a chain in Babylon's view, with
-  // pagination support
-  rpc ListHeaders(QueryListHeadersRequest) returns (QueryListHeadersResponse) {
-    option (google.api.http).get =
-        "/babylon/zoneconcierge/v1/headers/{consumer_id}";
   }
   // FinalizedChainsInfo queries the BTC-finalised info of chains with given IDs, with proofs
   rpc FinalizedChainsInfo(QueryFinalizedChainsInfoRequest)
@@ -59,48 +40,6 @@ message QueryParamsRequest {}
 message QueryParamsResponse {
   // params holds all the parameters of this module.
   babylon.zoneconcierge.v1.Params params = 1 [ (gogoproto.nullable) = false ];
-}
-
-// QueryHeaderRequest is request type for the Query/Header RPC method.
-message QueryHeaderRequest {
-  string consumer_id = 1;
-  uint64 height = 2;
-}
-
-// QueryHeaderResponse is response type for the Query/Header RPC method.
-message QueryHeaderResponse {
-  babylon.zoneconcierge.v1.IndexedHeader header = 1;
-  babylon.zoneconcierge.v1.Forks fork_headers = 2;
-}
-
-// QueryEpochChainsInfoRequest is request type for the Query/EpochChainsInfo RPC
-// method.
-message QueryEpochChainsInfoRequest {
-  uint64 epoch_num = 1;
-  repeated string consumer_ids = 2;
-}
-
-// QueryEpochChainsInfoResponse is response type for the Query/EpochChainsInfo RPC
-// method.
-message QueryEpochChainsInfoResponse {
-  // chains_info is the info of the Consumer
-  repeated babylon.zoneconcierge.v1.ChainInfo chains_info = 1;
-}
-
-// QueryListHeadersRequest is request type for the Query/ListHeaders RPC method.
-message QueryListHeadersRequest {
-  string consumer_id = 1;
-  // pagination defines whether to have the pagination in the request
-  cosmos.base.query.v1beta1.PageRequest pagination = 2;
-}
-
-// QueryListHeadersResponse is response type for the Query/ListHeaders RPC
-// method.
-message QueryListHeadersResponse {
-  // headers is the list of headers
-  repeated babylon.zoneconcierge.v1.IndexedHeader headers = 1;
-  // pagination defines the pagination in the response
-  cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
 // QueryFinalizedChainsInfoRequest is request type for the
@@ -134,17 +73,14 @@ message QueryFinalizedChainInfoUntilHeightRequest {
 // QueryFinalizedChainInfoUntilHeightResponse is response type for the
 // Query/FinalizedChainInfoUntilHeight RPC method.
 message QueryFinalizedChainInfoUntilHeightResponse {
-  // finalized_chain_info is the info of the Consumer
-  babylon.zoneconcierge.v1.ChainInfo finalized_chain_info = 1;
-
   // epoch_info is the metadata of the last BTC-finalised epoch
-  babylon.epoching.v1.Epoch epoch_info = 2;
+  babylon.epoching.v1.Epoch epoch_info = 1;
   // raw_checkpoint is the raw checkpoint of this epoch
-  babylon.checkpointing.v1.RawCheckpoint raw_checkpoint = 3;
+  babylon.checkpointing.v1.RawCheckpoint raw_checkpoint = 2;
   // btc_submission_key is position of two BTC txs that include the raw
   // checkpoint of this epoch
-  babylon.btccheckpoint.v1.SubmissionKey btc_submission_key = 4;
+  babylon.btccheckpoint.v1.SubmissionKey btc_submission_key = 3;
 
   // proof is the proof that the chain info is finalized
-  babylon.zoneconcierge.v1.ProofFinalizedChainInfo proof = 5;
+  babylon.zoneconcierge.v1.ProofFinalizedChainInfo proof = 4;
 }

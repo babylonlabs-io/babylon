@@ -233,14 +233,15 @@ The staking output can be spent through one of the following three script paths:
    is proven to have double-signed.
    ```
    <StakerPk> OP_CHECKSIGVERIFY
-   <FinalityProviderPk> OP_CHECKSIGVERIFY
+   <FinalityProviderPk1> OP_CHECKSIG <FinalityProviderPk2> OP_CHECKSIGADD ... <FinalityProviderPkN> OP_CHECKSIGADD
+   1 OP_NUMEQUAL
    <CovenantPk1> OP_CHECKSIG <CovenantPk2> OP_CHECKSIGADD ... <CovenantPkN> OP_CHECKSIGADD
    <CovenantThreshold> OP_NUMEQUAL
    ```
    **Fields**:
    * `StakerPK` is the BTC staker's public key.
-   * `FinalityProviderPk` is the public key of the finality provider
-     to which the stake is delegated.
+   * `FinalityProviderPk1..FinalityProviderPkN` are the lexicographically sorted
+     public keys of the finality providers to which the stake is delegated.
      > ⚡ Multi-staking to finality providers across different BSNs is
      > supported from v3 of the Babylon Genesis node.
      > The system enforces that at least one finality provider must secure the Babylon Genesis chain,
@@ -308,14 +309,15 @@ The unbonding output can be spent through one of the following two script paths:
    is proven to have double-signed while the stake is in the unbonding period.
    ```
    <StakerPk> OP_CHECKSIGVERIFY
-   <FinalityProviderPk> OP_CHECKSIGVERIFY
+   <FinalityProviderPk1> OP_CHECKSIG <FinalityProviderPk2> OP_CHECKSIGADD ... <FinalityProviderPkN> OP_CHECKSIGADD
+   1 OP_NUMEQUAL
    <CovenantPk1> OP_CHECKSIG <CovenantPk2> OP_CHECKSIGADD ... <CovenantPkN> OP_CHECKSIGADD
    <CovenantThreshold> OP_NUMEQUAL
    ```
    **Fields**:
    * `StakerPK` is the BTC staker's public key.
-   * `FinalityProviderPk` is the public key of the finality provider
-     to which the stake is delegated.
+   * `FinalityProviderPk1..FinalityProviderPkN` are the lexicographically sorted
+    public keys of the finality providers to which the stake is delegated.
      > ⚡ Multi-staking to finality providers across different BSNs is
      > supported from v3 of the Babylon Genesis node.
      > The system enforces that at least one finality provider must secure the Babylon Genesis chain,

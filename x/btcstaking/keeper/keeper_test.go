@@ -23,7 +23,7 @@ func TestPropagateFPSlashingToConsumersFillSlashingEventProperly(t *testing.T) {
 	btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 	btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
 	h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
-	h.GenAndApplyParams(r)
+	h.GenAndApplyCustomParams(r, 100, 200, 0, 2)
 
 	// generate and insert new Babylon finality provider
 	_, fpPK, _ := h.CreateFinalityProvider(r)
