@@ -36,8 +36,8 @@ handled by the `x/btcstaking` module.
 
 <!--TO DO: change all instances of consumer to bsn when code changed -->
 
-A **Consumer/BSN** is any external blockchain or rollup that registers with Babylon to utilise its security services. The
-`btcstkconsumer` module maintains a unique record for each BSN.
+A **Consumer/BSN** is any external blockchain or rollup that registers with Babylon to utilise its security services.
+The `btcstkconsumer` module maintains a unique record for each BSN.
 
 ### 1.2. Consumer/BSN Registration
 
@@ -61,10 +61,11 @@ The module supports two primary types of BSN integrations:
 
 *   **Description**: A rollup (e.g., an optimistic or ZK-rollup) that uses a smart contract on Babylon for its data
     availability or finality needs.
-*   **Identifier (`consumer_id`)**: A unique, human-readable string that identifies the rollup (e.g., `my-rollup-chain-1`).
-    Note: The consumer ID for rollup BSNs can be any unique string chosen arbitrarily.
+*   **Identifier (`consumer_id`)**: A unique, human-readable string that identifies the rollup
+    (e.g., `my-rollup-chain-1`).Note: The consumer ID for rollup BSNs can be any unique string chosen arbitrarily.
 *   **Integration Logic**: The registration requires the address of a `RollupFinalityContractAddress`,
-    which must be a valid, deployed CosmWasm contract on the Babylon chain. The module verifies the contract's existence.
+    which must be a valid, deployed CosmWasm contract on the Babylon chain. The module verifies the contract's
+    existence.
 
 ### 1.4. Finality Provider Management
 
@@ -252,7 +253,8 @@ message EventConsumerRegistered {
 *   `rollup_consumer_metadata`: This field is always present. For `ROLLUP` 
     consumers, it contains the finality contract address. For `COSMOS`
     consumers, it is present but its `finality_contract_address` field will be an empty string.
-    Note: `rollup_consumer_metadata` will be empty and/or appear where the Cosmos metadata is shown in the event payload.
+    Note: `rollup_consumer_metadata` will be empty and/or appear where the Cosmos metadata is shown in the event
+    payload.
 
 ## 6. Queries
 
