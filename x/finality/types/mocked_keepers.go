@@ -38,6 +38,20 @@ func (m *MockBTCStakingKeeper) EXPECT() *MockBTCStakingKeeperMockRecorder {
 	return m.recorder
 }
 
+// BabylonFinalityProviderExists mocks base method.
+func (m *MockBTCStakingKeeper) BabylonFinalityProviderExists(ctx context.Context, fpBTCPK []byte) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "BabylonFinalityProviderExists", ctx, fpBTCPK)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// BabylonFinalityProviderExists indicates an expected call of BabylonFinalityProviderExists.
+func (mr *MockBTCStakingKeeperMockRecorder) BabylonFinalityProviderExists(ctx, fpBTCPK interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BabylonFinalityProviderExists", reflect.TypeOf((*MockBTCStakingKeeper)(nil).BabylonFinalityProviderExists), ctx, fpBTCPK)
+}
+
 // BtcDelHasCovenantQuorums mocks base method.
 func (m *MockBTCStakingKeeper) BtcDelHasCovenantQuorums(ctx context.Context, btcDel *types.BTCDelegation, quorum uint32) (bool, error) {
 	m.ctrl.T.Helper()
