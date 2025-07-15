@@ -11,13 +11,15 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const testConsumerID = "test-consumer-1"
+
 func TestConsumerBTCState_GetSet(t *testing.T) {
 	babylonApp := app.Setup(t, false)
 	zcKeeper := babylonApp.ZoneConciergeKeeper
 	ctx := babylonApp.NewContext(false)
 
 	r := rand.New(rand.NewSource(10))
-	consumerID := "test-consumer-1"
+	consumerID := testConsumerID
 
 	header := datagen.GenRandomBTCHeaderInfo(r)
 
@@ -56,7 +58,7 @@ func TestConsumerBaseBTCHeader_GetSet(t *testing.T) {
 	ctx := babylonApp.NewContext(false)
 
 	r := rand.New(rand.NewSource(10))
-	consumerID := "test-consumer-1"
+	consumerID := testConsumerID
 	header := datagen.GenRandomBTCHeaderInfo(r)
 
 	result := zcKeeper.GetConsumerBaseBTCHeader(ctx, consumerID)
@@ -92,7 +94,7 @@ func TestConsumerLastSentSegment_GetSet(t *testing.T) {
 	ctx := babylonApp.NewContext(false)
 
 	r := rand.New(rand.NewSource(10))
-	consumerID := "test-consumer-1"
+	consumerID := testConsumerID
 
 	headers := []*btclctypes.BTCHeaderInfo{
 		datagen.GenRandomBTCHeaderInfo(r),
@@ -141,7 +143,7 @@ func TestInitializeConsumerBTCState(t *testing.T) {
 	ctx := babylonApp.NewContext(false)
 
 	r := rand.New(rand.NewSource(10))
-	consumerID := "test-consumer-1"
+	consumerID := testConsumerID
 
 	chain := datagen.NewBTCHeaderChainWithLength(r, 1, 100, 5)
 	err := btclcKeeper.InsertHeadersWithHookAndEvents(ctx, chain.ChainToBytes())
