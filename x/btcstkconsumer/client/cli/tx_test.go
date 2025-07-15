@@ -13,6 +13,7 @@ import (
 )
 
 func TestNewRegisterConsumerCmd(t *testing.T) {
+	t.Parallel()
 	clientCtx, addrs := testutilcli.SetupClientContext(t)
 	cmd := bsccli.NewRegisterConsumerCmd()
 
@@ -244,20 +245,19 @@ func TestNewRegisterConsumerCmd(t *testing.T) {
 			if tc.expectErrMsg != "" {
 				require.Error(t, err)
 				require.Contains(t, err.Error(), tc.expectErrMsg)
-			} else {
-				require.NoError(t, err, "test: %s\noutput: %s", tc.name, out.String())
-				resp := &sdk.TxResponse{}
-				err = clientCtx.Codec.UnmarshalJSON(out.Bytes(), resp)
-				require.NoError(t, err, out.String(), "test: %s, output\n:", tc.name, out.String())
+				return
 			}
+			require.NoError(t, err, "test: %s\noutput: %s", tc.name, out.String())
+			err = clientCtx.Codec.UnmarshalJSON(out.Bytes(), &sdk.TxResponse{})
+			require.NoError(t, err, out.String(), "test: %s, output\n:", tc.name, out.String())
 		})
 	}
 }
 
 func TestRegisterConsumerCmdUsage(t *testing.T) {
+	t.Parallel()
 	cmd := bsccli.NewRegisterConsumerCmd()
 
-	// Test command usage and help
 	require.Contains(t, cmd.Use, "register-consumer")
 	require.Contains(t, cmd.Use, "<consumer-id>")
 	require.Contains(t, cmd.Use, "<name>")

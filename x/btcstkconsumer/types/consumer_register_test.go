@@ -66,7 +66,7 @@ func TestConsumerRegisterValidate(t *testing.T) {
 }
 
 func TestMsgRegisterConsumerValidateBasic(t *testing.T) {
-	validCommission := math.LegacyNewDecWithPrec(5, 1) // 0.5
+	validCommission := math.LegacyMustNewDecFromStr("0.5")
 
 	testCases := []struct {
 		name     string
@@ -124,7 +124,7 @@ func TestMsgRegisterConsumerValidateBasic(t *testing.T) {
 				ConsumerId:          "consumer-123",
 				ConsumerName:        "Test Consumer",
 				ConsumerDescription: "Test Description",
-				BabylonCommission:   math.LegacyNewDecWithPrec(-1, 1), // -0.1
+				BabylonCommission:   math.LegacyMustNewDecFromStr("-0.1"),
 			},
 			expected: fmt.Errorf("babylon commission cannot be negative"),
 		},
@@ -135,7 +135,7 @@ func TestMsgRegisterConsumerValidateBasic(t *testing.T) {
 				ConsumerId:          "consumer-123",
 				ConsumerName:        "Test Consumer",
 				ConsumerDescription: "Test Description",
-				BabylonCommission:   math.LegacyNewDecWithPrec(15, 1), // 1.5
+				BabylonCommission:   math.LegacyMustNewDecFromStr("1.5"),
 			},
 			expected: fmt.Errorf("babylon commission cannot be greater than 1.0"),
 		},
