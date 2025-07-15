@@ -36,20 +36,21 @@ import (
 
 var (
 	expectedMaccPerms = map[string][]string{
-		authtypes.FeeCollectorName:   {authtypes.Burner}, // fee collector account
-		distrtypes.ModuleName:        nil,
-		minttypes.ModuleName:         {authtypes.Minter},
-		stktypes.BondedPoolName:      {authtypes.Burner, authtypes.Staking},
-		stktypes.NotBondedPoolName:   {authtypes.Burner, authtypes.Staking},
-		govtypes.ModuleName:          {authtypes.Burner},
-		ibctransfertypes.ModuleName:  {authtypes.Minter, authtypes.Burner},
-		incentivetypes.ModuleName:    nil, // this line is needed to create an account for incentive module
-		tokenfactorytypes.ModuleName: {authtypes.Minter, authtypes.Burner},
-		icatypes.ModuleName:          nil,
-		evmtypes.ModuleName:          {authtypes.Minter, authtypes.Burner},
-		erc20types.ModuleName:        {authtypes.Minter, authtypes.Burner},
-		feemarkettypes.ModuleName:    nil,
-		precisebanktypes.ModuleName:  {authtypes.Minter, authtypes.Burner},
+		authtypes.FeeCollectorName:         {authtypes.Burner}, // fee collector account
+		distrtypes.ModuleName:              nil,
+		minttypes.ModuleName:               {authtypes.Minter},
+		stktypes.BondedPoolName:            {authtypes.Burner, authtypes.Staking},
+		stktypes.NotBondedPoolName:         {authtypes.Burner, authtypes.Staking},
+		govtypes.ModuleName:                {authtypes.Burner},
+		ibctransfertypes.ModuleName:        {authtypes.Minter, authtypes.Burner},
+		incentivetypes.ModuleName:          nil, // this line is needed to create an account for incentive module
+		incentivetypes.BSNFeeCollectorName: nil, // module account for collecting BSN fees from IBC transfers
+		tokenfactorytypes.ModuleName:       {authtypes.Minter, authtypes.Burner},
+		icatypes.ModuleName:                nil,
+		evmtypes.ModuleName:                {authtypes.Minter, authtypes.Burner},
+		erc20types.ModuleName:              {authtypes.Minter, authtypes.Burner},
+		feemarkettypes.ModuleName:          nil,
+		precisebanktypes.ModuleName:        {authtypes.Minter, authtypes.Burner},
 	}
 )
 
