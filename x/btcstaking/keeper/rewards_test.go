@@ -5,13 +5,18 @@ import (
 	"math/rand"
 	"testing"
 
+	"cosmossdk.io/log"
 	"cosmossdk.io/math"
+	"cosmossdk.io/store"
+	storemetrics "cosmossdk.io/store/metrics"
 	testutil "github.com/babylonlabs-io/babylon/v3/testutil/btcstaking-helper"
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
 	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
+	ftypes "github.com/babylonlabs-io/babylon/v3/x/finality/types"
 	ictvtypes "github.com/babylonlabs-io/babylon/v3/x/incentive/types"
 	"github.com/btcsuite/btcd/btcec/v2"
+	dbm "github.com/cosmos/cosmos-db"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 )
@@ -24,10 +29,15 @@ func FuzzDistributeFpCommissionAndBtcDelRewards(f *testing.F) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		// Use NoMocksCalls helper to avoid .AnyTimes() setup conflicts
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-		h := testutil.NewHelperNoMocksCalls(t, btclcKeeper, btccKeeper)
+		btccKForFinality := ftypes.NewMockCheckpointingKeeper(ctrl)
+
+		ictvK := testutil.NewMockIctvKeeperK(ctrl)
+
+		db := dbm.NewMemDB()
+		stateStore := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
+		h := testutil.NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKeeper, btccKForFinality, ictvK)
 
 		h.GenAndApplyCustomParams(r, 100, 200, 0, 2)
 
@@ -78,8 +88,8 @@ func FuzzDistributeFpCommissionAndBtcDelRewards(f *testing.F) {
 		fpAddr := consumerFp.Address()
 
 		// Set up expectations for both calls made by the function
-		h.IctvKeeperK.MockBtcStk.EXPECT().AccumulateRewardGaugeForFP(gomock.Any(), gomock.Eq(fpAddr), gomock.Eq(fpCommission)).Times(1)
-		h.IctvKeeperK.MockBtcStk.EXPECT().AddFinalityProviderRewardsForBtcDelegations(gomock.Any(), gomock.Eq(fpAddr), gomock.Eq(delegatorRewards)).Return(nil).Times(1)
+		ictvK.MockBtcStk.EXPECT().AccumulateRewardGaugeForFP(gomock.Any(), gomock.Eq(fpAddr), gomock.Eq(fpCommission)).Times(1)
+		ictvK.MockBtcStk.EXPECT().AddFinalityProviderRewardsForBtcDelegations(gomock.Any(), gomock.Eq(fpAddr), gomock.Eq(delegatorRewards)).Return(nil).Times(1)
 
 		actualFpCommission, actualDelegatorRewards, err := h.BTCStakingKeeper.DistributeFpCommissionAndBtcDelRewards(h.Ctx, randConsumer.ConsumerId, *consumerFp.BtcPk, coinsToFp)
 		h.NoError(err)
@@ -102,7 +112,9 @@ func FuzzCollectBabylonCommission(f *testing.F) {
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
 		bankKeeper := types.NewMockBankKeeper(ctrl)
-		h := testutil.NewHelperWithBankMock(t, btclcKeeper, btccKeeper, bankKeeper)
+		ictvK := testutil.NewMockIctvKeeperK(ctrl)
+
+		h := testutil.NewHelperWithBankMock(t, btclcKeeper, btccKeeper, bankKeeper, ictvK)
 
 		h.GenAndApplyCustomParams(r, 100, 200, 0, 2)
 
@@ -148,7 +160,9 @@ func FuzzDistributeComissionAndBsnRewards(f *testing.F) {
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
 		bankKeeper := types.NewMockBankKeeper(ctrl)
-		h := testutil.NewHelperWithBankMock(t, btclcKeeper, btccKeeper, bankKeeper)
+		ictvK := testutil.NewMockIctvKeeperK(ctrl)
+
+		h := testutil.NewHelperWithBankMock(t, btclcKeeper, btccKeeper, bankKeeper, ictvK)
 
 		h.GenAndApplyCustomParams(r, 100, 200, 0, 2)
 
@@ -206,8 +220,8 @@ func FuzzDistributeComissionAndBsnRewards(f *testing.F) {
 			fpCommission := ictvtypes.GetCoinsPortion(fpRewards, *fp.Commission)
 			delegatorRewards := fpRewards.Sub(fpCommission...)
 
-			h.IctvKeeperK.MockBtcStk.EXPECT().AccumulateRewardGaugeForFP(gomock.Any(), gomock.Any(), gomock.Eq(fpCommission)).Times(1)
-			h.IctvKeeperK.MockBtcStk.EXPECT().AddFinalityProviderRewardsForBtcDelegations(gomock.Any(), gomock.Any(), gomock.Eq(delegatorRewards)).Return(nil).Times(1)
+			ictvK.MockBtcStk.EXPECT().AccumulateRewardGaugeForFP(gomock.Any(), gomock.Any(), gomock.Eq(fpCommission)).Times(1)
+			ictvK.MockBtcStk.EXPECT().AddFinalityProviderRewardsForBtcDelegations(gomock.Any(), gomock.Any(), gomock.Eq(delegatorRewards)).Return(nil).Times(1)
 		}
 
 		actualEvtFpRatios, actualBbnCommission, err := h.BTCStakingKeeper.DistributeComissionAndBsnRewards(h.Ctx, randConsumer.ConsumerId, totalRewards, fpRatios)

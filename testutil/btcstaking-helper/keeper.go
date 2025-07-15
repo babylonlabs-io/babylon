@@ -48,8 +48,18 @@ type IctvKeeperI interface {
 // IctvKeeperK this structure is only test useful
 // It wraps two instances of the incentive keeper to create the test suite
 type IctvKeeperK struct {
-	ftypes.IncentiveKeeper
+	*ftypes.MockIncentiveKeeper
 	MockBtcStk *types.MockIncentiveKeeper
+}
+
+func NewMockIctvKeeperK(ctrl *gomock.Controller) *IctvKeeperK {
+	ictvFinalK := ftypes.NewMockIncentiveKeeper(ctrl)
+	ictvBstkK := types.NewMockIncentiveKeeper(ctrl)
+
+	return &IctvKeeperK{
+		MockIncentiveKeeper: ictvFinalK,
+		MockBtcStk:          ictvBstkK,
+	}
 }
 
 func (i IctvKeeperK) AccumulateRewardGaugeForFP(ctx context.Context, addr sdk.AccAddress, reward sdk.Coins) {
@@ -76,7 +86,7 @@ type Helper struct {
 	BTCLightClientKeeper             *types.MockBTCLightClientKeeper
 	CheckpointingKeeperForBtcStaking *types.MockBtcCheckpointKeeper
 	CheckpointingKeeperForFinality   *ftypes.MockCheckpointingKeeper
-	IctvKeeperK                      *IctvKeeperK
+	IctvKeeperK                      IctvKeeperI
 	Net                              *chaincfg.Params
 }
 
@@ -92,20 +102,14 @@ func NewHelper(
 ) *Helper {
 	ctrl := gomock.NewController(t)
 
-	// mock refundable messages
-	ictvFinalK := ftypes.NewMockIncentiveKeeper(ctrl)
-	ictvFinalK.EXPECT().IndexRefundableMsg(gomock.Any(), gomock.Any()).AnyTimes()
-	ictvFinalK.EXPECT().AddEventBtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
-	ictvFinalK.EXPECT().AddEventBtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	ictvK := NewMockIctvKeeperK(ctrl)
 
-	ictvBstkK := types.NewMockIncentiveKeeper(ctrl)
-	ictvBstkK.EXPECT().AccumulateRewardGaugeForFP(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
-	ictvBstkK.EXPECT().AddFinalityProviderRewardsForBtcDelegations(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	ictvK.MockIncentiveKeeper.EXPECT().IndexRefundableMsg(gomock.Any(), gomock.Any()).AnyTimes()
+	ictvK.MockIncentiveKeeper.EXPECT().AddEventBtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	ictvK.MockIncentiveKeeper.EXPECT().AddEventBtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 
-	ictvK := &IctvKeeperK{
-		IncentiveKeeper: ictvFinalK,
-		MockBtcStk:      ictvBstkK,
-	}
+	ictvK.MockBtcStk.EXPECT().AccumulateRewardGaugeForFP(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	ictvK.MockBtcStk.EXPECT().AddFinalityProviderRewardsForBtcDelegations(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 
 	db := dbm.NewMemDB()
 	stateStore := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
@@ -123,13 +127,7 @@ func NewHelperNoMocksCalls(
 ) *Helper {
 	ctrl := gomock.NewController(t)
 
-	ictvFinalK := ftypes.NewMockIncentiveKeeper(ctrl)
-	ictvBstkK := types.NewMockIncentiveKeeper(ctrl)
-
-	ictvK := &IctvKeeperK{
-		IncentiveKeeper: ictvFinalK,
-		MockBtcStk:      ictvBstkK,
-	}
+	ictvK := NewMockIctvKeeperK(ctrl)
 	db := dbm.NewMemDB()
 	stateStore := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
 
@@ -143,16 +141,10 @@ func NewHelperWithBankMock(
 	btclcKeeper *types.MockBTCLightClientKeeper,
 	btccKeeper *types.MockBtcCheckpointKeeper,
 	bankKeeper *types.MockBankKeeper,
+	ictvK *IctvKeeperK,
 ) *Helper {
 	ctrl := gomock.NewController(t)
 
-	ictvFinalK := ftypes.NewMockIncentiveKeeper(ctrl)
-	ictvBstkK := types.NewMockIncentiveKeeper(ctrl)
-
-	ictvK := &IctvKeeperK{
-		IncentiveKeeper: ictvFinalK,
-		MockBtcStk:      ictvBstkK,
-	}
 	db := dbm.NewMemDB()
 	stateStore := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
 
@@ -168,7 +160,7 @@ func NewHelperWithStoreAndIncentive(
 	btclcKeeper *types.MockBTCLightClientKeeper,
 	btccKForBtcStaking *types.MockBtcCheckpointKeeper,
 	btccKForFinality *ftypes.MockCheckpointingKeeper,
-	ictvKeeper *IctvKeeperK,
+	ictvKeeper IctvKeeperI,
 ) *Helper {
 	k, _ := keepertest.BTCStakingKeeperWithStore(t, db, stateStore, nil, btclcKeeper, btccKForBtcStaking, ictvKeeper)
 	msgSrvr := keeper.NewMsgServerImpl(*k)
