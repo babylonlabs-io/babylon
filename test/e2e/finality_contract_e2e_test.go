@@ -1,13 +1,15 @@
 package e2e
 
 import (
-	ct "github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
 	"math"
 	"math/rand"
 	"strconv"
 	"time"
 
+	sdkmath "cosmossdk.io/math"
+
 	"github.com/babylonlabs-io/babylon/v3/crypto/eots"
+	ct "github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
 	ftypes "github.com/babylonlabs-io/babylon/v3/x/finality/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -134,6 +136,7 @@ func (s *FinalityContractTestSuite) Test2RegisterRollupConsumer() {
 		BsnId,
 		datagen.GenRandomHexStr(s.r, 5),
 		"Chain description: "+datagen.GenRandomHexStr(s.r, 15),
+		sdkmath.LegacyMustNewDecFromStr("0.1"),
 	)
 
 	validatorNode, err := s.configurer.GetChainConfig(0).GetNodeAtIndex(0)
@@ -153,6 +156,7 @@ func (s *FinalityContractTestSuite) Test2RegisterRollupConsumer() {
 		s.Require().Equal(registeredBsn.ConsumerId, consumerRegistryResp.ConsumerRegisters[0].ConsumerId)
 		s.Require().Equal(registeredBsn.ConsumerName, consumerRegistryResp.ConsumerRegisters[0].ConsumerName)
 		s.Require().Equal(registeredBsn.ConsumerDescription, consumerRegistryResp.ConsumerRegisters[0].ConsumerDescription)
+		s.Require().Equal(registeredBsn.BabylonRewardsCommission.String(), consumerRegistryResp.ConsumerRegisters[0].BabylonRewardsCommission.String())
 
 		return true
 	}, 10*time.Second, 2*time.Second, "Consumer was not registered within the expected time")
