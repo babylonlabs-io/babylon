@@ -17,7 +17,7 @@ func TestQueuedMessage_ToResponse(t *testing.T) {
 	msgCancelUnbonding := &stakingtypes.MsgCancelUnbondingDelegation{}
 	msgCreateValidator := &stakingtypes.MsgCreateValidator{}
 	msgBeginRedelegate := &stakingtypes.MsgBeginRedelegate{}
-	unknownMsg := &stakingtypes.MsgEditValidator{}
+	msgEditValidator := &stakingtypes.MsgEditValidator{}
 
 	testcases := []struct {
 		name                string
@@ -71,13 +71,13 @@ func TestQueuedMessage_ToResponse(t *testing.T) {
 			expectQueuedMsgType: proto.MessageName(msgCreateValidator),
 		},
 		{
-			name: "unknown message type",
+			name: "MsgEditValidator",
 			inputQueuedMessage: types.QueuedMessage{
 				TxId:  []byte("tx6"),
 				MsgId: []byte("msg6"),
-				Msg:   &types.QueuedMessage_MsgEditValidator{MsgEditValidator: unknownMsg},
+				Msg:   &types.QueuedMessage_MsgEditValidator{MsgEditValidator: msgEditValidator},
 			},
-			expectQueuedMsgType: proto.MessageName(unknownMsg),
+			expectQueuedMsgType: proto.MessageName(msgEditValidator),
 		},
 		{
 			name: "nil message",
@@ -92,6 +92,7 @@ func TestQueuedMessage_ToResponse(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			if tc.expectPanic {
 				require.Panics(t, func() {
+					ch
 					_ = tc.inputQueuedMessage.ToResponse()
 				})
 				return
@@ -100,7 +101,7 @@ func TestQueuedMessage_ToResponse(t *testing.T) {
 			resp := tc.inputQueuedMessage.ToResponse()
 
 			require.NotNil(t, resp)
-			require.Equal(t, tc.expectQueuedMsgType, resp.QueuedMsgType)
+			require.Equal(t, tc.expectQueuedMsgType, resp.MsgType)
 			require.Equal(t, hex.EncodeToString(tc.inputQueuedMessage.TxId), resp.TxId)
 			require.Equal(t, hex.EncodeToString(tc.inputQueuedMessage.MsgId), resp.MsgId)
 			require.Equal(t, tc.inputQueuedMessage.UnwrapToSdkMsg().String(), resp.Msg)

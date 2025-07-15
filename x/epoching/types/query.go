@@ -24,12 +24,12 @@ func (q *QueuedMessage) ToResponse() *QueuedMessageResponse {
 	msgType := proto.MessageName(sdkMsg)
 
 	return &QueuedMessageResponse{
-		TxId:          hex.EncodeToString(q.TxId),
-		MsgId:         hex.EncodeToString(q.MsgId),
-		BlockHeight:   q.BlockHeight,
-		BlockTime:     q.BlockTime,
-		Msg:           sdkMsg.String(),
-		QueuedMsgType: msgType,
+		TxId:        hex.EncodeToString(q.TxId),
+		MsgId:       hex.EncodeToString(q.MsgId),
+		BlockHeight: q.BlockHeight,
+		BlockTime:   q.BlockTime,
+		Msg:         sdkMsg.String(),
+		MsgType:     msgType,
 	}
 }
 

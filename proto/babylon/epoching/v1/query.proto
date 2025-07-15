@@ -9,7 +9,6 @@ import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/babylonlabs-io/babylon/v3/x/epoching/types";
-option (gogoproto.goproto_getters_all) = false;
 
 // Query defines the gRPC querier service.
 service Query {
@@ -225,8 +224,8 @@ message QueuedMessageResponse {
   // msg is the actual message that is sent by a user and is queued by the
   // epoching module as string.
   string msg = 5;
-  // enriched_msg contains a parsed, structured version of the original message
-  string queued_msg_type = 6;
+  // msg_type is a string that identifies the type of the underlying message.
+  string msg_type = 6;
 }
 
 // QueuedMessageList is a message that contains a list of staking-related

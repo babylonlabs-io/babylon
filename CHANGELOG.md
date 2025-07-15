@@ -107,7 +107,7 @@ check of rewards
 - [#1335](https://github.com/babylonlabs-io/babylon/pull/1335) Tweaks on BTC stake expansion feature.
 - [#1343](https://github.com/babylonlabs-io/babylon/pull/1343) Adjust `testnet`
 command to modify `max-finality-providers` parameter.
-- [#1344](https://github.com/babylonlabs-io/babylon/pull/1344) Add `EnrichedMsg` field to `QueuedMessageResponse` message.
+- [#1344](https://github.com/babylonlabs-io/babylon/pull/1344) Add `MsgType` field to `QueuedMessageResponse` message.
 - [#1352](https://github.com/babylonlabs-io/babylon/pull/1352) Add stake expansion signatures in BTC delegation query response
 
 ### State Machine Breaking
