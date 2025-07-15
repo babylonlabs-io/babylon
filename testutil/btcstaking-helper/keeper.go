@@ -49,15 +49,15 @@ type IctvKeeperI interface {
 // It wraps two instances of the incentive keeper to create the test suite
 type IctvKeeperK struct {
 	ftypes.IncentiveKeeper
-	mockBtcStk types.IncentiveKeeper
+	MockBtcStk *types.MockIncentiveKeeper
 }
 
 func (i IctvKeeperK) AccumulateRewardGaugeForFP(ctx context.Context, addr sdk.AccAddress, reward sdk.Coins) {
-	i.mockBtcStk.AccumulateRewardGaugeForFP(ctx, addr, reward)
+	i.MockBtcStk.AccumulateRewardGaugeForFP(ctx, addr, reward)
 }
 
 func (i IctvKeeperK) AddFinalityProviderRewardsForBtcDelegations(ctx context.Context, fp sdk.AccAddress, rwd sdk.Coins) error {
-	return i.mockBtcStk.AddFinalityProviderRewardsForBtcDelegations(ctx, fp, rwd)
+	return i.MockBtcStk.AddFinalityProviderRewardsForBtcDelegations(ctx, fp, rwd)
 }
 
 type Helper struct {
@@ -76,6 +76,7 @@ type Helper struct {
 	BTCLightClientKeeper             *types.MockBTCLightClientKeeper
 	CheckpointingKeeperForBtcStaking *types.MockBtcCheckpointKeeper
 	CheckpointingKeeperForFinality   *ftypes.MockCheckpointingKeeper
+	IctvKeeperK                      *IctvKeeperK
 	Net                              *chaincfg.Params
 }
 
@@ -98,10 +99,12 @@ func NewHelper(
 	ictvFinalK.EXPECT().AddEventBtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 
 	ictvBstkK := types.NewMockIncentiveKeeper(ctrl)
+	ictvBstkK.EXPECT().AccumulateRewardGaugeForFP(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	ictvBstkK.EXPECT().AddFinalityProviderRewardsForBtcDelegations(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 
-	ictvK := IctvKeeperK{
+	ictvK := &IctvKeeperK{
 		IncentiveKeeper: ictvFinalK,
-		mockBtcStk:      ictvBstkK,
+		MockBtcStk:      ictvBstkK,
 	}
 
 	db := dbm.NewMemDB()
@@ -120,13 +123,12 @@ func NewHelperNoMocksCalls(
 ) *Helper {
 	ctrl := gomock.NewController(t)
 
-	// mock refundable messages
 	ictvFinalK := ftypes.NewMockIncentiveKeeper(ctrl)
 	ictvBstkK := types.NewMockIncentiveKeeper(ctrl)
 
-	ictvK := IctvKeeperK{
+	ictvK := &IctvKeeperK{
 		IncentiveKeeper: ictvFinalK,
-		mockBtcStk:      ictvBstkK,
+		MockBtcStk:      ictvBstkK,
 	}
 	db := dbm.NewMemDB()
 	stateStore := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
@@ -143,7 +145,7 @@ func NewHelperWithStoreAndIncentive(
 	btclcKeeper *types.MockBTCLightClientKeeper,
 	btccKForBtcStaking *types.MockBtcCheckpointKeeper,
 	btccKForFinality *ftypes.MockCheckpointingKeeper,
-	ictvKeeper IctvKeeperI,
+	ictvKeeper *IctvKeeperK,
 ) *Helper {
 	k, _ := keepertest.BTCStakingKeeperWithStore(t, db, stateStore, nil, btclcKeeper, btccKForBtcStaking, ictvKeeper)
 	msgSrvr := keeper.NewMsgServerImpl(*k)
@@ -178,6 +180,7 @@ func NewHelperWithStoreAndIncentive(
 		BTCLightClientKeeper:             btclcKeeper,
 		CheckpointingKeeperForBtcStaking: btccKForBtcStaking,
 		CheckpointingKeeperForFinality:   btccKForFinality,
+		IctvKeeperK:                      ictvKeeper,
 		Net:                              &chaincfg.SimNetParams,
 	}
 }
