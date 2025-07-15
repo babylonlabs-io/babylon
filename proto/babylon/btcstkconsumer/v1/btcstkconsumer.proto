@@ -2,6 +2,7 @@ syntax = "proto3";
 package babylon.btcstkconsumer.v1;
 
 import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
 
 option go_package = "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types";
 
@@ -30,6 +31,13 @@ message ConsumerRegister {
     CosmosConsumerMetadata cosmos_consumer_metadata = 4;
     RollupConsumerMetadata rollup_consumer_metadata = 5;
   };
+  // babylon_rewards_commission is the commission rate that Babylon takes from rewards
+  // distributed to finality providers for this BSN consumer
+  string babylon_rewards_commission = 6 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable) = false
+  ];
 }
 
 // CosmosConsumerMetadata is the metadata for the Cosmos integration
