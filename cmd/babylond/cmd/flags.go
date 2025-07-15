@@ -19,42 +19,43 @@ import (
 )
 
 const (
-	flagMaxActiveValidators        = "max-active-validators"
-	flagBtcConfirmationDepth       = "btc-confirmation-depth"
-	flagEpochInterval              = "epoch-interval"
-	flagBtcFinalizationTimeout     = "btc-finalization-timeout"
-	flagCheckpointTag              = "checkpoint-tag"
-	flagBaseBtcHeaderHex           = "btc-base-header"
-	flagBaseBtcHeaderHeight        = "btc-base-header-height"
-	flagAllowedReporterAddresses   = "allowed-reporter-addresses"
-	flagInflationRateChange        = "inflation-rate-change"
-	flagInflationMax               = "inflation-max"
-	flagInflationMin               = "inflation-min"
-	flagGoalBonded                 = "goal-bonded"
-	flagBlocksPerYear              = "blocks-per-year"
-	flagGenesisTime                = "genesis-time"
-	flagBlockGasLimit              = "block-gas-limit"
-	flagVoteExtensionEnableHeight  = "vote-extension-enable-height"
-	flagCovenantPks                = "covenant-pks"
-	flagCovenantQuorum             = "covenant-quorum"
-	flagMinStakingAmtSat           = "min-staking-amount-sat"
-	flagMaxStakingAmtSat           = "max-staking-amount-sat"
-	flagMinStakingTimeBlocks       = "min-staking-time-blocks"
-	flagMaxStakingTimeBlocks       = "max-staking-time-blocks"
-	flagMaxActiveFinalityProviders = "max-active-finality-providers"
-	flagUnbondingTime              = "unbonding-time"
-	flagUnbondingFeeSat            = "unbonding-fee-sat"
-	flagSlashingPkScript           = "slashing-pk-script"
-	flagMinSlashingFee             = "min-slashing-fee-sat"
-	flagSlashingRate               = "slashing-rate"
-	flagMinCommissionRate          = "min-commission-rate"
-	flagSignedBlocksWindow         = "signed-blocks-window"
-	flagActivationHeight           = "activation-height"
-	flagMinSignedPerWindow         = "min-signed-per-window"
-	flagFinalitySigTimeout         = "finality-sig-timeout"
-	flagJailDuration               = "jail-duration"
-	flagNoBlsPassword              = "no-bls-password"
-	flagBlsPasswordFile            = "bls-password-file"
+	flagMaxActiveValidators          = "max-active-validators"
+	flagBtcConfirmationDepth         = "btc-confirmation-depth"
+	flagEpochInterval                = "epoch-interval"
+	flagBtcFinalizationTimeout       = "btc-finalization-timeout"
+	flagCheckpointTag                = "checkpoint-tag"
+	flagBaseBtcHeaderHex             = "btc-base-header"
+	flagBaseBtcHeaderHeight          = "btc-base-header-height"
+	flagAllowedReporterAddresses     = "allowed-reporter-addresses"
+	flagInflationRateChange          = "inflation-rate-change"
+	flagInflationMax                 = "inflation-max"
+	flagInflationMin                 = "inflation-min"
+	flagGoalBonded                   = "goal-bonded"
+	flagBlocksPerYear                = "blocks-per-year"
+	flagGenesisTime                  = "genesis-time"
+	flagBlockGasLimit                = "block-gas-limit"
+	flagVoteExtensionEnableHeight    = "vote-extension-enable-height"
+	flagCovenantPks                  = "covenant-pks"
+	flagCovenantQuorum               = "covenant-quorum"
+	flagMinStakingAmtSat             = "min-staking-amount-sat"
+	flagMaxStakingAmtSat             = "max-staking-amount-sat"
+	flagMinStakingTimeBlocks         = "min-staking-time-blocks"
+	flagMaxStakingTimeBlocks         = "max-staking-time-blocks"
+	flagMaxActiveFinalityProviders   = "max-active-finality-providers"
+	flagUnbondingTime                = "unbonding-time"
+	flagUnbondingFeeSat              = "unbonding-fee-sat"
+	flagSlashingPkScript             = "slashing-pk-script"
+	flagMinSlashingFee               = "min-slashing-fee-sat"
+	flagSlashingRate                 = "slashing-rate"
+	flagMaxFinalityProvidersInScript = "max-finality-providers-in-script"
+	flagMinCommissionRate            = "min-commission-rate"
+	flagSignedBlocksWindow           = "signed-blocks-window"
+	flagActivationHeight             = "activation-height"
+	flagMinSignedPerWindow           = "min-signed-per-window"
+	flagFinalitySigTimeout           = "finality-sig-timeout"
+	flagJailDuration                 = "jail-duration"
+	flagNoBlsPassword                = "no-bls-password"
+	flagBlsPasswordFile              = "bls-password-file"
 )
 
 type GenesisCLIArgs struct {
@@ -84,6 +85,7 @@ type GenesisCLIArgs struct {
 	SlashingPkScript              string
 	MinSlashingTransactionFeeSat  int64
 	SlashingRate                  math.LegacyDec
+	MaxFinalityProvidersInScript  uint32
 	MaxActiveFinalityProviders    uint32
 	UnbondingTime                 uint16
 	UnbondingFeeSat               int64
@@ -121,6 +123,7 @@ func addGenesisFlags(cmd *cobra.Command) {
 	cmd.Flags().Int64(flagMinSlashingFee, 1000, "Bitcoin staking minimum slashing fee")
 	cmd.Flags().String(flagMinCommissionRate, "0", "Bitcoin staking validator minimum commission rate")
 	cmd.Flags().String(flagSlashingRate, "0.1", "Bitcoin staking slashing rate")
+	cmd.Flags().Uint32(flagMaxFinalityProvidersInScript, 1, "Maximum amount of finality providers in the staking script")
 	cmd.Flags().Uint32(flagMaxActiveFinalityProviders, 100, "Bitcoin staking maximum active finality providers")
 	cmd.Flags().Uint16(flagUnbondingTime, 21, "Required timelock on unbonding transaction in btc blocks. Must be larger than btc-finalization-timeout")
 	cmd.Flags().Int64(flagUnbondingFeeSat, 1000, "Required fee for unbonding transaction in satoshis")
@@ -163,6 +166,7 @@ func parseGenesisFlags(cmd *cobra.Command) (*GenesisCLIArgs, error) {
 	minSlashingFee, _ := cmd.Flags().GetInt64(flagMinSlashingFee)
 	minCommissionRate, _ := cmd.Flags().GetString(flagMinCommissionRate)
 	slashingRate, _ := cmd.Flags().GetString(flagSlashingRate)
+	maxFinalityProvidersInScript, _ := cmd.Flags().GetUint32(flagMaxFinalityProvidersInScript)
 	maxActiveFinalityProviders, _ := cmd.Flags().GetUint32(flagMaxActiveFinalityProviders)
 	unbondingTime, _ := cmd.Flags().GetUint16(flagUnbondingTime)
 	unbondingFeeSat, _ := cmd.Flags().GetInt64(flagUnbondingFeeSat)
@@ -221,6 +225,7 @@ func parseGenesisFlags(cmd *cobra.Command) (*GenesisCLIArgs, error) {
 		MinSlashingTransactionFeeSat:  minSlashingFee,
 		MinCommissionRate:             math.LegacyMustNewDecFromStr(minCommissionRate),
 		SlashingRate:                  math.LegacyMustNewDecFromStr(slashingRate),
+		MaxFinalityProvidersInScript:  maxFinalityProvidersInScript,
 		MaxActiveFinalityProviders:    maxActiveFinalityProviders,
 		UnbondingTime:                 unbondingTime,
 		UnbondingFeeSat:               unbondingFeeSat,

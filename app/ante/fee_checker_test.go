@@ -1,6 +1,7 @@
 package ante_test
 
 import (
+	"fmt"
 	"math"
 	"testing"
 
@@ -30,14 +31,15 @@ func TestCheckTxFeeWithGlobalMinGasPrices(t *testing.T) {
 	require.NoError(t, err)
 
 	feeAmount := int64(1000)
-	ctx := sdk.Context{}
 
 	testCases := []struct {
 		name       string
 		fee        sdk.Coins
+		malleate   func(ctx sdk.Context) sdk.Context
 		gasLimit   uint64
 		appVersion uint64
 		expErr     bool
+		errMsg     string
 	}{
 		{
 			name:       "bad tx; fee below required minimum",
@@ -72,6 +74,18 @@ func TestCheckTxFeeWithGlobalMinGasPrices(t *testing.T) {
 			fee:        sdk.NewCoins(sdk.NewInt64Coin(appparams.DefaultBondDenom, 0)),
 			gasLimit:   0,
 			appVersion: uint64(2),
+			expErr:     true,
+			errMsg:     "empty coins",
+		},
+		{
+			name:     "gen tx; gas limit and fee are 0",
+			fee:      sdk.NewCoins(sdk.NewInt64Coin(appparams.DefaultBondDenom, 0)),
+			gasLimit: 0,
+			malleate: func(ctx sdk.Context) sdk.Context {
+				return ctx.WithBlockHeight(0) // genesis block
+				// In genesis block, we allow empty fees
+			},
+			appVersion: uint64(2),
 			expErr:     false,
 		},
 		{
@@ -81,17 +95,40 @@ func TestCheckTxFeeWithGlobalMinGasPrices(t *testing.T) {
 			appVersion: uint64(2),
 			expErr:     false,
 		},
+		{
+			name:       "bad tx; fee uses non-default denom",
+			fee:        sdk.NewCoins(sdk.NewInt64Coin("usdt", feeAmount)),
+			gasLimit:   uint64(float64(feeAmount) / appparams.GlobalMinGasPrice),
+			appVersion: uint64(2),
+			expErr:     true,
+			errMsg:     fmt.Sprintf("only %s denom is allowed", appparams.DefaultBondDenom),
+		},
+		{
+			name: "bad tx; fee has multiple denoms including default",
+			fee: sdk.NewCoins(
+				sdk.NewInt64Coin(appparams.DefaultBondDenom, feeAmount),
+				sdk.NewInt64Coin("usdt", feeAmount),
+			),
+			gasLimit:   uint64(float64(feeAmount*2) / appparams.GlobalMinGasPrice),
+			appVersion: uint64(2),
+			expErr:     true,
+			errMsg:     fmt.Sprintf("only %s denom is allowed", appparams.DefaultBondDenom),
+		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			ctx := sdk.Context{}.WithBlockHeight(10)
 			builder.SetGasLimit(tc.gasLimit)
 			builder.SetFeeAmount(tc.fee)
 			tx := builder.GetTx()
-
+			if tc.malleate != nil {
+				ctx = tc.malleate(ctx)
+			}
 			_, _, err := ante.CheckTxFeeWithGlobalMinGasPrices(ctx, tx)
 			if tc.expErr {
 				require.Error(t, err)
+				require.ErrorContains(t, err, tc.errMsg)
 			} else {
 				require.NoError(t, err)
 			}

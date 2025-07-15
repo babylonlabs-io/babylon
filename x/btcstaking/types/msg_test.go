@@ -363,9 +363,14 @@ func TestStructFieldConsistency(t *testing.T) {
 	expandType := reflect.TypeOf(types.MsgBtcStakeExpand{})
 
 	// Forward check: all fields in MsgCreateBTCDelegation are in MsgBtcStakeExpand
+	// except StakingTxInclusionProof which was removed from MsgBtcStakeExpand
 	var missingFromExpand []string
 	for i := 0; i < createType.NumField(); i++ {
 		createField := createType.Field(i)
+		// Skip StakingTxInclusionProof field as it was intentionally removed from MsgBtcStakeExpand
+		if createField.Name == "StakingTxInclusionProof" {
+			continue
+		}
 		expandField, ok := expandType.FieldByName(createField.Name)
 		if !ok {
 			missingFromExpand = append(missingFromExpand, createField.Name)

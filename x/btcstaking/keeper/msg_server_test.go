@@ -1380,7 +1380,7 @@ func TestCorrectUnbondingTimeInDelegation(t *testing.T) {
 			h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
 
 			// set all parameters
-			_, _ = h.GenAndApplyCustomParams(r, tt.finalizationTimeout, tt.unbondingTimeInParams, 0)
+			_, _ = h.GenAndApplyCustomParams(r, tt.finalizationTimeout, tt.unbondingTimeInParams, 0, 1)
 
 			// generate and insert new finality provider
 			_, fpPK, _ := h.CreateFinalityProvider(r)
@@ -1429,7 +1429,7 @@ func TestAllowList(t *testing.T) {
 
 	allowListExpirationHeight := uint64(10)
 	// set all parameters, use the allow list
-	h.GenAndApplyCustomParams(r, 100, 0, allowListExpirationHeight)
+	h.GenAndApplyCustomParams(r, 100, 0, allowListExpirationHeight, 1)
 
 	// generate and insert new finality provider
 	_, fpPK, _ := h.CreateFinalityProvider(r)

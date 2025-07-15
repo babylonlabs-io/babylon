@@ -29,7 +29,7 @@ func FuzzMultiStaking_MultiStakedBTCDelegation(f *testing.F) {
 		h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
 
 		// set all parameters
-		covenantSKs, _ := h.GenAndApplyParams(r)
+		covenantSKs, _ := h.GenAndApplyCustomParams(r, 100, 200, 0, 2)
 
 		bsParams := h.BTCStakingKeeper.GetParams(h.Ctx)
 
@@ -151,7 +151,7 @@ func FuzzFinalityProviderDelegations_RestakingConsumers(f *testing.F) {
 		h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
 
 		// set all parameters
-		h.GenAndApplyParams(r)
+		h.GenAndApplyCustomParams(r, 100, 200, 0, 2)
 
 		// register a new consumer
 		consumerRegister := datagen.GenRandomCosmosConsumerRegister(r)
@@ -257,7 +257,7 @@ func TestNoActivationEventForRollupConsumer(t *testing.T) {
 	h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
 
 	// set all parameters
-	covenantSKs, _ := h.GenAndApplyParams(r)
+	covenantSKs, _ := h.GenAndApplyCustomParams(r, 100, 200, 0, 2)
 
 	// generate and insert new Babylon finality provider
 	_, fpPK, _ := h.CreateFinalityProvider(r)

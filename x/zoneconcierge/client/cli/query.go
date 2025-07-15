@@ -2,8 +2,6 @@ package cli
 
 import (
 	"fmt"
-	"strconv"
-
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
 
@@ -24,7 +22,6 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 	}
 
 	cmd.AddCommand(CmdFinalizedChainsInfo())
-	cmd.AddCommand(CmdEpochChainsInfoInfo())
 	return cmd
 }
 
@@ -51,32 +48,5 @@ func CmdFinalizedChainsInfo() *cobra.Command {
 	cmd.Flags().Bool("prove", false, "whether to retrieve proofs for each FinalizedChainInfo")
 	flags.AddQueryFlagsToCmd(cmd)
 
-	return cmd
-}
-
-func CmdEpochChainsInfoInfo() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "epoch-chains-info <epoch-num> <consumer-ids>",
-		Short: "retrieve the latest info for a list of consumers in a given epoch",
-		Args:  cobra.MinimumNArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx := client.GetClientContextFromCmd(cmd)
-			queryClient := types.NewQueryClient(clientCtx)
-
-			epoch, err := strconv.ParseUint(args[0], 10, 64)
-			if err != nil {
-				return err
-			}
-			req := types.QueryEpochChainsInfoRequest{EpochNum: epoch, ConsumerIds: args[1:]}
-			resp, err := queryClient.EpochChainsInfo(cmd.Context(), &req)
-			if err != nil {
-				return err
-			}
-
-			return clientCtx.PrintProto(resp)
-		},
-	}
-
-	flags.AddQueryFlagsToCmd(cmd)
 	return cmd
 }

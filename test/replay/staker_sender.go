@@ -247,7 +247,6 @@ func (s *Staker) CreateBtcExpandMessage(
 		StakingTime:                   stakingTime,
 		StakingValue:                  totalSat,
 		StakingTx:                     serializedStakingTx,
-		StakingTxInclusionProof:       nil,
 		SlashingTx:                    stakingSlashingInfo.SlashingTx,
 		DelegatorSlashingSig:          delegatorSig,
 		UnbondingValue:                int64(unbondingValue),
