@@ -9,7 +9,7 @@ protoVer = 0.14.0
 protoImageName = ghcr.io/cosmos/proto-builder:$(protoVer)
 
 bufImage = $(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace bufbuild/buf
-protoGenImage = $(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace $(protoImageName)
+protoImage = $(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace $(protoImageName)
 
 proto-help:
 	@echo "Available proto commands:"
