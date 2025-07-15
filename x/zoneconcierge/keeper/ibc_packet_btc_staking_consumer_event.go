@@ -126,9 +126,13 @@ func (k Keeper) HandleIBCChannelCreation(
 		return fmt.Errorf("failed to initialize consumer base BTC header: %w", err)
 	}
 
+	// Get current tip height for logging
+	currentTip := k.btclcKeeper.GetTipInfo(ctx)
+
 	k.Logger(ctx).Info("IBC channel created successfully",
 		"consumerID", clientID,
 		"channelID", channelID,
+		"currentTipHeight", currentTip.Height,
 		"note", "Consumer base BTC header initialized to current tip",
 	)
 
@@ -212,8 +216,8 @@ func (k Keeper) HandleBSNBaseBTCHeader(
 	}
 
 	// Validate the base BTC header
-	if baseBTCHeader == nil {
-		return fmt.Errorf("base BTC header is nil")
+	if err := baseBTCHeader.Validate(); err != nil {
+		return fmt.Errorf("base BTC header is invalid: %w", err)
 	}
 
 	// Verify that the base BTC header exists in Babylon's BTC light client

@@ -24,6 +24,8 @@ func (k Keeper) BroadcastBTCHeaders(ctx context.Context) error {
 	// - If Consumer base header exists but no headers sent: from Consumer base to tip
 	// - If headers previously sent: from child of most recent valid header to tip
 	// - If reorg detected: from Consumer base to tip
+	// TODO: Improve reorg handling efficiency - instead of sending from Consumer base to tip,
+	// we should send a dedicated reorg event and then send headers from the reorged point to tip
 
 	// Keep track of headers sent for updating last sent segment
 	var lastHeadersSent []*btclctypes.BTCHeaderInfo
