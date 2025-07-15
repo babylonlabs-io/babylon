@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sort"
 
@@ -10,6 +11,7 @@ import (
 	finalitytypes "github.com/babylonlabs-io/babylon/v3/x/finality/types"
 	"github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 )
 
@@ -70,7 +72,21 @@ func (k Keeper) BroadcastBTCStakingConsumerEvents(
 
 		for _, channel := range channels {
 			if err := k.SendIBCPacket(ctx, channel, outPacket); err != nil {
-				return err
+				if errors.Is(err, clienttypes.ErrClientNotActive) {
+					k.Logger(sdkCtx).Info("IBC client is not active, skipping channel",
+						"consumerID", consumerID,
+						"channel", channel.ChannelId,
+						"error", err.Error(),
+					)
+					continue
+				}
+
+				k.Logger(sdkCtx).Error("failed to send BTC staking consumer event to channel, continuing with other channels",
+					"consumerID", consumerID,
+					"channel", channel.ChannelId,
+					"error", err.Error(),
+				)
+				continue
 			}
 		}
 
