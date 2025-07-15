@@ -326,7 +326,7 @@ func TestOnlyBabylonFpCanCommitRandomness(t *testing.T) {
 	replayerTempDir := t.TempDir()
 	driver := NewBabylonAppDriver(r, t, driverTempDir, replayerTempDir)
 
-	consumerID1 := "consumer1"
+	const consumerID1 = "consumer1"
 
 	// 1. Set up mock IBC clients for each consumer before registering consumers
 	ctx := driver.App.BaseApp.NewContext(false)
