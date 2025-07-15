@@ -670,20 +670,9 @@ func (ms msgServer) SelectiveSlashingEvidence(goCtx context.Context, req *types.
 	fpSK, fpPK := btcec.PrivKeyFromBytes(req.RecoveredFpBtcSk)
 	fpBTCPK := bbn.NewBIP340PubKeyFromBTCPK(fpPK)
 
-	// ensure the finality provider exists
-	fp, err := ms.GetFinalityProvider(ctx, fpBTCPK.MustMarshal())
-	if err != nil {
-		return nil, types.ErrFpNotFound.Wrapf("failing to find finality provider with btc pk %s", fpBTCPK.MarshalHex())
-	}
-	// ensure the finality provider is not slashed
-	if fp.IsSlashed() {
-		return nil, types.ErrFpAlreadySlashed
-	}
-
-	// at this point, the finality provider must have done selective slashing and must be
-	// adversarial
-
-	// slash the finality provider now
+	// slashing the provider - this method also checks:
+	// - that the fp first exists and can be found
+	// - that the finality provider isnt already slashed
 	if err := ms.SlashFinalityProvider(ctx, fpBTCPK.MustMarshal()); err != nil {
 		return nil, err
 	}

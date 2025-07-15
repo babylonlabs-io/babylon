@@ -344,9 +344,15 @@ message MsgSelectiveSlashingEvidence {
   option (cosmos.msg.v1.signer) = "signer";
 
   string signer = 1;
-  // staking_tx_hash is the hash of the staking tx.
-  // It uniquely identifies a BTC delegation
-  bytes recovered_fp_btc_sk = 2;
+
+  reserved 2;
+  reserved "staking_tx_hash";
+
+  // recovered_fp_btc_sk is the BTC SK of the finality provider who
+  // launches the selective slashing offence. The SK is recovered by
+  // using a covenant adaptor signature and the corresponding Schnorr
+  // signature
+  bytes recovered_fp_btc_sk = 3;
 }
 // MsgSelectiveSlashingEvidenceResponse is the response for
 // MsgSelectiveSlashingEvidence
