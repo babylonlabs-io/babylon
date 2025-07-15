@@ -126,6 +126,8 @@ for multistaking fps
 - [#1344](https://github.com/babylonlabs-io/babylon/pull/1344) Bump cosmos-sdk and
 remove send restrictions
 - [#1364](https://github.com/babylonlabs-io/babylon/pull/1364) Add babylon commission as legacy dec `[0...1]` to Consumer Registry.
+- [#1359](https://github.com/babylonlabs-io/babylon/pull/1359) Add `MsgAddBsnRewards` to btcstaking and wired BTC delegations from
+BSNs to incentive reward tracker.
 
 ### Bug fixes
 
