@@ -121,9 +121,9 @@ func (k Keeper) HandleIBCChannelCreation(
 		return fmt.Errorf("failed to update consumer register: %w", err)
 	}
 
-	// Initialize Consumer base BTC header to current tip
-	if err := k.initializeConsumerBaseBTCHeader(ctx, clientID); err != nil {
-		return fmt.Errorf("failed to initialize consumer base BTC header: %w", err)
+	// Initialize Consumer BTC state to current tip
+	if err := k.InitializeConsumerBTCState(ctx, clientID); err != nil {
+		return fmt.Errorf("failed to initialize consumer BTC state: %w", err)
 	}
 
 	// Get current tip height for logging

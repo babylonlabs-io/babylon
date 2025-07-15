@@ -3,7 +3,6 @@ package keeper
 import (
 	"context"
 
-	btclctypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
 	"github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -27,9 +26,6 @@ func (k Keeper) BroadcastBTCHeaders(ctx context.Context) error {
 	// TODO: Improve reorg handling efficiency - instead of sending from Consumer base to tip,
 	// we should send a dedicated reorg event and then send headers from the reorged point to tip
 
-	// Keep track of headers sent for updating last sent segment
-	var lastHeadersSent []*btclctypes.BTCHeaderInfo
-
 	for _, channel := range openZCChannels {
 		consumerID, err := k.getClientID(ctx, channel)
 		if err != nil {
@@ -49,17 +45,9 @@ func (k Keeper) BroadcastBTCHeaders(ctx context.Context) error {
 			return err
 		}
 
-		// Use the first consumer's headers for updating last sent segment
-		// This maintains backward compatibility with the global last sent segment
-		if lastHeadersSent == nil {
-			lastHeadersSent = headers
-		}
-	}
-
-	// Update last sent segment if any headers were sent
-	if lastHeadersSent != nil {
-		k.setLastSentSegment(ctx, &types.BTCChainSegment{
-			BtcHeaders: lastHeadersSent,
+		// Update the consumer-specific last sent segment
+		k.SetConsumerLastSentSegment(ctx, consumerID, &types.BTCChainSegment{
+			BtcHeaders: headers,
 		})
 	}
 
