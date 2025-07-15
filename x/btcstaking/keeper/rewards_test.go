@@ -5,6 +5,7 @@ import (
 	"math/rand"
 	"testing"
 
+	"cosmossdk.io/math"
 	testutil "github.com/babylonlabs-io/babylon/v3/testutil/btcstaking-helper"
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
@@ -86,5 +87,140 @@ func FuzzDistributeFpCommissionAndBtcDelRewards(f *testing.F) {
 		// Verify the returned values match expected calculations
 		require.Equal(t, fpCommission, actualFpCommission)
 		require.Equal(t, delegatorRewards, actualDelegatorRewards)
+	})
+}
+
+func FuzzCollectBabylonCommission(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 500)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		// Use helper with bank keeper mock
+		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
+		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
+		bankKeeper := types.NewMockBankKeeper(ctrl)
+		h := testutil.NewHelperWithBankMock(t, btclcKeeper, btccKeeper, bankKeeper)
+
+		h.GenAndApplyCustomParams(r, 100, 200, 0, 2)
+
+		// Test case 1: Consumer not found
+		nonExistentConsumerId := "non-existent-consumer"
+		totalRewards := datagen.GenRandomCoins(r)
+		_, _, err := h.BTCStakingKeeper.CollectBabylonCommission(h.Ctx, nonExistentConsumerId, totalRewards)
+		require.ErrorContains(t, err, "BSN consumer not found")
+
+		// Test case 2: Valid commission collection
+		randConsumer := registerAndVerifyConsumer(t, r, h)
+
+		// Calculate expected values
+		expectedBabylonCommission := ictvtypes.GetCoinsPortion(totalRewards, randConsumer.BabylonRewardsCommission)
+		expectedRemainingRewards := totalRewards.Sub(expectedBabylonCommission...)
+
+		// Mock the bank keeper for commission transfer
+		bankKeeper.EXPECT().SendCoinsFromModuleToModule(
+			gomock.Any(),
+			ictvtypes.ModuleName,
+			gomock.Any(),
+			gomock.Eq(expectedBabylonCommission),
+		).Return(nil).Times(1)
+
+		actualBabylonCommission, actualRemainingRewards, err := h.BTCStakingKeeper.CollectBabylonCommission(h.Ctx, randConsumer.ConsumerId, totalRewards)
+		h.NoError(err)
+
+		// Verify the returned values match expected calculations
+		require.Equal(t, expectedBabylonCommission, actualBabylonCommission)
+		require.Equal(t, expectedRemainingRewards, actualRemainingRewards)
+	})
+}
+
+func FuzzDistributeComissionAndBsnRewards(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 500)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		// Use helper with bank keeper mock
+		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
+		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
+		bankKeeper := types.NewMockBankKeeper(ctrl)
+		h := testutil.NewHelperWithBankMock(t, btclcKeeper, btccKeeper, bankKeeper)
+
+		h.GenAndApplyCustomParams(r, 100, 200, 0, 2)
+
+		// Test case 1: Consumer not found
+		nonExistentConsumerId := "non-existent-consumer"
+		totalRewards := datagen.GenRandomCoins(r)
+		emptyFpRatios := []types.FpRatio{}
+		_, _, err := h.BTCStakingKeeper.DistributeComissionAndBsnRewards(h.Ctx, nonExistentConsumerId, totalRewards, emptyFpRatios)
+		require.ErrorContains(t, err, "BSN consumer not found")
+
+		// Test case 2: Valid distribution with multiple FPs
+		randConsumer := registerAndVerifyConsumer(t, r, h)
+
+		// Create multiple finality providers
+		numFPs := 2 + r.Intn(3) // 2-4 FPs
+		fpRatios := make([]types.FpRatio, numFPs)
+		fpAddresses := make([]string, numFPs)
+
+		// Generate FP ratios that sum to 1.0
+		// Create equal ratios for simplicity
+		equalRatio := math.LegacyOneDec().QuoInt64(int64(numFPs))
+
+		for i := 0; i < numFPs; i++ {
+			_, _, fp, err := h.CreateConsumerFinalityProvider(r, randConsumer.ConsumerId)
+			h.NoError(err)
+
+			fpRatios[i] = types.FpRatio{
+				BtcPk: fp.BtcPk,
+				Ratio: equalRatio,
+			}
+			fpAddresses[i] = fp.Address().String()
+		}
+
+		// Calculate expected values
+		expectedBabylonCommission := ictvtypes.GetCoinsPortion(totalRewards, randConsumer.BabylonRewardsCommission)
+		remainingRewards := totalRewards.Sub(expectedBabylonCommission...)
+
+		// Mock the bank keeper for commission transfer
+		bankKeeper.EXPECT().SendCoinsFromModuleToModule(
+			gomock.Any(),
+			ictvtypes.ModuleName,
+			gomock.Any(),
+			gomock.Eq(expectedBabylonCommission),
+		).Return(nil).Times(1)
+
+		// Set up expectations for each FP
+		for _, fpRatio := range fpRatios {
+			fpRewards := ictvtypes.GetCoinsPortion(remainingRewards, fpRatio.Ratio)
+
+			// Get the FP from the BTCStaking keeper to get the actual commission
+			fp, err := h.BTCStakingKeeper.GetFinalityProvider(h.Ctx, fpRatio.BtcPk.MustMarshal())
+			h.NoError(err)
+
+			// For each FP, we expect both AccumulateRewardGaugeForFP and AddFinalityProviderRewardsForBtcDelegations
+			fpCommission := ictvtypes.GetCoinsPortion(fpRewards, *fp.Commission)
+			delegatorRewards := fpRewards.Sub(fpCommission...)
+
+			h.IctvKeeperK.MockBtcStk.EXPECT().AccumulateRewardGaugeForFP(gomock.Any(), gomock.Any(), gomock.Eq(fpCommission)).Times(1)
+			h.IctvKeeperK.MockBtcStk.EXPECT().AddFinalityProviderRewardsForBtcDelegations(gomock.Any(), gomock.Any(), gomock.Eq(delegatorRewards)).Return(nil).Times(1)
+		}
+
+		actualEvtFpRatios, actualBbnCommission, err := h.BTCStakingKeeper.DistributeComissionAndBsnRewards(h.Ctx, randConsumer.ConsumerId, totalRewards, fpRatios)
+		h.NoError(err)
+
+		// Verify the returned values
+		require.Equal(t, expectedBabylonCommission, actualBbnCommission)
+		require.Len(t, actualEvtFpRatios, numFPs)
+
+		// Verify each FP's event data
+		for i, evtFpRatio := range actualEvtFpRatios {
+			require.Equal(t, fpRatios[i].BtcPk, evtFpRatio.BtcPk)
+			require.Equal(t, fpRatios[i].Ratio, evtFpRatio.Ratio)
+		}
 	})
 }

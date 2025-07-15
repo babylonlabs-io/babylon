@@ -138,6 +138,29 @@ func NewHelperNoMocksCalls(
 	return NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKeeper, ckptKeeper, ictvK)
 }
 
+func NewHelperWithBankMock(
+	t testing.TB,
+	btclcKeeper *types.MockBTCLightClientKeeper,
+	btccKeeper *types.MockBtcCheckpointKeeper,
+	bankKeeper *types.MockBankKeeper,
+) *Helper {
+	ctrl := gomock.NewController(t)
+
+	ictvFinalK := ftypes.NewMockIncentiveKeeper(ctrl)
+	ictvBstkK := types.NewMockIncentiveKeeper(ctrl)
+
+	ictvK := &IctvKeeperK{
+		IncentiveKeeper: ictvFinalK,
+		MockBtcStk:      ictvBstkK,
+	}
+	db := dbm.NewMemDB()
+	stateStore := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
+
+	ckptKeeper := ftypes.NewMockCheckpointingKeeper(ctrl)
+
+	return NewHelperWithStoreIncentiveAndBank(t, db, stateStore, btclcKeeper, btccKeeper, ckptKeeper, ictvK, bankKeeper)
+}
+
 func NewHelperWithStoreAndIncentive(
 	t testing.TB,
 	db dbm.DB,
@@ -148,6 +171,54 @@ func NewHelperWithStoreAndIncentive(
 	ictvKeeper *IctvKeeperK,
 ) *Helper {
 	k, _ := keepertest.BTCStakingKeeperWithStore(t, db, stateStore, nil, btclcKeeper, btccKForBtcStaking, ictvKeeper)
+	msgSrvr := keeper.NewMsgServerImpl(*k)
+
+	bscKeeper := k.BscKeeper.(bsckeeper.Keeper)
+	btcStkConsumerMsgServer := bsckeeper.NewMsgServerImpl(bscKeeper)
+
+	fk, ctx := keepertest.FinalityKeeperWithStore(t, db, stateStore, k, ictvKeeper, btccKForFinality)
+	fMsgSrvr := fkeeper.NewMsgServerImpl(*fk)
+
+	// set all parameters
+	err := k.SetParams(ctx, types.DefaultParams())
+	require.NoError(t, err)
+	err = fk.SetParams(ctx, ftypes.DefaultParams())
+	require.NoError(t, err)
+
+	ctx = ctx.WithHeaderInfo(header.Info{Height: 1, Time: time.Now()}).WithBlockHeight(1).WithBlockTime(time.Now())
+
+	return &Helper{
+		t:   t,
+		Ctx: ctx,
+
+		BTCStakingKeeper: k,
+		MsgServer:        msgSrvr,
+
+		BTCStkConsumerKeeper:    &bscKeeper,
+		BtcStkConsumerMsgServer: btcStkConsumerMsgServer,
+
+		FinalityKeeper: fk,
+		FMsgServer:     fMsgSrvr,
+
+		BTCLightClientKeeper:             btclcKeeper,
+		CheckpointingKeeperForBtcStaking: btccKForBtcStaking,
+		CheckpointingKeeperForFinality:   btccKForFinality,
+		IctvKeeperK:                      ictvKeeper,
+		Net:                              &chaincfg.SimNetParams,
+	}
+}
+
+func NewHelperWithStoreIncentiveAndBank(
+	t testing.TB,
+	db dbm.DB,
+	stateStore store.CommitMultiStore,
+	btclcKeeper *types.MockBTCLightClientKeeper,
+	btccKForBtcStaking *types.MockBtcCheckpointKeeper,
+	btccKForFinality *ftypes.MockCheckpointingKeeper,
+	ictvKeeper *IctvKeeperK,
+	bankKeeper *types.MockBankKeeper,
+) *Helper {
+	k, _ := keepertest.BTCStakingKeeperWithStoreAndBank(t, db, stateStore, nil, btclcKeeper, btccKForBtcStaking, ictvKeeper, bankKeeper)
 	msgSrvr := keeper.NewMsgServerImpl(*k)
 
 	bscKeeper := k.BscKeeper.(bsckeeper.Keeper)
