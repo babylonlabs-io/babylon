@@ -92,7 +92,6 @@ func TestQueuedMessage_ToResponse(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			if tc.expectPanic {
 				require.Panics(t, func() {
-					ch
 					_ = tc.inputQueuedMessage.ToResponse()
 				})
 				return
