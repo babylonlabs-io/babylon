@@ -66,7 +66,7 @@ func FuzzCommitPubRandList(f *testing.F) {
 		signingContext := signingcontext.FpRandCommitContextV0(ctx.ChainID(), fKeeper.ModuleAddress())
 
 		// Case 1: fail if the finality provider is not registered
-		bsKeeper.EXPECT().HasFinalityProvider(gomock.Any(), gomock.Eq(fpBTCPKBytes)).Return(false).Times(1)
+		bsKeeper.EXPECT().BabylonFinalityProviderExists(gomock.Any(), gomock.Eq(fpBTCPKBytes)).Return(false).Times(1)
 		startHeight := datagen.RandomInt(r, 10)
 		numPubRand := uint64(200)
 		_, msg, err := datagen.GenRandomMsgCommitPubRandList(r, btcSK, signingContext, startHeight, numPubRand)
@@ -74,7 +74,7 @@ func FuzzCommitPubRandList(f *testing.F) {
 		_, err = ms.CommitPubRandList(ctx, msg)
 		require.Error(t, err)
 		// register the finality provider
-		bsKeeper.EXPECT().HasFinalityProvider(gomock.Any(), gomock.Eq(fpBTCPKBytes)).Return(true).AnyTimes()
+		bsKeeper.EXPECT().BabylonFinalityProviderExists(gomock.Any(), gomock.Eq(fpBTCPKBytes)).Return(true).AnyTimes()
 
 		// Case 2: commit a list of <minPubRand pubrand and it should fail
 		startHeight = datagen.RandomInt(r, 10)
@@ -159,7 +159,7 @@ func FuzzAddFinalitySig(f *testing.F) {
 		fpBTCPK := bbn.NewBIP340PubKeyFromBTCPK(btcPK)
 		fpBTCPKBytes := fpBTCPK.MustMarshal()
 		require.NoError(t, err)
-		bsKeeper.EXPECT().HasFinalityProvider(gomock.Any(), gomock.Eq(fpBTCPKBytes)).Return(true).AnyTimes()
+		bsKeeper.EXPECT().BabylonFinalityProviderExists(gomock.Any(), gomock.Eq(fpBTCPKBytes)).Return(true).AnyTimes()
 
 		// set committed epoch num
 		committedEpochNum := datagen.GenRandomEpochNum(r) + 1
@@ -383,7 +383,7 @@ func TestVoteForConflictingHashShouldRetrieveEvidenceAndSlash(t *testing.T) {
 	fpBTCPK := bbn.NewBIP340PubKeyFromBTCPK(btcPK)
 	fpBTCPKBytes := fpBTCPK.MustMarshal()
 	require.NoError(t, err)
-	bsKeeper.EXPECT().HasFinalityProvider(gomock.Any(),
+	bsKeeper.EXPECT().BabylonFinalityProviderExists(gomock.Any(),
 		gomock.Eq(fpBTCPKBytes)).Return(true).AnyTimes()
 	cKeeper.EXPECT().GetEpoch(gomock.Any()).Return(&epochingtypes.Epoch{EpochNumber: 1}).AnyTimes()
 	cKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(uint64(1)).AnyTimes()
@@ -478,7 +478,7 @@ func TestDoNotPanicOnNilProof(t *testing.T) {
 	fpBTCPK := bbn.NewBIP340PubKeyFromBTCPK(btcPK)
 	fpBTCPKBytes := fpBTCPK.MustMarshal()
 	require.NoError(t, err)
-	bsKeeper.EXPECT().HasFinalityProvider(gomock.Any(), gomock.Eq(fpBTCPKBytes)).Return(true).AnyTimes()
+	bsKeeper.EXPECT().BabylonFinalityProviderExists(gomock.Any(), gomock.Eq(fpBTCPKBytes)).Return(true).AnyTimes()
 
 	// set committed epoch num
 	committedEpochNum := datagen.GenRandomEpochNum(r) + 1

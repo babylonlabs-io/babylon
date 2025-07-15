@@ -215,7 +215,7 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 				// add the BTC delegation to each multi-staked finality provider
 				for _, fpBTCPK := range btcDel.FpBtcPkList {
 					fpBTCPKHex := fpBTCPK.MarshalHex()
-					if !k.BTCStakingKeeper.HasFinalityProvider(ctx, fpBTCPK) {
+					if !k.BTCStakingKeeper.BabylonFinalityProviderExists(ctx, fpBTCPK) {
 						// This is a consumer FP rather than Babylon FP, skip it
 						continue
 					}
@@ -415,7 +415,7 @@ func (k Keeper) processPowerDistUpdateEventUnbond(
 ) {
 	for _, fpBTCPK := range btcDel.FpBtcPkList {
 		fpBTCPKHex := fpBTCPK.MarshalHex()
-		if !k.BTCStakingKeeper.HasFinalityProvider(ctx, fpBTCPK) {
+		if !k.BTCStakingKeeper.BabylonFinalityProviderExists(ctx, fpBTCPK) {
 			// This is a consumer FP rather than Babylon FP, skip it
 			continue
 		}

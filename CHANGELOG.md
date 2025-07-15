@@ -141,6 +141,8 @@ secret key in slashing
 - [#1337](https://github.com/babylonlabs-io/babylon/pull/1337) fix: update proto gen
 - [#1355](https://github.com/babylonlabs-io/babylon/pull/1355) Allow empty fees on genesis transactions
 - [#1361](https://github.com/babylonlabs-io/babylon/pull/1361) Fix typo on makefile
+- [#1366](https://github.com/babylonlabs-io/babylon/pull/1366) fix: not add consumer fps
+to Babylon voting power table
 
 ## v2.2.0
 
