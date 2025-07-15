@@ -33,13 +33,13 @@ func GetTxCmd() *cobra.Command {
 
 func NewRegisterConsumerCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "register-consumer <consumer-id> <name> <description> <babylon-commission> [rollup-address]",
+		Use:   "register-consumer <consumer-id> <name> <description> <babylon-rewards-commission> [rollup-address]",
 		Args:  cobra.MinimumNArgs(4),
 		Short: "Registers a consumer",
 		Long: strings.TrimSpace(
 			`Registers a consumer with Babylon. The consumer-id must be unique and will be used to identify this consumer.
 			The name and optional description help identify the purpose of this consumer.
-			The babylon-commission is the commission rate (between 0 and 1) that Babylon charges for this consumer.`,
+			The babylon-rewards-commission is the commission rate (between 0 and 1) that Babylon charges for this consumer.`,
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
@@ -61,14 +61,14 @@ func NewRegisterConsumerCmd() *cobra.Command {
 			}
 			babylonCommissionStr := args[3]
 			if babylonCommissionStr == "" {
-				return fmt.Errorf("babylon commission cannot be empty")
+				return fmt.Errorf("babylon rewards commission cannot be empty")
 			}
 			babylonCommission, err := math.LegacyNewDecFromStr(babylonCommissionStr)
 			if err != nil {
-				return fmt.Errorf("invalid babylon commission: %w", err)
+				return fmt.Errorf("invalid babylon rewards commission: %w", err)
 			}
 			if babylonCommission.IsNegative() || babylonCommission.GT(math.LegacyOneDec()) {
-				return fmt.Errorf("babylon commission must be between 0 and 1, got: %s", babylonCommissionStr)
+				return fmt.Errorf("babylon rewards commission must be between 0 and 1, got: %s", babylonCommissionStr)
 			}
 			rollupAddress := ""
 			if len(args) > 4 {
@@ -81,7 +81,7 @@ func NewRegisterConsumerCmd() *cobra.Command {
 				ConsumerName:                  name,
 				ConsumerDescription:           description,
 				RollupFinalityContractAddress: rollupAddress,
-				BabylonCommission:             babylonCommission,
+				BabylonRewardsCommission:      babylonCommission,
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)

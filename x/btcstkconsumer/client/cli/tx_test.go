@@ -122,7 +122,7 @@ func TestNewRegisterConsumerCmd(t *testing.T) {
 				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
 				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 10)).String()),
 			},
-			"babylon commission cannot be empty",
+			"babylon rewards commission cannot be empty",
 		},
 		{
 			"invalid babylon-commission format",
@@ -136,7 +136,7 @@ func TestNewRegisterConsumerCmd(t *testing.T) {
 				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
 				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 10)).String()),
 			},
-			"invalid babylon commission",
+			"invalid babylon rewards commission",
 		},
 		{
 			"babylon-commission greater than 1",
@@ -150,7 +150,7 @@ func TestNewRegisterConsumerCmd(t *testing.T) {
 				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
 				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 10)).String()),
 			},
-			"babylon commission must be between 0 and 1, got: 1.5",
+			"babylon rewards commission must be between 0 and 1, got: 1.5",
 		},
 		{
 			"valid cosmos consumer registration (commission 0.0)",
@@ -262,9 +262,9 @@ func TestRegisterConsumerCmdUsage(t *testing.T) {
 	require.Contains(t, cmd.Use, "<consumer-id>")
 	require.Contains(t, cmd.Use, "<name>")
 	require.Contains(t, cmd.Use, "<description>")
-	require.Contains(t, cmd.Use, "<babylon-commission>")
+	require.Contains(t, cmd.Use, "<babylon-rewards-commission>")
 	require.Contains(t, cmd.Use, "[rollup-address]")
 	require.Equal(t, "Registers a consumer", cmd.Short)
-	require.Contains(t, cmd.Long, "babylon-commission is the commission rate")
+	require.Contains(t, cmd.Long, "babylon-rewards-commission is the commission rate")
 	require.Contains(t, cmd.Long, "between 0 and 1")
 }
