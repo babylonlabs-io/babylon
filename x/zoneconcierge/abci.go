@@ -2,12 +2,15 @@ package zoneconcierge
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/keeper"
 	"github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/telemetry"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 )
 
 // BeginBlocker sends a pending packet for every channel upon each new block,
@@ -20,13 +23,34 @@ func BeginBlocker(ctx context.Context, k keeper.Keeper) error {
 func EndBlocker(ctx context.Context, k keeper.Keeper) ([]abci.ValidatorUpdate, error) {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyEndBlocker)
 
-	// error in generating IBC packet data or sending packets is consensus-critical
+	// Handle BTC headers broadcast with structured error handling
 	if err := k.BroadcastBTCHeaders(ctx); err != nil {
-		panic(err)
+		handleBroadcastError(ctx, k, "BroadcastBTCHeaders", err)
 	}
+
+	// Handle BTC staking consumer events broadcast with structured error handling
 	if err := k.BroadcastBTCStakingConsumerEvents(ctx); err != nil {
-		panic(err)
+		handleBroadcastError(ctx, k, "BroadcastBTCStakingConsumerEvents", err)
 	}
 
 	return []abci.ValidatorUpdate{}, nil
+}
+
+// handleBroadcastError provides structured error handling for IBC broadcast operations
+// It logs errors but doesn't panic, preventing chain halts
+func handleBroadcastError(ctx context.Context, k keeper.Keeper, operation string, err error) {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+
+	if errors.Is(err, clienttypes.ErrClientNotActive) {
+		k.Logger(sdkCtx).Info("IBC client is not active, skipping broadcast",
+			"operation", operation,
+			"error", err.Error(),
+		)
+		return
+	}
+
+	k.Logger(sdkCtx).Error("failed to broadcast IBC packet, continuing operation",
+		"operation", operation,
+		"error", err.Error(),
+	)
 }
