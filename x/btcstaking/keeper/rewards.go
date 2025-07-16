@@ -65,7 +65,7 @@ func (k Keeper) CollectBabylonCommission(
 
 	// 2. Calculate and collect Babylon commission
 	babylonCommission = ictvtypes.GetCoinsPortion(totalRewards, consumerRegister.BabylonRewardsCommission)
-	if err := k.bankKeeper.SendCoinsFromModuleToModule(ctx, ictvtypes.ModuleName, params.AccCommissionCollectorBSN.String(), babylonCommission); err != nil {
+	if err := k.bankKeeper.SendCoinsFromModuleToModule(ctx, ictvtypes.ModuleName, params.ModAccCommissionCollectorBSN, babylonCommission); err != nil {
 		return nil, nil, fmt.Errorf("failed to collect Babylon commission: %w", err)
 	}
 

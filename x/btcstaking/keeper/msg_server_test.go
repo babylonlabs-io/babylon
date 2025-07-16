@@ -2,6 +2,7 @@ package keeper_test
 
 import (
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"math"
 	"math/rand"
@@ -19,6 +20,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/babylonlabs-io/babylon/v3/app/params"
 	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
 	asig "github.com/babylonlabs-io/babylon/v3/crypto/schnorr-adaptor-signature"
 	testutil "github.com/babylonlabs-io/babylon/v3/testutil/btcstaking-helper"
@@ -30,6 +32,7 @@ import (
 	"github.com/babylonlabs-io/babylon/v3/x/btcstaking"
 	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 	btcsctypes "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
+	ictvtypes "github.com/babylonlabs-io/babylon/v3/x/incentive/types"
 )
 
 func FuzzMsgServer_UpdateParams(f *testing.F) {
@@ -1640,4 +1643,312 @@ func FuzzDeterminismBtcstakingBeginBlocker(f *testing.F) {
 		appHash2 = hex.EncodeToString(h1.Ctx.BlockHeader().AppHash)
 		require.Equal(t, appHash1, appHash2)
 	})
+}
+
+func TestMsgServerAddBsnRewards(t *testing.T) {
+	r := rand.New(rand.NewSource(42))
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
+	btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
+	bankKeeper := types.NewMockBankKeeper(ctrl)
+	ictvK := testutil.NewMockIctvKeeperK(ctrl)
+
+	h := testutil.NewHelperWithBankMock(t, btclcKeeper, btccKeeper, bankKeeper, ictvK)
+
+	h.GenAndApplyCustomParams(r, 100, 200, 0, 2)
+
+	consumer := registerAndVerifyConsumer(t, r, h)
+
+	_, _, fp1, err := h.CreateConsumerFinalityProvider(r, consumer.ConsumerId)
+	h.NoError(err)
+	_, _, fp2, err := h.CreateConsumerFinalityProvider(r, consumer.ConsumerId)
+	h.NoError(err)
+
+	ratio1 := sdkmath.LegacyMustNewDecFromStr("0.6")
+	ratio2 := sdkmath.LegacyMustNewDecFromStr("0.4")
+	fpRatios := []types.FpRatio{
+		{BtcPk: fp1.BtcPk, Ratio: ratio1},
+		{BtcPk: fp2.BtcPk, Ratio: ratio2},
+	}
+
+	totalRewards := sdk.NewCoins(sdk.NewCoin("ubbn", sdkmath.NewInt(1000000)))
+
+	senderAddr := datagen.GenRandomAddress()
+	senderAddrStr := senderAddr.String()
+
+	validMsg := &types.MsgAddBsnRewards{
+		Sender:        senderAddrStr,
+		BsnConsumerId: consumer.ConsumerId,
+		TotalRewards:  totalRewards,
+		FpRatios:      fpRatios,
+	}
+
+	t.Run("successful AddBsnRewards", func(t *testing.T) {
+		setupSuccessfulAddBsnRewardsMocks(t, h, bankKeeper, ictvK, senderAddr, consumer, totalRewards, fpRatios)
+
+		resp, err := h.MsgServer.AddBsnRewards(h.Ctx, validMsg)
+		h.NoError(err)
+		require.NotNil(t, resp)
+
+		verifyAddBsnRewardsEvent(t, h, consumer.ConsumerId, totalRewards, fpRatios)
+	})
+
+	t.Run("insufficient balance", func(t *testing.T) {
+		bankKeeper.EXPECT().SpendableCoins(gomock.Any(), gomock.Eq(senderAddr)).Return(
+			sdk.NewCoins(sdk.NewCoin("ubbn", sdkmath.NewInt(500000))),
+		).Times(1)
+
+		resp, err := h.MsgServer.AddBsnRewards(h.Ctx, validMsg)
+		require.EqualError(t, err, "rpc error: code = InvalidArgument desc = insufficient balance")
+		require.Nil(t, resp)
+	})
+
+	t.Run("bad consumer ID: not found", func(t *testing.T) {
+		bankKeeper.EXPECT().SpendableCoins(gomock.Any(), gomock.Eq(senderAddr)).Return(
+			sdk.NewCoins(sdk.NewCoin("ubbn", sdkmath.NewInt(2000000))),
+		).Times(1)
+
+		// Mock the account to incentive module transfer
+		bankKeeper.EXPECT().SendCoinsFromAccountToModule(
+			gomock.Any(),
+			gomock.Eq(senderAddr),
+			gomock.Eq(ictvtypes.ModuleName),
+			gomock.Eq(totalRewards),
+		).Return(nil).Times(1)
+
+		msg := *validMsg
+		msg.BsnConsumerId = "non-existent-consumer"
+		resp, err := h.MsgServer.AddBsnRewards(h.Ctx, &msg)
+		require.EqualError(t, err, "rpc error: code = Internal desc = BSN consumer not found: consumer not registered")
+		require.Nil(t, resp)
+	})
+
+	t.Run("bank transfer of babylon commission failure", func(t *testing.T) {
+		bankKeeper.EXPECT().SpendableCoins(gomock.Any(), gomock.Eq(senderAddr)).Return(
+			sdk.NewCoins(sdk.NewCoin("ubbn", sdkmath.NewInt(2000000))),
+		).Times(1)
+
+		// setup bad bank transfer
+		bankKeeper.EXPECT().SendCoinsFromAccountToModule(
+			gomock.Any(),
+			gomock.Eq(senderAddr),
+			gomock.Eq(ictvtypes.ModuleName),
+			gomock.Eq(totalRewards),
+		).Return(errors.New("bank transfer failed")).Times(1)
+
+		resp, err := h.MsgServer.AddBsnRewards(h.Ctx, validMsg)
+		require.EqualError(t, err, "rpc error: code = Internal desc = bank transfer failed")
+		require.Nil(t, resp)
+	})
+
+	t.Run("invalid finality provider ratios with fp not found", func(t *testing.T) {
+		bankKeeper.EXPECT().SpendableCoins(gomock.Any(), gomock.Eq(senderAddr)).Return(
+			sdk.NewCoins(sdk.NewCoin("ubbn", sdkmath.NewInt(2000000))),
+		).Times(1)
+
+		bankKeeper.EXPECT().SendCoinsFromAccountToModule(
+			gomock.Any(),
+			gomock.Eq(senderAddr),
+			gomock.Eq(ictvtypes.ModuleName),
+			gomock.Eq(totalRewards),
+		).Return(nil).Times(1)
+
+		expectedBabylonCommission := ictvtypes.GetCoinsPortion(totalRewards, consumer.BabylonRewardsCommission)
+		bankKeeper.EXPECT().SendCoinsFromModuleToModule(
+			gomock.Any(),
+			ictvtypes.ModuleName,
+			gomock.Any(),
+			gomock.Eq(expectedBabylonCommission),
+		).Return(nil).Times(1)
+
+		nonExistentFpPk, err := datagen.GenRandomBIP340PubKey(r)
+		h.NoError(err)
+
+		invalidFpRatios := []types.FpRatio{
+			{BtcPk: nonExistentFpPk, Ratio: sdkmath.LegacyOneDec()},
+		}
+
+		msg := *validMsg
+		msg.FpRatios = invalidFpRatios
+
+		resp, err := h.MsgServer.AddBsnRewards(h.Ctx, &msg)
+		require.EqualError(t, err, "rpc error: code = Internal desc = finality provider not found: the finality provider is not found")
+		require.Nil(t, resp)
+	})
+
+	t.Run("multiple coin denominations", func(t *testing.T) {
+		// clear the evts to avoid grabbing the wrong event to verify
+		h.Ctx = h.Ctx.WithEventManager(sdk.NewEventManager())
+
+		multiCoinRewards := sdk.NewCoins(
+			sdk.NewCoin("ubbn", sdkmath.NewInt(1000000)),
+			sdk.NewCoin("uatom", sdkmath.NewInt(500000)),
+		)
+
+		setupSuccessfulAddBsnRewardsMocks(t, h, bankKeeper, ictvK, senderAddr, consumer, multiCoinRewards, fpRatios)
+
+		msg := *validMsg
+		msg.TotalRewards = multiCoinRewards
+		resp, err := h.MsgServer.AddBsnRewards(h.Ctx, &msg)
+		h.NoError(err)
+		require.NotNil(t, resp)
+
+		verifyAddBsnRewardsEvent(t, h, consumer.ConsumerId, multiCoinRewards, fpRatios)
+	})
+
+	t.Run("fp commission with 0%", func(t *testing.T) {
+		h.Ctx = h.Ctx.WithEventManager(sdk.NewEventManager())
+
+		_, _, fpZeroCommission, err := h.CreateConsumerFinalityProvider(r, consumer.ConsumerId)
+		h.NoError(err)
+		zeroCommissionRate := sdkmath.LegacyZeroDec()
+		fpZeroCommission.Commission = &zeroCommissionRate
+		h.BTCStakingKeeper.UpdateFinalityProvider(h.Ctx, fpZeroCommission)
+
+		// Create FP ratios with zero commission FP
+		zeroCommissionRatios := []types.FpRatio{
+			{BtcPk: fpZeroCommission.BtcPk, Ratio: sdkmath.LegacyOneDec()},
+		}
+
+		// Setup successful mocks for zero commission scenario
+		setupSuccessfulAddBsnRewardsMocks(t, h, bankKeeper, ictvK, senderAddr, consumer, totalRewards, zeroCommissionRatios)
+
+		msg := *validMsg
+		msg.FpRatios = zeroCommissionRatios
+
+		resp, err := h.MsgServer.AddBsnRewards(h.Ctx, &msg)
+		h.NoError(err)
+		require.NotNil(t, resp)
+
+		verifyAddBsnRewardsEvent(t, h, consumer.ConsumerId, totalRewards, zeroCommissionRatios)
+	})
+
+	t.Run("1ubbn as reward", func(t *testing.T) {
+		h.Ctx = h.Ctx.WithEventManager(sdk.NewEventManager())
+		smallRewards := sdk.NewCoins(sdk.NewCoin("ubbn", sdkmath.NewInt(1)))
+
+		setupSuccessfulAddBsnRewardsMocks(t, h, bankKeeper, ictvK, senderAddr, consumer, smallRewards, fpRatios)
+
+		msg := *validMsg
+		msg.TotalRewards = smallRewards
+		resp, err := h.MsgServer.AddBsnRewards(h.Ctx, &msg)
+		h.NoError(err)
+		require.NotNil(t, resp)
+
+		verifyAddBsnRewardsEvent(t, h, consumer.ConsumerId, smallRewards, fpRatios)
+	})
+
+	t.Run("ratio for 10 finality providers", func(t *testing.T) {
+		h.Ctx = h.Ctx.WithEventManager(sdk.NewEventManager())
+		numFPs := 10
+		manyFpRatios := make([]types.FpRatio, numFPs)
+		equalRatio := sdkmath.LegacyOneDec().QuoInt64(int64(numFPs))
+
+		for i := 0; i < numFPs; i++ {
+			_, _, fp, err := h.CreateConsumerFinalityProvider(r, consumer.ConsumerId)
+			h.NoError(err)
+			manyFpRatios[i] = types.FpRatio{
+				BtcPk: fp.BtcPk,
+				Ratio: equalRatio,
+			}
+		}
+
+		setupSuccessfulAddBsnRewardsMocks(t, h, bankKeeper, ictvK, senderAddr, consumer, totalRewards, manyFpRatios)
+
+		msg := &types.MsgAddBsnRewards{
+			Sender:        senderAddrStr,
+			BsnConsumerId: consumer.ConsumerId,
+			TotalRewards:  totalRewards,
+			FpRatios:      manyFpRatios,
+		}
+		resp, err := h.MsgServer.AddBsnRewards(h.Ctx, msg)
+		h.NoError(err)
+		require.NotNil(t, resp)
+
+		verifyAddBsnRewardsEvent(t, h, consumer.ConsumerId, totalRewards, manyFpRatios)
+	})
+}
+
+// Helper function to setup successful AddBsnRewards test mocks
+func setupSuccessfulAddBsnRewardsMocks(
+	t *testing.T,
+	h *testutil.Helper,
+	bankKeeper *types.MockBankKeeper,
+	ictvK *testutil.IctvKeeperK,
+	senderAddr sdk.AccAddress,
+	consumer *btcsctypes.ConsumerRegister,
+	expectedTotalRewards sdk.Coins,
+	expectedFpRatios []types.FpRatio,
+) {
+	bankKeeper.EXPECT().SpendableCoins(gomock.Any(), gomock.Eq(senderAddr)).Return(
+		expectedTotalRewards,
+	).Times(1)
+
+	// Mock the send from sender to ictv module
+	bankKeeper.EXPECT().SendCoinsFromAccountToModule(
+		gomock.Any(),
+		gomock.Eq(senderAddr),
+		gomock.Eq(ictvtypes.ModuleName),
+		gomock.Eq(expectedTotalRewards),
+	).Return(nil).Times(1)
+
+	// Calculate expected babylon commission
+	expectedBabylonCommission := ictvtypes.GetCoinsPortion(expectedTotalRewards, consumer.BabylonRewardsCommission)
+	remainingRewards := expectedTotalRewards.Sub(expectedBabylonCommission...)
+
+	// Mock the babylon commission transfer from incentives to bsn collector
+	bankKeeper.EXPECT().SendCoinsFromModuleToModule(
+		gomock.Any(),
+		gomock.Eq(ictvtypes.ModuleName),
+		gomock.Eq(params.ModAccCommissionCollectorBSN),
+		gomock.Eq(expectedBabylonCommission),
+	).Return(nil).Times(1)
+
+	// Set up expectations for each FP
+	for _, fpRatio := range expectedFpRatios {
+		fpRewards := ictvtypes.GetCoinsPortion(remainingRewards, fpRatio.Ratio)
+
+		fp, err := h.BTCStakingKeeper.GetFinalityProvider(h.Ctx, fpRatio.BtcPk.MustMarshal())
+		h.NoError(err)
+
+		fpCommission := ictvtypes.GetCoinsPortion(fpRewards, *fp.Commission)
+		delegatorRewards := fpRewards.Sub(fpCommission...)
+
+		ictvK.MockBtcStk.EXPECT().AccumulateRewardGaugeForFP(gomock.Any(), gomock.Eq(fp.Address()), gomock.Eq(fpCommission)).Times(1)
+		ictvK.MockBtcStk.EXPECT().AddFinalityProviderRewardsForBtcDelegations(gomock.Any(), gomock.Eq(fp.Address()), gomock.Eq(delegatorRewards)).Return(nil).Times(1)
+	}
+}
+
+// verifyAddBsnRewardsEvent Helper function to verify AddBsnRewards event contains the expected values
+func verifyAddBsnRewardsEvent(t *testing.T, h *testutil.Helper, expectedConsumerId string, expectedTotalRewards sdk.Coins, expectedFpRatios []types.FpRatio) {
+	events := h.Ctx.EventManager().Events()
+	require.Greater(t, len(events), 0)
+
+	var foundEvent *sdk.Event
+	for _, event := range events {
+		if event.Type == "babylon.btcstaking.v1.EventAddBsnRewards" {
+			foundEvent = &event
+			break
+		}
+	}
+	require.NotNil(t, foundEvent, "EventAddBsnRewards event should be emitted")
+
+	attributeMap := make(map[string]string)
+	for _, attr := range foundEvent.Attributes {
+		attributeMap[attr.Key] = attr.Value
+	}
+
+	evt := types.EventAddBsnRewards{}
+	err := json.Unmarshal([]byte(attributeMap["bsn_consumer_id"]), &evt.BsnConsumerId)
+	require.NoError(t, err)
+	err = json.Unmarshal([]byte(attributeMap["total_rewards"]), &evt.TotalRewards)
+	require.NoError(t, err)
+	err = json.Unmarshal([]byte(attributeMap["fp_ratios"]), &evt.FpRatios)
+	require.NoError(t, err)
+
+	require.Equal(t, expectedConsumerId, evt.BsnConsumerId, "Event should contain correct consumer ID")
+	require.Equal(t, expectedTotalRewards.String(), evt.TotalRewards.String(), "Event should contain correct total rewards")
+	require.Equal(t, len(expectedFpRatios), len(evt.FpRatios), "Event should contain correct number of FPs")
 }
