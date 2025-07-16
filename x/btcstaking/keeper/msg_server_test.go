@@ -1695,12 +1695,13 @@ func TestMsgServerAddBsnRewards(t *testing.T) {
 	})
 
 	t.Run("insufficient balance", func(t *testing.T) {
+		spendable := sdk.NewCoins(sdk.NewCoin("ubbn", sdkmath.NewInt(500000)))
 		bankKeeper.EXPECT().SpendableCoins(gomock.Any(), gomock.Eq(senderAddr)).Return(
-			sdk.NewCoins(sdk.NewCoin("ubbn", sdkmath.NewInt(500000))),
+			spendable,
 		).Times(1)
 
 		resp, err := h.MsgServer.AddBsnRewards(h.Ctx, validMsg)
-		require.EqualError(t, err, "rpc error: code = InvalidArgument desc = insufficient balance")
+		require.EqualError(t, err, status.Errorf(codes.InvalidArgument, "insufficient balance: spendable %s and total rewards %s", spendable.String(), validMsg.TotalRewards.String()).Error())
 		require.Nil(t, resp)
 	})
 
@@ -1720,7 +1721,7 @@ func TestMsgServerAddBsnRewards(t *testing.T) {
 		msg := *validMsg
 		msg.BsnConsumerId = invalidBsnConsumerID
 		resp, err := h.MsgServer.AddBsnRewards(h.Ctx, &msg)
-		require.EqualError(t, err, "rpc error: code = Internal desc = BSN consumer not found: consumer not registered")
+		require.EqualError(t, err, types.ErrUnableToDistributeBsnRewards.Wrapf("failed: %v", types.ErrConsumerIDNotRegistered.Wrapf("consumer %s: %s", invalidBsnConsumerID, "consumer not registered")).Error())
 		require.Nil(t, resp)
 	})
 
@@ -1738,7 +1739,7 @@ func TestMsgServerAddBsnRewards(t *testing.T) {
 		).Return(errors.New("bank transfer failed")).Times(1)
 
 		resp, err := h.MsgServer.AddBsnRewards(h.Ctx, validMsg)
-		require.EqualError(t, err, "rpc error: code = Internal desc = bank transfer failed")
+		require.EqualError(t, err, types.ErrUnableToSendCoins.Wrapf("failed to send coins to incentive module account: %s", "bank transfer failed").Error())
 		require.Nil(t, resp)
 	})
 
@@ -1773,7 +1774,7 @@ func TestMsgServerAddBsnRewards(t *testing.T) {
 		msg.FpRatios = invalidFpRatios
 
 		resp, err := h.MsgServer.AddBsnRewards(h.Ctx, &msg)
-		require.EqualError(t, err, "rpc error: code = Internal desc = finality provider not found: the finality provider is not found")
+		require.EqualError(t, err, types.ErrUnableToDistributeBsnRewards.Wrapf("failed: %v", types.ErrFpNotFound.Wrapf("finality provider %s: %s", nonExistentFpPk.MarshalHex(), "the finality provider is not found")).Error())
 		require.Nil(t, resp)
 	})
 
@@ -1918,6 +1919,9 @@ func setupAddBsnRewardsMocks(
 
 		if fpCommission.IsAllPositive() {
 			ictvK.MockBtcStk.EXPECT().AccumulateRewardGaugeForFP(gomock.Any(), gomock.Eq(fp.Address()), gomock.Eq(fpCommission)).Times(1)
+		}
+
+		if delegatorRewards.IsAllPositive() {
 			ictvK.MockBtcStk.EXPECT().AddFinalityProviderRewardsForBtcDelegations(gomock.Any(), gomock.Eq(fp.Address()), gomock.Eq(delegatorRewards)).Return(nil).Times(1)
 		}
 	}

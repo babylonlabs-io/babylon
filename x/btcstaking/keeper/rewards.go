@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"fmt"
 	"strings"
 
 	bbntypes "github.com/babylonlabs-io/babylon/v3/types"
@@ -63,22 +62,24 @@ func (k Keeper) CollectBabylonCommission(
 	// 1. Get BSN consumer register and validate
 	consumerRegister, err := k.BscKeeper.GetConsumerRegister(ctx, bsnConsumerId)
 	if err != nil {
-		return nil, nil, fmt.Errorf("BSN consumer not found: %w", err)
+		return nil, nil, types.ErrConsumerIDNotRegistered.Wrapf("consumer %s: %v", bsnConsumerId, err)
 	}
 
 	// 2. Calculate Babylon commission
 	babylonCommission = ictvtypes.GetCoinsPortion(totalRewards, consumerRegister.BabylonRewardsCommission)
+
+	// 3. Calculate remaining rewards after Babylon commission
+	remainingRewards = totalRewards.Sub(babylonCommission...)
+
+	// 4. If there is no babylon commission, just returns
 	if !babylonCommission.IsAllPositive() {
 		return babylonCommission, remainingRewards, nil
 	}
 
-	// 3. Collect Babylon commission
+	// 5. Collect Babylon commission
 	if err := k.bankKeeper.SendCoinsFromModuleToModule(ctx, ictvtypes.ModuleName, ictvtypes.ModAccCommissionCollectorBSN, babylonCommission); err != nil {
-		return nil, nil, fmt.Errorf("failed to collect Babylon commission: %w", err)
+		return nil, nil, types.ErrUnableToSendCoins.Wrapf("failed to collect Babylon commission: %v", err)
 	}
-
-	// 4. Calculate remaining rewards after Babylon commission
-	remainingRewards = totalRewards.Sub(babylonCommission...)
 
 	return babylonCommission, remainingRewards, nil
 }
@@ -94,22 +95,20 @@ func (k Keeper) DistributeFpCommissionAndBtcDelRewards(
 	// 1. Get finality provider for commission rate
 	fp, err := k.GetFinalityProvider(ctx, fpBtcPk.MustMarshal())
 	if err != nil {
-		return nil, nil, fmt.Errorf("finality provider not found: %w", err)
+		return nil, nil, types.ErrFpNotFound.Wrapf("finality provider %s: %v", fpBtcPk.MarshalHex(), err)
 	}
 
 	// 2. Validate that FP belongs to the specified BSN consumer
 	if !strings.EqualFold(fp.BsnId, bsnConsumerId) {
-		return nil, nil, fmt.Errorf("finality provider %s belongs to BSN consumer %s, not %s", fpBtcPk.MarshalHex(), fp.BsnId, bsnConsumerId)
+		return nil, nil, types.ErrFpInvalidBsnID.Wrapf("finality provider %s belongs to BSN consumer %s, not %s", fpBtcPk.MarshalHex(), fp.BsnId, bsnConsumerId)
 	}
 
 	// 3. Calculate FP commission
 	fpCommission = ictvtypes.GetCoinsPortion(fpRewards, *fp.Commission)
-	if !fpCommission.IsAllPositive() {
-		return fpCommission, delegatorRewards, nil
+	if fpCommission.IsAllPositive() {
+		// 4. Add FP commission to existing reward gauge system via incentive module
+		k.ictvKeeper.AccumulateRewardGaugeForFP(ctx, fp.Address(), fpCommission)
 	}
-
-	// 4. Add FP commission to existing reward gauge system via incentive module
-	k.ictvKeeper.AccumulateRewardGaugeForFP(ctx, fp.Address(), fpCommission)
 
 	delegatorRewards = fpRewards.Sub(fpCommission...)
 	if !delegatorRewards.IsAllPositive() {
@@ -118,7 +117,7 @@ func (k Keeper) DistributeFpCommissionAndBtcDelRewards(
 
 	// 5. Remaining goes to BTC delegations via existing F1 system
 	if err := k.ictvKeeper.AddFinalityProviderRewardsForBtcDelegations(ctx, fp.Address(), delegatorRewards); err != nil {
-		return nil, nil, fmt.Errorf("failed to add delegator rewards: %w", err)
+		return nil, nil, types.ErrUnableToAllocateBtcRewards.Wrapf("failed: %v", err)
 	}
 
 	return fpCommission, delegatorRewards, nil

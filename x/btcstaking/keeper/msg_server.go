@@ -732,24 +732,24 @@ func (ms msgServer) AddBsnRewards(goCtx context.Context, req *types.MsgAddBsnRew
 	// 1. Parse and validate sender address
 	senderAddr, err := sdk.AccAddressFromBech32(req.Sender)
 	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid sender address")
+		return nil, status.Errorf(codes.InvalidArgument, "invalid address %s: %v", req.Sender, err)
 	}
 
 	// 2. Validate that sender has sufficient balance
 	spendableCoins := ms.bankKeeper.SpendableCoins(ctx, senderAddr)
 	if !spendableCoins.IsAllGTE(req.TotalRewards) {
-		return nil, status.Error(codes.InvalidArgument, "insufficient balance")
+		return nil, status.Errorf(codes.InvalidArgument, "insufficient balance: spendable %s and total rewards %s", spendableCoins.String(), req.TotalRewards.String())
 	}
 
 	// 3. Transfer funds from sender to incentives module account
 	if err := ms.bankKeeper.SendCoinsFromAccountToModule(ctx, senderAddr, ictvtypes.ModuleName, req.TotalRewards); err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, types.ErrUnableToSendCoins.Wrapf("failed to send coins to incentive module account: %v", err)
 	}
 
 	// 4. Collects the babylon and the FP commission, and allocates the remaining rewards to btc stakers according to their voting power and fp ratio
 	eventFpRewards, babylonCommission, err := ms.CollectComissionAndDistributeBsnRewards(ctx, req.BsnConsumerId, req.TotalRewards, req.FpRatios)
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, types.ErrUnableToDistributeBsnRewards.Wrapf("failed: %v", err)
 	}
 
 	// 5. Emit typed evt
@@ -761,7 +761,7 @@ func (ms msgServer) AddBsnRewards(goCtx context.Context, req *types.MsgAddBsnRew
 		FpRatios:          eventFpRewards,
 	}
 	if err := ctx.EventManager().EmitTypedEvent(evt); err != nil {
-		return nil, status.Error(codes.Internal, fmt.Sprintf("failed to emit event: %s", err.Error()))
+		panic(fmt.Errorf("failed to emit EventAddBsnRewards event: %w", err))
 	}
 
 	return &types.MsgAddBsnRewardsResponse{}, nil

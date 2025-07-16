@@ -1,7 +1,6 @@
 package keeper_test
 
 import (
-	"fmt"
 	"math/rand"
 	"testing"
 
@@ -78,11 +77,11 @@ func FuzzDistributeFpCommissionAndBtcDelRewards(f *testing.F) {
 		badBtcPK := fpSK.PubKey()
 		bip340PK := bbn.NewBIP340PubKeyFromBTCPK(badBtcPK)
 		_, _, err = h.BTCStakingKeeper.DistributeFpCommissionAndBtcDelRewards(h.Ctx, h.Ctx.ChainID(), *bip340PK, datagen.GenRandomCoins(r))
-		require.EqualError(t, err, fmt.Errorf("finality provider not found: %w", types.ErrFpNotFound).Error())
+		require.EqualError(t, err, types.ErrFpNotFound.Wrapf("finality provider %s: %s", bip340PK.MarshalHex(), "the finality provider is not found").Error())
 
 		// bad consumer id for consumer FP
 		_, _, err = h.BTCStakingKeeper.DistributeFpCommissionAndBtcDelRewards(h.Ctx, h.Ctx.ChainID(), *consumerFp.BtcPk, datagen.GenRandomCoins(r))
-		require.EqualError(t, err, fmt.Errorf("finality provider %s belongs to BSN consumer %s, not %s", consumerFp.BtcPk.MarshalHex(), consumerFp.BsnId, h.Ctx.ChainID()).Error())
+		require.EqualError(t, err, types.ErrFpInvalidBsnID.Wrapf("finality provider %s belongs to BSN consumer %s, not %s", consumerFp.BtcPk.MarshalHex(), consumerFp.BsnId, h.Ctx.ChainID()).Error())
 
 		// valid distribution
 		coinsToFp := datagen.GenRandomCoins(r)
@@ -123,19 +122,21 @@ func FuzzCollectBabylonCommission(f *testing.F) {
 
 		totalRewards := datagen.GenRandomCoins(r)
 		_, _, err := h.BTCStakingKeeper.CollectBabylonCommission(h.Ctx, invalidBsnConsumerID, totalRewards)
-		require.ErrorContains(t, err, "BSN consumer not found")
+		require.EqualError(t, err, types.ErrConsumerIDNotRegistered.Wrapf("consumer %s: %s", invalidBsnConsumerID, "consumer not registered").Error())
 
 		randConsumer := h.RegisterAndVerifyConsumer(t, r)
 
 		expectedBabylonCommission := ictvtypes.GetCoinsPortion(totalRewards, randConsumer.BabylonRewardsCommission)
 		expectedRemainingRewards := totalRewards.Sub(expectedBabylonCommission...)
 
-		bankKeeper.EXPECT().SendCoinsFromModuleToModule(
-			gomock.Any(),
-			ictvtypes.ModuleName,
-			gomock.Any(),
-			gomock.Eq(expectedBabylonCommission),
-		).Return(nil).Times(1)
+		if expectedBabylonCommission.IsAllPositive() {
+			bankKeeper.EXPECT().SendCoinsFromModuleToModule(
+				gomock.Any(),
+				ictvtypes.ModuleName,
+				gomock.Any(),
+				gomock.Eq(expectedBabylonCommission),
+			).Return(nil).Times(1)
+		}
 
 		actualBabylonCommission, actualRemainingRewards, err := h.BTCStakingKeeper.CollectBabylonCommission(h.Ctx, randConsumer.ConsumerId, totalRewards)
 		h.NoError(err)
@@ -164,7 +165,7 @@ func FuzzCollectComissionAndDistributeBsnRewards(f *testing.F) {
 		totalRewards := datagen.GenRandomCoins(r)
 		emptyFpRatios := []types.FpRatio{}
 		_, _, err := h.BTCStakingKeeper.CollectComissionAndDistributeBsnRewards(h.Ctx, invalidBsnConsumerID, totalRewards, emptyFpRatios)
-		require.ErrorContains(t, err, "BSN consumer not found")
+		require.EqualError(t, err, types.ErrConsumerIDNotRegistered.Wrapf("consumer %s: %s", invalidBsnConsumerID, "consumer not registered").Error())
 
 		randConsumer := h.RegisterAndVerifyConsumer(t, r)
 
