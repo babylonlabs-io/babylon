@@ -31,10 +31,11 @@ var (
 	PortKey               = []byte{0x11} // PortKey defines the key to store the port ID in store
 	ChainInfoKey          = []byte{0x12} // ChainInfoKey defines the key to store the chain info for each Consumer in store
 	CanonicalChainKey     = []byte{0x13} // CanonicalChainKey defines the key to store the canonical chain for each Consumer in store
-	EpochChainInfoKey     = []byte{0x15} // EpochChainInfoKey defines the key to store each epoch's latests chain info for each Consumer in store
-	LastSentBTCSegmentKey = []byte{0x14} // LastSentBTCSegmentKey is key holding last btc light client segment sent to other cosmos zones
-	ParamsKey             = []byte{0x15} // key prefix for the parameters
-	SealedEpochProofKey   = []byte{0x16} // key prefix for proof of sealed epochs
+	EpochChainInfoKey     = []byte{0x14} // EpochChainInfoKey defines the key to store each epoch's latests chain info for each Consumer in store
+	LastSentBTCSegmentKey = []byte{0x15} // LastSentBTCSegmentKey is key holding last btc light client segment sent to other cosmos zones
+	ParamsKey             = []byte{0x16} // key prefix for the parameters
+	SealedEpochProofKey   = []byte{0x17} // key prefix for proof of sealed epochs
+	ConsumerBTCStateKey   = []byte{0x18} // key prefix for unified Consumer BTC state
 )
 
 func KeyPrefix(p string) []byte {
