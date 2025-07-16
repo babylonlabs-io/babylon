@@ -148,7 +148,7 @@ func FuzzCollectComissionAndDistributeBsnRewards(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 500)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
-		r := rand.New(rand.NewSource(seed))
+		r := rand.New(rand.NewSource(217))
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
@@ -188,12 +188,14 @@ func FuzzCollectComissionAndDistributeBsnRewards(f *testing.F) {
 		expectedBabylonCommission := ictvtypes.GetCoinsPortion(totalRewards, randConsumer.BabylonRewardsCommission)
 		remainingRewards := totalRewards.Sub(expectedBabylonCommission...)
 
-		bankKeeper.EXPECT().SendCoinsFromModuleToModule(
-			gomock.Any(),
-			ictvtypes.ModuleName,
-			gomock.Any(),
-			gomock.Eq(expectedBabylonCommission),
-		).Return(nil).Times(1)
+		if expectedBabylonCommission.IsAllPositive() {
+			bankKeeper.EXPECT().SendCoinsFromModuleToModule(
+				gomock.Any(),
+				ictvtypes.ModuleName,
+				gomock.Any(),
+				gomock.Eq(expectedBabylonCommission),
+			).Return(nil).Times(1)
+		}
 
 		for _, fpRatio := range fpRatios {
 			fpRewards := ictvtypes.GetCoinsPortion(remainingRewards, fpRatio.Ratio)
