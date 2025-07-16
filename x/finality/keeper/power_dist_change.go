@@ -212,27 +212,7 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 
 			switch delEvent.NewState {
 			case types.BTCDelegationStatus_ACTIVE:
-				// newly active BTC delegation
-				// add the BTC delegation to each multi-staked finality provider
-				for _, fpBTCPK := range btcDel.FpBtcPkList {
-					fpBTCPKHex := fpBTCPK.MarshalHex()
-					if !k.BTCStakingKeeper.BabylonFinalityProviderExists(ctx, fpBTCPK) {
-						// This is a consumer FP rather than Babylon FP, skip it
-						continue
-					}
-					activatedSatsByFpBtcPk[fpBTCPKHex] = append(activatedSatsByFpBtcPk[fpBTCPKHex], btcDel.TotalSat)
-				}
-
-				// FP could be already slashed when it is being activated, but it is okay
-				// since slashed finality providers do not earn rewards
-				k.processRewardTracker(ctx, fpByBtcPkHex, btcDel, func(fp *types.FinalityProvider, del sdk.AccAddress, sats uint64) {
-					if fp.SecuresBabylonGenesis(sdk.UnwrapSDKContext(ctx)) {
-						k.MustProcessBabylonBtcDelegationActivated(ctx, fp.Address(), del, sats)
-						return
-					}
-					// BSNs don't need to add to the events, can be processed instantly
-					k.MustProcessConsumerBtcDelegationActivated(ctx, fp.Address(), del, sats)
-				})
+				k.processPowerDistUpdateEventActive(ctx, fpByBtcPkHex, btcDel, activatedSatsByFpBtcPk)
 			case types.BTCDelegationStatus_UNBONDED:
 				// In case of delegation transtioning from phase-1 it is possible that
 				// somebody unbonds before receiving the required covenant signatures.
@@ -416,6 +396,8 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 	return newDc
 }
 
+// processPowerDistUpdateEventUnbond actively updates the unbonded sats
+// map and process the incentives reward tracking structures for unbonded btc dels.
 func (k Keeper) processPowerDistUpdateEventUnbond(
 	ctx context.Context,
 	cacheFpByBtcPkHex map[string]*types.FinalityProvider,
@@ -439,6 +421,37 @@ func (k Keeper) processPowerDistUpdateEventUnbond(
 		// Should update the reward tracker structures on the spot and don't care to have the rewards
 		// being distributed based on the latest voting power.
 		k.MustProcessConsumerBtcDelegationUnbonded(ctx, fp.Address(), del, sats)
+	})
+}
+
+// processPowerDistUpdateEventActive actively handles the activated sats
+// map and process the incentives reward tracking structures for activated btc dels.
+func (k Keeper) processPowerDistUpdateEventActive(
+	ctx context.Context,
+	cacheFpByBtcPkHex map[string]*types.FinalityProvider,
+	btcDel *types.BTCDelegation,
+	activatedSatsByFpBtcPk map[string][]uint64,
+) {
+	// newly active BTC delegation
+	// add the BTC delegation to each multi-staked finality provider
+	for _, fpBTCPK := range btcDel.FpBtcPkList {
+		fpBTCPKHex := fpBTCPK.MarshalHex()
+		if !k.BTCStakingKeeper.BabylonFinalityProviderExists(ctx, fpBTCPK) {
+			// This is a consumer FP rather than Babylon FP, skip it
+			continue
+		}
+		activatedSatsByFpBtcPk[fpBTCPKHex] = append(activatedSatsByFpBtcPk[fpBTCPKHex], btcDel.TotalSat)
+	}
+
+	// FP could be already slashed when it is being activated, but it is okay
+	// since slashed finality providers do not earn rewards
+	k.processRewardTracker(ctx, cacheFpByBtcPkHex, btcDel, func(fp *types.FinalityProvider, del sdk.AccAddress, sats uint64) {
+		if fp.SecuresBabylonGenesis(sdk.UnwrapSDKContext(ctx)) {
+			k.MustProcessBabylonBtcDelegationActivated(ctx, fp.Address(), del, sats)
+			return
+		}
+		// BSNs don't need to add to the events, can be processed instantly
+		k.MustProcessConsumerBtcDelegationActivated(ctx, fp.Address(), del, sats)
 	})
 }
 
