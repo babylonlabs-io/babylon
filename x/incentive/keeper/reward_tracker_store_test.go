@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	errorsmod "cosmossdk.io/errors"
-	"cosmossdk.io/math"
 	sdkmath "cosmossdk.io/math"
 	"github.com/stretchr/testify/require"
 
@@ -186,7 +185,7 @@ func FuzzCheckBTCDelegationRewardsTracker(f *testing.F) {
 		del1, del2 := datagen.GenRandomAddress(), datagen.GenRandomAddress()
 
 		// fp1, del1
-		err := k.setBTCDelegationRewardsTracker(ctx, fp1, del1, types.NewBTCDelegationRewardsTracker(0, math.NewInt(100)))
+		err := k.setBTCDelegationRewardsTracker(ctx, fp1, del1, types.NewBTCDelegationRewardsTracker(0, sdkmath.NewInt(100)))
 		require.NoError(t, err)
 
 		count := 0
@@ -200,7 +199,7 @@ func FuzzCheckBTCDelegationRewardsTracker(f *testing.F) {
 		require.NoError(t, err)
 
 		// fp1, del2
-		err = k.setBTCDelegationRewardsTracker(ctx, fp1, del2, types.NewBTCDelegationRewardsTracker(0, math.NewInt(100)))
+		err = k.setBTCDelegationRewardsTracker(ctx, fp1, del2, types.NewBTCDelegationRewardsTracker(0, sdkmath.NewInt(100)))
 		require.NoError(t, err)
 
 		count = 0
@@ -380,7 +379,7 @@ func FuzzCheckSubFinalityProviderStaked(f *testing.F) {
 		require.True(t, fp2CurrentRwd.TotalActiveSat.IsZero())
 
 		// subTotalActiveSat returns negative value - should fail
-		err = k.subFinalityProviderStaked(ctx, fp2, math.NewInt(1000))
+		err = k.subFinalityProviderStaked(ctx, fp2, sdkmath.NewInt(1000))
 		require.Error(t, err)
 		require.True(t, errorsmod.IsOf(err, types.ErrFPCurrentRewardsTrackerNegativeAmount))
 	})
@@ -459,7 +458,7 @@ func FuzzCheckAddFinalityProviderStaked(f *testing.F) {
 		err = k.AddFinalityProviderRewardsForBtcDelegations(ctx, fp2, rwdOnFp2)
 		require.EqualError(t, err, types.ErrFPCurrentRewardsWithoutVotingPower.Wrapf("fp %s doesn't have positive voting power", fp2.String()).Error())
 
-		require.Equal(t, currentRwdFp2.TotalActiveSat, math.ZeroInt())
+		require.Equal(t, currentRwdFp2.TotalActiveSat, sdkmath.ZeroInt())
 		require.Equal(t, currentRwdFp2.Period, uint64(1))
 		require.Equal(t, currentRwdFp2.CurrentRewards.String(), sdk.NewCoins().String())
 
@@ -568,7 +567,7 @@ func TestAddSubDelegationSat(t *testing.T) {
 
 	fp1, del1 := datagen.GenRandomAddress(), datagen.GenRandomAddress()
 	fp2, del2 := datagen.GenRandomAddress(), datagen.GenRandomAddress()
-	amtFp1Del1, amtFp1Del2, amtFp2Del2, amtFp2Del1 := math.NewInt(2000), math.NewInt(4000), math.NewInt(500), math.NewInt(700)
+	amtFp1Del1, amtFp1Del2, amtFp2Del2, amtFp2Del1 := sdkmath.NewInt(2000), sdkmath.NewInt(4000), sdkmath.NewInt(500), sdkmath.NewInt(700)
 
 	_, err := k.GetBTCDelegationRewardsTracker(ctx, fp1, del1)
 	require.EqualError(t, err, types.ErrBTCDelegationRewardsTrackerNotFound.Error())
@@ -628,7 +627,7 @@ func TestAddSubDelegationSat(t *testing.T) {
 	checkFpDelTotalSat(t, ctx, k, fp2, del1, amtFp2Del1)
 	checkFpDelTotalSat(t, ctx, k, fp2, del2, amtFp2Del2)
 
-	lastAmtFp1Del2 := math.NewInt(2000)
+	lastAmtFp1Del2 := sdkmath.NewInt(2000)
 	// adds 2000 for fp1, del2
 	// fp1       => 8000
 	// fp2       => 1200
@@ -645,7 +644,7 @@ func TestAddSubDelegationSat(t *testing.T) {
 	checkFpDelTotalSat(t, ctx, k, fp2, del1, amtFp2Del1)
 	checkFpDelTotalSat(t, ctx, k, fp2, del2, amtFp2Del2)
 
-	subAmtFp2Del2 := math.NewInt(350)
+	subAmtFp2Del2 := sdkmath.NewInt(350)
 	// subtract 350 for fp2, del2
 	// fp1       => 8000
 	// fp2       =>  850
@@ -663,13 +662,13 @@ func TestAddSubDelegationSat(t *testing.T) {
 	checkFpDelTotalSat(t, ctx, k, fp2, del2, amtFp2Del2.Sub(subAmtFp2Del2))
 }
 
-func checkFpTotalSat(t *testing.T, ctx sdk.Context, k *Keeper, fp sdk.AccAddress, expectedSat math.Int) {
+func checkFpTotalSat(t *testing.T, ctx sdk.Context, k *Keeper, fp sdk.AccAddress, expectedSat sdkmath.Int) {
 	rwd, err := k.GetFinalityProviderCurrentRewards(ctx, fp)
 	require.NoError(t, err)
 	require.Equal(t, expectedSat.String(), rwd.TotalActiveSat.String())
 }
 
-func checkFpDelTotalSat(t *testing.T, ctx sdk.Context, k *Keeper, fp, del sdk.AccAddress, expectedSat math.Int) {
+func checkFpDelTotalSat(t *testing.T, ctx sdk.Context, k *Keeper, fp, del sdk.AccAddress, expectedSat sdkmath.Int) {
 	rwd, err := k.GetBTCDelegationRewardsTracker(ctx, fp, del)
 	require.NoError(t, err)
 	require.Equal(t, expectedSat.String(), rwd.TotalActiveSat.String())

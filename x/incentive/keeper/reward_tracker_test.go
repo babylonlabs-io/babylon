@@ -5,7 +5,6 @@ import (
 	"math/rand"
 	"testing"
 
-	"cosmossdk.io/math"
 	sdkmath "cosmossdk.io/math"
 	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
 	"github.com/babylonlabs-io/babylon/v3/testutil/coins"
@@ -291,7 +290,7 @@ func FuzzCheckCalculateBTCDelegationRewards(f *testing.F) {
 		require.EqualError(t, err, types.ErrBTCDelegationRewardsTrackerNotFound.Error())
 		require.Equal(t, rwd, sdk.Coins{})
 
-		btcRwd.TotalActiveSat = math.ZeroInt()
+		btcRwd.TotalActiveSat = sdkmath.ZeroInt()
 		err = k.setBTCDelegationRewardsTracker(ctx, fp, del, btcRwd)
 		require.NoError(t, err)
 
@@ -355,7 +354,7 @@ func FuzzCheckCalculateDelegationRewardsBetween(f *testing.F) {
 		endingPeriod := btcRwd.StartPeriodCumulativeReward + 1
 
 		// creates a bad historical ending period that has less rewards than the starting one
-		err = k.setFinalityProviderHistoricalRewards(ctx, fp, endingPeriod, types.NewFinalityProviderHistoricalRewards(historicalStartPeriod.CumulativeRewardsPerSat.QuoInt(math.NewInt(2))))
+		err = k.setFinalityProviderHistoricalRewards(ctx, fp, endingPeriod, types.NewFinalityProviderHistoricalRewards(historicalStartPeriod.CumulativeRewardsPerSat.QuoInt(sdkmath.NewInt(2))))
 		require.NoError(t, err)
 		require.Panics(t, func() {
 			_, _ = k.calculateDelegationRewardsBetween(ctx, fp, btcRwd, endingPeriod)
@@ -413,7 +412,7 @@ func FuzzCheckAddFinalityProviderRewardsForBtcDelegations(f *testing.F) {
 
 		currentRwd, err = k.GetFinalityProviderCurrentRewards(ctx, fp)
 		require.NoError(t, err)
-		require.Equal(t, coinsAdded.MulInt(math.NewInt(2)).String(), currentRwd.CurrentRewards.String())
+		require.Equal(t, coinsAdded.MulInt(sdkmath.NewInt(2)).String(), currentRwd.CurrentRewards.String())
 	})
 }
 
@@ -436,7 +435,7 @@ func FuzzCheckIncrementFinalityProviderPeriod(f *testing.F) {
 		err = k.setFinalityProviderCurrentRewards(ctx, fp, fpCurrentRwd)
 		require.NoError(t, err)
 
-		amtRwdInHistorical := fpCurrentRwd.CurrentRewards.MulInt(types.DecimalAccumulatedRewards).QuoInt(math.NewInt(2))
+		amtRwdInHistorical := fpCurrentRwd.CurrentRewards.MulInt(types.DecimalAccumulatedRewards).QuoInt(sdkmath.NewInt(2))
 		err = k.setFinalityProviderHistoricalRewards(ctx, fp, fpCurrentRwd.Period-1, types.NewFinalityProviderHistoricalRewards(amtRwdInHistorical))
 		require.NoError(t, err)
 
@@ -502,7 +501,7 @@ func FuzzCheckInitializeFinalityProvider(f *testing.F) {
 		currentRwdFp, err := k.initializeFinalityProvider(ctx, fp)
 		require.NoError(t, err)
 		require.Equal(t, currentRwdFp.CurrentRewards.String(), sdk.NewCoins().String())
-		require.Equal(t, currentRwdFp.TotalActiveSat.String(), math.ZeroInt().String())
+		require.Equal(t, currentRwdFp.TotalActiveSat.String(), sdkmath.ZeroInt().String())
 		require.Equal(t, currentRwdFp.Period, uint64(1))
 
 		histRwdFp, err := k.GetFinalityProviderHistoricalRewards(ctx, fp, 0)
@@ -513,7 +512,7 @@ func FuzzCheckInitializeFinalityProvider(f *testing.F) {
 		currentRwdFp, err = k.initializeFinalityProvider(ctx, fp)
 		require.NoError(t, err)
 		require.Equal(t, currentRwdFp.CurrentRewards.String(), sdk.NewCoins().String())
-		require.Equal(t, currentRwdFp.TotalActiveSat.String(), math.ZeroInt().String())
+		require.Equal(t, currentRwdFp.TotalActiveSat.String(), sdkmath.ZeroInt().String())
 		require.Equal(t, currentRwdFp.Period, uint64(1))
 
 		histRwdFp, err = k.GetFinalityProviderHistoricalRewards(ctx, fp, 0)
@@ -532,7 +531,7 @@ func TestIncrementFinalityProviderPeriod(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, fp1EndedPeriod, uint64(1))
 
-	checkFpCurrentRwd(t, ctx, k, fp1, fp1EndedPeriod, sdk.NewCoins(), math.NewInt(0))
+	checkFpCurrentRwd(t, ctx, k, fp1, fp1EndedPeriod, sdk.NewCoins(), sdkmath.NewInt(0))
 	checkFpHistoricalRwd(t, ctx, k, fp1, 0, sdk.NewCoins())
 
 	rwdAddedToPeriod1 := newBaseCoins(2_000000) // 2bbn
@@ -541,10 +540,10 @@ func TestIncrementFinalityProviderPeriod(t *testing.T) {
 
 	// historical should not modify the rewards for the period already created
 	checkFpHistoricalRwd(t, ctx, k, fp1, 0, sdk.NewCoins())
-	checkFpCurrentRwd(t, ctx, k, fp1, fp1EndedPeriod, sdk.NewCoins(), math.NewInt(0))
+	checkFpCurrentRwd(t, ctx, k, fp1, fp1EndedPeriod, sdk.NewCoins(), sdkmath.NewInt(0))
 
 	// needs to add some voting power so it can calculate the amount of rewards per share
-	satsDelegated := math.NewInt(500)
+	satsDelegated := sdkmath.NewInt(500)
 	err = k.addDelegationSat(ctx, fp1, del1, satsDelegated)
 	require.NoError(t, err)
 
@@ -571,7 +570,7 @@ func checkFpHistoricalRwd(t *testing.T, ctx sdk.Context, k *Keeper, fp sdk.AccAd
 	require.Equal(t, historical.CumulativeRewardsPerSat.String(), expectedRwd.String())
 }
 
-func checkFpCurrentRwd(t *testing.T, ctx sdk.Context, k *Keeper, fp sdk.AccAddress, expectedPeriod uint64, expectedRwd sdk.Coins, totalActiveSat math.Int) {
+func checkFpCurrentRwd(t *testing.T, ctx sdk.Context, k *Keeper, fp sdk.AccAddress, expectedPeriod uint64, expectedRwd sdk.Coins, totalActiveSat sdkmath.Int) {
 	fp1CurrentRwd, err := k.GetFinalityProviderCurrentRewards(ctx, fp)
 	require.NoError(t, err)
 	require.Equal(t, fp1CurrentRwd.CurrentRewards.String(), expectedRwd.String())
@@ -580,5 +579,5 @@ func checkFpCurrentRwd(t *testing.T, ctx sdk.Context, k *Keeper, fp sdk.AccAddre
 }
 
 func newBaseCoins(amt uint64) sdk.Coins {
-	return sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, math.NewIntFromUint64(amt)))
+	return sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewIntFromUint64(amt)))
 }
