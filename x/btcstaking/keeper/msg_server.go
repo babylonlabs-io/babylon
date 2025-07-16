@@ -751,7 +751,7 @@ func (ms msgServer) AddBsnRewards(goCtx context.Context, req *types.MsgAddBsnRew
 	}
 
 	// 4. Distribute the FP commission to gauge and rewards btc stakers to their voting power and according to FP ratios and collect event info
-	eventFpRewards, babylonCommission, err := ms.DistributeComissionAndBsnRewards(ctx, req.BsnConsumerId, req.TotalRewards, req.FpRatios)
+	eventFpRewards, babylonCommission, err := ms.CollectComissionAndDistributeBsnRewards(ctx, req.BsnConsumerId, req.TotalRewards, req.FpRatios)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}

@@ -11,8 +11,15 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// DistributeComissionAndBsnRewards allocates rewards to finality providers based on their ratios with Babylon commission
-func (k Keeper) DistributeComissionAndBsnRewards(
+// CollectComissionAndDistributeBsnRewards collects the commissions for babylon and FPs and
+// allocates rewards to the BTC stakers based on the FP ratios
+// 1. Collect babylon commission
+// [for each fp]
+//  2. Calculate the FP entitled rewards based on the ratio
+//  3. Validate FP BSN ID matches the bsnConsumerId
+//  4. Collect FP commission
+//  5. Send the remaining funds to the BTC stakers of that FP
+func (k Keeper) CollectComissionAndDistributeBsnRewards(
 	ctx sdk.Context,
 	bsnConsumerId string,
 	totalRewards sdk.Coins,
@@ -76,7 +83,7 @@ func (k Keeper) CollectBabylonCommission(
 }
 
 // DistributeFpCommissionAndBtcDelRewards distributes rewards for a single finality provider,
-// splitting between FP commission and delegator rewards
+// splitting between FP commission and BTC delegators rewards
 func (k Keeper) DistributeFpCommissionAndBtcDelRewards(
 	ctx sdk.Context,
 	bsnConsumerId string,

@@ -1686,7 +1686,7 @@ func TestMsgServerAddBsnRewards(t *testing.T) {
 	}
 
 	t.Run("successful AddBsnRewards", func(t *testing.T) {
-		setupSuccessfulAddBsnRewardsMocks(t, h, bankKeeper, ictvK, senderAddr, consumer, totalRewards, fpRatios)
+		setupAddBsnRewardsMocks(h, bankKeeper, ictvK, senderAddr, consumer, totalRewards, fpRatios)
 
 		resp, err := h.MsgServer.AddBsnRewards(h.Ctx, validMsg)
 		h.NoError(err)
@@ -1719,7 +1719,7 @@ func TestMsgServerAddBsnRewards(t *testing.T) {
 		).Return(nil).Times(1)
 
 		msg := *validMsg
-		msg.BsnConsumerId = "non-existent-consumer"
+		msg.BsnConsumerId = invalidBsnConsumerID
 		resp, err := h.MsgServer.AddBsnRewards(h.Ctx, &msg)
 		require.EqualError(t, err, "rpc error: code = Internal desc = BSN consumer not found: consumer not registered")
 		require.Nil(t, resp)
@@ -1787,7 +1787,7 @@ func TestMsgServerAddBsnRewards(t *testing.T) {
 			sdk.NewCoin("uatom", sdkmath.NewInt(500000)),
 		)
 
-		setupSuccessfulAddBsnRewardsMocks(t, h, bankKeeper, ictvK, senderAddr, consumer, multiCoinRewards, fpRatios)
+		setupAddBsnRewardsMocks(h, bankKeeper, ictvK, senderAddr, consumer, multiCoinRewards, fpRatios)
 
 		msg := *validMsg
 		msg.TotalRewards = multiCoinRewards
@@ -1813,7 +1813,7 @@ func TestMsgServerAddBsnRewards(t *testing.T) {
 		}
 
 		// Setup successful mocks for zero commission scenario
-		setupSuccessfulAddBsnRewardsMocks(t, h, bankKeeper, ictvK, senderAddr, consumer, totalRewards, zeroCommissionRatios)
+		setupAddBsnRewardsMocks(h, bankKeeper, ictvK, senderAddr, consumer, totalRewards, zeroCommissionRatios)
 
 		msg := *validMsg
 		msg.FpRatios = zeroCommissionRatios
@@ -1829,7 +1829,7 @@ func TestMsgServerAddBsnRewards(t *testing.T) {
 		h.Ctx = h.Ctx.WithEventManager(sdk.NewEventManager())
 		smallRewards := sdk.NewCoins(sdk.NewCoin("ubbn", sdkmath.NewInt(1)))
 
-		setupSuccessfulAddBsnRewardsMocks(t, h, bankKeeper, ictvK, senderAddr, consumer, smallRewards, fpRatios)
+		setupAddBsnRewardsMocks(h, bankKeeper, ictvK, senderAddr, consumer, smallRewards, fpRatios)
 
 		msg := *validMsg
 		msg.TotalRewards = smallRewards
@@ -1855,7 +1855,7 @@ func TestMsgServerAddBsnRewards(t *testing.T) {
 			}
 		}
 
-		setupSuccessfulAddBsnRewardsMocks(t, h, bankKeeper, ictvK, senderAddr, consumer, totalRewards, manyFpRatios)
+		setupAddBsnRewardsMocks(h, bankKeeper, ictvK, senderAddr, consumer, totalRewards, manyFpRatios)
 
 		msg := &types.MsgAddBsnRewards{
 			Sender:        senderAddrStr,
@@ -1872,8 +1872,7 @@ func TestMsgServerAddBsnRewards(t *testing.T) {
 }
 
 // Helper function to setup successful AddBsnRewards test mocks
-func setupSuccessfulAddBsnRewardsMocks(
-	t *testing.T,
+func setupAddBsnRewardsMocks(
 	h *testutil.Helper,
 	bankKeeper *types.MockBankKeeper,
 	ictvK *testutil.IctvKeeperK,
