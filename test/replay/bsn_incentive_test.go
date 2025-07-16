@@ -27,26 +27,32 @@ func TestConsumerBsnRewardDistribution(t *testing.T) {
 	covSender := d.CreateCovenantSender()
 	require.NotNil(t, covSender)
 
-	consumerID := "bsn-consumer"
+	consumerID := "bsn-consumer-0"
 	d.App.IBCKeeper.ClientKeeper.SetClientState(d.Ctx(), consumerID, &ibctmtypes.ClientState{})
 	d.GenerateNewBlock()
 
-	consumer := d.RegisterConsumer(r, consumerID)
+	consumer0 := d.RegisterConsumer(r, consumerID)
 	d.GenerateNewBlockAssertExecutionSuccess()
 
 	babylonFp := d.CreateNFinalityProviderAccounts(1)[0]
 	babylonFp.RegisterFinalityProvider("")
 
 	consumerFp := []*FinalityProvider{
-		d.CreateFinalityProviderForConsumer(consumer),
-		d.CreateFinalityProviderForConsumer(consumer),
+		d.CreateFinalityProviderForConsumer(consumer0),
+		d.CreateFinalityProviderForConsumer(consumer0),
+		d.CreateFinalityProviderForConsumer(consumer0),
 	}
 
 	staker := d.CreateNStakerAccounts(1)[0]
 	staker.CreatePreApprovalDelegation(
-		[]*bbn.BIP340PubKey{consumerFp[0].BTCPublicKey(), consumerFp[1].BTCPublicKey(), babylonFp.BTCPublicKey()},
+		[]*bbn.BIP340PubKey{consumerFp[0].BTCPublicKey(), babylonFp.BTCPublicKey()},
 		1000,
 		100000000,
+	)
+	staker.CreatePreApprovalDelegation(
+		[]*bbn.BIP340PubKey{consumerFp[1].BTCPublicKey(), babylonFp.BTCPublicKey()},
+		1000,
+		200000000,
 	)
 
 	d.GenerateNewBlockAssertExecutionSuccess()
@@ -54,9 +60,9 @@ func TestConsumerBsnRewardDistribution(t *testing.T) {
 	covSender.SendCovenantSignatures()
 	d.GenerateNewBlockAssertExecutionSuccess()
 
-	d.ActivateVerifiedDelegations(1)
+	d.ActivateVerifiedDelegations(2)
 	activeDelegations := d.GetActiveBTCDelegations(t)
-	require.Len(t, activeDelegations, 1)
+	require.Len(t, activeDelegations, 2)
 
 	fpRatios := []types.FpRatio{
 		{BtcPk: consumerFp[0].BTCPublicKey(), Ratio: math.LegacyMustNewDecFromStr("0.7")},
@@ -71,7 +77,8 @@ func TestConsumerBsnRewardDistribution(t *testing.T) {
 	err = d.App.BankKeeper.SendCoinsFromModuleToAccount(d.Ctx(), minttypes.ModuleName, recipient, mintCoins)
 
 	require.NoError(t, err)
-	totalRewards := mintCoins.Add(sdk.NewCoin("ubbn", math.NewInt(1_000000)))
+	bbnRwd := sdk.NewCoin("ubbn", math.NewInt(1_000000))
+	totalRewards := mintCoins.Add(bbnRwd)
 
 	conFpAddr0, conFpAddr1 := consumerFp[0].Address(), consumerFp[1].Address()
 	conFpAddrStr0, conFpAddrStr1 := conFpAddr0.String(), conFpAddr1.String()
@@ -81,7 +88,7 @@ func TestConsumerBsnRewardDistribution(t *testing.T) {
 	addrs := []sdk.AccAddress{staker.Address(), conFpAddr0, conFpAddr1, params.AccBbnComissionCollectorBsn}
 	beforeWithdrawBalances := d.BankBalances(addrs...)
 
-	d.SendBsnRewards(consumer.ID, totalRewards, fpRatios)
+	d.SendBsnRewards(consumer0.ID, totalRewards, fpRatios)
 	d.GenerateNewBlockAssertExecutionSuccess()
 
 	consumerFp[0].WithdrawBtcStakingRewards()
@@ -100,7 +107,7 @@ func TestConsumerBsnRewardDistribution(t *testing.T) {
 	balancesDiff := BankBalancesDiff(afterWithdrawBalances, beforeWithdrawBalances, addrs...)
 
 	// check babylon commission
-	expBbnCommission := ictvtypes.GetCoinsPortion(totalRewards, consumer.BabylonCommission)
+	expBbnCommission := ictvtypes.GetCoinsPortion(totalRewards, consumer0.BabylonCommission)
 	require.Equal(t, expBbnCommission.String(), balancesDiff[bbnCommAddrStr].String())
 
 	remaining := totalRewards.Sub(expBbnCommission...)
@@ -125,6 +132,34 @@ func TestConsumerBsnRewardDistribution(t *testing.T) {
 	expectedToEarnFromFp1 := entitledToFp1.Sub(commissionFp1...)
 	expectedRewardsBtcStk := expectedToEarnFromFp0.Add(expectedToEarnFromFp1...)
 	require.Equal(t, expectedRewardsBtcStk.String(), balancesDiff[stkAddrStr].String())
+
+	// Spend funds from the babylon commission module account
+	rReceiver := datagen.GenRandomAddress()
+	err = d.App.BankKeeper.SendCoinsFromModuleToAccount(d.Ctx(), ictvtypes.ModAccCommissionCollectorBSN, rReceiver, expBbnCommission)
+	require.NoError(t, err)
+
+	receivedCoins := d.BankBalances(rReceiver)[rReceiver.String()]
+	require.Equal(t, expBbnCommission.String(), receivedCoins.String())
+
+	// send rewads to one finality provider that never received delegations
+	_, err = SendTxWithMessages(
+		d.t,
+		d.App,
+		d.SenderInfo,
+		&types.MsgAddBsnRewards{
+			Sender:        d.GetDriverAccountAddress().String(),
+			BsnConsumerId: consumer0.ID,
+			TotalRewards:  sdk.NewCoins(bbnRwd),
+			FpRatios:      []types.FpRatio{types.FpRatio{BtcPk: consumerFp[2].BTCPublicKey(), Ratio: math.LegacyOneDec()}},
+		},
+	)
+	require.NoError(t, err)
+
+	txResults := d.GenerateNewBlockAssertExecutionFailure()
+	require.Len(t, txResults, 1)
+	require.Contains(t, txResults[0].Log, "finality provider current rewards not found")
+
+	// unbond one btc delegation
 }
 
 // SendBsnRewards sends BSN rewards using MsgAddBsnRewards
