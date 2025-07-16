@@ -37,5 +37,5 @@ func GenRandomRollupRegister(r *rand.Rand, contractAddress string) *bsctypes.Con
 
 // GenBabylonRewardsCommission generates a value between 0.000 and 1.0
 func GenBabylonRewardsCommission(r *rand.Rand) sdkmath.LegacyDec {
-	return sdkmath.LegacyNewDecWithPrec(1000, 3)
+	return sdkmath.LegacyNewDecWithPrec(int64(r.Intn(1000)), 3)
 }

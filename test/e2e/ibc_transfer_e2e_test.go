@@ -429,12 +429,7 @@ func (s *IBCTransferTestSuite) Test5E2EBelowThreshold() {
 			return false
 		}
 
-		before := balanceBeforeReceivingSendA.String()
-		after := balanceAfterReceivingSendA.String()
-
-		s.Require().NotEqual(before, after)
-
-		return true
+		return !balanceBeforeReceivingSendA.Equal(balanceAfterReceivingSendA)
 	}, 90*time.Second, 2*time.Second, "Transfer back B was not successful")
 }
 

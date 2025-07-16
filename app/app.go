@@ -154,6 +154,7 @@ var (
 	DefaultNodeHome string
 	// fee collector account, module accounts and their permissions
 	maccPerms = map[string][]string{
+<<<<<<< HEAD
 		authtypes.FeeCollectorName:     nil, // fee collector account
 		distrtypes.ModuleName:          nil,
 		minttypes.ModuleName:           {authtypes.Minter},
@@ -164,6 +165,23 @@ var (
 		incentivetypes.ModuleName:      nil, // this line is needed to create an account for incentive module
 		tokenfactorytypes.ModuleName:   {authtypes.Minter, authtypes.Burner},
 		icatypes.ModuleName:            nil,
+=======
+		authtypes.FeeCollectorName:                  {authtypes.Burner}, // fee collector account, needs Burner role for feemarket burning of BaseFee
+		distrtypes.ModuleName:                       nil,
+		minttypes.ModuleName:                        {authtypes.Minter},
+		stakingtypes.BondedPoolName:                 {authtypes.Burner, authtypes.Staking},
+		stakingtypes.NotBondedPoolName:              {authtypes.Burner, authtypes.Staking},
+		govtypes.ModuleName:                         {authtypes.Burner},
+		ibctransfertypes.ModuleName:                 {authtypes.Minter, authtypes.Burner},
+		incentivetypes.ModuleName:                   nil, // this line is needed to create an account for incentive module
+		tokenfactorytypes.ModuleName:                {authtypes.Minter, authtypes.Burner},
+		icatypes.ModuleName:                         nil,
+		evmtypes.ModuleName:                         {authtypes.Minter, authtypes.Burner},
+		feemarkettypes.ModuleName:                   nil,
+		erc20types.ModuleName:                       {authtypes.Minter, authtypes.Burner}, // Allows erc20 module to mint/burn for token pairs
+		precisebanktypes.ModuleName:                 {authtypes.Minter, authtypes.Burner},
+		incentivetypes.ModAccCommissionCollectorBSN: nil, // Babylon BSN rewards commission collector
+>>>>>>> c93f250 (feat: add `MsgAddBsnRewards` handler and opt in BSNs consumer into F1 reward distribution (#1359))
 	}
 
 	// software upgrades and forks

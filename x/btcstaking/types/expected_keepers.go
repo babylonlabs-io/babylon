@@ -6,6 +6,7 @@ import (
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
 	btcctypes "github.com/babylonlabs-io/babylon/v3/x/btccheckpoint/types"
 	btclctypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
+	btcstkconsumertypes "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -26,8 +27,17 @@ type FinalityKeeper interface {
 type BTCStkConsumerKeeper interface {
 	IsConsumerRegistered(ctx context.Context, consumerID string) bool
 	IsCosmosConsumer(ctx context.Context, consumerID string) (bool, error)
+	GetConsumerRegister(ctx context.Context, consumerID string) (*btcstkconsumertypes.ConsumerRegister, error)
 }
 
 type IncentiveKeeper interface {
 	IndexRefundableMsg(ctx context.Context, msg sdk.Msg)
+	AddFinalityProviderRewardsForBtcDelegations(ctx context.Context, fp sdk.AccAddress, rwd sdk.Coins) error
+	AccumulateRewardGaugeForFP(ctx context.Context, addr sdk.AccAddress, reward sdk.Coins)
+}
+
+type BankKeeper interface {
+	SpendableCoins(ctx context.Context, addr sdk.AccAddress) sdk.Coins
+	SendCoinsFromAccountToModule(ctx context.Context, senderAddr sdk.AccAddress, recipientModule string, amt sdk.Coins) error
+	SendCoinsFromModuleToModule(ctx context.Context, senderModule, recipientModule string, amt sdk.Coins) error
 }
