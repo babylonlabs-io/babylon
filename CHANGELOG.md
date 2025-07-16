@@ -111,6 +111,7 @@ check of rewards
 command to modify `max-finality-providers` parameter.
 - [#1344](https://github.com/babylonlabs-io/babylon/pull/1344) Add `MsgType` field to `QueuedMessageResponse` message.
 - [#1352](https://github.com/babylonlabs-io/babylon/pull/1352) Add stake expansion signatures in BTC delegation query response
+- [#1367](https://github.com/babylonlabs-io/babylon/pull/1367) Add v3 mainnet upgrade handler
 
 ### State Machine Breaking
 
@@ -151,6 +152,8 @@ secret key in slashing
 to Babylon voting power table
 - [#1369](https://github.com/babylonlabs-io/babylon/pull/1369) fix: update stake expansion validation to allow expanding
 already expanded delegations
+- [#1375](https://github.com/babylonlabs-io/babylon/pull/1375) fix: add strict requirements
+for multi staked fps
 
 ## v2.2.0
 

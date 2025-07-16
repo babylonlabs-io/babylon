@@ -43,17 +43,6 @@ func (k Keeper) CreateBTCDelegation(ctx sdk.Context, parsedMsg *types.ParsedCrea
 		return types.ErrReusedStakingTx.Wrapf("duplicated tx hash: %s", stakingTxHash.String())
 	}
 
-	// Ensure all finality providers
-	// - are known to Babylon,
-	// - at least 1 one of them is a Babylon finality provider,
-	// - are not slashed, and
-	// - their registered epochs are finalised
-	// and then check whether the BTC stake is restaked to FPs of consumers
-	err := k.validateMultiStakedFPs(ctx, parsedMsg.FinalityProviderKeys.PublicKeysBbnFormat)
-	if err != nil {
-		return err
-	}
-
 	// 5. Get params for the validated inclusion height either tip or inclusion height
 	timeInfo, params, paramsVersion, err := k.getTimeInfoAndParams(ctx, parsedMsg)
 	if err != nil {
@@ -63,6 +52,14 @@ func (k Keeper) CreateBTCDelegation(ctx sdk.Context, parsedMsg *types.ParsedCrea
 	// 6. Validate the staking tx against the params
 	paramsValidationResult, err := types.ValidateParsedMessageAgainstTheParams(parsedMsg, params, k.btcNet)
 	if err != nil {
+		return err
+	}
+
+	// Ensure all finality providers
+	// - are known to Babylon
+	// - every FP is from different BSN
+	// - exactly one FP is from Babylon
+	if err := k.validateMultiStakedFPs(ctx, parsedMsg.FinalityProviderKeys.PublicKeysBbnFormat); err != nil {
 		return err
 	}
 
@@ -391,11 +388,13 @@ func (k Keeper) setBTCDelegation(ctx context.Context, btcDel *types.BTCDelegatio
 	store.Set(stakingTxHash[:], btcDelBytes)
 }
 
-// validateMultiStakedFPs ensures all finality providers are known to Babylon and at least
-// one of them is a Babylon finality provider. It also checks whether the BTC stake is
-// multi-staked to FPs of consumer chains
+// validateMultiStakedFPs ensures all finality providers
+// - are known to Babylon
+// - exactly one of them is a Babylon finality provider
+// - all consumer finality providers are from different consumer chains
 func (k Keeper) validateMultiStakedFPs(ctx sdk.Context, fpBTCPKs []bbn.BIP340PubKey) error {
-	multiStakedToBabylon := false
+	fpConsumerCounters := make(map[string]int)
+	babylonFpCount := 0
 
 	for i := range fpBTCPKs {
 		fpBTCPK := fpBTCPKs[i]
@@ -407,14 +406,27 @@ func (k Keeper) validateMultiStakedFPs(ctx sdk.Context, fpBTCPKs []bbn.BIP340Pub
 		if fp.IsSlashed() {
 			return types.ErrFpAlreadySlashed
 		}
+
 		if fp.SecuresBabylonGenesis(ctx) {
-			multiStakedToBabylon = true
+			babylonFpCount++
+
+			if babylonFpCount > 1 {
+				return types.ErrInvalidMultiStakingFPs.Wrap("more than one Babylon finality provider found in the multi-staking selection")
+			}
+		} else {
+			fpConsumerCounters[fp.BsnId]++
+
+			if fpConsumerCounters[fp.BsnId] > 1 {
+				return types.ErrInvalidMultiStakingFPs.Wrapf("more than one finality provider found from the same BSN: %s, in the multi-staking selection", fp.BsnId)
+			}
 		}
 	}
-	if !multiStakedToBabylon {
+
+	if babylonFpCount == 0 {
 		// a BTC delegation has to stake to at least 1 Babylon finality provider
-		return types.ErrNoBabylonFPRestaked
+		return types.ErrNoBabylonFPMultiStaked
 	}
+
 	return nil
 }
 
