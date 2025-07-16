@@ -39,7 +39,7 @@ func CreateUpgradeHandler(mm *module.Manager, configurator module.Configurator, 
 			return newVM, err
 		}
 
-		//ensure that the parameter is 1 when during the validatioon
+		// ensure that the parameter is 1 when during the validation
 		params := keepers.BTCStakingKeeper.GetParams(ctx)
 		params.MaxFinalityProviders = 1
 
