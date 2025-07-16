@@ -149,10 +149,61 @@ func (k Keeper) getDeepEnoughBTCHeaders(ctx context.Context) []*btclctypes.BTCHe
 	return k.btclcKeeper.GetMainChainFrom(ctx, startHeight)
 }
 
-// getHeadersToBroadcast retrieves headers to be broadcasted to all open IBC channels to ZoneConcierge
-// The header to be broadcasted are:
-// - either the whole known chain if we did not broadcast any headers yet
-// - headers from the child of the most recent header we sent which is still in the main chain up to the current tip
+// getHeadersToBroadcastForConsumer retrieves headers to be broadcasted to a specific Consumer
+// The headers to be broadcasted are:
+// - If no Consumer base header exists: use the last k+1 headers from tip (fallback)
+// - If Consumer base header exists but no headers sent yet: from Consumer base to tip
+// - If headers previously sent: from child of most recent valid header to tip
+// - If reorg detected: from Consumer base to tip
+func (k Keeper) getHeadersToBroadcastForConsumer(ctx context.Context, consumerID string) []*btclctypes.BTCHeaderInfo {
+	baseHeader := k.GetConsumerBaseBTCHeader(ctx, consumerID)
+	lastSegment := k.GetConsumerLastSentSegment(ctx, consumerID)
+
+	// If no Consumer base header exists, fallback to the old behavior
+	if baseHeader == nil {
+		return k.getHeadersToBroadcast(ctx)
+	}
+
+	// Validate base header is not too old to prevent excessive header ranges
+	tipHeight := k.btclcKeeper.GetTipInfo(ctx).Height
+	kValue := k.btccKeeper.GetParams(ctx).BtcConfirmationDepth
+	if tipHeight > baseHeader.Height && tipHeight-baseHeader.Height > kValue {
+		k.Logger(sdk.UnwrapSDKContext(ctx)).Error("Consumer base header too old",
+			"consumerID", consumerID,
+			"baseHeight", baseHeader.Height,
+			"tipHeight", tipHeight,
+			"kValue", kValue,
+		)
+		// Fallback to k headers
+		return k.getDeepEnoughBTCHeaders(ctx)
+	}
+
+	// If we haven't sent any headers yet, send from Consumer base to tip
+	if lastSegment == nil {
+		return k.btclcKeeper.GetMainChainFrom(ctx, baseHeader.Height+1)
+	}
+
+	// Find the most recent header we sent that's still in the main chain
+	var initHeader *btclctypes.BTCHeaderInfo
+	for i := len(lastSegment.BtcHeaders) - 1; i >= 0; i-- {
+		header := lastSegment.BtcHeaders[i]
+		if header, err := k.btclcKeeper.GetHeaderByHash(ctx, header.Hash); err == nil && header != nil {
+			initHeader = header
+			break
+		}
+	}
+
+	// If no header from last segment is still valid (reorg), send from Consumer base to tip
+	if initHeader == nil {
+		return k.getDeepEnoughBTCHeaders(ctx)
+	}
+
+	// Send headers from the child of the most recent valid header to tip
+	return k.btclcKeeper.GetMainChainFrom(ctx, initHeader.Height+1)
+}
+
+// getHeadersToBroadcast retrieves headers using the fallback method of k+1.
+// This is used when no Consumer base header is set
 func (k Keeper) getHeadersToBroadcast(ctx context.Context) []*btclctypes.BTCHeaderInfo {
 	lastSegment := k.GetLastSentSegment(ctx)
 

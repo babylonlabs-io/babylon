@@ -20,28 +20,29 @@ func (k Keeper) BroadcastBTCHeaders(ctx context.Context) error {
 		return nil
 	}
 
-	// Current behavior:
-	// - If no headers sent: Returns last w+1 headers from tip
-	// - If headers previously sent:
-	//   - If last segment valid: Returns headers from last sent to tip
-	//   - If last segment invalid (reorg): Returns last w+1 headers from tip
-	//
-	// TODO: Should use Consumer base BTC header as starting point:
-	// - If no headers sent: Return from Consumer base to tip
-	// - If headers previously sent:
-	//   - If last segment valid: Return from last sent header to tip
-	//   - If last segment invalid (reorg): Return from Consumer base to tip
-	headers := k.getHeadersToBroadcast(ctx)
-	if len(headers) == 0 {
-		k.Logger(sdkCtx).Info("skipping BTC header broadcast",
-			"reason", "no headers to broadcast",
-		)
-		return nil
-	}
-
-	packet := types.NewBTCHeadersPacketData(&types.BTCHeaders{Headers: headers})
+	// New behavior using Consumer-specific base headers:
+	// - If no Consumer base header exists: fallback to sending k+1 from tip
+	// - If Consumer base header exists but no headers sent: from Consumer base to tip
+	// - If headers previously sent: from child of most recent valid header to tip
+	// - If reorg detected: from Consumer base to tip
+	// TODO: Improve reorg handling efficiency - instead of sending from Consumer base to tip,
+	// we should send a dedicated reorg event and then send headers from the reorged point to tip
 
 	for _, channel := range openZCChannels {
+		consumerID, err := k.getClientID(ctx, channel)
+		if err != nil {
+			return err
+		}
+
+		headers := k.getHeadersToBroadcastForConsumer(ctx, consumerID)
+		if len(headers) == 0 {
+			k.Logger(sdkCtx).Debug("skipping BTC header broadcast for consumer, no headers to broadcast",
+				"consumerID", consumerID,
+			)
+			continue
+		}
+
+		packet := types.NewBTCHeadersPacketData(&types.BTCHeaders{Headers: headers})
 		if err := k.SendIBCPacket(ctx, channel, packet); err != nil {
 			if errors.Is(err, clienttypes.ErrClientNotActive) {
 				k.Logger(sdkCtx).Info("IBC client is not active, skipping channel",
@@ -57,11 +58,12 @@ func (k Keeper) BroadcastBTCHeaders(ctx context.Context) error {
 			)
 			continue
 		}
-	}
 
-	k.setLastSentSegment(ctx, &types.BTCChainSegment{
-		BtcHeaders: headers,
-	})
+		// Update the consumer-specific last sent segment
+		k.SetConsumerLastSentSegment(ctx, consumerID, &types.BTCChainSegment{
+			BtcHeaders: headers,
+		})
+	}
 
 	return nil
 }
