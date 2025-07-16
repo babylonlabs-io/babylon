@@ -45,7 +45,7 @@ func FuzzDistributeFpCommissionAndBtcDelRewards(f *testing.F) {
 
 		h.GenAndApplyCustomParams(r, 100, 200, 0, 2)
 
-		randConsumer := registerAndVerifyConsumer(t, r, h)
+		randConsumer := h.RegisterAndVerifyConsumer(t, r)
 
 		_, fpPk, _ := h.CreateFinalityProvider(r)
 
@@ -125,7 +125,7 @@ func FuzzCollectBabylonCommission(f *testing.F) {
 		_, _, err := h.BTCStakingKeeper.CollectBabylonCommission(h.Ctx, invalidBsnConsumerID, totalRewards)
 		require.ErrorContains(t, err, "BSN consumer not found")
 
-		randConsumer := registerAndVerifyConsumer(t, r, h)
+		randConsumer := h.RegisterAndVerifyConsumer(t, r)
 
 		expectedBabylonCommission := ictvtypes.GetCoinsPortion(totalRewards, randConsumer.BabylonRewardsCommission)
 		expectedRemainingRewards := totalRewards.Sub(expectedBabylonCommission...)
@@ -166,7 +166,7 @@ func FuzzCollectComissionAndDistributeBsnRewards(f *testing.F) {
 		_, _, err := h.BTCStakingKeeper.CollectComissionAndDistributeBsnRewards(h.Ctx, invalidBsnConsumerID, totalRewards, emptyFpRatios)
 		require.ErrorContains(t, err, "BSN consumer not found")
 
-		randConsumer := registerAndVerifyConsumer(t, r, h)
+		randConsumer := h.RegisterAndVerifyConsumer(t, r)
 
 		// Create multiple finality providers
 		numFPs := 2 + r.Intn(3)

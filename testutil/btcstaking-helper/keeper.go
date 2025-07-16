@@ -340,6 +340,35 @@ func (h *Helper) GenAndApplyCustomParams(
 	return covenantSKs, covenantPKs
 }
 
+// RegisterAndVerifyConsumer register a random consumer on Babylon and verify the registration
+func (h *Helper) RegisterAndVerifyConsumer(t *testing.T, r *rand.Rand) *bsctypes.ConsumerRegister {
+	// Generate a random consumer register
+	randomConsumer := datagen.GenRandomCosmosConsumerRegister(r)
+
+	// Check that the consumer is not already registered
+	isRegistered := h.BTCStkConsumerKeeper.IsConsumerRegistered(h.Ctx, randomConsumer.ConsumerId)
+	require.False(t, isRegistered)
+
+	// Attempt to fetch the consumer from the database
+	dbConsumer, err := h.BTCStkConsumerKeeper.GetConsumerRegister(h.Ctx, randomConsumer.ConsumerId)
+	require.Error(t, err)
+	require.Nil(t, dbConsumer)
+
+	// Register the consumer
+	err = h.BTCStkConsumerKeeper.RegisterConsumer(h.Ctx, randomConsumer)
+	require.NoError(t, err)
+
+	// Verify that the consumer is now registered
+	dbConsumer, err = h.BTCStkConsumerKeeper.GetConsumerRegister(h.Ctx, randomConsumer.ConsumerId)
+	require.NoError(t, err)
+	require.NotNil(t, dbConsumer)
+	require.Equal(t, randomConsumer.ConsumerId, dbConsumer.ConsumerId)
+	require.Equal(t, randomConsumer.ConsumerName, dbConsumer.ConsumerName)
+	require.Equal(t, randomConsumer.ConsumerDescription, dbConsumer.ConsumerDescription)
+
+	return dbConsumer
+}
+
 func (h *Helper) CreateFinalityProvider(r *rand.Rand) (*btcec.PrivateKey, *btcec.PublicKey, *types.FinalityProvider) {
 	fpSK, fpPK, err := datagen.GenRandomBTCKeyPair(r)
 	h.NoError(err)

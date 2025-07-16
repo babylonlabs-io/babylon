@@ -1659,7 +1659,7 @@ func TestMsgServerAddBsnRewards(t *testing.T) {
 
 	h.GenAndApplyCustomParams(r, 100, 200, 0, 2)
 
-	consumer := registerAndVerifyConsumer(t, r, h)
+	consumer := h.RegisterAndVerifyConsumer(t, r)
 
 	_, _, fp1, err := h.CreateConsumerFinalityProvider(r, consumer.ConsumerId)
 	h.NoError(err)
