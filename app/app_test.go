@@ -30,19 +30,7 @@ import (
 
 var (
 	expectedMaccPerms = map[string][]string{
-<<<<<<< HEAD
-		authtypes.FeeCollectorName:   nil, // fee collector account
-		distrtypes.ModuleName:        nil,
-		minttypes.ModuleName:         {authtypes.Minter},
-		stktypes.BondedPoolName:      {authtypes.Burner, authtypes.Staking},
-		stktypes.NotBondedPoolName:   {authtypes.Burner, authtypes.Staking},
-		govtypes.ModuleName:          {authtypes.Burner},
-		ibctransfertypes.ModuleName:  {authtypes.Minter, authtypes.Burner},
-		incentivetypes.ModuleName:    nil, // this line is needed to create an account for incentive module
-		tokenfactorytypes.ModuleName: {authtypes.Minter, authtypes.Burner},
-		icatypes.ModuleName:          nil,
-=======
-		authtypes.FeeCollectorName:                  {authtypes.Burner}, // fee collector account
+		authtypes.FeeCollectorName:                  nil, // fee collector account
 		distrtypes.ModuleName:                       nil,
 		minttypes.ModuleName:                        {authtypes.Minter},
 		stktypes.BondedPoolName:                     {authtypes.Burner, authtypes.Staking},
@@ -52,12 +40,7 @@ var (
 		incentivetypes.ModuleName:                   nil, // this line is needed to create an account for incentive module
 		tokenfactorytypes.ModuleName:                {authtypes.Minter, authtypes.Burner},
 		icatypes.ModuleName:                         nil,
-		evmtypes.ModuleName:                         {authtypes.Minter, authtypes.Burner},
-		erc20types.ModuleName:                       {authtypes.Minter, authtypes.Burner},
-		feemarkettypes.ModuleName:                   nil,
-		precisebanktypes.ModuleName:                 {authtypes.Minter, authtypes.Burner},
 		incentivetypes.ModAccCommissionCollectorBSN: nil, // Babylon BSN rewards commission collector
->>>>>>> c93f250 (feat: add `MsgAddBsnRewards` handler and opt in BSNs consumer into F1 reward distribution (#1359))
 	}
 )
 
