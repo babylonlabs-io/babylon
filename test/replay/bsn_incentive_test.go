@@ -159,7 +159,7 @@ func TestConsumerBsnRewardDistribution(t *testing.T) {
 	require.Len(t, txResults, 1)
 	require.Contains(t, txResults[0].Log, "finality provider current rewards not found")
 
-	// unbond one btc delegation
+	// TODO(rafilx): unbond one btc delegation until fp has zero vp and send bsn rewards.
 }
 
 // SendBsnRewards sends BSN rewards using MsgAddBsnRewards
