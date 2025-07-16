@@ -49,11 +49,53 @@ During the allow-list period:
 
 - Only delegations with transaction hashes included in the allow-list can expand to multi-staking
 - New delegations cannot be created with multi-staking capabilities
-- Existing multi-staking delegations can continue to expand
+- Existing multi-staking delegations can continue to expand (note that for a delegation to be multi-staking, its ancestor transaction must have been in the allow-list)
 
 > **⚡ Note**
 > The allow-list will expire at a predefined time/block height. Once it has expired,
 > multi-staking capabilities will be available for all delegations, including new ones.
+
+> **⚠️ Warning**
+> Stake expansions that only increase the staked amount and/or extend the timelock
+> without adding finality providers from different BSNs will not achieve multi-staking.
+> The resulting expanded transaction will remain delegated to a single finality provider.
+> Importantly, if the original delegation was in the allow-list, this eligibility
+> will be permanently lost as the expanded transaction does not inherit allow-list status.
+> This design ensures simple and consistent multi-staking eligibility rules.
+
+See below a flow chart of the possible outcomes
+during the multi-staking allow-list period:
+
+```mermaid
+flowchart TD
+    A[Original Delegation] --> B[Stake Expansion<br/>Request]
+
+    B --> C{In Allow-List?}
+
+    C -->|Yes| D[Allow-List Eligible]
+    C -->|No| E[Not Eligible for Multi-Staking]
+
+    D --> F{Stake Expansion Type}
+    E --> G[Can only expand:<br/>- Increase amount<br/>- Renew timelock]
+
+    F -->|Add FPs from<br/>different BSNs| H[Multi-Staking Achieved]
+    F -->|Only increase amount<br/>or renew timelock| I[⚠️ Multi-Staking<br/>Right Lost]
+
+    H --> J[Can continue expanding<br/>to more BSNs]
+    I --> K[Cannot achieve<br/>multi-staking later]
+
+    J --> L{Further Expansion}
+    L -->|Add more BSNs| J
+    L -->|Only amount/timelock| M[Still Multi-Staking<br/>but no new BSNs]
+
+    G --> N[Expanded delegation<br/>with Babylon Genesis FP]
+
+    style D fill:#e1f5fe
+    style H fill:#c8e6c9
+    style I fill:#ffcdd2
+    style K fill:#ffcdd2
+    style E fill:#f3e5f5
+```
 
 ## 3. Timeline of Events
 
@@ -64,11 +106,13 @@ When the multi-staking allow-list becomes active, the following rules apply:
 **Eligible for Multi-Staking Expansion:**
 
 - Delegations with transaction hashes included in the allow-list
-- Delegations that have already expanded to multi-staking (grandfathered)
+- Delegations that have already expanded to multi-staking
+  (its ancestor transaction must have been in the allow-list))
 
 **Multi-Staking Restrictions:**
 
-- New delegations cannot be created with multi-staking capabilities
+- New delegations cannot be created with multi-staking capabilities.
+  New delegations can **only** stake to a Babylon Genesis finality provider.
 - Only stake expansion is permitted to achieve multi-staking
 - Expansions must follow existing validation rules and security constraints
 
