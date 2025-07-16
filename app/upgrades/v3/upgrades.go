@@ -4,9 +4,14 @@ import (
 	"context"
 	store "cosmossdk.io/store/types"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
+
 	"github.com/babylonlabs-io/babylon/v3/app/keepers"
 	"github.com/babylonlabs-io/babylon/v3/app/upgrades"
 	"github.com/cosmos/cosmos-sdk/types/module"
+
+	btcstkconsumertypes "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
+	zoneconciergetypes "github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
+	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
 )
 
 // UpgradeName defines the on-chain upgrade name for the Babylon v3 upgrade
@@ -16,13 +21,31 @@ var Upgrade = upgrades.Upgrade{
 	UpgradeName:          UpgradeName,
 	CreateUpgradeHandler: CreateUpgradeHandler,
 	StoreUpgrades: store.StoreUpgrades{
-		Added:   []string{},
-		Deleted: []string{},
+		Added: []string{
+			btcstkconsumertypes.StoreKey,
+			zoneconciergetypes.StoreKey,
+		},
+		Deleted: []string{
+			capabilitytypes.StoreKey,
+		},
 	},
 }
 
 func CreateUpgradeHandler(mm *module.Manager, configurator module.Configurator, keepers *keepers.AppKeepers) upgradetypes.UpgradeHandler {
 	return func(ctx context.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
-		return mm.RunMigrations(ctx, configurator, fromVM)
+		newVM, err := mm.RunMigrations(ctx, configurator, fromVM)
+		if err != nil {
+			return newVM, err
+		}
+
+		//ensure that the parameter is 1 when during the validatioon
+		params := keepers.BTCStakingKeeper.GetParams(ctx)
+		params.MaxFinalityProviders = 1
+
+		if err := keepers.BTCStakingKeeper.SetParams(ctx, params); err != nil {
+			return newVM, err
+		}
+
+		return newVM, nil
 	}
 }
