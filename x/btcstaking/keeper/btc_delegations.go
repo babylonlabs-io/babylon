@@ -414,7 +414,6 @@ func (k Keeper) validateMultiStakedFPs(ctx sdk.Context, fpBTCPKs []bbn.BIP340Pub
 			if babylonFpCount > 1 {
 				return types.ErrInvalidMultiStakingFPs.Wrap("more than one Babylon finality provider found in the multi-staking selection")
 			}
-
 		} else {
 			fpConsumerCounters[fp.BsnId]++
 
