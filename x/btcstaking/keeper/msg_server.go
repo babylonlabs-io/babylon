@@ -750,7 +750,7 @@ func (ms msgServer) AddBsnRewards(goCtx context.Context, req *types.MsgAddBsnRew
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	// 4. Distribute the FP commission to gauge and rewards btc stakers to their voting power and according to FP ratios and collect event info
+	// 4. Collects the babylon and the FP commission, and allocates the remaining rewards to btc stakers according to their voting power and fp ratio
 	eventFpRewards, babylonCommission, err := ms.CollectComissionAndDistributeBsnRewards(ctx, req.BsnConsumerId, req.TotalRewards, req.FpRatios)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
@@ -764,7 +764,6 @@ func (ms msgServer) AddBsnRewards(goCtx context.Context, req *types.MsgAddBsnRew
 		BabylonCommission: babylonCommission,
 		FpRatios:          eventFpRewards,
 	}
-
 	if err := ctx.EventManager().EmitTypedEvent(evt); err != nil {
 		return nil, status.Error(codes.Internal, fmt.Sprintf("failed to emit event: %s", err.Error()))
 	}

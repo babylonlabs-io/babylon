@@ -18,7 +18,7 @@ import (
 //  2. Calculate the FP entitled rewards based on the ratio
 //  3. Validate FP BSN ID matches the bsnConsumerId
 //  4. Collect FP commission
-//  5. Send the remaining funds to the BTC stakers of that FP
+//  5. Allocate the remaining funds to the BTC stakers of that FP
 func (k Keeper) CollectComissionAndDistributeBsnRewards(
 	ctx sdk.Context,
 	bsnConsumerId string,
