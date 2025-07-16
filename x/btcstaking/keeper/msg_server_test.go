@@ -20,7 +20,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/babylonlabs-io/babylon/v3/app/params"
 	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
 	asig "github.com/babylonlabs-io/babylon/v3/crypto/schnorr-adaptor-signature"
 	testutil "github.com/babylonlabs-io/babylon/v3/testutil/btcstaking-helper"
@@ -1901,7 +1900,7 @@ func setupAddBsnRewardsMocks(
 	bankKeeper.EXPECT().SendCoinsFromModuleToModule(
 		gomock.Any(),
 		gomock.Eq(ictvtypes.ModuleName),
-		gomock.Eq(params.ModAccCommissionCollectorBSN),
+		gomock.Eq(ictvtypes.ModAccCommissionCollectorBSN),
 		gomock.Eq(expectedBabylonCommission),
 	).Return(nil).Times(1)
 

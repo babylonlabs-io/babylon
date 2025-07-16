@@ -10,10 +10,9 @@ import (
 )
 
 var (
-	AccGov                       = authtypes.NewModuleAddress(govtypes.ModuleName)
-	AccDistribution              = authtypes.NewModuleAddress(dstrtypes.ModuleName)
-	AccFeeCollector              = authtypes.NewModuleAddress(authtypes.FeeCollectorName)
-	AccFinality                  = authtypes.NewModuleAddress(finalitytypes.ModuleName)
-	AccBTCStaking                = authtypes.NewModuleAddress(btcstktypes.ModuleName)
-	ModAccCommissionCollectorBSN = "commission_collector_bsn"
+	AccGov          = authtypes.NewModuleAddress(govtypes.ModuleName)
+	AccDistribution = authtypes.NewModuleAddress(dstrtypes.ModuleName)
+	AccFeeCollector = authtypes.NewModuleAddress(authtypes.FeeCollectorName)
+	AccFinality     = authtypes.NewModuleAddress(finalitytypes.ModuleName)
+	AccBTCStaking   = authtypes.NewModuleAddress(btcstktypes.ModuleName)
 )

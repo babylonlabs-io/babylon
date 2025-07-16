@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/babylonlabs-io/babylon/v3/app/params"
 	bbntypes "github.com/babylonlabs-io/babylon/v3/types"
 	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 	ictvtypes "github.com/babylonlabs-io/babylon/v3/x/incentive/types"
@@ -72,7 +71,7 @@ func (k Keeper) CollectBabylonCommission(
 
 	// 2. Calculate and collect Babylon commission
 	babylonCommission = ictvtypes.GetCoinsPortion(totalRewards, consumerRegister.BabylonRewardsCommission)
-	if err := k.bankKeeper.SendCoinsFromModuleToModule(ctx, ictvtypes.ModuleName, params.ModAccCommissionCollectorBSN, babylonCommission); err != nil {
+	if err := k.bankKeeper.SendCoinsFromModuleToModule(ctx, ictvtypes.ModuleName, ictvtypes.ModAccCommissionCollectorBSN, babylonCommission); err != nil {
 		return nil, nil, fmt.Errorf("failed to collect Babylon commission: %w", err)
 	}
 
