@@ -29,12 +29,13 @@ func FuzzMultiStaking_MultiStakedBTCDelegation(f *testing.F) {
 		h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
 
 		// set all parameters
-		covenantSKs, _ := h.GenAndApplyCustomParams(r, 100, 200, 0, 2)
+		covenantSKs, _ := h.GenAndApplyCustomParams(r, 100, 200, 0, 10)
 
 		bsParams := h.BTCStakingKeeper.GetParams(h.Ctx)
 
 		// generate and insert new Babylon finality provider
 		_, fpPK, _ := h.CreateFinalityProvider(r)
+		_, fpPK1, _ := h.CreateFinalityProvider(r)
 
 		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		h.NoError(err)
@@ -63,6 +64,9 @@ func FuzzMultiStaking_MultiStakedBTCDelegation(f *testing.F) {
 		// so we need to update it to the block time to make it equal
 		consumerFP.CommissionInfo.UpdateTime = h.Ctx.BlockTime().UTC()
 		require.Equal(t, consumerFP, consumerFP2)
+
+		_, consumerFPPK1, _, err := h.CreateConsumerFinalityProvider(r, consumerRegister.ConsumerId)
+		h.NoError(err)
 
 		/*
 			ensure BTC delegation request will fail if some fp PK does not exist
@@ -103,12 +107,52 @@ func FuzzMultiStaking_MultiStakedBTCDelegation(f *testing.F) {
 			30,
 		)
 		h.Error(err)
-		require.True(t, errors.Is(err, types.ErrNoBabylonFPRestaked), err)
+		require.True(t, errors.Is(err, types.ErrNoBabylonFPMultiStaked), err)
+
+		/*
+			ensure BTC delegation request will fail if more than one Babylon fp is selected
+		*/
+
+		_, _, _, _, _, _, err = h.CreateDelegationWithBtcBlockHeight(
+			r,
+			delSK,
+			[]*btcec.PublicKey{fpPK, fpPK1, consumerFPPK},
+			stakingValue,
+			1000,
+			0,
+			0,
+			false,
+			false,
+			10,
+			30,
+		)
+		h.Error(err)
+		require.True(t, errors.Is(err, types.ErrInvalidMultiStakingFPs), err)
+
+		/*
+			ensure BTC delegation request will fail if more than one consumer fp is selected
+		*/
+
+		_, _, _, _, _, _, err = h.CreateDelegationWithBtcBlockHeight(
+			r,
+			delSK,
+			[]*btcec.PublicKey{fpPK, consumerFPPK, consumerFPPK1},
+			stakingValue,
+			1000,
+			0,
+			0,
+			false,
+			false,
+			10,
+			30,
+		)
+		h.Error(err)
+		require.True(t, errors.Is(err, types.ErrInvalidMultiStakingFPs), err)
 
 		/*
 			happy case -- multi-staking to a Babylon fp and a consumer fp
 		*/
-
+		lcTip := uint32(30)
 		_, msgBTCDel, actualDel, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
 			r,
 			delSK,
@@ -120,7 +164,7 @@ func FuzzMultiStaking_MultiStakedBTCDelegation(f *testing.F) {
 			false,
 			false,
 			10,
-			30,
+			lcTip,
 		)
 		h.NoError(err)
 
@@ -131,8 +175,7 @@ func FuzzMultiStaking_MultiStakedBTCDelegation(f *testing.F) {
 		stakingTxHash := actualDel.MustGetStakingTxHash()
 		actualDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash.String())
 		h.NoError(err)
-		btcTip := h.BTCLightClientKeeper.GetTipInfo(h.Ctx).Height
-		status, err := h.BTCStakingKeeper.BtcDelStatus(h.Ctx, actualDel, bsParams.CovenantQuorum, btcTip)
+		status, err := h.BTCStakingKeeper.BtcDelStatus(h.Ctx, actualDel, bsParams.CovenantQuorum, lcTip)
 		h.NoError(err)
 		require.Equal(t, types.BTCDelegationStatus_ACTIVE, status)
 	})

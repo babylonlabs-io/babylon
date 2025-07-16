@@ -1325,19 +1325,22 @@ func TestDoNotAllowDelegationWithoutFinalityProvider(t *testing.T) {
 		UnbondingSlashingTx:           testUnbondingInfo.SlashingTx,
 		DelegatorUnbondingSlashingSig: delUnbondingSlashingSig,
 	}
+	tipHeight := 150
+	inclusionHeight := uint32(100)
+	inclusionHeader := &btclctypes.BTCHeaderInfo{
+		Header: &btcHeader,
+		Height: inclusionHeight,
+	}
+	mockTipHeaderInfo := &btclctypes.BTCHeaderInfo{Height: uint32(tipHeight)}
+	btclcKeeper.EXPECT().GetHeaderByHash(gomock.Any(), btcHeader.Hash()).Return(inclusionHeader, nil).Times(1)
+	btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(mockTipHeaderInfo).Times(1)
 
 	_, err = h.MsgServer.CreateBTCDelegation(h.Ctx, msgCreateBTCDel)
 	require.Error(t, err)
 	require.True(t, errors.Is(err, types.ErrFpNotFound))
 
 	AddFinalityProvider(t, h.Ctx, *h.BTCStakingKeeper, fp)
-	inclusionHeight := uint32(100)
-	inclusionHeader := &btclctypes.BTCHeaderInfo{
-		Header: &btcHeader,
-		Height: inclusionHeight,
-	}
-	tipHeight := 150
-	mockTipHeaderInfo := &btclctypes.BTCHeaderInfo{Height: uint32(tipHeight)}
+
 	btclcKeeper.EXPECT().GetHeaderByHash(gomock.Any(), btcHeader.Hash()).Return(inclusionHeader, nil).Times(1)
 	btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(mockTipHeaderInfo).Times(1)
 	_, err = h.MsgServer.CreateBTCDelegation(h.Ctx, msgCreateBTCDel)
