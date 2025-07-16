@@ -208,7 +208,7 @@ func FuzzSlashConsumerFinalityProvider(f *testing.F) {
 		h.GenAndApplyParams(r)
 
 		// register a random consumer on Babylon
-		randomConsumer := registerAndVerifyConsumer(t, r, h)
+		randomConsumer := h.RegisterAndVerifyConsumer(t, r)
 
 		// create a consumer finality provider
 		_, _, fp, err := h.CreateConsumerFinalityProvider(r, randomConsumer.ConsumerId)

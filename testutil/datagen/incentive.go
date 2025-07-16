@@ -38,7 +38,7 @@ func GenRandomStakeholderType(r *rand.Rand) itypes.StakeholderType {
 }
 
 func GenRandomCoins(r *rand.Rand) sdk.Coins {
-	numCoins := r.Int31n(10) + 10
+	numCoins := r.Int31n(10) + 2
 	coins := sdk.NewCoins()
 	for i := int32(0); i < numCoins; i++ {
 		demon := GenRandomDenom(r)

@@ -23,6 +23,7 @@ import (
 	"github.com/babylonlabs-io/babylon/v3/btcstaking"
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
 	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
+	ictvtypes "github.com/babylonlabs-io/babylon/v3/x/incentive/types"
 )
 
 type msgServer struct {
@@ -245,7 +246,7 @@ func (ms msgServer) AddBTCDelegationInclusionProof(
 
 	// at this point, the BTC delegation inclusion proof is verified and is not duplicated
 	// thus, we can safely consider this message as refundable
-	ms.iKeeper.IndexRefundableMsg(ctx, req)
+	ms.ictvKeeper.IndexRefundableMsg(ctx, req)
 
 	return &types.MsgAddBTCDelegationInclusionProofResponse{}, nil
 }
@@ -396,7 +397,7 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 	// delegation already has a covenant quorum. This is to ensure that covenant
 	// members do not spend transaction fee, even if they submit covenant signatures
 	// late.
-	ms.iKeeper.IndexRefundableMsg(ctx, req)
+	ms.ictvKeeper.IndexRefundableMsg(ctx, req)
 
 	return &types.MsgAddCovenantSigsResponse{}, nil
 }
@@ -649,7 +650,7 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 
 	// At this point, the unbonding signature is verified.
 	// Thus, we can safely consider this message as refundable
-	ms.iKeeper.IndexRefundableMsg(ctx, req)
+	ms.ictvKeeper.IndexRefundableMsg(ctx, req)
 
 	return &types.MsgBTCUndelegateResponse{}, nil
 }
@@ -719,9 +720,51 @@ func (ms msgServer) SelectiveSlashingEvidence(goCtx context.Context, req *types.
 
 	// At this point, the selective slashing evidence is verified and is not duplicated.
 	// Thus, we can safely consider this message as refundable
-	ms.iKeeper.IndexRefundableMsg(ctx, req)
+	ms.ictvKeeper.IndexRefundableMsg(ctx, req)
 
 	return &types.MsgSelectiveSlashingEvidenceResponse{}, nil
+}
+
+// AddBsnRewards adds rewards for finality providers of a specific BSN consumer
+func (ms msgServer) AddBsnRewards(goCtx context.Context, req *types.MsgAddBsnRewards) (*types.MsgAddBsnRewardsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// 1. Parse and validate sender address
+	senderAddr, err := sdk.AccAddressFromBech32(req.Sender)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid address %s: %v", req.Sender, err)
+	}
+
+	// 2. Validate that sender has sufficient balance
+	spendableCoins := ms.bankKeeper.SpendableCoins(ctx, senderAddr)
+	if !spendableCoins.IsAllGTE(req.TotalRewards) {
+		return nil, status.Errorf(codes.InvalidArgument, "insufficient balance: spendable %s and total rewards %s", spendableCoins.String(), req.TotalRewards.String())
+	}
+
+	// 3. Transfer funds from sender to incentives module account
+	if err := ms.bankKeeper.SendCoinsFromAccountToModule(ctx, senderAddr, ictvtypes.ModuleName, req.TotalRewards); err != nil {
+		return nil, types.ErrUnableToSendCoins.Wrapf("failed to send coins to incentive module account: %v", err)
+	}
+
+	// 4. Collects the babylon and the FP commission, and allocates the remaining rewards to btc stakers according to their voting power and fp ratio
+	eventFpRewards, babylonCommission, err := ms.CollectComissionAndDistributeBsnRewards(ctx, req.BsnConsumerId, req.TotalRewards, req.FpRatios)
+	if err != nil {
+		return nil, types.ErrUnableToDistributeBsnRewards.Wrapf("failed: %v", err)
+	}
+
+	// 5. Emit typed evt
+	evt := &types.EventAddBsnRewards{
+		Sender:            req.Sender,
+		BsnConsumerId:     req.BsnConsumerId,
+		TotalRewards:      req.TotalRewards,
+		BabylonCommission: babylonCommission,
+		FpRatios:          eventFpRewards,
+	}
+	if err := ctx.EventManager().EmitTypedEvent(evt); err != nil {
+		panic(fmt.Errorf("failed to emit EventAddBsnRewards event: %w", err))
+	}
+
+	return &types.MsgAddBsnRewardsResponse{}, nil
 }
 
 // hasSufficientCovenantOverlap returns true if the intersection of CovCommittee1 and CovCommittee2

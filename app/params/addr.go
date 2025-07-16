@@ -7,12 +7,14 @@ import (
 
 	btcstktypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 	finalitytypes "github.com/babylonlabs-io/babylon/v3/x/finality/types"
+	ictvtypes "github.com/babylonlabs-io/babylon/v3/x/incentive/types"
 )
 
 var (
-	AccGov          = authtypes.NewModuleAddress(govtypes.ModuleName)
-	AccDistribution = authtypes.NewModuleAddress(dstrtypes.ModuleName)
-	AccFeeCollector = authtypes.NewModuleAddress(authtypes.FeeCollectorName)
-	AccFinality     = authtypes.NewModuleAddress(finalitytypes.ModuleName)
-	AccBTCStaking   = authtypes.NewModuleAddress(btcstktypes.ModuleName)
+	AccGov                      = authtypes.NewModuleAddress(govtypes.ModuleName)
+	AccDistribution             = authtypes.NewModuleAddress(dstrtypes.ModuleName)
+	AccFeeCollector             = authtypes.NewModuleAddress(authtypes.FeeCollectorName)
+	AccFinality                 = authtypes.NewModuleAddress(finalitytypes.ModuleName)
+	AccBTCStaking               = authtypes.NewModuleAddress(btcstktypes.ModuleName)
+	AccBbnComissionCollectorBsn = authtypes.NewModuleAddress(ictvtypes.ModAccCommissionCollectorBSN)
 )
