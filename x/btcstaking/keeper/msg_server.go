@@ -154,10 +154,6 @@ func (ms msgServer) BtcStakeExpand(goCtx context.Context, req *types.MsgBtcStake
 		return nil, status.Errorf(codes.InvalidArgument, "previous staking transaction is not active")
 	}
 
-	if prevBtcDel.IsStakeExpansion() {
-		return nil, status.Errorf(codes.InvalidArgument, "the previous BTC staking transaction %s is already a stake expansion", req.PreviousStakingTxHash)
-	}
-
 	if !strings.EqualFold(prevBtcDel.StakerAddr, req.StakerAddr) {
 		return nil, status.Errorf(codes.InvalidArgument, "the previous BTC staking transaction staker address: %s does not match with current staker address: %s", prevBtcDel.StakerAddr, req.StakerAddr)
 	}

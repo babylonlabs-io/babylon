@@ -39,8 +39,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
+- [#1331](https://github.com/babylonlabs-io/babylon/pull/1331/) Improve BSN Header synchronization.
+- [#1304](https://github.com/babylonlabs-io/babylon/pull/304) Update rollup finality e2e tests
+- [#1360](https://github.com/babylonlabs-io/babylon/pull/1360) Replace `panic` with logging in SendPacket calls.
 - [#1348](https://github.com/babylonlabs-io/babylon/pull/1348) Remove IsSimpleTransfer and IsTransferTx
-- [#1304](https://github.com/babylonlabs-io/babylon/pull/1304) Update rollup finality e2e tests
 - [#1300](https://github.com/babylonlabs-io/babylon/pull/1300) x/btcstaking handles fp ops
 - [#1295](https://github.com/babylonlabs-io/babylon/pull/1295) Rename
 `consumer_id` to `bsn_id` for finality providers
@@ -147,6 +149,8 @@ secret key in slashing
 - [#1361](https://github.com/babylonlabs-io/babylon/pull/1361) Fix typo on makefile
 - [#1366](https://github.com/babylonlabs-io/babylon/pull/1366) fix: not add consumer fps
 to Babylon voting power table
+- [#1369](https://github.com/babylonlabs-io/babylon/pull/1369) fix: update stake expansion validation to allow expanding
+already expanded delegations
 
 ## v2.2.0
 
