@@ -27,8 +27,8 @@ delegations, not through new delegation creation.
 ### 2.1. Multi-Staking
 
 Multi-staking refers to the capability of a single delegation to be associated
-with finality providers from different Bitcoin Secured Networks (BSNs).
-This allows stakers to diversify their delegation across multiple networks
+with finality providers from multiple Bitcoin Secured Networks (BSNs).
+This allows stakers to use the same stake to secure multiple networks
 while maintaining a single stake transaction.
 
 ### 2.2. Stake Expansion
@@ -36,7 +36,7 @@ while maintaining a single stake transaction.
 Stake expansion is the process of modifying an existing delegation to include
 additional finality providers from different BSNs, increase the BTC amount staked
 and/or renew the staking timelock. This is the
-only method to achieve multi-staking during the allow-list period.
+only method to achieve multi-staking during the multi-staking allow-list period.
 
 ### 2.3. Multi-Staking Allow-List
 
@@ -75,14 +75,19 @@ When the multi-staking allow-list becomes active, the following rules apply:
 > **⚡ Important**
 > The criteria for inclusion in the allow-list is to be determined (TBD).
 > The specific requirements and selection process will be announced separately.
+> The purpose of this document is to describe the mechanics of the allow-list
+> and not how it will be populated.
 
 > **⚠️ Warning**
 > It is possible to perform a stake expansion without achieving multi-staking
-> (e.g., **only** increasing the staked amount and/or renewing the timelock).
-> In such cases, the resulting expanded transaction will not be multi-staking.
+> by **only** increasing the staked amount and/or renewing the timelock.
+> In such cases, the resulting expanded transaction will not be multi-staking
+> (i.e., it will continue delegating to only a single finality provider).
 > If the original delegation
 > was within the allow-list, the right for multi-staking will be lost as the
 > expanded transaction will not inherit the allow-list eligibility.
+> This design choice was made to keep the multi-staking eligibility rules
+> simple and avoid adding extra complexity for this edge case.
 
 ### 3.2. Allow-List Expiration
 
@@ -102,7 +107,7 @@ Once the allow-list expires, multi-staking becomes fully available:
 To obtain information about the multi-staking allow-list status and included
 transaction hashes, you can inspect the relevant code.
 
-**Retrieving Allow-List Transaction Hashes**
+**Retrieving Allow-List Transaction Hashes**:
 The transaction hashes included in the multi-staking allow-list are hardcoded
 in the codebase for each deployed network. The specific location will be
 determined based on the implementation approach.
