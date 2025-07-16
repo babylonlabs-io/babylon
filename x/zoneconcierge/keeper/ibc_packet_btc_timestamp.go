@@ -2,10 +2,8 @@ package keeper
 
 import (
 	"context"
+	"errors"
 	"fmt"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
 	btcctypes "github.com/babylonlabs-io/babylon/v3/x/btccheckpoint/types"
@@ -13,6 +11,9 @@ import (
 	checkpointingtypes "github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
 	epochingtypes "github.com/babylonlabs-io/babylon/v3/x/epoching/types"
 	"github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 )
 
 // finalizedInfo is a private struct that stores metadata and proofs
@@ -220,6 +221,10 @@ func (k Keeper) BroadcastBTCTimestamps(
 	// get all metadata shared across BTC timestamps in the same epoch
 	finalizedInfo, err := k.getFinalizedInfo(ctx, epochNum, headersToBroadcast)
 	if err != nil {
+		k.Logger(sdkCtx).Error("failed to get finalized info for BTC timestamp broadcast",
+			"epoch", epochNum,
+			"error", err.Error(),
+		)
 		return err
 	}
 
@@ -227,17 +232,40 @@ func (k Keeper) BroadcastBTCTimestamps(
 	for _, channel := range openZCChannels {
 		consumerID, err := k.getClientID(ctx, channel)
 		if err != nil {
-			return err
+			k.Logger(sdkCtx).Error("failed to get client ID for channel, skipping",
+				"channel", channel.ChannelId,
+				"error", err.Error(),
+			)
+			continue
 		}
 
 		btcTimestamp, err := k.createBTCTimestamp(ctx, consumerID, channel, finalizedInfo)
 		if err != nil {
-			return err
+			k.Logger(sdkCtx).Error("failed to create BTC timestamp for channel, skipping",
+				"channel", channel.ChannelId,
+				"consumerID", consumerID,
+				"error", err.Error(),
+			)
+			continue
 		}
 
 		packet := types.NewBTCTimestampPacketData(btcTimestamp)
 		if err := k.SendIBCPacket(ctx, channel, packet); err != nil {
-			return err
+			if errors.Is(err, clienttypes.ErrClientNotActive) {
+				k.Logger(sdkCtx).Info("IBC client is not active, skipping channel",
+					"channel", channel.ChannelId,
+					"consumerID", consumerID,
+					"error", err.Error(),
+				)
+				continue
+			}
+
+			k.Logger(sdkCtx).Error("failed to send BTC timestamp to channel, continuing with other channels",
+				"channel", channel.ChannelId,
+				"consumerID", consumerID,
+				"error", err.Error(),
+			)
+			continue
 		}
 	}
 
