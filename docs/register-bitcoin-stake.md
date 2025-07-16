@@ -458,7 +458,7 @@ message MsgCreateBTCDelegation {
   and compact 32-byte representation.
   > Specifying more than one finality provider constitutes multi-staking,
   > i.e delegating across multiple BSNs. The system enforces the following constraints:
-  > * At least one finality provider must be securing the Babylon Genesis chain.
+  > * Exactly one finality provider must be securing the Babylon Genesis chain.
   > * At most one finality provider may be selected per consumer BSN.
   > * The total number of finality providers must not exceed the
   > `max_multi_staked_fps limit`, which can be queried from the registered BSN.
