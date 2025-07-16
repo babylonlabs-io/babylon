@@ -58,7 +58,7 @@ During the allow-list period:
 > **⚠️ Warning**
 > Stake expansions that only increase the staked amount and/or extend the timelock
 > without adding finality providers from different BSNs will not achieve multi-staking.
-> The resulting expanded transaction will remain delegated to a single finality provider.
+> The resulting expanded transaction will remain delegated to a single finality provider from Babylon Genesis network.
 > Importantly, if the original delegation was in the allow-list, this eligibility
 > will be permanently lost as the expanded transaction does not inherit allow-list status.
 > This design ensures simple and consistent multi-staking eligibility rules.
