@@ -6,6 +6,7 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
+	types "github.com/babylonlabs-io/babylon/v3/types"
 	"github.com/btcsuite/btcd/blockchain"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
@@ -372,6 +373,10 @@ func (f *FpRatio) ValidateBasic() error {
 	// 1. Validate BTC public key
 	if f.BtcPk == nil {
 		return fmt.Errorf("BTC public key cannot be nil")
+	}
+
+	if len(*f.BtcPk) != types.BIP340PubKeyLen {
+		return fmt.Errorf("invalid FP BTC PubKey. Expected length %d, got %d", types.BIP340PubKeyLen, len(*f.BtcPk))
 	}
 
 	// 2. Validate ratio

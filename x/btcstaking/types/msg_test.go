@@ -848,6 +848,14 @@ func TestFpRatioValidateBasic(t *testing.T) {
 			},
 			expected: fmt.Errorf("ratio cannot be greater than 1.0"),
 		},
+		{
+			name: "invalid BTC public key length",
+			fpRatio: &types.FpRatio{
+				BtcPk: (*bbntypes.BIP340PubKey)(&[]byte{0x01, 0x02, 0x03}), // too short
+				Ratio: math.LegacyNewDecWithPrec(5, 1),
+			},
+			expected: fmt.Errorf("invalid FP BTC PubKey. Expected length 32, got 3"),
+		},
 	}
 
 	for _, tc := range testCases {
