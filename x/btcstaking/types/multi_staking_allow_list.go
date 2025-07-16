@@ -22,12 +22,12 @@ func LoadMultiStakingAllowList() ([]*chainhash.Hash, error) {
 	}
 
 	allowedTxHashes := make([]*chainhash.Hash, len(d.TxHashes))
-	for _, txHash := range d.TxHashes {
+	for i, txHash := range d.TxHashes {
 		hash, err := chainhash.NewHashFromStr(txHash)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse tx hash: %w", err)
 		}
-		allowedTxHashes = append(allowedTxHashes, hash)
+		allowedTxHashes[i] = hash
 	}
 
 	return allowedTxHashes, nil
