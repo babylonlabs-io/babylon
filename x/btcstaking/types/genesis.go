@@ -83,6 +83,10 @@ func (gs GenesisState) Validate() error {
 		return err
 	}
 
+	if err := gs.validateAllowedMultiStakingTxHashes(); err != nil {
+		return err
+	}
+
 	return gs.validateAllowedStakingTxHashes()
 }
 
@@ -116,12 +120,22 @@ func (h AllowedStakingTxHashStr) Validate() error {
 // validateAllowedStakingTxHashes validates there're no duplicate entries
 // and the hash has the corresponding size
 func (gs GenesisState) validateAllowedStakingTxHashes() error {
-	hashes := make(map[string]bool)
-	for _, hStr := range gs.AllowedStakingTxHashes {
-		if _, exists := hashes[hStr]; exists {
+	return validateTxHashes(gs.AllowedStakingTxHashes)
+}
+
+// validateAllowedMultiStakingTxHashes validates there're no duplicate entries
+// and the hash has the corresponding size
+func (gs GenesisState) validateAllowedMultiStakingTxHashes() error {
+	return validateTxHashes(gs.AllowedMultiStakingTxHashes)
+}
+
+func validateTxHashes(hashes []string) error {
+	seen := make(map[string]bool)
+	for _, hStr := range hashes {
+		if _, exists := seen[hStr]; exists {
 			return fmt.Errorf("duplicate staking tx hash: %s", hStr)
 		}
-		hashes[hStr] = true
+		seen[hStr] = true
 		h := AllowedStakingTxHashStr(hStr)
 		if err := h.Validate(); err != nil {
 			return err
