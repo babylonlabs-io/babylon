@@ -457,7 +457,7 @@ func FuzzCheckAddFinalityProviderStaked(f *testing.F) {
 
 		rwdOnFp2 := datagen.GenRandomCoins(r)
 		err = k.AddFinalityProviderRewardsForBtcDelegations(ctx, fp2, rwdOnFp2)
-		require.NoError(t, err)
+		require.EqualError(t, err, types.ErrFPCurrentRewardsWithoutVotingPower.Wrapf("fp %s doesn't have positive voting power", fp2.String()).Error())
 
 		require.Equal(t, currentRwdFp2.TotalActiveSat, math.ZeroInt())
 		require.Equal(t, currentRwdFp2.Period, uint64(1))
@@ -465,6 +465,9 @@ func FuzzCheckAddFinalityProviderStaked(f *testing.F) {
 
 		amtAddedToFp2 := datagen.RandomMathInt(r, 1000)
 		err = k.addFinalityProviderStaked(ctx, fp2, amtAddedToFp2)
+		require.NoError(t, err)
+
+		err = k.AddFinalityProviderRewardsForBtcDelegations(ctx, fp2, rwdOnFp2)
 		require.NoError(t, err)
 
 		currentRwdFp2, err = k.GetFinalityProviderCurrentRewards(ctx, fp2)

@@ -395,6 +395,11 @@ func FuzzCheckAddFinalityProviderRewardsForBtcDelegations(f *testing.F) {
 
 		_, err = k.initializeFinalityProvider(ctx, fp)
 		require.NoError(t, err)
+		// adding rewards without any vp
+		err = k.AddFinalityProviderRewardsForBtcDelegations(ctx, fp, coinsAdded)
+		require.EqualError(t, err, types.ErrFPCurrentRewardsWithoutVotingPower.Wrapf("fp %s doesn't have positive voting power", fp.String()).Error())
+
+		k.BtcDelegationActivated(ctx, fp, datagen.GenRandomAddress(), sdkmath.NewInt(1))
 		err = k.AddFinalityProviderRewardsForBtcDelegations(ctx, fp, coinsAdded)
 		require.NoError(t, err)
 
@@ -532,16 +537,20 @@ func TestIncrementFinalityProviderPeriod(t *testing.T) {
 
 	rwdAddedToPeriod1 := newBaseCoins(2_000000) // 2bbn
 	err = k.AddFinalityProviderRewardsForBtcDelegations(ctx, fp1, rwdAddedToPeriod1)
-	require.NoError(t, err)
+	require.EqualError(t, err, types.ErrFPCurrentRewardsWithoutVotingPower.Wrapf("fp %s doesn't have positive voting power", fp1.String()).Error())
 
 	// historical should not modify the rewards for the period already created
 	checkFpHistoricalRwd(t, ctx, k, fp1, 0, sdk.NewCoins())
-	checkFpCurrentRwd(t, ctx, k, fp1, fp1EndedPeriod, rwdAddedToPeriod1, math.NewInt(0))
+	checkFpCurrentRwd(t, ctx, k, fp1, fp1EndedPeriod, sdk.NewCoins(), math.NewInt(0))
 
 	// needs to add some voting power so it can calculate the amount of rewards per share
 	satsDelegated := math.NewInt(500)
 	err = k.addDelegationSat(ctx, fp1, del1, satsDelegated)
 	require.NoError(t, err)
+
+	err = k.AddFinalityProviderRewardsForBtcDelegations(ctx, fp1, rwdAddedToPeriod1)
+	require.NoError(t, err)
+	checkFpCurrentRwd(t, ctx, k, fp1, fp1EndedPeriod, rwdAddedToPeriod1, satsDelegated)
 
 	fp1EndedPeriod, err = k.IncrementFinalityProviderPeriod(ctx, fp1)
 	require.NoError(t, err)
