@@ -31,9 +31,9 @@ func TestMultiConsumerDelegation(t *testing.T) {
 	driver.GenerateNewBlock()
 
 	// 2. Register consumers
-	consumer1 := driver.RegisterConsumer(consumerID1)
-	consumer2 := driver.RegisterConsumer(consumerID2)
-	consumer3 := driver.RegisterConsumer(consumerID3)
+	consumer1 := driver.RegisterConsumer(r, consumerID1)
+	consumer2 := driver.RegisterConsumer(r, consumerID2)
+	consumer3 := driver.RegisterConsumer(r, consumerID3)
 	// Create a Babylon FP (registered without consumer ID)
 	babylonFp := driver.CreateNFinalityProviderAccounts(1)[0]
 	babylonFp.RegisterFinalityProvider("")
@@ -96,7 +96,7 @@ func TestMultiConsumerDelegationTooManyKeys(t *testing.T) {
 	driver.GenerateNewBlock()
 
 	// 2. Register consumers
-	consumer1 := driver.RegisterConsumer(consumerID1)
+	consumer1 := driver.RegisterConsumer(r, consumerID1)
 	// Create a Babylon FP (registered without consumer ID)
 	babylonFp := driver.CreateNFinalityProviderAccounts(1)[0]
 	babylonFp.RegisterFinalityProvider("")
