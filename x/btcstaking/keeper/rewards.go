@@ -37,18 +37,15 @@ func (k Keeper) CollectComissionAndDistributeBsnRewards(
 		fpRewards := ictvtypes.GetCoinsPortion(remainingRewards, fpRatio.Ratio)
 
 		// 3. Distribute FP commission and delegator rewards
-		fpCommission, delegatorRewards, err := k.DistributeFpCommissionAndBtcDelRewards(ctx, bsnConsumerId, *fpRatio.BtcPk, fpRewards)
+		_, _, err := k.DistributeFpCommissionAndBtcDelRewards(ctx, bsnConsumerId, *fpRatio.BtcPk, fpRewards)
 		if err != nil {
 			return nil, nil, err
 		}
 
 		// 4. Collect event data
 		evtFpRewards[i] = types.EventFpRewardInfo{
-			BtcPk:            fpRatio.BtcPk,
-			Ratio:            fpRatio.Ratio,
-			TotalAllocated:   fpRewards,
-			FpCommission:     fpCommission,
-			DelegatorRewards: delegatorRewards,
+			FpBtcPkHex:   fpRatio.BtcPk.MarshalHex(),
+			TotalRewards: fpRewards,
 		}
 	}
 
@@ -69,13 +66,18 @@ func (k Keeper) CollectBabylonCommission(
 		return nil, nil, fmt.Errorf("BSN consumer not found: %w", err)
 	}
 
-	// 2. Calculate and collect Babylon commission
+	// 2. Calculate Babylon commission
 	babylonCommission = ictvtypes.GetCoinsPortion(totalRewards, consumerRegister.BabylonRewardsCommission)
+	if !babylonCommission.IsAllPositive() {
+		return babylonCommission, remainingRewards, nil
+	}
+
+	// 3. Collect Babylon commission
 	if err := k.bankKeeper.SendCoinsFromModuleToModule(ctx, ictvtypes.ModuleName, ictvtypes.ModAccCommissionCollectorBSN, babylonCommission); err != nil {
 		return nil, nil, fmt.Errorf("failed to collect Babylon commission: %w", err)
 	}
 
-	// 3. Calculate remaining rewards after Babylon commission
+	// 4. Calculate remaining rewards after Babylon commission
 	remainingRewards = totalRewards.Sub(babylonCommission...)
 
 	return babylonCommission, remainingRewards, nil
@@ -102,12 +104,19 @@ func (k Keeper) DistributeFpCommissionAndBtcDelRewards(
 
 	// 3. Calculate FP commission
 	fpCommission = ictvtypes.GetCoinsPortion(fpRewards, *fp.Commission)
+	if !fpCommission.IsAllPositive() {
+		return fpCommission, delegatorRewards, nil
+	}
 
 	// 4. Add FP commission to existing reward gauge system via incentive module
 	k.ictvKeeper.AccumulateRewardGaugeForFP(ctx, fp.Address(), fpCommission)
 
-	// 5. Remaining goes to BTC delegations via existing F1 system
 	delegatorRewards = fpRewards.Sub(fpCommission...)
+	if !delegatorRewards.IsAllPositive() {
+		return fpCommission, delegatorRewards, nil
+	}
+
+	// 5. Remaining goes to BTC delegations via existing F1 system
 	if err := k.ictvKeeper.AddFinalityProviderRewardsForBtcDelegations(ctx, fp.Address(), delegatorRewards); err != nil {
 		return nil, nil, fmt.Errorf("failed to add delegator rewards: %w", err)
 	}

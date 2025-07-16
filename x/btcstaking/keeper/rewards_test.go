@@ -204,8 +204,10 @@ func FuzzCollectComissionAndDistributeBsnRewards(f *testing.F) {
 			fpCommission := ictvtypes.GetCoinsPortion(fpRewards, *fp.Commission)
 			delegatorRewards := fpRewards.Sub(fpCommission...)
 
-			ictvK.MockBtcStk.EXPECT().AccumulateRewardGaugeForFP(gomock.Any(), gomock.Any(), gomock.Eq(fpCommission)).Times(1)
-			ictvK.MockBtcStk.EXPECT().AddFinalityProviderRewardsForBtcDelegations(gomock.Any(), gomock.Any(), gomock.Eq(delegatorRewards)).Return(nil).Times(1)
+			if fpCommission.IsAllPositive() {
+				ictvK.MockBtcStk.EXPECT().AccumulateRewardGaugeForFP(gomock.Any(), gomock.Any(), gomock.Eq(fpCommission)).Times(1)
+				ictvK.MockBtcStk.EXPECT().AddFinalityProviderRewardsForBtcDelegations(gomock.Any(), gomock.Any(), gomock.Eq(delegatorRewards)).Return(nil).Times(1)
+			}
 		}
 
 		actualEvtFpRatios, actualBbnCommission, err := h.BTCStakingKeeper.CollectComissionAndDistributeBsnRewards(h.Ctx, randConsumer.ConsumerId, totalRewards, fpRatios)
@@ -215,8 +217,10 @@ func FuzzCollectComissionAndDistributeBsnRewards(f *testing.F) {
 		require.Len(t, actualEvtFpRatios, numFPs)
 
 		for i, evtFpRatio := range actualEvtFpRatios {
-			require.Equal(t, fpRatios[i].BtcPk, evtFpRatio.BtcPk)
-			require.Equal(t, fpRatios[i].Ratio, evtFpRatio.Ratio)
+			fpRewards := ictvtypes.GetCoinsPortion(remainingRewards, fpRatios[i].Ratio)
+
+			require.Equal(t, fpRatios[i].BtcPk.MarshalHex(), evtFpRatio.FpBtcPkHex)
+			require.Equal(t, fpRewards.String(), evtFpRatio.TotalRewards.String())
 		}
 	})
 }

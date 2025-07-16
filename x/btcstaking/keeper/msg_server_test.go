@@ -1897,12 +1897,14 @@ func setupAddBsnRewardsMocks(
 	remainingRewards := expectedTotalRewards.Sub(expectedBabylonCommission...)
 
 	// Mock the babylon commission transfer from incentives to bsn collector
-	bankKeeper.EXPECT().SendCoinsFromModuleToModule(
-		gomock.Any(),
-		gomock.Eq(ictvtypes.ModuleName),
-		gomock.Eq(ictvtypes.ModAccCommissionCollectorBSN),
-		gomock.Eq(expectedBabylonCommission),
-	).Return(nil).Times(1)
+	if expectedBabylonCommission.IsAllPositive() {
+		bankKeeper.EXPECT().SendCoinsFromModuleToModule(
+			gomock.Any(),
+			gomock.Eq(ictvtypes.ModuleName),
+			gomock.Eq(ictvtypes.ModAccCommissionCollectorBSN),
+			gomock.Eq(expectedBabylonCommission),
+		).Return(nil).Times(1)
+	}
 
 	// Set up expectations for each FP
 	for _, fpRatio := range expectedFpRatios {
@@ -1914,8 +1916,10 @@ func setupAddBsnRewardsMocks(
 		fpCommission := ictvtypes.GetCoinsPortion(fpRewards, *fp.Commission)
 		delegatorRewards := fpRewards.Sub(fpCommission...)
 
-		ictvK.MockBtcStk.EXPECT().AccumulateRewardGaugeForFP(gomock.Any(), gomock.Eq(fp.Address()), gomock.Eq(fpCommission)).Times(1)
-		ictvK.MockBtcStk.EXPECT().AddFinalityProviderRewardsForBtcDelegations(gomock.Any(), gomock.Eq(fp.Address()), gomock.Eq(delegatorRewards)).Return(nil).Times(1)
+		if fpCommission.IsAllPositive() {
+			ictvK.MockBtcStk.EXPECT().AccumulateRewardGaugeForFP(gomock.Any(), gomock.Eq(fp.Address()), gomock.Eq(fpCommission)).Times(1)
+			ictvK.MockBtcStk.EXPECT().AddFinalityProviderRewardsForBtcDelegations(gomock.Any(), gomock.Eq(fp.Address()), gomock.Eq(delegatorRewards)).Return(nil).Times(1)
+		}
 	}
 }
 

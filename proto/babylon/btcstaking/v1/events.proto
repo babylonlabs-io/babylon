@@ -304,24 +304,9 @@ message EventAddBsnRewards {
 // EventFpRewardInfo contains finality provider reward information for events
 message EventFpRewardInfo {
   // BtcPK is the Bitcoin secp256k1 PK of the finality provider
-  bytes btc_pk = 1 [(gogoproto.customtype) = "github.com/babylonlabs-io/babylon/v3/types.BIP340PubKey"];
-  // Ratio is the proportion of total rewards allocated to this finality provider
-  string ratio = 2 [
-    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
-    (gogoproto.nullable) = false
-  ];
-  // TotalAllocated is the total amount allocated to this finality provider
-  repeated cosmos.base.v1beta1.Coin total_allocated = 3 [
-    (gogoproto.nullable) = false,
-    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
-  ];
-  // FpCommission is the commission amount that goes to the finality provider
-  repeated cosmos.base.v1beta1.Coin fp_commission = 4 [
-    (gogoproto.nullable) = false,
-    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
-  ];
-  // DelegatorRewards is the amount that goes to BTC delegators
-  repeated cosmos.base.v1beta1.Coin delegator_rewards = 5 [
+  string fp_btc_pk_hex = 1 [(amino.dont_omitempty) = true];
+  // TotalRewards is the total amount allocated to this finality provider
+  repeated cosmos.base.v1beta1.Coin total_rewards = 2 [
     (gogoproto.nullable) = false,
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
   ];
