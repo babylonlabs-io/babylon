@@ -44,10 +44,11 @@ func TestConsumerBsnRewardDistribution(t *testing.T) {
 	}
 
 	staker := d.CreateNStakerAccounts(1)[0]
+	amtSatFp0 := int64(100000000)
 	staker.CreatePreApprovalDelegation(
 		[]*bbn.BIP340PubKey{consumerFp[0].BTCPublicKey(), babylonFp.BTCPublicKey()},
 		1000,
-		100000000,
+		amtSatFp0,
 	)
 	staker.CreatePreApprovalDelegation(
 		[]*bbn.BIP340PubKey{consumerFp[1].BTCPublicKey(), babylonFp.BTCPublicKey()},
@@ -88,6 +89,7 @@ func TestConsumerBsnRewardDistribution(t *testing.T) {
 	addrs := []sdk.AccAddress{staker.Address(), conFpAddr0, conFpAddr1, params.AccBbnComissionCollectorBsn}
 	beforeWithdrawBalances := d.BankBalances(addrs...)
 
+	// send the BSN rewards
 	d.SendBsnRewards(consumer0.ID, totalRewards, fpRatios)
 	d.GenerateNewBlockAssertExecutionSuccess()
 
@@ -142,6 +144,7 @@ func TestConsumerBsnRewardDistribution(t *testing.T) {
 	require.Equal(t, expBbnCommission.String(), receivedCoins.String())
 
 	// send rewads to one finality provider that never received delegations
+	basicRewards := sdk.NewCoins(bbnRwd)
 	_, err = SendTxWithMessages(
 		d.t,
 		d.App,
@@ -149,17 +152,40 @@ func TestConsumerBsnRewardDistribution(t *testing.T) {
 		&types.MsgAddBsnRewards{
 			Sender:        d.GetDriverAccountAddress().String(),
 			BsnConsumerId: consumer0.ID,
-			TotalRewards:  sdk.NewCoins(bbnRwd),
+			TotalRewards:  basicRewards,
 			FpRatios:      []types.FpRatio{types.FpRatio{BtcPk: consumerFp[2].BTCPublicKey(), Ratio: math.LegacyOneDec()}},
 		},
 	)
+	d.SenderInfo.IncSeq()
 	require.NoError(t, err)
 
 	txResults := d.GenerateNewBlockAssertExecutionFailure()
 	require.Len(t, txResults, 1)
 	require.Contains(t, txResults[0].Log, "finality provider current rewards not found")
 
-	// TODO(rafilx): unbond one btc delegation until fp has zero vp and send bsn rewards.
+	// unbond one btc delegation until fp has zero vp and send bsn rewards to it.
+	err = d.App.IncentiveKeeper.BtcDelegationUnbonded(d.Ctx(), conFpAddr0, staker.Address(), math.NewInt(amtSatFp0))
+	require.NoError(t, err)
+
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	resp, err := SendTxWithMessages(
+		d.t,
+		d.App,
+		d.SenderInfo,
+		&types.MsgAddBsnRewards{
+			Sender:        d.GetDriverAccountAddress().String(),
+			BsnConsumerId: consumer0.ID,
+			TotalRewards:  basicRewards,
+			FpRatios:      fpRatios,
+		},
+	)
+	require.NoError(t, err)
+	require.NotNil(t, resp)
+
+	txResults = d.GenerateNewBlockAssertExecutionFailure()
+	require.Len(t, txResults, 1)
+	require.Contains(t, txResults[0].Log, ictvtypes.ErrFPCurrentRewardsWithoutVotingPower.Error())
 }
 
 // SendBsnRewards sends BSN rewards using MsgAddBsnRewards
