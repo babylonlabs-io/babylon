@@ -11,11 +11,12 @@ import (
 
 	btcstkconsumertypes "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
 	zoneconciergetypes "github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
-	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
 )
 
 // UpgradeName defines the on-chain upgrade name for the Babylon v3 upgrade
 const UpgradeName = "v3"
+
+const deletedCapabilityStoreKey = "capability"
 
 var Upgrade = upgrades.Upgrade{
 	UpgradeName:          UpgradeName,
@@ -26,7 +27,7 @@ var Upgrade = upgrades.Upgrade{
 			zoneconciergetypes.StoreKey,
 		},
 		Deleted: []string{
-			capabilitytypes.StoreKey,
+			deletedCapabilityStoreKey,
 		},
 	},
 }
