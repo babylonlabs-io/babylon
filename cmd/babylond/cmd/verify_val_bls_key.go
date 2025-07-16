@@ -114,7 +114,7 @@ $ babylond verify-validator-bls-key babylonvaloper1... --no-bls-password
 			resp, err := checkpointingQueryClient.BlsPublicKeyList(
 				cmd.Context(),
 				&checkpointingtypes.QueryBlsPublicKeyListRequest{
-					EpochNum: epochResponse.GetCurrentEpoch(),
+					EpochNum: epochResponse.CurrentEpoch,
 				},
 			)
 			if err != nil {

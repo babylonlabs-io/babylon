@@ -121,6 +121,16 @@ func (k Keeper) GetFinalityProvider(ctx context.Context, fpBTCPK []byte) (*types
 	return &fp, nil
 }
 
+// IsBabylonGenesisFinalityProvider checks if the finality provider is a Babylon Genesis finality provider
+func (k Keeper) BabylonFinalityProviderExists(ctx context.Context, fpBTCPK []byte) bool {
+	fp, err := k.GetFinalityProvider(ctx, fpBTCPK)
+	if err != nil {
+		// if the finality provider is not found, then there is no such Babylon finality provider
+		return false
+	}
+	return fp.SecuresBabylonGenesis(sdk.UnwrapSDKContext(ctx))
+}
+
 // SlashFinalityProvider slashes a finality provider with the given PK
 // A slashed finality provider will not have voting power
 // This function handles both Babylon FPs and consumer FPs

@@ -2,9 +2,11 @@ package keeper
 
 import (
 	"context"
+	"errors"
 
 	"github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 )
 
 // BroadcastBTCHeaders sends an IBC packet of BTC headers to all open IBC channels to ZoneConcierge
@@ -42,7 +44,19 @@ func (k Keeper) BroadcastBTCHeaders(ctx context.Context) error {
 
 		packet := types.NewBTCHeadersPacketData(&types.BTCHeaders{Headers: headers})
 		if err := k.SendIBCPacket(ctx, channel, packet); err != nil {
-			return err
+			if errors.Is(err, clienttypes.ErrClientNotActive) {
+				k.Logger(sdkCtx).Info("IBC client is not active, skipping channel",
+					"channel", channel.ChannelId,
+					"error", err.Error(),
+				)
+				continue
+			}
+
+			k.Logger(sdkCtx).Error("failed to send BTC headers to channel, continuing with other channels",
+				"channel", channel.ChannelId,
+				"error", err.Error(),
+			)
+			continue
 		}
 
 		// Update the consumer-specific last sent segment

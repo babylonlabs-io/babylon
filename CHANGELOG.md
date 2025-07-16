@@ -41,6 +41,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 - [#1331](https://github.com/babylonlabs-io/babylon/pull/1331/) Improve BSN Header synchronization.
 - [#1304](https://github.com/babylonlabs-io/babylon/pull/304) Update rollup finality e2e tests
+- [#1360](https://github.com/babylonlabs-io/babylon/pull/1360) Replace `panic` with logging in SendPacket calls.
 - [#1348](https://github.com/babylonlabs-io/babylon/pull/1348) Remove IsSimpleTransfer and IsTransferTx
 - [#1300](https://github.com/babylonlabs-io/babylon/pull/1300) x/btcstaking handles fp ops
 - [#1295](https://github.com/babylonlabs-io/babylon/pull/1295) Rename
@@ -108,6 +109,7 @@ check of rewards
 - [#1335](https://github.com/babylonlabs-io/babylon/pull/1335) Tweaks on BTC stake expansion feature.
 - [#1343](https://github.com/babylonlabs-io/babylon/pull/1343) Adjust `testnet`
 command to modify `max-finality-providers` parameter.
+- [#1344](https://github.com/babylonlabs-io/babylon/pull/1344) Add `MsgType` field to `QueuedMessageResponse` message.
 - [#1352](https://github.com/babylonlabs-io/babylon/pull/1352) Add stake expansion signatures in BTC delegation query response
 
 ### State Machine Breaking
@@ -125,6 +127,7 @@ queued for cosmos bsns
 for multistaking fps
 - [#1344](https://github.com/babylonlabs-io/babylon/pull/1344) Bump cosmos-sdk and
 remove send restrictions
+- [#1364](https://github.com/babylonlabs-io/babylon/pull/1364) Add babylon commission as legacy dec `[0...1]` to Consumer Registry.
 
 ### Bug fixes
 
@@ -141,6 +144,11 @@ secret key in slashing
 - [#1325](https://github.com/babylonlabs-io/babylon/pull/1325) fix: add signing context to `EvidenceResponse` message
 - [#1337](https://github.com/babylonlabs-io/babylon/pull/1337) fix: update proto gen
 - [#1355](https://github.com/babylonlabs-io/babylon/pull/1355) Allow empty fees on genesis transactions
+- [#1361](https://github.com/babylonlabs-io/babylon/pull/1361) Fix typo on makefile
+- [#1366](https://github.com/babylonlabs-io/babylon/pull/1366) fix: not add consumer fps
+to Babylon voting power table
+- [#1369](https://github.com/babylonlabs-io/babylon/pull/1369) fix: update stake expansion validation to allow expanding
+already expanded delegations
 
 ## v2.2.0
 

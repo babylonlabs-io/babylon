@@ -68,7 +68,7 @@ func FuzzFinalityProviderPowerAtHeight(f *testing.F) {
 		keeper.SetVotingPower(ctx, fp.BtcPk.MustMarshal(), randomHeight, randomPower)
 
 		// happy case
-		bk.EXPECT().HasFinalityProvider(gomock.Any(), gomock.Any()).Return(true).Times(1)
+		bk.EXPECT().BabylonFinalityProviderExists(gomock.Any(), gomock.Any()).Return(true).Times(1)
 		req1 := &types.QueryFinalityProviderPowerAtHeightRequest{
 			FpBtcPkHex: fp.BtcPk.MarshalHex(),
 			Height:     randomHeight,
@@ -79,7 +79,7 @@ func FuzzFinalityProviderPowerAtHeight(f *testing.F) {
 
 		// case where the voting power store is not updated in
 		// the given height
-		bk.EXPECT().HasFinalityProvider(gomock.Any(), gomock.Any()).Return(true).Times(1)
+		bk.EXPECT().BabylonFinalityProviderExists(gomock.Any(), gomock.Any()).Return(true).Times(1)
 		requestHeight := randomHeight + datagen.RandomInt(r, 10) + 1
 		req2 := &types.QueryFinalityProviderPowerAtHeightRequest{
 			FpBtcPkHex: fp.BtcPk.MarshalHex(),
@@ -89,7 +89,7 @@ func FuzzFinalityProviderPowerAtHeight(f *testing.F) {
 		require.ErrorIs(t, err, types.ErrVotingPowerTableNotUpdated)
 
 		// case where the given fp pk does not exist
-		bk.EXPECT().HasFinalityProvider(gomock.Any(), gomock.Any()).Return(false).Times(1)
+		bk.EXPECT().BabylonFinalityProviderExists(gomock.Any(), gomock.Any()).Return(false).Times(1)
 		randPk, err := datagen.GenRandomBIP340PubKey(r)
 		require.NoError(t, err)
 		req3 := &types.QueryFinalityProviderPowerAtHeightRequest{
@@ -110,7 +110,7 @@ func FuzzFinalityProviderCurrentVotingPower(f *testing.F) {
 
 		// Setup keeper and context
 		bk := types.NewMockBTCStakingKeeper(ctrl)
-		bk.EXPECT().HasFinalityProvider(gomock.Any(), gomock.Any()).Return(true).AnyTimes()
+		bk.EXPECT().BabylonFinalityProviderExists(gomock.Any(), gomock.Any()).Return(true).AnyTimes()
 		keeper, ctx := testkeeper.FinalityKeeper(t, bk, nil, nil)
 
 		// random finality provider
@@ -406,7 +406,7 @@ func FuzzListPubRandCommit(f *testing.F) {
 		fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, sk, "", "")
 		require.NoError(t, err)
 		bsKeeper.EXPECT().GetFinalityProvider(gomock.Any(), gomock.Eq(bip340PK.MustMarshal())).Return(fp, nil).AnyTimes()
-		bsKeeper.EXPECT().HasFinalityProvider(gomock.Any(), gomock.Eq(bip340PK.MustMarshal())).Return(true).AnyTimes()
+		bsKeeper.EXPECT().BabylonFinalityProviderExists(gomock.Any(), gomock.Eq(bip340PK.MustMarshal())).Return(true).AnyTimes()
 		cKeeper.EXPECT().GetEpoch(gomock.Any()).Return(&epochingtypes.Epoch{EpochNumber: 1}).AnyTimes()
 
 		commitCtxString := signingcontext.FpRandCommitContextV0(ctx.ChainID(), fKeeper.ModuleAddress())

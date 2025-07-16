@@ -58,6 +58,13 @@ message MsgRegisterConsumer {
   // serves as the data availability layer for finality signatures of the rollup.
   // (if set, then this means this is a rollup integration)
   string rollup_finality_contract_address = 5 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  // babylon_rewards_commission is the commission rate that Babylon charges for this consumer
+  // Must be between 0 and 1 (inclusive)
+  string babylon_rewards_commission = 6 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.nullable) = false,
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec"
+  ];
 }
 
 // MsgRegisterConsumerResponse is the response to the MsgRegisterConsumer message.
