@@ -110,7 +110,7 @@ func (bcs BTCChainSegment) Validate() error {
 
 func (cbs ConsumerBTCState) Validate() error {
 	if cbs.BaseHeader == nil {
-		return errors.New("invalid consumer BTC state. empty base header")
+		return errors.New("invalid consumer BTC state: base header is empty")
 	}
 	if err := cbs.BaseHeader.Validate(); err != nil {
 		return err
