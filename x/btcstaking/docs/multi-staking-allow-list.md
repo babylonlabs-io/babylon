@@ -75,7 +75,7 @@ flowchart TD
     C -->|Yes| D[Allow-List Eligible]
     C -->|No| E[Not Eligible for Multi-Staking]
 
-    D --> F{Stake Expansion Type}
+    D --> F{Stake Expansion}
     E --> G[Can only expand:<br/>- Increase amount<br/>- Renew timelock]
 
     F -->|Add FPs from<br/>different BSNs| H[Multi-Staking Achieved]
