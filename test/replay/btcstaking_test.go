@@ -7,6 +7,8 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	"github.com/btcsuite/btcd/btcec/v2"
+	"github.com/btcsuite/btcd/wire"
+	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/crypto/ed25519"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -763,6 +765,95 @@ func TestExpandBTCDelegation(t *testing.T) {
 	activeDelegations = driver.GetActiveBTCDelegations(t)
 	require.Len(t, activeDelegations, 1)
 	require.NotNil(t, activeDelegations[0].StkExp)
+
+	unbondedDelegations := driver.GetUnbondedBTCDelegations(t)
+	require.Len(t, unbondedDelegations, 1)
+}
+
+func containsEvent(events []abci.Event, eventType string) bool {
+	for _, event := range events {
+		if event.Type == eventType {
+			return true
+		}
+	}
+	return false
+}
+
+func TestAcceptSlashingTxAsUnbondingTx(t *testing.T) {
+	t.Parallel()
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	driverTempDir := t.TempDir()
+	replayerTempDir := t.TempDir()
+	driver := NewBabylonAppDriver(r, t, driverTempDir, replayerTempDir)
+	driver.GenerateNewBlock()
+
+	covSender := driver.CreateCovenantSender()
+	require.NotNil(t, covSender)
+
+	infos := driver.CreateNFinalityProviderAccounts(1)
+	fp1 := infos[0]
+
+	sinfos := driver.CreateNStakerAccounts(1)
+	s1 := sinfos[0]
+
+	fp1.RegisterFinalityProvider("")
+	driver.GenerateNewBlockAssertExecutionSuccess()
+
+	var (
+		stakingTime  = uint32(1000)
+		stakingValue = int64(100000000)
+	)
+	s1.CreatePreApprovalDelegation(
+		[]*bbn.BIP340PubKey{fp1.BTCPublicKey()},
+		stakingTime,
+		stakingValue,
+	)
+	driver.GenerateNewBlockAssertExecutionSuccess()
+
+	covSender.SendCovenantSignatures()
+	driver.GenerateNewBlockAssertExecutionSuccess()
+
+	driver.ActivateVerifiedDelegations(1)
+	activeDelegations := driver.GetActiveBTCDelegations(t)
+	require.Len(t, activeDelegations, 1)
+
+	slashingTx, _, err := bbn.NewBTCTxFromHex(activeDelegations[0].SlashingTxHex)
+	require.NoError(t, err)
+
+	stakingTx, stakingTxBytes, err := bbn.NewBTCTxFromHex(activeDelegations[0].StakingTxHex)
+	require.NoError(t, err)
+
+	params := driver.GetBTCStakingParams(t)
+
+	slashingTxbytes, slashingTxMsg := datagen.AddWitnessToSlashingTx(
+		t,
+		stakingTx.TxOut[0],
+		s1.BTCPrivateKey,
+		covenantSKs,
+		params.CovenantQuorum,
+		[]*btcec.PublicKey{fp1.BTCPrivateKey.PubKey()},
+		uint16(stakingTime),
+		stakingValue,
+		slashingTx,
+		driver.App.BTCLightClientKeeper.GetBTCNet(),
+	)
+
+	blockWithProofs := driver.IncludeTxsInBTCAncConfirm([]*wire.MsgTx{slashingTxMsg})
+	require.Len(t, blockWithProofs.Proofs, 2)
+
+	msg := &bstypes.MsgBTCUndelegate{
+		Signer:                        s1.AddressString(),
+		StakingTxHash:                 stakingTx.TxHash().String(),
+		StakeSpendingTx:               slashingTxbytes,
+		StakeSpendingTxInclusionProof: bstypes.NewInclusionProofFromSpvProof(blockWithProofs.Proofs[1]),
+		FundingTransactions:           [][]byte{stakingTxBytes},
+	}
+	s1.SendMessage(msg)
+	txResults := driver.GenerateNewBlockAssertExecutionSuccessWithResults()
+	// First result is injected checkpoint tx, second is the unbonding tx execution
+	require.NotEmpty(t, txResults[1].Events)
+	// Unbonding through slashing tx should be treated as EventBTCDelgationUnbondedEarly
+	require.True(t, containsEvent(txResults[1].Events, "babylon.btcstaking.v1.EventBTCDelgationUnbondedEarly"))
 
 	unbondedDelegations := driver.GetUnbondedBTCDelegations(t)
 	require.Len(t, unbondedDelegations, 1)

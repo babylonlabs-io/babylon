@@ -152,6 +152,8 @@ to Babylon voting power table
 already expanded delegations
 - [#1375](https://github.com/babylonlabs-io/babylon/pull/1375) fix: add strict requirements
 for multi staked fps
+- [#1384](https://github.com/babylonlabs-io/babylon/pull/1384) fix: Cascaded slashing
+adjustment
 
 ## v2.2.0
 
