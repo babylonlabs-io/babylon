@@ -9,6 +9,7 @@ import (
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
 	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
+	ictvtypes "github.com/babylonlabs-io/babylon/v3/x/incentive/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
@@ -55,6 +56,22 @@ func (f *FinalityProvider) RegisterFinalityProvider(bsnId string) {
 		msg,
 	)
 	// message accepted to the mempool increment sequence number
+	f.IncSeq()
+}
+
+// WithdrawBtcStakingRewards withdraws BTC staking rewards for this fp
+func (f *FinalityProvider) WithdrawBtcStakingRewards() {
+	msg := &ictvtypes.MsgWithdrawReward{
+		Type:    ictvtypes.FINALITY_PROVIDER.String(),
+		Address: f.Address().String(),
+	}
+
+	DefaultSendTxWithMessagesSuccess(
+		f.t,
+		f.app,
+		f.SenderInfo,
+		msg,
+	)
 	f.IncSeq()
 }
 

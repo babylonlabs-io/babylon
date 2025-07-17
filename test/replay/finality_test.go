@@ -334,7 +334,7 @@ func TestOnlyBabylonFpCanCommitRandomness(t *testing.T) {
 	driver.GenerateNewBlock()
 
 	// 2. Register consumers
-	consumer1 := driver.RegisterConsumer(consumerID1)
+	consumer1 := driver.RegisterConsumer(r, consumerID1)
 	require.NotNil(t, consumer1)
 
 	// Create a Babylon FP (registered without consumer ID)

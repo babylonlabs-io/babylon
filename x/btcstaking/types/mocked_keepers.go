@@ -11,7 +11,8 @@ import (
 	types "github.com/babylonlabs-io/babylon/v3/types"
 	types0 "github.com/babylonlabs-io/babylon/v3/x/btccheckpoint/types"
 	types1 "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
-	types2 "github.com/cosmos/cosmos-sdk/types"
+	types2 "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
+	types3 "github.com/cosmos/cosmos-sdk/types"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -178,6 +179,21 @@ func (m *MockBTCStkConsumerKeeper) EXPECT() *MockBTCStkConsumerKeeperMockRecorde
 	return m.recorder
 }
 
+// GetConsumerRegister mocks base method.
+func (m *MockBTCStkConsumerKeeper) GetConsumerRegister(ctx context.Context, consumerID string) (*types2.ConsumerRegister, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetConsumerRegister", ctx, consumerID)
+	ret0, _ := ret[0].(*types2.ConsumerRegister)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetConsumerRegister indicates an expected call of GetConsumerRegister.
+func (mr *MockBTCStkConsumerKeeperMockRecorder) GetConsumerRegister(ctx, consumerID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetConsumerRegister", reflect.TypeOf((*MockBTCStkConsumerKeeper)(nil).GetConsumerRegister), ctx, consumerID)
+}
+
 // IsConsumerRegistered mocks base method.
 func (m *MockBTCStkConsumerKeeper) IsConsumerRegistered(ctx context.Context, consumerID string) bool {
 	m.ctrl.T.Helper()
@@ -230,8 +246,34 @@ func (m *MockIncentiveKeeper) EXPECT() *MockIncentiveKeeperMockRecorder {
 	return m.recorder
 }
 
+// AccumulateRewardGaugeForFP mocks base method.
+func (m *MockIncentiveKeeper) AccumulateRewardGaugeForFP(ctx context.Context, addr types3.AccAddress, reward types3.Coins) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "AccumulateRewardGaugeForFP", ctx, addr, reward)
+}
+
+// AccumulateRewardGaugeForFP indicates an expected call of AccumulateRewardGaugeForFP.
+func (mr *MockIncentiveKeeperMockRecorder) AccumulateRewardGaugeForFP(ctx, addr, reward interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AccumulateRewardGaugeForFP", reflect.TypeOf((*MockIncentiveKeeper)(nil).AccumulateRewardGaugeForFP), ctx, addr, reward)
+}
+
+// AddFinalityProviderRewardsForBtcDelegations mocks base method.
+func (m *MockIncentiveKeeper) AddFinalityProviderRewardsForBtcDelegations(ctx context.Context, fp types3.AccAddress, rwd types3.Coins) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddFinalityProviderRewardsForBtcDelegations", ctx, fp, rwd)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AddFinalityProviderRewardsForBtcDelegations indicates an expected call of AddFinalityProviderRewardsForBtcDelegations.
+func (mr *MockIncentiveKeeperMockRecorder) AddFinalityProviderRewardsForBtcDelegations(ctx, fp, rwd interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddFinalityProviderRewardsForBtcDelegations", reflect.TypeOf((*MockIncentiveKeeper)(nil).AddFinalityProviderRewardsForBtcDelegations), ctx, fp, rwd)
+}
+
 // IndexRefundableMsg mocks base method.
-func (m *MockIncentiveKeeper) IndexRefundableMsg(ctx context.Context, msg types2.Msg) {
+func (m *MockIncentiveKeeper) IndexRefundableMsg(ctx context.Context, msg types3.Msg) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "IndexRefundableMsg", ctx, msg)
 }
@@ -240,4 +282,69 @@ func (m *MockIncentiveKeeper) IndexRefundableMsg(ctx context.Context, msg types2
 func (mr *MockIncentiveKeeperMockRecorder) IndexRefundableMsg(ctx, msg interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IndexRefundableMsg", reflect.TypeOf((*MockIncentiveKeeper)(nil).IndexRefundableMsg), ctx, msg)
+}
+
+// MockBankKeeper is a mock of BankKeeper interface.
+type MockBankKeeper struct {
+	ctrl     *gomock.Controller
+	recorder *MockBankKeeperMockRecorder
+}
+
+// MockBankKeeperMockRecorder is the mock recorder for MockBankKeeper.
+type MockBankKeeperMockRecorder struct {
+	mock *MockBankKeeper
+}
+
+// NewMockBankKeeper creates a new mock instance.
+func NewMockBankKeeper(ctrl *gomock.Controller) *MockBankKeeper {
+	mock := &MockBankKeeper{ctrl: ctrl}
+	mock.recorder = &MockBankKeeperMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockBankKeeper) EXPECT() *MockBankKeeperMockRecorder {
+	return m.recorder
+}
+
+// SendCoinsFromAccountToModule mocks base method.
+func (m *MockBankKeeper) SendCoinsFromAccountToModule(ctx context.Context, senderAddr types3.AccAddress, recipientModule string, amt types3.Coins) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SendCoinsFromAccountToModule", ctx, senderAddr, recipientModule, amt)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SendCoinsFromAccountToModule indicates an expected call of SendCoinsFromAccountToModule.
+func (mr *MockBankKeeperMockRecorder) SendCoinsFromAccountToModule(ctx, senderAddr, recipientModule, amt interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendCoinsFromAccountToModule", reflect.TypeOf((*MockBankKeeper)(nil).SendCoinsFromAccountToModule), ctx, senderAddr, recipientModule, amt)
+}
+
+// SendCoinsFromModuleToModule mocks base method.
+func (m *MockBankKeeper) SendCoinsFromModuleToModule(ctx context.Context, senderModule, recipientModule string, amt types3.Coins) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SendCoinsFromModuleToModule", ctx, senderModule, recipientModule, amt)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SendCoinsFromModuleToModule indicates an expected call of SendCoinsFromModuleToModule.
+func (mr *MockBankKeeperMockRecorder) SendCoinsFromModuleToModule(ctx, senderModule, recipientModule, amt interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendCoinsFromModuleToModule", reflect.TypeOf((*MockBankKeeper)(nil).SendCoinsFromModuleToModule), ctx, senderModule, recipientModule, amt)
+}
+
+// SpendableCoins mocks base method.
+func (m *MockBankKeeper) SpendableCoins(ctx context.Context, addr types3.AccAddress) types3.Coins {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SpendableCoins", ctx, addr)
+	ret0, _ := ret[0].(types3.Coins)
+	return ret0
+}
+
+// SpendableCoins indicates an expected call of SpendableCoins.
+func (mr *MockBankKeeperMockRecorder) SpendableCoins(ctx, addr interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SpendableCoins", reflect.TypeOf((*MockBankKeeper)(nil).SpendableCoins), ctx, addr)
 }

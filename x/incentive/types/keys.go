@@ -18,6 +18,9 @@ const (
 
 	// MemStoreKey defines the in-memory store key
 	MemStoreKey = "mem_incentive"
+
+	// ModAccCommissionCollectorBSN the module account to gather babylon commission over BSN rewards
+	ModAccCommissionCollectorBSN = "commission_collector_bsn"
 )
 
 var (
