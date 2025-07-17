@@ -18,18 +18,20 @@ const UpgradeName = "v3"
 
 const deletedCapabilityStoreKey = "capability"
 
-var Upgrade = upgrades.Upgrade{
-	UpgradeName:          UpgradeName,
-	CreateUpgradeHandler: CreateUpgradeHandler,
-	StoreUpgrades: store.StoreUpgrades{
-		Added: []string{
-			btcstkconsumertypes.StoreKey,
-			zoneconciergetypes.StoreKey,
+func CreateUpgrade() upgrades.Upgrade {
+	return upgrades.Upgrade{
+		UpgradeName:          UpgradeName,
+		CreateUpgradeHandler: CreateUpgradeHandler,
+		StoreUpgrades: store.StoreUpgrades{
+			Added: []string{
+				btcstkconsumertypes.StoreKey,
+				zoneconciergetypes.StoreKey,
+			},
+			Deleted: []string{
+				deletedCapabilityStoreKey,
+			},
 		},
-		Deleted: []string{
-			deletedCapabilityStoreKey,
-		},
-	},
+	}
 }
 
 func CreateUpgradeHandler(mm *module.Manager, configurator module.Configurator, keepers *keepers.AppKeepers) upgradetypes.UpgradeHandler {
