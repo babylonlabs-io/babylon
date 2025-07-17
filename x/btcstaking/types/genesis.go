@@ -287,6 +287,7 @@ func SortData(gs *GenesisState) {
 	})
 
 	slices.Sort(gs.AllowedStakingTxHashes)
+	slices.Sort(gs.AllowedMultiStakingTxHashes)
 }
 
 func buildDelegationIndexKey(fp, del *types.BIP340PubKey) string {

@@ -120,6 +120,12 @@ func NewHelper(
 	return NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKeeper, ckptKeeper, ictvK)
 }
 
+func (h *Helper) WithBlockHeight(height int64) *Helper {
+	h.Ctx = h.Ctx.WithBlockHeight(height)
+	h.Ctx = h.Ctx.WithHeaderInfo(header.Info{Height: height, Time: time.Now()})
+	return h
+}
+
 func NewHelperNoMocksCalls(
 	t testing.TB,
 	btclcKeeper *types.MockBTCLightClientKeeper,
@@ -262,6 +268,10 @@ func (h *Helper) Equal(expected, actual interface{}) {
 
 func (h *Helper) Error(err error, msgAndArgs ...any) {
 	require.Error(h.t, err, msgAndArgs...)
+}
+
+func (h *Helper) ErrorContains(err error, contains string, msgAndArgs ...any) {
+	require.ErrorContains(h.t, err, contains, msgAndArgs...)
 }
 
 func (h *Helper) StakerPopContext() string {

@@ -150,9 +150,30 @@ func FuzzMultiStaking_MultiStakedBTCDelegation(f *testing.F) {
 		require.True(t, errors.Is(err, types.ErrInvalidMultiStakingFPs), err)
 
 		/*
-			happy case -- multi-staking to a Babylon fp and a consumer fp
+			during multi-staking allow-list -- try multi-staking to a Babylon fp and a consumer fp but not allowed
 		*/
 		lcTip := uint32(30)
+		_, _, _, _, _, _, err = h.CreateDelegationWithBtcBlockHeight(
+			r,
+			delSK,
+			[]*btcec.PublicKey{fpPK, consumerFPPK},
+			stakingValue,
+			1000,
+			0,
+			0,
+			false,
+			false,
+			10,
+			lcTip,
+		)
+		h.Error(err)
+		h.ErrorContains(err, "it is not allowed to create new delegations with multi-staking during the multi-staking allow-list period")
+
+		/*
+			happy case -- multi-staking to a Babylon fp and a consumer fp
+		*/
+		heightAfterMultiStakingAllowListExpiration := int64(10)
+		h = h.WithBlockHeight(heightAfterMultiStakingAllowListExpiration)
 		_, msgBTCDel, actualDel, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
 			r,
 			delSK,
@@ -191,7 +212,8 @@ func FuzzFinalityProviderDelegations_RestakingConsumers(f *testing.F) {
 		// mock BTC light client and BTC checkpoint modules
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-		h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
+		heightAfterMultiStakingAllowListExpiration := int64(10)
+		h := testutil.NewHelper(t, btclcKeeper, btccKeeper).WithBlockHeight(heightAfterMultiStakingAllowListExpiration)
 
 		// set all parameters
 		h.GenAndApplyCustomParams(r, 100, 200, 0, 2)
@@ -297,7 +319,8 @@ func TestNoActivationEventForRollupConsumer(t *testing.T) {
 	// mock BTC light client and BTC checkpoint modules
 	btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 	btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-	h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
+	heightAfterMultiStakingAllowListExpiration := int64(10)
+	h := testutil.NewHelper(t, btclcKeeper, btccKeeper).WithBlockHeight(heightAfterMultiStakingAllowListExpiration)
 
 	// set all parameters
 	covenantSKs, _ := h.GenAndApplyCustomParams(r, 100, 200, 0, 2)

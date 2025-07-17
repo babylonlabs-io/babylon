@@ -44,12 +44,12 @@ func TestIsMultiStakingAllowListEnabled(t *testing.T) {
 	}{
 		{
 			name:     "height below expiration - enabled",
-			height:   5,
+			height:   2,
 			expected: true,
 		},
 		{
 			name:     "height at expiration - disabled",
-			height:   10,
+			height:   5,
 			expected: false,
 		},
 		{

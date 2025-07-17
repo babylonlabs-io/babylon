@@ -9,7 +9,7 @@ package types
 // Make sure to include the correct tx hashes for the
 // mainnet or testnet as needed in the corresponding
 // files with the build tags
-const multiStakingAllowListExpirationHeight = 10
+const multiStakingAllowListExpirationHeight = 5
 const multiStakingAllowList = `{
   "tx_hashes": [
     "11f29d946c10d7774ce5c1732f51542171c09aedc6dc6f9ec1dcc68118fbe549",

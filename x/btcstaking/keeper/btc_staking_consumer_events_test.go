@@ -87,7 +87,8 @@ func FuzzSetBTCStakingEventStore_ActiveDel(f *testing.F) {
 		// mock BTC light client and BTC checkpoint modules
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-		h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
+		heightAfterMultiStakingAllowListExpiration := int64(10)
+		h := testutil.NewHelper(t, btclcKeeper, btccKeeper).WithBlockHeight(heightAfterMultiStakingAllowListExpiration)
 
 		// set all parameters
 		covenantSKs, _ := h.GenAndApplyCustomParams(r, 100, 200, 0, 2)
@@ -185,7 +186,8 @@ func FuzzSetBTCStakingEventStore_UnbondedDel(f *testing.F) {
 		// mock BTC light client and BTC checkpoint modules
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-		h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
+		heightAfterMultiStakingAllowListExpiration := int64(10)
+		h := testutil.NewHelper(t, btclcKeeper, btccKeeper).WithBlockHeight(heightAfterMultiStakingAllowListExpiration)
 
 		// set all parameters
 		covenantSKs, _ := h.GenAndApplyCustomParams(r, 100, 200, 0, 2)
