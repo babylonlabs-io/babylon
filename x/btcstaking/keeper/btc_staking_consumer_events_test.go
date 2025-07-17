@@ -32,7 +32,7 @@ func FuzzSetBTCStakingEventStore_NewFp(f *testing.F) {
 		h.GenAndApplyParams(r)
 
 		// register a random consumer on Babylon
-		randomConsumer := registerAndVerifyConsumer(t, r, h)
+		randomConsumer := h.RegisterAndVerifyConsumer(t, r)
 
 		// create new consumer finality providers, this will create on Babylon and insert
 		// events in the events store
@@ -93,7 +93,7 @@ func FuzzSetBTCStakingEventStore_ActiveDel(f *testing.F) {
 		covenantSKs, _ := h.GenAndApplyCustomParams(r, 100, 200, 0, 2)
 
 		// register a random consumer on Babylon
-		randomConsumer := registerAndVerifyConsumer(t, r, h)
+		randomConsumer := h.RegisterAndVerifyConsumer(t, r)
 		// create a new consumer finality provider
 		_, consumerFpPK, _, err := h.CreateConsumerFinalityProvider(r, randomConsumer.ConsumerId)
 		require.NoError(t, err)
@@ -193,7 +193,7 @@ func FuzzSetBTCStakingEventStore_UnbondedDel(f *testing.F) {
 		bsParams := h.BTCStakingKeeper.GetParams(h.Ctx)
 
 		// register a random consumer on Babylon
-		randomConsumer := registerAndVerifyConsumer(t, r, h)
+		randomConsumer := h.RegisterAndVerifyConsumer(t, r)
 		// create a new consumer finality provider
 		_, consumerFpPK, _, err := h.CreateConsumerFinalityProvider(r, randomConsumer.ConsumerId)
 		require.NoError(t, err)
@@ -324,7 +324,7 @@ func FuzzDeleteBTCStakingEventStore(f *testing.F) {
 		randNum := int(datagen.RandomInt(r, 10)) + 1
 		var consumerIds []string
 		for i := 0; i < randNum; i++ {
-			randomConsumer := registerAndVerifyConsumer(t, r, h)
+			randomConsumer := h.RegisterAndVerifyConsumer(t, r)
 			_, _, _, err := h.CreateConsumerFinalityProvider(r, randomConsumer.ConsumerId)
 			require.NoError(t, err)
 
@@ -351,35 +351,6 @@ func FuzzDeleteBTCStakingEventStore(f *testing.F) {
 			require.Equal(t, len(latestStoreState.GetNewFp()), 1)
 		}
 	})
-}
-
-// helper function: register a random consumer on Babylon and verify the registration
-func registerAndVerifyConsumer(t *testing.T, r *rand.Rand, h *testutil.Helper) *bsctypes.ConsumerRegister {
-	// Generate a random consumer register
-	randomConsumer := datagen.GenRandomCosmosConsumerRegister(r)
-
-	// Check that the consumer is not already registered
-	isRegistered := h.BTCStkConsumerKeeper.IsConsumerRegistered(h.Ctx, randomConsumer.ConsumerId)
-	require.False(t, isRegistered)
-
-	// Attempt to fetch the consumer from the database
-	dbConsumer, err := h.BTCStkConsumerKeeper.GetConsumerRegister(h.Ctx, randomConsumer.ConsumerId)
-	require.Error(t, err)
-	require.Nil(t, dbConsumer)
-
-	// Register the consumer
-	err = h.BTCStkConsumerKeeper.RegisterConsumer(h.Ctx, randomConsumer)
-	require.NoError(t, err)
-
-	// Verify that the consumer is now registered
-	dbConsumer, err = h.BTCStkConsumerKeeper.GetConsumerRegister(h.Ctx, randomConsumer.ConsumerId)
-	require.NoError(t, err)
-	require.NotNil(t, dbConsumer)
-	require.Equal(t, randomConsumer.ConsumerId, dbConsumer.ConsumerId)
-	require.Equal(t, randomConsumer.ConsumerName, dbConsumer.ConsumerName)
-	require.Equal(t, randomConsumer.ConsumerDescription, dbConsumer.ConsumerDescription)
-
-	return dbConsumer
 }
 
 func TestDeterministicOrdering(t *testing.T) {

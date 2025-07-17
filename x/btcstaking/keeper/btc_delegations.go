@@ -158,7 +158,6 @@ func (k Keeper) AddBTCDelegation(
 
 	// for each finality provider the delegation multi-stakes to, update its index
 	for _, fpBTCPK := range btcDel.FpBtcPkList {
-		fpBTCPK := fpBTCPK // remove when update to go1.22
 		// get BTC delegation index under this finality provider
 		btcDelIndex := k.getBTCDelegatorDelegationIndex(ctx, &fpBTCPK, btcDel.BtcPk)
 		if btcDelIndex == nil {

@@ -6,8 +6,6 @@ import (
 	"strconv"
 	"time"
 
-	sdkmath "cosmossdk.io/math"
-
 	"github.com/babylonlabs-io/babylon/v3/crypto/eots"
 	ct "github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
 	ftypes "github.com/babylonlabs-io/babylon/v3/x/finality/types"
@@ -136,7 +134,7 @@ func (s *FinalityContractTestSuite) Test2RegisterRollupConsumer() {
 		BsnId,
 		datagen.GenRandomHexStr(s.r, 5),
 		"Chain description: "+datagen.GenRandomHexStr(s.r, 15),
-		sdkmath.LegacyMustNewDecFromStr("0.1"),
+		datagen.GenBabylonRewardsCommission(s.r),
 	)
 
 	validatorNode, err := s.configurer.GetChainConfig(0).GetNodeAtIndex(0)

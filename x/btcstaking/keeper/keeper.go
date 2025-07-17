@@ -24,7 +24,8 @@ type (
 		btclcKeeper types.BTCLightClientKeeper
 		btccKeeper  types.BtcCheckpointKeeper
 		BscKeeper   types.BTCStkConsumerKeeper
-		iKeeper     types.IncentiveKeeper
+		ictvKeeper  types.IncentiveKeeper
+		bankKeeper  types.BankKeeper
 
 		Schema                       collections.Schema
 		AllowedStakingTxHashesKeySet collections.KeySet[[]byte]
@@ -52,6 +53,7 @@ func NewKeeper(
 	btccKeeper types.BtcCheckpointKeeper,
 	bscKeeper types.BTCStkConsumerKeeper,
 	iKeeper types.IncentiveKeeper,
+	bankKeeper types.BankKeeper,
 
 	btcNet *chaincfg.Params,
 	btcStakingModuleAddress string,
@@ -66,7 +68,8 @@ func NewKeeper(
 		btclcKeeper:             btclcKeeper,
 		btccKeeper:              btccKeeper,
 		BscKeeper:               bscKeeper,
-		iKeeper:                 iKeeper,
+		ictvKeeper:              iKeeper,
+		bankKeeper:              bankKeeper,
 
 		AllowedStakingTxHashesKeySet: collections.NewKeySet(
 			sb,
@@ -80,7 +83,7 @@ func NewKeeper(
 			"allowed_multi_staking_tx_hashes_key_set",
 			collections.BytesKey,
 		),
-		LargestBtcReorg: collections.NewItem[types.LargestBtcReOrg](
+		LargestBtcReorg: collections.NewItem(
 			sb,
 			types.LargestBtcReorgInBlocks,
 			"largest_btc_reorg",

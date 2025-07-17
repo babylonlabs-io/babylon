@@ -11,8 +11,8 @@ import (
 	types "github.com/babylonlabs-io/babylon/v3/x/epoching/types"
 	crypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 	_ "github.com/cosmos/gogoproto/gogoproto"
-	proto "github.com/gogo/protobuf/proto"
-	github_com_gogo_protobuf_types "github.com/gogo/protobuf/types"
+	proto "github.com/cosmos/gogoproto/proto"
+	github_com_cosmos_gogoproto_types "github.com/cosmos/gogoproto/types"
 	_ "google.golang.org/protobuf/types/known/timestamppb"
 	io "io"
 	math "math"
@@ -736,7 +736,7 @@ func (m *IndexedHeader) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		dAtA[i] = 0x2a
 	}
 	if m.Time != nil {
-		n1, err1 := github_com_gogo_protobuf_types.StdTimeMarshalTo(*m.Time, dAtA[i-github_com_gogo_protobuf_types.SizeOfStdTime(*m.Time):])
+		n1, err1 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(*m.Time, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.Time):])
 		if err1 != nil {
 			return 0, err1
 		}
@@ -1186,7 +1186,7 @@ func (m *IndexedHeader) Size() (n int) {
 		n += 1 + sovZoneconcierge(uint64(m.Height))
 	}
 	if m.Time != nil {
-		l = github_com_gogo_protobuf_types.SizeOfStdTime(*m.Time)
+		l = github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.Time)
 		n += 1 + l + sovZoneconcierge(uint64(l))
 	}
 	l = len(m.BabylonHeaderHash)
@@ -1506,7 +1506,7 @@ func (m *IndexedHeader) Unmarshal(dAtA []byte) error {
 			if m.Time == nil {
 				m.Time = new(time.Time)
 			}
-			if err := github_com_gogo_protobuf_types.StdTimeUnmarshal(m.Time, dAtA[iNdEx:postIndex]); err != nil {
+			if err := github_com_cosmos_gogoproto_types.StdTimeUnmarshal(m.Time, dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
