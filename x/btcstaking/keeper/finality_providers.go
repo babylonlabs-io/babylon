@@ -159,22 +159,12 @@ func (k Keeper) SlashFinalityProvider(ctx context.Context, fpBTCPK []byte) error
 	fp.SlashedBtcHeight = btcTip.Height
 	k.setFinalityProvider(ctx, fp)
 
+	// we do not keep power distribution table for consumer FPs, so we only record the event for Babylon FPs
 	if fp.SecuresBabylonGenesis(sdk.UnwrapSDKContext(ctx)) {
 		// record slashed event. The next `BeginBlock` will consume this
 		// event for updating the finality provider set
 		powerUpdateEvent := types.NewEventPowerDistUpdateWithSlashedFP(fp.BtcPk)
 		k.addPowerDistUpdateEvent(ctx, btcTip.Height, powerUpdateEvent)
-	} else {
-		// Process all delegations for this consumer finality provider and record slashed events
-		err = k.HandleFPBTCDelegations(ctx, fp.BtcPk, func(btcDel *types.BTCDelegation) error {
-			stakingTxHash := btcDel.MustGetStakingTxHash().String()
-			eventSlashedBTCDelegation := types.NewEventPowerDistUpdateWithSlashedBTCDelegation(stakingTxHash)
-			k.addPowerDistUpdateEvent(ctx, btcTip.Height, eventSlashedBTCDelegation)
-			return nil
-		})
-		if err != nil {
-			return fmt.Errorf("failed to handle BTC delegations: %w", err)
-		}
 	}
 
 	return nil

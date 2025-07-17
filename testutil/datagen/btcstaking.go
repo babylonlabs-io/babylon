@@ -903,6 +903,73 @@ func AddWitnessToUnbondingTx(
 	return serializedUnbondingTxWithWitness, unbondingTx
 }
 
+func AddWitnessToSlashingTx(
+	t *testing.T,
+	stakingOutput *wire.TxOut,
+	stakerSk *btcec.PrivateKey,
+	covenantSks []*btcec.PrivateKey,
+	covenantQuorum uint32,
+	finalityProviderPKs []*btcec.PublicKey,
+	stakingTime uint16,
+	stakingValue int64,
+	slashingTx *wire.MsgTx,
+	net *chaincfg.Params,
+) ([]byte, *wire.MsgTx) {
+	var covenatnPks []*btcec.PublicKey
+	for _, sk := range covenantSks {
+		covenatnPks = append(covenatnPks, sk.PubKey())
+	}
+
+	stakingInfo, err := stk.BuildStakingInfo(
+		stakerSk.PubKey(),
+		finalityProviderPKs,
+		covenatnPks,
+		covenantQuorum,
+		stakingTime,
+		btcutil.Amount(stakingValue),
+		net,
+	)
+	require.NoError(t, err)
+
+	// sanity check that what we re-build is the same as what we have in the BTC delegation
+	require.Equal(t, stakingOutput, stakingInfo.StakingOutput)
+
+	slashingSpendInfo, err := stakingInfo.SlashingPathSpendInfo()
+	require.NoError(t, err)
+
+	unbondingScirpt := slashingSpendInfo.RevealedLeaf.Script
+	require.NotNil(t, unbondingScirpt)
+
+	covenantSigs := GenerateSignatures(
+		t,
+		covenantSks,
+		slashingTx,
+		stakingOutput,
+		slashingSpendInfo.RevealedLeaf,
+	)
+	require.NoError(t, err)
+
+	stakerSig, err := stk.SignTxWithOneScriptSpendInputFromTapLeaf(
+		slashingTx,
+		stakingOutput,
+		stakerSk,
+		slashingSpendInfo.RevealedLeaf,
+	)
+	require.NoError(t, err)
+
+	// we cheat here a bit as we do not execute transaction on BTC so we can provide
+	// the same witness as for unbonding path.
+	slashingWitness, err := slashingSpendInfo.CreateUnbondingPathWitness(covenantSigs, stakerSig)
+	require.NoError(t, err)
+
+	slashingTx.TxIn[0].Witness = slashingWitness
+
+	serializedUnbondingTxWithWitness, err := bbn.SerializeBTCTx(slashingTx)
+	require.NoError(t, err)
+
+	return serializedUnbondingTxWithWitness, slashingTx
+}
+
 func AddWitnessToStakeExpTx(
 	t *testing.T,
 	stakingOutput *wire.TxOut,

@@ -447,7 +447,6 @@ type EventPowerDistUpdate struct {
 	//	*EventPowerDistUpdate_JailedFp
 	//	*EventPowerDistUpdate_UnjailedFp
 	//	*EventPowerDistUpdate_BtcDelStateUpdate
-	//	*EventPowerDistUpdate_SlashedBtcDelegation
 	Ev isEventPowerDistUpdate_Ev `protobuf_oneof:"ev"`
 }
 
@@ -502,15 +501,11 @@ type EventPowerDistUpdate_UnjailedFp struct {
 type EventPowerDistUpdate_BtcDelStateUpdate struct {
 	BtcDelStateUpdate *EventBTCDelegationStateUpdate `protobuf:"bytes,4,opt,name=btc_del_state_update,json=btcDelStateUpdate,proto3,oneof" json:"btc_del_state_update,omitempty"`
 }
-type EventPowerDistUpdate_SlashedBtcDelegation struct {
-	SlashedBtcDelegation *EventPowerDistUpdate_EventSlashedBTCDelegation `protobuf:"bytes,5,opt,name=slashed_btc_delegation,json=slashedBtcDelegation,proto3,oneof" json:"slashed_btc_delegation,omitempty"`
-}
 
-func (*EventPowerDistUpdate_SlashedFp) isEventPowerDistUpdate_Ev()            {}
-func (*EventPowerDistUpdate_JailedFp) isEventPowerDistUpdate_Ev()             {}
-func (*EventPowerDistUpdate_UnjailedFp) isEventPowerDistUpdate_Ev()           {}
-func (*EventPowerDistUpdate_BtcDelStateUpdate) isEventPowerDistUpdate_Ev()    {}
-func (*EventPowerDistUpdate_SlashedBtcDelegation) isEventPowerDistUpdate_Ev() {}
+func (*EventPowerDistUpdate_SlashedFp) isEventPowerDistUpdate_Ev()         {}
+func (*EventPowerDistUpdate_JailedFp) isEventPowerDistUpdate_Ev()          {}
+func (*EventPowerDistUpdate_UnjailedFp) isEventPowerDistUpdate_Ev()        {}
+func (*EventPowerDistUpdate_BtcDelStateUpdate) isEventPowerDistUpdate_Ev() {}
 
 func (m *EventPowerDistUpdate) GetEv() isEventPowerDistUpdate_Ev {
 	if m != nil {
@@ -547,13 +542,6 @@ func (m *EventPowerDistUpdate) GetBtcDelStateUpdate() *EventBTCDelegationStateUp
 	return nil
 }
 
-func (m *EventPowerDistUpdate) GetSlashedBtcDelegation() *EventPowerDistUpdate_EventSlashedBTCDelegation {
-	if x, ok := m.GetEv().(*EventPowerDistUpdate_SlashedBtcDelegation); ok {
-		return x.SlashedBtcDelegation
-	}
-	return nil
-}
-
 // XXX_OneofWrappers is for the internal use of the proto package.
 func (*EventPowerDistUpdate) XXX_OneofWrappers() []interface{} {
 	return []interface{}{
@@ -561,7 +549,6 @@ func (*EventPowerDistUpdate) XXX_OneofWrappers() []interface{} {
 		(*EventPowerDistUpdate_JailedFp)(nil),
 		(*EventPowerDistUpdate_UnjailedFp)(nil),
 		(*EventPowerDistUpdate_BtcDelStateUpdate)(nil),
-		(*EventPowerDistUpdate_SlashedBtcDelegation)(nil),
 	}
 }
 
@@ -609,60 +596,6 @@ func (m *EventPowerDistUpdate_EventSlashedFinalityProvider) XXX_DiscardUnknown()
 
 var xxx_messageInfo_EventPowerDistUpdate_EventSlashedFinalityProvider proto.InternalMessageInfo
 
-// EventSlashedBTCDelegation is emitted for each BTC delegation that multi-stakes
-// to a slashed consumer finality provider.
-// It indicates that the voting power of affected Babylon finality providers
-// will be discounted for this delegation.
-type EventPowerDistUpdate_EventSlashedBTCDelegation struct {
-	// staking_tx_hash is the hash of the staking tx.
-	// It uniquely identifies a BTC delegation
-	StakingTxHash string `protobuf:"bytes,1,opt,name=staking_tx_hash,json=stakingTxHash,proto3" json:"staking_tx_hash,omitempty"`
-}
-
-func (m *EventPowerDistUpdate_EventSlashedBTCDelegation) Reset() {
-	*m = EventPowerDistUpdate_EventSlashedBTCDelegation{}
-}
-func (m *EventPowerDistUpdate_EventSlashedBTCDelegation) String() string {
-	return proto.CompactTextString(m)
-}
-func (*EventPowerDistUpdate_EventSlashedBTCDelegation) ProtoMessage() {}
-func (*EventPowerDistUpdate_EventSlashedBTCDelegation) Descriptor() ([]byte, []int) {
-	return fileDescriptor_74118427820fff75, []int{5, 1}
-}
-func (m *EventPowerDistUpdate_EventSlashedBTCDelegation) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *EventPowerDistUpdate_EventSlashedBTCDelegation) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_EventPowerDistUpdate_EventSlashedBTCDelegation.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *EventPowerDistUpdate_EventSlashedBTCDelegation) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_EventPowerDistUpdate_EventSlashedBTCDelegation.Merge(m, src)
-}
-func (m *EventPowerDistUpdate_EventSlashedBTCDelegation) XXX_Size() int {
-	return m.Size()
-}
-func (m *EventPowerDistUpdate_EventSlashedBTCDelegation) XXX_DiscardUnknown() {
-	xxx_messageInfo_EventPowerDistUpdate_EventSlashedBTCDelegation.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_EventPowerDistUpdate_EventSlashedBTCDelegation proto.InternalMessageInfo
-
-func (m *EventPowerDistUpdate_EventSlashedBTCDelegation) GetStakingTxHash() string {
-	if m != nil {
-		return m.StakingTxHash
-	}
-	return ""
-}
-
 // EventJailedFinalityProvider defines an event that a finality provider
 // is jailed after being detected sluggish
 type EventPowerDistUpdate_EventJailedFinalityProvider struct {
@@ -677,7 +610,7 @@ func (m *EventPowerDistUpdate_EventJailedFinalityProvider) String() string {
 }
 func (*EventPowerDistUpdate_EventJailedFinalityProvider) ProtoMessage() {}
 func (*EventPowerDistUpdate_EventJailedFinalityProvider) Descriptor() ([]byte, []int) {
-	return fileDescriptor_74118427820fff75, []int{5, 2}
+	return fileDescriptor_74118427820fff75, []int{5, 1}
 }
 func (m *EventPowerDistUpdate_EventJailedFinalityProvider) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -720,7 +653,7 @@ func (m *EventPowerDistUpdate_EventUnjailedFinalityProvider) String() string {
 }
 func (*EventPowerDistUpdate_EventUnjailedFinalityProvider) ProtoMessage() {}
 func (*EventPowerDistUpdate_EventUnjailedFinalityProvider) Descriptor() ([]byte, []int) {
-	return fileDescriptor_74118427820fff75, []int{5, 3}
+	return fileDescriptor_74118427820fff75, []int{5, 2}
 }
 func (m *EventPowerDistUpdate_EventUnjailedFinalityProvider) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1584,7 +1517,6 @@ func init() {
 	proto.RegisterType((*EventSelectiveSlashing)(nil), "babylon.btcstaking.v1.EventSelectiveSlashing")
 	proto.RegisterType((*EventPowerDistUpdate)(nil), "babylon.btcstaking.v1.EventPowerDistUpdate")
 	proto.RegisterType((*EventPowerDistUpdate_EventSlashedFinalityProvider)(nil), "babylon.btcstaking.v1.EventPowerDistUpdate.EventSlashedFinalityProvider")
-	proto.RegisterType((*EventPowerDistUpdate_EventSlashedBTCDelegation)(nil), "babylon.btcstaking.v1.EventPowerDistUpdate.EventSlashedBTCDelegation")
 	proto.RegisterType((*EventPowerDistUpdate_EventJailedFinalityProvider)(nil), "babylon.btcstaking.v1.EventPowerDistUpdate.EventJailedFinalityProvider")
 	proto.RegisterType((*EventPowerDistUpdate_EventUnjailedFinalityProvider)(nil), "babylon.btcstaking.v1.EventPowerDistUpdate.EventUnjailedFinalityProvider")
 	proto.RegisterType((*EventFinalityProviderStatusChange)(nil), "babylon.btcstaking.v1.EventFinalityProviderStatusChange")
@@ -2092,27 +2024,6 @@ func (m *EventPowerDistUpdate_BtcDelStateUpdate) MarshalToSizedBuffer(dAtA []byt
 	}
 	return len(dAtA) - i, nil
 }
-func (m *EventPowerDistUpdate_SlashedBtcDelegation) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *EventPowerDistUpdate_SlashedBtcDelegation) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	if m.SlashedBtcDelegation != nil {
-		{
-			size, err := m.SlashedBtcDelegation.MarshalToSizedBuffer(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = encodeVarintEvents(dAtA, i, uint64(size))
-		}
-		i--
-		dAtA[i] = 0x2a
-	}
-	return len(dAtA) - i, nil
-}
 func (m *EventPowerDistUpdate_EventSlashedFinalityProvider) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -2142,36 +2053,6 @@ func (m *EventPowerDistUpdate_EventSlashedFinalityProvider) MarshalToSizedBuffer
 			}
 			i = encodeVarintEvents(dAtA, i, uint64(size))
 		}
-		i--
-		dAtA[i] = 0xa
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *EventPowerDistUpdate_EventSlashedBTCDelegation) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *EventPowerDistUpdate_EventSlashedBTCDelegation) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *EventPowerDistUpdate_EventSlashedBTCDelegation) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if len(m.StakingTxHash) > 0 {
-		i -= len(m.StakingTxHash)
-		copy(dAtA[i:], m.StakingTxHash)
-		i = encodeVarintEvents(dAtA, i, uint64(len(m.StakingTxHash)))
 		i--
 		dAtA[i] = 0xa
 	}
@@ -3016,18 +2897,6 @@ func (m *EventPowerDistUpdate_BtcDelStateUpdate) Size() (n int) {
 	}
 	return n
 }
-func (m *EventPowerDistUpdate_SlashedBtcDelegation) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if m.SlashedBtcDelegation != nil {
-		l = m.SlashedBtcDelegation.Size()
-		n += 1 + l + sovEvents(uint64(l))
-	}
-	return n
-}
 func (m *EventPowerDistUpdate_EventSlashedFinalityProvider) Size() (n int) {
 	if m == nil {
 		return 0
@@ -3036,19 +2905,6 @@ func (m *EventPowerDistUpdate_EventSlashedFinalityProvider) Size() (n int) {
 	_ = l
 	if m.Pk != nil {
 		l = m.Pk.Size()
-		n += 1 + l + sovEvents(uint64(l))
-	}
-	return n
-}
-
-func (m *EventPowerDistUpdate_EventSlashedBTCDelegation) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	l = len(m.StakingTxHash)
-	if l > 0 {
 		n += 1 + l + sovEvents(uint64(l))
 	}
 	return n
@@ -4415,41 +4271,6 @@ func (m *EventPowerDistUpdate) Unmarshal(dAtA []byte) error {
 			}
 			m.Ev = &EventPowerDistUpdate_BtcDelStateUpdate{v}
 			iNdEx = postIndex
-		case 5:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field SlashedBtcDelegation", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowEvents
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthEvents
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthEvents
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			v := &EventPowerDistUpdate_EventSlashedBTCDelegation{}
-			if err := v.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			m.Ev = &EventPowerDistUpdate_SlashedBtcDelegation{v}
-			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipEvents(dAtA[iNdEx:])
@@ -4534,88 +4355,6 @@ func (m *EventPowerDistUpdate_EventSlashedFinalityProvider) Unmarshal(dAtA []byt
 			if err := m.Pk.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipEvents(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthEvents
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *EventPowerDistUpdate_EventSlashedBTCDelegation) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowEvents
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: EventSlashedBTCDelegation: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: EventSlashedBTCDelegation: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field StakingTxHash", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowEvents
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthEvents
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthEvents
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.StakingTxHash = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
