@@ -17,19 +17,11 @@ service Query {
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
     option (google.api.http).get = "/babylon/zoneconcierge/v1/params";
   }
-  // FinalizedChainsInfo queries the BTC-finalised info of chains with given IDs, with proofs
-  rpc FinalizedChainsInfo(QueryFinalizedChainsInfoRequest)
-      returns (QueryFinalizedChainsInfoResponse) {
+  // FinalizedConsumersInfo queries the BTC-finalised info of consumers with given IDs, with proofs
+  rpc FinalizedConsumersInfo(QueryFinalizedConsumersInfoRequest)
+      returns (QueryFinalizedConsumersInfoResponse) {
     option (google.api.http).get =
-        "/babylon/zoneconcierge/v1/finalized_chains_info";
-  }
-  // FinalizedChainInfoUntilHeight queries the BTC-finalised info no later than
-  // the provided Consumer height, with proofs
-  rpc FinalizedChainInfoUntilHeight(QueryFinalizedChainInfoUntilHeightRequest)
-      returns (QueryFinalizedChainInfoUntilHeightResponse) {
-    option (google.api.http).get =
-        "/babylon/zoneconcierge/v1/finalized_chain_info/{consumer_id}/height/"
-        "{height}";
+        "/babylon/zoneconcierge/v1/finalized_consumers_info";
   }
 }
 
@@ -42,45 +34,32 @@ message QueryParamsResponse {
   babylon.zoneconcierge.v1.Params params = 1 [ (gogoproto.nullable) = false ];
 }
 
-// QueryFinalizedChainsInfoRequest is request type for the
-// Query/FinalizedChainsInfo RPC method.
-message QueryFinalizedChainsInfoRequest {
+// QueryFinalizedConsumersInfoRequest is request type for the
+// Query/FinalizedConsumersInfo RPC method.
+message QueryFinalizedConsumersInfoRequest {
   // consumer_ids is the list of ids of Consumers
   repeated string consumer_ids = 1;
   // prove indicates whether the querier wants to get proofs of this timestamp
   bool prove = 2;
 }
 
-// QueryFinalizedChainsInfoResponse is response type for the
-// Query/FinalizedChainsInfo RPC method.
-message QueryFinalizedChainsInfoResponse {
-  repeated babylon.zoneconcierge.v1.FinalizedChainInfo finalized_chains_info = 1;
+// QueryFinalizedConsumersInfoResponse is response type for the
+// Query/FinalizedConsumersInfo RPC method.
+message QueryFinalizedConsumersInfoResponse {
+  repeated FinalizedConsumerData finalized_consumers_data = 1;
 }
 
-// QueryFinalizedChainInfoUntilHeightRequest is request type for the
-// Query/FinalizedChainInfoUntilHeight RPC method.
-message QueryFinalizedChainInfoUntilHeightRequest {
-  // consumer_id is the ID of the Consumer
+// FinalizedConsumerData contains the finalized consumer data for a consumer
+message FinalizedConsumerData {
   string consumer_id = 1;
-  // height is the height of the Consumer chain
-  // such that the returned finalised chain info will be no later than this
-  // height
-  uint64 height = 2;
-  // prove indicates whether the querier wants to get proofs of this timestamp
-  bool prove = 3;
-}
-
-// QueryFinalizedChainInfoUntilHeightResponse is response type for the
-// Query/FinalizedChainInfoUntilHeight RPC method.
-message QueryFinalizedChainInfoUntilHeightResponse {
-  // epoch_info is the metadata of the last BTC-finalised epoch
-  babylon.epoching.v1.Epoch epoch_info = 1;
-  // raw_checkpoint is the raw checkpoint of this epoch
-  babylon.checkpointing.v1.RawCheckpoint raw_checkpoint = 2;
-  // btc_submission_key is position of two BTC txs that include the raw
-  // checkpoint of this epoch
-  babylon.btccheckpoint.v1.SubmissionKey btc_submission_key = 3;
-
-  // proof is the proof that the chain info is finalized
-  babylon.zoneconcierge.v1.ProofFinalizedChainInfo proof = 4;
+  // The latest finalized header for this consumer
+  IndexedHeader latest_finalized_header = 2;
+  // The epoch in which this header was finalized
+  babylon.epoching.v1.Epoch epoch_info = 3;
+  // The raw checkpoint of this epoch
+  babylon.checkpointing.v1.RawCheckpoint raw_checkpoint = 4;
+  // The submission key for the checkpoint
+  babylon.btccheckpoint.v1.SubmissionKey btc_submission_key = 5;
+  // Proofs of finality
+  ProofFinalizedConsumer proof = 6;
 }

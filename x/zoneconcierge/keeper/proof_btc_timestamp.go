@@ -88,26 +88,20 @@ func (k Keeper) ProveEpochSubmitted(ctx context.Context, sk *btcctypes.Submissio
 	return bestSubmissionData.TxsInfo, nil
 }
 
-// proveFinalizedChainInfo generates proofs that a chainInfo has been finalised by the given epoch with epochInfo
-// It includes proofTxInBlock, proofHeaderInEpoch, proofEpochSealed and proofEpochSubmitted
+// proveFinalizedConsumer generates proofs that a consumer header has been finalised by the given epoch with epochInfo
+// It includes proofEpochSealed and proofEpochSubmitted
 // The proofs can be verified by a verifier with access to a BTC and Babylon light client
 // CONTRACT: this is only a private helper function for simplifying the implementation of RPC calls
-func (k Keeper) proveFinalizedChainInfo(
+func (k Keeper) proveFinalizedConsumer(
 	ctx context.Context,
-	chainInfo *types.ChainInfo,
+	indexedHeader *types.IndexedHeader,
 	epochInfo *epochingtypes.Epoch,
 	bestSubmissionKey *btcctypes.SubmissionKey,
-) (*types.ProofFinalizedChainInfo, error) {
+) (*types.ProofFinalizedConsumer, error) {
 	var (
 		err   error
-		proof = &types.ProofFinalizedChainInfo{}
+		proof = &types.ProofFinalizedConsumer{}
 	)
-
-	// Proof that the Consumer header is timestamped in epoch
-	proof.ProofConsumerHeaderInEpoch, err = k.ProveConsumerHeaderInEpoch(ctx, chainInfo.LatestHeader, epochInfo)
-	if err != nil {
-		return nil, err
-	}
 
 	// proof that the epoch is sealed
 	proof.ProofEpochSealed, err = k.ProveEpochSealed(ctx, epochInfo.EpochNumber)
@@ -123,6 +117,12 @@ func (k Keeper) proveFinalizedChainInfo(
 		// Since the epoch w.r.t. the bestSubmissionKey is finalised, this
 		// can only be a programming error, so we should panic here.
 		panic(err)
+	}
+
+	// proof that the consumer header is included in the epoch
+	proof.ProofConsumerHeaderInEpoch, err = k.ProveConsumerHeaderInEpoch(ctx, indexedHeader, epochInfo)
+	if err != nil {
+		return nil, err
 	}
 
 	return proof, nil

@@ -115,27 +115,27 @@ func (m *QueryParamsResponse) GetParams() Params {
 	return Params{}
 }
 
-// QueryFinalizedChainsInfoRequest is request type for the
-// Query/FinalizedChainsInfo RPC method.
-type QueryFinalizedChainsInfoRequest struct {
+// QueryFinalizedConsumersInfoRequest is request type for the
+// Query/FinalizedConsumersInfo RPC method.
+type QueryFinalizedConsumersInfoRequest struct {
 	// consumer_ids is the list of ids of Consumers
 	ConsumerIds []string `protobuf:"bytes,1,rep,name=consumer_ids,json=consumerIds,proto3" json:"consumer_ids,omitempty"`
 	// prove indicates whether the querier wants to get proofs of this timestamp
 	Prove bool `protobuf:"varint,2,opt,name=prove,proto3" json:"prove,omitempty"`
 }
 
-func (m *QueryFinalizedChainsInfoRequest) Reset()         { *m = QueryFinalizedChainsInfoRequest{} }
-func (m *QueryFinalizedChainsInfoRequest) String() string { return proto.CompactTextString(m) }
-func (*QueryFinalizedChainsInfoRequest) ProtoMessage()    {}
-func (*QueryFinalizedChainsInfoRequest) Descriptor() ([]byte, []int) {
+func (m *QueryFinalizedConsumersInfoRequest) Reset()         { *m = QueryFinalizedConsumersInfoRequest{} }
+func (m *QueryFinalizedConsumersInfoRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryFinalizedConsumersInfoRequest) ProtoMessage()    {}
+func (*QueryFinalizedConsumersInfoRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_cd665af90102da38, []int{2}
 }
-func (m *QueryFinalizedChainsInfoRequest) XXX_Unmarshal(b []byte) error {
+func (m *QueryFinalizedConsumersInfoRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryFinalizedChainsInfoRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryFinalizedConsumersInfoRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryFinalizedChainsInfoRequest.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryFinalizedConsumersInfoRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -145,50 +145,50 @@ func (m *QueryFinalizedChainsInfoRequest) XXX_Marshal(b []byte, deterministic bo
 		return b[:n], nil
 	}
 }
-func (m *QueryFinalizedChainsInfoRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryFinalizedChainsInfoRequest.Merge(m, src)
+func (m *QueryFinalizedConsumersInfoRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryFinalizedConsumersInfoRequest.Merge(m, src)
 }
-func (m *QueryFinalizedChainsInfoRequest) XXX_Size() int {
+func (m *QueryFinalizedConsumersInfoRequest) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryFinalizedChainsInfoRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryFinalizedChainsInfoRequest.DiscardUnknown(m)
+func (m *QueryFinalizedConsumersInfoRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryFinalizedConsumersInfoRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryFinalizedChainsInfoRequest proto.InternalMessageInfo
+var xxx_messageInfo_QueryFinalizedConsumersInfoRequest proto.InternalMessageInfo
 
-func (m *QueryFinalizedChainsInfoRequest) GetConsumerIds() []string {
+func (m *QueryFinalizedConsumersInfoRequest) GetConsumerIds() []string {
 	if m != nil {
 		return m.ConsumerIds
 	}
 	return nil
 }
 
-func (m *QueryFinalizedChainsInfoRequest) GetProve() bool {
+func (m *QueryFinalizedConsumersInfoRequest) GetProve() bool {
 	if m != nil {
 		return m.Prove
 	}
 	return false
 }
 
-// QueryFinalizedChainsInfoResponse is response type for the
-// Query/FinalizedChainsInfo RPC method.
-type QueryFinalizedChainsInfoResponse struct {
-	FinalizedChainsInfo []*FinalizedChainInfo `protobuf:"bytes,1,rep,name=finalized_chains_info,json=finalizedChainsInfo,proto3" json:"finalized_chains_info,omitempty"`
+// QueryFinalizedConsumersInfoResponse is response type for the
+// Query/FinalizedConsumersInfo RPC method.
+type QueryFinalizedConsumersInfoResponse struct {
+	FinalizedConsumersData []*FinalizedConsumerData `protobuf:"bytes,1,rep,name=finalized_consumers_data,json=finalizedConsumersData,proto3" json:"finalized_consumers_data,omitempty"`
 }
 
-func (m *QueryFinalizedChainsInfoResponse) Reset()         { *m = QueryFinalizedChainsInfoResponse{} }
-func (m *QueryFinalizedChainsInfoResponse) String() string { return proto.CompactTextString(m) }
-func (*QueryFinalizedChainsInfoResponse) ProtoMessage()    {}
-func (*QueryFinalizedChainsInfoResponse) Descriptor() ([]byte, []int) {
+func (m *QueryFinalizedConsumersInfoResponse) Reset()         { *m = QueryFinalizedConsumersInfoResponse{} }
+func (m *QueryFinalizedConsumersInfoResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryFinalizedConsumersInfoResponse) ProtoMessage()    {}
+func (*QueryFinalizedConsumersInfoResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_cd665af90102da38, []int{3}
 }
-func (m *QueryFinalizedChainsInfoResponse) XXX_Unmarshal(b []byte) error {
+func (m *QueryFinalizedConsumersInfoResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryFinalizedChainsInfoResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryFinalizedConsumersInfoResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryFinalizedChainsInfoResponse.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryFinalizedConsumersInfoResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -198,54 +198,52 @@ func (m *QueryFinalizedChainsInfoResponse) XXX_Marshal(b []byte, deterministic b
 		return b[:n], nil
 	}
 }
-func (m *QueryFinalizedChainsInfoResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryFinalizedChainsInfoResponse.Merge(m, src)
+func (m *QueryFinalizedConsumersInfoResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryFinalizedConsumersInfoResponse.Merge(m, src)
 }
-func (m *QueryFinalizedChainsInfoResponse) XXX_Size() int {
+func (m *QueryFinalizedConsumersInfoResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryFinalizedChainsInfoResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryFinalizedChainsInfoResponse.DiscardUnknown(m)
+func (m *QueryFinalizedConsumersInfoResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryFinalizedConsumersInfoResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryFinalizedChainsInfoResponse proto.InternalMessageInfo
+var xxx_messageInfo_QueryFinalizedConsumersInfoResponse proto.InternalMessageInfo
 
-func (m *QueryFinalizedChainsInfoResponse) GetFinalizedChainsInfo() []*FinalizedChainInfo {
+func (m *QueryFinalizedConsumersInfoResponse) GetFinalizedConsumersData() []*FinalizedConsumerData {
 	if m != nil {
-		return m.FinalizedChainsInfo
+		return m.FinalizedConsumersData
 	}
 	return nil
 }
 
-// QueryFinalizedChainInfoUntilHeightRequest is request type for the
-// Query/FinalizedChainInfoUntilHeight RPC method.
-type QueryFinalizedChainInfoUntilHeightRequest struct {
-	// consumer_id is the ID of the Consumer
+// FinalizedConsumerData contains the finalized consumer data for a consumer
+type FinalizedConsumerData struct {
 	ConsumerId string `protobuf:"bytes,1,opt,name=consumer_id,json=consumerId,proto3" json:"consumer_id,omitempty"`
-	// height is the height of the Consumer chain
-	// such that the returned finalised chain info will be no later than this
-	// height
-	Height uint64 `protobuf:"varint,2,opt,name=height,proto3" json:"height,omitempty"`
-	// prove indicates whether the querier wants to get proofs of this timestamp
-	Prove bool `protobuf:"varint,3,opt,name=prove,proto3" json:"prove,omitempty"`
+	// The latest finalized header for this consumer
+	LatestFinalizedHeader *IndexedHeader `protobuf:"bytes,2,opt,name=latest_finalized_header,json=latestFinalizedHeader,proto3" json:"latest_finalized_header,omitempty"`
+	// The epoch in which this header was finalized
+	EpochInfo *types.Epoch `protobuf:"bytes,3,opt,name=epoch_info,json=epochInfo,proto3" json:"epoch_info,omitempty"`
+	// The raw checkpoint of this epoch
+	RawCheckpoint *types1.RawCheckpoint `protobuf:"bytes,4,opt,name=raw_checkpoint,json=rawCheckpoint,proto3" json:"raw_checkpoint,omitempty"`
+	// The submission key for the checkpoint
+	BtcSubmissionKey *types2.SubmissionKey `protobuf:"bytes,5,opt,name=btc_submission_key,json=btcSubmissionKey,proto3" json:"btc_submission_key,omitempty"`
+	// Proofs of finality
+	Proof *ProofFinalizedConsumer `protobuf:"bytes,6,opt,name=proof,proto3" json:"proof,omitempty"`
 }
 
-func (m *QueryFinalizedChainInfoUntilHeightRequest) Reset() {
-	*m = QueryFinalizedChainInfoUntilHeightRequest{}
-}
-func (m *QueryFinalizedChainInfoUntilHeightRequest) String() string {
-	return proto.CompactTextString(m)
-}
-func (*QueryFinalizedChainInfoUntilHeightRequest) ProtoMessage() {}
-func (*QueryFinalizedChainInfoUntilHeightRequest) Descriptor() ([]byte, []int) {
+func (m *FinalizedConsumerData) Reset()         { *m = FinalizedConsumerData{} }
+func (m *FinalizedConsumerData) String() string { return proto.CompactTextString(m) }
+func (*FinalizedConsumerData) ProtoMessage()    {}
+func (*FinalizedConsumerData) Descriptor() ([]byte, []int) {
 	return fileDescriptor_cd665af90102da38, []int{4}
 }
-func (m *QueryFinalizedChainInfoUntilHeightRequest) XXX_Unmarshal(b []byte) error {
+func (m *FinalizedConsumerData) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryFinalizedChainInfoUntilHeightRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *FinalizedConsumerData) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryFinalizedChainInfoUntilHeightRequest.Marshal(b, m, deterministic)
+		return xxx_messageInfo_FinalizedConsumerData.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -255,112 +253,54 @@ func (m *QueryFinalizedChainInfoUntilHeightRequest) XXX_Marshal(b []byte, determ
 		return b[:n], nil
 	}
 }
-func (m *QueryFinalizedChainInfoUntilHeightRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryFinalizedChainInfoUntilHeightRequest.Merge(m, src)
+func (m *FinalizedConsumerData) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_FinalizedConsumerData.Merge(m, src)
 }
-func (m *QueryFinalizedChainInfoUntilHeightRequest) XXX_Size() int {
+func (m *FinalizedConsumerData) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryFinalizedChainInfoUntilHeightRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryFinalizedChainInfoUntilHeightRequest.DiscardUnknown(m)
+func (m *FinalizedConsumerData) XXX_DiscardUnknown() {
+	xxx_messageInfo_FinalizedConsumerData.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryFinalizedChainInfoUntilHeightRequest proto.InternalMessageInfo
+var xxx_messageInfo_FinalizedConsumerData proto.InternalMessageInfo
 
-func (m *QueryFinalizedChainInfoUntilHeightRequest) GetConsumerId() string {
+func (m *FinalizedConsumerData) GetConsumerId() string {
 	if m != nil {
 		return m.ConsumerId
 	}
 	return ""
 }
 
-func (m *QueryFinalizedChainInfoUntilHeightRequest) GetHeight() uint64 {
+func (m *FinalizedConsumerData) GetLatestFinalizedHeader() *IndexedHeader {
 	if m != nil {
-		return m.Height
+		return m.LatestFinalizedHeader
 	}
-	return 0
+	return nil
 }
 
-func (m *QueryFinalizedChainInfoUntilHeightRequest) GetProve() bool {
-	if m != nil {
-		return m.Prove
-	}
-	return false
-}
-
-// QueryFinalizedChainInfoUntilHeightResponse is response type for the
-// Query/FinalizedChainInfoUntilHeight RPC method.
-type QueryFinalizedChainInfoUntilHeightResponse struct {
-	// epoch_info is the metadata of the last BTC-finalised epoch
-	EpochInfo *types.Epoch `protobuf:"bytes,1,opt,name=epoch_info,json=epochInfo,proto3" json:"epoch_info,omitempty"`
-	// raw_checkpoint is the raw checkpoint of this epoch
-	RawCheckpoint *types1.RawCheckpoint `protobuf:"bytes,2,opt,name=raw_checkpoint,json=rawCheckpoint,proto3" json:"raw_checkpoint,omitempty"`
-	// btc_submission_key is position of two BTC txs that include the raw
-	// checkpoint of this epoch
-	BtcSubmissionKey *types2.SubmissionKey `protobuf:"bytes,3,opt,name=btc_submission_key,json=btcSubmissionKey,proto3" json:"btc_submission_key,omitempty"`
-	// proof is the proof that the chain info is finalized
-	Proof *ProofFinalizedChainInfo `protobuf:"bytes,4,opt,name=proof,proto3" json:"proof,omitempty"`
-}
-
-func (m *QueryFinalizedChainInfoUntilHeightResponse) Reset() {
-	*m = QueryFinalizedChainInfoUntilHeightResponse{}
-}
-func (m *QueryFinalizedChainInfoUntilHeightResponse) String() string {
-	return proto.CompactTextString(m)
-}
-func (*QueryFinalizedChainInfoUntilHeightResponse) ProtoMessage() {}
-func (*QueryFinalizedChainInfoUntilHeightResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_cd665af90102da38, []int{5}
-}
-func (m *QueryFinalizedChainInfoUntilHeightResponse) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *QueryFinalizedChainInfoUntilHeightResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_QueryFinalizedChainInfoUntilHeightResponse.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *QueryFinalizedChainInfoUntilHeightResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryFinalizedChainInfoUntilHeightResponse.Merge(m, src)
-}
-func (m *QueryFinalizedChainInfoUntilHeightResponse) XXX_Size() int {
-	return m.Size()
-}
-func (m *QueryFinalizedChainInfoUntilHeightResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryFinalizedChainInfoUntilHeightResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_QueryFinalizedChainInfoUntilHeightResponse proto.InternalMessageInfo
-
-func (m *QueryFinalizedChainInfoUntilHeightResponse) GetEpochInfo() *types.Epoch {
+func (m *FinalizedConsumerData) GetEpochInfo() *types.Epoch {
 	if m != nil {
 		return m.EpochInfo
 	}
 	return nil
 }
 
-func (m *QueryFinalizedChainInfoUntilHeightResponse) GetRawCheckpoint() *types1.RawCheckpoint {
+func (m *FinalizedConsumerData) GetRawCheckpoint() *types1.RawCheckpoint {
 	if m != nil {
 		return m.RawCheckpoint
 	}
 	return nil
 }
 
-func (m *QueryFinalizedChainInfoUntilHeightResponse) GetBtcSubmissionKey() *types2.SubmissionKey {
+func (m *FinalizedConsumerData) GetBtcSubmissionKey() *types2.SubmissionKey {
 	if m != nil {
 		return m.BtcSubmissionKey
 	}
 	return nil
 }
 
-func (m *QueryFinalizedChainInfoUntilHeightResponse) GetProof() *ProofFinalizedChainInfo {
+func (m *FinalizedConsumerData) GetProof() *ProofFinalizedConsumer {
 	if m != nil {
 		return m.Proof
 	}
@@ -370,10 +310,9 @@ func (m *QueryFinalizedChainInfoUntilHeightResponse) GetProof() *ProofFinalizedC
 func init() {
 	proto.RegisterType((*QueryParamsRequest)(nil), "babylon.zoneconcierge.v1.QueryParamsRequest")
 	proto.RegisterType((*QueryParamsResponse)(nil), "babylon.zoneconcierge.v1.QueryParamsResponse")
-	proto.RegisterType((*QueryFinalizedChainsInfoRequest)(nil), "babylon.zoneconcierge.v1.QueryFinalizedChainsInfoRequest")
-	proto.RegisterType((*QueryFinalizedChainsInfoResponse)(nil), "babylon.zoneconcierge.v1.QueryFinalizedChainsInfoResponse")
-	proto.RegisterType((*QueryFinalizedChainInfoUntilHeightRequest)(nil), "babylon.zoneconcierge.v1.QueryFinalizedChainInfoUntilHeightRequest")
-	proto.RegisterType((*QueryFinalizedChainInfoUntilHeightResponse)(nil), "babylon.zoneconcierge.v1.QueryFinalizedChainInfoUntilHeightResponse")
+	proto.RegisterType((*QueryFinalizedConsumersInfoRequest)(nil), "babylon.zoneconcierge.v1.QueryFinalizedConsumersInfoRequest")
+	proto.RegisterType((*QueryFinalizedConsumersInfoResponse)(nil), "babylon.zoneconcierge.v1.QueryFinalizedConsumersInfoResponse")
+	proto.RegisterType((*FinalizedConsumerData)(nil), "babylon.zoneconcierge.v1.FinalizedConsumerData")
 }
 
 func init() {
@@ -381,51 +320,48 @@ func init() {
 }
 
 var fileDescriptor_cd665af90102da38 = []byte{
-	// 693 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xa4, 0x54, 0xcf, 0x4f, 0x13, 0x41,
-	0x14, 0xee, 0x96, 0xd2, 0xc8, 0x54, 0x8d, 0x19, 0xd0, 0x34, 0x8d, 0x96, 0xba, 0xd1, 0x58, 0x0c,
-	0xec, 0xa4, 0xe5, 0x60, 0xe0, 0xe0, 0x01, 0xfc, 0x45, 0x34, 0x44, 0x57, 0xb8, 0x70, 0xa9, 0xbb,
-	0xcb, 0x74, 0x3b, 0xa1, 0x9d, 0x59, 0x76, 0xa6, 0xc5, 0x42, 0x48, 0x8c, 0xf1, 0xae, 0x89, 0x7f,
-	0x93, 0x09, 0x47, 0x12, 0x0f, 0x7a, 0x32, 0x06, 0xf8, 0x43, 0xcc, 0xce, 0xce, 0xb6, 0x5d, 0xda,
-	0x85, 0xaa, 0xa7, 0xee, 0xbc, 0xf9, 0xde, 0xfb, 0xde, 0xf7, 0xcd, 0x7b, 0x05, 0xf7, 0x6c, 0xcb,
-	0xee, 0x36, 0x19, 0x45, 0xfb, 0x8c, 0x62, 0x87, 0x51, 0x87, 0x60, 0xdf, 0xc5, 0xa8, 0x53, 0x41,
-	0xbb, 0x6d, 0xec, 0x77, 0x0d, 0xcf, 0x67, 0x82, 0xc1, 0xbc, 0x42, 0x19, 0x31, 0x94, 0xd1, 0xa9,
-	0x14, 0x66, 0x5c, 0xe6, 0x32, 0x09, 0x42, 0xc1, 0x57, 0x88, 0x2f, 0xdc, 0x76, 0x19, 0x73, 0x9b,
-	0x18, 0x59, 0x1e, 0x41, 0x16, 0xa5, 0x4c, 0x58, 0x82, 0x30, 0xca, 0xd5, 0xed, 0x7c, 0xc4, 0x69,
-	0x0b, 0xc7, 0x69, 0x60, 0x67, 0xc7, 0x63, 0x84, 0x8a, 0x80, 0x33, 0x16, 0x50, 0xe8, 0xb9, 0x08,
-	0xdd, 0xbf, 0x21, 0xd4, 0x0d, 0xd0, 0x43, 0x50, 0x3d, 0x82, 0x62, 0x8f, 0x39, 0x0d, 0x85, 0x8a,
-	0xbe, 0xcf, 0x93, 0x0f, 0x09, 0x8e, 0x6b, 0x0b, 0xd1, 0xf7, 0x13, 0xd1, 0x9e, 0xe5, 0x5b, 0x2d,
-	0xa5, 0x48, 0x9f, 0x01, 0xf0, 0x4d, 0x60, 0xd7, 0x6b, 0x19, 0x34, 0xf1, 0x6e, 0x1b, 0x73, 0xa1,
-	0x6f, 0x82, 0xe9, 0x58, 0x94, 0x7b, 0x8c, 0x72, 0x0c, 0x1f, 0x83, 0x6c, 0x98, 0x9c, 0xd7, 0x4a,
-	0x5a, 0x39, 0x57, 0x2d, 0x19, 0x49, 0xee, 0x1a, 0x61, 0xe6, 0x4a, 0xe6, 0xe8, 0xd7, 0x6c, 0xca,
-	0x54, 0x59, 0xfa, 0x16, 0x98, 0x95, 0x65, 0x9f, 0x11, 0x6a, 0x35, 0xc9, 0x3e, 0xde, 0x5e, 0x6d,
-	0x58, 0x84, 0xf2, 0x35, 0x5a, 0x67, 0x8a, 0x19, 0xde, 0x05, 0x57, 0x1d, 0x46, 0x79, 0xbb, 0x85,
-	0xfd, 0x1a, 0xd9, 0x0e, 0x88, 0x26, 0xca, 0x53, 0x66, 0x2e, 0x8a, 0xad, 0x6d, 0x73, 0x38, 0x03,
-	0x26, 0x3d, 0x9f, 0x75, 0x70, 0x3e, 0x5d, 0xd2, 0xca, 0x57, 0xcc, 0xf0, 0xa0, 0x7f, 0xd2, 0x40,
-	0x29, 0xb9, 0xb8, 0x12, 0xf0, 0x0e, 0xdc, 0xac, 0x47, 0xd7, 0x35, 0x47, 0xde, 0xd7, 0x08, 0xad,
-	0x33, 0x49, 0x93, 0xab, 0xce, 0x27, 0xeb, 0x89, 0x57, 0x95, 0x45, 0xa7, 0xeb, 0xc3, 0x4c, 0xfa,
-	0x3e, 0x98, 0x1b, 0xd1, 0x45, 0x70, 0xb5, 0x49, 0x05, 0x69, 0xbe, 0xc0, 0xc4, 0x6d, 0x88, 0x48,
-	0xec, 0x2c, 0xc8, 0x0d, 0x88, 0x95, 0xa6, 0x4e, 0x99, 0xa0, 0xaf, 0x15, 0xde, 0x02, 0xd9, 0x86,
-	0xcc, 0x90, 0x5a, 0x33, 0xa6, 0x3a, 0xf5, 0x2d, 0x98, 0x18, 0xb4, 0xe0, 0x47, 0x1a, 0x3c, 0x1c,
-	0x87, 0x5c, 0x99, 0xb1, 0x04, 0x80, 0x9c, 0xb0, 0xc8, 0x81, 0xe0, 0x45, 0x0b, 0x3d, 0x07, 0x7a,
-	0xc3, 0xd7, 0xa9, 0x18, 0x4f, 0x83, 0x6f, 0x73, 0x4a, 0x86, 0x82, 0x6a, 0x70, 0x1d, 0x5c, 0xf7,
-	0xad, 0xbd, 0x5a, 0x7f, 0x8c, 0x65, 0x7f, 0xb9, 0xea, 0x83, 0x5e, 0x7a, 0x6c, 0xe4, 0x83, 0x1a,
-	0xa6, 0xb5, 0xb7, 0xda, 0x8b, 0x99, 0xd7, 0xfc, 0xc1, 0x23, 0xdc, 0x04, 0xd0, 0x16, 0x4e, 0x8d,
-	0xb7, 0xed, 0x16, 0xe1, 0x9c, 0x30, 0x5a, 0xdb, 0xc1, 0x5d, 0x29, 0x6e, 0xb0, 0x66, 0x7c, 0xc7,
-	0x3a, 0x15, 0xe3, 0x6d, 0x0f, 0xff, 0x12, 0x77, 0xcd, 0x1b, 0xb6, 0x70, 0x62, 0x11, 0xf8, 0x5c,
-	0xda, 0xc4, 0xea, 0xf9, 0x8c, 0xac, 0x54, 0xb9, 0x60, 0x5c, 0x03, 0xd8, 0x88, 0x37, 0x0e, 0xf3,
-	0xab, 0x67, 0x19, 0x30, 0x29, 0x9d, 0x85, 0x9f, 0x35, 0x90, 0x0d, 0x67, 0x1b, 0x5e, 0x30, 0x2d,
-	0xc3, 0x2b, 0x55, 0x58, 0x18, 0x13, 0x1d, 0x3e, 0x8e, 0x5e, 0xfe, 0xf8, 0xfd, 0xec, 0x6b, 0x5a,
-	0x87, 0x25, 0x74, 0xc9, 0x1e, 0xc3, 0x6f, 0x1a, 0x98, 0x1e, 0x31, 0xf3, 0x70, 0xe9, 0x12, 0xc2,
-	0xe4, 0x25, 0x2c, 0x2c, 0xff, 0x4b, 0xaa, 0x6a, 0xfc, 0x91, 0x6c, 0xbc, 0x02, 0x51, 0x72, 0xe3,
-	0x23, 0x57, 0x10, 0x7e, 0x48, 0x83, 0x3b, 0x17, 0x0e, 0x2e, 0x5c, 0xfd, 0xab, 0xb6, 0x46, 0xef,
-	0x5c, 0xe1, 0xc9, 0xff, 0x15, 0x51, 0x2a, 0x37, 0xa4, 0xca, 0x75, 0xf8, 0x6a, 0x6c, 0x95, 0x52,
-	0x24, 0x3a, 0x18, 0xd8, 0xf7, 0x43, 0x14, 0x6e, 0x33, 0x3a, 0x08, 0x7f, 0x0f, 0x57, 0x36, 0x8e,
-	0x4e, 0x8a, 0xda, 0xf1, 0x49, 0x51, 0xfb, 0x7d, 0x52, 0xd4, 0xbe, 0x9c, 0x16, 0x53, 0xc7, 0xa7,
-	0xc5, 0xd4, 0xcf, 0xd3, 0x62, 0x6a, 0x6b, 0xd9, 0x25, 0xa2, 0xd1, 0xb6, 0x0d, 0x87, 0xb5, 0x22,
-	0xc6, 0xa6, 0x65, 0xf3, 0x05, 0xc2, 0x7a, 0x0d, 0x74, 0x16, 0xd1, 0xfb, 0x73, 0x5d, 0x88, 0xae,
-	0x87, 0xb9, 0x9d, 0x95, 0xff, 0xf4, 0x8b, 0x7f, 0x02, 0x00, 0x00, 0xff, 0xff, 0xfd, 0x4c, 0x90,
-	0x0d, 0x31, 0x07, 0x00, 0x00,
+	// 656 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x54, 0xcf, 0x6e, 0xd3, 0x4c,
+	0x1c, 0x8c, 0xfb, 0x27, 0xfa, 0xba, 0xf9, 0x40, 0x68, 0x69, 0x8b, 0x15, 0xa1, 0x34, 0x18, 0x10,
+	0x41, 0x6a, 0x6d, 0x92, 0x72, 0xa1, 0x02, 0x0e, 0x2d, 0x54, 0x54, 0x48, 0x08, 0x16, 0x7a, 0x41,
+	0x42, 0xd6, 0xda, 0xde, 0x38, 0xab, 0x26, 0xbb, 0xae, 0x77, 0x93, 0x36, 0x3d, 0xf2, 0x02, 0x54,
+	0xe2, 0x91, 0xb8, 0xf4, 0x58, 0xc4, 0x85, 0x13, 0x42, 0x2d, 0x57, 0xde, 0x01, 0x79, 0x6d, 0x27,
+	0x75, 0x5c, 0xb7, 0x88, 0x9b, 0x3d, 0x9e, 0xdf, 0xcc, 0xce, 0x66, 0x7e, 0x01, 0x77, 0x1c, 0xec,
+	0x0c, 0xbb, 0x9c, 0x59, 0x07, 0x9c, 0x11, 0x97, 0x33, 0x97, 0x92, 0xd0, 0x27, 0xd6, 0xa0, 0x69,
+	0xed, 0xf6, 0x49, 0x38, 0x34, 0x83, 0x90, 0x4b, 0x0e, 0xf5, 0x84, 0x65, 0x66, 0x58, 0xe6, 0xa0,
+	0x59, 0x9d, 0xf7, 0xb9, 0xcf, 0x15, 0xc9, 0x8a, 0x9e, 0x62, 0x7e, 0xf5, 0xa6, 0xcf, 0xb9, 0xdf,
+	0x25, 0x16, 0x0e, 0xa8, 0x85, 0x19, 0xe3, 0x12, 0x4b, 0xca, 0x99, 0x48, 0xbe, 0x2e, 0xa7, 0x9e,
+	0x8e, 0x74, 0xdd, 0x0e, 0x71, 0x77, 0x02, 0x4e, 0x99, 0x8c, 0x3c, 0x33, 0x40, 0xc2, 0xbe, 0x9f,
+	0xb2, 0xc7, 0x5f, 0x28, 0xf3, 0x23, 0x76, 0x8e, 0x6a, 0xa4, 0x54, 0x12, 0x70, 0xb7, 0x93, 0xb0,
+	0xd2, 0xe7, 0x49, 0xf3, 0x5c, 0xe0, 0x6c, 0xb6, 0x98, 0x7d, 0xb7, 0x90, 0x1d, 0xe0, 0x10, 0xf7,
+	0x92, 0x44, 0xc6, 0x3c, 0x80, 0x6f, 0xa2, 0xeb, 0x7a, 0xad, 0x40, 0x44, 0x76, 0xfb, 0x44, 0x48,
+	0x63, 0x1b, 0x5c, 0xcf, 0xa0, 0x22, 0xe0, 0x4c, 0x10, 0xf8, 0x14, 0x94, 0xe3, 0x61, 0x5d, 0xab,
+	0x6b, 0x8d, 0x4a, 0xab, 0x6e, 0x16, 0xdd, 0xae, 0x19, 0x4f, 0xae, 0xcf, 0x1c, 0xfd, 0x58, 0x2a,
+	0xa1, 0x64, 0xca, 0xf8, 0x00, 0x0c, 0x25, 0xbb, 0x49, 0x19, 0xee, 0xd2, 0x03, 0xe2, 0x6d, 0x70,
+	0x26, 0xfa, 0x3d, 0x12, 0x8a, 0x2d, 0xd6, 0xe6, 0x89, 0x39, 0xbc, 0x05, 0xfe, 0x77, 0x13, 0xdc,
+	0xa6, 0x5e, 0xe4, 0x35, 0xdd, 0x98, 0x43, 0x95, 0x14, 0xdb, 0xf2, 0x04, 0x9c, 0x07, 0xb3, 0x41,
+	0xc8, 0x07, 0x44, 0x9f, 0xaa, 0x6b, 0x8d, 0xff, 0x50, 0xfc, 0x62, 0x1c, 0x6a, 0xe0, 0xf6, 0x85,
+	0xfa, 0x49, 0x0c, 0x0a, 0xf4, 0x76, 0xca, 0xb0, 0x53, 0x59, 0x61, 0x7b, 0x58, 0x62, 0x65, 0x56,
+	0x69, 0x59, 0xc5, 0xc1, 0x72, 0xda, 0xcf, 0xb0, 0xc4, 0x68, 0xb1, 0x9d, 0xb3, 0x8c, 0x70, 0xe3,
+	0xcb, 0x34, 0x58, 0x38, 0x77, 0x02, 0x2e, 0x81, 0xca, 0x99, 0x94, 0xea, 0x42, 0xe7, 0x10, 0x18,
+	0x87, 0x84, 0x36, 0xb8, 0xd1, 0xc5, 0x92, 0x08, 0x69, 0x8f, 0x0f, 0xdb, 0x21, 0xd8, 0x23, 0xa1,
+	0x4a, 0x5d, 0x69, 0xdd, 0x2b, 0x3e, 0xe4, 0x16, 0xf3, 0xc8, 0x3e, 0xf1, 0x5e, 0x28, 0x3a, 0x5a,
+	0x88, 0x75, 0x46, 0xe7, 0x88, 0x61, 0xf8, 0x08, 0x00, 0xd5, 0x30, 0x9b, 0xb2, 0x36, 0xd7, 0xa7,
+	0x95, 0x66, 0x75, 0xa4, 0x39, 0x2a, 0xdf, 0xa0, 0x69, 0x3e, 0x8f, 0x9e, 0xd1, 0x9c, 0x82, 0xa2,
+	0x9b, 0x84, 0xaf, 0xc0, 0xd5, 0x10, 0xef, 0xd9, 0xe3, 0x1a, 0xeb, 0x33, 0x13, 0x47, 0xca, 0x54,
+	0x3e, 0xd2, 0x40, 0x78, 0x6f, 0x63, 0x84, 0xa1, 0x2b, 0xe1, 0xd9, 0x57, 0xb8, 0x0d, 0xa0, 0x23,
+	0x5d, 0x5b, 0xf4, 0x9d, 0x1e, 0x15, 0x82, 0x72, 0x66, 0xef, 0x90, 0xa1, 0x3e, 0x3b, 0xa1, 0x99,
+	0xdd, 0xb1, 0x41, 0xd3, 0x7c, 0x3b, 0xe2, 0xbf, 0x24, 0x43, 0x74, 0xcd, 0x91, 0x6e, 0x06, 0x81,
+	0x9b, 0xaa, 0x26, 0xbc, 0xad, 0x97, 0x95, 0xd2, 0x83, 0x0b, 0xea, 0x1a, 0xd1, 0x72, 0x3f, 0x14,
+	0x8a, 0xc7, 0x5b, 0xbf, 0xa7, 0xc0, 0xac, 0x2a, 0x16, 0xfc, 0xa4, 0x81, 0x72, 0x5c, 0x6d, 0xb8,
+	0x5c, 0xac, 0x96, 0xdf, 0xa8, 0xea, 0xca, 0x5f, 0xb2, 0xe3, 0x8a, 0x1a, 0x8d, 0x8f, 0xdf, 0x7e,
+	0x7d, 0x9e, 0x32, 0x60, 0xdd, 0xba, 0x64, 0x8d, 0xe1, 0x57, 0x0d, 0x2c, 0x9e, 0xdf, 0x77, 0xf8,
+	0xf8, 0x12, 0xcf, 0x0b, 0xd7, 0xb0, 0xfa, 0xe4, 0x1f, 0xa7, 0x93, 0x04, 0x6b, 0x2a, 0xc1, 0x43,
+	0xd8, 0x2a, 0x4e, 0x70, 0xde, 0x12, 0x46, 0x5d, 0x5c, 0x7f, 0x77, 0x74, 0x52, 0xd3, 0x8e, 0x4f,
+	0x6a, 0xda, 0xcf, 0x93, 0x9a, 0x76, 0x78, 0x5a, 0x2b, 0x1d, 0x9f, 0xd6, 0x4a, 0xdf, 0x4f, 0x6b,
+	0xa5, 0xf7, 0x6b, 0x3e, 0x95, 0x9d, 0xbe, 0x63, 0xba, 0xbc, 0x97, 0xea, 0x76, 0xb1, 0x23, 0x56,
+	0x28, 0x1f, 0xd9, 0x0c, 0x56, 0xad, 0xfd, 0x09, 0x2f, 0x39, 0x0c, 0x88, 0x70, 0xca, 0xea, 0x1f,
+	0x6f, 0xf5, 0x4f, 0x00, 0x00, 0x00, 0xff, 0xff, 0x1d, 0x1d, 0xc6, 0x16, 0x39, 0x06, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -442,11 +378,8 @@ const _ = grpc.SupportPackageIsVersion4
 type QueryClient interface {
 	// Params queries the parameters of the module.
 	Params(ctx context.Context, in *QueryParamsRequest, opts ...grpc.CallOption) (*QueryParamsResponse, error)
-	// FinalizedChainsInfo queries the BTC-finalised info of chains with given IDs, with proofs
-	FinalizedChainsInfo(ctx context.Context, in *QueryFinalizedChainsInfoRequest, opts ...grpc.CallOption) (*QueryFinalizedChainsInfoResponse, error)
-	// FinalizedChainInfoUntilHeight queries the BTC-finalised info no later than
-	// the provided Consumer height, with proofs
-	FinalizedChainInfoUntilHeight(ctx context.Context, in *QueryFinalizedChainInfoUntilHeightRequest, opts ...grpc.CallOption) (*QueryFinalizedChainInfoUntilHeightResponse, error)
+	// FinalizedConsumersInfo queries the BTC-finalised info of consumers with given IDs, with proofs
+	FinalizedConsumersInfo(ctx context.Context, in *QueryFinalizedConsumersInfoRequest, opts ...grpc.CallOption) (*QueryFinalizedConsumersInfoResponse, error)
 }
 
 type queryClient struct {
@@ -466,18 +399,9 @@ func (c *queryClient) Params(ctx context.Context, in *QueryParamsRequest, opts .
 	return out, nil
 }
 
-func (c *queryClient) FinalizedChainsInfo(ctx context.Context, in *QueryFinalizedChainsInfoRequest, opts ...grpc.CallOption) (*QueryFinalizedChainsInfoResponse, error) {
-	out := new(QueryFinalizedChainsInfoResponse)
-	err := c.cc.Invoke(ctx, "/babylon.zoneconcierge.v1.Query/FinalizedChainsInfo", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *queryClient) FinalizedChainInfoUntilHeight(ctx context.Context, in *QueryFinalizedChainInfoUntilHeightRequest, opts ...grpc.CallOption) (*QueryFinalizedChainInfoUntilHeightResponse, error) {
-	out := new(QueryFinalizedChainInfoUntilHeightResponse)
-	err := c.cc.Invoke(ctx, "/babylon.zoneconcierge.v1.Query/FinalizedChainInfoUntilHeight", in, out, opts...)
+func (c *queryClient) FinalizedConsumersInfo(ctx context.Context, in *QueryFinalizedConsumersInfoRequest, opts ...grpc.CallOption) (*QueryFinalizedConsumersInfoResponse, error) {
+	out := new(QueryFinalizedConsumersInfoResponse)
+	err := c.cc.Invoke(ctx, "/babylon.zoneconcierge.v1.Query/FinalizedConsumersInfo", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -488,11 +412,8 @@ func (c *queryClient) FinalizedChainInfoUntilHeight(ctx context.Context, in *Que
 type QueryServer interface {
 	// Params queries the parameters of the module.
 	Params(context.Context, *QueryParamsRequest) (*QueryParamsResponse, error)
-	// FinalizedChainsInfo queries the BTC-finalised info of chains with given IDs, with proofs
-	FinalizedChainsInfo(context.Context, *QueryFinalizedChainsInfoRequest) (*QueryFinalizedChainsInfoResponse, error)
-	// FinalizedChainInfoUntilHeight queries the BTC-finalised info no later than
-	// the provided Consumer height, with proofs
-	FinalizedChainInfoUntilHeight(context.Context, *QueryFinalizedChainInfoUntilHeightRequest) (*QueryFinalizedChainInfoUntilHeightResponse, error)
+	// FinalizedConsumersInfo queries the BTC-finalised info of consumers with given IDs, with proofs
+	FinalizedConsumersInfo(context.Context, *QueryFinalizedConsumersInfoRequest) (*QueryFinalizedConsumersInfoResponse, error)
 }
 
 // UnimplementedQueryServer can be embedded to have forward compatible implementations.
@@ -502,11 +423,8 @@ type UnimplementedQueryServer struct {
 func (*UnimplementedQueryServer) Params(ctx context.Context, req *QueryParamsRequest) (*QueryParamsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Params not implemented")
 }
-func (*UnimplementedQueryServer) FinalizedChainsInfo(ctx context.Context, req *QueryFinalizedChainsInfoRequest) (*QueryFinalizedChainsInfoResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method FinalizedChainsInfo not implemented")
-}
-func (*UnimplementedQueryServer) FinalizedChainInfoUntilHeight(ctx context.Context, req *QueryFinalizedChainInfoUntilHeightRequest) (*QueryFinalizedChainInfoUntilHeightResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method FinalizedChainInfoUntilHeight not implemented")
+func (*UnimplementedQueryServer) FinalizedConsumersInfo(ctx context.Context, req *QueryFinalizedConsumersInfoRequest) (*QueryFinalizedConsumersInfoResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FinalizedConsumersInfo not implemented")
 }
 
 func RegisterQueryServer(s grpc1.Server, srv QueryServer) {
@@ -531,38 +449,20 @@ func _Query_Params_Handler(srv interface{}, ctx context.Context, dec func(interf
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Query_FinalizedChainsInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryFinalizedChainsInfoRequest)
+func _Query_FinalizedConsumersInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryFinalizedConsumersInfoRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(QueryServer).FinalizedChainsInfo(ctx, in)
+		return srv.(QueryServer).FinalizedConsumersInfo(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/babylon.zoneconcierge.v1.Query/FinalizedChainsInfo",
+		FullMethod: "/babylon.zoneconcierge.v1.Query/FinalizedConsumersInfo",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).FinalizedChainsInfo(ctx, req.(*QueryFinalizedChainsInfoRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Query_FinalizedChainInfoUntilHeight_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryFinalizedChainInfoUntilHeightRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(QueryServer).FinalizedChainInfoUntilHeight(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/babylon.zoneconcierge.v1.Query/FinalizedChainInfoUntilHeight",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).FinalizedChainInfoUntilHeight(ctx, req.(*QueryFinalizedChainInfoUntilHeightRequest))
+		return srv.(QueryServer).FinalizedConsumersInfo(ctx, req.(*QueryFinalizedConsumersInfoRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -576,12 +476,8 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 			Handler:    _Query_Params_Handler,
 		},
 		{
-			MethodName: "FinalizedChainsInfo",
-			Handler:    _Query_FinalizedChainsInfo_Handler,
-		},
-		{
-			MethodName: "FinalizedChainInfoUntilHeight",
-			Handler:    _Query_FinalizedChainInfoUntilHeight_Handler,
+			MethodName: "FinalizedConsumersInfo",
+			Handler:    _Query_FinalizedConsumersInfo_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -644,7 +540,7 @@ func (m *QueryParamsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryFinalizedChainsInfoRequest) Marshal() (dAtA []byte, err error) {
+func (m *QueryFinalizedConsumersInfoRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -654,12 +550,12 @@ func (m *QueryFinalizedChainsInfoRequest) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *QueryFinalizedChainsInfoRequest) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryFinalizedConsumersInfoRequest) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryFinalizedChainsInfoRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryFinalizedConsumersInfoRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -686,7 +582,7 @@ func (m *QueryFinalizedChainsInfoRequest) MarshalToSizedBuffer(dAtA []byte) (int
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryFinalizedChainsInfoResponse) Marshal() (dAtA []byte, err error) {
+func (m *QueryFinalizedConsumersInfoResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -696,20 +592,20 @@ func (m *QueryFinalizedChainsInfoResponse) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *QueryFinalizedChainsInfoResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryFinalizedConsumersInfoResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryFinalizedChainsInfoResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryFinalizedConsumersInfoResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if len(m.FinalizedChainsInfo) > 0 {
-		for iNdEx := len(m.FinalizedChainsInfo) - 1; iNdEx >= 0; iNdEx-- {
+	if len(m.FinalizedConsumersData) > 0 {
+		for iNdEx := len(m.FinalizedConsumersData) - 1; iNdEx >= 0; iNdEx-- {
 			{
-				size, err := m.FinalizedChainsInfo[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				size, err := m.FinalizedConsumersData[iNdEx].MarshalToSizedBuffer(dAtA[:i])
 				if err != nil {
 					return 0, err
 				}
@@ -723,7 +619,7 @@ func (m *QueryFinalizedChainsInfoResponse) MarshalToSizedBuffer(dAtA []byte) (in
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryFinalizedChainInfoUntilHeightRequest) Marshal() (dAtA []byte, err error) {
+func (m *FinalizedConsumerData) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -733,57 +629,12 @@ func (m *QueryFinalizedChainInfoUntilHeightRequest) Marshal() (dAtA []byte, err 
 	return dAtA[:n], nil
 }
 
-func (m *QueryFinalizedChainInfoUntilHeightRequest) MarshalTo(dAtA []byte) (int, error) {
+func (m *FinalizedConsumerData) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryFinalizedChainInfoUntilHeightRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if m.Prove {
-		i--
-		if m.Prove {
-			dAtA[i] = 1
-		} else {
-			dAtA[i] = 0
-		}
-		i--
-		dAtA[i] = 0x18
-	}
-	if m.Height != 0 {
-		i = encodeVarintQuery(dAtA, i, uint64(m.Height))
-		i--
-		dAtA[i] = 0x10
-	}
-	if len(m.ConsumerId) > 0 {
-		i -= len(m.ConsumerId)
-		copy(dAtA[i:], m.ConsumerId)
-		i = encodeVarintQuery(dAtA, i, uint64(len(m.ConsumerId)))
-		i--
-		dAtA[i] = 0xa
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *QueryFinalizedChainInfoUntilHeightResponse) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *QueryFinalizedChainInfoUntilHeightResponse) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *QueryFinalizedChainInfoUntilHeightResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *FinalizedConsumerData) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -798,7 +649,7 @@ func (m *QueryFinalizedChainInfoUntilHeightResponse) MarshalToSizedBuffer(dAtA [
 			i = encodeVarintQuery(dAtA, i, uint64(size))
 		}
 		i--
-		dAtA[i] = 0x22
+		dAtA[i] = 0x32
 	}
 	if m.BtcSubmissionKey != nil {
 		{
@@ -810,7 +661,7 @@ func (m *QueryFinalizedChainInfoUntilHeightResponse) MarshalToSizedBuffer(dAtA [
 			i = encodeVarintQuery(dAtA, i, uint64(size))
 		}
 		i--
-		dAtA[i] = 0x1a
+		dAtA[i] = 0x2a
 	}
 	if m.RawCheckpoint != nil {
 		{
@@ -822,7 +673,7 @@ func (m *QueryFinalizedChainInfoUntilHeightResponse) MarshalToSizedBuffer(dAtA [
 			i = encodeVarintQuery(dAtA, i, uint64(size))
 		}
 		i--
-		dAtA[i] = 0x12
+		dAtA[i] = 0x22
 	}
 	if m.EpochInfo != nil {
 		{
@@ -833,6 +684,25 @@ func (m *QueryFinalizedChainInfoUntilHeightResponse) MarshalToSizedBuffer(dAtA [
 			i -= size
 			i = encodeVarintQuery(dAtA, i, uint64(size))
 		}
+		i--
+		dAtA[i] = 0x1a
+	}
+	if m.LatestFinalizedHeader != nil {
+		{
+			size, err := m.LatestFinalizedHeader.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintQuery(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.ConsumerId) > 0 {
+		i -= len(m.ConsumerId)
+		copy(dAtA[i:], m.ConsumerId)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.ConsumerId)))
 		i--
 		dAtA[i] = 0xa
 	}
@@ -870,7 +740,7 @@ func (m *QueryParamsResponse) Size() (n int) {
 	return n
 }
 
-func (m *QueryFinalizedChainsInfoRequest) Size() (n int) {
+func (m *QueryFinalizedConsumersInfoRequest) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -888,14 +758,14 @@ func (m *QueryFinalizedChainsInfoRequest) Size() (n int) {
 	return n
 }
 
-func (m *QueryFinalizedChainsInfoResponse) Size() (n int) {
+func (m *QueryFinalizedConsumersInfoResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	if len(m.FinalizedChainsInfo) > 0 {
-		for _, e := range m.FinalizedChainsInfo {
+	if len(m.FinalizedConsumersData) > 0 {
+		for _, e := range m.FinalizedConsumersData {
 			l = e.Size()
 			n += 1 + l + sovQuery(uint64(l))
 		}
@@ -903,7 +773,7 @@ func (m *QueryFinalizedChainsInfoResponse) Size() (n int) {
 	return n
 }
 
-func (m *QueryFinalizedChainInfoUntilHeightRequest) Size() (n int) {
+func (m *FinalizedConsumerData) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -913,21 +783,10 @@ func (m *QueryFinalizedChainInfoUntilHeightRequest) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovQuery(uint64(l))
 	}
-	if m.Height != 0 {
-		n += 1 + sovQuery(uint64(m.Height))
+	if m.LatestFinalizedHeader != nil {
+		l = m.LatestFinalizedHeader.Size()
+		n += 1 + l + sovQuery(uint64(l))
 	}
-	if m.Prove {
-		n += 2
-	}
-	return n
-}
-
-func (m *QueryFinalizedChainInfoUntilHeightResponse) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
 	if m.EpochInfo != nil {
 		l = m.EpochInfo.Size()
 		n += 1 + l + sovQuery(uint64(l))
@@ -1086,7 +945,7 @@ func (m *QueryParamsResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryFinalizedChainsInfoRequest) Unmarshal(dAtA []byte) error {
+func (m *QueryFinalizedConsumersInfoRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1109,10 +968,10 @@ func (m *QueryFinalizedChainsInfoRequest) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryFinalizedChainsInfoRequest: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryFinalizedConsumersInfoRequest: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryFinalizedChainsInfoRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryFinalizedConsumersInfoRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -1188,7 +1047,7 @@ func (m *QueryFinalizedChainsInfoRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryFinalizedChainsInfoResponse) Unmarshal(dAtA []byte) error {
+func (m *QueryFinalizedConsumersInfoResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1211,15 +1070,15 @@ func (m *QueryFinalizedChainsInfoResponse) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryFinalizedChainsInfoResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryFinalizedConsumersInfoResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryFinalizedChainsInfoResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryFinalizedConsumersInfoResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field FinalizedChainsInfo", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field FinalizedConsumersData", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -1246,8 +1105,8 @@ func (m *QueryFinalizedChainsInfoResponse) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.FinalizedChainsInfo = append(m.FinalizedChainsInfo, &FinalizedChainInfo{})
-			if err := m.FinalizedChainsInfo[len(m.FinalizedChainsInfo)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			m.FinalizedConsumersData = append(m.FinalizedConsumersData, &FinalizedConsumerData{})
+			if err := m.FinalizedConsumersData[len(m.FinalizedConsumersData)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -1272,7 +1131,7 @@ func (m *QueryFinalizedChainsInfoResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryFinalizedChainInfoUntilHeightRequest) Unmarshal(dAtA []byte) error {
+func (m *FinalizedConsumerData) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1295,10 +1154,10 @@ func (m *QueryFinalizedChainInfoUntilHeightRequest) Unmarshal(dAtA []byte) error
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryFinalizedChainInfoUntilHeightRequest: wiretype end group for non-group")
+			return fmt.Errorf("proto: FinalizedConsumerData: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryFinalizedChainInfoUntilHeightRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: FinalizedConsumerData: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -1334,10 +1193,10 @@ func (m *QueryFinalizedChainInfoUntilHeightRequest) Unmarshal(dAtA []byte) error
 			m.ConsumerId = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 2:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Height", wireType)
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field LatestFinalizedHeader", wireType)
 			}
-			m.Height = 0
+			var msglen int
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowQuery
@@ -1347,82 +1206,29 @@ func (m *QueryFinalizedChainInfoUntilHeightRequest) Unmarshal(dAtA []byte) error
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.Height |= uint64(b&0x7F) << shift
+				msglen |= int(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-		case 3:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Prove", wireType)
-			}
-			var v int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowQuery
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				v |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			m.Prove = bool(v != 0)
-		default:
-			iNdEx = preIndex
-			skippy, err := skipQuery(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
+			if msglen < 0 {
 				return ErrInvalidLengthQuery
 			}
-			if (iNdEx + skippy) > l {
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *QueryFinalizedChainInfoUntilHeightResponse) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowQuery
+			if m.LatestFinalizedHeader == nil {
+				m.LatestFinalizedHeader = &IndexedHeader{}
 			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
+			if err := m.LatestFinalizedHeader.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
 			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: QueryFinalizedChainInfoUntilHeightResponse: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryFinalizedChainInfoUntilHeightResponse: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
+			iNdEx = postIndex
+		case 3:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field EpochInfo", wireType)
 			}
@@ -1458,7 +1264,7 @@ func (m *QueryFinalizedChainInfoUntilHeightResponse) Unmarshal(dAtA []byte) erro
 				return err
 			}
 			iNdEx = postIndex
-		case 2:
+		case 4:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field RawCheckpoint", wireType)
 			}
@@ -1494,7 +1300,7 @@ func (m *QueryFinalizedChainInfoUntilHeightResponse) Unmarshal(dAtA []byte) erro
 				return err
 			}
 			iNdEx = postIndex
-		case 3:
+		case 5:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field BtcSubmissionKey", wireType)
 			}
@@ -1530,7 +1336,7 @@ func (m *QueryFinalizedChainInfoUntilHeightResponse) Unmarshal(dAtA []byte) erro
 				return err
 			}
 			iNdEx = postIndex
-		case 4:
+		case 6:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Proof", wireType)
 			}
@@ -1560,7 +1366,7 @@ func (m *QueryFinalizedChainInfoUntilHeightResponse) Unmarshal(dAtA []byte) erro
 				return io.ErrUnexpectedEOF
 			}
 			if m.Proof == nil {
-				m.Proof = &ProofFinalizedChainInfo{}
+				m.Proof = &ProofFinalizedConsumer{}
 			}
 			if err := m.Proof.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err

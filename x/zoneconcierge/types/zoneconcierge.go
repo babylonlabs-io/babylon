@@ -89,42 +89,11 @@ func (ih *IndexedHeader) Equal(ih2 *IndexedHeader) bool {
 	return bytes.Equal(ih.BabylonTxHash, ih2.BabylonTxHash)
 }
 
-func (ci *ChainInfo) Equal(ci2 *ChainInfo) bool {
-	if ci.Validate() != nil || ci2.Validate() != nil {
-		return false
+func (ihp IndexedHeaderWithProof) Validate() error {
+	if ihp.Header == nil {
+		return errors.New("invalid indexed header with proof. empty header")
 	}
-
-	if ci.ConsumerId != ci2.ConsumerId {
-		return false
-	}
-	if !ci.LatestHeader.Equal(ci2.LatestHeader) {
-		return false
-	}
-	return ci.TimestampedHeadersCount == ci2.TimestampedHeadersCount
-}
-
-func (ci *ChainInfo) Validate() error {
-	switch {
-	case len(ci.ConsumerId) == 0:
-		return ErrInvalidChainInfo.Wrap("ConsumerId is empty")
-	case ci.LatestHeader == nil:
-		return ErrInvalidChainInfo.Wrap("LatestHeader is nil")
-	}
-	if err := ci.LatestHeader.Validate(); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (cip ChainInfoWithProof) Validate() error {
-	if cip.ChainInfo == nil {
-		return errors.New("invalid chain info with proof. empty chain info")
-	}
-	if cip.ProofHeaderInEpoch == nil {
-		return errors.New("invalid chain info with proof. empty proof")
-	}
-	return cip.ChainInfo.Validate()
+	return ihp.Header.Validate()
 }
 
 func (bcs BTCChainSegment) Validate() error {
@@ -133,6 +102,21 @@ func (bcs BTCChainSegment) Validate() error {
 	}
 	for _, h := range bcs.BtcHeaders {
 		if err := h.Validate(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (cbs ConsumerBTCState) Validate() error {
+	if cbs.BaseHeader == nil {
+		return errors.New("invalid consumer BTC state. empty base header")
+	}
+	if err := cbs.BaseHeader.Validate(); err != nil {
+		return err
+	}
+	if cbs.LastSentSegment != nil {
+		if err := cbs.LastSentSegment.Validate(); err != nil {
 			return err
 		}
 	}

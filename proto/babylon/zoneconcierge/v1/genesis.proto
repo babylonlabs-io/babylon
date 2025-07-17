@@ -13,28 +13,35 @@ message GenesisState {
   string port_id = 1;
   // params holds the zoneconcierge module's parameters
   Params params = 2 [ (gogoproto.nullable) = false ];
-  // chains_info contains all the registered chains information
-  repeated ChainInfo chains_info = 3;
-  // chains_indexed_headers contains the canonical chains
-  // of the consumer chains, formed as a list of IndexedHeaders
-  repeated IndexedHeader chains_indexed_headers = 4;
-  // chains_epochs_info contains the epochs' latest ChainInfo for a consumer
-  // chain
-  repeated EpochChainInfoEntry chains_epochs_info = 5;
+  // finalized_headers contains the latest IndexedHeaderWithProof for each consumer and each finalized epoch
+  repeated FinalizedHeaderEntry finalized_headers = 3;
   // last_sent_segment is the last BTC chain segment
   // which was broadcasted to the other light clients
-  BTCChainSegment last_sent_segment = 6;
+  BTCChainSegment last_sent_segment = 4;
   // sealed_epochs_proofs contains the proofs that each epoch is sealed
-  repeated SealedEpochProofEntry sealed_epochs_proofs = 7;
+  repeated SealedEpochProofEntry sealed_epochs_proofs = 5;
+  // consumer_btc_states contains the BTC header synchronization state for each consumer
+  repeated ConsumerBTCStateEntry consumer_btc_states = 6;
+  // registered_consumers contains the list of registered consumer IDs
+  repeated string registered_consumers = 7;
 }
 
-// EpochChainInfoEntry contains each epoch's latest ChainInfo for a consumer
-// chain
-message EpochChainInfoEntry {
-  // epoch_number is the number of the epoch
+// FinalizedHeaderEntry is a helper for genesis state.
+message FinalizedHeaderEntry {
+  // epoch_number is the epoch number
   uint64 epoch_number = 1;
-  // chain_info contains the last consumer chain info of the epoch
-  ChainInfoWithProof chain_info = 2;
+  // consumer_id is the ID of the consumer
+  string consumer_id = 2;
+  // header_with_proof is the latest IndexedHeaderWithProof for the consumer and epoch
+  IndexedHeaderWithProof header_with_proof = 3;
+}
+
+// ConsumerBTCStateEntry is a helper for genesis state
+message ConsumerBTCStateEntry {
+  // consumer_id is the ID of the consumer
+  string consumer_id = 1;
+  // state is the BTC header synchronization state for the consumer
+  ConsumerBTCState state = 2;
 }
 
 // SealedEpochProofEntry contains each epoch's proof that it is sealed

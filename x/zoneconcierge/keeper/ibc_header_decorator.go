@@ -90,22 +90,8 @@ func (d *IBCHeaderDecorator) PostHandle(ctx sdk.Context, tx sdk.Tx, simulate, su
 			continue
 		}
 
-		// FrozenHeight is non-zero -> client is frozen -> this is a fork header
-		// NOTE: A valid tx can ONLY have a single fork header msg, and this fork
-		// header msg can ONLY be the LAST msg in this tx. If there is a fork
-		// header before a canonical header in a tx, then the client will be
-		// frozen upon the fork header, and the subsequent canonical header will
-		// fail, eventually failing the entire tx. All state updates due to this
-		// failed tx will be rolled back.
 		isOnFork := !clientState.FrozenHeight.IsZero()
 		d.k.HandleHeaderWithValidCommit(ctx, txHash, headerInfo, isOnFork)
-
-		// unfreeze client (by setting FrozenHeight to zero again) if the client is frozen
-		// due to a fork header
-		if isOnFork {
-			clientState.FrozenHeight = clienttypes.ZeroHeight()
-			d.k.clientKeeper.SetClientState(ctx, headerInfo.ClientId, clientState)
-		}
 	}
 
 	return next(ctx, tx, simulate, success)

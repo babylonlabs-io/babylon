@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
 
@@ -21,13 +22,13 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 
-	cmd.AddCommand(CmdFinalizedChainsInfo())
+	cmd.AddCommand(CmdFinalizedConsumersInfo())
 	return cmd
 }
 
-func CmdFinalizedChainsInfo() *cobra.Command {
+func CmdFinalizedConsumersInfo() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "finalized-chains-info <consumer-ids>",
+		Use:   "finalized-consumers-info <consumer-ids>",
 		Short: "retrieve the finalized info for a given list of consumers",
 		Args:  cobra.ArbitraryArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -35,8 +36,8 @@ func CmdFinalizedChainsInfo() *cobra.Command {
 
 			clientCtx := client.GetClientContextFromCmd(cmd)
 			queryClient := types.NewQueryClient(clientCtx)
-			req := types.QueryFinalizedChainsInfoRequest{ConsumerIds: args, Prove: prove}
-			resp, err := queryClient.FinalizedChainsInfo(cmd.Context(), &req)
+			req := types.QueryFinalizedConsumersInfoRequest{ConsumerIds: args, Prove: prove}
+			resp, err := queryClient.FinalizedConsumersInfo(cmd.Context(), &req)
 			if err != nil {
 				return err
 			}
@@ -45,7 +46,7 @@ func CmdFinalizedChainsInfo() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().Bool("prove", false, "whether to retrieve proofs for each FinalizedChainInfo")
+	cmd.Flags().Bool("prove", false, "whether to retrieve proofs for each FinalizedConsumerData")
 	flags.AddQueryFlagsToCmd(cmd)
 
 	return cmd

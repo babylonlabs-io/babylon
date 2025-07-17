@@ -41,7 +41,7 @@ func (k Keeper) getFinalizedInfo(
 	// get proof that the epoch is sealed
 	proofEpochSealed := k.getSealedEpochProof(ctx, epochNum)
 	if proofEpochSealed == nil {
-		panic(err) // only programming error
+		return nil, fmt.Errorf("proof epoch sealed is nil for epoch %d", epochNum)
 	}
 
 	// assign raw checkpoint
@@ -111,27 +111,26 @@ func (k Keeper) createBTCTimestamp(
 		EpochInfo:        finalizedInfo.EpochInfo,
 		RawCheckpoint:    finalizedInfo.RawCheckpoint,
 		BtcSubmissionKey: finalizedInfo.BTCSubmissionKey,
-		Proof: &types.ProofFinalizedChainInfo{
-			ProofConsumerHeaderInEpoch: nil,
-			ProofEpochSealed:           finalizedInfo.ProofEpochSealed,
-			ProofEpochSubmitted:        finalizedInfo.ProofEpochSubmitted,
+		Proof: &types.ProofFinalizedConsumer{
+			ProofEpochSealed:    finalizedInfo.ProofEpochSealed,
+			ProofEpochSubmitted: finalizedInfo.ProofEpochSubmitted,
 		},
 	}
 
-	// get finalised chainInfo
-	// NOTE: it's possible that this chain does not have chain info at the moment
+	// get finalized header for this consumer and epoch
+	// NOTE: it's possible that this consumer does not have a header in this epoch
 	epochNum := finalizedInfo.EpochInfo.EpochNumber
-	epochChainInfo, err := k.GetEpochChainInfo(ctx, consumerID, epochNum)
+	finalizedHeader, err := k.GetFinalizedHeader(ctx, consumerID, epochNum)
 	if err == nil {
 		// if there is a Consumer header checkpointed in this finalised epoch,
 		// add this Consumer header and corresponding proofs to the BTC timestamp
-		epochOfHeader := epochChainInfo.ChainInfo.LatestHeader.BabylonEpoch
+		epochOfHeader := finalizedHeader.Header.BabylonEpoch
 		if epochOfHeader == epochNum {
-			btcTimestamp.Header = epochChainInfo.ChainInfo.LatestHeader
-			btcTimestamp.Proof.ProofConsumerHeaderInEpoch = epochChainInfo.ProofHeaderInEpoch
+			btcTimestamp.Header = finalizedHeader.Header
+			// Note: proof is now included in the IndexedHeaderWithProof, not separately
 		}
 	} else {
-		k.Logger(sdkCtx).Debug("no epochChainInfo for consumer",
+		k.Logger(sdkCtx).Debug("no finalized header for consumer",
 			"consumerID", consumerID,
 			"epoch", epochNum,
 			"error", err,
@@ -255,17 +254,17 @@ func (k Keeper) BroadcastBTCTimestamps(
 		return nil
 	}
 
-	// get all channels that are open and are connected to ZoneConcierge's port
-	openZCChannels := k.GetAllOpenZCChannels(ctx)
-	if len(openZCChannels) == 0 {
+	// get all registered consumers
+	consumerIDs := k.GetAllConsumerIDs(ctx)
+	if len(consumerIDs) == 0 {
 		k.Logger(sdkCtx).Info("skipping BTC timestamp broadcast",
-			"reason", "no open channels",
+			"reason", "no registered consumers",
 		)
 		return nil
 	}
 
 	k.Logger(sdkCtx).Info("broadcasting BTC timestamps",
-		"channels", len(openZCChannels),
+		"consumers", len(consumerIDs),
 		"epoch", epochNum,
 	)
 
@@ -279,20 +278,20 @@ func (k Keeper) BroadcastBTCTimestamps(
 		return err
 	}
 
-	// for each channel, construct and send BTC timestamp
-	for _, channel := range openZCChannels {
-		consumerID, err := k.getClientID(ctx, channel)
-		if err != nil {
-			k.Logger(sdkCtx).Error("failed to get client ID for channel, skipping",
-				"channel", channel.ChannelId,
-				"error", err.Error(),
+	// for each registered consumer, find its channel and send BTC timestamp
+	for _, consumerID := range consumerIDs {
+		// Find the channel for this consumer
+		channel, found := k.getChannelForConsumer(ctx, consumerID)
+		if !found {
+			k.Logger(sdkCtx).Debug("no open channel found for consumer, skipping",
+				"consumerID", consumerID,
 			)
 			continue
 		}
 
 		btcTimestamp, err := k.createBTCTimestamp(ctx, consumerID, channel, finalizedInfo)
 		if err != nil {
-			k.Logger(sdkCtx).Error("failed to create BTC timestamp for channel, skipping",
+			k.Logger(sdkCtx).Error("failed to create BTC timestamp for consumer, skipping",
 				"channel", channel.ChannelId,
 				"consumerID", consumerID,
 				"error", err.Error(),
@@ -303,7 +302,7 @@ func (k Keeper) BroadcastBTCTimestamps(
 		packet := types.NewBTCTimestampPacketData(btcTimestamp)
 		if err := k.SendIBCPacket(ctx, channel, packet); err != nil {
 			if errors.Is(err, clienttypes.ErrClientNotActive) {
-				k.Logger(sdkCtx).Info("IBC client is not active, skipping channel",
+				k.Logger(sdkCtx).Info("IBC client is not active, skipping consumer",
 					"channel", channel.ChannelId,
 					"consumerID", consumerID,
 					"error", err.Error(),
@@ -311,7 +310,7 @@ func (k Keeper) BroadcastBTCTimestamps(
 				continue
 			}
 
-			k.Logger(sdkCtx).Error("failed to send BTC timestamp to channel, continuing with other channels",
+			k.Logger(sdkCtx).Error("failed to send BTC timestamp to consumer, continuing with other consumers",
 				"channel", channel.ChannelId,
 				"consumerID", consumerID,
 				"error", err.Error(),

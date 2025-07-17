@@ -29,19 +29,17 @@ type GenesisState struct {
 	PortId string `protobuf:"bytes,1,opt,name=port_id,json=portId,proto3" json:"port_id,omitempty"`
 	// params holds the zoneconcierge module's parameters
 	Params Params `protobuf:"bytes,2,opt,name=params,proto3" json:"params"`
-	// chains_info contains all the registered chains information
-	ChainsInfo []*ChainInfo `protobuf:"bytes,3,rep,name=chains_info,json=chainsInfo,proto3" json:"chains_info,omitempty"`
-	// chains_indexed_headers contains the canonical chains
-	// of the consumer chains, formed as a list of IndexedHeaders
-	ChainsIndexedHeaders []*IndexedHeader `protobuf:"bytes,4,rep,name=chains_indexed_headers,json=chainsIndexedHeaders,proto3" json:"chains_indexed_headers,omitempty"`
-	// chains_epochs_info contains the epochs' latest ChainInfo for a consumer
-	// chain
-	ChainsEpochsInfo []*EpochChainInfoEntry `protobuf:"bytes,5,rep,name=chains_epochs_info,json=chainsEpochsInfo,proto3" json:"chains_epochs_info,omitempty"`
+	// finalized_headers contains the latest IndexedHeaderWithProof for each consumer and each finalized epoch
+	FinalizedHeaders []*FinalizedHeaderEntry `protobuf:"bytes,3,rep,name=finalized_headers,json=finalizedHeaders,proto3" json:"finalized_headers,omitempty"`
 	// last_sent_segment is the last BTC chain segment
 	// which was broadcasted to the other light clients
-	LastSentSegment *BTCChainSegment `protobuf:"bytes,6,opt,name=last_sent_segment,json=lastSentSegment,proto3" json:"last_sent_segment,omitempty"`
+	LastSentSegment *BTCChainSegment `protobuf:"bytes,4,opt,name=last_sent_segment,json=lastSentSegment,proto3" json:"last_sent_segment,omitempty"`
 	// sealed_epochs_proofs contains the proofs that each epoch is sealed
-	SealedEpochsProofs []*SealedEpochProofEntry `protobuf:"bytes,7,rep,name=sealed_epochs_proofs,json=sealedEpochsProofs,proto3" json:"sealed_epochs_proofs,omitempty"`
+	SealedEpochsProofs []*SealedEpochProofEntry `protobuf:"bytes,5,rep,name=sealed_epochs_proofs,json=sealedEpochsProofs,proto3" json:"sealed_epochs_proofs,omitempty"`
+	// consumer_btc_states contains the BTC header synchronization state for each consumer
+	ConsumerBtcStates []*ConsumerBTCStateEntry `protobuf:"bytes,6,rep,name=consumer_btc_states,json=consumerBtcStates,proto3" json:"consumer_btc_states,omitempty"`
+	// registered_consumers contains the list of registered consumer IDs
+	RegisteredConsumers []string `protobuf:"bytes,7,rep,name=registered_consumers,json=registeredConsumers,proto3" json:"registered_consumers,omitempty"`
 }
 
 func (m *GenesisState) Reset()         { *m = GenesisState{} }
@@ -91,23 +89,9 @@ func (m *GenesisState) GetParams() Params {
 	return Params{}
 }
 
-func (m *GenesisState) GetChainsInfo() []*ChainInfo {
+func (m *GenesisState) GetFinalizedHeaders() []*FinalizedHeaderEntry {
 	if m != nil {
-		return m.ChainsInfo
-	}
-	return nil
-}
-
-func (m *GenesisState) GetChainsIndexedHeaders() []*IndexedHeader {
-	if m != nil {
-		return m.ChainsIndexedHeaders
-	}
-	return nil
-}
-
-func (m *GenesisState) GetChainsEpochsInfo() []*EpochChainInfoEntry {
-	if m != nil {
-		return m.ChainsEpochsInfo
+		return m.FinalizedHeaders
 	}
 	return nil
 }
@@ -126,27 +110,42 @@ func (m *GenesisState) GetSealedEpochsProofs() []*SealedEpochProofEntry {
 	return nil
 }
 
-// EpochChainInfoEntry contains each epoch's latest ChainInfo for a consumer
-// chain
-type EpochChainInfoEntry struct {
-	// epoch_number is the number of the epoch
-	EpochNumber uint64 `protobuf:"varint,1,opt,name=epoch_number,json=epochNumber,proto3" json:"epoch_number,omitempty"`
-	// chain_info contains the last consumer chain info of the epoch
-	ChainInfo *ChainInfoWithProof `protobuf:"bytes,2,opt,name=chain_info,json=chainInfo,proto3" json:"chain_info,omitempty"`
+func (m *GenesisState) GetConsumerBtcStates() []*ConsumerBTCStateEntry {
+	if m != nil {
+		return m.ConsumerBtcStates
+	}
+	return nil
 }
 
-func (m *EpochChainInfoEntry) Reset()         { *m = EpochChainInfoEntry{} }
-func (m *EpochChainInfoEntry) String() string { return proto.CompactTextString(m) }
-func (*EpochChainInfoEntry) ProtoMessage()    {}
-func (*EpochChainInfoEntry) Descriptor() ([]byte, []int) {
+func (m *GenesisState) GetRegisteredConsumers() []string {
+	if m != nil {
+		return m.RegisteredConsumers
+	}
+	return nil
+}
+
+// FinalizedHeaderEntry is a helper for genesis state.
+type FinalizedHeaderEntry struct {
+	// epoch_number is the epoch number
+	EpochNumber uint64 `protobuf:"varint,1,opt,name=epoch_number,json=epochNumber,proto3" json:"epoch_number,omitempty"`
+	// consumer_id is the ID of the consumer
+	ConsumerId string `protobuf:"bytes,2,opt,name=consumer_id,json=consumerId,proto3" json:"consumer_id,omitempty"`
+	// header_with_proof is the latest IndexedHeaderWithProof for the consumer and epoch
+	HeaderWithProof *IndexedHeaderWithProof `protobuf:"bytes,3,opt,name=header_with_proof,json=headerWithProof,proto3" json:"header_with_proof,omitempty"`
+}
+
+func (m *FinalizedHeaderEntry) Reset()         { *m = FinalizedHeaderEntry{} }
+func (m *FinalizedHeaderEntry) String() string { return proto.CompactTextString(m) }
+func (*FinalizedHeaderEntry) ProtoMessage()    {}
+func (*FinalizedHeaderEntry) Descriptor() ([]byte, []int) {
 	return fileDescriptor_56f290ad7c2c7dc7, []int{1}
 }
-func (m *EpochChainInfoEntry) XXX_Unmarshal(b []byte) error {
+func (m *FinalizedHeaderEntry) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *EpochChainInfoEntry) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *FinalizedHeaderEntry) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_EpochChainInfoEntry.Marshal(b, m, deterministic)
+		return xxx_messageInfo_FinalizedHeaderEntry.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -156,28 +155,90 @@ func (m *EpochChainInfoEntry) XXX_Marshal(b []byte, deterministic bool) ([]byte,
 		return b[:n], nil
 	}
 }
-func (m *EpochChainInfoEntry) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_EpochChainInfoEntry.Merge(m, src)
+func (m *FinalizedHeaderEntry) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_FinalizedHeaderEntry.Merge(m, src)
 }
-func (m *EpochChainInfoEntry) XXX_Size() int {
+func (m *FinalizedHeaderEntry) XXX_Size() int {
 	return m.Size()
 }
-func (m *EpochChainInfoEntry) XXX_DiscardUnknown() {
-	xxx_messageInfo_EpochChainInfoEntry.DiscardUnknown(m)
+func (m *FinalizedHeaderEntry) XXX_DiscardUnknown() {
+	xxx_messageInfo_FinalizedHeaderEntry.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_EpochChainInfoEntry proto.InternalMessageInfo
+var xxx_messageInfo_FinalizedHeaderEntry proto.InternalMessageInfo
 
-func (m *EpochChainInfoEntry) GetEpochNumber() uint64 {
+func (m *FinalizedHeaderEntry) GetEpochNumber() uint64 {
 	if m != nil {
 		return m.EpochNumber
 	}
 	return 0
 }
 
-func (m *EpochChainInfoEntry) GetChainInfo() *ChainInfoWithProof {
+func (m *FinalizedHeaderEntry) GetConsumerId() string {
 	if m != nil {
-		return m.ChainInfo
+		return m.ConsumerId
+	}
+	return ""
+}
+
+func (m *FinalizedHeaderEntry) GetHeaderWithProof() *IndexedHeaderWithProof {
+	if m != nil {
+		return m.HeaderWithProof
+	}
+	return nil
+}
+
+// ConsumerBTCStateEntry is a helper for genesis state
+type ConsumerBTCStateEntry struct {
+	// consumer_id is the ID of the consumer
+	ConsumerId string `protobuf:"bytes,1,opt,name=consumer_id,json=consumerId,proto3" json:"consumer_id,omitempty"`
+	// state is the BTC header synchronization state for the consumer
+	State *ConsumerBTCState `protobuf:"bytes,2,opt,name=state,proto3" json:"state,omitempty"`
+}
+
+func (m *ConsumerBTCStateEntry) Reset()         { *m = ConsumerBTCStateEntry{} }
+func (m *ConsumerBTCStateEntry) String() string { return proto.CompactTextString(m) }
+func (*ConsumerBTCStateEntry) ProtoMessage()    {}
+func (*ConsumerBTCStateEntry) Descriptor() ([]byte, []int) {
+	return fileDescriptor_56f290ad7c2c7dc7, []int{2}
+}
+func (m *ConsumerBTCStateEntry) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *ConsumerBTCStateEntry) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_ConsumerBTCStateEntry.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *ConsumerBTCStateEntry) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ConsumerBTCStateEntry.Merge(m, src)
+}
+func (m *ConsumerBTCStateEntry) XXX_Size() int {
+	return m.Size()
+}
+func (m *ConsumerBTCStateEntry) XXX_DiscardUnknown() {
+	xxx_messageInfo_ConsumerBTCStateEntry.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ConsumerBTCStateEntry proto.InternalMessageInfo
+
+func (m *ConsumerBTCStateEntry) GetConsumerId() string {
+	if m != nil {
+		return m.ConsumerId
+	}
+	return ""
+}
+
+func (m *ConsumerBTCStateEntry) GetState() *ConsumerBTCState {
+	if m != nil {
+		return m.State
 	}
 	return nil
 }
@@ -194,7 +255,7 @@ func (m *SealedEpochProofEntry) Reset()         { *m = SealedEpochProofEntry{} }
 func (m *SealedEpochProofEntry) String() string { return proto.CompactTextString(m) }
 func (*SealedEpochProofEntry) ProtoMessage()    {}
 func (*SealedEpochProofEntry) Descriptor() ([]byte, []int) {
-	return fileDescriptor_56f290ad7c2c7dc7, []int{2}
+	return fileDescriptor_56f290ad7c2c7dc7, []int{3}
 }
 func (m *SealedEpochProofEntry) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -239,7 +300,8 @@ func (m *SealedEpochProofEntry) GetProof() *ProofEpochSealed {
 
 func init() {
 	proto.RegisterType((*GenesisState)(nil), "babylon.zoneconcierge.v1.GenesisState")
-	proto.RegisterType((*EpochChainInfoEntry)(nil), "babylon.zoneconcierge.v1.EpochChainInfoEntry")
+	proto.RegisterType((*FinalizedHeaderEntry)(nil), "babylon.zoneconcierge.v1.FinalizedHeaderEntry")
+	proto.RegisterType((*ConsumerBTCStateEntry)(nil), "babylon.zoneconcierge.v1.ConsumerBTCStateEntry")
 	proto.RegisterType((*SealedEpochProofEntry)(nil), "babylon.zoneconcierge.v1.SealedEpochProofEntry")
 }
 
@@ -248,39 +310,43 @@ func init() {
 }
 
 var fileDescriptor_56f290ad7c2c7dc7 = []byte{
-	// 509 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x93, 0x4f, 0x6b, 0x13, 0x41,
-	0x18, 0xc6, 0xb3, 0x36, 0x4d, 0xe9, 0xa4, 0xa0, 0x8e, 0x55, 0x97, 0x1c, 0xd6, 0x18, 0x51, 0xa3,
-	0xb4, 0xbb, 0xb4, 0xbd, 0x79, 0x10, 0x49, 0x2d, 0x1a, 0x04, 0x29, 0x93, 0x8a, 0xa0, 0xc8, 0x32,
-	0xbb, 0xfb, 0x66, 0xb3, 0x90, 0xcc, 0x2c, 0x3b, 0xd3, 0xd0, 0x88, 0x57, 0xef, 0x7e, 0x07, 0xbf,
-	0x4c, 0x8f, 0x3d, 0x7a, 0x12, 0x49, 0xbe, 0x88, 0xcc, 0x3b, 0x9b, 0x6a, 0xa5, 0x2b, 0xbd, 0x84,
-	0xdd, 0x27, 0xcf, 0xf3, 0x7b, 0x9f, 0x9d, 0x3f, 0xe4, 0x51, 0xc4, 0xa3, 0xd9, 0x58, 0x8a, 0xe0,
-	0xb3, 0x14, 0x10, 0x4b, 0x11, 0x67, 0x50, 0xa4, 0x10, 0x4c, 0x77, 0x82, 0x14, 0x04, 0xa8, 0x4c,
-	0xf9, 0x79, 0x21, 0xb5, 0xa4, 0x6e, 0xe9, 0xf3, 0x2f, 0xf8, 0xfc, 0xe9, 0x4e, 0x6b, 0x33, 0x95,
-	0xa9, 0x44, 0x53, 0x60, 0x9e, 0xac, 0xbf, 0xf5, 0xb0, 0x92, 0x9b, 0xf3, 0x82, 0x4f, 0x4a, 0x6c,
-	0x6b, 0xab, 0xd2, 0x76, 0x71, 0x0e, 0xba, 0x3b, 0xdf, 0xeb, 0x64, 0xe3, 0x95, 0xad, 0x35, 0xd0,
-	0x5c, 0x03, 0xbd, 0x4b, 0xd6, 0x72, 0x59, 0xe8, 0x30, 0x4b, 0x5c, 0xa7, 0xed, 0x74, 0xd7, 0x59,
-	0xc3, 0xbc, 0xf6, 0x13, 0xfa, 0x9c, 0x34, 0xec, 0x1c, 0xf7, 0x5a, 0xdb, 0xe9, 0x36, 0x77, 0xdb,
-	0x7e, 0x55, 0x7f, 0xff, 0x10, 0x7d, 0xbd, 0xfa, 0xe9, 0xcf, 0x7b, 0x35, 0x56, 0xa6, 0xe8, 0x4b,
-	0xd2, 0x8c, 0x47, 0x3c, 0x13, 0x2a, 0xcc, 0xc4, 0x50, 0xba, 0x2b, 0xed, 0x95, 0x6e, 0x73, 0xf7,
-	0x41, 0x35, 0x64, 0xdf, 0x98, 0xfb, 0x62, 0x28, 0x19, 0xb1, 0x39, 0xf3, 0x4c, 0x3f, 0x91, 0x3b,
-	0xe7, 0x94, 0x04, 0x4e, 0x20, 0x09, 0x47, 0xc0, 0x13, 0x28, 0x94, 0x5b, 0x47, 0xe0, 0xe3, 0x6a,
-	0x60, 0xdf, 0x06, 0x5e, 0xa3, 0x9f, 0x6d, 0x2e, 0xa1, 0x7f, 0x89, 0x8a, 0x7e, 0x24, 0xb4, 0xc4,
-	0x43, 0x2e, 0xe3, 0x51, 0xd9, 0x75, 0x15, 0xd1, 0xdb, 0xd5, 0xe8, 0x03, 0x63, 0x3e, 0x2f, 0x7c,
-	0x20, 0x74, 0x31, 0x63, 0x37, 0x2c, 0x08, 0xff, 0xb2, 0xdd, 0xdf, 0x91, 0x9b, 0x63, 0xae, 0x74,
-	0xa8, 0x40, 0x98, 0x9f, 0x74, 0x02, 0x42, 0xbb, 0x0d, 0x5c, 0xcc, 0x27, 0xd5, 0xec, 0xde, 0xd1,
-	0x3e, 0x92, 0x07, 0x36, 0xc0, 0xae, 0x1b, 0xc6, 0x00, 0x84, 0x2e, 0x05, 0xca, 0xc9, 0xa6, 0x02,
-	0x3e, 0x86, 0x64, 0xd9, 0x39, 0x2f, 0xa4, 0x1c, 0x2a, 0x77, 0x0d, 0x5b, 0x07, 0xd5, 0xe4, 0x01,
-	0xa6, 0xb0, 0xe0, 0xa1, 0x89, 0xd8, 0xde, 0x54, 0xfd, 0x91, 0x15, 0xea, 0xaa, 0xf3, 0xd5, 0x21,
-	0xb7, 0x2e, 0xf9, 0x46, 0x7a, 0x9f, 0x6c, 0xe0, 0xcc, 0x50, 0x1c, 0x4f, 0x22, 0x28, 0xf0, 0xc4,
-	0xd4, 0x59, 0x13, 0xb5, 0xb7, 0x28, 0xd1, 0x37, 0xc4, 0x6e, 0x9f, 0x5d, 0x49, 0x7b, 0x74, 0xb6,
-	0xae, 0xb0, 0xeb, 0xef, 0x33, 0x6d, 0x5b, 0xb1, 0xf5, 0x78, 0xa9, 0x75, 0xbe, 0x90, 0xdb, 0x97,
-	0x96, 0xbe, 0x4a, 0x91, 0x17, 0x64, 0x15, 0x17, 0xa6, 0xec, 0xf0, 0xf4, 0x3f, 0xc7, 0x17, 0xb9,
-	0x26, 0x6a, 0x87, 0x31, 0x1b, 0xec, 0x1d, 0x9d, 0xce, 0x3d, 0xe7, 0x6c, 0xee, 0x39, 0xbf, 0xe6,
-	0x9e, 0xf3, 0x6d, 0xe1, 0xd5, 0xce, 0x16, 0x5e, 0xed, 0xc7, 0xc2, 0xab, 0x7d, 0x78, 0x96, 0x66,
-	0x7a, 0x74, 0x1c, 0xf9, 0xb1, 0x9c, 0x04, 0x25, 0x76, 0xcc, 0x23, 0xb5, 0x9d, 0xc9, 0xe5, 0x6b,
-	0x30, 0xdd, 0x0b, 0x4e, 0xfe, 0xb9, 0x92, 0x7a, 0x96, 0x83, 0x8a, 0x1a, 0x78, 0x11, 0xf7, 0x7e,
-	0x07, 0x00, 0x00, 0xff, 0xff, 0xef, 0x55, 0xe4, 0xf4, 0x37, 0x04, 0x00, 0x00,
+	// 572 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x54, 0xcd, 0x6a, 0xdb, 0x4c,
+	0x14, 0xb5, 0x3e, 0x3b, 0x0e, 0x19, 0x07, 0xf2, 0x79, 0xe2, 0x50, 0xe1, 0x85, 0xe2, 0x1a, 0x5a,
+	0xdc, 0xd2, 0x4a, 0x75, 0xb2, 0xeb, 0xa2, 0x04, 0x9b, 0xb4, 0xf5, 0xa6, 0x04, 0xd9, 0xa5, 0xd0,
+	0x16, 0x84, 0x7e, 0xae, 0xa5, 0x01, 0x7b, 0x46, 0x68, 0xc6, 0x6e, 0x6c, 0xfa, 0x10, 0xa5, 0x4f,
+	0xd3, 0x47, 0xc8, 0x32, 0xcb, 0xae, 0x4a, 0xb1, 0x5f, 0xa4, 0x68, 0x46, 0x6a, 0x70, 0x6a, 0x91,
+	0x6c, 0x84, 0xe6, 0xcc, 0x3d, 0xe7, 0x9e, 0x39, 0x77, 0x18, 0xf4, 0xd8, 0x73, 0xbd, 0xc5, 0x84,
+	0x51, 0x6b, 0xc9, 0x28, 0xf8, 0x8c, 0xfa, 0x04, 0x92, 0x10, 0xac, 0x79, 0xd7, 0x0a, 0x81, 0x02,
+	0x27, 0xdc, 0x8c, 0x13, 0x26, 0x18, 0xd6, 0xb3, 0x3a, 0x73, 0xa3, 0xce, 0x9c, 0x77, 0x9b, 0x8d,
+	0x90, 0x85, 0x4c, 0x16, 0x59, 0xe9, 0x9f, 0xaa, 0x6f, 0x3e, 0x2a, 0xd4, 0x8d, 0xdd, 0xc4, 0x9d,
+	0x66, 0xb2, 0xcd, 0x67, 0x85, 0x65, 0x9b, 0x7d, 0x64, 0x75, 0xfb, 0x7b, 0x05, 0xed, 0xbf, 0x51,
+	0xb6, 0x86, 0xc2, 0x15, 0x80, 0x1f, 0xa0, 0xdd, 0x98, 0x25, 0xc2, 0x21, 0x81, 0xae, 0xb5, 0xb4,
+	0xce, 0x9e, 0x5d, 0x4d, 0x97, 0x83, 0x00, 0xbf, 0x42, 0x55, 0xd5, 0x47, 0xff, 0xaf, 0xa5, 0x75,
+	0x6a, 0x27, 0x2d, 0xb3, 0xc8, 0xbf, 0x79, 0x21, 0xeb, 0x7a, 0x95, 0xab, 0x5f, 0xc7, 0x25, 0x3b,
+	0x63, 0xe1, 0x4f, 0xa8, 0x3e, 0x26, 0xd4, 0x9d, 0x90, 0x25, 0x04, 0x4e, 0x04, 0x6e, 0x00, 0x09,
+	0xd7, 0xcb, 0xad, 0x72, 0xa7, 0x76, 0x62, 0x16, 0x4b, 0xbd, 0xce, 0x29, 0x6f, 0x25, 0xe3, 0x9c,
+	0x8a, 0x64, 0x61, 0xff, 0x3f, 0xde, 0x44, 0x39, 0x7e, 0x8f, 0xea, 0x13, 0x97, 0x0b, 0x87, 0x03,
+	0x4d, 0x3f, 0xe1, 0x14, 0xa8, 0xd0, 0x2b, 0xd2, 0xe7, 0x93, 0x62, 0xf1, 0xde, 0xa8, 0xdf, 0x8f,
+	0x5c, 0x42, 0x87, 0x8a, 0x60, 0x1f, 0xa4, 0x1a, 0x43, 0xa0, 0x22, 0x03, 0xb0, 0x8b, 0x1a, 0x1c,
+	0xdc, 0x09, 0x04, 0x0e, 0xc4, 0xcc, 0x8f, 0xb8, 0x13, 0x27, 0x8c, 0x8d, 0xb9, 0xbe, 0x23, 0x6d,
+	0x5b, 0xc5, 0xca, 0x43, 0xc9, 0x3a, 0x4f, 0x49, 0x17, 0x29, 0x45, 0xf9, 0xc6, 0xfc, 0x06, 0xe6,
+	0x12, 0xe7, 0xd8, 0x41, 0x87, 0x3e, 0xa3, 0x7c, 0x36, 0x85, 0xc4, 0xf1, 0x84, 0xef, 0xf0, 0x74,
+	0x0a, 0x5c, 0xaf, 0xde, 0xd5, 0xa1, 0x9f, 0x91, 0x7a, 0xa3, 0xbe, 0x1c, 0x9c, 0xea, 0x50, 0xcf,
+	0xb5, 0x7a, 0xc2, 0x97, 0x30, 0xc7, 0x5d, 0xd4, 0x48, 0x20, 0x24, 0x5c, 0x40, 0x02, 0x81, 0x93,
+	0xef, 0x73, 0x7d, 0xb7, 0x55, 0xee, 0xec, 0xd9, 0x87, 0x37, 0x7b, 0xb9, 0x22, 0x6f, 0xff, 0xd0,
+	0x50, 0x63, 0x5b, 0xf0, 0xf8, 0x21, 0xda, 0x97, 0x41, 0x38, 0x74, 0x36, 0xf5, 0x20, 0x91, 0x37,
+	0xa4, 0x62, 0xd7, 0x24, 0xf6, 0x4e, 0x42, 0xf8, 0x18, 0xd5, 0xfe, 0x9e, 0x87, 0x04, 0xf2, 0xae,
+	0xec, 0xd9, 0x28, 0x87, 0x06, 0x01, 0xfe, 0x8c, 0xea, 0x6a, 0xfa, 0xce, 0x17, 0x22, 0x22, 0x95,
+	0xa8, 0x5e, 0x96, 0xa3, 0x7a, 0x51, 0x7c, 0xdc, 0x01, 0x0d, 0xe0, 0x32, 0x37, 0xf3, 0x81, 0x08,
+	0x15, 0xab, 0x7d, 0x10, 0x6d, 0x02, 0xed, 0x25, 0x3a, 0xda, 0x9a, 0xcc, 0x6d, 0x5f, 0xda, 0x3f,
+	0xbe, 0xce, 0xd0, 0x8e, 0xcc, 0x3e, 0xbb, 0xde, 0x4f, 0xef, 0x1f, 0xbd, 0xad, 0x88, 0xed, 0xaf,
+	0xe8, 0x68, 0xeb, 0xdc, 0xef, 0x13, 0xdb, 0x19, 0xda, 0x51, 0x49, 0xdc, 0xd9, 0x5d, 0xe9, 0xa6,
+	0x54, 0xd5, 0xcc, 0x56, 0xc4, 0xde, 0xe8, 0x6a, 0x65, 0x68, 0xd7, 0x2b, 0x43, 0xfb, 0xbd, 0x32,
+	0xb4, 0x6f, 0x6b, 0xa3, 0x74, 0xbd, 0x36, 0x4a, 0x3f, 0xd7, 0x46, 0xe9, 0xe3, 0xcb, 0x90, 0x88,
+	0x68, 0xe6, 0x99, 0x3e, 0x9b, 0x5a, 0x99, 0xec, 0xc4, 0xf5, 0xf8, 0x73, 0xc2, 0xf2, 0xa5, 0x35,
+	0x3f, 0xb5, 0x2e, 0x6f, 0x3d, 0x18, 0x62, 0x11, 0x03, 0xf7, 0xaa, 0xf2, 0x99, 0x38, 0xfd, 0x13,
+	0x00, 0x00, 0xff, 0xff, 0x66, 0x3f, 0x8f, 0x69, 0xd5, 0x04, 0x00, 0x00,
 }
 
 func (m *GenesisState) Marshal() (dAtA []byte, err error) {
@@ -303,6 +369,29 @@ func (m *GenesisState) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
+	if len(m.RegisteredConsumers) > 0 {
+		for iNdEx := len(m.RegisteredConsumers) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.RegisteredConsumers[iNdEx])
+			copy(dAtA[i:], m.RegisteredConsumers[iNdEx])
+			i = encodeVarintGenesis(dAtA, i, uint64(len(m.RegisteredConsumers[iNdEx])))
+			i--
+			dAtA[i] = 0x3a
+		}
+	}
+	if len(m.ConsumerBtcStates) > 0 {
+		for iNdEx := len(m.ConsumerBtcStates) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.ConsumerBtcStates[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintGenesis(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x32
+		}
+	}
 	if len(m.SealedEpochsProofs) > 0 {
 		for iNdEx := len(m.SealedEpochsProofs) - 1; iNdEx >= 0; iNdEx-- {
 			{
@@ -314,7 +403,7 @@ func (m *GenesisState) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 				i = encodeVarintGenesis(dAtA, i, uint64(size))
 			}
 			i--
-			dAtA[i] = 0x3a
+			dAtA[i] = 0x2a
 		}
 	}
 	if m.LastSentSegment != nil {
@@ -327,40 +416,12 @@ func (m *GenesisState) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 			i = encodeVarintGenesis(dAtA, i, uint64(size))
 		}
 		i--
-		dAtA[i] = 0x32
+		dAtA[i] = 0x22
 	}
-	if len(m.ChainsEpochsInfo) > 0 {
-		for iNdEx := len(m.ChainsEpochsInfo) - 1; iNdEx >= 0; iNdEx-- {
+	if len(m.FinalizedHeaders) > 0 {
+		for iNdEx := len(m.FinalizedHeaders) - 1; iNdEx >= 0; iNdEx-- {
 			{
-				size, err := m.ChainsEpochsInfo[iNdEx].MarshalToSizedBuffer(dAtA[:i])
-				if err != nil {
-					return 0, err
-				}
-				i -= size
-				i = encodeVarintGenesis(dAtA, i, uint64(size))
-			}
-			i--
-			dAtA[i] = 0x2a
-		}
-	}
-	if len(m.ChainsIndexedHeaders) > 0 {
-		for iNdEx := len(m.ChainsIndexedHeaders) - 1; iNdEx >= 0; iNdEx-- {
-			{
-				size, err := m.ChainsIndexedHeaders[iNdEx].MarshalToSizedBuffer(dAtA[:i])
-				if err != nil {
-					return 0, err
-				}
-				i -= size
-				i = encodeVarintGenesis(dAtA, i, uint64(size))
-			}
-			i--
-			dAtA[i] = 0x22
-		}
-	}
-	if len(m.ChainsInfo) > 0 {
-		for iNdEx := len(m.ChainsInfo) - 1; iNdEx >= 0; iNdEx-- {
-			{
-				size, err := m.ChainsInfo[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				size, err := m.FinalizedHeaders[iNdEx].MarshalToSizedBuffer(dAtA[:i])
 				if err != nil {
 					return 0, err
 				}
@@ -391,7 +452,7 @@ func (m *GenesisState) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *EpochChainInfoEntry) Marshal() (dAtA []byte, err error) {
+func (m *FinalizedHeaderEntry) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -401,19 +462,66 @@ func (m *EpochChainInfoEntry) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *EpochChainInfoEntry) MarshalTo(dAtA []byte) (int, error) {
+func (m *FinalizedHeaderEntry) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *EpochChainInfoEntry) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *FinalizedHeaderEntry) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if m.ChainInfo != nil {
+	if m.HeaderWithProof != nil {
 		{
-			size, err := m.ChainInfo.MarshalToSizedBuffer(dAtA[:i])
+			size, err := m.HeaderWithProof.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintGenesis(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.ConsumerId) > 0 {
+		i -= len(m.ConsumerId)
+		copy(dAtA[i:], m.ConsumerId)
+		i = encodeVarintGenesis(dAtA, i, uint64(len(m.ConsumerId)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if m.EpochNumber != 0 {
+		i = encodeVarintGenesis(dAtA, i, uint64(m.EpochNumber))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *ConsumerBTCStateEntry) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *ConsumerBTCStateEntry) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *ConsumerBTCStateEntry) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.State != nil {
+		{
+			size, err := m.State.MarshalToSizedBuffer(dAtA[:i])
 			if err != nil {
 				return 0, err
 			}
@@ -423,10 +531,12 @@ func (m *EpochChainInfoEntry) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0x12
 	}
-	if m.EpochNumber != 0 {
-		i = encodeVarintGenesis(dAtA, i, uint64(m.EpochNumber))
+	if len(m.ConsumerId) > 0 {
+		i -= len(m.ConsumerId)
+		copy(dAtA[i:], m.ConsumerId)
+		i = encodeVarintGenesis(dAtA, i, uint64(len(m.ConsumerId)))
 		i--
-		dAtA[i] = 0x8
+		dAtA[i] = 0xa
 	}
 	return len(dAtA) - i, nil
 }
@@ -494,20 +604,8 @@ func (m *GenesisState) Size() (n int) {
 	}
 	l = m.Params.Size()
 	n += 1 + l + sovGenesis(uint64(l))
-	if len(m.ChainsInfo) > 0 {
-		for _, e := range m.ChainsInfo {
-			l = e.Size()
-			n += 1 + l + sovGenesis(uint64(l))
-		}
-	}
-	if len(m.ChainsIndexedHeaders) > 0 {
-		for _, e := range m.ChainsIndexedHeaders {
-			l = e.Size()
-			n += 1 + l + sovGenesis(uint64(l))
-		}
-	}
-	if len(m.ChainsEpochsInfo) > 0 {
-		for _, e := range m.ChainsEpochsInfo {
+	if len(m.FinalizedHeaders) > 0 {
+		for _, e := range m.FinalizedHeaders {
 			l = e.Size()
 			n += 1 + l + sovGenesis(uint64(l))
 		}
@@ -522,10 +620,22 @@ func (m *GenesisState) Size() (n int) {
 			n += 1 + l + sovGenesis(uint64(l))
 		}
 	}
+	if len(m.ConsumerBtcStates) > 0 {
+		for _, e := range m.ConsumerBtcStates {
+			l = e.Size()
+			n += 1 + l + sovGenesis(uint64(l))
+		}
+	}
+	if len(m.RegisteredConsumers) > 0 {
+		for _, s := range m.RegisteredConsumers {
+			l = len(s)
+			n += 1 + l + sovGenesis(uint64(l))
+		}
+	}
 	return n
 }
 
-func (m *EpochChainInfoEntry) Size() (n int) {
+func (m *FinalizedHeaderEntry) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -534,8 +644,29 @@ func (m *EpochChainInfoEntry) Size() (n int) {
 	if m.EpochNumber != 0 {
 		n += 1 + sovGenesis(uint64(m.EpochNumber))
 	}
-	if m.ChainInfo != nil {
-		l = m.ChainInfo.Size()
+	l = len(m.ConsumerId)
+	if l > 0 {
+		n += 1 + l + sovGenesis(uint64(l))
+	}
+	if m.HeaderWithProof != nil {
+		l = m.HeaderWithProof.Size()
+		n += 1 + l + sovGenesis(uint64(l))
+	}
+	return n
+}
+
+func (m *ConsumerBTCStateEntry) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.ConsumerId)
+	if l > 0 {
+		n += 1 + l + sovGenesis(uint64(l))
+	}
+	if m.State != nil {
+		l = m.State.Size()
 		n += 1 + l + sovGenesis(uint64(l))
 	}
 	return n
@@ -659,7 +790,7 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 3:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ChainsInfo", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field FinalizedHeaders", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -686,80 +817,12 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.ChainsInfo = append(m.ChainsInfo, &ChainInfo{})
-			if err := m.ChainsInfo[len(m.ChainsInfo)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			m.FinalizedHeaders = append(m.FinalizedHeaders, &FinalizedHeaderEntry{})
+			if err := m.FinalizedHeaders[len(m.FinalizedHeaders)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
 		case 4:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ChainsIndexedHeaders", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowGenesis
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthGenesis
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthGenesis
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.ChainsIndexedHeaders = append(m.ChainsIndexedHeaders, &IndexedHeader{})
-			if err := m.ChainsIndexedHeaders[len(m.ChainsIndexedHeaders)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 5:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ChainsEpochsInfo", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowGenesis
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthGenesis
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthGenesis
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.ChainsEpochsInfo = append(m.ChainsEpochsInfo, &EpochChainInfoEntry{})
-			if err := m.ChainsEpochsInfo[len(m.ChainsEpochsInfo)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 6:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field LastSentSegment", wireType)
 			}
@@ -795,7 +858,7 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
-		case 7:
+		case 5:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field SealedEpochsProofs", wireType)
 			}
@@ -829,78 +892,9 @@ func (m *GenesisState) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipGenesis(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthGenesis
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *EpochChainInfoEntry) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowGenesis
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: EpochChainInfoEntry: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: EpochChainInfoEntry: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field EpochNumber", wireType)
-			}
-			m.EpochNumber = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowGenesis
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.EpochNumber |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		case 2:
+		case 6:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ChainInfo", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ConsumerBtcStates", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -927,10 +921,295 @@ func (m *EpochChainInfoEntry) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.ChainInfo == nil {
-				m.ChainInfo = &ChainInfoWithProof{}
+			m.ConsumerBtcStates = append(m.ConsumerBtcStates, &ConsumerBTCStateEntry{})
+			if err := m.ConsumerBtcStates[len(m.ConsumerBtcStates)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
 			}
-			if err := m.ChainInfo.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			iNdEx = postIndex
+		case 7:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field RegisteredConsumers", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.RegisteredConsumers = append(m.RegisteredConsumers, string(dAtA[iNdEx:postIndex]))
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipGenesis(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *FinalizedHeaderEntry) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowGenesis
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: FinalizedHeaderEntry: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: FinalizedHeaderEntry: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field EpochNumber", wireType)
+			}
+			m.EpochNumber = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.EpochNumber |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ConsumerId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ConsumerId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field HeaderWithProof", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.HeaderWithProof == nil {
+				m.HeaderWithProof = &IndexedHeaderWithProof{}
+			}
+			if err := m.HeaderWithProof.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipGenesis(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *ConsumerBTCStateEntry) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowGenesis
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: ConsumerBTCStateEntry: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: ConsumerBTCStateEntry: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ConsumerId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ConsumerId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field State", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowGenesis
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthGenesis
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.State == nil {
+				m.State = &ConsumerBTCState{}
+			}
+			if err := m.State.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex

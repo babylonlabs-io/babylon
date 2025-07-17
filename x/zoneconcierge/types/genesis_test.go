@@ -48,33 +48,33 @@ func TestGenesisState_Validate(t *testing.T) {
 			errMsg: "invalid identifier",
 		},
 		{
-			desc: "duplicate chain info entries",
+			desc: "duplicate finalized header entries",
 			genState: &types.GenesisState{
-				PortId:     types.PortID,
-				ChainsInfo: append(gs.ChainsInfo, gs.ChainsInfo[0]),
+				PortId:           types.PortID,
+				FinalizedHeaders: append(gs.FinalizedHeaders, gs.FinalizedHeaders[0]),
 			},
 			valid:  false,
 			errMsg: "duplicate entry",
 		},
 		{
-			desc: "duplicate indexed headers",
+			desc: "duplicate consumer BTC state entries",
 			genState: &types.GenesisState{
-				PortId:               types.PortID,
-				ChainsIndexedHeaders: append(gs.ChainsIndexedHeaders, gs.ChainsIndexedHeaders[0]),
+				PortId:            types.PortID,
+				ConsumerBtcStates: append(gs.ConsumerBtcStates, gs.ConsumerBtcStates[0]),
 			},
 			valid:  false,
 			errMsg: "duplicate entry",
 		},
 		{
-			desc: "invalid epoch chain info entry (nil chain info)",
+			desc: "invalid finalized header entry (nil header)",
 			genState: &types.GenesisState{
 				PortId: types.PortID,
-				ChainsEpochsInfo: []*types.EpochChainInfoEntry{
-					{EpochNumber: 1, ChainInfo: nil},
+				FinalizedHeaders: []*types.FinalizedHeaderEntry{
+					{ConsumerId: "consumer1", EpochNumber: 1, HeaderWithProof: nil},
 				},
 			},
 			valid:  false,
-			errMsg: "empty chain info",
+			errMsg: "empty header with proof",
 		},
 		{
 			desc: "invalid sealed epoch proof (nil proof)",

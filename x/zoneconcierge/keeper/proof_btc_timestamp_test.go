@@ -42,14 +42,18 @@ func FuzzProofConsumerHeaderInEpoch(f *testing.F) {
 
 		// handle a random header from a random consumer chain
 		consumerID := datagen.GenRandomHexStr(r, 10)
+
+		// register the consumer
+		zck.AddConsumer(h.Ctx, consumerID)
+
 		height := datagen.RandomInt(r, 100) + 1
 		ibctmHeader := datagen.GenRandomIBCTMHeader(r, height)
 		headerInfo := datagen.NewZCHeaderInfo(ibctmHeader, consumerID)
 		zck.HandleHeaderWithValidCommit(h.Ctx, datagen.GenRandomByteArray(r, 32), headerInfo, false)
 
 		// ensure the header is successfully inserted
-		indexedHeader, err := zck.GetHeader(h.Ctx, consumerID, height)
-		h.NoError(err)
+		indexedHeader := zck.GetLatestEpochHeader(h.Ctx, consumerID)
+		require.NotNil(t, indexedHeader)
 
 		// enter the 1st block of the next epoch
 		for j := 0; j < int(epochInterval); j++ {

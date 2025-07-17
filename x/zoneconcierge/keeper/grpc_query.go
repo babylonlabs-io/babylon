@@ -21,59 +21,59 @@ func (k Keeper) Params(c context.Context, req *types.QueryParamsRequest) (*types
 	return &types.QueryParamsResponse{Params: k.GetParams(ctx)}, nil
 }
 
-// FinalizedChainsInfo returns the finalized info for a given list of chains
-func (k Keeper) FinalizedChainsInfo(c context.Context, req *types.QueryFinalizedChainsInfoRequest) (*types.QueryFinalizedChainsInfoResponse, error) {
+// FinalizedConsumersInfo returns the finalized info for a given list of consumers
+func (k Keeper) FinalizedConsumersInfo(c context.Context, req *types.QueryFinalizedConsumersInfoRequest) (*types.QueryFinalizedConsumersInfoResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 
-	// return if no chain IDs are provided
+	// return if no consumer IDs are provided
 	if len(req.ConsumerIds) == 0 {
-		return nil, status.Error(codes.InvalidArgument, "chain ID cannot be empty")
+		return nil, status.Error(codes.InvalidArgument, "consumer ID cannot be empty")
 	}
 
-	// return if chain IDs contain duplicates or empty strings
+	// return if consumer IDs contain duplicates or empty strings
 	if err := bbntypes.CheckForDuplicatesAndEmptyStrings(req.ConsumerIds); err != nil {
 		return nil, status.Error(codes.InvalidArgument, types.ErrInvalidConsumerIDs.Wrap(err.Error()).Error())
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)
-	resp := &types.QueryFinalizedChainsInfoResponse{FinalizedChainsInfo: []*types.FinalizedChainInfo{}}
+	resp := &types.QueryFinalizedConsumersInfoResponse{FinalizedConsumersData: []*types.FinalizedConsumerData{}}
 
 	// find the last finalised epoch
 	lastFinalizedEpoch := k.GetLastFinalizedEpoch(ctx)
+
 	// TODO: paginate this for loop
 	for _, ConsumerId := range req.ConsumerIds {
-		// check if chain ID is valid
-		if !k.HasChainInfo(ctx, ConsumerId) {
-			return nil, status.Error(codes.InvalidArgument, types.ErrChainInfoNotFound.Wrapf("chain ID %s", ConsumerId).Error())
+		// Validate that the consumer is registered
+		if !k.HasConsumer(ctx, ConsumerId) {
+			return nil, status.Error(codes.InvalidArgument, types.ErrConsumerInfoNotFound.Wrapf("consumer ID %s is not registered", ConsumerId).Error())
 		}
 
-		data := &types.FinalizedChainInfo{ConsumerId: ConsumerId}
+		data := &types.FinalizedConsumerData{ConsumerId: ConsumerId}
 
-		// if the chain info is not found in the last finalised epoch, return with empty fields
-		if !k.EpochChainInfoExists(ctx, ConsumerId, lastFinalizedEpoch) {
-			resp.FinalizedChainsInfo = append(resp.FinalizedChainsInfo, data)
+		// if no finalized header exists for this consumer in the last finalised epoch, return with empty fields
+		if !k.FinalizedHeaderExists(ctx, ConsumerId, lastFinalizedEpoch) {
+			resp.FinalizedConsumersData = append(resp.FinalizedConsumersData, data)
 			continue
 		}
 
-		// find the chain info in the last finalised epoch
-		chainInfoWithProof, err := k.GetEpochChainInfo(ctx, ConsumerId, lastFinalizedEpoch)
+		// get the finalized header for this consumer in the last finalised epoch
+		finalizedHeader, err := k.GetFinalizedHeader(ctx, ConsumerId, lastFinalizedEpoch)
 		if err != nil {
 			return nil, err
 		}
-		chainInfo := chainInfoWithProof.ChainInfo
 
-		// set finalizedEpoch as the earliest epoch that snapshots this chain info.
-		// it's possible that the chain info's epoch is way before the last finalised epoch
+		// set finalizedEpoch as the earliest epoch that snapshots this header.
+		// it's possible that the header's epoch is way before the last finalised epoch
 		// e.g., when there is no relayer for many epochs
 		// NOTE: if an epoch is finalised then all of its previous epochs are also finalised
 		finalizedEpoch := lastFinalizedEpoch
-		if chainInfo.LatestHeader.BabylonEpoch < finalizedEpoch {
-			finalizedEpoch = chainInfo.LatestHeader.BabylonEpoch
+		if finalizedHeader.Header.BabylonEpoch < finalizedEpoch {
+			finalizedEpoch = finalizedHeader.Header.BabylonEpoch
 		}
 
-		data.FinalizedChainInfo = chainInfo
+		data.LatestFinalizedHeader = finalizedHeader.Header
 
 		// find the epoch metadata of the finalised epoch
 		data.EpochInfo, err = k.epochingKeeper.GetHistoricalEpoch(ctx, finalizedEpoch)
@@ -96,104 +96,13 @@ func (k Keeper) FinalizedChainsInfo(c context.Context, req *types.QueryFinalized
 
 		// generate all proofs
 		if req.Prove {
-			data.Proof, err = k.proveFinalizedChainInfo(ctx, chainInfo, data.EpochInfo, data.BtcSubmissionKey)
+			data.Proof, err = k.proveFinalizedConsumer(ctx, finalizedHeader.Header, data.EpochInfo, data.BtcSubmissionKey)
 			if err != nil {
 				return nil, err
 			}
 		}
 
-		resp.FinalizedChainsInfo = append(resp.FinalizedChainsInfo, data)
-	}
-
-	return resp, nil
-}
-
-func (k Keeper) FinalizedChainInfoUntilHeight(c context.Context, req *types.QueryFinalizedChainInfoUntilHeightRequest) (*types.QueryFinalizedChainInfoUntilHeightResponse, error) {
-	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid request")
-	}
-
-	if len(req.ConsumerId) == 0 {
-		return nil, status.Error(codes.InvalidArgument, "chain ID cannot be empty")
-	}
-
-	ctx := sdk.UnwrapSDKContext(c)
-	resp := &types.QueryFinalizedChainInfoUntilHeightResponse{}
-
-	// find the last finalised epoch
-	lastFinalizedEpoch := k.GetLastFinalizedEpoch(ctx)
-	// find the chain info in the last finalised epoch
-	chainInfoWithProof, err := k.GetEpochChainInfo(ctx, req.ConsumerId, lastFinalizedEpoch)
-	if err != nil {
-		return nil, err
-	}
-	chainInfo := chainInfoWithProof.ChainInfo
-
-	// set finalizedEpoch as the earliest epoch that snapshots this chain info.
-	// it's possible that the chain info's epoch is way before the last finalised epoch
-	// e.g., when there is no relayer for many epochs
-	// NOTE: if an epoch is finalised then all of its previous epochs are also finalised
-	finalizedEpoch := lastFinalizedEpoch
-	if chainInfo.LatestHeader.BabylonEpoch < finalizedEpoch {
-		finalizedEpoch = chainInfo.LatestHeader.BabylonEpoch
-	}
-
-	if chainInfo.LatestHeader.Height <= req.Height { // the requested height is after the last finalised chain info
-		// find and assign the epoch metadata of the finalised epoch
-		resp.EpochInfo, err = k.epochingKeeper.GetHistoricalEpoch(ctx, finalizedEpoch)
-		if err != nil {
-			return nil, err
-		}
-
-		rawCheckpoint, err := k.checkpointingKeeper.GetRawCheckpoint(ctx, finalizedEpoch)
-
-		if err != nil {
-			return nil, err
-		}
-
-		resp.RawCheckpoint = rawCheckpoint.Ckpt
-
-		// find and assign the raw checkpoint and the best submission key for the finalised epoch
-		_, resp.BtcSubmissionKey, err = k.btccKeeper.GetBestSubmission(ctx, finalizedEpoch)
-		if err != nil {
-			return nil, err
-		}
-	} else { // the requested height is before the last finalised chain info
-		// starting from the requested height, iterate backward until a timestamped header
-		closestHeader, err := k.FindClosestHeader(ctx, req.ConsumerId, req.Height)
-		if err != nil {
-			return nil, err
-		}
-		// assign the finalizedEpoch, and retrieve epoch info, raw ckpt and submission key
-		finalizedEpoch = closestHeader.BabylonEpoch
-		resp.EpochInfo, err = k.epochingKeeper.GetHistoricalEpoch(ctx, finalizedEpoch)
-		if err != nil {
-			return nil, err
-		}
-
-		rawCheckpoint, err := k.checkpointingKeeper.GetRawCheckpoint(ctx, finalizedEpoch)
-
-		if err != nil {
-			return nil, err
-		}
-
-		resp.RawCheckpoint = rawCheckpoint.Ckpt
-
-		_, resp.BtcSubmissionKey, err = k.btccKeeper.GetBestSubmission(ctx, finalizedEpoch)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	// if the query does not want the proofs, return here
-	if !req.Prove {
-		return resp, nil
-	}
-
-	// generate all proofs
-	resp.Proof, err = k.proveFinalizedChainInfo(ctx, chainInfo, resp.EpochInfo, resp.BtcSubmissionKey)
-	if err != nil {
-		return nil, err
+		resp.FinalizedConsumersData = append(resp.FinalizedConsumersData, data)
 	}
 
 	return resp, nil
