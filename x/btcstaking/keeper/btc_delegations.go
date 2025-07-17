@@ -86,10 +86,10 @@ func (k Keeper) CreateBTCDelegation(ctx sdk.Context, parsedMsg *types.ParsedCrea
 		// is in the allow list or the previous staking tx is a multi-staking tx
 		allowed, err := k.IsMultiStakingAllowed(ctx, parsedMsg.StkExp.PreviousActiveStkTxHash)
 		if err != nil {
-			return fmt.Errorf("failed to check if the previous staking tx hash is elegible for multi-staking: %w", err)
+			return fmt.Errorf("failed to check if the previous staking tx hash is eligible for multi-staking: %w", err)
 		}
 		if !allowed {
-			return types.ErrInvalidStakingTx.Wrapf("staking tx hash: %s, is not elegible for multi-staking", parsedMsg.StkExp.PreviousActiveStkTxHash.String())
+			return types.ErrInvalidStakingTx.Wrapf("staking tx hash: %s, is not eligible for multi-staking", parsedMsg.StkExp.PreviousActiveStkTxHash.String())
 		}
 	}
 

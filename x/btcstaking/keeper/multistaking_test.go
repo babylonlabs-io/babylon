@@ -268,7 +268,7 @@ func TestMultiStakingAllowList(t *testing.T) {
 		lcTip,
 	)
 	h.Error(err)
-	h.ErrorContains(err, "not elegible for multi-staking")
+	h.ErrorContains(err, "not eligible for multi-staking")
 
 	// Test 2: Create BtcStakeExpand with prevDelTxHash in allow list
 	// Add the previous staking tx hash to the allow list
