@@ -210,6 +210,14 @@ func (d *BTCDelegation) MustGetUnbondingTx() *wire.MsgTx {
 	return unbondingTx
 }
 
+func (d *BTCDelegation) MustGetStakingSlashingTx() *wire.MsgTx {
+	slashingTx, err := d.SlashingTx.ToMsgTx()
+	if err != nil {
+		panic(err)
+	}
+	return slashingTx
+}
+
 func (d *BTCDelegation) StakeExpansionTxHash() (*chainhash.Hash, error) {
 	if !d.IsStakeExpansion() {
 		return nil, errors.New("stake expansion not found. This is not a stake expansion delegation")

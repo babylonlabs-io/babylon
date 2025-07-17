@@ -604,7 +604,7 @@ func (d *BabylonAppDriver) GenerateBlocksUntilHeight(untilBlock uint64) {
 	}
 }
 
-func (d *BabylonAppDriver) GenerateNewBlockAssertExecutionSuccess() {
+func (d *BabylonAppDriver) GenerateNewBlockAssertExecutionSuccessWithResults() []*abci.ExecTxResult {
 	response := d.GenerateNewBlock()
 
 	for _, tx := range response.TxResults {
@@ -615,6 +615,12 @@ func (d *BabylonAppDriver) GenerateNewBlockAssertExecutionSuccess() {
 
 		require.Equal(d.t, tx.Code, uint32(0), tx.Log)
 	}
+
+	return response.TxResults
+}
+
+func (d *BabylonAppDriver) GenerateNewBlockAssertExecutionSuccess() {
+	d.GenerateNewBlockAssertExecutionSuccessWithResults()
 }
 
 func (d *BabylonAppDriver) GenerateNewBlockAssertExecutionFailure() []*abci.ExecTxResult {
@@ -715,14 +721,12 @@ func (d *BabylonAppDriver) ActivateVerifiedDelegations(expectedVerifiedDelegatio
 // Returns the block with the transactions
 func (d *BabylonAppDriver) IncludeVerifiedStakingTxInBTC(expectedVerifiedDelegations int) *datagen.BlockWithProofs {
 	verifiedDelegations := d.GetVerifiedBTCDelegations(d.t)
-	btcCheckpointParams := d.GetBTCCkptParams(d.t)
 
 	// Only verify number if requested
 	if expectedVerifiedDelegations != 0 {
 		require.Equal(d.t, len(verifiedDelegations), expectedVerifiedDelegations)
 	}
 
-	tip, _ := d.GetBTCLCTip()
 	var transactions []*wire.MsgTx
 	for _, del := range verifiedDelegations {
 		stakingTx, _, err := bbn.NewBTCTxFromHex(del.StakingTxHex)
@@ -730,7 +734,15 @@ func (d *BabylonAppDriver) IncludeVerifiedStakingTxInBTC(expectedVerifiedDelegat
 		transactions = append(transactions, stakingTx)
 	}
 
-	block := datagen.GenRandomBtcdBlockWithTransactions(d.r, transactions, tip)
+	return d.IncludeTxsInBTCAncConfirm(transactions)
+}
+
+func (d *BabylonAppDriver) IncludeTxsInBTCAncConfirm(txs []*wire.MsgTx) *datagen.BlockWithProofs {
+	btcCheckpointParams := d.GetBTCCkptParams(d.t)
+
+	tip, _ := d.GetBTCLCTip()
+
+	block := datagen.GenRandomBtcdBlockWithTransactions(d.r, txs, tip)
 	headers := BlocksWithProofsToHeaderBytes([]*datagen.BlockWithProofs{block})
 
 	confirmationBLocks := datagen.GenNEmptyBlocks(
