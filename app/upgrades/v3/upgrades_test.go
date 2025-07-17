@@ -70,6 +70,12 @@ func (s *UpgradeTestSuite) PostUpgrade() {
 	_, found := s.app.ModuleManager.Modules[deletedCapabilityStoreKey]
 	s.Require().False(found, "x/capability module shouldn't be found")
 
+	_, found = s.app.ModuleManager.Modules["btcstkconsumer"]
+	s.Require().True(found, "x/btcstkconsumer module shouldn't be found")
+
+	_, found = s.app.ModuleManager.Modules["zoneconcierge"]
+	s.Require().True(found, "x/zoneconcierge module shouldn't be found")
+
 	params := s.app.BTCStakingKeeper.GetParams(s.ctx)
 	s.Require().Equal(uint32(1), params.MaxFinalityProviders)
 }
