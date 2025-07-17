@@ -3,13 +3,14 @@ package app
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/babylonlabs-io/babylon/v3/x/zoneconcierge"
-	zckeeper "github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/keeper"
-	zctypes "github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/babylonlabs-io/babylon/v3/x/zoneconcierge"
+	zckeeper "github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/keeper"
+	zctypes "github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
 
 	autocliv1 "cosmossdk.io/api/cosmos/autocli/v1"
 	reflectionv1 "cosmossdk.io/api/cosmos/reflection/v1"
@@ -154,16 +155,17 @@ var (
 	DefaultNodeHome string
 	// fee collector account, module accounts and their permissions
 	maccPerms = map[string][]string{
-		authtypes.FeeCollectorName:     nil, // fee collector account
-		distrtypes.ModuleName:          nil,
-		minttypes.ModuleName:           {authtypes.Minter},
-		stakingtypes.BondedPoolName:    {authtypes.Burner, authtypes.Staking},
-		stakingtypes.NotBondedPoolName: {authtypes.Burner, authtypes.Staking},
-		govtypes.ModuleName:            {authtypes.Burner},
-		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
-		incentivetypes.ModuleName:      nil, // this line is needed to create an account for incentive module
-		tokenfactorytypes.ModuleName:   {authtypes.Minter, authtypes.Burner},
-		icatypes.ModuleName:            nil,
+		authtypes.FeeCollectorName:                  nil, // fee collector account
+		distrtypes.ModuleName:                       nil,
+		minttypes.ModuleName:                        {authtypes.Minter},
+		stakingtypes.BondedPoolName:                 {authtypes.Burner, authtypes.Staking},
+		stakingtypes.NotBondedPoolName:              {authtypes.Burner, authtypes.Staking},
+		govtypes.ModuleName:                         {authtypes.Burner},
+		ibctransfertypes.ModuleName:                 {authtypes.Minter, authtypes.Burner},
+		incentivetypes.ModuleName:                   nil, // this line is needed to create an account for incentive module
+		tokenfactorytypes.ModuleName:                {authtypes.Minter, authtypes.Burner},
+		icatypes.ModuleName:                         nil,
+		incentivetypes.ModAccCommissionCollectorBSN: nil, // Babylon BSN rewards commission collector
 	}
 
 	// software upgrades and forks

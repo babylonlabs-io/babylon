@@ -4,6 +4,8 @@ package babylon.btcstaking.v1;
 import "gogoproto/gogo.proto";
 import "babylon/btcstaking/v1/btcstaking.proto";
 import "amino/amino.proto";
+import "cosmos_proto/cosmos.proto";
+import "cosmos/base/v1beta1/coin.proto";
 
 option go_package = "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types";
 
@@ -277,4 +279,35 @@ message EventStakeExpansionActivated {
   string stake_expansion_tx_header_hash = 3 [(amino.dont_omitempty) = true];
   // stake_expansion_tx_block_index is the stake expansion tx index in the block
   uint32 stake_expansion_tx_block_index = 4 [(amino.dont_omitempty) = true];
+}
+
+// EventAddBsnRewards event that rewards were added for BSN finality providers
+message EventAddBsnRewards {
+  // Sender is the babylon address which paid for the rewards
+  string sender = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  // BsnConsumerId is the ID of the BSN consumer
+  string bsn_consumer_id = 2;
+  // TotalRewards is the total amount of rewards that were distributed
+  repeated cosmos.base.v1beta1.Coin total_rewards = 3 [
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
+  // BabylonCommission is the amount of commission collected by Babylon
+  repeated cosmos.base.v1beta1.Coin babylon_commission = 4 [
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
+  // FpRatios contains the finality providers and their respective reward ratios
+  repeated EventFpRewardInfo fp_ratios = 5 [(gogoproto.nullable) = false];
+}
+
+// EventFpRewardInfo contains finality provider reward information for events
+message EventFpRewardInfo {
+  // BtcPK is the Bitcoin secp256k1 PK of the finality provider
+  string fp_btc_pk_hex = 1 [(amino.dont_omitempty) = true];
+  // TotalRewards is the total amount allocated to this finality provider
+  repeated cosmos.base.v1beta1.Coin total_rewards = 2 [
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
 }

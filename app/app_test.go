@@ -30,16 +30,17 @@ import (
 
 var (
 	expectedMaccPerms = map[string][]string{
-		authtypes.FeeCollectorName:   nil, // fee collector account
-		distrtypes.ModuleName:        nil,
-		minttypes.ModuleName:         {authtypes.Minter},
-		stktypes.BondedPoolName:      {authtypes.Burner, authtypes.Staking},
-		stktypes.NotBondedPoolName:   {authtypes.Burner, authtypes.Staking},
-		govtypes.ModuleName:          {authtypes.Burner},
-		ibctransfertypes.ModuleName:  {authtypes.Minter, authtypes.Burner},
-		incentivetypes.ModuleName:    nil, // this line is needed to create an account for incentive module
-		tokenfactorytypes.ModuleName: {authtypes.Minter, authtypes.Burner},
-		icatypes.ModuleName:          nil,
+		authtypes.FeeCollectorName:                  nil, // fee collector account
+		distrtypes.ModuleName:                       nil,
+		minttypes.ModuleName:                        {authtypes.Minter},
+		stktypes.BondedPoolName:                     {authtypes.Burner, authtypes.Staking},
+		stktypes.NotBondedPoolName:                  {authtypes.Burner, authtypes.Staking},
+		govtypes.ModuleName:                         {authtypes.Burner},
+		ibctransfertypes.ModuleName:                 {authtypes.Minter, authtypes.Burner},
+		incentivetypes.ModuleName:                   nil, // this line is needed to create an account for incentive module
+		tokenfactorytypes.ModuleName:                {authtypes.Minter, authtypes.Burner},
+		icatypes.ModuleName:                         nil,
+		incentivetypes.ModAccCommissionCollectorBSN: nil, // Babylon BSN rewards commission collector
 	}
 )
 

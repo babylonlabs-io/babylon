@@ -14,6 +14,7 @@ import (
 	"testing"
 	"time"
 
+	"cosmossdk.io/math"
 	sdkmath "cosmossdk.io/math"
 	"github.com/babylonlabs-io/babylon/v3/btctxformatter"
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
@@ -1042,16 +1043,19 @@ func (d *BabylonAppDriver) GovPropWaitPass(msgInGovProp sdk.Msg) {
 
 // Consumer represents a registered consumer chain
 type Consumer struct {
-	ID string
+	ID                string
+	BabylonCommission math.LegacyDec
 }
 
 // RegisterConsumer registers a new consumer
-func (d *BabylonAppDriver) RegisterConsumer(consumerID string, rollupContractAddr ...string) *Consumer {
+func (d *BabylonAppDriver) RegisterConsumer(r *rand.Rand, consumerID string, rollupContractAddr ...string) *Consumer {
+	commission := datagen.GenBabylonRewardsCommission(r)
 	msg := &btcstkconsumertypes.MsgRegisterConsumer{
-		Signer:              d.GetDriverAccountAddress().String(),
-		ConsumerId:          consumerID,
-		ConsumerName:        "Test Consumer " + consumerID,
-		ConsumerDescription: "Test consumer for replay tests",
+		Signer:                   d.GetDriverAccountAddress().String(),
+		ConsumerId:               consumerID,
+		ConsumerName:             "Test Consumer " + consumerID,
+		ConsumerDescription:      "Test consumer for replay tests",
+		BabylonRewardsCommission: commission,
 	}
 
 	// If rollup contract address is provided, set it
@@ -1062,7 +1066,8 @@ func (d *BabylonAppDriver) RegisterConsumer(consumerID string, rollupContractAdd
 	d.SendTxWithMsgsFromDriverAccount(d.t, msg)
 
 	return &Consumer{
-		ID: consumerID,
+		ID:                consumerID,
+		BabylonCommission: commission,
 	}
 }
 

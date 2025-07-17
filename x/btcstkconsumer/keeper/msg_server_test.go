@@ -52,10 +52,10 @@ func FuzzRegisterConsumer(f *testing.F) {
 		consumerRegister := datagen.GenRandomCosmosConsumerRegister(r)
 		// Register the consumer
 		_, err = msgServer.RegisterConsumer(ctx, &types.MsgRegisterConsumer{
-			ConsumerId:          consumerRegister.ConsumerId,
-			ConsumerName:        consumerRegister.ConsumerName,
-			ConsumerDescription: consumerRegister.ConsumerDescription,
-			BabylonRewardsCommission:   consumerRegister.BabylonRewardsCommission,
+			ConsumerId:               consumerRegister.ConsumerId,
+			ConsumerName:             consumerRegister.ConsumerName,
+			ConsumerDescription:      consumerRegister.ConsumerDescription,
+			BabylonRewardsCommission: consumerRegister.BabylonRewardsCommission,
 		})
 		require.Error(t, err)
 		require.ErrorIs(t, err, govtypes.ErrInvalidSigner)
@@ -74,10 +74,10 @@ func FuzzRegisterConsumer(f *testing.F) {
 		babylonApp.IBCKeeper.ClientKeeper.SetClientState(ctx, consumerRegister.ConsumerId, &ibctmtypes.ClientState{})
 		// Register the consumer
 		_, err = msgServer.RegisterConsumer(ctx, &types.MsgRegisterConsumer{
-			ConsumerId:          consumerRegister.ConsumerId,
-			ConsumerName:        consumerRegister.ConsumerName,
-			ConsumerDescription: consumerRegister.ConsumerDescription,
-			BabylonRewardsCommission:   consumerRegister.BabylonRewardsCommission,
+			ConsumerId:               consumerRegister.ConsumerId,
+			ConsumerName:             consumerRegister.ConsumerName,
+			ConsumerDescription:      consumerRegister.ConsumerDescription,
+			BabylonRewardsCommission: consumerRegister.BabylonRewardsCommission,
 		})
 		require.NoError(t, err)
 		// check that the consumer is registered
@@ -98,7 +98,7 @@ func FuzzRegisterConsumer(f *testing.F) {
 			ConsumerName:                  consumerRegister.ConsumerName,
 			ConsumerDescription:           consumerRegister.ConsumerDescription,
 			RollupFinalityContractAddress: contractAddr.String(),
-			BabylonRewardsCommission:             consumerRegister.BabylonRewardsCommission,
+			BabylonRewardsCommission:      consumerRegister.BabylonRewardsCommission,
 		})
 		require.NoError(t, err)
 		// check that the consumer is registered
