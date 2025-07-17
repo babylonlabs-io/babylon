@@ -619,7 +619,7 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 		delegatorUnbondingInfo = &types.DelegatorUnbondingInfo{
 			// if the stake spending tx is the same as the either the registered unbonding tx or the slashing tx,
 			// we do not need to save it in the database
-			// this is expected report
+			// this is an expected report
 			SpendStakeTx: []byte{},
 		}
 		types.EmitEarlyUnbondedEvent(ctx, btcDel.MustGetStakingTxHash().String(), stakerSpendigTxHeader.Height)

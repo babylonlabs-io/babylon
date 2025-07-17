@@ -983,15 +983,15 @@ func AddWitnessToStakeExpTx(
 	spendingTx *wire.MsgTx, // this is the stake expansion transaction
 	net *chaincfg.Params,
 ) ([]byte, *wire.MsgTx) {
-	var covenatnPks []*btcec.PublicKey
+	var covenantPks []*btcec.PublicKey
 	for _, sk := range covenantSks {
-		covenatnPks = append(covenatnPks, sk.PubKey())
+		covenantPks = append(covenantPks, sk.PubKey())
 	}
 
 	stakingInfo, err := stk.BuildStakingInfo(
 		stakerSk.PubKey(),
 		finalityProviderPKs,
-		covenatnPks,
+		covenantPks,
 		covenantQuorum,
 		stakingTime,
 		btcutil.Amount(stakingValue),
