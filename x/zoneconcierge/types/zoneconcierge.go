@@ -91,7 +91,7 @@ func (ih *IndexedHeader) Equal(ih2 *IndexedHeader) bool {
 
 func (ihp IndexedHeaderWithProof) Validate() error {
 	if ihp.Header == nil {
-		return errors.New("invalid indexed header with proof. empty header")
+		return errors.New("invalid indexed header with proof: empty header")
 	}
 	return ihp.Header.Validate()
 }
