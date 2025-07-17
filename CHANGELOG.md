@@ -113,6 +113,7 @@ command to modify `max-finality-providers` parameter.
 - [#1352](https://github.com/babylonlabs-io/babylon/pull/1352) Add stake expansion signatures in BTC delegation query response
 - [#1367](https://github.com/babylonlabs-io/babylon/pull/1367) Add v3 mainnet upgrade handler
 - [#1379](https://github.com/babylonlabs-io/babylon/pull/1379) Add multi-staking allow-list docs in `x/btcstaking`
+- [#1358](https://github.com/babylonlabs-io/babylon/pull/1358) Simplify selective slashing message handler
 
 ### State Machine Breaking
 

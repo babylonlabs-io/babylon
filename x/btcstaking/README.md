@@ -776,11 +776,10 @@ message MsgSelectiveSlashingEvidence {
 
 Upon `MsgSelectiveSlashingEvidence`, a Babylon node will execute as follows:
 
-1. Find the BTC delegation with the given staking transaction hash.
-2. Ensure the BTC delegation is active or unbonding.
-3. Ensure the given secret key corresponds to the finality provider's public
+1. Ensure the BTC delegation is active or unbonding.
+2. Ensure the given secret key corresponds to the finality provider's public
    key.
-4. At this point, the finality provider must have done selective slashing. Thus,
+3. At this point, the finality provider must have done selective slashing. Thus,
    slash the finality provider and emit an event `EventSelectiveSlashing` about
    this.
 
