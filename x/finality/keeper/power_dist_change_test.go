@@ -1951,7 +1951,8 @@ func TestBSNDelegationActivated_DirectIncentives(t *testing.T) {
 	btclcKeeper := btcstktypes.NewMockBTCLightClientKeeper(ctrl)
 	btccKeeper := btcstktypes.NewMockBtcCheckpointKeeper(ctrl)
 	incentiveKeeper := ftypes.NewMockIncentiveKeeper(ctrl)
-	h := testutil.NewHelperNoMocksCalls(t, btclcKeeper, btccKeeper)
+	heightAfterMultiStakingAllowListExpiration := int64(10)
+	h := testutil.NewHelperNoMocksCalls(t, btclcKeeper, btccKeeper).WithBlockHeight(heightAfterMultiStakingAllowListExpiration)
 
 	h.FinalityKeeper.IncentiveKeeper = incentiveKeeper
 
@@ -2023,7 +2024,8 @@ func TestBSNDelegationUnbonded_DirectIncentives(t *testing.T) {
 	btccKeeper := btcstktypes.NewMockBtcCheckpointKeeper(ctrl)
 	ictvK := testutil.NewMockIctvKeeperK(ctrl)
 
-	h := testutil.NewHelperWithBankMock(t, btclcKeeper, btccKeeper, nil, ictvK)
+	heightAfterMultiStakingAllowListExpiration := int64(10)
+	h := testutil.NewHelperWithBankMock(t, btclcKeeper, btccKeeper, nil, ictvK).WithBlockHeight(heightAfterMultiStakingAllowListExpiration)
 
 	covenantSKs, _ := h.GenAndApplyCustomParams(r, 100, 200, 0, 2)
 
@@ -2094,7 +2096,8 @@ func TestTwoBtcActivationEvents(t *testing.T) {
 	btclcKeeper := btcstktypes.NewMockBTCLightClientKeeper(ctrl)
 	btccKeeper := btcstktypes.NewMockBtcCheckpointKeeper(ctrl)
 	ictvK := ftypes.NewMockIncentiveKeeper(ctrl)
-	h := testutil.NewHelperNoMocksCalls(t, btclcKeeper, btccKeeper)
+	heightAfterMultiStakingAllowListExpiration := int64(10)
+	h := testutil.NewHelperNoMocksCalls(t, btclcKeeper, btccKeeper).WithBlockHeight(heightAfterMultiStakingAllowListExpiration)
 	h.FinalityKeeper.IncentiveKeeper = ictvK
 
 	h.GenAndApplyCustomParams(r, 100, 200, 0, 2)
