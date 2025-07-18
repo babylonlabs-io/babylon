@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/btcsuite/btcd/btcec/v2"
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
@@ -103,6 +104,15 @@ func TestExportGenesis(t *testing.T) {
 		k.AddBTCStakingConsumerEvent(ctx, e.ConsumerId, event)
 	}
 
+	// store allowed multi staking tx hashes
+	for _, txHash := range gs.AllowedMultiStakingTxHashes {
+		hashBz, err := hex.DecodeString(txHash)
+		require.NoError(t, err)
+		hash, err := chainhash.NewHash(hashBz)
+		require.NoError(t, err)
+		k.IndexAllowedMultiStakingTransaction(ctx, hash)
+	}
+
 	exportedGs, err := k.ExportGenesis(ctx)
 	h.NoError(err)
 
@@ -182,6 +192,7 @@ func setupTest(t *testing.T) (sdk.Context, *helper.Helper, *types.GenesisState) 
 	events := make([]*types.EventIndex, 0)
 	btcDelegators := make([]*types.BTCDelegator, 0)
 	allowedStkTxHashes := make([]string, 0)
+	allowedMultiStkTxHashes := make([]string, 0)
 	consumerEvents := make([]*types.ConsumerEvent, 0)
 
 	blkHeight := uint64(r.Int63n(1000)) + math.MaxUint16
@@ -224,6 +235,7 @@ func setupTest(t *testing.T) (sdk.Context, *helper.Helper, *types.GenesisState) 
 			})
 
 			allowedStkTxHashes = append(allowedStkTxHashes, hex.EncodeToString(stakingTxHash[:]))
+			allowedMultiStkTxHashes = append(allowedMultiStkTxHashes, hex.EncodeToString(stakingTxHash[:]))
 
 			// record event that the BTC delegation will become expired (unbonded) at EndHeight-w
 			unbondedEvent := types.NewEventPowerDistUpdateWithBTCDel(&types.EventBTCDelegationStateUpdate{
@@ -258,15 +270,16 @@ func setupTest(t *testing.T) (sdk.Context, *helper.Helper, *types.GenesisState) 
 	}
 
 	gs := &types.GenesisState{
-		Params:                 []*types.Params{&params},
-		FinalityProviders:      fps,
-		BtcDelegations:         btcDelegations,
-		BlockHeightChains:      chainsHeight,
-		BtcDelegators:          btcDelegators,
-		Events:                 events,
-		AllowedStakingTxHashes: allowedStkTxHashes,
-		LargestBtcReorg:        latestBtcReOrg,
-		ConsumerEvents:         consumerEvents,
+		Params:                      []*types.Params{&params},
+		FinalityProviders:           fps,
+		BtcDelegations:              btcDelegations,
+		BlockHeightChains:           chainsHeight,
+		BtcDelegators:               btcDelegators,
+		Events:                      events,
+		AllowedStakingTxHashes:      allowedStkTxHashes,
+		LargestBtcReorg:             latestBtcReOrg,
+		ConsumerEvents:              consumerEvents,
+		AllowedMultiStakingTxHashes: allowedMultiStkTxHashes,
 	}
 	require.NoError(t, gs.Validate())
 	return ctx, h, gs
