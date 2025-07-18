@@ -3,6 +3,7 @@ package initialization
 import (
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"path/filepath"
 	"time"
 
@@ -19,6 +20,7 @@ import (
 	"github.com/cosmos/gogoproto/proto"
 
 	"github.com/babylonlabs-io/babylon/v3/test/e2e/util"
+	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
 	btccheckpointtypes "github.com/babylonlabs-io/babylon/v3/x/btccheckpoint/types"
 	blctypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
@@ -174,13 +176,17 @@ func initGenesis(
 
 	for _, val := range chain.nodes {
 		addr, err := val.keyInfo.GetAddress()
-
 		if err != nil {
 			return err
 		}
 
 		if chain.chainMeta.Id == ChainAID {
-			if err := addAccount(configDir, "", InitBalanceStrA, addr, forkHeight); err != nil {
+			// add random coins to test bsn rewards
+			r := rand.New(rand.NewSource(time.Now().Unix()))
+			initialFundsA := datagen.GenRandomCoins(r).MulInt(sdkmath.NewInt(10))
+			initialFundsA = initialFundsA.Add(sdk.NewCoin(BabylonDenom, sdkmath.NewInt(BabylonBalanceA)))
+
+			if err := addAccount(configDir, "", initialFundsA.String(), addr, forkHeight); err != nil {
 				return err
 			}
 		} else if chain.chainMeta.Id == ChainBID {

@@ -40,11 +40,19 @@ const (
 	numPubRand        = uint64(350)
 )
 
-type BtcRewardsDistribution struct {
+type BaseBtcRewardsDistribution struct {
 	suite.Suite
 
 	r   *rand.Rand
 	net *chaincfg.Params
+
+	// covenant helpers
+	covenantSKs     []*btcec.PrivateKey
+	covenantWallets []string
+}
+
+type BtcRewardsDistribution struct {
+	BaseBtcRewardsDistribution
 
 	fp1BTCSK  *btcec.PrivateKey
 	fp2BTCSK  *btcec.PrivateKey
@@ -78,10 +86,6 @@ type BtcRewardsDistribution struct {
 	// bech32 address of the finality providers
 	fp1Addr string
 	fp2Addr string
-
-	// covenant helpers
-	covenantSKs     []*btcec.PrivateKey
-	covenantWallets []string
 
 	// finality helpers
 	finalityIdx              uint64
@@ -152,6 +156,7 @@ func (s *BtcRewardsDistribution) Test1CreateFinalityProviders() {
 		s.fp1BTCSK,
 		n1,
 		s.fp1Addr,
+		"",
 	)
 	s.NotNil(s.fp1)
 
@@ -161,6 +166,7 @@ func (s *BtcRewardsDistribution) Test1CreateFinalityProviders() {
 		s.fp2BTCSK,
 		n2,
 		s.fp2Addr,
+		"",
 	)
 	s.NotNil(s.fp2)
 
@@ -197,40 +203,7 @@ func (s *BtcRewardsDistribution) Test3SubmitCovenantSignature() {
 	n1, err := s.configurer.GetChainConfig(0).GetNodeAtIndex(1)
 	s.NoError(err)
 
-	params := n1.QueryBTCStakingParams()
-
-	covAddrs := make([]string, params.CovenantQuorum)
-	covWallets := make([]string, params.CovenantQuorum)
-	for i := 0; i < int(params.CovenantQuorum); i++ {
-		covWallet := fmt.Sprintf("cov%d", i)
-		covWallets[i] = covWallet
-		covAddrs[i] = n1.KeysAdd(covWallet)
-	}
-	s.covenantWallets = covWallets
-
-	n1.BankMultiSendFromNode(covAddrs, "1000000ubbn")
-
-	// tx bank send needs to take effect
-	n1.WaitForNextBlock()
-
-	pendingDelsResp := n1.QueryFinalityProvidersDelegations(s.fp1.BtcPk.MarshalHex(), s.fp2.BtcPk.MarshalHex())
-	s.Require().Equal(len(pendingDelsResp), 3)
-
-	for _, pendingDelResp := range pendingDelsResp {
-		pendingDel, err := chain.ParseRespBTCDelToBTCDel(pendingDelResp)
-		s.NoError(err)
-
-		SendCovenantSigsToPendingDel(s.r, s.T(), n1, s.net, s.covenantSKs, s.covenantWallets, pendingDel)
-
-		n1.WaitForNextBlock()
-	}
-
-	// ensure the BTC delegation has covenant sigs now
-	activeDelsSet := n1.QueryFinalityProvidersDelegations(s.fp1.BtcPk.MarshalHex(), s.fp2.BtcPk.MarshalHex())
-	s.Require().Len(activeDelsSet, 3)
-	for _, activeDel := range activeDelsSet {
-		s.Require().True(activeDel.Active)
-	}
+	s.CreateCovenantsAndSubmitSignaturesToPendDels(n1, s.fp1, s.fp2)
 }
 
 // Test4CommitPublicRandomnessAndSealed commits public randomness for
@@ -736,7 +709,7 @@ func (s *BtcRewardsDistribution) QueryRewardGauges(n *chain.NodeConfig) (
 	return fp1RewardGauge, fp2RewardGauge, btcDel1RewardGauge, btcDel2RewardGauge
 }
 
-func (s *BtcRewardsDistribution) CreateBTCDelegationAndCheck(
+func (s *BaseBtcRewardsDistribution) CreateBTCDelegationAndCheck(
 	n *chain.NodeConfig,
 	wDel string,
 	fp *bstypes.FinalityProvider,
@@ -745,6 +718,61 @@ func (s *BtcRewardsDistribution) CreateBTCDelegationAndCheck(
 	stakingSatAmt int64,
 ) {
 	n.CreateBTCDelegationAndCheck(s.r, s.T(), s.net, wDel, fp, btcStakerSK, delAddr, stakingTimeBlocks, stakingSatAmt)
+}
+
+func (s *BaseBtcRewardsDistribution) CreateBTCDelegationMultipleFPsAndCheck(
+	n *chain.NodeConfig,
+	wDel string,
+	btcStakerSK *btcec.PrivateKey,
+	delAddr string,
+	stakingSatAmt int64,
+	fps ...*bstypes.FinalityProvider,
+) {
+	n.CreateBTCDelegationMultipleFPsAndCheck(s.r, s.T(), s.net, wDel, fps, btcStakerSK, delAddr, stakingTimeBlocks, stakingSatAmt)
+}
+
+func (s *BaseBtcRewardsDistribution) CreateCovenantsAndSubmitSignaturesToPendDels(
+	n *chain.NodeConfig,
+	fps ...*bstypes.FinalityProvider,
+) {
+	params := n.QueryBTCStakingParams()
+
+	covAddrs := make([]string, params.CovenantQuorum)
+	covWallets := make([]string, params.CovenantQuorum)
+	for i := 0; i < int(params.CovenantQuorum); i++ {
+		covWallet := fmt.Sprintf("cov%d", i)
+		covWallets[i] = covWallet
+		covAddrs[i] = n.KeysAdd(covWallet)
+	}
+	s.covenantWallets = covWallets
+
+	n.BankMultiSendFromNode(covAddrs, "1000000ubbn")
+
+	fpBtcPks := make([]string, len(fps))
+	for i, fp := range fps {
+		fpBtcPks[i] = fp.BtcPk.MarshalHex()
+	}
+
+	// tx bank send needs to take effect
+	n.WaitForNextBlock()
+	pendingDelsResp := n.QueryFinalityProvidersDelegations(fpBtcPks...)
+	s.Require().Equal(len(pendingDelsResp), 3)
+
+	for _, pendingDelResp := range pendingDelsResp {
+		pendingDel, err := chain.ParseRespBTCDelToBTCDel(pendingDelResp)
+		s.NoError(err)
+
+		SendCovenantSigsToPendingDel(s.r, s.T(), n, s.net, s.covenantSKs, s.covenantWallets, pendingDel)
+
+		n.WaitForNextBlock()
+	}
+
+	// ensure the BTC delegation has covenant sigs now
+	activeDelsSet := n.QueryFinalityProvidersDelegations(fpBtcPks...)
+	s.Require().Len(activeDelsSet, 3)
+	for _, activeDel := range activeDelsSet {
+		s.Require().True(activeDel.Active)
+	}
 }
 
 // CheckWithdrawReward withdraw rewards for one delegation and check the balance

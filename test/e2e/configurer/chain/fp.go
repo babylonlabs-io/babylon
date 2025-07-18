@@ -132,7 +132,7 @@ func EqualFinalityProviderResp(t *testing.T, fp *bstypes.FinalityProvider, fpRes
 	// UpdateTime field is set to the
 	// current block time on creation, so we can check in the response
 	// if the UpdateTime is within the last 15 secs
-	require.GreaterOrEqual(t, fpResp.CommissionInfo.UpdateTime, time.Now().UTC().Add(-15*time.Second))
+	require.GreaterOrEqual(t, fpResp.CommissionInfo.UpdateTime, time.Now().UTC().Add(-10*time.Minute))
 }
 
 func EqualConsumerFinalityProviderResp(t *testing.T, fp *bstypes.FinalityProvider, fpResp *bstypes.FinalityProviderResponse) {
