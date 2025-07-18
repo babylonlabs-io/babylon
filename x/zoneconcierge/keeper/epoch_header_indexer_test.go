@@ -9,6 +9,7 @@ import (
 
 	"github.com/babylonlabs-io/babylon/v3/app"
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
+	btcstkconsumertypes "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
 )
 
 func FuzzEpochHeaderIndexer(f *testing.F) {
@@ -24,8 +25,18 @@ func FuzzEpochHeaderIndexer(f *testing.F) {
 		hooks := zcKeeper.Hooks()
 		consumerID := datagen.GenRandomHexStr(r, 10)
 
-		// register the consumer
-		zcKeeper.AddConsumer(ctx, consumerID)
+		// Register the consumer through the btcstkconsumer keeper
+		consumerRegister := &btcstkconsumertypes.ConsumerRegister{
+			ConsumerId:          consumerID,
+			ConsumerName:        "test-consumer",
+			ConsumerDescription: "Test consumer for epoch headers",
+			ConsumerMetadata: &btcstkconsumertypes.ConsumerRegister_CosmosConsumerMetadata{
+				CosmosConsumerMetadata: &btcstkconsumertypes.CosmosConsumerMetadata{},
+			},
+			BabylonRewardsCommission: datagen.GenBabylonRewardsCommission(r),
+		}
+		err := babylonApp.BTCStkConsumerKeeper.RegisterConsumer(ctx, consumerRegister)
+		require.NoError(t, err)
 
 		// enter a random epoch
 		epochNum := datagen.RandomInt(r, 10) + 1 // start from epoch 1
@@ -71,8 +82,18 @@ func FuzzGetFinalizedHeaders(f *testing.F) {
 		hooks := zcKeeper.Hooks()
 		consumerID := datagen.GenRandomHexStr(r, 10)
 
-		// register the consumer
-		zcKeeper.AddConsumer(ctx, consumerID)
+		// Register the consumer through the btcstkconsumer keeper
+		consumerRegister := &btcstkconsumertypes.ConsumerRegister{
+			ConsumerId:          consumerID,
+			ConsumerName:        "test-consumer",
+			ConsumerDescription: "Test consumer for epoch headers",
+			ConsumerMetadata: &btcstkconsumertypes.ConsumerRegister_CosmosConsumerMetadata{
+				CosmosConsumerMetadata: &btcstkconsumertypes.CosmosConsumerMetadata{},
+			},
+			BabylonRewardsCommission: datagen.GenBabylonRewardsCommission(r),
+		}
+		err := babylonApp.BTCStkConsumerKeeper.RegisterConsumer(ctx, consumerRegister)
+		require.NoError(t, err)
 
 		numReqs := datagen.RandomInt(r, 5) + 1
 		epochNumList := []uint64{datagen.RandomInt(r, 10) + 1}

@@ -15,6 +15,7 @@ import (
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
 	testhelper "github.com/babylonlabs-io/babylon/v3/testutil/helper"
 	btcctypes "github.com/babylonlabs-io/babylon/v3/x/btccheckpoint/types"
+	btcstkconsumertypes "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
 	"github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
 )
@@ -61,8 +62,18 @@ func FuzzBTCTimestamp(f *testing.F) {
 		// handle a random header from a random consumer chain
 		consumerID := datagen.GenRandomHexStr(r, 10)
 
-		// register the consumer
-		zck.AddConsumer(h.Ctx, consumerID)
+		// Register the consumer through the btcstkconsumer keeper
+		consumerRegister := &btcstkconsumertypes.ConsumerRegister{
+			ConsumerId:          consumerID,
+			ConsumerName:        "test-consumer",
+			ConsumerDescription: "Test consumer for BTC timestamp",
+			ConsumerMetadata: &btcstkconsumertypes.ConsumerRegister_CosmosConsumerMetadata{
+				CosmosConsumerMetadata: &btcstkconsumertypes.CosmosConsumerMetadata{},
+			},
+			BabylonRewardsCommission: datagen.GenBabylonRewardsCommission(r),
+		}
+		err = h.App.BTCStkConsumerKeeper.RegisterConsumer(h.Ctx, consumerRegister)
+		require.NoError(t, err)
 
 		height := datagen.RandomInt(r, 100) + 1
 		ibctmHeader := datagen.GenRandomIBCTMHeader(r, height)

@@ -35,7 +35,6 @@ var (
 	ParamsKey                = []byte{0x15} // key prefix for the parameters
 	SealedEpochProofKey      = []byte{0x16} // key prefix for proof of sealed epochs
 	ConsumerBTCStateKey      = []byte{0x17} // key prefix for unified Consumer BTC state
-	RegisteredConsumersKey   = []byte{0x18} // key prefix for registered Cosmos consumers
 )
 
 func KeyPrefix(p string) []byte {

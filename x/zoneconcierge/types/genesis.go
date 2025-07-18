@@ -24,16 +24,14 @@ func NewGenesis(
 	lastSentSegment *BTCChainSegment,
 	sealedEpochs []*SealedEpochProofEntry,
 	consumerBtcStates []*ConsumerBTCStateEntry,
-	registeredConsumers []string,
 ) *GenesisState {
 	return &GenesisState{
-		PortId:              PortID,
-		Params:              params,
-		FinalizedHeaders:    finalizedHeaders,
-		LastSentSegment:     lastSentSegment,
-		SealedEpochsProofs:  sealedEpochs,
-		ConsumerBtcStates:   consumerBtcStates,
-		RegisteredConsumers: registeredConsumers,
+		PortId:             PortID,
+		Params:             params,
+		FinalizedHeaders:   finalizedHeaders,
+		LastSentSegment:    lastSentSegment,
+		SealedEpochsProofs: sealedEpochs,
+		ConsumerBtcStates:  consumerBtcStates,
 	}
 }
 
@@ -64,10 +62,6 @@ func (gs GenesisState) Validate() error {
 	}
 
 	if err := types.ValidateEntries(gs.ConsumerBtcStates, func(cs *ConsumerBTCStateEntry) string { return cs.ConsumerId }); err != nil {
-		return err
-	}
-
-	if err := types.ValidateEntries(gs.RegisteredConsumers, func(consumerID string) string { return consumerID }); err != nil {
 		return err
 	}
 
@@ -115,6 +109,4 @@ func SortData(gs *GenesisState) {
 		}
 		return gs.SealedEpochsProofs[i].Proof.String() < gs.SealedEpochsProofs[j].Proof.String()
 	})
-
-	sort.Strings(gs.RegisteredConsumers)
 }

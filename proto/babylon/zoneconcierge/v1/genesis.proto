@@ -22,8 +22,6 @@ message GenesisState {
   repeated SealedEpochProofEntry sealed_epochs_proofs = 5;
   // consumer_btc_states contains the BTC header synchronization state for each consumer
   repeated ConsumerBTCStateEntry consumer_btc_states = 6;
-  // registered_consumers contains the list of registered consumer IDs
-  repeated string registered_consumers = 7;
 }
 
 // FinalizedHeaderEntry is a helper for genesis state.

@@ -141,10 +141,6 @@ func (k Keeper) HandleIBCChannelCreation(
 	if err := k.InitializeConsumerBTCState(ctx, clientID); err != nil {
 		return fmt.Errorf("failed to initialize consumer BTC state: %w", err)
 	}
-
-	// Register the consumer in our registry (clientID is the consumerID)
-	k.AddConsumer(ctx, clientID)
-
 	// Get current tip height for logging
 	currentTip := k.btclcKeeper.GetTipInfo(ctx)
 

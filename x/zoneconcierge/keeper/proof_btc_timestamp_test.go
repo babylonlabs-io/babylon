@@ -17,6 +17,7 @@ import (
 	testhelper "github.com/babylonlabs-io/babylon/v3/testutil/helper"
 	testkeeper "github.com/babylonlabs-io/babylon/v3/testutil/keeper"
 	btcctypes "github.com/babylonlabs-io/babylon/v3/x/btccheckpoint/types"
+	btcstkconsumertypes "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
 	zctypes "github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
 )
@@ -43,8 +44,18 @@ func FuzzProofConsumerHeaderInEpoch(f *testing.F) {
 		// handle a random header from a random consumer chain
 		consumerID := datagen.GenRandomHexStr(r, 10)
 
-		// register the consumer
-		zck.AddConsumer(h.Ctx, consumerID)
+		// Register the consumer through the btcstkconsumer keeper
+		consumerRegister := &btcstkconsumertypes.ConsumerRegister{
+			ConsumerId:          consumerID,
+			ConsumerName:        "test-consumer",
+			ConsumerDescription: "Test consumer for proof",
+			ConsumerMetadata: &btcstkconsumertypes.ConsumerRegister_CosmosConsumerMetadata{
+				CosmosConsumerMetadata: &btcstkconsumertypes.CosmosConsumerMetadata{},
+			},
+			BabylonRewardsCommission: datagen.GenBabylonRewardsCommission(r),
+		}
+		err = h.App.BTCStkConsumerKeeper.RegisterConsumer(h.Ctx, consumerRegister)
+		require.NoError(t, err)
 
 		height := datagen.RandomInt(r, 100) + 1
 		ibctmHeader := datagen.GenRandomIBCTMHeader(r, height)

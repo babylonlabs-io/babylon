@@ -33,10 +33,7 @@ func (k Keeper) InitGenesis(ctx context.Context, gs types.GenesisState) error {
 		k.SetConsumerBTCState(ctx, cs.ConsumerId, cs.State)
 	}
 
-	// Initialize registered consumers
-	for _, consumerID := range gs.RegisteredConsumers {
-		k.AddConsumer(ctx, consumerID)
-	}
+	// NOTE: Consumer registration is now handled by the btcstkconsumer module
 
 	return k.SetParams(ctx, gs.Params)
 }
@@ -55,17 +52,15 @@ func (k Keeper) ExportGenesis(ctx context.Context) (*types.GenesisState, error) 
 		return nil, err
 	}
 
-	// Get all registered consumers
-	registeredConsumers := k.GetAllConsumerIDs(ctx)
+	// NOTE: Consumer registration is now handled by the btcstkconsumer module
 
 	return &types.GenesisState{
-		Params:              k.GetParams(ctx),
-		PortId:              k.GetPort(ctx),
-		FinalizedHeaders:    fh,
-		LastSentSegment:     k.GetLastSentSegment(ctx),
-		SealedEpochsProofs:  se,
-		ConsumerBtcStates:   cs,
-		RegisteredConsumers: registeredConsumers,
+		Params:             k.GetParams(ctx),
+		PortId:             k.GetPort(ctx),
+		FinalizedHeaders:   fh,
+		LastSentSegment:    k.GetLastSentSegment(ctx),
+		SealedEpochsProofs: se,
+		ConsumerBtcStates:  cs,
 	}, nil
 }
 

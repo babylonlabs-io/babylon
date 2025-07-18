@@ -18,13 +18,19 @@ func FuzzTestExportGenesis(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		var (
-			r      = rand.New(rand.NewSource(seed))
-			ctrl   = gomock.NewController(t)
-			k, ctx = keepertest.ZoneConciergeKeeper(t, nil, nil, nil, nil, nil, nil, nil)
+			r    = rand.New(rand.NewSource(seed))
+			ctrl = gomock.NewController(t)
 		)
 		defer ctrl.Finish()
 
 		gs := datagen.GenRandomZoneconciergeGenState(r)
+
+		// mock btcstkconsumer keeper
+		btcStkConsumerKeeper := types.NewMockBTCStkConsumerKeeper(ctrl)
+		btcStkConsumerKeeper.EXPECT().GetAllRegisteredConsumerIDs(gomock.Any()).Return([]string{}).AnyTimes()
+		btcStkConsumerKeeper.EXPECT().IsCosmosConsumer(gomock.Any(), gomock.Any()).Return(true, nil).AnyTimes()
+
+		k, ctx := keepertest.ZoneConciergeKeeper(t, nil, nil, nil, nil, nil, nil, btcStkConsumerKeeper)
 
 		// set values to state using InitGenesis
 		err := k.InitGenesis(ctx, *gs)
@@ -48,8 +54,14 @@ func FuzzTestInitGenesis(f *testing.F) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		k, ctx := keepertest.ZoneConciergeKeeper(t, nil, nil, nil, nil, nil, nil, nil)
 		gs := datagen.GenRandomZoneconciergeGenState(r)
+
+		// mock btcstkconsumer keeper
+		btcStkConsumerKeeper := types.NewMockBTCStkConsumerKeeper(ctrl)
+		btcStkConsumerKeeper.EXPECT().GetAllRegisteredConsumerIDs(gomock.Any()).Return([]string{}).AnyTimes()
+		btcStkConsumerKeeper.EXPECT().IsCosmosConsumer(gomock.Any(), gomock.Any()).Return(true, nil).AnyTimes()
+
+		k, ctx := keepertest.ZoneConciergeKeeper(t, nil, nil, nil, nil, nil, nil, btcStkConsumerKeeper)
 
 		// Run the InitGenesis
 		err := k.InitGenesis(ctx, *gs)

@@ -34,7 +34,6 @@ consumers) via IBC packets:
   - [LatestEpochHeaders](#latestepochheaders)
   - [FinalizedEpochHeaders](#finalizedepochheaders)
   - [ConsumerBTCState](#consumerbtcstate)
-  - [RegisteredConsumers](#registeredconsumers)
   - [Params](#params)
   - [Port](#port)
   - [LastSentBTCSegment](#lastsentbtcsegment)
@@ -61,8 +60,7 @@ consumers) via IBC packets:
 
 ## State
 
-The Zone Concierge module maintains a simplified header indexing system and
-manages consumer registrations with the following KV stores.
+The Zone Concierge module maintains a simplified header indexing system with the following KV stores. Consumer registration is handled by the `btcstkconsumer` module.
 
 ### Parameters
 
@@ -157,12 +155,6 @@ message ConsumerBTCState {
 }
 ```
 
-### RegisteredConsumers
-
-The [consumer registry storage](./keeper/consumer_registry.go) maintains a
-simple registry of registered consumers. The key is the consumer's `ConsumerID`,
-and the value is an existence marker. This provides efficient lookup for
-determining which consumers are authorized to receive updates.
 
 ### Params
 
@@ -221,8 +213,7 @@ executes as follows:
 1. Extract the header info and the client state from the message
 2. Determine if the header is on a fork by checking if the client is frozen
 3. Call `HandleHeaderWithValidCommit` to process the header
-4. Check if the consumer is registered in the consumer registry; if not,
-   ignore the header
+4. Check if the consumer is registered through the `btcstkconsumer` module and is a Cosmos consumer; if not, ignore the header
 5. Create an `IndexedHeader` with the header metadata and Babylon context
 6. If the header is not on a fork and is newer than the existing latest header,
    update the latest epoch header for the consumer

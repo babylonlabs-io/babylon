@@ -6,8 +6,6 @@ import "google/protobuf/timestamp.proto";
 import "tendermint/crypto/proof.proto";
 import "babylon/btccheckpoint/v1/btccheckpoint.proto";
 import "babylon/checkpointing/v1/bls_key.proto";
-//import "babylon/checkpointing/v1/checkpoint.proto";
-//import "babylon/epoching/v1/epoching.proto";
 import "babylon/btclightclient/v1/btclightclient.proto";
 
 option go_package = "github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types";

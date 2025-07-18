@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"context"
 	"math/rand"
 	"testing"
 
@@ -128,20 +129,30 @@ func FuzzFinalizedChainInfo(f *testing.F) {
 		channelKeeper := zctypes.NewMockChannelKeeper(ctrl)
 		channelKeeper.EXPECT().GetAllChannels(gomock.Any()).Return(nil).AnyTimes()
 
-		zcKeeper, ctx := testkeeper.ZoneConciergeKeeper(t, channelKeeper, btclcKeeper, checkpointingKeeper, btccKeeper, epochingKeeper, nil, nil)
+		// mock btcstkconsumer keeper
+		btcStkConsumerKeeper := zctypes.NewMockBTCStkConsumerKeeper(ctrl)
+		btcStkConsumerKeeper.EXPECT().IsConsumerRegistered(gomock.Any(), gomock.Any()).Return(true).AnyTimes()
+		btcStkConsumerKeeper.EXPECT().IsCosmosConsumer(gomock.Any(), gomock.Any()).Return(true, nil).AnyTimes()
+
+		zcKeeper, ctx := testkeeper.ZoneConciergeKeeper(t, channelKeeper, btclcKeeper, checkpointingKeeper, btccKeeper, epochingKeeper, nil, btcStkConsumerKeeper)
 		hooks := zcKeeper.Hooks()
 
 		var (
 			consumersInfo []consumerInfo
 			consumerIDs   []string
 		)
+
+		// Set up the mock to return the consumerIDs slice
+		btcStkConsumerKeeper.EXPECT().GetAllRegisteredConsumerIDs(gomock.Any()).DoAndReturn(func(ctx context.Context) []string {
+			return consumerIDs
+		}).AnyTimes()
 		numChains := datagen.RandomInt(r, 100) + 1
 		for i := uint64(0); i < numChains; i++ {
 			consumerIDLen := datagen.RandomInt(r, 40) + 10
 			consumerID := string(datagen.GenRandomByteArray(r, consumerIDLen))
 
-			// register the consumer
-			zcKeeper.AddConsumer(ctx, consumerID)
+			// NOTE: Consumer registration is handled by the btcstkconsumer module
+			// The mock btcstkconsumer keeper should return true for IsConsumerRegistered and IsCosmosConsumer
 
 			// invoke the hook a random number of times to simulate a random number of blocks
 			numHeaders := datagen.RandomInt(r, 100) + 1
