@@ -34,7 +34,7 @@ func CreateFpFromNodeAddr(
 	require.NoError(t, err)
 
 	// empty defaults to Babylon Genesis
-	previousFps := node.QueryFinalityProviders("")
+	previousFps := node.QueryFinalityProviders(node.chainId)
 
 	// use a higher commission to ensure the reward is more than tx fee of a finality sig
 	commission := sdkmath.LegacyNewDecWithPrec(20, 2)
@@ -49,7 +49,7 @@ func CreateFpFromNodeAddr(
 	node.WaitForNextBlock()
 
 	// query the existence of finality provider and assert equivalence
-	actualFps := node.QueryFinalityProviders("")
+	actualFps := node.QueryFinalityProviders(node.chainId)
 	require.Len(t, actualFps, len(previousFps)+1)
 
 	// get chain ID to assert equality with the BsnId field

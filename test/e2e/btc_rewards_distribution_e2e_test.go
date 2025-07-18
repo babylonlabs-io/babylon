@@ -170,7 +170,7 @@ func (s *BtcRewardsDistribution) Test1CreateFinalityProviders() {
 	)
 	s.NotNil(s.fp2)
 
-	actualFps := n2.QueryFinalityProviders("")
+	actualFps := n2.QueryFinalityProviders(n2.ChainID())
 	s.Len(actualFps, 2)
 }
 
@@ -266,7 +266,7 @@ func (s *BtcRewardsDistribution) Test4CommitPublicRandomnessAndSealed() {
 	s.Require().GreaterOrEqual(finalizedEpoch, fp1PubRand.EpochNum)
 	s.Require().GreaterOrEqual(finalizedEpoch, fp2PubRand.EpochNum)
 
-	fps := n2.QueryFinalityProviders("")
+	fps := n2.QueryFinalityProviders(n2.ChainID())
 	s.Require().Len(fps, 2)
 	for _, fp := range fps {
 		s.Require().False(fp.Jailed, "fp is jailed")
@@ -358,7 +358,7 @@ func (s *BtcRewardsDistribution) Test5CheckRewardsFirstDelegations() {
 	// (del2) => 4_00000000
 
 	// verifies that everyone is active and not slashed
-	fps := n2.QueryFinalityProviders("")
+	fps := n2.QueryFinalityProviders(n2.ChainID())
 	s.Len(fps, 2)
 	s.Equal(fps[0].Commission.String(), fps[1].Commission.String())
 	for _, fp := range fps {
@@ -526,7 +526,7 @@ func (s *BtcRewardsDistribution) Test8SlashFp() {
 
 	n2.WaitForNextBlocks(2)
 
-	fps := n2.QueryFinalityProviders("")
+	fps := n2.QueryFinalityProviders(n2.ChainID())
 	require.Len(s.T(), fps, 2)
 	for _, fp := range fps {
 		if strings.EqualFold(fp.Addr, s.fp1Addr) {

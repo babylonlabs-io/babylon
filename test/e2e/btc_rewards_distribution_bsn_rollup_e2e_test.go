@@ -4,11 +4,14 @@ import (
 	"math/rand"
 	"time"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/chaincfg"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/babylonlabs-io/babylon/v3/test/e2e/configurer"
+	"github.com/babylonlabs-io/babylon/v3/testutil/coins"
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
 	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 	bsctypes "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
@@ -237,106 +240,63 @@ func (s *BtcRewardsDistributionBsnRollup) Test3SubmitCovenantSignature() {
 	s.CreateCovenantsAndSubmitSignaturesToPendDels(n1, s.fp1bbn)
 }
 
-// // Test4CommitPublicRandomnessAndSealed commits public randomness for
-// // each finality provider and seals the epoch.
-// func (s *BtcRewardsDistributionBsnRollup) Test4CommitPublicRandomnessAndSealed() {
-// 	chainA := s.configurer.GetChainConfig(0)
-// 	n1, err := chainA.GetNodeAtIndex(1)
-// 	s.NoError(err)
-// 	n2, err := chainA.GetNodeAtIndex(2)
-// 	s.NoError(err)
+// Test5CheckRewardsFirstDelegations verifies the rewards of all the 3 created BTC delegations
+// Since it is a BSN rewards, it doesn't depend on the blocks, but when the MsgBsnAddRewards
+// is sent.
+func (s *BtcRewardsDistributionBsnRollup) Test5CheckRewardsFirstDelegations() {
+	n2, err := s.configurer.GetChainConfig(0).GetNodeAtIndex(2)
+	s.NoError(err)
 
-// 	// needs to wait for a block to make sure the pub rand is committed
-// 	// prior to epoch finalization
-// 	n2.WaitForNextBlockWithSleep50ms()
+	// Current setup of voting power
+	// (fp1, del1) => 2_00000000
+	// (fp1, del2) => 4_00000000
+	// (fp2, del1) => 2_00000000
 
-// 	// check all FPs requirement to be active
-// 	// TotalBondedSat > 0
-// 	// IsTimestamped
-// 	// !IsJailed
-// 	// !IsSlashed
+	// The sum per bech32 address will be
+	// (fp1)  => 6_00000000
+	// (fp2)  => 2_00000000
+	// (del1) => 4_00000000
+	// (del2) => 4_00000000
 
-// 	fps := n2.QueryFinalityProviders("")
-// 	s.Require().Len(fps, 2)
-// 	for _, fp := range fps {
-// 		s.Require().False(fp.Jailed, "fp is jailed")
-// 		s.Require().Zero(fp.SlashedBabylonHeight, "fp is slashed")
-// 		fpDels := n2.QueryFinalityProviderDelegations(fp.BtcPk.MarshalHex())
-// 		if fp.BtcPk.Equals(s.fp1bbn.BtcPk) {
-// 			s.Require().Len(fpDels, 2)
-// 		} else {
-// 			s.Require().Len(fpDels, 1)
-// 		}
-// 		for _, fpDelStaker := range fpDels {
-// 			for _, fpDel := range fpDelStaker.Dels {
-// 				s.Require().True(fpDel.Active)
-// 				s.Require().GreaterOrEqual(fpDel.TotalSat, uint64(0))
-// 			}
-// 		}
-// 	}
+	// verifies that everyone is active and not slashed
+	fps := n2.QueryFinalityProviders("")
+	s.Len(fps, 4)
+	for _, fp := range fps {
+		s.Equal(fp.SlashedBabylonHeight, uint64(0))
+		s.Equal(fp.SlashedBtcHeight, uint32(0))
+	}
 
-// }
+	dels := n2.QueryFinalityProvidersDelegations(s.fp1bbn.BtcPk.MarshalHex())
+	s.Len(dels, 3)
+	for _, del := range dels {
+		s.True(del.Active)
+	}
 
-// // Test5CheckRewardsFirstDelegations verifies the rewards independent of mint amounts
-// // There might be a difference in rewards if the BTC delegations were included in different blocks
-// // that is the reason to get the difference in rewards between a block range to assert
-// // the reward difference between fps and delegators.
-// func (s *BtcRewardsDistributionBsnRollup) Test5CheckRewardsFirstDelegations() {
-// 	n2, err := s.configurer.GetChainConfig(0).GetNodeAtIndex(2)
-// 	s.NoError(err)
+	// makes sure there is some reward there
+	s.Eventually(func() bool {
+		_, errFp1 := n2.QueryRewardGauge(s.fp1bbn.Address())
+		_, errFp2 := n2.QueryRewardGauge(s.fp2cons0.Address())
+		_, errDel1 := n2.QueryRewardGauge(sdk.MustAccAddressFromBech32(s.del1Addr))
+		_, errDel2 := n2.QueryRewardGauge(sdk.MustAccAddressFromBech32(s.del2Addr))
+		return errFp1 == nil && errFp2 == nil && errDel1 == nil && errDel2 == nil
+	}, time.Minute*2, time.Second*3, "wait to have some rewards available in the gauge")
 
-// 	// Current setup of voting power
-// 	// (fp1, del1) => 2_00000000
-// 	// (fp1, del2) => 4_00000000
-// 	// (fp2, del1) => 2_00000000
+	// The rewards distributed for the finality providers should be fp1 => 3x, fp2 => 1x
+	fp1DiffRewards, fp2DiffRewards, del1DiffRewards, del2DiffRewards := s.QueryRewardGauges(n2)
 
-// 	// The sum per bech32 address will be
-// 	// (fp1)  => 6_00000000
-// 	// (fp2)  => 2_00000000
-// 	// (del1) => 4_00000000
-// 	// (del2) => 4_00000000
+	coins.RequireCoinsDiffInPointOnePercentMargin(
+		s.T(),
+		fp2DiffRewards.Coins.MulInt(sdkmath.NewIntFromUint64(3)),
+		fp1DiffRewards.Coins,
+	)
 
-// 	// verifies that everyone is active and not slashed
-// 	fps := n2.QueryFinalityProviders("")
-// 	s.Len(fps, 2)
-// 	s.Equal(fps[0].Commission.String(), fps[1].Commission.String())
-// 	for _, fp := range fps {
-// 		s.Equal(fp.SlashedBabylonHeight, uint64(0))
-// 		s.Equal(fp.SlashedBtcHeight, uint32(0))
-// 	}
+	// The rewards distributed to the delegators should be the same for each delegator
+	coins.RequireCoinsDiffInPointOnePercentMargin(s.T(), del1DiffRewards.Coins, del2DiffRewards.Coins)
 
-// 	dels := n2.QueryFinalityProvidersDelegations(s.fp1bbn.BtcPk.MarshalHex(), s.fp2cons0.BtcPk.MarshalHex())
-// 	s.Len(dels, 3)
-// 	for _, del := range dels {
-// 		s.True(del.Active)
-// 	}
+	CheckWithdrawReward(s.T(), n2, wDel2, s.del2Addr)
 
-// 	// makes sure there is some reward there
-// 	s.Eventually(func() bool {
-// 		_, errFp1 := n2.QueryRewardGauge(s.fp1bbn.Address())
-// 		_, errFp2 := n2.QueryRewardGauge(s.fp2cons0.Address())
-// 		_, errDel1 := n2.QueryRewardGauge(sdk.MustAccAddressFromBech32(s.del1Addr))
-// 		_, errDel2 := n2.QueryRewardGauge(sdk.MustAccAddressFromBech32(s.del2Addr))
-// 		return errFp1 == nil && errFp2 == nil && errDel1 == nil && errDel2 == nil
-// 	}, time.Minute*2, time.Second*3, "wait to have some rewards available in the gauge")
-
-// 	// The rewards distributed for the finality providers should be fp1 => 3x, fp2 => 1x
-// 	fp1DiffRewards, fp2DiffRewards, del1DiffRewards, del2DiffRewards := s.QueryRewardGauges(n2)
-// 	s.AddFinalityVoteUntilCurrentHeight()
-
-// 	coins.RequireCoinsDiffInPointOnePercentMargin(
-// 		s.T(),
-// 		fp2DiffRewards.Coins.MulInt(sdkmath.NewIntFromUint64(3)),
-// 		fp1DiffRewards.Coins,
-// 	)
-
-// 	// The rewards distributed to the delegators should be the same for each delegator
-// 	coins.RequireCoinsDiffInPointOnePercentMargin(s.T(), del1DiffRewards.Coins, del2DiffRewards.Coins)
-
-// 	CheckWithdrawReward(s.T(), n2, wDel2, s.del2Addr)
-
-// 	s.AddFinalityVoteUntilCurrentHeight()
-// }
+	s.AddFinalityVoteUntilCurrentHeight()
+}
 
 // // Test6ActiveLastDelegation creates a new btc delegation
 // // (fp2, del2) with 6_00000000 sats and sends the covenant signatures
