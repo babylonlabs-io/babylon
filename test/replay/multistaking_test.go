@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 	ibctmtypes "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
 
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
@@ -19,9 +20,9 @@ func TestMultiConsumerDelegation(t *testing.T) {
 	replayerTempDir := t.TempDir()
 	driver := NewBabylonAppDriver(r, t, driverTempDir, replayerTempDir)
 
-	consumerID1 := "consumer1"
-	consumerID2 := "consumer2"
-	consumerID3 := "consumer3"
+	const consumerID1 = "consumer1"
+	const consumerID2 = "consumer2"
+	const consumerID3 = "consumer3"
 
 	// 1. Set up mock IBC clients for each consumer before registering consumers
 	ctx := driver.App.BaseApp.NewContext(false)
@@ -130,4 +131,76 @@ func TestMultiConsumerDelegationTooManyKeys(t *testing.T) {
 	require.Len(t, txResults, 1)
 	require.Equal(t, uint32(1108), txResults[0].Code)
 	require.Contains(t, txResults[0].Log, expectedLog)
+}
+
+func TestAdditionalGasCostForMultiStakedDelegation(t *testing.T) {
+	t.Parallel()
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	driverTempDir := t.TempDir()
+	replayerTempDir := t.TempDir()
+	driver := NewBabylonAppDriver(r, t, driverTempDir, replayerTempDir)
+
+	consumerID1 := "consumer1"
+	consumerID2 := "consumer2"
+
+	// 1. Set up mock IBC clients for each consumer before registering consumers
+	ctx := driver.App.BaseApp.NewContext(false)
+	driver.App.IBCKeeper.ClientKeeper.SetClientState(ctx, consumerID1, &ibctmtypes.ClientState{})
+	driver.App.IBCKeeper.ClientKeeper.SetClientState(ctx, consumerID2, &ibctmtypes.ClientState{})
+	driver.GenerateNewBlock()
+
+	// 2. Register consumers
+	consumer1 := driver.RegisterConsumer(r, consumerID1)
+	consumer2 := driver.RegisterConsumer(r, consumerID2)
+
+	// Create a Babylon FP (registered without consumer ID)
+	babylonFps := driver.CreateNFinalityProviderAccounts(2)
+	babylonFps[0].RegisterFinalityProvider("")
+	babylonFps[1].RegisterFinalityProvider("")
+
+	fp1 := driver.CreateFinalityProviderForConsumer(consumer1)
+	require.NotNil(t, fp1)
+	fp2 := driver.CreateFinalityProviderForConsumer(consumer2)
+	require.NotNil(t, fp2)
+
+	multiStakedFpKeys := []*bbn.BIP340PubKey{
+		fp1.BTCPublicKey(),
+		fp2.BTCPublicKey(),
+	}
+
+	// Generate blocks to process registrations
+	driver.GenerateNewBlockAssertExecutionSuccess()
+	staker := driver.CreateNStakerAccounts(1)[0]
+
+	// 4. Create a delegation with three consumer FPs and one Babylon FP
+	staker.CreatePreApprovalDelegation(
+		[]*bbn.BIP340PubKey{
+			babylonFps[0].BTCPublicKey(),
+		},
+		1000,
+		100000000,
+	)
+	txResults1 := driver.GenerateNewBlockAssertExecutionSuccessWithResults()
+	require.Len(t, txResults1, 1)
+	require.Equal(t, uint32(0), txResults1[0].Code)
+
+	staker.CreatePreApprovalDelegation(
+		[]*bbn.BIP340PubKey{
+			babylonFps[1].BTCPublicKey(),
+			multiStakedFpKeys[0],
+			multiStakedFpKeys[1],
+		},
+		1000,
+		100000000,
+	)
+
+	txResults2 := driver.GenerateNewBlockAssertExecutionSuccessWithResults()
+	require.Len(t, txResults2, 1)
+	require.Equal(t, uint32(0), txResults2[0].Code)
+
+	params := driver.GetBTCStakingParams(t)
+	minimalGasDifference := bstypes.GasCostPerMultiStakedFP * len(multiStakedFpKeys) * len(params.CovenantPks)
+	// We cannot use equal as multistaked delegations use more gas by default, though
+	// the difference is small enough so that `minimalGasDifference` is much larger than it
+	require.GreaterOrEqual(t, txResults2[0].GasUsed-txResults1[0].GasUsed, int64(minimalGasDifference))
 }
