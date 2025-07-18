@@ -24,6 +24,12 @@ import (
 const (
 	// TODO: need to determine a proper default value
 	defaultDelegationCreationBaseGasFee = 1000
+
+	// Additional gas cost added to the pre-approval delegation creation
+	// for each additional FP in the multi-staked delegation. This gas cost is charged
+	// becouse every covenant committe member must create separate Adaptor Signature
+	// for each FP in the multi-staked delegation.
+	GasCostPerMultiStakedFP = 7000
 )
 
 var _ paramtypes.ParamSet = (*Params)(nil)
