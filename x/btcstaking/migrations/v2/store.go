@@ -63,12 +63,13 @@ func indexAllowedMultiStakingTxs(
 	for _, txHash := range txHashes {
 		// Check for duplicates in the allow list
 		// If a duplicate is found, log an error and skip indexing
-		if _, exists := txMap[txHash.String()]; exists {
+		txHashStr := txHash.String()
+		if _, exists := txMap[txHashStr]; exists {
 			logger.Error("Duplicate transaction hash found in multi-staking allow list", "tx_hash",
-				txHash.String())
+				txHashStr)
 			continue
 		}
-		txMap[txHash.String()] = struct{}{}
+		txMap[txHashStr] = struct{}{}
 		indexTxHash(ctx, txHash)
 		txCount++
 	}
