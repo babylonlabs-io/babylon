@@ -1,7 +1,6 @@
 package e2e
 
 import (
-	"fmt"
 	"math/rand"
 	"time"
 
@@ -159,7 +158,7 @@ func (s *BtcRewardsDistributionBsnRollup) Test1CreateFinalityProviders() {
 
 	consumers := n2.QueryBTCStkConsumerConsumers()
 	require.Len(s.T(), consumers, 2)
-	fmt.Print("All Consumers created")
+	s.T().Log("All Consumers created")
 
 	s.fp1bbn = CreateNodeFP(
 		s.T(),
@@ -203,7 +202,7 @@ func (s *BtcRewardsDistributionBsnRollup) Test1CreateFinalityProviders() {
 
 	actualFps := n2.QueryFinalityProviders("")
 	require.Len(s.T(), actualFps, 4, "should have created all the FPs to start the test")
-	fmt.Print("All Fps created")
+	s.T().Log("All Fps created")
 }
 
 // Test2CreateFinalityProviders creates the first 3 btc delegations

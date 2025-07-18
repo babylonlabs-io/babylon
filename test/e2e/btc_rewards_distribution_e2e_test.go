@@ -156,7 +156,7 @@ func (s *BtcRewardsDistribution) Test1CreateFinalityProviders() {
 		s.fp1BTCSK,
 		n1,
 		s.fp1Addr,
-		"",
+		n1.ChainID(),
 	)
 	s.NotNil(s.fp1)
 
@@ -166,7 +166,7 @@ func (s *BtcRewardsDistribution) Test1CreateFinalityProviders() {
 		s.fp2BTCSK,
 		n2,
 		s.fp2Addr,
-		"",
+		n1.ChainID(),
 	)
 	s.NotNil(s.fp2)
 
