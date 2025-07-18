@@ -113,6 +113,7 @@ command to modify `max-finality-providers` parameter.
 - [#1352](https://github.com/babylonlabs-io/babylon/pull/1352) Add stake expansion signatures in BTC delegation query response
 - [#1367](https://github.com/babylonlabs-io/babylon/pull/1367) Add v3 mainnet upgrade handler
 - [#1379](https://github.com/babylonlabs-io/babylon/pull/1379) Add multi-staking allow-list docs in `x/btcstaking`
+- [#1381](https://github.com/babylonlabs-io/babylon/pull/1381) Add multi-staking allow-list logic
 - [#1392](https://github.com/babylonlabs-io/babylon/pull/1392) Add e2e test for BSN rollup rewards.
 
 ### State Machine Breaking
@@ -133,6 +134,9 @@ remove send restrictions
 - [#1364](https://github.com/babylonlabs-io/babylon/pull/1364) Add babylon commission as legacy dec `[0...1]` to Consumer Registry.
 - [#1359](https://github.com/babylonlabs-io/babylon/pull/1359) Add `MsgAddBsnRewards` to btcstaking and wired BTC delegations from
 BSNs to incentive reward tracker.
+- [#1390](https://github.com/babylonlabs-io/babylon/pull/1390) Add additional gas
+cost per multi-staked finality provider
+
 
 ### Bug fixes
 
