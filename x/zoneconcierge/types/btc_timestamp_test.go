@@ -45,7 +45,7 @@ func FuzzBTCTimestamp(f *testing.F) {
 
 		// empty BTC timestamp
 		btcTs := &types.BTCTimestamp{}
-		btcTs.Proof = &types.ProofFinalizedConsumer{}
+		btcTs.Proof = &types.ProofFinalizedHeader{}
 
 		// chain is at height 1 thus epoch 1
 

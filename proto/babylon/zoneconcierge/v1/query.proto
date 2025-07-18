@@ -61,5 +61,5 @@ message FinalizedConsumerData {
   // The submission key for the checkpoint
   babylon.btccheckpoint.v1.SubmissionKey btc_submission_key = 5;
   // Proofs of finality
-  ProofFinalizedConsumer proof = 6;
+  ProofFinalizedHeader proof = 6;
 }

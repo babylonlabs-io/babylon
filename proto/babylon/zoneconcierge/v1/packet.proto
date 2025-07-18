@@ -67,7 +67,7 @@ message BTCTimestamp {
   /*
      Proofs that the header is finalized
   */
-  babylon.zoneconcierge.v1.ProofFinalizedConsumer proof = 6;
+  babylon.zoneconcierge.v1.ProofFinalizedHeader proof = 6;
 }
 
 // ConsumerSlashingIBCPacket defines the slashing information that a Consumer sends to Babylon's ZoneConcierge upon a

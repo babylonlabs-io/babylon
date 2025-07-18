@@ -97,10 +97,10 @@ func (k Keeper) proveFinalizedConsumer(
 	indexedHeader *types.IndexedHeader,
 	epochInfo *epochingtypes.Epoch,
 	bestSubmissionKey *btcctypes.SubmissionKey,
-) (*types.ProofFinalizedConsumer, error) {
+) (*types.ProofFinalizedHeader, error) {
 	var (
 		err   error
-		proof = &types.ProofFinalizedConsumer{}
+		proof = &types.ProofFinalizedHeader{}
 	)
 
 	// proof that the epoch is sealed

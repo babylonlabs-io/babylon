@@ -70,11 +70,11 @@ message ProofEpochSealed {
   tendermint.crypto.ProofOps proof_epoch_val_set = 3;
 }
 
-// ProofFinalizedConsumer is a set of proofs that attest a consumer is
+// ProofFinalizedHeader is a set of proofs that attest a header is
 // BTC-finalised
-message ProofFinalizedConsumer {
+message ProofFinalizedHeader {
   /*
-    The following fields include proofs that attest the consumer is
+    The following fields include proofs that attest the header is
     BTC-finalised
   */
   // proof_epoch_sealed is the proof that the epoch is sealed

@@ -117,12 +117,6 @@ func GenRandomZoneconciergeGenState(r *rand.Rand) *types.GenesisState {
 		}
 	}
 
-	// Extract consumer IDs for the registered consumers list
-	var registeredConsumers []string
-	for _, cs := range consumerBTCStates {
-		registeredConsumers = append(registeredConsumers, cs.ConsumerId)
-	}
-
 	return &types.GenesisState{
 		Params: types.Params{
 			IbcPacketTimeoutSeconds: RandomUInt32(r, 100000) + 1,

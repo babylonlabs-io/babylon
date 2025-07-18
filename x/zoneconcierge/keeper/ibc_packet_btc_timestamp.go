@@ -111,7 +111,7 @@ func (k Keeper) createBTCTimestamp(
 		EpochInfo:        finalizedInfo.EpochInfo,
 		RawCheckpoint:    finalizedInfo.RawCheckpoint,
 		BtcSubmissionKey: finalizedInfo.BTCSubmissionKey,
-		Proof: &types.ProofFinalizedConsumer{
+		Proof: &types.ProofFinalizedHeader{
 			ProofEpochSealed:    finalizedInfo.ProofEpochSealed,
 			ProofEpochSubmitted: finalizedInfo.ProofEpochSubmitted,
 		},

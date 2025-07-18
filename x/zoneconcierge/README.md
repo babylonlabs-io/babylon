@@ -292,12 +292,12 @@ message BTCTimestamp {
   /* 
     Proofs that the header is finalized
   */
-  babylon.zoneconcierge.v1.ProofFinalizedConsumer proof = 6;
+  babylon.zoneconcierge.v1.ProofFinalizedHeader proof = 6;
 }
 
-// ProofFinalizedConsumer is a set of proofs that attest a consumer is
+// ProofFinalizedHeader is a set of proofs that attest a header is
 // BTC-finalized
-message ProofFinalizedConsumer {
+message ProofFinalizedHeader {
   /*
     The following fields include proofs that attest the consumer is
     BTC-finalized
