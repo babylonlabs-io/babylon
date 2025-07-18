@@ -97,7 +97,12 @@ func (k Keeper) CreateBTCDelegation(ctx sdk.Context, parsedMsg *types.ParsedCrea
 	// everything is good, if the staking tx is not included on BTC consume additinal
 	// gas
 	if !parsedMsg.IsIncludedOnBTC() {
-		ctx.GasMeter().ConsumeGas(params.DelegationCreationBaseGasFee, "delegation creation fee")
+		// Calculate additional gas cost for multi-staked delegation. Additional cost
+		// is charged per each additional FP in the multi-staked delegation except
+		// the Babylon FP.
+		additionalGasCost := types.GasCostPerMultiStakedFP * len(params.CovenantPks) * (parsedMsg.FinalityProviderKeys.Len() - 1)
+
+		ctx.GasMeter().ConsumeGas(params.DelegationCreationBaseGasFee+uint64(additionalGasCost), "delegation creation fee")
 	}
 
 	// 7.all good, construct BTCDelegation and insert BTC delegation
