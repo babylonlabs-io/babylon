@@ -200,7 +200,7 @@ func TestAdditionalGasCostForMultiStakedDelegation(t *testing.T) {
 
 	params := driver.GetBTCStakingParams(t)
 	minimalGasDifference := bstypes.GasCostPerMultiStakedFP * len(multiStakedFpKeys) * len(params.CovenantPks)
-	// We cannout use equal as mulistaked delegations use more gas by default, though
+	// We cannot use equal as multistaked delegations use more gas by default, though
 	// the difference is small enough so that `minimalGasDifference` is much larger than it
 	require.GreaterOrEqual(t, txResults2[0].GasUsed-txResults1[0].GasUsed, int64(minimalGasDifference))
 }
