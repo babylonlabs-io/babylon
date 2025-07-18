@@ -87,7 +87,7 @@ func GenRandomCommission(r *rand.Rand) sdkmath.LegacyDec {
 }
 
 func GenRandomDescription(r *rand.Rand) *stakingtypes.Description {
-	return &stakingtypes.Description{Moniker: GenRandomHexStr(r, 10)}
+	return &stakingtypes.Description{Moniker: GenRandomHexStr(r, 10), Identity: GenRandomHexStr(r, 5), Website: GenRandomHexStr(r, 10), SecurityContact: GenRandomHexStr(r, 15), Details: GenRandomHexStr(r, 20)}
 }
 
 func GenCustomFinalityProvider(

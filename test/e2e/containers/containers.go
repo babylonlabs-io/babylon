@@ -139,7 +139,7 @@ func (m *Manager) ExecCmd(t *testing.T, fullContainerName string, command []stri
 			// This only works if CLI outputs "Error" or "error"
 			// to stderr.
 			fmt.Printf("\n Debug: errOut %s", errBufString)
-			fmt.Printf("\n Debug: output %s", outBuf.String())
+			fmt.Printf("\n Debug: command %+v\noutput %s", command, outBuf.String())
 
 			if (errRegex.MatchString(errBufString) || m.isDebugLogEnabled) && maxDebugLogTriesLeft > 0 {
 				t.Log("\nstderr:")

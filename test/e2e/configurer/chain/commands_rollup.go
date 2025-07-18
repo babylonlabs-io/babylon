@@ -3,13 +3,20 @@ package chain
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
+	"time"
 
 	cmtcrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 
 	"github.com/babylonlabs-io/babylon/v3/types"
 
 	"github.com/babylonlabs-io/babylon/v3/test/e2e/configurer/rollup"
+	"github.com/babylonlabs-io/babylon/v3/test/e2e/initialization"
 	"github.com/stretchr/testify/require"
+)
+
+const (
+	finalityContractPath = "/bytecode/finality.wasm"
 )
 
 func (n *NodeConfig) CommitPubRandListRollup(walletAddrOrName, finalityContractAddr string, fpBtcPk *types.BIP340PubKey, startHeight uint64, numPubRand uint64, commitment []byte, sig *types.BIP340Signature) {
@@ -86,4 +93,42 @@ func (n *NodeConfig) AddFinalitySigRollup(
 	require.NoError(n.t, err)
 
 	return GetTxHashFromOutput(outBuf.String())
+}
+
+func (n *NodeConfig) CreateFinalityContract(bsnId string) (contractAddr string) {
+	wasmContractId := int(n.QueryLatestWasmCodeID())
+	n.StoreWasmCode(finalityContractPath, n.WalletName)
+
+	n.WaitForNextBlock()
+
+	require.Eventually(n.t, func() bool {
+		newLatestWasmId := int(n.QueryLatestWasmCodeID())
+		if wasmContractId+1 > newLatestWasmId {
+			return false
+		}
+		wasmContractId = newLatestWasmId
+		return true
+	}, time.Second*6, time.Millisecond*100)
+
+	// Instantiate the finality gadget contract with node as admin
+	n.InstantiateWasmContract(
+		strconv.Itoa(wasmContractId),
+		`{
+			"admin": "`+n.PublicAddress+`",
+			"bsn_id": "`+bsnId+`"
+		}`,
+		initialization.ValidatorWalletName,
+	)
+
+	var (
+		contracts []string
+		err       error
+	)
+	require.Eventually(n.t, func() bool {
+		contracts, err = n.QueryContractsFromId(wasmContractId)
+		return err == nil && len(contracts) == 1
+	}, time.Second*10, time.Millisecond*100)
+
+	fmt.Printf("Finality gadget contract address: %+v", contracts)
+	return contracts[0]
 }

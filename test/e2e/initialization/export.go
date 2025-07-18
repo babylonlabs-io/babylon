@@ -10,9 +10,10 @@ type ChainMeta struct {
 }
 
 type Node struct {
-	Name          string `json:"name"`
-	ConfigDir     string `json:"configDir"`
-	Mnemonic      string `json:"mnemonic"`
+	Name      string `json:"name"`
+	ConfigDir string `json:"configDir"`
+	Mnemonic  string `json:"mnemonic"`
+	// PublicAddress is validator bech32 AccAddress.String()
 	PublicAddress string `json:"publicAddress"`
 	WalletName    string `json:"walletName"`
 	PublicKey     []byte `json:"publicKey"`
