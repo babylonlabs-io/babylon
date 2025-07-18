@@ -11,6 +11,7 @@ import (
 	keepertest "github.com/babylonlabs-io/babylon/v3/testutil/keeper"
 	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/keeper"
 	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types/allowlist"
 
 	"github.com/stretchr/testify/require"
 )
@@ -39,5 +40,15 @@ func TestMigrateStore(t *testing.T) {
 	for i := 0; i < paramsVersions; i++ {
 		params := btcStakingKeeper.GetParamsByVersion(ctx, uint32(i))
 		require.Equal(t, uint32(1), params.MaxFinalityProviders)
+	}
+
+	// check if multi-staking allow list is indexed
+	txHashes, err := allowlist.LoadMultiStakingAllowList()
+	require.NoError(t, err)
+	require.NotEmpty(t, txHashes)
+	for _, txHash := range txHashes {
+		allowed, err := btcStakingKeeper.IsMultiStakingAllowed(ctx, txHash)
+		require.NoError(t, err)
+		require.True(t, allowed, "tx hash %s should be indexed in the allow list", txHash.String())
 	}
 }

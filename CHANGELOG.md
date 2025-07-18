@@ -110,6 +110,11 @@ command to modify `max-finality-providers` parameter.
 - [#1344](https://github.com/babylonlabs-io/babylon/pull/1344) Add `MsgType` field to `QueuedMessageResponse` message.
 - [#1352](https://github.com/babylonlabs-io/babylon/pull/1352) Add stake expansion signatures in BTC delegation query response
 - [#1367](https://github.com/babylonlabs-io/babylon/pull/1367) Add v3 mainnet upgrade handler
+<<<<<<< HEAD
+=======
+- [#1379](https://github.com/babylonlabs-io/babylon/pull/1379) Add multi-staking allow-list docs in `x/btcstaking`
+- [#1381](https://github.com/babylonlabs-io/babylon/pull/1381) Add multi-staking allow-list logic
+>>>>>>> 12fe58c (feat: add multi-staking allow-list logic (#1381))
 
 ### State Machine Breaking
 
