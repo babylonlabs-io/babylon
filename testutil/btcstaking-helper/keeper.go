@@ -13,6 +13,7 @@ import (
 	storemetrics "cosmossdk.io/store/metrics"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
 	dbm "github.com/cosmos/cosmos-db"
@@ -118,6 +119,12 @@ func NewHelper(
 	ckptKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(timestampedEpoch).AnyTimes()
 
 	return NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKeeper, ckptKeeper, ictvK)
+}
+
+func (h *Helper) WithBlockHeight(height int64) *Helper {
+	h.Ctx = h.Ctx.WithBlockHeight(height)
+	h.Ctx = h.Ctx.WithHeaderInfo(header.Info{Height: height, Time: time.Now()})
+	return h
 }
 
 func NewHelperNoMocksCalls(
@@ -262,6 +269,10 @@ func (h *Helper) Equal(expected, actual interface{}) {
 
 func (h *Helper) Error(err error, msgAndArgs ...any) {
 	require.Error(h.t, err, msgAndArgs...)
+}
+
+func (h *Helper) ErrorContains(err error, contains string, msgAndArgs ...any) {
+	require.ErrorContains(h.t, err, contains, msgAndArgs...)
 }
 
 func (h *Helper) StakerPopContext() string {
@@ -620,7 +631,6 @@ func (h *Helper) CreateDelegationWithBtcBlockHeight(
 func (h *Helper) GenerateCovenantSignaturesMessages(
 	r *rand.Rand,
 	covenantSKs []*btcec.PrivateKey,
-	msgCreateBTCDel *types.MsgCreateBTCDelegation,
 	del *types.BTCDelegation,
 ) []*types.MsgAddCovenantSigs {
 	stakingTx, err := bbn.NewBTCTxFromBytes(del.StakingTx)
@@ -646,7 +656,7 @@ func (h *Helper) GenerateCovenantSignaturesMessages(
 		vPKs,
 		stakingTx,
 		slashingPathInfo.GetPkScriptPath(),
-		msgCreateBTCDel.SlashingTx,
+		del.SlashingTx,
 	)
 	h.NoError(err)
 
@@ -676,17 +686,35 @@ func (h *Helper) GenerateCovenantSignaturesMessages(
 	covUnbondingSigs, err := datagen.GenCovenantUnbondingSigs(covenantSKs, stakingTx, del.StakingOutputIdx, unbondingPathInfo.GetPkScriptPath(), unbondingTx)
 	h.NoError(err)
 
+	covStkExpSigs := []*bbn.BIP340Signature{}
+	if del.IsStakeExpansion() {
+		prevTxHash, err := chainhash.NewHash(del.StkExp.PreviousStakingTxHash)
+		h.NoError(err)
+		prevDel, err := h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, prevTxHash.String())
+		h.NoError(err)
+		params := h.BTCStakingKeeper.GetParams(h.Ctx)
+		prevDelStakingInfo, err := prevDel.GetStakingInfo(&params, h.Net)
+		h.NoError(err)
+		covStkExpSigs, err = datagen.GenCovenantStakeExpSig(covenantSKs, del, prevDelStakingInfo)
+		h.NoError(err)
+	}
+
 	msgs := make([]*types.MsgAddCovenantSigs, len(bsParams.CovenantPks))
 
 	for i := 0; i < len(bsParams.CovenantPks); i++ {
 		msgAddCovenantSig := &types.MsgAddCovenantSigs{
-			Signer:                  msgCreateBTCDel.StakerAddr,
+			Signer:                  del.StakerAddr,
 			Pk:                      covenantSlashingTxSigs[i].CovPk,
 			StakingTxHash:           stakingTxHash,
 			SlashingTxSigs:          covenantSlashingTxSigs[i].AdaptorSigs,
 			UnbondingTxSig:          bbn.NewBIP340SignatureFromBTCSig(covUnbondingSigs[i]),
 			SlashingUnbondingTxSigs: covenantUnbondingSlashingTxSigs[i].AdaptorSigs,
 		}
+
+		if del.IsStakeExpansion() {
+			msgAddCovenantSig.StakeExpansionTxSig = covStkExpSigs[i]
+		}
+
 		msgs[i] = msgAddCovenantSig
 	}
 	return msgs
@@ -705,11 +733,10 @@ func (h *Helper) CreateCovenantSigs(
 	h.NoError(err)
 	stakingTxHash := stakingTx.TxHash().String()
 
-	covenantMsgs := h.GenerateCovenantSignaturesMessages(r, covenantSKs, msgCreateBTCDel, del)
+	covenantMsgs := h.GenerateCovenantSignaturesMessages(r, covenantSKs, del)
 	for _, m := range covenantMsgs {
-		msgCopy := m
 		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: lightClientTipHeight}).MaxTimes(1)
-		_, err := h.MsgServer.AddCovenantSigs(h.Ctx, msgCopy)
+		_, err := h.MsgServer.AddCovenantSigs(h.Ctx, m)
 		h.NoError(err)
 	}
 	/*
@@ -734,7 +761,7 @@ func (h *Helper) CreateCovenantSigs(
 	status, err := h.BTCStakingKeeper.BtcDelStatus(h.Ctx, actualDelWithCovenantSigs, bsParams.CovenantQuorum, btcTipHeight)
 	require.NoError(h.t, err)
 
-	if msgCreateBTCDel.StakingTxInclusionProof != nil {
+	if msgCreateBTCDel != nil && msgCreateBTCDel.StakingTxInclusionProof != nil {
 		// not pre-approval flow, the BTC delegation should be active
 		require.Equal(h.t, status, types.BTCDelegationStatus_ACTIVE)
 	} else {
@@ -827,4 +854,185 @@ func (h *Helper) AddFinalityProvider(fp *types.FinalityProvider) {
 		Pop:   fp.Pop,
 	})
 	h.NoError(err)
+}
+
+func (h *Helper) BuildBTCInclusionProofForSpendingTx(r *rand.Rand, spendingTx *wire.MsgTx, btcHeight uint32) *types.InclusionProof {
+	prevBlockForSpendingTx, _ := datagen.GenRandomBtcdBlock(r, 0, nil)
+	btcHeaderWithProof := datagen.CreateBlockWithTransaction(r, &prevBlockForSpendingTx.Header, spendingTx)
+	btcHeader := btcHeaderWithProof.HeaderBytes
+	btcHeaderInfo := &btclctypes.BTCHeaderInfo{Header: &btcHeader, Height: btcHeight}
+	spendingTxInclusionProof := types.NewInclusionProof(
+		&btcctypes.TransactionKey{Index: 1, Hash: btcHeader.Hash()},
+		btcHeaderWithProof.SpvProof.MerkleNodes,
+	)
+	h.BTCLightClientKeeper.EXPECT().GetHeaderByHash(gomock.Eq(h.Ctx), gomock.Eq(btcHeader.Hash())).Return(btcHeaderInfo, nil).AnyTimes()
+	return spendingTxInclusionProof
+}
+
+func (h *Helper) CreateBtcStakeExpansionWithBtcTipHeight(
+	r *rand.Rand,
+	delSK *btcec.PrivateKey,
+	fpPKs []*btcec.PublicKey,
+	stakingValue int64,
+	stakingTime uint16,
+	prevDel *types.BTCDelegation,
+	lightClientTipHeight uint32,
+) (*wire.MsgTx, *wire.MsgTx, error) {
+	expandMsg := h.createBtcStakeExpandMessage(
+		r,
+		delSK,
+		fpPKs,
+		stakingValue,
+		stakingTime,
+		prevDel,
+	)
+
+	h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: lightClientTipHeight}).MaxTimes(3)
+
+	// Submit the BtcStakeExpand message
+	_, err := h.MsgServer.BtcStakeExpand(h.Ctx, expandMsg)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	spendingTx, err := bbn.NewBTCTxFromBytes(expandMsg.StakingTx)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	fundingTx, err := bbn.NewBTCTxFromBytes(expandMsg.FundingTx)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return spendingTx, fundingTx, nil
+}
+
+// Helper function to create a BtcStakeExpand message for testing
+func (h *Helper) createBtcStakeExpandMessage(
+	r *rand.Rand,
+	delSK *btcec.PrivateKey,
+	fpPKs []*btcec.PublicKey,
+	stakingValue int64,
+	stakingTime uint16,
+	prevDel *types.BTCDelegation,
+) *types.MsgBtcStakeExpand {
+	// Get staking parameters
+	params := h.BTCStakingKeeper.GetParams(h.Ctx)
+
+	// Convert fpPKs to BIP340PubKey format
+	var fpBtcPkList []bbn.BIP340PubKey
+	for _, fpPK := range fpPKs {
+		fpBtcPkList = append(fpBtcPkList, *bbn.NewBIP340PubKeyFromBTCPK(fpPK))
+	}
+
+	// Convert covenant keys
+	var covenantPks []*btcec.PublicKey
+	for _, pk := range params.CovenantPks {
+		covenantPks = append(covenantPks, pk.MustToBTCPK())
+	}
+
+	// Create funding transaction
+	fundingTx := datagen.GenFundingTx(
+		h.T().(*testing.T),
+		r,
+		h.Net,
+		&wire.OutPoint{Index: 0},
+		stakingValue,
+		prevDel.MustGetStakingTx().TxOut[prevDel.StakingOutputIdx],
+	)
+	// Convert previousStakingTxHash to OutPoint
+	prevDelTxHash := prevDel.MustGetStakingTxHash()
+	prevStakingOutPoint := wire.NewOutPoint(&prevDelTxHash, datagen.StakingOutIdx)
+
+	// Convert fundingTxHash to OutPoint
+	fundingTxHash := fundingTx.TxHash()
+	fundingOutPoint := wire.NewOutPoint(&fundingTxHash, 0)
+	outPoints := []*wire.OutPoint{prevStakingOutPoint, fundingOutPoint}
+
+	// Generate staking slashing info using multiple inputs
+	stakingSlashingInfo := datagen.GenBTCStakingSlashingInfoWithInputs(
+		r,
+		h.T(),
+		h.Net,
+		outPoints,
+		delSK,
+		fpPKs,
+		covenantPks,
+		params.CovenantQuorum,
+		stakingTime,
+		stakingValue,
+		params.SlashingPkScript,
+		params.SlashingRate,
+		uint16(params.UnbondingTimeBlocks),
+	)
+
+	slashingPathSpendInfo, err := stakingSlashingInfo.StakingInfo.SlashingPathSpendInfo()
+	h.NoError(err)
+
+	// Sign the slashing tx with delegator key
+	delegatorSig, err := stakingSlashingInfo.SlashingTx.Sign(
+		stakingSlashingInfo.StakingTx,
+		datagen.StakingOutIdx,
+		slashingPathSpendInfo.GetPkScriptPath(),
+		delSK,
+	)
+	h.NoError(err)
+
+	// Serialize the staking tx bytes
+	serializedStakingTx, err := bbn.SerializeBTCTx(stakingSlashingInfo.StakingTx)
+	h.NoError(err)
+
+	stkTxHash := stakingSlashingInfo.StakingTx.TxHash()
+	unbondingValue := uint64(stakingValue) - uint64(params.UnbondingFeeSat)
+
+	// Generate unbonding slashing info
+	unbondingSlashingInfo := datagen.GenBTCUnbondingSlashingInfo(
+		r,
+		h.T(),
+		h.Net,
+		delSK,
+		fpPKs,
+		covenantPks,
+		params.CovenantQuorum,
+		wire.NewOutPoint(&stkTxHash, datagen.StakingOutIdx),
+		uint16(params.UnbondingTimeBlocks),
+		int64(unbondingValue),
+		params.SlashingPkScript,
+		params.SlashingRate,
+		uint16(params.UnbondingTimeBlocks),
+	)
+
+	unbondingTxBytes, err := bbn.SerializeBTCTx(unbondingSlashingInfo.UnbondingTx)
+	h.NoError(err)
+
+	delSlashingTxSig, err := unbondingSlashingInfo.GenDelSlashingTxSig(delSK)
+	h.NoError(err)
+
+	// Create proof of possession
+	stakerAddr := sdk.MustAccAddressFromBech32(prevDel.StakerAddr)
+	pop, err := datagen.NewPoPBTC(h.StakerPopContext(), stakerAddr, delSK)
+	h.NoError(err)
+
+	fundingTxBz, err := bbn.SerializeBTCTx(fundingTx)
+	h.NoError(err)
+
+	return &types.MsgBtcStakeExpand{
+		StakerAddr:                    prevDel.StakerAddr,
+		Pop:                           pop,
+		BtcPk:                         bbn.NewBIP340PubKeyFromBTCPK(delSK.PubKey()),
+		FpBtcPkList:                   fpBtcPkList,
+		StakingTime:                   uint32(stakingTime),
+		StakingValue:                  stakingValue,
+		StakingTx:                     serializedStakingTx,
+		SlashingTx:                    stakingSlashingInfo.SlashingTx,
+		DelegatorSlashingSig:          delegatorSig,
+		UnbondingValue:                int64(unbondingValue),
+		UnbondingTime:                 params.UnbondingTimeBlocks,
+		UnbondingTx:                   unbondingTxBytes,
+		UnbondingSlashingTx:           unbondingSlashingInfo.SlashingTx,
+		DelegatorUnbondingSlashingSig: delSlashingTxSig,
+		PreviousStakingTxHash:         prevDelTxHash.String(),
+		FundingTx:                     fundingTxBz,
+	}
 }

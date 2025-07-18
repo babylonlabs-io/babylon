@@ -24,8 +24,14 @@ func NewMigrator(keeper Keeper) Migrator {
 // Migrate1to2 migrates from version 1 to 2.
 func (m Migrator) Migrate1to2(ctx sdk.Context) error {
 	store := runtime.KVStoreAdapter(m.keeper.storeService.OpenKVStore(ctx))
-	return v2.MigrateStore(ctx, store, m.keeper.cdc, func(ctx context.Context, p *types.Params) error {
-		p.MaxFinalityProviders = 1
-		return nil
-	})
+	return v2.MigrateStore(
+		ctx,
+		store,
+		m.keeper.cdc,
+		func(ctx context.Context, p *types.Params) error {
+			p.MaxFinalityProviders = 1
+			return nil
+		},
+		m.keeper.IndexAllowedMultiStakingTransaction,
+	)
 }
