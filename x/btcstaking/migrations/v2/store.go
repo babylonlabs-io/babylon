@@ -58,18 +58,8 @@ func indexAllowedMultiStakingTxs(
 		return err
 	}
 	logger := ctx.Logger().With("module", "x/btcstaking/migrations/v2")
-	txMap := make(map[string]struct{})
 	var txCount int
 	for _, txHash := range txHashes {
-		// Check for duplicates in the allow list
-		// If a duplicate is found, log an error and skip indexing
-		txHashStr := txHash.String()
-		if _, exists := txMap[txHashStr]; exists {
-			logger.Error("Duplicate transaction hash found in multi-staking allow list", "tx_hash",
-				txHashStr)
-			continue
-		}
-		txMap[txHashStr] = struct{}{}
 		indexTxHash(ctx, txHash)
 		txCount++
 	}

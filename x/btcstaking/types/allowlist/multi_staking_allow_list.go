@@ -21,13 +21,18 @@ func LoadMultiStakingAllowList() ([]*chainhash.Hash, error) {
 		return nil, err
 	}
 
-	allowedTxHashes := make([]*chainhash.Hash, len(d.TxHashes))
-	for i, txHash := range d.TxHashes {
+	allowedTxHashes := make([]*chainhash.Hash, 0, len(d.TxHashes))
+	txHashes := make(map[string]struct{})
+	for _, txHash := range d.TxHashes {
+		if _, exists := txHashes[txHash]; exists {
+			continue // Skip duplicate tx hashes
+		}
+		txHashes[txHash] = struct{}{}
 		hash, err := chainhash.NewHashFromStr(txHash)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse tx hash: %w", err)
 		}
-		allowedTxHashes[i] = hash
+		allowedTxHashes = append(allowedTxHashes, hash)
 	}
 
 	return allowedTxHashes, nil

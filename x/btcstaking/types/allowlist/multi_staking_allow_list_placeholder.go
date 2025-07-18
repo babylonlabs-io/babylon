@@ -13,7 +13,9 @@ const multiStakingAllowListExpirationHeight = 5
 const multiStakingAllowList = `{
   "tx_hashes": [
     "11f29d946c10d7774ce5c1732f51542171c09aedc6dc6f9ec1dcc68118fbe549",
+    "ffc5e728e9c6c961f045b60833b6ebe0e22780b33ac359dac99fd0216a785508",
     "ffc5e728e9c6c961f045b60833b6ebe0e22780b33ac359dac99fd0216a785508"
   ]
 }
 `
+// NOTE: Keep a duplicate tx hash in the list to test for duplicate handling
