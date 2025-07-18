@@ -137,9 +137,9 @@ func (k Keeper) HandleIBCChannelCreation(
 		return fmt.Errorf("failed to update consumer register: %w", err)
 	}
 
-	// Initialize Consumer BTC state to current tip
-	if err := k.InitializeConsumerBTCState(ctx, clientID); err != nil {
-		return fmt.Errorf("failed to initialize consumer BTC state: %w", err)
+	// Initialize BSN BTC state to current tip
+	if err := k.InitializeBSNBTCState(ctx, clientID); err != nil {
+		return fmt.Errorf("failed to initialize BSN BTC state: %w", err)
 	}
 	// Get current tip height for logging
 	currentTip := k.btclcKeeper.GetTipInfo(ctx)
@@ -148,7 +148,7 @@ func (k Keeper) HandleIBCChannelCreation(
 		"consumerID", clientID,
 		"channelID", channelID,
 		"currentTipHeight", currentTip.Height,
-		"note", "Consumer base BTC header initialized to current tip",
+		"note", "BSN base BTC header initialized to current tip",
 	)
 
 	return nil
@@ -158,7 +158,7 @@ func (k Keeper) HandleConsumerSlashing(
 	ctx sdk.Context,
 	portID string,
 	channelID string,
-	consumerSlashing *types.ConsumerSlashingIBCPacket,
+	consumerSlashing *types.BSNSlashingIBCPacket,
 ) error {
 	clientID, _, err := k.channelKeeper.GetChannelClientState(ctx, portID, channelID)
 	if err != nil {
@@ -246,7 +246,7 @@ func (k Keeper) HandleBSNBaseBTCHeader(
 	}
 
 	// Store the BSN's reported base BTC header
-	k.SetConsumerBaseBTCHeader(ctx, clientID, baseBTCHeader)
+	k.SetBSNBaseBTCHeader(ctx, clientID, baseBTCHeader)
 
 	return nil
 }

@@ -33,7 +33,7 @@ consumers) via IBC packets:
   - [Parameters](#parameters)
   - [LatestEpochHeaders](#latestepochheaders)
   - [FinalizedEpochHeaders](#finalizedepochheaders)
-  - [ConsumerBTCState](#consumerbtcstate)
+  - [BSNBTCState](#bsnbtcstate)
   - [Params](#params)
   - [Port](#port)
   - [LastSentBTCSegment](#lastsentbtcsegment)
@@ -84,38 +84,38 @@ message Params {
 ### LatestEpochHeaders
 
 The [latest epoch headers storage](./keeper/epoch_header_indexer.go) maintains
-the most recent header received from each consumer during the current epoch. The
-key is the consumer's `ConsumerID`, and the value is an `IndexedHeader` object.
+the most recent header received from each BSN during the current epoch. The
+key is the BSN's `ConsumerID`, and the value is an `IndexedHeader` object.
 This storage is cleared at the end of each epoch when headers are moved to the
 finalized storage.
 
 ### FinalizedEpochHeaders
 
 The [finalized epoch headers storage](./keeper/epoch_header_indexer.go)
-maintains headers that have been finalized for each consumer and epoch. The key
-is the epoch number plus the consumer's `ConsumerID`, and the value is an
+maintains headers that have been finalized for each BSN and epoch. The key
+is the epoch number plus the BSN's `ConsumerID`, and the value is an
 `IndexedHeaderWithProof` object. The `IndexedHeaderWithProof` contains both the
 header metadata and the inclusion proof.
 
 ```protobuf
-// IndexedHeader is the metadata of a Consumer header
+// IndexedHeader is the metadata of a BSN header
 message IndexedHeader {
-  // consumer_id is the unique ID of the consumer
+  // consumer_id is the unique ID of the BSN
   string consumer_id = 1;
   // hash is the hash of this header
   bytes hash = 2;
-  // height is the height of this header on the Consumer's ledger.
-  // (hash, height) jointly provide the position of the header on the Consumer ledger
+  // height is the height of this header on the BSN's ledger.
+  // (hash, height) jointly provide the position of the header on the BSN ledger
   uint64 height = 3;
-  // time is the timestamp of this header on the Consumer's ledger.
-  // It is needed for a Consumer to unbond all mature validators/delegations before
+  // time is the timestamp of this header on the BSN's ledger.
+  // It is needed for a BSN to unbond all mature validators/delegations before
   // this timestamp, when this header is BTC-finalised
   google.protobuf.Timestamp time = 4 [ (gogoproto.stdtime) = true ];
-  // babylon_header_hash is the hash of the babylon block that includes this Consumer
+  // babylon_header_hash is the hash of the babylon block that includes this BSN
   // header
   bytes babylon_header_hash = 5;
   // babylon_header_height is the height of the babylon block that includes this
-  // Consumer header
+  // BSN header
   uint64 babylon_header_height = 6;
   // epoch is the epoch number of this header on Babylon ledger
   uint64 babylon_epoch = 7;
@@ -135,21 +135,21 @@ message IndexedHeaderWithProof {
 }
 ```
 
-### ConsumerBTCState
+### BSNBTCState
 
-The [consumer BTC state storage](./keeper/consumer_btc_state.go) maintains
-unified BTC synchronization state for each consumer. The key is the consumer's
-`ConsumerID`, and the value is a `ConsumerBTCState` object that tracks the base
-BTC header and last sent BTC header segment for each consumer.
+The [BSN BTC state storage](./keeper/consumer_btc_state.go) maintains
+unified BTC synchronization state for each BSN. The key is the BSN's
+`ConsumerID`, and the value is a `BSNBTCState` object that tracks the base
+BTC header and last sent BTC header segment for each BSN.
 
 ```protobuf
-// ConsumerBTCState stores per-consumer BTC synchronization state
+// BSNBTCState stores per-BSN BTC synchronization state
 // This includes both the base header and the last sent segment
-message ConsumerBTCState {
-  // base_header is the base BTC header for this consumer
+message BSNBTCState {
+  // base_header is the base BTC header for this BSN
   // This represents the starting point from which BTC headers are synchronized
   babylon.btclightclient.v1.BTCHeaderInfo base_header = 1;
-  // last_sent_segment is the last segment of BTC headers sent to this consumer
+  // last_sent_segment is the last segment of BTC headers sent to this BSN
   // This is used to determine the next headers to send and handle reorgs
   BTCChainSegment last_sent_segment = 2;
 }
@@ -213,10 +213,10 @@ executes as follows:
 1. Extract the header info and the client state from the message
 2. Determine if the header is on a fork by checking if the client is frozen
 3. Call `HandleHeaderWithValidCommit` to process the header
-4. Check if the consumer is registered through the `btcstkconsumer` module and is a Cosmos consumer; if not, ignore the header
+4. Check if the BSN is registered through the `btcstkconsumer` module and is a Cosmos BSN; if not, ignore the header
 5. Create an `IndexedHeader` with the header metadata and Babylon context
 6. If the header is not on a fork and is newer than the existing latest header,
-   update the latest epoch header for the consumer
+   update the latest epoch header for the BSN
 7. Log fork events for monitoring and debugging purposes
 
 ## Hooks
@@ -263,11 +263,11 @@ Bitcoin.
 ```protobuf
 // BTCTimestamp is a BTC timestamp that carries information of a BTC-finalized epoch
 // It includes a number of BTC headers, a raw checkpoint, an epoch metadata, and 
-// a Consumer header if there exists Consumer headers checkpointed to this epoch.
+// a BSN header if there exists BSN headers checkpointed to this epoch.
 // Upon a newly finalized epoch in Babylon, Babylon will send a BTC timestamp to each
-// PoS blockchain that has phase-2 integration with Babylon via IBC.
+// BSN via IBC.
 message BTCTimestamp {
-  // header is the last Consumer header in the finalized Babylon epoch
+  // header is the last BSN header in the finalized Babylon epoch
   babylon.zoneconcierge.v1.IndexedHeader header = 1;
 
   /*
@@ -299,7 +299,7 @@ message BTCTimestamp {
 // BTC-finalized
 message ProofFinalizedHeader {
   /*
-    The following fields include proofs that attest the consumer is
+    The following fields include proofs that attest the header is
     BTC-finalized
   */
   // proof_epoch_sealed is the proof that the epoch is sealed
@@ -308,7 +308,7 @@ message ProofFinalizedHeader {
   // in BTC ledger It is the two TransactionInfo in the best (i.e., earliest)
   // checkpoint submission
   repeated babylon.btccheckpoint.v1.TransactionInfo proof_epoch_submitted = 2;
-  // proof_consumer_header_in_epoch is the proof that the consumer header is included in the epoch
+  // proof_consumer_header_in_epoch is the proof that the BSN header is included in the epoch
   tendermint.crypto.ProofOps proof_consumer_header_in_epoch = 3;
 }
 ```
@@ -354,22 +354,22 @@ The `EndBlocker` calls `BroadcastBTCHeaders` to send BTC headers to all open IBC
 channels with BSNs. This ensures that BSNs' BTC light clients stay synchronized
 with Babylon Genesis' BTC light client.
 
-The header selection logic now uses per-consumer BTC state tracking with the
+The header selection logic now uses per-BSN BTC state tracking with the
 following enhanced rules:
 
-- **Consumer-specific BTC state**: Each consumer has its own `ConsumerBTCState`
+- **BSN-specific BTC state**: Each BSN has its own `BSNBTCState`
   that tracks the base BTC header and last sent segment
-- **No consumer base header**: Falls back to sending the last `w+1` BTC headers
+- **No BSN base header**: Falls back to sending the last `w+1` BTC headers
   from the tip (where `w` is the confirmation depth parameter)
-- **Consumer base header exists but no headers sent**: Send headers from the
-  consumer's base header to the current tip
+- **BSN base header exists but no headers sent**: Send headers from the
+  BSN's base header to the current tip
 - **Headers previously sent**: Send headers from the child of the most recent
   valid header in the last sent segment to the current tip
 - **Reorg detection**: If no header from the last sent segment is still valid
-  (indicating a Bitcoin reorg), fall back to sending from the consumer's base
+  (indicating a Bitcoin reorg), fall back to sending from the BSN's base
   header to the current tip
 
-This per-consumer approach provides better efficiency and reorg handling
+This per-BSN approach provides better efficiency and reorg handling
 compared to the previous global broadcast strategy.
 
 ### Broadcasting BTC Staking Events
@@ -412,7 +412,7 @@ of inbound packets.
 
 The [inbound packet structure](proto/babylon/zoneconcierge/v1/packet.proto) is
 defined as follows. Currently, the Zone Concierge module handles one type of
-incoming packet: `ConsumerSlashingIBCPacket`. This packet type allows BSNs to
+incoming packet: `BSNSlashingIBCPacket`. This packet type allows BSNs to
 report slashing evidence for finality providers.
 
 ```protobuf
@@ -420,15 +420,15 @@ report slashing evidence for finality providers.
 message InboundPacket {
   // packet is the actual message carried in the IBC packet
   oneof packet {
-    ConsumerSlashingIBCPacket consumer_slashing = 1;
+    BSNSlashingIBCPacket bsn_slashing = 1;
   }
 }
 
-// ConsumerSlashingIBCPacket defines the slashing information that a Consumer sends to Babylon's ZoneConcierge upon a
-// Consumer slashing event.
-// It includes the FP public key, the Consumer block height at the slashing event, and the double sign evidence.
-message ConsumerSlashingIBCPacket {
-  /// evidence is the FP slashing evidence that the Consumer sends to Babylon
+// BSNSlashingIBCPacket defines the slashing information that a BSN sends to Babylon's ZoneConcierge upon a
+// BSN slashing event.
+// It includes the FP public key, the BSN block height at the slashing event, and the double sign evidence.
+message BSNSlashingIBCPacket {
+  /// evidence is the FP slashing evidence that the BSN sends to Babylon
   babylon.finality.v1.Evidence evidence = 1;
 }
 ```
@@ -488,7 +488,7 @@ events.
 | Packet Direction | Types |
 |-----------------|-------|
 | Outbound | `BTCHeaders`, `BTCTimestamp`, `BTCStakingConsumerEvent` |
-| Inbound | `ConsumerSlashingIBCPacket` |
+| Inbound | `BSNSlashingIBCPacket` |
 
 ### Relaying BTC Headers
 

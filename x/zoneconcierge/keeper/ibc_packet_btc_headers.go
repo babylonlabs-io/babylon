@@ -64,8 +64,8 @@ func (k Keeper) BroadcastBTCHeaders(ctx context.Context) error {
 			continue
 		}
 
-		// Update the consumer-specific last sent segment
-		k.SetConsumerLastSentSegment(ctx, consumerID, &types.BTCChainSegment{
+		// Update the BSN-specific last sent segment
+		k.SetBSNLastSentSegment(ctx, consumerID, &types.BTCChainSegment{
 			BtcHeaders: headers,
 		})
 	}

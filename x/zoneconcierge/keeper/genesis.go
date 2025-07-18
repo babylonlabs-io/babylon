@@ -29,8 +29,8 @@ func (k Keeper) InitGenesis(ctx context.Context, gs types.GenesisState) error {
 	}
 
 	// Initialize consumer BTC states
-	for _, cs := range gs.ConsumerBtcStates {
-		k.SetConsumerBTCState(ctx, cs.ConsumerId, cs.State)
+	for _, cs := range gs.BsnBtcStates {
+		k.SetBSNBTCState(ctx, cs.ConsumerId, cs.State)
 	}
 
 	// NOTE: Consumer registration is now handled by the btcstkconsumer module
@@ -44,7 +44,7 @@ func (k Keeper) ExportGenesis(ctx context.Context) (*types.GenesisState, error) 
 	fh := k.GetAllFinalizedHeaders(ctx)
 
 	// Get all consumer BTC states
-	cs := k.getAllConsumerBTCStates(ctx)
+	cs := k.getAllBSNBTCStates(ctx)
 
 	// Get sealed epoch proofs
 	se, err := k.sealedEpochsProofs(ctx)
@@ -60,22 +60,22 @@ func (k Keeper) ExportGenesis(ctx context.Context) (*types.GenesisState, error) 
 		FinalizedHeaders:   fh,
 		LastSentSegment:    k.GetLastSentSegment(ctx),
 		SealedEpochsProofs: se,
-		ConsumerBtcStates:  cs,
+		BsnBtcStates:       cs,
 	}, nil
 }
 
-// getAllConsumerBTCStates gets all consumer BTC states for genesis export
-func (k Keeper) getAllConsumerBTCStates(ctx context.Context) []*types.ConsumerBTCStateEntry {
-	var entries []*types.ConsumerBTCStateEntry
-	store := k.consumerBTCStateStore(ctx)
+// getAllBSNBTCStates gets all BSN BTC states for genesis export
+func (k Keeper) getAllBSNBTCStates(ctx context.Context) []*types.BSNBTCStateEntry {
+	var entries []*types.BSNBTCStateEntry
+	store := k.bsnBTCStateStore(ctx)
 	iterator := store.Iterator(nil, nil)
 	defer iterator.Close()
 
 	for ; iterator.Valid(); iterator.Next() {
 		consumerID := string(iterator.Key())
-		var state types.ConsumerBTCState
+		var state types.BSNBTCState
 		k.cdc.MustUnmarshal(iterator.Value(), &state)
-		entries = append(entries, &types.ConsumerBTCStateEntry{
+		entries = append(entries, &types.BSNBTCStateEntry{
 			ConsumerId: consumerID,
 			State:      &state,
 		})

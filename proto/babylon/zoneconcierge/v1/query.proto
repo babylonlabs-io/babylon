@@ -17,11 +17,11 @@ service Query {
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
     option (google.api.http).get = "/babylon/zoneconcierge/v1/params";
   }
-  // FinalizedConsumersInfo queries the BTC-finalised info of consumers with given IDs, with proofs
-  rpc FinalizedConsumersInfo(QueryFinalizedConsumersInfoRequest)
-      returns (QueryFinalizedConsumersInfoResponse) {
+  // FinalizedBSNsInfo queries the BTC-finalised info of BSNs with given IDs, with proofs
+  rpc FinalizedBSNsInfo(QueryFinalizedBSNsInfoRequest)
+      returns (QueryFinalizedBSNsInfoResponse) {
     option (google.api.http).get =
-        "/babylon/zoneconcierge/v1/finalized_consumers_info";
+        "/babylon/zoneconcierge/v1/finalized_bsns_info";
   }
 }
 
@@ -34,25 +34,25 @@ message QueryParamsResponse {
   babylon.zoneconcierge.v1.Params params = 1 [ (gogoproto.nullable) = false ];
 }
 
-// QueryFinalizedConsumersInfoRequest is request type for the
-// Query/FinalizedConsumersInfo RPC method.
-message QueryFinalizedConsumersInfoRequest {
-  // consumer_ids is the list of ids of Consumers
+// QueryFinalizedBSNsInfoRequest is request type for the
+// Query/FinalizedBSNsInfo RPC method.
+message QueryFinalizedBSNsInfoRequest {
+  // consumer_ids is the list of ids of BSNs
   repeated string consumer_ids = 1;
   // prove indicates whether the querier wants to get proofs of this timestamp
   bool prove = 2;
 }
 
-// QueryFinalizedConsumersInfoResponse is response type for the
-// Query/FinalizedConsumersInfo RPC method.
-message QueryFinalizedConsumersInfoResponse {
-  repeated FinalizedConsumerData finalized_consumers_data = 1;
+// QueryFinalizedBSNsInfoResponse is response type for the
+// Query/FinalizedBSNsInfo RPC method.
+message QueryFinalizedBSNsInfoResponse {
+  repeated FinalizedBSNData finalized_bsns_data = 1;
 }
 
-// FinalizedConsumerData contains the finalized consumer data for a consumer
-message FinalizedConsumerData {
+// FinalizedBSNData contains the finalized BSN data for a BSN
+message FinalizedBSNData {
   string consumer_id = 1;
-  // The latest finalized header for this consumer
+  // The latest finalized header for this BSN
   IndexedHeader latest_finalized_header = 2;
   // The epoch in which this header was finalized
   babylon.epoching.v1.Epoch epoch_info = 3;

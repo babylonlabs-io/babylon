@@ -64,8 +64,8 @@ func GenRandomIndexedHeaderWithProofAndConsumerId(r *rand.Rand, consumerId strin
 	}
 }
 
-func GenRandomConsumerBTCState(r *rand.Rand) *types.ConsumerBTCState {
-	return &types.ConsumerBTCState{
+func GenRandomBSNBTCState(r *rand.Rand) *types.BSNBTCState {
+	return &types.BSNBTCState{
 		BaseHeader:      GenRandomBTCHeaderInfo(r),
 		LastSentSegment: GenRandomBTCChainSegment(r),
 	}
@@ -90,10 +90,10 @@ func GenRandomProofEpochSealed(r *rand.Rand) *types.ProofEpochSealed {
 
 func GenRandomZoneconciergeGenState(r *rand.Rand) *types.GenesisState {
 	var (
-		entriesCount      = int(RandomIntOtherThan(r, 0, 20)) + 1 // make sure there's always at least one entry
-		finalizedHeaders  = make([]*types.FinalizedHeaderEntry, entriesCount)
-		consumerBTCStates = make([]*types.ConsumerBTCStateEntry, entriesCount)
-		sealedEpochs      = make([]*types.SealedEpochProofEntry, entriesCount)
+		entriesCount     = int(RandomIntOtherThan(r, 0, 20)) + 1 // make sure there's always at least one entry
+		finalizedHeaders = make([]*types.FinalizedHeaderEntry, entriesCount)
+		bsnBTCStates     = make([]*types.BSNBTCStateEntry, entriesCount)
+		sealedEpochs     = make([]*types.SealedEpochProofEntry, entriesCount)
 	)
 
 	for i := range entriesCount {
@@ -106,9 +106,9 @@ func GenRandomZoneconciergeGenState(r *rand.Rand) *types.GenesisState {
 			HeaderWithProof: GenRandomIndexedHeaderWithProofAndConsumerId(r, consumerId),
 		}
 
-		consumerBTCStates[i] = &types.ConsumerBTCStateEntry{
+		bsnBTCStates[i] = &types.BSNBTCStateEntry{
 			ConsumerId: consumerId,
-			State:      GenRandomConsumerBTCState(r),
+			State:      GenRandomBSNBTCState(r),
 		}
 
 		sealedEpochs[i] = &types.SealedEpochProofEntry{
@@ -125,6 +125,6 @@ func GenRandomZoneconciergeGenState(r *rand.Rand) *types.GenesisState {
 		FinalizedHeaders:   finalizedHeaders,
 		LastSentSegment:    GenRandomBTCChainSegment(r),
 		SealedEpochsProofs: sealedEpochs,
-		ConsumerBtcStates:  consumerBTCStates,
+		BsnBtcStates:       bsnBTCStates,
 	}
 }

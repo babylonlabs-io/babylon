@@ -20,8 +20,8 @@ message GenesisState {
   BTCChainSegment last_sent_segment = 4;
   // sealed_epochs_proofs contains the proofs that each epoch is sealed
   repeated SealedEpochProofEntry sealed_epochs_proofs = 5;
-  // consumer_btc_states contains the BTC header synchronization state for each consumer
-  repeated ConsumerBTCStateEntry consumer_btc_states = 6;
+  // bsn_btc_states contains the BTC header synchronization state for each BSN
+  repeated BSNBTCStateEntry bsn_btc_states = 6;
 }
 
 // FinalizedHeaderEntry is a helper for genesis state.
@@ -34,12 +34,12 @@ message FinalizedHeaderEntry {
   IndexedHeaderWithProof header_with_proof = 3;
 }
 
-// ConsumerBTCStateEntry is a helper for genesis state
-message ConsumerBTCStateEntry {
-  // consumer_id is the ID of the consumer
+// BSNBTCStateEntry is a helper for genesis state
+message BSNBTCStateEntry {
+  // consumer_id is the ID of the BSN
   string consumer_id = 1;
-  // state is the BTC header synchronization state for the consumer
-  ConsumerBTCState state = 2;
+  // state is the BTC header synchronization state for the BSN
+  BSNBTCState state = 2;
 }
 
 // SealedEpochProofEntry contains each epoch's proof that it is sealed

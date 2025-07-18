@@ -148,17 +148,17 @@ func (k Keeper) getDeepEnoughBTCHeaders(ctx context.Context) []*btclctypes.BTCHe
 	return k.btclcKeeper.GetMainChainFrom(ctx, startHeight)
 }
 
-// getHeadersToBroadcastForConsumer retrieves headers to be broadcasted to a specific Consumer
+// getHeadersToBroadcastForConsumer retrieves headers to be broadcasted to a specific BSN
 // The headers to be broadcasted are:
-// - If no Consumer base header exists: use the last k+1 headers from tip (fallback)
-// - If Consumer base header exists but no headers sent yet: from Consumer base to tip
+// - If no BSN base header exists: use the last k+1 headers from tip (fallback)
+// - If BSN base header exists but no headers sent yet: from BSN base to tip
 // - If headers previously sent: from child of most recent valid header to tip
-// - If reorg detected: from Consumer base to tip
+// - If reorg detected: from BSN base to tip
 func (k Keeper) getHeadersToBroadcastForConsumer(ctx context.Context, consumerID string) []*btclctypes.BTCHeaderInfo {
-	baseHeader := k.GetConsumerBaseBTCHeader(ctx, consumerID)
-	lastSegment := k.GetConsumerLastSentSegment(ctx, consumerID)
+	baseHeader := k.GetBSNBaseBTCHeader(ctx, consumerID)
+	lastSegment := k.GetBSNLastSentSegment(ctx, consumerID)
 
-	// If no Consumer base header exists, fallback to the old behavior
+	// If no BSN base header exists, fallback to the old behavior
 	if baseHeader == nil {
 		return k.getHeadersToBroadcast(ctx)
 	}
@@ -167,7 +167,7 @@ func (k Keeper) getHeadersToBroadcastForConsumer(ctx context.Context, consumerID
 	tipHeight := k.btclcKeeper.GetTipInfo(ctx).Height
 	kValue := k.btccKeeper.GetParams(ctx).BtcConfirmationDepth
 	if tipHeight > baseHeader.Height && tipHeight-baseHeader.Height > kValue {
-		k.Logger(sdk.UnwrapSDKContext(ctx)).Error("Consumer base header too old",
+		k.Logger(sdk.UnwrapSDKContext(ctx)).Error("BSN base header too old",
 			"consumerID", consumerID,
 			"baseHeight", baseHeader.Height,
 			"tipHeight", tipHeight,
@@ -177,7 +177,7 @@ func (k Keeper) getHeadersToBroadcastForConsumer(ctx context.Context, consumerID
 		return k.getDeepEnoughBTCHeaders(ctx)
 	}
 
-	// If we haven't sent any headers yet, send from Consumer base to tip
+	// If we haven't sent any headers yet, send from BSN base to tip
 	if lastSegment == nil {
 		return k.btclcKeeper.GetMainChainFrom(ctx, baseHeader.Height+1)
 	}
@@ -192,7 +192,7 @@ func (k Keeper) getHeadersToBroadcastForConsumer(ctx context.Context, consumerID
 		}
 	}
 
-	// If no header from last segment is still valid (reorg), send from Consumer base to tip
+	// If no header from last segment is still valid (reorg), send from BSN base to tip
 	if initHeader == nil {
 		return k.getDeepEnoughBTCHeaders(ctx)
 	}

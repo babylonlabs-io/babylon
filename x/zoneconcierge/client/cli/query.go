@@ -22,22 +22,22 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 
-	cmd.AddCommand(CmdFinalizedConsumersInfo())
+	cmd.AddCommand(CmdFinalizedBSNsInfo())
 	return cmd
 }
 
-func CmdFinalizedConsumersInfo() *cobra.Command {
+func CmdFinalizedBSNsInfo() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "finalized-consumers-info <consumer-ids>",
-		Short: "retrieve the finalized info for a given list of consumers",
+		Use:   "finalized-bsns-info <bsn-ids>",
+		Short: "retrieve the finalized info for a given list of BSNs",
 		Args:  cobra.ArbitraryArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			prove, _ := cmd.Flags().GetBool("prove")
 
 			clientCtx := client.GetClientContextFromCmd(cmd)
 			queryClient := types.NewQueryClient(clientCtx)
-			req := types.QueryFinalizedConsumersInfoRequest{ConsumerIds: args, Prove: prove}
-			resp, err := queryClient.FinalizedConsumersInfo(cmd.Context(), &req)
+			req := types.QueryFinalizedBSNsInfoRequest{ConsumerIds: args, Prove: prove}
+			resp, err := queryClient.FinalizedBSNsInfo(cmd.Context(), &req)
 			if err != nil {
 				return err
 			}
@@ -46,7 +46,7 @@ func CmdFinalizedConsumersInfo() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().Bool("prove", false, "whether to retrieve proofs for each FinalizedConsumerData")
+	cmd.Flags().Bool("prove", false, "whether to retrieve proofs for each FinalizedBSNData")
 	flags.AddQueryFlagsToCmd(cmd)
 
 	return cmd

@@ -23,7 +23,7 @@ func NewGenesis(
 	finalizedHeaders []*FinalizedHeaderEntry,
 	lastSentSegment *BTCChainSegment,
 	sealedEpochs []*SealedEpochProofEntry,
-	consumerBtcStates []*ConsumerBTCStateEntry,
+	bsnBtcStates []*BSNBTCStateEntry,
 ) *GenesisState {
 	return &GenesisState{
 		PortId:             PortID,
@@ -31,7 +31,7 @@ func NewGenesis(
 		FinalizedHeaders:   finalizedHeaders,
 		LastSentSegment:    lastSentSegment,
 		SealedEpochsProofs: sealedEpochs,
-		ConsumerBtcStates:  consumerBtcStates,
+		BsnBtcStates:       bsnBtcStates,
 	}
 }
 
@@ -61,7 +61,7 @@ func (gs GenesisState) Validate() error {
 		return err
 	}
 
-	if err := types.ValidateEntries(gs.ConsumerBtcStates, func(cs *ConsumerBTCStateEntry) string { return cs.ConsumerId }); err != nil {
+	if err := types.ValidateEntries(gs.BsnBtcStates, func(cs *BSNBTCStateEntry) string { return cs.ConsumerId }); err != nil {
 		return err
 	}
 
@@ -75,9 +75,9 @@ func (fhe FinalizedHeaderEntry) Validate() error {
 	return fhe.HeaderWithProof.Validate()
 }
 
-func (cse ConsumerBTCStateEntry) Validate() error {
+func (cse BSNBTCStateEntry) Validate() error {
 	if cse.State == nil {
-		return errors.New("invalid consumer BTC state entry. empty state")
+		return errors.New("invalid BSN BTC state entry. empty state")
 	}
 	return cse.State.Validate()
 }
@@ -99,8 +99,8 @@ func SortData(gs *GenesisState) {
 		return gs.FinalizedHeaders[i].ConsumerId < gs.FinalizedHeaders[j].ConsumerId
 	})
 
-	sort.Slice(gs.ConsumerBtcStates, func(i, j int) bool {
-		return gs.ConsumerBtcStates[i].ConsumerId < gs.ConsumerBtcStates[j].ConsumerId
+	sort.Slice(gs.BsnBtcStates, func(i, j int) bool {
+		return gs.BsnBtcStates[i].ConsumerId < gs.BsnBtcStates[j].ConsumerId
 	})
 
 	sort.Slice(gs.SealedEpochsProofs, func(i, j int) bool {

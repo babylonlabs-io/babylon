@@ -20,14 +20,14 @@ func (c *QueryClient) QueryZoneConcierge(f func(ctx context.Context, queryClient
 }
 
 // FinalizedConnectedChainsInfo queries the zoneconcierge module to get the finalization information for a connected chain
-func (c *QueryClient) FinalizedConnectedChainsInfo(consumerIds []string) (*zctypes.QueryFinalizedConsumersInfoResponse, error) {
-	var resp *zctypes.QueryFinalizedConsumersInfoResponse
+func (c *QueryClient) FinalizedConnectedChainsInfo(consumerIds []string) (*zctypes.QueryFinalizedBSNsInfoResponse, error) {
+	var resp *zctypes.QueryFinalizedBSNsInfoResponse
 	err := c.QueryZoneConcierge(func(ctx context.Context, queryClient zctypes.QueryClient) error {
 		var err error
-		req := &zctypes.QueryFinalizedConsumersInfoRequest{
+		req := &zctypes.QueryFinalizedBSNsInfoRequest{
 			ConsumerIds: consumerIds,
 		}
-		resp, err = queryClient.FinalizedConsumersInfo(ctx, req)
+		resp, err = queryClient.FinalizedBSNsInfo(ctx, req)
 		return err
 	})
 

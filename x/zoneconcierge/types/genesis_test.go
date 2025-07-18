@@ -59,8 +59,8 @@ func TestGenesisState_Validate(t *testing.T) {
 		{
 			desc: "duplicate consumer BTC state entries",
 			genState: &types.GenesisState{
-				PortId:            types.PortID,
-				ConsumerBtcStates: append(gs.ConsumerBtcStates, gs.ConsumerBtcStates[0]),
+				PortId:       types.PortID,
+				BsnBtcStates: append(gs.BsnBtcStates, gs.BsnBtcStates[0]),
 			},
 			valid:  false,
 			errMsg: "duplicate entry",

@@ -171,9 +171,9 @@ func FuzzFinalizedChainInfo(f *testing.F) {
 		checkpointingKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(epoch.EpochNumber).AnyTimes()
 
 		// check if the consumer info of this epoch is recorded or not
-		resp, err := zcKeeper.FinalizedConsumersInfo(ctx, &zctypes.QueryFinalizedConsumersInfoRequest{ConsumerIds: consumerIDs, Prove: true})
+		resp, err := zcKeeper.FinalizedBSNsInfo(ctx, &zctypes.QueryFinalizedBSNsInfoRequest{ConsumerIds: consumerIDs, Prove: true})
 		require.NoError(t, err)
-		for i, respData := range resp.FinalizedConsumersData {
+		for i, respData := range resp.FinalizedBsnsData {
 			require.Equal(t, consumersInfo[i].consumerID, respData.ConsumerId)
 			require.Equal(t, consumersInfo[i].numHeaders-1, respData.LatestFinalizedHeader.Height)
 		}

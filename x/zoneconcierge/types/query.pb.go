@@ -115,27 +115,27 @@ func (m *QueryParamsResponse) GetParams() Params {
 	return Params{}
 }
 
-// QueryFinalizedConsumersInfoRequest is request type for the
-// Query/FinalizedConsumersInfo RPC method.
-type QueryFinalizedConsumersInfoRequest struct {
-	// consumer_ids is the list of ids of Consumers
+// QueryFinalizedBSNsInfoRequest is request type for the
+// Query/FinalizedBSNsInfo RPC method.
+type QueryFinalizedBSNsInfoRequest struct {
+	// consumer_ids is the list of ids of BSNs
 	ConsumerIds []string `protobuf:"bytes,1,rep,name=consumer_ids,json=consumerIds,proto3" json:"consumer_ids,omitempty"`
 	// prove indicates whether the querier wants to get proofs of this timestamp
 	Prove bool `protobuf:"varint,2,opt,name=prove,proto3" json:"prove,omitempty"`
 }
 
-func (m *QueryFinalizedConsumersInfoRequest) Reset()         { *m = QueryFinalizedConsumersInfoRequest{} }
-func (m *QueryFinalizedConsumersInfoRequest) String() string { return proto.CompactTextString(m) }
-func (*QueryFinalizedConsumersInfoRequest) ProtoMessage()    {}
-func (*QueryFinalizedConsumersInfoRequest) Descriptor() ([]byte, []int) {
+func (m *QueryFinalizedBSNsInfoRequest) Reset()         { *m = QueryFinalizedBSNsInfoRequest{} }
+func (m *QueryFinalizedBSNsInfoRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryFinalizedBSNsInfoRequest) ProtoMessage()    {}
+func (*QueryFinalizedBSNsInfoRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_cd665af90102da38, []int{2}
 }
-func (m *QueryFinalizedConsumersInfoRequest) XXX_Unmarshal(b []byte) error {
+func (m *QueryFinalizedBSNsInfoRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryFinalizedConsumersInfoRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryFinalizedBSNsInfoRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryFinalizedConsumersInfoRequest.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryFinalizedBSNsInfoRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -145,50 +145,50 @@ func (m *QueryFinalizedConsumersInfoRequest) XXX_Marshal(b []byte, deterministic
 		return b[:n], nil
 	}
 }
-func (m *QueryFinalizedConsumersInfoRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryFinalizedConsumersInfoRequest.Merge(m, src)
+func (m *QueryFinalizedBSNsInfoRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryFinalizedBSNsInfoRequest.Merge(m, src)
 }
-func (m *QueryFinalizedConsumersInfoRequest) XXX_Size() int {
+func (m *QueryFinalizedBSNsInfoRequest) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryFinalizedConsumersInfoRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryFinalizedConsumersInfoRequest.DiscardUnknown(m)
+func (m *QueryFinalizedBSNsInfoRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryFinalizedBSNsInfoRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryFinalizedConsumersInfoRequest proto.InternalMessageInfo
+var xxx_messageInfo_QueryFinalizedBSNsInfoRequest proto.InternalMessageInfo
 
-func (m *QueryFinalizedConsumersInfoRequest) GetConsumerIds() []string {
+func (m *QueryFinalizedBSNsInfoRequest) GetConsumerIds() []string {
 	if m != nil {
 		return m.ConsumerIds
 	}
 	return nil
 }
 
-func (m *QueryFinalizedConsumersInfoRequest) GetProve() bool {
+func (m *QueryFinalizedBSNsInfoRequest) GetProve() bool {
 	if m != nil {
 		return m.Prove
 	}
 	return false
 }
 
-// QueryFinalizedConsumersInfoResponse is response type for the
-// Query/FinalizedConsumersInfo RPC method.
-type QueryFinalizedConsumersInfoResponse struct {
-	FinalizedConsumersData []*FinalizedConsumerData `protobuf:"bytes,1,rep,name=finalized_consumers_data,json=finalizedConsumersData,proto3" json:"finalized_consumers_data,omitempty"`
+// QueryFinalizedBSNsInfoResponse is response type for the
+// Query/FinalizedBSNsInfo RPC method.
+type QueryFinalizedBSNsInfoResponse struct {
+	FinalizedBsnsData []*FinalizedBSNData `protobuf:"bytes,1,rep,name=finalized_bsns_data,json=finalizedBsnsData,proto3" json:"finalized_bsns_data,omitempty"`
 }
 
-func (m *QueryFinalizedConsumersInfoResponse) Reset()         { *m = QueryFinalizedConsumersInfoResponse{} }
-func (m *QueryFinalizedConsumersInfoResponse) String() string { return proto.CompactTextString(m) }
-func (*QueryFinalizedConsumersInfoResponse) ProtoMessage()    {}
-func (*QueryFinalizedConsumersInfoResponse) Descriptor() ([]byte, []int) {
+func (m *QueryFinalizedBSNsInfoResponse) Reset()         { *m = QueryFinalizedBSNsInfoResponse{} }
+func (m *QueryFinalizedBSNsInfoResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryFinalizedBSNsInfoResponse) ProtoMessage()    {}
+func (*QueryFinalizedBSNsInfoResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_cd665af90102da38, []int{3}
 }
-func (m *QueryFinalizedConsumersInfoResponse) XXX_Unmarshal(b []byte) error {
+func (m *QueryFinalizedBSNsInfoResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryFinalizedConsumersInfoResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryFinalizedBSNsInfoResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryFinalizedConsumersInfoResponse.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryFinalizedBSNsInfoResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -198,29 +198,29 @@ func (m *QueryFinalizedConsumersInfoResponse) XXX_Marshal(b []byte, deterministi
 		return b[:n], nil
 	}
 }
-func (m *QueryFinalizedConsumersInfoResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryFinalizedConsumersInfoResponse.Merge(m, src)
+func (m *QueryFinalizedBSNsInfoResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryFinalizedBSNsInfoResponse.Merge(m, src)
 }
-func (m *QueryFinalizedConsumersInfoResponse) XXX_Size() int {
+func (m *QueryFinalizedBSNsInfoResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryFinalizedConsumersInfoResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryFinalizedConsumersInfoResponse.DiscardUnknown(m)
+func (m *QueryFinalizedBSNsInfoResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryFinalizedBSNsInfoResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryFinalizedConsumersInfoResponse proto.InternalMessageInfo
+var xxx_messageInfo_QueryFinalizedBSNsInfoResponse proto.InternalMessageInfo
 
-func (m *QueryFinalizedConsumersInfoResponse) GetFinalizedConsumersData() []*FinalizedConsumerData {
+func (m *QueryFinalizedBSNsInfoResponse) GetFinalizedBsnsData() []*FinalizedBSNData {
 	if m != nil {
-		return m.FinalizedConsumersData
+		return m.FinalizedBsnsData
 	}
 	return nil
 }
 
-// FinalizedConsumerData contains the finalized consumer data for a consumer
-type FinalizedConsumerData struct {
+// FinalizedBSNData contains the finalized BSN data for a BSN
+type FinalizedBSNData struct {
 	ConsumerId string `protobuf:"bytes,1,opt,name=consumer_id,json=consumerId,proto3" json:"consumer_id,omitempty"`
-	// The latest finalized header for this consumer
+	// The latest finalized header for this BSN
 	LatestFinalizedHeader *IndexedHeader `protobuf:"bytes,2,opt,name=latest_finalized_header,json=latestFinalizedHeader,proto3" json:"latest_finalized_header,omitempty"`
 	// The epoch in which this header was finalized
 	EpochInfo *types.Epoch `protobuf:"bytes,3,opt,name=epoch_info,json=epochInfo,proto3" json:"epoch_info,omitempty"`
@@ -232,18 +232,18 @@ type FinalizedConsumerData struct {
 	Proof *ProofFinalizedHeader `protobuf:"bytes,6,opt,name=proof,proto3" json:"proof,omitempty"`
 }
 
-func (m *FinalizedConsumerData) Reset()         { *m = FinalizedConsumerData{} }
-func (m *FinalizedConsumerData) String() string { return proto.CompactTextString(m) }
-func (*FinalizedConsumerData) ProtoMessage()    {}
-func (*FinalizedConsumerData) Descriptor() ([]byte, []int) {
+func (m *FinalizedBSNData) Reset()         { *m = FinalizedBSNData{} }
+func (m *FinalizedBSNData) String() string { return proto.CompactTextString(m) }
+func (*FinalizedBSNData) ProtoMessage()    {}
+func (*FinalizedBSNData) Descriptor() ([]byte, []int) {
 	return fileDescriptor_cd665af90102da38, []int{4}
 }
-func (m *FinalizedConsumerData) XXX_Unmarshal(b []byte) error {
+func (m *FinalizedBSNData) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *FinalizedConsumerData) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *FinalizedBSNData) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_FinalizedConsumerData.Marshal(b, m, deterministic)
+		return xxx_messageInfo_FinalizedBSNData.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -253,54 +253,54 @@ func (m *FinalizedConsumerData) XXX_Marshal(b []byte, deterministic bool) ([]byt
 		return b[:n], nil
 	}
 }
-func (m *FinalizedConsumerData) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_FinalizedConsumerData.Merge(m, src)
+func (m *FinalizedBSNData) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_FinalizedBSNData.Merge(m, src)
 }
-func (m *FinalizedConsumerData) XXX_Size() int {
+func (m *FinalizedBSNData) XXX_Size() int {
 	return m.Size()
 }
-func (m *FinalizedConsumerData) XXX_DiscardUnknown() {
-	xxx_messageInfo_FinalizedConsumerData.DiscardUnknown(m)
+func (m *FinalizedBSNData) XXX_DiscardUnknown() {
+	xxx_messageInfo_FinalizedBSNData.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_FinalizedConsumerData proto.InternalMessageInfo
+var xxx_messageInfo_FinalizedBSNData proto.InternalMessageInfo
 
-func (m *FinalizedConsumerData) GetConsumerId() string {
+func (m *FinalizedBSNData) GetConsumerId() string {
 	if m != nil {
 		return m.ConsumerId
 	}
 	return ""
 }
 
-func (m *FinalizedConsumerData) GetLatestFinalizedHeader() *IndexedHeader {
+func (m *FinalizedBSNData) GetLatestFinalizedHeader() *IndexedHeader {
 	if m != nil {
 		return m.LatestFinalizedHeader
 	}
 	return nil
 }
 
-func (m *FinalizedConsumerData) GetEpochInfo() *types.Epoch {
+func (m *FinalizedBSNData) GetEpochInfo() *types.Epoch {
 	if m != nil {
 		return m.EpochInfo
 	}
 	return nil
 }
 
-func (m *FinalizedConsumerData) GetRawCheckpoint() *types1.RawCheckpoint {
+func (m *FinalizedBSNData) GetRawCheckpoint() *types1.RawCheckpoint {
 	if m != nil {
 		return m.RawCheckpoint
 	}
 	return nil
 }
 
-func (m *FinalizedConsumerData) GetBtcSubmissionKey() *types2.SubmissionKey {
+func (m *FinalizedBSNData) GetBtcSubmissionKey() *types2.SubmissionKey {
 	if m != nil {
 		return m.BtcSubmissionKey
 	}
 	return nil
 }
 
-func (m *FinalizedConsumerData) GetProof() *ProofFinalizedHeader {
+func (m *FinalizedBSNData) GetProof() *ProofFinalizedHeader {
 	if m != nil {
 		return m.Proof
 	}
@@ -310,9 +310,9 @@ func (m *FinalizedConsumerData) GetProof() *ProofFinalizedHeader {
 func init() {
 	proto.RegisterType((*QueryParamsRequest)(nil), "babylon.zoneconcierge.v1.QueryParamsRequest")
 	proto.RegisterType((*QueryParamsResponse)(nil), "babylon.zoneconcierge.v1.QueryParamsResponse")
-	proto.RegisterType((*QueryFinalizedConsumersInfoRequest)(nil), "babylon.zoneconcierge.v1.QueryFinalizedConsumersInfoRequest")
-	proto.RegisterType((*QueryFinalizedConsumersInfoResponse)(nil), "babylon.zoneconcierge.v1.QueryFinalizedConsumersInfoResponse")
-	proto.RegisterType((*FinalizedConsumerData)(nil), "babylon.zoneconcierge.v1.FinalizedConsumerData")
+	proto.RegisterType((*QueryFinalizedBSNsInfoRequest)(nil), "babylon.zoneconcierge.v1.QueryFinalizedBSNsInfoRequest")
+	proto.RegisterType((*QueryFinalizedBSNsInfoResponse)(nil), "babylon.zoneconcierge.v1.QueryFinalizedBSNsInfoResponse")
+	proto.RegisterType((*FinalizedBSNData)(nil), "babylon.zoneconcierge.v1.FinalizedBSNData")
 }
 
 func init() {
@@ -320,48 +320,49 @@ func init() {
 }
 
 var fileDescriptor_cd665af90102da38 = []byte{
-	// 653 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x54, 0x4f, 0x6f, 0xd3, 0x30,
-	0x1c, 0x6d, 0xf6, 0xa7, 0x62, 0x2e, 0x20, 0x64, 0xb6, 0x11, 0x55, 0xa8, 0x2b, 0x01, 0x44, 0x91,
-	0xb6, 0x44, 0xed, 0xb8, 0x30, 0x01, 0x87, 0x6d, 0x20, 0x26, 0x24, 0x04, 0x86, 0x5d, 0x90, 0x50,
-	0xe4, 0x24, 0x6e, 0x6a, 0xad, 0xb5, 0xb3, 0xd8, 0xed, 0xd6, 0x1d, 0xf9, 0x02, 0x4c, 0xe2, 0x13,
-	0x71, 0xdb, 0x71, 0x88, 0x0b, 0x27, 0x84, 0x36, 0xae, 0x7c, 0x07, 0x14, 0xe7, 0x4f, 0x97, 0x76,
-	0xd9, 0x10, 0x37, 0xf7, 0xe5, 0xfd, 0xde, 0xf3, 0xb3, 0xde, 0xaf, 0xe0, 0x9e, 0x83, 0x9d, 0x61,
-	0x97, 0x33, 0xeb, 0x80, 0x33, 0xe2, 0x72, 0xe6, 0x52, 0x12, 0xfa, 0xc4, 0x1a, 0x34, 0xad, 0xdd,
-	0x3e, 0x09, 0x87, 0x66, 0x10, 0x72, 0xc9, 0xa1, 0x9e, 0xb0, 0xcc, 0x1c, 0xcb, 0x1c, 0x34, 0xab,
-	0xf3, 0x3e, 0xf7, 0xb9, 0x22, 0x59, 0xd1, 0x29, 0xe6, 0x57, 0x6f, 0xfb, 0x9c, 0xfb, 0x5d, 0x62,
-	0xe1, 0x80, 0x5a, 0x98, 0x31, 0x2e, 0xb1, 0xa4, 0x9c, 0x89, 0xe4, 0xeb, 0x72, 0xea, 0xe9, 0x48,
-	0xd7, 0xed, 0x10, 0x77, 0x27, 0xe0, 0x94, 0xc9, 0xc8, 0x33, 0x07, 0x24, 0xec, 0x87, 0x29, 0x7b,
-	0xf4, 0x85, 0x32, 0x3f, 0x62, 0x4f, 0x50, 0x8d, 0x94, 0x4a, 0x02, 0xee, 0x76, 0x12, 0x56, 0x7a,
-	0x1e, 0x37, 0x9f, 0x08, 0x9c, 0xcf, 0x16, 0xb3, 0xef, 0x17, 0xb2, 0x03, 0x1c, 0xe2, 0x5e, 0x92,
-	0xc8, 0x98, 0x07, 0xf0, 0x6d, 0xf4, 0x5c, 0x6f, 0x14, 0x88, 0xc8, 0x6e, 0x9f, 0x08, 0x69, 0x6c,
-	0x83, 0x9b, 0x39, 0x54, 0x04, 0x9c, 0x09, 0x02, 0x9f, 0x81, 0x72, 0x3c, 0xac, 0x6b, 0x75, 0xad,
-	0x51, 0x69, 0xd5, 0xcd, 0xa2, 0xd7, 0x35, 0xe3, 0xc9, 0xf5, 0x99, 0xa3, 0x9f, 0x4b, 0x25, 0x94,
-	0x4c, 0x19, 0x1f, 0x81, 0xa1, 0x64, 0x5f, 0x50, 0x86, 0xbb, 0xf4, 0x80, 0x78, 0x1b, 0x9c, 0x89,
-	0x7e, 0x8f, 0x84, 0x62, 0x8b, 0xb5, 0x79, 0x62, 0x0e, 0xef, 0x80, 0xab, 0x6e, 0x82, 0xdb, 0xd4,
-	0x8b, 0xbc, 0xa6, 0x1b, 0x73, 0xa8, 0x92, 0x62, 0x5b, 0x9e, 0x80, 0xf3, 0x60, 0x36, 0x08, 0xf9,
-	0x80, 0xe8, 0x53, 0x75, 0xad, 0x71, 0x05, 0xc5, 0x3f, 0x8c, 0x43, 0x0d, 0xdc, 0xbd, 0x50, 0x3f,
-	0x89, 0x41, 0x81, 0xde, 0x4e, 0x19, 0x76, 0x2a, 0x2b, 0x6c, 0x0f, 0x4b, 0xac, 0xcc, 0x2a, 0x2d,
-	0xab, 0x38, 0xd8, 0x84, 0xf6, 0x26, 0x96, 0x18, 0x2d, 0xb6, 0x27, 0x2c, 0x23, 0xdc, 0xf8, 0x3a,
-	0x0d, 0x16, 0xce, 0x9d, 0x80, 0x4b, 0xa0, 0x72, 0x26, 0xa5, 0x7a, 0xd0, 0x39, 0x04, 0x46, 0x21,
-	0xa1, 0x0d, 0x6e, 0x75, 0xb1, 0x24, 0x42, 0xda, 0xa3, 0xcb, 0x76, 0x08, 0xf6, 0x48, 0xa8, 0x52,
-	0x57, 0x5a, 0x0f, 0x8a, 0x2f, 0xb9, 0xc5, 0x3c, 0xb2, 0x4f, 0xbc, 0x97, 0x8a, 0x8e, 0x16, 0x62,
-	0x9d, 0xec, 0x1e, 0x31, 0x0c, 0x1f, 0x03, 0xa0, 0x1a, 0x66, 0x53, 0xd6, 0xe6, 0xfa, 0xb4, 0xd2,
-	0xac, 0x66, 0x9a, 0x59, 0xf9, 0x06, 0x4d, 0xf3, 0x79, 0x74, 0x46, 0x73, 0x0a, 0x8a, 0x5e, 0x12,
-	0xbe, 0x06, 0xd7, 0x43, 0xbc, 0x67, 0x8f, 0x6a, 0xac, 0xcf, 0x8c, 0x5d, 0x29, 0x57, 0xf9, 0x48,
-	0x03, 0xe1, 0xbd, 0x8d, 0x0c, 0x43, 0xd7, 0xc2, 0xb3, 0x3f, 0xe1, 0x36, 0x80, 0x8e, 0x74, 0x6d,
-	0xd1, 0x77, 0x7a, 0x54, 0x08, 0xca, 0x99, 0xbd, 0x43, 0x86, 0xfa, 0xec, 0x98, 0x66, 0x7e, 0xc7,
-	0x06, 0x4d, 0xf3, 0x5d, 0xc6, 0x7f, 0x45, 0x86, 0xe8, 0x86, 0x23, 0xdd, 0x1c, 0x02, 0x37, 0x55,
-	0x4d, 0x78, 0x5b, 0x2f, 0x2b, 0x25, 0xf3, 0x82, 0xba, 0x46, 0xb4, 0xb1, 0x07, 0x42, 0xf1, 0x70,
-	0xeb, 0xcf, 0x14, 0x98, 0x55, 0xb5, 0x82, 0x9f, 0x35, 0x50, 0x8e, 0x8b, 0x0d, 0x97, 0x8b, 0xb5,
-	0x26, 0xf7, 0xa9, 0xba, 0xf2, 0x8f, 0xec, 0xb8, 0xa0, 0x46, 0xe3, 0xd3, 0xf7, 0xdf, 0x5f, 0xa6,
-	0x0c, 0x58, 0xb7, 0x2e, 0x59, 0x62, 0xf8, 0x4d, 0x03, 0x8b, 0xe7, 0xb7, 0x1d, 0x3e, 0xb9, 0xc4,
-	0xf3, 0xc2, 0x25, 0xac, 0x3e, 0xfd, 0xcf, 0xe9, 0x24, 0xc1, 0x9a, 0x4a, 0xf0, 0x08, 0xb6, 0x8a,
-	0x13, 0x9c, 0xb7, 0x82, 0x51, 0x13, 0xd7, 0xdf, 0x1f, 0x9d, 0xd4, 0xb4, 0xe3, 0x93, 0x9a, 0xf6,
-	0xeb, 0xa4, 0xa6, 0x1d, 0x9e, 0xd6, 0x4a, 0xc7, 0xa7, 0xb5, 0xd2, 0x8f, 0xd3, 0x5a, 0xe9, 0xc3,
-	0x9a, 0x4f, 0x65, 0xa7, 0xef, 0x98, 0x2e, 0xef, 0xa5, 0xba, 0x5d, 0xec, 0x88, 0x15, 0xca, 0x33,
-	0x9b, 0xc1, 0xaa, 0xb5, 0x3f, 0xe6, 0x25, 0x87, 0x01, 0x11, 0x4e, 0x59, 0xfd, 0xdf, 0xad, 0xfe,
-	0x0d, 0x00, 0x00, 0xff, 0xff, 0xf3, 0x72, 0xef, 0x12, 0x37, 0x06, 0x00, 0x00,
+	// 658 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x54, 0x4d, 0x6f, 0xd3, 0x4a,
+	0x14, 0x8d, 0xfb, 0x11, 0xbd, 0x4e, 0xde, 0x7b, 0x6a, 0xa7, 0x45, 0x58, 0x11, 0xb8, 0xc1, 0x02,
+	0x11, 0x50, 0x6b, 0x2b, 0xa9, 0x10, 0x1f, 0x0b, 0x16, 0xa1, 0x20, 0x2a, 0xa4, 0x0a, 0x5c, 0x2a,
+	0xa1, 0x6e, 0xac, 0xb1, 0x3d, 0x71, 0x46, 0x4d, 0x66, 0x5c, 0xcf, 0x24, 0x6d, 0x2a, 0x56, 0xfc,
+	0x01, 0x90, 0xf8, 0x3b, 0xb0, 0xef, 0xb2, 0x12, 0x1b, 0xd8, 0x20, 0xd4, 0xf2, 0x43, 0x90, 0xc7,
+	0x1f, 0xa9, 0x1d, 0x99, 0xc2, 0x6e, 0x7c, 0xe6, 0xcc, 0x39, 0xf7, 0x5e, 0x9d, 0x6b, 0x70, 0xd3,
+	0x41, 0xce, 0xb8, 0xcf, 0xa8, 0x79, 0xcc, 0x28, 0x76, 0x19, 0x75, 0x09, 0x0e, 0x7d, 0x6c, 0x8e,
+	0x5a, 0xe6, 0xc1, 0x10, 0x87, 0x63, 0x23, 0x08, 0x99, 0x60, 0x50, 0x4d, 0x58, 0x46, 0x8e, 0x65,
+	0x8c, 0x5a, 0xf5, 0x15, 0x9f, 0xf9, 0x4c, 0x92, 0xcc, 0xe8, 0x14, 0xf3, 0xeb, 0xd7, 0x7c, 0xc6,
+	0xfc, 0x3e, 0x36, 0x51, 0x40, 0x4c, 0x44, 0x29, 0x13, 0x48, 0x10, 0x46, 0x79, 0x72, 0xbb, 0x96,
+	0x7a, 0x3a, 0xc2, 0x75, 0x7b, 0xd8, 0xdd, 0x0f, 0x18, 0xa1, 0x22, 0xf2, 0xcc, 0x01, 0x09, 0xfb,
+	0x4e, 0xca, 0x9e, 0xdc, 0x10, 0xea, 0x47, 0xec, 0x29, 0xaa, 0x9e, 0x52, 0x71, 0xc0, 0xdc, 0x5e,
+	0xc2, 0x4a, 0xcf, 0x45, 0xf3, 0xa9, 0x86, 0xf3, 0xbd, 0xc5, 0xec, 0x5b, 0xa5, 0xec, 0x00, 0x85,
+	0x68, 0x90, 0x74, 0xa4, 0xaf, 0x00, 0xf8, 0x2a, 0x1a, 0xd7, 0x4b, 0x09, 0x5a, 0xf8, 0x60, 0x88,
+	0xb9, 0xd0, 0x77, 0xc1, 0x72, 0x0e, 0xe5, 0x01, 0xa3, 0x1c, 0xc3, 0xc7, 0xa0, 0x1a, 0x3f, 0x56,
+	0x95, 0x86, 0xd2, 0xac, 0xb5, 0x1b, 0x46, 0xd9, 0x74, 0x8d, 0xf8, 0x65, 0x67, 0xee, 0xe4, 0xfb,
+	0x6a, 0xc5, 0x4a, 0x5e, 0xe9, 0x6f, 0xc0, 0x75, 0x29, 0xfb, 0x8c, 0x50, 0xd4, 0x27, 0xc7, 0xd8,
+	0xeb, 0xec, 0x6c, 0xf3, 0x2d, 0xda, 0x65, 0x89, 0x2f, 0xbc, 0x01, 0xfe, 0x75, 0x19, 0xe5, 0xc3,
+	0x01, 0x0e, 0x6d, 0xe2, 0x45, 0x36, 0xb3, 0xcd, 0x05, 0xab, 0x96, 0x62, 0x5b, 0x1e, 0x87, 0x2b,
+	0x60, 0x3e, 0x08, 0xd9, 0x08, 0xab, 0x33, 0x0d, 0xa5, 0xf9, 0x8f, 0x15, 0x7f, 0xe8, 0x6f, 0x81,
+	0x56, 0xa6, 0x9c, 0xd4, 0xbe, 0x07, 0x96, 0xbb, 0xe9, 0xa5, 0xed, 0x70, 0xca, 0x6d, 0x0f, 0x09,
+	0x24, 0x1d, 0x6a, 0xed, 0xbb, 0xe5, 0x8d, 0x5c, 0x54, 0xdc, 0x44, 0x02, 0x59, 0x4b, 0x99, 0x4c,
+	0x87, 0x53, 0x1e, 0x41, 0xfa, 0xa7, 0x59, 0xb0, 0x58, 0xe4, 0xc1, 0x55, 0x50, 0xbb, 0xd0, 0x8b,
+	0x9c, 0xd8, 0x82, 0x05, 0x26, 0xad, 0x40, 0x1b, 0x5c, 0xed, 0x23, 0x81, 0xb9, 0xb0, 0x27, 0x85,
+	0xf5, 0x30, 0xf2, 0x70, 0x28, 0x7b, 0xab, 0xb5, 0x6f, 0x97, 0x57, 0xb5, 0x45, 0x3d, 0x7c, 0x84,
+	0xbd, 0xe7, 0x92, 0x6e, 0x5d, 0x89, 0x75, 0xb2, 0x12, 0x62, 0x18, 0x3e, 0x04, 0x40, 0x46, 0xc8,
+	0x26, 0xb4, 0xcb, 0xd4, 0x59, 0xa9, 0x59, 0xcf, 0x34, 0xb3, 0x74, 0x8d, 0x5a, 0xc6, 0xd3, 0xe8,
+	0x6c, 0x2d, 0x48, 0x28, 0x9a, 0x1a, 0xdc, 0x06, 0xff, 0x87, 0xe8, 0xd0, 0x9e, 0xe4, 0x54, 0x9d,
+	0x2b, 0x94, 0x94, 0xcb, 0x74, 0xa4, 0x61, 0xa1, 0xc3, 0x27, 0x19, 0x66, 0xfd, 0x17, 0x5e, 0xfc,
+	0x84, 0xbb, 0x00, 0x3a, 0xc2, 0xb5, 0xf9, 0xd0, 0x19, 0x10, 0xce, 0x09, 0xa3, 0xf6, 0x3e, 0x1e,
+	0xab, 0xf3, 0x05, 0xcd, 0xfc, 0x12, 0x8d, 0x5a, 0xc6, 0x4e, 0xc6, 0x7f, 0x81, 0xc7, 0xd6, 0xa2,
+	0x23, 0xdc, 0x1c, 0x02, 0x37, 0x65, 0x18, 0x58, 0x57, 0xad, 0x4a, 0x25, 0xe3, 0x37, 0x79, 0x8c,
+	0x68, 0x85, 0x01, 0x59, 0xf1, 0xe3, 0xf6, 0xb7, 0x19, 0x30, 0x2f, 0xd3, 0x03, 0xdf, 0x2b, 0xa0,
+	0x1a, 0x27, 0x17, 0xae, 0x95, 0x6b, 0x4d, 0x2f, 0x4c, 0x7d, 0xfd, 0x0f, 0xd9, 0x71, 0x18, 0xf5,
+	0xe6, 0xbb, 0x2f, 0x3f, 0x3f, 0xce, 0xe8, 0xb0, 0x61, 0x5e, 0xb2, 0xa5, 0xf0, 0xb3, 0x02, 0x96,
+	0xa6, 0x42, 0x0d, 0xef, 0x5f, 0x62, 0x57, 0xb6, 0x60, 0xf5, 0x07, 0x7f, 0xff, 0x30, 0x29, 0xf9,
+	0x9e, 0x2c, 0xd9, 0x84, 0xeb, 0xe5, 0x25, 0x17, 0xf6, 0x2b, 0x4a, 0x5d, 0xe7, 0xf5, 0xc9, 0x99,
+	0xa6, 0x9c, 0x9e, 0x69, 0xca, 0x8f, 0x33, 0x4d, 0xf9, 0x70, 0xae, 0x55, 0x4e, 0xcf, 0xb5, 0xca,
+	0xd7, 0x73, 0xad, 0xb2, 0xf7, 0xc8, 0x27, 0xa2, 0x37, 0x74, 0x0c, 0x97, 0x0d, 0x52, 0xc9, 0x3e,
+	0x72, 0xf8, 0x3a, 0x61, 0x99, 0xc3, 0x68, 0xc3, 0x3c, 0x2a, 0xd8, 0x88, 0x71, 0x80, 0xb9, 0x53,
+	0x95, 0x3f, 0xaf, 0x8d, 0x5f, 0x01, 0x00, 0x00, 0xff, 0xff, 0xaf, 0xe7, 0x9c, 0xc5, 0x04, 0x06,
+	0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -378,8 +379,8 @@ const _ = grpc.SupportPackageIsVersion4
 type QueryClient interface {
 	// Params queries the parameters of the module.
 	Params(ctx context.Context, in *QueryParamsRequest, opts ...grpc.CallOption) (*QueryParamsResponse, error)
-	// FinalizedConsumersInfo queries the BTC-finalised info of consumers with given IDs, with proofs
-	FinalizedConsumersInfo(ctx context.Context, in *QueryFinalizedConsumersInfoRequest, opts ...grpc.CallOption) (*QueryFinalizedConsumersInfoResponse, error)
+	// FinalizedBSNsInfo queries the BTC-finalised info of BSNs with given IDs, with proofs
+	FinalizedBSNsInfo(ctx context.Context, in *QueryFinalizedBSNsInfoRequest, opts ...grpc.CallOption) (*QueryFinalizedBSNsInfoResponse, error)
 }
 
 type queryClient struct {
@@ -399,9 +400,9 @@ func (c *queryClient) Params(ctx context.Context, in *QueryParamsRequest, opts .
 	return out, nil
 }
 
-func (c *queryClient) FinalizedConsumersInfo(ctx context.Context, in *QueryFinalizedConsumersInfoRequest, opts ...grpc.CallOption) (*QueryFinalizedConsumersInfoResponse, error) {
-	out := new(QueryFinalizedConsumersInfoResponse)
-	err := c.cc.Invoke(ctx, "/babylon.zoneconcierge.v1.Query/FinalizedConsumersInfo", in, out, opts...)
+func (c *queryClient) FinalizedBSNsInfo(ctx context.Context, in *QueryFinalizedBSNsInfoRequest, opts ...grpc.CallOption) (*QueryFinalizedBSNsInfoResponse, error) {
+	out := new(QueryFinalizedBSNsInfoResponse)
+	err := c.cc.Invoke(ctx, "/babylon.zoneconcierge.v1.Query/FinalizedBSNsInfo", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -412,8 +413,8 @@ func (c *queryClient) FinalizedConsumersInfo(ctx context.Context, in *QueryFinal
 type QueryServer interface {
 	// Params queries the parameters of the module.
 	Params(context.Context, *QueryParamsRequest) (*QueryParamsResponse, error)
-	// FinalizedConsumersInfo queries the BTC-finalised info of consumers with given IDs, with proofs
-	FinalizedConsumersInfo(context.Context, *QueryFinalizedConsumersInfoRequest) (*QueryFinalizedConsumersInfoResponse, error)
+	// FinalizedBSNsInfo queries the BTC-finalised info of BSNs with given IDs, with proofs
+	FinalizedBSNsInfo(context.Context, *QueryFinalizedBSNsInfoRequest) (*QueryFinalizedBSNsInfoResponse, error)
 }
 
 // UnimplementedQueryServer can be embedded to have forward compatible implementations.
@@ -423,8 +424,8 @@ type UnimplementedQueryServer struct {
 func (*UnimplementedQueryServer) Params(ctx context.Context, req *QueryParamsRequest) (*QueryParamsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Params not implemented")
 }
-func (*UnimplementedQueryServer) FinalizedConsumersInfo(ctx context.Context, req *QueryFinalizedConsumersInfoRequest) (*QueryFinalizedConsumersInfoResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method FinalizedConsumersInfo not implemented")
+func (*UnimplementedQueryServer) FinalizedBSNsInfo(ctx context.Context, req *QueryFinalizedBSNsInfoRequest) (*QueryFinalizedBSNsInfoResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FinalizedBSNsInfo not implemented")
 }
 
 func RegisterQueryServer(s grpc1.Server, srv QueryServer) {
@@ -449,20 +450,20 @@ func _Query_Params_Handler(srv interface{}, ctx context.Context, dec func(interf
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Query_FinalizedConsumersInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryFinalizedConsumersInfoRequest)
+func _Query_FinalizedBSNsInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryFinalizedBSNsInfoRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(QueryServer).FinalizedConsumersInfo(ctx, in)
+		return srv.(QueryServer).FinalizedBSNsInfo(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/babylon.zoneconcierge.v1.Query/FinalizedConsumersInfo",
+		FullMethod: "/babylon.zoneconcierge.v1.Query/FinalizedBSNsInfo",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).FinalizedConsumersInfo(ctx, req.(*QueryFinalizedConsumersInfoRequest))
+		return srv.(QueryServer).FinalizedBSNsInfo(ctx, req.(*QueryFinalizedBSNsInfoRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -476,8 +477,8 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 			Handler:    _Query_Params_Handler,
 		},
 		{
-			MethodName: "FinalizedConsumersInfo",
-			Handler:    _Query_FinalizedConsumersInfo_Handler,
+			MethodName: "FinalizedBSNsInfo",
+			Handler:    _Query_FinalizedBSNsInfo_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -540,7 +541,7 @@ func (m *QueryParamsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryFinalizedConsumersInfoRequest) Marshal() (dAtA []byte, err error) {
+func (m *QueryFinalizedBSNsInfoRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -550,12 +551,12 @@ func (m *QueryFinalizedConsumersInfoRequest) Marshal() (dAtA []byte, err error) 
 	return dAtA[:n], nil
 }
 
-func (m *QueryFinalizedConsumersInfoRequest) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryFinalizedBSNsInfoRequest) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryFinalizedConsumersInfoRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryFinalizedBSNsInfoRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -582,7 +583,7 @@ func (m *QueryFinalizedConsumersInfoRequest) MarshalToSizedBuffer(dAtA []byte) (
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryFinalizedConsumersInfoResponse) Marshal() (dAtA []byte, err error) {
+func (m *QueryFinalizedBSNsInfoResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -592,20 +593,20 @@ func (m *QueryFinalizedConsumersInfoResponse) Marshal() (dAtA []byte, err error)
 	return dAtA[:n], nil
 }
 
-func (m *QueryFinalizedConsumersInfoResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryFinalizedBSNsInfoResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryFinalizedConsumersInfoResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryFinalizedBSNsInfoResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if len(m.FinalizedConsumersData) > 0 {
-		for iNdEx := len(m.FinalizedConsumersData) - 1; iNdEx >= 0; iNdEx-- {
+	if len(m.FinalizedBsnsData) > 0 {
+		for iNdEx := len(m.FinalizedBsnsData) - 1; iNdEx >= 0; iNdEx-- {
 			{
-				size, err := m.FinalizedConsumersData[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				size, err := m.FinalizedBsnsData[iNdEx].MarshalToSizedBuffer(dAtA[:i])
 				if err != nil {
 					return 0, err
 				}
@@ -619,7 +620,7 @@ func (m *QueryFinalizedConsumersInfoResponse) MarshalToSizedBuffer(dAtA []byte) 
 	return len(dAtA) - i, nil
 }
 
-func (m *FinalizedConsumerData) Marshal() (dAtA []byte, err error) {
+func (m *FinalizedBSNData) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -629,12 +630,12 @@ func (m *FinalizedConsumerData) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *FinalizedConsumerData) MarshalTo(dAtA []byte) (int, error) {
+func (m *FinalizedBSNData) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *FinalizedConsumerData) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *FinalizedBSNData) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -740,7 +741,7 @@ func (m *QueryParamsResponse) Size() (n int) {
 	return n
 }
 
-func (m *QueryFinalizedConsumersInfoRequest) Size() (n int) {
+func (m *QueryFinalizedBSNsInfoRequest) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -758,14 +759,14 @@ func (m *QueryFinalizedConsumersInfoRequest) Size() (n int) {
 	return n
 }
 
-func (m *QueryFinalizedConsumersInfoResponse) Size() (n int) {
+func (m *QueryFinalizedBSNsInfoResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	if len(m.FinalizedConsumersData) > 0 {
-		for _, e := range m.FinalizedConsumersData {
+	if len(m.FinalizedBsnsData) > 0 {
+		for _, e := range m.FinalizedBsnsData {
 			l = e.Size()
 			n += 1 + l + sovQuery(uint64(l))
 		}
@@ -773,7 +774,7 @@ func (m *QueryFinalizedConsumersInfoResponse) Size() (n int) {
 	return n
 }
 
-func (m *FinalizedConsumerData) Size() (n int) {
+func (m *FinalizedBSNData) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -945,7 +946,7 @@ func (m *QueryParamsResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryFinalizedConsumersInfoRequest) Unmarshal(dAtA []byte) error {
+func (m *QueryFinalizedBSNsInfoRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -968,10 +969,10 @@ func (m *QueryFinalizedConsumersInfoRequest) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryFinalizedConsumersInfoRequest: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryFinalizedBSNsInfoRequest: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryFinalizedConsumersInfoRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryFinalizedBSNsInfoRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -1047,7 +1048,7 @@ func (m *QueryFinalizedConsumersInfoRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryFinalizedConsumersInfoResponse) Unmarshal(dAtA []byte) error {
+func (m *QueryFinalizedBSNsInfoResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1070,15 +1071,15 @@ func (m *QueryFinalizedConsumersInfoResponse) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryFinalizedConsumersInfoResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryFinalizedBSNsInfoResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryFinalizedConsumersInfoResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryFinalizedBSNsInfoResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field FinalizedConsumersData", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field FinalizedBsnsData", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -1105,8 +1106,8 @@ func (m *QueryFinalizedConsumersInfoResponse) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.FinalizedConsumersData = append(m.FinalizedConsumersData, &FinalizedConsumerData{})
-			if err := m.FinalizedConsumersData[len(m.FinalizedConsumersData)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			m.FinalizedBsnsData = append(m.FinalizedBsnsData, &FinalizedBSNData{})
+			if err := m.FinalizedBsnsData[len(m.FinalizedBsnsData)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -1131,7 +1132,7 @@ func (m *QueryFinalizedConsumersInfoResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *FinalizedConsumerData) Unmarshal(dAtA []byte) error {
+func (m *FinalizedBSNData) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1154,10 +1155,10 @@ func (m *FinalizedConsumerData) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: FinalizedConsumerData: wiretype end group for non-group")
+			return fmt.Errorf("proto: FinalizedBSNData: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: FinalizedConsumerData: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: FinalizedBSNData: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:

@@ -21,44 +21,44 @@ func (k Keeper) Params(c context.Context, req *types.QueryParamsRequest) (*types
 	return &types.QueryParamsResponse{Params: k.GetParams(ctx)}, nil
 }
 
-// FinalizedConsumersInfo returns the finalized info for a given list of consumers
-func (k Keeper) FinalizedConsumersInfo(c context.Context, req *types.QueryFinalizedConsumersInfoRequest) (*types.QueryFinalizedConsumersInfoResponse, error) {
+// FinalizedBSNsInfo returns the finalized info for a given list of BSNs
+func (k Keeper) FinalizedBSNsInfo(c context.Context, req *types.QueryFinalizedBSNsInfoRequest) (*types.QueryFinalizedBSNsInfoResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 
-	// return if no consumer IDs are provided
+	// return if no BSN IDs are provided
 	if len(req.ConsumerIds) == 0 {
-		return nil, status.Error(codes.InvalidArgument, "consumer ID cannot be empty")
+		return nil, status.Error(codes.InvalidArgument, "BSN ID cannot be empty")
 	}
 
-	// return if consumer IDs contain duplicates or empty strings
+	// return if BSN IDs contain duplicates or empty strings
 	if err := bbntypes.CheckForDuplicatesAndEmptyStrings(req.ConsumerIds); err != nil {
 		return nil, status.Error(codes.InvalidArgument, types.ErrInvalidConsumerIDs.Wrap(err.Error()).Error())
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)
-	resp := &types.QueryFinalizedConsumersInfoResponse{FinalizedConsumersData: []*types.FinalizedConsumerData{}}
+	resp := &types.QueryFinalizedBSNsInfoResponse{FinalizedBsnsData: []*types.FinalizedBSNData{}}
 
 	// find the last finalised epoch
 	lastFinalizedEpoch := k.GetLastFinalizedEpoch(ctx)
 
 	// TODO: paginate this for loop
 	for _, ConsumerId := range req.ConsumerIds {
-		// Validate that the consumer is registered
+		// Validate that the BSN is registered
 		if !k.HasConsumer(ctx, ConsumerId) {
-			return nil, status.Error(codes.InvalidArgument, types.ErrConsumerInfoNotFound.Wrapf("consumer ID %s is not registered", ConsumerId).Error())
+			return nil, status.Error(codes.InvalidArgument, types.ErrConsumerInfoNotFound.Wrapf("BSN ID %s is not registered", ConsumerId).Error())
 		}
 
-		data := &types.FinalizedConsumerData{ConsumerId: ConsumerId}
+		data := &types.FinalizedBSNData{ConsumerId: ConsumerId}
 
-		// if no finalized header exists for this consumer in the last finalised epoch, return with empty fields
+		// if no finalized header exists for this BSN in the last finalised epoch, return with empty fields
 		if !k.FinalizedHeaderExists(ctx, ConsumerId, lastFinalizedEpoch) {
-			resp.FinalizedConsumersData = append(resp.FinalizedConsumersData, data)
+			resp.FinalizedBsnsData = append(resp.FinalizedBsnsData, data)
 			continue
 		}
 
-		// get the finalized header for this consumer in the last finalised epoch
+		// get the finalized header for this BSN in the last finalised epoch
 		finalizedHeader, err := k.GetFinalizedHeader(ctx, ConsumerId, lastFinalizedEpoch)
 		if err != nil {
 			return nil, err
@@ -96,13 +96,13 @@ func (k Keeper) FinalizedConsumersInfo(c context.Context, req *types.QueryFinali
 
 		// generate all proofs
 		if req.Prove {
-			data.Proof, err = k.proveFinalizedConsumer(ctx, finalizedHeader.Header, data.EpochInfo, data.BtcSubmissionKey)
+			data.Proof, err = k.proveFinalizedBSN(ctx, finalizedHeader.Header, data.EpochInfo, data.BtcSubmissionKey)
 			if err != nil {
 				return nil, err
 			}
 		}
 
-		resp.FinalizedConsumersData = append(resp.FinalizedConsumersData, data)
+		resp.FinalizedBsnsData = append(resp.FinalizedBsnsData, data)
 	}
 
 	return resp, nil

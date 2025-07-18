@@ -10,24 +10,24 @@ import "babylon/btclightclient/v1/btclightclient.proto";
 
 option go_package = "github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types";
 
-// IndexedHeader is the metadata of a Consumer header
+// IndexedHeader is the metadata of a BSN header
 message IndexedHeader {
   // consumer_id is the unique ID of the consumer
   string consumer_id = 1;
   // hash is the hash of this header
   bytes hash = 2;
-  // height is the height of this header on the Consumer's ledger.
-  // (hash, height) jointly provide the position of the header on the Consumer ledger
+  // height is the height of this header on the BSN's ledger.
+  // (hash, height) jointly provide the position of the header on the BSN ledger
   uint64 height = 3;
-  // time is the timestamp of this header on the Consumer's ledger.
-  // It is needed for a Consumer to unbond all mature validators/delegations before
+  // time is the timestamp of this header on the BSN's ledger.
+  // It is needed for a BSN to unbond all mature validators/delegations before
   // this timestamp, when this header is BTC-finalised
   google.protobuf.Timestamp time = 4 [ (gogoproto.stdtime) = true ];
-  // babylon_header_hash is the hash of the babylon block that includes this Consumer
+  // babylon_header_hash is the hash of the babylon block that includes this BSN
   // header
   bytes babylon_header_hash = 5;
   // babylon_header_height is the height of the babylon block that includes this
-  // Consumer header
+  // BSN header
   uint64 babylon_header_height = 6;
   // epoch is the epoch number of this header on Babylon ledger
   uint64 babylon_epoch = 7;
@@ -92,13 +92,13 @@ message BTCChainSegment {
   repeated babylon.btclightclient.v1.BTCHeaderInfo btc_headers = 1;
 }
 
-// ConsumerBTCState stores per-consumer BTC synchronization state
+// BSNBTCState stores per-BSN BTC synchronization state
 // This includes both the base header and the last sent segment
-message ConsumerBTCState {
-  // base_header is the base BTC header for this consumer
+message BSNBTCState {
+  // base_header is the base BTC header for this BSN
   // This represents the starting point from which BTC headers are synchronized
   babylon.btclightclient.v1.BTCHeaderInfo base_header = 1;
-  // last_sent_segment is the last segment of BTC headers sent to this consumer
+  // last_sent_segment is the last segment of BTC headers sent to this BSN
   // This is used to determine the next headers to send and handle reorgs
   BTCChainSegment last_sent_segment = 2;
 }

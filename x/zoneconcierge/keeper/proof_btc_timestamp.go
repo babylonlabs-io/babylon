@@ -88,11 +88,11 @@ func (k Keeper) ProveEpochSubmitted(ctx context.Context, sk *btcctypes.Submissio
 	return bestSubmissionData.TxsInfo, nil
 }
 
-// proveFinalizedConsumer generates proofs that a consumer header has been finalised by the given epoch with epochInfo
+// proveFinalizedBSN generates proofs that a BSN header has been finalised by the given epoch with epochInfo
 // It includes proofEpochSealed and proofEpochSubmitted
 // The proofs can be verified by a verifier with access to a BTC and Babylon light client
 // CONTRACT: this is only a private helper function for simplifying the implementation of RPC calls
-func (k Keeper) proveFinalizedConsumer(
+func (k Keeper) proveFinalizedBSN(
 	ctx context.Context,
 	indexedHeader *types.IndexedHeader,
 	epochInfo *epochingtypes.Epoch,
