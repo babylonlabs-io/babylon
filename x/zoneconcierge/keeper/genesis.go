@@ -10,24 +10,17 @@ import (
 func (k Keeper) InitGenesis(ctx context.Context, gs types.GenesisState) error {
 	k.SetPort(ctx, gs.PortId)
 
-	for _, ci := range gs.ChainsInfo {
-		k.setChainInfo(ctx, ci)
+	// Initialize finalized headers
+	for _, fh := range gs.FinalizedHeaders {
+		k.setFinalizedHeader(ctx, fh.ConsumerId, fh.EpochNumber, fh.HeaderWithProof)
 	}
 
-	for _, h := range gs.ChainsIndexedHeaders {
-		if err := k.insertHeader(ctx, h.ConsumerId, h); err != nil {
-			return err
-		}
-	}
-
-	for _, ei := range gs.ChainsEpochsInfo {
-		k.setEpochChainInfo(ctx, ei.ChainInfo.ChainInfo.ConsumerId, ei.EpochNumber, ei.ChainInfo)
-	}
-
+	// Initialize last sent segment
 	if gs.LastSentSegment != nil {
 		k.setLastSentSegment(ctx, gs.LastSentSegment)
 	}
 
+	// Initialize sealed epoch proofs
 	for _, se := range gs.SealedEpochsProofs {
 		k.sealedEpochProofStore(ctx).Set(
 			sdk.Uint64ToBigEndian(se.EpochNumber),
@@ -35,125 +28,62 @@ func (k Keeper) InitGenesis(ctx context.Context, gs types.GenesisState) error {
 		)
 	}
 
+	// Initialize consumer BTC states
+	for _, cs := range gs.BsnBtcStates {
+		k.SetBSNBTCState(ctx, cs.ConsumerId, cs.State)
+	}
+
+	// NOTE: Consumer registration is now handled by the btcstkconsumer module
+
 	return k.SetParams(ctx, gs.Params)
 }
 
 // ExportGenesis returns the keeper state into a exported genesis state.
 func (k Keeper) ExportGenesis(ctx context.Context) (*types.GenesisState, error) {
-	consumerIDs, ci := k.chainsInfo(ctx)
+	// Get all finalized headers
+	fh := k.GetAllFinalizedHeaders(ctx)
 
-	h, err := k.chainsHeaders(ctx, consumerIDs)
-	if err != nil {
-		return nil, err
-	}
+	// Get all consumer BTC states
+	cs := k.getAllBSNBTCStates(ctx)
 
-	ei, err := k.chainsEpochsInfo(ctx, consumerIDs)
-	if err != nil {
-		return nil, err
-	}
-
+	// Get sealed epoch proofs
 	se, err := k.sealedEpochsProofs(ctx)
 	if err != nil {
 		return nil, err
 	}
 
+	// NOTE: Consumer registration is now handled by the btcstkconsumer module
+
 	return &types.GenesisState{
-		Params:               k.GetParams(ctx),
-		PortId:               k.GetPort(ctx),
-		ChainsInfo:           ci,
-		ChainsIndexedHeaders: h,
-		ChainsEpochsInfo:     ei,
-		LastSentSegment:      k.GetLastSentSegment(ctx),
-		SealedEpochsProofs:   se,
+		Params:             k.GetParams(ctx),
+		PortId:             k.GetPort(ctx),
+		FinalizedHeaders:   fh,
+		LastSentSegment:    k.GetLastSentSegment(ctx),
+		SealedEpochsProofs: se,
+		BsnBtcStates:       cs,
 	}, nil
 }
 
-// chainsInfo gets the information and consumer ID of all consumer chains
-// that integrate Babylon
-func (k Keeper) chainsInfo(ctx context.Context) ([]string, []*types.ChainInfo) {
-	consumerIds := make([]string, 0)
-	chains := make([]*types.ChainInfo, 0)
-	iter := k.chainInfoStore(ctx).Iterator(nil, nil)
-	defer iter.Close()
+// getAllBSNBTCStates gets all BSN BTC states for genesis export
+func (k Keeper) getAllBSNBTCStates(ctx context.Context) []*types.BSNBTCStateEntry {
+	var entries []*types.BSNBTCStateEntry
+	store := k.bsnBTCStateStore(ctx)
+	iterator := store.Iterator(nil, nil)
+	defer iterator.Close()
 
-	for ; iter.Valid(); iter.Next() {
-		// consumer ID is the store key
-		consumerIds = append(consumerIds, string(iter.Key()))
-
-		var chainInfo types.ChainInfo
-		k.cdc.MustUnmarshal(iter.Value(), &chainInfo)
-		chains = append(chains, &chainInfo)
+	for ; iterator.Valid(); iterator.Next() {
+		consumerID := string(iterator.Key())
+		var state types.BSNBTCState
+		k.cdc.MustUnmarshal(iterator.Value(), &state)
+		entries = append(entries, &types.BSNBTCStateEntry{
+			ConsumerId: consumerID,
+			State:      &state,
+		})
 	}
-	return consumerIds, chains
+	return entries
 }
 
-func (k Keeper) chainsHeaders(ctx context.Context, consumerIDs []string) ([]*types.IndexedHeader, error) {
-	headers := make([]*types.IndexedHeader, 0)
-	for _, cID := range consumerIDs {
-		hs, err := k.headersByChain(ctx, cID)
-		if err != nil {
-			return nil, err
-		}
-		headers = append(headers, hs...)
-	}
-	return headers, nil
-}
-
-func (k Keeper) headersByChain(ctx context.Context, consumerID string) ([]*types.IndexedHeader, error) {
-	headers := make([]*types.IndexedHeader, 0)
-	iter := k.canonicalChainStore(ctx, consumerID).Iterator(nil, nil)
-	defer iter.Close()
-
-	for ; iter.Valid(); iter.Next() {
-		var h types.IndexedHeader
-		if err := k.cdc.Unmarshal(iter.Value(), &h); err != nil {
-			return nil, err
-		}
-
-		if err := h.Validate(); err != nil {
-			return nil, err
-		}
-		headers = append(headers, &h)
-	}
-	return headers, nil
-}
-
-func (k Keeper) chainsEpochsInfo(ctx context.Context, consumerIDs []string) ([]*types.EpochChainInfoEntry, error) {
-	entries := make([]*types.EpochChainInfoEntry, 0)
-	for _, cID := range consumerIDs {
-		epochsInfo, err := k.epochsInfoByChain(ctx, cID)
-		if err != nil {
-			return nil, err
-		}
-		entries = append(entries, epochsInfo...)
-	}
-	return entries, nil
-}
-
-func (k Keeper) epochsInfoByChain(ctx context.Context, consumerID string) ([]*types.EpochChainInfoEntry, error) {
-	entries := make([]*types.EpochChainInfoEntry, 0)
-	iter := k.epochChainInfoStore(ctx, consumerID).Iterator(nil, nil)
-	defer iter.Close()
-
-	for ; iter.Valid(); iter.Next() {
-		epochNum := sdk.BigEndianToUint64(iter.Key())
-
-		var ci types.ChainInfoWithProof
-		if err := k.cdc.Unmarshal(iter.Value(), &ci); err != nil {
-			return nil, err
-		}
-		entry := &types.EpochChainInfoEntry{
-			EpochNumber: epochNum,
-			ChainInfo:   &ci,
-		}
-		if err := entry.Validate(); err != nil {
-			return nil, err
-		}
-		entries = append(entries, entry)
-	}
-	return entries, nil
-}
-
+// sealedEpochsProofs gets all sealed epoch proofs for genesis export
 func (k Keeper) sealedEpochsProofs(ctx context.Context) ([]*types.SealedEpochProofEntry, error) {
 	entries := make([]*types.SealedEpochProofEntry, 0)
 	iter := k.sealedEpochProofStore(ctx).Iterator(nil, nil)

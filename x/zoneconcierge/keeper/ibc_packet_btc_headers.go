@@ -12,10 +12,11 @@ import (
 // BroadcastBTCHeaders sends an IBC packet of BTC headers to all open IBC channels to ZoneConcierge
 func (k Keeper) BroadcastBTCHeaders(ctx context.Context) error {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	openZCChannels := k.GetAllOpenZCChannels(ctx)
-	if len(openZCChannels) == 0 {
+	// get all registered consumers
+	consumerIDs := k.GetAllConsumerIDs(ctx)
+	if len(consumerIDs) == 0 {
 		k.Logger(sdkCtx).Info("skipping BTC header broadcast",
-			"reason", "no open channels",
+			"reason", "no registered consumers",
 		)
 		return nil
 	}
@@ -28,10 +29,14 @@ func (k Keeper) BroadcastBTCHeaders(ctx context.Context) error {
 	// TODO: Improve reorg handling efficiency - instead of sending from Consumer base to tip,
 	// we should send a dedicated reorg event and then send headers from the reorged point to tip
 
-	for _, channel := range openZCChannels {
-		consumerID, err := k.getClientID(ctx, channel)
-		if err != nil {
-			return err
+	for _, consumerID := range consumerIDs {
+		// Find the channel for this consumer
+		channel, found := k.getChannelForConsumer(ctx, consumerID)
+		if !found {
+			k.Logger(sdkCtx).Debug("no open channel found for consumer, skipping BTC header broadcast",
+				"consumerID", consumerID,
+			)
+			continue
 		}
 
 		headers := k.getHeadersToBroadcastForConsumer(ctx, consumerID)
@@ -59,8 +64,8 @@ func (k Keeper) BroadcastBTCHeaders(ctx context.Context) error {
 			continue
 		}
 
-		// Update the consumer-specific last sent segment
-		k.SetConsumerLastSentSegment(ctx, consumerID, &types.BTCChainSegment{
+		// Update the BSN-specific last sent segment
+		k.SetBSNLastSentSegment(ctx, consumerID, &types.BTCChainSegment{
 			BtcHeaders: headers,
 		})
 	}

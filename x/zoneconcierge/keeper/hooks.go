@@ -23,17 +23,14 @@ var _ epochingtypes.EpochingHooks = Hooks{}
 func (k Keeper) Hooks() Hooks { return Hooks{k} }
 
 func (h Hooks) AfterEpochEnds(ctx context.Context, epoch uint64) {
-	// upon an epoch has ended, index the current chain info for each Consumer
-	// TODO: do this together when epoch is sealed?
-	for _, consumerID := range h.k.GetAllConsumerIDs(ctx) {
-		h.k.recordEpochChainInfo(ctx, consumerID, epoch)
-	}
+	// upon an epoch has ended, record the latest headers for each consumer
+	h.k.recordEpochHeaders(ctx, epoch)
 }
 
 func (h Hooks) AfterRawCheckpointSealed(ctx context.Context, epoch uint64) error {
-	// upon a raw checkpoint is sealed, index the current chain info for each consumer,
+	// upon a raw checkpoint is sealed, record the proofs for the epoch headers
 	// and generate/save the proof that the epoch is sealed
-	h.k.recordEpochChainInfoProofs(ctx, epoch)
+	h.k.recordEpochHeadersProofs(ctx, epoch)
 	h.k.recordSealedEpochProof(ctx, epoch)
 	return nil
 }

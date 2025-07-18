@@ -166,8 +166,8 @@ func (im IBCModule) OnRecvPacket(
 	}
 
 	switch packet := packetData.Packet.(type) {
-	case *types.InboundPacket_ConsumerSlashing:
-		err := im.keeper.HandleConsumerSlashing(ctx, modulePacket.DestinationPort, modulePacket.DestinationChannel, packet.ConsumerSlashing)
+	case *types.InboundPacket_BsnSlashing:
+		err := im.keeper.HandleConsumerSlashing(ctx, modulePacket.DestinationPort, modulePacket.DestinationChannel, packet.BsnSlashing)
 		if err != nil {
 			return channeltypes.NewErrorAcknowledgement(err)
 		}

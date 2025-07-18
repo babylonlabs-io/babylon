@@ -15,6 +15,7 @@ import (
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
 	testhelper "github.com/babylonlabs-io/babylon/v3/testutil/helper"
 	btcctypes "github.com/babylonlabs-io/babylon/v3/x/btccheckpoint/types"
+	btcstkconsumertypes "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
 	"github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
 )
@@ -44,7 +45,7 @@ func FuzzBTCTimestamp(f *testing.F) {
 
 		// empty BTC timestamp
 		btcTs := &types.BTCTimestamp{}
-		btcTs.Proof = &types.ProofFinalizedChainInfo{}
+		btcTs.Proof = &types.ProofFinalizedHeader{}
 
 		// chain is at height 1 thus epoch 1
 
@@ -60,14 +61,28 @@ func FuzzBTCTimestamp(f *testing.F) {
 
 		// handle a random header from a random consumer chain
 		consumerID := datagen.GenRandomHexStr(r, 10)
+
+		// Register the consumer through the btcstkconsumer keeper
+		consumerRegister := &btcstkconsumertypes.ConsumerRegister{
+			ConsumerId:          consumerID,
+			ConsumerName:        "test-consumer",
+			ConsumerDescription: "Test consumer for BTC timestamp",
+			ConsumerMetadata: &btcstkconsumertypes.ConsumerRegister_CosmosConsumerMetadata{
+				CosmosConsumerMetadata: &btcstkconsumertypes.CosmosConsumerMetadata{},
+			},
+			BabylonRewardsCommission: datagen.GenBabylonRewardsCommission(r),
+		}
+		err = h.App.BTCStkConsumerKeeper.RegisterConsumer(h.Ctx, consumerRegister)
+		require.NoError(t, err)
+
 		height := datagen.RandomInt(r, 100) + 1
 		ibctmHeader := datagen.GenRandomIBCTMHeader(r, height)
 		headerInfo := datagen.NewZCHeaderInfo(ibctmHeader, consumerID)
 		zck.HandleHeaderWithValidCommit(h.Ctx, datagen.GenRandomByteArray(r, 32), headerInfo, false)
 
-		// ensure the header is successfully inserted
-		indexedHeader, err := zck.GetHeader(h.Ctx, consumerID, height)
-		h.NoError(err)
+		// ensure the header is successfully inserted in latest epoch headers
+		indexedHeader := zck.GetLatestEpochHeader(h.Ctx, consumerID)
+		require.NotNil(t, indexedHeader)
 
 		// enter block 21, 1st block of epoch 3
 		for j := 0; j < int(epochInterval); j++ {
@@ -82,13 +97,8 @@ func FuzzBTCTimestamp(f *testing.F) {
 		h.NoError(err)
 
 		// generate inclusion proof
-		proof, err := zck.ProveConsumerHeaderInEpoch(h.Ctx, indexedHeader, epochWithHeader)
-		h.NoError(err)
-
 		btcTs.EpochInfo = epochWithHeader
 		btcTs.Header = indexedHeader
-		btcTs.Proof.ProofConsumerHeaderInEpoch = proof
-
 		/*
 			seal the epoch and generate ProofEpochSealed
 		*/

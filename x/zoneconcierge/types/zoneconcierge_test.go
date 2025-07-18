@@ -16,47 +16,29 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestChainInfo_Validate(t *testing.T) {
+func TestIndexedHeader_Validate(t *testing.T) {
 	r := rand.New(rand.NewSource(time.Now().Unix()))
 	validHeader := datagen.GenRandomIndexedHeader(r)
 
 	testCases := []struct {
 		name        string
-		chainInfo   types.ChainInfo
+		header      types.IndexedHeader
 		expectError string
 	}{
 		{
 			name:        "Empty ConsumerId",
-			chainInfo:   types.ChainInfo{},
-			expectError: "ConsumerId is empty",
-		},
-		{
-			name: "Nil LatestHeader",
-			chainInfo: types.ChainInfo{
-				ConsumerId: "chain-A",
-			},
-			expectError: "LatestHeader is nil",
-		},
-		{
-			name: "Invalid LatestHeader",
-			chainInfo: types.ChainInfo{
-				ConsumerId:   "chain-A",
-				LatestHeader: &types.IndexedHeader{},
-			},
+			header:      types.IndexedHeader{},
 			expectError: "empty ConsumerID",
 		},
 		{
-			name: "Valid ChainInfo",
-			chainInfo: types.ChainInfo{
-				ConsumerId:   "chain-A",
-				LatestHeader: validHeader,
-			},
+			name:   "Valid IndexedHeader",
+			header: *validHeader,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := tc.chainInfo.Validate()
+			err := tc.header.Validate()
 			if tc.expectError == "" {
 				require.NoError(t, err)
 				return
@@ -67,52 +49,48 @@ func TestChainInfo_Validate(t *testing.T) {
 	}
 }
 
-func TestChainInfoWithProof_Validate(t *testing.T) {
+func TestIndexedHeaderWithProof_Validate(t *testing.T) {
 	r := rand.New(rand.NewSource(time.Now().Unix()))
-	validChainInfo := &types.ChainInfo{
-		ConsumerId:   "chain-A",
-		LatestHeader: datagen.GenRandomIndexedHeader(r),
-	}
+	validHeader := datagen.GenRandomIndexedHeader(r)
 
-	invalidChainInfo := &types.ChainInfo{
-		ConsumerId:   "",
-		LatestHeader: nil,
+	invalidHeader := &types.IndexedHeader{
+		ConsumerId: "",
 	}
 
 	testCases := []struct {
 		name        string
-		input       types.ChainInfoWithProof
+		input       types.IndexedHeaderWithProof
 		expectError string
 	}{
 		{
-			name: "Nil ChainInfo",
-			input: types.ChainInfoWithProof{
-				ChainInfo:          nil,
-				ProofHeaderInEpoch: &crypto.ProofOps{},
+			name: "Nil Header",
+			input: types.IndexedHeaderWithProof{
+				Header: nil,
+				Proof:  &crypto.ProofOps{},
 			},
-			expectError: "empty chain info",
+			expectError: "empty header",
 		},
 		{
-			name: "Nil ProofHeaderInEpoch",
-			input: types.ChainInfoWithProof{
-				ChainInfo:          validChainInfo,
-				ProofHeaderInEpoch: nil,
+			name: "Nil Proof (should pass validation since Proof is not validated)",
+			input: types.IndexedHeaderWithProof{
+				Header: validHeader,
+				Proof:  nil,
 			},
-			expectError: "empty proof",
+			expectError: "",
 		},
 		{
-			name: "Invalid ChainInfo (fails its Validate)",
-			input: types.ChainInfoWithProof{
-				ChainInfo:          invalidChainInfo,
-				ProofHeaderInEpoch: &crypto.ProofOps{},
+			name: "Invalid Header (fails its Validate)",
+			input: types.IndexedHeaderWithProof{
+				Header: invalidHeader,
+				Proof:  &crypto.ProofOps{},
 			},
-			expectError: "ConsumerId is empty",
+			expectError: "empty ConsumerID",
 		},
 		{
-			name: "Valid types.ChainInfoWithProof",
-			input: types.ChainInfoWithProof{
-				ChainInfo:          validChainInfo,
-				ProofHeaderInEpoch: &crypto.ProofOps{},
+			name: "Valid IndexedHeaderWithProof",
+			input: types.IndexedHeaderWithProof{
+				Header: validHeader,
+				Proof:  &crypto.ProofOps{},
 			},
 			expectError: "",
 		},

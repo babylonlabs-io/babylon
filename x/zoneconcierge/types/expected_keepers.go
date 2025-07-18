@@ -103,4 +103,7 @@ type BTCStkConsumerKeeper interface {
 	RegisterConsumer(ctx context.Context, consumerRegister *btcstkconsumertypes.ConsumerRegister) error
 	UpdateConsumer(ctx context.Context, consumerRegister *btcstkconsumertypes.ConsumerRegister) error
 	GetConsumerRegister(ctx context.Context, consumerID string) (*btcstkconsumertypes.ConsumerRegister, error)
+	IsConsumerRegistered(ctx context.Context, consumerID string) bool
+	GetAllRegisteredConsumerIDs(ctx context.Context) []string
+	IsCosmosConsumer(ctx context.Context, consumerID string) (bool, error)
 }

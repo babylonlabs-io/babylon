@@ -20,7 +20,7 @@ import (
 )
 
 func GetConsumerHeaderKey(consumerID string, height uint64) []byte {
-	key := CanonicalChainKey
+	key := FinalizedEpochHeadersKey
 	key = append(key, []byte(consumerID)...)
 	key = append(key, sdk.Uint64ToBigEndian(height)...)
 	return key
@@ -328,11 +328,6 @@ func (ts *BTCTimestamp) VerifyStateless(
 
 	// verify the epoch is sealed
 	if err := VerifyEpochSealed(ts.EpochInfo, ts.RawCheckpoint, ts.Proof.ProofEpochSealed); err != nil {
-		return err
-	}
-
-	// verify the Consumer header is committed to the epoch
-	if err := VerifyConsumerHeaderInEpoch(ts.Header, ts.EpochInfo, ts.Proof.ProofConsumerHeaderInEpoch); err != nil {
 		return err
 	}
 

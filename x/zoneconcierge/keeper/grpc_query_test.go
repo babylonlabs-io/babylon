@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"context"
 	"math/rand"
 	"testing"
 
@@ -16,7 +17,7 @@ import (
 	zctypes "github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
 )
 
-type chainInfo struct {
+type consumerInfo struct {
 	consumerID        string
 	numHeaders        uint64
 	headerStartHeight uint64
@@ -53,9 +54,9 @@ func FuzzEpochChainsInfo(f *testing.F) {
 		// we insert random number of headers for each chain in each epoch,
 		// chainHeaderStartHeights keeps track of the next start height of header for each chain
 		chainHeaderStartHeights := make([]uint64, numChains)
-		epochToChainInfo := make(map[uint64]map[string]chainInfo)
+		epochToConsumerInfo := make(map[uint64]map[string]consumerInfo)
 		for _, epochNum := range epochNums {
-			epochToChainInfo[epochNum] = make(map[string]chainInfo)
+			epochToConsumerInfo[epochNum] = make(map[string]consumerInfo)
 			for j, consumerID := range consumerIDs {
 				// generate a random number of headers for each chain
 				numHeaders := datagen.RandomInt(r, 100) + 1
@@ -63,7 +64,7 @@ func FuzzEpochChainsInfo(f *testing.F) {
 				// trigger hooks to append these headers
 				SimulateNewHeaders(ctx, r, &zcKeeper, consumerID, chainHeaderStartHeights[j], numHeaders)
 
-				epochToChainInfo[epochNum][consumerID] = chainInfo{
+				epochToConsumerInfo[epochNum][consumerID] = consumerInfo{
 					consumerID:        consumerID,
 					numHeaders:        numHeaders,
 					headerStartHeight: chainHeaderStartHeights[j],
@@ -128,24 +129,37 @@ func FuzzFinalizedChainInfo(f *testing.F) {
 		channelKeeper := zctypes.NewMockChannelKeeper(ctrl)
 		channelKeeper.EXPECT().GetAllChannels(gomock.Any()).Return(nil).AnyTimes()
 
-		zcKeeper, ctx := testkeeper.ZoneConciergeKeeper(t, channelKeeper, btclcKeeper, checkpointingKeeper, btccKeeper, epochingKeeper, nil, nil)
+		// mock btcstkconsumer keeper
+		btcStkConsumerKeeper := zctypes.NewMockBTCStkConsumerKeeper(ctrl)
+		btcStkConsumerKeeper.EXPECT().IsConsumerRegistered(gomock.Any(), gomock.Any()).Return(true).AnyTimes()
+		btcStkConsumerKeeper.EXPECT().IsCosmosConsumer(gomock.Any(), gomock.Any()).Return(true, nil).AnyTimes()
+
+		zcKeeper, ctx := testkeeper.ZoneConciergeKeeper(t, channelKeeper, btclcKeeper, checkpointingKeeper, btccKeeper, epochingKeeper, nil, btcStkConsumerKeeper)
 		hooks := zcKeeper.Hooks()
 
 		var (
-			chainsInfo  []chainInfo
-			consumerIDs []string
+			consumersInfo []consumerInfo
+			consumerIDs   []string
 		)
+
+		// Set up the mock to return the consumerIDs slice
+		btcStkConsumerKeeper.EXPECT().GetAllRegisteredConsumerIDs(gomock.Any()).DoAndReturn(func(ctx context.Context) []string {
+			return consumerIDs
+		}).AnyTimes()
 		numChains := datagen.RandomInt(r, 100) + 1
 		for i := uint64(0); i < numChains; i++ {
 			consumerIDLen := datagen.RandomInt(r, 40) + 10
 			consumerID := string(datagen.GenRandomByteArray(r, consumerIDLen))
+
+			// NOTE: Consumer registration is handled by the btcstkconsumer module
+			// The mock btcstkconsumer keeper should return true for IsConsumerRegistered and IsCosmosConsumer
 
 			// invoke the hook a random number of times to simulate a random number of blocks
 			numHeaders := datagen.RandomInt(r, 100) + 1
 			SimulateNewHeaders(ctx, r, zcKeeper, consumerID, 0, numHeaders)
 
 			consumerIDs = append(consumerIDs, consumerID)
-			chainsInfo = append(chainsInfo, chainInfo{
+			consumersInfo = append(consumersInfo, consumerInfo{
 				consumerID: consumerID,
 				numHeaders: numHeaders,
 			})
@@ -156,12 +170,12 @@ func FuzzFinalizedChainInfo(f *testing.F) {
 		require.NoError(t, err)
 		checkpointingKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(epoch.EpochNumber).AnyTimes()
 
-		// check if the chain info of this epoch is recorded or not
-		resp, err := zcKeeper.FinalizedChainsInfo(ctx, &zctypes.QueryFinalizedChainsInfoRequest{ConsumerIds: consumerIDs, Prove: true})
+		// check if the consumer info of this epoch is recorded or not
+		resp, err := zcKeeper.FinalizedBSNsInfo(ctx, &zctypes.QueryFinalizedBSNsInfoRequest{ConsumerIds: consumerIDs, Prove: true})
 		require.NoError(t, err)
-		for i, respData := range resp.FinalizedChainsInfo {
-			require.Equal(t, chainsInfo[i].consumerID, respData.FinalizedChainInfo.ConsumerId)
-			require.Equal(t, chainsInfo[i].numHeaders-1, respData.FinalizedChainInfo.LatestHeader.Height)
+		for i, respData := range resp.FinalizedBsnsData {
+			require.Equal(t, consumersInfo[i].consumerID, respData.ConsumerId)
+			require.Equal(t, consumersInfo[i].numHeaders-1, respData.LatestFinalizedHeader.Height)
 		}
 	})
 }
