@@ -27,7 +27,7 @@ const (
 
 	// Additional gas cost added to the pre-approval delegation creation
 	// for each additional FP in the multi-staked delegation. This gas cost is charged
-	// becouse every covenant committe member must create separate Adaptor Signature
+	// because every covenant committee member must create separate Adaptor Signature
 	// for each FP in the multi-staked delegation.
 	GasCostPerMultiStakedFP = 7000
 )

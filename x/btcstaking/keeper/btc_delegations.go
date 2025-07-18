@@ -75,10 +75,7 @@ func (k Keeper) CreateBTCDelegation(ctx sdk.Context, parsedMsg *types.ParsedCrea
 	// gas
 	if !parsedMsg.IsIncludedOnBTC() {
 		// Calculate additional gas cost for multi-staked delegation
-		additionalGasCost :=
-			types.GasCostPerMultiStakedFP*
-				len(params.CovenantPks)*
-				parsedMsg.FinalityProviderKeys.Len() - 1
+		additionalGasCost := types.GasCostPerMultiStakedFP * len(params.CovenantPks) * (parsedMsg.FinalityProviderKeys.Len() - 1)
 
 		ctx.GasMeter().ConsumeGas(params.DelegationCreationBaseGasFee+uint64(additionalGasCost), "delegation creation fee")
 	}
