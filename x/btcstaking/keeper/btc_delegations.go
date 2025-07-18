@@ -19,6 +19,7 @@ import (
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
 	btclctypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
 	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types/allowlist"
 )
 
 // CreateBTCDelegation creates a BTC delegation
@@ -75,8 +76,8 @@ func (k Keeper) CreateBTCDelegation(ctx sdk.Context, parsedMsg *types.ParsedCrea
 	// During multi-staking allow-list period, only existing BTC delegations
 	// in the allow-list can become multi-staked via stake expansion or
 	// already existing multi-staking delegation (extended from the allow-list)
-	isMultiStaking := len(parsedMsg.FinalityProviderKeys.PublicKeysBbnFormat) > 1
-	if isMultiStaking && types.IsMultiStakingAllowListEnabled(ctx.BlockHeight()) {
+	isMultiStaking := parsedMsg.FinalityProviderKeys.Len() > 1
+	if isMultiStaking && allowlist.IsMultiStakingAllowListEnabled(ctx.BlockHeight()) {
 		// if is not stake expansion, it is not allowed to create new delegations with multi-staking
 		if parsedMsg.StkExp == nil {
 			return types.ErrInvalidStakingTx.Wrap("it is not allowed to create new delegations with multi-staking during the multi-staking allow-list period")

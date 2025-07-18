@@ -1,4 +1,4 @@
-package types_test
+package allowlist_test
 
 import (
 	"testing"
@@ -6,11 +6,11 @@ import (
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types/allowlist"
 )
 
 func TestLoadMultiStakingAllowList(t *testing.T) {
-	hashes, err := types.LoadMultiStakingAllowList()
+	hashes, err := allowlist.LoadMultiStakingAllowList()
 	require.NoError(t, err)
 	require.NotNil(t, hashes)
 	require.NotEmpty(t, hashes)
@@ -66,7 +66,7 @@ func TestIsMultiStakingAllowListEnabled(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := types.IsMultiStakingAllowListEnabled(tt.height)
+			result := allowlist.IsMultiStakingAllowListEnabled(tt.height)
 			require.Equal(t, tt.expected, result)
 		})
 	}

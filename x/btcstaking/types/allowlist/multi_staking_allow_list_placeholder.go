@@ -1,6 +1,6 @@
 //go:build !mainnet && !testnet
 
-package types
+package allowlist
 
 // This is a placeholder for the multi-staking allow list and allow list expiration height.
 // Values here are not used in production and are only for testing purposes.

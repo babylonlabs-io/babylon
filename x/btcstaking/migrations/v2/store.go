@@ -6,6 +6,7 @@ import (
 	"cosmossdk.io/store/prefix"
 	storetypes "cosmossdk.io/store/types"
 	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types/allowlist"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -52,12 +53,25 @@ func indexAllowedMultiStakingTxs(
 	ctx sdk.Context,
 	indexTxHash func(ctx context.Context, txHash *chainhash.Hash),
 ) error {
-	txHashes, err := types.LoadMultiStakingAllowList()
+	txHashes, err := allowlist.LoadMultiStakingAllowList()
 	if err != nil {
 		return err
 	}
+	logger := ctx.Logger().With("module", "x/btcstaking/migrations/v2")
+	txMap := make(map[string]struct{})
+	var txCount int
 	for _, txHash := range txHashes {
+		// Check for duplicates in the allow list
+		// If a duplicate is found, log an error and skip indexing
+		if _, exists := txMap[txHash.String()]; exists {
+			logger.Error("Duplicate transaction hash found in multi-staking allow list", "tx_hash",
+				txHash.String())
+			continue
+		}
+		txMap[txHash.String()] = struct{}{}
 		indexTxHash(ctx, txHash)
+		txCount++
 	}
+	logger.Info("Indexed multi-staking allow list transactions", "count", txCount)
 	return nil
 }

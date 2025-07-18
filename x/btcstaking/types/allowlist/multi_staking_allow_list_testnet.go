@@ -1,6 +1,6 @@
 //go:build testnet
 
-package types
+package allowlist
 
 // TODO TBD
 const multiStakingAllowListExpirationHeight = 0
