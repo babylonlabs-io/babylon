@@ -227,7 +227,7 @@ func (s *BtcRewardsDistributionBsnRollup) Test2CreateFirstBtcDelegations() {
 
 	// add bsn rewards to FP without adding voting power, should fail
 	failRwdCoins := sdk.NewCoins(sdk.NewCoin(nativeDenom, math.NewInt(1000)))
-	failRatios := []bstypes.FpRatio{bstypes.FpRatio{BtcPk: s.fp2cons0.BtcPk, Ratio: math.LegacyOneDec()}}
+	failRatios := []bstypes.FpRatio{{BtcPk: s.fp2cons0.BtcPk, Ratio: math.LegacyOneDec()}}
 	outBuf, _, _ := n2.AddBsnRewards(n2.WalletName, s.fp3cons0.BsnId, failRwdCoins, failRatios)
 
 	txHash := chain.GetTxHashFromOutput(outBuf.String())
@@ -271,11 +271,11 @@ func (s *BtcRewardsDistributionBsnRollup) Test5CheckRewardsFirstDelegations() {
 
 	bbnCommDiff, del1Diff, del2Diff, fp1bbnDiff, fp2cons0Diff, fp3cons0Diff, fp4cons4Diff := s.SuiteRewardsDiff(n2, func() {
 		n2.AddBsnRewards(n2.WalletName, s.bsn0.ConsumerId, rewardCoins, []bstypes.FpRatio{
-			bstypes.FpRatio{
+			{
 				BtcPk: s.fp2cons0.BtcPk,
 				Ratio: fp2Ratio,
 			},
-			bstypes.FpRatio{
+			{
 				BtcPk: s.fp3cons0.BtcPk,
 				Ratio: fp3Ratio,
 			},
@@ -371,12 +371,10 @@ func (s *BtcRewardsDistributionBsnRollup) Test7CheckRewardsBsn4() {
 	fp4Ratio := math.LegacyOneDec()
 
 	bbnCommDiff, del1Diff, del2Diff, fp1bbnDiff, fp2cons0Diff, fp3cons0Diff, fp4cons4Diff := s.SuiteRewardsDiff(n2, func() {
-		n2.AddBsnRewards(n2.WalletName, s.bsn4.ConsumerId, rewardCoins, []bstypes.FpRatio{
-			bstypes.FpRatio{
-				BtcPk: s.fp4cons4.BtcPk,
-				Ratio: fp4Ratio,
-			},
-		})
+		n2.AddBsnRewards(n2.WalletName, s.bsn4.ConsumerId, rewardCoins, []bstypes.FpRatio{{
+			BtcPk: s.fp4cons4.BtcPk,
+			Ratio: fp4Ratio,
+		}})
 	})
 
 	bbnCommExp := itypes.GetCoinsPortion(rewardCoins, s.bsn4.BabylonRewardsCommission)
