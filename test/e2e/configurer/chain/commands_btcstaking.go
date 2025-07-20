@@ -1,6 +1,7 @@
 package chain
 
 import (
+	"bytes"
 	"encoding/hex"
 	"fmt"
 	"math/rand"
@@ -20,7 +21,7 @@ import (
 	"github.com/btcsuite/btcd/wire"
 
 	sdkmath "cosmossdk.io/math"
-	"github.com/cometbft/cometbft/libs/bytes"
+	cometbytes "github.com/cometbft/cometbft/libs/bytes"
 	cmtcrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -174,7 +175,7 @@ func (n *NodeConfig) AddBsnRewards(
 	fromWalletName, bsnId string,
 	rewards sdk.Coins,
 	fpRatios []bstypes.FpRatio,
-) {
+) (outBuf, errBuf bytes.Buffer, err error) {
 	n.LogActionF("adding BSN rewards %s to %s from nodeName: %s", rewards.String(), bsnId, n.Name)
 
 	cmd := []string{"babylond", "tx", "btcstaking", "add-bsn-rewards", bsnId, rewards.String()}
@@ -193,9 +194,10 @@ func (n *NodeConfig) AddBsnRewards(
 	cmd = append(cmd, "--gas=3000000")
 	cmd = append(cmd, "--gas-adjustment=2")
 
-	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
+	outBuf, errBuf, err = n.containerManager.ExecTxCmdWithSuccessString(n.t, n.chainId, n.Name, cmd, "")
 	require.NoError(n.t, err)
 	n.LogActionF("successfully added BSN rewards")
+	return outBuf, errBuf, err
 }
 
 func (n *NodeConfig) CommitPubRandList(fpBTCPK *bbn.BIP340PubKey, startHeight uint64, numPubrand uint64, commitment []byte, sig *bbn.BIP340Signature) {
@@ -555,7 +557,7 @@ func (n *NodeConfig) AddFinalitySignatureToBlock(
 	pubRand *bbn.SchnorrPubRand,
 	proof cmtcrypto.Proof,
 	overallFlags ...string,
-) (blockVotedAppHash bytes.HexBytes) {
+) (blockVotedAppHash cometbytes.HexBytes) {
 	blockToVote, err := n.QueryBlock(int64(blockHeight))
 	require.NoError(n.t, err)
 	appHash := blockToVote.AppHash
