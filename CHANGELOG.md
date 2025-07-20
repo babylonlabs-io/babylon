@@ -39,7 +39,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
+- [#1331](https://github.com/babylonlabs-io/babylon/pull/1331/) Improve BSN Header synchronization.
 - [#1304](https://github.com/babylonlabs-io/babylon/pull/304) Update rollup finality e2e tests
+- [#1360](https://github.com/babylonlabs-io/babylon/pull/1360) Replace `panic` with logging in SendPacket calls.
+- [#1348](https://github.com/babylonlabs-io/babylon/pull/1348) Remove IsSimpleTransfer and IsTransferTx
 - [#1300](https://github.com/babylonlabs-io/babylon/pull/1300) x/btcstaking handles fp ops
 - [#1295](https://github.com/babylonlabs-io/babylon/pull/1295) Rename
 `consumer_id` to `bsn_id` for finality providers
@@ -104,6 +107,13 @@ check of rewards
 - [#1062](https://github.com/babylonlabs-io/babylon/pull/1062) Add `anteHandler` to avoid fee grants on refundable tx (`x/incentive`)
 - [#1231](https://github.com/babylonlabs-io/babylon/pull/1231) Add BTC stake expansion.
 - [#1335](https://github.com/babylonlabs-io/babylon/pull/1335) Tweaks on BTC stake expansion feature.
+- [#1343](https://github.com/babylonlabs-io/babylon/pull/1343) Adjust `testnet`
+command to modify `max-finality-providers` parameter.
+- [#1344](https://github.com/babylonlabs-io/babylon/pull/1344) Add `MsgType` field to `QueuedMessageResponse` message.
+- [#1352](https://github.com/babylonlabs-io/babylon/pull/1352) Add stake expansion signatures in BTC delegation query response
+- [#1367](https://github.com/babylonlabs-io/babylon/pull/1367) Add v3 mainnet upgrade handler
+- [#1379](https://github.com/babylonlabs-io/babylon/pull/1379) Add multi-staking allow-list docs in `x/btcstaking`
+- [#1381](https://github.com/babylonlabs-io/babylon/pull/1381) Add multi-staking allow-list logic
 
 ### State Machine Breaking
 
@@ -116,6 +126,16 @@ transfer stack
 when the babylon block is being BTC rewarded.
 - [#1296](https://github.com/babylonlabs-io/babylon/pull/1296) IBC events are only
 queued for cosmos bsns
+- [#1328](https://github.com/babylonlabs-io/babylon/pull/1328) Add global limit
+for multistaking fps
+- [#1344](https://github.com/babylonlabs-io/babylon/pull/1344) Bump cosmos-sdk and
+remove send restrictions
+- [#1364](https://github.com/babylonlabs-io/babylon/pull/1364) Add babylon commission as legacy dec `[0...1]` to Consumer Registry.
+- [#1359](https://github.com/babylonlabs-io/babylon/pull/1359) Add `MsgAddBsnRewards` to btcstaking and wired BTC delegations from
+BSNs to incentive reward tracker.
+- [#1390](https://github.com/babylonlabs-io/babylon/pull/1390) Add additional gas
+cost per multi-staked finality provider
+
 
 ### Bug fixes
 
@@ -130,6 +150,17 @@ between different signing operations
 - [#1318](https://github.com/babylonlabs-io/babylon/pull/1318) fix: propagation of
 secret key in slashing
 - [#1325](https://github.com/babylonlabs-io/babylon/pull/1325) fix: add signing context to `EvidenceResponse` message
+- [#1337](https://github.com/babylonlabs-io/babylon/pull/1337) fix: update proto gen
+- [#1355](https://github.com/babylonlabs-io/babylon/pull/1355) Allow empty fees on genesis transactions
+- [#1361](https://github.com/babylonlabs-io/babylon/pull/1361) Fix typo on makefile
+- [#1366](https://github.com/babylonlabs-io/babylon/pull/1366) fix: not add consumer fps
+to Babylon voting power table
+- [#1369](https://github.com/babylonlabs-io/babylon/pull/1369) fix: update stake expansion validation to allow expanding
+already expanded delegations
+- [#1375](https://github.com/babylonlabs-io/babylon/pull/1375) fix: add strict requirements
+for multi staked fps
+- [#1384](https://github.com/babylonlabs-io/babylon/pull/1384) fix: Cascaded slashing
+adjustment
 
 ## v2.2.0
 

@@ -8,6 +8,7 @@ import (
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
 	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
+	ictvtypes "github.com/babylonlabs-io/babylon/v3/x/incentive/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
@@ -306,6 +307,22 @@ func (s *Staker) CreateBtcStakeExpand(
 func (s *Staker) SendMessage(
 	msg sdk.Msg,
 ) {
+	DefaultSendTxWithMessagesSuccess(
+		s.t,
+		s.app,
+		s.SenderInfo,
+		msg,
+	)
+	s.IncSeq()
+}
+
+// WithdrawBtcStakingRewards withdraws BTC staking rewards for this staker
+func (s *Staker) WithdrawBtcStakingRewards() {
+	msg := &ictvtypes.MsgWithdrawReward{
+		Type:    ictvtypes.BTC_STAKER.String(),
+		Address: s.Address().String(),
+	}
+
 	DefaultSendTxWithMessagesSuccess(
 		s.t,
 		s.app,

@@ -48,15 +48,6 @@ func NewEventPowerDistUpdateWithUnjailedFP(fpBTCPK *bbn.BIP340PubKey) *EventPowe
 	}
 }
 
-func NewEventPowerDistUpdateWithSlashedBTCDelegation(stakingTxHash string) *EventPowerDistUpdate {
-	return &EventPowerDistUpdate{
-		Ev: &EventPowerDistUpdate_SlashedBtcDelegation{
-			SlashedBtcDelegation: &EventPowerDistUpdate_EventSlashedBTCDelegation{
-				StakingTxHash: stakingTxHash,
-			},
-		},
-	}
-}
 func NewEventFinalityProviderCreated(fp *FinalityProvider) *EventFinalityProviderCreated {
 	return &EventFinalityProviderCreated{
 		BtcPkHex:        fp.BtcPk.MarshalHex(),

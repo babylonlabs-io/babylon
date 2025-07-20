@@ -21,6 +21,9 @@ func (k Keeper) AddFinalityProviderRewardsForBtcDelegations(ctx context.Context,
 	if err != nil {
 		return err
 	}
+	if !fpCurrentRwd.TotalActiveSat.IsPositive() {
+		return types.ErrFPCurrentRewardsWithoutVotingPower.Wrapf("fp %s doesn't have positive voting power", fp.String())
+	}
 
 	fpCurrentRwd.AddRewards(rwd)
 	return k.setFinalityProviderCurrentRewards(ctx, fp, fpCurrentRwd)
