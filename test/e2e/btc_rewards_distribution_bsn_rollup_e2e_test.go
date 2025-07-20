@@ -15,6 +15,7 @@ import (
 	"github.com/babylonlabs-io/babylon/v3/app/params"
 	"github.com/babylonlabs-io/babylon/v3/test/e2e/configurer"
 	"github.com/babylonlabs-io/babylon/v3/test/e2e/configurer/chain"
+	"github.com/babylonlabs-io/babylon/v3/testutil/coins"
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
 	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 	bsctypes "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
@@ -223,6 +224,8 @@ func (s *BtcRewardsDistributionBsnRollup) Test2CreateFirstBtcDelegations() {
 
 	n2.BankMultiSendFromNode([]string{s.del1Addr, s.del2Addr}, "1000000ubbn")
 
+	// TODO(rafilx): add bsn rewards to FP without adding voting power, should fail
+
 	n2.WaitForNextBlocks(2)
 
 	s.CreateBTCDelegationMultipleFPsAndCheck(n2, wDel1, s.del1BTCSK, s.del1Addr, s.fp2fp4Del1StkAmt, s.fp1bbn, s.fp2cons0, s.fp4cons4)
@@ -252,20 +255,56 @@ func (s *BtcRewardsDistributionBsnRollup) Test5CheckRewardsFirstDelegations() {
 	s.NoError(err)
 
 	rewardCoins := nodeBalances.Sub(sdk.NewCoin(nativeDenom, nodeBalances.AmountOf(nativeDenom))).QuoInt(math.NewInt(4))
-	require.Greater(s.T(), rewardCoins.Len(), 3) // should have 3 or more coins to give out as rewards
+	require.Greater(s.T(), rewardCoins.Len(), 2, "should have 2 or more denoms to give out as rewards")
 
 	fp2Ratio, fp3Ratio := math.LegacyMustNewDecFromStr("0.7"), math.LegacyMustNewDecFromStr("0.3")
 
-	n2.AddBsnRewards(n2.WalletName, s.bsn0.ConsumerId, rewardCoins, []bstypes.FpRatio{
-		bstypes.FpRatio{
-			BtcPk: s.fp2cons0.BtcPk,
-			Ratio: fp2Ratio,
-		},
-		bstypes.FpRatio{
-			BtcPk: s.fp3cons0.BtcPk,
-			Ratio: fp3Ratio,
-		},
+	bbnCommDiff, del1Diff, del2Diff, fp1bbnDiff, fp2cons0Diff, fp3cons0Diff, fp4cons4Diff := s.SuiteRewardsDiff(n2, func() {
+		n2.AddBsnRewards(n2.WalletName, s.bsn0.ConsumerId, rewardCoins, []bstypes.FpRatio{
+			bstypes.FpRatio{
+				BtcPk: s.fp2cons0.BtcPk,
+				Ratio: fp2Ratio,
+			},
+			bstypes.FpRatio{
+				BtcPk: s.fp3cons0.BtcPk,
+				Ratio: fp3Ratio,
+			},
+		})
 	})
+
+	bbnCommExp := itypes.GetCoinsPortion(rewardCoins, s.bsn0.BabylonRewardsCommission)
+	require.Equal(s.T(), bbnCommExp.String(), bbnCommDiff.String(), "babylon commission")
+
+	rewardCoinsAfterBbnComm := rewardCoins.Sub(bbnCommExp...)
+
+	fp2AfterRatio := itypes.GetCoinsPortion(rewardCoinsAfterBbnComm, fp2Ratio)
+	fp2CommExp := itypes.GetCoinsPortion(fp2AfterRatio, *s.fp2cons0.Commission)
+	require.Equal(s.T(), fp2CommExp.String(), fp2cons0Diff.String(), "fp2 consumer 0 commission")
+
+	fp3AfterRatio := itypes.GetCoinsPortion(rewardCoinsAfterBbnComm, fp3Ratio)
+	fp3CommExp := itypes.GetCoinsPortion(fp3AfterRatio, *s.fp3cons0.Commission)
+	require.Equal(s.T(), fp3CommExp.String(), fp3cons0Diff.String(), "fp3 consumer 0 commission")
+
+	// Current setup of voting power
+	// (fp2, del1) => 2_00000000
+	// (fp2, del2) => 4_00000000
+	// (fp3, del1) => 2_00000000
+
+	fp2RemainingBtcRewards := fp2AfterRatio.Sub(fp2CommExp...)
+	fp3RemainingBtcRewards := fp3AfterRatio.Sub(fp3CommExp...)
+
+	// del1 will receive all the rewards of fp3 and 1/3 of the fp2 rewards
+	expectedRewardsDel1 := coins.CalculatePercentageOfCoins(fp2RemainingBtcRewards, 33).Add(fp3RemainingBtcRewards...)
+	coins.RequireCoinsDiffInPointOnePercentMargin(s.T(), expectedRewardsDel1, del1Diff)
+	// del2 will receive 2/3 of the fp2 rewards
+	expectedRewardsDel2 := coins.CalculatePercentageOfCoins(fp2RemainingBtcRewards, 66)
+	coins.RequireCoinsDiffInPointOnePercentMargin(s.T(), expectedRewardsDel2, del2Diff)
+
+	require.True(s.T(), fp1bbnDiff.IsZero(), "fp1 was not rewarded")
+	require.True(s.T(), fp4cons4Diff.IsZero(), "fp4 was not rewarded")
+
+	// check reward gauges accordingly to ratio and commissions
+
 	// Current setup of voting power
 	// (fp1, del1) => 2_00000000
 	// (fp1, del2) => 4_00000000
@@ -359,25 +398,29 @@ func (s *BtcRewardsDistributionBsnRollup) QueryFpRewards(n *chain.NodeConfig) (
 		return nil
 	})
 
-	s.NoError(g.Wait())
-
+	_ = g.Wait()
+	fp1bbnRewardCoins := sdk.NewCoins()
 	fp1bbnRewardGauge, ok := fp1bbnRewardGauges[itypes.FINALITY_PROVIDER.String()]
-	s.True(ok)
-	s.True(fp1bbnRewardGauge.Coins.IsAllPositive())
-
+	if ok {
+		fp1bbnRewardCoins = fp1bbnRewardGauge.Coins
+	}
+	fp2cons0RewardCoins := sdk.NewCoins()
 	fp2cons0RewardGauge, ok := fp2cons0RewardGauges[itypes.FINALITY_PROVIDER.String()]
-	s.True(ok)
-	s.True(fp2cons0RewardGauge.Coins.IsAllPositive())
-
+	if ok {
+		fp2cons0RewardCoins = fp2cons0RewardGauge.Coins
+	}
+	fp3cons0RewardCoins := sdk.NewCoins()
 	fp3cons0RewardGauge, ok := fp3cons0RewardGauges[itypes.FINALITY_PROVIDER.String()]
-	s.True(ok)
-	s.True(fp3cons0RewardGauge.Coins.IsAllPositive())
-
+	if ok {
+		fp3cons0RewardCoins = fp3cons0RewardGauge.Coins
+	}
+	fp4cons4RewardCoins := sdk.NewCoins()
 	fp4cons4RewardGauge, ok := fp4cons4RewardGauges[itypes.FINALITY_PROVIDER.String()]
-	s.True(ok)
-	s.True(fp4cons4RewardGauge.Coins.IsAllPositive())
+	if ok {
+		fp4cons4RewardCoins = fp4cons4RewardGauge.Coins
+	}
 
-	return fp1bbnRewardGauge.Coins, fp2cons0RewardGauge.Coins, fp3cons0RewardGauge.Coins, fp4cons4RewardGauge.Coins
+	return fp1bbnRewardCoins, fp2cons0RewardCoins, fp3cons0RewardCoins, fp4cons4RewardCoins
 }
 
 // QueryDelRewards returns the rewards available for del1, del2
@@ -404,17 +447,21 @@ func (s *BtcRewardsDistributionBsnRollup) QueryDelRewards(n *chain.NodeConfig) (
 		}
 		return nil
 	})
-	s.NoError(g.Wait())
 
+	_ = g.Wait()
+
+	btcDel1RewardCoins := sdk.NewCoins()
 	btcDel1RewardGauge, ok := btcDel1RewardGauges[itypes.BTC_STAKER.String()]
-	s.True(ok)
-	s.True(btcDel1RewardGauge.Coins.IsAllPositive())
+	if ok {
+		btcDel1RewardCoins = btcDel1RewardGauge.Coins
+	}
 
+	btcDel2RewardCoins := sdk.NewCoins()
 	btcDel2RewardGauge, ok := btcDel2RewardGauges[itypes.BTC_STAKER.String()]
-	s.True(ok)
-	s.True(btcDel2RewardGauge.Coins.IsAllPositive())
-
-	return btcDel1RewardGauge.Coins, btcDel2RewardGauge.Coins
+	if ok {
+		btcDel2RewardCoins = btcDel2RewardGauge.Coins
+	}
+	return btcDel1RewardCoins, btcDel2RewardCoins
 }
 
 // QuerySuiteRewards returns the babylon commission account balance and fp, dels
@@ -428,6 +475,27 @@ func (s *BtcRewardsDistributionBsnRollup) QuerySuiteRewards(n *chain.NodeConfig)
 	fp1bbn, fp2cons0, fp3cons0, fp4cons4 = s.QueryFpRewards(n)
 	del1, del2 = s.QueryDelRewards(n)
 	return bbnComm, del1, del2, fp1bbn, fp2cons0, fp3cons0, fp4cons4
+}
+
+func (s *BtcRewardsDistributionBsnRollup) SuiteRewardsDiff(n *chain.NodeConfig, f func()) (
+	bbnComm, del1, del2, fp1bbn, fp2cons0, fp3cons0, fp4cons4 sdk.Coins,
+) {
+	bbnCommBefore, del1Before, del2Before, fp1bbnBefore, fp2cons0Before, fp3cons0Before, fp4cons4Before := s.QuerySuiteRewards(n)
+
+	f()
+	n.WaitForNextBlock()
+
+	bbnCommAfter, del1After, del2After, fp1bbnAfter, fp2cons0After, fp3cons0After, fp4cons4After := s.QuerySuiteRewards(n)
+
+	bbnCommDiff := bbnCommAfter.Sub(bbnCommBefore...)
+	del1Diff := del1After.Sub(del1Before...)
+	del2Diff := del2After.Sub(del2Before...)
+	fp1bbnDiff := fp1bbnAfter.Sub(fp1bbnBefore...)
+	fp2cons0Diff := fp2cons0After.Sub(fp2cons0Before...)
+	fp3cons0Diff := fp3cons0After.Sub(fp3cons0Before...)
+	fp4cons4Diff := fp4cons4After.Sub(fp4cons4Before...)
+
+	return bbnCommDiff, del1Diff, del2Diff, fp1bbnDiff, fp2cons0Diff, fp3cons0Diff, fp4cons4Diff
 }
 
 // // Test6ActiveLastDelegation creates a new btc delegation

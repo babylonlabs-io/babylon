@@ -190,7 +190,7 @@ func (n *NodeConfig) AddBsnRewards(
 	// used key
 	cmd = append(cmd, fmt.Sprintf("--from=%s", fromWalletName))
 	// gas
-	cmd = append(cmd, "--gas=300000")
+	cmd = append(cmd, "--gas=3000000")
 	cmd = append(cmd, "--gas-adjustment=2")
 
 	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
