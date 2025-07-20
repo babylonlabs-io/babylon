@@ -229,7 +229,7 @@ func (s *BtcRewardsDistributionBsnRollup) Test2CreateFirstBtcDelegations() {
 	outBuf, _, _ := n2.AddBsnRewards(n2.WalletName, s.fp3cons0.BsnId, failRwdCoins, failRatios)
 
 	txHash := chain.GetTxHashFromOutput(outBuf.String())
-	n2.WaitForNextBlock()
+	n2.WaitForNextBlocks(2)
 
 	txRespAddBsnRewards, _ := n2.QueryTx(txHash)
 	require.Contains(s.T(), txRespAddBsnRewards.RawLog, "unable to allocate BTC rewards")
