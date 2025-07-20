@@ -63,7 +63,7 @@ func (k Keeper) AddFinalityProvider(goCtx context.Context, msg *types.MsgCreateF
 		CommissionInfo: commissionInfo,
 	}
 
-	k.setFinalityProvider(ctx, &fp)
+	k.SetFinalityProvider(ctx, &fp)
 	k.bsnIndexFinalityProvider(ctx, &fp)
 
 	// Create BTC Staking Consumer Event for the new finality provider
@@ -77,8 +77,8 @@ func (k Keeper) AddFinalityProvider(goCtx context.Context, msg *types.MsgCreateF
 	return ctx.EventManager().EmitTypedEvent(types.NewEventFinalityProviderCreated(&fp))
 }
 
-// setFinalityProvider adds the given finality provider to KVStore
-func (k Keeper) setFinalityProvider(ctx context.Context, fp *types.FinalityProvider) {
+// SetFinalityProvider adds the given finality provider to KVStore
+func (k Keeper) SetFinalityProvider(ctx context.Context, fp *types.FinalityProvider) {
 	store := k.finalityProviderStore(ctx)
 	fpBytes := k.cdc.MustMarshal(fp)
 	store.Set(fp.BtcPk.MustMarshal(), fpBytes)
@@ -98,7 +98,7 @@ func (k Keeper) UpdateFinalityProvider(ctx context.Context, fp *types.FinalityPr
 		return types.ErrFpNotFound
 	}
 
-	k.setFinalityProvider(ctx, fp)
+	k.SetFinalityProvider(ctx, fp)
 
 	return nil
 }
@@ -157,7 +157,7 @@ func (k Keeper) SlashFinalityProvider(ctx context.Context, fpBTCPK []byte) error
 		return fmt.Errorf("failed to get current BTC tip")
 	}
 	fp.SlashedBtcHeight = btcTip.Height
-	k.setFinalityProvider(ctx, fp)
+	k.SetFinalityProvider(ctx, fp)
 
 	// we do not keep power distribution table for consumer FPs, so we only record the event for Babylon FPs
 	if fp.SecuresBabylonGenesis(sdk.UnwrapSDKContext(ctx)) {
@@ -258,7 +258,7 @@ func (k Keeper) JailFinalityProvider(ctx context.Context, fpBTCPK []byte) error 
 
 	// set finality provider to be jailed
 	fp.Jailed = true
-	k.setFinalityProvider(ctx, fp)
+	k.SetFinalityProvider(ctx, fp)
 
 	btcTip := k.btclcKeeper.GetTipInfo(ctx)
 	if btcTip == nil {
@@ -287,7 +287,7 @@ func (k Keeper) UnjailFinalityProvider(ctx context.Context, fpBTCPK []byte) erro
 	}
 
 	fp.Jailed = false
-	k.setFinalityProvider(ctx, fp)
+	k.SetFinalityProvider(ctx, fp)
 
 	btcTip := k.btclcKeeper.GetTipInfo(ctx)
 	if btcTip == nil {
@@ -370,4 +370,23 @@ func (k Keeper) UpdateFinalityProviderCommission(goCtx context.Context, newCommi
 	fp.CommissionInfo.UpdateTime = blockTime
 
 	return nil
+}
+
+// migrateBabylonFinalityProviders migrates all existing Babylon finality providers
+// to to have the BSN ID set to Babylon's chain ID. It also indexes the finality
+// provider in the BSN index store.
+func (k Keeper) migrateBabylonFinalityProviders(ctx sdk.Context) {
+	babylonBSNID := ctx.ChainID()
+
+	store := k.finalityProviderStore(ctx)
+	iter := store.Iterator(nil, nil)
+	defer iter.Close()
+
+	for ; iter.Valid(); iter.Next() {
+		var fp types.FinalityProvider
+		k.cdc.MustUnmarshal(iter.Value(), &fp)
+		fp.BsnId = babylonBSNID
+		k.SetFinalityProvider(ctx, &fp)
+		k.bsnIndexFinalityProvider(ctx, &fp)
+	}
 }

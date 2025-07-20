@@ -33,5 +33,6 @@ func (m Migrator) Migrate1to2(ctx sdk.Context) error {
 			return nil
 		},
 		m.keeper.IndexAllowedMultiStakingTransaction,
+		m.keeper.migrateBabylonFinalityProviders,
 	)
 }
