@@ -39,7 +39,7 @@ func CreateFpFromNodeAddr(
 	// use a higher commission to ensure the reward is more than tx fee of a finality sig
 	commission := sdkmath.LegacyNewDecWithPrec(20, 2)
 	newFP.Commission = &commission
-	node.CreateFinalityProvider(newFP.Addr, newFP.BtcPk, newFP.Pop,
+	node.CreateConsumerFinalityProvider(newFP.Addr, node.chainId, newFP.BtcPk, newFP.Pop,
 		newFP.Description.Moniker, newFP.Description.Identity,
 		newFP.Description.Website, newFP.Description.SecurityContact,
 		newFP.Description.Details, newFP.Commission, newFP.CommissionInfo.MaxRate,

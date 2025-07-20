@@ -223,18 +223,20 @@ func (s *BtcRewardsDistributionBsnRollup) Test2CreateFirstBtcDelegations() {
 
 	n2.BankMultiSendFromNode([]string{s.del1Addr, s.del2Addr}, "1000000ubbn")
 
+	n2.WaitForNextBlock()
+
 	// add bsn rewards to FP without adding voting power, should fail
 	failRwdCoins := sdk.NewCoins(sdk.NewCoin(nativeDenom, math.NewInt(1000)))
 	failRatios := []bstypes.FpRatio{bstypes.FpRatio{BtcPk: s.fp2cons0.BtcPk, Ratio: math.LegacyOneDec()}}
 	outBuf, _, _ := n2.AddBsnRewards(n2.WalletName, s.fp3cons0.BsnId, failRwdCoins, failRatios)
 
 	txHash := chain.GetTxHashFromOutput(outBuf.String())
-	n2.WaitForNextBlocks(2)
+	n2.WaitForNextBlock()
 
 	txRespAddBsnRewards, _ := n2.QueryTx(txHash)
 	require.Contains(s.T(), txRespAddBsnRewards.RawLog, "unable to allocate BTC rewards")
 
-	n2.WaitForNextBlocks(2)
+	n2.WaitForNextBlock()
 
 	s.CreateBTCDelegationMultipleFPsAndCheck(n2, wDel1, s.del1BTCSK, s.del1Addr, s.fp2fp4Del1StkAmt, s.fp1bbn, s.fp2cons0, s.fp4cons4)
 	s.CreateBTCDelegationMultipleFPsAndCheck(n2, wDel1, s.del1BTCSK, s.del1Addr, s.fp3fp4Del1StkAmt, s.fp1bbn, s.fp3cons0, s.fp4cons4)

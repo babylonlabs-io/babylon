@@ -188,9 +188,7 @@ func (n *NodeConfig) AddBsnRewards(
 	fpRatiosStr := strings.Join(fpRatioStrList, ",")
 	cmd = append(cmd, fpRatiosStr)
 
-	// used key
 	cmd = append(cmd, fmt.Sprintf("--from=%s", fromWalletName))
-	// gas
 	cmd = append(cmd, "--gas=3000000")
 	cmd = append(cmd, "--gas-adjustment=2")
 
