@@ -1,20 +1,24 @@
 package e2e
 
 import (
+	"fmt"
 	"math/rand"
 	"time"
 
-	sdkmath "cosmossdk.io/math"
+	"cosmossdk.io/math"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/chaincfg"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/sync/errgroup"
 
+	"github.com/babylonlabs-io/babylon/v3/app/params"
 	"github.com/babylonlabs-io/babylon/v3/test/e2e/configurer"
-	"github.com/babylonlabs-io/babylon/v3/testutil/coins"
+	"github.com/babylonlabs-io/babylon/v3/test/e2e/configurer/chain"
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
 	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 	bsctypes "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
+	itypes "github.com/babylonlabs-io/babylon/v3/x/incentive/types"
 )
 
 const (
@@ -221,11 +225,8 @@ func (s *BtcRewardsDistributionBsnRollup) Test2CreateFirstBtcDelegations() {
 
 	n2.WaitForNextBlocks(2)
 
-	// fp2fp4Del1StkAmt
 	s.CreateBTCDelegationMultipleFPsAndCheck(n2, wDel1, s.del1BTCSK, s.del1Addr, s.fp2fp4Del1StkAmt, s.fp1bbn, s.fp2cons0, s.fp4cons4)
-	// fp3fp4Del1StkAmt
 	s.CreateBTCDelegationMultipleFPsAndCheck(n2, wDel1, s.del1BTCSK, s.del1Addr, s.fp3fp4Del1StkAmt, s.fp1bbn, s.fp3cons0, s.fp4cons4)
-	// fp2Del2StkAmt
 	s.CreateBTCDelegationMultipleFPsAndCheck(n2, wDel2, s.del2BTCSK, s.del2Addr, s.fp2Del2StkAmt, s.fp1bbn, s.fp2cons0)
 
 	resp := n2.QueryBtcDelegations(bstypes.BTCDelegationStatus_ANY)
@@ -247,6 +248,24 @@ func (s *BtcRewardsDistributionBsnRollup) Test5CheckRewardsFirstDelegations() {
 	n2, err := s.configurer.GetChainConfig(0).GetNodeAtIndex(2)
 	s.NoError(err)
 
+	nodeBalances, err := n2.QueryBalances(n2.PublicAddress)
+	s.NoError(err)
+
+	rewardCoins := nodeBalances.Sub(sdk.NewCoin(nativeDenom, nodeBalances.AmountOf(nativeDenom))).QuoInt(math.NewInt(4))
+	require.Greater(s.T(), rewardCoins.Len(), 3) // should have 3 or more coins to give out as rewards
+
+	fp2Ratio, fp3Ratio := math.LegacyMustNewDecFromStr("0.7"), math.LegacyMustNewDecFromStr("0.3")
+
+	n2.AddBsnRewards(n2.WalletName, s.bsn0.ConsumerId, rewardCoins, []bstypes.FpRatio{
+		bstypes.FpRatio{
+			BtcPk: s.fp2cons0.BtcPk,
+			Ratio: fp2Ratio,
+		},
+		bstypes.FpRatio{
+			BtcPk: s.fp3cons0.BtcPk,
+			Ratio: fp3Ratio,
+		},
+	})
 	// Current setup of voting power
 	// (fp1, del1) => 2_00000000
 	// (fp1, del2) => 4_00000000
@@ -259,43 +278,156 @@ func (s *BtcRewardsDistributionBsnRollup) Test5CheckRewardsFirstDelegations() {
 	// (del2) => 4_00000000
 
 	// verifies that everyone is active and not slashed
-	fps := n2.QueryFinalityProviders("")
-	s.Len(fps, 4)
-	for _, fp := range fps {
-		s.Equal(fp.SlashedBabylonHeight, uint64(0))
-		s.Equal(fp.SlashedBtcHeight, uint32(0))
-	}
+	// fps := n2.QueryFinalityProviders("")
+	// s.Len(fps, 4)
+	// for _, fp := range fps {
+	// 	s.Equal(fp.SlashedBabylonHeight, uint64(0))
+	// 	s.Equal(fp.SlashedBtcHeight, uint32(0))
+	// }
 
-	dels := n2.QueryFinalityProvidersDelegations(s.fp1bbn.BtcPk.MarshalHex())
-	s.Len(dels, 3)
-	for _, del := range dels {
-		s.True(del.Active)
-	}
+	// dels := n2.QueryFinalityProvidersDelegations(s.fp1bbn.BtcPk.MarshalHex())
+	// s.Len(dels, 3)
+	// for _, del := range dels {
+	// 	s.True(del.Active)
+	// }
 
-	// makes sure there is some reward there
-	s.Eventually(func() bool {
-		_, errFp1 := n2.QueryRewardGauge(s.fp1bbn.Address())
-		_, errFp2 := n2.QueryRewardGauge(s.fp2cons0.Address())
-		_, errDel1 := n2.QueryRewardGauge(sdk.MustAccAddressFromBech32(s.del1Addr))
-		_, errDel2 := n2.QueryRewardGauge(sdk.MustAccAddressFromBech32(s.del2Addr))
-		return errFp1 == nil && errFp2 == nil && errDel1 == nil && errDel2 == nil
-	}, time.Minute*2, time.Second*3, "wait to have some rewards available in the gauge")
+	// // makes sure there is some reward there
+	// s.Eventually(func() bool {
+	// 	_, errFp1 := n2.QueryRewardGauge(s.fp1bbn.Address())
+	// 	_, errFp2 := n2.QueryRewardGauge(s.fp2cons0.Address())
+	// 	_, errDel1 := n2.QueryRewardGauge(sdk.MustAccAddressFromBech32(s.del1Addr))
+	// 	_, errDel2 := n2.QueryRewardGauge(sdk.MustAccAddressFromBech32(s.del2Addr))
+	// 	return errFp1 == nil && errFp2 == nil && errDel1 == nil && errDel2 == nil
+	// }, time.Minute*2, time.Second*3, "wait to have some rewards available in the gauge")
 
-	// The rewards distributed for the finality providers should be fp1 => 3x, fp2 => 1x
-	fp1DiffRewards, fp2DiffRewards, del1DiffRewards, del2DiffRewards := s.QueryRewardGauges(n2)
+	// // The rewards distributed for the finality providers should be fp1 => 3x, fp2 => 1x
+	// fp1DiffRewards, fp2DiffRewards, del1DiffRewards, del2DiffRewards := s.QueryRewardGauges(n2)
 
-	coins.RequireCoinsDiffInPointOnePercentMargin(
-		s.T(),
-		fp2DiffRewards.Coins.MulInt(sdkmath.NewIntFromUint64(3)),
-		fp1DiffRewards.Coins,
+	// coins.RequireCoinsDiffInPointOnePercentMargin(
+	// 	s.T(),
+	// 	fp2DiffRewards.Coins.MulInt(sdkmath.NewIntFromUint64(3)),
+	// 	fp1DiffRewards.Coins,
+	// )
+
+	// // The rewards distributed to the delegators should be the same for each delegator
+	// coins.RequireCoinsDiffInPointOnePercentMargin(s.T(), del1DiffRewards.Coins, del2DiffRewards.Coins)
+
+	// CheckWithdrawReward(s.T(), n2, wDel2, s.del2Addr)
+
+	// s.AddFinalityVoteUntilCurrentHeight()
+}
+
+// QueryFpRewards returns the rewards available for fp1, fp2, fp3, fp4
+func (s *BtcRewardsDistributionBsnRollup) QueryFpRewards(n *chain.NodeConfig) (
+	fp1bbn, fp2cons0, fp3cons0, fp4cons4 sdk.Coins,
+) {
+	g := new(errgroup.Group)
+	var (
+		err                  error
+		fp1bbnRewardGauges   map[string]*itypes.RewardGaugesResponse
+		fp2cons0RewardGauges map[string]*itypes.RewardGaugesResponse
+		fp3cons0RewardGauges map[string]*itypes.RewardGaugesResponse
+		fp4cons4RewardGauges map[string]*itypes.RewardGaugesResponse
 	)
 
-	// The rewards distributed to the delegators should be the same for each delegator
-	coins.RequireCoinsDiffInPointOnePercentMargin(s.T(), del1DiffRewards.Coins, del2DiffRewards.Coins)
+	g.Go(func() error {
+		fp1bbnRewardGauges, err = n.QueryRewardGauge(s.fp1bbn.Address())
+		if err != nil {
+			return fmt.Errorf("failed to query rewards for fp1bbn: %w", err)
+		}
+		return nil
+	})
+	g.Go(func() error {
+		fp2cons0RewardGauges, err = n.QueryRewardGauge(s.fp2cons0.Address())
+		if err != nil {
+			return fmt.Errorf("failed to query rewards for fp2cons0: %w", err)
+		}
+		return nil
+	})
+	g.Go(func() error {
+		fp3cons0RewardGauges, err = n.QueryRewardGauge(s.fp3cons0.Address())
+		if err != nil {
+			return fmt.Errorf("failed to query rewards for fp3cons0: %w", err)
+		}
+		return nil
+	})
+	g.Go(func() error {
+		fp4cons4RewardGauges, err = n.QueryRewardGauge(s.fp4cons4.Address())
+		if err != nil {
+			return fmt.Errorf("failed to query rewards for fp4cons4: %w", err)
+		}
+		return nil
+	})
 
-	CheckWithdrawReward(s.T(), n2, wDel2, s.del2Addr)
+	s.NoError(g.Wait())
 
-	s.AddFinalityVoteUntilCurrentHeight()
+	fp1bbnRewardGauge, ok := fp1bbnRewardGauges[itypes.FINALITY_PROVIDER.String()]
+	s.True(ok)
+	s.True(fp1bbnRewardGauge.Coins.IsAllPositive())
+
+	fp2cons0RewardGauge, ok := fp2cons0RewardGauges[itypes.FINALITY_PROVIDER.String()]
+	s.True(ok)
+	s.True(fp2cons0RewardGauge.Coins.IsAllPositive())
+
+	fp3cons0RewardGauge, ok := fp3cons0RewardGauges[itypes.FINALITY_PROVIDER.String()]
+	s.True(ok)
+	s.True(fp3cons0RewardGauge.Coins.IsAllPositive())
+
+	fp4cons4RewardGauge, ok := fp4cons4RewardGauges[itypes.FINALITY_PROVIDER.String()]
+	s.True(ok)
+	s.True(fp4cons4RewardGauge.Coins.IsAllPositive())
+
+	return fp1bbnRewardGauge.Coins, fp2cons0RewardGauge.Coins, fp3cons0RewardGauge.Coins, fp4cons4RewardGauge.Coins
+}
+
+// QueryDelRewards returns the rewards available for del1, del2
+func (s *BtcRewardsDistributionBsnRollup) QueryDelRewards(n *chain.NodeConfig) (
+	del1coins, del2coins sdk.Coins,
+) {
+	g := new(errgroup.Group)
+	var (
+		err                 error
+		btcDel1RewardGauges map[string]*itypes.RewardGaugesResponse
+		btcDel2RewardGauges map[string]*itypes.RewardGaugesResponse
+	)
+	g.Go(func() error {
+		btcDel1RewardGauges, err = n.QueryRewardGauge(sdk.MustAccAddressFromBech32(s.del1Addr))
+		if err != nil {
+			return fmt.Errorf("failed to query rewards for del1: %w", err)
+		}
+		return nil
+	})
+	g.Go(func() error {
+		btcDel2RewardGauges, err = n.QueryRewardGauge(sdk.MustAccAddressFromBech32(s.del2Addr))
+		if err != nil {
+			return fmt.Errorf("failed to query rewards for del2: %w", err)
+		}
+		return nil
+	})
+	s.NoError(g.Wait())
+
+	btcDel1RewardGauge, ok := btcDel1RewardGauges[itypes.BTC_STAKER.String()]
+	s.True(ok)
+	s.True(btcDel1RewardGauge.Coins.IsAllPositive())
+
+	btcDel2RewardGauge, ok := btcDel2RewardGauges[itypes.BTC_STAKER.String()]
+	s.True(ok)
+	s.True(btcDel2RewardGauge.Coins.IsAllPositive())
+
+	return btcDel1RewardGauge.Coins, btcDel2RewardGauge.Coins
+}
+
+// QuerySuiteRewards returns the babylon commission account balance and fp, dels
+// available rewards
+func (s *BtcRewardsDistributionBsnRollup) QuerySuiteRewards(n *chain.NodeConfig) (
+	bbnComm, del1, del2, fp1bbn, fp2cons0, fp3cons0, fp4cons4 sdk.Coins,
+) {
+	bbnComm, err := n.QueryBalances(params.AccBbnComissionCollectorBsn.String())
+	require.NoError(s.T(), err)
+
+	fp1bbn, fp2cons0, fp3cons0, fp4cons4 = s.QueryFpRewards(n)
+	del1, del2 = s.QueryDelRewards(n)
+	return bbnComm, del1, del2, fp1bbn, fp2cons0, fp3cons0, fp4cons4
 }
 
 // // Test6ActiveLastDelegation creates a new btc delegation

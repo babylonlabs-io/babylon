@@ -170,6 +170,34 @@ func (n *NodeConfig) AddCovenantSigs(
 	n.LogActionF("successfully added covenant signatures")
 }
 
+func (n *NodeConfig) AddBsnRewards(
+	fromWalletName, bsnId string,
+	rewards sdk.Coins,
+	fpRatios []bstypes.FpRatio,
+) {
+	n.LogActionF("adding BSN rewards %s to %s from nodeName: %s", rewards.String(), bsnId, n.Name)
+
+	cmd := []string{"babylond", "tx", "btcstaking", "add-bsn-rewards", bsnId, rewards.String()}
+
+	var fpRatioStrList []string
+	for _, fp := range fpRatios {
+		fpPkHex := fp.BtcPk.MarshalHex()
+		fpRatioStrList = append(fpRatioStrList, fmt.Sprintf("%s:%s", fpPkHex, fp.Ratio.String()))
+	}
+	fpRatiosStr := strings.Join(fpRatioStrList, ",")
+	cmd = append(cmd, fpRatiosStr)
+
+	// used key
+	cmd = append(cmd, fmt.Sprintf("--from=%s", fromWalletName))
+	// gas
+	cmd = append(cmd, "--gas=300000")
+	cmd = append(cmd, "--gas-adjustment=2")
+
+	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
+	require.NoError(n.t, err)
+	n.LogActionF("successfully added BSN rewards")
+}
+
 func (n *NodeConfig) CommitPubRandList(fpBTCPK *bbn.BIP340PubKey, startHeight uint64, numPubrand uint64, commitment []byte, sig *bbn.BIP340Signature) {
 	n.LogActionF("committing public randomness list")
 
