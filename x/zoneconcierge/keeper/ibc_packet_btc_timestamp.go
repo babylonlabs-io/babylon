@@ -2,10 +2,8 @@ package keeper
 
 import (
 	"context"
+	"errors"
 	"fmt"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
 	btcctypes "github.com/babylonlabs-io/babylon/v3/x/btccheckpoint/types"
@@ -13,6 +11,9 @@ import (
 	checkpointingtypes "github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
 	epochingtypes "github.com/babylonlabs-io/babylon/v3/x/epoching/types"
 	"github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 )
 
 // finalizedInfo is a private struct that stores metadata and proofs
@@ -148,10 +149,61 @@ func (k Keeper) getDeepEnoughBTCHeaders(ctx context.Context) []*btclctypes.BTCHe
 	return k.btclcKeeper.GetMainChainFrom(ctx, startHeight)
 }
 
-// getHeadersToBroadcast retrieves headers to be broadcasted to all open IBC channels to ZoneConcierge
-// The header to be broadcasted are:
-// - either the whole known chain if we did not broadcast any headers yet
-// - headers from the child of the most recent header we sent which is still in the main chain up to the current tip
+// getHeadersToBroadcastForConsumer retrieves headers to be broadcasted to a specific Consumer
+// The headers to be broadcasted are:
+// - If no Consumer base header exists: use the last k+1 headers from tip (fallback)
+// - If Consumer base header exists but no headers sent yet: from Consumer base to tip
+// - If headers previously sent: from child of most recent valid header to tip
+// - If reorg detected: from Consumer base to tip
+func (k Keeper) getHeadersToBroadcastForConsumer(ctx context.Context, consumerID string) []*btclctypes.BTCHeaderInfo {
+	baseHeader := k.GetConsumerBaseBTCHeader(ctx, consumerID)
+	lastSegment := k.GetConsumerLastSentSegment(ctx, consumerID)
+
+	// If no Consumer base header exists, fallback to the old behavior
+	if baseHeader == nil {
+		return k.getHeadersToBroadcast(ctx)
+	}
+
+	// Validate base header is not too old to prevent excessive header ranges
+	tipHeight := k.btclcKeeper.GetTipInfo(ctx).Height
+	kValue := k.btccKeeper.GetParams(ctx).BtcConfirmationDepth
+	if tipHeight > baseHeader.Height && tipHeight-baseHeader.Height > kValue {
+		k.Logger(sdk.UnwrapSDKContext(ctx)).Error("Consumer base header too old",
+			"consumerID", consumerID,
+			"baseHeight", baseHeader.Height,
+			"tipHeight", tipHeight,
+			"kValue", kValue,
+		)
+		// Fallback to k headers
+		return k.getDeepEnoughBTCHeaders(ctx)
+	}
+
+	// If we haven't sent any headers yet, send from Consumer base to tip
+	if lastSegment == nil {
+		return k.btclcKeeper.GetMainChainFrom(ctx, baseHeader.Height+1)
+	}
+
+	// Find the most recent header we sent that's still in the main chain
+	var initHeader *btclctypes.BTCHeaderInfo
+	for i := len(lastSegment.BtcHeaders) - 1; i >= 0; i-- {
+		header := lastSegment.BtcHeaders[i]
+		if header, err := k.btclcKeeper.GetHeaderByHash(ctx, header.Hash); err == nil && header != nil {
+			initHeader = header
+			break
+		}
+	}
+
+	// If no header from last segment is still valid (reorg), send from Consumer base to tip
+	if initHeader == nil {
+		return k.getDeepEnoughBTCHeaders(ctx)
+	}
+
+	// Send headers from the child of the most recent valid header to tip
+	return k.btclcKeeper.GetMainChainFrom(ctx, initHeader.Height+1)
+}
+
+// getHeadersToBroadcast retrieves headers using the fallback method of k+1.
+// This is used when no Consumer base header is set
 func (k Keeper) getHeadersToBroadcast(ctx context.Context) []*btclctypes.BTCHeaderInfo {
 	lastSegment := k.GetLastSentSegment(ctx)
 
@@ -220,6 +272,10 @@ func (k Keeper) BroadcastBTCTimestamps(
 	// get all metadata shared across BTC timestamps in the same epoch
 	finalizedInfo, err := k.getFinalizedInfo(ctx, epochNum, headersToBroadcast)
 	if err != nil {
+		k.Logger(sdkCtx).Error("failed to get finalized info for BTC timestamp broadcast",
+			"epoch", epochNum,
+			"error", err.Error(),
+		)
 		return err
 	}
 
@@ -227,17 +283,40 @@ func (k Keeper) BroadcastBTCTimestamps(
 	for _, channel := range openZCChannels {
 		consumerID, err := k.getClientID(ctx, channel)
 		if err != nil {
-			return err
+			k.Logger(sdkCtx).Error("failed to get client ID for channel, skipping",
+				"channel", channel.ChannelId,
+				"error", err.Error(),
+			)
+			continue
 		}
 
 		btcTimestamp, err := k.createBTCTimestamp(ctx, consumerID, channel, finalizedInfo)
 		if err != nil {
-			return err
+			k.Logger(sdkCtx).Error("failed to create BTC timestamp for channel, skipping",
+				"channel", channel.ChannelId,
+				"consumerID", consumerID,
+				"error", err.Error(),
+			)
+			continue
 		}
 
 		packet := types.NewBTCTimestampPacketData(btcTimestamp)
 		if err := k.SendIBCPacket(ctx, channel, packet); err != nil {
-			return err
+			if errors.Is(err, clienttypes.ErrClientNotActive) {
+				k.Logger(sdkCtx).Info("IBC client is not active, skipping channel",
+					"channel", channel.ChannelId,
+					"consumerID", consumerID,
+					"error", err.Error(),
+				)
+				continue
+			}
+
+			k.Logger(sdkCtx).Error("failed to send BTC timestamp to channel, continuing with other channels",
+				"channel", channel.ChannelId,
+				"consumerID", consumerID,
+				"error", err.Error(),
+			)
+			continue
 		}
 	}
 

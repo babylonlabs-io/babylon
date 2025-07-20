@@ -19,6 +19,7 @@ import (
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
 	btclctypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
 	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types/allowlist"
 )
 
 // CreateBTCDelegation creates a BTC delegation
@@ -43,17 +44,6 @@ func (k Keeper) CreateBTCDelegation(ctx sdk.Context, parsedMsg *types.ParsedCrea
 		return types.ErrReusedStakingTx.Wrapf("duplicated tx hash: %s", stakingTxHash.String())
 	}
 
-	// Ensure all finality providers
-	// - are known to Babylon,
-	// - at least 1 one of them is a Babylon finality provider,
-	// - are not slashed, and
-	// - their registered epochs are finalised
-	// and then check whether the BTC stake is restaked to FPs of consumers
-	err := k.validateMultiStakedFPs(ctx, parsedMsg.FinalityProviderKeys.PublicKeysBbnFormat)
-	if err != nil {
-		return err
-	}
-
 	// 5. Get params for the validated inclusion height either tip or inclusion height
 	timeInfo, params, paramsVersion, err := k.getTimeInfoAndParams(ctx, parsedMsg)
 	if err != nil {
@@ -66,6 +56,14 @@ func (k Keeper) CreateBTCDelegation(ctx sdk.Context, parsedMsg *types.ParsedCrea
 		return err
 	}
 
+	// Ensure all finality providers
+	// - are known to Babylon
+	// - every FP is from different BSN
+	// - exactly one FP is from Babylon
+	if err := k.validateMultiStakedFPs(ctx, parsedMsg.FinalityProviderKeys.PublicKeysBbnFormat); err != nil {
+		return err
+	}
+
 	// 7. if allow list is enabled we need to check whether staking transactions hash
 	// is in the allow list
 	if isAllowListEnabled(ctx, params) {
@@ -74,10 +72,37 @@ func (k Keeper) CreateBTCDelegation(ctx sdk.Context, parsedMsg *types.ParsedCrea
 		}
 	}
 
+	// Check multi-staking allow list
+	// During multi-staking allow-list period, only existing BTC delegations
+	// in the allow-list can become multi-staked via stake expansion or
+	// already existing multi-staking delegation (extended from the allow-list)
+	isMultiStaking := parsedMsg.FinalityProviderKeys.Len() > 1
+	if isMultiStaking && allowlist.IsMultiStakingAllowListEnabled(ctx.BlockHeight()) {
+		// if is not stake expansion, it is not allowed to create new delegations with multi-staking
+		if parsedMsg.StkExp == nil {
+			return types.ErrInvalidStakingTx.Wrap("it is not allowed to create new delegations with multi-staking during the multi-staking allow-list period")
+		}
+
+		// if it is stake expansion, we need to check if the previous staking tx hash
+		// is in the allow list or the previous staking tx is a multi-staking tx
+		allowed, err := k.IsMultiStakingAllowed(ctx, parsedMsg.StkExp.PreviousActiveStkTxHash)
+		if err != nil {
+			return fmt.Errorf("failed to check if the previous staking tx hash is eligible for multi-staking: %w", err)
+		}
+		if !allowed {
+			return types.ErrInvalidStakingTx.Wrapf("staking tx hash: %s, is not eligible for multi-staking", parsedMsg.StkExp.PreviousActiveStkTxHash.String())
+		}
+	}
+
 	// everything is good, if the staking tx is not included on BTC consume additinal
 	// gas
 	if !parsedMsg.IsIncludedOnBTC() {
-		ctx.GasMeter().ConsumeGas(params.DelegationCreationBaseGasFee, "delegation creation fee")
+		// Calculate additional gas cost for multi-staked delegation. Additional cost
+		// is charged per each additional FP in the multi-staked delegation except
+		// the Babylon FP.
+		additionalGasCost := types.GasCostPerMultiStakedFP * len(params.CovenantPks) * (parsedMsg.FinalityProviderKeys.Len() - 1)
+
+		ctx.GasMeter().ConsumeGas(params.DelegationCreationBaseGasFee+uint64(additionalGasCost), "delegation creation fee")
 	}
 
 	// 7.all good, construct BTCDelegation and insert BTC delegation
@@ -139,7 +164,6 @@ func (k Keeper) AddBTCDelegation(
 
 	// for each finality provider the delegation multi-stakes to, update its index
 	for _, fpBTCPK := range btcDel.FpBtcPkList {
-		fpBTCPK := fpBTCPK // remove when update to go1.22
 		// get BTC delegation index under this finality provider
 		btcDelIndex := k.getBTCDelegatorDelegationIndex(ctx, &fpBTCPK, btcDel.BtcPk)
 		if btcDelIndex == nil {
@@ -392,11 +416,13 @@ func (k Keeper) setBTCDelegation(ctx context.Context, btcDel *types.BTCDelegatio
 	store.Set(stakingTxHash[:], btcDelBytes)
 }
 
-// validateMultiStakedFPs ensures all finality providers are known to Babylon and at least
-// one of them is a Babylon finality provider. It also checks whether the BTC stake is
-// multi-staked to FPs of consumer chains
+// validateMultiStakedFPs ensures all finality providers
+// - are known to Babylon
+// - exactly one of them is a Babylon finality provider
+// - all consumer finality providers are from different consumer chains
 func (k Keeper) validateMultiStakedFPs(ctx sdk.Context, fpBTCPKs []bbn.BIP340PubKey) error {
-	multiStakedToBabylon := false
+	fpConsumerCounters := make(map[string]int)
+	babylonFpCount := 0
 
 	for i := range fpBTCPKs {
 		fpBTCPK := fpBTCPKs[i]
@@ -408,14 +434,26 @@ func (k Keeper) validateMultiStakedFPs(ctx sdk.Context, fpBTCPKs []bbn.BIP340Pub
 		if fp.IsSlashed() {
 			return types.ErrFpAlreadySlashed
 		}
+
 		if fp.SecuresBabylonGenesis(ctx) {
-			multiStakedToBabylon = true
+			babylonFpCount++
+
+			if babylonFpCount > 1 {
+				return types.ErrInvalidMultiStakingFPs.Wrap("more than one Babylon finality provider found in the multi-staking selection")
+			}
+		} else {
+			fpConsumerCounters[fp.BsnId]++
+			if fpConsumerCounters[fp.BsnId] > 1 {
+				return types.ErrInvalidMultiStakingFPs.Wrapf("more than one finality provider found from the same BSN: %s, in the multi-staking selection", fp.BsnId)
+			}
 		}
 	}
-	if !multiStakedToBabylon {
+
+	if babylonFpCount == 0 {
 		// a BTC delegation has to stake to at least 1 Babylon finality provider
-		return types.ErrNoBabylonFPRestaked
+		return types.ErrNoBabylonFPMultiStaked
 	}
+
 	return nil
 }
 

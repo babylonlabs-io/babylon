@@ -31,7 +31,7 @@ func (k Keeper) FinalityProviderPowerAtHeight(ctx context.Context, req *types.Qu
 		return nil, status.Errorf(codes.InvalidArgument, "failed to unmarshal finality provider BTC PK hex: %v", err)
 	}
 
-	if !k.BTCStakingKeeper.HasFinalityProvider(ctx, *fpBTCPK) {
+	if !k.BTCStakingKeeper.BabylonFinalityProviderExists(ctx, *fpBTCPK) {
 		return nil, bstypes.ErrFpNotFound
 	}
 

@@ -68,6 +68,9 @@ message Params {
   // btc_activation_height is the btc height from which parameters are activated
   // (inclusive)
   uint32 btc_activation_height = 15;
+  // max_finality_providers is the maximum number of finality providers that can
+  // be used in staking script
+  uint32 max_finality_providers = 16;
 }
 
 // HeightVersionPair pairs a btc height with a version of the parameters

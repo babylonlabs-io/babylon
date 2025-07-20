@@ -24,6 +24,12 @@ import (
 const (
 	// TODO: need to determine a proper default value
 	defaultDelegationCreationBaseGasFee = 1000
+
+	// Additional gas cost added to the pre-approval delegation creation
+	// for each additional FP in the multi-staked delegation. This gas cost is charged
+	// because every covenant committee member must create separate Adaptor Signature
+	// for each FP in the multi-staked delegation.
+	GasCostPerMultiStakedFP = 7000
 )
 
 var _ paramtypes.ParamSet = (*Params)(nil)
@@ -84,6 +90,9 @@ func DefaultParams() Params {
 		// Allow list can only be enabled by upgrade
 		AllowListExpirationHeight: 0,
 		BtcActivationHeight:       0,
+		// Default max finality providers is 1, which means that only one finality provider can be used in staking script.
+		// Multi-staking is disabled with this setting.
+		MaxFinalityProviders: 1,
 	}
 }
 
@@ -205,6 +214,10 @@ func (p Params) Validate() error {
 	}
 	if int(p.CovenantQuorum)*2 <= len(p.CovenantPks) {
 		return fmt.Errorf("covenant quorum size has to be more than 1/2 of the covenant committee size")
+	}
+
+	if p.MaxFinalityProviders == 0 {
+		return fmt.Errorf("MaxFinalityProviders must be greater than zero")
 	}
 
 	if err := validateStakingAmout(p.MinStakingValueSat, p.MaxStakingValueSat); err != nil {

@@ -7,6 +7,8 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	"github.com/btcsuite/btcd/btcec/v2"
+	"github.com/btcsuite/btcd/wire"
+	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/crypto/ed25519"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -21,7 +23,6 @@ import (
 	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 	btcstakingtypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 	"github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
-	ibctmtypes "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
 )
 
 // TestEpochFinalization checks whether we can finalize some epochs
@@ -576,75 +577,6 @@ func MakeInnerMsg(t *testing.T) *stakingtypes.MsgCreateValidator {
 	return msg
 }
 
-func TestMultiConsumerDelegation(t *testing.T) {
-	t.Parallel()
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	driverTempDir := t.TempDir()
-	replayerTempDir := t.TempDir()
-	driver := NewBabylonAppDriver(r, t, driverTempDir, replayerTempDir)
-
-	consumerID1 := "consumer1"
-	consumerID2 := "consumer2"
-	consumerID3 := "consumer3"
-
-	// 1. Set up mock IBC clients for each consumer before registering consumers
-	ctx := driver.App.BaseApp.NewContext(false)
-	driver.App.IBCKeeper.ClientKeeper.SetClientState(ctx, consumerID1, &ibctmtypes.ClientState{})
-	driver.App.IBCKeeper.ClientKeeper.SetClientState(ctx, consumerID2, &ibctmtypes.ClientState{})
-	driver.App.IBCKeeper.ClientKeeper.SetClientState(ctx, consumerID3, &ibctmtypes.ClientState{})
-	driver.GenerateNewBlock()
-
-	// 2. Register consumers
-	consumer1 := driver.RegisterConsumer(consumerID1)
-	consumer2 := driver.RegisterConsumer(consumerID2)
-	consumer3 := driver.RegisterConsumer(consumerID3)
-	// Create a Babylon FP (registered without consumer ID)
-	babylonFp := driver.CreateNFinalityProviderAccounts(1)[0]
-	babylonFp.RegisterFinalityProvider("")
-
-	// 3. Create finality providers for each consumer
-	fp1s := []*FinalityProvider{
-		// Create 2 FPs for consumer1
-		driver.CreateFinalityProviderForConsumer(consumer1),
-		driver.CreateFinalityProviderForConsumer(consumer1),
-	}
-	fp2 := driver.CreateFinalityProviderForConsumer(consumer2)
-	fp3 := driver.CreateFinalityProviderForConsumer(consumer3)
-	// Generate blocks to process registrations
-	driver.GenerateNewBlockAssertExecutionSuccess()
-	staker := driver.CreateNStakerAccounts(1)[0]
-
-	// 4. Create a delegation with three consumer FPs and one Babylon FP
-	staker.CreatePreApprovalDelegation(
-		[]*bbn.BIP340PubKey{fp1s[0].BTCPublicKey(), fp2.BTCPublicKey(), fp3.BTCPublicKey(), babylonFp.BTCPublicKey()},
-		1000,
-		100000000,
-	)
-
-	// 5. Create a valid delegation with 2 FPs (including Babylon FP)
-	staker.CreatePreApprovalDelegation(
-		[]*bbn.BIP340PubKey{babylonFp.BTCPublicKey(), fp1s[0].BTCPublicKey()},
-		1000,
-		100000000,
-	)
-	driver.GenerateNewBlockAssertExecutionSuccess()
-
-	// 6. Replay all blocks and verify state
-	replayer := NewBlockReplayer(t, replayerTempDir)
-
-	// Set up IBC client states in the replayer before replaying blocks
-	replayerCtx := replayer.App.BaseApp.NewContext(false)
-	replayer.App.IBCKeeper.ClientKeeper.SetClientState(replayerCtx, consumerID1, &ibctmtypes.ClientState{})
-	replayer.App.IBCKeeper.ClientKeeper.SetClientState(replayerCtx, consumerID2, &ibctmtypes.ClientState{})
-	replayer.App.IBCKeeper.ClientKeeper.SetClientState(replayerCtx, consumerID3, &ibctmtypes.ClientState{})
-
-	// Replay all the blocks from driver and check appHash
-	replayer.ReplayBlocks(t, driver.GetFinalizedBlocks())
-	// After replay we should have the same apphash and last block height
-	require.Equal(t, driver.GetLastState().LastBlockHeight, replayer.LastState.LastBlockHeight)
-	require.Equal(t, driver.GetLastState().AppHash, replayer.LastState.AppHash)
-}
-
 func TestBadUnbondingFeeParams(t *testing.T) {
 	t.Parallel()
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
@@ -834,6 +766,95 @@ func TestExpandBTCDelegation(t *testing.T) {
 	activeDelegations = driver.GetActiveBTCDelegations(t)
 	require.Len(t, activeDelegations, 1)
 	require.NotNil(t, activeDelegations[0].StkExp)
+
+	unbondedDelegations := driver.GetUnbondedBTCDelegations(t)
+	require.Len(t, unbondedDelegations, 1)
+}
+
+func containsEvent(events []abci.Event, eventType string) bool {
+	for _, event := range events {
+		if event.Type == eventType {
+			return true
+		}
+	}
+	return false
+}
+
+func TestAcceptSlashingTxAsUnbondingTx(t *testing.T) {
+	t.Parallel()
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	driverTempDir := t.TempDir()
+	replayerTempDir := t.TempDir()
+	driver := NewBabylonAppDriver(r, t, driverTempDir, replayerTempDir)
+	driver.GenerateNewBlock()
+
+	covSender := driver.CreateCovenantSender()
+	require.NotNil(t, covSender)
+
+	infos := driver.CreateNFinalityProviderAccounts(1)
+	fp1 := infos[0]
+
+	sinfos := driver.CreateNStakerAccounts(1)
+	s1 := sinfos[0]
+
+	fp1.RegisterFinalityProvider("")
+	driver.GenerateNewBlockAssertExecutionSuccess()
+
+	var (
+		stakingTime  = uint32(1000)
+		stakingValue = int64(100000000)
+	)
+	s1.CreatePreApprovalDelegation(
+		[]*bbn.BIP340PubKey{fp1.BTCPublicKey()},
+		stakingTime,
+		stakingValue,
+	)
+	driver.GenerateNewBlockAssertExecutionSuccess()
+
+	covSender.SendCovenantSignatures()
+	driver.GenerateNewBlockAssertExecutionSuccess()
+
+	driver.ActivateVerifiedDelegations(1)
+	activeDelegations := driver.GetActiveBTCDelegations(t)
+	require.Len(t, activeDelegations, 1)
+
+	slashingTx, _, err := bbn.NewBTCTxFromHex(activeDelegations[0].SlashingTxHex)
+	require.NoError(t, err)
+
+	stakingTx, stakingTxBytes, err := bbn.NewBTCTxFromHex(activeDelegations[0].StakingTxHex)
+	require.NoError(t, err)
+
+	params := driver.GetBTCStakingParams(t)
+
+	slashingTxbytes, slashingTxMsg := datagen.AddWitnessToSlashingTx(
+		t,
+		stakingTx.TxOut[0],
+		s1.BTCPrivateKey,
+		covenantSKs,
+		params.CovenantQuorum,
+		[]*btcec.PublicKey{fp1.BTCPrivateKey.PubKey()},
+		uint16(stakingTime),
+		stakingValue,
+		slashingTx,
+		driver.App.BTCLightClientKeeper.GetBTCNet(),
+	)
+
+	blockWithProofs := driver.IncludeTxsInBTCAncConfirm([]*wire.MsgTx{slashingTxMsg})
+	require.Len(t, blockWithProofs.Proofs, 2)
+
+	msg := &bstypes.MsgBTCUndelegate{
+		Signer:                        s1.AddressString(),
+		StakingTxHash:                 stakingTx.TxHash().String(),
+		StakeSpendingTx:               slashingTxbytes,
+		StakeSpendingTxInclusionProof: bstypes.NewInclusionProofFromSpvProof(blockWithProofs.Proofs[1]),
+		FundingTransactions:           [][]byte{stakingTxBytes},
+	}
+	s1.SendMessage(msg)
+	txResults := driver.GenerateNewBlockAssertExecutionSuccessWithResults()
+	// First result is injected checkpoint tx, second is the unbonding tx execution
+	require.NotEmpty(t, txResults[1].Events)
+	// Unbonding through slashing tx should be treated as EventBTCDelgationUnbondedEarly
+	require.True(t, containsEvent(txResults[1].Events, "babylon.btcstaking.v1.EventBTCDelgationUnbondedEarly"))
 
 	unbondedDelegations := driver.GetUnbondedBTCDelegations(t)
 	require.Len(t, unbondedDelegations, 1)

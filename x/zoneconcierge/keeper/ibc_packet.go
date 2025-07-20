@@ -31,6 +31,12 @@ func (k Keeper) SendIBCPacket(ctx context.Context, channel channeltypes.Identifi
 	destinationPort := channel.Counterparty.PortId
 	destinationChannel := channel.Counterparty.ChannelId
 
+	// Validate packet before attempting to send
+	if err := k.validatePacket(packetData); err != nil {
+		k.Logger(sdkCtx).Error(fmt.Sprintf("packet validation failed for channel %v port %s: %v", destinationChannel, destinationPort, err))
+		return err
+	}
+
 	// timeout
 	timeoutPeriod := time.Duration(k.GetParams(sdkCtx).IbcPacketTimeoutSeconds) * time.Second
 	timeoutTime := uint64(sdkCtx.HeaderInfo().Time.Add(timeoutPeriod).UnixNano())
@@ -63,6 +69,17 @@ func (k Keeper) SendIBCPacket(ctx context.Context, channel channeltypes.Identifi
 			labels,
 		)
 	}()
+
+	return nil
+}
+
+// validatePacket performs basic validation on the packet before sending
+func (k Keeper) validatePacket(packetData *types.OutboundPacket) error {
+	packetBytes := k.cdc.MustMarshal(packetData)
+
+	if len(packetBytes) > channeltypes.MaximumPayloadsSize {
+		return fmt.Errorf("packet payload size (%d bytes) exceeds maximum allowed size (%d bytes)", len(packetBytes), channeltypes.MaximumPayloadsSize)
+	}
 
 	return nil
 }

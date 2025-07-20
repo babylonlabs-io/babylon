@@ -3,6 +3,7 @@ package types
 import (
 	"context"
 
+	sdkmath "cosmossdk.io/math"
 	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 	etypes "github.com/babylonlabs-io/babylon/v3/x/epoching/types"
 	"github.com/btcsuite/btcd/btcec/v2"
@@ -16,6 +17,7 @@ type BTCStakingKeeper interface {
 	GetBTCHeightAtBabylonHeight(ctx context.Context, babylonHeight uint64) uint32
 	GetFinalityProvider(ctx context.Context, fpBTCPK []byte) (*bstypes.FinalityProvider, error)
 	HasFinalityProvider(ctx context.Context, fpBTCPK []byte) bool
+	BabylonFinalityProviderExists(ctx context.Context, fpBTCPK []byte) bool
 	SlashFinalityProvider(ctx context.Context, fpBTCPK []byte) error
 	PropagateFPSlashingToConsumers(ctx context.Context, fpBTCSK *btcec.PrivateKey) error
 	GetBTCDelegation(ctx context.Context, stakingTxHashStr string) (*bstypes.BTCDelegation, error)
@@ -40,4 +42,6 @@ type IncentiveKeeper interface {
 	IndexRefundableMsg(ctx context.Context, msg sdk.Msg)
 	AddEventBtcDelegationActivated(ctx context.Context, height uint64, fp, del sdk.AccAddress, sat uint64) error
 	AddEventBtcDelegationUnbonded(ctx context.Context, height uint64, fp, del sdk.AccAddress, sat uint64) error
+	BtcDelegationActivated(ctx context.Context, fp, del sdk.AccAddress, sat sdkmath.Int) error
+	BtcDelegationUnbonded(ctx context.Context, fp, del sdk.AccAddress, sat sdkmath.Int) error
 }

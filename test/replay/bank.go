@@ -5,6 +5,15 @@ import (
 	"github.com/test-go/testify/require"
 )
 
+func BankBalancesDiff(coins, coinsToSub map[string]sdk.Coins, addrs ...sdk.AccAddress) map[string]sdk.Coins {
+	result := make(map[string]sdk.Coins, len(addrs))
+	for _, addr := range addrs {
+		addrStr := addr.String()
+		result[addrStr] = coins[addrStr].Sub(coinsToSub[addrStr]...)
+	}
+	return result
+}
+
 func (d *BabylonAppDriver) BankBalances(addrs ...sdk.AccAddress) map[string]sdk.Coins {
 	bankK := d.App.BankKeeper
 
