@@ -29,6 +29,10 @@ type (
 
 		Schema                       collections.Schema
 		AllowedStakingTxHashesKeySet collections.KeySet[[]byte]
+		// allowedMultiStakingTxHashesKeySet is a key set for tx hashes
+		// that are allowed for multi-staking during the multi-staking
+		// allow list period.
+		allowedMultiStakingTxHashesKeySet collections.KeySet[[]byte]
 		// LargestBtcReorg defines the BTC block height difference between
 		// the btc tip height and the rollback block height
 		LargestBtcReorg collections.Item[types.LargestBtcReOrg]
@@ -71,6 +75,12 @@ func NewKeeper(
 			sb,
 			types.AllowedStakingTxHashesKey,
 			"allowed_staking_tx_hashes_key_set",
+			collections.BytesKey,
+		),
+		allowedMultiStakingTxHashesKeySet: collections.NewKeySet(
+			sb,
+			types.AllowedMultiStakingTxHashesKey,
+			"allowed_multi_staking_tx_hashes_key_set",
 			collections.BytesKey,
 		),
 		LargestBtcReorg: collections.NewItem(

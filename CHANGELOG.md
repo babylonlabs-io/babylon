@@ -39,6 +39,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
+- [#1387](https://github.com/babylonlabs-io/babylon/pull/1387) Refactor the usage of `ChainInfo` and canonical chain indexing.
 - [#1331](https://github.com/babylonlabs-io/babylon/pull/1331/) Improve BSN Header synchronization.
 - [#1304](https://github.com/babylonlabs-io/babylon/pull/304) Update rollup finality e2e tests
 - [#1360](https://github.com/babylonlabs-io/babylon/pull/1360) Replace `panic` with logging in SendPacket calls.
@@ -111,9 +112,10 @@ check of rewards
 command to modify `max-finality-providers` parameter.
 - [#1344](https://github.com/babylonlabs-io/babylon/pull/1344) Add `MsgType` field to `QueuedMessageResponse` message.
 - [#1352](https://github.com/babylonlabs-io/babylon/pull/1352) Add stake expansion signatures in BTC delegation query response
+- [#1358](https://github.com/babylonlabs-io/babylon/pull/1358) Simplify selective slashing message handler
 - [#1367](https://github.com/babylonlabs-io/babylon/pull/1367) Add v3 mainnet upgrade handler
 - [#1379](https://github.com/babylonlabs-io/babylon/pull/1379) Add multi-staking allow-list docs in `x/btcstaking`
-- [#1358](https://github.com/babylonlabs-io/babylon/pull/1358) Simplify selective slashing message handler
+- [#1381](https://github.com/babylonlabs-io/babylon/pull/1381) Add multi-staking allow-list logic
 
 ### State Machine Breaking
 
@@ -133,6 +135,11 @@ remove send restrictions
 - [#1364](https://github.com/babylonlabs-io/babylon/pull/1364) Add babylon commission as legacy dec `[0...1]` to Consumer Registry.
 - [#1359](https://github.com/babylonlabs-io/babylon/pull/1359) Add `MsgAddBsnRewards` to btcstaking and wired BTC delegations from
 BSNs to incentive reward tracker.
+- [#1390](https://github.com/babylonlabs-io/babylon/pull/1390) Add additional gas
+cost per multi-staked finality provider
+- [#1394](https://github.com/babylonlabs-io/babylon/pull/1394) Add migration for
+FP data
+
 
 ### Bug fixes
 

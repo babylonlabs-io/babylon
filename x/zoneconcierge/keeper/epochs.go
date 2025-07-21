@@ -72,7 +72,7 @@ func (k Keeper) getSealedEpochProof(ctx context.Context, epochNum uint64) *types
 // sealedEpochProofStore stores the proof that each epoch is sealed
 // prefix: SealedEpochProofKey
 // key: epochNumber
-// value: ChainInfoWithProof
+// value: ProofEpochSealed
 func (k Keeper) sealedEpochProofStore(ctx context.Context) prefix.Store {
 	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
 	return prefix.NewStore(storeAdapter, types.SealedEpochProofKey)

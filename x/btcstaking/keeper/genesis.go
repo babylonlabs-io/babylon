@@ -26,7 +26,7 @@ func (k Keeper) InitGenesis(ctx context.Context, gs types.GenesisState) error {
 	}
 
 	for _, fp := range gs.FinalityProviders {
-		k.setFinalityProvider(ctx, fp)
+		k.SetFinalityProvider(ctx, fp)
 	}
 
 	for _, btcDel := range gs.BtcDelegations {
@@ -74,6 +74,17 @@ func (k Keeper) InitGenesis(ctx context.Context, gs types.GenesisState) error {
 		}
 	}
 
+	for _, hStr := range gs.AllowedMultiStakingTxHashes {
+		// hashes are hex encoded for better readability
+		bz, err := hex.DecodeString(hStr)
+		if err != nil {
+			return fmt.Errorf("error decoding tx hash: %w", err)
+		}
+		if err := k.allowedMultiStakingTxHashesKeySet.Set(ctx, bz); err != nil {
+			return err
+		}
+	}
+
 	if gs.LargestBtcReorg != nil {
 		if err := k.SetLargestBtcReorg(ctx, *gs.LargestBtcReorg); err != nil {
 			return err
@@ -114,16 +125,22 @@ func (k Keeper) ExportGenesis(ctx context.Context) (*types.GenesisState, error) 
 		return nil, err
 	}
 
+	multiStakingTxHashes, err := k.allowedMultiStakingTxHashes(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	return &types.GenesisState{
-		Params:                 k.GetAllParams(ctx),
-		FinalityProviders:      fps,
-		BtcDelegations:         dels,
-		BlockHeightChains:      k.blockHeightChains(ctx),
-		BtcDelegators:          btcDels,
-		Events:                 evts,
-		AllowedStakingTxHashes: txHashes,
-		LargestBtcReorg:        k.GetLargestBtcReorg(ctx),
-		ConsumerEvents:         k.consumerEvents(ctx),
+		Params:                      k.GetAllParams(ctx),
+		FinalityProviders:           fps,
+		BtcDelegations:              dels,
+		BlockHeightChains:           k.blockHeightChains(ctx),
+		BtcDelegators:               btcDels,
+		Events:                      evts,
+		AllowedStakingTxHashes:      txHashes,
+		AllowedMultiStakingTxHashes: multiStakingTxHashes,
+		LargestBtcReorg:             k.GetLargestBtcReorg(ctx),
+		ConsumerEvents:              k.consumerEvents(ctx),
 	}, nil
 }
 
@@ -211,6 +228,31 @@ func (k Keeper) btcDelegatorsWithKey(ctx context.Context, storeKey []byte) ([]*t
 func (k Keeper) allowedStakingTxHashes(ctx context.Context) ([]string, error) {
 	hashes := make([]string, 0)
 	iterator, err := k.AllowedStakingTxHashesKeySet.Iterate(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		key, err := iterator.Key()
+		if err != nil {
+			return nil, err
+		}
+
+		// encode hash as a hex string
+		hashStr := hex.EncodeToString(key)
+		hashes = append(hashes, hashStr)
+	}
+
+	return hashes, nil
+}
+
+// allowedMultiStakingTxHashes loads all allowed multi-staking transactions hashes stored.
+// It encodes the hashes as hex strings to be human readable on exporting the genesis
+// This function has high resource consumption and should be only used on export genesis.
+func (k Keeper) allowedMultiStakingTxHashes(ctx context.Context) ([]string, error) {
+	hashes := make([]string, 0)
+	iterator, err := k.allowedMultiStakingTxHashesKeySet.Iterate(ctx, nil)
 	if err != nil {
 		return nil, err
 	}

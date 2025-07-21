@@ -110,7 +110,7 @@ func (ms msgServer) EditFinalityProvider(goCtx context.Context, req *types.MsgEd
 	// all good, update the finality provider and set back
 	fp.Description = req.Description
 
-	ms.setFinalityProvider(goCtx, fp)
+	ms.SetFinalityProvider(goCtx, fp)
 
 	// notify subscriber
 	ctx := sdk.UnwrapSDKContext(goCtx)
