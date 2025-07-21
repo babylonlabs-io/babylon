@@ -2,14 +2,17 @@ package keeper
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sort"
 
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
+	btclctypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
 	bsctypes "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
 	finalitytypes "github.com/babylonlabs-io/babylon/v3/x/finality/types"
 	"github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 )
 
@@ -70,7 +73,21 @@ func (k Keeper) BroadcastBTCStakingConsumerEvents(
 
 		for _, channel := range channels {
 			if err := k.SendIBCPacket(ctx, channel, outPacket); err != nil {
-				return err
+				if errors.Is(err, clienttypes.ErrClientNotActive) {
+					k.Logger(sdkCtx).Info("IBC client is not active, skipping channel",
+						"consumerID", consumerID,
+						"channel", channel.ChannelId,
+						"error", err.Error(),
+					)
+					continue
+				}
+
+				k.Logger(sdkCtx).Error("failed to send BTC staking consumer event to channel, continuing with other channels",
+					"consumerID", consumerID,
+					"channel", channel.ChannelId,
+					"error", err.Error(),
+				)
+				continue
 			}
 		}
 
@@ -120,6 +137,20 @@ func (k Keeper) HandleIBCChannelCreation(
 		return fmt.Errorf("failed to update consumer register: %w", err)
 	}
 
+	// Initialize BSN BTC state to current tip
+	if err := k.InitializeBSNBTCState(ctx, clientID); err != nil {
+		return fmt.Errorf("failed to initialize BSN BTC state: %w", err)
+	}
+	// Get current tip height for logging
+	currentTip := k.btclcKeeper.GetTipInfo(ctx)
+
+	k.Logger(ctx).Info("IBC channel created successfully",
+		"consumerID", clientID,
+		"channelID", channelID,
+		"currentTipHeight", currentTip.Height,
+		"note", "BSN base BTC header initialized to current tip",
+	)
+
 	return nil
 }
 
@@ -127,7 +158,7 @@ func (k Keeper) HandleConsumerSlashing(
 	ctx sdk.Context,
 	portID string,
 	channelID string,
-	consumerSlashing *types.ConsumerSlashingIBCPacket,
+	consumerSlashing *types.BSNSlashingIBCPacket,
 ) error {
 	clientID, _, err := k.channelKeeper.GetChannelClientState(ctx, portID, channelID)
 	if err != nil {
@@ -181,6 +212,41 @@ func (k Keeper) HandleConsumerSlashing(
 	if err := sdk.UnwrapSDKContext(ctx).EventManager().EmitTypedEvent(eventSlashing); err != nil {
 		return fmt.Errorf("failed to emit EventSlashedFinalityProvider event: %w", err)
 	}
+
+	return nil
+}
+
+// HandleBSNBaseBTCHeader processes a BSN base BTC header received.
+// This allows BSNs to inform Babylon about which BTC header they consider as their base
+func (k Keeper) HandleBSNBaseBTCHeader(
+	ctx sdk.Context,
+	portID string,
+	channelID string,
+	baseBTCHeader *btclctypes.BTCHeaderInfo,
+) error {
+	// Get the client ID from the channel to identify the BSN
+	clientID, _, err := k.channelKeeper.GetChannelClientState(ctx, portID, channelID)
+	if err != nil {
+		return fmt.Errorf("failed to get client state: %w", err)
+	}
+
+	// Validate the base BTC header
+	if err := baseBTCHeader.Validate(); err != nil {
+		return fmt.Errorf("base BTC header is invalid: %w", err)
+	}
+
+	// Verify that the base BTC header exists in Babylon's BTC light client
+	// This ensures the BSN is not trying to set a base header that Babylon doesn't know about
+	existingHeader, err := k.btclcKeeper.GetHeaderByHash(ctx, baseBTCHeader.Hash)
+	if err != nil {
+		return fmt.Errorf("failed to retrieve base BTC header from Babylon's BTC light client: %w", err)
+	}
+	if existingHeader == nil {
+		return fmt.Errorf("base BTC header not found in Babylon's BTC light client: %v", baseBTCHeader.Hash)
+	}
+
+	// Store the BSN's reported base BTC header
+	k.SetBSNBaseBTCHeader(ctx, clientID, baseBTCHeader)
 
 	return nil
 }

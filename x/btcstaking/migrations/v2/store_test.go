@@ -11,6 +11,7 @@ import (
 	keepertest "github.com/babylonlabs-io/babylon/v3/testutil/keeper"
 	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/keeper"
 	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types/allowlist"
 
 	"github.com/stretchr/testify/require"
 )
@@ -21,6 +22,8 @@ func TestMigrateStore(t *testing.T) {
 		storeKey              = storetypes.NewKVStoreKey(types.StoreKey)
 		btcStakingKeeper, ctx = keepertest.BTCStakingKeeperWithStoreKey(t, storeKey, nil, nil, nil)
 		paramsVersions        = 10
+		testChainID           = "test-chain-id"
+		nFps                  = 10
 	)
 
 	for i := 0; i < paramsVersions; i++ {
@@ -31,13 +34,48 @@ func TestMigrateStore(t *testing.T) {
 		require.NoError(t, btcStakingKeeper.SetParams(ctx, params))
 	}
 
+	var generatedRandomFps []*types.FinalityProvider
+	for i := 0; i < nFps; i++ {
+		fp, err := datagen.GenRandomFinalityProvider(r, "", "")
+		require.NoError(t, err)
+		btcStakingKeeper.SetFinalityProvider(ctx, fp)
+		generatedRandomFps = append(generatedRandomFps, fp)
+	}
+
 	// Perform migration
 	m := keeper.NewMigrator(*btcStakingKeeper)
-	require.NoError(t, m.Migrate1to2(ctx))
+	require.NoError(t, m.Migrate1to2(ctx.WithChainID(testChainID)))
 
 	// after migration, all params should have max finality providers set to 1
 	for i := 0; i < paramsVersions; i++ {
 		params := btcStakingKeeper.GetParamsByVersion(ctx, uint32(i))
 		require.Equal(t, uint32(1), params.MaxFinalityProviders)
+	}
+
+	// check if multi-staking allow list is indexed
+	txHashes, err := allowlist.LoadMultiStakingAllowList()
+	require.NoError(t, err)
+	require.NotEmpty(t, txHashes)
+	for _, txHash := range txHashes {
+		allowed, err := btcStakingKeeper.IsMultiStakingAllowed(ctx, txHash)
+		require.NoError(t, err)
+		require.True(t, allowed, "tx hash %s should be indexed in the allow list", txHash.String())
+	}
+
+	// check if all finality providers have the BSN ID set to the test chain ID
+	for _, fp := range generatedRandomFps {
+		fp, err := btcStakingKeeper.GetFinalityProvider(ctx, fp.BtcPk.MustMarshal())
+		require.NoError(t, err)
+		require.Equal(t, testChainID, fp.BsnId)
+	}
+
+	// check if all finality providers are properly indexed
+	fpResp, err := btcStakingKeeper.FinalityProviders(ctx, &types.QueryFinalityProvidersRequest{
+		BsnId: testChainID,
+	})
+	require.NoError(t, err)
+	require.Equal(t, len(generatedRandomFps), len(fpResp.FinalityProviders))
+	for _, fp := range fpResp.FinalityProviders {
+		require.Equal(t, testChainID, fp.BsnId)
 	}
 }

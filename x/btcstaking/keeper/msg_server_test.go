@@ -2,6 +2,7 @@ package keeper_test
 
 import (
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"math"
 	"math/rand"
@@ -20,7 +21,6 @@ import (
 	"google.golang.org/grpc/status"
 
 	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
-	asig "github.com/babylonlabs-io/babylon/v3/crypto/schnorr-adaptor-signature"
 	testutil "github.com/babylonlabs-io/babylon/v3/testutil/btcstaking-helper"
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
 	testhelper "github.com/babylonlabs-io/babylon/v3/testutil/helper"
@@ -30,6 +30,7 @@ import (
 	"github.com/babylonlabs-io/babylon/v3/x/btcstaking"
 	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 	btcsctypes "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
+	ictvtypes "github.com/babylonlabs-io/babylon/v3/x/incentive/types"
 )
 
 func FuzzMsgServer_UpdateParams(f *testing.F) {
@@ -576,7 +577,7 @@ func createActiveBtcDel(t *testing.T, btcLightclientTipHeight uint32) (*testutil
 	h.NoError(err)
 
 	btcBlockHeightTxInserted := btcLightclientTipHeight - btcctParams.BtcConfirmationDepth
-	stakingTxHash, msgCreateBTCDel, _, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
+	stakingTxHash, _, _, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
 		r,
 		delSK,
 		[]*btcec.PublicKey{fpPK},
@@ -595,7 +596,7 @@ func createActiveBtcDel(t *testing.T, btcLightclientTipHeight uint32) (*testutil
 	h.NoError(err)
 	require.NotNil(t, actualDel)
 
-	msgs := h.GenerateCovenantSignaturesMessages(r, covenantSKs, msgCreateBTCDel, actualDel)
+	msgs := h.GenerateCovenantSignaturesMessages(r, covenantSKs, actualDel)
 	for _, msg := range msgs {
 		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: btcBlockHeightTxInserted})
 		_, err = h.MsgServer.AddCovenantSigs(h.Ctx, msg)
@@ -650,7 +651,7 @@ func TestRejectActivationThatShouldNotUsePreApprovalFlow(t *testing.T) {
 	stakingValue := int64(2 * 10e8)
 	delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 	h.NoError(err)
-	stakingTxHash, msgCreateBTCDel, _, headerInfo, inclusionProof, _, err := h.CreateDelegationWithBtcBlockHeight(
+	stakingTxHash, _, _, headerInfo, inclusionProof, _, err := h.CreateDelegationWithBtcBlockHeight(
 		r,
 		delSK,
 		[]*btcec.PublicKey{fpPK},
@@ -675,7 +676,7 @@ func TestRejectActivationThatShouldNotUsePreApprovalFlow(t *testing.T) {
 	h.NoError(err)
 	require.NotNil(t, actualDel)
 
-	msgs := h.GenerateCovenantSignaturesMessages(r, covenantSKs, msgCreateBTCDel, actualDel)
+	msgs := h.GenerateCovenantSignaturesMessages(r, covenantSKs, actualDel)
 	for _, msg := range msgs {
 		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: 10})
 		_, err = h.MsgServer.AddCovenantSigs(h.Ctx, msg)
@@ -733,10 +734,7 @@ func FuzzAddCovenantSigs(f *testing.F) {
 		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		h.NoError(err)
 
-		var stakingTxHash string
-		var msgCreateBTCDel *types.MsgCreateBTCDelegation
-
-		stakingTxHash, msgCreateBTCDel, _, _, _, _, err = h.CreateDelegationWithBtcBlockHeight(
+		stakingTxHash, _, _, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
 			r,
 			delSK,
 			[]*btcec.PublicKey{fpPK},
@@ -759,7 +757,7 @@ func FuzzAddCovenantSigs(f *testing.F) {
 		h.NoError(err)
 		require.False(h.T(), hasQuorum)
 
-		msgs := h.GenerateCovenantSignaturesMessages(r, covenantSKs, msgCreateBTCDel, actualDel)
+		msgs := h.GenerateCovenantSignaturesMessages(r, covenantSKs, actualDel)
 		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: 30}).AnyTimes()
 		// ensure the system does not panick due to a bogus covenant sig request
 		bogusMsg := *msgs[0]
@@ -1052,151 +1050,36 @@ func FuzzSelectiveSlashing(f *testing.F) {
 		h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
 
 		// set all parameters
-		covenantSKs, _ := h.GenAndApplyParams(r)
-		bsParams := h.BTCStakingKeeper.GetParams(h.Ctx)
+		h.GenAndApplyParams(r)
+
+		tipHeight := 150
+		mockTip := &btclctypes.BTCHeaderInfo{Height: uint32(tipHeight)}
+		btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(mockTip).AnyTimes()
 
 		// generate and insert new finality provider
 		fpSK, fpPK, _ := h.CreateFinalityProvider(r)
 		fpBtcPk := bbn.NewBIP340PubKeyFromBTCPK(fpPK)
-
-		// generate and insert new BTC delegation
-		stakingValue := int64(2 * 10e8)
-		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
-		h.NoError(err)
-		stakingTxHash, msgCreateBTCDel, actualDel, btcHeaderInfo, inclusionProof, _, err := h.CreateDelegationWithBtcBlockHeight(
-			r,
-			delSK,
-			[]*btcec.PublicKey{fpPK},
-			stakingValue,
-			1000,
-			0,
-			0,
-			true,
-			false,
-			10,
-			10,
-		)
-		h.NoError(err)
-
-		// add covenant signatures to this BTC delegation
-		// so that the BTC delegation becomes bonded
-		h.CreateCovenantSigs(r, covenantSKs, msgCreateBTCDel, actualDel, 10)
-		// activate the BTC delegation
-		h.AddInclusionProof(stakingTxHash, btcHeaderInfo, inclusionProof, 30)
-
-		// now BTC delegation has all covenant signatures
-		actualDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
-		h.NoError(err)
-		hasQuorum, err := h.BTCStakingKeeper.BtcDelHasCovenantQuorums(h.Ctx, actualDel, bsParams.CovenantQuorum)
-		h.NoError(err)
-		require.True(t, hasQuorum)
 
 		// construct message for the evidence of selective slashing
 		msg := &types.MsgSelectiveSlashingEvidence{
 			Signer:           datagen.GenRandomAccount().Address,
-			StakingTxHash:    actualDel.MustGetStakingTxHash().String(),
 			RecoveredFpBtcSk: fpSK.Serialize(),
 		}
 
-		// ensure the system does not panick due to a bogus unbonding msg
-		bogusMsg := *msg
-		bogusMsg.StakingTxHash = datagen.GenRandomBtcdHash(r).String()
-		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: 30}).AnyTimes()
-		_, err = h.MsgServer.SelectiveSlashingEvidence(h.Ctx, &bogusMsg)
-		h.Error(err)
-
-		// submit evidence of selective slashing
-		_, err = h.MsgServer.SelectiveSlashingEvidence(h.Ctx, msg)
-		h.NoError(err)
-
-		// ensure the finality provider is slashed
-		slashedFp, err := h.BTCStakingKeeper.GetFinalityProvider(h.Ctx, fpBtcPk.MustMarshal())
-		h.NoError(err)
-		require.True(t, slashedFp.IsSlashed())
-	})
-}
-
-func FuzzSelectiveSlashing_StakingTx(f *testing.F) {
-	datagen.AddRandomSeedsToFuzzer(f, 10)
-
-	f.Fuzz(func(t *testing.T, seed int64) {
-		r := rand.New(rand.NewSource(seed))
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-
-		// mock BTC light client and BTC checkpoint modules
-		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
-		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-		h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
-
-		// set all parameters
-		covenantSKs, _ := h.GenAndApplyParams(r)
-		bsParams := h.BTCStakingKeeper.GetParams(h.Ctx)
-
-		// generate and insert new finality provider
-		fpSK, fpPK, _ := h.CreateFinalityProvider(r)
-		fpBtcPk := bbn.NewBIP340PubKeyFromBTCPK(fpPK)
-
-		// generate and insert new BTC delegation
-		stakingValue := int64(2 * 10e8)
-		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
-		h.NoError(err)
-		stakingTxHash, msgCreateBTCDel, actualDel, btcHeaderInfo, inclusionProof, _, err := h.CreateDelegationWithBtcBlockHeight(
-			r,
-			delSK,
-			[]*btcec.PublicKey{fpPK},
-			stakingValue,
-			1000,
-			0,
-			0,
-			true,
-			false,
-			10,
-			10,
-		)
-		h.NoError(err)
-
-		// add covenant signatures to this BTC delegation
-		// so that the BTC delegation becomes bonded
-		h.CreateCovenantSigs(r, covenantSKs, msgCreateBTCDel, actualDel, 10)
-		// activate the BTC delegation
-		h.AddInclusionProof(stakingTxHash, btcHeaderInfo, inclusionProof, 30)
-		// now BTC delegation has all covenant signatures
-		actualDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
-		h.NoError(err)
-		require.True(t, actualDel.HasCovenantQuorums(bsParams.CovenantQuorum, 0))
-
-		// finality provider pulls off selective slashing by decrypting covenant's adaptor signature
-		// on the slashing tx
-		// choose a random covenant adaptor signature
-		covIdx := datagen.RandomInt(r, int(bsParams.CovenantQuorum))
-		covPK := bbn.NewBIP340PubKeyFromBTCPK(covenantSKs[covIdx].PubKey())
-		fpIdx := datagen.RandomInt(r, len(actualDel.FpBtcPkList))
-		covASig, err := actualDel.GetCovSlashingAdaptorSig(covPK, int(fpIdx), bsParams.CovenantQuorum, 0)
-		h.NoError(err)
-
-		// finality provider decrypts the covenant signature
-		decKey, err := asig.NewDecryptionKeyFromBTCSK(fpSK)
-		h.NoError(err)
-		covSchnorrSig, err := covASig.Decrypt(decKey)
+		// ensure the system does not panic due to a bogus unbonding msg
+		// In the new logic, a "bogus" message is one with an unregistered SK.
+		bogusSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		require.NoError(t, err)
-		decryptedCovenantSig := bbn.NewBIP340SignatureFromBTCSig(covSchnorrSig)
-
-		// recover the fpSK by using adaptor signature and decrypted Schnorr signature
-		recoveredFPDecKey, err := covASig.Extract(decryptedCovenantSig.MustToBTCSig())
-		require.NoError(t, err)
-		recoveredFPSK := recoveredFPDecKey.ToBTCSK()
-		// ensure the recovered finality provider SK is same as the real one
-		require.Equal(t, fpSK.Serialize(), recoveredFPSK.Serialize())
-
-		// submit evidence of selective slashing
-		msg := &types.MsgSelectiveSlashingEvidence{
+		bogusMsg := &types.MsgSelectiveSlashingEvidence{
 			Signer:           datagen.GenRandomAccount().Address,
-			StakingTxHash:    actualDel.MustGetStakingTxHash().String(),
-			RecoveredFpBtcSk: recoveredFPSK.Serialize(),
+			RecoveredFpBtcSk: bogusSK.Serialize(),
 		}
-		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: 30}).AnyTimes()
 
+		_, err = h.MsgServer.SelectiveSlashingEvidence(h.Ctx, bogusMsg)
+		h.Error(err)
+		require.ErrorIs(t, err, types.ErrFpNotFound)
+
+		// submit evidence of selective slashing
 		_, err = h.MsgServer.SelectiveSlashingEvidence(h.Ctx, msg)
 		h.NoError(err)
 
@@ -1204,6 +1087,11 @@ func FuzzSelectiveSlashing_StakingTx(f *testing.F) {
 		slashedFp, err := h.BTCStakingKeeper.GetFinalityProvider(h.Ctx, fpBtcPk.MustMarshal())
 		h.NoError(err)
 		require.True(t, slashedFp.IsSlashed())
+
+		// ensure a second attempt to slash fails
+		_, err = h.MsgServer.SelectiveSlashingEvidence(h.Ctx, msg)
+		h.Error(err)
+		require.ErrorIs(t, err, types.ErrFpAlreadySlashed)
 	})
 }
 
@@ -1325,19 +1213,22 @@ func TestDoNotAllowDelegationWithoutFinalityProvider(t *testing.T) {
 		UnbondingSlashingTx:           testUnbondingInfo.SlashingTx,
 		DelegatorUnbondingSlashingSig: delUnbondingSlashingSig,
 	}
+	tipHeight := 150
+	inclusionHeight := uint32(100)
+	inclusionHeader := &btclctypes.BTCHeaderInfo{
+		Header: &btcHeader,
+		Height: inclusionHeight,
+	}
+	mockTipHeaderInfo := &btclctypes.BTCHeaderInfo{Height: uint32(tipHeight)}
+	btclcKeeper.EXPECT().GetHeaderByHash(gomock.Any(), btcHeader.Hash()).Return(inclusionHeader, nil).Times(1)
+	btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(mockTipHeaderInfo).Times(1)
 
 	_, err = h.MsgServer.CreateBTCDelegation(h.Ctx, msgCreateBTCDel)
 	require.Error(t, err)
 	require.True(t, errors.Is(err, types.ErrFpNotFound))
 
 	AddFinalityProvider(t, h.Ctx, *h.BTCStakingKeeper, fp)
-	inclusionHeight := uint32(100)
-	inclusionHeader := &btclctypes.BTCHeaderInfo{
-		Header: &btcHeader,
-		Height: inclusionHeight,
-	}
-	tipHeight := 150
-	mockTipHeaderInfo := &btclctypes.BTCHeaderInfo{Height: uint32(tipHeight)}
+
 	btclcKeeper.EXPECT().GetHeaderByHash(gomock.Any(), btcHeader.Hash()).Return(inclusionHeader, nil).Times(1)
 	btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(mockTipHeaderInfo).Times(1)
 	_, err = h.MsgServer.CreateBTCDelegation(h.Ctx, msgCreateBTCDel)
@@ -1640,4 +1531,319 @@ func FuzzDeterminismBtcstakingBeginBlocker(f *testing.F) {
 		appHash2 = hex.EncodeToString(h1.Ctx.BlockHeader().AppHash)
 		require.Equal(t, appHash1, appHash2)
 	})
+}
+
+func TestMsgServerAddBsnRewards(t *testing.T) {
+	r := rand.New(rand.NewSource(42))
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
+	btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
+	bankKeeper := types.NewMockBankKeeper(ctrl)
+	ictvK := testutil.NewMockIctvKeeperK(ctrl)
+
+	h := testutil.NewHelperWithBankMock(t, btclcKeeper, btccKeeper, bankKeeper, ictvK)
+
+	h.GenAndApplyCustomParams(r, 100, 200, 0, 2)
+
+	consumer := h.RegisterAndVerifyConsumer(t, r)
+
+	_, _, fp1, err := h.CreateConsumerFinalityProvider(r, consumer.ConsumerId)
+	h.NoError(err)
+	_, _, fp2, err := h.CreateConsumerFinalityProvider(r, consumer.ConsumerId)
+	h.NoError(err)
+
+	ratio1 := sdkmath.LegacyMustNewDecFromStr("0.6")
+	ratio2 := sdkmath.LegacyMustNewDecFromStr("0.4")
+	fpRatios := []types.FpRatio{
+		{BtcPk: fp1.BtcPk, Ratio: ratio1},
+		{BtcPk: fp2.BtcPk, Ratio: ratio2},
+	}
+
+	totalRewards := sdk.NewCoins(sdk.NewCoin("ubbn", sdkmath.NewInt(1000000)))
+
+	senderAddr := datagen.GenRandomAddress()
+	senderAddrStr := senderAddr.String()
+
+	validMsg := &types.MsgAddBsnRewards{
+		Sender:        senderAddrStr,
+		BsnConsumerId: consumer.ConsumerId,
+		TotalRewards:  totalRewards,
+		FpRatios:      fpRatios,
+	}
+
+	t.Run("successful AddBsnRewards", func(t *testing.T) {
+		setupAddBsnRewardsMocks(h, bankKeeper, ictvK, senderAddr, consumer, totalRewards, fpRatios)
+
+		resp, err := h.MsgServer.AddBsnRewards(h.Ctx, validMsg)
+		h.NoError(err)
+		require.NotNil(t, resp)
+
+		verifyAddBsnRewardsEvent(t, h, consumer.ConsumerId, totalRewards, fpRatios)
+	})
+
+	t.Run("insufficient balance", func(t *testing.T) {
+		spendable := sdk.NewCoins(sdk.NewCoin("ubbn", sdkmath.NewInt(500000)))
+		bankKeeper.EXPECT().SpendableCoins(gomock.Any(), gomock.Eq(senderAddr)).Return(
+			spendable,
+		).Times(1)
+
+		resp, err := h.MsgServer.AddBsnRewards(h.Ctx, validMsg)
+		require.EqualError(t, err, status.Errorf(codes.InvalidArgument, "insufficient balance: spendable %s and total rewards %s", spendable.String(), validMsg.TotalRewards.String()).Error())
+		require.Nil(t, resp)
+	})
+
+	t.Run("bad consumer ID: not found", func(t *testing.T) {
+		bankKeeper.EXPECT().SpendableCoins(gomock.Any(), gomock.Eq(senderAddr)).Return(
+			sdk.NewCoins(sdk.NewCoin("ubbn", sdkmath.NewInt(2000000))),
+		).Times(1)
+
+		// Mock the account to incentive module transfer
+		bankKeeper.EXPECT().SendCoinsFromAccountToModule(
+			gomock.Any(),
+			gomock.Eq(senderAddr),
+			gomock.Eq(ictvtypes.ModuleName),
+			gomock.Eq(totalRewards),
+		).Return(nil).Times(1)
+
+		msg := *validMsg
+		msg.BsnConsumerId = invalidBsnConsumerID
+		resp, err := h.MsgServer.AddBsnRewards(h.Ctx, &msg)
+		require.EqualError(t, err, types.ErrUnableToDistributeBsnRewards.Wrapf("failed: %v", types.ErrConsumerIDNotRegistered.Wrapf("consumer %s: %s", invalidBsnConsumerID, "consumer not registered")).Error())
+		require.Nil(t, resp)
+	})
+
+	t.Run("bank transfer of babylon commission failure", func(t *testing.T) {
+		bankKeeper.EXPECT().SpendableCoins(gomock.Any(), gomock.Eq(senderAddr)).Return(
+			sdk.NewCoins(sdk.NewCoin("ubbn", sdkmath.NewInt(2000000))),
+		).Times(1)
+
+		// setup bad bank transfer
+		bankKeeper.EXPECT().SendCoinsFromAccountToModule(
+			gomock.Any(),
+			gomock.Eq(senderAddr),
+			gomock.Eq(ictvtypes.ModuleName),
+			gomock.Eq(totalRewards),
+		).Return(errors.New("bank transfer failed")).Times(1)
+
+		resp, err := h.MsgServer.AddBsnRewards(h.Ctx, validMsg)
+		require.EqualError(t, err, types.ErrUnableToSendCoins.Wrapf("failed to send coins to incentive module account: %s", "bank transfer failed").Error())
+		require.Nil(t, resp)
+	})
+
+	t.Run("invalid finality provider ratios with fp not found", func(t *testing.T) {
+		bankKeeper.EXPECT().SpendableCoins(gomock.Any(), gomock.Eq(senderAddr)).Return(
+			sdk.NewCoins(sdk.NewCoin("ubbn", sdkmath.NewInt(2000000))),
+		).Times(1)
+
+		bankKeeper.EXPECT().SendCoinsFromAccountToModule(
+			gomock.Any(),
+			gomock.Eq(senderAddr),
+			gomock.Eq(ictvtypes.ModuleName),
+			gomock.Eq(totalRewards),
+		).Return(nil).Times(1)
+
+		expectedBabylonCommission := ictvtypes.GetCoinsPortion(totalRewards, consumer.BabylonRewardsCommission)
+		bankKeeper.EXPECT().SendCoinsFromModuleToModule(
+			gomock.Any(),
+			ictvtypes.ModuleName,
+			gomock.Any(),
+			gomock.Eq(expectedBabylonCommission),
+		).Return(nil).Times(1)
+
+		nonExistentFpPk, err := datagen.GenRandomBIP340PubKey(r)
+		h.NoError(err)
+
+		invalidFpRatios := []types.FpRatio{
+			{BtcPk: nonExistentFpPk, Ratio: sdkmath.LegacyOneDec()},
+		}
+
+		msg := *validMsg
+		msg.FpRatios = invalidFpRatios
+
+		resp, err := h.MsgServer.AddBsnRewards(h.Ctx, &msg)
+		require.EqualError(t, err, types.ErrUnableToDistributeBsnRewards.Wrapf("failed: %v", types.ErrFpNotFound.Wrapf("finality provider %s: %s", nonExistentFpPk.MarshalHex(), "the finality provider is not found")).Error())
+		require.Nil(t, resp)
+	})
+
+	t.Run("multiple coin denominations", func(t *testing.T) {
+		// clear the evts to avoid grabbing the wrong event to verify
+		h.Ctx = h.Ctx.WithEventManager(sdk.NewEventManager())
+
+		multiCoinRewards := sdk.NewCoins(
+			sdk.NewCoin("ubbn", sdkmath.NewInt(1000000)),
+			sdk.NewCoin("uatom", sdkmath.NewInt(500000)),
+		)
+
+		setupAddBsnRewardsMocks(h, bankKeeper, ictvK, senderAddr, consumer, multiCoinRewards, fpRatios)
+
+		msg := *validMsg
+		msg.TotalRewards = multiCoinRewards
+		resp, err := h.MsgServer.AddBsnRewards(h.Ctx, &msg)
+		h.NoError(err)
+		require.NotNil(t, resp)
+
+		verifyAddBsnRewardsEvent(t, h, consumer.ConsumerId, multiCoinRewards, fpRatios)
+	})
+
+	t.Run("fp commission with 0%", func(t *testing.T) {
+		h.Ctx = h.Ctx.WithEventManager(sdk.NewEventManager())
+
+		_, _, fpZeroCommission, err := h.CreateConsumerFinalityProvider(r, consumer.ConsumerId)
+		h.NoError(err)
+		zeroCommissionRate := sdkmath.LegacyZeroDec()
+		fpZeroCommission.Commission = &zeroCommissionRate
+		h.BTCStakingKeeper.UpdateFinalityProvider(h.Ctx, fpZeroCommission)
+
+		// Create FP ratios with zero commission FP
+		zeroCommissionRatios := []types.FpRatio{
+			{BtcPk: fpZeroCommission.BtcPk, Ratio: sdkmath.LegacyOneDec()},
+		}
+
+		// Setup successful mocks for zero commission scenario
+		setupAddBsnRewardsMocks(h, bankKeeper, ictvK, senderAddr, consumer, totalRewards, zeroCommissionRatios)
+
+		msg := *validMsg
+		msg.FpRatios = zeroCommissionRatios
+
+		resp, err := h.MsgServer.AddBsnRewards(h.Ctx, &msg)
+		h.NoError(err)
+		require.NotNil(t, resp)
+
+		verifyAddBsnRewardsEvent(t, h, consumer.ConsumerId, totalRewards, zeroCommissionRatios)
+	})
+
+	t.Run("1ubbn as reward", func(t *testing.T) {
+		h.Ctx = h.Ctx.WithEventManager(sdk.NewEventManager())
+		smallRewards := sdk.NewCoins(sdk.NewCoin("ubbn", sdkmath.NewInt(1)))
+
+		setupAddBsnRewardsMocks(h, bankKeeper, ictvK, senderAddr, consumer, smallRewards, fpRatios)
+
+		msg := *validMsg
+		msg.TotalRewards = smallRewards
+		resp, err := h.MsgServer.AddBsnRewards(h.Ctx, &msg)
+		h.NoError(err)
+		require.NotNil(t, resp)
+
+		verifyAddBsnRewardsEvent(t, h, consumer.ConsumerId, smallRewards, fpRatios)
+	})
+
+	t.Run("ratio for 10 finality providers", func(t *testing.T) {
+		h.Ctx = h.Ctx.WithEventManager(sdk.NewEventManager())
+		numFPs := 10
+		manyFpRatios := make([]types.FpRatio, numFPs)
+		equalRatio := sdkmath.LegacyOneDec().QuoInt64(int64(numFPs))
+
+		for i := 0; i < numFPs; i++ {
+			_, _, fp, err := h.CreateConsumerFinalityProvider(r, consumer.ConsumerId)
+			h.NoError(err)
+			manyFpRatios[i] = types.FpRatio{
+				BtcPk: fp.BtcPk,
+				Ratio: equalRatio,
+			}
+		}
+
+		setupAddBsnRewardsMocks(h, bankKeeper, ictvK, senderAddr, consumer, totalRewards, manyFpRatios)
+
+		msg := &types.MsgAddBsnRewards{
+			Sender:        senderAddrStr,
+			BsnConsumerId: consumer.ConsumerId,
+			TotalRewards:  totalRewards,
+			FpRatios:      manyFpRatios,
+		}
+		resp, err := h.MsgServer.AddBsnRewards(h.Ctx, msg)
+		h.NoError(err)
+		require.NotNil(t, resp)
+
+		verifyAddBsnRewardsEvent(t, h, consumer.ConsumerId, totalRewards, manyFpRatios)
+	})
+}
+
+// Helper function to setup successful AddBsnRewards test mocks
+func setupAddBsnRewardsMocks(
+	h *testutil.Helper,
+	bankKeeper *types.MockBankKeeper,
+	ictvK *testutil.IctvKeeperK,
+	senderAddr sdk.AccAddress,
+	consumer *btcsctypes.ConsumerRegister,
+	expectedTotalRewards sdk.Coins,
+	expectedFpRatios []types.FpRatio,
+) {
+	bankKeeper.EXPECT().SpendableCoins(gomock.Any(), gomock.Eq(senderAddr)).Return(
+		expectedTotalRewards,
+	).Times(1)
+
+	// Mock the send from sender to ictv module
+	bankKeeper.EXPECT().SendCoinsFromAccountToModule(
+		gomock.Any(),
+		gomock.Eq(senderAddr),
+		gomock.Eq(ictvtypes.ModuleName),
+		gomock.Eq(expectedTotalRewards),
+	).Return(nil).Times(1)
+
+	// Calculate expected babylon commission
+	expectedBabylonCommission := ictvtypes.GetCoinsPortion(expectedTotalRewards, consumer.BabylonRewardsCommission)
+	remainingRewards := expectedTotalRewards.Sub(expectedBabylonCommission...)
+
+	// Mock the babylon commission transfer from incentives to bsn collector
+	if expectedBabylonCommission.IsAllPositive() {
+		bankKeeper.EXPECT().SendCoinsFromModuleToModule(
+			gomock.Any(),
+			gomock.Eq(ictvtypes.ModuleName),
+			gomock.Eq(ictvtypes.ModAccCommissionCollectorBSN),
+			gomock.Eq(expectedBabylonCommission),
+		).Return(nil).Times(1)
+	}
+
+	// Set up expectations for each FP
+	for _, fpRatio := range expectedFpRatios {
+		fpRewards := ictvtypes.GetCoinsPortion(remainingRewards, fpRatio.Ratio)
+
+		fp, err := h.BTCStakingKeeper.GetFinalityProvider(h.Ctx, fpRatio.BtcPk.MustMarshal())
+		h.NoError(err)
+
+		fpCommission := ictvtypes.GetCoinsPortion(fpRewards, *fp.Commission)
+		delegatorRewards := fpRewards.Sub(fpCommission...)
+
+		if fpCommission.IsAllPositive() {
+			ictvK.MockBtcStk.EXPECT().AccumulateRewardGaugeForFP(gomock.Any(), gomock.Eq(fp.Address()), gomock.Eq(fpCommission)).Times(1)
+		}
+
+		if delegatorRewards.IsAllPositive() {
+			ictvK.MockBtcStk.EXPECT().AddFinalityProviderRewardsForBtcDelegations(gomock.Any(), gomock.Eq(fp.Address()), gomock.Eq(delegatorRewards)).Return(nil).Times(1)
+		}
+	}
+}
+
+// verifyAddBsnRewardsEvent Helper function to verify AddBsnRewards event contains the expected values
+func verifyAddBsnRewardsEvent(t *testing.T, h *testutil.Helper, expectedConsumerId string, expectedTotalRewards sdk.Coins, expectedFpRatios []types.FpRatio) {
+	events := h.Ctx.EventManager().Events()
+	require.Greater(t, len(events), 0)
+
+	var foundEvent *sdk.Event
+	for _, event := range events {
+		if event.Type == "babylon.btcstaking.v1.EventAddBsnRewards" {
+			foundEvent = &event
+			break
+		}
+	}
+	require.NotNil(t, foundEvent, "EventAddBsnRewards event should be emitted")
+
+	attributeMap := make(map[string]string)
+	for _, attr := range foundEvent.Attributes {
+		attributeMap[attr.Key] = attr.Value
+	}
+
+	evt := types.EventAddBsnRewards{}
+	err := json.Unmarshal([]byte(attributeMap["bsn_consumer_id"]), &evt.BsnConsumerId)
+	require.NoError(t, err)
+	err = json.Unmarshal([]byte(attributeMap["total_rewards"]), &evt.TotalRewards)
+	require.NoError(t, err)
+	err = json.Unmarshal([]byte(attributeMap["fp_ratios"]), &evt.FpRatios)
+	require.NoError(t, err)
+
+	require.Equal(t, expectedConsumerId, evt.BsnConsumerId, "Event should contain correct consumer ID")
+	require.Equal(t, expectedTotalRewards.String(), evt.TotalRewards.String(), "Event should contain correct total rewards")
+	require.Equal(t, len(expectedFpRatios), len(evt.FpRatios), "Event should contain correct number of FPs")
 }

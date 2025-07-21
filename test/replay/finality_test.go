@@ -1,6 +1,7 @@
 package replay
 
 import (
+	"fmt"
 	"math/rand"
 	"testing"
 	"time"
@@ -8,6 +9,7 @@ import (
 	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
 	ftypes "github.com/babylonlabs-io/babylon/v3/x/finality/types"
+	ibctmtypes "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -315,4 +317,37 @@ func TestMissingSignInfoNewlyActiveFpSet(t *testing.T) {
 
 	// vote and finalize a few more blocks
 	scn.FinalityFinalizeBlocksAllVotes(blkHeightLastVoted+1, 2)
+}
+
+func TestOnlyBabylonFpCanCommitRandomness(t *testing.T) {
+	t.Parallel()
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	driverTempDir := t.TempDir()
+	replayerTempDir := t.TempDir()
+	driver := NewBabylonAppDriver(r, t, driverTempDir, replayerTempDir)
+
+	const consumerID1 = "consumer1"
+
+	// 1. Set up mock IBC clients for each consumer before registering consumers
+	ctx := driver.App.BaseApp.NewContext(false)
+	driver.App.IBCKeeper.ClientKeeper.SetClientState(ctx, consumerID1, &ibctmtypes.ClientState{})
+	driver.GenerateNewBlock()
+
+	// 2. Register consumers
+	consumer1 := driver.RegisterConsumer(r, consumerID1)
+	require.NotNil(t, consumer1)
+
+	// Create a Babylon FP (registered without consumer ID)
+	consumerFp := driver.CreateNFinalityProviderAccounts(1)[0]
+	consumerFp.RegisterFinalityProvider(consumerID1)
+	driver.GenerateNewBlock()
+
+	consumerFp.CommitRandomness()
+
+	msg := fmt.Sprintf("failed to execute message; message index: 0: the finality provider with BTC PK %s is not a Babylon Genesis finality provider: the public randomness list is invalid", consumerFp.BTCPublicKey().MarshalHex())
+
+	txResults := driver.GenerateNewBlockAssertExecutionFailure()
+	require.Len(t, txResults, 1)
+	require.Equal(t, txResults[0].Code, uint32(1106))
+	require.Contains(t, txResults[0].Log, msg)
 }

@@ -53,22 +53,10 @@ func GenRandomBTCChainSegment(r *rand.Rand) *types.BTCChainSegment {
 	}
 }
 
-func GenRandomChainInfo(r *rand.Rand) *types.ChainInfo {
-	consumerId := fmt.Sprintf("chain-%s", GenRandomHexStr(r, 20))
-	return GenRandomChainInfoWithConsumerId(r, consumerId)
-}
-
-func GenRandomChainInfoWithConsumerId(r *rand.Rand, consumerId string) *types.ChainInfo {
-	return &types.ChainInfo{
-		ConsumerId:   consumerId,
-		LatestHeader: GenRandomIndexedHeaderWithConsumerId(r, consumerId),
-	}
-}
-
-func GenRandomChainInfoWithProof(r *rand.Rand) *types.ChainInfoWithProof {
-	return &types.ChainInfoWithProof{
-		ChainInfo: GenRandomChainInfo(r),
-		ProofHeaderInEpoch: &cmtcrypto.ProofOps{
+func GenRandomIndexedHeaderWithProofAndConsumerId(r *rand.Rand, consumerId string) *types.IndexedHeaderWithProof {
+	return &types.IndexedHeaderWithProof{
+		Header: GenRandomIndexedHeaderWithConsumerId(r, consumerId),
+		Proof: &cmtcrypto.ProofOps{
 			Ops: []cmtcrypto.ProofOp{
 				cmtcrypto.ProofOp{},
 			},
@@ -76,14 +64,10 @@ func GenRandomChainInfoWithProof(r *rand.Rand) *types.ChainInfoWithProof {
 	}
 }
 
-func GenRandomChainInfoWithProofAndConsumerId(r *rand.Rand, consumerId string) *types.ChainInfoWithProof {
-	return &types.ChainInfoWithProof{
-		ChainInfo: GenRandomChainInfoWithConsumerId(r, consumerId),
-		ProofHeaderInEpoch: &cmtcrypto.ProofOps{
-			Ops: []cmtcrypto.ProofOp{
-				cmtcrypto.ProofOp{},
-			},
-		},
+func GenRandomBSNBTCState(r *rand.Rand) *types.BSNBTCState {
+	return &types.BSNBTCState{
+		BaseHeader:      GenRandomBTCHeaderInfo(r),
+		LastSentSegment: GenRandomBTCChainSegment(r),
 	}
 }
 
@@ -107,22 +91,24 @@ func GenRandomProofEpochSealed(r *rand.Rand) *types.ProofEpochSealed {
 func GenRandomZoneconciergeGenState(r *rand.Rand) *types.GenesisState {
 	var (
 		entriesCount     = int(RandomIntOtherThan(r, 0, 20)) + 1 // make sure there's always at least one entry
-		chainsInfo       = make([]*types.ChainInfo, entriesCount)
-		idxHeaders       = make([]*types.IndexedHeader, entriesCount)
-		chainsEpochsInfo = make([]*types.EpochChainInfoEntry, entriesCount)
+		finalizedHeaders = make([]*types.FinalizedHeaderEntry, entriesCount)
+		bsnBTCStates     = make([]*types.BSNBTCStateEntry, entriesCount)
 		sealedEpochs     = make([]*types.SealedEpochProofEntry, entriesCount)
 	)
 
 	for i := range entriesCount {
 		epochNum := uint64(i + 1)
-		ci := GenRandomChainInfo(r)
-		chainsInfo[i] = ci
+		consumerId := fmt.Sprintf("chain-%s", GenRandomHexStr(r, 20))
 
-		idxHeaders[i] = GenRandomIndexedHeaderWithConsumerAndEpoch(r, ci.ConsumerId, epochNum)
+		finalizedHeaders[i] = &types.FinalizedHeaderEntry{
+			EpochNumber:     epochNum,
+			ConsumerId:      consumerId,
+			HeaderWithProof: GenRandomIndexedHeaderWithProofAndConsumerId(r, consumerId),
+		}
 
-		chainsEpochsInfo[i] = &types.EpochChainInfoEntry{
-			EpochNumber: epochNum,
-			ChainInfo:   GenRandomChainInfoWithProofAndConsumerId(r, ci.ConsumerId),
+		bsnBTCStates[i] = &types.BSNBTCStateEntry{
+			ConsumerId: consumerId,
+			State:      GenRandomBSNBTCState(r),
 		}
 
 		sealedEpochs[i] = &types.SealedEpochProofEntry{
@@ -131,14 +117,14 @@ func GenRandomZoneconciergeGenState(r *rand.Rand) *types.GenesisState {
 		}
 	}
 
-	return types.NewGenesis(
-		types.Params{
+	return &types.GenesisState{
+		Params: types.Params{
 			IbcPacketTimeoutSeconds: RandomUInt32(r, 100000) + 1,
 		},
-		chainsInfo,
-		idxHeaders,
-		chainsEpochsInfo,
-		GenRandomBTCChainSegment(r),
-		sealedEpochs,
-	)
+		PortId:             types.PortID,
+		FinalizedHeaders:   finalizedHeaders,
+		LastSentSegment:    GenRandomBTCChainSegment(r),
+		SealedEpochsProofs: sealedEpochs,
+		BsnBtcStates:       bsnBTCStates,
+	}
 }

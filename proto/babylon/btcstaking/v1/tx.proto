@@ -9,6 +9,7 @@ import "cosmos/staking/v1beta1/staking.proto";
 import "babylon/btcstaking/v1/pop.proto";
 import "babylon/btcstaking/v1/btcstaking.proto";
 import "amino/amino.proto";
+import "cosmos/base/v1beta1/coin.proto";
 
 option go_package = "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types";
 
@@ -42,6 +43,9 @@ service Msg {
   rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
   // BtcStakeExpand expands an previous active BTC delegation into a new one
   rpc BtcStakeExpand(MsgBtcStakeExpand) returns (MsgBtcStakeExpandResponse);
+  // AddBsnRewards defines a method to add additional rewards for finality providers
+  // and their BTC delegators with specified distribution ratios
+  rpc AddBsnRewards(MsgAddBsnRewards) returns (MsgAddBsnRewardsResponse);
 }
 
 // MsgCreateFinalityProvider is the message for creating a finality provider
@@ -340,9 +344,10 @@ message MsgSelectiveSlashingEvidence {
   option (cosmos.msg.v1.signer) = "signer";
 
   string signer = 1;
-  // staking_tx_hash is the hash of the staking tx.
-  // It uniquely identifies a BTC delegation
-  string staking_tx_hash = 2;
+
+  reserved 2;
+  reserved "staking_tx_hash";
+
   // recovered_fp_btc_sk is the BTC SK of the finality provider who
   // launches the selective slashing offence. The SK is recovered by
   // using a covenant adaptor signature and the corresponding Schnorr
@@ -371,3 +376,42 @@ message MsgUpdateParams {
 
 // MsgUpdateParamsResponse is the response to the MsgUpdateParams message.
 message MsgUpdateParamsResponse {}
+
+// MsgAddBsnRewards adds rewards for finality providers of a specific BSN consumer
+message MsgAddBsnRewards {
+  option (cosmos.msg.v1.signer) = "sender";
+
+  // Sender is the babylon address which will pay for the rewards
+  string sender = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  // BsnConsumerId is the ID of the BSN consumer
+  // - for Cosmos SDK chains, the consumer ID will be the IBC client ID
+  // - for rollup chains, the consumer ID will be the chain ID of the rollup
+  //   chain
+  string bsn_consumer_id = 2;
+  // TotalRewards is the total amount of rewards to be distributed among finality providers.
+  // This amount will be distributed according to the ratios specified in fp_ratios.
+  repeated cosmos.base.v1beta1.Coin total_rewards = 3 [
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
+  // FpRatios is a list of finality providers and their respective reward distribution ratios.
+  // The ratios should sum to 1.0 to distribute the entire total_rewards amount.
+  repeated FpRatio fp_ratios = 4 [ (gogoproto.nullable) = false ];
+}
+
+// FpRatio defines the finality provider identifier and their reward distribution ratio
+message FpRatio {
+  // BtcPK is the Bitcoin secp256k1 PK of the finality provider
+  bytes btc_pk = 1 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/v3/types.BIP340PubKey" ];
+  // Ratio is the proportion of total_rewards that this finality provider and their BTC stakers
+  // should receive. Must be a decimal between 0 and 1. The sum of all ratios in fp_ratios
+  // should equal 1.0. From the calculated reward amount, the babylon genesis commission and
+  // finality provider commission will be deducted before allocating to BTC stakers.
+  string ratio = 2 [
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable) = false
+  ];
+}
+
+// MsgAddBsnRewardsResponse defines the Msg/AddBsnRewards response type.
+message MsgAddBsnRewardsResponse {}

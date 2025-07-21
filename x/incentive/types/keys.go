@@ -21,6 +21,9 @@ const (
 
 	// BSNFeeCollectorName defines the module account for collecting BSN fees from IBC transfers
 	BSNFeeCollectorName = "bsn_fee_collector"
+	// TODO(rafilx): check to delete one of those
+	// ModAccCommissionCollectorBSN the module account to gather babylon commission over BSN rewards
+	ModAccCommissionCollectorBSN = "commission_collector_bsn"
 )
 
 var (

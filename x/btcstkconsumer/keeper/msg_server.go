@@ -34,6 +34,12 @@ func (ms msgServer) RegisterConsumer(goCtx context.Context, req *types.MsgRegist
 		return nil, err
 	}
 
+	sdkCtx := sdk.UnwrapSDKContext(goCtx)
+
+	if req.ConsumerId == sdkCtx.ChainID() {
+		return nil, types.ErrInvalidConsumerIDs.Wrap("consumer id cannot be the same as the Babylon Genesis chain id")
+	}
+
 	var consumerType types.ConsumerType
 	if len(req.RollupFinalityContractAddress) > 0 {
 		// this is a rollup consumer
@@ -54,6 +60,7 @@ func (ms msgServer) RegisterConsumer(goCtx context.Context, req *types.MsgRegist
 			req.ConsumerName,
 			req.ConsumerDescription,
 			req.RollupFinalityContractAddress,
+			req.BabylonRewardsCommission,
 		)
 		if err := ms.Keeper.RegisterConsumer(goCtx, consumerRegister); err != nil {
 			return nil, err
@@ -73,6 +80,7 @@ func (ms msgServer) RegisterConsumer(goCtx context.Context, req *types.MsgRegist
 			req.ConsumerId,
 			req.ConsumerName,
 			req.ConsumerDescription,
+			req.BabylonRewardsCommission,
 		)
 		if err := ms.Keeper.RegisterConsumer(goCtx, consumerRegister); err != nil {
 			return nil, err
@@ -80,13 +88,15 @@ func (ms msgServer) RegisterConsumer(goCtx context.Context, req *types.MsgRegist
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	if err := ctx.EventManager().EmitTypedEvent(
-		types.NewConsumerRegisteredEvent(
-			req.ConsumerId,
-			req.ConsumerName,
-			req.ConsumerDescription,
-			consumerType,
-			req.RollupFinalityContractAddress)); err != nil {
+	evt := types.NewConsumerRegisteredEvent(
+		req.ConsumerId,
+		req.ConsumerName,
+		req.ConsumerDescription,
+		consumerType,
+		req.RollupFinalityContractAddress,
+		req.BabylonRewardsCommission,
+	)
+	if err := ctx.EventManager().EmitTypedEvent(evt); err != nil {
 		panic(fmt.Errorf("failed to emit NewConsumerRegisteredEvent event: %w", err))
 	}
 

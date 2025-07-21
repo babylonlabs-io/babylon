@@ -280,6 +280,9 @@ test-e2e-cache-finality-contract:
 test-e2e-cache-upgrade-v2:
 	go test -run TestSoftwareUpgradeV2TestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
 
+test-e2e-btc-rewards-bsn-rollup:
+	go test -run TestBtcRewardsDistributionBsnRollup -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
+
 test-sim-nondeterminism:
 	@echo "Running non-determinism test..."
 	@go test -mod=readonly $(SIMAPP) -run TestAppStateDeterminism -Enabled=true \

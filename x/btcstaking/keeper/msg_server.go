@@ -23,6 +23,7 @@ import (
 	"github.com/babylonlabs-io/babylon/v3/btcstaking"
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
 	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
+	ictvtypes "github.com/babylonlabs-io/babylon/v3/x/incentive/types"
 )
 
 type msgServer struct {
@@ -109,7 +110,7 @@ func (ms msgServer) EditFinalityProvider(goCtx context.Context, req *types.MsgEd
 	// all good, update the finality provider and set back
 	fp.Description = req.Description
 
-	ms.setFinalityProvider(goCtx, fp)
+	ms.SetFinalityProvider(goCtx, fp)
 
 	// notify subscriber
 	ctx := sdk.UnwrapSDKContext(goCtx)
@@ -151,10 +152,6 @@ func (ms msgServer) BtcStakeExpand(goCtx context.Context, req *types.MsgBtcStake
 
 	if !isPreviousStkActive {
 		return nil, status.Errorf(codes.InvalidArgument, "previous staking transaction is not active")
-	}
-
-	if prevBtcDel.IsStakeExpansion() {
-		return nil, status.Errorf(codes.InvalidArgument, "the previous BTC staking transaction %s is already a stake expansion", req.PreviousStakingTxHash)
 	}
 
 	if !strings.EqualFold(prevBtcDel.StakerAddr, req.StakerAddr) {
@@ -249,7 +246,7 @@ func (ms msgServer) AddBTCDelegationInclusionProof(
 
 	// at this point, the BTC delegation inclusion proof is verified and is not duplicated
 	// thus, we can safely consider this message as refundable
-	ms.iKeeper.IndexRefundableMsg(ctx, req)
+	ms.ictvKeeper.IndexRefundableMsg(ctx, req)
 
 	return &types.MsgAddBTCDelegationInclusionProofResponse{}, nil
 }
@@ -400,7 +397,7 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 	// delegation already has a covenant quorum. This is to ensure that covenant
 	// members do not spend transaction fee, even if they submit covenant signatures
 	// late.
-	ms.iKeeper.IndexRefundableMsg(ctx, req)
+	ms.ictvKeeper.IndexRefundableMsg(ctx, req)
 
 	return &types.MsgAddCovenantSigsResponse{}, nil
 }
@@ -612,13 +609,17 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 	registeredUnbondingTx := btcDel.MustGetUnbondingTx()
 	registeredUnbondingTxHash := registeredUnbondingTx.TxHash()
 
+	slashingTx := btcDel.MustGetStakingSlashingTx()
+	slashingTxHash := slashingTx.TxHash()
+
 	var delegatorUnbondingInfo *types.DelegatorUnbondingInfo
 
 	switch {
-	case spendStakeTxHash.IsEqual(&registeredUnbondingTxHash):
+	case spendStakeTxHash.IsEqual(&registeredUnbondingTxHash) || spendStakeTxHash.IsEqual(&slashingTxHash):
 		delegatorUnbondingInfo = &types.DelegatorUnbondingInfo{
-			// if the stake spending tx is the same as the registered unbonding tx,
+			// if the stake spending tx is the same as the either the registered unbonding tx or the slashing tx,
 			// we do not need to save it in the database
+			// this is an expected report
 			SpendStakeTx: []byte{},
 		}
 		types.EmitEarlyUnbondedEvent(ctx, btcDel.MustGetStakingTxHash().String(), stakerSpendigTxHeader.Height)
@@ -653,7 +654,7 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 
 	// At this point, the unbonding signature is verified.
 	// Thus, we can safely consider this message as refundable
-	ms.iKeeper.IndexRefundableMsg(ctx, req)
+	ms.ictvKeeper.IndexRefundableMsg(ctx, req)
 
 	return &types.MsgBTCUndelegateResponse{}, nil
 }
@@ -665,54 +666,19 @@ func (ms msgServer) SelectiveSlashingEvidence(goCtx context.Context, req *types.
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	delInfo, err := ms.getBTCDelWithParams(ctx, req.StakingTxHash)
-	if err != nil {
-		return nil, err
-	}
-
-	// ensure the BTC delegation is active, or its BTC undelegation receives an
-	// unbonding signature from the staker
-	status, _, err := ms.BtcDelStatusWithTip(ctx, delInfo)
-	if err != nil {
-		return nil, err
-	}
-
-	btcDel := delInfo.Delegation
-	if status != types.BTCDelegationStatus_ACTIVE && !btcDel.IsUnbondedEarly() {
-		return nil, types.ErrBTCDelegationNotFound.Wrap("a BTC delegation that is not active or unbonding early cannot be slashed")
-	}
-
 	// decode the finality provider's BTC SK/PK
 	fpSK, fpPK := btcec.PrivKeyFromBytes(req.RecoveredFpBtcSk)
 	fpBTCPK := bbn.NewBIP340PubKeyFromBTCPK(fpPK)
 
-	// ensure the BTC delegation is staked to the given finality provider
-	fpIdx := btcDel.GetFpIdx(fpBTCPK)
-	if fpIdx == -1 {
-		return nil, types.ErrFpNotFound.Wrapf("BTC delegation is not staked to the finality provider")
-	}
-
-	// ensure the finality provider exists
-	fp, err := ms.GetFinalityProvider(ctx, fpBTCPK.MustMarshal())
-	if err != nil {
-		panic(types.ErrFpNotFound.Wrapf("failing to find the finality provider with BTC delegations"))
-	}
-	// ensure the finality provider is not slashed
-	if fp.IsSlashed() {
-		return nil, types.ErrFpAlreadySlashed
-	}
-
-	// at this point, the finality provider must have done selective slashing and must be
-	// adversarial
-
-	// slash the finality provider now
+	// slashing the provider - this method also checks:
+	// - that the fp first exists and can be found
+	// - that the finality provider isnt already slashed
 	if err := ms.SlashFinalityProvider(ctx, fpBTCPK.MustMarshal()); err != nil {
-		panic(err) // failed to slash the finality provider, must be programming error
+		return nil, err
 	}
 
 	// emit selective slashing event
 	evidence := &types.SelectiveSlashingEvidence{
-		StakingTxHash:    req.StakingTxHash,
 		FpBtcPk:          fpBTCPK,
 		RecoveredFpBtcSk: fpSK.Serialize(),
 	}
@@ -723,9 +689,51 @@ func (ms msgServer) SelectiveSlashingEvidence(goCtx context.Context, req *types.
 
 	// At this point, the selective slashing evidence is verified and is not duplicated.
 	// Thus, we can safely consider this message as refundable
-	ms.iKeeper.IndexRefundableMsg(ctx, req)
+	ms.ictvKeeper.IndexRefundableMsg(ctx, req)
 
 	return &types.MsgSelectiveSlashingEvidenceResponse{}, nil
+}
+
+// AddBsnRewards adds rewards for finality providers of a specific BSN consumer
+func (ms msgServer) AddBsnRewards(goCtx context.Context, req *types.MsgAddBsnRewards) (*types.MsgAddBsnRewardsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// 1. Parse and validate sender address
+	senderAddr, err := sdk.AccAddressFromBech32(req.Sender)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid address %s: %v", req.Sender, err)
+	}
+
+	// 2. Validate that sender has sufficient balance
+	spendableCoins := ms.bankKeeper.SpendableCoins(ctx, senderAddr)
+	if !spendableCoins.IsAllGTE(req.TotalRewards) {
+		return nil, status.Errorf(codes.InvalidArgument, "insufficient balance: spendable %s and total rewards %s", spendableCoins.String(), req.TotalRewards.String())
+	}
+
+	// 3. Transfer funds from sender to incentives module account
+	if err := ms.bankKeeper.SendCoinsFromAccountToModule(ctx, senderAddr, ictvtypes.ModuleName, req.TotalRewards); err != nil {
+		return nil, types.ErrUnableToSendCoins.Wrapf("failed to send coins to incentive module account: %v", err)
+	}
+
+	// 4. Collects the babylon and the FP commission, and allocates the remaining rewards to btc stakers according to their voting power and fp ratio
+	eventFpRewards, babylonCommission, err := ms.CollectComissionAndDistributeBsnRewards(ctx, req.BsnConsumerId, req.TotalRewards, req.FpRatios)
+	if err != nil {
+		return nil, types.ErrUnableToDistributeBsnRewards.Wrapf("failed: %v", err)
+	}
+
+	// 5. Emit typed evt
+	evt := &types.EventAddBsnRewards{
+		Sender:            req.Sender,
+		BsnConsumerId:     req.BsnConsumerId,
+		TotalRewards:      req.TotalRewards,
+		BabylonCommission: babylonCommission,
+		FpRatios:          eventFpRewards,
+	}
+	if err := ctx.EventManager().EmitTypedEvent(evt); err != nil {
+		panic(fmt.Errorf("failed to emit EventAddBsnRewards event: %w", err))
+	}
+
+	return &types.MsgAddBsnRewardsResponse{}, nil
 }
 
 // hasSufficientCovenantOverlap returns true if the intersection of CovCommittee1 and CovCommittee2

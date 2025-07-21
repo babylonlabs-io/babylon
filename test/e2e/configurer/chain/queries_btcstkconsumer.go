@@ -21,7 +21,7 @@ func (n *NodeConfig) QueryBTCStkConsumerParams() *bstkconsumertypes.Params {
 	return &resp.Params
 }
 
-func (n *NodeConfig) QueryBTCStkConsumerConsumers() *[]*bstkconsumertypes.ConsumerRegisterResponse {
+func (n *NodeConfig) QueryBTCStkConsumerConsumers() []*bstkconsumertypes.ConsumerRegisterResponse {
 	bz, err := n.QueryGRPCGateway("/babylon/btcstkconsumer/v1/consumer_registry_list", url.Values{})
 	require.NoError(n.t, err)
 
@@ -29,7 +29,7 @@ func (n *NodeConfig) QueryBTCStkConsumerConsumers() *[]*bstkconsumertypes.Consum
 	err = util.Cdc.UnmarshalJSON(bz, &resp)
 	require.NoError(n.t, err)
 
-	return &resp.ConsumerRegisters
+	return resp.ConsumerRegisters
 }
 
 func (n *NodeConfig) QueryBTCStkConsumerConsumer(consumerID string) *bstkconsumertypes.QueryConsumersRegistryResponse {

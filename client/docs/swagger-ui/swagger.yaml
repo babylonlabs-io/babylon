@@ -2268,6 +2268,11 @@ paths:
                         queued by the
 
                         epoching module as string.
+                    msg_type:
+                      type: string
+                      description: >-
+                        msg_type is a string that identifies the type of the
+                        underlying message.
                   title: >-
                     QueuedMessageResponse is a message that can change the
                     validator set and is delayed
@@ -2941,6 +2946,11 @@ paths:
                               and is queued by the
 
                               epoching module as string.
+                          msg_type:
+                            type: string
+                            description: >-
+                              msg_type is a string that identifies the type of
+                              the underlying message.
                         title: >-
                           QueuedMessageResponse is a message that can change the
                           validator set and is delayed
@@ -3991,6 +4001,34 @@ paths:
                           optionally to add more
 
                           stake to the BTC delegation.
+                      previous_stk_covenant_sigs:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            pk:
+                              type: string
+                              format: byte
+                            sig:
+                              type: string
+                              format: byte
+                          title: >-
+                            SignatureInfo is a BIP-340 signature together with
+                            its signer's BIP-340 PK
+                        description: >-
+                          previous_stk_covenant_sigs is a list of signatures on
+                          the stake expansion
+
+                          transaction (i.e., the transaction spending the
+                          previous staking transaction
+
+                          {previous_staking_tx_hash}) by each covenant member.
+
+                          It must be provided to allow the previous staking tx
+                          to be spent as
+
+                          an transaction input of another BTC staking
+                          transaction.
             title: >-
               QueryBTCDelegationResponse is response type matching
 
@@ -4488,6 +4526,34 @@ paths:
                             optionally to add more
 
                             stake to the BTC delegation.
+                        previous_stk_covenant_sigs:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              pk:
+                                type: string
+                                format: byte
+                              sig:
+                                type: string
+                                format: byte
+                            title: >-
+                              SignatureInfo is a BIP-340 signature together with
+                              its signer's BIP-340 PK
+                          description: >-
+                            previous_stk_covenant_sigs is a list of signatures
+                            on the stake expansion
+
+                            transaction (i.e., the transaction spending the
+                            previous staking transaction
+
+                            {previous_staking_tx_hash}) by each covenant member.
+
+                            It must be provided to allow the previous staking tx
+                            to be spent as
+
+                            an transaction input of another BTC staking
+                            transaction.
                   description: >-
                     BTCDelegationResponse is the client needed information from
                     a BTCDelegation
@@ -5532,6 +5598,35 @@ paths:
                                   optionally to add more
 
                                   stake to the BTC delegation.
+                              previous_stk_covenant_sigs:
+                                type: array
+                                items:
+                                  type: object
+                                  properties:
+                                    pk:
+                                      type: string
+                                      format: byte
+                                    sig:
+                                      type: string
+                                      format: byte
+                                  title: >-
+                                    SignatureInfo is a BIP-340 signature
+                                    together with its signer's BIP-340 PK
+                                description: >-
+                                  previous_stk_covenant_sigs is a list of
+                                  signatures on the stake expansion
+
+                                  transaction (i.e., the transaction spending
+                                  the previous staking transaction
+
+                                  {previous_staking_tx_hash}) by each covenant
+                                  member.
+
+                                  It must be provided to allow the previous
+                                  staking tx to be spent as
+
+                                  an transaction input of another BTC staking
+                                  transaction.
                         description: >-
                           BTCDelegationResponse is the client needed information
                           from a BTCDelegation
@@ -8315,6 +8410,14 @@ paths:
                         block
 
                         where finality signature is an EOTS signature
+                    signing_context:
+                      type: string
+                      title: >-
+                        signing_context is the context in which the finality
+                        signatures were used.
+
+                        It must be hex encoded 32 bytes, of the sha256 hash of
+                        the context string
                   title: >-
                     Evidence is the evidence that a finality provider has signed
                     finality
@@ -8492,6 +8595,14 @@ paths:
                       block
 
                       where finality signature is an EOTS signature
+                  signing_context:
+                    type: string
+                    title: >-
+                      signing_context is the context in which the finality
+                      signatures were used.
+
+                      It must be hex encoded 32 bytes, of the sha256 hash of the
+                      context string
                 title: >-
                   Evidence is the evidence that a finality provider has signed
                   finality
@@ -10838,6 +10949,13 @@ paths:
                         finality contract
 
                         set only for rollup integration
+                    babylon_rewards_commission:
+                      type: string
+                      title: >-
+                        babylon_rewards_commission is the commission rate that
+                        Babylon takes from rewards
+
+                        distributed to finality providers for this BSN consumer
                   title: >-
                     ConsumerRegisterResponse contains the information for a
                     registered consumer
@@ -11007,6 +11125,13 @@ paths:
                         finality contract
 
                         set only for rollup integration
+                    babylon_rewards_commission:
+                      type: string
+                      title: >-
+                        babylon_rewards_commission is the commission rate that
+                        Babylon takes from rewards
+
+                        distributed to finality providers for this BSN consumer
                   title: >-
                     ConsumerRegisterResponse contains the information for a
                     registered consumer
@@ -11465,390 +11590,6 @@ paths:
                       format: byte
       tags:
         - Query
-  /babylon/zoneconcierge/v1/chain_info/{consumer_id}/header/{height}:
-    get:
-      summary: Header queries the Consumer header and fork headers at a given height
-      operationId: Header
-      responses:
-        '200':
-          description: A successful response.
-          schema:
-            type: object
-            properties:
-              header:
-                type: object
-                properties:
-                  consumer_id:
-                    type: string
-                    title: consumer_id is the unique ID of the consumer
-                  hash:
-                    type: string
-                    format: byte
-                    title: hash is the hash of this header
-                  height:
-                    type: string
-                    format: uint64
-                    title: >-
-                      height is the height of this header on the Consumer's
-                      ledger.
-
-                      (hash, height) jointly provide the position of the header
-                      on the Consumer ledger
-                  time:
-                    type: string
-                    format: date-time
-                    title: >-
-                      time is the timestamp of this header on the Consumer's
-                      ledger.
-
-                      It is needed for a Consumer to unbond all mature
-                      validators/delegations before
-
-                      this timestamp, when this header is BTC-finalised
-                  babylon_header_hash:
-                    type: string
-                    format: byte
-                    title: >-
-                      babylon_header_hash is the hash of the babylon block that
-                      includes this Consumer
-
-                      header
-                  babylon_header_height:
-                    type: string
-                    format: uint64
-                    title: >-
-                      babylon_header_height is the height of the babylon block
-                      that includes this
-
-                      Consumer header
-                  babylon_epoch:
-                    type: string
-                    format: uint64
-                    title: epoch is the epoch number of this header on Babylon ledger
-                  babylon_tx_hash:
-                    type: string
-                    format: byte
-                    title: >-
-                      babylon_tx_hash is the hash of the tx that includes this
-                      header
-
-                      (babylon_block_height, babylon_tx_hash) jointly provides
-                      the position of
-
-                      the header on Babylon ledger
-                title: IndexedHeader is the metadata of a Consumer header
-              fork_headers:
-                type: object
-                properties:
-                  headers:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        consumer_id:
-                          type: string
-                          title: consumer_id is the unique ID of the consumer
-                        hash:
-                          type: string
-                          format: byte
-                          title: hash is the hash of this header
-                        height:
-                          type: string
-                          format: uint64
-                          title: >-
-                            height is the height of this header on the
-                            Consumer's ledger.
-
-                            (hash, height) jointly provide the position of the
-                            header on the Consumer ledger
-                        time:
-                          type: string
-                          format: date-time
-                          title: >-
-                            time is the timestamp of this header on the
-                            Consumer's ledger.
-
-                            It is needed for a Consumer to unbond all mature
-                            validators/delegations before
-
-                            this timestamp, when this header is BTC-finalised
-                        babylon_header_hash:
-                          type: string
-                          format: byte
-                          title: >-
-                            babylon_header_hash is the hash of the babylon block
-                            that includes this Consumer
-
-                            header
-                        babylon_header_height:
-                          type: string
-                          format: uint64
-                          title: >-
-                            babylon_header_height is the height of the babylon
-                            block that includes this
-
-                            Consumer header
-                        babylon_epoch:
-                          type: string
-                          format: uint64
-                          title: >-
-                            epoch is the epoch number of this header on Babylon
-                            ledger
-                        babylon_tx_hash:
-                          type: string
-                          format: byte
-                          title: >-
-                            babylon_tx_hash is the hash of the tx that includes
-                            this header
-
-                            (babylon_block_height, babylon_tx_hash) jointly
-                            provides the position of
-
-                            the header on Babylon ledger
-                      title: IndexedHeader is the metadata of a Consumer header
-                    title: >-
-                      blocks is the list of non-canonical indexed headers at the
-                      same height
-                description: >-
-                  Forks is a list of non-canonical `IndexedHeader`s at the same
-                  height.
-
-                  For example, assuming the following blockchain
-
-                  ```
-
-                  A <- B <- C <- D <- E
-                             \ -- D1
-                             \ -- D2
-                  ```
-
-                  Then the fork will be {[D1, D2]} where each item is in struct
-                  `IndexedBlock`.
-
-
-                  Note that each `IndexedHeader` in the fork should have a valid
-                  quorum
-
-                  certificate. Such forks exist since Babylon considers
-                  Consumers might have
-
-                  dishonest majority. Also note that the IBC-Go implementation
-                  will only
-
-                  consider the first header in a fork valid, since the
-                  subsequent headers
-
-                  cannot be verified without knowing the validator set in the
-                  previous header.
-            description: >-
-              QueryHeaderResponse is response type for the Query/Header RPC
-              method.
-        default:
-          description: An unexpected error response.
-          schema:
-            type: object
-            properties:
-              error:
-                type: string
-              code:
-                type: integer
-                format: int32
-              message:
-                type: string
-              details:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    type_url:
-                      type: string
-                      description: >-
-                        A URL/resource name that uniquely identifies the type of
-                        the serialized
-
-                        protocol buffer message. This string must contain at
-                        least
-
-                        one "/" character. The last segment of the URL's path
-                        must represent
-
-                        the fully qualified name of the type (as in
-
-                        `path/google.protobuf.Duration`). The name should be in
-                        a canonical form
-
-                        (e.g., leading "." is not accepted).
-
-
-                        In practice, teams usually precompile into the binary
-                        all types that they
-
-                        expect it to use in the context of Any. However, for
-                        URLs which use the
-
-                        scheme `http`, `https`, or no scheme, one can optionally
-                        set up a type
-
-                        server that maps type URLs to message definitions as
-                        follows:
-
-
-                        * If no scheme is provided, `https` is assumed.
-
-                        * An HTTP GET on the URL must yield a
-                        [google.protobuf.Type][]
-                          value in binary format, or produce an error.
-                        * Applications are allowed to cache lookup results based
-                        on the
-                          URL, or have them precompiled into a binary to avoid any
-                          lookup. Therefore, binary compatibility needs to be preserved
-                          on changes to types. (Use versioned type names to manage
-                          breaking changes.)
-
-                        Note: this functionality is not currently available in
-                        the official
-
-                        protobuf release, and it is not used for type URLs
-                        beginning with
-
-                        type.googleapis.com.
-
-
-                        Schemes other than `http`, `https` (or the empty scheme)
-                        might be
-
-                        used with implementation specific semantics.
-                    value:
-                      type: string
-                      format: byte
-                      description: >-
-                        Must be a valid serialized protocol buffer of the above
-                        specified type.
-                  description: >-
-                    `Any` contains an arbitrary serialized protocol buffer
-                    message along with a
-
-                    URL that describes the type of the serialized message.
-
-
-                    Protobuf library provides support to pack/unpack Any values
-                    in the form
-
-                    of utility functions or additional generated methods of the
-                    Any type.
-
-
-                    Example 1: Pack and unpack a message in C++.
-
-                        Foo foo = ...;
-                        Any any;
-                        any.PackFrom(foo);
-                        ...
-                        if (any.UnpackTo(&foo)) {
-                          ...
-                        }
-
-                    Example 2: Pack and unpack a message in Java.
-
-                        Foo foo = ...;
-                        Any any = Any.pack(foo);
-                        ...
-                        if (any.is(Foo.class)) {
-                          foo = any.unpack(Foo.class);
-                        }
-                        // or ...
-                        if (any.isSameTypeAs(Foo.getDefaultInstance())) {
-                          foo = any.unpack(Foo.getDefaultInstance());
-                        }
-
-                    Example 3: Pack and unpack a message in Python.
-
-                        foo = Foo(...)
-                        any = Any()
-                        any.Pack(foo)
-                        ...
-                        if any.Is(Foo.DESCRIPTOR):
-                          any.Unpack(foo)
-                          ...
-
-                    Example 4: Pack and unpack a message in Go
-
-                         foo := &pb.Foo{...}
-                         any, err := anypb.New(foo)
-                         if err != nil {
-                           ...
-                         }
-                         ...
-                         foo := &pb.Foo{}
-                         if err := any.UnmarshalTo(foo); err != nil {
-                           ...
-                         }
-
-                    The pack methods provided by protobuf library will by
-                    default use
-
-                    'type.googleapis.com/full.type.name' as the type URL and the
-                    unpack
-
-                    methods only use the fully qualified type name after the
-                    last '/'
-
-                    in the type URL, for example "foo.bar.com/x/y.z" will yield
-                    type
-
-                    name "y.z".
-
-
-                    JSON
-
-
-                    The JSON representation of an `Any` value uses the regular
-
-                    representation of the deserialized, embedded message, with
-                    an
-
-                    additional field `@type` which contains the type URL.
-                    Example:
-
-                        package google.profile;
-                        message Person {
-                          string first_name = 1;
-                          string last_name = 2;
-                        }
-
-                        {
-                          "@type": "type.googleapis.com/google.profile.Person",
-                          "firstName": <string>,
-                          "lastName": <string>
-                        }
-
-                    If the embedded message type is well-known and has a custom
-                    JSON
-
-                    representation, that representation will be embedded adding
-                    a field
-
-                    `value` which holds the custom JSON in addition to the
-                    `@type`
-
-                    field. Example (for message [google.protobuf.Duration][]):
-
-                        {
-                          "@type": "type.googleapis.com/google.protobuf.Duration",
-                          "value": "1.212s"
-                        }
-      parameters:
-        - name: consumer_id
-          in: path
-          required: true
-          type: string
-        - name: height
-          in: path
-          required: true
-          type: string
-          format: uint64
-      tags:
-        - Query
   /babylon/zoneconcierge/v1/finalized_chain_info/{consumer_id}/height/{height}:
     get:
       summary: >-
@@ -11863,194 +11604,6 @@ paths:
           schema:
             type: object
             properties:
-              finalized_chain_info:
-                type: object
-                properties:
-                  consumer_id:
-                    type: string
-                    title: consumer_id is the ID of the consumer
-                  latest_header:
-                    type: object
-                    properties:
-                      consumer_id:
-                        type: string
-                        title: consumer_id is the unique ID of the consumer
-                      hash:
-                        type: string
-                        format: byte
-                        title: hash is the hash of this header
-                      height:
-                        type: string
-                        format: uint64
-                        title: >-
-                          height is the height of this header on the Consumer's
-                          ledger.
-
-                          (hash, height) jointly provide the position of the
-                          header on the Consumer ledger
-                      time:
-                        type: string
-                        format: date-time
-                        title: >-
-                          time is the timestamp of this header on the Consumer's
-                          ledger.
-
-                          It is needed for a Consumer to unbond all mature
-                          validators/delegations before
-
-                          this timestamp, when this header is BTC-finalised
-                      babylon_header_hash:
-                        type: string
-                        format: byte
-                        title: >-
-                          babylon_header_hash is the hash of the babylon block
-                          that includes this Consumer
-
-                          header
-                      babylon_header_height:
-                        type: string
-                        format: uint64
-                        title: >-
-                          babylon_header_height is the height of the babylon
-                          block that includes this
-
-                          Consumer header
-                      babylon_epoch:
-                        type: string
-                        format: uint64
-                        title: >-
-                          epoch is the epoch number of this header on Babylon
-                          ledger
-                      babylon_tx_hash:
-                        type: string
-                        format: byte
-                        title: >-
-                          babylon_tx_hash is the hash of the tx that includes
-                          this header
-
-                          (babylon_block_height, babylon_tx_hash) jointly
-                          provides the position of
-
-                          the header on Babylon ledger
-                    title: IndexedHeader is the metadata of a Consumer header
-                  latest_forks:
-                    type: object
-                    properties:
-                      headers:
-                        type: array
-                        items:
-                          type: object
-                          properties:
-                            consumer_id:
-                              type: string
-                              title: consumer_id is the unique ID of the consumer
-                            hash:
-                              type: string
-                              format: byte
-                              title: hash is the hash of this header
-                            height:
-                              type: string
-                              format: uint64
-                              title: >-
-                                height is the height of this header on the
-                                Consumer's ledger.
-
-                                (hash, height) jointly provide the position of
-                                the header on the Consumer ledger
-                            time:
-                              type: string
-                              format: date-time
-                              title: >-
-                                time is the timestamp of this header on the
-                                Consumer's ledger.
-
-                                It is needed for a Consumer to unbond all mature
-                                validators/delegations before
-
-                                this timestamp, when this header is
-                                BTC-finalised
-                            babylon_header_hash:
-                              type: string
-                              format: byte
-                              title: >-
-                                babylon_header_hash is the hash of the babylon
-                                block that includes this Consumer
-
-                                header
-                            babylon_header_height:
-                              type: string
-                              format: uint64
-                              title: >-
-                                babylon_header_height is the height of the
-                                babylon block that includes this
-
-                                Consumer header
-                            babylon_epoch:
-                              type: string
-                              format: uint64
-                              title: >-
-                                epoch is the epoch number of this header on
-                                Babylon ledger
-                            babylon_tx_hash:
-                              type: string
-                              format: byte
-                              title: >-
-                                babylon_tx_hash is the hash of the tx that
-                                includes this header
-
-                                (babylon_block_height, babylon_tx_hash) jointly
-                                provides the position of
-
-                                the header on Babylon ledger
-                          title: IndexedHeader is the metadata of a Consumer header
-                        title: >-
-                          blocks is the list of non-canonical indexed headers at
-                          the same height
-                    description: >-
-                      Forks is a list of non-canonical `IndexedHeader`s at the
-                      same height.
-
-                      For example, assuming the following blockchain
-
-                      ```
-
-                      A <- B <- C <- D <- E
-                                 \ -- D1
-                                 \ -- D2
-                      ```
-
-                      Then the fork will be {[D1, D2]} where each item is in
-                      struct `IndexedBlock`.
-
-
-                      Note that each `IndexedHeader` in the fork should have a
-                      valid quorum
-
-                      certificate. Such forks exist since Babylon considers
-                      Consumers might have
-
-                      dishonest majority. Also note that the IBC-Go
-                      implementation will only
-
-                      consider the first header in a fork valid, since the
-                      subsequent headers
-
-                      cannot be verified without knowing the validator set in
-                      the previous header.
-                    title: >-
-                      latest_forks is the latest forks, formed as a series of
-                      IndexedHeader (from
-
-                      low to high)
-                  timestamped_headers_count:
-                    type: string
-                    format: uint64
-                    title: >-
-                      timestamped_headers_count is the number of timestamped
-                      headers in the Consumer's
-
-                      canonical chain
-                title: ChainInfo is the information of a Consumer
               epoch_info:
                 title: epoch_info is the metadata of the last BTC-finalised epoch
                 type: object
@@ -12606,12 +12159,16 @@ paths:
                       type: string
                       title: consumer_id is the ID of the consumer
                     finalized_chain_info:
+                      title: finalized_chain_info is the info of the Consumer
                       type: object
                       properties:
                         consumer_id:
                           type: string
                           title: consumer_id is the ID of the consumer
                         latest_header:
+                          title: >-
+                            latest_header is the latest header in Consumer's
+                            canonical chain
                           type: object
                           properties:
                             consumer_id:
@@ -12675,121 +12232,6 @@ paths:
                                 provides the position of
 
                                 the header on Babylon ledger
-                          title: IndexedHeader is the metadata of a Consumer header
-                        latest_forks:
-                          type: object
-                          properties:
-                            headers:
-                              type: array
-                              items:
-                                type: object
-                                properties:
-                                  consumer_id:
-                                    type: string
-                                    title: >-
-                                      consumer_id is the unique ID of the
-                                      consumer
-                                  hash:
-                                    type: string
-                                    format: byte
-                                    title: hash is the hash of this header
-                                  height:
-                                    type: string
-                                    format: uint64
-                                    title: >-
-                                      height is the height of this header on the
-                                      Consumer's ledger.
-
-                                      (hash, height) jointly provide the
-                                      position of the header on the Consumer
-                                      ledger
-                                  time:
-                                    type: string
-                                    format: date-time
-                                    title: >-
-                                      time is the timestamp of this header on
-                                      the Consumer's ledger.
-
-                                      It is needed for a Consumer to unbond all
-                                      mature validators/delegations before
-
-                                      this timestamp, when this header is
-                                      BTC-finalised
-                                  babylon_header_hash:
-                                    type: string
-                                    format: byte
-                                    title: >-
-                                      babylon_header_hash is the hash of the
-                                      babylon block that includes this Consumer
-
-                                      header
-                                  babylon_header_height:
-                                    type: string
-                                    format: uint64
-                                    title: >-
-                                      babylon_header_height is the height of the
-                                      babylon block that includes this
-
-                                      Consumer header
-                                  babylon_epoch:
-                                    type: string
-                                    format: uint64
-                                    title: >-
-                                      epoch is the epoch number of this header
-                                      on Babylon ledger
-                                  babylon_tx_hash:
-                                    type: string
-                                    format: byte
-                                    title: >-
-                                      babylon_tx_hash is the hash of the tx that
-                                      includes this header
-
-                                      (babylon_block_height, babylon_tx_hash)
-                                      jointly provides the position of
-
-                                      the header on Babylon ledger
-                                title: >-
-                                  IndexedHeader is the metadata of a Consumer
-                                  header
-                              title: >-
-                                blocks is the list of non-canonical indexed
-                                headers at the same height
-                          description: >-
-                            Forks is a list of non-canonical `IndexedHeader`s at
-                            the same height.
-
-                            For example, assuming the following blockchain
-
-                            ```
-
-                            A <- B <- C <- D <- E
-                                       \ -- D1
-                                       \ -- D2
-                            ```
-
-                            Then the fork will be {[D1, D2]} where each item is
-                            in struct `IndexedBlock`.
-
-
-                            Note that each `IndexedHeader` in the fork should
-                            have a valid quorum
-
-                            certificate. Such forks exist since Babylon
-                            considers Consumers might have
-
-                            dishonest majority. Also note that the IBC-Go
-                            implementation will only
-
-                            consider the first header in a fork valid, since the
-                            subsequent headers
-
-                            cannot be verified without knowing the validator set
-                            in the previous header.
-                          title: >-
-                            latest_forks is the latest forks, formed as a series
-                            of IndexedHeader (from
-
-                            low to high)
                         timestamped_headers_count:
                           type: string
                           format: uint64
@@ -12798,7 +12240,6 @@ paths:
                             timestamped headers in the Consumer's
 
                             canonical chain
-                      title: ChainInfo is the information of a Consumer
                     epoch_info:
                       title: >-
                         epoch_info is the metadata of the last BTC-finalised
@@ -15007,6 +14448,11 @@ definitions:
                 by the
 
                 epoching module as string.
+            msg_type:
+              type: string
+              description: >-
+                msg_type is a string that identifies the type of the underlying
+                message.
           title: >-
             QueuedMessageResponse is a message that can change the validator set
             and is delayed
@@ -15223,6 +14669,11 @@ definitions:
                       queued by the
 
                       epoching module as string.
+                  msg_type:
+                    type: string
+                    description: >-
+                      msg_type is a string that identifies the type of the
+                      underlying message.
                 title: >-
                   QueuedMessageResponse is a message that can change the
                   validator set and is delayed
@@ -15340,6 +14791,11 @@ definitions:
                 by the
 
                 epoching module as string.
+            msg_type:
+              type: string
+              description: >-
+                msg_type is a string that identifies the type of the underlying
+                message.
           title: >-
             QueuedMessageResponse is a message that can change the validator set
             and is delayed
@@ -15372,6 +14828,11 @@ definitions:
         description: |-
           msg is the actual message that is sent by a user and is queued by the
           epoching module as string.
+      msg_type:
+        type: string
+        description: >-
+          msg_type is a string that identifies the type of the underlying
+          message.
     title: >-
       QueuedMessageResponse is a message that can change the validator set and
       is delayed
@@ -15659,6 +15120,33 @@ definitions:
               more
 
               stake to the BTC delegation.
+          previous_stk_covenant_sigs:
+            type: array
+            items:
+              type: object
+              properties:
+                pk:
+                  type: string
+                  format: byte
+                sig:
+                  type: string
+                  format: byte
+              title: >-
+                SignatureInfo is a BIP-340 signature together with its signer's
+                BIP-340 PK
+            description: >-
+              previous_stk_covenant_sigs is a list of signatures on the stake
+              expansion
+
+              transaction (i.e., the transaction spending the previous staking
+              transaction
+
+              {previous_staking_tx_hash}) by each covenant member.
+
+              It must be provided to allow the previous staking tx to be spent
+              as
+
+              an transaction input of another BTC staking transaction.
     description: >-
       BTCDelegationResponse is the client needed information from a
       BTCDelegation
@@ -15976,6 +15464,33 @@ definitions:
                     add more
 
                     stake to the BTC delegation.
+                previous_stk_covenant_sigs:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      pk:
+                        type: string
+                        format: byte
+                      sig:
+                        type: string
+                        format: byte
+                    title: >-
+                      SignatureInfo is a BIP-340 signature together with its
+                      signer's BIP-340 PK
+                  description: >-
+                    previous_stk_covenant_sigs is a list of signatures on the
+                    stake expansion
+
+                    transaction (i.e., the transaction spending the previous
+                    staking transaction
+
+                    {previous_staking_tx_hash}) by each covenant member.
+
+                    It must be provided to allow the previous staking tx to be
+                    spent as
+
+                    an transaction input of another BTC staking transaction.
           description: >-
             BTCDelegationResponse is the client needed information from a
             BTCDelegation
@@ -16693,6 +16208,33 @@ definitions:
                   add more
 
                   stake to the BTC delegation.
+              previous_stk_covenant_sigs:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    pk:
+                      type: string
+                      format: byte
+                    sig:
+                      type: string
+                      format: byte
+                  title: >-
+                    SignatureInfo is a BIP-340 signature together with its
+                    signer's BIP-340 PK
+                description: >-
+                  previous_stk_covenant_sigs is a list of signatures on the
+                  stake expansion
+
+                  transaction (i.e., the transaction spending the previous
+                  staking transaction
+
+                  {previous_staking_tx_hash}) by each covenant member.
+
+                  It must be provided to allow the previous staking tx to be
+                  spent as
+
+                  an transaction input of another BTC staking transaction.
     title: |-
       QueryBTCDelegationResponse is response type matching
       QueryBTCDelegationRequest and containing BTC delegation information
@@ -16965,6 +16507,33 @@ definitions:
                     add more
 
                     stake to the BTC delegation.
+                previous_stk_covenant_sigs:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      pk:
+                        type: string
+                        format: byte
+                      sig:
+                        type: string
+                        format: byte
+                    title: >-
+                      SignatureInfo is a BIP-340 signature together with its
+                      signer's BIP-340 PK
+                  description: >-
+                    previous_stk_covenant_sigs is a list of signatures on the
+                    stake expansion
+
+                    transaction (i.e., the transaction spending the previous
+                    staking transaction
+
+                    {previous_staking_tx_hash}) by each covenant member.
+
+                    It must be provided to allow the previous staking tx to be
+                    spent as
+
+                    an transaction input of another BTC staking transaction.
           description: >-
             BTCDelegationResponse is the client needed information from a
             BTCDelegation
@@ -17281,6 +16850,34 @@ definitions:
                           optionally to add more
 
                           stake to the BTC delegation.
+                      previous_stk_covenant_sigs:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            pk:
+                              type: string
+                              format: byte
+                            sig:
+                              type: string
+                              format: byte
+                          title: >-
+                            SignatureInfo is a BIP-340 signature together with
+                            its signer's BIP-340 PK
+                        description: >-
+                          previous_stk_covenant_sigs is a list of signatures on
+                          the stake expansion
+
+                          transaction (i.e., the transaction spending the
+                          previous staking transaction
+
+                          {previous_staking_tx_hash}) by each covenant member.
+
+                          It must be provided to allow the previous staking tx
+                          to be spent as
+
+                          an transaction input of another BTC staking
+                          transaction.
                 description: >-
                   BTCDelegationResponse is the client needed information from a
                   BTCDelegation
@@ -18331,6 +17928,32 @@ definitions:
           second input (this one) is to pay for fees and optionally to add more
 
           stake to the BTC delegation.
+      previous_stk_covenant_sigs:
+        type: array
+        items:
+          type: object
+          properties:
+            pk:
+              type: string
+              format: byte
+            sig:
+              type: string
+              format: byte
+          title: >-
+            SignatureInfo is a BIP-340 signature together with its signer's
+            BIP-340 PK
+        description: >-
+          previous_stk_covenant_sigs is a list of signatures on the stake
+          expansion
+
+          transaction (i.e., the transaction spending the previous staking
+          transaction
+
+          {previous_staking_tx_hash}) by each covenant member.
+
+          It must be provided to allow the previous staking tx to be spent as
+
+          an transaction input of another BTC staking transaction.
     description: >-
       StakeExpansionResponse stores information necessary to construct the
       expanded BTC staking
@@ -18598,6 +18221,14 @@ definitions:
         title: |-
           fork_finality_sig is the finality signature to the fork block
           where finality signature is an EOTS signature
+      signing_context:
+        type: string
+        title: >-
+          signing_context is the context in which the finality signatures were
+          used.
+
+          It must be hex encoded 32 bytes, of the sha256 hash of the context
+          string
     title: >-
       Evidence is the evidence that a finality provider has signed finality
 
@@ -18861,6 +18492,14 @@ definitions:
             title: |-
               fork_finality_sig is the finality signature to the fork block
               where finality signature is an EOTS signature
+          signing_context:
+            type: string
+            title: >-
+              signing_context is the context in which the finality signatures
+              were used.
+
+              It must be hex encoded 32 bytes, of the sha256 hash of the context
+              string
         title: >-
           Evidence is the evidence that a finality provider has signed finality
 
@@ -18990,6 +18629,14 @@ definitions:
               title: |-
                 fork_finality_sig is the finality signature to the fork block
                 where finality signature is an EOTS signature
+            signing_context:
+              type: string
+              title: >-
+                signing_context is the context in which the finality signatures
+                were used.
+
+                It must be hex encoded 32 bytes, of the sha256 hash of the
+                context string
           title: >-
             Evidence is the evidence that a finality provider has signed
             finality
@@ -20171,6 +19818,13 @@ definitions:
           contract
 
           set only for rollup integration
+      babylon_rewards_commission:
+        type: string
+        title: >-
+          babylon_rewards_commission is the commission rate that Babylon takes
+          from rewards
+
+          distributed to finality providers for this BSN consumer
     title: >-
       ConsumerRegisterResponse contains the information for a registered
       consumer
@@ -20226,6 +19880,13 @@ definitions:
                 contract
 
                 set only for rollup integration
+            babylon_rewards_commission:
+              type: string
+              title: >-
+                babylon_rewards_commission is the commission rate that Babylon
+                takes from rewards
+
+                distributed to finality providers for this BSN consumer
           title: >-
             ConsumerRegisterResponse contains the information for a registered
             consumer
@@ -20303,6 +19964,13 @@ definitions:
                 contract
 
                 set only for rollup integration
+            babylon_rewards_commission:
+              type: string
+              title: >-
+                babylon_rewards_commission is the commission rate that Babylon
+                takes from rewards
+
+                distributed to finality providers for this BSN consumer
           title: >-
             ConsumerRegisterResponse contains the information for a registered
             consumer
@@ -20773,6 +20441,7 @@ definitions:
         type: string
         title: consumer_id is the ID of the consumer
       latest_header:
+        title: latest_header is the latest header in Consumer's canonical chain
         type: object
         properties:
           consumer_id:
@@ -20830,110 +20499,6 @@ definitions:
               position of
 
               the header on Babylon ledger
-        title: IndexedHeader is the metadata of a Consumer header
-      latest_forks:
-        type: object
-        properties:
-          headers:
-            type: array
-            items:
-              type: object
-              properties:
-                consumer_id:
-                  type: string
-                  title: consumer_id is the unique ID of the consumer
-                hash:
-                  type: string
-                  format: byte
-                  title: hash is the hash of this header
-                height:
-                  type: string
-                  format: uint64
-                  title: >-
-                    height is the height of this header on the Consumer's
-                    ledger.
-
-                    (hash, height) jointly provide the position of the header on
-                    the Consumer ledger
-                time:
-                  type: string
-                  format: date-time
-                  title: >-
-                    time is the timestamp of this header on the Consumer's
-                    ledger.
-
-                    It is needed for a Consumer to unbond all mature
-                    validators/delegations before
-
-                    this timestamp, when this header is BTC-finalised
-                babylon_header_hash:
-                  type: string
-                  format: byte
-                  title: >-
-                    babylon_header_hash is the hash of the babylon block that
-                    includes this Consumer
-
-                    header
-                babylon_header_height:
-                  type: string
-                  format: uint64
-                  title: >-
-                    babylon_header_height is the height of the babylon block
-                    that includes this
-
-                    Consumer header
-                babylon_epoch:
-                  type: string
-                  format: uint64
-                  title: epoch is the epoch number of this header on Babylon ledger
-                babylon_tx_hash:
-                  type: string
-                  format: byte
-                  title: >-
-                    babylon_tx_hash is the hash of the tx that includes this
-                    header
-
-                    (babylon_block_height, babylon_tx_hash) jointly provides the
-                    position of
-
-                    the header on Babylon ledger
-              title: IndexedHeader is the metadata of a Consumer header
-            title: >-
-              blocks is the list of non-canonical indexed headers at the same
-              height
-        description: >-
-          Forks is a list of non-canonical `IndexedHeader`s at the same height.
-
-          For example, assuming the following blockchain
-
-          ```
-
-          A <- B <- C <- D <- E
-                     \ -- D1
-                     \ -- D2
-          ```
-
-          Then the fork will be {[D1, D2]} where each item is in struct
-          `IndexedBlock`.
-
-
-          Note that each `IndexedHeader` in the fork should have a valid quorum
-
-          certificate. Such forks exist since Babylon considers Consumers might
-          have
-
-          dishonest majority. Also note that the IBC-Go implementation will only
-
-          consider the first header in a fork valid, since the subsequent
-          headers
-
-          cannot be verified without knowing the validator set in the previous
-          header.
-        title: >-
-          latest_forks is the latest forks, formed as a series of IndexedHeader
-          (from
-
-          low to high)
       timestamped_headers_count:
         type: string
         format: uint64
@@ -20950,12 +20515,14 @@ definitions:
         type: string
         title: consumer_id is the ID of the consumer
       finalized_chain_info:
+        title: finalized_chain_info is the info of the Consumer
         type: object
         properties:
           consumer_id:
             type: string
             title: consumer_id is the ID of the consumer
           latest_header:
+            title: latest_header is the latest header in Consumer's canonical chain
             type: object
             properties:
               consumer_id:
@@ -21014,115 +20581,6 @@ definitions:
                   position of
 
                   the header on Babylon ledger
-            title: IndexedHeader is the metadata of a Consumer header
-          latest_forks:
-            type: object
-            properties:
-              headers:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    consumer_id:
-                      type: string
-                      title: consumer_id is the unique ID of the consumer
-                    hash:
-                      type: string
-                      format: byte
-                      title: hash is the hash of this header
-                    height:
-                      type: string
-                      format: uint64
-                      title: >-
-                        height is the height of this header on the Consumer's
-                        ledger.
-
-                        (hash, height) jointly provide the position of the
-                        header on the Consumer ledger
-                    time:
-                      type: string
-                      format: date-time
-                      title: >-
-                        time is the timestamp of this header on the Consumer's
-                        ledger.
-
-                        It is needed for a Consumer to unbond all mature
-                        validators/delegations before
-
-                        this timestamp, when this header is BTC-finalised
-                    babylon_header_hash:
-                      type: string
-                      format: byte
-                      title: >-
-                        babylon_header_hash is the hash of the babylon block
-                        that includes this Consumer
-
-                        header
-                    babylon_header_height:
-                      type: string
-                      format: uint64
-                      title: >-
-                        babylon_header_height is the height of the babylon block
-                        that includes this
-
-                        Consumer header
-                    babylon_epoch:
-                      type: string
-                      format: uint64
-                      title: >-
-                        epoch is the epoch number of this header on Babylon
-                        ledger
-                    babylon_tx_hash:
-                      type: string
-                      format: byte
-                      title: >-
-                        babylon_tx_hash is the hash of the tx that includes this
-                        header
-
-                        (babylon_block_height, babylon_tx_hash) jointly provides
-                        the position of
-
-                        the header on Babylon ledger
-                  title: IndexedHeader is the metadata of a Consumer header
-                title: >-
-                  blocks is the list of non-canonical indexed headers at the
-                  same height
-            description: >-
-              Forks is a list of non-canonical `IndexedHeader`s at the same
-              height.
-
-              For example, assuming the following blockchain
-
-              ```
-
-              A <- B <- C <- D <- E
-                         \ -- D1
-                         \ -- D2
-              ```
-
-              Then the fork will be {[D1, D2]} where each item is in struct
-              `IndexedBlock`.
-
-
-              Note that each `IndexedHeader` in the fork should have a valid
-              quorum
-
-              certificate. Such forks exist since Babylon considers Consumers
-              might have
-
-              dishonest majority. Also note that the IBC-Go implementation will
-              only
-
-              consider the first header in a fork valid, since the subsequent
-              headers
-
-              cannot be verified without knowing the validator set in the
-              previous header.
-            title: >-
-              latest_forks is the latest forks, formed as a series of
-              IndexedHeader (from
-
-              low to high)
           timestamped_headers_count:
             type: string
             format: uint64
@@ -21131,7 +20589,6 @@ definitions:
               the Consumer's
 
               canonical chain
-        title: ChainInfo is the information of a Consumer
       epoch_info:
         title: epoch_info is the metadata of the last BTC-finalised epoch
         type: object
@@ -21421,97 +20878,6 @@ definitions:
 
               checkpoint submission
     title: FinalizedChainInfo is the information of a Consumer that is BTC-finalised
-  babylon.zoneconcierge.v1.Forks:
-    type: object
-    properties:
-      headers:
-        type: array
-        items:
-          type: object
-          properties:
-            consumer_id:
-              type: string
-              title: consumer_id is the unique ID of the consumer
-            hash:
-              type: string
-              format: byte
-              title: hash is the hash of this header
-            height:
-              type: string
-              format: uint64
-              title: >-
-                height is the height of this header on the Consumer's ledger.
-
-                (hash, height) jointly provide the position of the header on the
-                Consumer ledger
-            time:
-              type: string
-              format: date-time
-              title: >-
-                time is the timestamp of this header on the Consumer's ledger.
-
-                It is needed for a Consumer to unbond all mature
-                validators/delegations before
-
-                this timestamp, when this header is BTC-finalised
-            babylon_header_hash:
-              type: string
-              format: byte
-              title: >-
-                babylon_header_hash is the hash of the babylon block that
-                includes this Consumer
-
-                header
-            babylon_header_height:
-              type: string
-              format: uint64
-              title: >-
-                babylon_header_height is the height of the babylon block that
-                includes this
-
-                Consumer header
-            babylon_epoch:
-              type: string
-              format: uint64
-              title: epoch is the epoch number of this header on Babylon ledger
-            babylon_tx_hash:
-              type: string
-              format: byte
-              title: >-
-                babylon_tx_hash is the hash of the tx that includes this header
-
-                (babylon_block_height, babylon_tx_hash) jointly provides the
-                position of
-
-                the header on Babylon ledger
-          title: IndexedHeader is the metadata of a Consumer header
-        title: blocks is the list of non-canonical indexed headers at the same height
-    description: >-
-      Forks is a list of non-canonical `IndexedHeader`s at the same height.
-
-      For example, assuming the following blockchain
-
-      ```
-
-      A <- B <- C <- D <- E
-                 \ -- D1
-                 \ -- D2
-      ```
-
-      Then the fork will be {[D1, D2]} where each item is in struct
-      `IndexedBlock`.
-
-
-      Note that each `IndexedHeader` in the fork should have a valid quorum
-
-      certificate. Such forks exist since Babylon considers Consumers might have
-
-      dishonest majority. Also note that the IBC-Go implementation will only
-
-      consider the first header in a fork valid, since the subsequent headers
-
-      cannot be verified without knowing the validator set in the previous
-      header.
   babylon.zoneconcierge.v1.IndexedHeader:
     type: object
     properties:
@@ -21868,189 +21234,6 @@ definitions:
   babylon.zoneconcierge.v1.QueryFinalizedChainInfoUntilHeightResponse:
     type: object
     properties:
-      finalized_chain_info:
-        type: object
-        properties:
-          consumer_id:
-            type: string
-            title: consumer_id is the ID of the consumer
-          latest_header:
-            type: object
-            properties:
-              consumer_id:
-                type: string
-                title: consumer_id is the unique ID of the consumer
-              hash:
-                type: string
-                format: byte
-                title: hash is the hash of this header
-              height:
-                type: string
-                format: uint64
-                title: >-
-                  height is the height of this header on the Consumer's ledger.
-
-                  (hash, height) jointly provide the position of the header on
-                  the Consumer ledger
-              time:
-                type: string
-                format: date-time
-                title: >-
-                  time is the timestamp of this header on the Consumer's ledger.
-
-                  It is needed for a Consumer to unbond all mature
-                  validators/delegations before
-
-                  this timestamp, when this header is BTC-finalised
-              babylon_header_hash:
-                type: string
-                format: byte
-                title: >-
-                  babylon_header_hash is the hash of the babylon block that
-                  includes this Consumer
-
-                  header
-              babylon_header_height:
-                type: string
-                format: uint64
-                title: >-
-                  babylon_header_height is the height of the babylon block that
-                  includes this
-
-                  Consumer header
-              babylon_epoch:
-                type: string
-                format: uint64
-                title: epoch is the epoch number of this header on Babylon ledger
-              babylon_tx_hash:
-                type: string
-                format: byte
-                title: >-
-                  babylon_tx_hash is the hash of the tx that includes this
-                  header
-
-                  (babylon_block_height, babylon_tx_hash) jointly provides the
-                  position of
-
-                  the header on Babylon ledger
-            title: IndexedHeader is the metadata of a Consumer header
-          latest_forks:
-            type: object
-            properties:
-              headers:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    consumer_id:
-                      type: string
-                      title: consumer_id is the unique ID of the consumer
-                    hash:
-                      type: string
-                      format: byte
-                      title: hash is the hash of this header
-                    height:
-                      type: string
-                      format: uint64
-                      title: >-
-                        height is the height of this header on the Consumer's
-                        ledger.
-
-                        (hash, height) jointly provide the position of the
-                        header on the Consumer ledger
-                    time:
-                      type: string
-                      format: date-time
-                      title: >-
-                        time is the timestamp of this header on the Consumer's
-                        ledger.
-
-                        It is needed for a Consumer to unbond all mature
-                        validators/delegations before
-
-                        this timestamp, when this header is BTC-finalised
-                    babylon_header_hash:
-                      type: string
-                      format: byte
-                      title: >-
-                        babylon_header_hash is the hash of the babylon block
-                        that includes this Consumer
-
-                        header
-                    babylon_header_height:
-                      type: string
-                      format: uint64
-                      title: >-
-                        babylon_header_height is the height of the babylon block
-                        that includes this
-
-                        Consumer header
-                    babylon_epoch:
-                      type: string
-                      format: uint64
-                      title: >-
-                        epoch is the epoch number of this header on Babylon
-                        ledger
-                    babylon_tx_hash:
-                      type: string
-                      format: byte
-                      title: >-
-                        babylon_tx_hash is the hash of the tx that includes this
-                        header
-
-                        (babylon_block_height, babylon_tx_hash) jointly provides
-                        the position of
-
-                        the header on Babylon ledger
-                  title: IndexedHeader is the metadata of a Consumer header
-                title: >-
-                  blocks is the list of non-canonical indexed headers at the
-                  same height
-            description: >-
-              Forks is a list of non-canonical `IndexedHeader`s at the same
-              height.
-
-              For example, assuming the following blockchain
-
-              ```
-
-              A <- B <- C <- D <- E
-                         \ -- D1
-                         \ -- D2
-              ```
-
-              Then the fork will be {[D1, D2]} where each item is in struct
-              `IndexedBlock`.
-
-
-              Note that each `IndexedHeader` in the fork should have a valid
-              quorum
-
-              certificate. Such forks exist since Babylon considers Consumers
-              might have
-
-              dishonest majority. Also note that the IBC-Go implementation will
-              only
-
-              consider the first header in a fork valid, since the subsequent
-              headers
-
-              cannot be verified without knowing the validator set in the
-              previous header.
-            title: >-
-              latest_forks is the latest forks, formed as a series of
-              IndexedHeader (from
-
-              low to high)
-          timestamped_headers_count:
-            type: string
-            format: uint64
-            title: >-
-              timestamped_headers_count is the number of timestamped headers in
-              the Consumer's
-
-              canonical chain
-        title: ChainInfo is the information of a Consumer
       epoch_info:
         title: epoch_info is the metadata of the last BTC-finalised epoch
         type: object
@@ -22354,12 +21537,16 @@ definitions:
               type: string
               title: consumer_id is the ID of the consumer
             finalized_chain_info:
+              title: finalized_chain_info is the info of the Consumer
               type: object
               properties:
                 consumer_id:
                   type: string
                   title: consumer_id is the ID of the consumer
                 latest_header:
+                  title: >-
+                    latest_header is the latest header in Consumer's canonical
+                    chain
                   type: object
                   properties:
                     consumer_id:
@@ -22422,115 +21609,6 @@ definitions:
                         the position of
 
                         the header on Babylon ledger
-                  title: IndexedHeader is the metadata of a Consumer header
-                latest_forks:
-                  type: object
-                  properties:
-                    headers:
-                      type: array
-                      items:
-                        type: object
-                        properties:
-                          consumer_id:
-                            type: string
-                            title: consumer_id is the unique ID of the consumer
-                          hash:
-                            type: string
-                            format: byte
-                            title: hash is the hash of this header
-                          height:
-                            type: string
-                            format: uint64
-                            title: >-
-                              height is the height of this header on the
-                              Consumer's ledger.
-
-                              (hash, height) jointly provide the position of the
-                              header on the Consumer ledger
-                          time:
-                            type: string
-                            format: date-time
-                            title: >-
-                              time is the timestamp of this header on the
-                              Consumer's ledger.
-
-                              It is needed for a Consumer to unbond all mature
-                              validators/delegations before
-
-                              this timestamp, when this header is BTC-finalised
-                          babylon_header_hash:
-                            type: string
-                            format: byte
-                            title: >-
-                              babylon_header_hash is the hash of the babylon
-                              block that includes this Consumer
-
-                              header
-                          babylon_header_height:
-                            type: string
-                            format: uint64
-                            title: >-
-                              babylon_header_height is the height of the babylon
-                              block that includes this
-
-                              Consumer header
-                          babylon_epoch:
-                            type: string
-                            format: uint64
-                            title: >-
-                              epoch is the epoch number of this header on
-                              Babylon ledger
-                          babylon_tx_hash:
-                            type: string
-                            format: byte
-                            title: >-
-                              babylon_tx_hash is the hash of the tx that
-                              includes this header
-
-                              (babylon_block_height, babylon_tx_hash) jointly
-                              provides the position of
-
-                              the header on Babylon ledger
-                        title: IndexedHeader is the metadata of a Consumer header
-                      title: >-
-                        blocks is the list of non-canonical indexed headers at
-                        the same height
-                  description: >-
-                    Forks is a list of non-canonical `IndexedHeader`s at the
-                    same height.
-
-                    For example, assuming the following blockchain
-
-                    ```
-
-                    A <- B <- C <- D <- E
-                               \ -- D1
-                               \ -- D2
-                    ```
-
-                    Then the fork will be {[D1, D2]} where each item is in
-                    struct `IndexedBlock`.
-
-
-                    Note that each `IndexedHeader` in the fork should have a
-                    valid quorum
-
-                    certificate. Such forks exist since Babylon considers
-                    Consumers might have
-
-                    dishonest majority. Also note that the IBC-Go implementation
-                    will only
-
-                    consider the first header in a fork valid, since the
-                    subsequent headers
-
-                    cannot be verified without knowing the validator set in the
-                    previous header.
-                  title: >-
-                    latest_forks is the latest forks, formed as a series of
-                    IndexedHeader (from
-
-                    low to high)
                 timestamped_headers_count:
                   type: string
                   format: uint64
@@ -22539,7 +21617,6 @@ definitions:
                     headers in the Consumer's
 
                     canonical chain
-              title: ChainInfo is the information of a Consumer
             epoch_info:
               title: epoch_info is the metadata of the last BTC-finalised epoch
               type: object

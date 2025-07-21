@@ -4,6 +4,7 @@ import (
 	"context"
 	"math/rand"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -30,6 +31,32 @@ func TestMsgServer(t *testing.T) {
 	require.NotEmpty(t, k)
 }
 
+func TestRejectConsumerIdSameAsChainId(t *testing.T) {
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+
+	babylonApp, ctx := wasmtest.SetupAppWithContext(t)
+	bscKeeper := babylonApp.BTCStkConsumerKeeper
+	msgServer := keeper.NewMsgServerImpl(bscKeeper)
+
+	ctx = ctx.WithChainID("babylon-1")
+	/*
+		Test registering Cosmos consumer
+	*/
+	// generate a random consumer register
+	consumerRegister := datagen.GenRandomCosmosConsumerRegister(r)
+	// mock IBC light client
+	babylonApp.IBCKeeper.ClientKeeper.SetClientState(ctx, consumerRegister.ConsumerId, &ibctmtypes.ClientState{})
+	// Register the consumer
+	_, err := msgServer.RegisterConsumer(ctx, &types.MsgRegisterConsumer{
+		ConsumerId:               ctx.ChainID(),
+		ConsumerName:             consumerRegister.ConsumerName,
+		ConsumerDescription:      consumerRegister.ConsumerDescription,
+		BabylonRewardsCommission: consumerRegister.BabylonRewardsCommission,
+	})
+	require.Error(t, err)
+	require.ErrorIs(t, err, types.ErrInvalidConsumerIDs)
+}
+
 func FuzzRegisterConsumer(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 
@@ -52,9 +79,10 @@ func FuzzRegisterConsumer(f *testing.F) {
 		consumerRegister := datagen.GenRandomCosmosConsumerRegister(r)
 		// Register the consumer
 		_, err = msgServer.RegisterConsumer(ctx, &types.MsgRegisterConsumer{
-			ConsumerId:          consumerRegister.ConsumerId,
-			ConsumerName:        consumerRegister.ConsumerName,
-			ConsumerDescription: consumerRegister.ConsumerDescription,
+			ConsumerId:               consumerRegister.ConsumerId,
+			ConsumerName:             consumerRegister.ConsumerName,
+			ConsumerDescription:      consumerRegister.ConsumerDescription,
+			BabylonRewardsCommission: consumerRegister.BabylonRewardsCommission,
 		})
 		require.Error(t, err)
 		require.ErrorIs(t, err, govtypes.ErrInvalidSigner)
@@ -73,9 +101,10 @@ func FuzzRegisterConsumer(f *testing.F) {
 		babylonApp.IBCKeeper.ClientKeeper.SetClientState(ctx, consumerRegister.ConsumerId, &ibctmtypes.ClientState{})
 		// Register the consumer
 		_, err = msgServer.RegisterConsumer(ctx, &types.MsgRegisterConsumer{
-			ConsumerId:          consumerRegister.ConsumerId,
-			ConsumerName:        consumerRegister.ConsumerName,
-			ConsumerDescription: consumerRegister.ConsumerDescription,
+			ConsumerId:               consumerRegister.ConsumerId,
+			ConsumerName:             consumerRegister.ConsumerName,
+			ConsumerDescription:      consumerRegister.ConsumerDescription,
+			BabylonRewardsCommission: consumerRegister.BabylonRewardsCommission,
 		})
 		require.NoError(t, err)
 		// check that the consumer is registered
@@ -96,6 +125,7 @@ func FuzzRegisterConsumer(f *testing.F) {
 			ConsumerName:                  consumerRegister.ConsumerName,
 			ConsumerDescription:           consumerRegister.ConsumerDescription,
 			RollupFinalityContractAddress: contractAddr.String(),
+			BabylonRewardsCommission:      consumerRegister.BabylonRewardsCommission,
 		})
 		require.NoError(t, err)
 		// check that the consumer is registered

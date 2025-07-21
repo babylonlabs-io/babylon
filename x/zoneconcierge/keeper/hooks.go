@@ -2,8 +2,10 @@ package keeper
 
 import (
 	"context"
+	"errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 
 	checkpointingtypes "github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
 	epochingtypes "github.com/babylonlabs-io/babylon/v3/x/epoching/types"
@@ -21,17 +23,14 @@ var _ epochingtypes.EpochingHooks = Hooks{}
 func (k Keeper) Hooks() Hooks { return Hooks{k} }
 
 func (h Hooks) AfterEpochEnds(ctx context.Context, epoch uint64) {
-	// upon an epoch has ended, index the current chain info for each Consumer
-	// TODO: do this together when epoch is sealed?
-	for _, consumerID := range h.k.GetAllConsumerIDs(ctx) {
-		h.k.recordEpochChainInfo(ctx, consumerID, epoch)
-	}
+	// upon an epoch has ended, record the latest headers for each consumer
+	h.k.recordEpochHeaders(ctx, epoch)
 }
 
 func (h Hooks) AfterRawCheckpointSealed(ctx context.Context, epoch uint64) error {
-	// upon a raw checkpoint is sealed, index the current chain info for each consumer,
+	// upon a raw checkpoint is sealed, record the proofs for the epoch headers
 	// and generate/save the proof that the epoch is sealed
-	h.k.recordEpochChainInfoProofs(ctx, epoch)
+	h.k.recordEpochHeadersProofs(ctx, epoch)
 	h.k.recordSealedEpochProof(ctx, epoch)
 	return nil
 }
@@ -42,7 +41,7 @@ func (h Hooks) AfterRawCheckpointFinalized(ctx context.Context, epoch uint64) er
 
 	// send BTC timestamp to all open channels with ZoneConcierge
 	if err := h.k.BroadcastBTCTimestamps(ctx, epoch, headersToBroadcast); err != nil {
-		panic(err)
+		h.handleHookBroadcastError(ctx, "BroadcastBTCTimestamps", err)
 	}
 
 	// only update the segment if we have broadcasted some headers
@@ -52,6 +51,24 @@ func (h Hooks) AfterRawCheckpointFinalized(ctx context.Context, epoch uint64) er
 		})
 	}
 	return nil
+}
+
+// handleHookBroadcastError provides structured error handling for IBC broadcast operations in hooks
+func (h Hooks) handleHookBroadcastError(ctx context.Context, operation string, err error) {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+
+	if errors.Is(err, clienttypes.ErrClientNotActive) {
+		h.k.Logger(sdkCtx).Info("IBC client is not active, skipping broadcast in hook",
+			"operation", operation,
+			"error", err.Error(),
+		)
+		return
+	}
+
+	h.k.Logger(sdkCtx).Error("failed to broadcast IBC packet in hook, continuing operation",
+		"operation", operation,
+		"error", err.Error(),
+	)
 }
 
 // Other unused hooks

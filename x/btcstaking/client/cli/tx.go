@@ -10,6 +10,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -51,6 +52,7 @@ func GetTxCmd() *cobra.Command {
 		NewSelectiveSlashingEvidenceCmd(),
 		NewAddBTCDelegationInclusionProofCmd(),
 		NewBTCStakeExpandCmd(),
+		NewAddBsnRewardsCmd(),
 	)
 
 	return cmd
@@ -451,8 +453,8 @@ func NewBTCUndelegateCmd() *cobra.Command {
 
 func NewSelectiveSlashingEvidenceCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "selective-slashing-evidence [staking_tx_hash] [recovered_fp_btc_sk]",
-		Args:  cobra.ExactArgs(2),
+		Use:   "selective-slashing-evidence [recovered_fp_btc_sk]",
+		Args:  cobra.ExactArgs(1),
 		Short: "Add the recovered BTC SK of a finality provider that launched selective slashing offence.",
 		Long: strings.TrimSpace(
 			`Add the recovered BTC SK of a finality provider that launched selective slashing offence. The SK is recovered from a pair of Schnorr/adaptor signatures`, // TODO: example
@@ -463,9 +465,6 @@ func NewSelectiveSlashingEvidenceCmd() *cobra.Command {
 				return err
 			}
 
-			// get staking tx hash
-			stakingTxHash := args[0]
-
 			// get delegator signature for unbonding tx
 			fpSKBytes, err := hex.DecodeString(args[1])
 			if err != nil {
@@ -474,7 +473,6 @@ func NewSelectiveSlashingEvidenceCmd() *cobra.Command {
 
 			msg := types.MsgSelectiveSlashingEvidence{
 				Signer:           clientCtx.FromAddress.String(),
-				StakingTxHash:    stakingTxHash,
 				RecoveredFpBtcSk: fpSKBytes,
 			}
 
@@ -623,4 +621,108 @@ func parseArgsIntoMsgCreateBTCDelegation(args []string) (*types.MsgCreateBTCDele
 		UnbondingSlashingTx:           unbondingSlashingTx,
 		DelegatorUnbondingSlashingSig: delegatorUnbondingSlashingSig,
 	}, nil
+}
+
+func NewAddBsnRewardsCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "add-bsn-rewards [bsn-consumer-id] [total-rewards] [fp-ratios]",
+		Args:  cobra.ExactArgs(3),
+		Short: "Add BSN rewards for distribution to finality providers",
+		Long: strings.TrimSpace(
+			`Add BSN rewards for distribution to finality providers of a specific BSN consumer.
+
+Example:
+babylond tx btcstaking add-bsn-rewards consumer1 1000ubbn "fp1_btc_pk:0.6,fp2_btc_pk:0.4"
+
+Where fp-ratios is a comma-separated list of "btc_pk:ratio" pairs that must sum to 1.0`),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			// Parse BSN consumer ID
+			bsnConsumerID := args[0]
+			if bsnConsumerID == "" {
+				return fmt.Errorf("BSN consumer ID cannot be empty")
+			}
+
+			// Parse total rewards
+			totalRewards, err := sdk.ParseCoinsNormalized(args[1])
+			if err != nil {
+				return fmt.Errorf("invalid total rewards: %w", err)
+			}
+
+			// Parse FP ratios
+			fpRatios, err := ParseFpRatios(args[2])
+			if err != nil {
+				return fmt.Errorf("invalid FP ratios: %w", err)
+			}
+
+			// Validate ratios sum to 1.0
+			ratioSum := sdkmath.LegacyZeroDec()
+			for _, fpRatio := range fpRatios {
+				ratioSum = ratioSum.Add(fpRatio.Ratio)
+			}
+
+			if !ratioSum.Equal(sdkmath.LegacyOneDec()) {
+				return fmt.Errorf("FP ratios must sum to 1.0, got: %s", ratioSum.String())
+			}
+
+			msg := &types.MsgAddBsnRewards{
+				Sender:        clientCtx.FromAddress.String(),
+				BsnConsumerId: bsnConsumerID,
+				TotalRewards:  totalRewards,
+				FpRatios:      fpRatios,
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+	return cmd
+}
+
+// parseFpRatios parses a comma-separated list of "btc_pk:ratio" pairs
+func ParseFpRatios(fpRatiosStr string) ([]types.FpRatio, error) {
+	if fpRatiosStr == "" {
+		return nil, fmt.Errorf("FP ratios cannot be empty")
+	}
+
+	pairs := strings.Split(fpRatiosStr, ",")
+	fpRatios := make([]types.FpRatio, 0, len(pairs))
+
+	for _, pair := range pairs {
+		parts := strings.Split(strings.TrimSpace(pair), ":")
+		if len(parts) != 2 {
+			return nil, fmt.Errorf("invalid FP ratio format, expected 'btc_pk:ratio', got: %s", pair)
+		}
+
+		btcPkHex := strings.TrimSpace(parts[0])
+		ratioStr := strings.TrimSpace(parts[1])
+
+		// Parse BTC public key
+		btcPk, err := bbn.NewBIP340PubKeyFromHex(btcPkHex)
+		if err != nil {
+			return nil, fmt.Errorf("invalid BTC public key %s: %w", btcPkHex, err)
+		}
+
+		// Validate ratio
+		ratio, err := sdkmath.LegacyNewDecFromStr(ratioStr)
+		if err != nil {
+			return nil, fmt.Errorf("invalid ratio %s: %w", ratioStr, err)
+		}
+
+		if ratio.IsNegative() || ratio.GT(sdkmath.LegacyOneDec()) {
+			return nil, fmt.Errorf("ratio must be between 0 and 1, got: %s", ratioStr)
+		}
+
+		fpRatios = append(fpRatios, types.FpRatio{
+			BtcPk: btcPk,
+			Ratio: ratio,
+		})
+	}
+
+	return fpRatios, nil
 }

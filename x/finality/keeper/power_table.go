@@ -52,7 +52,7 @@ func (k Keeper) GetCurrentVotingPower(ctx context.Context, fpBTCPK []byte) (uint
 	storeAtHeight := prefix.NewStore(store, sdk.Uint64ToBigEndian(lastHeight))
 
 	// if the finality provider is not known, return 0 voting power
-	if !k.BTCStakingKeeper.HasFinalityProvider(ctx, fpBTCPK) {
+	if !k.BTCStakingKeeper.BabylonFinalityProviderExists(ctx, fpBTCPK) {
 		return lastHeight, 0
 	}
 

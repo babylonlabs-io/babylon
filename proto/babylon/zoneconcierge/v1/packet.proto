@@ -25,23 +25,24 @@ message OutboundPacket {
 message InboundPacket {
   // packet is the actual message carried in the IBC packet
   oneof packet {
-    ConsumerSlashingIBCPacket consumer_slashing = 1;
+    BSNSlashingIBCPacket bsn_slashing = 1;
+    BSNBaseBTCHeaderIBCPacket bsn_base_btc_header = 2;
   }
 }
 
 // BTCHeaders contains BTC headers that have been verified and inserted into Babylon's BTC light client
-// These headers are forwarded to consumer chains to keep their light clients in sync with Babylon
+// These headers are forwarded to BSNs to keep their light clients in sync with Babylon
 message BTCHeaders {
     repeated babylon.btclightclient.v1.BTCHeaderInfo headers = 1;
 }
 
 // BTCTimestamp is a BTC timestamp that carries information of a BTC-finalised epoch.
 // It includes a number of BTC headers, a raw checkpoint, an epoch metadata, and
-// a Cosmos Consumer header if there exists Cosmos Consumer headers checkpointed to this epoch.
+// a BSN header if there exists BSN headers checkpointed to this epoch.
 // Upon a newly finalised epoch in Babylon, Babylon will send a BTC timestamp to each
-// consumer chain via IBC.
+// BSN via IBC.
 message BTCTimestamp {
-  // header is the last Cosmos Consumer header in the finalized Babylon epoch
+  // header is the last BSN header in the finalized Babylon epoch
   babylon.zoneconcierge.v1.IndexedHeader header = 1;
 
   /*
@@ -66,13 +67,20 @@ message BTCTimestamp {
   /*
      Proofs that the header is finalized
   */
-  babylon.zoneconcierge.v1.ProofFinalizedChainInfo proof = 6;
+  babylon.zoneconcierge.v1.ProofFinalizedHeader proof = 6;
 }
 
-// ConsumerSlashingIBCPacket defines the slashing information that a Consumer sends to Babylon's ZoneConcierge upon a
-// Consumer slashing event.
-// It includes the FP public key, the Consumer block height at the slashing event, and the double sign evidence.
-message ConsumerSlashingIBCPacket {
-  /// evidence is the FP slashing evidence that the Consumer sends to Babylon
+// BSNSlashingIBCPacket defines the slashing information that a BSN sends to Babylon's ZoneConcierge upon a
+// BSN slashing event.
+// It includes the FP public key, the BSN block height at the slashing event, and the double sign evidence.
+message BSNSlashingIBCPacket {
+  /// evidence is the FP slashing evidence that the BSN sends to Babylon
   babylon.finality.v1.Evidence evidence = 1;
+}
+
+// BSNBaseBTCHeaderIBCPacket defines the base BTC header information that a BSN sends to Babylon's ZoneConcierge
+// to inform Babylon about which BTC header the BSN considers as its starting point for BTC light client synchronization
+message BSNBaseBTCHeaderIBCPacket {
+  // base_btc_header is the BTC header that the BSN uses as the base for its BTC light client
+  babylon.btclightclient.v1.BTCHeaderInfo base_btc_header = 1;
 }

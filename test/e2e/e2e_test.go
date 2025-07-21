@@ -58,3 +58,8 @@ func TestFinalityContractTestSuite(t *testing.T) {
 func TestBSNFeeCollectionTestSuite(t *testing.T) {
 	suite.Run(t, new(BSNFeeCollectionTestSuite))
 }
+
+// TestBtcRewardsDistributionBsnRollup tests the bsn rewards for rollups
+func TestBtcRewardsDistributionBsnRollup(t *testing.T) {
+	suite.Run(t, new(BtcRewardsDistributionBsnRollup))
+}

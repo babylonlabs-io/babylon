@@ -35,6 +35,19 @@ func BTCStakingKeeperWithStore(
 	btccKeeper types.BtcCheckpointKeeper,
 	iKeeper types.IncentiveKeeper,
 ) (*keeper.Keeper, sdk.Context) {
+	return BTCStakingKeeperWithStoreAndBank(t, db, stateStore, storeKey, btclcKeeper, btccKeeper, iKeeper, nil)
+}
+
+func BTCStakingKeeperWithStoreAndBank(
+	t testing.TB,
+	db dbm.DB,
+	stateStore store.CommitMultiStore,
+	storeKey *storetypes.KVStoreKey,
+	btclcKeeper types.BTCLightClientKeeper,
+	btccKeeper types.BtcCheckpointKeeper,
+	iKeeper types.IncentiveKeeper,
+	bankKeeper types.BankKeeper,
+) (*keeper.Keeper, sdk.Context) {
 	if storeKey == nil {
 		storeKey = storetypes.NewKVStoreKey(types.StoreKey)
 	}
@@ -67,6 +80,8 @@ func BTCStakingKeeperWithStore(
 		btccKeeper,
 		bscKeeper,
 		iKeeper,
+		bankKeeper,
+
 		&chaincfg.SimNetParams,
 		appparams.AccBTCStaking.String(),
 		appparams.AccGov.String(),
