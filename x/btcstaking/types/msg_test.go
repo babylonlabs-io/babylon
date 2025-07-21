@@ -12,6 +12,8 @@ import (
 	bbntypes "github.com/babylonlabs-io/babylon/v3/types"
 	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 	"github.com/btcsuite/btcd/btcec/v2"
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	stktypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
@@ -321,6 +323,14 @@ func TestMsgSelectiveSlashingEvidence_ValidateBasic(t *testing.T) {
 			expErr: "invalid signer addr",
 		},
 		{
+			name: "invalid staking tx hash length",
+			msg: types.MsgSelectiveSlashingEvidence{
+				Signer:           validAddr,
+				RecoveredFpBtcSk: validSk,
+			},
+			expErr: fmt.Sprintf("staking tx hash is not %d", chainhash.MaxHashStringSize),
+		},
+		{
 			name: "invalid BTC SK length",
 			msg: types.MsgSelectiveSlashingEvidence{
 				Signer:           validAddr,
@@ -387,5 +397,470 @@ func TestStructFieldConsistency(t *testing.T) {
 	}
 	if len(missingFromCreate) > 0 {
 		t.Errorf("MsgCreateBTCDelegation is missing fields (except final 2) from MsgBtcStakeExpand: %v", missingFromCreate)
+	}
+}
+
+func TestMsgAddBsnRewardsValidateBasic(t *testing.T) {
+	r := rand.New(rand.NewSource(42))
+
+	// Helper to create valid test data
+	validAddr := datagen.GenRandomAddress().String()
+	validBsnConsumerId := "consumer-123"
+	validCoin := sdk.NewCoin("ubbn", math.NewInt(1000000))
+	validTotalRewards := sdk.NewCoins(validCoin)
+
+	// Create valid BTC public keys
+	validBtcPk1, err := datagen.GenRandomBIP340PubKey(r)
+	require.NoError(t, err)
+	validBtcPk2, err := datagen.GenRandomBIP340PubKey(r)
+	require.NoError(t, err)
+
+	// Create valid ratios that sum to 1.0
+	ratio1 := math.LegacyNewDecWithPrec(6, 1) // 0.6
+	ratio2 := math.LegacyNewDecWithPrec(4, 1) // 0.4
+
+	validFpRatios := []types.FpRatio{
+		{
+			BtcPk: validBtcPk1,
+			Ratio: ratio1,
+		},
+		{
+			BtcPk: validBtcPk2,
+			Ratio: ratio2,
+		},
+	}
+
+	testCases := []struct {
+		name     string
+		msg      *types.MsgAddBsnRewards
+		expected error
+	}{
+		{
+			name: "valid message",
+			msg: &types.MsgAddBsnRewards{
+				Sender:        validAddr,
+				BsnConsumerId: validBsnConsumerId,
+				TotalRewards:  validTotalRewards,
+				FpRatios:      validFpRatios,
+			},
+			expected: nil,
+		},
+		{
+			name: "invalid sender address",
+			msg: &types.MsgAddBsnRewards{
+				Sender:        "invalid_address",
+				BsnConsumerId: validBsnConsumerId,
+				TotalRewards:  validTotalRewards,
+				FpRatios:      validFpRatios,
+			},
+			expected: fmt.Errorf("invalid sender address: invalid_address - decoding bech32 failed: invalid separator index -1"),
+		},
+		{
+			name: "empty sender address",
+			msg: &types.MsgAddBsnRewards{
+				Sender:        "",
+				BsnConsumerId: validBsnConsumerId,
+				TotalRewards:  validTotalRewards,
+				FpRatios:      validFpRatios,
+			},
+			expected: fmt.Errorf("invalid sender address:  - empty address string is not allowed"),
+		},
+		{
+			name: "empty BSN consumer ID",
+			msg: &types.MsgAddBsnRewards{
+				Sender:        validAddr,
+				BsnConsumerId: "",
+				TotalRewards:  validTotalRewards,
+				FpRatios:      validFpRatios,
+			},
+			expected: fmt.Errorf("empty BSN consumer ID"),
+		},
+		{
+			name: "empty total rewards",
+			msg: &types.MsgAddBsnRewards{
+				Sender:        validAddr,
+				BsnConsumerId: validBsnConsumerId,
+				TotalRewards:  sdk.NewCoins(),
+				FpRatios:      validFpRatios,
+			},
+			expected: fmt.Errorf("empty total rewards"),
+		},
+		{
+			name: "zero total rewards",
+			msg: &types.MsgAddBsnRewards{
+				Sender:        validAddr,
+				BsnConsumerId: validBsnConsumerId,
+				TotalRewards:  sdk.NewCoins(sdk.NewCoin("ubbn", math.NewInt(0))),
+				FpRatios:      validFpRatios,
+			},
+			expected: fmt.Errorf("empty total rewards"),
+		},
+		{
+			name: "negative total rewards",
+			msg: &types.MsgAddBsnRewards{
+				Sender:        validAddr,
+				BsnConsumerId: validBsnConsumerId,
+				TotalRewards:  sdk.Coins{sdk.Coin{Denom: "ubbn", Amount: math.NewInt(-100)}},
+				FpRatios:      validFpRatios,
+			},
+			expected: fmt.Errorf("invalid total rewards: coin -100ubbn amount is not positive"),
+		},
+		{
+			name: "invalid coin denomination",
+			msg: &types.MsgAddBsnRewards{
+				Sender:        validAddr,
+				BsnConsumerId: validBsnConsumerId,
+				TotalRewards:  sdk.Coins{sdk.Coin{Denom: "", Amount: math.NewInt(1000)}},
+				FpRatios:      validFpRatios,
+			},
+			expected: fmt.Errorf("invalid total rewards: invalid denom: "),
+		},
+		{
+			name: "empty FP ratios",
+			msg: &types.MsgAddBsnRewards{
+				Sender:        validAddr,
+				BsnConsumerId: validBsnConsumerId,
+				TotalRewards:  validTotalRewards,
+				FpRatios:      []types.FpRatio{},
+			},
+			expected: fmt.Errorf("empty finality provider ratios"),
+		},
+		{
+			name: "nil BTC public key",
+			msg: &types.MsgAddBsnRewards{
+				Sender:        validAddr,
+				BsnConsumerId: validBsnConsumerId,
+				TotalRewards:  validTotalRewards,
+				FpRatios: []types.FpRatio{
+					{
+						BtcPk: nil,
+						Ratio: math.LegacyOneDec(),
+					},
+				},
+			},
+			expected: fmt.Errorf("finality provider 0: BTC public key cannot be nil"),
+		},
+		{
+			name: "negative ratio",
+			msg: &types.MsgAddBsnRewards{
+				Sender:        validAddr,
+				BsnConsumerId: validBsnConsumerId,
+				TotalRewards:  validTotalRewards,
+				FpRatios: []types.FpRatio{
+					{
+						BtcPk: validBtcPk1,
+						Ratio: math.LegacyNewDecWithPrec(-1, 1), // -0.1
+					},
+				},
+			},
+			expected: fmt.Errorf("finality provider 0: ratio cannot be negative"),
+		},
+		{
+			name: "ratio greater than 1.0",
+			msg: &types.MsgAddBsnRewards{
+				Sender:        validAddr,
+				BsnConsumerId: validBsnConsumerId,
+				TotalRewards:  validTotalRewards,
+				FpRatios: []types.FpRatio{
+					{
+						BtcPk: validBtcPk1,
+						Ratio: math.LegacyNewDecWithPrec(15, 1), // 1.5
+					},
+				},
+			},
+			expected: fmt.Errorf("finality provider 0: ratio cannot be greater than 1.0"),
+		},
+		{
+			name: "zero ratio",
+			msg: &types.MsgAddBsnRewards{
+				Sender:        validAddr,
+				BsnConsumerId: validBsnConsumerId,
+				TotalRewards:  validTotalRewards,
+				FpRatios: []types.FpRatio{
+					{
+						BtcPk: validBtcPk1,
+						Ratio: math.LegacyZeroDec(),
+					},
+				},
+			},
+			expected: fmt.Errorf("finality provider 0: ratio cannot be zero"),
+		},
+		{
+			name: "ratios sum to more than 1.0",
+			msg: &types.MsgAddBsnRewards{
+				Sender:        validAddr,
+				BsnConsumerId: validBsnConsumerId,
+				TotalRewards:  validTotalRewards,
+				FpRatios: []types.FpRatio{
+					{
+						BtcPk: validBtcPk1,
+						Ratio: math.LegacyNewDecWithPrec(7, 1), // 0.7
+					},
+					{
+						BtcPk: validBtcPk2,
+						Ratio: math.LegacyNewDecWithPrec(5, 1), // 0.5
+					},
+				},
+			},
+			expected: fmt.Errorf("finality provider ratios must sum to 1.0, got 1.200000000000000000"),
+		},
+		{
+			name: "ratios sum to less than 1.0",
+			msg: &types.MsgAddBsnRewards{
+				Sender:        validAddr,
+				BsnConsumerId: validBsnConsumerId,
+				TotalRewards:  validTotalRewards,
+				FpRatios: []types.FpRatio{
+					{
+						BtcPk: validBtcPk1,
+						Ratio: math.LegacyNewDecWithPrec(3, 1), // 0.3
+					},
+					{
+						BtcPk: validBtcPk2,
+						Ratio: math.LegacyNewDecWithPrec(3, 1), // 0.3
+					},
+				},
+			},
+			expected: fmt.Errorf("finality provider ratios must sum to 1.0, got 0.600000000000000000"),
+		},
+		{
+			name: "ratios sum to exactly 1.0 (edge case with precision)",
+			msg: &types.MsgAddBsnRewards{
+				Sender:        validAddr,
+				BsnConsumerId: validBsnConsumerId,
+				TotalRewards:  validTotalRewards,
+				FpRatios: []types.FpRatio{
+					{
+						BtcPk: validBtcPk1,
+						Ratio: math.LegacyNewDecWithPrec(3333333333, 10), // 0.3333333333
+					},
+					{
+						BtcPk: validBtcPk2,
+						Ratio: math.LegacyNewDecWithPrec(6666666667, 10), // 0.6666666667
+					},
+				},
+			},
+			expected: nil, // Should pass due to tolerance
+		},
+		{
+			name: "single FP with ratio 1.0",
+			msg: &types.MsgAddBsnRewards{
+				Sender:        validAddr,
+				BsnConsumerId: validBsnConsumerId,
+				TotalRewards:  validTotalRewards,
+				FpRatios: []types.FpRatio{
+					{
+						BtcPk: validBtcPk1,
+						Ratio: math.LegacyOneDec(),
+					},
+				},
+			},
+			expected: nil,
+		},
+		{
+			name: "multiple coins in total rewards",
+			msg: &types.MsgAddBsnRewards{
+				Sender:        validAddr,
+				BsnConsumerId: validBsnConsumerId,
+				TotalRewards: sdk.NewCoins(
+					sdk.NewCoin("ubbn", math.NewInt(1000000)),
+					sdk.NewCoin("uatom", math.NewInt(500000)),
+				),
+				FpRatios: validFpRatios,
+			},
+			expected: nil,
+		},
+		{
+			name: "duplicate finality provider BTC public keys",
+			msg: &types.MsgAddBsnRewards{
+				Sender:        validAddr,
+				BsnConsumerId: validBsnConsumerId,
+				TotalRewards:  validTotalRewards,
+				FpRatios: []types.FpRatio{
+					{
+						BtcPk: validBtcPk1,
+						Ratio: math.LegacyNewDecWithPrec(5, 1), // 0.5
+					},
+					{
+						BtcPk: validBtcPk1, // Same BTC public key as above
+						Ratio: math.LegacyNewDecWithPrec(5, 1), // 0.5
+					},
+				},
+			},
+			expected: fmt.Errorf("duplicate finality provider BTC public key at index 1: %s", validBtcPk1.MarshalHex()),
+		},
+		{
+			name: "duplicate finality provider with three FPs (duplicate at index 2)",
+			msg: &types.MsgAddBsnRewards{
+				Sender:        validAddr,
+				BsnConsumerId: validBsnConsumerId,
+				TotalRewards:  validTotalRewards,
+				FpRatios: []types.FpRatio{
+					{
+						BtcPk: validBtcPk1,
+						Ratio: math.LegacyNewDecWithPrec(4, 1), // 0.4
+					},
+					{
+						BtcPk: validBtcPk2,
+						Ratio: math.LegacyNewDecWithPrec(3, 1), // 0.3
+					},
+					{
+						BtcPk: validBtcPk1, // Duplicate of first FP
+						Ratio: math.LegacyNewDecWithPrec(3, 1), // 0.3
+					},
+				},
+			},
+			expected: fmt.Errorf("duplicate finality provider BTC public key at index 2: %s", validBtcPk1.MarshalHex()),
+		},
+		{
+			name: "rewards with different denominations",
+			msg: &types.MsgAddBsnRewards{
+				Sender:        validAddr,
+				BsnConsumerId: validBsnConsumerId,
+				TotalRewards: sdk.NewCoins(
+					sdk.NewCoin("ubbn", math.NewInt(1000000)),
+					sdk.NewCoin("uatom", math.NewInt(500000)),
+					sdk.NewCoin("ustake", math.NewInt(250000)),
+				),
+				FpRatios: validFpRatios,
+			},
+			expected: nil,
+		},
+		{
+			name: "rewards with mixed valid and invalid denominations",
+			msg: &types.MsgAddBsnRewards{
+				Sender:        validAddr,
+				BsnConsumerId: validBsnConsumerId,
+				TotalRewards: sdk.Coins{
+					sdk.NewCoin("ubbn", math.NewInt(1000000)),
+					sdk.Coin{Denom: "invalid-denom!", Amount: math.NewInt(500000)}, // Invalid denom with special char
+				},
+				FpRatios: validFpRatios,
+			},
+			expected: fmt.Errorf("invalid total rewards: invalid denom: invalid-denom!"),
+		},
+		{
+			name: "rewards with empty denomination",
+			msg: &types.MsgAddBsnRewards{
+				Sender:        validAddr,
+				BsnConsumerId: validBsnConsumerId,
+				TotalRewards: sdk.Coins{
+					sdk.NewCoin("ubbn", math.NewInt(1000000)),
+					sdk.Coin{Denom: "", Amount: math.NewInt(500000)},
+				},
+				FpRatios: validFpRatios,
+			},
+			expected: fmt.Errorf("invalid total rewards: invalid denom: "),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := tc.msg.ValidateBasic()
+			if tc.expected != nil {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tc.expected.Error())
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestFpRatioValidateBasic(t *testing.T) {
+	r := rand.New(rand.NewSource(42))
+
+	validBtcPk, err := datagen.GenRandomBIP340PubKey(r)
+	require.NoError(t, err)
+
+	testCases := []struct {
+		name     string
+		fpRatio  *types.FpRatio
+		expected error
+	}{
+		{
+			name: "valid FpRatio",
+			fpRatio: &types.FpRatio{
+				BtcPk: validBtcPk,
+				Ratio: math.LegacyNewDecWithPrec(5, 1), // 0.5
+			},
+			expected: nil,
+		},
+		{
+			name: "valid FpRatio with ratio 1.0",
+			fpRatio: &types.FpRatio{
+				BtcPk: validBtcPk,
+				Ratio: math.LegacyOneDec(),
+			},
+			expected: nil,
+		},
+		{
+			name: "valid FpRatio with small ratio",
+			fpRatio: &types.FpRatio{
+				BtcPk: validBtcPk,
+				Ratio: math.LegacyNewDecWithPrec(1, 10), // 0.0000000001
+			},
+			expected: nil,
+		},
+		{
+			name: "nil BTC public key",
+			fpRatio: &types.FpRatio{
+				BtcPk: nil,
+				Ratio: math.LegacyNewDecWithPrec(5, 1),
+			},
+			expected: fmt.Errorf("BTC public key cannot be nil"),
+		},
+		{
+			name: "negative ratio",
+			fpRatio: &types.FpRatio{
+				BtcPk: validBtcPk,
+				Ratio: math.LegacyNewDecWithPrec(-1, 1), // -0.1
+			},
+			expected: fmt.Errorf("ratio cannot be negative"),
+		},
+		{
+			name: "zero ratio",
+			fpRatio: &types.FpRatio{
+				BtcPk: validBtcPk,
+				Ratio: math.LegacyZeroDec(),
+			},
+			expected: fmt.Errorf("ratio cannot be zero"),
+		},
+		{
+			name: "ratio greater than 1.0",
+			fpRatio: &types.FpRatio{
+				BtcPk: validBtcPk,
+				Ratio: math.LegacyNewDecWithPrec(15, 1), // 1.5
+			},
+			expected: fmt.Errorf("ratio cannot be greater than 1.0"),
+		},
+		{
+			name: "ratio much greater than 1.0",
+			fpRatio: &types.FpRatio{
+				BtcPk: validBtcPk,
+				Ratio: math.LegacyNewDec(100), // 100.0
+			},
+			expected: fmt.Errorf("ratio cannot be greater than 1.0"),
+		},
+		{
+			name: "invalid BTC public key length",
+			fpRatio: &types.FpRatio{
+				BtcPk: (*bbntypes.BIP340PubKey)(&[]byte{0x01, 0x02, 0x03}), // too short
+				Ratio: math.LegacyNewDecWithPrec(5, 1),
+			},
+			expected: fmt.Errorf("invalid FP BTC PubKey. Expected length 32, got 3"),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := tc.fpRatio.ValidateBasic()
+			if tc.expected != nil {
+				require.Error(t, err)
+				require.Equal(t, tc.expected.Error(), err.Error())
+			} else {
+				require.NoError(t, err)
+			}
+		})
 	}
 }
