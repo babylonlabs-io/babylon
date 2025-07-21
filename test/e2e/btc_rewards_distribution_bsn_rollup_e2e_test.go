@@ -207,6 +207,9 @@ func (s *BtcRewardsDistributionBsnRollup) Test1CreateFinalityProviders() {
 	)
 	s.NotNil(s.fp4cons4)
 
+	n1.WaitForNextBlock()
+	n2.WaitForNextBlock()
+
 	actualFps := n2.QueryFinalityProviders("")
 	require.Len(s.T(), actualFps, 4, "should have created all the FPs to start the test")
 	s.T().Log("All Fps created")
