@@ -20,20 +20,18 @@ func DefaultGenesis() *GenesisState {
 // NewGenesis creates a new GenesisState instance
 func NewGenesis(
 	params Params,
-	chainsInfo []*ChainInfo,
-	indexedHeaders []*IndexedHeader,
-	epochsInfo []*EpochChainInfoEntry,
+	finalizedHeaders []*FinalizedHeaderEntry,
 	lastSentSegment *BTCChainSegment,
 	sealedEpochs []*SealedEpochProofEntry,
+	bsnBtcStates []*BSNBTCStateEntry,
 ) *GenesisState {
 	return &GenesisState{
-		PortId:               PortID,
-		Params:               params,
-		ChainsInfo:           chainsInfo,
-		ChainsIndexedHeaders: indexedHeaders,
-		ChainsEpochsInfo:     epochsInfo,
-		LastSentSegment:      lastSentSegment,
-		SealedEpochsProofs:   sealedEpochs,
+		PortId:             PortID,
+		Params:             params,
+		FinalizedHeaders:   finalizedHeaders,
+		LastSentSegment:    lastSentSegment,
+		SealedEpochsProofs: sealedEpochs,
+		BsnBtcStates:       bsnBtcStates,
 	}
 }
 
@@ -44,29 +42,11 @@ func (gs GenesisState) Validate() error {
 		return err
 	}
 
-	if err := types.ValidateEntries(gs.ChainsInfo, func(ci *ChainInfo) string { return ci.ConsumerId }); err != nil {
-		return err
-	}
-
 	if err := types.ValidateEntries(
-		gs.ChainsIndexedHeaders,
-		func(ih *IndexedHeader) string {
+		gs.FinalizedHeaders,
+		func(fh *FinalizedHeaderEntry) string {
 			// unique key is consumer id + epoch number
-			return ih.ConsumerId + strconv.FormatUint(ih.BabylonEpoch, 10)
-		}); err != nil {
-		return err
-	}
-
-	if err := types.ValidateEntries(
-		gs.ChainsEpochsInfo,
-		func(eci *EpochChainInfoEntry) string {
-			var consumerId string
-			// if this is nil, the corresponding error is returned later
-			if eci.ChainInfo != nil && eci.ChainInfo.ChainInfo != nil {
-				consumerId = eci.ChainInfo.ChainInfo.ConsumerId
-			}
-			// unique key is consumer id + epoch number
-			return consumerId + strconv.FormatUint(eci.EpochNumber, 10)
+			return fh.ConsumerId + strconv.FormatUint(fh.EpochNumber, 10)
 		}); err != nil {
 		return err
 	}
@@ -81,14 +61,25 @@ func (gs GenesisState) Validate() error {
 		return err
 	}
 
+	if err := types.ValidateEntries(gs.BsnBtcStates, func(cs *BSNBTCStateEntry) string { return cs.ConsumerId }); err != nil {
+		return err
+	}
+
 	return gs.Params.Validate()
 }
 
-func (eci EpochChainInfoEntry) Validate() error {
-	if eci.ChainInfo == nil {
-		return errors.New("invalid epoch chain info entry. empty chain info")
+func (fhe FinalizedHeaderEntry) Validate() error {
+	if fhe.HeaderWithProof == nil {
+		return errors.New("invalid finalized header entry. empty header with proof")
 	}
-	return eci.ChainInfo.Validate()
+	return fhe.HeaderWithProof.Validate()
+}
+
+func (cse BSNBTCStateEntry) Validate() error {
+	if cse.State == nil {
+		return errors.New("invalid BSN BTC state entry. empty state")
+	}
+	return cse.State.Validate()
 }
 
 func (sep SealedEpochProofEntry) Validate() error {
@@ -101,17 +92,15 @@ func (sep SealedEpochProofEntry) Validate() error {
 // Helper function to sort slices to get a deterministic
 // result on the tests
 func SortData(gs *GenesisState) {
-	sort.Slice(gs.ChainsInfo, func(i, j int) bool {
-		return gs.ChainsInfo[i].ConsumerId < gs.ChainsInfo[j].ConsumerId
-	})
-	sort.Slice(gs.ChainsIndexedHeaders, func(i, j int) bool {
-		return gs.ChainsIndexedHeaders[i].ConsumerId < gs.ChainsIndexedHeaders[j].ConsumerId
-	})
-	sort.Slice(gs.ChainsEpochsInfo, func(i, j int) bool {
-		if gs.ChainsEpochsInfo[i].EpochNumber != gs.ChainsEpochsInfo[j].EpochNumber {
-			return gs.ChainsEpochsInfo[i].EpochNumber < gs.ChainsEpochsInfo[j].EpochNumber
+	sort.Slice(gs.FinalizedHeaders, func(i, j int) bool {
+		if gs.FinalizedHeaders[i].EpochNumber != gs.FinalizedHeaders[j].EpochNumber {
+			return gs.FinalizedHeaders[i].EpochNumber < gs.FinalizedHeaders[j].EpochNumber
 		}
-		return gs.ChainsEpochsInfo[i].ChainInfo.ChainInfo.ConsumerId < gs.ChainsEpochsInfo[j].ChainInfo.ChainInfo.ConsumerId
+		return gs.FinalizedHeaders[i].ConsumerId < gs.FinalizedHeaders[j].ConsumerId
+	})
+
+	sort.Slice(gs.BsnBtcStates, func(i, j int) bool {
+		return gs.BsnBtcStates[i].ConsumerId < gs.BsnBtcStates[j].ConsumerId
 	})
 
 	sort.Slice(gs.SealedEpochsProofs, func(i, j int) bool {

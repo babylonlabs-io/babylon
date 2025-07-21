@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"context"
-	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -12,6 +11,16 @@ import (
 // HandleHeaderWithValidCommit handles a Consumer header with a valid QC
 func (k Keeper) HandleHeaderWithValidCommit(ctx context.Context, txHash []byte, header *types.HeaderInfo, isOnFork bool) {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
+
+	// Check if the consumer is registered before processing its header
+	if !k.HasConsumer(ctx, header.ClientId) {
+		k.Logger(sdkCtx).Debug("ignoring header from unregistered consumer",
+			"consumer_id", header.ClientId,
+			"height", header.Height,
+		)
+		return
+	}
+
 	babylonHeader := sdkCtx.HeaderInfo()
 	indexedHeader := types.IndexedHeader{
 		ConsumerId:          header.ClientId,
@@ -26,24 +35,6 @@ func (k Keeper) HandleHeaderWithValidCommit(ctx context.Context, txHash []byte, 
 
 	k.Logger(sdkCtx).Debug("found new IBC header", "header", indexedHeader)
 
-	var (
-		chainInfo *types.ChainInfo
-		err       error
-	)
-	if !k.HasChainInfo(ctx, indexedHeader.ConsumerId) {
-		// chain info does not exist yet, initialise chain info for this chain
-		chainInfo, err = k.InitChainInfo(ctx, indexedHeader.ConsumerId)
-		if err != nil {
-			panic(fmt.Errorf("failed to initialize chain info of %s: %w", indexedHeader.ConsumerId, err))
-		}
-	} else {
-		// get chain info
-		chainInfo, err = k.GetChainInfo(ctx, indexedHeader.ConsumerId)
-		if err != nil {
-			panic(fmt.Errorf("failed to get chain info of %s: %w", indexedHeader.ConsumerId, err))
-		}
-	}
-
 	if isOnFork {
 		// Log the fork event
 		k.Logger(sdkCtx).Info(
@@ -53,20 +44,10 @@ func (k Keeper) HandleHeaderWithValidCommit(ctx context.Context, txHash []byte, 
 			"babylon_height", indexedHeader.BabylonHeaderHeight,
 		)
 	} else {
-		// ensure the header is the latest one, otherwise ignore it
-		// NOTE: while an old header is considered acceptable in IBC-Go (see Case_valid_past_update), but
-		// ZoneConcierge should not checkpoint it since Babylon requires monotonic checkpointing
-		if !chainInfo.IsLatestHeader(&indexedHeader) {
-			return
-		}
-
-		// insert header to canonical chain index
-		if err := k.insertHeader(ctx, indexedHeader.ConsumerId, &indexedHeader); err != nil {
-			panic(err)
-		}
-		// update the latest canonical header in chain info
-		if err := k.updateLatestHeader(ctx, indexedHeader.ConsumerId, &indexedHeader); err != nil {
-			panic(err)
+		// Update header if it's newer than existing one
+		existingHeader := k.GetLatestEpochHeader(ctx, indexedHeader.ConsumerId)
+		if existingHeader == nil || indexedHeader.Height > existingHeader.Height {
+			k.SetLatestEpochHeader(ctx, indexedHeader.ConsumerId, &indexedHeader)
 		}
 	}
 }
