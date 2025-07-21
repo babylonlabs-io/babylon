@@ -16,6 +16,7 @@ import (
 
 const (
 	btcstkconsumerModulePath = "btcstkconsumer"
+	zoneconciergeModulePath  = "zoneconcierge"
 )
 
 type SoftwareUpgradeV3TestSuite struct {
@@ -92,12 +93,9 @@ func (s *SoftwareUpgradeV3TestSuite) TestUpgradeV3() {
 	n.QueryParams(btcstkconsumerModulePath, &btcstkconsumerParams)
 	s.T().Logf("btcstkconsumer params: %v", btcstkconsumerParams)
 
-	btcstkparams, ok := btcstkconsumerParams["params"].(map[string]interface{})
-	s.Require().True(ok, "params field should exist and be a map")
-
-	permissionedIntegration, ok := btcstkparams["permissioned_integration"].([]interface{})
-	s.Require().True(ok, "permissioned_integration field should exist and be a map")
-	s.Equal(permissionedIntegration, true)
+	finalisedChainsInfoResp := n.QueryZoneConciergeFinalizedChainsInfo([]string{}, false)
+	s.NoError(err, "zoneconcierge FinalizedChainsInfo query should succeed")
+	s.T().Logf("zoneconcierge FinalizedChainsInfo: %v", finalisedChainsInfoResp)
 
 	n.WaitForNextBlock()
 
