@@ -133,6 +133,8 @@ remove send restrictions
 BSNs to incentive reward tracker.
 - [#1390](https://github.com/babylonlabs-io/babylon/pull/1390) Add additional gas
 cost per multi-staked finality provider
+- [#1394](https://github.com/babylonlabs-io/babylon/pull/1394) Add migration for
+FP data
 
 
 ### Bug fixes

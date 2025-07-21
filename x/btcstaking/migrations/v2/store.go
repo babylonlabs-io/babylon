@@ -20,6 +20,7 @@ func MigrateStore(
 	c codec.BinaryCodec,
 	modifyParams func(ctx context.Context, p *types.Params) error,
 	indexTxHash func(ctx context.Context, txHash *chainhash.Hash),
+	migrateBabylonFinalityProviders func(ctx sdk.Context),
 ) error {
 	if err := migrateParams(ctx, s, c, modifyParams); err != nil {
 		return err
@@ -28,6 +29,8 @@ func MigrateStore(
 	if err := indexAllowedMultiStakingTxs(ctx, indexTxHash); err != nil {
 		return err
 	}
+
+	migrateBabylonFinalityProviders(ctx)
 
 	return nil
 }
