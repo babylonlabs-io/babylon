@@ -19,7 +19,7 @@ func TestParseGovPropFromFile(t *testing.T) {
 
 	pwd, err := os.Getwd()
 	require.NoError(t, err)
-	upgradePath := filepath.Join(pwd, "../", config.UpgradeV2FilePath)
+	upgradePath := filepath.Join(pwd, "../", config.UpgradeV3FilePath)
 
 	_, msgProp, err := parseGovPropFromFile(cdc, upgradePath)
 	require.NoError(t, err)
@@ -32,7 +32,7 @@ func TestWriteGovPropToFile(t *testing.T) {
 
 	pwd, err := os.Getwd()
 	require.NoError(t, err)
-	upgradePath := filepath.Join(pwd, "../", config.UpgradeV2FilePath)
+	upgradePath := filepath.Join(pwd, "../", config.UpgradeV3FilePath)
 
 	prop, msgProp, err := parseGovPropFromFile(cdc, upgradePath)
 	require.NoError(t, err)
@@ -41,7 +41,7 @@ func TestWriteGovPropToFile(t *testing.T) {
 	newPropHeight := r.Int63()
 	msgProp.Plan.Height = newPropHeight
 
-	tempFilePath := filepath.Join(t.TempDir(), filepath.Base(config.UpgradeV2FilePath))
+	tempFilePath := filepath.Join(t.TempDir(), filepath.Base(config.UpgradeV3FilePath))
 
 	err = writeGovPropToFile(cdc, tempFilePath, *prop, *msgProp)
 	require.NoError(t, err)

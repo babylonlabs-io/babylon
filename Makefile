@@ -243,7 +243,7 @@ test-e2e-cache:
 	$(MAKE) test-e2e-cache-btc-staking-pre-approval
 	$(MAKE) test-e2e-cache-ibc-transfer
 	$(MAKE) test-e2e-cache-finality-contract
-#	$(MAKE) test-e2e-cache-upgrade-v2
+	$(MAKE) test-e2e-cache-upgrade-v3
 
 clean-e2e:
 	docker container rm -f $(shell docker container ls -a -q) || true
@@ -273,8 +273,8 @@ test-e2e-cache-ica:
 test-e2e-cache-finality-contract:
 	go test -run TestFinalityContractTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
 
-test-e2e-cache-upgrade-v2:
-	go test -run TestSoftwareUpgradeV2TestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
+test-e2e-cache-upgrade-v3:
+	go test -run TestSoftwareUpgradeV3TestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
 
 test-sim-nondeterminism:
 	@echo "Running non-determinism test..."
