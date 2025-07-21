@@ -39,6 +39,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
+- [#1387](https://github.com/babylonlabs-io/babylon/pull/1387) Refactor the usage of `ChainInfo` and canonical chain indexing.
 - [#1331](https://github.com/babylonlabs-io/babylon/pull/1331/) Improve BSN Header synchronization.
 - [#1304](https://github.com/babylonlabs-io/babylon/pull/304) Update rollup finality e2e tests
 - [#1360](https://github.com/babylonlabs-io/babylon/pull/1360) Replace `panic` with logging in SendPacket calls.

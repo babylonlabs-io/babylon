@@ -42,6 +42,23 @@ func (k Keeper) getClientID(ctx context.Context, channel channeltypes.Identified
 	return clientID, nil
 }
 
+// getChannelForConsumer finds an open channel for a given consumer ID
+func (k Keeper) getChannelForConsumer(ctx context.Context, consumerID string) (channeltypes.IdentifiedChannel, bool) {
+	openChannels := k.GetAllOpenZCChannels(ctx)
+
+	for _, channel := range openChannels {
+		clientID, err := k.getClientID(ctx, channel)
+		if err != nil {
+			continue
+		}
+		if clientID == consumerID {
+			return channel, true
+		}
+	}
+
+	return channeltypes.IdentifiedChannel{}, false
+}
+
 // isChannelUninitialized checks whether the channel is not initilialised yet
 // it's done by checking whether the packet sequence number is 1 (the first sequence number) or not
 func (k Keeper) isChannelUninitialized(ctx context.Context, channel channeltypes.IdentifiedChannel) bool {
