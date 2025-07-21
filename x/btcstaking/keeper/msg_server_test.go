@@ -21,7 +21,6 @@ import (
 	"google.golang.org/grpc/status"
 
 	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
-	asig "github.com/babylonlabs-io/babylon/v3/crypto/schnorr-adaptor-signature"
 	testutil "github.com/babylonlabs-io/babylon/v3/testutil/btcstaking-helper"
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
 	testhelper "github.com/babylonlabs-io/babylon/v3/testutil/helper"
@@ -1051,151 +1050,36 @@ func FuzzSelectiveSlashing(f *testing.F) {
 		h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
 
 		// set all parameters
-		covenantSKs, _ := h.GenAndApplyParams(r)
-		bsParams := h.BTCStakingKeeper.GetParams(h.Ctx)
+		h.GenAndApplyParams(r)
+
+		tipHeight := 150
+		mockTip := &btclctypes.BTCHeaderInfo{Height: uint32(tipHeight)}
+		btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(mockTip).AnyTimes()
 
 		// generate and insert new finality provider
 		fpSK, fpPK, _ := h.CreateFinalityProvider(r)
 		fpBtcPk := bbn.NewBIP340PubKeyFromBTCPK(fpPK)
-
-		// generate and insert new BTC delegation
-		stakingValue := int64(2 * 10e8)
-		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
-		h.NoError(err)
-		stakingTxHash, msgCreateBTCDel, actualDel, btcHeaderInfo, inclusionProof, _, err := h.CreateDelegationWithBtcBlockHeight(
-			r,
-			delSK,
-			[]*btcec.PublicKey{fpPK},
-			stakingValue,
-			1000,
-			0,
-			0,
-			true,
-			false,
-			10,
-			10,
-		)
-		h.NoError(err)
-
-		// add covenant signatures to this BTC delegation
-		// so that the BTC delegation becomes bonded
-		h.CreateCovenantSigs(r, covenantSKs, msgCreateBTCDel, actualDel, 10)
-		// activate the BTC delegation
-		h.AddInclusionProof(stakingTxHash, btcHeaderInfo, inclusionProof, 30)
-
-		// now BTC delegation has all covenant signatures
-		actualDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
-		h.NoError(err)
-		hasQuorum, err := h.BTCStakingKeeper.BtcDelHasCovenantQuorums(h.Ctx, actualDel, bsParams.CovenantQuorum)
-		h.NoError(err)
-		require.True(t, hasQuorum)
 
 		// construct message for the evidence of selective slashing
 		msg := &types.MsgSelectiveSlashingEvidence{
 			Signer:           datagen.GenRandomAccount().Address,
-			StakingTxHash:    actualDel.MustGetStakingTxHash().String(),
 			RecoveredFpBtcSk: fpSK.Serialize(),
 		}
 
-		// ensure the system does not panick due to a bogus unbonding msg
-		bogusMsg := *msg
-		bogusMsg.StakingTxHash = datagen.GenRandomBtcdHash(r).String()
-		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: 30}).AnyTimes()
-		_, err = h.MsgServer.SelectiveSlashingEvidence(h.Ctx, &bogusMsg)
-		h.Error(err)
-
-		// submit evidence of selective slashing
-		_, err = h.MsgServer.SelectiveSlashingEvidence(h.Ctx, msg)
-		h.NoError(err)
-
-		// ensure the finality provider is slashed
-		slashedFp, err := h.BTCStakingKeeper.GetFinalityProvider(h.Ctx, fpBtcPk.MustMarshal())
-		h.NoError(err)
-		require.True(t, slashedFp.IsSlashed())
-	})
-}
-
-func FuzzSelectiveSlashing_StakingTx(f *testing.F) {
-	datagen.AddRandomSeedsToFuzzer(f, 10)
-
-	f.Fuzz(func(t *testing.T, seed int64) {
-		r := rand.New(rand.NewSource(seed))
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-
-		// mock BTC light client and BTC checkpoint modules
-		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
-		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-		h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
-
-		// set all parameters
-		covenantSKs, _ := h.GenAndApplyParams(r)
-		bsParams := h.BTCStakingKeeper.GetParams(h.Ctx)
-
-		// generate and insert new finality provider
-		fpSK, fpPK, _ := h.CreateFinalityProvider(r)
-		fpBtcPk := bbn.NewBIP340PubKeyFromBTCPK(fpPK)
-
-		// generate and insert new BTC delegation
-		stakingValue := int64(2 * 10e8)
-		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
-		h.NoError(err)
-		stakingTxHash, msgCreateBTCDel, actualDel, btcHeaderInfo, inclusionProof, _, err := h.CreateDelegationWithBtcBlockHeight(
-			r,
-			delSK,
-			[]*btcec.PublicKey{fpPK},
-			stakingValue,
-			1000,
-			0,
-			0,
-			true,
-			false,
-			10,
-			10,
-		)
-		h.NoError(err)
-
-		// add covenant signatures to this BTC delegation
-		// so that the BTC delegation becomes bonded
-		h.CreateCovenantSigs(r, covenantSKs, msgCreateBTCDel, actualDel, 10)
-		// activate the BTC delegation
-		h.AddInclusionProof(stakingTxHash, btcHeaderInfo, inclusionProof, 30)
-		// now BTC delegation has all covenant signatures
-		actualDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
-		h.NoError(err)
-		require.True(t, actualDel.HasCovenantQuorums(bsParams.CovenantQuorum, 0))
-
-		// finality provider pulls off selective slashing by decrypting covenant's adaptor signature
-		// on the slashing tx
-		// choose a random covenant adaptor signature
-		covIdx := datagen.RandomInt(r, int(bsParams.CovenantQuorum))
-		covPK := bbn.NewBIP340PubKeyFromBTCPK(covenantSKs[covIdx].PubKey())
-		fpIdx := datagen.RandomInt(r, len(actualDel.FpBtcPkList))
-		covASig, err := actualDel.GetCovSlashingAdaptorSig(covPK, int(fpIdx), bsParams.CovenantQuorum, 0)
-		h.NoError(err)
-
-		// finality provider decrypts the covenant signature
-		decKey, err := asig.NewDecryptionKeyFromBTCSK(fpSK)
-		h.NoError(err)
-		covSchnorrSig, err := covASig.Decrypt(decKey)
+		// ensure the system does not panic due to a bogus unbonding msg
+		// In the new logic, a "bogus" message is one with an unregistered SK.
+		bogusSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		require.NoError(t, err)
-		decryptedCovenantSig := bbn.NewBIP340SignatureFromBTCSig(covSchnorrSig)
-
-		// recover the fpSK by using adaptor signature and decrypted Schnorr signature
-		recoveredFPDecKey, err := covASig.Extract(decryptedCovenantSig.MustToBTCSig())
-		require.NoError(t, err)
-		recoveredFPSK := recoveredFPDecKey.ToBTCSK()
-		// ensure the recovered finality provider SK is same as the real one
-		require.Equal(t, fpSK.Serialize(), recoveredFPSK.Serialize())
-
-		// submit evidence of selective slashing
-		msg := &types.MsgSelectiveSlashingEvidence{
+		bogusMsg := &types.MsgSelectiveSlashingEvidence{
 			Signer:           datagen.GenRandomAccount().Address,
-			StakingTxHash:    actualDel.MustGetStakingTxHash().String(),
-			RecoveredFpBtcSk: recoveredFPSK.Serialize(),
+			RecoveredFpBtcSk: bogusSK.Serialize(),
 		}
-		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: 30}).AnyTimes()
 
+		_, err = h.MsgServer.SelectiveSlashingEvidence(h.Ctx, bogusMsg)
+		h.Error(err)
+		require.ErrorIs(t, err, types.ErrFpNotFound)
+
+		// submit evidence of selective slashing
 		_, err = h.MsgServer.SelectiveSlashingEvidence(h.Ctx, msg)
 		h.NoError(err)
 
@@ -1203,6 +1087,11 @@ func FuzzSelectiveSlashing_StakingTx(f *testing.F) {
 		slashedFp, err := h.BTCStakingKeeper.GetFinalityProvider(h.Ctx, fpBtcPk.MustMarshal())
 		h.NoError(err)
 		require.True(t, slashedFp.IsSlashed())
+
+		// ensure a second attempt to slash fails
+		_, err = h.MsgServer.SelectiveSlashingEvidence(h.Ctx, msg)
+		h.Error(err)
+		require.ErrorIs(t, err, types.ErrFpAlreadySlashed)
 	})
 }
 
