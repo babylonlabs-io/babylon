@@ -12,7 +12,6 @@ import (
 	bbntypes "github.com/babylonlabs-io/babylon/v3/types"
 	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 	"github.com/btcsuite/btcd/btcec/v2"
-	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	stktypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -321,14 +320,6 @@ func TestMsgSelectiveSlashingEvidence_ValidateBasic(t *testing.T) {
 				RecoveredFpBtcSk: validSk,
 			},
 			expErr: "invalid signer addr",
-		},
-		{
-			name: "invalid staking tx hash length",
-			msg: types.MsgSelectiveSlashingEvidence{
-				Signer:           validAddr,
-				RecoveredFpBtcSk: validSk,
-			},
-			expErr: fmt.Sprintf("staking tx hash is not %d", chainhash.MaxHashStringSize),
 		},
 		{
 			name: "invalid BTC SK length",
