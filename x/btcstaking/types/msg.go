@@ -184,9 +184,6 @@ func (m *MsgSelectiveSlashingEvidence) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(m.Signer); err != nil {
 		return fmt.Errorf("invalid signer addr: %s - %v", m.Signer, err)
 	}
-	if len(m.StakingTxHash) != chainhash.MaxHashStringSize {
-		return fmt.Errorf("staking tx hash is not %d", chainhash.MaxHashStringSize)
-	}
 
 	if len(m.RecoveredFpBtcSk) != btcec.PrivKeyBytesLen {
 		return fmt.Errorf("malformed BTC SK. Expected length: %d, got %d", btcec.PrivKeyBytesLen, len(m.RecoveredFpBtcSk))
