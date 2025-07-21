@@ -1,11 +1,7 @@
 name: ci
 
 on:
-<<<<<<< HEAD
-  push:
-=======
   pull_request:
->>>>>>> ea21826 (chore: e2e bsn rollup rewards (#1392))
     branches:
       - '**'
 
