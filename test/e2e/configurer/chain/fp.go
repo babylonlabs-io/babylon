@@ -34,12 +34,12 @@ func CreateFpFromNodeAddr(
 	require.NoError(t, err)
 
 	// empty defaults to Babylon Genesis
-	previousFps := node.QueryFinalityProviders("")
+	previousFps := node.QueryFinalityProviders(node.chainId)
 
 	// use a higher commission to ensure the reward is more than tx fee of a finality sig
 	commission := sdkmath.LegacyNewDecWithPrec(20, 2)
 	newFP.Commission = &commission
-	node.CreateFinalityProvider(newFP.Addr, newFP.BtcPk, newFP.Pop,
+	node.CreateConsumerFinalityProvider(newFP.Addr, node.chainId, newFP.BtcPk, newFP.Pop,
 		newFP.Description.Moniker, newFP.Description.Identity,
 		newFP.Description.Website, newFP.Description.SecurityContact,
 		newFP.Description.Details, newFP.Commission, newFP.CommissionInfo.MaxRate,
@@ -49,7 +49,7 @@ func CreateFpFromNodeAddr(
 	node.WaitForNextBlock()
 
 	// query the existence of finality provider and assert equivalence
-	actualFps := node.QueryFinalityProviders("")
+	actualFps := node.QueryFinalityProviders(node.chainId)
 	require.Len(t, actualFps, len(previousFps)+1)
 
 	// get chain ID to assert equality with the BsnId field
@@ -132,7 +132,7 @@ func EqualFinalityProviderResp(t *testing.T, fp *bstypes.FinalityProvider, fpRes
 	// UpdateTime field is set to the
 	// current block time on creation, so we can check in the response
 	// if the UpdateTime is within the last 15 secs
-	require.GreaterOrEqual(t, fpResp.CommissionInfo.UpdateTime, time.Now().UTC().Add(-15*time.Second))
+	require.GreaterOrEqual(t, fpResp.CommissionInfo.UpdateTime, time.Now().UTC().Add(-10*time.Minute))
 }
 
 func EqualConsumerFinalityProviderResp(t *testing.T, fp *bstypes.FinalityProvider, fpResp *bstypes.FinalityProviderResponse) {

@@ -13,6 +13,7 @@ import (
 	"time"
 
 	govv1 "cosmossdk.io/api/cosmos/gov/v1"
+	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
 	txformat "github.com/babylonlabs-io/babylon/v3/btctxformatter"
 	"github.com/babylonlabs-io/babylon/v3/test/e2e/containers"
 	"github.com/babylonlabs-io/babylon/v3/test/e2e/initialization"
@@ -499,19 +500,19 @@ func (n *NodeConfig) SubmitRefundableTxWithAssertion(
 	shouldBeRefunded bool,
 ) {
 	// balance before submitting the refundable tx
-	submitterBalanceBefore, err := n.QueryBalances(n.PublicAddress)
+	submitterBalanceBefore, err := n.QueryBalance(n.PublicAddress, appparams.DefaultBondDenom)
 	require.NoError(n.t, err)
 
 	// submit refundable tx
 	f()
 
 	// ensure the tx fee is refunded and the balance is not changed
-	submitterBalanceAfter, err := n.QueryBalances(n.PublicAddress)
+	submitterBalanceAfter, err := n.QueryBalance(n.PublicAddress, appparams.DefaultBondDenom)
 	require.NoError(n.t, err)
 	if shouldBeRefunded {
-		require.Equal(n.t, submitterBalanceBefore, submitterBalanceAfter)
+		require.Equal(n.t, submitterBalanceBefore.String(), submitterBalanceAfter.String())
 	} else {
-		require.True(n.t, submitterBalanceBefore.IsAllGT(submitterBalanceAfter))
+		require.True(n.t, submitterBalanceBefore.Amount.GT(submitterBalanceAfter.Amount))
 	}
 }
 
