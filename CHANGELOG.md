@@ -139,7 +139,7 @@ cost per multi-staked finality provider
 - [#1394](https://github.com/babylonlabs-io/babylon/pull/1394) Add migration for
 FP data
 - [#1398](https://github.com/babylonlabs-io/babylon/pull/1398) Add custom tokenfactory
-bindings
+bindings (thanks @benluelo for contribution)
 
 ### Bug fixes
 
