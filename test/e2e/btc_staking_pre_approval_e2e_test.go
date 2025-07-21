@@ -425,7 +425,7 @@ func (s *BTCStakingPreApprovalTestSuite) Test4CommitPublicRandomnessAndSubmitFin
 	s.T().Logf("the finality provider received rewards for providing finality")
 }
 
-func (s *BTCStakingPreApprovalTestSuite) Test4WithdrawReward() {
+func (s *BTCStakingPreApprovalTestSuite) Test5WithdrawReward() {
 	chainA := s.configurer.GetChainConfig(0)
 	n, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
@@ -435,7 +435,7 @@ func (s *BTCStakingPreApprovalTestSuite) Test4WithdrawReward() {
 }
 
 // Test5SubmitStakerUnbonding is an end-to-end test for user unbonding
-func (s *BTCStakingPreApprovalTestSuite) Test5SubmitStakerUnbonding() {
+func (s *BTCStakingPreApprovalTestSuite) Test6SubmitStakerUnbonding() {
 	chainA := s.configurer.GetChainConfig(0)
 	chainA.WaitUntilHeight(1)
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)

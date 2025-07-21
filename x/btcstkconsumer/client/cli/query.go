@@ -12,7 +12,7 @@ import (
 )
 
 // GetQueryCmd returns the cli query commands for this module
-func GetQueryCmd(queryRoute string) *cobra.Command {
+func GetQueryCmd() *cobra.Command {
 	// Group btcstaking queries under a subcommand
 	cmd := &cobra.Command{
 		Use:                        types.ModuleName,

@@ -846,45 +846,31 @@ func CreateNodeFP(
 	r *rand.Rand,
 	fpSk *btcec.PrivateKey,
 	node *chain.NodeConfig,
-	fpAddr string,
+	fpAddrStr, bsnId string,
 ) (newFP *bstypes.FinalityProvider) {
 	// the node is the new FP
-	nodeAddr, err := sdk.AccAddressFromBech32(fpAddr)
+	fpAddr, err := sdk.AccAddressFromBech32(fpAddrStr)
 	require.NoError(t, err)
 
 	fpPopContext := signingcontext.FpPopContextV0(node.ChainID(), appparams.AccBTCStaking.String())
 
-	newFP, err = datagen.GenCustomFinalityProvider(r, fpSk, fpPopContext, nodeAddr, "")
+	newFP, err = datagen.GenCustomFinalityProvider(r, fpSk, fpPopContext, fpAddr, bsnId)
 	require.NoError(t, err)
-
-	previousFps := node.QueryFinalityProviders("")
 
 	// use a higher commission to ensure the reward is more than tx fee of a finality sig
 	commission := sdkmath.LegacyNewDecWithPrec(20, 2)
 	newFP.Commission = &commission
-	node.CreateFinalityProvider(newFP.Addr, newFP.BtcPk, newFP.Pop, newFP.Description.Moniker, newFP.Description.Identity, newFP.Description.Website, newFP.Description.SecurityContact, newFP.Description.Details, newFP.Commission, newFP.CommissionInfo.MaxRate, newFP.CommissionInfo.MaxChangeRate)
+	node.CreateConsumerFinalityProvider(newFP.Addr, newFP.BsnId, newFP.BtcPk, newFP.Pop, newFP.Description.Moniker, newFP.Description.Identity, newFP.Description.Website, newFP.Description.SecurityContact, newFP.Description.Details, newFP.Commission, newFP.CommissionInfo.MaxRate, newFP.CommissionInfo.MaxChangeRate)
 
 	// wait for a block so that above txs take effect
 	node.WaitForNextBlock()
 
 	// query the existence of finality provider and assert equivalence
-	actualFps := node.QueryFinalityProviders("")
-	require.Len(t, actualFps, len(previousFps)+1)
+	fpResp := node.QueryFinalityProvider(newFP.BtcPk.MarshalHex())
+	require.NotNil(t, fpResp)
 
-	// get chain ID to assert equality with the BsnId field
-	status, err := node.Status()
-	require.NoError(t, err)
-	newFP.BsnId = status.NodeInfo.Network
-
-	for _, fpResp := range actualFps {
-		if !strings.EqualFold(fpResp.Addr, newFP.Addr) {
-			continue
-		}
-		chain.EqualFinalityProviderResp(t, newFP, fpResp)
-		return newFP
-	}
-
-	return nil
+	chain.EqualFinalityProviderResp(t, newFP, fpResp)
+	return newFP
 }
 
 // CovenantBTCPKs returns the covenantBTCPks as slice from parameters
