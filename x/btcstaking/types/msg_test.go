@@ -12,7 +12,6 @@ import (
 	bbntypes "github.com/babylonlabs-io/babylon/v3/types"
 	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 	"github.com/btcsuite/btcd/btcec/v2"
-	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	stktypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -299,9 +298,7 @@ func TestMsgEditFinalityProviderValidateBasic(t *testing.T) {
 }
 
 func TestMsgSelectiveSlashingEvidence_ValidateBasic(t *testing.T) {
-	r := rand.New(rand.NewSource(10))
 	validAddr := datagen.GenRandomAddress().String()
-	validHash := datagen.GenRandomHexStr(r, 32)    // 64 chars
 	validSk := make([]byte, btcec.PrivKeyBytesLen) // 32 bytes
 
 	testCases := []struct {
@@ -313,7 +310,6 @@ func TestMsgSelectiveSlashingEvidence_ValidateBasic(t *testing.T) {
 			name: "valid message",
 			msg: types.MsgSelectiveSlashingEvidence{
 				Signer:           validAddr,
-				StakingTxHash:    validHash,
 				RecoveredFpBtcSk: validSk,
 			},
 		},
@@ -321,25 +317,14 @@ func TestMsgSelectiveSlashingEvidence_ValidateBasic(t *testing.T) {
 			name: "invalid signer address",
 			msg: types.MsgSelectiveSlashingEvidence{
 				Signer:           "not_bech32",
-				StakingTxHash:    validHash,
 				RecoveredFpBtcSk: validSk,
 			},
 			expErr: "invalid signer addr",
 		},
 		{
-			name: "invalid staking tx hash length",
-			msg: types.MsgSelectiveSlashingEvidence{
-				Signer:           validAddr,
-				StakingTxHash:    "short",
-				RecoveredFpBtcSk: validSk,
-			},
-			expErr: fmt.Sprintf("staking tx hash is not %d", chainhash.MaxHashStringSize),
-		},
-		{
 			name: "invalid BTC SK length",
 			msg: types.MsgSelectiveSlashingEvidence{
 				Signer:           validAddr,
-				StakingTxHash:    validHash,
 				RecoveredFpBtcSk: make([]byte, 16), // too short
 			},
 			expErr: fmt.Sprintf("malformed BTC SK. Expected length: %d", btcec.PrivKeyBytesLen),
