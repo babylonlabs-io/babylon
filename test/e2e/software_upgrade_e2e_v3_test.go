@@ -1,13 +1,19 @@
 package e2e
 
 import (
+	"math/rand"
+	"time"
+
+	"github.com/btcsuite/btcd/btcec/v2"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
 	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
 	v3 "github.com/babylonlabs-io/babylon/v3/app/upgrades/v3"
+	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
 	"github.com/babylonlabs-io/babylon/v3/testutil/sample"
 	btclighttypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
+	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 
 	"github.com/babylonlabs-io/babylon/v3/test/e2e/configurer"
 	"github.com/babylonlabs-io/babylon/v3/test/e2e/configurer/chain"
@@ -24,6 +30,13 @@ type SoftwareUpgradeV3TestSuite struct {
 
 	configurer            *configurer.UpgradeConfigurer
 	balancesBeforeUpgrade map[string]sdk.Coin
+	fp1Addr               string
+	fp2Addr               string
+	r                     *rand.Rand
+	fp1BTCSK              *btcec.PrivateKey
+	fp2BTCSK              *btcec.PrivateKey
+	fp1                   *bstypes.FinalityProvider
+	fp2                   *bstypes.FinalityProvider
 }
 
 func (s *SoftwareUpgradeV3TestSuite) SetupSuite() {
@@ -80,6 +93,35 @@ func (s *SoftwareUpgradeV3TestSuite) TestUpgradeV3() {
 	n, err := chainA.GetNodeAtIndex(1)
 	s.NoError(err)
 
+	s.fp1Addr = n.KeysAdd("fp1Addr")
+	s.fp2Addr = n.KeysAdd("fp2Addr")
+	n.BankMultiSendFromNode([]string{s.fp1Addr, s.fp2Addr}, "1000000ubbn")
+
+	n.WaitForNextBlock()
+
+	s.r = rand.New(rand.NewSource(time.Now().UnixNano()))
+
+	s.fp1BTCSK, _, _ = datagen.GenRandomBTCKeyPair(s.r)
+	s.fp2BTCSK, _, _ = datagen.GenRandomBTCKeyPair(s.r)
+
+	s.fp1 = CreateNodeFP(
+		s.T(),
+		s.r,
+		s.fp1BTCSK,
+		n,
+		s.fp1Addr,
+		n.ChainID(),
+	)
+
+	s.fp2 = CreateNodeFP(
+		s.T(),
+		s.r,
+		s.fp2BTCSK,
+		n,
+		s.fp2Addr,
+		n.ChainID(),
+	)
+
 	govProp, err := s.configurer.ParseGovPropFromFile()
 	s.NoError(err)
 	chainA.WaitUntilHeight(govProp.Plan.Height + 1) // waits for chain to produce blocks
@@ -88,12 +130,37 @@ func (s *SoftwareUpgradeV3TestSuite) TestUpgradeV3() {
 	resp := n.QueryAppliedPlan(v3.UpgradeName)
 	s.EqualValues(expectedUpgradeHeight, resp.Height, "the plan should be applied at the height %d", expectedUpgradeHeight)
 
+	// check fps have the same chain id
+	s.Require().Equal(s.fp2.BsnId, n.ChainID())
+
+	fp1CommitPubRand := n.QueryListPubRandCommit(fp1CommitPubRandList.FpBtcPk)
+	fp1PubRand := fp1CommitPubRand[commitStartHeight]
+	s.Require().Equal(fp1PubRand.NumPubRand, numPubRand)
+
+	fp2CommitPubRand := n.QueryListPubRandCommit(fp2CommitPubRandList.FpBtcPk)
+	fp2PubRand := fp2CommitPubRand[commitStartHeight]
+	s.Require().Equal(fp2PubRand.NumPubRand, numPubRand)
+
+	// check btcstaking params has max finality provider set to 1
+	var stakingParams map[string]interface{}
+	n.QueryParams("btcstaking", &stakingParams)
+	s.T().Logf("staking params: %v", stakingParams)
+
+	btcstakingparams, exists := stakingParams["params"]
+	s.Require().True(exists, "btcstakingparams params should exist")
+
+	btcparamsMap, ok := btcstakingparams.(map[string]interface{})
+	s.Require().True(ok, "btcstakingparams params should exist")
+
+	maxFP, ok := btcparamsMap["max_finality_providers"]
+	s.Require().True(ok, "max_finality_providers param should exist")
+	s.Require().Equal(float64(1), maxFP, "max_finality_providers should be 1")
+
 	// check that the module exists by querying parameters with the QueryParams helper
 	var btcstkconsumerParams map[string]interface{}
 	n.QueryParams(btcstkconsumerModulePath, &btcstkconsumerParams)
 	s.T().Logf("btcstkconsumer params: %v", btcstkconsumerParams)
 
-	// Check that the permissioned_integration field exists
 	params, exists := btcstkconsumerParams["params"]
 	s.Require().True(exists, "btcstkconsumer params should exist")
 
