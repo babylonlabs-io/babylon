@@ -241,13 +241,13 @@ func (s *IbcCallbackBsnAddRewardsTestSuite) Test3CreateFactoryToken() {
 	s.bsnCustomTokenDenom = fmt.Sprintf("factory/%s/%s", s.bsnSenderAddr, customDenomName)
 	s.T().Logf("Creating custom denom: %s", s.bsnCustomTokenDenom)
 
-	bsnNode.CreateDenom(s.bsnSenderAddr, s.bsnCustomTokenDenom)
+	bsnNode.CreateDenom(s.bsnSenderAddr, customDenomName)
 	bsnNode.WaitForNextBlock()
 
 	mintAmt := s.r.Int63n(10_000000) + 10_000000
 	mintInt := math.NewInt(mintAmt)
 
-	bsnNode.MintDenom(s.bsnSenderAddr, mintInt.String(), s.bsnCustomTokenDenom)
+	bsnNode.MintDenom(s.bsnSenderAddr, mintInt.String(), customDenomName)
 	bsnNode.WaitForNextBlock()
 
 	bsnSenderBalances, err := bsnNode.QueryBalances(s.bsnSenderAddr)
