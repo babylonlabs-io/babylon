@@ -117,6 +117,7 @@ command to modify `max-finality-providers` parameter.
 - [#1379](https://github.com/babylonlabs-io/babylon/pull/1379) Add multi-staking allow-list docs in `x/btcstaking`
 - [#1381](https://github.com/babylonlabs-io/babylon/pull/1381) Add multi-staking allow-list logic
 - [#1392](https://github.com/babylonlabs-io/babylon/pull/1392) Add e2e test for BSN rollup rewards.
+- [#1404](https://github.com/babylonlabs-io/babylon/pull/1404) Refactor power dist event processing.
 
 ### State Machine Breaking
 
