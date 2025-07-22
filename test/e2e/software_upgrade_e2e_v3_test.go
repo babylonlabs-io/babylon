@@ -209,9 +209,9 @@ func (s *SoftwareUpgradeV3TestSuite) TestUpgradeV3() {
 	registeredConsumers := n.QueryBTCStkConsumerConsumers()
 	s.T().Logf("registered consumers: %v", registeredConsumers)
 
-	if len(*registeredConsumers) > 0 {
-		consumerIDs := make([]string, len(*registeredConsumers))
-		for i, consumer := range *registeredConsumers {
+	if len(registeredConsumers) > 0 {
+		consumerIDs := make([]string, len(registeredConsumers))
+		for i, consumer := range registeredConsumers {
 			consumerIDs[i] = consumer.ConsumerId
 		}
 
