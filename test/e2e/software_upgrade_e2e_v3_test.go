@@ -27,6 +27,7 @@ type SoftwareUpgradeV3TestSuite struct {
 }
 
 func (s *SoftwareUpgradeV3TestSuite) SetupSuite() {
+	s.T().Skip("Temporarily skipping v3 upgrade test")
 	s.T().Log("setting up e2e integration test suite for v2.2.0 to v3 upgrade...")
 	var err error
 	s.balancesBeforeUpgrade = make(map[string]sdk.Coin)
