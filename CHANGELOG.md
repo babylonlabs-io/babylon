@@ -42,8 +42,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#1269](https://github.com/babylonlabs-io/babylon/pull/1269) Add fee collector e2e tests.
 - [#1344](https://github.com/babylonlabs-io/babylon/pull/1344) Bump cosmos-sdk and
 remove send restrictions
+<<<<<<< HEAD
 
 ### Bug Fixes
+=======
+- [#1364](https://github.com/babylonlabs-io/babylon/pull/1364) Add babylon commission as legacy dec `[0...1]` to Consumer Registry.
+- [#1359](https://github.com/babylonlabs-io/babylon/pull/1359) Add `MsgAddBsnRewards` to btcstaking and wired BTC delegations from
+BSNs to incentive reward tracker.
+- [#1390](https://github.com/babylonlabs-io/babylon/pull/1390) Add additional gas
+cost per multi-staked finality provider
+- [#1394](https://github.com/babylonlabs-io/babylon/pull/1394) Add migration for
+FP data
+- [#1398](https://github.com/babylonlabs-io/babylon/pull/1398) Add custom tokenfactory
+bindings (thanks @benluelo for contribution)
+>>>>>>> 09820f4 (add custom tokenfactory bindings (#1398))
 
 - [#1355](https://github.com/babylonlabs-io/babylon/pull/1355) Allow empty fees on genesis transactions
 
