@@ -131,6 +131,7 @@ func (s *SoftwareUpgradeV3TestSuite) TestUpgradeV3() {
 	s.EqualValues(expectedUpgradeHeight, resp.Height, "the plan should be applied at the height %d", expectedUpgradeHeight)
 
 	// check fps have the same chain id
+	s.Require().Equal(s.fp1.BsnId, n.ChainID())
 	s.Require().Equal(s.fp2.BsnId, n.ChainID())
 
 	fp1CommitPubRand := n.QueryListPubRandCommit(fp1CommitPubRandList.FpBtcPk)
