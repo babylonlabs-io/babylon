@@ -66,6 +66,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Checkout v2.2.0
         run: |
           git checkout v2.2.0
@@ -282,7 +284,7 @@ jobs:
         with:
           name: init-chain
           path: /tmp
-      - name: Docker load babylond (v3
+      - name: Docker load babylond (v3)
         run: |
           docker load < /tmp/docker-babylond.tar.gz
       - name: Docker load babylond v2.2.0
