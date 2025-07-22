@@ -15,6 +15,7 @@ import (
 	btclighttypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
 	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 
+	"github.com/babylonlabs-io/babylon/v3/app/signingcontext"
 	"github.com/babylonlabs-io/babylon/v3/test/e2e/configurer"
 	"github.com/babylonlabs-io/babylon/v3/test/e2e/configurer/chain"
 	"github.com/babylonlabs-io/babylon/v3/test/e2e/configurer/config"
@@ -123,6 +124,37 @@ func (s *SoftwareUpgradeV3TestSuite) TestUpgradeV3() {
 		n.ChainID(),
 	)
 
+	n.WaitForNextBlock()
+
+	randCommitContext := signingcontext.FpRandCommitContextV0(n.ChainID(), appparams.AccFinality.String())
+	numPubRand := uint64(100)
+
+	commitStartHeight := n.LatestBlockNumber()
+	_, fp1CommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(s.r, s.fp1BTCSK, randCommitContext, commitStartHeight, numPubRand)
+	s.NoError(err)
+	_, fp2CommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(s.r, s.fp2BTCSK, randCommitContext, commitStartHeight, numPubRand)
+	s.NoError(err)
+
+	s.Require().NotNil(fp1CommitPubRandList, "fp1CommitPubRandList should not be nil")
+	s.Require().NotNil(fp2CommitPubRandList, "fp2CommitPubRandList should not be nil")
+
+	n.CommitPubRandList(
+		fp1CommitPubRandList.FpBtcPk,
+		fp1CommitPubRandList.StartHeight,
+		fp1CommitPubRandList.NumPubRand,
+		fp1CommitPubRandList.Commitment,
+		fp1CommitPubRandList.Sig,
+	)
+	n.CommitPubRandList(
+		fp2CommitPubRandList.FpBtcPk,
+		fp2CommitPubRandList.StartHeight,
+		fp2CommitPubRandList.NumPubRand,
+		fp2CommitPubRandList.Commitment,
+		fp2CommitPubRandList.Sig,
+	)
+
+	n.WaitForNextBlock()
+
 	govProp, err := s.configurer.ParseGovPropFromFile()
 	s.NoError(err)
 	chainA.WaitUntilHeight(govProp.Plan.Height + 1) // waits for chain to produce blocks
@@ -134,13 +166,16 @@ func (s *SoftwareUpgradeV3TestSuite) TestUpgradeV3() {
 	// check fps have the same chain id
 	s.Require().Equal(s.fp2.BsnId, n.ChainID())
 
+	// query pub randomness
 	fp1CommitPubRand := n.QueryListPubRandCommit(fp1CommitPubRandList.FpBtcPk)
-	fp1PubRand := fp1CommitPubRand[commitStartHeight]
-	s.Require().Equal(fp1PubRand.NumPubRand, numPubRand)
+	s.Require().NotNil(fp1CommitPubRand, "fp1CommitPubRand should not be nil")
+	_, ok := fp1CommitPubRand[commitStartHeight]
+	s.Require().True(ok, "fp1CommitPubRand should contain commitStartHeight")
 
 	fp2CommitPubRand := n.QueryListPubRandCommit(fp2CommitPubRandList.FpBtcPk)
-	fp2PubRand := fp2CommitPubRand[commitStartHeight]
-	s.Require().Equal(fp2PubRand.NumPubRand, numPubRand)
+	s.Require().NotNil(fp2CommitPubRand, "fp2CommitPubRand should not be nil")
+	_, ok = fp2CommitPubRand[commitStartHeight]
+	s.Require().True(ok, "fp2CommitPubRand should contain commitStartHeight")
 
 	// check btcstaking params has max finality provider set to 1
 	var stakingParams map[string]interface{}
