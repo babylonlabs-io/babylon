@@ -85,6 +85,7 @@ import (
 	ibccallbacks "github.com/cosmos/ibc-go/v10/modules/apps/callbacks"
 	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
 	ibckeeper "github.com/cosmos/ibc-go/v10/modules/core/keeper"
+	tokenfactorybindings "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/bindings"
 	tokenfactorykeeper "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/keeper"
 	tokenfactorytypes "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/types"
 
@@ -511,6 +512,15 @@ func (ak *AppKeepers) InitKeepers(
 			&ak.CheckpointingKeeper,
 			&ak.BTCLightClientKeeper,
 			&ak.ZoneConciergeKeeper,
+		),
+		wasmOpts...,
+	)
+
+	// Register custom plugins for the tokenfactory module
+	wasmOpts = append(
+		tokenfactorybindings.RegisterCustomPlugins(
+			ak.BankKeeper,
+			&ak.TokenFactoryKeeper,
 		),
 		wasmOpts...,
 	)
