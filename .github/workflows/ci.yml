@@ -61,6 +61,29 @@ jobs:
           name: babylond-${{ github.sha }} # so it renovates at every new sha
           path: /tmp/docker-babylond.tar.gz
 
+  e2e-docker-build-babylon-v2-2-0:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Checkout v2.2.0
+        run: |
+          git checkout v2.2.0
+      - name: Build docker babylond v2.2.0
+        run: |
+          make -C contrib/images babylond-e2e
+      - name: Tag as v2.2.0
+        run: |
+          docker tag babylonlabs-io/babylond:latest babylonlabs-io/babylond:v2.2.0
+      - name: Docker save babylon v2.2.0
+        run: |
+          docker save -o /tmp/docker-babylond-v2-2-0.tar.gz babylonlabs-io/babylond:v2.2.0
+      - name: Upload babylon v2.2.0 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: babylond-v2-2-0
+          path: /tmp/docker-babylond-v2-2-0.tar.gz
+
   e2e-docker-build-e2e-init-chain:
     runs-on: ubuntu-22.04
     steps:
@@ -239,19 +262,35 @@ jobs:
           make test-e2e-cache-ica
 
   e2e-run-upgrade-v3:
-    needs: [e2e-docker-build-babylon]
+    needs: [e2e-docker-build-babylon, e2e-docker-build-babylon-v2-2-0, e2e-docker-build-e2e-init-chain]
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      - name: Download babylon artifact
+      - name: Download babylon artifact (v3)
         uses: actions/download-artifact@v4
         with:
           name: babylond-${{ github.sha }}
           path: /tmp
-      - name: Docker load babylond
+      - name: Download babylon v2.2.0 artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: babylond-v2-2-0
+          path: /tmp
+      - name: Download init-chain artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: init-chain
+          path: /tmp
+      - name: Docker load babylond (v3
         run: |
           docker load < /tmp/docker-babylond.tar.gz
+      - name: Docker load babylond v2.2.0
+        run: |
+          docker load < /tmp/docker-babylond-v2-2-0.tar.gz
+      - name: Docker load init-chain
+        run: |
+          docker load < /tmp/docker-init-chain.tar.gz
       - name: Cache Go
         uses: actions/setup-go@v5
         with:
