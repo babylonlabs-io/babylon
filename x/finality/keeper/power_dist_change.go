@@ -199,8 +199,7 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 		fp := *dc.FinalityProviders[i]
 		fpBTCPKHex := fp.BtcPk.MarshalHex()
 
-		fpStatus, _ := state.FPStates[fpBTCPKHex]
-		switch fpStatus {
+		switch state.FPStates[fpBTCPKHex] {
 		case ftypes.FinalityProviderState_SLASHED:
 			// if this finality provider is slashed, continue to avoid
 			// assigning delegation to it
@@ -254,8 +253,7 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 	fpActiveBtcPkHexList := make([]string, 0, len(state.ActivatedSatsByFpBtcPk))
 	for fpBTCPKHex := range state.ActivatedSatsByFpBtcPk {
 		// if the fp was slashed, should not even be added to the list
-		fpStatus, _ := state.FPStates[fpBTCPKHex]
-		if fpStatus == ftypes.FinalityProviderState_SLASHED {
+		if state.FPStates[fpBTCPKHex] == ftypes.FinalityProviderState_SLASHED {
 			continue
 		}
 		fpActiveBtcPkHexList = append(fpActiveBtcPkHexList, fpBTCPKHex)
@@ -285,11 +283,10 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 		fpDistInfo := ftypes.NewFinalityProviderDistInfo(newFP)
 
 		// check for jailing cases
-		fpStatus, _ := state.FPStates[fpBTCPKHex]
-		if fpStatus == ftypes.FinalityProviderState_JAILED {
+		switch state.FPStates[fpBTCPKHex] {
+		case ftypes.FinalityProviderState_JAILED:
 			fpDistInfo.IsJailed = true
-		}
-		if fpStatus == ftypes.FinalityProviderState_UNJAILED {
+		case ftypes.FinalityProviderState_UNJAILED:
 			fpDistInfo.IsJailed = false
 		}
 

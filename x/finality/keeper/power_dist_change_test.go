@@ -2228,7 +2228,7 @@ func addPowerDistUpdateEvents(
 	kvStore := ctx.KVStore(storeKey)
 
 	// Create the prefix store for power dist update events at the specific BTC height
-	prefixKey := append(btcstktypes.PowerDistUpdateKey, sdk.Uint64ToBigEndian(btcHeight)...)
+	prefixKey := append(btcstktypes.PowerDistUpdateKey, sdk.Uint64ToBigEndian(btcHeight)...) //nolint:gocritic
 	prefixStore := prefix.NewStore(kvStore, prefixKey)
 
 	// Add each event to the store
