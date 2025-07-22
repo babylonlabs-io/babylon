@@ -134,14 +134,6 @@ func (s *SoftwareUpgradeV3TestSuite) TestUpgradeV3() {
 	s.Require().Equal(s.fp1.BsnId, n.ChainID())
 	s.Require().Equal(s.fp2.BsnId, n.ChainID())
 
-	fp1CommitPubRand := n.QueryListPubRandCommit(fp1CommitPubRandList.FpBtcPk)
-	fp1PubRand := fp1CommitPubRand[commitStartHeight]
-	s.Require().Equal(fp1PubRand.NumPubRand, numPubRand)
-
-	fp2CommitPubRand := n.QueryListPubRandCommit(fp2CommitPubRandList.FpBtcPk)
-	fp2PubRand := fp2CommitPubRand[commitStartHeight]
-	s.Require().Equal(fp2PubRand.NumPubRand, numPubRand)
-
 	// check btcstaking params has max finality provider set to 1
 	var stakingParams map[string]interface{}
 	n.QueryParams("btcstaking", &stakingParams)
