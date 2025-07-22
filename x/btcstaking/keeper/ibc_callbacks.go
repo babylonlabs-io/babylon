@@ -90,9 +90,9 @@ func (k Keeper) IBCReceivePacketCallback(
 	}
 
 	switch callbackMemo.Action {
-	case types.AddBSNRewardsMemo:
+	case types.CallbackActionAddBsnRewardsMemo:
 		if callbackMemo.AddBsnRewards == nil {
-			return errorsmod.Wrapf(types.ErrInvalidCallbackAddBsnRewards, "%s property is nil", types.AddBSNRewardsMemo)
+			return errorsmod.Wrapf(types.ErrInvalidCallbackAddBsnRewards, "%s property is nil", types.CallbackActionAddBsnRewardsMemo)
 		}
 		return k.processAddBsnRewards(cachedCtx, packet.GetDestPort(), packet.GetDestChannel(), transferData, callbackMemo.AddBsnRewards)
 	}

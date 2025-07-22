@@ -218,7 +218,7 @@ func (s *BtcRewardsDistributionBsnRollup) Test1CreateFinalityProviders() {
 	s.T().Log("All Fps created")
 }
 
-// Test2CreateFinalityProviders creates the first 3 btc delegations
+// Test2CreateFirstBtcDelegations creates the first 3 btc delegations
 // with the same values, but different satoshi staked amounts
 func (s *BtcRewardsDistributionBsnRollup) Test2CreateFirstBtcDelegations() {
 	n2, err := s.configurer.GetChainConfig(0).GetNodeAtIndex(2)

@@ -51,8 +51,6 @@ var (
 		feemarkettypes.ModuleName:                   nil,
 		precisebanktypes.ModuleName:                 {authtypes.Minter, authtypes.Burner},
 		incentivetypes.ModAccCommissionCollectorBSN: nil, // Babylon BSN rewards commission collector
-		// TODO(rafilx): check to delete one of those
-		incentivetypes.BSNFeeCollectorName: nil, // module account for collecting BSN fees from IBC transfers
 	}
 )
 

@@ -182,8 +182,6 @@ var (
 		erc20types.ModuleName:                       {authtypes.Minter, authtypes.Burner}, // Allows erc20 module to mint/burn for token pairs
 		precisebanktypes.ModuleName:                 {authtypes.Minter, authtypes.Burner},
 		incentivetypes.ModAccCommissionCollectorBSN: nil, // Babylon BSN rewards commission collector
-		// TODO(rafilx): check to delete one of those
-		incentivetypes.BSNFeeCollectorName: nil, // module account for collecting BSN fees from IBC transfers
 	}
 
 	// software upgrades and forks
@@ -958,7 +956,7 @@ func BlockedAddresses() map[string]bool {
 	// allow the following addresses to receive funds
 	delete(blockedAddrs, appparams.AccGov.String())
 	// Allow BSN fee collector to receive IBC transfer funds
-	delete(blockedAddrs, authtypes.NewModuleAddress(incentivetypes.BSNFeeCollectorName).String())
+	delete(blockedAddrs, appparams.AccBbnComissionCollectorBsn.String())
 
 	// Block precompiled contracts
 	blockedPrecompilesHex := evmtypes.AvailableStaticPrecompiles
