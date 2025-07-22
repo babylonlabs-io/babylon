@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	v2 "github.com/babylonlabs-io/babylon/v3/app/upgrades/v2"
+	v3 "github.com/babylonlabs-io/babylon/v3/app/upgrades/v3"
 
 	"github.com/babylonlabs-io/babylon/v3/app"
 	"github.com/babylonlabs-io/babylon/v3/test/e2e/configurer/config"
@@ -24,7 +24,7 @@ func TestParseGovPropFromFile(t *testing.T) {
 	_, msgProp, err := parseGovPropFromFile(cdc, upgradePath)
 	require.NoError(t, err)
 
-	require.Equal(t, msgProp.Plan.Name, v2.UpgradeName)
+	require.Equal(t, msgProp.Plan.Name, v3.UpgradeName)
 }
 
 func TestWriteGovPropToFile(t *testing.T) {

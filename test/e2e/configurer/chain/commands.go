@@ -574,9 +574,9 @@ func (n *NodeConfig) FailICASendTx(from, connectionID, packetMsgPath string) {
 	n.LogActionF("Failed to perform ICA send (as expected)")
 }
 
-func (n *NodeConfig) QueryZoneConciergeFinalizedChainsInfo(consumerIDs []string, prove bool) map[string]interface{} {
-	n.LogActionF("querying zoneconcierge finalized-chains-info for consumerIDs: %v", consumerIDs)
-	cmd := []string{"babylond", "query", "zoneconcierge", "finalized-chains-info"}
+func (n *NodeConfig) QueryZoneConciergeFinalizedBsnsInfo(consumerIDs []string, prove bool) map[string]interface{} {
+	n.LogActionF("querying zoneconcierge finalized-bsns-info for consumerIDs: %v", consumerIDs)
+	cmd := []string{"babylond", "query", "zoneconcierge", "finalized-bsns-info"}
 	cmd = append(cmd, consumerIDs...)
 	if prove {
 		cmd = append(cmd, "--prove")
