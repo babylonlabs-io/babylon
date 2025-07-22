@@ -93,9 +93,31 @@ func (s *SoftwareUpgradeV3TestSuite) TestUpgradeV3() {
 	n.QueryParams(btcstkconsumerModulePath, &btcstkconsumerParams)
 	s.T().Logf("btcstkconsumer params: %v", btcstkconsumerParams)
 
-	finalisedChainsInfoResp := n.QueryZoneConciergeFinalizedChainsInfo([]string{}, false)
-	s.NoError(err, "zoneconcierge FinalizedChainsInfo query should succeed")
-	s.T().Logf("zoneconcierge FinalizedChainsInfo: %v", finalisedChainsInfoResp)
+	// Check that the permissioned_integration field exists
+	params, exists := btcstkconsumerParams["params"]
+	s.Require().True(exists, "btcstkconsumer params should exist")
+
+	paramsMap, ok := params.(map[string]interface{})
+	s.Require().True(ok, "btcstkconsumer params should be a map")
+
+	_, permissionedExists := paramsMap["permissioned_integration"]
+	s.Require().True(permissionedExists, "permissioned_integration field should exist in btcstkconsumer params")
+
+	registeredConsumers := n.QueryBTCStkConsumerConsumers()
+	s.T().Logf("registered consumers: %v", registeredConsumers)
+
+	if len(*registeredConsumers) > 0 {
+		consumerIDs := make([]string, len(*registeredConsumers))
+		for i, consumer := range *registeredConsumers {
+			consumerIDs[i] = consumer.ConsumerId
+		}
+
+		finalisedBsnsInfoResp := n.QueryZoneConciergeFinalizedBsnsInfo(consumerIDs, false)
+		s.NoError(err, "zoneconcierge FinalizedBsnsInfo query should succeed")
+		s.T().Logf("zoneconcierge FinalizedBsnsInfo: %v", finalisedBsnsInfoResp)
+	} else {
+		s.T().Log("No registered consumers found, skipping finalized-bsns-info query")
+	}
 
 	n.WaitForNextBlock()
 
