@@ -4,7 +4,6 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
-	"github.com/babylonlabs-io/babylon/v3/x/incentive/keeper"
 	"time"
 
 	sdkmath "cosmossdk.io/math"
@@ -12,7 +11,8 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/babylonlabs-io/babylon/v3/test/e2e/configurer"
-	incentivetypes "github.com/babylonlabs-io/babylon/v3/x/incentive/types"
+	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
+	ictvtypes "github.com/babylonlabs-io/babylon/v3/x/incentive/types"
 )
 
 type BSNFeeCollectionTestSuite struct {
@@ -92,7 +92,7 @@ func (s *BSNFeeCollectionTestSuite) TestBSNFeeCollectionWithCorrectMemo() {
 	s.Require().True(customBalance.GT(sdkmath.ZeroInt()), "Should have custom tokens after minting")
 
 	// Get BSN fee collector module account address on chain B
-	bsnFeeCollectorAddr, err := nB.QueryModuleAddress(incentivetypes.BSNFeeCollectorName)
+	bsnFeeCollectorAddr, err := nB.QueryModuleAddress(ictvtypes.BSNFeeCollectorName)
 	s.Require().NoError(err)
 
 	// Get test distribution account address (instead of distribution module which can't receive custom tokens)
@@ -109,9 +109,12 @@ func (s *BSNFeeCollectionTestSuite) TestBSNFeeCollectionWithCorrectMemo() {
 	transferCoin := sdk.NewInt64Coin(customDenom, transferAmount)
 
 	// Create JSON callback memo for IBC callback middleware with BSN action
-	callbackMemo := keeper.CallbackMemo{
-		DestCallback: &keeper.CallbackInfo{Address: bsnFeeCollectorAddr.String()},
-		Action:       bsnRewardDistributionMemo,
+	callbackMemo := bstypes.CallbackMemo{
+		DestCallback: &bstypes.CallbackInfo{Address: bsnFeeCollectorAddr.String()},
+		Action:       bstypes.AddBSNRewardsMemo,
+		AddBsnRewards: &bstypes.CallbackAddBsnRewards{
+			BsnConsumerID: "x",
+		},
 	}
 	// Convert struct to JSON string
 	callbackMemoJSON, err := json.Marshal(callbackMemo)

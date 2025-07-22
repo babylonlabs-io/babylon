@@ -1,39 +1,24 @@
 package keeper
 
 import (
+	"encoding/json"
+
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
-	"crypto/sha256"
-	"encoding/json"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
-	"github.com/babylonlabs-io/babylon/v3/x/incentive/types"
+	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
+	ictvtypes "github.com/babylonlabs-io/babylon/v3/x/incentive/types"
 )
 
 // Ensure that the incentive Keeper implements the ContractKeeper interface
 var _ types.ContractKeeper = (*Keeper)(nil)
-
-const (
-	// BSNRewardDistributionMemo is the memo string indicating BSN reward distribution
-	// TODO: we should use this to check if the correct memo is used in the transfer
-	BSNRewardDistributionMemo = "bsn_reward_distribution"
-)
-
-// CallbackMemo defines the structure for callback memo in IBC transfers
-// TODO: We can add the fp distribution here in the future
-type CallbackMemo struct {
-	DestCallback *CallbackInfo `json:"dest_callback,omitempty"`
-	Action       string        `json:"action,omitempty"`
-}
-
-// CallbackInfo contains the callback information
-type CallbackInfo struct {
-	Address string `json:"address"`
-}
 
 // IBCSendPacketCallback is called when a packet is sent
 // Not needed for BSN fee collection scenario
@@ -99,14 +84,20 @@ func (k Keeper) IBCReceivePacketCallback(
 	}
 
 	// Check for JSON callback format
-	var callbackMemo CallbackMemo
+	var callbackMemo types.CallbackMemo
 	if err := json.Unmarshal([]byte(transferData.Memo), &callbackMemo); err != nil {
 		return err
 	}
 
-	// TODO: Here we can directly distribute to BTC stakers and do whatever with the rest.
-	// Process the BSN fee distribution
-	return k.processBSNFeeDistribution(cachedCtx, packet.GetDestPort(), packet.GetDestChannel(), transferData)
+	switch callbackMemo.Action {
+	case types.AddBSNRewardsMemo:
+		if callbackMemo.AddBsnRewards == nil {
+			return errorsmod.Wrapf(types.ErrInvalidCallbackAddBsnRewards, "%s property is nil", types.AddBSNRewardsMemo)
+		}
+		return k.processAddBsnRewards(cachedCtx, packet.GetDestPort(), packet.GetDestChannel(), transferData, callbackMemo.AddBsnRewards)
+	}
+
+	return nil
 }
 
 // parseTransferData parses the packet data as ICS20 transfer data
@@ -118,52 +109,27 @@ func (k Keeper) parseTransferData(packet ibcexported.PacketI) (*transfertypes.Fu
 	return &transferData, nil
 }
 
-// getTestDistributionAddress returns a deterministic test address for distribution
-// This is used instead of the distribution module which can't receive custom tokens
-func (k Keeper) getTestDistributionAddress() sdk.AccAddress {
-	// Create a deterministic address based on a fixed seed
-	// This ensures the same address is used across test runs
-	hash := sha256.Sum256([]byte("test_distribution_account"))
-	return sdk.AccAddress(hash[:20])
-}
-
-// processBSNFeeDistribution processes the BSN fee distribution
-func (k Keeper) processBSNFeeDistribution(
+// processAddBsnRewards processes the BSN fee distribution
+func (k Keeper) processAddBsnRewards(
 	ctx sdk.Context,
 	destPort string,
 	destChannel string,
 	transferData *transfertypes.FungibleTokenPacketData,
+	callbackAddBsnRewards *types.CallbackAddBsnRewards,
 ) error {
-	// Parse the transfer amount
 	transferAmount, ok := math.NewIntFromString(transferData.Amount)
 	if !ok {
-		return errorsmod.Wrapf(types.ErrInvalidAmount, "invalid transfer amount: %s", transferData.Amount)
+		return errorsmod.Wrapf(ictvtypes.ErrInvalidAmount, "invalid transfer amount: %s", transferData.Amount)
 	}
 
-	// Calculate the IBC denom representation.
+	// Calculate the IBC denom representation on babylon chain.
 	ibcDenom := transfertypes.NewDenom(transferData.Denom, transfertypes.NewHop(destPort, destChannel)).IBCDenom()
+	bsnRewards := sdk.NewCoins(sdk.NewCoin(ibcDenom, transferAmount))
 
-	// NOTE: This is a PoC implementation. Where just split 50/50 between
-	// a random address and the bsn_fee_collector account.
-
-	// Calculate distribution amount (50% of transfer)
-	distributionAmount := transferAmount.QuoRaw(2)
-	distributionPortion := sdk.NewCoins(sdk.NewCoin(ibcDenom, distributionAmount))
-
-	// Send portion to a test account (since distribution module can't receive custom tokens)
-	// Use a deterministic test address for consistent testing
-	testDistributionAddr := k.getTestDistributionAddress()
-
-	if err := k.bankKeeper.SendCoinsFromModuleToAccount(
-		ctx,
-		types.BSNFeeCollectorName,
-		testDistributionAddr,
-		distributionPortion,
-	); err != nil {
-		return errorsmod.Wrapf(err, "failed to send portion to test distribution account")
+	receiverOnBbnAddr, err := sdk.AccAddressFromBech32(transferData.Receiver)
+	if err != nil {
+		return status.Errorf(codes.InvalidArgument, "invalid address %s: %v", transferData.Receiver, err)
 	}
 
-	// TODO: Emit some events for traceability
-
-	return nil
+	return k.AddBsnRewards(ctx, receiverOnBbnAddr, callbackAddBsnRewards.BsnConsumerID, bsnRewards, callbackAddBsnRewards.FpRatios)
 }
