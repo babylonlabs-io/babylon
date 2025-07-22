@@ -28,24 +28,6 @@ const (
 	FinalityProviderState_SLASHED FinalityProviderState = 3
 )
 
-var FinalityProviderState_name = map[int32]string{
-	0: "UNKNOWN",
-	1: "UNJAILED",
-	2: "JAILED",
-	3: "SLASHED",
-}
-
-var FinalityProviderState_value = map[string]int32{
-	"UNKNOWN":  0,
-	"UNJAILED": 1,
-	"JAILED":   2,
-	"SLASHED":  3,
-}
-
-func (x FinalityProviderState) String() string {
-	return FinalityProviderState_name[int32(x)]
-}
-
 // Processing state during the power distribution change process
 // It holds the state of finality providers, BTC delegations, and events
 // It is used to track the changes in the finality providers' states and the BTC delegations
