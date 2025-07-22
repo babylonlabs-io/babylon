@@ -259,11 +259,8 @@ func (s *IbcCallbackBsnAddRewardsTestSuite) Test3CreateFactoryToken() {
 }
 
 func (s *IbcCallbackBsnAddRewardsTestSuite) Test4FailSendBsnRewardsCallback() {
-	bbnChain0 := s.configurer.GetChainConfig(0)
 	bsnChain1 := s.configurer.GetChainConfig(1)
 
-	bbnNode, err := bbnChain0.GetNodeAtIndex(2)
-	s.NoError(err)
 	bsnNode, err := bsnChain1.GetNodeAtIndex(2)
 	s.NoError(err)
 
@@ -272,13 +269,68 @@ func (s *IbcCallbackBsnAddRewardsTestSuite) Test4FailSendBsnRewardsCallback() {
 	tranferInt := math.NewInt(transferAmt)
 	transferCoin := sdk.NewCoin(s.bsnCustomTokenDenom, tranferInt)
 
-	// Create JSON callback memo for IBC callback middleware with BSN action
+	// Create bad JSON callback memo
 	callbackMemo := bstypes.CallbackMemo{
 		Action: bstypes.CallbackActionAddBsnRewardsMemo,
 		AddBsnRewards: &bstypes.CallbackAddBsnRewards{
 			BsnConsumerID: "x",
 		},
 	}
+
+	callbackMemoJSON, err := json.Marshal(callbackMemo)
+	s.Require().NoError(err)
+	callbackMemoString := string(callbackMemoJSON)
+
+	bsnSenderBefore, err := bsnNode.QueryBalances(s.bsnSenderAddr)
+	s.Require().NoError(err)
+
+	ibcTransferTxHash := bsnNode.SendIBCTransfer(s.bsnSenderAddr, s.bbnIbcCallbackReceiverAddr, callbackMemoString, transferCoin)
+	bsnNode.WaitForNextBlocks(4)
+
+	bsnSenderAfter, err := bsnNode.QueryBalances(s.bsnSenderAddr)
+	s.Require().NoError(err)
+
+	// Query transaction to ensure it failed
+	txRes, tx, err := bsnNode.QueryTxWithError(ibcTransferTxHash)
+	s.Require().NoError(err)
+	s.Require().Zero(txRes.Code, fmt.Sprintf("Transaction failed with code %d: %s", txRes.Code, txRes.RawLog))
+
+	require.Equal(s.T(), bsnSenderAfter.Sub(tx.GetFee()...).String(), bsnSenderBefore, "bsn sender should have it funds bridged back")
+}
+
+func (s *IbcCallbackBsnAddRewardsTestSuite) Test5SendBsnRewardsCallback() {
+	bbnChain0 := s.configurer.GetChainConfig(0)
+	bsnChain1 := s.configurer.GetChainConfig(1)
+
+	bbnNode, err := bbnChain0.GetNodeAtIndex(2)
+	s.NoError(err)
+	bsnNode, err := bsnChain1.GetNodeAtIndex(2)
+	s.NoError(err)
+
+	transferAmt := s.r.Int63n(2_000000) + 1_000000
+	tranferInt := math.NewInt(transferAmt)
+	transferCoin := sdk.NewCoin(s.bsnCustomTokenDenom, tranferInt)
+
+	fp2Ratio, fp3Ratio := math.LegacyMustNewDecFromStr("0.7"), math.LegacyMustNewDecFromStr("0.3")
+
+	// Create JSON callback memo for IBC callback middleware with BSN action
+	callbackMemo := bstypes.CallbackMemo{
+		Action: bstypes.CallbackActionAddBsnRewardsMemo,
+		AddBsnRewards: &bstypes.CallbackAddBsnRewards{
+			BsnConsumerID: s.bsn0.ConsumerId,
+			FpRatios: []bstypes.FpRatio{
+				{
+					BtcPk: s.fp2cons0.BtcPk,
+					Ratio: fp2Ratio,
+				},
+				{
+					BtcPk: s.fp3cons0.BtcPk,
+					Ratio: fp3Ratio,
+				},
+			},
+		},
+	}
+
 	// Convert struct to JSON string
 	callbackMemoJSON, err := json.Marshal(callbackMemo)
 	s.Require().NoError(err)
@@ -287,7 +339,7 @@ func (s *IbcCallbackBsnAddRewardsTestSuite) Test4FailSendBsnRewardsCallback() {
 	var ibcTransferTxHash string
 	bbnNode.BalancesDiff(func() {
 		ibcTransferTxHash = bsnNode.SendIBCTransfer(s.bsnSenderAddr, s.bbnIbcCallbackReceiverAddr, callbackMemoString, transferCoin)
-		bsnNode.WaitForNextBlock()
+		bsnNode.WaitForNextBlocks(5)
 	}, s.bsnSenderAddr)
 
 	// Query transaction to ensure it was successful
