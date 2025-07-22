@@ -78,7 +78,7 @@ var validatorConfig = &initialization.NodeConfig{
 const (
 	chainID         = initialization.ChainAID
 	testPartSize    = 65536
-	defaultGasLimit = 750000
+	defaultGasLimit = 10000000
 	defaultFee      = 500000
 	epochLength     = 10
 	blkTime         = time.Second * 5
@@ -403,7 +403,7 @@ func (d *BabylonAppDriver) SendTxWithMessagesSuccess(
 		Type: abci.CheckTxType_New,
 	})
 	require.NoError(t, err)
-	require.Equal(t, result.Code, uint32(0))
+	require.Equal(t, result.Code, uint32(0), result.Log)
 }
 
 func SendTxWithMessagesSuccess(

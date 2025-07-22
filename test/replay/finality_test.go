@@ -3,9 +3,12 @@ package replay
 import (
 	"fmt"
 	"math/rand"
+	"os"
 	"testing"
 	"time"
 
+	"github.com/CosmWasm/wasmd/x/wasm/ioutils"
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
 	ftypes "github.com/babylonlabs-io/babylon/v3/x/finality/types"
@@ -350,4 +353,66 @@ func TestOnlyBabylonFpCanCommitRandomness(t *testing.T) {
 	require.Len(t, txResults, 1)
 	require.Equal(t, txResults[0].Code, uint32(1106))
 	require.Contains(t, txResults[0].Log, msg)
+}
+
+func TestFinalityVote(t *testing.T) {
+	t.Parallel()
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	driverTempDir := t.TempDir()
+	replayerTempDir := t.TempDir()
+	driver := NewBabylonAppDriver(r, t, driverTempDir, replayerTempDir)
+	driver.GenerateNewBlock()
+
+	wampath := "/Users/konradstaniec/Work/babylon/babylon/test/replay/finality.wasm"
+
+	wasmCode, err := os.ReadFile(wampath)
+	require.NoError(t, err)
+
+	gzippedCode, err := ioutils.GzipIt(wasmCode)
+	require.NoError(t, err)
+
+	wasmParams := driver.App.WasmKeeper.GetParams(driver.Ctx())
+
+	wasmParams.CodeUploadAccess = wasmtypes.AccessConfig{
+		Permission: wasmtypes.AccessTypeEverybody,
+		Addresses:  []string{appparams.AccGov.String()},
+	}
+
+	driver.GovPropWaitPass(&wasmtypes.MsgUpdateParams{
+		Authority: appparams.AccGov.String(),
+		Params:    wasmParams,
+	})
+
+	driver.GenerateNewBlock()
+
+	driver.SendTxWithMsgsFromDriverAccount(t, &wasmtypes.MsgStoreCode{
+		Sender:       driver.AddressString(),
+		WASMByteCode: gzippedCode,
+	})
+
+	bsnId := "bsn1"
+
+	// rateLimitingInterval := "100"
+	msg := `{
+		"admin": "` + driver.AddressString() + `",
+		"bsn_id": "` + bsnId + `",
+		"min_pub_rand": 100,
+		"rate_limiting_interval": 100,
+		"max_msgs_per_interval": 100,
+		"bsn_activation_height": 0,
+		"finality_signature_interval": 1
+	}`
+
+	driver.SendTxWithMsgsFromDriverAccount(t, &wasmtypes.MsgStoreCode{
+		Sender:       driver.AddressString(),
+		WASMByteCode: gzippedCode,
+	})
+
+	driver.SendTxWithMsgsFromDriverAccount(t, &wasmtypes.MsgInstantiateContract{
+		Sender: driver.AddressString(),
+		CodeID: 1,
+		Msg:    []byte(msg),
+		Label:  "finality",
+	})
+
 }
