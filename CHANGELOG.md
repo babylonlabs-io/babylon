@@ -133,6 +133,12 @@ remove send restrictions
 - [#1364](https://github.com/babylonlabs-io/babylon/pull/1364) Add babylon commission as legacy dec `[0...1]` to Consumer Registry.
 - [#1359](https://github.com/babylonlabs-io/babylon/pull/1359) Add `MsgAddBsnRewards` to btcstaking and wired BTC delegations from
 BSNs to incentive reward tracker.
+- [#1390](https://github.com/babylonlabs-io/babylon/pull/1390) Add additional gas
+cost per multi-staked finality provider
+- [#1394](https://github.com/babylonlabs-io/babylon/pull/1394) Add migration for
+FP data
+- [#1398](https://github.com/babylonlabs-io/babylon/pull/1398) Add custom tokenfactory
+bindings (thanks @benluelo for contribution)
 
 ### Bug fixes
 
