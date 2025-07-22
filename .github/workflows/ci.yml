@@ -73,7 +73,7 @@ jobs:
           git checkout v2.2.0
       - name: Build docker babylond v2.2.0
         run: |
-          docker build --tag babylonlabs-io/babylond:v2.2.0 -f contrib/images/babylond/Dockerfile . --build-arg BABYLON_BUILD_OPTIONS="testnet" --build-arg VERSION="v2.2.0"
+          docker build --tag babylonlabs-io/babylond:v2.2.0 -f contrib/images/babylond/Dockerfile . --build-arg VERSION="v2.2.0"
       - name: Docker save babylon v2.2.0
         run: |
           docker save -o /tmp/docker-babylond-v2-2-0.tar.gz babylonlabs-io/babylond:v2.2.0
