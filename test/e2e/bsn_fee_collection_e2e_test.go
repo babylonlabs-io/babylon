@@ -15,7 +15,7 @@ import (
 	ictvtypes "github.com/babylonlabs-io/babylon/v3/x/incentive/types"
 )
 
-type BSNFeeCollectionTestSuite struct {
+type IbcCallbackBsnAddRewardsTestSuite struct {
 	suite.Suite
 
 	configurer configurer.Configurer
@@ -34,7 +34,7 @@ func getTestDistributionAddress() sdk.AccAddress {
 	return sdk.AccAddress(hash[:20])
 }
 
-func (s *BSNFeeCollectionTestSuite) SetupSuite() {
+func (s *IbcCallbackBsnAddRewardsTestSuite) SetupSuite() {
 	s.T().Log("setting up BSN fee collection test suite...")
 	var err error
 
@@ -48,7 +48,7 @@ func (s *BSNFeeCollectionTestSuite) SetupSuite() {
 	s.Require().NoError(err)
 }
 
-func (s *BSNFeeCollectionTestSuite) TearDownSuite() {
+func (s *IbcCallbackBsnAddRewardsTestSuite) TearDownSuite() {
 	err := s.configurer.ClearResources()
 	if err != nil {
 		s.T().Logf("error to clear resources %s", err.Error())
@@ -56,7 +56,7 @@ func (s *BSNFeeCollectionTestSuite) TearDownSuite() {
 }
 
 // TestBSNFeeCollectionWithCorrectMemo tests BSN fee collection with the correct memo
-func (s *BSNFeeCollectionTestSuite) TestBSNFeeCollectionWithCorrectMemo() {
+func (s *IbcCallbackBsnAddRewardsTestSuite) TestBSNFeeCollectionWithCorrectMemo() {
 	bbnChainA := s.configurer.GetChainConfig(0)
 	bbnChainB := s.configurer.GetChainConfig(1)
 

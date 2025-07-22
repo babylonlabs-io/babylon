@@ -12,7 +12,7 @@ type CallbackMemo struct {
 	AddBsnRewards *CallbackAddBsnRewards `json:"add_bsn_rewards,omitempty"`
 }
 
-// CallbackAddBsnRewards calback memo information wrapper to
+// CallbackAddBsnRewards callback memo information wrapper to
 // add BSN rewards.
 type CallbackAddBsnRewards struct {
 	BsnConsumerID string    `json:"bsn_consumer_id"`

@@ -124,9 +124,9 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: 1.23
-      - name: Run e2e TestBSNFeeCollectionTestSuite
+      - name: Run e2e TestIbcCallbackBsnAddRewardsTestSuite
         run: |
-          make test-e2e-cache-bsn-fee-collection
+          make test-e2e-cache-ibc-bsn-add-rewards
 
   e2e-run-btc-timestamping:
     needs: [e2e-docker-build-babylon]
