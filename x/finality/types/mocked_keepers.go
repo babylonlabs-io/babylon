@@ -9,6 +9,7 @@ import (
 	reflect "reflect"
 
 	math "cosmossdk.io/math"
+	prefix "cosmossdk.io/store/prefix"
 	types "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 	types0 "github.com/babylonlabs-io/babylon/v3/x/epoching/types"
 	v2 "github.com/btcsuite/btcd/btcec/v2"
@@ -78,20 +79,6 @@ func (m *MockBTCStakingKeeper) ClearPowerDistUpdateEvents(ctx context.Context, b
 func (mr *MockBTCStakingKeeperMockRecorder) ClearPowerDistUpdateEvents(ctx, btcHeight interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ClearPowerDistUpdateEvents", reflect.TypeOf((*MockBTCStakingKeeper)(nil).ClearPowerDistUpdateEvents), ctx, btcHeight)
-}
-
-// GetAllPowerDistUpdateEvents mocks base method.
-func (m *MockBTCStakingKeeper) GetAllPowerDistUpdateEvents(ctx context.Context, lastBTCTipHeight, btcTipHeight uint32) []*types.EventPowerDistUpdate {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAllPowerDistUpdateEvents", ctx, lastBTCTipHeight, btcTipHeight)
-	ret0, _ := ret[0].([]*types.EventPowerDistUpdate)
-	return ret0
-}
-
-// GetAllPowerDistUpdateEvents indicates an expected call of GetAllPowerDistUpdateEvents.
-func (mr *MockBTCStakingKeeperMockRecorder) GetAllPowerDistUpdateEvents(ctx, lastBTCTipHeight, btcTipHeight interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllPowerDistUpdateEvents", reflect.TypeOf((*MockBTCStakingKeeper)(nil).GetAllPowerDistUpdateEvents), ctx, lastBTCTipHeight, btcTipHeight)
 }
 
 // GetBTCDelegation mocks base method.
@@ -206,6 +193,20 @@ func (m *MockBTCStakingKeeper) JailFinalityProvider(ctx context.Context, fpBTCPK
 func (mr *MockBTCStakingKeeperMockRecorder) JailFinalityProvider(ctx, fpBTCPK interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "JailFinalityProvider", reflect.TypeOf((*MockBTCStakingKeeper)(nil).JailFinalityProvider), ctx, fpBTCPK)
+}
+
+// PowerDistUpdateEventBtcHeightStore mocks base method.
+func (m *MockBTCStakingKeeper) PowerDistUpdateEventBtcHeightStore(ctx context.Context, btcHeight uint32) prefix.Store {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PowerDistUpdateEventBtcHeightStore", ctx, btcHeight)
+	ret0, _ := ret[0].(prefix.Store)
+	return ret0
+}
+
+// PowerDistUpdateEventBtcHeightStore indicates an expected call of PowerDistUpdateEventBtcHeightStore.
+func (mr *MockBTCStakingKeeperMockRecorder) PowerDistUpdateEventBtcHeightStore(ctx, btcHeight interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PowerDistUpdateEventBtcHeightStore", reflect.TypeOf((*MockBTCStakingKeeper)(nil).PowerDistUpdateEventBtcHeightStore), ctx, btcHeight)
 }
 
 // PropagateFPSlashingToConsumers mocks base method.

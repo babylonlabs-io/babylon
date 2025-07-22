@@ -334,7 +334,7 @@ func (k Keeper) setEventIdx(
 	ctx context.Context,
 	evt *types.EventIndex,
 ) error {
-	store := k.powerDistUpdateEventBtcHeightStore(ctx, evt.BlockHeightBtc)
+	store := k.PowerDistUpdateEventBtcHeightStore(ctx, evt.BlockHeightBtc)
 
 	bz, err := evt.Event.Marshal()
 	if err != nil {

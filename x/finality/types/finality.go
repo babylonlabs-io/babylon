@@ -9,7 +9,73 @@ import (
 
 	"github.com/babylonlabs-io/babylon/v3/crypto/eots"
 	"github.com/babylonlabs-io/babylon/v3/types"
+	btcstktypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 )
+
+// FinalityProviderState defines the possible states of a finality provider
+// It is used in the power distribution change process
+// to determine the state of each finality provider and how it affects the power distribution
+type FinalityProviderState int32
+
+const (
+	// FinalityProviderState_UNKNOWN indicates the finality provider state is unknown or uninitialized
+	FinalityProviderState_UNKNOWN FinalityProviderState = 0
+	// FinalityProviderState_UNJAILED indicates the finality provider is active and can participate
+	FinalityProviderState_UNJAILED FinalityProviderState = 1
+	// FinalityProviderState_JAILED indicates the finality provider is jailed and cannot participate
+	FinalityProviderState_JAILED FinalityProviderState = 2
+	// FinalityProviderState_SLASHED indicates the finality provider has been slashed
+	FinalityProviderState_SLASHED FinalityProviderState = 3
+)
+
+var FinalityProviderState_name = map[int32]string{
+	0: "UNKNOWN",
+	1: "UNJAILED",
+	2: "JAILED",
+	3: "SLASHED",
+}
+
+var FinalityProviderState_value = map[string]int32{
+	"UNKNOWN":  0,
+	"UNJAILED": 1,
+	"JAILED":   2,
+	"SLASHED":  3,
+}
+
+func (x FinalityProviderState) String() string {
+	return FinalityProviderState_name[int32(x)]
+}
+
+// Processing state during the power distribution change process
+// It holds the state of finality providers, BTC delegations, and events
+// It is used to track the changes in the finality providers' states and the BTC delegations
+// It is also used to determine the final state of each finality provider after the power distribution change
+// The state is updated during the power distribution change process and is used to generate the
+// final power distribution cache
+type ProcessingState struct {
+	// FPStates is a map of the finality providers' state
+	FPStates     map[string]FinalityProviderState
+	FpByBtcPkHex map[string]*btcstktypes.FinalityProvider
+	// UnbondedSatsByFpBtcPk is a map where key is finality provider's BTC PK hex and value is a list
+	// of BTC delegations satoshis that were unbonded or expired without previously
+	// being unbonded
+	UnbondedSatsByFpBtcPk map[string][]uint64
+	// ActivatedSatsByFpBtcPk is a map where key is finality provider's BTC PK hex and value is a list
+	// of BTC delegations satoshis amount that newly become active under this provider
+	ActivatedSatsByFpBtcPk map[string][]uint64
+	// A slice of the BTC delegations expired events
+	ExpiredEvents []*btcstktypes.EventPowerDistUpdate_BtcDelStateUpdate
+}
+
+func NewProcessingState() *ProcessingState {
+	return &ProcessingState{
+		FPStates:               map[string]FinalityProviderState{},
+		FpByBtcPkHex:           map[string]*btcstktypes.FinalityProvider{},
+		UnbondedSatsByFpBtcPk:  map[string][]uint64{},
+		ActivatedSatsByFpBtcPk: map[string][]uint64{},
+		ExpiredEvents:          []*btcstktypes.EventPowerDistUpdate_BtcDelStateUpdate{},
+	}
+}
 
 func (c *PubRandCommit) IsInRange(height uint64) bool {
 	start, end := c.Range()
