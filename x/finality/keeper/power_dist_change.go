@@ -322,8 +322,7 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 // state updates. It handles BTC delegation updates immediately, while deferring expired events
 // for later processing. Finality provider state updates are processed immediately.
 func (k Keeper) processEventsAtHeight(ctx context.Context, sdkCtx sdk.Context, btcHeight uint32, state *ftypes.ProcessingState) {
-	store := k.BTCStakingKeeper.PowerDistUpdateEventBtcHeightStore(ctx, btcHeight)
-	iter := store.Iterator(nil, nil)
+	iter := k.BTCStakingKeeper.PowerDistUpdateEventBtcHeightStoreIterator(ctx, btcHeight)
 	defer iter.Close()
 
 	for ; iter.Valid(); iter.Next() {
