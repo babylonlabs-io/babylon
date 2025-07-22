@@ -62,7 +62,6 @@ import (
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-<<<<<<< HEAD
 	pfmrouter "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward"
 	pfmrouterkeeper "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward/keeper"
 	pfmroutertypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward/types"
@@ -86,12 +85,7 @@ import (
 	porttypes "github.com/cosmos/ibc-go/v8/modules/core/05-port/types" // ibc module puts types under `ibchost` rather than `ibctypes`
 	ibcexported "github.com/cosmos/ibc-go/v8/modules/core/exported"
 	ibckeeper "github.com/cosmos/ibc-go/v8/modules/core/keeper"
-=======
-	ibccallbacks "github.com/cosmos/ibc-go/v10/modules/apps/callbacks"
-	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
-	ibckeeper "github.com/cosmos/ibc-go/v10/modules/core/keeper"
 	tokenfactorybindings "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/bindings"
->>>>>>> 09820f4 (add custom tokenfactory bindings (#1398))
 	tokenfactorykeeper "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/keeper"
 	tokenfactorytypes "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/types"
 )
@@ -424,97 +418,6 @@ func (ak *AppKeepers) InitKeepers(
 		appparams.AccGov.String(),
 	)
 
-<<<<<<< HEAD
-=======
-	ak.EVMTransferKeeper = evmtransferkeeper.NewKeeper(
-		appCodec, runtime.NewKVStoreService(keys[evmtypes.ModuleName]),
-		ak.GetSubspace(ibctransfertypes.ModuleName),
-		ak.IBCKeeper.ChannelKeeper, // ICS4Wrapper
-		ak.IBCKeeper.ChannelKeeper,
-		bApp.MsgServiceRouter(), ak.AccountKeeper, ak.BankKeeper,
-		ak.Erc20Keeper, // Add ERC20 Keeper for ERC20 transfers
-		appparams.AccGov.String(),
-	)
-
-	ak.EVMKeeper.WithStaticPrecompiles(
-		NewAvailableStaticPrecompiles(
-			appCodec,
-			ak.PreciseBankKeeper,
-			ak.Erc20Keeper,
-			ak.GovKeeper,
-			ak.SlashingKeeper,
-			ak.EvidenceKeeper,
-		),
-	)
-	// Create the TokenFactory Keeper
-	ak.TokenFactoryKeeper = tokenfactorykeeper.NewKeeper(
-		appCodec,
-		ak.keys[tokenfactorytypes.StoreKey],
-		maccPerms,
-		ak.AccountKeeper,
-		ak.BankKeeper,
-		ak.DistrKeeper,
-		tokenFactoryCapabilities,
-		tokenfactorykeeper.DefaultIsSudoAdminFunc,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-	)
-
-	// Register custom plugins for the wasm module
-	wasmOpts = append(
-		owasm.RegisterCustomPlugins(
-			&ak.TokenFactoryKeeper,
-			&epochingKeeper,
-			&ak.CheckpointingKeeper,
-			&ak.BTCLightClientKeeper,
-			&ak.ZoneConciergeKeeper,
-		),
-		wasmOpts...,
-	)
-
-	// Register custom plugins for the tokenfactory module
-	wasmOpts = append(
-		tokenfactorybindings.RegisterCustomPlugins(
-			ak.BankKeeper,
-			&ak.TokenFactoryKeeper,
-		),
-		wasmOpts...,
-	)
-
-	// Register gRPC queries for the wasm module
-	wasmOpts = append(
-		owasm.RegisterGrpcQueries(*bApp.GRPCQueryRouter(), appCodec),
-		wasmOpts...,
-	)
-
-	// Register message handlers for the wasm module
-	wasmOpts = append(
-		owasm.RegisterMessageHandler(
-			&ak.FinalityKeeper,
-		),
-		wasmOpts...,
-	)
-
-	ak.WasmKeeper = wasmkeeper.NewKeeper(
-		appCodec,
-		runtime.NewKVStoreService(keys[wasmtypes.StoreKey]),
-		ak.AccountKeeper,
-		ak.BankKeeper,
-		ak.StakingKeeper,
-		distrkeeper.NewQuerier(ak.DistrKeeper),
-		ak.IBCKeeper.ChannelKeeper,
-		ak.IBCKeeper.ChannelKeeper,
-		ak.TransferKeeper,
-		bApp.MsgServiceRouter(),
-		bApp.GRPCQueryRouter(),
-		homePath,
-		wasmConfig,
-		wasmtypes.VMConfig{},
-		WasmCapabilities(),
-		appparams.AccGov.String(),
-		wasmOpts...,
-	)
-
->>>>>>> 09820f4 (add custom tokenfactory bindings (#1398))
 	// register the proposal types
 	// Deprecated: Avoid adding new handlers, instead use the new proposal flow
 	// by granting the governance module the right to execute the message.
@@ -667,7 +570,23 @@ func (ak *AppKeepers) InitKeepers(
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
-	wasmOpts = append(owasm.RegisterCustomPlugins(&ak.TokenFactoryKeeper, &epochingKeeper, &ak.CheckpointingKeeper, &ak.BTCLightClientKeeper), wasmOpts...)
+	wasmOpts = append(
+		owasm.RegisterCustomPlugins(
+			&ak.TokenFactoryKeeper,
+			&epochingKeeper,
+			&ak.CheckpointingKeeper,
+			&ak.BTCLightClientKeeper,
+		),
+		wasmOpts...,
+	)
+
+	wasmOpts = append(
+		tokenfactorybindings.RegisterCustomPlugins(
+			ak.BankKeeper,
+			&ak.TokenFactoryKeeper,
+		),
+		wasmOpts...,
+	)
 
 	ak.WasmKeeper = wasmkeeper.NewKeeper(
 		appCodec,
