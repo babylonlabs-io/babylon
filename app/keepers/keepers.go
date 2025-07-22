@@ -85,6 +85,7 @@ import (
 	porttypes "github.com/cosmos/ibc-go/v8/modules/core/05-port/types" // ibc module puts types under `ibchost` rather than `ibctypes`
 	ibcexported "github.com/cosmos/ibc-go/v8/modules/core/exported"
 	ibckeeper "github.com/cosmos/ibc-go/v8/modules/core/keeper"
+	tokenfactorybindings "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/bindings"
 	tokenfactorykeeper "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/keeper"
 	tokenfactorytypes "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/types"
 )
@@ -569,7 +570,23 @@ func (ak *AppKeepers) InitKeepers(
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
-	wasmOpts = append(owasm.RegisterCustomPlugins(&ak.TokenFactoryKeeper, &epochingKeeper, &ak.CheckpointingKeeper, &ak.BTCLightClientKeeper), wasmOpts...)
+	wasmOpts = append(
+		owasm.RegisterCustomPlugins(
+			&ak.TokenFactoryKeeper,
+			&epochingKeeper,
+			&ak.CheckpointingKeeper,
+			&ak.BTCLightClientKeeper,
+		),
+		wasmOpts...,
+	)
+
+	wasmOpts = append(
+		tokenfactorybindings.RegisterCustomPlugins(
+			ak.BankKeeper,
+			&ak.TokenFactoryKeeper,
+		),
+		wasmOpts...,
+	)
 
 	ak.WasmKeeper = wasmkeeper.NewKeeper(
 		appCodec,

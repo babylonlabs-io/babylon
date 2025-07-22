@@ -42,6 +42,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#1269](https://github.com/babylonlabs-io/babylon/pull/1269) Add fee collector e2e tests.
 - [#1344](https://github.com/babylonlabs-io/babylon/pull/1344) Bump cosmos-sdk and
 remove send restrictions
+- [#1398](https://github.com/babylonlabs-io/babylon/pull/1398) Add custom tokenfactory
+bindings (thanks @benluelo for contribution)
 
 ### Bug Fixes
 
