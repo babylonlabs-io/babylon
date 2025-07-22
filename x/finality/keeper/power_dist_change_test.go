@@ -1,8 +1,6 @@
 package keeper_test
 
 import (
-	"strings"
-
 	"math/rand"
 	"testing"
 	"time"
@@ -219,7 +217,6 @@ func FuzzDistributionCacheVpCheck_FpSlashedBeforeInclusionProof(f *testing.F) {
 
 		var (
 			btcDelWithoutInclusionProof   *datagen.CreateDelegationInfo
-			fpToBeSlashed                 *btcstktypes.MsgCreateFinalityProvider
 			fpSlashedSK                   *secp256k1.PrivateKey
 			delegationInfosToIncludeProof []*datagen.CreateDelegationInfo
 		)
@@ -255,7 +252,6 @@ func FuzzDistributionCacheVpCheck_FpSlashedBeforeInclusionProof(f *testing.F) {
 				}
 
 				if btcDelWithoutInclusionProof == nil {
-					fpToBeSlashed = fpMsg
 					btcDelWithoutInclusionProof = delCreationInfo
 					fpSlashedSK = fpBtcSK
 					// the first one will be slashed, and the inclusion proof sent later
@@ -310,18 +306,8 @@ func FuzzDistributionCacheVpCheck_FpSlashedBeforeInclusionProof(f *testing.F) {
 		activeFps := vpDstCache.GetActiveFinalityProviderSet()
 		require.Equal(t, len(activeFps), int(createdFps))
 
-		// gets any active delegation from the fp to be slashed
-		var delSlashed *datagen.CreateDelegationInfo
-		for _, activeDel := range delegationInfosToIncludeProof {
-			if strings.EqualFold(fpToBeSlashed.BtcPk.MarshalHex(), activeDel.MsgCreateBTCDelegation.FpBtcPkList[0].MarshalHex()) {
-				delSlashed = activeDel
-				break
-			}
-		}
-
 		_, err := msgSrvrBtcStk.SelectiveSlashingEvidence(ctx, &btcstktypes.MsgSelectiveSlashingEvidence{
 			Signer:           datagen.GenRandomAddress().String(),
-			StakingTxHash:    delSlashed.StakingTxHash,
 			RecoveredFpBtcSk: fpSlashedSK.Serialize(),
 		})
 		require.NoError(t, err)
@@ -1351,7 +1337,7 @@ func TestDoNotGenerateDuplicateEventsAfterHavingCovenantQuorum(t *testing.T) {
 	delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 	h.NoError(err)
 	stakingParams := h.BTCStakingKeeper.GetParamsWithVersion(h.Ctx).Params
-	expectedStakingTxHash, msgCreateBTCDel, actualDel, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
+	expectedStakingTxHash, _, actualDel, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
 		r,
 		delSK,
 		[]*btcec.PublicKey{fpPK},
@@ -1390,7 +1376,7 @@ func TestDoNotGenerateDuplicateEventsAfterHavingCovenantQuorum(t *testing.T) {
 	h.BeginBlocker()
 	require.Zero(t, h.FinalityKeeper.GetVotingPower(h.Ctx, *fp.BtcPk, babylonHeight))
 
-	msgs := h.GenerateCovenantSignaturesMessages(r, covenantSKs, msgCreateBTCDel, actualDel)
+	msgs := h.GenerateCovenantSignaturesMessages(r, covenantSKs, actualDel)
 
 	// Generate and report covenant signatures from all covenant members.
 	for _, m := range msgs {
@@ -1644,7 +1630,7 @@ func createDelegationWithFinalityProvider(
 	chainID string,
 	fpIndex int,
 	fpInfo *btcstktypes.FinalityProvider, // Must be non-nil
-	fpSK *btcec.PrivateKey, // Must be non-nil
+	fpSK *btcec.PrivateKey,               // Must be non-nil
 	btcStakingMsgServer btcstktypes.MsgServer,
 	btcLcMsgServer btclctypes.MsgServer,
 	finalityMsgServer ftypes.MsgServer, // Use finality related MsgServer type
@@ -1951,7 +1937,8 @@ func TestBSNDelegationActivated_DirectIncentives(t *testing.T) {
 	btclcKeeper := btcstktypes.NewMockBTCLightClientKeeper(ctrl)
 	btccKeeper := btcstktypes.NewMockBtcCheckpointKeeper(ctrl)
 	incentiveKeeper := ftypes.NewMockIncentiveKeeper(ctrl)
-	h := testutil.NewHelperNoMocksCalls(t, btclcKeeper, btccKeeper)
+	heightAfterMultiStakingAllowListExpiration := int64(10)
+	h := testutil.NewHelperNoMocksCalls(t, btclcKeeper, btccKeeper).WithBlockHeight(heightAfterMultiStakingAllowListExpiration)
 
 	h.FinalityKeeper.IncentiveKeeper = incentiveKeeper
 
@@ -2023,7 +2010,8 @@ func TestBSNDelegationUnbonded_DirectIncentives(t *testing.T) {
 	btccKeeper := btcstktypes.NewMockBtcCheckpointKeeper(ctrl)
 	ictvK := testutil.NewMockIctvKeeperK(ctrl)
 
-	h := testutil.NewHelperWithBankMock(t, btclcKeeper, btccKeeper, nil, ictvK)
+	heightAfterMultiStakingAllowListExpiration := int64(10)
+	h := testutil.NewHelperWithBankMock(t, btclcKeeper, btccKeeper, nil, ictvK).WithBlockHeight(heightAfterMultiStakingAllowListExpiration)
 
 	covenantSKs, _ := h.GenAndApplyCustomParams(r, 100, 200, 0, 2)
 
@@ -2094,7 +2082,8 @@ func TestTwoBtcActivationEvents(t *testing.T) {
 	btclcKeeper := btcstktypes.NewMockBTCLightClientKeeper(ctrl)
 	btccKeeper := btcstktypes.NewMockBtcCheckpointKeeper(ctrl)
 	ictvK := ftypes.NewMockIncentiveKeeper(ctrl)
-	h := testutil.NewHelperNoMocksCalls(t, btclcKeeper, btccKeeper)
+	heightAfterMultiStakingAllowListExpiration := int64(10)
+	h := testutil.NewHelperNoMocksCalls(t, btclcKeeper, btccKeeper).WithBlockHeight(heightAfterMultiStakingAllowListExpiration)
 	h.FinalityKeeper.IncentiveKeeper = ictvK
 
 	h.GenAndApplyCustomParams(r, 100, 200, 0, 2)

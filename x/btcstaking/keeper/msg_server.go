@@ -110,7 +110,7 @@ func (ms msgServer) EditFinalityProvider(goCtx context.Context, req *types.MsgEd
 	// all good, update the finality provider and set back
 	fp.Description = req.Description
 
-	ms.setFinalityProvider(goCtx, fp)
+	ms.SetFinalityProvider(goCtx, fp)
 
 	// notify subscriber
 	ctx := sdk.UnwrapSDKContext(goCtx)
@@ -666,54 +666,19 @@ func (ms msgServer) SelectiveSlashingEvidence(goCtx context.Context, req *types.
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	delInfo, err := ms.getBTCDelWithParams(ctx, req.StakingTxHash)
-	if err != nil {
-		return nil, err
-	}
-
-	// ensure the BTC delegation is active, or its BTC undelegation receives an
-	// unbonding signature from the staker
-	status, _, err := ms.BtcDelStatusWithTip(ctx, delInfo)
-	if err != nil {
-		return nil, err
-	}
-
-	btcDel := delInfo.Delegation
-	if status != types.BTCDelegationStatus_ACTIVE && !btcDel.IsUnbondedEarly() {
-		return nil, types.ErrBTCDelegationNotFound.Wrap("a BTC delegation that is not active or unbonding early cannot be slashed")
-	}
-
 	// decode the finality provider's BTC SK/PK
 	fpSK, fpPK := btcec.PrivKeyFromBytes(req.RecoveredFpBtcSk)
 	fpBTCPK := bbn.NewBIP340PubKeyFromBTCPK(fpPK)
 
-	// ensure the BTC delegation is staked to the given finality provider
-	fpIdx := btcDel.GetFpIdx(fpBTCPK)
-	if fpIdx == -1 {
-		return nil, types.ErrFpNotFound.Wrapf("BTC delegation is not staked to the finality provider")
-	}
-
-	// ensure the finality provider exists
-	fp, err := ms.GetFinalityProvider(ctx, fpBTCPK.MustMarshal())
-	if err != nil {
-		panic(types.ErrFpNotFound.Wrapf("failing to find the finality provider with BTC delegations"))
-	}
-	// ensure the finality provider is not slashed
-	if fp.IsSlashed() {
-		return nil, types.ErrFpAlreadySlashed
-	}
-
-	// at this point, the finality provider must have done selective slashing and must be
-	// adversarial
-
-	// slash the finality provider now
+	// slashing the provider - this method also checks:
+	// - that the fp first exists and can be found
+	// - that the finality provider isnt already slashed
 	if err := ms.SlashFinalityProvider(ctx, fpBTCPK.MustMarshal()); err != nil {
-		panic(err) // failed to slash the finality provider, must be programming error
+		return nil, err
 	}
 
 	// emit selective slashing event
 	evidence := &types.SelectiveSlashingEvidence{
-		StakingTxHash:    req.StakingTxHash,
 		FpBtcPk:          fpBTCPK,
 		RecoveredFpBtcSk: fpSK.Serialize(),
 	}

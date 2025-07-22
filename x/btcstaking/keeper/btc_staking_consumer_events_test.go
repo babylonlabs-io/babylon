@@ -87,7 +87,8 @@ func FuzzSetBTCStakingEventStore_ActiveDel(f *testing.F) {
 		// mock BTC light client and BTC checkpoint modules
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-		h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
+		heightAfterMultiStakingAllowListExpiration := int64(10)
+		h := testutil.NewHelper(t, btclcKeeper, btccKeeper).WithBlockHeight(heightAfterMultiStakingAllowListExpiration)
 
 		// set all parameters
 		covenantSKs, _ := h.GenAndApplyCustomParams(r, 100, 200, 0, 2)
@@ -104,7 +105,7 @@ func FuzzSetBTCStakingEventStore_ActiveDel(f *testing.F) {
 		stakingValue := int64(2 * 10e8)
 		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		h.NoError(err)
-		stakingTxHash, msgCreateBTCDel, _, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
+		stakingTxHash, _, _, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
 			r,
 			delSK,
 			[]*btcec.PublicKey{consumerFpPK, babylonFpPK},
@@ -128,7 +129,7 @@ func FuzzSetBTCStakingEventStore_ActiveDel(f *testing.F) {
 		h.NoError(err)
 		require.False(t, hasQuorum)
 		// create cov sigs to activate the delegation
-		msgs := h.GenerateCovenantSignaturesMessages(r, covenantSKs, msgCreateBTCDel, actualDel)
+		msgs := h.GenerateCovenantSignaturesMessages(r, covenantSKs, actualDel)
 		bogusMsg := *msgs[0]
 		bogusMsg.StakingTxHash = datagen.GenRandomBtcdHash(r).String()
 		_, err = h.MsgServer.AddCovenantSigs(h.Ctx, &bogusMsg)
@@ -185,7 +186,8 @@ func FuzzSetBTCStakingEventStore_UnbondedDel(f *testing.F) {
 		// mock BTC light client and BTC checkpoint modules
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-		h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
+		heightAfterMultiStakingAllowListExpiration := int64(10)
+		h := testutil.NewHelper(t, btclcKeeper, btccKeeper).WithBlockHeight(heightAfterMultiStakingAllowListExpiration)
 
 		// set all parameters
 		covenantSKs, _ := h.GenAndApplyCustomParams(r, 100, 200, 0, 2)

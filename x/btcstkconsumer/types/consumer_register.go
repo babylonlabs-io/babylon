@@ -2,6 +2,7 @@ package types
 
 import (
 	"fmt"
+	"unicode/utf8"
 
 	"cosmossdk.io/math"
 )
@@ -9,6 +10,9 @@ import (
 func (m *MsgRegisterConsumer) ValidateBasic() error {
 	if len(m.ConsumerId) == 0 {
 		return fmt.Errorf("ConsumerId must be non-empty")
+	}
+	if !utf8.ValidString(m.ConsumerId) {
+		return fmt.Errorf("ConsumerId must be valid UTF-8")
 	}
 	if len(m.ConsumerName) == 0 {
 		return fmt.Errorf("ConsumerName must be non-empty")

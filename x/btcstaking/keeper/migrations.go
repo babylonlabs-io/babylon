@@ -24,8 +24,34 @@ func NewMigrator(keeper Keeper) Migrator {
 // Migrate1to2 migrates from version 1 to 2.
 func (m Migrator) Migrate1to2(ctx sdk.Context) error {
 	store := runtime.KVStoreAdapter(m.keeper.storeService.OpenKVStore(ctx))
-	return v2.MigrateStore(ctx, store, m.keeper.cdc, func(ctx context.Context, p *types.Params) error {
-		p.MaxFinalityProviders = 1
-		return nil
-	})
+	return v2.MigrateStore(
+		ctx,
+		store,
+		m.keeper.cdc,
+		func(ctx context.Context, p *types.Params) error {
+			p.MaxFinalityProviders = 1
+			return nil
+		},
+		m.keeper.IndexAllowedMultiStakingTransaction,
+		m.keeper.migrateBabylonFinalityProviders,
+	)
+}
+
+// migrateBabylonFinalityProviders migrates all existing Babylon finality providers
+// to to have the BSN ID set to Babylon's chain ID. It also indexes the finality
+// provider in the BSN index store.
+func (k Keeper) migrateBabylonFinalityProviders(ctx sdk.Context) {
+	babylonBSNID := ctx.ChainID()
+
+	store := k.finalityProviderStore(ctx)
+	iter := store.Iterator(nil, nil)
+	defer iter.Close()
+
+	for ; iter.Valid(); iter.Next() {
+		var fp types.FinalityProvider
+		k.cdc.MustUnmarshal(iter.Value(), &fp)
+		fp.BsnId = babylonBSNID
+		k.SetFinalityProvider(ctx, &fp)
+		k.bsnIndexFinalityProvider(ctx, &fp)
+	}
 }

@@ -34,6 +34,12 @@ func (ms msgServer) RegisterConsumer(goCtx context.Context, req *types.MsgRegist
 		return nil, err
 	}
 
+	sdkCtx := sdk.UnwrapSDKContext(goCtx)
+
+	if req.ConsumerId == sdkCtx.ChainID() {
+		return nil, types.ErrInvalidConsumerIDs.Wrap("consumer id cannot be the same as the Babylon Genesis chain id")
+	}
+
 	var consumerType types.ConsumerType
 	if len(req.RollupFinalityContractAddress) > 0 {
 		// this is a rollup consumer
