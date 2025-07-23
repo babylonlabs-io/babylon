@@ -37,6 +37,7 @@ type (
 		authority string
 
 		// Collections for KV store management
+		Schema                collections.Schema
 		Port                  collections.Item[string]
 		ParamsCollection      collections.Item[types.Params]
 		LastSentBTCSegment    collections.Item[types.BTCChainSegment]
@@ -67,7 +68,7 @@ func NewKeeper(
 ) *Keeper {
 	sb := collections.NewSchemaBuilder(storeService)
 
-	return &Keeper{
+	k := &Keeper{
 		cdc:                 cdc,
 		storeService:        storeService,
 		ics4Wrapper:         ics4Wrapper,
@@ -132,6 +133,14 @@ func NewKeeper(
 			codec.CollValue[types.IndexedHeaderWithProof](cdc),
 		),
 	}
+
+	schema, err := sb.Build()
+	if err != nil {
+		panic(err)
+	}
+	k.Schema = schema
+
+	return k
 }
 
 // Logger returns a module-specific logger.
