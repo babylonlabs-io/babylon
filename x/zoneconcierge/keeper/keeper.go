@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 
+	"cosmossdk.io/collections"
 	corestoretypes "cosmossdk.io/core/store"
 	"cosmossdk.io/log"
 	storetypes "cosmossdk.io/store/types"
@@ -34,6 +35,15 @@ type (
 		// The address capable of executing a MsgUpdateParams message.
 		// Typically, this should be the x/gov module account.
 		authority string
+
+		// Collections for KV store management
+		Port                  collections.Item[string]
+		ParamsCollection      collections.Item[types.Params]
+		LastSentBTCSegment    collections.Item[types.BTCChainSegment]
+		SealedEpochProof      collections.Map[uint64, types.ProofEpochSealed]
+		BSNBTCState           collections.Map[string, types.BSNBTCState]
+		LatestEpochHeaders    collections.Map[string, types.IndexedHeader]
+		FinalizedEpochHeaders collections.Map[collections.Pair[uint64, string], types.IndexedHeaderWithProof]
 	}
 )
 
@@ -55,6 +65,8 @@ func NewKeeper(
 	btcStkKeeper types.BTCStkConsumerKeeper,
 	authority string,
 ) *Keeper {
+	sb := collections.NewSchemaBuilder(storeService)
+
 	return &Keeper{
 		cdc:                 cdc,
 		storeService:        storeService,
@@ -72,6 +84,53 @@ func NewKeeper(
 		bsKeeper:            bsKeeper,
 		btcStkKeeper:        btcStkKeeper,
 		authority:           authority,
+
+		Port: collections.NewItem[string](
+			sb,
+			types.PortKey,
+			"port",
+			collections.StringValue,
+		),
+		ParamsCollection: collections.NewItem[types.Params](
+			sb,
+			types.ParamsKey,
+			"params",
+			codec.CollValue[types.Params](cdc),
+		),
+		LastSentBTCSegment: collections.NewItem[types.BTCChainSegment](
+			sb,
+			types.LastSentBTCSegmentKey,
+			"last_sent_btc_segment",
+			codec.CollValue[types.BTCChainSegment](cdc),
+		),
+		SealedEpochProof: collections.NewMap[uint64, types.ProofEpochSealed](
+			sb,
+			types.SealedEpochProofKey,
+			"sealed_epoch_proof",
+			collections.Uint64Key,
+			codec.CollValue[types.ProofEpochSealed](cdc),
+		),
+		BSNBTCState: collections.NewMap[string, types.BSNBTCState](
+			sb,
+			types.BSNBTCStateKey,
+			"bsn_btc_state",
+			collections.StringKey,
+			codec.CollValue[types.BSNBTCState](cdc),
+		),
+		LatestEpochHeaders: collections.NewMap[string, types.IndexedHeader](
+			sb,
+			types.LatestEpochHeadersKey,
+			"latest_epoch_headers",
+			collections.StringKey,
+			codec.CollValue[types.IndexedHeader](cdc),
+		),
+		FinalizedEpochHeaders: collections.NewMap[collections.Pair[uint64, string], types.IndexedHeaderWithProof](
+			sb,
+			types.FinalizedEpochHeadersKey,
+			"finalized_epoch_headers",
+			collections.PairKeyCodec(collections.Uint64Key, collections.StringKey),
+			codec.CollValue[types.IndexedHeaderWithProof](cdc),
+		),
 	}
 }
 
@@ -82,18 +141,14 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 
 // GetPort returns the portID for the transfer module. Used in ExportGenesis
 func (k Keeper) GetPort(ctx context.Context) string {
-	store := k.storeService.OpenKVStore(ctx)
-	port, err := store.Get(types.PortKey)
+	port, err := k.Port.Get(ctx)
 	if err != nil {
 		panic(err)
 	}
-	return string(port)
+	return port
 }
 
 // SetPort sets the portID for the transfer module. Used in InitGenesis
-func (k Keeper) SetPort(ctx context.Context, portID string) {
-	store := k.storeService.OpenKVStore(ctx)
-	if err := store.Set(types.PortKey, []byte(portID)); err != nil {
-		panic(err)
-	}
+func (k Keeper) SetPort(ctx context.Context, portID string) error {
+	return k.Port.Set(ctx, portID)
 }
