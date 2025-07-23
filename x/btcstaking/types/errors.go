@@ -42,5 +42,5 @@ var (
 	ErrUnableToDistributeBsnRewards = errorsmod.Register(ModuleName, 1133, "unable to distribute BSN rewards")
 	ErrFpInvalidBsnID               = errorsmod.Register(ModuleName, 1134, "finality provider has a different BSN ID")
 	ErrUnableToAllocateBtcRewards   = errorsmod.Register(ModuleName, 1135, "unable to allocate BTC rewards")
-	ErrInvalidCallbackAddBsnRewards = errorsmod.Register(ModuleName, 1136, "invalid add bsn rewards")
+	ErrInvalidCallbackAddBsnRewards = errorsmod.Register(ModuleName, 1136, "invalid callback add bsn rewards")
 )
