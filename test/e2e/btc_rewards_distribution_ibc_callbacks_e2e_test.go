@@ -109,26 +109,22 @@ func (s *IbcCallbackBsnAddRewards) TearDownSuite() {
 // Test1CreateFinalityProviders creates all finality providers
 func (s *IbcCallbackBsnAddRewards) Test1CreateFinalityProviders() {
 	chainA := s.configurer.GetChainConfig(0)
+	chainB := s.configurer.GetChainConfig(1)
 	chainA.WaitUntilHeight(2)
+	chainB.WaitUntilHeight(2)
 
-	n1, err := chainA.GetNodeAtIndex(1)
-	s.NoError(err)
-	n2, err := chainA.GetNodeAtIndex(2)
-	s.NoError(err)
+	bbnNode := s.BbnNode()
+	bbnNode.WaitForNextBlock()
 
-	n1.WaitForNextBlock()
-	n2.WaitForNextBlock()
+	s.fp1bbnAddr = bbnNode.KeysAdd(wFp1)
+	s.fp2cons0Addr = bbnNode.KeysAdd(wFp2)
+	s.fp3cons0Addr = bbnNode.KeysAdd(wFp3)
 
-	s.fp1bbnAddr = n1.KeysAdd(wFp1)
-	s.fp2cons0Addr = n2.KeysAdd(wFp2)
-	s.fp3cons0Addr = n2.KeysAdd(wFp3)
+	bbnNode.BankMultiSendFromNode([]string{s.fp1bbnAddr, s.fp2cons0Addr, s.fp3cons0Addr}, "1000000ubbn")
 
-	n2.BankMultiSendFromNode([]string{s.fp1bbnAddr, s.fp2cons0Addr, s.fp3cons0Addr}, "1000000ubbn")
+	bbnNode.WaitForNextBlock()
 
-	n1.WaitForNextBlock()
-	n2.WaitForNextBlock()
-
-	clientStatesResp, err := n1.QueryClientStates()
+	clientStatesResp, err := bbnNode.QueryClientStates()
 	require.NoError(s.T(), err)
 	require.Equal(s.T(), clientStatesResp.ClientStates.Len(), 1)
 	clientState := clientStatesResp.ClientStates[0]
@@ -139,13 +135,12 @@ func (s *IbcCallbackBsnAddRewards) Test1CreateFinalityProviders() {
 		"Chain description: "+datagen.GenRandomHexStr(s.r, 15),
 		datagen.GenBabylonRewardsCommission(s.r),
 	)
-	n1.RegisterConsumerChain(n1.WalletName, bsn0.ConsumerId, bsn0.ConsumerName, bsn0.ConsumerDescription, bsn0.BabylonRewardsCommission.String())
+	bbnNode.RegisterConsumerChain(bbnNode.WalletName, bsn0.ConsumerId, bsn0.ConsumerName, bsn0.ConsumerDescription, bsn0.BabylonRewardsCommission.String())
 	s.bsn0 = bsn0
 
-	n1.WaitForNextBlock()
-	n2.WaitForNextBlock()
+	bbnNode.WaitForNextBlock()
 
-	consumers := n2.QueryBTCStkConsumerConsumers()
+	consumers := bbnNode.QueryBTCStkConsumerConsumers()
 	require.Len(s.T(), consumers, 1)
 	s.T().Log("All Consumers created")
 
@@ -153,9 +148,9 @@ func (s *IbcCallbackBsnAddRewards) Test1CreateFinalityProviders() {
 		s.T(),
 		s.r,
 		s.fp1bbnBTCSK,
-		n1,
+		bbnNode,
 		s.fp1bbnAddr,
-		n1.ChainID(),
+		bbnNode.ChainID(),
 	)
 	require.NotNil(s.T(), s.fp1bbn)
 
@@ -163,7 +158,7 @@ func (s *IbcCallbackBsnAddRewards) Test1CreateFinalityProviders() {
 		s.T(),
 		s.r,
 		s.fp2cons0BTCSK,
-		n2,
+		bbnNode,
 		s.fp2cons0Addr,
 		bsn0.ConsumerId,
 	)
@@ -173,17 +168,14 @@ func (s *IbcCallbackBsnAddRewards) Test1CreateFinalityProviders() {
 		s.T(),
 		s.r,
 		s.fp3cons0BTCSK,
-		n2,
+		bbnNode,
 		s.fp3cons0Addr,
 		bsn0.ConsumerId,
 	)
 	s.NotNil(s.fp3cons0)
 
-	n1.WaitForNextBlock()
-	n2.WaitForNextBlock()
-
-	babylonFps := n2.QueryFinalityProviders(n1.ChainID())
-	cons0Fps := n2.QueryFinalityProviders(bsn0.ConsumerId)
+	babylonFps := bbnNode.QueryFinalityProviders(bbnNode.ChainID())
+	cons0Fps := bbnNode.QueryFinalityProviders(bsn0.ConsumerId)
 
 	require.Len(s.T(), append(babylonFps, cons0Fps...), 3, "should have created all the FPs to start the test")
 	s.T().Log("All Fps created")
@@ -191,36 +183,29 @@ func (s *IbcCallbackBsnAddRewards) Test1CreateFinalityProviders() {
 
 // Test2CreateBtcDelegations creates 3 btc delegations
 func (s *IbcCallbackBsnAddRewards) Test2CreateBtcDelegations() {
-	n2, err := s.configurer.GetChainConfig(0).GetNodeAtIndex(2)
-	s.NoError(err)
+	bbnNode := s.BbnNode()
 
-	s.del1Addr = n2.KeysAdd(wDel1)
-	s.del2Addr = n2.KeysAdd(wDel2)
+	s.del1Addr = bbnNode.KeysAdd(wDel1)
+	s.del2Addr = bbnNode.KeysAdd(wDel2)
 
-	n2.BankMultiSendFromNode([]string{s.del1Addr, s.del2Addr}, "1000000ubbn")
+	bbnNode.BankMultiSendFromNode([]string{s.del1Addr, s.del2Addr}, "1000000ubbn")
 
-	n2.WaitForNextBlock()
+	bbnNode.WaitForNextBlock()
 
-	s.CreateBTCDelegationMultipleFPsAndCheck(n2, wDel1, s.del1BTCSK, s.del1Addr, s.fp2Del1StkAmt, s.fp1bbn, s.fp2cons0)
-	s.CreateBTCDelegationMultipleFPsAndCheck(n2, wDel1, s.del1BTCSK, s.del1Addr, s.fp3Del1StkAmt, s.fp1bbn, s.fp3cons0)
-	s.CreateBTCDelegationMultipleFPsAndCheck(n2, wDel2, s.del2BTCSK, s.del2Addr, s.fp2Del2StkAmt, s.fp1bbn, s.fp2cons0)
+	s.CreateBTCDelegationMultipleFPsAndCheck(bbnNode, wDel1, s.del1BTCSK, s.del1Addr, s.fp2Del1StkAmt, s.fp1bbn, s.fp2cons0)
+	s.CreateBTCDelegationMultipleFPsAndCheck(bbnNode, wDel1, s.del1BTCSK, s.del1Addr, s.fp3Del1StkAmt, s.fp1bbn, s.fp3cons0)
+	s.CreateBTCDelegationMultipleFPsAndCheck(bbnNode, wDel2, s.del2BTCSK, s.del2Addr, s.fp2Del2StkAmt, s.fp1bbn, s.fp2cons0)
 
-	resp := n2.QueryBtcDelegations(bstypes.BTCDelegationStatus_ANY)
+	resp := bbnNode.QueryBtcDelegations(bstypes.BTCDelegationStatus_ANY)
 	require.Len(s.T(), resp.BtcDelegations, 3)
 
-	s.CreateCovenantsAndSubmitSignaturesToPendDels(n2, s.fp1bbn)
+	s.CreateCovenantsAndSubmitSignaturesToPendDels(bbnNode, s.fp1bbn)
+
+	s.bbnIbcCallbackReceiverAddr = bbnNode.KeysAdd("bsn-receiver")
 }
 
 func (s *IbcCallbackBsnAddRewards) Test3CreateFactoryToken() {
-	bbnChain0 := s.configurer.GetChainConfig(0)
-	bsnChain1 := s.configurer.GetChainConfig(1)
-
-	bbnNode, err := bbnChain0.GetNodeAtIndex(2)
-	s.NoError(err)
-	bsnNode, err := bsnChain1.GetNodeAtIndex(2)
-	s.NoError(err)
-
-	s.bbnIbcCallbackReceiverAddr = bbnNode.KeysAdd("bsn-receiver")
+	bsnNode := s.BsnNode()
 
 	// Create and fund sender account
 	s.bsnSenderAddr = bsnNode.KeysAdd("bsn-sender")
@@ -250,13 +235,8 @@ func (s *IbcCallbackBsnAddRewards) Test3CreateFactoryToken() {
 }
 
 func (s *IbcCallbackBsnAddRewards) Test4SendBsnRewardsCallback() {
-	bbnChain0 := s.configurer.GetChainConfig(0)
-	bsnChain1 := s.configurer.GetChainConfig(1)
-
-	bbnNode, err := bbnChain0.GetNodeAtIndex(2)
-	s.NoError(err)
-	bsnNode, err := bsnChain1.GetNodeAtIndex(2)
-	s.NoError(err)
+	bbnNode := s.BbnNode()
+	bsnNode := s.BsnNode()
 
 	transferAmt := s.r.Int63n(2_000000) + 1_000000
 	tranferInt := math.NewInt(transferAmt)
@@ -307,32 +287,33 @@ func (s *IbcCallbackBsnAddRewards) Test4SendBsnRewardsCallback() {
 	ibcTransferTxHash := bsnNode.SendIBCTransfer(s.bsnSenderAddr, s.bbnIbcCallbackReceiverAddr, callbackMemoString, rewardCoin)
 	bsnNode.WaitForNextBlocks(3)
 
-	bbnIbcCallbackReceiverBalances, err := bbnNode.QueryBalances(s.bbnIbcCallbackReceiverAddr)
-	s.Require().NoError(err)
-	require.Equal(s.T(), bbnIbcCallbackReceiverBalances.String(), rewardCoin.String(), "bbnIbcCallbackReceiverBalances")
-
 	// Query transaction to ensure it was successful
 	txRes, _, err := bsnNode.QueryTxWithError(ibcTransferTxHash)
 	s.Require().NoError(err)
 	s.Require().Zero(txRes.Code, fmt.Sprintf("Transaction failed with code %d: %s", txRes.Code, txRes.RawLog))
 
+	bbnIbcCallbackReceiverBalances, err := bbnNode.QueryBalances(s.bbnIbcCallbackReceiverAddr)
+	s.Require().NoError(err)
+	require.Equal(s.T(), bbnIbcCallbackReceiverBalances.String(), rewardCoin.String(), "bbnIbcCallbackReceiverBalances is equal")
+
 	rewardCoins := sdk.NewCoins(rewardCoin)
-	bbnCommExp := itypes.GetCoinsPortion(rewardCoins, s.bsn0.BabylonRewardsCommission)
+	bbnCommExpected := itypes.GetCoinsPortion(rewardCoins, s.bsn0.BabylonRewardsCommission)
+
 	var bbnCommBalancesAfter sdk.Coins
 	s.Eventually(func() bool {
 		bbnCommBalancesAfter, err = bbnNode.QueryBalances(bbnAccCommAddr)
 		s.Require().NoError(err)
 
 		bbnCommDiff := bbnCommBalancesAfter.Sub(bbnCommBalancesBefore...)
-		if bbnCommExp.Equal(bbnCommDiff) {
+		if bbnCommExpected.Equal(bbnCommDiff) {
 			return true
 		}
 
-		s.T().Logf("babylon commission is %s instead of %s", bbnCommDiff.String(), bbnCommExp.String())
+		s.T().Logf("babylon commission is %s instead of %s", bbnCommDiff.String(), bbnCommExpected.String())
 		return false
 	}, time.Minute*4, time.Second*3)
 
-	rewardCoinsAfterBbnComm := rewardCoins.Sub(bbnCommExp...)
+	rewardCoinsAfterBbnComm := rewardCoins.Sub(bbnCommExpected...)
 
 	fp1bbn, fp2cons0, fp3cons0 := s.QueryFpRewards(bbnNode)
 
@@ -345,7 +326,6 @@ func (s *IbcCallbackBsnAddRewards) Test4SendBsnRewardsCallback() {
 	require.Equal(s.T(), fp3CommExp.String(), fp3cons0.String(), "fp3 consumer 0 commission")
 
 	require.True(s.T(), fp1bbn.IsZero(), "fp1 was not rewarded")
-	// require.Equal(s.T(), bbnCommExp.String(), bbnCommDiff.String(), "babylon commission")
 }
 
 // func (s *IbcCallbackBsnAddRewards) Test5FailSendBsnRewardsCallback() {
@@ -576,4 +556,22 @@ func (s *IbcCallbackBsnAddRewards) QueryFpRewards(n *chain.NodeConfig) (
 	}
 
 	return fp1bbnRewardCoins, fp2cons0RewardCoins, fp3cons0RewardCoins
+}
+
+func (s *IbcCallbackBsnAddRewards) BbnNode() *chain.NodeConfig {
+	bbnChain0 := s.configurer.GetChainConfig(0)
+
+	bbnNode, err := bbnChain0.GetNodeAtIndex(2)
+	s.NoError(err)
+
+	return bbnNode
+}
+
+func (s *IbcCallbackBsnAddRewards) BsnNode() *chain.NodeConfig {
+	bsnChain1 := s.configurer.GetChainConfig(1)
+
+	bsnNode, err := bsnChain1.GetNodeAtIndex(2)
+	s.NoError(err)
+
+	return bsnNode
 }
