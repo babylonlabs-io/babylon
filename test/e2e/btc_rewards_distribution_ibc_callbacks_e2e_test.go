@@ -271,16 +271,26 @@ func (s *IbcCallbackBsnAddRewards) Test4SendBsnRewardsCallback() {
 			Address: datagen.GenRandomAccount().Address,
 			AddBsnRewards: &bstypes.CallbackAddBsnRewards{
 				BsnConsumerID: s.bsn0.ConsumerId,
-				FpRatios: []bstypes.CallbackAddBsnRewardsFpRatio{
+				FpRatios: []bstypes.FpRatio{
 					{
-						BtcPkHex: s.fp2cons0.BtcPk.MarshalHex(),
-						RatioDec: "0.7",
+						BtcPk: s.fp2cons0.BtcPk,
+						Ratio: fp2Ratio,
 					},
 					{
-						BtcPkHex: s.fp3cons0.BtcPk.MarshalHex(),
-						RatioDec: "0.3",
+						BtcPk: s.fp3cons0.BtcPk,
+						Ratio: fp3Ratio,
 					},
 				},
+				// FpRatios: []bstypes.CallbackAddBsnRewardsFpRatio{
+				// 	{
+				// 		BtcPkHex: s.fp2cons0.BtcPk.MarshalHex(),
+				// 		RatioDec: "0.7",
+				// 	},
+				// 	{
+				// 		BtcPkHex: s.fp3cons0.BtcPk.MarshalHex(),
+				// 		RatioDec: "0.3",
+				// 	},
+				// },
 			},
 		},
 	}

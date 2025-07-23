@@ -159,10 +159,11 @@ func (k Keeper) processAddBsnRewards(
 		return status.Errorf(codes.InvalidArgument, "invalid address %s: %v", transferData.Receiver, err)
 	}
 
-	fpRatios, err := callbackAddBsnRewards.ToFpRatios()
-	if err != nil {
-		return status.Errorf(codes.InvalidArgument, "invalid fp ratio %+v: %v", callbackAddBsnRewards.FpRatios, err)
-	}
+	fpRatios := callbackAddBsnRewards.FpRatios
+	// fpRatios, err := callbackAddBsnRewards.ToFpRatios()
+	// if err != nil {
+	// 	return status.Errorf(codes.InvalidArgument, "invalid fp ratio %+v: %v", callbackAddBsnRewards.FpRatios, err)
+	// }
 
 	return k.AddBsnRewards(ctx, receiverOnBbnAddr, callbackAddBsnRewards.BsnConsumerID, bsnRewards, fpRatios)
 }
