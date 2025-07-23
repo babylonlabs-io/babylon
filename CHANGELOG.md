@@ -118,7 +118,7 @@ command to modify `max-finality-providers` parameter.
 - [#1381](https://github.com/babylonlabs-io/babylon/pull/1381) Add multi-staking allow-list logic
 - [#1388](https://github.com/babylonlabs-io/babylon/pull/1388) Upgrade: state migration for v3
 - [#1392](https://github.com/babylonlabs-io/babylon/pull/1392) Add e2e test for BSN rollup rewards.
-- [#1303](https://github.com/babylonlabs-io/babylon/pull/1303) Add IBC callback middleware to `x/incentive` module.
+- [#1303](https://github.com/babylonlabs-io/babylon/pull/1303) Add IBC callback middleware to `x/btcstaking` module to call add bsn rewards.
 
 ### State Machine Breaking
 
