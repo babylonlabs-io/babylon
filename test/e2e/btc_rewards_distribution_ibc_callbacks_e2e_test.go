@@ -348,52 +348,52 @@ func (s *IbcCallbackBsnAddRewards) Test4SendBsnRewardsCallback() {
 	// require.Equal(s.T(), bbnCommExp.String(), bbnCommDiff.String(), "babylon commission")
 }
 
-func (s *IbcCallbackBsnAddRewards) Test5FailSendBsnRewardsCallback() {
-	s.T().Skip()
-	bsnChain1 := s.configurer.GetChainConfig(1)
+// func (s *IbcCallbackBsnAddRewards) Test5FailSendBsnRewardsCallback() {
+// 	s.T().Skip()
+// 	bsnChain1 := s.configurer.GetChainConfig(1)
 
-	bsnNode, err := bsnChain1.GetNodeAtIndex(2)
-	s.NoError(err)
+// 	bsnNode, err := bsnChain1.GetNodeAtIndex(2)
+// 	s.NoError(err)
 
-	// Create transfer coin using custom denom
-	transferAmt := s.r.Int63n(2_000000) + 1_000000
-	tranferInt := math.NewInt(transferAmt)
-	transferCoin := sdk.NewCoin(s.bsnCustomTokenDenom, tranferInt)
+// 	// Create transfer coin using custom denom
+// 	transferAmt := s.r.Int63n(2_000000) + 1_000000
+// 	tranferInt := math.NewInt(transferAmt)
+// 	transferCoin := sdk.NewCoin(s.bsnCustomTokenDenom, tranferInt)
 
-	// Create bad JSON callback memo
-	callbackMemo := bstypes.CallbackMemo{
-		Action: bstypes.CallbackActionAddBsnRewardsMemo,
-		DestCallback: &bstypes.CallbackInfo{
-			Address: datagen.GenRandomAccount().Address,
-			AddBsnRewards: &bstypes.CallbackAddBsnRewards{
-				BsnConsumerID: "x",
-			},
-		},
-	}
+// 	// Create bad JSON callback memo
+// 	callbackMemo := bstypes.CallbackMemo{
+// 		Action: bstypes.CallbackActionAddBsnRewardsMemo,
+// 		DestCallback: &bstypes.CallbackInfo{
+// 			Address: datagen.GenRandomAccount().Address,
+// 			AddBsnRewards: &bstypes.CallbackAddBsnRewards{
+// 				BsnConsumerID: "x",
+// 			},
+// 		},
+// 	}
 
-	callbackMemoJSON, err := json.Marshal(callbackMemo)
-	s.Require().NoError(err)
-	callbackMemoString := string(callbackMemoJSON)
+// 	callbackMemoJSON, err := json.Marshal(callbackMemo)
+// 	s.Require().NoError(err)
+// 	callbackMemoString := string(callbackMemoJSON)
 
-	bsnSenderBefore, err := bsnNode.QueryBalances(s.bsnSenderAddr)
-	s.Require().NoError(err)
+// 	bsnSenderBefore, err := bsnNode.QueryBalances(s.bsnSenderAddr)
+// 	s.Require().NoError(err)
 
-	ibcTransferTxHash := bsnNode.SendIBCTransfer(s.bsnSenderAddr, s.bbnIbcCallbackReceiverAddr, callbackMemoString, transferCoin)
-	bsnNode.WaitForNextBlocks(5)
+// 	ibcTransferTxHash := bsnNode.SendIBCTransfer(s.bsnSenderAddr, s.bbnIbcCallbackReceiverAddr, callbackMemoString, transferCoin)
+// 	bsnNode.WaitForNextBlocks(5)
 
-	// Query transaction to get fees
-	ibcTxRes, ibcTx, err := bsnNode.QueryTxWithError(ibcTransferTxHash)
-	s.Require().NoError(err)
-	s.Require().Zero(ibcTxRes.Code, fmt.Sprintf("Transaction failed with code %d: %s", ibcTxRes.Code, ibcTxRes.RawLog))
+// 	// Query transaction to get fees
+// 	ibcTxRes, ibcTx, err := bsnNode.QueryTxWithError(ibcTransferTxHash)
+// 	s.Require().NoError(err)
+// 	s.Require().Zero(ibcTxRes.Code, fmt.Sprintf("Transaction failed with code %d: %s", ibcTxRes.Code, ibcTxRes.RawLog))
 
-	s.Eventually(func() bool {
-		bsnSenderAfter, err := bsnNode.QueryBalances(s.bsnSenderAddr)
-		s.Require().NoError(err)
+// 	s.Eventually(func() bool {
+// 		bsnSenderAfter, err := bsnNode.QueryBalances(s.bsnSenderAddr)
+// 		s.Require().NoError(err)
 
-		bsnSenderAfterFee := bsnSenderAfter.Sub(ibcTx.GetFee()...)
-		return bsnSenderAfterFee.Equal(bsnSenderBefore)
-	}, time.Minute*4, time.Second, "balance is not equal to %s", bsnSenderBefore.String())
-}
+// 		bsnSenderAfterFee := bsnSenderAfter.Sub(ibcTx.GetFee()...)
+// 		return bsnSenderAfterFee.Equal(bsnSenderBefore)
+// 	}, time.Minute*4, time.Second, "balance is not equal to %s", bsnSenderBefore.String())
+// }
 
 // TestBSNFeeCollectionWithCorrectMemo tests BSN fee collection with the correct memo
 // func (s *IbcCallbackBsnAddRewardsTestSuite) TestBSNFeeCollectionWithCorrectMemo() {
