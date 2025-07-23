@@ -6,6 +6,7 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	callbacktypes "github.com/cosmos/ibc-go/v10/modules/apps/callbacks/types"
 	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
@@ -18,7 +19,7 @@ import (
 )
 
 // Ensure that the incentive Keeper implements the ContractKeeper interface
-var _ types.ContractKeeper = (*Keeper)(nil)
+var _ callbacktypes.ContractKeeper = (*Keeper)(nil)
 
 // IBCSendPacketCallback is called when a packet is sent
 // Not needed for BSN fee collection scenario
