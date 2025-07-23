@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"encoding/json"
-	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
@@ -73,7 +72,7 @@ func (k Keeper) IBCReceivePacketCallback(
 	_ string,
 	_ string,
 ) error {
-	k.Logger(cachedCtx).Info("reached IBCReceivePacketCallback")
+	k.Logger(cachedCtx).Info("IBCReceivePacketCallback called")
 	// Parse packet data as ICS20 transfer first (before checking ack success)
 	transferData, err := k.parseTransferData(packet)
 	if err != nil {
@@ -91,18 +90,14 @@ func (k Keeper) IBCReceivePacketCallback(
 		return err
 	}
 
-	k.Logger(cachedCtx).Info("IBCReceivePacketCallback",
+	k.Logger(cachedCtx).Info(
+		"IBCReceivePacketCallback",
 		"action", callbackMemo.Action,
 		"memo_parse", transferData.Memo,
 	)
 
 	switch callbackMemo.Action {
 	case types.CallbackActionAddBsnRewardsMemo:
-
-		k.Logger(cachedCtx).Info("IBCReceivePacketCallback to send bsn rewards",
-			"AddBsnRewards", fmt.Sprintf("callbackMemo.AddBsnRewards %+v", callbackMemo.DestCallback.AddBsnRewards),
-		)
-
 		if callbackMemo.DestCallback == nil {
 			return errorsmod.Wrap(types.ErrInvalidCallbackAddBsnRewards, "dest_callback property is nil")
 		}
@@ -114,17 +109,16 @@ func (k Keeper) IBCReceivePacketCallback(
 
 		err = k.processAddBsnRewards(cachedCtx, packet.GetDestPort(), packet.GetDestChannel(), transferData, addBsnRewards)
 		if err != nil {
-			k.Logger(cachedCtx).Error("IBCReceivePacketCallback processAddBsnRewards err callback",
+			k.Logger(cachedCtx).Error(
+				"ibc callback had an error processing add bsn rewards",
 				"err", err.Error(),
 			)
 			return err
 		}
-		k.Logger(cachedCtx).Info("IBCReceivePacketCallback processAddBsnRewards successful")
 	default:
 		return nil
 	}
 
-	k.Logger(cachedCtx).Info("IBCReceivePacketCallback reached an end with nil")
 	return nil
 }
 
@@ -159,11 +153,5 @@ func (k Keeper) processAddBsnRewards(
 		return status.Errorf(codes.InvalidArgument, "invalid address %s: %v", transferData.Receiver, err)
 	}
 
-	fpRatios := callbackAddBsnRewards.FpRatios
-	// fpRatios, err := callbackAddBsnRewards.ToFpRatios()
-	// if err != nil {
-	// 	return status.Errorf(codes.InvalidArgument, "invalid fp ratio %+v: %v", callbackAddBsnRewards.FpRatios, err)
-	// }
-
-	return k.AddBsnRewards(ctx, receiverOnBbnAddr, callbackAddBsnRewards.BsnConsumerID, bsnRewards, fpRatios)
+	return k.AddBsnRewards(ctx, receiverOnBbnAddr, callbackAddBsnRewards.BsnConsumerID, bsnRewards, callbackAddBsnRewards.FpRatios)
 }

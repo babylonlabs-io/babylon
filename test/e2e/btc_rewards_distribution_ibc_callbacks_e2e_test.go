@@ -328,8 +328,25 @@ func (s *IbcCallbackBsnAddRewards) Test4SendBsnRewardsCallback() {
 	require.True(s.T(), fp1bbnDiff.IsZero(), "fp1 was not rewarded")
 }
 
+// Test5FailSendBsnRewardsCallback test is suppose to fail and return
+// the funds back to the BSN sender, but it doesn't, so the unhappy path
+// is not currently working properly and the test is being skip
 func (s *IbcCallbackBsnAddRewards) Test5FailSendBsnRewardsCallback() {
 	s.T().Skip()
+	// 8:27PM INF packet received dst_channel=channel-0 dst_port=transfer module=x/ibc/channel sequence=2 src_channel=channel-0 src_port=transfer
+	// 8:27PM INF successfully handled ICS-20 packet module=x/ibc-transfer sequence=2
+	// 8:27PM INF reached IBCReceivePacketCallback module=x/btcstaking
+	// 8:27PM INF IBCReceivePacketCallback action=add_bsn_rewards memo_parse="{\"action\":\"add_bsn_rewards\",\"dest_callback\":{\"address\":\"bbn1sekqw5dmkekpg7pz5uakhpu3add8vnj7fw2lf8\",\"add_bsn_rewards\":{\"bsn_consumer_id\":\"x\",\"fp_ratios\":null}}}" module=x/btcstaking
+	// 8:27PM INF IBCReceivePacketCallback to send bsn rewards AddBsnRewards="callbackMemo.AddBsnRewards &{BsnConsumerID:x FpRatios:[]}" module=x/btcstaking
+	// 8:27PM ERR IBCReceivePacketCallback processAddBsnRewards err callback err="failed: consumer x: consumer not registered: consumer is not registered [cosmossdk.io/errors@v1.0.2/errors.go:155]: unable to distribute BSN rewards" module=x/btcstaking
+	// 8:27PM INF acknowledgement written dst_channel=channel-0 dst_port=transfer module=x/ibc/channel sequence=2 src_channel=channel-0 src_port=transfer
+	// 8:27PM INF receive packet callback succeeded channel-id=channel-0 module=baseapp port-id=transfer result=RESPONSE_RESULT_TYPE_SUCCESS
+	// 8:27PM INF skipping BTC staking consumer event broadcast module=x/ibc-zoneconcierge reason="no open channels"
+	// 8:27PM INF finalized block block_app_hash=DDF6C7A60129B145F7ED64A9C08634E0350909BFFC7D4727FFCA2D4622E23FD8 height=138 module=state num_txs_res=1 num_val_updates=0 server=node
+	// 8:27PM INF executed block app_hash=DDF6C7A60129B145F7ED64A9C08634E0350909BFFC7D4727FFCA2D4622E23FD8 height=138 module=state server=node
+	// 8:27PM INF committed state block_app_hash=697A3A6B9079B3DD6B6B69D2221132176543E45FB81D25FE771E1786DA6D5475 height=138 module=state server=node
+	// 8:27PM INF indexed block events height=138 module=txindex server=node
+	// 8:27PM INF Timed out dur=990.958042 height=139 module=consensus round=0 server=node step=RoundStepNewHeight
 	bbnNode := s.BbnNode()
 	bsnNode := s.BsnNode()
 

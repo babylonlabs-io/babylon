@@ -746,7 +746,7 @@ func (s *BaseBtcRewardsDistribution) CreateCovenantsAndSubmitSignaturesToPendDel
 	}
 	s.covenantWallets = covWallets
 
-	n.BankMultiSendFromNode(covAddrs, "100000000ubbn")
+	n.BankMultiSendFromNode(covAddrs, "200000000ubbn")
 
 	fpBtcPks := make([]string, len(fps))
 	for i, fp := range fps {
