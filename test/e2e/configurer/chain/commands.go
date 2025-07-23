@@ -594,6 +594,23 @@ func (n *NodeConfig) MintDenom(from, amount, denom string) {
 	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
 
 	require.NoError(n.t, err)
-
 	n.LogActionF("successfully minted tokenfactory tokens %s%s", amount, denom)
+}
+
+func (n *NodeConfig) QueryZoneConciergeFinalizedBsnsInfo(consumerIDs []string, prove bool) map[string]interface{} {
+	n.LogActionF("querying zoneconcierge finalized-bsns-info for consumerIDs: %v", consumerIDs)
+	cmd := []string{"babylond", "query", "zoneconcierge", "finalized-bsns-info"}
+	cmd = append(cmd, consumerIDs...)
+	if prove {
+		cmd = append(cmd, "--prove")
+	}
+	cmd = append(cmd, "--output=json")
+
+	out, _, err := n.containerManager.ExecCmd(n.t, n.Name, cmd, "")
+	require.NoError(n.t, err)
+
+	var result map[string]interface{}
+	err = json.Unmarshal(out.Bytes(), &result)
+	require.NoError(n.t, err)
+	return result
 }
