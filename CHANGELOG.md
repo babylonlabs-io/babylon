@@ -113,6 +113,7 @@ command to modify `max-finality-providers` parameter.
 - [#1358](https://github.com/babylonlabs-io/babylon/pull/1358) Simplify selective slashing message handler
 - [#1367](https://github.com/babylonlabs-io/babylon/pull/1367) Add v3 mainnet upgrade handler
 - [#1381](https://github.com/babylonlabs-io/babylon/pull/1381) Add multi-staking allow-list logic
+- [#1388](https://github.com/babylonlabs-io/babylon/pull/1388) Upgrade: state migration for v3
 - [#1392](https://github.com/babylonlabs-io/babylon/pull/1392) Add e2e test for BSN rollup rewards.
 
 ### State Machine Breaking
