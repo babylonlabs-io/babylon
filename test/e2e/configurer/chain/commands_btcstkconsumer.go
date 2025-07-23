@@ -59,6 +59,24 @@ func (n *NodeConfig) CreateConsumerFinalityProvider(walletAddrOrName string, con
 	n.LogActionF("Successfully created %s finality provider", consumer)
 }
 
+func (n *NodeConfig) CreateFinalityProviderV2(walletAddrOrName string, btcPK *bbn.BIP340PubKey, pop *bstypes.ProofOfPossessionBTC, moniker, identity, website, securityContract, details string, commission *sdkmath.LegacyDec, commissionMaxRate, commissionMaxRateChange sdkmath.LegacyDec) {
+	// get BTC PK hex
+	btcPKHex := btcPK.MarshalHex()
+	// get pop hex
+	popHex, err := pop.ToHexStr()
+	require.NoError(n.t, err)
+
+	cmd := []string{
+		"babylond", "tx", "btcstaking", "create-finality-provider", btcPKHex, popHex,
+		fmt.Sprintf("--from=%s", walletAddrOrName), "--moniker", moniker, "--identity", identity, "--website", website,
+		"--security-contact", securityContract, "--details", details, "--commission-rate", commission.String(),
+		"--commission-max-rate", commissionMaxRate.String(), "--commission-max-change-rate", commissionMaxRateChange.String(),
+	}
+
+	_, _, err = n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
+	require.NoError(n.t, err)
+	n.LogActionF("Successfully created %s finality provider", n.Name)
+}
 func (n *NodeConfig) CommitPubRandListConsumer(walletAddrOrName, consumerId string, fpBtcPk *bbn.BIP340PubKey, startHeight uint64, numPubRand uint64, commitment []byte, sig *bbn.BIP340Signature) {
 	if consumerId == "" {
 		// Use the chain ID as the consumer

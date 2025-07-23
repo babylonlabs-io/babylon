@@ -14,6 +14,7 @@ import (
 	"github.com/babylonlabs-io/babylon/v3/testutil/sample"
 	btclighttypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
 	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/v3/x/finality/types"
 
 	"github.com/babylonlabs-io/babylon/v3/app/signingcontext"
 	"github.com/babylonlabs-io/babylon/v3/test/e2e/configurer"
@@ -38,6 +39,9 @@ type SoftwareUpgradeV3TestSuite struct {
 	fp2BTCSK              *btcec.PrivateKey
 	fp1                   *bstypes.FinalityProvider
 	fp2                   *bstypes.FinalityProvider
+	fp1CommitPubRandList  *types.MsgCommitPubRandList
+	fp2CommitPubRandList  *types.MsgCommitPubRandList
+	commitStartHeight     uint64
 }
 
 func (s *SoftwareUpgradeV3TestSuite) SetupSuite() {
@@ -50,19 +54,68 @@ func (s *SoftwareUpgradeV3TestSuite) SetupSuite() {
 
 	// func runs right before the upgrade proposal is sent
 	preUpgradeFunc := func(chains []*chain.Config) {
-		node := chains[0].NodeConfigs[1]
+		n := chains[0].NodeConfigs[1]
 
-		// Record some balances before the upgrade to verify after
-		addresses := []string{
-			node.PublicAddress,
-			chains[0].NodeConfigs[0].PublicAddress,
-		}
+		s.fp1Addr = n.KeysAdd("fp1Addr")
+		s.fp2Addr = n.KeysAdd("fp2Addr")
+		n.BankMultiSendFromNode([]string{s.fp1Addr, s.fp2Addr}, "900000ubbn")
 
-		for _, addr := range addresses {
-			balance, err := node.QueryBalance(addr, appparams.DefaultBondDenom)
-			s.NoError(err)
-			s.balancesBeforeUpgrade[addr] = *balance
-		}
+		n.WaitForNextBlock()
+
+		_, err := n.QueryBalance(s.fp1Addr, appparams.DefaultBondDenom)
+		s.NoError(err)
+		_, err = n.QueryBalance(s.fp2Addr, appparams.DefaultBondDenom)
+		s.NoError(err)
+
+		s.r = rand.New(rand.NewSource(time.Now().UnixNano()))
+
+		s.fp1BTCSK, _, _ = datagen.GenRandomBTCKeyPair(s.r)
+		s.fp2BTCSK, _, _ = datagen.GenRandomBTCKeyPair(s.r)
+
+		s.fp1 = CreateNodeFPV2(
+			s.T(),
+			s.r,
+			s.fp1BTCSK,
+			n,
+			s.fp1Addr,
+		)
+
+		s.fp2 = CreateNodeFPV2(
+			s.T(),
+			s.r,
+			s.fp2BTCSK,
+			n,
+			s.fp2Addr,
+		)
+
+		n.WaitForNextBlock()
+
+		randCommitContext := signingcontext.FpRandCommitContextV0(n.ChainID(), appparams.AccFinality.String())
+		numPubRand := uint64(100)
+
+		s.commitStartHeight = n.LatestBlockNumber()
+		_, s.fp1CommitPubRandList, err = datagen.GenRandomMsgCommitPubRandList(s.r, s.fp1BTCSK, randCommitContext, s.commitStartHeight, numPubRand)
+		s.NoError(err)
+		_, s.fp2CommitPubRandList, err = datagen.GenRandomMsgCommitPubRandList(s.r, s.fp2BTCSK, randCommitContext, s.commitStartHeight, numPubRand)
+		s.NoError(err)
+
+		s.Require().NotNil(s.fp1CommitPubRandList, "fp1CommitPubRandList should not be nil")
+		s.Require().NotNil(s.fp2CommitPubRandList, "fp2CommitPubRandList should not be nil")
+
+		n.CommitPubRandList(
+			s.fp1CommitPubRandList.FpBtcPk,
+			s.fp1CommitPubRandList.StartHeight,
+			s.fp1CommitPubRandList.NumPubRand,
+			s.fp1CommitPubRandList.Commitment,
+			s.fp1CommitPubRandList.Sig,
+		)
+		n.CommitPubRandList(
+			s.fp2CommitPubRandList.FpBtcPk,
+			s.fp2CommitPubRandList.StartHeight,
+			s.fp2CommitPubRandList.NumPubRand,
+			s.fp2CommitPubRandList.Commitment,
+			s.fp2CommitPubRandList.Sig,
+		)
 	}
 
 	cfg, err := configurer.NewSoftwareUpgradeConfigurer(
@@ -95,64 +148,6 @@ func (s *SoftwareUpgradeV3TestSuite) TestUpgradeV3() {
 	n, err := chainA.GetNodeAtIndex(1)
 	s.NoError(err)
 
-	s.fp1Addr = n.KeysAdd("fp1Addr")
-	s.fp2Addr = n.KeysAdd("fp2Addr")
-	n.BankMultiSendFromNode([]string{s.fp1Addr, s.fp2Addr}, "1000000ubbn")
-
-	n.WaitForNextBlock()
-
-	s.r = rand.New(rand.NewSource(time.Now().UnixNano()))
-
-	s.fp1BTCSK, _, _ = datagen.GenRandomBTCKeyPair(s.r)
-	s.fp2BTCSK, _, _ = datagen.GenRandomBTCKeyPair(s.r)
-
-	s.fp1 = CreateNodeFP(
-		s.T(),
-		s.r,
-		s.fp1BTCSK,
-		n,
-		s.fp1Addr,
-		n.ChainID(),
-	)
-
-	s.fp2 = CreateNodeFP(
-		s.T(),
-		s.r,
-		s.fp2BTCSK,
-		n,
-		s.fp2Addr,
-		n.ChainID(),
-	)
-
-	n.WaitForNextBlock()
-
-	randCommitContext := signingcontext.FpRandCommitContextV0(n.ChainID(), appparams.AccFinality.String())
-	numPubRand := uint64(100)
-
-	commitStartHeight := n.LatestBlockNumber()
-	_, fp1CommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(s.r, s.fp1BTCSK, randCommitContext, commitStartHeight, numPubRand)
-	s.NoError(err)
-	_, fp2CommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(s.r, s.fp2BTCSK, randCommitContext, commitStartHeight, numPubRand)
-	s.NoError(err)
-
-	s.Require().NotNil(fp1CommitPubRandList, "fp1CommitPubRandList should not be nil")
-	s.Require().NotNil(fp2CommitPubRandList, "fp2CommitPubRandList should not be nil")
-
-	n.CommitPubRandList(
-		fp1CommitPubRandList.FpBtcPk,
-		fp1CommitPubRandList.StartHeight,
-		fp1CommitPubRandList.NumPubRand,
-		fp1CommitPubRandList.Commitment,
-		fp1CommitPubRandList.Sig,
-	)
-	n.CommitPubRandList(
-		fp2CommitPubRandList.FpBtcPk,
-		fp2CommitPubRandList.StartHeight,
-		fp2CommitPubRandList.NumPubRand,
-		fp2CommitPubRandList.Commitment,
-		fp2CommitPubRandList.Sig,
-	)
-
 	n.WaitForNextBlock()
 
 	govProp, err := s.configurer.ParseGovPropFromFile()
@@ -164,17 +159,18 @@ func (s *SoftwareUpgradeV3TestSuite) TestUpgradeV3() {
 	s.EqualValues(expectedUpgradeHeight, resp.Height, "the plan should be applied at the height %d", expectedUpgradeHeight)
 
 	// check fps have the same chain id
-	s.Require().Equal(s.fp2.BsnId, n.ChainID())
+	s.Require().Equal(n.ChainID(), s.fp1.BsnId)
+	s.Require().Equal(n.ChainID(), s.fp2.BsnId)
 
 	// query pub randomness
-	fp1CommitPubRand := n.QueryListPubRandCommit(fp1CommitPubRandList.FpBtcPk)
+	fp1CommitPubRand := n.QueryListPubRandCommit(s.fp1CommitPubRandList.FpBtcPk)
 	s.Require().NotNil(fp1CommitPubRand, "fp1CommitPubRand should not be nil")
-	_, ok := fp1CommitPubRand[commitStartHeight]
+	_, ok := fp1CommitPubRand[s.commitStartHeight]
 	s.Require().True(ok, "fp1CommitPubRand should contain commitStartHeight")
 
-	fp2CommitPubRand := n.QueryListPubRandCommit(fp2CommitPubRandList.FpBtcPk)
+	fp2CommitPubRand := n.QueryListPubRandCommit(s.fp2CommitPubRandList.FpBtcPk)
 	s.Require().NotNil(fp2CommitPubRand, "fp2CommitPubRand should not be nil")
-	_, ok = fp2CommitPubRand[commitStartHeight]
+	_, ok = fp2CommitPubRand[s.commitStartHeight]
 	s.Require().True(ok, "fp2CommitPubRand should contain commitStartHeight")
 
 	// check btcstaking params has max finality provider set to 1

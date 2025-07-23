@@ -873,6 +873,38 @@ func CreateNodeFP(
 	return newFP
 }
 
+func CreateNodeFPV2(
+	t *testing.T,
+	r *rand.Rand,
+	fpSk *btcec.PrivateKey,
+	node *chain.NodeConfig,
+	fpAddrStr string,
+) (newFP *bstypes.FinalityProvider) {
+	// the node is the new FP
+	fpAddr, err := sdk.AccAddressFromBech32(fpAddrStr)
+	require.NoError(t, err)
+
+	fpPopContext := signingcontext.FpPopContextV0(node.ChainID(), appparams.AccBTCStaking.String())
+
+	newFP, err = datagen.GenCustomFinalityProvider(r, fpSk, fpPopContext, fpAddr, node.ChainID())
+	require.NoError(t, err)
+
+	// use a higher commission to ensure the reward is more than tx fee of a finality sig
+	commission := sdkmath.LegacyNewDecWithPrec(20, 2)
+	newFP.Commission = &commission
+	node.CreateFinalityProviderV2(newFP.Addr, newFP.BtcPk, newFP.Pop, newFP.Description.Moniker, newFP.Description.Identity, newFP.Description.Website, newFP.Description.SecurityContact, newFP.Description.Details, newFP.Commission, newFP.CommissionInfo.MaxRate, newFP.CommissionInfo.MaxChangeRate)
+
+	// wait for a block so that above txs take effect
+	node.WaitForNextBlock()
+
+	// query the existence of finality provider and assert equivalence
+	fpResp := node.QueryFinalityProvider(newFP.BtcPk.MarshalHex())
+	require.NotNil(t, fpResp)
+
+	chain.EqualFinalityProviderResp(t, newFP, fpResp)
+	return newFP
+}
+
 // CovenantBTCPKs returns the covenantBTCPks as slice from parameters
 func CovenantBTCPKs(params *bstypes.Params) []*btcec.PublicKey {
 	// get covenant BTC PKs
