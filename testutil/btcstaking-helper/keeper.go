@@ -146,6 +146,27 @@ func NewHelperNoMocksCalls(
 	return NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKeeper, ckptKeeper, ictvK, storeKeys...)
 }
 
+// NewHelperWithIncentiveKeeper creates a new Helper with the given BTCLightClientKeeper and BtcCheckpointKeeper mocks, and an instance of the incentive keeper.
+func NewHelperWithIncentiveKeeper(
+	t testing.TB,
+	btclcKeeper *types.MockBTCLightClientKeeper,
+	btccKeeper *types.MockBtcCheckpointKeeper,
+) *Helper {
+	ctrl := gomock.NewController(t)
+
+	db := dbm.NewMemDB()
+	stateStore := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
+
+	accK := keepertest.AccountKeeper(t, db, stateStore)
+	bankK := keepertest.BankKeeper(t, db, stateStore, accK)
+
+	ictvK, _ := keepertest.IncentiveKeeperWithStore(t, db, stateStore, nil, bankK, accK, nil)
+
+	ckptKeeper := ftypes.NewMockCheckpointingKeeper(ctrl)
+
+	return NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKeeper, ckptKeeper, ictvK)
+}
+
 func NewHelperWithBankMock(
 	t testing.TB,
 	btclcKeeper *types.MockBTCLightClientKeeper,
