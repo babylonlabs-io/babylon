@@ -746,7 +746,7 @@ func (s *BaseBtcRewardsDistribution) CreateCovenantsAndSubmitSignaturesToPendDel
 	}
 	s.covenantWallets = covWallets
 
-	n.BankMultiSendFromNode(covAddrs, "1000000ubbn")
+	n.BankMultiSendFromNode(covAddrs, "100000000ubbn")
 
 	fpBtcPks := make([]string, len(fps))
 	for i, fp := range fps {
@@ -773,6 +773,7 @@ func (s *BaseBtcRewardsDistribution) CreateCovenantsAndSubmitSignaturesToPendDel
 	for _, activeDel := range activeDelsSet {
 		s.Require().True(activeDel.Active)
 	}
+	s.T().Log("All BTC delegations are active")
 }
 
 // CheckWithdrawReward withdraw rewards for one delegation and check the balance
