@@ -11,9 +11,11 @@ import (
 	"github.com/btcsuite/btcd/chaincfg"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/babylonlabs-io/babylon/v3/app/params"
 	"github.com/babylonlabs-io/babylon/v3/test/e2e/configurer"
+	"github.com/babylonlabs-io/babylon/v3/test/e2e/configurer/chain"
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
 	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 	bsctypes "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
@@ -270,11 +272,11 @@ func (s *IbcCallbackBsnAddRewards) Test4SendBsnRewardsCallback() {
 			FpRatios: []bstypes.CallbackAddBsnRewardsFpRatio{
 				{
 					BtcPkHex: s.fp2cons0.BtcPk.MarshalHex(),
-					RatioDec: fp2Ratio.String(),
+					RatioDec: "0.7",
 				},
 				{
 					BtcPkHex: s.fp3cons0.BtcPk.MarshalHex(),
-					RatioDec: fp3Ratio.String(),
+					RatioDec: "0.3",
 				},
 			},
 		},
@@ -292,6 +294,10 @@ func (s *IbcCallbackBsnAddRewards) Test4SendBsnRewardsCallback() {
 	ibcTransferTxHash := bsnNode.SendIBCTransfer(s.bsnSenderAddr, s.bbnIbcCallbackReceiverAddr, callbackMemoString, rewardCoin)
 	bsnNode.WaitForNextBlocks(3)
 
+	bbnIbcCallbackReceiverBalances, err := bbnNode.QueryBalances(s.bbnIbcCallbackReceiverAddr)
+	s.Require().NoError(err)
+	require.Equal(s.T(), bbnIbcCallbackReceiverBalances.String(), rewardCoin.String(), "bbnIbcCallbackReceiverBalances")
+
 	// Query transaction to ensure it was successful
 	txRes, _, err := bsnNode.QueryTxWithError(ibcTransferTxHash)
 	s.Require().NoError(err)
@@ -308,9 +314,24 @@ func (s *IbcCallbackBsnAddRewards) Test4SendBsnRewardsCallback() {
 		if bbnCommExp.Equal(bbnCommDiff) {
 			return true
 		}
+
 		s.T().Logf("babylon commission is %s instead of %s", bbnCommDiff.String(), bbnCommExp.String())
 		return false
-	}, time.Minute*2, time.Second*3)
+	}, time.Minute*4, time.Second*3)
+
+	rewardCoinsAfterBbnComm := rewardCoins.Sub(bbnCommExp...)
+
+	fp1bbn, fp2cons0, fp3cons0 := s.QueryFpRewards(bbnNode)
+
+	fp2AfterRatio := itypes.GetCoinsPortion(rewardCoinsAfterBbnComm, fp2Ratio)
+	fp2CommExp := itypes.GetCoinsPortion(fp2AfterRatio, *s.fp2cons0.Commission)
+	require.Equal(s.T(), fp2CommExp.String(), fp2cons0.String(), "fp2 consumer 0 commission")
+
+	fp3AfterRatio := itypes.GetCoinsPortion(rewardCoinsAfterBbnComm, fp3Ratio)
+	fp3CommExp := itypes.GetCoinsPortion(fp3AfterRatio, *s.fp3cons0.Commission)
+	require.Equal(s.T(), fp3CommExp.String(), fp3cons0.String(), "fp3 consumer 0 commission")
+
+	require.True(s.T(), fp1bbn.IsZero(), "fp1 was not rewarded")
 	// require.Equal(s.T(), bbnCommExp.String(), bbnCommDiff.String(), "babylon commission")
 }
 
@@ -486,3 +507,57 @@ func (s *IbcCallbackBsnAddRewards) Test5FailSendBsnRewardsCallback() {
 // 	s.T().Logf("BSN fee collector received: %d custom tokens (50%% of transfer)", expectedBSNAmount)
 // 	s.T().Logf("Test distribution account received: %d custom tokens (50%% of transfer)", expectedDistributionAmount)
 // }
+
+// QueryFpRewards returns the rewards available for fp1, fp2, fp3, fp4
+func (s *IbcCallbackBsnAddRewards) QueryFpRewards(n *chain.NodeConfig) (
+	fp1bbn, fp2cons0, fp3cons0 sdk.Coins,
+) {
+	g := new(errgroup.Group)
+	var (
+		err                  error
+		fp1bbnRewardGauges   map[string]*itypes.RewardGaugesResponse
+		fp2cons0RewardGauges map[string]*itypes.RewardGaugesResponse
+		fp3cons0RewardGauges map[string]*itypes.RewardGaugesResponse
+	)
+
+	g.Go(func() error {
+		fp1bbnRewardGauges, err = n.QueryRewardGauge(s.fp1bbn.Address())
+		if err != nil {
+			return fmt.Errorf("failed to query rewards for fp1bbn: %w", err)
+		}
+		return nil
+	})
+	g.Go(func() error {
+		fp2cons0RewardGauges, err = n.QueryRewardGauge(s.fp2cons0.Address())
+		if err != nil {
+			return fmt.Errorf("failed to query rewards for fp2cons0: %w", err)
+		}
+		return nil
+	})
+	g.Go(func() error {
+		fp3cons0RewardGauges, err = n.QueryRewardGauge(s.fp3cons0.Address())
+		if err != nil {
+			return fmt.Errorf("failed to query rewards for fp3cons0: %w", err)
+		}
+		return nil
+	})
+
+	_ = g.Wait()
+	fp1bbnRewardCoins := sdk.NewCoins()
+	fp1bbnRewardGauge, ok := fp1bbnRewardGauges[itypes.FINALITY_PROVIDER.String()]
+	if ok {
+		fp1bbnRewardCoins = fp1bbnRewardGauge.Coins
+	}
+	fp2cons0RewardCoins := sdk.NewCoins()
+	fp2cons0RewardGauge, ok := fp2cons0RewardGauges[itypes.FINALITY_PROVIDER.String()]
+	if ok {
+		fp2cons0RewardCoins = fp2cons0RewardGauge.Coins
+	}
+	fp3cons0RewardCoins := sdk.NewCoins()
+	fp3cons0RewardGauge, ok := fp3cons0RewardGauges[itypes.FINALITY_PROVIDER.String()]
+	if ok {
+		fp3cons0RewardCoins = fp3cons0RewardGauge.Coins
+	}
+
+	return fp1bbnRewardCoins, fp2cons0RewardCoins, fp3cons0RewardCoins
+}

@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"encoding/json"
+	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
@@ -72,6 +73,7 @@ func (k Keeper) IBCReceivePacketCallback(
 	_ string,
 	_ string,
 ) error {
+	k.Logger(cachedCtx).Info("reached IBCReceivePacketCallback")
 	// Parse packet data as ICS20 transfer first (before checking ack success)
 	transferData, err := k.parseTransferData(packet)
 	if err != nil {
@@ -89,19 +91,32 @@ func (k Keeper) IBCReceivePacketCallback(
 		return err
 	}
 
+	k.Logger(cachedCtx).Info("IBCReceivePacketCallback",
+		"action", callbackMemo.Action,
+		"memo_parse", transferData.Memo,
+	)
+
 	switch callbackMemo.Action {
 	case types.CallbackActionAddBsnRewardsMemo:
+		k.Logger(cachedCtx).Info("IBCReceivePacketCallback to send bsn rewards",
+			"AddBsnRewards", fmt.Sprintf("callbackMemo.AddBsnRewards %+v", callbackMemo.AddBsnRewards),
+		)
 		if callbackMemo.AddBsnRewards == nil {
 			return errorsmod.Wrapf(types.ErrInvalidCallbackAddBsnRewards, "%s property is nil", types.CallbackActionAddBsnRewardsMemo)
 		}
 		err = k.processAddBsnRewards(cachedCtx, packet.GetDestPort(), packet.GetDestChannel(), transferData, callbackMemo.AddBsnRewards)
 		if err != nil {
+			k.Logger(cachedCtx).Error("IBCReceivePacketCallback processAddBsnRewards err callback",
+				"err", err.Error(),
+			)
 			return err
 		}
+		k.Logger(cachedCtx).Info("IBCReceivePacketCallback processAddBsnRewards successfull")
 	default:
 		return nil
 	}
 
+	k.Logger(cachedCtx).Info("IBCReceivePacketCallback reached an end with nil")
 	return nil
 }
 
