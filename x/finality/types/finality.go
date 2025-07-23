@@ -19,13 +19,13 @@ type FinalityProviderState int32
 
 const (
 	// FinalityProviderState_UNKNOWN indicates the finality provider state is unknown or uninitialized
-	FinalityProviderState_UNKNOWN FinalityProviderState = 0
+	FinalityProviderState_UNKNOWN FinalityProviderState = iota
 	// FinalityProviderState_UNJAILED indicates the finality provider is active and can participate
-	FinalityProviderState_UNJAILED FinalityProviderState = 1
+	FinalityProviderState_UNJAILED
 	// FinalityProviderState_JAILED indicates the finality provider is jailed and cannot participate
-	FinalityProviderState_JAILED FinalityProviderState = 2
+	FinalityProviderState_JAILED
 	// FinalityProviderState_SLASHED indicates the finality provider has been slashed
-	FinalityProviderState_SLASHED FinalityProviderState = 3
+	FinalityProviderState_SLASHED
 )
 
 // Processing state during the power distribution change process
