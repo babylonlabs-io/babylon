@@ -275,13 +275,23 @@ func (s *IbcCallbackBsnAddRewards) Test4SendBsnRewardsCallback() {
 	callbackMemoString := string(callbackMemoJSON)
 
 	bbnCommDiff, del1Diff, del2Diff, fp1bbnDiff, fp2cons0Diff, fp3cons0Diff := s.SuiteRewardsDiff(bbnNode, func() {
+		bsnSenderBalances, err := bsnNode.QueryBalances(s.bsnSenderAddr)
+		s.Require().NoError(err)
+
 		ibcTransferTxHash := bsnNode.SendIBCTransfer(s.bsnSenderAddr, s.bbnIbcCallbackReceiverAddr, callbackMemoString, rewardCoin)
 		bsnNode.WaitForNextBlocks(5)
 
 		// Query transaction to ensure it was successful
-		txRes, _, err := bsnNode.QueryTxWithError(ibcTransferTxHash)
+		ibcTxRes, ibcTx, err := bsnNode.QueryTxWithError(ibcTransferTxHash)
 		s.Require().NoError(err)
-		s.Require().Zero(txRes.Code, fmt.Sprintf("Transaction failed with code %d: %s", txRes.Code, txRes.RawLog))
+		s.Require().Zero(ibcTxRes.Code, fmt.Sprintf("Transaction failed with code %d: %s", ibcTxRes.Code, ibcTxRes.RawLog))
+
+		// check sender balances
+		bsnSenderAfter, err := bsnNode.QueryBalances(s.bsnSenderAddr)
+		s.Require().NoError(err)
+
+		feesPlusRewards := ibcTx.GetFee().Add(rewardCoin)
+		require.Equal(s.T(), bsnSenderBalances.Sub(feesPlusRewards...).String(), bsnSenderAfter.String(), "bsn sender balance check")
 	})
 
 	rewardDenomInBbn := getFirstIBCDenom(bbnCommDiff)
@@ -318,181 +328,53 @@ func (s *IbcCallbackBsnAddRewards) Test4SendBsnRewardsCallback() {
 	require.True(s.T(), fp1bbnDiff.IsZero(), "fp1 was not rewarded")
 }
 
-// func (s *IbcCallbackBsnAddRewards) Test5FailSendBsnRewardsCallback() {
-// 	s.T().Skip()
-// 	bsnChain1 := s.configurer.GetChainConfig(1)
+func (s *IbcCallbackBsnAddRewards) Test5FailSendBsnRewardsCallback() {
+	s.T().Skip()
+	bbnNode := s.BbnNode()
+	bsnNode := s.BsnNode()
 
-// 	bsnNode, err := bsnChain1.GetNodeAtIndex(2)
-// 	s.NoError(err)
+	transferAmt := s.r.Int63n(2_000000) + 1_000000
+	tranferInt := math.NewInt(transferAmt)
+	rewardCoin := sdk.NewCoin(s.bsnCustomTokenDenom, tranferInt)
 
-// 	// Create transfer coin using custom denom
-// 	transferAmt := s.r.Int63n(2_000000) + 1_000000
-// 	tranferInt := math.NewInt(transferAmt)
-// 	transferCoin := sdk.NewCoin(s.bsnCustomTokenDenom, tranferInt)
+	failingCallbackMemo := bstypes.CallbackMemo{
+		Action: bstypes.CallbackActionAddBsnRewardsMemo,
+		DestCallback: &bstypes.CallbackInfo{
+			Address: datagen.GenRandomAccount().Address,
+			AddBsnRewards: &bstypes.CallbackAddBsnRewards{
+				BsnConsumerID: "x",
+			},
+		},
+	}
 
-// 	// Create bad JSON callback memo
-// 	callbackMemo := bstypes.CallbackMemo{
-// 		Action: bstypes.CallbackActionAddBsnRewardsMemo,
-// 		DestCallback: &bstypes.CallbackInfo{
-// 			Address: datagen.GenRandomAccount().Address,
-// 			AddBsnRewards: &bstypes.CallbackAddBsnRewards{
-// 				BsnConsumerID: "x",
-// 			},
-// 		},
-// 	}
+	callbackMemoJSON, err := json.Marshal(failingCallbackMemo)
+	s.Require().NoError(err)
+	callbackMemoString := string(callbackMemoJSON)
 
-// 	callbackMemoJSON, err := json.Marshal(callbackMemo)
-// 	s.Require().NoError(err)
-// 	callbackMemoString := string(callbackMemoJSON)
+	bbnCommDiff, del1Diff, del2Diff, fp1bbnDiff, fp2cons0Diff, fp3cons0Diff := s.SuiteRewardsDiff(bbnNode, func() {
+		bsnSenderBalances, err := bsnNode.QueryBalances(s.bsnSenderAddr)
+		s.Require().NoError(err)
 
-// 	bsnSenderBefore, err := bsnNode.QueryBalances(s.bsnSenderAddr)
-// 	s.Require().NoError(err)
+		ibcTransferTxHash := bsnNode.SendIBCTransfer(s.bsnSenderAddr, s.bbnIbcCallbackReceiverAddr, callbackMemoString, rewardCoin)
+		bsnNode.WaitForNextBlocks(5)
 
-// 	ibcTransferTxHash := bsnNode.SendIBCTransfer(s.bsnSenderAddr, s.bbnIbcCallbackReceiverAddr, callbackMemoString, transferCoin)
-// 	bsnNode.WaitForNextBlocks(5)
+		ibcTxRes, ibcTx, err := bsnNode.QueryTxWithError(ibcTransferTxHash)
+		s.Require().NoError(err)
+		s.Require().Zero(ibcTxRes.Code, fmt.Sprintf("Transaction failed with code %d: %s", ibcTxRes.Code, ibcTxRes.RawLog))
 
-// 	// Query transaction to get fees
-// 	ibcTxRes, ibcTx, err := bsnNode.QueryTxWithError(ibcTransferTxHash)
-// 	s.Require().NoError(err)
-// 	s.Require().Zero(ibcTxRes.Code, fmt.Sprintf("Transaction failed with code %d: %s", ibcTxRes.Code, ibcTxRes.RawLog))
+		bsnSenderAfter, err := bsnNode.QueryBalances(s.bsnSenderAddr)
+		s.Require().NoError(err)
 
-// 	s.Eventually(func() bool {
-// 		bsnSenderAfter, err := bsnNode.QueryBalances(s.bsnSenderAddr)
-// 		s.Require().NoError(err)
+		require.Equal(s.T(), bsnSenderBalances.Sub(ibcTx.GetFee()...).String(), bsnSenderAfter.String(), "bsn sender balance check")
+	})
 
-// 		bsnSenderAfterFee := bsnSenderAfter.Sub(ibcTx.GetFee()...)
-// 		return bsnSenderAfterFee.Equal(bsnSenderBefore)
-// 	}, time.Minute*4, time.Second, "balance is not equal to %s", bsnSenderBefore.String())
-// }
-
-// TestBSNFeeCollectionWithCorrectMemo tests BSN fee collection with the correct memo
-// func (s *IbcCallbackBsnAddRewardsTestSuite) TestBSNFeeCollectionWithCorrectMemo() {
-// 	bbnChainA := s.configurer.GetChainConfig(0)
-// 	bbnChainB := s.configurer.GetChainConfig(1)
-
-// 	nA, err := bbnChainA.GetNodeAtIndex(2)
-// 	s.NoError(err)
-// 	nB, err := bbnChainB.GetNodeAtIndex(2)
-// 	s.NoError(err)
-
-// 	// Create and fund sender account
-// 	s.bsnSenderAddr = nA.KeysAdd("bsn-sender")
-// 	nA.BankSendFromNode(s.bsnSenderAddr, "15000000ubbn") // Give enough ubbn for tokenfactory creation fee (10M) + tx fees
-// 	nA.WaitForNextBlock()
-
-// 	// Create custom denom using tokenfactory
-// 	customDenom := fmt.Sprintf("factory/%s/%s", s.bsnSenderAddr, customDenomName)
-// 	s.T().Logf("Creating custom denom: %s", customDenom)
-
-// 	// Create the denom
-// 	nA.CreateDenom(s.bsnSenderAddr, customDenomName)
-// 	nA.WaitForNextBlock()
-
-// 	// Mint custom tokens to sender
-// 	mintAmount := fmt.Sprintf("%d", transferAmount*10) // Mint 10x what we need
-// 	nA.MintDenom(s.bsnSenderAddr, mintAmount, customDenom)
-// 	nA.WaitForNextBlock()
-
-// 	// Verify sender has the custom tokens
-// 	balanceBeforeSend, err := nA.QueryBalances(s.bsnSenderAddr)
-// 	s.Require().NoError(err)
-
-// 	// Check custom denom balance specifically
-// 	customBalance := balanceBeforeSend.AmountOf(customDenom)
-// 	s.Require().True(customBalance.GT(sdkmath.ZeroInt()), "Should have custom tokens after minting")
-
-// 	// // Get BSN fee collector module account address on chain B
-// 	// bsnFeeCollectorAddr, err := nB.QueryModuleAddress(ictvtypes.BSNFeeCollectorName)
-// 	// s.Require().NoError(err)
-
-// 	// Get test distribution account address (instead of distribution module which can't receive custom tokens)
-// 	testDistributionAddr := getTestDistributionAddress()
-
-// 	// Get initial balances
-// 	initialBSNBalance, err := nB.QueryBalances(bsnFeeCollectorAddr.String())
-// 	s.Require().NoError(err)
-
-// 	initialTestDistributionBalance, err := nB.QueryBalances(testDistributionAddr.String())
-// 	s.Require().NoError(err)
-
-// 	// Create transfer coin using custom denom
-// 	transferCoin := sdk.NewInt64Coin(customDenom, transferAmount)
-
-// 	// Create JSON callback memo for IBC callback middleware with BSN action
-// 	callbackMemo := bstypes.CallbackMemo{
-// 		Action: bstypes.CallbackActionAddBsnRewardsMemo,
-// 		AddBsnRewards: &bstypes.CallbackAddBsnRewards{
-// 			BsnConsumerID: "x",
-// 		},
-// 	}
-// 	// Convert struct to JSON string
-// 	callbackMemoJSON, err := json.Marshal(callbackMemo)
-// 	s.Require().NoError(err)
-// 	callbackMemoString := string(callbackMemoJSON)
-
-// 	txHash := nA.SendIBCTransfer(s.bsnSenderAddr, bsnFeeCollectorAddr.String(), callbackMemoString, transferCoin)
-// 	nA.WaitForNextBlock()
-
-// 	// Query transaction to ensure it was successful
-// 	txRes, _, err := nA.QueryTxWithError(txHash)
-// 	s.Require().NoError(err)
-// 	s.Require().Zero(txRes.Code, fmt.Sprintf("Transaction failed with code %d: %s", txRes.Code, txRes.RawLog))
-
-// 	// Calculate expected amounts after 50% distribution
-// 	expectedDistributionAmount := transferAmount / 2 // 50% goes to distribution
-// 	expectedBSNAmount := transferAmount / 2          // 50% remains in BSN fee collector
-
-// 	// Check BSN fee collector balance - should have received 50% of transfer
-// 	s.Require().Eventually(func() bool {
-// 		finalBSNBalance, err := nB.QueryBalances(bsnFeeCollectorAddr.String())
-// 		if err != nil {
-// 			s.T().Logf("Failed to query BSN fee collector balance: %s", err.Error())
-// 			return false
-// 		}
-
-// 		// Look for the IBC denom
-// 		ibcDenom := getFirstIBCDenom(finalBSNBalance)
-// 		if ibcDenom == "" {
-// 			s.T().Logf("No IBC denom found in BSN fee collector balance: %s", finalBSNBalance.String())
-// 			return false
-// 		}
-// 		s.T().Logf("Found IBC denom: %s", ibcDenom)
-
-// 		// Calculate received amount (final - initial)
-// 		initialIBCAmount := initialBSNBalance.AmountOf(ibcDenom).Int64()
-// 		finalIBCAmount := finalBSNBalance.AmountOf(ibcDenom).Int64()
-// 		actualBSNAmount := finalIBCAmount - initialIBCAmount
-
-// 		return actualBSNAmount == expectedBSNAmount
-// 	}, 2*time.Minute, 5*time.Second, "BSN fee collector did not receive expected amount")
-
-// 	// Check test distribution account balance - should have received 50% of transfer
-// 	s.Require().Eventually(func() bool {
-// 		finalTestDistributionBalance, err := nB.QueryBalances(testDistributionAddr.String())
-// 		if err != nil {
-// 			s.T().Logf("Failed to query test distribution balance: %s", err.Error())
-// 			return false
-// 		}
-
-// 		// Look for the IBC denom
-// 		ibcDenom := getFirstIBCDenom(finalTestDistributionBalance)
-// 		if ibcDenom == "" {
-// 			s.T().Logf("No IBC denom found in test distribution balance: %s", finalTestDistributionBalance.String())
-// 			return false
-// 		}
-// 		s.T().Logf("Found IBC denom in test distribution: %s", ibcDenom)
-
-// 		// Calculate received amount (final - initial)
-// 		initialIBCAmount := initialTestDistributionBalance.AmountOf(ibcDenom).Int64()
-// 		finalIBCAmount := finalTestDistributionBalance.AmountOf(ibcDenom).Int64()
-// 		actualDistributionAmount := finalIBCAmount - initialIBCAmount
-
-// 		return actualDistributionAmount == expectedDistributionAmount
-// 	}, 2*time.Minute, 5*time.Second, "Test distribution account did not receive expected amount")
-
-// 	s.T().Logf("BSN fee collector received: %d custom tokens (50%% of transfer)", expectedBSNAmount)
-// 	s.T().Logf("Test distribution account received: %d custom tokens (50%% of transfer)", expectedDistributionAmount)
-// }
+	require.True(s.T(), bbnCommDiff.IsZero(), "bbn commission should not be rewarded")
+	require.True(s.T(), del1Diff.IsZero(), "del1 was not rewarded")
+	require.True(s.T(), del2Diff.IsZero(), "del2 was not rewarded")
+	require.True(s.T(), fp1bbnDiff.IsZero(), "fp1 was not rewarded")
+	require.True(s.T(), fp2cons0Diff.IsZero(), "fp2 was not rewarded")
+	require.True(s.T(), fp3cons0Diff.IsZero(), "fp3 was not rewarded")
+}
 
 // QueryFpRewards returns the rewards available for fp1, fp2, fp3, fp4
 func (s *IbcCallbackBsnAddRewards) QueryFpRewards(n *chain.NodeConfig) (

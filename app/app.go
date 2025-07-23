@@ -955,8 +955,6 @@ func BlockedAddresses() map[string]bool {
 
 	// allow the following addresses to receive funds
 	delete(blockedAddrs, appparams.AccGov.String())
-	// Allow BSN fee collector to receive IBC transfer funds
-	delete(blockedAddrs, appparams.AccBbnComissionCollectorBsn.String())
 
 	// Block precompiled contracts
 	blockedPrecompilesHex := evmtypes.AvailableStaticPrecompiles
