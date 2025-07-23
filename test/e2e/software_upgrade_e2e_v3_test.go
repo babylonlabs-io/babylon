@@ -154,9 +154,10 @@ func (s *SoftwareUpgradeV3TestSuite) TestUpgradeV3() {
 	resp := n.QueryAppliedPlan(v3.UpgradeName)
 	s.EqualValues(expectedUpgradeHeight, resp.Height, "the plan should be applied at the height %d", expectedUpgradeHeight)
 
-	// check fps have the same chain id
-	s.Require().Equal(n.ChainID(), s.fp1.BsnId)
-	s.Require().Equal(n.ChainID(), s.fp2.BsnId)
+	fp1 := n.QueryFinalityProvider(s.fp1.BtcPk.MarshalHex())
+	s.Require().Equal(fp1.BsnId, n.ChainID())
+	fp2 := n.QueryFinalityProvider(s.fp2.BtcPk.MarshalHex())
+	s.Require().Equal(fp2.BsnId, n.ChainID())
 
 	// query pub randomness
 	fp1CommitPubRand := n.QueryListPubRandCommit(s.fp1CommitPubRandList.FpBtcPk)
