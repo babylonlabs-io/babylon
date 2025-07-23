@@ -73,16 +73,16 @@ func (k Keeper) IBCReceivePacketCallback(
 	_ string,
 	_ string,
 ) error {
+	// Early return if acknowledgement is not successful
+	if !ack.Success() {
+		return nil
+	}
+
 	k.Logger(cachedCtx).Info("IBCReceivePacketCallback called")
 	// Parse packet data as ICS20 transfer first (before checking ack success)
 	transferData, err := k.parseTransferData(packet)
 	if err != nil {
 		return err
-	}
-
-	// Early return if acknowledgement is not successful
-	if !ack.Success() {
-		return nil
 	}
 
 	// Check for JSON callback format
