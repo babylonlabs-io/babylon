@@ -89,13 +89,10 @@ func (s *SoftwareUpgradeV3TestSuite) SetupSuite() {
 
 		n.WaitForNextBlock()
 
-		randCommitContext := signingcontext.FpRandCommitContextV0(n.ChainID(), appparams.AccFinality.String())
-		numPubRand := uint64(100)
-
 		s.commitStartHeight = n.LatestBlockNumber()
-		_, s.fp1CommitPubRandList, err = datagen.GenRandomMsgCommitPubRandList(s.r, s.fp1BTCSK, randCommitContext, s.commitStartHeight, numPubRand)
+		_, s.fp1CommitPubRandList, err = datagen.GenRandomMsgCommitPubRandList(s.r, s.fp1BTCSK, "", s.commitStartHeight, numPubRand)
 		s.NoError(err)
-		_, s.fp2CommitPubRandList, err = datagen.GenRandomMsgCommitPubRandList(s.r, s.fp2BTCSK, randCommitContext, s.commitStartHeight, numPubRand)
+		_, s.fp2CommitPubRandList, err = datagen.GenRandomMsgCommitPubRandList(s.r, s.fp2BTCSK, "", s.commitStartHeight, numPubRand)
 		s.NoError(err)
 
 		s.Require().NotNil(s.fp1CommitPubRandList, "fp1CommitPubRandList should not be nil")
