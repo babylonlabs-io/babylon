@@ -32,6 +32,7 @@ import (
 	"github.com/babylonlabs-io/babylon/v3/test/e2e/initialization"
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
+	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 )
 
@@ -125,8 +126,79 @@ func (n *NodeConfig) CreateBTCDelegation(
 	return outBuff.String()
 }
 
+func (n *NodeConfig) CreateBTCStakeExpansionDelegation(
+	msg *bstypes.MsgBtcStakeExpand,
+	fromWalletName string,
+	generateOnly bool,
+	overallFlags ...string,
+) (outStr string) {
+	n.LogActionF("creating BTC delegation")
+
+	btcPKHex := msg.BtcPk.MarshalHex()
+
+	// get pop hex
+	popHex, err := msg.Pop.ToHexStr()
+	require.NoError(n.t, err)
+
+	// get staking tx info hex
+	stakingTxHex := hex.EncodeToString(msg.StakingTx)
+
+	fpPKHexList := make([]string, len(msg.FpBtcPkList))
+	for i, fpPK := range msg.FpBtcPkList {
+		fpPKHexList[i] = fpPK.MarshalHex()
+	}
+	fpPKHexes := strings.Join(fpPKHexList, ",")
+
+	stakingTimeString := sdkmath.NewUint(uint64(msg.StakingTime)).String()
+	stakingValueString := sdkmath.NewInt(int64(msg.StakingValue)).String()
+
+	// get slashing tx hex
+	slashingTxHex := msg.SlashingTx.ToHexStr()
+	// get delegator sig hex
+	delegatorSigHex := msg.DelegatorSlashingSig.ToHexStr()
+
+	// on-demand unbonding related
+	unbondingTxHex := hex.EncodeToString(msg.UnbondingTx)
+	unbondingSlashingTxHex := msg.UnbondingSlashingTx.ToHexStr()
+	unbondingTimeStr := sdkmath.NewUint(uint64(msg.UnbondingTime)).String()
+	unbondingValueStr := sdkmath.NewInt(int64(msg.UnbondingValue)).String()
+	delUnbondingSlashingSigHex := msg.DelegatorUnbondingSlashingSig.ToHexStr()
+
+	fundingTxHex := hex.EncodeToString(msg.FundingTx)
+
+	var inclusionProofHex string
+	cmd := []string{
+		"babylond", "tx", "btcstaking", "btc-stake-expand",
+		btcPKHex, popHex, stakingTxHex, inclusionProofHex, fpPKHexes, stakingTimeString, stakingValueString, slashingTxHex, delegatorSigHex, unbondingTxHex, unbondingSlashingTxHex, unbondingTimeStr, unbondingValueStr, delUnbondingSlashingSigHex,
+		msg.PreviousStakingTxHash, fundingTxHex,
+		fmt.Sprintf("--from=%s", fromWalletName), containers.FlagHome, flagKeyringTest,
+		n.FlagChainID(), "--log_format=json",
+	}
+
+	// gas price
+	cmd = append(cmd, "--gas-prices=0.1ubbn")
+
+	if generateOnly {
+		cmd = append(cmd, "--generate-only")
+	} else {
+		// broadcast stuff
+		cmd = append(cmd, "-b=sync", "--yes")
+	}
+
+	cmd = append(cmd, fmt.Sprintf("--chain-id=%s", n.chainId), "-b=sync", "--yes")
+	outBuff, _, err := n.containerManager.ExecCmd(n.t, n.Name, append(cmd, overallFlags...), "")
+
+	require.NoError(n.t, err)
+	n.LogActionF("successfully created BTC stake expansion delegation")
+	return outBuff.String()
+}
+
 func (n *NodeConfig) AddCovenantSigsFromVal(covPK *bbn.BIP340PubKey, stakingTxHash string, slashingSigs [][]byte, unbondingSig *bbn.BIP340Signature, unbondingSlashingSigs [][]byte) {
-	n.AddCovenantSigs("val", covPK, stakingTxHash, slashingSigs, unbondingSig, unbondingSlashingSigs)
+	n.AddCovenantSigs("val", covPK, stakingTxHash, slashingSigs, unbondingSig, unbondingSlashingSigs, nil)
+}
+
+func (n *NodeConfig) AddCovenantSigsFromValForStakeExp(covPK *bbn.BIP340PubKey, stakingTxHash string, slashingSigs [][]byte, unbondingSig *bbn.BIP340Signature, unbondingSlashingSigs [][]byte, stkExpSig *bbn.BIP340Signature) {
+	n.AddCovenantSigs("val", covPK, stakingTxHash, slashingSigs, unbondingSig, unbondingSlashingSigs, stkExpSig)
 }
 
 func (n *NodeConfig) AddCovenantSigs(
@@ -136,6 +208,7 @@ func (n *NodeConfig) AddCovenantSigs(
 	slashingSigs [][]byte,
 	unbondingSig *bbn.BIP340Signature,
 	unbondingSlashingSigs [][]byte,
+	stakeExpTxSig *bbn.BIP340Signature,
 ) {
 	n.LogActionF("adding covenant signature from nodeName: %s", n.Name)
 
@@ -159,6 +232,10 @@ func (n *NodeConfig) AddCovenantSigs(
 	}
 	unbondingSlashingSigStr := strings.Join(unbondingSlashingSigStrList, ",")
 	cmd = append(cmd, unbondingSlashingSigStr)
+
+	if stakeExpTxSig != nil {
+		cmd = append(cmd, stakeExpTxSig.ToHexStr())
+	}
 
 	// used key
 	cmd = append(cmd, fmt.Sprintf("--from=%s", fromWalletName))
@@ -547,6 +624,52 @@ func (n *NodeConfig) CreateBTCDelegationMultipleFPsAndCheck(
 	return testStakingInfo
 }
 
+func (n *NodeConfig) CreateBTCStakeExpDelegationMultipleFPsAndCheck(
+	r *rand.Rand,
+	t *testing.T,
+	btcNet *chaincfg.Params,
+	walletNameSender string,
+	fps []*bstypes.FinalityProvider,
+	btcStakerSK *btcec.PrivateKey,
+	delAddr string,
+	stakingTimeBlocks uint16,
+	stakingSatAmt int64,
+	prevDel *bstypes.BTCDelegation,
+) (*datagen.TestStakingSlashingInfo, *wire.MsgTx) {
+	// Convert finality provider BTC PKs to BIP340 PKs
+	fpPKs := make([]*bbn.BIP340PubKey, len(fps))
+	for i, fp := range fps {
+		fpPKs[i] = fp.BtcPk
+	}
+
+	msg, testStakingInfo := n.createBtcStakeExpandMessage(
+		r,
+		t,
+		btcNet,
+		btcStakerSK,
+		fps,
+		stakingSatAmt,
+		stakingTimeBlocks,
+		prevDel,
+	)
+
+	// submit the message for creating BTC delegation
+	n.CreateBTCStakeExpansionDelegation(msg, walletNameSender, false)
+
+	// wait for a block so that above txs take effect
+	n.WaitForNextBlock()
+
+	// check if the address matches
+	btcDelegationResp := n.QueryBtcDelegation(testStakingInfo.StakingTx.TxHash().String())
+	require.NotNil(t, btcDelegationResp)
+	require.Equal(t, btcDelegationResp.BtcDelegation.StakerAddr, delAddr)
+	require.Equal(t, btcStakerSK.PubKey().SerializeCompressed()[1:], btcDelegationResp.BtcDelegation.BtcPk.MustToBTCPK().SerializeCompressed()[1:])
+
+	fundingTx, err := bbn.NewBTCTxFromBytes(msg.FundingTx)
+	require.NoError(t, err)
+	return testStakingInfo, fundingTx
+}
+
 func (n *NodeConfig) AddFinalitySignatureToBlock(
 	fpBTCSK *secp256k1.PrivateKey,
 	fpBTCPK *bbn.BIP340PubKey,
@@ -593,4 +716,137 @@ func CovenantBTCPKs(params *bstypes.Params) []*btcec.PublicKey {
 		covenantBTCPKs[i] = covenantPK.MustToBTCPK()
 	}
 	return covenantBTCPKs
+}
+
+func (n *NodeConfig) createBtcStakeExpandMessage(
+	r *rand.Rand,
+	t *testing.T,
+	btcNet *chaincfg.Params,
+	delSK *btcec.PrivateKey,
+	fps []*bstypes.FinalityProvider,
+	stakingValue int64,
+	stakingTime uint16,
+	prevDel *bstypes.BTCDelegation,
+) (*bstypes.MsgBtcStakeExpand, *datagen.TestStakingSlashingInfo) {
+	// BTC staking params, BTC delegation key pairs and PoP
+	params := n.QueryBTCStakingParams()
+
+	// get fpPKs in BIP340PubKey and BIP340 formats
+	var fpBtcPkList []bbn.BIP340PubKey
+	for _, fp := range fps {
+		fpBtcPkList = append(fpBtcPkList, *fp.BtcPk)
+	}
+	fpPKs, err := bbn.NewBTCPKsFromBIP340PKs(fpBtcPkList)
+	require.NoError(t, err)
+
+	// Convert covenant keys
+	var covenantPks []*btcec.PublicKey
+	for _, pk := range params.CovenantPks {
+		covenantPks = append(covenantPks, pk.MustToBTCPK())
+	}
+
+	// Create funding transaction
+	fundingTx := datagen.GenFundingTx(
+		t,
+		r,
+		btcNet,
+		&wire.OutPoint{Index: 0},
+		stakingValue,
+		prevDel.MustGetStakingTx().TxOut[prevDel.StakingOutputIdx],
+	)
+	// Convert previousStakingTxHash to OutPoint
+	prevDelTxHash := prevDel.MustGetStakingTxHash()
+	prevStakingOutPoint := wire.NewOutPoint(&prevDelTxHash, datagen.StakingOutIdx)
+
+	// Convert fundingTxHash to OutPoint
+	fundingTxHash := fundingTx.TxHash()
+	fundingOutPoint := wire.NewOutPoint(&fundingTxHash, 0)
+	outPoints := []*wire.OutPoint{prevStakingOutPoint, fundingOutPoint}
+
+	// Generate staking slashing info using multiple inputs
+	stakingSlashingInfo := datagen.GenBTCStakingSlashingInfoWithInputs(
+		r,
+		t,
+		btcNet,
+		outPoints,
+		delSK,
+		fpPKs,
+		covenantPks,
+		params.CovenantQuorum,
+		stakingTime,
+		stakingValue,
+		params.SlashingPkScript,
+		params.SlashingRate,
+		uint16(params.UnbondingTimeBlocks),
+	)
+
+	slashingPathSpendInfo, err := stakingSlashingInfo.StakingInfo.SlashingPathSpendInfo()
+	require.NoError(t, err)
+
+	// Sign the slashing tx with delegator key
+	delegatorSig, err := stakingSlashingInfo.SlashingTx.Sign(
+		stakingSlashingInfo.StakingTx,
+		datagen.StakingOutIdx,
+		slashingPathSpendInfo.GetPkScriptPath(),
+		delSK,
+	)
+	require.NoError(t, err)
+
+	// Serialize the staking tx bytes
+	serializedStakingTx, err := bbn.SerializeBTCTx(stakingSlashingInfo.StakingTx)
+	require.NoError(t, err)
+
+	stkTxHash := stakingSlashingInfo.StakingTx.TxHash()
+	unbondingValue := uint64(stakingValue) - uint64(params.UnbondingFeeSat)
+
+	// Generate unbonding slashing info
+	unbondingSlashingInfo := datagen.GenBTCUnbondingSlashingInfo(
+		r,
+		t,
+		btcNet,
+		delSK,
+		fpPKs,
+		covenantPks,
+		params.CovenantQuorum,
+		wire.NewOutPoint(&stkTxHash, datagen.StakingOutIdx),
+		uint16(params.UnbondingTimeBlocks),
+		int64(unbondingValue),
+		params.SlashingPkScript,
+		params.SlashingRate,
+		uint16(params.UnbondingTimeBlocks),
+	)
+
+	unbondingTxBytes, err := bbn.SerializeBTCTx(unbondingSlashingInfo.UnbondingTx)
+	require.NoError(t, err)
+
+	delSlashingTxSig, err := unbondingSlashingInfo.GenDelSlashingTxSig(delSK)
+	require.NoError(t, err)
+
+	// Create proof of possession
+	stakerAddr := sdk.MustAccAddressFromBech32(prevDel.StakerAddr)
+	stakerPopContext := signingcontext.StakerPopContextV0(n.chainId, appparams.AccBTCStaking.String())
+	pop, err := datagen.NewPoPBTC(stakerPopContext, stakerAddr, delSK)
+	require.NoError(t, err)
+
+	fundingTxBz, err := bbn.SerializeBTCTx(fundingTx)
+	require.NoError(t, err)
+
+	return &types.MsgBtcStakeExpand{
+		StakerAddr:                    prevDel.StakerAddr,
+		Pop:                           pop,
+		BtcPk:                         bbn.NewBIP340PubKeyFromBTCPK(delSK.PubKey()),
+		FpBtcPkList:                   fpBtcPkList,
+		StakingTime:                   uint32(stakingTime),
+		StakingValue:                  stakingValue,
+		StakingTx:                     serializedStakingTx,
+		SlashingTx:                    stakingSlashingInfo.SlashingTx,
+		DelegatorSlashingSig:          delegatorSig,
+		UnbondingValue:                int64(unbondingValue),
+		UnbondingTime:                 params.UnbondingTimeBlocks,
+		UnbondingTx:                   unbondingTxBytes,
+		UnbondingSlashingTx:           unbondingSlashingInfo.SlashingTx,
+		DelegatorUnbondingSlashingSig: delSlashingTxSig,
+		PreviousStakingTxHash:         prevDelTxHash.String(),
+		FundingTx:                     fundingTxBz,
+	}, stakingSlashingInfo
 }

@@ -888,6 +888,7 @@ func SendCovenantSigsToPendingDel(
 			covenantSlashingSigs[i].AdaptorSigs,
 			bbn.NewBIP340SignatureFromBTCSig(covUnbondingSigs[i]),
 			covenantUnbondingSlashingSigs[i].AdaptorSigs,
+			nil,
 		)
 	}
 }
