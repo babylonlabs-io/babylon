@@ -2214,6 +2214,157 @@ func TestTwoBtcActivationEvents(t *testing.T) {
 	require.Equal(t, stakingValue1+stakingValue2, int64(fpDist.TotalBondedSat))
 }
 
+func TestGovernanceJailingAfterUnjailInSameBlock(t *testing.T) {
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	// mock BTC light client and BTC checkpoint modules
+	btclcKeeper := btcstktypes.NewMockBTCLightClientKeeper(ctrl)
+	btccKeeper := btcstktypes.NewMockBtcCheckpointKeeper(ctrl)
+	h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
+
+	// set all parameters
+	covenantSKs, _ := h.GenAndApplyParams(r)
+
+	// generate and insert new finality provider
+	fpSK, fpPK, fp := h.CreateFinalityProvider(r)
+	h.CommitPubRandList(r, fpSK, fp, 1, 100, true)
+
+	// create BTC delegation to give the FP voting power
+	stakingValue := int64(2 * 10e8)
+	delSK, _, err := datagen.GenRandomBTCKeyPair(r)
+	h.NoError(err)
+	stakingTxHash, msgCreateBTCDel, actualDel, btcHeaderInfo, inclusionProof, _, err := h.CreateDelegationWithBtcBlockHeight(
+		r,
+		delSK,
+		[]*btcec.PublicKey{fpPK},
+		stakingValue,
+		1000,
+		0,
+		0,
+		true,
+		false,
+		10,
+		10,
+	)
+	h.NoError(err)
+
+	// give it covenant signatures
+	h.CreateCovenantSigs(r, covenantSKs, msgCreateBTCDel, actualDel, 10)
+	// activate the BTC delegation
+	h.AddInclusionProof(stakingTxHash, btcHeaderInfo, inclusionProof, 30)
+
+	// execute BeginBlock to make FP active
+	btcTip := &btclctypes.BTCHeaderInfo{Height: 30}
+	babylonHeight := uint64(10) // Start from a reasonable height
+	h.SetCtxHeight(babylonHeight)
+	h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(btcTip).AnyTimes()
+	h.BeginBlocker()
+
+	// ensure FP has voting power
+	require.Equal(t, uint64(stakingValue), h.FinalityKeeper.GetVotingPower(h.Ctx, *fp.BtcPk, babylonHeight))
+
+	// Create voting power distribution caches for multiple heights
+	// This is important because HandleResumeFinalityProposal will look for these
+	for i := babylonHeight - 5; i <= babylonHeight; i++ {
+		dc := ftypes.NewVotingPowerDistCache()
+		fpDistInfo := ftypes.NewFinalityProviderDistInfo(fp)
+		fpDistInfo.TotalBondedSat = uint64(stakingValue)
+		fpDistInfo.IsTimestamped = true
+		dc.AddFinalityProviderDistInfo(fpDistInfo)
+		h.FinalityKeeper.SetVotingPowerDistCache(h.Ctx, i, dc)
+	}
+
+	// Step 1: Jail the FP (regular jailing for missing blocks)
+	err = h.BTCStakingKeeper.JailFinalityProvider(h.Ctx, fp.BtcPk.MustMarshal())
+	h.NoError(err)
+
+	// Update signing info with jail time
+	signInfo, err := h.FinalityKeeper.FinalityProviderSigningTracker.Get(h.Ctx, fp.BtcPk.MustMarshal())
+	h.NoError(err)
+	signInfo.JailedUntil = h.Ctx.HeaderInfo().Time.Add(-1 * time.Hour) // Set jail time in the past
+	err = h.FinalityKeeper.FinalityProviderSigningTracker.Set(h.Ctx, fp.BtcPk.MustMarshal(), signInfo)
+	h.NoError(err)
+
+	haltingHeight := uint32(babylonHeight - 3)
+
+	// Step 2: Get the current BTC tip info
+	currentBTCHeight := btcTip.Height
+
+	// Step 3: Now in the same block, we'll simulate both events:
+	// First, the FP unjails themselves
+	err = h.BTCStakingKeeper.UnjailFinalityProvider(h.Ctx, fp.BtcPk.MustMarshal())
+	h.NoError(err)
+
+	// Second, governance tries to jail the FP via ResumeFinalityProposal
+	sdkCtx := sdk.UnwrapSDKContext(h.Ctx)
+	err = h.FinalityKeeper.HandleResumeFinalityProposal(
+		sdkCtx,
+		[]string{fp.BtcPk.MarshalHex()},
+		haltingHeight,
+	)
+	h.NoError(err)
+
+	// Step 4: Get all events at current BTC height
+	events := h.BTCStakingKeeper.GetAllPowerDistUpdateEvents(h.Ctx, currentBTCHeight, currentBTCHeight)
+
+	// Verify we have both jail and unjail events
+	var hasJailEvent, hasUnjailEvent bool
+	for _, event := range events {
+		if jailedFp := event.GetJailedFp(); jailedFp != nil {
+			if jailedFp.Pk.MarshalHex() == fp.BtcPk.MarshalHex() {
+				hasJailEvent = true
+			}
+		}
+		if unjailedFp := event.GetUnjailedFp(); unjailedFp != nil {
+			if unjailedFp.Pk.MarshalHex() == fp.BtcPk.MarshalHex() {
+				hasUnjailEvent = true
+			}
+		}
+	}
+	require.True(t, hasJailEvent, "Should have jail event")
+	require.True(t, hasUnjailEvent, "Should have unjail event")
+
+	// Step 5: Process the events - this is where the bug manifests
+	babylonHeight += 1
+	h.SetCtxHeight(babylonHeight)
+	h.BeginBlocker()
+
+	// Step 6: Check the results
+	dc := h.FinalityKeeper.GetVotingPowerDistCache(h.Ctx, babylonHeight)
+	require.NotNil(t, dc, "Distribution cache should exist")
+
+	// Find the FP in the distribution cache
+	var foundFP *ftypes.FinalityProviderDistInfo
+	for _, fpInfo := range dc.FinalityProviders {
+		if fpInfo.BtcPk.MarshalHex() == fp.BtcPk.MarshalHex() {
+			foundFP = fpInfo
+			break
+		}
+	}
+
+	require.NotNil(t, foundFP, "FP should be in the distribution cache")
+
+	// FP should be jailed in the voting distribution
+	// due to governance jailing it via ResumeFinalityProposal
+	require.True(t, foundFP.IsJailed,
+		"FP should be jailed in voting distribution due to governance jailing")
+
+	// Apply active FPs to see if the FP has voting power
+	dc.ApplyActiveFinalityProviders(10)
+
+	// The FP maintains voting power when it shouldn't
+	activeFPs := dc.GetActiveFinalityProviderSet()
+	_, exists := activeFPs[fp.BtcPk.MarshalHex()]
+	require.False(t, exists, "FP should not be in active finality providers set (jailed via governance)")
+
+	// if we check the actual FP state, should bejailed
+	fpFromKeeper, err := h.BTCStakingKeeper.GetFinalityProvider(h.Ctx, fp.BtcPk.MustMarshal())
+	h.NoError(err)
+	require.True(t, fpFromKeeper.IsJailed(), "FP is marked as jailed in keeper")
+}
+
 // addPowerDistUpdateEvents is a helper function that seeds the BTCStaking module store
 // with power distribution update events at specific BTC heights. This allows the
 // ProcessAllPowerDistUpdateEvents function to pick up these events via the
