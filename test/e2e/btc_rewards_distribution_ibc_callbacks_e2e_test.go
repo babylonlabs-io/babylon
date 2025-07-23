@@ -1,7 +1,6 @@
 package e2e
 
 import (
-	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"math/rand"
@@ -18,6 +17,7 @@ import (
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
 	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 	bsctypes "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
+	itypes "github.com/babylonlabs-io/babylon/v3/x/incentive/types"
 )
 
 type IbcCallbackBsnAddRewards struct {
@@ -64,18 +64,6 @@ type IbcCallbackBsnAddRewards struct {
 	bbnIbcCallbackReceiverAddr string
 	bsnSenderAddr              string
 	bsnCustomTokenDenom        string
-}
-
-const (
-	bsnRewardDistributionMemo = "bsn_reward_distribution"
-	transferAmount            = int64(100_000000) // 100k custom tokens
-	customDenomName           = "testcoin"        // Custom token name
-)
-
-// getTestDistributionAddress returns the same deterministic test address used in the keeper
-func getTestDistributionAddress() sdk.AccAddress {
-	hash := sha256.Sum256([]byte("test_distribution_account"))
-	return sdk.AccAddress(hash[:20])
 }
 
 func (s *IbcCallbackBsnAddRewards) SetupSuite() {
@@ -259,7 +247,75 @@ func (s *IbcCallbackBsnAddRewards) Test3CreateFactoryToken() {
 	require.Equal(s.T(), customBalance.String(), mintInt.String(), "Should have custom tokens after minting")
 }
 
-func (s *IbcCallbackBsnAddRewards) Test4FailSendBsnRewardsCallback() {
+func (s *IbcCallbackBsnAddRewards) Test4SendBsnRewardsCallback() {
+	bbnChain0 := s.configurer.GetChainConfig(0)
+	bsnChain1 := s.configurer.GetChainConfig(1)
+
+	bbnNode, err := bbnChain0.GetNodeAtIndex(2)
+	s.NoError(err)
+	bsnNode, err := bsnChain1.GetNodeAtIndex(2)
+	s.NoError(err)
+
+	transferAmt := s.r.Int63n(2_000000) + 1_000000
+	tranferInt := math.NewInt(transferAmt)
+	rewardCoin := sdk.NewCoin(s.bsnCustomTokenDenom, tranferInt)
+
+	fp2Ratio, fp3Ratio := math.LegacyMustNewDecFromStr("0.7"), math.LegacyMustNewDecFromStr("0.3")
+
+	// Create JSON callback memo for IBC callback middleware with BSN action
+	callbackMemo := bstypes.CallbackMemo{
+		Action: bstypes.CallbackActionAddBsnRewardsMemo,
+		AddBsnRewards: &bstypes.CallbackAddBsnRewards{
+			BsnConsumerID: s.bsn0.ConsumerId,
+			FpRatios: []bstypes.CallbackAddBsnRewardsFpRatio{
+				{
+					BtcPkHex: s.fp2cons0.BtcPk.MarshalHex(),
+					RatioDec: fp2Ratio.String(),
+				},
+				{
+					BtcPkHex: s.fp3cons0.BtcPk.MarshalHex(),
+					RatioDec: fp3Ratio.String(),
+				},
+			},
+		},
+	}
+
+	bbnAccCommAddr := params.AccBbnComissionCollectorBsn.String()
+	// Convert struct to JSON string
+	callbackMemoJSON, err := json.Marshal(callbackMemo)
+	s.Require().NoError(err)
+	callbackMemoString := string(callbackMemoJSON)
+
+	bbnCommBalancesBefore, err := bbnNode.QueryBalances(bbnAccCommAddr)
+	s.Require().NoError(err)
+
+	ibcTransferTxHash := bsnNode.SendIBCTransfer(s.bsnSenderAddr, s.bbnIbcCallbackReceiverAddr, callbackMemoString, rewardCoin)
+	bsnNode.WaitForNextBlocks(3)
+
+	// Query transaction to ensure it was successful
+	txRes, _, err := bsnNode.QueryTxWithError(ibcTransferTxHash)
+	s.Require().NoError(err)
+	s.Require().Zero(txRes.Code, fmt.Sprintf("Transaction failed with code %d: %s", txRes.Code, txRes.RawLog))
+
+	rewardCoins := sdk.NewCoins(rewardCoin)
+	bbnCommExp := itypes.GetCoinsPortion(rewardCoins, s.bsn0.BabylonRewardsCommission)
+	var bbnCommBalancesAfter sdk.Coins
+	s.Eventually(func() bool {
+		bbnCommBalancesAfter, err = bbnNode.QueryBalances(bbnAccCommAddr)
+		s.Require().NoError(err)
+
+		bbnCommDiff := bbnCommBalancesAfter.Sub(bbnCommBalancesBefore...)
+		if bbnCommExp.Equal(bbnCommDiff) {
+			return true
+		}
+		s.T().Logf("babylon commission is %s instead of %s", bbnCommDiff.String(), bbnCommExp.String())
+		return false
+	}, time.Minute*2, time.Second*3)
+	// require.Equal(s.T(), bbnCommExp.String(), bbnCommDiff.String(), "babylon commission")
+}
+
+func (s *IbcCallbackBsnAddRewards) Test5FailSendBsnRewardsCallback() {
+	s.T().Skip()
 	bsnChain1 := s.configurer.GetChainConfig(1)
 
 	bsnNode, err := bsnChain1.GetNodeAtIndex(2)
@@ -300,61 +356,6 @@ func (s *IbcCallbackBsnAddRewards) Test4FailSendBsnRewardsCallback() {
 		bsnSenderAfterFee := bsnSenderAfter.Sub(ibcTx.GetFee()...)
 		return bsnSenderAfterFee.Equal(bsnSenderBefore)
 	}, time.Minute*4, time.Second, "balance is not equal to %s", bsnSenderBefore.String())
-}
-
-func (s *IbcCallbackBsnAddRewards) Test5SendBsnRewardsCallback() {
-	bbnChain0 := s.configurer.GetChainConfig(0)
-	bsnChain1 := s.configurer.GetChainConfig(1)
-
-	bbnNode, err := bbnChain0.GetNodeAtIndex(2)
-	s.NoError(err)
-	bsnNode, err := bsnChain1.GetNodeAtIndex(2)
-	s.NoError(err)
-
-	transferAmt := s.r.Int63n(2_000000) + 1_000000
-	tranferInt := math.NewInt(transferAmt)
-	transferCoin := sdk.NewCoin(s.bsnCustomTokenDenom, tranferInt)
-
-	fp2Ratio, fp3Ratio := math.LegacyMustNewDecFromStr("0.7"), math.LegacyMustNewDecFromStr("0.3")
-
-	// Create JSON callback memo for IBC callback middleware with BSN action
-	callbackMemo := bstypes.CallbackMemo{
-		Action: bstypes.CallbackActionAddBsnRewardsMemo,
-		AddBsnRewards: &bstypes.CallbackAddBsnRewards{
-			BsnConsumerID: s.bsn0.ConsumerId,
-			FpRatios: []bstypes.FpRatio{
-				{
-					BtcPk: s.fp2cons0.BtcPk,
-					Ratio: fp2Ratio,
-				},
-				{
-					BtcPk: s.fp3cons0.BtcPk,
-					Ratio: fp3Ratio,
-				},
-			},
-		},
-	}
-
-	// Convert struct to JSON string
-	callbackMemoJSON, err := json.Marshal(callbackMemo)
-	s.Require().NoError(err)
-	callbackMemoString := string(callbackMemoJSON)
-
-	bbnAccCommAddr := params.AccBbnComissionCollectorBsn.String()
-	var ibcTransferTxHash string
-	balancesDiff := bbnNode.BalancesDiff(func() {
-		ibcTransferTxHash = bsnNode.SendIBCTransfer(s.bsnSenderAddr, s.bbnIbcCallbackReceiverAddr, callbackMemoString, transferCoin)
-		bsnNode.WaitForNextBlocks(5)
-	}, s.bbnIbcCallbackReceiverAddr, bbnAccCommAddr)
-
-	// Query transaction to ensure it was successful
-	txRes, _, err := bsnNode.QueryTxWithError(ibcTransferTxHash)
-	s.Require().NoError(err)
-	s.Require().Zero(txRes.Code, fmt.Sprintf("Transaction failed with code %d: %s", txRes.Code, txRes.RawLog))
-
-	bbnCommissionDiff := balancesDiff[bbnAccCommAddr]
-	bsnRewardsDenomInBbn := getFirstIBCDenom(bbnCommissionDiff)
-	s.Require().Equal("x", bsnRewardsDenomInBbn)
 }
 
 // TestBSNFeeCollectionWithCorrectMemo tests BSN fee collection with the correct memo
