@@ -5,6 +5,7 @@ import (
 	"net/url"
 
 	"github.com/babylonlabs-io/babylon/v3/test/e2e/util"
+	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 )
 
@@ -76,6 +77,20 @@ func (n *NodeConfig) QueryChannelClientState(channelID, portID string) (*channel
 	}
 
 	var resp channeltypes.QueryChannelClientStateResponse
+	if err := util.Cdc.UnmarshalJSON(bz, &resp); err != nil {
+		return nil, err
+	}
+
+	return &resp, nil
+}
+
+func (n *NodeConfig) QueryClientStates() (*clienttypes.QueryClientStatesResponse, error) {
+	bz, err := n.QueryGRPCGateway("/ibc/core/client/v1/client_states", url.Values{})
+	if err != nil {
+		return nil, err
+	}
+
+	var resp clienttypes.QueryClientStatesResponse
 	if err := util.Cdc.UnmarshalJSON(bz, &resp); err != nil {
 		return nil, err
 	}

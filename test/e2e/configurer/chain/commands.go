@@ -574,6 +574,29 @@ func (n *NodeConfig) FailICASendTx(from, connectionID, packetMsgPath string) {
 	n.LogActionF("Failed to perform ICA send (as expected)")
 }
 
+// CreateDenom creates a new tokenfactory denom
+func (n *NodeConfig) CreateDenom(from, subdenom string) {
+	n.LogActionF("creating tokenfactory denom %s from %s", subdenom, from)
+
+	cmd := []string{"babylond", "tx", "tokenfactory", "create-denom", subdenom, fmt.Sprintf("--from=%s", from)}
+	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
+
+	require.NoError(n.t, err)
+
+	n.LogActionF("successfully created tokenfactory denom %s", subdenom)
+}
+
+// MintDenom mints tokens of a tokenfactory denom
+func (n *NodeConfig) MintDenom(from, amount, denom string) {
+	n.LogActionF("minting tokenfactory tokens %s%s from %s", amount, denom, from)
+
+	cmd := []string{"babylond", "tx", "tokenfactory", "mint", amount + denom, fmt.Sprintf("--from=%s", from)}
+	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
+
+	require.NoError(n.t, err)
+	n.LogActionF("successfully minted tokenfactory tokens %s%s", amount, denom)
+}
+
 func (n *NodeConfig) QueryZoneConciergeFinalizedBsnsInfo(consumerIDs []string, prove bool) map[string]interface{} {
 	n.LogActionF("querying zoneconcierge finalized-bsns-info for consumerIDs: %v", consumerIDs)
 	cmd := []string{"babylond", "query", "zoneconcierge", "finalized-bsns-info"}

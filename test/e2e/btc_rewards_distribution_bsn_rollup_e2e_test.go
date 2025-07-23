@@ -218,7 +218,7 @@ func (s *BtcRewardsDistributionBsnRollup) Test1CreateFinalityProviders() {
 	s.T().Log("All Fps created")
 }
 
-// Test2CreateFinalityProviders creates the first 3 btc delegations
+// Test2CreateFirstBtcDelegations creates the first 3 btc delegations
 // with the same values, but different satoshi staked amounts
 func (s *BtcRewardsDistributionBsnRollup) Test2CreateFirstBtcDelegations() {
 	n2, err := s.configurer.GetChainConfig(0).GetNodeAtIndex(2)
@@ -483,47 +483,6 @@ func (s *BtcRewardsDistributionBsnRollup) QueryFpRewards(n *chain.NodeConfig) (
 	return fp1bbnRewardCoins, fp2cons0RewardCoins, fp3cons0RewardCoins, fp4cons4RewardCoins
 }
 
-// QueryDelRewards returns the rewards available for del1, del2
-func (s *BtcRewardsDistributionBsnRollup) QueryDelRewards(n *chain.NodeConfig) (
-	del1coins, del2coins sdk.Coins,
-) {
-	g := new(errgroup.Group)
-	var (
-		err                 error
-		btcDel1RewardGauges map[string]*itypes.RewardGaugesResponse
-		btcDel2RewardGauges map[string]*itypes.RewardGaugesResponse
-	)
-	g.Go(func() error {
-		btcDel1RewardGauges, err = n.QueryRewardGauge(sdk.MustAccAddressFromBech32(s.del1Addr))
-		if err != nil {
-			return fmt.Errorf("failed to query rewards for del1: %w", err)
-		}
-		return nil
-	})
-	g.Go(func() error {
-		btcDel2RewardGauges, err = n.QueryRewardGauge(sdk.MustAccAddressFromBech32(s.del2Addr))
-		if err != nil {
-			return fmt.Errorf("failed to query rewards for del2: %w", err)
-		}
-		return nil
-	})
-
-	_ = g.Wait()
-
-	btcDel1RewardCoins := sdk.NewCoins()
-	btcDel1RewardGauge, ok := btcDel1RewardGauges[itypes.BTC_STAKER.String()]
-	if ok {
-		btcDel1RewardCoins = btcDel1RewardGauge.Coins
-	}
-
-	btcDel2RewardCoins := sdk.NewCoins()
-	btcDel2RewardGauge, ok := btcDel2RewardGauges[itypes.BTC_STAKER.String()]
-	if ok {
-		btcDel2RewardCoins = btcDel2RewardGauge.Coins
-	}
-	return btcDel1RewardCoins, btcDel2RewardCoins
-}
-
 // QuerySuiteRewards returns the babylon commission account balance and fp, dels
 // available rewards
 func (s *BtcRewardsDistributionBsnRollup) QuerySuiteRewards(n *chain.NodeConfig) (
@@ -533,7 +492,9 @@ func (s *BtcRewardsDistributionBsnRollup) QuerySuiteRewards(n *chain.NodeConfig)
 	require.NoError(s.T(), err)
 
 	fp1bbn, fp2cons0, fp3cons0, fp4cons4 = s.QueryFpRewards(n)
-	del1, del2 = s.QueryDelRewards(n)
+	delRwd := s.QueryDelRewards(n, s.del1Addr, s.del2Addr)
+	del1, del2 = delRwd[s.del1Addr], delRwd[s.del2Addr]
+
 	return bbnComm, del1, del2, fp1bbn, fp2cons0, fp3cons0, fp4cons4
 }
 
