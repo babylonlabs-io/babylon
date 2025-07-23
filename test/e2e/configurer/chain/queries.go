@@ -515,3 +515,29 @@ func (n *NodeConfig) WaitFinalityIsActivated() (activatedHeight uint64) {
 	n.t.Logf("the activated height is %d", activatedHeight)
 	return activatedHeight
 }
+
+func (n *NodeConfig) QueryBalancesN(addrs ...string) map[string]sdk.Coins {
+	resp := make(map[string]sdk.Coins, len(addrs))
+	for _, addr := range addrs {
+		coins, err := n.QueryBalances(addr)
+		require.NoError(n.t, err)
+
+		resp[addr] = coins
+	}
+	return resp
+}
+
+// BalancesDiff queries the balance before and after querying the func and returns it
+func (n *NodeConfig) BalancesDiff(f func(), addrs ...string) map[string]sdk.Coins {
+	before := n.QueryBalancesN(addrs...)
+
+	f()
+
+	after := n.QueryBalancesN(addrs...)
+
+	resp := make(map[string]sdk.Coins, len(addrs))
+	for _, addr := range addrs {
+		resp[addr] = after[addr].Sub(before[addr]...)
+	}
+	return resp
+}

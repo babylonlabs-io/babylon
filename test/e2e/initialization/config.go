@@ -18,6 +18,7 @@ import (
 	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	staketypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/gogoproto/proto"
+	tokenfactorytypes "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/types"
 
 	"github.com/babylonlabs-io/babylon/v3/test/e2e/util"
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
@@ -264,6 +265,11 @@ func initGenesis(
 		return fmt.Errorf("failed to update rate limiter genesis state: %w", err)
 	}
 
+	err = updateModuleGenesis(appGenState, tokenfactorytypes.ModuleName, &tokenfactorytypes.GenesisState{}, updateTokenFactoryGenesis)
+	if err != nil {
+		return fmt.Errorf("failed to update tokenfactory genesis state: %w", err)
+  }
+
 	err = updateModuleGenesis(appGenState, btcstktypes.ModuleName, &btcstktypes.GenesisState{}, updateBtcStakingGenesis)
 	if err != nil {
 		return fmt.Errorf("failed to update rate limiter genesis state: %w", err)
@@ -421,4 +427,10 @@ func applyRateLimitsToChainConfig(rateLimiterGenState *ratelimiter.GenesisState)
 	}
 
 	rateLimiterGenState.RateLimits = append(rateLimiterGenState.RateLimits, rateLimit)
+}
+
+func updateTokenFactoryGenesis(tokenfactoryGenState *tokenfactorytypes.GenesisState) {
+	tokenfactoryGenState.Params = tokenfactorytypes.Params{
+		DenomCreationFee: sdk.NewCoins(sdk.NewCoin(BabylonDenom, sdkmath.NewInt(10000))),
+	}
 }

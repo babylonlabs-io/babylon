@@ -1,13 +1,56 @@
 package keeper
 
 import (
+	"fmt"
 	"strings"
 
 	bbntypes "github.com/babylonlabs-io/babylon/v3/types"
 	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 	ictvtypes "github.com/babylonlabs-io/babylon/v3/x/incentive/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
+
+// AddBsnRewards adds rewards for finality providers of a specific BSN consumer
+func (k Keeper) AddBsnRewards(
+	ctx sdk.Context,
+	sender sdk.AccAddress,
+	bsnConsumerId string,
+	totalRewards sdk.Coins,
+	fpRatios []types.FpRatio,
+) error {
+	// 1. Validate that sender has sufficient balance
+	spendableCoins := k.bankKeeper.SpendableCoins(ctx, sender)
+	if !spendableCoins.IsAllGTE(totalRewards) {
+		return status.Errorf(codes.InvalidArgument, "insufficient balance: spendable %s and total rewards %s", spendableCoins.String(), totalRewards.String())
+	}
+
+	// 2. Transfer funds from sender to incentives module account
+	if err := k.bankKeeper.SendCoinsFromAccountToModule(ctx, sender, ictvtypes.ModuleName, totalRewards); err != nil {
+		return types.ErrUnableToSendCoins.Wrapf("failed to send coins to incentive module account: %v", err)
+	}
+
+	// 3. Collects the babylon and the FP commission, and allocates the remaining rewards to btc stakers according to their voting power and fp ratio
+	eventFpRewards, babylonCommission, err := k.CollectComissionAndDistributeBsnRewards(ctx, bsnConsumerId, totalRewards, fpRatios)
+	if err != nil {
+		return types.ErrUnableToDistributeBsnRewards.Wrapf("failed: %v", err)
+	}
+
+	// 4. Emit typed evt
+	evt := &types.EventAddBsnRewards{
+		Sender:            sender.String(),
+		BsnConsumerId:     bsnConsumerId,
+		TotalRewards:      totalRewards,
+		BabylonCommission: babylonCommission,
+		FpRatios:          eventFpRewards,
+	}
+	if err := ctx.EventManager().EmitTypedEvent(evt); err != nil {
+		panic(fmt.Errorf("failed to emit EventAddBsnRewards event: %w", err))
+	}
+
+	return nil
+}
 
 // CollectComissionAndDistributeBsnRewards collects the commissions for babylon and FPs and
 // allocates rewards to the BTC stakers based on the FP ratios
