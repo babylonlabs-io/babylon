@@ -267,16 +267,19 @@ func (s *IbcCallbackBsnAddRewards) Test4SendBsnRewardsCallback() {
 	// Create JSON callback memo for IBC callback middleware with BSN action
 	callbackMemo := bstypes.CallbackMemo{
 		Action: bstypes.CallbackActionAddBsnRewardsMemo,
-		AddBsnRewards: &bstypes.CallbackAddBsnRewards{
-			BsnConsumerID: s.bsn0.ConsumerId,
-			FpRatios: []bstypes.CallbackAddBsnRewardsFpRatio{
-				{
-					BtcPkHex: s.fp2cons0.BtcPk.MarshalHex(),
-					RatioDec: "0.7",
-				},
-				{
-					BtcPkHex: s.fp3cons0.BtcPk.MarshalHex(),
-					RatioDec: "0.3",
+		DestCallback: &bstypes.CallbackInfo{
+			Address: datagen.GenRandomAccount().Address,
+			AddBsnRewards: &bstypes.CallbackAddBsnRewards{
+				BsnConsumerID: s.bsn0.ConsumerId,
+				FpRatios: []bstypes.CallbackAddBsnRewardsFpRatio{
+					{
+						BtcPkHex: s.fp2cons0.BtcPk.MarshalHex(),
+						RatioDec: "0.7",
+					},
+					{
+						BtcPkHex: s.fp3cons0.BtcPk.MarshalHex(),
+						RatioDec: "0.3",
+					},
 				},
 			},
 		},
@@ -350,8 +353,11 @@ func (s *IbcCallbackBsnAddRewards) Test5FailSendBsnRewardsCallback() {
 	// Create bad JSON callback memo
 	callbackMemo := bstypes.CallbackMemo{
 		Action: bstypes.CallbackActionAddBsnRewardsMemo,
-		AddBsnRewards: &bstypes.CallbackAddBsnRewards{
-			BsnConsumerID: "x",
+		DestCallback: &bstypes.CallbackInfo{
+			Address: datagen.GenRandomAccount().Address,
+			AddBsnRewards: &bstypes.CallbackAddBsnRewards{
+				BsnConsumerID: "x",
+			},
 		},
 	}
 

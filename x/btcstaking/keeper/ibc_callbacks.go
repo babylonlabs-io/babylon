@@ -98,20 +98,28 @@ func (k Keeper) IBCReceivePacketCallback(
 
 	switch callbackMemo.Action {
 	case types.CallbackActionAddBsnRewardsMemo:
+
 		k.Logger(cachedCtx).Info("IBCReceivePacketCallback to send bsn rewards",
-			"AddBsnRewards", fmt.Sprintf("callbackMemo.AddBsnRewards %+v", callbackMemo.AddBsnRewards),
+			"AddBsnRewards", fmt.Sprintf("callbackMemo.AddBsnRewards %+v", callbackMemo.DestCallback.AddBsnRewards),
 		)
-		if callbackMemo.AddBsnRewards == nil {
+
+		if callbackMemo.DestCallback == nil {
+			return errorsmod.Wrap(types.ErrInvalidCallbackAddBsnRewards, "dest_callback property is nil")
+		}
+
+		addBsnRewards := callbackMemo.DestCallback.AddBsnRewards
+		if addBsnRewards == nil {
 			return errorsmod.Wrapf(types.ErrInvalidCallbackAddBsnRewards, "%s property is nil", types.CallbackActionAddBsnRewardsMemo)
 		}
-		err = k.processAddBsnRewards(cachedCtx, packet.GetDestPort(), packet.GetDestChannel(), transferData, callbackMemo.AddBsnRewards)
+
+		err = k.processAddBsnRewards(cachedCtx, packet.GetDestPort(), packet.GetDestChannel(), transferData, addBsnRewards)
 		if err != nil {
 			k.Logger(cachedCtx).Error("IBCReceivePacketCallback processAddBsnRewards err callback",
 				"err", err.Error(),
 			)
 			return err
 		}
-		k.Logger(cachedCtx).Info("IBCReceivePacketCallback processAddBsnRewards successfull")
+		k.Logger(cachedCtx).Info("IBCReceivePacketCallback processAddBsnRewards successful")
 	default:
 		return nil
 	}

@@ -106,7 +106,7 @@ jobs:
         run: |
           make test-e2e-cache-ibc-transfer
 
-  e2e-run-bsn-fee-collection:
+  e2e-run-ibc-callback-bsn-add-rewards:
     needs: [ e2e-docker-build-babylon ]
     runs-on: ubuntu-22.04
     steps:
