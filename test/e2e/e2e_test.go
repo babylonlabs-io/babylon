@@ -54,9 +54,9 @@ func TestFinalityContractTestSuite(t *testing.T) {
 	suite.Run(t, new(FinalityContractTestSuite))
 }
 
-// TestIbcCallbackBsnAddRewardsTestSuite tests BSN fee collection via IBC callbacks end-to-end
-func TestIbcCallbackBsnAddRewardsTestSuite(t *testing.T) {
-	suite.Run(t, new(IbcCallbackBsnAddRewardsTestSuite))
+// TestIbcCallbackBsnAddRewards tests BSN fee collection via IBC callbacks end-to-end
+func TestIbcCallbackBsnAddRewards(t *testing.T) {
+	suite.Run(t, new(IbcCallbackBsnAddRewards))
 }
 
 // TestBtcRewardsDistributionBsnRollup tests the bsn rewards for rollups

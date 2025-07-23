@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"encoding/json"
+	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
@@ -94,7 +95,11 @@ func (k Keeper) IBCReceivePacketCallback(
 		if callbackMemo.AddBsnRewards == nil {
 			return errorsmod.Wrapf(types.ErrInvalidCallbackAddBsnRewards, "%s property is nil", types.CallbackActionAddBsnRewardsMemo)
 		}
-		return k.processAddBsnRewards(cachedCtx, packet.GetDestPort(), packet.GetDestChannel(), transferData, callbackMemo.AddBsnRewards)
+		// return k.processAddBsnRewards(cachedCtx, packet.GetSourcePort(), packet.GetSourceChannel(), transferData, callbackMemo.AddBsnRewards)
+		err = k.processAddBsnRewards(cachedCtx, packet.GetDestPort(), packet.GetDestChannel(), transferData, callbackMemo.AddBsnRewards)
+		if err != nil {
+			panic(fmt.Sprintf("failed to run processAddBsnRewards: %s", err.Error()))
+		}
 	}
 
 	return nil

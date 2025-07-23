@@ -252,7 +252,7 @@ clean-e2e:
 	docker network prune -f || true
 
 test-e2e-cache-ibc-bsn-add-rewards:
-	go test -run TestIbcCallbackBsnAddRewardsTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
+	go test -run TestIbcCallbackBsnAddRewards -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
 
 test-e2e-cache-btc-timestamping:
 	go test -run TestBTCTimestampingTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e

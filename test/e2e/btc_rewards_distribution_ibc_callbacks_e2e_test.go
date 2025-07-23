@@ -13,13 +13,14 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
+	"github.com/babylonlabs-io/babylon/v3/app/params"
 	"github.com/babylonlabs-io/babylon/v3/test/e2e/configurer"
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
 	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 	bsctypes "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
 )
 
-type IbcCallbackBsnAddRewardsTestSuite struct {
+type IbcCallbackBsnAddRewards struct {
 	BaseBtcRewardsDistribution
 
 	// consumer
@@ -77,7 +78,7 @@ func getTestDistributionAddress() sdk.AccAddress {
 	return sdk.AccAddress(hash[:20])
 }
 
-func (s *IbcCallbackBsnAddRewardsTestSuite) SetupSuite() {
+func (s *IbcCallbackBsnAddRewards) SetupSuite() {
 	s.T().Log("setting up BSN fee collection test suite...")
 	var err error
 
@@ -108,7 +109,7 @@ func (s *IbcCallbackBsnAddRewardsTestSuite) SetupSuite() {
 	s.Require().NoError(err)
 }
 
-func (s *IbcCallbackBsnAddRewardsTestSuite) TearDownSuite() {
+func (s *IbcCallbackBsnAddRewards) TearDownSuite() {
 	err := s.configurer.ClearResources()
 	if err != nil {
 		s.T().Logf("error to clear resources %s", err.Error())
@@ -116,7 +117,7 @@ func (s *IbcCallbackBsnAddRewardsTestSuite) TearDownSuite() {
 }
 
 // Test1CreateFinalityProviders creates all finality providers
-func (s *IbcCallbackBsnAddRewardsTestSuite) Test1CreateFinalityProviders() {
+func (s *IbcCallbackBsnAddRewards) Test1CreateFinalityProviders() {
 	chainA := s.configurer.GetChainConfig(0)
 	chainA.WaitUntilHeight(2)
 
@@ -199,7 +200,7 @@ func (s *IbcCallbackBsnAddRewardsTestSuite) Test1CreateFinalityProviders() {
 }
 
 // Test2CreateBtcDelegations creates 3 btc delegations
-func (s *IbcCallbackBsnAddRewardsTestSuite) Test2CreateBtcDelegations() {
+func (s *IbcCallbackBsnAddRewards) Test2CreateBtcDelegations() {
 	n2, err := s.configurer.GetChainConfig(0).GetNodeAtIndex(2)
 	s.NoError(err)
 
@@ -220,7 +221,7 @@ func (s *IbcCallbackBsnAddRewardsTestSuite) Test2CreateBtcDelegations() {
 	s.CreateCovenantsAndSubmitSignaturesToPendDels(n2, s.fp1bbn)
 }
 
-func (s *IbcCallbackBsnAddRewardsTestSuite) Test3CreateFactoryToken() {
+func (s *IbcCallbackBsnAddRewards) Test3CreateFactoryToken() {
 	bbnChain0 := s.configurer.GetChainConfig(0)
 	bsnChain1 := s.configurer.GetChainConfig(1)
 
@@ -247,7 +248,7 @@ func (s *IbcCallbackBsnAddRewardsTestSuite) Test3CreateFactoryToken() {
 	mintAmt := s.r.Int63n(10_000000) + 10_000000
 	mintInt := math.NewInt(mintAmt)
 
-	bsnNode.MintDenom(s.bsnSenderAddr, mintInt.String(), customDenomName)
+	bsnNode.MintDenom(s.bsnSenderAddr, mintInt.String(), s.bsnCustomTokenDenom)
 	bsnNode.WaitForNextBlock()
 
 	bsnSenderBalances, err := bsnNode.QueryBalances(s.bsnSenderAddr)
@@ -255,10 +256,10 @@ func (s *IbcCallbackBsnAddRewardsTestSuite) Test3CreateFactoryToken() {
 
 	// Check custom denom balance specifically
 	customBalance := bsnSenderBalances.AmountOf(s.bsnCustomTokenDenom)
-	s.Require().True(customBalance.Equal(mintInt), "Should have custom tokens after minting")
+	require.Equal(s.T(), customBalance.String(), mintInt.String(), "Should have custom tokens after minting")
 }
 
-func (s *IbcCallbackBsnAddRewardsTestSuite) Test4FailSendBsnRewardsCallback() {
+func (s *IbcCallbackBsnAddRewards) Test4FailSendBsnRewardsCallback() {
 	bsnChain1 := s.configurer.GetChainConfig(1)
 
 	bsnNode, err := bsnChain1.GetNodeAtIndex(2)
@@ -285,20 +286,23 @@ func (s *IbcCallbackBsnAddRewardsTestSuite) Test4FailSendBsnRewardsCallback() {
 	s.Require().NoError(err)
 
 	ibcTransferTxHash := bsnNode.SendIBCTransfer(s.bsnSenderAddr, s.bbnIbcCallbackReceiverAddr, callbackMemoString, transferCoin)
-	bsnNode.WaitForNextBlocks(4)
+	bsnNode.WaitForNextBlocks(5)
 
-	bsnSenderAfter, err := bsnNode.QueryBalances(s.bsnSenderAddr)
+	// Query transaction to get fees
+	ibcTxRes, ibcTx, err := bsnNode.QueryTxWithError(ibcTransferTxHash)
 	s.Require().NoError(err)
+	s.Require().Zero(ibcTxRes.Code, fmt.Sprintf("Transaction failed with code %d: %s", ibcTxRes.Code, ibcTxRes.RawLog))
 
-	// Query transaction to ensure it failed
-	txRes, tx, err := bsnNode.QueryTxWithError(ibcTransferTxHash)
-	s.Require().NoError(err)
-	s.Require().Zero(txRes.Code, fmt.Sprintf("Transaction failed with code %d: %s", txRes.Code, txRes.RawLog))
+	s.Eventually(func() bool {
+		bsnSenderAfter, err := bsnNode.QueryBalances(s.bsnSenderAddr)
+		s.Require().NoError(err)
 
-	require.Equal(s.T(), bsnSenderAfter.Sub(tx.GetFee()...).String(), bsnSenderBefore, "bsn sender should have it funds bridged back")
+		bsnSenderAfterFee := bsnSenderAfter.Sub(ibcTx.GetFee()...)
+		return bsnSenderAfterFee.Equal(bsnSenderBefore)
+	}, time.Minute*4, time.Second, "balance is not equal to %s", bsnSenderBefore.String())
 }
 
-func (s *IbcCallbackBsnAddRewardsTestSuite) Test5SendBsnRewardsCallback() {
+func (s *IbcCallbackBsnAddRewards) Test5SendBsnRewardsCallback() {
 	bbnChain0 := s.configurer.GetChainConfig(0)
 	bsnChain1 := s.configurer.GetChainConfig(1)
 
@@ -336,17 +340,21 @@ func (s *IbcCallbackBsnAddRewardsTestSuite) Test5SendBsnRewardsCallback() {
 	s.Require().NoError(err)
 	callbackMemoString := string(callbackMemoJSON)
 
+	bbnAccCommAddr := params.AccBbnComissionCollectorBsn.String()
 	var ibcTransferTxHash string
-	bbnNode.BalancesDiff(func() {
+	balancesDiff := bbnNode.BalancesDiff(func() {
 		ibcTransferTxHash = bsnNode.SendIBCTransfer(s.bsnSenderAddr, s.bbnIbcCallbackReceiverAddr, callbackMemoString, transferCoin)
 		bsnNode.WaitForNextBlocks(5)
-	}, s.bsnSenderAddr)
+	}, s.bbnIbcCallbackReceiverAddr, bbnAccCommAddr)
 
 	// Query transaction to ensure it was successful
 	txRes, _, err := bsnNode.QueryTxWithError(ibcTransferTxHash)
 	s.Require().NoError(err)
 	s.Require().Zero(txRes.Code, fmt.Sprintf("Transaction failed with code %d: %s", txRes.Code, txRes.RawLog))
 
+	bbnCommissionDiff := balancesDiff[bbnAccCommAddr]
+	bsnRewardsDenomInBbn := getFirstIBCDenom(bbnCommissionDiff)
+	s.Require().Equal("x", bsnRewardsDenomInBbn)
 }
 
 // TestBSNFeeCollectionWithCorrectMemo tests BSN fee collection with the correct memo

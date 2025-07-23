@@ -124,7 +124,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: 1.23
-      - name: Run e2e TestIbcCallbackBsnAddRewardsTestSuite
+      - name: Run e2e TestIbcCallbackBsnAddRewards
         run: |
           make test-e2e-cache-ibc-bsn-add-rewards
 
