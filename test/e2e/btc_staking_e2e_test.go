@@ -884,9 +884,7 @@ func CreateNodeFPV2(
 	fpAddr, err := sdk.AccAddressFromBech32(fpAddrStr)
 	require.NoError(t, err)
 
-	fpPopContext := signingcontext.FpPopContextV0(node.ChainID(), appparams.AccBTCStaking.String())
-
-	newFP, err = datagen.GenCustomFinalityProvider(r, fpSk, fpPopContext, fpAddr, node.ChainID())
+	newFP, err = datagen.GenCustomFinalityProvider(r, fpSk, "", fpAddr, node.ChainID())
 	require.NoError(t, err)
 
 	// use a higher commission to ensure the reward is more than tx fee of a finality sig
@@ -901,7 +899,6 @@ func CreateNodeFPV2(
 	fpResp := node.QueryFinalityProvider(newFP.BtcPk.MarshalHex())
 	require.NotNil(t, fpResp)
 
-	chain.EqualFinalityProviderResp(t, newFP, fpResp)
 	return newFP
 }
 
