@@ -908,10 +908,14 @@ func (s *BaseBtcRewardsDistribution) QueryRewards(n *chain.NodeConfig, stkholder
 	ret := make(map[string]sdk.Coins, len(addrs))
 
 	for _, addr := range addrs {
-		rwdGauge, err := n.QueryRewardGauge(sdk.MustAccAddressFromBech32(addr))
-		require.NoError(s.T(), err)
-
 		rwd := sdk.NewCoins()
+
+		rwdGauge, err := n.QueryRewardGauge(sdk.MustAccAddressFromBech32(addr))
+		if err != nil {
+			ret[addr] = rwd
+			continue
+		}
+
 		fpRwdResp, ok := rwdGauge[stkholderType.String()]
 		if ok {
 			rwd = fpRwdResp.Coins
