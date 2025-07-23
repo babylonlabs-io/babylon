@@ -284,7 +284,8 @@ func (s *IbcCallbackBsnAddRewards) Test4SendBsnRewardsCallback() {
 		s.Require().Zero(txRes.Code, fmt.Sprintf("Transaction failed with code %d: %s", txRes.Code, txRes.RawLog))
 	})
 
-	rewardCoins := sdk.NewCoins(rewardCoin)
+	rewardDenomInBbn := getFirstIBCDenom(bbnCommDiff)
+	rewardCoins := sdk.NewCoins(sdk.NewCoin(rewardDenomInBbn, rewardCoin.Amount))
 
 	bbnCommExp := itypes.GetCoinsPortion(rewardCoins, s.bsn0.BabylonRewardsCommission)
 	require.Equal(s.T(), bbnCommExp.String(), bbnCommDiff.String(), "babylon commission")

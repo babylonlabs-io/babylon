@@ -905,27 +905,19 @@ func (s *BaseBtcRewardsDistribution) QueryDelRewards(n *chain.NodeConfig, delAdd
 
 // QueryRewards returns the rewards available for fp1, fp2, fp3, fp4
 func (s *BaseBtcRewardsDistribution) QueryRewards(n *chain.NodeConfig, stkholderType itypes.StakeholderType, addrs ...string) map[string]sdk.Coins {
-	g := new(errgroup.Group)
-
 	ret := make(map[string]sdk.Coins, len(addrs))
 
 	for _, addr := range addrs {
-		g.Go(func() error {
-			rwdGauge, err := n.QueryRewardGauge(sdk.MustAccAddressFromBech32(addr))
-			if err != nil {
-				return fmt.Errorf("failed to query rewards for %s: %w", addr, err)
-			}
-			rwd := sdk.NewCoins()
-			fpRwdResp, ok := rwdGauge[stkholderType.String()]
-			if ok {
-				rwd = fpRwdResp.Coins
-			}
-			ret[addr] = rwd
-			return nil
-		})
-	}
+		rwdGauge, err := n.QueryRewardGauge(sdk.MustAccAddressFromBech32(addr))
+		require.NoError(s.T(), err)
 
-	_ = g.Wait()
+		rwd := sdk.NewCoins()
+		fpRwdResp, ok := rwdGauge[stkholderType.String()]
+		if ok {
+			rwd = fpRwdResp.Coins
+		}
+		ret[addr] = rwd
+	}
 
 	return ret
 }
