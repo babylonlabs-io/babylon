@@ -22,19 +22,28 @@ func (k Keeper) ConsumerRegistryList(c context.Context, req *types.QueryConsumer
 
 	ctx := sdk.UnwrapSDKContext(c)
 
-	consumerRegisters := []*types.ConsumerRegisterResponse{}
-	store := k.consumerRegistryStore(ctx)
-	pageRes, err := query.Paginate(store, req.Pagination, func(key, value []byte) error {
-		consumerID := string(key)
-		consumerRegister, err := k.GetConsumerRegister(ctx, consumerID)
-		if err != nil {
-			return err
+	var consumerRegisters []*types.ConsumerRegisterResponse
+	var count uint64
+	limit := uint64(100) // default limit
+	if req.Pagination != nil && req.Pagination.Limit > 0 {
+		limit = req.Pagination.Limit
+	}
+
+	// Collect consumers up to the limit (simple approach for collections migration)
+	err := k.ConsumerRegistry.Walk(ctx, nil, func(consumerID string, consumerRegister types.ConsumerRegister) (bool, error) {
+		if count >= limit {
+			return true, nil // stop iteration
 		}
 		consumerRegisters = append(consumerRegisters, consumerRegister.ToResponse())
-		return nil
+		count++
+		return false, nil
 	})
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	pageRes := &query.PageResponse{
+		Total: count,
 	}
 
 	resp := &types.QueryConsumerRegistryListResponse{
