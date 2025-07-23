@@ -77,6 +77,7 @@ func (n *NodeConfig) CreateFinalityProviderV2(walletAddrOrName string, btcPK *bb
 	require.NoError(n.t, err)
 	n.LogActionF("Successfully created %s finality provider", n.Name)
 }
+
 func (n *NodeConfig) CommitPubRandListConsumer(walletAddrOrName, consumerId string, fpBtcPk *bbn.BIP340PubKey, startHeight uint64, numPubRand uint64, commitment []byte, sig *bbn.BIP340Signature) {
 	if consumerId == "" {
 		// Use the chain ID as the consumer
