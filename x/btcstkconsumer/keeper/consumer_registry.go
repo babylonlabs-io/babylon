@@ -60,8 +60,7 @@ func (k Keeper) GetAllRegisteredConsumerIDs(ctx context.Context) []string {
 		return false, nil
 	})
 	if err != nil {
-		// Return empty list on error rather than panicking
-		return []string{}
+		panic(err)
 	}
 	return consumerIDs
 }

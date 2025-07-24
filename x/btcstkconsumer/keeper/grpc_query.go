@@ -23,19 +23,61 @@ func (k Keeper) ConsumerRegistryList(c context.Context, req *types.QueryConsumer
 	ctx := sdk.UnwrapSDKContext(c)
 
 	var consumerRegisters []*types.ConsumerRegisterResponse
-	var count uint64
+	var offset uint64
+	var nextKey []byte
+	var totalCount uint64
+
 	limit := uint64(100) // default limit
-	if req.Pagination != nil && req.Pagination.Limit > 0 {
-		limit = req.Pagination.Limit
+	if req.Pagination != nil {
+		if req.Pagination.Limit > 0 {
+			limit = req.Pagination.Limit
+		}
+		offset = req.Pagination.Offset
 	}
 
-	// Collect consumers up to the limit (simple approach for collections migration)
+	// Start key for pagination
+	var startKey []byte
+	if req.Pagination != nil && len(req.Pagination.Key) > 0 {
+		startKey = req.Pagination.Key
+	}
+
+	// First pass to get total count
 	err := k.ConsumerRegistry.Walk(ctx, nil, func(consumerID string, consumerRegister types.ConsumerRegister) (bool, error) {
-		if count >= limit {
-			return true, nil // stop iteration
+		totalCount++
+		return false, nil
+	})
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	var itemsProcessed uint64
+	var itemsCollected uint64
+	var foundStartKey bool = startKey == nil
+
+	err = k.ConsumerRegistry.Walk(ctx, nil, func(consumerID string, consumerRegister types.ConsumerRegister) (bool, error) {
+		if !foundStartKey {
+			if string(startKey) == consumerID {
+				foundStartKey = true
+			}
+			return false, nil
 		}
-		consumerRegisters = append(consumerRegisters, consumerRegister.ToResponse())
-		count++
+
+		// Handle offset
+		if itemsProcessed < offset {
+			itemsProcessed++
+			return false, nil
+		}
+
+		// Collect item if we haven't hit the limit
+		if itemsCollected < limit {
+			consumerRegisters = append(consumerRegisters, consumerRegister.ToResponse())
+			itemsCollected++
+		} else {
+			nextKey = []byte(consumerID)
+			return true, nil
+		}
+
+		itemsProcessed++
 		return false, nil
 	})
 	if err != nil {
@@ -43,7 +85,8 @@ func (k Keeper) ConsumerRegistryList(c context.Context, req *types.QueryConsumer
 	}
 
 	pageRes := &query.PageResponse{
-		Total: count,
+		NextKey: nextKey,
+		Total:   totalCount,
 	}
 
 	resp := &types.QueryConsumerRegistryListResponse{
