@@ -4,29 +4,22 @@ import (
 	"context"
 	"fmt"
 
-	"cosmossdk.io/store/prefix"
 	btclctypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
 	"github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
-	"github.com/cosmos/cosmos-sdk/runtime"
 )
 
 // GetBSNBTCState gets the unified BTC state for a specific BSN
 func (k Keeper) GetBSNBTCState(ctx context.Context, consumerID string) *types.BSNBTCState {
-	store := k.bsnBTCStateStore(ctx)
-	stateBytes := store.Get([]byte(consumerID))
-	if len(stateBytes) == 0 {
+	state, err := k.BSNBTCState.Get(ctx, consumerID)
+	if err != nil {
 		return nil
 	}
-	var state types.BSNBTCState
-	k.cdc.MustUnmarshal(stateBytes, &state)
 	return &state
 }
 
 // SetBSNBTCState sets the unified BTC state for a specific BSN
-func (k Keeper) SetBSNBTCState(ctx context.Context, consumerID string, state *types.BSNBTCState) {
-	store := k.bsnBTCStateStore(ctx)
-	stateBytes := k.cdc.MustMarshal(state)
-	store.Set([]byte(consumerID), stateBytes)
+func (k Keeper) SetBSNBTCState(ctx context.Context, consumerID string, state *types.BSNBTCState) error {
+	return k.BSNBTCState.Set(ctx, consumerID, *state)
 }
 
 // GetBSNBaseBTCHeader gets the base BTC header for a specific BSN
@@ -45,7 +38,9 @@ func (k Keeper) SetBSNBaseBTCHeader(ctx context.Context, consumerID string, head
 		state = &types.BSNBTCState{}
 	}
 	state.BaseHeader = header
-	k.SetBSNBTCState(ctx, consumerID, state)
+	if err := k.SetBSNBTCState(ctx, consumerID, state); err != nil {
+		panic(err)
+	}
 }
 
 // GetBSNLastSentSegment gets the last sent segment for a specific BSN
@@ -64,16 +59,9 @@ func (k Keeper) SetBSNLastSentSegment(ctx context.Context, consumerID string, se
 		state = &types.BSNBTCState{}
 	}
 	state.LastSentSegment = segment
-	k.SetBSNBTCState(ctx, consumerID, state)
-}
-
-// bsnBTCStateStore stores the unified BTC state for each BSN
-// prefix: BSNBTCStateKey
-// key: consumerID
-// value: BSNBTCState
-func (k Keeper) bsnBTCStateStore(ctx context.Context) prefix.Store {
-	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
-	return prefix.NewStore(storeAdapter, types.BSNBTCStateKey)
+	if err := k.SetBSNBTCState(ctx, consumerID, state); err != nil {
+		panic(err)
+	}
 }
 
 // InitializeBSNBTCState initializes the BTC state for a BSN
@@ -98,6 +86,5 @@ func (k Keeper) InitializeBSNBTCState(ctx context.Context, consumerID string) er
 		LastSentSegment: nil, // No headers sent yet
 	}
 
-	k.SetBSNBTCState(ctx, consumerID, state)
-	return nil
+	return k.SetBSNBTCState(ctx, consumerID, state)
 }
