@@ -382,9 +382,13 @@ func (k Keeper) processExpiredEvents(ctx context.Context, sdkCtx sdk.Context, st
 			panic(err) // only programming error
 		}
 
+                types.EmitExpiredDelegationEvent(sdkCtx, delStkTxHash)
+                if btcDel.IsUnbondedEarly() {
+                   continue
+                 }
 		delParams := k.BTCStakingKeeper.GetParamsByVersion(ctx, btcDel.ParamsVersion)
 
-		types.EmitExpiredDelegationEvent(sdkCtx, delStkTxHash)
+		
 		// We process expired event if:
 		// - it hasn't unbonded early
 		// - it has all required covenant signatures
@@ -392,7 +396,7 @@ func (k Keeper) processExpiredEvents(ctx context.Context, sdkCtx sdk.Context, st
 		if err != nil {
 			panic(err)
 		}
-		if !btcDel.IsUnbondedEarly() && hasQuorum {
+		if hasQuorum {
 			// only adds to the new unbonded list if it hasn't
 			// previously unbonded with types.BTCDelegationStatus_UNBONDED
 			k.processPowerDistUpdateEventUnbond(ctx, state, btcDel)
