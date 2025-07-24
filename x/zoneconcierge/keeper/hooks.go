@@ -46,9 +46,11 @@ func (h Hooks) AfterRawCheckpointFinalized(ctx context.Context, epoch uint64) er
 
 	// only update the segment if we have broadcasted some headers
 	if len(headersToBroadcast) > 0 {
-		h.k.setLastSentSegment(ctx, &types.BTCChainSegment{
+		if err := h.k.setLastSentSegment(ctx, &types.BTCChainSegment{
 			BtcHeaders: headersToBroadcast,
-		})
+		}); err != nil {
+			panic(err)
+		}
 	}
 	return nil
 }
