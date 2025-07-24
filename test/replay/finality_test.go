@@ -14,6 +14,7 @@ import (
 	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
 	"github.com/babylonlabs-io/babylon/v3/app/signingcontext"
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
+	"github.com/babylonlabs-io/babylon/v3/types"
 	ftypes "github.com/babylonlabs-io/babylon/v3/x/finality/types"
 	ibctmtypes "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
 	"github.com/stretchr/testify/require"
@@ -366,6 +367,9 @@ func TestFinalityVotOnConsumerOnContract(t *testing.T) {
 	driver := NewBabylonAppDriver(r, t, driverTempDir, replayerTempDir)
 	driver.GenerateNewBlock()
 
+	const bsnId = "bsn1"
+	const wampath = "finality.wasm"
+
 	babylonFpSender := driver.CreateNFinalityProviderAccounts(1)[0]
 	babylonFpSender.RegisterFinalityProvider("")
 
@@ -374,138 +378,22 @@ func TestFinalityVotOnConsumerOnContract(t *testing.T) {
 
 	consumerFPPK := consumerFpSender.BTCPublicKey()
 
-	wampath := "finality.wasm"
-
-	wasmCode, err := os.ReadFile(wampath)
-	require.NoError(t, err)
-
-	gzippedCode, err := ioutils.GzipIt(wasmCode)
-	require.NoError(t, err)
-
-	wasmParams := driver.App.WasmKeeper.GetParams(driver.Ctx())
-
-	wasmParams.CodeUploadAccess = wasmtypes.AccessConfig{
-		Permission: wasmtypes.AccessTypeEverybody,
-		Addresses:  []string{appparams.AccGov.String()},
-	}
-
-	driver.GovPropWaitPass(&wasmtypes.MsgUpdateParams{
-		Authority: appparams.AccGov.String(),
-		Params:    wasmParams,
-	})
-
-	driver.GenerateNewBlock()
-
-	driver.SendTxWithMsgsFromDriverAccount(t, &wasmtypes.MsgStoreCode{
-		Sender:       driver.AddressString(),
-		WASMByteCode: gzippedCode,
-	})
-
-	bsnId := "bsn1"
-
-	// rateLimitingInterval := "100"
-	msg := `{
-		"admin": "` + driver.AddressString() + `",
-		"bsn_id": "` + bsnId + `",
-		"min_pub_rand": 150,
-		"rate_limiting_interval": 100,
-		"max_msgs_per_interval": 100,
-		"bsn_activation_height": 0,
-		"finality_signature_interval": 1,
-		"allowed_finality_providers": [
-			"` + babylonFpSender.BTCPublicKey().MarshalHex() + `",
-			"` + consumerFPPK.MarshalHex() + `"
-		]
-	}`
-
-	driver.SendTxWithMsgsFromDriverAccount(t, &wasmtypes.MsgStoreCode{
-		Sender:       driver.AddressString(),
-		WASMByteCode: gzippedCode,
-	})
-
-	txResults := driver.SendTxWithMsgsFromDriverAccounGetResults(t, &wasmtypes.MsgInstantiateContract{
-		Sender: driver.AddressString(),
-		CodeID: 1,
-		Msg:    []byte(msg),
-		Label:  "finality",
-	})
-
-	require.Len(t, txResults, 1)
-
-	// find event with "_contract_address" key and return the value
-	contractAddress := ""
-	for _, event := range txResults[0].Events {
-		if event.Type == "instantiate" {
-			for _, attr := range event.Attributes {
-				if attr.Key == "_contract_address" {
-					contractAddress = string(attr.Value)
-					break
-				}
-			}
-		}
-	}
-
-	require.NotEmpty(t, contractAddress)
-
+	contractAddress := driver.StoreAndDeployContract(bsnId, wampath, consumerFPPK)
 	driver.RegisterConsumer(r, bsnId, contractAddress)
 
 	// register consumer fp as finality provider
 	consumerFpSender.RegisterFinalityProvider(bsnId)
 	driver.GenerateNewBlockAssertExecutionSuccess()
 
-	rinfo, m, err := datagen.GenRandomMsgCommitPubRandList(
-		r,
-		consumerFpSender.BTCPrivateKey,
-		signingcontext.FpRandCommitContextV0(driver.App.ChainID(), contractAddress),
-		1,
-		10000,
-	)
-	require.NoError(t, err)
-
-	rndCommit := `{
-		"commit_public_randomness": {
-			"fp_pubkey_hex": "` + consumerFpSender.BTCPublicKey().MarshalHex() + `",
-			"start_height": 1,
-			"num_pub_rand": 10000,
-			"commitment": "` + base64.StdEncoding.EncodeToString(rinfo.Commitment) + `",
-			"signature": "` + base64.StdEncoding.EncodeToString(m.Sig.MustMarshal()) + `"
-		}
-	}`
-
-	txResults1 := driver.SendTxWithMsgsFromDriverAccounGetResults(t, &wasmtypes.MsgExecuteContract{
-		Sender:   driver.AddressString(),
-		Contract: contractAddress,
-		Msg:      []byte(rndCommit),
-	})
-
-	require.Len(t, txResults1, 1)
+	rinfo := driver.CommitRandomnessForConsumerFP(consumerFpSender, contractAddress)
 
 	// need to finalize 2 epochs
 	driver.FinializeCkptForEpoch(1)
 	driver.ProgressTillFirstBlockTheNextEpoch()
 	driver.FinializeCkptForEpoch(2)
 
-	smBytes := driver.ConsumerVoteForHeight(consumerFpSender, contractAddress, 1, rinfo)
-
-	// Submit finality vote to the smart contract for height 1
-	txResults2 := driver.SendTxWithMsgsFromDriverAccounGetResults(t, &wasmtypes.MsgExecuteContract{
-		Sender:   driver.AddressString(),
-		Contract: contractAddress,
-		Msg:      smBytes,
-	})
-
-	require.Len(t, txResults2, 1)
-
-	smBytes2 := driver.ConsumerVoteForHeight(consumerFpSender, contractAddress, 2, rinfo)
-
-	// Submit finality vote to the smart contract for height 2
-	txResults3 := driver.SendTxWithMsgsFromDriverAccounGetResults(t, &wasmtypes.MsgExecuteContract{
-		Sender:   driver.AddressString(),
-		Contract: contractAddress,
-		Msg:      smBytes2,
-	})
-
-	require.Len(t, txResults3, 1)
+	driver.CastConsumerVoteForHeight(consumerFpSender, contractAddress, 1, rinfo)
+	driver.CastConsumerVoteForHeight(consumerFpSender, contractAddress, 2, rinfo)
 }
 
 func (d *BabylonAppDriver) ConsumerVoteForHeight(
@@ -549,6 +437,133 @@ func (d *BabylonAppDriver) ConsumerVoteForHeight(
 	require.NoError(d.t, err)
 
 	return smBytes
+}
+
+func (d *BabylonAppDriver) RandomnessCommitment(
+	consumerFpSender *FinalityProvider,
+	contractAddress string,
+) ([]byte, *datagen.RandListInfo) {
+	rinfo, m, err := datagen.GenRandomMsgCommitPubRandList(
+		d.r,
+		consumerFpSender.BTCPrivateKey,
+		signingcontext.FpRandCommitContextV0(d.App.ChainID(), contractAddress),
+		1,
+		10000,
+	)
+	require.NoError(d.t, err)
+
+	rndCommit := `{
+		"commit_public_randomness": {
+			"fp_pubkey_hex": "` + consumerFpSender.BTCPublicKey().MarshalHex() + `",
+			"start_height": 1,
+			"num_pub_rand": 10000,
+			"commitment": "` + base64.StdEncoding.EncodeToString(rinfo.Commitment) + `",
+			"signature": "` + base64.StdEncoding.EncodeToString(m.Sig.MustMarshal()) + `"
+		}
+	}`
+
+	return []byte(rndCommit), rinfo
+}
+
+func (driver *BabylonAppDriver) StoreAndDeployContract(
+	bsnId string,
+	wampath string,
+	allowedFpPubKey *types.BIP340PubKey,
+) string {
+
+	wasmCode, err := os.ReadFile(wampath)
+	require.NoError(driver.t, err)
+
+	gzippedCode, err := ioutils.GzipIt(wasmCode)
+	require.NoError(driver.t, err)
+
+	wasmParams := driver.App.WasmKeeper.GetParams(driver.Ctx())
+
+	wasmParams.CodeUploadAccess = wasmtypes.AccessConfig{
+		Permission: wasmtypes.AccessTypeEverybody,
+		Addresses:  []string{appparams.AccGov.String()},
+	}
+
+	driver.GovPropWaitPass(&wasmtypes.MsgUpdateParams{
+		Authority: appparams.AccGov.String(),
+		Params:    wasmParams,
+	})
+
+	driver.GenerateNewBlock()
+
+	driver.SendTxWithMsgsFromDriverAccount(driver.t, &wasmtypes.MsgStoreCode{
+		Sender:       driver.AddressString(),
+		WASMByteCode: gzippedCode,
+	})
+
+	msg := `{
+		"admin": "` + driver.AddressString() + `",
+		"bsn_id": "` + bsnId + `",
+		"min_pub_rand": 150,
+		"rate_limiting_interval": 100,
+		"max_msgs_per_interval": 100,
+		"bsn_activation_height": 0,
+		"finality_signature_interval": 1,
+		"allowed_finality_providers": [
+			"` + allowedFpPubKey.MarshalHex() + `"
+		]
+	}`
+
+	txResults := driver.SendTxWithMsgsFromDriverAccounGetResults(driver.t, &wasmtypes.MsgInstantiateContract{
+		Sender: driver.AddressString(),
+		CodeID: 1,
+		Msg:    []byte(msg),
+		Label:  "finality",
+	})
+
+	require.Len(driver.t, txResults, 1)
+
+	// find event with "_contract_address" key and return the value
+	contractAddress := ""
+	for _, event := range txResults[0].Events {
+		if event.Type == "instantiate" {
+			for _, attr := range event.Attributes {
+				if attr.Key == "_contract_address" {
+					contractAddress = string(attr.Value)
+					break
+				}
+			}
+		}
+	}
+
+	require.NotEmpty(driver.t, contractAddress)
+
+	return contractAddress
+}
+
+func (driver *BabylonAppDriver) CommitRandomnessForConsumerFP(
+	consumerFpSender *FinalityProvider,
+	contractAddress string,
+) *datagen.RandListInfo {
+	rndCommit, rinfo := driver.RandomnessCommitment(consumerFpSender, contractAddress)
+
+	driver.SendTxWithMsgsFromDriverAccount(driver.t, &wasmtypes.MsgExecuteContract{
+		Sender:   driver.AddressString(),
+		Contract: contractAddress,
+		Msg:      rndCommit,
+	})
+
+	return rinfo
+}
+
+func (driver *BabylonAppDriver) CastConsumerVoteForHeight(
+	consumerFpSender *FinalityProvider,
+	contractAddress string,
+	height uint64,
+	rinfo *datagen.RandListInfo,
+) {
+	smBytes := driver.ConsumerVoteForHeight(consumerFpSender, contractAddress, height, rinfo)
+
+	driver.SendTxWithMsgsFromDriverAccount(driver.t, &wasmtypes.MsgExecuteContract{
+		Sender:   driver.AddressString(),
+		Contract: contractAddress,
+		Msg:      smBytes,
+	})
 }
 
 type Proof struct {
