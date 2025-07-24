@@ -31,16 +31,10 @@ func (k Keeper) ExportGenesis(ctx context.Context) (*types.GenesisState, error) 
 }
 
 func (k Keeper) consumers(ctx context.Context) ([]*types.ConsumerRegister, error) {
-	consumers := make([]*types.ConsumerRegister, 0)
-	iter := k.consumerRegistryStore(ctx).Iterator(nil, nil)
-	defer iter.Close()
-
-	for ; iter.Valid(); iter.Next() {
-		var consumer types.ConsumerRegister
-		if err := consumer.Unmarshal(iter.Value()); err != nil {
-			return nil, err
-		}
+	var consumers []*types.ConsumerRegister
+	err := k.ConsumerRegistry.Walk(ctx, nil, func(consumerID string, consumer types.ConsumerRegister) (bool, error) {
 		consumers = append(consumers, &consumer)
-	}
-	return consumers, nil
+		return false, nil
+	})
+	return consumers, err
 }
