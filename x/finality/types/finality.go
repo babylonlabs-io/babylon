@@ -37,7 +37,10 @@ const (
 type ProcessingState struct {
 	// FPStatesByBtcPk is a map of the finality providers' state
 	FPStatesByBtcPk map[string]FinalityProviderState
-	FpByBtcPk       map[string]*btcstktypes.FinalityProvider
+	// FpByBtcPk is a map where key is finality provider's BTC PK hex and value is the finality provider
+	// It is used as cache to avoid fetching the finality provider from the store
+	// during the power distribution change process
+	FpByBtcPk map[string]*btcstktypes.FinalityProvider
 	// DeltaSatsByFpBtcPk is a map where key is finality provider's BTC PK hex and value is the
 	// delta of BTC delegations satoshis that were added or removed from the provider
 	// during the power distribution change process
