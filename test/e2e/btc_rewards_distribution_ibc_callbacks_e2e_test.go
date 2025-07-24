@@ -328,11 +328,14 @@ func (s *IbcCallbackBsnAddRewards) Test4SendBsnRewardsCallback() {
 	require.True(s.T(), fp1bbnDiff.IsZero(), "fp1 was not rewarded")
 }
 
-// Test5FailSendBsnRewardsCallback test is suppose to fail and return
-// the funds back to the BSN sender, but it doesn't, so the unhappy path
-// is not currently working properly and the test is being skip
-func (s *IbcCallbackBsnAddRewards) Test5FailSendBsnRewardsCallback() {
-	s.T().Skip()
+// Test5IbcSendBadBsnRewardsCallbackReturnFunds it send rewards using the memo field
+// and `CallbackAddBsnRewards`, but it specifies an invalid BsnConsumerID which
+// errors out in the processing of adding rewards and rejects the ICS20 packet
+// returning the funds to the BSN sender.
+// Note: The bsn sender of rewards will still pay the fees of the IBC transaction
+// but will reiceve back the rewards sent throught ICS20. The IBC tx will respond
+// without error and code zero, but the IBC packet will be rejected with Acknowledgement_Error
+func (s *IbcCallbackBsnAddRewards) Test5IbcSendBadBsnRewardsCallbackReturnFunds() {
 	bbnNode := s.BbnNode()
 	bsnNode := s.BsnNode()
 
@@ -355,20 +358,20 @@ func (s *IbcCallbackBsnAddRewards) Test5FailSendBsnRewardsCallback() {
 	callbackMemoString := string(callbackMemoJSON)
 
 	bbnCommDiff, del1Diff, del2Diff, fp1bbnDiff, fp2cons0Diff, fp3cons0Diff := s.SuiteRewardsDiff(bbnNode, func() {
-		bsnSenderBalances, err := bsnNode.QueryBalances(s.bsnSenderAddr)
+		bsnSenderBalancesBefore, err := bsnNode.QueryBalances(s.bsnSenderAddr)
 		s.Require().NoError(err)
 
 		ibcTransferTxHash := bsnNode.SendIBCTransfer(s.bsnSenderAddr, s.bbnIbcCallbackReceiverAddr, callbackMemoString, rewardCoin)
-		bsnNode.WaitForNextBlocks(5)
+		bsnNode.WaitForNextBlocks(7)
 
 		ibcTxRes, ibcTx, err := bsnNode.QueryTxWithError(ibcTransferTxHash)
 		s.Require().NoError(err)
 		s.Require().Zero(ibcTxRes.Code, fmt.Sprintf("Transaction failed with code %d: %s", ibcTxRes.Code, ibcTxRes.RawLog))
 
-		bsnSenderAfter, err := bsnNode.QueryBalances(s.bsnSenderAddr)
+		bsnSenderBalancesAfter, err := bsnNode.QueryBalances(s.bsnSenderAddr)
 		s.Require().NoError(err)
 
-		require.Equal(s.T(), bsnSenderBalances.Sub(ibcTx.GetFee()...).String(), bsnSenderAfter.String(), "bsn sender balance check")
+		require.Equal(s.T(), bsnSenderBalancesBefore.Sub(ibcTx.GetFee()...).String(), bsnSenderBalancesAfter.String(), "bsn sender balance check")
 	})
 
 	require.True(s.T(), bbnCommDiff.IsZero(), "bbn commission should not be rewarded")
