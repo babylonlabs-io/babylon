@@ -12,26 +12,15 @@ func (k Keeper) SetParams(ctx context.Context, p types.Params) error {
 		return err
 	}
 
-	store := k.storeService.OpenKVStore(ctx)
-	bz := k.cdc.MustMarshal(&p)
-	if err := store.Set(types.ParamsKey, bz); err != nil {
-		panic(err)
-	}
-
-	return nil
+	return k.ParamsCollection.Set(ctx, p)
 }
 
 // GetParams returns the current x/zoneconcierge module parameters.
 func (k Keeper) GetParams(ctx context.Context) (p types.Params) {
-	store := k.storeService.OpenKVStore(ctx)
-	bz, err := store.Get(types.ParamsKey)
+	params, err := k.ParamsCollection.Get(ctx)
 	if err != nil {
-		panic(err)
-	}
-	if bz == nil {
+		// Return default params if not found
 		return p
 	}
-
-	k.cdc.MustUnmarshal(bz, &p)
-	return p
+	return params
 }
