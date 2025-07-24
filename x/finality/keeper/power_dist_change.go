@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"math"
 	"sort"
 	"time"
 
@@ -225,7 +224,7 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 			fp.AddBondedSats(uint64(fpDeltaSats))
 		case fpDeltaSats < 0:
 			satsToRemove := abs(fpDeltaSats)
-			fp.RemoveBondedSats(satsToRemove)
+			fp.RemoveBondedSats(uint64(satsToRemove))
 		}
 		// remove the finality provider entry in fpActiveSats map, so that
 		// after the for loop the rest entries in fpActiveSats belongs to new
@@ -290,7 +289,7 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 			fpDistInfo.AddBondedSats(uint64(fpDeltaSats))
 		case fpDeltaSats < 0:
 			satsToRemove := abs(fpDeltaSats)
-			fpDistInfo.RemoveBondedSats(satsToRemove)
+			fpDistInfo.RemoveBondedSats(uint64(satsToRemove))
 		}
 
 		// add this finality provider to the new cache if it has voting power
@@ -613,7 +612,10 @@ func (k Keeper) loadFP(
 	return fp, nil
 }
 
-// abs returns the absolute value of a signed integer as an unsigned integer.
-func abs(val int64) uint64 {
-	return uint64(math.Abs(float64(val)))
+// abs returns the absolute value of a signed integer
+func abs(val int64) int64 {
+	if val < 0 {
+		return -val
+	}
+	return val
 }
