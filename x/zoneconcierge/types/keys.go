@@ -28,13 +28,13 @@ const (
 )
 
 var (
-	PortKey                  = []byte{0x11} // PortKey defines the key to store the port ID in store
-	LatestEpochHeadersKey    = []byte{0x12} // LatestEpochHeadersKey defines the key to store the latest headers for each BSN in the current epoch
-	FinalizedEpochHeadersKey = []byte{0x13} // FinalizedEpochHeadersKey defines the key to store finalized headers for each BSN and epoch
-	LastSentBTCSegmentKey    = []byte{0x14} // LastSentBTCSegmentKey is key holding last btc light client segment sent to other cosmos zones
-	ParamsKey                = []byte{0x15} // key prefix for the parameters
-	SealedEpochProofKey      = []byte{0x16} // key prefix for proof of sealed epochs
-	BSNBTCStateKey           = []byte{0x17} // key prefix for unified BSN BTC state
+	PortKey                  = []byte{0x11} // PortKey defines the key to store the port ID (collections.Item[string])
+	LatestEpochHeadersKey    = []byte{0x12} // LatestEpochHeadersKey defines the prefix for latest headers per consumer (collections.Map[string, IndexedHeader])
+	FinalizedEpochHeadersKey = []byte{0x13} // FinalizedEpochHeadersKey defines the prefix for finalized headers per consumer and epoch (collections.Map[collections.Pair[uint64, string], IndexedHeaderWithProof])
+	LastSentBTCSegmentKey    = []byte{0x14} // LastSentBTCSegmentKey stores the last sent BTC segment (collections.Item[BTCChainSegment])
+	ParamsKey                = []byte{0x15} // ParamsKey stores module parameters (collections.Item[Params])
+	SealedEpochProofKey      = []byte{0x16} // SealedEpochProofKey stores proof of sealed epochs per epoch number (collections.Map[uint64, ProofEpochSealed])
+	BSNBTCStateKey           = []byte{0x17} // BSNBTCStateKey stores unified BSN BTC state per consumer ID (collections.Map[string, BSNBTCState])
 )
 
 func KeyPrefix(p string) []byte {

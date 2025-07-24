@@ -746,7 +746,7 @@ func (s *BaseBtcRewardsDistribution) CreateCovenantsAndSubmitSignaturesToPendDel
 	}
 	s.covenantWallets = covWallets
 
-	n.BankMultiSendFromNode(covAddrs, "1000000ubbn")
+	n.BankMultiSendFromNode(covAddrs, "200000000ubbn")
 
 	fpBtcPks := make([]string, len(fps))
 	for i, fp := range fps {
@@ -773,6 +773,7 @@ func (s *BaseBtcRewardsDistribution) CreateCovenantsAndSubmitSignaturesToPendDel
 	for _, activeDel := range activeDelsSet {
 		s.Require().True(activeDel.Active)
 	}
+	s.T().Log("All BTC delegations are active")
 }
 
 // CheckWithdrawReward withdraw rewards for one delegation and check the balance
@@ -890,4 +891,37 @@ func SendCovenantSigsToPendingDel(
 			covenantUnbondingSlashingSigs[i].AdaptorSigs,
 		)
 	}
+}
+
+// QueryFpRewards returns the rewards available for fp1, fp2, fp3, fp4
+func (s *BaseBtcRewardsDistribution) QueryFpRewards(n *chain.NodeConfig, fpAddrs ...string) map[string]sdk.Coins {
+	return s.QueryRewards(n, itypes.FINALITY_PROVIDER, fpAddrs...)
+}
+
+// QueryDelRewards returns the rewards available for fp1, fp2, fp3, fp4
+func (s *BaseBtcRewardsDistribution) QueryDelRewards(n *chain.NodeConfig, delAddrs ...string) map[string]sdk.Coins {
+	return s.QueryRewards(n, itypes.BTC_STAKER, delAddrs...)
+}
+
+// QueryRewards returns the rewards available for fp1, fp2, fp3, fp4
+func (s *BaseBtcRewardsDistribution) QueryRewards(n *chain.NodeConfig, stkholderType itypes.StakeholderType, addrs ...string) map[string]sdk.Coins {
+	ret := make(map[string]sdk.Coins, len(addrs))
+
+	for _, addr := range addrs {
+		rwd := sdk.NewCoins()
+
+		rwdGauge, err := n.QueryRewardGauge(sdk.MustAccAddressFromBech32(addr))
+		if err != nil {
+			ret[addr] = rwd
+			continue
+		}
+
+		fpRwdResp, ok := rwdGauge[stkholderType.String()]
+		if ok {
+			rwd = fpRwdResp.Coins
+		}
+		ret[addr] = rwd
+	}
+
+	return ret
 }

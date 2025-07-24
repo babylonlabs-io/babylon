@@ -15,8 +15,8 @@ const (
 )
 
 var (
-	ParamsKey           = []byte("p_btcstkconsumer")
-	ConsumerRegisterKey = []byte{0x01} // ConsumerRegisterKey defines the key to the chain register for each consumer in store
+	ParamsKey           = []byte("p_btcstkconsumer") // ParamsKey stores module parameters (collections.Item[Params])
+	ConsumerRegisterKey = []byte{0x01}               // ConsumerRegisterKey stores consumer registry per consumer ID (collections.Map[string, ConsumerRegister])
 )
 
 func KeyPrefix(p string) []byte {
