@@ -215,30 +215,21 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 			fp.IsJailed = false
 		}
 
-		// process all new BTC delegations under this finality provider
-		if fpActiveSats, ok := state.ActivatedSatsByFpBtcPk[fpBTCPKHex]; ok {
-			// handle new BTC delegations for this finality provider
-			for _, activatedSats := range fpActiveSats {
-				fp.AddBondedSats(activatedSats)
-			}
-			// remove the finality provider entry in fpActiveSats map, so that
-			// after the for loop the rest entries in fpActiveSats belongs to new
-			// finality providers with new BTC delegations
-			delete(state.ActivatedSatsByFpBtcPk, fpBTCPKHex)
+		// process all delta in delegated satoshis under this finality provider
+		fpDeltaSats := state.DeltaSatsByFpBtcPk[fpBTCPKHex]
+		// handle delta sats based on new BTC delegations and
+		// unbonded delegations for this finality provider
+		switch {
+		case fpDeltaSats > 0:
+			fp.AddBondedSats(uint64(fpDeltaSats))
+		case fpDeltaSats < 0:
+			satsToRemove := uint64(-fpDeltaSats)
+			fp.RemoveBondedSats(satsToRemove)
 		}
-
-		// process all new unbonding BTC delegations under this finality provider
-		if fpUnbondedSats, ok := state.UnbondedSatsByFpBtcPk[fpBTCPKHex]; ok {
-			// handle unbonded delegations for this finality provider
-			for _, unbodedSats := range fpUnbondedSats {
-				fp.RemoveBondedSats(unbodedSats)
-			}
-			// remove the finality provider entry in fpUnbondedSats map, so that
-			// after the for loop the rest entries in fpUnbondedSats belongs to new
-			// finality providers that might have btc delegations entries
-			// that activated and unbonded in the same slice of events
-			delete(state.UnbondedSatsByFpBtcPk, fpBTCPKHex)
-		}
+		// remove the finality provider entry in fpActiveSats map, so that
+		// after the for loop the rest entries in fpActiveSats belongs to new
+		// finality providers with new BTC delegations
+		delete(state.DeltaSatsByFpBtcPk, fpBTCPKHex)
 
 		// add this finality provider to the new cache if it has voting power
 		if fp.TotalBondedSat > 0 {
@@ -250,8 +241,8 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 		process new BTC delegations under new finality providers in activeBTCDels
 	*/
 	// sort new finality providers in activeBTCDels to ensure determinism
-	fpActiveBtcPkHexList := make([]string, 0, len(state.ActivatedSatsByFpBtcPk))
-	for fpBTCPKHex := range state.ActivatedSatsByFpBtcPk {
+	fpActiveBtcPkHexList := make([]string, 0, len(state.DeltaSatsByFpBtcPk))
+	for fpBTCPKHex := range state.DeltaSatsByFpBtcPk {
 		// if the fp was slashed, should not even be added to the list
 		if state.FPStatesByBtcPk[fpBTCPKHex] == ftypes.FinalityProviderState_SLASHED {
 			continue
@@ -290,18 +281,15 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 			fpDistInfo.IsJailed = false
 		}
 
-		// add each BTC delegation
-		fpActiveSats := state.ActivatedSatsByFpBtcPk[fpBTCPKHex]
-		for _, activatedSats := range fpActiveSats {
-			fpDistInfo.AddBondedSats(activatedSats)
-		}
-
-		// edge case where we might be processing an unbonded event
-		// from a newly active finality provider in the same slice
-		// of events received.
-		fpUnbondedSats := state.UnbondedSatsByFpBtcPk[fpBTCPKHex]
-		for _, unbodedSats := range fpUnbondedSats {
-			fpDistInfo.RemoveBondedSats(unbodedSats)
+		// update the bonded sats for this finality provider
+		// if had any delta sats during the power distribution change
+		fpDeltaSats := state.DeltaSatsByFpBtcPk[fpBTCPKHex]
+		switch {
+		case fpDeltaSats > 0:
+			fpDistInfo.AddBondedSats(uint64(fpDeltaSats))
+		case fpDeltaSats < 0:
+			satsToRemove := uint64(-fpDeltaSats)
+			fpDistInfo.RemoveBondedSats(satsToRemove)
 		}
 
 		// add this finality provider to the new cache if it has voting power
@@ -440,7 +428,7 @@ func (k Keeper) processPowerDistUpdateEventUnbond(
 			// This is a consumer FP rather than Babylon FP, skip it
 			continue
 		}
-		state.UnbondedSatsByFpBtcPk[fpBTCPKHex] = append(state.UnbondedSatsByFpBtcPk[fpBTCPKHex], btcDel.TotalSat)
+		state.DeltaSatsByFpBtcPk[fpBTCPKHex] -= int64(btcDel.TotalSat)
 	}
 	k.processRewardTracker(ctx, state.FpByBtcPk, btcDel, func(fp *types.FinalityProvider, del sdk.AccAddress, sats uint64) {
 		if fp.SecuresBabylonGenesis(sdk.UnwrapSDKContext(ctx)) {
@@ -469,7 +457,7 @@ func (k Keeper) processPowerDistUpdateEventActive(
 			// This is a consumer FP rather than Babylon FP, skip it
 			continue
 		}
-		state.ActivatedSatsByFpBtcPk[fpBTCPKHex] = append(state.ActivatedSatsByFpBtcPk[fpBTCPKHex], btcDel.TotalSat)
+		state.DeltaSatsByFpBtcPk[fpBTCPKHex] += int64(btcDel.TotalSat)
 	}
 
 	// FP could be already slashed when it is being activated, but it is okay

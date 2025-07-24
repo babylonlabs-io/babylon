@@ -38,24 +38,20 @@ type ProcessingState struct {
 	// FPStatesByBtcPk is a map of the finality providers' state
 	FPStatesByBtcPk map[string]FinalityProviderState
 	FpByBtcPk       map[string]*btcstktypes.FinalityProvider
-	// UnbondedSatsByFpBtcPk is a map where key is finality provider's BTC PK hex and value is a list
-	// of BTC delegations satoshis that were unbonded or expired without previously
-	// being unbonded
-	UnbondedSatsByFpBtcPk map[string][]uint64
-	// ActivatedSatsByFpBtcPk is a map where key is finality provider's BTC PK hex and value is a list
-	// of BTC delegations satoshis amount that newly become active under this provider
-	ActivatedSatsByFpBtcPk map[string][]uint64
+	// DeltaSatsByFpBtcPk is a map where key is finality provider's BTC PK hex and value is the
+	// delta of BTC delegations satoshis that were added or removed from the provider
+	// during the power distribution change process
+	DeltaSatsByFpBtcPk map[string]int64
 	// A slice of the BTC delegations expired events
 	ExpiredEvents []*btcstktypes.EventPowerDistUpdate_BtcDelStateUpdate
 }
 
 func NewProcessingState() *ProcessingState {
 	return &ProcessingState{
-		FPStatesByBtcPk:        map[string]FinalityProviderState{},
-		FpByBtcPk:              map[string]*btcstktypes.FinalityProvider{},
-		UnbondedSatsByFpBtcPk:  map[string][]uint64{},
-		ActivatedSatsByFpBtcPk: map[string][]uint64{},
-		ExpiredEvents:          []*btcstktypes.EventPowerDistUpdate_BtcDelStateUpdate{},
+		FPStatesByBtcPk:    map[string]FinalityProviderState{},
+		FpByBtcPk:          map[string]*btcstktypes.FinalityProvider{},
+		DeltaSatsByFpBtcPk: map[string]int64{},
+		ExpiredEvents:      []*btcstktypes.EventPowerDistUpdate_BtcDelStateUpdate{},
 	}
 }
 
