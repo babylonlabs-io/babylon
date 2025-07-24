@@ -16,6 +16,6 @@ const (
 	// PropSubmitBlocks estimated number of blocks it takes to submit for a proposal
 	PropSubmitBlocks float32 = 1
 	// Upgrade prop files json
-	UpgradeV2FilePath     = "/govProps/v2.json"
+	UpgradeV3FilePath     = "/govProps/v3.json"
 	GovPropResumeFinality = "/govProps/resume-finality.json"
 )

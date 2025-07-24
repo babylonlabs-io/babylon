@@ -76,7 +76,7 @@ func (s *BTCStakingPreApprovalTestSuite) TearDownSuite() {
 
 func (s *BTCStakingPreApprovalTestSuite) Test1CreateFinalityProviderAndDelegation() {
 	chainA := s.configurer.GetChainConfig(0)
-	chainA.WaitUntilHeight(1)
+	chainA.WaitUntilHeight(3)
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
 

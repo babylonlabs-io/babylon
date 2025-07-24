@@ -61,6 +61,28 @@ jobs:
           name: babylond-${{ github.sha }} # so it renovates at every new sha
           path: /tmp/docker-babylond.tar.gz
 
+  e2e-docker-build-babylon-v2-2-0:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Checkout v2.2.0
+        run: |
+          git checkout v2.2.0
+      - name: Build docker babylond v2.2.0
+        run: |
+          docker build --tag babylonlabs-io/babylond:v2.2.0 -f contrib/images/babylond/Dockerfile . --build-arg VERSION="v2.2.0"
+      - name: Docker save babylon v2.2.0
+        run: |
+          docker save -o /tmp/docker-babylond-v2-2-0.tar.gz babylonlabs-io/babylond:v2.2.0
+      - name: Upload babylon v2.2.0 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: babylond-v2-2-0
+          path: /tmp/docker-babylond-v2-2-0.tar.gz
+
   e2e-docker-build-e2e-init-chain:
     runs-on: ubuntu-22.04
     steps:
@@ -105,6 +127,28 @@ jobs:
       - name: Run e2e TestIBCTranferTestSuite
         run: |
           make test-e2e-cache-ibc-transfer
+
+  e2e-run-ibc-callback-bsn-add-rewards:
+    needs: [ e2e-docker-build-babylon ]
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Download babylon artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: babylond-${{ github.sha }}
+          path: /tmp
+      - name: Docker load babylond
+        run: |
+          docker load < /tmp/docker-babylond.tar.gz
+      - name: Cache Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.23
+      - name: Run e2e TestIbcCallbackBsnAddRewards
+        run: |
+          make test-e2e-cache-ibc-bsn-add-rewards
 
   e2e-run-btc-timestamping:
     needs: [e2e-docker-build-babylon]
@@ -259,6 +303,48 @@ jobs:
       - name: Run e2e TestBtcRewardsDistributionBsnRollup
         run: |
           make test-e2e-btc-rewards-bsn-rollup
+
+  e2e-run-upgrade-v3:
+    needs: [e2e-docker-build-babylon, e2e-docker-build-babylon-v2-2-0, e2e-docker-build-e2e-init-chain]
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Download babylon artifact (v3)
+        uses: actions/download-artifact@v4
+        with:
+          name: babylond-${{ github.sha }}
+          path: /tmp
+      - name: Download babylon v2.2.0 artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: babylond-v2-2-0
+          path: /tmp
+      - name: Download init-chain artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: init-chain
+          path: /tmp
+      - name: Docker load babylond (v3)
+        run: |
+          docker load < /tmp/docker-babylond.tar.gz
+      - name: Docker load babylond v2.2.0
+        run: |
+          docker load < /tmp/docker-babylond-v2-2-0.tar.gz
+      - name: Verify images
+        run: |
+          echo "Available images:"
+          docker images babylonlabs-io/babylond
+      - name: Docker load init-chain
+        run: |
+          docker load < /tmp/docker-init-chain.tar.gz
+      - name: Cache Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.23
+      - name: Run e2e TestSoftwareUpgradeV3TestSuite
+        run: |
+          make test-e2e-cache-upgrade-v3
 
 #  e2e-run-finality-contract:
 #    needs: [e2e-docker-build-babylon]

@@ -44,14 +44,19 @@ func TestICATestSuite(t *testing.T) {
 	suite.Run(t, new(ICATestSuite))
 }
 
-// TestSoftwareUpgradeV2TestSuite tests software upgrade from v1.1 to v2 end-to-end
-func TestSoftwareUpgradeV2TestSuite(t *testing.T) {
-	suite.Run(t, new(SoftwareUpgradeV2TestSuite))
+// TestSoftwareUpgradeV3TestSuite tests software upgrade from v2.2.0 to v3 end-to-end
+func TestSoftwareUpgradeV3TestSuite(t *testing.T) {
+	suite.Run(t, new(SoftwareUpgradeV3TestSuite))
 }
 
 // TestFinalityContractTestSuite tests rollup finality contracts integration
 func TestFinalityContractTestSuite(t *testing.T) {
 	suite.Run(t, new(FinalityContractTestSuite))
+}
+
+// TestIbcCallbackBsnAddRewards tests BSN fee collection via IBC callbacks end-to-end
+func TestIbcCallbackBsnAddRewards(t *testing.T) {
+	suite.Run(t, new(IbcCallbackBsnAddRewards))
 }
 
 // TestBtcRewardsDistributionBsnRollup tests the bsn rewards for rollups

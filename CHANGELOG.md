@@ -40,6 +40,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ### Improvements
 
 - [#1406](https://github.com/babylonlabs-io/babylon/pull/1406) Use `collections` for KV store in `x/btcstkconsumer`.
+- [#1405](https://github.com/babylonlabs-io/babylon/pull/1405) Use `collections` for `zoneconcierge` KV store.
 - [#1387](https://github.com/babylonlabs-io/babylon/pull/1387) Refactor the usage of `ChainInfo` and canonical chain indexing.
 - [#1331](https://github.com/babylonlabs-io/babylon/pull/1331/) Improve BSN Header synchronization.
 - [#1304](https://github.com/babylonlabs-io/babylon/pull/304) Update rollup finality e2e tests
@@ -117,7 +118,9 @@ command to modify `max-finality-providers` parameter.
 - [#1367](https://github.com/babylonlabs-io/babylon/pull/1367) Add v3 mainnet upgrade handler
 - [#1379](https://github.com/babylonlabs-io/babylon/pull/1379) Add multi-staking allow-list docs in `x/btcstaking`
 - [#1381](https://github.com/babylonlabs-io/babylon/pull/1381) Add multi-staking allow-list logic
+- [#1388](https://github.com/babylonlabs-io/babylon/pull/1388) Upgrade: state migration for v3
 - [#1392](https://github.com/babylonlabs-io/babylon/pull/1392) Add e2e test for BSN rollup rewards.
+- [#1303](https://github.com/babylonlabs-io/babylon/pull/1303) Add IBC callback middleware to `x/btcstaking` module to call add bsn rewards.
 
 ### State Machine Breaking
 

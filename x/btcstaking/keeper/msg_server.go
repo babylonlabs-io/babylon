@@ -23,7 +23,6 @@ import (
 	"github.com/babylonlabs-io/babylon/v3/btcstaking"
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
 	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
-	ictvtypes "github.com/babylonlabs-io/babylon/v3/x/incentive/types"
 )
 
 type msgServer struct {
@@ -704,33 +703,10 @@ func (ms msgServer) AddBsnRewards(goCtx context.Context, req *types.MsgAddBsnRew
 		return nil, status.Errorf(codes.InvalidArgument, "invalid address %s: %v", req.Sender, err)
 	}
 
-	// 2. Validate that sender has sufficient balance
-	spendableCoins := ms.bankKeeper.SpendableCoins(ctx, senderAddr)
-	if !spendableCoins.IsAllGTE(req.TotalRewards) {
-		return nil, status.Errorf(codes.InvalidArgument, "insufficient balance: spendable %s and total rewards %s", spendableCoins.String(), req.TotalRewards.String())
-	}
-
-	// 3. Transfer funds from sender to incentives module account
-	if err := ms.bankKeeper.SendCoinsFromAccountToModule(ctx, senderAddr, ictvtypes.ModuleName, req.TotalRewards); err != nil {
-		return nil, types.ErrUnableToSendCoins.Wrapf("failed to send coins to incentive module account: %v", err)
-	}
-
-	// 4. Collects the babylon and the FP commission, and allocates the remaining rewards to btc stakers according to their voting power and fp ratio
-	eventFpRewards, babylonCommission, err := ms.CollectComissionAndDistributeBsnRewards(ctx, req.BsnConsumerId, req.TotalRewards, req.FpRatios)
+	// 2. Send the rewards to be distributed to that BSN FPs
+	err = ms.Keeper.AddBsnRewards(ctx, senderAddr, req.BsnConsumerId, req.TotalRewards, req.FpRatios)
 	if err != nil {
-		return nil, types.ErrUnableToDistributeBsnRewards.Wrapf("failed: %v", err)
-	}
-
-	// 5. Emit typed evt
-	evt := &types.EventAddBsnRewards{
-		Sender:            req.Sender,
-		BsnConsumerId:     req.BsnConsumerId,
-		TotalRewards:      req.TotalRewards,
-		BabylonCommission: babylonCommission,
-		FpRatios:          eventFpRewards,
-	}
-	if err := ctx.EventManager().EmitTypedEvent(evt); err != nil {
-		panic(fmt.Errorf("failed to emit EventAddBsnRewards event: %w", err))
+		return nil, err
 	}
 
 	return &types.MsgAddBsnRewardsResponse{}, nil

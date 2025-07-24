@@ -3,12 +3,13 @@ package keeper
 import (
 	"context"
 	"github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // InitGenesis initializes the keeper state from a provided initial genesis state.
 func (k Keeper) InitGenesis(ctx context.Context, gs types.GenesisState) error {
-	k.SetPort(ctx, gs.PortId)
+	if err := k.SetPort(ctx, gs.PortId); err != nil {
+		return err
+	}
 
 	// Initialize finalized headers
 	for _, fh := range gs.FinalizedHeaders {
@@ -17,20 +18,23 @@ func (k Keeper) InitGenesis(ctx context.Context, gs types.GenesisState) error {
 
 	// Initialize last sent segment
 	if gs.LastSentSegment != nil {
-		k.setLastSentSegment(ctx, gs.LastSentSegment)
+		if err := k.setLastSentSegment(ctx, gs.LastSentSegment); err != nil {
+			return err
+		}
 	}
 
 	// Initialize sealed epoch proofs
 	for _, se := range gs.SealedEpochsProofs {
-		k.sealedEpochProofStore(ctx).Set(
-			sdk.Uint64ToBigEndian(se.EpochNumber),
-			k.cdc.MustMarshal(se.Proof),
-		)
+		if err := k.SealedEpochProof.Set(ctx, se.EpochNumber, *se.Proof); err != nil {
+			return err
+		}
 	}
 
 	// Initialize consumer BTC states
 	for _, cs := range gs.BsnBtcStates {
-		k.SetBSNBTCState(ctx, cs.ConsumerId, cs.State)
+		if err := k.SetBSNBTCState(ctx, cs.ConsumerId, cs.State); err != nil {
+			return err
+		}
 	}
 
 	// NOTE: Consumer registration is now handled by the btcstkconsumer module
@@ -67,18 +71,15 @@ func (k Keeper) ExportGenesis(ctx context.Context) (*types.GenesisState, error) 
 // getAllBSNBTCStates gets all BSN BTC states for genesis export
 func (k Keeper) getAllBSNBTCStates(ctx context.Context) []*types.BSNBTCStateEntry {
 	var entries []*types.BSNBTCStateEntry
-	store := k.bsnBTCStateStore(ctx)
-	iterator := store.Iterator(nil, nil)
-	defer iterator.Close()
-
-	for ; iterator.Valid(); iterator.Next() {
-		consumerID := string(iterator.Key())
-		var state types.BSNBTCState
-		k.cdc.MustUnmarshal(iterator.Value(), &state)
+	err := k.BSNBTCState.Walk(ctx, nil, func(consumerID string, state types.BSNBTCState) (bool, error) {
 		entries = append(entries, &types.BSNBTCStateEntry{
 			ConsumerId: consumerID,
 			State:      &state,
 		})
+		return false, nil
+	})
+	if err != nil {
+		panic(err)
 	}
 	return entries
 }
@@ -86,24 +87,16 @@ func (k Keeper) getAllBSNBTCStates(ctx context.Context) []*types.BSNBTCStateEntr
 // sealedEpochsProofs gets all sealed epoch proofs for genesis export
 func (k Keeper) sealedEpochsProofs(ctx context.Context) ([]*types.SealedEpochProofEntry, error) {
 	entries := make([]*types.SealedEpochProofEntry, 0)
-	iter := k.sealedEpochProofStore(ctx).Iterator(nil, nil)
-	defer iter.Close()
-
-	for ; iter.Valid(); iter.Next() {
-		epochNum := sdk.BigEndianToUint64(iter.Key())
-
-		var proof types.ProofEpochSealed
-		if err := k.cdc.Unmarshal(iter.Value(), &proof); err != nil {
-			return nil, err
-		}
+	err := k.SealedEpochProof.Walk(ctx, nil, func(epochNum uint64, proof types.ProofEpochSealed) (bool, error) {
 		entry := &types.SealedEpochProofEntry{
 			EpochNumber: epochNum,
 			Proof:       &proof,
 		}
 		if err := entry.Validate(); err != nil {
-			return nil, err
+			return true, err
 		}
 		entries = append(entries, entry)
-	}
-	return entries, nil
+		return false, nil
+	})
+	return entries, err
 }
