@@ -22,19 +22,71 @@ func (k Keeper) ConsumerRegistryList(c context.Context, req *types.QueryConsumer
 
 	ctx := sdk.UnwrapSDKContext(c)
 
-	consumerRegisters := []*types.ConsumerRegisterResponse{}
-	store := k.consumerRegistryStore(ctx)
-	pageRes, err := query.Paginate(store, req.Pagination, func(key, value []byte) error {
-		consumerID := string(key)
-		consumerRegister, err := k.GetConsumerRegister(ctx, consumerID)
-		if err != nil {
-			return err
+	var consumerRegisters []*types.ConsumerRegisterResponse
+	var offset uint64
+	var nextKey []byte
+	var totalCount uint64
+
+	limit := uint64(100) // default limit
+	if req.Pagination != nil {
+		if req.Pagination.Limit > 0 {
+			limit = req.Pagination.Limit
 		}
-		consumerRegisters = append(consumerRegisters, consumerRegister.ToResponse())
-		return nil
+		offset = req.Pagination.Offset
+	}
+
+	// Start key for pagination
+	var startKey []byte
+	if req.Pagination != nil && len(req.Pagination.Key) > 0 {
+		startKey = req.Pagination.Key
+	}
+
+	// First pass to get total count
+	err := k.ConsumerRegistry.Walk(ctx, nil, func(consumerID string, consumerRegister types.ConsumerRegister) (bool, error) {
+		totalCount++
+		return false, nil
 	})
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	var itemsProcessed uint64
+	var itemsCollected uint64
+	var foundStartKey bool = startKey == nil
+
+	err = k.ConsumerRegistry.Walk(ctx, nil, func(consumerID string, consumerRegister types.ConsumerRegister) (bool, error) {
+		if !foundStartKey {
+			if string(startKey) == consumerID {
+				foundStartKey = true
+			}
+			return false, nil
+		}
+
+		// Handle offset
+		if itemsProcessed < offset {
+			itemsProcessed++
+			return false, nil
+		}
+
+		// Collect item if we haven't hit the limit
+		if itemsCollected < limit {
+			consumerRegisters = append(consumerRegisters, consumerRegister.ToResponse())
+			itemsCollected++
+		} else {
+			nextKey = []byte(consumerID)
+			return true, nil
+		}
+
+		itemsProcessed++
+		return false, nil
+	})
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	pageRes := &query.PageResponse{
+		NextKey: nextKey,
+		Total:   totalCount,
 	}
 
 	resp := &types.QueryConsumerRegistryListResponse{

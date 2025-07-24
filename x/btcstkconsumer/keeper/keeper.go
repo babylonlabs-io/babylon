@@ -3,6 +3,7 @@ package keeper
 import (
 	"fmt"
 
+	"cosmossdk.io/collections"
 	"cosmossdk.io/core/store"
 	"cosmossdk.io/log"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -23,6 +24,11 @@ type Keeper struct {
 	// the address capable of executing a MsgUpdateParams message. Typically, this
 	// should be the x/gov module account.
 	authority string
+
+	Schema collections.Schema
+	// Collections for KV store management
+	ParamsCollection collections.Item[types.Params]
+	ConsumerRegistry collections.Map[string, types.ConsumerRegister]
 }
 
 func NewKeeper(
@@ -38,7 +44,9 @@ func NewKeeper(
 		panic(fmt.Sprintf("invalid authority address: %s", authority))
 	}
 
-	return Keeper{
+	sb := collections.NewSchemaBuilder(storeService)
+
+	k := Keeper{
 		cdc:           cdc,
 		storeService:  storeService,
 		bankKeeper:    bankKeeper,
@@ -46,7 +54,30 @@ func NewKeeper(
 		clientKeeper:  clientKeeper,
 		wasmKeeper:    wasmKeeper,
 		authority:     authority,
+
+		// Initialize collections
+		ParamsCollection: collections.NewItem[types.Params](
+			sb,
+			types.ParamsKey,
+			"params",
+			codec.CollValue[types.Params](cdc),
+		),
+		ConsumerRegistry: collections.NewMap[string, types.ConsumerRegister](
+			sb,
+			types.ConsumerRegisterKey,
+			"consumer_registry",
+			collections.StringKey,
+			codec.CollValue[types.ConsumerRegister](cdc),
+		),
 	}
+
+	schema, err := sb.Build()
+	if err != nil {
+		panic(err)
+	}
+	k.Schema = schema
+
+	return k
 }
 
 // GetAuthority returns the module's authority.
