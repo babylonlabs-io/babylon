@@ -35,9 +35,9 @@ const (
 // The state is updated during the power distribution change process and is used to generate the
 // final power distribution cache
 type ProcessingState struct {
-	// FPStates is a map of the finality providers' state
-	FPStates     map[string]FinalityProviderState
-	FpByBtcPkHex map[string]*btcstktypes.FinalityProvider
+	// FPStatesByBtcPk is a map of the finality providers' state
+	FPStatesByBtcPk map[string]FinalityProviderState
+	FpByBtcPk       map[string]*btcstktypes.FinalityProvider
 	// UnbondedSatsByFpBtcPk is a map where key is finality provider's BTC PK hex and value is a list
 	// of BTC delegations satoshis that were unbonded or expired without previously
 	// being unbonded
@@ -51,8 +51,8 @@ type ProcessingState struct {
 
 func NewProcessingState() *ProcessingState {
 	return &ProcessingState{
-		FPStates:               map[string]FinalityProviderState{},
-		FpByBtcPkHex:           map[string]*btcstktypes.FinalityProvider{},
+		FPStatesByBtcPk:        map[string]FinalityProviderState{},
+		FpByBtcPk:              map[string]*btcstktypes.FinalityProvider{},
 		UnbondedSatsByFpBtcPk:  map[string][]uint64{},
 		ActivatedSatsByFpBtcPk: map[string][]uint64{},
 		ExpiredEvents:          []*btcstktypes.EventPowerDistUpdate_BtcDelStateUpdate{},
