@@ -614,7 +614,7 @@ func (k Keeper) loadFP(
 
 // abs returns the absolute value of a signed integer.
 // There's a corner case: int64 minimum
-// value (-9223372036854775808) cannot be negated
+// value (-9223372036854775808) cannot be negated.
 // For satoshi values in Bitcoin context, this
 // overflow scenario is extremely unlikely since it
 // would represent an impossibly large amount of Bitcoin
