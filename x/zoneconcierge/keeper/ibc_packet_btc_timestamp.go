@@ -142,10 +142,19 @@ func (k Keeper) createBTCTimestamp(
 
 // getDeepEnoughBTCHeaders returns the last k+1 BTC headers for fork scenarios,
 // where k is the confirmation depth. This provides sufficient safety against reorgs.
+// The number of headers returned is limited by the MaxHeadersPerPacket parameter
 func (k Keeper) getDeepEnoughBTCHeaders(ctx context.Context) []*btclctypes.BTCHeaderInfo {
 	kValue := k.btccKeeper.GetParams(ctx).BtcConfirmationDepth
 	startHeight := k.btclcKeeper.GetTipInfo(ctx).Height - kValue
-	return k.btclcKeeper.GetMainChainFrom(ctx, startHeight)
+	headers := k.btclcKeeper.GetMainChainFrom(ctx, startHeight)
+
+	// Apply the MaxHeadersPerPacket limit
+	maxHeaders := int(k.GetParams(ctx).MaxHeadersPerPacket)
+	if len(headers) > maxHeaders {
+		return headers[:maxHeaders]
+	}
+
+	return headers
 }
 
 // getHeadersToBroadcastForConsumer retrieves headers to be broadcasted to a specific BSN
@@ -154,6 +163,7 @@ func (k Keeper) getDeepEnoughBTCHeaders(ctx context.Context) []*btclctypes.BTCHe
 // - If BSN base header exists but no headers sent yet: from BSN base to tip
 // - If headers previously sent: from child of most recent valid header to tip
 // - If reorg detected: from BSN base to tip
+// The number of headers returned is limited by the MaxHeadersPerPacket parameter
 func (k Keeper) getHeadersToBroadcastForConsumer(ctx context.Context, consumerID string) []*btclctypes.BTCHeaderInfo {
 	baseHeader := k.GetBSNBaseBTCHeader(ctx, consumerID)
 	lastSegment := k.GetBSNLastSentSegment(ctx, consumerID)
@@ -177,32 +187,42 @@ func (k Keeper) getHeadersToBroadcastForConsumer(ctx context.Context, consumerID
 		return k.getDeepEnoughBTCHeaders(ctx)
 	}
 
+	var headers []*btclctypes.BTCHeaderInfo
+
 	// If we haven't sent any headers yet, send from BSN base to tip
 	if lastSegment == nil {
-		return k.btclcKeeper.GetMainChainFrom(ctx, baseHeader.Height+1)
-	}
+		headers = k.btclcKeeper.GetMainChainFrom(ctx, baseHeader.Height+1)
+	} else {
+		// Find the most recent header we sent that's still in the main chain
+		var initHeader *btclctypes.BTCHeaderInfo
+		for i := len(lastSegment.BtcHeaders) - 1; i >= 0; i-- {
+			header := lastSegment.BtcHeaders[i]
+			if header, err := k.btclcKeeper.GetHeaderByHash(ctx, header.Hash); err == nil && header != nil {
+				initHeader = header
+				break
+			}
+		}
 
-	// Find the most recent header we sent that's still in the main chain
-	var initHeader *btclctypes.BTCHeaderInfo
-	for i := len(lastSegment.BtcHeaders) - 1; i >= 0; i-- {
-		header := lastSegment.BtcHeaders[i]
-		if header, err := k.btclcKeeper.GetHeaderByHash(ctx, header.Hash); err == nil && header != nil {
-			initHeader = header
-			break
+		// If no header from last segment is still valid (reorg), send from BSN base to tip
+		if initHeader == nil {
+			headers = k.getDeepEnoughBTCHeaders(ctx)
+		} else {
+			// Send headers from the child of the most recent valid header to tip
+			headers = k.btclcKeeper.GetMainChainFrom(ctx, initHeader.Height+1)
 		}
 	}
 
-	// If no header from last segment is still valid (reorg), send from BSN base to tip
-	if initHeader == nil {
-		return k.getDeepEnoughBTCHeaders(ctx)
+	maxHeaders := int(k.GetParams(ctx).MaxHeadersPerPacket)
+	if len(headers) > maxHeaders {
+		return headers[:maxHeaders]
 	}
 
-	// Send headers from the child of the most recent valid header to tip
-	return k.btclcKeeper.GetMainChainFrom(ctx, initHeader.Height+1)
+	return headers
 }
 
 // getHeadersToBroadcast retrieves headers using the fallback method of k+1.
 // This is used when no Consumer base header is set
+// The number of headers returned is limited by the MaxHeadersPerPacket parameter
 func (k Keeper) getHeadersToBroadcast(ctx context.Context) []*btclctypes.BTCHeaderInfo {
 	lastSegment := k.GetLastSentSegment(ctx)
 
@@ -226,16 +246,22 @@ func (k Keeper) getHeadersToBroadcast(ctx context.Context) []*btclctypes.BTCHead
 		}
 	}
 
+	var headers []*btclctypes.BTCHeaderInfo
 	if initHeader == nil {
 		// if initHeader is nil, then this means a reorg happens such that all headers
 		// in the last segment are reverted. In this case, send the last k+1 BTC headers
 		// using confirmation depth k instead of finalization timeout w for efficiency
-		return k.getDeepEnoughBTCHeaders(ctx)
+		headers = k.getDeepEnoughBTCHeaders(ctx)
+	} else {
+		headers = k.btclcKeeper.GetMainChainFrom(ctx, initHeader.Height+1)
 	}
 
-	headersToSend := k.btclcKeeper.GetMainChainFrom(ctx, initHeader.Height+1)
+	maxHeaders := int(k.GetParams(ctx).MaxHeadersPerPacket)
+	if len(headers) > maxHeaders {
+		return headers[:maxHeaders]
+	}
 
-	return headersToSend
+	return headers
 }
 
 // BroadcastBTCTimestamps sends an IBC packet of BTC timestamp to all open IBC channels to ZoneConcierge
