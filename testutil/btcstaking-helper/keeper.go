@@ -101,7 +101,7 @@ func NewHelper(
 	t testing.TB,
 	btclcKeeper *types.MockBTCLightClientKeeper,
 	btccKeeper *types.MockBtcCheckpointKeeper,
-	storeKeys ...*storetypes.KVStoreKey,
+	btcStkStoreKey *storetypes.KVStoreKey,
 ) *Helper {
 	ctrl := gomock.NewController(t)
 
@@ -120,7 +120,7 @@ func NewHelper(
 	ckptKeeper := ftypes.NewMockCheckpointingKeeper(ctrl)
 	ckptKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(timestampedEpoch).AnyTimes()
 
-	return NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKeeper, ckptKeeper, ictvK, storeKeys...)
+	return NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKeeper, ckptKeeper, ictvK, btcStkStoreKey)
 }
 
 func (h *Helper) WithBlockHeight(height int64) *Helper {
@@ -133,7 +133,7 @@ func NewHelperNoMocksCalls(
 	t testing.TB,
 	btclcKeeper *types.MockBTCLightClientKeeper,
 	btccKeeper *types.MockBtcCheckpointKeeper,
-	storeKeys ...*storetypes.KVStoreKey,
+	btcStkStoreKey *storetypes.KVStoreKey,
 ) *Helper {
 	ctrl := gomock.NewController(t)
 
@@ -143,7 +143,7 @@ func NewHelperNoMocksCalls(
 
 	ckptKeeper := ftypes.NewMockCheckpointingKeeper(ctrl)
 
-	return NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKeeper, ckptKeeper, ictvK, storeKeys...)
+	return NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKeeper, ckptKeeper, ictvK, btcStkStoreKey)
 }
 
 // NewHelperWithIncentiveKeeper creates a new Helper with the given BTCLightClientKeeper and BtcCheckpointKeeper mocks, and an instance of the incentive keeper.
@@ -164,7 +164,7 @@ func NewHelperWithIncentiveKeeper(
 
 	ckptKeeper := ftypes.NewMockCheckpointingKeeper(ctrl)
 
-	return NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKeeper, ckptKeeper, ictvK)
+	return NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKeeper, ckptKeeper, ictvK, nil)
 }
 
 func NewHelperWithBankMock(
@@ -173,7 +173,7 @@ func NewHelperWithBankMock(
 	btccKeeper *types.MockBtcCheckpointKeeper,
 	bankKeeper *types.MockBankKeeper,
 	ictvK *IctvKeeperK,
-	storeKeys ...*storetypes.KVStoreKey,
+	btcStkStoreKey *storetypes.KVStoreKey,
 ) *Helper {
 	ctrl := gomock.NewController(t)
 
@@ -182,7 +182,7 @@ func NewHelperWithBankMock(
 
 	ckptKeeper := ftypes.NewMockCheckpointingKeeper(ctrl)
 
-	return NewHelperWithStoreIncentiveAndBank(t, db, stateStore, btclcKeeper, btccKeeper, ckptKeeper, ictvK, bankKeeper, storeKeys...)
+	return NewHelperWithStoreIncentiveAndBank(t, db, stateStore, btclcKeeper, btccKeeper, ckptKeeper, ictvK, bankKeeper, btcStkStoreKey)
 }
 
 func NewHelperWithStoreAndIncentive(
@@ -193,16 +193,8 @@ func NewHelperWithStoreAndIncentive(
 	btccKForBtcStaking *types.MockBtcCheckpointKeeper,
 	btccKForFinality *ftypes.MockCheckpointingKeeper,
 	ictvKeeper IctvKeeperI,
-	storeKeys ...*storetypes.KVStoreKey,
+	btcStkStoreKey *storetypes.KVStoreKey,
 ) *Helper {
-	var btcStkStoreKey *storetypes.KVStoreKey
-	for _, k := range storeKeys {
-		if k.Name() == types.StoreKey {
-			btcStkStoreKey = k
-			break
-		}
-	}
-
 	k, _ := keepertest.BTCStakingKeeperWithStore(t, db, stateStore, btcStkStoreKey, btclcKeeper, btccKForBtcStaking, ictvKeeper)
 	msgSrvr := keeper.NewMsgServerImpl(*k)
 
@@ -250,15 +242,8 @@ func NewHelperWithStoreIncentiveAndBank(
 	btccKForFinality *ftypes.MockCheckpointingKeeper,
 	ictvKeeper *IctvKeeperK,
 	bankKeeper *types.MockBankKeeper,
-	storeKeys ...*storetypes.KVStoreKey,
+	btcStkStoreKey *storetypes.KVStoreKey,
 ) *Helper {
-	var btcStkStoreKey *storetypes.KVStoreKey
-	for _, k := range storeKeys {
-		if k.Name() == types.StoreKey {
-			btcStkStoreKey = k
-			break
-		}
-	}
 	k, _ := keepertest.BTCStakingKeeperWithStoreAndBank(t, db, stateStore, btcStkStoreKey, btclcKeeper, btccKForBtcStaking, ictvKeeper, bankKeeper)
 	msgSrvr := keeper.NewMsgServerImpl(*k)
 

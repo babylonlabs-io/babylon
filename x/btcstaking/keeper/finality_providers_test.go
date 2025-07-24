@@ -167,7 +167,7 @@ func TestUpdateFinalityProviderCommission(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			h := testutil.NewHelper(t, nil, nil)
+			h := testutil.NewHelper(t, nil, nil, nil)
 
 			params := h.BTCStakingKeeper.GetParams(h.Ctx)
 			params.MinCommissionRate = tc.minCommission
@@ -204,7 +204,7 @@ func FuzzSlashConsumerFinalityProvider(f *testing.F) {
 		// mock BTC light client and BTC checkpoint modules
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-		h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
+		h := testutil.NewHelper(t, btclcKeeper, btccKeeper, nil)
 		h.GenAndApplyParams(r)
 
 		// register a random consumer on Babylon
