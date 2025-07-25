@@ -146,6 +146,8 @@ cost per multi-staked finality provider
 FP data
 - [#1398](https://github.com/babylonlabs-io/babylon/pull/1398) Add custom tokenfactory
 bindings (thanks @benluelo for contribution)
+- [#1416](https://github.com/babylonlabs-io/babylon/pull/1416) Releax requirements
+for stake expansion funding output
 
 ### Bug fixes
 
