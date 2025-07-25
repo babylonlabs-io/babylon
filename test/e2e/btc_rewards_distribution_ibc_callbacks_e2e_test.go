@@ -424,6 +424,10 @@ func (s *IbcCallbackBsnAddRewards) Test6SendBsnRewardsCallbackWithNativeToken() 
 		s.Require().NoError(err)
 
 		ibcDenomOfbabylonNativeTokenInBsn := getFirstIBCDenom(bsnBalanceAfterIbcTransfer)
+		if len(ibcDenomOfbabylonNativeTokenInBsn) == 0 {
+			return false
+		}
+
 		ibcBabylonNativeTokenTransferInBsn = sdk.NewCoin(ibcDenomOfbabylonNativeTokenInBsn, ibcTransferOfNative.Amount)
 		expectedBsnBalance := bsnBalanceBeforeIbcTransfer.Add(ibcBabylonNativeTokenTransferInBsn).String()
 
@@ -466,7 +470,6 @@ func (s *IbcCallbackBsnAddRewards) Test6SendBsnRewardsCallbackWithNativeToken() 
 	s.Require().NoError(err)
 	callbackMemoString := string(callbackMemoJSON)
 
-	rewardCoin := ibcTransferOfNative
 	bbnCommDiff, del1Diff, del2Diff, fp1bbnDiff, fp2cons0Diff, fp3cons0Diff := s.SuiteRewardsDiff(bbnNode, func() {
 		bsnSenderBalances, err := bsnNode.QueryBalances(s.bsnSenderAddr)
 		s.Require().NoError(err)
@@ -481,11 +484,11 @@ func (s *IbcCallbackBsnAddRewards) Test6SendBsnRewardsCallbackWithNativeToken() 
 		bsnSenderAfter, err := bsnNode.QueryBalances(s.bsnSenderAddr)
 		s.Require().NoError(err)
 
-		feesPlusRewards := ibcTx.GetFee().Add(rewardCoin)
+		feesPlusRewards := ibcTx.GetFee().Add(ibcBabylonNativeTokenTransferInBsn)
 		require.Equal(s.T(), bsnSenderBalances.Sub(feesPlusRewards...).String(), bsnSenderAfter.String(), "bsn sender balance check")
 	})
 
-	rewardCoins := sdk.NewCoins(rewardCoin)
+	rewardCoins := sdk.NewCoins(ibcTransferOfNative)
 
 	bbnCommExp := itypes.GetCoinsPortion(rewardCoins, s.bsn0.BabylonRewardsCommission)
 	require.Equal(s.T(), bbnCommExp.String(), bbnCommDiff.String(), "babylon commission")
