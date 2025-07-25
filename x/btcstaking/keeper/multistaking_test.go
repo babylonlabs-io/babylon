@@ -28,7 +28,7 @@ func FuzzMultiStaking_MultiStakedBTCDelegation(f *testing.F) {
 		// mock BTC light client and BTC checkpoint modules
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-		h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
+		h := testutil.NewHelper(t, btclcKeeper, btccKeeper, nil)
 
 		// set all parameters
 		covenantSKs, _ := h.GenAndApplyCustomParams(r, 100, 200, 0, 10)
@@ -212,7 +212,7 @@ func TestMultiStakingAllowList(t *testing.T) {
 	// mock BTC light client and BTC checkpoint modules
 	btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 	btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-	h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
+	h := testutil.NewHelper(t, btclcKeeper, btccKeeper, nil)
 
 	// set all parameters
 	covenantSKs, _ := h.GenAndApplyCustomParams(r, 100, 200, 0, 10)
@@ -387,7 +387,7 @@ func FuzzFinalityProviderDelegations_RestakingConsumers(f *testing.F) {
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
 		heightAfterMultiStakingAllowListExpiration := int64(10)
-		h := testutil.NewHelper(t, btclcKeeper, btccKeeper).WithBlockHeight(heightAfterMultiStakingAllowListExpiration)
+		h := testutil.NewHelper(t, btclcKeeper, btccKeeper, nil).WithBlockHeight(heightAfterMultiStakingAllowListExpiration)
 
 		// set all parameters
 		h.GenAndApplyCustomParams(r, 100, 200, 0, 2)
@@ -494,7 +494,7 @@ func TestNoActivationEventForRollupConsumer(t *testing.T) {
 	btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 	btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
 	heightAfterMultiStakingAllowListExpiration := int64(10)
-	h := testutil.NewHelper(t, btclcKeeper, btccKeeper).WithBlockHeight(heightAfterMultiStakingAllowListExpiration)
+	h := testutil.NewHelper(t, btclcKeeper, btccKeeper, nil).WithBlockHeight(heightAfterMultiStakingAllowListExpiration)
 
 	// set all parameters
 	covenantSKs, _ := h.GenAndApplyCustomParams(r, 100, 200, 0, 2)

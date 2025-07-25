@@ -99,8 +99,8 @@ func FuzzHandleLivenessDeterminism(f *testing.F) {
 		// mock BTC light client and BTC checkpoint modules
 		btclcKeeper := bstypes.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := bstypes.NewMockBtcCheckpointKeeper(ctrl)
-		h1 := testutil.NewHelper(t, btclcKeeper, btccKeeper)
-		h2 := testutil.NewHelper(t, btclcKeeper, btccKeeper)
+		h1 := testutil.NewHelper(t, btclcKeeper, btccKeeper, nil)
+		h2 := testutil.NewHelper(t, btclcKeeper, btccKeeper, nil)
 
 		// set all parameters
 		covenantSKs, _ := h1.GenAndApplyParams(r)
