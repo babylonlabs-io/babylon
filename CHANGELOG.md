@@ -171,6 +171,8 @@ already expanded delegations
 for multi staked fps
 - [#1384](https://github.com/babylonlabs-io/babylon/pull/1384) fix: Cascaded slashing
 adjustment
+- [#1418][https://github.com/babylonlabs-io/babylon/pull/1418] fix: add stake expansion
+covenant signature to the events
 
 ## v2.2.0
 
