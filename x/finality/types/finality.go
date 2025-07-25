@@ -47,6 +47,8 @@ type ProcessingState struct {
 	DeltaSatsByFpBtcPk map[string]int64
 	// A slice of the BTC delegations expired events
 	ExpiredEvents []*btcstktypes.EventPowerDistUpdate_BtcDelStateUpdate
+	// A slice of the slashed finality provider events
+	SlashedEvents []*btcstktypes.EventPowerDistUpdate_SlashedFp
 }
 
 func NewProcessingState() *ProcessingState {
@@ -55,6 +57,7 @@ func NewProcessingState() *ProcessingState {
 		FpByBtcPk:          map[string]*btcstktypes.FinalityProvider{},
 		DeltaSatsByFpBtcPk: map[string]int64{},
 		ExpiredEvents:      []*btcstktypes.EventPowerDistUpdate_BtcDelStateUpdate{},
+		SlashedEvents:      []*btcstktypes.EventPowerDistUpdate_SlashedFp{},
 	}
 }
 

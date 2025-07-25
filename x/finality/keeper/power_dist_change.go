@@ -180,9 +180,9 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 		k.processEventsAtHeight(ctx, sdkCtx, btcHeight, state)
 	}
 
-	// Process deferred EXPIRED events
+	// Process events for terminal states (EXPIRED btc delegations and SLASHED finality providers)
 	k.processExpiredEvents(ctx, sdkCtx, state)
-
+	processSlashedEvents(sdkCtx, state)
 	/*
 		At this point, there is voting power update.
 		Then, construct a voting power dist cache by reconciling the previous
@@ -323,9 +323,12 @@ func (k Keeper) processEventsAtHeight(ctx context.Context, sdkCtx sdk.Context, b
 				// Process ACTIVE/UNBONDED events immediately
 				k.processBtcDelUpdateImmediate(ctx, state, typedEvent)
 			}
+		case *types.EventPowerDistUpdate_SlashedFp:
+			// Defer SLASHED events for later processing
+			state.SlashedEvents = append(state.SlashedEvents, typedEvent)
 		default:
-			// Process all FP events immediately
-			k.processFPEventImmediate(sdkCtx, state, event)
+			// Process all other FP events immediately
+			processFPEventImmediate(sdkCtx, state, event)
 		}
 	}
 }
@@ -391,20 +394,8 @@ func (k Keeper) processExpiredEvents(ctx context.Context, sdkCtx sdk.Context, st
 	}
 }
 
-func (k Keeper) processFPEventImmediate(ctx sdk.Context, state *ftypes.ProcessingState, event types.EventPowerDistUpdate) {
+func processFPEventImmediate(ctx sdk.Context, state *ftypes.ProcessingState, event types.EventPowerDistUpdate) {
 	switch typedEvent := event.Ev.(type) {
-	case *types.EventPowerDistUpdate_SlashedFp:
-		// record slashed fps
-		types.EmitSlashedFPEvent(ctx, typedEvent.SlashedFp.Pk)
-		fpBTCPKHex := typedEvent.SlashedFp.Pk.MarshalHex()
-		state.FPStatesByBtcPk[fpBTCPKHex] = ftypes.FinalityProviderState_SLASHED
-		// TODO(rafilx): handle slashed fps prunning
-		// It is not possible to slash fp and delete all of his data at the
-		// babylon block height that is being processed, because
-		// the function RewardBTCStaking is called a few blocks behind.
-		// If the data is deleted at the slash event, when slashed fps are
-		// receveing rewards from a few blocks behind HandleRewarding
-		// verifies the next block height to be rewarded.
 	case *types.EventPowerDistUpdate_JailedFp:
 		// record jailed fps
 		types.EmitJailedFPEvent(ctx, typedEvent.JailedFp.Pk)
@@ -412,6 +403,22 @@ func (k Keeper) processFPEventImmediate(ctx sdk.Context, state *ftypes.Processin
 	case *types.EventPowerDistUpdate_UnjailedFp:
 		// record unjailed fps
 		state.FPStatesByBtcPk[typedEvent.UnjailedFp.Pk.MarshalHex()] = ftypes.FinalityProviderState_UNJAILED
+	}
+}
+
+func processSlashedEvents(ctx sdk.Context, state *ftypes.ProcessingState) {
+	for _, event := range state.SlashedEvents {
+		// record slashed fps
+		types.EmitSlashedFPEvent(ctx, event.SlashedFp.Pk)
+		fpBTCPKHex := event.SlashedFp.Pk.MarshalHex()
+		state.FPStatesByBtcPk[fpBTCPKHex] = ftypes.FinalityProviderState_SLASHED
+		// TODO(rafilx): handle slashed fps prunning
+		// It is not possible to slash fp and delete all of his data at the
+		// babylon block height that is being processed, because
+		// the function RewardBTCStaking is called a few blocks behind.
+		// If the data is deleted at the slash event, when slashed fps are
+		// receiving rewards from a few blocks behind HandleRewarding
+		// verifies the next block height to be rewarded.
 	}
 }
 
