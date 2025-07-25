@@ -432,9 +432,8 @@ func (ms msgServer) validateStakeExpansionSig(
 		return fmt.Errorf("empty stake expansion covenant signature")
 	}
 
-	// this is stake expansion delegation, the signaure is provided
+	// this is stake expansion delegation, the signature is provided
 	// in the message, verify it
-
 	if btcDel.StkExp.IsSignedByCovMember(req.Pk) {
 		ms.Logger(ctx).Debug("Received duplicated covenant signature in stake expansion transaction",
 			"covenant pk", req.Pk.MarshalHex())
