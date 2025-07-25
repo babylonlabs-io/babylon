@@ -87,11 +87,6 @@ func TestExpandBTCDelegation(t *testing.T) {
 			spendingTx, err := bbn.NewBTCTxFromBytes(btcExpMsg.StakingTx)
 			require.NoError(t, err)
 
-			if fundingTx == nil {
-				fundingTx, err = bbn.NewBTCTxFromBytes(btcExpMsg.FundingTx)
-				require.NoError(t, err)
-			}
-
 			params := s.Driver.GetBTCStakingParams(t)
 			spendingTxWithWitnessBz, _ := datagen.AddWitnessToStakeExpTx(
 				t,
@@ -168,22 +163,90 @@ func TestInvalidStakeExpansion(t *testing.T) {
 		{
 			name: "report staking output spending before it is k-deep in BTC",
 			testCase: func(s *testSetup) {
-				// prevStkTx, _, err := bbn.NewBTCTxFromHex(s.ActiveDelegations[0].StakingTxHex)
-				// require.NoError(t, err)
-				// prevStkTxHash := prevStkTx.TxHash()
+				prevStkTx, prevStkTxBz, err := bbn.NewBTCTxFromHex(s.ActiveDelegations[0].StakingTxHex)
+				require.NoError(t, err)
+				prevStkTxHash := prevStkTx.TxHash()
 
-				// fundingTx, _, err := bbn.NewBTCTxFromHex(s.ActiveDelegations[1].StakingTxHex)
-				// require.NoError(t, err)
+				fundingTx := datagen.GenRandomTxWithOutputValue(s.r, 100000)
 
-				// stakeExpandMsg := s.Staker.CreateBtcExpandMessage(
-				// 	[]*bbn.BIP340PubKey{s.Fp.BTCPublicKey()},
-				// 	1000,
-				// 	100000000,
-				// 	prevStkTxHash.String(),
-				// 	nil,
-				// 	0,
-				// )
+				// Create a stake expansion message
+				stakeExpandMsg := s.Staker.CreateBtcExpandMessage(
+					[]*bbn.BIP340PubKey{s.Fp.BTCPublicKey()},
+					1000,
+					100000000,
+					prevStkTxHash.String(),
+					fundingTx,
+					0,
+				)
 
+				s.Staker.SendMessage(stakeExpandMsg)
+				s.Driver.GenerateNewBlockAssertExecutionSuccess()
+
+				// Submit covenant signatures
+				s.CovSender.SendCovenantSignatures()
+				results := s.Driver.GenerateNewBlockAssertExecutionSuccessWithResults()
+				require.NotEmpty(t, results)
+
+				for _, result := range results {
+					for _, event := range result.Events {
+						if event.Type == "babylon.btcstaking.v1.EventCovenantSignatureReceived" {
+							require.True(t, attributeValueNonEmpty(event, "covenant_stake_expansion_signature_hex"))
+						}
+					}
+				}
+
+				verifiedDels := s.Driver.GetVerifiedBTCDelegations(t)
+				require.Len(t, verifiedDels, 1)
+				require.NotNil(t, verifiedDels[0].StkExp)
+
+				stkExpStakingTx, err := bbn.NewBTCTxFromBytes(stakeExpandMsg.StakingTx)
+				require.NoError(t, err)
+
+				// add tx to BTC and submit headers with proofs
+				blockWithProofs := s.Driver.IncludeTxsInBTC([]*wire.MsgTx{stkExpStakingTx})
+				require.Len(t, blockWithProofs.Proofs, 2)
+
+				stakingTime := uint32(1000)
+				stakingValue := int64(100000000)
+
+				params := s.Driver.GetBTCStakingParams(t)
+				spendingTxWithWitnessBz, _ := datagen.AddWitnessToStakeExpTx(
+					t,
+					prevStkTx.TxOut[0],
+					fundingTx.TxOut[0],
+					s.Staker.BTCPrivateKey,
+					covenantSKs,
+					params.CovenantQuorum,
+					[]*btcec.PublicKey{s.Fp.BTCPrivateKey.PubKey()},
+					uint16(stakingTime),
+					stakingValue,
+					stkExpStakingTx,
+					s.Driver.App.BTCLightClientKeeper.GetBTCNet(),
+				)
+
+				// Try to unbond the delegation to activate the stake expansion
+				// but the stake expansion tx is not k-deep in BTC yet
+				msg := &bstypes.MsgBTCUndelegate{
+					Signer:                        s.Staker.AddressString(),
+					StakingTxHash:                 prevStkTx.TxHash().String(),
+					StakeSpendingTx:               spendingTxWithWitnessBz,
+					StakeSpendingTxInclusionProof: bstypes.NewInclusionProofFromSpvProof(blockWithProofs.Proofs[1]),
+					FundingTransactions:           [][]byte{prevStkTxBz, stakeExpandMsg.FundingTx},
+				}
+
+				s.Staker.SendMessage(msg)
+				res := s.Driver.GenerateNewBlockAssertExecutionFailure()
+				require.Len(t, res, 1)
+				require.Contains(t, res[0].Log, "invalid inclusion proof: not k-deep")
+
+				// check that previous delegations are still active
+				// and the stake expansion is still verified
+				activeDelegations := s.Driver.GetActiveBTCDelegations(t)
+				require.Len(t, activeDelegations, 2)
+
+				verifiedDels = s.Driver.GetVerifiedBTCDelegations(t)
+				require.Len(t, verifiedDels, 1)
+				require.NotNil(t, verifiedDels[0].StkExp)
 			},
 		},
 	}

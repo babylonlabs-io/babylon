@@ -132,7 +132,6 @@ func (s *Staker) createBTCDelegationMsg(
 	totalSat int64,
 	stakingSlashingInfo *datagen.TestStakingSlashingInfo,
 ) *bstypes.MsgCreateBTCDelegation {
-
 	slashingPathSpendInfo, err := stakingSlashingInfo.StakingInfo.SlashingPathSpendInfo()
 	require.NoError(s.t, err)
 
