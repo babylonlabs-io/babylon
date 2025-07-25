@@ -120,6 +120,7 @@ func GenRandomZoneconciergeGenState(r *rand.Rand) *types.GenesisState {
 	return &types.GenesisState{
 		Params: types.Params{
 			IbcPacketTimeoutSeconds: RandomUInt32(r, 100000) + 1,
+			MaxHeadersPerPacket:     RandomUInt32(r, 1000) + 1,
 		},
 		PortId:             types.PortID,
 		FinalizedHeaders:   finalizedHeaders,
