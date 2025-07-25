@@ -149,16 +149,9 @@ graph LR
 
 #### Babylon Chain BTC Staking Parameters
 
-BTC Stake expansions must adhere to parameters defined by the Babylon chain,
-which vary based on Bitcoin block heights. Each parameters version
-is defined by a `btc_activation_height`, determining the Bitcoin height
-from which the parameters version takes effect.
+BTC Stake expansions must adhere to parameters defined by the Babylon chain, which vary based on Bitcoin block heights. Each parameters version is defined by a `btc_activation_height`, determining the Bitcoin height from which the parameters version takes effect.
 
-For expansion transactions, you must determine the applicable parameter version 
-based on the **current Babylon on-chain Bitcoin light client tip height** 
-at the time of expansion registration. This ensures that the expansion transaction 
-commits to be validated against the current staking parameters version, similar 
-to the pre-staking registration flow.
+For expansion transactions, you must determine the applicable parameter version based on the **current Babylon on-chain Bitcoin light client tip height** at the time of expansion registration. This ensures that the expansion transaction commits to be validated against the current staking parameters version, similar to the pre-staking registration flow.
 
 To determine the correct parameters for expansion:
 1. Query the current Bitcoin light client tip height on Babylon:
@@ -167,64 +160,11 @@ To determine the correct parameters for expansion:
    ```
 2. Use this height as the `lookup_btc_height` to find the applicable parameters
 3. Sort all parameters versions by `btc_activation_height` in ascending order
-4. The first parameters version with `lookup_btc_height >= btc_activation_height`
-   applies to the expansion
-
-**Key Expansion Staking Parameters:**
-
-* `covenant_pks`:
-  BIP-340 public keys of the covenant committee (64-character hex strings).
-  The public keys are an x-coordinate only representation of a secp256k1 curve point.
-  These are required for constructing the expansion staking script and slashing transactions.
-
-* `covenant_quorum`:
-  The minimum number of covenant signatures required for transaction validation.
-  The expansion will be verified once this quorum threshold is met.
-
-* `min_staking_value_sat` / `max_staking_value_sat`:
-  The minimum/maximum Bitcoin stake in satoshis. The expansion's total `staking_value`
-  must fall within these bounds and be greater than or equal to the original stake amount.
-
-* `min_staking_time_blocks` / `max_staking_time_blocks`:
-  The minimum/maximum Bitcoin staking duration (in Bitcoin blocks).
-  The expansion's `staking_time` must comply with these constraints.
-
-* `slashing_pk_script`:
-  The `pk_script` expected in the first output of slashing transactions.
-  This must be used when constructing both the staking and unbonding slashing
-  transactions for the expansion.
-
-* `min_slashing_tx_fee_sat`:
-  The minimum transaction fee (in satoshis) required for the pre-signed slashing
-  transactions. Both expansion slashing transactions must meet this requirement.
-
-* `slashing_rate`: 
-  A scalar specifying the percentage of stake slashed if finality providers double-sign.
-  This affects the slashing transaction output amounts.
-
-* `unbonding_time_blocks`:
-  The on-demand unbonding time in Bitcoin blocks that must be used for the
-  expansion's unbonding transaction timelock.
-
-* `unbonding_fee_sat`:
-  The Bitcoin fee in satoshis required for unbonding transactions.
-  The expansion unbonding transaction must account for this fee.
-
-* `min_commission_rate`: 
-  A scalar defining the minimum commission rate for finality providers.
-  All finality providers in the expansion list must meet this requirement.
-
-* `delegation_creation_base_gas_fee`: 
-  Defines the minimum gas fee required when registering a stake expansion.
-  Since expansions follow the pre-staking pattern, this increased gas fee applies.
-
-* `btc_activation_height`: 
-  The Bitcoin block height on which this parameters version takes effect.
+4. The first parameters version with `lookup_btc_height >= btc_activation_height` applies to the expansion
 
 > **⚡ Retrieving Current Staking Parameters**
 >
-> These parameters are part of the [x/btcstaking](../x/btcstaking)
-> module and can be queried via a Babylon node using RPC/LCD endpoints or the CLI:
+> These parameters are part of the [x/btcstaking](../x/btcstaking) module and can be queried via a Babylon node using RPC/LCD endpoints or the CLI:
 >
 > ```bash
 > # Query current staking parameters
@@ -237,18 +177,11 @@ To determine the correct parameters for expansion:
 > babylond query btclightclient tip
 > ```
 
-> **⚠️ Critical Warning**: Make sure that you are retrieving the BTC Staking 
-> parameters from a trusted node and verify their authenticity using additional
-> sources. Using incorrect parameters will cause expansion validation to fail
-> or create transactions incompatible with the current Babylon state.
+> **⚠️ Critical Warning**: Make sure that you are retrieving the BTC Staking parameters from a trusted node and verify their authenticity using additional sources. Using incorrect parameters will cause expansion validation to fail or create transactions incompatible with the current Babylon state.
 
 > **⚡ Parameter Selection for Expansion**
 >
-> Unlike post-staking registration which uses parameters based on Bitcoin
-> inclusion height, expansions must use parameters corresponding to the
-> **current Babylon Bitcoin light client tip** at expansion submission time.
-> This pre-commitment ensures parameter consistency even if the expansion
-> is later included in a Bitcoin block with different active parameters.
+> Unlike post-staking registration which uses parameters based on Bitcoin inclusion height, expansions must use parameters corresponding to the **current Babylon Bitcoin light client tip** at expansion submission time. This pre-commitment ensures parameter consistency even if the expansion is later included in a Bitcoin block with different active parameters.
 
 ### 3.5 Detailed Transaction Construction
 
@@ -294,7 +227,6 @@ by the btcstaking module:
    # Query the original delegation to get covenant signatures
    babylond query btcstaking btc-delegation [previous-staking-tx-hash]
    ```
-   
    The response includes a `StkExp` (StakeExpansionResponse) field containing the covenant signatures needed to spend the original staking output. These signatures are pre-computed by the covenant committee for expansion purposes.
 
 2. **Create the Staker Signature for Input 1**:
