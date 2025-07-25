@@ -384,6 +384,8 @@ message MsgBtcStakeExpand {
   staker's Babylon account where staking rewards will be accumulated.
   *This must be the same address that signed the original delegation and 
   must also sign the expansion registration transaction*.
+  
+  Example: `"bbn1abc123def456ghi789jkl012mno345pqr678stu901vwx234yz"`
 
 * `pop` (Proof of Possession):
   A cryptographic signature proving that the submitter of the expansion
@@ -400,6 +402,14 @@ message MsgBtcStakeExpand {
   * **BIP-340**: The hash of the staker address bytes should be signed.
   * **BIP-322**: Bytes of the bech32 encoded address should be signed.
   * **ECDSA**: Bytes of the bech32 encoded address should be signed.
+  
+  Example (BIP-340):
+  ```json
+  {
+    "btc_sig_type": 0,
+    "btc_sig": "f1e2d3c4b5a69788c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2"
+  }
+  ```
 
 * `btc_pk`:
   This Bitcoin `secp256k1` public key of the BTC staker,
@@ -409,6 +419,8 @@ message MsgBtcStakeExpand {
   as it corresponds to the staker public key used to construct the 
   [staking script](./staking-script.md) used in both the original and expansion
   BTC Staking transactions.
+  
+  Example: `"7b3a9c8e5f1d2a4c6b8d9e0f1a2c3e4f5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e"`
 
 * `fp_btc_pk_list`:
   A list of the `secp256k1` public keys of the finality providers
@@ -416,6 +428,16 @@ message MsgBtcStakeExpand {
   and compact 32-byte representation. **This list must be a superset of the finality
   providers from the original delegation** - you cannot remove existing finality providers,
   only add new ones.
+  
+  Example: 
+  ```json
+  [
+    "7b3a9c8e5f1d2a4c6b8d9e0f1a2c3e4f5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e",
+    "e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3",
+    "a9b8c7d6e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1b0c9d8e7f6a5b4c3d2e1f0a9b8"
+  ]
+  ```
+  
   > **⚠️ Critical Requirement**: The expansion finality provider list must include
   > all finality providers from the original delegation plus any additional ones.
   > The btcstaking module will reject expansions that attempt to remove existing
@@ -489,6 +511,8 @@ message MsgBtcStakeExpand {
   * Checking the original delegation registration transaction on a Babylon block explorer
   The btcstaking module uses this hash to locate and validate the previous delegation
   before processing the expansion.
+  
+  Example: `"d4c2b8f9a1e5c3d7e9f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3"`
 
 * `funding_tx`:
   The Bitcoin transaction (in hex format) containing the additional UTXO used as
@@ -511,63 +535,15 @@ message MsgBtcStakeExpand {
 
 ### 3.5 Constructing the `MsgBtcStakeExpand`
 
-There are multiple ways to construct and submit the expansion message:
-
-**Command Line Interface (CLI):**
-```bash
-babylond tx btcstaking btc-stake-expand \
-  [staker-addr] [btc-pk-hex] [fp-btc-pk-list] \
-  [staking-time] [staking-value] [staking-tx-hex] \
-  [slashing-tx] [delegator-slashing-sig] \
-  [unbonding-time] [unbonding-tx] [unbonding-value] \
-  [unbonding-slashing-tx] [delegator-unbonding-slashing-sig] \
-  [previous-staking-tx-hash] [funding-tx-hex] [pop]
-```
-
-**Golang Implementation:**
-```go
-// Using the btcstaking module types
-import "github.com/babylonlabs-io/babylon/x/btcstaking/types"
-
-msg := &types.MsgBtcStakeExpand{
-    StakerAddr:                     stakerAddr,
-    Pop:                           proofOfPossession,
-    BtcPk:                         stakerBtcPk,
-    FpBtcPkList:                   expandedFpList,
-    StakingTime:                   newStakingTime,
-    StakingValue:                  totalNewAmount,
-    StakingTx:                     expansionTxBytes,
-    SlashingTx:                    slashingTx,
-    DelegatorSlashingSig:          delegatorSlashingSig,
-    UnbondingTime:                 unbondingTime,
-    UnbondingTx:                   unbondingTx,
-    UnbondingValue:                unbondingValue,
-    UnbondingSlashingTx:           unbondingSlashingTx,
-    DelegatorUnbondingSlashingSig: delegatorUnbondingSlashingSig,
-    PreviousStakingTxHash:         prevStakeTxHash,
-    FundingTx:                     fundingTxBytes,
-}
-```
-
-**TypeScript Implementation:**
-```typescript
-// Using Babylon's TypeScript libraries
-const expansionMsg = {
-  typeUrl: "/babylon.btcstaking.v1.MsgBtcStakeExpand",
-  value: {
-    stakerAddr: stakerAddress,
-    pop: proofOfPossession,
-    btcPk: stakerBtcPublicKey,
-    fpBtcPkList: expandedFinalityProviders,
-    stakingTime: newStakingTime,
-    stakingValue: totalStakingAmount.toString(),
-    stakingTx: expansionTransaction,
-    // ... other required fields
-    previousStakingTxHash: originalStakeTxHash,
-    fundingTx: fundingTransaction,
-  }
-};
-```
+There are multiple ways to construct and broadcast the `MsgBtcStakeExpand` message to the Babylon network:
+* **Command Line Interface (CLI)**: 
+  Use the `babylond tx btcstaking btc-stake-expand` command.
+* **TypeScript Implementation**: 
+  Generate the message using TypeScript following this [reference implementation](https://github.com/babylonlabs-io/simple-staking/blob/2b9682c4f779ab39562951930bc3d023e5467461/src/app/hooks/services/useTransactionService.ts#L672-L679) and broadcast to the Babylon network.
+* **Golang Implementation**: 
+  Construct the message using Golang based on this [type reference](../x/btcstaking/types/tx.pb.go) and broadcast to the Babylon network.
+* **External References**: 
+  For detailed instructions on broadcasting transactions, refer to the external [Cosmos SDK documentation](https://docs.cosmos.network/main/learn/advanced/transactions#broadcasting-the-transaction).
 
 > **⚠️ Important**: The expansion message undergoes the same covenant verification process as new delegations. Ensure all slashing transactions and signatures are properly constructed according to the [staking script specification](./staking-script.md).
 
