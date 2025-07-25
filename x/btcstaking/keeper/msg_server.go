@@ -422,14 +422,21 @@ func (ms msgServer) validateStakeExpansionSig(
 	}
 	btcDel, params := delInfo.Delegation, delInfo.Params
 
-	if !btcDel.IsStakeExpansion() {
+	if !btcDel.IsStakeExpansion() && req.StakeExpansionTxSig != nil {
+		return fmt.Errorf("stake expansion tx signature provided for non-stake expansion delegation")
+	}
+
+	if !btcDel.IsStakeExpansion() && req.StakeExpansionTxSig == nil {
+		// not stake expansion, no signature provided, ok
 		return nil
 	}
 
-	if req.StakeExpansionTxSig == nil {
+	if btcDel.IsStakeExpansion() && req.StakeExpansionTxSig == nil {
 		return fmt.Errorf("empty stake expansion covenant signature")
 	}
 
+	// this is stake expansion delegation, the signature is provided
+	// in the message, verify it
 	if btcDel.StkExp.IsSignedByCovMember(req.Pk) {
 		ms.Logger(ctx).Debug("Received duplicated covenant signature in stake expansion transaction",
 			"covenant pk", req.Pk.MarshalHex())
