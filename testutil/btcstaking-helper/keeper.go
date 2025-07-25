@@ -11,6 +11,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	"cosmossdk.io/store"
 	storemetrics "cosmossdk.io/store/metrics"
+	storetypes "cosmossdk.io/store/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
@@ -100,6 +101,7 @@ func NewHelper(
 	t testing.TB,
 	btclcKeeper *types.MockBTCLightClientKeeper,
 	btccKeeper *types.MockBtcCheckpointKeeper,
+	btcStkStoreKey *storetypes.KVStoreKey,
 ) *Helper {
 	ctrl := gomock.NewController(t)
 
@@ -118,7 +120,7 @@ func NewHelper(
 	ckptKeeper := ftypes.NewMockCheckpointingKeeper(ctrl)
 	ckptKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(timestampedEpoch).AnyTimes()
 
-	return NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKeeper, ckptKeeper, ictvK)
+	return NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKeeper, ckptKeeper, ictvK, btcStkStoreKey)
 }
 
 func (h *Helper) WithBlockHeight(height int64) *Helper {
@@ -131,6 +133,7 @@ func NewHelperNoMocksCalls(
 	t testing.TB,
 	btclcKeeper *types.MockBTCLightClientKeeper,
 	btccKeeper *types.MockBtcCheckpointKeeper,
+	btcStkStoreKey *storetypes.KVStoreKey,
 ) *Helper {
 	ctrl := gomock.NewController(t)
 
@@ -140,7 +143,28 @@ func NewHelperNoMocksCalls(
 
 	ckptKeeper := ftypes.NewMockCheckpointingKeeper(ctrl)
 
-	return NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKeeper, ckptKeeper, ictvK)
+	return NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKeeper, ckptKeeper, ictvK, btcStkStoreKey)
+}
+
+// NewHelperWithIncentiveKeeper creates a new Helper with the given BTCLightClientKeeper and BtcCheckpointKeeper mocks, and an instance of the incentive keeper.
+func NewHelperWithIncentiveKeeper(
+	t testing.TB,
+	btclcKeeper *types.MockBTCLightClientKeeper,
+	btccKeeper *types.MockBtcCheckpointKeeper,
+) *Helper {
+	ctrl := gomock.NewController(t)
+
+	db := dbm.NewMemDB()
+	stateStore := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
+
+	accK := keepertest.AccountKeeper(t, db, stateStore)
+	bankK := keepertest.BankKeeper(t, db, stateStore, accK)
+
+	ictvK, _ := keepertest.IncentiveKeeperWithStore(t, db, stateStore, nil, bankK, accK, nil)
+
+	ckptKeeper := ftypes.NewMockCheckpointingKeeper(ctrl)
+
+	return NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKeeper, ckptKeeper, ictvK, nil)
 }
 
 func NewHelperWithBankMock(
@@ -149,6 +173,7 @@ func NewHelperWithBankMock(
 	btccKeeper *types.MockBtcCheckpointKeeper,
 	bankKeeper *types.MockBankKeeper,
 	ictvK *IctvKeeperK,
+	btcStkStoreKey *storetypes.KVStoreKey,
 ) *Helper {
 	ctrl := gomock.NewController(t)
 
@@ -157,7 +182,7 @@ func NewHelperWithBankMock(
 
 	ckptKeeper := ftypes.NewMockCheckpointingKeeper(ctrl)
 
-	return NewHelperWithStoreIncentiveAndBank(t, db, stateStore, btclcKeeper, btccKeeper, ckptKeeper, ictvK, bankKeeper)
+	return NewHelperWithStoreIncentiveAndBank(t, db, stateStore, btclcKeeper, btccKeeper, ckptKeeper, ictvK, bankKeeper, btcStkStoreKey)
 }
 
 func NewHelperWithStoreAndIncentive(
@@ -168,8 +193,9 @@ func NewHelperWithStoreAndIncentive(
 	btccKForBtcStaking *types.MockBtcCheckpointKeeper,
 	btccKForFinality *ftypes.MockCheckpointingKeeper,
 	ictvKeeper IctvKeeperI,
+	btcStkStoreKey *storetypes.KVStoreKey,
 ) *Helper {
-	k, _ := keepertest.BTCStakingKeeperWithStore(t, db, stateStore, nil, btclcKeeper, btccKForBtcStaking, ictvKeeper)
+	k, _ := keepertest.BTCStakingKeeperWithStore(t, db, stateStore, btcStkStoreKey, btclcKeeper, btccKForBtcStaking, ictvKeeper)
 	msgSrvr := keeper.NewMsgServerImpl(*k)
 
 	bscKeeper := k.BscKeeper.(bsckeeper.Keeper)
@@ -216,8 +242,9 @@ func NewHelperWithStoreIncentiveAndBank(
 	btccKForFinality *ftypes.MockCheckpointingKeeper,
 	ictvKeeper *IctvKeeperK,
 	bankKeeper *types.MockBankKeeper,
+	btcStkStoreKey *storetypes.KVStoreKey,
 ) *Helper {
-	k, _ := keepertest.BTCStakingKeeperWithStoreAndBank(t, db, stateStore, nil, btclcKeeper, btccKForBtcStaking, ictvKeeper, bankKeeper)
+	k, _ := keepertest.BTCStakingKeeperWithStoreAndBank(t, db, stateStore, btcStkStoreKey, btclcKeeper, btccKForBtcStaking, ictvKeeper, bankKeeper)
 	msgSrvr := keeper.NewMsgServerImpl(*k)
 
 	bscKeeper := k.BscKeeper.(bsckeeper.Keeper)
