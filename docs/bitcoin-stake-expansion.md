@@ -41,21 +41,19 @@ Bitcoin Stake Expansion enables existing active BTC delegations to be modified a
 ### 2.1 Overview of Expansion vs Traditional Unbond-Restake
 
 **Traditional Multi-Chain Staking Flow:**
-```mermaid
-graph LR
-    A[Initiate Unbonding] --> B[Stop Earning Rewards]
-    B --> C[Wait ~7 Days]
-    C --> D[Create New Delegation]
-    D --> E[Wait for Activation]
-    E --> F[Resume Rewards]
-```
+
+1. Stop Earning Rewards
+2. Wait ~7 Days
+3. Create New Delegation
+4. Wait for Activation
+5. Resume Rewards
+
 **Stake Expansion Flow:**
-```mermaid
-graph LR
-    A[Submit Expansion Request] --> B[Covenant Verification<br/>Rewards Continue]
-    B --> C[Atomic Activation]
-    C --> D[New Delegation Active]
-```
+
+1. Covenant Verification Rewards Continue
+2. Atomic Activation
+3. New Delegation Active
+
 
 > **⚡ Note**: Expansion maintains reward earning throughout the entire process, only transitioning atomically upon final activation.
 
@@ -67,7 +65,7 @@ graph LR
 - Funding UTXO must be from a separate, confirmed Bitcoin transaction controlled by your staking key
 - New finality provider list must include all existing FPs (can only add, not remove)
 - New staking amount must be ≥ original amount
-- All transactions must use current Babylon staking parameters
+- All transactions must use current Babylon staking parameters rules
 
 > **⚠️ Critical**: Create a separate funding transaction first, wait for confirmation, then use that UTXO as Input 1 in your expansion transaction. Expansion transactions are limited to exactly 2 inputs.
 
@@ -80,7 +78,7 @@ To expand a Bitcoin stake, you need to submit a `MsgBtcStakeExpand` message cont
 1. **Reference to your original stake** - Transaction hash of your active delegation
 2. **Funding preparation** - A confirmed Bitcoin transaction with additional funds
 3. **Expansion transaction** - A special 2-input Bitcoin transaction combining original stake + new funds
-4. **Updated delegation parameters** - New finality providers (superset), amounts, timelock
+4. **Updated delegation values** - New finality providers (superset), amounts, timelock
 5. **Security signatures** - Proof of key ownership and pre-signed slashing consent
 
 **High-Level Process:**
@@ -101,12 +99,13 @@ graph LR
 - Funding UTXO must be from a separate, confirmed Bitcoin transaction
 - New finality provider list must include all existing FPs (can only add, not remove)
 - New staking amount must be ≥ original amount
+- The babylon signer address must be the same from the old stake (staker_addr)
 
 **Common Mistakes:**
 - ❌ Using more than 2 inputs
 - ❌ Using unconfirmed funding transaction
 - ❌ Using different Bitcoin keys for original stake and funding
-- ❌ Wrong input order (original stake must be Input 0)
+- ❌ Wrong input order (original stake must be the first Input of index 0)
 
 ### 3.3 Expansion Data Requirements
 
@@ -127,8 +126,7 @@ graph LR
 
 **4. Expansion Transaction**
 - Source: Construct using Bitcoin staking libraries
-- Needed: 2-input transaction (original stake + funding UTXO) → expanded staking output
-- Structure: Input 0 (original stake) + Input 1 (funding) → Output 0 (expanded stake)
+- Structure: See detailed construction requirements in section 3.5
 
 **5. Slashing Transactions & Signatures**
 - Source: Create using staking parameters, sign with your Bitcoin key
@@ -167,21 +165,15 @@ To determine the correct parameters for expansion:
 > These parameters are part of the [x/btcstaking](../x/btcstaking) module and can be queried via a Babylon node using RPC/LCD endpoints or the CLI:
 >
 > ```bash
-> # Query current staking parameters
 > babylond query btcstaking params
-> 
-> # Query specific parameter version by Bitcoin height
-> babylond query btcstaking params --height [bitcoin-height]
-> 
-> # Query Bitcoin light client tip for parameter selection
-> babylond query btclightclient tip
+> babylond query btclightclient tip  
 > ```
 
 > **⚠️ Critical Warning**: Make sure that you are retrieving the BTC Staking parameters from a trusted node and verify their authenticity using additional sources. Using incorrect parameters will cause expansion validation to fail or create transactions incompatible with the current Babylon state.
 
 > **⚡ Parameter Selection for Expansion**
 >
-> Unlike post-staking registration which uses parameters based on Bitcoin inclusion height, expansions must use parameters corresponding to the **current Babylon Bitcoin light client tip** at expansion submission time. This pre-commitment ensures parameter consistency even if the expansion is later included in a Bitcoin block with different active parameters.
+> Unlike post-staking registration which uses parameters based on Bitcoin inclusion height, expansions must use parameters corresponding to the **current Babylon Bitcoin light client tip** at expansion submission time. This pre-commitment ensures parameter consistency even if the expansion is later included in a Bitcoin block with different active parameters. The new BTC stake expansion must respect the current Babylon staking parameters rules.
 
 ### 3.5 Detailed Transaction Construction
 
@@ -383,7 +375,7 @@ message MsgBtcStakeExpand {
   A Bech32-encoded Babylon address (`bbn...`) representing the
   staker's Babylon account where staking rewards will be accumulated.
   *This must be the same address that signed the original delegation and 
-  must also sign the expansion registration transaction*.
+  must also sign the expansion registration transaction*. The babylon signer address must be the same from the old stake (staker_addr).
   
   Example: `"bbn1abc123def456ghi789jkl012mno345pqr678stu901vwx234yz"`
 
