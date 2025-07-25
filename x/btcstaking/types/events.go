@@ -113,11 +113,20 @@ func NewCovenantSignatureReceivedEvent(
 	btcDel *BTCDelegation,
 	covPK *bbn.BIP340PubKey,
 	unbondingTxSig *bbn.BIP340Signature,
+	stakeExpansionTxSig *bbn.BIP340Signature,
 ) *EventCovenantSignatureReceived {
+
+	var stakeExpansionTxSigHex string
+
+	if btcDel.IsStakeExpansion() {
+		stakeExpansionTxSigHex = stakeExpansionTxSig.ToHexStr()
+	}
+
 	return &EventCovenantSignatureReceived{
-		StakingTxHash:                 btcDel.MustGetStakingTxHash().String(),
-		CovenantBtcPkHex:              covPK.MarshalHex(),
-		CovenantUnbondingSignatureHex: unbondingTxSig.ToHexStr(),
+		StakingTxHash:                      btcDel.MustGetStakingTxHash().String(),
+		CovenantBtcPkHex:                   covPK.MarshalHex(),
+		CovenantUnbondingSignatureHex:      unbondingTxSig.ToHexStr(),
+		CovenantStakeExpansionSignatureHex: stakeExpansionTxSigHex,
 	}
 }
 
