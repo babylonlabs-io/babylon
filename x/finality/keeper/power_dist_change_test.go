@@ -6,11 +6,8 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
-<<<<<<< HEAD
-=======
 	"cosmossdk.io/store/prefix"
 	storetypes "cosmossdk.io/store/types"
->>>>>>> 08f0beb (chore: refactor power dist event processing (#1404))
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/txscript"
