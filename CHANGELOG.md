@@ -121,6 +121,7 @@ command to modify `max-finality-providers` parameter.
 - [#1388](https://github.com/babylonlabs-io/babylon/pull/1388) Upgrade: state migration for v3
 - [#1392](https://github.com/babylonlabs-io/babylon/pull/1392) Add e2e test for BSN rollup rewards.
 - [#1303](https://github.com/babylonlabs-io/babylon/pull/1303) Add IBC callback middleware to `x/btcstaking` module to call add bsn rewards.
+- [#1404](https://github.com/babylonlabs-io/babylon/pull/1404) Refactor power dist event processing.
 - [#1415](https://github.com/babylonlabs-io/babylon/pull/1415) Bump ibc-go to v10.3.0 and e2e test `AddBsnRewards`
 with bad memo field in IBC callbacks.
 
@@ -148,6 +149,8 @@ cost per multi-staked finality provider
 FP data
 - [#1398](https://github.com/babylonlabs-io/babylon/pull/1398) Add custom tokenfactory
 bindings (thanks @benluelo for contribution)
+- [#1416](https://github.com/babylonlabs-io/babylon/pull/1416) Releax requirements
+for stake expansion funding output
 
 ### Bug fixes
 
@@ -173,6 +176,8 @@ already expanded delegations
 for multi staked fps
 - [#1384](https://github.com/babylonlabs-io/babylon/pull/1384) fix: Cascaded slashing
 adjustment
+- [#1418](https://github.com/babylonlabs-io/babylon/pull/1418) fix: add stake expansion
+covenant signature to the events
 
 ## v2.2.0
 
