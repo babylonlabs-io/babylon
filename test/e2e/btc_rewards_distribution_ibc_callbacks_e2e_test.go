@@ -243,8 +243,8 @@ func (s *IbcCallbackBsnAddRewards) Test4SendBsnRewardsCallback() {
 	bsnNode := s.BsnNode()
 
 	transferAmt := s.r.Int63n(2_000000) + 1_000000
-	tranferInt := math.NewInt(transferAmt)
-	rewardCoin := sdk.NewCoin(s.bsnCustomTokenDenom, tranferInt)
+	transferInt := math.NewInt(transferAmt)
+	rewardCoin := sdk.NewCoin(s.bsnCustomTokenDenom, transferInt)
 
 	fp2Ratio, fp3Ratio := math.LegacyMustNewDecFromStr("0.7"), math.LegacyMustNewDecFromStr("0.3")
 
@@ -334,15 +334,15 @@ func (s *IbcCallbackBsnAddRewards) Test4SendBsnRewardsCallback() {
 // errors out in the processing of adding rewards and rejects the ICS20 packet
 // returning the funds to the BSN sender.
 // Note: The bsn sender of rewards will still pay the fees of the IBC transaction
-// but will reiceve back the rewards sent thought ICS20. The IBC tx will respond
+// but will receive back the rewards sent through ICS20. The IBC tx will respond
 // without error and code zero, but the IBC packet will be rejected with Acknowledgement_Error
 func (s *IbcCallbackBsnAddRewards) Test5IbcSendBadBsnRewardsCallbackReturnFunds() {
 	bbnNode := s.BbnNode()
 	bsnNode := s.BsnNode()
 
 	transferAmt := s.r.Int63n(2_000000) + 1_000000
-	tranferInt := math.NewInt(transferAmt)
-	rewardCoin := sdk.NewCoin(s.bsnCustomTokenDenom, tranferInt)
+	transferInt := math.NewInt(transferAmt)
+	rewardCoin := sdk.NewCoin(s.bsnCustomTokenDenom, transferInt)
 
 	failingCallbackMemo := bstypes.CallbackMemo{
 		Action: bstypes.CallbackActionAddBsnRewardsMemo,
@@ -388,8 +388,8 @@ func (s *IbcCallbackBsnAddRewards) Test6SendBsnRewardsCallbackWithNativeToken() 
 	bsnNode := s.BsnNode()
 
 	transferAmt := s.r.Int63n(500) + 100000
-	tranferInt := math.NewInt(transferAmt)
-	ibcTransferOfNative := sdk.NewCoin(nativeDenom, tranferInt)
+	transferInt := math.NewInt(transferAmt)
+	ibcTransferOfNative := sdk.NewCoin(nativeDenom, transferInt)
 
 	bbnBalanceBeforeIbcTransfer, err := bbnNode.QueryBalances(bbnNode.PublicAddress)
 	s.Require().NoError(err)

@@ -57,25 +57,25 @@ func TestBabylonRepresentationIcs20TransferCoin(t *testing.T) {
 	packet := NewMockPacket("transfer", "channel-0", "transfer", "channel-0")
 
 	transferAmt := r.Int63n(2_000000) + 1_000000
-	tranferInt := math.NewInt(transferAmt)
+	transferInt := math.NewInt(transferAmt)
 
-	// test any coin comming from BSN to babylon
+	// test any coin coming from BSN to babylon
 	bsnDenom := "factory/bbn18ksee06lpvhrv6vxrtcsuju6sdkxzhww20w6fr/ee6f3aa622b84287391b"
 	bsnCoin, err := keeper.BabylonRepresentationIcs20TransferCoin(packet, types.Token{
 		Denom:  types.ExtractDenomFromPath(bsnDenom),
-		Amount: tranferInt.String(),
+		Amount: transferInt.String(),
 	})
 	require.NoError(t, err)
 	expectedBsnDenomAsIbcOnBabylon := "ibc/10AC285CC67C4B5F8D6F5AD86102143C087FEE2AFBD83AB87E2AEB494E2951CB"
-	require.Equal(t, bsnCoin.String(), sdk.NewCoin(expectedBsnDenomAsIbcOnBabylon, tranferInt).String())
+	require.Equal(t, bsnCoin.String(), sdk.NewCoin(expectedBsnDenomAsIbcOnBabylon, transferInt).String())
 
 	// test native ubbn that was first on babylon to BSN and then BSN
 	// is returning it to babylon
 	ubbnDenomInBsn := "transfer/channel-0/ubbn"
 	ubbnCoin, err := keeper.BabylonRepresentationIcs20TransferCoin(packet, types.Token{
 		Denom:  types.ExtractDenomFromPath(ubbnDenomInBsn),
-		Amount: tranferInt.String(),
+		Amount: transferInt.String(),
 	})
 	require.NoError(t, err)
-	require.Equal(t, ubbnCoin.String(), sdk.NewCoin(appparams.DefaultBondDenom, tranferInt).String())
+	require.Equal(t, ubbnCoin.String(), sdk.NewCoin(appparams.DefaultBondDenom, transferInt).String())
 }
