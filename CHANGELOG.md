@@ -48,6 +48,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#1747](https://github.com/babylonlabs-io/babylon/pull/1747) bump cosmos-sdk to `v0.53.4`
 - [#1062](https://github.com/babylonlabs-io/babylon/pull/1062) Add `anteHandler` to avoid fee grants on refundable tx (`x/incentive`)
 - [#1060](https://github.com/babylonlabs-io/babylon/pull/1060) Optimize `PubRandCommit` lookup in `x/finality` module
+- [#1416](https://github.com/babylonlabs-io/babylon/pull/1416) Releax requirements for stake expansion funding output
 
 ### Features
 
@@ -65,8 +66,6 @@ bindings (thanks @benluelo for contribution)
 - [#1594](https://github.com/babylonlabs-io/babylon/pull/1594) Add soft deleted to finality providers response.
 - [#1611](https://github.com/babylonlabs-io/babylon/pull/1611) Rename `x/btcstaking` prefixes as `v3.x`.
 - [#1668](https://github.com/babylonlabs-io/babylon/pull/1668) Bump dependencies based on dependabot alerts
-
-### Bug Fixes
 
 - [#1355](https://github.com/babylonlabs-io/babylon/pull/1355) Allow empty fees on genesis transactions
 - [#1453](https://github.com/babylonlabs-io/babylon/pull/1453) fix: inactive FP event on full unbonding

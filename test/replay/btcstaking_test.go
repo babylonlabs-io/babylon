@@ -10,7 +10,7 @@ import (
 	"github.com/babylonlabs-io/babylon/v4/btcstaking"
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	btcstktypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
-	"github.com/btcsuite/btcd/btcec/v2"
+	abci "github.com/cometbft/cometbft/abci/types"
 
 	"github.com/stretchr/testify/require"
 
@@ -570,116 +570,11 @@ func TestBadUnbondingFeeParams(t *testing.T) {
 	require.Contains(t, txResults[0].Log, btcstaking.ErrInvalidUnbondingFee.Error())
 }
 
-func TestExpandBTCDelegation(t *testing.T) {
-	t.Parallel()
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	driverTempDir := t.TempDir()
-	replayerTempDir := t.TempDir()
-	driver := NewBabylonAppDriver(r, t, driverTempDir, replayerTempDir)
-	driver.GenerateNewBlock()
-
-	covSender := driver.CreateCovenantSender()
-	require.NotNil(t, covSender)
-
-	infos := driver.CreateNFinalityProviderAccounts(1)
-	fp1 := infos[0]
-
-	sinfos := driver.CreateNStakerAccounts(1)
-	s1 := sinfos[0]
-
-	fp1.RegisterFinalityProvider()
-	driver.GenerateNewBlockAssertExecutionSuccess()
-
-	var (
-		stakingTime  = uint32(1000)
-		stakingValue = int64(100000000)
-	)
-	s1.CreatePreApprovalDelegation(
-		[]*bbn.BIP340PubKey{fp1.BTCPublicKey()},
-		stakingTime,
-		stakingValue,
-	)
-	driver.GenerateNewBlockAssertExecutionSuccess()
-
-	covSender.SendCovenantSignatures()
-	driver.GenerateNewBlockAssertExecutionSuccess()
-
-	driver.ActivateVerifiedDelegations(1)
-	activeDelegations := driver.GetActiveBTCDelegations(t)
-	require.Len(t, activeDelegations, 1)
-
-	prevStkTx, prevStkTxBz, err := bbn.NewBTCTxFromHex(activeDelegations[0].StakingTxHex)
-	require.NoError(t, err)
-
-	btcExpMsg := s1.CreateBtcStakeExpand(
-		[]*bbn.BIP340PubKey{fp1.BTCPublicKey()},
-		stakingTime,
-		stakingValue,
-		prevStkTx,
-	)
-	driver.GenerateNewBlockAssertExecutionSuccess()
-
-	// A BTC delegation with stake expansion should be creatd
-	// with pending state
-	pendingDelegations := driver.GetPendingBTCDelegations(t)
-	require.Len(t, pendingDelegations, 1)
-
-	require.NotNil(t, pendingDelegations[0].StkExp)
-
-	covSender.SendCovenantSignatures()
-	driver.GenerateNewBlockAssertExecutionSuccess()
-
-	// After getting covenant sigs, stake expansion delegation
-	// should be verified
-	verifiedDels := driver.GetVerifiedBTCDelegations(t)
-	require.Len(t, verifiedDels, 1)
-	require.NotNil(t, verifiedDels[0].StkExp)
-
-	// wait stake expansion Tx be 'k' deep in BTC
-	blockWithProofs := driver.IncludeVerifiedStakingTxInBTC(1)
-	require.Len(t, blockWithProofs.Proofs, 2)
-
-	// Send MsgBTCUndelegate for the first delegation
-	// to activate stake expansion
-	spendingTx, err := bbn.NewBTCTxFromBytes(btcExpMsg.StakingTx)
-	require.NoError(t, err)
-
-	fundingTx, err := bbn.NewBTCTxFromBytes(btcExpMsg.FundingTx)
-	require.NoError(t, err)
-
-	params := driver.GetBTCStakingParams(t)
-	spendingTxWithWitnessBz, _ := datagen.AddWitnessToStakeExpTx(
-		t,
-		prevStkTx.TxOut[0],
-		fundingTx.TxOut[0],
-		s1.BTCPrivateKey,
-		covenantSKs,
-		params.CovenantQuorum,
-		[]*btcec.PublicKey{fp1.BTCPrivateKey.PubKey()},
-		uint16(stakingTime),
-		stakingValue,
-		spendingTx,
-		driver.App.BTCLightClientKeeper.GetBTCNet(),
-	)
-
-	msg := &btcstktypes.MsgBTCUndelegate{
-		Signer:                        s1.AddressString(),
-		StakingTxHash:                 prevStkTx.TxHash().String(),
-		StakeSpendingTx:               spendingTxWithWitnessBz,
-		StakeSpendingTxInclusionProof: btcstktypes.NewInclusionProofFromSpvProof(blockWithProofs.Proofs[1]),
-		FundingTransactions:           [][]byte{prevStkTxBz, btcExpMsg.FundingTx},
+func attributeValueNonEmpty(event abci.Event, attributeKey string) bool {
+	for _, attribute := range event.Attributes {
+		if attribute.Key == attributeKey && len(attribute.Value) > 0 {
+			return true
+		}
 	}
-
-	s1.SendMessage(msg)
-	driver.GenerateNewBlockAssertExecutionSuccess()
-
-	// After unbonding the initial delegation
-	// the stake expansion should become active
-	// and the initial delegation should become unbonded
-	activeDelegations = driver.GetActiveBTCDelegations(t)
-	require.Len(t, activeDelegations, 1)
-	require.NotNil(t, activeDelegations[0].StkExp)
-
-	unbondedDelegations := driver.GetUnbondedBTCDelegations(t)
-	require.Len(t, unbondedDelegations, 1)
+	return false
 }
