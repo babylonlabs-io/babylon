@@ -333,7 +333,7 @@ func (s *IbcCallbackBsnAddRewards) Test4SendBsnRewardsCallback() {
 // errors out in the processing of adding rewards and rejects the ICS20 packet
 // returning the funds to the BSN sender.
 // Note: The bsn sender of rewards will still pay the fees of the IBC transaction
-// but will reiceve back the rewards sent throught ICS20. The IBC tx will respond
+// but will reiceve back the rewards sent thought ICS20. The IBC tx will respond
 // without error and code zero, but the IBC packet will be rejected with Acknowledgement_Error
 func (s *IbcCallbackBsnAddRewards) Test5IbcSendBadBsnRewardsCallbackReturnFunds() {
 	bbnNode := s.BbnNode()
