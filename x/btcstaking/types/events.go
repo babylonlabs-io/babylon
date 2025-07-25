@@ -115,7 +115,6 @@ func NewCovenantSignatureReceivedEvent(
 	unbondingTxSig *bbn.BIP340Signature,
 	stakeExpansionTxSig *bbn.BIP340Signature,
 ) *EventCovenantSignatureReceived {
-
 	var stakeExpansionTxSigHex string
 
 	if btcDel.IsStakeExpansion() {
