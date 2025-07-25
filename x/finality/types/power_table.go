@@ -224,6 +224,10 @@ func (v *FinalityProviderDistInfo) AddBondedSats(sats uint64) {
 }
 
 func (v *FinalityProviderDistInfo) RemoveBondedSats(sats uint64) {
+	// safeguard against underflow in total bonded satoshis
+	if v.TotalBondedSat < sats {
+		sats = v.TotalBondedSat
+	}
 	v.TotalBondedSat -= sats
 }
 
