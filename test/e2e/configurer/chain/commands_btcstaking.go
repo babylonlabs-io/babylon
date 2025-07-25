@@ -197,8 +197,8 @@ func (n *NodeConfig) AddCovenantSigsFromVal(covPK *bbn.BIP340PubKey, stakingTxHa
 	n.AddCovenantSigs("val", covPK, stakingTxHash, slashingSigs, unbondingSig, unbondingSlashingSigs, nil)
 }
 
-func (n *NodeConfig) AddCovenantSigsFromValForStakeExp(covPK *bbn.BIP340PubKey, stakingTxHash string, slashingSigs [][]byte, unbondingSig *bbn.BIP340Signature, unbondingSlashingSigs [][]byte, stkExpSig *bbn.BIP340Signature) {
-	n.AddCovenantSigs("val", covPK, stakingTxHash, slashingSigs, unbondingSig, unbondingSlashingSigs, stkExpSig)
+func (n *NodeConfig) AddCovenantSigsFromValForStakeExp(covPK *bbn.BIP340PubKey, stakingTxHash string, slashingSigs [][]byte, unbondingSig *bbn.BIP340Signature, unbondingSlashingSigs [][]byte, stkExpSig *bbn.BIP340Signature) string {
+	return n.AddCovenantSigs("val", covPK, stakingTxHash, slashingSigs, unbondingSig, unbondingSlashingSigs, stkExpSig)
 }
 
 func (n *NodeConfig) AddCovenantSigs(
@@ -209,7 +209,7 @@ func (n *NodeConfig) AddCovenantSigs(
 	unbondingSig *bbn.BIP340Signature,
 	unbondingSlashingSigs [][]byte,
 	stakeExpTxSig *bbn.BIP340Signature,
-) {
+) string {
 	n.LogActionF("adding covenant signature from nodeName: %s", n.Name)
 
 	covPKHex := covPK.MarshalHex()
@@ -243,9 +243,11 @@ func (n *NodeConfig) AddCovenantSigs(
 	cmd = append(cmd, "--gas=3000000")
 	cmd = append(cmd, "--gas-adjustment=1.2")
 
-	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
+	outBuf, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
 	require.NoError(n.t, err)
 	n.LogActionF("successfully added covenant signatures")
+
+	return GetTxHashFromOutput(outBuf.String())
 }
 
 func (n *NodeConfig) AddBsnRewards(
@@ -377,7 +379,7 @@ func (n *NodeConfig) BTCUndelegate(
 	spendStakeTx *wire.MsgTx,
 	spendStakeTxInclusionProof *bstypes.InclusionProof,
 	fundingTxs []*wire.MsgTx,
-) {
+) string {
 	n.LogActionF("undelegate by using signature on unbonding tx from delegator")
 
 	spendStakeTxBytes, err := bbn.SerializeBTCTx(spendStakeTx)
@@ -394,11 +396,12 @@ func (n *NodeConfig) BTCUndelegate(
 	}
 	fundingTxsHexStr := strings.Join(fundingTxsHex, ",")
 
-	cmd := []string{"babylond", "tx", "btcstaking", "btc-undelegate", stakingTxHash.String(), spendStakeTxHex, inclusionProofHex, fundingTxsHexStr, "--from=val"}
+	cmd := []string{"babylond", "tx", "btcstaking", "btc-undelegate", stakingTxHash.String(), spendStakeTxHex, inclusionProofHex, fundingTxsHexStr, "--from=val", "--gas=500000"}
 
-	_, _, err = n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
+	outBuf, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
 	require.NoError(n.t, err)
 	n.LogActionF("successfully added signature on unbonding tx from delegator")
+	return GetTxHashFromOutput(outBuf.String())
 }
 
 func (n *NodeConfig) AddBTCDelegationInclusionProof(

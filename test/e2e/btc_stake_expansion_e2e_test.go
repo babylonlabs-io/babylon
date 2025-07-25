@@ -1,13 +1,13 @@
 package e2e
 
 import (
-	"encoding/hex"
 	"math"
 	"math/rand"
 	"time"
 
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/stretchr/testify/suite"
 
@@ -115,9 +115,9 @@ func (s *BTCStakeExpansionTestSuite) Test1CreateStakeExpansionDelegation() {
 	s.Equal(delegation.BtcDelegation.StakerAddr, nonValidatorNode.PublicAddress)
 
 	// Step 2: submit covenant signature to activate the BTC delegation
-	pendingDel, err := chain.ParseRespBTCDelToBTCDel(pendingDels.Dels[0])
+	originalDel, err := chain.ParseRespBTCDelToBTCDel(pendingDels.Dels[0])
 	s.NoError(err)
-	s.addCovenantSigs(pendingDel)
+	s.addCovenantSigs(originalDel)
 
 	// ensure the BTC delegation has covenant sigs now
 	activeDelsSet := nonValidatorNode.QueryFinalityProviderDelegations(s.cacheFP.BtcPk.MarshalHex())
@@ -145,26 +145,21 @@ func (s *BTCStakeExpansionTestSuite) Test1CreateStakeExpansionDelegation() {
 		activeDel,
 	)
 
-	pendingDelSet = nonValidatorNode.QueryFinalityProviderDelegations(s.cacheFP.BtcPk.MarshalHex())
-	s.Len(pendingDelSet, 1)
-	pendingDels = pendingDelSet[0]
-	s.Len(pendingDels.Dels, 1)
-	s.Equal(s.delBTCSK.PubKey().SerializeCompressed()[1:], pendingDels.Dels[0].BtcPk.MustToBTCPK().SerializeCompressed()[1:])
-	s.Len(pendingDels.Dels[0].CovenantSigs, 0)
-	s.NotNil(pendingDels.Dels[0].StkExp)
-
-	// check delegation
-	stkExpDelegation := nonValidatorNode.QueryBtcDelegation(stkExpDelStakingSlashingInfo.StakingTx.TxHash().String())
+	// check stake expansion delegation is pending
+	stkExpTxHash := stkExpDelStakingSlashingInfo.StakingTx.TxHash()
+	stkExpDelegation := nonValidatorNode.QueryBtcDelegation(stkExpTxHash.String())
 	s.NotNil(stkExpDelegation)
 	s.Equal(stkExpDelegation.BtcDelegation.StakerAddr, nonValidatorNode.PublicAddress)
+	s.NotNil(stkExpDelegation.BtcDelegation.StkExp)
+	s.Equal(stkExpDelegation.BtcDelegation.StatusDesc, bstypes.BTCDelegationStatus_PENDING.String())
 
 	// Step 4: submit covenant signature to verify the BTC expansion delegation
-	pendingDel, err = chain.ParseRespBTCDelToBTCDel(pendingDels.Dels[0])
+	stkExpDel, err := chain.ParseRespBTCDelToBTCDel(stkExpDelegation.BtcDelegation)
 	s.NoError(err)
-	s.addCovenantSigs(pendingDel)
+	s.addCovenantSigs(stkExpDel)
 
 	// ensure the BTC staking expansion delegation is verified now
-	stkExpDelegation = nonValidatorNode.QueryBtcDelegation(stkExpDelStakingSlashingInfo.StakingTx.TxHash().String())
+	stkExpDelegation = nonValidatorNode.QueryBtcDelegation(stkExpTxHash.String())
 	s.NotNil(stkExpDelegation)
 	s.Equal(stkExpDelegation.BtcDelegation.StatusDesc, bstypes.BTCDelegationStatus_VERIFIED.String())
 
@@ -205,7 +200,7 @@ func (s *BTCStakeExpansionTestSuite) Test1CreateStakeExpansionDelegation() {
 	prevDelStakingTxHash := prevDelStakingInfo.StakingTx.TxHash()
 	nonValidatorNode.SubmitRefundableTxWithAssertion(func() {
 		// submit the message for creating BTC undelegation
-		nonValidatorNode.BTCUndelegate(
+		txHash := nonValidatorNode.BTCUndelegate(
 			&prevDelStakingTxHash,
 			stakeExpTxMsg,
 			inclusionProof,
@@ -215,7 +210,10 @@ func (s *BTCStakeExpansionTestSuite) Test1CreateStakeExpansionDelegation() {
 			},
 		)
 		// wait for a block so that above txs take effect
-		nonValidatorNode.WaitForNextBlock()
+		nonValidatorNode.WaitForNextBlocks(2)
+
+		res, _ := nonValidatorNode.QueryTx(txHash)
+		s.Equal(res.Code, uint32(0), res.RawLog)
 	}, true)
 
 	// Wait for unbonded delegations to be created
@@ -303,8 +301,9 @@ func (s *BTCStakeExpansionTestSuite) addCovenantSigs(del *bstypes.BTCDelegation)
 
 	covStkExpSigs := []*bbn.BIP340Signature{}
 	if del.IsStakeExpansion() {
-		prevDelTxHash := hex.EncodeToString(del.StkExp.PreviousStakingTxHash)
-		prevDelRes := nonValidatorNode.QueryBtcDelegation(prevDelTxHash)
+		prevDelTxHash, err := chainhash.NewHash(del.StkExp.PreviousStakingTxHash)
+		s.NoError(err)
+		prevDelRes := nonValidatorNode.QueryBtcDelegation(prevDelTxHash.String())
 		s.NotNil(prevDelRes)
 		prevDel := prevDelRes.BtcDelegation
 		s.NotNil(prevDel)
@@ -325,7 +324,7 @@ func (s *BTCStakeExpansionTestSuite) addCovenantSigs(del *bstypes.BTCDelegation)
 			if del.IsStakeExpansion() {
 				stkExpSig = covStkExpSigs[i]
 			}
-			nonValidatorNode.AddCovenantSigsFromValForStakeExp(
+			txHash := nonValidatorNode.AddCovenantSigsFromValForStakeExp(
 				covenantSlashingSigs[i].CovPk,
 				stakingTxHash,
 				covenantSlashingSigs[i].AdaptorSigs,
@@ -334,10 +333,10 @@ func (s *BTCStakeExpansionTestSuite) addCovenantSigs(del *bstypes.BTCDelegation)
 				stkExpSig,
 			)
 			// wait for a block so that above txs take effect
-			nonValidatorNode.WaitForNextBlock()
+			nonValidatorNode.WaitForNextBlocks(2)
+
+			res, _ := nonValidatorNode.QueryTx(txHash)
+			s.Equal(res.Code, uint32(0), res.RawLog)
 		}, true)
 	}
-
-	// wait for a block so that above txs take effect
-	nonValidatorNode.WaitForNextBlocks(2)
 }
