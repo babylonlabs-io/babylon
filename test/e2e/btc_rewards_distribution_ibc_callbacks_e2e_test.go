@@ -387,7 +387,7 @@ func (s *IbcCallbackBsnAddRewards) Test6SendBsnRewardsCallbackWithNativeToken() 
 	bbnNode := s.BbnNode()
 	bsnNode := s.BsnNode()
 
-	transferAmt := s.r.Int63n(2_000000) + 1_000000
+	transferAmt := s.r.Int63n(500) + 100000
 	tranferInt := math.NewInt(transferAmt)
 	ibcTransferOfNative := sdk.NewCoin(nativeDenom, tranferInt)
 
@@ -400,10 +400,6 @@ func (s *IbcCallbackBsnAddRewards) Test6SendBsnRewardsCallbackWithNativeToken() 
 	// Send ubbn native token transfer to the bsn sender of rewards
 	txHashIbcNativeTransfer := bbnNode.SendIBCTransfer(bbnNode.PublicAddress, s.bsnSenderAddr, "transfer", ibcTransferOfNative)
 	bbnNode.WaitForNextBlock()
-	// rewardCoin := sdk.NewCoin(s.bsnCustomTokenDenom, tranferInt)
-
-	// 2999393815240ubbn,
-	// 2999392154863ubbn,
 
 	txResIbcNative, txRespIbcNativeTransfer := bbnNode.QueryTx(txHashIbcNativeTransfer)
 	s.Require().Zero(txResIbcNative.Code, fmt.Sprintf("Transaction failed with code %d: %s", txResIbcNative.Code, txResIbcNative.RawLog))
