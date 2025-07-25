@@ -162,6 +162,11 @@ type ParsedCreateDelStkExp struct {
 	// OtherFundingOutput that was used to pay for fees and optionally increase the
 	// amount of BTC staked.
 	OtherFundingOutput *wire.TxOut
+	// FundingTxHash is the hash of the funding transaction that was used to pay for fees
+	// and optionally increase the amount of BTC staked.
+	FundingTxHash chainhash.Hash
+	// FundingOutputIndex is the index of the OtherFundingOutput
+	FundingOutputIndex uint32
 }
 
 // parseCreateDelegationMessage parses MsgCreateBTCDelegation message and performs some basic
