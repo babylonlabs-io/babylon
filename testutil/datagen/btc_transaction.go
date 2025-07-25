@@ -400,6 +400,16 @@ func GenRandomTx(r *rand.Rand) *wire.MsgTx {
 	return tx
 }
 
+func GenRandomTxWithOutputValue(r *rand.Rand, value int64) *wire.MsgTx {
+	tx := GenRandomTx(r)
+	if len(tx.TxOut) == 0 {
+		tx.AddTxOut(wire.NewTxOut(value, GenRandomByteArray(r, 80)))
+	} else {
+		tx.TxOut[0].Value = value
+	}
+	return tx
+}
+
 func GenRandomTxWithOutputs(r *rand.Rand, numOutputs int) *wire.MsgTx {
 	// structure of the below tx is from https://github.com/btcsuite/btcd/blob/master/wire/msgtx_test.go
 	tx := &wire.MsgTx{

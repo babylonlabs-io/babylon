@@ -532,6 +532,40 @@ func GenBTCStakingSlashingInfoWithInputs(
 	slashingRate sdkmath.LegacyDec,
 	slashingChangeLockTime uint16,
 ) *TestStakingSlashingInfo {
+	return GenBTCStakingSlashingInfoWithInputsAndChange(
+		r,
+		t,
+		btcNet,
+		outPoints,
+		stakerSK,
+		fpPKs,
+		covenantPKs,
+		covenantQuorum,
+		stakingTimeBlocks,
+		stakingValue,
+		slashingPkScript,
+		slashingRate,
+		slashingChangeLockTime,
+		10000,
+	)
+}
+
+func GenBTCStakingSlashingInfoWithInputsAndChange(
+	r *rand.Rand,
+	t testing.TB,
+	btcNet *chaincfg.Params,
+	outPoints []*wire.OutPoint,
+	stakerSK *btcec.PrivateKey,
+	fpPKs []*btcec.PublicKey,
+	covenantPKs []*btcec.PublicKey,
+	covenantQuorum uint32,
+	stakingTimeBlocks uint16,
+	stakingValue int64,
+	slashingPkScript []byte,
+	slashingRate sdkmath.LegacyDec,
+	slashingChangeLockTime uint16,
+	changeAmt int64,
+) *TestStakingSlashingInfo {
 	require.NotEmpty(t, outPoints)
 
 	stakingInfo, err := btcstaking.BuildStakingInfo(
@@ -560,7 +594,7 @@ func GenBTCStakingSlashingInfoWithInputs(
 	require.NoError(t, err)
 	require.False(t, txscript.GetScriptClass(changeScript) == txscript.NonStandardTy)
 
-	tx.AddTxOut(wire.NewTxOut(10000, changeScript))
+	tx.AddTxOut(wire.NewTxOut(changeAmt, changeScript))
 
 	// Build slashing tx
 	slashingMsgTx, err := btcstaking.BuildSlashingTxFromStakingTxStrict(
@@ -616,6 +650,42 @@ func GenBTCStakingSlashingInfo(
 		slashingPkScript,
 		slashingRate,
 		slashingChangeLockTime,
+	)
+}
+
+func GenBTCStakingSlashingInfoWithChangeAmt(
+	r *rand.Rand,
+	t testing.TB,
+	btcNet *chaincfg.Params,
+	stakerSK *btcec.PrivateKey,
+	fpPKs []*btcec.PublicKey,
+	covenantPKs []*btcec.PublicKey,
+	covenantQuorum uint32,
+	stakingTimeBlocks uint16,
+	stakingValue int64,
+	slashingPkScript []byte,
+	slashingRate sdkmath.LegacyDec,
+	slashingChangeLockTime uint16,
+	changeAmt int64,
+) *TestStakingSlashingInfo {
+	// an arbitrary input
+	spend := makeSpendableOutWithRandOutPoint(r, btcutil.Amount(stakingValue+UnbondingTxFee))
+	outPoint := &spend.prevOut
+	return GenBTCStakingSlashingInfoWithInputsAndChange(
+		r,
+		t,
+		btcNet,
+		[]*wire.OutPoint{outPoint},
+		stakerSK,
+		fpPKs,
+		covenantPKs,
+		covenantQuorum,
+		stakingTimeBlocks,
+		stakingValue,
+		slashingPkScript,
+		slashingRate,
+		slashingChangeLockTime,
+		changeAmt,
 	)
 }
 
@@ -1036,34 +1106,4 @@ func AddWitnessToStakeExpTx(
 	require.NoError(t, err)
 
 	return serializedUnbondingTxWithWitness, spendingTx
-}
-
-func GenFundingTx(
-	t *testing.T,
-	r *rand.Rand,
-	btcNet *chaincfg.Params,
-	outPoint *wire.OutPoint,
-	outAmount int64,
-	stakingOutput *wire.TxOut,
-) *wire.MsgTx {
-	// Create funding tx that spends the provided outPoint
-	fundingTx := wire.NewMsgTx(2)
-
-	// Input: from given outPoint
-	txIn := wire.NewTxIn(outPoint, nil, nil)
-	fundingTx.AddTxIn(txIn)
-
-	// Output: stake expansion output (same as original stakingOutput)
-	fundingTx.AddTxOut(wire.NewTxOut(stakingOutput.Value, stakingOutput.PkScript))
-
-	// Add change output if needed
-	change := outAmount - stakingOutput.Value
-	if change > 1000 {
-		changeScript, err := GenRandomPubKeyHashScript(r, btcNet)
-		require.NoError(t, err)
-		require.False(t, txscript.GetScriptClass(changeScript) == txscript.NonStandardTy)
-		fundingTx.AddTxOut(wire.NewTxOut(change, changeScript))
-	}
-
-	return fundingTx
 }
