@@ -398,14 +398,15 @@ func (s *IbcCallbackBsnAddRewards) Test6SendBsnRewardsCallbackWithNativeToken() 
 	s.Require().NoError(err)
 
 	// Send ubbn native token transfer to the bsn sender of rewards
-	txHashIbcNativeTransfer := bbnNode.SendIBCTransfer(bbnNode.WalletName, s.bsnSenderAddr, "transfer", ibcTransferOfNative)
+	txHashIbcNativeTransfer := bbnNode.SendIBCTransfer(bbnNode.PublicAddress, s.bsnSenderAddr, "transfer", ibcTransferOfNative)
 	bbnNode.WaitForNextBlock()
 	// rewardCoin := sdk.NewCoin(s.bsnCustomTokenDenom, tranferInt)
 
 	// 2999393815240ubbn,
 	// 2999392154863ubbn,
 
-	_, txRespIbcNativeTransfer := bbnNode.QueryTx(txHashIbcNativeTransfer)
+	txResIbcNative, txRespIbcNativeTransfer := bbnNode.QueryTx(txHashIbcNativeTransfer)
+	s.Require().Zero(txResIbcNative.Code, fmt.Sprintf("Transaction failed with code %d: %s", txResIbcNative.Code, txResIbcNative.RawLog))
 	txFeesPaidIbcNativeTransfer := txRespIbcNativeTransfer.GetFee()
 
 	expectedBbnBalance := bbnBalanceBeforeIbcTransfer.Sub(txFeesPaidIbcNativeTransfer.Add(ibcTransferOfNative)...).String()
@@ -415,16 +416,16 @@ func (s *IbcCallbackBsnAddRewards) Test6SendBsnRewardsCallbackWithNativeToken() 
 		bbnBalanceAfterIbcTransfer, err := bbnNode.QueryBalances(bbnNode.PublicAddress)
 		s.Require().NoError(err)
 
-		bsnBalanceAfterIbcTransfer, err := bsnNode.QueryBalances(s.bsnSenderAddr)
-		s.Require().NoError(err)
-
 		if !strings.EqualFold(expectedBbnBalance, bbnBalanceAfterIbcTransfer.String()) {
 			s.T().Logf(
-				"bbnBalanceAfterIbcTransfer: %s; expectedBbnBalance: %s, txFees: %s, coinTransfer: %s",
-				bbnBalanceAfterIbcTransfer.String(), expectedBbnBalance, txFeesPaidIbcNativeTransfer.String(), ibcTransferOfNative.String(),
+				"bbnBalanceAfterIbcTransfer: %s; \n bbnBalanceBeforeIbcTransfer: %s expectedBbnBalance: %s, txFees: %s, coinTransfer: %s",
+				bbnBalanceAfterIbcTransfer.String(), bbnBalanceBeforeIbcTransfer.String(), expectedBbnBalance, txFeesPaidIbcNativeTransfer.String(), ibcTransferOfNative.String(),
 			)
 			return false
 		}
+
+		bsnBalanceAfterIbcTransfer, err := bsnNode.QueryBalances(s.bsnSenderAddr)
+		s.Require().NoError(err)
 
 		ibcDenomOfbabylonNativeTokenInBsn := getFirstIBCDenom(bsnBalanceAfterIbcTransfer)
 		ibcBabylonNativeTokenTransferInBsn = sdk.NewCoin(ibcDenomOfbabylonNativeTokenInBsn, ibcTransferOfNative.Amount)
@@ -439,7 +440,7 @@ func (s *IbcCallbackBsnAddRewards) Test6SendBsnRewardsCallbackWithNativeToken() 
 		}
 
 		return true
-	}, 1*time.Minute, 1*time.Second, "Transfer was not successful")
+	}, 3*time.Minute, 1*time.Second, "Transfer was not successful")
 
 	// send the native token `ubbn` that was bridged to the bsn sender as rewards and check if the
 	// ibc callback middleware can correctly parse everything
@@ -475,7 +476,7 @@ func (s *IbcCallbackBsnAddRewards) Test6SendBsnRewardsCallbackWithNativeToken() 
 		s.Require().NoError(err)
 
 		ibcTransferTxHash := bsnNode.SendIBCTransfer(s.bsnSenderAddr, s.bbnIbcCallbackReceiverAddr, callbackMemoString, ibcBabylonNativeTokenTransferInBsn)
-		bsnNode.WaitForNextBlocks(5)
+		bsnNode.WaitForNextBlocks(15)
 
 		ibcTxRes, ibcTx, err := bsnNode.QueryTxWithError(ibcTransferTxHash)
 		s.Require().NoError(err)
