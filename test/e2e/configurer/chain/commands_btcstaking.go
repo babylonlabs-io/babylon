@@ -749,14 +749,8 @@ func (n *NodeConfig) createBtcStakeExpandMessage(
 	}
 
 	// Create funding transaction
-	fundingTx := datagen.GenFundingTx(
-		t,
-		r,
-		btcNet,
-		&wire.OutPoint{Index: 0},
-		stakingValue,
-		prevDel.MustGetStakingTx().TxOut[prevDel.StakingOutputIdx],
-	)
+	fundingTx := datagen.GenRandomTxWithOutputValue(r, 10000000)
+
 	// Convert previousStakingTxHash to OutPoint
 	prevDelTxHash := prevDel.MustGetStakingTxHash()
 	prevStakingOutPoint := wire.NewOutPoint(&prevDelTxHash, datagen.StakingOutIdx)

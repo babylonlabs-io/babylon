@@ -20,9 +20,9 @@ func TestExpandBTCDelegation(t *testing.T) {
 		fundingSetup func(s *testSetup) (*wire.MsgTx, uint32)
 	}{
 		{
-			name: "with random funding tx (default)",
+			name: "with random funding tx",
 			fundingSetup: func(s *testSetup) (*wire.MsgTx, uint32) {
-				return nil, 0
+				return datagen.GenRandomTxWithOutputValue(s.r, 100000), 0
 			},
 		},
 		{
@@ -49,14 +49,16 @@ func TestExpandBTCDelegation(t *testing.T) {
 
 			fundingTx, fundingTxOutIdx := tc.fundingSetup(s)
 
-			btcExpMsg := s.Staker.CreateBtcStakeExpand(
+			btcExpMsg := s.Staker.CreateBtcExpandMessage(
 				[]*bbn.BIP340PubKey{s.Fp.BTCPublicKey()},
 				stakingTime,
 				stakingValue,
-				prevStkTx,
+				prevStkTx.TxHash().String(),
 				fundingTx,
 				fundingTxOutIdx,
 			)
+			s.Staker.SendMessage(btcExpMsg)
+
 			s.Driver.GenerateNewBlockAssertExecutionSuccess()
 
 			pendingDelegations := s.Driver.GetPendingBTCDelegations(t)
@@ -139,7 +141,7 @@ func TestInvalidStakeExpansion(t *testing.T) {
 		testCase func(s *testSetup)
 	}{
 		{
-			name: "using previous staking output as funding output",
+			name: "using a staking output as funding output",
 			testCase: func(s *testSetup) {
 				prevStkTx, _, err := bbn.NewBTCTxFromHex(s.ActiveDelegations[0].StakingTxHex)
 				require.NoError(t, err)
@@ -166,6 +168,21 @@ func TestInvalidStakeExpansion(t *testing.T) {
 		{
 			name: "report staking output spending before it is k-deep in BTC",
 			testCase: func(s *testSetup) {
+				// prevStkTx, _, err := bbn.NewBTCTxFromHex(s.ActiveDelegations[0].StakingTxHex)
+				// require.NoError(t, err)
+				// prevStkTxHash := prevStkTx.TxHash()
+
+				// fundingTx, _, err := bbn.NewBTCTxFromHex(s.ActiveDelegations[1].StakingTxHex)
+				// require.NoError(t, err)
+
+				// stakeExpandMsg := s.Staker.CreateBtcExpandMessage(
+				// 	[]*bbn.BIP340PubKey{s.Fp.BTCPublicKey()},
+				// 	1000,
+				// 	100000000,
+				// 	prevStkTxHash.String(),
+				// 	nil,
+				// 	0,
+				// )
 
 			},
 		},
@@ -181,6 +198,7 @@ func TestInvalidStakeExpansion(t *testing.T) {
 }
 
 type testSetup struct {
+	r                 *rand.Rand
 	Driver            *BabylonAppDriver
 	CovSender         *CovenantSender
 	Staker            *Staker
@@ -237,6 +255,7 @@ func setupTest(t *testing.T) *testSetup {
 	})
 
 	return &testSetup{
+		r:                 r,
 		Driver:            driver,
 		CovSender:         covSender,
 		Staker:            s1,

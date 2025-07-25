@@ -1107,33 +1107,3 @@ func AddWitnessToStakeExpTx(
 
 	return serializedUnbondingTxWithWitness, spendingTx
 }
-
-func GenFundingTx(
-	t *testing.T,
-	r *rand.Rand,
-	btcNet *chaincfg.Params,
-	outPoint *wire.OutPoint,
-	outAmount int64,
-	stakingOutput *wire.TxOut,
-) *wire.MsgTx {
-	// Create funding tx that spends the provided outPoint
-	fundingTx := wire.NewMsgTx(2)
-
-	// Input: from given outPoint
-	txIn := wire.NewTxIn(outPoint, nil, nil)
-	fundingTx.AddTxIn(txIn)
-
-	// Output: stake expansion output (same as original stakingOutput)
-	fundingTx.AddTxOut(wire.NewTxOut(stakingOutput.Value, stakingOutput.PkScript))
-
-	// Add change output if needed
-	change := outAmount - stakingOutput.Value
-	if change > 1000 {
-		changeScript, err := GenRandomPubKeyHashScript(r, btcNet)
-		require.NoError(t, err)
-		require.False(t, txscript.GetScriptClass(changeScript) == txscript.NonStandardTy)
-		fundingTx.AddTxOut(wire.NewTxOut(change, changeScript))
-	}
-
-	return fundingTx
-}

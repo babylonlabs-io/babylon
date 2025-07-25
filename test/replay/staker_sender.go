@@ -1,7 +1,6 @@
 package replay
 
 import (
-	"crypto/sha256"
 	"math/rand"
 	"testing"
 
@@ -336,42 +335,6 @@ func (s *Staker) CreatePreApprovalDelegation(
 
 	s.SendMessage(msg)
 
-	return msg
-}
-
-func (s *Staker) CreateBtcStakeExpand(
-	fpKeys []*bbn.BIP340PubKey,
-	stakingTime uint32,
-	totalSat int64,
-	prevStkTx *wire.MsgTx,
-	fundingTx *wire.MsgTx,
-	fundingTxOutIdx uint32,
-) *bstypes.MsgBtcStakeExpand {
-	stakingOutput := prevStkTx.TxOut[0]
-
-	if fundingTx == nil {
-		// Create a fake outPoint for funding
-		dummyData := sha256.Sum256([]byte("dummy funding tx"))
-		dummyOutPoint := &wire.OutPoint{
-			Hash:  chainhash.Hash(dummyData),
-			Index: 0,
-		}
-
-		// Generate funding tx for stake expansion
-		fundingTx = datagen.GenFundingTx(
-			s.t,
-			s.r,
-			s.app.BTCLightClientKeeper.GetBTCNet(),
-			dummyOutPoint,
-			totalSat,
-			stakingOutput,
-		)
-
-		fundingTxOutIdx = 0
-	}
-
-	msg := s.CreateBtcExpandMessage(fpKeys, stakingTime, totalSat, prevStkTx.TxHash().String(), fundingTx, fundingTxOutIdx)
-	s.SendMessage(msg)
 	return msg
 }
 
