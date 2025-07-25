@@ -12,6 +12,9 @@ const (
 
 // NewParams creates a new Params instance
 func NewParams(ibcPacketTimeoutSeconds uint32, maxHeadersPerPacket uint32) Params {
+	if maxHeadersPerPacket == 0 {
+		maxHeadersPerPacket = DefaultMaxHeadersPerPacket
+	}
 	return Params{
 		IbcPacketTimeoutSeconds: ibcPacketTimeoutSeconds,
 		MaxHeadersPerPacket:     maxHeadersPerPacket,
