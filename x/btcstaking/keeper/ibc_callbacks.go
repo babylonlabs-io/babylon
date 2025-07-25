@@ -71,18 +71,19 @@ func (k Keeper) IBCReceivePacketCallback(
 	packet ibcexported.PacketI,
 	ack ibcexported.Acknowledgement,
 	_ string,
-	_ string,
+	version string,
 ) error {
+	k.Logger(cachedCtx).Info("IBCReceivePacketCallback called")
+
 	// Early return if acknowledgement is not successful
 	if !ack.Success() {
 		return nil
 	}
 
-	k.Logger(cachedCtx).Info("IBCReceivePacketCallback called")
 	// Parse packet data as ICS20 transfer first (before checking ack success)
-	transferData, err := k.parseTransferData(packet)
+	transferData, err := transfertypes.UnmarshalPacketData(packet.GetData(), version, "")
 	if err != nil {
-		return err
+		return errorsmod.Wrap(err, "unmarshal transfer packet data")
 	}
 
 	// Check for JSON callback format
@@ -108,7 +109,7 @@ func (k Keeper) IBCReceivePacketCallback(
 			return errorsmod.Wrapf(types.ErrInvalidCallbackAddBsnRewards, "%s property is nil", types.CallbackActionAddBsnRewardsMemo)
 		}
 
-		err = k.processAddBsnRewards(cachedCtx, packet.GetDestPort(), packet.GetDestChannel(), transferData, addBsnRewards)
+		err = k.processAddBsnRewards(cachedCtx, packet, &transferData, addBsnRewards)
 		if err != nil {
 			k.Logger(cachedCtx).Error(
 				"ibc callback had an error processing add bsn rewards",
@@ -123,36 +124,57 @@ func (k Keeper) IBCReceivePacketCallback(
 	return nil
 }
 
-// parseTransferData parses the packet data as ICS20 transfer data
-func (k Keeper) parseTransferData(packet ibcexported.PacketI) (*transfertypes.FungibleTokenPacketData, error) {
-	var transferData transfertypes.FungibleTokenPacketData
-	if err := transfertypes.ModuleCdc.UnmarshalJSON(packet.GetData(), &transferData); err != nil {
-		return nil, err
-	}
-	return &transferData, nil
-}
-
 // processAddBsnRewards processes the BSN fee distribution
 func (k Keeper) processAddBsnRewards(
 	ctx sdk.Context,
-	destPort string,
-	destChannel string,
-	transferData *transfertypes.FungibleTokenPacketData,
+	packet ibcexported.PacketI,
+	transferData *transfertypes.InternalTransferRepresentation,
 	callbackAddBsnRewards *types.CallbackAddBsnRewards,
 ) error {
-	transferAmount, ok := math.NewIntFromString(transferData.Amount)
-	if !ok {
-		return errorsmod.Wrapf(ictvtypes.ErrInvalidAmount, "invalid transfer amount: %s", transferData.Amount)
+	// Calculate the proper denom and amount of the ics20 packet
+	bsnReward, err := Ics20TransferCoin(packet, transferData)
+	if err != nil {
+		return err
 	}
-
-	// Calculate the IBC denom representation on babylon chain.
-	ibcDenom := transfertypes.NewDenom(transferData.Denom, transfertypes.NewHop(destPort, destChannel)).IBCDenom()
-	bsnRewards := sdk.NewCoins(sdk.NewCoin(ibcDenom, transferAmount))
 
 	receiverOnBbnAddr, err := sdk.AccAddressFromBech32(transferData.Receiver)
 	if err != nil {
 		return status.Errorf(codes.InvalidArgument, "invalid address %s: %v", transferData.Receiver, err)
 	}
 
-	return k.AddBsnRewards(ctx, receiverOnBbnAddr, callbackAddBsnRewards.BsnConsumerID, bsnRewards, callbackAddBsnRewards.FpRatios)
+	return k.AddBsnRewards(ctx, receiverOnBbnAddr, callbackAddBsnRewards.BsnConsumerID, sdk.NewCoins(bsnReward), callbackAddBsnRewards.FpRatios)
+}
+
+func Ics20TransferCoin(
+	packet ibcexported.PacketI,
+	transferDataIt *transfertypes.InternalTransferRepresentation,
+) (sdk.Coin, error) {
+	transferAmount, ok := math.NewIntFromString(transferDataIt.Token.Amount)
+	if !ok {
+		return sdk.Coin{}, errorsmod.Wrapf(ictvtypes.ErrInvalidAmount, "invalid transfer amount: %s", transferDataIt.Token.Amount)
+	}
+
+	// This is the prefix that would have been prefixed to the denomination
+	// on sender chain IF and only if the token originally came from the
+	// receiving chain.
+	//
+	// NOTE: We use SourcePort and SourceChannel here, because the counterparty
+	// chain would have prefixed with DestPort and DestChannel when originally
+	// receiving this token.
+	// https://github.com/cosmos/ibc-go/blob/a6217ab02a4d57c52a938eeaff8aeb383e523d12/modules/apps/transfer/keeper/relay.go#L147-L175
+	token := transferDataIt.Token
+	if token.Denom.HasPrefix(packet.GetSourcePort(), packet.GetSourceChannel()) {
+		// sender chain is not the source, unescrow tokens
+
+		// remove prefix added by sender chain
+		token.Denom.Trace = token.Denom.Trace[1:]
+		return sdk.NewCoin(token.Denom.IBCDenom(), transferAmount), nil
+	}
+
+	// since SendPacket did not prefix the denomination, we must add the destination port and channel to the trace
+	trace := []transfertypes.Hop{transfertypes.NewHop(packet.GetDestPort(), packet.GetDestChannel())}
+	token.Denom.Trace = append(trace, token.Denom.Trace...)
+
+	voucherDenom := token.Denom.IBCDenom()
+	return sdk.NewCoin(voucherDenom, transferAmount), nil
 }
