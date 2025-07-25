@@ -43,8 +43,8 @@ stakers to:
 
 **Key Benefits:**
 - Zero downtime for voting power and rewards
-- No unbonding fees or waiting periods  
-- Atomic activation process
+- No unbonding fees or waiting periods
+- Atomic activation process (unbond and activation in same babylon block)
 - Maintains security guarantees throughout expansion
 
 ## 2. Bitcoin Stake Expansion Methods
