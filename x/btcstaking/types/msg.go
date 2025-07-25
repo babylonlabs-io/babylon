@@ -188,6 +188,8 @@ func (m *MsgBtcStakeExpand) GetStakeExpansion() (*ParsedCreateDelStkExp, error) 
 	return &ParsedCreateDelStkExp{
 		PreviousActiveStkTxHash: previousActiveStkTxHash,
 		OtherFundingOutput:      otherOutput,
+		FundingTxHash:           fundingTxHash,
+		FundingOutputIndex:      idxOtherInput,
 	}, nil
 }
 
