@@ -25,7 +25,7 @@ func benchBeginBlock(b *testing.B, numFPs int, numDelsUnderFP int) {
 	defer ctrl.Finish()
 	btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 	btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-	h := testutil.NewHelper(b, btclcKeeper, btccKeeper)
+	h := testutil.NewHelper(b, btclcKeeper, btccKeeper, nil)
 	// set all parameters
 	covenantSKs, _ := h.GenAndApplyParams(r)
 

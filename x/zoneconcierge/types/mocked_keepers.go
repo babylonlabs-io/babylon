@@ -800,6 +800,20 @@ func (m *MockBTCStkConsumerKeeper) EXPECT() *MockBTCStkConsumerKeeperMockRecorde
 	return m.recorder
 }
 
+// GetAllRegisteredConsumerIDs mocks base method.
+func (m *MockBTCStkConsumerKeeper) GetAllRegisteredConsumerIDs(ctx context.Context) []string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAllRegisteredConsumerIDs", ctx)
+	ret0, _ := ret[0].([]string)
+	return ret0
+}
+
+// GetAllRegisteredConsumerIDs indicates an expected call of GetAllRegisteredConsumerIDs.
+func (mr *MockBTCStkConsumerKeeperMockRecorder) GetAllRegisteredConsumerIDs(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllRegisteredConsumerIDs", reflect.TypeOf((*MockBTCStkConsumerKeeper)(nil).GetAllRegisteredConsumerIDs), ctx)
+}
+
 // GetConsumerRegister mocks base method.
 func (m *MockBTCStkConsumerKeeper) GetConsumerRegister(ctx context.Context, consumerID string) (*types3.ConsumerRegister, error) {
 	m.ctrl.T.Helper()
@@ -813,6 +827,35 @@ func (m *MockBTCStkConsumerKeeper) GetConsumerRegister(ctx context.Context, cons
 func (mr *MockBTCStkConsumerKeeperMockRecorder) GetConsumerRegister(ctx, consumerID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetConsumerRegister", reflect.TypeOf((*MockBTCStkConsumerKeeper)(nil).GetConsumerRegister), ctx, consumerID)
+}
+
+// IsConsumerRegistered mocks base method.
+func (m *MockBTCStkConsumerKeeper) IsConsumerRegistered(ctx context.Context, consumerID string) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsConsumerRegistered", ctx, consumerID)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// IsConsumerRegistered indicates an expected call of IsConsumerRegistered.
+func (mr *MockBTCStkConsumerKeeperMockRecorder) IsConsumerRegistered(ctx, consumerID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsConsumerRegistered", reflect.TypeOf((*MockBTCStkConsumerKeeper)(nil).IsConsumerRegistered), ctx, consumerID)
+}
+
+// IsCosmosConsumer mocks base method.
+func (m *MockBTCStkConsumerKeeper) IsCosmosConsumer(ctx context.Context, consumerID string) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsCosmosConsumer", ctx, consumerID)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// IsCosmosConsumer indicates an expected call of IsCosmosConsumer.
+func (mr *MockBTCStkConsumerKeeperMockRecorder) IsCosmosConsumer(ctx, consumerID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsCosmosConsumer", reflect.TypeOf((*MockBTCStkConsumerKeeper)(nil).IsCosmosConsumer), ctx, consumerID)
 }
 
 // RegisterConsumer mocks base method.
@@ -841,47 +884,4 @@ func (m *MockBTCStkConsumerKeeper) UpdateConsumer(ctx context.Context, consumerR
 func (mr *MockBTCStkConsumerKeeperMockRecorder) UpdateConsumer(ctx, consumerRegister interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateConsumer", reflect.TypeOf((*MockBTCStkConsumerKeeper)(nil).UpdateConsumer), ctx, consumerRegister)
-}
-
-// IsConsumerRegistered mocks base method.
-func (m *MockBTCStkConsumerKeeper) IsConsumerRegistered(ctx context.Context, consumerID string) bool {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "IsConsumerRegistered", ctx, consumerID)
-	ret0, _ := ret[0].(bool)
-	return ret0
-}
-
-// IsConsumerRegistered indicates an expected call of IsConsumerRegistered.
-func (mr *MockBTCStkConsumerKeeperMockRecorder) IsConsumerRegistered(ctx, consumerID interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsConsumerRegistered", reflect.TypeOf((*MockBTCStkConsumerKeeper)(nil).IsConsumerRegistered), ctx, consumerID)
-}
-
-// GetAllRegisteredConsumerIDs mocks base method.
-func (m *MockBTCStkConsumerKeeper) GetAllRegisteredConsumerIDs(ctx context.Context) []string {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAllRegisteredConsumerIDs", ctx)
-	ret0, _ := ret[0].([]string)
-	return ret0
-}
-
-// GetAllRegisteredConsumerIDs indicates an expected call of GetAllRegisteredConsumerIDs.
-func (mr *MockBTCStkConsumerKeeperMockRecorder) GetAllRegisteredConsumerIDs(ctx interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllRegisteredConsumerIDs", reflect.TypeOf((*MockBTCStkConsumerKeeper)(nil).GetAllRegisteredConsumerIDs), ctx)
-}
-
-// IsCosmosConsumer mocks base method.
-func (m *MockBTCStkConsumerKeeper) IsCosmosConsumer(ctx context.Context, consumerID string) (bool, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "IsCosmosConsumer", ctx, consumerID)
-	ret0, _ := ret[0].(bool)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// IsCosmosConsumer indicates an expected call of IsCosmosConsumer.
-func (mr *MockBTCStkConsumerKeeperMockRecorder) IsCosmosConsumer(ctx, consumerID interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsCosmosConsumer", reflect.TypeOf((*MockBTCStkConsumerKeeper)(nil).IsCosmosConsumer), ctx, consumerID)
 }

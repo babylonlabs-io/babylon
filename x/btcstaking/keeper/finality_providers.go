@@ -281,6 +281,11 @@ func (k Keeper) UnjailFinalityProvider(ctx context.Context, fpBTCPK []byte) erro
 		return err
 	}
 
+	// ensure finality provider is not slashed yet
+	if fp.IsSlashed() {
+		return types.ErrFpAlreadySlashed
+	}
+
 	// ensure finality provider is already jailed
 	if !fp.IsJailed() {
 		return types.ErrFpNotJailed
@@ -371,4 +376,3 @@ func (k Keeper) UpdateFinalityProviderCommission(goCtx context.Context, newCommi
 
 	return nil
 }
-

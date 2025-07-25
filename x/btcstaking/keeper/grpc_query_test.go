@@ -38,7 +38,7 @@ func FuzzFinalityProviders(f *testing.F) {
 		// Setup keeper and context with mocks for BSN consumer functionality
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-		h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
+		h := testutil.NewHelper(t, btclcKeeper, btccKeeper, nil)
 		h.GenAndApplyParams(r)
 
 		// Define BSN IDs for Babylon (test context setup)

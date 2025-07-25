@@ -28,7 +28,7 @@ func FuzzSetBTCStakingEventStore_NewFp(f *testing.F) {
 		// mock BTC light client and BTC checkpoint modules
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-		h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
+		h := testutil.NewHelper(t, btclcKeeper, btccKeeper, nil)
 		h.GenAndApplyParams(r)
 
 		// register a random consumer on Babylon
@@ -88,7 +88,7 @@ func FuzzSetBTCStakingEventStore_ActiveDel(f *testing.F) {
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
 		heightAfterMultiStakingAllowListExpiration := int64(10)
-		h := testutil.NewHelper(t, btclcKeeper, btccKeeper).WithBlockHeight(heightAfterMultiStakingAllowListExpiration)
+		h := testutil.NewHelper(t, btclcKeeper, btccKeeper, nil).WithBlockHeight(heightAfterMultiStakingAllowListExpiration)
 
 		// set all parameters
 		covenantSKs, _ := h.GenAndApplyCustomParams(r, 100, 200, 0, 2)
@@ -187,7 +187,7 @@ func FuzzSetBTCStakingEventStore_UnbondedDel(f *testing.F) {
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
 		heightAfterMultiStakingAllowListExpiration := int64(10)
-		h := testutil.NewHelper(t, btclcKeeper, btccKeeper).WithBlockHeight(heightAfterMultiStakingAllowListExpiration)
+		h := testutil.NewHelper(t, btclcKeeper, btccKeeper, nil).WithBlockHeight(heightAfterMultiStakingAllowListExpiration)
 
 		// set all parameters
 		covenantSKs, _ := h.GenAndApplyCustomParams(r, 100, 200, 0, 2)
@@ -318,7 +318,7 @@ func FuzzDeleteBTCStakingEventStore(f *testing.F) {
 		// mock BTC light client and BTC checkpoint modules
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-		h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
+		h := testutil.NewHelper(t, btclcKeeper, btccKeeper, nil)
 		h.GenAndApplyParams(r)
 
 		// register random number of consumers on Babylon
@@ -363,7 +363,7 @@ func TestDeterministicOrdering(t *testing.T) {
 	// mock BTC light client and BTC checkpoint modules
 	btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 	btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-	h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
+	h := testutil.NewHelper(t, btclcKeeper, btccKeeper, nil)
 	h.GenAndApplyParams(r)
 
 	bsnIds := []string{"bsn-z", "bsn-a", "bsn-m", "bsn-b"}

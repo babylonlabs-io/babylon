@@ -41,7 +41,7 @@ func FuzzDistributeFpCommissionAndBtcDelRewards(f *testing.F) {
 		db := dbm.NewMemDB()
 		stateStore := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
 		heightAfterMultiStakingAllowListExpiration := int64(10)
-		h := testutil.NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKeeper, btccKForFinality, ictvK).WithBlockHeight(heightAfterMultiStakingAllowListExpiration)
+		h := testutil.NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKeeper, btccKForFinality, ictvK, nil).WithBlockHeight(heightAfterMultiStakingAllowListExpiration)
 
 		h.GenAndApplyCustomParams(r, 100, 200, 0, 2)
 
@@ -117,7 +117,7 @@ func FuzzCollectBabylonCommission(f *testing.F) {
 		bankKeeper := types.NewMockBankKeeper(ctrl)
 		ictvK := testutil.NewMockIctvKeeperK(ctrl)
 
-		h := testutil.NewHelperWithBankMock(t, btclcKeeper, btccKeeper, bankKeeper, ictvK)
+		h := testutil.NewHelperWithBankMock(t, btclcKeeper, btccKeeper, bankKeeper, ictvK, nil)
 
 		h.GenAndApplyCustomParams(r, 100, 200, 0, 2)
 
@@ -159,7 +159,7 @@ func FuzzCollectComissionAndDistributeBsnRewards(f *testing.F) {
 		bankKeeper := types.NewMockBankKeeper(ctrl)
 		ictvK := testutil.NewMockIctvKeeperK(ctrl)
 
-		h := testutil.NewHelperWithBankMock(t, btclcKeeper, btccKeeper, bankKeeper, ictvK)
+		h := testutil.NewHelperWithBankMock(t, btclcKeeper, btccKeeper, bankKeeper, ictvK, nil)
 
 		h.GenAndApplyCustomParams(r, 100, 200, 0, 2)
 
