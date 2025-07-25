@@ -176,25 +176,12 @@ commits to be validated against the current staking parameters version,
 similar to the pre-staking registration flow.
 
 To determine the correct parameters for expansion:
-1. Query the current Bitcoin light client tip height on Babylon:
-   ```bash
-   babylond query btclightclient tip
-   ```
+1. Query the current Bitcoin light client tip height on Babylon
 2. Use this height as the `lookup_btc_height` to find the applicable
   parameters
 3. Sort all parameters versions by `btc_activation_height` in ascending order
 4. The first parameters version with
   `lookup_btc_height >= btc_activation_height` applies to the expansion
-
-> **⚡ Retrieving Current Staking Parameters**
->
-> These parameters are part of the [x/btcstaking](../x/btcstaking) module and
-  can be queried via a Babylon node using RPC/LCD endpoints or the CLI:
->
-> ```bash
-> babylond query btcstaking params
-> babylond query btclightclient tip  
-> ```
 
 > **⚠️ Critical Warning**: Make sure that you are retrieving the BTC Staking
 > parameters from a trusted node and verify their authenticity using
