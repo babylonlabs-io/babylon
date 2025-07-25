@@ -150,7 +150,7 @@ func (n *NodeConfig) CreateBTCStakeExpansionDelegation(
 	fpPKHexes := strings.Join(fpPKHexList, ",")
 
 	stakingTimeString := sdkmath.NewUint(uint64(msg.StakingTime)).String()
-	stakingValueString := sdkmath.NewInt(int64(msg.StakingValue)).String()
+	stakingValueString := sdkmath.NewInt(msg.StakingValue).String()
 
 	// get slashing tx hex
 	slashingTxHex := msg.SlashingTx.ToHexStr()
@@ -161,7 +161,7 @@ func (n *NodeConfig) CreateBTCStakeExpansionDelegation(
 	unbondingTxHex := hex.EncodeToString(msg.UnbondingTx)
 	unbondingSlashingTxHex := msg.UnbondingSlashingTx.ToHexStr()
 	unbondingTimeStr := sdkmath.NewUint(uint64(msg.UnbondingTime)).String()
-	unbondingValueStr := sdkmath.NewInt(int64(msg.UnbondingValue)).String()
+	unbondingValueStr := sdkmath.NewInt(msg.UnbondingValue).String()
 	delUnbondingSlashingSigHex := msg.DelegatorUnbondingSlashingSig.ToHexStr()
 
 	fundingTxHex := hex.EncodeToString(msg.FundingTx)

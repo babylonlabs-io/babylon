@@ -31,8 +31,6 @@ type BTCStakeExpansionTestSuite struct {
 	covenantQuorum uint32
 	stakingValue   int64
 	configurer     configurer.Configurer
-
-	feePayerAddr string
 }
 
 func (s *BTCStakeExpansionTestSuite) SetupSuite() {
@@ -241,6 +239,7 @@ func (s *BTCStakeExpansionTestSuite) addCovenantSigs(del *bstypes.BTCDelegation)
 	chainA := s.configurer.GetChainConfig(0)
 	chainA.WaitUntilHeight(1)
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
+	s.NoError(err)
 	chainA.WaitUntilHeight(1)
 
 	slashingTx := del.SlashingTx
