@@ -118,8 +118,10 @@ graph LR
     A[Original Stake] --> C[Expansion Transaction]
     B[Additional Funds] --> C
     C --> D[Submit to Babylon]
-    D --> E[Covenant Verification]
-    E --> F[Activation]
+    D --> E[Covenant Signatures]
+    E --> F[BTC Staker Signature]
+    F --> G[Broadcast to Bitcoin]
+    G --> H[Activation]
 ```
 
 ### 3.2 Expansion Data Requirements
@@ -164,30 +166,9 @@ graph LR
 
 #### Babylon Chain BTC Staking Parameters
 
-BTC Stake expansions must adhere to parameters defined by the Babylon chain,
-which vary based on Bitcoin block heights. Each parameters version is defined
-by a `btc_activation_height`, determining the Bitcoin height from which the
-parameters version takes effect.
-
-For expansion transactions, you must determine the applicable parameter version
-based on the **current Babylon on-chain Bitcoin light client tip height** at the
-time of expansion registration. This ensures that the expansion transaction
-commits to be validated against the current staking parameters version,
-similar to the pre-staking registration flow.
-
-To determine the correct parameters for expansion:
-1. Query the current Bitcoin light client tip height on Babylon
-2. Use this height as the `lookup_btc_height` to find the applicable
-  parameters
-3. Sort all parameters versions by `btc_activation_height` in ascending order
-4. The first parameters version with
-  `lookup_btc_height >= btc_activation_height` applies to the expansion
-
-> **⚠️ Critical Warning**: Make sure that you are retrieving the BTC Staking
-> parameters from a trusted node and verify their authenticity using
-> additional sources. Using incorrect parameters will cause expansion
-> validation to fail or create transactions incompatible with the current
-> Babylon state.
+BTC Stake expansions must adhere to the current Babylon staking parameters.
+The expansion transaction must be constructed using parameters corresponding
+to the **current Babylon Bitcoin light client tip** at expansion submission time.
 
 > **⚡ Parameter Selection for Expansion**
 >
@@ -239,6 +220,45 @@ by the btcstaking module:
 transactions** because Input 0 (the original staking output) requires covenant
 signatures to be spent through the unbonding path.
 
+```mermaid
+sequenceDiagram
+actor btcstaker as BTC Staker
+participant babylon as Babylon
+participant covd as Covenant
+participant vigilante as Vigilante
+participant btc as BTC
+
+autonumber
+
+Note over btcstaker,babylon: ...Active BTC delegation
+btcstaker->>babylon: MsgBtcStakeExpand
+activate babylon
+babylon-->>btcstaker: New pending BTC Del
+deactivate babylon
+
+Note over covd,babylon: Watch for pending BTC Dels
+
+covd->>babylon: Send missing signatures
+activate babylon
+babylon-->>covd: Stake Expansion Verified
+deactivate babylon
+
+Note over vigilante,btc: Watch BTC
+
+btcstaker->>btc: Send Stake Expanion BTC Tx (spends the staking output)
+activate btc
+btc-->>btcstaker: Stake Expansion tx mined
+deactivate btc
+
+
+Note over btcstaker, btc: Stake expansion is K deep
+vigilante->>babylon: Reports BTC stake expansion is K deep<br>MsgBTCUndelegate
+activate babylon
+babylon-->>vigilante: Stake expansion is confirmed
+deactivate babylon
+Note over babylon: Creates events of unbonding for old staking<br>and activation of stake expansion to process<br>at the same babylon block height
+```
+
 **Step-by-Step Signing Process:**
 
 1. **Retrieve Covenant Signatures from Babylon Node**:
@@ -288,9 +308,11 @@ signatures to be spent through the unbonding path.
 - ❌ Missing covenant signatures in witness - transaction will be invalid
 - ❌ Using different Bitcoin keys for Input 0 and Input 1 - must be the same key
 
-> **⚡ Note**: The covenant signatures for expansion are pre-computed and
-> stored with each active delegation. You don't need to wait for new covenant
-> signatures - they're immediately available when you query the delegation.
+> **⚡ Note**: Once you submit `MsgBtcStakeExpand` to Babylon, it creates a 
+> pending delegation. Covenants then read the pending delegation and provide 
+> the missing signatures needed to spend the original stake. After receiving 
+> covenant signatures, the BTC staker adds their signature and broadcasts 
+> the expansion transaction to Bitcoin.
 
 **Input Requirements:**
 The expansion transaction inputs must be constructed carefully:
