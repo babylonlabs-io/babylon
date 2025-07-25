@@ -5,13 +5,14 @@
 1. [Introduction](#1-introduction)
 2. [Bitcoin Stake Expansion Methods](#2-bitcoin-stake-expansion-methods)
    1. [Overview of Expansion vs Traditional Unbond-Restake](#21-overview-of-expansion-vs-traditional-unbond-restake)
-   2. [Expansion Validation](#22-expansion-validation)
+   2. [Expansion Requirements](#22-expansion-requirements)
 3. [Bitcoin Stake Expansion Registration](#3-bitcoin-stake-expansion-registration)
-   1. [Overview of Expansion Data Requirements](#31-overview-of-expansion-data-requirements)
-   2. [Babylon Chain BTC Staking Parameters](#32-babylon-chain-btc-staking-parameters)
-   3. [Creating the Bitcoin Expansion Transaction](#33-creating-the-bitcoin-expansion-transaction)
-   4. [The `MsgBtcStakeExpand` Babylon Message](#34-the-msgbtcstakeexpand-babylon-message)
-   5. [Constructing the `MsgBtcStakeExpand`](#35-constructing-the-msgbtcstakeexpand)
+   1. [Overview: What You Need for Expansion](#31-overview-what-you-need-for-expansion)
+   2. [Expansion Data Requirements](#33-expansion-data-requirements)
+   3. [Implementation Details](#34-implementation-details)
+   4. [Detailed Transaction Construction](#35-detailed-transaction-construction)
+   5. [The `MgBtcStakeExpand` Babylon Message](#36-the-msgbtcstakeexpand-babylon-message)
+   6. [Constructing the `MsgBtcStakeExpand`](#37-constructing-the-msgbtcstakeexpand)
 4. [Managing your Bitcoin Stake Expansion](#4-managing-your-bitcoin-stake-expansion)
    1. [Monitoring Expansion Status](#41-monitoring-expansion-status)
    2. [Activation Process](#42-activation-process)
@@ -74,12 +75,19 @@ process, only transitioning atomically upon final activation.
 - Original delegation must be `ACTIVE` with no ongoing unbonding or slashing
 - Expansion transaction must have exactly 2 inputs: original stake output +
   funding UTXO
-- Funding UTXO must be from a separate, confirmed Bitcoin transactioncontrolled
+- Funding UTXO must be from a separate, confirmed Bitcoin transaction controlled
   by your staking key
 - New finality provider list must include all existing FPs (can only add, not
   remove)
 - New staking amount must be ≥ original amount
 - All transactions must use current Babylon staking parameters rules
+- The babylon signer address must be the same from the old stake (`staker_addr`)
+
+**Common Mistakes:**
+- ❌ Using more than 2 inputs
+- ❌ Using unconfirmed funding transaction
+- ❌ Using different Bitcoin keys for original stake and funding
+- ❌ Wrong input order (original stake must be the first Input of index 0)
 
 > **⚠️ Critical**: Create a separate funding transaction first, wait for
 > confirmation, then use that UTXO as Input 1 in your expansion transaction.
@@ -114,24 +122,7 @@ graph LR
     E --> F[Activation]
 ```
 
-### 3.2 Critical Requirements
-
-**Key Constraints:**
-- Expansion transactions must have exactly 2 inputs: original stake output +
-  funding UTXO
-- Funding UTXO must be from a separate, confirmed Bitcoin transaction
-- New finality provider list must include all existing FPs (can only add, not
-  remove)
-- New staking amount must be ≥ original amount
-- The babylon signer address must be the same from the old stake (staker_addr)
-
-**Common Mistakes:**
-- ❌ Using more than 2 inputs
-- ❌ Using unconfirmed funding transaction
-- ❌ Using different Bitcoin keys for original stake and funding
-- ❌ Wrong input order (original stake must be the first Input of index 0)
-
-### 3.3 Expansion Data Requirements
+### 3.2 Expansion Data Requirements
 
 **1. Original Delegation Data**
 - Source: Query active delegations from Babylon node
@@ -169,7 +160,7 @@ graph LR
   timelock
 - Constraint: Must include all original FPs plus any new ones
 
-### 3.4 Implementation Details
+### 3.3 Implementation Details
 
 #### Babylon Chain BTC Staking Parameters
 
@@ -220,7 +211,7 @@ To determine the correct parameters for expansion:
 > later included in a Bitcoin block with different active parameters. The new
 > BTC stake expansion must respect the current Babylon staking parameters rules.
 
-### 3.5 Detailed Transaction Construction
+### 3.4 Detailed Transaction Construction
 
 The Bitcoin expansion transaction and related transactions must follow the
 specific structures required by the btcstaking module. These transactions
@@ -394,7 +385,7 @@ You can create these transactions using:
 > non-conforming transactions. Additionally, all transaction fee calculations 
 > must account for the minimum fees specified in the staking parameters.
 
-### 3.4 The `MsgBtcStakeExpand` Babylon Message
+### 3.5 The `MsgBtcStakeExpand` Babylon Message
 
 The `MsgBtcStakeExpand` message in the btcstaking module handles stake
 expansion registration:
@@ -593,7 +584,7 @@ message MsgBtcStakeExpand {
 > The inclusion proof is submitted later after Bitcoin confirmation via 
 > `MsgAddBTCDelegationInclusionProof`.
 
-### 3.5 Constructing the `MsgBtcStakeExpand`
+### 3.6 Constructing the `MsgBtcStakeExpand`
 
 There are multiple ways to construct and broadcast the `MsgBtcStakeExpand`
   message to the Babylon network:
