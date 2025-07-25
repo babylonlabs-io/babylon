@@ -132,7 +132,7 @@ func (k Keeper) processAddBsnRewards(
 	callbackAddBsnRewards *types.CallbackAddBsnRewards,
 ) error {
 	// Calculate the proper denom and amount of the ics20 packet
-	bsnReward, err := Ics20TransferCoin(packet, transferData)
+	bsnReward, err := BabylonRepresentationIcs20TransferCoin(packet, transferData.Token)
 	if err != nil {
 		return err
 	}
@@ -145,13 +145,17 @@ func (k Keeper) processAddBsnRewards(
 	return k.AddBsnRewards(ctx, receiverOnBbnAddr, callbackAddBsnRewards.BsnConsumerID, sdk.NewCoins(bsnReward), callbackAddBsnRewards.FpRatios)
 }
 
-func Ics20TransferCoin(
+// BabylonRepresentationIcs20TransferCoin it checks if the coin was from babylon genesis
+// in the first place, if it was it removes the last denom trace to correctly parses the
+// denom. If it did not come from babylon, it is a token created from BSN chain and it
+// just adds the destination port and channel to the denom trace
+func BabylonRepresentationIcs20TransferCoin(
 	packet ibcexported.PacketI,
-	transferDataIt *transfertypes.InternalTransferRepresentation,
+	token transfertypes.Token,
 ) (sdk.Coin, error) {
-	transferAmount, ok := math.NewIntFromString(transferDataIt.Token.Amount)
+	transferAmount, ok := math.NewIntFromString(token.Amount)
 	if !ok {
-		return sdk.Coin{}, errorsmod.Wrapf(ictvtypes.ErrInvalidAmount, "invalid transfer amount: %s", transferDataIt.Token.Amount)
+		return sdk.Coin{}, errorsmod.Wrapf(ictvtypes.ErrInvalidAmount, "invalid transfer amount: %s", token.Amount)
 	}
 
 	// This is the prefix that would have been prefixed to the denomination
@@ -162,7 +166,6 @@ func Ics20TransferCoin(
 	// chain would have prefixed with DestPort and DestChannel when originally
 	// receiving this token.
 	// https://github.com/cosmos/ibc-go/blob/a6217ab02a4d57c52a938eeaff8aeb383e523d12/modules/apps/transfer/keeper/relay.go#L147-L175
-	token := transferDataIt.Token
 	if token.Denom.HasPrefix(packet.GetSourcePort(), packet.GetSourceChannel()) {
 		// sender chain is not the source, unescrow tokens
 
@@ -175,6 +178,6 @@ func Ics20TransferCoin(
 	trace := []transfertypes.Hop{transfertypes.NewHop(packet.GetDestPort(), packet.GetDestChannel())}
 	token.Denom.Trace = append(trace, token.Denom.Trace...)
 
-	voucherDenom := token.Denom.IBCDenom()
-	return sdk.NewCoin(voucherDenom, transferAmount), nil
+	bsnDenom := token.Denom.IBCDenom()
+	return sdk.NewCoin(bsnDenom, transferAmount), nil
 }
