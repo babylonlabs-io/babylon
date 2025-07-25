@@ -9,7 +9,57 @@ import (
 
 	"github.com/babylonlabs-io/babylon/v3/crypto/eots"
 	"github.com/babylonlabs-io/babylon/v3/types"
+	btcstktypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 )
+
+// FinalityProviderState defines the possible states of a finality provider
+// It is used in the power distribution change process
+// to determine the state of each finality provider and how it affects the power distribution
+type FinalityProviderState int32
+
+const (
+	// FinalityProviderState_UNKNOWN indicates the finality provider state is unknown or uninitialized
+	FinalityProviderState_UNKNOWN FinalityProviderState = iota
+	// FinalityProviderState_UNJAILED indicates the finality provider is active and can participate
+	FinalityProviderState_UNJAILED
+	// FinalityProviderState_JAILED indicates the finality provider is jailed and cannot participate
+	FinalityProviderState_JAILED
+	// FinalityProviderState_SLASHED indicates the finality provider has been slashed
+	FinalityProviderState_SLASHED
+)
+
+// Processing state during the power distribution change process
+// It holds the state of finality providers, BTC delegations, and events
+// It is used to track the changes in the finality providers' states and the BTC delegations
+// It is also used to determine the final state of each finality provider after the power distribution change
+// The state is updated during the power distribution change process and is used to generate the
+// final power distribution cache
+type ProcessingState struct {
+	// FPStatesByBtcPk is a map of the finality providers' state
+	FPStatesByBtcPk map[string]FinalityProviderState
+	// FpByBtcPk is a map where key is finality provider's BTC PK hex and value is the finality provider
+	// It is used as cache to avoid fetching the finality provider from the store
+	// during the power distribution change process
+	FpByBtcPk map[string]*btcstktypes.FinalityProvider
+	// DeltaSatsByFpBtcPk is a map where key is finality provider's BTC PK hex and value is the
+	// delta of BTC delegations satoshis that were added or removed from the provider
+	// during the power distribution change process
+	DeltaSatsByFpBtcPk map[string]int64
+	// A slice of the BTC delegations expired events
+	ExpiredEvents []*btcstktypes.EventPowerDistUpdate_BtcDelStateUpdate
+	// A slice of the slashed finality provider events
+	SlashedEvents []*btcstktypes.EventPowerDistUpdate_SlashedFp
+}
+
+func NewProcessingState() *ProcessingState {
+	return &ProcessingState{
+		FPStatesByBtcPk:    map[string]FinalityProviderState{},
+		FpByBtcPk:          map[string]*btcstktypes.FinalityProvider{},
+		DeltaSatsByFpBtcPk: map[string]int64{},
+		ExpiredEvents:      []*btcstktypes.EventPowerDistUpdate_BtcDelStateUpdate{},
+		SlashedEvents:      []*btcstktypes.EventPowerDistUpdate_SlashedFp{},
+	}
+}
 
 func (c *PubRandCommit) IsInRange(height uint64) bool {
 	start, end := c.Range()

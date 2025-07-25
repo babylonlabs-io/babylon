@@ -4,6 +4,7 @@ import (
 	"context"
 
 	sdkmath "cosmossdk.io/math"
+	storetypes "cosmossdk.io/store/types"
 	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 	etypes "github.com/babylonlabs-io/babylon/v3/x/epoching/types"
 	"github.com/btcsuite/btcd/btcec/v2"
@@ -21,12 +22,12 @@ type BTCStakingKeeper interface {
 	SlashFinalityProvider(ctx context.Context, fpBTCPK []byte) error
 	PropagateFPSlashingToConsumers(ctx context.Context, fpBTCSK *btcec.PrivateKey) error
 	GetBTCDelegation(ctx context.Context, stakingTxHashStr string) (*bstypes.BTCDelegation, error)
-	GetAllPowerDistUpdateEvents(ctx context.Context, lastBTCTipHeight, btcTipHeight uint32) []*bstypes.EventPowerDistUpdate
 	ClearPowerDistUpdateEvents(ctx context.Context, btcHeight uint32)
 	JailFinalityProvider(ctx context.Context, fpBTCPK []byte) error
 	UnjailFinalityProvider(ctx context.Context, fpBTCPK []byte) error
 	UpdateFinalityProvider(ctx context.Context, fp *bstypes.FinalityProvider) error
 	BtcDelHasCovenantQuorums(ctx context.Context, btcDel *bstypes.BTCDelegation, quorum uint32) (bool, error)
+	PowerDistUpdateEventBtcHeightStoreIterator(ctx context.Context, btcHeight uint32) storetypes.Iterator
 }
 
 type CheckpointingKeeper interface {
