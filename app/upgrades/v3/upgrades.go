@@ -51,12 +51,12 @@ func CreateUpgradeHandler(fpCount uint32, relativeWaitingTime uint32) upgrades.U
 			btcParams := keepers.BTCStakingKeeper.GetParams(sdkCtx)
 			btcParamsCopy := btcParams
 
-			btcParamsCopy.MaxFinalityProviders = uint32(fpCount)
+			btcParamsCopy.MaxFinalityProviders = fpCount
 
 			btcTip := keepers.BTCLightClientKeeper.GetTipInfo(sdkCtx)
 			currentBtcHeight := btcTip.Height
 
-			btcParamsCopy.BtcActivationHeight = uint32(currentBtcHeight) + relativeWaitingTime
+			btcParamsCopy.BtcActivationHeight = currentBtcHeight + relativeWaitingTime
 
 			err = keepers.BTCStakingKeeper.SetParams(sdkCtx, btcParamsCopy)
 			if err != nil {
