@@ -45,7 +45,7 @@ stakers to:
 **Key Benefits:**
 - Zero downtime for voting power and rewards
 - No unbonding fees or waiting periods
-- Atomic activation process (unbond and activation in same babylon block)
+- Atomic activation process (unbond and activation in the same Babylon Genesis block)
 - Maintains security guarantees throughout expansion
 
 **Limitations**: The stake expansion protocol, can't be used for the following:
@@ -65,98 +65,118 @@ staking again.
 - **Expanded Staking Transaction**: The new staking transaction expanding
   the original staking transaction by using its staking output as an input
   and following the rules of the Stake Expansion protocol. 
-  > *Note*: An expanded staking transaction can serve as the original
+  > **Note**: An expanded staking transaction can serve as the original
   > staking transaction for a subsequent stake expansion operation.
 
-## 2. Bitcoin Stake Expansion Methods
+## 2. Stake Expansion Protocol
 
-### 2.1 Overview of Expansion vs Traditional Unbond-Stake Again
+### 2.1. Stake Expansion Procedure
 
-**Traditional Multi-Chain Staking Flow:**
+The stake expansion procedure operates as follows:
+1. **Stake Expansion Request**: The staker submits
+   a stake expansion request on Babylon Genesis. The request
+   includes the expanded staking transaction that spends over
+   the original staking transaction through the on-demand unbonding
+   script path. The Babylon Genesis chain records the request.
+2. **Covenants Verify the Request**: The Covenants identify
+   the stake expansion request and verify it by submitting
+   their signatures for both the spending of the original
+   staking transaction and the on-demand unbonding and slashing
+   transactions of the expanded staking transaction.
+3. **Submission to Bitcoin**: The staker, having received all
+   necessary signatures submits the fully signed expanded staking
+   transaction to Bitcoin.
+4. **Monitoring for Confirmation**: A vigilante tracker (or the staker themself)
+   monitor Bitcoin for the confirmation status of the stake expansion transaction.
+   Once this happens, the inclusion proof is submitted to Babylon Genesis.
+5. **Stake Expansion Activation**: Once a valid proof of inclusion in a sufficiently confirmed block
+   is submitted for a stake expansion, the expanded staking transaction becomes active
+   and the original staking transaction becomes unbonded.
+   *The switch is an atomic operation*.
 
-1. Wait the on-demand unbonding period
-2. Create new staking transaction
-3. Wait for activation
-4. Activated
+> **Note**: The stake expansion procedure is similar to the
+> pre-staking registration procedure in the sense that the
+> staker first submits to Babylon Genesis before broadcasting to
+> Bitcoin.
 
-**Stake Expansion Flow:**
+```mermaid
+sequenceDiagram
+actor btcstaker as BTC Staker
+participant babylon as Babylon Genesis
+participant covd as Covenant
+participant vigilante as Vigilante
+participant btc as BTC
 
-1. Create a stake expansion transaction
-2. Wait for activation
-3. Atomic unbonding of prior staking transaction
-   and activation of expanded staking transaction.
+autonumber
 
-> **⚡ Note**: Expansion maintains reward earning throughout the entire
-> process, only transitioning atomically upon final activation.
+Note over btcstaker,babylon: ...Active BTC delegation
+btcstaker->>babylon: MsgBtcStakeExpand
+activate babylon
+babylon-->>btcstaker: New pending BTC Del
+deactivate babylon
+
+Note over covd,babylon: Watch for pending BTC Dels
+
+covd->>babylon: Send missing signatures
+activate babylon
+babylon-->>covd: Stake Expansion Verified
+deactivate babylon
+
+Note over vigilante,btc: Watch BTC
+
+btcstaker->>btc: Send Stake Expanion BTC Tx (spends the staking output)
+activate btc
+btc-->>btcstaker: Stake Expansion tx mined
+deactivate btc
+
+
+Note over btcstaker, btc: Stake expansion is K deep
+vigilante->>babylon: Reports BTC stake expansion is K deep<br>MsgBTCUndelegate
+activate babylon
+babylon-->>vigilante: Stake expansion is confirmed
+deactivate babylon
+Note over babylon: Creates events of unbonding for old staking<br>and activation of stake expansion to process<br>at the same babylon block height
+```
 
 ### 2.2. Stake Expansion Transaction Structure
 
-The stake expansion staking transaction is fundamentally a normal Bitcoin
-staking transaction that spends an existing staking output. The key difference
-lies in its input structure:
-
-**Standard Staking Transaction:**
-```
-Inputs:
-Any number of funding UTXOs (controlled by staker's Bitcoin key)
-
-Outputs:
-Output 0: Staking output (following the staking script format)
-```
-
-**Stake Expansion Staking Transaction:**
-```
-Inputs:
-Input 0: Original staking output (from previous active delegation)
-Input 1: Additional funding UTXO (from the funding_tx transaction)
-
-Outputs:  
-- Output 0: New expanded staking output (following the staking script format)
-```
-
-## Funding Transaction
-
-The **funding transaction** (`funding_tx` field) is a separate, confirmed
-Bitcoin transaction that:
-
-1. Provides Additional Funds and contains a UTXO controlled by the staker's
-  Bitcoin key
-2. Ensures the expansion transaction has sufficient fees for Bitcoin network
-  inclusion
-3. Allows the expanded staking amount to be ≥ the original amount
-4. Required to be confirmed on Bitcoin before expansion submission to Babylon
-
-The funding transaction is referenced by the expansion staking transaction's
-Input 1, which spends the funding UTXO to provide the additional satoshis
-needed for expansion.
+All expanded staking transactions are normal
+Bitcoin staking transaction as per the
+[specification](./staking-script.md#bitcoin-staking-transactions-specification).
+What makes them unique is the requirement that they follow the following structure:
+* **Two Inputs** in the following precise order:
+  * **First Input**: The staking output of the original staking transaction.
+    Its value should hold at least as many BTC as the original staking output. 
+  * **Second Input**: Funding output used to pay for fees and/or increase the
+    stake amount. It can come from any transaction as long as it was never
+    a staking output.
+* **Any number of outputs** with at least *one* corresponding to the
+  expanded staking transaction staking output.
 
 ### 2.3 Stake Expansion Requirements
-
-To ensure the overall safety of the system,
-each stake expansion transaction should follow the following rules:
 
 The Stake Expansion protocol defines certain rules for
 the expanded staking transaction in relation to both the original
 staking transaction and its state on Babylon Genesis.
 
-- As defined in the prior section, the expanded staking transaction should have
-  exactly two outputs:
+- **Exactly Two Inputs** The expanded staking transaction should have
+  exactly two inputs:
   (1) the original staking output and
   (2) the funding UTXO
-- The funding UTXO should not correspond to any BTC Staking Output known
-  to Babylon Genesis.
-- The finality providers list in the expanded staking transaction should
+- **Funding UTXO**: The funding UTXO should not correspond
+  to any BTC Staking Output known to Babylon Genesis.
+- **Finality Providers**: The finality providers list in the expanded staking transaction should
   contain *all* finality providers from the original staking transaction
   and optionally new ones corresponding to different BSNs.
-- The original staking transaction must have an `ACTIVE` on Babylon Genesis.
-- The staking amount in the expanded staking transaction must be ≥ original amount
+- **Original Staking Status**: The original staking transaction must have an `ACTIVE` on Babylon Genesis.
+- **Expanded Stake Staking Amount**: The staking amount in the expanded staking transaction must be ≥ original amount
   > This requirement is the primary reason the stake expansion staking transaction
   > needs an additional funding UTXO input:
   > the original staking output alone wouldn’t suffice,
   > as Bitcoin transaction fees must be deducted,
   > and those fees can't be covered by the staking output itself
   > as the new staking output should at least have the same BTC as it. 
-- The staking expansion should use the current Babylon Genesis staking parameters.
+- **BTC Staking Params**: The staking expansion should use the current Babylon Genesis staking parameters.
   Documentation on how to select the appropriate parameters can be found
   in the [staking registration document](./register-bitcoin-stake.md#32-babylon-genesis-chain-btc-staking-parameters).
   > **Note**: The stake expansion protocol closely follows the
@@ -167,7 +187,7 @@ staking transaction and its state on Babylon Genesis.
   > staking parameters as defined by Babylon Genesis at the time of submission.
   > It is allowed for the original staking transaction and
   > the stake expansion staking transaction to use different staking parameters.
-- The Babylon Genesis address used to submit the stake expansion transaction to Babylon Genesis
+- **Submitter Address**: The Babylon Genesis address used to submit the stake expansion transaction to Babylon Genesis
   should be the same as the owner of the original staking transaction.
 
 > **⚠️ Critical**: All stake expansion transactions that do not follow
@@ -177,7 +197,7 @@ staking transaction and its state on Babylon Genesis.
 
 ## 3. Bitcoin Stake Expansion Registration
 
-### 3.1 Overview: What You Need for Expansion
+### 3.1 Overview: Required Transactions
 
 To expand a Bitcoin stake, you need to submit a `MsgBtcStakeExpand` message
 containing:
@@ -232,206 +252,38 @@ later included in a Bitcoin block with different active parameters.
 
 ### 3.3 Detailed Transaction Construction
 
-The Bitcoin expansion transaction and related transactions must follow the
-specific structures required by the btcstaking module. These transactions
-include:
-* **Bitcoin Expansion Transaction**: The main transaction that spends the
-  original stake and additional funding to create the expanded stake
-* **Slashing Transaction**: A pre-signed transaction consenting to slashing
+The Bitcoin stake expansion protocols requires a set of transactions
+which must follow the specific structures required by the Babylon Genesis chain.
+These transactions include:
+* **Expansion Staking Transaction**: The main transaction that spends the
+  original staking output and the additional funding output
+  to create the expanded stake
+* **Slashing Transaction**: A pre-signed transaction spending the expansion staking transaction
+  through the slashing path and consenting to slashing
   in case of double-signing for the expanded stake
 * **Unbonding Transaction**: The on-demand unbonding transaction used to unlock
   the expanded stake before the originally committed timelock expires
 * **Unbonding Slashing Transaction**: A pre-signed transaction consenting to
   slashing during the unbonding process in case of double-signing
 
-#### Creating the Bitcoin Expansion Transaction
-
-The expansion transaction must follow a strict two-input structure validated 
-by the btcstaking module:
-
-**Required Transaction Structure:**
-- **Input 0**: Previous staking transaction output (the original active
-  delegation)
-  * Must reference the exact UTXO from the original staking transaction
-  * Requires covenant signatures for spending (obtained from Babylon node)
-  * Must match the `previous_staking_tx_hash` provided in the expansion message
-- **Input 1**: Additional funding UTXO (controlled by staker)
-  * Must be controlled by the same Bitcoin key used for staking
-  * Provides funds for staking value increase and transaction fees
-  * Must be from a confirmed Bitcoin transaction (the `funding_tx`)
-- **Output 0**: New expanded staking output
-  * Must follow the [staking script format](./staking-script.md) exactly
-  * Uses the expanded finality provider list (superset of original)
-  * Contains the new total staking value (≥ original amount)
-  * Must use current Babylon staking parameters
-
-<!-- TODO: change output? -->
-
-#### Critical: Signing the Expansion Transaction
-
-**The expansion transaction signing process is different from regular Bitcoin
-transactions** because Input 0 (the original staking output) requires covenant
-signatures to be spent through the unbonding path.
-
-```mermaid
-sequenceDiagram
-actor btcstaker as BTC Staker
-participant babylon as Babylon Genesis
-participant covd as Covenant
-participant vigilante as Vigilante
-participant btc as BTC
-
-autonumber
-
-Note over btcstaker,babylon: ...Active BTC delegation
-btcstaker->>babylon: MsgBtcStakeExpand
-activate babylon
-babylon-->>btcstaker: New pending BTC Del
-deactivate babylon
-
-Note over covd,babylon: Watch for pending BTC Dels
-
-covd->>babylon: Send missing signatures
-activate babylon
-babylon-->>covd: Stake Expansion Verified
-deactivate babylon
-
-Note over vigilante,btc: Watch BTC
-
-btcstaker->>btc: Send Stake Expanion BTC Tx (spends the staking output)
-activate btc
-btc-->>btcstaker: Stake Expansion tx mined
-deactivate btc
-
-
-Note over btcstaker, btc: Stake expansion is K deep
-vigilante->>babylon: Reports BTC stake expansion is K deep<br>MsgBTCUndelegate
-activate babylon
-babylon-->>vigilante: Stake expansion is confirmed
-deactivate babylon
-Note over babylon: Creates events of unbonding for old staking<br>and activation of stake expansion to process<br>at the same babylon block height
-```
-
-**Step-by-Step Signing Process:**
-
-1. **Retrieve Covenant Signatures from Babylon Node**:
-   ```bash
-   # Query the original delegation to get covenant signatures
-   babylond query btcstaking btc-delegation [previous-staking-tx-hash]
-   ```
-   The response includes a `StkExp` (StakeExpansionResponse) field containing
-  the covenant signatures needed to spend the original staking output.
-  These signatures are pre-computed by the covenant committee for expansion
-  purposes.
-
-2. **Create the Staker Signature for Input 1**:
-  - Sign Input 1 (funding UTXO) using your Bitcoin private key
-  - This follows standard Bitcoin signing procedures (legacy or SegWit
-  depending on UTXO type)
-
-3. **Compose the Transaction Witness**:
-  - **Input 0 Witness**: Combine the covenant signatures (from step 1) with
-  your staker signature to create the witness stack for spending the original
-  staking output via unbonding path
-  - **Input 1 Witness**: Your signature for spending the funding UTXO
-
-4. **Finalize and Broadcast**:
-  - The fully signed expansion transaction can now be broadcast to the Bitcoin
-  network
-  - Submit the transaction hash and inclusion proof to Babylon after confirmation
-
-**Important Signature Details:**
-
-- **Input 0 (Original Staking Output)**:
-  - Spends via **unbonding path** of the staking script
-  - Requires: Staker signature + Covenant signatures (quorum)
-  - Covenant signatures are **provided by Babylon node** in delegation response
-  - Staker must sign with the same Bitcoin key used for original stake
-
-- **Input 1 (Funding UTXO)**:
-  - Spends via normal Bitcoin script (P2PKH, P2WPKH, etc.)
-  - Requires: Only staker signature
-  - Must use same Bitcoin key as staking key for consistency
-
-**Common Signing Mistakes:**
-- ❌ Trying to create covenant signatures yourself - they must come from
-  Babylon node
-- ❌ Using wrong signing path for Input 0 - must use unbonding path, not
-  timelock path
-- ❌ Missing covenant signatures in witness - transaction will be invalid
-- ❌ Using different Bitcoin keys for Input 0 and Input 1 - must be the same key
-
-> **⚡ Note**: Once you submit `MsgBtcStakeExpand` to Babylon, it creates a 
-> pending delegation. Covenants then read the pending delegation and provide 
-> the missing signatures needed to spend the original stake. After receiving 
-> covenant signatures, the BTC staker adds their signature and broadcasts 
-> the expansion transaction to Bitcoin.
-
-**Input Requirements:**
-The expansion transaction inputs must be constructed carefully:
-
-1. **Input 0 (Original Stake)**:
-  * `previous_output`: Reference to the original staking transaction output
-  * `txid`: Transaction hash of the original staking transaction
-  * `vout`: Output index of the staking output (typically 0)
-  * `script_sig`: Initially empty (signatures added during covenant
-  verification)
-  * `sequence`: Set according to Bitcoin transaction requirements
-
-2. **Input 1 (Funding UTXO)**:
-   * `previous_output`: Reference to the funding transaction output
-     * `txid`: Transaction hash from the `funding_tx`
-     * `vout`: Output index containing the funding amount
-   * `script_sig`: Signature spending the funding UTXO (if legacy input)
-   * `witness`: Witness data for spending the funding UTXO (if SegWit input)
-   * `sequence`: Set according to Bitcoin transaction requirements
-
-**Output Construction:**  
-The expansion transaction must create exactly one output:
-
-* **Output 0 (Expanded Staking Output)**:
-  * `value`: Total expanded staking amount in satoshis
-  * `pk_script`: The staking script constructed using:
-    * Staker's Bitcoin public key (same as original)
-    * Expanded finality provider list (superset of original)
-    * Current covenant committee public keys and quorum
-    * New staking timelock period
-    * Current unbonding timelock from parameters
-
-#### Creating Slashing Transactions
-
-Both staking and unbonding slashing transactions must be created for the
-expansion:
-
-**Staking Slashing Transaction:**
-* **Input 0**: Spends the expansion staking output via slashing path
-  * `previous_output`: References the expansion transaction output
-  * `script_sig`: Initially empty (signatures added during verification)
-  * Contains placeholder for staker, covenant, and finality provider signatures
-* **Output 0**: Slashing output using current `slashing_pk_script`
-  * `value`: Calculated based on `slashing_rate` and staking amount
-  * `pk_script`: Must match the current `slashing_pk_script` parameter
-* **Output 1** (if applicable): Change output
-  * `value`: Remaining funds after slashing and fees
-  * `pk_script`: Change script following the staking script format
-
-**Unbonding Slashing Transaction:**
-* **Input 0**: Spends the unbonding output via slashing path
-  * `previous_output`: References the unbonding transaction output
-  * Similar signature structure to staking slashing transaction
-* **Outputs**: Same structure as staking slashing transaction
-
-#### Creating the Unbonding Transaction
-
-The unbonding transaction allows on-demand unlock of the expanded stake:
-
-**Transaction Structure:**
-* **Input 0**: Spends the expansion staking output via unbonding path
-  * `previous_output`: References the expansion transaction output
-  * `script_sig`: Initially empty (staker signature added for unbonding)
-* **Output 0**: Unbonding output
-  * `value`: Expanded staking amount minus unbonding fees
-  * `pk_script`: Unbonding script with current `unbonding_time_blocks`
+> **Important**:
+> The expansion transaction must follow a strict two-input structure validated 
+> by the Babylon Genesis chain:
+> - **Input 0**: Original staking transaction output
+>   * Must reference the exact UTXO from the original staking transaction
+>   * Spent via the unbonding path of the staking script (requires staker + covenant signatures) .
+> - **Input 1**: Additional funding UTXO utilized to ensure that
+>   the expanded stake staking amount is >= the original stake staking amount.
+> - **Outputs**: The stake expansion transaction can have an arbitrary
+>   number of outputs, with one of those serving as the expanded stake
+>   staking output. This output:
+>   * Must follow the [staking output format](./staking-script.md)
+>   * Uses the expanded finality provider list (superset of original)
+>   * Contains the new total staking value (≥ of the original amount)
+>   * Must use current Babylon staking parameters
+>
+> The rest of the transactions are the same as with the typical
+> [BTC Stake Registration Protocol](./register-bitcoin-stake.md)
 
 **Transaction Construction:**
 You can create these transactions using:
@@ -449,10 +301,8 @@ You can create these transactions using:
 
 ### 3.4. The `MsgBtcStakeExpand` Babylon Message
 
-The `MsgBtcStakeExpand` message in the btcstaking module handles stake
-expansion registration:
-
-#### Key Fields in `MsgBtcStakeExpand`
+The `MsgBtcStakeExpand` message of the `x/btcstaking` module
+is used to submit the Stake Expansion request.
 
 ```protobuf
 // MsgBtcStakeExpand is the message for expanding existing BTC stakes
@@ -519,6 +369,7 @@ message MsgBtcStakeExpand {
     "btc_sig": "f1e2d3c4b5a69788c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2"
   }
   ```
+  <!-- TODO: This is outdated, we need new documentation for PoP using the signing context -->
 
 * `btc_pk`:
   This Bitcoin `secp256k1` public key of the BTC staker,
@@ -551,8 +402,9 @@ message MsgBtcStakeExpand {
   
   > **⚠️ Critical Requirement**: The expansion finality provider list must
   > include
-  > all finality providers from the original delegation plus any additional ones.
-  > The btcstaking module will reject expansions that attempt to remove existing
+  > all finality providers from the original delegation and optionally additional ones
+  > from new BSNs.
+  > The Babylon Genesis chain will reject expansions that attempt to remove existing
   > finality providers. Query the original delegation to retrieve the current
   > finality provider list before constructing the expansion.
 
@@ -562,12 +414,18 @@ message MsgBtcStakeExpand {
   This is the same as the timelock used when constructing the 
   [staking script](./staking-script.md) and must comply with the current
   Babylon staking parameters.
+  > **Important Note**: Every stake expansion transaction starts
+  > with a fresh timelock, meaning that the time the original
+  > staking transaction spent being active will not be deducted from
+  > the staking time defined here.
 
 * `staking_value`:
   The total amount of satoshis locked in the staking output of the expansion
   BTC staking transaction (`staking_tx`). This value must be greater than or
   equal to the original delegation's staking value. The increase comes from
   the additional funding UTXO provided in the expansion transaction.
+  > **Critical Requirement**: This value should be >= the original
+  > stake's staking amount.
 
 * `staking_tx`:
   The Bitcoin expansion transaction in hex format. This transaction must have
@@ -578,7 +436,7 @@ message MsgBtcStakeExpand {
   > **⚠️ Critical Structure**: The expansion transaction must follow the exact
   > two-input structure validated by the btcstaking module. Input 0 must spend
   > the original staking transaction output, and Input 1 must be the additional
-  > funding UTXO controlled by the staker's key.
+  > funding UTXO.
 
 * `slashing_tx` / `delegator_slashing_sig`:
   The slashing transaction that spends the expansion BTC staking transaction
@@ -594,7 +452,7 @@ message MsgBtcStakeExpand {
   The on-demand unbonding period measured in Bitcoin blocks for the expanded
   delegation. This is the same as the timelock used when constructing
   the [unbonding script](./staking-script.md) and must comply with the current
-  Babylon staking parameters.
+  Babylon Genesis BTC staking parameters.
 
 * `unbonding_tx`:
   The unsigned unbonding transaction in hex format for the expanded stake.
@@ -614,28 +472,15 @@ message MsgBtcStakeExpand {
   signature for it. Both are in hex format. This transaction must be
   constructed for the expanded unbonding parameters and finality provider list.
 
-#### Expansion-Specific Field Details
-
 * `previous_staking_tx_hash`:
   The transaction hash (in hex format) of the original active staking
-  transaction being expanded. This can be obtained by:
-  * Querying your wallet or staking interface for your active delegations
-  * Using the Babylon CLI: `babylond query btcstaking delegations-by-staker [staker-address]`
-  * Checking the original delegation registration transaction on a Babylon block
-  explorer The btcstaking module uses this hash to locate and validate the
-  previous delegation before processing the expansion.
-  
-  Example: `"d4c2b8f9a1e5c3d7e9f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3"`
+  transaction being expanded.
 
 * `funding_tx`:
   The Bitcoin transaction (in hex format) containing the additional UTXO used as
-  the second input in the expansion transaction. This transaction must:
-  * Have been confirmed on the Bitcoin network before expansion submission
-  * Contain a UTXO that is controlled by the same Bitcoin key used for staking
-  * Provide sufficient funds to cover the staking value increase and transaction
-  fees. You can obtain this by creating a standard Bitcoin transaction that
-  sends funds to an address controlled by your staking Bitcoin key, then
-  using that transaction as the funding source.
+  the second input in the expansion transaction. This transaction must
+  provide sufficient funds to cover the staking value increase and transaction
+  fees.
 
 > **⚠️ Critical Validation**: The btcstaking module performs strict validation
 > on the relationship between the original delegation, expansion parameters, and
@@ -653,8 +498,8 @@ There are multiple ways to construct and broadcast the `MsgBtcStakeExpand`
 * **Command Line Interface (CLI)**: 
   Use the `babylond tx btcstaking btc-stake-expand` command.
 * **TypeScript Implementation**: 
-  Generate the message using TypeScript following this
-  [reference implementation](https://github.com/babylonlabs-io/simple-staking/blob/2b9682c4f779ab39562951930bc3d023e5467461/src/app/hooks/services/useTransactionService.ts#L672-L679) and broadcast to the Babylon network.
+  Generate the message using TypeScript following the
+  [TypeScript staking library](https://github.com/babylonlabs-io/btc-staking-ts).
 * **Golang Implementation**: 
   Construct the message using Golang based on this
   [type reference](../x/btcstaking/types/tx.pb.go) and broadcast to the Babylon
@@ -667,6 +512,51 @@ There are multiple ways to construct and broadcast the `MsgBtcStakeExpand`
 > verification process as new delegations. Ensure all slashing transactions
 > and signatures are properly constructed according to the
 > [staking script specification](./staking-script.md).
+
+### 3.6. Broadcasting the Fully Signed Stake Expansion Transaction
+
+After the submission of the `MsgBtcStakeExpand` to Babylon Genesis,
+the covenants' will verify it and submit their signatures for the
+spending of the original staking output and
+the unbonding and slashing transactions of the stake expansion transaction.
+
+Following is the procedure for utilizing the covenant signatures
+for spending the original staking output through the on-demand unbonding
+path to create the fully signed stake expansion transaction:
+1. **Retrieve covenant signatures from the Babylon Genesis chain**
+   by querying the original staking transaction hash. The
+   response includes a `StkExp` (StakeExpansionResponse) field
+   containing the covenant signatures needed to spend the original
+   staking output.
+
+   ```bash
+   # Query the original delegation to get covenant signatures
+   babylond query btcstaking btc-delegation [previous-staking-tx-hash]
+   ```
+2. **Compose the Witness for Spending the Original Staking Output**
+   using the staker's and covenants' signatures.
+   > **Note**: This is accomplished the same way the transaction
+   > witness is constructed for the on-demand unbonding transaction.
+
+3. **Sign the funding transaction input**
+
+4. **Finalize and Broadcast**:
+  - The fully signed expansion transaction can now be broadcast to the Bitcoin
+  network
+  - Submit the transaction hash and inclusion proof to Babylon after confirmation
+
+**Common Signing Mistakes:**
+- ❌ Trying to create covenant signatures yourself - they must come from
+  Babylon node
+- ❌ Using wrong signing path for Input 0 - must use unbonding path, not
+  timelock path
+- ❌ Missing covenant signatures in witness - transaction will be invalid
+
+> **⚡ Note**: Once you submit `MsgBtcStakeExpand` to Babylon, it creates a 
+> pending delegation. Covenants then read the pending delegation and provide 
+> the missing signatures needed to spend the original stake. After receiving 
+> covenant signatures, the BTC staker adds their signature and broadcasts 
+> the expansion transaction to Bitcoin.
 
 ## 4. Managing your Bitcoin Stake Expansion
 
