@@ -14,7 +14,10 @@ import (
 func TestGenesis(t *testing.T) {
 	genesisState := types.GenesisState{
 		PortId: types.PortID,
-		Params: types.Params{IbcPacketTimeoutSeconds: 100},
+		Params: types.Params{
+			IbcPacketTimeoutSeconds: 100,
+			MaxHeadersPerPacket:     types.DefaultMaxHeadersPerPacket,
+		},
 	}
 
 	ctrl := gomock.NewController(t)

@@ -13,4 +13,9 @@ message Params {
   // IBC packet becomes timeout, measured in seconds
   uint32 ibc_packet_timeout_seconds = 1
       [ (gogoproto.moretags) = "yaml:\"ibc_packet_timeout_seconds\"" ];
+  
+  // max_headers_per_packet is the maximum number of BTC headers that can be
+  // included in a single IBC packet
+  uint32 max_headers_per_packet = 2
+      [ (gogoproto.moretags) = "yaml:\"max_headers_per_packet\"" ];
 }

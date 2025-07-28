@@ -34,7 +34,10 @@ func TestGenesisState_Validate(t *testing.T) {
 			desc: "valid genesis state",
 			genState: &types.GenesisState{
 				PortId: types.PortID,
-				Params: types.Params{IbcPacketTimeoutSeconds: 100},
+				Params: types.Params{
+					IbcPacketTimeoutSeconds: 100,
+					MaxHeadersPerPacket:     types.DefaultMaxHeadersPerPacket,
+				},
 			},
 			valid: true,
 		},
