@@ -56,6 +56,19 @@ stakers to:
 The only way to achieve those is by on-demand unbonding and
 staking again.
 
+### 1.1. Terminology
+
+- **Stake Expansion**: The protocol of expanding a stake.
+- **Stake Expansion Submission**:
+  The submission of the Stake Expansion to Babylon Genesis.
+- **Original Staking Transaction**: The original staking transaction
+  that is now getting expanded through the Stake Expansion protocol.
+- **Expanded Staking Transaction**: The new staking transaction expanding
+  the original staking transaction by using its staking output as an input
+  and following the rules of the Stake Expansion protocol. 
+  > *Note*: An expanded staking transaction can serve as the original
+  > staking transaction for a subsequent stake expansion operation.
+
 ## 2. Bitcoin Stake Expansion Methods
 
 ### 2.1 Overview of Expansion vs Traditional Unbond-Stake Again
@@ -110,20 +123,21 @@ staking transaction and its state on Babylon Genesis.
   and optionally new ones corresponding to different BSNs.
 - The original staking transaction must have an `ACTIVE` on Babylon Genesis.
 - The staking amount in the expanded staking transaction must be ≥ original amount
-  > This requirement is the key reason that the staking expansion
-  > requires an additional funding UTXO input:
-  > the original staking output would never be enough as a
-  > single input UTXO as the Bitcoin transaction fees would
-  > need to be deducted from it.
+  > This requirement is the primary reason the stake expansion staking transaction
+  > needs an additional funding UTXO input:
+  > the original staking output alone wouldn’t suffice,
+  > as Bitcoin transaction fees must be deducted,
+  > and those fees can't be covered by the staking output itself
+  > as the new staking output should at least have the same BTC as it. 
 - The staking expansion should use the current Babylon Genesis staking parameters.
-  > **Note**: The stake expansion protocol follows a similar procedure to the
-  > [pre-staking registration flow](./register-bitcoin-stake.md#23-pre-staking-registration)
-  > in which the transaction is first sent to confirmation to Babylon Genesis prior
-  > to being broadcast to Bitcoin.
-  > This means that the stake expansion transaction should use the current Bitcoin Staking
-  > parameters as depicted by Babylon Genesis.
-  > It's permitted for the original staking transaction and the staking expansion transaction
-  > to be using different parameters.
+  > **Note**: The stake expansion protocol closely follows the
+  > [pre-staking registration flow](./register-bitcoin-stake.md#23-pre-staking-registration),
+  > where the transaction is first submitted to Babylon Genesis for confirmation
+  > before being broadcast to the Bitcoin network.
+  > As a result, the stake expansion transaction must use the current Bitcoin
+  > staking parameters as defined by Babylon Genesis at the time of submission.
+  > It is allowed for the original staking transaction and
+  > the stake expansion staking transaction to use different staking parameters.
 - The Babylon Genesis address used to submit the stake expansion transaction to Babylon Genesis
   should be the same as the owner of the original staking transaction.
 
