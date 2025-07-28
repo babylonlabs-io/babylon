@@ -178,11 +178,12 @@ func (h *Helper) getExtendedVotesFromValSet(
 		// 1. set build vote extension
 		sig := bls12381.Sign(sk, signBytes)
 		ve := checkpointingtypes.VoteExtension{
-			Signer:    genesisKeys[i].ValidatorAddress,
-			BlockHash: &blockHash,
-			EpochNum:  epochNum,
-			Height:    height,
-			BlsSig:    &sig,
+			Signer:           genesisKeys[i].ValidatorAddress,
+			ValidatorAddress: genesisKeys[i].ValidatorAddress,
+			BlockHash:        &blockHash,
+			EpochNum:         epochNum,
+			Height:           height,
+			BlsSig:           &sig,
 		}
 		veBytes, err := ve.Marshal()
 		if err != nil {
