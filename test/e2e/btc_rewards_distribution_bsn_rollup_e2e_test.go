@@ -372,7 +372,7 @@ func (s *BtcRewardsDistributionBsnRollup) Test7CheckRewardsBsn4() {
 	s.NoError(err)
 
 	rewardCoins := nodeBalances.Sub(sdk.NewCoin(nativeDenom, nodeBalances.AmountOf(nativeDenom))).QuoInt(math.NewInt(4))
-	require.Greater(s.T(), rewardCoins.Len(), 2, "should have 2 or more denoms to give out as rewards")
+	require.Greater(s.T(), rewardCoins.Len(), 1, "should have 2 or more denoms to give out as rewards")
 
 	fp4Ratio := math.LegacyOneDec()
 

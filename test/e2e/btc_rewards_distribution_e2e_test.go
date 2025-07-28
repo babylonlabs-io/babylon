@@ -12,6 +12,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/cometbft/cometbft/libs/bytes"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
@@ -819,7 +820,7 @@ func SendCovenantSigsToPendingDel(
 	covenantSKs []*btcec.PrivateKey,
 	covWallets []string,
 	pendingDel *bstypes.BTCDelegation,
-) {
+) []string {
 	require.Len(t, pendingDel.CovenantSigs, 0)
 
 	params := n.QueryBTCStakingParams()
@@ -880,18 +881,42 @@ func SendCovenantSigsToPendingDel(
 	)
 	require.NoError(t, err)
 
+	covStkExpSigs := []*bbn.BIP340Signature{}
+	if pendingDel.IsStakeExpansion() {
+		prevDelTxHash, err := chainhash.NewHash(pendingDel.StkExp.PreviousStakingTxHash)
+		require.NoError(t, err)
+		prevDelRes := n.QueryBtcDelegation(prevDelTxHash.String())
+		require.NotNil(t, prevDelRes)
+		prevDel := prevDelRes.BtcDelegation
+		require.NotNil(t, prevDel)
+		prevParams := n.QueryBTCStakingParamsByVersion(prevDel.ParamsVersion)
+		pDel, err := chain.ParseRespBTCDelToBTCDel(prevDel)
+		require.NoError(t, err)
+		prevDelStakingInfo, err := pDel.GetStakingInfo(prevParams, btcNet)
+		require.NoError(t, err)
+		covStkExpSigs, err = datagen.GenCovenantStakeExpSig(covenantSKs, pendingDel, prevDelStakingInfo)
+		require.NoError(t, err)
+	}
+
+	txHashes := make([]string, params.CovenantQuorum)
 	for i := 0; i < int(params.CovenantQuorum); i++ {
 		// add covenant sigs
-		n.AddCovenantSigs(
+		var stkExpSig *bbn.BIP340Signature
+		if pendingDel.IsStakeExpansion() {
+			stkExpSig = covStkExpSigs[i]
+		}
+		// add covenant sigs
+		txHashes[i] = n.AddCovenantSigs(
 			covWallets[i],
 			covenantSlashingSigs[i].CovPk,
 			stakingTxHash,
 			covenantSlashingSigs[i].AdaptorSigs,
 			bbn.NewBIP340SignatureFromBTCSig(covUnbondingSigs[i]),
 			covenantUnbondingSlashingSigs[i].AdaptorSigs,
-			nil,
+			stkExpSig,
 		)
 	}
+	return txHashes
 }
 
 // QueryFpRewards returns the rewards available for fp1, fp2, fp3, fp4
