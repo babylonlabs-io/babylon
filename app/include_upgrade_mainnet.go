@@ -22,7 +22,7 @@ var WhitelistedChannelsID = map[string]struct{}{
 // init is used to include v3 upgrade for mainnet data
 func init() {
 	Upgrades = []upgrades.Upgrade{
-		v3.CreateUpgrade(true),
+		v3.CreateUpgrade(5, 288),
 		v22.Upgrade,
 		v2.CreateUpgrade(false, WhitelistedChannelsID),
 	}
