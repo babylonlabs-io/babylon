@@ -960,7 +960,7 @@ func (h *Helper) createBtcStakeExpandMessage(
 	}
 
 	// Create funding transaction
-	fundingTx := datagen.GenRandomTxWithOutputValue(r,10000000)
+	fundingTx := datagen.GenRandomTxWithOutputValue(r, 10000000)
 
 	// Convert previousStakingTxHash to OutPoint
 	prevDelTxHash := prevDel.MustGetStakingTxHash()
