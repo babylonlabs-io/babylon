@@ -31,7 +31,6 @@ func (s *IBCTransferTestSuite) SetupSuite() {
 	)
 
 	s.configurer, err = configurer.NewIBCTransferConfigurer(s.T(), true)
-
 	s.Require().NoError(err)
 
 	err = s.configurer.ConfigureChains()
