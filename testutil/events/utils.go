@@ -11,8 +11,8 @@ import (
 func RequireEventAttribute(t *testing.T, event sdk.Event, key, expectedValue string, msgAndArgs ...any) {
 	t.Helper()
 	for _, attr := range event.Attributes {
-		if string(attr.Key) == key {
-			require.Equal(t, expectedValue, string(attr.Value), msgAndArgs...)
+		if attr.Key == key {
+			require.Equal(t, expectedValue, attr.Value, msgAndArgs...)
 			return
 		}
 	}
