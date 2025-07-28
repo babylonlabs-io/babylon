@@ -4,15 +4,16 @@
 
 1. [Introduction](#1-introduction)
 2. [Bitcoin Stake Expansion Methods](#2-bitcoin-stake-expansion-methods)
-   1. [Overview of Expansion vs Traditional Unbond-Stake-Again](#21-overview-of-expansion-vs-traditional-unbond-stake-again)
+   1. [Stake Expansion Procedure](#21-stake-expansion-procedure)
    2. [Stake Expansion Transaction Structure](#22-stake-expansion-transaction-structure)
-   3. [Expansion Requirements](#23-stake-expansion-requirements)
+   3. [Stake Expansion Requirements](#23-stake-expansion-requirements)
 3. [Bitcoin Stake Expansion Registration](#3-bitcoin-stake-expansion-registration)
-   1. [Overview: What You Need for Expansion](#31-overview-what-you-need-for-expansion)
+   1. [Overview: Required Transactions](#31-overview-required-transactions)
    2. [BTC Staking Parameters Selection](#32-btc-staking-parameters-selection)
    3. [Detailed Transaction Construction](#33-detailed-transaction-construction)
    4. [The `MsgBtcStakeExpand` Babylon Message](#34-the-msgbtcstakeexpand-babylon-message)
    5. [Constructing the `MsgBtcStakeExpand`](#35-constructing-the-msgbtcstakeexpand)
+   6. [Broadcasting the Fully Signed Stake Expansion Transaction](#36-broadcasting-the-fully-signed-stake-expansion-transaction)
 4. [Managing your Bitcoin Stake Expansion](#4-managing-your-bitcoin-stake-expansion)
    1. [Monitoring Expansion Status](#41-monitoring-expansion-status)
    2. [Activation Process](#42-activation-process)
@@ -227,10 +228,6 @@ graph LR
     F --> G[Broadcast to Bitcoin]
     G --> H[Activation]
 ```
-
-Notice that the procedure looks very similar to the pre-staking
-registration flow, with the main difference being that
-one of the inputs in this case is an already active staking output.
 
 ### 3.2. BTC Staking Parameters Selection
 
