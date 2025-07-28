@@ -86,51 +86,8 @@ func (s *BTCStakeExpansionTestSuite) Test1CreateStakeExpansionDelegation() {
 	// generate staking tx and slashing tx
 	stakingTimeBlocks := uint16(math.MaxUint16)
 
-	// Step 1: we create a BTC delegation
-	// NOTE: we use the node's address for the BTC delegation
-	prevDelStakingInfo := nonValidatorNode.CreateBTCDelegationAndCheck(
-		s.r,
-		s.T(),
-		s.net,
-		nonValidatorNode.WalletName,
-		s.cacheFP,
-		s.delBTCSK,
-		nonValidatorNode.PublicAddress,
-		stakingTimeBlocks,
-		s.stakingValue,
-	)
-
-	pendingDelSet := nonValidatorNode.QueryFinalityProviderDelegations(s.cacheFP.BtcPk.MarshalHex())
-	s.Len(pendingDelSet, 1)
-	pendingDels := pendingDelSet[0]
-	s.Len(pendingDels.Dels, 1)
-	s.Equal(s.delBTCSK.PubKey().SerializeCompressed()[1:], pendingDels.Dels[0].BtcPk.MustToBTCPK().SerializeCompressed()[1:])
-	s.Len(pendingDels.Dels[0].CovenantSigs, 0)
-
-	// check delegation
-	delegation := nonValidatorNode.QueryBtcDelegation(prevDelStakingInfo.StakingTx.TxHash().String())
-	s.NotNil(delegation)
-	s.Equal(delegation.BtcDelegation.StakerAddr, nonValidatorNode.PublicAddress)
-
-	// Step 2: submit covenant signature to activate the BTC delegation
-	originalDel, err := chain.ParseRespBTCDelToBTCDel(pendingDels.Dels[0])
-	s.NoError(err)
-	s.addCovenantSigs(nonValidatorNode, originalDel)
-
-	// ensure the BTC delegation has covenant sigs now
-	activeDelsSet := nonValidatorNode.QueryFinalityProviderDelegations(s.cacheFP.BtcPk.MarshalHex())
-	s.Len(activeDelsSet, 1)
-
-	activeDels, err := chain.ParseRespsBTCDelToBTCDel(activeDelsSet[0])
-	s.NoError(err)
-	s.NotNil(activeDels)
-	s.Len(activeDels.Dels, 1)
-
-	activeDel := activeDels.Dels[0]
-	s.True(activeDel.HasCovenantQuorums(s.covenantQuorum, 0))
-
-	// Step 3: create a BTC expansion delegation
-	stkExpDelStakingSlashingInfo, fundingTx := nonValidatorNode.CreateBTCStakeExpDelegationMultipleFPsAndCheck(
+	// create a BTC expansion delegation
+	stkExpDelStakingSlashingInfo, prevDelStakingInfo, fundingTx := nonValidatorNode.CreateBTCDelegationWithExpansionAndCheck(
 		s.r,
 		s.T(),
 		s.net,
@@ -140,7 +97,8 @@ func (s *BTCStakeExpansionTestSuite) Test1CreateStakeExpansionDelegation() {
 		nonValidatorNode.PublicAddress,
 		stakingTimeBlocks,
 		s.stakingValue,
-		activeDel,
+		s.covenantSKs,
+		s.covenantQuorum,
 	)
 
 	// check stake expansion delegation is pending
@@ -154,12 +112,17 @@ func (s *BTCStakeExpansionTestSuite) Test1CreateStakeExpansionDelegation() {
 	// Step 4: submit covenant signature to verify the BTC expansion delegation
 	stkExpDel, err := chain.ParseRespBTCDelToBTCDel(stkExpDelegation.BtcDelegation)
 	s.NoError(err)
-	s.addCovenantSigs(nonValidatorNode, stkExpDel)
+	nonValidatorNode.SendCovenantSigsAsValAndCheck(s.r, s.T(), s.net, s.covenantSKs, stkExpDel)
 
 	// ensure the BTC staking expansion delegation is verified now
 	stkExpDelegation = nonValidatorNode.QueryBtcDelegation(stkExpTxHash.String())
 	s.NotNil(stkExpDelegation)
 	s.Equal(stkExpDelegation.BtcDelegation.StatusDesc, bstypes.BTCDelegationStatus_VERIFIED.String())
+
+	activeDelRes := nonValidatorNode.QueryBtcDelegation(prevDelStakingInfo.StakingTx.TxHash().String())
+	s.NotNil(activeDelRes)
+	activeDel, err := chain.ParseRespBTCDelToBTCDel(activeDelRes.BtcDelegation)
+	s.NoError(err)
 
 	// Step 5: submit MsgBTCUndelegate for the original BTC delegation
 	// to activate the BTC expansion delegation
@@ -229,28 +192,4 @@ func (s *BTCStakeExpansionTestSuite) Test1CreateStakeExpansionDelegation() {
 	stkExpDelegation = nonValidatorNode.QueryBtcDelegation(stkExpDelStakingSlashingInfo.StakingTx.TxHash().String())
 	s.NotNil(stkExpDelegation)
 	s.Equal(stkExpDelegation.BtcDelegation.StatusDesc, bstypes.BTCDelegationStatus_ACTIVE.String())
-}
-
-func (s *BTCStakeExpansionTestSuite) addCovenantSigs(n *chain.NodeConfig, del *bstypes.BTCDelegation) {
-	/*
-		generate and insert new covenant signature, in order to activate the BTC delegation
-	*/
-	wallets := make([]string, len(s.covenantSKs))
-	for i := range s.covenantSKs {
-		wallets[i] = "val"
-	}
-	txHashes := SendCovenantSigsToPendingDel(
-		s.r, s.T(),
-		n, s.net,
-		s.covenantSKs,
-		wallets,
-		del,
-	)
-
-	// wait for a block so that above txs take effect
-	n.WaitForNextBlocks(2)
-	for _, txHash := range txHashes {
-		res, _ := n.QueryTx(txHash)
-		s.Equal(res.Code, uint32(0), res.RawLog)
-	}
 }

@@ -847,3 +847,221 @@ func (n *NodeConfig) createBtcStakeExpandMessage(
 		FundingTx:                     fundingTxBz,
 	}, stakingSlashingInfo
 }
+
+func (n *NodeConfig) SendCovenantSigs(
+	r *rand.Rand,
+	t testing.TB,
+	btcNet *chaincfg.Params,
+	covenantSKs []*btcec.PrivateKey,
+	covWallets []string,
+	pendingDel *bstypes.BTCDelegation,
+) []string {
+	require.Len(t, pendingDel.CovenantSigs, 0)
+
+	params := n.QueryBTCStakingParams()
+	slashingTx := pendingDel.SlashingTx
+	stakingTx := pendingDel.StakingTx
+
+	stakingMsgTx, err := bbn.NewBTCTxFromBytes(stakingTx)
+	require.NoError(t, err)
+	stakingTxHash := stakingMsgTx.TxHash().String()
+
+	fpBTCPKs, err := bbn.NewBTCPKsFromBIP340PKs(pendingDel.FpBtcPkList)
+	require.NoError(t, err)
+
+	stakingInfo, err := pendingDel.GetStakingInfo(params, btcNet)
+	require.NoError(t, err)
+
+	stakingSlashingPathInfo, err := stakingInfo.SlashingPathSpendInfo()
+	require.NoError(t, err)
+
+	/*
+		generate and insert new covenant signature, in order to activate the BTC delegation
+	*/
+	// covenant signatures on slashing tx
+	covenantSlashingSigs, err := datagen.GenCovenantAdaptorSigs(
+		covenantSKs,
+		fpBTCPKs,
+		stakingMsgTx,
+		stakingSlashingPathInfo.GetPkScriptPath(),
+		slashingTx,
+	)
+	require.NoError(t, err)
+
+	// cov Schnorr sigs on unbonding signature
+	unbondingPathInfo, err := stakingInfo.UnbondingPathSpendInfo()
+	require.NoError(t, err)
+	unbondingTx, err := bbn.NewBTCTxFromBytes(pendingDel.BtcUndelegation.UnbondingTx)
+	require.NoError(t, err)
+
+	covUnbondingSigs, err := datagen.GenCovenantUnbondingSigs(
+		covenantSKs,
+		stakingMsgTx,
+		pendingDel.StakingOutputIdx,
+		unbondingPathInfo.GetPkScriptPath(),
+		unbondingTx,
+	)
+	require.NoError(t, err)
+
+	unbondingInfo, err := pendingDel.GetUnbondingInfo(params, btcNet)
+	require.NoError(t, err)
+	unbondingSlashingPathInfo, err := unbondingInfo.SlashingPathSpendInfo()
+	require.NoError(t, err)
+	covenantUnbondingSlashingSigs, err := datagen.GenCovenantAdaptorSigs(
+		covenantSKs,
+		fpBTCPKs,
+		unbondingTx,
+		unbondingSlashingPathInfo.GetPkScriptPath(),
+		pendingDel.BtcUndelegation.SlashingTx,
+	)
+	require.NoError(t, err)
+
+	covStkExpSigs := []*bbn.BIP340Signature{}
+	if pendingDel.IsStakeExpansion() {
+		prevDelTxHash, err := chainhash.NewHash(pendingDel.StkExp.PreviousStakingTxHash)
+		require.NoError(t, err)
+		prevDelRes := n.QueryBtcDelegation(prevDelTxHash.String())
+		require.NotNil(t, prevDelRes)
+		prevDel := prevDelRes.BtcDelegation
+		require.NotNil(t, prevDel)
+		prevParams := n.QueryBTCStakingParamsByVersion(prevDel.ParamsVersion)
+		pDel, err := ParseRespBTCDelToBTCDel(prevDel)
+		require.NoError(t, err)
+		prevDelStakingInfo, err := pDel.GetStakingInfo(prevParams, btcNet)
+		require.NoError(t, err)
+		covStkExpSigs, err = datagen.GenCovenantStakeExpSig(covenantSKs, pendingDel, prevDelStakingInfo)
+		require.NoError(t, err)
+	}
+
+	txHashes := make([]string, params.CovenantQuorum)
+	for i := 0; i < int(params.CovenantQuorum); i++ {
+		// add covenant sigs
+		var stkExpSig *bbn.BIP340Signature
+		if pendingDel.IsStakeExpansion() {
+			stkExpSig = covStkExpSigs[i]
+		}
+		// add covenant sigs
+		txHashes[i] = n.AddCovenantSigs(
+			covWallets[i],
+			covenantSlashingSigs[i].CovPk,
+			stakingTxHash,
+			covenantSlashingSigs[i].AdaptorSigs,
+			bbn.NewBIP340SignatureFromBTCSig(covUnbondingSigs[i]),
+			covenantUnbondingSlashingSigs[i].AdaptorSigs,
+			stkExpSig,
+		)
+		n.WaitForNextBlock()
+	}
+	return txHashes
+}
+
+func (n *NodeConfig) SendCovenantSigsAsValAndCheck(
+	r *rand.Rand,
+	t testing.TB,
+	btcNet *chaincfg.Params,
+	covenantSKs []*btcec.PrivateKey,
+	pendingDel *bstypes.BTCDelegation,
+) {
+	/*
+		generate and insert new covenant signature, in order to activate the BTC delegation
+	*/
+	wallets := make([]string, len(covenantSKs))
+	for i := range covenantSKs {
+		wallets[i] = "val"
+	}
+	txHashes := n.SendCovenantSigs(
+		r, t,
+		btcNet,
+		covenantSKs,
+		wallets,
+		pendingDel,
+	)
+
+	// wait for a block so that above txs take effect
+	n.WaitForNextBlocks(2)
+	for _, txHash := range txHashes {
+		res, _ := n.QueryTx(txHash)
+		require.Equal(t, res.Code, uint32(0), res.RawLog)
+	}
+}
+
+func (n *NodeConfig) CreateBTCDelegationWithExpansionAndCheck(
+	r *rand.Rand,
+	t *testing.T,
+	btcNet *chaincfg.Params,
+	walletNameSender string,
+	fps []*bstypes.FinalityProvider,
+	btcStakerSK *btcec.PrivateKey,
+	delAddr string,
+	stakingTimeBlocks uint16,
+	stakingSatAmt int64,
+	covenantSKs []*btcec.PrivateKey,
+	covenantQuorum uint32,
+) (*datagen.TestStakingSlashingInfo, *datagen.TestStakingSlashingInfo, *wire.MsgTx) {
+	// Step 1: we create a BTC delegation
+	// NOTE: we use the node's address for the BTC delegation
+	prevDelStakingInfo := n.CreateBTCDelegationMultipleFPsAndCheck(
+		r,
+		t,
+		btcNet,
+		n.WalletName,
+		fps,
+		btcStakerSK,
+		delAddr,
+		stakingTimeBlocks,
+		stakingSatAmt,
+	)
+
+	pendingDelSet := n.QueryFinalityProviderDelegations(fps[0].BtcPk.MarshalHex())
+	require.Len(t, pendingDelSet, 1)
+	pendingDels := pendingDelSet[0]
+	require.Len(t, pendingDels.Dels, 1)
+	require.Equal(t, btcStakerSK.PubKey().SerializeCompressed()[1:], pendingDels.Dels[0].BtcPk.MustToBTCPK().SerializeCompressed()[1:])
+	require.Len(t, pendingDels.Dels[0].CovenantSigs, 0)
+
+	// check delegation
+	delegation := n.QueryBtcDelegation(prevDelStakingInfo.StakingTx.TxHash().String())
+	require.NotNil(t, delegation)
+	require.Equal(t, delegation.BtcDelegation.StakerAddr, n.PublicAddress)
+
+	// Step 2: submit covenant signature to activate the BTC delegation
+	originalDel, err := ParseRespBTCDelToBTCDel(pendingDels.Dels[0])
+	require.NoError(t, err)
+	n.SendCovenantSigsAsValAndCheck(r, t, btcNet, covenantSKs, originalDel)
+
+	// ensure the BTC delegation has covenant sigs now
+	activeDelsSet := n.QueryFinalityProviderDelegations(fps[0].BtcPk.MarshalHex())
+	require.Len(t, activeDelsSet, 1)
+
+	activeDels, err := ParseRespsBTCDelToBTCDel(activeDelsSet[0])
+	require.NoError(t, err)
+	require.NotNil(t, activeDels)
+	require.Len(t, activeDels.Dels, 1)
+
+	activeDel := activeDels.Dels[0]
+	require.True(t, activeDel.HasCovenantQuorums(covenantQuorum, 0))
+
+	// Step 3: create a BTC expansion delegation
+	stkExpDelStakingSlashingInfo, fundingTx := n.CreateBTCStakeExpDelegationMultipleFPsAndCheck(
+		r,
+		t,
+		btcNet,
+		n.WalletName,
+		fps,
+		btcStakerSK,
+		n.PublicAddress,
+		stakingTimeBlocks,
+		stakingSatAmt,
+		activeDel,
+	)
+
+	// check stake expansion delegation is pending
+	stkExpTxHash := stkExpDelStakingSlashingInfo.StakingTx.TxHash()
+	stkExpDelegation := n.QueryBtcDelegation(stkExpTxHash.String())
+	require.NotNil(t, stkExpDelegation)
+	require.Equal(t, stkExpDelegation.BtcDelegation.StakerAddr, n.PublicAddress)
+	require.NotNil(t, stkExpDelegation.BtcDelegation.StkExp)
+	require.Equal(t, stkExpDelegation.BtcDelegation.StatusDesc, bstypes.BTCDelegationStatus_PENDING.String())
+
+	return stkExpDelStakingSlashingInfo, prevDelStakingInfo, fundingTx
+}

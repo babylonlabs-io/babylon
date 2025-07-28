@@ -349,7 +349,7 @@ func (s *BtcRewardsDistributionBsnRollup) Test6ActiveLastDelegation() {
 	pendingDel, err := chain.ParseRespBTCDelToBTCDel(pendingDels[0])
 	s.NoError(err)
 
-	SendCovenantSigsToPendingDel(s.r, s.T(), n1, s.net, s.covenantSKs, s.covenantWallets, pendingDel)
+	n1.SendCovenantSigs(s.r, s.T(), s.net, s.covenantSKs, s.covenantWallets, pendingDel)
 
 	// wait for a block so that covenant txs take effect
 	n1.WaitForNextBlock()
