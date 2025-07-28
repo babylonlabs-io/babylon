@@ -21,24 +21,33 @@ const (
 
 type UpgradeTestSuite struct {
 	suite.Suite
-	ctx       sdk.Context
-	app       *app.BabylonApp
-	preModule appmodule.HasPreBlocker
+	ctx              sdk.Context
+	app              *app.BabylonApp
+	preModule        appmodule.HasPreBlocker
+	initialBtcHeight uint64
 }
 
-func TestUpdateTestSuite(t *testing.T) {
+func TestUpgradeTestSuite(t *testing.T) {
 	suite.Run(t, new(UpgradeTestSuite))
 }
 
-func (s *UpgradeTestSuite) SetupTest() {
-	app.Upgrades = []upgrades.Upgrade{CreateUpgrade()}
+func (s *UpgradeTestSuite) setupTestWithNetwork(isMainnet bool) {
+	s.initialBtcHeight = 100
+
+	app.Upgrades = []upgrades.Upgrade{CreateUpgrade(isMainnet)}
 
 	s.app = app.SetupWithBitcoinConf(s.T(), false, bbn.BtcSignet)
 	s.ctx = s.app.BaseApp.NewContextLegacy(false, tmproto.Header{Height: 1, ChainID: "babylon-1", Time: time.Now().UTC()})
 	s.preModule = upgrade.NewAppModule(s.app.UpgradeKeeper, s.app.AccountKeeper.AddressCodec())
+
+	// Set initial BTC staking parameters with a known BtcActivationHeight
+	params := s.app.BTCStakingKeeper.GetParams(s.ctx)
+	params.BtcActivationHeight = uint32(s.initialBtcHeight)
+	err := s.app.BTCStakingKeeper.SetParams(s.ctx, params)
+	s.Require().NoError(err)
 }
 
-func (s *UpgradeTestSuite) Upgrade() {
+func (s *UpgradeTestSuite) executeUpgrade() {
 	s.ctx = s.ctx.WithBlockHeight(DummyUpgradeHeight - 1)
 	plan := upgradetypes.Plan{Name: UpgradeName, Height: DummyUpgradeHeight}
 	err := s.app.UpgradeKeeper.ScheduleUpgrade(s.ctx, plan)
@@ -57,6 +66,64 @@ func (s *UpgradeTestSuite) Upgrade() {
 	})
 }
 
+func (s *UpgradeTestSuite) TestUpgradeNetworks() {
+	testCases := []struct {
+		name                    string
+		isMainnet               bool
+		expectedMaxFPs          uint32
+		expectedHeightIncrement uint32
+	}{
+		{
+			name:                    "mainnet upgrade",
+			isMainnet:               true,
+			expectedMaxFPs:          5,
+			expectedHeightIncrement: 288,
+		},
+		{
+			name:                    "testnet upgrade",
+			isMainnet:               false,
+			expectedMaxFPs:          10,
+			expectedHeightIncrement: 144,
+		},
+	}
+
+	for _, tc := range testCases {
+		s.Run(tc.name, func() {
+			s.setupTestWithNetwork(tc.isMainnet)
+
+			s.executeUpgrade()
+
+			s.verifyPostUpgrade(tc.expectedMaxFPs, tc.expectedHeightIncrement)
+		})
+	}
+}
+
+func (s *UpgradeTestSuite) verifyPostUpgrade(expectedMaxFPs, expectedHeightIncrement uint32) {
+	_, found := s.app.ModuleManager.Modules[deletedCapabilityStoreKey]
+	s.Require().False(found, "x/capability module should be deleted")
+
+	_, found = s.app.ModuleManager.Modules["btcstkconsumer"]
+	s.Require().True(found, "x/btcstkconsumer module should be found")
+
+	_, found = s.app.ModuleManager.Modules["zoneconcierge"]
+	s.Require().True(found, "x/zoneconcierge module should be found")
+
+	params := s.app.BTCStakingKeeper.GetParams(s.ctx)
+	s.Require().Equal(expectedMaxFPs, params.MaxFinalityProviders, "MaxFinalityProviders should match expected value")
+
+	expectedBtcHeight := uint32(s.initialBtcHeight) + expectedHeightIncrement
+	s.Require().Equal(expectedBtcHeight, params.BtcActivationHeight, "BtcActivationHeight should be incremented correctly")
+}
+
+// Legacy test methods for backwards compatibility
+func (s *UpgradeTestSuite) SetupTest() {
+	s.setupTestWithNetwork(false) // Default to testnet
+}
+
+func (s *UpgradeTestSuite) Upgrade() {
+	s.executeUpgrade()
+}
+
 func (s *UpgradeTestSuite) TestUpgrade() {
 	s.SetupTest()
 	s.PreUpgrade()
@@ -67,15 +134,5 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 func (s *UpgradeTestSuite) PreUpgrade() {}
 
 func (s *UpgradeTestSuite) PostUpgrade() {
-	_, found := s.app.ModuleManager.Modules[deletedCapabilityStoreKey]
-	s.Require().False(found, "x/capability module shouldn't be found")
-
-	_, found = s.app.ModuleManager.Modules["btcstkconsumer"]
-	s.Require().True(found, "x/btcstkconsumer module shouldn't be found")
-
-	_, found = s.app.ModuleManager.Modules["zoneconcierge"]
-	s.Require().True(found, "x/zoneconcierge module shouldn't be found")
-
-	params := s.app.BTCStakingKeeper.GetParams(s.ctx)
-	s.Require().Equal(uint32(1), params.MaxFinalityProviders)
+	s.verifyPostUpgrade(10, 144) // Testnet values: 10 MaxFPs, 144 height increment
 }

@@ -183,7 +183,7 @@ func (s *SoftwareUpgradeV3TestSuite) TestUpgradeV3() {
 
 	maxFP, ok := btcparamsMap["max_finality_providers"]
 	s.Require().True(ok, "max_finality_providers param should exist")
-	s.Require().Equal(float64(1), maxFP, "max_finality_providers should be 1")
+	s.Require().Equal(float64(5), maxFP, "max_finality_providers should be 5")
 
 	// check that the module exists by querying parameters with the QueryParams helper
 	var btcstkconsumerParams map[string]interface{}
