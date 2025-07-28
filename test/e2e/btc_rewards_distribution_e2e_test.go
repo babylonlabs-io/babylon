@@ -915,6 +915,7 @@ func SendCovenantSigsToPendingDel(
 			covenantUnbondingSlashingSigs[i].AdaptorSigs,
 			stkExpSig,
 		)
+		n.WaitForNextBlock()
 	}
 	return txHashes
 }
