@@ -1,9 +1,6 @@
 package v3
 
 import (
-	"testing"
-	"time"
-
 	"cosmossdk.io/core/appmodule"
 	"cosmossdk.io/core/header"
 	"cosmossdk.io/x/upgrade"
@@ -14,6 +11,8 @@ import (
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
+	"testing"
+	"time"
 )
 
 const (
@@ -32,15 +31,16 @@ func TestUpgradeTestSuite(t *testing.T) {
 	suite.Run(t, new(UpgradeTestSuite))
 }
 
-func (s *UpgradeTestSuite) setupTestWithNetwork(fpCount uint32, btcActivationHeight uint32) {
+func (s *UpgradeTestSuite) setupTestWithNetwork(isMainnet bool) {
 	s.initialBtcHeight = 100
 
-	app.Upgrades = []upgrades.Upgrade{CreateUpgrade(fpCount, btcActivationHeight)}
+	app.Upgrades = []upgrades.Upgrade{CreateUpgrade(isMainnet)}
 
 	s.app = app.SetupWithBitcoinConf(s.T(), false, bbn.BtcSignet)
 	s.ctx = s.app.BaseApp.NewContextLegacy(false, tmproto.Header{Height: 1, ChainID: "babylon-1", Time: time.Now().UTC()})
 	s.preModule = upgrade.NewAppModule(s.app.UpgradeKeeper, s.app.AccountKeeper.AddressCodec())
 
+	// Set initial BTC staking parameters with a known BtcActivationHeight
 	params := s.app.BTCStakingKeeper.GetParams(s.ctx)
 	params.BtcActivationHeight = uint32(s.initialBtcHeight)
 	err := s.app.BTCStakingKeeper.SetParams(s.ctx, params)
@@ -68,34 +68,37 @@ func (s *UpgradeTestSuite) executeUpgrade() {
 
 func (s *UpgradeTestSuite) TestUpgradeNetworks() {
 	testCases := []struct {
-		name                      string
-		expectedMaxFPs            uint32
-		expectedBtcActivationHeight uint32
+		name                    string
+		isMainnet               bool
+		expectedMaxFPs          uint32
+		expectedHeightIncrement uint32
 	}{
 		{
-			name:                        "mainnet upgrade",
-			expectedMaxFPs:              5,
-			expectedBtcActivationHeight: 915000,
+			name:                    "mainnet upgrade",
+			isMainnet:               true,
+			expectedMaxFPs:          5,
+			expectedHeightIncrement: 288,
 		},
 		{
-			name:                        "testnet upgrade", 
-			expectedMaxFPs:              10,
-			expectedBtcActivationHeight: 260000,
+			name:                    "testnet upgrade",
+			isMainnet:               false,
+			expectedMaxFPs:          10,
+			expectedHeightIncrement: 144,
 		},
 	}
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			s.setupTestWithNetwork(tc.expectedMaxFPs, tc.expectedBtcActivationHeight)
+			s.setupTestWithNetwork(tc.isMainnet)
 
 			s.executeUpgrade()
 
-			s.verifyPostUpgrade(tc.expectedMaxFPs, tc.expectedBtcActivationHeight)
+			s.verifyPostUpgrade(tc.expectedMaxFPs, tc.expectedHeightIncrement)
 		})
 	}
 }
 
-func (s *UpgradeTestSuite) verifyPostUpgrade(expectedMaxFPs, expectedBtcActivationHeight uint32) {
+func (s *UpgradeTestSuite) verifyPostUpgrade(expectedMaxFPs, expectedHeightIncrement uint32) {
 	_, found := s.app.ModuleManager.Modules[deletedCapabilityStoreKey]
 	s.Require().False(found, "x/capability module should be deleted")
 
@@ -107,5 +110,29 @@ func (s *UpgradeTestSuite) verifyPostUpgrade(expectedMaxFPs, expectedBtcActivati
 
 	params := s.app.BTCStakingKeeper.GetParams(s.ctx)
 	s.Require().Equal(expectedMaxFPs, params.MaxFinalityProviders, "MaxFinalityProviders should match expected value")
-	s.Require().Equal(expectedBtcActivationHeight, params.BtcActivationHeight, "BtcActivationHeight should be set to absolute height")
+
+	expectedBtcHeight := uint32(s.initialBtcHeight) + expectedHeightIncrement
+	s.Require().Equal(expectedBtcHeight, params.BtcActivationHeight, "BtcActivationHeight should be incremented correctly")
+}
+
+// Legacy test methods for backwards compatibility
+func (s *UpgradeTestSuite) SetupTest() {
+	s.setupTestWithNetwork(false) // Default to testnet
+}
+
+func (s *UpgradeTestSuite) Upgrade() {
+	s.executeUpgrade()
+}
+
+func (s *UpgradeTestSuite) TestUpgrade() {
+	s.SetupTest()
+	s.PreUpgrade()
+	s.Upgrade()
+	s.PostUpgrade()
+}
+
+func (s *UpgradeTestSuite) PreUpgrade() {}
+
+func (s *UpgradeTestSuite) PostUpgrade() {
+	s.verifyPostUpgrade(10, 144) // Testnet values: 10 MaxFPs, 144 height increment
 }
