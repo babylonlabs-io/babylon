@@ -160,7 +160,7 @@ func FuzzActiveFinalityProvidersAtHeight(f *testing.F) {
 		btclcKeeper := bstypes.NewMockBTCLightClientKeeper(ctrl)
 		btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: 30}).AnyTimes()
 		btccKeeper := bstypes.NewMockBtcCheckpointKeeper(ctrl)
-		h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
+		h := testutil.NewHelper(t, btclcKeeper, btccKeeper, nil)
 
 		h.GenAndApplyParams(r)
 

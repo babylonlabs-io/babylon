@@ -23,7 +23,7 @@ func TestPropagateFPSlashingToConsumersFillSlashingEventProperly(t *testing.T) {
 	btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 	btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
 	heightAfterMultiStakingAllowListExpiration := int64(10)
-	h := testutil.NewHelper(t, btclcKeeper, btccKeeper).WithBlockHeight(heightAfterMultiStakingAllowListExpiration)
+	h := testutil.NewHelper(t, btclcKeeper, btccKeeper, nil).WithBlockHeight(heightAfterMultiStakingAllowListExpiration)
 	h.GenAndApplyCustomParams(r, 100, 200, 0, 2)
 
 	// generate and insert new Babylon finality provider
