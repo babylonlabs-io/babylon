@@ -177,9 +177,9 @@ func (k Keeper) getHeadersToBroadcastForConsumer(ctx context.Context, consumerID
 		return k.getDeepEnoughBTCHeaders(ctx)
 	}
 
-	// If we haven't sent any headers yet, send from BSN base to tip
+	// If we haven't sent any headers yet, send from BSN base to tip (including base header)
 	if lastSegment == nil {
-		return k.btclcKeeper.GetMainChainFrom(ctx, baseHeader.Height+1)
+		return k.btclcKeeper.GetMainChainFrom(ctx, baseHeader.Height)
 	}
 
 	// Find the most recent header we sent that's still in the main chain
