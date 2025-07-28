@@ -130,6 +130,8 @@ staking transaction and its state on Babylon Genesis.
   > and those fees can't be covered by the staking output itself
   > as the new staking output should at least have the same BTC as it. 
 - The staking expansion should use the current Babylon Genesis staking parameters.
+  Documentation on how to select the appropriate parameters can be found
+  in the [staking registration document](./register-bitcoin-stake.md#32-babylon-genesis-chain-btc-staking-parameters).
   > **Note**: The stake expansion protocol closely follows the
   > [pre-staking registration flow](./register-bitcoin-stake.md#23-pre-staking-registration),
   > where the transaction is first submitted to Babylon Genesis for confirmation
@@ -153,29 +155,35 @@ staking transaction and its state on Babylon Genesis.
 To expand a Bitcoin stake, you need to submit a `MsgBtcStakeExpand` message
 containing:
 
-1. **Reference to your original stake** - Transaction hash of your active
-  delegation
-2. **Funding preparation** - A confirmed Bitcoin transaction with additional
-  funds
-3. **Expansion transaction** - A special 2-input Bitcoin transaction combining
-  original stake + new funds
-4. **Updated delegation values** - New finality providers (superset), amounts,
-  timelock
-5. **Security signatures** - Proof of key ownership and pre-signed slashing
-  consent
+1. **A reference to your original stake**: Transaction hash of the active
+   delegation to expand.
+2. **Expansion transaction**: A special 2-input Bitcoin transaction spending
+   the original staking output and the funding output.
+3. **Updated delegation values**: New finality providers (superset) and/or
+  updated amounts and timelock.
+  > **Note**: Each stake expansion transaction starts with a new timelock
+  > which is the value defined here.
+4. **Funding Transaction**: The Bitcoin transaction from which an output will
+   be used as the funding output of the expanded staking transaction.
+5. **Security signatures**: Proof of possession and pre-signed slashing
+   consent.
 
 **High-Level Process:**
 
 ```mermaid
 graph LR
-    A[Original Stake] --> C[Expansion Transaction]
+    A[Original Stake] --> C[Expanded Stake]
     B[Additional Funds] --> C
-    C --> D[Submit to Babylon]
+    C --> D[Submit to Babylon Genesis]
     D --> E[Covenant Signatures]
     E --> F[BTC Staker Signature]
     F --> G[Broadcast to Bitcoin]
     G --> H[Activation]
 ```
+
+Notice that the procedure looks very similar to the pre-staking
+registration flow, with the main difference being that
+one of the inputs in this case is an already active staking output.
 
 ### 3.2 Expansion Data Requirements
 
@@ -232,6 +240,9 @@ to the **current Babylon Bitcoin light client tip** at expansion submission time
 > later included in a Bitcoin block with different active parameters. The new
 > BTC stake expansion must respect the current Babylon staking parameters rules.
 
+<!-- TODO: instead of tying with post-staking registration, we should
+focus on pre-staking registration -->
+
 ### 3.4 Detailed Transaction Construction
 
 The Bitcoin expansion transaction and related transactions must follow the
@@ -267,6 +278,8 @@ by the btcstaking module:
   * Contains the new total staking value (≥ original amount)
   * Must use current Babylon staking parameters
 
+<!-- TODO: change output? -->
+
 #### Critical: Signing the Expansion Transaction
 
 **The expansion transaction signing process is different from regular Bitcoin
@@ -276,7 +289,7 @@ signatures to be spent through the unbonding path.
 ```mermaid
 sequenceDiagram
 actor btcstaker as BTC Staker
-participant babylon as Babylon
+participant babylon as Babylon Genesis
 participant covd as Covenant
 participant vigilante as Vigilante
 participant btc as BTC
@@ -673,8 +686,8 @@ There are multiple ways to construct and broadcast the `MsgBtcStakeExpand`
 ### 4.1 Monitoring Expansion Status
 
 After submitting a `MsgBtcStakeExpand`, the btcstaking module creates a new
-delegation in `PENDING` status while the original remains `ACTIVE`. Monitor the
-expansion progress through:
+delegation in `PENDING` status while the original staking transaction
+remains `ACTIVE`.
 
 **Querying Delegation Status:**
 ```bash
@@ -686,9 +699,10 @@ babylond query btcstaking btc-delegation [previous-staking-tx-hash]
 ```
 
 **Status Progression:**
-1. **PENDING**: Expansion submitted, awaiting covenant verification
-2. **VERIFIED**: Covenant signatures collected (pre-staking flow)
-3. **ACTIVE**: Expansion activated, original delegation unbonded
+1. **PENDING**: Stake Expansion submitted, awaiting covenant verification
+2. **VERIFIED**: Covenant signatures for stake expansion unbonding and
+   slashing transactions collected
+3. **ACTIVE**: Stake expansion activated, original delegation switched to `UNBONDED`.
 
 ### 4.2 Activation Process
 
@@ -718,7 +732,7 @@ babylond query btcstaking btc-delegation [previous-staking-tx-hash]
 
 > **⚠️ Critical Warning**: For stake expansions, the inclusion proof must be
 > submitted via `MsgBTCUndelegate`, not `MsgAddBTCDelegationInclusionProof`.
-The btcstaking module will reject expansion inclusion proofs submitted through
+> The btcstaking module will reject expansion inclusion proofs submitted through
 > the standard inclusion proof message.
 
 ---
