@@ -9,7 +9,7 @@
    3. [Expansion Requirements](#23-stake-expansion-requirements)
 3. [Bitcoin Stake Expansion Registration](#3-bitcoin-stake-expansion-registration)
    1. [Overview: What You Need for Expansion](#31-overview-what-you-need-for-expansion)
-   2. [Implementation Details](#32-implementation-details)
+   2. [BTC Staking Parameters Selection](#32-btc-staking-parameters-selection)
    3. [Detailed Transaction Construction](#33-detailed-transaction-construction)
    4. [The `MsgBtcStakeExpand` Babylon Message](#34-the-msgbtcstakeexpand-babylon-message)
    5. [Constructing the `MsgBtcStakeExpand`](#35-constructing-the-msgbtcstakeexpand)
@@ -227,25 +227,23 @@ Notice that the procedure looks very similar to the pre-staking
 registration flow, with the main difference being that
 one of the inputs in this case is an already active staking output.
 
-### 3.2 Implementation Details
+### 3.2. BTC Staking Parameters Selection
 
-#### Babylon Chain BTC Staking Parameters
+The BTC Stake expansion protocol transactions are broadcast
+to the Babylon Genesis chain prior to the stake expansion
+staking transaction is broadcast to Bitcoin. This makes
+the parameters selection akin to the one used for,
+the [pre-staking registration flow](./register-bitcoin-stake.md#23-pre-staking-registration).
 
-BTC Stake expansions must adhere to the current Babylon staking parameters.
-The expansion transaction must be constructed using parameters corresponding
-to the **current Babylon Bitcoin light client tip** at expansion submission time.
-
-> **⚡ Parameter Selection for Expansion**
->
-> Unlike post-staking registration which uses parameters based on Bitcoin
-> inclusion height, expansions must use parameters corresponding to the
-> **current Babylon Bitcoin light client tip** at expansion submission time.
-> This pre-commitment ensures parameter consistency even if the expansion is
-> later included in a Bitcoin block with different active parameters. The new
-> BTC stake expansion must respect the current Babylon staking parameters rules.
-
-<!-- TODO: instead of tying with post-staking registration, we should
-focus on pre-staking registration -->
+Specifically, the transactions associated with the
+BTC Stake expansion operation (expanded staking transaction
+and unbonding/slashing transactions for it) must
+adhere to the current BTC staking parameters as reflected on
+the Babylon Genesis chain and matching with the
+**current Babylon Genesis Bitcoin light client tip height**
+at expansion submission time.
+This pre-commitment ensures parameter consistency even if the expansion is
+later included in a Bitcoin block with different active parameters.
 
 ### 3.3 Detailed Transaction Construction
 
