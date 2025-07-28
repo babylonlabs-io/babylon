@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
+	testutilevents "github.com/babylonlabs-io/babylon/v3/testutil/events"
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
 	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 	"github.com/btcsuite/btcd/btcec/v2"
@@ -71,7 +72,7 @@ func TestExpandBTCDelegation(t *testing.T) {
 
 			for _, result := range results {
 				for _, event := range result.Events {
-					if event.Type == "babylon.btcstaking.v1.EventCovenantSignatureReceived" {
+					if testutilevents.IsEventType(event, &bstypes.EventCovenantSignatureReceived{}) {
 						require.True(t, attributeValueNonEmpty(event, "covenant_stake_expansion_signature_hex"))
 					}
 				}
@@ -189,7 +190,7 @@ func TestInvalidStakeExpansion(t *testing.T) {
 
 				for _, result := range results {
 					for _, event := range result.Events {
-						if event.Type == "babylon.btcstaking.v1.EventCovenantSignatureReceived" {
+						if testutilevents.IsEventType(event, &bstypes.EventCovenantSignatureReceived{}) {
 							require.True(t, attributeValueNonEmpty(event, "covenant_stake_expansion_signature_hex"))
 						}
 					}
@@ -280,7 +281,7 @@ func TestInvalidStakeExpansion(t *testing.T) {
 
 				for _, result := range results {
 					for _, event := range result.Events {
-						if event.Type == "babylon.btcstaking.v1.EventCovenantSignatureReceived" {
+						if testutilevents.IsEventType(event, &bstypes.EventCovenantSignatureReceived{}) {
 							require.True(t, attributeValueNonEmpty(event, "covenant_stake_expansion_signature_hex"))
 						}
 					}
