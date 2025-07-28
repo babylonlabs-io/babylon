@@ -159,7 +159,7 @@ func (k Keeper) getHeadersFromBaseOrFallback(ctx context.Context, consumerID str
 	tipHeight := k.btclcKeeper.GetTipInfo(ctx).Height
 	kValue := k.btccKeeper.GetParams(ctx).BtcConfirmationDepth
 
-	if tipHeight > baseHeader.Height && tipHeight-baseHeader.Height > kValue {
+	if tipHeight >= baseHeader.Height && tipHeight-baseHeader.Height > kValue {
 		// Base header is too old, fall back to k+1 headers from tip
 		return k.getDeepEnoughBTCHeaders(ctx)
 	}
