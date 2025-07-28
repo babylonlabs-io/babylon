@@ -8,13 +8,8 @@ require (
 	github.com/cometbft/cometbft v0.38.17
 	github.com/cometbft/cometbft-db v0.15.0
 	github.com/cosmos/cosmos-sdk v0.53.3
-<<<<<<< HEAD
-	github.com/cosmos/ibc-go/modules/light-clients/08-wasm/v10 v10.1.1
-=======
-	github.com/cosmos/evm v1.0.0-rc0.0.20250602235914-3eb2135b9103
 	github.com/cosmos/ibc-go/modules/light-clients/08-wasm/v10 v10.3.0
-	github.com/ethereum/go-ethereum v1.15.11
->>>>>>> 1ae5e22 (chore: bump ibc-go to v10.3.0 and e2e test failing IBC callback `AddBsnRewards` (#1415))
+	github.com/ethereum/go-ethereum v1.15.11 // indirect
 	github.com/gorilla/mux v1.8.1
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0
 	github.com/pkg/errors v0.9.1
@@ -102,10 +97,10 @@ require (
 	github.com/bytedance/sonic v1.13.2 // indirect
 	github.com/bytedance/sonic/loader v0.2.4 // indirect
 	github.com/cloudwego/base64x v0.1.5 // indirect
-	github.com/ethereum/go-ethereum v1.15.10 // indirect
 	github.com/gogo/status v1.1.0 // indirect
 	github.com/holiman/uint256 v1.3.2 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.10 // indirect
+	github.com/onsi/gomega v1.36.2 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	golang.org/x/arch v0.15.0 // indirect
 )
