@@ -148,6 +148,26 @@ func (k Keeper) getDeepEnoughBTCHeaders(ctx context.Context) []*btclctypes.BTCHe
 	return k.btclcKeeper.GetMainChainFrom(ctx, startHeight)
 }
 
+// getHeadersFromBaseOrFallback tries to include base header when possible, otherwise falls back to k+1 headers
+func (k Keeper) getHeadersFromBaseOrFallback(ctx context.Context, consumerID string) []*btclctypes.BTCHeaderInfo {
+	baseHeader := k.GetBSNBaseBTCHeader(ctx, consumerID)
+	if baseHeader == nil {
+		return k.getDeepEnoughBTCHeaders(ctx)
+	}
+
+	// Check if we can start from base header without sending too many headers
+	tipHeight := k.btclcKeeper.GetTipInfo(ctx).Height
+	kValue := k.btccKeeper.GetParams(ctx).BtcConfirmationDepth
+
+	if tipHeight > baseHeader.Height && tipHeight-baseHeader.Height > kValue {
+		// Base header is too old, fall back to k+1 headers from tip
+		return k.getDeepEnoughBTCHeaders(ctx)
+	}
+
+	// Include base header for BSN initialization
+	return k.btclcKeeper.GetMainChainFrom(ctx, baseHeader.Height)
+}
+
 // getHeadersToBroadcastForConsumer retrieves headers to be broadcasted to a specific BSN
 // The headers to be broadcasted are:
 // - If no BSN base header exists: use the last k+1 headers from tip (fallback)
@@ -173,8 +193,8 @@ func (k Keeper) getHeadersToBroadcastForConsumer(ctx context.Context, consumerID
 			"tipHeight", tipHeight,
 			"kValue", kValue,
 		)
-		// Fallback to k headers
-		return k.getDeepEnoughBTCHeaders(ctx)
+		// Fallback to k headers, but still try to include base header if not too old
+		return k.getHeadersFromBaseOrFallback(ctx, consumerID)
 	}
 
 	// If we haven't sent any headers yet, send from BSN base to tip (including base header)
@@ -194,7 +214,7 @@ func (k Keeper) getHeadersToBroadcastForConsumer(ctx context.Context, consumerID
 
 	// If no header from last segment is still valid (reorg), send from BSN base to tip
 	if initHeader == nil {
-		return k.getDeepEnoughBTCHeaders(ctx)
+		return k.getHeadersFromBaseOrFallback(ctx, consumerID)
 	}
 
 	// Send headers from the child of the most recent valid header to tip

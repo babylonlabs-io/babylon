@@ -262,3 +262,95 @@ func TestBSNBTCState_EdgeCases(t *testing.T) {
 	require.NotNil(t, resultSegment)
 	require.Nil(t, resultSegment.BtcHeaders)
 }
+
+func TestGetHeadersToBroadcastForConsumer_IncludesBaseHeader(t *testing.T) {
+	babylonApp := app.Setup(t, false)
+	zcKeeper := babylonApp.ZoneConciergeKeeper
+	btclcKeeper := babylonApp.BTCLightClientKeeper
+	ctx := babylonApp.NewContext(false)
+
+	r := rand.New(rand.NewSource(10))
+	consumerID := testConsumerID
+
+	chain := datagen.NewBTCHeaderChainWithLength(r, 1, 100, 10)
+	err := btclcKeeper.InsertHeadersWithHookAndEvents(ctx, chain.ChainToBytes())
+	require.NoError(t, err)
+
+	tipHeight := btclcKeeper.GetTipInfo(ctx).Height
+	baseHeight := tipHeight - 5
+	baseHeader := btclcKeeper.GetHeaderByHeight(ctx, baseHeight)
+	require.NotNil(t, baseHeader)
+	zcKeeper.SetBSNBaseBTCHeader(ctx, consumerID, baseHeader)
+
+	headers := zcKeeper.TestGetHeadersToBroadcastForConsumer(ctx, consumerID)
+
+	require.NotEmpty(t, headers)
+	require.Equal(t, baseHeader.Height, headers[0].Height)
+	require.True(t, baseHeader.Hash.Eq(headers[0].Hash))
+
+	expectedLength := int(tipHeight - baseHeight + 1)
+	require.Len(t, headers, expectedLength)
+
+	for i, header := range headers {
+		expectedHeight := baseHeight + uint32(i)
+		require.Equal(t, expectedHeight, header.Height)
+	}
+}
+
+func TestGetHeadersToBroadcastForConsumer_FallbackConditions(t *testing.T) {
+	babylonApp := app.Setup(t, false)
+	zcKeeper := babylonApp.ZoneConciergeKeeper
+	btclcKeeper := babylonApp.BTCLightClientKeeper
+	btccKeeper := babylonApp.BtcCheckpointKeeper
+	ctx := babylonApp.NewContext(false)
+
+	r := rand.New(rand.NewSource(10))
+	consumerID := testConsumerID
+
+	chain := datagen.NewBTCHeaderChainWithLength(r, 1, 100, 20)
+	err := btclcKeeper.InsertHeadersWithHookAndEvents(ctx, chain.ChainToBytes())
+	require.NoError(t, err)
+
+	tipHeight := btclcKeeper.GetTipInfo(ctx).Height
+	kValue := btccKeeper.GetParams(ctx).BtcConfirmationDepth
+
+	t.Run("no base header set - falls back to old behavior", func(t *testing.T) {
+		headers := zcKeeper.TestGetHeadersToBroadcastForConsumer(ctx, consumerID)
+
+		require.NotEmpty(t, headers)
+		expectedStartHeight := tipHeight - kValue
+		require.Equal(t, expectedStartHeight, headers[0].Height)
+		require.Len(t, headers, int(kValue)+1)
+	})
+
+	t.Run("base header too old - falls back to k headers", func(t *testing.T) {
+		oldBaseHeight := tipHeight - kValue - 5
+		oldBaseHeader := btclcKeeper.GetHeaderByHeight(ctx, oldBaseHeight)
+		require.NotNil(t, oldBaseHeader)
+		zcKeeper.SetBSNBaseBTCHeader(ctx, consumerID, oldBaseHeader)
+
+		headers := zcKeeper.TestGetHeadersToBroadcastForConsumer(ctx, consumerID)
+
+		require.NotEmpty(t, headers)
+
+		if tipHeight-oldBaseHeight <= kValue {
+			require.Equal(t, oldBaseHeight, headers[0].Height)
+		} else {
+			expectedStartHeight := tipHeight - kValue
+			require.Equal(t, expectedStartHeight, headers[0].Height)
+		}
+	})
+
+	t.Run("new function includes base header when reasonable", func(t *testing.T) {
+		reasonableBaseHeight := tipHeight - kValue/2
+		reasonableBaseHeader := btclcKeeper.GetHeaderByHeight(ctx, reasonableBaseHeight)
+		require.NotNil(t, reasonableBaseHeader)
+		zcKeeper.SetBSNBaseBTCHeader(ctx, consumerID, reasonableBaseHeader)
+
+		headers := zcKeeper.TestGetHeadersFromBaseOrFallback(ctx, consumerID)
+
+		require.NotEmpty(t, headers)
+		require.Equal(t, reasonableBaseHeight, headers[0].Height)
+		require.True(t, reasonableBaseHeader.Hash.Eq(headers[0].Hash))
+	})
+}
