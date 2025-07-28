@@ -4,8 +4,9 @@
 
 1. [Introduction](#1-introduction)
 2. [Bitcoin Stake Expansion Methods](#2-bitcoin-stake-expansion-methods)
-   1. [Overview of Expansion vs Traditional Unbond-Restake](#21-overview-of-expansion-vs-traditional-unbond-restake)
-   2. [Expansion Requirements](#22-expansion-requirements)
+   1. [Overview of Expansion vs Traditional Unbond-Stake-Again](#21-overview-of-expansion-vs-traditional-unbond-stake-again)
+   2. [Stake Expansion Transaction Structure](#22-stake-expansion-transaction-structure)
+   3. [Expansion Requirements](#23-stake-expansion-requirements)
 3. [Bitcoin Stake Expansion Registration](#3-bitcoin-stake-expansion-registration)
    1. [Overview: What You Need for Expansion](#31-overview-what-you-need-for-expansion)
    2. [Expansion Data Requirements](#32-expansion-data-requirements)
@@ -20,8 +21,9 @@
 ---
 
 This document walks through the process of expanding existing Bitcoin stakes on
-the Babylon chain. Bitcoin Stake Expansion allows existing active delegations to
-add new finality providers, increase staking amounts, or extend timelock
+the Babylon Genesis chain. Bitcoin Stake Expansion allows existing active delegations to
+add new finality providers to secure new BSNs,
+increase staking amounts, or extend timelock
 periods without requiring the traditional unbonding process.
 
 **Target Audience**: This document is intended as a reference for technical
@@ -31,7 +33,7 @@ platforms, wallet integrations, or custom Bitcoin staking solutions.
 ## 1. Introduction
 
 Bitcoin Stake Expansion enables existing active BTC delegations to be
-modified and extended without the approximately 7-day unbonding period. This
+extended without having to wait for the on-demand unbonding period. This
 process maintains continuous reward earning and voting power while allowing
 stakers to:
 
@@ -47,51 +49,88 @@ stakers to:
 - Atomic activation process (unbond and activation in same babylon block)
 - Maintains security guarantees throughout expansion
 
+**Limitations**: The stake expansion protocol, can't be used for the following:
+- Modify the finality provider selection of an already secured BSN
+- Remove delegation from a finality provider.
+
+The only way to achieve those is by on-demand unbonding and
+staking again.
+
 ## 2. Bitcoin Stake Expansion Methods
 
-### 2.1 Overview of Expansion vs Traditional Unbond-Restake
+### 2.1 Overview of Expansion vs Traditional Unbond-Stake Again
 
 **Traditional Multi-Chain Staking Flow:**
 
-1. Stop Earning Rewards
-2. Wait ~7 Days
-3. Create New Delegation
-4. Wait for Activation
-5. Resume Rewards
+1. Wait the on-demand unbonding period
+2. Create new staking transaction
+3. Wait for activation
+4. Activated
 
 **Stake Expansion Flow:**
 
-1. Covenant Verification Rewards Continue
-2. Atomic Activation
-3. New Delegation Active
-
+1. Create a stake expansion transaction
+2. Wait for activation
+3. Atomic unbonding of prior staking transaction
+   and activation of expanded staking transaction.
 
 > **⚡ Note**: Expansion maintains reward earning throughout the entire
-process, only transitioning atomically upon final activation.
+> process, only transitioning atomically upon final activation.
 
-### 2.2 Expansion Requirements
+### 2.2. Stake Expansion Transaction Structure
 
-**Key Requirements for Expansion:**
-- Original delegation must be `ACTIVE` with no ongoing unbonding or slashing
-- Expansion transaction must have exactly 2 inputs: original stake output +
-  funding UTXO
-- Funding UTXO must be from a separate, confirmed Bitcoin transaction controlled
-  by your staking key
-- New finality provider list must include all existing FPs (can only add, not
-  remove)
-- New staking amount must be ≥ original amount
-- All transactions must use current Babylon staking parameters rules
-- The babylon signer address must be the same from the old stake (`staker_addr`)
+<!-- TODO: Define the structure of the stake expansion transaction
+and compare it with the staking transaction format:
+Key differences:
+* The stake expansion transaction is a normal staking transaction,
+  but has exactly two inputs with the one being the funding output.
+* The rest remain the same.
 
-**Common Mistakes:**
-- ❌ Using more than 2 inputs
-- ❌ Using unconfirmed funding transaction
-- ❌ Using different Bitcoin keys for original stake and funding
-- ❌ Wrong input order (original stake must be the first Input of index 0)
+This will help define some of the terminology we use later,
+e.g., "funding UTXO" -->
 
-> **⚠️ Critical**: Create a separate funding transaction first, wait for
-> confirmation, then use that UTXO as Input 1 in your expansion transaction.
-> Expansion transactions are limited to exactly 2 inputs.
+
+### 2.3 Stake Expansion Requirements
+
+To ensure the overall safety of the system,
+each stake expansion transaction should follow the following rules:
+
+The Stake Expansion protocol defines certain rules for
+the expanded staking transaction in relation to both the original
+staking transaction and its state on Babylon Genesis.
+
+- As defined in the prior section, the expanded staking transaction should have
+  exactly two outputs:
+  (1) the original staking output and
+  (2) the funding UTXO
+- The funding UTXO should not correspond to any BTC Staking Output known
+  to Babylon Genesis.
+- The finality providers list in the expanded staking transaction should
+  contain *all* finality providers from the original staking transaction
+  and optionally new ones corresponding to different BSNs.
+- The original staking transaction must have an `ACTIVE` on Babylon Genesis.
+- The staking amount in the expanded staking transaction must be ≥ original amount
+  > This requirement is the key reason that the staking expansion
+  > requires an additional funding UTXO input:
+  > the original staking output would never be enough as a
+  > single input UTXO as the Bitcoin transaction fees would
+  > need to be deducted from it.
+- The staking expansion should use the current Babylon Genesis staking parameters.
+  > **Note**: The stake expansion protocol follows a similar procedure to the
+  > [pre-staking registration flow](./register-bitcoin-stake.md#23-pre-staking-registration)
+  > in which the transaction is first sent to confirmation to Babylon Genesis prior
+  > to being broadcast to Bitcoin.
+  > This means that the stake expansion transaction should use the current Bitcoin Staking
+  > parameters as depicted by Babylon Genesis.
+  > It's permitted for the original staking transaction and the staking expansion transaction
+  > to be using different parameters.
+- The Babylon Genesis address used to submit the stake expansion transaction to Babylon Genesis
+  should be the same as the owner of the original staking transaction.
+
+> **⚠️ Critical**: All stake expansion transactions that do not follow
+> the aforementioned rules will be rejected.
+> Make sure that you first communicate your stake expansion transaction to
+> Babylon Genesis for confirmation before submitting to Bitcoin.
 
 ## 3. Bitcoin Stake Expansion Registration
 
