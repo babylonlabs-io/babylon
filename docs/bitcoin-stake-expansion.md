@@ -91,21 +91,6 @@ staking again.
 
 ### 2.2. Stake Expansion Transaction Structure
 
-## Message Structure
-
-Stake expansion uses the `MsgBtcStakeExpand` message, which extends
-`MsgCreateBTCDelegation` with two additional fields:
-
-- `previous_staking_tx_hash`: Hash of the active staking transaction
-  being expanded
-- `funding_tx`: Bitcoin transaction providing additional funds for the expansion
-
-All other fields (`staker_addr`, `btc_pk`, `fp_btc_pk_list`, `staking_time`,
-`staking_value`, etc.) follow the same structure as standard BTC delegation
-creation.
-
-## Transaction Data Structure
-
 The stake expansion staking transaction is fundamentally a normal Bitcoin
 staking transaction that spends an existing staking output. The key difference
 lies in its input structure:
@@ -113,17 +98,17 @@ lies in its input structure:
 **Standard Staking Transaction:**
 ```
 Inputs:
-- Input 0: Funding UTXO (controlled by staker's Bitcoin key)
+Any number of funding UTXOs (controlled by staker's Bitcoin key)
 
 Outputs:
-- Output 0: Staking output (following the staking script format)
+Output 0: Staking output (following the staking script format)
 ```
 
 **Stake Expansion Staking Transaction:**
 ```
 Inputs:
-- Input 0: Original staking output (from previous active delegation)
-- Input 1: Funding UTXO (from the funding_tx transaction)
+Input 0: Original staking output (from previous active delegation)
+Input 1: Additional funding UTXO (from the funding_tx transaction)
 
 Outputs:  
 - Output 0: New expanded staking output (following the staking script format)
