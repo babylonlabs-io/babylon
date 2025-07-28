@@ -245,6 +245,7 @@ test-e2e-cache:
 	$(MAKE) test-e2e-cache-ibc-transfer
 	$(MAKE) test-e2e-cache-upgrade-v2
 	$(MAKE) test-e2e-cache-epoching-spam-prevention
+	$(MAKE) test-e2e-cache-btc-stake-expansion
 
 clean-e2e:
 	docker container rm -f $(shell docker container ls -a -q) || true
@@ -282,6 +283,9 @@ test-e2e-cache-upgrade-v2:
 
 test-e2e-cache-epoching-spam-prevention:
 	go test -run TestEpochingSpamPreventionTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
+
+test-e2e-cache-btc-stake-expansion:
+	go test -run TestBTCStakeExpansionTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
 
 test-sim-nondeterminism:
 	@echo "Running non-determinism test..."

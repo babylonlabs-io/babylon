@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/stretchr/testify/require"
 
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/util"
@@ -290,6 +291,23 @@ func ParseRespBTCDelToBTCDel(resp *bstypes.BTCDelegationResponse) (btcDel *bstyp
 			btcDel.BtcUndelegation.DelegatorUnbondingInfo = &bstypes.DelegatorUnbondingInfo{
 				SpendStakeTx: spendStakeTx,
 			}
+		}
+	}
+
+	if resp.StkExp != nil {
+		prevTxHash, err := chainhash.NewHashFromStr(resp.StkExp.PreviousStakingTxHashHex)
+		if err != nil {
+			return nil, err
+		}
+
+		otherFundOutput, err := hex.DecodeString(resp.StkExp.OtherFundingTxOutHex)
+		if err != nil {
+			return nil, err
+		}
+		btcDel.StkExp = &bstypes.StakeExpansion{
+			PreviousStakingTxHash:   prevTxHash.CloneBytes(),
+			OtherFundingTxOut:       otherFundOutput,
+			PreviousStkCovenantSigs: resp.StkExp.PreviousStkCovenantSigs,
 		}
 	}
 

@@ -2,142 +2,397 @@ package replay
 
 import (
 	"math/rand"
+	"sort"
 	"testing"
 	"time"
 
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	testutilevents "github.com/babylonlabs-io/babylon/v4/testutil/events"
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 	"github.com/btcsuite/btcd/btcec/v2"
+	"github.com/btcsuite/btcd/wire"
 	"github.com/stretchr/testify/require"
 )
 
 func TestExpandBTCDelegation(t *testing.T) {
-	t.Parallel()
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	driverTempDir := t.TempDir()
-	replayerTempDir := t.TempDir()
-	driver := NewBabylonAppDriver(r, t, driverTempDir, replayerTempDir)
-	driver.GenerateNewBlock()
+	testCases := []struct {
+		name         string
+		fundingSetup func(s *testSetup) (*wire.MsgTx, uint32)
+	}{
+		{
+			name: "with random funding tx",
+			fundingSetup: func(s *testSetup) (*wire.MsgTx, uint32) {
+				return datagen.GenRandomTxWithOutputValue(s.r, 100000), 0
+			},
+		},
+		{
+			name: "using a UTXO that is not a staking output from another delegation",
+			fundingSetup: func(s *testSetup) (*wire.MsgTx, uint32) {
+				fundingTx, _, err := bbn.NewBTCTxFromHex(s.ActiveDelegations[1].StakingTxHex)
+				require.NoError(t, err)
+				require.Len(t, fundingTx.TxOut, 2)
+				return fundingTx, 1
+			},
+		},
+	}
 
-	covSender := driver.CreateCovenantSender()
-	require.NotNil(t, covSender)
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			s := setupTest(t)
 
-	infos := driver.CreateNFinalityProviderAccounts(1)
-	fp1 := infos[0]
+			prevStkTx, prevStkTxBz, err := bbn.NewBTCTxFromHex(s.ActiveDelegations[0].StakingTxHex)
+			require.NoError(t, err)
 
-	sinfos := driver.CreateNStakerAccounts(1)
-	s1 := sinfos[0]
+			stakingTime := uint32(1000)
+			stakingValue := int64(100000000)
 
-	fp1.RegisterFinalityProvider()
-	driver.GenerateNewBlockAssertExecutionSuccess()
+			fundingTx, fundingTxOutIdx := tc.fundingSetup(s)
 
-	var (
-		stakingTime  = uint32(1000)
-		stakingValue = int64(100000000)
-	)
-	s1.CreatePreApprovalDelegation(
-		[]*bbn.BIP340PubKey{fp1.BTCPublicKey()},
-		stakingTime,
-		stakingValue,
-	)
-	driver.GenerateNewBlockAssertExecutionSuccess()
+			btcExpMsg := s.Staker.CreateBtcExpandMessage(
+				[]*bbn.BIP340PubKey{s.Fp.BTCPublicKey()},
+				stakingTime,
+				stakingValue,
+				prevStkTx.TxHash().String(),
+				fundingTx,
+				fundingTxOutIdx,
+			)
+			s.Staker.SendMessage(btcExpMsg)
 
-	covSender.SendCovenantSignatures()
-	driver.GenerateNewBlockAssertExecutionSuccess()
+			s.Driver.GenerateNewBlockAssertExecutionSuccess()
 
-	driver.ActivateVerifiedDelegations(1)
-	activeDelegations := driver.GetActiveBTCDelegations(t)
-	require.Len(t, activeDelegations, 1)
+			pendingDelegations := s.Driver.GetPendingBTCDelegations(t)
+			require.Len(t, pendingDelegations, 1)
+			require.NotNil(t, pendingDelegations[0].StkExp)
 
-	prevStkTx, prevStkTxBz, err := bbn.NewBTCTxFromHex(activeDelegations[0].StakingTxHex)
-	require.NoError(t, err)
+			s.CovSender.SendCovenantSignatures()
+			results := s.Driver.GenerateNewBlockAssertExecutionSuccessWithResults()
+			require.NotEmpty(t, results)
 
-	btcExpMsg := s1.CreateBtcStakeExpand(
-		[]*bbn.BIP340PubKey{fp1.BTCPublicKey()},
-		stakingTime,
-		stakingValue,
-		prevStkTx,
-	)
-	driver.GenerateNewBlockAssertExecutionSuccess()
-
-	// A BTC delegation with stake expansion should be creatd
-	// with pending state
-	pendingDelegations := driver.GetPendingBTCDelegations(t)
-	require.Len(t, pendingDelegations, 1)
-
-	require.NotNil(t, pendingDelegations[0].StkExp)
-
-	covSender.SendCovenantSignatures()
-	results := driver.GenerateNewBlockAssertExecutionSuccessWithResults()
-	require.NotEmpty(t, results)
-
-	for _, result := range results {
-		for _, event := range result.Events {
-			if event.Type == "babylon.btcstaking.v1.EventCovenantSignatureReceived" {
-				require.True(t, attributeValueNonEmpty(event, "covenant_stake_expansion_signature_hex"))
+			for _, result := range results {
+				for _, event := range result.Events {
+					if testutilevents.IsEventType(event, &bstypes.EventCovenantSignatureReceived{}) {
+						require.True(t, attributeValueNonEmpty(event, "covenant_stake_expansion_signature_hex"))
+					}
+				}
 			}
-		}
+
+			verifiedDels := s.Driver.GetVerifiedBTCDelegations(t)
+			require.Len(t, verifiedDels, 1)
+			require.NotNil(t, verifiedDels[0].StkExp)
+
+			blockWithProofs := s.Driver.IncludeVerifiedStakingTxInBTC(1)
+			require.Len(t, blockWithProofs.Proofs, 2)
+
+			spendingTx, err := bbn.NewBTCTxFromBytes(btcExpMsg.StakingTx)
+			require.NoError(t, err)
+
+			params := s.Driver.GetBTCStakingParams(t)
+			spendingTxWithWitnessBz, _ := datagen.AddWitnessToStakeExpTx(
+				t,
+				prevStkTx.TxOut[0],
+				fundingTx.TxOut[fundingTxOutIdx],
+				s.Staker.BTCPrivateKey,
+				covenantSKs,
+				params.CovenantQuorum,
+				[]*btcec.PublicKey{s.Fp.BTCPrivateKey.PubKey()},
+				uint16(stakingTime),
+				stakingValue,
+				spendingTx,
+				s.Driver.App.BTCLightClientKeeper.GetBTCNet(),
+			)
+
+			msg := &bstypes.MsgBTCUndelegate{
+				Signer:                        s.Staker.AddressString(),
+				StakingTxHash:                 prevStkTx.TxHash().String(),
+				StakeSpendingTx:               spendingTxWithWitnessBz,
+				StakeSpendingTxInclusionProof: bstypes.NewInclusionProofFromSpvProof(blockWithProofs.Proofs[1]),
+				FundingTransactions:           [][]byte{prevStkTxBz, btcExpMsg.FundingTx},
+			}
+
+			s.Staker.SendMessage(msg)
+			s.Driver.GenerateNewBlockAssertExecutionSuccess()
+
+			resp := s.Driver.GetBTCDelegation(t, spendingTx.TxHash().String())
+			require.NotNil(t, resp)
+			require.NotNil(t, resp.StkExp)
+			require.Equal(t, resp.StatusDesc, bstypes.BTCDelegationStatus_ACTIVE.String())
+
+			unbondedDelegations := s.Driver.GetUnbondedBTCDelegations(t)
+			require.Len(t, unbondedDelegations, 1)
+
+			// there should be 2 active delegations now
+			// the other delegation added on the test setup
+			// and the one we just expanded
+			activeDelegations := s.Driver.GetActiveBTCDelegations(t)
+			require.Len(t, activeDelegations, 2)
+		})
 	}
-
-	// After getting covenant sigs, stake expansion delegation
-	// should be verified
-	verifiedDels := driver.GetVerifiedBTCDelegations(t)
-	require.Len(t, verifiedDels, 1)
-	require.NotNil(t, verifiedDels[0].StkExp)
-
-	// wait stake expansion Tx be 'k' deep in BTC
-	blockWithProofs := driver.IncludeVerifiedStakingTxInBTC(1)
-	require.Len(t, blockWithProofs.Proofs, 2)
-
-	// Send MsgBTCUndelegate for the first delegation
-	// to activate stake expansion
-	spendingTx, err := bbn.NewBTCTxFromBytes(btcExpMsg.StakingTx)
-	require.NoError(t, err)
-
-	fundingTx, err := bbn.NewBTCTxFromBytes(btcExpMsg.FundingTx)
-	require.NoError(t, err)
-
-	params := driver.GetBTCStakingParams(t)
-	spendingTxWithWitnessBz, _ := datagen.AddWitnessToStakeExpTx(
-		t,
-		prevStkTx.TxOut[0],
-		fundingTx.TxOut[0],
-		s1.BTCPrivateKey,
-		covenantSKs,
-		params.CovenantQuorum,
-		[]*btcec.PublicKey{fp1.BTCPrivateKey.PubKey()},
-		uint16(stakingTime),
-		stakingValue,
-		spendingTx,
-		driver.App.BTCLightClientKeeper.GetBTCNet(),
-	)
-
-	msg := &bstypes.MsgBTCUndelegate{
-		Signer:                        s1.AddressString(),
-		StakingTxHash:                 prevStkTx.TxHash().String(),
-		StakeSpendingTx:               spendingTxWithWitnessBz,
-		StakeSpendingTxInclusionProof: bstypes.NewInclusionProofFromSpvProof(blockWithProofs.Proofs[1]),
-		FundingTransactions:           [][]byte{prevStkTxBz, btcExpMsg.FundingTx},
-	}
-
-	s1.SendMessage(msg)
-	driver.GenerateNewBlockAssertExecutionSuccess()
-
-	// After unbonding the initial delegation
-	// the stake expansion should become active
-	// and the initial delegation should become unbonded
-	activeDelegations = driver.GetActiveBTCDelegations(t)
-	require.Len(t, activeDelegations, 1)
-	require.NotNil(t, activeDelegations[0].StkExp)
-
-	unbondedDelegations := driver.GetUnbondedBTCDelegations(t)
-	require.Len(t, unbondedDelegations, 1)
 }
 
-// TODO: Convert this to table test testing different cases
-func TestRejectStakeExpansionUsingPreviousStakingOutput(t *testing.T) {
-	t.Parallel()
+func TestInvalidStakeExpansion(t *testing.T) {
+	testCases := []struct {
+		name     string
+		testCase func(s *testSetup)
+	}{
+		{
+			name: "using a staking output as funding output",
+			testCase: func(s *testSetup) {
+				prevStkTx, _, err := bbn.NewBTCTxFromHex(s.ActiveDelegations[0].StakingTxHex)
+				require.NoError(t, err)
+				prevStkTxHash := prevStkTx.TxHash()
+
+				fundingTx, _, err := bbn.NewBTCTxFromHex(s.ActiveDelegations[1].StakingTxHex)
+				require.NoError(t, err)
+
+				stakeExpandMsg := s.Staker.CreateBtcExpandMessage(
+					[]*bbn.BIP340PubKey{s.Fp.BTCPublicKey()},
+					1000,
+					100000000,
+					prevStkTxHash.String(),
+					fundingTx,
+					s.ActiveDelegations[1].StakingOutputIdx,
+				)
+
+				s.Staker.SendMessage(stakeExpandMsg)
+				res := s.Driver.GenerateNewBlockAssertExecutionFailure()
+				require.Len(t, res, 1)
+				require.Equal(t, res[0].Log, "failed to execute message; message index: 0: rpc error: code = InvalidArgument desc = the funding output cannot be a staking output")
+			},
+		},
+		{
+			name: "report staking output spending before it is k-deep in BTC",
+			testCase: func(s *testSetup) {
+				prevStkTx, prevStkTxBz, err := bbn.NewBTCTxFromHex(s.ActiveDelegations[0].StakingTxHex)
+				require.NoError(t, err)
+				prevStkTxHash := prevStkTx.TxHash()
+
+				fundingTx := datagen.GenRandomTxWithOutputValue(s.r, 100000)
+
+				// Create a stake expansion message
+				stakeExpandMsg := s.Staker.CreateBtcExpandMessage(
+					[]*bbn.BIP340PubKey{s.Fp.BTCPublicKey()},
+					1000,
+					100000000,
+					prevStkTxHash.String(),
+					fundingTx,
+					0,
+				)
+
+				s.Staker.SendMessage(stakeExpandMsg)
+				s.Driver.GenerateNewBlockAssertExecutionSuccess()
+
+				// Submit covenant signatures
+				s.CovSender.SendCovenantSignatures()
+				results := s.Driver.GenerateNewBlockAssertExecutionSuccessWithResults()
+				require.NotEmpty(t, results)
+
+				for _, result := range results {
+					for _, event := range result.Events {
+						if testutilevents.IsEventType(event, &bstypes.EventCovenantSignatureReceived{}) {
+							require.True(t, attributeValueNonEmpty(event, "covenant_stake_expansion_signature_hex"))
+						}
+					}
+				}
+
+				verifiedDels := s.Driver.GetVerifiedBTCDelegations(t)
+				require.Len(t, verifiedDels, 1)
+				require.NotNil(t, verifiedDels[0].StkExp)
+
+				stkExpStakingTx, err := bbn.NewBTCTxFromBytes(stakeExpandMsg.StakingTx)
+				require.NoError(t, err)
+
+				// add tx to BTC and submit headers with proofs
+				blockWithProofs := s.Driver.IncludeTxsInBTC([]*wire.MsgTx{stkExpStakingTx})
+				require.Len(t, blockWithProofs.Proofs, 2)
+
+				stakingTime := uint32(1000)
+				stakingValue := int64(100000000)
+
+				params := s.Driver.GetBTCStakingParams(t)
+				spendingTxWithWitnessBz, _ := datagen.AddWitnessToStakeExpTx(
+					t,
+					prevStkTx.TxOut[0],
+					fundingTx.TxOut[0],
+					s.Staker.BTCPrivateKey,
+					covenantSKs,
+					params.CovenantQuorum,
+					[]*btcec.PublicKey{s.Fp.BTCPrivateKey.PubKey()},
+					uint16(stakingTime),
+					stakingValue,
+					stkExpStakingTx,
+					s.Driver.App.BTCLightClientKeeper.GetBTCNet(),
+				)
+
+				// Try to unbond the delegation to activate the stake expansion
+				// but the stake expansion tx is not k-deep in BTC yet
+				msg := &bstypes.MsgBTCUndelegate{
+					Signer:                        s.Staker.AddressString(),
+					StakingTxHash:                 prevStkTx.TxHash().String(),
+					StakeSpendingTx:               spendingTxWithWitnessBz,
+					StakeSpendingTxInclusionProof: bstypes.NewInclusionProofFromSpvProof(blockWithProofs.Proofs[1]),
+					FundingTransactions:           [][]byte{prevStkTxBz, stakeExpandMsg.FundingTx},
+				}
+
+				s.Staker.SendMessage(msg)
+				res := s.Driver.GenerateNewBlockAssertExecutionFailure()
+				require.Len(t, res, 1)
+				require.Contains(t, res[0].Log, "invalid inclusion proof: not k-deep")
+
+				// check that previous delegations are still active
+				// and the stake expansion is still verified
+				activeDelegations := s.Driver.GetActiveBTCDelegations(t)
+				require.Len(t, activeDelegations, 2)
+
+				verifiedDels = s.Driver.GetVerifiedBTCDelegations(t)
+				require.Len(t, verifiedDels, 1)
+				require.NotNil(t, verifiedDels[0].StkExp)
+			},
+		},
+		{
+			name: "user unbonds before activating stake expansion",
+			testCase: func(s *testSetup) {
+				prevStkTx, prevStkTxBz, err := bbn.NewBTCTxFromHex(s.ActiveDelegations[0].StakingTxHex)
+				require.NoError(t, err)
+				prevStkTxHash := prevStkTx.TxHash()
+
+				fundingTx := datagen.GenRandomTxWithOutputValue(s.r, 100000)
+				stakingTime := uint32(1000)
+				stakingValue := int64(100000000)
+
+				// Create a stake expansion message
+				stakeExpandMsg := s.Staker.CreateBtcExpandMessage(
+					[]*bbn.BIP340PubKey{s.Fp.BTCPublicKey()},
+					stakingTime,
+					stakingValue,
+					prevStkTxHash.String(),
+					fundingTx,
+					0,
+				)
+
+				s.Staker.SendMessage(stakeExpandMsg)
+				s.Driver.GenerateNewBlockAssertExecutionSuccess()
+
+				// Submit covenant signatures
+				s.CovSender.SendCovenantSignatures()
+				results := s.Driver.GenerateNewBlockAssertExecutionSuccessWithResults()
+				require.NotEmpty(t, results)
+
+				for _, result := range results {
+					for _, event := range result.Events {
+						if testutilevents.IsEventType(event, &bstypes.EventCovenantSignatureReceived{}) {
+							require.True(t, attributeValueNonEmpty(event, "covenant_stake_expansion_signature_hex"))
+						}
+					}
+				}
+
+				verifiedDels := s.Driver.GetVerifiedBTCDelegations(t)
+				require.Len(t, verifiedDels, 1)
+				require.NotNil(t, verifiedDels[0].StkExp)
+
+				// Unbond the delegation before the stake expansion is activated
+				params := s.Driver.GetBTCStakingParams(t)
+				unbondingTx, _, err := bbn.NewBTCTxFromHex(s.ActiveDelegations[0].UndelegationResponse.UnbondingTxHex)
+				require.NoError(t, err)
+				unbondingTxBytes, slashingTxMsg := datagen.AddWitnessToUnbondingTx(
+					t,
+					prevStkTx.TxOut[0],
+					s.Staker.BTCPrivateKey,
+					covenantSKs,
+					params.CovenantQuorum,
+					[]*btcec.PublicKey{s.Fp.BTCPrivateKey.PubKey()},
+					uint16(stakingTime),
+					stakingValue,
+					unbondingTx,
+					s.Driver.App.BTCLightClientKeeper.GetBTCNet(),
+				)
+
+				blockWithProofs := s.Driver.IncludeTxsInBTCAndConfirm([]*wire.MsgTx{slashingTxMsg})
+				require.Len(t, blockWithProofs.Proofs, 2)
+
+				msg := &bstypes.MsgBTCUndelegate{
+					Signer:                        s.Staker.AddressString(),
+					StakingTxHash:                 prevStkTx.TxHash().String(),
+					StakeSpendingTx:               unbondingTxBytes,
+					StakeSpendingTxInclusionProof: bstypes.NewInclusionProofFromSpvProof(blockWithProofs.Proofs[1]),
+					FundingTransactions:           [][]byte{prevStkTxBz},
+				}
+				s.Staker.SendMessage(msg)
+				s.Driver.GenerateNewBlockAssertExecutionSuccessWithResults()
+
+				// check that the delegation is unbonded
+				unbondedDelegations := s.Driver.GetUnbondedBTCDelegations(t)
+				require.Len(t, unbondedDelegations, 1)
+
+				// Add tx to BTC and submit headers with proofs
+				// In practice this would not be possible because the
+				// staking output should be already spent by the unbonding tx
+				stkExpStakingTx, err := bbn.NewBTCTxFromBytes(stakeExpandMsg.StakingTx)
+				require.NoError(t, err)
+				blockWithProofs = s.Driver.IncludeVerifiedStakingTxInBTC(1)
+				require.Len(t, blockWithProofs.Proofs, 2)
+
+				spendingTxWithWitnessBz, _ := datagen.AddWitnessToStakeExpTx(
+					t,
+					prevStkTx.TxOut[0],
+					fundingTx.TxOut[0],
+					s.Staker.BTCPrivateKey,
+					covenantSKs,
+					params.CovenantQuorum,
+					[]*btcec.PublicKey{s.Fp.BTCPrivateKey.PubKey()},
+					uint16(stakingTime),
+					stakingValue,
+					stkExpStakingTx,
+					s.Driver.App.BTCLightClientKeeper.GetBTCNet(),
+				)
+
+				// Try to unbond the delegation to activate the stake expansion
+				// but the original delegation is already unbonded
+				msg = &bstypes.MsgBTCUndelegate{
+					Signer:                        s.Staker.AddressString(),
+					StakingTxHash:                 prevStkTx.TxHash().String(),
+					StakeSpendingTx:               spendingTxWithWitnessBz,
+					StakeSpendingTxInclusionProof: bstypes.NewInclusionProofFromSpvProof(blockWithProofs.Proofs[1]),
+					FundingTransactions:           [][]byte{prevStkTxBz, stakeExpandMsg.FundingTx},
+				}
+
+				s.Staker.SendMessage(msg)
+				res := s.Driver.GenerateNewBlockAssertExecutionFailure()
+				require.Len(t, res, 1)
+				require.Contains(t, res[0].Log, "cannot unbond an unbonded BTC delegation")
+
+				// check that previous extra delegation is still active
+				// and the stake expansion is still verified
+				activeDelegations := s.Driver.GetActiveBTCDelegations(t)
+				require.Len(t, activeDelegations, 1)
+
+				verifiedDels = s.Driver.GetVerifiedBTCDelegations(t)
+				require.Len(t, verifiedDels, 1)
+				require.NotNil(t, verifiedDels[0].StkExp)
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			s := setupTest(t)
+			tc.testCase(s)
+		})
+	}
+}
+
+type testSetup struct {
+	r                 *rand.Rand
+	Driver            *BabylonAppDriver
+	CovSender         *CovenantSender
+	Staker            *Staker
+	Fp                *FinalityProvider
+	ActiveDelegations []*bstypes.BTCDelegationResponse
+}
+
+func setupTest(t *testing.T) *testSetup {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	driverTempDir := t.TempDir()
 	replayerTempDir := t.TempDir()
@@ -154,16 +409,19 @@ func TestRejectStakeExpansionUsingPreviousStakingOutput(t *testing.T) {
 	s1 := sinfos[0]
 	require.NotNil(t, s1)
 
+	stakingTime := uint32(1000)
+	stakingValue := int64(100000000)
 	msg := s1.CreateDelegationMessage(
 		[]*bbn.BIP340PubKey{fp1.BTCPublicKey()},
-		1000,
-		100000000,
+		stakingTime,
+		stakingValue,
 	)
 
-	msg1 := s1.CreateDelegationMessage(
+	msg1 := s1.CreateDelegationMessageWithChange(
 		[]*bbn.BIP340PubKey{fp1.BTCPublicKey()},
-		1000,
-		100000000,
+		stakingTime,
+		stakingValue*2,
+		stakingValue, // change amount
 	)
 
 	driver.ConfirmStakingTransactionOnBTC([]*bstypes.MsgCreateBTCDelegation{msg, msg1})
@@ -172,31 +430,22 @@ func TestRejectStakeExpansionUsingPreviousStakingOutput(t *testing.T) {
 	s1.SendMessage(msg)
 	s1.SendMessage(msg1)
 	driver.GenerateNewBlockAssertExecutionSuccess()
-	// Activate through covenant signatures
 	covSender.SendCovenantSignatures()
 	driver.GenerateNewBlockAssertExecutionSuccess()
 
 	activeDelegations := driver.GetActiveBTCDelegations(t)
 	require.Len(t, activeDelegations, 2)
 
-	prevStkTx, _, err := bbn.NewBTCTxFromHex(activeDelegations[0].StakingTxHex)
-	require.NoError(t, err)
-	prevStkTxHash := prevStkTx.TxHash()
+	sort.Slice(activeDelegations, func(i, j int) bool {
+		return activeDelegations[i].TotalSat < activeDelegations[j].TotalSat
+	})
 
-	// using other staking tx as funding tx
-	fundingTx, _, err := bbn.NewBTCTxFromHex(activeDelegations[1].StakingTxHex)
-	require.NoError(t, err)
-
-	stakeExpandMsg := s1.CreateBtcExpandMessage(
-		[]*bbn.BIP340PubKey{fp1.BTCPublicKey()},
-		1000,
-		100000000,
-		prevStkTxHash.String(),
-		fundingTx,
-	)
-
-	s1.SendMessage(stakeExpandMsg)
-	res := driver.GenerateNewBlockAssertExecutionFailure()
-	require.Len(t, res, 1)
-	require.Equal(t, res[0].Log, "failed to execute message; message index: 0: rpc error: code = InvalidArgument desc = the funding output cannot be a staking output")
+	return &testSetup{
+		r:                 r,
+		Driver:            driver,
+		CovSender:         covSender,
+		Staker:            s1,
+		Fp:                fp1,
+		ActiveDelegations: activeDelegations,
+	}
 }

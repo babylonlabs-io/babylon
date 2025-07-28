@@ -187,28 +187,7 @@ func (s *BtcRewardsDistribution) Test2CreateFirstBtcDelegations() {
 func (s *BtcRewardsDistribution) Test3SubmitCovenantSignature() {
 	n1, err := s.configurer.GetChainConfig(0).GetNodeAtIndex(1)
 	s.NoError(err)
-
-	params := n1.QueryBTCStakingParams()
-
-	covAddrs := make([]string, params.CovenantQuorum)
-	covWallets := make([]string, params.CovenantQuorum)
-	for i := 0; i < int(params.CovenantQuorum); i++ {
-		covWallet := fmt.Sprintf("cov%d", i)
-		covWallets[i] = covWallet
-		covAddrs[i] = n1.KeysAdd(covWallet)
-	}
-	s.covenantWallets = covWallets
-
-	n1.BankMultiSendFromNode(covAddrs, "1000000ubbn")
-
-	// tx bank send needs to take effect
-	n1.WaitForNextBlock()
-
-	AddCovdSigsToPendingBtcDels(s.r, s.T(), n1, s.net, params, s.covenantSKs, s.covenantWallets, s.fp1.BtcPk.MarshalHex(), s.fp2.BtcPk.MarshalHex())
-
-	// ensure the BTC delegation has covenant sigs now
-	activeDelsSet := AllBtcDelsActive(s.T(), n1, s.fp1.BtcPk.MarshalHex(), s.fp2.BtcPk.MarshalHex())
-	s.Require().Len(activeDelsSet, 3)
+	s.CreateCovenantsAndSubmitSignaturesToPendDels(n1, s.fp1, s.fp2)
 }
 
 // Test4CommitPublicRandomnessAndSealed commits public randomness for
@@ -433,7 +412,7 @@ func (s *BtcRewardsDistribution) Test6ActiveLastDelegation() {
 	pendingDel, err := chain.ParseRespBTCDelToBTCDel(pendingDels[0])
 	s.NoError(err)
 
-	SendCovenantSigsToPendingDel(s.r, s.T(), n1, s.net, s.covenantSKs, s.covenantWallets, pendingDel)
+	n1.SendCovenantSigs(s.r, s.T(), s.net, s.covenantSKs, s.covenantWallets, pendingDel)
 
 	// wait for a block so that covenant txs take effect
 	n1.WaitForNextBlock()
@@ -758,97 +737,6 @@ func CheckWithdrawReward(
 	actualAmt := delBalanceAfterWithdraw.String()
 	expectedAmt := delBalanceBeforeWithdraw.Add(coinsWithdraw...).Sub(txResp.AuthInfo.Fee.Amount...).String()
 	require.Equal(t, expectedAmt, actualAmt)
-}
-
-func SendCovenantSigsToPendingDel(
-	r *rand.Rand,
-	t testing.TB,
-	n *chain.NodeConfig,
-	btcNet *chaincfg.Params,
-	covenantSKs []*btcec.PrivateKey,
-	covWallets []string,
-	pendingDel *bstypes.BTCDelegation,
-) {
-	require.Len(t, pendingDel.CovenantSigs, 0)
-
-	params := n.QueryBTCStakingParams()
-	slashingTx := pendingDel.SlashingTx
-	stakingTx := pendingDel.StakingTx
-
-	stakingMsgTx, err := bbn.NewBTCTxFromBytes(stakingTx)
-	require.NoError(t, err)
-	stakingTxHash := stakingMsgTx.TxHash().String()
-
-	fpBTCPKs, err := bbn.NewBTCPKsFromBIP340PKs(pendingDel.FpBtcPkList)
-	require.NoError(t, err)
-
-	stakingInfo, err := pendingDel.GetStakingInfo(params, btcNet)
-	require.NoError(t, err)
-
-	stakingSlashingPathInfo, err := stakingInfo.SlashingPathSpendInfo()
-	require.NoError(t, err)
-
-	/*
-		generate and insert new covenant signature, in order to activate the BTC delegation
-	*/
-	// covenant signatures on slashing tx
-	covenantSlashingSigs, err := datagen.GenCovenantAdaptorSigs(
-		covenantSKs,
-		fpBTCPKs,
-		stakingMsgTx,
-		stakingSlashingPathInfo.GetPkScriptPath(),
-		slashingTx,
-	)
-	require.NoError(t, err)
-
-	// cov Schnorr sigs on unbonding signature
-	unbondingPathInfo, err := stakingInfo.UnbondingPathSpendInfo()
-	require.NoError(t, err)
-	unbondingTx, err := bbn.NewBTCTxFromBytes(pendingDel.BtcUndelegation.UnbondingTx)
-	require.NoError(t, err)
-
-	covUnbondingSigs, err := datagen.GenCovenantUnbondingSigs(
-		covenantSKs,
-		stakingMsgTx,
-		pendingDel.StakingOutputIdx,
-		unbondingPathInfo.GetPkScriptPath(),
-		unbondingTx,
-	)
-	require.NoError(t, err)
-
-	unbondingInfo, err := pendingDel.GetUnbondingInfo(params, btcNet)
-	require.NoError(t, err)
-	unbondingSlashingPathInfo, err := unbondingInfo.SlashingPathSpendInfo()
-	require.NoError(t, err)
-	covenantUnbondingSlashingSigs, err := datagen.GenCovenantAdaptorSigs(
-		covenantSKs,
-		fpBTCPKs,
-		unbondingTx,
-		unbondingSlashingPathInfo.GetPkScriptPath(),
-		pendingDel.BtcUndelegation.SlashingTx,
-	)
-	require.NoError(t, err)
-
-	for i := 0; i < int(params.CovenantQuorum); i++ {
-		// add covenant sigs
-		n.AddCovenantSigs(
-			covWallets[i],
-			covenantSlashingSigs[i].CovPk,
-			stakingTxHash,
-			covenantSlashingSigs[i].AdaptorSigs,
-			bbn.NewBIP340SignatureFromBTCSig(covUnbondingSigs[i]),
-			covenantUnbondingSlashingSigs[i].AdaptorSigs,
-		)
-	}
-}
-
-func AllBtcDelsActive(t *testing.T, n *chain.NodeConfig, fpsBTCPK ...string) []*bstypes.BTCDelegationResponse {
-	activeDelsSet := n.QueryFinalityProvidersDelegations(fpsBTCPK...)
-	for _, activeDel := range activeDelsSet {
-		require.True(t, activeDel.Active)
-		require.Greater(t, activeDel.TotalSat, uint64(0))
-	}
-	return activeDelsSet
 }
 
 func AddCovdSigsToPendingBtcDels(

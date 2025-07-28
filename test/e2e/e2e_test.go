@@ -53,3 +53,8 @@ func TestSoftwareUpgradeV2TestSuite(t *testing.T) {
 func TestEpochingSpamPreventionTestSuite(t *testing.T) {
 	suite.Run(t, new(EpochingSpamPreventionTestSuite))
 }
+
+// TestBTCStakeExpansionTestSuite tests BTC stake expansion end-to-end
+func TestBTCStakeExpansionTestSuite(t *testing.T) {
+	suite.Run(t, new(BTCStakeExpansionTestSuite))
+}
