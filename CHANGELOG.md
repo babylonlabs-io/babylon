@@ -39,6 +39,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
+- [#1429](https://github.com/babylonlabs-io/babylon/pull/1429) Send base header if no headers were sent previously.
 - [#1406](https://github.com/babylonlabs-io/babylon/pull/1406) Use `collections` for KV store in `x/btcstkconsumer`.
 - [#1405](https://github.com/babylonlabs-io/babylon/pull/1405) Use `collections` for `zoneconcierge` KV store.
 - [#1387](https://github.com/babylonlabs-io/babylon/pull/1387) Refactor the usage of `ChainInfo` and canonical chain indexing.
@@ -123,6 +124,7 @@ command to modify `max-finality-providers` parameter.
 - [#1303](https://github.com/babylonlabs-io/babylon/pull/1303) Add IBC callback middleware to `x/btcstaking` module to call add bsn rewards.
 - [#1404](https://github.com/babylonlabs-io/babylon/pull/1404) Refactor power dist event processing.
 - [#1425](https://github.com/babylonlabs-io/babylon/pull/1425) Improvement to vote ext handling
+- [#1428](https://github.com/babylonlabs-io/babylon/pull/1428) Update stake expansion events
 - [#1410](https://github.com/babylonlabs-io/babylon/pull/1410) Add stake expansion e2e test
 
 ### State Machine Breaking
