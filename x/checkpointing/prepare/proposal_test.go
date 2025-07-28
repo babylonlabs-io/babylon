@@ -8,8 +8,11 @@ import (
 	"testing"
 	"time"
 
+	cometproto "github.com/cometbft/cometbft/proto/tendermint/types"
+
 	"cosmossdk.io/core/header"
 	"cosmossdk.io/log"
+	abci "github.com/cometbft/cometbft/abci/types"
 	cbftt "github.com/cometbft/cometbft/abci/types"
 	cmtprotocrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 	tendermintTypes "github.com/cometbft/cometbft/proto/tendermint/types"
@@ -76,11 +79,12 @@ func (v *TestValidator) VoteExtension(
 	bls := bls12381.Sign(v.Keys.PrivateKey, signBytes)
 
 	return checkpointingtypes.VoteExtension{
-		Signer:    v.Keys.ValidatorAddress,
-		BlockHash: bh,
-		EpochNum:  epochNum,
-		Height:    0,
-		BlsSig:    &bls,
+		Signer:           v.Keys.ValidatorAddress,
+		ValidatorAddress: v.Keys.ValidatorAddress,
+		BlockHash:        bh,
+		EpochNum:         epochNum,
+		Height:           0,
+		BlsSig:           &bls,
 	}
 }
 
@@ -267,11 +271,12 @@ func verifyCheckpoint(validators []TestValidator, rawCkpt *checkpointingtypes.Ra
 }
 
 type Scenario struct {
-	TotalPower   int64
-	ValidatorSet []TestValidator
-	Extensions   []cbftt.ExtendedVoteInfo
-	Txs          []sdk.Tx
-	TxVerifier   baseapp.ProposalTxVerifier
+	TotalPower          int64
+	ValidatorSet        []TestValidator
+	Extensions          []cbftt.ExtendedVoteInfo
+	Txs                 []sdk.Tx
+	TxVerifier          baseapp.ProposalTxVerifier
+	ExpectedAbsentVotes uint32
 }
 
 type ValidatorsAndExtensions struct {
@@ -589,9 +594,10 @@ func TestPrepareProposalAtVoteExtensionHeight(t *testing.T) {
 				}
 
 				return &Scenario{
-					TotalPower:   totalPower,
-					ValidatorSet: validatorAndExtensions.Vals,
-					Extensions:   signedVoteExtensions,
+					TotalPower:          totalPower,
+					ValidatorSet:        validatorAndExtensions.Vals,
+					Extensions:          signedVoteExtensions,
+					ExpectedAbsentVotes: uint32(invalidBlsSig),
 				}
 			},
 			expectError: false,
@@ -601,9 +607,10 @@ func TestPrepareProposalAtVoteExtensionHeight(t *testing.T) {
 			scenarioSetup: func(ec *EpochAndCtx, ek *mocks.MockCheckpointingKeeper) *Scenario {
 				bh := randomBlockHash()
 				bh1 := randomBlockHash()
-
+				numInvalidVoteExtensions := 2
+				// 2/3 + 1 of validators voted for valid block hash
 				validatorAndExtensionsValid, totalPowerValid := generateNValidatorAndVoteExtensions(t, 7, &bh, ec.Epoch.EpochNumber)
-				validatorAndExtensionsInvalid, totalPowerInvalid := generateNValidatorAndVoteExtensions(t, 2, &bh1, ec.Epoch.EpochNumber)
+				validatorAndExtensionsInvalid, totalPowerInvalid := generateNValidatorAndVoteExtensions(t, numInvalidVoteExtensions, &bh1, ec.Epoch.EpochNumber)
 
 				var allvalidators []TestValidator
 				allvalidators = append(allvalidators, validatorAndExtensionsValid.Vals...)
@@ -629,6 +636,8 @@ func TestPrepareProposalAtVoteExtensionHeight(t *testing.T) {
 					TotalPower:   totalPowerValid + totalPowerInvalid,
 					ValidatorSet: allvalidators,
 					Extensions:   signedVoteExtensions,
+					// 2
+					ExpectedAbsentVotes: uint32(numInvalidVoteExtensions),
 				}
 			},
 			expectError: false,
@@ -732,7 +741,6 @@ func TestPrepareProposalAtVoteExtensionHeight(t *testing.T) {
 			if tt.expectError {
 				require.Error(t, err)
 			} else {
-				require.NoError(t, err)
 				expTxCount := len(scenario.Txs) + 1 // Expecting to have all the txs in the mempool + the injected checkpoint tx
 				require.Len(t, prop.Txs, expTxCount)
 				checkpoint, err := h.ExtractInjectedCheckpoint(prop.Txs)
@@ -740,6 +748,35 @@ func TestPrepareProposalAtVoteExtensionHeight(t *testing.T) {
 				err = verifyCheckpoint(scenario.ValidatorSet, checkpoint.Ckpt.Ckpt)
 				require.NoError(t, err)
 				verifyTxOrder(t, prop.Txs, encCfg.TxConfig.TxDecoder(), regularTxCount, livenessTxCount)
+
+				// Check that process proposal accepts valid proposal
+				procResult, err := h.ProcessProposal()(ec.Ctx, &abci.RequestProcessProposal{
+					Height: ec.Ctx.HeaderInfo().Height,
+					Txs:    prop.Txs,
+				})
+				require.NoError(t, err)
+				require.NotNil(t, procResult)
+				require.True(t, procResult.IsAccepted())
+
+				if scenario.ExpectedAbsentVotes > 0 {
+					// check that the number of absent votes is as expected
+					numAbsentVotes := 0
+					for _, vote := range checkpoint.ExtendedCommitInfo.Votes {
+						if vote.BlockIdFlag == cometproto.BlockIDFlagAbsent {
+							require.Empty(t, vote.ExtensionSignature)
+							require.Empty(t, vote.VoteExtension)
+							numAbsentVotes++
+						}
+					}
+					require.Equal(t, scenario.ExpectedAbsentVotes, uint32(numAbsentVotes))
+				} else {
+					// or check that all the votes are present and in commit state
+					for _, vote := range checkpoint.ExtendedCommitInfo.Votes {
+						require.NotEmpty(t, vote.ExtensionSignature)
+						require.NotEmpty(t, vote.VoteExtension)
+						require.Equal(t, vote.BlockIdFlag, cometproto.BlockIDFlagCommit)
+					}
+				}
 			}
 		})
 	}
