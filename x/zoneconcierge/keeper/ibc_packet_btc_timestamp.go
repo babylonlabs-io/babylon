@@ -5,15 +5,16 @@ import (
 	"errors"
 	"fmt"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
 	btcctypes "github.com/babylonlabs-io/babylon/v3/x/btccheckpoint/types"
 	btclctypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
 	epochingtypes "github.com/babylonlabs-io/babylon/v3/x/epoching/types"
 	"github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
-	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 )
 
 // finalizedInfo is a private struct that stores metadata and proofs
@@ -179,7 +180,7 @@ func (k Keeper) getHeadersToBroadcastForConsumer(ctx context.Context, consumerID
 
 	// If we haven't sent any headers yet, send from BSN base to tip
 	if lastSegment == nil {
-		return k.btclcKeeper.GetMainChainFrom(ctx, baseHeader.Height+1)
+		return k.btclcKeeper.GetMainChainFrom(ctx, baseHeader.Height)
 	}
 
 	// Find the most recent header we sent that's still in the main chain
