@@ -185,7 +185,7 @@ func (n *NodeConfig) CreateBTCStakeExpansionDelegation(
 		cmd = append(cmd, "-b=sync", "--yes")
 	}
 
-	cmd = append(cmd, fmt.Sprintf("--chain-id=%s", n.chainId), "-b=sync", "--yes")
+	cmd = append(cmd, fmt.Sprintf("--chain-id=%s", n.chainId))
 	outBuff, _, err := n.containerManager.ExecCmd(n.t, n.Name, append(cmd, overallFlags...), "")
 
 	require.NoError(n.t, err)
