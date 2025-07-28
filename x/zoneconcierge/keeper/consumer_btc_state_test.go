@@ -282,7 +282,7 @@ func TestGetHeadersToBroadcastForConsumer_IncludesBaseHeader(t *testing.T) {
 	require.NotNil(t, baseHeader)
 	zcKeeper.SetBSNBaseBTCHeader(ctx, consumerID, baseHeader)
 
-	headers := zcKeeper.TestGetHeadersToBroadcastForConsumer(ctx, consumerID)
+	headers := zcKeeper.GetHeadersToBroadcastForConsumerForTesting(ctx, consumerID)
 
 	require.NotEmpty(t, headers)
 	require.Equal(t, baseHeader.Height, headers[0].Height)
@@ -315,7 +315,7 @@ func TestGetHeadersToBroadcastForConsumer_FallbackConditions(t *testing.T) {
 	kValue := btccKeeper.GetParams(ctx).BtcConfirmationDepth
 
 	t.Run("no base header set - falls back to old behavior", func(t *testing.T) {
-		headers := zcKeeper.TestGetHeadersToBroadcastForConsumer(ctx, consumerID)
+		headers := zcKeeper.GetHeadersToBroadcastForConsumerForTesting(ctx, consumerID)
 
 		require.NotEmpty(t, headers)
 		expectedStartHeight := tipHeight - kValue
@@ -329,7 +329,7 @@ func TestGetHeadersToBroadcastForConsumer_FallbackConditions(t *testing.T) {
 		require.NotNil(t, oldBaseHeader)
 		zcKeeper.SetBSNBaseBTCHeader(ctx, consumerID, oldBaseHeader)
 
-		headers := zcKeeper.TestGetHeadersToBroadcastForConsumer(ctx, consumerID)
+		headers := zcKeeper.GetHeadersToBroadcastForConsumerForTesting(ctx, consumerID)
 
 		require.NotEmpty(t, headers)
 
@@ -347,7 +347,7 @@ func TestGetHeadersToBroadcastForConsumer_FallbackConditions(t *testing.T) {
 		require.NotNil(t, reasonableBaseHeader)
 		zcKeeper.SetBSNBaseBTCHeader(ctx, consumerID, reasonableBaseHeader)
 
-		headers := zcKeeper.TestGetHeadersFromBaseOrFallback(ctx, consumerID)
+		headers := zcKeeper.GetHeadersFromBaseOrFallbackForTesting(ctx, consumerID)
 
 		require.NotEmpty(t, headers)
 		require.Equal(t, reasonableBaseHeight, headers[0].Height)

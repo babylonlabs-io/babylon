@@ -168,6 +168,14 @@ func (k Keeper) getHeadersFromBaseOrFallback(ctx context.Context, consumerID str
 	return k.btclcKeeper.GetMainChainFrom(ctx, baseHeader.Height)
 }
 
+func (k Keeper) GetHeadersToBroadcastForConsumerForTesting(ctx context.Context, consumerID string) []*btclctypes.BTCHeaderInfo {
+	return k.getHeadersToBroadcastForConsumer(ctx, consumerID)
+}
+
+func (k Keeper) GetHeadersFromBaseOrFallbackForTesting(ctx context.Context, consumerID string) []*btclctypes.BTCHeaderInfo {
+	return k.getHeadersFromBaseOrFallback(ctx, consumerID)
+}
+
 // getHeadersToBroadcastForConsumer retrieves headers to be broadcasted to a specific BSN
 // The headers to be broadcasted are:
 // - If no BSN base header exists: use the last k+1 headers from tip (fallback)
