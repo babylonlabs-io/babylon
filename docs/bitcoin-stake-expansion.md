@@ -92,16 +92,59 @@ staking again.
 
 ### 2.2. Stake Expansion Transaction Structure
 
-<!-- TODO: Define the structure of the stake expansion transaction
-and compare it with the staking transaction format:
-Key differences:
-* The stake expansion transaction is a normal staking transaction,
-  but has exactly two inputs with the one being the funding output.
-* The rest remain the same.
+## Message Structure
 
-This will help define some of the terminology we use later,
-e.g., "funding UTXO" -->
+Stake expansion uses the `MsgBtcStakeExpand` message, which extends
+`MsgCreateBTCDelegation` with two additional fields:
 
+- `previous_staking_tx_hash`: Hash of the active staking transaction
+  being expanded
+- `funding_tx`: Bitcoin transaction providing additional funds for the expansion
+
+All other fields (`staker_addr`, `btc_pk`, `fp_btc_pk_list`, `staking_time`,
+`staking_value`, etc.) follow the same structure as standard BTC delegation
+creation.
+
+## Transaction Data Structure
+
+The stake expansion staking transaction is fundamentally a normal Bitcoin
+staking transaction that spends an existing staking output. The key difference
+lies in its input structure:
+
+**Standard Staking Transaction:**
+```
+Inputs:
+- Input 0: Funding UTXO (controlled by staker's Bitcoin key)
+
+Outputs:
+- Output 0: Staking output (following the staking script format)
+```
+
+**Stake Expansion Staking Transaction:**
+```
+Inputs:
+- Input 0: Original staking output (from previous active delegation)
+- Input 1: Funding UTXO (from the funding_tx transaction)
+
+Outputs:  
+- Output 0: New expanded staking output (following the staking script format)
+```
+
+## Funding Transaction
+
+The **funding transaction** (`funding_tx` field) is a separate, confirmed
+Bitcoin transaction that:
+
+1. Provides Additional Funds and contains a UTXO controlled by the staker's
+  Bitcoin key
+2. Ensures the expansion transaction has sufficient fees for Bitcoin network
+  inclusion
+3. Allows the expanded staking amount to be ≥ the original amount
+4. Required to be confirmed on Bitcoin before expansion submission to Babylon
+
+The funding transaction is referenced by the expansion staking transaction's
+Input 1, which spends the funding UTXO to provide the additional satoshis
+needed for expansion.
 
 ### 2.3 Stake Expansion Requirements
 
