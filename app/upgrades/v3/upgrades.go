@@ -2,6 +2,7 @@ package v3
 
 import (
 	"context"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	store "cosmossdk.io/store/types"
@@ -60,6 +61,10 @@ func CreateUpgradeHandler(isMainnet bool) upgrades.UpgradeHandlerCreator {
 			btcParamsCopy.BtcActivationHeight = btcParamsCopy.
 				BtcActivationHeight + heightIncrement
 			err = keepers.BTCStakingKeeper.SetParams(sdkCtx, *btcParamsCopy)
+			if err != nil {
+				return nil, err
+			}
+
 			return migrations, nil
 		}
 	}
