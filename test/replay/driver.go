@@ -763,6 +763,21 @@ func (d *BabylonAppDriver) IncludeTxsInBTCAncConfirm(txs []*wire.MsgTx) *datagen
 	return block
 }
 
+func (d *BabylonAppDriver) IncludeTxsInBTC(txs []*wire.MsgTx) *datagen.BlockWithProofs {
+	tip, _ := d.GetBTCLCTip()
+
+	block := datagen.GenRandomBtcdBlockWithTransactions(d.r, txs, tip)
+	headers := BlocksWithProofsToHeaderBytes([]*datagen.BlockWithProofs{block})
+
+	// extend our light client so that all stakers are confirmed
+	d.SendTxWithMsgsFromDriverAccount(d.t, &btclighttypes.MsgInsertHeaders{
+		Signer:  d.GetDriverAccountAddress().String(),
+		Headers: headers,
+	})
+
+	return block
+}
+
 // ConfirmStakingTransactionOnBTC confirms staking transactions included in the
 // provided messages on the simulated BTC chain. Afterwards, it fills inclusion
 // proof in the provided messages. It is up to the caller to send the messages
