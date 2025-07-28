@@ -235,7 +235,7 @@ message EventBTCDelgationUnbondedEarly {
   string new_state = 3 [(amino.dont_omitempty) = true];
   // stake_expansion_tx_hash is the hash of the stake expansion transaction
   // This field is only set if the delegation was expanded
-  string stake_expansion_tx_hash = 4 [(amino.dont_omitempty) = true];
+  string stake_expansion_tx_hash = 4;
 }
 
 // EventBTCDelegationExpired is the event emitted when a BTC delegation
