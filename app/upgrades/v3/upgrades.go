@@ -54,7 +54,7 @@ func CreateUpgradeHandler(isMainnet bool) upgrades.UpgradeHandlerCreator {
 				btcParamsCopy.MaxFinalityProviders = 5
 				heightIncrement = 288
 			} else {
-				btcParamsCopy.MaxFinalityProviders = 10
+				btcParamsCopy.MaxFinalityProviders = 15
 				heightIncrement = 144
 			}
 			btcParamsCopy.BtcActivationHeight = btcParamsCopy.

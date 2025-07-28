@@ -1,6 +1,9 @@
 package v3
 
 import (
+	"testing"
+	"time"
+
 	"cosmossdk.io/core/appmodule"
 	"cosmossdk.io/core/header"
 	"cosmossdk.io/x/upgrade"
@@ -11,8 +14,6 @@ import (
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
-	"testing"
-	"time"
 )
 
 const (
@@ -40,7 +41,6 @@ func (s *UpgradeTestSuite) setupTestWithNetwork(isMainnet bool) {
 	s.ctx = s.app.BaseApp.NewContextLegacy(false, tmproto.Header{Height: 1, ChainID: "babylon-1", Time: time.Now().UTC()})
 	s.preModule = upgrade.NewAppModule(s.app.UpgradeKeeper, s.app.AccountKeeper.AddressCodec())
 
-	// Set initial BTC staking parameters with a known BtcActivationHeight
 	params := s.app.BTCStakingKeeper.GetParams(s.ctx)
 	params.BtcActivationHeight = uint32(s.initialBtcHeight)
 	err := s.app.BTCStakingKeeper.SetParams(s.ctx, params)
@@ -82,7 +82,7 @@ func (s *UpgradeTestSuite) TestUpgradeNetworks() {
 		{
 			name:                    "testnet upgrade",
 			isMainnet:               false,
-			expectedMaxFPs:          10,
+			expectedMaxFPs:          15,
 			expectedHeightIncrement: 144,
 		},
 	}
@@ -115,9 +115,8 @@ func (s *UpgradeTestSuite) verifyPostUpgrade(expectedMaxFPs, expectedHeightIncre
 	s.Require().Equal(expectedBtcHeight, params.BtcActivationHeight, "BtcActivationHeight should be incremented correctly")
 }
 
-// Legacy test methods for backwards compatibility
 func (s *UpgradeTestSuite) SetupTest() {
-	s.setupTestWithNetwork(false) // Default to testnet
+	s.setupTestWithNetwork(false)
 }
 
 func (s *UpgradeTestSuite) Upgrade() {
@@ -134,5 +133,5 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 func (s *UpgradeTestSuite) PreUpgrade() {}
 
 func (s *UpgradeTestSuite) PostUpgrade() {
-	s.verifyPostUpgrade(10, 144) // Testnet values: 10 MaxFPs, 144 height increment
+	s.verifyPostUpgrade(15, 144)
 }
