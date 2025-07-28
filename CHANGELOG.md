@@ -123,6 +123,7 @@ command to modify `max-finality-providers` parameter.
 - [#1303](https://github.com/babylonlabs-io/babylon/pull/1303) Add IBC callback middleware to `x/btcstaking` module to call add bsn rewards.
 - [#1404](https://github.com/babylonlabs-io/babylon/pull/1404) Refactor power dist event processing.
 - [#1425](https://github.com/babylonlabs-io/babylon/pull/1425) Improvement to vote ext handling
+- [#1428](https://github.com/babylonlabs-io/babylon/pull/1428) Update stake expansion events
 
 ### State Machine Breaking
 
