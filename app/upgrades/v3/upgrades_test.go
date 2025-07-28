@@ -32,10 +32,10 @@ func TestUpgradeTestSuite(t *testing.T) {
 	suite.Run(t, new(UpgradeTestSuite))
 }
 
-func (s *UpgradeTestSuite) setupTestWithNetwork(isMainnet bool) {
+func (s *UpgradeTestSuite) setupTestWithNetwork(fpCount uint32, relativeWaitingTime uint32) {
 	s.initialBtcHeight = 100
 
-	app.Upgrades = []upgrades.Upgrade{CreateUpgrade(isMainnet)}
+	app.Upgrades = []upgrades.Upgrade{CreateUpgrade(fpCount, relativeWaitingTime)}
 
 	s.app = app.SetupWithBitcoinConf(s.T(), false, bbn.BtcSignet)
 	s.ctx = s.app.BaseApp.NewContextLegacy(false, tmproto.Header{Height: 1, ChainID: "babylon-1", Time: time.Now().UTC()})
@@ -75,13 +75,11 @@ func (s *UpgradeTestSuite) TestUpgradeNetworks() {
 	}{
 		{
 			name:                    "mainnet upgrade",
-			isMainnet:               true,
 			expectedMaxFPs:          5,
 			expectedHeightIncrement: 288,
 		},
 		{
 			name:                    "testnet upgrade",
-			isMainnet:               false,
 			expectedMaxFPs:          15,
 			expectedHeightIncrement: 144,
 		},
@@ -89,7 +87,7 @@ func (s *UpgradeTestSuite) TestUpgradeNetworks() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			s.setupTestWithNetwork(tc.isMainnet)
+			s.setupTestWithNetwork(tc.expectedMaxFPs, tc.expectedHeightIncrement)
 
 			s.executeUpgrade()
 
@@ -111,27 +109,12 @@ func (s *UpgradeTestSuite) verifyPostUpgrade(expectedMaxFPs, expectedHeightIncre
 	params := s.app.BTCStakingKeeper.GetParams(s.ctx)
 	s.Require().Equal(expectedMaxFPs, params.MaxFinalityProviders, "MaxFinalityProviders should match expected value")
 
-	expectedBtcHeight := uint32(s.initialBtcHeight) + expectedHeightIncrement
-	s.Require().Equal(expectedBtcHeight, params.BtcActivationHeight, "BtcActivationHeight should be incremented correctly")
-}
+	currentBtcTip := s.app.BTCLightClientKeeper.GetTipInfo(s.ctx)
+	var currentTipHeight uint32
+	if currentBtcTip != nil {
+		currentTipHeight = currentBtcTip.Height
+	}
 
-func (s *UpgradeTestSuite) SetupTest() {
-	s.setupTestWithNetwork(false)
-}
-
-func (s *UpgradeTestSuite) Upgrade() {
-	s.executeUpgrade()
-}
-
-func (s *UpgradeTestSuite) TestUpgrade() {
-	s.SetupTest()
-	s.PreUpgrade()
-	s.Upgrade()
-	s.PostUpgrade()
-}
-
-func (s *UpgradeTestSuite) PreUpgrade() {}
-
-func (s *UpgradeTestSuite) PostUpgrade() {
-	s.verifyPostUpgrade(15, 144)
+	expectedBtcActivationHeight := currentTipHeight + expectedHeightIncrement
+	s.Require().Equal(expectedBtcActivationHeight, params.BtcActivationHeight, "BtcActivationHeight should be current tip + relative waiting time")
 }

@@ -14,7 +14,7 @@ import (
 // it is also used for e2e testing
 func init() {
 	Upgrades = []upgrades.Upgrade{
-		v3.CreateUpgrade(false),
+		v3.CreateUpgrade(10, 144),
 		v2rc4.Upgrade,
 		v2.CreateUpgrade(true, map[string]struct{}{}),
 		v22.Upgrade,
