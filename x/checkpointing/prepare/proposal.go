@@ -5,6 +5,8 @@ import (
 	"encoding/hex"
 	"fmt"
 
+	cometproto "github.com/cometbft/cometbft/proto/tendermint/types"
+
 	"cosmossdk.io/log"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -17,6 +19,8 @@ import (
 )
 
 const defaultInjectedTxIndex = 0
+
+type SigValidationFn func(ctx sdk.Context, extendedVotes *abci.ExtendedCommitInfo, blockHash []byte) []ckpttypes.BlsSig
 
 var (
 	EmptyProposalRes = abci.ResponsePrepareProposal{Txs: [][]byte{}}
@@ -103,7 +107,12 @@ func (h *ProposalHandler) PrepareProposal() sdk.PrepareProposalHandler {
 		// 2. build a checkpoint for the previous epoch
 		// Note: the epoch has not increased yet, so
 		// we can use the current epoch
-		ckpt, err := h.buildCheckpointFromVoteExtensions(ctx, epoch.EpochNumber, req.LocalLastCommit.Votes)
+		ckpt, err := h.buildCheckpointFromVoteExtensions(
+			ctx,
+			epoch.EpochNumber,
+			&req.LocalLastCommit,
+			h.getValidBlsSigsAndPruneCommitInfo,
+		)
 		if err != nil {
 			return &EmptyProposalRes, fmt.Errorf("failed to build checkpoint from vote extensions: %w", err)
 		}
@@ -130,17 +139,31 @@ func (h *ProposalHandler) PrepareProposal() sdk.PrepareProposalHandler {
 	}
 }
 
-func (h *ProposalHandler) buildCheckpointFromVoteExtensions(ctx sdk.Context, epoch uint64, extendedVotes []abci.ExtendedVoteInfo) (*ckpttypes.RawCheckpointWithMeta, error) {
-	prevBlockID, err := h.findLastBlockHash(extendedVotes)
+// buildCheckpointFromVoteExtensions builds a checkpoint from vote extensions. If
+// pruneInvalidVotes is true, it will prune invalid votes from the provided
+// commit info.
+func (h *ProposalHandler) buildCheckpointFromVoteExtensions(
+	ctx sdk.Context,
+	epoch uint64,
+	extCommit *abci.ExtendedCommitInfo,
+	sigValidationFn SigValidationFn,
+) (*ckpttypes.RawCheckpointWithMeta, error) {
+	prevBlockID, err := h.findLastBlockHash(extCommit.Votes)
 	if err != nil {
 		return nil, err
 	}
-	ckpt := ckpttypes.NewCheckpointWithMeta(ckpttypes.NewCheckpoint(epoch, prevBlockID), ckpttypes.Accumulating)
-	validBLSSigs := h.getValidBlsSigs(ctx, extendedVotes, prevBlockID)
+	ckpt := ckpttypes.NewCheckpointWithMeta(
+		ckpttypes.NewCheckpoint(epoch, prevBlockID),
+		ckpttypes.Accumulating,
+	)
+	validBLSSigs := sigValidationFn(
+		ctx,
+		extCommit,
+		prevBlockID,
+	)
 	vals := h.ckptKeeper.GetValidatorSet(ctx, epoch)
 	totalPower := h.ckptKeeper.GetTotalVotingPower(ctx, epoch)
-	// TODO: maybe we don't need to verify BLS sigs anymore as they are already
-	//  verified by VerifyVoteExtension
+
 	for _, sig := range validBLSSigs {
 		signerAddress, err := sdk.ValAddressFromBech32(sig.SignerAddress)
 		if err != nil {
@@ -179,32 +202,82 @@ func (h *ProposalHandler) buildCheckpointFromVoteExtensions(ctx sdk.Context, epo
 	return ckpt, nil
 }
 
-func (h *ProposalHandler) getValidBlsSigs(ctx sdk.Context, extendedVotes []abci.ExtendedVoteInfo, blockHash []byte) []ckpttypes.BlsSig {
-	k := h.ckptKeeper
-	validBLSSigs := make([]ckpttypes.BlsSig, 0, len(extendedVotes))
-	for _, voteInfo := range extendedVotes {
-		veBytes := voteInfo.VoteExtension
-		if len(veBytes) == 0 {
-			h.logger.Error("received empty vote extension", "validator", voteInfo.Validator.String())
+func (h *ProposalHandler) verifyVoteExtension(
+	ctx sdk.Context,
+	veBytes []byte,
+	expectedBlockHash []byte,
+) (*ckpttypes.BlsSig, error) {
+	if len(veBytes) == 0 {
+		return nil, fmt.Errorf("vote extension is empty")
+	}
+
+	var ve ckpttypes.VoteExtension
+	if err := ve.Unmarshal(veBytes); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal vote extension: %w", err)
+	}
+
+	_, err := sdk.ValAddressFromBech32(ve.Signer)
+	if err != nil {
+		return nil, fmt.Errorf("invalid signer address in vote extension: %w", err)
+	}
+
+	_, err = sdk.ValAddressFromBech32(ve.ValidatorAddress)
+	if err != nil {
+		return nil, fmt.Errorf("invalid validator address in vote extension: %w", err)
+	}
+
+	if !bytes.Equal(*ve.BlockHash, expectedBlockHash) {
+		return nil, fmt.Errorf("the BLS sig is signed over unexpected block hash. Expected: %s, Got: %s",
+			hex.EncodeToString(expectedBlockHash), ve.BlockHash.String())
+	}
+
+	sig := ve.ToBLSSig()
+
+	if err := h.ckptKeeper.VerifyBLSSig(ctx, sig); err != nil {
+		return nil, fmt.Errorf("invalid BLS signature: %w", err)
+	}
+
+	return sig, nil
+}
+
+func (h *ProposalHandler) getValidBlsSigs(
+	ctx sdk.Context,
+	extendedVotes *abci.ExtendedCommitInfo,
+	blockHash []byte,
+) []ckpttypes.BlsSig {
+	var validBLSSigs []ckpttypes.BlsSig
+
+	for _, vote := range extendedVotes.Votes {
+		sig, err := h.verifyVoteExtension(ctx, vote.VoteExtension, blockHash)
+		if err != nil {
+			h.logger.Error("invalid vote extension", "err", err)
 			continue
 		}
-		var ve ckpttypes.VoteExtension
-		if err := ve.Unmarshal(veBytes); err != nil {
-			h.logger.Error("failed to unmarshal vote extension", "err", err)
-			continue
-		}
+		validBLSSigs = append(validBLSSigs, *sig)
+	}
 
-		if !bytes.Equal(*ve.BlockHash, blockHash) {
-			h.logger.Error("the BLS sig is signed over unexpected block hash",
-				"expected", hex.EncodeToString(blockHash),
-				"got", ve.BlockHash.String())
-			continue
-		}
+	return validBLSSigs
+}
 
-		sig := ve.ToBLSSig()
+func (h *ProposalHandler) getValidBlsSigsAndPruneCommitInfo(
+	ctx sdk.Context,
+	extendedVotes *abci.ExtendedCommitInfo,
+	blockHash []byte,
+) []ckpttypes.BlsSig {
+	var validBLSSigs []ckpttypes.BlsSig
 
-		if err := k.VerifyBLSSig(ctx, sig); err != nil {
-			h.logger.Error("invalid BLS signature", "err", err)
+	for i, vote := range extendedVotes.Votes {
+		sig, err := h.verifyVoteExtension(ctx, vote.VoteExtension, blockHash)
+
+		if err != nil {
+			h.logger.Error("invalid vote extension", "err", err)
+
+			// We are marking votes with invalid vote extensions as absent
+			vote.BlockIdFlag = cometproto.BlockIDFlagAbsent
+			vote.ExtensionSignature = nil
+			vote.VoteExtension = nil
+			extendedVotes.Votes[i] = vote
+
 			continue
 		}
 
@@ -325,7 +398,15 @@ func (h *ProposalHandler) ProcessProposal() sdk.ProcessProposalHandler {
 			// Note: this is needed because LastBlockID is not available here so that
 			// we can't verify whether the injected checkpoint is signing the correct
 			// LastBlockID
-			ckpt, err := h.buildCheckpointFromVoteExtensions(ctx, epoch.EpochNumber, injectedCkpt.ExtendedCommitInfo.Votes)
+			// We do not prune invalid vote extensions as this is job of the proposer
+			// we just verify that voting power is sufficient to build a checkpoint
+			// over 2/3
+			ckpt, err := h.buildCheckpointFromVoteExtensions(
+				ctx,
+				epoch.EpochNumber,
+				injectedCkpt.ExtendedCommitInfo,
+				h.getValidBlsSigs,
+			)
 			if err != nil {
 				// should not return error here as error will cause panic
 				h.logger.Info("invalid vote extensions",
