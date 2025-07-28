@@ -430,7 +430,7 @@ func (s *BtcRewardsDistribution) Test6ActiveLastDelegation() {
 	pendingDel, err := chain.ParseRespBTCDelToBTCDel(pendingDels[0])
 	s.NoError(err)
 
-	SendCovenantSigsToPendingDel(s.r, s.T(), n1, s.net, s.covenantSKs, s.covenantWallets, pendingDel)
+	n1.SendCovenantSigs(s.r, s.T(), s.net, s.covenantSKs, s.covenantWallets, pendingDel)
 
 	// wait for a block so that covenant txs take effect
 	n1.WaitForNextBlock()
@@ -762,7 +762,7 @@ func (s *BaseBtcRewardsDistribution) CreateCovenantsAndSubmitSignaturesToPendDel
 		pendingDel, err := chain.ParseRespBTCDelToBTCDel(pendingDelResp)
 		s.NoError(err)
 
-		SendCovenantSigsToPendingDel(s.r, s.T(), n, s.net, s.covenantSKs, s.covenantWallets, pendingDel)
+		n.SendCovenantSigs(s.r, s.T(), s.net, s.covenantSKs, s.covenantWallets, pendingDel)
 
 		n.WaitForNextBlock()
 	}
@@ -809,88 +809,6 @@ func CheckWithdrawReward(
 	actualAmt := delBalanceAfterWithdraw.String()
 	expectedAmt := delBalanceBeforeWithdraw.Add(delRewardGauge.WithdrawnCoins...).Sub(txResp.AuthInfo.Fee.Amount...).String()
 	require.Equal(t, expectedAmt, actualAmt)
-}
-
-func SendCovenantSigsToPendingDel(
-	r *rand.Rand,
-	t testing.TB,
-	n *chain.NodeConfig,
-	btcNet *chaincfg.Params,
-	covenantSKs []*btcec.PrivateKey,
-	covWallets []string,
-	pendingDel *bstypes.BTCDelegation,
-) {
-	require.Len(t, pendingDel.CovenantSigs, 0)
-
-	params := n.QueryBTCStakingParams()
-	slashingTx := pendingDel.SlashingTx
-	stakingTx := pendingDel.StakingTx
-
-	stakingMsgTx, err := bbn.NewBTCTxFromBytes(stakingTx)
-	require.NoError(t, err)
-	stakingTxHash := stakingMsgTx.TxHash().String()
-
-	fpBTCPKs, err := bbn.NewBTCPKsFromBIP340PKs(pendingDel.FpBtcPkList)
-	require.NoError(t, err)
-
-	stakingInfo, err := pendingDel.GetStakingInfo(params, btcNet)
-	require.NoError(t, err)
-
-	stakingSlashingPathInfo, err := stakingInfo.SlashingPathSpendInfo()
-	require.NoError(t, err)
-
-	/*
-		generate and insert new covenant signature, in order to activate the BTC delegation
-	*/
-	// covenant signatures on slashing tx
-	covenantSlashingSigs, err := datagen.GenCovenantAdaptorSigs(
-		covenantSKs,
-		fpBTCPKs,
-		stakingMsgTx,
-		stakingSlashingPathInfo.GetPkScriptPath(),
-		slashingTx,
-	)
-	require.NoError(t, err)
-
-	// cov Schnorr sigs on unbonding signature
-	unbondingPathInfo, err := stakingInfo.UnbondingPathSpendInfo()
-	require.NoError(t, err)
-	unbondingTx, err := bbn.NewBTCTxFromBytes(pendingDel.BtcUndelegation.UnbondingTx)
-	require.NoError(t, err)
-
-	covUnbondingSigs, err := datagen.GenCovenantUnbondingSigs(
-		covenantSKs,
-		stakingMsgTx,
-		pendingDel.StakingOutputIdx,
-		unbondingPathInfo.GetPkScriptPath(),
-		unbondingTx,
-	)
-	require.NoError(t, err)
-
-	unbondingInfo, err := pendingDel.GetUnbondingInfo(params, btcNet)
-	require.NoError(t, err)
-	unbondingSlashingPathInfo, err := unbondingInfo.SlashingPathSpendInfo()
-	require.NoError(t, err)
-	covenantUnbondingSlashingSigs, err := datagen.GenCovenantAdaptorSigs(
-		covenantSKs,
-		fpBTCPKs,
-		unbondingTx,
-		unbondingSlashingPathInfo.GetPkScriptPath(),
-		pendingDel.BtcUndelegation.SlashingTx,
-	)
-	require.NoError(t, err)
-
-	for i := 0; i < int(params.CovenantQuorum); i++ {
-		// add covenant sigs
-		n.AddCovenantSigs(
-			covWallets[i],
-			covenantSlashingSigs[i].CovPk,
-			stakingTxHash,
-			covenantSlashingSigs[i].AdaptorSigs,
-			bbn.NewBIP340SignatureFromBTCSig(covUnbondingSigs[i]),
-			covenantUnbondingSlashingSigs[i].AdaptorSigs,
-		)
-	}
 }
 
 // QueryFpRewards returns the rewards available for fp1, fp2, fp3, fp4

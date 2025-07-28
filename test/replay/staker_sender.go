@@ -1,7 +1,6 @@
 package replay
 
 import (
-	"crypto/sha256"
 	"math/rand"
 	"testing"
 
@@ -68,6 +67,71 @@ func (s *Staker) CreateDelegationMessage(
 		uint16(params.UnbondingTimeBlocks),
 	)
 
+	return s.createBTCDelegationMsg(
+		params,
+		fpKeys,
+		fpBTCPKs,
+		covenantPks,
+		stakingTime,
+		totalSat,
+		stakingSlashingInfo,
+	)
+}
+
+func (s *Staker) CreateDelegationMessageWithChange(
+	fpKeys []*bbn.BIP340PubKey,
+	stakingTime uint32,
+	totalSat int64,
+	changeAmt int64,
+) *bstypes.MsgCreateBTCDelegation {
+	params := s.d.GetBTCStakingParams(s.t)
+
+	var covenantPks []*btcec.PublicKey
+	for _, pk := range params.CovenantPks {
+		covenantPks = append(covenantPks, pk.MustToBTCPK())
+	}
+
+	var fpBTCPKs []*btcec.PublicKey
+	for _, fpKey := range fpKeys {
+		fpBTCPKs = append(fpBTCPKs, fpKey.MustToBTCPK())
+	}
+
+	stakingSlashingInfo := datagen.GenBTCStakingSlashingInfoWithChangeAmt(
+		s.r,
+		s.t,
+		BtcParams,
+		s.BTCPrivateKey,
+		fpBTCPKs,
+		covenantPks,
+		params.CovenantQuorum,
+		uint16(stakingTime),
+		totalSat,
+		params.SlashingPkScript,
+		params.SlashingRate,
+		uint16(params.UnbondingTimeBlocks),
+		changeAmt,
+	)
+
+	return s.createBTCDelegationMsg(
+		params,
+		fpKeys,
+		fpBTCPKs,
+		covenantPks,
+		stakingTime,
+		totalSat,
+		stakingSlashingInfo,
+	)
+}
+
+func (s *Staker) createBTCDelegationMsg(
+	params *bstypes.Params,
+	fpKeys []*bbn.BIP340PubKey,
+	fpBTCPKs []*btcec.PublicKey,
+	covenantPks []*btcec.PublicKey,
+	stakingTime uint32,
+	totalSat int64,
+	stakingSlashingInfo *datagen.TestStakingSlashingInfo,
+) *bstypes.MsgCreateBTCDelegation {
 	slashingPathSpendInfo, err := stakingSlashingInfo.StakingInfo.SlashingPathSpendInfo()
 	require.NoError(s.t, err)
 
@@ -116,7 +180,7 @@ func (s *Staker) CreateDelegationMessage(
 		fpBtcPkList[i] = *pk
 	}
 
-	msg := &bstypes.MsgCreateBTCDelegation{
+	return &bstypes.MsgCreateBTCDelegation{
 		StakerAddr:   s.AddressString(),
 		Pop:          pop,
 		BtcPk:        s.BTCPublicKey(),
@@ -134,8 +198,6 @@ func (s *Staker) CreateDelegationMessage(
 		UnbondingSlashingTx:           unbondingSlashingInfo.SlashingTx,
 		DelegatorUnbondingSlashingSig: delSlashingTxSig,
 	}
-
-	return msg
 }
 
 func (s *Staker) CreateBtcExpandMessage(
@@ -144,6 +206,7 @@ func (s *Staker) CreateBtcExpandMessage(
 	totalSat int64,
 	prevStakeTxHash string,
 	fundingTx *wire.MsgTx,
+	fundingTxOutIdx uint32,
 ) *bstypes.MsgBtcStakeExpand {
 	params := s.d.GetBTCStakingParams(s.t)
 
@@ -166,7 +229,7 @@ func (s *Staker) CreateBtcExpandMessage(
 
 	// Convert fundingTxHash to OutPoint
 	fundingTxHash := fundingTx.TxHash()
-	fundingOutPoint := wire.NewOutPoint(&fundingTxHash, 0)
+	fundingOutPoint := wire.NewOutPoint(&fundingTxHash, fundingTxOutIdx)
 	outPoints := []*wire.OutPoint{prevStakingOutPoint, fundingOutPoint}
 
 	// Generate staking slashing info using multiple inputs
@@ -271,36 +334,6 @@ func (s *Staker) CreatePreApprovalDelegation(
 
 	s.SendMessage(msg)
 
-	return msg
-}
-
-func (s *Staker) CreateBtcStakeExpand(
-	fpKeys []*bbn.BIP340PubKey,
-	stakingTime uint32,
-	totalSat int64,
-	prevStkTx *wire.MsgTx,
-) *bstypes.MsgBtcStakeExpand {
-	stakingOutput := prevStkTx.TxOut[0]
-
-	// Create a fake outPoint for funding
-	dummyData := sha256.Sum256([]byte("dummy funding tx"))
-	dummyOutPoint := &wire.OutPoint{
-		Hash:  chainhash.Hash(dummyData),
-		Index: 0,
-	}
-
-	// Generate funding tx for stake expansion
-	fundingTx := datagen.GenFundingTx(
-		s.t,
-		s.r,
-		s.app.BTCLightClientKeeper.GetBTCNet(),
-		dummyOutPoint,
-		totalSat,
-		stakingOutput,
-	)
-
-	msg := s.CreateBtcExpandMessage(fpKeys, stakingTime, totalSat, prevStkTx.TxHash().String(), fundingTx)
-	s.SendMessage(msg)
 	return msg
 }
 
