@@ -68,3 +68,7 @@ func TestBtcRewardsDistributionBsnRollup(t *testing.T) {
 func TestBTCStakeExpansionTestSuite(t *testing.T) {
 	suite.Run(t, new(BTCStakeExpansionTestSuite))
 }
+
+func TestMathOverflowTest(t *testing.T) {
+	suite.Run(t, new(MathOverflowTest))
+}
