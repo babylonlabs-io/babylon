@@ -22,10 +22,10 @@ const (
 	deletedCapabilityStoreKey = "capability"
 )
 
-func CreateUpgrade(fpCount uint32, relativeWaitingTime uint32) upgrades.Upgrade {
+func CreateUpgrade(fpCount uint32, btcActivationHeight uint32) upgrades.Upgrade {
 	return upgrades.Upgrade{
 		UpgradeName:          UpgradeName,
-		CreateUpgradeHandler: CreateUpgradeHandler(fpCount, relativeWaitingTime),
+		CreateUpgradeHandler: CreateUpgradeHandler(fpCount, btcActivationHeight),
 		StoreUpgrades: store.StoreUpgrades{
 			Added: []string{
 				btcstkconsumertypes.StoreKey,
@@ -38,7 +38,7 @@ func CreateUpgrade(fpCount uint32, relativeWaitingTime uint32) upgrades.Upgrade 
 	}
 }
 
-func CreateUpgradeHandler(fpCount uint32, relativeWaitingTime uint32) upgrades.UpgradeHandlerCreator {
+func CreateUpgradeHandler(fpCount uint32, btcActivationHeight uint32) upgrades.UpgradeHandlerCreator {
 	return func(mm *module.Manager, configurator module.Configurator, keepers *keepers.AppKeepers) upgradetypes.UpgradeHandler {
 		return func(ctx context.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
 			migrations, err := mm.RunMigrations(ctx, configurator, fromVM)
@@ -52,11 +52,7 @@ func CreateUpgradeHandler(fpCount uint32, relativeWaitingTime uint32) upgrades.U
 			btcParamsCopy := btcParams
 
 			btcParamsCopy.MaxFinalityProviders = fpCount
-
-			btcTip := keepers.BTCLightClientKeeper.GetTipInfo(sdkCtx)
-			currentBtcHeight := btcTip.Height
-
-			btcParamsCopy.BtcActivationHeight = currentBtcHeight + relativeWaitingTime
+			btcParamsCopy.BtcActivationHeight = btcActivationHeight
 
 			err = keepers.BTCStakingKeeper.SetParams(sdkCtx, btcParamsCopy)
 			if err != nil {

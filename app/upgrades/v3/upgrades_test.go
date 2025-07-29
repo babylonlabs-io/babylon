@@ -32,10 +32,10 @@ func TestUpgradeTestSuite(t *testing.T) {
 	suite.Run(t, new(UpgradeTestSuite))
 }
 
-func (s *UpgradeTestSuite) setupTestWithNetwork(fpCount uint32, relativeWaitingTime uint32) {
+func (s *UpgradeTestSuite) setupTestWithNetwork(fpCount uint32, btcActivationHeight uint32) {
 	s.initialBtcHeight = 100
 
-	app.Upgrades = []upgrades.Upgrade{CreateUpgrade(fpCount, relativeWaitingTime)}
+	app.Upgrades = []upgrades.Upgrade{CreateUpgrade(fpCount, btcActivationHeight)}
 
 	s.app = app.SetupWithBitcoinConf(s.T(), false, bbn.BtcSignet)
 	s.ctx = s.app.BaseApp.NewContextLegacy(false, tmproto.Header{Height: 1, ChainID: "babylon-1", Time: time.Now().UTC()})
@@ -68,35 +68,34 @@ func (s *UpgradeTestSuite) executeUpgrade() {
 
 func (s *UpgradeTestSuite) TestUpgradeNetworks() {
 	testCases := []struct {
-		name                    string
-		isMainnet               bool
-		expectedMaxFPs          uint32
-		expectedHeightIncrement uint32
+		name                      string
+		expectedMaxFPs            uint32
+		expectedBtcActivationHeight uint32
 	}{
 		{
-			name:                    "mainnet upgrade",
-			expectedMaxFPs:          5,
-			expectedHeightIncrement: 288,
+			name:                        "mainnet upgrade",
+			expectedMaxFPs:              5,
+			expectedBtcActivationHeight: 915000,
 		},
 		{
-			name:                    "testnet upgrade",
-			expectedMaxFPs:          15,
-			expectedHeightIncrement: 144,
+			name:                        "testnet upgrade", 
+			expectedMaxFPs:              10,
+			expectedBtcActivationHeight: 260000,
 		},
 	}
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			s.setupTestWithNetwork(tc.expectedMaxFPs, tc.expectedHeightIncrement)
+			s.setupTestWithNetwork(tc.expectedMaxFPs, tc.expectedBtcActivationHeight)
 
 			s.executeUpgrade()
 
-			s.verifyPostUpgrade(tc.expectedMaxFPs, tc.expectedHeightIncrement)
+			s.verifyPostUpgrade(tc.expectedMaxFPs, tc.expectedBtcActivationHeight)
 		})
 	}
 }
 
-func (s *UpgradeTestSuite) verifyPostUpgrade(expectedMaxFPs, expectedHeightIncrement uint32) {
+func (s *UpgradeTestSuite) verifyPostUpgrade(expectedMaxFPs, expectedBtcActivationHeight uint32) {
 	_, found := s.app.ModuleManager.Modules[deletedCapabilityStoreKey]
 	s.Require().False(found, "x/capability module should be deleted")
 
@@ -108,13 +107,5 @@ func (s *UpgradeTestSuite) verifyPostUpgrade(expectedMaxFPs, expectedHeightIncre
 
 	params := s.app.BTCStakingKeeper.GetParams(s.ctx)
 	s.Require().Equal(expectedMaxFPs, params.MaxFinalityProviders, "MaxFinalityProviders should match expected value")
-
-	currentBtcTip := s.app.BTCLightClientKeeper.GetTipInfo(s.ctx)
-	var currentTipHeight uint32
-	if currentBtcTip != nil {
-		currentTipHeight = currentBtcTip.Height
-	}
-
-	expectedBtcActivationHeight := currentTipHeight + expectedHeightIncrement
-	s.Require().Equal(expectedBtcActivationHeight, params.BtcActivationHeight, "BtcActivationHeight should be current tip + relative waiting time")
+	s.Require().Equal(expectedBtcActivationHeight, params.BtcActivationHeight, "BtcActivationHeight should be set to absolute height")
 }
