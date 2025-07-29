@@ -39,6 +39,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
+- [#1437](https://github.com/babylonlabs-io/babylon/pull/1437) Send base headers before the fallback cases.
 - [#1429](https://github.com/babylonlabs-io/babylon/pull/1429) Send base header if no headers were sent previously.
 - [#1406](https://github.com/babylonlabs-io/babylon/pull/1406) Use `collections` for KV store in `x/btcstkconsumer`.
 - [#1405](https://github.com/babylonlabs-io/babylon/pull/1405) Use `collections` for `zoneconcierge` KV store.
@@ -126,6 +127,7 @@ command to modify `max-finality-providers` parameter.
 - [#1425](https://github.com/babylonlabs-io/babylon/pull/1425) Improvement to vote ext handling
 - [#1428](https://github.com/babylonlabs-io/babylon/pull/1428) Update stake expansion events
 - [#1415](https://github.com/babylonlabs-io/babylon/pull/1415) Bump ibc-go to v10.3.0 and e2e test `AddBsnRewards`
+- [#1410](https://github.com/babylonlabs-io/babylon/pull/1410) Add stake expansion e2e test
 - [#1432](https://github.com/babylonlabs-io/babylon/pull/1432) Update maxFps and btcActivatioHeight in btcStakingParams for V3
 
 ### State Machine Breaking

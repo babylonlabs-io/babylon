@@ -349,7 +349,7 @@ func (s *BtcRewardsDistributionBsnRollup) Test6ActiveLastDelegation() {
 	pendingDel, err := chain.ParseRespBTCDelToBTCDel(pendingDels[0])
 	s.NoError(err)
 
-	SendCovenantSigsToPendingDel(s.r, s.T(), n1, s.net, s.covenantSKs, s.covenantWallets, pendingDel)
+	n1.SendCovenantSigs(s.r, s.T(), s.net, s.covenantSKs, s.covenantWallets, pendingDel)
 
 	// wait for a block so that covenant txs take effect
 	n1.WaitForNextBlock()
@@ -372,7 +372,7 @@ func (s *BtcRewardsDistributionBsnRollup) Test7CheckRewardsBsn4() {
 	s.NoError(err)
 
 	rewardCoins := nodeBalances.Sub(sdk.NewCoin(nativeDenom, nodeBalances.AmountOf(nativeDenom))).QuoInt(math.NewInt(4))
-	require.Greater(s.T(), rewardCoins.Len(), 2, "should have 2 or more denoms to give out as rewards")
+	require.Greater(s.T(), rewardCoins.Len(), 1, "should have 2 or more denoms to give out as rewards")
 
 	fp4Ratio := math.LegacyOneDec()
 
