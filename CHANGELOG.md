@@ -127,8 +127,8 @@ command to modify `max-finality-providers` parameter.
 - [#1425](https://github.com/babylonlabs-io/babylon/pull/1425) Improvement to vote ext handling
 - [#1428](https://github.com/babylonlabs-io/babylon/pull/1428) Update stake expansion events
 - [#1415](https://github.com/babylonlabs-io/babylon/pull/1415) Bump ibc-go to v10.3.0 and e2e test `AddBsnRewards`
-with bad memo field in IBC callbacks.
 - [#1410](https://github.com/babylonlabs-io/babylon/pull/1410) Add stake expansion e2e test
+- [#1432](https://github.com/babylonlabs-io/babylon/pull/1432) Update maxFps and btcActivatioHeight in btcStakingParams for V3
 
 ### State Machine Breaking
 
