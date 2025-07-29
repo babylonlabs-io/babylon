@@ -3,7 +3,7 @@
 ## Table of Contents
 
 1. [Introduction](#1-introduction)
-2. [Bitcoin Stake Expansion Methods](#2-bitcoin-stake-expansion-methods)
+2. [Stake Expansion Protocol](#2-stake-expansion-protocol)
    1. [Stake Expansion Procedure](#21-stake-expansion-procedure)
    2. [Stake Expansion Transaction Structure](#22-stake-expansion-transaction-structure)
    3. [Stake Expansion Requirements](#23-stake-expansion-requirements)
