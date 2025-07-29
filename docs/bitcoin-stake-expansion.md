@@ -146,13 +146,12 @@ Bitcoin staking transaction as per the
 [specification](./staking-script.md#bitcoin-staking-transactions-specification).
 What makes them unique is the requirement that they follow the following structure:
 * **Two Inputs** in the following precise order:
-  * **First Input**: The staking output of the original staking transaction.
-    Its value should hold at least as many BTC as the original staking output. 
+  * **First Input**: The original staking output that is being expanded.
   * **Second Input**: Funding output used to pay for fees and/or increase the
     stake amount. It can come from any transaction as long as it was never
     a staking output.
 * **Any number of outputs** with at least *one* corresponding to the
-  expanded staking transaction staking output.
+  expanded staking transaction staking output. The Babylon chain requires that the new staking output value must be at least the same as the old staking value.
 
 ### 2.3 Stake Expansion Requirements
 
@@ -232,8 +231,8 @@ graph LR
 ### 3.2. BTC Staking Parameters Selection
 
 The BTC Stake expansion protocol transactions are broadcast
-to the Babylon Genesis chain prior to the stake expansion
-staking transaction is broadcast to Bitcoin. This makes
+to the Babylon Genesis chain before the corresponding stake
+expansion transaction is broadcast to Bitcoin. This makes
 the parameters selection akin to the one used for,
 the [pre-staking registration flow](./register-bitcoin-stake.md#23-pre-staking-registration).
 
@@ -486,7 +485,7 @@ message MsgBtcStakeExpand {
 
 > **⚡ Note**: The expansion message follows the pre-staking registration pattern. 
 > The inclusion proof is submitted later after Bitcoin confirmation via 
-> `MsgAddBTCDelegationInclusionProof`.
+> `MsgBTCUndelegate`.
 
 ### 3.5. Constructing the `MsgBtcStakeExpand`
 
