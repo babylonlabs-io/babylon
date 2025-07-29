@@ -44,7 +44,6 @@ type SoftwareUpgradeV3TestSuite struct {
 }
 
 func (s *SoftwareUpgradeV3TestSuite) SetupSuite() {
-	s.T().Skip("Temporarily skipping v3 upgrade test")
 	s.T().Log("setting up e2e integration test suite for v2.2.0 to v3 upgrade...")
 	var err error
 	s.balancesBeforeUpgrade = make(map[string]sdk.Coin)
@@ -185,7 +184,7 @@ func (s *SoftwareUpgradeV3TestSuite) TestUpgradeV3() {
 	s.Require().True(ok, "max_finality_providers param should exist")
 	s.Require().Equal(float64(5), maxFP, "max_finality_providers should be 5")
 
-	s.Require().Equal(float64(288), btcparamsMap["btc_activation_height"], "BtcActivationHeight should be incremented correctly")
+	s.Require().Equal(float64(915000), btcparamsMap["btc_activation_height"], "BtcActivationHeight should be incremented correctly")
 
 	// check that the module exists by querying parameters with the QueryParams helper
 	var btcstkconsumerParams map[string]interface{}
