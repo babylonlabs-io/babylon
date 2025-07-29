@@ -3,6 +3,7 @@
 package allowlist
 
 // Values here are not used in production and are only used for e2e tests.
+// This file is compiled only when both 'testnet' and 'e2e_upgrade' build tags are present.
 // The actual allow list is defined in the files with build tags:
 // multi_staking_allow_list_mainnet.go and multi_staking_allow_list_testnet.go
 // Make sure to include the correct tx hashes for the
