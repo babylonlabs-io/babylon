@@ -39,6 +39,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
+- [#1437](https://github.com/babylonlabs-io/babylon/pull/1437) Send base headers before the fallback cases.
 - [#1429](https://github.com/babylonlabs-io/babylon/pull/1429) Send base header if no headers were sent previously.
 - [#1406](https://github.com/babylonlabs-io/babylon/pull/1406) Use `collections` for KV store in `x/btcstkconsumer`.
 - [#1405](https://github.com/babylonlabs-io/babylon/pull/1405) Use `collections` for `zoneconcierge` KV store.
