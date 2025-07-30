@@ -39,6 +39,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
+- [#1437](https://github.com/babylonlabs-io/babylon/pull/1437) Send base headers before the fallback cases.
 - [#1429](https://github.com/babylonlabs-io/babylon/pull/1429) Send base header if no headers were sent previously.
 - [#1406](https://github.com/babylonlabs-io/babylon/pull/1406) Use `collections` for KV store in `x/btcstkconsumer`.
 - [#1405](https://github.com/babylonlabs-io/babylon/pull/1405) Use `collections` for `zoneconcierge` KV store.
@@ -126,8 +127,9 @@ command to modify `max-finality-providers` parameter.
 - [#1425](https://github.com/babylonlabs-io/babylon/pull/1425) Improvement to vote ext handling
 - [#1428](https://github.com/babylonlabs-io/babylon/pull/1428) Update stake expansion events
 - [#1415](https://github.com/babylonlabs-io/babylon/pull/1415) Bump ibc-go to v10.3.0 and e2e test `AddBsnRewards`
-with bad memo field in IBC callbacks.
 - [#1410](https://github.com/babylonlabs-io/babylon/pull/1410) Add stake expansion e2e test
+- [#1432](https://github.com/babylonlabs-io/babylon/pull/1432) Update maxFps and btcActivatioHeight in btcStakingParams for V3
+- [#1450](https://github.com/babylonlabs-io/babylon/pull/1450) Align v3 test
 - [#1449](https://github.com/babylonlabs-io/babylon/pull/1449) Fix math int overflow in incentive reward tracker structures.
 
 ### State Machine Breaking
@@ -183,6 +185,7 @@ for multi staked fps
 adjustment
 - [#1418](https://github.com/babylonlabs-io/babylon/pull/1418) fix: add stake expansion
 covenant signature to the events
+- [#1447](https://github.com/babylonlabs-io/babylon/pull/1447) Add multi-staking allow-list data for e2e tests
 
 ## v2.2.0
 

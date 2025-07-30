@@ -1,4 +1,4 @@
-//go:build testnet
+//go:build testnet && !e2e_upgrade
 
 package allowlist
 
