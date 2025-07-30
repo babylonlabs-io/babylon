@@ -5,7 +5,7 @@
     1. [Core Distribution Function](#21-core-distribution-function)
     2. [Babylon Genesis Fee Collection and Storage](#22-babylon-genesis-fee-collection-and-storage)
     3. [Querying, withdrawing rewards](#23-querying-withdrawing-rewards)
-    4. [Submitting rewards through transactions](#24-submitting-rewards-through-transactions)
+    4. [Submitting rewards through transactions](#24-submitting-rewards-through-msgaddbsnrewards)
     5. [Submitting rewards through IBC](#25-submitting-rewards-through-ibc)
 3. [Rollup BSNs](#3-rollup-bsns)
     1. [Bridge funds, transfer using tx](#31-bridge-funds-transfer-using-tx)
@@ -21,7 +21,7 @@ relevant for different types of consumers:
 
 1.  **Direct Message Invocation**: This flow is triggered by processing the
     `MsgAddBsnRewards` message. See
-    [Submitting rewards through transactions](#submitting-rewards-through-transactions).
+    [Submitting rewards through transactions](#24-submitting-rewards-through-msgaddbsnrewards).
 2.  **IBC Transfer**: This flow is initiated when an IBC transfer with a
     specific memo field is received. See
     [Submitting rewards through IBC](#25-submitting-rewards-through-ibc).
