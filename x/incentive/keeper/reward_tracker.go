@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 
-	"github.com/babylonlabs-io/babylon/v3/x/incentive/types"
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	sdkmath "cosmossdk.io/math"
+	bbntypes "github.com/babylonlabs-io/babylon/v3/types"
+	"github.com/babylonlabs-io/babylon/v3/x/incentive/types"
 )
 
 // AddFinalityProviderRewardsForBtcDelegations gets the current finality provider rewards
@@ -239,9 +240,9 @@ func (k Keeper) IncrementFinalityProviderPeriod(ctx context.Context, fp sdk.AccA
 
 	currentRewardsPerSat := sdk.NewCoins()
 	if !fpCurrentRwd.TotalActiveSat.IsZero() {
-		currentRewardsPerSatWithDecimals, valid := fpCurrentRwd.CurrentRewards.SafeMulInt(types.DecimalAccumulatedRewards)
-		if !valid {
-			return 0, types.ErrInvalidAmount.Wrap("math overflow")
+		currentRewardsPerSatWithDecimals, err := bbntypes.CoinsSafeMulInt(fpCurrentRwd.CurrentRewards, types.DecimalAccumulatedRewards)
+		if err != nil {
+			return 0, err
 		}
 
 		currentRewardsPerSat = currentRewardsPerSatWithDecimals.QuoInt(fpCurrentRwd.TotalActiveSat)

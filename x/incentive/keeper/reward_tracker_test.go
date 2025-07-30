@@ -468,13 +468,15 @@ func TestMathOverflowIncrementFinalityProviderPeriod(t *testing.T) {
 	fpCurrentRwd := datagen.GenRandomFinalityProviderCurrentRewards(r)
 	maxSupply, ok := sdkmath.NewIntFromString("115792089237316195423570985008687907853269984665640564039457584007913129639934")
 	require.True(t, ok)
-	fpCurrentRwd.CurrentRewards = fpCurrentRwd.CurrentRewards.Add(sdk.NewCoin(datagen.GenRandomDenom(r), maxSupply))
+	fpCurrentRwd.CurrentRewards = sdk.NewCoins(sdk.NewCoin(datagen.GenRandomDenom(r), maxSupply))
 
 	err := k.setFinalityProviderCurrentRewards(ctx, fp, fpCurrentRwd)
 	require.NoError(t, err)
 
-	// int overflow
-	k.IncrementFinalityProviderPeriod(ctx, fp)
+	// int math overflow
+	period, err := k.IncrementFinalityProviderPeriod(ctx, fp)
+	require.Equal(t, uint64(0), period)
+	require.EqualError(t, err, sdkmath.ErrIntOverflow.Error())
 }
 
 func FuzzCheckInitializeBTCDelegation(f *testing.F) {
