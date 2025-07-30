@@ -192,14 +192,25 @@ func (s *SoftwareUpgradeV3TestSuite) TestUpgradeV3() {
 	n.QueryParams(btcstkconsumerModulePath, &btcstkconsumerParams)
 	s.T().Logf("btcstkconsumer params: %v", btcstkconsumerParams)
 
-	params, exists := btcstkconsumerParams["params"]
+	btcConsParams, exists := btcstkconsumerParams["params"]
 	s.Require().True(exists, "btcstkconsumer params should exist")
 
-	paramsMap, ok := params.(map[string]interface{})
+	btcConsParamsMap, ok := btcConsParams.(map[string]interface{})
 	s.Require().True(ok, "btcstkconsumer params should be a map")
+	s.Require().Equal(false, btcConsParamsMap["permissioned_integration"],
+		"permissioned_integration should be false")
 
-	_, permissionedExists := paramsMap["permissioned_integration"]
-	s.Require().True(permissionedExists, "permissioned_integration field should exist in btcstkconsumer params")
+	var zoneConcierge map[string]interface{}
+	n.QueryParams(zoneconciergeModulePath, &zoneConcierge)
+	s.T().Logf("zone concierge params: %v", zoneConcierge)
+
+	zoneConciergeParams, exists := zoneConcierge["params"]
+	s.Require().True(exists, "zone concierge params should exist")
+
+	zoneConciergeParamsMap, ok := zoneConciergeParams.(map[string]interface{})
+	s.Require().True(ok, "zone concierge params should be a map")
+	s.Require().Equal(2419200,
+		zoneConciergeParamsMap["ibc_packet_timeout_seconds"], "ibc_packet_timeout_seconds should be false")
 
 	registeredConsumers := n.QueryBTCStkConsumerConsumers()
 	s.T().Logf("registered consumers: %v", registeredConsumers)
