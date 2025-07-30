@@ -182,7 +182,7 @@ func (s *SoftwareUpgradeV3TestSuite) TestUpgradeV3() {
 
 	maxFP, ok := btcparamsMap["max_finality_providers"]
 	s.Require().True(ok, "max_finality_providers param should exist")
-	s.Require().Equal(float64(5), maxFP, "max_finality_providers should be 5")
+	s.Require().Equal(float64(10), maxFP, "max_finality_providers should be 5")
 
 	s.Require().Equal(float64(915000), btcparamsMap["btc_activation_height"], "BtcActivationHeight should be incremented correctly")
 
