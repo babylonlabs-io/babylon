@@ -234,7 +234,11 @@ func (k Keeper) IncrementFinalityProviderPeriod(ctx context.Context, fp sdk.AccA
 
 	currentRewardsPerSat := sdk.NewCoins()
 	if !fpCurrentRwd.TotalActiveSat.IsZero() {
-		currentRewardsPerSatWithDecimals := fpCurrentRwd.CurrentRewards.MulInt(types.DecimalAccumulatedRewards)
+		currentRewardsPerSatWithDecimals, valid := fpCurrentRwd.CurrentRewards.SafeMulInt(types.DecimalAccumulatedRewards)
+		if !valid {
+			return 0, types.ErrInvalidAmount
+		}
+
 		currentRewardsPerSat = currentRewardsPerSatWithDecimals.QuoInt(fpCurrentRwd.TotalActiveSat)
 	}
 
