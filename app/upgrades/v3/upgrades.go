@@ -43,7 +43,7 @@ func CreateUpgrade(fpCount uint32, btcActivationHeight uint32,
 
 func CreateUpgradeHandler(fpCount uint32, btcActivationHeight uint32,
 	permissionedIntegration bool, ibcPacketTimeoutSeconds uint32) upgrades.
-	UpgradeHandlerCreator {
+UpgradeHandlerCreator {
 	return func(mm *module.Manager, configurator module.Configurator, keepers *keepers.AppKeepers) upgradetypes.UpgradeHandler {
 		return func(ctx context.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
 			migrations, err := mm.RunMigrations(ctx, configurator, fromVM)
@@ -62,6 +62,9 @@ func CreateUpgradeHandler(fpCount uint32, btcActivationHeight uint32,
 
 			err = keepers.ZoneConciergeKeeper.SetParams(sdkCtx,
 				zoneConciergeParams)
+			if err != nil {
+				return nil, err
+			}
 
 			btcStkConsumerParams := btcstkconsumertypes.DefaultParams()
 			btcStkConsumerParams.PermissionedIntegration = permissionedIntegration
@@ -71,6 +74,9 @@ func CreateUpgradeHandler(fpCount uint32, btcActivationHeight uint32,
 
 			err = keepers.BTCStkConsumerKeeper.SetParams(sdkCtx,
 				btcStkConsumerParams)
+			if err != nil {
+				return nil, err
+			}
 
 			btcParams := keepers.BTCStakingKeeper.GetParams(sdkCtx)
 			btcParamsCopy := btcParams
