@@ -51,8 +51,8 @@ func (dc *VotingPowerDistCache) FindNewActiveFinalityProviders(prevDc *VotingPow
 }
 
 func (dc *VotingPowerDistCache) FindNewInactiveFinalityProviders(prevDc *VotingPowerDistCache) []*FinalityProviderDistInfo {
-	prevInactiveFps := prevDc.GetInactiveFinalityProviderSet()
 	inactiveFps := dc.GetInactiveFinalityProviderSet()
+	prevInactiveFps := prevDc.GetInactiveFinalityProviderSet()
 	newInactiveFps := make([]*FinalityProviderDistInfo, 0)
 
 	for pk, fp := range inactiveFps {
