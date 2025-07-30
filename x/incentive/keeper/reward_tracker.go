@@ -25,7 +25,9 @@ func (k Keeper) AddFinalityProviderRewardsForBtcDelegations(ctx context.Context,
 		return types.ErrFPCurrentRewardsWithoutVotingPower.Wrapf("fp %s doesn't have positive voting power", fp.String())
 	}
 
-	fpCurrentRwd.AddRewards(rwd)
+	if err := fpCurrentRwd.AddRewards(rwd); err != nil {
+		return err
+	}
 	return k.setFinalityProviderCurrentRewards(ctx, fp, fpCurrentRwd)
 }
 
@@ -198,7 +200,10 @@ func (k Keeper) calculateDelegationRewardsBetween(
 		panic("negative rewards should not be possible")
 	}
 
-	rewardsWithDecimals := differenceWithDecimals.MulInt(btcDelRwdTracker.TotalActiveSat)
+	rewardsWithDecimals, valid := differenceWithDecimals.SafeMulInt(btcDelRwdTracker.TotalActiveSat)
+	if !valid {
+		return sdk.Coins{}, types.ErrInvalidAmount.Wrap("math overflow")
+	}
 	// note: necessary to truncate so we don't allow withdrawing more rewardsWithDecimals than owed
 	// QuoInt already truncates
 	rewards := rewardsWithDecimals.QuoInt(types.DecimalAccumulatedRewards)
@@ -236,7 +241,7 @@ func (k Keeper) IncrementFinalityProviderPeriod(ctx context.Context, fp sdk.AccA
 	if !fpCurrentRwd.TotalActiveSat.IsZero() {
 		currentRewardsPerSatWithDecimals, valid := fpCurrentRwd.CurrentRewards.SafeMulInt(types.DecimalAccumulatedRewards)
 		if !valid {
-			return 0, types.ErrInvalidAmount
+			return 0, types.ErrInvalidAmount.Wrap("math overflow")
 		}
 
 		currentRewardsPerSat = currentRewardsPerSatWithDecimals.QuoInt(fpCurrentRwd.TotalActiveSat)

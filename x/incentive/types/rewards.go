@@ -63,8 +63,17 @@ func NewFinalityProviderHistoricalRewards(cumulativeRewardsPerSat sdk.Coins) Fin
 	}
 }
 
-func (f *FinalityProviderCurrentRewards) AddRewards(coinsToAdd sdk.Coins) {
-	f.CurrentRewards = f.CurrentRewards.Add(coinsToAdd...)
+func (f *FinalityProviderCurrentRewards) AddRewards(coinsToAdd sdk.Coins) error {
+	var panicErr error
+	func() {
+		defer func() {
+			if r := recover(); r != nil {
+				panicErr = ErrInvalidAmount.Wrapf("math overflow: %v", r)
+			}
+		}()
+		f.CurrentRewards = f.CurrentRewards.Add(coinsToAdd...)
+	}()
+	return panicErr
 }
 
 func (f *FinalityProviderCurrentRewards) SubRewards(coinsToSubtract sdk.Coins) {
