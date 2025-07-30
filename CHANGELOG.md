@@ -129,6 +129,7 @@ command to modify `max-finality-providers` parameter.
 - [#1415](https://github.com/babylonlabs-io/babylon/pull/1415) Bump ibc-go to v10.3.0 and e2e test `AddBsnRewards`
 - [#1410](https://github.com/babylonlabs-io/babylon/pull/1410) Add stake expansion e2e test
 - [#1432](https://github.com/babylonlabs-io/babylon/pull/1432) Update maxFps and btcActivatioHeight in btcStakingParams for V3
+- [#1450](https://github.com/babylonlabs-io/babylon/pull/1450) Align v3 test
 
 ### State Machine Breaking
 
@@ -183,6 +184,7 @@ for multi staked fps
 adjustment
 - [#1418](https://github.com/babylonlabs-io/babylon/pull/1418) fix: add stake expansion
 covenant signature to the events
+- [#1447](https://github.com/babylonlabs-io/babylon/pull/1447) Add multi-staking allow-list data for e2e tests
 - [#1453](https://github.com/babylonlabs-io/babylon/pull/1453) fix: inactive FP event on full unbonding
 
 ## v2.2.0
