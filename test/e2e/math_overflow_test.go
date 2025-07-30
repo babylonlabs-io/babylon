@@ -2,7 +2,7 @@ package e2e
 
 /*
 NOTE: This test suite has been updated to more closely match configuration for Mainnet.
-The min commission rate is now set to 3% instead of 0% for all validators. To accomodate the deducted commmission, we have to fund the validator rewards an additional time to make up for the deducted commission. This will get the
+The min commission rate is now set to 3% instead of 0% for all validators. To accommodate the deducted commmission, we have to fund the validator rewards an additional time to make up for the deducted commission. This will get the
 cumulative rewards ratio close enough to MAX_INT_256 to trigger the overflow on slashing.
 NOTE: An additional test TestOverflowNoSlashing is added to demonstrate how exploit can be done in a way that's unique to Babylon. And it doesn't require slashing or validator to be in active set.
 */
@@ -12,7 +12,6 @@ import (
 	"math/big"
 	"math/rand"
 	"strings"
-	"testing"
 	"time"
 
 	"cosmossdk.io/math"
@@ -23,7 +22,6 @@ import (
 	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 
 	"github.com/stretchr/testify/suite"
-	"github.com/test-go/testify/require"
 )
 
 const (
@@ -95,8 +93,9 @@ func (s *MathOverflowTest) Test1OverflowNoSlashing() {
 	nodeB.WaitForNextBlocks(15)
 
 	// Wait until denom is received on chain B
-	denomTrace := ibctransfertypes.ParseDenomTrace(ibctransfertypes.GetPrefixedDenom("transfer", "channel-0", denomA))
-	ibcDenomA := denomTrace.IBCDenom()
+	denom := ibctransfertypes.ExtractDenomFromPath(denomA)
+	denom.Trace = append(denom.Trace, ibctransfertypes.NewHop("transfer", "channel-0"))
+	ibcDenomA := denom.IBCDenom()
 	s.Require().Eventually(func() bool {
 		balances, err := nodeB.QueryBalances(s.valAccAddrB)
 		if err != nil {
@@ -223,38 +222,4 @@ func MaxValueLegacyDec() math.LegacyDec {
 	tmp := new(big.Int).Exp(big.NewInt(2), big.NewInt(256), nil)
 	tmp = new(big.Int).Sub(new(big.Int).Mul(tmp, precisionReuse), big.NewInt(1))
 	return math.LegacyNewDecFromBigInt(tmp)
-}
-
-func TestMaxValueDec(t *testing.T) {
-	// strVal := MaxValueLegacyDec().Sub(math.LegacyOneDec()).TruncateDec().String()
-
-	x := math.LegacyNewDec(1000000000000000000)
-	for {
-		strV := fmt.Sprintf("%d", x)
-		value, err := math.LegacyNewDecFromStr(strV)
-		if err != nil {
-			break
-		}
-		x = x.Add(math.LegacyNewDec(1000000000000000000))
-		require.NoError(t, err)
-		require.NotNil(t, value)
-	}
-
-}
-
-func TestMaxValueDec2(t *testing.T) {
-	// strVal := MaxValueLegacyDec().Sub(math.LegacyOneDec()).TruncateDec().String()
-
-	// str := "109999999999999999999999999999999999999999999999999999999999999999999999999999"
-	str := "119999999999999999999999999999999999999999999999999999999999999999999999999999"
-	for {
-		value, err := math.LegacyNewDecFromStr(str)
-		if err != nil {
-			break
-		}
-		str = str + "0"
-		require.NoError(t, err)
-		require.NotNil(t, value)
-	}
-
 }

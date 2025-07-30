@@ -458,6 +458,29 @@ func FuzzCheckIncrementFinalityProviderPeriod(f *testing.F) {
 	})
 }
 
+func TestMathOverflowAddFinalityProviderRewardsForBtcDelegations(t *testing.T) {
+	t.Parallel()
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+
+	k, ctx := NewKeeperWithCtx(t)
+	fp, del := datagen.GenRandomAddress(), datagen.GenRandomAddress()
+
+	maxSupply, ok := sdkmath.NewIntFromString("115792089237316195423570985008687907853269984665640564039457584007913129639935")
+	require.True(t, ok)
+
+	err := k.BtcDelegationActivated(ctx, fp, del, sdkmath.NewIntFromUint64(10))
+	require.NoError(t, err)
+
+	denom := datagen.GenRandomDenom(r)
+	rewards := sdk.NewCoins(sdk.NewCoin(denom, maxSupply))
+	err = k.AddFinalityProviderRewardsForBtcDelegations(ctx, fp, rewards)
+	require.NoError(t, err)
+
+	rewards = sdk.NewCoins(sdk.NewCoin(denom, sdkmath.OneInt()))
+	err = k.AddFinalityProviderRewardsForBtcDelegations(ctx, fp, rewards)
+	require.EqualError(t, err, types.ErrInvalidAmount.Wrapf("math overflow: %s", "integer overflow").Error())
+}
+
 func TestMathOverflowCalculateBTCDelegationRewards(t *testing.T) {
 	t.Parallel()
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
