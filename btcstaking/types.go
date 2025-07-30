@@ -195,6 +195,18 @@ func (sti *StakingInfo) GetPkScript() []byte {
 	return sti.StakingOutput.PkScript
 }
 
+// TaprootStakingOutputAddr returns the taproot address from the staking output script
+func (sti *StakingInfo) TaprootStakingOutputAddr(net *chaincfg.Params) (*btcutil.AddressTaproot, error) {
+	if sti.StakingOutput == nil {
+		return nil, fmt.Errorf("nil staking output")
+	}
+	if len(sti.StakingOutput.PkScript) <= 2 {
+		return nil, fmt.Errorf("invalid length of staking output pk script")
+	}
+	witnessProgram := sti.StakingOutput.PkScript[2:] // Skip OP_1 (0x51) and length (0x20)
+	return btcutil.NewAddressTaproot(witnessProgram, &chaincfg.MainNetParams)
+}
+
 // GetOutputFetcher returns the fetcher of the staking tx's output
 func (sti *StakingInfo) GetOutputFetcher() *txscript.CannedPrevOutputFetcher {
 	return txscript.NewCannedPrevOutputFetcher(

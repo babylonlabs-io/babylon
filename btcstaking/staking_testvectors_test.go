@@ -251,9 +251,7 @@ func TestVectorsCompatiblity(t *testing.T) {
 			require.NoError(t, fmt.Errorf("error serializing unbonding tx for case %s: %w", tc.Description, err))
 		}
 
-		// Convert PkScript to taproot address
-		witnessProgram := info.StakingOutput.PkScript[2:] // Skip OP_1 (0x51) and length (0x20)
-		addr, err := btcutil.NewAddressTaproot(witnessProgram, &chaincfg.MainNetParams)
+		addr, err := info.TaprootStakingOutputAddr(&chaincfg.MainNetParams)
 		require.NoError(t, err)
 
 		require.Equal(t, tc.Expected.StakingOutputPkScript, hex.EncodeToString(info.StakingOutput.PkScript), fmt.Sprintf("failed case: %s", tc.Description))
@@ -416,9 +414,7 @@ func GenerateTestCase(
 		Network:                    "mainnet",
 	}
 
-	// Convert PkScript to taproot address
-	witnessProgram := info.StakingOutput.PkScript[2:] // Skip OP_1 (0x51) and length (0x20)
-	addr, err := btcutil.NewAddressTaproot(witnessProgram, &chaincfg.MainNetParams)
+	addr, err := info.TaprootStakingOutputAddr(&chaincfg.MainNetParams)
 	require.NoError(t, err)
 
 	expected := Expected{
