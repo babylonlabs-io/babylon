@@ -130,6 +130,7 @@ command to modify `max-finality-providers` parameter.
 - [#1410](https://github.com/babylonlabs-io/babylon/pull/1410) Add stake expansion e2e test
 - [#1432](https://github.com/babylonlabs-io/babylon/pull/1432) Update maxFps and btcActivatioHeight in btcStakingParams for V3
 - [#1450](https://github.com/babylonlabs-io/babylon/pull/1450) Align v3 test
+- [#1451](https://github.com/babylonlabs-io/babylon/pull/1451) Add new expected field `taproot_address_staking_output` to test vectors.
 
 ### State Machine Breaking
 
