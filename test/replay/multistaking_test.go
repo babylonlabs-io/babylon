@@ -6,11 +6,12 @@ import (
 	"testing"
 	"time"
 
+	bbn "github.com/babylonlabs-io/babylon/v3/types"
 	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 	abci "github.com/cometbft/cometbft/abci/types"
+	connectiontypes "github.com/cosmos/ibc-go/v10/modules/core/03-connection/types"
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 	ibctmtypes "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
-
-	bbn "github.com/babylonlabs-io/babylon/v3/types"
 	"github.com/stretchr/testify/require"
 )
 
@@ -221,8 +222,50 @@ func TestCheckGasMulitstaking(t *testing.T) {
 	// 1. Set up mock IBC clients for each consumer before registering consumers
 	ctx := driver.App.BaseApp.NewContext(false)
 	driver.App.IBCKeeper.ClientKeeper.SetClientState(ctx, consumerID1, &ibctmtypes.ClientState{})
+
+	driver.App.IBCKeeper.ConnectionKeeper.SetConnection(
+		ctx, consumerID1, connectiontypes.ConnectionEnd{
+			ClientId: consumerID1,
+		},
+	)
+
+	driver.App.IBCKeeper.ChannelKeeper.SetChannel(
+		ctx, "zoneconcierge", consumerID1, channeltypes.Channel{
+			State:          channeltypes.OPEN,
+			ConnectionHops: []string{consumerID1},
+		},
+	)
+
 	driver.App.IBCKeeper.ClientKeeper.SetClientState(ctx, consumerID2, &ibctmtypes.ClientState{})
+
+	driver.App.IBCKeeper.ConnectionKeeper.SetConnection(
+		ctx, consumerID2, connectiontypes.ConnectionEnd{
+			ClientId: consumerID2,
+		},
+	)
+
+	driver.App.IBCKeeper.ChannelKeeper.SetChannel(
+		ctx, "zoneconcierge", consumerID2, channeltypes.Channel{
+			State:          channeltypes.OPEN,
+			ConnectionHops: []string{consumerID2},
+		},
+	)
+
 	driver.App.IBCKeeper.ClientKeeper.SetClientState(ctx, consumerID3, &ibctmtypes.ClientState{})
+
+	driver.App.IBCKeeper.ConnectionKeeper.SetConnection(
+		ctx, consumerID3, connectiontypes.ConnectionEnd{
+			ClientId: consumerID3,
+		},
+	)
+
+	driver.App.IBCKeeper.ChannelKeeper.SetChannel(
+		ctx, "zoneconcierge", consumerID3, channeltypes.Channel{
+			State:          channeltypes.OPEN,
+			ConnectionHops: []string{consumerID3},
+		},
+	)
+
 	driver.GenerateNewBlock()
 
 	covSender := driver.CreateCovenantSender()

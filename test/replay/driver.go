@@ -87,7 +87,7 @@ const (
 var (
 	defaultFeeCoin                 = sdk.NewCoin("ubbn", sdkmath.NewInt(defaultFee))
 	BtcParams                      = &chaincfg.SimNetParams
-	covenantSKs, _, CovenantQuorum = bstypes.DefaultCovenantCommittee()
+	covenantSKs, _, CovenantQuorum = bstypes.LargerDefaultCovenantCommittee()
 )
 
 func getGenDoc(

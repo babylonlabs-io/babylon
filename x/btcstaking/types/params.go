@@ -47,6 +47,17 @@ func DefaultCovenantCommittee() ([]*btcec.PrivateKey, []*btcec.PublicKey, uint32
 	return sks, pks, 3
 }
 
+func LargerDefaultCovenantCommittee() ([]*btcec.PrivateKey, []*btcec.PublicKey, uint32) {
+	sks, pks := []*btcec.PrivateKey{}, []*btcec.PublicKey{}
+	for i := uint8(0); i < 9; i++ {
+		skBytes := tmhash.Sum([]byte{i})
+		sk, pk := btcec.PrivKeyFromBytes(skBytes)
+		sks = append(sks, sk)
+		pks = append(pks, pk)
+	}
+	return sks, pks, 6
+}
+
 func defaultSlashingPkScript() []byte {
 	// 20 bytes
 	pkHash := []byte{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
@@ -69,7 +80,7 @@ func ParamKeyTable() paramtypes.KeyTable {
 
 // DefaultParams returns a default set of parameters
 func DefaultParams() Params {
-	_, pks, quorum := DefaultCovenantCommittee()
+	_, pks, quorum := LargerDefaultCovenantCommittee()
 	return Params{
 		CovenantPks:          bbn.NewBIP340PKsFromBTCPKs(pks),
 		CovenantQuorum:       quorum,
