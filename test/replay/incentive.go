@@ -57,3 +57,20 @@ func (s *StandardScenario) IctvWithdrawBtcStakerRewardsByAddr() map[string]sdk.C
 
 	return rewards
 }
+
+func AllCoinsEqual(coins map[string]sdk.Coin) bool {
+	var ref *sdk.Coin
+	for _, coin := range coins {
+		if ref == nil { // fill first time
+			ref = &coin
+			continue
+		}
+
+		if coin.IsEqual(*ref) {
+			continue
+		}
+		return false
+	}
+
+	return true
+}

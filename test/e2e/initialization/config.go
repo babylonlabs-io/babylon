@@ -24,7 +24,6 @@ import (
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
 	btccheckpointtypes "github.com/babylonlabs-io/babylon/v3/x/btccheckpoint/types"
-	blctypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
 	btclighttypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
 	btcstktypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 	finalitytypes "github.com/babylonlabs-io/babylon/v3/x/finality/types"
@@ -71,7 +70,9 @@ var (
 	StakeAmountCoinA = sdk.NewCoin(BabylonDenom, StakeAmountIntA)
 	StakeAmountIntB  = sdkmath.NewInt(StakeAmountB)
 	StakeAmountCoinB = sdk.NewCoin(BabylonDenom, StakeAmountIntB)
-
+	// POC: TEST DENOM USED TO OVERFLOW MAX_INT_256
+	MaxSupply       = "115792089237316195423570985008687907853269984665640564039457584007913129639935"
+	TestDenom       = "utest"
 	InitBalanceStrA = fmt.Sprintf("%d%s", BabylonBalanceA, BabylonDenom)
 	InitBalanceStrB = fmt.Sprintf("%d%s", BabylonBalanceB, BabylonDenom)
 )
@@ -175,8 +176,9 @@ func initGenesis(
 	// initialize a genesis file
 	configDir := chain.nodes[0].configDir()
 
-	for _, val := range chain.nodes {
+	for i, val := range chain.nodes {
 		addr, err := val.keyInfo.GetAddress()
+
 		if err != nil {
 			return err
 		}
@@ -186,8 +188,13 @@ func initGenesis(
 			r := rand.New(rand.NewSource(time.Now().Unix()))
 			initialFundsA := datagen.GenRandomCoins(r).MulInt(sdkmath.NewInt(10))
 			initialFundsA = initialFundsA.Add(sdk.NewCoin(BabylonDenom, sdkmath.NewInt(BabylonBalanceA)))
+			initialFundsAStr := initialFundsA.String()
 
-			if err := addAccount(configDir, "", initialFundsA.String(), addr, forkHeight); err != nil {
+			// POC: NODE 2 WILL HAVE ENTIRE SUPPLY OF TEST TOKEN
+			if i == 2 {
+				initialFundsAStr = fmt.Sprintf("%s,%s%s", initialFundsAStr, MaxSupply, TestDenom)
+			}
+			if err := addAccount(configDir, "", initialFundsAStr, addr, forkHeight); err != nil {
 				return err
 			}
 		} else if chain.chainMeta.Id == ChainBID {
@@ -245,7 +252,7 @@ func initGenesis(
 		return err
 	}
 
-	err = updateModuleGenesis(appGenState, blctypes.ModuleName, blctypes.DefaultGenesis(), updateBtcLightClientGenesis(btcHeaders))
+	err = updateModuleGenesis(appGenState, btclighttypes.ModuleName, btclighttypes.DefaultGenesis(), updateBtcLightClientGenesis(btcHeaders))
 	if err != nil {
 		return err
 	}
@@ -268,7 +275,7 @@ func initGenesis(
 	err = updateModuleGenesis(appGenState, tokenfactorytypes.ModuleName, &tokenfactorytypes.GenesisState{}, updateTokenFactoryGenesis)
 	if err != nil {
 		return fmt.Errorf("failed to update tokenfactory genesis state: %w", err)
-  }
+	}
 
 	err = updateModuleGenesis(appGenState, btcstktypes.ModuleName, &btcstktypes.GenesisState{}, updateBtcStakingGenesis)
 	if err != nil {
@@ -314,7 +321,6 @@ func updateBankGenesis(bankGenState *banktypes.GenesisState) {
 func updateGovGenesis(votingPeriod, expeditedVotingPeriod time.Duration) func(govGenState *govv1.GenesisState) {
 	return func(govGenState *govv1.GenesisState) {
 		govGenState.Params.MinDeposit = sdk.NewCoins(sdk.NewCoin(BabylonDenom, sdkmath.NewInt(100)))
-		govGenState.Params.ExpeditedMinDeposit = sdk.NewCoins(sdk.NewCoin(BabylonDenom, sdkmath.NewInt(1000)))
 		govGenState.Params.VotingPeriod = &votingPeriod
 		govGenState.Params.ExpeditedVotingPeriod = &expeditedVotingPeriod
 	}
@@ -325,17 +331,19 @@ func updateMintGenesis(mintGenState *minttypes.GenesisState) {
 }
 
 func updateStakeGenesis(stakeGenState *staketypes.GenesisState) {
+	// TODO: STAKE PARAMS ARE SET TO VALUES IDENTICAL TO MAINNET
+	minCommissionRate, _ := sdkmath.LegacyNewDecFromStr("0.03")
 	stakeGenState.Params = staketypes.Params{
 		BondDenom:         BabylonDenom,
 		MaxValidators:     100,
 		MaxEntries:        7,
 		HistoricalEntries: 10000,
 		UnbondingTime:     staketypes.DefaultUnbondingTime,
-		MinCommissionRate: sdkmath.LegacyZeroDec(),
+		MinCommissionRate: minCommissionRate,
 	}
 }
 
-func updateBtcLightClientGenesis(btcHeaders []*btclighttypes.BTCHeaderInfo) func(blcGenState *blctypes.GenesisState) {
+func updateBtcLightClientGenesis(btcHeaders []*btclighttypes.BTCHeaderInfo) func(blcGenState *btclighttypes.GenesisState) {
 	return func(blcGenState *btclighttypes.GenesisState) {
 		if len(btcHeaders) > 0 {
 			blcGenState.BtcHeaders = btcHeaders
@@ -347,8 +355,8 @@ func updateBtcLightClientGenesis(btcHeaders []*btclighttypes.BTCHeaderInfo) func
 		if err != nil {
 			panic(err)
 		}
-		work := blctypes.CalcWork(&baseBtcHeader)
-		blcGenState.BtcHeaders = []*blctypes.BTCHeaderInfo{blctypes.NewBTCHeaderInfo(&baseBtcHeader, baseBtcHeader.Hash(), 0, &work)}
+		work := btclighttypes.CalcWork(&baseBtcHeader)
+		blcGenState.BtcHeaders = []*btclighttypes.BTCHeaderInfo{btclighttypes.NewBTCHeaderInfo(&baseBtcHeader, baseBtcHeader.Hash(), 0, &work)}
 	}
 }
 
@@ -375,14 +383,19 @@ func updateGenUtilGenesis(c *internalChain) func(*genutiltypes.GenesisState) {
 	return func(genUtilGenState *genutiltypes.GenesisState) {
 		// generate genesis txs
 		genTxs := make([]json.RawMessage, 0, len(c.nodes))
-		for _, node := range c.nodes {
+		for i, node := range c.nodes {
 			if !node.isValidator {
 				continue
 			}
 
 			stakeAmountCoin := StakeAmountCoinA
 			if c.chainMeta.Id != ChainAID {
-				stakeAmountCoin = StakeAmountCoinB
+				if i == 2 {
+					// POC: NODE 2 WILL INITIAL STAKE OF 1ubbn
+					stakeAmountCoin = sdk.NewCoin(BabylonDenom, sdkmath.OneInt())
+				} else {
+					stakeAmountCoin = StakeAmountCoinB
+				}
 			}
 			createValmsg, err := node.buildCreateValidatorMsg(stakeAmountCoin, node.consensusKey)
 			if err != nil {

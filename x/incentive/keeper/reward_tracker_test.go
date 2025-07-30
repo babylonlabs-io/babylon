@@ -4,6 +4,7 @@ import (
 	"context"
 	"math/rand"
 	"testing"
+	"time"
 
 	sdkmath "cosmossdk.io/math"
 	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
@@ -428,7 +429,7 @@ func FuzzCheckIncrementFinalityProviderPeriod(f *testing.F) {
 
 		// increment without initializing the FP
 		endedPeriod, err := k.IncrementFinalityProviderPeriod(ctx, fp)
-		require.NoError(t, err, types.ErrFPCurrentRewardsNotFound.Error())
+		require.NoError(t, err)
 		require.Equal(t, endedPeriod, uint64(1))
 
 		fpCurrentRwd := datagen.GenRandomFinalityProviderCurrentRewards(r)
@@ -455,6 +456,25 @@ func FuzzCheckIncrementFinalityProviderPeriod(f *testing.F) {
 		require.Equal(t, newFPCurrentRwd.Period, fpCurrentRwd.Period+1)
 		require.Equal(t, newFPCurrentRwd.TotalActiveSat, fpCurrentRwd.TotalActiveSat)
 	})
+}
+
+func TestMathOverflowIncrementFinalityProviderPeriod(t *testing.T) {
+	t.Parallel()
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+
+	k, ctx := NewKeeperWithCtx(t)
+	fp := datagen.GenRandomAddress()
+
+	fpCurrentRwd := datagen.GenRandomFinalityProviderCurrentRewards(r)
+	maxSupply, ok := sdkmath.NewIntFromString("115792089237316195423570985008687907853269984665640564039457584007913129639934")
+	require.True(t, ok)
+	fpCurrentRwd.CurrentRewards = fpCurrentRwd.CurrentRewards.Add(sdk.NewCoin(datagen.GenRandomDenom(r), maxSupply))
+
+	err := k.setFinalityProviderCurrentRewards(ctx, fp, fpCurrentRwd)
+	require.NoError(t, err)
+
+	// int overflow
+	k.IncrementFinalityProviderPeriod(ctx, fp)
 }
 
 func FuzzCheckInitializeBTCDelegation(f *testing.F) {

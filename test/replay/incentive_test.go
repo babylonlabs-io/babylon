@@ -5,8 +5,13 @@ import (
 	"testing"
 	"time"
 
+	"cosmossdk.io/math"
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
+	bbn "github.com/babylonlabs-io/babylon/v3/types"
+	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
+	minttypes "github.com/babylonlabs-io/babylon/v3/x/mint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	ibctmtypes "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
 	"github.com/stretchr/testify/require"
 )
 
@@ -79,18 +84,82 @@ func TestBtcRewardTrackerAtRewardedBabylonBlockAndNotLatestState(t *testing.T) {
 	require.False(t, AllCoinsEqual(lastRwdCheck))
 }
 
-func AllCoinsEqual(coins map[string]sdk.Coin) bool {
-	var ref *sdk.Coin
+func TestAddBsnRewardsMathOverflow(t *testing.T) {
+	t.Parallel()
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	d := NewBabylonAppDriverTmpDir(r, t)
 
-	for _, coin := range coins {
-		if ref == nil {
-			ref = &coin
-			continue
-		}
-		if !coin.IsEqual(*ref) {
-			return false
-		}
+	d.GenerateNewBlock()
+
+	covSender := d.CreateCovenantSender()
+	require.NotNil(t, covSender)
+
+	consumerID := "bsn-consumer-0"
+	d.App.IBCKeeper.ClientKeeper.SetClientState(d.Ctx(), consumerID, &ibctmtypes.ClientState{})
+	d.GenerateNewBlock()
+
+	consumer0 := d.RegisterConsumer(r, consumerID)
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	babylonFp := d.CreateNFinalityProviderAccounts(1)[0]
+	babylonFp.RegisterFinalityProvider("")
+
+	consFps := []*FinalityProvider{
+		d.CreateFinalityProviderForConsumer(consumer0),
+		d.CreateFinalityProviderForConsumer(consumer0),
 	}
 
-	return true
+	staker := d.CreateNStakerAccounts(1)[0]
+	staker.CreatePreApprovalDelegation(
+		[]*bbn.BIP340PubKey{consFps[0].BTCPublicKey(), babylonFp.BTCPublicKey()},
+		1000,
+		100000000,
+	)
+	staker.CreatePreApprovalDelegation(
+		[]*bbn.BIP340PubKey{consFps[1].BTCPublicKey(), babylonFp.BTCPublicKey()},
+		1000,
+		200000000,
+	)
+
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	covSender.SendCovenantSignatures()
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	d.ActivateVerifiedDelegations(2)
+	activeDelegations := d.GetActiveBTCDelegations(t)
+	require.Len(t, activeDelegations, 2)
+
+	// send all the rewards to the same FP to force the math overflow
+	fpRatios := []types.FpRatio{
+		{BtcPk: consFps[0].BTCPublicKey(), Ratio: math.LegacyOneDec()},
+	}
+
+	testDenom := "utesttest"
+	maxSupply, ok := math.NewIntFromString("115792089237316195423570985008687907853269984665640564039457584007913129639934")
+	require.True(t, ok)
+
+	bsnRewardCoins := sdk.NewCoins(sdk.NewCoin(testDenom, maxSupply))
+	err := d.App.MintKeeper.MintCoins(d.Ctx(), bsnRewardCoins)
+	require.NoError(t, err)
+
+	recipient := d.GetDriverAccountAddress()
+	err = d.App.BankKeeper.SendCoinsFromModuleToAccount(d.Ctx(), minttypes.ModuleName, recipient, bsnRewardCoins)
+	require.NoError(t, err)
+
+	d.SendBsnRewardsFromDriver(consumer0.ID, bsnRewardCoins, fpRatios)
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	// withdraw the rewards and add again
+	staker.WithdrawBtcStakingRewards()
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	balancesMap := d.BankBalances(staker.Address())
+	stakerBalance := balancesMap[staker.AddressString()]
+
+	amtTest := stakerBalance.AmountOf(testDenom)
+	require.True(t, amtTest.IsPositive())
+
+	d.SendBsnRewards(staker.SenderInfo, consumer0.ID, sdk.NewCoins(sdk.NewCoin(testDenom, amtTest)), fpRatios)
+	d.GenerateNewBlockAssertExecutionSuccess()
 }

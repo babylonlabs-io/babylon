@@ -90,7 +90,7 @@ func TestConsumerBsnRewardDistribution(t *testing.T) {
 	beforeWithdrawBalances := d.BankBalances(addrs...)
 
 	// send the BSN rewards
-	d.SendBsnRewards(consumer0.ID, totalRewards, fpRatios)
+	d.SendBsnRewardsFromDriver(consumer0.ID, totalRewards, fpRatios)
 	d.GenerateNewBlockAssertExecutionSuccess()
 
 	consumerFp[0].WithdrawBtcStakingRewards()
@@ -188,14 +188,19 @@ func TestConsumerBsnRewardDistribution(t *testing.T) {
 	require.Contains(t, txResults[0].Log, ictvtypes.ErrFPCurrentRewardsWithoutVotingPower.Error())
 }
 
+// SendBsnRewardsFromDriver sends BSN rewards using MsgAddBsnRewards
+func (d *BabylonAppDriver) SendBsnRewardsFromDriver(consumerID string, totalRewards sdk.Coins, fpRatios []types.FpRatio) {
+	d.SendBsnRewards(d.SenderInfo, consumerID, totalRewards, fpRatios)
+}
+
 // SendBsnRewards sends BSN rewards using MsgAddBsnRewards
-func (d *BabylonAppDriver) SendBsnRewards(consumerID string, totalRewards sdk.Coins, fpRatios []types.FpRatio) {
+func (d *BabylonAppDriver) SendBsnRewards(sender *SenderInfo, consumerID string, totalRewards sdk.Coins, fpRatios []types.FpRatio) {
 	msg := &types.MsgAddBsnRewards{
-		Sender:        d.GetDriverAccountAddress().String(),
+		Sender:        sender.AddressString(),
 		BsnConsumerId: consumerID,
 		TotalRewards:  totalRewards,
 		FpRatios:      fpRatios,
 	}
 
-	d.SendTxWithMsgsFromDriverAccount(d.t, msg)
+	d.SendTxWithMessagesSuccess(d.t, sender, defaultGasLimit, defaultFeeCoin, msg)
 }

