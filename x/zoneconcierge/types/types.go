@@ -9,3 +9,5 @@ type HeaderInfo struct {
 	Height   uint64
 	Time     time.Time
 }
+
+var FailedToSendPacket = false

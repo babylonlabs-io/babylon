@@ -8,6 +8,7 @@ import (
 
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
 	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
+	zctypes "github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	connectiontypes "github.com/cosmos/ibc-go/v10/modules/core/03-connection/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
@@ -221,6 +222,7 @@ func TestCheckGasMulitstaking(t *testing.T) {
 
 	// 1. Set up mock IBC clients for each consumer before registering consumers
 	ctx := driver.App.BaseApp.NewContext(false)
+
 	driver.App.IBCKeeper.ClientKeeper.SetClientState(ctx, consumerID1, &ibctmtypes.ClientState{})
 
 	driver.App.IBCKeeper.ConnectionKeeper.SetConnection(
@@ -278,6 +280,10 @@ func TestCheckGasMulitstaking(t *testing.T) {
 	babylonFp := driver.CreateNFinalityProviderAccounts(1)[0]
 	babylonFp.RegisterFinalityProvider("")
 
+	babylonFp1 := driver.CreateNFinalityProviderAccounts(1)[0]
+	babylonFp1.RegisterFinalityProvider("")
+	driver.GenerateNewBlockAssertExecutionSuccess()
+
 	// 3. Create finality providers for each consumer
 	fp1s := []*FinalityProvider{
 		// Create 2 FPs for consumer1
@@ -322,7 +328,40 @@ func TestCheckGasMulitstaking(t *testing.T) {
 	)
 
 	driver.GenerateNewBlockAssertExecutionSuccess()
+	covSender.SendCovenantSignatures()
+	driver.GenerateNewBlockAssertExecutionSuccess()
 
+	staker.CreatePreApprovalDelegation(
+		[]*bbn.BIP340PubKey{babylonFp1.BTCPublicKey(), fp1s[1].BTCPublicKey(), fp2.BTCPublicKey(), fp3.BTCPublicKey()},
+		1000,
+		100000000,
+	)
+
+	staker.CreatePreApprovalDelegation(
+		[]*bbn.BIP340PubKey{babylonFp1.BTCPublicKey(), fp2.BTCPublicKey(), fp3.BTCPublicKey()},
+		1000,
+		100000000,
+	)
+
+	staker.CreatePreApprovalDelegation(
+		[]*bbn.BIP340PubKey{babylonFp1.BTCPublicKey(), fp2.BTCPublicKey(), fp3.BTCPublicKey()},
+		1000,
+		100000000,
+	)
+
+	staker.CreatePreApprovalDelegation(
+		[]*bbn.BIP340PubKey{babylonFp1.BTCPublicKey(), fp2.BTCPublicKey(), fp3.BTCPublicKey()},
+		1000,
+		100000000,
+	)
+
+	staker.CreatePreApprovalDelegation(
+		[]*bbn.BIP340PubKey{babylonFp1.BTCPublicKey(), fp2.BTCPublicKey(), fp3.BTCPublicKey()},
+		1000,
+		100000000,
+	)
+
+	driver.GenerateNewBlockAssertExecutionSuccess()
 	covSender.SendCovenantSignatures()
 	driver.GenerateNewBlockAssertExecutionSuccess()
 
@@ -334,10 +373,176 @@ func (d *BabylonAppDriver) ActivateVerifiedDelegationsResults() []*abci.ExecTxRe
 	block := d.IncludeVerifiedStakingTxInBTC(0)
 	acitvationMsgs := blockWithProofsToActivationMessages(block, d.GetDriverAccountAddress())
 
-	for _, msg := range acitvationMsgs {
-		d.SendTxWithMessagesSuccess(d.t, d.SenderInfo, 10000000, defaultFeeCoin, msg)
+	for i, msg := range acitvationMsgs {
+		var gaslimit uint64
+
+		if i < 5 {
+			gaslimit = 1_100_000
+		} else if i < 10 {
+			gaslimit = 2_000_000
+		} else if i < 15 {
+			gaslimit = 2_700_000
+		} else if i < 20 {
+			gaslimit = 3_500_000
+		} else if i < 25 {
+			gaslimit = 4_400_000
+		} else if i < 30 {
+			gaslimit = 5_100_000
+		} else if i < 35 {
+			gaslimit = 6_000_000
+		} else if i < 40 {
+			gaslimit = 7_000_000
+		} else if i < 45 {
+			gaslimit = 7_500_000
+		} else if i < 50 {
+			gaslimit = 8_500_000
+		} else {
+			gaslimit = 10_000_000
+		}
+
+		d.SendTxWithMessagesSuccess(d.t, d.SenderInfo, gaslimit, defaultFeeCoin, msg)
 		d.IncSeq()
 	}
 
 	return d.GenerateNewBlockAssertExecutionSuccessWithResults()
+}
+
+func TestCheckGasMulitstaking2FpsFailedPacket(t *testing.T) {
+	t.Parallel()
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	driverTempDir := t.TempDir()
+	replayerTempDir := t.TempDir()
+	driver := NewBabylonAppDriver(r, t, driverTempDir, replayerTempDir)
+
+	const consumerID1 = "consumer1"
+	const consumerID2 = "consumer2"
+	const consumerID3 = "consumer3"
+
+	// 1. Set up mock IBC clients for each consumer before registering consumers
+	ctx := driver.App.BaseApp.NewContext(false)
+
+	driver.App.IBCKeeper.ClientKeeper.SetClientState(ctx, consumerID1, &ibctmtypes.ClientState{})
+
+	driver.App.IBCKeeper.ConnectionKeeper.SetConnection(
+		ctx, consumerID1, connectiontypes.ConnectionEnd{
+			ClientId: consumerID1,
+		},
+	)
+
+	driver.App.IBCKeeper.ChannelKeeper.SetChannel(
+		ctx, "zoneconcierge", consumerID1, channeltypes.Channel{
+			State:          channeltypes.OPEN,
+			ConnectionHops: []string{consumerID1},
+		},
+	)
+
+	driver.App.IBCKeeper.ClientKeeper.SetClientState(ctx, consumerID2, &ibctmtypes.ClientState{})
+
+	driver.App.IBCKeeper.ConnectionKeeper.SetConnection(
+		ctx, consumerID2, connectiontypes.ConnectionEnd{
+			ClientId: consumerID2,
+		},
+	)
+
+	driver.App.IBCKeeper.ChannelKeeper.SetChannel(
+		ctx, "zoneconcierge", consumerID2, channeltypes.Channel{
+			State:          channeltypes.OPEN,
+			ConnectionHops: []string{consumerID2},
+		},
+	)
+
+	driver.App.IBCKeeper.ClientKeeper.SetClientState(ctx, consumerID3, &ibctmtypes.ClientState{})
+
+	driver.App.IBCKeeper.ConnectionKeeper.SetConnection(
+		ctx, consumerID3, connectiontypes.ConnectionEnd{
+			ClientId: consumerID3,
+		},
+	)
+
+	driver.App.IBCKeeper.ChannelKeeper.SetChannel(
+		ctx, "zoneconcierge", consumerID3, channeltypes.Channel{
+			State:          channeltypes.OPEN,
+			ConnectionHops: []string{consumerID3},
+		},
+	)
+
+	driver.GenerateNewBlock()
+
+	covSender := driver.CreateCovenantSender()
+
+	// 2. Register consumers
+	consumer1 := driver.RegisterConsumer(r, consumerID1)
+	consumer2 := driver.RegisterConsumer(r, consumerID2)
+	consumer3 := driver.RegisterConsumer(r, consumerID3)
+	// Create a Babylon FP (registered without consumer ID)
+	babylonFp := driver.CreateNFinalityProviderAccounts(1)[0]
+	babylonFp.RegisterFinalityProvider("")
+
+	babylonFp1 := driver.CreateNFinalityProviderAccounts(1)[0]
+	babylonFp1.RegisterFinalityProvider("")
+	driver.GenerateNewBlockAssertExecutionSuccess()
+
+	// 3. Create finality providers for each consumer
+	fp1s := []*FinalityProvider{
+		// Create 2 FPs for consumer1
+		driver.CreateFinalityProviderForConsumer(consumer1),
+		driver.CreateFinalityProviderForConsumer(consumer1),
+	}
+	require.NotEmpty(t, fp1s)
+	fp2 := driver.CreateFinalityProviderForConsumer(consumer2)
+	fp3 := driver.CreateFinalityProviderForConsumer(consumer3)
+	require.NotNil(t, fp3)
+	// Generate blocks to process registrations
+	driver.GenerateNewBlockAssertExecutionSuccess()
+	staker := driver.CreateNStakerAccounts(1)[0]
+
+	driver.SendAndVerifyNDelegations(t, staker, covSender, []*bbn.BIP340PubKey{babylonFp1.BTCPublicKey(), fp2.BTCPublicKey()}, 5)
+	driver.SendAndVerifyNDelegations(t, staker, covSender, []*bbn.BIP340PubKey{babylonFp1.BTCPublicKey(), fp2.BTCPublicKey()}, 5)
+	driver.SendAndVerifyNDelegations(t, staker, covSender, []*bbn.BIP340PubKey{babylonFp1.BTCPublicKey(), fp2.BTCPublicKey()}, 5)
+	driver.SendAndVerifyNDelegations(t, staker, covSender, []*bbn.BIP340PubKey{babylonFp1.BTCPublicKey(), fp2.BTCPublicKey()}, 5)
+	driver.SendAndVerifyNDelegations(t, staker, covSender, []*bbn.BIP340PubKey{babylonFp1.BTCPublicKey(), fp2.BTCPublicKey()}, 5)
+	driver.SendAndVerifyNDelegations(t, staker, covSender, []*bbn.BIP340PubKey{babylonFp1.BTCPublicKey(), fp2.BTCPublicKey()}, 5)
+	driver.SendAndVerifyNDelegations(t, staker, covSender, []*bbn.BIP340PubKey{babylonFp1.BTCPublicKey(), fp2.BTCPublicKey()}, 5)
+	driver.SendAndVerifyNDelegations(t, staker, covSender, []*bbn.BIP340PubKey{babylonFp1.BTCPublicKey(), fp2.BTCPublicKey()}, 5)
+	driver.SendAndVerifyNDelegations(t, staker, covSender, []*bbn.BIP340PubKey{babylonFp1.BTCPublicKey(), fp2.BTCPublicKey()}, 5)
+	driver.SendAndVerifyNDelegations(t, staker, covSender, []*bbn.BIP340PubKey{babylonFp1.BTCPublicKey(), fp2.BTCPublicKey()}, 5)
+	driver.SendAndVerifyNDelegations(t, staker, covSender, []*bbn.BIP340PubKey{babylonFp1.BTCPublicKey(), fp2.BTCPublicKey()}, 5)
+	driver.SendAndVerifyNDelegations(t, staker, covSender, []*bbn.BIP340PubKey{babylonFp1.BTCPublicKey(), fp2.BTCPublicKey()}, 5)
+
+	results := driver.ActivateVerifiedDelegationsResults()
+	require.NotEmpty(t, results)
+
+	var totalGasUsed int64
+	var totalGasWanted int64
+
+	for _, result := range results {
+		totalGasUsed += result.GasUsed
+		totalGasWanted += result.GasWanted
+	}
+
+	fmt.Println("totalGasUsed", totalGasUsed)
+	fmt.Println("totalGasWanted", totalGasWanted)
+
+	require.True(t, zctypes.FailedToSendPacket)
+}
+
+func (driver *BabylonAppDriver) SendAndVerifyNDelegations(
+	t *testing.T,
+	staker *Staker,
+	covSender *CovenantSender,
+	keys []*bbn.BIP340PubKey,
+	n int,
+) {
+
+	for i := 0; i < n; i++ {
+		staker.CreatePreApprovalDelegation(
+			keys,
+			1000,
+			100000000,
+		)
+	}
+
+	driver.GenerateNewBlockAssertExecutionSuccess()
+	covSender.SendCovenantSignatures()
+	driver.GenerateNewBlockAssertExecutionSuccess()
 }

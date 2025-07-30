@@ -87,6 +87,8 @@ func (k Keeper) BroadcastBTCStakingConsumerEvents(
 					"channel", channel.ChannelId,
 					"error", err.Error(),
 				)
+
+				types.FailedToSendPacket = true
 				continue
 			}
 		}

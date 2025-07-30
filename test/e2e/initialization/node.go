@@ -330,7 +330,7 @@ func (n *internalNode) init() error {
 	appGenesis.Consensus = &genutiltypes.ConsensusGenesis{
 		Params: cmttypes.DefaultConsensusParams(),
 	}
-	appGenesis.Consensus.Params.Block.MaxGas = babylonApp.DefaultGasLimit
+	appGenesis.Consensus.Params.Block.MaxGas = 300_000_000
 	appGenesis.Consensus.Params.ABCI.VoteExtensionsEnableHeight = babylonApp.DefaultVoteExtensionsEnableHeight
 
 	if err = genutil.ExportGenesisFile(appGenesis, config.GenesisFile()); err != nil {

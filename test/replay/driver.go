@@ -406,6 +406,20 @@ func (d *BabylonAppDriver) SendTxWithMessagesSuccess(
 	require.Equal(t, result.Code, uint32(0))
 }
 
+func (d *BabylonAppDriver) SimulateTx(
+	t *testing.T,
+	senderInfo *SenderInfo,
+	gas uint64,
+	fee sdk.Coin,
+	msgs ...sdk.Msg,
+) uint64 {
+	txBytes := d.CreateTx(t, senderInfo, gas, fee, msgs...)
+
+	gInfo, _, err := d.App.Simulate(txBytes)
+	require.NoError(t, err)
+	return gInfo.GasUsed
+}
+
 func SendTxWithMessagesSuccess(
 	t *testing.T,
 	app *babylonApp.BabylonApp,

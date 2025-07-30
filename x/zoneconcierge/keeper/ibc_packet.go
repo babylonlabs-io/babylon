@@ -32,7 +32,7 @@ func (k Keeper) SendIBCPacket(ctx context.Context, channel channeltypes.Identifi
 	destinationChannel := channel.Counterparty.ChannelId
 
 	// Validate packet before attempting to send
-	if err := k.validatePacket(packetData); err != nil {
+if err := k.validatePacket(packetData); err != nil {
 		k.Logger(sdkCtx).Error(fmt.Sprintf("packet validation failed for channel %v port %s: %v", destinationChannel, destinationPort, err))
 		return err
 	}
