@@ -53,25 +53,13 @@ The `AddBsnRewards` function coordinates the entire reward distribution process:
 4. Distributes remaining rewards among finality providers and their BTC
     stakers using the F1 distribution algorithm
 
-When Babylon Genesis receives a `MsgAddBsnRewards` message, it extracts all
-relevant fields and delegates processing to the `AddBsnRewards` function
-described earlier.
+The function can be triggered by either a direct `MsgAddBsnRewards` 
+transaction or an IBC transfer with callback parameters, ensuring consistent 
+processing regardless of the submission method.
 
-> **⚡ Important: ** Babylon does not enforce how the `FpRatios` must be
-> calculated. It is up to the message `Sender` to calculate the correct
-> distribution.
-
-An overview of the process of distributing rewards through `MsgAddBsnRewards` is
-as follows:
-
-1. The `Sender` calculates how the rewards should be distributed among the
-   finality providers.
-2. The `Sender` bridges the reward token to the Babylon Genesis chain.
-3. The `Sender` sends the `MsgAddBsnRewards` message to Babylon Genesis.
-
-> **⚡ Important: **
-> It is important that the `MsgAddBsnRewards` message is sent to Babylon Genesis
-> as soon as possible after calculating the distribution.
+> **⚡ Important** Babylon does not enforce how the `FpRatios` must be 
+> calculated. It is up to the message `Sender` to calculate the correct 
+> distribution based on their reward distribution logic.
 
 ### 2.2. Babylon Genesis Fee Collection and Storage
 
@@ -84,31 +72,14 @@ The commission rate is set when a BSN consumer registers on Babylon Genesis.
 During registration, the consumer specifies their `BabylonRewardsCommission`
 rate, which is stored in the consumer registration record.
 
-The Babylon commission is calculated using the formula: `Total Rewards ×
-Commission Rate`. The remaining rewards after commission deduction are then
-distributed among finality providers and their BTC stakers using the F1
-distribution algorithm implemented in the `x/incentive` module.
+The Babylon commission is calculated using the formula: `Total Rewards × 
+Commission Rate` and automatically transferred to the `commission_collector_bsn` 
+module account before reward distribution. This account is managed by the 
+`x/incentive` module and controlled by the protocol.
 
-The calculated commission is stored in a dedicated module account called
-`commission_collector_bsn`. This is a special account managed by the
-`x/incentive` module that is controlled by the protocol and not accessible
-to external parties without governance.
-
-#### 4. Commission Transfer Process
-The commission transfer happens automatically through the system's banking functions:
-1. Funds move from the `incentive` module account
-    (where all rewards initially arrive)
-2. The calculated commission amount is transferred to the
-    `commission_collector_bsn` module account (managed by the `x/incentive` module)
-3. This transfer occurs before any rewards are distributed to
-    finality providers or stakers
-
-The commission collection is completely automatic and ensures Babylon Genesis
-receives its predetermined cut from every reward distribution.
-
-The remaining rewards (total rewards minus Babylon commission) are then
-distributed among the finality providers and their corresponding BTC stakers
-according to their voting power and commission rates.
+The remaining rewards are distributed to finality providers and their BTC 
+stakers through the F1 distribution algorithm implemented in the `x/incentive` 
+module.
 
 ### 2.3. Querying, withdrawing rewards
 
@@ -116,17 +87,9 @@ The BTC staking module handles BSN rewards distribution by transferring funds to
 the `x/incentive` module, which then manages the actual reward distribution,
 tracking, and withdrawal for BTC stakers and finality providers.
 
-#### Reward Distribution Process
-
-When BSN rewards are distributed through the BTC staking module:
-
-1. Rewards are sent via `MsgAddBsnRewards` or IBC transfer
-2. Babylon Genesis automatically deducts its commission
-3. For each finality provider:
-   - FP commission is calculated and allocated
-   - Remaining rewards are distributed to BTC delegators
-4. Rewards are handled by the `x/incentive` module using its F1 distribution
-    algorithm
+BSN rewards are processed through the `AddBsnRewards` function (detailed in 
+section 2.1) and then managed by the `x/incentive` module for tracking and 
+withdrawal.
 
 The rewards distribution leverages the existing incentive module infrastructure
 for:
@@ -210,13 +173,11 @@ already be
 > Babylon Genesis.
 
 #### 4. Automatic Processing
-Once received, Babylon Genesis automatically processes the transaction by
-deducting its commission and distributing the remaining rewards to finality
-providers and their stakers using the F1 distribution algorithm.
+Once received, Babylon Genesis processes the transaction through the 
+`AddBsnRewards` function described in section 2.1.
 
-> **⚡ Important: **
-> The `MsgAddBsnRewards` message should be sent to Babylon Genesis as soon as
-possible after calculating the distribution to ensure timely reward processing.
+> **⚡ Important** The message should be sent as soon as possible after 
+> calculating the distribution to ensure timely reward processing.
 
 ### 2.5. Submitting rewards through IBC
 
@@ -266,12 +227,8 @@ The transfer amount represents the total rewards to be distributed according
 to the specified ratios.
 
 #### 4. Callback Processing
-When Babylon Genesis receives the IBC transfer, it automatically:
-1. Parses the memo field to extract reward distribution parameters
-2. Validates the BSN ID and finality provider ratios
-3. Triggers the same `AddBsnRewards` processing as direct transactions
-4. Deducts Babylon commission and distributes remaining rewards using the F1
-    algorithm
+When Babylon Genesis receives the IBC transfer, it parses the memo field and 
+triggers the same `AddBsnRewards` processing as direct transactions.
 
 > **⚡ Important: **
 > IBC-based reward distribution follows the same validation rules and processing
@@ -310,14 +267,9 @@ available in the sender's account before transaction submission. The bridge
 must handle cross-chain communication, finality requirements, and security
 measures like multi-signature schemes.
 
-Once tokens are bridged, the rollup submits a `MsgAddBsnRewards` transaction
-using their registered rollup chain ID as the `BsnConsumerId`. The transaction
-follows the same validation rules as described in section 2.4: the sender
-must have sufficient balance, all finality providers must be registered with
-active delegations, and the consumer must exist in the registry.
-
-Babylon Genesis processes rollup rewards using the same `AddBsnRewards`
-function as other types.
+Once tokens are bridged, the rollup submits a `MsgAddBsnRewards` transaction 
+using their registered rollup chain ID as the `BsnConsumerId`, following the 
+same process as described in section 2.4.
 
 ### 3.2. Cosmos BSNs
 
@@ -377,12 +329,7 @@ Here's an example memo field:
 }
 ```
 
-The entire amount sent with the ICS20 transfer will be used as rewards for
-distribution. The callback processing validates the IBC transfer was
-successful, parses the transfer data, extracts the memo parameters, and
-calculates the proper IBC denomination for the transferred tokens.
-
-Once processed, the system calls the same `AddBsnRewards` function used by
-direct transactions, ensuring identical validation, commission deduction and
-reward distribution.
+The entire amount sent with the ICS20 transfer will be used as rewards for 
+distribution, processed through the same reward distribution system as direct 
+transactions.
 
