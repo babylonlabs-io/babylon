@@ -57,7 +57,7 @@ The function can be triggered by either a direct `MsgAddBsnRewards`
 transaction or an IBC transfer with callback parameters, ensuring consistent 
 processing regardless of the submission method.
 
-> **⚡ Important** Babylon does not enforce how the `FpRatios` must be 
+> **⚡ Important:** Babylon does not enforce how the `FpRatios` must be
 > calculated. It is up to the message `Sender` to calculate the correct 
 > distribution based on their reward distribution logic.
 
@@ -161,22 +161,22 @@ type MsgAddBsnRewards struct {
 - `FpRatios`: List specifying how rewards should be distributed among finality
     providers (ratios should sum to 1.0)
 
-> **⚡ Important: ** Before sending the message, the `Sender` must have enough
+> **⚡ Important:** Before sending the message, the `Sender` must have enough
 > coins to cover the amount declared in the `TotalRewards` field.
 
-> **⚡ Important: ** All finality providers in the `FpRatios` list must
+> **⚡ Important:** All finality providers in the `FpRatios` list must
 already be
 > registered on the Babylon chain and have active delegations. Otherwise, an
 > error will be returned to the caller.
 
-> **⚡ Important: ** The consumer identified by `BsnConsumerId` must exist on
+> **⚡ Important:** The consumer identified by `BsnConsumerId` must exist on
 > Babylon Genesis.
 
 #### 4. Automatic Processing
 Once received, Babylon Genesis processes the transaction through the 
 `AddBsnRewards` function described in section 2.1.
 
-> **⚡ Important** The message should be sent as soon as possible after 
+> **⚡ Important:** The message should be sent as soon as possible after
 > calculating the distribution to ensure timely reward processing.
 
 ### 2.5. Submitting rewards through IBC
@@ -230,7 +230,7 @@ to the specified ratios.
 When Babylon Genesis receives the IBC transfer, it parses the memo field and 
 triggers the same `AddBsnRewards` processing as direct transactions.
 
-> **⚡ Important: **
+> **⚡ Important:**
 > IBC-based reward distribution follows the same validation rules and processing
 > logic as direct `MsgAddBsnRewards` transactions, ensuring consistent
 > behavior across both submission methods.
