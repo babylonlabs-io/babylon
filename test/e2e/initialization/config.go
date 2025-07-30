@@ -71,7 +71,6 @@ var (
 	StakeAmountIntB  = sdkmath.NewInt(StakeAmountB)
 	StakeAmountCoinB = sdk.NewCoin(BabylonDenom, StakeAmountIntB)
 	// POC: TEST DENOM USED TO OVERFLOW MAX_INT_256
-	MaxSupply       = "115792089237316195423570985008687907853269984665640564039457584007913129639935"
 	TestDenom       = "utest"
 	InitBalanceStrA = fmt.Sprintf("%d%s", BabylonBalanceA, BabylonDenom)
 	InitBalanceStrB = fmt.Sprintf("%d%s", BabylonBalanceB, BabylonDenom)
@@ -192,7 +191,7 @@ func initGenesis(
 
 			// POC: NODE 2 WILL HAVE ENTIRE SUPPLY OF TEST TOKEN
 			if i == 2 {
-				initialFundsAStr = fmt.Sprintf("%s,%s%s", initialFundsAStr, MaxSupply, TestDenom)
+				initialFundsAStr = fmt.Sprintf("%s,%s%s", initialFundsAStr, datagen.LegacyDecMaxValue, TestDenom)
 			}
 			if err := addAccount(configDir, "", initialFundsAStr, addr, forkHeight); err != nil {
 				return err
@@ -321,6 +320,7 @@ func updateBankGenesis(bankGenState *banktypes.GenesisState) {
 func updateGovGenesis(votingPeriod, expeditedVotingPeriod time.Duration) func(govGenState *govv1.GenesisState) {
 	return func(govGenState *govv1.GenesisState) {
 		govGenState.Params.MinDeposit = sdk.NewCoins(sdk.NewCoin(BabylonDenom, sdkmath.NewInt(100)))
+		govGenState.Params.ExpeditedMinDeposit = sdk.NewCoins(sdk.NewCoin(BabylonDenom, sdkmath.NewInt(1000)))
 		govGenState.Params.VotingPeriod = &votingPeriod
 		govGenState.Params.ExpeditedVotingPeriod = &expeditedVotingPeriod
 	}

@@ -25,8 +25,7 @@ import (
 )
 
 const (
-	LegacyDecMaxValue = "115792089237316195423570985008687907853269984665640564039457584007913129639935"
-	errIntOverflow    = "recovered: integer overflow"
+	errIntOverflow = "recovered: integer overflow"
 )
 
 type MathOverflowTest struct {
@@ -84,8 +83,7 @@ func (s *MathOverflowTest) Test1OverflowNoSlashing() {
 	s.valAccAddrB = nodeB.WalletName
 
 	denomA := initialization.TestDenom
-	maxSupply, ok := math.NewIntFromString(initialization.MaxSupply)
-	s.Require().True(ok)
+	maxSupply := datagen.NewIntMaxSupply()
 	transferCoin := sdk.NewCoin(denomA, maxSupply)
 
 	// Transfer test denom from chain A to chain B
@@ -170,11 +168,11 @@ func (s *MathOverflowTest) Test2MathOverflowTokenFactory() {
 	nA0, err := chainA.GetNodeAtIndex(0)
 	s.NoError(err)
 
-	rewardsAmount := LegacyDecMaxValue + fullDenomName
+	rewardsAmount := datagen.LegacyDecMaxValue + fullDenomName
 	nA0ValAddr := sdk.ValAddress(sdk.MustAccAddressFromBech32(nA0.PublicAddress))
 
 	for {
-		mintDenomTxHash := nA2.MintDenom(senderChainA, LegacyDecMaxValue, fullDenomName)
+		mintDenomTxHash := nA2.MintDenom(senderChainA, datagen.LegacyDecMaxValue, fullDenomName)
 		nA2.WaitForNextBlocks(2)
 		tx, _ := nA2.QueryTx(mintDenomTxHash)
 		if strings.Contains(tx.RawLog, errIntOverflow) {

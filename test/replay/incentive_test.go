@@ -10,7 +10,6 @@ import (
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
 	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 	minttypes "github.com/babylonlabs-io/babylon/v3/x/mint/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	ibctmtypes "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
 	"github.com/stretchr/testify/require"
 )
@@ -135,31 +134,23 @@ func TestAddBsnRewardsMathOverflow(t *testing.T) {
 		{BtcPk: consFps[0].BTCPublicKey(), Ratio: math.LegacyOneDec()},
 	}
 
-	testDenom := "utesttest"
-	maxSupply, ok := math.NewIntFromString("115792089237316195423570985008687907853269984665640564039457584007913129639934")
-	require.True(t, ok)
-
-	bsnRewardCoins := sdk.NewCoins(sdk.NewCoin(testDenom, maxSupply))
-	err := d.App.MintKeeper.MintCoins(d.Ctx(), bsnRewardCoins)
+	bsnRewardCoinsMaxSupply := datagen.GenRandomCoinsMaxSupply(r)
+	err := d.App.MintKeeper.MintCoins(d.Ctx(), bsnRewardCoinsMaxSupply)
 	require.NoError(t, err)
 
 	recipient := d.GetDriverAccountAddress()
-	err = d.App.BankKeeper.SendCoinsFromModuleToAccount(d.Ctx(), minttypes.ModuleName, recipient, bsnRewardCoins)
+	err = d.App.BankKeeper.SendCoinsFromModuleToAccount(d.Ctx(), minttypes.ModuleName, recipient, bsnRewardCoinsMaxSupply)
 	require.NoError(t, err)
 
-	d.SendBsnRewardsFromDriver(consumer0.ID, bsnRewardCoins, fpRatios)
+	d.AddBsnRewardsFromDriver(consumer0.ID, bsnRewardCoinsMaxSupply, fpRatios)
 	d.GenerateNewBlockAssertExecutionSuccess()
 
-	// withdraw the rewards and add again
+	// withdraw the rewards triggers the int overflow because it calls
+	// IncrementFinalityProviderPeriod which multiplies the current rewards of the fp
+	// by the simulated Decimals (1^20) to get more precisions.
 	staker.WithdrawBtcStakingRewards()
-	d.GenerateNewBlockAssertExecutionSuccess()
-
-	balancesMap := d.BankBalances(staker.Address())
-	stakerBalance := balancesMap[staker.AddressString()]
-
-	amtTest := stakerBalance.AmountOf(testDenom)
-	require.True(t, amtTest.IsPositive())
-
-	d.SendBsnRewards(staker.SenderInfo, consumer0.ID, sdk.NewCoins(sdk.NewCoin(testDenom, amtTest)), fpRatios)
-	d.GenerateNewBlockAssertExecutionSuccess()
+	txResults := d.GenerateNewBlockAssertExecutionFailure()
+	require.Len(t, txResults, 1)
+	require.Equal(t, uint32(1), txResults[0].Code)
+	require.Contains(t, txResults[0].Log, "integer overflow")
 }

@@ -90,7 +90,7 @@ func TestConsumerBsnRewardDistribution(t *testing.T) {
 	beforeWithdrawBalances := d.BankBalances(addrs...)
 
 	// send the BSN rewards
-	d.SendBsnRewardsFromDriver(consumer0.ID, totalRewards, fpRatios)
+	d.AddBsnRewardsFromDriver(consumer0.ID, totalRewards, fpRatios)
 	d.GenerateNewBlockAssertExecutionSuccess()
 
 	consumerFp[0].WithdrawBtcStakingRewards()
@@ -150,7 +150,7 @@ func TestConsumerBsnRewardDistribution(t *testing.T) {
 		d.App,
 		d.SenderInfo,
 		&types.MsgAddBsnRewards{
-			Sender:        d.GetDriverAccountAddress().String(),
+			Sender:        d.SenderInfo.AddressString(),
 			BsnConsumerId: consumer0.ID,
 			TotalRewards:  basicRewards,
 			FpRatios:      []types.FpRatio{types.FpRatio{BtcPk: consumerFp[2].BTCPublicKey(), Ratio: math.LegacyOneDec()}},
@@ -188,13 +188,13 @@ func TestConsumerBsnRewardDistribution(t *testing.T) {
 	require.Contains(t, txResults[0].Log, ictvtypes.ErrFPCurrentRewardsWithoutVotingPower.Error())
 }
 
-// SendBsnRewardsFromDriver sends BSN rewards using MsgAddBsnRewards
-func (d *BabylonAppDriver) SendBsnRewardsFromDriver(consumerID string, totalRewards sdk.Coins, fpRatios []types.FpRatio) {
-	d.SendBsnRewards(d.SenderInfo, consumerID, totalRewards, fpRatios)
+// AddBsnRewardsFromDriver sends BSN rewards using MsgAddBsnRewards
+func (d *BabylonAppDriver) AddBsnRewardsFromDriver(consumerID string, totalRewards sdk.Coins, fpRatios []types.FpRatio) {
+	d.AddBsnRewards(d.SenderInfo, consumerID, totalRewards, fpRatios)
 }
 
-// SendBsnRewards sends BSN rewards using MsgAddBsnRewards
-func (d *BabylonAppDriver) SendBsnRewards(sender *SenderInfo, consumerID string, totalRewards sdk.Coins, fpRatios []types.FpRatio) {
+// AddBsnRewards sends BSN rewards using MsgAddBsnRewards
+func (d *BabylonAppDriver) AddBsnRewards(sender *SenderInfo, consumerID string, totalRewards sdk.Coins, fpRatios []types.FpRatio) {
 	msg := &types.MsgAddBsnRewards{
 		Sender:        sender.AddressString(),
 		BsnConsumerId: consumerID,
@@ -203,4 +203,5 @@ func (d *BabylonAppDriver) SendBsnRewards(sender *SenderInfo, consumerID string,
 	}
 
 	d.SendTxWithMessagesSuccess(d.t, sender, defaultGasLimit, defaultFeeCoin, msg)
+	sender.IncSeq()
 }

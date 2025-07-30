@@ -1,18 +1,18 @@
-package types
+package types_test
 
 import (
 	"fmt"
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
+	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
+	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
+	"github.com/babylonlabs-io/babylon/v3/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 )
 
 func TestCoinsSafeMulInt(t *testing.T) {
-	maxSupply, ok := sdkmath.NewIntFromString("115792089237316195423570985008687907853269984665640564039457584007913129639934")
-	require.True(t, ok)
-
 	tcs := []struct {
 		title      string
 		coins      sdk.Coins
@@ -22,30 +22,30 @@ func TestCoinsSafeMulInt(t *testing.T) {
 	}{
 		{
 			title:      "multiply by zero should error",
-			coins:      sdk.NewCoins(sdk.NewCoin("ubbn", sdkmath.NewInt(100))),
+			coins:      sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(100))),
 			multiplier: sdkmath.ZeroInt(),
 			exp:        nil,
-			expErr:     fmt.Errorf("%s: cannot multiply by zero", ErrInvalidAmount),
+			expErr:     fmt.Errorf("%s: cannot multiply by zero", types.ErrInvalidAmount),
 		},
 		{
 			title:      "multiply single coin by positive int",
-			coins:      sdk.NewCoins(sdk.NewCoin("ubbn", sdkmath.NewInt(100))),
+			coins:      sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(100))),
 			multiplier: sdkmath.NewInt(5),
-			exp:        sdk.NewCoins(sdk.NewCoin("ubbn", sdkmath.NewInt(500))),
+			exp:        sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(500))),
 			expErr:     nil,
 		},
 		{
 			title:      "multiply multiple coins by positive int",
-			coins:      sdk.NewCoins(sdk.NewCoin("ubbn", sdkmath.NewInt(100)), sdk.NewCoin("utoken", sdkmath.NewInt(200))),
+			coins:      sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(100)), sdk.NewCoin("utoken", sdkmath.NewInt(200))),
 			multiplier: sdkmath.NewInt(3),
-			exp:        sdk.NewCoins(sdk.NewCoin("ubbn", sdkmath.NewInt(300)), sdk.NewCoin("utoken", sdkmath.NewInt(600))),
+			exp:        sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(300)), sdk.NewCoin("utoken", sdkmath.NewInt(600))),
 			expErr:     nil,
 		},
 		{
 			title:      "multiply by one",
-			coins:      sdk.NewCoins(sdk.NewCoin("ubbn", sdkmath.NewInt(100))),
+			coins:      sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(100))),
 			multiplier: sdkmath.NewInt(1),
-			exp:        sdk.NewCoins(sdk.NewCoin("ubbn", sdkmath.NewInt(100))),
+			exp:        sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(100))),
 			expErr:     nil,
 		},
 		{
@@ -57,21 +57,21 @@ func TestCoinsSafeMulInt(t *testing.T) {
 		},
 		{
 			title:      "multiply large numbers",
-			coins:      sdk.NewCoins(sdk.NewCoin("ubbn", sdkmath.NewInt(1000000))),
+			coins:      sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(1000000))),
 			multiplier: sdkmath.NewInt(1000000),
-			exp:        sdk.NewCoins(sdk.NewCoin("ubbn", sdkmath.NewInt(1000000000000))),
+			exp:        sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(1000000000000))),
 			expErr:     nil,
 		},
 		{
 			title:      "multiply by negative int should error via SafeMul",
-			coins:      sdk.NewCoins(sdk.NewCoin("ubbn", sdkmath.NewInt(100))),
+			coins:      sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(100))),
 			multiplier: sdkmath.NewInt(-5),
 			exp:        sdk.Coins{},
 			expErr:     fmt.Errorf("negative coin amount: %s", "-500"),
 		},
 		{
 			title:      "overflow should error",
-			coins:      sdk.NewCoins(sdk.NewCoin("ubbn", maxSupply)),
+			coins:      sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, datagen.NewIntMaxSupply())),
 			multiplier: sdkmath.NewInt(2),
 			exp:        sdk.Coins{},
 			expErr:     sdkmath.ErrIntOverflow,
@@ -80,7 +80,7 @@ func TestCoinsSafeMulInt(t *testing.T) {
 
 	for _, tc := range tcs {
 		t.Run(tc.title, func(t *testing.T) {
-			result, err := CoinsSafeMulInt(tc.coins, tc.multiplier)
+			result, err := types.CoinsSafeMulInt(tc.coins, tc.multiplier)
 			if tc.expErr != nil {
 				require.EqualError(t, err, tc.expErr.Error())
 				return

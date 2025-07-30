@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"cosmossdk.io/math"
 	sdkmath "cosmossdk.io/math"
 	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
 	"github.com/babylonlabs-io/babylon/v3/testutil/coins"
@@ -488,21 +489,20 @@ func TestMathOverflowCalculateBTCDelegationRewards(t *testing.T) {
 	k, ctx := NewKeeperWithCtx(t)
 	fp, del := datagen.GenRandomAddress(), datagen.GenRandomAddress()
 
-	maxSupply, ok := sdkmath.NewIntFromString("115792089237316195423570985008687907853269984665640564039457584007913129639934")
-	require.True(t, ok)
-
 	btcRwd := datagen.GenRandomBTCDelegationRewardsTracker(r)
-	btcRwd.TotalActiveSat = maxSupply
+	btcRwd.TotalActiveSat = datagen.NewIntMaxSupply()
 	err := k.setBTCDelegationRewardsTracker(ctx, fp, del, btcRwd)
 	require.NoError(t, err)
 
 	startHist, endHist := datagen.GenRandomFPHistRwdStartAndEnd(r)
-	startHist.CumulativeRewardsPerSat = sdk.NewCoins(sdk.NewCoin("test", maxSupply.QuoRaw(2)))
+	rwdsPerSatMaxSupply := datagen.GenRandomCoinsMaxSupply(r)
+
+	startHist.CumulativeRewardsPerSat = rwdsPerSatMaxSupply.QuoInt(math.NewInt(2))
 	err = k.setFinalityProviderHistoricalRewards(ctx, fp, btcRwd.StartPeriodCumulativeReward, startHist)
 	require.NoError(t, err)
 
 	endPeriod := btcRwd.StartPeriodCumulativeReward + datagen.RandomInt(r, 10) + 1
-	endHist.CumulativeRewardsPerSat = sdk.NewCoins(sdk.NewCoin("test", maxSupply))
+	endHist.CumulativeRewardsPerSat = rwdsPerSatMaxSupply
 	err = k.setFinalityProviderHistoricalRewards(ctx, fp, endPeriod, endHist)
 	require.NoError(t, err)
 
@@ -519,9 +519,7 @@ func TestMathOverflowIncrementFinalityProviderPeriod(t *testing.T) {
 	fp := datagen.GenRandomAddress()
 
 	fpCurrentRwd := datagen.GenRandomFinalityProviderCurrentRewards(r)
-	maxSupply, ok := sdkmath.NewIntFromString("115792089237316195423570985008687907853269984665640564039457584007913129639934")
-	require.True(t, ok)
-	fpCurrentRwd.CurrentRewards = sdk.NewCoins(sdk.NewCoin(datagen.GenRandomDenom(r), maxSupply))
+	fpCurrentRwd.CurrentRewards = datagen.GenRandomCoinsMaxSupply(r)
 
 	err := k.setFinalityProviderCurrentRewards(ctx, fp, fpCurrentRwd)
 	require.NoError(t, err)
