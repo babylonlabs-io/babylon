@@ -196,8 +196,8 @@ func (s *SoftwareUpgradeV3TestSuite) TestUpgradeV3() {
 
 	btcConsParamsMap, ok := btcConsParams.(map[string]interface{})
 	s.Require().True(ok, "btcstkconsumer params should be a map")
-	s.Require().Equal(false, btcConsParamsMap["permissioned_integration"],
-		"permissioned_integration should be false")
+	s.Require().Equal(true, btcConsParamsMap["permissioned_integration"],
+		"permissioned_integration should be true")
 
 	var zoneConcierge map[string]interface{}
 	n.QueryParams(zoneconciergeModulePath, &zoneConcierge)
