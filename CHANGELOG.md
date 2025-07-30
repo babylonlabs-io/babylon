@@ -128,6 +128,7 @@ command to modify `max-finality-providers` parameter.
 - [#1415](https://github.com/babylonlabs-io/babylon/pull/1415) Bump ibc-go to v10.3.0 and e2e test `AddBsnRewards`
 with bad memo field in IBC callbacks.
 - [#1410](https://github.com/babylonlabs-io/babylon/pull/1410) Add stake expansion e2e test
+- [#1449](https://github.com/babylonlabs-io/babylon/pull/1449) Fix math int overflow in incentive reward tracker structures.
 
 ### State Machine Breaking
 
