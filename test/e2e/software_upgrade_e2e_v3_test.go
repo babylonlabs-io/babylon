@@ -199,15 +199,11 @@ func (s *SoftwareUpgradeV3TestSuite) TestUpgradeV3() {
 	s.Require().Equal(false, btcConsParamsMap["permissioned_integration"],
 		"permissioned_integration should be false")
 
-	var zoneConcierge map[string]interface{}
-
-	s.T().Logf("zone concierge params: %v", zoneConcierge)
-
 	zoneConciergeParams := n.QueryZoneConciergeParams()
+	s.T().Logf("zone concierge params: %v", zoneConciergeParams)
 	s.Require().True(exists, "zone concierge params should exist")
-
-	s.Require().Equal(2419200,
-		zoneConciergeParams.IbcPacketTimeoutSeconds, "ibc_packet_timeout_seconds should be false")
+	s.Require().Equal(uint32(2419200),
+		zoneConciergeParams.IbcPacketTimeoutSeconds, "ibc_packet_timeout_seconds should be 2419200")
 
 	registeredConsumers := n.QueryBTCStkConsumerConsumers()
 	s.T().Logf("registered consumers: %v", registeredConsumers)
