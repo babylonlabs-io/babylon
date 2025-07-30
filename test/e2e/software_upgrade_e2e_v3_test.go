@@ -200,16 +200,14 @@ func (s *SoftwareUpgradeV3TestSuite) TestUpgradeV3() {
 		"permissioned_integration should be false")
 
 	var zoneConcierge map[string]interface{}
-	n.QueryParams(zoneconciergeModulePath, &zoneConcierge)
+
 	s.T().Logf("zone concierge params: %v", zoneConcierge)
 
-	zoneConciergeParams, exists := zoneConcierge["params"]
+	zoneConciergeParams := n.QueryZoneConciergeParams()
 	s.Require().True(exists, "zone concierge params should exist")
 
-	zoneConciergeParamsMap, ok := zoneConciergeParams.(map[string]interface{})
-	s.Require().True(ok, "zone concierge params should be a map")
 	s.Require().Equal(2419200,
-		zoneConciergeParamsMap["ibc_packet_timeout_seconds"], "ibc_packet_timeout_seconds should be false")
+		zoneConciergeParams.IbcPacketTimeoutSeconds, "ibc_packet_timeout_seconds should be false")
 
 	registeredConsumers := n.QueryBTCStkConsumerConsumers()
 	s.T().Logf("registered consumers: %v", registeredConsumers)
