@@ -163,13 +163,13 @@ type MsgAddBsnRewards struct {
 
 > **⚡ Important:** Before sending the message, the `Sender` must have enough
 > coins to cover the amount declared in the `TotalRewards` field.
-
-> **⚡ Important:** All finality providers in the `FpRatios` list must
-already be
+>
+> All finality providers in the `FpRatios` list must
+>already be
 > registered on the Babylon chain and have active delegations. Otherwise, an
 > error will be returned to the caller.
-
-> **⚡ Important:** The consumer identified by `BsnConsumerId` must exist on
+>
+> The consumer identified by `BsnConsumerId` must exist on
 > Babylon Genesis.
 
 #### 4. Automatic Processing
