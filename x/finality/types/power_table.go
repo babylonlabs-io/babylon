@@ -52,34 +52,29 @@ func (dc *VotingPowerDistCache) FindNewActiveFinalityProviders(prevDc *VotingPow
 
 func (dc *VotingPowerDistCache) FindNewInactiveFinalityProviders(prevDc *VotingPowerDistCache) []*FinalityProviderDistInfo {
 	newInactiveFps := make([]*FinalityProviderDistInfo, 0)
+	prevInactiveFps := prevDc.GetInactiveFinalityProviderSet()
+	inactiveFps := dc.GetInactiveFinalityProviderSet()
 
-	currentFps := make(map[string]*FinalityProviderDistInfo)
-	currentFpIndices := make(map[string]uint32)
-	for i, fp := range dc.FinalityProviders {
-		pk := fp.BtcPk.MarshalHex()
-		currentFps[pk] = fp
-		currentFpIndices[pk] = uint32(i)
+	for pk, fp := range inactiveFps {
+		_, exists := prevInactiveFps[pk]
+		if !exists {
+			newInactiveFps = append(newInactiveFps, fp)
+		}
 	}
 
-	prevInactiveFps := prevDc.GetInactiveFinalityProviderSet()
-
-	// Single iteration over all previous FPs to find newly inactive ones
-	for _, fp := range prevDc.FinalityProviders {
-		pk := fp.BtcPk.MarshalHex()
-		currentFp, existsInCurrent := currentFps[pk]
-		_, wasInactive := prevInactiveFps[pk]
-
-		if !existsInCurrent {
-			// FP was present before but is now completely absent (unbonded)
+	// Also check for finality providers that were active before but now
+	// are not present in the current cache due to full unbonding.
+	currFps := make(map[string]struct{})
+	for _, fp := range dc.FinalityProviders {
+		currFps[fp.BtcPk.MarshalHex()] = struct{}{}
+	}
+	prevActivePfs := prevDc.GetActiveFinalityProviderSet()
+	for pk, fp := range prevActivePfs {
+		_, exists := currFps[pk]
+		if !exists {
+			// This FP was active before, but now it is not present in the current cache
+			// due to full unbonding, so we add it to the new inactive FP list.
 			newInactiveFps = append(newInactiveFps, fp)
-		} else if !wasInactive {
-			// FP exists in current cache, check if it's now inactive but wasn't before
-			currentIndex := currentFpIndices[pk]
-			if currentIndex >= dc.NumActiveFps &&
-				!currentFp.IsSlashed &&
-				!currentFp.IsJailed {
-				newInactiveFps = append(newInactiveFps, currentFp)
-			}
 		}
 	}
 
