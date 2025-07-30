@@ -183,6 +183,7 @@ for multi staked fps
 adjustment
 - [#1418](https://github.com/babylonlabs-io/babylon/pull/1418) fix: add stake expansion
 covenant signature to the events
+- [#1453](https://github.com/babylonlabs-io/babylon/pull/1453) fix: inactive FP event on full unbonding
 
 ## v2.2.0
 
