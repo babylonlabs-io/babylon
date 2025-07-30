@@ -62,6 +62,9 @@ func CreateUpgradeHandler(fpCount uint32, btcActivationHeight uint32,
 
 			err = keepers.ZoneConciergeKeeper.SetParams(sdkCtx,
 				zoneConciergeParams)
+			if err != nil {
+				return nil, err
+			}
 
 			btcStkConsumerParams := btcstkconsumertypes.DefaultParams()
 			btcStkConsumerParams.PermissionedIntegration = permissionedIntegration
@@ -71,6 +74,9 @@ func CreateUpgradeHandler(fpCount uint32, btcActivationHeight uint32,
 
 			err = keepers.BTCStkConsumerKeeper.SetParams(sdkCtx,
 				btcStkConsumerParams)
+			if err != nil {
+				return nil, err
+			}
 
 			btcParams := keepers.BTCStakingKeeper.GetParams(sdkCtx)
 			btcParamsCopy := btcParams
