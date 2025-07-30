@@ -51,14 +51,35 @@ func (dc *VotingPowerDistCache) FindNewActiveFinalityProviders(prevDc *VotingPow
 }
 
 func (dc *VotingPowerDistCache) FindNewInactiveFinalityProviders(prevDc *VotingPowerDistCache) []*FinalityProviderDistInfo {
-	inactiveFps := dc.GetInactiveFinalityProviderSet()
-	prevInactiveFps := prevDc.GetInactiveFinalityProviderSet()
 	newInactiveFps := make([]*FinalityProviderDistInfo, 0)
 
-	for pk, fp := range inactiveFps {
-		_, exists := prevInactiveFps[pk]
-		if !exists {
+	currentFps := make(map[string]*FinalityProviderDistInfo)
+	currentFpIndices := make(map[string]uint32)
+	for i, fp := range dc.FinalityProviders {
+		pk := fp.BtcPk.MarshalHex()
+		currentFps[pk] = fp
+		currentFpIndices[pk] = uint32(i)
+	}
+
+	prevInactiveFps := prevDc.GetInactiveFinalityProviderSet()
+
+	// Single iteration over all previous FPs to find newly inactive ones
+	for _, fp := range prevDc.FinalityProviders {
+		pk := fp.BtcPk.MarshalHex()
+		currentFp, existsInCurrent := currentFps[pk]
+		_, wasInactive := prevInactiveFps[pk]
+
+		if !existsInCurrent {
+			// FP was present before but is now completely absent (unbonded)
 			newInactiveFps = append(newInactiveFps, fp)
+		} else if !wasInactive {
+			// FP exists in current cache, check if it's now inactive but wasn't before
+			currentIndex := currentFpIndices[pk]
+			if currentIndex >= dc.NumActiveFps &&
+				!currentFp.IsSlashed &&
+				!currentFp.IsJailed {
+				newInactiveFps = append(newInactiveFps, currentFp)
+			}
 		}
 	}
 
