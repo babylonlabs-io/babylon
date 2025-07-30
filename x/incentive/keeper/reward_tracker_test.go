@@ -458,6 +458,36 @@ func FuzzCheckIncrementFinalityProviderPeriod(f *testing.F) {
 	})
 }
 
+func TestMathOverflowCalculateBTCDelegationRewards(t *testing.T) {
+	t.Parallel()
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+
+	k, ctx := NewKeeperWithCtx(t)
+	fp, del := datagen.GenRandomAddress(), datagen.GenRandomAddress()
+
+	maxSupply, ok := sdkmath.NewIntFromString("115792089237316195423570985008687907853269984665640564039457584007913129639934")
+	require.True(t, ok)
+
+	btcRwd := datagen.GenRandomBTCDelegationRewardsTracker(r)
+	btcRwd.TotalActiveSat = maxSupply
+	err := k.setBTCDelegationRewardsTracker(ctx, fp, del, btcRwd)
+	require.NoError(t, err)
+
+	startHist, endHist := datagen.GenRandomFPHistRwdStartAndEnd(r)
+	startHist.CumulativeRewardsPerSat = sdk.NewCoins(sdk.NewCoin("test", maxSupply.QuoRaw(2)))
+	err = k.setFinalityProviderHistoricalRewards(ctx, fp, btcRwd.StartPeriodCumulativeReward, startHist)
+	require.NoError(t, err)
+
+	endPeriod := btcRwd.StartPeriodCumulativeReward + datagen.RandomInt(r, 10) + 1
+	endHist.CumulativeRewardsPerSat = sdk.NewCoins(sdk.NewCoin("test", maxSupply))
+	err = k.setFinalityProviderHistoricalRewards(ctx, fp, endPeriod, endHist)
+	require.NoError(t, err)
+
+	rwd, err := k.CalculateBTCDelegationRewards(ctx, fp, del, endPeriod)
+	require.Equal(t, rwd, sdk.Coins{})
+	require.EqualError(t, err, sdkmath.ErrIntOverflow.Error())
+}
+
 func TestMathOverflowIncrementFinalityProviderPeriod(t *testing.T) {
 	t.Parallel()
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
@@ -473,7 +503,6 @@ func TestMathOverflowIncrementFinalityProviderPeriod(t *testing.T) {
 	err := k.setFinalityProviderCurrentRewards(ctx, fp, fpCurrentRwd)
 	require.NoError(t, err)
 
-	// int math overflow
 	period, err := k.IncrementFinalityProviderPeriod(ctx, fp)
 	require.Equal(t, uint64(0), period)
 	require.EqualError(t, err, sdkmath.ErrIntOverflow.Error())

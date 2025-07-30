@@ -201,10 +201,11 @@ func (k Keeper) calculateDelegationRewardsBetween(
 		panic("negative rewards should not be possible")
 	}
 
-	rewardsWithDecimals, valid := differenceWithDecimals.SafeMulInt(btcDelRwdTracker.TotalActiveSat)
-	if !valid {
-		return sdk.Coins{}, types.ErrInvalidAmount.Wrap("math overflow")
+	rewardsWithDecimals, err := bbntypes.CoinsSafeMulInt(differenceWithDecimals, btcDelRwdTracker.TotalActiveSat)
+	if err != nil {
+		return sdk.Coins{}, err
 	}
+
 	// note: necessary to truncate so we don't allow withdrawing more rewardsWithDecimals than owed
 	// QuoInt already truncates
 	rewards := rewardsWithDecimals.QuoInt(types.DecimalAccumulatedRewards)
