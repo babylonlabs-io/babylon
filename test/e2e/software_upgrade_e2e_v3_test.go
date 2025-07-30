@@ -182,9 +182,9 @@ func (s *SoftwareUpgradeV3TestSuite) TestUpgradeV3() {
 
 	maxFP, ok := btcparamsMap["max_finality_providers"]
 	s.Require().True(ok, "max_finality_providers param should exist")
-	s.Require().Equal(float64(5), maxFP, "max_finality_providers should be 5")
+	s.Require().Equal(float64(10), maxFP, "max_finality_providers should be 10")
 
-	s.Require().Equal(float64(915000), btcparamsMap["btc_activation_height"], "BtcActivationHeight should be incremented correctly")
+	s.Require().Equal(float64(260000), btcparamsMap["btc_activation_height"], "BtcActivationHeight should be incremented correctly")
 
 	// check that the module exists by querying parameters with the QueryParams helper
 	var btcstkconsumerParams map[string]interface{}
@@ -196,8 +196,8 @@ func (s *SoftwareUpgradeV3TestSuite) TestUpgradeV3() {
 
 	btcConsParamsMap, ok := btcConsParams.(map[string]interface{})
 	s.Require().True(ok, "btcstkconsumer params should be a map")
-	s.Require().Equal(true, btcConsParamsMap["permissioned_integration"],
-		"permissioned_integration should be true")
+	s.Require().Equal(false, btcConsParamsMap["permissioned_integration"],
+		"permissioned_integration should be false")
 
 	var zoneConcierge map[string]interface{}
 	n.QueryParams(zoneconciergeModulePath, &zoneConcierge)
