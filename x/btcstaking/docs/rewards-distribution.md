@@ -24,7 +24,7 @@ relevant for different types of consumers:
     [Submitting rewards through transactions](#submitting-rewards-through-transactions).
 2.  **IBC Transfer**: This flow is initiated when an IBC transfer with a
     specific memo field is received. See
-    [Submitting rewards through IBC](#submitting-rewards-through-ibc).
+    [Submitting rewards through IBC](#25-submitting-rewards-through-ibc).
 
 **Target Audience**: This document is intended as a technical reference for
 developers implementing BSN reward distribution systems. This includes BSN
@@ -36,33 +36,28 @@ automated reward processing.
 
 ### 2.1. Core Distribution Function
 
-The `AddBsnRewards` function is the core of the rewards distribution process.
-It is located in the `x/btcstaking/keeper/rewards.go` file and is responsible
-for distributing rewards to the finality providers of a specific BSN.
-It can be triggered either by a direct `MsgAddBsnRewards` message or through
+The `AddBsnRewards` function is the core of the rewards distribution process
+and is responsible for distributing rewards to the finality providers of a
+specific BSN. It can be triggered either by a direct `MsgAddBsnRewards`
+message or through
 an IBC transfer.
 
-The `AddBsnRewards` function performs the following actions:
+The `AddBsnRewards` function coordinates the entire reward distribution process:
 
-1. Verifies that the account initiating the rewards
-    distribution has a sufficient balance to cover the total rewards transfer.
-2. Transfers the total rewards from the sender's account to
-    the `incentive` module account. This account acts as a holding area for the
-    rewards before they are distributed.
-3. Calculates the Babylon commission based on the
-    commission rate defined for the BSN. The commission is then sent
-    to a predefined module account.
-4. After deducting the Babylon commission, the remaining rewards are
-    distributed among the finality providers and their
-    corresponding BTC stakers. The distribution is based on the voting power of
-    the stakers and the commission rates of the finality providers, using the F1
-    algorithm implemented in the `x/incentive` module.
+1. Verifies the sender has sufficient balance and all finality
+   providers are registered with active delegations
+2. Moves total rewards from sender to the `incentive` module
+   account for processing
+3. Automatically deducts Babylon Genesis commission and transfers it to the
+    protocol's collection account
+4. Distributes remaining rewards among finality providers and their BTC
+    stakers using the F1 distribution algorithm
 
 When Babylon Genesis receives a `MsgAddBsnRewards` message, it extracts all
 relevant fields and delegates processing to the `AddBsnRewards` function
 described earlier.
 
-> **⚡ Important** Babylon does not enforce how the `FpRatios` must be
+> **⚡ Important: ** Babylon does not enforce how the `FpRatios` must be
 > calculated. It is up to the message `Sender` to calculate the correct
 > distribution.
 
@@ -74,7 +69,7 @@ as follows:
 2. The `Sender` bridges the reward token to the Babylon Genesis chain.
 3. The `Sender` sends the `MsgAddBsnRewards` message to Babylon Genesis.
 
-> **⚡ Important**
+> **⚡ Important: **
 > It is important that the `MsgAddBsnRewards` message is sent to Babylon Genesis
 > as soon as possible after calculating the distribution.
 
@@ -85,18 +80,15 @@ calculates and deducts a commission from the total rewards before distributing
 them to finality providers and their stakers. The following steps occur in
 sequence during each reward distribution:
 
-#### 1. Commission Rate Definition
 The commission rate is set when a BSN consumer registers on Babylon Genesis.
 During registration, the consumer specifies their `BabylonRewardsCommission`
 rate, which is stored in the consumer registration record.
 
-#### 2. Commission Calculation
 The Babylon commission is calculated using the formula: `Total Rewards ×
 Commission Rate`. The remaining rewards after commission deduction are then
 distributed among finality providers and their BTC stakers using the F1
 distribution algorithm implemented in the `x/incentive` module.
 
-#### 3. Commission Storage
 The calculated commission is stored in a dedicated module account called
 `commission_collector_bsn`. This is a special account managed by the
 `x/incentive` module that is controlled by the protocol and not accessible
@@ -206,14 +198,15 @@ type MsgAddBsnRewards struct {
 - `FpRatios`: List specifying how rewards should be distributed among finality
     providers (ratios should sum to 1.0)
 
-> **⚡ Important** Before sending the message, the `Sender` must have enough
+> **⚡ Important: ** Before sending the message, the `Sender` must have enough
 > coins to cover the amount declared in the `TotalRewards` field.
 
-> **⚡ Important** All finality providers in the `FpRatios` list must already be
+> **⚡ Important: ** All finality providers in the `FpRatios` list must
+already be
 > registered on the Babylon chain and have active delegations. Otherwise, an
 > error will be returned to the caller.
 
-> **⚡ Important** The consumer identified by `BsnConsumerId` must exist on
+> **⚡ Important: ** The consumer identified by `BsnConsumerId` must exist on
 > Babylon Genesis.
 
 #### 4. Automatic Processing
@@ -221,7 +214,7 @@ Once received, Babylon Genesis automatically processes the transaction by
 deducting its commission and distributing the remaining rewards to finality
 providers and their stakers using the F1 distribution algorithm.
 
-> **⚡ Important**
+> **⚡ Important: **
 > The `MsgAddBsnRewards` message should be sent to Babylon Genesis as soon as
 possible after calculating the distribution to ensure timely reward processing.
 
@@ -280,7 +273,7 @@ When Babylon Genesis receives the IBC transfer, it automatically:
 4. Deducts Babylon commission and distributes remaining rewards using the F1
     algorithm
 
-> **⚡ Important**
+> **⚡ Important: **
 > IBC-based reward distribution follows the same validation rules and processing
 > logic as direct `MsgAddBsnRewards` transactions, ensuring consistent
 > behavior across both submission methods.
