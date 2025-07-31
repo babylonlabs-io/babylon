@@ -62,6 +62,22 @@ func (dc *VotingPowerDistCache) FindNewInactiveFinalityProviders(prevDc *VotingP
 		}
 	}
 
+	// Also check for finality providers that were active before but now
+	// are not present in the current cache due to full unbonding.
+	currFps := make(map[string]struct{})
+	for _, fp := range dc.FinalityProviders {
+		currFps[fp.BtcPk.MarshalHex()] = struct{}{}
+	}
+	prevActivePfs := prevDc.GetActiveFinalityProviderSet()
+	for pk, fp := range prevActivePfs {
+		_, exists := currFps[pk]
+		if !exists {
+			// This FP was active before, but now it is not present in the current cache
+			// due to full unbonding, so we add it to the new inactive FP list.
+			newInactiveFps = append(newInactiveFps, fp)
+		}
+	}
+
 	return newInactiveFps
 }
 
