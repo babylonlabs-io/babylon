@@ -183,9 +183,10 @@ func (s *SoftwareUpgradeV3TestSuite) TestUpgradeV3() {
 
 	maxFP, ok := btcparamsMap["max_finality_providers"]
 	s.Require().True(ok, "max_finality_providers param should exist")
-	s.Require().Equal(float64(5), maxFP, "max_finality_providers should be 5")
+	s.Require().Equal(float64(10), maxFP, "max_finality_providers should be 10")
 
-	s.Require().Equal(float64(260000), btcparamsMap["btc_activation_height"], "BtcActivationHeight should be incremented correctly")
+	s.Require().Equal(float64(260000), btcparamsMap["btc_activation_height"],
+		"BtcActivationHeight should be incremented correctly")
 
 	// check that the module exists by querying parameters with the QueryParams helper
 	var btcstkconsumerParams map[string]interface{}
@@ -200,15 +201,10 @@ func (s *SoftwareUpgradeV3TestSuite) TestUpgradeV3() {
 	s.Require().Equal(false, btcConsParamsMap["permissioned_integration"],
 		"permissioned_integration should be false")
 
-	var zoneConcierge map[string]interface{}
-
-	s.T().Logf("zone concierge params: %v", zoneConcierge)
-
 	zoneConciergeParams := n.QueryZoneConciergeParams()
 	s.Require().True(exists, "zone concierge params should exist")
-
-	s.Require().Equal(2419200,
-		zoneConciergeParams.IbcPacketTimeoutSeconds, "ibc_packet_timeout_seconds should be false")
+	s.Require().Equal(uint32(2419200),
+		zoneConciergeParams.IbcPacketTimeoutSeconds, "ibc_packet_timeout_seconds should be 2419200")
 
 	registeredConsumers := n.QueryBTCStkConsumerConsumers()
 	s.T().Logf("registered consumers: %v", registeredConsumers)
