@@ -140,7 +140,7 @@ through the protocol's reward system.
 #### 3. Message Construction and Submission
 The sender constructs and submits the `MsgAddBsnRewards` message with the following structure:
 
-```protobuf
+```go
 type MsgAddBsnRewards struct {
 	// Sender is the babylon address which will pay for the rewards
 	Sender string `protobuf:"bytes,1,opt,name=sender,proto3" json:"sender,omitempty"`
@@ -167,7 +167,7 @@ type MsgAddBsnRewards struct {
 > coins to cover the amount declared in the `TotalRewards` field.
 >
 > All finality providers in the `FpRatios` list must
->already be
+> already be
 > registered on the Babylon chain and have active delegations. Otherwise, an
 > error will be returned to the caller.
 >
