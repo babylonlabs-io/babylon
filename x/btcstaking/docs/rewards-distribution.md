@@ -42,7 +42,9 @@ specific BSN. It can be triggered either by a direct `MsgAddBsnRewards`
 message or through
 an IBC transfer.
 
-The `AddBsnRewards` function coordinates the entire reward distribution process:
+The [`AddBsnRewards` function](../keeper/msg_server.go)
+coordinates the entire reward distribution
+process:
 
 1. Verifies the sender has sufficient balance and all finality
    providers are registered with active delegations
@@ -119,7 +121,7 @@ the actual reward management is handled there.*
 
 ### 2.4. Submitting rewards through `MsgAddBsnRewards`
 
-BSN consumers can distribute rewards to their finality providers and BTC stakers
+BSNs can distribute rewards to their finality providers and BTC stakers
 by submitting `MsgAddBsnRewards` transactions directly to Babylon Genesis.
 The following steps occur in sequence during transaction-based
 reward distribution:
@@ -169,7 +171,7 @@ type MsgAddBsnRewards struct {
 > registered on the Babylon chain and have active delegations. Otherwise, an
 > error will be returned to the caller.
 >
-> The consumer identified by `BsnConsumerId` must exist on
+> The BSN consumer identified by `BsnConsumerId` must exist on
 > Babylon Genesis.
 
 #### 4. Automatic Processing
@@ -181,7 +183,7 @@ Once received, Babylon Genesis processes the transaction through the
 
 ### 2.5. Submitting rewards through IBC
 
-Cosmos SDK-based BSN consumers can distribute rewards using IBC transfers with
+Cosmos SDK-based BSNs can distribute rewards using IBC transfers with
 specially formatted memo fields. This method leverages Inter-Blockchain
 Communication to trigger reward distribution through callback mechanisms.
 The following steps occur in sequence during IBC-based reward distribution:
@@ -239,7 +241,8 @@ triggers the same `AddBsnRewards` processing as direct transactions.
 
 ### 3.1. Bridge funds, transfer using tx
 
-Rollup BSNs follow a transaction-based reward distribution model that requires
+Rollup BSN consumers follow a transaction-based reward distribution model that 
+requires
 external bridging infrastructure and direct message submission to Babylon
 Genesis.
 
@@ -280,30 +283,14 @@ Cosmos consumers register by providing an IBC client ID as their `ConsumerId`.
 Babylon Genesis validates that the corresponding IBC light client exists
 and stores the consumer's commission rate.
 
-Instead of external bridging, Cosmos BSNs use standard IBC transfers with
+Instead of external bridging, Cosmos BSN consumers use standard IBC transfers 
+with
 with the `memo` field (as seen below) to trigger reward distribution. When
 Babylon Genesis receives an IBC transfer, the callback system
 processes the memo field to extract reward distribution parameters.
 
 The memo must contain a JSON structure with `action: "add_bsn_rewards"` and
 include the BSN consumer ID and finality provider ratios.
-
-```go
-type CallbackMemo struct {
-    Action       string        `json:"action,omitempty"`
-    DestCallback *CallbackInfo `json:"dest_callback,omitempty"`
-}
-
-type CallbackInfo struct {
-    Address       string                   `json:"address"`
-    AddBsnRewards *CallbackAddBsnRewards   `json:"add_bsn_rewards,omitempty"`
-}
-
-type CallbackAddBsnRewards struct {
-    BsnConsumerID string    `json:"bsn_consumer_id"`
-    FpRatios      []FpRatio `json:"fp_ratios"`
-}
-```
 
 Here's an example memo field:
 
