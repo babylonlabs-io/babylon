@@ -69,7 +69,7 @@ func (k Keeper) IsMultiStakingAllowed(ctx context.Context, parsedMsg *types.Pars
 	stakeAmtChanged := uint64(parsedMsg.StakingValue) != del.TotalSat
 	if stakeAmtChanged {
 		return false, types.ErrInvalidStakingTx.Wrapf("it is not allowed to modify the staking amount during the multi-staking allow-list period. Previous amount: %d, new amount: %d",
-			del.TotalSat, int64(parsedMsg.StakingValue))
+			del.TotalSat, uint64(parsedMsg.StakingValue))
 	}
 	// If we reach here, it means the tx hash is in the allow list
 	// or it is an already existing multi-staking delegation (extended from the allow-list).
