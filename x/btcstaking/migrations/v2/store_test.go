@@ -58,7 +58,7 @@ func TestMigrateStore(t *testing.T) {
 	require.NotEmpty(t, txHashes)
 	store := ctx.KVStore(storeKey)
 	for _, txHash := range txHashes {
-		key := append(types.AllowedMultiStakingTxHashesKey, txHash[:]...)
+		key := append(types.AllowedMultiStakingTxHashesKey, txHash[:]...) //nolint:gocritic
 		exists := store.Has(key)
 		require.True(t, exists, "tx hash %s should be indexed in the allow list", txHash.String())
 	}
