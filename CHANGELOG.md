@@ -48,6 +48,7 @@ bindings (thanks @benluelo for contribution)
 ### Bug Fixes
 
 - [#1355](https://github.com/babylonlabs-io/babylon/pull/1355) Allow empty fees on genesis transactions
+- [#1453](https://github.com/babylonlabs-io/babylon/pull/1453) fix: inactive FP event on full unbonding
 
 ## v2.2.0
 
