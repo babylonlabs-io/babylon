@@ -238,6 +238,27 @@ func TestMultiStakingAllowList(t *testing.T) {
 	// Create the previous staking transaction that will be in the allow list
 	// This needs to be a single FP delegation first
 	lcTip := uint32(30)
+
+	// Try to create a new multi-staking delegation
+	// This should not be allowed during multi-staking allow-list period
+	_, _, _, _, _, _, err = h.CreateDelegationWithBtcBlockHeight(
+		r,
+		delSK,
+		fpPKs,
+		stakingValue,
+		1000,
+		0,
+		0,
+		false,
+		true,
+		10,
+		lcTip,
+	)
+	h.Error(err)
+	h.ErrorContains(err, "it is not allowed to create new delegations with multi-staking during the multi-staking allow-list period")
+
+	// Create the previous staking transaction that will be in the allow list
+	// This needs to be a single FP delegation first
 	prevStakingTxHash, prevMsgCreateBTCDel, prevDel, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
 		r,
 		delSK,
