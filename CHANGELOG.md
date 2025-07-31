@@ -126,11 +126,8 @@ command to modify `max-finality-providers` parameter.
 - [#1415](https://github.com/babylonlabs-io/babylon/pull/1415) Bump ibc-go to v10.3.0 and e2e test `AddBsnRewards`
 - [#1410](https://github.com/babylonlabs-io/babylon/pull/1410) Add stake expansion e2e test
 - [#1432](https://github.com/babylonlabs-io/babylon/pull/1432) Update maxFps and btcActivatioHeight in btcStakingParams for V3
-<<<<<<< HEAD
-=======
 - [#1450](https://github.com/babylonlabs-io/babylon/pull/1450) Align v3 test
 - [#1456](https://github.com/babylonlabs-io/babylon/pull/1456) Update logic in upgrade handler to include new module params
->>>>>>> b7191df (upgrade(v3): update logic in upgrade handler to include new module params (#1456))
 
 ### State Machine Breaking
 
