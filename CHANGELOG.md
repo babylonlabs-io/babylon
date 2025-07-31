@@ -48,6 +48,22 @@ bindings (thanks @benluelo for contribution)
 ### Bug Fixes
 
 - [#1355](https://github.com/babylonlabs-io/babylon/pull/1355) Allow empty fees on genesis transactions
+<<<<<<< HEAD
+=======
+- [#1361](https://github.com/babylonlabs-io/babylon/pull/1361) Fix typo on makefile
+- [#1366](https://github.com/babylonlabs-io/babylon/pull/1366) fix: not add consumer fps
+to Babylon voting power table
+- [#1369](https://github.com/babylonlabs-io/babylon/pull/1369) fix: update stake expansion validation to allow expanding
+already expanded delegations
+- [#1375](https://github.com/babylonlabs-io/babylon/pull/1375) fix: add strict requirements
+for multi staked fps
+- [#1384](https://github.com/babylonlabs-io/babylon/pull/1384) fix: Cascaded slashing
+adjustment
+- [#1418](https://github.com/babylonlabs-io/babylon/pull/1418) fix: add stake expansion
+covenant signature to the events
+- [#1447](https://github.com/babylonlabs-io/babylon/pull/1447) Add multi-staking allow-list data for e2e tests
+- [#1453](https://github.com/babylonlabs-io/babylon/pull/1453) fix: inactive FP event on full unbonding
+>>>>>>> 3975c21 (fix: inactive fp event (#1453))
 
 ## v2.2.0
 
