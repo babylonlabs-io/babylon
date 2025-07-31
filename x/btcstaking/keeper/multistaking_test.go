@@ -390,7 +390,21 @@ func TestMultiStakingAllowList(t *testing.T) {
 	_, consumer2FPPK, _, err := h.CreateConsumerFinalityProvider(r, consumerRegister2.ConsumerId)
 	h.NoError(err)
 
-	// Submit the BtcStakeExpand message
+	// Try to increase staking amt - should not be allowed
+	_, _, err = h.CreateBtcStakeExpansionWithBtcTipHeight(
+		r,
+		delSK,
+		append(fpPKs, consumer2FPPK),
+		stakingValue+1,
+		1000,
+		expandedDel,
+		lcTip,
+	)
+	h.Error(err)
+	h.ErrorContains(err, "it is not allowed to modify the staking amount during the multi-staking allow-list period")
+
+	// Submit the BtcStakeExpand message adding the new consumer FP
+	// and keeping same staking amount
 	doubleExpStakingTx, _, err := h.CreateBtcStakeExpansionWithBtcTipHeight(
 		r,
 		delSK,
