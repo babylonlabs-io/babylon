@@ -54,8 +54,7 @@ UpgradeHandlerCreator {
 			sdkCtx := sdk.UnwrapSDKContext(ctx)
 
 			zoneConciergeParams := zoneconciergetypes.DefaultParams()
-			zoneConciergeParams.
-				IbcPacketTimeoutSeconds = ibcPacketTimeoutSeconds
+			zoneConciergeParams.IbcPacketTimeoutSeconds = ibcPacketTimeoutSeconds
 			if err = zoneConciergeParams.Validate(); err != nil {
 				return nil, err
 			}
