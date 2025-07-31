@@ -2365,6 +2365,54 @@ func TestGovernanceJailingAfterUnjailInSameBlock(t *testing.T) {
 	require.True(t, fpFromKeeper.IsJailed(), "FP is marked as jailed in keeper")
 }
 
+func TestProcessAllPowerDistUpdateEvents_TotallyUnbondedFP(t *testing.T) {
+	t.Parallel()
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	h, del, _, sk := CreateFpAndBtcDel(t, r)
+
+	// Start with an active delegation
+	eventActive := btcstktypes.NewEventPowerDistUpdateWithBTCDel(&btcstktypes.EventBTCDelegationStateUpdate{
+		StakingTxHash: del.MustGetStakingTxHash().String(),
+		NewState:      btcstktypes.BTCDelegationStatus_ACTIVE,
+	})
+
+	events := []*btcstktypes.EventPowerDistUpdate{eventActive}
+
+	btcTipHeight := del.BtcTipHeight
+	// seed the event in the store
+	addPowerDistUpdateEvents(t, h.Ctx, sk, uint64(btcTipHeight), events)
+
+	// Process active event to create initial cache with active FP
+	prevDc := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, ftypes.NewVotingPowerDistCache(), btcTipHeight, btcTipHeight)
+	require.Len(t, prevDc.FinalityProviders, 1)
+	require.Equal(t, del.TotalSat, prevDc.FinalityProviders[0].TotalBondedSat)
+
+	// Mark FP as timestamped and apply active FPs to set correct NumActiveFps
+	prevDc.FinalityProviders[0].IsTimestamped = true
+	prevDc.ApplyActiveFinalityProviders(10) // Allow up to 10 active FPs
+
+	// Now unbond the delegation completely
+	eventUnbond := btcstktypes.NewEventPowerDistUpdateWithBTCDel(&btcstktypes.EventBTCDelegationStateUpdate{
+		StakingTxHash: del.MustGetStakingTxHash().String(),
+		NewState:      btcstktypes.BTCDelegationStatus_UNBONDED,
+	})
+	// seed the event in the store
+	btcTipHeight++
+	addPowerDistUpdateEvents(t, h.Ctx, sk, uint64(btcTipHeight), []*btcstktypes.EventPowerDistUpdate{eventUnbond})
+	// Process unbond event
+	newDc := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, prevDc, btcTipHeight, btcTipHeight)
+
+	// The newDc should not contain the FP anymore
+	require.Len(t, newDc.FinalityProviders, 0)
+
+	// Test that FindNewInactiveFinalityProviders works correctly
+	// It should find the FP as newly inactive since it was active before
+	// and now it is unbonded.
+	newlyInactiveFPs := newDc.FindNewInactiveFinalityProviders(prevDc)
+	require.Len(t, newlyInactiveFPs, 1)
+	require.Equal(t, del.FpBtcPkList[0].MarshalHex(), newlyInactiveFPs[0].BtcPk.MarshalHex())
+}
+
 // addPowerDistUpdateEvents is a helper function that seeds the BTCStaking module store
 // with power distribution update events at specific BTC heights. This allows the
 // ProcessAllPowerDistUpdateEvents function to pick up these events via the
