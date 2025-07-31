@@ -2,7 +2,9 @@ package keeper
 
 import (
 	"context"
+	"fmt"
 
+	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 )
 
@@ -33,24 +35,43 @@ func (k Keeper) IndexAllowedMultiStakingTransaction(ctx context.Context, txHash 
 }
 
 // IsMultiStakingAllowed checks if the given staking transaction is elegible
-// for multi-staking.
-func (k Keeper) IsMultiStakingAllowed(ctx context.Context, txHash *chainhash.Hash) (bool, error) {
-	inAllowList, err := k.allowedMultiStakingTxHashesKeySet.Has(ctx, txHash[:])
-	if err != nil {
-		return false, err
+// for multi-staking. This logic is used during the multi-staking allow-list period
+func (k Keeper) IsMultiStakingAllowed(ctx context.Context, parsedMsg *types.ParsedCreateDelegationMessage) (bool, error) {
+	// if is not stake expansion, it is not allowed to create new delegations with multi-staking
+	if parsedMsg == nil || parsedMsg.StkExp == nil {
+		return false, types.ErrInvalidStakingTx.Wrap("it is not allowed to create new delegations with multi-staking during the multi-staking allow-list period")
 	}
 
-	if inAllowList {
-		return true, nil
+	// if it is stake expansion, we need to check if the previous staking tx hash
+	// is in the allow list or the previous staking tx is a multi-staking tx
+	txHash := parsedMsg.StkExp.PreviousActiveStkTxHash
+	inAllowList, err := k.allowedMultiStakingTxHashesKeySet.Has(ctx, txHash[:])
+	if err != nil {
+		return false, fmt.Errorf("failed to check if the previous staking tx hash is eligible for multi-staking: %w", err)
 	}
 
 	// if tx hash is not in the allow list, but is already
-	// a multi-staking tx, then it is allowed
+	// a multi-staking tx (has more than one FP BTC PK), then it is allowed.
 	del := k.getBTCDelegation(ctx, *txHash)
 	if del == nil {
+		return false, fmt.Errorf("failed to find BTC delegation for tx hash: %s when checking multi-staking eligibility", txHash.String())
+	}
+
+	// tx hash is not in the allow list,
+	// and it is NOT a multi-staking tx,
+	// then it is NOT allowed.
+	if !inAllowList && len(del.FpBtcPkList) == 1 {
 		return false, nil
 	}
 
-	// if the delegation has more than one FP BTC PK, then it is a multi-staking tx
-	return len(del.FpBtcPkList) > 1, nil
+	// During the multi-staking allow-list period,
+	// it is not allowed to increase the staking amount.
+	stakeAmtChanged := uint64(parsedMsg.StakingValue) != del.TotalSat
+	if stakeAmtChanged {
+		return false, types.ErrInvalidStakingTx.Wrapf("it is not allowed to modify the staking amount during the multi-staking allow-list period. Previous amount: %d, new amount: %d",
+			del.TotalSat, parsedMsg.StakingValue)
+	}
+	// If we reach here, it means the tx hash is in the allow list
+	// or it is an already existing multi-staking delegation (extended from the allow-list).
+	return true, nil
 }
