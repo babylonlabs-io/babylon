@@ -318,8 +318,7 @@ BSN consumers can be implemented as either rollup-based or Cosmos SDK-based syst
 ### 3.1. Rollup BSN Consumers
 
 Rollup BSN consumers follow a transaction-based reward distribution model that 
-requires
-external bridging infrastructure and direct message submission to Babylon
+requires external bridging infrastructure and direct message submission to Babylon
 Genesis.
 
 Rollup BSN Consumers register on Babylon Genesis by submitting a
