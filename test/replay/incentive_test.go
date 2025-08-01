@@ -144,8 +144,7 @@ func TestAddBsnRewardsMathOverflow(t *testing.T) {
 	d.GenerateNewBlockAssertExecutionSuccess()
 
 	// FP current rewards now have the decimals, the error of int overflow should be thrown
-	// when the user send the message, by generating an error of integer overflow when
-	// the message is processed.
+	// when the user send the message.
 	d.AddBsnRewardsFromDriver(consumer0.ID, bsnRewardCoinsMaxSupply, fpRatios)
 	txResults := d.GenerateNewBlockAssertExecutionFailure()
 	require.Len(t, txResults, 1)
