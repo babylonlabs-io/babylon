@@ -7,16 +7,6 @@ and information associated with the BTC staking protocol (e.g., finality provide
 The Zone Concierge module synchronises the following information with consumer
 chains via IBC packets:
 
-<<<<<<< HEAD
-- **BTC Headers:** Babylon Genesis forwards BTC headers to BSNs to keep their
-  BTC light clients in sync with Babylon's BTC light client. This allows
-  BSNs to independently verify BTC timestamps.
-- **BTC Timestamps:** When a Babylon epoch is finalised, Babylon sends BTC
-  timestamps to BSNs. Each BTC timestamp contains:
-  - The latest BSN header that was checkpointed in the finalised
-    epoch
-  - Recent BTC headers that extend the consumer's BTC light client
-=======
 - **BTC Headers:** Babylon Genesis forwards the BTC headers maintained by its
   BTC light client to BSNs.  
   This allows BSNs to maintain an image of the Bitcoin chain and verify
@@ -26,7 +16,6 @@ chains via IBC packets:
   Genesis chain sends BTC timestamps to BSNs. Each BTC timestamp contains:
   - The latest BSN header that was checkpointed in the finalised epoch
   - Recent BTC headers that extend the BSN's BTC light client
->>>>>>> b248d34 (doc: zone concierge IBC channel doc (#1463))
   - The finalised epoch's metadata and raw checkpoint
   - Proofs that the consumer header was included in the epoch and the epoch was
     properly sealed and submitted to Bitcoin
@@ -43,6 +32,7 @@ chains via IBC packets:
   - [LatestEpochHeaders](#latestepochheaders)
   - [FinalizedEpochHeaders](#finalizedepochheaders)
   - [BSNBTCState](#bsnbtcstate)
+  - [BSNBTCState](#bsnbtcstate-1)
   - [Params](#params)
   - [Port](#port)
   - [LastSentBTCSegment](#lastsentbtcsegment)
@@ -63,7 +53,15 @@ chains via IBC packets:
   - [IBC Communication Protocol](#ibc-communication-protocol)
   - [Relaying BTC Headers](#relaying-btc-headers)
   - [Relaying BTC Timestamps](#relaying-btc-timestamps)
-  - [Relaying BTC Staking Events](#relaying-btc-staking-events)
+    - [Triggering timestamp relay](#triggering-timestamp-relay)
+    - [Broadcasting timestamps](#broadcasting-timestamps)
+    - [Assembling timestamps](#assembling-timestamps)
+    - [Cryptographic Proofs](#cryptographic-proofs)
+  - [Propagating BTC Staking Events](#propagating-btc-staking-events)
+    - [Broadcasting staking events](#broadcasting-staking-events)
+    - [Processing event flow](#processing-event-flow)
+    - [Registering consumers](#registering-consumers)
+    - [Handling slashing](#handling-slashing)
 
 <!-- TODO: concept section for describing BTC staking integration -->
 
@@ -505,21 +503,9 @@ events.
 
 ### IBC Communication Protocol
 
-<<<<<<< HEAD
-Channel Configuration:
-- Port: `zoneconcierge`
-- Ordering: `ORDERED`
-- Version: `zoneconcierge-1`
-
-| Packet Direction | Types |
-|-----------------|-------|
-| Outbound | `BTCHeaders`, `BTCTimestamp`, `BTCStakingConsumerEvent` |
-| Inbound | `BSNSlashingIBCPacket` |
-=======
 Please refer to
 [docs/ibc-zoneconcierge-setup.md](../../docs/ibc-zoneconcierge-setup.md) for the
 setup of Zone Concierge IBC channel.
->>>>>>> b248d34 (doc: zone concierge IBC channel doc (#1463))
 
 ### Relaying BTC Headers
 
