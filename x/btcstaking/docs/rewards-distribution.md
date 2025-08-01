@@ -7,14 +7,108 @@
     3. [Querying, withdrawing rewards](#23-querying-withdrawing-rewards)
     4. [Submitting rewards through transactions](#24-submitting-rewards-through-msgaddbsnrewards)
     5. [Submitting rewards through IBC](#25-submitting-rewards-through-ibc)
-3. [Rollup BSNs](#3-rollup-bsns)
+3. [Rollup BSN Consumers](#3-rollup-bsn-consumers)
     1. [Bridge funds, transfer using tx](#31-bridge-funds-transfer-using-tx)
-    2. [Cosmos BSNs](#32-cosmos-bsns)
+    2. [Cosmos BSN Consumers](#32-cosmos-bsn-consumers)
 
 ## 1. Introduction
 
-The BSN rewards distribution on the Babylon Genesis chain is handled by the
-`btcstaking` module.
+### 1.1. What is BSN Rewards Distribution?
+
+When you stake Bitcoin through Babylon, you're helping secure other
+networks by delegating your Bitcoin to finality providers. In return for this 
+service, these consumer BSNs pay rewards to participants in the staking 
+ecosystem.
+
+Here's how the rewards flow works:
+
+1. BSN consumers (like rollups or Cosmos SDKs) accumulate rewards
+   for the security services provided by Bitcoin stakers
+2. These BSN consumers send their reward tokens to Babylon Genesis for distribution
+3. Babylon Genesis automatically deducts a small commission (set when the
+   consumer BSN registers) to fund protocol operations
+4. The remaining rewards are distributed proportionally among:
+   - **Finality providers**: Who receive commission for operating infrastructure
+   and validating
+   - **Bitcoin stakers**: Who receive rewards proportional to their stake amount
+   and delegation choices
+
+### 1.2. Who Gets Rewards?
+
+The rewards distribution involves several participants:
+
+- **Bitcoin Stakers**: Individuals who have staked their Bitcoin through Babylon
+    earn rewards proportional to their stake
+- **Finality Providers**: Operators who run infrastructure and validate on
+   behalf of consumer BSNs, earning both commission from their delegators and
+   proportional rewards
+- **Babylon Genesis**: The protocol itself earns a commission on all reward
+  distributions to fund operations and development
+
+### 1.3. Technical Overview
+
+The BSN rewards distribution system on Babylon Genesis
+implements a reward allocation mechanism for Bitcoin staking
+participants. The system distributes rewards from BSN consumers to
+finality providers and their delegators, with Babylon Genesis taking a
+configurable commission on all distributions.
+
+### 1.4. Key Terminology
+
+Below are a list of key terms regarding rewards distribution
+
+- **F1 Fee Distribution Algorithm**: A proven mathematical algorithm (also
+  used by Cosmos SDK) that calculates how rewards should be
+  distributed proportionally among participants. It ensures accurate reward
+  calculations even when participants join or leave at different times.
+- **BSN Consumers**: Blockchain networks (like rollups or Cosmos
+  networks) that register with Babylon Genesis to receive Bitcoin staking
+  security services. These BSN consumers pay rewards in exchange for the security
+  provided by Bitcoin stakers.
+- **Multi-Chain Support**: The ability to handle reward distributions from
+  many different consumer BSNs through a single, unified system on Babylon Genesis.
+- **Flexible Invocation**: Rewards can be submitted and processed through
+  multiple methods - either direct blockchain transactions or
+  IBC transfers with special instructions.
+
+### 1.5. Rewards Distribution Flow
+
+The following diagram illustrates how rewards flow through Babylon Genesis.
+![Rewards](./static/rewards.png)
+
+**Flow Explanation:**
+
+1. BSN consumers (rollups or Cosmos networks) accumulate rewards for
+   Bitcoin staking security services
+
+2. BSN consumers submit rewards through either:
+   - **Direct transactions** (`MsgAddBsnRewards`) for rollups
+   - **IBC transfers** with callback memos for Cosmos networks
+
+3. The `x/btcstaking` module processes rewards, validates consumer
+   registration, and transfers funds to the `x/incentive` module
+
+4. Babylon Genesis automatically deducts its commission percentage before
+   distribution
+
+5. The F1 algorithm distributes remaining rewards proportionally among
+   finality providers and their Bitcoin staker delegators
+
+### 1.6. System Architecture
+
+The rewards distribution is handled by the `x/btcstaking` module and
+integrates with several other Babylon modules:
+
+- `x/btcstaking`: Core module managing finality providers, delegations,
+  and reward distribution
+- `x/incentive`: Handles the F1 fee distribution algorithm and reward
+  calculation logic
+- **`x/btcstkconsumer`**: Manages BSN consumer registrations and
+  commission rates
+- `IBC Callback Middleware`: Processes IBC transfers with reward
+  distribution instructions
+
+### 1.7. Distribution Flows
 
 There are two distinct flows for initiating the rewards distribution, each
 relevant for different types of consumers:
@@ -38,7 +132,7 @@ automated reward processing.
 
 The `AddBsnRewards` function is the core of the rewards distribution process
 and is responsible for distributing rewards to the finality providers of a
-specific BSN. It can be triggered either by a direct `MsgAddBsnRewards`
+specific BSN consumer. It can be triggered either by a direct `MsgAddBsnRewards`
 message or through
 an IBC transfer.
 
@@ -121,7 +215,7 @@ the actual reward management is handled there.*
 
 ### 2.4. Submitting rewards through `MsgAddBsnRewards`
 
-BSNs can distribute rewards to their finality providers and BTC stakers
+BSN consumers can distribute rewards to their finality providers and BTC stakers
 by submitting `MsgAddBsnRewards` transactions directly to Babylon Genesis.
 The following steps occur in sequence during transaction-based
 reward distribution:
@@ -156,8 +250,8 @@ type MsgAddBsnRewards struct {
 **Field Explanations:**
 - `Sender`: Babylon address (bbn...) that will pay for the rewards and must
     have sufficient balance
-- `BsnConsumerId`: For Cosmos SDK chains, this is the IBC client ID; for
-    rollup chains, this is the rollup chain ID
+- `BsnConsumerId`: For Cosmos SDK networks, this is the IBC client ID; for
+    rollups, this is the rollup ID
 - `TotalRewards`: Total reward amount to be distributed according to the
     specified ratios
 - `FpRatios`: List specifying how rewards should be distributed among finality
@@ -183,7 +277,7 @@ Once received, Babylon Genesis processes the transaction through the
 
 ### 2.5. Submitting rewards through IBC
 
-Cosmos SDK-based BSNs can distribute rewards using IBC transfers with
+Cosmos SDK-based BSN consumers can distribute rewards using IBC transfers with
 specially formatted memo fields. This method leverages Inter-Blockchain
 Communication to trigger reward distribution through callback mechanisms.
 The following steps occur in sequence during IBC-based reward distribution:
@@ -220,7 +314,7 @@ type CallbackAddBsnRewards struct {
 **Field Explanations:**
 - `Action`: Must be set to `"add_bsn_rewards"` to trigger reward distribution
 - `Address`: Required field for callback mechanism (can be placeholder)
-- `BsnConsumerID`: Identifies which BSN the rewards are for
+- `BsnConsumerID`: Identifies which BSN consumer the rewards are for
 - `FpRatios`: Specifies reward distribution ratios among finality providers
 
 #### 3. IBC Transfer Execution
@@ -237,7 +331,7 @@ triggers the same `AddBsnRewards` processing as direct transactions.
 > logic as direct `MsgAddBsnRewards` transactions, ensuring consistent
 > behavior across both submission methods.
 
-## 3. Rollup BSNs
+## 3. Rollup BSN Consumers
 
 ### 3.1. Bridge funds, transfer using tx
 
@@ -246,16 +340,16 @@ requires
 external bridging infrastructure and direct message submission to Babylon
 Genesis.
 
-Rollup consumers register on Babylon Genesis by submitting a
+Rollup BSN Consumers register on Babylon Genesis by submitting a
 `MsgRegisterConsumer` transaction. This message includes:
 
-- `ConsumerId`: The rollup chain ID that will be used as `BsnConsumerId` in
+- `ConsumerId`: The rollup ID that will be used as `BsnConsumerId` in
   reward transactions
 - `ConsumerName` and `ConsumerDescription`: Human-readable information about
   the rollup
 - `RollupFinalityContractAddress`: The address of the finality contract
-  deployed on Babylon Genesis (this field distinguishes rollup consumers from
-  Cosmos consumers)
+  deployed on Babylon Genesis (this field distinguishes rollup BSN from
+  Cosmos BSN consumers)
 - `BabylonRewardsCommission`: The commission rate that Babylon Genesis will
   automatically deduct from reward distributions
 
@@ -263,7 +357,7 @@ Babylon Genesis validates that the finality contract exists on-chain
 and stores the rollup's metadata, including the commission rate and contract
 address.
 
-The rollup chain must implement its own bridge infrastructure to transfer
+The rollup must implement its own bridge infrastructure to transfer
 reward tokens from the rollup to Babylon Genesis. Babylon Genesis doesn't
 provide bridging mechanisms - it simply requires that reward tokens be
 available in the sender's account before transaction submission. The bridge
@@ -271,17 +365,19 @@ must handle cross-chain communication, finality requirements, and security
 measures like multi-signature schemes.
 
 Once tokens are bridged, the rollup submits a `MsgAddBsnRewards` transaction 
-using their registered rollup chain ID as the `BsnConsumerId`, following the 
+using their registered rollup ID as the `BsnConsumerId`, following the 
 same process as described in section 2.4.
 
-### 3.2. Cosmos BSNs
+### 3.2. Cosmos BSN Consumers
 
-Cosmos SDK-based BSNs use IBC transfers with specialised callback mechanisms
+Cosmos SDK-based BSN consumers use IBC transfers with specialised callback 
+mechanisms
 to distribute rewards without requiring external bridge infrastructure.
 
-Cosmos consumers register by providing an IBC client ID as their `ConsumerId`.
+Cosmos BSN consumer register by providing an IBC client ID as their 
+`ConsumerId`.
 Babylon Genesis validates that the corresponding IBC light client exists
-and stores the consumer's commission rate.
+and stores the consumer commission rate.
 
 Instead of external bridging, Cosmos BSN consumers use standard IBC transfers 
 with
