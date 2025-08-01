@@ -193,5 +193,6 @@ func NewIntMaxSupply() sdkmath.Int {
 	if !ok {
 		panic("int string max supply failed")
 	}
+
 	return maxSupply
 }

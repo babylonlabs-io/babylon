@@ -473,7 +473,7 @@ func FuzzCheckAddFinalityProviderStaked(f *testing.F) {
 		require.NoError(t, err)
 		require.Equal(t, currentRwdFp2.TotalActiveSat.String(), amtAddedToFp2.String())
 		require.Equal(t, currentRwdFp2.Period, uint64(1))
-		require.Equal(t, currentRwdFp2.CurrentRewards.String(), rwdOnFp2.String())
+		require.Equal(t, currentRwdFp2.CurrentRewards.QuoInt(types.DecimalRewards).String(), rwdOnFp2.String())
 	})
 }
 

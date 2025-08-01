@@ -468,18 +468,21 @@ func TestMathOverflowAddFinalityProviderRewardsForBtcDelegations(t *testing.T) {
 	k, ctx := NewKeeperWithCtx(t)
 	fp, del := datagen.GenRandomAddress(), datagen.GenRandomAddress()
 
-	maxSupply, ok := sdkmath.NewIntFromString("115792089237316195423570985008687907853269984665640564039457584007913129639935")
-	require.True(t, ok)
-
 	err := k.BtcDelegationActivated(ctx, fp, del, sdkmath.NewIntFromUint64(10))
 	require.NoError(t, err)
 
-	denom := datagen.GenRandomDenom(r)
-	rewards := sdk.NewCoins(sdk.NewCoin(denom, maxSupply))
+	rewards := datagen.GenRandomCoinsMaxSupply(r)
 	err = k.AddFinalityProviderRewardsForBtcDelegations(ctx, fp, rewards)
+	require.EqualError(t, err, sdkmath.ErrIntOverflow.Error())
+
+	fpCurrRwds, err := k.GetFinalityProviderCurrentRewards(ctx, fp)
 	require.NoError(t, err)
 
-	rewards = sdk.NewCoins(sdk.NewCoin(denom, sdkmath.OneInt()))
+	fpCurrRwds.CurrentRewards = rewards
+	err = k.SetFinalityProviderCurrentRewards(ctx, fp, fpCurrRwds)
+	require.NoError(t, err)
+
+	rewards = sdk.NewCoins(sdk.NewCoin(rewards.GetDenomByIndex(0), sdkmath.OneInt()))
 	err = k.AddFinalityProviderRewardsForBtcDelegations(ctx, fp, rewards)
 	require.EqualError(t, err, types.ErrInvalidAmount.Wrapf("math overflow: %s", "integer overflow").Error())
 }
@@ -520,14 +523,29 @@ func TestMathOverflowIncrementFinalityProviderPeriod(t *testing.T) {
 	k, ctx := NewKeeperWithCtx(t)
 	fp := datagen.GenRandomAddress()
 
-	fpCurrentRwd := datagen.GenRandomFinalityProviderCurrentRewards(r)
-	fpCurrentRwd.CurrentRewards = datagen.GenRandomCoinsMaxSupply(r)
+	// initializes the fp current and historical
+	period, err := k.IncrementFinalityProviderPeriod(ctx, fp)
+	require.NoError(t, err)
+	require.Equal(t, uint64(1), period)
 
-	err := k.SetFinalityProviderCurrentRewards(ctx, fp, fpCurrentRwd)
+	// sets to max supply
+	fpCurrentRwd, err := k.GetFinalityProviderCurrentRewards(ctx, fp)
 	require.NoError(t, err)
 
-	period, err := k.IncrementFinalityProviderPeriod(ctx, fp)
-	require.Equal(t, uint64(0), period)
+	fpCurrentRwd.TotalActiveSat = datagen.RandomMathInt(r, 20).AddRaw(1)
+	fpCurrentRwd.CurrentRewards = datagen.GenRandomCoinsMaxSupply(r)
+	err = k.SetFinalityProviderCurrentRewards(ctx, fp, fpCurrentRwd)
+	require.NoError(t, err)
+
+	// tries to increment a new period and should not overflow
+	// as the reward decimals are already at the add bsn part
+	period, err = k.IncrementFinalityProviderPeriod(ctx, fp)
+	require.Equal(t, uint64(1), period, "ended period is expected to be 1 again")
+	require.NoError(t, err)
+
+	amtToAdd := sdkmath.NewIntFromUint64(18440000000000000000).MulRaw(199990000000000000).MulRaw(199990000000000000).MulRaw(199990000000000000)
+	coinToAdd := sdk.NewCoins(sdk.NewCoin(fpCurrentRwd.CurrentRewards.GetDenomByIndex(0), amtToAdd))
+	err = k.AddFinalityProviderRewardsForBtcDelegations(ctx, fp, coinToAdd)
 	require.EqualError(t, err, sdkmath.ErrIntOverflow.Error())
 }
 
@@ -623,7 +641,7 @@ func TestIncrementFinalityProviderPeriod(t *testing.T) {
 
 	err = k.AddFinalityProviderRewardsForBtcDelegations(ctx, fp1, rwdAddedToPeriod1)
 	require.NoError(t, err)
-	checkFpCurrentRwd(t, ctx, k, fp1, fp1EndedPeriod, rwdAddedToPeriod1, satsDelegated)
+	checkFpCurrentRwd(t, ctx, k, fp1, fp1EndedPeriod, rwdAddedToPeriod1.MulInt(types.DecimalRewards), satsDelegated)
 
 	fp1EndedPeriod, err = k.IncrementFinalityProviderPeriod(ctx, fp1)
 	require.NoError(t, err)
