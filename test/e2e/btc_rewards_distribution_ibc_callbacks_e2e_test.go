@@ -475,7 +475,7 @@ func (s *IbcCallbackBsnAddRewards) Test6SendBsnRewardsCallbackWithNativeToken() 
 		s.Require().NoError(err)
 
 		ibcTransferTxHash := bsnNode.SendIBCTransfer(s.bsnSenderAddr, s.bbnIbcCallbackReceiverAddr, callbackMemoString, ibcBabylonNativeTokenTransferInBsn)
-		bsnNode.WaitForNextBlocks(15)
+		bsnNode.WaitForNextBlocks(2)
 
 		ibcTxRes, ibcTx, err := bsnNode.QueryTxWithError(ibcTransferTxHash)
 		s.Require().NoError(err)
