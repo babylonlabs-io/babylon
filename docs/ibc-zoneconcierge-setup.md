@@ -52,12 +52,12 @@ contract](https://github.com/babylonlabs-io/cosmos-bsn-contracts/tree/main/contr
 deployed on the Cosmos BSN.
 
 **BSN Registration Requirement:** A Cosmos BSN must be registered in Babylon's
-consumer registry before establishing an associated Zone
-Concierge IBC channel. The consumer ID is the BSN's IBC light client ID on
-Babylon. The IBC relayer operator can verify the registration with `babylond
-query btcstkconsumer registered-consumer $IBC_LIGHT_CLIENT_ID` before creating a
-Zone Concierge IBC channel. Creating an IBC channel associated with an
-unregistered BSN will be rejected by the Zone Concierge module. Please refer to
+consumer registry before establishing an associated Zone Concierge IBC channel.
+The consumer ID is the BSN's IBC light client ID on Babylon. The IBC relayer
+operator can verify the registration with `babylond query btcstkconsumer
+registered-consumer $IBC_LIGHT_CLIENT_ID` before creating a Zone Concierge IBC
+channel. Creating an IBC channel associated with an unregistered BSN will be
+rejected by the Zone Concierge module. Please refer to
 [x/btcstkconsumer/README.md](../x/btcstkconsumer/README.md) for more details.
 
 ## Useful Documentations
