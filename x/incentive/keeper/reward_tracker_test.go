@@ -390,6 +390,7 @@ func FuzzCheckAddFinalityProviderRewardsForBtcDelegations(f *testing.F) {
 		fp := datagen.GenRandomAddress()
 
 		coinsAdded := datagen.GenRandomCoins(r)
+		coinsAddedWithDecimals := coinsAdded.MulInt(types.DecimalRewards)
 		// add rewards without initiliaze should error out
 		err := k.AddFinalityProviderRewardsForBtcDelegations(ctx, fp, coinsAdded)
 		require.EqualError(t, err, types.ErrFPCurrentRewardsNotFound.Error())
@@ -406,15 +407,16 @@ func FuzzCheckAddFinalityProviderRewardsForBtcDelegations(f *testing.F) {
 
 		currentRwd, err := k.GetFinalityProviderCurrentRewards(ctx, fp)
 		require.NoError(t, err)
-		require.Equal(t, coinsAdded.String(), currentRwd.CurrentRewards.String())
+		require.Equal(t, coinsAddedWithDecimals.String(), currentRwd.CurrentRewards.String())
 
 		// adds again the same amounts
 		err = k.AddFinalityProviderRewardsForBtcDelegations(ctx, fp, coinsAdded)
 		require.NoError(t, err)
 
+		// check that twice the coins added are there
 		currentRwd, err = k.GetFinalityProviderCurrentRewards(ctx, fp)
 		require.NoError(t, err)
-		require.Equal(t, coinsAdded.MulInt(sdkmath.NewInt(2)).String(), currentRwd.CurrentRewards.String())
+		require.Equal(t, coinsAddedWithDecimals.MulInt(sdkmath.NewInt(2)).String(), currentRwd.CurrentRewards.String())
 	})
 }
 
@@ -437,7 +439,7 @@ func FuzzCheckIncrementFinalityProviderPeriod(f *testing.F) {
 		err = k.SetFinalityProviderCurrentRewards(ctx, fp, fpCurrentRwd)
 		require.NoError(t, err)
 
-		amtRwdInHistorical := fpCurrentRwd.CurrentRewards.MulInt(types.DecimalRewards).QuoInt(sdkmath.NewInt(2))
+		amtRwdInHistorical := fpCurrentRwd.CurrentRewards.QuoInt(sdkmath.NewInt(2))
 		err = k.setFinalityProviderHistoricalRewards(ctx, fp, fpCurrentRwd.Period-1, types.NewFinalityProviderHistoricalRewards(amtRwdInHistorical))
 		require.NoError(t, err)
 
@@ -448,7 +450,7 @@ func FuzzCheckIncrementFinalityProviderPeriod(f *testing.F) {
 		historicalEndedPeriod, err := k.GetFinalityProviderHistoricalRewards(ctx, fp, endedPeriod)
 		require.NoError(t, err)
 
-		expectedHistoricalRwd := amtRwdInHistorical.Add(fpCurrentRwd.CurrentRewards.MulInt(types.DecimalRewards).QuoInt(fpCurrentRwd.TotalActiveSat)...)
+		expectedHistoricalRwd := amtRwdInHistorical.Add(fpCurrentRwd.CurrentRewards.QuoInt(fpCurrentRwd.TotalActiveSat)...)
 		require.Equal(t, historicalEndedPeriod.CumulativeRewardsPerSat.String(), expectedHistoricalRwd.String())
 
 		newFPCurrentRwd, err := k.GetFinalityProviderCurrentRewards(ctx, fp)
