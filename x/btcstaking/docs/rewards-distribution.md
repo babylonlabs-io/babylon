@@ -7,7 +7,6 @@
     4. [Key Terminology](#14-key-terminology)
     5. [Rewards Distribution Flow](#15-rewards-distribution-flow)
     6. [Module Overview](#16-module-overview)
-    7. [Distribution Flows](#17-distribution-flows)
 2. [Rewards Protocol](#2-rewards-protocol)
     1. [Core Distribution Function](#21-core-distribution-function)
     2. [Babylon Genesis Fee Collection and Storage](#22-babylon-genesis-fee-collection-and-storage)
@@ -23,22 +22,14 @@
 ### 1.1. What is BSN Rewards Distribution?
 
 When you stake Bitcoin through Babylon, you're helping secure other
-networks by delegating your Bitcoin to finality providers. In return for this 
-service, these consumer BSNs pay rewards to participants in the staking 
+networks by delegating your Bitcoin to finality providers. In return for this
+service, these consumer BSNs pay rewards to participants in the staking
 ecosystem.
 
-Here's how the rewards flow works:
-
-1. BSN consumers (like rollups or Cosmos SDKs) accumulate rewards
-   for the security services provided by Bitcoin stakers
-2. These BSN consumers send their reward tokens to Babylon Genesis for distribution
-3. Babylon Genesis automatically deducts a small commission (set when the
-   consumer BSN registers) to fund protocol operations
-4. The remaining rewards are distributed proportionally among:
-   - **Finality providers**: Who receive commission for operating infrastructure
-   and validating
-   - **Bitcoin stakers**: Who receive rewards proportional to their stake amount
-   and delegation choices
+The rewards distribution process connects BSN consumers (like rollups or
+Cosmos networks) with Bitcoin stakers and finality providers, ensuring all
+participants receive proportional compensation for their contributions to
+network security.
 
 ### 1.2. Who Gets Rewards?
 
@@ -110,18 +101,6 @@ integrates with several other Babylon modules:
   commission rates
 - `IBC Callback Middleware`: Processes IBC transfers with reward
   distribution instructions
-
-### 1.7. Distribution Flows
-
-There are two distinct flows for initiating the rewards distribution, each
-relevant for different types of consumers:
-
-1.  **Direct Message Invocation**: This flow is triggered by processing the
-    `MsgAddBsnRewards` message. See
-    [Submitting rewards through transactions](#24-submitting-rewards-through-msgaddbsnrewards).
-2.  **IBC Transfer**: This flow is initiated when an IBC transfer with a
-    specific memo field is received. See
-    [Submitting rewards through IBC](#25-submitting-rewards-through-ibc).
 
 **Target Audience**: This document is intended as a technical reference for
 developers implementing BSN reward distribution systems. This includes BSN
