@@ -6,14 +6,14 @@
 - [Useful Documentations](#useful-documentations)
 
 This page provides instructions for setting up a Zone Concierge IBC channel
-between Babylon's [ZoneConcierge module](../x/zoneconcierge/) and [Cosmos BSN
-contracts](https://github.com/babylonlabs-io/cosmos-bsn-contracts) deployed on
-Cosmos Bitcoin Supercharged Networks (BSNs) for BTC staking integration.
+between Babylon Genesis' [ZoneConcierge module](../x/zoneconcierge/) and [Cosmos
+BSN contracts](https://github.com/babylonlabs-io/cosmos-bsn-contracts) deployed
+on Cosmos Bitcoin Supercharged Networks (BSNs) for BTC staking integration.
 
 ## Overview
 
-The Zone Concierge module is an IBC-enabled module. It serves as Babylon's
-gateway for communicating with BSNs. It leverages the IBC protocol to
+The Zone Concierge module is an IBC-enabled module. It serves as Babylon
+Genesis' gateway for communicating with BSNs. It leverages the IBC protocol to
 synchronise information and provide BTC staking security for BSNs. For detailed
 technical information of the Zone Concierge module, refer to
 [`x/zoneconcierge/README.md`](../x/zoneconcierge/README.md).
@@ -22,13 +22,13 @@ technical information of the Zone Concierge module, refer to
 
 The Zone Concierge module involves the following IBC packets.
 
-**Outbound Packets (Babylon → BSN):**
+**Outbound Packets (Babylon Genesis → BSN):**
 
 - `BTCHeaders` - BTC headers
 - `BTCTimestamp` - BTC timestamps for BTC headers
 - `BTCStakingIBCPacket` - BTC staking events related to BSNs
 
-**Inbound Packets (BSN → Babylon):**
+**Inbound Packets (BSN → Babylon Genesis):**
 
 - `BSNSlashingIBCPacket` - Slashing evidences from BSNs
 - `BSNBaseBTCHeaderIBCPacket` - Base BTC headers from BSNs
@@ -42,7 +42,7 @@ The IBC communication uses the following configuration:
 
 | Setting | Value |
 |---------|-------|
-| **Port at Babylon** | `zoneconcierge` |
+| **Port at Babylon Genesis** | `zoneconcierge` |
 | **Port at BSN** | `wasm.$BABYLON_CONTRACT_ADDRESS` |
 | **Channel Ordering** | `ORDERED` |
 | **Protocol Version** | `zoneconcierge-1` |
@@ -51,13 +51,13 @@ Here `$BABYLON_CONTRACT_ADDRESS` is the address of the [Babylon
 contract](https://github.com/babylonlabs-io/cosmos-bsn-contracts/tree/main/contracts/babylon)
 deployed on the Cosmos BSN.
 
-**BSN Registration Requirement:** A Cosmos BSN must be registered in Babylon's
-consumer registry before establishing an associated Zone Concierge IBC channel.
-The consumer ID is the BSN's IBC light client ID on Babylon. The IBC relayer
-operator can verify the registration with `babylond query btcstkconsumer
-registered-consumer $IBC_LIGHT_CLIENT_ID` before creating a Zone Concierge IBC
-channel. Creating an IBC channel associated with an unregistered BSN will be
-rejected by the Zone Concierge module. Please refer to
+**BSN Registration Requirement:** A Cosmos BSN must be registered in Babylon
+Genesis' consumer registry before establishing an associated Zone Concierge IBC
+channel. The consumer ID is the BSN's IBC light client ID on Babylon Genesis.
+The IBC relayer operator can verify the registration with `babylond query
+btcstkconsumer registered-consumer $IBC_LIGHT_CLIENT_ID` before creating a Zone
+Concierge IBC channel. Creating an IBC channel associated with an unregistered
+BSN will be rejected by the Zone Concierge module. Please refer to
 [x/btcstkconsumer/README.md](../x/btcstkconsumer/README.md) for more details.
 
 ## Useful Documentations
