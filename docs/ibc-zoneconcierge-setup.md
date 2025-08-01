@@ -5,7 +5,7 @@
 - [IBC Channel Information](#ibc-channel-information)
 - [Useful Documentations](#useful-documentations)
 
-This page provides instructions for setting up a Zone Conceirge IBC channel
+This page provides instructions for setting up a Zone Concierge IBC channel
 between Babylon's [ZoneConcierge module](../x/zoneconcierge/) and [Cosmos BSN
 contracts](https://github.com/babylonlabs-io/cosmos-bsn-contracts) deployed on
 Cosmos Bitcoin Supercharged Networks (BSNs) for BTC staking integration.
