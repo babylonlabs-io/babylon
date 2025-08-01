@@ -183,7 +183,7 @@ system. The BTC staking module ensures that:
 - All rewards follow the F1 distribution algorithm for accurate tracking
 
 *For detailed information about querying and withdrawing rewards, please refer
-to the [`x/incentive` module documentation](../incentive/README.md), as
+to the [`x/incentive` module documentation](../../incentive/README.md), as
 the actual reward management is handled there.*
 
 ### 2.4. Submitting rewards through `MsgAddBsnRewards`
