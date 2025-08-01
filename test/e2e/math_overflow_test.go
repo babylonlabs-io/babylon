@@ -82,7 +82,7 @@ func (s *MathOverflowTest) Test1OverflowNoSlashing() {
 	s.NoError(err)
 	s.valAccAddrB = nodeB.WalletName
 
-	denomA := initialization.TestDenom
+	denomA := "ubbn"
 	maxSupply := datagen.NewIntMaxSupply()
 	transferCoin := sdk.NewCoin(denomA, maxSupply)
 
