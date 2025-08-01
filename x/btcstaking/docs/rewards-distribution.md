@@ -20,13 +20,13 @@
 
 ### 1.1. What is BSN Rewards Distribution?
 
-When you stake Bitcoin through Babylon, you're helping secure other
-networks by delegating your Bitcoin to finality providers. In return for this
+When you stake BTC through Babylon, you're helping secure other
+networks by delegating your BTC to finality providers. In return for this
 service, these consumer BSNs pay rewards to participants in the staking
 ecosystem.
 
 The rewards distribution process connects BSN consumers (like rollups or
-Cosmos networks) with Bitcoin stakers and finality providers, ensuring all
+Cosmos networks) with BTC stakers and finality providers, ensuring all
 participants receive proportional compensation for their contributions to
 network security.
 
@@ -34,7 +34,7 @@ network security.
 
 The rewards distribution involves several participants:
 
-- **Bitcoin Stakers**: Individuals who have staked their Bitcoin through Babylon
+- **Bitcoin Stakers**: Individuals who have staked their BTC through Babylon
     earn rewards proportional to their stake
 - **Finality Providers**: Operators who run infrastructure and validate on
    behalf of consumer BSNs, earning both commission from their delegators and
@@ -51,9 +51,9 @@ Below are a list of key terms regarding rewards distribution
   distributed proportionally among participants. It ensures accurate reward
   calculations even when participants join or leave at different times.
 - **BSN Consumers**: Blockchain networks (like rollups or Cosmos
-  networks) that register with Babylon Genesis to receive Bitcoin staking
+  networks) that register with Babylon Genesis to receive BTC staking
   security services. These BSN consumers pay rewards in exchange for the security
-  provided by Bitcoin stakers.
+  provided by BTC stakers.
 - **Multi-Chain Support**: The ability to handle reward distributions from
   many different consumer BSNs through a single, unified system on Babylon Genesis.
 - **Flexible Invocation**: Rewards can be submitted and processed through
@@ -68,7 +68,7 @@ The following diagram illustrates how rewards flow through Babylon Genesis.
 **Flow Explanation:**
 
 1. BSN consumers (rollups or Cosmos networks) accumulate rewards for
-   Bitcoin staking security services
+   BTC staking security services
 2. BSN consumers submit rewards through either:
    - **Direct transactions** (`MsgAddBsnRewards`) for rollups
    - **IBC transfers** with callback memos for Cosmos networks
@@ -77,7 +77,7 @@ The following diagram illustrates how rewards flow through Babylon Genesis.
 4. Babylon Genesis automatically deducts its commission percentage before
    distribution
 5. The F1 algorithm distributes remaining rewards proportionally among
-   finality providers and their Bitcoin staker delegators
+   finality providers and their BTC staker delegators
 
 ### 1.5. Module overview
 
