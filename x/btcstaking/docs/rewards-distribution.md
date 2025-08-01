@@ -80,17 +80,13 @@ The following diagram illustrates how rewards flow through Babylon Genesis.
 
 1. BSN consumers (rollups or Cosmos networks) accumulate rewards for
    Bitcoin staking security services
-
 2. BSN consumers submit rewards through either:
    - **Direct transactions** (`MsgAddBsnRewards`) for rollups
    - **IBC transfers** with callback memos for Cosmos networks
-
 3. The `x/btcstaking` module processes rewards, validates consumer
    registration, and transfers funds to the `x/incentive` module
-
 4. Babylon Genesis automatically deducts its commission percentage before
    distribution
-
 5. The F1 algorithm distributes remaining rewards proportionally among
    finality providers and their Bitcoin staker delegators
 
