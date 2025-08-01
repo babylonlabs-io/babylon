@@ -12,8 +12,8 @@
     3. [Querying, withdrawing rewards](#23-querying-withdrawing-rewards)
     4. [Submitting rewards through transactions](#24-submitting-rewards-through-msgaddbsnrewards)
     5. [Submitting rewards through IBC](#25-submitting-rewards-through-ibc)
-3. [Rollup BSN Consumers](#3-rollup-bsn-consumers)
-    1. [Bridge funds, transfer using tx](#31-bridge-funds-transfer-using-tx)
+3. [BSN Consumer Types](#3-bsn-consumer-types)
+    1. [Rollup BSN Consumers](#31-rollup-bsn-consumers)
     2. [Cosmos BSN Consumers](#32-cosmos-bsn-consumers)
 
 ## 1. Introduction
@@ -304,9 +304,18 @@ triggers the same `AddBsnRewards` processing as direct transactions.
 > logic as direct `MsgAddBsnRewards` transactions, ensuring consistent
 > behavior across both submission methods.
 
-## 3. Rollup BSN Consumers
+## 3. BSN Consumer Types
 
-### 3.1. Bridge funds, transfer using tx
+BSN consumers can be implemented as either rollup-based or Cosmos SDK-based systems, each with different reward submission mechanisms:
+
+| Aspect               | Rollup BSN Consumer    | Cosmos BSN Consumer      |
+| -------------------- | ---------------------- | ------------------------ |
+| Registration message | `MsgRegisterConsumer`  | `MsgRegisterConsumer`    |
+| Reward submission    | `MsgAddBsnRewards` tx  | IBC Transfer + memo      |
+| Bridge requirement   | External bridge needed | Native IBC transport     |
+| Callback mechanism   | –                      | JSON memo + IBC callback |
+
+### 3.1. Rollup BSN Consumers
 
 Rollup BSN consumers follow a transaction-based reward distribution model that 
 requires
