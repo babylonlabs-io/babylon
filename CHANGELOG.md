@@ -130,7 +130,11 @@ command to modify `max-finality-providers` parameter.
 - [#1450](https://github.com/babylonlabs-io/babylon/pull/1450) Align v3 test
 - [#1456](https://github.com/babylonlabs-io/babylon/pull/1456) Update logic in upgrade handler to include new module params
 - [#1464](https://github.com/babylonlabs-io/babylon/pull/1464) Fix flaky e2e rewards test.
+<<<<<<< HEAD
 - [#1460](https://github.com/babylonlabs-io/babylon/pull/1460) Add staking amount change restriction in multi-staking
+=======
+- [#1468](https://github.com/babylonlabs-io/babylon/pull/1468) Update multi-staking allow-list docs.
+>>>>>>> 8655eaf (chore(docs): update multi-staking allow-list (#1468))
 
 ### State Machine Breaking
 
