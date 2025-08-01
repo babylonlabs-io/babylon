@@ -16,6 +16,42 @@ import (
 	"github.com/babylonlabs-io/babylon/v3/x/incentive/types"
 )
 
+func FuzzIterateFpCurrentRewards(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		t.Parallel()
+		r := rand.New(rand.NewSource(seed))
+
+		k, ctx := NewKeeperWithCtx(t)
+
+		numOfFps := datagen.GenRandomEpochNum(r) + 1
+		fpCreated := make(map[string]types.FinalityProviderCurrentRewards, numOfFps)
+		for fpNum := 0; fpNum < int(numOfFps); fpNum++ {
+			fp := datagen.GenRandomAddress()
+
+			fpCurrRwds := datagen.GenRandomFinalityProviderCurrentRewards(r)
+			err := k.SetFinalityProviderCurrentRewards(ctx, fp, fpCurrRwds)
+			require.NoError(t, err)
+
+			fpCreated[fp.String()] = fpCurrRwds
+		}
+
+		err := k.IterateFpCurrentRewards(ctx, func(fp sdk.AccAddress, fpCurrRwds types.FinalityProviderCurrentRewards) error {
+			fpAddr := fp.String()
+			fpCurrRwdsInMap, ok := fpCreated[fpAddr]
+			require.True(t, ok)
+
+			require.EqualValues(t, fpCurrRwdsInMap, fpCurrRwds)
+
+			delete(fpCreated, fpAddr)
+			return nil
+		})
+		require.NoError(t, err)
+		require.Len(t, fpCreated, 0, "should have pass all the fps in the created map")
+	})
+}
+
 func FuzzCheckBtcDelegationActivated(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 

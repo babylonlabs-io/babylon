@@ -511,6 +511,10 @@ func TestMathOverflowCalculateBTCDelegationRewards(t *testing.T) {
 	err = k.setFinalityProviderHistoricalRewards(ctx, fp, endPeriod, endHist)
 	require.NoError(t, err)
 
+	// calculate the delegation rewards returns overflow in extreme cases where the
+	// btc delegation has an huge (max supply) value of active sats.
+	// This case in reality should never happen as there is only 21kk * 100kk sats
+	// available in the entire Bitcoin chain.
 	rwd, err := k.CalculateBTCDelegationRewards(ctx, fp, del, endPeriod)
 	require.Equal(t, rwd, sdk.Coins{})
 	require.EqualError(t, err, sdkmath.ErrIntOverflow.Error())
@@ -537,16 +541,19 @@ func TestMathOverflowIncrementFinalityProviderPeriod(t *testing.T) {
 	err = k.SetFinalityProviderCurrentRewards(ctx, fp, fpCurrentRwd)
 	require.NoError(t, err)
 
-	// tries to increment a new period and should not overflow
-	// as the reward decimals are already at the add bsn part
+	// increments a new period and should not overflow
+	// as the reward decimals are already at current fp rewards
 	period, err = k.IncrementFinalityProviderPeriod(ctx, fp)
 	require.Equal(t, uint64(1), period, "ended period is expected to be 1 again")
 	require.NoError(t, err)
 
-	amtToAdd := sdkmath.NewIntFromUint64(18440000000000000000).MulRaw(199990000000000000).MulRaw(199990000000000000).MulRaw(199990000000000000)
-	coinToAdd := sdk.NewCoins(sdk.NewCoin(fpCurrentRwd.CurrentRewards.GetDenomByIndex(0), amtToAdd))
+	// sets again to the max supply to try to add a single unit of denom as rewards
+	err = k.SetFinalityProviderCurrentRewards(ctx, fp, fpCurrentRwd)
+	require.NoError(t, err)
+	coinToAdd := sdk.NewCoins(sdk.NewCoin(fpCurrentRwd.CurrentRewards.GetDenomByIndex(0), sdkmath.OneInt()))
+	// it should reject it with math overflow
 	err = k.AddFinalityProviderRewardsForBtcDelegations(ctx, fp, coinToAdd)
-	require.EqualError(t, err, sdkmath.ErrIntOverflow.Error())
+	require.EqualError(t, err, types.ErrInvalidAmount.Wrapf("math overflow: %v", sdkmath.ErrIntOverflow).Error())
 }
 
 func FuzzCheckInitializeBTCDelegation(f *testing.F) {

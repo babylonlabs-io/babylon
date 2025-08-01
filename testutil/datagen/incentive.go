@@ -12,9 +12,9 @@ import (
 )
 
 const (
+	denomLen          = 5
 	characters        = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	LegacyDecMaxValue = "115792089237316195423570985008687907853269984665640564039457584007913129639935"
-	denomLen          = 5
 )
 
 func GenRandomDenom(r *rand.Rand) string {
@@ -167,6 +167,8 @@ func GenRandomFPHistRwd(r *rand.Rand) itypes.FinalityProviderHistoricalRewards {
 	return itypes.NewFinalityProviderHistoricalRewards(rwd)
 }
 
+// GenRandomFPHistRwdWithDecimals generates the FP historical with rewards.
+// Note: The current rewards structure already should contain the decimal multiplication
 func GenRandomFPHistRwdWithDecimals(r *rand.Rand) itypes.FinalityProviderHistoricalRewards {
 	rwd := GenRandomFPHistRwd(r)
 	rwd.CumulativeRewardsPerSat = rwd.CumulativeRewardsPerSat.MulInt(itypes.DecimalRewards)

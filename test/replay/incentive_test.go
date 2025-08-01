@@ -143,20 +143,12 @@ func TestAddBsnRewardsMathOverflow(t *testing.T) {
 	require.NoError(t, err)
 	d.GenerateNewBlockAssertExecutionSuccess()
 
-	// By updating the fp current rewards to have the decimals, the error of int overflow would be thrown
-	// when the user send the message, by returning an error and invalidating the adition of rewards.
+	// FP current rewards now have the decimals, the error of int overflow should be thrown
+	// when the user send the message, by generating an error of integer overflow when
+	// the message is processed.
 	d.AddBsnRewardsFromDriver(consumer0.ID, bsnRewardCoinsMaxSupply, fpRatios)
 	txResults := d.GenerateNewBlockAssertExecutionFailure()
 	require.Len(t, txResults, 1)
 	require.Equal(t, uint32(1133), txResults[0].Code)
 	require.Contains(t, txResults[0].Log, "integer overflow")
-
-	// withdraw the rewards triggers the int overflow because it calls
-	// IncrementFinalityProviderPeriod which multiplies the current rewards of the fp
-	// by the simulated Decimals (1^20) to get more precisions.
-	// staker.WithdrawBtcStakingRewards()
-	// txResults := d.GenerateNewBlockAssertExecutionFailure()
-	// require.Len(t, txResults, 1)
-	// require.Equal(t, uint32(1), txResults[0].Code)
-	// require.Contains(t, txResults[0].Log, "integer overflow")
 }

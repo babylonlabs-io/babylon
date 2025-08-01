@@ -324,15 +324,13 @@ func updateMintGenesis(mintGenState *minttypes.GenesisState) {
 }
 
 func updateStakeGenesis(stakeGenState *staketypes.GenesisState) {
-	// TODO: STAKE PARAMS ARE SET TO VALUES IDENTICAL TO MAINNET
-	minCommissionRate, _ := sdkmath.LegacyNewDecFromStr("0.03")
 	stakeGenState.Params = staketypes.Params{
 		BondDenom:         BabylonDenom,
 		MaxValidators:     100,
 		MaxEntries:        7,
 		HistoricalEntries: 10000,
 		UnbondingTime:     staketypes.DefaultUnbondingTime,
-		MinCommissionRate: minCommissionRate,
+		MinCommissionRate: sdkmath.LegacyMustNewDecFromStr("0.03"),
 	}
 }
 
@@ -376,20 +374,16 @@ func updateGenUtilGenesis(c *internalChain) func(*genutiltypes.GenesisState) {
 	return func(genUtilGenState *genutiltypes.GenesisState) {
 		// generate genesis txs
 		genTxs := make([]json.RawMessage, 0, len(c.nodes))
-		for i, node := range c.nodes {
+		for _, node := range c.nodes {
 			if !node.isValidator {
 				continue
 			}
 
 			stakeAmountCoin := StakeAmountCoinA
 			if c.chainMeta.Id != ChainAID {
-				if i == 2 {
-					// POC: NODE 2 WILL INITIAL STAKE OF 1ubbn
-					stakeAmountCoin = sdk.NewCoin(BabylonDenom, sdkmath.OneInt())
-				} else {
-					stakeAmountCoin = StakeAmountCoinB
-				}
+				stakeAmountCoin = StakeAmountCoinB
 			}
+
 			createValmsg, err := node.buildCreateValidatorMsg(stakeAmountCoin, node.consensusKey)
 			if err != nil {
 				panic("genutil genesis setup failed: " + err.Error())
