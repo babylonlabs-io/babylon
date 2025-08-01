@@ -7,14 +7,15 @@ and information associated with the BTC staking protocol (e.g., finality provide
 The Zone Concierge module synchronises the following information with consumer
 chains via IBC packets:
 
-- **BTC Headers:** Babylon Genesis forwards BTC headers to BSNs to keep their
-  BTC light clients in sync with Babylon's BTC light client. This allows
-  BSNs to independently verify BTC timestamps.
-- **BTC Timestamps:** When a Babylon epoch is finalised, Babylon sends BTC
-  timestamps to BSNs. Each BTC timestamp contains:
-  - The latest BSN header that was checkpointed in the finalised
-    epoch
-  - Recent BTC headers that extend the consumer's BTC light client
+- **BTC Headers:** Babylon Genesis forwards the BTC headers maintained by its
+  BTC light client to BSNs.  
+  This allows BSNs to maintain an image of the Bitcoin chain and verify
+  information included in it through inclusion proofs (e.g., an inclusion proof
+  of a BTC Timestamp containing BSN headers).
+- **BTC Timestamps:** When a Babylon Genesis epoch is finalized, the Babylon
+  Genesis chain sends BTC timestamps to BSNs. Each BTC timestamp contains:
+  - The latest BSN header that was checkpointed in the finalised epoch
+  - Recent BTC headers that extend the BSN's BTC light client
   - The finalised epoch's metadata and raw checkpoint
   - Proofs that the consumer header was included in the epoch and the epoch was
     properly sealed and submitted to Bitcoin
@@ -31,6 +32,7 @@ chains via IBC packets:
   - [LatestEpochHeaders](#latestepochheaders)
   - [FinalizedEpochHeaders](#finalizedepochheaders)
   - [BSNBTCState](#bsnbtcstate)
+  - [BSNBTCState](#bsnbtcstate-1)
   - [Params](#params)
   - [Port](#port)
   - [LastSentBTCSegment](#lastsentbtcsegment)
@@ -51,13 +53,23 @@ chains via IBC packets:
   - [IBC Communication Protocol](#ibc-communication-protocol)
   - [Relaying BTC Headers](#relaying-btc-headers)
   - [Relaying BTC Timestamps](#relaying-btc-timestamps)
-  - [Relaying BTC Staking Events](#relaying-btc-staking-events)
+    - [Triggering timestamp relay](#triggering-timestamp-relay)
+    - [Broadcasting timestamps](#broadcasting-timestamps)
+    - [Assembling timestamps](#assembling-timestamps)
+    - [Cryptographic Proofs](#cryptographic-proofs)
+  - [Propagating BTC Staking Events](#propagating-btc-staking-events)
+    - [Broadcasting staking events](#broadcasting-staking-events)
+    - [Processing event flow](#processing-event-flow)
+    - [Registering consumers](#registering-consumers)
+    - [Handling slashing](#handling-slashing)
 
 <!-- TODO: concept section for describing BTC staking integration -->
 
 ## State
 
-The Zone Concierge module maintains a simplified header indexing system with the following KV stores. Consumer registration is handled by the `btcstkconsumer` module.
+The Zone Concierge module maintains a simplified header indexing system with the
+following KV stores. Consumer registration is handled by the `btcstkconsumer`
+module.
 
 ### Parameters
 
@@ -81,16 +93,16 @@ message Params {
 ### LatestEpochHeaders
 
 The [latest epoch headers storage](./keeper/epoch_header_indexer.go) maintains
-the most recent header received from each BSN during the current epoch. The
-key is the BSN's `ConsumerID`, and the value is an `IndexedHeader` object.
-This storage is cleared at the end of each epoch when headers are moved to the
+the most recent header received from each BSN during the current epoch. The key
+is the BSN's `ConsumerID`, and the value is an `IndexedHeader` object. This
+storage is cleared at the end of each epoch when headers are moved to the
 finalized storage.
 
 ### FinalizedEpochHeaders
 
 The [finalized epoch headers storage](./keeper/epoch_header_indexer.go)
-maintains headers that have been finalized for each BSN and epoch. The key
-is the epoch number plus the BSN's `ConsumerID`, and the value is an
+maintains headers that have been finalized for each BSN and epoch. The key is
+the epoch number plus the BSN's `ConsumerID`, and the value is an
 `IndexedHeaderWithProof` object. The `IndexedHeaderWithProof` contains both the
 header metadata and the inclusion proof.
 
@@ -134,10 +146,10 @@ message IndexedHeaderWithProof {
 
 ### BSNBTCState
 
-The [BSN BTC state storage](./keeper/consumer_btc_state.go) maintains
-unified BTC synchronization state for each BSN. The key is the BSN's
-`ConsumerID`, and the value is a `BSNBTCState` object that tracks the base
-BTC header and last sent BTC header segment for each BSN.
+The [BSN BTC state storage](./keeper/consumer_btc_state.go) maintains unified
+BTC synchronization state for each BSN. The key is the BSN's `ConsumerID`, and
+the value is a `BSNBTCState` object that tracks the base BTC header and last
+sent BTC header segment for each BSN.
 
 ```protobuf
 // BSNBTCState stores per-BSN BTC synchronization state
@@ -221,7 +233,8 @@ executes as follows:
 1. Extract the header info and the client state from the message
 2. Determine if the header is on a fork by checking if the client is frozen
 3. Call `HandleHeaderWithValidCommit` to process the header
-4. Check if the BSN is registered through the `btcstkconsumer` module and is a Cosmos BSN; if not, ignore the header
+4. Check if the BSN is registered through the `btcstkconsumer` module and is a
+   Cosmos BSN; if not, ignore the header
 5. Create an `IndexedHeader` with the header metadata and Babylon context
 6. If the header is not on a fork and is newer than the existing latest header,
    update the latest epoch header for the BSN
@@ -242,7 +255,8 @@ The `AfterEpochEnds` hook is triggered when an epoch is ended, i.e., the last
 block in this epoch has been committed by CometBFT. Upon `AfterEpochEnds`, the
 Zone Concierge will:
 
-1. Record all current latest epoch headers as finalized headers for the completed epoch
+1. Record all current latest epoch headers as finalized headers for the
+   completed epoch
 2. Clear the latest epoch headers to prepare for the next epoch
 
 ### Recording proofs upon `AfterRawCheckpointSealed`
@@ -367,20 +381,20 @@ with Babylon Genesis' BTC light client.
 The header selection logic now uses per-BSN BTC state tracking with the
 following enhanced rules:
 
-- **BSN-specific BTC state**: Each BSN has its own `BSNBTCState`
-  that tracks the base BTC header and last sent segment
-- **No BSN base header**: Falls back to sending the last `w+1` BTC headers
-  from the tip (where `w` is the confirmation depth parameter)
-- **BSN base header exists but no headers sent**: Send headers from the
-  BSN's base header to the current tip
+- **BSN-specific BTC state**: Each BSN has its own `BSNBTCState` that tracks the
+  base BTC header and last sent segment
+- **No BSN base header**: Falls back to sending the last `w+1` BTC headers from
+  the tip (where `w` is the confirmation depth parameter)
+- **BSN base header exists but no headers sent**: Send headers from the BSN's
+  base header to the current tip
 - **Headers previously sent**: Send headers from the child of the most recent
   valid header in the last sent segment to the current tip
 - **Reorg detection**: If no header from the last sent segment is still valid
-  (indicating a Bitcoin reorg), fall back to sending from the BSN's base
-  header to the current tip
+  (indicating a Bitcoin reorg), fall back to sending from the BSN's base header
+  to the current tip
 
-This per-BSN approach provides better efficiency and reorg handling
-compared to the previous global broadcast strategy.
+This per-BSN approach provides better efficiency and reorg handling compared to
+the previous global broadcast strategy.
 
 ### Broadcasting BTC Staking Events
 
@@ -422,8 +436,8 @@ of inbound packets.
 
 The [inbound packet structure](proto/babylon/zoneconcierge/v1/packet.proto) is
 defined as follows. Currently, the Zone Concierge module handles one type of
-incoming packet: `BSNSlashingIBCPacket`. This packet type allows BSNs to
-report slashing evidence for finality providers.
+incoming packet: `BSNSlashingIBCPacket`. This packet type allows BSNs to report
+slashing evidence for finality providers.
 
 ```protobuf
 // InboundPacket represents packets received by Babylon from other chains
@@ -489,15 +503,9 @@ events.
 
 ### IBC Communication Protocol
 
-Channel Configuration:
-- Port: `zoneconcierge`
-- Ordering: `ORDERED`
-- Version: `zoneconcierge-1`
-
-| Packet Direction | Types |
-|-----------------|-------|
-| Outbound | `BTCHeaders`, `BTCTimestamp`, `BTCStakingConsumerEvent` |
-| Inbound | `BSNSlashingIBCPacket` |
+Please refer to
+[docs/ibc-zoneconcierge-setup.md](../../docs/ibc-zoneconcierge-setup.md) for the
+setup of Zone Concierge IBC channel.
 
 ### Relaying BTC Headers
 
