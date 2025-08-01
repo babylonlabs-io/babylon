@@ -6,6 +6,8 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	bbntypes "github.com/babylonlabs-io/babylon/v3/types"
 )
 
 var (
@@ -13,7 +15,7 @@ var (
 	// per sat to latter when giving out the rewards to the gauge, reduce
 	// the decimal points back, currently 20 decimal points are being added
 	// the sdkmath.Int holds a big int which support up to 2^256 integers
-	DecimalAccumulatedRewards, _ = sdkmath.NewIntFromString("100000000000000000000")
+	DecimalRewards, _ = sdkmath.NewIntFromString("100000000000000000000")
 )
 
 // NewEventBtcDelegationActivated returns a new EventPowerUpdate of type activated
@@ -63,7 +65,14 @@ func NewFinalityProviderHistoricalRewards(cumulativeRewardsPerSat sdk.Coins) Fin
 	}
 }
 
+// AddRewards adds the rewards to the FpCurrentRewards and apply the 20 decimal
+// cases to increase precision for the time to calculate the rewards per active satoshi staked
 func (f *FinalityProviderCurrentRewards) AddRewards(coinsToAdd sdk.Coins) error {
+	coinsToAddWithDecimals, err := bbntypes.CoinsSafeMulInt(coinsToAdd, DecimalRewards)
+	if err != nil {
+		return err
+	}
+
 	var panicErr error
 	func() {
 		defer func() {
@@ -71,7 +80,7 @@ func (f *FinalityProviderCurrentRewards) AddRewards(coinsToAdd sdk.Coins) error 
 				panicErr = ErrInvalidAmount.Wrapf("math overflow: %v", r)
 			}
 		}()
-		f.CurrentRewards = f.CurrentRewards.Add(coinsToAdd...)
+		f.CurrentRewards = f.CurrentRewards.Add(coinsToAddWithDecimals...)
 	}()
 	return panicErr
 }

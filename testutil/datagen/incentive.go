@@ -150,7 +150,7 @@ func GenRandomBTCTimestampingRewardDistInfo(r *rand.Rand) *btcctypes.RewardDistI
 }
 
 func GenRandomFinalityProviderCurrentRewards(r *rand.Rand) itypes.FinalityProviderCurrentRewards {
-	rwd := GenRandomCoins(r)
+	rwd := GenRandomCoins(r).MulInt(itypes.DecimalRewards)
 	period := RandomInt(r, 100) + 3
 	activeSatoshi := RandomMathInt(r, 10000).AddRaw(10)
 	return itypes.NewFinalityProviderCurrentRewards(rwd, period, activeSatoshi)
@@ -169,7 +169,7 @@ func GenRandomFPHistRwd(r *rand.Rand) itypes.FinalityProviderHistoricalRewards {
 
 func GenRandomFPHistRwdWithDecimals(r *rand.Rand) itypes.FinalityProviderHistoricalRewards {
 	rwd := GenRandomFPHistRwd(r)
-	rwd.CumulativeRewardsPerSat = rwd.CumulativeRewardsPerSat.MulInt(itypes.DecimalAccumulatedRewards)
+	rwd.CumulativeRewardsPerSat = rwd.CumulativeRewardsPerSat.MulInt(itypes.DecimalRewards)
 	return rwd
 }
 
@@ -193,5 +193,6 @@ func NewIntMaxSupply() sdkmath.Int {
 	if !ok {
 		panic("int string max supply failed")
 	}
+
 	return maxSupply
 }

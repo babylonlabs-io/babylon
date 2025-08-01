@@ -70,10 +70,8 @@ var (
 	StakeAmountCoinA = sdk.NewCoin(BabylonDenom, StakeAmountIntA)
 	StakeAmountIntB  = sdkmath.NewInt(StakeAmountB)
 	StakeAmountCoinB = sdk.NewCoin(BabylonDenom, StakeAmountIntB)
-	// POC: TEST DENOM USED TO OVERFLOW MAX_INT_256
-	TestDenom       = "utest"
-	InitBalanceStrA = fmt.Sprintf("%d%s", BabylonBalanceA, BabylonDenom)
-	InitBalanceStrB = fmt.Sprintf("%d%s", BabylonBalanceB, BabylonDenom)
+	InitBalanceStrA  = fmt.Sprintf("%d%s", BabylonBalanceA, BabylonDenom)
+	InitBalanceStrB  = fmt.Sprintf("%d%s", BabylonBalanceB, BabylonDenom)
 )
 
 func addAccount(path, moniker, amountStr string, accAddr sdk.AccAddress, forkHeight int) error {
@@ -175,7 +173,7 @@ func initGenesis(
 	// initialize a genesis file
 	configDir := chain.nodes[0].configDir()
 
-	for i, val := range chain.nodes {
+	for _, val := range chain.nodes {
 		addr, err := val.keyInfo.GetAddress()
 
 		if err != nil {
@@ -187,19 +185,14 @@ func initGenesis(
 			r := rand.New(rand.NewSource(time.Now().Unix()))
 			initialFundsA := datagen.GenRandomCoins(r).MulInt(sdkmath.NewInt(10))
 			initialFundsA = initialFundsA.Add(sdk.NewCoin(BabylonDenom, sdkmath.NewInt(BabylonBalanceA)))
-			initialFundsAStr := initialFundsA.String()
+			if err := addAccount(configDir, "", initialFundsA.String(), addr, forkHeight); err != nil {
+				return err
+			}
+			continue
+		}
 
-			// POC: NODE 2 WILL HAVE ENTIRE SUPPLY OF TEST TOKEN
-			if i == 2 {
-				initialFundsAStr = fmt.Sprintf("%s,%s%s", initialFundsAStr, datagen.LegacyDecMaxValue, TestDenom)
-			}
-			if err := addAccount(configDir, "", initialFundsAStr, addr, forkHeight); err != nil {
-				return err
-			}
-		} else if chain.chainMeta.Id == ChainBID {
-			if err := addAccount(configDir, "", InitBalanceStrB, addr, forkHeight); err != nil {
-				return err
-			}
+		if err := addAccount(configDir, "", InitBalanceStrB, addr, forkHeight); err != nil {
+			return err
 		}
 	}
 
