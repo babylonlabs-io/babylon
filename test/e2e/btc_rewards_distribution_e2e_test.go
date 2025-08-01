@@ -37,11 +37,7 @@ const (
 	wDel2             = "del2"
 	wFp1              = "fp1"
 	wFp2              = "fp2"
-<<<<<<< HEAD
-	numPubRand        = uint64(450)
-=======
 	numPubRand        = uint64(600)
->>>>>>> 977244e (chore: tryfix flaky e2e rewards (#1464))
 )
 
 type BaseBtcRewardsDistribution struct {
