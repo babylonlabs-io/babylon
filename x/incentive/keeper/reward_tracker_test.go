@@ -263,7 +263,7 @@ func FuzzCheckCalculateBTCDelegationRewardsAndSendToGauge(f *testing.F) {
 
 		expectedRwd := endHist.CumulativeRewardsPerSat.Sub(startHist.CumulativeRewardsPerSat...)
 		expectedRwd = expectedRwd.MulInt(btcRwd.TotalActiveSat)
-		expectedRwd = expectedRwd.QuoInt(types.DecimalAccumulatedRewards)
+		expectedRwd = expectedRwd.QuoInt(types.DecimalRewards)
 
 		rwdGauge := datagen.GenRandomRewardGauge(r)
 		k.SetRewardGauge(ctx, types.BTC_STAKER, del, rwdGauge)
@@ -324,7 +324,7 @@ func FuzzCheckCalculateBTCDelegationRewards(f *testing.F) {
 
 		expectedRwd := endHist.CumulativeRewardsPerSat.Sub(startHist.CumulativeRewardsPerSat...)
 		expectedRwd = expectedRwd.MulInt(btcRwd.TotalActiveSat)
-		expectedRwd = expectedRwd.QuoInt(types.DecimalAccumulatedRewards)
+		expectedRwd = expectedRwd.QuoInt(types.DecimalRewards)
 
 		rwd, err = k.CalculateBTCDelegationRewards(ctx, fp, del, endPeriod)
 		require.NoError(t, err)
@@ -349,7 +349,7 @@ func FuzzCheckCalculateDelegationRewardsBetween(f *testing.F) {
 		})
 
 		historicalStartPeriod := datagen.GenRandomFPHistRwd(r)
-		historicalStartPeriod.CumulativeRewardsPerSat = historicalStartPeriod.CumulativeRewardsPerSat.MulInt(types.DecimalAccumulatedRewards)
+		historicalStartPeriod.CumulativeRewardsPerSat = historicalStartPeriod.CumulativeRewardsPerSat.MulInt(types.DecimalRewards)
 		err := k.setFinalityProviderHistoricalRewards(ctx, fp, btcRwd.StartPeriodCumulativeReward, historicalStartPeriod)
 		require.NoError(t, err)
 
@@ -364,14 +364,14 @@ func FuzzCheckCalculateDelegationRewardsBetween(f *testing.F) {
 
 		// creates a correct historical rewards that has more rewards than the historical
 		historicalEndingPeriod := datagen.GenRandomFPHistRwd(r)
-		historicalEndingPeriod.CumulativeRewardsPerSat = historicalEndingPeriod.CumulativeRewardsPerSat.MulInt(types.DecimalAccumulatedRewards)
+		historicalEndingPeriod.CumulativeRewardsPerSat = historicalEndingPeriod.CumulativeRewardsPerSat.MulInt(types.DecimalRewards)
 		historicalEndingPeriod.CumulativeRewardsPerSat = historicalEndingPeriod.CumulativeRewardsPerSat.Add(historicalStartPeriod.CumulativeRewardsPerSat...)
 		err = k.setFinalityProviderHistoricalRewards(ctx, fp, endingPeriod, historicalEndingPeriod)
 		require.NoError(t, err)
 
 		expectedRewards := historicalEndingPeriod.CumulativeRewardsPerSat.Sub(historicalStartPeriod.CumulativeRewardsPerSat...)
 		expectedRewards = expectedRewards.MulInt(btcRwd.TotalActiveSat)
-		expectedRewards = expectedRewards.QuoInt(types.DecimalAccumulatedRewards)
+		expectedRewards = expectedRewards.QuoInt(types.DecimalRewards)
 
 		delRewards, err := k.calculateDelegationRewardsBetween(ctx, fp, btcRwd, endingPeriod)
 		require.NoError(t, err)
@@ -434,10 +434,10 @@ func FuzzCheckIncrementFinalityProviderPeriod(f *testing.F) {
 		require.Equal(t, endedPeriod, uint64(1))
 
 		fpCurrentRwd := datagen.GenRandomFinalityProviderCurrentRewards(r)
-		err = k.setFinalityProviderCurrentRewards(ctx, fp, fpCurrentRwd)
+		err = k.SetFinalityProviderCurrentRewards(ctx, fp, fpCurrentRwd)
 		require.NoError(t, err)
 
-		amtRwdInHistorical := fpCurrentRwd.CurrentRewards.MulInt(types.DecimalAccumulatedRewards).QuoInt(sdkmath.NewInt(2))
+		amtRwdInHistorical := fpCurrentRwd.CurrentRewards.MulInt(types.DecimalRewards).QuoInt(sdkmath.NewInt(2))
 		err = k.setFinalityProviderHistoricalRewards(ctx, fp, fpCurrentRwd.Period-1, types.NewFinalityProviderHistoricalRewards(amtRwdInHistorical))
 		require.NoError(t, err)
 
@@ -448,7 +448,7 @@ func FuzzCheckIncrementFinalityProviderPeriod(f *testing.F) {
 		historicalEndedPeriod, err := k.GetFinalityProviderHistoricalRewards(ctx, fp, endedPeriod)
 		require.NoError(t, err)
 
-		expectedHistoricalRwd := amtRwdInHistorical.Add(fpCurrentRwd.CurrentRewards.MulInt(types.DecimalAccumulatedRewards).QuoInt(fpCurrentRwd.TotalActiveSat)...)
+		expectedHistoricalRwd := amtRwdInHistorical.Add(fpCurrentRwd.CurrentRewards.MulInt(types.DecimalRewards).QuoInt(fpCurrentRwd.TotalActiveSat)...)
 		require.Equal(t, historicalEndedPeriod.CumulativeRewardsPerSat.String(), expectedHistoricalRwd.String())
 
 		newFPCurrentRwd, err := k.GetFinalityProviderCurrentRewards(ctx, fp)
@@ -521,7 +521,7 @@ func TestMathOverflowIncrementFinalityProviderPeriod(t *testing.T) {
 	fpCurrentRwd := datagen.GenRandomFinalityProviderCurrentRewards(r)
 	fpCurrentRwd.CurrentRewards = datagen.GenRandomCoinsMaxSupply(r)
 
-	err := k.setFinalityProviderCurrentRewards(ctx, fp, fpCurrentRwd)
+	err := k.SetFinalityProviderCurrentRewards(ctx, fp, fpCurrentRwd)
 	require.NoError(t, err)
 
 	period, err := k.IncrementFinalityProviderPeriod(ctx, fp)
@@ -542,7 +542,7 @@ func FuzzCheckInitializeBTCDelegation(f *testing.F) {
 		require.EqualError(t, err, types.ErrFPCurrentRewardsNotFound.Error())
 
 		fpCurrentRwd := datagen.GenRandomFinalityProviderCurrentRewards(r)
-		err = k.setFinalityProviderCurrentRewards(ctx, fp, fpCurrentRwd)
+		err = k.SetFinalityProviderCurrentRewards(ctx, fp, fpCurrentRwd)
 		require.NoError(t, err)
 
 		err = k.initializeBTCDelegation(ctx, fp, del)
@@ -628,7 +628,7 @@ func TestIncrementFinalityProviderPeriod(t *testing.T) {
 	require.Equal(t, fp1EndedPeriod, uint64(1))
 
 	// now the historical that just ended should have as cumulative rewards 4000ubbn 2_000000ubbn/500sats
-	checkFpHistoricalRwd(t, ctx, k, fp1, fp1EndedPeriod, newBaseCoins(4000).MulInt(types.DecimalAccumulatedRewards))
+	checkFpHistoricalRwd(t, ctx, k, fp1, fp1EndedPeriod, newBaseCoins(4000).MulInt(types.DecimalRewards))
 	checkFpCurrentRwd(t, ctx, k, fp1, fp1EndedPeriod+1, sdk.NewCoins(), satsDelegated)
 
 	fp2EndedPeriod, err := k.IncrementFinalityProviderPeriod(ctx, fp2)

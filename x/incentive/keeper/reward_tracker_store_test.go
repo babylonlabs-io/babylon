@@ -276,7 +276,7 @@ func FuzzCheckFinalityProviderCurrentRewards(f *testing.F) {
 		require.EqualError(t, err, types.ErrFPCurrentRewardsNotFound.Error())
 
 		expectedCurrentRwdFp1 := datagen.GenRandomFinalityProviderCurrentRewards(r)
-		err = k.setFinalityProviderCurrentRewards(ctx, fp1, expectedCurrentRwdFp1)
+		err = k.SetFinalityProviderCurrentRewards(ctx, fp1, expectedCurrentRwdFp1)
 		require.NoError(t, err)
 
 		currentRwdFp1, err := k.GetFinalityProviderCurrentRewards(ctx, fp1)
@@ -290,7 +290,7 @@ func FuzzCheckFinalityProviderCurrentRewards(f *testing.F) {
 		require.EqualError(t, err, types.ErrFPCurrentRewardsNotFound.Error())
 
 		// sets a new fp
-		err = k.setFinalityProviderCurrentRewards(ctx, fp2, datagen.GenRandomFinalityProviderCurrentRewards(r))
+		err = k.SetFinalityProviderCurrentRewards(ctx, fp2, datagen.GenRandomFinalityProviderCurrentRewards(r))
 		require.NoError(t, err)
 
 		_, err = k.GetFinalityProviderCurrentRewards(ctx, fp2)
@@ -333,7 +333,7 @@ func FuzzCheckFinalityProviderHistoricalRewards(f *testing.F) {
 		require.NoError(t, err)
 
 		// sets a new current fp rwd to check the delete all
-		err = k.setFinalityProviderCurrentRewards(ctx, fp2, datagen.GenRandomFinalityProviderCurrentRewards(r))
+		err = k.SetFinalityProviderCurrentRewards(ctx, fp2, datagen.GenRandomFinalityProviderCurrentRewards(r))
 		require.NoError(t, err)
 
 		_, err = k.GetFinalityProviderCurrentRewards(ctx, fp2)
@@ -368,7 +368,7 @@ func FuzzCheckSubFinalityProviderStaked(f *testing.F) {
 		require.EqualError(t, err, types.ErrFPCurrentRewardsNotFound.Error())
 
 		fp2Set := datagen.GenRandomFinalityProviderCurrentRewards(r)
-		err = k.setFinalityProviderCurrentRewards(ctx, fp2, fp2Set)
+		err = k.SetFinalityProviderCurrentRewards(ctx, fp2, fp2Set)
 		require.NoError(t, err)
 
 		err = k.subFinalityProviderStaked(ctx, fp2, fp2Set.TotalActiveSat)
@@ -405,7 +405,7 @@ func FuzzCheckSubDelegationSat(f *testing.F) {
 
 		fpCurrentRwd := datagen.GenRandomFinalityProviderCurrentRewards(r)
 		fpCurrentRwd.TotalActiveSat = amtInRwd
-		err = k.setFinalityProviderCurrentRewards(ctx, fp, fpCurrentRwd)
+		err = k.SetFinalityProviderCurrentRewards(ctx, fp, fpCurrentRwd)
 		require.NoError(t, err)
 
 		err = k.subDelegationSat(ctx, fp, del, amtToSub)

@@ -29,7 +29,7 @@ func (k Keeper) AddFinalityProviderRewardsForBtcDelegations(ctx context.Context,
 	if err := fpCurrentRwd.AddRewards(rwd); err != nil {
 		return err
 	}
-	return k.setFinalityProviderCurrentRewards(ctx, fp, fpCurrentRwd)
+	return k.SetFinalityProviderCurrentRewards(ctx, fp, fpCurrentRwd)
 }
 
 // BtcDelegationActivated adds new amount of active satoshi to the delegation
@@ -208,7 +208,7 @@ func (k Keeper) calculateDelegationRewardsBetween(
 
 	// note: necessary to truncate so we don't allow withdrawing more rewardsWithDecimals than owed
 	// QuoInt already truncates
-	rewards := rewardsWithDecimals.QuoInt(types.DecimalAccumulatedRewards)
+	rewards := rewardsWithDecimals.QuoInt(types.DecimalRewards)
 	return rewards, nil
 }
 
@@ -241,11 +241,8 @@ func (k Keeper) IncrementFinalityProviderPeriod(ctx context.Context, fp sdk.AccA
 
 	currentRewardsPerSat := sdk.NewCoins()
 	if !fpCurrentRwd.TotalActiveSat.IsZero() {
-		currentRewardsPerSatWithDecimals, err := bbntypes.CoinsSafeMulInt(fpCurrentRwd.CurrentRewards, types.DecimalAccumulatedRewards)
-		if err != nil {
-			return 0, err
-		}
-
+		// the fp current rewards is already set with decimals
+		currentRewardsPerSatWithDecimals := fpCurrentRwd.CurrentRewards
 		currentRewardsPerSat = currentRewardsPerSatWithDecimals.QuoInt(fpCurrentRwd.TotalActiveSat)
 	}
 
@@ -261,7 +258,7 @@ func (k Keeper) IncrementFinalityProviderPeriod(ctx context.Context, fp sdk.AccA
 
 	// initiates a new period with empty rewards and the same amount of active sat
 	newCurrentRwd := types.NewFinalityProviderCurrentRewards(sdk.NewCoins(), fpCurrentRwd.Period+1, fpCurrentRwd.TotalActiveSat)
-	if err := k.setFinalityProviderCurrentRewards(ctx, fp, newCurrentRwd); err != nil {
+	if err := k.SetFinalityProviderCurrentRewards(ctx, fp, newCurrentRwd); err != nil {
 		return 0, err
 	}
 
@@ -280,7 +277,7 @@ func (k Keeper) initializeFinalityProvider(ctx context.Context, fp sdk.AccAddres
 
 	// set current rewards (starting at period 1)
 	newFp := types.NewFinalityProviderCurrentRewards(sdk.NewCoins(), 1, sdkmath.ZeroInt())
-	return newFp, k.setFinalityProviderCurrentRewards(ctx, fp, newFp)
+	return newFp, k.SetFinalityProviderCurrentRewards(ctx, fp, newFp)
 }
 
 // initializeBTCDelegation creates a new BTCDelegationRewardsTracker from the
