@@ -53,18 +53,26 @@ deployed on the Cosmos BSN.
 
 **BSN Registration Requirement:** A Cosmos BSN must be registered in Babylon
 Genesis' consumer registry before establishing an associated Zone Concierge IBC
-channel; otherwise, *creating an IBC channel associated with an unregistered
-BSN will be rejected by the Zone Concierge module.*
+channel; otherwise, *creating an IBC channel associated with an unregistered BSN
+will be rejected by the Zone Concierge module.*
 
-That is, to integrate with Babylon Genesis as a Cosmos BSN, one needs to do the following in order:
+That is, to integrate with Babylon Genesis as a Cosmos BSN, one needs to do the
+following in order:
 
-- Create an IBC light client or choose an IBC light client that is actively relayed for this Cosmos chain inside Babylon Genesis chain.
-- Register the Cosmos chain as a BSN with the identifier being the ID of the IBC light client.
-  - If Babylon Genesis chain specifies permissionless integration, the registration can be done through `babylond tx btcstkconsumer register-consumer <consumer-id> <name> <description>` where `<consumer-id>` has to be the IBC light client's ID.
-  - If Babylon Genesis chain specifies permissioned integrtaion, the registration requires a governance proposal.
-  - Please refer to
-[x/btcstkconsumer/README.md](../x/btcstkconsumer/README.md) for more details about registering a Cosmos chain as a BSN.
-- Establish the Zone Concierge IBC channel on top of the IBC light client associated with the registered BSN.
+- Create an IBC light client or choose an IBC light client that is actively
+  relayed for this Cosmos chain inside Babylon Genesis chain.
+- Register the Cosmos chain as a BSN with the identifier being the ID of the IBC
+  light client.
+  - If Babylon Genesis chain specifies permissionless integration, the
+    registration can be done through `babylond tx btcstkconsumer
+    register-consumer <consumer-id> <name> <description>` where `<consumer-id>`
+    has to be the IBC light client's ID.
+  - If Babylon Genesis chain specifies permissioned integrtaion, the
+    registration requires a governance proposal.
+  - Please refer to [x/btcstkconsumer/README.md](../x/btcstkconsumer/README.md)
+for more details about registering a Cosmos chain as a BSN.
+- Establish the Zone Concierge IBC channel on top of the IBC light client
+  associated with the registered BSN.
 
 ## Useful Documentations
 
