@@ -81,12 +81,12 @@ flowchart TD
     F -->|Add FPs from<br/>different BSNs| H[Multi-Staking Achieved]
     F -->|Only increase amount<br/>or renew timelock| I[⚠️ Multi-Staking<br/>Right Lost]
 
-    H --> J[Can continue expanding<br/>to more BSNs]
+    H --> J[Can continue expanding<br/>to more BSNs only<br/>no amount changes]
     I --> K[Cannot achieve<br/>multi-staking later]
 
     J --> L{Further Expansion}
-    L -->|Add more BSNs| J
-    L -->|Only amount/timelock| M[Still Multi-Staking<br/>but no new BSNs]
+    L -->|Add more BSNs<br/>and/or renew timelock| J
+    L -->|Try to change amount| M[❌ Not Allowed<br/>during allow-list]
 
     G --> N[Expanded delegation<br/>with Babylon Genesis FP]
 
@@ -114,6 +114,7 @@ When the multi-staking allow-list becomes active, the following rules apply:
 - New delegations cannot be created with multi-staking capabilities.
   New delegations can **only** stake to a Babylon Genesis finality provider.
 - Only stake expansion is permitted to achieve multi-staking
+- Multi-staking delegations are not allowed to change the staked amount during the allow-list period
 - Expansions must follow existing validation rules and security constraints
 
 > **⚡ Important**
