@@ -1,6 +1,13 @@
 # BSN Rewards Distribution on Babylon Genesis
 
 1. [Introduction](#1-introduction)
+    1. [What is BSN Rewards Distribution?](#11-what-is-bsn-rewards-distribution)
+    2. [Who Gets Rewards?](#12-who-gets-rewards)
+    3. [Technical Overview](#13-technical-overview)
+    4. [Key Terminology](#14-key-terminology)
+    5. [Rewards Distribution Flow](#15-rewards-distribution-flow)
+    6. [Module Overview](#16-module-overview)
+    7. [Distribution Flows](#17-distribution-flows)
 2. [Rewards Protocol](#2-rewards-protocol)
     1. [Core Distribution Function](#21-core-distribution-function)
     2. [Babylon Genesis Fee Collection and Storage](#22-babylon-genesis-fee-collection-and-storage)
@@ -90,7 +97,7 @@ The following diagram illustrates how rewards flow through Babylon Genesis.
 5. The F1 algorithm distributes remaining rewards proportionally among
    finality providers and their Bitcoin staker delegators
 
-### 1.6. System Architecture
+### 1.6. Module overview
 
 The rewards distribution is handled by the `x/btcstaking` module and
 integrates with several other Babylon modules:
@@ -99,7 +106,7 @@ integrates with several other Babylon modules:
   and reward distribution
 - `x/incentive`: Handles the F1 fee distribution algorithm and reward
   calculation logic
-- **`x/btcstkconsumer`**: Manages BSN consumer registrations and
+- `x/btcstkconsumer`: Manages BSN consumer registrations and
   commission rates
 - `IBC Callback Middleware`: Processes IBC transfers with reward
   distribution instructions
