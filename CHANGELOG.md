@@ -133,6 +133,7 @@ command to modify `max-finality-providers` parameter.
 - [#1456](https://github.com/babylonlabs-io/babylon/pull/1456) Update logic in upgrade handler to include new module params
 - [#1451](https://github.com/babylonlabs-io/babylon/pull/1451) Add new expected field `taproot_address_staking_output` to test vectors.
 - [#1460](https://github.com/babylonlabs-io/babylon/pull/1460) Add staking amount change restriction in multi-staking
+- [#1464](https://github.com/babylonlabs-io/babylon/pull/1464) Fix flaky e2e rewards test.
 
 ### State Machine Breaking
 
