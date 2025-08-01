@@ -25,7 +25,7 @@ func TestCoinsSafeMulInt(t *testing.T) {
 			coins:      sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(100))),
 			multiplier: sdkmath.ZeroInt(),
 			exp:        nil,
-			expErr:     fmt.Errorf("%s: cannot multiply by zero", types.ErrInvalidAmount),
+			expErr:     fmt.Errorf("%w: cannot multiply coins by zero", types.ErrInvalidAmount),
 		},
 		{
 			title:      "multiply single coin by positive int",
@@ -76,6 +76,20 @@ func TestCoinsSafeMulInt(t *testing.T) {
 			exp:        sdk.Coins{},
 			expErr:     sdkmath.ErrIntOverflow,
 		},
+		{
+			title:      "empty coins with positive multiplier",
+			coins:      sdk.Coins{},
+			multiplier: sdkmath.NewInt(10),
+			exp:        sdk.Coins{},
+			expErr:     nil,
+		},
+		{
+			title:      "coins with zero amounts",
+			coins:      sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.ZeroInt())),
+			multiplier: sdkmath.NewInt(5),
+			exp:        sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.ZeroInt())),
+			expErr:     nil,
+		},
 	}
 
 	for _, tc := range tcs {
@@ -88,6 +102,61 @@ func TestCoinsSafeMulInt(t *testing.T) {
 
 			require.NoError(t, err)
 			require.Equal(t, tc.exp.String(), result.String())
+		})
+	}
+}
+
+func TestSafeNewCoin(t *testing.T) {
+	tcs := []struct {
+		title  string
+		denom  string
+		amount sdkmath.Int
+		expErr bool
+	}{
+		{
+			title:  "valid coin",
+			denom:  appparams.DefaultBondDenom,
+			amount: sdkmath.NewInt(100),
+			expErr: false,
+		},
+		{
+			title:  "empty denom should error",
+			denom:  "",
+			amount: sdkmath.NewInt(100),
+			expErr: true,
+		},
+		{
+			title:  "negative amount should error",
+			denom:  appparams.DefaultBondDenom,
+			amount: sdkmath.NewInt(-100),
+			expErr: true,
+		},
+		{
+			title:  "zero amount is valid",
+			denom:  appparams.DefaultBondDenom,
+			amount: sdkmath.ZeroInt(),
+			expErr: false,
+		},
+		{
+			title:  "invalid denom characters should error",
+			denom:  "INVALID-DENOM!",
+			amount: sdkmath.NewInt(100),
+			expErr: true,
+		},
+	}
+
+	for _, tc := range tcs {
+		t.Run(tc.title, func(t *testing.T) {
+			coin, err := types.SafeNewCoin(tc.denom, tc.amount)
+			if tc.expErr {
+				require.Error(t, err)
+				require.Equal(t, sdk.Coin{}, coin)
+				return
+			}
+
+			require.NoError(t, err)
+			require.Equal(t, tc.denom, coin.Denom)
+			require.Equal(t, tc.amount, coin.Amount)
 		})
 	}
 }

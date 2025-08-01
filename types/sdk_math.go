@@ -7,11 +7,12 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// CoinsSafeMulInt multiply the amounts of coins by x. Returns an error
-// if anything fails during the multiplication or coin valiation.
+// CoinsSafeMulInt multiplies the amounts of coins by x. Returns an error
+// if anything fails during the multiplication or coin validation.
+// Ex.: CoinsSafeMulInt(100utest, sdkmath.NewInt(5)) = 500utest
 func CoinsSafeMulInt(coins sdk.Coins, x sdkmath.Int) (sdk.Coins, error) {
 	if x.IsZero() {
-		return nil, fmt.Errorf("%s: cannot multiply by zero", ErrInvalidAmount)
+		return nil, fmt.Errorf("%w: cannot multiply coins by zero", ErrInvalidAmount)
 	}
 
 	res := make(sdk.Coins, len(coins))
@@ -31,7 +32,8 @@ func CoinsSafeMulInt(coins sdk.Coins, x sdkmath.Int) (sdk.Coins, error) {
 	return res, nil
 }
 
-// SafeNewCoin safely validates the coin created instead of panic.
+// SafeNewCoin safely validates the coin created instead of panicking.
+// Returns an error if the coin denomination or amount is invalid.
 func SafeNewCoin(denom string, amount sdkmath.Int) (sdk.Coin, error) {
 	coin := sdk.Coin{
 		Denom:  denom,
