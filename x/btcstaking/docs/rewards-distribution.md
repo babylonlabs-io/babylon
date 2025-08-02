@@ -7,65 +7,44 @@
     4. [Rewards Distribution Flow](#14-rewards-distribution-flow)
     5. [Module Overview](#15-module-overview)
 2. [Rewards Protocol](#2-rewards-protocol)
-    1. [Core Distribution Function](#21-core-distribution-function)
-    2. [Babylon Genesis Fee Collection and Storage](#22-babylon-genesis-fee-collection-and-storage)
-    3. [Querying, withdrawing rewards](#23-querying-withdrawing-rewards)
-    4. [Submitting rewards through transactions](#24-submitting-rewards-through-msgaddbsnrewards)
-    5. [Submitting rewards through IBC](#25-submitting-rewards-through-ibc)
+    1. [Rewards Distribution Procedure](#21-rewards-distribution-procedure)
+    2. [Submitting rewards through transactions](#22-submitting-rewards-through-msgaddbsnrewards)
+    3. [Submitting rewards through IBC](#23-submitting-rewards-through-ibc)
+    4. [Querying and Withdrawing Rewards](#24-querying-and-withdrawing-rewards)
+    5. [Internal Processing Details](#25-internal-processing-details)
 3. [BSN Consumer Types](#3-bsn-consumer-types)
     1. [Rollup BSN Consumers](#31-rollup-bsn-consumers)
     2. [Cosmos BSN Consumers](#32-cosmos-bsn-consumers)
 
 ## 1. Introduction
 
-### 1.1. What is BSN Rewards Distribution?
+When you stake BTC through Babylon, you're helping secure blockchain networks 
+by delegating your BTC to finality providers. In return, these BSN consumers 
+pay rewards to all staking participants.
 
-When you stake BTC through Babylon, you're helping secure other
-networks by delegating your BTC to finality providers. In return for this
-service, these consumer BSNs pay rewards to participants in the staking
-ecosystem.
+The rewards distribution system connects three key participants: **BTC 
+stakers** earn rewards proportional to their stake, **finality providers** 
+receive commission from delegators plus proportional rewards for infrastructure
+operations, and **Babylon Genesis** takes a commission on all distributions to
+fund protocol operations.
 
-The rewards distribution process connects BSN consumers (like rollups or
-Cosmos networks) with BTC stakers and finality providers, ensuring all
-participants receive proportional compensation for their contributions to
-network security.
+BSN consumers (rollups or Cosmos networks) register with Babylon Genesis to
+receive BTC staking security services. They submit rewards through direct
+transactions or IBC transfers, which are then distributed using the proven F1
+algorithm for accurate proportional allocation among all participants.
 
-### 1.2. Who Gets Rewards?
+**Target Audience**: This document serves as a technical reference for
+developers implementing BSN reward distribution systems, including BSN
+developers, protocol integrators, and finality provider operators.
 
-The rewards distribution involves several participants:
+## 2. Rewards Protocol
 
-- **Bitcoin Stakers**: Individuals who have staked their BTC through Babylon
-    earn rewards proportional to their stake
-- **Finality Providers**: Operators who run infrastructure and validate on
-   behalf of consumer BSNs, earning both commission from their delegators and
-   proportional rewards
-- **Babylon Genesis**: The protocol itself earns a commission on all reward
-  distributions to fund operations and development
-
-### 1.3. Key Terminology
-
-Below are a list of key terms regarding rewards distribution
-
-- **F1 Fee Distribution Algorithm**: A proven mathematical algorithm (also
-  used by Cosmos SDK) that calculates how rewards should be
-  distributed proportionally among participants. It ensures accurate reward
-  calculations even when participants join or leave at different times.
-- **BSN Consumers**: Blockchain networks (like rollups or Cosmos
-  networks) that register with Babylon Genesis to receive BTC staking
-  security services. These BSN consumers pay rewards in exchange for the security
-  provided by BTC stakers.
-- **Multi-Chain Support**: The ability to handle reward distributions from
-  many different consumer BSNs through a single, unified system on Babylon Genesis.
-- **Flexible Invocation**: Rewards can be submitted and processed through
-  multiple methods - either direct blockchain transactions or
-  IBC transfers with special instructions.
-
-### 1.4. Rewards Distribution Flow
+### 2.1. Rewards Distribution Procedure
 
 The following diagram illustrates how rewards flow through Babylon Genesis.
 ![Rewards](./static/rewards.png)
 
-**Flow Explanation:**
+**Flow Steps:**
 
 1. BSN consumers (rollups or Cosmos networks) accumulate rewards for
    BTC staking security services
@@ -79,114 +58,16 @@ The following diagram illustrates how rewards flow through Babylon Genesis.
 5. The F1 algorithm distributes remaining rewards proportionally among
    finality providers and their BTC staker delegators
 
-### 1.5. Module overview
+**Module Architecture:**
 
-The rewards distribution is handled by the `x/btcstaking` module and
-integrates with several other Babylon modules:
+The rewards distribution integrates several Babylon modules:
 
-- `x/btcstaking`: Core module managing finality providers, delegations,
-  and reward distribution
-- `x/incentive`: Handles the F1 fee distribution algorithm and reward
-  calculation logic
-- `x/btcstkconsumer`: Manages BSN consumer registrations and
-  commission rates
-- `IBC Callback Middleware`: Processes IBC transfers with reward
-  distribution instructions
+- **`x/btcstaking`**: Core module managing finality providers, delegations, and reward distribution
+- **`x/incentive`**: Handles the F1 fee distribution algorithm and reward calculation logic
+- **`x/btcstkconsumer`**: Manages BSN consumer registrations and commission rates
+- **IBC Callback Middleware**: Processes IBC transfers with reward distribution instructions
 
-**Target Audience**: This document is intended as a technical reference for
-developers implementing BSN reward distribution systems. This includes BSN
-developers building reward distribution mechanisms, protocol integrators
-connecting to Babylon Genesis, and finality provider operators implementing
-automated reward processing.
-
-## 2. Rewards Protocol
-
-### 2.1. Core Distribution Function
-
-The `AddBsnRewards` function is the core of the rewards distribution process
-and is responsible for distributing rewards to the finality providers of a
-specific BSN consumer. It can be triggered either by a direct `MsgAddBsnRewards`
-message or through
-an IBC transfer.
-
-The [`AddBsnRewards` function](../keeper/msg_server.go)
-coordinates the entire reward distribution
-process:
-
-1. Verifies the sender has sufficient balance and all finality
-   providers are registered with active delegations
-2. Moves total rewards from sender to the `incentive` module
-   account for processing
-3. Automatically deducts Babylon Genesis commission and transfers it to the
-    protocol's collection account
-4. Distributes remaining rewards among finality providers and their BTC
-    stakers using the F1 distribution algorithm
-
-The function can be triggered by either a direct `MsgAddBsnRewards` 
-transaction or an IBC transfer with callback parameters, ensuring consistent 
-processing regardless of the submission method.
-
-> **⚡ Important:** Babylon does not enforce how the `FpRatios` must be
-> calculated. It is up to the message `Sender` to calculate the correct 
-> distribution based on their reward distribution logic.
-
-### 2.2. Babylon Genesis Fee Collection and Storage
-
-As part of the rewards distribution process, Babylon Genesis automatically
-calculates and deducts a commission from the total rewards before distributing
-them to finality providers and their stakers. The following steps occur in
-sequence during each reward distribution:
-
-The commission rate is set when a BSN consumer registers on Babylon Genesis.
-During registration, the consumer specifies their `BabylonRewardsCommission`
-rate, which is stored in the consumer registration record.
-
-The Babylon commission is calculated using the formula: `Total Rewards × 
-Commission Rate` and automatically transferred to the `commission_collector_bsn` 
-module account before reward distribution. This account is managed by the 
-`x/incentive` module and controlled by the protocol.
-
-The remaining rewards are distributed to finality providers and their BTC 
-stakers through the F1 distribution algorithm implemented in the `x/incentive` 
-module.
-
-### 2.3. Querying, withdrawing rewards
-
-The BTC staking module handles BSN rewards distribution by transferring funds to
-the `x/incentive` module, which then manages the actual reward distribution,
-tracking, and withdrawal for BTC stakers and finality providers.
-
-BSN rewards are processed through the `AddBsnRewards` function (detailed in 
-section 2.1) and then managed by the `x/incentive` module for tracking and 
-withdrawal.
-
-The rewards distribution leverages the existing incentive module infrastructure
-for:
-- Reward gauge management
-- Historical reward tracking
-- Withdrawal functionality
-
-#### Querying Rewards
-
-Since rewards are managed by the `x/incentive` module, the incentive module's
-query endpoints should be used to check their reward status. The BTC
-staking module focuses on the distribution mechanism rather than reward
-tracking.
-
-#### Withdrawing Rewards
-
-Reward withdrawal is handled through the `x/incentive` module's withdrawal
-system. The BTC staking module ensures that:
-
-- Finality provider commissions are properly allocated to their reward gauges
-- BTC delegator rewards are distributed proportionally based on their stake
-- All rewards follow the F1 distribution algorithm for accurate tracking
-
-*For detailed information about querying and withdrawing rewards, please refer
-to the [`x/incentive` module documentation](../../incentive/README.md), as
-the actual reward management is handled there.*
-
-### 2.4. Submitting rewards through `MsgAddBsnRewards`
+### 2.2. Submitting rewards through `MsgAddBsnRewards`
 
 BSN consumers can distribute rewards to their finality providers and BTC stakers
 by submitting `MsgAddBsnRewards` transactions directly to Babylon Genesis.
@@ -243,12 +124,12 @@ type MsgAddBsnRewards struct {
 
 #### 4. Automatic Processing
 Once received, Babylon Genesis processes the transaction through the 
-`AddBsnRewards` function described in section 2.1.
+`AddBsnRewards` function described in section 2.5.
 
 > **⚡ Important:** The message should be sent as soon as possible after
 > calculating the distribution to ensure timely reward processing.
 
-### 2.5. Submitting rewards through IBC
+### 2.3. Submitting rewards through IBC
 
 Cosmos SDK-based BSN consumers can distribute rewards using IBC transfers with
 specially formatted memo fields. This method leverages Inter-Blockchain
@@ -304,9 +185,66 @@ triggers the same `AddBsnRewards` processing as direct transactions.
 > logic as direct `MsgAddBsnRewards` transactions, ensuring consistent
 > behavior across both submission methods.
 
+### 2.5. Internal Processing Details
+
+The `AddBsnRewards` function coordinates the entire reward distribution process 
+and can be triggered by either direct transactions or IBC transfers. 
+
+**Core Processing Steps:**
+1. Validates sender balance and finality provider registrations
+2. Transfers rewards to the `incentive` module for processing
+3. Deducts Babylon Genesis commission based on the consumer's registered rate
+4. Distributes remaining rewards using the F1 algorithm
+
+**Commission Collection:**
+Babylon Genesis automatically calculates commission using 
+`Total Rewards × Commission Rate` and transfers it to the 
+`commission_collector_bsn` module account before distribution.
+
+> **⚡ Important:** BSN consumers determine their own `FpRatios` 
+> calculation logic - Babylon does not enforce any specific distribution 
+> methodology.
+
+
+### 2.4. Querying and Withdrawing Rewards
+
+The BTC staking module handles BSN rewards distribution by transferring funds to
+the `x/incentive` module, which then manages the actual reward distribution,
+tracking, and withdrawal for BTC stakers and finality providers.
+
+BSN rewards are processed through the `AddBsnRewards` function and then managed 
+by the `x/incentive` module for tracking and withdrawal.
+
+The rewards distribution leverages the existing incentive module infrastructure 
+for:
+- Reward gauge management
+- Historical reward tracking
+- Withdrawal functionality
+
+#### Querying Rewards
+
+Since rewards are managed by the `x/incentive` module, the incentive module's
+query endpoints should be used to check reward status. The BTC
+staking module focuses on the distribution mechanism rather than reward
+tracking.
+
+#### Withdrawing Rewards
+
+Reward withdrawal is handled through the `x/incentive` module's withdrawal
+system. The BTC staking module ensures that:
+
+- Finality provider commissions are properly allocated to their reward gauges
+- BTC delegator rewards are distributed proportionally based on their stake
+- All rewards follow the F1 distribution algorithm for accurate tracking
+
+*For detailed information about querying and withdrawing rewards, please refer
+to the [`x/incentive` module documentation](../../incentive/README.md), as
+the actual reward management is handled there.*
+
 ## 3. BSN Consumer Types
 
-BSN consumers can be implemented as either rollup-based or Cosmos SDK-based systems, each with different reward submission mechanisms:
+BSN consumers can be implemented as either rollup-based or Cosmos SDK-based 
+chains, each with different reward submission mechanisms:
 
 | Aspect               | Rollup BSN Consumer    | Cosmos BSN Consumer      |
 | -------------------- | ---------------------- | ------------------------ |
@@ -396,4 +334,3 @@ Here's an example memo field:
 The entire amount sent with the ICS20 transfer will be used as rewards for 
 distribution, processed through the same reward distribution system as direct 
 transactions.
-
