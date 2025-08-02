@@ -22,6 +22,7 @@ import (
 	sdktx "github.com/cosmos/cosmos-sdk/types/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	dstrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	icacontrollertypes "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/controller/types"
 	"github.com/stretchr/testify/require"
@@ -126,6 +127,20 @@ func (n *NodeConfig) QueryBalances(address string) (sdk.Coins, error) {
 		return sdk.Coins{}, err
 	}
 	return balancesResp.GetBalances(), nil
+}
+
+// QueryDistributionRewards returns distribution module rewards available at the address.
+func (n *NodeConfig) QueryDistributionRewards(address string) (sdk.Coins, error) {
+	path := fmt.Sprintf("/cosmos/distribution/v1beta1/delegators/%s/rewards", address)
+	bz, err := n.QueryGRPCGateway(path, url.Values{})
+	require.NoError(n.t, err)
+
+	var rwdsResp dstrtypes.QueryDelegationTotalRewardsResponse
+	if err := util.Cdc.UnmarshalJSON(bz, &rwdsResp); err != nil {
+		return sdk.Coins{}, err
+	}
+
+	return sdk.NormalizeCoins(rwdsResp.Total), nil
 }
 
 // QueryBalance returns balance of some address.
