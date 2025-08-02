@@ -6,14 +6,17 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	bbntypes "github.com/babylonlabs-io/babylon/v3/types"
 )
 
 var (
-	// it is needed to add decimal points when reducing the rewards amount
-	// per sat to latter when giving out the rewards to the gauge, reduce
-	// the decimal points back, currently 20 decimal points are being added
-	// the sdkmath.Int holds a big int which support up to 2^256 integers
-	DecimalAccumulatedRewards, _ = sdkmath.NewIntFromString("100000000000000000000")
+	// DecimalRewards is a precision multiplier used for reward calculations.
+	// It adds 20 decimal places (10^20) to increase precision when calculating
+	// rewards per satoshi. This prevents precision loss during division operations.
+	// The value is later divided out when distributing final rewards to gauges.
+	// Using sdkmath.Int which supports up to 2^256 integers for overflow safety.
+	DecimalRewards, _ = sdkmath.NewIntFromString("100000000000000000000")
 )
 
 // NewEventBtcDelegationActivated returns a new EventPowerUpdate of type activated
@@ -63,8 +66,24 @@ func NewFinalityProviderHistoricalRewards(cumulativeRewardsPerSat sdk.Coins) Fin
 	}
 }
 
-func (f *FinalityProviderCurrentRewards) AddRewards(coinsToAdd sdk.Coins) {
-	f.CurrentRewards = f.CurrentRewards.Add(coinsToAdd...)
+// AddRewards adds the rewards to the FpCurrentRewards and applies the decimal
+// multiplier to increase precision for calculating rewards per active satoshi staked
+func (f *FinalityProviderCurrentRewards) AddRewards(coinsToAdd sdk.Coins) error {
+	coinsToAddWithDecimals, err := bbntypes.CoinsSafeMulInt(coinsToAdd, DecimalRewards)
+	if err != nil {
+		return err
+	}
+
+	var panicErr error
+	func() {
+		defer func() {
+			if r := recover(); r != nil {
+				panicErr = ErrInvalidAmount.Wrapf("math overflow: %v", r)
+			}
+		}()
+		f.CurrentRewards = f.CurrentRewards.Add(coinsToAddWithDecimals...)
+	}()
+	return panicErr
 }
 
 func (f *FinalityProviderCurrentRewards) SubRewards(coinsToSubtract sdk.Coins) {

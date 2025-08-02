@@ -276,7 +276,7 @@ func (s *BtcRewardsDistributionBsnRollup) Test5CheckRewardsFirstDelegations() {
 	fp2Ratio, fp3Ratio := math.LegacyMustNewDecFromStr("0.7"), math.LegacyMustNewDecFromStr("0.3")
 
 	bbnCommDiff, del1Diff, del2Diff, fp1bbnDiff, fp2cons0Diff, fp3cons0Diff, fp4cons4Diff := s.SuiteRewardsDiff(n2, func() {
-		n2.AddBsnRewards(n2.WalletName, s.bsn0.ConsumerId, rewardCoins, []bstypes.FpRatio{
+		outBuf, _, _ := n2.AddBsnRewards(n2.WalletName, s.bsn0.ConsumerId, rewardCoins, []bstypes.FpRatio{
 			{
 				BtcPk: s.fp2cons0.BtcPk,
 				Ratio: fp2Ratio,
@@ -286,6 +286,12 @@ func (s *BtcRewardsDistributionBsnRollup) Test5CheckRewardsFirstDelegations() {
 				Ratio: fp3Ratio,
 			},
 		})
+
+		txHash := chain.GetTxHashFromOutput(outBuf.String())
+		n2.WaitForNextBlock()
+
+		txRespAddBsnRewards, _ := n2.QueryTx(txHash)
+		require.Truef(s.T(), len(txRespAddBsnRewards.RawLog) == 0, "raw log should be empty %s", txRespAddBsnRewards.RawLog)
 	})
 
 	bbnCommExp := itypes.GetCoinsPortion(rewardCoins, s.bsn0.BabylonRewardsCommission)
@@ -377,10 +383,16 @@ func (s *BtcRewardsDistributionBsnRollup) Test7CheckRewardsBsn4() {
 	fp4Ratio := math.LegacyOneDec()
 
 	bbnCommDiff, del1Diff, del2Diff, fp1bbnDiff, fp2cons0Diff, fp3cons0Diff, fp4cons4Diff := s.SuiteRewardsDiff(n2, func() {
-		n2.AddBsnRewards(n2.WalletName, s.bsn4.ConsumerId, rewardCoins, []bstypes.FpRatio{{
+		outBuf, _, _ := n2.AddBsnRewards(n2.WalletName, s.bsn4.ConsumerId, rewardCoins, []bstypes.FpRatio{{
 			BtcPk: s.fp4cons4.BtcPk,
 			Ratio: fp4Ratio,
 		}})
+
+		txHash := chain.GetTxHashFromOutput(outBuf.String())
+		n2.WaitForNextBlock()
+
+		txRespAddBsnRewards, _ := n2.QueryTx(txHash)
+		require.Truef(s.T(), len(txRespAddBsnRewards.RawLog) == 0, "raw log should be empty %s", txRespAddBsnRewards.RawLog)
 	})
 
 	bbnCommExp := itypes.GetCoinsPortion(rewardCoins, s.bsn4.BabylonRewardsCommission)

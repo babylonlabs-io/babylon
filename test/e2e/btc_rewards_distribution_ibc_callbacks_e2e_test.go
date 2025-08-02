@@ -533,11 +533,19 @@ func (s *IbcCallbackBsnAddRewards) SuiteRewardsDiff(n *chain.NodeConfig, f func(
 	bbnComm, del1, del2, fp1bbn, fp2cons0, fp3cons0 sdk.Coins,
 ) {
 	bbnCommBefore, del1Before, del2Before, fp1bbnBefore, fp2cons0Before, fp3cons0Before := s.QuerySuiteRewards(n)
+	n.LogActionF(
+		"Suite rewards diff before: bbnComm %s, del1 %s, del2 %s, fp1 %s, fp2 %s, fp3 %s",
+		bbnCommBefore.String(), del1Before.String(), del2Before.String(), fp1bbnBefore.String(), fp2cons0Before.String(), fp3cons0Before.String(),
+	)
 
 	f()
 	n.WaitForNextBlock()
 
 	bbnCommAfter, del1After, del2After, fp1bbnAfter, fp2cons0After, fp3cons0After := s.QuerySuiteRewards(n)
+	n.LogActionF(
+		"Suite rewards diff after: bbnComm %s, del1 %s, del2 %s, fp1 %s, fp2 %s, fp3 %s",
+		bbnCommAfter.String(), del1After.String(), del2After.String(), fp1bbnAfter.String(), fp2cons0After.String(), fp3cons0After.String(),
+	)
 
 	bbnCommDiff := bbnCommAfter.Sub(bbnCommBefore...)
 	del1Diff := del1After.Sub(del1Before...)
