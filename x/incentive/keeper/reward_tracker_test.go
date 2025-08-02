@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"fmt"
 	"math/rand"
 	"testing"
 	"time"
@@ -11,6 +12,7 @@ import (
 	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
 	"github.com/babylonlabs-io/babylon/v3/testutil/coins"
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
+	bbntypes "github.com/babylonlabs-io/babylon/v3/types"
 	"github.com/babylonlabs-io/babylon/v3/x/incentive/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
@@ -472,8 +474,10 @@ func TestMathOverflowAddFinalityProviderRewardsForBtcDelegations(t *testing.T) {
 	require.NoError(t, err)
 
 	rewards := datagen.GenRandomCoinsMaxSupply(r)
+	rwdDenom := rewards.GetDenomByIndex(0)
 	err = k.AddFinalityProviderRewardsForBtcDelegations(ctx, fp, rewards)
-	require.EqualError(t, err, sdkmath.ErrIntOverflow.Error())
+	expErr := fmt.Errorf("%w: unable to multiply coins %s%s by %s: %w", bbntypes.ErrInvalidAmount, rewards.AmountOf(rwdDenom).String(), rwdDenom, types.DecimalRewards.String(), sdkmath.ErrIntOverflow)
+	require.EqualError(t, err, expErr.Error())
 
 	fpCurrRwds, err := k.GetFinalityProviderCurrentRewards(ctx, fp)
 	require.NoError(t, err)
@@ -482,7 +486,7 @@ func TestMathOverflowAddFinalityProviderRewardsForBtcDelegations(t *testing.T) {
 	err = k.SetFinalityProviderCurrentRewards(ctx, fp, fpCurrRwds)
 	require.NoError(t, err)
 
-	rewards = sdk.NewCoins(sdk.NewCoin(rewards.GetDenomByIndex(0), sdkmath.OneInt()))
+	rewards = sdk.NewCoins(sdk.NewCoin(rwdDenom, sdkmath.OneInt()))
 	err = k.AddFinalityProviderRewardsForBtcDelegations(ctx, fp, rewards)
 	require.EqualError(t, err, types.ErrInvalidAmount.Wrapf("math overflow: %s", "integer overflow").Error())
 }
@@ -517,7 +521,12 @@ func TestMathOverflowCalculateBTCDelegationRewards(t *testing.T) {
 	// available in the entire Bitcoin chain.
 	rwd, err := k.CalculateBTCDelegationRewards(ctx, fp, del, endPeriod)
 	require.Equal(t, rwd, sdk.Coins{})
-	require.EqualError(t, err, sdkmath.ErrIntOverflow.Error())
+	amt := endHist.CumulativeRewardsPerSat.Sub(startHist.CumulativeRewardsPerSat...)
+	expErr := fmt.Errorf(
+		"%w: unable to multiply coins %s by %s: %w",
+		bbntypes.ErrInvalidAmount, amt.String(), btcRwd.TotalActiveSat.String(), sdkmath.ErrIntOverflow,
+	)
+	require.EqualError(t, err, expErr.Error())
 }
 
 func TestMathOverflowIncrementFinalityProviderPeriod(t *testing.T) {

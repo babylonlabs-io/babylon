@@ -24,12 +24,20 @@ func MigrateStore(
 	k Keeper,
 ) error {
 	return k.IterateFpCurrentRewards(ctx, func(fp sdk.AccAddress, fpCurrRwds types.FinalityProviderCurrentRewards) error {
+		if fpCurrRwds.CurrentRewards.IsZero() { // no rewards, there is no need to migrate
+			return nil
+		}
+
 		currentRewardsWithDecimals, err := bbntypes.CoinsSafeMulInt(fpCurrRwds.CurrentRewards, types.DecimalRewards)
 		if err != nil {
-			return err
+			return types.ErrInvalidAmount.Wrapf("unable to migrate to rewards with decimals for fp %s - %s: %v", fp.String(), fpCurrRwds.CurrentRewards.String(), err)
 		}
 
 		fpCurrRwds.CurrentRewards = currentRewardsWithDecimals
-		return k.SetFinalityProviderCurrentRewards(ctx, fp, fpCurrRwds)
+		err = k.SetFinalityProviderCurrentRewards(ctx, fp, fpCurrRwds)
+		if err != nil {
+			return types.ErrFPCurrentRewardsInvalid.Wrapf("unable to migrate to rewards with decimals for fp %s - %s: %v", fp.String(), fpCurrRwds.CurrentRewards.String(), err)
+		}
+		return nil
 	})
 }

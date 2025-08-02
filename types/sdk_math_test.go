@@ -67,14 +67,17 @@ func TestCoinsSafeMulInt(t *testing.T) {
 			coins:      sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(100))),
 			multiplier: sdkmath.NewInt(-5),
 			exp:        sdk.Coins{},
-			expErr:     fmt.Errorf("negative coin amount: %s", "-500"),
+			expErr:     fmt.Errorf("unable to create new coin -500%s: unable to validate new coin -500%s: negative coin amount: -500", appparams.DefaultBondDenom, appparams.DefaultBondDenom),
 		},
 		{
 			title:      "overflow should error",
 			coins:      sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, datagen.NewIntMaxSupply())),
 			multiplier: sdkmath.NewInt(2),
 			exp:        sdk.Coins{},
-			expErr:     sdkmath.ErrIntOverflow,
+			expErr: fmt.Errorf(
+				"%w: unable to multiply coins %s%s by 2: %w",
+				types.ErrInvalidAmount, datagen.NewIntMaxSupply().String(), appparams.DefaultBondDenom, sdkmath.ErrIntOverflow,
+			),
 		},
 		{
 			title:      "empty coins with positive multiplier",
