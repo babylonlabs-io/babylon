@@ -151,7 +151,7 @@ message Params {
 
 ### Voting power table
 
-The [voting power table management](./keeper/voting_power_table.go) maintains
+The [voting power table management](./keeper/power_table.go) maintains
 the voting power table of all finality providers at each height of the Babylon
 chain. The key is the block height concatenated with the finality provider's
 Bitcoin secp256k1 public key in BIP-340 format, and the value is the finality
