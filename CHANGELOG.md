@@ -193,6 +193,7 @@ adjustment
 covenant signature to the events
 - [#1447](https://github.com/babylonlabs-io/babylon/pull/1447) Add multi-staking allow-list data for e2e tests
 - [#1453](https://github.com/babylonlabs-io/babylon/pull/1453) fix: inactive FP event on full unbonding
+- [#1470](https://github.com/babylonlabs-io/babylon/pull/1470) fix: debug_traceTransaction with tracer params
 
 ## v2.2.0
 
