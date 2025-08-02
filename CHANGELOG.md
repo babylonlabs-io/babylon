@@ -137,6 +137,7 @@ command to modify `max-finality-providers` parameter.
 - [#1460](https://github.com/babylonlabs-io/babylon/pull/1460) Add staking amount change restriction in multi-staking
 - [#1464](https://github.com/babylonlabs-io/babylon/pull/1464) Fix flaky e2e rewards test.
 - [#1468](https://github.com/babylonlabs-io/babylon/pull/1468) Update multi-staking allow-list docs.
+- [#1473](https://github.com/babylonlabs-io/babylon/pull/1473) Add checks for incentives rewards migration in e2e v3 upgrade test.
 
 ### State Machine Breaking
 
