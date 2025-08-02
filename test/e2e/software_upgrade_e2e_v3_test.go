@@ -14,16 +14,12 @@ import (
 	"github.com/babylonlabs-io/babylon/v3/testutil/sample"
 	btclighttypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
 	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
+	bsconstypes "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
 	"github.com/babylonlabs-io/babylon/v3/x/finality/types"
 
 	"github.com/babylonlabs-io/babylon/v3/test/e2e/configurer"
 	"github.com/babylonlabs-io/babylon/v3/test/e2e/configurer/chain"
 	"github.com/babylonlabs-io/babylon/v3/test/e2e/configurer/config"
-)
-
-const (
-	btcstkconsumerModulePath = "btcstkconsumer"
-	zoneconciergeModulePath  = "zoneconcierge"
 )
 
 type SoftwareUpgradeV3TestSuite struct {
@@ -140,7 +136,6 @@ func (s *SoftwareUpgradeV3TestSuite) TearDownSuite() {
 // TestUpgradeV3 checks if the upgrade from v2.2.0 to v3 was successful
 func (s *SoftwareUpgradeV3TestSuite) TestUpgradeV3() {
 	chainA := s.configurer.GetChainConfig(0)
-
 	n, err := chainA.GetNodeAtIndex(1)
 	s.NoError(err)
 
@@ -153,6 +148,17 @@ func (s *SoftwareUpgradeV3TestSuite) TestUpgradeV3() {
 	expectedUpgradeHeight := govProp.Plan.Height
 	resp := n.QueryAppliedPlan(v3.UpgradeName)
 	s.EqualValues(expectedUpgradeHeight, resp.Height, "the plan should be applied at the height %d", expectedUpgradeHeight)
+
+	s.CheckFpAfterUpgrade()
+	s.CheckParamsAfterUpgrade()
+
+	n.WaitForNextBlock()
+}
+
+func (s *SoftwareUpgradeV3TestSuite) CheckFpAfterUpgrade() {
+	chainA := s.configurer.GetChainConfig(0)
+	n, err := chainA.GetNodeAtIndex(1)
+	s.NoError(err)
 
 	fp1 := n.QueryFinalityProvider(s.fp1.BtcPk.MarshalHex())
 	s.Require().Equal(fp1.BsnId, n.ChainID())
@@ -169,6 +175,28 @@ func (s *SoftwareUpgradeV3TestSuite) TestUpgradeV3() {
 	s.Require().NotNil(fp2CommitPubRand, "fp2CommitPubRand should not be nil")
 	_, ok = fp2CommitPubRand[s.commitStartHeight]
 	s.Require().True(ok, "fp2CommitPubRand should contain commitStartHeight")
+}
+
+func (s *SoftwareUpgradeV3TestSuite) CheckParamsAfterUpgrade() {
+	chainA := s.configurer.GetChainConfig(0)
+	n, err := chainA.GetNodeAtIndex(1)
+	s.NoError(err)
+
+	// check that the module exists by querying parameters with the QueryParams helper
+	var btcstkconsumerParams map[string]interface{}
+	n.QueryParams(bsconstypes.ModuleName, &btcstkconsumerParams)
+	s.T().Logf("btcstkconsumer params: %v", btcstkconsumerParams)
+
+	btcConsParams, exists := btcstkconsumerParams["params"]
+	s.Require().True(exists, "btcstkconsumer params should exist")
+
+	btcConsParamsMap, ok := btcConsParams.(map[string]interface{})
+	s.Require().True(ok, "btcstkconsumer params should be a map")
+	s.Require().Equal(false, btcConsParamsMap["permissioned_integration"], "permissioned_integration should be false")
+
+	zoneConciergeParams := n.QueryZoneConciergeParams()
+	s.Require().True(exists, "zone concierge params should exist")
+	s.Require().Equal(uint32(2419200), zoneConciergeParams.IbcPacketTimeoutSeconds, "ibc_packet_timeout_seconds should be 2419200")
 
 	// check btcstaking params has max finality provider set to 1
 	var stakingParams map[string]interface{}
@@ -185,44 +213,5 @@ func (s *SoftwareUpgradeV3TestSuite) TestUpgradeV3() {
 	s.Require().True(ok, "max_finality_providers param should exist")
 	s.Require().Equal(float64(10), maxFP, "max_finality_providers should be 10")
 
-	s.Require().Equal(float64(260000), btcparamsMap["btc_activation_height"],
-		"BtcActivationHeight should be incremented correctly")
-
-	// check that the module exists by querying parameters with the QueryParams helper
-	var btcstkconsumerParams map[string]interface{}
-	n.QueryParams(btcstkconsumerModulePath, &btcstkconsumerParams)
-	s.T().Logf("btcstkconsumer params: %v", btcstkconsumerParams)
-
-	btcConsParams, exists := btcstkconsumerParams["params"]
-	s.Require().True(exists, "btcstkconsumer params should exist")
-
-	btcConsParamsMap, ok := btcConsParams.(map[string]interface{})
-	s.Require().True(ok, "btcstkconsumer params should be a map")
-	s.Require().Equal(false, btcConsParamsMap["permissioned_integration"],
-		"permissioned_integration should be false")
-
-	zoneConciergeParams := n.QueryZoneConciergeParams()
-	s.Require().True(exists, "zone concierge params should exist")
-	s.Require().Equal(uint32(2419200),
-		zoneConciergeParams.IbcPacketTimeoutSeconds, "ibc_packet_timeout_seconds should be 2419200")
-
-	registeredConsumers := n.QueryBTCStkConsumerConsumers()
-	s.T().Logf("registered consumers: %v", registeredConsumers)
-
-	if len(registeredConsumers) > 0 {
-		consumerIDs := make([]string, len(registeredConsumers))
-		for i, consumer := range registeredConsumers {
-			consumerIDs[i] = consumer.ConsumerId
-		}
-
-		finalisedBsnsInfoResp := n.QueryZoneConciergeFinalizedBsnsInfo(consumerIDs, false)
-		s.NoError(err, "zoneconcierge FinalizedBsnsInfo query should succeed")
-		s.T().Logf("zoneconcierge FinalizedBsnsInfo: %v", finalisedBsnsInfoResp)
-	} else {
-		s.T().Log("No registered consumers found, skipping finalized-bsns-info query")
-	}
-
-	n.WaitForNextBlock()
-
-	// TODO: Add more functionality checks here as they are added
+	s.Require().Equal(float64(260000), btcparamsMap["btc_activation_height"], "BtcActivationHeight should be incremented correctly")
 }
