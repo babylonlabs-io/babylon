@@ -32,10 +32,12 @@ func TestUpgradeTestSuite(t *testing.T) {
 	suite.Run(t, new(UpgradeTestSuite))
 }
 
-func (s *UpgradeTestSuite) setupTestWithNetwork(fpCount uint32, btcActivationHeight uint32) {
+func (s *UpgradeTestSuite) setupTestWithNetwork(fpCount uint32,
+	btcActivationHeight uint32, permissionedIntegration bool, ibcPacketTimeoutSeconds uint32) {
 	s.initialBtcHeight = 100
 
-	app.Upgrades = []upgrades.Upgrade{CreateUpgrade(fpCount, btcActivationHeight)}
+	app.Upgrades = []upgrades.Upgrade{CreateUpgrade(fpCount,
+		btcActivationHeight, permissionedIntegration, ibcPacketTimeoutSeconds)}
 
 	s.app = app.SetupWithBitcoinConf(s.T(), false, bbn.BtcSignet)
 	s.ctx = s.app.BaseApp.NewContextLegacy(false, tmproto.Header{Height: 1, ChainID: "babylon-1", Time: time.Now().UTC()})
@@ -68,34 +70,45 @@ func (s *UpgradeTestSuite) executeUpgrade() {
 
 func (s *UpgradeTestSuite) TestUpgradeNetworks() {
 	testCases := []struct {
-		name                      string
-		expectedMaxFPs            uint32
+		name                        string
+		expectedMaxFPs              uint32
 		expectedBtcActivationHeight uint32
+		permissionedIntegration     bool
+		ibcPacketTimeoutSeconds     uint32
 	}{
 		{
 			name:                        "mainnet upgrade",
 			expectedMaxFPs:              5,
 			expectedBtcActivationHeight: 915000,
+			permissionedIntegration:     true,
+			ibcPacketTimeoutSeconds:     2419200,
 		},
 		{
-			name:                        "testnet upgrade", 
+			name:                        "testnet upgrade",
 			expectedMaxFPs:              10,
 			expectedBtcActivationHeight: 260000,
+			permissionedIntegration:     false,
+			ibcPacketTimeoutSeconds:     2419200,
 		},
 	}
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			s.setupTestWithNetwork(tc.expectedMaxFPs, tc.expectedBtcActivationHeight)
+			s.setupTestWithNetwork(tc.expectedMaxFPs,
+				tc.expectedBtcActivationHeight, tc.permissionedIntegration, tc.
+					ibcPacketTimeoutSeconds)
 
 			s.executeUpgrade()
 
-			s.verifyPostUpgrade(tc.expectedMaxFPs, tc.expectedBtcActivationHeight)
+			s.verifyPostUpgrade(tc.expectedMaxFPs,
+				tc.expectedBtcActivationHeight, tc.ibcPacketTimeoutSeconds, tc.permissionedIntegration)
 		})
 	}
 }
 
-func (s *UpgradeTestSuite) verifyPostUpgrade(expectedMaxFPs, expectedBtcActivationHeight uint32) {
+func (s *UpgradeTestSuite) verifyPostUpgrade(expectedMaxFPs,
+	expectedBtcActivationHeight, expectedIbcPacketTimeoutSeconds uint32,
+	expectedPermissionedIntegration bool) {
 	_, found := s.app.ModuleManager.Modules[deletedCapabilityStoreKey]
 	s.Require().False(found, "x/capability module should be deleted")
 
@@ -105,7 +118,15 @@ func (s *UpgradeTestSuite) verifyPostUpgrade(expectedMaxFPs, expectedBtcActivati
 	_, found = s.app.ModuleManager.Modules["zoneconcierge"]
 	s.Require().True(found, "x/zoneconcierge module should be found")
 
-	params := s.app.BTCStakingKeeper.GetParams(s.ctx)
-	s.Require().Equal(expectedMaxFPs, params.MaxFinalityProviders, "MaxFinalityProviders should match expected value")
-	s.Require().Equal(expectedBtcActivationHeight, params.BtcActivationHeight, "BtcActivationHeight should be set to absolute height")
+	btcStakingParams := s.app.BTCStakingKeeper.GetParams(s.ctx)
+	s.Require().Equal(expectedMaxFPs, btcStakingParams.MaxFinalityProviders, "MaxFinalityProviders should match expected value")
+	s.Require().Equal(expectedBtcActivationHeight, btcStakingParams.BtcActivationHeight, "BtcActivationHeight should be set to absolute height")
+
+	btcStkConsumerParams := s.app.BTCStkConsumerKeeper.GetParams(s.ctx)
+	s.Require().Equal(expectedPermissionedIntegration, btcStkConsumerParams.PermissionedIntegration,
+		"IbcPacketTimeoutSeconds should be set to absolute height")
+
+	zoneConciergeParams := s.app.ZoneConciergeKeeper.GetParams(s.ctx)
+	s.Require().Equal(expectedIbcPacketTimeoutSeconds, zoneConciergeParams.IbcPacketTimeoutSeconds,
+		"IbcPacketTimeoutSeconds should be set to absolute height")
 }

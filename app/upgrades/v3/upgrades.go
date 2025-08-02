@@ -22,10 +22,13 @@ const (
 	deletedCapabilityStoreKey = "capability"
 )
 
-func CreateUpgrade(fpCount uint32, btcActivationHeight uint32) upgrades.Upgrade {
+func CreateUpgrade(fpCount uint32, btcActivationHeight uint32,
+	permissionedIntegration bool, ibcPacketTimeoutSeconds uint32,
+) upgrades.Upgrade {
 	return upgrades.Upgrade{
-		UpgradeName:          UpgradeName,
-		CreateUpgradeHandler: CreateUpgradeHandler(fpCount, btcActivationHeight),
+		UpgradeName: UpgradeName,
+		CreateUpgradeHandler: CreateUpgradeHandler(fpCount,
+			btcActivationHeight, permissionedIntegration, ibcPacketTimeoutSeconds),
 		StoreUpgrades: store.StoreUpgrades{
 			Added: []string{
 				btcstkconsumertypes.StoreKey,
@@ -38,7 +41,9 @@ func CreateUpgrade(fpCount uint32, btcActivationHeight uint32) upgrades.Upgrade 
 	}
 }
 
-func CreateUpgradeHandler(fpCount uint32, btcActivationHeight uint32) upgrades.UpgradeHandlerCreator {
+func CreateUpgradeHandler(fpCount uint32, btcActivationHeight uint32,
+	permissionedIntegration bool, ibcPacketTimeoutSeconds uint32) upgrades.
+UpgradeHandlerCreator {
 	return func(mm *module.Manager, configurator module.Configurator, keepers *keepers.AppKeepers) upgradetypes.UpgradeHandler {
 		return func(ctx context.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
 			migrations, err := mm.RunMigrations(ctx, configurator, fromVM)
@@ -47,6 +52,30 @@ func CreateUpgradeHandler(fpCount uint32, btcActivationHeight uint32) upgrades.U
 			}
 
 			sdkCtx := sdk.UnwrapSDKContext(ctx)
+
+			zoneConciergeParams := zoneconciergetypes.DefaultParams()
+			zoneConciergeParams.IbcPacketTimeoutSeconds = ibcPacketTimeoutSeconds
+			if err = zoneConciergeParams.Validate(); err != nil {
+				return nil, err
+			}
+
+			err = keepers.ZoneConciergeKeeper.SetParams(sdkCtx,
+				zoneConciergeParams)
+			if err != nil {
+				return nil, err
+			}
+
+			btcStkConsumerParams := btcstkconsumertypes.DefaultParams()
+			btcStkConsumerParams.PermissionedIntegration = permissionedIntegration
+			if err = btcStkConsumerParams.Validate(); err != nil {
+				return nil, err
+			}
+
+			err = keepers.BTCStkConsumerKeeper.SetParams(sdkCtx,
+				btcStkConsumerParams)
+			if err != nil {
+				return nil, err
+			}
 
 			btcParams := keepers.BTCStakingKeeper.GetParams(sdkCtx)
 			btcParamsCopy := btcParams

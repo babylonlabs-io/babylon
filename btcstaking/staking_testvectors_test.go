@@ -101,6 +101,7 @@ type Expected struct {
 	UnbondingTransactionTimeLockScript string `json:"unbonding_transaction_time_lock_script_hex"`
 	UnbondingTransactionSlashingScript string `json:"unbonding_transaction_slashing_script_hex"`
 	OpReturnScript                     string `json:"op_return_script_hex"`
+	TaprootAddressStakingOutput        string `json:"taproot_address_staking_output"`
 }
 
 type TestCase struct {
@@ -250,9 +251,13 @@ func TestVectorsCompatiblity(t *testing.T) {
 			require.NoError(t, fmt.Errorf("error serializing unbonding tx for case %s: %w", tc.Description, err))
 		}
 
+		addr, err := info.TaprootStakingOutputAddr(&chaincfg.MainNetParams)
+		require.NoError(t, err)
+
 		require.Equal(t, tc.Expected.StakingOutputPkScript, hex.EncodeToString(info.StakingOutput.PkScript), fmt.Sprintf("failed case: %s", tc.Description))
 		require.Equal(t, tc.Expected.StakingOutputValue, int(info.StakingOutput.Value), fmt.Sprintf("failed case: %s", tc.Description))
 		require.Equal(t, tc.Expected.StakingTransactionTimeLockScript, hex.EncodeToString(sti.RevealedLeaf.Script), fmt.Sprintf("failed case: %s", tc.Description))
+		require.Equal(t, tc.Expected.TaprootAddressStakingOutput, addr.String(), fmt.Sprintf("failed case: %s", tc.Description))
 		require.Equal(t, tc.Expected.StakingTransactionUnbondingScript, hex.EncodeToString(sui.RevealedLeaf.Script), fmt.Sprintf("failed case: %s", tc.Description))
 		require.Equal(t, tc.Expected.StakingTransactionSlashingScript, hex.EncodeToString(ssi.RevealedLeaf.Script), fmt.Sprintf("failed case: %s", tc.Description))
 		require.Equal(t, tc.Expected.UnbondingTransactionHex, hex.EncodeToString(serializedUbtTx), fmt.Sprintf("failed case: %s", tc.Description))
@@ -409,6 +414,9 @@ func GenerateTestCase(
 		Network:                    "mainnet",
 	}
 
+	addr, err := info.TaprootStakingOutputAddr(&chaincfg.MainNetParams)
+	require.NoError(t, err)
+
 	expected := Expected{
 		StakingOutputPkScript:              hex.EncodeToString(info.StakingOutput.PkScript),
 		StakingOutputValue:                 int(info.StakingOutput.Value),
@@ -418,6 +426,7 @@ func GenerateTestCase(
 		UnbondingTransactionHex:            ubtTxHex,
 		UnbondingTransactionTimeLockScript: hex.EncodeToString(uti.RevealedLeaf.Script),
 		UnbondingTransactionSlashingScript: hex.EncodeToString(usi.RevealedLeaf.Script),
+		TaprootAddressStakingOutput:        addr.String(),
 		OpReturnScript:                     opReturnOutput,
 	}
 

@@ -238,6 +238,27 @@ func TestMultiStakingAllowList(t *testing.T) {
 	// Create the previous staking transaction that will be in the allow list
 	// This needs to be a single FP delegation first
 	lcTip := uint32(30)
+
+	// Try to create a new multi-staking delegation
+	// This should not be allowed during multi-staking allow-list period
+	_, _, _, _, _, _, err = h.CreateDelegationWithBtcBlockHeight(
+		r,
+		delSK,
+		fpPKs,
+		stakingValue,
+		1000,
+		0,
+		0,
+		false,
+		true,
+		10,
+		lcTip,
+	)
+	h.Error(err)
+	h.ErrorContains(err, "it is not allowed to create new delegations with multi-staking during the multi-staking allow-list period")
+
+	// Create the previous staking transaction that will be in the allow list
+	// This needs to be a single FP delegation first
 	prevStakingTxHash, prevMsgCreateBTCDel, prevDel, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
 		r,
 		delSK,
@@ -270,12 +291,26 @@ func TestMultiStakingAllowList(t *testing.T) {
 	h.Error(err)
 	h.ErrorContains(err, "not eligible for multi-staking")
 
-	// Test 2: Create BtcStakeExpand with prevDelTxHash in allow list
 	// Add the previous staking tx hash to the allow list
 	prevDelTxHash, err := chainhash.NewHashFromStr(prevStakingTxHash)
 	h.NoError(err)
 	h.BTCStakingKeeper.IndexAllowedMultiStakingTransaction(h.Ctx, prevDelTxHash)
 
+	// Test 2: Try to create BtcStakeExpand with prevDelTxHash in allow list
+	// and increasing staked amount - should not be allowed
+	_, _, err = h.CreateBtcStakeExpansionWithBtcTipHeight(
+		r,
+		delSK,
+		fpPKs,
+		stakingValue+1, // increase the staking amount
+		1000,
+		prevDel,
+		lcTip,
+	)
+	h.Error(err)
+	h.ErrorContains(err, "it is not allowed to modify the staking amount during the multi-staking allow-list period")
+
+	// Test 3: Create BtcStakeExpand with prevDelTxHash in allow list
 	// Create the multi-staking delegation via stake expansion
 	spendingTx, fundingTx, err := h.CreateBtcStakeExpansionWithBtcTipHeight(
 		r,
@@ -346,7 +381,7 @@ func TestMultiStakingAllowList(t *testing.T) {
 	h.NoError(err)
 	require.Equal(t, types.BTCDelegationStatus_ACTIVE, status)
 
-	// Test 3: Extend a multi-staking delegation with txHash NOT in allow list
+	// Test 4: Extend a multi-staking delegation with txHash NOT in allow list
 	// (but original txHash was in multi-staking allow-list)
 	// Register a new consumer chain and add the FP to the new delegation expansion
 	consumerRegister2 := datagen.GenRandomCosmosConsumerRegister(r)
@@ -355,7 +390,21 @@ func TestMultiStakingAllowList(t *testing.T) {
 	_, consumer2FPPK, _, err := h.CreateConsumerFinalityProvider(r, consumerRegister2.ConsumerId)
 	h.NoError(err)
 
-	// Submit the BtcStakeExpand message
+	// Try to increase staking amt - should not be allowed
+	_, _, err = h.CreateBtcStakeExpansionWithBtcTipHeight(
+		r,
+		delSK,
+		append(fpPKs, consumer2FPPK),
+		stakingValue+1,
+		1000,
+		expandedDel,
+		lcTip,
+	)
+	h.Error(err)
+	h.ErrorContains(err, "it is not allowed to modify the staking amount during the multi-staking allow-list period")
+
+	// Submit the BtcStakeExpand message adding the new consumer FP
+	// and keeping same staking amount
 	doubleExpStakingTx, _, err := h.CreateBtcStakeExpansionWithBtcTipHeight(
 		r,
 		delSK,

@@ -64,7 +64,7 @@ func setupTest(t *testing.T, seed int64) (sdk.Context, *keeper.Keeper, *types.Ge
 	var (
 		r      = rand.New(rand.NewSource(seed))
 		k, ctx = keepertest.BTCStkConsumerKeeper(t)
-		l      = r.Intn(50)
+		l      = r.Intn(50) + 1
 		cs     = make([]*types.ConsumerRegister, l)
 	)
 
