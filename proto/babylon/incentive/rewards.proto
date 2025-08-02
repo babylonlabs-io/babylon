@@ -41,6 +41,10 @@ message FinalityProviderCurrentRewards {
   // or btc rewards withdraw) a new period must be created, accumulate this
   // rewards to FinalityProviderHistoricalRewards with a new period and zero out
   // the Current Rewards.
+  // Note: This rewards have increased simulated decimals (10^20) to increase
+  // precision when calculating the rewards per satoshi and protect against
+  // math overflow issues. The decimals are removed prior to sending out
+  // to the incentive gauge.
   repeated cosmos.base.v1beta1.Coin current_rewards = 1 [
     (gogoproto.nullable) = false,
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
