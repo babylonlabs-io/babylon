@@ -16,4 +16,5 @@ var (
 	ErrFPCurrentRewardsTrackerNegativeAmount     = errorsmod.Register(ModuleName, 1107, "FP current rewards tracker has a negative amount of TotalActiveSat")
 	ErrInvalidAmount                             = errorsmod.Register(ModuleName, 1108, "invalid amount")
 	ErrFPCurrentRewardsWithoutVotingPower        = errorsmod.Register(ModuleName, 1109, "finality provider doesn't have active voting power")
+	ErrFPCurrentRewardsInvalid                   = errorsmod.Register(ModuleName, 1110, "finality provider current rewards was invalid")
 )

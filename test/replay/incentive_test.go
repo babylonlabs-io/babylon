@@ -5,8 +5,12 @@ import (
 	"testing"
 	"time"
 
+	"cosmossdk.io/math"
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	bbn "github.com/babylonlabs-io/babylon/v3/types"
+	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
+	minttypes "github.com/babylonlabs-io/babylon/v3/x/mint/types"
+	ibctmtypes "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
 	"github.com/stretchr/testify/require"
 )
 
@@ -79,18 +83,71 @@ func TestBtcRewardTrackerAtRewardedBabylonBlockAndNotLatestState(t *testing.T) {
 	require.False(t, AllCoinsEqual(lastRwdCheck))
 }
 
-func AllCoinsEqual(coins map[string]sdk.Coin) bool {
-	var ref *sdk.Coin
+func TestAddBsnRewardsMathOverflow(t *testing.T) {
+	t.Parallel()
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	d := NewBabylonAppDriverTmpDir(r, t)
 
-	for _, coin := range coins {
-		if ref == nil {
-			ref = &coin
-			continue
-		}
-		if !coin.IsEqual(*ref) {
-			return false
-		}
+	d.GenerateNewBlock()
+
+	covSender := d.CreateCovenantSender()
+	require.NotNil(t, covSender)
+
+	consumerID := "bsn-consumer-0"
+	d.App.IBCKeeper.ClientKeeper.SetClientState(d.Ctx(), consumerID, &ibctmtypes.ClientState{})
+	d.GenerateNewBlock()
+
+	consumer0 := d.RegisterConsumer(r, consumerID)
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	babylonFp := d.CreateNFinalityProviderAccounts(1)[0]
+	babylonFp.RegisterFinalityProvider("")
+
+	consFps := []*FinalityProvider{
+		d.CreateFinalityProviderForConsumer(consumer0),
+		d.CreateFinalityProviderForConsumer(consumer0),
 	}
 
-	return true
+	staker := d.CreateNStakerAccounts(1)[0]
+	staker.CreatePreApprovalDelegation(
+		[]*bbn.BIP340PubKey{consFps[0].BTCPublicKey(), babylonFp.BTCPublicKey()},
+		1000,
+		100000000,
+	)
+	staker.CreatePreApprovalDelegation(
+		[]*bbn.BIP340PubKey{consFps[1].BTCPublicKey(), babylonFp.BTCPublicKey()},
+		1000,
+		200000000,
+	)
+
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	covSender.SendCovenantSignatures()
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	d.ActivateVerifiedDelegations(2)
+	activeDelegations := d.GetActiveBTCDelegations(t)
+	require.Len(t, activeDelegations, 2)
+
+	// send all the rewards to the same FP to force the math overflow
+	fpRatios := []types.FpRatio{
+		{BtcPk: consFps[0].BTCPublicKey(), Ratio: math.LegacyOneDec()},
+	}
+
+	bsnRewardCoinsMaxSupply := datagen.GenRandomCoinsMaxSupply(r)
+	err := d.App.MintKeeper.MintCoins(d.Ctx(), bsnRewardCoinsMaxSupply)
+	require.NoError(t, err)
+
+	recipient := d.GetDriverAccountAddress()
+	err = d.App.BankKeeper.SendCoinsFromModuleToAccount(d.Ctx(), minttypes.ModuleName, recipient, bsnRewardCoinsMaxSupply)
+	require.NoError(t, err)
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	// FP current rewards now have the decimals, the error of int overflow should be thrown
+	// when the user send the message.
+	d.AddBsnRewardsFromDriver(consumer0.ID, bsnRewardCoinsMaxSupply, fpRatios)
+	txResults := d.GenerateNewBlockAssertExecutionFailure()
+	require.Len(t, txResults, 1)
+	require.Equal(t, uint32(1133), txResults[0].Code)
+	require.Contains(t, txResults[0].Log, "integer overflow")
 }

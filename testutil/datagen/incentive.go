@@ -12,8 +12,9 @@ import (
 )
 
 const (
-	characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	denomLen   = 5
+	denomLen          = 5
+	characters        = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	LegacyDecMaxValue = "115792089237316195423570985008687907853269984665640564039457584007913129639935"
 )
 
 func GenRandomDenom(r *rand.Rand) string {
@@ -149,7 +150,7 @@ func GenRandomBTCTimestampingRewardDistInfo(r *rand.Rand) *btcctypes.RewardDistI
 }
 
 func GenRandomFinalityProviderCurrentRewards(r *rand.Rand) itypes.FinalityProviderCurrentRewards {
-	rwd := GenRandomCoins(r)
+	rwd := GenRandomCoins(r).MulInt(itypes.DecimalRewards)
 	period := RandomInt(r, 100) + 3
 	activeSatoshi := RandomMathInt(r, 10000).AddRaw(10)
 	return itypes.NewFinalityProviderCurrentRewards(rwd, period, activeSatoshi)
@@ -166,9 +167,11 @@ func GenRandomFPHistRwd(r *rand.Rand) itypes.FinalityProviderHistoricalRewards {
 	return itypes.NewFinalityProviderHistoricalRewards(rwd)
 }
 
+// GenRandomFPHistRwdWithDecimals generates the FP historical with rewards.
+// Note: The current rewards structure already should contain the decimal multiplication
 func GenRandomFPHistRwdWithDecimals(r *rand.Rand) itypes.FinalityProviderHistoricalRewards {
 	rwd := GenRandomFPHistRwd(r)
-	rwd.CumulativeRewardsPerSat = rwd.CumulativeRewardsPerSat.MulInt(itypes.DecimalAccumulatedRewards)
+	rwd.CumulativeRewardsPerSat = rwd.CumulativeRewardsPerSat.MulInt(itypes.DecimalRewards)
 	return rwd
 }
 
@@ -177,4 +180,21 @@ func GenRandomFPHistRwdStartAndEnd(r *rand.Rand) (start, end itypes.FinalityProv
 	end = GenRandomFPHistRwdWithDecimals(r)
 	end.CumulativeRewardsPerSat = end.CumulativeRewardsPerSat.Add(start.CumulativeRewardsPerSat...)
 	return start, end
+}
+
+func GenRandomCoinsMaxSupply(r *rand.Rand) sdk.Coins {
+	return sdk.NewCoins(GenRandomCoinMaxSupply(r))
+}
+
+func GenRandomCoinMaxSupply(r *rand.Rand) sdk.Coin {
+	return sdk.NewCoin(GenRandomDenom(r), NewIntMaxSupply())
+}
+
+func NewIntMaxSupply() sdkmath.Int {
+	maxSupply, ok := sdkmath.NewIntFromString(LegacyDecMaxValue)
+	if !ok {
+		panic("int string max supply failed")
+	}
+
+	return maxSupply
 }
