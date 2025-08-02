@@ -32,12 +32,12 @@ func TestUpgradeTestSuite(t *testing.T) {
 	suite.Run(t, new(UpgradeTestSuite))
 }
 
-func (s *UpgradeTestSuite) setupTestWithNetwork(fpCount uint32,
-	btcActivationHeight uint32, permissionedIntegration bool, ibcPacketTimeoutSeconds uint32) {
+func (s *UpgradeTestSuite) setupTestWithNetwork(
+	permissionedIntegration bool,
+	fpCount, btcActivationHeight, ibcPacketTimeoutSeconds uint32,
+) {
 	s.initialBtcHeight = 100
-
-	app.Upgrades = []upgrades.Upgrade{CreateUpgrade(fpCount,
-		btcActivationHeight, permissionedIntegration, ibcPacketTimeoutSeconds)}
+	app.Upgrades = []upgrades.Upgrade{CreateUpgrade(permissionedIntegration, fpCount, btcActivationHeight, ibcPacketTimeoutSeconds)}
 
 	s.app = app.SetupWithBitcoinConf(s.T(), false, bbn.BtcSignet)
 	s.ctx = s.app.BaseApp.NewContextLegacy(false, tmproto.Header{Height: 1, ChainID: "babylon-1", Time: time.Now().UTC()})
@@ -94,21 +94,25 @@ func (s *UpgradeTestSuite) TestUpgradeNetworks() {
 
 	for _, tc := range testCases {
 		s.Run(tc.name, func() {
-			s.setupTestWithNetwork(tc.expectedMaxFPs,
-				tc.expectedBtcActivationHeight, tc.permissionedIntegration, tc.
-					ibcPacketTimeoutSeconds)
+			s.setupTestWithNetwork(
+				tc.permissionedIntegration,
+				tc.expectedMaxFPs, tc.expectedBtcActivationHeight, tc.ibcPacketTimeoutSeconds,
+			)
 
 			s.executeUpgrade()
 
-			s.verifyPostUpgrade(tc.expectedMaxFPs,
-				tc.expectedBtcActivationHeight, tc.ibcPacketTimeoutSeconds, tc.permissionedIntegration)
+			s.verifyPostUpgrade(
+				tc.permissionedIntegration,
+				tc.expectedMaxFPs, tc.expectedBtcActivationHeight, tc.ibcPacketTimeoutSeconds,
+			)
 		})
 	}
 }
 
-func (s *UpgradeTestSuite) verifyPostUpgrade(expectedMaxFPs,
-	expectedBtcActivationHeight, expectedIbcPacketTimeoutSeconds uint32,
-	expectedPermissionedIntegration bool) {
+func (s *UpgradeTestSuite) verifyPostUpgrade(
+	expectedPermissionedIntegration bool,
+	expectedMaxFPs, expectedBtcActivationHeight, expectedIbcPacketTimeoutSeconds uint32,
+) {
 	_, found := s.app.ModuleManager.Modules[deletedCapabilityStoreKey]
 	s.Require().False(found, "x/capability module should be deleted")
 

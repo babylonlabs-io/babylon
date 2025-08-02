@@ -22,13 +22,16 @@ const (
 	deletedCapabilityStoreKey = "capability"
 )
 
-func CreateUpgrade(fpCount uint32, btcActivationHeight uint32,
-	permissionedIntegration bool, ibcPacketTimeoutSeconds uint32,
+func CreateUpgrade(
+	permissionedIntegration bool,
+	fpCount, btcActivationHeight, ibcPacketTimeoutSeconds uint32,
 ) upgrades.Upgrade {
 	return upgrades.Upgrade{
 		UpgradeName: UpgradeName,
-		CreateUpgradeHandler: CreateUpgradeHandler(fpCount,
-			btcActivationHeight, permissionedIntegration, ibcPacketTimeoutSeconds),
+		CreateUpgradeHandler: CreateUpgradeHandler(
+			permissionedIntegration,
+			fpCount, btcActivationHeight, ibcPacketTimeoutSeconds,
+		),
 		StoreUpgrades: store.StoreUpgrades{
 			Added: []string{
 				btcstkconsumertypes.StoreKey,
@@ -41,17 +44,18 @@ func CreateUpgrade(fpCount uint32, btcActivationHeight uint32,
 	}
 }
 
-func CreateUpgradeHandler(fpCount uint32, btcActivationHeight uint32,
-	permissionedIntegration bool, ibcPacketTimeoutSeconds uint32) upgrades.
-UpgradeHandlerCreator {
+func CreateUpgradeHandler(
+	permissionedIntegration bool,
+	fpCount, btcActivationHeight, ibcPacketTimeoutSeconds uint32,
+) upgrades.UpgradeHandlerCreator {
 	return func(mm *module.Manager, configurator module.Configurator, keepers *keepers.AppKeepers) upgradetypes.UpgradeHandler {
-		return func(ctx context.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
-			migrations, err := mm.RunMigrations(ctx, configurator, fromVM)
+		return func(goCtx context.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
+			migrations, err := mm.RunMigrations(goCtx, configurator, fromVM)
 			if err != nil {
 				return nil, err
 			}
 
-			sdkCtx := sdk.UnwrapSDKContext(ctx)
+			ctx := sdk.UnwrapSDKContext(goCtx)
 
 			zoneConciergeParams := zoneconciergetypes.DefaultParams()
 			zoneConciergeParams.IbcPacketTimeoutSeconds = ibcPacketTimeoutSeconds
@@ -59,8 +63,7 @@ UpgradeHandlerCreator {
 				return nil, err
 			}
 
-			err = keepers.ZoneConciergeKeeper.SetParams(sdkCtx,
-				zoneConciergeParams)
+			err = keepers.ZoneConciergeKeeper.SetParams(ctx, zoneConciergeParams)
 			if err != nil {
 				return nil, err
 			}
@@ -71,19 +74,17 @@ UpgradeHandlerCreator {
 				return nil, err
 			}
 
-			err = keepers.BTCStkConsumerKeeper.SetParams(sdkCtx,
-				btcStkConsumerParams)
+			err = keepers.BTCStkConsumerKeeper.SetParams(ctx, btcStkConsumerParams)
 			if err != nil {
 				return nil, err
 			}
 
-			btcParams := keepers.BTCStakingKeeper.GetParams(sdkCtx)
-			btcParamsCopy := btcParams
+			// from the last parameter version, updates the fp count and activation height
+			btcParams := keepers.BTCStakingKeeper.GetParams(ctx)
+			btcParams.MaxFinalityProviders = fpCount
+			btcParams.BtcActivationHeight = btcActivationHeight
 
-			btcParamsCopy.MaxFinalityProviders = fpCount
-			btcParamsCopy.BtcActivationHeight = btcActivationHeight
-
-			err = keepers.BTCStakingKeeper.SetParams(sdkCtx, btcParamsCopy)
+			err = keepers.BTCStakingKeeper.SetParams(ctx, btcParams)
 			if err != nil {
 				return nil, err
 			}
