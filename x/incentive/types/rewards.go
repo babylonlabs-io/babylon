@@ -105,9 +105,6 @@ func (f *FinalityProviderCurrentRewards) Validate() error {
 	if f.CurrentRewards.IsAnyNil() {
 		return errors.New("current rewards has nil coins")
 	}
-	if f.CurrentRewards.Len() == 0 {
-		return errors.New("current rewards has no coins")
-	}
 
 	if f.TotalActiveSat.IsNil() {
 		return errors.New("current rewards has no total active satoshi delegated")
