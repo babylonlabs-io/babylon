@@ -9,7 +9,7 @@ babylond: babylond-rmi
 
 babylond-e2e:
 	docker build --tag babylonlabs-io/babylond -f babylond/Dockerfile ${BABYLON_FULL_PATH} \
-		--build-arg BABYLON_BUILD_OPTIONS="testnet e2e_upgrade"
+		--build-arg BABYLON_BUILD_OPTIONS="e2e_upgrade"
 
 babylond-rmi:
 	docker rmi babylonlabs-io/babylond --force 2>/dev/null; true
@@ -29,4 +29,4 @@ cosmos-relayer: cosmos-relayer-rmi
 cosmos-relayer-rmi:
 	docker rmi babylonlabs-io/cosmos-relayer 2>/dev/null; true
 
-.PHONY: all babylond cosmos-relayer e2e-init-chain babylond-rmi cosmos-relayer-rmi 
+.PHONY: all babylond cosmos-relayer e2e-init-chain babylond-rmi cosmos-relayer-rmi

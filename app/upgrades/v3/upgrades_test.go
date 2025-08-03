@@ -1,4 +1,4 @@
-package v3
+package v3_test
 
 import (
 	"testing"
@@ -10,6 +10,7 @@ import (
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 	"github.com/babylonlabs-io/babylon/v3/app"
 	"github.com/babylonlabs-io/babylon/v3/app/upgrades"
+	v3 "github.com/babylonlabs-io/babylon/v3/app/upgrades/v3"
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -37,7 +38,7 @@ func (s *UpgradeTestSuite) setupTestWithNetwork(
 	fpCount, btcActivationHeight, ibcPacketTimeoutSeconds uint32,
 ) {
 	s.initialBtcHeight = 100
-	app.Upgrades = []upgrades.Upgrade{CreateUpgrade(permissionedIntegration, fpCount, btcActivationHeight, ibcPacketTimeoutSeconds)}
+	app.Upgrades = []upgrades.Upgrade{v3.CreateUpgrade(permissionedIntegration, fpCount, btcActivationHeight, ibcPacketTimeoutSeconds)}
 
 	s.app = app.SetupWithBitcoinConf(s.T(), false, bbn.BtcSignet)
 	s.ctx = s.app.BaseApp.NewContextLegacy(false, tmproto.Header{Height: 1, ChainID: "babylon-1", Time: time.Now().UTC()})
@@ -51,7 +52,7 @@ func (s *UpgradeTestSuite) setupTestWithNetwork(
 
 func (s *UpgradeTestSuite) executeUpgrade() {
 	s.ctx = s.ctx.WithBlockHeight(DummyUpgradeHeight - 1)
-	plan := upgradetypes.Plan{Name: UpgradeName, Height: DummyUpgradeHeight}
+	plan := upgradetypes.Plan{Name: v3.UpgradeName, Height: DummyUpgradeHeight}
 	err := s.app.UpgradeKeeper.ScheduleUpgrade(s.ctx, plan)
 	s.Require().NoError(err)
 
@@ -113,7 +114,7 @@ func (s *UpgradeTestSuite) verifyPostUpgrade(
 	expectedPermissionedIntegration bool,
 	expectedMaxFPs, expectedBtcActivationHeight, expectedIbcPacketTimeoutSeconds uint32,
 ) {
-	_, found := s.app.ModuleManager.Modules[deletedCapabilityStoreKey]
+	_, found := s.app.ModuleManager.Modules[v3.DeletedCapabilityStoreKey]
 	s.Require().False(found, "x/capability module should be deleted")
 
 	_, found = s.app.ModuleManager.Modules["btcstkconsumer"]

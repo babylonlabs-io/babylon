@@ -19,8 +19,13 @@ import (
 // UpgradeName defines the on-chain upgrade name for the Babylon v3 upgrade
 const (
 	UpgradeName               = "v3"
-	deletedCapabilityStoreKey = "capability"
+	DeletedCapabilityStoreKey = "capability"
 )
+
+var StoresToAdd = []string{
+	btcstkconsumertypes.StoreKey,
+	zoneconciergetypes.StoreKey,
+}
 
 func CreateUpgrade(
 	permissionedIntegration bool,
@@ -33,12 +38,9 @@ func CreateUpgrade(
 			fpCount, btcActivationHeight, ibcPacketTimeoutSeconds,
 		),
 		StoreUpgrades: store.StoreUpgrades{
-			Added: []string{
-				btcstkconsumertypes.StoreKey,
-				zoneconciergetypes.StoreKey,
-			},
+			Added: StoresToAdd,
 			Deleted: []string{
-				deletedCapabilityStoreKey,
+				DeletedCapabilityStoreKey,
 			},
 		},
 	}
@@ -68,12 +70,9 @@ func CreateUpgradeHandler(
 				return nil, err
 			}
 
-			btcStkConsumerParams := btcstkconsumertypes.DefaultParams()
-			btcStkConsumerParams.PermissionedIntegration = permissionedIntegration
-			if err = btcStkConsumerParams.Validate(); err != nil {
-				return nil, err
+			btcStkConsumerParams := btcstkconsumertypes.Params{
+				PermissionedIntegration: permissionedIntegration,
 			}
-
 			err = keepers.BTCStkConsumerKeeper.SetParams(ctx, btcStkConsumerParams)
 			if err != nil {
 				return nil, err
