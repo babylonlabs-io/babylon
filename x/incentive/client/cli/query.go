@@ -26,6 +26,7 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 		CmdQueryRewardGauges(),
 		CmdQueryBTCStakingGauge(),
 		CmdQueryDelegationRewards(),
+		CmdQueryFpCurrentRewards(),
 	)
 
 	return cmd
@@ -114,6 +115,35 @@ func CmdQueryDelegationRewards() *cobra.Command {
 				DelegatorAddress:        args[1],
 			}
 			res, err := queryClient.DelegationRewards(cmd.Context(), req)
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+
+	return cmd
+}
+
+func CmdQueryFpCurrentRewards() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "fp-current-rewards [finality-provider-address]",
+		Short: "shows the finality provider current rewards of the given fp bbn address",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			queryClient := types.NewQueryClient(clientCtx)
+			req := &types.QueryFpCurrentRewardsRequest{
+				FinalityProviderAddress: args[0],
+			}
+			res, err := queryClient.FpCurrentRewards(cmd.Context(), req)
 			if err != nil {
 				return err
 			}

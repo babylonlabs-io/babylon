@@ -88,6 +88,21 @@ func (k Keeper) DelegationRewards(ctx context.Context, req *types.QueryDelegatio
 	return &types.QueryDelegationRewardsResponse{Rewards: rewards}, nil
 }
 
+// FpCurrentRewards gets the current fp rewards.
+func (k Keeper) FpCurrentRewards(ctx context.Context, req *types.QueryFpCurrentRewardsRequest) (*types.QueryFpCurrentRewardsResponse, error) {
+	fpAddr, err := sdk.AccAddressFromBech32(req.FinalityProviderAddress)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	fpCurrRwds, err := k.GetFinalityProviderCurrentRewards(ctx, fpAddr)
+	if err != nil {
+		return nil, types.ErrFPCurrentRewardsInvalid.Wrapf("failed to get for addr %s: %s", fpAddr.String(), err.Error())
+	}
+
+	return fpCurrRwds.ToResponse(), nil
+}
+
 func convertGaugeToBTCStakingResponse(gauge types.Gauge) *types.BTCStakingGaugeResponse {
 	return &types.BTCStakingGaugeResponse{
 		Coins: gauge.Coins,

@@ -98,6 +98,15 @@ func (f *FinalityProviderCurrentRewards) SubTotalActiveSat(amt sdkmath.Int) {
 	f.TotalActiveSat = f.TotalActiveSat.Sub(amt)
 }
 
+// ToResponse casts to the query response
+func (f *FinalityProviderCurrentRewards) ToResponse() *QueryFpCurrentRewardsResponse {
+	return &QueryFpCurrentRewardsResponse{
+		CurrentRewards: f.CurrentRewards,
+		Period:         f.Period,
+		TotalActiveSat: f.TotalActiveSat,
+	}
+}
+
 func (f *FinalityProviderCurrentRewards) Validate() error {
 	if !f.CurrentRewards.IsValid() {
 		return fmt.Errorf("current rewards has invalid coins: %s", f.CurrentRewards.String())
