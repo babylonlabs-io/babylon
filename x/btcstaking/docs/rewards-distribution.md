@@ -233,69 +233,28 @@ process.
 BSN consumers can be implemented as either rollup-based or Cosmos SDK-based 
 chains, each with different reward submission mechanisms:
 
-| Aspect               | Rollup BSN Consumer    | Cosmos BSN Consumer      |
-| -------------------- | ---------------------- | ------------------------ |
-| Registration message | `MsgRegisterConsumer`  | `MsgRegisterConsumer`    |
-| Reward submission    | `MsgAddBsnRewards` tx  | IBC Transfer + memo      |
-| Bridge requirement   | External bridge needed | Native IBC transport     |
-| Callback mechanism   | –                      | JSON memo + IBC callback |
+| Aspect               | Rollup BSN Consumer    | Cosmos BSN Consumer                  |
+| -------------------- | ---------------------- | ------------------------------------ |
+| Reward submission    | `MsgAddBsnRewards` tx  | IBC Transfer + memo                  |
+| Bridge requirement   | External bridge needed | Native IBC transport + Callbacks     |
 
 ### 3.1. Rollup BSN Consumers
 
-Rollup BSN consumers follow a transaction-based reward distribution model that 
-requires external bridging infrastructure and direct message submission to Babylon
-Genesis.
-
-Rollup BSN Consumers register on Babylon Genesis by submitting a
-`MsgRegisterConsumer` transaction. This message includes:
-
-- `ConsumerId`: The rollup ID that will be used as `BsnConsumerId` in
-  reward transactions
-- `ConsumerName` and `ConsumerDescription`: Human-readable information about
-  the rollup
-- `RollupFinalityContractAddress`: The address of the finality contract
-  deployed on Babylon Genesis (this field distinguishes rollup BSN from
-  Cosmos BSN consumers)
-- `BabylonRewardsCommission`: The commission rate that Babylon Genesis will
-  automatically deduct from reward distributions
-
-Babylon Genesis validates that the finality contract exists on-chain
-and stores the rollup's metadata, including the commission rate and contract
-address.
-
-The rollup must implement its own bridge infrastructure to transfer
-reward tokens from the rollup to Babylon Genesis. Babylon Genesis doesn't
-provide bridging mechanisms - it simply requires that reward tokens be
-available in the sender's account before transaction submission. The bridge
-must handle cross-chain communication, finality requirements, and security
-measures like multi-signature schemes.
-
-Once tokens are bridged, the rollup submits a `MsgAddBsnRewards` transaction 
-using their registered rollup ID as the `BsnConsumerId`, following the 
-same process as described in section 2.4.
+Ethereum-based Rollup BSNs that intend to distribute an Ethereum based token
+as a reward to BTC stakers must use bridging infrastructure to create
+a native bridged denomination of the token on Babylon Genesis.
+The native denomination can then be distributed using `MsgAddBsnRewards`
+as described in [Section 2.2.](#22-rewards-distribution-via-msgaddbsnrewards).
 
 ### 3.2. Cosmos BSN Consumers
 
-Cosmos SDK-based BSN consumers use IBC transfers with specialised callback 
-mechanisms
-to distribute rewards without requiring external bridge infrastructure.
-
-Cosmos BSN consumer register by providing an IBC client ID as their 
-`ConsumerId`.
-Babylon Genesis validates that the corresponding IBC light client exists
-and stores the consumer commission rate.
-
-Instead of external bridging, Cosmos BSN consumers use standard IBC transfers 
-with
-with the `memo` field (as seen below) to trigger reward distribution. When
-Babylon Genesis receives an IBC transfer, the callback system
-processes the memo field to extract reward distribution parameters.
-
-The memo must contain a JSON structure with `action: "add_bsn_rewards"` and
-include the BSN consumer ID and finality provider ratios.
+Cosmos SDK-based BSN consumers are expected to use IBC transfers
+combined with IBC Callbacks. Specifically,
+the Cosmos BSNs stack can periodically generate an ICS-20 transfer
+containing the details of the distribution as part of an IBC Callback
+message in the `memo` field.
 
 Here's an example memo field:
-
 ```json
 {
   "action": "add_bsn_rewards",
