@@ -98,7 +98,8 @@ func (f *FinalityProviderCurrentRewards) SubTotalActiveSat(amt sdkmath.Int) {
 	f.TotalActiveSat = f.TotalActiveSat.Sub(amt)
 }
 
-// ToResponse casts to the query response
+// ToResponse converts FinalityProviderCurrentRewards to QueryFpCurrentRewardsResponse
+// for gRPC query responses.
 func (f *FinalityProviderCurrentRewards) ToResponse() *QueryFpCurrentRewardsResponse {
 	return &QueryFpCurrentRewardsResponse{
 		CurrentRewards: f.CurrentRewards,

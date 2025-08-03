@@ -88,7 +88,7 @@ func (k Keeper) DelegationRewards(ctx context.Context, req *types.QueryDelegatio
 	return &types.QueryDelegationRewardsResponse{Rewards: rewards}, nil
 }
 
-// FpCurrentRewards gets the current fp rewards.
+// FpCurrentRewards gets the current finality provider rewards.
 func (k Keeper) FpCurrentRewards(ctx context.Context, req *types.QueryFpCurrentRewardsRequest) (*types.QueryFpCurrentRewardsResponse, error) {
 	fpAddr, err := sdk.AccAddressFromBech32(req.FinalityProviderAddress)
 	if err != nil {

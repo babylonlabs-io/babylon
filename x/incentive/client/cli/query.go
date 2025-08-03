@@ -131,7 +131,7 @@ func CmdQueryDelegationRewards() *cobra.Command {
 func CmdQueryFpCurrentRewards() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "fp-current-rewards [finality-provider-address]",
-		Short: "shows the finality provider current rewards of the given fp bbn address",
+		Short: "shows the finality provider current rewards of the given finality provider address",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
