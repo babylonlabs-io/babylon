@@ -610,6 +610,11 @@ func (d *BabylonAppDriver) GenerateBlocksUntilHeight(untilBlock uint64) {
 	}
 }
 
+func (d *BabylonAppDriver) GenerateNewBlockReturnResults() []*abci.ExecTxResult {
+	response := d.GenerateNewBlock()
+	return response.TxResults
+}
+
 func (d *BabylonAppDriver) GenerateNewBlockAssertExecutionSuccessWithResults() []*abci.ExecTxResult {
 	response := d.GenerateNewBlock()
 

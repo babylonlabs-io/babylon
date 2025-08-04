@@ -192,7 +192,9 @@ func (k Keeper) AddBTCDelegationInclusionProof(
 	)
 
 	// notify consumer chains about the active BTC delegation
-	k.notifyConsumersOnActiveBTCDel(ctx, btcDel)
+	if err := k.notifyConsumersOnActiveBTCDel(ctx, btcDel); err != nil {
+		return err
+	}
 
 	k.addPowerDistUpdateEvent(ctx, timeInfo.TipHeight, activeEvent)
 

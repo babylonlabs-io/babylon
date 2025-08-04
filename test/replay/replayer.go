@@ -1,8 +1,9 @@
 package replay
 
 import (
-	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
 	"testing"
+
+	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
 
 	"cosmossdk.io/log"
 	babylonApp "github.com/babylonlabs-io/babylon/v3/app"

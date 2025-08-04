@@ -7,6 +7,8 @@ import (
 
 	"cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
+	"github.com/babylonlabs-io/babylon/v3/btcstaking"
+	bbn "github.com/babylonlabs-io/babylon/v3/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
@@ -15,10 +17,8 @@ import (
 	"github.com/btcsuite/btcd/wire"
 	"github.com/cometbft/cometbft/crypto/tmhash"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 	"gopkg.in/yaml.v2"
-
-	"github.com/babylonlabs-io/babylon/v3/btcstaking"
-	bbn "github.com/babylonlabs-io/babylon/v3/types"
 )
 
 const (
@@ -30,6 +30,10 @@ const (
 	// because every covenant committee member must create separate Adaptor Signature
 	// for each FP in the multi-staked delegation.
 	GasCostPerMultiStakedFP = 7000
+
+	// MaxBtcStakingPacketSize is the maximum size of the BTC staking packet
+	// 144 bytes is a buffer for OutboundPacket packet wrapper
+	MaxBtcStakingPacketSize = channeltypes.MaximumPayloadsSize - 144
 )
 
 var _ paramtypes.ParamSet = (*Params)(nil)

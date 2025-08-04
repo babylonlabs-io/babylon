@@ -208,6 +208,11 @@ func TestAdditionalGasCostForMultiStakedDelegation(t *testing.T) {
 	require.GreaterOrEqual(t, txResults2[0].GasUsed-txResults1[0].GasUsed, int64(minimalGasDifference))
 }
 
+// packVerifiedDelegations packs activation of verified delegations into a single block
+// with proper gas limits for each message
+// It obeys all gas limits of the Babylon Genesis:
+// - Every tx is less than 10M gas
+// - Block will have less than 300M gas
 func (d *BabylonAppDriver) packVerifiedDelegations() []*abci.ExecTxResult {
 	block := d.IncludeVerifiedStakingTxInBTC(0)
 	acitvationMsgs := blockWithProofsToActivationMessages(block, d.GetDriverAccountAddress())
@@ -243,7 +248,7 @@ func (d *BabylonAppDriver) packVerifiedDelegations() []*abci.ExecTxResult {
 		d.IncSeq()
 	}
 
-	return d.GenerateNewBlockAssertExecutionSuccessWithResults()
+	return d.GenerateNewBlockReturnResults()
 }
 
 func (driver *BabylonAppDriver) InitCosmosConsumer(ctx sdk.Context, consumerID string) {
@@ -264,7 +269,7 @@ func (driver *BabylonAppDriver) InitCosmosConsumer(ctx sdk.Context, consumerID s
 
 }
 
-func TestCheckGasMulitstaking2FpsFailedPacket(t *testing.T) {
+func TestTooBigMulistakingPacket(t *testing.T) {
 	t.Parallel()
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	driverTempDir := t.TempDir()
@@ -280,7 +285,6 @@ func TestCheckGasMulitstaking2FpsFailedPacket(t *testing.T) {
 	driver.InitCosmosConsumer(ctx, consumerID1)
 	driver.InitCosmosConsumer(ctx, consumerID2)
 	driver.InitCosmosConsumer(ctx, consumerID3)
-
 	driver.GenerateNewBlock()
 
 	covSender := driver.CreateCovenantSender()
@@ -311,6 +315,8 @@ func TestCheckGasMulitstaking2FpsFailedPacket(t *testing.T) {
 	driver.GenerateNewBlockAssertExecutionSuccess()
 	staker := driver.CreateNStakerAccounts(1)[0]
 
+	// we are sending and verifing delegations in batches of 5 to ensure
+	// that covenant transaction will not go over block gas limits
 	driver.SendAndVerifyNDelegations(t, staker, covSender, []*bbn.BIP340PubKey{babylonFp1.BTCPublicKey(), fp2.BTCPublicKey()}, 5)
 	driver.SendAndVerifyNDelegations(t, staker, covSender, []*bbn.BIP340PubKey{babylonFp1.BTCPublicKey(), fp2.BTCPublicKey()}, 5)
 	driver.SendAndVerifyNDelegations(t, staker, covSender, []*bbn.BIP340PubKey{babylonFp1.BTCPublicKey(), fp2.BTCPublicKey()}, 5)
@@ -321,12 +327,20 @@ func TestCheckGasMulitstaking2FpsFailedPacket(t *testing.T) {
 	driver.SendAndVerifyNDelegations(t, staker, covSender, []*bbn.BIP340PubKey{babylonFp1.BTCPublicKey(), fp2.BTCPublicKey()}, 5)
 	driver.SendAndVerifyNDelegations(t, staker, covSender, []*bbn.BIP340PubKey{babylonFp1.BTCPublicKey(), fp2.BTCPublicKey()}, 5)
 	driver.SendAndVerifyNDelegations(t, staker, covSender, []*bbn.BIP340PubKey{babylonFp1.BTCPublicKey(), fp2.BTCPublicKey()}, 5)
-	driver.SendAndVerifyNDelegations(t, staker, covSender, []*bbn.BIP340PubKey{babylonFp1.BTCPublicKey(), fp2.BTCPublicKey()}, 5)
-	driver.SendAndVerifyNDelegations(t, staker, covSender, []*bbn.BIP340PubKey{babylonFp1.BTCPublicKey(), fp2.BTCPublicKey()}, 5)
-
+	driver.SendAndVerifyNDelegations(t, staker, covSender, []*bbn.BIP340PubKey{babylonFp1.BTCPublicKey(), fp2.BTCPublicKey()}, 4)
 	results := driver.packVerifiedDelegations()
 	require.NotEmpty(t, results)
 
+	// All results except the last one should be successful
+	for _, result := range results[:len(results)-1] {
+		require.Equal(t, uint32(0), result.Code)
+	}
+
+	lastResult := results[len(results)-1]
+
+	// Last result should be a failure
+	require.Equal(t, uint32(1), lastResult.Code)
+	require.Contains(t, lastResult.Log, "IBC packet size is too large")
 }
 
 func (driver *BabylonAppDriver) SendAndVerifyNDelegations(
