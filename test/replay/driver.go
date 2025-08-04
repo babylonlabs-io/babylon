@@ -78,16 +78,16 @@ var validatorConfig = &initialization.NodeConfig{
 const (
 	chainID         = initialization.ChainAID
 	testPartSize    = 65536
-	defaultGasLimit = 750000
+	defaultGasLimit = 1000000
 	defaultFee      = 500000
 	epochLength     = 10
 	blkTime         = time.Second * 5
 )
 
 var (
-	defaultFeeCoin                 = sdk.NewCoin("ubbn", sdkmath.NewInt(defaultFee))
-	BtcParams                      = &chaincfg.SimNetParams
-	covenantSKs, _, CovenantQuorum = bstypes.DefaultCovenantCommittee()
+	defaultFeeCoin                   = sdk.NewCoin("ubbn", sdkmath.NewInt(defaultFee))
+	BtcParams                        = &chaincfg.SimNetParams
+	covenantSKs, pks, CovenantQuorum = bstypes.LargeDefaultCovenantCommittee()
 )
 
 func getGenDoc(
@@ -172,6 +172,12 @@ func NewBabylonAppDriver(
 		expeditedVotingPeriod,   // expedited
 		1,
 		[]*btclighttypes.BTCHeaderInfo{},
+		// 300M is gas limit set for testnet and mainnet
+		300_000_000,
+		&initialization.StartingBtcStakingParams{
+			CovenantCommittee: bbn.NewBIP340PKsFromBTCPKs(pks),
+			CovenantQuorum:    CovenantQuorum,
+		},
 	)
 	require.NoError(t, err)
 	require.NotNil(t, chain)

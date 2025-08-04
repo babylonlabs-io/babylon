@@ -46,6 +46,12 @@ type NodeConfig struct {
 	BtcNetwork         string // The Bitcoin network used
 }
 
+// StartingBtcStakingParams is the initial btc staking parameters for the chain
+type StartingBtcStakingParams struct {
+	CovenantCommittee []bbn.BIP340PubKey
+	CovenantQuorum    uint32
+}
+
 const (
 	// common
 	BabylonDenom        = "ubbn"
@@ -169,6 +175,7 @@ func initGenesis(
 	votingPeriod, expeditedVotingPeriod time.Duration,
 	forkHeight int,
 	btcHeaders []*btclighttypes.BTCHeaderInfo,
+	startingBtcStakingParams *StartingBtcStakingParams,
 ) error {
 	// initialize a genesis file
 	configDir := chain.nodes[0].configDir()
@@ -269,7 +276,7 @@ func initGenesis(
 		return fmt.Errorf("failed to update tokenfactory genesis state: %w", err)
 	}
 
-	err = updateModuleGenesis(appGenState, btcstktypes.ModuleName, &btcstktypes.GenesisState{}, updateBtcStakingGenesis)
+	err = updateModuleGenesis(appGenState, btcstktypes.ModuleName, &btcstktypes.GenesisState{}, updupdateBtcStakingGenesisFn(startingBtcStakingParams))
 	if err != nil {
 		return fmt.Errorf("failed to update rate limiter genesis state: %w", err)
 	}
@@ -368,6 +375,17 @@ func updateFinalityGenesis(finalityGenState *finalitytypes.GenesisState) {
 func updateBtcStakingGenesis(btcStakingGenState *btcstktypes.GenesisState) {
 	// bump max finality providers to 5 in e2e and replay tests
 	btcStakingGenState.Params[0].MaxFinalityProviders = 5
+}
+
+func updupdateBtcStakingGenesisFn(p *StartingBtcStakingParams) func(*btcstktypes.GenesisState) {
+	return func(gen *btcstktypes.GenesisState) {
+		gen.Params[0].MaxFinalityProviders = 5
+
+		if p != nil {
+			gen.Params[0].CovenantPks = p.CovenantCommittee
+			gen.Params[0].CovenantQuorum = p.CovenantQuorum
+		}
+	}
 }
 
 func updateGenUtilGenesis(c *internalChain) func(*genutiltypes.GenesisState) {
