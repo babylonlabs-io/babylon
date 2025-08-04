@@ -220,27 +220,28 @@ func (d *BabylonAppDriver) packVerifiedDelegations() []*abci.ExecTxResult {
 	for i, msg := range acitvationMsgs {
 		var gaslimit uint64
 
-		if i < 5 {
+		switch {
+		case i < 5:
 			gaslimit = 1_100_000
-		} else if i < 10 {
+		case i < 10:
 			gaslimit = 2_000_000
-		} else if i < 15 {
+		case i < 15:
 			gaslimit = 2_700_000
-		} else if i < 20 {
+		case i < 20:
 			gaslimit = 3_500_000
-		} else if i < 25 {
+		case i < 25:
 			gaslimit = 4_400_000
-		} else if i < 30 {
+		case i < 30:
 			gaslimit = 5_100_000
-		} else if i < 35 {
+		case i < 35:
 			gaslimit = 6_000_000
-		} else if i < 40 {
+		case i < 40:
 			gaslimit = 7_000_000
-		} else if i < 45 {
+		case i < 45:
 			gaslimit = 7_500_000
-		} else if i < 50 {
+		case i < 50:
 			gaslimit = 8_500_000
-		} else {
+		default:
 			gaslimit = 10_000_000
 		}
 
@@ -266,10 +267,9 @@ func (driver *BabylonAppDriver) InitCosmosConsumer(ctx sdk.Context, consumerID s
 			ConnectionHops: []string{consumerID},
 		},
 	)
-
 }
 
-func TestTooBigMulistakingPacket(t *testing.T) {
+func TestTooBigMultistakingPacket(t *testing.T) {
 	t.Parallel()
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	driverTempDir := t.TempDir()
@@ -350,7 +350,6 @@ func (driver *BabylonAppDriver) SendAndVerifyNDelegations(
 	keys []*bbn.BIP340PubKey,
 	n int,
 ) {
-
 	for i := 0; i < n; i++ {
 		staker.CreatePreApprovalDelegation(
 			keys,

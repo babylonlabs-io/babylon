@@ -276,7 +276,7 @@ func initGenesis(
 		return fmt.Errorf("failed to update tokenfactory genesis state: %w", err)
 	}
 
-	err = updateModuleGenesis(appGenState, btcstktypes.ModuleName, &btcstktypes.GenesisState{}, updupdateBtcStakingGenesisFn(startingBtcStakingParams))
+	err = updateModuleGenesis(appGenState, btcstktypes.ModuleName, &btcstktypes.GenesisState{}, updateBtcStakingGenesisFn(startingBtcStakingParams))
 	if err != nil {
 		return fmt.Errorf("failed to update rate limiter genesis state: %w", err)
 	}
@@ -372,12 +372,7 @@ func updateFinalityGenesis(finalityGenState *finalitytypes.GenesisState) {
 	finalityGenState.Params.SignedBlocksWindow = 300
 }
 
-func updateBtcStakingGenesis(btcStakingGenState *btcstktypes.GenesisState) {
-	// bump max finality providers to 5 in e2e and replay tests
-	btcStakingGenState.Params[0].MaxFinalityProviders = 5
-}
-
-func updupdateBtcStakingGenesisFn(p *StartingBtcStakingParams) func(*btcstktypes.GenesisState) {
+func updateBtcStakingGenesisFn(p *StartingBtcStakingParams) func(*btcstktypes.GenesisState) {
 	return func(gen *btcstktypes.GenesisState) {
 		gen.Params[0].MaxFinalityProviders = 5
 
