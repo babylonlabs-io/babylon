@@ -139,6 +139,8 @@ command to modify `max-finality-providers` parameter.
 - [#1468](https://github.com/babylonlabs-io/babylon/pull/1468) Update multi-staking allow-list docs.
 - [#1474](https://github.com/babylonlabs-io/babylon/pull/1474) Add `QueryFpCurrentRewardsRequest` and fix export genesis of incentives
 to allow empty coins in fp current rewards.
+- [#1489](https://github.com/babylonlabs-io/babylon/pull/1489) Loads the consumer ID from the IBC packet if it is not set in
+`AddBsnRewards` IBC callbacks.
 
 ### State Machine Breaking
 
