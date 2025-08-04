@@ -29,6 +29,10 @@ func TestMultiConsumerDelegation(t *testing.T) {
 	driver.App.IBCKeeper.ClientKeeper.SetClientState(ctx, consumerID1, &ibctmtypes.ClientState{})
 	driver.App.IBCKeeper.ClientKeeper.SetClientState(ctx, consumerID2, &ibctmtypes.ClientState{})
 	driver.App.IBCKeeper.ClientKeeper.SetClientState(ctx, consumerID3, &ibctmtypes.ClientState{})
+	// open channel for the consumers
+	OpenChannelForConsumer(ctx, driver.App, consumerID1)
+	OpenChannelForConsumer(ctx, driver.App, consumerID2)
+	OpenChannelForConsumer(ctx, driver.App, consumerID3)
 	driver.GenerateNewBlock()
 
 	// 2. Register consumers
@@ -69,17 +73,49 @@ func TestMultiConsumerDelegation(t *testing.T) {
 	// 6. Replay all blocks and verify state
 	replayer := NewBlockReplayer(t, replayerTempDir)
 
-	// Set up IBC client states in the replayer before replaying blocks
+	// Set up IBC client states and channels in the replayer before replaying blocks
 	replayerCtx := replayer.App.BaseApp.NewContext(false)
 	replayer.App.IBCKeeper.ClientKeeper.SetClientState(replayerCtx, consumerID1, &ibctmtypes.ClientState{})
 	replayer.App.IBCKeeper.ClientKeeper.SetClientState(replayerCtx, consumerID2, &ibctmtypes.ClientState{})
 	replayer.App.IBCKeeper.ClientKeeper.SetClientState(replayerCtx, consumerID3, &ibctmtypes.ClientState{})
+	// Open channels for consumers
+	OpenChannelForConsumer(replayerCtx, replayer.App, consumerID1)
+	OpenChannelForConsumer(replayerCtx, replayer.App, consumerID2)
+	OpenChannelForConsumer(replayerCtx, replayer.App, consumerID3)
 
 	// Replay all the blocks from driver and check appHash
 	replayer.ReplayBlocks(t, driver.GetFinalizedBlocks())
 	// After replay we should have the same apphash and last block height
 	require.Equal(t, driver.GetLastState().LastBlockHeight, replayer.LastState.LastBlockHeight)
 	require.Equal(t, driver.GetLastState().AppHash, replayer.LastState.AppHash)
+}
+
+func TestConsumerFpCreationWithoutChannel(t *testing.T) {
+	t.Parallel()
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	driverTempDir := t.TempDir()
+	replayerTempDir := t.TempDir()
+	driver := NewBabylonAppDriver(r, t, driverTempDir, replayerTempDir)
+
+	const consumerID1 = "consumer1"
+
+	// Set up mock IBC clients for consumer before registering consumers
+	ctx := driver.App.BaseApp.NewContext(false)
+	driver.App.IBCKeeper.ClientKeeper.SetClientState(ctx, consumerID1, &ibctmtypes.ClientState{})
+
+	driver.GenerateNewBlock()
+
+	// Register consumer
+	consumer1 := driver.RegisterConsumer(r, consumerID1)
+	// Create a Babylon FP (registered without consumer ID)
+	babylonFp := driver.CreateNFinalityProviderAccounts(1)[0]
+	babylonFp.RegisterFinalityProvider("")
+
+	// should fail if we try to create an FP and there's no open channel
+	driver.CreateFinalityProviderForConsumer(consumer1)
+	res := driver.GenerateNewBlockAssertExecutionFailure()
+	require.Len(t, res, 1)
+	require.Contains(t, res[0].Log, "consumer does not have an open IBC channel")
 }
 
 func TestMultiConsumerDelegationTooManyKeys(t *testing.T) {
@@ -98,6 +134,10 @@ func TestMultiConsumerDelegationTooManyKeys(t *testing.T) {
 
 	// 2. Register consumers
 	consumer1 := driver.RegisterConsumer(r, consumerID1)
+	// open channel for the consumer
+	OpenChannelForConsumer(driver.Ctx(), driver.App, consumerID1)
+	driver.GenerateNewBlock()
+
 	// Create a Babylon FP (registered without consumer ID)
 	babylonFp := driver.CreateNFinalityProviderAccounts(1)[0]
 	babylonFp.RegisterFinalityProvider("")
@@ -147,6 +187,9 @@ func TestAdditionalGasCostForMultiStakedDelegation(t *testing.T) {
 	ctx := driver.App.BaseApp.NewContext(false)
 	driver.App.IBCKeeper.ClientKeeper.SetClientState(ctx, consumerID1, &ibctmtypes.ClientState{})
 	driver.App.IBCKeeper.ClientKeeper.SetClientState(ctx, consumerID2, &ibctmtypes.ClientState{})
+	// open channels for the consumers
+	OpenChannelForConsumer(ctx, driver.App, consumerID1)
+	OpenChannelForConsumer(ctx, driver.App, consumerID2)
 	driver.GenerateNewBlock()
 
 	// 2. Register consumers
