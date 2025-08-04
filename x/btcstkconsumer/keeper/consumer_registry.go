@@ -3,6 +3,10 @@ package keeper
 import (
 	"context"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	connectiontypes "github.com/cosmos/ibc-go/v10/modules/core/03-connection/types"
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+
 	"github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
 )
 
@@ -63,4 +67,29 @@ func (k Keeper) GetAllRegisteredConsumerIDs(ctx context.Context) []string {
 		panic(err)
 	}
 	return consumerIDs
+}
+
+// GetConsumerID returns the consumer ID based on the channel and port ID
+func (k Keeper) GetConsumerID(ctx sdk.Context, portID, channelID string) (consumerID string, err error) {
+	channel, found := k.channelKeeper.GetChannel(ctx, portID, channelID)
+	if !found {
+		return "", channeltypes.ErrChannelNotFound.Wrapf("portID: %s, channelID: %s", portID, channelID)
+	}
+
+	if len(channel.ConnectionHops) == 0 {
+		return "", channeltypes.ErrInvalidChannel.Wrap("no connection hops")
+	}
+
+	connectionID := channel.ConnectionHops[0]
+	connection, found := k.connectionKeeper.GetConnection(ctx, connectionID)
+	if !found {
+		return "", connectiontypes.ErrConnectionNotFound.Wrapf("portID: %s, channelID: %s, connectionID: %s", portID, channelID, connectionID)
+	}
+
+	cons, err := k.GetConsumerRegister(ctx, connection.ClientId)
+	if err != nil {
+		return "", err
+	}
+
+	return cons.ConsumerId, nil
 }
