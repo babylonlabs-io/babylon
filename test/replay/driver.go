@@ -78,7 +78,7 @@ var validatorConfig = &initialization.NodeConfig{
 const (
 	chainID         = initialization.ChainAID
 	testPartSize    = 65536
-	defaultGasLimit = 750000
+	defaultGasLimit = 10000000
 	defaultFee      = 500000
 	epochLength     = 10
 	blkTime         = time.Second * 5
@@ -403,7 +403,7 @@ func (d *BabylonAppDriver) SendTxWithMessagesSuccess(
 		Type: abci.CheckTxType_New,
 	})
 	require.NoError(t, err)
-	require.Equal(t, result.Code, uint32(0))
+	require.Equal(t, result.Code, uint32(0), result.Log)
 }
 
 func SendTxWithMessagesSuccess(
@@ -914,6 +914,36 @@ func (d *BabylonAppDriver) SendTxWithMsgsFromDriverAccount(
 	}
 
 	d.IncSeq()
+}
+
+func (d *BabylonAppDriver) SendTxWithMsgsFromDriverAccounGetResults(
+	t *testing.T,
+	msgs ...sdk.Msg,
+) []*abci.ExecTxResult {
+	d.SendTxWithMessagesSuccess(
+		t,
+		d.SenderInfo,
+		defaultGasLimit,
+		defaultFeeCoin,
+		msgs...,
+	)
+
+	result := d.GenerateNewBlock()
+
+	for _, rs := range result.TxResults {
+		// our checkpoint transactions have 0 gas wanted, skip them to avoid confusing the
+		// tests
+		if rs.GasWanted == 0 {
+			continue
+		}
+
+		// all executions should be successful
+		require.Equal(t, rs.Code, uint32(0), rs.Log)
+	}
+
+	d.IncSeq()
+
+	return result.TxResults
 }
 
 // Funciont to initate different type of senders
