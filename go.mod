@@ -8,7 +8,7 @@ require (
 	github.com/cometbft/cometbft v0.38.17
 	github.com/cometbft/cometbft-db v0.15.0
 	github.com/cosmos/cosmos-sdk v0.53.3
-	github.com/cosmos/evm v1.0.0-rc0.0.20250602235914-3eb2135b9103
+	github.com/cosmos/evm v0.3.0
 	github.com/cosmos/ibc-go/modules/light-clients/08-wasm/v10 v10.3.0
 	github.com/ethereum/go-ethereum v1.15.11
 	github.com/gorilla/mux v1.8.1
