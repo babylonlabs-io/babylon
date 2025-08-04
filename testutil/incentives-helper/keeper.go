@@ -36,6 +36,7 @@ func NewIncentiveHelper(
 	btclcKeeper *bstypes.MockBTCLightClientKeeper,
 	btccKForBtcStaking *bstypes.MockBtcCheckpointKeeper,
 	btccKForFinality *ftypes.MockCheckpointingKeeper,
+	chKeeper *types.MockZoneConciergeChannelKeeper,
 ) *IncentiveHelper {
 	db := dbm.NewMemDB()
 	stateStore := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
@@ -44,7 +45,7 @@ func NewIncentiveHelper(
 	bankK := keepertest.BankKeeper(t, db, stateStore, accK)
 
 	ictvK, _ := keepertest.IncentiveKeeperWithStore(t, db, stateStore, nil, bankK, accK, nil)
-	btcstkH := btcstkhelper.NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKForBtcStaking, btccKForFinality, ictvK, nil)
+	btcstkH := btcstkhelper.NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKForBtcStaking, btccKForFinality, ictvK, chKeeper, nil)
 
 	return &IncentiveHelper{
 		Helper:           btcstkH,

@@ -20,7 +20,7 @@ func TestMigrateStore(t *testing.T) {
 	var (
 		r                     = rand.New(rand.NewSource(time.Now().UnixNano()))
 		storeKey              = storetypes.NewKVStoreKey(types.StoreKey)
-		btcStakingKeeper, ctx = keepertest.BTCStakingKeeperWithStoreKey(t, storeKey, nil, nil, nil)
+		btcStakingKeeper, ctx = keepertest.BTCStakingKeeperWithStoreKey(t, storeKey, nil, nil,nil, nil)
 		paramsVersions        = 10
 		testChainID           = "test-chain-id"
 		nFps                  = 10

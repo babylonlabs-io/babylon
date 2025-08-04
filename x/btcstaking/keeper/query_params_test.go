@@ -10,7 +10,7 @@ import (
 )
 
 func TestParamsQuery(t *testing.T) {
-	keeper, ctx := testkeeper.BTCStakingKeeper(t, nil, nil, nil)
+	keeper, ctx := testkeeper.BTCStakingKeeper(t, nil, nil, nil, nil)
 	params := types.DefaultParams()
 
 	currParams := keeper.GetParams(ctx)
@@ -24,7 +24,7 @@ func TestParamsQuery(t *testing.T) {
 }
 
 func TestParamsByVersionQuery(t *testing.T) {
-	keeper, ctx := testkeeper.BTCStakingKeeper(t, nil, nil, nil)
+	keeper, ctx := testkeeper.BTCStakingKeeper(t, nil, nil, nil, nil)
 
 	currParams := keeper.GetParams(ctx)
 
@@ -74,7 +74,7 @@ func TestParamsByVersionQuery(t *testing.T) {
 }
 
 func TestParamsByBTCHeightQuery(t *testing.T) {
-	keeper, ctx := testkeeper.BTCStakingKeeper(t, nil, nil, nil)
+	keeper, ctx := testkeeper.BTCStakingKeeper(t, nil, nil, nil, nil)
 	currParams := keeper.GetParams(ctx)
 
 	// starting with `1` as BTCStakingKeeper creates params with version 0

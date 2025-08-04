@@ -37,11 +37,12 @@ func FuzzDistributeFpCommissionAndBtcDelRewards(f *testing.F) {
 		btccKForFinality := ftypes.NewMockCheckpointingKeeper(ctrl)
 
 		ictvK := testutil.NewMockIctvKeeperK(ctrl)
+		chK := types.NewMockZoneConciergeChannelKeeper(ctrl)
 
 		db := dbm.NewMemDB()
 		stateStore := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
 		heightAfterMultiStakingAllowListExpiration := int64(10)
-		h := testutil.NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKeeper, btccKForFinality, ictvK, nil).WithBlockHeight(heightAfterMultiStakingAllowListExpiration)
+		h := testutil.NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKeeper, btccKForFinality, ictvK, chK, nil).WithBlockHeight(heightAfterMultiStakingAllowListExpiration)
 
 		h.GenAndApplyCustomParams(r, 100, 200, 0, 2)
 

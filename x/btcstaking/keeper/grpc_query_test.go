@@ -224,7 +224,7 @@ func FuzzFinalityProvider(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 		// Setup keeper and context
-		keeper, ctx := testkeeper.BTCStakingKeeper(t, nil, nil, nil)
+		keeper, ctx := testkeeper.BTCStakingKeeper(t, nil, nil, nil, nil)
 		ctx = sdk.UnwrapSDKContext(ctx)
 
 		// Generate random finality providers and add them to kv store
@@ -293,7 +293,7 @@ func FuzzFinalityProviderDelegations(f *testing.F) {
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
 		btccKeeper.EXPECT().GetParams(gomock.Any()).Return(btcctypes.DefaultParams()).AnyTimes()
-		keeper, ctx := testkeeper.BTCStakingKeeper(t, btclcKeeper, btccKeeper, nil)
+		keeper, ctx := testkeeper.BTCStakingKeeper(t, btclcKeeper, btccKeeper, nil, nil)
 
 		// covenant and slashing addr
 		covenantSKs, covenantPKs, covenantQuorum := datagen.GenCovenantCommittee(r)
@@ -409,7 +409,7 @@ func FuzzPendingBTCDelegations(f *testing.F) {
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
 		btccKeeper.EXPECT().GetParams(gomock.Any()).Return(btcctypes.DefaultParams()).AnyTimes()
-		keeper, ctx := testkeeper.BTCStakingKeeper(t, btclcKeeper, btccKeeper, nil)
+		keeper, ctx := testkeeper.BTCStakingKeeper(t, btclcKeeper, btccKeeper, nil, nil)
 
 		// covenant and slashing addr
 		covenantSKs, covenantPKs, covenantQuorum := datagen.GenCovenantCommittee(r)
@@ -562,7 +562,7 @@ func TestCorrectParamsVersionIsUsed(t *testing.T) {
 	btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 	btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
 	btccKeeper.EXPECT().GetParams(gomock.Any()).Return(btcctypes.DefaultParams()).AnyTimes()
-	keeper, ctx := testkeeper.BTCStakingKeeper(t, btclcKeeper, btccKeeper, nil)
+	keeper, ctx := testkeeper.BTCStakingKeeper(t, btclcKeeper, btccKeeper, nil, nil)
 
 	// covenant and slashing addr
 	covenantSKs, covenantPKs, covenantQuorum := datagen.GenCovenantCommittee(r)
@@ -679,7 +679,7 @@ func FuzzParamsVersions(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		t.Parallel()
 		r := rand.New(rand.NewSource(seed))
-		k, ctx := testkeeper.BTCStakingKeeper(t, nil, nil, nil)
+		k, ctx := testkeeper.BTCStakingKeeper(t, nil, nil, nil, nil)
 
 		qntParams := datagen.RandomInt(r, 120) + 1
 

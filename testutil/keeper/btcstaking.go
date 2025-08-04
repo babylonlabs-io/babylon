@@ -34,8 +34,9 @@ func BTCStakingKeeperWithStore(
 	btclcKeeper types.BTCLightClientKeeper,
 	btccKeeper types.BtcCheckpointKeeper,
 	iKeeper types.IncentiveKeeper,
+	chKeeper types.ZoneConciergeChannelKeeper,
 ) (*keeper.Keeper, sdk.Context) {
-	return BTCStakingKeeperWithStoreAndBank(t, db, stateStore, storeKey, btclcKeeper, btccKeeper, iKeeper, nil, nil)
+	return BTCStakingKeeperWithStoreAndBank(t, db, stateStore, storeKey, btclcKeeper, btccKeeper, iKeeper, nil, chKeeper)
 }
 
 func BTCStakingKeeperWithStoreAndBank(
@@ -100,8 +101,9 @@ func BTCStakingKeeper(
 	btclcKeeper types.BTCLightClientKeeper,
 	btccKeeper types.BtcCheckpointKeeper,
 	iKeeper types.IncentiveKeeper,
+	chKeeper types.ZoneConciergeChannelKeeper,
 ) (*keeper.Keeper, sdk.Context) {
-	return BTCStakingKeeperWithStoreKey(t, nil, btclcKeeper, btccKeeper, iKeeper)
+	return BTCStakingKeeperWithStoreKey(t, nil, btclcKeeper, btccKeeper, iKeeper, chKeeper)
 }
 
 func BTCStakingKeeperWithStoreKey(
@@ -110,11 +112,12 @@ func BTCStakingKeeperWithStoreKey(
 	btclcKeeper types.BTCLightClientKeeper,
 	btccKeeper types.BtcCheckpointKeeper,
 	iKeeper types.IncentiveKeeper,
+	chKeeper types.ZoneConciergeChannelKeeper,
 ) (*keeper.Keeper, sdk.Context) {
 	db := dbm.NewMemDB()
 	stateStore := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
 
-	k, ctx := BTCStakingKeeperWithStore(t, db, stateStore, storeKey, btclcKeeper, btccKeeper, iKeeper)
+	k, ctx := BTCStakingKeeperWithStore(t, db, stateStore, storeKey, btclcKeeper, btccKeeper, iKeeper, chKeeper)
 
 	// Initialize params
 	if err := k.SetParams(ctx, types.DefaultParams()); err != nil {

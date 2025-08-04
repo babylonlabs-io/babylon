@@ -705,13 +705,14 @@ func TestBtcDelegationRewards(t *testing.T) {
 
 	btclcKeeper := bstypes.NewMockBTCLightClientKeeper(ctrl)
 	btccKForBtcStaking := bstypes.NewMockBtcCheckpointKeeper(ctrl)
+	chKeeper := bstypes.NewMockZoneConciergeChannelKeeper(ctrl)
 
 	epochNumber := uint64(10)
 	btccKForFinality := types.NewMockCheckpointingKeeper(ctrl)
 	btccKForFinality.EXPECT().GetEpoch(gomock.Any()).Return(&epochingtypes.Epoch{EpochNumber: epochNumber}).AnyTimes()
 	btccKForFinality.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(epochNumber).AnyTimes()
 
-	h := testutil.NewIncentiveHelper(t, btclcKeeper, btccKForBtcStaking, btccKForFinality)
+	h := testutil.NewIncentiveHelper(t, btclcKeeper, btccKForBtcStaking, btccKForFinality, chKeeper)
 	// set all parameters
 	covenantSKs, _ := h.GenAndApplyParams(r)
 	h.SetFinalityActivationHeight(0)
@@ -779,13 +780,14 @@ func TestBtcDelegationRewardsEarlyUnbondingAndExpire(t *testing.T) {
 
 	btclcKeeper := bstypes.NewMockBTCLightClientKeeper(ctrl)
 	btccKForBtcStaking := bstypes.NewMockBtcCheckpointKeeper(ctrl)
+	chKeeper := bstypes.NewMockZoneConciergeChannelKeeper(ctrl)
 
 	epochNumber := uint64(10)
 	btccKForFinality := types.NewMockCheckpointingKeeper(ctrl)
 	btccKForFinality.EXPECT().GetEpoch(gomock.Any()).Return(&epochingtypes.Epoch{EpochNumber: epochNumber}).AnyTimes()
 	btccKForFinality.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(epochNumber).AnyTimes()
 
-	h := testutil.NewIncentiveHelper(t, btclcKeeper, btccKForBtcStaking, btccKForFinality)
+	h := testutil.NewIncentiveHelper(t, btclcKeeper, btccKForBtcStaking, btccKForFinality, chKeeper)
 	// set all parameters
 	covenantSKs, _ := h.GenAndApplyParams(r)
 	h.SetFinalityActivationHeight(0)
