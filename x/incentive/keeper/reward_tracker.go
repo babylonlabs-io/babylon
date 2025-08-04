@@ -23,7 +23,7 @@ func (k Keeper) AddFinalityProviderRewardsForBtcDelegations(ctx context.Context,
 	}
 
 	fpCurrentRwd.AddRewards(rwd)
-	return k.setFinalityProviderCurrentRewards(ctx, fp, fpCurrentRwd)
+	return k.SetFinalityProviderCurrentRewards(ctx, fp, fpCurrentRwd)
 }
 
 // BtcDelegationActivated adds new amount of active satoshi to the delegation
@@ -247,7 +247,7 @@ func (k Keeper) IncrementFinalityProviderPeriod(ctx context.Context, fp sdk.AccA
 
 	// initiates a new period with empty rewards and the same amount of active sat
 	newCurrentRwd := types.NewFinalityProviderCurrentRewards(sdk.NewCoins(), fpCurrentRwd.Period+1, fpCurrentRwd.TotalActiveSat)
-	if err := k.setFinalityProviderCurrentRewards(ctx, fp, newCurrentRwd); err != nil {
+	if err := k.SetFinalityProviderCurrentRewards(ctx, fp, newCurrentRwd); err != nil {
 		return 0, err
 	}
 
@@ -266,7 +266,7 @@ func (k Keeper) initializeFinalityProvider(ctx context.Context, fp sdk.AccAddres
 
 	// set current rewards (starting at period 1)
 	newFp := types.NewFinalityProviderCurrentRewards(sdk.NewCoins(), 1, sdkmath.ZeroInt())
-	return newFp, k.setFinalityProviderCurrentRewards(ctx, fp, newFp)
+	return newFp, k.SetFinalityProviderCurrentRewards(ctx, fp, newFp)
 }
 
 // initializeBTCDelegation creates a new BTCDelegationRewardsTracker from the
