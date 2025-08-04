@@ -29,6 +29,7 @@ func TestConsumerBsnRewardDistribution(t *testing.T) {
 
 	consumerID := "bsn-consumer-0"
 	d.App.IBCKeeper.ClientKeeper.SetClientState(d.Ctx(), consumerID, &ibctmtypes.ClientState{})
+	OpenChannelForConsumer(d.Ctx(), d.App, consumerID)
 	d.GenerateNewBlock()
 
 	consumer0 := d.RegisterConsumer(r, consumerID)
