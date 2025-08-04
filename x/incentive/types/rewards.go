@@ -98,15 +98,22 @@ func (f *FinalityProviderCurrentRewards) SubTotalActiveSat(amt sdkmath.Int) {
 	f.TotalActiveSat = f.TotalActiveSat.Sub(amt)
 }
 
+// ToResponse converts FinalityProviderCurrentRewards to QueryFpCurrentRewardsResponse
+// for gRPC query responses.
+func (f *FinalityProviderCurrentRewards) ToResponse() *QueryFpCurrentRewardsResponse {
+	return &QueryFpCurrentRewardsResponse{
+		CurrentRewards: f.CurrentRewards,
+		Period:         f.Period,
+		TotalActiveSat: f.TotalActiveSat,
+	}
+}
+
 func (f *FinalityProviderCurrentRewards) Validate() error {
 	if !f.CurrentRewards.IsValid() {
 		return fmt.Errorf("current rewards has invalid coins: %s", f.CurrentRewards.String())
 	}
 	if f.CurrentRewards.IsAnyNil() {
 		return errors.New("current rewards has nil coins")
-	}
-	if f.CurrentRewards.Len() == 0 {
-		return errors.New("current rewards has no coins")
 	}
 
 	if f.TotalActiveSat.IsNil() {
