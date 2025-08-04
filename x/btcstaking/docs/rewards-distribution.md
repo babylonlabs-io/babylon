@@ -1,11 +1,6 @@
 # BSN Rewards Distribution on Babylon Genesis
 
 1. [Introduction](#1-introduction)
-    1. [What is BSN Rewards Distribution?](#11-what-is-bsn-rewards-distribution)
-    2. [Who Gets Rewards?](#12-who-gets-rewards)
-    3. [Key Terminology](#13-key-terminology)
-    4. [Rewards Distribution Flow](#14-rewards-distribution-flow)
-    5. [Module Overview](#15-module-overview)
 2. [Rewards Protocol](#2-rewards-protocol)
     1. [Rewards Distribution Procedure](#21-rewards-distribution-procedure)
     2. [Submitting rewards via transactions](#22-rewards-distribution-via-msgaddbsnrewards)
