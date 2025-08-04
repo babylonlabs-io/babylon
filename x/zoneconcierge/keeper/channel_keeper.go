@@ -61,7 +61,7 @@ func (k ChannelKeeper) Logger(ctx sdk.Context) log.Logger {
 
 // InitGenesis initializes the keeper state from a provided initial genesis state.
 func (k ChannelKeeper) InitGenesis(ctx context.Context, gs types.GenesisState) error {
-	return k.setPort(ctx, gs.PortId)
+	return k.port.Set(ctx, gs.PortId)
 }
 
 // GetPort returns the portID for the zoneconcierge module. Used in ExportGenesis
@@ -71,11 +71,6 @@ func (k ChannelKeeper) GetPort(ctx context.Context) string {
 		panic(err)
 	}
 	return port
-}
-
-// SetPort sets the portID for the zoneconcierge module. Used in InitGenesis
-func (k ChannelKeeper) setPort(ctx context.Context, portID string) error {
-	return k.port.Set(ctx, portID)
 }
 
 func (k ChannelKeeper) GetAllChannels(ctx context.Context) []channeltypes.IdentifiedChannel {
