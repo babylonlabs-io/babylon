@@ -115,9 +115,10 @@ func FuzzCollectBabylonCommission(f *testing.F) {
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
 		bankKeeper := types.NewMockBankKeeper(ctrl)
+		chanKeeper := types.NewMockZoneConciergeChannelKeeper(ctrl)
 		ictvK := testutil.NewMockIctvKeeperK(ctrl)
 
-		h := testutil.NewHelperWithBankMock(t, btclcKeeper, btccKeeper, bankKeeper, ictvK, nil)
+		h := testutil.NewHelperWithBankMock(t, btclcKeeper, btccKeeper, bankKeeper, chanKeeper, ictvK, nil)
 
 		h.GenAndApplyCustomParams(r, 100, 200, 0, 2)
 
@@ -158,8 +159,9 @@ func FuzzCollectComissionAndDistributeBsnRewards(f *testing.F) {
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
 		bankKeeper := types.NewMockBankKeeper(ctrl)
 		ictvK := testutil.NewMockIctvKeeperK(ctrl)
+		chanKeeper := types.NewMockZoneConciergeChannelKeeper(ctrl)
 
-		h := testutil.NewHelperWithBankMock(t, btclcKeeper, btccKeeper, bankKeeper, ictvK, nil)
+		h := testutil.NewHelperWithBankMock(t, btclcKeeper, btccKeeper, bankKeeper, chanKeeper, ictvK, nil)
 
 		h.GenAndApplyCustomParams(r, 100, 200, 0, 2)
 

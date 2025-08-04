@@ -41,3 +41,7 @@ type BankKeeper interface {
 	SendCoinsFromAccountToModule(ctx context.Context, senderAddr sdk.AccAddress, recipientModule string, amt sdk.Coins) error
 	SendCoinsFromModuleToModule(ctx context.Context, senderModule, recipientModule string, amt sdk.Coins) error
 }
+
+type ZoneConciergeChannelKeeper interface {
+	ConsumerHasIBCChannelOpen(ctx context.Context, consumerID string) bool
+}

@@ -31,7 +31,7 @@ func (k Keeper) BroadcastBTCHeaders(ctx context.Context) error {
 
 	for _, consumerID := range consumerIDs {
 		// Find the channel for this consumer
-		channel, found := k.getChannelForConsumer(ctx, consumerID)
+		channel, found := k.channelKeeper.GetChannelForConsumer(ctx, consumerID)
 		if !found {
 			k.Logger(sdkCtx).Debug("no open channel found for consumer, skipping BTC header broadcast",
 				"consumerID", consumerID,

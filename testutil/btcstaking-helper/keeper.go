@@ -172,6 +172,7 @@ func NewHelperWithBankMock(
 	btclcKeeper *types.MockBTCLightClientKeeper,
 	btccKeeper *types.MockBtcCheckpointKeeper,
 	bankKeeper *types.MockBankKeeper,
+	chanKeeper *types.MockZoneConciergeChannelKeeper,
 	ictvK *IctvKeeperK,
 	btcStkStoreKey *storetypes.KVStoreKey,
 ) *Helper {
@@ -182,7 +183,7 @@ func NewHelperWithBankMock(
 
 	ckptKeeper := ftypes.NewMockCheckpointingKeeper(ctrl)
 
-	return NewHelperWithStoreIncentiveAndBank(t, db, stateStore, btclcKeeper, btccKeeper, ckptKeeper, ictvK, bankKeeper, btcStkStoreKey)
+	return NewHelperWithStoreIncentiveAndBank(t, db, stateStore, btclcKeeper, btccKeeper, ckptKeeper, ictvK, bankKeeper, chanKeeper, btcStkStoreKey)
 }
 
 func NewHelperWithStoreAndIncentive(
@@ -242,9 +243,10 @@ func NewHelperWithStoreIncentiveAndBank(
 	btccKForFinality *ftypes.MockCheckpointingKeeper,
 	ictvKeeper *IctvKeeperK,
 	bankKeeper *types.MockBankKeeper,
+	chanKeeper *types.MockZoneConciergeChannelKeeper,
 	btcStkStoreKey *storetypes.KVStoreKey,
 ) *Helper {
-	k, _ := keepertest.BTCStakingKeeperWithStoreAndBank(t, db, stateStore, btcStkStoreKey, btclcKeeper, btccKForBtcStaking, ictvKeeper, bankKeeper)
+	k, _ := keepertest.BTCStakingKeeperWithStoreAndBank(t, db, stateStore, btcStkStoreKey, btclcKeeper, btccKForBtcStaking, ictvKeeper, bankKeeper, chanKeeper)
 	msgSrvr := keeper.NewMsgServerImpl(*k)
 
 	bscKeeper := k.BscKeeper.(bsckeeper.Keeper)

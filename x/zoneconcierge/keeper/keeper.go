@@ -1,8 +1,6 @@
 package keeper
 
 import (
-	"context"
-
 	"cosmossdk.io/collections"
 	corestoretypes "cosmossdk.io/core/store"
 	"cosmossdk.io/log"
@@ -20,7 +18,7 @@ type (
 		ics4Wrapper      types.ICS4Wrapper
 		clientKeeper     types.ClientKeeper
 		connectionKeeper types.ConnectionKeeper
-		channelKeeper    types.ChannelKeeper
+		channelKeeper    types.ZoneConciergeChannelKeeper
 		authKeeper       types.AccountKeeper
 		bankKeeper       types.BankKeeper
 		// used in BTC timestamping
@@ -38,7 +36,6 @@ type (
 
 		// Collections for KV store management
 		Schema                collections.Schema
-		Port                  collections.Item[string]
 		ParamsCollection      collections.Item[types.Params]
 		LastSentBTCSegment    collections.Item[types.BTCChainSegment]
 		SealedEpochProof      collections.Map[uint64, types.ProofEpochSealed]
@@ -54,7 +51,7 @@ func NewKeeper(
 	ics4Wrapper types.ICS4Wrapper,
 	clientKeeper types.ClientKeeper,
 	connectionKeeper types.ConnectionKeeper,
-	channelKeeper types.ChannelKeeper,
+	channelKeeper types.ZoneConciergeChannelKeeper,
 	authKeeper types.AccountKeeper,
 	bankKeeper types.BankKeeper,
 	btclcKeeper types.BTCLightClientKeeper,
@@ -86,12 +83,6 @@ func NewKeeper(
 		btcStkKeeper:        btcStkKeeper,
 		authority:           authority,
 
-		Port: collections.NewItem[string](
-			sb,
-			types.PortKey,
-			"port",
-			collections.StringValue,
-		),
 		ParamsCollection: collections.NewItem[types.Params](
 			sb,
 			types.ParamsKey,
@@ -148,16 +139,6 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", "x/"+ibcexported.ModuleName+"-"+types.ModuleName)
 }
 
-// GetPort returns the portID for the transfer module. Used in ExportGenesis
-func (k Keeper) GetPort(ctx context.Context) string {
-	port, err := k.Port.Get(ctx)
-	if err != nil {
-		panic(err)
-	}
-	return port
-}
-
-// SetPort sets the portID for the transfer module. Used in InitGenesis
-func (k Keeper) SetPort(ctx context.Context, portID string) error {
-	return k.Port.Set(ctx, portID)
+func (k Keeper) GetPort(ctx sdk.Context) string {
+	return k.channelKeeper.GetPort(ctx)
 }

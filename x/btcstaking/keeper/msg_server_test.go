@@ -1544,9 +1544,10 @@ func TestMsgServerAddBsnRewards(t *testing.T) {
 	btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 	btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
 	bankKeeper := types.NewMockBankKeeper(ctrl)
+	chanKeeper := types.NewMockZoneConciergeChannelKeeper(ctrl)
 	ictvK := testutil.NewMockIctvKeeperK(ctrl)
 
-	h := testutil.NewHelperWithBankMock(t, btclcKeeper, btccKeeper, bankKeeper, ictvK, nil)
+	h := testutil.NewHelperWithBankMock(t, btclcKeeper, btccKeeper, bankKeeper, chanKeeper, ictvK, nil)
 
 	h.GenAndApplyCustomParams(r, 100, 200, 0, 2)
 

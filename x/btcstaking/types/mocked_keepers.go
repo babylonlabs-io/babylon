@@ -348,3 +348,40 @@ func (mr *MockBankKeeperMockRecorder) SpendableCoins(ctx, addr interface{}) *gom
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SpendableCoins", reflect.TypeOf((*MockBankKeeper)(nil).SpendableCoins), ctx, addr)
 }
+
+// MockZoneConciergeChannelKeeper is a mock of ZoneConciergeChannelKeeper interface.
+type MockZoneConciergeChannelKeeper struct {
+	ctrl     *gomock.Controller
+	recorder *MockZoneConciergeChannelKeeperMockRecorder
+}
+
+// MockZoneConciergeChannelKeeperMockRecorder is the mock recorder for MockZoneConciergeChannelKeeper.
+type MockZoneConciergeChannelKeeperMockRecorder struct {
+	mock *MockZoneConciergeChannelKeeper
+}
+
+// NewMockZoneConciergeChannelKeeper creates a new mock instance.
+func NewMockZoneConciergeChannelKeeper(ctrl *gomock.Controller) *MockZoneConciergeChannelKeeper {
+	mock := &MockZoneConciergeChannelKeeper{ctrl: ctrl}
+	mock.recorder = &MockZoneConciergeChannelKeeperMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockZoneConciergeChannelKeeper) EXPECT() *MockZoneConciergeChannelKeeperMockRecorder {
+	return m.recorder
+}
+
+// ConsumerHasIBCChannelOpen mocks base method.
+func (m *MockZoneConciergeChannelKeeper) ConsumerHasIBCChannelOpen(ctx context.Context, consumerID string) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ConsumerHasIBCChannelOpen", ctx, consumerID)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// ConsumerHasIBCChannelOpen indicates an expected call of ConsumerHasIBCChannelOpen.
+func (mr *MockZoneConciergeChannelKeeperMockRecorder) ConsumerHasIBCChannelOpen(ctx, consumerID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ConsumerHasIBCChannelOpen", reflect.TypeOf((*MockZoneConciergeChannelKeeper)(nil).ConsumerHasIBCChannelOpen), ctx, consumerID)
+}

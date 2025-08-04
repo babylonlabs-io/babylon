@@ -2051,11 +2051,12 @@ func TestBSNDelegationUnbonded_DirectIncentives(t *testing.T) {
 	btclcKeeper := btcstktypes.NewMockBTCLightClientKeeper(ctrl)
 	btccKeeper := btcstktypes.NewMockBtcCheckpointKeeper(ctrl)
 	ictvK := testutil.NewMockIctvKeeperK(ctrl)
+	chanKeeper := btcstktypes.NewMockZoneConciergeChannelKeeper(ctrl)
 
 	heightAfterMultiStakingAllowListExpiration := int64(10)
 	btcStakingStoreKey := storetypes.NewKVStoreKey(btcstktypes.StoreKey)
 
-	h := testutil.NewHelperWithBankMock(t, btclcKeeper, btccKeeper, nil, ictvK, btcStakingStoreKey).WithBlockHeight(heightAfterMultiStakingAllowListExpiration)
+	h := testutil.NewHelperWithBankMock(t, btclcKeeper, btccKeeper, nil, chanKeeper, ictvK, btcStakingStoreKey).WithBlockHeight(heightAfterMultiStakingAllowListExpiration)
 
 	covenantSKs, _ := h.GenAndApplyCustomParams(r, 100, 200, 0, 2)
 
