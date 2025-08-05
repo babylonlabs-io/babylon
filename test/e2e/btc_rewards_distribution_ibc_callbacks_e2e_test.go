@@ -446,12 +446,12 @@ func (s *IbcCallbackBsnAddRewards) Test6SendBsnRewardsCallbackWithNativeToken() 
 	// ibc callback middleware can correctly parse everything
 	fp2Ratio, fp3Ratio := math.LegacyMustNewDecFromStr("0.7"), math.LegacyMustNewDecFromStr("0.3")
 
+	// send the callback without specifying consumer ID to try to load from the ibc channel
 	callbackMemo := bstypes.CallbackMemo{
 		Action: bstypes.CallbackActionAddBsnRewardsMemo,
 		DestCallback: &bstypes.CallbackInfo{
 			Address: datagen.GenRandomAccount().Address,
 			AddBsnRewards: &bstypes.CallbackAddBsnRewards{
-				BsnConsumerID: s.bsn0.ConsumerId,
 				FpRatios: []bstypes.FpRatio{
 					{
 						BtcPk: s.fp2cons0.BtcPk,
