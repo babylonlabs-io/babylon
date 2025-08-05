@@ -311,7 +311,7 @@ func (s *SoftwareUpgradeV3TestSuite) FpCommitPubRandAndVote(n *chain.NodeConfig)
 			&s.fp1RandListInfo.PRList[s.finalityIdx],
 			*s.fp1RandListInfo.ProofList[s.finalityIdx].ToProto(),
 			"",
-			fmt.Sprintf("--from=%s", wFp1),
+			fmt.Sprintf("--from=%s", s.fp2Addr),
 		)
 	}()
 
@@ -325,11 +325,14 @@ func (s *SoftwareUpgradeV3TestSuite) FpCommitPubRandAndVote(n *chain.NodeConfig)
 			&s.fp2RandListInfo.PRList[s.finalityIdx],
 			*s.fp2RandListInfo.ProofList[s.finalityIdx].ToProto(),
 			"",
-			fmt.Sprintf("--from=%s", wFp2),
+			fmt.Sprintf("--from=%s", s.fp2Addr),
 		)
 	}()
 
 	wg.Wait()
+
+	s.finalityIdx++
+	s.finalityBlockHeightVoted++
 	n.WaitForNextBlockWithSleep50ms()
 
 	// ensure vote is eventually cast
@@ -342,6 +345,8 @@ func (s *SoftwareUpgradeV3TestSuite) FpCommitPubRandAndVote(n *chain.NodeConfig)
 	s.Equal(s.finalityBlockHeightVoted, finalizedBlocks[0].Height)
 	s.Equal(appHash.Bytes(), finalizedBlocks[0].AppHash)
 	s.T().Logf("the block %d is finalized", s.finalityBlockHeightVoted)
+
+	s.AddFinalityVoteUntilCurrentHeight(n)
 }
 
 // TestUpgradeV3 checks if the upgrade from v2.2.0 to v3 was successful
@@ -379,12 +384,12 @@ func (s *SoftwareUpgradeV3TestSuite) CheckFpAfterUpgrade() {
 	// query pub randomness
 	fp1CommitPubRand := n.QueryListPubRandCommit(s.fp1.BtcPk)
 	s.Require().NotNil(fp1CommitPubRand, "fp1CommitPubRand should not be nil")
-	_, ok := fp1CommitPubRand[s.finalityIdx]
+	_, ok := fp1CommitPubRand[s.finalityBlockHeightVoted]
 	s.Require().True(ok, "fp1CommitPubRand should contain commitStartHeight")
 
 	fp2CommitPubRand := n.QueryListPubRandCommit(s.fp2.BtcPk)
 	s.Require().NotNil(fp2CommitPubRand, "fp2CommitPubRand should not be nil")
-	_, ok = fp2CommitPubRand[s.finalityIdx]
+	_, ok = fp2CommitPubRand[s.finalityBlockHeightVoted]
 	s.Require().True(ok, "fp2CommitPubRand should contain commitStartHeight")
 }
 
@@ -404,4 +409,72 @@ func (s *SoftwareUpgradeV3TestSuite) CheckParamsAfterUpgrade() {
 	btcStkParams := n.QueryBTCStakingParams()
 	s.Require().Equal(uint32(10), btcStkParams.MaxFinalityProviders, "max_finality_providers should be 10")
 	s.Require().Equal(uint32(260000), btcStkParams.BtcActivationHeight, "btc activation height should be 260000")
+}
+
+func (s *SoftwareUpgradeV3TestSuite) AddFinalityVoteUntilCurrentHeight(n *chain.NodeConfig) {
+	currentBlock := n.LatestBlockNumber()
+
+	accFp1, err := n.QueryAccount(s.fp1.Addr)
+	s.NoError(err)
+	accFp2, err := n.QueryAccount(s.fp2.Addr)
+	s.NoError(err)
+
+	accNumberFp1 := accFp1.GetAccountNumber()
+	accSequenceFp1 := accFp1.GetSequence()
+
+	accNumberFp2 := accFp2.GetAccountNumber()
+	accSequenceFp2 := accFp2.GetSequence()
+
+	for s.finalityBlockHeightVoted < currentBlock {
+		fp1Flags := []string{
+			"--offline",
+			fmt.Sprintf("--account-number=%d", accNumberFp1),
+			fmt.Sprintf("--sequence=%d", accSequenceFp1),
+			fmt.Sprintf("--from=%s", s.fp1.Addr),
+		}
+		fp2Flags := []string{
+			"--offline",
+			fmt.Sprintf("--account-number=%d", accNumberFp2),
+			fmt.Sprintf("--sequence=%d", accSequenceFp2),
+			fmt.Sprintf("--from=%s", s.fp2.Addr),
+		}
+		s.AddFinalityVote(fp1Flags, fp2Flags)
+
+		accSequenceFp1++
+		accSequenceFp2++
+	}
+}
+
+func (s *SoftwareUpgradeV3TestSuite) AddFinalityVote(flagsFp1, flagsFp2 []string) (appHash bytes.HexBytes) {
+	chainA := s.configurer.GetChainConfig(0)
+	n2, err := chainA.GetNodeAtIndex(2)
+	s.NoError(err)
+	n1, err := chainA.GetNodeAtIndex(1)
+	s.NoError(err)
+
+	appHash = n1.AddFinalitySignatureToBlockWithContext(
+		s.fp1BTCSK,
+		s.fp1.BtcPk,
+		s.finalityBlockHeightVoted,
+		s.fp1RandListInfo.SRList[s.finalityIdx],
+		&s.fp1RandListInfo.PRList[s.finalityIdx],
+		*s.fp1RandListInfo.ProofList[s.finalityIdx].ToProto(),
+		"",
+		flagsFp1...,
+	)
+
+	n2.AddFinalitySignatureToBlockWithContext(
+		s.fp2BTCSK,
+		s.fp2.BtcPk,
+		s.finalityBlockHeightVoted,
+		s.fp2RandListInfo.SRList[s.finalityIdx],
+		&s.fp2RandListInfo.PRList[s.finalityIdx],
+		*s.fp2RandListInfo.ProofList[s.finalityIdx].ToProto(),
+		"",
+		flagsFp2...,
+	)
+
+	s.finalityIdx++
+	s.finalityBlockHeightVoted++
+	return appHash
 }
