@@ -311,7 +311,7 @@ func (s *SoftwareUpgradeV3TestSuite) FpCommitPubRandAndVote(n *chain.NodeConfig)
 			&s.fp1RandListInfo.PRList[s.finalityIdx],
 			*s.fp1RandListInfo.ProofList[s.finalityIdx].ToProto(),
 			"",
-			fmt.Sprintf("--from=%s", s.fp2Addr),
+			fmt.Sprintf("--from=%s", wFp1),
 		)
 	}()
 
@@ -325,7 +325,7 @@ func (s *SoftwareUpgradeV3TestSuite) FpCommitPubRandAndVote(n *chain.NodeConfig)
 			&s.fp2RandListInfo.PRList[s.finalityIdx],
 			*s.fp2RandListInfo.ProofList[s.finalityIdx].ToProto(),
 			"",
-			fmt.Sprintf("--from=%s", s.fp2Addr),
+			fmt.Sprintf("--from=%s", wFp2),
 		)
 	}()
 
@@ -369,6 +369,11 @@ func (s *SoftwareUpgradeV3TestSuite) Test1UpgradeV3() {
 	s.CheckParamsAfterUpgrade()
 
 	n.WaitForNextBlock()
+
+	// send finality votes until upgrade height plus 10 blocks
+	s.AddFinalityVoteUntilCurrentHeight(n)
+
+	// check for rewards from the finality activation height until last finalized block
 }
 
 func (s *SoftwareUpgradeV3TestSuite) CheckFpAfterUpgrade() {
@@ -447,12 +452,10 @@ func (s *SoftwareUpgradeV3TestSuite) AddFinalityVoteUntilCurrentHeight(n *chain.
 
 func (s *SoftwareUpgradeV3TestSuite) AddFinalityVote(flagsFp1, flagsFp2 []string) (appHash bytes.HexBytes) {
 	chainA := s.configurer.GetChainConfig(0)
-	n2, err := chainA.GetNodeAtIndex(2)
-	s.NoError(err)
-	n1, err := chainA.GetNodeAtIndex(1)
+	n, err := chainA.GetNodeAtIndex(1)
 	s.NoError(err)
 
-	appHash = n1.AddFinalitySignatureToBlockWithContext(
+	appHash = n.AddFinalitySignatureToBlockWithContext(
 		s.fp1BTCSK,
 		s.fp1.BtcPk,
 		s.finalityBlockHeightVoted,
@@ -463,7 +466,7 @@ func (s *SoftwareUpgradeV3TestSuite) AddFinalityVote(flagsFp1, flagsFp2 []string
 		flagsFp1...,
 	)
 
-	n2.AddFinalitySignatureToBlockWithContext(
+	n.AddFinalitySignatureToBlockWithContext(
 		s.fp2BTCSK,
 		s.fp2.BtcPk,
 		s.finalityBlockHeightVoted,
