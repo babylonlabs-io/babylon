@@ -141,6 +141,7 @@ command to modify `max-finality-providers` parameter.
 to allow empty coins in fp current rewards.
 - [#1489](https://github.com/babylonlabs-io/babylon/pull/1489) Loads the consumer ID from the IBC packet if it is not set in
 `AddBsnRewards` IBC callbacks.
+- [#1481](https://github.com/babylonlabs-io/babylon/pull/1481) chore: bsn id proto order for compatibility
 
 ### State Machine Breaking
 
