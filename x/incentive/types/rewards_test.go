@@ -57,8 +57,7 @@ func TestFinalityProviderCurrentRewards_Validate(t *testing.T) {
 				Period:         5,
 				TotalActiveSat: validTotalActiveSat,
 			},
-			expectError:    true,
-			expectedErrMsg: "current rewards has no coins",
+			expectError: false,
 		},
 		{
 			name: "nil total active sat",

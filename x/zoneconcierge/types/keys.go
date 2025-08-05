@@ -6,7 +6,7 @@ import (
 
 const (
 	// ModuleName defines the module name
-	ModuleName = "zoneconcierge"
+	ModuleName = "zc"
 
 	// StoreKey defines the primary module store key
 	StoreKey = ModuleName
@@ -15,7 +15,7 @@ const (
 	RouterKey = ModuleName
 
 	// MemStoreKey defines the in-memory store key
-	MemStoreKey = "mem_zoneconcierge"
+	MemStoreKey = "mem_zc"
 
 	// Version defines the current version the IBC module supports
 	Version = "zoneconcierge-1"
