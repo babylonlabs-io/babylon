@@ -197,6 +197,7 @@ covenant signature to the events
 - [#1453](https://github.com/babylonlabs-io/babylon/pull/1453) fix: inactive FP event on full unbonding
 - [#1476](https://github.com/babylonlabs-io/babylon/pull/1476) fix: Add limit for
 IBC packet size
+- [#1495](https://github.com/babylonlabs-io/babylon/pull/1495) fix: rename `zoneconcierge` to `zc`
 
 ## v2.2.0
 
