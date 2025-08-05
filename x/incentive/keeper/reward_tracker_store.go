@@ -108,8 +108,8 @@ func (k Keeper) setBTCDelegationRewardsTracker(ctx context.Context, fp, del sdk.
 	return k.btcDelegationRewardsTracker.Set(ctx, collections.Join(fp.Bytes(), del.Bytes()), rwd)
 }
 
-// setFinalityProviderCurrentRewards sets a new structure in the store, it fails and returns an error if the rwd fails to marshal.
-func (k Keeper) setFinalityProviderCurrentRewards(ctx context.Context, fp sdk.AccAddress, rwd types.FinalityProviderCurrentRewards) error {
+// SetFinalityProviderCurrentRewards sets a new structure in the store, it fails and returns an error if the rwd fails to marshal.
+func (k Keeper) SetFinalityProviderCurrentRewards(ctx context.Context, fp sdk.AccAddress, rwd types.FinalityProviderCurrentRewards) error {
 	return k.finalityProviderCurrentRewards.Set(ctx, fp.Bytes(), rwd)
 }
 
@@ -182,7 +182,7 @@ func (k Keeper) subFinalityProviderStaked(ctx context.Context, fp sdk.AccAddress
 	if fpCurrentRwd.TotalActiveSat.IsNegative() {
 		return types.ErrFPCurrentRewardsTrackerNegativeAmount
 	}
-	return k.setFinalityProviderCurrentRewards(ctx, fp, fpCurrentRwd)
+	return k.SetFinalityProviderCurrentRewards(ctx, fp, fpCurrentRwd)
 }
 
 // addFinalityProviderStaked increases the total amount of active satoshi to a finality provider
@@ -204,7 +204,7 @@ func (k Keeper) addFinalityProviderStaked(ctx context.Context, fp sdk.AccAddress
 	}
 
 	fpCurrentRwd.AddTotalActiveSat(amt)
-	return k.setFinalityProviderCurrentRewards(ctx, fp, fpCurrentRwd)
+	return k.SetFinalityProviderCurrentRewards(ctx, fp, fpCurrentRwd)
 }
 
 // addDelegationSat it increases the amount of satoshi staked for the delegation (fp, del)
