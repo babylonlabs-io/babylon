@@ -14,18 +14,20 @@ func InitChain(
 	votingPeriod, expeditedVotingPeriod time.Duration,
 	forkHeight int,
 	btcHeaders []*btclighttypes.BTCHeaderInfo,
+	gasLimit int64,
+	startingBtcStakingParams *StartingBtcStakingParams,
 ) (*Chain, error) {
 	chain := new(id, dataDir)
 
 	for _, nodeConfig := range nodeConfigs {
-		newNode, err := newNode(chain, nodeConfig)
+		newNode, err := newNode(chain, nodeConfig, gasLimit)
 		if err != nil {
 			return nil, err
 		}
 		chain.nodes = append(chain.nodes, newNode)
 	}
 
-	if err := initGenesis(chain, votingPeriod, expeditedVotingPeriod, forkHeight, btcHeaders); err != nil {
+	if err := initGenesis(chain, votingPeriod, expeditedVotingPeriod, forkHeight, btcHeaders, startingBtcStakingParams); err != nil {
 		return nil, err
 	}
 
