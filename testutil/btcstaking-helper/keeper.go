@@ -450,7 +450,7 @@ func (h *Helper) CreateConsumerFinalityProvider(r *rand.Rand, consumerID string)
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	h.ChannelKeeper.EXPECT().ConsumerHasIBCChannelOpen(h.Ctx, consumerID).Return(true).Times(1)
+	h.ChannelKeeper.EXPECT().ConsumerHasIBCChannelOpen(h.Ctx, consumerID).Return(true).AnyTimes()
 	msgNewFp := types.MsgCreateFinalityProvider{
 		Addr:        fp.Addr,
 		Description: fp.Description,

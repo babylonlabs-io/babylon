@@ -132,6 +132,29 @@ func FuzzMsgCreateFinalityProvider(f *testing.F) {
 		_, err = h.MsgServer.CreateFinalityProvider(h.Ctx, msgUnregisteredBsn)
 		require.Error(t, err)
 
+		// Try to create a FP for a registered BSN but without an IBC channel
+		h.ChannelKeeper.EXPECT().ConsumerHasIBCChannelOpen(h.Ctx, registeredBsnId).Return(false).Times(1)
+		fpRegisteredBsn, err := datagen.GenRandomFinalityProvider(r, h.FpPopContext(), registeredBsnId)
+		require.NoError(t, err)
+		msgRegisteredBsn := &types.MsgCreateFinalityProvider{
+			Addr:        fpRegisteredBsn.Addr,
+			Description: fpRegisteredBsn.Description,
+			Commission: types.NewCommissionRates(
+				*fpRegisteredBsn.Commission,
+				fpRegisteredBsn.CommissionInfo.MaxRate,
+				fpRegisteredBsn.CommissionInfo.MaxChangeRate,
+			),
+			BtcPk: fpRegisteredBsn.BtcPk,
+			Pop:   fpRegisteredBsn.Pop,
+			BsnId: registeredBsnId,
+		}
+		_, err = h.MsgServer.CreateFinalityProvider(h.Ctx, msgRegisteredBsn)
+		require.Error(t, err)
+		require.ErrorIs(t, err, types.ErrFpConsumerNoIBCChannelOpen)
+
+		// If it's a registered consumer, we need to ensure the channel is open to be able to create a consumer FP
+		h.ChannelKeeper.EXPECT().ConsumerHasIBCChannelOpen(h.Ctx, registeredBsnId).Return(true).AnyTimes()
+
 		fps := []*types.FinalityProvider{}
 		for i := 0; i < int(datagen.RandomInt(r, 20)); i++ {
 			bsnId := ""
