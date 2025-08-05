@@ -39,6 +39,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
+- [#1492](https://github.com/babylonlabs-io/babylon/pull/1492) Bump cosmos evm to v0.3.0.
 - [#1437](https://github.com/babylonlabs-io/babylon/pull/1437) Send base headers before the fallback cases.
 - [#1429](https://github.com/babylonlabs-io/babylon/pull/1429) Send base header if no headers were sent previously.
 - [#1406](https://github.com/babylonlabs-io/babylon/pull/1406) Use `collections` for KV store in `x/btcstkconsumer`.
