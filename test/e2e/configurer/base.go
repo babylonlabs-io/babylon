@@ -117,16 +117,8 @@ func (bc *baseConfigurer) RunIBCTransferChannel() error {
 
 // OpenZoneConciergeChannel opens a zoneconcierge channel between all pairs of chains.
 // This function assumes relayers are already running
-func (bc *baseConfigurer) OpenZoneConciergeChannel() error {
-	// Run a relayer between every possible pair of chains.
-	for i := 0; i < len(bc.chainConfigs); i++ {
-		for j := i + 1; j < len(bc.chainConfigs); j++ {
-			if err := bc.createZoneConciergeChannel(bc.chainConfigs[i], bc.chainConfigs[j]); err != nil {
-				return err
-			}
-		}
-	}
-	return nil
+func (bc *baseConfigurer) OpenZoneConciergeChannel(chainA, chainB *chain.Config, chainAConnID string) error {
+	return bc.createZoneConciergeChannel(chainA, chainB, chainAConnID)
 }
 
 // CompleteIBCChannelHandshake completes the channel handshake in cases when ChanOpenInit was initiated
@@ -350,21 +342,21 @@ func (bc *baseConfigurer) runCosmosIBCRelayer(chainConfigA *chain.Config, chainC
 }
 
 func (bc *baseConfigurer) createIBCTransferChannel(chainA *chain.Config, chainB *chain.Config) error {
-	return bc.createIBCChannel(chainA, chainB, "transfer", "transfer", "unordered", "ics20-1")
+	return bc.createIBCChannel(chainA, chainB, "transfer", "transfer", "unordered", "ics20-1", "--new-client-connection")
 }
 
 // createZoneConciergeChannel creates a consumer channel between two chains using the zoneconcierge port
-func (bc *baseConfigurer) createZoneConciergeChannel(chainA *chain.Config, chainB *chain.Config) error {
-	return bc.createIBCChannel(chainA, chainB, "zoneconcierge", "zoneconcierge", "ordered", "zoneconcierge-1")
+func (bc *baseConfigurer) createZoneConciergeChannel(chainA *chain.Config, chainB *chain.Config, chainAConnID string) error {
+	return bc.createIBCChannel(chainA, chainB, "zoneconcierge", "zoneconcierge", "ordered", "zoneconcierge-1", "--a-connection-id", chainAConnID)
 }
 
-func (bc *baseConfigurer) createIBCChannel(chainA *chain.Config, chainB *chain.Config, srcPortID, destPortID, order, version string) error {
+func (bc *baseConfigurer) createIBCChannel(chainA *chain.Config, chainB *chain.Config, srcPortID, destPortID, order, version string, otherFlags ...string) error {
 	bc.t.Logf("connecting %s and %s chains via IBC: src port %q; dest port %q", chainA.ChainMeta.Id, chainB.ChainMeta.Id, srcPortID, destPortID)
 	cmd := []string{"hermes", "create", "channel",
 		"--a-chain", chainA.ChainMeta.Id, "--b-chain", chainB.ChainMeta.Id,
 		"--a-port", srcPortID, "--b-port", destPortID,
-		"--new-client-connection", "--order", order,
-		"--channel-version", version, "--yes"}
+		"--order", order, "--channel-version", version, "--yes"}
+	cmd = append(cmd, otherFlags...)
 	bc.t.Log(cmd)
 	_, _, err := bc.containerManager.ExecHermesCmd(bc.t, cmd, "SUCCESS")
 	if err != nil {
