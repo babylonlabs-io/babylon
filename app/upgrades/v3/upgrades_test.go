@@ -18,7 +18,9 @@ import (
 )
 
 const (
-	DummyUpgradeHeight = 5
+	DummyUpgradeHeight               = 5
+	expectedZoneConciergeModuleName  = "zc"
+	expectedBtcStkConsumerModuleName = "btcstkconsumer"
 )
 
 type UpgradeTestSuite struct {
@@ -117,10 +119,10 @@ func (s *UpgradeTestSuite) verifyPostUpgrade(
 	_, found := s.app.ModuleManager.Modules[v3.DeletedCapabilityStoreKey]
 	s.Require().False(found, "x/capability module should be deleted")
 
-	_, found = s.app.ModuleManager.Modules["btcstkconsumer"]
+	_, found = s.app.ModuleManager.Modules[expectedBtcStkConsumerModuleName]
 	s.Require().True(found, "x/btcstkconsumer module should be found")
 
-	_, found = s.app.ModuleManager.Modules["zoneconcierge"]
+	_, found = s.app.ModuleManager.Modules[expectedZoneConciergeModuleName]
 	s.Require().True(found, "x/zoneconcierge module should be found")
 
 	btcStakingParams := s.app.BTCStakingKeeper.GetParams(s.ctx)

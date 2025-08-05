@@ -140,6 +140,7 @@ command to modify `max-finality-providers` parameter.
 - [#1474](https://github.com/babylonlabs-io/babylon/pull/1474) Add `QueryFpCurrentRewardsRequest` and fix export genesis of incentives
 to allow empty coins in fp current rewards.
 - [#1473](https://github.com/babylonlabs-io/babylon/pull/1473) Add checks for incentives rewards migration in e2e v3 upgrade test.
+- [#1481](https://github.com/babylonlabs-io/babylon/pull/1481) chore: bsn id proto order for compatibility
 
 ### State Machine Breaking
 
@@ -196,6 +197,9 @@ adjustment
 covenant signature to the events
 - [#1447](https://github.com/babylonlabs-io/babylon/pull/1447) Add multi-staking allow-list data for e2e tests
 - [#1453](https://github.com/babylonlabs-io/babylon/pull/1453) fix: inactive FP event on full unbonding
+- [#1476](https://github.com/babylonlabs-io/babylon/pull/1476) fix: Add limit for
+IBC packet size
+- [#1495](https://github.com/babylonlabs-io/babylon/pull/1495) fix: rename `zoneconcierge` to `zc`
 
 ## v2.2.0
 
