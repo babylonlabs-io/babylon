@@ -57,7 +57,7 @@ func (k Keeper) AddBTCStakingConsumerEvents(ctx context.Context, consumerID stri
 
 	eventsBytes := k.cdc.MustMarshal(&packet)
 
-	if len(eventsBytes) >= types.MaxBtcStakingPacketSize {
+	if len(eventsBytes) > types.MaxBtcStakingPacketSize {
 		return fmt.Errorf("IBC packet size is too large %d bytes. Cannot create more staking events in the block", len(eventsBytes))
 	}
 
