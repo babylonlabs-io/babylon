@@ -3,8 +3,6 @@ package replay
 import (
 	"testing"
 
-	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
-
 	"cosmossdk.io/log"
 	babylonApp "github.com/babylonlabs-io/babylon/v3/app"
 	appsigner "github.com/babylonlabs-io/babylon/v3/app/signer"
