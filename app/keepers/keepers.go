@@ -647,9 +647,8 @@ func (ak *AppKeepers) InitKeepers(
 	ak.BTCStkConsumerKeeper = bsckeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[bsctypes.StoreKey]),
-		ak.AccountKeeper,
-		ak.BankKeeper,
 		ak.IBCKeeper.ClientKeeper,
+		ak.IBCKeeper.ChannelKeeper,
 		ak.WasmKeeper,
 		appparams.AccGov.String(),
 	)

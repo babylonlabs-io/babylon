@@ -179,6 +179,21 @@ func (m *MockBTCStkConsumerKeeper) EXPECT() *MockBTCStkConsumerKeeperMockRecorde
 	return m.recorder
 }
 
+// GetConsumerID mocks base method.
+func (m *MockBTCStkConsumerKeeper) GetConsumerID(ctx types3.Context, portID, channelID string) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetConsumerID", ctx, portID, channelID)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetConsumerID indicates an expected call of GetConsumerID.
+func (mr *MockBTCStkConsumerKeeperMockRecorder) GetConsumerID(ctx, portID, channelID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetConsumerID", reflect.TypeOf((*MockBTCStkConsumerKeeper)(nil).GetConsumerID), ctx, portID, channelID)
+}
+
 // GetConsumerRegister mocks base method.
 func (m *MockBTCStkConsumerKeeper) GetConsumerRegister(ctx context.Context, consumerID string) (*types2.ConsumerRegister, error) {
 	m.ctrl.T.Helper()

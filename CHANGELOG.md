@@ -137,6 +137,12 @@ command to modify `max-finality-providers` parameter.
 - [#1460](https://github.com/babylonlabs-io/babylon/pull/1460) Add staking amount change restriction in multi-staking
 - [#1464](https://github.com/babylonlabs-io/babylon/pull/1464) Fix flaky e2e rewards test.
 - [#1468](https://github.com/babylonlabs-io/babylon/pull/1468) Update multi-staking allow-list docs.
+- [#1474](https://github.com/babylonlabs-io/babylon/pull/1474) Add `QueryFpCurrentRewardsRequest` and fix export genesis of incentives
+to allow empty coins in fp current rewards.
+- [#1489](https://github.com/babylonlabs-io/babylon/pull/1489) Loads the consumer ID from the IBC packet if it is not set in
+`AddBsnRewards` IBC callbacks.
+- [#1481](https://github.com/babylonlabs-io/babylon/pull/1481) chore: bsn id proto order for compatibility
+- [#1490](https://github.com/babylonlabs-io/babylon/pull/1490) Add multi-staking allow-list for Testnet
 - [#1485](https://github.com/babylonlabs-io/babylon/pull/1485) Add channel check on consumer FP creation
 
 ### State Machine Breaking
@@ -194,6 +200,9 @@ adjustment
 covenant signature to the events
 - [#1447](https://github.com/babylonlabs-io/babylon/pull/1447) Add multi-staking allow-list data for e2e tests
 - [#1453](https://github.com/babylonlabs-io/babylon/pull/1453) fix: inactive FP event on full unbonding
+- [#1476](https://github.com/babylonlabs-io/babylon/pull/1476) fix: Add limit for
+IBC packet size
+- [#1495](https://github.com/babylonlabs-io/babylon/pull/1495) fix: rename `zoneconcierge` to `zc`
 
 ## v2.2.0
 

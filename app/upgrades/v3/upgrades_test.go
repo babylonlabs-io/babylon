@@ -1,4 +1,4 @@
-package v3
+package v3_test
 
 import (
 	"testing"
@@ -10,6 +10,7 @@ import (
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 	"github.com/babylonlabs-io/babylon/v3/app"
 	"github.com/babylonlabs-io/babylon/v3/app/upgrades"
+	v3 "github.com/babylonlabs-io/babylon/v3/app/upgrades/v3"
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -17,7 +18,9 @@ import (
 )
 
 const (
-	DummyUpgradeHeight = 5
+	DummyUpgradeHeight               = 5
+	expectedZoneConciergeModuleName  = "zc"
+	expectedBtcStkConsumerModuleName = "btcstkconsumer"
 )
 
 type UpgradeTestSuite struct {
@@ -36,7 +39,7 @@ func (s *UpgradeTestSuite) setupTestWithNetwork(fpCount uint32,
 	btcActivationHeight uint32, permissionedIntegration bool, ibcPacketTimeoutSeconds uint32) {
 	s.initialBtcHeight = 100
 
-	app.Upgrades = []upgrades.Upgrade{CreateUpgrade(fpCount,
+	app.Upgrades = []upgrades.Upgrade{v3.CreateUpgrade(fpCount,
 		btcActivationHeight, permissionedIntegration, ibcPacketTimeoutSeconds)}
 
 	s.app = app.SetupWithBitcoinConf(s.T(), false, bbn.BtcSignet)
@@ -51,7 +54,7 @@ func (s *UpgradeTestSuite) setupTestWithNetwork(fpCount uint32,
 
 func (s *UpgradeTestSuite) executeUpgrade() {
 	s.ctx = s.ctx.WithBlockHeight(DummyUpgradeHeight - 1)
-	plan := upgradetypes.Plan{Name: UpgradeName, Height: DummyUpgradeHeight}
+	plan := upgradetypes.Plan{Name: v3.UpgradeName, Height: DummyUpgradeHeight}
 	err := s.app.UpgradeKeeper.ScheduleUpgrade(s.ctx, plan)
 	s.Require().NoError(err)
 
@@ -109,13 +112,13 @@ func (s *UpgradeTestSuite) TestUpgradeNetworks() {
 func (s *UpgradeTestSuite) verifyPostUpgrade(expectedMaxFPs,
 	expectedBtcActivationHeight, expectedIbcPacketTimeoutSeconds uint32,
 	expectedPermissionedIntegration bool) {
-	_, found := s.app.ModuleManager.Modules[deletedCapabilityStoreKey]
+	_, found := s.app.ModuleManager.Modules[v3.DeletedCapabilityStoreKey]
 	s.Require().False(found, "x/capability module should be deleted")
 
-	_, found = s.app.ModuleManager.Modules["btcstkconsumer"]
+	_, found = s.app.ModuleManager.Modules[expectedBtcStkConsumerModuleName]
 	s.Require().True(found, "x/btcstkconsumer module should be found")
 
-	_, found = s.app.ModuleManager.Modules["zoneconcierge"]
+	_, found = s.app.ModuleManager.Modules[expectedZoneConciergeModuleName]
 	s.Require().True(found, "x/zoneconcierge module should be found")
 
 	btcStakingParams := s.app.BTCStakingKeeper.GetParams(s.ctx)

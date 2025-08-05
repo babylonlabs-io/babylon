@@ -16,9 +16,8 @@ type Keeper struct {
 	cdc          codec.BinaryCodec
 	storeService store.KVStoreService
 
-	accountKeeper types.AccountKeeper
-	bankKeeper    types.BankKeeper
 	clientKeeper  types.ClientKeeper
+	channelKeeper types.ChannelKeeper
 	wasmKeeper    types.WasmKeeper
 
 	// the address capable of executing a MsgUpdateParams message. Typically, this
@@ -34,9 +33,8 @@ type Keeper struct {
 func NewKeeper(
 	cdc codec.BinaryCodec,
 	storeService store.KVStoreService,
-	accountKeeper types.AccountKeeper,
-	bankKeeper types.BankKeeper,
 	clientKeeper types.ClientKeeper,
+	channelKeeper types.ChannelKeeper,
 	wasmKeeper types.WasmKeeper,
 	authority string,
 ) Keeper {
@@ -49,9 +47,8 @@ func NewKeeper(
 	k := Keeper{
 		cdc:           cdc,
 		storeService:  storeService,
-		bankKeeper:    bankKeeper,
-		accountKeeper: accountKeeper,
 		clientKeeper:  clientKeeper,
+		channelKeeper: channelKeeper,
 		wasmKeeper:    wasmKeeper,
 		authority:     authority,
 

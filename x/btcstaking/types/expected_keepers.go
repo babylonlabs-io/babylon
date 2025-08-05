@@ -28,6 +28,7 @@ type BTCStkConsumerKeeper interface {
 	IsConsumerRegistered(ctx context.Context, consumerID string) bool
 	IsCosmosConsumer(ctx context.Context, consumerID string) (bool, error)
 	GetConsumerRegister(ctx context.Context, consumerID string) (*btcstkconsumertypes.ConsumerRegister, error)
+	GetConsumerID(ctx sdk.Context, portID, channelID string) (consumerID string, err error)
 }
 
 type IncentiveKeeper interface {
