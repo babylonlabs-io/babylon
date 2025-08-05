@@ -649,7 +649,6 @@ func (ak *AppKeepers) InitKeepers(
 		runtime.NewKVStoreService(keys[bsctypes.StoreKey]),
 		ak.IBCKeeper.ClientKeeper,
 		ak.IBCKeeper.ChannelKeeper,
-		ak.IBCKeeper.ConnectionKeeper,
 		ak.WasmKeeper,
 		appparams.AccGov.String(),
 	)

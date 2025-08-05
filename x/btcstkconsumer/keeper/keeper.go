@@ -16,10 +16,9 @@ type Keeper struct {
 	cdc          codec.BinaryCodec
 	storeService store.KVStoreService
 
-	clientKeeper     types.ClientKeeper
-	channelKeeper    types.ChannelKeeper
-	connectionKeeper types.ConnectionKeeper
-	wasmKeeper       types.WasmKeeper
+	clientKeeper  types.ClientKeeper
+	channelKeeper types.ChannelKeeper
+	wasmKeeper    types.WasmKeeper
 
 	// the address capable of executing a MsgUpdateParams message. Typically, this
 	// should be the x/gov module account.
@@ -36,7 +35,6 @@ func NewKeeper(
 	storeService store.KVStoreService,
 	clientKeeper types.ClientKeeper,
 	channelKeeper types.ChannelKeeper,
-	connectionKeeper types.ConnectionKeeper,
 	wasmKeeper types.WasmKeeper,
 	authority string,
 ) Keeper {
@@ -47,13 +45,12 @@ func NewKeeper(
 	sb := collections.NewSchemaBuilder(storeService)
 
 	k := Keeper{
-		cdc:              cdc,
-		storeService:     storeService,
-		clientKeeper:     clientKeeper,
-		channelKeeper:    channelKeeper,
-		connectionKeeper: connectionKeeper,
-		wasmKeeper:       wasmKeeper,
-		authority:        authority,
+		cdc:           cdc,
+		storeService:  storeService,
+		clientKeeper:  clientKeeper,
+		channelKeeper: channelKeeper,
+		wasmKeeper:    wasmKeeper,
+		authority:     authority,
 
 		// Initialize collections
 		ParamsCollection: collections.NewItem[types.Params](
