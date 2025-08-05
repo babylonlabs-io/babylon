@@ -115,6 +115,21 @@ func (bc *baseConfigurer) RunIBCTransferChannel() error {
 	return nil
 }
 
+func (bc *baseConfigurer) RunZoneConciergeChannel() error {
+	// Run a relayer between every possible pair of chains.
+	for i := 0; i < len(bc.chainConfigs); i++ {
+		for j := i + 1; j < len(bc.chainConfigs); j++ {
+			if err := bc.runHermesIBCRelayer(bc.chainConfigs[i], bc.chainConfigs[j]); err != nil {
+				return err
+			}
+			if err := bc.createZoneConciergeChannel(bc.chainConfigs[i], bc.chainConfigs[j]); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 // CompleteIBCChannelHandshake completes the channel handshake in cases when ChanOpenInit was initiated
 // by some transaction that was previously executed on the chain. For example,
 // ICA MsgRegisterInterchainAccount will perform ChanOpenInit during its execution.
@@ -337,6 +352,11 @@ func (bc *baseConfigurer) runCosmosIBCRelayer(chainConfigA *chain.Config, chainC
 
 func (bc *baseConfigurer) createIBCTransferChannel(chainA *chain.Config, chainB *chain.Config) error {
 	return bc.createIBCChannel(chainA, chainB, "transfer", "transfer")
+}
+
+// createZoneConciergeChannel creates a consumer channel between two chains using the zoneconcierge port
+func (bc *baseConfigurer) createZoneConciergeChannel(chainA *chain.Config, chainB *chain.Config) error {
+	return bc.createIBCChannel(chainA, chainB, "zoneconcierge", "zoneconcierge")
 }
 
 func (bc *baseConfigurer) createIBCChannel(chainA *chain.Config, chainB *chain.Config, srcPortID, destPortID string) error {

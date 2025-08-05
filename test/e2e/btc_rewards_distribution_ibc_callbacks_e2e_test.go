@@ -145,6 +145,11 @@ func (s *IbcCallbackBsnAddRewards) Test1CreateFinalityProviders() {
 	require.Len(s.T(), consumers, 1)
 	s.T().Log("All Consumers created")
 
+	// Open zoneconcierge channel
+	err = s.configurer.RunZoneConciergeChannel()
+	bbnNode.WaitForNextBlock()
+	s.T().Log("Opened zoneconcierge channel")
+
 	s.fp1bbn = CreateNodeFP(
 		s.T(),
 		s.r,
