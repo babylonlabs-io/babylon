@@ -11525,6 +11525,87 @@ paths:
           type: string
       tags:
         - Query
+  /babylon/incentive/finality_providers_current_rewards/{finality_provider_address}:
+    get:
+      summary: FpCurrentRewards queries the finality provider pool of rewards
+      operationId: FpCurrentRewards
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              current_rewards:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    denom:
+                      type: string
+                    amount:
+                      type: string
+                  description: >-
+                    Coin defines a token with a denomination and an amount.
+
+
+                    NOTE: The amount field is an Int which implements the custom
+                    method
+
+                    signatures required by gogoproto.
+                description: >-
+                  CurrentRewards is the current rewards that the finality
+                  provider have
+
+                  to be distributed for his BTC stakers.
+              period:
+                type: string
+                format: uint64
+                description: |-
+                  Period is the current period that serves as a reference for
+                  creating new historical rewards.
+              total_active_sat:
+                type: string
+                format: byte
+                description: |-
+                  TotalActiveSat is the total amount of active satoshi delegated
+                  to this finality provider.
+            description: |-
+              QueryFpCurrentRewardsResponse is the response type for the
+              Query/FpCurrentRewards RPC method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      parameters:
+        - name: finality_provider_address
+          description: >-
+            finality_provider_address defines the finality provider address of
+            the
+
+            delegation.
+          in: path
+          required: true
+          type: string
+      tags:
+        - Query
   /babylon/incentive/params:
     get:
       summary: Parameters queries the parameters of the module.
@@ -18705,6 +18786,41 @@ definitions:
     description: |-
       QueryDelegatorWithdrawAddressResponse is the response type for the
       Query/DelegatorWithdrawAddress RPC method.
+  babylon.incentive.QueryFpCurrentRewardsResponse:
+    type: object
+    properties:
+      current_rewards:
+        type: array
+        items:
+          type: object
+          properties:
+            denom:
+              type: string
+            amount:
+              type: string
+          description: |-
+            Coin defines a token with a denomination and an amount.
+
+            NOTE: The amount field is an Int which implements the custom method
+            signatures required by gogoproto.
+        description: |-
+          CurrentRewards is the current rewards that the finality provider have
+          to be distributed for his BTC stakers.
+      period:
+        type: string
+        format: uint64
+        description: |-
+          Period is the current period that serves as a reference for
+          creating new historical rewards.
+      total_active_sat:
+        type: string
+        format: byte
+        description: |-
+          TotalActiveSat is the total amount of active satoshi delegated
+          to this finality provider.
+    description: |-
+      QueryFpCurrentRewardsResponse is the response type for the
+      Query/FpCurrentRewards RPC method.
   babylon.incentive.QueryParamsResponse:
     type: object
     properties:
