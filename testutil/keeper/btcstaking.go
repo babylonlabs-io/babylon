@@ -69,7 +69,6 @@ func BTCStakingKeeperWithStoreAndBank(
 		nil,
 		nil,
 		nil,
-		nil,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
