@@ -66,12 +66,12 @@ message MsgCreateFinalityProvider {
             "github.com/babylonlabs-io/babylon/v3/types.BIP340PubKey" ];
   // pop is the proof of possession of btc_pk over the FP signer address.
   ProofOfPossessionBTC pop = 5;
-  // bsn_id is the ID of the BSN
-  // If it's empty, it's assumed to be Babylon's chain id
-  string bsn_id = 6;
   // commission is the finality provider commission information
   CommissionRates commission = 7
       [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
+  // bsn_id is the ID of the BSN
+  // If it's empty, it's assumed to be Babylon's chain id
+  string bsn_id = 8;
 }
 
 // MsgCreateFinalityProviderResponse is the response for
