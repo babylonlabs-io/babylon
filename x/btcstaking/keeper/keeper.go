@@ -26,7 +26,6 @@ type (
 		BscKeeper   types.BTCStkConsumerKeeper
 		ictvKeeper  types.IncentiveKeeper
 		bankKeeper  types.BankKeeper
-		zcKeeper    types.ZoneConciergeChannelKeeper
 
 		Schema                       collections.Schema
 		AllowedStakingTxHashesKeySet collections.KeySet[[]byte]
@@ -55,7 +54,6 @@ func NewKeeper(
 	bscKeeper types.BTCStkConsumerKeeper,
 	iKeeper types.IncentiveKeeper,
 	bankKeeper types.BankKeeper,
-	zcKeeper types.ZoneConciergeChannelKeeper,
 
 	btcNet *chaincfg.Params,
 	btcStakingModuleAddress string,
@@ -72,7 +70,6 @@ func NewKeeper(
 		BscKeeper:               bscKeeper,
 		ictvKeeper:              iKeeper,
 		bankKeeper:              bankKeeper,
-		zcKeeper:                zcKeeper,
 
 		AllowedStakingTxHashesKeySet: collections.NewKeySet(
 			sb,

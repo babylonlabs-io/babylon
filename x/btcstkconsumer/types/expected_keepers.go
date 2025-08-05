@@ -15,6 +15,7 @@ type ClientKeeper interface {
 
 type ChannelKeeper interface {
 	GetChannelClientState(ctx sdk.Context, portID, channelID string) (clientID string, state ibcexported.ClientState, err error)
+	ConsumerHasIBCChannelOpen(ctx context.Context, consumerID string) bool
 }
 
 type WasmKeeper interface {

@@ -29,6 +29,7 @@ type BTCStkConsumerKeeper interface {
 	IsCosmosConsumer(ctx context.Context, consumerID string) (bool, error)
 	GetConsumerRegister(ctx context.Context, consumerID string) (*btcstkconsumertypes.ConsumerRegister, error)
 	GetConsumerID(ctx sdk.Context, portID, channelID string) (consumerID string, err error)
+	ConsumerHasIBCChannelOpen(ctx context.Context, consumerID string) bool
 }
 
 type IncentiveKeeper interface {
@@ -41,8 +42,4 @@ type BankKeeper interface {
 	SpendableCoins(ctx context.Context, addr sdk.AccAddress) sdk.Coins
 	SendCoinsFromAccountToModule(ctx context.Context, senderAddr sdk.AccAddress, recipientModule string, amt sdk.Coins) error
 	SendCoinsFromModuleToModule(ctx context.Context, senderModule, recipientModule string, amt sdk.Coins) error
-}
-
-type ZoneConciergeChannelKeeper interface {
-	ConsumerHasIBCChannelOpen(ctx context.Context, consumerID string) bool
 }

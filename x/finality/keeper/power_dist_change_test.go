@@ -22,6 +22,7 @@ import (
 	"github.com/babylonlabs-io/babylon/v3/app/signingcontext"
 	"github.com/babylonlabs-io/babylon/v3/test/replay"
 	testutil "github.com/babylonlabs-io/babylon/v3/testutil/btcstaking-helper"
+	"github.com/babylonlabs-io/babylon/v3/testutil/mocks"
 
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
@@ -2051,7 +2052,7 @@ func TestBSNDelegationUnbonded_DirectIncentives(t *testing.T) {
 	btclcKeeper := btcstktypes.NewMockBTCLightClientKeeper(ctrl)
 	btccKeeper := btcstktypes.NewMockBtcCheckpointKeeper(ctrl)
 	ictvK := testutil.NewMockIctvKeeperK(ctrl)
-	chanKeeper := btcstktypes.NewMockZoneConciergeChannelKeeper(ctrl)
+	chanKeeper := mocks.NewMockZoneConciergeChannelKeeper(ctrl)
 
 	heightAfterMultiStakingAllowListExpiration := int64(10)
 	btcStakingStoreKey := storetypes.NewKVStoreKey(btcstktypes.StoreKey)

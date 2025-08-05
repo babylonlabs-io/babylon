@@ -20,6 +20,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
+	"github.com/babylonlabs-io/babylon/v3/testutil/mocks"
 	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/keeper"
 	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 	bsckeeper "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/keeper"
@@ -34,7 +35,7 @@ func BTCStakingKeeperWithStore(
 	btclcKeeper types.BTCLightClientKeeper,
 	btccKeeper types.BtcCheckpointKeeper,
 	iKeeper types.IncentiveKeeper,
-	chKeeper types.ZoneConciergeChannelKeeper,
+	chKeeper *mocks.MockZoneConciergeChannelKeeper,
 ) (*keeper.Keeper, sdk.Context) {
 	return BTCStakingKeeperWithStoreAndBank(t, db, stateStore, storeKey, btclcKeeper, btccKeeper, iKeeper, nil, chKeeper)
 }
@@ -48,7 +49,7 @@ func BTCStakingKeeperWithStoreAndBank(
 	btccKeeper types.BtcCheckpointKeeper,
 	iKeeper types.IncentiveKeeper,
 	bankKeeper types.BankKeeper,
-	chanKeeper types.ZoneConciergeChannelKeeper,
+	chKeeper *mocks.MockZoneConciergeChannelKeeper,
 ) (*keeper.Keeper, sdk.Context) {
 	if storeKey == nil {
 		storeKey = storetypes.NewKVStoreKey(types.StoreKey)
@@ -69,7 +70,7 @@ func BTCStakingKeeperWithStoreAndBank(
 		cdc,
 		runtime.NewKVStoreService(bscStoreKey),
 		nil,
-		nil,
+		chKeeper,
 		nil,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
@@ -82,7 +83,6 @@ func BTCStakingKeeperWithStoreAndBank(
 		bscKeeper,
 		iKeeper,
 		bankKeeper,
-		chanKeeper,
 
 		&chaincfg.SimNetParams,
 		appparams.AccBTCStaking.String(),
@@ -100,7 +100,7 @@ func BTCStakingKeeper(
 	btclcKeeper types.BTCLightClientKeeper,
 	btccKeeper types.BtcCheckpointKeeper,
 	iKeeper types.IncentiveKeeper,
-	chKeeper types.ZoneConciergeChannelKeeper,
+	chKeeper *mocks.MockZoneConciergeChannelKeeper,
 ) (*keeper.Keeper, sdk.Context) {
 	return BTCStakingKeeperWithStoreKey(t, nil, btclcKeeper, btccKeeper, iKeeper, chKeeper)
 }
@@ -111,7 +111,7 @@ func BTCStakingKeeperWithStoreKey(
 	btclcKeeper types.BTCLightClientKeeper,
 	btccKeeper types.BtcCheckpointKeeper,
 	iKeeper types.IncentiveKeeper,
-	chKeeper types.ZoneConciergeChannelKeeper,
+	chKeeper *mocks.MockZoneConciergeChannelKeeper,
 ) (*keeper.Keeper, sdk.Context) {
 	db := dbm.NewMemDB()
 	stateStore := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())

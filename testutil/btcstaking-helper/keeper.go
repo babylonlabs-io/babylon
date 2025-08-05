@@ -25,6 +25,7 @@ import (
 	"github.com/babylonlabs-io/babylon/v3/app/signingcontext"
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
 	keepertest "github.com/babylonlabs-io/babylon/v3/testutil/keeper"
+	"github.com/babylonlabs-io/babylon/v3/testutil/mocks"
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
 	btcctypes "github.com/babylonlabs-io/babylon/v3/x/btccheckpoint/types"
 	btclctypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
@@ -89,7 +90,7 @@ type Helper struct {
 	CheckpointingKeeperForBtcStaking *types.MockBtcCheckpointKeeper
 	CheckpointingKeeperForFinality   *ftypes.MockCheckpointingKeeper
 	IctvKeeperK                      IctvKeeperI
-	ChannelKeeper                    *types.MockZoneConciergeChannelKeeper
+	ChannelKeeper                    *mocks.MockZoneConciergeChannelKeeper
 	Net                              *chaincfg.Params
 }
 
@@ -121,7 +122,7 @@ func NewHelper(
 	ckptKeeper := ftypes.NewMockCheckpointingKeeper(ctrl)
 	ckptKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(timestampedEpoch).AnyTimes()
 
-	chKeeper := types.NewMockZoneConciergeChannelKeeper(ctrl)
+	chKeeper := mocks.NewMockZoneConciergeChannelKeeper(ctrl)
 
 	return NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKeeper, ckptKeeper, ictvK, chKeeper, btcStkStoreKey)
 }
@@ -145,7 +146,7 @@ func NewHelperNoMocksCalls(
 	stateStore := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
 
 	ckptKeeper := ftypes.NewMockCheckpointingKeeper(ctrl)
-	chKeeper := types.NewMockZoneConciergeChannelKeeper(ctrl)
+	chKeeper := mocks.NewMockZoneConciergeChannelKeeper(ctrl)
 
 	return NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKeeper, ckptKeeper, ictvK, chKeeper, btcStkStoreKey)
 }
@@ -167,7 +168,7 @@ func NewHelperWithIncentiveKeeper(
 	ictvK, _ := keepertest.IncentiveKeeperWithStore(t, db, stateStore, nil, bankK, accK, nil)
 
 	ckptKeeper := ftypes.NewMockCheckpointingKeeper(ctrl)
-	chKeeper := types.NewMockZoneConciergeChannelKeeper(ctrl)
+	chKeeper := mocks.NewMockZoneConciergeChannelKeeper(ctrl)
 
 	return NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKeeper, ckptKeeper, ictvK, chKeeper, nil)
 }
@@ -177,7 +178,7 @@ func NewHelperWithBankMock(
 	btclcKeeper *types.MockBTCLightClientKeeper,
 	btccKeeper *types.MockBtcCheckpointKeeper,
 	bankKeeper *types.MockBankKeeper,
-	chanKeeper *types.MockZoneConciergeChannelKeeper,
+	chanKeeper *mocks.MockZoneConciergeChannelKeeper,
 	ictvK *IctvKeeperK,
 	btcStkStoreKey *storetypes.KVStoreKey,
 ) *Helper {
@@ -199,7 +200,7 @@ func NewHelperWithStoreAndIncentive(
 	btccKForBtcStaking *types.MockBtcCheckpointKeeper,
 	btccKForFinality *ftypes.MockCheckpointingKeeper,
 	ictvKeeper IctvKeeperI,
-	chKeeper *types.MockZoneConciergeChannelKeeper,
+	chKeeper *mocks.MockZoneConciergeChannelKeeper,
 	btcStkStoreKey *storetypes.KVStoreKey,
 ) *Helper {
 	k, _ := keepertest.BTCStakingKeeperWithStore(t, db, stateStore, btcStkStoreKey, btclcKeeper, btccKForBtcStaking, ictvKeeper, chKeeper)
@@ -250,7 +251,7 @@ func NewHelperWithStoreIncentiveAndBank(
 	btccKForFinality *ftypes.MockCheckpointingKeeper,
 	ictvKeeper *IctvKeeperK,
 	bankKeeper *types.MockBankKeeper,
-	chanKeeper *types.MockZoneConciergeChannelKeeper,
+	chanKeeper *mocks.MockZoneConciergeChannelKeeper,
 	btcStkStoreKey *storetypes.KVStoreKey,
 ) *Helper {
 	k, _ := keepertest.BTCStakingKeeperWithStoreAndBank(t, db, stateStore, btcStkStoreKey, btclcKeeper, btccKForBtcStaking, ictvKeeper, bankKeeper, chanKeeper)
@@ -287,6 +288,7 @@ func NewHelperWithStoreIncentiveAndBank(
 		CheckpointingKeeperForBtcStaking: btccKForBtcStaking,
 		CheckpointingKeeperForFinality:   btccKForFinality,
 		IctvKeeperK:                      ictvKeeper,
+		ChannelKeeper:                    chanKeeper,
 		Net:                              &chaincfg.SimNetParams,
 	}
 }

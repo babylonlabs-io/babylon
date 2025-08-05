@@ -644,20 +644,21 @@ func (ak *AppKeepers) InitKeepers(
 		appparams.AccGov.String(),
 	)
 
-	ak.BTCStkConsumerKeeper = bsckeeper.NewKeeper(
-		appCodec,
-		runtime.NewKVStoreService(keys[bsctypes.StoreKey]),
-		ak.IBCKeeper.ClientKeeper,
-		ak.IBCKeeper.ChannelKeeper,
-		ak.WasmKeeper,
-		appparams.AccGov.String(),
-	)
-
 	zcChannelKeeper := zckeeper.NewChannelKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[zctypes.StoreKey]),
 		ak.IBCKeeper.ChannelKeeper,
 	)
+
+	ak.BTCStkConsumerKeeper = bsckeeper.NewKeeper(
+		appCodec,
+		runtime.NewKVStoreService(keys[bsctypes.StoreKey]),
+		ak.IBCKeeper.ClientKeeper,
+		zcChannelKeeper,
+		ak.WasmKeeper,
+		appparams.AccGov.String(),
+	)
+
 	// set up BTC staking keeper
 	ak.BTCStakingKeeper = btcstakingkeeper.NewKeeper(
 		appCodec,
@@ -667,7 +668,6 @@ func (ak *AppKeepers) InitKeepers(
 		&ak.BTCStkConsumerKeeper,
 		&ak.IncentiveKeeper,
 		bankKeeper,
-		zcChannelKeeper,
 		btcNetParams,
 		appparams.AccBTCStaking.String(),
 		appparams.AccGov.String(),

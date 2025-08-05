@@ -26,6 +26,7 @@ import (
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
 	testutilevents "github.com/babylonlabs-io/babylon/v3/testutil/events"
 	testhelper "github.com/babylonlabs-io/babylon/v3/testutil/helper"
+	"github.com/babylonlabs-io/babylon/v3/testutil/mocks"
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
 	btcctypes "github.com/babylonlabs-io/babylon/v3/x/btccheckpoint/types"
 	btclctypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
@@ -1544,7 +1545,7 @@ func TestMsgServerAddBsnRewards(t *testing.T) {
 	btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 	btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
 	bankKeeper := types.NewMockBankKeeper(ctrl)
-	chanKeeper := types.NewMockZoneConciergeChannelKeeper(ctrl)
+	chanKeeper := mocks.NewMockZoneConciergeChannelKeeper(ctrl)
 	ictvK := testutil.NewMockIctvKeeperK(ctrl)
 
 	h := testutil.NewHelperWithBankMock(t, btclcKeeper, btccKeeper, bankKeeper, chanKeeper, ictvK, nil)

@@ -55,7 +55,7 @@ func (k Keeper) AddFinalityProvider(goCtx context.Context, msg *types.MsgCreateF
 			return types.ErrFpBSNIdNotRegistered
 		}
 		// Ensure there's an IBC channel open
-		if !k.zcKeeper.ConsumerHasIBCChannelOpen(ctx, bsnID) {
+		if !k.BscKeeper.ConsumerHasIBCChannelOpen(ctx, bsnID) {
 			return types.ErrFpConsumerNoIBCChannelOpen
 		}
 	}
