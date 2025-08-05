@@ -22,6 +22,11 @@ import (
 	ftypes "github.com/babylonlabs-io/babylon/v3/x/finality/types"
 )
 
+const (
+	// commit public randomness list
+	commitStartHeight = uint64(5)
+)
+
 type SoftwareUpgradeV3TestSuite struct {
 	BaseBtcRewardsDistribution
 
@@ -213,8 +218,6 @@ func (s *SoftwareUpgradeV3TestSuite) CreateBTCDelegationV2AndCheck(
 }
 
 func (s *SoftwareUpgradeV3TestSuite) FpCommitPubRandAndVote(n *chain.NodeConfig) {
-	// commit public randomness list
-	commitStartHeight := uint64(5)
 
 	// v2 is empty context
 	randCommitContext := ""
@@ -389,12 +392,12 @@ func (s *SoftwareUpgradeV3TestSuite) CheckFpAfterUpgrade() {
 	// query pub randomness
 	fp1CommitPubRand := n.QueryListPubRandCommit(s.fp1.BtcPk)
 	s.Require().NotNil(fp1CommitPubRand, "fp1CommitPubRand should not be nil")
-	_, ok := fp1CommitPubRand[s.finalityBlockHeightVoted]
+	_, ok := fp1CommitPubRand[commitStartHeight]
 	s.Require().True(ok, "fp1CommitPubRand should contain commitStartHeight")
 
 	fp2CommitPubRand := n.QueryListPubRandCommit(s.fp2.BtcPk)
 	s.Require().NotNil(fp2CommitPubRand, "fp2CommitPubRand should not be nil")
-	_, ok = fp2CommitPubRand[s.finalityBlockHeightVoted]
+	_, ok = fp2CommitPubRand[commitStartHeight]
 	s.Require().True(ok, "fp2CommitPubRand should contain commitStartHeight")
 }
 
