@@ -146,7 +146,7 @@ func (s *IbcCallbackBsnAddRewards) Test1CreateFinalityProviders() {
 	s.T().Log("All Consumers created")
 
 	// Open zoneconcierge channel
-	err = s.configurer.RunZoneConciergeChannel()
+	err = s.configurer.OpenZoneConciergeChannel()
 	require.NoError(s.T(), err, "failed to create zoneconcierge channel between Babylon and BSN")
 	bbnNode.WaitForNextBlock()
 	s.T().Log("Opened zoneconcierge channel")

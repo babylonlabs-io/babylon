@@ -115,13 +115,12 @@ func (bc *baseConfigurer) RunIBCTransferChannel() error {
 	return nil
 }
 
-func (bc *baseConfigurer) RunZoneConciergeChannel() error {
+// OpenZoneConciergeChannel opens a zoneconcierge channel between all pairs of chains.
+// This function assumes relayers are already running
+func (bc *baseConfigurer) OpenZoneConciergeChannel() error {
 	// Run a relayer between every possible pair of chains.
 	for i := 0; i < len(bc.chainConfigs); i++ {
 		for j := i + 1; j < len(bc.chainConfigs); j++ {
-			if err := bc.runHermesIBCRelayer(bc.chainConfigs[i], bc.chainConfigs[j]); err != nil {
-				return err
-			}
 			if err := bc.createZoneConciergeChannel(bc.chainConfigs[i], bc.chainConfigs[j]); err != nil {
 				return err
 			}

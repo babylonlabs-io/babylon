@@ -31,8 +31,8 @@ type Configurer interface {
 	RunCosmosRelayerIBC() error
 
 	RunIBCTransferChannel() error
-	// RunZoneConciergeChannel configures IBC channel using zoneconcierge port
-	RunZoneConciergeChannel() error
+	// OpenZoneConciergeChannel configures IBC channel using zoneconcierge port
+	OpenZoneConciergeChannel() error
 	// CompleteIBCChannelHandshake completes the channel handshake in cases when ChanOpenInit was initiated
 	// by some transaction that was previously executed on the chain. For example,
 	// ICA MsgRegisterInterchainAccount will perform ChanOpenInit during its execution.
