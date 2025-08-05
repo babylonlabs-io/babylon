@@ -7,6 +7,8 @@ import (
 
 	"cosmossdk.io/errors"
 	sdkmath "cosmossdk.io/math"
+	"github.com/babylonlabs-io/babylon/v3/btcstaking"
+	bbn "github.com/babylonlabs-io/babylon/v3/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
@@ -15,10 +17,8 @@ import (
 	"github.com/btcsuite/btcd/wire"
 	"github.com/cometbft/cometbft/crypto/tmhash"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 	"gopkg.in/yaml.v2"
-
-	"github.com/babylonlabs-io/babylon/v3/btcstaking"
-	bbn "github.com/babylonlabs-io/babylon/v3/types"
 )
 
 const (
@@ -30,6 +30,10 @@ const (
 	// because every covenant committee member must create separate Adaptor Signature
 	// for each FP in the multi-staked delegation.
 	GasCostPerMultiStakedFP = 7000
+
+	// MaxBtcStakingPacketSize is the maximum size of the BTC staking packet
+	// 144 bytes is a buffer for OutboundPacket packet wrapper
+	MaxBtcStakingPacketSize = channeltypes.MaximumPayloadsSize - 144
 )
 
 var _ paramtypes.ParamSet = (*Params)(nil)
@@ -45,6 +49,19 @@ func DefaultCovenantCommittee() ([]*btcec.PrivateKey, []*btcec.PublicKey, uint32
 		pks = append(pks, pk)
 	}
 	return sks, pks, 3
+}
+
+// LargeDefaultCovenantCommittee deterministically generates a covenant committee
+// with 9 members and quorum size of 6
+func LargeDefaultCovenantCommittee() ([]*btcec.PrivateKey, []*btcec.PublicKey, uint32) {
+	sks, pks := []*btcec.PrivateKey{}, []*btcec.PublicKey{}
+	for i := uint8(0); i < 9; i++ {
+		skBytes := tmhash.Sum([]byte{i})
+		sk, pk := btcec.PrivKeyFromBytes(skBytes)
+		sks = append(sks, sk)
+		pks = append(pks, pk)
+	}
+	return sks, pks, 6
 }
 
 func defaultSlashingPkScript() []byte {
