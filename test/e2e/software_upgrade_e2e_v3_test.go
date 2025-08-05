@@ -127,7 +127,7 @@ func (s *SoftwareUpgradeV3TestSuite) SetupFps(n *chain.NodeConfig) {
 }
 
 // TestUpgradeV3 checks if the upgrade from v2.2.0 to v3 was successful
-func (s *SoftwareUpgradeV3TestSuite) TestUpgradeV3() {
+func (s *SoftwareUpgradeV3TestSuite) Test1UpgradeV3() {
 	chainA := s.configurer.GetChainConfig(0)
 	n, err := chainA.GetNodeAtIndex(1)
 	s.NoError(err)
