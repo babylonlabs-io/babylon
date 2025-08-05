@@ -181,28 +181,10 @@ func NewSoftwareUpgradeConfigurer(t *testing.T, isDebugLogEnabled bool, upgradeP
 		return nil, err
 	}
 
-	cfgs := updateNodeConfigs(validatorConfigsChainA, func(cfg *initialization.NodeConfig) *initialization.NodeConfig {
-		return &initialization.NodeConfig{
-			Name:               fmt.Sprintf("%s-%s", cfg.Name, identifier),
-			Pruning:            cfg.Pruning,
-			PruningKeepRecent:  cfg.PruningKeepRecent,
-			PruningInterval:    cfg.PruningInterval,
-			SnapshotInterval:   cfg.SnapshotInterval,
-			SnapshotKeepRecent: cfg.SnapshotKeepRecent,
-			IsValidator:        cfg.IsValidator,
-			BtcNetwork:         string(bbn.BtcSignet),
-		}
-	})
-
-	chainA := chain.New(t, containerManager, initialization.ChainAID, cfgs, nil)
-	if btcHeaders != nil {
-		chainA.BTCHeaders = btcHeaders
-	}
-
 	return NewUpgradeConfigurer(t,
 		[]*chain.Config{
-			// we only need 1 chain for testing upgrade
-			chainA,
+			// we only need 1 chain for testing BTC staking
+			chain.New(t, containerManager, initialization.ChainAID, updateNodeConfigNameWithIdentifier(validatorConfigsChainA, identifier), nil),
 		},
 		withUpgrade(baseSetup), // base set up with upgrade
 		containerManager,

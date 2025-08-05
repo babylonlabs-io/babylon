@@ -228,7 +228,7 @@ func (s *BtcRewardsDistribution) Test4CommitPublicRandomnessAndSealed() {
 	s.NoError(err)
 	s.fp2RandListInfo = fp2RandListInfo
 
-	n1.CommitPubRandList(
+	n1.CommitPubRandListFromNode(
 		fp1CommitPubRandList.FpBtcPk,
 		fp1CommitPubRandList.StartHeight,
 		fp1CommitPubRandList.NumPubRand,
@@ -236,7 +236,7 @@ func (s *BtcRewardsDistribution) Test4CommitPublicRandomnessAndSealed() {
 		fp1CommitPubRandList.Sig,
 	)
 
-	n2.CommitPubRandList(
+	n2.CommitPubRandListFromNode(
 		fp2CommitPubRandList.FpBtcPk,
 		fp2CommitPubRandList.StartHeight,
 		fp2CommitPubRandList.NumPubRand,

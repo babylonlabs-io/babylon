@@ -277,7 +277,11 @@ func (n *NodeConfig) AddBsnRewards(
 	return outBuf, errBuf, err
 }
 
-func (n *NodeConfig) CommitPubRandList(fpBTCPK *bbn.BIP340PubKey, startHeight uint64, numPubrand uint64, commitment []byte, sig *bbn.BIP340Signature) {
+func (n *NodeConfig) CommitPubRandListFromNode(fpBTCPK *bbn.BIP340PubKey, startHeight uint64, numPubrand uint64, commitment []byte, sig *bbn.BIP340Signature) {
+	n.CommitPubRandList("val", fpBTCPK, startHeight, numPubrand, commitment, sig)
+}
+
+func (n *NodeConfig) CommitPubRandList(fromWallet string, fpBTCPK *bbn.BIP340PubKey, startHeight uint64, numPubrand uint64, commitment []byte, sig *bbn.BIP340Signature) {
 	n.LogActionF("committing public randomness list")
 
 	cmd := []string{"babylond", "tx", "finality", "commit-pubrand-list"}
@@ -303,7 +307,7 @@ func (n *NodeConfig) CommitPubRandList(fpBTCPK *bbn.BIP340PubKey, startHeight ui
 	cmd = append(cmd, sigHex)
 
 	// specify used key
-	cmd = append(cmd, "--from=val")
+	cmd = append(cmd, fmt.Sprintf("--from=%s", fromWallet))
 
 	// gas
 	cmd = append(cmd, "--gas=500000")
@@ -573,13 +577,39 @@ func (n *NodeConfig) CreateBTCDelegationMultipleFPsAndCheck(
 	stakingTimeBlocks uint16,
 	stakingSatAmt int64,
 ) (testStakingInfo *datagen.TestStakingSlashingInfo) {
+	stakerPopContext := signingcontext.StakerPopContextV0(n.chainId, appparams.AccBTCStaking.String())
+
+	return n.CreateBTCDelegationMultipleFPsAndCheckWithPopContext(
+		r,
+		t,
+		btcNet,
+		walletNameSender,
+		fps,
+		btcStakerSK,
+		delAddr,
+		stakingTimeBlocks,
+		stakingSatAmt,
+		stakerPopContext,
+	)
+}
+
+func (n *NodeConfig) CreateBTCDelegationMultipleFPsAndCheckWithPopContext(
+	r *rand.Rand,
+	t testing.TB,
+	btcNet *chaincfg.Params,
+	walletNameSender string,
+	fps []*bstypes.FinalityProvider,
+	btcStakerSK *btcec.PrivateKey,
+	delAddr string,
+	stakingTimeBlocks uint16,
+	stakingSatAmt int64,
+	stakerPopContext string,
+) (testStakingInfo *datagen.TestStakingSlashingInfo) {
 	// BTC staking params, BTC delegation key pairs and PoP
 	params := n.QueryBTCStakingParams()
 
 	// NOTE: we use the node's address for the BTC delegation
 	del1Addr := sdk.MustAccAddressFromBech32(delAddr)
-
-	stakerPopContext := signingcontext.StakerPopContextV0(n.chainId, appparams.AccBTCStaking.String())
 
 	popDel1, err := datagen.NewPoPBTC(stakerPopContext, del1Addr, btcStakerSK)
 	require.NoError(t, err)
@@ -682,11 +712,32 @@ func (n *NodeConfig) AddFinalitySignatureToBlock(
 	proof cmtcrypto.Proof,
 	overallFlags ...string,
 ) (blockVotedAppHash cometbytes.HexBytes) {
+	fpFinVoteContext := signingcontext.FpFinVoteContextV0(n.chainId, appparams.AccFinality.String())
+	return n.AddFinalitySignatureToBlockWithContext(
+		fpBTCSK,
+		fpBTCPK,
+		blockHeight,
+		privateRand,
+		pubRand,
+		proof,
+		fpFinVoteContext,
+		overallFlags...,
+	)
+}
+
+func (n *NodeConfig) AddFinalitySignatureToBlockWithContext(
+	fpBTCSK *secp256k1.PrivateKey,
+	fpBTCPK *bbn.BIP340PubKey,
+	blockHeight uint64,
+	privateRand *secp256k1.ModNScalar,
+	pubRand *bbn.SchnorrPubRand,
+	proof cmtcrypto.Proof,
+	fpFinVoteContext string,
+	overallFlags ...string,
+) (blockVotedAppHash cometbytes.HexBytes) {
 	blockToVote, err := n.QueryBlock(int64(blockHeight))
 	require.NoError(n.t, err)
 	appHash := blockToVote.AppHash
-
-	fpFinVoteContext := signingcontext.FpFinVoteContextV0(n.chainId, appparams.AccFinality.String())
 
 	msgToSign := []byte(fpFinVoteContext)
 	msgToSign = append(msgToSign, sdk.Uint64ToBigEndian(blockHeight)...)

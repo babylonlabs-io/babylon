@@ -51,3 +51,17 @@ func (n *NodeConfig) QueryRewardGauge(sAddr sdk.AccAddress) (map[string]*incenti
 
 	return resp.RewardGauges, nil
 }
+
+func (n *NodeConfig) QueryBtcStkGauge(blkHeight uint64) (sdk.Coins, error) {
+	path := fmt.Sprintf("//babylon/incentive/btc_staking_gauge/%d", blkHeight)
+	bz, err := n.QueryGRPCGateway(path, url.Values{})
+	if err != nil {
+		return nil, err
+	}
+	var resp incentivetypes.QueryBTCStakingGaugeResponse
+	if err := util.Cdc.UnmarshalJSON(bz, &resp); err != nil {
+		return nil, err
+	}
+
+	return resp.Gauge.Coins, nil
+}

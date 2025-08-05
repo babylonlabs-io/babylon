@@ -177,16 +177,39 @@ func (s *SoftwareUpgradeV3TestSuite) SetupVerifiedBtcDelegations(n *chain.NodeCo
 	n.WaitForNextBlock()
 
 	// fp1Del1
-	s.CreateBTCDelegationAndCheck(n, wDel1, s.fp1, s.del1BTCSK, s.del1Addr, s.fp1Del1StakingAmt)
+	s.CreateBTCDelegationV2AndCheck(n, wDel1, s.fp1, s.del1BTCSK, s.del1Addr, s.fp1Del1StakingAmt)
 	// fp1Del2
-	s.CreateBTCDelegationAndCheck(n, wDel2, s.fp1, s.del2BTCSK, s.del2Addr, s.fp1Del2StakingAmt)
+	s.CreateBTCDelegationV2AndCheck(n, wDel2, s.fp1, s.del2BTCSK, s.del2Addr, s.fp1Del2StakingAmt)
 	// fp2Del1
-	s.CreateBTCDelegationAndCheck(n, wDel1, s.fp2, s.del1BTCSK, s.del1Addr, s.fp2Del1StakingAmt)
+	s.CreateBTCDelegationV2AndCheck(n, wDel1, s.fp2, s.del1BTCSK, s.del1Addr, s.fp2Del1StakingAmt)
 
 	resp := n.QueryBtcDelegations(bstypes.BTCDelegationStatus_ANY)
 	require.Len(s.T(), resp.BtcDelegations, 3)
 
 	s.CreateCovenantsAndSubmitSignaturesToPendDels(n, s.fp1, s.fp2)
+}
+
+// CreateBTCDelegationV2AndCheck creates a btc delegation with empty signing context
+func (s *SoftwareUpgradeV3TestSuite) CreateBTCDelegationV2AndCheck(
+	n *chain.NodeConfig,
+	wDel string,
+	fp *bstypes.FinalityProvider,
+	btcStakerSK *btcec.PrivateKey,
+	delAddr string,
+	stakingSatAmt int64,
+) {
+	n.CreateBTCDelegationMultipleFPsAndCheckWithPopContext(
+		s.r,
+		s.T(),
+		s.net,
+		wDel,
+		[]*bstypes.FinalityProvider{fp},
+		btcStakerSK,
+		delAddr,
+		stakingTimeBlocks,
+		stakingSatAmt,
+		"",
+	)
 }
 
 func (s *SoftwareUpgradeV3TestSuite) FpCommitPubRandAndVote(n *chain.NodeConfig) {
@@ -205,6 +228,7 @@ func (s *SoftwareUpgradeV3TestSuite) FpCommitPubRandAndVote(n *chain.NodeConfig)
 	s.fp2RandListInfo = fp2RandListInfo
 
 	n.CommitPubRandList(
+		wFp1,
 		fp1CommitPubRandList.FpBtcPk,
 		fp1CommitPubRandList.StartHeight,
 		fp1CommitPubRandList.NumPubRand,
@@ -213,6 +237,7 @@ func (s *SoftwareUpgradeV3TestSuite) FpCommitPubRandAndVote(n *chain.NodeConfig)
 	)
 
 	n.CommitPubRandList(
+		wFp2,
 		fp2CommitPubRandList.FpBtcPk,
 		fp2CommitPubRandList.StartHeight,
 		fp2CommitPubRandList.NumPubRand,
@@ -278,26 +303,28 @@ func (s *SoftwareUpgradeV3TestSuite) FpCommitPubRandAndVote(n *chain.NodeConfig)
 
 	go func() {
 		defer wg.Done()
-		appHash = n.AddFinalitySignatureToBlock(
+		appHash = n.AddFinalitySignatureToBlockWithContext(
 			s.fp1BTCSK,
 			s.fp1.BtcPk,
 			s.finalityBlockHeightVoted,
 			s.fp1RandListInfo.SRList[s.finalityIdx],
 			&s.fp1RandListInfo.PRList[s.finalityIdx],
 			*s.fp1RandListInfo.ProofList[s.finalityIdx].ToProto(),
+			"",
 			fmt.Sprintf("--from=%s", wFp1),
 		)
 	}()
 
 	go func() {
 		defer wg.Done()
-		n.AddFinalitySignatureToBlock(
+		n.AddFinalitySignatureToBlockWithContext(
 			s.fp2BTCSK,
 			s.fp2.BtcPk,
 			s.finalityBlockHeightVoted,
 			s.fp2RandListInfo.SRList[s.finalityIdx],
 			&s.fp2RandListInfo.PRList[s.finalityIdx],
 			*s.fp2RandListInfo.ProofList[s.finalityIdx].ToProto(),
+			"",
 			fmt.Sprintf("--from=%s", wFp2),
 		)
 	}()
