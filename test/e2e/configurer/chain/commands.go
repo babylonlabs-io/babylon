@@ -82,7 +82,7 @@ func (n *NodeConfig) QueryParams(module string, result any) {
 }
 
 func (n *NodeConfig) SendIBCTransfer(from, recipient, memo string, token sdk.Coin) (txHash string) {
-	n.LogActionF("IBC sending %s from %s to %s. memo: %s", token.Amount.String(), from, recipient, memo)
+	n.LogActionF("IBC sending %s%s from %s to %s. memo: %s", token.Amount.String(), token.Denom, from, recipient, memo)
 
 	cmd := []string{"babylond", "tx", "ibc-transfer", "transfer", "transfer", "channel-0", recipient, token.String(), fmt.Sprintf("--from=%s", from), "--memo", memo}
 	outBuf, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
