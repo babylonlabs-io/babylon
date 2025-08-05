@@ -133,12 +133,9 @@ command to modify `max-finality-providers` parameter.
 - [#1464](https://github.com/babylonlabs-io/babylon/pull/1464) Fix flaky e2e rewards test.
 - [#1460](https://github.com/babylonlabs-io/babylon/pull/1460) Add staking amount change restriction in multi-staking
 - [#1468](https://github.com/babylonlabs-io/babylon/pull/1468) Update multi-staking allow-list docs.
-<<<<<<< HEAD
-=======
 - [#1474](https://github.com/babylonlabs-io/babylon/pull/1474) Add `QueryFpCurrentRewardsRequest` and fix export genesis of incentives
 to allow empty coins in fp current rewards.
 - [#1481](https://github.com/babylonlabs-io/babylon/pull/1481) chore: bsn id proto order for compatibility
->>>>>>> 5f6140c (chore: bsn id proto order for compatibility (#1481))
 
 ### State Machine Breaking
 
