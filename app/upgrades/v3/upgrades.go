@@ -19,7 +19,7 @@ import (
 // UpgradeName defines the on-chain upgrade name for the Babylon v3 upgrade
 const (
 	UpgradeName               = "v3"
-	deletedCapabilityStoreKey = "capability"
+	DeletedCapabilityStoreKey = "capability"
 )
 
 func CreateUpgrade(fpCount uint32, btcActivationHeight uint32,
@@ -35,7 +35,7 @@ func CreateUpgrade(fpCount uint32, btcActivationHeight uint32,
 				zoneconciergetypes.StoreKey,
 			},
 			Deleted: []string{
-				deletedCapabilityStoreKey,
+				DeletedCapabilityStoreKey,
 			},
 		},
 	}
@@ -43,7 +43,7 @@ func CreateUpgrade(fpCount uint32, btcActivationHeight uint32,
 
 func CreateUpgradeHandler(fpCount uint32, btcActivationHeight uint32,
 	permissionedIntegration bool, ibcPacketTimeoutSeconds uint32) upgrades.
-UpgradeHandlerCreator {
+	UpgradeHandlerCreator {
 	return func(mm *module.Manager, configurator module.Configurator, keepers *keepers.AppKeepers) upgradetypes.UpgradeHandler {
 		return func(ctx context.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
 			migrations, err := mm.RunMigrations(ctx, configurator, fromVM)

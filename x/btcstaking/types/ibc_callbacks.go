@@ -26,7 +26,7 @@ type CallbackInfo struct {
 // add BSN rewards.
 type CallbackAddBsnRewards struct {
 	// BsnConsumerID specifies which BSN to send the rewards to
-	BsnConsumerID string `json:"bsn_consumer_id"`
+	BsnConsumerID string `json:"bsn_consumer_id,omitempty"`
 	// FpRatios splits the rewards between the given FPs ratios
 	FpRatios []FpRatio `json:"fp_ratios"`
 }

@@ -332,7 +332,7 @@ func NewBabylonApp(
 		checkpointing.NewAppModule(appCodec, app.CheckpointingKeeper),
 		monitor.NewAppModule(appCodec, app.MonitorKeeper),
 		// Babylon modules - integration
-		btcstkconsumer.NewAppModule(appCodec, app.BTCStkConsumerKeeper, app.AccountKeeper, app.BankKeeper),
+		btcstkconsumer.NewAppModule(appCodec, app.BTCStkConsumerKeeper),
 		zoneconcierge.NewAppModule(appCodec, app.ZoneConciergeKeeper, app.AccountKeeper, app.BankKeeper),
 		// Babylon modules - btc staking
 		btcstaking.NewAppModule(appCodec, app.BTCStakingKeeper),
