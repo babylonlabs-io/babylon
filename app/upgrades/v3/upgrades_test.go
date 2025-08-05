@@ -115,7 +115,7 @@ func (s *UpgradeTestSuite) verifyPostUpgrade(expectedMaxFPs,
 	_, found = s.app.ModuleManager.Modules["btcstkconsumer"]
 	s.Require().True(found, "x/btcstkconsumer module should be found")
 
-	_, found = s.app.ModuleManager.Modules["zoneconcierge"]
+	_, found = s.app.ModuleManager.Modules["zc"]
 	s.Require().True(found, "x/zoneconcierge module should be found")
 
 	btcStakingParams := s.app.BTCStakingKeeper.GetParams(s.ctx)
