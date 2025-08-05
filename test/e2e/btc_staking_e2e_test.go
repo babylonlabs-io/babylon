@@ -873,7 +873,7 @@ func CreateNodeFP(
 	return newFP
 }
 
-func CreateNodeFPV2(
+func CreateNodeFpV2(
 	t *testing.T,
 	r *rand.Rand,
 	fpSk *btcec.PrivateKey,

@@ -60,6 +60,17 @@ func (n *NodeConfig) QueryFinalityProviders(bsnId string) []*bstypes.FinalityPro
 	return resp.FinalityProviders
 }
 
+func (n *NodeConfig) QueryFinalityProvidersV2() []*bstypes.FinalityProviderResponse {
+	bz, err := n.QueryGRPCGateway("/babylon/btcstaking/v1/finality_providers", url.Values{})
+	require.NoError(n.t, err)
+
+	var resp bstypes.QueryFinalityProvidersResponse
+	err = util.Cdc.UnmarshalJSON(bz, &resp)
+	require.NoError(n.t, err)
+
+	return resp.FinalityProviders
+}
+
 func (n *NodeConfig) QueryFinalityProvider(btcPkHex string) *bstypes.FinalityProviderResponse {
 	path := fmt.Sprintf("/babylon/btcstaking/v1/finality_providers/%s/finality_provider", btcPkHex)
 	bz, err := n.QueryGRPCGateway(path, url.Values{})
