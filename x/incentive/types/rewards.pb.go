@@ -96,6 +96,10 @@ type FinalityProviderCurrentRewards struct {
 	// or btc rewards withdraw) a new period must be created, accumulate this
 	// rewards to FinalityProviderHistoricalRewards with a new period and zero out
 	// the Current Rewards.
+	// Note: This rewards have increased simulated decimals (10^20) to increase
+	// precision when calculating the rewards per satoshi and protect against
+	// math overflow issues. The decimals are removed prior to sending out
+	// to the incentive gauge.
 	CurrentRewards github_com_cosmos_cosmos_sdk_types.Coins `protobuf:"bytes,1,rep,name=current_rewards,json=currentRewards,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coins" json:"current_rewards"`
 	// Period stores the current period that serves as a reference for
 	// creating new historical rewards and correlate with

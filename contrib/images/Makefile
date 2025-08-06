@@ -29,4 +29,4 @@ cosmos-relayer: cosmos-relayer-rmi
 cosmos-relayer-rmi:
 	docker rmi babylonlabs-io/cosmos-relayer 2>/dev/null; true
 
-.PHONY: all babylond cosmos-relayer e2e-init-chain babylond-rmi cosmos-relayer-rmi 
+.PHONY: all babylond cosmos-relayer e2e-init-chain babylond-rmi cosmos-relayer-rmi
