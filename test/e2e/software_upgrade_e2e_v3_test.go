@@ -6,10 +6,13 @@ import (
 	"sync"
 	"time"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/cometbft/cometbft/libs/bytes"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/sync/errgroup"
 
 	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
 	"github.com/babylonlabs-io/babylon/v3/app/signingcontext"
@@ -17,11 +20,13 @@ import (
 	"github.com/babylonlabs-io/babylon/v3/test/e2e/configurer"
 	"github.com/babylonlabs-io/babylon/v3/test/e2e/configurer/chain"
 	"github.com/babylonlabs-io/babylon/v3/test/e2e/configurer/config"
+	"github.com/babylonlabs-io/babylon/v3/testutil/coins"
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
 	"github.com/babylonlabs-io/babylon/v3/testutil/sample"
 	btclighttypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
 	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 	ftypes "github.com/babylonlabs-io/babylon/v3/x/finality/types"
+	itypes "github.com/babylonlabs-io/babylon/v3/x/incentive/types"
 )
 
 const (
@@ -386,7 +391,49 @@ func (s *SoftwareUpgradeV3TestSuite) Test1UpgradeV3() {
 	// check for rewards from the finality activation height until last finalized block
 	totalRewardsAllocated, err := n.QueryBtcStkGaugeFromBlocks(s.firstFinalizedBlockHeight, s.finalityBlockHeightVoted-1)
 	s.Require().NoError(err)
-	s.Require().NotNil(totalRewardsAllocated)
+	s.Require().False(totalRewardsAllocated.IsZero())
+
+	// assuming that both fps were rewarded the same amounts
+	fp1Rwds, fp2Rwds, del1, del2 := s.QueryRewardGauges(n)
+
+	// Current setup of voting power
+	// (fp1, del1) => 2_00000000
+	// (fp1, del2) => 4_00000000
+	// (fp2, del1) => 2_00000000
+
+	// The sum per bech32 address will be
+	// (fp1)  => 6_00000000
+	// (fp2)  => 2_00000000
+	// (del1) => 4_00000000
+	// (del2) => 4_00000000
+
+	vpFp1 := s.fp1Del1StakingAmt + s.fp1Del2StakingAmt
+	vpFp2 := s.fp2Del1StakingAmt
+	totalVp := vpFp1 + vpFp2
+
+	fp1Portion := sdkmath.LegacyNewDec(vpFp1).QuoTruncate(sdkmath.LegacyNewDec(totalVp))
+	fp1TotalRwds := itypes.GetCoinsPortion(totalRewardsAllocated, fp1Portion)
+
+	fp2Portion := sdkmath.LegacyNewDec(vpFp2).QuoTruncate(sdkmath.LegacyNewDec(totalVp))
+	fp2TotalRwds := itypes.GetCoinsPortion(totalRewardsAllocated, fp2Portion)
+
+	fp1CommExp := itypes.GetCoinsPortion(fp1TotalRwds, *s.fp1.Commission)
+	coins.RequireCoinsDiffInPointOnePercentMargin(s.T(), fp1CommExp, fp1Rwds.Coins)
+	require.Equal(s.T(), fp1CommExp.String(), fp1Rwds.Coins.String(), "fp1 rewards do not match")
+
+	fp2CommExp := itypes.GetCoinsPortion(fp2TotalRwds, *s.fp2.Commission)
+	require.Equal(s.T(), fp2CommExp.String(), fp2Rwds.String(), "fp2 rewards do not match")
+
+	fp1BtcStakersShares := fp1TotalRwds.Sub(fp1CommExp...)
+
+	// del1 receives what is left after fp commission for fp2 since it is the only staker
+	// plus his share in what is left from fp1
+	del1ShareFp1 := itypes.GetCoinsPortion(fp1BtcStakersShares, sdkmath.LegacyMustNewDecFromStr("0.666666667"))
+	expCoinsDel1 := fp2TotalRwds.Sub(fp2CommExp...).Add(del1ShareFp1...)
+	coins.RequireCoinsDiffInPointOnePercentMargin(s.T(), expCoinsDel1, del1.Coins)
+
+	expCoinsDel2 := itypes.GetCoinsPortion(fp1BtcStakersShares, sdkmath.LegacyMustNewDecFromStr("0.333333333"))
+	coins.RequireCoinsDiffInPointOnePercentMargin(s.T(), expCoinsDel2, del2.Coins)
 }
 
 func (s *SoftwareUpgradeV3TestSuite) CheckFpAfterUpgrade() {
@@ -489,4 +536,68 @@ func (s *SoftwareUpgradeV3TestSuite) AddFinalityVote(n *chain.NodeConfig, fpFina
 	s.finalityIdx++
 	s.finalityBlockHeightVoted++
 	return appHash
+}
+
+// QueryRewardGauges returns the rewards available for fp1, fp2, del1, del2
+func (s *SoftwareUpgradeV3TestSuite) QueryRewardGauges(n *chain.NodeConfig) (
+	fp1, fp2, del1, del2 *itypes.RewardGaugesResponse,
+) {
+	n.WaitForNextBlockWithSleep50ms()
+
+	g := new(errgroup.Group)
+	var (
+		err                 error
+		fp1RewardGauges     map[string]*itypes.RewardGaugesResponse
+		fp2RewardGauges     map[string]*itypes.RewardGaugesResponse
+		btcDel1RewardGauges map[string]*itypes.RewardGaugesResponse
+		btcDel2RewardGauges map[string]*itypes.RewardGaugesResponse
+	)
+
+	g.Go(func() error {
+		fp1RewardGauges, err = n.QueryRewardGauge(s.fp1.Address())
+		if err != nil {
+			return fmt.Errorf("failed to query rewards for fp1: %w", err)
+		}
+		return nil
+	})
+	g.Go(func() error {
+		fp2RewardGauges, err = n.QueryRewardGauge(s.fp2.Address())
+		if err != nil {
+			return fmt.Errorf("failed to query rewards for fp2: %w", err)
+		}
+		return nil
+	})
+	g.Go(func() error {
+		btcDel1RewardGauges, err = n.QueryRewardGauge(sdk.MustAccAddressFromBech32(s.del1Addr))
+		if err != nil {
+			return fmt.Errorf("failed to query rewards for del1: %w", err)
+		}
+		return nil
+	})
+	g.Go(func() error {
+		btcDel2RewardGauges, err = n.QueryRewardGauge(sdk.MustAccAddressFromBech32(s.del2Addr))
+		if err != nil {
+			return fmt.Errorf("failed to query rewards for del2: %w", err)
+		}
+		return nil
+	})
+	s.NoError(g.Wait())
+
+	fp1RewardGauge, ok := fp1RewardGauges[itypes.FINALITY_PROVIDER.String()]
+	s.True(ok)
+	s.True(fp1RewardGauge.Coins.IsAllPositive())
+
+	fp2RewardGauge, ok := fp2RewardGauges[itypes.FINALITY_PROVIDER.String()]
+	s.True(ok)
+	s.True(fp2RewardGauge.Coins.IsAllPositive())
+
+	btcDel1RewardGauge, ok := btcDel1RewardGauges[itypes.BTC_STAKER.String()]
+	s.True(ok)
+	s.True(btcDel1RewardGauge.Coins.IsAllPositive())
+
+	btcDel2RewardGauge, ok := btcDel2RewardGauges[itypes.BTC_STAKER.String()]
+	s.True(ok)
+	s.True(btcDel2RewardGauge.Coins.IsAllPositive())
+
+	return fp1RewardGauge, fp2RewardGauge, btcDel1RewardGauge, btcDel2RewardGauge
 }
