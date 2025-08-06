@@ -114,6 +114,7 @@ func (s *IbcCallbackBsnAddRewards) Test1CreateFinalityProviders() {
 	chainA.WaitUntilHeight(2)
 	chainB.WaitUntilHeight(2)
 
+	bsnNode := s.BsnNode()
 	bbnNode := s.BbnNode()
 	bbnNode.WaitForNextBlock()
 
@@ -136,14 +137,32 @@ func (s *IbcCallbackBsnAddRewards) Test1CreateFinalityProviders() {
 		"Chain description: "+datagen.GenRandomHexStr(s.r, 15),
 		datagen.GenBabylonRewardsCommission(s.r),
 	)
+	// Register consumer chain on BBN
 	bbnNode.RegisterConsumerChain(bbnNode.WalletName, bsn0.ConsumerId, bsn0.ConsumerName, bsn0.ConsumerDescription, bsn0.BabylonRewardsCommission.String())
+	// The other chain is BBN too, so need to register the consumer chain
+	// to be able to open the zoneconcierge channel
+	bsnNode.RegisterConsumerChain(bsnNode.WalletName, bsn0.ConsumerId, bsn0.ConsumerName, bsn0.ConsumerDescription, bsn0.BabylonRewardsCommission.String())
+
 	s.bsn0 = bsn0
 
 	bbnNode.WaitForNextBlock()
+	bsnNode.WaitForNextBlock()
 
 	consumers := bbnNode.QueryBTCStkConsumerConsumers()
 	require.Len(s.T(), consumers, 1)
 	s.T().Log("All Consumers created")
+	require.Equal(s.T(), consumers[0].ConsumerId, clientState.ClientId)
+
+	// Open zoneconcierge channel
+	// Need to use same connection ID as the one used in the consumer registration
+	connResp, err := bbnNode.QueryConnections()
+	require.NoError(s.T(), err)
+	require.Len(s.T(), connResp.Connections, 2)
+	connID := connResp.Connections[0].Id
+	err = s.configurer.OpenZoneConciergeChannel(chainA, chainB, connID)
+	require.NoError(s.T(), err, "failed to create zoneconcierge channel between Babylon and BSN")
+	bbnNode.WaitForNextBlock()
+	s.T().Log("Opened zoneconcierge channel")
 
 	s.fp1bbn = CreateNodeFP(
 		s.T(),

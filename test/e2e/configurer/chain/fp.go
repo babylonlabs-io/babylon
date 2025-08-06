@@ -45,9 +45,6 @@ func CreateFpFromNodeAddr(
 		newFP.Description.Details, newFP.Commission, newFP.CommissionInfo.MaxRate,
 		newFP.CommissionInfo.MaxChangeRate)
 
-	// wait for a block so that above txs take effect
-	node.WaitForNextBlock()
-
 	// query the existence of finality provider and assert equivalence
 	actualFps := node.QueryFinalityProviders(node.chainId)
 	require.Len(t, actualFps, len(previousFps)+1)
@@ -92,9 +89,6 @@ func CreateConsumerFpFromNodeAddr(
 	commission := sdkmath.LegacyNewDecWithPrec(20, 2)
 	newFP.Commission = &commission
 	node.CreateConsumerFinalityProvider(newFP.Addr, consumerId, newFP.BtcPk, newFP.Pop, newFP.Description.Moniker, newFP.Description.Identity, newFP.Description.Website, newFP.Description.SecurityContact, newFP.Description.Details, newFP.Commission, newFP.CommissionInfo.MaxRate, newFP.CommissionInfo.MaxChangeRate)
-
-	// wait for a block so that above txs take effect
-	node.WaitForNextBlock()
 
 	// get chain ID to assert equality with the ConsumerId field
 	if consumerId == "" {

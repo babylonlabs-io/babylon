@@ -46,10 +46,22 @@ func (k Keeper) AddFinalityProvider(goCtx context.Context, msg *types.MsgCreateF
 		// Babylon chain ID
 		bsnID = ctx.ChainID()
 	}
-	// If this is a consumer finality provider, ensure the consumer is registered
-	if bsnID != ctx.ChainID() && !k.BscKeeper.IsConsumerRegistered(ctx, bsnID) {
-		// if BSN ID is provided and it's not Babylon's chain ID, ensure it's a registered consumer
-		return types.ErrFpBSNIdNotRegistered
+
+	// Consumer finality providers checks
+	isConsumer := bsnID != ctx.ChainID()
+	if isConsumer {
+		// Ensure the consumer is registered
+		cr, err := k.BscKeeper.GetConsumerRegister(ctx, bsnID)
+		if err != nil || cr == nil {
+			return types.ErrFpBSNIdNotRegistered
+		}
+		// Ensure there's an IBC channel open if it is a Cosmos BSN
+		if cr.GetCosmosConsumerMetadata() != nil {
+			hasChannel := k.BscKeeper.ConsumerHasIBCChannelOpen(ctx, bsnID)
+			if !hasChannel {
+				return types.ErrFpConsumerNoIBCChannelOpen
+			}
+		}
 	}
 
 	// all good, add this finality provider
@@ -67,7 +79,7 @@ func (k Keeper) AddFinalityProvider(goCtx context.Context, msg *types.MsgCreateF
 	k.bsnIndexFinalityProvider(ctx, &fp)
 
 	// Create BTC Staking Consumer Event for the new finality provider
-	if !fp.SecuresBabylonGenesis(ctx) {
+	if isConsumer {
 		if err := k.AddBTCStakingConsumerEvent(ctx, fp.BsnId, types.CreateNewFinalityProviderEvent(&fp)); err != nil {
 			return err
 		}

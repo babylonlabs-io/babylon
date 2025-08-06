@@ -143,6 +143,7 @@ to allow empty coins in fp current rewards.
 `AddBsnRewards` IBC callbacks.
 - [#1481](https://github.com/babylonlabs-io/babylon/pull/1481) chore: bsn id proto order for compatibility
 - [#1490](https://github.com/babylonlabs-io/babylon/pull/1490) Add multi-staking allow-list for Testnet
+- [#1485](https://github.com/babylonlabs-io/babylon/pull/1485) Add channel check on consumer FP creation
 
 ### State Machine Breaking
 

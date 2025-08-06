@@ -54,6 +54,17 @@ type ChannelKeeper interface {
 	GetChannelClientState(ctx sdk.Context, portID, channelID string) (string, ibcexported.ClientState, error)
 }
 
+// ZoneConciergeChannelKeeper defines the expected zoneconcierge IBC channel keeper
+type ZoneConciergeChannelKeeper interface {
+	GetChannelClientState(ctx sdk.Context, portID, channelID string) (string, ibcexported.ClientState, error)
+	GetChannelForConsumer(ctx context.Context, consumerID string) (channeltypes.IdentifiedChannel, bool)
+	GetAllOpenZCChannels(ctx context.Context) []channeltypes.IdentifiedChannel
+	GetClientID(ctx context.Context, channel channeltypes.IdentifiedChannel) (string, error)
+	IsChannelUninitialized(ctx context.Context, channel channeltypes.IdentifiedChannel) bool
+	GetPort(ctx context.Context) string
+	InitGenesis(ctx context.Context, gs GenesisState) error
+}
+
 // ClientKeeper defines the expected IBC client keeper
 type ClientKeeper interface {
 	GetClientState(ctx sdk.Context, clientID string) (ibcexported.ClientState, bool)
