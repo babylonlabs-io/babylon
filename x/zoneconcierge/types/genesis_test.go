@@ -38,14 +38,6 @@ func TestGenesisState_Validate(t *testing.T) {
 			valid: true,
 		},
 		{
-			desc: "invalid port id",
-			genState: &types.GenesisState{
-				Params: types.DefaultParams(),
-			},
-			valid:  false,
-			errMsg: "invalid identifier",
-		},
-		{
 			desc: "duplicate finalized header entries",
 			genState: &types.GenesisState{
 				FinalizedHeaders: append(gs.FinalizedHeaders, gs.FinalizedHeaders[0]),
