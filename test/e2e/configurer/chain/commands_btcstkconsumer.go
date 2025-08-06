@@ -31,6 +31,10 @@ func (n *NodeConfig) RegisterRollupConsumerChain(walletAddrOrName, id, name, des
 	n.LogActionF("successfully registered consumer chain")
 }
 
+// CreateConsumerFinalityProvider creates a finality provider for a consumer chain
+// If consumerId is empty, it uses the chain ID as the consumer
+// This is used for creating a finality provider for the Babylon chain itself
+// This function submits the message, waits for block inclusion, and asserts the tx was successful
 func (n *NodeConfig) CreateConsumerFinalityProvider(walletAddrOrName string, consumerID string, btcPK *bbn.BIP340PubKey, pop *bstypes.ProofOfPossessionBTC, moniker, identity, website, securityContract, details string, commission *sdkmath.LegacyDec, commissionMaxRate, commissionMaxRateChange sdkmath.LegacyDec) {
 	// Just for logs
 	consumer := consumerID
@@ -54,8 +58,15 @@ func (n *NodeConfig) CreateConsumerFinalityProvider(walletAddrOrName string, con
 		"--bsn-id", consumerID,
 	}
 
-	_, _, err = n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
+	outBuf, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
 	require.NoError(n.t, err)
+
+	n.WaitForNextBlocks(2)
+
+	txHash := GetTxHashFromOutput(outBuf.String())
+	txRes, _ := n.QueryTx(txHash)
+	require.Equal(n.t, txRes.Code, uint32(0), "FP creation failed with code %d: %s", txRes.Code, txRes.RawLog)
+
 	n.LogActionF("Successfully created %s finality provider", consumer)
 }
 

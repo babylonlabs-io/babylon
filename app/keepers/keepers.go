@@ -558,11 +558,17 @@ func (ak *AppKeepers) InitKeepers(
 		appparams.AccGov.String(),
 	)
 
+	zcChannelKeeper := zckeeper.NewChannelKeeper(
+		appCodec,
+		runtime.NewKVStoreService(keys[zctypes.StoreKey]),
+		ak.IBCKeeper.ChannelKeeper,
+	)
+
 	ak.BTCStkConsumerKeeper = bsckeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[bsctypes.StoreKey]),
 		ak.IBCKeeper.ClientKeeper,
-		ak.IBCKeeper.ChannelKeeper,
+		zcChannelKeeper,
 		ak.WasmKeeper,
 		appparams.AccGov.String(),
 	)
@@ -610,7 +616,7 @@ func (ak *AppKeepers) InitKeepers(
 		ak.IBCKeeper.ChannelKeeper,
 		ak.IBCKeeper.ClientKeeper,
 		ak.IBCKeeper.ConnectionKeeper,
-		ak.IBCKeeper.ChannelKeeper,
+		zcChannelKeeper,
 		ak.AccountKeeper,
 		ak.BankKeeper,
 		&btclightclientKeeper,

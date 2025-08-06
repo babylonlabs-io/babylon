@@ -179,6 +179,20 @@ func (m *MockBTCStkConsumerKeeper) EXPECT() *MockBTCStkConsumerKeeperMockRecorde
 	return m.recorder
 }
 
+// ConsumerHasIBCChannelOpen mocks base method.
+func (m *MockBTCStkConsumerKeeper) ConsumerHasIBCChannelOpen(ctx context.Context, consumerID string) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ConsumerHasIBCChannelOpen", ctx, consumerID)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// ConsumerHasIBCChannelOpen indicates an expected call of ConsumerHasIBCChannelOpen.
+func (mr *MockBTCStkConsumerKeeperMockRecorder) ConsumerHasIBCChannelOpen(ctx, consumerID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ConsumerHasIBCChannelOpen", reflect.TypeOf((*MockBTCStkConsumerKeeper)(nil).ConsumerHasIBCChannelOpen), ctx, consumerID)
+}
+
 // GetConsumerID mocks base method.
 func (m *MockBTCStkConsumerKeeper) GetConsumerID(ctx types3.Context, portID, channelID string) (string, error) {
 	m.ctrl.T.Helper()

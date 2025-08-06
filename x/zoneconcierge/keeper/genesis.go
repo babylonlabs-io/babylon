@@ -2,12 +2,13 @@ package keeper
 
 import (
 	"context"
+
 	"github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
 )
 
 // InitGenesis initializes the keeper state from a provided initial genesis state.
 func (k Keeper) InitGenesis(ctx context.Context, gs types.GenesisState) error {
-	if err := k.SetPort(ctx, gs.PortId); err != nil {
+	if err := k.channelKeeper.InitGenesis(ctx, gs); err != nil {
 		return err
 	}
 
@@ -60,7 +61,7 @@ func (k Keeper) ExportGenesis(ctx context.Context) (*types.GenesisState, error) 
 
 	return &types.GenesisState{
 		Params:             k.GetParams(ctx),
-		PortId:             k.GetPort(ctx),
+		PortId:             k.channelKeeper.GetPort(ctx),
 		FinalizedHeaders:   fh,
 		LastSentSegment:    k.GetLastSentSegment(ctx),
 		SealedEpochsProofs: se,

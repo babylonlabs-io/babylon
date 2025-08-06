@@ -54,7 +54,7 @@ func TestAfterBTCRollBack(t *testing.T) {
 		t.Run(tc.title, func(t *testing.T) {
 			t.Parallel()
 
-			k, ctx := keepertest.BTCStakingKeeper(t, nil, nil, nil)
+			k, ctx := keepertest.BTCStakingKeeper(t, nil, nil, nil, nil)
 			k.Hooks().AfterBTCRollBack(ctx, tc.rollbackFrom, tc.rollbackTo)
 
 			actLargestBtcReorg, err := k.LargestBtcReorg.Get(ctx)
