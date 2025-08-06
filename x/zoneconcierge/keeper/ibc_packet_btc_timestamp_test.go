@@ -40,6 +40,7 @@ func genRandomChain(
 	return randomChain
 }
 
+// TODO: need to update for removed base header version
 func FuzzGetHeadersToBroadcast(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 
