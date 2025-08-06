@@ -37,7 +37,8 @@ func (h Hooks) AfterRawCheckpointSealed(ctx context.Context, epoch uint64) error
 // AfterRawCheckpointFinalized is triggered upon an epoch has been finalised
 func (h Hooks) AfterRawCheckpointFinalized(ctx context.Context, epoch uint64) error {
 
-	// send BTC timestamp to all open channels with ZoneConcierge
+	// send BTC timestamp to all open channels with ZoneConcierge along side with
+	// necessary light client headers
 	if err := h.k.BroadcastBTCTimestamps(ctx, epoch); err != nil {
 		h.handleHookBroadcastError(ctx, "BroadcastBTCTimestamps", err)
 	}
