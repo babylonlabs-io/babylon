@@ -21,8 +21,6 @@ import (
 	"github.com/babylonlabs-io/babylon/v3/test/e2e/configurer/config"
 	"github.com/babylonlabs-io/babylon/v3/testutil/coins"
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
-	"github.com/babylonlabs-io/babylon/v3/testutil/sample"
-	btclighttypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
 	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 	ftypes "github.com/babylonlabs-io/babylon/v3/x/finality/types"
 	itypes "github.com/babylonlabs-io/babylon/v3/x/incentive/types"
@@ -99,13 +97,10 @@ func (s *SoftwareUpgradeV3TestSuite) SetupSuite() {
 		s.FpCommitPubRandAndVote(n)
 	}
 
-	btcHeaderGenesis := sample.SignetBtcHeader195552(s.T())
-
 	s.configurer, err = configurer.NewSoftwareUpgradeConfigurer(
 		s.T(),
 		true,
 		config.UpgradeV3FilePath,
-		[]*btclighttypes.BTCHeaderInfo{btcHeaderGenesis},
 		preUpgradeFunc,
 	)
 	s.NoError(err)
@@ -151,32 +146,6 @@ func (s *SoftwareUpgradeV3TestSuite) SetupFps(n *chain.NodeConfig) {
 
 	actualFps := n.QueryFinalityProvidersV2()
 	s.Require().Len(actualFps, 2)
-
-	// s.commitStartHeight = n.LatestBlockNumber()
-
-	// var err error
-	// _, s.fp1CommitPubRandList, err = datagen.GenRandomMsgCommitPubRandList(s.r, s.fp1BTCSK, "", s.commitStartHeight, numPubRand)
-	// s.NoError(err)
-	// _, s.fp2CommitPubRandList, err = datagen.GenRandomMsgCommitPubRandList(s.r, s.fp2BTCSK, "", s.commitStartHeight, numPubRand)
-	// s.NoError(err)
-
-	// s.Require().NotNil(s.fp1CommitPubRandList, "fp1CommitPubRandList should not be nil")
-	// s.Require().NotNil(s.fp2CommitPubRandList, "fp2CommitPubRandList should not be nil")
-
-	// n.CommitPubRandList(
-	// 	s.fp1CommitPubRandList.FpBtcPk,
-	// 	s.fp1CommitPubRandList.StartHeight,
-	// 	s.fp1CommitPubRandList.NumPubRand,
-	// 	s.fp1CommitPubRandList.Commitment,
-	// 	s.fp1CommitPubRandList.Sig,
-	// )
-	// n.CommitPubRandList(
-	// 	s.fp2CommitPubRandList.FpBtcPk,
-	// 	s.fp2CommitPubRandList.StartHeight,
-	// 	s.fp2CommitPubRandList.NumPubRand,
-	// 	s.fp2CommitPubRandList.Commitment,
-	// 	s.fp2CommitPubRandList.Sig,
-	// )
 }
 
 func (s *SoftwareUpgradeV3TestSuite) SetupVerifiedBtcDelegations(n *chain.NodeConfig) {
@@ -372,15 +341,54 @@ func (s *SoftwareUpgradeV3TestSuite) Test1UpgradeV3() {
 	// wait a few blocks for the reward to be allocated
 	n.WaitForNextBlocks(20)
 
-	// check for rewards from the finality activation height until last finalized block
-	finalizedBlocks := n.QueryListBlocks(ftypes.QueriedBlockStatus_FINALIZED)
-	firstFinalizedBlock := finalizedBlocks[0]
-	lastFinalizedBlock := finalizedBlocks[len(finalizedBlocks)-1]
-	// at least one block should be finalized after the upgrade
-	s.Require().GreaterOrEqual(lastFinalizedBlock.Height, uint64(expectedUpgradeHeight))
+	s.CheckBtcRewardsAfterUpgrade(expectedUpgradeHeight)
+}
 
-	// assuming that both fps were rewarded the same amounts
-	fp1Rwds, fp2Rwds, del1, del2 := s.QueryRewardGauges(n)
+func (s *SoftwareUpgradeV3TestSuite) CheckFpAfterUpgrade() {
+	chainA := s.configurer.GetChainConfig(0)
+	chainA.WaitUntilHeight(1)
+	n, err := chainA.GetNodeAtIndex(1)
+	s.NoError(err)
+
+	fp1 := n.QueryFinalityProvider(s.fp1.BtcPk.MarshalHex())
+	s.Require().Equal(fp1.BsnId, n.ChainID())
+	fp2 := n.QueryFinalityProvider(s.fp2.BtcPk.MarshalHex())
+	s.Require().Equal(fp2.BsnId, n.ChainID())
+
+	// query pub randomness
+	fp1CommitPubRand := n.QueryListPubRandCommit(s.fp1.BtcPk)
+	s.Require().NotNil(fp1CommitPubRand, "fp1CommitPubRand should not be nil")
+	_, ok := fp1CommitPubRand[commitStartHeight]
+	s.Require().True(ok, "fp1CommitPubRand should contain commitStartHeight")
+
+	fp2CommitPubRand := n.QueryListPubRandCommit(s.fp2.BtcPk)
+	s.Require().NotNil(fp2CommitPubRand, "fp2CommitPubRand should not be nil")
+	_, ok = fp2CommitPubRand[commitStartHeight]
+	s.Require().True(ok, "fp2CommitPubRand should contain commitStartHeight")
+}
+
+func (s *SoftwareUpgradeV3TestSuite) CheckParamsAfterUpgrade() {
+	chainA := s.configurer.GetChainConfig(0)
+	chainA.WaitUntilHeight(1)
+	n, err := chainA.GetNodeAtIndex(1)
+	s.NoError(err)
+
+	btcStkConsParams := n.QueryBTCStkConsumerParams()
+	s.Require().False(btcStkConsParams.PermissionedIntegration, "btcstkconsumer permissioned integration should be false")
+
+	zoneConciergeParams := n.QueryZoneConciergeParams()
+	s.Require().Equal(uint32(2419200), zoneConciergeParams.IbcPacketTimeoutSeconds, "ibc_packet_timeout_seconds should be 2419200")
+
+	btcStkParams := n.QueryBTCStakingParams()
+	s.Require().Equal(uint32(10), btcStkParams.MaxFinalityProviders, "max_finality_providers should be 10")
+	s.Require().Equal(uint32(260000), btcStkParams.BtcActivationHeight, "btc activation height should be 260000")
+}
+
+func (s *SoftwareUpgradeV3TestSuite) CheckBtcRewardsAfterUpgrade(expectedUpgradeHeight int64) {
+	chainA := s.configurer.GetChainConfig(0)
+	chainA.WaitUntilHeight(1)
+	n, err := chainA.GetNodeAtIndex(1)
+	s.NoError(err)
 
 	// Current setup of voting power
 	// (fp1, del1) => 2_00000000
@@ -392,6 +400,16 @@ func (s *SoftwareUpgradeV3TestSuite) Test1UpgradeV3() {
 	// (fp2)  => 2_00000000
 	// (del1) => 4_00000000
 	// (del2) => 4_00000000
+
+	// check for rewards from the finality activation height until last finalized block
+	finalizedBlocks := n.QueryListBlocks(ftypes.QueriedBlockStatus_FINALIZED)
+	firstFinalizedBlock := finalizedBlocks[0]
+	lastFinalizedBlock := finalizedBlocks[len(finalizedBlocks)-1]
+	// at least one block should be finalized after the upgrade
+	s.Require().GreaterOrEqual(lastFinalizedBlock.Height, uint64(expectedUpgradeHeight))
+
+	// assuming that both fps were rewarded the same amounts
+	fp1Rwds, fp2Rwds, del1, del2 := s.QueryRewardGauges(n)
 
 	vpFp1 := s.fp1Del1StakingAmt + s.fp1Del2StakingAmt
 	vpFp2 := s.fp2Del1StakingAmt
@@ -457,47 +475,8 @@ func (s *SoftwareUpgradeV3TestSuite) Test1UpgradeV3() {
 
 	// since the fp commission is fixed at 20% and both delegators have the same amount staked over all dels 4_00000000
 	// they should earn roughly the same amounts, with rounding diffs
+	s.Require().Equal(s.fp1.Commission.String(), s.fp2.Commission.String())
 	coins.RequireCoinsDiffInPointOnePercentMargin(s.T(), del1.Coins, del2.Coins)
-}
-
-func (s *SoftwareUpgradeV3TestSuite) CheckFpAfterUpgrade() {
-	chainA := s.configurer.GetChainConfig(0)
-	n, err := chainA.GetNodeAtIndex(1)
-	s.NoError(err)
-
-	fp1 := n.QueryFinalityProvider(s.fp1.BtcPk.MarshalHex())
-	s.Require().Equal(fp1.BsnId, n.ChainID())
-	fp2 := n.QueryFinalityProvider(s.fp2.BtcPk.MarshalHex())
-	s.Require().Equal(fp2.BsnId, n.ChainID())
-
-	// query pub randomness
-	fp1CommitPubRand := n.QueryListPubRandCommit(s.fp1.BtcPk)
-	s.Require().NotNil(fp1CommitPubRand, "fp1CommitPubRand should not be nil")
-	_, ok := fp1CommitPubRand[commitStartHeight]
-	s.Require().True(ok, "fp1CommitPubRand should contain commitStartHeight")
-
-	fp2CommitPubRand := n.QueryListPubRandCommit(s.fp2.BtcPk)
-	s.Require().NotNil(fp2CommitPubRand, "fp2CommitPubRand should not be nil")
-	_, ok = fp2CommitPubRand[commitStartHeight]
-	s.Require().True(ok, "fp2CommitPubRand should contain commitStartHeight")
-}
-
-func (s *SoftwareUpgradeV3TestSuite) CheckParamsAfterUpgrade() {
-	chainA := s.configurer.GetChainConfig(0)
-	chainA.WaitUntilHeight(1)
-
-	n, err := chainA.GetNodeAtIndex(1)
-	s.NoError(err)
-
-	btcStkConsParams := n.QueryBTCStkConsumerParams()
-	s.Require().False(btcStkConsParams.PermissionedIntegration, "btcstkconsumer permissioned integration should be false")
-
-	zoneConciergeParams := n.QueryZoneConciergeParams()
-	s.Require().Equal(uint32(2419200), zoneConciergeParams.IbcPacketTimeoutSeconds, "ibc_packet_timeout_seconds should be 2419200")
-
-	btcStkParams := n.QueryBTCStakingParams()
-	s.Require().Equal(uint32(10), btcStkParams.MaxFinalityProviders, "max_finality_providers should be 10")
-	s.Require().Equal(uint32(260000), btcStkParams.BtcActivationHeight, "btc activation height should be 260000")
 }
 
 func (s *SoftwareUpgradeV3TestSuite) AddFinalityVoteUntilCurrentHeight(n *chain.NodeConfig, fpFinalityVoteContext string) {

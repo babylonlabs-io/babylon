@@ -11,7 +11,6 @@ import (
 	"github.com/babylonlabs-io/babylon/v3/test/e2e/containers"
 	"github.com/babylonlabs-io/babylon/v3/test/e2e/initialization"
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
-	btclighttypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
 )
 
 type Configurer interface {
@@ -174,7 +173,7 @@ func NewBabylonConfigurer(t *testing.T, isDebugLogEnabled bool) (Configurer, err
 }
 
 // NewSoftwareUpgradeConfigurer returns a new Configurer for Software Upgrade testing
-func NewSoftwareUpgradeConfigurer(t *testing.T, isDebugLogEnabled bool, upgradePath string, btcHeaders []*btclighttypes.BTCHeaderInfo, preUpgradeFunc PreUpgradeFunc) (*UpgradeConfigurer, error) {
+func NewSoftwareUpgradeConfigurer(t *testing.T, isDebugLogEnabled bool, upgradePath string, preUpgradeFunc PreUpgradeFunc) (*UpgradeConfigurer, error) {
 	identifier := identifierName(t)
 	containerManager, err := containers.NewManager(identifier, isDebugLogEnabled, false, true)
 	if err != nil {

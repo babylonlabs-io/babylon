@@ -70,9 +70,8 @@ func CreateUpgradeHandler(
 				return nil, err
 			}
 
-			btcStkConsumerParams := btcstkconsumertypes.Params{
-				PermissionedIntegration: permissionedIntegration,
-			}
+			btcStkConsumerParams := btcstkconsumertypes.DefaultParams()
+			btcStkConsumerParams.PermissionedIntegration = permissionedIntegration
 			err = keepers.BTCStkConsumerKeeper.SetParams(ctx, btcStkConsumerParams)
 			if err != nil {
 				return nil, err
