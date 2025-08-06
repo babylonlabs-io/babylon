@@ -14,9 +14,9 @@ message GenesisState {
   // finalized_headers contains the latest IndexedHeaderWithProof for each consumer and each finalized epoch
   repeated FinalizedHeaderEntry finalized_headers = 2;
   // sealed_epochs_proofs contains the proofs that each epoch is sealed
-  repeated SealedEpochProofEntry sealed_epochs_proofs = 4;
+  repeated SealedEpochProofEntry sealed_epochs_proofs = 3;
   // bsn_btc_states contains the BTC header synchronization state for each BSN
-  repeated BSNBTCStateEntry bsn_btc_states = 5;
+  repeated BSNBTCStateEntry bsn_btc_states = 4;
 }
 
 // FinalizedHeaderEntry is a helper for genesis state.
