@@ -38,7 +38,7 @@ func (k Keeper) BroadcastBTCHeaders(ctx context.Context) error {
 			continue
 		}
 
-		headers := k.getHeadersToBroadcast(ctx, consumerID)
+		headers := k.GetHeadersToBroadcast(ctx, consumerID)
 		if len(headers) == 0 {
 			k.Logger(sdkCtx).Debug("skipping BTC header broadcast for consumer, no headers to broadcast",
 				"consumerID", consumerID,
