@@ -24,7 +24,7 @@ func TestHaltIfBtcReorgLargerThanConfirmationDepth(t *testing.T) {
 
 	btcckKeeper.EXPECT().GetParams(gomock.Any()).Return(p).AnyTimes()
 
-	k, ctx := keepertest.BTCStakingKeeper(t, nil, btcckKeeper, nil)
+	k, ctx := keepertest.BTCStakingKeeper(t, nil, btcckKeeper, nil, nil)
 	r := rand.New(rand.NewSource(time.Now().Unix()))
 
 	from, to := datagen.GenRandomBTCHeaderInfo(r), datagen.GenRandomBTCHeaderInfo(r)
@@ -94,7 +94,7 @@ func TestMustGetLargestBtcReorg(t *testing.T) {
 		t.Run(tc.title, func(t *testing.T) {
 			t.Parallel()
 
-			k, ctx := keepertest.BTCStakingKeeper(t, nil, nil, nil)
+			k, ctx := keepertest.BTCStakingKeeper(t, nil, nil, nil, nil)
 
 			if tc.setNewLargest {
 				err := k.LargestBtcReorg.Set(ctx, *tc.largestBtcReorg)
@@ -183,7 +183,7 @@ func TestSetLargestBtcReorg(t *testing.T) {
 
 	for _, tc := range tcs {
 		t.Run(tc.title, func(t *testing.T) {
-			k, ctx := keepertest.BTCStakingKeeper(t, nil, nil, nil)
+			k, ctx := keepertest.BTCStakingKeeper(t, nil, nil, nil, nil)
 
 			if tc.setNewLargestFirst {
 				largestReorg.BlockDiff = tc.setLargestBtcReorgDiff
