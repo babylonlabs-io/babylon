@@ -90,7 +90,7 @@ func (k Keeper) createBTCTimestamp(
 	// if the Babylon contract in this channel has not been initialised, get headers from
 	// the tip to (k+1+len(finalizedInfo.BTCHeaders))-deep header for efficient initialization
 	var btcHeaders []*btclctypes.BTCHeaderInfo
-	if k.isChannelUninitialized(ctx, channel) {
+	if k.channelKeeper.IsChannelUninitialized(ctx, channel) {
 		kValue := k.btccKeeper.GetParams(ctx).BtcConfirmationDepth
 		depth := kValue + 1 + uint32(len(finalizedInfo.BTCHeaders))
 
@@ -218,7 +218,7 @@ func (k Keeper) BroadcastBTCTimestamps(
 	// for each registered consumer, find its channel and send BTC timestamp
 	for _, consumerID := range consumerIDs {
 		// Find the channel for this consumer
-		channel, found := k.getChannelForConsumer(ctx, consumerID)
+		channel, found := k.channelKeeper.GetChannelForConsumer(ctx, consumerID)
 		if !found {
 			k.Logger(sdkCtx).Debug("no open channel found for consumer, skipping",
 				"consumerID", consumerID,

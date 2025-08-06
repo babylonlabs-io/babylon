@@ -81,13 +81,14 @@ func ZoneConciergeKeeperWithStoreKey(
 
 	registry := codectypes.NewInterfaceRegistry()
 	appCodec := codec.NewProtoCodec(registry)
+
 	k := keeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(storeKey),
 		nil, // TODO: mock this keeper
 		nil, // TODO: mock this keeper
 		nil, // TODO: mock this keeper
-		channelKeeper,
+		keeper.NewChannelKeeper(appCodec, runtime.NewKVStoreService(storeKey), channelKeeper),
 		nil, // TODO: mock this keeper
 		nil, // TODO: mock this keeper
 		btclcKeeper,

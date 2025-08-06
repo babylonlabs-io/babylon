@@ -115,6 +115,12 @@ func (bc *baseConfigurer) RunIBCTransferChannel() error {
 	return nil
 }
 
+// OpenZoneConciergeChannel opens a zoneconcierge channel between all pairs of chains.
+// This function assumes relayers are already running
+func (bc *baseConfigurer) OpenZoneConciergeChannel(chainA, chainB *chain.Config, chainAConnID string) error {
+	return bc.createZoneConciergeChannel(chainA, chainB, chainAConnID)
+}
+
 // CompleteIBCChannelHandshake completes the channel handshake in cases when ChanOpenInit was initiated
 // by some transaction that was previously executed on the chain. For example,
 // ICA MsgRegisterInterchainAccount will perform ChanOpenInit during its execution.
@@ -336,12 +342,21 @@ func (bc *baseConfigurer) runCosmosIBCRelayer(chainConfigA *chain.Config, chainC
 }
 
 func (bc *baseConfigurer) createIBCTransferChannel(chainA *chain.Config, chainB *chain.Config) error {
-	return bc.createIBCChannel(chainA, chainB, "transfer", "transfer")
+	return bc.createIBCChannel(chainA, chainB, "transfer", "transfer", "unordered", "ics20-1", "--b-chain", chainB.ChainMeta.Id, "--new-client-connection")
 }
 
-func (bc *baseConfigurer) createIBCChannel(chainA *chain.Config, chainB *chain.Config, srcPortID, destPortID string) error {
+// createZoneConciergeChannel creates a consumer channel between two chains using the zoneconcierge port
+func (bc *baseConfigurer) createZoneConciergeChannel(chainA *chain.Config, chainB *chain.Config, chainAConnID string) error {
+	return bc.createIBCChannel(chainA, chainB, "zoneconcierge", "zoneconcierge", "ordered", "zoneconcierge-1", "--a-connection", chainAConnID)
+}
+
+func (bc *baseConfigurer) createIBCChannel(chainA *chain.Config, chainB *chain.Config, srcPortID, destPortID, order, version string, otherFlags ...string) error {
 	bc.t.Logf("connecting %s and %s chains via IBC: src port %q; dest port %q", chainA.ChainMeta.Id, chainB.ChainMeta.Id, srcPortID, destPortID)
-	cmd := []string{"hermes", "create", "channel", "--a-chain", chainA.ChainMeta.Id, "--b-chain", chainB.ChainMeta.Id, "--a-port", srcPortID, "--b-port", destPortID, "--new-client-connection", "--yes"}
+	cmd := []string{"hermes", "create", "channel",
+		"--a-chain", chainA.ChainMeta.Id,
+		"--a-port", srcPortID, "--b-port", destPortID,
+		"--order", order, "--channel-version", version, "--yes"}
+	cmd = append(cmd, otherFlags...)
 	bc.t.Log(cmd)
 	_, _, err := bc.containerManager.ExecHermesCmd(bc.t, cmd, "SUCCESS")
 	if err != nil {

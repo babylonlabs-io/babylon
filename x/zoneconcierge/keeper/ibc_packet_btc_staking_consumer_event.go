@@ -21,7 +21,7 @@ func (k Keeper) BroadcastBTCStakingConsumerEvents(
 	ctx context.Context,
 ) error {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	openZCChannels := k.GetAllOpenZCChannels(ctx)
+	openZCChannels := k.channelKeeper.GetAllOpenZCChannels(ctx)
 	if len(openZCChannels) == 0 {
 		k.Logger(sdkCtx).Info("skipping BTC staking consumer event broadcast",
 			"reason", "no open channels",
@@ -32,7 +32,7 @@ func (k Keeper) BroadcastBTCStakingConsumerEvents(
 	// Map consumer client IDs to their corresponding open channels.
 	consumerChannelMap := make(map[string][]channeltypes.IdentifiedChannel)
 	for _, channel := range openZCChannels {
-		consumerID, err := k.getClientID(ctx, channel)
+		consumerID, err := k.channelKeeper.GetClientID(ctx, channel)
 		if err != nil {
 			return err
 		}
