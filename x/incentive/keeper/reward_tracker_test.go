@@ -393,7 +393,7 @@ func FuzzCheckAddFinalityProviderRewardsForBtcDelegations(f *testing.F) {
 
 		coinsAdded := datagen.GenRandomCoins(r)
 		coinsAddedWithDecimals := coinsAdded.MulInt(types.DecimalRewards)
-		// add rewards without initiliaze should error out
+		// add rewards without initialize should error out
 		err := k.AddFinalityProviderRewardsForBtcDelegations(ctx, fp, coinsAdded)
 		require.EqualError(t, err, types.ErrFPCurrentRewardsNotFound.Error())
 
