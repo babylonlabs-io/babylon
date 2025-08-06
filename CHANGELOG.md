@@ -198,6 +198,7 @@ covenant signature to the events
 - [#1476](https://github.com/babylonlabs-io/babylon/pull/1476) fix: Add limit for
 IBC packet size
 - [#1495](https://github.com/babylonlabs-io/babylon/pull/1495) fix: rename `zoneconcierge` to `zc`
+- [#1491](https://github.com/babylonlabs-io/babylon/pull/1491) fix: restore `proofConsumerHeaderInEpoch` allocation removed
 
 ## v2.2.0
 
