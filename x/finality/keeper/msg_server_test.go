@@ -22,6 +22,7 @@ import (
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
 	testutil "github.com/babylonlabs-io/babylon/v3/testutil/incentives-helper"
 	keepertest "github.com/babylonlabs-io/babylon/v3/testutil/keeper"
+	"github.com/babylonlabs-io/babylon/v3/testutil/mocks"
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
 	btclctypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
 	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
@@ -705,13 +706,14 @@ func TestBtcDelegationRewards(t *testing.T) {
 
 	btclcKeeper := bstypes.NewMockBTCLightClientKeeper(ctrl)
 	btccKForBtcStaking := bstypes.NewMockBtcCheckpointKeeper(ctrl)
+	chKeeper := mocks.NewMockZoneConciergeChannelKeeper(ctrl)
 
 	epochNumber := uint64(10)
 	btccKForFinality := types.NewMockCheckpointingKeeper(ctrl)
 	btccKForFinality.EXPECT().GetEpoch(gomock.Any()).Return(&epochingtypes.Epoch{EpochNumber: epochNumber}).AnyTimes()
 	btccKForFinality.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(epochNumber).AnyTimes()
 
-	h := testutil.NewIncentiveHelper(t, btclcKeeper, btccKForBtcStaking, btccKForFinality)
+	h := testutil.NewIncentiveHelper(t, btclcKeeper, btccKForBtcStaking, btccKForFinality, chKeeper)
 	// set all parameters
 	covenantSKs, _ := h.GenAndApplyParams(r)
 	h.SetFinalityActivationHeight(0)
@@ -779,13 +781,14 @@ func TestBtcDelegationRewardsEarlyUnbondingAndExpire(t *testing.T) {
 
 	btclcKeeper := bstypes.NewMockBTCLightClientKeeper(ctrl)
 	btccKForBtcStaking := bstypes.NewMockBtcCheckpointKeeper(ctrl)
+	chKeeper := mocks.NewMockZoneConciergeChannelKeeper(ctrl)
 
 	epochNumber := uint64(10)
 	btccKForFinality := types.NewMockCheckpointingKeeper(ctrl)
 	btccKForFinality.EXPECT().GetEpoch(gomock.Any()).Return(&epochingtypes.Epoch{EpochNumber: epochNumber}).AnyTimes()
 	btccKForFinality.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(epochNumber).AnyTimes()
 
-	h := testutil.NewIncentiveHelper(t, btclcKeeper, btccKForBtcStaking, btccKForFinality)
+	h := testutil.NewIncentiveHelper(t, btclcKeeper, btccKForBtcStaking, btccKForFinality, chKeeper)
 	// set all parameters
 	covenantSKs, _ := h.GenAndApplyParams(r)
 	h.SetFinalityActivationHeight(0)
