@@ -148,91 +148,11 @@ func (k Keeper) getDeepEnoughBTCHeaders(ctx context.Context) []*btclctypes.BTCHe
 	return k.btclcKeeper.GetMainChainFrom(ctx, startHeight)
 }
 
-// getHeadersFromBaseOrFallback tries to include base header when possible, otherwise falls back to k+1 headers
-func (k Keeper) getHeadersFromBaseOrFallback(ctx context.Context, consumerID string) []*btclctypes.BTCHeaderInfo {
-	baseHeader := k.GetBSNBaseBTCHeader(ctx, consumerID)
-	if baseHeader == nil {
-		return k.getDeepEnoughBTCHeaders(ctx)
-	}
-
-	// Check if we can start from base header without sending too many headers
-	tipHeight := k.btclcKeeper.GetTipInfo(ctx).Height
-	kValue := k.btccKeeper.GetParams(ctx).BtcConfirmationDepth
-
-	if tipHeight >= baseHeader.Height && tipHeight-baseHeader.Height > kValue {
-		// Base header is too old, fall back to k+1 headers from tip
-		return k.getDeepEnoughBTCHeaders(ctx)
-	}
-
-	// Include base header for BSN initialization
-	return k.btclcKeeper.GetMainChainFrom(ctx, baseHeader.Height)
-}
-
-func (k Keeper) GetHeadersToBroadcastForConsumerForTesting(ctx context.Context, consumerID string) []*btclctypes.BTCHeaderInfo {
-	return k.getHeadersToBroadcastForConsumer(ctx, consumerID)
-}
-
-func (k Keeper) GetHeadersFromBaseOrFallbackForTesting(ctx context.Context, consumerID string) []*btclctypes.BTCHeaderInfo {
-	return k.getHeadersFromBaseOrFallback(ctx, consumerID)
-}
-
-// getHeadersToBroadcastForConsumer retrieves headers to be broadcasted to a specific BSN
-// The headers to be broadcasted are:
-// - If no BSN base header exists: use the last k+1 headers from tip (fallback)
-// - If BSN base header exists but no headers sent yet: from BSN base to tip
-// - If headers previously sent: from child of most recent valid header to tip
-// - If reorg detected: from BSN base to tip
-func (k Keeper) getHeadersToBroadcastForConsumer(ctx context.Context, consumerID string) []*btclctypes.BTCHeaderInfo {
-	baseHeader := k.GetBSNBaseBTCHeader(ctx, consumerID)
+// GetHeadersToBroadcast retrieves headers using the fallback method of k+1.
+// If a consumer ID is not provided, a global LastSentSegment is used to track the timestamped header
+// for all consumers when the checkpoint is finalized.
+func (k Keeper) GetHeadersToBroadcast(ctx context.Context, consumerID string) []*btclctypes.BTCHeaderInfo {
 	lastSegment := k.GetBSNLastSentSegment(ctx, consumerID)
-
-	// If no BSN base header exists, fallback to the old behavior
-	if baseHeader == nil {
-		return k.getHeadersToBroadcast(ctx)
-	}
-
-	// Validate base header is not too old to prevent excessive header ranges
-	tipHeight := k.btclcKeeper.GetTipInfo(ctx).Height
-	kValue := k.btccKeeper.GetParams(ctx).BtcConfirmationDepth
-	if tipHeight > baseHeader.Height && tipHeight-baseHeader.Height > kValue {
-		k.Logger(sdk.UnwrapSDKContext(ctx)).Error("BSN base header too old",
-			"consumerID", consumerID,
-			"baseHeight", baseHeader.Height,
-			"tipHeight", tipHeight,
-			"kValue", kValue,
-		)
-		// Fallback to k headers, but still try to include base header if not too old
-		return k.getHeadersFromBaseOrFallback(ctx, consumerID)
-	}
-
-	// If we haven't sent any headers yet, send from BSN base to tip (including base header)
-	if lastSegment == nil {
-		return k.btclcKeeper.GetMainChainFrom(ctx, baseHeader.Height)
-	}
-
-	// Find the most recent header we sent that's still in the main chain
-	var initHeader *btclctypes.BTCHeaderInfo
-	for i := len(lastSegment.BtcHeaders) - 1; i >= 0; i-- {
-		header := lastSegment.BtcHeaders[i]
-		if header, err := k.btclcKeeper.GetHeaderByHash(ctx, header.Hash); err == nil && header != nil {
-			initHeader = header
-			break
-		}
-	}
-
-	// If no header from last segment is still valid (reorg), send from BSN base to tip
-	if initHeader == nil {
-		return k.getHeadersFromBaseOrFallback(ctx, consumerID)
-	}
-
-	// Send headers from the child of the most recent valid header to tip
-	return k.btclcKeeper.GetMainChainFrom(ctx, initHeader.Height+1)
-}
-
-// getHeadersToBroadcast retrieves headers using the fallback method of k+1.
-// This is used when no Consumer base header is set
-func (k Keeper) getHeadersToBroadcast(ctx context.Context) []*btclctypes.BTCHeaderInfo {
-	lastSegment := k.GetLastSentSegment(ctx)
 
 	if lastSegment == nil {
 		// we did not send any headers yet, so we need to send the last k+1 BTC headers
@@ -270,7 +190,6 @@ func (k Keeper) getHeadersToBroadcast(ctx context.Context) []*btclctypes.BTCHead
 func (k Keeper) BroadcastBTCTimestamps(
 	ctx context.Context,
 	epochNum uint64,
-	headersToBroadcast []*btclctypes.BTCHeaderInfo,
 ) error {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	// Babylon does not broadcast BTC timestamps until finalising epoch 1
@@ -296,16 +215,6 @@ func (k Keeper) BroadcastBTCTimestamps(
 		"epoch", epochNum,
 	)
 
-	// get all metadata shared across BTC timestamps in the same epoch
-	finalizedInfo, err := k.getFinalizedInfo(ctx, epochNum, headersToBroadcast)
-	if err != nil {
-		k.Logger(sdkCtx).Error("failed to get finalized info for BTC timestamp broadcast",
-			"epoch", epochNum,
-			"error", err.Error(),
-		)
-		return err
-	}
-
 	// for each registered consumer, find its channel and send BTC timestamp
 	for _, consumerID := range consumerIDs {
 		// Find the channel for this consumer
@@ -315,6 +224,18 @@ func (k Keeper) BroadcastBTCTimestamps(
 				"consumerID", consumerID,
 			)
 			continue
+		}
+
+		headersToBroadcast := k.GetHeadersToBroadcast(ctx, consumerID)
+
+		// get all metadata shared across BTC timestamps in the same epoch
+		finalizedInfo, err := k.getFinalizedInfo(ctx, epochNum, headersToBroadcast)
+		if err != nil {
+			k.Logger(sdkCtx).Error("failed to get finalized info for BTC timestamp broadcast",
+				"epoch", epochNum,
+				"error", err.Error(),
+			)
+			return err
 		}
 
 		btcTimestamp, err := k.createBTCTimestamp(ctx, consumerID, channel, finalizedInfo)
@@ -344,6 +265,13 @@ func (k Keeper) BroadcastBTCTimestamps(
 				"error", err.Error(),
 			)
 			continue
+		}
+
+		// only update the segment if we have broadcasted some headers
+		if len(headersToBroadcast) > 0 {
+			k.SetBSNLastSentSegment(ctx, consumerID, &types.BTCChainSegment{
+				BtcHeaders: headersToBroadcast,
+			})
 		}
 	}
 
