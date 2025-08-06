@@ -108,6 +108,11 @@ func FuzzMsgCreateFinalityProvider(f *testing.F) {
 			ConsumerId:          registeredBsnId,
 			ConsumerName:        consumerName,
 			ConsumerDescription: consumerDesc,
+			ConsumerMetadata: &btcsctypes.ConsumerRegister_CosmosConsumerMetadata{
+				CosmosConsumerMetadata: &btcsctypes.CosmosConsumerMetadata{
+					ChannelId: registeredBsnId,
+				},
+			},
 		}
 
 		// Register the consumer

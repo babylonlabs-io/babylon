@@ -347,7 +347,7 @@ func (bc *baseConfigurer) createIBCTransferChannel(chainA *chain.Config, chainB 
 
 // createZoneConciergeChannel creates a consumer channel between two chains using the zoneconcierge port
 func (bc *baseConfigurer) createZoneConciergeChannel(chainA *chain.Config, chainB *chain.Config, chainAConnID string) error {
-	return bc.createIBCChannel(chainA, chainB, "zoneconcierge", "zoneconcierge", "ordered", "zoneconcierge-1", "--a-connection-id", chainAConnID)
+	return bc.createIBCChannel(chainA, chainB, "zoneconcierge", "zoneconcierge", "ordered", "zoneconcierge-1", "--a-connection", chainAConnID)
 }
 
 func (bc *baseConfigurer) createIBCChannel(chainA *chain.Config, chainB *chain.Config, srcPortID, destPortID, order, version string, otherFlags ...string) error {
