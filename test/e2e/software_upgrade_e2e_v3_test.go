@@ -392,12 +392,14 @@ func (s *SoftwareUpgradeV3TestSuite) Test1UpgradeV3() {
 	lastFinalizedBlocks := n.QueryListBlocks(ftypes.QueriedBlockStatus_FINALIZED)
 	lastFinalizedBlock := lastFinalizedBlocks[len(lastFinalizedBlocks)-1]
 
+	// assuming that both fps were rewarded the same amounts
+	fp1Rwds, fp2Rwds, del1, del2 := s.QueryRewardGauges(n)
+
 	totalRewardsAllocated, err := n.QueryBtcStkGaugeFromBlocks(s.firstFinalizedBlockHeight, lastFinalizedBlock.Height)
 	s.Require().NoError(err)
 	s.Require().False(totalRewardsAllocated.IsZero())
 
-	// assuming that both fps were rewarded the same amounts
-	fp1Rwds, fp2Rwds, del1, del2 := s.QueryRewardGauges(n)
+	// TODO: check that both fps voted in all the blocks
 
 	// Current setup of voting power
 	// (fp1, del1) => 2_00000000
