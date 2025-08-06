@@ -135,7 +135,6 @@ func FuzzFinalizedChainInfo(f *testing.F) {
 		btcStkConsumerKeeper.EXPECT().IsCosmosConsumer(gomock.Any(), gomock.Any()).Return(true, nil).AnyTimes()
 
 		zcKeeper, ctx := testkeeper.ZoneConciergeKeeper(t, channelKeeper, btclcKeeper, checkpointingKeeper, btccKeeper, epochingKeeper, nil, btcStkConsumerKeeper)
-		zcKeeper.SetPort(ctx, "zoneconcierge")
 
 		hooks := zcKeeper.Hooks()
 
