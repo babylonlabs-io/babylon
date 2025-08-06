@@ -82,3 +82,7 @@ func (k Keeper) GetConsumerID(ctx sdk.Context, portID, channelID string) (consum
 
 	return cons.ConsumerId, nil
 }
+
+func (k Keeper) ConsumerHasIBCChannelOpen(ctx context.Context, consumerID string) bool {
+	return k.channelKeeper.ConsumerHasIBCChannelOpen(ctx, consumerID)
+}

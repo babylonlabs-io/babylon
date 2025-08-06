@@ -10,6 +10,7 @@ import (
 	storemetrics "cosmossdk.io/store/metrics"
 	testutil "github.com/babylonlabs-io/babylon/v3/testutil/btcstaking-helper"
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
+	"github.com/babylonlabs-io/babylon/v3/testutil/mocks"
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
 	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 	ftypes "github.com/babylonlabs-io/babylon/v3/x/finality/types"
@@ -37,11 +38,12 @@ func FuzzDistributeFpCommissionAndBtcDelRewards(f *testing.F) {
 		btccKForFinality := ftypes.NewMockCheckpointingKeeper(ctrl)
 
 		ictvK := testutil.NewMockIctvKeeperK(ctrl)
+		chK := mocks.NewMockZoneConciergeChannelKeeper(ctrl)
 
 		db := dbm.NewMemDB()
 		stateStore := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
 		heightAfterMultiStakingAllowListExpiration := int64(10)
-		h := testutil.NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKeeper, btccKForFinality, ictvK, nil).WithBlockHeight(heightAfterMultiStakingAllowListExpiration)
+		h := testutil.NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKeeper, btccKForFinality, ictvK, chK, nil).WithBlockHeight(heightAfterMultiStakingAllowListExpiration)
 
 		h.GenAndApplyCustomParams(r, 100, 200, 0, 2)
 
@@ -116,8 +118,9 @@ func FuzzCollectBabylonCommission(f *testing.F) {
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
 		bankKeeper := types.NewMockBankKeeper(ctrl)
 		ictvK := testutil.NewMockIctvKeeperK(ctrl)
+		chK := mocks.NewMockZoneConciergeChannelKeeper(ctrl)
 
-		h := testutil.NewHelperWithBankMock(t, btclcKeeper, btccKeeper, bankKeeper, ictvK, nil)
+		h := testutil.NewHelperWithBankMock(t, btclcKeeper, btccKeeper, bankKeeper, chK, ictvK, nil)
 
 		h.GenAndApplyCustomParams(r, 100, 200, 0, 2)
 
@@ -158,8 +161,9 @@ func FuzzCollectComissionAndDistributeBsnRewards(f *testing.F) {
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
 		bankKeeper := types.NewMockBankKeeper(ctrl)
 		ictvK := testutil.NewMockIctvKeeperK(ctrl)
+		chK := mocks.NewMockZoneConciergeChannelKeeper(ctrl)
 
-		h := testutil.NewHelperWithBankMock(t, btclcKeeper, btccKeeper, bankKeeper, ictvK, nil)
+		h := testutil.NewHelperWithBankMock(t, btclcKeeper, btccKeeper, bankKeeper, chK, ictvK, nil)
 
 		h.GenAndApplyCustomParams(r, 100, 200, 0, 2)
 
