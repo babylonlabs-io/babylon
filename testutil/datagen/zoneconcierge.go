@@ -66,7 +66,6 @@ func GenRandomIndexedHeaderWithProofAndConsumerId(r *rand.Rand, consumerId strin
 
 func GenRandomBSNBTCState(r *rand.Rand) *types.BSNBTCState {
 	return &types.BSNBTCState{
-		BaseHeader:      GenRandomBTCHeaderInfo(r),
 		LastSentSegment: GenRandomBTCChainSegment(r),
 	}
 }
@@ -123,7 +122,6 @@ func GenRandomZoneconciergeGenState(r *rand.Rand) *types.GenesisState {
 		},
 		PortId:             types.PortID,
 		FinalizedHeaders:   finalizedHeaders,
-		LastSentSegment:    GenRandomBTCChainSegment(r),
 		SealedEpochsProofs: sealedEpochs,
 		BsnBtcStates:       bsnBTCStates,
 	}
