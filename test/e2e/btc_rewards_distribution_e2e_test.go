@@ -299,19 +299,6 @@ func (s *BtcRewardsDistribution) Test4CommitPublicRandomnessAndSealed() {
 
 	go func() {
 		defer wg.Done()
-		appHash = n1.AddFinalitySignatureToBlock(
-			s.fp1BTCSK,
-			s.fp1.BtcPk,
-			s.finalityBlockHeightVoted,
-			s.fp1RandListInfo.SRList[s.finalityIdx],
-			&s.fp1RandListInfo.PRList[s.finalityIdx],
-			*s.fp1RandListInfo.ProofList[s.finalityIdx].ToProto(),
-			fmt.Sprintf("--from=%s", wFp1),
-		)
-	}()
-
-	go func() {
-		defer wg.Done()
 		n2.AddFinalitySignatureToBlock(
 			s.fp2BTCSK,
 			s.fp2.BtcPk,
@@ -320,6 +307,19 @@ func (s *BtcRewardsDistribution) Test4CommitPublicRandomnessAndSealed() {
 			&s.fp2RandListInfo.PRList[s.finalityIdx],
 			*s.fp2RandListInfo.ProofList[s.finalityIdx].ToProto(),
 			fmt.Sprintf("--from=%s", wFp2),
+		)
+	}()
+
+	go func() {
+		defer wg.Done()
+		appHash = n1.AddFinalitySignatureToBlock(
+			s.fp1BTCSK,
+			s.fp1.BtcPk,
+			s.finalityBlockHeightVoted,
+			s.fp1RandListInfo.SRList[s.finalityIdx],
+			&s.fp1RandListInfo.PRList[s.finalityIdx],
+			*s.fp1RandListInfo.ProofList[s.finalityIdx].ToProto(),
+			fmt.Sprintf("--from=%s", wFp1),
 		)
 	}()
 
@@ -622,16 +622,6 @@ func (s *BtcRewardsDistribution) AddFinalityVote(flagsN1, flagsN2 []string) (app
 	s.finalityIdx++
 	s.finalityBlockHeightVoted++
 
-	appHash = n1.AddFinalitySignatureToBlock(
-		s.fp1BTCSK,
-		s.fp1.BtcPk,
-		s.finalityBlockHeightVoted,
-		s.fp1RandListInfo.SRList[s.finalityIdx],
-		&s.fp1RandListInfo.PRList[s.finalityIdx],
-		*s.fp1RandListInfo.ProofList[s.finalityIdx].ToProto(),
-		flagsN1...,
-	)
-
 	n2.AddFinalitySignatureToBlock(
 		s.fp2BTCSK,
 		s.fp2.BtcPk,
@@ -640,6 +630,16 @@ func (s *BtcRewardsDistribution) AddFinalityVote(flagsN1, flagsN2 []string) (app
 		&s.fp2RandListInfo.PRList[s.finalityIdx],
 		*s.fp2RandListInfo.ProofList[s.finalityIdx].ToProto(),
 		flagsN2...,
+	)
+
+	appHash = n1.AddFinalitySignatureToBlock(
+		s.fp1BTCSK,
+		s.fp1.BtcPk,
+		s.finalityBlockHeightVoted,
+		s.fp1RandListInfo.SRList[s.finalityIdx],
+		&s.fp1RandListInfo.PRList[s.finalityIdx],
+		*s.fp1RandListInfo.ProofList[s.finalityIdx].ToProto(),
+		flagsN1...,
 	)
 
 	return appHash
