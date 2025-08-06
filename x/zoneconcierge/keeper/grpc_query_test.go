@@ -135,7 +135,6 @@ func FuzzFinalizedChainInfo(f *testing.F) {
 		btcStkConsumerKeeper.EXPECT().IsCosmosConsumer(gomock.Any(), gomock.Any()).Return(true, nil).AnyTimes()
 
 		zcKeeper, ctx := testkeeper.ZoneConciergeKeeper(t, channelKeeper, btclcKeeper, checkpointingKeeper, btccKeeper, epochingKeeper, nil, btcStkConsumerKeeper)
-
 		hooks := zcKeeper.Hooks()
 
 		var (
@@ -143,7 +142,7 @@ func FuzzFinalizedChainInfo(f *testing.F) {
 			consumerIDs   []string
 		)
 
-		// Set up the mocks to return the consumerIDs slice
+		// Set up the mock to return the consumerIDs slice
 		btcStkConsumerKeeper.EXPECT().GetAllRegisteredConsumerIDs(gomock.Any()).DoAndReturn(func(ctx context.Context) []string {
 			return consumerIDs
 		}).AnyTimes()
