@@ -90,7 +90,6 @@ func DefaultBabylonAppConfig() *BabylonAppConfig {
 }
 
 func DefaultBabylonTemplate() string {
-	// manually add evm-chain-id field since cosmos evm v0.3.0 remove this field
 	return serverconfig.DefaultConfigTemplate + evmserverconfig.DefaultEVMConfigTemplate + wasmtypes.DefaultConfigTemplate() + `
 ###############################################################################
 ###                        BLS configuration                                ###
