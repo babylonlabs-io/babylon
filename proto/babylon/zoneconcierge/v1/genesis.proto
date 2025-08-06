@@ -15,13 +15,10 @@ message GenesisState {
   Params params = 2 [ (gogoproto.nullable) = false ];
   // finalized_headers contains the latest IndexedHeaderWithProof for each consumer and each finalized epoch
   repeated FinalizedHeaderEntry finalized_headers = 3;
-  // last_sent_segment is the last BTC chain segment
-  // which was broadcasted to the other light clients
-  BTCChainSegment last_sent_segment = 4;
   // sealed_epochs_proofs contains the proofs that each epoch is sealed
-  repeated SealedEpochProofEntry sealed_epochs_proofs = 5;
+  repeated SealedEpochProofEntry sealed_epochs_proofs = 4;
   // bsn_btc_states contains the BTC header synchronization state for each BSN
-  repeated BSNBTCStateEntry bsn_btc_states = 6;
+  repeated BSNBTCStateEntry bsn_btc_states = 5;
 }
 
 // FinalizedHeaderEntry is a helper for genesis state.

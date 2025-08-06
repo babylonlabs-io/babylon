@@ -205,6 +205,8 @@ covenant signature to the events
 IBC packet size
 - [#1495](https://github.com/babylonlabs-io/babylon/pull/1495) fix: rename `zoneconcierge` to `zc`
 - [#1491](https://github.com/babylonlabs-io/babylon/pull/1491) fix: restore `proofConsumerHeaderInEpoch` allocation removed
+- [#1512](https://github.com/babylonlabs-io/babylon/pull/1512) fix: remove base header
+and global segment store
 
 ## v2.2.0
 

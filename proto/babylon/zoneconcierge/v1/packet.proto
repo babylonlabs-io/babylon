@@ -26,7 +26,6 @@ message InboundPacket {
   // packet is the actual message carried in the IBC packet
   oneof packet {
     BSNSlashingIBCPacket bsn_slashing = 1;
-    BSNBaseBTCHeaderIBCPacket bsn_base_btc_header = 2;
   }
 }
 
@@ -76,11 +75,4 @@ message BTCTimestamp {
 message BSNSlashingIBCPacket {
   /// evidence is the FP slashing evidence that the BSN sends to Babylon
   babylon.finality.v1.Evidence evidence = 1;
-}
-
-// BSNBaseBTCHeaderIBCPacket defines the base BTC header information that a BSN sends to Babylon's ZoneConcierge
-// to inform Babylon about which BTC header the BSN considers as its starting point for BTC light client synchronization
-message BSNBaseBTCHeaderIBCPacket {
-  // base_btc_header is the BTC header that the BSN uses as the base for its BTC light client
-  babylon.btclightclient.v1.BTCHeaderInfo base_btc_header = 1;
 }
