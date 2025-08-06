@@ -193,16 +193,16 @@ func (s *BtcRewardsDistribution) CreateFirstBtcDelegations() {
 	s.del1Addr = n2.KeysAdd(wDel1)
 	s.del2Addr = n2.KeysAdd(wDel2)
 
-	n2.BankMultiSendFromNode([]string{s.del1Addr, s.del2Addr}, "1000000ubbn")
+	n2.BankMultiSendFromNode([]string{s.del1Addr, s.del2Addr}, "10000000ubbn")
 
 	n2.WaitForNextBlock()
 
 	// fp1Del1
 	s.CreateBTCDelegationAndCheck(n2, wDel1, s.fp1, s.del1BTCSK, s.del1Addr, s.fp1Del1StakingAmt)
-	// fp1Del2
-	s.CreateBTCDelegationAndCheck(n2, wDel2, s.fp1, s.del2BTCSK, s.del2Addr, s.fp1Del2StakingAmt)
 	// fp2Del1
 	s.CreateBTCDelegationAndCheck(n2, wDel1, s.fp2, s.del1BTCSK, s.del1Addr, s.fp2Del1StakingAmt)
+	// fp1Del2
+	s.CreateBTCDelegationAndCheck(n2, wDel2, s.fp1, s.del2BTCSK, s.del2Addr, s.fp1Del2StakingAmt)
 
 	resp := n2.QueryBtcDelegations(bstypes.BTCDelegationStatus_ANY)
 	require.Len(s.T(), resp.BtcDelegations, 3)
@@ -321,7 +321,7 @@ func (s *BtcRewardsDistribution) CommitPublicRandomnessAndSealed() {
 		*s.fp1RandListInfo.ProofList[s.finalityIdx].ToProto(),
 		fmt.Sprintf("--from=%s", wFp1),
 	)
-	n1.WaitForNextBlockWithSleep50ms()
+	n1.WaitForNextBlocks(2)
 
 	// ensure vote is eventually cast
 	var finalizedBlocks []*ftypes.IndexedBlock
@@ -375,6 +375,7 @@ func (s *BtcRewardsDistribution) CheckRewardsFirstDelegations() {
 		_, errFp2 := n2.QueryRewardGauge(s.fp2.Address())
 		_, errDel1 := n2.QueryRewardGauge(sdk.MustAccAddressFromBech32(s.del1Addr))
 		_, errDel2 := n2.QueryRewardGauge(sdk.MustAccAddressFromBech32(s.del2Addr))
+		n2.WaitForNextBlock()
 		return errFp1 == nil && errFp2 == nil && errDel1 == nil && errDel2 == nil
 	}, time.Minute*2, time.Second*3, "wait to have some rewards available in the gauge")
 
