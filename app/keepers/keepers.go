@@ -644,11 +644,7 @@ func (ak *AppKeepers) InitKeepers(
 		appparams.AccGov.String(),
 	)
 
-	zcChannelKeeper := zckeeper.NewChannelKeeper(
-		appCodec,
-		runtime.NewKVStoreService(keys[zctypes.StoreKey]),
-		ak.IBCKeeper.ChannelKeeper,
-	)
+	zcChannelKeeper := zckeeper.NewChannelKeeper(ak.IBCKeeper.ChannelKeeper)
 
 	ak.BTCStkConsumerKeeper = bsckeeper.NewKeeper(
 		appCodec,

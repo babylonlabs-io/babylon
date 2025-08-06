@@ -8,10 +8,6 @@ import (
 
 // InitGenesis initializes the keeper state from a provided initial genesis state.
 func (k Keeper) InitGenesis(ctx context.Context, gs types.GenesisState) error {
-	if err := k.channelKeeper.InitGenesis(ctx, gs); err != nil {
-		return err
-	}
-
 	// Initialize finalized headers
 	for _, fh := range gs.FinalizedHeaders {
 		k.setFinalizedHeader(ctx, fh.ConsumerId, fh.EpochNumber, fh.HeaderWithProof)
@@ -61,7 +57,6 @@ func (k Keeper) ExportGenesis(ctx context.Context) (*types.GenesisState, error) 
 
 	return &types.GenesisState{
 		Params:             k.GetParams(ctx),
-		PortId:             k.channelKeeper.GetPort(ctx),
 		FinalizedHeaders:   fh,
 		LastSentSegment:    k.GetLastSentSegment(ctx),
 		SealedEpochsProofs: se,

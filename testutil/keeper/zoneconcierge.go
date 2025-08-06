@@ -90,7 +90,7 @@ func ZoneConciergeKeeperWithStoreKey(
 		nil, // TODO: mock this keeper
 		nil, // TODO: mock this keeper
 		nil, // TODO: mock this keeper
-		keeper.NewChannelKeeper(appCodec, runtime.NewKVStoreService(storeKey), channelKeeper),
+		keeper.NewChannelKeeper(channelKeeper),
 		nil, // TODO: mock this keeper
 		nil, // TODO: mock this keeper
 		btclcKeeper,
