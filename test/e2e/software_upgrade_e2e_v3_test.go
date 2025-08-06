@@ -191,10 +191,10 @@ func (s *SoftwareUpgradeV3TestSuite) SetupVerifiedBtcDelegations(n *chain.NodeCo
 
 	// fp1Del1
 	s.CreateBTCDelegationV2AndCheck(n, wDel1, s.fp1, s.del1BTCSK, s.del1Addr, s.fp1Del1StakingAmt)
-	// fp1Del2
-	s.CreateBTCDelegationV2AndCheck(n, wDel2, s.fp1, s.del2BTCSK, s.del2Addr, s.fp1Del2StakingAmt)
 	// fp2Del1
 	s.CreateBTCDelegationV2AndCheck(n, wDel1, s.fp2, s.del1BTCSK, s.del1Addr, s.fp2Del1StakingAmt)
+	// fp1Del2
+	s.CreateBTCDelegationV2AndCheck(n, wDel2, s.fp1, s.del2BTCSK, s.del2Addr, s.fp1Del2StakingAmt)
 
 	resp := n.QueryBtcDelegations(bstypes.BTCDelegationStatus_ANY)
 	require.Len(s.T(), resp.BtcDelegations, 3)
@@ -342,9 +342,7 @@ func (s *SoftwareUpgradeV3TestSuite) FpCommitPubRandAndVote(n *chain.NodeConfig)
 
 	wg.Wait()
 
-	s.finalityIdx++
-	s.finalityBlockHeightVoted++
-	n.WaitForNextBlockWithSleep50ms()
+	n.WaitForNextBlocks(2)
 
 	// ensure vote is eventually cast
 	var finalizedBlocks []*ftypes.IndexedBlock
@@ -357,6 +355,8 @@ func (s *SoftwareUpgradeV3TestSuite) FpCommitPubRandAndVote(n *chain.NodeConfig)
 	s.Equal(appHash.Bytes(), finalizedBlocks[0].AppHash)
 	s.T().Logf("the block %d is finalized", s.finalityBlockHeightVoted)
 
+	s.finalityIdx++
+	s.finalityBlockHeightVoted++
 	s.AddFinalityVoteUntilCurrentHeight(n, "")
 }
 
@@ -389,7 +389,10 @@ func (s *SoftwareUpgradeV3TestSuite) Test1UpgradeV3() {
 	n.WaitForNextBlocks(10)
 
 	// check for rewards from the finality activation height until last finalized block
-	totalRewardsAllocated, err := n.QueryBtcStkGaugeFromBlocks(s.firstFinalizedBlockHeight, s.finalityBlockHeightVoted-1)
+	lastFinalizedBlocks := n.QueryListBlocks(ftypes.QueriedBlockStatus_FINALIZED)
+	lastFinalizedBlock := lastFinalizedBlocks[len(lastFinalizedBlocks)-1]
+
+	totalRewardsAllocated, err := n.QueryBtcStkGaugeFromBlocks(s.firstFinalizedBlockHeight, lastFinalizedBlock.Height)
 	s.Require().NoError(err)
 	s.Require().False(totalRewardsAllocated.IsZero())
 
@@ -422,7 +425,7 @@ func (s *SoftwareUpgradeV3TestSuite) Test1UpgradeV3() {
 	require.Equal(s.T(), fp1CommExp.String(), fp1Rwds.Coins.String(), "fp1 rewards do not match")
 
 	fp2CommExp := itypes.GetCoinsPortion(fp2TotalRwds, *s.fp2.Commission)
-	require.Equal(s.T(), fp2CommExp.String(), fp2Rwds.String(), "fp2 rewards do not match")
+	require.Equal(s.T(), fp2CommExp.String(), fp2Rwds.Coins.String(), "fp2 rewards do not match")
 
 	fp1BtcStakersShares := fp1TotalRwds.Sub(fp1CommExp...)
 
