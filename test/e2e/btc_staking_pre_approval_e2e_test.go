@@ -296,7 +296,7 @@ func (s *BTCStakingPreApprovalTestSuite) Test3SendStakingTransctionInclusionProo
 func (s *BTCStakingPreApprovalTestSuite) Test4CommitPublicRandomnessAndSubmitFinalitySignature() {
 	chainA := s.configurer.GetChainConfig(0)
 	chainA.WaitUntilHeight(1)
-	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
+	n, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
 
 	/*
@@ -306,11 +306,11 @@ func (s *BTCStakingPreApprovalTestSuite) Test4CommitPublicRandomnessAndSubmitFin
 	numPubRand := uint64(100)
 	commitStartHeight := uint64(1)
 
-	commitRandContext := signingcontext.FpRandCommitContextV0(nonValidatorNode.ChainID(), appparams.AccFinality.String())
+	commitRandContext := signingcontext.FpRandCommitContextV0(n.ChainID(), appparams.AccFinality.String())
 
 	randListInfo, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(s.r, s.fptBTCSK, commitRandContext, commitStartHeight, numPubRand)
 	s.NoError(err)
-	nonValidatorNode.CommitPubRandListFromNode(
+	n.CommitPubRandListFromNode(
 		msgCommitPubRandList.FpBtcPk,
 		msgCommitPubRandList.StartHeight,
 		msgCommitPubRandList.NumPubRand,
@@ -318,32 +318,38 @@ func (s *BTCStakingPreApprovalTestSuite) Test4CommitPublicRandomnessAndSubmitFin
 		msgCommitPubRandList.Sig,
 	)
 
+	n.WaitForNextBlockWithSleep50ms()
+
+	fpCommitPubRand := n.QueryListPubRandCommit(msgCommitPubRandList.FpBtcPk)
+	fpPubRand := fpCommitPubRand[commitStartHeight]
+	s.Require().Equal(fpPubRand.NumPubRand, numPubRand)
+
 	// no reward gauge for finality provider and delegation yet
 	fpBabylonAddr, err := sdk.AccAddressFromBech32(s.cacheFP.Addr)
 	s.NoError(err)
 
-	_, err = nonValidatorNode.QueryRewardGauge(fpBabylonAddr)
+	_, err = n.QueryRewardGauge(fpBabylonAddr)
 	s.ErrorContains(err, itypes.ErrRewardGaugeNotFound.Error())
 	delBabylonAddr := fpBabylonAddr
 
 	// finalize epochs from 1 to the current epoch
-	currentEpoch, err := nonValidatorNode.QueryCurrentEpoch()
+	currentEpoch, err := n.QueryCurrentEpoch()
 	s.NoError(err)
 
 	// wait until the end epoch is sealed
 	s.Eventually(func() bool {
-		resp, err := nonValidatorNode.QueryRawCheckpoint(currentEpoch)
+		resp, err := n.QueryRawCheckpoint(currentEpoch)
 		if err != nil {
 			return false
 		}
 		return resp.Status == ckpttypes.Sealed
 	}, time.Minute, time.Millisecond*50)
-	nonValidatorNode.FinalizeSealedEpochs(1, currentEpoch)
+	n.FinalizeSealedEpochs(1, currentEpoch)
 
 	// ensure the committed epoch is finalized
 	lastFinalizedEpoch := uint64(0)
 	s.Eventually(func() bool {
-		lastFinalizedEpoch, err = nonValidatorNode.QueryLastFinalizedEpoch()
+		lastFinalizedEpoch, err = n.QueryLastFinalizedEpoch()
 		if err != nil {
 			return false
 		}
@@ -351,27 +357,19 @@ func (s *BTCStakingPreApprovalTestSuite) Test4CommitPublicRandomnessAndSubmitFin
 	}, time.Minute, time.Millisecond*50)
 
 	// ensure btc staking is activated
-	var activatedHeight uint64
-	s.Eventually(func() bool {
-		activatedHeight, err = nonValidatorNode.QueryActivatedHeight()
-		if err != nil {
-			return false
-		}
-		return activatedHeight > 0
-	}, time.Minute, time.Millisecond*50)
-	s.T().Logf("the activated height is %d", activatedHeight)
+	activatedHeight := n.WaitFinalityIsActivated()
 
 	/*
 		submit finality signature
 	*/
 	// get block to vote
-	blockToVote, err := nonValidatorNode.QueryBlock(int64(activatedHeight))
+	blockToVote, err := n.QueryBlock(int64(activatedHeight))
 	s.NoError(err)
 	appHash := blockToVote.AppHash
 
 	idx := activatedHeight - commitStartHeight
 
-	fpFinVoteContext := signingcontext.FpFinVoteContextV0(nonValidatorNode.ChainID(), appparams.AccFinality.String())
+	fpFinVoteContext := signingcontext.FpFinVoteContextV0(n.ChainID(), appparams.AccFinality.String())
 
 	msgToSign := []byte(fpFinVoteContext)
 	msgToSign = append(msgToSign, sdk.Uint64ToBigEndian(activatedHeight)...)
@@ -381,14 +379,16 @@ func (s *BTCStakingPreApprovalTestSuite) Test4CommitPublicRandomnessAndSubmitFin
 	sig, err := eots.Sign(s.fptBTCSK, randListInfo.SRList[idx], msgToSign)
 	s.NoError(err)
 	eotsSig := bbn.NewSchnorrEOTSSigFromModNScalar(sig)
+
+	n.WaitForNextBlock()
 	// submit finality signature
-	nonValidatorNode.SubmitRefundableTxWithAssertion(func() {
-		nonValidatorNode.AddFinalitySigFromVal(s.cacheFP.BtcPk, activatedHeight, &randListInfo.PRList[idx], *randListInfo.ProofList[idx].ToProto(), appHash, eotsSig)
+	n.SubmitRefundableTxWithAssertion(func() {
+		n.AddFinalitySigFromVal(s.cacheFP.BtcPk, activatedHeight, &randListInfo.PRList[idx], *randListInfo.ProofList[idx].ToProto(), appHash, eotsSig)
 
 		// ensure vote is eventually cast
 		var finalizedBlocks []*ftypes.IndexedBlock
 		s.Eventually(func() bool {
-			finalizedBlocks = nonValidatorNode.QueryListBlocks(ftypes.QueriedBlockStatus_FINALIZED)
+			finalizedBlocks = n.QueryListBlocks(ftypes.QueriedBlockStatus_FINALIZED)
 			return len(finalizedBlocks) > 0
 		}, time.Minute, time.Millisecond*50)
 		s.Equal(activatedHeight, finalizedBlocks[0].Height)
@@ -397,16 +397,17 @@ func (s *BTCStakingPreApprovalTestSuite) Test4CommitPublicRandomnessAndSubmitFin
 	}, true)
 
 	// submit an invalid finality signature, and tx should NOT be refunded
-	nonValidatorNode.SubmitRefundableTxWithAssertion(func() {
+	n.WaitForNextBlock()
+	n.SubmitRefundableTxWithAssertion(func() {
 		_, pk, err := datagen.GenRandomBTCKeyPair(s.r)
 		s.NoError(err)
 		btcPK := bbn.NewBIP340PubKeyFromBTCPK(pk)
-		nonValidatorNode.AddFinalitySigFromVal(btcPK, activatedHeight, &randListInfo.PRList[idx], *randListInfo.ProofList[idx].ToProto(), appHash, eotsSig)
-		nonValidatorNode.WaitForNextBlock()
+		n.AddFinalitySigFromVal(btcPK, activatedHeight, &randListInfo.PRList[idx], *randListInfo.ProofList[idx].ToProto(), appHash, eotsSig)
+		n.WaitForNextBlock()
 	}, false)
 
 	// ensure finality provider has received rewards after the block is finalised
-	fpRewardGauges, err := nonValidatorNode.QueryRewardGauge(fpBabylonAddr)
+	fpRewardGauges, err := n.QueryRewardGauge(fpBabylonAddr)
 	s.NoError(err)
 	fpRewardGauge, ok := fpRewardGauges[itypes.FINALITY_PROVIDER.String()]
 	s.True(ok)
@@ -415,7 +416,7 @@ func (s *BTCStakingPreApprovalTestSuite) Test4CommitPublicRandomnessAndSubmitFin
 	s.Require().True(!fpRewardGauge.Coins[0].IsZero())
 
 	// ensure BTC delegation has received rewards after the block is finalised
-	btcDelRewardGauges, err := nonValidatorNode.QueryRewardGauge(delBabylonAddr)
+	btcDelRewardGauges, err := n.QueryRewardGauge(delBabylonAddr)
 	s.NoError(err)
 	btcDelRewardGauge, ok := btcDelRewardGauges[itypes.BTC_STAKER.String()]
 	s.True(ok)
