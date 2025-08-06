@@ -312,20 +312,6 @@ func (s *SoftwareUpgradeV3TestSuite) FpCommitPubRandAndVote(n *chain.NodeConfig)
 
 	go func() {
 		defer wg.Done()
-		appHash = n.AddFinalitySignatureToBlockWithContext(
-			s.fp1BTCSK,
-			s.fp1.BtcPk,
-			s.finalityBlockHeightVoted,
-			s.fp1RandListInfo.SRList[s.finalityIdx],
-			&s.fp1RandListInfo.PRList[s.finalityIdx],
-			*s.fp1RandListInfo.ProofList[s.finalityIdx].ToProto(),
-			"",
-			fmt.Sprintf("--from=%s", wFp1),
-		)
-	}()
-
-	go func() {
-		defer wg.Done()
 		n.AddFinalitySignatureToBlockWithContext(
 			s.fp2BTCSK,
 			s.fp2.BtcPk,
@@ -335,6 +321,20 @@ func (s *SoftwareUpgradeV3TestSuite) FpCommitPubRandAndVote(n *chain.NodeConfig)
 			*s.fp2RandListInfo.ProofList[s.finalityIdx].ToProto(),
 			"",
 			fmt.Sprintf("--from=%s", wFp2),
+		)
+	}()
+
+	go func() {
+		defer wg.Done()
+		appHash = n.AddFinalitySignatureToBlockWithContext(
+			s.fp1BTCSK,
+			s.fp1.BtcPk,
+			s.finalityBlockHeightVoted,
+			s.fp1RandListInfo.SRList[s.finalityIdx],
+			&s.fp1RandListInfo.PRList[s.finalityIdx],
+			*s.fp1RandListInfo.ProofList[s.finalityIdx].ToProto(),
+			"",
+			fmt.Sprintf("--from=%s", wFp1),
 		)
 	}()
 
@@ -418,6 +418,7 @@ func (s *SoftwareUpgradeV3TestSuite) Test1UpgradeV3() {
 	fp1Rate := sdkmath.LegacyNewDec(vpFp1).QuoTruncate(sdkmath.LegacyNewDec(totalVp))
 	fp2Rate := sdkmath.LegacyNewDec(vpFp2).QuoTruncate(sdkmath.LegacyNewDec(totalVp))
 
+	coinsRewarded := sdk.NewCoins()
 	fp1TotalCommission, fp2TotalCommission, fp1CoinsForDels, fp2CoinsForDels := sdk.NewCoins(), sdk.NewCoins(), sdk.NewCoins(), sdk.NewCoins()
 	for blkHeight := firstFinalizedBlock.Height; blkHeight <= lastFinalizedBlock.Height; blkHeight++ {
 		fpsVoted := n.QueryVotesAtHeight(blkHeight)
@@ -440,6 +441,7 @@ func (s *SoftwareUpgradeV3TestSuite) Test1UpgradeV3() {
 		// add the rewards for each block
 		coinsInBlk, err := n.QueryBtcStkGauge(blkHeight)
 		s.Require().NoError(err)
+		coinsRewarded = coinsRewarded.Add(coinsInBlk...)
 
 		coinsForFp1AndDels := itypes.GetCoinsPortion(coinsInBlk, fp1Rate)
 		fp1Comm := itypes.GetCoinsPortion(coinsForFp1AndDels, *s.fp1.Commission)
@@ -453,6 +455,7 @@ func (s *SoftwareUpgradeV3TestSuite) Test1UpgradeV3() {
 	}
 
 	// fp1CommExp := itypes.GetCoinsPortion(fp1TotalRwds, *s.fp1.Commission)
+	coins.RequireCoinsDiffInPointOnePercentMargin(s.T(), coinsRewarded, totalRewardsAllocated)
 	coins.RequireCoinsDiffInPointOnePercentMargin(s.T(), fp1TotalCommission, fp1Rwds.Coins)
 
 	coins.RequireCoinsDiffInPointOnePercentMargin(s.T(), fp2TotalCommission, fp2Rwds.Coins)
@@ -542,17 +545,6 @@ func (s *SoftwareUpgradeV3TestSuite) AddFinalityVoteUntilCurrentHeight(n *chain.
 }
 
 func (s *SoftwareUpgradeV3TestSuite) AddFinalityVote(n *chain.NodeConfig, fpFinalityVoteContext string, flagsFp1, flagsFp2 []string) (appHash bytes.HexBytes) {
-	appHash = n.AddFinalitySignatureToBlockWithContext(
-		s.fp1BTCSK,
-		s.fp1.BtcPk,
-		s.finalityBlockHeightVoted,
-		s.fp1RandListInfo.SRList[s.finalityIdx],
-		&s.fp1RandListInfo.PRList[s.finalityIdx],
-		*s.fp1RandListInfo.ProofList[s.finalityIdx].ToProto(),
-		fpFinalityVoteContext,
-		flagsFp1...,
-	)
-
 	n.AddFinalitySignatureToBlockWithContext(
 		s.fp2BTCSK,
 		s.fp2.BtcPk,
@@ -562,6 +554,17 @@ func (s *SoftwareUpgradeV3TestSuite) AddFinalityVote(n *chain.NodeConfig, fpFina
 		*s.fp2RandListInfo.ProofList[s.finalityIdx].ToProto(),
 		fpFinalityVoteContext,
 		flagsFp2...,
+	)
+
+	appHash = n.AddFinalitySignatureToBlockWithContext(
+		s.fp1BTCSK,
+		s.fp1.BtcPk,
+		s.finalityBlockHeightVoted,
+		s.fp1RandListInfo.SRList[s.finalityIdx],
+		&s.fp1RandListInfo.PRList[s.finalityIdx],
+		*s.fp1RandListInfo.ProofList[s.finalityIdx].ToProto(),
+		fpFinalityVoteContext,
+		flagsFp1...,
 	)
 
 	s.finalityIdx++
