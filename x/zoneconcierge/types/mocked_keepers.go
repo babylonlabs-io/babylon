@@ -327,10 +327,10 @@ func (m *MockZoneConciergeChannelKeeper) EXPECT() *MockZoneConciergeChannelKeepe
 }
 
 // GetAllOpenZCChannels mocks base method.
-func (m *MockZoneConciergeChannelKeeper) GetAllOpenZCChannels(ctx context.Context) []types9.IdentifiedChannel {
+func (m *MockZoneConciergeChannelKeeper) GetAllOpenZCChannels(ctx context.Context) []types10.IdentifiedChannel {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAllOpenZCChannels", ctx)
-	ret0, _ := ret[0].([]types9.IdentifiedChannel)
+	ret0, _ := ret[0].([]types10.IdentifiedChannel)
 	return ret0
 }
 
@@ -357,10 +357,10 @@ func (mr *MockZoneConciergeChannelKeeperMockRecorder) GetChannelClientState(ctx,
 }
 
 // GetChannelForConsumer mocks base method.
-func (m *MockZoneConciergeChannelKeeper) GetChannelForConsumer(ctx context.Context, consumerID string) (types9.IdentifiedChannel, bool) {
+func (m *MockZoneConciergeChannelKeeper) GetChannelForConsumer(ctx context.Context, consumerID string) (types10.IdentifiedChannel, bool) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetChannelForConsumer", ctx, consumerID)
-	ret0, _ := ret[0].(types9.IdentifiedChannel)
+	ret0, _ := ret[0].(types10.IdentifiedChannel)
 	ret1, _ := ret[1].(bool)
 	return ret0, ret1
 }
@@ -372,7 +372,7 @@ func (mr *MockZoneConciergeChannelKeeperMockRecorder) GetChannelForConsumer(ctx,
 }
 
 // GetClientID mocks base method.
-func (m *MockZoneConciergeChannelKeeper) GetClientID(ctx context.Context, channel types9.IdentifiedChannel) (string, error) {
+func (m *MockZoneConciergeChannelKeeper) GetClientID(ctx context.Context, channel types10.IdentifiedChannel) (string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetClientID", ctx, channel)
 	ret0, _ := ret[0].(string)
@@ -415,7 +415,7 @@ func (mr *MockZoneConciergeChannelKeeperMockRecorder) InitGenesis(ctx, gs interf
 }
 
 // IsChannelUninitialized mocks base method.
-func (m *MockZoneConciergeChannelKeeper) IsChannelUninitialized(ctx context.Context, channel types9.IdentifiedChannel) bool {
+func (m *MockZoneConciergeChannelKeeper) IsChannelUninitialized(ctx context.Context, channel types10.IdentifiedChannel) bool {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "IsChannelUninitialized", ctx, channel)
 	ret0, _ := ret[0].(bool)
