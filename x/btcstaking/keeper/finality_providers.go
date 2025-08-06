@@ -50,13 +50,17 @@ func (k Keeper) AddFinalityProvider(goCtx context.Context, msg *types.MsgCreateF
 	// Consumer finality providers checks
 	isConsumer := bsnID != ctx.ChainID()
 	if isConsumer {
-		if !k.BscKeeper.IsConsumerRegistered(ctx, bsnID) {
-			// Ensure the consumer is registered
+		// Ensure the consumer is registered
+		cr, err := k.BscKeeper.GetConsumerRegister(ctx, bsnID)
+		if err != nil || cr == nil {
 			return types.ErrFpBSNIdNotRegistered
 		}
-		// Ensure there's an IBC channel open
-		if !k.BscKeeper.ConsumerHasIBCChannelOpen(ctx, bsnID) {
-			return types.ErrFpConsumerNoIBCChannelOpen
+		// Ensure there's an IBC channel open if it is a Cosmos BSN
+		if cr.GetCosmosConsumerMetadata() != nil {
+			hasChannel := k.BscKeeper.ConsumerHasIBCChannelOpen(ctx, bsnID)
+			if !hasChannel {
+				return types.ErrFpConsumerNoIBCChannelOpen
+			}
 		}
 	}
 
