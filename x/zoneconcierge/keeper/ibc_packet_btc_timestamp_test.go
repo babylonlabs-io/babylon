@@ -10,6 +10,7 @@ import (
 	btclckeeper "github.com/babylonlabs-io/babylon/v3/x/btclightclient/keeper"
 	btclctypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
 	"github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
+	znctypes "github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	connectiontypes "github.com/cosmos/ibc-go/v10/modules/core/03-connection/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
@@ -74,112 +75,102 @@ func InitCosmosConsumer(app *app.BabylonApp, ctx sdk.Context, consumerID string)
 	app.BTCStkConsumerKeeper.RegisterConsumer(ctx, &consumerRegister)
 }
 
-// TODO: need to update for removed base header version
 func FuzzGetHeadersToBroadcast(f *testing.F) {
-	f.Skip("TODO fix this test")
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 
 		babylonApp := app.Setup(t, false)
-		zcKeeper := babylonApp.ZoneConciergeKeeper
-		btclcKeeper := babylonApp.BTCLightClientKeeper
+		zcK, btclightK := babylonApp.ZoneConciergeKeeper, babylonApp.BTCLightClientKeeper
 		ctx := babylonApp.NewContext(false)
 
 		consumerID := "consumer1"
 		InitCosmosConsumer(babylonApp, ctx, consumerID)
 
-		hooks := zcKeeper.Hooks()
-
 		// insert a random number of BTC headers to BTC light client
 		kValue := babylonApp.BtcCheckpointKeeper.GetParams(ctx).BtcConfirmationDepth
-		chainLength := uint32(datagen.RandomInt(r, 10)) + kValue
+		chainLength := uint32(datagen.RandomInt(r, 10)) + kValue*2
 		genRandomChain(
 			t,
 			r,
-			&btclcKeeper,
+			&btclightK,
 			ctx,
 			0,
 			chainLength,
 		)
 
-		// finalise a random epoch
-		epochNum := datagen.RandomInt(r, 10)
-		err := hooks.AfterRawCheckpointFinalized(ctx, epochNum)
-		require.NoError(t, err)
 		// current tip
-		btcTip := btclcKeeper.GetTipInfo(ctx)
+		btcTip := btclightK.GetTipInfo(ctx)
+
+		// At this point last segment is still nil
+
 		// assert the last segment is the last k+1 BTC headers (using confirmation depth)
-		lastSegment := zcKeeper.GetBSNLastSentSegment(ctx, consumerID)
-		require.Len(t, lastSegment.BtcHeaders, int(kValue)+1)
-		for i := range lastSegment.BtcHeaders {
-			require.Equal(t, btclcKeeper.GetHeaderByHeight(ctx, btcTip.Height-kValue+uint32(i)), lastSegment.BtcHeaders[i])
+		btcHeaders := zcK.GetHeadersToBroadcast(ctx, consumerID)
+		require.Len(t, btcHeaders, int(kValue)+1)
+		for i := range btcHeaders {
+			require.Equal(t, btclightK.GetHeaderByHeight(ctx, btcTip.Height-kValue+uint32(i)), btcHeaders[i])
 		}
 
-		// finalise another epoch, during which a small number of new BTC headers are inserted
-		epochNum += 1
-		chainLength = uint32(datagen.RandomInt(r, 10)) + 1
+		// generates a few blocks but not enough to surpass `k` and check that it should return k+1 blocks
+		chainLength = uint32(datagen.RandomInt(r, int(kValue-2))) + 1
 		genRandomChain(
 			t,
 			r,
-			&btclcKeeper,
+			&btclightK,
 			ctx,
 			btcTip.Height,
 			chainLength,
 		)
-		err = hooks.AfterRawCheckpointFinalized(ctx, epochNum)
-		require.NoError(t, err)
-		// assert the last segment is since the header after the last tip
-		lastSegment = zcKeeper.GetBSNLastSentSegment(ctx, consumerID)
-		require.Len(t, lastSegment.BtcHeaders, int(chainLength))
-		for i := range lastSegment.BtcHeaders {
-			require.Equal(t, btclcKeeper.GetHeaderByHeight(ctx, uint32(i)+btcTip.Height+1), lastSegment.BtcHeaders[i])
+
+		// updates the tip
+		btcTip = btclightK.GetTipInfo(ctx)
+
+		// checks that returns k+1 headers
+		btcHeaders2 := zcK.GetHeadersToBroadcast(ctx, consumerID)
+		require.Len(t, btcHeaders2, int(kValue)+1)
+		for i := range btcHeaders2 {
+			require.Equal(t, btclightK.GetHeaderByHeight(ctx, uint32(i)+btcTip.Height-kValue), btcHeaders2[i])
 		}
 
-		// remember the current tip and the segment length
-		btcTip = btclcKeeper.GetTipInfo(ctx)
-		lastSegmentLength := uint32(len(lastSegment.BtcHeaders))
+		// set the first headers as last segment to test without nil segments
+		zcK.SetBSNLastSentSegment(ctx, consumerID, &znctypes.BTCChainSegment{
+			BtcHeaders: btcHeaders,
+		})
 
-		// finalise another epoch, during which a number of new BTC headers with reorg are inserted
-		epochNum += 1
-		// reorg at a super random point
-		// NOTE: it's possible that the last segment is totally reverted. We want to be resilient against
-		// this, by sending the BTC headers since the last reorg point
-		reorgPoint := uint32(datagen.RandomInt(r, int(btcTip.Height)))
+		// gets the headers again to check with last segments set and init header exists
+		btcHeaders3 := zcK.GetHeadersToBroadcast(ctx, consumerID)
+		require.Len(t, btcHeaders3, int(chainLength))
+		for i := range btcHeaders3 {
+			require.Equal(t, btclightK.GetHeaderByHeight(ctx, uint32(i)+btcTip.Height-chainLength+1), btcHeaders3[i])
+		}
+
+		// sets to the last segment set
+		zcK.SetBSNLastSentSegment(ctx, consumerID, &znctypes.BTCChainSegment{
+			BtcHeaders: btcHeaders3,
+		})
+
+		// Large reorg of BTC headers happens, which we want to be resilient against
+		// send the BTC headers of at least k deep
+		reorgPoint := uint32(datagen.RandomInt(r, int(btcTip.Height-1)-len(btcHeaders3)))
 		revertedChainLength := btcTip.Height - reorgPoint
 		// the fork chain needs to be longer than the canonical one
-		forkChainLength := revertedChainLength + uint32(datagen.RandomInt(r, 10)) + 1
+		forkChainLength := revertedChainLength + uint32(datagen.RandomInt(r, 2)) + kValue
 		genRandomChain(
 			t,
 			r,
-			&btclcKeeper,
+			&btclightK,
 			ctx,
 			reorgPoint,
 			forkChainLength,
 		)
-		err = hooks.AfterRawCheckpointFinalized(ctx, epochNum)
-		require.NoError(t, err)
-		// current tip
-		btcTip = btclcKeeper.GetTipInfo(ctx)
-		// assert the last segment is the last k+1 BTC headers (using confirmation depth)
-		lastSegment = zcKeeper.GetBSNLastSentSegment(ctx, consumerID)
-		if revertedChainLength >= lastSegmentLength {
-			// the entire last segment is reverted, the last k+1 BTC headers should be sent
-			require.Len(t, lastSegment.BtcHeaders, int(kValue)+1)
-			// assert the consistency of k+1 sent BTC headers
-			for i := range lastSegment.BtcHeaders {
-				expectedHeight := btcTip.Height - kValue + uint32(i)
-				require.Equal(t, btclcKeeper.GetHeaderByHeight(ctx, expectedHeight), lastSegment.BtcHeaders[i])
-			}
-		} else {
-			// only a subset headers of last segment are reverted, only the new fork should be sent
-			require.Len(t, lastSegment.BtcHeaders, int(forkChainLength))
-			// assert the consistency of the sent fork BTC headers
-			for i := range lastSegment.BtcHeaders {
-				expectedHeight := btcTip.Height - forkChainLength + 1 + uint32(i)
-				require.Equal(t, btclcKeeper.GetHeaderByHeight(ctx, expectedHeight), lastSegment.BtcHeaders[i])
-			}
+
+		btcTip = btclightK.GetTipInfo(ctx)
+
+		btcHeaders4 := zcK.GetHeadersToBroadcast(ctx, consumerID)
+		require.Len(t, btcHeaders4, int(kValue)+1)
+		for i := range btcHeaders4 {
+			require.Equal(t, btclightK.GetHeaderByHeight(ctx, uint32(i)+btcTip.Height-kValue), btcHeaders4[i])
 		}
 	})
 }

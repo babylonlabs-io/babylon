@@ -148,10 +148,10 @@ func (k Keeper) getDeepEnoughBTCHeaders(ctx context.Context) []*btclctypes.BTCHe
 	return k.btclcKeeper.GetMainChainFrom(ctx, startHeight)
 }
 
-// getHeadersToBroadcast retrieves headers using the fallback method of k+1.
+// GetHeadersToBroadcast retrieves headers using the fallback method of k+1.
 // If a consumer ID is not provided, a global LastSentSegment is used to track the timestamped header
 // for all consumers when the checkpoint is finalized.
-func (k Keeper) getHeadersToBroadcast(ctx context.Context, consumerID string) []*btclctypes.BTCHeaderInfo {
+func (k Keeper) GetHeadersToBroadcast(ctx context.Context, consumerID string) []*btclctypes.BTCHeaderInfo {
 	lastSegment := k.GetBSNLastSentSegment(ctx, consumerID)
 
 	if lastSegment == nil {
@@ -226,7 +226,7 @@ func (k Keeper) BroadcastBTCTimestamps(
 			continue
 		}
 
-		headersToBroadcast := k.getHeadersToBroadcast(ctx, consumerID)
+		headersToBroadcast := k.GetHeadersToBroadcast(ctx, consumerID)
 
 		// get all metadata shared across BTC timestamps in the same epoch
 		finalizedInfo, err := k.getFinalizedInfo(ctx, epochNum, headersToBroadcast)
