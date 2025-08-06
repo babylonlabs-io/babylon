@@ -144,6 +144,7 @@ to allow empty coins in fp current rewards.
 - [#1481](https://github.com/babylonlabs-io/babylon/pull/1481) chore: bsn id proto order for compatibility
 - [#1490](https://github.com/babylonlabs-io/babylon/pull/1490) Add multi-staking allow-list for Testnet
 - [#1485](https://github.com/babylonlabs-io/babylon/pull/1485) Add channel check on consumer FP creation
+- [#1516](https://github.com/babylonlabs-io/babylon/pull/1516) Remove `zoneconcierge` port ID from state
 
 ### State Machine Breaking
 
