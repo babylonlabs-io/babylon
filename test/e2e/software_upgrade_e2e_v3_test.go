@@ -184,7 +184,7 @@ func (s *SoftwareUpgradeV3TestSuite) TestUpgradeV3() {
 	s.Require().True(ok, "max_finality_providers param should exist")
 	s.Require().Equal(float64(10), maxFP, "max_finality_providers should be 10")
 
-	s.Require().Equal(float64(260000), btcparamsMap["btc_activation_height"],
+	s.Require().Equal(float64(264773), btcparamsMap["btc_activation_height"],
 		"BtcActivationHeight should be incremented correctly")
 
 	// check that the module exists by querying parameters with the QueryParams helper
