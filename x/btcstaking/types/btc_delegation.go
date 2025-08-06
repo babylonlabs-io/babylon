@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"sort"
+	"strings"
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -39,6 +41,15 @@ func NewBTCDelegationStatusFromString(statusStr string) (BTCDelegationStatus, er
 	default:
 		return -1, fmt.Errorf("invalid status string; should be one of {pending, verified, active, unbonded, any}")
 	}
+}
+
+func GetBTCDelegationStatusOptions() string {
+	var statuses []string
+	for status := range BTCDelegationStatus_value {
+		statuses = append(statuses, strings.ToLower(status))
+	}
+	sort.Strings(statuses)
+	return strings.Join(statuses, ", ")
 }
 
 func (d *BTCDelegation) MustGetValidStakingTime() uint16 {
