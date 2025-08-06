@@ -127,7 +127,7 @@ func (k Keeper) createBTCTimestamp(
 		epochOfHeader := finalizedHeader.Header.BabylonEpoch
 		if epochOfHeader == epochNum {
 			btcTimestamp.Header = finalizedHeader.Header
-			// Note: proof is now included in the IndexedHeaderWithProof, not separately
+			btcTimestamp.Proof.ProofConsumerHeaderInEpoch = finalizedHeader.Proof
 		}
 	} else {
 		k.Logger(sdkCtx).Debug("no finalized header for consumer",
