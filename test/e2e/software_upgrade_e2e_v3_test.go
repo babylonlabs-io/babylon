@@ -381,7 +381,7 @@ func (s *SoftwareUpgradeV3TestSuite) CheckParamsAfterUpgrade() {
 
 	btcStkParams := n.QueryBTCStakingParams()
 	s.Require().Equal(uint32(10), btcStkParams.MaxFinalityProviders, "max_finality_providers should be 10")
-	s.Require().Equal(uint32(260000), btcStkParams.BtcActivationHeight, "btc activation height should be 260000")
+	s.Require().Equal(uint32(264773), btcStkParams.BtcActivationHeight, "btc activation height should be 264773")
 }
 
 func (s *SoftwareUpgradeV3TestSuite) CheckBtcRewardsAfterUpgrade(expectedUpgradeHeight int64) {
