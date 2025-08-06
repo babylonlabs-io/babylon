@@ -234,7 +234,7 @@ is used to store this structure.
 message FinalityProviderHistoricalRewards {
   // The cumulative rewards of that finality provider per sat until that period
   // This coins will aways increase the value, never be reduced due to keep
-  // acumulation and when the cumulative rewards will be used to distribute
+  // accumulation and when the cumulative rewards will be used to distribute
   // rewards, 2 periods will be loaded, calculate the difference and multiplied
   // by the total sat amount delegated
   // https://github.com/cosmos/cosmos-sdk/blob/e76102f885b71fd6e1c1efb692052173c4b3c3a3/x/distribution/keeper/delegation.go#L47
