@@ -184,18 +184,6 @@ func (n *NodeConfig) QueryListPubRandCommit(fpBTCPK *bbn.BIP340PubKey) map[uint6
 	return resp.PubRandCommitMap
 }
 
-func (n *NodeConfig) QueryVotesAtHeight(height uint64) []bbn.BIP340PubKey {
-	path := fmt.Sprintf("/babylon/finality/v1/votes/%d", height)
-	bz, err := n.QueryGRPCGateway(path, url.Values{})
-	require.NoError(n.t, err)
-
-	var resp ftypes.QueryVotesAtHeightResponse
-	err = util.Cdc.UnmarshalJSON(bz, &resp)
-	require.NoError(n.t, err)
-
-	return resp.BtcPks
-}
-
 // TODO: pagination support
 func (n *NodeConfig) QueryListBlocks(status ftypes.QueriedBlockStatus) []*ftypes.IndexedBlock {
 	values := url.Values{}

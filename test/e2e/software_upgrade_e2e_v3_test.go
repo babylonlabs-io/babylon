@@ -389,8 +389,10 @@ func (s *SoftwareUpgradeV3TestSuite) Test1UpgradeV3() {
 	n.WaitForNextBlocks(10)
 
 	// check for rewards from the finality activation height until last finalized block
-	lastFinalizedBlocks := n.QueryListBlocks(ftypes.QueriedBlockStatus_FINALIZED)
-	lastFinalizedBlock := lastFinalizedBlocks[len(lastFinalizedBlocks)-1]
+	finalizedBlocks := n.QueryListBlocks(ftypes.QueriedBlockStatus_FINALIZED)
+	firstFinalizedBlock := finalizedBlocks[0]
+	lastFinalizedBlock := finalizedBlocks[len(finalizedBlocks)-1]
+	s.Require().GreaterOrEqual(uint64(expectedUpgradeHeight), lastFinalizedBlock.Height)
 
 	// assuming that both fps were rewarded the same amounts
 	fp1Rwds, fp2Rwds, del1, del2 := s.QueryRewardGauges(n)
@@ -398,8 +400,6 @@ func (s *SoftwareUpgradeV3TestSuite) Test1UpgradeV3() {
 	totalRewardsAllocated, err := n.QueryBtcStkGaugeFromBlocks(s.firstFinalizedBlockHeight, lastFinalizedBlock.Height)
 	s.Require().NoError(err)
 	s.Require().False(totalRewardsAllocated.IsZero())
-
-	// TODO: check that both fps voted in all the blocks
 
 	// Current setup of voting power
 	// (fp1, del1) => 2_00000000
@@ -416,20 +416,48 @@ func (s *SoftwareUpgradeV3TestSuite) Test1UpgradeV3() {
 	vpFp2 := s.fp2Del1StakingAmt
 	totalVp := vpFp1 + vpFp2
 
-	fp1Portion := sdkmath.LegacyNewDec(vpFp1).QuoTruncate(sdkmath.LegacyNewDec(totalVp))
-	fp1TotalRwds := itypes.GetCoinsPortion(totalRewardsAllocated, fp1Portion)
+	fp1TotalRwds, fp2TotalRwds := sdk.NewCoins(), sdk.NewCoins()
+	for blkHeight := firstFinalizedBlock.Height; blkHeight <= lastFinalizedBlock.Height; blkHeight++ {
+		fpsVoted := n.QueryVotesAtHeight(blkHeight)
+		s.Require().Len(fpsVoted, 2, "two fps should have voted")
+		for _, fpVoted := range fpsVoted {
+			if fpVoted.Equals(s.fp1.BtcPk) {
+				continue
+			}
+			if fpVoted.Equals(s.fp2.BtcPk) {
+				continue
+			}
+			s.Require().Fail("some other fp voted?")
+		}
 
-	fp2Portion := sdkmath.LegacyNewDec(vpFp2).QuoTruncate(sdkmath.LegacyNewDec(totalVp))
-	fp2TotalRwds := itypes.GetCoinsPortion(totalRewardsAllocated, fp2Portion)
+		fp1Vp := n.QueryFinalityProviderPowerAtHeight(s.fp1.BtcPk, blkHeight)
+		s.Require().EqualValues(vpFp1, fp1Vp)
+		fp2Vp := n.QueryFinalityProviderPowerAtHeight(s.fp2.BtcPk, blkHeight)
+		s.Require().EqualValues(vpFp2, fp2Vp)
 
-	fp1CommExp := itypes.GetCoinsPortion(fp1TotalRwds, *s.fp1.Commission)
-	coins.RequireCoinsDiffInPointOnePercentMargin(s.T(), fp1CommExp, fp1Rwds.Coins)
-	require.Equal(s.T(), fp1CommExp.String(), fp1Rwds.Coins.String(), "fp1 rewards do not match")
+		// add the rewards for each block
+		coinsInBlk, err := n.QueryBtcStkGauge(blkHeight)
+		s.Require().NoError(err)
+
+		fp1Rate := sdkmath.LegacyNewDec(vpFp1).QuoTruncate(sdkmath.LegacyNewDec(totalVp))
+		fp1Portion := itypes.GetCoinsPortion(coinsInBlk, fp1Rate)
+		fp1Comm := itypes.GetCoinsPortion(fp1Portion, *s.fp1.Commission)
+		fp1TotalRwds = fp1TotalRwds.Add(fp1Comm...)
+
+		fp2Rate := sdkmath.LegacyNewDec(vpFp2).QuoTruncate(sdkmath.LegacyNewDec(totalVp))
+		fp2Portion := itypes.GetCoinsPortion(coinsInBlk, fp2Rate)
+		fp2Comm := itypes.GetCoinsPortion(fp2Portion, *s.fp2.Commission)
+		fp2TotalRwds = fp2TotalRwds.Add(fp2Comm...)
+	}
+
+	// fp1CommExp := itypes.GetCoinsPortion(fp1TotalRwds, *s.fp1.Commission)
+	coins.RequireCoinsDiffInPointOnePercentMargin(s.T(), fp1TotalRwds, fp1Rwds.Coins)
+	require.Equal(s.T(), fp1TotalRwds.String(), fp1Rwds.Coins.String(), "fp1 rewards do not match")
 
 	fp2CommExp := itypes.GetCoinsPortion(fp2TotalRwds, *s.fp2.Commission)
-	require.Equal(s.T(), fp2CommExp.String(), fp2Rwds.Coins.String(), "fp2 rewards do not match")
+	require.Equal(s.T(), fp2TotalRwds.String(), fp2Rwds.Coins.String(), "fp2 rewards do not match")
 
-	fp1BtcStakersShares := fp1TotalRwds.Sub(fp1CommExp...)
+	fp1BtcStakersShares := fp1TotalRwds.Sub(fp1TotalRwds...)
 
 	// del1 receives what is left after fp commission for fp2 since it is the only staker
 	// plus his share in what is left from fp1
