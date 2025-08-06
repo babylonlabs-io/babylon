@@ -3,7 +3,6 @@ package e2e
 import (
 	"fmt"
 	"math/rand"
-	"sync"
 	"time"
 
 	sdkmath "cosmossdk.io/math"
@@ -304,41 +303,28 @@ func (s *SoftwareUpgradeV3TestSuite) FpCommitPubRandAndVote(n *chain.NodeConfig)
 	s.finalityIdx = s.finalityBlockHeightVoted - commitStartHeight
 
 	n.WaitForNextBlockWithSleep50ms()
-	var (
-		wg      sync.WaitGroup
-		appHash bytes.HexBytes
+
+	// send vote of fp2 first to avoid finalizing block only with fp1 vote
+	n.AddFinalitySignatureToBlockWithContext(
+		s.fp2BTCSK,
+		s.fp2.BtcPk,
+		s.finalityBlockHeightVoted,
+		s.fp2RandListInfo.SRList[s.finalityIdx],
+		&s.fp2RandListInfo.PRList[s.finalityIdx],
+		*s.fp2RandListInfo.ProofList[s.finalityIdx].ToProto(),
+		"",
+		fmt.Sprintf("--from=%s", wFp2),
 	)
-	wg.Add(2)
-
-	go func() {
-		defer wg.Done()
-		n.AddFinalitySignatureToBlockWithContext(
-			s.fp2BTCSK,
-			s.fp2.BtcPk,
-			s.finalityBlockHeightVoted,
-			s.fp2RandListInfo.SRList[s.finalityIdx],
-			&s.fp2RandListInfo.PRList[s.finalityIdx],
-			*s.fp2RandListInfo.ProofList[s.finalityIdx].ToProto(),
-			"",
-			fmt.Sprintf("--from=%s", wFp2),
-		)
-	}()
-
-	go func() {
-		defer wg.Done()
-		appHash = n.AddFinalitySignatureToBlockWithContext(
-			s.fp1BTCSK,
-			s.fp1.BtcPk,
-			s.finalityBlockHeightVoted,
-			s.fp1RandListInfo.SRList[s.finalityIdx],
-			&s.fp1RandListInfo.PRList[s.finalityIdx],
-			*s.fp1RandListInfo.ProofList[s.finalityIdx].ToProto(),
-			"",
-			fmt.Sprintf("--from=%s", wFp1),
-		)
-	}()
-
-	wg.Wait()
+	appHash := n.AddFinalitySignatureToBlockWithContext(
+		s.fp1BTCSK,
+		s.fp1.BtcPk,
+		s.finalityBlockHeightVoted,
+		s.fp1RandListInfo.SRList[s.finalityIdx],
+		&s.fp1RandListInfo.PRList[s.finalityIdx],
+		*s.fp1RandListInfo.ProofList[s.finalityIdx].ToProto(),
+		"",
+		fmt.Sprintf("--from=%s", wFp1),
+	)
 
 	n.WaitForNextBlocks(2)
 
@@ -396,10 +382,6 @@ func (s *SoftwareUpgradeV3TestSuite) Test1UpgradeV3() {
 	// assuming that both fps were rewarded the same amounts
 	fp1Rwds, fp2Rwds, del1, del2 := s.QueryRewardGauges(n)
 
-	totalRewardsAllocated, err := n.QueryBtcStkGaugeFromBlocks(firstFinalizedBlock.Height, lastFinalizedBlock.Height)
-	s.Require().NoError(err)
-	s.Require().False(totalRewardsAllocated.IsZero())
-
 	// Current setup of voting power
 	// (fp1, del1) => 2_00000000
 	// (fp1, del2) => 4_00000000
@@ -418,8 +400,8 @@ func (s *SoftwareUpgradeV3TestSuite) Test1UpgradeV3() {
 	fp1Rate := sdkmath.LegacyNewDec(vpFp1).QuoTruncate(sdkmath.LegacyNewDec(totalVp))
 	fp2Rate := sdkmath.LegacyNewDec(vpFp2).QuoTruncate(sdkmath.LegacyNewDec(totalVp))
 
-	coinsRewarded := sdk.NewCoins()
-	fp1TotalCommission, fp2TotalCommission, fp1CoinsForDels, fp2CoinsForDels := sdk.NewCoins(), sdk.NewCoins(), sdk.NewCoins(), sdk.NewCoins()
+	totalCoinsRewarded := sdk.NewCoins()
+	fp1CommTotal, fp2CommTotal, fp1CoinsForDels, fp2CoinsForDels := sdk.NewCoins(), sdk.NewCoins(), sdk.NewCoins(), sdk.NewCoins()
 	for blkHeight := firstFinalizedBlock.Height; blkHeight <= lastFinalizedBlock.Height; blkHeight++ {
 		fpsVoted := n.QueryVotesAtHeight(blkHeight)
 		s.Require().Len(fpsVoted, 2, "two fps should have voted")
@@ -438,36 +420,44 @@ func (s *SoftwareUpgradeV3TestSuite) Test1UpgradeV3() {
 		fp2Vp := n.QueryFinalityProviderPowerAtHeight(s.fp2.BtcPk, blkHeight)
 		s.Require().EqualValues(vpFp2, fp2Vp)
 
-		// add the rewards for each block
+		// calculate the rewards given for each block
 		coinsInBlk, err := n.QueryBtcStkGauge(blkHeight)
 		s.Require().NoError(err)
-		coinsRewarded = coinsRewarded.Add(coinsInBlk...)
+		totalCoinsRewarded = totalCoinsRewarded.Add(coinsInBlk...)
 
 		coinsForFp1AndDels := itypes.GetCoinsPortion(coinsInBlk, fp1Rate)
 		fp1Comm := itypes.GetCoinsPortion(coinsForFp1AndDels, *s.fp1.Commission)
-		fp1TotalCommission = fp1TotalCommission.Add(fp1Comm...)
+		fp1CommTotal = fp1CommTotal.Add(fp1Comm...)
 		fp1CoinsForDels = fp1CoinsForDels.Add(coinsForFp1AndDels.Sub(fp1Comm...)...)
 
 		coinsForFp2AndDels := itypes.GetCoinsPortion(coinsInBlk, fp2Rate)
 		fp2Comm := itypes.GetCoinsPortion(coinsForFp2AndDels, *s.fp2.Commission)
-		fp2TotalCommission = fp2TotalCommission.Add(fp2Comm...)
-		fp2CoinsForDels = fp2CoinsForDels.Add(coinsForFp2AndDels.Sub(fp1Comm...)...)
+		fp2CommTotal = fp2CommTotal.Add(fp2Comm...)
+		fp2CoinsForDels = fp2CoinsForDels.Add(coinsForFp2AndDels.Sub(fp2Comm...)...)
 	}
 
-	// fp1CommExp := itypes.GetCoinsPortion(fp1TotalRwds, *s.fp1.Commission)
-	coins.RequireCoinsDiffInPointOnePercentMargin(s.T(), coinsRewarded, totalRewardsAllocated)
-	coins.RequireCoinsDiffInPointOnePercentMargin(s.T(), fp1TotalCommission, fp1Rwds.Coins)
+	// fp commissions check
+	coins.RequireCoinsDiffInPointOnePercentMargin(s.T(), fp1CommTotal, fp1Rwds.Coins)
+	coins.RequireCoinsDiffInPointOnePercentMargin(s.T(), fp2CommTotal, fp2Rwds.Coins)
 
-	coins.RequireCoinsDiffInPointOnePercentMargin(s.T(), fp2TotalCommission, fp2Rwds.Coins)
+	// BTC delegators check
+	// (fp1, del1) => 2_00000000
+	// (fp1, del2) => 4_00000000
+	// (fp2, del1) => 2_00000000
 
 	// del1 receives what is left after fp commission for fp2 since it is the only staker
-	// plus his share in what is left from fp1
-	del1ShareFp1 := itypes.GetCoinsPortion(fp1CoinsForDels, sdkmath.LegacyMustNewDecFromStr("0.666666667"))
+	// plus his share in fp1CoinsForDels 1/3
+	del1ShareFp1 := itypes.GetCoinsPortion(fp1CoinsForDels, sdkmath.LegacyMustNewDecFromStr("0.333333333"))
 	expCoinsDel1 := fp2CoinsForDels.Add(del1ShareFp1...)
 	coins.RequireCoinsDiffInPointOnePercentMargin(s.T(), expCoinsDel1, del1.Coins)
 
-	expCoinsDel2 := itypes.GetCoinsPortion(fp1CoinsForDels, sdkmath.LegacyMustNewDecFromStr("0.333333333"))
+	// del2 receives 2/3 of fp1CoinsForDels
+	expCoinsDel2 := itypes.GetCoinsPortion(fp1CoinsForDels, sdkmath.LegacyMustNewDecFromStr("0.666666667"))
 	coins.RequireCoinsDiffInPointOnePercentMargin(s.T(), expCoinsDel2, del2.Coins)
+
+	// since the fp commission is fixed at 20% and both delegators have the same amount staked over all dels 4_00000000
+	// they should earn roughly the same amounts, with rounding diffs
+	coins.RequireCoinsDiffInPointOnePercentMargin(s.T(), del1.Coins, del2.Coins)
 }
 
 func (s *SoftwareUpgradeV3TestSuite) CheckFpAfterUpgrade() {
@@ -545,6 +535,9 @@ func (s *SoftwareUpgradeV3TestSuite) AddFinalityVoteUntilCurrentHeight(n *chain.
 }
 
 func (s *SoftwareUpgradeV3TestSuite) AddFinalityVote(n *chain.NodeConfig, fpFinalityVoteContext string, flagsFp1, flagsFp2 []string) (appHash bytes.HexBytes) {
+	// send vote of fp2 first to avoid finalizing block only with fp1 vote. Vps:
+	// (fp1)  => 6_00000000
+	// (fp2)  => 2_00000000
 	n.AddFinalitySignatureToBlockWithContext(
 		s.fp2BTCSK,
 		s.fp2.BtcPk,

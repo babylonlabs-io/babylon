@@ -6,7 +6,7 @@
       "plan": {
         "name": "v3",
         "time": "0001-01-01T00:00:00Z",
-        "height": "167",
+        "height": "183",
         "info": "Upgrade to v3",
         "upgraded_client_state": null
       }
