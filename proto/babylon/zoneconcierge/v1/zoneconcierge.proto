@@ -93,12 +93,8 @@ message BTCChainSegment {
 }
 
 // BSNBTCState stores per-BSN BTC synchronization state
-// This includes both the base header and the last sent segment
 message BSNBTCState {
-  // base_header is the base BTC header for this BSN
-  // This represents the starting point from which BTC headers are synchronized
-  babylon.btclightclient.v1.BTCHeaderInfo base_header = 1;
   // last_sent_segment is the last segment of BTC headers sent to this BSN
   // This is used to determine the next headers to send and handle reorgs
-  BTCChainSegment last_sent_segment = 2;
+  BTCChainSegment last_sent_segment = 1;
 }

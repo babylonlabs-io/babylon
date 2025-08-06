@@ -21,8 +21,6 @@ func TestBSNBTCState_GetSet(t *testing.T) {
 	r := rand.New(rand.NewSource(10))
 	consumerID := testConsumerID
 
-	header := datagen.GenRandomBTCHeaderInfo(r)
-
 	headers := []*btclctypes.BTCHeaderInfo{
 		datagen.GenRandomBTCHeaderInfo(r),
 		datagen.GenRandomBTCHeaderInfo(r),
@@ -32,7 +30,6 @@ func TestBSNBTCState_GetSet(t *testing.T) {
 	}
 
 	expectedState := &types.BSNBTCState{
-		BaseHeader:      header,
 		LastSentSegment: segment,
 	}
 
@@ -42,50 +39,7 @@ func TestBSNBTCState_GetSet(t *testing.T) {
 	zcKeeper.SetBSNBTCState(ctx, consumerID, expectedState)
 	state = zcKeeper.GetBSNBTCState(ctx, consumerID)
 	require.NotNil(t, state)
-	require.Equal(t, expectedState.BaseHeader, state.BaseHeader)
 	require.Equal(t, expectedState.LastSentSegment, state.LastSentSegment)
-
-	newHeader := datagen.GenRandomBTCHeaderInfo(r)
-	expectedState.BaseHeader = newHeader
-	zcKeeper.SetBSNBTCState(ctx, consumerID, expectedState)
-	state = zcKeeper.GetBSNBTCState(ctx, consumerID)
-	require.Equal(t, newHeader, state.BaseHeader)
-}
-
-func TestConsumerBaseBTCHeader_GetSet(t *testing.T) {
-	babylonApp := app.Setup(t, false)
-	zcKeeper := babylonApp.ZoneConciergeKeeper
-	ctx := babylonApp.NewContext(false)
-
-	r := rand.New(rand.NewSource(10))
-	consumerID := testConsumerID
-	header := datagen.GenRandomBTCHeaderInfo(r)
-
-	result := zcKeeper.GetBSNBaseBTCHeader(ctx, consumerID)
-	require.Nil(t, result)
-
-	zcKeeper.SetBSNBaseBTCHeader(ctx, consumerID, header)
-	result = zcKeeper.GetBSNBaseBTCHeader(ctx, consumerID)
-	require.NotNil(t, result)
-	require.Equal(t, header, result)
-
-	newHeader := datagen.GenRandomBTCHeaderInfo(r)
-	zcKeeper.SetBSNBaseBTCHeader(ctx, consumerID, newHeader)
-	result = zcKeeper.GetBSNBaseBTCHeader(ctx, consumerID)
-	require.Equal(t, newHeader, result)
-
-	segment := &types.BTCChainSegment{
-		BtcHeaders: []*btclctypes.BTCHeaderInfo{datagen.GenRandomBTCHeaderInfo(r)},
-	}
-	zcKeeper.SetBSNLastSentSegment(ctx, consumerID, segment)
-
-	anotherHeader := datagen.GenRandomBTCHeaderInfo(r)
-	zcKeeper.SetBSNBaseBTCHeader(ctx, consumerID, anotherHeader)
-
-	resultHeader := zcKeeper.GetBSNBaseBTCHeader(ctx, consumerID)
-	resultSegment := zcKeeper.GetBSNLastSentSegment(ctx, consumerID)
-	require.Equal(t, anotherHeader, resultHeader)
-	require.Equal(t, segment, resultSegment)
 }
 
 func TestConsumerLastSentSegment_GetSet(t *testing.T) {
@@ -122,118 +76,13 @@ func TestConsumerLastSentSegment_GetSet(t *testing.T) {
 	result = zcKeeper.GetBSNLastSentSegment(ctx, consumerID)
 	require.Equal(t, newSegment, result)
 
-	baseHeader := datagen.GenRandomBTCHeaderInfo(r)
-	zcKeeper.SetBSNBaseBTCHeader(ctx, consumerID, baseHeader)
-
 	anotherSegment := &types.BTCChainSegment{
 		BtcHeaders: []*btclctypes.BTCHeaderInfo{datagen.GenRandomBTCHeaderInfo(r)},
 	}
 	zcKeeper.SetBSNLastSentSegment(ctx, consumerID, anotherSegment)
 
-	resultHeader := zcKeeper.GetBSNBaseBTCHeader(ctx, consumerID)
 	resultSegment := zcKeeper.GetBSNLastSentSegment(ctx, consumerID)
-	require.Equal(t, baseHeader, resultHeader)
 	require.Equal(t, anotherSegment, resultSegment)
-}
-
-func TestInitializeBSNBTCState(t *testing.T) {
-	babylonApp := app.Setup(t, false)
-	zcKeeper := babylonApp.ZoneConciergeKeeper
-	btclcKeeper := babylonApp.BTCLightClientKeeper
-	ctx := babylonApp.NewContext(false)
-
-	r := rand.New(rand.NewSource(10))
-	consumerID := testConsumerID
-
-	chain := datagen.NewBTCHeaderChainWithLength(r, 1, 100, 5)
-	err := btclcKeeper.InsertHeadersWithHookAndEvents(ctx, chain.ChainToBytes())
-	require.NoError(t, err)
-
-	tipInfo := btclcKeeper.GetTipInfo(ctx)
-	require.NotNil(t, tipInfo)
-
-	err = zcKeeper.InitializeBSNBTCState(ctx, consumerID)
-	require.NoError(t, err)
-
-	state := zcKeeper.GetBSNBTCState(ctx, consumerID)
-	require.NotNil(t, state)
-	require.Equal(t, tipInfo, state.BaseHeader)
-	require.Nil(t, state.LastSentSegment) // Should be nil initially
-
-	err = zcKeeper.InitializeBSNBTCState(ctx, consumerID)
-	require.NoError(t, err)
-
-	newState := zcKeeper.GetBSNBTCState(ctx, consumerID)
-	require.Equal(t, state, newState)
-
-	existingHeader := datagen.GenRandomBTCHeaderInfo(r)
-	zcKeeper.SetBSNBaseBTCHeader(ctx, consumerID, existingHeader)
-
-	err = zcKeeper.InitializeBSNBTCState(ctx, consumerID)
-	require.NoError(t, err)
-
-	finalHeader := zcKeeper.GetBSNBaseBTCHeader(ctx, consumerID)
-	require.Equal(t, existingHeader, finalHeader)
-}
-
-func TestBSNBTCState_MultipleBSNs(t *testing.T) {
-	babylonApp := app.Setup(t, false)
-	zcKeeper := babylonApp.ZoneConciergeKeeper
-	ctx := babylonApp.NewContext(false)
-
-	r := rand.New(rand.NewSource(10))
-
-	consumer1 := "consumer-1"
-	consumer2 := "consumer-2"
-	consumer3 := "consumer-3"
-
-	header1 := datagen.GenRandomBTCHeaderInfo(r)
-	header2 := datagen.GenRandomBTCHeaderInfo(r)
-	header3 := datagen.GenRandomBTCHeaderInfo(r)
-
-	segment1 := &types.BTCChainSegment{
-		BtcHeaders: []*btclctypes.BTCHeaderInfo{datagen.GenRandomBTCHeaderInfo(r)},
-	}
-	segment2 := &types.BTCChainSegment{
-		BtcHeaders: []*btclctypes.BTCHeaderInfo{
-			datagen.GenRandomBTCHeaderInfo(r),
-			datagen.GenRandomBTCHeaderInfo(r),
-		},
-	}
-
-	zcKeeper.SetBSNBaseBTCHeader(ctx, consumer1, header1)
-	zcKeeper.SetBSNBaseBTCHeader(ctx, consumer2, header2)
-	zcKeeper.SetBSNBaseBTCHeader(ctx, consumer3, header3)
-
-	zcKeeper.SetBSNLastSentSegment(ctx, consumer1, segment1)
-	zcKeeper.SetBSNLastSentSegment(ctx, consumer2, segment2)
-
-	result1 := zcKeeper.GetBSNBaseBTCHeader(ctx, consumer1)
-	result2 := zcKeeper.GetBSNBaseBTCHeader(ctx, consumer2)
-	result3 := zcKeeper.GetBSNBaseBTCHeader(ctx, consumer3)
-
-	require.Equal(t, header1, result1)
-	require.Equal(t, header2, result2)
-	require.Equal(t, header3, result3)
-
-	seg1 := zcKeeper.GetBSNLastSentSegment(ctx, consumer1)
-	seg2 := zcKeeper.GetBSNLastSentSegment(ctx, consumer2)
-	seg3 := zcKeeper.GetBSNLastSentSegment(ctx, consumer3)
-
-	require.Equal(t, segment1, seg1)
-	require.Equal(t, segment2, seg2)
-	require.Nil(t, seg3)
-
-	newHeader1 := datagen.GenRandomBTCHeaderInfo(r)
-	zcKeeper.SetBSNBaseBTCHeader(ctx, consumer1, newHeader1)
-
-	result1 = zcKeeper.GetBSNBaseBTCHeader(ctx, consumer1)
-	result2 = zcKeeper.GetBSNBaseBTCHeader(ctx, consumer2)
-	result3 = zcKeeper.GetBSNBaseBTCHeader(ctx, consumer3)
-
-	require.Equal(t, newHeader1, result1)
-	require.Equal(t, header2, result2)
-	require.Equal(t, header3, result3)
 }
 
 func TestBSNBTCState_EdgeCases(t *testing.T) {
@@ -245,9 +94,6 @@ func TestBSNBTCState_EdgeCases(t *testing.T) {
 	nonExistentID := "non-existent-consumer"
 	result := zcKeeper.GetBSNBTCState(ctx, nonExistentID)
 	require.Nil(t, result)
-
-	baseHeader := zcKeeper.GetBSNBaseBTCHeader(ctx, nonExistentID)
-	require.Nil(t, baseHeader)
 
 	lastSegment := zcKeeper.GetBSNLastSentSegment(ctx, nonExistentID)
 	require.Nil(t, lastSegment)
@@ -261,96 +107,4 @@ func TestBSNBTCState_EdgeCases(t *testing.T) {
 	resultSegment := zcKeeper.GetBSNLastSentSegment(ctx, consumerID)
 	require.NotNil(t, resultSegment)
 	require.Nil(t, resultSegment.BtcHeaders)
-}
-
-func TestGetHeadersToBroadcastForConsumer_IncludesBaseHeader(t *testing.T) {
-	babylonApp := app.Setup(t, false)
-	zcKeeper := babylonApp.ZoneConciergeKeeper
-	btclcKeeper := babylonApp.BTCLightClientKeeper
-	ctx := babylonApp.NewContext(false)
-
-	r := rand.New(rand.NewSource(10))
-	consumerID := testConsumerID
-
-	chain := datagen.NewBTCHeaderChainWithLength(r, 1, 100, 10)
-	err := btclcKeeper.InsertHeadersWithHookAndEvents(ctx, chain.ChainToBytes())
-	require.NoError(t, err)
-
-	tipHeight := btclcKeeper.GetTipInfo(ctx).Height
-	baseHeight := tipHeight - 5
-	baseHeader := btclcKeeper.GetHeaderByHeight(ctx, baseHeight)
-	require.NotNil(t, baseHeader)
-	zcKeeper.SetBSNBaseBTCHeader(ctx, consumerID, baseHeader)
-
-	headers := zcKeeper.GetHeadersToBroadcastForConsumerForTesting(ctx, consumerID)
-
-	require.NotEmpty(t, headers)
-	require.Equal(t, baseHeader.Height, headers[0].Height)
-	require.True(t, baseHeader.Hash.Eq(headers[0].Hash))
-
-	expectedLength := int(tipHeight - baseHeight + 1)
-	require.Len(t, headers, expectedLength)
-
-	for i, header := range headers {
-		expectedHeight := baseHeight + uint32(i)
-		require.Equal(t, expectedHeight, header.Height)
-	}
-}
-
-func TestGetHeadersToBroadcastForConsumer_FallbackConditions(t *testing.T) {
-	babylonApp := app.Setup(t, false)
-	zcKeeper := babylonApp.ZoneConciergeKeeper
-	btclcKeeper := babylonApp.BTCLightClientKeeper
-	btccKeeper := babylonApp.BtcCheckpointKeeper
-	ctx := babylonApp.NewContext(false)
-
-	r := rand.New(rand.NewSource(10))
-	consumerID := testConsumerID
-
-	chain := datagen.NewBTCHeaderChainWithLength(r, 1, 100, 20)
-	err := btclcKeeper.InsertHeadersWithHookAndEvents(ctx, chain.ChainToBytes())
-	require.NoError(t, err)
-
-	tipHeight := btclcKeeper.GetTipInfo(ctx).Height
-	kValue := btccKeeper.GetParams(ctx).BtcConfirmationDepth
-
-	t.Run("no base header set - falls back to old behavior", func(t *testing.T) {
-		headers := zcKeeper.GetHeadersToBroadcastForConsumerForTesting(ctx, consumerID)
-
-		require.NotEmpty(t, headers)
-		expectedStartHeight := tipHeight - kValue
-		require.Equal(t, expectedStartHeight, headers[0].Height)
-		require.Len(t, headers, int(kValue)+1)
-	})
-
-	t.Run("base header too old - falls back to k headers", func(t *testing.T) {
-		oldBaseHeight := tipHeight - kValue - 5
-		oldBaseHeader := btclcKeeper.GetHeaderByHeight(ctx, oldBaseHeight)
-		require.NotNil(t, oldBaseHeader)
-		zcKeeper.SetBSNBaseBTCHeader(ctx, consumerID, oldBaseHeader)
-
-		headers := zcKeeper.GetHeadersToBroadcastForConsumerForTesting(ctx, consumerID)
-
-		require.NotEmpty(t, headers)
-
-		if tipHeight-oldBaseHeight <= kValue {
-			require.Equal(t, oldBaseHeight, headers[0].Height)
-		} else {
-			expectedStartHeight := tipHeight - kValue
-			require.Equal(t, expectedStartHeight, headers[0].Height)
-		}
-	})
-
-	t.Run("new function includes base header when reasonable", func(t *testing.T) {
-		reasonableBaseHeight := tipHeight - kValue/2
-		reasonableBaseHeader := btclcKeeper.GetHeaderByHeight(ctx, reasonableBaseHeight)
-		require.NotNil(t, reasonableBaseHeader)
-		zcKeeper.SetBSNBaseBTCHeader(ctx, consumerID, reasonableBaseHeader)
-
-		headers := zcKeeper.GetHeadersFromBaseOrFallbackForTesting(ctx, consumerID)
-
-		require.NotEmpty(t, headers)
-		require.Equal(t, reasonableBaseHeight, headers[0].Height)
-		require.True(t, reasonableBaseHeader.Hash.Eq(headers[0].Hash))
-	})
 }
