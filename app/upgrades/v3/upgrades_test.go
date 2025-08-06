@@ -89,7 +89,7 @@ func (s *UpgradeTestSuite) TestUpgradeNetworks() {
 		{
 			name:                        "testnet upgrade",
 			expectedMaxFPs:              10,
-			expectedBtcActivationHeight: 260000,
+			expectedBtcActivationHeight: 264773,
 			permissionedIntegration:     false,
 			ibcPacketTimeoutSeconds:     2419200,
 		},
