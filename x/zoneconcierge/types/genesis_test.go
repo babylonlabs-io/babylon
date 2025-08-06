@@ -28,7 +28,7 @@ func TestGenesisState_Validate(t *testing.T) {
 			desc:     "empty is invalid",
 			genState: &types.GenesisState{},
 			valid:    false,
-			errMsg:   "identifier cannot be blank",
+			errMsg:   "IbcPacketTimeoutSeconds must be positive",
 		},
 		{
 			desc: "valid genesis state",
