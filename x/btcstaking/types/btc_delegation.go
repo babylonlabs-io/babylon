@@ -39,7 +39,7 @@ func NewBTCDelegationStatusFromString(statusStr string) (BTCDelegationStatus, er
 	case "any":
 		return BTCDelegationStatus_ANY, nil
 	default:
-		return -1, fmt.Errorf("invalid status string; should be one of {pending, verified, active, unbonded, any}")
+		return -1, fmt.Errorf("invalid status string; should be one of {pending, verified, active, unbonded, expired, any}")
 	}
 }
 
