@@ -136,7 +136,7 @@ func FuzzDelegationRewardsQuery(f *testing.F) {
 		require.NoError(t, store.Set(fpCurrRwdKeyBz, currRwdBz))
 
 		// set start historical rewards corresponding to btcRwd.StartPeriodCumulativeReward
-		amtRwdInHistStart := fpCurrentRwd.CurrentRewards.MulInt(types.DecimalAccumulatedRewards).QuoInt(math.NewInt(2))
+		amtRwdInHistStart := fpCurrentRwd.CurrentRewards.QuoInt(math.NewInt(2))
 		startHist := types.NewFinalityProviderHistoricalRewards(amtRwdInHistStart)
 		// encode the starting historical rewards
 		startHistRwdBz, err := codec.CollValue[types.FinalityProviderHistoricalRewards](encConfig.Codec).Encode(startHist)
@@ -150,7 +150,7 @@ func FuzzDelegationRewardsQuery(f *testing.F) {
 
 		// set end period historical rewards
 		// end period for calculation is fpCurrentRwd.Period-1
-		amtRwdInHistEnd := amtRwdInHistStart.Add(fpCurrentRwd.CurrentRewards.MulInt(types.DecimalAccumulatedRewards).QuoInt(fpCurrentRwd.TotalActiveSat)...)
+		amtRwdInHistEnd := amtRwdInHistStart.Add(fpCurrentRwd.CurrentRewards.QuoInt(fpCurrentRwd.TotalActiveSat)...)
 		endHist := types.NewFinalityProviderHistoricalRewards(amtRwdInHistEnd)
 		// encode the fp historical rewards
 		endHistRwdBz, err := codec.CollValue[types.FinalityProviderHistoricalRewards](encConfig.Codec).Encode(endHist)
@@ -165,7 +165,7 @@ func FuzzDelegationRewardsQuery(f *testing.F) {
 		// Calculate expected rewards
 		expectedRwd := endHist.CumulativeRewardsPerSat.Sub(startHist.CumulativeRewardsPerSat...)
 		expectedRwd = expectedRwd.MulInt(btcRwd.TotalActiveSat.Add(fpCurrentRwd.TotalActiveSat))
-		expectedRwd = expectedRwd.QuoInt(types.DecimalAccumulatedRewards)
+		expectedRwd = expectedRwd.QuoInt(types.DecimalRewards)
 
 		// Call the DelegationRewards query
 		res, err := k.DelegationRewards(
@@ -176,6 +176,39 @@ func FuzzDelegationRewardsQuery(f *testing.F) {
 			},
 		)
 		require.NoError(t, err)
-		require.Equal(t, expectedRwd, res.Rewards)
+		require.Equal(t, expectedRwd.String(), res.Rewards.String())
+	})
+}
+
+func FuzzFpCurrentRewards(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+
+		k, ctx := testkeeper.IncentiveKeeper(t, nil, nil, nil)
+
+		// invalid query
+		badFp := datagen.GenRandomAddress()
+		req := &types.QueryFpCurrentRewardsRequest{
+			FinalityProviderAddress: badFp.String(),
+		}
+		resp, err := k.FpCurrentRewards(ctx, req)
+		require.EqualError(t, err, types.ErrFPCurrentRewardsInvalid.Wrapf("failed to get for addr %s: %s", badFp.String(), types.ErrFPCurrentRewardsNotFound).Error())
+		require.Nil(t, resp)
+
+		// correct query
+		fp := datagen.GenRandomAddress()
+		rwd := datagen.GenRandomFinalityProviderCurrentRewards(r)
+		err = k.SetFinalityProviderCurrentRewards(ctx, fp, rwd)
+		require.NoError(t, err)
+
+		req = &types.QueryFpCurrentRewardsRequest{
+			FinalityProviderAddress: fp.String(),
+		}
+		resp, err = k.FpCurrentRewards(ctx, req)
+		require.NoError(t, err)
+		require.Equal(t, resp.CurrentRewards.String(), rwd.CurrentRewards.String())
+		require.Equal(t, resp.TotalActiveSat.String(), rwd.TotalActiveSat.String())
+		require.Equal(t, resp.Period, rwd.Period)
 	})
 }

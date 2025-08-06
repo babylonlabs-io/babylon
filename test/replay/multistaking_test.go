@@ -6,10 +6,13 @@ import (
 	"testing"
 	"time"
 
-	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
-	ibctmtypes "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
-
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
+	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
+	abci "github.com/cometbft/cometbft/abci/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	connectiontypes "github.com/cosmos/ibc-go/v10/modules/core/03-connection/types"
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+	ibctmtypes "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
 	"github.com/stretchr/testify/require"
 )
 
@@ -203,4 +206,159 @@ func TestAdditionalGasCostForMultiStakedDelegation(t *testing.T) {
 	// We cannot use equal as multistaked delegations use more gas by default, though
 	// the difference is small enough so that `minimalGasDifference` is much larger than it
 	require.GreaterOrEqual(t, txResults2[0].GasUsed-txResults1[0].GasUsed, int64(minimalGasDifference))
+}
+
+// packVerifiedDelegations packs activation of verified delegations into a single block
+// with proper gas limits for each message
+// It obeys all gas limits of the Babylon Genesis:
+// - Every tx is less than 10M gas
+// - Block will have less than 300M gas
+func (d *BabylonAppDriver) packVerifiedDelegations() []*abci.ExecTxResult {
+	block := d.IncludeVerifiedStakingTxInBTC(0)
+	acitvationMsgs := blockWithProofsToActivationMessages(block, d.GetDriverAccountAddress())
+
+	for i, msg := range acitvationMsgs {
+		var gaslimit uint64
+
+		switch {
+		case i < 5:
+			gaslimit = 1_100_000
+		case i < 10:
+			gaslimit = 2_000_000
+		case i < 15:
+			gaslimit = 2_700_000
+		case i < 20:
+			gaslimit = 3_500_000
+		case i < 25:
+			gaslimit = 4_400_000
+		case i < 30:
+			gaslimit = 5_100_000
+		case i < 35:
+			gaslimit = 6_000_000
+		case i < 40:
+			gaslimit = 7_000_000
+		case i < 45:
+			gaslimit = 7_500_000
+		case i < 50:
+			gaslimit = 8_500_000
+		default:
+			gaslimit = 10_000_000
+		}
+
+		d.SendTxWithMessagesSuccess(d.t, d.SenderInfo, gaslimit, defaultFeeCoin, msg)
+		d.IncSeq()
+	}
+
+	return d.GenerateNewBlockReturnResults()
+}
+
+func (driver *BabylonAppDriver) InitCosmosConsumer(ctx sdk.Context, consumerID string) {
+	driver.App.IBCKeeper.ClientKeeper.SetClientState(ctx, consumerID, &ibctmtypes.ClientState{})
+
+	driver.App.IBCKeeper.ConnectionKeeper.SetConnection(
+		ctx, consumerID, connectiontypes.ConnectionEnd{
+			ClientId: consumerID,
+		},
+	)
+
+	driver.App.IBCKeeper.ChannelKeeper.SetChannel(
+		ctx, "zoneconcierge", consumerID, channeltypes.Channel{
+			State:          channeltypes.OPEN,
+			ConnectionHops: []string{consumerID},
+		},
+	)
+}
+
+func TestTooBigMultistakingPacket(t *testing.T) {
+	t.Parallel()
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	driverTempDir := t.TempDir()
+	replayerTempDir := t.TempDir()
+	driver := NewBabylonAppDriver(r, t, driverTempDir, replayerTempDir)
+
+	const consumerID1 = "consumer1"
+	const consumerID2 = "consumer2"
+	const consumerID3 = "consumer3"
+
+	// 1. Set up mock IBC clients for each consumer before registering consumers
+	ctx := driver.App.BaseApp.NewContext(false)
+	driver.InitCosmosConsumer(ctx, consumerID1)
+	driver.InitCosmosConsumer(ctx, consumerID2)
+	driver.InitCosmosConsumer(ctx, consumerID3)
+	driver.GenerateNewBlock()
+
+	covSender := driver.CreateCovenantSender()
+
+	// 2. Register consumers
+	consumer1 := driver.RegisterConsumer(r, consumerID1)
+	consumer2 := driver.RegisterConsumer(r, consumerID2)
+	consumer3 := driver.RegisterConsumer(r, consumerID3)
+	// Create a Babylon FP (registered without consumer ID)
+	babylonFp := driver.CreateNFinalityProviderAccounts(1)[0]
+	babylonFp.RegisterFinalityProvider("")
+
+	babylonFp1 := driver.CreateNFinalityProviderAccounts(1)[0]
+	babylonFp1.RegisterFinalityProvider("")
+	driver.GenerateNewBlockAssertExecutionSuccess()
+
+	// 3. Create finality providers for each consumer
+	fp1s := []*FinalityProvider{
+		// Create 2 FPs for consumer1
+		driver.CreateFinalityProviderForConsumer(consumer1),
+		driver.CreateFinalityProviderForConsumer(consumer1),
+	}
+	require.NotEmpty(t, fp1s)
+	fp2 := driver.CreateFinalityProviderForConsumer(consumer2)
+	fp3 := driver.CreateFinalityProviderForConsumer(consumer3)
+	require.NotNil(t, fp3)
+	// Generate blocks to process registrations
+	driver.GenerateNewBlockAssertExecutionSuccess()
+	staker := driver.CreateNStakerAccounts(1)[0]
+
+	// we are sending and verifing delegations in batches of 5 to ensure
+	// that covenant transaction will not go over block gas limits
+	driver.SendAndVerifyNDelegations(t, staker, covSender, []*bbn.BIP340PubKey{babylonFp1.BTCPublicKey(), fp2.BTCPublicKey()}, 5)
+	driver.SendAndVerifyNDelegations(t, staker, covSender, []*bbn.BIP340PubKey{babylonFp1.BTCPublicKey(), fp2.BTCPublicKey()}, 5)
+	driver.SendAndVerifyNDelegations(t, staker, covSender, []*bbn.BIP340PubKey{babylonFp1.BTCPublicKey(), fp2.BTCPublicKey()}, 5)
+	driver.SendAndVerifyNDelegations(t, staker, covSender, []*bbn.BIP340PubKey{babylonFp1.BTCPublicKey(), fp2.BTCPublicKey()}, 5)
+	driver.SendAndVerifyNDelegations(t, staker, covSender, []*bbn.BIP340PubKey{babylonFp1.BTCPublicKey(), fp2.BTCPublicKey()}, 5)
+	driver.SendAndVerifyNDelegations(t, staker, covSender, []*bbn.BIP340PubKey{babylonFp1.BTCPublicKey(), fp2.BTCPublicKey()}, 5)
+	driver.SendAndVerifyNDelegations(t, staker, covSender, []*bbn.BIP340PubKey{babylonFp1.BTCPublicKey(), fp2.BTCPublicKey()}, 5)
+	driver.SendAndVerifyNDelegations(t, staker, covSender, []*bbn.BIP340PubKey{babylonFp1.BTCPublicKey(), fp2.BTCPublicKey()}, 5)
+	driver.SendAndVerifyNDelegations(t, staker, covSender, []*bbn.BIP340PubKey{babylonFp1.BTCPublicKey(), fp2.BTCPublicKey()}, 5)
+	driver.SendAndVerifyNDelegations(t, staker, covSender, []*bbn.BIP340PubKey{babylonFp1.BTCPublicKey(), fp2.BTCPublicKey()}, 5)
+	driver.SendAndVerifyNDelegations(t, staker, covSender, []*bbn.BIP340PubKey{babylonFp1.BTCPublicKey(), fp2.BTCPublicKey()}, 4)
+	results := driver.packVerifiedDelegations()
+	require.NotEmpty(t, results)
+
+	// All results except the last one should be successful
+	for _, result := range results[:len(results)-1] {
+		require.Equal(t, uint32(0), result.Code)
+	}
+
+	lastResult := results[len(results)-1]
+
+	// Last result should be a failure
+	require.Equal(t, uint32(1), lastResult.Code)
+	require.Contains(t, lastResult.Log, "IBC packet size is too large")
+}
+
+func (driver *BabylonAppDriver) SendAndVerifyNDelegations(
+	t *testing.T,
+	staker *Staker,
+	covSender *CovenantSender,
+	keys []*bbn.BIP340PubKey,
+	n int,
+) {
+	for i := 0; i < n; i++ {
+		staker.CreatePreApprovalDelegation(
+			keys,
+			1000,
+			100000000,
+		)
+	}
+
+	driver.GenerateNewBlockAssertExecutionSuccess()
+	covSender.SendCovenantSignatures()
+	driver.GenerateNewBlockAssertExecutionSuccess()
 }

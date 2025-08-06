@@ -142,7 +142,16 @@ func (k Keeper) processAddBsnRewards(
 		return status.Errorf(codes.InvalidArgument, "invalid address %s: %v", transferData.Receiver, err)
 	}
 
-	return k.AddBsnRewards(ctx, receiverOnBbnAddr, callbackAddBsnRewards.BsnConsumerID, sdk.NewCoins(bsnReward), callbackAddBsnRewards.FpRatios)
+	bsnConsID := callbackAddBsnRewards.BsnConsumerID
+	if len(bsnConsID) == 0 {
+		// uses the destination because it is the port and channel registered on babylon side
+		bsnConsID, err = k.BscKeeper.GetConsumerID(ctx, packet.GetDestPort(), packet.GetDestChannel())
+		if err != nil {
+			return status.Errorf(codes.InvalidArgument, "unable to parse BSN consumer ID from packet %+v: %v", packet, err)
+		}
+	}
+
+	return k.AddBsnRewards(ctx, receiverOnBbnAddr, bsnConsID, sdk.NewCoins(bsnReward), callbackAddBsnRewards.FpRatios)
 }
 
 // BabylonRepresentationIcs20TransferCoin it checks if the coin was from babylon genesis

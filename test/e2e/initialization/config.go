@@ -24,7 +24,6 @@ import (
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
 	btccheckpointtypes "github.com/babylonlabs-io/babylon/v3/x/btccheckpoint/types"
-	blctypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
 	btclighttypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
 	btcstktypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 	finalitytypes "github.com/babylonlabs-io/babylon/v3/x/finality/types"
@@ -45,6 +44,12 @@ type NodeConfig struct {
 	SnapshotKeepRecent uint32 // number of recent snapshots to keep and serve (0 to keep all)
 	IsValidator        bool   // flag indicating whether a node should be a validator
 	BtcNetwork         string // The Bitcoin network used
+}
+
+// StartingBtcStakingParams is the initial btc staking parameters for the chain
+type StartingBtcStakingParams struct {
+	CovenantCommittee []bbn.BIP340PubKey
+	CovenantQuorum    uint32
 }
 
 const (
@@ -71,9 +76,8 @@ var (
 	StakeAmountCoinA = sdk.NewCoin(BabylonDenom, StakeAmountIntA)
 	StakeAmountIntB  = sdkmath.NewInt(StakeAmountB)
 	StakeAmountCoinB = sdk.NewCoin(BabylonDenom, StakeAmountIntB)
-
-	InitBalanceStrA = fmt.Sprintf("%d%s", BabylonBalanceA, BabylonDenom)
-	InitBalanceStrB = fmt.Sprintf("%d%s", BabylonBalanceB, BabylonDenom)
+	InitBalanceStrA  = fmt.Sprintf("%d%s", BabylonBalanceA, BabylonDenom)
+	InitBalanceStrB  = fmt.Sprintf("%d%s", BabylonBalanceB, BabylonDenom)
 )
 
 func addAccount(path, moniker, amountStr string, accAddr sdk.AccAddress, forkHeight int) error {
@@ -171,12 +175,14 @@ func initGenesis(
 	votingPeriod, expeditedVotingPeriod time.Duration,
 	forkHeight int,
 	btcHeaders []*btclighttypes.BTCHeaderInfo,
+	startingBtcStakingParams *StartingBtcStakingParams,
 ) error {
 	// initialize a genesis file
 	configDir := chain.nodes[0].configDir()
 
 	for _, val := range chain.nodes {
 		addr, err := val.keyInfo.GetAddress()
+
 		if err != nil {
 			return err
 		}
@@ -186,14 +192,14 @@ func initGenesis(
 			r := rand.New(rand.NewSource(time.Now().Unix()))
 			initialFundsA := datagen.GenRandomCoins(r).MulInt(sdkmath.NewInt(10))
 			initialFundsA = initialFundsA.Add(sdk.NewCoin(BabylonDenom, sdkmath.NewInt(BabylonBalanceA)))
-
 			if err := addAccount(configDir, "", initialFundsA.String(), addr, forkHeight); err != nil {
 				return err
 			}
-		} else if chain.chainMeta.Id == ChainBID {
-			if err := addAccount(configDir, "", InitBalanceStrB, addr, forkHeight); err != nil {
-				return err
-			}
+			continue
+		}
+
+		if err := addAccount(configDir, "", InitBalanceStrB, addr, forkHeight); err != nil {
+			return err
 		}
 	}
 
@@ -245,7 +251,7 @@ func initGenesis(
 		return err
 	}
 
-	err = updateModuleGenesis(appGenState, blctypes.ModuleName, blctypes.DefaultGenesis(), updateBtcLightClientGenesis(btcHeaders))
+	err = updateModuleGenesis(appGenState, btclighttypes.ModuleName, btclighttypes.DefaultGenesis(), updateBtcLightClientGenesis(btcHeaders))
 	if err != nil {
 		return err
 	}
@@ -268,9 +274,9 @@ func initGenesis(
 	err = updateModuleGenesis(appGenState, tokenfactorytypes.ModuleName, &tokenfactorytypes.GenesisState{}, updateTokenFactoryGenesis)
 	if err != nil {
 		return fmt.Errorf("failed to update tokenfactory genesis state: %w", err)
-  }
+	}
 
-	err = updateModuleGenesis(appGenState, btcstktypes.ModuleName, &btcstktypes.GenesisState{}, updateBtcStakingGenesis)
+	err = updateModuleGenesis(appGenState, btcstktypes.ModuleName, &btcstktypes.GenesisState{}, updateBtcStakingGenesisFn(startingBtcStakingParams))
 	if err != nil {
 		return fmt.Errorf("failed to update rate limiter genesis state: %w", err)
 	}
@@ -331,11 +337,11 @@ func updateStakeGenesis(stakeGenState *staketypes.GenesisState) {
 		MaxEntries:        7,
 		HistoricalEntries: 10000,
 		UnbondingTime:     staketypes.DefaultUnbondingTime,
-		MinCommissionRate: sdkmath.LegacyZeroDec(),
+		MinCommissionRate: sdkmath.LegacyMustNewDecFromStr("0.03"),
 	}
 }
 
-func updateBtcLightClientGenesis(btcHeaders []*btclighttypes.BTCHeaderInfo) func(blcGenState *blctypes.GenesisState) {
+func updateBtcLightClientGenesis(btcHeaders []*btclighttypes.BTCHeaderInfo) func(blcGenState *btclighttypes.GenesisState) {
 	return func(blcGenState *btclighttypes.GenesisState) {
 		if len(btcHeaders) > 0 {
 			blcGenState.BtcHeaders = btcHeaders
@@ -347,8 +353,8 @@ func updateBtcLightClientGenesis(btcHeaders []*btclighttypes.BTCHeaderInfo) func
 		if err != nil {
 			panic(err)
 		}
-		work := blctypes.CalcWork(&baseBtcHeader)
-		blcGenState.BtcHeaders = []*blctypes.BTCHeaderInfo{blctypes.NewBTCHeaderInfo(&baseBtcHeader, baseBtcHeader.Hash(), 0, &work)}
+		work := btclighttypes.CalcWork(&baseBtcHeader)
+		blcGenState.BtcHeaders = []*btclighttypes.BTCHeaderInfo{btclighttypes.NewBTCHeaderInfo(&baseBtcHeader, baseBtcHeader.Hash(), 0, &work)}
 	}
 }
 
@@ -366,9 +372,15 @@ func updateFinalityGenesis(finalityGenState *finalitytypes.GenesisState) {
 	finalityGenState.Params.SignedBlocksWindow = 300
 }
 
-func updateBtcStakingGenesis(btcStakingGenState *btcstktypes.GenesisState) {
-	// bump max finality providers to 5 in e2e and replay tests
-	btcStakingGenState.Params[0].MaxFinalityProviders = 5
+func updateBtcStakingGenesisFn(p *StartingBtcStakingParams) func(*btcstktypes.GenesisState) {
+	return func(gen *btcstktypes.GenesisState) {
+		gen.Params[0].MaxFinalityProviders = 5
+
+		if p != nil {
+			gen.Params[0].CovenantPks = p.CovenantCommittee
+			gen.Params[0].CovenantQuorum = p.CovenantQuorum
+		}
+	}
 }
 
 func updateGenUtilGenesis(c *internalChain) func(*genutiltypes.GenesisState) {
@@ -384,6 +396,7 @@ func updateGenUtilGenesis(c *internalChain) func(*genutiltypes.GenesisState) {
 			if c.chainMeta.Id != ChainAID {
 				stakeAmountCoin = StakeAmountCoinB
 			}
+
 			createValmsg, err := node.buildCreateValidatorMsg(stakeAmountCoin, node.consensusKey)
 			if err != nil {
 				panic("genutil genesis setup failed: " + err.Error())

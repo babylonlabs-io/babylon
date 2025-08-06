@@ -78,16 +78,9 @@ func (k Keeper) CreateBTCDelegation(ctx sdk.Context, parsedMsg *types.ParsedCrea
 	// already existing multi-staking delegation (extended from the allow-list)
 	isMultiStaking := parsedMsg.FinalityProviderKeys.Len() > 1
 	if isMultiStaking && allowlist.IsMultiStakingAllowListEnabled(ctx.BlockHeight()) {
-		// if is not stake expansion, it is not allowed to create new delegations with multi-staking
-		if parsedMsg.StkExp == nil {
-			return types.ErrInvalidStakingTx.Wrap("it is not allowed to create new delegations with multi-staking during the multi-staking allow-list period")
-		}
-
-		// if it is stake expansion, we need to check if the previous staking tx hash
-		// is in the allow list or the previous staking tx is a multi-staking tx
-		allowed, err := k.IsMultiStakingAllowed(ctx, parsedMsg.StkExp.PreviousActiveStkTxHash)
+		allowed, err := k.IsMultiStakingAllowed(ctx, parsedMsg)
 		if err != nil {
-			return fmt.Errorf("failed to check if the previous staking tx hash is eligible for multi-staking: %w", err)
+			return err
 		}
 		if !allowed {
 			return types.ErrInvalidStakingTx.Wrapf("staking tx hash: %s, is not eligible for multi-staking", parsedMsg.StkExp.PreviousActiveStkTxHash.String())
@@ -225,7 +218,7 @@ func (k Keeper) addCovenantSigsToBTCDelegation(
 	parsedUnbondingSlashingAdaptorSignatures []asig.AdaptorSignature,
 	stakeExpansionTxSig *bbn.BIP340Signature,
 	btcTipHeight uint32,
-) {
+) error {
 	btcDel := delInfo.Delegation
 	var quorumPreviousStk uint32
 	if btcDel.IsStakeExpansion() {
@@ -280,7 +273,9 @@ func (k Keeper) addCovenantSigsToBTCDelegation(
 			k.addPowerDistUpdateEvent(ctx, btcTipHeight, activeEvent)
 
 			// notify consumer chains about the active BTC delegation
-			k.notifyConsumersOnActiveBTCDel(ctx, btcDel)
+			if err := k.notifyConsumersOnActiveBTCDel(ctx, btcDel); err != nil {
+				return err
+			}
 		} else {
 			quorumReachedEvent := types.NewCovenantQuorumReachedEvent(
 				btcDel,
@@ -292,9 +287,11 @@ func (k Keeper) addCovenantSigsToBTCDelegation(
 			}
 		}
 	}
+
+	return nil
 }
 
-func (k Keeper) notifyConsumersOnActiveBTCDel(ctx context.Context, btcDel *types.BTCDelegation) {
+func (k Keeper) notifyConsumersOnActiveBTCDel(ctx context.Context, btcDel *types.BTCDelegation) error {
 	// get consumer ids of only non-Babylon finality providers
 	multiStakedFPConsumerIDs, err := k.multiStakedFPConsumerIDs(ctx, btcDel.FpBtcPkList)
 	if err != nil {
@@ -306,9 +303,11 @@ func (k Keeper) notifyConsumersOnActiveBTCDel(ctx context.Context, btcDel *types
 	}
 	for _, consumerID := range multiStakedFPConsumerIDs {
 		if err := k.AddBTCStakingConsumerEvent(ctx, consumerID, consumerEvent); err != nil {
-			panic(fmt.Errorf("failed to add active BTC delegation event: %w", err))
+			return fmt.Errorf("failed to add active BTC delegation event: %w", err)
 		}
 	}
+
+	return nil
 }
 
 // btcUndelegate adds the signature of the unbonding tx signed by the staker
@@ -319,12 +318,12 @@ func (k Keeper) btcUndelegate(
 	u *types.DelegatorUnbondingInfo,
 	stakeSpendingTx []byte,
 	proof *types.InclusionProof,
-) {
+) error {
 	btcDel.BtcUndelegation.DelegatorUnbondingInfo = u
 	k.setBTCDelegation(ctx, btcDel)
 
 	if !btcDel.HasInclusionProof() {
-		return
+		return nil
 	}
 
 	// notify subscriber about this unbonded BTC delegation
@@ -350,9 +349,10 @@ func (k Keeper) btcUndelegate(
 	}
 	for _, consumerID := range multiStakedFPConsumerIDs {
 		if err = k.AddBTCStakingConsumerEvent(ctx, consumerID, consumerEvent); err != nil {
-			panic(fmt.Errorf("failed to add active BTC delegation event: %w", err))
+			return fmt.Errorf("failed to add unbonded BTC delegation event: %w", err)
 		}
 	}
+	return nil
 }
 
 // isAllowListEnabled checks if the allow list is enabled at the given height
