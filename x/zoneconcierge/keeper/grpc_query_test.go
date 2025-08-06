@@ -144,7 +144,7 @@ func FuzzFinalizedChainInfo(f *testing.F) {
 			consumerIDs   []string
 		)
 
-		// Set up the mock to return the consumerIDs slice
+		// Set up the mocks to return the consumerIDs slice
 		btcStkConsumerKeeper.EXPECT().GetAllRegisteredConsumerIDs(gomock.Any()).DoAndReturn(func(ctx context.Context) []string {
 			return consumerIDs
 		}).AnyTimes()
