@@ -3,13 +3,11 @@ package keeper
 import (
 	"testing"
 
-	"cosmossdk.io/core/header"
 	"cosmossdk.io/log"
 	"cosmossdk.io/store"
 	"cosmossdk.io/store/metrics"
 	storetypes "cosmossdk.io/store/types"
 	cmtcrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
-	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -83,28 +81,13 @@ func ZoneConciergeKeeperWithStoreKey(
 
 	registry := codectypes.NewInterfaceRegistry()
 	appCodec := codec.NewProtoCodec(registry)
-<<<<<<< HEAD
-=======
-
-	ctx := sdk.NewContext(stateStore, cmtproto.Header{}, false, logger)
-	ctx = ctx.WithHeaderInfo(header.Info{})
-
-	ck := keeper.NewChannelKeeper(appCodec, runtime.NewKVStoreService(storeKey), channelKeeper)
-	err := ck.InitGenesis(ctx, *types.DefaultGenesis())
-	require.NoError(t, err)
-
->>>>>>> d3bbe2d (Fix/zoneconcierge no base header (#1512))
 	k := keeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(storeKey),
 		nil, // TODO: mock this keeper
 		nil, // TODO: mock this keeper
 		nil, // TODO: mock this keeper
-<<<<<<< HEAD
 		channelKeeper,
-=======
-		ck,
->>>>>>> d3bbe2d (Fix/zoneconcierge no base header (#1512))
 		nil, // TODO: mock this keeper
 		nil, // TODO: mock this keeper
 		btclcKeeper,
