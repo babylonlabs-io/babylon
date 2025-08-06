@@ -10,7 +10,6 @@ import (
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
 	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 	minttypes "github.com/babylonlabs-io/babylon/v3/x/mint/types"
-	ibctmtypes "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
 	"github.com/stretchr/testify/require"
 )
 
@@ -94,7 +93,6 @@ func TestAddBsnRewardsMathOverflow(t *testing.T) {
 	require.NotNil(t, covSender)
 
 	consumerID := "bsn-consumer-0"
-	d.App.IBCKeeper.ClientKeeper.SetClientState(d.Ctx(), consumerID, &ibctmtypes.ClientState{})
 	OpenChannelForConsumer(d.Ctx(), d.App, consumerID)
 	d.GenerateNewBlock()
 

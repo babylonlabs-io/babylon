@@ -13,7 +13,6 @@ import (
 	ictvtypes "github.com/babylonlabs-io/babylon/v3/x/incentive/types"
 	minttypes "github.com/babylonlabs-io/babylon/v3/x/mint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	ibctmtypes "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
 	"github.com/stretchr/testify/require"
 )
 
@@ -28,7 +27,6 @@ func TestConsumerBsnRewardDistribution(t *testing.T) {
 	require.NotNil(t, covSender)
 
 	consumerID := "bsn-consumer-0"
-	d.App.IBCKeeper.ClientKeeper.SetClientState(d.Ctx(), consumerID, &ibctmtypes.ClientState{})
 	OpenChannelForConsumer(d.Ctx(), d.App, consumerID)
 	d.GenerateNewBlock()
 
