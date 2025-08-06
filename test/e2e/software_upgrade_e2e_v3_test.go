@@ -63,11 +63,10 @@ type SoftwareUpgradeV3TestSuite struct {
 	fp2Addr string
 
 	// finality helpers
-	finalityIdx               uint64
-	firstFinalizedBlockHeight uint64
-	finalityBlockHeightVoted  uint64
-	fp1RandListInfo           *datagen.RandListInfo
-	fp2RandListInfo           *datagen.RandListInfo
+	finalityIdx              uint64
+	finalityBlockHeightVoted uint64
+	fp1RandListInfo          *datagen.RandListInfo
+	fp2RandListInfo          *datagen.RandListInfo
 
 	configurer *configurer.UpgradeConfigurer
 }
@@ -300,7 +299,6 @@ func (s *SoftwareUpgradeV3TestSuite) FpCommitPubRandAndVote(n *chain.NodeConfig)
 	}
 
 	s.finalityBlockHeightVoted = n.WaitFinalityIsActivated()
-	s.firstFinalizedBlockHeight = s.finalityBlockHeightVoted
 
 	// submit finality signature
 	s.finalityIdx = s.finalityBlockHeightVoted - commitStartHeight
@@ -386,18 +384,19 @@ func (s *SoftwareUpgradeV3TestSuite) Test1UpgradeV3() {
 	s.AddFinalityVoteUntilCurrentHeight(n, fpFinVoteContext)
 
 	// wait a few blocks for the reward to be allocated
-	n.WaitForNextBlocks(10)
+	n.WaitForNextBlocks(20)
 
 	// check for rewards from the finality activation height until last finalized block
 	finalizedBlocks := n.QueryListBlocks(ftypes.QueriedBlockStatus_FINALIZED)
 	firstFinalizedBlock := finalizedBlocks[0]
 	lastFinalizedBlock := finalizedBlocks[len(finalizedBlocks)-1]
-	s.Require().GreaterOrEqual(uint64(expectedUpgradeHeight), lastFinalizedBlock.Height)
+	// at least one block should be finalized after the upgrade
+	s.Require().GreaterOrEqual(lastFinalizedBlock.Height, uint64(expectedUpgradeHeight))
 
 	// assuming that both fps were rewarded the same amounts
 	fp1Rwds, fp2Rwds, del1, del2 := s.QueryRewardGauges(n)
 
-	totalRewardsAllocated, err := n.QueryBtcStkGaugeFromBlocks(s.firstFinalizedBlockHeight, lastFinalizedBlock.Height)
+	totalRewardsAllocated, err := n.QueryBtcStkGaugeFromBlocks(firstFinalizedBlock.Height, lastFinalizedBlock.Height)
 	s.Require().NoError(err)
 	s.Require().False(totalRewardsAllocated.IsZero())
 
@@ -416,7 +415,10 @@ func (s *SoftwareUpgradeV3TestSuite) Test1UpgradeV3() {
 	vpFp2 := s.fp2Del1StakingAmt
 	totalVp := vpFp1 + vpFp2
 
-	fp1TotalRwds, fp2TotalRwds := sdk.NewCoins(), sdk.NewCoins()
+	fp1Rate := sdkmath.LegacyNewDec(vpFp1).QuoTruncate(sdkmath.LegacyNewDec(totalVp))
+	fp2Rate := sdkmath.LegacyNewDec(vpFp2).QuoTruncate(sdkmath.LegacyNewDec(totalVp))
+
+	fp1TotalCommission, fp2TotalCommission, fp1CoinsForDels, fp2CoinsForDels := sdk.NewCoins(), sdk.NewCoins(), sdk.NewCoins(), sdk.NewCoins()
 	for blkHeight := firstFinalizedBlock.Height; blkHeight <= lastFinalizedBlock.Height; blkHeight++ {
 		fpsVoted := n.QueryVotesAtHeight(blkHeight)
 		s.Require().Len(fpsVoted, 2, "two fps should have voted")
@@ -439,33 +441,29 @@ func (s *SoftwareUpgradeV3TestSuite) Test1UpgradeV3() {
 		coinsInBlk, err := n.QueryBtcStkGauge(blkHeight)
 		s.Require().NoError(err)
 
-		fp1Rate := sdkmath.LegacyNewDec(vpFp1).QuoTruncate(sdkmath.LegacyNewDec(totalVp))
-		fp1Portion := itypes.GetCoinsPortion(coinsInBlk, fp1Rate)
-		fp1Comm := itypes.GetCoinsPortion(fp1Portion, *s.fp1.Commission)
-		fp1TotalRwds = fp1TotalRwds.Add(fp1Comm...)
+		coinsForFp1AndDels := itypes.GetCoinsPortion(coinsInBlk, fp1Rate)
+		fp1Comm := itypes.GetCoinsPortion(coinsForFp1AndDels, *s.fp1.Commission)
+		fp1TotalCommission = fp1TotalCommission.Add(fp1Comm...)
+		fp1CoinsForDels = fp1CoinsForDels.Add(coinsForFp1AndDels.Sub(fp1Comm...)...)
 
-		fp2Rate := sdkmath.LegacyNewDec(vpFp2).QuoTruncate(sdkmath.LegacyNewDec(totalVp))
-		fp2Portion := itypes.GetCoinsPortion(coinsInBlk, fp2Rate)
-		fp2Comm := itypes.GetCoinsPortion(fp2Portion, *s.fp2.Commission)
-		fp2TotalRwds = fp2TotalRwds.Add(fp2Comm...)
+		coinsForFp2AndDels := itypes.GetCoinsPortion(coinsInBlk, fp2Rate)
+		fp2Comm := itypes.GetCoinsPortion(coinsForFp2AndDels, *s.fp2.Commission)
+		fp2TotalCommission = fp2TotalCommission.Add(fp2Comm...)
+		fp2CoinsForDels = fp2CoinsForDels.Add(coinsForFp2AndDels.Sub(fp1Comm...)...)
 	}
 
 	// fp1CommExp := itypes.GetCoinsPortion(fp1TotalRwds, *s.fp1.Commission)
-	coins.RequireCoinsDiffInPointOnePercentMargin(s.T(), fp1TotalRwds, fp1Rwds.Coins)
-	require.Equal(s.T(), fp1TotalRwds.String(), fp1Rwds.Coins.String(), "fp1 rewards do not match")
+	coins.RequireCoinsDiffInPointOnePercentMargin(s.T(), fp1TotalCommission, fp1Rwds.Coins)
 
-	fp2CommExp := itypes.GetCoinsPortion(fp2TotalRwds, *s.fp2.Commission)
-	require.Equal(s.T(), fp2TotalRwds.String(), fp2Rwds.Coins.String(), "fp2 rewards do not match")
-
-	fp1BtcStakersShares := fp1TotalRwds.Sub(fp1TotalRwds...)
+	coins.RequireCoinsDiffInPointOnePercentMargin(s.T(), fp2TotalCommission, fp2Rwds.Coins)
 
 	// del1 receives what is left after fp commission for fp2 since it is the only staker
 	// plus his share in what is left from fp1
-	del1ShareFp1 := itypes.GetCoinsPortion(fp1BtcStakersShares, sdkmath.LegacyMustNewDecFromStr("0.666666667"))
-	expCoinsDel1 := fp2TotalRwds.Sub(fp2CommExp...).Add(del1ShareFp1...)
+	del1ShareFp1 := itypes.GetCoinsPortion(fp1CoinsForDels, sdkmath.LegacyMustNewDecFromStr("0.666666667"))
+	expCoinsDel1 := fp2CoinsForDels.Add(del1ShareFp1...)
 	coins.RequireCoinsDiffInPointOnePercentMargin(s.T(), expCoinsDel1, del1.Coins)
 
-	expCoinsDel2 := itypes.GetCoinsPortion(fp1BtcStakersShares, sdkmath.LegacyMustNewDecFromStr("0.333333333"))
+	expCoinsDel2 := itypes.GetCoinsPortion(fp1CoinsForDels, sdkmath.LegacyMustNewDecFromStr("0.333333333"))
 	coins.RequireCoinsDiffInPointOnePercentMargin(s.T(), expCoinsDel2, del2.Coins)
 }
 
