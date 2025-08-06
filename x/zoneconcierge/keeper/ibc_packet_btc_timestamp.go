@@ -152,12 +152,7 @@ func (k Keeper) getDeepEnoughBTCHeaders(ctx context.Context) []*btclctypes.BTCHe
 // If a consumer ID is not provided, a global LastSentSegment is used to track the timestamped header
 // for all consumers when the checkpoint is finalized.
 func (k Keeper) getHeadersToBroadcast(ctx context.Context, consumerID string) []*btclctypes.BTCHeaderInfo {
-	var lastSegment *types.BTCChainSegment
-	if consumerID != "" {
-		lastSegment = k.GetLastSentSegment(ctx)
-	} else {
-		lastSegment = k.GetBSNLastSentSegment(ctx, consumerID)
-	}
+	lastSegment := k.GetBSNLastSentSegment(ctx, consumerID)
 
 	if lastSegment == nil {
 		// we did not send any headers yet, so we need to send the last k+1 BTC headers
@@ -195,7 +190,6 @@ func (k Keeper) getHeadersToBroadcast(ctx context.Context, consumerID string) []
 func (k Keeper) BroadcastBTCTimestamps(
 	ctx context.Context,
 	epochNum uint64,
-	headersToBroadcast []*btclctypes.BTCHeaderInfo,
 ) error {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	// Babylon does not broadcast BTC timestamps until finalising epoch 1
@@ -221,16 +215,6 @@ func (k Keeper) BroadcastBTCTimestamps(
 		"epoch", epochNum,
 	)
 
-	// get all metadata shared across BTC timestamps in the same epoch
-	finalizedInfo, err := k.getFinalizedInfo(ctx, epochNum, headersToBroadcast)
-	if err != nil {
-		k.Logger(sdkCtx).Error("failed to get finalized info for BTC timestamp broadcast",
-			"epoch", epochNum,
-			"error", err.Error(),
-		)
-		return err
-	}
-
 	// for each registered consumer, find its channel and send BTC timestamp
 	for _, consumerID := range consumerIDs {
 		// Find the channel for this consumer
@@ -240,6 +224,18 @@ func (k Keeper) BroadcastBTCTimestamps(
 				"consumerID", consumerID,
 			)
 			continue
+		}
+
+		headersToBroadcast := k.getHeadersToBroadcast(ctx, consumerID)
+
+		// get all metadata shared across BTC timestamps in the same epoch
+		finalizedInfo, err := k.getFinalizedInfo(ctx, epochNum, headersToBroadcast)
+		if err != nil {
+			k.Logger(sdkCtx).Error("failed to get finalized info for BTC timestamp broadcast",
+				"epoch", epochNum,
+				"error", err.Error(),
+			)
+			return err
 		}
 
 		btcTimestamp, err := k.createBTCTimestamp(ctx, consumerID, channel, finalizedInfo)
@@ -269,6 +265,13 @@ func (k Keeper) BroadcastBTCTimestamps(
 				"error", err.Error(),
 			)
 			continue
+		}
+
+		// only update the segment if we have broadcasted some headers
+		if len(headersToBroadcast) > 0 {
+			k.SetBSNLastSentSegment(ctx, consumerID, &types.BTCChainSegment{
+				BtcHeaders: headersToBroadcast,
+			})
 		}
 	}
 

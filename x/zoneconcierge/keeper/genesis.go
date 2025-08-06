@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+
 	"github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
 )
 
@@ -14,13 +15,6 @@ func (k Keeper) InitGenesis(ctx context.Context, gs types.GenesisState) error {
 	// Initialize finalized headers
 	for _, fh := range gs.FinalizedHeaders {
 		k.setFinalizedHeader(ctx, fh.ConsumerId, fh.EpochNumber, fh.HeaderWithProof)
-	}
-
-	// Initialize last sent segment
-	if gs.LastSentSegment != nil {
-		if err := k.setLastSentSegment(ctx, gs.LastSentSegment); err != nil {
-			return err
-		}
 	}
 
 	// Initialize sealed epoch proofs
@@ -62,7 +56,6 @@ func (k Keeper) ExportGenesis(ctx context.Context) (*types.GenesisState, error) 
 		Params:             k.GetParams(ctx),
 		PortId:             k.GetPort(ctx),
 		FinalizedHeaders:   fh,
-		LastSentSegment:    k.GetLastSentSegment(ctx),
 		SealedEpochsProofs: se,
 		BsnBtcStates:       cs,
 	}, nil

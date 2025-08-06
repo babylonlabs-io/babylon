@@ -7,21 +7,6 @@ import (
 	"github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
 )
 
-// GetLastSentSegment get last broadcasted btc light client segment
-func (k Keeper) GetLastSentSegment(ctx context.Context) *types.BTCChainSegment {
-	segment, err := k.LastSentBTCSegment.Get(ctx)
-	if err != nil {
-		return nil
-	}
-	return &segment
-}
-
-// setLastSentSegment sets the last segment which was broadcasted to the other light clients
-// called upon each AfterRawCheckpointFinalized hook invocation
-func (k Keeper) setLastSentSegment(ctx context.Context, segment *types.BTCChainSegment) error {
-	return k.LastSentBTCSegment.Set(ctx, *segment)
-}
-
 func (k Keeper) GetLastFinalizedEpoch(ctx context.Context) uint64 {
 	return k.checkpointingKeeper.GetLastFinalizedEpoch(ctx)
 }
