@@ -73,7 +73,7 @@ func ParseTwoProofs(
 		checkpointData = append(checkpointData, data)
 	}
 
-	// at this point we know we have two correctly formated babylon op return transactions
+	// at this point we know we have two correctly formatted babylon op return transactions
 	// we need to check if parts match
 	rawCkptData, err := txformat.ConnectParts(txformat.CurrentVersion, checkpointData[0], checkpointData[1])
 
