@@ -149,7 +149,7 @@ func (s *IbcCallbackBsnAddRewards) Test1CreateFinalityProviders() {
 	// Need to use same connection ID as the one used in the consumer registration
 	connResp, err := bbnNode.QueryConnections()
 	require.NoError(s.T(), err)
-	require.Len(s.T(), connResp.Connections, 1)
+	require.Len(s.T(), connResp.Connections, 2)
 	connID := connResp.Connections[0].Id
 	err = s.configurer.OpenZoneConciergeChannel(chainA, chainB, connID)
 	require.NoError(s.T(), err, "failed to create zoneconcierge channel between Babylon and BSN")
