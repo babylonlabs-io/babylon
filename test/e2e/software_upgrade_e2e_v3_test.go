@@ -373,36 +373,8 @@ func (s *SoftwareUpgradeV3TestSuite) CheckParamsAfterUpgrade() {
 	n, err := chainA.GetNodeAtIndex(1)
 	s.NoError(err)
 
-<<<<<<< HEAD
-	btcstakingparams, exists := stakingParams["params"]
-	s.Require().True(exists, "btcstakingparams params should exist")
-
-	btcparamsMap, ok := btcstakingparams.(map[string]interface{})
-	s.Require().True(ok, "btcstakingparams params should exist")
-
-	maxFP, ok := btcparamsMap["max_finality_providers"]
-	s.Require().True(ok, "max_finality_providers param should exist")
-	s.Require().Equal(float64(10), maxFP, "max_finality_providers should be 10")
-
-	s.Require().Equal(float64(264773), btcparamsMap["btc_activation_height"],
-		"BtcActivationHeight should be incremented correctly")
-
-	// check that the module exists by querying parameters with the QueryParams helper
-	var btcstkconsumerParams map[string]interface{}
-	n.QueryParams(btcstkconsumerModulePath, &btcstkconsumerParams)
-	s.T().Logf("btcstkconsumer params: %v", btcstkconsumerParams)
-
-	btcConsParams, exists := btcstkconsumerParams["params"]
-	s.Require().True(exists, "btcstkconsumer params should exist")
-
-	btcConsParamsMap, ok := btcConsParams.(map[string]interface{})
-	s.Require().True(ok, "btcstkconsumer params should be a map")
-	s.Require().Equal(false, btcConsParamsMap["permissioned_integration"],
-		"permissioned_integration should be false")
-=======
 	btcStkConsParams := n.QueryBTCStkConsumerParams()
 	s.Require().False(btcStkConsParams.PermissionedIntegration, "btcstkconsumer permissioned integration should be false")
->>>>>>> 14095de (chore: e2e test for incentives migration in upgrade v3 (#1473))
 
 	zoneConciergeParams := n.QueryZoneConciergeParams()
 	s.Require().Equal(uint32(2419200), zoneConciergeParams.IbcPacketTimeoutSeconds, "ibc_packet_timeout_seconds should be 2419200")
