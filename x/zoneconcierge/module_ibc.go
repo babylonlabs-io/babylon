@@ -172,12 +172,6 @@ func (im IBCModule) OnRecvPacket(
 			return channeltypes.NewErrorAcknowledgement(err)
 		}
 		return channeltypes.NewResultAcknowledgement([]byte("Consumer slashing handled successfully"))
-	case *types.InboundPacket_BsnBaseBtcHeader:
-		err := im.keeper.HandleBSNBaseBTCHeader(ctx, modulePacket.DestinationPort, modulePacket.DestinationChannel, packet.BsnBaseBtcHeader.BaseBtcHeader)
-		if err != nil {
-			return channeltypes.NewErrorAcknowledgement(err)
-		}
-		return channeltypes.NewResultAcknowledgement([]byte("BSN base BTC header updated successfully"))
 	default:
 		errMsg := fmt.Sprintf("unrecognized inbound packet type: %T", packet)
 		return channeltypes.NewErrorAcknowledgement(errorsmod.Wrap(sdkerrors.ErrUnknownRequest, errMsg))

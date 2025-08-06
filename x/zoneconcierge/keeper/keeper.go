@@ -37,7 +37,6 @@ type (
 		// Collections for KV store management
 		Schema                collections.Schema
 		ParamsCollection      collections.Item[types.Params]
-		LastSentBTCSegment    collections.Item[types.BTCChainSegment]
 		SealedEpochProof      collections.Map[uint64, types.ProofEpochSealed]
 		BSNBTCState           collections.Map[string, types.BSNBTCState]
 		LatestEpochHeaders    collections.Map[string, types.IndexedHeader]
@@ -88,12 +87,6 @@ func NewKeeper(
 			types.ParamsKey,
 			"params",
 			codec.CollValue[types.Params](cdc),
-		),
-		LastSentBTCSegment: collections.NewItem[types.BTCChainSegment](
-			sb,
-			types.LastSentBTCSegmentKey,
-			"last_sent_btc_segment",
-			codec.CollValue[types.BTCChainSegment](cdc),
 		),
 		SealedEpochProof: collections.NewMap[uint64, types.ProofEpochSealed](
 			sb,

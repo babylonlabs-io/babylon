@@ -13,13 +13,6 @@ func (k Keeper) InitGenesis(ctx context.Context, gs types.GenesisState) error {
 		k.setFinalizedHeader(ctx, fh.ConsumerId, fh.EpochNumber, fh.HeaderWithProof)
 	}
 
-	// Initialize last sent segment
-	if gs.LastSentSegment != nil {
-		if err := k.setLastSentSegment(ctx, gs.LastSentSegment); err != nil {
-			return err
-		}
-	}
-
 	// Initialize sealed epoch proofs
 	for _, se := range gs.SealedEpochsProofs {
 		if err := k.SealedEpochProof.Set(ctx, se.EpochNumber, *se.Proof); err != nil {
@@ -58,7 +51,6 @@ func (k Keeper) ExportGenesis(ctx context.Context) (*types.GenesisState, error) 
 	return &types.GenesisState{
 		Params:             k.GetParams(ctx),
 		FinalizedHeaders:   fh,
-		LastSentSegment:    k.GetLastSentSegment(ctx),
 		SealedEpochsProofs: se,
 		BsnBtcStates:       cs,
 	}, nil

@@ -26,7 +26,6 @@ func NewGenesis(
 	return &GenesisState{
 		Params:             params,
 		FinalizedHeaders:   finalizedHeaders,
-		LastSentSegment:    lastSentSegment,
 		SealedEpochsProofs: sealedEpochs,
 		BsnBtcStates:       bsnBtcStates,
 	}
@@ -42,12 +41,6 @@ func (gs GenesisState) Validate() error {
 			return fh.ConsumerId + strconv.FormatUint(fh.EpochNumber, 10)
 		}); err != nil {
 		return err
-	}
-
-	if gs.LastSentSegment != nil {
-		if err := gs.LastSentSegment.Validate(); err != nil {
-			return err
-		}
 	}
 
 	if err := types.ValidateEntries(gs.SealedEpochsProofs, func(se *SealedEpochProofEntry) uint64 { return se.EpochNumber }); err != nil {
