@@ -97,7 +97,7 @@ func (n *NodeConfig) CommitPubRandListConsumer(walletAddrOrName, consumerId stri
 	n.LogActionF("Committing public randomness list for %s", consumerId)
 
 	if consumerId == n.chainId {
-		n.CommitPubRandList(fpBtcPk, startHeight, numPubRand, commitment, sig)
+		n.CommitPubRandListFromNode(fpBtcPk, startHeight, numPubRand, commitment, sig)
 		return
 	}
 
