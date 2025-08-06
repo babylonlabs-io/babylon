@@ -12,7 +12,7 @@ message GenesisState {
   // params holds the zoneconcierge module's parameters
   Params params = 1 [ (gogoproto.nullable) = false ];
   // finalized_headers contains the latest IndexedHeaderWithProof for each consumer and each finalized epoch
-  repeated FinalizedHeaderEntry finalized_headers = 3;
+  repeated FinalizedHeaderEntry finalized_headers = 2;
   // sealed_epochs_proofs contains the proofs that each epoch is sealed
   repeated SealedEpochProofEntry sealed_epochs_proofs = 4;
   // bsn_btc_states contains the BTC header synchronization state for each BSN
