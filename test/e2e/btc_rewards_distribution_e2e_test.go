@@ -5,7 +5,6 @@ import (
 	"math"
 	"math/rand"
 	"strings"
-	"sync"
 	"testing"
 	"time"
 
@@ -130,8 +129,19 @@ func (s *BtcRewardsDistribution) TearDownSuite() {
 	}
 }
 
-// Test1CreateFinalityProviders creates all finality providers
-func (s *BtcRewardsDistribution) Test1CreateFinalityProviders() {
+func (s *BtcRewardsDistribution) TestAll() {
+	s.CreateFinalityProviders()
+	s.CreateFirstBtcDelegations()
+	s.SubmitCovenantSignature()
+	s.CommitPublicRandomnessAndSealed()
+	s.CheckRewardsFirstDelegations()
+	s.ActiveLastDelegation()
+	s.LastCheckRewards()
+	s.SlashFp()
+}
+
+// CreateFinalityProviders creates all finality providers
+func (s *BtcRewardsDistribution) CreateFinalityProviders() {
 	chainA := s.configurer.GetChainConfig(0)
 	chainA.WaitUntilHeight(2)
 
@@ -176,7 +186,7 @@ func (s *BtcRewardsDistribution) Test1CreateFinalityProviders() {
 
 // Test2CreateFinalityProviders creates the first 3 btc delegations
 // with the same values, but different satoshi staked amounts
-func (s *BtcRewardsDistribution) Test2CreateFirstBtcDelegations() {
+func (s *BtcRewardsDistribution) CreateFirstBtcDelegations() {
 	n2, err := s.configurer.GetChainConfig(0).GetNodeAtIndex(2)
 	s.NoError(err)
 
@@ -198,17 +208,17 @@ func (s *BtcRewardsDistribution) Test2CreateFirstBtcDelegations() {
 	require.Len(s.T(), resp.BtcDelegations, 3)
 }
 
-// Test3SubmitCovenantSignature covenant approves all the 3 BTC delegation
-func (s *BtcRewardsDistribution) Test3SubmitCovenantSignature() {
+// SubmitCovenantSignature covenant approves all the 3 BTC delegation
+func (s *BtcRewardsDistribution) SubmitCovenantSignature() {
 	n1, err := s.configurer.GetChainConfig(0).GetNodeAtIndex(1)
 	s.NoError(err)
 
 	s.CreateCovenantsAndSubmitSignaturesToPendDels(n1, s.fp1, s.fp2)
 }
 
-// Test4CommitPublicRandomnessAndSealed commits public randomness for
+// CommitPublicRandomnessAndSealed commits public randomness for
 // each finality provider and seals the epoch.
-func (s *BtcRewardsDistribution) Test4CommitPublicRandomnessAndSealed() {
+func (s *BtcRewardsDistribution) CommitPublicRandomnessAndSealed() {
 	chainA := s.configurer.GetChainConfig(0)
 	n1, err := chainA.GetNodeAtIndex(1)
 	s.NoError(err)
@@ -246,7 +256,7 @@ func (s *BtcRewardsDistribution) Test4CommitPublicRandomnessAndSealed() {
 
 	// needs to wait for a block to make sure the pub rand is committed
 	// prior to epoch finalization
-	n2.WaitForNextBlockWithSleep50ms()
+	n2.WaitForNextBlocks(2)
 
 	// check all FPs requirement to be active
 	// TotalBondedSat > 0
@@ -291,39 +301,26 @@ func (s *BtcRewardsDistribution) Test4CommitPublicRandomnessAndSealed() {
 	s.finalityIdx = s.finalityBlockHeightVoted - commitStartHeight
 
 	n1.WaitForNextBlockWithSleep50ms()
-	var (
-		wg      sync.WaitGroup
-		appHash bytes.HexBytes
+
+	n2.AddFinalitySignatureToBlock(
+		s.fp2BTCSK,
+		s.fp2.BtcPk,
+		s.finalityBlockHeightVoted,
+		s.fp2RandListInfo.SRList[s.finalityIdx],
+		&s.fp2RandListInfo.PRList[s.finalityIdx],
+		*s.fp2RandListInfo.ProofList[s.finalityIdx].ToProto(),
+		fmt.Sprintf("--from=%s", wFp2),
 	)
-	wg.Add(2)
 
-	go func() {
-		defer wg.Done()
-		n2.AddFinalitySignatureToBlock(
-			s.fp2BTCSK,
-			s.fp2.BtcPk,
-			s.finalityBlockHeightVoted,
-			s.fp2RandListInfo.SRList[s.finalityIdx],
-			&s.fp2RandListInfo.PRList[s.finalityIdx],
-			*s.fp2RandListInfo.ProofList[s.finalityIdx].ToProto(),
-			fmt.Sprintf("--from=%s", wFp2),
-		)
-	}()
-
-	go func() {
-		defer wg.Done()
-		appHash = n1.AddFinalitySignatureToBlock(
-			s.fp1BTCSK,
-			s.fp1.BtcPk,
-			s.finalityBlockHeightVoted,
-			s.fp1RandListInfo.SRList[s.finalityIdx],
-			&s.fp1RandListInfo.PRList[s.finalityIdx],
-			*s.fp1RandListInfo.ProofList[s.finalityIdx].ToProto(),
-			fmt.Sprintf("--from=%s", wFp1),
-		)
-	}()
-
-	wg.Wait()
+	appHash := n1.AddFinalitySignatureToBlock(
+		s.fp1BTCSK,
+		s.fp1.BtcPk,
+		s.finalityBlockHeightVoted,
+		s.fp1RandListInfo.SRList[s.finalityIdx],
+		&s.fp1RandListInfo.PRList[s.finalityIdx],
+		*s.fp1RandListInfo.ProofList[s.finalityIdx].ToProto(),
+		fmt.Sprintf("--from=%s", wFp1),
+	)
 	n1.WaitForNextBlockWithSleep50ms()
 
 	// ensure vote is eventually cast
@@ -338,11 +335,11 @@ func (s *BtcRewardsDistribution) Test4CommitPublicRandomnessAndSealed() {
 	s.T().Logf("the block %d is finalized", s.finalityBlockHeightVoted)
 }
 
-// Test5CheckRewardsFirstDelegations verifies the rewards independent of mint amounts
+// CheckRewardsFirstDelegations verifies the rewards independent of mint amounts
 // There might be a difference in rewards if the BTC delegations were included in different blocks
 // that is the reason to get the difference in rewards between a block range to assert
 // the reward difference between fps and delegators.
-func (s *BtcRewardsDistribution) Test5CheckRewardsFirstDelegations() {
+func (s *BtcRewardsDistribution) CheckRewardsFirstDelegations() {
 	n2, err := s.configurer.GetChainConfig(0).GetNodeAtIndex(2)
 	s.NoError(err)
 
@@ -399,10 +396,10 @@ func (s *BtcRewardsDistribution) Test5CheckRewardsFirstDelegations() {
 	s.AddFinalityVoteUntilCurrentHeight()
 }
 
-// Test6ActiveLastDelegation creates a new btc delegation
+// ActiveLastDelegation creates a new btc delegation
 // (fp2, del2) with 6_00000000 sats and sends the covenant signatures
 // needed.
-func (s *BtcRewardsDistribution) Test6ActiveLastDelegation() {
+func (s *BtcRewardsDistribution) ActiveLastDelegation() {
 	chainA := s.configurer.GetChainConfig(0)
 	n2, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
@@ -445,9 +442,9 @@ func (s *BtcRewardsDistribution) Test6ActiveLastDelegation() {
 	}
 }
 
-// Test7CheckRewards verifies the rewards of all the delegations
+// LastCheckRewards verifies the rewards of all the delegations
 // and finality provider
-func (s *BtcRewardsDistribution) Test7CheckRewards() {
+func (s *BtcRewardsDistribution) LastCheckRewards() {
 	n2, err := s.configurer.GetChainConfig(0).GetNodeAtIndex(2)
 	s.NoError(err)
 
@@ -490,8 +487,8 @@ func (s *BtcRewardsDistribution) Test7CheckRewards() {
 	s.NotEmpty(del2DiffRewardsStr)
 }
 
-// Test8SlashFp slashes the finality provider, but should continue to produce blocks
-func (s *BtcRewardsDistribution) Test8SlashFp() {
+// SlashFp slashes the finality provider, but should continue to produce blocks
+func (s *BtcRewardsDistribution) SlashFp() {
 	chainA := s.configurer.GetChainConfig(0)
 	n2, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
