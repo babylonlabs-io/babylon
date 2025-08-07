@@ -208,6 +208,7 @@ IBC packet size
 - [#1491](https://github.com/babylonlabs-io/babylon/pull/1491) fix: restore `proofConsumerHeaderInEpoch` allocation removed
 - [#1512](https://github.com/babylonlabs-io/babylon/pull/1512) fix: remove base header
 and global segment store
+- [#1470](https://github.com/babylonlabs-io/babylon/pull/1470) fix: debug_traceTransaction with tracer params
 
 ## v2.2.0
 
