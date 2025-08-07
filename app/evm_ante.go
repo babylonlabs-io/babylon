@@ -58,7 +58,7 @@ func SigVerificationGasConsumer(
 		return nil
 
 	case *secp256k1.PubKey:
-		// Ethereum keys
+		// Cosmos keys
 		meter.ConsumeGas(params.SigVerifyCostSecp256k1, "ante verify: secp256k1")
 		return nil
 
