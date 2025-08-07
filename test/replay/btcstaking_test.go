@@ -1,6 +1,7 @@
 package replay
 
 import (
+	"fmt"
 	"math/rand"
 	"testing"
 	"time"
@@ -657,7 +658,6 @@ func TestPostRegistrationDelegation(t *testing.T) {
 	require.Len(t, activeDelegations, 1)
 }
 
-
 func containsEvent(events []abci.Event, eventType string) bool {
 	for _, event := range events {
 		if event.Type == eventType {
@@ -754,4 +754,94 @@ func TestAcceptSlashingTxAsUnbondingTx(t *testing.T) {
 
 	unbondedDelegations := driver.GetUnbondedBTCDelegations(t)
 	require.Len(t, unbondedDelegations, 1)
+}
+
+func TestSlashingFpWithManyMulistakedDelegations(t *testing.T) {
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	d := NewBabylonAppDriverTmpDir(r, t)
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	covSender := d.CreateCovenantSender()
+	bbnFp := d.CreateNFinalityProviderAccounts(1)[0]
+	stakers := d.CreateNStakerAccounts(3)
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	bbnFp.RegisterFinalityProvider("")
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	bbnFp.CommitRandomness()
+
+	currentEpochNumber := d.GetEpoch().EpochNumber
+	d.ProgressTillFirstBlockTheNextEpoch()
+	d.FinializeCkptForEpoch(currentEpochNumber)
+
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	stk2 := stakers[0]
+	// send one btc delegation just to have voting power in the fp
+	fps := []*bbn.BIP340PubKey{bbnFp.BTCPublicKey()}
+	d.SendAndVerifyNDelegations(t, stk2, covSender, fps, 1)
+
+	d.ActivateVerifiedDelegations(1)
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	// fp is activated
+	activationHeight := d.GetActivationHeight(d.t)
+	require.Greater(d.t, activationHeight, uint64(0))
+
+	// create consumers
+	const consumerID1 = "consumer1"
+	const consumerID2 = "consumer2"
+	ctx := d.Ctx().WithIsCheckTx(false)
+	OpenChannelForConsumer(ctx, d.App, consumerID1)
+	OpenChannelForConsumer(ctx, d.App, consumerID2)
+
+	// 2. Register consumers
+	consumer1 := d.RegisterConsumer(r, consumerID1)
+	consumer2 := d.RegisterConsumer(r, consumerID2)
+	require.NotNil(t, consumer1, consumer2)
+
+	// 3. Create finality providers for each consumer
+	fpsCons1 := d.CreateFinalityProviderForConsumer(consumer1)
+	fpsCons2 := d.CreateFinalityProviderForConsumer(consumer2)
+	require.NotNil(t, fpsCons1, fpsCons2)
+
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	d.MintNativeTo(t, stk2.Address(), 10000000_000000)
+	d.MintNativeTo(t, covSender.Address(), 10000000_000000)
+
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	fps = []*bbn.BIP340PubKey{bbnFp.BTCPublicKey(), fpsCons1.BTCPublicKey(), fpsCons2.BTCPublicKey()}
+
+	// creates 5k btc delegations to slash it
+	batchSize := 7
+	totalActiveDels := len(d.GetActiveBTCDelegations(d.t))
+	for i := 0; i < 5000; i += batchSize {
+		fmt.Printf("\ncreated %d btc delegations", i)
+		d.SendAndVerifyNDelegations(t, stk2, covSender, fps, batchSize)
+
+		verifiedDelegations := d.GetVerifiedBTCDelegations(t)
+		require.Equal(t, len(verifiedDelegations), batchSize)
+
+		d.packVerifiedDelegations()
+
+		d.GenerateNewBlockAssertExecutionSuccess()
+		activeDels := d.GetActiveBTCDelegations(d.t)
+
+		totalActiveDels += batchSize
+		require.Equal(t, len(activeDels), totalActiveDels)
+	}
+
+	// slash it
+	d.GenerateNewBlockAssertExecutionSuccess()
+	bbnFp.CastVote(activationHeight)
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	bogusHash := datagen.GenRandomByteArray(r, 32)
+	txRes := bbnFp.CastVoteForHash(activationHeight, bogusHash)
+	require.Equal(t, 122, txRes.GasUsed)
+	res := d.GenerateNewBlockAssertExecutionSuccessWithResults()
+	require.NotEmpty(t, res)
 }

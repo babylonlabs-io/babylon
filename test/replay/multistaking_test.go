@@ -255,9 +255,9 @@ func (d *BabylonAppDriver) packVerifiedDelegations() []*abci.ExecTxResult {
 
 		switch {
 		case i < 5:
-			gaslimit = 1_100_000
+			gaslimit = 10_000_000
 		case i < 10:
-			gaslimit = 2_000_000
+			gaslimit = 10_000_000
 		case i < 15:
 			gaslimit = 2_700_000
 		case i < 20:

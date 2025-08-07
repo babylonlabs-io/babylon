@@ -11,6 +11,7 @@ import (
 	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 	ictvtypes "github.com/babylonlabs-io/babylon/v3/x/incentive/types"
 	"github.com/btcsuite/btcd/btcec/v2"
+	abci "github.com/cometbft/cometbft/abci/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
 )
@@ -106,7 +107,7 @@ func (f *FinalityProvider) CastVote(height uint64) {
 }
 
 // CastVoteForHash useful to cast bad vote
-func (f *FinalityProvider) CastVoteForHash(height uint64, blkAppHash []byte) {
+func (f *FinalityProvider) CastVoteForHash(height uint64, blkAppHash []byte) *abci.ResponseCheckTx {
 	msg, err := datagen.NewMsgAddFinalitySig(
 		f.AddressString(),
 		f.BTCPrivateKey,
@@ -118,7 +119,7 @@ func (f *FinalityProvider) CastVoteForHash(height uint64, blkAppHash []byte) {
 	)
 	require.NoError(f.t, err)
 
-	DefaultSendTxWithMessagesSuccess(
+	resp := DefaultSendTxWithMessagesSuccess(
 		f.t,
 		f.app,
 		f.SenderInfo,
@@ -126,6 +127,7 @@ func (f *FinalityProvider) CastVoteForHash(height uint64, blkAppHash []byte) {
 	)
 
 	f.IncSeq()
+	return resp
 }
 
 func (f *FinalityProvider) SendSelectiveSlashingEvidence() {
