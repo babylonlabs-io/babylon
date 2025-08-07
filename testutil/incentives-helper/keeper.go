@@ -18,6 +18,7 @@ import (
 	testutil "github.com/babylonlabs-io/babylon/v3/testutil/btcstaking-helper"
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
 	keepertest "github.com/babylonlabs-io/babylon/v3/testutil/keeper"
+	"github.com/babylonlabs-io/babylon/v3/testutil/mocks"
 	btclctypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
 	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
@@ -36,6 +37,7 @@ func NewIncentiveHelper(
 	btclcKeeper *bstypes.MockBTCLightClientKeeper,
 	btccKForBtcStaking *bstypes.MockBtcCheckpointKeeper,
 	btccKForFinality *ftypes.MockCheckpointingKeeper,
+	chKeeper *mocks.MockZoneConciergeChannelKeeper,
 ) *IncentiveHelper {
 	db := dbm.NewMemDB()
 	stateStore := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
@@ -44,7 +46,7 @@ func NewIncentiveHelper(
 	bankK := keepertest.BankKeeper(t, db, stateStore, accK)
 
 	ictvK, _ := keepertest.IncentiveKeeperWithStore(t, db, stateStore, nil, bankK, accK, nil)
-	btcstkH := btcstkhelper.NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKForBtcStaking, btccKForFinality, ictvK, nil)
+	btcstkH := btcstkhelper.NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKForBtcStaking, btccKForFinality, ictvK, chKeeper, nil)
 
 	return &IncentiveHelper{
 		Helper:           btcstkH,

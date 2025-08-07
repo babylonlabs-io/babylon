@@ -107,13 +107,23 @@ func (s *IbcCallbackBsnAddRewards) TearDownSuite() {
 	}
 }
 
-// Test1CreateFinalityProviders creates all finality providers
-func (s *IbcCallbackBsnAddRewards) Test1CreateFinalityProviders() {
+func (s *IbcCallbackBsnAddRewards) TestAll() {
+	s.CreateFinalityProviders()
+	s.CreateBtcDelegations()
+	s.CreateFactoryToken()
+	s.SendBsnRewardsCallback()
+	s.IbcSendBadBsnRewardsCallbackReturnFunds()
+	s.SendBsnRewardsCallbackWithNativeToken()
+}
+
+// CreateFinalityProviders creates all finality providers
+func (s *IbcCallbackBsnAddRewards) CreateFinalityProviders() {
 	chainA := s.configurer.GetChainConfig(0)
 	chainB := s.configurer.GetChainConfig(1)
 	chainA.WaitUntilHeight(2)
 	chainB.WaitUntilHeight(2)
 
+	bsnNode := s.BsnNode()
 	bbnNode := s.BbnNode()
 	bbnNode.WaitForNextBlock()
 
@@ -136,14 +146,32 @@ func (s *IbcCallbackBsnAddRewards) Test1CreateFinalityProviders() {
 		"Chain description: "+datagen.GenRandomHexStr(s.r, 15),
 		datagen.GenBabylonRewardsCommission(s.r),
 	)
+	// Register consumer chain on BBN
 	bbnNode.RegisterConsumerChain(bbnNode.WalletName, bsn0.ConsumerId, bsn0.ConsumerName, bsn0.ConsumerDescription, bsn0.BabylonRewardsCommission.String())
+	// The other chain is BBN too, so need to register the consumer chain
+	// to be able to open the zoneconcierge channel
+	bsnNode.RegisterConsumerChain(bsnNode.WalletName, bsn0.ConsumerId, bsn0.ConsumerName, bsn0.ConsumerDescription, bsn0.BabylonRewardsCommission.String())
+
 	s.bsn0 = bsn0
 
 	bbnNode.WaitForNextBlock()
+	bsnNode.WaitForNextBlock()
 
 	consumers := bbnNode.QueryBTCStkConsumerConsumers()
 	require.Len(s.T(), consumers, 1)
 	s.T().Log("All Consumers created")
+	require.Equal(s.T(), consumers[0].ConsumerId, clientState.ClientId)
+
+	// Open zoneconcierge channel
+	// Need to use same connection ID as the one used in the consumer registration
+	connResp, err := bbnNode.QueryConnections()
+	require.NoError(s.T(), err)
+	require.Len(s.T(), connResp.Connections, 2)
+	connID := connResp.Connections[0].Id
+	err = s.configurer.OpenZoneConciergeChannel(chainA, chainB, connID)
+	require.NoError(s.T(), err, "failed to create zoneconcierge channel between Babylon and BSN")
+	bbnNode.WaitForNextBlock()
+	s.T().Log("Opened zoneconcierge channel")
 
 	s.fp1bbn = CreateNodeFP(
 		s.T(),
@@ -184,8 +212,8 @@ func (s *IbcCallbackBsnAddRewards) Test1CreateFinalityProviders() {
 	bbnNode.WaitForNextBlock()
 }
 
-// Test2CreateBtcDelegations creates 3 btc delegations
-func (s *IbcCallbackBsnAddRewards) Test2CreateBtcDelegations() {
+// CreateBtcDelegations creates 3 btc delegations
+func (s *IbcCallbackBsnAddRewards) CreateBtcDelegations() {
 	bbnNode := s.BbnNode()
 
 	s.del1Addr = bbnNode.KeysAdd(wDel1)
@@ -208,7 +236,7 @@ func (s *IbcCallbackBsnAddRewards) Test2CreateBtcDelegations() {
 	s.T().Log("All BTC delegations created")
 }
 
-func (s *IbcCallbackBsnAddRewards) Test3CreateFactoryToken() {
+func (s *IbcCallbackBsnAddRewards) CreateFactoryToken() {
 	bsnNode := s.BsnNode()
 
 	// Create and fund sender account
@@ -238,7 +266,7 @@ func (s *IbcCallbackBsnAddRewards) Test3CreateFactoryToken() {
 	require.Equal(s.T(), customBalance.String(), mintInt.String(), "Should have custom tokens after minting")
 }
 
-func (s *IbcCallbackBsnAddRewards) Test4SendBsnRewardsCallback() {
+func (s *IbcCallbackBsnAddRewards) SendBsnRewardsCallback() {
 	bbnNode := s.BbnNode()
 	bsnNode := s.BsnNode()
 
@@ -329,14 +357,14 @@ func (s *IbcCallbackBsnAddRewards) Test4SendBsnRewardsCallback() {
 	require.True(s.T(), fp1bbnDiff.IsZero(), "fp1 was not rewarded")
 }
 
-// Test5IbcSendBadBsnRewardsCallbackReturnFunds it send rewards using the memo field
+// IbcSendBadBsnRewardsCallbackReturnFunds it send rewards using the memo field
 // and `CallbackAddBsnRewards`, but it specifies an invalid BsnConsumerID which
 // errors out in the processing of adding rewards and rejects the ICS20 packet
 // returning the funds to the BSN sender.
 // Note: The bsn sender of rewards will still pay the fees of the IBC transaction
 // but will receive back the rewards sent through ICS20. The IBC tx will respond
 // without error and code zero, but the IBC packet will be rejected with Acknowledgement_Error
-func (s *IbcCallbackBsnAddRewards) Test5IbcSendBadBsnRewardsCallbackReturnFunds() {
+func (s *IbcCallbackBsnAddRewards) IbcSendBadBsnRewardsCallbackReturnFunds() {
 	bbnNode := s.BbnNode()
 	bsnNode := s.BsnNode()
 
@@ -383,7 +411,7 @@ func (s *IbcCallbackBsnAddRewards) Test5IbcSendBadBsnRewardsCallbackReturnFunds(
 	require.True(s.T(), fp3cons0Diff.IsZero(), "fp3 was not rewarded")
 }
 
-func (s *IbcCallbackBsnAddRewards) Test6SendBsnRewardsCallbackWithNativeToken() {
+func (s *IbcCallbackBsnAddRewards) SendBsnRewardsCallbackWithNativeToken() {
 	bbnNode := s.BbnNode()
 	bsnNode := s.BsnNode()
 
@@ -475,7 +503,7 @@ func (s *IbcCallbackBsnAddRewards) Test6SendBsnRewardsCallbackWithNativeToken() 
 		s.Require().NoError(err)
 
 		ibcTransferTxHash := bsnNode.SendIBCTransfer(s.bsnSenderAddr, s.bbnIbcCallbackReceiverAddr, callbackMemoString, ibcBabylonNativeTokenTransferInBsn)
-		bsnNode.WaitForNextBlocks(2)
+		bsnNode.WaitForNextBlocks(10)
 
 		ibcTxRes, ibcTx, err := bsnNode.QueryTxWithError(ibcTransferTxHash)
 		s.Require().NoError(err)

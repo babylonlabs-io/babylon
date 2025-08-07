@@ -6,6 +6,7 @@ import (
 
 	"github.com/babylonlabs-io/babylon/v3/test/e2e/util"
 	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
+	connectiontypes "github.com/cosmos/ibc-go/v10/modules/core/03-connection/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 )
 
@@ -91,6 +92,20 @@ func (n *NodeConfig) QueryClientStates() (*clienttypes.QueryClientStatesResponse
 	}
 
 	var resp clienttypes.QueryClientStatesResponse
+	if err := util.Cdc.UnmarshalJSON(bz, &resp); err != nil {
+		return nil, err
+	}
+
+	return &resp, nil
+}
+
+func (n *NodeConfig) QueryConnections() (*connectiontypes.QueryConnectionsResponse, error) {
+	bz, err := n.QueryGRPCGateway("/ibc/core/connection/v1/connections", url.Values{})
+	if err != nil {
+		return nil, err
+	}
+
+	var resp connectiontypes.QueryConnectionsResponse
 	if err := util.Cdc.UnmarshalJSON(bz, &resp); err != nil {
 		return nil, err
 	}

@@ -39,7 +39,7 @@ func (im IBCModule) OnChanOpenInit(
 	}
 
 	// Require portID to be the one that ZoneConcierge is bound to
-	boundPort := im.keeper.GetPort(ctx)
+	boundPort := im.keeper.GetPort()
 	if boundPort != portID {
 		return "", errorsmod.Wrapf(porttypes.ErrInvalidPort, "invalid port: %s, expected %s", portID, boundPort)
 	}
@@ -80,7 +80,7 @@ func (im IBCModule) OnChanOpenTry(
 	}
 
 	// Require portID to be the one that ZoneConcierge is bound to
-	boundPort := im.keeper.GetPort(ctx)
+	boundPort := im.keeper.GetPort()
 	if boundPort != portID {
 		return "", errorsmod.Wrapf(porttypes.ErrInvalidPort, "invalid port: %s, expected %s", portID, boundPort)
 	}
@@ -172,12 +172,6 @@ func (im IBCModule) OnRecvPacket(
 			return channeltypes.NewErrorAcknowledgement(err)
 		}
 		return channeltypes.NewResultAcknowledgement([]byte("Consumer slashing handled successfully"))
-	case *types.InboundPacket_BsnBaseBtcHeader:
-		err := im.keeper.HandleBSNBaseBTCHeader(ctx, modulePacket.DestinationPort, modulePacket.DestinationChannel, packet.BsnBaseBtcHeader.BaseBtcHeader)
-		if err != nil {
-			return channeltypes.NewErrorAcknowledgement(err)
-		}
-		return channeltypes.NewResultAcknowledgement([]byte("BSN base BTC header updated successfully"))
 	default:
 		errMsg := fmt.Sprintf("unrecognized inbound packet type: %T", packet)
 		return channeltypes.NewErrorAcknowledgement(errorsmod.Wrap(sdkerrors.ErrUnknownRequest, errMsg))

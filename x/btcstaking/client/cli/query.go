@@ -132,7 +132,7 @@ func CmdFinalityProviders() *cobra.Command {
 func CmdBTCDelegations() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "btc-delegations [status]",
-		Short: "retrieve all BTC delegations under the given status (pending, active, unbonding, unbonded, any)",
+		Short: fmt.Sprintf("retrieve all BTC delegations under the given status (%s)", types.GetBTCDelegationStatusOptions()),
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)

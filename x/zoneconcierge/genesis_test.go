@@ -13,7 +13,6 @@ import (
 
 func TestGenesis(t *testing.T) {
 	genesisState := types.GenesisState{
-		PortId: types.PortID,
 		Params: types.Params{IbcPacketTimeoutSeconds: 100},
 	}
 
@@ -32,6 +31,5 @@ func TestGenesis(t *testing.T) {
 	nullify.Fill(&genesisState)
 	nullify.Fill(got)
 
-	require.Equal(t, genesisState.PortId, got.PortId)
 	require.Equal(t, genesisState.Params, got.Params)
 }

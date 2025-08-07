@@ -32,7 +32,7 @@ func TestGenesis(t *testing.T) {
 
 	btcCkpK, _ := keepertest.NewBTCChkptKeeperWithStoreKeys(t, db, nil, nil, stateStore, lc, cc, ic, chaincfg.SimNetParams.PowLimit)
 
-	k, ctx := keepertest.BTCStakingKeeperWithStore(t, db, stateStore, nil, nil, btcCkpK, nil)
+	k, ctx := keepertest.BTCStakingKeeperWithStore(t, db, stateStore, nil, nil, btcCkpK, nil, nil)
 
 	btcstaking.InitGenesis(ctx, *k, genesisState)
 	got := btcstaking.ExportGenesis(ctx, *k)

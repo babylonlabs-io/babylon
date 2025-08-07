@@ -83,13 +83,17 @@ func ZoneConciergeKeeperWithStoreKey(
 
 	registry := codectypes.NewInterfaceRegistry()
 	appCodec := codec.NewProtoCodec(registry)
+
+	ctx := sdk.NewContext(stateStore, cmtproto.Header{}, false, logger)
+	ctx = ctx.WithHeaderInfo(header.Info{})
+
 	k := keeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(storeKey),
 		nil, // TODO: mock this keeper
 		nil, // TODO: mock this keeper
 		nil, // TODO: mock this keeper
-		channelKeeper,
+		keeper.NewChannelKeeper(channelKeeper),
 		nil, // TODO: mock this keeper
 		nil, // TODO: mock this keeper
 		btclcKeeper,
@@ -101,9 +105,6 @@ func ZoneConciergeKeeperWithStoreKey(
 		btcStkKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
-
-	ctx := sdk.NewContext(stateStore, cmtproto.Header{}, false, logger)
-	ctx = ctx.WithHeaderInfo(header.Info{})
 
 	return k, ctx
 }
