@@ -39,7 +39,7 @@ func (im IBCModule) OnChanOpenInit(
 	}
 
 	// Require portID to be the one that ZoneConcierge is bound to
-	boundPort := im.keeper.GetPort(ctx)
+	boundPort := im.keeper.GetPort()
 	if boundPort != portID {
 		return "", errorsmod.Wrapf(porttypes.ErrInvalidPort, "invalid port: %s, expected %s", portID, boundPort)
 	}
@@ -80,7 +80,7 @@ func (im IBCModule) OnChanOpenTry(
 	}
 
 	// Require portID to be the one that ZoneConcierge is bound to
-	boundPort := im.keeper.GetPort(ctx)
+	boundPort := im.keeper.GetPort()
 	if boundPort != portID {
 		return "", errorsmod.Wrapf(porttypes.ErrInvalidPort, "invalid port: %s, expected %s", portID, boundPort)
 	}

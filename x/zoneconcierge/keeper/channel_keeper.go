@@ -3,74 +3,30 @@ package keeper
 import (
 	"context"
 
-	"cosmossdk.io/collections"
-	corestoretypes "cosmossdk.io/core/store"
 	"cosmossdk.io/log"
 	"github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
-	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
 )
 
-type (
-	ChannelKeeper struct {
-		cdc           codec.BinaryCodec
-		storeService  corestoretypes.KVStoreService
-		channelKeeper types.ChannelKeeper
-
-		// Collections for KV store management
-		Schema collections.Schema
-		port   collections.Item[string]
-	}
-)
+// ChannelKeeper is a wrapper around the IBC channel keeper
+// that provides additional functionality specific to ZoneConcierge.
+type ChannelKeeper struct {
+	channelKeeper types.ChannelKeeper
+}
 
 func NewChannelKeeper(
-	cdc codec.BinaryCodec,
-	storeService corestoretypes.KVStoreService,
 	channelKeeper types.ChannelKeeper,
 ) *ChannelKeeper {
-	sb := collections.NewSchemaBuilder(storeService)
-
-	k := &ChannelKeeper{
-		cdc:           cdc,
-		storeService:  storeService,
+	return &ChannelKeeper{
 		channelKeeper: channelKeeper,
-
-		port: collections.NewItem[string](
-			sb,
-			types.PortKey,
-			"port",
-			collections.StringValue,
-		),
 	}
-
-	schema, err := sb.Build()
-	if err != nil {
-		panic(err)
-	}
-	k.Schema = schema
-
-	return k
 }
 
 // Logger returns a module-specific logger.
 func (k ChannelKeeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", "x/"+ibcexported.ModuleName+"-"+types.ModuleName+"-channel")
-}
-
-// InitGenesis initializes the keeper state from a provided initial genesis state.
-func (k ChannelKeeper) InitGenesis(ctx context.Context, gs types.GenesisState) error {
-	return k.port.Set(ctx, gs.PortId)
-}
-
-// GetPort returns the portID for the zoneconcierge module. Used in ExportGenesis
-func (k ChannelKeeper) GetPort(ctx context.Context) string {
-	port, err := k.port.Get(ctx)
-	if err != nil {
-		panic(err)
-	}
-	return port
 }
 
 func (k ChannelKeeper) GetAllChannels(ctx context.Context) []channeltypes.IdentifiedChannel {
@@ -79,7 +35,6 @@ func (k ChannelKeeper) GetAllChannels(ctx context.Context) []channeltypes.Identi
 
 // GetAllOpenZCChannels returns all open channels that are connected to ZoneConcierge's port
 func (k ChannelKeeper) GetAllOpenZCChannels(ctx context.Context) []channeltypes.IdentifiedChannel {
-	zcPort := k.GetPort(ctx)
 	channels := k.GetAllChannels(ctx)
 
 	openZCChannels := []channeltypes.IdentifiedChannel{}
@@ -87,7 +42,7 @@ func (k ChannelKeeper) GetAllOpenZCChannels(ctx context.Context) []channeltypes.
 		if channel.State != channeltypes.OPEN {
 			continue
 		}
-		if channel.PortId != zcPort {
+		if channel.PortId != types.PortID {
 			continue
 		}
 		openZCChannels = append(openZCChannels, channel)
