@@ -6,13 +6,11 @@ import (
 	"strconv"
 
 	"github.com/babylonlabs-io/babylon/v3/types"
-	host "github.com/cosmos/ibc-go/v10/modules/core/24-host"
 )
 
 // DefaultGenesis returns the default genesis state
 func DefaultGenesis() *GenesisState {
 	return &GenesisState{
-		PortId: PortID,
 		Params: DefaultParams(),
 	}
 }
@@ -26,10 +24,8 @@ func NewGenesis(
 	bsnBtcStates []*BSNBTCStateEntry,
 ) *GenesisState {
 	return &GenesisState{
-		PortId:             PortID,
 		Params:             params,
 		FinalizedHeaders:   finalizedHeaders,
-		LastSentSegment:    lastSentSegment,
 		SealedEpochsProofs: sealedEpochs,
 		BsnBtcStates:       bsnBtcStates,
 	}
@@ -38,10 +34,6 @@ func NewGenesis(
 // Validate performs basic genesis state validation returning an error upon any
 // failure.
 func (gs GenesisState) Validate() error {
-	if err := host.PortIdentifierValidator(gs.PortId); err != nil {
-		return err
-	}
-
 	if err := types.ValidateEntries(
 		gs.FinalizedHeaders,
 		func(fh *FinalizedHeaderEntry) string {
@@ -49,12 +41,6 @@ func (gs GenesisState) Validate() error {
 			return fh.ConsumerId + strconv.FormatUint(fh.EpochNumber, 10)
 		}); err != nil {
 		return err
-	}
-
-	if gs.LastSentSegment != nil {
-		if err := gs.LastSentSegment.Validate(); err != nil {
-			return err
-		}
 	}
 
 	if err := types.ValidateEntries(gs.SealedEpochsProofs, func(se *SealedEpochProofEntry) uint64 { return se.EpochNumber }); err != nil {

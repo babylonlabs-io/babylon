@@ -61,7 +61,7 @@ consumers) via IBC packets:
 ## State
 
 The Zone Concierge module maintains a simplified header indexing system with the
-following KV stores. Consumer registration is handled by the `btcstkconsumer`
+following KV stores (using store key `"zc"`). Consumer registration is handled by the `btcstkconsumer`
 module.
 
 ### Parameters

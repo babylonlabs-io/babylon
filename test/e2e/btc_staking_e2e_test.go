@@ -257,7 +257,7 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 
 	randListInfo, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(s.r, s.fptBTCSK, commitRandContext, commitStartHeight, numPubRand)
 	s.NoError(err)
-	nonValidatorNode.CommitPubRandList(
+	nonValidatorNode.CommitPubRandListFromNode(
 		msgCommitPubRandList.FpBtcPk,
 		msgCommitPubRandList.StartHeight,
 		msgCommitPubRandList.NumPubRand,
@@ -862,9 +862,6 @@ func CreateNodeFP(
 	newFP.Commission = &commission
 	node.CreateConsumerFinalityProvider(newFP.Addr, newFP.BsnId, newFP.BtcPk, newFP.Pop, newFP.Description.Moniker, newFP.Description.Identity, newFP.Description.Website, newFP.Description.SecurityContact, newFP.Description.Details, newFP.Commission, newFP.CommissionInfo.MaxRate, newFP.CommissionInfo.MaxChangeRate)
 
-	// wait for a block so that above txs take effect
-	node.WaitForNextBlock()
-
 	// query the existence of finality provider and assert equivalence
 	fpResp := node.QueryFinalityProvider(newFP.BtcPk.MarshalHex())
 	require.NotNil(t, fpResp)
@@ -873,7 +870,7 @@ func CreateNodeFP(
 	return newFP
 }
 
-func CreateNodeFPV2(
+func CreateNodeFpV2(
 	t *testing.T,
 	r *rand.Rand,
 	fpSk *btcec.PrivateKey,

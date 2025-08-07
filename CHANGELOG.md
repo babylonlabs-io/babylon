@@ -139,10 +139,13 @@ command to modify `max-finality-providers` parameter.
 - [#1468](https://github.com/babylonlabs-io/babylon/pull/1468) Update multi-staking allow-list docs.
 - [#1474](https://github.com/babylonlabs-io/babylon/pull/1474) Add `QueryFpCurrentRewardsRequest` and fix export genesis of incentives
 to allow empty coins in fp current rewards.
+- [#1473](https://github.com/babylonlabs-io/babylon/pull/1473) Add checks for incentives rewards migration in e2e v3 upgrade test.
 - [#1489](https://github.com/babylonlabs-io/babylon/pull/1489) Loads the consumer ID from the IBC packet if it is not set in
 `AddBsnRewards` IBC callbacks.
 - [#1481](https://github.com/babylonlabs-io/babylon/pull/1481) chore: bsn id proto order for compatibility
 - [#1490](https://github.com/babylonlabs-io/babylon/pull/1490) Add multi-staking allow-list for Testnet
+- [#1485](https://github.com/babylonlabs-io/babylon/pull/1485) Add channel check on consumer FP creation
+- [#1516](https://github.com/babylonlabs-io/babylon/pull/1516) Remove `zoneconcierge` port ID from state
 
 ### State Machine Breaking
 
@@ -202,6 +205,9 @@ covenant signature to the events
 - [#1476](https://github.com/babylonlabs-io/babylon/pull/1476) fix: Add limit for
 IBC packet size
 - [#1495](https://github.com/babylonlabs-io/babylon/pull/1495) fix: rename `zoneconcierge` to `zc`
+- [#1491](https://github.com/babylonlabs-io/babylon/pull/1491) fix: restore `proofConsumerHeaderInEpoch` allocation removed
+- [#1512](https://github.com/babylonlabs-io/babylon/pull/1512) fix: remove base header
+and global segment store
 - [#1470](https://github.com/babylonlabs-io/babylon/pull/1470) fix: debug_traceTransaction with tracer params
 
 ## v2.2.0
