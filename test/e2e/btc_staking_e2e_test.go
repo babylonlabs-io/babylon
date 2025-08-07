@@ -257,7 +257,7 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 
 	randListInfo, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(s.r, s.fptBTCSK, commitRandContext, commitStartHeight, numPubRand)
 	s.NoError(err)
-	nonValidatorNode.CommitPubRandList(
+	nonValidatorNode.CommitPubRandListFromNode(
 		msgCommitPubRandList.FpBtcPk,
 		msgCommitPubRandList.StartHeight,
 		msgCommitPubRandList.NumPubRand,
@@ -870,7 +870,7 @@ func CreateNodeFP(
 	return newFP
 }
 
-func CreateNodeFPV2(
+func CreateNodeFpV2(
 	t *testing.T,
 	r *rand.Rand,
 	fpSk *btcec.PrivateKey,
