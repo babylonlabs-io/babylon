@@ -132,6 +132,6 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", "x/"+ibcexported.ModuleName+"-"+types.ModuleName)
 }
 
-func (k Keeper) GetPort(ctx sdk.Context) string {
-	return k.channelKeeper.GetPort(ctx)
+func (k Keeper) GetPort() string {
+	return types.PortID
 }

@@ -61,8 +61,6 @@ type ZoneConciergeChannelKeeper interface {
 	GetAllOpenZCChannels(ctx context.Context) []channeltypes.IdentifiedChannel
 	GetClientID(ctx context.Context, channel channeltypes.IdentifiedChannel) (string, error)
 	IsChannelUninitialized(ctx context.Context, channel channeltypes.IdentifiedChannel) bool
-	GetPort(ctx context.Context) string
-	InitGenesis(ctx context.Context, gs GenesisState) error
 }
 
 // ClientKeeper defines the expected IBC client keeper

@@ -28,29 +28,18 @@ func TestGenesisState_Validate(t *testing.T) {
 			desc:     "empty is invalid",
 			genState: &types.GenesisState{},
 			valid:    false,
-			errMsg:   "identifier cannot be blank",
+			errMsg:   "IbcPacketTimeoutSeconds must be positive",
 		},
 		{
 			desc: "valid genesis state",
 			genState: &types.GenesisState{
-				PortId: types.PortID,
 				Params: types.Params{IbcPacketTimeoutSeconds: 100},
 			},
 			valid: true,
 		},
 		{
-			desc: "invalid port id",
-			genState: &types.GenesisState{
-				PortId: "invalid!port",
-				Params: types.DefaultParams(),
-			},
-			valid:  false,
-			errMsg: "invalid identifier",
-		},
-		{
 			desc: "duplicate finalized header entries",
 			genState: &types.GenesisState{
-				PortId:           types.PortID,
 				FinalizedHeaders: append(gs.FinalizedHeaders, gs.FinalizedHeaders[0]),
 			},
 			valid:  false,
@@ -59,7 +48,6 @@ func TestGenesisState_Validate(t *testing.T) {
 		{
 			desc: "duplicate consumer BTC state entries",
 			genState: &types.GenesisState{
-				PortId:       types.PortID,
 				BsnBtcStates: append(gs.BsnBtcStates, gs.BsnBtcStates[0]),
 			},
 			valid:  false,
@@ -68,7 +56,6 @@ func TestGenesisState_Validate(t *testing.T) {
 		{
 			desc: "invalid finalized header entry (nil header)",
 			genState: &types.GenesisState{
-				PortId: types.PortID,
 				FinalizedHeaders: []*types.FinalizedHeaderEntry{
 					{ConsumerId: "consumer1", EpochNumber: 1, HeaderWithProof: nil},
 				},
@@ -79,7 +66,6 @@ func TestGenesisState_Validate(t *testing.T) {
 		{
 			desc: "invalid sealed epoch proof (nil proof)",
 			genState: &types.GenesisState{
-				PortId: types.PortID,
 				SealedEpochsProofs: []*types.SealedEpochProofEntry{
 					{EpochNumber: 1, Proof: nil},
 				},
@@ -90,7 +76,6 @@ func TestGenesisState_Validate(t *testing.T) {
 		{
 			desc: "invalid params",
 			genState: &types.GenesisState{
-				PortId: types.PortID,
 				Params: types.Params{IbcPacketTimeoutSeconds: 0},
 			},
 			valid:  false,
