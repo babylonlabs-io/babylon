@@ -111,7 +111,11 @@ require (
 	github.com/go-sourcemap/sourcemap v2.1.3+incompatible // indirect
 	github.com/gofrs/flock v0.8.1 // indirect
 	github.com/gogo/status v1.1.0 // indirect
+<<<<<<< HEAD
 	github.com/google/pprof v0.0.0-20250403155104-27863c87afa6 // indirect
+=======
+	github.com/google/pprof v0.0.0-20241210010833-40e02aabc2ad // indirect
+>>>>>>> e316362 (fix: debug_traceTransaction with tracer params (#1470))
 	github.com/holiman/bloomfilter/v2 v2.0.3 // indirect
 	github.com/huin/goupnp v1.3.0 // indirect
 	github.com/jackpal/go-nat-pmp v1.0.2 // indirect
