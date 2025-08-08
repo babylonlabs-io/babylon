@@ -43,6 +43,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#1474](https://github.com/babylonlabs-io/babylon/pull/1474) Add `QueryFpCurrentRewardsRequest` and fix export genesis of incentives
 to allow empty coins in fp current rewards.
 - [#1453](https://github.com/babylonlabs-io/babylon/pull/1453) fix: inactive FP event on full unbonding
+- [#1529](https://github.com/babylonlabs-io/babylon/pull/1529) Allow `FinalityProviderHistoricalRewards` to have empty coins
+to export genesis.
 
 ## v2.2.0
 
