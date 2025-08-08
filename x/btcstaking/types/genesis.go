@@ -180,7 +180,6 @@ func (e ConsumerEvent) Validate() error {
 
 	if len(e.Events.NewFp) == 0 &&
 		len(e.Events.ActiveDel) == 0 &&
-		len(e.Events.SlashedDel) == 0 &&
 		len(e.Events.UnbondedDel) == 0 {
 		return errors.New("empty Events")
 	}

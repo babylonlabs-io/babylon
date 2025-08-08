@@ -15,7 +15,6 @@ import (
 	types3 "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
 	types4 "github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
 	types5 "github.com/babylonlabs-io/babylon/v3/x/epoching/types"
-	v2 "github.com/btcsuite/btcd/btcec/v2"
 	types6 "github.com/cosmos/cosmos-sdk/types"
 	types8 "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 	types9 "github.com/cosmos/ibc-go/v10/modules/core/03-connection/types"
@@ -384,34 +383,6 @@ func (m *MockZoneConciergeChannelKeeper) GetClientID(ctx context.Context, channe
 func (mr *MockZoneConciergeChannelKeeperMockRecorder) GetClientID(ctx, channel interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetClientID", reflect.TypeOf((*MockZoneConciergeChannelKeeper)(nil).GetClientID), ctx, channel)
-}
-
-// GetPort mocks base method.
-func (m *MockZoneConciergeChannelKeeper) GetPort(ctx context.Context) string {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetPort", ctx)
-	ret0, _ := ret[0].(string)
-	return ret0
-}
-
-// GetPort indicates an expected call of GetPort.
-func (mr *MockZoneConciergeChannelKeeperMockRecorder) GetPort(ctx interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPort", reflect.TypeOf((*MockZoneConciergeChannelKeeper)(nil).GetPort), ctx)
-}
-
-// InitGenesis mocks base method.
-func (m *MockZoneConciergeChannelKeeper) InitGenesis(ctx context.Context, gs GenesisState) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "InitGenesis", ctx, gs)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// InitGenesis indicates an expected call of InitGenesis.
-func (mr *MockZoneConciergeChannelKeeperMockRecorder) InitGenesis(ctx, gs interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InitGenesis", reflect.TypeOf((*MockZoneConciergeChannelKeeper)(nil).InitGenesis), ctx, gs)
 }
 
 // IsChannelUninitialized mocks base method.
@@ -872,20 +843,6 @@ func (m *MockBTCStakingKeeper) GetFinalityProvider(ctx context.Context, fpBTCPK 
 func (mr *MockBTCStakingKeeperMockRecorder) GetFinalityProvider(ctx, fpBTCPK interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFinalityProvider", reflect.TypeOf((*MockBTCStakingKeeper)(nil).GetFinalityProvider), ctx, fpBTCPK)
-}
-
-// PropagateFPSlashingToConsumers mocks base method.
-func (m *MockBTCStakingKeeper) PropagateFPSlashingToConsumers(ctx context.Context, fpBTCSK *v2.PrivateKey) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "PropagateFPSlashingToConsumers", ctx, fpBTCSK)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// PropagateFPSlashingToConsumers indicates an expected call of PropagateFPSlashingToConsumers.
-func (mr *MockBTCStakingKeeperMockRecorder) PropagateFPSlashingToConsumers(ctx, fpBTCSK interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PropagateFPSlashingToConsumers", reflect.TypeOf((*MockBTCStakingKeeper)(nil).PropagateFPSlashingToConsumers), ctx, fpBTCSK)
 }
 
 // SlashFinalityProvider mocks base method.
