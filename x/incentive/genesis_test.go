@@ -3,20 +3,14 @@ package incentive_test
 import (
 	"testing"
 
-<<<<<<< HEAD
+	sdkmath "cosmossdk.io/math"
+	"github.com/stretchr/testify/require"
+
+	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
 	keepertest "github.com/babylonlabs-io/babylon/v2/testutil/keeper"
 	"github.com/babylonlabs-io/babylon/v2/testutil/nullify"
 	"github.com/babylonlabs-io/babylon/v2/x/incentive"
 	"github.com/babylonlabs-io/babylon/v2/x/incentive/types"
-=======
-	sdkmath "cosmossdk.io/math"
-	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
-	keepertest "github.com/babylonlabs-io/babylon/v3/testutil/keeper"
-	"github.com/babylonlabs-io/babylon/v3/testutil/nullify"
-	"github.com/babylonlabs-io/babylon/v3/x/incentive"
-	"github.com/babylonlabs-io/babylon/v3/x/incentive/types"
->>>>>>> 25a0cd3 (chore: allow zero len coins as fp historical rewards (#1529))
-	"github.com/stretchr/testify/require"
 )
 
 func TestGenesis(t *testing.T) {
