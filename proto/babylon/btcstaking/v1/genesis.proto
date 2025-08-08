@@ -31,7 +31,7 @@ message GenesisState {
   // all consumer chain events
   repeated ConsumerEvent consumer_events = 10;
   // collection of the allowed multi-staking transaction hashes (hex encoded)
-  repeated string allowed_multi_staking_tx_hashes = 11;  
+  repeated string allowed_multi_staking_tx_hashes = 11;
 }
 
 // BlockHeightBbnToBtc stores the btc <-> bbn block.
@@ -70,8 +70,7 @@ message EventIndex {
 message ConsumerEvent {
   // consumer_id is the identifier of the consumer chain
   string consumer_id = 1;
-  // events holds all the events (NewFinalityProvider, ActiveBTCDelegation,
-  // SlashedBTCDelegation, UnbondedBTCDelegation)
+  // events holds all the events (NewFinalityProvider, ActiveBTCDelegation, UnbondedBTCDelegation)
   // for the consumer chain
   BTCStakingIBCPacket events = 2;
 }

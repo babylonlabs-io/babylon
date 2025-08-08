@@ -201,6 +201,6 @@ func (d *BabylonAppDriver) AddBsnRewards(sender *SenderInfo, consumerID string, 
 		FpRatios:      fpRatios,
 	}
 
-	d.SendTxWithMessagesSuccess(d.t, sender, defaultGasLimit, defaultFeeCoin, msg)
+	d.SendTxWithMessagesSuccess(d.t, sender, DefaultGasLimit, defaultFeeCoin, msg)
 	sender.IncSeq()
 }

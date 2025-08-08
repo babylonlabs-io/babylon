@@ -62,6 +62,7 @@ import (
 	btclighttypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
 	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 	ckpttypes "github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
+	minttypes "github.com/babylonlabs-io/babylon/v3/x/mint/types"
 )
 
 var validatorConfig = &initialization.NodeConfig{
@@ -75,15 +76,15 @@ var validatorConfig = &initialization.NodeConfig{
 }
 
 const (
-	chainID         = initialization.ChainAID
-	testPartSize    = 65536
-	defaultGasLimit = 1000000
-	defaultFee      = 500000
-	epochLength     = 10
-	blkTime         = time.Second * 5
+	chainID      = initialization.ChainAID
+	testPartSize = 65536
+	defaultFee   = 500000
+	epochLength  = 10
+	blkTime      = time.Second * 5
 )
 
 var (
+	DefaultGasLimit                  = uint64(1_000_000)
 	defaultFeeCoin                   = sdk.NewCoin("ubbn", sdkmath.NewInt(defaultFee))
 	BtcParams                        = &chaincfg.SimNetParams
 	covenantSKs, pks, CovenantQuorum = bstypes.LargeDefaultCovenantCommittee()
@@ -406,7 +407,7 @@ func (d *BabylonAppDriver) SendTxWithMessagesSuccess(
 		Type: abci.CheckTxType_New,
 	})
 	require.NoError(t, err)
-	require.Equal(t, result.Code, uint32(0))
+	require.Equal(t, result.Code, uint32(0), "tx log: %s - first msg type %s", result.GetLog(), msgs[0].String())
 }
 
 func SendTxWithMessagesSuccess(
@@ -416,7 +417,7 @@ func SendTxWithMessagesSuccess(
 	gas uint64,
 	fee sdk.Coin,
 	msgs ...sdk.Msg,
-) {
+) *abci.ResponseCheckTx {
 	txBytes := createTx(t, app.TxConfig(), senderInfo, gas, fee, msgs...)
 
 	result, err := app.CheckTx(&abci.RequestCheckTx{
@@ -426,6 +427,7 @@ func SendTxWithMessagesSuccess(
 
 	require.NoError(t, err)
 	require.Equal(t, result.Code, uint32(0), result.Log)
+	return result
 }
 
 func SendTxWithMessages(
@@ -434,7 +436,7 @@ func SendTxWithMessages(
 	senderInfo *SenderInfo,
 	msgs ...sdk.Msg,
 ) (*abci.ResponseCheckTx, error) {
-	txBytes := createTx(t, app.TxConfig(), senderInfo, defaultGasLimit, defaultFeeCoin, msgs...)
+	txBytes := createTx(t, app.TxConfig(), senderInfo, DefaultGasLimit, defaultFeeCoin, msgs...)
 
 	return app.CheckTx(&abci.RequestCheckTx{
 		Tx:   txBytes,
@@ -447,12 +449,12 @@ func DefaultSendTxWithMessagesSuccess(
 	app *babylonApp.BabylonApp,
 	senderInfo *SenderInfo,
 	msgs ...sdk.Msg,
-) {
-	SendTxWithMessagesSuccess(
+) *abci.ResponseCheckTx {
+	return SendTxWithMessagesSuccess(
 		t,
 		app,
 		senderInfo,
-		defaultGasLimit,
+		DefaultGasLimit,
 		defaultFeeCoin,
 		msgs...,
 	)
@@ -696,12 +698,12 @@ func (d *BabylonAppDriver) GenBlockWithTransactions(
 }
 
 func blockWithProofsToActivationMessages(
-	blockWithProofs *datagen.BlockWithProofs,
+	btcBlockWithProofs *datagen.BlockWithProofs,
 	senderAddr sdk.AccAddress,
 ) []sdk.Msg {
 	msgs := []sdk.Msg{}
 
-	for i, tx := range blockWithProofs.Transactions {
+	for i, wireTx := range btcBlockWithProofs.Transactions {
 		// no coinbase tx
 		if i == 0 {
 			continue
@@ -709,8 +711,8 @@ func blockWithProofsToActivationMessages(
 
 		msgs = append(msgs, &bstypes.MsgAddBTCDelegationInclusionProof{
 			Signer:                  senderAddr.String(),
-			StakingTxHash:           tx.TxHash().String(),
-			StakingTxInclusionProof: bstypes.NewInclusionProofFromSpvProof(blockWithProofs.Proofs[i]),
+			StakingTxHash:           wireTx.TxHash().String(),
+			StakingTxInclusionProof: bstypes.NewInclusionProofFromSpvProof(btcBlockWithProofs.Proofs[i]),
 		})
 	}
 	return msgs
@@ -903,7 +905,7 @@ func (d *BabylonAppDriver) SendTxWithMsgsFromDriverAccount(
 	d.SendTxWithMessagesSuccess(
 		t,
 		d.SenderInfo,
-		defaultGasLimit,
+		DefaultGasLimit,
 		defaultFeeCoin,
 		msgs...,
 	)
@@ -918,7 +920,7 @@ func (d *BabylonAppDriver) SendTxWithMsgsFromDriverAccount(
 		}
 
 		// all executions should be successful
-		require.Equal(t, rs.Code, uint32(0), rs.Log)
+		require.Equal(t, rs.Code, uint32(0), rs.Log, msgs[0].String())
 	}
 
 	d.IncSeq()
@@ -1133,4 +1135,43 @@ func (d *BabylonAppDriver) FpRandCommitContext() string {
 
 func (d *BabylonAppDriver) FpFinVoteContext() string {
 	return signingcontext.FpFinVoteContextV0(d.App.ChainID(), d.App.FinalityKeeper.ModuleAddress())
+}
+
+func (d *BabylonAppDriver) BankSend(
+	t *testing.T,
+	from *SenderInfo,
+	to sdk.AccAddress,
+	coins sdk.Coins,
+) {
+	msgBankSend := banktypes.MsgSend{
+		FromAddress: from.AddressString(),
+		ToAddress:   to.String(),
+		// 100 BBN, should be enough for most tests
+		Amount: coins,
+	}
+
+	DefaultSendTxWithMessagesSuccess(t, d.App, from, &msgBankSend)
+	from.IncSeq()
+}
+
+func (d *BabylonAppDriver) BankSendNative(
+	t *testing.T,
+	from *SenderInfo,
+	to sdk.AccAddress,
+	amt int64,
+) {
+	d.BankSend(t, d.SenderInfo, from.Address(), sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(amt))))
+}
+
+func (d *BabylonAppDriver) MintNativeTo(
+	t *testing.T,
+	recipient sdk.AccAddress,
+	amt int64,
+) {
+	mintCoins := sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(amt)))
+	err := d.App.MintKeeper.MintCoins(d.Ctx(), mintCoins)
+	require.NoError(t, err)
+
+	err = d.App.BankKeeper.SendCoinsFromModuleToAccount(d.Ctx(), minttypes.ModuleName, recipient, mintCoins)
+	require.NoError(t, err)
 }

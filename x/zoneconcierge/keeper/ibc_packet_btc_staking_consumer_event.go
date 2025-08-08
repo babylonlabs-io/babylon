@@ -197,11 +197,6 @@ func (k Keeper) HandleConsumerSlashing(
 		return fmt.Errorf("failed to slash finality provider: %w", err)
 	}
 
-	// Send slashing event to other involved consumers
-	if err := k.bsKeeper.PropagateFPSlashingToConsumers(ctx, slashedFpBTCSK); err != nil {
-		return fmt.Errorf("failed to propagate slashing to consumers: %w", err)
-	}
-
 	// Emit slashed finality provider event so btc slasher/vigilante can slash the finality provider
 	eventSlashing := finalitytypes.NewEventSlashedFinalityProvider(evidence)
 	if err := sdk.UnwrapSDKContext(ctx).EventManager().EmitTypedEvent(eventSlashing); err != nil {
