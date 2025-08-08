@@ -153,13 +153,10 @@ func (f *BTCDelegationRewardsTracker) Validate() error {
 
 func (hr *FinalityProviderHistoricalRewards) Validate() error {
 	if !hr.CumulativeRewardsPerSat.IsValid() {
-		return fmt.Errorf("cummulative rewards per sat has invalid coins: %s", hr.CumulativeRewardsPerSat.String())
+		return fmt.Errorf("cumulative rewards per sat has invalid coins: %s", hr.CumulativeRewardsPerSat.String())
 	}
 	if hr.CumulativeRewardsPerSat.IsAnyNil() {
-		return errors.New("cummulative rewards per sat has nil coins")
-	}
-	if hr.CumulativeRewardsPerSat.Len() == 0 {
-		return errors.New("cummulative rewards per sat has no coins")
+		return errors.New("cumulative rewards per sat has nil coins")
 	}
 	return nil
 }
