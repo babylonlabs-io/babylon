@@ -37,6 +37,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+<<<<<<< HEAD
+=======
+### Improvements
+
+- [#1229](https://github.com/babylonlabs-io/babylon/pull/1229) Wire up EVM.
+- [#1529](https://github.com/babylonlabs-io/babylon/pull/1529) Allow `FinalityProviderHistoricalRewards` to have empty coins
+to export genesis.
+
+>>>>>>> 25a0cd3 (chore: allow zero len coins as fp historical rewards (#1529))
 ## v3.0.0-rc.1
 
 - [#1525](https://github.com/babylonlabs-io/babylon/pull/1525) Remove `PropagateFPSlashingToConsumers` call from slashing logic at send
