@@ -605,7 +605,7 @@ func TestBadUnbondingFeeParams(t *testing.T) {
 		Params:    p,
 	}
 	msgToSend := d.NewGovProp(&prop)
-	d.SendTxWithMessagesSuccess(t, d.SenderInfo, defaultGasLimit, defaultFeeCoin, msgToSend)
+	d.SendTxWithMessagesSuccess(t, d.SenderInfo, DefaultGasLimit, defaultFeeCoin, msgToSend)
 
 	txResults := d.GenerateNewBlockAssertExecutionFailure()
 	require.Len(t, txResults, 1)
@@ -756,6 +756,11 @@ func TestAcceptSlashingTxAsUnbondingTx(t *testing.T) {
 }
 
 func TestSlashingFpWithManyMulistakedDelegations(t *testing.T) {
+	tmpGas := DefaultGasLimit
+	DefaultGasLimit = uint64(10_000_000)
+	defer func() {
+		DefaultGasLimit = tmpGas
+	}()
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	d := NewBabylonAppDriverTmpDir(r, t)
 	d.GenerateNewBlockAssertExecutionSuccess()

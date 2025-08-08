@@ -77,15 +77,15 @@ var validatorConfig = &initialization.NodeConfig{
 }
 
 const (
-	chainID         = initialization.ChainAID
-	testPartSize    = 65536
-	defaultGasLimit = 10_000_000
-	defaultFee      = 500000
-	epochLength     = 10
-	blkTime         = time.Second * 5
+	chainID      = initialization.ChainAID
+	testPartSize = 65536
+	defaultFee   = 500000
+	epochLength  = 10
+	blkTime      = time.Second * 5
 )
 
 var (
+	DefaultGasLimit                  = uint64(1_000_000)
 	defaultFeeCoin                   = sdk.NewCoin("ubbn", sdkmath.NewInt(defaultFee))
 	BtcParams                        = &chaincfg.SimNetParams
 	covenantSKs, pks, CovenantQuorum = bstypes.LargeDefaultCovenantCommittee()
@@ -439,7 +439,7 @@ func SendTxWithMessages(
 	senderInfo *SenderInfo,
 	msgs ...sdk.Msg,
 ) (*abci.ResponseCheckTx, error) {
-	txBytes := createTx(t, app.TxConfig(), senderInfo, defaultGasLimit, defaultFeeCoin, msgs...)
+	txBytes := createTx(t, app.TxConfig(), senderInfo, DefaultGasLimit, defaultFeeCoin, msgs...)
 
 	return app.CheckTx(&abci.RequestCheckTx{
 		Tx:   txBytes,
@@ -457,7 +457,7 @@ func DefaultSendTxWithMessagesSuccess(
 		t,
 		app,
 		senderInfo,
-		defaultGasLimit,
+		DefaultGasLimit,
 		defaultFeeCoin,
 		msgs...,
 	)
@@ -908,7 +908,7 @@ func (d *BabylonAppDriver) SendTxWithMsgsFromDriverAccount(
 	d.SendTxWithMessagesSuccess(
 		t,
 		d.SenderInfo,
-		defaultGasLimit,
+		DefaultGasLimit,
 		defaultFeeCoin,
 		msgs...,
 	)
