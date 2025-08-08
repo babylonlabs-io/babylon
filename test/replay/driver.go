@@ -7,6 +7,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
+
 	"github.com/babylonlabs-io/babylon/v3/app/signingcontext"
 
 	"math/rand"
