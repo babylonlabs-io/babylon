@@ -46,8 +46,6 @@ func (k Keeper) AddBTCStakingConsumerEvents(ctx context.Context, consumerID stri
 			packet.NewFp = append(packet.NewFp, event.GetNewFp())
 		case event.GetActiveDel() != nil:
 			packet.ActiveDel = append(packet.ActiveDel, event.GetActiveDel())
-		case event.GetSlashedDel() != nil:
-			packet.SlashedDel = append(packet.SlashedDel, event.GetSlashedDel())
 		case event.GetUnbondedDel() != nil:
 			packet.UnbondedDel = append(packet.UnbondedDel, event.GetUnbondedDel())
 		default:

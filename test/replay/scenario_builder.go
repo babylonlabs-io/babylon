@@ -70,6 +70,7 @@ func (s *StandardScenario) InitScenario(
 
 	covSender.SendCovenantSignatures()
 	s.driver.GenerateNewBlockAssertExecutionSuccess()
+	s.driver.GenerateNewBlockAssertExecutionSuccess()
 
 	verifiedDelegations := s.driver.GetVerifiedBTCDelegations(s.driver.t)
 	require.Equal(s.driver.t, len(verifiedDelegations), numFps*delegationsPerFp)

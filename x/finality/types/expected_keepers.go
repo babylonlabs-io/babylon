@@ -7,7 +7,6 @@ import (
 	storetypes "cosmossdk.io/store/types"
 	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 	etypes "github.com/babylonlabs-io/babylon/v3/x/epoching/types"
-	"github.com/btcsuite/btcd/btcec/v2"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -20,7 +19,6 @@ type BTCStakingKeeper interface {
 	HasFinalityProvider(ctx context.Context, fpBTCPK []byte) bool
 	BabylonFinalityProviderExists(ctx context.Context, fpBTCPK []byte) bool
 	SlashFinalityProvider(ctx context.Context, fpBTCPK []byte) error
-	PropagateFPSlashingToConsumers(ctx context.Context, fpBTCSK *btcec.PrivateKey) error
 	GetBTCDelegation(ctx context.Context, stakingTxHashStr string) (*bstypes.BTCDelegation, error)
 	ClearPowerDistUpdateEvents(ctx context.Context, btcHeight uint32)
 	JailFinalityProvider(ctx context.Context, fpBTCPK []byte) error
