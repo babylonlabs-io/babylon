@@ -52,7 +52,7 @@ func NewAnteHandler(
 				BankKeeper:      bankKeeper,
 				SignModeHandler: signModeHandler,
 				FeegrantKeeper:  feegrantKeeper,
-				SigGasConsumer:  authante.DefaultSigVerificationGasConsumer,
+				SigGasConsumer:  evmHandlerOptions.SigGasConsumer,
 				// CheckTxFeeWithGlobalMinGasPrices will enforce the global minimum
 				// gas price for all transactions.
 				TxFeeChecker: CheckTxFeeWithGlobalMinGasPrices,
