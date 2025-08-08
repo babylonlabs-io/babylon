@@ -158,9 +158,6 @@ func (hr *FinalityProviderHistoricalRewards) Validate() error {
 	if hr.CumulativeRewardsPerSat.IsAnyNil() {
 		return errors.New("cummulative rewards per sat has nil coins")
 	}
-	if hr.CumulativeRewardsPerSat.Len() == 0 {
-		return errors.New("cummulative rewards per sat has no coins")
-	}
 	return nil
 }
 
