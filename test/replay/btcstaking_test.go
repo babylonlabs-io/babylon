@@ -762,7 +762,7 @@ func TestSlashingFpWithManyMulistakedDelegations(t *testing.T) {
 
 	covSender := d.CreateCovenantSender()
 	bbnFp := d.CreateNFinalityProviderAccounts(1)[0]
-	numStakers := 20
+	numStakers := 50
 	stakers := d.CreateNStakerAccounts(numStakers)
 	d.GenerateNewBlockAssertExecutionSuccess()
 
@@ -812,7 +812,7 @@ func TestSlashingFpWithManyMulistakedDelegations(t *testing.T) {
 	d.MintNativeTo(t, covSender.Address(), 10000000_000000)
 
 	// creates 200 btc delegations to slash it
-	batchSize := 10
+	batchSize := 4
 	totalActiveDels := len(d.GetActiveBTCDelegations(d.t))
 	for _, stk := range stakers {
 		d.MintNativeTo(t, stk.Address(), 10000000_000000)
@@ -824,7 +824,7 @@ func TestSlashingFpWithManyMulistakedDelegations(t *testing.T) {
 		verifiedDelegations := d.GetVerifiedBTCDelegations(t)
 		require.Equal(t, len(verifiedDelegations), batchSize)
 
-		d.packVerifiedDelegations()
+		d.ActivateVerifiedDelegations(batchSize)
 
 		d.GenerateNewBlockAssertExecutionSuccess()
 		activeDels := d.GetActiveBTCDelegations(d.t)
@@ -856,5 +856,5 @@ func TestSlashingFpWithManyMulistakedDelegations(t *testing.T) {
 
 	fpBbn, err = d.App.BTCStakingKeeper.GetFinalityProvider(d.Ctx(), *fpBtcPk)
 	require.NoError(t, err)
-	require.True(t, fpBbn.Jailed)
+	require.True(t, fpBbn.IsSlashed())
 }
