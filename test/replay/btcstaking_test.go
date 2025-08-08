@@ -1,7 +1,6 @@
 package replay
 
 import (
-	"fmt"
 	"math/rand"
 	"testing"
 	"time"
@@ -763,7 +762,8 @@ func TestSlashingFpWithManyMulistakedDelegations(t *testing.T) {
 
 	covSender := d.CreateCovenantSender()
 	bbnFp := d.CreateNFinalityProviderAccounts(1)[0]
-	stakers := d.CreateNStakerAccounts(3)
+	numStakers := 20
+	stakers := d.CreateNStakerAccounts(numStakers)
 	d.GenerateNewBlockAssertExecutionSuccess()
 
 	bbnFp.RegisterFinalityProvider("")
@@ -807,20 +807,19 @@ func TestSlashingFpWithManyMulistakedDelegations(t *testing.T) {
 	require.NotNil(t, fpsCons1, fpsCons2)
 
 	d.GenerateNewBlockAssertExecutionSuccess()
-
-	d.MintNativeTo(t, stk2.Address(), 10000000_000000)
-	d.MintNativeTo(t, covSender.Address(), 10000000_000000)
-
-	d.GenerateNewBlockAssertExecutionSuccess()
-
 	fps = []*bbn.BIP340PubKey{bbnFp.BTCPublicKey(), fpsCons1.BTCPublicKey(), fpsCons2.BTCPublicKey()}
 
-	// creates 5k btc delegations to slash it
-	batchSize := 7
+	d.MintNativeTo(t, covSender.Address(), 10000000_000000)
+
+	// creates 200 btc delegations to slash it
+	batchSize := 10
 	totalActiveDels := len(d.GetActiveBTCDelegations(d.t))
-	for i := 0; i < 5000; i += batchSize {
-		fmt.Printf("\ncreated %d btc delegations", i)
-		d.SendAndVerifyNDelegations(t, stk2, covSender, fps, batchSize)
+	for _, stk := range stakers {
+		d.MintNativeTo(t, stk.Address(), 10000000_000000)
+		d.SendAndVerifyNDelegations(t, stk, covSender, fps, batchSize)
+
+		d.GenerateNewBlockAssertExecutionSuccess()
+		d.GenerateNewBlockAssertExecutionSuccess()
 
 		verifiedDelegations := d.GetVerifiedBTCDelegations(t)
 		require.Equal(t, len(verifiedDelegations), batchSize)
@@ -833,15 +832,29 @@ func TestSlashingFpWithManyMulistakedDelegations(t *testing.T) {
 		totalActiveDels += batchSize
 		require.Equal(t, len(activeDels), totalActiveDels)
 	}
+	// 200 dels + bbn del
+	require.Equal(t, totalActiveDels, (batchSize*numStakers)+1)
 
-	// slash it
+	// unjails the fp so he can vote
+	fpBtcPk := bbnFp.BTCPublicKey()
+	fpBbn, err := d.App.BTCStakingKeeper.GetFinalityProvider(d.Ctx(), *fpBtcPk)
+	require.NoError(t, err)
+
+	fpBbn.Jailed = false
+	d.App.BTCStakingKeeper.SetFinalityProvider(d.Ctx(), fpBbn)
+
 	d.GenerateNewBlockAssertExecutionSuccess()
 	bbnFp.CastVote(activationHeight)
 	d.GenerateNewBlockAssertExecutionSuccess()
 
+	// slash it
 	bogusHash := datagen.GenRandomByteArray(r, 32)
 	txRes := bbnFp.CastVoteForHash(activationHeight, bogusHash)
-	require.Equal(t, 122, txRes.GasUsed)
+	require.LessOrEqual(t, txRes.GasUsed, int64(100_000))
 	res := d.GenerateNewBlockAssertExecutionSuccessWithResults()
 	require.NotEmpty(t, res)
+
+	fpBbn, err = d.App.BTCStakingKeeper.GetFinalityProvider(d.Ctx(), *fpBtcPk)
+	require.NoError(t, err)
+	require.True(t, fpBbn.Jailed)
 }

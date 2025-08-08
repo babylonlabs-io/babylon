@@ -37,6 +37,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+### Improvements
+
+- [#1524](https://github.com/babylonlabs-io/babylon/pull/1524) Remove `PropagateFPSlashingToConsumers` call from slashing logic at send finality signature
 - [#1229](https://github.com/babylonlabs-io/babylon/pull/1229) Wire up EVM.
 
 ## v3.0.0-rc.0

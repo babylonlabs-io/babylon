@@ -79,7 +79,7 @@ var validatorConfig = &initialization.NodeConfig{
 const (
 	chainID         = initialization.ChainAID
 	testPartSize    = 65536
-	defaultGasLimit = 1000000
+	defaultGasLimit = 10000000
 	defaultFee      = 500000
 	epochLength     = 10
 	blkTime         = time.Second * 5
