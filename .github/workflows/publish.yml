@@ -9,7 +9,8 @@ on:
       - 'release/v3.x'
     tags:
       - '*'
-
+  workflow_dispatch:
+  
 permissions:
   contents: read
 
