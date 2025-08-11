@@ -229,7 +229,7 @@ and global segment store
 
 ### Improvements
 
-- [GHSA-56j4-446m-qrf6](https://github.com/babylonlabs-io/babylon-ghsa-56j4-446m-qrf6/pull/1) Add bank restriction for fee collector account
+- [GHSA-56j4-446m-qrf6](https://github.com/advisories/GHSA-56j4-446m-qrf6) Add bank restriction for fee collector account
 
 ## v2.1.0
 
