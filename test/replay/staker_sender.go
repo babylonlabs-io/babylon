@@ -1,6 +1,7 @@
 package replay
 
 import (
+	"github.com/babylonlabs-io/babylon/v3/btcstaking"
 	"math/rand"
 	"testing"
 
@@ -393,23 +394,36 @@ func (s *Staker) UnbondDelegation(
 	require.NotNil(s.t, delegation, "delegation should exist")
 	infos := parseInfos(s.t, delegation, params)
 
-	covenantSKs := covSender.GetCovenantPrivateKeys()
+	unbondingPathSpendInfo, err := infos.StakingSlashingInfo.StakingInfo.UnbondingPathSpendInfo()
+	require.NoError(s.t, err)
 
-	_, unbondingTxMsg := datagen.AddWitnessToUnbondingTx(
+	stakingOutput := stakingTx.TxOut[delegation.StakingOutputIdx]
+
+	covenantSKs := covSender.GetCovenantPrivateKeys()
+	covenantSigs := datagen.GenerateSignatures(
 		s.t,
-		infos.StakingSlashingInfo.StakingTx.TxOut[delegation.StakingOutputIdx],
-		s.BTCPrivateKey,
 		covenantSKs,
-		params.CovenantQuorum,
-		infos.FpPKs,
-		uint16(params.UnbondingTimeBlocks),
-		stakingValue,
 		infos.UnbondingSlashingInfo.UnbondingTx,
-		s.d.App.BTCLightClientKeeper.GetBTCNet(),
+		stakingOutput,
+		unbondingPathSpendInfo.RevealedLeaf,
 	)
 
+	stakerSig, err := btcstaking.SignTxWithOneScriptSpendInputFromTapLeaf(
+		infos.UnbondingSlashingInfo.UnbondingTx,
+		stakingOutput,
+		s.BTCPrivateKey,
+		unbondingPathSpendInfo.RevealedLeaf,
+	)
+	require.NoError(s.t, err)
+
+	witness, err := unbondingPathSpendInfo.CreateUnbondingPathWitness(covenantSigs, stakerSig)
+	require.NoError(s.t, err)
+
+	unbondingTxMsg := infos.UnbondingSlashingInfo.UnbondingTx
+	unbondingTxMsg.TxIn[0].Witness = witness
+
 	blockWithUnbondingTx := s.d.IncludeTxsInBTCAncConfirm([]*wire.MsgTx{unbondingTxMsg})
-	require.Len(s.t, blockWithUnbondingTx.Proofs, 1)
+	require.Len(s.t, blockWithUnbondingTx.Proofs, 2)
 
 	stakingTxBz, err := bbn.SerializeBTCTx(stakingTx)
 	require.NoError(s.t, err)
@@ -421,7 +435,7 @@ func (s *Staker) UnbondDelegation(
 		Signer:                        s.AddressString(),
 		StakingTxHash:                 stakingTxHash.String(),
 		StakeSpendingTx:               unbondingTxBytes,
-		StakeSpendingTxInclusionProof: bstypes.NewInclusionProofFromSpvProof(blockWithUnbondingTx.Proofs[0]),
+		StakeSpendingTxInclusionProof: bstypes.NewInclusionProofFromSpvProof(blockWithUnbondingTx.Proofs[1]),
 		FundingTransactions:           [][]byte{stakingTxBz},
 	}
 
