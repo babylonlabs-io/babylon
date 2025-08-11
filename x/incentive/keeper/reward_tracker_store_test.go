@@ -497,7 +497,7 @@ func FuzzCheckAddFinalityProviderStaked(f *testing.F) {
 		require.Equal(t, currentRwdFp2.Period, uint64(1))
 		require.Equal(t, currentRwdFp2.CurrentRewards.String(), sdk.NewCoins().String())
 
-		amtAddedToFp2 := datagen.RandomMathInt(r, 1000)
+		amtAddedToFp2 := datagen.RandomMathInt(r, 1000).AddRaw(1)
 		err = k.addFinalityProviderStaked(ctx, fp2, amtAddedToFp2)
 		require.NoError(t, err)
 

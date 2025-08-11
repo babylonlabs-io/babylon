@@ -397,11 +397,6 @@ func (k Keeper) slashFinalityProvider(
 		return fmt.Errorf("failed to slash finality provider: %v", err)
 	}
 
-	// Propagate slashing information to consumer chains
-	if err := k.BTCStakingKeeper.PropagateFPSlashingToConsumers(ctx, fpBTCSK); err != nil {
-		return fmt.Errorf("failed to propagate finality provider slashing to consumers: %w", err)
-	}
-
 	// emit slashing event
 	eventSlashing := types.NewEventSlashedFinalityProvider(evidence)
 	if err := sdk.UnwrapSDKContext(ctx).EventManager().EmitTypedEvent(eventSlashing); err != nil {

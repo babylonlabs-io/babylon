@@ -39,6 +39,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
+- [#1229](https://github.com/babylonlabs-io/babylon/pull/1229) Wire up EVM.
+- [#1529](https://github.com/babylonlabs-io/babylon/pull/1529) Allow `FinalityProviderHistoricalRewards` to have empty coins
+to export genesis.
+
+## v3.0.0-rc.1
+
+### Improvements
+
+- [#1525](https://github.com/babylonlabs-io/babylon/pull/1525) Remove `PropagateFPSlashingToConsumers` call from slashing logic at send
+finality signature and `SlashedBTCDelegation` structure.
+
+## v3.0.0-rc.0
+
+### Improvements
+
 - [#1463](https://github.com/babylonlabs-io/babylon/pull/1463) doc: zone concierge IBC channel doc
 - [#1437](https://github.com/babylonlabs-io/babylon/pull/1437) Send base headers before the fallback cases.
 - [#1429](https://github.com/babylonlabs-io/babylon/pull/1429) Send base header if no headers were sent previously.
@@ -108,7 +123,6 @@ check of rewards
 - [#1195](https://github.com/babylonlabs-io/babylon/pull/1195) Update repository version to `v3`.
 - [#1060](https://github.com/babylonlabs-io/babylon/pull/1060) Optimize `PubRandCommit` lookup in `x/finality` module
 - [#1223](https://github.com/babylonlabs-io/babylon/pull/1223) Bump Cosmos SDK to `v0.53.0`
-- [#1229](https://github.com/babylonlabs-io/babylon/pull/1229) Wire up EVM.
 - [#1269](https://github.com/babylonlabs-io/babylon/pull/1269) Add fee collector e2e tests.
 - [#1062](https://github.com/babylonlabs-io/babylon/pull/1062) Add `anteHandler` to avoid fee grants on refundable tx (`x/incentive`)
 - [#1231](https://github.com/babylonlabs-io/babylon/pull/1231) Add BTC stake expansion.
@@ -209,6 +223,7 @@ IBC packet size
 - [#1491](https://github.com/babylonlabs-io/babylon/pull/1491) fix: restore `proofConsumerHeaderInEpoch` allocation removed
 - [#1512](https://github.com/babylonlabs-io/babylon/pull/1512) fix: remove base header
 and global segment store
+- [#1470](https://github.com/babylonlabs-io/babylon/pull/1470) fix: debug_traceTransaction with tracer params
 
 ## v2.2.0
 

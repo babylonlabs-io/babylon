@@ -325,8 +325,7 @@ func (m *EventIndex) GetEvent() *EventPowerDistUpdate {
 type ConsumerEvent struct {
 	// consumer_id is the identifier of the consumer chain
 	ConsumerId string `protobuf:"bytes,1,opt,name=consumer_id,json=consumerId,proto3" json:"consumer_id,omitempty"`
-	// events holds all the events (NewFinalityProvider, ActiveBTCDelegation,
-	// SlashedBTCDelegation, UnbondedBTCDelegation)
+	// events holds all the events (NewFinalityProvider, ActiveBTCDelegation, UnbondedBTCDelegation)
 	// for the consumer chain
 	Events *BTCStakingIBCPacket `protobuf:"bytes,2,opt,name=events,proto3" json:"events,omitempty"`
 }

@@ -400,16 +400,6 @@ func TestConsumerEventValidate(t *testing.T) {
 			expectErr: "",
 		},
 		{
-			name: "valid SlashedDel event",
-			event: types.ConsumerEvent{
-				ConsumerId: "consumer1",
-				Events: &types.BTCStakingIBCPacket{
-					SlashedDel: []*types.SlashedBTCDelegation{{}},
-				},
-			},
-			expectErr: "",
-		},
-		{
 			name: "valid UnbondedDel event",
 			event: types.ConsumerEvent{
 				ConsumerId: "consumer1",
