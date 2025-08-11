@@ -19,10 +19,10 @@ import (
 // sends them to corresponding consumers via open IBC channels, and then deletes the events from the store.
 func (k Keeper) BroadcastBTCStakingConsumerEvents(
 	ctx context.Context,
+	consumerChannels []channeltypes.IdentifiedChannel,
 ) error {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	openZCChannels := k.channelKeeper.GetAllOpenZCChannels(ctx)
-	if len(openZCChannels) == 0 {
+	if len(consumerChannels) == 0 {
 		k.Logger(sdkCtx).Info("skipping BTC staking consumer event broadcast",
 			"reason", "no open channels",
 		)
@@ -30,14 +30,9 @@ func (k Keeper) BroadcastBTCStakingConsumerEvents(
 	}
 
 	// Map consumer client IDs to their corresponding open channels.
-	consumerChannelMap := make(map[string][]channeltypes.IdentifiedChannel)
-	for _, channel := range openZCChannels {
-		consumerID, err := k.channelKeeper.GetClientID(ctx, channel)
-		if err != nil {
-			return err
-		}
-
-		consumerChannelMap[consumerID] = append(consumerChannelMap[consumerID], channel)
+	consumerChannelMap, err := k.buildConsumerChannelMap(ctx, consumerChannels)
+	if err != nil {
+		return err
 	}
 
 	// Iterate through all consumer events and send them to the corresponding open IBC channel.

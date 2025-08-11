@@ -151,7 +151,7 @@ func (k Keeper) getDeepEnoughBTCHeaders(ctx context.Context) []*btclctypes.BTCHe
 // GetHeadersToBroadcast retrieves headers using the fallback method of k+1.
 // If a consumer ID is not provided, a global LastSentSegment is used to track the timestamped header
 // for all consumers when the checkpoint is finalized.
-func (k Keeper) GetHeadersToBroadcast(ctx context.Context, consumerID string) []*btclctypes.BTCHeaderInfo {
+func (k Keeper) GetHeadersToBroadcast(ctx context.Context, consumerID string, headerCache *HeaderCache) []*btclctypes.BTCHeaderInfo {
 	lastSegment := k.GetBSNLastSentSegment(ctx, consumerID)
 
 	if lastSegment == nil {
@@ -168,7 +168,7 @@ func (k Keeper) GetHeadersToBroadcast(ctx context.Context, consumerID string) []
 	var initHeader *btclctypes.BTCHeaderInfo
 	for i := len(lastSegment.BtcHeaders) - 1; i >= 0; i-- {
 		header := lastSegment.BtcHeaders[i]
-		if header, err := k.btclcKeeper.GetHeaderByHash(ctx, header.Hash); err == nil && header != nil {
+		if header, err := headerCache.GetHeaderByHash(ctx, k, header.Hash); err == nil && header != nil {
 			initHeader = header
 			break
 		}
@@ -190,6 +190,7 @@ func (k Keeper) GetHeadersToBroadcast(ctx context.Context, consumerID string) []
 func (k Keeper) BroadcastBTCTimestamps(
 	ctx context.Context,
 	epochNum uint64,
+	consumerChannels []channeltypes.IdentifiedChannel,
 ) error {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	// Babylon does not broadcast BTC timestamps until finalising epoch 1
@@ -215,18 +216,27 @@ func (k Keeper) BroadcastBTCTimestamps(
 		"epoch", epochNum,
 	)
 
-	// for each registered consumer, find its channel and send BTC timestamp
+	// Build a map for O(1) channel lookups
+	consumerChannelMap, err := k.buildConsumerChannelMap(ctx, consumerChannels)
+	if err != nil {
+		return err
+	}
+
+	// Create header cache to avoid duplicate DB queries across consumers
+	headerCache := NewHeaderCache()
+
+	// for each registered consumer, find its channels and send BTC timestamp
 	for _, consumerID := range consumerIDs {
-		// Find the channel for this consumer
-		channel, found := k.channelKeeper.GetChannelForConsumer(ctx, consumerID)
-		if !found {
-			k.Logger(sdkCtx).Debug("no open channel found for consumer, skipping",
+		// Find channels for this consumer using O(1) map lookup
+		channels, found := consumerChannelMap[consumerID]
+		if !found || len(channels) == 0 {
+			k.Logger(sdkCtx).Debug("no open channels found for consumer, skipping",
 				"consumerID", consumerID,
 			)
 			continue
 		}
 
-		headersToBroadcast := k.GetHeadersToBroadcast(ctx, consumerID)
+		headersToBroadcast := k.GetHeadersToBroadcast(ctx, consumerID, headerCache)
 
 		// get all metadata shared across BTC timestamps in the same epoch
 		finalizedInfo, err := k.getFinalizedInfo(ctx, epochNum, headersToBroadcast)
@@ -238,20 +248,11 @@ func (k Keeper) BroadcastBTCTimestamps(
 			return err
 		}
 
-		btcTimestamp, err := k.createBTCTimestamp(ctx, consumerID, channel, finalizedInfo)
-		if err != nil {
-			k.Logger(sdkCtx).Error("failed to create BTC timestamp for consumer, skipping",
-				"channel", channel.ChannelId,
-				"consumerID", consumerID,
-				"error", err.Error(),
-			)
-			continue
-		}
-
-		packet := types.NewBTCTimestampPacketData(btcTimestamp)
-		if err := k.SendIBCPacket(ctx, channel, packet); err != nil {
-			if errors.Is(err, clienttypes.ErrClientNotActive) {
-				k.Logger(sdkCtx).Info("IBC client is not active, skipping consumer",
+		// Send to all channels for this consumer
+		for _, channel := range channels {
+			btcTimestamp, err := k.createBTCTimestamp(ctx, consumerID, channel, finalizedInfo)
+			if err != nil {
+				k.Logger(sdkCtx).Error("failed to create BTC timestamp for consumer, skipping channel",
 					"channel", channel.ChannelId,
 					"consumerID", consumerID,
 					"error", err.Error(),
@@ -259,12 +260,24 @@ func (k Keeper) BroadcastBTCTimestamps(
 				continue
 			}
 
-			k.Logger(sdkCtx).Error("failed to send BTC timestamp to consumer, continuing with other consumers",
-				"channel", channel.ChannelId,
-				"consumerID", consumerID,
-				"error", err.Error(),
-			)
-			continue
+			packet := types.NewBTCTimestampPacketData(btcTimestamp)
+			if err := k.SendIBCPacket(ctx, channel, packet); err != nil {
+				if errors.Is(err, clienttypes.ErrClientNotActive) {
+					k.Logger(sdkCtx).Info("IBC client is not active, skipping channel",
+						"channel", channel.ChannelId,
+						"consumerID", consumerID,
+						"error", err.Error(),
+					)
+					continue
+				}
+
+				k.Logger(sdkCtx).Error("failed to send BTC timestamp to channel, continuing with other channels",
+					"channel", channel.ChannelId,
+					"consumerID", consumerID,
+					"error", err.Error(),
+				)
+				continue
+			}
 		}
 
 		// only update the segment if we have broadcasted some headers

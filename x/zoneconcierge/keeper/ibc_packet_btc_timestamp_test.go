@@ -10,6 +10,7 @@ import (
 	btclckeeper "github.com/babylonlabs-io/babylon/v3/x/btclightclient/keeper"
 	btclctypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
 	"github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
+	znckeeper "github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/keeper"
 	znctypes "github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	connectiontypes "github.com/cosmos/ibc-go/v10/modules/core/03-connection/types"
@@ -106,7 +107,8 @@ func FuzzGetHeadersToBroadcast(f *testing.F) {
 		// At this point last segment is still nil
 
 		// assert the last segment is the last k+1 BTC headers (using confirmation depth)
-		btcHeaders := zcK.GetHeadersToBroadcast(ctx, consumerID)
+		headerCache := znckeeper.NewHeaderCache()
+		btcHeaders := zcK.GetHeadersToBroadcast(ctx, consumerID, headerCache)
 		require.Len(t, btcHeaders, int(kValue)+1)
 		for i := range btcHeaders {
 			require.Equal(t, btclightK.GetHeaderByHeight(ctx, btcTip.Height-kValue+uint32(i)), btcHeaders[i])
@@ -127,7 +129,7 @@ func FuzzGetHeadersToBroadcast(f *testing.F) {
 		btcTip = btclightK.GetTipInfo(ctx)
 
 		// checks that returns k+1 headers
-		btcHeaders2 := zcK.GetHeadersToBroadcast(ctx, consumerID)
+		btcHeaders2 := zcK.GetHeadersToBroadcast(ctx, consumerID, headerCache)
 		require.Len(t, btcHeaders2, int(kValue)+1)
 		for i := range btcHeaders2 {
 			require.Equal(t, btclightK.GetHeaderByHeight(ctx, uint32(i)+btcTip.Height-kValue), btcHeaders2[i])
@@ -139,7 +141,7 @@ func FuzzGetHeadersToBroadcast(f *testing.F) {
 		})
 
 		// gets the headers again to check with last segments set and init header exists
-		btcHeaders3 := zcK.GetHeadersToBroadcast(ctx, consumerID)
+		btcHeaders3 := zcK.GetHeadersToBroadcast(ctx, consumerID, headerCache)
 		require.Len(t, btcHeaders3, int(chainLength))
 		for i := range btcHeaders3 {
 			require.Equal(t, btclightK.GetHeaderByHeight(ctx, uint32(i)+btcTip.Height-chainLength+1), btcHeaders3[i])
@@ -167,7 +169,7 @@ func FuzzGetHeadersToBroadcast(f *testing.F) {
 
 		btcTip = btclightK.GetTipInfo(ctx)
 
-		btcHeaders4 := zcK.GetHeadersToBroadcast(ctx, consumerID)
+		btcHeaders4 := zcK.GetHeadersToBroadcast(ctx, consumerID, headerCache)
 		require.Len(t, btcHeaders4, int(kValue)+1)
 		for i := range btcHeaders4 {
 			require.Equal(t, btclightK.GetHeaderByHeight(ctx, uint32(i)+btcTip.Height-kValue), btcHeaders4[i])

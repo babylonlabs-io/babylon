@@ -38,7 +38,8 @@ func (h Hooks) AfterRawCheckpointSealed(ctx context.Context, epoch uint64) error
 func (h Hooks) AfterRawCheckpointFinalized(ctx context.Context, epoch uint64) error {
 	// send BTC timestamp to all open channels with ZoneConcierge along side with
 	// necessary light client headers
-	if err := h.k.BroadcastBTCTimestamps(ctx, epoch); err != nil {
+	consumerChans := h.k.channelKeeper.GetAllOpenZCChannels(ctx)
+	if err := h.k.BroadcastBTCTimestamps(ctx, epoch, consumerChans); err != nil {
 		h.handleHookBroadcastError(ctx, "BroadcastBTCTimestamps", err)
 	}
 
