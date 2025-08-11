@@ -7,7 +7,11 @@ import (
 
 	erc20types "github.com/cosmos/evm/x/erc20/types"
 
+<<<<<<< HEAD
 	"github.com/babylonlabs-io/babylon/v4/app"
+=======
+	"github.com/babylonlabs-io/babylon/v3/app"
+>>>>>>> ff15aa5 (feat: bump cosmos evm from v1.0.0-rc0 to v0.3.1 (#1492))
 )
 
 // BabylonApp DefaultGenesis ERC20 NativePrecompiles test

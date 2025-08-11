@@ -1,9 +1,15 @@
 package app_test
 
 import (
+<<<<<<< HEAD
 	"github.com/babylonlabs-io/babylon/v4/app"
 	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
 	"github.com/babylonlabs-io/babylon/v4/cmd/babylond/cmd"
+=======
+	"github.com/babylonlabs-io/babylon/v3/app"
+	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
+	"github.com/babylonlabs-io/babylon/v3/cmd/babylond/cmd"
+>>>>>>> ff15aa5 (feat: bump cosmos evm from v1.0.0-rc0 to v0.3.1 (#1492))
 	evmtypes "github.com/cosmos/evm/x/vm/types"
 
 	"github.com/stretchr/testify/require"

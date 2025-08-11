@@ -31,10 +31,17 @@ import (
 	appsigner "github.com/babylonlabs-io/babylon/v4/app/signer"
 
 	"cosmossdk.io/log"
+<<<<<<< HEAD
 	"github.com/babylonlabs-io/babylon/v4/app"
 	"github.com/babylonlabs-io/babylon/v4/app/params"
 	"github.com/babylonlabs-io/babylon/v4/cmd/babylond/cmd/genhelpers"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
+=======
+	"github.com/babylonlabs-io/babylon/v3/app"
+	"github.com/babylonlabs-io/babylon/v3/app/params"
+	"github.com/babylonlabs-io/babylon/v3/cmd/babylond/cmd/genhelpers"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
+>>>>>>> ff15aa5 (feat: bump cosmos evm from v1.0.0-rc0 to v0.3.1 (#1492))
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
