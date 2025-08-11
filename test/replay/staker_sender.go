@@ -123,6 +123,21 @@ func (s *Staker) CreateDelegationMessageWithChange(
 	)
 }
 
+func (s *Staker) createBTCUndelegateMsg(signer, stakingTXHash string,
+	unbondingSlashingInfo *datagen.TestUnbondingSlashingInfo,
+	stakeSpendingInclusionProof *bstypes.InclusionProof,
+	fundingTxs [][]byte) *bstypes.MsgBTCUndelegate {
+	unbondingTxBytes, err := bbn.SerializeBTCTx(unbondingSlashingInfo.UnbondingTx)
+	require.NoError(s.t, err)
+	return &bstypes.MsgBTCUndelegate{
+		Signer:                        signer,
+		StakingTxHash:                 stakingTXHash,
+		StakeSpendingTx:               unbondingTxBytes,
+		StakeSpendingTxInclusionProof: stakeSpendingInclusionProof,
+		FundingTransactions:           fundingTxs,
+	}
+}
+
 func (s *Staker) createBTCDelegationMsg(
 	params *bstypes.Params,
 	fpKeys []*bbn.BIP340PubKey,
@@ -363,4 +378,52 @@ func (s *Staker) WithdrawBtcStakingRewards() {
 		msg,
 	)
 	s.IncSeq()
+}
+
+func (s *Staker) UnbondDelegation(
+	stakingTxHash *chainhash.Hash,
+	fpKeys []*bbn.BIP340PubKey,
+	stakingValue int64,
+	stakingTx *wire.MsgTx,
+	covSender *CovenantSender,
+) {
+	params := s.d.GetBTCStakingParams(s.t)
+
+	delegation := s.d.GetBTCDelegation(s.t, stakingTxHash.String())
+	require.NotNil(s.t, delegation, "delegation should exist")
+	infos := parseInfos(s.t, delegation, params)
+
+	covenantSKs := covSender.GetCovenantPrivateKeys()
+
+	_, unbondingTxMsg := datagen.AddWitnessToUnbondingTx(
+		s.t,
+		infos.StakingSlashingInfo.StakingTx.TxOut[delegation.StakingOutputIdx],
+		s.BTCPrivateKey,
+		covenantSKs,
+		params.CovenantQuorum,
+		infos.FpPKs,
+		uint16(params.UnbondingTimeBlocks),
+		stakingValue,
+		infos.UnbondingSlashingInfo.UnbondingTx,
+		s.d.App.BTCLightClientKeeper.GetBTCNet(),
+	)
+
+	blockWithUnbondingTx := s.d.IncludeTxsInBTCAncConfirm([]*wire.MsgTx{unbondingTxMsg})
+	require.Len(s.t, blockWithUnbondingTx.Proofs, 1)
+
+	stakingTxBz, err := bbn.SerializeBTCTx(stakingTx)
+	require.NoError(s.t, err)
+
+	unbondingTxBytes, err := bbn.SerializeBTCTx(unbondingTxMsg)
+	require.NoError(s.t, err)
+
+	msg := &bstypes.MsgBTCUndelegate{
+		Signer:                        s.AddressString(),
+		StakingTxHash:                 stakingTxHash.String(),
+		StakeSpendingTx:               unbondingTxBytes,
+		StakeSpendingTxInclusionProof: bstypes.NewInclusionProofFromSpvProof(blockWithUnbondingTx.Proofs[0]),
+		FundingTransactions:           [][]byte{stakingTxBz},
+	}
+
+	s.SendMessage(msg)
 }
