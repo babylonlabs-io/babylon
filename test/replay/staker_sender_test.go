@@ -68,7 +68,7 @@ func TestUnbondDelegation(t *testing.T) {
 
 	stakingTxHash := stakingTx.TxHash()
 
-	stk2.UnbondDelegation(&stakingTxHash, fps, int64(activation.TotalSat), stakingTx, covSender)
+	stk2.UnbondDelegation(&stakingTxHash, stakingTx, covSender)
 
 	d.GenerateNewBlockAssertExecutionSuccess()
 

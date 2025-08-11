@@ -383,8 +383,6 @@ func (s *Staker) WithdrawBtcStakingRewards() {
 
 func (s *Staker) UnbondDelegation(
 	stakingTxHash *chainhash.Hash,
-	fpKeys []*bbn.BIP340PubKey,
-	stakingValue int64,
 	stakingTx *wire.MsgTx,
 	covSender *CovenantSender,
 ) {
