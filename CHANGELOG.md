@@ -39,10 +39,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
+- [#1229](https://github.com/babylonlabs-io/babylon/pull/1229) Wire up EVM.
+- [#1529](https://github.com/babylonlabs-io/babylon/pull/1529) Allow `FinalityProviderHistoricalRewards` to have empty coins
+to export genesis.
+- [#1539](https://github.com/babylonlabs-io/babylon/pull/1539) update unbonding in replay testsuite
+
+## v3.0.0-rc.1
+
+### Improvements
+
 - [#1525](https://github.com/babylonlabs-io/babylon/pull/1525) Remove `PropagateFPSlashingToConsumers` call from slashing logic at send
 finality signature and `SlashedBTCDelegation` structure.
-- [#1229](https://github.com/babylonlabs-io/babylon/pull/1229) Wire up EVM.
-- [#1539](https://github.com/babylonlabs-io/babylon/pull/1539) update unbonding in replay testsuite
 
 ## v3.0.0-rc.0
 
@@ -154,6 +161,7 @@ to allow empty coins in fp current rewards.
 - [#1490](https://github.com/babylonlabs-io/babylon/pull/1490) Add multi-staking allow-list for Testnet
 - [#1485](https://github.com/babylonlabs-io/babylon/pull/1485) Add channel check on consumer FP creation
 - [#1516](https://github.com/babylonlabs-io/babylon/pull/1516) Remove `zoneconcierge` port ID from state
+- [#1492](https://github.com/babylonlabs-io/babylon/pull/1492) Bump cosmos evm to v0.3.1
 
 ### State Machine Breaking
 
