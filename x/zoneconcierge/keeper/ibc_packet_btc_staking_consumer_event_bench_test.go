@@ -173,7 +173,7 @@ func setupBenchmarkEvents(b *testing.B, app *app.BabylonApp, ctx sdk.Context, co
 							FpBtcPkList:   []string{fmt.Sprintf("%064x", datagen.GenRandomByteArray(r, 32))},
 							StartHeight:   uint32(datagen.RandomInt(r, 1000000)),
 							EndHeight:     uint32(datagen.RandomInt(r, 1000000) + 1000000),
-							TotalSat:      uint64(datagen.RandomInt(r, 100000000)), // up to 1 BTC in sats
+							TotalSat:      datagen.RandomInt(r, 100000000), // up to 1 BTC in sats
 							StakingTx:     datagen.GenRandomByteArray(r, 100),
 							UnbondingTime: uint32(144), // ~1 day in blocks
 							ParamsVersion: 1,

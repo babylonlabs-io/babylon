@@ -8,45 +8,8 @@ import (
 	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 
-	bbn "github.com/babylonlabs-io/babylon/v3/types"
-	btclctypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
 	"github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
 )
-
-// HeaderCache provides in-memory caching for BTC headers to avoid duplicate DB queries
-type HeaderCache struct {
-	cache map[string]*btclctypes.BTCHeaderInfo
-}
-
-// NewHeaderCache creates a new header cache
-func NewHeaderCache() *HeaderCache {
-	return &HeaderCache{
-		cache: make(map[string]*btclctypes.BTCHeaderInfo),
-	}
-}
-
-// GetHeaderByHash retrieves a header by hash, using cache first, then falling back to DB
-func (hc *HeaderCache) GetHeaderByHash(ctx context.Context, k Keeper, hash *bbn.BTCHeaderHashBytes) (*btclctypes.BTCHeaderInfo, error) {
-	hashStr := hash.String()
-
-	// Check cache first
-	if header, found := hc.cache[hashStr]; found {
-		return header, nil
-	}
-
-	// Cache miss - retrieve from DB
-	header, err := k.btclcKeeper.GetHeaderByHash(ctx, hash)
-	if err != nil {
-		return nil, err
-	}
-
-	// Store in cache for future use
-	if header != nil {
-		hc.cache[hashStr] = header
-	}
-
-	return header, nil
-}
 
 // BroadcastBTCHeaders sends an IBC packet of BTC headers to all open IBC channels to ZoneConcierge
 func (k Keeper) BroadcastBTCHeaders(ctx context.Context, consumerChannels []channeltypes.IdentifiedChannel) error {
@@ -74,7 +37,7 @@ func (k Keeper) BroadcastBTCHeaders(ctx context.Context, consumerChannels []chan
 	}
 
 	// Create header cache to avoid duplicate DB queries across consumers
-	headerCache := NewHeaderCache()
+	headerCache := types.NewHeaderCache()
 
 	for _, consumerID := range consumerIDs {
 		// Find channels for this consumer using O(1) map lookup

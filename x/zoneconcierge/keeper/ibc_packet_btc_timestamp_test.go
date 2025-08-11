@@ -10,7 +10,6 @@ import (
 	btclckeeper "github.com/babylonlabs-io/babylon/v3/x/btclightclient/keeper"
 	btclctypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
 	"github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
-	znckeeper "github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/keeper"
 	znctypes "github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	connectiontypes "github.com/cosmos/ibc-go/v10/modules/core/03-connection/types"
@@ -107,7 +106,7 @@ func FuzzGetHeadersToBroadcast(f *testing.F) {
 		// At this point last segment is still nil
 
 		// assert the last segment is the last k+1 BTC headers (using confirmation depth)
-		headerCache := znckeeper.NewHeaderCache()
+		headerCache := znctypes.NewHeaderCache()
 		btcHeaders := zcK.GetHeadersToBroadcast(ctx, consumerID, headerCache)
 		require.Len(t, btcHeaders, int(kValue)+1)
 		for i := range btcHeaders {
