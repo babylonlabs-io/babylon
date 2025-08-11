@@ -4,11 +4,10 @@ import (
 	"context"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 )
 
-func (k Keeper) GetAllOpenChannels(ctx sdk.Context) []types.IdentifiedChannel {
+func (k Keeper) GetAllOpenChannels(ctx sdk.Context) []channeltypes.IdentifiedChannel {
 	return k.channelKeeper.GetAllOpenZCChannels(ctx)
 }
 
