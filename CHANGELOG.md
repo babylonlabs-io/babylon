@@ -160,6 +160,7 @@ to allow empty coins in fp current rewards.
 - [#1490](https://github.com/babylonlabs-io/babylon/pull/1490) Add multi-staking allow-list for Testnet
 - [#1485](https://github.com/babylonlabs-io/babylon/pull/1485) Add channel check on consumer FP creation
 - [#1516](https://github.com/babylonlabs-io/babylon/pull/1516) Remove `zoneconcierge` port ID from state
+- [#1492](https://github.com/babylonlabs-io/babylon/pull/1492) Bump cosmos evm to v0.3.1
 
 ### State Machine Breaking
 
