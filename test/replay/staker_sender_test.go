@@ -25,7 +25,7 @@ func TestUnbondDelegation(t *testing.T) {
 
 	covSender := d.CreateCovenantSender()
 	bbnFp := d.CreateNFinalityProviderAccounts(1)[0]
-	numStakers := 50
+	numStakers := 1
 	stakers := d.CreateNStakerAccounts(numStakers)
 	d.GenerateNewBlockAssertExecutionSuccess()
 

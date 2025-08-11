@@ -124,21 +124,6 @@ func (s *Staker) CreateDelegationMessageWithChange(
 	)
 }
 
-func (s *Staker) createBTCUndelegateMsg(signer, stakingTXHash string,
-	unbondingSlashingInfo *datagen.TestUnbondingSlashingInfo,
-	stakeSpendingInclusionProof *bstypes.InclusionProof,
-	fundingTxs [][]byte) *bstypes.MsgBTCUndelegate {
-	unbondingTxBytes, err := bbn.SerializeBTCTx(unbondingSlashingInfo.UnbondingTx)
-	require.NoError(s.t, err)
-	return &bstypes.MsgBTCUndelegate{
-		Signer:                        signer,
-		StakingTxHash:                 stakingTXHash,
-		StakeSpendingTx:               unbondingTxBytes,
-		StakeSpendingTxInclusionProof: stakeSpendingInclusionProof,
-		FundingTransactions:           fundingTxs,
-	}
-}
-
 func (s *Staker) createBTCDelegationMsg(
 	params *bstypes.Params,
 	fpKeys []*bbn.BIP340PubKey,
