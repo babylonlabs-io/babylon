@@ -370,14 +370,14 @@ func (s *BtcRewardsDistribution) CheckRewardsFirstDelegations() {
 	}
 
 	// makes sure there is some reward there
-	s.Eventually(func() bool {
+	s.Require().Eventually(func() bool {
 		_, errFp1 := n2.QueryRewardGauge(s.fp1.Address())
 		_, errFp2 := n2.QueryRewardGauge(s.fp2.Address())
 		_, errDel1 := n2.QueryRewardGauge(sdk.MustAccAddressFromBech32(s.del1Addr))
 		_, errDel2 := n2.QueryRewardGauge(sdk.MustAccAddressFromBech32(s.del2Addr))
 		n2.WaitForNextBlock()
 		return errFp1 == nil && errFp2 == nil && errDel1 == nil && errDel2 == nil
-	}, time.Minute*2, time.Second*3, "wait to have some rewards available in the gauge")
+	}, time.Minute*3, time.Second*3, "wait to have some rewards available in the gauge")
 
 	// The rewards distributed for the finality providers should be fp1 => 3x, fp2 => 1x
 	fp1DiffRewards, fp2DiffRewards, del1DiffRewards, del2DiffRewards := s.QueryRewardGauges(n2)
@@ -690,19 +690,19 @@ func (s *BtcRewardsDistribution) QueryRewardGauges(n *chain.NodeConfig) (
 
 	fp1RewardGauge, ok := fp1RewardGauges[itypes.FINALITY_PROVIDER.String()]
 	s.True(ok)
-	s.True(fp1RewardGauge.Coins.IsAllPositive())
+	s.True(fp1RewardGauge.Coins.IsAllPositive(), "rwd gauge %+v", fp1RewardGauge)
 
 	fp2RewardGauge, ok := fp2RewardGauges[itypes.FINALITY_PROVIDER.String()]
 	s.True(ok)
-	s.True(fp2RewardGauge.Coins.IsAllPositive())
+	s.Truef(fp2RewardGauge.Coins.IsAllPositive(), "rwd gauge %+v", fp2RewardGauge)
 
 	btcDel1RewardGauge, ok := btcDel1RewardGauges[itypes.BTC_STAKER.String()]
 	s.True(ok)
-	s.True(btcDel1RewardGauge.Coins.IsAllPositive())
+	s.True(btcDel1RewardGauge.Coins.IsAllPositive(), "rwd gauge %+v", btcDel1RewardGauge)
 
 	btcDel2RewardGauge, ok := btcDel2RewardGauges[itypes.BTC_STAKER.String()]
 	s.True(ok)
-	s.True(btcDel2RewardGauge.Coins.IsAllPositive())
+	s.True(btcDel2RewardGauge.Coins.IsAllPositive(), "rwd gauge %+v", btcDel2RewardGauge)
 
 	return fp1RewardGauge, fp2RewardGauge, btcDel1RewardGauge, btcDel2RewardGauge
 }

@@ -439,11 +439,13 @@ func (ak *AppKeepers) InitKeepers(
 		appCodec,
 		ak.keys[evmtypes.ModuleName],
 		ak.tkeys[evmtypes.TransientKey],
+		ak.keys,
 		authtypes.NewModuleAddress(govtypes.ModuleName),
 		ak.AccountKeeper,
 		ak.PreciseBankKeeper,
 		ak.StakingKeeper,
 		ak.FeemarketKeeper,
+		&ak.ConsensusParamsKeeper,
 		&ak.Erc20Keeper,
 		tracer,
 	)
@@ -587,7 +589,7 @@ func (ak *AppKeepers) InitKeepers(
 
 	ak.GovKeeper = *govKeeper.SetHooks(
 		govtypes.NewMultiGovHooks(
-		// register the governance hooks
+			// register the governance hooks
 		),
 	)
 

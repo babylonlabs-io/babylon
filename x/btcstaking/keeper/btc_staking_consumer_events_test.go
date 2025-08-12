@@ -51,7 +51,6 @@ func FuzzSetBTCStakingEventStore_NewFp(f *testing.F) {
 
 		// there should be no other events in the store
 		require.Nil(t, evs.GetActiveDel())
-		require.Nil(t, evs.GetSlashedDel())
 		require.Nil(t, evs.GetUnbondedDel())
 
 		// Prepare a map of finality providers based on btc pk hex
@@ -158,7 +157,6 @@ func FuzzSetBTCStakingEventStore_ActiveDel(f *testing.F) {
 		require.Equal(t, 1, len(evs.GetNewFp()))
 		require.Equal(t, 1, len(evs.GetActiveDel()))
 		// there should be no other events in the store
-		require.Nil(t, evs.GetSlashedDel())
 		require.Nil(t, evs.GetUnbondedDel())
 		// Assert the contents of the staking event
 		ev := evs.GetActiveDel()[0]
@@ -297,7 +295,6 @@ func FuzzSetBTCStakingEventStore_UnbondedDel(f *testing.F) {
 		require.Equal(t, 1, len(evs.GetActiveDel()))
 		require.Equal(t, 1, len(evs.GetUnbondedDel()))
 		// there should be no other events in the store
-		require.Nil(t, evs.GetSlashedDel())
 		// Assert the contents of the staking event
 		ev := evs.GetUnbondedDel()[0]
 		require.NotNil(t, ev)

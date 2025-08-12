@@ -235,7 +235,7 @@ func PrepareGenesis(
 	// Add ERC20 genesis configuration
 	erc20GenState := erc20types.DefaultGenesisState()
 	erc20GenState.TokenPairs = app.DefaultTokenPairs
-	erc20GenState.Params.NativePrecompiles = []string{app.WTokenContractMainnet}
+	erc20GenState.NativePrecompiles = []string{app.WTokenContractMainnet}
 	genesisState[erc20types.ModuleName] = cdc.MustMarshalJSON(erc20GenState)
 
 	feemarketGenState := feemarkettypes.DefaultGenesisState()
