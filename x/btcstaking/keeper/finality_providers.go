@@ -55,8 +55,9 @@ func (k Keeper) AddFinalityProvider(goCtx context.Context, msg *types.MsgCreateF
 			return types.ErrFpBSNIdNotRegistered
 		}
 		// Ensure there's an IBC channel open if it is a Cosmos BSN
-		if cr.GetCosmosConsumerMetadata() != nil {
-			hasChannel := k.BscKeeper.ConsumerHasIBCChannelOpen(ctx, bsnID, cr.GetCosmosConsumerMetadata().ChannelId)
+		ccm := cr.GetCosmosConsumerMetadata()
+		if ccm != nil && ccm.ChannelId != "" {
+			hasChannel := k.BscKeeper.ConsumerHasIBCChannelOpen(ctx, bsnID, ccm.ChannelId)
 			if !hasChannel {
 				return types.ErrFpConsumerNoIBCChannelOpen
 			}

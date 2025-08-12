@@ -55,11 +55,13 @@ func (k Keeper) IsCosmosConsumer(ctx context.Context, consumerID string) (bool, 
 	return consumerRegister.GetCosmosConsumerMetadata() != nil, nil
 }
 
-// GetAllRegisteredCosmosConsumers gets all cosmos consumers that registered to Babylon
+// GetAllRegisteredCosmosConsumers gets all cosmos consumers that registered and IBC init complete with channel ID set
 func (k Keeper) GetAllRegisteredCosmosConsumers(ctx context.Context) []*types.ConsumerRegister {
 	var consumers []*types.ConsumerRegister
 	err := k.ConsumerRegistry.Walk(ctx, nil, func(consumerID string, consumerRegister types.ConsumerRegister) (bool, error) {
-		if consumerRegister.GetCosmosConsumerMetadata() != nil {
+		// Select consumers registered as Cosmos consumer with metadata, IBC init complete with channel ID set
+		metadata := consumerRegister.GetCosmosConsumerMetadata()
+		if metadata != nil && metadata.ChannelId != "" {
 			consumers = append(consumers, &consumerRegister)
 		}
 		return false, nil
