@@ -24,7 +24,7 @@ type CovenantSender struct {
 	app *babylonApp.BabylonApp
 }
 
-func (c *CovenantSender) GetCovenantPrivateKeys() []*btcec.PrivateKey {
+func (c *CovenantSender) CovenantPrivateKeys() []*btcec.PrivateKey {
 	return covenantSKs
 }
 

@@ -382,7 +382,7 @@ func (s *Staker) UnbondDelegation(
 
 	stakingOutput := stakingTx.TxOut[delegation.StakingOutputIdx]
 
-	covenantSKs := covSender.GetCovenantPrivateKeys()
+	covenantSKs := covSender.CovenantPrivateKeys()
 	covenantSigs := datagen.GenerateSignatures(
 		s.t,
 		covenantSKs,
