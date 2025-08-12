@@ -45,13 +45,17 @@ func BenchmarkBroadcastBTCHeaders(b *testing.B) {
 			setupBTCChain(b, app, ctx, btcKeeper, bc.btcChainLength)
 
 			// Setup consumers and channels
-			consumerChannels := setupBTCHeadersConsumersAndChannels(b, app, ctx, bc.consumers, bc.channelsPerConsumer, bc.headerCacheHits)
+			setupBTCHeadersConsumersAndChannels(b, app, ctx, bc.consumers, bc.channelsPerConsumer, bc.headerCacheHits)
+			consumerChannelMap, err := app.ZoneConciergeKeeper.GetConsumerChannelMap(ctx)
+			if err != nil {
+				b.Fatal(err)
+			}
 
 			b.ResetTimer()
 			b.ReportAllocs()
 
 			for i := 0; i < b.N; i++ {
-				err := zcKeeper.BroadcastBTCHeaders(ctx, consumerChannels)
+				err := zcKeeper.BroadcastBTCHeaders(ctx, consumerChannelMap)
 				require.NoError(b, err)
 			}
 		})
@@ -78,17 +82,17 @@ func setupBTCChain(b *testing.B, babylonApp *app.BabylonApp, ctx sdk.Context, bt
 	// Check if BTC genesis header exists, if not create it
 	initHeader := btcKeeper.GetHeaderByHeight(ctx, 0)
 	if initHeader == nil {
-		// Initialize BTC genesis header using signet genesis  
+		// Initialize BTC genesis header using signet genesis
 		genesisHeader, err := app.SignetBtcHeaderGenesis(babylonApp.AppCodec())
 		require.NoError(b, err)
-		
+
 		// Check if base header already exists to avoid panic
 		if btcKeeper.GetBaseBTCHeader(ctx) == nil {
 			// Set the base BTC header (genesis at height 0)
 			genesisHeader.Height = 0
 			btcKeeper.SetBaseBTCHeader(ctx, *genesisHeader)
 		}
-		
+
 		// Retrieve the now-initialized header
 		initHeader = btcKeeper.GetHeaderByHeight(ctx, 0)
 		require.NotNil(b, initHeader, "BTC genesis header should be initialized")
@@ -107,10 +111,8 @@ func setupBTCChain(b *testing.B, babylonApp *app.BabylonApp, ctx sdk.Context, bt
 	return randomChain
 }
 
-func setupBTCHeadersConsumersAndChannels(b *testing.B, app *app.BabylonApp, ctx sdk.Context, consumers, channelsPerConsumer int, simulateCacheHits bool) []channeltypes.IdentifiedChannel {
+func setupBTCHeadersConsumersAndChannels(b *testing.B, app *app.BabylonApp, ctx sdk.Context, consumers, channelsPerConsumer int, simulateCacheHits bool) {
 	b.Helper()
-
-	var allChannels []channeltypes.IdentifiedChannel
 
 	for i := 0; i < consumers; i++ {
 		consumerID := fmt.Sprintf("consumer-%d", i)
@@ -129,11 +131,8 @@ func setupBTCHeadersConsumersAndChannels(b *testing.B, app *app.BabylonApp, ctx 
 		}
 
 		// Setup IBC infrastructure
-		channels := setupConsumerIBCInfrastructure(b, app, ctx, consumerID, i, channelsPerConsumer)
-		allChannels = append(allChannels, channels...)
+		setupConsumerIBCInfrastructure(b, app, ctx, consumerID, i, channelsPerConsumer)
 	}
-
-	return allChannels
 }
 
 func setupBTCHeadersConsumer(b *testing.B, app *app.BabylonApp, ctx sdk.Context, consumerID string, index int) {
@@ -154,10 +153,8 @@ func setupBTCHeadersConsumer(b *testing.B, app *app.BabylonApp, ctx sdk.Context,
 	require.NoError(b, err)
 }
 
-func setupConsumerIBCInfrastructure(b *testing.B, app *app.BabylonApp, ctx sdk.Context, consumerID string, index, channelsPerConsumer int) []channeltypes.IdentifiedChannel {
+func setupConsumerIBCInfrastructure(b *testing.B, app *app.BabylonApp, ctx sdk.Context, consumerID string, index, channelsPerConsumer int) {
 	b.Helper()
-
-	var channels []channeltypes.IdentifiedChannel
 
 	// Setup IBC client
 	app.IBCKeeper.ClientKeeper.SetClientState(ctx, consumerID, &ibctmtypes.ClientState{})
@@ -182,19 +179,5 @@ func setupConsumerIBCInfrastructure(b *testing.B, app *app.BabylonApp, ctx sdk.C
 				ConnectionHops: []string{connectionID},
 			},
 		)
-
-		// Create IdentifiedChannel for the benchmark
-		identifiedChannel := channeltypes.IdentifiedChannel{
-			State:          channeltypes.OPEN,
-			Ordering:       channeltypes.UNORDERED,
-			Counterparty:   channeltypes.Counterparty{},
-			ConnectionHops: []string{connectionID},
-			Version:        "1",
-			PortId:         portID,
-			ChannelId:      channelID,
-		}
-		channels = append(channels, identifiedChannel)
 	}
-
-	return channels
 }

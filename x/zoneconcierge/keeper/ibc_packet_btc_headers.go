@@ -12,7 +12,7 @@ import (
 )
 
 // BroadcastBTCHeaders sends an IBC packet of BTC headers to all open IBC channels to ZoneConcierge
-func (k Keeper) BroadcastBTCHeaders(ctx context.Context, consumerChannels []channeltypes.IdentifiedChannel) error {
+func (k Keeper) BroadcastBTCHeaders(ctx context.Context, consumerChannelMap map[string][]channeltypes.IdentifiedChannel) error {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	// get all registered consumers
 	consumerIDs := k.GetAllConsumerIDs(ctx)
@@ -29,12 +29,6 @@ func (k Keeper) BroadcastBTCHeaders(ctx context.Context, consumerChannels []chan
 	// - If reorg detected: send the last k+1 BTC headers
 	// TODO: Improve reorg handling efficiency - instead of sending from Consumer base to tip,
 	// we should send a dedicated reorg event and then send headers from the reorged point to tip
-
-	// Build a map for O(1) channel lookups
-	consumerChannelMap, err := k.buildConsumerChannelMap(ctx, consumerChannels)
-	if err != nil {
-		return err
-	}
 
 	// Create header cache to avoid duplicate DB queries across consumers
 	headerCache := types.NewHeaderCache()

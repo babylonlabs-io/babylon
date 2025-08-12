@@ -40,14 +40,18 @@ func BenchmarkBroadcastBTCStakingConsumerEvents(b *testing.B) {
 			app, ctx, zcKeeper := setupTest(b)
 
 			// Setup consumers, channels, and events
-			consumerChannels := setupBenchmarkConsumersAndChannels(b, app, ctx, bc.consumers, bc.channelsPerConsumer)
+			setupBenchmarkConsumersAndChannels(b, app, ctx, bc.consumers, bc.channelsPerConsumer)
 			setupBenchmarkEvents(b, app, ctx, bc.consumers, bc.eventsPerConsumer)
+			consumerChannelMap, err := app.ZoneConciergeKeeper.GetConsumerChannelMap(ctx)
+			if err != nil {
+				b.Fatal(err)
+			}
 
 			b.ResetTimer()
 			b.ReportAllocs()
 
 			for i := 0; i < b.N; i++ {
-				err := zcKeeper.BroadcastBTCStakingConsumerEvents(ctx, consumerChannels)
+				err := zcKeeper.BroadcastBTCStakingConsumerEvents(ctx, consumerChannelMap)
 				require.NoError(b, err)
 
 				// Re-setup events for next iteration (since they get deleted after broadcast)
@@ -73,10 +77,8 @@ func setupTest(b *testing.B) (*app.BabylonApp, sdk.Context, *keeper.Keeper) {
 	return babylonApp, ctx, zcKeeper
 }
 
-func setupBenchmarkConsumersAndChannels(b *testing.B, app *app.BabylonApp, ctx sdk.Context, consumers, channelsPerConsumer int) []channeltypes.IdentifiedChannel {
+func setupBenchmarkConsumersAndChannels(b *testing.B, app *app.BabylonApp, ctx sdk.Context, consumers, channelsPerConsumer int) {
 	b.Helper()
-
-	var allChannels []channeltypes.IdentifiedChannel
 
 	for i := 0; i < consumers; i++ {
 		consumerID := fmt.Sprintf("consumer-%d", i)
@@ -104,18 +106,6 @@ func setupBenchmarkConsumersAndChannels(b *testing.B, app *app.BabylonApp, ctx s
 					ConnectionHops: []string{connectionID},
 				},
 			)
-
-			// Create IdentifiedChannel for the benchmark
-			identifiedChannel := channeltypes.IdentifiedChannel{
-				State:          channeltypes.OPEN,
-				Ordering:       channeltypes.UNORDERED,
-				Counterparty:   channeltypes.Counterparty{},
-				ConnectionHops: []string{connectionID},
-				Version:        "1",
-				PortId:         portID,
-				ChannelId:      channelID,
-			}
-			allChannels = append(allChannels, identifiedChannel)
 		}
 
 		// Register consumer
@@ -132,8 +122,6 @@ func setupBenchmarkConsumersAndChannels(b *testing.B, app *app.BabylonApp, ctx s
 		err := app.BTCStkConsumerKeeper.RegisterConsumer(ctx, consumerRegister)
 		require.NoError(b, err)
 	}
-
-	return allChannels
 }
 
 func setupBenchmarkEvents(b *testing.B, app *app.BabylonApp, ctx sdk.Context, consumers, eventsPerConsumer int) {

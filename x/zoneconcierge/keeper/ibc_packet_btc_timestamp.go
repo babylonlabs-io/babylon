@@ -168,7 +168,12 @@ func (k Keeper) GetHeadersToBroadcast(ctx context.Context, consumerID string, he
 	var initHeader *btclctypes.BTCHeaderInfo
 	for i := len(lastSegment.BtcHeaders) - 1; i >= 0; i-- {
 		header := lastSegment.BtcHeaders[i]
-		if header, err := headerCache.GetHeaderByHash(ctx, header.Hash, k.btclcKeeper.GetHeaderByHash); err == nil && header != nil {
+		if header, err := headerCache.GetHeaderByHash(
+			header.Hash,
+			func() (*btclctypes.BTCHeaderInfo, error) {
+				return k.btclcKeeper.GetHeaderByHash(ctx, header.Hash)
+			},
+		); err == nil && header != nil {
 			initHeader = header
 			break
 		}
@@ -190,7 +195,7 @@ func (k Keeper) GetHeadersToBroadcast(ctx context.Context, consumerID string, he
 func (k Keeper) BroadcastBTCTimestamps(
 	ctx context.Context,
 	epochNum uint64,
-	consumerChannels []channeltypes.IdentifiedChannel,
+	consumerChannelMap map[string][]channeltypes.IdentifiedChannel,
 ) error {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	// Babylon does not broadcast BTC timestamps until finalising epoch 1
@@ -215,12 +220,6 @@ func (k Keeper) BroadcastBTCTimestamps(
 		"consumers", len(consumerIDs),
 		"epoch", epochNum,
 	)
-
-	// Build a map for O(1) channel lookups
-	consumerChannelMap, err := k.buildConsumerChannelMap(ctx, consumerChannels)
-	if err != nil {
-		return err
-	}
 
 	// Create header cache to avoid duplicate DB queries across consumers
 	headerCache := types.NewHeaderCache()

@@ -1,8 +1,6 @@
 package types
 
 import (
-	"context"
-
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
 	btclctypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
 )
@@ -20,7 +18,7 @@ func NewHeaderCache() *HeaderCache {
 }
 
 // GetHeaderByHash retrieves a header by hash, using cache first, then falling back to DB
-func (hc *HeaderCache) GetHeaderByHash(ctx context.Context, hash *bbn.BTCHeaderHashBytes, getHeaderFn func(ctx context.Context, hash *bbn.BTCHeaderHashBytes) (*btclctypes.BTCHeaderInfo, error)) (*btclctypes.BTCHeaderInfo, error) {
+func (hc *HeaderCache) GetHeaderByHash(hash *bbn.BTCHeaderHashBytes, fetchHeaderFn func() (*btclctypes.BTCHeaderInfo, error)) (*btclctypes.BTCHeaderInfo, error) {
 	hashStr := hash.String()
 
 	// Check cache first
@@ -29,7 +27,7 @@ func (hc *HeaderCache) GetHeaderByHash(ctx context.Context, hash *bbn.BTCHeaderH
 	}
 
 	// Cache miss - retrieve from DB
-	header, err := getHeaderFn(ctx, hash)
+	header, err := fetchHeaderFn()
 	if err != nil {
 		return nil, err
 	}
