@@ -832,6 +832,14 @@ func TestSlashingFpWithManyMulistakedDelegations(t *testing.T) {
 		d.ActivateVerifiedDelegations(batchSize)
 
 		d.GenerateNewBlockAssertExecutionSuccess()
+		// the ZC end blocker fails to delete the consumer IBC packets after sending them
+		// because there's no IBC connection setup.
+		// For simplicity, we remove the packets here to avoid having many events accumulated
+		// and test failing due to out of gas errors.
+		d.App.BTCStakingKeeper.DeleteBTCStakingConsumerIBCPacket(d.Ctx(), consumerID1)
+		d.App.BTCStakingKeeper.DeleteBTCStakingConsumerIBCPacket(d.Ctx(), consumerID2)
+		d.GenerateNewBlockAssertExecutionSuccess()
+
 		activeDels := d.GetActiveBTCDelegations(d.t)
 
 		totalActiveDels += batchSize
