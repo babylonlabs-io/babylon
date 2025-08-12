@@ -29,7 +29,6 @@ help:
 
 PACKAGES_NOSIMULATION=$(shell go list ./... | grep -v '/simulation')
 PACKAGES_SIMTEST=$(shell go list ./... | grep '/simulation')
-COMMIT := $(shell git log -1 --format='%H')
 LEDGER_ENABLED ?= true
 BINDIR ?= $(GOPATH)/bin
 PROJECT_NAME ?= babylon
@@ -246,6 +245,7 @@ test-e2e-cache:
 	$(MAKE) test-e2e-cache-ibc-bsn-add-rewards
 	$(MAKE) test-e2e-btc-rewards-bsn-rollup
 	$(MAKE) test-e2e-cache-upgrade-v3
+	$(MAKE) test-e2e-cache-btc-stake-expansion
 
 clean-e2e:
 	docker container rm -f $(shell docker container ls -a -q) || true
@@ -283,6 +283,9 @@ test-e2e-cache-upgrade-v3:
 
 test-e2e-btc-rewards-bsn-rollup:
 	go test -run TestBtcRewardsDistributionBsnRollup -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
+
+test-e2e-cache-btc-stake-expansion:
+	go test -run TestBTCStakeExpansionTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
 
 test-sim-nondeterminism:
 	@echo "Running non-determinism test..."

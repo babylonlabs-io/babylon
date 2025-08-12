@@ -82,7 +82,7 @@ func (n *NodeConfig) QueryParams(module string, result any) {
 }
 
 func (n *NodeConfig) SendIBCTransfer(from, recipient, memo string, token sdk.Coin) (txHash string) {
-	n.LogActionF("IBC sending %s from %s to %s. memo: %s", token.Amount.String(), from, recipient, memo)
+	n.LogActionF("IBC sending %s%s from %s to %s. memo: %s", token.Amount.String(), token.Denom, from, recipient, memo)
 
 	cmd := []string{"babylond", "tx", "ibc-transfer", "transfer", "transfer", "channel-0", recipient, token.String(), fmt.Sprintf("--from=%s", from), "--memo", memo}
 	outBuf, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
@@ -587,14 +587,45 @@ func (n *NodeConfig) CreateDenom(from, subdenom string) {
 }
 
 // MintDenom mints tokens of a tokenfactory denom
-func (n *NodeConfig) MintDenom(from, amount, denom string) {
+func (n *NodeConfig) MintDenom(from, amount, denom string) (txHash string) {
 	n.LogActionF("minting tokenfactory tokens %s%s from %s", amount, denom, from)
 
 	cmd := []string{"babylond", "tx", "tokenfactory", "mint", amount + denom, fmt.Sprintf("--from=%s", from)}
-	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
 
+	outBuf, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
 	require.NoError(n.t, err)
 	n.LogActionF("successfully minted tokenfactory tokens %s%s", amount, denom)
+
+	return GetTxHashFromOutput(outBuf.String())
+}
+
+func (n *NodeConfig) FundValidatorRewardsPool(fromWallet, validator, coins string, overallFlags ...string) (txHash string) {
+	n.LogActionF("funding validator from wallet %s  validator %s", fromWallet, validator)
+	cmd := []string{"babylond", "tx", "distribution", "fund-validator-rewards-pool", validator, coins, fmt.Sprintf("--from=%s", fromWallet)}
+
+	outBuf, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, append(cmd, overallFlags...))
+	require.NoError(n.t, err)
+	n.LogActionF("successfully funded validator from wallet %s to validator %s with rewards %s", fromWallet, validator, coins)
+
+	return GetTxHashFromOutput(outBuf.String())
+}
+
+func (n *NodeConfig) Delegate(fromWallet, validator string, amount string, overallFlags ...string) {
+	n.LogActionF("delegating from %s to validator %s", fromWallet, validator)
+	cmd := []string{"babylond", "tx", "epoching", "delegate", validator, amount, fmt.Sprintf("--from=%s", fromWallet)}
+	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, append(cmd, overallFlags...))
+
+	require.NoError(n.t, err)
+	n.LogActionF("successfully delegated %s to validator %s", fromWallet, validator)
+}
+
+func (n *NodeConfig) WithdrawValidatorRewards(fromWallet, validator string, overallFlags ...string) {
+	n.LogActionF("withdrawing validator rewards from wallet %s  validator %s", fromWallet, validator)
+	cmd := []string{"babylond", "tx", "distribution", "withdraw-rewards", validator, fmt.Sprintf("--from=%s", fromWallet), "--gas=300000"}
+	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, append(cmd, overallFlags...))
+
+	require.NoError(n.t, err)
+	n.LogActionF("successfully withdraw validator rewards from wallet %s  validator %s", fromWallet, validator)
 }
 
 func (n *NodeConfig) QueryZoneConciergeFinalizedBsnsInfo(consumerIDs []string, prove bool) map[string]interface{} {

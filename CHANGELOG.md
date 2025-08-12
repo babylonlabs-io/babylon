@@ -39,6 +39,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
+- [#1229](https://github.com/babylonlabs-io/babylon/pull/1229) Wire up EVM.
+- [#1529](https://github.com/babylonlabs-io/babylon/pull/1529) Allow `FinalityProviderHistoricalRewards` to have empty coins
+to export genesis.
+
+## v3.0.0-rc.1
+
+### Improvements
+
+- [#1525](https://github.com/babylonlabs-io/babylon/pull/1525) Remove `PropagateFPSlashingToConsumers` call from slashing logic at send
+finality signature and `SlashedBTCDelegation` structure.
+
+## v3.0.0-rc.0
+
+### Improvements
+
+- [#1463](https://github.com/babylonlabs-io/babylon/pull/1463) doc: zone concierge IBC channel doc
+- [#1437](https://github.com/babylonlabs-io/babylon/pull/1437) Send base headers before the fallback cases.
+- [#1429](https://github.com/babylonlabs-io/babylon/pull/1429) Send base header if no headers were sent previously.
 - [#1406](https://github.com/babylonlabs-io/babylon/pull/1406) Use `collections` for KV store in `x/btcstkconsumer`.
 - [#1405](https://github.com/babylonlabs-io/babylon/pull/1405) Use `collections` for `zoneconcierge` KV store.
 - [#1387](https://github.com/babylonlabs-io/babylon/pull/1387) Refactor the usage of `ChainInfo` and canonical chain indexing.
@@ -105,7 +123,6 @@ check of rewards
 - [#1195](https://github.com/babylonlabs-io/babylon/pull/1195) Update repository version to `v3`.
 - [#1060](https://github.com/babylonlabs-io/babylon/pull/1060) Optimize `PubRandCommit` lookup in `x/finality` module
 - [#1223](https://github.com/babylonlabs-io/babylon/pull/1223) Bump Cosmos SDK to `v0.53.0`
-- [#1229](https://github.com/babylonlabs-io/babylon/pull/1229) Wire up EVM.
 - [#1269](https://github.com/babylonlabs-io/babylon/pull/1269) Add fee collector e2e tests.
 - [#1062](https://github.com/babylonlabs-io/babylon/pull/1062) Add `anteHandler` to avoid fee grants on refundable tx (`x/incentive`)
 - [#1231](https://github.com/babylonlabs-io/babylon/pull/1231) Add BTC stake expansion.
@@ -123,6 +140,27 @@ command to modify `max-finality-providers` parameter.
 - [#1303](https://github.com/babylonlabs-io/babylon/pull/1303) Add IBC callback middleware to `x/btcstaking` module to call add bsn rewards.
 - [#1404](https://github.com/babylonlabs-io/babylon/pull/1404) Refactor power dist event processing.
 - [#1425](https://github.com/babylonlabs-io/babylon/pull/1425) Improvement to vote ext handling
+- [#1428](https://github.com/babylonlabs-io/babylon/pull/1428) Update stake expansion events
+- [#1415](https://github.com/babylonlabs-io/babylon/pull/1415) Bump ibc-go to v10.3.0 and e2e test `AddBsnRewards`
+- [#1410](https://github.com/babylonlabs-io/babylon/pull/1410) Add stake expansion e2e test
+- [#1432](https://github.com/babylonlabs-io/babylon/pull/1432) Update maxFps and btcActivatioHeight in btcStakingParams for V3
+- [#1450](https://github.com/babylonlabs-io/babylon/pull/1450) Align v3 test
+- [#1449](https://github.com/babylonlabs-io/babylon/pull/1449) Fix math int overflow in incentive reward tracker structures.
+- [#1456](https://github.com/babylonlabs-io/babylon/pull/1456) Update logic in upgrade handler to include new module params
+- [#1451](https://github.com/babylonlabs-io/babylon/pull/1451) Add new expected field `taproot_address_staking_output` to test vectors.
+- [#1460](https://github.com/babylonlabs-io/babylon/pull/1460) Add staking amount change restriction in multi-staking
+- [#1464](https://github.com/babylonlabs-io/babylon/pull/1464) Fix flaky e2e rewards test.
+- [#1468](https://github.com/babylonlabs-io/babylon/pull/1468) Update multi-staking allow-list docs.
+- [#1474](https://github.com/babylonlabs-io/babylon/pull/1474) Add `QueryFpCurrentRewardsRequest` and fix export genesis of incentives
+to allow empty coins in fp current rewards.
+- [#1473](https://github.com/babylonlabs-io/babylon/pull/1473) Add checks for incentives rewards migration in e2e v3 upgrade test.
+- [#1489](https://github.com/babylonlabs-io/babylon/pull/1489) Loads the consumer ID from the IBC packet if it is not set in
+`AddBsnRewards` IBC callbacks.
+- [#1481](https://github.com/babylonlabs-io/babylon/pull/1481) chore: bsn id proto order for compatibility
+- [#1490](https://github.com/babylonlabs-io/babylon/pull/1490) Add multi-staking allow-list for Testnet
+- [#1485](https://github.com/babylonlabs-io/babylon/pull/1485) Add channel check on consumer FP creation
+- [#1516](https://github.com/babylonlabs-io/babylon/pull/1516) Remove `zoneconcierge` port ID from state
+- [#1492](https://github.com/babylonlabs-io/babylon/pull/1492) Bump cosmos evm to v0.3.1
 
 ### State Machine Breaking
 
@@ -177,6 +215,15 @@ for multi staked fps
 adjustment
 - [#1418](https://github.com/babylonlabs-io/babylon/pull/1418) fix: add stake expansion
 covenant signature to the events
+- [#1447](https://github.com/babylonlabs-io/babylon/pull/1447) Add multi-staking allow-list data for e2e tests
+- [#1453](https://github.com/babylonlabs-io/babylon/pull/1453) fix: inactive FP event on full unbonding
+- [#1476](https://github.com/babylonlabs-io/babylon/pull/1476) fix: Add limit for
+IBC packet size
+- [#1495](https://github.com/babylonlabs-io/babylon/pull/1495) fix: rename `zoneconcierge` to `zc`
+- [#1491](https://github.com/babylonlabs-io/babylon/pull/1491) fix: restore `proofConsumerHeaderInEpoch` allocation removed
+- [#1512](https://github.com/babylonlabs-io/babylon/pull/1512) fix: remove base header
+and global segment store
+- [#1470](https://github.com/babylonlabs-io/babylon/pull/1470) fix: debug_traceTransaction with tracer params
 
 ## v2.2.0
 

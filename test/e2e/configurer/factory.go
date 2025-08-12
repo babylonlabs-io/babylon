@@ -11,7 +11,6 @@ import (
 	"github.com/babylonlabs-io/babylon/v3/test/e2e/containers"
 	"github.com/babylonlabs-io/babylon/v3/test/e2e/initialization"
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
-	btclighttypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
 )
 
 type Configurer interface {
@@ -31,6 +30,8 @@ type Configurer interface {
 	RunCosmosRelayerIBC() error
 
 	RunIBCTransferChannel() error
+	// OpenZoneConciergeChannel configures IBC channel using zoneconcierge port
+	OpenZoneConciergeChannel(chainA, chainB *chain.Config, chainAConnID string) error
 	// CompleteIBCChannelHandshake completes the channel handshake in cases when ChanOpenInit was initiated
 	// by some transaction that was previously executed on the chain. For example,
 	// ICA MsgRegisterInterchainAccount will perform ChanOpenInit during its execution.
@@ -174,35 +175,17 @@ func NewBabylonConfigurer(t *testing.T, isDebugLogEnabled bool) (Configurer, err
 }
 
 // NewSoftwareUpgradeConfigurer returns a new Configurer for Software Upgrade testing
-func NewSoftwareUpgradeConfigurer(t *testing.T, isDebugLogEnabled bool, upgradePath string, btcHeaders []*btclighttypes.BTCHeaderInfo, preUpgradeFunc PreUpgradeFunc) (*UpgradeConfigurer, error) {
+func NewSoftwareUpgradeConfigurer(t *testing.T, isDebugLogEnabled bool, upgradePath string, preUpgradeFunc PreUpgradeFunc) (*UpgradeConfigurer, error) {
 	identifier := identifierName(t)
 	containerManager, err := containers.NewManager(identifier, isDebugLogEnabled, false, true)
 	if err != nil {
 		return nil, err
 	}
 
-	cfgs := updateNodeConfigs(validatorConfigsChainA, func(cfg *initialization.NodeConfig) *initialization.NodeConfig {
-		return &initialization.NodeConfig{
-			Name:               fmt.Sprintf("%s-%s", cfg.Name, identifier),
-			Pruning:            cfg.Pruning,
-			PruningKeepRecent:  cfg.PruningKeepRecent,
-			PruningInterval:    cfg.PruningInterval,
-			SnapshotInterval:   cfg.SnapshotInterval,
-			SnapshotKeepRecent: cfg.SnapshotKeepRecent,
-			IsValidator:        cfg.IsValidator,
-			BtcNetwork:         string(bbn.BtcSignet),
-		}
-	})
-
-	chainA := chain.New(t, containerManager, initialization.ChainAID, cfgs, nil)
-	if btcHeaders != nil {
-		chainA.BTCHeaders = btcHeaders
-	}
-
 	return NewUpgradeConfigurer(t,
 		[]*chain.Config{
-			// we only need 1 chain for testing upgrade
-			chainA,
+			// we only need 1 chain for testing BTC staking
+			chain.New(t, containerManager, initialization.ChainAID, updateNodeConfigNameWithIdentifier(validatorConfigsChainA, identifier), nil),
 		},
 		withUpgrade(baseSetup), // base set up with upgrade
 		containerManager,

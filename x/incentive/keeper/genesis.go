@@ -68,7 +68,7 @@ func (k Keeper) InitGenesis(ctx context.Context, gs types.GenesisState) error {
 		if acc == nil {
 			return fmt.Errorf("finality provider account with address %s does not exist", entry.Address)
 		}
-		if err := k.setFinalityProviderCurrentRewards(ctx, fpAddr, *entry.Rewards); err != nil {
+		if err := k.SetFinalityProviderCurrentRewards(ctx, fpAddr, *entry.Rewards); err != nil {
 			return err
 		}
 	}

@@ -271,12 +271,12 @@ func (s *BtcRewardsDistributionBsnRollup) Test5CheckRewardsFirstDelegations() {
 	s.NoError(err)
 
 	rewardCoins := nodeBalances.Sub(sdk.NewCoin(nativeDenom, nodeBalances.AmountOf(nativeDenom))).QuoInt(math.NewInt(4))
-	require.Greater(s.T(), rewardCoins.Len(), 2, "should have 2 or more denoms to give out as rewards")
+	require.GreaterOrEqual(s.T(), rewardCoins.Len(), 2, "should have 2 or more denoms to give out as rewards")
 
 	fp2Ratio, fp3Ratio := math.LegacyMustNewDecFromStr("0.7"), math.LegacyMustNewDecFromStr("0.3")
 
 	bbnCommDiff, del1Diff, del2Diff, fp1bbnDiff, fp2cons0Diff, fp3cons0Diff, fp4cons4Diff := s.SuiteRewardsDiff(n2, func() {
-		n2.AddBsnRewards(n2.WalletName, s.bsn0.ConsumerId, rewardCoins, []bstypes.FpRatio{
+		outBuf, _, _ := n2.AddBsnRewards(n2.WalletName, s.bsn0.ConsumerId, rewardCoins, []bstypes.FpRatio{
 			{
 				BtcPk: s.fp2cons0.BtcPk,
 				Ratio: fp2Ratio,
@@ -286,6 +286,12 @@ func (s *BtcRewardsDistributionBsnRollup) Test5CheckRewardsFirstDelegations() {
 				Ratio: fp3Ratio,
 			},
 		})
+
+		txHash := chain.GetTxHashFromOutput(outBuf.String())
+		n2.WaitForNextBlock()
+
+		txRespAddBsnRewards, _ := n2.QueryTx(txHash)
+		require.Truef(s.T(), len(txRespAddBsnRewards.RawLog) == 0, "raw log should be empty %s", txRespAddBsnRewards.RawLog)
 	})
 
 	bbnCommExp := itypes.GetCoinsPortion(rewardCoins, s.bsn0.BabylonRewardsCommission)
@@ -349,7 +355,7 @@ func (s *BtcRewardsDistributionBsnRollup) Test6ActiveLastDelegation() {
 	pendingDel, err := chain.ParseRespBTCDelToBTCDel(pendingDels[0])
 	s.NoError(err)
 
-	SendCovenantSigsToPendingDel(s.r, s.T(), n1, s.net, s.covenantSKs, s.covenantWallets, pendingDel)
+	n1.SendCovenantSigs(s.r, s.T(), s.net, s.covenantSKs, s.covenantWallets, pendingDel)
 
 	// wait for a block so that covenant txs take effect
 	n1.WaitForNextBlock()
@@ -372,15 +378,21 @@ func (s *BtcRewardsDistributionBsnRollup) Test7CheckRewardsBsn4() {
 	s.NoError(err)
 
 	rewardCoins := nodeBalances.Sub(sdk.NewCoin(nativeDenom, nodeBalances.AmountOf(nativeDenom))).QuoInt(math.NewInt(4))
-	require.Greater(s.T(), rewardCoins.Len(), 2, "should have 2 or more denoms to give out as rewards")
+	require.Greater(s.T(), rewardCoins.Len(), 1, "should have 2 or more denoms to give out as rewards")
 
 	fp4Ratio := math.LegacyOneDec()
 
 	bbnCommDiff, del1Diff, del2Diff, fp1bbnDiff, fp2cons0Diff, fp3cons0Diff, fp4cons4Diff := s.SuiteRewardsDiff(n2, func() {
-		n2.AddBsnRewards(n2.WalletName, s.bsn4.ConsumerId, rewardCoins, []bstypes.FpRatio{{
+		outBuf, _, _ := n2.AddBsnRewards(n2.WalletName, s.bsn4.ConsumerId, rewardCoins, []bstypes.FpRatio{{
 			BtcPk: s.fp4cons4.BtcPk,
 			Ratio: fp4Ratio,
 		}})
+
+		txHash := chain.GetTxHashFromOutput(outBuf.String())
+		n2.WaitForNextBlock()
+
+		txRespAddBsnRewards, _ := n2.QueryTx(txHash)
+		require.Truef(s.T(), len(txRespAddBsnRewards.RawLog) == 0, "raw log should be empty %s", txRespAddBsnRewards.RawLog)
 	})
 
 	bbnCommExp := itypes.GetCoinsPortion(rewardCoins, s.bsn4.BabylonRewardsCommission)

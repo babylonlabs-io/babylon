@@ -16,6 +16,42 @@ import (
 	"github.com/babylonlabs-io/babylon/v3/x/incentive/types"
 )
 
+func FuzzIterateFpCurrentRewards(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		t.Parallel()
+		r := rand.New(rand.NewSource(seed))
+
+		k, ctx := NewKeeperWithCtx(t)
+
+		numOfFps := datagen.GenRandomEpochNum(r) + 1
+		fpCreated := make(map[string]types.FinalityProviderCurrentRewards, numOfFps)
+		for fpNum := 0; fpNum < int(numOfFps); fpNum++ {
+			fp := datagen.GenRandomAddress()
+
+			fpCurrRwds := datagen.GenRandomFinalityProviderCurrentRewards(r)
+			err := k.SetFinalityProviderCurrentRewards(ctx, fp, fpCurrRwds)
+			require.NoError(t, err)
+
+			fpCreated[fp.String()] = fpCurrRwds
+		}
+
+		err := k.IterateFpCurrentRewards(ctx, func(fp sdk.AccAddress, fpCurrRwds types.FinalityProviderCurrentRewards) error {
+			fpAddr := fp.String()
+			fpCurrRwdsInMap, ok := fpCreated[fpAddr]
+			require.True(t, ok)
+
+			require.EqualValues(t, fpCurrRwdsInMap, fpCurrRwds)
+
+			delete(fpCreated, fpAddr)
+			return nil
+		})
+		require.NoError(t, err)
+		require.Len(t, fpCreated, 0, "should have pass all the fps in the created map")
+	})
+}
+
 func FuzzCheckBtcDelegationActivated(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 
@@ -276,7 +312,7 @@ func FuzzCheckFinalityProviderCurrentRewards(f *testing.F) {
 		require.EqualError(t, err, types.ErrFPCurrentRewardsNotFound.Error())
 
 		expectedCurrentRwdFp1 := datagen.GenRandomFinalityProviderCurrentRewards(r)
-		err = k.setFinalityProviderCurrentRewards(ctx, fp1, expectedCurrentRwdFp1)
+		err = k.SetFinalityProviderCurrentRewards(ctx, fp1, expectedCurrentRwdFp1)
 		require.NoError(t, err)
 
 		currentRwdFp1, err := k.GetFinalityProviderCurrentRewards(ctx, fp1)
@@ -290,7 +326,7 @@ func FuzzCheckFinalityProviderCurrentRewards(f *testing.F) {
 		require.EqualError(t, err, types.ErrFPCurrentRewardsNotFound.Error())
 
 		// sets a new fp
-		err = k.setFinalityProviderCurrentRewards(ctx, fp2, datagen.GenRandomFinalityProviderCurrentRewards(r))
+		err = k.SetFinalityProviderCurrentRewards(ctx, fp2, datagen.GenRandomFinalityProviderCurrentRewards(r))
 		require.NoError(t, err)
 
 		_, err = k.GetFinalityProviderCurrentRewards(ctx, fp2)
@@ -333,7 +369,7 @@ func FuzzCheckFinalityProviderHistoricalRewards(f *testing.F) {
 		require.NoError(t, err)
 
 		// sets a new current fp rwd to check the delete all
-		err = k.setFinalityProviderCurrentRewards(ctx, fp2, datagen.GenRandomFinalityProviderCurrentRewards(r))
+		err = k.SetFinalityProviderCurrentRewards(ctx, fp2, datagen.GenRandomFinalityProviderCurrentRewards(r))
 		require.NoError(t, err)
 
 		_, err = k.GetFinalityProviderCurrentRewards(ctx, fp2)
@@ -368,7 +404,7 @@ func FuzzCheckSubFinalityProviderStaked(f *testing.F) {
 		require.EqualError(t, err, types.ErrFPCurrentRewardsNotFound.Error())
 
 		fp2Set := datagen.GenRandomFinalityProviderCurrentRewards(r)
-		err = k.setFinalityProviderCurrentRewards(ctx, fp2, fp2Set)
+		err = k.SetFinalityProviderCurrentRewards(ctx, fp2, fp2Set)
 		require.NoError(t, err)
 
 		err = k.subFinalityProviderStaked(ctx, fp2, fp2Set.TotalActiveSat)
@@ -405,7 +441,7 @@ func FuzzCheckSubDelegationSat(f *testing.F) {
 
 		fpCurrentRwd := datagen.GenRandomFinalityProviderCurrentRewards(r)
 		fpCurrentRwd.TotalActiveSat = amtInRwd
-		err = k.setFinalityProviderCurrentRewards(ctx, fp, fpCurrentRwd)
+		err = k.SetFinalityProviderCurrentRewards(ctx, fp, fpCurrentRwd)
 		require.NoError(t, err)
 
 		err = k.subDelegationSat(ctx, fp, del, amtToSub)
@@ -427,7 +463,6 @@ func FuzzCheckAddFinalityProviderStaked(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
-		t.Parallel()
 		r := rand.New(rand.NewSource(seed))
 
 		k, ctx := NewKeeperWithCtx(t)
@@ -462,7 +497,7 @@ func FuzzCheckAddFinalityProviderStaked(f *testing.F) {
 		require.Equal(t, currentRwdFp2.Period, uint64(1))
 		require.Equal(t, currentRwdFp2.CurrentRewards.String(), sdk.NewCoins().String())
 
-		amtAddedToFp2 := datagen.RandomMathInt(r, 1000)
+		amtAddedToFp2 := datagen.RandomMathInt(r, 1000).AddRaw(1)
 		err = k.addFinalityProviderStaked(ctx, fp2, amtAddedToFp2)
 		require.NoError(t, err)
 
@@ -473,7 +508,7 @@ func FuzzCheckAddFinalityProviderStaked(f *testing.F) {
 		require.NoError(t, err)
 		require.Equal(t, currentRwdFp2.TotalActiveSat.String(), amtAddedToFp2.String())
 		require.Equal(t, currentRwdFp2.Period, uint64(1))
-		require.Equal(t, currentRwdFp2.CurrentRewards.String(), rwdOnFp2.String())
+		require.Equal(t, currentRwdFp2.CurrentRewards.QuoInt(types.DecimalRewards).String(), rwdOnFp2.String())
 	})
 }
 

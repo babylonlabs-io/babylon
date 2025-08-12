@@ -22,6 +22,7 @@ import (
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
 	testutil "github.com/babylonlabs-io/babylon/v3/testutil/incentives-helper"
 	keepertest "github.com/babylonlabs-io/babylon/v3/testutil/keeper"
+	"github.com/babylonlabs-io/babylon/v3/testutil/mocks"
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
 	btclctypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
 	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
@@ -242,10 +243,6 @@ func FuzzAddFinalitySig(f *testing.F) {
 		// mock slashing interface
 		bsKeeper.EXPECT().SlashFinalityProvider(gomock.Any(), gomock.Eq(fpBTCPKBytes)).Return(nil).Times(1)
 
-		// We need to use `gomock.Any()` as second argument as we may derive SK or
-		// negation of the SK when extracting the SK from the evidence
-		bsKeeper.EXPECT().PropagateFPSlashingToConsumers(gomock.Any(), gomock.Any()).Return(nil).Times(1)
-
 		// NOTE: even though this finality provider is slashed, the msg should be successful
 		// Otherwise the saved evidence will be rolled back
 		cKeeper.EXPECT().GetEpochByHeight(gomock.Any(), msg.BlockHeight).Return(uint64(1)).Times(1)
@@ -428,8 +425,6 @@ func TestVoteForConflictingHashShouldRetrieveEvidenceAndSlash(t *testing.T) {
 		gomock.Any()).Return(fp, nil).Times(1)
 	bsKeeper.EXPECT().SlashFinalityProvider(gomock.Any(),
 		gomock.Eq(fpBTCPKBytes)).Return(nil).Times(1)
-	bsKeeper.EXPECT().PropagateFPSlashingToConsumers(gomock.Any(),
-		gomock.Any()).Return(nil).Times(1)
 	_, err = ms.AddFinalitySig(ctx, msg)
 	require.NoError(t, err)
 	sig, err := fKeeper.GetSig(ctx, blockHeight, fpBTCPK)
@@ -662,11 +657,6 @@ func FuzzEquivocationEvidence(f *testing.F) {
 			ForkFinalitySigHex:      hex.EncodeToString(bbn.NewSchnorrEOTSSigFromModNScalar(forkSig).MustMarshal()),
 			SigningContext:          "", // TODO: test using actual context
 		}
-		ev, err := msg.ParseToEvidence()
-		require.NoError(t, err)
-
-		sk, err := ev.ExtractBTCSK()
-		require.NoError(t, err)
 
 		// set block height in context to be >= evidence height
 		blockAppHash := datagen.GenRandomByteArray(r, 32)
@@ -679,7 +669,6 @@ func FuzzEquivocationEvidence(f *testing.F) {
 
 		// mock slashing interface
 		bsKeeper.EXPECT().SlashFinalityProvider(gomock.Any(), gomock.Eq(fpBTCPKBytes)).Return(nil)
-		bsKeeper.EXPECT().PropagateFPSlashingToConsumers(gomock.Any(), gomock.Eq(sk)).Return(nil)
 
 		_, err = ms.EquivocationEvidence(ctx, msg)
 		require.NoError(t, err)
@@ -705,13 +694,14 @@ func TestBtcDelegationRewards(t *testing.T) {
 
 	btclcKeeper := bstypes.NewMockBTCLightClientKeeper(ctrl)
 	btccKForBtcStaking := bstypes.NewMockBtcCheckpointKeeper(ctrl)
+	chKeeper := mocks.NewMockZoneConciergeChannelKeeper(ctrl)
 
 	epochNumber := uint64(10)
 	btccKForFinality := types.NewMockCheckpointingKeeper(ctrl)
 	btccKForFinality.EXPECT().GetEpoch(gomock.Any()).Return(&epochingtypes.Epoch{EpochNumber: epochNumber}).AnyTimes()
 	btccKForFinality.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(epochNumber).AnyTimes()
 
-	h := testutil.NewIncentiveHelper(t, btclcKeeper, btccKForBtcStaking, btccKForFinality)
+	h := testutil.NewIncentiveHelper(t, btclcKeeper, btccKForBtcStaking, btccKForFinality, chKeeper)
 	// set all parameters
 	covenantSKs, _ := h.GenAndApplyParams(r)
 	h.SetFinalityActivationHeight(0)
@@ -779,13 +769,14 @@ func TestBtcDelegationRewardsEarlyUnbondingAndExpire(t *testing.T) {
 
 	btclcKeeper := bstypes.NewMockBTCLightClientKeeper(ctrl)
 	btccKForBtcStaking := bstypes.NewMockBtcCheckpointKeeper(ctrl)
+	chKeeper := mocks.NewMockZoneConciergeChannelKeeper(ctrl)
 
 	epochNumber := uint64(10)
 	btccKForFinality := types.NewMockCheckpointingKeeper(ctrl)
 	btccKForFinality.EXPECT().GetEpoch(gomock.Any()).Return(&epochingtypes.Epoch{EpochNumber: epochNumber}).AnyTimes()
 	btccKForFinality.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(epochNumber).AnyTimes()
 
-	h := testutil.NewIncentiveHelper(t, btclcKeeper, btccKForBtcStaking, btccKForFinality)
+	h := testutil.NewIncentiveHelper(t, btclcKeeper, btccKForBtcStaking, btccKForFinality, chKeeper)
 	// set all parameters
 	covenantSKs, _ := h.GenAndApplyParams(r)
 	h.SetFinalityActivationHeight(0)

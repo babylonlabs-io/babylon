@@ -20,7 +20,7 @@ func TestMigrateStore(t *testing.T) {
 	var (
 		r                     = rand.New(rand.NewSource(time.Now().UnixNano()))
 		storeKey              = storetypes.NewKVStoreKey(types.StoreKey)
-		btcStakingKeeper, ctx = keepertest.BTCStakingKeeperWithStoreKey(t, storeKey, nil, nil, nil)
+		btcStakingKeeper, ctx = keepertest.BTCStakingKeeperWithStoreKey(t, storeKey, nil, nil, nil, nil)
 		paramsVersions        = 10
 		testChainID           = "test-chain-id"
 		nFps                  = 10
@@ -56,10 +56,11 @@ func TestMigrateStore(t *testing.T) {
 	txHashes, err := allowlist.LoadMultiStakingAllowList()
 	require.NoError(t, err)
 	require.NotEmpty(t, txHashes)
+	store := ctx.KVStore(storeKey)
 	for _, txHash := range txHashes {
-		allowed, err := btcStakingKeeper.IsMultiStakingAllowed(ctx, txHash)
-		require.NoError(t, err)
-		require.True(t, allowed, "tx hash %s should be indexed in the allow list", txHash.String())
+		key := append(types.AllowedMultiStakingTxHashesKey, txHash[:]...) //nolint:gocritic
+		exists := store.Has(key)
+		require.True(t, exists, "tx hash %s should be indexed in the allow list", txHash.String())
 	}
 
 	// check if all finality providers have the BSN ID set to the test chain ID

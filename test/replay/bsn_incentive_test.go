@@ -13,7 +13,6 @@ import (
 	ictvtypes "github.com/babylonlabs-io/babylon/v3/x/incentive/types"
 	minttypes "github.com/babylonlabs-io/babylon/v3/x/mint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	ibctmtypes "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
 	"github.com/stretchr/testify/require"
 )
 
@@ -28,7 +27,7 @@ func TestConsumerBsnRewardDistribution(t *testing.T) {
 	require.NotNil(t, covSender)
 
 	consumerID := "bsn-consumer-0"
-	d.App.IBCKeeper.ClientKeeper.SetClientState(d.Ctx(), consumerID, &ibctmtypes.ClientState{})
+	OpenChannelForConsumer(d.Ctx(), d.App, consumerID)
 	d.GenerateNewBlock()
 
 	consumer0 := d.RegisterConsumer(r, consumerID)
@@ -90,7 +89,7 @@ func TestConsumerBsnRewardDistribution(t *testing.T) {
 	beforeWithdrawBalances := d.BankBalances(addrs...)
 
 	// send the BSN rewards
-	d.SendBsnRewards(consumer0.ID, totalRewards, fpRatios)
+	d.AddBsnRewardsFromDriver(consumer0.ID, totalRewards, fpRatios)
 	d.GenerateNewBlockAssertExecutionSuccess()
 
 	consumerFp[0].WithdrawBtcStakingRewards()
@@ -150,7 +149,7 @@ func TestConsumerBsnRewardDistribution(t *testing.T) {
 		d.App,
 		d.SenderInfo,
 		&types.MsgAddBsnRewards{
-			Sender:        d.GetDriverAccountAddress().String(),
+			Sender:        d.SenderInfo.AddressString(),
 			BsnConsumerId: consumer0.ID,
 			TotalRewards:  basicRewards,
 			FpRatios:      []types.FpRatio{types.FpRatio{BtcPk: consumerFp[2].BTCPublicKey(), Ratio: math.LegacyOneDec()}},
@@ -188,14 +187,20 @@ func TestConsumerBsnRewardDistribution(t *testing.T) {
 	require.Contains(t, txResults[0].Log, ictvtypes.ErrFPCurrentRewardsWithoutVotingPower.Error())
 }
 
-// SendBsnRewards sends BSN rewards using MsgAddBsnRewards
-func (d *BabylonAppDriver) SendBsnRewards(consumerID string, totalRewards sdk.Coins, fpRatios []types.FpRatio) {
+// AddBsnRewardsFromDriver sends BSN rewards using MsgAddBsnRewards
+func (d *BabylonAppDriver) AddBsnRewardsFromDriver(consumerID string, totalRewards sdk.Coins, fpRatios []types.FpRatio) {
+	d.AddBsnRewards(d.SenderInfo, consumerID, totalRewards, fpRatios)
+}
+
+// AddBsnRewards sends BSN rewards using MsgAddBsnRewards
+func (d *BabylonAppDriver) AddBsnRewards(sender *SenderInfo, consumerID string, totalRewards sdk.Coins, fpRatios []types.FpRatio) {
 	msg := &types.MsgAddBsnRewards{
-		Sender:        d.GetDriverAccountAddress().String(),
+		Sender:        sender.AddressString(),
 		BsnConsumerId: consumerID,
 		TotalRewards:  totalRewards,
 		FpRatios:      fpRatios,
 	}
 
-	d.SendTxWithMsgsFromDriverAccount(d.t, msg)
+	d.SendTxWithMessagesSuccess(d.t, sender, DefaultGasLimit, defaultFeeCoin, msg)
+	sender.IncSeq()
 }

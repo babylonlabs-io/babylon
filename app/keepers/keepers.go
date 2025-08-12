@@ -439,11 +439,13 @@ func (ak *AppKeepers) InitKeepers(
 		appCodec,
 		ak.keys[evmtypes.ModuleName],
 		ak.tkeys[evmtypes.TransientKey],
+		ak.keys,
 		authtypes.NewModuleAddress(govtypes.ModuleName),
 		ak.AccountKeeper,
 		ak.PreciseBankKeeper,
 		ak.StakingKeeper,
 		ak.FeemarketKeeper,
+		&ak.ConsensusParamsKeeper,
 		&ak.Erc20Keeper,
 		tracer,
 	)
@@ -587,7 +589,7 @@ func (ak *AppKeepers) InitKeepers(
 
 	ak.GovKeeper = *govKeeper.SetHooks(
 		govtypes.NewMultiGovHooks(
-		// register the governance hooks
+			// register the governance hooks
 		),
 	)
 
@@ -644,12 +646,13 @@ func (ak *AppKeepers) InitKeepers(
 		appparams.AccGov.String(),
 	)
 
+	zcChannelKeeper := zckeeper.NewChannelKeeper(ak.IBCKeeper.ChannelKeeper)
+
 	ak.BTCStkConsumerKeeper = bsckeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[bsctypes.StoreKey]),
-		ak.AccountKeeper,
-		ak.BankKeeper,
 		ak.IBCKeeper.ClientKeeper,
+		zcChannelKeeper,
 		ak.WasmKeeper,
 		appparams.AccGov.String(),
 	)
@@ -697,7 +700,7 @@ func (ak *AppKeepers) InitKeepers(
 		ak.IBCKeeper.ChannelKeeper,
 		ak.IBCKeeper.ClientKeeper,
 		ak.IBCKeeper.ConnectionKeeper,
-		ak.IBCKeeper.ChannelKeeper,
+		zcChannelKeeper,
 		ak.AccountKeeper,
 		ak.BankKeeper,
 		&btclightclientKeeper,

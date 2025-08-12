@@ -54,7 +54,7 @@ type internalNode struct {
 	isValidator  bool
 }
 
-func newNode(chain *internalChain, nodeConfig *NodeConfig) (*internalNode, error) {
+func newNode(chain *internalChain, nodeConfig *NodeConfig, gasLimit int64) (*internalNode, error) {
 	node := &internalNode{
 		chain:       chain,
 		moniker:     fmt.Sprintf("%s-node-%s", chain.chainMeta.Id, nodeConfig.Name),
@@ -68,7 +68,7 @@ func newNode(chain *internalChain, nodeConfig *NodeConfig) (*internalNode, error
 		return nil, err
 	}
 	// generate genesis files
-	if err := node.init(); err != nil {
+	if err := node.init(gasLimit); err != nil {
 		return nil, err
 	}
 	if err := node.createNodeKey(); err != nil {
@@ -302,7 +302,7 @@ func (n *internalNode) getAppGenesis() (*genutiltypes.AppGenesis, error) {
 	return appGenesis, nil
 }
 
-func (n *internalNode) init() error {
+func (n *internalNode) init(gasLimit int64) error {
 	if err := n.createConfig(); err != nil {
 		return err
 	}
@@ -330,7 +330,7 @@ func (n *internalNode) init() error {
 	appGenesis.Consensus = &genutiltypes.ConsensusGenesis{
 		Params: cmttypes.DefaultConsensusParams(),
 	}
-	appGenesis.Consensus.Params.Block.MaxGas = babylonApp.DefaultGasLimit
+	appGenesis.Consensus.Params.Block.MaxGas = gasLimit
 	appGenesis.Consensus.Params.ABCI.VoteExtensionsEnableHeight = babylonApp.DefaultVoteExtensionsEnableHeight
 
 	if err = genutil.ExportGenesisFile(appGenesis, config.GenesisFile()); err != nil {
@@ -374,7 +374,7 @@ func (n *internalNode) initNodeConfigs(persistentPeers []string) error {
 	valConfig.P2P.ExternalAddress = fmt.Sprintf("%s:%d", n.moniker, 26656)
 	valConfig.RPC.ListenAddress = "tcp://0.0.0.0:26657"
 	valConfig.StateSync.Enable = false
-	valConfig.LogLevel = "debug"
+	valConfig.LogLevel = "info"
 	valConfig.P2P.PersistentPeers = strings.Join(persistentPeers, ",")
 	valConfig.Storage.DiscardABCIResponses = false
 

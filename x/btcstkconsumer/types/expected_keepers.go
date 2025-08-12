@@ -5,21 +5,17 @@ import (
 
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
 )
 
-// AccountKeeper defines the expected interface for the Account module.
-type AccountKeeper interface {
-	// Methods imported from account should be defined here
-}
-
-// BankKeeper defines the expected interface for the Bank module.
-type BankKeeper interface {
-	// Methods imported from bank should be defined here
-}
-
 type ClientKeeper interface {
 	GetClientState(ctx sdk.Context, clientID string) (ibcexported.ClientState, bool)
+}
+
+type ChannelKeeper interface {
+	GetChannelClientState(ctx sdk.Context, portID, channelID string) (clientID string, state ibcexported.ClientState, err error)
+	ConsumerHasIBCChannelOpen(ctx context.Context, consumerID string) bool
 }
 
 type WasmKeeper interface {

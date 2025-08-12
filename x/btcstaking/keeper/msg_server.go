@@ -371,7 +371,7 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 
 	// All is fine add received signatures to the BTC delegation and BtcUndelegation
 	// and emit corresponding events
-	ms.addCovenantSigsToBTCDelegation(
+	if err := ms.addCovenantSigsToBTCDelegation(
 		ctx,
 		delInfo,
 		req.Pk,
@@ -380,7 +380,9 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 		parsedUnbondingSlashingAdaptorSignatures,
 		req.StakeExpansionTxSig,
 		btcTip.Height,
-	)
+	); err != nil {
+		return nil, err
+	}
 
 	// at this point, the covenant signatures are verified and are not duplicated.
 	// Thus, we can safely consider this message as refundable
@@ -622,16 +624,16 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 		}
 		types.EmitEarlyUnbondedEvent(ctx, btcDel.MustGetStakingTxHash().String(), stakerSpendigTxHeader.Height)
 	case isStakeExpansion:
-		// stake expansion case: emit stake expansion activation event
+		// emit an early unbonded event for the delegation (the one that is being expanded)
+		types.EmitEarlyUnbondedEventByStakeExpansion(
+			ctx,
+			btcDel.MustGetStakingTxHash().String(),
+			spendStakeTxHash.String(),
+			stakerSpendigTxHeader.Height,
+		)
 		delegatorUnbondingInfo = &types.DelegatorUnbondingInfo{
 			SpendStakeTx: req.StakeSpendingTx,
 		}
-		types.EmitStakeExpansionActivatedEvent(ctx,
-			btcDel.MustGetStakingTxHash().String(),
-			spendStakeTxHash.String(),
-			req.StakeSpendingTxInclusionProof.Key.Hash.MarshalHex(),
-			req.StakeSpendingTxInclusionProof.Key.Index,
-		)
 	default:
 		// spend staking tx is not the registered unbonding tx, we need to save it in the database
 		// and emit an event
@@ -648,7 +650,9 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 
 	// all good, add the signature to BTC delegation's undelegation
 	// and set back
-	ms.btcUndelegate(ctx, btcDel, delegatorUnbondingInfo, req.StakeSpendingTx, req.StakeSpendingTxInclusionProof)
+	if err := ms.btcUndelegate(ctx, btcDel, delegatorUnbondingInfo, req.StakeSpendingTx, req.StakeSpendingTxInclusionProof); err != nil {
+		return nil, err
+	}
 
 	// At this point, the unbonding signature is verified.
 	// Thus, we can safely consider this message as refundable

@@ -15,7 +15,6 @@ import (
 	types3 "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
 	types4 "github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
 	types5 "github.com/babylonlabs-io/babylon/v3/x/epoching/types"
-	btcec "github.com/btcsuite/btcd/btcec/v2"
 	types6 "github.com/cosmos/cosmos-sdk/types"
 	types7 "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 	types8 "github.com/cosmos/ibc-go/v10/modules/core/03-connection/types"
@@ -301,6 +300,103 @@ func (m *MockChannelKeeper) GetNextSequenceSend(ctx types6.Context, portID, chan
 func (mr *MockChannelKeeperMockRecorder) GetNextSequenceSend(ctx, portID, channelID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNextSequenceSend", reflect.TypeOf((*MockChannelKeeper)(nil).GetNextSequenceSend), ctx, portID, channelID)
+}
+
+// MockZoneConciergeChannelKeeper is a mock of ZoneConciergeChannelKeeper interface.
+type MockZoneConciergeChannelKeeper struct {
+	ctrl     *gomock.Controller
+	recorder *MockZoneConciergeChannelKeeperMockRecorder
+}
+
+// MockZoneConciergeChannelKeeperMockRecorder is the mock recorder for MockZoneConciergeChannelKeeper.
+type MockZoneConciergeChannelKeeperMockRecorder struct {
+	mock *MockZoneConciergeChannelKeeper
+}
+
+// NewMockZoneConciergeChannelKeeper creates a new mock instance.
+func NewMockZoneConciergeChannelKeeper(ctrl *gomock.Controller) *MockZoneConciergeChannelKeeper {
+	mock := &MockZoneConciergeChannelKeeper{ctrl: ctrl}
+	mock.recorder = &MockZoneConciergeChannelKeeperMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockZoneConciergeChannelKeeper) EXPECT() *MockZoneConciergeChannelKeeperMockRecorder {
+	return m.recorder
+}
+
+// GetAllOpenZCChannels mocks base method.
+func (m *MockZoneConciergeChannelKeeper) GetAllOpenZCChannels(ctx context.Context) []types9.IdentifiedChannel {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAllOpenZCChannels", ctx)
+	ret0, _ := ret[0].([]types9.IdentifiedChannel)
+	return ret0
+}
+
+// GetAllOpenZCChannels indicates an expected call of GetAllOpenZCChannels.
+func (mr *MockZoneConciergeChannelKeeperMockRecorder) GetAllOpenZCChannels(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllOpenZCChannels", reflect.TypeOf((*MockZoneConciergeChannelKeeper)(nil).GetAllOpenZCChannels), ctx)
+}
+
+// GetChannelClientState mocks base method.
+func (m *MockZoneConciergeChannelKeeper) GetChannelClientState(ctx types6.Context, portID, channelID string) (string, exported.ClientState, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetChannelClientState", ctx, portID, channelID)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(exported.ClientState)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// GetChannelClientState indicates an expected call of GetChannelClientState.
+func (mr *MockZoneConciergeChannelKeeperMockRecorder) GetChannelClientState(ctx, portID, channelID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetChannelClientState", reflect.TypeOf((*MockZoneConciergeChannelKeeper)(nil).GetChannelClientState), ctx, portID, channelID)
+}
+
+// GetChannelForConsumer mocks base method.
+func (m *MockZoneConciergeChannelKeeper) GetChannelForConsumer(ctx context.Context, consumerID string) (types9.IdentifiedChannel, bool) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetChannelForConsumer", ctx, consumerID)
+	ret0, _ := ret[0].(types9.IdentifiedChannel)
+	ret1, _ := ret[1].(bool)
+	return ret0, ret1
+}
+
+// GetChannelForConsumer indicates an expected call of GetChannelForConsumer.
+func (mr *MockZoneConciergeChannelKeeperMockRecorder) GetChannelForConsumer(ctx, consumerID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetChannelForConsumer", reflect.TypeOf((*MockZoneConciergeChannelKeeper)(nil).GetChannelForConsumer), ctx, consumerID)
+}
+
+// GetClientID mocks base method.
+func (m *MockZoneConciergeChannelKeeper) GetClientID(ctx context.Context, channel types9.IdentifiedChannel) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetClientID", ctx, channel)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetClientID indicates an expected call of GetClientID.
+func (mr *MockZoneConciergeChannelKeeperMockRecorder) GetClientID(ctx, channel interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetClientID", reflect.TypeOf((*MockZoneConciergeChannelKeeper)(nil).GetClientID), ctx, channel)
+}
+
+// IsChannelUninitialized mocks base method.
+func (m *MockZoneConciergeChannelKeeper) IsChannelUninitialized(ctx context.Context, channel types9.IdentifiedChannel) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsChannelUninitialized", ctx, channel)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// IsChannelUninitialized indicates an expected call of IsChannelUninitialized.
+func (mr *MockZoneConciergeChannelKeeperMockRecorder) IsChannelUninitialized(ctx, channel interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsChannelUninitialized", reflect.TypeOf((*MockZoneConciergeChannelKeeper)(nil).IsChannelUninitialized), ctx, channel)
 }
 
 // MockClientKeeper is a mock of ClientKeeper interface.
@@ -747,20 +843,6 @@ func (m *MockBTCStakingKeeper) GetFinalityProvider(ctx context.Context, fpBTCPK 
 func (mr *MockBTCStakingKeeperMockRecorder) GetFinalityProvider(ctx, fpBTCPK interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFinalityProvider", reflect.TypeOf((*MockBTCStakingKeeper)(nil).GetFinalityProvider), ctx, fpBTCPK)
-}
-
-// PropagateFPSlashingToConsumers mocks base method.
-func (m *MockBTCStakingKeeper) PropagateFPSlashingToConsumers(ctx context.Context, fpBTCSK *btcec.PrivateKey) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "PropagateFPSlashingToConsumers", ctx, fpBTCSK)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// PropagateFPSlashingToConsumers indicates an expected call of PropagateFPSlashingToConsumers.
-func (mr *MockBTCStakingKeeperMockRecorder) PropagateFPSlashingToConsumers(ctx, fpBTCSK interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PropagateFPSlashingToConsumers", reflect.TypeOf((*MockBTCStakingKeeper)(nil).PropagateFPSlashingToConsumers), ctx, fpBTCSK)
 }
 
 // SlashFinalityProvider mocks base method.

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand"
+	"strings"
 	"time"
 
 	"cosmossdk.io/math"
@@ -106,13 +107,23 @@ func (s *IbcCallbackBsnAddRewards) TearDownSuite() {
 	}
 }
 
-// Test1CreateFinalityProviders creates all finality providers
-func (s *IbcCallbackBsnAddRewards) Test1CreateFinalityProviders() {
+func (s *IbcCallbackBsnAddRewards) TestAll() {
+	s.CreateFinalityProviders()
+	s.CreateBtcDelegations()
+	s.CreateFactoryToken()
+	s.SendBsnRewardsCallback()
+	s.IbcSendBadBsnRewardsCallbackReturnFunds()
+	s.SendBsnRewardsCallbackWithNativeToken()
+}
+
+// CreateFinalityProviders creates all finality providers
+func (s *IbcCallbackBsnAddRewards) CreateFinalityProviders() {
 	chainA := s.configurer.GetChainConfig(0)
 	chainB := s.configurer.GetChainConfig(1)
 	chainA.WaitUntilHeight(2)
 	chainB.WaitUntilHeight(2)
 
+	bsnNode := s.BsnNode()
 	bbnNode := s.BbnNode()
 	bbnNode.WaitForNextBlock()
 
@@ -135,14 +146,32 @@ func (s *IbcCallbackBsnAddRewards) Test1CreateFinalityProviders() {
 		"Chain description: "+datagen.GenRandomHexStr(s.r, 15),
 		datagen.GenBabylonRewardsCommission(s.r),
 	)
+	// Register consumer chain on BBN
 	bbnNode.RegisterConsumerChain(bbnNode.WalletName, bsn0.ConsumerId, bsn0.ConsumerName, bsn0.ConsumerDescription, bsn0.BabylonRewardsCommission.String())
+	// The other chain is BBN too, so need to register the consumer chain
+	// to be able to open the zoneconcierge channel
+	bsnNode.RegisterConsumerChain(bsnNode.WalletName, bsn0.ConsumerId, bsn0.ConsumerName, bsn0.ConsumerDescription, bsn0.BabylonRewardsCommission.String())
+
 	s.bsn0 = bsn0
 
 	bbnNode.WaitForNextBlock()
+	bsnNode.WaitForNextBlock()
 
 	consumers := bbnNode.QueryBTCStkConsumerConsumers()
 	require.Len(s.T(), consumers, 1)
 	s.T().Log("All Consumers created")
+	require.Equal(s.T(), consumers[0].ConsumerId, clientState.ClientId)
+
+	// Open zoneconcierge channel
+	// Need to use same connection ID as the one used in the consumer registration
+	connResp, err := bbnNode.QueryConnections()
+	require.NoError(s.T(), err)
+	require.Len(s.T(), connResp.Connections, 2)
+	connID := connResp.Connections[0].Id
+	err = s.configurer.OpenZoneConciergeChannel(chainA, chainB, connID)
+	require.NoError(s.T(), err, "failed to create zoneconcierge channel between Babylon and BSN")
+	bbnNode.WaitForNextBlock()
+	s.T().Log("Opened zoneconcierge channel")
 
 	s.fp1bbn = CreateNodeFP(
 		s.T(),
@@ -183,8 +212,8 @@ func (s *IbcCallbackBsnAddRewards) Test1CreateFinalityProviders() {
 	bbnNode.WaitForNextBlock()
 }
 
-// Test2CreateBtcDelegations creates 3 btc delegations
-func (s *IbcCallbackBsnAddRewards) Test2CreateBtcDelegations() {
+// CreateBtcDelegations creates 3 btc delegations
+func (s *IbcCallbackBsnAddRewards) CreateBtcDelegations() {
 	bbnNode := s.BbnNode()
 
 	s.del1Addr = bbnNode.KeysAdd(wDel1)
@@ -207,7 +236,7 @@ func (s *IbcCallbackBsnAddRewards) Test2CreateBtcDelegations() {
 	s.T().Log("All BTC delegations created")
 }
 
-func (s *IbcCallbackBsnAddRewards) Test3CreateFactoryToken() {
+func (s *IbcCallbackBsnAddRewards) CreateFactoryToken() {
 	bsnNode := s.BsnNode()
 
 	// Create and fund sender account
@@ -237,13 +266,13 @@ func (s *IbcCallbackBsnAddRewards) Test3CreateFactoryToken() {
 	require.Equal(s.T(), customBalance.String(), mintInt.String(), "Should have custom tokens after minting")
 }
 
-func (s *IbcCallbackBsnAddRewards) Test4SendBsnRewardsCallback() {
+func (s *IbcCallbackBsnAddRewards) SendBsnRewardsCallback() {
 	bbnNode := s.BbnNode()
 	bsnNode := s.BsnNode()
 
 	transferAmt := s.r.Int63n(2_000000) + 1_000000
-	tranferInt := math.NewInt(transferAmt)
-	rewardCoin := sdk.NewCoin(s.bsnCustomTokenDenom, tranferInt)
+	transferInt := math.NewInt(transferAmt)
+	rewardCoin := sdk.NewCoin(s.bsnCustomTokenDenom, transferInt)
 
 	fp2Ratio, fp3Ratio := math.LegacyMustNewDecFromStr("0.7"), math.LegacyMustNewDecFromStr("0.3")
 
@@ -328,17 +357,20 @@ func (s *IbcCallbackBsnAddRewards) Test4SendBsnRewardsCallback() {
 	require.True(s.T(), fp1bbnDiff.IsZero(), "fp1 was not rewarded")
 }
 
-// Test5FailSendBsnRewardsCallback test is suppose to fail and return
-// the funds back to the BSN sender, but it doesn't, so the unhappy path
-// is not currently working properly and the test is being skip
-func (s *IbcCallbackBsnAddRewards) Test5FailSendBsnRewardsCallback() {
-	s.T().Skip()
+// IbcSendBadBsnRewardsCallbackReturnFunds it send rewards using the memo field
+// and `CallbackAddBsnRewards`, but it specifies an invalid BsnConsumerID which
+// errors out in the processing of adding rewards and rejects the ICS20 packet
+// returning the funds to the BSN sender.
+// Note: The bsn sender of rewards will still pay the fees of the IBC transaction
+// but will receive back the rewards sent through ICS20. The IBC tx will respond
+// without error and code zero, but the IBC packet will be rejected with Acknowledgement_Error
+func (s *IbcCallbackBsnAddRewards) IbcSendBadBsnRewardsCallbackReturnFunds() {
 	bbnNode := s.BbnNode()
 	bsnNode := s.BsnNode()
 
 	transferAmt := s.r.Int63n(2_000000) + 1_000000
-	tranferInt := math.NewInt(transferAmt)
-	rewardCoin := sdk.NewCoin(s.bsnCustomTokenDenom, tranferInt)
+	transferInt := math.NewInt(transferAmt)
+	rewardCoin := sdk.NewCoin(s.bsnCustomTokenDenom, transferInt)
 
 	failingCallbackMemo := bstypes.CallbackMemo{
 		Action: bstypes.CallbackActionAddBsnRewardsMemo,
@@ -355,20 +387,20 @@ func (s *IbcCallbackBsnAddRewards) Test5FailSendBsnRewardsCallback() {
 	callbackMemoString := string(callbackMemoJSON)
 
 	bbnCommDiff, del1Diff, del2Diff, fp1bbnDiff, fp2cons0Diff, fp3cons0Diff := s.SuiteRewardsDiff(bbnNode, func() {
-		bsnSenderBalances, err := bsnNode.QueryBalances(s.bsnSenderAddr)
+		bsnSenderBalancesBefore, err := bsnNode.QueryBalances(s.bsnSenderAddr)
 		s.Require().NoError(err)
 
 		ibcTransferTxHash := bsnNode.SendIBCTransfer(s.bsnSenderAddr, s.bbnIbcCallbackReceiverAddr, callbackMemoString, rewardCoin)
-		bsnNode.WaitForNextBlocks(5)
+		bsnNode.WaitForNextBlocks(15)
 
 		ibcTxRes, ibcTx, err := bsnNode.QueryTxWithError(ibcTransferTxHash)
 		s.Require().NoError(err)
 		s.Require().Zero(ibcTxRes.Code, fmt.Sprintf("Transaction failed with code %d: %s", ibcTxRes.Code, ibcTxRes.RawLog))
 
-		bsnSenderAfter, err := bsnNode.QueryBalances(s.bsnSenderAddr)
+		bsnSenderBalancesAfter, err := bsnNode.QueryBalances(s.bsnSenderAddr)
 		s.Require().NoError(err)
 
-		require.Equal(s.T(), bsnSenderBalances.Sub(ibcTx.GetFee()...).String(), bsnSenderAfter.String(), "bsn sender balance check")
+		require.Equal(s.T(), bsnSenderBalancesBefore.Sub(ibcTx.GetFee()...).String(), bsnSenderBalancesAfter.String(), "bsn sender balance check")
 	})
 
 	require.True(s.T(), bbnCommDiff.IsZero(), "bbn commission should not be rewarded")
@@ -377,6 +409,144 @@ func (s *IbcCallbackBsnAddRewards) Test5FailSendBsnRewardsCallback() {
 	require.True(s.T(), fp1bbnDiff.IsZero(), "fp1 was not rewarded")
 	require.True(s.T(), fp2cons0Diff.IsZero(), "fp2 was not rewarded")
 	require.True(s.T(), fp3cons0Diff.IsZero(), "fp3 was not rewarded")
+}
+
+func (s *IbcCallbackBsnAddRewards) SendBsnRewardsCallbackWithNativeToken() {
+	bbnNode := s.BbnNode()
+	bsnNode := s.BsnNode()
+
+	transferAmt := s.r.Int63n(500) + 100000
+	transferInt := math.NewInt(transferAmt)
+	ibcTransferOfNative := sdk.NewCoin(nativeDenom, transferInt)
+
+	bbnBalanceBeforeIbcTransfer, err := bbnNode.QueryBalances(bbnNode.PublicAddress)
+	s.Require().NoError(err)
+
+	bsnBalanceBeforeIbcTransfer, err := bsnNode.QueryBalances(s.bsnSenderAddr)
+	s.Require().NoError(err)
+
+	// Send ubbn native token transfer to the bsn sender of rewards
+	txHashIbcNativeTransfer := bbnNode.SendIBCTransfer(bbnNode.PublicAddress, s.bsnSenderAddr, "transfer", ibcTransferOfNative)
+	bbnNode.WaitForNextBlock()
+
+	txResIbcNative, txRespIbcNativeTransfer := bbnNode.QueryTx(txHashIbcNativeTransfer)
+	s.Require().Zero(txResIbcNative.Code, fmt.Sprintf("Transaction failed with code %d: %s", txResIbcNative.Code, txResIbcNative.RawLog))
+	txFeesPaidIbcNativeTransfer := txRespIbcNativeTransfer.GetFee()
+
+	expectedBbnBalance := bbnBalanceBeforeIbcTransfer.Sub(txFeesPaidIbcNativeTransfer.Add(ibcTransferOfNative)...).String()
+
+	var ibcBabylonNativeTokenTransferInBsn sdk.Coin
+	s.Require().Eventually(func() bool {
+		bbnBalanceAfterIbcTransfer, err := bbnNode.QueryBalances(bbnNode.PublicAddress)
+		s.Require().NoError(err)
+
+		if !strings.EqualFold(expectedBbnBalance, bbnBalanceAfterIbcTransfer.String()) {
+			s.T().Logf(
+				"bbnBalanceAfterIbcTransfer: %s; \n bbnBalanceBeforeIbcTransfer: %s expectedBbnBalance: %s, txFees: %s, coinTransfer: %s",
+				bbnBalanceAfterIbcTransfer.String(), bbnBalanceBeforeIbcTransfer.String(), expectedBbnBalance, txFeesPaidIbcNativeTransfer.String(), ibcTransferOfNative.String(),
+			)
+			return false
+		}
+
+		bsnBalanceAfterIbcTransfer, err := bsnNode.QueryBalances(s.bsnSenderAddr)
+		s.Require().NoError(err)
+
+		ibcDenomOfbabylonNativeTokenInBsn := getFirstIBCDenom(bsnBalanceAfterIbcTransfer)
+		if len(ibcDenomOfbabylonNativeTokenInBsn) == 0 {
+			return false
+		}
+
+		ibcBabylonNativeTokenTransferInBsn = sdk.NewCoin(ibcDenomOfbabylonNativeTokenInBsn, ibcTransferOfNative.Amount)
+		expectedBsnBalance := bsnBalanceBeforeIbcTransfer.Add(ibcBabylonNativeTokenTransferInBsn).String()
+
+		if !strings.EqualFold(expectedBsnBalance, bsnBalanceAfterIbcTransfer.String()) {
+			s.T().Logf(
+				"bsnBalanceAfterIbcTransfer: %s; expectedBsnBalance: %s, txFees: %s, coinTransfer: %s",
+				bsnBalanceAfterIbcTransfer.String(), expectedBsnBalance, txFeesPaidIbcNativeTransfer.String(), ibcTransferOfNative.String(),
+			)
+			return false
+		}
+
+		return true
+	}, 3*time.Minute, 1*time.Second, "Transfer was not successful")
+
+	// send the native token `ubbn` that was bridged to the bsn sender as rewards and check if the
+	// ibc callback middleware can correctly parse everything
+	fp2Ratio, fp3Ratio := math.LegacyMustNewDecFromStr("0.7"), math.LegacyMustNewDecFromStr("0.3")
+
+	// send the callback without specifying consumer ID to try to load from the ibc channel
+	callbackMemo := bstypes.CallbackMemo{
+		Action: bstypes.CallbackActionAddBsnRewardsMemo,
+		DestCallback: &bstypes.CallbackInfo{
+			Address: datagen.GenRandomAccount().Address,
+			AddBsnRewards: &bstypes.CallbackAddBsnRewards{
+				FpRatios: []bstypes.FpRatio{
+					{
+						BtcPk: s.fp2cons0.BtcPk,
+						Ratio: fp2Ratio,
+					},
+					{
+						BtcPk: s.fp3cons0.BtcPk,
+						Ratio: fp3Ratio,
+					},
+				},
+			},
+		},
+	}
+
+	callbackMemoJSON, err := json.Marshal(callbackMemo)
+	s.Require().NoError(err)
+	callbackMemoString := string(callbackMemoJSON)
+
+	bbnCommDiff, del1Diff, del2Diff, fp1bbnDiff, fp2cons0Diff, fp3cons0Diff := s.SuiteRewardsDiff(bbnNode, func() {
+		bsnSenderBalances, err := bsnNode.QueryBalances(s.bsnSenderAddr)
+		s.Require().NoError(err)
+
+		ibcTransferTxHash := bsnNode.SendIBCTransfer(s.bsnSenderAddr, s.bbnIbcCallbackReceiverAddr, callbackMemoString, ibcBabylonNativeTokenTransferInBsn)
+		bsnNode.WaitForNextBlocks(10)
+
+		ibcTxRes, ibcTx, err := bsnNode.QueryTxWithError(ibcTransferTxHash)
+		s.Require().NoError(err)
+		s.Require().Zero(ibcTxRes.Code, fmt.Sprintf("Transaction failed with code %d: %s", ibcTxRes.Code, ibcTxRes.RawLog))
+
+		bsnSenderAfter, err := bsnNode.QueryBalances(s.bsnSenderAddr)
+		s.Require().NoError(err)
+
+		feesPlusRewards := ibcTx.GetFee().Add(ibcBabylonNativeTokenTransferInBsn)
+		require.Equal(s.T(), bsnSenderBalances.Sub(feesPlusRewards...).String(), bsnSenderAfter.String(), "bsn sender balance check")
+	})
+
+	rewardCoins := sdk.NewCoins(ibcTransferOfNative)
+
+	bbnCommExp := itypes.GetCoinsPortion(rewardCoins, s.bsn0.BabylonRewardsCommission)
+	require.Equal(s.T(), bbnCommExp.String(), bbnCommDiff.String(), "babylon commission")
+
+	rewardCoinsAfterBbnComm := rewardCoins.Sub(bbnCommExp...)
+
+	fp2AfterRatio := itypes.GetCoinsPortion(rewardCoinsAfterBbnComm, fp2Ratio)
+	fp2CommExp := itypes.GetCoinsPortion(fp2AfterRatio, *s.fp2cons0.Commission)
+	require.Equal(s.T(), fp2CommExp.String(), fp2cons0Diff.String(), "fp2 consumer 0 commission")
+
+	fp3AfterRatio := itypes.GetCoinsPortion(rewardCoinsAfterBbnComm, fp3Ratio)
+	fp3CommExp := itypes.GetCoinsPortion(fp3AfterRatio, *s.fp3cons0.Commission)
+	require.Equal(s.T(), fp3CommExp.String(), fp3cons0Diff.String(), "fp3 consumer 0 commission")
+
+	// Current setup of voting power for consumer 0
+	// (fp2cons0, del1) => 2_00000000
+	// (fp2cons0, del2) => 4_00000000
+	// (fp3cons0, del1) => 2_00000000
+
+	fp2RemainingBtcRewards := fp2AfterRatio.Sub(fp2CommExp...)
+	fp3RemainingBtcRewards := fp3AfterRatio.Sub(fp3CommExp...)
+
+	// del1 will receive all the rewards of fp3 and 1/3 of the fp2 rewards
+	expectedRewardsDel1 := itypes.GetCoinsPortion(fp2RemainingBtcRewards, math.LegacyMustNewDecFromStr("0.333333333333334")).Add(fp3RemainingBtcRewards...)
+	coins.RequireCoinsDiffInPointOnePercentMargin(s.T(), expectedRewardsDel1, del1Diff)
+	// del2 will receive 2/3 of the fp2 rewards
+	expectedRewardsDel2 := itypes.GetCoinsPortion(fp2RemainingBtcRewards, math.LegacyMustNewDecFromStr("0.666666666666666"))
+	coins.RequireCoinsDiffInPointOnePercentMargin(s.T(), expectedRewardsDel2, del2Diff)
+
+	require.True(s.T(), fp1bbnDiff.IsZero(), "fp1 was not rewarded")
 }
 
 // QueryFpRewards returns the rewards available for fp1, fp2, fp3, fp4
@@ -391,11 +561,19 @@ func (s *IbcCallbackBsnAddRewards) SuiteRewardsDiff(n *chain.NodeConfig, f func(
 	bbnComm, del1, del2, fp1bbn, fp2cons0, fp3cons0 sdk.Coins,
 ) {
 	bbnCommBefore, del1Before, del2Before, fp1bbnBefore, fp2cons0Before, fp3cons0Before := s.QuerySuiteRewards(n)
+	n.LogActionF(
+		"Suite rewards diff before: bbnComm %s, del1 %s, del2 %s, fp1 %s, fp2 %s, fp3 %s",
+		bbnCommBefore.String(), del1Before.String(), del2Before.String(), fp1bbnBefore.String(), fp2cons0Before.String(), fp3cons0Before.String(),
+	)
 
 	f()
 	n.WaitForNextBlock()
 
 	bbnCommAfter, del1After, del2After, fp1bbnAfter, fp2cons0After, fp3cons0After := s.QuerySuiteRewards(n)
+	n.LogActionF(
+		"Suite rewards diff after: bbnComm %s, del1 %s, del2 %s, fp1 %s, fp2 %s, fp3 %s",
+		bbnCommAfter.String(), del1After.String(), del2After.String(), fp1bbnAfter.String(), fp2cons0After.String(), fp3cons0After.String(),
+	)
 
 	bbnCommDiff := bbnCommAfter.Sub(bbnCommBefore...)
 	del1Diff := del1After.Sub(del1Before...)

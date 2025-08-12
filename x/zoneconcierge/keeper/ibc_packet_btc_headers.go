@@ -22,16 +22,15 @@ func (k Keeper) BroadcastBTCHeaders(ctx context.Context) error {
 	}
 
 	// New behavior using Consumer-specific base headers:
-	// - If no Consumer base header exists: fallback to sending k+1 from tip
-	// - If Consumer base header exists but no headers sent: from Consumer base to tip
+	// - If no headers sent: send the last k+1 BTC headers
 	// - If headers previously sent: from child of most recent valid header to tip
-	// - If reorg detected: from Consumer base to tip
+	// - If reorg detected: send the last k+1 BTC headers
 	// TODO: Improve reorg handling efficiency - instead of sending from Consumer base to tip,
 	// we should send a dedicated reorg event and then send headers from the reorged point to tip
 
 	for _, consumerID := range consumerIDs {
 		// Find the channel for this consumer
-		channel, found := k.getChannelForConsumer(ctx, consumerID)
+		channel, found := k.channelKeeper.GetChannelForConsumer(ctx, consumerID)
 		if !found {
 			k.Logger(sdkCtx).Debug("no open channel found for consumer, skipping BTC header broadcast",
 				"consumerID", consumerID,
@@ -39,7 +38,7 @@ func (k Keeper) BroadcastBTCHeaders(ctx context.Context) error {
 			continue
 		}
 
-		headers := k.getHeadersToBroadcastForConsumer(ctx, consumerID)
+		headers := k.GetHeadersToBroadcast(ctx, consumerID)
 		if len(headers) == 0 {
 			k.Logger(sdkCtx).Debug("skipping BTC header broadcast for consumer, no headers to broadcast",
 				"consumerID", consumerID,

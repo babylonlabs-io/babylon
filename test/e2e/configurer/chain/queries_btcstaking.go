@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/stretchr/testify/require"
 
 	"github.com/babylonlabs-io/babylon/v3/test/e2e/util"
@@ -50,6 +51,17 @@ func (n *NodeConfig) QueryFinalityParams() *ftypes.Params {
 func (n *NodeConfig) QueryFinalityProviders(bsnId string) []*bstypes.FinalityProviderResponse {
 	path := fmt.Sprintf("/babylon/btcstaking/v1/finality_providers/%s", bsnId)
 	bz, err := n.QueryGRPCGateway(path, url.Values{})
+	require.NoError(n.t, err)
+
+	var resp bstypes.QueryFinalityProvidersResponse
+	err = util.Cdc.UnmarshalJSON(bz, &resp)
+	require.NoError(n.t, err)
+
+	return resp.FinalityProviders
+}
+
+func (n *NodeConfig) QueryFinalityProvidersV2() []*bstypes.FinalityProviderResponse {
+	bz, err := n.QueryGRPCGateway("/babylon/btcstaking/v1/finality_providers", url.Values{})
 	require.NoError(n.t, err)
 
 	var resp bstypes.QueryFinalityProvidersResponse
@@ -172,18 +184,6 @@ func (n *NodeConfig) QueryListPubRandCommit(fpBTCPK *bbn.BIP340PubKey) map[uint6
 	return resp.PubRandCommitMap
 }
 
-func (n *NodeConfig) QueryVotesAtHeight(height uint64) []bbn.BIP340PubKey {
-	path := fmt.Sprintf("/babylon/finality/v1/votes/%d", height)
-	bz, err := n.QueryGRPCGateway(path, url.Values{})
-	require.NoError(n.t, err)
-
-	var resp ftypes.QueryVotesAtHeightResponse
-	err = util.Cdc.UnmarshalJSON(bz, &resp)
-	require.NoError(n.t, err)
-
-	return resp.BtcPks
-}
-
 // TODO: pagination support
 func (n *NodeConfig) QueryListBlocks(status ftypes.QueriedBlockStatus) []*ftypes.IndexedBlock {
 	values := url.Values{}
@@ -304,6 +304,23 @@ func ParseRespBTCDelToBTCDel(resp *bstypes.BTCDelegationResponse) (btcDel *bstyp
 			btcDel.BtcUndelegation.DelegatorUnbondingInfo = &bstypes.DelegatorUnbondingInfo{
 				SpendStakeTx: spendStakeTx,
 			}
+		}
+	}
+
+	if resp.StkExp != nil {
+		prevTxHash, err := chainhash.NewHashFromStr(resp.StkExp.PreviousStakingTxHashHex)
+		if err != nil {
+			return nil, err
+		}
+
+		otherFundOutput, err := hex.DecodeString(resp.StkExp.OtherFundingTxOutHex)
+		if err != nil {
+			return nil, err
+		}
+		btcDel.StkExp = &bstypes.StakeExpansion{
+			PreviousStakingTxHash:   prevTxHash.CloneBytes(),
+			OtherFundingTxOut:       otherFundOutput,
+			PreviousStkCovenantSigs: resp.StkExp.PreviousStkCovenantSigs,
 		}
 	}
 

@@ -6,7 +6,6 @@ import (
 
 	"cosmossdk.io/math"
 	"cosmossdk.io/store/prefix"
-	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stktypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -46,10 +45,22 @@ func (k Keeper) AddFinalityProvider(goCtx context.Context, msg *types.MsgCreateF
 		// Babylon chain ID
 		bsnID = ctx.ChainID()
 	}
-	// If this is a consumer finality provider, ensure the consumer is registered
-	if bsnID != ctx.ChainID() && !k.BscKeeper.IsConsumerRegistered(ctx, bsnID) {
-		// if BSN ID is provided and it's not Babylon's chain ID, ensure it's a registered consumer
-		return types.ErrFpBSNIdNotRegistered
+
+	// Consumer finality providers checks
+	isConsumer := bsnID != ctx.ChainID()
+	if isConsumer {
+		// Ensure the consumer is registered
+		cr, err := k.BscKeeper.GetConsumerRegister(ctx, bsnID)
+		if err != nil || cr == nil {
+			return types.ErrFpBSNIdNotRegistered
+		}
+		// Ensure there's an IBC channel open if it is a Cosmos BSN
+		if cr.GetCosmosConsumerMetadata() != nil {
+			hasChannel := k.BscKeeper.ConsumerHasIBCChannelOpen(ctx, bsnID)
+			if !hasChannel {
+				return types.ErrFpConsumerNoIBCChannelOpen
+			}
+		}
 	}
 
 	// all good, add this finality provider
@@ -67,7 +78,7 @@ func (k Keeper) AddFinalityProvider(goCtx context.Context, msg *types.MsgCreateF
 	k.bsnIndexFinalityProvider(ctx, &fp)
 
 	// Create BTC Staking Consumer Event for the new finality provider
-	if !fp.SecuresBabylonGenesis(ctx) {
+	if isConsumer {
 		if err := k.AddBTCStakingConsumerEvent(ctx, fp.BsnId, types.CreateNewFinalityProviderEvent(&fp)); err != nil {
 			return err
 		}
@@ -165,72 +176,6 @@ func (k Keeper) SlashFinalityProvider(ctx context.Context, fpBTCPK []byte) error
 		// event for updating the finality provider set
 		powerUpdateEvent := types.NewEventPowerDistUpdateWithSlashedFP(fp.BtcPk)
 		k.addPowerDistUpdateEvent(ctx, btcTip.Height, powerUpdateEvent)
-	}
-
-	return nil
-}
-
-// PropagateFPSlashingToConsumers propagates the slashing of a finality provider (FP) to all relevant consumer chains.
-// It processes all delegations associated with the given FP and creates slashing events for each affected consumer chain.
-//
-// The function performs the following steps:
-//  1. Retrieves all BTC delegations associated with the given finality provider.
-//  2. Collects slashed events for each consumer chain using collectSlashedConsumerEvents:
-//     a. For each delegation, creates a SlashedBTCDelegation event.
-//     b. Identifies the consumer chains associated with the FPs in the delegation.
-//     c. Ensures that each consumer chain receives only one event per delegation, even if multiple FPs in the delegation belong to the same consumer.
-//  3. Sends the collected events to their respective consumer chains.
-//
-// Parameters:
-// - ctx: The context for the operation.
-// - fpBTCSK: Extracted Bitcoin private key of the finality provider being slashed.
-//
-// Returns:
-// - An error if any operation fails, nil otherwise.
-func (k Keeper) PropagateFPSlashingToConsumers(
-	ctx context.Context,
-	fpBTCSK *btcec.PrivateKey,
-) error {
-	fpBTCPK := bbn.NewBIP340PubKeyFromBTCPK(fpBTCSK.PubKey())
-
-	// Map to collect events for each consumer
-	consumerEvents := make(map[string][]*types.BTCStakingConsumerEvent)
-	// Create a map to store FP to consumer ID mappings
-	fpToConsumerMap := make(map[string]string)
-
-	// Process all delegations for this finality provider and collect slashing events
-	// for each consumer chain. Ensures that each consumer receives only one event per
-	// delegation, even if multiple finality providers in the delegation belong to the same consumer.
-	err := k.HandleFPBTCDelegations(ctx, fpBTCPK, func(delegation *types.BTCDelegation) error {
-		consumerEvent := types.CreateSlashedBTCDelegationEvent(delegation, fpBTCSK)
-
-		for _, delegationFPBTCPK := range delegation.FpBtcPkList {
-			fpBTCPKHex := delegationFPBTCPK.MarshalHex()
-			if _, ok := fpToConsumerMap[fpBTCPKHex]; !ok {
-				fp, err := k.GetFinalityProvider(ctx, delegationFPBTCPK)
-				if err != nil {
-					return err
-				}
-				if fp.SecuresBabylonGenesis(sdk.UnwrapSDKContext(ctx)) {
-					continue
-				}
-				fpToConsumerMap[fpBTCPKHex] = fp.BsnId
-			}
-
-			// Only add event once per consumer per delegation
-			consumerEvents[fpToConsumerMap[fpBTCPKHex]] = append(consumerEvents[fpToConsumerMap[fpBTCPKHex]], consumerEvent)
-		}
-		return nil
-	})
-	if err != nil {
-		return err
-	}
-
-	// Send collected events to each involved consumer chain
-	for consumerID, events := range consumerEvents {
-		if err := k.AddBTCStakingConsumerEvents(ctx, consumerID, events); err != nil {
-			return err
-		}
 	}
 
 	return nil

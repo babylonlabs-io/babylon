@@ -8,6 +8,10 @@ import (
 	"path/filepath"
 	"strings"
 
+	// Force-load the tracer engines to trigger registration due to Go-Ethereum v1.10.15 changes
+	_ "github.com/ethereum/go-ethereum/eth/tracers/js"
+	_ "github.com/ethereum/go-ethereum/eth/tracers/native"
+
 	autocliv1 "cosmossdk.io/api/cosmos/autocli/v1"
 	reflectionv1 "cosmossdk.io/api/cosmos/reflection/v1"
 	"cosmossdk.io/client/v2/autocli"
@@ -354,7 +358,7 @@ func NewBabylonApp(
 		checkpointing.NewAppModule(appCodec, app.CheckpointingKeeper),
 		monitor.NewAppModule(appCodec, app.MonitorKeeper),
 		// Babylon modules - integration
-		btcstkconsumer.NewAppModule(appCodec, app.BTCStkConsumerKeeper, app.AccountKeeper, app.BankKeeper),
+		btcstkconsumer.NewAppModule(appCodec, app.BTCStkConsumerKeeper),
 		zoneconcierge.NewAppModule(appCodec, app.ZoneConciergeKeeper, app.AccountKeeper, app.BankKeeper),
 		// Babylon modules - btc staking
 		btcstaking.NewAppModule(appCodec, app.BTCStakingKeeper),
@@ -867,7 +871,7 @@ func (a *BabylonApp) DefaultGenesis() map[string]json.RawMessage {
 	// Add ERC20 genesis configuration
 	erc20GenState := erc20types.DefaultGenesisState()
 	erc20GenState.TokenPairs = DefaultTokenPairs
-	erc20GenState.Params.NativePrecompiles = append(erc20GenState.Params.NativePrecompiles, WTokenContractMainnet)
+	erc20GenState.NativePrecompiles = []string{WTokenContractMainnet}
 	genesis[erc20types.ModuleName] = a.appCodec.MustMarshalJSON(erc20GenState)
 
 	feemarketGenState := feemarkettypes.DefaultGenesisState()
