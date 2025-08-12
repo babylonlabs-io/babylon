@@ -68,6 +68,13 @@ func (k Keeper) BroadcastBTCStakingConsumerEvents(
 				)
 				continue
 			}
+
+			k.Logger(sdkCtx).Error("failed to send BTC staking consumer event to channel, continuing with other channels",
+				"consumerID", consumerID,
+				"channel", channel.ChannelId,
+				"error", err.Error(),
+			)
+			continue
 		}
 
 		k.bsKeeper.DeleteBTCStakingConsumerIBCPacket(ctx, consumerID)
