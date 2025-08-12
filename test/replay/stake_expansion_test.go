@@ -308,7 +308,7 @@ func TestInvalidStakeExpansion(t *testing.T) {
 					s.Driver.App.BTCLightClientKeeper.GetBTCNet(),
 				)
 
-				blockWithProofs := s.Driver.IncludeTxsInBTCAncConfirm([]*wire.MsgTx{slashingTxMsg})
+				blockWithProofs := s.Driver.IncludeTxsInBTCAndConfirm([]*wire.MsgTx{slashingTxMsg})
 				require.Len(t, blockWithProofs.Proofs, 2)
 
 				msg := &bstypes.MsgBTCUndelegate{

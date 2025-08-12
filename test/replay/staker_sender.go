@@ -405,7 +405,7 @@ func (s *Staker) UnbondDelegation(
 	unbondingTxMsg := infos.UnbondingSlashingInfo.UnbondingTx
 	unbondingTxMsg.TxIn[0].Witness = witness
 
-	blockWithUnbondingTx := s.d.IncludeTxsInBTCAncConfirm([]*wire.MsgTx{unbondingTxMsg})
+	blockWithUnbondingTx := s.d.IncludeTxsInBTCAndConfirm([]*wire.MsgTx{unbondingTxMsg})
 	require.Len(s.t, blockWithUnbondingTx.Proofs, 2)
 
 	stakingTxBz, err := bbn.SerializeBTCTx(stakingTx)
