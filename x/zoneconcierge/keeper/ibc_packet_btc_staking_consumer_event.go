@@ -61,7 +61,7 @@ func (k Keeper) BroadcastBTCStakingConsumerEvents(
 
 		if err := k.SendIBCPacket(ctx, channel, outPacket); err != nil {
 			if errors.Is(err, clienttypes.ErrClientNotActive) {
-				k.Logger(sdkCtx).Info("IBC client is not active, skipping channel",
+				k.Logger(sdkCtx).Info("IBC client is not active, skipping",
 					"consumerID", consumerID,
 					"channel", channel.ChannelId,
 					"error", err.Error(),
@@ -69,7 +69,7 @@ func (k Keeper) BroadcastBTCStakingConsumerEvents(
 				continue
 			}
 
-			k.Logger(sdkCtx).Error("failed to send BTC staking consumer event to channel, continuing with other channels",
+			k.Logger(sdkCtx).Error("failed to send BTC staking consumer event",
 				"consumerID", consumerID,
 				"channel", channel.ChannelId,
 				"error", err.Error(),
