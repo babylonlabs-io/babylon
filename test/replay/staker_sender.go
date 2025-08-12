@@ -1,6 +1,7 @@
 package replay
 
 import (
+	"github.com/babylonlabs-io/babylon/v3/btcstaking"
 	"math/rand"
 	"testing"
 
@@ -363,4 +364,63 @@ func (s *Staker) WithdrawBtcStakingRewards() {
 		msg,
 	)
 	s.IncSeq()
+}
+
+func (s *Staker) UnbondDelegation(
+	stakingTxHash *chainhash.Hash,
+	stakingTx *wire.MsgTx,
+	covSender *CovenantSender,
+) {
+	params := s.d.GetBTCStakingParams(s.t)
+
+	delegation := s.d.GetBTCDelegation(s.t, stakingTxHash.String())
+	require.NotNil(s.t, delegation, "delegation should exist")
+	infos := parseInfos(s.t, delegation, params)
+
+	unbondingPathSpendInfo, err := infos.StakingSlashingInfo.StakingInfo.UnbondingPathSpendInfo()
+	require.NoError(s.t, err)
+
+	stakingOutput := stakingTx.TxOut[delegation.StakingOutputIdx]
+
+	covenantSKs := covSender.CovenantPrivateKeys()
+	covenantSigs := datagen.GenerateSignatures(
+		s.t,
+		covenantSKs,
+		infos.UnbondingSlashingInfo.UnbondingTx,
+		stakingOutput,
+		unbondingPathSpendInfo.RevealedLeaf,
+	)
+
+	stakerSig, err := btcstaking.SignTxWithOneScriptSpendInputFromTapLeaf(
+		infos.UnbondingSlashingInfo.UnbondingTx,
+		stakingOutput,
+		s.BTCPrivateKey,
+		unbondingPathSpendInfo.RevealedLeaf,
+	)
+	require.NoError(s.t, err)
+
+	witness, err := unbondingPathSpendInfo.CreateUnbondingPathWitness(covenantSigs, stakerSig)
+	require.NoError(s.t, err)
+
+	unbondingTxMsg := infos.UnbondingSlashingInfo.UnbondingTx
+	unbondingTxMsg.TxIn[0].Witness = witness
+
+	blockWithUnbondingTx := s.d.IncludeTxsInBTCAndConfirm([]*wire.MsgTx{unbondingTxMsg})
+	require.Len(s.t, blockWithUnbondingTx.Proofs, 2)
+
+	stakingTxBz, err := bbn.SerializeBTCTx(stakingTx)
+	require.NoError(s.t, err)
+
+	unbondingTxBytes, err := bbn.SerializeBTCTx(unbondingTxMsg)
+	require.NoError(s.t, err)
+
+	msg := &bstypes.MsgBTCUndelegate{
+		Signer:                        s.AddressString(),
+		StakingTxHash:                 stakingTxHash.String(),
+		StakeSpendingTx:               unbondingTxBytes,
+		StakeSpendingTxInclusionProof: bstypes.NewInclusionProofFromSpvProof(blockWithUnbondingTx.Proofs[1]),
+		FundingTransactions:           [][]byte{stakingTxBz},
+	}
+
+	s.SendMessage(msg)
 }
