@@ -12,7 +12,7 @@ import (
 )
 
 // BroadcastBTCHeaders sends an IBC packet of BTC headers to all open IBC channels to ZoneConcierge
-func (k Keeper) BroadcastBTCHeaders(ctx context.Context, consumerChannelMap map[string][]channeltypes.IdentifiedChannel) error {
+func (k Keeper) BroadcastBTCHeaders(ctx context.Context, consumerChannelMap map[string]channeltypes.IdentifiedChannel) error {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	// get all registered consumers
 	consumerIDs := k.GetAllConsumerIDs(ctx)
@@ -35,8 +35,8 @@ func (k Keeper) BroadcastBTCHeaders(ctx context.Context, consumerChannelMap map[
 
 	for _, consumerID := range consumerIDs {
 		// Find channels for this consumer using O(1) map lookup
-		channels, found := consumerChannelMap[consumerID]
-		if !found || len(channels) == 0 {
+		channel, found := consumerChannelMap[consumerID]
+		if !found {
 			k.Logger(sdkCtx).Debug("no open channels found for consumer, skipping BTC header broadcast",
 				"consumerID", consumerID,
 			)
@@ -53,33 +53,27 @@ func (k Keeper) BroadcastBTCHeaders(ctx context.Context, consumerChannelMap map[
 
 		packet := types.NewBTCHeadersPacketData(&types.BTCHeaders{Headers: headers})
 
-		// Send to all channels for this consumer
-		sentToAtLeastOneChannel := false
-		for _, channel := range channels {
-			if err := k.SendIBCPacket(ctx, channel, packet); err != nil {
-				if errors.Is(err, clienttypes.ErrClientNotActive) {
-					k.Logger(sdkCtx).Info("IBC client is not active, skipping channel",
-						"channel", channel.ChannelId,
-						"error", err.Error(),
-					)
-					continue
-				}
-
-				k.Logger(sdkCtx).Error("failed to send BTC headers to channel, continuing with other channels",
+		// Send to channel for this consumer
+		if err := k.SendIBCPacket(ctx, channel, packet); err != nil {
+			if errors.Is(err, clienttypes.ErrClientNotActive) {
+				k.Logger(sdkCtx).Info("IBC client is not active, skipping channel",
 					"channel", channel.ChannelId,
 					"error", err.Error(),
 				)
 				continue
 			}
-			sentToAtLeastOneChannel = true
+
+			k.Logger(sdkCtx).Error("failed to send BTC headers to channel, continuing with other channels",
+				"channel", channel.ChannelId,
+				"error", err.Error(),
+			)
+			continue
 		}
 
 		// Update the BSN-specific last sent segment only if we sent to at least one channel
-		if sentToAtLeastOneChannel {
-			k.SetBSNLastSentSegment(ctx, consumerID, &types.BTCChainSegment{
-				BtcHeaders: headers,
-			})
-		}
+		k.SetBSNLastSentSegment(ctx, consumerID, &types.BTCChainSegment{
+			BtcHeaders: headers,
+		})
 	}
 
 	return nil

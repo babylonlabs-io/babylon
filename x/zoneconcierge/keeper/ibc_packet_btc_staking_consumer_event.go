@@ -19,7 +19,7 @@ import (
 // sends them to corresponding consumers via open IBC channels, and then deletes the events from the store.
 func (k Keeper) BroadcastBTCStakingConsumerEvents(
 	ctx context.Context,
-	consumerChannelMap map[string][]channeltypes.IdentifiedChannel,
+	consumerChannelMap map[string]channeltypes.IdentifiedChannel,
 ) error {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	if len(consumerChannelMap) == 0 {
@@ -44,7 +44,7 @@ func (k Keeper) BroadcastBTCStakingConsumerEvents(
 		ibcPacket := consumerIBCPacketMap[consumerID]
 
 		// Check if there are open channels for the current consumer ID.
-		channels, ok := consumerChannelMap[consumerID]
+		channel, ok := consumerChannelMap[consumerID]
 		if !ok {
 			k.Logger(sdkCtx).Warn("skipping BTC staking consumer event broadcast",
 				"reason", "no channels found for consumer",
@@ -59,24 +59,22 @@ func (k Keeper) BroadcastBTCStakingConsumerEvents(
 			},
 		}
 
-		for _, channel := range channels {
-			if err := k.SendIBCPacket(ctx, channel, outPacket); err != nil {
-				if errors.Is(err, clienttypes.ErrClientNotActive) {
-					k.Logger(sdkCtx).Info("IBC client is not active, skipping channel",
-						"consumerID", consumerID,
-						"channel", channel.ChannelId,
-						"error", err.Error(),
-					)
-					continue
-				}
-
-				k.Logger(sdkCtx).Error("failed to send BTC staking consumer event to channel, continuing with other channels",
+		if err := k.SendIBCPacket(ctx, channel, outPacket); err != nil {
+			if errors.Is(err, clienttypes.ErrClientNotActive) {
+				k.Logger(sdkCtx).Info("IBC client is not active, skipping channel",
 					"consumerID", consumerID,
 					"channel", channel.ChannelId,
 					"error", err.Error(),
 				)
 				continue
 			}
+
+			k.Logger(sdkCtx).Error("failed to send BTC staking consumer event to channel, continuing with other channels",
+				"consumerID", consumerID,
+				"channel", channel.ChannelId,
+				"error", err.Error(),
+			)
+			continue
 		}
 
 		k.bsKeeper.DeleteBTCStakingConsumerIBCPacket(ctx, consumerID)
