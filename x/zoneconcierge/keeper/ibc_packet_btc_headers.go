@@ -4,17 +4,18 @@ import (
 	"context"
 	"errors"
 
-	"github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
+
+	"github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
 )
 
 // BroadcastBTCHeaders sends an IBC packet of BTC headers to all open IBC channels to ZoneConcierge
 func (k Keeper) BroadcastBTCHeaders(ctx context.Context) error {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	// get all registered consumers
-	consumerIDs := k.GetAllConsumerIDs(ctx)
-	if len(consumerIDs) == 0 {
+	consumers := k.btcStkKeeper.GetAllRegisteredCosmosConsumers(ctx)
+	if len(consumers) == 0 {
 		k.Logger(sdkCtx).Info("skipping BTC header broadcast",
 			"reason", "no registered consumers",
 		)
@@ -28,20 +29,20 @@ func (k Keeper) BroadcastBTCHeaders(ctx context.Context) error {
 	// TODO: Improve reorg handling efficiency - instead of sending from Consumer base to tip,
 	// we should send a dedicated reorg event and then send headers from the reorged point to tip
 
-	for _, consumerID := range consumerIDs {
+	for _, consumer := range consumers {
 		// Find the channel for this consumer
-		channel, found := k.channelKeeper.GetChannelForConsumer(ctx, consumerID)
+		channel, found := k.channelKeeper.GetChannelForConsumer(ctx, consumer.ConsumerId, consumer.GetCosmosConsumerMetadata().ChannelId)
 		if !found {
 			k.Logger(sdkCtx).Debug("no open channel found for consumer, skipping BTC header broadcast",
-				"consumerID", consumerID,
+				"consumerID", consumer.ConsumerId,
 			)
 			continue
 		}
 
-		headers := k.GetHeadersToBroadcast(ctx, consumerID)
+		headers := k.GetHeadersToBroadcast(ctx, consumer.ConsumerId)
 		if len(headers) == 0 {
 			k.Logger(sdkCtx).Debug("skipping BTC header broadcast for consumer, no headers to broadcast",
-				"consumerID", consumerID,
+				"consumerID", consumer.ConsumerId,
 			)
 			continue
 		}
@@ -64,7 +65,7 @@ func (k Keeper) BroadcastBTCHeaders(ctx context.Context) error {
 		}
 
 		// Update the BSN-specific last sent segment
-		k.SetBSNLastSentSegment(ctx, consumerID, &types.BTCChainSegment{
+		k.SetBSNLastSentSegment(ctx, consumer.ConsumerId, &types.BTCChainSegment{
 			BtcHeaders: headers,
 		})
 	}

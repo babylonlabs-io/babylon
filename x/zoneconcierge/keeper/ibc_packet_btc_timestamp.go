@@ -5,15 +5,16 @@ import (
 	"errors"
 	"fmt"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
 	btcctypes "github.com/babylonlabs-io/babylon/v3/x/btccheckpoint/types"
 	btclctypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
 	epochingtypes "github.com/babylonlabs-io/babylon/v3/x/epoching/types"
 	"github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
-	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 )
 
 // finalizedInfo is a private struct that stores metadata and proofs
@@ -202,8 +203,8 @@ func (k Keeper) BroadcastBTCTimestamps(
 	}
 
 	// get all registered consumers
-	consumerIDs := k.GetAllConsumerIDs(ctx)
-	if len(consumerIDs) == 0 {
+	consumers := k.btcStkKeeper.GetAllRegisteredCosmosConsumers(ctx)
+	if len(consumers) == 0 {
 		k.Logger(sdkCtx).Info("skipping BTC timestamp broadcast",
 			"reason", "no registered consumers",
 		)
@@ -211,22 +212,22 @@ func (k Keeper) BroadcastBTCTimestamps(
 	}
 
 	k.Logger(sdkCtx).Info("broadcasting BTC timestamps",
-		"consumers", len(consumerIDs),
+		"consumers", len(consumers),
 		"epoch", epochNum,
 	)
 
 	// for each registered consumer, find its channel and send BTC timestamp
-	for _, consumerID := range consumerIDs {
+	for _, consumer := range consumers {
 		// Find the channel for this consumer
-		channel, found := k.channelKeeper.GetChannelForConsumer(ctx, consumerID)
+		channel, found := k.channelKeeper.GetChannelForConsumer(ctx, consumer.ConsumerId, consumer.GetCosmosConsumerMetadata().ChannelId)
 		if !found {
 			k.Logger(sdkCtx).Debug("no open channel found for consumer, skipping",
-				"consumerID", consumerID,
+				"consumerID", consumer.ConsumerId,
 			)
 			continue
 		}
 
-		headersToBroadcast := k.GetHeadersToBroadcast(ctx, consumerID)
+		headersToBroadcast := k.GetHeadersToBroadcast(ctx, consumer.ConsumerId)
 
 		// get all metadata shared across BTC timestamps in the same epoch
 		finalizedInfo, err := k.getFinalizedInfo(ctx, epochNum, headersToBroadcast)
@@ -238,11 +239,11 @@ func (k Keeper) BroadcastBTCTimestamps(
 			return err
 		}
 
-		btcTimestamp, err := k.createBTCTimestamp(ctx, consumerID, channel, finalizedInfo)
+		btcTimestamp, err := k.createBTCTimestamp(ctx, consumer.ConsumerId, channel, finalizedInfo)
 		if err != nil {
 			k.Logger(sdkCtx).Error("failed to create BTC timestamp for consumer, skipping",
 				"channel", channel.ChannelId,
-				"consumerID", consumerID,
+				"consumerID", consumer.ConsumerId,
 				"error", err.Error(),
 			)
 			continue
@@ -253,7 +254,7 @@ func (k Keeper) BroadcastBTCTimestamps(
 			if errors.Is(err, clienttypes.ErrClientNotActive) {
 				k.Logger(sdkCtx).Info("IBC client is not active, skipping consumer",
 					"channel", channel.ChannelId,
-					"consumerID", consumerID,
+					"consumerID", consumer.ConsumerId,
 					"error", err.Error(),
 				)
 				continue
@@ -261,7 +262,7 @@ func (k Keeper) BroadcastBTCTimestamps(
 
 			k.Logger(sdkCtx).Error("failed to send BTC timestamp to consumer, continuing with other consumers",
 				"channel", channel.ChannelId,
-				"consumerID", consumerID,
+				"consumerID", consumer.ConsumerId,
 				"error", err.Error(),
 			)
 			continue
@@ -269,7 +270,7 @@ func (k Keeper) BroadcastBTCTimestamps(
 
 		// only update the segment if we have broadcasted some headers
 		if len(headersToBroadcast) > 0 {
-			k.SetBSNLastSentSegment(ctx, consumerID, &types.BTCChainSegment{
+			k.SetBSNLastSentSegment(ctx, consumer.ConsumerId, &types.BTCChainSegment{
 				BtcHeaders: headersToBroadcast,
 			})
 		}

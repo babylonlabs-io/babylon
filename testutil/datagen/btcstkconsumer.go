@@ -4,6 +4,7 @@ import (
 	"math/rand"
 
 	sdkmath "cosmossdk.io/math"
+
 	bsctypes "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
 )
 

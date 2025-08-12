@@ -55,17 +55,19 @@ func (k Keeper) IsCosmosConsumer(ctx context.Context, consumerID string) (bool, 
 	return consumerRegister.GetCosmosConsumerMetadata() != nil, nil
 }
 
-// GetAllRegisteredConsumerIDs gets all consumer IDs that registered to Babylon
-func (k Keeper) GetAllRegisteredConsumerIDs(ctx context.Context) []string {
-	var consumerIDs []string
-	err := k.ConsumerRegistry.Walk(ctx, nil, func(consumerID string, _ types.ConsumerRegister) (bool, error) {
-		consumerIDs = append(consumerIDs, consumerID)
+// GetAllRegisteredCosmosConsumers gets all cosmos consumers that registered to Babylon
+func (k Keeper) GetAllRegisteredCosmosConsumers(ctx context.Context) []*types.ConsumerRegister {
+	var consumers []*types.ConsumerRegister
+	err := k.ConsumerRegistry.Walk(ctx, nil, func(consumerID string, consumerRegister types.ConsumerRegister) (bool, error) {
+		if consumerRegister.GetCosmosConsumerMetadata() != nil {
+			consumers = append(consumers, &consumerRegister)
+		}
 		return false, nil
 	})
 	if err != nil {
 		panic(err)
 	}
-	return consumerIDs
+	return consumers
 }
 
 // GetConsumerID returns the consumer ID based on the channel and port ID
@@ -83,6 +85,6 @@ func (k Keeper) GetConsumerID(ctx sdk.Context, portID, channelID string) (consum
 	return cons.ConsumerId, nil
 }
 
-func (k Keeper) ConsumerHasIBCChannelOpen(ctx context.Context, consumerID string) bool {
-	return k.channelKeeper.ConsumerHasIBCChannelOpen(ctx, consumerID)
+func (k Keeper) ConsumerHasIBCChannelOpen(ctx context.Context, consumerID, channelID string) bool {
+	return k.channelKeeper.ConsumerHasIBCChannelOpen(ctx, consumerID, channelID)
 }

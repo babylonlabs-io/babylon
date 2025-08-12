@@ -5,10 +5,11 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/babylonlabs-io/babylon/v3/app"
-	btclightclienttypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
+
+	"github.com/babylonlabs-io/babylon/v3/app"
+	btclightclienttypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
 
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
 	testkeeper "github.com/babylonlabs-io/babylon/v3/testutil/keeper"
@@ -143,7 +144,7 @@ func FuzzFinalizedChainInfo(f *testing.F) {
 		)
 
 		// Set up the mock to return the consumerIDs slice
-		btcStkConsumerKeeper.EXPECT().GetAllRegisteredConsumerIDs(gomock.Any()).DoAndReturn(func(ctx context.Context) []string {
+		btcStkConsumerKeeper.EXPECT().GetAllRegisteredCosmosConsumers(gomock.Any()).DoAndReturn(func(ctx context.Context) []string {
 			return consumerIDs
 		}).AnyTimes()
 		numChains := datagen.RandomInt(r, 100) + 1
