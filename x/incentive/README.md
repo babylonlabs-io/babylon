@@ -53,9 +53,8 @@ Shared Networks (BSNs) simultaneously. With multi-staking:
   enabling cross-chain security provisioning
 - Reward calculations account for the delegator's voting power contribution
   to each individual finality provider
-- Rewards handle multiple reward denominations simultaneously
-- Each finality provider can distribute
-  rewards in different tokens based on their BSN's economics
+- Each BSN can distribute rewards in different tokens based on their BSN's 
+  economics
 
 All reward structures (`Gauge`, `RewardGauge`, `FinalityProviderHistoricalRewards`,
 etc.) support multiple coin denominations through the `repeated cosmos.base.v1beta1.Coin`
