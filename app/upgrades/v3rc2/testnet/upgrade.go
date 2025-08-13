@@ -23,12 +23,6 @@ var Upgrade = upgrades.Upgrade{
 
 func CreateUpgradeHandler(mm *module.Manager, configurator module.Configurator, keepers *keepers.AppKeepers) upgradetypes.UpgradeHandler {
 	return func(ctx context.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
-		// Run migrations before applying any other state changes.
-		migrations, err := mm.RunMigrations(ctx, configurator, fromVM)
-		if err != nil {
-			return nil, err
-		}
-
-		return migrations, nil
+		return mm.RunMigrations(ctx, configurator, fromVM)
 	}
 }
