@@ -251,7 +251,7 @@ func (k Keeper) BroadcastBTCTimestamps(
 		// Send to consumer's channel
 		btcTimestamp, err := k.createBTCTimestamp(ctx, consumerID, channel, finalizedInfo)
 		if err != nil {
-			k.Logger(sdkCtx).Error("failed to create BTC timestamp for consumer, skipping channel",
+			k.Logger(sdkCtx).Error("failed to create BTC timestamp for consumer, skipping consumer",
 				"channel", channel.ChannelId,
 				"consumerID", consumerID,
 				"error", err.Error(),
@@ -262,7 +262,7 @@ func (k Keeper) BroadcastBTCTimestamps(
 		packet := types.NewBTCTimestampPacketData(btcTimestamp)
 		if err := k.SendIBCPacket(ctx, channel, packet); err != nil {
 			if errors.Is(err, clienttypes.ErrClientNotActive) {
-				k.Logger(sdkCtx).Info("IBC client is not active, skipping channel",
+				k.Logger(sdkCtx).Info("IBC client is not active, skipping consumer",
 					"channel", channel.ChannelId,
 					"consumerID", consumerID,
 					"error", err.Error(),
@@ -270,7 +270,7 @@ func (k Keeper) BroadcastBTCTimestamps(
 				continue
 			}
 
-			k.Logger(sdkCtx).Error("failed to send BTC timestamp to channel, continuing with other channels",
+			k.Logger(sdkCtx).Error("failed to send BTC timestamp to consumer, continuing with other consumers",
 				"channel", channel.ChannelId,
 				"consumerID", consumerID,
 				"error", err.Error(),
