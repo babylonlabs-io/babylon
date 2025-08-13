@@ -747,10 +747,10 @@ func (d *BabylonAppDriver) IncludeVerifiedStakingTxInBTC(expectedVerifiedDelegat
 		transactions = append(transactions, stakingTx)
 	}
 
-	return d.IncludeTxsInBTCAncConfirm(transactions)
+	return d.IncludeTxsInBTCAndConfirm(transactions)
 }
 
-func (d *BabylonAppDriver) IncludeTxsInBTCAncConfirm(txs []*wire.MsgTx) *datagen.BlockWithProofs {
+func (d *BabylonAppDriver) IncludeTxsInBTCAndConfirm(txs []*wire.MsgTx) *datagen.BlockWithProofs {
 	btcCheckpointParams := d.GetBTCCkptParams(d.t)
 
 	tip, _ := d.GetBTCLCTip()
