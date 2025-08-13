@@ -88,8 +88,8 @@ message QueryLatestEpochHeaderRequest {
   string consumer_id = 1;
 }
 
-// QueryLatestEpochHeadersResponse is request type for the
-// QueryLatestEpochHeadersResponse RPC method.
+// QueryLatestEpochHeaderResponse is response type for the
+// QueryLatestEpochHeaderResponse RPC method.
 message QueryLatestEpochHeaderResponse {
   IndexedHeader header = 1;
 }
@@ -98,7 +98,7 @@ message QueryLatestEpochHeaderResponse {
 message QueryBSNLastSentSegmentRequest {
   string consumer_id = 1;
 }
-// QueryBSNLastSentSegmentResponse is request type for the
+// QueryBSNLastSentSegmentResponse is response type for the
 // QueryBSNLastSentSegmentResponse RPC method.
 message QueryBSNLastSentSegmentResponse {
   BTCChainSegment segment = 1;
@@ -108,7 +108,7 @@ message QueryBSNLastSentSegmentResponse {
 message QueryGetSealedEpochProofRequest {
   uint64 epoch_num = 1;
 }
-// QuerySealedEpochProofResponse is request type for the
+// QuerySealedEpochProofResponse is response type for the
 // QuerySealedEpochProofResponse RPC method.
 message QueryGetSealedEpochProofResponse {
   ProofEpochSealed epoch = 1;
