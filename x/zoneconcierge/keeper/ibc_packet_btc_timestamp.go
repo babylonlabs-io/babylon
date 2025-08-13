@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
 
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
 	btcctypes "github.com/babylonlabs-io/babylon/v3/x/btccheckpoint/types"
@@ -207,14 +208,20 @@ func (k Keeper) BroadcastBTCTimestamps(
 		return nil
 	}
 
-	// get all registered consumers
-	consumerIDs := k.GetAllConsumerIDs(ctx)
-	if len(consumerIDs) == 0 {
+	if len(consumerChannelMap) == 0 {
 		k.Logger(sdkCtx).Info("skipping BTC timestamp broadcast",
 			"reason", "no registered consumers",
 		)
 		return nil
 	}
+
+	// get all registered consumers
+	// Extract keys and sort them for deterministic iteration
+	consumerIDs := make([]string, 0, len(consumerChannelMap))
+	for consumerID := range consumerChannelMap {
+		consumerIDs = append(consumerIDs, consumerID)
+	}
+	sort.Strings(consumerIDs)
 
 	k.Logger(sdkCtx).Info("broadcasting BTC timestamps",
 		"consumers", len(consumerIDs),
@@ -227,13 +234,7 @@ func (k Keeper) BroadcastBTCTimestamps(
 	// for each registered consumer, find its channels and send BTC timestamp
 	for _, consumerID := range consumerIDs {
 		// Find channels for this consumer using O(1) map lookup
-		channel, found := consumerChannelMap[consumerID]
-		if !found {
-			k.Logger(sdkCtx).Debug("no open channels found for consumer, skipping",
-				"consumerID", consumerID,
-			)
-			continue
-		}
+		channel := consumerChannelMap[consumerID]
 
 		headersToBroadcast := k.GetHeadersToBroadcast(ctx, consumerID, headerCache)
 
