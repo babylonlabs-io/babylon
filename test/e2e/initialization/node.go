@@ -206,7 +206,6 @@ func (n *internalNode) createConsensusKey() error {
 
 func (n *internalNode) createKeyFromMnemonic(name, mnemonic string) error {
 	kb, err := keyring.New(keyringAppName, keyring.BackendTest, n.configDir(), nil, util.Cdc)
-
 	if err != nil {
 		return err
 	}
@@ -342,6 +341,10 @@ func (n *internalNode) init(gasLimit int64) error {
 }
 
 func (n *internalNode) createMnemonic() (string, error) {
+	return CreateMnemonic()
+}
+
+func CreateMnemonic() (string, error) {
 	entropySeed, err := bip39.NewEntropy(256)
 	if err != nil {
 		return "", err
