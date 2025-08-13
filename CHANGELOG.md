@@ -37,15 +37,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
-### Improvements
-
-<<<<<<< HEAD
-=======
-- [#1229](https://github.com/babylonlabs-io/babylon/pull/1229) Wire up EVM.
-
 ## v3.0.0-rc.2
 
->>>>>>> 30cf516 (prep for v3rc2 upgrade (#1547))
 - [#1529](https://github.com/babylonlabs-io/babylon/pull/1529) Allow `FinalityProviderHistoricalRewards` to have empty coins
 to export genesis.
 - [#1539](https://github.com/babylonlabs-io/babylon/pull/1539) update unbonding in replay testsuite
