@@ -795,8 +795,8 @@ func TestSlashingFpWithManyMulistakedDelegations(t *testing.T) {
 	require.Greater(d.t, activationHeight, uint64(0))
 
 	// create consumers
-	const consumerID1 = "consumer1"
-	const consumerID2 = "consumer2"
+	const consumerID1 = "09-localhost-1" // use localhost client module for tests (already active)
+	const consumerID2 = "09-localhost-2"
 	ctx := d.Ctx().WithIsCheckTx(false)
 	OpenChannelForConsumer(ctx, d.App, consumerID1)
 	OpenChannelForConsumer(ctx, d.App, consumerID2)
@@ -831,13 +831,6 @@ func TestSlashingFpWithManyMulistakedDelegations(t *testing.T) {
 
 		d.ActivateVerifiedDelegations(batchSize)
 
-		d.GenerateNewBlockAssertExecutionSuccess()
-		// the ZC end blocker fails to delete the consumer IBC packets after sending them
-		// because there's no IBC connection setup.
-		// For simplicity, we remove the packets here to avoid having many events accumulated
-		// and test failing due to out of gas errors.
-		d.App.BTCStakingKeeper.DeleteBTCStakingConsumerIBCPacket(d.Ctx(), consumerID1)
-		d.App.BTCStakingKeeper.DeleteBTCStakingConsumerIBCPacket(d.Ctx(), consumerID2)
 		d.GenerateNewBlockAssertExecutionSuccess()
 
 		activeDels := d.GetActiveBTCDelegations(d.t)
