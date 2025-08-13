@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/rand"
 	"testing"
+	"time"
 
 	"github.com/babylonlabs-io/babylon/v4/app"
 	btclightclienttypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
@@ -211,6 +212,25 @@ func TestLatestEpochHeader(t *testing.T) {
 	require.NotNil(t, resp1)
 
 	resp2, err := zcKeeper.LatestEpochHeader(ctx, req2)
+	require.Error(t, err)
+	require.Nil(t, resp2)
+}
+
+func TestBSNLastSentSegment(t *testing.T) {
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	babylonApp := app.Setup(t, false)
+	ctx := babylonApp.NewContext(false)
+	zcKeeper := babylonApp.ZoneConciergeKeeper
+	h := datagen.GenRandomBTCChainSegment(r)
+	zcKeeper.SetBSNLastSentSegment(ctx, "1", h)
+
+	req1 := &zctypes.QueryBSNLastSentSegmentRequest{ConsumerId: "1"}
+	req2 := &zctypes.QueryBSNLastSentSegmentRequest{ConsumerId: ""}
+
+	resp1, err := zcKeeper.BSNLastSentSegment(ctx, req1)
+	require.NoError(t, err)
+	require.NotNil(t, resp1)
+	resp2, err := zcKeeper.BSNLastSentSegment(ctx, req2)
 	require.Error(t, err)
 	require.Nil(t, resp2)
 }

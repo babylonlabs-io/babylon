@@ -108,7 +108,7 @@ func (k Keeper) FinalizedBSNsInfo(c context.Context, req *types.QueryFinalizedBS
 	return resp, nil
 }
 
-func (k Keeper) LatestEpochHeader(sdkCtx context.Context,
+func (k Keeper) LatestEpochHeader(goCtx context.Context,
 	req *types.QueryLatestEpochHeaderRequest) (*types.
 QueryLatestEpochHeaderResponse, error) {
 	if req == nil {
@@ -119,7 +119,7 @@ QueryLatestEpochHeaderResponse, error) {
 		return nil, status.Error(codes.InvalidArgument, "consumer id cannot be empty")
 	}
 
-	ctx := sdk.UnwrapSDKContext(sdkCtx)
+	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	h := k.GetLatestEpochHeader(ctx, req.ConsumerId)
 	if h == nil {
@@ -130,5 +130,26 @@ QueryLatestEpochHeaderResponse, error) {
 		Header: h,
 	}
 
+	return resp, nil
+}
+
+func (k Keeper) BSNLastSentSegment(goCtx context.Context,
+	req *types.QueryBSNLastSentSegmentRequest) (*types.QueryBSNLastSentSegmentResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+
+	if req.ConsumerId == "" {
+		return nil, status.Error(codes.InvalidArgument, "consumer id cannot be empty")
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	s := k.GetBSNLastSentSegment(ctx, req.ConsumerId)
+	if s == nil {
+		return nil, status.Error(codes.NotFound, "BSN last sent segment not found")
+	}
+	resp := &types.QueryBSNLastSentSegmentResponse{
+		Segment: s,
+	}
 	return resp, nil
 }
