@@ -107,3 +107,28 @@ func (k Keeper) FinalizedBSNsInfo(c context.Context, req *types.QueryFinalizedBS
 
 	return resp, nil
 }
+
+func (k Keeper) LatestEpochHeader(sdkCtx context.Context,
+	req *types.QueryLatestEpochHeaderRequest) (*types.
+QueryLatestEpochHeaderResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+
+	if req.ConsumerId == "" {
+		return nil, status.Error(codes.InvalidArgument, "consumer id cannot be empty")
+	}
+
+	ctx := sdk.UnwrapSDKContext(sdkCtx)
+
+	h := k.GetLatestEpochHeader(ctx, req.ConsumerId)
+	if h == nil {
+		return nil, status.Error(codes.NotFound, "header not found")
+	}
+
+	resp := &types.QueryLatestEpochHeaderResponse{
+		Header: h,
+	}
+
+	return resp, nil
+}

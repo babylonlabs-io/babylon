@@ -187,3 +187,30 @@ func FuzzFinalizedChainInfo(f *testing.F) {
 		}
 	})
 }
+
+func TestLatestEpochHeader(t *testing.T) {
+	resp := &zctypes.IndexedHeader{
+		ConsumerId:          "1",
+		Hash:                []byte("hash"),
+		Height:              1,
+		Time:                nil,
+		BabylonTxHash:       []byte("babylon_tx_hash"),
+		BabylonHeaderHeight: 1,
+		BabylonHeaderHash:   []byte("babylon_header_hash"),
+	}
+
+	babylonApp := app.Setup(t, false)
+	ctx := babylonApp.NewContext(false)
+	zcKeeper := babylonApp.ZoneConciergeKeeper
+	zcKeeper.SetLatestEpochHeader(ctx, "1", resp)
+	req1 := &zctypes.QueryLatestEpochHeaderRequest{ConsumerId: "1"}
+	req2 := &zctypes.QueryLatestEpochHeaderRequest{ConsumerId: ""}
+
+	resp1, err := zcKeeper.LatestEpochHeader(ctx, req1)
+	require.NoError(t, err)
+	require.NotNil(t, resp1)
+
+	resp2, err := zcKeeper.LatestEpochHeader(ctx, req2)
+	require.Error(t, err)
+	require.Nil(t, resp2)
+}

@@ -23,6 +23,12 @@ service Query {
     option (google.api.http).get =
         "/babylon/zoneconcierge/v1/finalized_bsns_info";
   }
+  // LatestEpochHeader queries the latest epoch header for a given consumer ID
+  rpc LatestEpochHeader(QueryLatestEpochHeaderRequest) returns
+      (QueryLatestEpochHeaderResponse){
+    option (google.api.http).get =
+        "/babylon/zoneconcierge/v1/latest_epoch_header/{consumer_id}";
+  }
 }
 
 // QueryParamsRequest is the request type for the Query/Params RPC method.
@@ -62,4 +68,16 @@ message FinalizedBSNData {
   babylon.btccheckpoint.v1.SubmissionKey btc_submission_key = 5;
   // Proofs of finality
   ProofFinalizedHeader proof = 6;
+}
+
+// QueryLatestEpochHeadersRequest is request type for the
+// QueryLatestEpochHeadersRequest RPC method.
+message QueryLatestEpochHeaderRequest {
+  string consumer_id = 1;
+}
+
+// QueryLatestEpochHeadersResponse is request type for the
+// QueryLatestEpochHeadersResponse RPC method.
+message QueryLatestEpochHeaderResponse {
+  IndexedHeader header = 1;
 }
