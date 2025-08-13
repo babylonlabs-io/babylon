@@ -439,7 +439,7 @@ func (ms msgServer) validateStakeExpansionSig(
 	prevBtcDel, prevParams := delInfo.PrevDel, delInfo.PrevParams
 
 	if !prevParams.HasCovenantPK(req.Pk) {
-		return errorsmod.Wrapf(types.ErrInvalidCovenantSig, "covenant with pk %s was not a member at params (version %d) of the previous stake", req.Pk.MarshalHex(), prevBtcDel.ParamsVersion)
+		return errorsmod.Wrapf(types.ErrInvalidCovenantSig, "covenant with pk %s was not a member at params (version %d) of the previous delegation", req.Pk.MarshalHex(), prevBtcDel.ParamsVersion)
 	}
 
 	// Covenant committee members can rotate, so we need to check
