@@ -794,8 +794,8 @@ func TestSlashingFpWithManyMulistakedDelegations(t *testing.T) {
 	require.Greater(d.t, activationHeight, uint64(0))
 
 	// create consumers
-	const consumerID1 = "consumer1"
-	const consumerID2 = "consumer2"
+	const consumerID1 = "09-localhost-1" // use localhost client module for tests (already active)
+	const consumerID2 = "09-localhost-2"
 	ctx := d.Ctx().WithIsCheckTx(false)
 	OpenChannelForConsumer(ctx, d.App, consumerID1)
 	OpenChannelForConsumer(ctx, d.App, consumerID2)
@@ -831,6 +831,7 @@ func TestSlashingFpWithManyMulistakedDelegations(t *testing.T) {
 		d.ActivateVerifiedDelegations(batchSize)
 
 		d.GenerateNewBlockAssertExecutionSuccess()
+
 		activeDels := d.GetActiveBTCDelegations(d.t)
 
 		totalActiveDels += batchSize

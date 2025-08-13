@@ -24,6 +24,9 @@ func OpenChannelForConsumer(ctx sdk.Context, app *babylonApp.BabylonApp, consume
 		[]string{consumerID}, zctypes.Version,
 	)
 	app.IBCKeeper.ChannelKeeper.SetChannel(ctx, app.ZoneConciergeKeeper.GetPort(), channelID, channel)
+	app.IBCKeeper.ChannelKeeper.SetNextSequenceSend(ctx, app.ZoneConciergeKeeper.GetPort(), channelID, 1)
+	app.IBCKeeper.ChannelKeeper.SetNextSequenceRecv(ctx, app.ZoneConciergeKeeper.GetPort(), channelID, 1)
+	app.IBCKeeper.ChannelKeeper.SetNextSequenceAck(ctx, app.ZoneConciergeKeeper.GetPort(), channelID, 1)
 
 	// set connection
 	prefix := app.IBCKeeper.ConnectionKeeper.GetCommitmentPrefix()
