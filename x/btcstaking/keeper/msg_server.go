@@ -431,15 +431,11 @@ func (ms msgServer) validateStakeExpansionSig(
 	}
 
 	// check if the btc pk was a covenant at the parameters version
-	// of the previous active staking transaction and signed it
+	// of the previous active staking transaction
 	prevBtcDel, prevParams := delInfo.PrevDel, delInfo.PrevParams
 
 	if !prevParams.HasCovenantPK(req.Pk) {
-		return errorsmod.Wrapf(types.ErrInvalidCovenantSig, "covenant with pk %s was not a member at params (version %d) of the previous stake", req.Pk.MarshalHex(), prevBtcDel.ParamsVersion)
-	}
-
-	if !prevBtcDel.IsSignedByCovMember(req.Pk) {
-		return errorsmod.Wrapf(types.ErrInvalidCovenantSig, "covenant signature for pk %s not found in previous delegation", req.Pk.MarshalHex())
+		return errorsmod.Wrapf(types.ErrInvalidCovenantSig, "covenant with pk %s was not a member at params (version %d) of the previous delegation", req.Pk.MarshalHex(), prevBtcDel.ParamsVersion)
 	}
 
 	// Covenant committee members can rotate, so we need to check
