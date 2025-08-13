@@ -292,9 +292,9 @@ func TestTooBigMultistakingPacket(t *testing.T) {
 	replayerTempDir := t.TempDir()
 	driver := NewBabylonAppDriver(r, t, driverTempDir, replayerTempDir)
 
-	const consumerID1 = "consumer1"
-	const consumerID2 = "consumer2"
-	const consumerID3 = "consumer3"
+	const consumerID1 = "09-localhost-1" // use localhost client module for tests (already active)
+	const consumerID2 = "09-localhost-2"
+	const consumerID3 = "09-localhost-3"
 
 	// 1. Set up mock IBC clients and channels for each consumer before registering consumers
 	ctx := driver.App.BaseApp.NewContext(false)
