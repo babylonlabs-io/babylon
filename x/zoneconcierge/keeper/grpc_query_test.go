@@ -234,3 +234,27 @@ func TestBSNLastSentSegment(t *testing.T) {
 	require.Error(t, err)
 	require.Nil(t, resp2)
 }
+
+func TestGetSealedEpochProof(t *testing.T) {
+	babylonApp := app.Setup(t, false)
+	ctx := babylonApp.NewContext(false)
+	zcKeeper := babylonApp.ZoneConciergeKeeper
+	req1 := &zctypes.QueryGetSealedEpochProofRequest{EpochNum: 1}
+	req2 := &zctypes.QueryGetSealedEpochProofRequest{EpochNum: 0}
+
+	testProof := zctypes.ProofEpochSealed{
+		ValidatorSet: []*checkpointingtypes.ValidatorWithBlsKey{},
+	}
+
+	err := zcKeeper.SealedEpochProof.Set(ctx, 1, testProof)
+	require.NoError(t, err)
+
+	resp1, err := zcKeeper.GetSealedEpochProof(ctx, req1)
+	require.NoError(t, err)
+	require.NotNil(t, resp1)
+	require.Empty(t, resp1.Epoch.ValidatorSet)
+
+	resp2, err := zcKeeper.GetSealedEpochProof(ctx, req2)
+	require.Error(t, err)
+	require.Nil(t, resp2)
+}

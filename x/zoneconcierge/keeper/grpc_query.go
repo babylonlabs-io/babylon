@@ -153,3 +153,24 @@ func (k Keeper) BSNLastSentSegment(goCtx context.Context,
 	}
 	return resp, nil
 }
+
+func (k Keeper) GetSealedEpochProof(goCtx context.Context,
+	req *types.QueryGetSealedEpochProofRequest) (*types.
+QueryGetSealedEpochProofResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+	if req.EpochNum == 0 {
+		return nil, status.Error(codes.InvalidArgument,
+			"epoch number cannot be 0")
+	}
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	se := k.getSealedEpochProof(ctx, req.EpochNum)
+	if se == nil {
+		return nil, status.Error(codes.NotFound, "sealed epoch proof not found")
+	}
+	resp := &types.QueryGetSealedEpochProofResponse{
+		Epoch: se,
+	}
+	return resp, nil
+}

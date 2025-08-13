@@ -32,8 +32,14 @@ service Query {
   // BSNLastSentSegment queries the last sent segment of a given consumer ID
   rpc BSNLastSentSegment(QueryBSNLastSentSegmentRequest) returns
       (QueryBSNLastSentSegmentResponse) {
-    option(google.api.http).get =
+    option (google.api.http).get =
         "/babylon/zoneconcierge/v1/bsn_last_sent_segment/{consumer_id}";
+  }
+  // SealedEpochProof queries the proof of a sealed epoch
+  rpc GetSealedEpochProof(QueryGetSealedEpochProofRequest) returns
+      (QueryGetSealedEpochProofResponse) {
+    option (google.api.http).get =
+        "/babylon/zoneconcierge/v1/sealed_epoch_proof/{epoch_num}";
   }
 }
 
@@ -96,4 +102,14 @@ message QueryBSNLastSentSegmentRequest {
 // QueryBSNLastSentSegmentResponse RPC method.
 message QueryBSNLastSentSegmentResponse {
   BTCChainSegment segment = 1;
+}
+// QuerySealedEpochProofRequest is request type for the
+// QuerySealedEpochProofRequest RPC method.
+message QueryGetSealedEpochProofRequest {
+  uint64 epoch_num = 1;
+}
+// QuerySealedEpochProofResponse is request type for the
+// QuerySealedEpochProofResponse RPC method.
+message QueryGetSealedEpochProofResponse {
+  ProofEpochSealed epoch = 1;
 }
