@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 	"errors"
+	"sort"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
@@ -14,14 +15,19 @@ import (
 // BroadcastBTCHeaders sends an IBC packet of BTC headers to all open IBC channels to ZoneConcierge
 func (k Keeper) BroadcastBTCHeaders(ctx context.Context, consumerChannelMap map[string]channeltypes.IdentifiedChannel) error {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	// get all registered consumers
-	consumerIDs := k.GetAllConsumerIDs(ctx)
-	if len(consumerIDs) == 0 {
+	if len(consumerChannelMap) == 0 {
 		k.Logger(sdkCtx).Info("skipping BTC header broadcast",
 			"reason", "no registered consumers",
 		)
 		return nil
 	}
+
+	// Extract keys and sort them for deterministic iteration
+	consumerIDs := make([]string, 0, len(consumerChannelMap))
+	for consumerID := range consumerChannelMap {
+		consumerIDs = append(consumerIDs, consumerID)
+	}
+	sort.Strings(consumerIDs)
 
 	// New behavior using Consumer-specific base headers:
 	// - If no headers sent: send the last k+1 BTC headers
@@ -35,13 +41,7 @@ func (k Keeper) BroadcastBTCHeaders(ctx context.Context, consumerChannelMap map[
 
 	for _, consumerID := range consumerIDs {
 		// Find channels for this consumer using O(1) map lookup
-		channel, found := consumerChannelMap[consumerID]
-		if !found {
-			k.Logger(sdkCtx).Debug("no open channels found for consumer, skipping BTC header broadcast",
-				"consumerID", consumerID,
-			)
-			continue
-		}
+		channel := consumerChannelMap[consumerID]
 
 		headers := k.GetHeadersToBroadcast(ctx, consumerID, headerCache)
 		if len(headers) == 0 {
