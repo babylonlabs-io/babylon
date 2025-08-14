@@ -1,7 +1,7 @@
 package replay
 
 import (
-	ictvtypes "github.com/babylonlabs-io/babylon/v3/x/incentive/types"
+	ictvtypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/test-go/testify/require"
 )

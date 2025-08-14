@@ -8,9 +8,9 @@ import (
 	context "context"
 	reflect "reflect"
 
-	bls12381 "github.com/babylonlabs-io/babylon/v3/crypto/bls12381"
-	types "github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
-	types0 "github.com/babylonlabs-io/babylon/v3/x/epoching/types"
+	bls12381 "github.com/babylonlabs-io/babylon/v4/crypto/bls12381"
+	types "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
+	types0 "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 	crypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 	types1 "github.com/cosmos/cosmos-sdk/types"
 	gomock "github.com/golang/mock/gomock"

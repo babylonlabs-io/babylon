@@ -1,7 +1,7 @@
 package app
 
 import (
-	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
+	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
 	erc20types "github.com/cosmos/evm/x/erc20/types"
 )
 

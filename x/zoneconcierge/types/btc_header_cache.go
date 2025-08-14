@@ -1,8 +1,8 @@
 package types
 
 import (
-	bbn "github.com/babylonlabs-io/babylon/v3/types"
-	btclctypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	btclctypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
 )
 
 // HeaderCache provides in-memory caching for BTC headers to avoid duplicate DB queries

@@ -3,7 +3,7 @@ package replay
 import (
 	"bytes"
 	"encoding/hex"
-	bbn "github.com/babylonlabs-io/babylon/v3/types"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/stretchr/testify/require"
 	"math/rand"

@@ -1,7 +1,7 @@
 package bindings
 
 import (
-	lcTypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
+	lcTypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
 )
 
 // AsBtcBlockHeaderInfo translates BTCHeaderInfo to BtcBlockHeaderInfo

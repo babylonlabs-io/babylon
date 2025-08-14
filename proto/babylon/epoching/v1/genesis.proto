@@ -5,7 +5,7 @@ import "gogoproto/gogo.proto";
 import "babylon/epoching/v1/params.proto";
 import "babylon/epoching/v1/epoching.proto";
 
-option go_package = "github.com/babylonlabs-io/babylon/v3/x/epoching/types";
+option go_package = "github.com/babylonlabs-io/babylon/v4/x/epoching/types";
 
 // GenesisState defines the epoching module's genesis state.
 message GenesisState {

@@ -13,7 +13,7 @@ import (
 	grpctypes "github.com/cosmos/cosmos-sdk/types/grpc"
 	"google.golang.org/grpc/metadata"
 
-	"github.com/babylonlabs-io/babylon/v3/client/config"
+	"github.com/babylonlabs-io/babylon/v4/client/config"
 )
 
 // QueryClient is a client that can only perform queries to a Babylon node

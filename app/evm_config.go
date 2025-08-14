@@ -3,7 +3,7 @@ package app
 import (
 	"cosmossdk.io/math"
 	"fmt"
-	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
+	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
 )

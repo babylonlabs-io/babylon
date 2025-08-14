@@ -2,7 +2,7 @@ package types
 
 import (
 	"cosmossdk.io/collections"
-	bbn "github.com/babylonlabs-io/babylon/v3/types"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
 )
 
 const (
