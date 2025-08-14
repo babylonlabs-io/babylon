@@ -7,8 +7,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	chkpttypes "github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
-	"github.com/babylonlabs-io/babylon/v3/x/monitor/types"
+	chkpttypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
+	"github.com/babylonlabs-io/babylon/v4/x/monitor/types"
 )
 
 // InitGenesis initializes the keeper state from a provided initial genesis state.

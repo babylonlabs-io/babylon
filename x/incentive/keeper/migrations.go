@@ -1,7 +1,7 @@
 package keeper
 
 import (
-	v2 "github.com/babylonlabs-io/babylon/v3/x/incentive/migrations/v2"
+	v2 "github.com/babylonlabs-io/babylon/v4/x/incentive/migrations/v2"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 

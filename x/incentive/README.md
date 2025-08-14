@@ -3,9 +3,10 @@
 ## Table of Contents
 
 1. [Distribution for BTC Stakers and Finality Providers](#1-distribution-for-btc-stakers-and-finality-providers)
-   1. [Overview of x/distribution logic](#overview-of-xdistribution-logic)
-   2. [Reward Distribution for BABY Stakers](#reward-distribution-for-baby-stakers)
-   3. [What is the inflation mechanism and how are rewards distributed](#what-is-the-inflation-mechanism-and-how-are-rewards-distributed)
+   1. [Multi-Staking](#11-multi-staking)
+   2. [Overview of x/distribution logic](#12-overview-of-xdistribution-logic)
+   3. [Reward Distribution for BABY Stakers](#13-reward-distribution-for-baby-stakers)
+   4. [What is the inflation mechanism and how are rewards distributed](#14-what-is-the-inflation-mechanism-and-how-are-rewards-distributed)
 2. [States](#2-states)
    1. [Parameters](#21-parameters)
    2. [Gauge](#22-gauge)
@@ -19,7 +20,7 @@
    3. [MsgWithdrawReward](#33-msgwithdrawreward)
 4. [BeginBlocker and EndBlocker](#4-beginblocker-and-endblocker)
 5. [Queries](#5-queries)
-6. [AnteHandler for refundable transactions](#6-antehandler-decorator-for-refundable-transactions)
+6. [AnteHandler Decorator for Refundable Transactions](#6-antehandler-decorator-for-refundable-transactions)
 
 ## 1. Distribution for BTC Stakers and Finality Providers
 
@@ -38,6 +39,26 @@ power of the finality provider and the BTC delegations. This module works
 in collaboration with the `x/distribution`. For native stakers and validators,
 rewards are distributed through the `x/distribution` module after the initial
 distribution to BTC stakers and finality providers.
+
+### 1.1. Multi-Staking
+
+The incentive module supports multi-staking, which allows Bitcoin holders
+to delegate their BTC to multiple finality providers across different Babylon
+Shared Networks (BSNs) simultaneously. With multi-staking:
+
+- A single BTC delegation can secure multiple PoS chains simultaneously
+- Rewards are distributed proportionally across all finality providers
+  that the delegator is staking to
+- Each finality provider in a multi-staking setup can operate on different BSNs,
+  enabling cross-chain security provisioning
+- Reward calculations account for the delegator's voting power contribution
+  to each individual finality provider
+- Each BSN can distribute rewards in different tokens based on their BSN's 
+  economics
+
+All reward structures (`Gauge`, `RewardGauge`, `FinalityProviderHistoricalRewards`,
+etc.) support multiple coin denominations through the `repeated cosmos.base.v1beta1.Coin`
+fields, allowing for complex multi-token reward scenarios.
 
 Within the module, there is a critical object called the `rewards gauge`, which
 serves as a gauge accumulating rewards for both finality providers and BTC stakers.
@@ -70,7 +91,7 @@ There are 2 messages available through CLI
 - `MsgSetWithdrawAddress` - set a new withdraw address for a delegator or
   finality provider
 
-### Overview of x/distribution logic
+### 1.2. Overview of x/distribution logic
 
 Once the rewards have been distributed by `x/incentive` to BTC stakers
 and finality providers, the `x/distribution` module is called in `app.go`. The
@@ -84,7 +105,7 @@ So, while rewards continuously accrue, they are actually distributed
 (when transferred out of the pool) only when a withdrawal is executed
 or when a change in delegation triggers a withdrawal.
 
-### Reward Distribution for BABY Stakers
+### 1.3. Reward Distribution for BABY Stakers
 
 Upon `BeginBlock`, following the reward distribution for BTC stakers and finality
 providers, the [`x/distribution`](https://docs.cosmos.network/main/build/modules/distribution)
@@ -92,7 +113,7 @@ module will then distribute the rest to native stakers and validators. However,
 note that rewards are not actively “pushed” out to accounts at this time instead,
 they are recorded and remain in the pool until a withdrawal event.
 
-### What is the inflation mechanism and how are rewards distributed
+### 1.4. What is the inflation mechanism and how are rewards distributed
 
 The `x/mint` module defines the inflation mechanism, which is calculated
 annually and holds the parameters for the logic that that determines
@@ -369,6 +390,10 @@ to the user's account balance. This involves deducting the reward amount
 from the gauge and crediting it to the user's account, effectively updating
 the blockchain's state to reflect these changes.
 
+> **Note**: Rewards are calculated based on the delegator's voting power contribution
+> to each finality provider in their multi-staking setup. This ensures proportional 
+> distribution across all staked positions.
+
 ```protobuf
 message MsgWithdrawReward {
   option (cosmos.msg.v1.signer) = "delegator_address";
@@ -422,10 +447,22 @@ such as when a user delegates BTC to a finality provider.
 
 | **Endpoint**                                                            | **Description**                                                          |
 | ----------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| `/babylon/incentive/v1/params`                                          | Queries the current parameters of the Incentive module.                  |
-| `/babylon/incentive/v1/btc_staking_gauge/{height}`                      | Retrieves the BTC staking gauge information for a specific block height. |
-| `/babylon/incentive/v1/reward_gauges`                                   | Retrieves the reward gauges for all stakeholders.                        |
-| `/babylon/incentive/v1/delegators/{delegator_address}/withdraw_address` | Queries the withdraw address of a specific delegator.                    |
+| `/babylon/incentive/params`                                             | Queries the current parameters of the Incentive module.                  |
+| `/babylon/incentive/btc_staking_gauge/{height}`                         | Retrieves the BTC staking gauge information for a specific block height. |
+| `/babylon/incentive/address/{address}/reward_gauge`                     | Retrieves the reward gauges for a specific stakeholder address.          |
+| `/babylon/incentive/delegators/{delegator_address}/withdraw_address`    | Queries the withdraw address of a specific delegator.                    |
+| `/babylon/incentive/finality_providers/{finality_provider_address}/delegators/{delegator_address}/delegation_rewards` | Queries delegation rewards for a specific finality provider and delegator. |
+| `/babylon/incentive/finality_providers_current_rewards/{finality_provider_address}` | Queries the current rewards for a finality provider. |
+
+> ⚡ **Note**: When working with multi-staking delegations, reward queries return the total 
+> accumulated rewards across all finality providers the delegator is staking 
+> to, with support for multiple token denominations earned from different BSNs 
+> in a single response. While totals are aggregated, the system maintains 
+> separate tracking for rewards earned from each finality provider. 
+>
+> During the multi-staking allow-list period, additional
+> validation rules apply. See the [btcstaking module documentation](../btcstaking/README.md)
+> for details on multi-staking constraints and the allow-list mechanism.
 
 ## 6. AnteHandler Decorator for Refundable Transactions
 

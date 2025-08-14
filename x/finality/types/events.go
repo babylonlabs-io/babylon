@@ -1,6 +1,6 @@
 package types
 
-import "github.com/babylonlabs-io/babylon/v3/types"
+import "github.com/babylonlabs-io/babylon/v4/types"
 
 func NewEventSlashedFinalityProvider(evidence *Evidence) *EventSlashedFinalityProvider {
 	return &EventSlashedFinalityProvider{

@@ -22,11 +22,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/v3/app"
-	testutilcli "github.com/babylonlabs-io/babylon/v3/testutil/cli"
-	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
-	bbn "github.com/babylonlabs-io/babylon/v3/types"
-	btcstakingcli "github.com/babylonlabs-io/babylon/v3/x/btcstaking/client/cli"
+	"github.com/babylonlabs-io/babylon/v4/app"
+	testutilcli "github.com/babylonlabs-io/babylon/v4/testutil/cli"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	btcstakingcli "github.com/babylonlabs-io/babylon/v4/x/btcstaking/client/cli"
 )
 
 type mockCometRPC struct {

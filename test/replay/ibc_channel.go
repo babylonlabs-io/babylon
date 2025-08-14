@@ -9,8 +9,8 @@ import (
 	commitmenttypes "github.com/cosmos/ibc-go/v10/modules/core/23-commitment/types"
 	ibctmtypes "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
 
-	babylonApp "github.com/babylonlabs-io/babylon/v3/app"
-	zctypes "github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
+	babylonApp "github.com/babylonlabs-io/babylon/v4/app"
+	zctypes "github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/types"
 )
 
 func OpenChannelForConsumer(ctx sdk.Context, app *babylonApp.BabylonApp, consumerID string) {
@@ -24,6 +24,9 @@ func OpenChannelForConsumer(ctx sdk.Context, app *babylonApp.BabylonApp, consume
 		[]string{consumerID}, zctypes.Version,
 	)
 	app.IBCKeeper.ChannelKeeper.SetChannel(ctx, app.ZoneConciergeKeeper.GetPort(), channelID, channel)
+	app.IBCKeeper.ChannelKeeper.SetNextSequenceSend(ctx, app.ZoneConciergeKeeper.GetPort(), channelID, 1)
+	app.IBCKeeper.ChannelKeeper.SetNextSequenceRecv(ctx, app.ZoneConciergeKeeper.GetPort(), channelID, 1)
+	app.IBCKeeper.ChannelKeeper.SetNextSequenceAck(ctx, app.ZoneConciergeKeeper.GetPort(), channelID, 1)
 
 	// set connection
 	prefix := app.IBCKeeper.ConnectionKeeper.GetCommitmentPrefix()

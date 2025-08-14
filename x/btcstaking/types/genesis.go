@@ -8,7 +8,7 @@ import (
 	"slices"
 	"sort"
 
-	types "github.com/babylonlabs-io/babylon/v3/types"
+	types "github.com/babylonlabs-io/babylon/v4/types"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/cosmos/cosmos-sdk/codec"
 )

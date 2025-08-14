@@ -7,8 +7,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
-	"github.com/babylonlabs-io/babylon/v3/app/signingcontext"
+	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
+	"github.com/babylonlabs-io/babylon/v4/app/signingcontext"
 
 	"math/rand"
 	"path/filepath"
@@ -17,10 +17,10 @@ import (
 
 	"cosmossdk.io/math"
 	sdkmath "cosmossdk.io/math"
-	"github.com/babylonlabs-io/babylon/v3/btctxformatter"
-	bbn "github.com/babylonlabs-io/babylon/v3/types"
-	btckckpttypes "github.com/babylonlabs-io/babylon/v3/x/btccheckpoint/types"
-	btcstkconsumertypes "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
+	"github.com/babylonlabs-io/babylon/v4/btctxformatter"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	btckckpttypes "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
+	btcstkconsumertypes "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
 
 	"cosmossdk.io/log"
 	"github.com/btcsuite/btcd/btcec/v2"
@@ -56,14 +56,14 @@ import (
 	"github.com/otiai10/copy"
 	"github.com/stretchr/testify/require"
 
-	babylonApp "github.com/babylonlabs-io/babylon/v3/app"
-	appsigner "github.com/babylonlabs-io/babylon/v3/app/signer"
-	"github.com/babylonlabs-io/babylon/v3/test/e2e/initialization"
-	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
-	btclighttypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
-	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
-	ckpttypes "github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
-	minttypes "github.com/babylonlabs-io/babylon/v3/x/mint/types"
+	babylonApp "github.com/babylonlabs-io/babylon/v4/app"
+	appsigner "github.com/babylonlabs-io/babylon/v4/app/signer"
+	"github.com/babylonlabs-io/babylon/v4/test/e2e/initialization"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	btclighttypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
+	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+	ckpttypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
+	minttypes "github.com/babylonlabs-io/babylon/v4/x/mint/types"
 )
 
 var validatorConfig = &initialization.NodeConfig{
@@ -747,10 +747,10 @@ func (d *BabylonAppDriver) IncludeVerifiedStakingTxInBTC(expectedVerifiedDelegat
 		transactions = append(transactions, stakingTx)
 	}
 
-	return d.IncludeTxsInBTCAncConfirm(transactions)
+	return d.IncludeTxsInBTCAndConfirm(transactions)
 }
 
-func (d *BabylonAppDriver) IncludeTxsInBTCAncConfirm(txs []*wire.MsgTx) *datagen.BlockWithProofs {
+func (d *BabylonAppDriver) IncludeTxsInBTCAndConfirm(txs []*wire.MsgTx) *datagen.BlockWithProofs {
 	btcCheckpointParams := d.GetBTCCkptParams(d.t)
 
 	tip, _ := d.GetBTCLCTip()
@@ -1091,7 +1091,7 @@ type Consumer struct {
 }
 
 // RegisterConsumer registers a new consumer
-func (d *BabylonAppDriver) RegisterConsumer(r *rand.Rand, consumerID string, rollupContractAddr ...string) *Consumer {
+func (d *BabylonAppDriver) RegisterConsumer(r *rand.Rand, ctx sdk.Context, app *babylonApp.BabylonApp, consumerID string, rollupContractAddr ...string) *Consumer {
 	commission := datagen.GenBabylonRewardsCommission(r)
 	msg := &btcstkconsumertypes.MsgRegisterConsumer{
 		Signer:                   d.GetDriverAccountAddress().String(),
@@ -1107,6 +1107,18 @@ func (d *BabylonAppDriver) RegisterConsumer(r *rand.Rand, consumerID string, rol
 	}
 
 	d.SendTxWithMsgsFromDriverAccount(d.t, msg)
+
+	// Set channel id on consumer's metadata
+	// To minimize mocking complexity, perform the channel ID setup manually without a transaction
+	consumerRegister, err := app.BTCStkConsumerKeeper.GetConsumerRegister(ctx, consumerID)
+	require.NoError(d.t, err)
+	cosmosMetadata := consumerRegister.GetCosmosConsumerMetadata()
+	cosmosMetadata.ChannelId = fmt.Sprintf("channel-%s", consumerID)
+	consumerRegister.ConsumerMetadata = &btcstkconsumertypes.ConsumerRegister_CosmosConsumerMetadata{
+		CosmosConsumerMetadata: cosmosMetadata,
+	}
+	err = app.BTCStkConsumerKeeper.UpdateConsumer(ctx, consumerRegister)
+	require.NoError(d.t, err)
 
 	return &Consumer{
 		ID:                consumerID,

@@ -3,10 +3,10 @@ package mint_test
 import (
 	"testing"
 
-	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
-	"github.com/babylonlabs-io/babylon/v3/testutil/helper"
-	ictvtypes "github.com/babylonlabs-io/babylon/v3/x/incentive/types"
-	"github.com/babylonlabs-io/babylon/v3/x/mint/types"
+	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
+	"github.com/babylonlabs-io/babylon/v4/testutil/helper"
+	ictvtypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
+	"github.com/babylonlabs-io/babylon/v4/x/mint/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/stretchr/testify/require"
 )

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/babylonlabs-io/babylon/v3/types"
+	"github.com/babylonlabs-io/babylon/v4/types"
 )
 
 // DefaultGenesis returns the default Capability genesis state

@@ -24,14 +24,14 @@ import (
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/v3/app"
-	"github.com/babylonlabs-io/babylon/v3/app/params"
-	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
-	appsigner "github.com/babylonlabs-io/babylon/v3/app/signer"
-	"github.com/babylonlabs-io/babylon/v3/cmd/babylond/cmd"
-	"github.com/babylonlabs-io/babylon/v3/cmd/babylond/cmd/genhelpers"
-	"github.com/babylonlabs-io/babylon/v3/testutil/signer"
-	"github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
+	"github.com/babylonlabs-io/babylon/v4/app"
+	"github.com/babylonlabs-io/babylon/v4/app/params"
+	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
+	appsigner "github.com/babylonlabs-io/babylon/v4/app/signer"
+	"github.com/babylonlabs-io/babylon/v4/cmd/babylond/cmd"
+	"github.com/babylonlabs-io/babylon/v4/cmd/babylond/cmd/genhelpers"
+	"github.com/babylonlabs-io/babylon/v4/testutil/signer"
+	"github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
 )
 
 func Test_CmdGenTx(t *testing.T) {

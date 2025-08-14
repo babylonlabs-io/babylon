@@ -10,8 +10,8 @@ import (
 
 	math "cosmossdk.io/math"
 	types "cosmossdk.io/store/types"
-	types0 "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
-	types1 "github.com/babylonlabs-io/babylon/v3/x/epoching/types"
+	types0 "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+	types1 "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 	types2 "github.com/cosmos/cosmos-sdk/types"
 	gomock "github.com/golang/mock/gomock"
 )

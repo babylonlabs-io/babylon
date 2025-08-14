@@ -6,10 +6,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
-	testutilevents "github.com/babylonlabs-io/babylon/v3/testutil/events"
-	bbn "github.com/babylonlabs-io/babylon/v3/types"
-	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	testutilevents "github.com/babylonlabs-io/babylon/v4/testutil/events"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/stretchr/testify/require"
@@ -308,7 +308,7 @@ func TestInvalidStakeExpansion(t *testing.T) {
 					s.Driver.App.BTCLightClientKeeper.GetBTCNet(),
 				)
 
-				blockWithProofs := s.Driver.IncludeTxsInBTCAncConfirm([]*wire.MsgTx{slashingTxMsg})
+				blockWithProofs := s.Driver.IncludeTxsInBTCAndConfirm([]*wire.MsgTx{slashingTxMsg})
 				require.Len(t, blockWithProofs.Proofs, 2)
 
 				msg := &bstypes.MsgBTCUndelegate{

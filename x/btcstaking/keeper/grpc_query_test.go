@@ -16,14 +16,14 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
-	testutil "github.com/babylonlabs-io/babylon/v3/testutil/btcstaking-helper"
-	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
-	testkeeper "github.com/babylonlabs-io/babylon/v3/testutil/keeper"
-	bbn "github.com/babylonlabs-io/babylon/v3/types"
-	btcctypes "github.com/babylonlabs-io/babylon/v3/x/btccheckpoint/types"
-	btclctypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
-	btcstakingkeeper "github.com/babylonlabs-io/babylon/v3/x/btcstaking/keeper"
-	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
+	testutil "github.com/babylonlabs-io/babylon/v4/testutil/btcstaking-helper"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	testkeeper "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	btcctypes "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
+	btclctypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
+	btcstakingkeeper "github.com/babylonlabs-io/babylon/v4/x/btcstaking/keeper"
+	"github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 )
 
 var net = &chaincfg.SimNetParams
@@ -66,7 +66,7 @@ func FuzzFinalityProviders(f *testing.F) {
 		numTotalFPs := int(datagen.RandomInt(r, 20) + 1) // 1 to 20 FPs total
 
 		// If it's a registered consumer, we need to ensure the channel is open to be able to create a consumer FP
-		h.ChannelKeeper.EXPECT().ConsumerHasIBCChannelOpen(h.Ctx, registeredBsnId).Return(true).AnyTimes()
+		h.ChannelKeeper.EXPECT().ConsumerHasIBCChannelOpen(h.Ctx, registeredBsnId, consumerRegister.GetCosmosConsumerMetadata().ChannelId).Return(true).AnyTimes()
 
 		for i := 0; i < numTotalFPs; i++ {
 			fpSK, _, err := datagen.GenRandomBTCKeyPair(r)

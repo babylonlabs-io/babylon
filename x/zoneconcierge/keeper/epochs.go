@@ -3,8 +3,8 @@ package keeper
 import (
 	"context"
 
-	epochingtypes "github.com/babylonlabs-io/babylon/v3/x/epoching/types"
-	"github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
+	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
+	"github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/types"
 )
 
 func (k Keeper) GetLastFinalizedEpoch(ctx context.Context) uint64 {

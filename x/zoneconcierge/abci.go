@@ -5,8 +5,8 @@ import (
 	"errors"
 	"time"
 
-	"github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/keeper"
-	"github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
+	"github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/keeper"
+	"github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -23,13 +23,19 @@ func BeginBlocker(ctx context.Context, k keeper.Keeper) error {
 func EndBlocker(ctx context.Context, k keeper.Keeper) ([]abci.ValidatorUpdate, error) {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyEndBlocker)
 
+	// Build a map for O(1) channel lookups
+	consumerChannelMap, err := k.GetConsumerChannelMap(ctx)
+	if err != nil {
+		handleBroadcastError(ctx, k, "BuildConsumerChannelMap", err)
+	}
+
 	// Handle BTC headers broadcast with structured error handling
-	if err := k.BroadcastBTCHeaders(ctx); err != nil {
+	if err := k.BroadcastBTCHeaders(ctx, consumerChannelMap); err != nil {
 		handleBroadcastError(ctx, k, "BroadcastBTCHeaders", err)
 	}
 
 	// Handle BTC staking consumer events broadcast with structured error handling
-	if err := k.BroadcastBTCStakingConsumerEvents(ctx); err != nil {
+	if err := k.BroadcastBTCStakingConsumerEvents(ctx, consumerChannelMap); err != nil {
 		handleBroadcastError(ctx, k, "BroadcastBTCStakingConsumerEvents", err)
 	}
 

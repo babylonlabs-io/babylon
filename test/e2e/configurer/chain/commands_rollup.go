@@ -8,10 +8,10 @@ import (
 
 	cmtcrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 
-	"github.com/babylonlabs-io/babylon/v3/types"
+	"github.com/babylonlabs-io/babylon/v4/types"
 
-	"github.com/babylonlabs-io/babylon/v3/test/e2e/configurer/rollup"
-	"github.com/babylonlabs-io/babylon/v3/test/e2e/initialization"
+	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer/rollup"
+	"github.com/babylonlabs-io/babylon/v4/test/e2e/initialization"
 	"github.com/stretchr/testify/require"
 )
 

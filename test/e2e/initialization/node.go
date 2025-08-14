@@ -26,14 +26,14 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/spf13/viper"
 
-	checkpointingtypes "github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
 
-	babylonApp "github.com/babylonlabs-io/babylon/v3/app"
-	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
-	appsigner "github.com/babylonlabs-io/babylon/v3/app/signer"
-	"github.com/babylonlabs-io/babylon/v3/cmd/babylond/cmd"
-	"github.com/babylonlabs-io/babylon/v3/test/e2e/util"
-	e2etypes "github.com/babylonlabs-io/babylon/v3/test/e2e2/types"
+	babylonApp "github.com/babylonlabs-io/babylon/v4/app"
+	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
+	appsigner "github.com/babylonlabs-io/babylon/v4/app/signer"
+	"github.com/babylonlabs-io/babylon/v4/cmd/babylond/cmd"
+	"github.com/babylonlabs-io/babylon/v4/test/e2e/util"
+	e2etypes "github.com/babylonlabs-io/babylon/v4/test/e2e2/types"
 )
 
 type internalNode struct {

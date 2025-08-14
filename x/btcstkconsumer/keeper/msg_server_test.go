@@ -8,15 +8,16 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/v3/app"
-	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
-	keepertest "github.com/babylonlabs-io/babylon/v3/testutil/keeper"
-	wasmtest "github.com/babylonlabs-io/babylon/v3/wasmbinding/test"
-	"github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/keeper"
-	"github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	ibctmtypes "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
+
+	"github.com/babylonlabs-io/babylon/v4/app"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	keepertest "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
+	wasmtest "github.com/babylonlabs-io/babylon/v4/wasmbinding/test"
+	"github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/keeper"
+	"github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
 )
 
 func setupMsgServer(t testing.TB) (keeper.Keeper, types.MsgServer, context.Context) {
@@ -43,7 +44,7 @@ func TestRejectConsumerIdSameAsChainId(t *testing.T) {
 		Test registering Cosmos consumer
 	*/
 	// generate a random consumer register
-	consumerRegister := datagen.GenRandomCosmosConsumerRegister(r)
+	consumerRegister := datagen.GenRandomCosmosConsumerRegisterWithoutChannelSet(r)
 	// mock IBC light client
 	babylonApp.IBCKeeper.ClientKeeper.SetClientState(ctx, consumerRegister.ConsumerId, &ibctmtypes.ClientState{})
 	// Register the consumer
@@ -76,7 +77,7 @@ func FuzzRegisterConsumer(f *testing.F) {
 		})
 		require.NoError(t, err)
 		// generate a random consumer register
-		consumerRegister := datagen.GenRandomCosmosConsumerRegister(r)
+		consumerRegister := datagen.GenRandomCosmosConsumerRegisterWithoutChannelSet(r)
 		// Register the consumer
 		_, err = msgServer.RegisterConsumer(ctx, &types.MsgRegisterConsumer{
 			ConsumerId:               consumerRegister.ConsumerId,
@@ -96,7 +97,7 @@ func FuzzRegisterConsumer(f *testing.F) {
 			Test registering Cosmos consumer
 		*/
 		// generate a random consumer register
-		consumerRegister = datagen.GenRandomCosmosConsumerRegister(r)
+		consumerRegister = datagen.GenRandomCosmosConsumerRegisterWithoutChannelSet(r)
 		// mock IBC light client
 		babylonApp.IBCKeeper.ClientKeeper.SetClientState(ctx, consumerRegister.ConsumerId, &ibctmtypes.ClientState{})
 		// Register the consumer
