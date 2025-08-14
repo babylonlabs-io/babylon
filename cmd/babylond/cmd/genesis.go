@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"cosmossdk.io/math"
-	"github.com/babylonlabs-io/babylon/v3/app"
 	"github.com/babylonlabs-io/babylon/v3/app/keepers"
 	erc20types "github.com/cosmos/evm/x/erc20/types"
 	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
@@ -234,8 +233,6 @@ func PrepareGenesis(
 
 	// Add ERC20 genesis configuration
 	erc20GenState := erc20types.DefaultGenesisState()
-	erc20GenState.TokenPairs = app.DefaultTokenPairs
-	erc20GenState.NativePrecompiles = []string{app.WTokenContractMainnet}
 	genesisState[erc20types.ModuleName] = cdc.MustMarshalJSON(erc20GenState)
 
 	feemarketGenState := feemarkettypes.DefaultGenesisState()
