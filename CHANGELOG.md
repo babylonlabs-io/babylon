@@ -40,9 +40,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ### Improvements
 
 - [#1229](https://github.com/babylonlabs-io/babylon/pull/1229) Wire up EVM.
+- [#1540](https://github.com/babylonlabs-io/babylon/pull/1540) Optimizations on `x/zoneconcierge` `EndBlocker` logic.
+- [#1536](https://github.com/babylonlabs-io/babylon/pull/1536) Refactor `x/zoneconcierge` for optimize ibc channel, client io
+
+## v3.0.0-rc.2
+
 - [#1529](https://github.com/babylonlabs-io/babylon/pull/1529) Allow `FinalityProviderHistoricalRewards` to have empty coins
 to export genesis.
 - [#1539](https://github.com/babylonlabs-io/babylon/pull/1539) update unbonding in replay testsuite
+
+### Bug fixes
+
+- [#1545](https://github.com/babylonlabs-io/babylon/pull/1545) fix: remove unnecessary
+covenant verification for stake expansion delegation
 
 ## v3.0.0-rc.1
 
@@ -162,7 +172,6 @@ to allow empty coins in fp current rewards.
 - [#1485](https://github.com/babylonlabs-io/babylon/pull/1485) Add channel check on consumer FP creation
 - [#1516](https://github.com/babylonlabs-io/babylon/pull/1516) Remove `zoneconcierge` port ID from state
 - [#1492](https://github.com/babylonlabs-io/babylon/pull/1492) Bump cosmos evm to v0.3.1
-- [#1536](https://github.com/babylonlabs-io/babylon/pull/1536) Refactor `zoneconcierge` for optimize ibc channel, client io
 
 ### State Machine Breaking
 
