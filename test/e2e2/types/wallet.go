@@ -4,7 +4,8 @@ import (
 	"fmt"
 
 	"cosmossdk.io/math"
-	appsigner "github.com/babylonlabs-io/babylon/v3/app/signer"
+	"github.com/babylonlabs-io/babylon/v4/app/signer"
+	appsigner "github.com/babylonlabs-io/babylon/v4/app/signer"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/cometbft/cometbft/crypto/ed25519"
 	"github.com/cometbft/cometbft/privval"
@@ -17,7 +18,7 @@ import (
 	"github.com/cosmos/go-bip39"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/v3/test/e2e/util"
+	"github.com/babylonlabs-io/babylon/v4/test/e2e/util"
 )
 
 const (
@@ -46,6 +47,7 @@ type WalletSender struct {
 
 type ValidatorWallet struct {
 	*WalletSender
+	ConsKey          *signer.ConsensusKey
 	ConsensusAddress sdk.ConsAddress
 	ValidatorAddress sdk.ValAddress
 }

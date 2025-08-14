@@ -3,7 +3,7 @@ package e2e2
 import (
 	"testing"
 
-	"github.com/babylonlabs-io/babylon/v3/test/e2e2/types"
+	"github.com/babylonlabs-io/babylon/v4/test/e2e2/types"
 )
 
 func TestIBCTransfer(t *testing.T) {

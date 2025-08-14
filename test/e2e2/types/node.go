@@ -9,6 +9,15 @@ import (
 	"testing"
 	"time"
 
+	"encoding/json"
+
+	bbnapp "github.com/babylonlabs-io/babylon/v4/app"
+	cmtconfig "github.com/cometbft/cometbft/config"
+	cmttypes "github.com/cometbft/cometbft/types"
+	"github.com/cosmos/cosmos-sdk/server"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/genutil"
+	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/stretchr/testify/require"
@@ -21,15 +30,19 @@ const (
 
 // Node represents a blockchain node enviroment in a docker container
 type Node struct {
-	Name  string
-	Home  string
-	Ports *NodePorts
+	Tm          *TestManager
+	ChainConfig *ChainConfig
 
+	Name string
+	Home string
+
+	// Values are set when creating the babylon node container
+	Ports     *NodePorts
 	Container *Container
-	Tm        *TestManager
 
 	// Wallets all the wallets where the keyring files were created inside this node
-	Wallets []*WalletSender
+	// where the key is the wallet name
+	Wallets map[string]*WalletSender
 }
 
 // ValidatorNode represents a validator node with additional capabilities
@@ -39,27 +52,37 @@ type ValidatorNode struct {
 }
 
 // NewValidatorNode creates a new validator node with simple ID generation
-func NewValidatorNode(name string, cfg *ChainConfig) *ValidatorNode {
-	n := NewNode(name, cfg)
+func NewValidatorNode(tm *TestManager, name string, cfg *ChainConfig) *ValidatorNode {
+	n := NewNode(tm, name, cfg)
 
-	n.CreateKey(name)
-	n.CreateConsensusKey
+	valW := n.CreateKey(name)
+	consKey, err := CreateConsensusKey(n.Name, valW.Mnemonic, n.Home)
+	require.NoError(n.T(), err)
 
 	return &ValidatorNode{
-		Node:   n,
-		Wallet: &ValidatorWallet{},
+		Node: n,
+		Wallet: &ValidatorWallet{
+			WalletSender:     valW,
+			ConsKey:          consKey,
+			ValidatorAddress: sdk.ValAddress(valW.Address),
+			ConsensusAddress: sdk.GetConsAddress(valW.PrivKey.PubKey()),
+		},
 	}
 }
 
 // NewNode creates a new regular node with simple ID generation
-func NewNode(name string, cfg *ChainConfig) *Node {
-	// nodeID := fmt.Sprintf("%s-node-%s", cfg.ChainID, name)
-
-	return &Node{
-		Name: name,
-		Home: filepath.Join(cfg.Home, name),
-		// Container: ,
+func NewNode(tm *TestManager, name string, cfg *ChainConfig) *Node {
+	n := &Node{
+		Tm:          tm,
+		ChainConfig: cfg,
+		Name:        name,
+		Home:        filepath.Join(cfg.Home, name),
+		Wallets:     make(map[string]*WalletSender),
 	}
+
+	n.CreateConfigDir()
+	n.WriteConfigAndGenesis()
+	return n
 }
 
 // Node implementation
@@ -100,6 +123,43 @@ func (n *Node) Start() {
 // 	return node, nil
 // }
 
+func (n *Node) ConfigDirPath() string {
+	return filepath.Join(n.Home, "config")
+}
+
+func (n *Node) CreateConfigDir() {
+	err := os.MkdirAll(n.ConfigDirPath(), 0o755)
+	require.NoError(n.T(), err)
+}
+
+func (n *Node) WriteConfigAndGenesis() {
+	serverCtx := server.NewDefaultContext()
+	config := serverCtx.Config
+
+	config.SetRoot(n.Home)
+	config.Moniker = n.Name
+
+	appGenesis, err := AppGenesisFromConfig(n.Home)
+	require.NoError(n.T(), err)
+
+	// Create a temp app to get the default genesis state
+	tempApp := bbnapp.NewTmpBabylonApp()
+	appState, err := json.MarshalIndent(tempApp.DefaultGenesis(), "", " ")
+	require.NoError(n.T(), err)
+
+	appGenesis.ChainID = n.ChainConfig.ChainID
+	appGenesis.AppState = appState
+	appGenesis.Consensus = &genutiltypes.ConsensusGenesis{
+		Params: cmttypes.DefaultConsensusParams(),
+	}
+	appGenesis.Consensus.Params.Block.MaxGas = n.ChainConfig.GasLimit
+	appGenesis.Consensus.Params.ABCI.VoteExtensionsEnableHeight = bbnapp.DefaultVoteExtensionsEnableHeight
+
+	err = genutil.ExportGenesisFile(appGenesis, config.GenesisFile())
+	require.NoError(n.T(), err)
+	cmtconfig.WriteConfigFile(filepath.Join(n.ConfigDirPath(), "config.toml"), config)
+}
+
 func (n *Node) T() *testing.T {
 	return n.Tm.T
 }
@@ -109,14 +169,8 @@ func (n *Node) CreateKey(keyName string) *WalletSender {
 	if n.IsChainRunning() {
 		// set seq and acc number
 	}
-	n.Wallets = append(n.Wallets, nw)
+	n.Wallets[keyName] = nw
 	return nw
-}
-
-func (n *ValidatorNode) CreateConsensusKey() {
-	consKey, err := CreateConsensusKey(n.Name, n.Wallet.Mnemonic, n.Home)
-	require.NoError(n.T(), err)
-	
 }
 
 func (n *Node) IsChainRunning() bool {
@@ -229,4 +283,25 @@ func RunCommand(command string) error {
 func ImageExistsLocally(imageName string) bool {
 	cmd := exec.Command("docker", "image", "inspect", imageName)
 	return cmd.Run() == nil
+}
+
+func AppGenesisFromConfig(rootPath string) (*genutiltypes.AppGenesis, error) {
+	serverCtx := server.NewDefaultContext()
+	config := serverCtx.Config
+	config.SetRoot(rootPath)
+
+	genFile := config.GenesisFile()
+	appGenesis := &genutiltypes.AppGenesis{}
+
+	if _, err := os.Stat(genFile); err != nil {
+		if !os.IsNotExist(err) {
+			return nil, err
+		}
+	}
+
+	_, appGenesis, err := genutiltypes.GenesisStateFromGenFile(genFile)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read genesis doc from file: %w", err)
+	}
+	return appGenesis, nil
 }

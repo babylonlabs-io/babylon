@@ -224,27 +224,7 @@ func (n *internalNode) getNodeKey() *p2p.NodeKey {
 }
 
 func (n *internalNode) getAppGenesis() (*genutiltypes.AppGenesis, error) {
-	serverCtx := server.NewDefaultContext()
-	config := serverCtx.Config
-	config.SetRoot(n.configDir())
-
-	genFile := config.GenesisFile()
-	appGenesis := &genutiltypes.AppGenesis{}
-
-	if _, err := os.Stat(genFile); err != nil {
-		if !os.IsNotExist(err) {
-			return nil, err
-		}
-	} else {
-		var err error
-
-		_, appGenesis, err = genutiltypes.GenesisStateFromGenFile(genFile)
-		if err != nil {
-			return nil, fmt.Errorf("failed to read genesis doc from file: %w", err)
-		}
-	}
-
-	return appGenesis, nil
+	return e2etypes.AppGenesisFromConfig(n.configDir())
 }
 
 func (n *internalNode) init(gasLimit int64) error {

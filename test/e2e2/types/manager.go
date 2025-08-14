@@ -102,7 +102,7 @@ func (tm *TestManagerIbc) Start() {
 
 func (tm *TestManager) ChainsWaitUntilHeight(blkHeight uint32) {
 	for _, chain := range tm.Chains {
-		chain.ChainsWaitUntilHeight(blkHeight)
+		chain.WaitUntilBlkHeight(blkHeight)
 	}
 }
 

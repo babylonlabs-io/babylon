@@ -65,12 +65,12 @@ func NewChainConfig(tempDir, chainID string) *ChainConfig {
 func NewChain(tm *TestManager, cfg *ChainConfig) *Chain {
 	nodes := make([]*Node, cfg.NodeCount)
 	for i := 0; i < cfg.NodeCount; i++ {
-		nodes[i] = NewNode(fmt.Sprintf("n-%d", i), cfg)
+		nodes[i] = NewNode(tm, fmt.Sprintf("n-%d", i), cfg)
 	}
 
 	vals := make([]*ValidatorNode, cfg.ValidatorCount)
 	for i := 0; i < cfg.ValidatorCount; i++ {
-		vals[i] = NewValidatorNode(fmt.Sprintf("val-%d", i), cfg)
+		vals[i] = NewValidatorNode(tm, fmt.Sprintf("val-%d", i), cfg)
 	}
 
 	c := &Chain{
@@ -88,7 +88,7 @@ func NewChain(tm *TestManager, cfg *ChainConfig) *Chain {
 	return c
 }
 
-func (c *Chain) ChainsWaitUntilHeight(blkHeight uint32) {
+func (c *Chain) WaitUntilBlkHeight(blkHeight uint32) {
 
 }
 
@@ -101,29 +101,9 @@ func (c *Chain) AllNodes() []*Node {
 	return append(ret, c.Nodes...)
 }
 
-// AddNode adds a regular node to the chain
-func (c *Chain) AddNode(node *Node) {
-	c.Nodes = append(c.Nodes, node)
-}
-
-// AddValidator adds a validator node to the chain
-func (c *Chain) AddValidator(validator *ValidatorNode) {
-	c.Validators = append(c.Validators, validator)
-}
-
 // Start starts all nodes in the chain
 func (c *Chain) Start() {
 	for _, n := range c.AllNodes() {
 		n.Start()
 	}
-}
-
-// GetValidators returns all validator nodes
-func (c *Chain) GetValidators() []*ValidatorNode {
-	return c.Validators
-}
-
-// GetChainID returns the chain ID
-func (c *Chain) GetChainID() string {
-	return c.Config.ChainID
 }
