@@ -19,7 +19,7 @@ const (
 	FlagHome                   = "--home=" + BabylonHomePathInContainer
 )
 
-// Node represents a blockchain node
+// Node represents a blockchain node enviroment in a docker container
 type Node struct {
 	Name  string
 	Home  string
@@ -27,6 +27,9 @@ type Node struct {
 
 	Container *Container
 	Tm        *TestManager
+
+	// Wallets all the wallets where the keyring files were created inside this node
+	Wallets []*WalletSender
 }
 
 // ValidatorNode represents a validator node with additional capabilities
@@ -37,8 +40,10 @@ type ValidatorNode struct {
 
 // NewValidatorNode creates a new validator node with simple ID generation
 func NewValidatorNode(name string, cfg *ChainConfig) *ValidatorNode {
-
 	n := NewNode(name, cfg)
+
+	n.CreateKey(name)
+	n.CreateConsensusKey
 
 	return &ValidatorNode{
 		Node:   n,
@@ -97,6 +102,25 @@ func (n *Node) Start() {
 
 func (n *Node) T() *testing.T {
 	return n.Tm.T
+}
+
+func (n *Node) CreateKey(keyName string) *WalletSender {
+	nw := NewWalletSender(keyName, n)
+	if n.IsChainRunning() {
+		// set seq and acc number
+	}
+	n.Wallets = append(n.Wallets, nw)
+	return nw
+}
+
+func (n *ValidatorNode) CreateConsensusKey() {
+	consKey, err := CreateConsensusKey(n.Name, n.Wallet.Mnemonic, n.Home)
+	require.NoError(n.T(), err)
+	
+}
+
+func (n *Node) IsChainRunning() bool {
+	return false
 }
 
 func (n *Node) RunNodeResource() {

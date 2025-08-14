@@ -5,6 +5,7 @@ import (
 
 	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
 	"github.com/babylonlabs-io/babylon/v3/testutil/helper"
+	ictvtypes "github.com/babylonlabs-io/babylon/v3/x/incentive/types"
 	"github.com/babylonlabs-io/babylon/v3/x/mint/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/stretchr/testify/require"
@@ -20,4 +21,5 @@ func TestItCreatesModuleAccountOnInitBlock(t *testing.T) {
 	feeColl := app.AccountKeeper.GetAccount(ctx, appparams.AccFeeCollector)
 	require.Equal(t, "bbn17xpfvakm2amg962yls6f84z3kell8c5l88j35y", feeColl.GetAddress().String())
 	require.Equal(t, "bbn1pxp3laljasxl67j0k4lvv9hy8yr9043teh7zry", appparams.AccBbnComissionCollectorBsn.String())
+	require.Equal(t, "bbn1hfny2zhlc328ksxjsv3qrrldcgqw3684yu5vsh", authtypes.NewModuleAddress(ictvtypes.ModuleName).String())
 }
