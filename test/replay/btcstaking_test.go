@@ -802,8 +802,8 @@ func TestSlashingFpWithManyMulistakedDelegations(t *testing.T) {
 	OpenChannelForConsumer(ctx, d.App, consumerID2)
 
 	// 2. Register consumers
-	consumer1 := d.RegisterConsumer(r, consumerID1)
-	consumer2 := d.RegisterConsumer(r, consumerID2)
+	consumer1 := d.RegisterConsumer(r, ctx, d.App, consumerID1)
+	consumer2 := d.RegisterConsumer(r, ctx, d.App, consumerID2)
 	require.NotNil(t, consumer1, consumer2)
 
 	// 3. Create finality providers for each consumer

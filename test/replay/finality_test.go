@@ -6,13 +6,14 @@ import (
 	"testing"
 	"time"
 
-	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
-	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
-	ftypes "github.com/babylonlabs-io/babylon/v3/x/finality/types"
 	ibctmtypes "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
+	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
+	ftypes "github.com/babylonlabs-io/babylon/v3/x/finality/types"
 )
 
 func FuzzJailing(f *testing.F) {
@@ -334,7 +335,7 @@ func TestOnlyBabylonFpCanCommitRandomness(t *testing.T) {
 	driver.GenerateNewBlock()
 
 	// 2. Register consumers
-	consumer1 := driver.RegisterConsumer(r, consumerID1)
+	consumer1 := driver.RegisterConsumer(r, ctx, driver.App, consumerID1)
 	require.NotNil(t, consumer1)
 
 	// Create a Babylon FP (registered without consumer ID)
