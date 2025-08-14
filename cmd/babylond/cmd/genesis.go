@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/babylonlabs-io/babylon/v3/app/keepers"
 	"time"
 
 	"cosmossdk.io/math"
