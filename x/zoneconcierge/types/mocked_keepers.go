@@ -257,10 +257,10 @@ func (mr *MockChannelKeeperMockRecorder) GetAllChannels(ctx interface{}) *gomock
 }
 
 // GetAllChannelsWithPortPrefix mocks base method.
-func (m *MockChannelKeeper) GetAllChannelsWithPortPrefix(ctx types6.Context, portPrefix string) []types9.IdentifiedChannel {
+func (m *MockChannelKeeper) GetAllChannelsWithPortPrefix(ctx types6.Context, portPrefix string) []types10.IdentifiedChannel {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAllChannelsWithPortPrefix", ctx, portPrefix)
-	ret0, _ := ret[0].([]types9.IdentifiedChannel)
+	ret0, _ := ret[0].([]types10.IdentifiedChannel)
 	return ret0
 }
 
@@ -370,17 +370,10 @@ func (mr *MockZoneConciergeChannelKeeperMockRecorder) GetChannelClientState(ctx,
 }
 
 // GetChannelForConsumer mocks base method.
-<<<<<<< HEAD
-func (m *MockZoneConciergeChannelKeeper) GetChannelForConsumer(ctx context.Context, consumerID string) (types10.IdentifiedChannel, bool) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetChannelForConsumer", ctx, consumerID)
-	ret0, _ := ret[0].(types10.IdentifiedChannel)
-=======
-func (m *MockZoneConciergeChannelKeeper) GetChannelForConsumer(ctx context.Context, consumerID, channelID string) (types9.IdentifiedChannel, bool) {
+func (m *MockZoneConciergeChannelKeeper) GetChannelForConsumer(ctx context.Context, consumerID, channelID string) (types10.IdentifiedChannel, bool) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetChannelForConsumer", ctx, consumerID, channelID)
-	ret0, _ := ret[0].(types9.IdentifiedChannel)
->>>>>>> 983d655 (fix(zoneconcierge): refactor for optimize ibc channel, client related io (#1536))
+	ret0, _ := ret[0].(types10.IdentifiedChannel)
 	ret1, _ := ret[1].(bool)
 	return ret0, ret1
 }

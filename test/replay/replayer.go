@@ -3,13 +3,6 @@ package replay
 import (
 	"testing"
 
-<<<<<<< HEAD
-=======
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
-
->>>>>>> 983d655 (fix(zoneconcierge): refactor for optimize ibc channel, client related io (#1536))
 	"cosmossdk.io/log"
 	dbmc "github.com/cometbft/cometbft-db"
 	cs "github.com/cometbft/cometbft/consensus"
@@ -20,6 +13,7 @@ import (
 	"github.com/cometbft/cometbft/store"
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/server"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
 	babylonApp "github.com/babylonlabs-io/babylon/v3/app"

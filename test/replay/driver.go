@@ -6,14 +6,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-<<<<<<< HEAD
-
-	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
-
-	"github.com/babylonlabs-io/babylon/v3/app/signingcontext"
-
-=======
->>>>>>> 983d655 (fix(zoneconcierge): refactor for optimize ibc channel, client related io (#1536))
 	"math/rand"
 	"path/filepath"
 	"testing"
