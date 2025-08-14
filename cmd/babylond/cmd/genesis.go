@@ -4,10 +4,10 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/babylonlabs-io/babylon/v3/app/keepers"
 	"time"
 
 	"cosmossdk.io/math"
+	"github.com/babylonlabs-io/babylon/v3/app/keepers"
 	erc20types "github.com/cosmos/evm/x/erc20/types"
 	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
