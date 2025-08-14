@@ -11,9 +11,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	txformat "github.com/babylonlabs-io/babylon/v3/btctxformatter"
-	"github.com/babylonlabs-io/babylon/v3/crypto/bls12381"
-	epochingtypes "github.com/babylonlabs-io/babylon/v3/x/epoching/types"
+	txformat "github.com/babylonlabs-io/babylon/v4/btctxformatter"
+	"github.com/babylonlabs-io/babylon/v4/crypto/bls12381"
+	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 )
 
 const (

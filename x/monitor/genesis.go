@@ -3,8 +3,8 @@ package monitor
 import (
 	"context"
 
-	"github.com/babylonlabs-io/babylon/v3/x/monitor/keeper"
-	"github.com/babylonlabs-io/babylon/v3/x/monitor/types"
+	"github.com/babylonlabs-io/babylon/v4/x/monitor/keeper"
+	"github.com/babylonlabs-io/babylon/v4/x/monitor/types"
 )
 
 // InitGenesis initializes the monitor module's state from a provided genesis

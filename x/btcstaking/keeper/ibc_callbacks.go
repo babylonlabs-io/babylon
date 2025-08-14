@@ -14,8 +14,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
-	ictvtypes "github.com/babylonlabs-io/babylon/v3/x/incentive/types"
+	"github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+	ictvtypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
 )
 
 // Ensure that the incentive Keeper implements the ContractKeeper interface

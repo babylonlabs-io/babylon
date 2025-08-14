@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/babylonlabs-io/babylon/v3/app"
+	"github.com/babylonlabs-io/babylon/v4/app"
 
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
@@ -23,7 +23,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltest "github.com/cosmos/cosmos-sdk/x/genutil/client/testutil"
 
-	bbncmd "github.com/babylonlabs-io/babylon/v3/cmd/babylond/cmd"
+	bbncmd "github.com/babylonlabs-io/babylon/v4/cmd/babylond/cmd"
 )
 
 var testMbm = module.NewBasicManager(genutil.AppModuleBasic{})

@@ -6,7 +6,7 @@ import (
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types/allowlist"
+	"github.com/babylonlabs-io/babylon/v4/x/btcstaking/types/allowlist"
 )
 
 func TestLoadMultiStakingAllowList(t *testing.T) {

@@ -8,8 +8,8 @@ import (
 	context "context"
 	reflect "reflect"
 
-	types "github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
-	types0 "github.com/babylonlabs-io/babylon/v3/x/epoching/types"
+	types "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
+	types0 "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 	crypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 	types1 "github.com/cosmos/cosmos-sdk/types"
 	types2 "github.com/cosmos/cosmos-sdk/x/staking/types"

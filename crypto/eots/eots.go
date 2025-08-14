@@ -11,7 +11,7 @@ import (
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	ecdsa_schnorr "github.com/decred/dcrd/dcrec/secp256k1/v4/schnorr"
 
-	"github.com/babylonlabs-io/babylon/v3/crypto/common"
+	"github.com/babylonlabs-io/babylon/v4/crypto/common"
 )
 
 type ModNScalar = btcec.ModNScalar

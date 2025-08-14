@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
-	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
-	ftypes "github.com/babylonlabs-io/babylon/v3/x/finality/types"
+	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	ftypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
 	ibctmtypes "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"

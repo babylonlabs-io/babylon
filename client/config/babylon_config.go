@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/babylonlabs-io/babylon/v3/client/babylonclient"
+	"github.com/babylonlabs-io/babylon/v4/client/babylonclient"
 )
 
 // BabylonConfig defines configuration for the Babylon client

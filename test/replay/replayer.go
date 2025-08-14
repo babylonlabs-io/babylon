@@ -3,11 +3,11 @@ package replay
 import (
 	"testing"
 
-	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
+	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
 
 	"cosmossdk.io/log"
-	babylonApp "github.com/babylonlabs-io/babylon/v3/app"
-	appsigner "github.com/babylonlabs-io/babylon/v3/app/signer"
+	babylonApp "github.com/babylonlabs-io/babylon/v4/app"
+	appsigner "github.com/babylonlabs-io/babylon/v4/app/signer"
 	dbmc "github.com/cometbft/cometbft-db"
 	cs "github.com/cometbft/cometbft/consensus"
 	cometlog "github.com/cometbft/cometbft/libs/log"
