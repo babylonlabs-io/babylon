@@ -4,8 +4,6 @@ import (
 	"testing"
 
 	"cosmossdk.io/log"
-	babylonApp "github.com/babylonlabs-io/babylon/v3/app"
-	appsigner "github.com/babylonlabs-io/babylon/v3/app/signer"
 	dbmc "github.com/cometbft/cometbft-db"
 	cs "github.com/cometbft/cometbft/consensus"
 	cometlog "github.com/cometbft/cometbft/libs/log"
@@ -15,13 +13,18 @@ import (
 	"github.com/cometbft/cometbft/store"
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/server"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
+
+	babylonApp "github.com/babylonlabs-io/babylon/v3/app"
+	appsigner "github.com/babylonlabs-io/babylon/v3/app/signer"
 )
 
 type BlockReplayer struct {
 	BlockExec *sm.BlockExecutor
 	LastState sm.State
 	App       *babylonApp.BabylonApp
+	Ctx       sdk.Context
 }
 
 func NewBlockReplayer(t *testing.T, nodeDir string) *BlockReplayer {
@@ -110,5 +113,6 @@ func (r *BlockReplayer) ReplayBlocks(t *testing.T, blocks []FinalizedBlock) {
 		require.NoError(t, err)
 		require.NotNil(t, state)
 		r.LastState = state.Copy()
+		r.Ctx = r.App.NewUncachedContext(false, *block.Block.Header.ToProto())
 	}
 }
