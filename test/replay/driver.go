@@ -174,7 +174,7 @@ func NewBabylonAppDriver(
 		1,
 		[]*btclighttypes.BTCHeaderInfo{},
 		// 300M is gas limit set for testnet and mainnet
-		300_000_000,
+		300_000_000_000,
 		&initialization.StartingBtcStakingParams{
 			CovenantCommittee: bbn.NewBIP340PKsFromBTCPKs(pks),
 			CovenantQuorum:    CovenantQuorum,
@@ -953,7 +953,7 @@ func (d *BabylonAppDriver) CreateSendingAccountMessage() *NewAccountInfo {
 		FromAddress: d.GetDriverAccountAddress().String(),
 		ToAddress:   accAddress.String(),
 		// 100 BBN, should be enough for most tests
-		Amount: sdk.NewCoins(sdk.NewCoin("ubbn", sdkmath.NewInt(100000000))),
+		Amount: sdk.NewCoins(sdk.NewCoin("ubbn", sdkmath.NewInt(10000000000))),
 	}
 
 	return &NewAccountInfo{

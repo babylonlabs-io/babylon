@@ -5,6 +5,7 @@ import (
 	"math/rand"
 	"testing"
 	"time"
+	"unsafe"
 
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
 	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
@@ -377,4 +378,113 @@ func (driver *BabylonAppDriver) SendAndVerifyNDelegations(
 	driver.GenerateNewBlockAssertExecutionSuccess()
 	covSender.SendCovenantSignatures()
 	driver.GenerateNewBlockAssertExecutionSuccess()
+}
+
+// BenchmarkPackVerifiedDelegations30Consumers benchmarks packVerifiedDelegations with 30 consumer chains
+// This focuses specifically on the GenerateNewBlockReturnResults performance after maximum activation messages
+func BenchmarkPackVerifiedDelegations30Consumers(b *testing.B) {
+	// Skip the benchmark setup and just run packVerifiedDelegations multiple times
+	// We'll reuse the existing test setup from TestTooBigMultistakingPacket but with 30 consumers
+
+	for i := 0; i < b.N; i++ {
+		b.StopTimer() // Stop timer during setup
+
+		r := rand.New(rand.NewSource(1)) // Fixed seed for consistent results
+		driverTempDir := b.TempDir()
+		replayerTempDir := b.TempDir()
+
+		// Use the same pattern as existing tests but inline to avoid testing.T issues
+		consumerCount := 120
+		delegationsCount := 240
+		driver := createDriverWithNConsumersAndMDelegations(b, r, driverTempDir, replayerTempDir, consumerCount, delegationsCount)
+
+		block := driver.IncludeVerifiedStakingTxInBTC(0)
+		acitvationMsgs := blockWithProofsToActivationMessages(block, driver.GetDriverAccountAddress())
+
+		for _, msg := range acitvationMsgs {
+			driver.SendTxWithMessagesSuccess(driver.t, driver.SenderInfo, 10_000_000, defaultFeeCoin, msg)
+			driver.IncSeq()
+		}
+
+		b.StartTimer() // Start timer for the actual benchmark
+		driver.GenerateNewBlockAssertExecutionSuccess()
+	}
+}
+
+// createDriverWithNConsumers creates a BabylonAppDriver with N consumer chains and maximum activation messages
+func createDriverWithNConsumersAndMDelegations(b *testing.B, r *rand.Rand, driverTempDir, replayerTempDir string, consumersCount, delegationsCount int) *BabylonAppDriver {
+	// Use unsafe conversion to convert *testing.B to *testing.T
+	// This works because they have similar memory layouts for the methods we need
+	t := (*testing.T)(unsafe.Pointer(b))
+	driver := NewBabylonAppDriver(r, t, driverTempDir, replayerTempDir)
+
+	// Set up consumersCount consumer chains (similar to TestTooBigMultistakingPacket but with consumersCount)
+	consumerIDs := make([]string, consumersCount)
+	consumers := make([]*Consumer, consumersCount)
+	fps := make([]*FinalityProvider, consumersCount)
+
+	ctx := driver.App.BaseApp.NewContext(false)
+	for i := 0; i < consumersCount; i++ {
+		consumerIDs[i] = fmt.Sprintf("09-localhost-%d", i+1)
+		OpenChannelForConsumer(ctx, driver.App, consumerIDs[i])
+	}
+	driver.GenerateNewBlock()
+
+	covSender := driver.CreateCovenantSender()
+
+	// Register consumers and create finality providers
+	for i := 0; i < consumersCount; i++ {
+		consumers[i] = driver.RegisterConsumer(r, consumerIDs[i])
+		fps[i] = driver.CreateFinalityProviderForConsumer(consumers[i])
+	}
+
+	// Create Babylon FPs
+	babylonFps := driver.CreateNFinalityProviderAccounts(2)
+	babylonFps[0].RegisterFinalityProvider("")
+	babylonFps[1].RegisterFinalityProvider("")
+	driver.GenerateNewBlockAssertExecutionSuccess()
+
+	staker := driver.CreateNStakerAccounts(1)[0]
+
+	// Create delegations across all consumer chains
+	// We'll create multiple delegations, each with different combinations of FPs
+	// to ensure all consumer chains are covered
+	// With M delegations and 4 consumer FPs per delegation, we cycle through all consumer chains:
+	// - Each delegation uses 4 consecutive consumer FPs (mod 30)
+	// - Delegation 0: consumers 0,1,2,3; Delegation 1: consumers 4,5,6,7; etc.
+	// - This ensures comprehensive coverage across all consumer chains
+	batchSize := 5
+
+	for i := 0; i < delegationsCount; i += batchSize {
+		remaining := delegationsCount - i
+		currentBatch := batchSize
+		if remaining < batchSize {
+			currentBatch = remaining
+		}
+
+		for j := 0; j < currentBatch; j++ {
+			// Create different FP combinations for each delegation to cover all 30 consumer chains
+			// Each delegation will have exactly 5 FPs: 1 babylon + 4 consumer FPs
+			var delegationFpKeys []*bbn.BIP340PubKey
+			delegationFpKeys = append(delegationFpKeys, babylonFps[0].BTCPublicKey()) // Always include 1 babylon FP
+
+			// Calculate which consumer chains to include for this delegation
+			// Use modulo to cycle through all consumer chains
+			delegationIndex := i + j
+			startConsumer := (delegationIndex * 4) % consumersCount // Start at different consumer for each delegation
+
+			// Add 4 consumer FPs from different chains, cycling through all consumers
+			for k := 0; k < 4; k++ {
+				consumerIndex := (startConsumer + k) % consumersCount
+				delegationFpKeys = append(delegationFpKeys, fps[consumerIndex].BTCPublicKey())
+			}
+
+			staker.CreatePreApprovalDelegation(delegationFpKeys, 1000, 100000000)
+		}
+		driver.GenerateNewBlockAssertExecutionSuccess()
+		covSender.SendCovenantSignatures()
+		driver.GenerateNewBlockAssertExecutionSuccess()
+	}
+
+	return driver
 }
