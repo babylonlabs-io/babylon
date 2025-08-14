@@ -6,14 +6,15 @@ import (
 	"time"
 
 	"cosmossdk.io/math"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/require"
+
 	"github.com/babylonlabs-io/babylon/v3/app/params"
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
 	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 	ictvtypes "github.com/babylonlabs-io/babylon/v3/x/incentive/types"
 	minttypes "github.com/babylonlabs-io/babylon/v3/x/mint/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/require"
 )
 
 func TestConsumerBsnRewardDistribution(t *testing.T) {
@@ -30,7 +31,7 @@ func TestConsumerBsnRewardDistribution(t *testing.T) {
 	OpenChannelForConsumer(d.Ctx(), d.App, consumerID)
 	d.GenerateNewBlock()
 
-	consumer0 := d.RegisterConsumer(r, consumerID)
+	consumer0 := d.RegisterConsumer(r, d.Ctx(), d.App, consumerID)
 	d.GenerateNewBlockAssertExecutionSuccess()
 
 	babylonFp := d.CreateNFinalityProviderAccounts(1)[0]

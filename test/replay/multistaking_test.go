@@ -6,11 +6,15 @@ import (
 	"testing"
 	"time"
 
-	bbn "github.com/babylonlabs-io/babylon/v3/types"
-	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 	abci "github.com/cometbft/cometbft/abci/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	ibctmtypes "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
 	"github.com/stretchr/testify/require"
+
+	babylonApp "github.com/babylonlabs-io/babylon/v3/app"
+	bbn "github.com/babylonlabs-io/babylon/v3/types"
+	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
+	btcstkconsumertypes "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
 )
 
 func TestMultiConsumerDelegation(t *testing.T) {
@@ -33,9 +37,10 @@ func TestMultiConsumerDelegation(t *testing.T) {
 	driver.GenerateNewBlock()
 
 	// 2. Register consumers
-	consumer1 := driver.RegisterConsumer(r, consumerID1)
-	consumer2 := driver.RegisterConsumer(r, consumerID2)
-	consumer3 := driver.RegisterConsumer(r, consumerID3)
+	consumer1 := driver.RegisterConsumer(r, driver.Ctx(), driver.App, consumerID1)
+	consumer2 := driver.RegisterConsumer(r, driver.Ctx(), driver.App, consumerID2)
+	consumer3 := driver.RegisterConsumer(r, driver.Ctx(), driver.App, consumerID3)
+
 	// Create a Babylon FP (registered without consumer ID)
 	babylonFp := driver.CreateNFinalityProviderAccounts(1)[0]
 	babylonFp.RegisterFinalityProvider("")
@@ -79,7 +84,17 @@ func TestMultiConsumerDelegation(t *testing.T) {
 	OpenChannelForConsumer(replayerCtx, replayer.App, consumerID3)
 
 	// Replay all the blocks from driver and check appHash
-	replayer.ReplayBlocks(t, driver.GetFinalizedBlocks())
+	// Perform the manual transition in the same order as the previous driver's RegisterConsumer call
+	replayBlocks := driver.GetFinalizedBlocks()
+	replayer.ReplayBlocks(t, replayBlocks[0:1])
+	replayer.ReplayBlocks(t, replayBlocks[1:2])
+	RegisterConsumerChannelID(t, replayer.Ctx, replayer.App, consumerID1)
+	replayer.ReplayBlocks(t, replayBlocks[2:3])
+	RegisterConsumerChannelID(t, replayer.Ctx, replayer.App, consumerID2)
+	replayer.ReplayBlocks(t, replayBlocks[3:4])
+	RegisterConsumerChannelID(t, replayer.Ctx, replayer.App, consumerID3)
+	replayer.ReplayBlocks(t, replayBlocks[4:])
+
 	// After replay we should have the same apphash and last block height
 	require.Equal(t, driver.GetLastState().LastBlockHeight, replayer.LastState.LastBlockHeight)
 	require.Equal(t, driver.GetLastState().AppHash, replayer.LastState.AppHash)
@@ -101,7 +116,8 @@ func TestConsumerFpCreationWithoutChannel(t *testing.T) {
 	driver.GenerateNewBlock()
 
 	// Register consumer
-	consumer1 := driver.RegisterConsumer(r, consumerID1)
+	consumer1 := driver.RegisterConsumer(r, driver.Ctx(), driver.App, consumerID1)
+	driver.GenerateNewBlock()
 	// Create a Babylon FP (registered without consumer ID)
 	babylonFp := driver.CreateNFinalityProviderAccounts(1)[0]
 	babylonFp.RegisterFinalityProvider("")
@@ -129,7 +145,8 @@ func TestMultiConsumerDelegationTooManyKeys(t *testing.T) {
 	driver.GenerateNewBlock()
 
 	// 2. Register consumers
-	consumer1 := driver.RegisterConsumer(r, consumerID1)
+	consumer1 := driver.RegisterConsumer(r, driver.Ctx(), driver.App, consumerID1)
+	driver.GenerateNewBlock()
 
 	driver.GenerateNewBlock()
 
@@ -186,8 +203,8 @@ func TestAdditionalGasCostForMultiStakedDelegation(t *testing.T) {
 	driver.GenerateNewBlock()
 
 	// 2. Register consumers
-	consumer1 := driver.RegisterConsumer(r, consumerID1)
-	consumer2 := driver.RegisterConsumer(r, consumerID2)
+	consumer1 := driver.RegisterConsumer(r, driver.Ctx(), driver.App, consumerID1)
+	consumer2 := driver.RegisterConsumer(r, driver.Ctx(), driver.App, consumerID2)
 
 	// Create a Babylon FP (registered without consumer ID)
 	babylonFps := driver.CreateNFinalityProviderAccounts(2)
@@ -306,9 +323,10 @@ func TestTooBigMultistakingPacket(t *testing.T) {
 	covSender := driver.CreateCovenantSender()
 
 	// 2. Register consumers
-	consumer1 := driver.RegisterConsumer(r, consumerID1)
-	consumer2 := driver.RegisterConsumer(r, consumerID2)
-	consumer3 := driver.RegisterConsumer(r, consumerID3)
+	consumer1 := driver.RegisterConsumer(r, driver.Ctx(), driver.App, consumerID1)
+	consumer2 := driver.RegisterConsumer(r, driver.Ctx(), driver.App, consumerID2)
+	consumer3 := driver.RegisterConsumer(r, driver.Ctx(), driver.App, consumerID3)
+	driver.GenerateNewBlock()
 	// Create a Babylon FP (registered without consumer ID)
 	babylonFp := driver.CreateNFinalityProviderAccounts(1)[0]
 	babylonFp.RegisterFinalityProvider("")
@@ -377,4 +395,18 @@ func (driver *BabylonAppDriver) SendAndVerifyNDelegations(
 	driver.GenerateNewBlockAssertExecutionSuccess()
 	covSender.SendCovenantSignatures()
 	driver.GenerateNewBlockAssertExecutionSuccess()
+}
+
+// RegisterConsumerChannelID set channel id for a cosmos consumer
+func RegisterConsumerChannelID(t *testing.T, ctx sdk.Context, app *babylonApp.BabylonApp, consumerID string) {
+	// Set channel id on consumer's metadata
+	consumerRegister, err := app.BTCStkConsumerKeeper.GetConsumerRegister(ctx, consumerID)
+	require.NoError(t, err)
+	cosmosMetadata := consumerRegister.GetCosmosConsumerMetadata()
+	cosmosMetadata.ChannelId = fmt.Sprintf("channel-%s", consumerID)
+	consumerRegister.ConsumerMetadata = &btcstkconsumertypes.ConsumerRegister_CosmosConsumerMetadata{
+		CosmosConsumerMetadata: cosmosMetadata,
+	}
+	err = app.BTCStkConsumerKeeper.UpdateConsumer(ctx, consumerRegister)
+	require.NoError(t, err)
 }

@@ -2,13 +2,16 @@ package keeper_test
 
 import (
 	"context"
+	"fmt"
 	"math/rand"
 	"testing"
 
-	"github.com/babylonlabs-io/babylon/v3/app"
-	btclightclienttypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
+
+	"github.com/babylonlabs-io/babylon/v3/app"
+	btclightclienttypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
 
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
 	testkeeper "github.com/babylonlabs-io/babylon/v3/testutil/keeper"
@@ -138,13 +141,14 @@ func FuzzFinalizedChainInfo(f *testing.F) {
 		hooks := zcKeeper.Hooks()
 
 		var (
-			consumersInfo []consumerInfo
-			consumerIDs   []string
+			consumersInfo    []consumerInfo
+			consumerIDs      []string
+			consumerChannels []channeltypes.IdentifiedChannel
 		)
 
 		// Set up the mock to return the consumerIDs slice
-		btcStkConsumerKeeper.EXPECT().GetAllRegisteredConsumerIDs(gomock.Any()).DoAndReturn(func(ctx context.Context) []string {
-			return consumerIDs
+		channelKeeper.EXPECT().GetAllChannelsWithPortPrefix(gomock.Any(), zctypes.PortID).DoAndReturn(func(ctx context.Context, portPrefix string) []channeltypes.IdentifiedChannel {
+			return consumerChannels
 		}).AnyTimes()
 		numChains := datagen.RandomInt(r, 100) + 1
 		for i := uint64(0); i < numChains; i++ {
@@ -162,6 +166,11 @@ func FuzzFinalizedChainInfo(f *testing.F) {
 			consumersInfo = append(consumersInfo, consumerInfo{
 				consumerID: consumerID,
 				numHeaders: numHeaders,
+			})
+			consumerChannels = append(consumerChannels, channeltypes.IdentifiedChannel{
+				Ordering:  channeltypes.ORDERED,
+				PortId:    zctypes.PortID,
+				ChannelId: fmt.Sprintf("channel-%s", consumerID),
 			})
 		}
 

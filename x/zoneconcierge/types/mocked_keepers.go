@@ -256,6 +256,20 @@ func (mr *MockChannelKeeperMockRecorder) GetAllChannels(ctx interface{}) *gomock
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllChannels", reflect.TypeOf((*MockChannelKeeper)(nil).GetAllChannels), ctx)
 }
 
+// GetAllChannelsWithPortPrefix mocks base method.
+func (m *MockChannelKeeper) GetAllChannelsWithPortPrefix(ctx types6.Context, portPrefix string) []types9.IdentifiedChannel {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAllChannelsWithPortPrefix", ctx, portPrefix)
+	ret0, _ := ret[0].([]types9.IdentifiedChannel)
+	return ret0
+}
+
+// GetAllChannelsWithPortPrefix indicates an expected call of GetAllChannelsWithPortPrefix.
+func (mr *MockChannelKeeperMockRecorder) GetAllChannelsWithPortPrefix(ctx, portPrefix interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllChannelsWithPortPrefix", reflect.TypeOf((*MockChannelKeeper)(nil).GetAllChannelsWithPortPrefix), ctx, portPrefix)
+}
+
 // GetChannel mocks base method.
 func (m *MockChannelKeeper) GetChannel(ctx types6.Context, srcPort, srcChan string) (types10.Channel, bool) {
 	m.ctrl.T.Helper()
@@ -356,18 +370,25 @@ func (mr *MockZoneConciergeChannelKeeperMockRecorder) GetChannelClientState(ctx,
 }
 
 // GetChannelForConsumer mocks base method.
+<<<<<<< HEAD
 func (m *MockZoneConciergeChannelKeeper) GetChannelForConsumer(ctx context.Context, consumerID string) (types10.IdentifiedChannel, bool) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetChannelForConsumer", ctx, consumerID)
 	ret0, _ := ret[0].(types10.IdentifiedChannel)
+=======
+func (m *MockZoneConciergeChannelKeeper) GetChannelForConsumer(ctx context.Context, consumerID, channelID string) (types9.IdentifiedChannel, bool) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetChannelForConsumer", ctx, consumerID, channelID)
+	ret0, _ := ret[0].(types9.IdentifiedChannel)
+>>>>>>> 983d655 (fix(zoneconcierge): refactor for optimize ibc channel, client related io (#1536))
 	ret1, _ := ret[1].(bool)
 	return ret0, ret1
 }
 
 // GetChannelForConsumer indicates an expected call of GetChannelForConsumer.
-func (mr *MockZoneConciergeChannelKeeperMockRecorder) GetChannelForConsumer(ctx, consumerID interface{}) *gomock.Call {
+func (mr *MockZoneConciergeChannelKeeperMockRecorder) GetChannelForConsumer(ctx, consumerID, channelID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetChannelForConsumer", reflect.TypeOf((*MockZoneConciergeChannelKeeper)(nil).GetChannelForConsumer), ctx, consumerID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetChannelForConsumer", reflect.TypeOf((*MockZoneConciergeChannelKeeper)(nil).GetChannelForConsumer), ctx, consumerID, channelID)
 }
 
 // GetClientID mocks base method.
@@ -882,18 +903,18 @@ func (m *MockBTCStkConsumerKeeper) EXPECT() *MockBTCStkConsumerKeeperMockRecorde
 	return m.recorder
 }
 
-// GetAllRegisteredConsumerIDs mocks base method.
-func (m *MockBTCStkConsumerKeeper) GetAllRegisteredConsumerIDs(ctx context.Context) []string {
+// GetAllRegisteredCosmosConsumers mocks base method.
+func (m *MockBTCStkConsumerKeeper) GetAllRegisteredCosmosConsumers(ctx context.Context) []*types3.ConsumerRegister {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAllRegisteredConsumerIDs", ctx)
-	ret0, _ := ret[0].([]string)
+	ret := m.ctrl.Call(m, "GetAllRegisteredCosmosConsumers", ctx)
+	ret0, _ := ret[0].([]*types3.ConsumerRegister)
 	return ret0
 }
 
-// GetAllRegisteredConsumerIDs indicates an expected call of GetAllRegisteredConsumerIDs.
-func (mr *MockBTCStkConsumerKeeperMockRecorder) GetAllRegisteredConsumerIDs(ctx interface{}) *gomock.Call {
+// GetAllRegisteredCosmosConsumers indicates an expected call of GetAllRegisteredCosmosConsumers.
+func (mr *MockBTCStkConsumerKeeperMockRecorder) GetAllRegisteredCosmosConsumers(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllRegisteredConsumerIDs", reflect.TypeOf((*MockBTCStkConsumerKeeper)(nil).GetAllRegisteredConsumerIDs), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllRegisteredCosmosConsumers", reflect.TypeOf((*MockBTCStkConsumerKeeper)(nil).GetAllRegisteredCosmosConsumers), ctx)
 }
 
 // GetConsumerRegister mocks base method.
