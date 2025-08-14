@@ -14,8 +14,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	babylonApp "github.com/babylonlabs-io/babylon/v4/app"
-	bbn "github.com/babylonlabs-io/babylon/v4/types"
-	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 	btcstkconsumertypes "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
 )
 
