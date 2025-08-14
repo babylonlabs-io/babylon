@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/babylonlabs-io/babylon/v3/app/signingcontext"
-	btcckpttypes "github.com/babylonlabs-io/babylon/v3/x/btccheckpoint/types"
+	"github.com/babylonlabs-io/babylon/v4/app/signingcontext"
+	btcckpttypes "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
 
 	errorsmod "cosmossdk.io/errors"
 	"github.com/btcsuite/btcd/btcec/v2"
@@ -20,9 +20,9 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/babylonlabs-io/babylon/v3/btcstaking"
-	bbn "github.com/babylonlabs-io/babylon/v3/types"
-	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/v4/btcstaking"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	"github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 )
 
 type msgServer struct {

@@ -13,14 +13,14 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/v3/app/params"
-	"github.com/babylonlabs-io/babylon/v3/test/e2e/configurer"
-	"github.com/babylonlabs-io/babylon/v3/test/e2e/configurer/chain"
-	"github.com/babylonlabs-io/babylon/v3/testutil/coins"
-	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
-	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
-	bsctypes "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
-	itypes "github.com/babylonlabs-io/babylon/v3/x/incentive/types"
+	"github.com/babylonlabs-io/babylon/v4/app/params"
+	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer"
+	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer/chain"
+	"github.com/babylonlabs-io/babylon/v4/testutil/coins"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+	bsctypes "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
+	itypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
 )
 
 type IbcCallbackBsnAddRewards struct {

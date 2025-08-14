@@ -8,11 +8,11 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
-	testutil "github.com/babylonlabs-io/babylon/v3/testutil/btcstaking-helper"
-	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
-	"github.com/babylonlabs-io/babylon/v3/testutil/mocks"
-	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
-	btcstkconsumertypes "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
+	testutil "github.com/babylonlabs-io/babylon/v4/testutil/btcstaking-helper"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	"github.com/babylonlabs-io/babylon/v4/testutil/mocks"
+	"github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+	btcstkconsumertypes "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
 )
 
 // TestAddFinalityProvider_ConsumerValidation tests the consumer validation logic

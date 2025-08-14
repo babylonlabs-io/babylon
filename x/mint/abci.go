@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/babylonlabs-io/babylon/v3/x/mint/keeper"
-	"github.com/babylonlabs-io/babylon/v3/x/mint/types"
+	"github.com/babylonlabs-io/babylon/v4/x/mint/keeper"
+	"github.com/babylonlabs-io/babylon/v4/x/mint/types"
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

@@ -6,10 +6,10 @@ import (
 	sdktestdata "github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	keepertest "github.com/babylonlabs-io/babylon/v3/testutil/keeper"
-	btclctypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
-	"github.com/babylonlabs-io/babylon/v3/x/incentive/keeper"
-	"github.com/babylonlabs-io/babylon/v3/x/incentive/types"
+	keepertest "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
+	btclctypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
+	"github.com/babylonlabs-io/babylon/v4/x/incentive/keeper"
+	"github.com/babylonlabs-io/babylon/v4/x/incentive/types"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"

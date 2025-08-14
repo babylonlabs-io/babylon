@@ -5,9 +5,11 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
+	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
 
 	"cosmossdk.io/log"
+	babylonApp "github.com/babylonlabs-io/babylon/v4/app"
+	appsigner "github.com/babylonlabs-io/babylon/v4/app/signer"
 	dbmc "github.com/cometbft/cometbft-db"
 	cs "github.com/cometbft/cometbft/consensus"
 	cometlog "github.com/cometbft/cometbft/libs/log"
@@ -19,8 +21,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/stretchr/testify/require"
 
-	babylonApp "github.com/babylonlabs-io/babylon/v3/app"
-	appsigner "github.com/babylonlabs-io/babylon/v3/app/signer"
 )
 
 type BlockReplayer struct {

@@ -5,8 +5,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/v3/test/e2e/util"
-	zoneconciergetype "github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
+	"github.com/babylonlabs-io/babylon/v4/test/e2e/util"
+	zoneconciergetype "github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/types"
 )
 
 func (n *NodeConfig) QueryZoneConciergeParams() *zoneconciergetype.Params {

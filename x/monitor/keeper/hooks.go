@@ -3,8 +3,8 @@ package keeper
 import (
 	"context"
 
-	checkpointingtypes "github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
-	etypes "github.com/babylonlabs-io/babylon/v3/x/epoching/types"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
+	etypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 

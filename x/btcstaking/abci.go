@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/keeper"
-	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/v4/x/btcstaking/keeper"
+	"github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/telemetry"
 )

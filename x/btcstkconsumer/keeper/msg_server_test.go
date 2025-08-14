@@ -12,12 +12,12 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	ibctmtypes "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
 
-	"github.com/babylonlabs-io/babylon/v3/app"
-	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
-	keepertest "github.com/babylonlabs-io/babylon/v3/testutil/keeper"
-	wasmtest "github.com/babylonlabs-io/babylon/v3/wasmbinding/test"
-	"github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/keeper"
-	"github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
+	"github.com/babylonlabs-io/babylon/v4/app"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	keepertest "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
+	wasmtest "github.com/babylonlabs-io/babylon/v4/wasmbinding/test"
+	"github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/keeper"
+	"github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
 )
 
 func setupMsgServer(t testing.TB) (keeper.Keeper, types.MsgServer, context.Context) {

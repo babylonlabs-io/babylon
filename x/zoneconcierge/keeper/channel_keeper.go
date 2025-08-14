@@ -4,11 +4,10 @@ import (
 	"context"
 
 	"cosmossdk.io/log"
+	"github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
-
-	"github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
 )
 
 // ChannelKeeper is a wrapper around the IBC channel keeper

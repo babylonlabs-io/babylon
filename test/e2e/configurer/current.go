@@ -5,10 +5,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/babylonlabs-io/babylon/v3/app"
-	"github.com/babylonlabs-io/babylon/v3/test/e2e/configurer/chain"
-	"github.com/babylonlabs-io/babylon/v3/test/e2e/containers"
-	"github.com/babylonlabs-io/babylon/v3/test/e2e/initialization"
+	"github.com/babylonlabs-io/babylon/v4/app"
+	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer/chain"
+	"github.com/babylonlabs-io/babylon/v4/test/e2e/containers"
+	"github.com/babylonlabs-io/babylon/v4/test/e2e/initialization"
 )
 
 type CurrentBranchConfigurer struct {

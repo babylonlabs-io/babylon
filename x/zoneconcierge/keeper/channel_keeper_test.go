@@ -10,9 +10,9 @@ import (
 	ibctmtypes "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/v3/app"
-	zckeeper "github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/keeper"
-	zctypes "github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
+	"github.com/babylonlabs-io/babylon/v4/app"
+	zckeeper "github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/keeper"
+	zctypes "github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/types"
 )
 
 func setupChannelKeeperTest(t *testing.T) (*app.BabylonApp, sdk.Context, *zckeeper.ChannelKeeper) {

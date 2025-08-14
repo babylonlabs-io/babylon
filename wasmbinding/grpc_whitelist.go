@@ -2,9 +2,9 @@ package wasmbinding
 
 import (
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-	btcstakingtypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
-	epochtypes "github.com/babylonlabs-io/babylon/v3/x/epoching/types"
-	ftypes "github.com/babylonlabs-io/babylon/v3/x/finality/types"
+	btcstakingtypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+	epochtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
+	ftypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
 	"github.com/cosmos/gogoproto/proto"
 )
 

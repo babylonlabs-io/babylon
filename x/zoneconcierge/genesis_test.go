@@ -6,11 +6,11 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
-	keepertest "github.com/babylonlabs-io/babylon/v3/testutil/keeper"
-	"github.com/babylonlabs-io/babylon/v3/testutil/nullify"
-	btcstkconsumertypes "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
-	"github.com/babylonlabs-io/babylon/v3/x/zoneconcierge"
-	"github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
+	keepertest "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
+	"github.com/babylonlabs-io/babylon/v4/testutil/nullify"
+	btcstkconsumertypes "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
+	"github.com/babylonlabs-io/babylon/v4/x/zoneconcierge"
+	"github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/types"
 )
 
 func TestGenesis(t *testing.T) {

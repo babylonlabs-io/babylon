@@ -9,12 +9,12 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/v3/app/params"
-	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
-	bbn "github.com/babylonlabs-io/babylon/v3/types"
-	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
-	ictvtypes "github.com/babylonlabs-io/babylon/v3/x/incentive/types"
-	minttypes "github.com/babylonlabs-io/babylon/v3/x/mint/types"
+	"github.com/babylonlabs-io/babylon/v4/app/params"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	"github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+	ictvtypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
+	minttypes "github.com/babylonlabs-io/babylon/v4/x/mint/types"
 )
 
 func TestConsumerBsnRewardDistribution(t *testing.T) {

@@ -5,7 +5,7 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	bsctypes "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
+	bsctypes "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
 )
 
 func GenRandomCosmosConsumerRegister(r *rand.Rand) *bsctypes.ConsumerRegister {
