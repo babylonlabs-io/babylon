@@ -56,6 +56,7 @@ func (k Keeper) IsCosmosConsumer(ctx context.Context, consumerID string) (bool, 
 }
 
 // GetAllRegisteredCosmosConsumers gets all cosmos consumers that registered and IBC init complete with channel ID set
+// Note: # Since the introduction of map in #1540, it is not currently used, but kept for potential future use.
 func (k Keeper) GetAllRegisteredCosmosConsumers(ctx context.Context) []*types.ConsumerRegister {
 	var consumers []*types.ConsumerRegister
 	err := k.ConsumerRegistry.Walk(ctx, nil, func(consumerID string, consumerRegister types.ConsumerRegister) (bool, error) {
