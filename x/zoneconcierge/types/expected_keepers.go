@@ -3,6 +3,12 @@ package types
 import (
 	"context"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types" //nolint:staticcheck
+	connectiontypes "github.com/cosmos/ibc-go/v10/modules/core/03-connection/types"
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
+
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	btcctypes "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
 	btclctypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
@@ -10,11 +16,6 @@ import (
 	btcstkconsumertypes "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
 	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types" //nolint:staticcheck
-	connectiontypes "github.com/cosmos/ibc-go/v10/modules/core/03-connection/types"
-	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
-	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
 )
 
 // AccountKeeper defines the contract required for account APIs.
@@ -50,13 +51,14 @@ type ChannelKeeper interface {
 	GetChannel(ctx sdk.Context, srcPort, srcChan string) (channel channeltypes.Channel, found bool)
 	GetNextSequenceSend(ctx sdk.Context, portID, channelID string) (uint64, bool)
 	GetAllChannels(ctx sdk.Context) (channels []channeltypes.IdentifiedChannel)
+	GetAllChannelsWithPortPrefix(ctx sdk.Context, portPrefix string) []channeltypes.IdentifiedChannel
 	GetChannelClientState(ctx sdk.Context, portID, channelID string) (string, ibcexported.ClientState, error)
 }
 
 // ZoneConciergeChannelKeeper defines the expected zoneconcierge IBC channel keeper
 type ZoneConciergeChannelKeeper interface {
 	GetChannelClientState(ctx sdk.Context, portID, channelID string) (string, ibcexported.ClientState, error)
-	GetChannelForConsumer(ctx context.Context, consumerID string) (channeltypes.IdentifiedChannel, bool)
+	GetChannelForConsumer(ctx context.Context, consumerID, channelID string) (channeltypes.IdentifiedChannel, bool)
 	GetAllOpenZCChannels(ctx context.Context) []channeltypes.IdentifiedChannel
 	GetClientID(ctx context.Context, channel channeltypes.IdentifiedChannel) (string, error)
 	IsChannelUninitialized(ctx context.Context, channel channeltypes.IdentifiedChannel) bool
@@ -111,6 +113,6 @@ type BTCStkConsumerKeeper interface {
 	UpdateConsumer(ctx context.Context, consumerRegister *btcstkconsumertypes.ConsumerRegister) error
 	GetConsumerRegister(ctx context.Context, consumerID string) (*btcstkconsumertypes.ConsumerRegister, error)
 	IsConsumerRegistered(ctx context.Context, consumerID string) bool
-	GetAllRegisteredConsumerIDs(ctx context.Context) []string
+	GetAllRegisteredCosmosConsumers(ctx context.Context) []*btcstkconsumertypes.ConsumerRegister
 	IsCosmosConsumer(ctx context.Context, consumerID string) (bool, error)
 }

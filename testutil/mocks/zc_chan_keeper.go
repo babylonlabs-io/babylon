@@ -34,17 +34,17 @@ func (m *MockZoneConciergeChannelKeeper) EXPECT() *MockZoneConciergeChannelKeepe
 }
 
 // ConsumerHasIBCChannelOpen mocks base method.
-func (m *MockZoneConciergeChannelKeeper) ConsumerHasIBCChannelOpen(ctx context.Context, consumerID string) bool {
+func (m *MockZoneConciergeChannelKeeper) ConsumerHasIBCChannelOpen(ctx context.Context, consumerID, channelID string) bool {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ConsumerHasIBCChannelOpen", ctx, consumerID)
+	ret := m.ctrl.Call(m, "ConsumerHasIBCChannelOpen", ctx, consumerID, channelID)
 	ret0, _ := ret[0].(bool)
 	return ret0
 }
 
 // ConsumerHasIBCChannelOpen indicates an expected call of ConsumerHasIBCChannelOpen.
-func (mr *MockZoneConciergeChannelKeeperMockRecorder) ConsumerHasIBCChannelOpen(ctx, consumerID interface{}) *gomock.Call {
+func (mr *MockZoneConciergeChannelKeeperMockRecorder) ConsumerHasIBCChannelOpen(ctx, consumerID, channelID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ConsumerHasIBCChannelOpen", reflect.TypeOf((*MockZoneConciergeChannelKeeper)(nil).ConsumerHasIBCChannelOpen), ctx, consumerID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ConsumerHasIBCChannelOpen", reflect.TypeOf((*MockZoneConciergeChannelKeeper)(nil).ConsumerHasIBCChannelOpen), ctx, consumerID, channelID)
 }
 
 // GetChannelClientState mocks base method.

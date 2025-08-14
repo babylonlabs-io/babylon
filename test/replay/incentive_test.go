@@ -6,11 +6,12 @@ import (
 	"time"
 
 	"cosmossdk.io/math"
+	"github.com/stretchr/testify/require"
+
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	"github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 	minttypes "github.com/babylonlabs-io/babylon/v4/x/mint/types"
-	"github.com/stretchr/testify/require"
 )
 
 func TestBtcRewardTrackerAtRewardedBabylonBlockAndNotLatestState(t *testing.T) {
@@ -96,7 +97,7 @@ func TestAddBsnRewardsMathOverflow(t *testing.T) {
 	OpenChannelForConsumer(d.Ctx(), d.App, consumerID)
 	d.GenerateNewBlock()
 
-	consumer0 := d.RegisterConsumer(r, consumerID)
+	consumer0 := d.RegisterConsumer(r, d.Ctx(), d.App, consumerID)
 	d.GenerateNewBlockAssertExecutionSuccess()
 
 	babylonFp := d.CreateNFinalityProviderAccounts(1)[0]

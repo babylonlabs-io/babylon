@@ -3,11 +3,12 @@ package types
 import (
 	"context"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	btcctypes "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
 	btclctypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
 	btcstkconsumertypes "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 type BTCLightClientKeeper interface {
@@ -29,7 +30,7 @@ type BTCStkConsumerKeeper interface {
 	IsCosmosConsumer(ctx context.Context, consumerID string) (bool, error)
 	GetConsumerRegister(ctx context.Context, consumerID string) (*btcstkconsumertypes.ConsumerRegister, error)
 	GetConsumerID(ctx sdk.Context, portID, channelID string) (consumerID string, err error)
-	ConsumerHasIBCChannelOpen(ctx context.Context, consumerID string) bool
+	ConsumerHasIBCChannelOpen(ctx context.Context, consumerID, channelID string) bool
 }
 
 type IncentiveKeeper interface {

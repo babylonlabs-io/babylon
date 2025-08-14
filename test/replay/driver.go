@@ -1091,7 +1091,7 @@ type Consumer struct {
 }
 
 // RegisterConsumer registers a new consumer
-func (d *BabylonAppDriver) RegisterConsumer(r *rand.Rand, consumerID string, rollupContractAddr ...string) *Consumer {
+func (d *BabylonAppDriver) RegisterConsumer(r *rand.Rand, ctx sdk.Context, app *babylonApp.BabylonApp, consumerID string, rollupContractAddr ...string) *Consumer {
 	commission := datagen.GenBabylonRewardsCommission(r)
 	msg := &btcstkconsumertypes.MsgRegisterConsumer{
 		Signer:                   d.GetDriverAccountAddress().String(),
@@ -1107,6 +1107,18 @@ func (d *BabylonAppDriver) RegisterConsumer(r *rand.Rand, consumerID string, rol
 	}
 
 	d.SendTxWithMsgsFromDriverAccount(d.t, msg)
+
+	// Set channel id on consumer's metadata
+	// To minimize mocking complexity, perform the channel ID setup manually without a transaction
+	consumerRegister, err := app.BTCStkConsumerKeeper.GetConsumerRegister(ctx, consumerID)
+	require.NoError(d.t, err)
+	cosmosMetadata := consumerRegister.GetCosmosConsumerMetadata()
+	cosmosMetadata.ChannelId = fmt.Sprintf("channel-%s", consumerID)
+	consumerRegister.ConsumerMetadata = &btcstkconsumertypes.ConsumerRegister_CosmosConsumerMetadata{
+		CosmosConsumerMetadata: cosmosMetadata,
+	}
+	err = app.BTCStkConsumerKeeper.UpdateConsumer(ctx, consumerRegister)
+	require.NoError(d.t, err)
 
 	return &Consumer{
 		ID:                consumerID,

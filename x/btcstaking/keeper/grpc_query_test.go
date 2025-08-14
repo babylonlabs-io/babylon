@@ -66,7 +66,7 @@ func FuzzFinalityProviders(f *testing.F) {
 		numTotalFPs := int(datagen.RandomInt(r, 20) + 1) // 1 to 20 FPs total
 
 		// If it's a registered consumer, we need to ensure the channel is open to be able to create a consumer FP
-		h.ChannelKeeper.EXPECT().ConsumerHasIBCChannelOpen(h.Ctx, registeredBsnId).Return(true).AnyTimes()
+		h.ChannelKeeper.EXPECT().ConsumerHasIBCChannelOpen(h.Ctx, registeredBsnId, consumerRegister.GetCosmosConsumerMetadata().ChannelId).Return(true).AnyTimes()
 
 		for i := 0; i < numTotalFPs; i++ {
 			fpSK, _, err := datagen.GenRandomBTCKeyPair(r)

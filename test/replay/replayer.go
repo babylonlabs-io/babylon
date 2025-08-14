@@ -3,6 +3,8 @@ package replay
 import (
 	"testing"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
 
 	"cosmossdk.io/log"
@@ -18,12 +20,14 @@ import (
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/stretchr/testify/require"
+
 )
 
 type BlockReplayer struct {
 	BlockExec *sm.BlockExecutor
 	LastState sm.State
 	App       *babylonApp.BabylonApp
+	Ctx       sdk.Context
 }
 
 func NewBlockReplayer(t *testing.T, nodeDir string) *BlockReplayer {
@@ -114,5 +118,6 @@ func (r *BlockReplayer) ReplayBlocks(t *testing.T, blocks []FinalizedBlock) {
 		require.NoError(t, err)
 		require.NotNil(t, state)
 		r.LastState = state.Copy()
+		r.Ctx = r.App.NewUncachedContext(false, *block.Block.Header.ToProto())
 	}
 }

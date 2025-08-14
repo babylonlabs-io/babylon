@@ -29,20 +29,13 @@ func (k ChannelKeeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", "x/"+ibcexported.ModuleName+"-"+types.ModuleName+"-channel")
 }
 
-func (k ChannelKeeper) GetAllChannels(ctx context.Context) []channeltypes.IdentifiedChannel {
-	return k.channelKeeper.GetAllChannels(sdk.UnwrapSDKContext(ctx))
-}
-
 // GetAllOpenZCChannels returns all open channels that are connected to ZoneConcierge's port
 func (k ChannelKeeper) GetAllOpenZCChannels(ctx context.Context) []channeltypes.IdentifiedChannel {
-	channels := k.GetAllChannels(ctx)
+	zcChannels := k.channelKeeper.GetAllChannelsWithPortPrefix(sdk.UnwrapSDKContext(ctx), types.PortID)
 
 	openZCChannels := []channeltypes.IdentifiedChannel{}
-	for _, channel := range channels {
+	for _, channel := range zcChannels {
 		if channel.State != channeltypes.OPEN {
-			continue
-		}
-		if channel.PortId != types.PortID {
 			continue
 		}
 		openZCChannels = append(openZCChannels, channel)
@@ -51,8 +44,8 @@ func (k ChannelKeeper) GetAllOpenZCChannels(ctx context.Context) []channeltypes.
 	return openZCChannels
 }
 
-func (k ChannelKeeper) ConsumerHasIBCChannelOpen(ctx context.Context, consumerID string) bool {
-	_, found := k.GetChannelForConsumer(ctx, consumerID)
+func (k ChannelKeeper) ConsumerHasIBCChannelOpen(ctx context.Context, consumerID, channelID string) bool {
+	_, found := k.GetChannelForConsumer(ctx, consumerID, channelID)
 	return found
 }
 
@@ -68,20 +61,21 @@ func (k ChannelKeeper) GetClientID(ctx context.Context, channel channeltypes.Ide
 	return clientID, nil
 }
 
-// getChannelForConsumer finds an open channel for a given consumer ID
-func (k ChannelKeeper) GetChannelForConsumer(ctx context.Context, consumerID string) (channeltypes.IdentifiedChannel, bool) {
-	openChannels := k.GetAllOpenZCChannels(ctx)
-
-	for _, channel := range openChannels {
-		clientID, err := k.GetClientID(ctx, channel)
-		if err != nil {
-			continue
-		}
-		if clientID == consumerID {
-			return channel, true
-		}
+// GetChannelForConsumer finds an open channel for a given consumer ID and channel ID
+func (k ChannelKeeper) GetChannelForConsumer(ctx context.Context, consumerID, channelID string) (channeltypes.IdentifiedChannel, bool) {
+	channel, found := k.channelKeeper.GetChannel(sdk.UnwrapSDKContext(ctx), types.PortID, channelID)
+	if !found || channel.State != channeltypes.OPEN {
+		return channeltypes.IdentifiedChannel{}, false
 	}
+	identifiedChannel := channeltypes.NewIdentifiedChannel(types.PortID, channelID, channel)
 
+	clientID, _, err := k.channelKeeper.GetChannelClientState(sdk.UnwrapSDKContext(ctx), identifiedChannel.PortId, identifiedChannel.ChannelId)
+	if err != nil {
+		return channeltypes.IdentifiedChannel{}, false
+	}
+	if clientID == consumerID {
+		return identifiedChannel, true
+	}
 	return channeltypes.IdentifiedChannel{}, false
 }
 

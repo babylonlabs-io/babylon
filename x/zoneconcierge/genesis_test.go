@@ -3,12 +3,14 @@ package zoneconcierge_test
 import (
 	"testing"
 
-	keepertest "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
-	"github.com/babylonlabs-io/babylon/v4/testutil/nullify"
-	"github.com/babylonlabs-io/babylon/v4/x/zoneconcierge"
-	"github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/types"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
+
+	keepertest "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
+	"github.com/babylonlabs-io/babylon/v4/testutil/nullify"
+	btcstkconsumertypes "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
+	"github.com/babylonlabs-io/babylon/v4/x/zoneconcierge"
+	"github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/types"
 )
 
 func TestGenesis(t *testing.T) {
@@ -21,7 +23,7 @@ func TestGenesis(t *testing.T) {
 
 	// mock btcstkconsumer keeper
 	btcStkConsumerKeeper := types.NewMockBTCStkConsumerKeeper(ctrl)
-	btcStkConsumerKeeper.EXPECT().GetAllRegisteredConsumerIDs(gomock.Any()).Return([]string{}).AnyTimes()
+	btcStkConsumerKeeper.EXPECT().GetAllRegisteredCosmosConsumers(gomock.Any()).Return([]*btcstkconsumertypes.ConsumerRegister{}).AnyTimes()
 
 	k, ctx := keepertest.ZoneConciergeKeeper(t, nil, nil, nil, nil, nil, nil, btcStkConsumerKeeper)
 	zoneconcierge.InitGenesis(ctx, *k, genesisState)
