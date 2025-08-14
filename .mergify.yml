@@ -11,6 +11,15 @@ queue_rules:
       {{ body }}
     merge_method: squash
 pull_request_rules:
+  - name: auto-add v4.x backport label when v3.x label is added
+    conditions:
+      - base=main
+      - label=backport-to-release/v3.x
+      - -label=backport-to-release/v4.x
+    actions:
+      label:
+        add:
+          - backport-to-release/v4.x
   - name: backport changes to v4.x branch
     conditions:
       - base=main
