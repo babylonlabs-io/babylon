@@ -84,12 +84,13 @@ func NewNode(tm *TestManager, name string, cfg *ChainConfig) *Node {
 	nPorts, err := tm.PortMgr.AllocateNodePorts()
 	require.NoError(tm.T, err)
 
+	cointanerName := fmt.Sprintf("%s-%s-%s", tm.NetworkID(), cfg.ChainID, name)
 	n := &Node{
 		Tm:          tm,
 		ChainConfig: cfg,
 		Name:        name,
 		Home:        filepath.Join(cfg.Home, name),
-		Container:   NewContainerBbnNode(name),
+		Container:   NewContainerBbnNode(cointanerName),
 		Ports:       nPorts,
 		Wallets:     make(map[string]*WalletSender),
 	}
@@ -222,19 +223,20 @@ func (n *Node) IsChainRunning() bool {
 }
 
 func (n *Node) RunNodeResource() {
-	if !n.Container.ImageExistsLocally() { // builds it locally if it doesn't have
-		err := RunCommand("make build-docker-e2e")
-		require.NoError(n.T(), err)
-	}
-
 	pwd, err := os.Getwd()
 	require.NoError(n.T(), err)
+
+	if !n.Container.ImageExistsLocally() { // builds it locally if it doesn't have
+		// needs to be in the path where the makefile is located '-'
+		err := RunMakeCommand(filepath.Join(pwd, "../../"), "build-docker-e2e")
+		require.NoError(n.T(), err)
+	}
 
 	runOpts := &dockertest.RunOptions{
 		Name:       n.Container.Name,
 		Repository: n.Container.Repository,
 		Tag:        n.Container.Tag,
-		NetworkID:  n.Tm.NetworkID,
+		NetworkID:  n.Tm.NetworkID(),
 		User:       "root:root",
 		Entrypoint: []string{
 			"sh",
@@ -327,6 +329,26 @@ func RunCommand(command string) error {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
+}
+
+func RunMakeCommand(path, command string) error {
+	// Build the image
+	makePath, err := exec.LookPath("make")
+	if err != nil {
+		return fmt.Errorf("make command not found: %w", err)
+	}
+
+	fmt.Printf("Running make in path %s command %s...\n", path, command)
+	cmd := exec.Command(makePath, command)
+	cmd.Dir = path
+
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to build image: %w\nOutput: %s", err, string(output))
+	}
+
+	fmt.Printf("✓ Successfully built\n")
+	return nil
 }
 
 func AppGenesisFromConfig(rootPath string) (*genutiltypes.AppGenesis, error) {

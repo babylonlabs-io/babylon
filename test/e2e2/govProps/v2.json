@@ -1,0 +1,20 @@
+{
+  "messages": [
+    {
+      "@type": "/cosmos.upgrade.v1beta1.MsgSoftwareUpgrade",
+      "authority": "bbn10d07y265gmmuvt4z0w9aw880jnsr700jduz5f2",
+      "plan": {
+        "name": "v2",
+        "time": "0001-01-01T00:00:00Z",
+        "height": "25",
+        "info": "Upgrade to v2",
+        "upgraded_client_state": null
+      }
+    }
+  ],
+  "metadata": "",
+  "deposit": "500000000ubbn",
+  "title": "Upgrade to Babylon v2",
+  "summary": "This upgrade introduces tokenfactory and other v2 features",
+  "expedited": false
+} 

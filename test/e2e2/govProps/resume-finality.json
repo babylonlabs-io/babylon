@@ -1,0 +1,17 @@
+{
+  "messages": [
+    {
+      "@type": "/babylon.finality.v1.MsgResumeFinalityProposal",
+      "authority": "bbn10d07y265gmmuvt4z0w9aw880jnsr700jduz5f2",
+      "fp_pks_hex": [
+        "dd5f58d342aee47f277069c3789595c52d769855d5361c88e05c1fc941f793b1"
+      ],
+      "halting_height": 55
+    }
+  ],
+  "metadata": "",
+  "deposit": "500000000ubbn",
+  "title": "Resume finality",
+  "summary": "Resume finality by jailing Finality provider with largest voting power",
+  "expedited": false
+}

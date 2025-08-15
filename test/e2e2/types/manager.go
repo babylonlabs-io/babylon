@@ -13,7 +13,6 @@ import (
 type TestManager struct {
 	T *testing.T
 
-	NetworkID        string
 	TempDir          string
 	PortMgr          *PortManager
 	Pool             *dockertest.Pool
@@ -36,8 +35,7 @@ func NewTestManager(t *testing.T) *TestManager {
 		t.Fatalf("failed to create Docker pool: %v", err)
 	}
 
-	networkID := GenerateNetworkID(t)
-	network, err := pool.CreateNetwork(fmt.Sprintf("bbn-e2e-%s", networkID))
+	network, err := pool.CreateNetwork(fmt.Sprintf("bbn-e2e-%s", GenerateNetworkID(t)))
 	if err != nil {
 		t.Fatalf("failed to create Docker network: %v", err)
 	}
@@ -50,7 +48,6 @@ func NewTestManager(t *testing.T) *TestManager {
 
 	nm := &TestManager{
 		T:                t,
-		NetworkID:        networkID,
 		TempDir:          t.TempDir(),
 		PortMgr:          NewPortManager(),
 		Pool:             pool,
@@ -83,6 +80,10 @@ func NewTmWithIbc(t *testing.T) *TestManagerIbc {
 		TestManager: tm,
 		Hermes:      NewHermesRelayer(tm),
 	}
+}
+
+func (tm *TestManager) NetworkID() string {
+	return tm.Network.Network.ID
 }
 
 // Start runs all the nodes
