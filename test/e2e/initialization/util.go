@@ -9,7 +9,7 @@ import (
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/util"
 )
 
-func decodeTx(txBytes []byte) (*sdktx.Tx, error) {
+func DecodeTx(txBytes []byte) (*sdktx.Tx, error) {
 	var raw sdktx.TxRaw
 
 	// reject all unknown proto fields in the root TxRaw
