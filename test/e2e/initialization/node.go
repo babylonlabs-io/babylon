@@ -147,17 +147,10 @@ func (n *internalNode) createAppConfig(nodeConfig *NodeConfig) {
 }
 
 func (n *internalNode) createNodeKey() error {
-	serverCtx := server.NewDefaultContext()
-	config := serverCtx.Config
-
-	config.SetRoot(n.configDir())
-	config.Moniker = n.moniker
-
-	nodeKey, err := p2p.LoadOrGenNodeKey(config.NodeKeyFile())
+	nodeKey, err := e2etypes.CreateNodeKey(n.configDir(), n.moniker)
 	if err != nil {
 		return err
 	}
-
 	n.nodeKey = *nodeKey
 	return nil
 }

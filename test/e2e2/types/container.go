@@ -2,10 +2,17 @@ package types
 
 import (
 	"fmt"
+	"os/exec"
 	"strings"
 	"sync"
 
 	"github.com/ory/dockertest/v3"
+)
+
+const (
+	// Images that do not have specified tag, latest will be used by default.
+	// name of babylon image produced by running `make build-docker`
+	BabylonContainerName = "babylonlabs-io/babylond"
 )
 
 // ContainerConfig defines configuration for creating a container
@@ -23,12 +30,9 @@ type ContainerConfig struct {
 
 // Container represents a running Docker container
 type Container struct {
-	ID          string
-	Name        string
-	Repository  string
-	Tag         string
-	Mounts      []string
-	Environment map[string]string
+	Name       string
+	Repository string
+	Tag        string
 }
 
 // ContainerManager manages Docker containers lifecycle
@@ -46,6 +50,27 @@ func NewContainerManager(pool *dockertest.Pool, network *dockertest.Network) *Co
 		Network:   network,
 		Resources: make(map[string]*dockertest.Resource),
 	}
+}
+
+func NewContainerBbnNode(nodeName string) *Container {
+	return &Container{
+		Name:       nodeName,
+		Repository: BabylonContainerName,
+		Tag:        "latest",
+	}
+}
+
+func (c *Container) ImageName() string {
+	return fmt.Sprintf("%s:%s", c.Repository, c.Tag)
+}
+
+func (c *Container) ImageExistsLocally() bool {
+	return ImageExistsLocally(c.ImageName())
+}
+
+func ImageExistsLocally(imageName string) bool {
+	cmd := exec.Command("docker", "image", "inspect", imageName)
+	return cmd.Run() == nil
 }
 
 // CreateContainer creates a new container with the given configuration

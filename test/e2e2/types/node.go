@@ -11,19 +11,26 @@ import (
 
 	"encoding/json"
 
-	bbnapp "github.com/babylonlabs-io/babylon/v4/app"
 	cmtconfig "github.com/cometbft/cometbft/config"
+	"github.com/cometbft/cometbft/p2p"
 	cmttypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/server"
+	srvconfig "github.com/cosmos/cosmos-sdk/server/config"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/stretchr/testify/require"
+
+	bbnapp "github.com/babylonlabs-io/babylon/v4/app"
+	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
+	"github.com/babylonlabs-io/babylon/v4/cmd/babylond/cmd"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
 )
 
 const (
+	MinGasPrice                = "0.002"
 	BabylonHomePathInContainer = "/home/babylon/babylondata"
 	FlagHome                   = "--home=" + BabylonHomePathInContainer
 )
@@ -40,6 +47,8 @@ type Node struct {
 	Ports     *NodePorts
 	Container *Container
 
+	NodeKeyP2P *p2p.NodeKey
+
 	// Wallets all the wallets where the keyring files were created inside this node
 	// where the key is the wallet name
 	Wallets map[string]*WalletSender
@@ -55,7 +64,7 @@ type ValidatorNode struct {
 func NewValidatorNode(tm *TestManager, name string, cfg *ChainConfig) *ValidatorNode {
 	n := NewNode(tm, name, cfg)
 
-	valW := n.CreateKey(name)
+	valW := n.CreateWallet(name)
 	consKey, err := CreateConsensusKey(n.Name, valW.Mnemonic, n.Home)
 	require.NoError(n.T(), err)
 
@@ -72,16 +81,23 @@ func NewValidatorNode(tm *TestManager, name string, cfg *ChainConfig) *Validator
 
 // NewNode creates a new regular node with simple ID generation
 func NewNode(tm *TestManager, name string, cfg *ChainConfig) *Node {
+	nPorts, err := tm.PortMgr.AllocateNodePorts()
+	require.NoError(tm.T, err)
+
 	n := &Node{
 		Tm:          tm,
 		ChainConfig: cfg,
 		Name:        name,
 		Home:        filepath.Join(cfg.Home, name),
+		Container:   NewContainerBbnNode(name),
+		Ports:       nPorts,
 		Wallets:     make(map[string]*WalletSender),
 	}
 
 	n.CreateConfigDir()
 	n.WriteConfigAndGenesis()
+	n.CreateNodeKeyP2P()
+	n.CreateAppConfig()
 	return n
 }
 
@@ -132,6 +148,34 @@ func (n *Node) CreateConfigDir() {
 	require.NoError(n.T(), err)
 }
 
+func (n *Node) CreateNodeKeyP2P() {
+	p2pKey, err := CreateNodeKey(n.Home, n.Name)
+	require.NoError(n.T(), err)
+	n.NodeKeyP2P = p2pKey
+}
+
+func (n *Node) CreateAppConfig() {
+	appCfgPath := filepath.Join(n.ConfigDirPath(), "app.toml")
+
+	appConfig := cmd.DefaultBabylonAppConfig()
+	appConfig.BaseConfig.Pruning = "default"
+	appConfig.BaseConfig.PruningKeepRecent = "0"
+	appConfig.BaseConfig.PruningInterval = "0"
+	appConfig.API.Enable = true
+	appConfig.API.Address = n.GetRESTAddress()
+	appConfig.MinGasPrices = fmt.Sprintf("%s%s", MinGasPrice, appparams.DefaultBondDenom)
+	appConfig.StateSync.SnapshotInterval = 1500
+	appConfig.StateSync.SnapshotKeepRecent = 2
+	appConfig.BtcConfig.Network = string(bbn.BtcSimnet)
+	appConfig.GRPC.Enable = true
+	appConfig.GRPC.Address = n.GetGRPCAddress()
+
+	customTemplate := cmd.DefaultBabylonTemplate()
+
+	srvconfig.SetConfigTemplate(customTemplate)
+	srvconfig.WriteConfigFile(appCfgPath, appConfig)
+}
+
 func (n *Node) WriteConfigAndGenesis() {
 	serverCtx := server.NewDefaultContext()
 	config := serverCtx.Config
@@ -164,7 +208,7 @@ func (n *Node) T() *testing.T {
 	return n.Tm.T
 }
 
-func (n *Node) CreateKey(keyName string) *WalletSender {
+func (n *Node) CreateWallet(keyName string) *WalletSender {
 	nw := NewWalletSender(keyName, n)
 	if n.IsChainRunning() {
 		// set seq and acc number
@@ -178,6 +222,11 @@ func (n *Node) IsChainRunning() bool {
 }
 
 func (n *Node) RunNodeResource() {
+	if !n.Container.ImageExistsLocally() { // builds it locally if it doesn't have
+		err := RunCommand("make build-docker-e2e")
+		require.NoError(n.T(), err)
+	}
+
 	pwd, err := os.Getwd()
 	require.NoError(n.T(), err)
 
@@ -280,28 +329,41 @@ func RunCommand(command string) error {
 	return cmd.Run()
 }
 
-func ImageExistsLocally(imageName string) bool {
-	cmd := exec.Command("docker", "image", "inspect", imageName)
-	return cmd.Run() == nil
-}
-
 func AppGenesisFromConfig(rootPath string) (*genutiltypes.AppGenesis, error) {
 	serverCtx := server.NewDefaultContext()
 	config := serverCtx.Config
 	config.SetRoot(rootPath)
 
 	genFile := config.GenesisFile()
-	appGenesis := &genutiltypes.AppGenesis{}
 
-	if _, err := os.Stat(genFile); err != nil {
-		if !os.IsNotExist(err) {
-			return nil, err
+	_, err := os.Stat(genFile)
+	if err == nil {
+		_, appGenesis, err := genutiltypes.GenesisStateFromGenFile(genFile)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read genesis doc from file: %w", err)
 		}
+
+		return appGenesis, nil
 	}
 
-	_, appGenesis, err := genutiltypes.GenesisStateFromGenFile(genFile)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read genesis doc from file: %w", err)
+	// if it doesn't exist just returns it empty
+	if !os.IsNotExist(err) {
+		return nil, err
 	}
-	return appGenesis, nil
+	return &genutiltypes.AppGenesis{}, nil
+}
+
+func CreateNodeKey(rootDir, moniker string) (*p2p.NodeKey, error) {
+	serverCtx := server.NewDefaultContext()
+	config := serverCtx.Config
+
+	config.SetRoot(rootDir)
+	config.Moniker = moniker
+
+	nodeKey, err := p2p.LoadOrGenNodeKey(config.NodeKeyFile())
+	if err != nil {
+		return nil, err
+	}
+
+	return nodeKey, nil
 }

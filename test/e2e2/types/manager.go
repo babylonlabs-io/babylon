@@ -49,13 +49,14 @@ func NewTestManager(t *testing.T) *TestManager {
 	}
 
 	nm := &TestManager{
+		T:                t,
 		NetworkID:        networkID,
 		TempDir:          t.TempDir(),
 		PortMgr:          NewPortManager(),
 		Pool:             pool,
 		Network:          network,
 		ContainerManager: containerManager,
-		T:                t,
+		Chains:           make(map[string]*Chain),
 	}
 
 	// Add network cleanup - this will be called last
