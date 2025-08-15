@@ -9,6 +9,7 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	appkeepers "github.com/babylonlabs-io/babylon/v4/app/keepers"
+	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/cosmos/cosmos-sdk/server"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -162,7 +163,8 @@ func (c *Chain) WritePeers() {
 	}
 
 	for _, n := range allNodes {
-		_, _ = appkeepers.CreateClientConfig(c.Config.ChainID, "test", n.Home)
+		_, err := appkeepers.CreateClientConfig(c.Config.ChainID, keyring.BackendTest, n.Home)
+		require.NoError(c.T(), err)
 	}
 }
 

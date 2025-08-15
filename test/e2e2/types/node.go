@@ -97,7 +97,7 @@ func NewNode(tm *TestManager, name string, cfg *ChainConfig) *Node {
 	nPorts, err := tm.PortMgr.AllocateNodePorts()
 	require.NoError(tm.T, err)
 
-	cointanerName := fmt.Sprintf("%s-%s-%s", tm.NetworkID(), cfg.ChainID, name)
+	cointanerName := fmt.Sprintf("%s-%s-%s", cfg.ChainID, name, tm.NetworkID()[:4])
 	n := &Node{
 		Tm:          tm,
 		ChainConfig: cfg,
@@ -420,6 +420,7 @@ func (n *Node) RunNodeResource() {
 		require.NoError(n.T(), err)
 	}
 
+	exposedPorts := n.Ports.ContainerExposedPorts()
 	runOpts := &dockertest.RunOptions{
 		Name:       n.Container.Name,
 		Repository: n.Container.Repository,
@@ -433,7 +434,7 @@ func (n *Node) RunNodeResource() {
 			// "export BABYLON_BLS_PASSWORD=password && babylond start " + FlagHome + " --log_level trace --trace",
 			"export BABYLON_BLS_PASSWORD=password && babylond start " + FlagHome,
 		},
-		ExposedPorts: n.Ports.ContainerExposedPorts(),
+		ExposedPorts: exposedPorts,
 		Mounts: []string{
 			fmt.Sprintf("%s/:%s", n.Home, BabylonHomePathInContainer),
 			fmt.Sprintf("%s/bytecode:/bytecode", pwd),

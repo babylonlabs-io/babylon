@@ -35,7 +35,7 @@ const (
 )
 
 var (
-	SelfDelegationAmt     = sdkmath.NewInt(1_000_000_000000) // 1kk ubbn
+	SelfDelegationAmt     = sdkmath.NewInt(10_000_000000) // 10k ubbn
 	InitialSelfDelegation = sdk.NewCoin(appparams.DefaultBondDenom, SelfDelegationAmt)
 )
 

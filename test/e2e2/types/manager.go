@@ -60,6 +60,12 @@ func NewTestManager(t *testing.T) *TestManager {
 
 	// Add network cleanup - this will be called last
 	t.Cleanup(func() {
+		for name, r := range nm.ContainerManager.Resources {
+			err = r.Close()
+			if err != nil {
+				t.Logf("error removing resource %s %+v", name, err)
+			}
+		}
 		err = pool.RemoveNetwork(network)
 		if err != nil {
 			t.Logf("error removing network %+v", err)
