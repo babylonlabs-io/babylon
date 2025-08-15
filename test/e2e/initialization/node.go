@@ -374,5 +374,5 @@ func (n *internalNode) signMsg(msgs ...sdk.Msg) (*sdktx.Tx, error) {
 		return nil, err
 	}
 
-	return decodeTx(bz)
+	return DecodeTx(bz)
 }

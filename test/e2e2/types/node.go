@@ -6,27 +6,39 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
 	"encoding/json"
 
+	sdkmath "cosmossdk.io/math"
+	appsigner "github.com/babylonlabs-io/babylon/v4/app/signer"
 	cmtconfig "github.com/cometbft/cometbft/config"
 	"github.com/cometbft/cometbft/p2p"
 	cmttypes "github.com/cometbft/cometbft/types"
+	"github.com/cosmos/cosmos-sdk/codec/unknownproto"
+	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"github.com/cosmos/cosmos-sdk/server"
 	srvconfig "github.com/cosmos/cosmos-sdk/server/config"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdktx "github.com/cosmos/cosmos-sdk/types/tx"
+	sdksigning "github.com/cosmos/cosmos-sdk/types/tx/signing"
+	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
 
 	bbnapp "github.com/babylonlabs-io/babylon/v4/app"
 	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
 	"github.com/babylonlabs-io/babylon/v4/cmd/babylond/cmd"
+	"github.com/babylonlabs-io/babylon/v4/test/e2e/util"
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
 )
 
 const (
@@ -48,6 +60,7 @@ type Node struct {
 	Container *Container
 
 	NodeKeyP2P *p2p.NodeKey
+	PeerID     string
 
 	// Wallets all the wallets where the keyring files were created inside this node
 	// where the key is the wallet name
@@ -116,6 +129,155 @@ func (n *Node) Start() {
 
 }
 
+func (n *ValidatorNode) CreateValidatorMsg(selfDelegationAmt sdk.Coin) sdk.Msg {
+	description := stakingtypes.NewDescription(n.Name, "", "", "", "")
+	commissionRates := stakingtypes.CommissionRates{
+		Rate:          sdkmath.LegacyMustNewDecFromStr("0.1"),
+		MaxRate:       sdkmath.LegacyMustNewDecFromStr("0.2"),
+		MaxChangeRate: sdkmath.LegacyMustNewDecFromStr("0.01"),
+	}
+
+	// get the initial validator min self delegation
+	minSelfDelegation, _ := sdkmath.NewIntFromString("1")
+
+	// valPubKey, err := cryptocodec.FromCmtPubKeyInterface( n.consensusKey.Comet.PubKey)
+	valPubKey, err := cryptocodec.FromCmtPubKeyInterface(n.Wallet.ConsKey.Comet.PubKey)
+	require.NoError(n.T(), err)
+
+	stkMsgCreateVal, err := stakingtypes.NewMsgCreateValidator(
+		n.Wallet.ValidatorAddress.String(),
+		valPubKey,
+		selfDelegationAmt,
+		description,
+		commissionRates,
+		minSelfDelegation,
+	)
+	require.NoError(n.T(), err)
+
+	proofOfPossession, err := appsigner.BuildPoP(n.Wallet.ConsKey.Comet.PrivKey, n.Wallet.ConsKey.Bls.PrivKey)
+	require.NoError(n.T(), err)
+
+	msg, err := checkpointingtypes.NewMsgWrappedCreateValidator(stkMsgCreateVal, &n.Wallet.ConsKey.Bls.PubKey, proofOfPossession)
+	require.NoError(n.T(), err)
+	return msg
+}
+
+// signMsg returns a signed tx of the provided messages,
+// signed by the validator, using 0 fees, a high gas limit, and a common memo.
+func (n *ValidatorNode) SignMsg(msgs ...sdk.Msg) *sdktx.Tx {
+	txBuilder := util.EncodingConfig.TxConfig.NewTxBuilder()
+	err := txBuilder.SetMsgs(msgs...)
+	require.NoError(n.T(), err, "err building msg")
+
+	// txBuilder.SetMemo(fmt.Sprintf("%s@%s:26656", n.nodeKey.ID(), n.moniker))
+	txBuilder.SetFeeAmount(sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(20000))))
+
+	pubKey := n.Wallet.PrivKey.PubKey()
+	signerData := authsigning.SignerData{
+		ChainID:       n.ChainConfig.ChainID,
+		AccountNumber: 0,
+		Sequence:      0,
+		Address:       n.Wallet.Address.String(),
+		PubKey:        pubKey,
+	}
+
+	// For SIGN_MODE_DIRECT, calling SetSignatures calls setSignerInfos on
+	// TxBuilder under the hood, and SignerInfos is needed to generate the sign
+	// bytes. This is the reason for setting SetSignatures here, with a nil
+	// signature.
+	//
+	// Note: This line is not needed for SIGN_MODE_LEGACY_AMINO, but putting it
+	// also doesn't affect its generated sign bytes, so for code's simplicity
+	// sake, we put it here.
+	sig := sdksigning.SignatureV2{
+		PubKey: pubKey,
+		Data: &sdksigning.SingleSignatureData{
+			SignMode:  sdksigning.SignMode_SIGN_MODE_DIRECT,
+			Signature: nil,
+		},
+		Sequence: 0,
+	}
+
+	err = txBuilder.SetSignatures(sig)
+	require.NoError(n.T(), err, "err setting sigs")
+
+	bytesToSign, err := authsigning.GetSignBytesAdapter(
+		sdk.Context{}, // TODO: this is an empty context
+		util.EncodingConfig.TxConfig.SignModeHandler(),
+		sdksigning.SignMode_SIGN_MODE_DIRECT,
+		signerData,
+		txBuilder.GetTx(),
+	)
+	require.NoError(n.T(), err, "err get sign bytes")
+
+	sigBytes, err := n.Wallet.PrivKey.Sign(bytesToSign)
+	require.NoError(n.T(), err, "err private key sign bytes")
+
+	sig = sdksigning.SignatureV2{
+		PubKey: pubKey,
+		Data: &sdksigning.SingleSignatureData{
+			SignMode:  sdksigning.SignMode_SIGN_MODE_DIRECT,
+			Signature: sigBytes,
+		},
+		Sequence: 0,
+	}
+
+	err = txBuilder.SetSignatures(sig)
+	require.NoError(n.T(), err, "err setting signatures")
+
+	signedTx := txBuilder.GetTx()
+	bz, err := util.EncodingConfig.TxConfig.TxEncoder()(signedTx)
+	require.NoError(n.T(), err, "err encoding tx")
+
+	txDecoded, err := DecodeTx(bz)
+	require.NoError(n.T(), err, "err decoding tx")
+
+	return txDecoded
+}
+
+func (n *Node) WriteGenesis(genDoc *genutiltypes.AppGenesis) {
+	path := filepath.Join(n.ConfigDirPath(), "genesis.json")
+	err := genutil.ExportGenesisFile(genDoc, path)
+	require.NoError(n.T(), err)
+}
+
+func DecodeTx(txBytes []byte) (*sdktx.Tx, error) {
+	var raw sdktx.TxRaw
+
+	// reject all unknown proto fields in the root TxRaw
+	err := unknownproto.RejectUnknownFieldsStrict(txBytes, &raw, util.EncodingConfig.InterfaceRegistry)
+	if err != nil {
+		return nil, fmt.Errorf("failed to reject unknown fields: %w", err)
+	}
+
+	if err := util.Cdc.Unmarshal(txBytes, &raw); err != nil {
+		return nil, err
+	}
+
+	var body sdktx.TxBody
+	if err := util.Cdc.Unmarshal(raw.BodyBytes, &body); err != nil {
+		return nil, fmt.Errorf("failed to decode tx: %w", err)
+	}
+
+	var authInfo sdktx.AuthInfo
+
+	// reject all unknown proto fields in AuthInfo
+	err = unknownproto.RejectUnknownFieldsStrict(raw.AuthInfoBytes, &authInfo, util.EncodingConfig.InterfaceRegistry)
+	if err != nil {
+		return nil, fmt.Errorf("failed to reject unknown fields: %w", err)
+	}
+
+	if err := util.Cdc.Unmarshal(raw.AuthInfoBytes, &authInfo); err != nil {
+		return nil, fmt.Errorf("failed to decode auth info: %w", err)
+	}
+
+	return &sdktx.Tx{
+		Body:       &body,
+		AuthInfo:   &authInfo,
+		Signatures: raw.Signatures,
+	}, nil
+}
+
 // func newNode(chain *internalChain, nodeConfig *NodeConfig, gasLimit int64) (*internalNode, error) {
 // 	node := &internalNode{
 // 		chain:       chain,
@@ -153,6 +315,8 @@ func (n *Node) CreateNodeKeyP2P() {
 	p2pKey, err := CreateNodeKey(n.Home, n.Name)
 	require.NoError(n.T(), err)
 	n.NodeKeyP2P = p2pKey
+
+	n.PeerID = fmt.Sprintf("%s@%s:%d", n.NodeKeyP2P.ID(), n.Name, n.Ports.P2P)
 }
 
 func (n *Node) CreateAppConfig() {
@@ -203,6 +367,30 @@ func (n *Node) WriteConfigAndGenesis() {
 	err = genutil.ExportGenesisFile(appGenesis, config.GenesisFile())
 	require.NoError(n.T(), err)
 	cmtconfig.WriteConfigFile(filepath.Join(n.ConfigDirPath(), "config.toml"), config)
+}
+
+func (n *Node) InitConfigWithPeers(persistentPeers []string) {
+	cmtCfgPath := filepath.Join(n.ConfigDirPath(), "config.toml")
+
+	vpr := viper.New()
+	vpr.SetConfigFile(cmtCfgPath)
+	err := vpr.ReadInConfig()
+	require.NoError(n.T(), err)
+
+	valConfig := cmtconfig.DefaultConfig()
+	err = vpr.Unmarshal(valConfig)
+	require.NoError(n.T(), err)
+
+	valConfig.P2P.ListenAddress = n.GetP2PAddress()
+	valConfig.P2P.AddrBookStrict = false
+	valConfig.P2P.ExternalAddress = fmt.Sprintf("%s:%d", n.Name, n.Ports.P2P)
+	valConfig.RPC.ListenAddress = n.GetRPCAddress()
+	valConfig.StateSync.Enable = false
+	valConfig.LogLevel = "info"
+	valConfig.P2P.PersistentPeers = strings.Join(persistentPeers, ",")
+	valConfig.Storage.DiscardABCIResponses = false
+
+	cmtconfig.WriteConfigFile(cmtCfgPath, valConfig)
 }
 
 func (n *Node) T() *testing.T {
@@ -260,7 +448,6 @@ func (n *Node) RunNodeResource() {
 }
 
 func (n *Node) Stop() error {
-
 	return nil
 }
 
@@ -332,7 +519,6 @@ func RunCommand(command string) error {
 }
 
 func RunMakeCommand(path, command string) error {
-	// Build the image
 	makePath, err := exec.LookPath("make")
 	if err != nil {
 		return fmt.Errorf("make command not found: %w", err)

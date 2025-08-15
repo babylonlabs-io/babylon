@@ -12,6 +12,7 @@ import (
 // TestManager manages isolated Docker networks for tests
 type TestManager struct {
 	T *testing.T
+	R *rand.Rand
 
 	TempDir          string
 	PortMgr          *PortManager
@@ -48,6 +49,7 @@ func NewTestManager(t *testing.T) *TestManager {
 
 	nm := &TestManager{
 		T:                t,
+		R:                rand.New(rand.NewSource(time.Now().Unix())),
 		TempDir:          t.TempDir(),
 		PortMgr:          NewPortManager(),
 		Pool:             pool,

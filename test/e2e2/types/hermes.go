@@ -80,7 +80,7 @@ func (hr *HermesRelayer) AddChain(chain *Chain, account *WalletSender) error {
 		return err
 	}
 
-	hr.Config.ChainConfigs[chain.ID] = &HermesChainConfig{
+	hr.Config.ChainConfigs[chain.Config.ChainID] = &HermesChainConfig{
 		ChainConfig:    chain.Config,
 		RPCAddr:        rpcAddr,
 		GRPCAddr:       grpcAddr,

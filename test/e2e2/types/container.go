@@ -52,9 +52,9 @@ func NewContainerManager(pool *dockertest.Pool, network *dockertest.Network) *Co
 	}
 }
 
-func NewContainerBbnNode(nodeName string) *Container {
+func NewContainerBbnNode(containerName string) *Container {
 	return &Container{
-		Name:       nodeName,
+		Name:       containerName,
 		Repository: BabylonContainerName,
 		Tag:        "latest",
 	}
