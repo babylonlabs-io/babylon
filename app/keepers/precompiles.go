@@ -2,21 +2,22 @@ package keepers
 
 import (
 	"fmt"
-	"github.com/cosmos/cosmos-sdk/codec"
-	precisebankkeeper "github.com/cosmos/evm/x/precisebank/keeper"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
 	"maps"
 
-	evidencekeeper "cosmossdk.io/x/evidence/keeper"
+	"cosmossdk.io/core/address"
+	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
+	"github.com/cosmos/cosmos-sdk/codec"
+	authcodec "github.com/cosmos/cosmos-sdk/x/auth/codec"
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
 	slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
 	bankprecompile "github.com/cosmos/evm/precompiles/bank"
 	"github.com/cosmos/evm/precompiles/bech32"
-	evidenceprecompile "github.com/cosmos/evm/precompiles/evidence"
 	govprecompile "github.com/cosmos/evm/precompiles/gov"
 	"github.com/cosmos/evm/precompiles/p256"
 	slashingprecompile "github.com/cosmos/evm/precompiles/slashing"
 	erc20Keeper "github.com/cosmos/evm/x/erc20/keeper"
+	precisebankkeeper "github.com/cosmos/evm/x/precisebank/keeper"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
 )
@@ -33,7 +34,21 @@ var BabylonAvailableStaticPrecompiles = []string{
 	evmtypes.BankPrecompileAddress,
 	evmtypes.GovPrecompileAddress,
 	evmtypes.SlashingPrecompileAddress,
-	evmtypes.EvidencePrecompileAddress,
+}
+
+type PrecompileOptions struct {
+	// Codec is the codec used to encode and decode messages.
+	AddressCodec address.Codec
+	// ValidatorAddressCodec is the codec used to encode and decode validator addresses.
+	ValidatorAddressCodec address.Codec
+	// ConsensusAddressCodec is the codec used to encode and decode consensus addresses.
+	ConsensusAddressCodec address.Codec
+}
+
+var CodecOptions = PrecompileOptions{
+	AddressCodec:          authcodec.NewBech32Codec(appparams.Bech32PrefixAccAddr),
+	ValidatorAddressCodec: authcodec.NewBech32Codec(appparams.Bech32PrefixValAddr),
+	ConsensusAddressCodec: authcodec.NewBech32Codec(appparams.Bech32PrefixConsAddr),
 }
 
 // NewAvailableStaticPrecompiles adds the static precompiles to the EVM
@@ -44,10 +59,8 @@ func NewAvailableStaticPrecompiles(
 	erc20Keeper erc20Keeper.Keeper,
 	govKeeper govkeeper.Keeper,
 	slashingKeeper slashingkeeper.Keeper,
-	evidenceKeeper evidencekeeper.Keeper,
 ) map[common.Address]vm.PrecompiledContract {
 	// TODO: We can add more custom precompiles here for Babylon Modules
-
 	// Clone the mapping from the latest EVM fork.
 	precompiles := maps.Clone(vm.PrecompiledContractsPrague)
 
@@ -64,19 +77,14 @@ func NewAvailableStaticPrecompiles(
 		panic(fmt.Errorf("failed to instantiate bank precompile: %w", err))
 	}
 
-	govPrecompile, err := govprecompile.NewPrecompile(govKeeper, cdc)
+	govPrecompile, err := govprecompile.NewPrecompile(govKeeper, cdc, CodecOptions.AddressCodec)
 	if err != nil {
 		panic(fmt.Errorf("failed to instantiate gov precompile: %w", err))
 	}
 
-	slashingPrecompile, err := slashingprecompile.NewPrecompile(slashingKeeper)
+	slashingPrecompile, err := slashingprecompile.NewPrecompile(slashingKeeper, CodecOptions.ValidatorAddressCodec, CodecOptions.ConsensusAddressCodec)
 	if err != nil {
 		panic(fmt.Errorf("failed to instantiate slashing precompile: %w", err))
-	}
-
-	evidencePrecompile, err := evidenceprecompile.NewPrecompile(evidenceKeeper)
-	if err != nil {
-		panic(fmt.Errorf("failed to instantiate evidence precompile: %w", err))
 	}
 
 	// Stateless precompiles
@@ -87,7 +95,6 @@ func NewAvailableStaticPrecompiles(
 	precompiles[bankPrecompile.Address()] = bankPrecompile
 	precompiles[govPrecompile.Address()] = govPrecompile
 	precompiles[slashingPrecompile.Address()] = slashingPrecompile
-	precompiles[evidencePrecompile.Address()] = evidencePrecompile
 
 	return precompiles
 }

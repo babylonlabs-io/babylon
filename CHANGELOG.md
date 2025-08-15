@@ -39,6 +39,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
+- [#1430](https://github.com/babylonlabs-io/babylon/pull/1430) Bump Cosmos EVM to 0.41 and add signer extractor.
 - [#1555](https://github.com/babylonlabs-io/babylon/pull/1555) Create new mergify rule for v4.
 - [#1554](https://github.com/babylonlabs-io/babylon/pull/1554) Bump repo to v4.
 - [#1229](https://github.com/babylonlabs-io/babylon/pull/1229) Wire up EVM.
