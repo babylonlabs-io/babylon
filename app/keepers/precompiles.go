@@ -3,7 +3,7 @@ package keepers
 import (
 	"cosmossdk.io/core/address"
 	"fmt"
-	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
+	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
 	"github.com/cosmos/cosmos-sdk/codec"
 	authcodec "github.com/cosmos/cosmos-sdk/x/auth/codec"
 	precisebankkeeper "github.com/cosmos/evm/x/precisebank/keeper"
