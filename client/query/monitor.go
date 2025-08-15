@@ -3,7 +3,7 @@ package query
 import (
 	"context"
 
-	monitortypes "github.com/babylonlabs-io/babylon/v3/x/monitor/types"
+	monitortypes "github.com/babylonlabs-io/babylon/v4/x/monitor/types"
 	"github.com/cosmos/cosmos-sdk/client"
 )
 

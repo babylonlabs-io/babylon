@@ -19,12 +19,12 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/stretchr/testify/require"
 
-	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
-	"github.com/babylonlabs-io/babylon/v3/testutil/mocks"
-	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/keeper"
-	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
-	bsckeeper "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/keeper"
-	bsctypes "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
+	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
+	"github.com/babylonlabs-io/babylon/v4/testutil/mocks"
+	"github.com/babylonlabs-io/babylon/v4/x/btcstaking/keeper"
+	"github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+	bsckeeper "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/keeper"
+	bsctypes "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
 )
 
 func BTCStakingKeeperWithStore(

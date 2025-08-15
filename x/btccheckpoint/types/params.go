@@ -4,7 +4,7 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	txformat "github.com/babylonlabs-io/babylon/v3/btctxformatter"
+	txformat "github.com/babylonlabs-io/babylon/v4/btctxformatter"
 )
 
 const (

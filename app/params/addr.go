@@ -5,9 +5,9 @@ import (
 	dstrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
-	btcstktypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
-	finalitytypes "github.com/babylonlabs-io/babylon/v3/x/finality/types"
-	ictvtypes "github.com/babylonlabs-io/babylon/v3/x/incentive/types"
+	btcstktypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+	finalitytypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
+	ictvtypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
 )
 
 var (

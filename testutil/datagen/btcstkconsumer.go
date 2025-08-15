@@ -4,10 +4,25 @@ import (
 	"math/rand"
 
 	sdkmath "cosmossdk.io/math"
-	bsctypes "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
+
+	bsctypes "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
 )
 
 func GenRandomCosmosConsumerRegister(r *rand.Rand) *bsctypes.ConsumerRegister {
+	clientID := "test-" + GenRandomHexStr(r, 10)
+	return &bsctypes.ConsumerRegister{
+		ConsumerId:          clientID,
+		ConsumerName:        GenRandomHexStr(r, 5),
+		ConsumerDescription: "Chain description: " + GenRandomHexStr(r, 15),
+		ConsumerMetadata: &bsctypes.ConsumerRegister_CosmosConsumerMetadata{
+			CosmosConsumerMetadata: &bsctypes.CosmosConsumerMetadata{
+				ChannelId: "channel-" + GenRandomHexStr(r, 3), // Generate random channel ID
+			},
+		},
+		BabylonRewardsCommission: GenBabylonRewardsCommission(r),
+	}
+}
+func GenRandomCosmosConsumerRegisterWithoutChannelSet(r *rand.Rand) *bsctypes.ConsumerRegister {
 	clientID := "test-" + GenRandomHexStr(r, 10)
 	return &bsctypes.ConsumerRegister{
 		ConsumerId:          clientID,

@@ -8,8 +8,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	testutilcli "github.com/babylonlabs-io/babylon/v3/testutil/cli"
-	bsccli "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/client/cli"
+	testutilcli "github.com/babylonlabs-io/babylon/v4/testutil/cli"
+	bsccli "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/client/cli"
 )
 
 func TestNewRegisterConsumerCmd(t *testing.T) {

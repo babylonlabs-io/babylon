@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"sort"
 
-	bbn "github.com/babylonlabs-io/babylon/v3/types"
-	bsctypes "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
-	finalitytypes "github.com/babylonlabs-io/babylon/v3/x/finality/types"
-	"github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	bsctypes "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
+	finalitytypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
+	"github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
@@ -19,25 +19,14 @@ import (
 // sends them to corresponding consumers via open IBC channels, and then deletes the events from the store.
 func (k Keeper) BroadcastBTCStakingConsumerEvents(
 	ctx context.Context,
+	consumerChannelMap map[string]channeltypes.IdentifiedChannel,
 ) error {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	openZCChannels := k.channelKeeper.GetAllOpenZCChannels(ctx)
-	if len(openZCChannels) == 0 {
+	if len(consumerChannelMap) == 0 {
 		k.Logger(sdkCtx).Info("skipping BTC staking consumer event broadcast",
 			"reason", "no open channels",
 		)
 		return nil
-	}
-
-	// Map consumer client IDs to their corresponding open channels.
-	consumerChannelMap := make(map[string][]channeltypes.IdentifiedChannel)
-	for _, channel := range openZCChannels {
-		consumerID, err := k.channelKeeper.GetClientID(ctx, channel)
-		if err != nil {
-			return err
-		}
-
-		consumerChannelMap[consumerID] = append(consumerChannelMap[consumerID], channel)
 	}
 
 	// Iterate through all consumer events and send them to the corresponding open IBC channel.
@@ -55,7 +44,7 @@ func (k Keeper) BroadcastBTCStakingConsumerEvents(
 		ibcPacket := consumerIBCPacketMap[consumerID]
 
 		// Check if there are open channels for the current consumer ID.
-		channels, ok := consumerChannelMap[consumerID]
+		channel, ok := consumerChannelMap[consumerID]
 		if !ok {
 			k.Logger(sdkCtx).Warn("skipping BTC staking consumer event broadcast",
 				"reason", "no channels found for consumer",
@@ -70,24 +59,22 @@ func (k Keeper) BroadcastBTCStakingConsumerEvents(
 			},
 		}
 
-		for _, channel := range channels {
-			if err := k.SendIBCPacket(ctx, channel, outPacket); err != nil {
-				if errors.Is(err, clienttypes.ErrClientNotActive) {
-					k.Logger(sdkCtx).Info("IBC client is not active, skipping channel",
-						"consumerID", consumerID,
-						"channel", channel.ChannelId,
-						"error", err.Error(),
-					)
-					continue
-				}
-
-				k.Logger(sdkCtx).Error("failed to send BTC staking consumer event to channel, continuing with other channels",
+		if err := k.SendIBCPacket(ctx, channel, outPacket); err != nil {
+			if errors.Is(err, clienttypes.ErrClientNotActive) {
+				k.Logger(sdkCtx).Info("IBC client is not active, skipping",
 					"consumerID", consumerID,
 					"channel", channel.ChannelId,
 					"error", err.Error(),
 				)
 				continue
 			}
+
+			k.Logger(sdkCtx).Error("failed to send BTC staking consumer event",
+				"consumerID", consumerID,
+				"channel", channel.ChannelId,
+				"error", err.Error(),
+			)
+			continue
 		}
 
 		k.bsKeeper.DeleteBTCStakingConsumerIBCPacket(ctx, consumerID)

@@ -1,6 +1,6 @@
 go 1.23.8
 
-module github.com/babylonlabs-io/babylon/v3
+module github.com/babylonlabs-io/babylon/v4
 
 require (
 	github.com/CosmWasm/wasmd v0.55.1

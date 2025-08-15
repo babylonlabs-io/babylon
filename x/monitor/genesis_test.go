@@ -3,11 +3,11 @@ package monitor_test
 import (
 	"testing"
 
-	"github.com/babylonlabs-io/babylon/v3/x/monitor"
+	"github.com/babylonlabs-io/babylon/v4/x/monitor"
 	"github.com/stretchr/testify/require"
 
-	simapp "github.com/babylonlabs-io/babylon/v3/app"
-	"github.com/babylonlabs-io/babylon/v3/x/monitor/types"
+	simapp "github.com/babylonlabs-io/babylon/v4/app"
+	"github.com/babylonlabs-io/babylon/v4/x/monitor/types"
 )
 
 func TestExportGenesis(t *testing.T) {

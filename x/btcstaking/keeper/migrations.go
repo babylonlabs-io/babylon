@@ -3,8 +3,8 @@ package keeper
 import (
 	"context"
 
-	v2 "github.com/babylonlabs-io/babylon/v3/x/btcstaking/migrations/v2"
-	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
+	v2 "github.com/babylonlabs-io/babylon/v4/x/btcstaking/migrations/v2"
+	"github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

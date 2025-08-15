@@ -3,8 +3,8 @@ package zoneconcierge
 import (
 	"context"
 
-	"github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/keeper"
-	"github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
+	"github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/keeper"
+	"github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/types"
 )
 
 // InitGenesis initializes the module's state from a provided genesis state.

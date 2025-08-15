@@ -6,12 +6,12 @@ import (
 	"time"
 
 	"cosmossdk.io/math"
-	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
 	crypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 
-	bbntypes "github.com/babylonlabs-io/babylon/v3/types"
-	btclctypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
-	"github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
+	bbntypes "github.com/babylonlabs-io/babylon/v4/types"
+	btclctypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
+	"github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/types"
 
 	"github.com/stretchr/testify/require"
 )

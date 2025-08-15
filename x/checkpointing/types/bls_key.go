@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/babylonlabs-io/babylon/v3/crypto/bls12381"
+	"github.com/babylonlabs-io/babylon/v4/crypto/bls12381"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 

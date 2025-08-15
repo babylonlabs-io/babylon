@@ -3,10 +3,10 @@ package v2
 import (
 	"context"
 
-	bbntypes "github.com/babylonlabs-io/babylon/v3/types"
+	bbntypes "github.com/babylonlabs-io/babylon/v4/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/babylonlabs-io/babylon/v3/x/incentive/types"
+	"github.com/babylonlabs-io/babylon/v4/x/incentive/types"
 )
 
 // Keeper the expected keeper interface to perform the migration

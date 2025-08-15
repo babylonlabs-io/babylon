@@ -5,8 +5,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	bbntypes "github.com/babylonlabs-io/babylon/v3/types"
-	ftypes "github.com/babylonlabs-io/babylon/v3/x/finality/types"
+	bbntypes "github.com/babylonlabs-io/babylon/v4/types"
+	ftypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
 )
 
 // HandleResumeFinalityProposal handles the resume finality proposal in the following steps:
