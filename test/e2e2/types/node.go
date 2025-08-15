@@ -316,7 +316,7 @@ func (n *Node) CreateNodeKeyP2P() {
 	require.NoError(n.T(), err)
 	n.NodeKeyP2P = p2pKey
 
-	n.PeerID = fmt.Sprintf("%s@%s:%d", n.NodeKeyP2P.ID(), n.Name, n.Ports.P2P)
+	n.PeerID = fmt.Sprintf("%s@%s:%d", n.NodeKeyP2P.ID(), n.Container.Name, n.Ports.P2P)
 }
 
 func (n *Node) CreateAppConfig() {
@@ -383,7 +383,7 @@ func (n *Node) InitConfigWithPeers(persistentPeers []string) {
 
 	valConfig.P2P.ListenAddress = n.GetP2PAddress()
 	valConfig.P2P.AddrBookStrict = false
-	valConfig.P2P.ExternalAddress = fmt.Sprintf("%s:%d", n.Name, n.Ports.P2P)
+	valConfig.P2P.ExternalAddress = fmt.Sprintf("%s:%d", n.Container.Name, n.Ports.P2P)
 	valConfig.RPC.ListenAddress = n.GetRPCAddress()
 	valConfig.StateSync.Enable = false
 	valConfig.LogLevel = "info"
@@ -456,14 +456,14 @@ func (n *Node) GetRPCAddress() string {
 	if n.Ports == nil {
 		return ""
 	}
-	return fmt.Sprintf("http://localhost:%d", n.Ports.RPC)
+	return fmt.Sprintf("tcp://0.0.0.0:%d", n.Ports.RPC)
 }
 
 func (n *Node) GetP2PAddress() string {
 	if n.Ports == nil {
 		return ""
 	}
-	return fmt.Sprintf("tcp://localhost:%d", n.Ports.P2P)
+	return fmt.Sprintf("tcp://0.0.0.0:%d", n.Ports.P2P)
 }
 
 func (n *Node) GetGRPCAddress() string {
