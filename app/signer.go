@@ -2,10 +2,9 @@ package app
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	mempool "github.com/cosmos/cosmos-sdk/types/mempool"
+	"github.com/cosmos/cosmos-sdk/types/mempool"
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
-	//evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 var _ mempool.SignerExtractionAdapter = EthSignerExtractionAdapter{}

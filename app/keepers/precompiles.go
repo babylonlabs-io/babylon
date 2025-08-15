@@ -1,15 +1,13 @@
 package keepers
 
 import (
-	"cosmossdk.io/core/address"
 	"fmt"
+	"maps"
+
+	"cosmossdk.io/core/address"
 	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
 	"github.com/cosmos/cosmos-sdk/codec"
 	authcodec "github.com/cosmos/cosmos-sdk/x/auth/codec"
-	precisebankkeeper "github.com/cosmos/evm/x/precisebank/keeper"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
-	"maps"
-
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
 	slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
 	bankprecompile "github.com/cosmos/evm/precompiles/bank"
@@ -18,6 +16,8 @@ import (
 	"github.com/cosmos/evm/precompiles/p256"
 	slashingprecompile "github.com/cosmos/evm/precompiles/slashing"
 	erc20Keeper "github.com/cosmos/evm/x/erc20/keeper"
+	precisebankkeeper "github.com/cosmos/evm/x/precisebank/keeper"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
 )
