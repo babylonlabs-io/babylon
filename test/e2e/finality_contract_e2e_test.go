@@ -6,24 +6,24 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/babylonlabs-io/babylon/v3/crypto/eots"
-	ct "github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
-	ftypes "github.com/babylonlabs-io/babylon/v3/x/finality/types"
+	"github.com/babylonlabs-io/babylon/v4/crypto/eots"
+	ct "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
+	ftypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/chaincfg"
 
-	bbn "github.com/babylonlabs-io/babylon/v3/types"
-	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
-	bsctypes "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+	bsctypes "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/babylonlabs-io/babylon/v3/test/e2e/configurer"
-	"github.com/babylonlabs-io/babylon/v3/test/e2e/configurer/chain"
-	"github.com/babylonlabs-io/babylon/v3/test/e2e/initialization"
-	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
+	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer"
+	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer/chain"
+	"github.com/babylonlabs-io/babylon/v4/test/e2e/initialization"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
 )
 
 const (

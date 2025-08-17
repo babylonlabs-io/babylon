@@ -9,11 +9,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/v3/app"
-	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
-	testhelper "github.com/babylonlabs-io/babylon/v3/testutil/helper"
-	checkpointingkeeper "github.com/babylonlabs-io/babylon/v3/x/checkpointing/keeper"
-	"github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
+	"github.com/babylonlabs-io/babylon/v4/app"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	testhelper "github.com/babylonlabs-io/babylon/v4/testutil/helper"
+	checkpointingkeeper "github.com/babylonlabs-io/babylon/v4/x/checkpointing/keeper"
+	"github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
 )
 
 func FuzzGetValidatorBlsKeySet(f *testing.F) {

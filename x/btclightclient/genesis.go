@@ -3,8 +3,8 @@ package btclightclient
 import (
 	"context"
 
-	"github.com/babylonlabs-io/babylon/v3/x/btclightclient/keeper"
-	"github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
+	"github.com/babylonlabs-io/babylon/v4/x/btclightclient/keeper"
+	"github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
 )
 
 // InitGenesis initializes the capability module's state from a provided genesis

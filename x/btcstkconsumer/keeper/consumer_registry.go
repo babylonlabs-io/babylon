@@ -6,7 +6,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 
-	"github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
+	"github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
 )
 
 // RegisterConsumer registers a new consumer
@@ -55,17 +55,22 @@ func (k Keeper) IsCosmosConsumer(ctx context.Context, consumerID string) (bool, 
 	return consumerRegister.GetCosmosConsumerMetadata() != nil, nil
 }
 
-// GetAllRegisteredConsumerIDs gets all consumer IDs that registered to Babylon
-func (k Keeper) GetAllRegisteredConsumerIDs(ctx context.Context) []string {
-	var consumerIDs []string
-	err := k.ConsumerRegistry.Walk(ctx, nil, func(consumerID string, _ types.ConsumerRegister) (bool, error) {
-		consumerIDs = append(consumerIDs, consumerID)
+// GetAllRegisteredCosmosConsumers gets all cosmos consumers that registered and IBC init complete with channel ID set
+// Note: # Since the introduction of map in #1540, it is not currently used, but kept for potential future use.
+func (k Keeper) GetAllRegisteredCosmosConsumers(ctx context.Context) []*types.ConsumerRegister {
+	var consumers []*types.ConsumerRegister
+	err := k.ConsumerRegistry.Walk(ctx, nil, func(consumerID string, consumerRegister types.ConsumerRegister) (bool, error) {
+		// Select consumers registered as Cosmos consumer with metadata, IBC init complete with channel ID set
+		metadata := consumerRegister.GetCosmosConsumerMetadata()
+		if metadata != nil && metadata.ChannelId != "" {
+			consumers = append(consumers, &consumerRegister)
+		}
 		return false, nil
 	})
 	if err != nil {
 		panic(err)
 	}
-	return consumerIDs
+	return consumers
 }
 
 // GetConsumerID returns the consumer ID based on the channel and port ID
@@ -83,6 +88,6 @@ func (k Keeper) GetConsumerID(ctx sdk.Context, portID, channelID string) (consum
 	return cons.ConsumerId, nil
 }
 
-func (k Keeper) ConsumerHasIBCChannelOpen(ctx context.Context, consumerID string) bool {
-	return k.channelKeeper.ConsumerHasIBCChannelOpen(ctx, consumerID)
+func (k Keeper) ConsumerHasIBCChannelOpen(ctx context.Context, consumerID, channelID string) bool {
+	return k.channelKeeper.ConsumerHasIBCChannelOpen(ctx, consumerID, channelID)
 }

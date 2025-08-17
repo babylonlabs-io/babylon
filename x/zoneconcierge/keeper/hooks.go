@@ -7,8 +7,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 
-	checkpointingtypes "github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
-	epochingtypes "github.com/babylonlabs-io/babylon/v3/x/epoching/types"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
+	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 )
 
 type Hooks struct {
@@ -38,7 +38,12 @@ func (h Hooks) AfterRawCheckpointSealed(ctx context.Context, epoch uint64) error
 func (h Hooks) AfterRawCheckpointFinalized(ctx context.Context, epoch uint64) error {
 	// send BTC timestamp to all open channels with ZoneConcierge along side with
 	// necessary light client headers
-	if err := h.k.BroadcastBTCTimestamps(ctx, epoch); err != nil {
+	consumerChannelMap, err := h.k.GetConsumerChannelMap(ctx)
+	if err != nil {
+		h.handleHookBroadcastError(ctx, "BuildConsumerChannelMap", err)
+	}
+
+	if err := h.k.BroadcastBTCTimestamps(ctx, epoch, consumerChannelMap); err != nil {
 		h.handleHookBroadcastError(ctx, "BroadcastBTCTimestamps", err)
 	}
 

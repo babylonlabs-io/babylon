@@ -5,11 +5,11 @@ import (
 
 	"cosmossdk.io/log"
 
-	"github.com/babylonlabs-io/babylon/v3/app"
-	"github.com/babylonlabs-io/babylon/v3/cmd/babylond/cmd"
+	"github.com/babylonlabs-io/babylon/v4/app"
+	"github.com/babylonlabs-io/babylon/v4/cmd/babylond/cmd"
 	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"
 
-	"github.com/babylonlabs-io/babylon/v3/app/params"
+	"github.com/babylonlabs-io/babylon/v4/app/params"
 )
 
 func main() {

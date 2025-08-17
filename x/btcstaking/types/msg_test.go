@@ -8,9 +8,9 @@ import (
 
 	"cosmossdk.io/errors"
 	"cosmossdk.io/math"
-	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
-	bbntypes "github.com/babylonlabs-io/babylon/v3/types"
-	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	bbntypes "github.com/babylonlabs-io/babylon/v4/types"
+	"github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -673,7 +673,7 @@ func TestMsgAddBsnRewardsValidateBasic(t *testing.T) {
 						Ratio: math.LegacyNewDecWithPrec(5, 1), // 0.5
 					},
 					{
-						BtcPk: validBtcPk1, // Same BTC public key as above
+						BtcPk: validBtcPk1,                     // Same BTC public key as above
 						Ratio: math.LegacyNewDecWithPrec(5, 1), // 0.5
 					},
 				},
@@ -696,7 +696,7 @@ func TestMsgAddBsnRewardsValidateBasic(t *testing.T) {
 						Ratio: math.LegacyNewDecWithPrec(3, 1), // 0.3
 					},
 					{
-						BtcPk: validBtcPk1, // Duplicate of first FP
+						BtcPk: validBtcPk1,                     // Duplicate of first FP
 						Ratio: math.LegacyNewDecWithPrec(3, 1), // 0.3
 					},
 				},

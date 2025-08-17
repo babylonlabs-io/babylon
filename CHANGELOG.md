@@ -39,7 +39,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
+- [#1555](https://github.com/babylonlabs-io/babylon/pull/1555) Create new mergify rule for v4.
+- [#1554](https://github.com/babylonlabs-io/babylon/pull/1554) Bump repo to v4.
 - [#1229](https://github.com/babylonlabs-io/babylon/pull/1229) Wire up EVM.
+- [#1540](https://github.com/babylonlabs-io/babylon/pull/1540) Optimizations on `x/zoneconcierge` `EndBlocker` logic.
+- [#1536](https://github.com/babylonlabs-io/babylon/pull/1536) Refactor `x/zoneconcierge` for optimize ibc channel, client io
 
 ## v3.0.0-rc.2
 

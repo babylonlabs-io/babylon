@@ -6,8 +6,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/v3/test/e2e/util"
-	bstkconsumertypes "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
+	"github.com/babylonlabs-io/babylon/v4/test/e2e/util"
+	bstkconsumertypes "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
 )
 
 func (n *NodeConfig) QueryBTCStkConsumerParams() *bstkconsumertypes.Params {

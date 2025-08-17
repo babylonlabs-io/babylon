@@ -10,9 +10,9 @@ import (
 
 	"github.com/btcsuite/btcd/btcec/v2"
 
-	bbn "github.com/babylonlabs-io/babylon/v3/types"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
 
-	"github.com/babylonlabs-io/babylon/v3/test/e2e/configurer/rollup"
+	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer/rollup"
 )
 
 // QueryLastPublicRandCommitRollup returns the last public randomness

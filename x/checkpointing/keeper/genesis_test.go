@@ -10,11 +10,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
-	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
-	testutilkeeper "github.com/babylonlabs-io/babylon/v3/testutil/keeper"
-	"github.com/babylonlabs-io/babylon/v3/x/checkpointing/keeper"
-	"github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
+	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	testutilkeeper "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
+	"github.com/babylonlabs-io/babylon/v4/x/checkpointing/keeper"
+	"github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"

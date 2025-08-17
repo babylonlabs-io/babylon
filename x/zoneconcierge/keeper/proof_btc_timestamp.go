@@ -6,10 +6,10 @@ import (
 
 	cmtcrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 
-	btcctypes "github.com/babylonlabs-io/babylon/v3/x/btccheckpoint/types"
-	checkpointingtypes "github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
-	epochingtypes "github.com/babylonlabs-io/babylon/v3/x/epoching/types"
-	"github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
+	btcctypes "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
+	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
+	"github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/types"
 )
 
 func (k Keeper) ProveConsumerHeaderInEpoch(_ context.Context, header *types.IndexedHeader, epoch *epochingtypes.Epoch) (*cmtcrypto.ProofOps, error) {

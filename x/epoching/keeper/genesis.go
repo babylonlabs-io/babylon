@@ -3,7 +3,7 @@ package keeper
 import (
 	"context"
 
-	"github.com/babylonlabs-io/babylon/v3/x/epoching/types"
+	"github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 

@@ -7,8 +7,8 @@ import (
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
-	"github.com/babylonlabs-io/babylon/v3/app/keepers"
-	"github.com/babylonlabs-io/babylon/v3/app/upgrades"
+	"github.com/babylonlabs-io/babylon/v4/app/keepers"
+	"github.com/babylonlabs-io/babylon/v4/app/upgrades"
 )
 
 // UpgradeName defines the on-chain upgrade name for the Babylon v2.2 upgrade
