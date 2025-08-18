@@ -19,6 +19,8 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	anteinterfaces "github.com/cosmos/evm/ante/interfaces"
 	ibckeeper "github.com/cosmos/ibc-go/v10/modules/core/keeper"
+
+	evmante "github.com/cosmos/evm/ante/evm"
 )
 
 // NewAnteHandler creates a new AnteHandler for the Babylon chain.
@@ -74,6 +76,7 @@ func NewAnteHandler(
 		NewGasLimitDecorator(mempoolOpts),
 		NewIBCMsgSizeDecorator(),
 		NewWrappedAnteHandler(authAnteHandler),
+		evmante.NewGasWantedDecorator(evmHandlerOptions.EvmKeeper, evmHandlerOptions.FeeMarketKeeper),
 		NewBtcValidationDecorator(btcConfig, btccKeeper),
 		incentivekeeper.NewRefundTxDecorator(nil),
 		NewPriorityDecorator(),
