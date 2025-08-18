@@ -2,7 +2,10 @@ package types
 
 import (
 	"fmt"
+	"io"
 	"math/rand"
+	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -144,6 +147,15 @@ func (n *Node) Start() {
 	require.NoError(n.T(), err)
 
 	n.RpcClient = rpcClient
+}
+
+func (n *Node) HostPort(portID int) string {
+	resource := n.ContainerResource()
+	return resource.GetHostPort(fmt.Sprintf("%d/tcp", portID))
+}
+
+func (n *Node) ContainerResource() *dockertest.Resource {
+	return n.Tm.ContainerManager.Resources[n.Container.Name]
 }
 
 func (n *ValidatorNode) CreateValidatorMsg(selfDelegationAmt sdk.Coin) sdk.Msg {
@@ -543,6 +555,32 @@ func (n *Node) IsHealthy() bool {
 func (n *Node) WaitForHeight(height int64) error {
 	// Implementation will be added later
 	return nil
+}
+
+// QueryGRPCGateway performs a query via the gRPC gateway
+func (n *Node) QueryGRPCGateway(path string, params url.Values) ([]byte, error) {
+	if n.Ports == nil {
+		return nil, fmt.Errorf("node ports not initialized")
+	}
+
+	restHost := n.HostPort(n.Ports.REST)
+	baseURL := fmt.Sprintf("http://%s", restHost)
+	if len(params) > 0 {
+		baseURL += "?" + params.Encode()
+	}
+
+	fullURL := baseURL + path
+	resp, err := http.Get(fullURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query gRPC gateway: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("gRPC gateway returned status %d", resp.StatusCode)
+	}
+
+	return io.ReadAll(resp.Body)
 }
 
 func (n *Node) QueryHeight() (int64, error) {

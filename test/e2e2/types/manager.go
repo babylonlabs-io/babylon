@@ -107,7 +107,7 @@ func (tm *TestManagerIbc) Start() {
 
 	tm.ChainsWaitUntilHeight(1)
 
-	cA, cB := tm.Chains[CHAIN_ID_BABYLON], tm.Chains[CHAIN_ID_BSN]
+	cA, cB := tm.ChainBBN(), tm.ChainBSN()
 	tm.Hermes.Start(cA, cB)
 
 	tm.Hermes.CreateIBCTransferChannel(cA, cB)
@@ -127,4 +127,12 @@ func GenerateNetworkID(t *testing.T) string {
 	random := rand.Intn(10000)
 
 	return fmt.Sprintf("%s-%d-%d", testName, timestamp, random)
+}
+
+func (tm *TestManagerIbc) ChainBBN() *Chain {
+	return tm.Chains[CHAIN_ID_BABYLON]
+}
+
+func (tm *TestManagerIbc) ChainBSN() *Chain {
+	return tm.Chains[CHAIN_ID_BSN]
 }
