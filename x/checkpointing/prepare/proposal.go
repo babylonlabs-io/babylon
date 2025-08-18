@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
-	"github.com/babylonlabs-io/babylon/v4/app"
-
 	cometproto "github.com/cometbft/cometbft/proto/tendermint/types"
 
 	"cosmossdk.io/log"
@@ -16,6 +14,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/mempool"
 	sdktestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
 
+	"github.com/babylonlabs-io/babylon/v4/types"
 	ckpttypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
 )
 
@@ -46,8 +45,10 @@ func NewProposalHandler(
 	mp mempool.Mempool,
 	bApp *baseapp.BaseApp,
 	encCfg sdktestutil.TestEncodingConfig,
+	ethSignerExtractor types.EthSignerExtractionAdapter,
 ) *ProposalHandler {
 	defaultHandler := baseapp.NewDefaultProposalHandler(mp, bApp)
+	defaultHandler.SetSignerExtractionAdapter(ethSignerExtractor)
 	ckpttypes.RegisterInterfaces(encCfg.InterfaceRegistry)
 
 	return &ProposalHandler{
@@ -62,8 +63,6 @@ func NewProposalHandler(
 }
 
 func (h *ProposalHandler) SetHandlers(bApp *baseapp.BaseApp) {
-	defaultHandler := baseapp.NewDefaultProposalHandler(bApp.Mempool(), bApp)
-	defaultHandler.SetSignerExtractionAdapter(app.NewEthSignerExtractionAdapter(mempool.NewDefaultSignerExtractionAdapter()))
 	bApp.SetPrepareProposal(h.PrepareProposal())
 	bApp.SetProcessProposal(h.ProcessProposal())
 }

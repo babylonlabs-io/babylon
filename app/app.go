@@ -593,7 +593,7 @@ func NewBabylonApp(
 
 	// set proposal extension
 	proposalHandler := prepare.NewProposalHandler(
-		logger, &app.CheckpointingKeeper, bApp.Mempool(), bApp, app.EncCfg)
+		logger, &app.CheckpointingKeeper, bApp.Mempool(), bApp, app.EncCfg, bbn.NewEthSignerExtractionAdapter(mempool.NewDefaultSignerExtractionAdapter()))
 	proposalHandler.SetHandlers(bApp)
 
 	// set vote extension
@@ -987,7 +987,7 @@ func getAppMempool(appOpts servertypes.AppOptions) mempool.Mempool {
 		maxTxs     = cast.ToInt(appOpts.Get(server.FlagMempoolMaxTxs))
 		mempoolCfg = mempool.DefaultPriorityNonceMempoolConfig()
 	)
-	mempoolCfg.SignerExtractor = NewEthSignerExtractionAdapter(mempool.NewDefaultSignerExtractionAdapter())
+	mempoolCfg.SignerExtractor = bbn.NewEthSignerExtractionAdapter(mempool.NewDefaultSignerExtractionAdapter())
 	mempoolCfg.MaxTx = maxTxs
 	mp = mempool.NewPriorityMempool(mempoolCfg)
 	if maxTxs < 0 {
