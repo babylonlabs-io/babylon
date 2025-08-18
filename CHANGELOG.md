@@ -39,6 +39,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
+<<<<<<< HEAD
+=======
+- [#1553](https://github.com/babylonlabs-io/babylon/pull/1553) Remove native Coin precompile from token pairs.
+- [#1555](https://github.com/babylonlabs-io/babylon/pull/1555) Create new mergify rule for v4.
+>>>>>>> 397d8df (fix(evm): Remove default wrapped gas token pair (#1553))
 - [#1554](https://github.com/babylonlabs-io/babylon/pull/1554) Bump repo to v4.
 - [#1229](https://github.com/babylonlabs-io/babylon/pull/1229) Wire up EVM.
 - [#1540](https://github.com/babylonlabs-io/babylon/pull/1540) Optimizations on `x/zoneconcierge` `EndBlocker` logic.
