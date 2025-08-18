@@ -40,9 +40,9 @@ port = 3001
 [[chains]]
 type = "CosmosSdk"
 id = '$BBN_A_E2E_CHAIN_ID'
-rpc_addr = 'http://$BBN_A_E2E_VAL_HOST:26657'
-grpc_addr = 'http://$BBN_A_E2E_VAL_HOST:9090'
-event_source = { mode = 'push', url = 'ws://$BBN_A_E2E_VAL_HOST:26657/websocket', batch_delay = '500ms' }
+rpc_addr = 'http://$BBN_A_E2E_VAL_HOST_RPC'
+grpc_addr = 'http://$BBN_A_E2E_VAL_HOST_GRPC'
+event_source = { mode = 'push', url = 'ws://$BBN_A_E2E_VAL_HOST_RPC/websocket', batch_delay = '500ms' }
 rpc_timeout = '10s'
 account_prefix = 'bbn'
 key_name = 'val01-bbn-a'
@@ -56,9 +56,9 @@ trust_threshold = { numerator = '1', denominator = '3' }
 [[chains]]
 type = "CosmosSdk"
 id = '$BBN_B_E2E_CHAIN_ID'
-rpc_addr = 'http://$BBN_B_E2E_VAL_HOST:26657'
-grpc_addr = 'http://$BBN_B_E2E_VAL_HOST:9090'
-event_source = { mode = 'push', url = 'ws://$BBN_B_E2E_VAL_HOST:26657/websocket', batch_delay = '500ms' }
+rpc_addr = 'http://$BBN_B_E2E_VAL_HOST_RPC'
+grpc_addr = 'http://$BBN_B_E2E_VAL_HOST_GRPC'
+event_source = { mode = 'push', url = 'ws://$BBN_B_E2E_VAL_HOST_RPC/websocket', batch_delay = '500ms' }
 rpc_timeout = '10s'
 account_prefix = 'bbn'
 key_name = 'val01-bbn-b'

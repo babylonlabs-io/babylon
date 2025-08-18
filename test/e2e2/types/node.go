@@ -82,8 +82,17 @@ type ValidatorNode struct {
 	Wallet *ValidatorWallet
 }
 
-// NewNode creates a new regular node with simple ID generation
+// NewNode creates a new regular node and necessary files with default wallet
 func NewNode(tm *TestManager, name string, cfg *ChainConfig) *Node {
+	n := NewNodeWithoutBls(tm, name, cfg)
+	// even regular nodes needs bls keys
+	// to avoid erros in signer.LoadOrGenBlsKey
+	GenBlsKey(n.Home)
+	return n
+}
+
+// NewNodeWithoutBls creates a new regular node with simple ID generation
+func NewNodeWithoutBls(tm *TestManager, name string, cfg *ChainConfig) *Node {
 	nPorts, err := tm.PortMgr.AllocateNodePorts()
 	require.NoError(tm.T, err)
 
@@ -109,10 +118,10 @@ func NewNode(tm *TestManager, name string, cfg *ChainConfig) *Node {
 
 // NewValidatorNode creates a new validator node with simple ID generation
 func NewValidatorNode(tm *TestManager, name string, cfg *ChainConfig) *ValidatorNode {
-	n := NewNode(tm, name, cfg)
+	n := NewNodeWithoutBls(tm, name, cfg)
 
 	valW := n.CreateWallet(name)
-	consKey, err := CreateConsensusKey(n.Name, valW.Mnemonic, n.Home)
+	consKey, err := CreateConsensusBlsKey(valW.Mnemonic, n.Home)
 	require.NoError(n.T(), err)
 
 	return &ValidatorNode{

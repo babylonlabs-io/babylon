@@ -7,6 +7,7 @@ import (
 	"github.com/babylonlabs-io/babylon/v4/app/signer"
 	appsigner "github.com/babylonlabs-io/babylon/v4/app/signer"
 	"github.com/btcsuite/btcd/btcec/v2"
+	cmtcfg "github.com/cometbft/cometbft/config"
 	"github.com/cometbft/cometbft/crypto/ed25519"
 	"github.com/cometbft/cometbft/privval"
 	sdkcrypto "github.com/cosmos/cosmos-sdk/crypto"
@@ -24,6 +25,7 @@ import (
 const (
 	KeyringPassphrase = "testpassphrase"
 	KeyringAppName    = "testnet"
+	BlsPwd            = "password"
 )
 
 // WalletSender manages transaction sending for an account
@@ -200,20 +202,15 @@ func CreateMnemonic() (string, error) {
 	return mnemonic, nil
 }
 
-func CreateConsensusKey(moniker, mnemonic, rootDir string) (*appsigner.ConsensusKey, error) {
-	serverCtx := server.NewDefaultContext()
-	config := serverCtx.Config
-	config.SetRoot(rootDir)
-	config.Moniker = moniker
+func CreateConsensusBlsKey(mnemonic, rootDir string) (*appsigner.ConsensusKey, error) {
+	bls, err := GenBlsKey(rootDir)
+	if err != nil {
+		return nil, err
+	}
 
+	config := NodeConfig(rootDir)
 	pvKeyFile := config.PrivValidatorKeyFile()
 	pvStateFile := config.PrivValidatorStateFile()
-	blsKeyFile := appsigner.DefaultBlsKeyFile(rootDir)
-	blsPasswordFile := appsigner.DefaultBlsPasswordFile(rootDir)
-
-	if err := appsigner.EnsureDirs(pvKeyFile, pvStateFile, blsKeyFile, blsPasswordFile); err != nil {
-		return nil, fmt.Errorf("failed to ensure dirs: %w", err)
-	}
 
 	// create file pv
 	var privKey ed25519.PrivKey
@@ -226,11 +223,31 @@ func CreateConsensusKey(moniker, mnemonic, rootDir string) (*appsigner.Consensus
 	filePV.Key.Save()
 	filePV.LastSignState.Save()
 
-	// create bls pv
-	bls := appsigner.GenBls(blsKeyFile, blsPasswordFile, "password")
-
 	return &appsigner.ConsensusKey{
 		Comet: &filePV.Key,
 		Bls:   &bls.Key,
 	}, nil
+}
+
+func GenBlsKey(rootDir string) (*appsigner.Bls, error) {
+	config := NodeConfig(rootDir)
+	pvKeyFile := config.PrivValidatorKeyFile()
+	pvStateFile := config.PrivValidatorStateFile()
+
+	blsKeyFile := appsigner.DefaultBlsKeyFile(rootDir)
+	blsPasswordFile := appsigner.DefaultBlsPasswordFile(rootDir)
+
+	if err := appsigner.EnsureDirs(pvKeyFile, pvStateFile, blsKeyFile, blsPasswordFile); err != nil {
+		return nil, fmt.Errorf("failed to ensure dirs: %w", err)
+	}
+
+	// create bls pv
+	return appsigner.GenBls(blsKeyFile, blsPasswordFile, BlsPwd), nil
+}
+
+func NodeConfig(rootDir string) *cmtcfg.Config {
+	serverCtx := server.NewDefaultContext()
+	config := serverCtx.Config
+	config.SetRoot(rootDir)
+	return config
 }

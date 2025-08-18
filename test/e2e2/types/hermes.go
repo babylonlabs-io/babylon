@@ -115,8 +115,8 @@ func (hr *HermesRelayer) RunResource(cA, cB *Chain) *dockertest.Resource {
 
 	// we are using non validator nodes as validator are constantly sending bls
 	// transactions, which makes relayer operations failing
-	relayerNodeA := cA.Nodes[0]
-	relayerNodeB := cB.Nodes[0]
+	rnA := cA.Nodes[0]
+	rnB := cB.Nodes[0]
 
 	runOpts := &dockertest.RunOptions{
 		Name:       hr.Container.Name,
@@ -135,10 +135,12 @@ func (hr *HermesRelayer) RunResource(cA, cB *Chain) *dockertest.Resource {
 			fmt.Sprintf("HERMES_PORT=%d", hr.ExposedPort),
 			fmt.Sprintf("BBN_A_E2E_CHAIN_ID=%s", cA.ChainID()),
 			fmt.Sprintf("BBN_B_E2E_CHAIN_ID=%s", cB.ChainID()),
-			fmt.Sprintf("BBN_A_E2E_VAL_MNEMONIC=%s", relayerNodeA.DefaultWallet().Mnemonic),
-			fmt.Sprintf("BBN_B_E2E_VAL_MNEMONIC=%s", relayerNodeB.DefaultWallet().Mnemonic),
-			fmt.Sprintf("BBN_A_E2E_VAL_HOST=%s", relayerNodeA.Container.Name),
-			fmt.Sprintf("BBN_B_E2E_VAL_HOST=%s", relayerNodeB.Container.Name),
+			fmt.Sprintf("BBN_A_E2E_VAL_MNEMONIC=%s", rnA.DefaultWallet().Mnemonic),
+			fmt.Sprintf("BBN_B_E2E_VAL_MNEMONIC=%s", rnB.DefaultWallet().Mnemonic),
+			fmt.Sprintf("BBN_A_E2E_VAL_HOST_GRPC=%s:%d", rnA.Container.Name, rnA.Ports.GRPC),
+			fmt.Sprintf("BBN_A_E2E_VAL_HOST_RPC=%s:%d", rnA.Container.Name, rnA.Ports.RPC),
+			fmt.Sprintf("BBN_B_E2E_VAL_HOST_GRPC=%s:%d", rnB.Container.Name, rnB.Ports.GRPC),
+			fmt.Sprintf("BBN_B_E2E_VAL_HOST_RPC=%s:%d", rnB.Container.Name, rnB.Ports.RPC),
 		},
 		Entrypoint: []string{
 			"sh",

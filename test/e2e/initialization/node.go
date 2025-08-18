@@ -156,7 +156,7 @@ func (n *internalNode) createNodeKey() error {
 }
 
 func (n *internalNode) createConsensusKey() error {
-	consKey, err := e2etypes.CreateConsensusKey(n.moniker, n.mnemonic, n.configDir())
+	consKey, err := e2etypes.CreateConsensusBlsKey(n.moniker, n.mnemonic, n.configDir())
 	if err != nil {
 		return err
 	}
