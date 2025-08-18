@@ -203,3 +203,51 @@ func (hr *HermesRelayer) ContainerExposedPorts() []string {
 		strconv.FormatInt(int64(hr.ExposedPort), 10),
 	}
 }
+
+// CreateIBCTransferChannel creates a transfer channel between two chains
+func (hr *HermesRelayer) CreateIBCTransferChannel(chainA, chainB *Chain) {
+	err := hr.CreateIBCChannel(chainA, chainB, "transfer", "transfer", "unordered", "ics20-1", "--b-chain", chainB.ChainID(), "--new-client-connection")
+	require.NoError(hr.T(), err)
+}
+
+// CreateZoneConciergeChannel creates a consumer channel between two chains using the zoneconcierge port
+func (hr *HermesRelayer) CreateZoneConciergeChannel(chainA, chainB *Chain, chainAConnID string) error {
+	return hr.CreateIBCChannel(chainA, chainB, "zoneconcierge", "zoneconcierge", "ordered", "zoneconcierge-1", "--a-connection", chainAConnID)
+}
+
+// CreateIBCChannel creates an IBC channel between two chains using hermes
+func (hr *HermesRelayer) CreateIBCChannel(chainA, chainB *Chain, srcPortID, destPortID, order, version string, otherFlags ...string) error {
+	hr.T().Logf("connecting %s and %s chains via IBC: src port %q; dest port %q", chainA.ChainID(), chainB.ChainID(), srcPortID, destPortID)
+
+	cmd := []string{"hermes", "create", "channel",
+		"--a-chain", chainA.ChainID(),
+		"--a-port", srcPortID, "--b-port", destPortID,
+		"--order", order, "--channel-version", version, "--yes"}
+	cmd = append(cmd, otherFlags...)
+
+	hr.T().Log(cmd)
+
+	// Execute hermes command in the container
+	_, err := hr.ExecHermesCmd(cmd)
+	if err != nil {
+		return err
+	}
+
+	hr.T().Logf("connected %s and %s chains via IBC src port %q; dest port %q", chainA.ChainID(), chainB.ChainID(), srcPortID, destPortID)
+	return nil
+}
+
+// ExecHermesCmd executes a hermes command in the container
+func (hr *HermesRelayer) ExecHermesCmd(cmd []string) (string, error) {
+	outBuf, errBuf, err := hr.Tm.ContainerManager.ExecCmd(hr.T(), hr.Container.Name, cmd, "SUCCESS")
+	if err != nil {
+		return "", fmt.Errorf("failed to exec hermes command: %w", err)
+	}
+
+	output := outBuf.String()
+	if errOutput := errBuf.String(); errOutput != "" {
+		output += "\nstderr: " + errOutput
+	}
+
+	return output, nil
+}

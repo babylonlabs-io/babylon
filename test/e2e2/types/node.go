@@ -319,14 +319,23 @@ func (n *Node) CreateAppConfig() {
 	appConfig.BaseConfig.Pruning = "default"
 	appConfig.BaseConfig.PruningKeepRecent = "0"
 	appConfig.BaseConfig.PruningInterval = "0"
+
 	appConfig.API.Enable = true
 	appConfig.API.Address = n.GetRESTAddress()
+
 	appConfig.MinGasPrices = fmt.Sprintf("%s%s", MinGasPrice, appparams.DefaultBondDenom)
 	appConfig.StateSync.SnapshotInterval = 1500
 	appConfig.StateSync.SnapshotKeepRecent = 2
 	appConfig.BtcConfig.Network = string(bbn.BtcSimnet)
+
 	appConfig.GRPC.Enable = true
 	appConfig.GRPC.Address = n.GetGRPCAddress()
+
+	// Configure EVM JSON-RPC with dynamic ports
+	appConfig.JSONRPC.Enable = true
+	appConfig.JSONRPC.Address = n.GetEVMRPCAddress()
+	appConfig.JSONRPC.WsAddress = n.GetEVMWSAddress()
+	appConfig.JSONRPC.WSOrigins = []string{"0.0.0.0", "127.0.0.1", "localhost"}
 
 	customTemplate := cmd.DefaultBabylonTemplate()
 
@@ -502,14 +511,28 @@ func (n *Node) GetGRPCAddress() string {
 	if n.Ports == nil {
 		return ""
 	}
-	return fmt.Sprintf("localhost:%d", n.Ports.GRPC)
+	return fmt.Sprintf("0.0.0.0:%d", n.Ports.GRPC)
 }
 
 func (n *Node) GetRESTAddress() string {
 	if n.Ports == nil {
 		return ""
 	}
-	return fmt.Sprintf("http://localhost:%d", n.Ports.REST)
+	return fmt.Sprintf("tcp://0.0.0.0:%d", n.Ports.REST)
+}
+
+func (n *Node) GetEVMRPCAddress() string {
+	if n.Ports == nil {
+		return ""
+	}
+	return fmt.Sprintf("0.0.0.0:%d", n.Ports.EVMRPC)
+}
+
+func (n *Node) GetEVMWSAddress() string {
+	if n.Ports == nil {
+		return ""
+	}
+	return fmt.Sprintf("0.0.0.0:%d", n.Ports.EVMWS)
 }
 
 func (n *Node) IsHealthy() bool {

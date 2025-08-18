@@ -2,6 +2,7 @@ package e2e2
 
 import (
 	"testing"
+	"time"
 
 	"github.com/babylonlabs-io/babylon/v4/test/e2e2/types"
 )
@@ -11,6 +12,8 @@ func TestIBCTransfer(t *testing.T) {
 	tm := types.NewTmWithIbc(t)
 
 	tm.Start()
+
+	time.Sleep(50000000000)
 	// Verify tokens arrived on consumer chain
 	// TODO: Implement balance queries
 
