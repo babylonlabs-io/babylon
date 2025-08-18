@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
+	"github.com/babylonlabs-io/babylon/v4/app"
 
 	cometproto "github.com/cometbft/cometbft/proto/tendermint/types"
 
@@ -61,6 +62,8 @@ func NewProposalHandler(
 }
 
 func (h *ProposalHandler) SetHandlers(bApp *baseapp.BaseApp) {
+	defaultHandler := baseapp.NewDefaultProposalHandler(bApp.Mempool(), bApp)
+	defaultHandler.SetSignerExtractionAdapter(app.NewEthSignerExtractionAdapter(mempool.NewDefaultSignerExtractionAdapter()))
 	bApp.SetPrepareProposal(h.PrepareProposal())
 	bApp.SetProcessProposal(h.ProcessProposal())
 }
