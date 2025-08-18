@@ -78,7 +78,7 @@ func NewAnteHandler(
 		NewWrappedAnteHandler(authAnteHandler),
 		evmante.NewGasWantedDecorator(evmHandlerOptions.EvmKeeper, evmHandlerOptions.FeeMarketKeeper),
 		NewBtcValidationDecorator(btcConfig, btccKeeper),
-		incentivekeeper.NewRefundTxDecorator(nil),
+		incentivekeeper.NewRefundTxDecorator(nil, accountKeeper, nil),
 		NewPriorityDecorator(),
 	)
 

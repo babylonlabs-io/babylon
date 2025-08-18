@@ -1,10 +1,15 @@
 package keeper_test
 
 import (
+	"context"
+	storetypes "cosmossdk.io/store/types"
 	"testing"
+	"time"
 
+	"cosmossdk.io/core/address"
 	sdktestdata "github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
 	keepertest "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
 	btclctypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
@@ -39,12 +44,42 @@ func (tx *mockFeeTx) FeeGranter() []byte { return tx.feeGranter }
 func (tx *mockFeeTx) GetFee() sdk.Coins  { return tx.fee }
 func (tx *mockFeeTx) GetGas() uint64     { return tx.gas }
 
+type MockAccountKeeper struct {
+	FundedAddr sdk.AccAddress
+}
+
+func (m MockAccountKeeper) GetAccount(_ context.Context, addr sdk.AccAddress) sdk.AccountI {
+	if m.FundedAddr != nil && addr.Equals(m.FundedAddr) {
+		return &authtypes.BaseAccount{Address: addr.String()}
+	}
+	return nil
+}
+func (m MockAccountKeeper) SetAccount(_ context.Context, _ sdk.AccountI) {}
+func (m MockAccountKeeper) NewAccountWithAddress(_ context.Context, _ sdk.AccAddress) sdk.AccountI {
+	return nil
+}
+func (m MockAccountKeeper) RemoveAccount(_ context.Context, _ sdk.AccountI) {}
+func (m MockAccountKeeper) GetModuleAddress(_ string) sdk.AccAddress        { return sdk.AccAddress{} }
+func (m MockAccountKeeper) GetParams(_ context.Context) authtypes.Params {
+	return authtypes.DefaultParams()
+}
+
+func (m MockAccountKeeper) GetSequence(_ context.Context, _ sdk.AccAddress) (uint64, error) {
+	return 0, nil
+}
+func (m MockAccountKeeper) RemoveExpiredUnorderedNonces(_ sdk.Context) error { return nil }
+func (m MockAccountKeeper) TryAddUnorderedNonce(_ sdk.Context, _ []byte, _ time.Time) error {
+	return nil
+}
+func (m MockAccountKeeper) UnorderedTransactionsEnabled() bool { return false }
+func (m MockAccountKeeper) AddressCodec() address.Codec        { return nil }
+
 func TestCheckTxAndClearIndex(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
 	iKeeper, ctx := keepertest.IncentiveKeeper(t, nil, nil, nil)
-	decorator := keeper.NewRefundTxDecorator(iKeeper)
+	decorator := keeper.NewRefundTxDecorator(iKeeper, nil, nil)
 
 	testCases := []struct {
 		name     string
@@ -172,7 +207,7 @@ func TestRefundTxDecorator_AnteHandle(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			decorator := keeper.NewRefundTxDecorator(nil)
+			decorator := keeper.NewRefundTxDecorator(nil, MockAccountKeeper{}, nil)
 
 			// Create a mock FeeTx
 			tx := &mockFeeTx{
@@ -183,6 +218,7 @@ func TestRefundTxDecorator_AnteHandle(t *testing.T) {
 
 			// Wrap in context
 			ctx := sdk.Context{}.WithChainID("test-chain")
+			ctx = ctx.WithGasMeter(storetypes.NewGasMeter(1e10))
 
 			// Next handler simply returns no error
 			next := func(ctx sdk.Context, tx sdk.Tx, simulate bool) (sdk.Context, error) {

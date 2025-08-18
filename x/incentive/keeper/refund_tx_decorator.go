@@ -4,7 +4,11 @@ import (
 	"bytes"
 	"errors"
 
+	anteinterfaces "github.com/cosmos/evm/ante/interfaces"
+	feemarketkeeper "github.com/cosmos/evm/x/feemarket/keeper"
+
 	errorsmod "cosmossdk.io/errors"
+	storetypes "cosmossdk.io/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
@@ -19,13 +23,18 @@ var _ sdk.PostDecorator = &RefundTxDecorator{}
 var _ sdk.AnteDecorator = &RefundTxDecorator{}
 
 type RefundTxDecorator struct {
-	k *Keeper
+	k                   *Keeper
+	ak                  anteinterfaces.AccountKeeper
+	fmk                 *feemarketkeeper.Keeper
+	currentTxInitialGas uint64
 }
 
 // NewRefundTxDecorator creates a new RefundTxDecorator
-func NewRefundTxDecorator(k *Keeper) *RefundTxDecorator {
+func NewRefundTxDecorator(k *Keeper, ak anteinterfaces.AccountKeeper, fmk *feemarketkeeper.Keeper) *RefundTxDecorator {
 	return &RefundTxDecorator{
-		k: k,
+		k:   k,
+		ak:  ak,
+		fmk: fmk,
 	}
 }
 
@@ -48,6 +57,16 @@ func (d *RefundTxDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool
 			return ctx, errors.New("it is not possible to use a fee grant in a refundable transaction")
 		}
 	}
+
+	// calculate gas consumed by tx size at cosmos ante handler
+	params := d.ak.GetParams(ctx)
+	gasConsumedByTxSize := params.TxSizeCostPerByte * storetypes.Gas(len(ctx.TxBytes()))
+
+	// calculate gas consumed by signature verification at cosmos ante handler
+	var gasConsumedBySigVerification uint64
+	gasConsumedBySigVerification += params.SigVerifyCostSecp256k1
+
+	d.currentTxInitialGas = ctx.GasMeter().GasConsumed() - gasConsumedByTxSize - gasConsumedBySigVerification
 
 	return next(ctx, tx, simulate)
 }
@@ -76,6 +95,29 @@ func (d *RefundTxDecorator) PostHandle(ctx sdk.Context, tx sdk.Tx, simulate, suc
 			d.k.Logger(ctx).Error("failed to refund tx", "error", err)
 			return next(ctx, tx, simulate, success)
 		}
+
+		totalGasConsumed := ctx.GasMeter().GasConsumed() - d.currentTxInitialGas
+
+		// refund gas consumed from tx gas meter
+		ctx.GasMeter().RefundGas(totalGasConsumed, "refundable babylon tx gas consumption refund")
+
+		// refund gas wanted from transient gas wanted
+		if d.fmk != nil {
+			feeTx, ok := tx.(sdk.FeeTx)
+			if !ok {
+				return ctx, errorsmod.Wrap(sdkerrors.ErrTxDecode, "Tx must be a FeeTx")
+			}
+			gasLimit := feeTx.GetGas()
+			currentGasWanted := d.fmk.GetTransientGasWanted(ctx)
+			if currentGasWanted < gasLimit {
+				return ctx, errorsmod.Wrap(sdkerrors.ErrTxDecode, "Tx gas limit is greater than the current gas wanted")
+			}
+			adjustedGasWanted := currentGasWanted - gasLimit
+			d.fmk.SetTransientBlockGasWanted(ctx, adjustedGasWanted)
+		}
+
+		// reset tracking
+		d.currentTxInitialGas = 0
 	}
 
 	// move to the next PostHandler
