@@ -63,8 +63,7 @@ func (d *RefundTxDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool
 	gasConsumedByTxSize := params.TxSizeCostPerByte * storetypes.Gas(len(ctx.TxBytes()))
 
 	// calculate gas consumed by signature verification at cosmos ante handler
-	var gasConsumedBySigVerification uint64
-	gasConsumedBySigVerification += params.SigVerifyCostSecp256k1
+	gasConsumedBySigVerification := params.SigVerifyCostSecp256k1
 
 	d.currentTxInitialGas = ctx.GasMeter().GasConsumed() - gasConsumedByTxSize - gasConsumedBySigVerification
 
@@ -162,14 +161,14 @@ func isRefundTx(tx sdk.Tx) bool {
 	for _, msg := range tx.GetMsgs() {
 		switch msg.(type) {
 		case *btclctypes.MsgInsertHeaders, // BTC light client
-			// BTC timestamping
+		// BTC timestamping
 			*btcctypes.MsgInsertBTCSpvProof,
-			// BTC staking
+		// BTC staking
 			*bstypes.MsgAddCovenantSigs,
 			*bstypes.MsgBTCUndelegate,
 			*bstypes.MsgSelectiveSlashingEvidence,
 			*bstypes.MsgAddBTCDelegationInclusionProof,
-			// BTC staking finality
+		// BTC staking finality
 			*ftypes.MsgAddFinalitySig:
 			continue
 		default:
