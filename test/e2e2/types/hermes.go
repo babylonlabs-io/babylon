@@ -1,7 +1,20 @@
 package types
 
 import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+	"os"
+	"path/filepath"
+	"strconv"
+	"testing"
 	"time"
+
+	"github.com/babylonlabs-io/babylon/v4/test/e2e/util"
+	"github.com/ory/dockertest/v3"
+	"github.com/stretchr/testify/require"
 )
 
 // HermesChainConfig defines Hermes configuration for a specific chain
@@ -47,97 +60,144 @@ type HermesConfig struct {
 
 // HermesRelayer manages Hermes IBC relayer
 type HermesRelayer struct {
-	Config    *HermesConfig
-	Container *Container
-	Tm        *TestManager
+	Home string
+
+	Endpoint    string
+	Config      *HermesConfig
+	Container   *Container
+	Tm          *TestManager
+	ExposedPort int
 }
 
 // NewHermesRelayer creates a new Hermes relayer
 func NewHermesRelayer(tm *TestManager) *HermesRelayer {
+	home := filepath.Join(tm.TempDir, "hermes")
+	err := os.MkdirAll(home, 0o755)
+	require.NoError(tm.T, err)
+
+	cointanerName := fmt.Sprintf("%s-%s", "hermes", tm.NetworkID()[:4])
+
+	hermesPort, err := tm.PortMgr.AllocatePort()
+	require.NoError(tm.T, err)
+
 	return &HermesRelayer{
-		Config: &HermesConfig{
-			ChainConfigs: make(map[string]*HermesChainConfig),
-			GlobalConfig: &HermesGlobalConfig{
-				LogLevel:      "info",
-				TelemetryHost: "0.0.0.0",
-				TelemetryPort: 3031,
-				RestPort:      3000,
-			},
-		},
-		Tm: tm,
+		Home:        home,
+		Container:   NewContainerHermes(cointanerName),
+		Tm:          tm,
+		ExposedPort: hermesPort,
 	}
-}
-
-// AddChain adds a chain to the relayer configuration
-func (hr *HermesRelayer) AddChain(chain *Chain, account *WalletSender) error {
-	rpcAddr, err := hr.getRPCAddress(chain)
-	if err != nil {
-		return err
-	}
-
-	grpcAddr, err := hr.getGRPCAddress(chain)
-	if err != nil {
-		return err
-	}
-
-	hr.Config.ChainConfigs[chain.Config.ChainID] = &HermesChainConfig{
-		ChainConfig:    chain.Config,
-		RPCAddr:        rpcAddr,
-		GRPCAddr:       grpcAddr,
-		WebSocketAddr:  rpcAddr + "/websocket",
-		Account:        account,
-		GasPrice:       "0.001ubbn",
-		KeyName:        account.KeyName,
-		TrustingPeriod: 14 * 24 * time.Hour,
-	}
-
-	return nil
 }
 
 // Start starts the Hermes relayer container
-func (hr *HermesRelayer) Start() {
-	// TODO: Implement Hermes container startup
-
+func (hr *HermesRelayer) Start(cA, cB *Chain) {
+	dockerResource := hr.RunResource(cA, cB)
+	hr.WaitRelayerToStart(dockerResource)
 }
 
-// Stop stops the Hermes relayer container
-func (hr *HermesRelayer) Stop() error {
-	// TODO: Implement Hermes container shutdown
-	return nil
+func (hr *HermesRelayer) T() *testing.T {
+	return hr.Tm.T
 }
 
-// CreateChannel creates an IBC channel between two chains
-func (hr *HermesRelayer) CreateChannel(chainA, chainB, portA, portB string) (*ChannelConfig, error) {
-	channelConfig := &ChannelConfig{
-		ChainA: chainA,
-		ChainB: chainB,
-		PortA:  portA,
-		PortB:  portB,
+func (hr *HermesRelayer) RunResource(cA, cB *Chain) *dockertest.Resource {
+	hr.T().Log("starting Hermes relayer container...")
+
+	require.GreaterOrEqual(hr.T(), len(cA.Nodes), 1)
+	require.GreaterOrEqual(hr.T(), len(cB.Nodes), 1)
+
+	pwd, err := os.Getwd()
+	require.NoError(hr.T(), err)
+
+	_, err = util.CopyFile(
+		filepath.Join(pwd, "/scripts/", "hermes_bootstrap.sh"),
+		filepath.Join(hr.Home, "hermes_bootstrap.sh"),
+	)
+	require.NoError(hr.T(), err)
+
+	// we are using non validator nodes as validator are constantly sending bls
+	// transactions, which makes relayer operations failing
+	relayerNodeA := cA.Nodes[0]
+	relayerNodeB := cB.Nodes[0]
+
+	runOpts := &dockertest.RunOptions{
+		Name:       hr.Container.Name,
+		Repository: hr.Container.Repository,
+		Tag:        hr.Container.Tag,
+		NetworkID:  hr.Tm.NetworkID(),
+		Cmd: []string{
+			"start",
+		},
+		User: "root:root",
+		Mounts: []string{
+			fmt.Sprintf("%s/:/root/hermes", hr.Home),
+		},
+		ExposedPorts: hr.ContainerExposedPorts(),
+		Env: []string{
+			fmt.Sprintf("HERMES_PORT=%d", hr.ExposedPort),
+			fmt.Sprintf("BBN_A_E2E_CHAIN_ID=%s", cA.ChainID()),
+			fmt.Sprintf("BBN_B_E2E_CHAIN_ID=%s", cB.ChainID()),
+			fmt.Sprintf("BBN_A_E2E_VAL_MNEMONIC=%s", relayerNodeA.DefaultWallet().Mnemonic),
+			fmt.Sprintf("BBN_B_E2E_VAL_MNEMONIC=%s", relayerNodeB.DefaultWallet().Mnemonic),
+			fmt.Sprintf("BBN_A_E2E_VAL_HOST=%s", relayerNodeA.Container.Name),
+			fmt.Sprintf("BBN_B_E2E_VAL_HOST=%s", relayerNodeB.Container.Name),
+		},
+		Entrypoint: []string{
+			"sh",
+			"-c",
+			"chmod +x /root/hermes/hermes_bootstrap.sh && /root/hermes/hermes_bootstrap.sh",
+		},
 	}
 
-	// TODO: Implement channel creation logic
-	hr.Config.Channels = append(hr.Config.Channels, *channelConfig)
-	return channelConfig, nil
+	resource, err := hr.Tm.ContainerManager.Pool.RunWithOptions(runOpts, NoRestart)
+	require.NoError(hr.T(), err)
+
+	hr.Tm.ContainerManager.Resources[hr.Container.Name] = resource
+	hr.T().Logf("started Hermes relayer container: %s", resource.Container.ID)
+	return resource
 }
 
-// RelayPackets relays pending packets between chains
-func (hr *HermesRelayer) RelayPackets() error {
-	// TODO: Implement packet relaying
-	return nil
+func (hr *HermesRelayer) WaitRelayerToStart(hermesResource *dockertest.Resource) {
+	hr.Endpoint = fmt.Sprintf("http://%s/state", hermesResource.GetHostPort(fmt.Sprintf("%d/tcp", hr.ExposedPort)))
+
+	require.Eventually(hr.T(), func() bool {
+		req, err := http.NewRequestWithContext(
+			context.Background(),
+			http.MethodGet,
+			hr.Endpoint,
+			nil,
+		)
+		if err != nil {
+			return false
+		}
+
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			return false
+		}
+		defer resp.Body.Close()
+
+		bz, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return false
+		}
+
+		var respBody map[string]interface{}
+		if err := json.Unmarshal(bz, &respBody); err != nil {
+			return false
+		}
+
+		status, ok := respBody["status"].(string)
+		require.True(hr.T(), ok)
+		result, ok := respBody["result"].(map[string]interface{})
+		require.True(hr.T(), ok)
+		chains, ok := result["chains"].([]interface{})
+		require.True(hr.T(), ok)
+
+		return status == "success" && len(chains) == 2
+	}, 5*time.Minute, time.Second, "hermes relayer not healthy")
 }
 
-// getRPCAddress gets RPC address from the first node in the chain
-func (hr *HermesRelayer) getRPCAddress(chain *Chain) (string, error) {
-	if len(chain.Nodes) == 0 {
-		return "", nil
+func (hr *HermesRelayer) ContainerExposedPorts() []string {
+	return []string{
+		strconv.FormatInt(int64(hr.ExposedPort), 10),
 	}
-	return chain.Nodes[0].GetRPCAddress(), nil
-}
-
-// getGRPCAddress gets GRPC address from the first node in the chain
-func (hr *HermesRelayer) getGRPCAddress(chain *Chain) (string, error) {
-	if len(chain.Nodes) == 0 {
-		return "", nil
-	}
-	return chain.Nodes[0].GetGRPCAddress(), nil
 }

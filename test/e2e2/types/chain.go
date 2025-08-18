@@ -56,10 +56,11 @@ type Chain struct {
 // NewChainConfig creates a new chain configuration with default values
 func NewChainConfig(tempDir, chainID string) *ChainConfig {
 	return &ChainConfig{
-		ChainID:               chainID,
-		Home:                  filepath.Join(tempDir, chainID),
+		ChainID: chainID,
+		Home:    filepath.Join(tempDir, chainID),
+		// starts with 2 nodes (1 val, one non-validator)
 		ValidatorCount:        1,
-		NodeCount:             0,
+		NodeCount:             1,
 		BlockTime:             5 * time.Second,
 		EpochLength:           10,
 		VotingPeriod:          30 * time.Second,
@@ -106,6 +107,10 @@ func NewChain(tm *TestManager, cfg *ChainConfig) *Chain {
 	return c
 }
 
+func (c *Chain) ChainID() string {
+	return c.Config.ChainID
+}
+
 func (c *Chain) T() *testing.T {
 	return c.Tm.T
 }
@@ -141,7 +146,8 @@ func (c *Chain) InitGenesis() {
 	_, err = UpdateGenAccounts(appGenState, accsToAdd)
 	require.NoError(c.T(), err, "failed to set gen accs")
 	// update all other modules
-	UpdateGenModulesState(appGenState, *c.InitialGenesis, c.Validators, nil, nil, balancesToAdd)
+	err = UpdateGenModulesState(appGenState, *c.InitialGenesis, c.Validators, nil, nil, balancesToAdd)
+	require.NoError(c.T(), err, "failed to update gen state for all other modules")
 
 	appStateJSON, err := json.Marshal(appGenState)
 	require.NoError(c.T(), err, "failed to marshal application genesis state")
@@ -169,16 +175,24 @@ func (c *Chain) WritePeers() {
 }
 
 func (c *Chain) WaitUntilBlkHeight(blkHeight uint32) {
-
+	for _, n := range c.AllNodes() {
+		n.WaitUntilBlkHeight(blkHeight)
+	}
 }
 
 // AllNodes returns an combined slice of validators and regular nodes
 func (c *Chain) AllNodes() []*Node {
 	ret := make([]*Node, c.Config.NodeCount+c.Config.ValidatorCount)
-	for i, v := range c.Validators {
-		ret[i] = v.Node
+	iter := 0
+	for _, v := range c.Validators {
+		ret[iter] = v.Node
+		iter++
 	}
-	return append(ret, c.Nodes...)
+	for _, n := range c.Nodes {
+		ret[iter] = n
+		iter++
+	}
+	return ret
 }
 
 // WriteGenesis writes the genesis file in all the nodes available

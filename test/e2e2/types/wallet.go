@@ -43,6 +43,9 @@ type WalletSender struct {
 	// transaction control properties are only set after the chain is running
 	SequenceNumber uint64
 	AccountNumber  uint64
+
+	// Latest Txs IDs Sent
+	Txs []string
 }
 
 type ValidatorWallet struct {

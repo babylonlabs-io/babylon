@@ -13,6 +13,9 @@ const (
 	// Images that do not have specified tag, latest will be used by default.
 	// name of babylon image produced by running `make build-docker`
 	BabylonContainerName = "babylonlabs-io/babylond"
+
+	HermesRelayerRepository = "informalsystems/hermes"
+	HermesRelayerTag        = "1.13.1"
 )
 
 // ContainerConfig defines configuration for creating a container
@@ -57,6 +60,14 @@ func NewContainerBbnNode(containerName string) *Container {
 		Name:       containerName,
 		Repository: BabylonContainerName,
 		Tag:        "latest",
+	}
+}
+
+func NewContainerHermes(containerName string) *Container {
+	return &Container{
+		Name:       containerName,
+		Repository: HermesRelayerRepository,
+		Tag:        HermesRelayerTag,
 	}
 }
 

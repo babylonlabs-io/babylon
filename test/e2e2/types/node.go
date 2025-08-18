@@ -16,6 +16,7 @@ import (
 	appsigner "github.com/babylonlabs-io/babylon/v4/app/signer"
 	cmtconfig "github.com/cometbft/cometbft/config"
 	"github.com/cometbft/cometbft/p2p"
+	rpchttp "github.com/cometbft/cometbft/rpc/client/http"
 	cmttypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/codec/unknownproto"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
@@ -45,6 +46,12 @@ const (
 	MinGasPrice                = "0.002"
 	BabylonHomePathInContainer = "/home/babylon/babylondata"
 	FlagHome                   = "--home=" + BabylonHomePathInContainer
+
+	// waitUntilRepeatPauseTime is the time to wait between each check of the node status.
+	waitUntilRepeatPauseTime = 2 * time.Second
+	// waitUntilrepeatMax is the maximum number of times to repeat the wait until condition.
+	waitUntilrepeatMax   = 60
+	DefaultNodeWalletKey = "node-key"
 )
 
 // Node represents a blockchain node enviroment in a docker container
@@ -55,12 +62,14 @@ type Node struct {
 	Name string
 	Home string
 
-	// Values are set when creating the babylon node container
 	Ports     *NodePorts
 	Container *Container
 
 	NodeKeyP2P *p2p.NodeKey
 	PeerID     string
+
+	// Values are set when creating the babylon node container
+	RpcClient *rpchttp.HTTP
 
 	// Wallets all the wallets where the keyring files were created inside this node
 	// where the key is the wallet name
@@ -71,6 +80,31 @@ type Node struct {
 type ValidatorNode struct {
 	*Node
 	Wallet *ValidatorWallet
+}
+
+// NewNode creates a new regular node with simple ID generation
+func NewNode(tm *TestManager, name string, cfg *ChainConfig) *Node {
+	nPorts, err := tm.PortMgr.AllocateNodePorts()
+	require.NoError(tm.T, err)
+
+	cointanerName := fmt.Sprintf("%s-%s-%s", cfg.ChainID, name, tm.NetworkID()[:4])
+	n := &Node{
+		Tm:          tm,
+		ChainConfig: cfg,
+		Name:        name,
+		Home:        filepath.Join(cfg.Home, name),
+		Container:   NewContainerBbnNode(cointanerName),
+		Ports:       nPorts,
+		Wallets:     make(map[string]*WalletSender, 0),
+	}
+
+	// each node starts with at least one wallet
+	n.CreateWallet(DefaultNodeWalletKey)
+	n.CreateConfigDir()
+	n.WriteConfigAndGenesis()
+	n.CreateNodeKeyP2P()
+	n.CreateAppConfig()
+	return n
 }
 
 // NewValidatorNode creates a new validator node with simple ID generation
@@ -92,41 +126,15 @@ func NewValidatorNode(tm *TestManager, name string, cfg *ChainConfig) *Validator
 	}
 }
 
-// NewNode creates a new regular node with simple ID generation
-func NewNode(tm *TestManager, name string, cfg *ChainConfig) *Node {
-	nPorts, err := tm.PortMgr.AllocateNodePorts()
-	require.NoError(tm.T, err)
-
-	cointanerName := fmt.Sprintf("%s-%s-%s", cfg.ChainID, name, tm.NetworkID()[:4])
-	n := &Node{
-		Tm:          tm,
-		ChainConfig: cfg,
-		Name:        name,
-		Home:        filepath.Join(cfg.Home, name),
-		Container:   NewContainerBbnNode(cointanerName),
-		Ports:       nPorts,
-		Wallets:     make(map[string]*WalletSender),
-	}
-
-	n.CreateConfigDir()
-	n.WriteConfigAndGenesis()
-	n.CreateNodeKeyP2P()
-	n.CreateAppConfig()
-	return n
-}
-
-// Node implementation
+// Start runs the container
 func (n *Node) Start() {
+	resource := n.RunNodeResource()
 
-	// init node data first
-	// func (cb *CurrentBranchConfigurer) ConfigureChain(chainConfig *chain.Config) error {
-	// 	cb.t.Logf("starting e2e infrastructure from current branch for chain-id: %s", chainConfig.Id)
-	// 	tmpDir, err := os.MkdirTemp("", "bbn-e2e-testnet-*")
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	n.RunNodeResource()
+	hostPort := resource.GetHostPort(fmt.Sprintf("%d/tcp", n.Ports.RPC))
+	rpcClient, err := rpchttp.New("tcp://"+hostPort, "/websocket")
+	require.NoError(n.T(), err)
 
+	n.RpcClient = rpcClient
 }
 
 func (n *ValidatorNode) CreateValidatorMsg(selfDelegationAmt sdk.Coin) sdk.Msg {
@@ -278,30 +286,6 @@ func DecodeTx(txBytes []byte) (*sdktx.Tx, error) {
 	}, nil
 }
 
-// func newNode(chain *internalChain, nodeConfig *NodeConfig, gasLimit int64) (*internalNode, error) {
-// 	node := &internalNode{
-// 		chain:       chain,
-// 		moniker:     fmt.Sprintf("%s-node-%s", chain.chainMeta.Id, nodeConfig.Name),
-// 		isValidator: nodeConfig.IsValidator,
-// 	}
-// 	// creating keys comes before init
-// 	if err := node.createKey(ValidatorWalletName); err != nil {
-// 		return nil, err
-// 	}
-// 	if err := node.createConsensusKey(); err != nil {
-// 		return nil, err
-// 	}
-// 	// generate genesis files
-// 	if err := node.init(gasLimit); err != nil {
-// 		return nil, err
-// 	}
-// 	if err := node.createNodeKey(); err != nil {
-// 		return nil, err
-// 	}
-// 	node.createAppConfig(nodeConfig)
-// 	return node, nil
-// }
-
 func (n *Node) ConfigDirPath() string {
 	return filepath.Join(n.Home, "config")
 }
@@ -406,11 +390,15 @@ func (n *Node) CreateWallet(keyName string) *WalletSender {
 	return nw
 }
 
+func (n *Node) DefaultWallet() *WalletSender {
+	return n.Wallets[DefaultNodeWalletKey]
+}
+
 func (n *Node) IsChainRunning() bool {
 	return false
 }
 
-func (n *Node) RunNodeResource() {
+func (n *Node) RunNodeResource() *dockertest.Resource {
 	pwd, err := os.Getwd()
 	require.NoError(n.T(), err)
 
@@ -446,6 +434,41 @@ func (n *Node) RunNodeResource() {
 	require.NoError(n.T(), err)
 
 	n.Tm.ContainerManager.Resources[n.Container.Name] = resource
+	return resource
+}
+
+func (n *Node) WaitUntilBlkHeight(blkHeight uint32) {
+	var (
+		latestBlockHeight uint64
+	)
+	for i := 0; i < waitUntilrepeatMax; i++ {
+		var err error
+		latestBlockHeight, err = n.LatestBlockNumber()
+		if err != nil {
+			n.T().Errorf("node %s error %s waiting for blk height %d", n.Name, err.Error(), blkHeight)
+		}
+
+		if latestBlockHeight >= uint64(blkHeight) {
+			return
+		}
+		time.Sleep(waitUntilRepeatPauseTime)
+	}
+	n.T().Errorf("node %s timed out waiting for blk height %d, latest block height was %d", n.Name, blkHeight, latestBlockHeight)
+}
+
+func (n *Node) WaitForCondition(doneCondition func() bool, errorMsg string) {
+	n.WaitForConditionWithPause(doneCondition, errorMsg, waitUntilRepeatPauseTime)
+}
+
+func (n *Node) WaitForConditionWithPause(doneCondition func() bool, errorMsg string, pause time.Duration) {
+	for i := 0; i < waitUntilrepeatMax; i++ {
+		if !doneCondition() {
+			time.Sleep(pause)
+			continue
+		}
+		return
+	}
+	n.T().Errorf("node %s timed out waiting for condition. Msg: %s", n.Name, errorMsg)
 }
 
 func (n *Node) Stop() error {

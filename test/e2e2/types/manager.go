@@ -107,7 +107,7 @@ func (tm *TestManagerIbc) Start() {
 
 	tm.ChainsWaitUntilHeight(1)
 
-	tm.Hermes.Start()
+	tm.Hermes.Start(tm.Chains[CHAIN_ID_BABYLON], tm.Chains[CHAIN_ID_BSN])
 }
 
 func (tm *TestManager) ChainsWaitUntilHeight(blkHeight uint32) {
