@@ -876,8 +876,6 @@ func (a *BabylonApp) DefaultGenesis() map[string]json.RawMessage {
 
 	// Add ERC20 genesis configuration
 	erc20GenState := erc20types.DefaultGenesisState()
-	erc20GenState.TokenPairs = DefaultTokenPairs
-	erc20GenState.NativePrecompiles = []string{WTokenContractMainnet}
 	genesis[erc20types.ModuleName] = a.appCodec.MustMarshalJSON(erc20GenState)
 
 	feemarketGenState := feemarkettypes.DefaultGenesisState()
