@@ -2,11 +2,11 @@ package keeper_test
 
 import (
 	"context"
-	storetypes "cosmossdk.io/store/types"
 	"testing"
 	"time"
 
 	"cosmossdk.io/core/address"
+	storetypes "cosmossdk.io/store/types"
 	sdktestdata "github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
