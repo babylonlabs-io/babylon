@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"cosmossdk.io/collections"
-	"github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
+	"github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/types"
 )
 
 // GetFinalizedHeader gets the finalized header for a given consumer and epoch

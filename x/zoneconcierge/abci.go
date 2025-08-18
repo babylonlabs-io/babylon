@@ -5,8 +5,8 @@ import (
 	"errors"
 	"time"
 
-	"github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/keeper"
-	"github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
+	"github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/keeper"
+	"github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"

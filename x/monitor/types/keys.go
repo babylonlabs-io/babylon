@@ -3,7 +3,7 @@ package types
 import (
 	"fmt"
 
-	"github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
+	"github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 

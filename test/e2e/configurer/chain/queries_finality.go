@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/babylonlabs-io/babylon/v3/test/e2e/util"
-	bbn "github.com/babylonlabs-io/babylon/v3/types"
-	ftypes "github.com/babylonlabs-io/babylon/v3/x/finality/types"
+	"github.com/babylonlabs-io/babylon/v4/test/e2e/util"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	ftypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
 	"github.com/stretchr/testify/require"
 )
 

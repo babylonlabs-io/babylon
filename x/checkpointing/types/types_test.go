@@ -7,10 +7,10 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	bls12381 "github.com/babylonlabs-io/babylon/v3/crypto/bls12381"
-	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
-	testkeeper "github.com/babylonlabs-io/babylon/v3/testutil/keeper"
-	"github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
+	bls12381 "github.com/babylonlabs-io/babylon/v4/crypto/bls12381"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	testkeeper "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
+	"github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
 )
 
 // a single validator

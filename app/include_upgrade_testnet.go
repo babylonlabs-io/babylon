@@ -3,12 +3,12 @@
 package app
 
 import (
-	"github.com/babylonlabs-io/babylon/v3/app/upgrades"
-	v2 "github.com/babylonlabs-io/babylon/v3/app/upgrades/v2"
-	v22 "github.com/babylonlabs-io/babylon/v3/app/upgrades/v2_2"
-	v2rc4 "github.com/babylonlabs-io/babylon/v3/app/upgrades/v2rc4/testnet"
-	v3 "github.com/babylonlabs-io/babylon/v3/app/upgrades/v3"
-	v3rc2 "github.com/babylonlabs-io/babylon/v3/app/upgrades/v3rc2/testnet"
+	"github.com/babylonlabs-io/babylon/v4/app/upgrades"
+	v2 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v2"
+	v22 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v2_2"
+	v2rc4 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v2rc4/testnet"
+	v3 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v3"
+	v3rc2 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v3rc2/testnet"
 )
 
 // init is used to include v1 upgrade testnet data

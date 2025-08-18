@@ -3,7 +3,7 @@ package keeper
 import (
 	"context"
 
-	"github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
+	"github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
 )
 
 // SetParams sets the x/btclightclient module parameters.

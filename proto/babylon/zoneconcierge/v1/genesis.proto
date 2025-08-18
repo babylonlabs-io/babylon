@@ -5,7 +5,7 @@ import "gogoproto/gogo.proto";
 import "babylon/zoneconcierge/v1/params.proto";
 import "babylon/zoneconcierge/v1/zoneconcierge.proto";
 
-option go_package = "github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types";
+option go_package = "github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/types";
 
 // GenesisState defines the zoneconcierge module's genesis state.
 message GenesisState {

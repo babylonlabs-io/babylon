@@ -8,10 +8,10 @@ import (
 	context "context"
 	reflect "reflect"
 
-	types "github.com/babylonlabs-io/babylon/v3/types"
-	types0 "github.com/babylonlabs-io/babylon/v3/x/btccheckpoint/types"
-	types1 "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
-	types2 "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
+	types "github.com/babylonlabs-io/babylon/v4/types"
+	types0 "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
+	types1 "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
+	types2 "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
 	types3 "github.com/cosmos/cosmos-sdk/types"
 	gomock "github.com/golang/mock/gomock"
 )
@@ -180,17 +180,17 @@ func (m *MockBTCStkConsumerKeeper) EXPECT() *MockBTCStkConsumerKeeperMockRecorde
 }
 
 // ConsumerHasIBCChannelOpen mocks base method.
-func (m *MockBTCStkConsumerKeeper) ConsumerHasIBCChannelOpen(ctx context.Context, consumerID string) bool {
+func (m *MockBTCStkConsumerKeeper) ConsumerHasIBCChannelOpen(ctx context.Context, consumerID, channelID string) bool {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ConsumerHasIBCChannelOpen", ctx, consumerID)
+	ret := m.ctrl.Call(m, "ConsumerHasIBCChannelOpen", ctx, consumerID, channelID)
 	ret0, _ := ret[0].(bool)
 	return ret0
 }
 
 // ConsumerHasIBCChannelOpen indicates an expected call of ConsumerHasIBCChannelOpen.
-func (mr *MockBTCStkConsumerKeeperMockRecorder) ConsumerHasIBCChannelOpen(ctx, consumerID interface{}) *gomock.Call {
+func (mr *MockBTCStkConsumerKeeperMockRecorder) ConsumerHasIBCChannelOpen(ctx, consumerID, channelID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ConsumerHasIBCChannelOpen", reflect.TypeOf((*MockBTCStkConsumerKeeper)(nil).ConsumerHasIBCChannelOpen), ctx, consumerID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ConsumerHasIBCChannelOpen", reflect.TypeOf((*MockBTCStkConsumerKeeper)(nil).ConsumerHasIBCChannelOpen), ctx, consumerID, channelID)
 }
 
 // GetConsumerID mocks base method.

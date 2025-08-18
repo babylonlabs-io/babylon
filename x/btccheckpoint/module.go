@@ -13,9 +13,9 @@ import (
 
 	abci "github.com/cometbft/cometbft/abci/types"
 
-	"github.com/babylonlabs-io/babylon/v3/x/btccheckpoint/client/cli"
-	"github.com/babylonlabs-io/babylon/v3/x/btccheckpoint/keeper"
-	"github.com/babylonlabs-io/babylon/v3/x/btccheckpoint/types"
+	"github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/client/cli"
+	"github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/keeper"
+	"github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"

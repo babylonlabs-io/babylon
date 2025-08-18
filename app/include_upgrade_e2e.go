@@ -8,7 +8,7 @@ import (
 	precisebanktypes "github.com/cosmos/evm/x/precisebank/types"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
 
-	v3 "github.com/babylonlabs-io/babylon/v3/app/upgrades/v3"
+	v3 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v3"
 )
 
 // init is used to include v1 upgrade testnet data

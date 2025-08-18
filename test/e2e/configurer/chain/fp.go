@@ -7,10 +7,10 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
-	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
-	"github.com/babylonlabs-io/babylon/v3/app/signingcontext"
-	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
-	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
+	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
+	"github.com/babylonlabs-io/babylon/v4/app/signingcontext"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/stretchr/testify/require"
 

@@ -21,20 +21,20 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
-	testutil "github.com/babylonlabs-io/babylon/v3/testutil/btcstaking-helper"
-	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
-	testutilevents "github.com/babylonlabs-io/babylon/v3/testutil/events"
-	testhelper "github.com/babylonlabs-io/babylon/v3/testutil/helper"
-	"github.com/babylonlabs-io/babylon/v3/testutil/mocks"
-	bbn "github.com/babylonlabs-io/babylon/v3/types"
-	btcctypes "github.com/babylonlabs-io/babylon/v3/x/btccheckpoint/types"
-	btclctypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
-	"github.com/babylonlabs-io/babylon/v3/x/btcstaking"
-	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
-	btcsctypes "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
-	ftypes "github.com/babylonlabs-io/babylon/v3/x/finality/types"
-	ictvtypes "github.com/babylonlabs-io/babylon/v3/x/incentive/types"
+	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
+	testutil "github.com/babylonlabs-io/babylon/v4/testutil/btcstaking-helper"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	testutilevents "github.com/babylonlabs-io/babylon/v4/testutil/events"
+	testhelper "github.com/babylonlabs-io/babylon/v4/testutil/helper"
+	"github.com/babylonlabs-io/babylon/v4/testutil/mocks"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	btcctypes "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
+	btclctypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
+	"github.com/babylonlabs-io/babylon/v4/x/btcstaking"
+	"github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+	btcsctypes "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
+	ftypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
+	ictvtypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
 )
 
 func FuzzMsgServer_UpdateParams(f *testing.F) {
@@ -138,7 +138,7 @@ func FuzzMsgCreateFinalityProvider(f *testing.F) {
 		require.Error(t, err)
 
 		// Try to create a FP for a registered BSN but without an IBC channel
-		h.ChannelKeeper.EXPECT().ConsumerHasIBCChannelOpen(h.Ctx, registeredBsnId).Return(false).Times(1)
+		h.ChannelKeeper.EXPECT().ConsumerHasIBCChannelOpen(h.Ctx, registeredBsnId, consumerRegister.GetCosmosConsumerMetadata().ChannelId).Return(false).Times(1)
 		fpRegisteredBsn, err := datagen.GenRandomFinalityProvider(r, h.FpPopContext(), registeredBsnId)
 		require.NoError(t, err)
 		msgRegisteredBsn := &types.MsgCreateFinalityProvider{
@@ -158,7 +158,7 @@ func FuzzMsgCreateFinalityProvider(f *testing.F) {
 		require.ErrorIs(t, err, types.ErrFpConsumerNoIBCChannelOpen)
 
 		// If it's a registered consumer, we need to ensure the channel is open to be able to create a consumer FP
-		h.ChannelKeeper.EXPECT().ConsumerHasIBCChannelOpen(h.Ctx, registeredBsnId).Return(true).AnyTimes()
+		h.ChannelKeeper.EXPECT().ConsumerHasIBCChannelOpen(h.Ctx, registeredBsnId, consumerRegister.GetCosmosConsumerMetadata().ChannelId).Return(true).AnyTimes()
 
 		fps := []*types.FinalityProvider{}
 		for i := 0; i < int(datagen.RandomInt(r, 20)); i++ {

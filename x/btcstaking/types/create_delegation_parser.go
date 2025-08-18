@@ -11,8 +11,8 @@ import (
 	"github.com/btcsuite/btcd/wire"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/babylonlabs-io/babylon/v3/btcstaking"
-	bbn "github.com/babylonlabs-io/babylon/v3/types"
+	"github.com/babylonlabs-io/babylon/v4/btcstaking"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
 )
 
 type ParsedPublicKey struct {

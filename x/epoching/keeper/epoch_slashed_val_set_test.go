@@ -7,13 +7,13 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
-	testhelper "github.com/babylonlabs-io/babylon/v3/testutil/helper"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	testhelper "github.com/babylonlabs-io/babylon/v4/testutil/helper"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/v3/x/epoching/types"
+	"github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 )
 
 func FuzzSlashedValSet(f *testing.F) {

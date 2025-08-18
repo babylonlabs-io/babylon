@@ -15,9 +15,9 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
-	asig "github.com/babylonlabs-io/babylon/v3/crypto/schnorr-adaptor-signature"
-	bbn "github.com/babylonlabs-io/babylon/v3/types"
-	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
+	asig "github.com/babylonlabs-io/babylon/v4/crypto/schnorr-adaptor-signature"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	"github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 )
 
 const (

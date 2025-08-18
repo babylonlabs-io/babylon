@@ -4,11 +4,11 @@ import (
 	"math/rand"
 	"testing"
 
-	bbn "github.com/babylonlabs-io/babylon/v3/types"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
 
-	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
-	keepertest "github.com/babylonlabs-io/babylon/v3/testutil/keeper"
-	"github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	keepertest "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
+	"github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
 	"github.com/stretchr/testify/require"
 )
 

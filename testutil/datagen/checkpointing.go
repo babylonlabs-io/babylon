@@ -2,10 +2,10 @@ package datagen
 
 import (
 	"cosmossdk.io/math"
-	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
-	appsigner "github.com/babylonlabs-io/babylon/v3/app/signer"
-	"github.com/babylonlabs-io/babylon/v3/crypto/bls12381"
-	"github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
+	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
+	appsigner "github.com/babylonlabs-io/babylon/v4/app/signer"
+	"github.com/babylonlabs-io/babylon/v4/crypto/bls12381"
+	"github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
 	"github.com/cometbft/cometbft/crypto/ed25519"
 	"github.com/cosmos/cosmos-sdk/crypto/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"

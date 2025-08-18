@@ -10,8 +10,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stktypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	bbn "github.com/babylonlabs-io/babylon/v3/types"
-	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	"github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 )
 
 // AddFinalityProvider adds the given finality provider to KVStore if it has valid
@@ -55,9 +55,9 @@ func (k Keeper) AddFinalityProvider(goCtx context.Context, msg *types.MsgCreateF
 			return types.ErrFpBSNIdNotRegistered
 		}
 		// Ensure there's an IBC channel open if it is a Cosmos BSN
-		if cr.GetCosmosConsumerMetadata() != nil {
-			hasChannel := k.BscKeeper.ConsumerHasIBCChannelOpen(ctx, bsnID)
-			if !hasChannel {
+		ccm := cr.GetCosmosConsumerMetadata()
+		if ccm != nil {
+			if ccm.ChannelId == "" || !k.BscKeeper.ConsumerHasIBCChannelOpen(ctx, bsnID, ccm.ChannelId) {
 				return types.ErrFpConsumerNoIBCChannelOpen
 			}
 		}

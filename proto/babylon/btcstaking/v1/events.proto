@@ -7,7 +7,7 @@ import "amino/amino.proto";
 import "cosmos_proto/cosmos.proto";
 import "cosmos/base/v1beta1/coin.proto";
 
-option go_package = "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types";
+option go_package = "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types";
 
 // EventNewFinalityProvider is the event emitted when new finality provider is created
 message EventNewFinalityProvider {
@@ -82,19 +82,19 @@ message EventPowerDistUpdate {
   // is slashed
   // TODO: unify with existing slashing events
   message EventSlashedFinalityProvider {
-    bytes pk = 1 [(gogoproto.customtype) = "github.com/babylonlabs-io/babylon/v3/types.BIP340PubKey"];
+    bytes pk = 1 [(gogoproto.customtype) = "github.com/babylonlabs-io/babylon/v4/types.BIP340PubKey"];
   }
 
   // EventJailedFinalityProvider defines an event that a finality provider
   // is jailed after being detected sluggish
   message EventJailedFinalityProvider {
-    bytes pk = 1 [(gogoproto.customtype) = "github.com/babylonlabs-io/babylon/v3/types.BIP340PubKey"];
+    bytes pk = 1 [(gogoproto.customtype) = "github.com/babylonlabs-io/babylon/v4/types.BIP340PubKey"];
   }
 
   // EventUnjailedFinalityProvider defines an event that a jailed finality provider
   // is unjailed after the jailing period is passed
   message EventUnjailedFinalityProvider {
-    bytes pk = 1 [(gogoproto.customtype) = "github.com/babylonlabs-io/babylon/v3/types.BIP340PubKey"];
+    bytes pk = 1 [(gogoproto.customtype) = "github.com/babylonlabs-io/babylon/v4/types.BIP340PubKey"];
   }
 
   // ev is the event that affects voting power distribution

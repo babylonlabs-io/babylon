@@ -29,15 +29,15 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
 
-	appsigner "github.com/babylonlabs-io/babylon/v3/app/signer"
-	"github.com/babylonlabs-io/babylon/v3/testutil/signer"
-	minttypes "github.com/babylonlabs-io/babylon/v3/x/mint/types"
+	appsigner "github.com/babylonlabs-io/babylon/v4/app/signer"
+	"github.com/babylonlabs-io/babylon/v4/testutil/signer"
+	minttypes "github.com/babylonlabs-io/babylon/v4/x/mint/types"
 
-	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
-	"github.com/babylonlabs-io/babylon/v3/crypto/bls12381"
-	bbn "github.com/babylonlabs-io/babylon/v3/types"
-	btclighttypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
-	checkpointingtypes "github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
+	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
+	"github.com/babylonlabs-io/babylon/v4/crypto/bls12381"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	btclighttypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
 )
 
 // SetupOptions defines arguments that are passed into `Simapp` constructor.

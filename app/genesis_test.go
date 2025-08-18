@@ -7,7 +7,7 @@ import (
 
 	erc20types "github.com/cosmos/evm/x/erc20/types"
 
-	"github.com/babylonlabs-io/babylon/v3/app"
+	"github.com/babylonlabs-io/babylon/v4/app"
 )
 
 // BabylonApp DefaultGenesis ERC20 NativePrecompiles test

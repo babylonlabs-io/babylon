@@ -6,8 +6,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	bbntypes "github.com/babylonlabs-io/babylon/v3/types"
-	"github.com/babylonlabs-io/babylon/v3/x/finality/types"
+	bbntypes "github.com/babylonlabs-io/babylon/v4/types"
+	"github.com/babylonlabs-io/babylon/v4/x/finality/types"
 )
 
 func TestFinalityProviderSigningInfo_Validate(t *testing.T) {

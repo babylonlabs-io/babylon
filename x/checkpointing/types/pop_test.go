@@ -3,8 +3,8 @@ package types_test
 import (
 	"testing"
 
-	appsigner "github.com/babylonlabs-io/babylon/v3/app/signer"
-	"github.com/babylonlabs-io/babylon/v3/crypto/bls12381"
+	appsigner "github.com/babylonlabs-io/babylon/v4/app/signer"
+	"github.com/babylonlabs-io/babylon/v4/crypto/bls12381"
 	"github.com/cometbft/cometbft/crypto/ed25519"
 	"github.com/cosmos/cosmos-sdk/crypto/codec"
 	"github.com/stretchr/testify/require"

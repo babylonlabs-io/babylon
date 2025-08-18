@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	bbntypes "github.com/babylonlabs-io/babylon/v3/types"
-	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
-	ictvtypes "github.com/babylonlabs-io/babylon/v3/x/incentive/types"
+	bbntypes "github.com/babylonlabs-io/babylon/v4/types"
+	"github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+	ictvtypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
