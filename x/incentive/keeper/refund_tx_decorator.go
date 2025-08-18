@@ -4,13 +4,11 @@ import (
 	"bytes"
 	"errors"
 
-	anteinterfaces "github.com/cosmos/evm/ante/interfaces"
-	feemarketkeeper "github.com/cosmos/evm/x/feemarket/keeper"
-
 	errorsmod "cosmossdk.io/errors"
 	storetypes "cosmossdk.io/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	anteinterfaces "github.com/cosmos/evm/ante/interfaces"
 
 	btcctypes "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
 	btclctypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
@@ -22,15 +20,20 @@ import (
 var _ sdk.PostDecorator = &RefundTxDecorator{}
 var _ sdk.AnteDecorator = &RefundTxDecorator{}
 
+type ExtendedFeeMarketKeeper interface {
+	GetTransientGasWanted(ctx sdk.Context) uint64
+	SetTransientBlockGasWanted(ctx sdk.Context, gasWanted uint64)
+}
+
 type RefundTxDecorator struct {
 	k                   *Keeper
 	ak                  anteinterfaces.AccountKeeper
-	fmk                 *feemarketkeeper.Keeper
+	fmk                 anteinterfaces.FeeMarketKeeper
 	currentTxInitialGas uint64
 }
 
 // NewRefundTxDecorator creates a new RefundTxDecorator
-func NewRefundTxDecorator(k *Keeper, ak anteinterfaces.AccountKeeper, fmk *feemarketkeeper.Keeper) *RefundTxDecorator {
+func NewRefundTxDecorator(k *Keeper, ak anteinterfaces.AccountKeeper, fmk anteinterfaces.FeeMarketKeeper) *RefundTxDecorator {
 	return &RefundTxDecorator{
 		k:   k,
 		ak:  ak,
@@ -107,12 +110,14 @@ func (d *RefundTxDecorator) PostHandle(ctx sdk.Context, tx sdk.Tx, simulate, suc
 				return ctx, errorsmod.Wrap(sdkerrors.ErrTxDecode, "Tx must be a FeeTx")
 			}
 			gasLimit := feeTx.GetGas()
-			currentGasWanted := d.fmk.GetTransientGasWanted(ctx)
-			if currentGasWanted < gasLimit {
-				return ctx, errorsmod.Wrap(sdkerrors.ErrTxDecode, "Tx gas limit is greater than the current gas wanted")
+			if extendedFeeMarketKeeper, ok := d.fmk.(ExtendedFeeMarketKeeper); ok {
+				currentGasWanted := extendedFeeMarketKeeper.GetTransientGasWanted(ctx)
+				if currentGasWanted < gasLimit {
+					return ctx, errorsmod.Wrap(sdkerrors.ErrTxDecode, "Tx gas limit is greater than the current gas wanted")
+				}
+				adjustedGasWanted := currentGasWanted - gasLimit
+				extendedFeeMarketKeeper.SetTransientBlockGasWanted(ctx, adjustedGasWanted)
 			}
-			adjustedGasWanted := currentGasWanted - gasLimit
-			d.fmk.SetTransientBlockGasWanted(ctx, adjustedGasWanted)
 		}
 
 		// reset tracking
@@ -152,6 +157,10 @@ func (d *RefundTxDecorator) CheckTxAndClearIndex(ctx sdk.Context, tx sdk.Tx) boo
 	return refundable
 }
 
+func (d *RefundTxDecorator) SetCurrentTxInitialGas(initialGas uint64) {
+	d.currentTxInitialGas = initialGas
+}
+
 // isRefundTx returns true if ALL its messages are refundable
 func isRefundTx(tx sdk.Tx) bool {
 	if len(tx.GetMsgs()) == 0 {
@@ -161,14 +170,14 @@ func isRefundTx(tx sdk.Tx) bool {
 	for _, msg := range tx.GetMsgs() {
 		switch msg.(type) {
 		case *btclctypes.MsgInsertHeaders, // BTC light client
-		// BTC timestamping
+			// BTC timestamping
 			*btcctypes.MsgInsertBTCSpvProof,
-		// BTC staking
+			// BTC staking
 			*bstypes.MsgAddCovenantSigs,
 			*bstypes.MsgBTCUndelegate,
 			*bstypes.MsgSelectiveSlashingEvidence,
 			*bstypes.MsgAddBTCDelegationInclusionProof,
-		// BTC staking finality
+			// BTC staking finality
 			*ftypes.MsgAddFinalitySig:
 			continue
 		default:

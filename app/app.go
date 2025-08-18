@@ -615,7 +615,7 @@ func NewBabylonApp(
 
 	// set postHandler
 	postHandler := sdk.ChainPostDecorators(
-		incentivekeeper.NewRefundTxDecorator(&app.IncentiveKeeper, app.AccountKeeper, &app.FeemarketKeeper),
+		incentivekeeper.NewRefundTxDecorator(&app.IncentiveKeeper, app.AccountKeeper, app.FeemarketKeeper),
 		zckeeper.NewIBCHeaderDecorator(&app.ZoneConciergeKeeper),
 	)
 	app.SetPostHandler(postHandler)
