@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/ory/dockertest/v3"
+	"github.com/test-go/testify/require"
 )
 
 // TestManager manages isolated Docker networks for tests
@@ -113,6 +114,7 @@ func (tm *TestManagerIbc) Start() {
 
 	tm.Hermes.CreateIBCTransferChannel(cA, cB)
 	tm.ChainsWaitUntilNextBlock()
+	tm.RequireChannelsCreated()
 
 	// creating channels by hermes modifies the acc sequence
 	tm.UpdateWalletsAccSeqNumber()
@@ -157,4 +159,18 @@ func (tm *TestManagerIbc) ChainBBN() *Chain {
 
 func (tm *TestManagerIbc) ChainBSN() *Chain {
 	return tm.Chains[CHAIN_ID_BSN]
+}
+
+func (tm *TestManagerIbc) ChainNodes() (bbn, bsn *Node) {
+	return tm.ChainBBN().Nodes[0], tm.ChainBSN().Nodes[0]
+}
+
+func (tm *TestManagerIbc) RequireChannelsCreated() {
+	bbn, bsn := tm.ChainNodes()
+
+	tm.T.Log("Verifying IBC channels were created...")
+	bbnChannels := bbn.QueryIBCChannels()
+	require.Len(tm.T, bbnChannels.Channels, 1, "No IBC channels found on Babylon chain")
+	bsnChannels := bsn.QueryIBCChannels()
+	require.Len(tm.T, bsnChannels.Channels, 1, "No IBC channels found on BSN Consumer chain")
 }

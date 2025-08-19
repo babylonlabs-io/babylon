@@ -18,42 +18,35 @@ func TestIBCTransfer(t *testing.T) {
 	tm := tmanager.NewTmWithIbc(t)
 	tm.Start()
 
-	bbn, bsn := tm.ChainBBN().Nodes[0], tm.ChainBSN().Nodes[0]
-
-	t.Log("Verifying IBC channels were created...")
-	bbnChannels := bbn.QueryIBCChannels()
-	require.Len(t, bbnChannels.Channels, 1, "No IBC channels found on Babylon chain")
-	bsnChannels := bsn.QueryIBCChannels()
-	require.Len(t, bsnChannels.Channels, 1, "No IBC channels found on BSN Consumer chain")
+	bbn, bsn := tm.ChainNodes()
 
 	t.Log("Testing IBC transfer from BSN to BBN...")
-
 	bsnSender := bsn.DefaultWallet()
 	bsnSender.VerifySentTx = true
 
-	channel := bsnChannels.Channels[0]
-	channelID := channel.ChannelId
+	bsnChannels := bsn.QueryIBCChannels()
+	bsnChannel := bsnChannels.Channels[0]
 	bbnRecipient := datagen.GenRandomAddress().String()
-	transferAmount := sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(1_000000))
+	ibcTransferCoin := sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(1_000000))
 
 	bsnSenderBalancesBefore := bsn.QueryAllBalances(bsnSender.Addr())
 	bbnRecipientBalancesBefore := bbn.QueryAllBalances(bbnRecipient)
 	t.Logf("Before transfer - Sender balance: %s, Recipient balance: %s", bsnSenderBalancesBefore.String(), bbnRecipientBalancesBefore.String())
 
-	ibcTxHash := bsn.SendIBCTransfer(bsnSender, bbnRecipient, transferAmount, channelID, "test transfer")
+	ibcTxHash := bsn.SendIBCTransfer(bsnSender, bbnRecipient, ibcTransferCoin, bsnChannel.ChannelId, "test transfer")
 	t.Logf("IBC transfer submitted successfully with tx hash: %s", ibcTxHash)
 
 	// Compute the expected IBC denom on Babylon side
 	// When tokens are transferred from BSN to BBN, the denom gets prefixed with transfer/channel-X and latter hashed to ibc/
-	hop := transfertypes.NewHop(channel.Counterparty.PortId, channel.Counterparty.ChannelId)
-	denomTrace := transfertypes.NewDenom(transferAmount.Denom, hop)
+	hop := transfertypes.NewHop(bsnChannel.Counterparty.PortId, bsnChannel.Counterparty.ChannelId)
+	denomTrace := transfertypes.NewDenom(ibcTransferCoin.Denom, hop)
 	expectedIBCDenom := denomTrace.IBCDenom()
 	t.Logf("Expected IBC denom on Babylon: %s", expectedIBCDenom)
 
 	// Wait for IBC transfer to complete and verify balance changes on both sides
 	require.Eventually(t, func() bool {
 		bbnRecipientBalancesAfter := bbn.QueryAllBalances(bbnRecipient)
-		expAfterBalances := bbnRecipientBalancesBefore.Add(sdk.NewCoin(expectedIBCDenom, transferAmount.Amount))
+		expAfterBalances := bbnRecipientBalancesBefore.Add(sdk.NewCoin(expectedIBCDenom, ibcTransferCoin.Amount))
 
 		return bbnRecipientBalancesAfter.Equal(expAfterBalances)
 	}, 30*time.Second, 2*time.Second, "IBC transfer should complete within 30 seconds")
@@ -61,6 +54,6 @@ func TestIBCTransfer(t *testing.T) {
 	bsnSenderBalancesAfter := bsn.QueryAllBalances(bsnSender.Addr())
 	ibcTxResp := bsn.QueryTxByHash(ibcTxHash)
 
-	expBsnSendBalances := bsnSenderBalancesBefore.Sub(ibcTxResp.Tx.GetFee()...).Sub(transferAmount)
+	expBsnSendBalances := bsnSenderBalancesBefore.Sub(ibcTxResp.Tx.GetFee()...).Sub(ibcTransferCoin)
 	require.Equal(t, expBsnSendBalances.String(), bsnSenderBalancesAfter.String(), "Sender should have %s, but has %s", expBsnSendBalances.String(), bsnSenderBalancesAfter.String())
 }
