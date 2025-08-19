@@ -15,7 +15,7 @@ import (
 	dbm "github.com/cosmos/cosmos-db"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/test-go/testify/require"
+	"github.com/stretchr/testify/require"
 )
 
 func FuzzTestExportGenesis(f *testing.F) {

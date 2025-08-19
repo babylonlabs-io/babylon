@@ -6,7 +6,7 @@ import (
 
 	"cosmossdk.io/math"
 	"github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
-	"github.com/test-go/testify/require"
+	"github.com/stretchr/testify/require"
 )
 
 func TestConsumerRegisterValidate(t *testing.T) {

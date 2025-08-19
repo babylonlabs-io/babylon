@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/ory/dockertest/v3"
-	"github.com/test-go/testify/require"
+	"github.com/stretchr/testify/require"
 )
 
 // TestManager manages isolated Docker networks for tests
