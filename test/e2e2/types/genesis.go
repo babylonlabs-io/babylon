@@ -260,7 +260,6 @@ func UpdateGenesisGenUtil(vals []*ValidatorNode) func(*genutiltypes.GenesisState
 	return func(genUtilGenState *genutiltypes.GenesisState) {
 		genTxs := make([]json.RawMessage, 0, len(vals))
 		for _, val := range vals { // one gentx per val
-
 			createValmsg := val.CreateValidatorMsg(InitialSelfDelegation)
 			signedTx := val.SignMsg(createValmsg)
 
@@ -274,7 +273,7 @@ func UpdateGenesisGenUtil(vals []*ValidatorNode) func(*genutiltypes.GenesisState
 
 func UpdateGenesisRateLimit(rateLimiterGenState *ratelimiter.GenesisState) {
 	path := &ratelimiter.Path{
-		Denom:             "ubbn",
+		Denom:             appparams.DefaultBondDenom,
 		ChannelOrClientId: "channel-0",
 	}
 
@@ -290,7 +289,7 @@ func UpdateGenesisRateLimit(rateLimiterGenState *ratelimiter.GenesisState) {
 		Flow: &ratelimiter.Flow{
 			Inflow:       sdkmath.NewInt(0),
 			Outflow:      sdkmath.NewInt(0),
-			ChannelValue: sdkmath.NewInt(1_000_000),
+			ChannelValue: sdkmath.NewInt(10_000000), // 10 BABY
 		},
 	}
 

@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"cosmossdk.io/math"
-	"github.com/babylonlabs-io/babylon/v4/app/signer"
 	appsigner "github.com/babylonlabs-io/babylon/v4/app/signer"
 	"github.com/btcsuite/btcd/btcec/v2"
 	cmtcfg "github.com/cometbft/cometbft/config"
@@ -60,7 +59,7 @@ type WalletSender struct {
 
 type ValidatorWallet struct {
 	*WalletSender
-	ConsKey          *signer.ConsensusKey
+	ConsKey          *appsigner.ConsensusKey
 	ConsensusAddress sdk.ConsAddress
 	ValidatorAddress sdk.ValAddress
 }

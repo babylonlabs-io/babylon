@@ -8,6 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdktx "github.com/cosmos/cosmos-sdk/types/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
@@ -33,6 +34,13 @@ func (n *Node) TxQuery(f func(sdktx.ServiceClient)) {
 	n.GrpcConn(func(conn *grpc.ClientConn) {
 		txClient := sdktx.NewServiceClient(conn)
 		f(txClient)
+	})
+}
+
+func (n *Node) BankQuery(f func(banktypes.QueryClient)) {
+	n.GrpcConn(func(conn *grpc.ClientConn) {
+		bankClient := banktypes.NewQueryClient(conn)
+		f(bankClient)
 	})
 }
 
@@ -119,4 +127,21 @@ func (n *Node) QueryTxByHash(txHash string) *sdktx.GetTxResponse {
 	})
 
 	return resp
+}
+
+// QueryAllBalances queries all coin balances for a given address from a running node
+func (n *Node) QueryAllBalances(address string) sdk.Coins {
+	var (
+		resp *banktypes.QueryAllBalancesResponse
+		err  error
+	)
+
+	n.BankQuery(func(bankClient banktypes.QueryClient) {
+		resp, err = bankClient.AllBalances(context.Background(), &banktypes.QueryAllBalancesRequest{
+			Address: address,
+		})
+		require.NoError(n.T(), err)
+	})
+
+	return resp.Balances
 }

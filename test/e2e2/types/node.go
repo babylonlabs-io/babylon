@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
+	"os/user"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -32,8 +33,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
-	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/spf13/viper"
@@ -59,7 +58,7 @@ const (
 	DefaultNodeWalletKey = "node-key"
 )
 
-// Node represents a blockchain node enviroment in a docker container
+// Node represents a blockchain node environment in a docker container
 type Node struct {
 	Tm          *TestManager
 	ChainConfig *ChainConfig
@@ -93,7 +92,8 @@ func NewNode(tm *TestManager, name string, cfg *ChainConfig) *Node {
 	n := NewNodeWithoutBls(tm, name, cfg)
 	// even regular nodes needs bls keys
 	// to avoid erros in signer.LoadOrGenBlsKey
-	GenBlsKey(n.Home)
+	_, err := GenBlsKey(n.Home)
+	require.NoError(n.T(), err)
 	return n
 }
 
@@ -418,10 +418,11 @@ func (n *Node) T() *testing.T {
 
 func (n *Node) CreateWallet(keyName string) *WalletSender {
 	nw := NewWalletSender(keyName, n)
+	n.Wallets[keyName] = nw
 	if n.IsChainRunning() {
 		// set seq and acc number
+		n.UpdateWalletAccSeqNumber(keyName)
 	}
-	n.Wallets[keyName] = nw
 	return nw
 }
 
@@ -444,12 +445,18 @@ func (n *Node) RunNodeResource() *dockertest.Resource {
 	}
 
 	exposedPorts := n.Ports.ContainerExposedPorts()
+
+	// Get current user info to avoid permission issues
+	currentUser, err := user.Current()
+	require.NoError(n.T(), err)
+	userSpec := fmt.Sprintf("%s:%s", currentUser.Uid, currentUser.Gid)
+
 	runOpts := &dockertest.RunOptions{
 		Name:       n.Container.Name,
 		Repository: n.Container.Repository,
 		Tag:        n.Container.Tag,
 		NetworkID:  n.Tm.NetworkID(),
-		User:       "root:root",
+		User:       userSpec,
 		Entrypoint: []string{
 			"sh",
 			"-c",
@@ -590,7 +597,12 @@ func (n *Node) QueryGRPCGateway(path string, params url.Values) ([]byte, error) 
 	}
 
 	fullURL := baseURL + path
-	resp, err := http.Get(fullURL)
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, fullURL, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query gRPC gateway: %w", err)
 	}
@@ -601,31 +613,6 @@ func (n *Node) QueryGRPCGateway(path string, params url.Values) ([]byte, error) 
 	}
 
 	return io.ReadAll(resp.Body)
-}
-
-// SendIBCTransfer creates and submits an IBC transfer transaction
-func (n *Node) SendIBCTransfer(wallet *WalletSender, recipient string, token sdk.Coin, channelID string, memo string) string {
-	n.T().Logf("Sending %s from %s (BSN) to %s (BBN) via channel %s", token.String(), wallet.Address.String(), recipient, channelID)
-	// Create timeout height (current height + 1000 blocks)
-	timeoutHeight := clienttypes.NewHeight(0, 1000)
-
-	// Create timeout timestamp (current time + 1 hour)
-	timeoutTimestamp := uint64(time.Now().Add(time.Hour).UnixNano())
-
-	// Create IBC transfer message
-	msg := transfertypes.NewMsgTransfer(
-		"transfer",              // source port
-		channelID,               // source channel
-		token,                   // token to transfer
-		wallet.Address.String(), // sender
-		recipient,               // receiver
-		timeoutHeight,           // timeout height
-		timeoutTimestamp,        // timeout timestamp
-		memo,                    // memo
-	)
-
-	txHash, _ := wallet.SubmitMsgs(msg)
-	return txHash
 }
 
 // SubmitTx submits a signed transaction to the network via RPC client
@@ -696,6 +683,13 @@ func (n *Node) UpdateWalletsAccSeqNumber() {
 		num, seq := acc.GetAccountNumber(), acc.GetSequence()
 		n.Wallets[kName].UpdateAccNumberAndSeq(num, seq)
 	}
+}
+
+// UpdateWalletAccSeqNumber updates one wallet seq and acc number by querying the chain
+func (n *Node) UpdateWalletAccSeqNumber(walletKeyName string) {
+	w := n.Wallets[walletKeyName]
+	num, seq := n.QueryAccountInfo(w.Addr())
+	w.UpdateAccNumberAndSeq(num, seq)
 }
 
 func NoRestart(config *docker.HostConfig) {
