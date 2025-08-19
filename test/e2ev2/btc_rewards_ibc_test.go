@@ -5,12 +5,12 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/v4/test/e2e2/types"
+	"github.com/babylonlabs-io/babylon/v4/test/e2ev2/tmanager"
 )
 
 func TestBtcRewardsIbcCallback(t *testing.T) {
 	t.Parallel()
-	tm := types.NewTmWithIbc(t)
+	tm := tmanager.NewTmWithIbc(t)
 	tm.Start()
 
 	// Setup chains and verify IBC channels

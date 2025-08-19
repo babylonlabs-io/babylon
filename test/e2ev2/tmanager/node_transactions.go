@@ -1,4 +1,4 @@
-package types
+package tmanager
 
 import (
 	"cosmossdk.io/math"

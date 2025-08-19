@@ -33,7 +33,7 @@ import (
 	appsigner "github.com/babylonlabs-io/babylon/v4/app/signer"
 	"github.com/babylonlabs-io/babylon/v4/cmd/babylond/cmd"
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/util"
-	e2etypes "github.com/babylonlabs-io/babylon/v4/test/e2e2/types"
+	e2ev2 "github.com/babylonlabs-io/babylon/v4/test/e2ev2/tmanager"
 )
 
 type internalNode struct {
@@ -147,7 +147,7 @@ func (n *internalNode) createAppConfig(nodeConfig *NodeConfig) {
 }
 
 func (n *internalNode) createNodeKey() error {
-	nodeKey, err := e2etypes.CreateNodeKey(n.configDir(), n.moniker)
+	nodeKey, err := e2ev2.CreateNodeKey(n.configDir(), n.moniker)
 	if err != nil {
 		return err
 	}
@@ -156,7 +156,7 @@ func (n *internalNode) createNodeKey() error {
 }
 
 func (n *internalNode) createConsensusKey() error {
-	consKey, err := e2etypes.CreateConsensusBlsKey(n.mnemonic, n.configDir())
+	consKey, err := e2ev2.CreateConsensusBlsKey(n.mnemonic, n.configDir())
 	if err != nil {
 		return err
 	}
@@ -165,7 +165,7 @@ func (n *internalNode) createConsensusKey() error {
 	return nil
 }
 func (n *internalNode) createKeyFromMnemonic(name, mnemonic string) error {
-	info, privKey, err := e2etypes.CreateKeyFromMnemonic(name, mnemonic, n.configDir())
+	info, privKey, err := e2ev2.CreateKeyFromMnemonic(name, mnemonic, n.configDir())
 	if err != nil {
 		return err
 	}
@@ -178,7 +178,7 @@ func (n *internalNode) createKeyFromMnemonic(name, mnemonic string) error {
 }
 
 func (n *internalNode) createKey(name string) error {
-	mnemonic, err := e2etypes.CreateMnemonic()
+	mnemonic, err := e2ev2.CreateMnemonic()
 	if err != nil {
 		return err
 	}
@@ -217,7 +217,7 @@ func (n *internalNode) getNodeKey() *p2p.NodeKey {
 }
 
 func (n *internalNode) getAppGenesis() (*genutiltypes.AppGenesis, error) {
-	return e2etypes.AppGenesisFromConfig(n.configDir())
+	return e2ev2.AppGenesisFromConfig(n.configDir())
 }
 
 func (n *internalNode) init(gasLimit int64) error {

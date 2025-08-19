@@ -20,7 +20,7 @@ import (
 	tokenfactorytypes "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/types"
 
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/util"
-	e2etypes "github.com/babylonlabs-io/babylon/v4/test/e2e2/types"
+	e2ev2 "github.com/babylonlabs-io/babylon/v4/test/e2ev2/tmanager"
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	btccheckpointtypes "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
@@ -209,57 +209,57 @@ func initGenesis(
 		return err
 	}
 
-	err = e2etypes.UpdateModuleGenesis(appGenState, banktypes.ModuleName, &banktypes.GenesisState{}, e2etypes.UpdateGenesisBank(nil))
+	err = e2ev2.UpdateModuleGenesis(appGenState, banktypes.ModuleName, &banktypes.GenesisState{}, e2ev2.UpdateGenesisBank(nil))
 	if err != nil {
 		return err
 	}
 
-	err = e2etypes.UpdateModuleGenesis(appGenState, govtypes.ModuleName, &govv1.GenesisState{}, e2etypes.UpdateGenesisGov(votingPeriod, expeditedVotingPeriod))
+	err = e2ev2.UpdateModuleGenesis(appGenState, govtypes.ModuleName, &govv1.GenesisState{}, e2ev2.UpdateGenesisGov(votingPeriod, expeditedVotingPeriod))
 	if err != nil {
 		return err
 	}
 
-	err = e2etypes.UpdateModuleGenesis(appGenState, minttypes.ModuleName, &minttypes.GenesisState{}, e2etypes.UpdateGenesisMint)
+	err = e2ev2.UpdateModuleGenesis(appGenState, minttypes.ModuleName, &minttypes.GenesisState{}, e2ev2.UpdateGenesisMint)
 	if err != nil {
 		return err
 	}
 
-	err = e2etypes.UpdateModuleGenesis(appGenState, staketypes.ModuleName, &staketypes.GenesisState{}, e2etypes.UpdateGenesisStake)
+	err = e2ev2.UpdateModuleGenesis(appGenState, staketypes.ModuleName, &staketypes.GenesisState{}, e2ev2.UpdateGenesisStake)
 	if err != nil {
 		return err
 	}
 
-	err = e2etypes.UpdateModuleGenesis(appGenState, genutiltypes.ModuleName, &genutiltypes.GenesisState{}, updateGenesisGenUtil(chain))
+	err = e2ev2.UpdateModuleGenesis(appGenState, genutiltypes.ModuleName, &genutiltypes.GenesisState{}, updateGenesisGenUtil(chain))
 	if err != nil {
 		return err
 	}
 
-	err = e2etypes.UpdateModuleGenesis(appGenState, btclighttypes.ModuleName, btclighttypes.DefaultGenesis(), e2etypes.UpdateGenesisBtcLightClient(btcHeaders))
+	err = e2ev2.UpdateModuleGenesis(appGenState, btclighttypes.ModuleName, btclighttypes.DefaultGenesis(), e2ev2.UpdateGenesisBtcLightClient(btcHeaders))
 	if err != nil {
 		return err
 	}
 
-	err = e2etypes.UpdateModuleGenesis(appGenState, btccheckpointtypes.ModuleName, btccheckpointtypes.DefaultGenesis(), e2etypes.UpdateGenesisBtccheckpoint)
+	err = e2ev2.UpdateModuleGenesis(appGenState, btccheckpointtypes.ModuleName, btccheckpointtypes.DefaultGenesis(), e2ev2.UpdateGenesisBtccheckpoint)
 	if err != nil {
 		return err
 	}
 
-	err = e2etypes.UpdateModuleGenesis(appGenState, finalitytypes.ModuleName, &finalitytypes.GenesisState{}, e2etypes.UpdateGenesisFinality)
+	err = e2ev2.UpdateModuleGenesis(appGenState, finalitytypes.ModuleName, &finalitytypes.GenesisState{}, e2ev2.UpdateGenesisFinality)
 	if err != nil {
 		return err
 	}
 
-	err = e2etypes.UpdateModuleGenesis(appGenState, ratelimiter.ModuleName, &ratelimiter.GenesisState{}, e2etypes.UpdateGenesisRateLimit)
+	err = e2ev2.UpdateModuleGenesis(appGenState, ratelimiter.ModuleName, &ratelimiter.GenesisState{}, e2ev2.UpdateGenesisRateLimit)
 	if err != nil {
 		return fmt.Errorf("failed to update rate limiter genesis state: %w", err)
 	}
 
-	err = e2etypes.UpdateModuleGenesis(appGenState, tokenfactorytypes.ModuleName, &tokenfactorytypes.GenesisState{}, e2etypes.UpdateGenesisTokenFactory)
+	err = e2ev2.UpdateModuleGenesis(appGenState, tokenfactorytypes.ModuleName, &tokenfactorytypes.GenesisState{}, e2ev2.UpdateGenesisTokenFactory)
 	if err != nil {
 		return fmt.Errorf("failed to update tokenfactory genesis state: %w", err)
 	}
 
-	err = e2etypes.UpdateModuleGenesis(appGenState, btcstktypes.ModuleName, &btcstktypes.GenesisState{}, updateGenesisBtcStaking(startingBtcStakingParams))
+	err = e2ev2.UpdateModuleGenesis(appGenState, btcstktypes.ModuleName, &btcstktypes.GenesisState{}, updateGenesisBtcStaking(startingBtcStakingParams))
 	if err != nil {
 		return fmt.Errorf("failed to update rate limiter genesis state: %w", err)
 	}
