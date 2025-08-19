@@ -111,7 +111,7 @@ light client. Registering BSN can be permissionless or permissioned
 One can execute
 
 ```bash
-$ babylond tx btcstkconsumer register-consumer $consumer-id $name $description $commission
+babylond tx btcstkconsumer register-consumer $consumer-id $name $description $commission
 ```
 
 where
@@ -138,15 +138,22 @@ as follows.
       "consumer_id": $consumer-id,
       "consumer_name": $name,
       "consumer_description": $description,
-      "babylon_rewards_commission": $commission,
+      "babylon_rewards_commission": $commission
     }
   ],
   "metadata": "Register consumer BSN",
   "title": "Register consumer BSN",
   "summary": "Register consumer BSN for Babylon system",
-  "deposit": $deposit_amount,
+  "deposit": $deposit_amount
 }
 ```
+
+where
+
+- `$consumer-id`, `$name`, `$description`, and `$commission` are same as in the
+  permissionless case,
+- `$gov_authority` is the governance account address of Babylon Genesis, and
+- `$deposit_amount` is the amount of deposit for the governance proposal.
 
 ### Step 3: Establishing zone concierge IBC channel
 
