@@ -1,9 +1,9 @@
 package types
 
 import (
+	"context"
 	"fmt"
 	"io"
-	"math/rand"
 	"net/http"
 	"net/url"
 	"os"
@@ -32,6 +32,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
+	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/spf13/viper"
@@ -72,7 +74,8 @@ type Node struct {
 	PeerID     string
 
 	// Values are set when creating the babylon node container
-	RpcClient *rpchttp.HTTP
+	RpcClient    *rpchttp.HTTP
+	GrpcEndpoint string
 
 	// Wallets all the wallets where the keyring files were created inside this node
 	// where the key is the wallet name
@@ -142,11 +145,13 @@ func NewValidatorNode(tm *TestManager, name string, cfg *ChainConfig) *Validator
 func (n *Node) Start() {
 	resource := n.RunNodeResource()
 
-	hostPort := resource.GetHostPort(fmt.Sprintf("%d/tcp", n.Ports.RPC))
-	rpcClient, err := rpchttp.New("tcp://"+hostPort, "/websocket")
+	rpcHostPort := resource.GetHostPort(fmt.Sprintf("%d/tcp", n.Ports.RPC))
+	rpcClient, err := rpchttp.New("tcp://"+rpcHostPort, "/websocket")
 	require.NoError(n.T(), err)
-
 	n.RpcClient = rpcClient
+
+	grpcHostPort := resource.GetHostPort(fmt.Sprintf("%d/tcp", n.Ports.GRPC))
+	n.GrpcEndpoint = grpcHostPort
 }
 
 func (n *Node) HostPort(portID int) string {
@@ -467,6 +472,21 @@ func (n *Node) RunNodeResource() *dockertest.Resource {
 	return resource
 }
 
+func (n *Node) WaitForNextBlock() {
+	n.WaitForNextBlocks(1)
+}
+
+func (n *Node) WaitForNextBlocks(numberOfBlocks uint64) {
+	latest, err := n.LatestBlockNumber()
+	require.NoError(n.T(), err)
+	blockToWait := latest + numberOfBlocks
+	n.WaitForCondition(func() bool {
+		newLatest, err := n.LatestBlockNumber()
+		require.NoError(n.T(), err)
+		return newLatest > blockToWait
+	}, fmt.Sprintf("Timed out waiting for block %d. Current height is: %d", latest, blockToWait))
+}
+
 func (n *Node) WaitUntilBlkHeight(blkHeight uint32) {
 	var (
 		latestBlockHeight uint64
@@ -583,18 +603,99 @@ func (n *Node) QueryGRPCGateway(path string, params url.Values) ([]byte, error) 
 	return io.ReadAll(resp.Body)
 }
 
-func (n *Node) QueryHeight() (int64, error) {
-	// Implementation will be added later
-	return 0, nil
+// SendIBCTransfer creates and submits an IBC transfer transaction
+func (n *Node) SendIBCTransfer(wallet *WalletSender, recipient string, token sdk.Coin, channelID string, memo string) string {
+	n.T().Logf("Sending %s from %s (BSN) to %s (BBN) via channel %s", token.String(), wallet.Address.String(), recipient, channelID)
+	// Create timeout height (current height + 1000 blocks)
+	timeoutHeight := clienttypes.NewHeight(0, 1000)
+
+	// Create timeout timestamp (current time + 1 hour)
+	timeoutTimestamp := uint64(time.Now().Add(time.Hour).UnixNano())
+
+	// Create IBC transfer message
+	msg := transfertypes.NewMsgTransfer(
+		"transfer",              // source port
+		channelID,               // source channel
+		token,                   // token to transfer
+		wallet.Address.String(), // sender
+		recipient,               // receiver
+		timeoutHeight,           // timeout height
+		timeoutTimestamp,        // timeout timestamp
+		memo,                    // memo
+	)
+
+	txHash, _ := wallet.SubmitMsgs(msg)
+	return txHash
 }
 
-// generateTestID creates a unique test identifier
-func GenerateTestID(testName string) string {
-	sanitized := SanitizeTestName(testName)
-	timestamp := time.Now().Unix()
-	random := rand.Intn(10000)
+// SubmitTx submits a signed transaction to the network via RPC client
+func (n *Node) SubmitTx(tx *sdktx.Tx) (string, error) {
+	// Convert *sdktx.Tx back to transaction bytes for broadcasting
+	// We need to encode the transaction using the raw message approach
+	rawTx := &sdktx.TxRaw{
+		BodyBytes:     make([]byte, 0),
+		AuthInfoBytes: make([]byte, 0),
+		Signatures:    tx.Signatures,
+	}
 
-	return fmt.Sprintf("%s-%d-%d", sanitized, timestamp, random)
+	// Marshal body and auth info
+	if tx.Body != nil {
+		bodyBytes, err := util.Cdc.Marshal(tx.Body)
+		if err != nil {
+			return "", fmt.Errorf("failed to marshal tx body: %w", err)
+		}
+		rawTx.BodyBytes = bodyBytes
+	}
+
+	if tx.AuthInfo != nil {
+		authInfoBytes, err := util.Cdc.Marshal(tx.AuthInfo)
+		if err != nil {
+			return "", fmt.Errorf("failed to marshal auth info: %w", err)
+		}
+		rawTx.AuthInfoBytes = authInfoBytes
+	}
+
+	// Marshal the raw transaction
+	txBytes, err := util.Cdc.Marshal(rawTx)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal raw transaction: %w", err)
+	}
+
+	// Submit transaction via RPC client using BroadcastTxSync
+	result, err := n.RpcClient.BroadcastTxSync(context.Background(), txBytes)
+	if err != nil {
+		return "", fmt.Errorf("failed to broadcast transaction: %w", err)
+	}
+
+	if result.Code != 0 {
+		return "", fmt.Errorf("transaction failed with code %d: %s", result.Code, result.Log)
+	}
+
+	return result.Hash.String(), nil
+}
+
+// RequireTxSuccess queries a transaction by hash and requires it to have code 0 (success)
+func (n *Node) RequireTxSuccess(txHash string) {
+	txResp := n.QueryTxByHash(txHash)
+	require.Equal(n.T(), uint32(0), txResp.TxResponse.Code, "Transaction %s failed with code %d: %s", txHash, txResp.TxResponse.Code, txResp.TxResponse.RawLog)
+}
+
+// UpdateWalletsAccSeqNumber updates all wallets in a node by querying the chain
+func (n *Node) UpdateWalletsAccSeqNumber() {
+	addrs := make([]string, 0)
+	keyNameByAddr := make(map[string]string, 0)
+	for kName, w := range n.Wallets {
+		addr := w.Addr()
+		addrs = append(addrs, addr)
+		keyNameByAddr[addr] = kName
+	}
+
+	accByAddr := n.QueryAllAccountInfo(addrs...)
+	for addr, acc := range accByAddr {
+		kName := keyNameByAddr[addr]
+		num, seq := acc.GetAccountNumber(), acc.GetSequence()
+		n.Wallets[kName].UpdateAccNumberAndSeq(num, seq)
+	}
 }
 
 func NoRestart(config *docker.HostConfig) {

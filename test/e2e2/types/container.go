@@ -102,30 +102,6 @@ func (cm *ContainerManager) StartContainer(container *Container) error {
 	return nil
 }
 
-// buildEnvSlice converts environment map to slice format expected by Docker
-func buildEnvSlice(env map[string]string) []string {
-	if env == nil {
-		return nil
-	}
-
-	envSlice := make([]string, 0, len(env))
-	for key, value := range env {
-		envSlice = append(envSlice, fmt.Sprintf("%s=%s", key, value))
-	}
-	return envSlice
-}
-
-// parseImageString extracts repository and tag from image string
-func parseImageString(image string) (repository, tag string) {
-	// Handle cases like "babylonlabs-io/babylon:latest" -> ("babylonlabs-io/babylon", "latest")
-	parts := strings.Split(image, ":")
-	if len(parts) == 2 {
-		return parts[0], parts[1]
-	}
-	// No tag specified, use latest
-	return image, "latest"
-}
-
 // sanitizeTestName removes characters that are not valid for Docker network names
 func SanitizeTestName(name string) string {
 	// Docker network names must be lowercase and can contain a-z, 0-9, _, -, .

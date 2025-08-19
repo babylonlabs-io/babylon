@@ -142,9 +142,11 @@ func (c *Chain) InitGenesis() {
 		}
 	}
 
-	// TODO(rafilx): update seq and acc number for wallets
-	_, err = UpdateGenAccounts(appGenState, accsToAdd)
+	sanitizedAccs, err := UpdateGenAccounts(appGenState, accsToAdd)
 	require.NoError(c.T(), err, "failed to set gen accs")
+	// Update sequence and account numbers for wallets based on sanitized accounts
+	c.UpdateWalletSequenceAndAccountNumbers(sanitizedAccs)
+
 	// update all other modules
 	err = UpdateGenModulesState(appGenState, *c.InitialGenesis, c.Validators, nil, nil, balancesToAdd)
 	require.NoError(c.T(), err, "failed to update gen state for all other modules")
@@ -155,6 +157,28 @@ func (c *Chain) InitGenesis() {
 
 	// write the same genesis to all nodes
 	c.WriteGenesis(genDoc)
+}
+
+// UpdateWalletSequenceAndAccountNumbers updates the sequence and account numbers for all wallets
+// based on the sanitized accounts from genesis
+func (c *Chain) UpdateWalletSequenceAndAccountNumbers(sanitizedAccs authtypes.GenesisAccounts) {
+	// Create a map of address to account for quick lookup
+	accMap := make(map[string]sdk.AccountI)
+	for _, acc := range sanitizedAccs {
+		accMap[acc.GetAddress().String()] = acc
+	}
+
+	// Update wallet properties based on the sanitized accounts
+	for _, node := range c.AllNodes() {
+		for _, wallet := range node.Wallets {
+			acc, exists := accMap[wallet.Addr()]
+			if !exists {
+				continue
+			}
+			wallet.AccountNumber = acc.GetAccountNumber()
+			wallet.SequenceNumber = acc.GetSequence()
+		}
+	}
 }
 
 func (c *Chain) WritePeers() {

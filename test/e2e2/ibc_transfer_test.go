@@ -3,13 +3,16 @@ package e2e2
 import (
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
+	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
 	"github.com/babylonlabs-io/babylon/v4/test/e2e2/types"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 )
 
 func TestIBCTransfer(t *testing.T) {
 	tm := types.NewTmWithIbc(t)
-
 	tm.Start()
 
 	// Check that both IBC channels were created
@@ -23,28 +26,18 @@ func TestIBCTransfer(t *testing.T) {
 	bsnChannels := bsn.QueryIBCChannels()
 	require.Len(t, bsnChannels.Channels, 1, "No IBC channels found on BSN Consumer chain")
 
-	// Log channel information
-	t.Logf("Babylon channels: %d", len(bbnChannels.Channels))
-	for i, ch := range bbnChannels.Channels {
-		t.Logf("  Channel %d: %s -> %s (State: %s, Port: %s)",
-			i, ch.ChannelId, ch.Counterparty.ChannelId, ch.State, ch.PortId)
-	}
+	// Test IBC transfer from BSN to BBN
+	t.Log("Testing IBC transfer from BSN to BBN...")
 
-	t.Logf("Consumer BSN channels: %d", len(bsnChannels.Channels))
-	for i, ch := range bsnChannels.Channels {
-		t.Logf("  Channel %d: %s -> %s (State: %s, Port: %s)",
-			i, ch.ChannelId, ch.Counterparty.ChannelId, ch.State, ch.PortId)
-	}
+	bsnSender := bsn.DefaultWallet()
+	bsnSender.VerifySentTx = true
 
-	// time.Sleep(100 * time.Second)
-	// Verify tokens arrived on consumer chain
-	// TODO: Implement balance queries
+	channelID := bsnChannels.Channels[0].ChannelId
+	bbnRecipient := datagen.GenRandomAddress().String()
+	transferAmount := sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(1_000000))
 
-	// Send tokens back from Consumer to Babylon
-	// TODO: Implement reverse transfer
+	txHash := bsn.SendIBCTransfer(bsnSender, bbnRecipient, transferAmount, channelID, "test transfer")
+	require.NotEmpty(t, txHash, "Transaction hash should not be empty")
 
-	// Verify round-trip worked
-	// TODO: Implement final balance verification
-
-	// Test cleanup handled by t.Cleanup()
+	t.Logf("IBC transfer submitted successfully with hash: %s", txHash)
 }

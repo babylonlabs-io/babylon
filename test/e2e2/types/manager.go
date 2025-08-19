@@ -105,17 +105,39 @@ func (tm *TestManager) Start() {
 func (tm *TestManagerIbc) Start() {
 	tm.TestManager.Start()
 
+	// Wait for chains to produce at least one block
 	tm.ChainsWaitUntilHeight(1)
 
 	cA, cB := tm.ChainBBN(), tm.ChainBSN()
 	tm.Hermes.Start(cA, cB)
 
 	tm.Hermes.CreateIBCTransferChannel(cA, cB)
+	tm.ChainsWaitUntilNextBlock()
+
+	// creating channels by hermes modifies the acc sequence
+	tm.UpdateWalletsAccSeqNumber()
+}
+
+// UpdateWalletsAccSeqNumber iterates over all chains, nodes and wallets
+// to update the acc sequence and number
+func (tm *TestManagerIbc) UpdateWalletsAccSeqNumber() {
+	// Query and update account sequence and numbers for all wallets
+	for _, chain := range tm.Chains {
+		for _, node := range chain.AllNodes() {
+			node.UpdateWalletsAccSeqNumber()
+		}
+	}
 }
 
 func (tm *TestManager) ChainsWaitUntilHeight(blkHeight uint32) {
 	for _, chain := range tm.Chains {
 		chain.WaitUntilBlkHeight(blkHeight)
+	}
+}
+
+func (tm *TestManager) ChainsWaitUntilNextBlock() {
+	for _, chain := range tm.Chains {
+		chain.Nodes[0].WaitForNextBlock()
 	}
 }
 

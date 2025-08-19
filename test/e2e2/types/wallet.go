@@ -2,6 +2,7 @@ package types
 
 import (
 	"fmt"
+	"testing"
 
 	"cosmossdk.io/math"
 	"github.com/babylonlabs-io/babylon/v4/app/signer"
@@ -16,9 +17,13 @@ import (
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/cosmos-sdk/server"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdktx "github.com/cosmos/cosmos-sdk/types/tx"
+	sdksigning "github.com/cosmos/cosmos-sdk/types/tx/signing"
+	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	"github.com/cosmos/go-bip39"
 	"github.com/stretchr/testify/require"
 
+	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/util"
 )
 
@@ -30,10 +35,10 @@ const (
 
 // WalletSender manages transaction sending for an account
 type WalletSender struct {
+	Node *Node
+
 	Address sdk.AccAddress
 	PrivKey cryptotypes.PrivKey
-
-	ChainConfig *ChainConfig
 
 	// KeyName used in babylond keys add <KeyName>
 	KeyName  string
@@ -46,8 +51,11 @@ type WalletSender struct {
 	SequenceNumber uint64
 	AccountNumber  uint64
 
-	// Latest Txs IDs Sent
+	// Txs Latest TxHash Sent
 	Txs []string
+	// VerifySentTx defines whether it should or not wait for the next chain block to verify the result of the
+	// transaction
+	VerifySentTx bool
 }
 
 type ValidatorWallet struct {
@@ -87,6 +95,7 @@ func NewWalletSender(keyName string, n *Node) *WalletSender {
 	require.NoError(n.T(), err)
 
 	return &WalletSender{
+		Node:    n,
 		Address: sdk.AccAddress(privKey.PubKey().Address()),
 		PrivKey: privKey,
 
@@ -97,7 +106,13 @@ func NewWalletSender(keyName string, n *Node) *WalletSender {
 
 		SequenceNumber: 0,
 		AccountNumber:  0,
+
+		VerifySentTx: false,
 	}
+}
+
+func (ws *WalletSender) T() *testing.T {
+	return ws.Node.T()
 }
 
 // IncSeq increments the sequence number
@@ -112,7 +127,111 @@ func (ws *WalletSender) Addr() string {
 
 // ChainID returns the chain ID from the chain config
 func (ws *WalletSender) ChainID() string {
-	return ws.ChainConfig.ChainID
+	return ws.Node.ChainConfig.ChainID
+}
+
+// SignMsg creates and signs a transaction with the provided messages
+func (ws *WalletSender) SignMsg(msgs ...sdk.Msg) *sdktx.Tx {
+	txBuilder := util.EncodingConfig.TxConfig.NewTxBuilder()
+	err := txBuilder.SetMsgs(msgs...)
+	require.NoError(ws.T(), err, "failed to set messages")
+
+	// Set fee and gas
+	txBuilder.SetFeeAmount(sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, math.NewInt(20000))))
+	txBuilder.SetGasLimit(300000)
+
+	pubKey := ws.PrivKey.PubKey()
+	signerData := authsigning.SignerData{
+		ChainID:       ws.ChainID(),
+		AccountNumber: ws.AccountNumber,
+		Sequence:      ws.SequenceNumber,
+		Address:       ws.Address.String(),
+		PubKey:        pubKey,
+	}
+
+	// For SIGN_MODE_DIRECT, calling SetSignatures calls setSignerInfos on
+	// TxBuilder under the hood, and SignerInfos is needed to generate the sign
+	// bytes. This is the reason for setting SetSignatures here, with a nil
+	// signature.
+	sig := sdksigning.SignatureV2{
+		PubKey: pubKey,
+		Data: &sdksigning.SingleSignatureData{
+			SignMode:  sdksigning.SignMode_SIGN_MODE_DIRECT,
+			Signature: nil,
+		},
+		Sequence: ws.SequenceNumber,
+	}
+
+	err = txBuilder.SetSignatures(sig)
+	require.NoError(ws.T(), err, "failed to set signatures")
+
+	bytesToSign, err := authsigning.GetSignBytesAdapter(
+		sdk.Context{}, // Empty context for now
+		util.EncodingConfig.TxConfig.SignModeHandler(),
+		sdksigning.SignMode_SIGN_MODE_DIRECT,
+		signerData,
+		txBuilder.GetTx(),
+	)
+	require.NoError(ws.T(), err, "failed to get sign bytes")
+
+	sigBytes, err := ws.PrivKey.Sign(bytesToSign)
+	require.NoError(ws.T(), err, "failed to sign bytes")
+
+	sig = sdksigning.SignatureV2{
+		PubKey: pubKey,
+		Data: &sdksigning.SingleSignatureData{
+			SignMode:  sdksigning.SignMode_SIGN_MODE_DIRECT,
+			Signature: sigBytes,
+		},
+		Sequence: ws.SequenceNumber,
+	}
+
+	err = txBuilder.SetSignatures(sig)
+	require.NoError(ws.T(), err, "failed to set final signatures")
+
+	// Increment sequence number for next transaction
+	ws.IncSeq()
+
+	signedTx := txBuilder.GetTx()
+
+	// Convert to *sdktx.Tx format
+	bz, err := util.EncodingConfig.TxConfig.TxEncoder()(signedTx)
+	require.NoError(ws.T(), err, "failed to encode tx")
+
+	txDecoded, err := DecodeTx(bz)
+	require.NoError(ws.T(), err, "failed to decode tx")
+
+	return txDecoded
+}
+
+// SubmitMsgs builds the tx with the messages and sign it.
+// If the wallet is tagged to wait to verify the transaction it waits for one block
+// and checks if the transaction execution was success (code == 0).
+func (ws *WalletSender) SubmitMsgs(msgs ...sdk.Msg) (txHash string, tx *sdktx.Tx) {
+	// Sign and submit the transaction
+	signedTx := ws.SignMsg(msgs...)
+
+	txHash, err := ws.Node.SubmitTx(signedTx)
+	require.NoError(ws.T(), err, "Failed to submit IBC transfer transaction")
+
+	ws.AddTxSent(txHash)
+	if ws.VerifySentTx {
+		ws.Node.WaitForNextBlock()
+		ws.T().Logf("Wallet %s is set to verify tx: %s", ws.KeyName, txHash)
+		ws.Node.RequireTxSuccess(txHash)
+	}
+
+	return txHash, signedTx
+}
+
+func (ws *WalletSender) AddTxSent(txHash string) {
+	ws.Txs = append(ws.Txs, txHash)
+}
+
+// UpdateAccNumberAndSeq updates the wallet's sequence and account numbers by querying the chain
+func (ws *WalletSender) UpdateAccNumberAndSeq(accNum, seqNum uint64) {
+	ws.AccountNumber = accNum
+	ws.SequenceNumber = seqNum
 }
 
 // // NewFinalityProvider creates a new finality provider
@@ -208,25 +327,29 @@ func CreateConsensusBlsKey(mnemonic, rootDir string) (*appsigner.ConsensusKey, e
 		return nil, err
 	}
 
+	filePV := GenCometKey(mnemonic, rootDir)
+	return &appsigner.ConsensusKey{
+		Comet: &filePV.Key,
+		Bls:   &bls.Key,
+	}, nil
+}
+
+func GenCometKey(mnemonic, rootDir string) *privval.FilePV {
 	config := NodeConfig(rootDir)
 	pvKeyFile := config.PrivValidatorKeyFile()
 	pvStateFile := config.PrivValidatorStateFile()
 
-	// create file pv
 	var privKey ed25519.PrivKey
 	if mnemonic == "" {
 		privKey = ed25519.GenPrivKey()
 	} else {
 		privKey = ed25519.GenPrivKeyFromSecret([]byte(mnemonic))
 	}
+
 	filePV := privval.NewFilePV(privKey, pvKeyFile, pvStateFile)
 	filePV.Key.Save()
 	filePV.LastSignState.Save()
-
-	return &appsigner.ConsensusKey{
-		Comet: &filePV.Key,
-		Bls:   &bls.Key,
-	}, nil
+	return filePV
 }
 
 func GenBlsKey(rootDir string) (*appsigner.Bls, error) {
@@ -241,7 +364,6 @@ func GenBlsKey(rootDir string) (*appsigner.Bls, error) {
 		return nil, fmt.Errorf("failed to ensure dirs: %w", err)
 	}
 
-	// create bls pv
 	return appsigner.GenBls(blsKeyFile, blsPasswordFile, BlsPwd), nil
 }
 
