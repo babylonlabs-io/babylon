@@ -426,6 +426,16 @@ func (n *Node) CreateWallet(keyName string) *WalletSender {
 	return nw
 }
 
+// Wallet returns an existing wallet by name
+func (n *Node) Wallet(keyName string) *WalletSender {
+	return n.Wallets[keyName]
+}
+
+// SendFromDefaultWallet sends coins from the default wallet to an address
+func (n *Node) SendFromDefaultWallet(recipient string, coin sdk.Coin) {
+	n.SendCoins(recipient, sdk.NewCoins(coin))
+}
+
 func (n *Node) DefaultWallet() *WalletSender {
 	return n.Wallets[DefaultNodeWalletKey]
 }

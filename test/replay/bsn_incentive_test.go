@@ -153,7 +153,7 @@ func TestConsumerBsnRewardDistribution(t *testing.T) {
 			Sender:        d.SenderInfo.AddressString(),
 			BsnConsumerId: consumer0.ID,
 			TotalRewards:  basicRewards,
-			FpRatios:      []types.FpRatio{types.FpRatio{BtcPk: consumerFp[2].BTCPublicKey(), Ratio: math.LegacyOneDec()}},
+			FpRatios:      []types.FpRatio{{BtcPk: consumerFp[2].BTCPublicKey(), Ratio: math.LegacyOneDec()}},
 		},
 	)
 	d.SenderInfo.IncSeq()

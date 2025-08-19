@@ -116,7 +116,7 @@ func GenRandomEpochingGenesisState(r *rand.Rand) *epochingtypes.GenesisState {
 		valsLc[i] = &epochingtypes.ValidatorLifecycle{
 			ValAddr: GenRandomValidatorAddress().String(),
 			ValLife: []*epochingtypes.ValStateUpdate{
-				&epochingtypes.ValStateUpdate{
+				{
 					State:       epochingtypes.BondState_BONDED,
 					BlockHeight: 0,
 				},
@@ -126,7 +126,7 @@ func GenRandomEpochingGenesisState(r *rand.Rand) *epochingtypes.GenesisState {
 		delsLc[i] = &epochingtypes.DelegationLifecycle{
 			DelAddr: GenRandomAddress().String(),
 			DelLife: []*epochingtypes.DelegationStateUpdate{
-				&epochingtypes.DelegationStateUpdate{
+				{
 					State:   epochingtypes.BondState_BONDED,
 					ValAddr: GenRandomValidatorAddress().String(),
 				},

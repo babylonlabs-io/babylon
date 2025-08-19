@@ -5,6 +5,8 @@ import (
 	"net/url"
 
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/util"
+	bsctypes "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
+	ictvtypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdktx "github.com/cosmos/cosmos-sdk/types/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -41,6 +43,20 @@ func (n *Node) BankQuery(f func(banktypes.QueryClient)) {
 	n.GrpcConn(func(conn *grpc.ClientConn) {
 		bankClient := banktypes.NewQueryClient(conn)
 		f(bankClient)
+	})
+}
+
+func (n *Node) BtcStkConsumerQuery(f func(bsctypes.QueryClient)) {
+	n.GrpcConn(func(conn *grpc.ClientConn) {
+		bscClient := bsctypes.NewQueryClient(conn)
+		f(bscClient)
+	})
+}
+
+func (n *Node) IncentiveQuery(f func(ictvtypes.QueryClient)) {
+	n.GrpcConn(func(conn *grpc.ClientConn) {
+		incentiveClient := ictvtypes.NewQueryClient(conn)
+		f(incentiveClient)
 	})
 }
 
@@ -144,4 +160,50 @@ func (n *Node) QueryAllBalances(address string) sdk.Coins {
 	})
 
 	return resp.Balances
+}
+
+// QueryBTCStkConsumerConsumers queries all registered BTC staking consumer chains
+func (n *Node) QueryBTCStkConsumerConsumers() []*bsctypes.ConsumerRegisterResponse {
+	var (
+		resp *bsctypes.QueryConsumersRegistryResponse
+		err  error
+	)
+
+	n.BtcStkConsumerQuery(func(bscClient bsctypes.QueryClient) {
+		resp, err = bscClient.ConsumersRegistry(context.Background(), &bsctypes.QueryConsumersRegistryRequest{
+			// Empty consumer_ids means query all consumers
+			ConsumerIds: []string{},
+		})
+		require.NoError(n.T(), err)
+	})
+
+	return resp.ConsumerRegisters
+}
+
+// QueryFinalityProviderRewards queries rewards for multiple finality providers
+func (n *Node) QueryFinalityProviderRewards(fpAddrs []string) map[string]sdk.Coins {
+	return n.QueryIctvRewardGauges(fpAddrs, ictvtypes.FINALITY_PROVIDER)
+}
+
+// QueryDelegatorRewards queries rewards for multiple delegators
+func (n *Node) QueryDelegatorRewards(delAddrs []string) map[string]sdk.Coins {
+	return n.QueryIctvRewardGauges(delAddrs, ictvtypes.BTC_STAKER)
+}
+
+// QueryIctvRewardGauges queries rewards for multiple delegators
+func (n *Node) QueryIctvRewardGauges(addrs []string, holderType ictvtypes.StakeholderType) map[string]sdk.Coins {
+	rewards := make(map[string]sdk.Coins, len(addrs))
+
+	n.IncentiveQuery(func(ictvClient ictvtypes.QueryClient) {
+		for _, addr := range addrs {
+			resp, err := ictvClient.RewardGauges(context.Background(), &ictvtypes.QueryRewardGaugesRequest{
+				Address: addr,
+			})
+			require.NoError(n.T(), err)
+
+			rewards[addr] = resp.RewardGauges[holderType.String()].Coins
+		}
+	})
+
+	return rewards
 }

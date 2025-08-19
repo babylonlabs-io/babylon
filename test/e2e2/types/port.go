@@ -23,12 +23,12 @@ type PortManager struct {
 
 // NodePorts holds all port assignments for a node
 type NodePorts struct {
-	RPC     int // 26657
-	P2P     int // 26656
-	GRPC    int // 9090
-	REST    int // 1317
-	EVMRPC  int // 8545
-	EVMWS   int // 8546
+	RPC    int // 26657
+	P2P    int // 26656
+	GRPC   int // 9090
+	REST   int // 1317
+	EVMRPC int // 8545
+	EVMWS  int // 8546
 }
 
 // NewPortManager creates a new port manager with default range
