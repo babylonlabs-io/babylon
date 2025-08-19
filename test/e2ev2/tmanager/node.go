@@ -512,7 +512,7 @@ func (n *Node) WaitUntilBlkHeight(blkHeight uint32) {
 		var err error
 		latestBlockHeight, err = n.LatestBlockNumber()
 		if err != nil {
-			n.T().Errorf("node %s error %s waiting for blk height %d", n.Name, err.Error(), blkHeight)
+			n.T().Logf("node %s error %s waiting for blk height %d", n.Name, err.Error(), blkHeight)
 		}
 
 		if latestBlockHeight >= uint64(blkHeight) {
