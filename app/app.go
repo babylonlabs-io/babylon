@@ -121,12 +121,12 @@ import (
 	"github.com/babylonlabs-io/babylon/v4/x/btcstaking"
 	btcstakingtypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 	"github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer"
-	bsctypes "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
 	btcstkconsumertypes "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
 	"github.com/babylonlabs-io/babylon/v4/x/checkpointing"
 	"github.com/babylonlabs-io/babylon/v4/x/checkpointing/prepare"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
 	"github.com/babylonlabs-io/babylon/v4/x/checkpointing/vote_extensions"
+	"github.com/babylonlabs-io/babylon/v4/x/coostaking"
 	coostakingtypes "github.com/babylonlabs-io/babylon/v4/x/coostaking/types"
 	"github.com/babylonlabs-io/babylon/v4/x/epoching"
 	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
@@ -366,6 +366,7 @@ func NewBabylonApp(
 		finality.NewAppModule(appCodec, app.FinalityKeeper),
 		// Babylon modules - tokenomics
 		incentive.NewAppModule(appCodec, app.IncentiveKeeper, app.AccountKeeper, app.BankKeeper),
+		coostaking.NewAppModule(appCodec, app.CoostakingKeeper),
 		// Cosmos EVM modules
 		evm.NewAppModule(app.EVMKeeper, app.AccountKeeper, app.AccountKeeper.AddressCodec()),
 		feemarket.NewAppModule(app.FeemarketKeeper),
@@ -431,7 +432,7 @@ func NewBabylonApp(
 		wasmtypes.ModuleName,
 		ratelimittypes.ModuleName,
 		// Integration related modules
-		bsctypes.ModuleName,
+		btcstkconsumertypes.ModuleName,
 		zctypes.ModuleName,
 		btcstkconsumertypes.ModuleName,
 		// BTC staking related modules
@@ -465,7 +466,7 @@ func NewBabylonApp(
 		wasmtypes.ModuleName,
 		ratelimittypes.ModuleName,
 		// Integration related modules
-		bsctypes.ModuleName,
+		btcstkconsumertypes.ModuleName,
 		zctypes.ModuleName,
 		btcstkconsumertypes.ModuleName,
 		// BTC staking related modules
@@ -521,7 +522,7 @@ func NewBabylonApp(
 		icatypes.ModuleName,
 		pfmroutertypes.ModuleName,
 		// Integration related modules
-		bsctypes.ModuleName,
+		btcstkconsumertypes.ModuleName,
 		zctypes.ModuleName,
 		btcstkconsumertypes.ModuleName,
 		// BTC staking related modules
