@@ -3,7 +3,6 @@ package coostaking
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 
 	"cosmossdk.io/core/appmodule"
 	"google.golang.org/grpc"
@@ -11,9 +10,8 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 
-	"github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/client/cli"
-	"github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/keeper"
-	"github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/types"
+	"github.com/babylonlabs-io/babylon/v4/x/coostaking/keeper"
+	"github.com/babylonlabs-io/babylon/v4/x/coostaking/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -21,10 +19,12 @@ import (
 )
 
 var (
-	_ appmodule.HasGenesis  = AppModule{}
-	_ appmodule.AppModule   = AppModule{}
-	_ appmodule.HasServices = AppModule{}
-	_ module.AppModuleBasic = AppModuleBasic{}
+	_ appmodule.HasBeginBlocker = AppModule{}
+	_ appmodule.HasEndBlocker   = AppModule{}
+	_ appmodule.HasGenesis      = AppModule{}
+	_ appmodule.AppModule       = AppModule{}
+	_ appmodule.HasServices     = AppModule{}
+	_ module.AppModuleBasic     = AppModuleBasic{}
 )
 
 // ----------------------------------------------------------------------------
@@ -47,26 +47,20 @@ func (AppModuleBasic) Name() string {
 
 // RegisterLegacyAminoCodec registers the amino codec for the module, which is used to marshal and unmarshal structs to/from []byte in order to persist them in the module's KVStore
 func (AppModuleBasic) RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
-	types.RegisterCodec(cdc)
 }
 
 // RegisterInterfaces registers a module's interface types and their concrete implementations as proto.Message
 func (a AppModuleBasic) RegisterInterfaces(reg cdctypes.InterfaceRegistry) {
-	types.RegisterInterfaces(reg)
 }
 
 // DefaultGenesis returns a default GenesisState for the module, marshalled to json.RawMessage. The default GenesisState need to be defined by the module developer and is primarily used for testing
 func (AppModuleBasic) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
-	return cdc.MustMarshalJSON(types.DefaultGenesis())
+	return nil
 }
 
 // ValidateGenesis used to validate the GenesisState, given in its json.RawMessage form
 func (AppModuleBasic) ValidateGenesis(cdc codec.JSONCodec, config client.TxEncodingConfig, bz json.RawMessage) error {
-	var genState types.GenesisState
-	if err := cdc.UnmarshalJSON(bz, &genState); err != nil {
-		return fmt.Errorf("failed to unmarshal %s genesis state: %w", types.ModuleName, err)
-	}
-	return genState.Validate()
+	return nil
 }
 
 // RegisterGRPCGatewayRoutes registers the gRPC Gateway routes for the module
@@ -76,12 +70,12 @@ func (AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, mux *r
 
 // GetTxCmd returns the root Tx command for the module. The subcommands of this root command are used by end-users to generate new transactions containing messages defined in the module
 func (a AppModuleBasic) GetTxCmd() *cobra.Command {
-	return cli.GetTxCmd()
+	return nil
 }
 
 // GetQueryCmd returns the root query command for the module. The subcommands of this root command are used by end-users to generate new queries to the subset of the state defined by the module
 func (AppModuleBasic) GetQueryCmd() *cobra.Command {
-	return cli.GetQueryCmd(types.StoreKey)
+	return nil
 }
 
 // ----------------------------------------------------------------------------
@@ -107,29 +101,39 @@ func NewAppModule(
 
 // RegisterServices implements appmodule.HasServices.
 func (am AppModule) RegisterServices(grpc.ServiceRegistrar) error {
-	panic("unimplemented")
+	return nil
 }
 
 // DefaultGenesis implements appmodule.HasGenesis.
 // Subtle: this method shadows the method (AppModuleBasic).DefaultGenesis of AppModule.AppModuleBasic.
 func (am AppModule) DefaultGenesis(appmodule.GenesisTarget) error {
-	panic("unimplemented")
+	return nil
 }
 
 // ExportGenesis implements appmodule.HasGenesis.
 func (am AppModule) ExportGenesis(context.Context, appmodule.GenesisTarget) error {
-	panic("unimplemented")
+	return nil
 }
 
 // InitGenesis implements appmodule.HasGenesis.
 func (am AppModule) InitGenesis(context.Context, appmodule.GenesisSource) error {
-	panic("unimplemented")
+	return nil
 }
 
 // ValidateGenesis implements appmodule.HasGenesis.
 // Subtle: this method shadows the method (AppModuleBasic).ValidateGenesis of AppModule.AppModuleBasic.
 func (am AppModule) ValidateGenesis(appmodule.GenesisSource) error {
-	panic("unimplemented")
+	return nil
+}
+
+// BeginBlock implements appmodule.HasBeginBlocker.
+func (am AppModule) BeginBlock(context.Context) error {
+	return nil
+}
+
+// EndBlock implements appmodule.HasEndBlocker.
+func (am AppModule) EndBlock(context.Context) error {
+	return nil
 }
 
 // ConsensusVersion is a sequence number for state-breaking change of the module. It should be incremented on each consensus-breaking change introduced by the module. To avoid wrong/empty versions, the initial version should be set to 1

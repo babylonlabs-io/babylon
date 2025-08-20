@@ -23,88 +23,63 @@ type (
 		// name of the FeeCollector ModuleAccount
 		feeCollectorName string
 
+		// params stores the module parameter
+		params collections.Item[types.Params]
+
 		// Collections structures for rewards
 
-		// historicalRewards maps (period) => historicalRewards
-		historicalRewards collections.Map[uint64, types.HistoricalRewards]
 		// currentRewards stores the current rewards information
 		currentRewards collections.Item[types.CurrentRewards]
-
-		// coostakerRewardsTracker maps (CoostakerAddr) => coostakerRewardsTracker
+		// historicalRewards maps (period) => historicalRewards
+		historicalRewards collections.Map[uint64, types.HistoricalRewards]
+		// coostakerRewardsTracker maps (coostakerAddr) => coostakerRewardsTracker
 		coostakerRewardsTracker collections.Map[[]byte, types.CoostakerRewardsTracker]
-
-		// rewardTrackerEvents maps (babylon block height) => types.EventsPowerUpdateAtHeight
-		rewardTrackerEvents collections.Map[uint64, types.EventsPowerUpdateAtHeight]
-		// rewardTrackerEventsLastProcessedHeight keeps track of the latest processed babylon block height of events
-		rewardTrackerEventsLastProcessedHeight collections.Item[uint64]
 	}
 )
 
 func NewKeeper(
 	cdc codec.BinaryCodec,
 	storeService corestoretypes.KVStoreService,
-	bankKeeper types.BankKeeper,
-	accountKeeper types.AccountKeeper,
-	epochingKeeper types.EpochingKeeper,
 	authority string,
 	feeCollectorName string,
 ) Keeper {
 	sb := collections.NewSchemaBuilder(storeService)
 
 	return Keeper{
-		cdc:            cdc,
-		storeService:   storeService,
-		bankKeeper:     bankKeeper,
-		accountKeeper:  accountKeeper,
-		epochingKeeper: epochingKeeper,
-		RefundableMsgKeySet: collections.NewKeySet(
-			sb,
-			types.RefundableMsgKeySetPrefix,
-			"refundable_msg_key_set",
-			collections.BytesKey,
-		),
+		cdc:          cdc,
+		storeService: storeService,
 
-		// Collections structures for rewards
-		coostakerRewardsTracker: collections.NewMap(
+		authority:        authority,
+		feeCollectorName: feeCollectorName,
+
+		params: collections.NewItem(
 			sb,
-			types.BTCDelegationRewardsTrackerKeyPrefix,
-			"btc_delegation_rewards_tracker",
-			// keys: (FpAddr, DelAddr)
-			collections.PairKeyCodec(collections.BytesKey, collections.BytesKey),
-			codec.CollValue[types.BTCDelegationRewardsTracker](cdc),
+			types.ParamsKey,
+			"parameters",
+			codec.CollValue[types.Params](cdc),
+		),
+		currentRewards: collections.NewItem(
+			sb,
+			types.CurrentRewardsKeyPrefix,
+			"current_rewards",
+			codec.CollValue[types.CurrentRewards](cdc),
 		),
 		historicalRewards: collections.NewMap(
 			sb,
-			types.FinalityProviderHistoricalRewardsKeyPrefix,
-			"fp_historical_rewards",
-			// keys: (FpAddr, period)
-			collections.PairKeyCodec(collections.BytesKey, collections.Uint64Key),
-			codec.CollValue[types.FinalityProviderHistoricalRewards](cdc),
-		),
-		currentRewards: collections.NewMap(
-			sb,
-			types.FinalityProviderCurrentRewardsKeyPrefix,
-			"fp_current_rewards",
-			// key: (FpAddr)
-			collections.BytesKey,
-			codec.CollValue[types.FinalityProviderCurrentRewards](cdc),
-		),
-		rewardTrackerEvents: collections.NewMap(
-			sb,
-			types.RewardTrackerEvents,
-			"events_reward_tracker",
-			// key: (babylon block height)
+			types.HistoricalRewardsKeyPrefix,
+			"historical_rewards",
+			// key: (period)
 			collections.Uint64Key,
-			codec.CollValue[types.EventsPowerUpdateAtHeight](cdc),
+			codec.CollValue[types.HistoricalRewards](cdc),
 		),
-		rewardTrackerEventsLastProcessedHeight: collections.NewItem[uint64](
+		coostakerRewardsTracker: collections.NewMap(
 			sb,
-			types.RewardTrackerEventsLastProcessedHeight,
-			"last_processed_height_events_reward_tracker",
-			collections.Uint64Value,
+			types.CoostakerRewardsTrackerKeyPrefix,
+			"coostaker_rewards_tracker",
+			// key: (coostakerAddr)
+			collections.BytesKey,
+			codec.CollValue[types.CoostakerRewardsTracker](cdc),
 		),
-		authority:        authority,
-		feeCollectorName: feeCollectorName,
 	}
 }
 

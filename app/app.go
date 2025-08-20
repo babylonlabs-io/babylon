@@ -127,6 +127,7 @@ import (
 	"github.com/babylonlabs-io/babylon/v4/x/checkpointing/prepare"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
 	"github.com/babylonlabs-io/babylon/v4/x/checkpointing/vote_extensions"
+	coostakingtypes "github.com/babylonlabs-io/babylon/v4/x/coostaking/types"
 	"github.com/babylonlabs-io/babylon/v4/x/epoching"
 	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 	"github.com/babylonlabs-io/babylon/v4/x/finality"
@@ -402,8 +403,10 @@ func NewBabylonApp(
 	app.ModuleManager.SetOrderBeginBlockers(
 		upgradetypes.ModuleName,
 		// NOTE: incentive module's BeginBlock has to be after mint but before distribution
-		// so that it can intercept a part of new inflation to reward BTC staking stakeholders
-		minttypes.ModuleName, incentivetypes.ModuleName, distrtypes.ModuleName,
+		// so that it can intercept a part of new inflation to reward BTC staking stakeholders.
+		// Coostaking module goes right after incentives but before distribution to also take
+		// a cut of the inflation for Coostaking (BABY + BTC) staking.
+		minttypes.ModuleName, incentivetypes.ModuleName, coostakingtypes.ModuleName, distrtypes.ModuleName,
 		// Cosmos EVM
 		erc20types.ModuleName,
 		feemarkettypes.ModuleName,
@@ -469,7 +472,8 @@ func NewBabylonApp(
 		btcstakingtypes.ModuleName,
 		finalitytypes.ModuleName,
 		// tokenomics related modules
-		incentivetypes.ModuleName, // EndBlock of incentive module does not matter
+		incentivetypes.ModuleName,  // EndBlock of incentive module does not matter
+		coostakingtypes.ModuleName, // EndBlock of coostaking module does not matter
 		// Cosmos EVM
 		evmtypes.ModuleName,
 		erc20types.ModuleName,
@@ -525,6 +529,7 @@ func NewBabylonApp(
 		finalitytypes.ModuleName,
 		// tokenomics-related modules
 		incentivetypes.ModuleName,
+		coostakingtypes.ModuleName,
 	}
 	app.ModuleManager.SetOrderInitGenesis(genesisModuleOrder...)
 	app.ModuleManager.SetOrderExportGenesis(genesisModuleOrder...)

@@ -44,6 +44,8 @@ import (
 	bsctypes "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
 	checkpointingkeeper "github.com/babylonlabs-io/babylon/v4/x/checkpointing/keeper"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
+	coostakingkeeper "github.com/babylonlabs-io/babylon/v4/x/coostaking/keeper"
+	coostakingtypes "github.com/babylonlabs-io/babylon/v4/x/coostaking/types"
 	epochingkeeper "github.com/babylonlabs-io/babylon/v4/x/epoching/keeper"
 	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 	finalitykeeper "github.com/babylonlabs-io/babylon/v4/x/finality/keeper"
@@ -165,6 +167,7 @@ type AppKeepers struct {
 	BtcCheckpointKeeper  btccheckpointkeeper.Keeper
 	CheckpointingKeeper  checkpointingkeeper.Keeper
 	MonitorKeeper        monitorkeeper.Keeper
+	CoostakingKeeper     coostakingkeeper.Keeper
 
 	// IBC-related modules
 	IBCKeeper           *ibckeeper.Keeper           // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
@@ -258,6 +261,7 @@ func (ak *AppKeepers) InitKeepers(
 		wasmtypes.StoreKey,
 		// tokenomics-related modules
 		incentivetypes.StoreKey,
+		coostakingtypes.StoreKey,
 		// EVM
 		evmtypes.StoreKey,
 		feemarkettypes.StoreKey,
@@ -370,13 +374,19 @@ func (ak *AppKeepers) InitKeepers(
 		appparams.AccGov.String(),
 	)
 
-	// set up incentive keeper
 	ak.IncentiveKeeper = incentivekeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[incentivetypes.StoreKey]),
 		ak.BankKeeper,
 		ak.AccountKeeper,
 		&epochingKeeper,
+		appparams.AccGov.String(),
+		authtypes.FeeCollectorName,
+	)
+
+	ak.CoostakingKeeper = coostakingkeeper.NewKeeper(
+		appCodec,
+		runtime.NewKVStoreService(keys[coostakingtypes.StoreKey]),
 		appparams.AccGov.String(),
 		authtypes.FeeCollectorName,
 	)
