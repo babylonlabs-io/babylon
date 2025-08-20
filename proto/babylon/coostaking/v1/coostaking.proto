@@ -8,8 +8,6 @@ option go_package = "github.com/babylonlabs-io/babylon/v4/x/coostaking/types";
 
 // Params defines the parameters for the module.
 message Params {
-  option (gogoproto.goproto_stringer) = false;
-
   // CoostakingPortion is the portion of rewards that goes to Coostakers
   // NOTE: This portion of coostakers is taken after the incentive module
   // takes part of the fee_collector to give out to BTC stakers.
