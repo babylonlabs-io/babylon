@@ -89,7 +89,7 @@ func (s *IBCTransferTestSuite) IBCTransfer() {
 	nA.BankSendFromNode(s.addrA, "10000000ubbn")
 
 	s.addrB = nB.KeysAdd("addr-B")
-	nB.BankSendFromNode(s.addrB, "10000000ubbn")
+	nB.BankSendFromNode(s.addrB, "30000000ubbn")
 
 	nB.WaitForNextBlock()
 	nA.WaitForNextBlock()
