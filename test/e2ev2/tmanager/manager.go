@@ -21,7 +21,6 @@ type TestManager struct {
 	Network          *dockertest.Network
 	ContainerManager *ContainerManager
 	Chains           map[string]*Chain
-	// LastTxsIDs       []string
 }
 
 // TestManagerIbc manages two chains with ibc connection

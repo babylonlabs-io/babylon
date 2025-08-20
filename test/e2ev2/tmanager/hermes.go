@@ -17,53 +17,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// HermesChainConfig defines Hermes configuration for a specific chain
-type HermesChainConfig struct {
-	ChainConfig    *ChainConfig
-	RPCAddr        string
-	GRPCAddr       string
-	WebSocketAddr  string
-	Account        *WalletSender // HermesAccount is now a WalletSender
-	GasPrice       string
-	KeyName        string
-	TrustingPeriod time.Duration
-}
-
-// HermesGlobalConfig defines global Hermes configuration
-type HermesGlobalConfig struct {
-	LogLevel      string
-	TelemetryHost string
-	TelemetryPort int
-	RestPort      int
-}
-
-// ChannelConfig defines IBC channel configuration
-type ChannelConfig struct {
-	ChainA      string
-	ChainB      string
-	PortA       string
-	PortB       string
-	ChannelA    string
-	ChannelB    string
-	ConnectionA string
-	ConnectionB string
-	ClientA     string
-	ClientB     string
-}
-
-// HermesConfig holds complete Hermes relayer configuration
-type HermesConfig struct {
-	ChainConfigs map[string]*HermesChainConfig
-	Channels     []ChannelConfig
-	GlobalConfig *HermesGlobalConfig
-}
-
 // HermesRelayer manages Hermes IBC relayer
 type HermesRelayer struct {
 	Home string
 
 	Endpoint    string
-	Config      *HermesConfig
 	Container   *Container
 	Tm          *TestManager
 	ExposedPort int

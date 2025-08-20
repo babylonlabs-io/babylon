@@ -233,47 +233,6 @@ func (ws *WalletSender) UpdateAccNumberAndSeq(accNum, seqNum uint64) {
 	ws.SequenceNumber = seqNum
 }
 
-// // NewFinalityProvider creates a new finality provider
-// func NewFinalityProvider(keyName string, chainConfig *ChainConfig) *FinalityProvider {
-// 	walletSender := NewWalletSender(keyName, chainConfig)
-// 	btcPrivKey, _ := btcec.NewPrivateKey()
-
-// 	return &FinalityProvider{
-// 		WalletSender: walletSender,
-// 		BtcPrivKey:   btcPrivKey,
-// 		Description:  "Test Finality Provider",
-// 		Commission:   math.LegacyNewDecWithPrec(5, 2), // 5%
-// 	}
-// }
-
-// // NewBtcStaker creates a new Bitcoin staker
-// func NewBtcStaker(keyName string, chainConfig *ChainConfig) *BtcStaker {
-// 	walletSender := NewWalletSender(keyName, chainConfig)
-// 	btcPrivKey, _ := btcec.NewPrivateKey()
-
-// 	return &BtcStaker{
-// 		WalletSender:  walletSender,
-// 		BtcPrivKey:    btcPrivKey,
-// 		StakingAmount: 1000000, // 1 BBN
-// 	}
-// }
-
-// // NewCovenantSender creates a new covenant sender
-// func NewCovenantSender(keyName string, chainConfig *ChainConfig) *CovenantSender {
-// 	walletSender := NewWalletSender(keyName, chainConfig)
-
-// 	// Generate some covenant keys
-// 	covenantKeys := make([]*btcec.PrivateKey, 3)
-// 	for i := range covenantKeys {
-// 		covenantKeys[i], _ = btcec.NewPrivateKey()
-// 	}
-
-// 	return &CovenantSender{
-// 		WalletSender: walletSender,
-// 		CovenantKeys: covenantKeys,
-// 	}
-// }
-
 func CreateKeyFromMnemonic(
 	name, mnemonic, directoryPath string,
 ) (info *keyring.Record, privKey cryptotypes.PrivKey, err error) {

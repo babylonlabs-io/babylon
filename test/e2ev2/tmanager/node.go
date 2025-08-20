@@ -174,7 +174,6 @@ func (n *ValidatorNode) CreateValidatorMsg(selfDelegationAmt sdk.Coin) sdk.Msg {
 	// get the initial validator min self delegation
 	minSelfDelegation, _ := sdkmath.NewIntFromString("1")
 
-	// valPubKey, err := cryptocodec.FromCmtPubKeyInterface( n.consensusKey.Comet.PubKey)
 	valPubKey, err := cryptocodec.FromCmtPubKeyInterface(n.Wallet.ConsKey.Comet.PubKey)
 	require.NoError(n.T(), err)
 
