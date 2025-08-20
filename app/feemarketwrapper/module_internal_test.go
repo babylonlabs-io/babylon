@@ -4,9 +4,9 @@ import (
 	"errors"
 	"fmt"
 
-	abci "github.com/cometbft/cometbft/abci/types"
 	"cosmossdk.io/math"
 	storetypes "cosmossdk.io/store/types"
+	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -46,6 +46,7 @@ func testCustomBeginBlock(ctx sdk.Context, k FeemarketKeeperInterface) error {
 }
 
 // testCustomEndBlock is a testable version of customEndBlock that accepts interface
+//nolint:unparam // []abci.ValidatorUpdate return required for ABCI interface compatibility
 func testCustomEndBlock(ctx sdk.Context, k FeemarketKeeperInterface, tKey *storetypes.TransientStoreKey) ([]abci.ValidatorUpdate, error) {
 	if ctx.BlockGasMeter() == nil {
 		err := errors.New("block gas meter is nil when setting block gas wanted")
