@@ -41,4 +41,4 @@ proto-format:
 proto-lint:
 	@$(bufImage) lint --error-format=json
 
-.PHONY: proto proto-gen proto-swagger-gen proto-format proto-lint proto-all
+.PHONY: proto-gen proto-swagger-gen proto-format proto-lint proto-all
