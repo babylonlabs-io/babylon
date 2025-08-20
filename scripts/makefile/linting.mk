@@ -50,7 +50,7 @@ lint-all-fix:
 	@codespell -w
 	@$(golangci_lint_cmd) run --out-format=tab --fix
 
-.PHONY: lint-go lint-go-fix lint-markdown lint-markdown-fix lint  lint-typo lint-typo-fix lint-all-fix
+.PHONY: lint-go lint-go-fix lint-markdown lint-markdown-fix lint-typo lint-typo-fix lint-all-fix
 
 format: ## Run code formatter
 	find . -name '*.go' -type f -not -path "./vendor*" -not -path "*.git*" -not -path "./client/docs/statik/statik.go" -not -name '*.pb.go' | xargs gofmt -w -s
