@@ -432,7 +432,6 @@ func NewBabylonApp(
 		wasmtypes.ModuleName,
 		ratelimittypes.ModuleName,
 		// Integration related modules
-		btcstkconsumertypes.ModuleName,
 		zctypes.ModuleName,
 		btcstkconsumertypes.ModuleName,
 		// BTC staking related modules
@@ -466,7 +465,6 @@ func NewBabylonApp(
 		wasmtypes.ModuleName,
 		ratelimittypes.ModuleName,
 		// Integration related modules
-		btcstkconsumertypes.ModuleName,
 		zctypes.ModuleName,
 		btcstkconsumertypes.ModuleName,
 		// BTC staking related modules
@@ -522,7 +520,6 @@ func NewBabylonApp(
 		icatypes.ModuleName,
 		pfmroutertypes.ModuleName,
 		// Integration related modules
-		btcstkconsumertypes.ModuleName,
 		zctypes.ModuleName,
 		btcstkconsumertypes.ModuleName,
 		// BTC staking related modules
