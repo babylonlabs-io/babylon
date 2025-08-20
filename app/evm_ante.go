@@ -13,7 +13,6 @@ import (
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	evmante "github.com/cosmos/evm/ante"
 	cosmosevmante "github.com/cosmos/evm/ante/evm"
 	"github.com/cosmos/evm/crypto/ethsecp256k1"
 	cosmosevmtypes "github.com/cosmos/evm/types"
@@ -58,7 +57,7 @@ func SigVerificationGasConsumer(
 		return nil
 
 	case *secp256k1.PubKey:
-		// Ethereum keys
+		// Cosmos keys
 		meter.ConsumeGas(params.SigVerifyCostSecp256k1, "ante verify: secp256k1")
 		return nil
 
@@ -73,9 +72,36 @@ func SigVerificationGasConsumer(
 		if !ok {
 			return fmt.Errorf("expected %T, got, %T", &signing.MultiSignatureData{}, sig.Data)
 		}
-		return evmante.ConsumeMultisignatureVerificationGas(meter, multisignature, pubkey, params, sig.Sequence)
+		return ConsumeMultisignatureVerificationGas(meter, multisignature, pubkey, params, sig.Sequence)
 
 	default:
 		return errorsmod.Wrapf(errortypes.ErrInvalidPubKey, "unrecognized/unsupported public key type: %T", pubkey)
 	}
+}
+
+// ConsumeMultisignatureVerificationGas consumes gas from a GasMeter for verifying a multisig pubkey signature
+func ConsumeMultisignatureVerificationGas(
+	meter storetypes.GasMeter, sig *signing.MultiSignatureData, pubkey multisig.PubKey,
+	params authtypes.Params, accSeq uint64,
+) error {
+	size := sig.BitArray.Count()
+	sigIndex := 0
+
+	for i := 0; i < size; i++ {
+		if !sig.BitArray.GetIndex(i) {
+			continue
+		}
+		sigV2 := signing.SignatureV2{
+			PubKey:   pubkey.GetPubKeys()[i],
+			Data:     sig.Signatures[sigIndex],
+			Sequence: accSeq,
+		}
+		err := SigVerificationGasConsumer(meter, sigV2, params)
+		if err != nil {
+			return err
+		}
+		sigIndex++
+	}
+
+	return nil
 }
