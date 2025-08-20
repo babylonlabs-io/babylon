@@ -19,4 +19,4 @@ gosec-docker:
 gosec-local:
 	gosec -exclude-generated -exclude-dir=$(CURDIR)/testutil -exclude-dir=$(CURDIR)/test -conf $(CURDIR)/gosec.json $(CURDIR)/...
 
-.PHONY: gosec-menu gosec-docker gosec-local
+.PHONY: gosec gosec-docker gosec-local
