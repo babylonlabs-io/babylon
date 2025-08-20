@@ -61,10 +61,10 @@ func NewChainConfig(tempDir, chainID string) *ChainConfig {
 		// starts with 2 nodes (1 val, one non-validator)
 		ValidatorCount:        1,
 		NodeCount:             1,
-		BlockTime:             5 * time.Second,
+		BlockTime:             2 * time.Second,
 		EpochLength:           10,
-		VotingPeriod:          30 * time.Second,
-		ExpeditedVotingPeriod: 15 * time.Second,
+		VotingPeriod:          12 * time.Second,
+		ExpeditedVotingPeriod: 6 * time.Second,
 		BTCConfirmationDepth:  6,
 		GasLimit:              300_000_000,
 	}

@@ -477,7 +477,6 @@ func (n *Node) RunNodeResource() *dockertest.Resource {
 		Mounts: []string{
 			fmt.Sprintf("%s/:%s", n.Home, BabylonHomePathInContainer),
 			fmt.Sprintf("%s/bytecode:/bytecode", pwd),
-			fmt.Sprintf("%s/govProps:/govProps", pwd),
 		},
 	}
 
