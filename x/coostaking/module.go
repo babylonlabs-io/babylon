@@ -6,11 +6,10 @@ import (
 	"fmt"
 
 	"cosmossdk.io/core/appmodule"
+	"google.golang.org/grpc"
 
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
-
-	abci "github.com/cometbft/cometbft/abci/types"
 
 	"github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/client/cli"
 	"github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/keeper"
@@ -18,15 +17,14 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 )
 
 var (
-	_ appmodule.AppModule       = AppModule{}
-	_ appmodule.HasBeginBlocker = AppModule{}
-	_ module.HasABCIEndBlock    = AppModule{}
-	_ module.AppModuleBasic     = AppModuleBasic{}
+	_ appmodule.HasGenesis  = AppModule{}
+	_ appmodule.AppModule   = AppModule{}
+	_ appmodule.HasServices = AppModule{}
+	_ module.AppModuleBasic = AppModuleBasic{}
 )
 
 // ----------------------------------------------------------------------------
@@ -107,51 +105,40 @@ func NewAppModule(
 	}
 }
 
-// Deprecated: use RegisterServices
-func (AppModule) QuerierRoute() string { return types.RouterKey }
-
-// RegisterServices registers a gRPC query service to respond to the module-specific gRPC queries
-func (am AppModule) RegisterServices(cfg module.Configurator) {
-	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServerImpl(am.k))
-	types.RegisterQueryServer(cfg.QueryServer(), am.k)
+// RegisterServices implements appmodule.HasServices.
+func (am AppModule) RegisterServices(grpc.ServiceRegistrar) error {
+	panic("unimplemented")
 }
 
-// RegisterInvariants registers the invariants of the module. If an invariant deviates from its predicted value, the InvariantRegistry triggers appropriate logic (most often the chain will be halted)
-// nolint staticcheck
-func (am AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
-
-// InitGenesis performs the module's genesis initialization. It returns no validator updates.
-func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, gs json.RawMessage) {
-	var genState types.GenesisState
-	// Initialize global index to index in genesis state
-	cdc.MustUnmarshalJSON(gs, &genState)
-
-	// InitGenesis(ctx, am.k, genState)
+// DefaultGenesis implements appmodule.HasGenesis.
+// Subtle: this method shadows the method (AppModuleBasic).DefaultGenesis of AppModule.AppModuleBasic.
+func (am AppModule) DefaultGenesis(appmodule.GenesisTarget) error {
+	panic("unimplemented")
 }
 
-// ExportGenesis returns the module's exported genesis state as raw JSON bytes.
-func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.RawMessage {
-	// genState := ExportGenesis(ctx, am.k)
-	return cdc.MustMarshalJSON(nil)
+// ExportGenesis implements appmodule.HasGenesis.
+func (am AppModule) ExportGenesis(context.Context, appmodule.GenesisTarget) error {
+	panic("unimplemented")
+}
+
+// InitGenesis implements appmodule.HasGenesis.
+func (am AppModule) InitGenesis(context.Context, appmodule.GenesisSource) error {
+	panic("unimplemented")
+}
+
+// ValidateGenesis implements appmodule.HasGenesis.
+// Subtle: this method shadows the method (AppModuleBasic).ValidateGenesis of AppModule.AppModuleBasic.
+func (am AppModule) ValidateGenesis(appmodule.GenesisSource) error {
+	panic("unimplemented")
 }
 
 // ConsensusVersion is a sequence number for state-breaking change of the module. It should be incremented on each consensus-breaking change introduced by the module. To avoid wrong/empty versions, the initial version should be set to 1
 func (AppModule) ConsensusVersion() uint64 { return 1 }
 
-// BeginBlock contains the logic that is automatically triggered at the beginning of each block
-func (am AppModule) BeginBlock(ctx context.Context) error {
-	return nil
-}
-
-// EndBlock contains the logic that is automatically triggered at the end of each block
-func (am AppModule) EndBlock(ctx context.Context) ([]abci.ValidatorUpdate, error) {
-	return nil, nil
-}
-
 // IsOnePerModuleType implements the depinject.OnePerModuleType interface.
-func (am AppModule) IsOnePerModuleType() { // marker
+func (AppModule) IsOnePerModuleType() { // marker
 }
 
 // IsAppModule implements the appmodule.AppModule interface.
-func (am AppModule) IsAppModule() { // marker
+func (AppModule) IsAppModule() { // marker
 }
