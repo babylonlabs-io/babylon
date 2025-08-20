@@ -238,6 +238,7 @@ IBC packet size
 - [#1512](https://github.com/babylonlabs-io/babylon/pull/1512) fix: remove base header
 and global segment store
 - [#1470](https://github.com/babylonlabs-io/babylon/pull/1470) fix: debug_traceTransaction with tracer params
+- [#1523](https://github.com/babylonlabs-io/babylon/pull/1523) fix: change SigGasConsumer to accepts ethsecp256k1 as a pubkey
 
 ## v2.2.0
 
