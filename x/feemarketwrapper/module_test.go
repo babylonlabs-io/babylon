@@ -1,15 +1,16 @@
 package feemarketwrapper_test
 
 import (
+	"github.com/stretchr/testify/require"
 	"testing"
 
 	"cosmossdk.io/math"
 	storetypes "cosmossdk.io/store/types"
-	"github.com/stretchr/testify/require"
+
+	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
 
 	testhelper "github.com/babylonlabs-io/babylon/v4/testutil/helper"
 	"github.com/babylonlabs-io/babylon/v4/x/feemarketwrapper"
-	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
 )
 
 func TestModule_Setup(t *testing.T) {
