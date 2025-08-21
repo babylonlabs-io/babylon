@@ -30,6 +30,7 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/babylonlabs-io/babylon/v4/x/feemarketwrapper"
 	abci "github.com/cometbft/cometbft/abci/types"
 	cmtos "github.com/cometbft/cometbft/libs/os"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
@@ -86,7 +87,6 @@ import (
 	srvflags "github.com/cosmos/evm/server/flags"
 	evmutils "github.com/cosmos/evm/utils"
 	"github.com/cosmos/evm/x/erc20"
-	"github.com/cosmos/evm/x/feemarket"
 	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
 	"github.com/cosmos/evm/x/precisebank"
 	precisebanktypes "github.com/cosmos/evm/x/precisebank/types"
@@ -373,7 +373,7 @@ func NewBabylonApp(
 		incentive.NewAppModule(appCodec, app.IncentiveKeeper, app.AccountKeeper, app.BankKeeper),
 		// Cosmos EVM modules
 		evm.NewAppModule(app.EVMKeeper, app.AccountKeeper, app.AccountKeeper.AddressCodec()),
-		feemarket.NewAppModule(app.FeemarketKeeper),
+		feemarketwrapper.NewAppModule(app.FeemarketKeeper, app.GetTKey(feemarkettypes.TransientKey)),
 		erc20.NewAppModule(app.Erc20Keeper, app.AccountKeeper),
 		precisebank.NewAppModule(app.PreciseBankKeeper, app.BankKeeper, app.AccountKeeper),
 	)
@@ -621,7 +621,7 @@ func NewBabylonApp(
 
 	// set postHandler
 	postHandler := sdk.ChainPostDecorators(
-		incentivekeeper.NewRefundTxDecorator(&app.IncentiveKeeper),
+		incentivekeeper.NewRefundTxDecorator(&app.IncentiveKeeper, app.GetTKey(feemarkettypes.TransientKey)),
 		zckeeper.NewIBCHeaderDecorator(&app.ZoneConciergeKeeper),
 	)
 	app.SetPostHandler(postHandler)
