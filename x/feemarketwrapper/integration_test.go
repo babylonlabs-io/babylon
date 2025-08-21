@@ -74,6 +74,7 @@ func TestIntegration_RefundableTransactionFlow(t *testing.T) {
 		afterGas := ctx.GasMeter().GasConsumed()
 		txGasUsed := afterGas - beforeGas
 
+		// consume gas used for block gas meter tracking
 		ctx.BlockGasMeter().ConsumeGas(txGasUsed, "btc_header_insertion")
 
 		t.Logf("MsgInsertHeaders executed - Gas used: %d", txGasUsed)
@@ -103,33 +104,32 @@ func TestIntegration_RefundableTransactionFlow(t *testing.T) {
 		ctxWithExecMode := ctx.WithExecMode(sdk.ExecModeFinalize)
 		_, err = postHandler(ctxWithExecMode, tx, false, true)
 		require.NoError(t, err)
-
 		t.Logf("RefundTxDecorator PostHandle executed successfully")
 
-		storedGasWanted := feemarketwrapper.GetTransientRefundableBlockGasWanted(ctx, tKey)
-		storedGasUsed := feemarketwrapper.GetTransientRefundableBlockGasUsed(ctx, tKey)
+		storedRefundableGasWanted := feemarketwrapper.GetTransientRefundableBlockGasWanted(ctx, tKey)
+		storedRefundableGasUsed := feemarketwrapper.GetTransientRefundableBlockGasUsed(ctx, tKey)
 
-		require.Equal(t, txGasLimit, storedGasWanted)
-		require.Greater(t, storedGasUsed, uint64(0), "Some gas should have been recorded as used")
+		require.Equal(t, txGasLimit, storedRefundableGasWanted)
+		require.Greater(t, storedRefundableGasUsed, uint64(0), "Some gas should have been recorded as used")
 
-		t.Logf("RefundTxDecorator stored - Gas wanted: %d, Gas used: %d", storedGasWanted, storedGasUsed)
+		t.Logf("RefundTxDecorator stored - Gas wanted: %d, Gas used: %d", storedRefundableGasWanted, storedRefundableGasUsed)
 
 		additionalGas := uint64(200000)
-		totalBlockGasWanted := storedGasWanted + additionalGas
+		totalBlockGasWanted := storedRefundableGasWanted + additionalGas
 		feemarketKeeper.SetTransientBlockGasWanted(ctx, totalBlockGasWanted)
 
 		ctx.BlockGasMeter().ConsumeGas(additionalGas, "other_transactions")
 
 		consumedGas := ctx.BlockGasMeter().GasConsumed()
 		t.Logf("Block state - Total gas wanted: %d, Total gas consumed: %d, Refundable wanted: %d, Refundable used: %d",
-			totalBlockGasWanted, consumedGas, storedGasWanted, storedGasUsed)
+			totalBlockGasWanted, consumedGas, storedRefundableGasWanted, storedRefundableGasUsed)
 
 		wrapper := feemarketwrapper.NewAppModule(feemarketKeeper, tKey)
 		validatorUpdates, err := wrapper.EndBlock(ctx)
 		require.NoError(t, err)
 		require.Empty(t, validatorUpdates)
 
-		expectedAdjustedGasWanted := totalBlockGasWanted - storedGasWanted
+		expectedAdjustedGasWanted := totalBlockGasWanted - storedRefundableGasWanted
 		t.Logf("Expected adjusted gas wanted: %d (should exclude refundable gas)", expectedAdjustedGasWanted)
 
 		err = wrapper.BeginBlock(ctx)
@@ -137,11 +137,12 @@ func TestIntegration_RefundableTransactionFlow(t *testing.T) {
 
 		finalBaseFee := feemarketKeeper.GetBaseFee(ctx)
 		require.NotNil(t, finalBaseFee)
+		t.Logf("Begin base fee: %s", params.BaseFee.String())
 		t.Logf("Final base fee: %s", finalBaseFee.String())
 
 		require.Greater(t, txGasUsed, uint64(0), "Transaction should have consumed gas")
-		require.Equal(t, txGasLimit, storedGasWanted, "Refundable gas wanted should match tx gas limit")
-		require.Greater(t, storedGasUsed, uint64(0), "Refundable gas used should be greater than 0")
+		require.Equal(t, txGasLimit, storedRefundableGasWanted, "Refundable gas wanted should match tx gas limit")
+		require.Greater(t, storedRefundableGasUsed, uint64(0), "Refundable gas used should be greater than 0")
 		require.NotNil(t, finalBaseFee, "Final base fee should be calculated")
 
 		t.Log("✅ Integration test passed: Refundable transaction flow works end-to-end")
