@@ -206,7 +206,7 @@ func InitTestnet(
 	babylonConfig.GRPC.Address = "0.0.0.0:9090"
 
 	// Update babylonConfig to include Ethereum JSON-RPC settings and other settings
-	babylonConfig.Mempool.MaxTxs = -1 // NOTE: No-op mempool required
+	babylonConfig.Mempool.MaxTxs = 0 //
 	babylonConfig.EVM = *servercfg.DefaultEVMConfig()
 	babylonConfig.JSONRPC = *servercfg.DefaultJSONRPCConfig()
 	babylonConfig.JSONRPC.API = []string{"eth", "net", "web3", "debug"} // debug enabled
@@ -463,7 +463,7 @@ func InitTestnet(
 	}
 
 	coins := sdk.Coins{
-		sdk.NewCoin("ubbn", math.NewInt(10e6)),
+		sdk.NewCoin("ubbn", math.NewInt(10e17)),
 	}
 
 	genBalances = append(genBalances, banktypes.Balance{Address: addr.String(), Coins: coins.Sort()})
