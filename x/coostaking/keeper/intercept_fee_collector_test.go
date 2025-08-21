@@ -42,7 +42,9 @@ func FuzzInterceptFeeCollector(f *testing.F) {
 		bankK.EXPECT().SendCoinsFromModuleToModule(gomock.Any(), gomock.Eq(authtypes.FeeCollectorName), gomock.Eq(types.ModuleName), gomock.Eq(coostakingPortion)).Times(1)
 
 		// handle coins in fee collector
-		k.HandleCoinsInFeeCollector(ctx)
+		err := k.HandleCoinsInFeeCollector(ctx)
+		require.NoError(t, err)
+
 		rwd, err := k.GetCurrentRewards(ctx)
 		require.NoError(t, err)
 		require.Equal(t, coostakingPortion.String(), rwd.Rewards.String())
@@ -75,7 +77,9 @@ func TestInterceptFeeCollectorWithSmallAmount(t *testing.T) {
 	bankK.EXPECT().SendCoinsFromModuleToModule(gomock.Any(), gomock.Eq(authtypes.FeeCollectorName), gomock.Eq(types.ModuleName), gomock.Eq(coostakingPortion)).Times(1)
 
 	// handle coins in fee collector
-	k.HandleCoinsInFeeCollector(ctx)
+	err := k.HandleCoinsInFeeCollector(ctx)
+	require.NoError(t, err)
+
 	rwd, err := k.GetCurrentRewards(ctx)
 	require.NoError(t, err)
 	require.Equal(t, coostakingPortion.String(), rwd.Rewards.String())

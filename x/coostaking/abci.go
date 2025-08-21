@@ -14,13 +14,13 @@ import (
 func BeginBlocker(ctx context.Context, k keeper.Keeper) error {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyBeginBlocker)
 
-	// handle coins in the fee collector account, including
-	// - send a portion of coins in the fee collector account to the incentive module account
-	// - accumulate BTC staking gauge at the current height
-	if sdk.UnwrapSDKContext(ctx).HeaderInfo().Height > 0 {
-		k.HandleCoinsInFeeCollector(ctx)
+	if sdk.UnwrapSDKContext(ctx).HeaderInfo().Height <= 0 {
+		return nil
 	}
-	return nil
+	// handle coins in the fee collector account, including
+	// - send a portion of coins in the fee collector account to the coostaking module account
+	// - accumulate the entitled portion to the current rewards
+	return k.HandleCoinsInFeeCollector(ctx)
 }
 
 func EndBlocker(ctx context.Context, k keeper.Keeper) error {
