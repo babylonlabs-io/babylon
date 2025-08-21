@@ -20,7 +20,6 @@ import (
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/stretchr/testify/require"
-
 )
 
 type BlockReplayer struct {
