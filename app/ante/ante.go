@@ -17,6 +17,7 @@ import (
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	evmante "github.com/cosmos/evm/ante/evm"
 	anteinterfaces "github.com/cosmos/evm/ante/interfaces"
 	ibckeeper "github.com/cosmos/ibc-go/v10/modules/core/keeper"
 )
@@ -74,8 +75,9 @@ func NewAnteHandler(
 		NewGasLimitDecorator(mempoolOpts),
 		NewIBCMsgSizeDecorator(),
 		NewWrappedAnteHandler(authAnteHandler),
+		evmante.NewGasWantedDecorator(evmHandlerOptions.EvmKeeper, evmHandlerOptions.FeeMarketKeeper),
 		NewBtcValidationDecorator(btcConfig, btccKeeper),
-		incentivekeeper.NewRefundTxDecorator(nil),
+		incentivekeeper.NewRefundTxDecorator(nil, nil),
 		NewPriorityDecorator(),
 	)
 
