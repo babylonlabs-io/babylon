@@ -19,8 +19,8 @@ import (
 	staketypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	tokenfactorytypes "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/types"
 
-<<<<<<< HEAD
 	"github.com/babylonlabs-io/babylon/v3/test/e2e/util"
+	e2ev2 "github.com/babylonlabs-io/babylon/v3/test/e2ev2/tmanager"
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
 	btccheckpointtypes "github.com/babylonlabs-io/babylon/v3/x/btccheckpoint/types"
@@ -28,17 +28,6 @@ import (
 	btcstktypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 	finalitytypes "github.com/babylonlabs-io/babylon/v3/x/finality/types"
 	minttypes "github.com/babylonlabs-io/babylon/v3/x/mint/types"
-=======
-	"github.com/babylonlabs-io/babylon/v4/test/e2e/util"
-	e2ev2 "github.com/babylonlabs-io/babylon/v4/test/e2ev2/tmanager"
-	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
-	bbn "github.com/babylonlabs-io/babylon/v4/types"
-	btccheckpointtypes "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
-	btclighttypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
-	btcstktypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
-	finalitytypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
-	minttypes "github.com/babylonlabs-io/babylon/v4/x/mint/types"
->>>>>>> dfbd055 (chore:  e2e refactory (#1552))
 	ratelimiter "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/types"
 )
 

@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"cosmossdk.io/math"
-	appsigner "github.com/babylonlabs-io/babylon/v4/app/signer"
+	appsigner "github.com/babylonlabs-io/babylon/v3/app/signer"
 	"github.com/btcsuite/btcd/btcec/v2"
 	cmtcfg "github.com/cometbft/cometbft/config"
 	"github.com/cometbft/cometbft/crypto/ed25519"
@@ -22,8 +22,8 @@ import (
 	"github.com/cosmos/go-bip39"
 	"github.com/stretchr/testify/require"
 
-	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
-	"github.com/babylonlabs-io/babylon/v4/test/e2e/util"
+	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
+	"github.com/babylonlabs-io/babylon/v3/test/e2e/util"
 )
 
 const (

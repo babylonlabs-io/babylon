@@ -5,9 +5,9 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
-	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
-	"github.com/babylonlabs-io/babylon/v4/test/e2ev2/tmanager"
-	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
+	"github.com/babylonlabs-io/babylon/v3/test/e2ev2/tmanager"
+	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	"github.com/stretchr/testify/require"

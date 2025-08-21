@@ -17,7 +17,7 @@ import (
 	"encoding/json"
 
 	sdkmath "cosmossdk.io/math"
-	appsigner "github.com/babylonlabs-io/babylon/v4/app/signer"
+	appsigner "github.com/babylonlabs-io/babylon/v3/app/signer"
 	cmtconfig "github.com/cometbft/cometbft/config"
 	"github.com/cometbft/cometbft/p2p"
 	rpchttp "github.com/cometbft/cometbft/rpc/client/http"
@@ -38,12 +38,12 @@ import (
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
 
-	bbnapp "github.com/babylonlabs-io/babylon/v4/app"
-	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
-	"github.com/babylonlabs-io/babylon/v4/cmd/babylond/cmd"
-	"github.com/babylonlabs-io/babylon/v4/test/e2e/util"
-	bbn "github.com/babylonlabs-io/babylon/v4/types"
-	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
+	bbnapp "github.com/babylonlabs-io/babylon/v3/app"
+	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
+	"github.com/babylonlabs-io/babylon/v3/cmd/babylond/cmd"
+	"github.com/babylonlabs-io/babylon/v3/test/e2e/util"
+	bbn "github.com/babylonlabs-io/babylon/v3/types"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
 )
 
 const (
@@ -347,12 +347,6 @@ func (n *Node) CreateAppConfig() {
 	appConfig.GRPC.Enable = true
 	appConfig.GRPC.Address = n.GetGRPCAddress()
 
-	// Configure EVM JSON-RPC with dynamic ports
-	appConfig.JSONRPC.Enable = true
-	appConfig.JSONRPC.Address = n.GetEVMRPCAddress()
-	appConfig.JSONRPC.WsAddress = n.GetEVMWSAddress()
-	appConfig.JSONRPC.WSOrigins = []string{"0.0.0.0", "127.0.0.1", "localhost"}
-
 	customTemplate := cmd.DefaultBabylonTemplate()
 
 	srvconfig.SetConfigTemplate(customTemplate)
@@ -566,20 +560,6 @@ func (n *Node) GetRESTAddress() string {
 		return ""
 	}
 	return fmt.Sprintf("tcp://0.0.0.0:%d", n.Ports.REST)
-}
-
-func (n *Node) GetEVMRPCAddress() string {
-	if n.Ports == nil {
-		return ""
-	}
-	return fmt.Sprintf("0.0.0.0:%d", n.Ports.EVMRPC)
-}
-
-func (n *Node) GetEVMWSAddress() string {
-	if n.Ports == nil {
-		return ""
-	}
-	return fmt.Sprintf("0.0.0.0:%d", n.Ports.EVMWS)
 }
 
 func (n *Node) IsHealthy() bool {

@@ -28,22 +28,12 @@ import (
 
 	checkpointingtypes "github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
 
-<<<<<<< HEAD
-	"github.com/cometbft/cometbft/privval"
-
 	babylonApp "github.com/babylonlabs-io/babylon/v3/app"
 	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
 	appsigner "github.com/babylonlabs-io/babylon/v3/app/signer"
 	"github.com/babylonlabs-io/babylon/v3/cmd/babylond/cmd"
 	"github.com/babylonlabs-io/babylon/v3/test/e2e/util"
-=======
-	babylonApp "github.com/babylonlabs-io/babylon/v4/app"
-	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
-	appsigner "github.com/babylonlabs-io/babylon/v4/app/signer"
-	"github.com/babylonlabs-io/babylon/v4/cmd/babylond/cmd"
-	"github.com/babylonlabs-io/babylon/v4/test/e2e/util"
-	e2ev2 "github.com/babylonlabs-io/babylon/v4/test/e2ev2/tmanager"
->>>>>>> dfbd055 (chore:  e2e refactory (#1552))
+	e2ev2 "github.com/babylonlabs-io/babylon/v3/test/e2ev2/tmanager"
 )
 
 type internalNode struct {

@@ -11,8 +11,8 @@ import (
 	tokenfactorytypes "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/types"
 	"github.com/stretchr/testify/require"
 
-	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
-	bsctypes "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
+	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
+	bsctypes "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
 )
 
 // SendIBCTransfer creates and submits an IBC transfer transaction

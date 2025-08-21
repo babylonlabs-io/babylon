@@ -5,13 +5,8 @@ import (
 	"testing"
 
 	"cosmossdk.io/math"
-<<<<<<< HEAD
 	"github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
-	"github.com/test-go/testify/require"
-=======
-	"github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
 	"github.com/stretchr/testify/require"
->>>>>>> dfbd055 (chore:  e2e refactory (#1552))
 )
 
 func TestConsumerRegisterValidate(t *testing.T) {

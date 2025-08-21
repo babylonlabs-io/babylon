@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/v4/test/e2ev2/tmanager"
+	"github.com/babylonlabs-io/babylon/v3/test/e2ev2/tmanager"
 )
 
 func TestBtcRewardsIbcCallback(t *testing.T) {

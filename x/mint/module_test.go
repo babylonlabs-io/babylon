@@ -3,17 +3,11 @@ package mint_test
 import (
 	"testing"
 
-<<<<<<< HEAD
 	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
 	"github.com/babylonlabs-io/babylon/v3/testutil/helper"
+	btcstktypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
+	ictvtypes "github.com/babylonlabs-io/babylon/v3/x/incentive/types"
 	"github.com/babylonlabs-io/babylon/v3/x/mint/types"
-=======
-	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
-	"github.com/babylonlabs-io/babylon/v4/testutil/helper"
-	btcstktypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
-	ictvtypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
-	"github.com/babylonlabs-io/babylon/v4/x/mint/types"
->>>>>>> dfbd055 (chore:  e2e refactory (#1552))
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/stretchr/testify/require"
 )

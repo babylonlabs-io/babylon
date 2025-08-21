@@ -8,7 +8,7 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
-	appkeepers "github.com/babylonlabs-io/babylon/v4/app/keepers"
+	appkeepers "github.com/babylonlabs-io/babylon/v3/app/keepers"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/cosmos/cosmos-sdk/server"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -17,8 +17,8 @@ import (
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	"github.com/stretchr/testify/require"
 
-	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
-	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
+	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
 )
 
 const (

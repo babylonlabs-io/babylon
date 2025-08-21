@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/babylonlabs-io/babylon/v4/test/e2e/util"
+	"github.com/babylonlabs-io/babylon/v3/test/e2e/util"
 	"github.com/ory/dockertest/v3"
 	"github.com/stretchr/testify/require"
 )

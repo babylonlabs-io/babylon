@@ -23,12 +23,10 @@ type PortManager struct {
 
 // NodePorts holds all port assignments for a node
 type NodePorts struct {
-	RPC    int // 26657
-	P2P    int // 26656
-	GRPC   int // 9090
-	REST   int // 1317
-	EVMRPC int // 8545
-	EVMWS  int // 8546
+	RPC  int // 26657
+	P2P  int // 26656
+	GRPC int // 9090
+	REST int // 1317
 }
 
 // NewPortManager creates a new port manager with default range
@@ -113,18 +111,16 @@ func (pm *PortManager) isPortAvailable(port int) bool {
 
 // AllocateNodePorts allocates all required ports for a node
 func (pm *PortManager) AllocateNodePorts() (*NodePorts, error) {
-	ports, err := pm.AllocatePortRange(6)
+	ports, err := pm.AllocatePortRange(4)
 	if err != nil {
 		return nil, fmt.Errorf("failed to allocate node ports: %w", err)
 	}
 
 	return &NodePorts{
-		RPC:    ports[0],
-		P2P:    ports[1],
-		GRPC:   ports[2],
-		REST:   ports[3],
-		EVMRPC: ports[4],
-		EVMWS:  ports[5],
+		RPC:  ports[0],
+		P2P:  ports[1],
+		GRPC: ports[2],
+		REST: ports[3],
 	}, nil
 }
 
@@ -133,7 +129,7 @@ func (pm *PortManager) ReleaseNodePorts(ports *NodePorts) {
 	if ports == nil {
 		return
 	}
-	pm.ReleasePorts([]int{ports.RPC, ports.P2P, ports.GRPC, ports.REST, ports.EVMRPC, ports.EVMWS})
+	pm.ReleasePorts([]int{ports.RPC, ports.P2P, ports.GRPC, ports.REST})
 }
 
 func (np *NodePorts) ContainerExposedPorts() []string {
@@ -142,7 +138,5 @@ func (np *NodePorts) ContainerExposedPorts() []string {
 		strconv.FormatInt(int64(np.P2P), 10),
 		strconv.FormatInt(int64(np.GRPC), 10),
 		strconv.FormatInt(int64(np.REST), 10),
-		strconv.FormatInt(int64(np.EVMRPC), 10),
-		strconv.FormatInt(int64(np.EVMWS), 10),
 	}
 }
