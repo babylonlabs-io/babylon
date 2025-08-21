@@ -3,7 +3,7 @@ package replay
 import (
 	ictvtypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/test-go/testify/require"
+	"github.com/stretchr/testify/require"
 )
 
 func (d *BabylonAppDriver) GenerateBlocksUntilLastProcessedBtcStkEventsHeightIs(untilBlock uint64) {

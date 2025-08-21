@@ -144,8 +144,8 @@ func FuzzBTCTimestamp(f *testing.F) {
 		// assign BTC submission key and ProofEpochSubmitted
 		btcTs.BtcSubmissionKey = &btcctypes.SubmissionKey{
 			Key: []*btcctypes.TransactionKey{
-				&btcctypes.TransactionKey{Index: uint32(idxs[0]), Hash: btcBlocks[0].HeaderBytes.Hash()},
-				&btcctypes.TransactionKey{Index: uint32(idxs[1]), Hash: btcBlocks[1].HeaderBytes.Hash()},
+				{Index: uint32(idxs[0]), Hash: btcBlocks[0].HeaderBytes.Hash()},
+				{Index: uint32(idxs[1]), Hash: btcBlocks[1].HeaderBytes.Hash()},
 			},
 		}
 		btcTs.Proof.ProofEpochSubmitted = []*btcctypes.TransactionInfo{

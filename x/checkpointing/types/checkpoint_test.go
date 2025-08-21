@@ -9,7 +9,7 @@ import (
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
 	"github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
 
-	"github.com/test-go/testify/require"
+	"github.com/stretchr/testify/require"
 )
 
 func TestRawCheckpointWithMeta_Validate(t *testing.T) {
