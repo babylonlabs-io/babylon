@@ -3,6 +3,7 @@ package coostaking
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"cosmossdk.io/core/appmodule"
 	"google.golang.org/grpc"
@@ -112,7 +113,19 @@ func (am AppModule) RegisterServices(cfg grpc.ServiceRegistrar) error {
 
 // DefaultGenesis implements appmodule.HasGenesis.
 // Subtle: this method shadows the method (AppModuleBasic).DefaultGenesis of AppModule.AppModuleBasic.
-func (am AppModule) DefaultGenesis(appmodule.GenesisTarget) error {
+func (am AppModule) DefaultGenesis(target appmodule.GenesisTarget) error {
+	genesisState := types.DefaultGenesis()
+	writer, err := target(types.ModuleName)
+	if err != nil {
+		return fmt.Errorf("failed to get writer for %s genesis state: %w", types.ModuleName, err)
+	}
+	defer writer.Close()
+
+	encoder := json.NewEncoder(writer)
+	if err := encoder.Encode(genesisState); err != nil {
+		return fmt.Errorf("failed to encode %s genesis state: %w", types.ModuleName, err)
+	}
+
 	return nil
 }
 
@@ -122,8 +135,9 @@ func (am AppModule) ExportGenesis(context.Context, appmodule.GenesisTarget) erro
 }
 
 // InitGenesis implements appmodule.HasGenesis.
-func (am AppModule) InitGenesis(context.Context, appmodule.GenesisSource) error {
-	return nil
+// look at https://github.dev/dysonprotocol/dysonprotocol2/blob/c46695c4f08d4b7b39a89ee776bafed84671d145/x/crontask/module/module.go
+func (am AppModule) InitGenesis(ctx context.Context, gs appmodule.GenesisSource) error {
+	return InitGenesis(ctx, am.k, *types.DefaultGenesis())
 }
 
 // ValidateGenesis implements appmodule.HasGenesis.
