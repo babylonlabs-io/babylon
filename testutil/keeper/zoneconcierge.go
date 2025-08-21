@@ -28,9 +28,7 @@ type zoneconciergeStoreQuerier struct{}
 func (zoneconciergeStoreQuerier) Query(req *storetypes.RequestQuery) (*storetypes.ResponseQuery, error) {
 	return &storetypes.ResponseQuery{
 		ProofOps: &cmtcrypto.ProofOps{
-			Ops: []cmtcrypto.ProofOp{
-				cmtcrypto.ProofOp{},
-			},
+			Ops: []cmtcrypto.ProofOp{{}},
 		},
 	}, nil
 }

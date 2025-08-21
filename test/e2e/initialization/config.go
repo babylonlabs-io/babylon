@@ -17,10 +17,10 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	staketypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/cosmos/gogoproto/proto"
 	tokenfactorytypes "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/types"
 
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/util"
+	e2ev2 "github.com/babylonlabs-io/babylon/v4/test/e2ev2/tmanager"
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	btccheckpointtypes "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
@@ -80,12 +80,11 @@ var (
 	InitBalanceStrB  = fmt.Sprintf("%d%s", BabylonBalanceB, BabylonDenom)
 )
 
-func addAccount(path, moniker, amountStr string, accAddr sdk.AccAddress, forkHeight int) error {
+func AddAccount(path, amountStr string, accAddr sdk.AccAddress, forkHeight int) error {
 	serverCtx := server.NewDefaultContext()
 	config := serverCtx.Config
 
 	config.SetRoot(path)
-	config.Moniker = moniker
 
 	coins, err := sdk.ParseCoinsNormalized(amountStr)
 	if err != nil {
@@ -154,22 +153,6 @@ func addAccount(path, moniker, amountStr string, accAddr sdk.AccAddress, forkHei
 	return genutil.ExportGenesisFile(genDoc, genFile)
 }
 
-//nolint:typecheck
-func updateModuleGenesis[V proto.Message](appGenState map[string]json.RawMessage, moduleName string, protoVal V, updateGenesis func(V)) error {
-	if err := util.Cdc.UnmarshalJSON(appGenState[moduleName], protoVal); err != nil {
-		return err
-	}
-	updateGenesis(protoVal)
-	newGenState := protoVal
-
-	bz, err := util.Cdc.MarshalJSON(newGenState)
-	if err != nil {
-		return err
-	}
-	appGenState[moduleName] = bz
-	return nil
-}
-
 func initGenesis(
 	chain *internalChain,
 	votingPeriod, expeditedVotingPeriod time.Duration,
@@ -192,13 +175,13 @@ func initGenesis(
 			r := rand.New(rand.NewSource(time.Now().Unix()))
 			initialFundsA := datagen.GenRandomCoins(r).MulInt(sdkmath.NewInt(10))
 			initialFundsA = initialFundsA.Add(sdk.NewCoin(BabylonDenom, sdkmath.NewInt(BabylonBalanceA)))
-			if err := addAccount(configDir, "", initialFundsA.String(), addr, forkHeight); err != nil {
+			if err := AddAccount(configDir, initialFundsA.String(), addr, forkHeight); err != nil {
 				return err
 			}
 			continue
 		}
 
-		if err := addAccount(configDir, "", InitBalanceStrB, addr, forkHeight); err != nil {
+		if err := AddAccount(configDir, InitBalanceStrB, addr, forkHeight); err != nil {
 			return err
 		}
 	}
@@ -226,57 +209,57 @@ func initGenesis(
 		return err
 	}
 
-	err = updateModuleGenesis(appGenState, banktypes.ModuleName, &banktypes.GenesisState{}, updateBankGenesis)
+	err = e2ev2.UpdateModuleGenesis(appGenState, banktypes.ModuleName, &banktypes.GenesisState{}, e2ev2.UpdateGenesisBank(nil))
 	if err != nil {
 		return err
 	}
 
-	err = updateModuleGenesis(appGenState, govtypes.ModuleName, &govv1.GenesisState{}, updateGovGenesis(votingPeriod, expeditedVotingPeriod))
+	err = e2ev2.UpdateModuleGenesis(appGenState, govtypes.ModuleName, &govv1.GenesisState{}, e2ev2.UpdateGenesisGov(votingPeriod, expeditedVotingPeriod))
 	if err != nil {
 		return err
 	}
 
-	err = updateModuleGenesis(appGenState, minttypes.ModuleName, &minttypes.GenesisState{}, updateMintGenesis)
+	err = e2ev2.UpdateModuleGenesis(appGenState, minttypes.ModuleName, &minttypes.GenesisState{}, e2ev2.UpdateGenesisMint)
 	if err != nil {
 		return err
 	}
 
-	err = updateModuleGenesis(appGenState, staketypes.ModuleName, &staketypes.GenesisState{}, updateStakeGenesis)
+	err = e2ev2.UpdateModuleGenesis(appGenState, staketypes.ModuleName, &staketypes.GenesisState{}, e2ev2.UpdateGenesisStake)
 	if err != nil {
 		return err
 	}
 
-	err = updateModuleGenesis(appGenState, genutiltypes.ModuleName, &genutiltypes.GenesisState{}, updateGenUtilGenesis(chain))
+	err = e2ev2.UpdateModuleGenesis(appGenState, genutiltypes.ModuleName, &genutiltypes.GenesisState{}, updateGenesisGenUtil(chain))
 	if err != nil {
 		return err
 	}
 
-	err = updateModuleGenesis(appGenState, btclighttypes.ModuleName, btclighttypes.DefaultGenesis(), updateBtcLightClientGenesis(btcHeaders))
+	err = e2ev2.UpdateModuleGenesis(appGenState, btclighttypes.ModuleName, btclighttypes.DefaultGenesis(), e2ev2.UpdateGenesisBtcLightClient(btcHeaders))
 	if err != nil {
 		return err
 	}
 
-	err = updateModuleGenesis(appGenState, btccheckpointtypes.ModuleName, btccheckpointtypes.DefaultGenesis(), updateBtccheckpointGenesis)
+	err = e2ev2.UpdateModuleGenesis(appGenState, btccheckpointtypes.ModuleName, btccheckpointtypes.DefaultGenesis(), e2ev2.UpdateGenesisBtccheckpoint)
 	if err != nil {
 		return err
 	}
 
-	err = updateModuleGenesis(appGenState, finalitytypes.ModuleName, &finalitytypes.GenesisState{}, updateFinalityGenesis)
+	err = e2ev2.UpdateModuleGenesis(appGenState, finalitytypes.ModuleName, &finalitytypes.GenesisState{}, e2ev2.UpdateGenesisFinality)
 	if err != nil {
 		return err
 	}
 
-	err = updateModuleGenesis(appGenState, ratelimiter.ModuleName, &ratelimiter.GenesisState{}, applyRateLimitsToChainConfig)
+	err = e2ev2.UpdateModuleGenesis(appGenState, ratelimiter.ModuleName, &ratelimiter.GenesisState{}, e2ev2.UpdateGenesisRateLimit)
 	if err != nil {
 		return fmt.Errorf("failed to update rate limiter genesis state: %w", err)
 	}
 
-	err = updateModuleGenesis(appGenState, tokenfactorytypes.ModuleName, &tokenfactorytypes.GenesisState{}, updateTokenFactoryGenesis)
+	err = e2ev2.UpdateModuleGenesis(appGenState, tokenfactorytypes.ModuleName, &tokenfactorytypes.GenesisState{}, e2ev2.UpdateGenesisTokenFactory)
 	if err != nil {
 		return fmt.Errorf("failed to update tokenfactory genesis state: %w", err)
 	}
 
-	err = updateModuleGenesis(appGenState, btcstktypes.ModuleName, &btcstktypes.GenesisState{}, updateBtcStakingGenesisFn(startingBtcStakingParams))
+	err = e2ev2.UpdateModuleGenesis(appGenState, btcstktypes.ModuleName, &btcstktypes.GenesisState{}, updateGenesisBtcStaking(startingBtcStakingParams))
 	if err != nil {
 		return fmt.Errorf("failed to update rate limiter genesis state: %w", err)
 	}
@@ -301,89 +284,7 @@ func initGenesis(
 	return nil
 }
 
-func updateBankGenesis(bankGenState *banktypes.GenesisState) {
-	bankGenState.DenomMetadata = append(bankGenState.DenomMetadata, banktypes.Metadata{
-		Description: "An example stable token",
-		Display:     BabylonDenom,
-		Base:        BabylonDenom,
-		Symbol:      BabylonDenom,
-		Name:        BabylonDenom,
-		DenomUnits: []*banktypes.DenomUnit{
-			{
-				Denom:    BabylonDenom,
-				Exponent: 0,
-			},
-		},
-	})
-}
-
-func updateGovGenesis(votingPeriod, expeditedVotingPeriod time.Duration) func(govGenState *govv1.GenesisState) {
-	return func(govGenState *govv1.GenesisState) {
-		govGenState.Params.MinDeposit = sdk.NewCoins(sdk.NewCoin(BabylonDenom, sdkmath.NewInt(100)))
-		govGenState.Params.ExpeditedMinDeposit = sdk.NewCoins(sdk.NewCoin(BabylonDenom, sdkmath.NewInt(1000)))
-		govGenState.Params.VotingPeriod = &votingPeriod
-		govGenState.Params.ExpeditedVotingPeriod = &expeditedVotingPeriod
-	}
-}
-
-func updateMintGenesis(mintGenState *minttypes.GenesisState) {
-	mintGenState.Minter.BondDenom = BabylonDenom
-}
-
-func updateStakeGenesis(stakeGenState *staketypes.GenesisState) {
-	stakeGenState.Params = staketypes.Params{
-		BondDenom:         BabylonDenom,
-		MaxValidators:     100,
-		MaxEntries:        7,
-		HistoricalEntries: 10000,
-		UnbondingTime:     staketypes.DefaultUnbondingTime,
-		MinCommissionRate: sdkmath.LegacyMustNewDecFromStr("0.03"),
-	}
-}
-
-func updateBtcLightClientGenesis(btcHeaders []*btclighttypes.BTCHeaderInfo) func(blcGenState *btclighttypes.GenesisState) {
-	return func(blcGenState *btclighttypes.GenesisState) {
-		if len(btcHeaders) > 0 {
-			blcGenState.BtcHeaders = btcHeaders
-			return
-		}
-
-		btcSimnetGenesisHex := "0100000000000000000000000000000000000000000000000000000000000000000000003ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a45068653ffff7f2002000000"
-		baseBtcHeader, err := bbn.NewBTCHeaderBytesFromHex(btcSimnetGenesisHex)
-		if err != nil {
-			panic(err)
-		}
-		work := btclighttypes.CalcWork(&baseBtcHeader)
-		blcGenState.BtcHeaders = []*btclighttypes.BTCHeaderInfo{btclighttypes.NewBTCHeaderInfo(&baseBtcHeader, baseBtcHeader.Hash(), 0, &work)}
-	}
-}
-
-func updateBtccheckpointGenesis(btccheckpointGenState *btccheckpointtypes.GenesisState) {
-	btccheckpointGenState.Params = btccheckpointtypes.DefaultParams()
-	btccheckpointGenState.Params.BtcConfirmationDepth = BabylonBtcConfirmationPeriod
-	btccheckpointGenState.Params.CheckpointFinalizationTimeout = BabylonBtcFinalizationPeriod
-	btccheckpointGenState.Params.CheckpointTag = BabylonOpReturnTag
-}
-
-func updateFinalityGenesis(finalityGenState *finalitytypes.GenesisState) {
-	finalityGenState.Params = finalitytypes.DefaultParams()
-	finalityGenState.Params.FinalityActivationHeight = 0
-	finalityGenState.Params.FinalitySigTimeout = 4
-	finalityGenState.Params.SignedBlocksWindow = 300
-}
-
-func updateBtcStakingGenesisFn(p *StartingBtcStakingParams) func(*btcstktypes.GenesisState) {
-	return func(gen *btcstktypes.GenesisState) {
-		gen.Params[0].MaxFinalityProviders = 5
-
-		if p != nil {
-			gen.Params[0].CovenantPks = p.CovenantCommittee
-			gen.Params[0].CovenantQuorum = p.CovenantQuorum
-		}
-	}
-}
-
-func updateGenUtilGenesis(c *internalChain) func(*genutiltypes.GenesisState) {
+func updateGenesisGenUtil(c *internalChain) func(*genutiltypes.GenesisState) {
 	return func(genUtilGenState *genutiltypes.GenesisState) {
 		// generate genesis txs
 		genTxs := make([]json.RawMessage, 0, len(c.nodes))
@@ -417,33 +318,13 @@ func updateGenUtilGenesis(c *internalChain) func(*genutiltypes.GenesisState) {
 	}
 }
 
-func applyRateLimitsToChainConfig(rateLimiterGenState *ratelimiter.GenesisState) {
-	path := &ratelimiter.Path{
-		Denom:             "ubbn",
-		ChannelOrClientId: "channel-0",
-	}
+func updateGenesisBtcStaking(p *StartingBtcStakingParams) func(*btcstktypes.GenesisState) {
+	return func(gen *btcstktypes.GenesisState) {
+		gen.Params[0].MaxFinalityProviders = 5
 
-	quota := &ratelimiter.Quota{
-		MaxPercentSend: sdkmath.NewInt(90),
-		MaxPercentRecv: sdkmath.NewInt(90),
-		DurationHours:  24,
-	}
-
-	rateLimit := ratelimiter.RateLimit{
-		Path:  path,
-		Quota: quota,
-		Flow: &ratelimiter.Flow{
-			Inflow:       sdkmath.NewInt(0),
-			Outflow:      sdkmath.NewInt(0),
-			ChannelValue: sdkmath.NewInt(1_000_000),
-		},
-	}
-
-	rateLimiterGenState.RateLimits = append(rateLimiterGenState.RateLimits, rateLimit)
-}
-
-func updateTokenFactoryGenesis(tokenfactoryGenState *tokenfactorytypes.GenesisState) {
-	tokenfactoryGenState.Params = tokenfactorytypes.Params{
-		DenomCreationFee: sdk.NewCoins(sdk.NewCoin(BabylonDenom, sdkmath.NewInt(10000))),
+		if p != nil {
+			gen.Params[0].CovenantPks = p.CovenantCommittee
+			gen.Params[0].CovenantQuorum = p.CovenantQuorum
+		}
 	}
 }
