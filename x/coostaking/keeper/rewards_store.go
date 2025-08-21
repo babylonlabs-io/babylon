@@ -12,7 +12,7 @@ func (k Keeper) setCoostakerRewardsTracker(ctx context.Context, addr sdk.AccAddr
 	return k.coostakerRewardsTracker.Set(ctx, addr, rwdTracker)
 }
 
-func (k Keeper) setCurrentRewards(ctx context.Context, currentRwd types.CurrentRewards) error {
+func (k Keeper) SetCurrentRewards(ctx context.Context, currentRwd types.CurrentRewards) error {
 	return k.currentRewards.Set(ctx, currentRwd)
 }
 
@@ -24,5 +24,5 @@ func (k Keeper) UpdateCurrentRewardsTotalScore(ctx context.Context, totalScore m
 
 	currentRwd.TotalScore = totalScore
 	// TODO(rafilx): initialize a new period, creates historical...
-	return k.setCurrentRewards(ctx, currentRwd)
+	return k.SetCurrentRewards(ctx, currentRwd)
 }

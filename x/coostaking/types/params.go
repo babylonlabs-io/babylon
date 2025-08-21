@@ -1,8 +1,6 @@
 package types
 
 import (
-	fmt "fmt"
-
 	"cosmossdk.io/math"
 )
 
@@ -33,19 +31,19 @@ func DefaultParams() Params {
 // Validate validates the set of params
 func (p Params) Validate() error {
 	if p.CoostakingPortion.IsNil() {
-		return fmt.Errorf("CoostakingPortion should not be nil")
+		return ErrInvalidCoostakingPortion
 	}
 
 	if p.CoostakingPortion.GTE(math.LegacyOneDec()) {
-		return fmt.Errorf("coostaking portion should be less or equal 1")
+		return ErrCoostakingPortionTooHigh
 	}
 
 	if p.ScoreRatioBtcByBaby.IsNil() {
-		return fmt.Errorf("ScoreRatioBtcByBaby should not be nil")
+		return ErrInvalidScoreRatioBtcByBaby
 	}
 
 	if p.ScoreRatioBtcByBaby.LT(math.OneInt()) {
-		return fmt.Errorf("score ratio of btc to baby should be higher or equal 1")
+		return ErrScoreRatioTooLow
 	}
 
 	return nil
