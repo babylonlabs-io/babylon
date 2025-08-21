@@ -241,7 +241,7 @@ func (m *CustomMessenger) DispatchMsg(ctx sdk.Context, contractAddr sdk.AccAddre
 				return nil, nil, nil, errorsmod.Wrap(err, "failed to encode response")
 			}
 
-			return nil, nil, [][]*codectypes.Any{[]*codectypes.Any{encodedResp}}, nil
+			return nil, nil, [][]*codectypes.Any{{encodedResp}}, nil
 		}
 	}
 	return m.wrapped.DispatchMsg(ctx, contractAddr, contractIBCPortID, msg)

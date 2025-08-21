@@ -9,7 +9,7 @@ import (
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
 	"github.com/babylonlabs-io/babylon/v3/x/btclightclient/keeper"
 	"github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
-	"github.com/test-go/testify/require"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCheckRollBackInvariants(t *testing.T) {

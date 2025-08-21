@@ -57,9 +57,7 @@ func GenRandomIndexedHeaderWithProofAndConsumerId(r *rand.Rand, consumerId strin
 	return &types.IndexedHeaderWithProof{
 		Header: GenRandomIndexedHeaderWithConsumerId(r, consumerId),
 		Proof: &cmtcrypto.ProofOps{
-			Ops: []cmtcrypto.ProofOp{
-				cmtcrypto.ProofOp{},
-			},
+			Ops: []cmtcrypto.ProofOp{{}},
 		},
 	}
 }
@@ -75,14 +73,10 @@ func GenRandomProofEpochSealed(r *rand.Rand) *types.ProofEpochSealed {
 	return &types.ProofEpochSealed{
 		ValidatorSet: vs.ValSet,
 		ProofEpochInfo: &cmtcrypto.ProofOps{
-			Ops: []cmtcrypto.ProofOp{
-				cmtcrypto.ProofOp{},
-			},
+			Ops: []cmtcrypto.ProofOp{{}},
 		},
 		ProofEpochValSet: &cmtcrypto.ProofOps{
-			Ops: []cmtcrypto.ProofOp{
-				cmtcrypto.ProofOp{},
-			},
+			Ops: []cmtcrypto.ProofOp{{}},
 		},
 	}
 }

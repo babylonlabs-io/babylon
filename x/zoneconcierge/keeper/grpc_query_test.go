@@ -6,12 +6,11 @@ import (
 	"math/rand"
 	"testing"
 
+	"github.com/babylonlabs-io/babylon/v3/app"
+	btclightclienttypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
-
-	"github.com/babylonlabs-io/babylon/v3/app"
-	btclightclienttypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
 
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
 	testkeeper "github.com/babylonlabs-io/babylon/v3/testutil/keeper"

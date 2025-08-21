@@ -18,4 +18,5 @@ const multiStakingAllowList = `{
   ]
 }
 `
+
 // NOTE: Keep a duplicate tx hash in the list to test for duplicate handling

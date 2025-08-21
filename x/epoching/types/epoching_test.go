@@ -241,7 +241,7 @@ func TestDelegationLifecycle_Validate(t *testing.T) {
 			input: types.DelegationLifecycle{
 				DelAddr: validDelAddr,
 				DelLife: []*types.DelegationStateUpdate{
-					&types.DelegationStateUpdate{
+					{
 						ValAddr: "bad",
 					},
 				},
@@ -254,7 +254,7 @@ func TestDelegationLifecycle_Validate(t *testing.T) {
 			input: types.DelegationLifecycle{
 				DelAddr: validDelAddr,
 				DelLife: []*types.DelegationStateUpdate{
-					&types.DelegationStateUpdate{
+					{
 						ValAddr: validValAddr,
 						State:   types.BondState(4654),
 					},

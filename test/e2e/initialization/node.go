@@ -8,15 +8,11 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/cometbft/cometbft/crypto/ed25519"
-
 	"cosmossdk.io/math"
 	cmtconfig "github.com/cometbft/cometbft/config"
 	"github.com/cometbft/cometbft/p2p"
 	cmttypes "github.com/cometbft/cometbft/types"
-	sdkcrypto "github.com/cosmos/cosmos-sdk/crypto"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
-	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/cosmos-sdk/server"
@@ -28,18 +24,16 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/cosmos/go-bip39"
 	"github.com/spf13/viper"
 
 	checkpointingtypes "github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
-
-	"github.com/cometbft/cometbft/privval"
 
 	babylonApp "github.com/babylonlabs-io/babylon/v3/app"
 	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
 	appsigner "github.com/babylonlabs-io/babylon/v3/app/signer"
 	"github.com/babylonlabs-io/babylon/v3/cmd/babylond/cmd"
 	"github.com/babylonlabs-io/babylon/v3/test/e2e/util"
+	e2ev2 "github.com/babylonlabs-io/babylon/v3/test/e2ev2/tmanager"
 )
 
 type internalNode struct {
@@ -153,81 +147,25 @@ func (n *internalNode) createAppConfig(nodeConfig *NodeConfig) {
 }
 
 func (n *internalNode) createNodeKey() error {
-	serverCtx := server.NewDefaultContext()
-	config := serverCtx.Config
-
-	config.SetRoot(n.configDir())
-	config.Moniker = n.moniker
-
-	nodeKey, err := p2p.LoadOrGenNodeKey(config.NodeKeyFile())
+	nodeKey, err := e2ev2.CreateNodeKey(n.configDir(), n.moniker)
 	if err != nil {
 		return err
 	}
-
 	n.nodeKey = *nodeKey
 	return nil
 }
 
 func (n *internalNode) createConsensusKey() error {
-	serverCtx := server.NewDefaultContext()
-	config := serverCtx.Config
-	config.SetRoot(n.configDir())
-	config.Moniker = n.moniker
-
-	pvKeyFile := config.PrivValidatorKeyFile()
-	pvStateFile := config.PrivValidatorStateFile()
-	blsKeyFile := appsigner.DefaultBlsKeyFile(n.configDir())
-	blsPasswordFile := appsigner.DefaultBlsPasswordFile(n.configDir())
-
-	if err := appsigner.EnsureDirs(pvKeyFile, pvStateFile, blsKeyFile, blsPasswordFile); err != nil {
-		return fmt.Errorf("failed to ensure dirs: %w", err)
+	consKey, err := e2ev2.CreateConsensusBlsKey(n.mnemonic, n.configDir())
+	if err != nil {
+		return err
 	}
 
-	// create file pv
-	var privKey ed25519.PrivKey
-	if n.mnemonic == "" {
-		privKey = ed25519.GenPrivKey()
-	} else {
-		privKey = ed25519.GenPrivKeyFromSecret([]byte(n.mnemonic))
-	}
-	filePV := privval.NewFilePV(privKey, pvKeyFile, pvStateFile)
-	filePV.Key.Save()
-	filePV.LastSignState.Save()
-
-	// create bls pv
-	bls := appsigner.GenBls(blsKeyFile, blsPasswordFile, "password")
-
-	n.consensusKey = appsigner.ConsensusKey{
-		Comet: &filePV.Key,
-		Bls:   &bls.Key,
-	}
+	n.consensusKey = *consKey
 	return nil
 }
-
 func (n *internalNode) createKeyFromMnemonic(name, mnemonic string) error {
-	kb, err := keyring.New(keyringAppName, keyring.BackendTest, n.configDir(), nil, util.Cdc)
-
-	if err != nil {
-		return err
-	}
-
-	keyringAlgos, _ := kb.SupportedAlgorithms()
-	algo, err := keyring.NewSigningAlgoFromString(string(hd.Secp256k1Type), keyringAlgos)
-	if err != nil {
-		return err
-	}
-
-	info, err := kb.NewAccount(name, mnemonic, "", sdk.FullFundraiserPath, algo)
-	if err != nil {
-		return err
-	}
-
-	privKeyArmor, err := kb.ExportPrivKeyArmor(name, keyringPassphrase)
-	if err != nil {
-		return err
-	}
-
-	privKey, _, err := sdkcrypto.UnarmorDecryptPrivKey(privKeyArmor, keyringPassphrase)
+	info, privKey, err := e2ev2.CreateKeyFromMnemonic(name, mnemonic, n.configDir())
 	if err != nil {
 		return err
 	}
@@ -240,7 +178,7 @@ func (n *internalNode) createKeyFromMnemonic(name, mnemonic string) error {
 }
 
 func (n *internalNode) createKey(name string) error {
-	mnemonic, err := n.createMnemonic()
+	mnemonic, err := e2ev2.CreateMnemonic()
 	if err != nil {
 		return err
 	}
@@ -279,27 +217,7 @@ func (n *internalNode) getNodeKey() *p2p.NodeKey {
 }
 
 func (n *internalNode) getAppGenesis() (*genutiltypes.AppGenesis, error) {
-	serverCtx := server.NewDefaultContext()
-	config := serverCtx.Config
-	config.SetRoot(n.configDir())
-
-	genFile := config.GenesisFile()
-	appGenesis := &genutiltypes.AppGenesis{}
-
-	if _, err := os.Stat(genFile); err != nil {
-		if !os.IsNotExist(err) {
-			return nil, err
-		}
-	} else {
-		var err error
-
-		_, appGenesis, err = genutiltypes.GenesisStateFromGenFile(genFile)
-		if err != nil {
-			return nil, fmt.Errorf("failed to read genesis doc from file: %w", err)
-		}
-	}
-
-	return appGenesis, nil
+	return e2ev2.AppGenesisFromConfig(n.configDir())
 }
 
 func (n *internalNode) init(gasLimit int64) error {
@@ -339,20 +257,6 @@ func (n *internalNode) init(gasLimit int64) error {
 
 	cmtconfig.WriteConfigFile(filepath.Join(config.RootDir, "config", "config.toml"), config)
 	return nil
-}
-
-func (n *internalNode) createMnemonic() (string, error) {
-	entropySeed, err := bip39.NewEntropy(256)
-	if err != nil {
-		return "", err
-	}
-
-	mnemonic, err := bip39.NewMnemonic(entropySeed)
-	if err != nil {
-		return "", err
-	}
-
-	return mnemonic, nil
 }
 
 func (n *internalNode) initNodeConfigs(persistentPeers []string) error {
@@ -470,5 +374,5 @@ func (n *internalNode) signMsg(msgs ...sdk.Msg) (*sdktx.Tx, error) {
 		return nil, err
 	}
 
-	return decodeTx(bz)
+	return DecodeTx(bz)
 }
