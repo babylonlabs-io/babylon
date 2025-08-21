@@ -8,7 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/babylonlabs-io/babylon/v4/app/feemarketwrapper"
+	"github.com/babylonlabs-io/babylon/v4/x/feemarketwrapper"
 	btcctypes "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
 	btclctypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
 	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
