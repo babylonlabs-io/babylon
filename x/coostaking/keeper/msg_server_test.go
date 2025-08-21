@@ -174,7 +174,8 @@ func TestMsgUpdateParams(t *testing.T) {
 
 	for _, tc := range tcs {
 		t.Run(tc.name, func(t *testing.T) {
-			k, ctx := testkeeper.CoostakingKeeper(t)
+			k, ctrl, ctx := testkeeper.CoostakingKeeperWithMocks(t, nil)
+			defer ctrl.Finish()
 			msgServer := keeper.NewMsgServerImpl(*k)
 
 			// Initialize CurrentRewards to avoid collections error

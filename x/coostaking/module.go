@@ -133,13 +133,14 @@ func (am AppModule) ValidateGenesis(appmodule.GenesisSource) error {
 }
 
 // BeginBlock implements appmodule.HasBeginBlocker.
-func (am AppModule) BeginBlock(context.Context) error {
-	return nil
+func (am AppModule) BeginBlock(ctx context.Context) error {
+	return BeginBlocker(ctx, am.k)
 }
 
 // EndBlock implements appmodule.HasEndBlocker.
-func (am AppModule) EndBlock(context.Context) error {
-	return nil
+func (am AppModule) EndBlock(ctx context.Context) error {
+	_, err := EndBlocker(ctx, am.k)
+	return err
 }
 
 // ConsensusVersion is a sequence number for state-breaking change of the module. It should be incremented on each consensus-breaking change introduced by the module. To avoid wrong/empty versions, the initial version should be set to 1

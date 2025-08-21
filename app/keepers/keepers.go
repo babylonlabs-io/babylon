@@ -387,6 +387,8 @@ func (ak *AppKeepers) InitKeepers(
 	ak.CoostakingKeeper = coostakingkeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[coostakingtypes.StoreKey]),
+		ak.BankKeeper,
+		ak.AccountKeeper,
 		appparams.AccGov.String(),
 		authtypes.FeeCollectorName,
 	)

@@ -16,6 +16,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
 	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
@@ -28,6 +29,8 @@ func CoostakingKeeperWithStore(
 	db dbm.DB,
 	stateStore store.CommitMultiStore,
 	storeKey *storetypes.KVStoreKey,
+	bankK types.BankKeeper,
+	accK types.AccountKeeper,
 ) (*keeper.Keeper, sdk.Context) {
 	if storeKey == nil {
 		storeKey = storetypes.NewKVStoreKey(types.StoreKey)
@@ -42,6 +45,8 @@ func CoostakingKeeperWithStore(
 	k := keeper.NewKeeper(
 		cdc,
 		runtime.NewKVStoreService(storeKey),
+		bankK,
+		accK,
 		appparams.AccGov.String(),
 		authtypes.FeeCollectorName,
 	)
@@ -59,18 +64,24 @@ func CoostakingKeeperWithStore(
 	return &k, ctx
 }
 
-func CoostakingKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
-	return CoostakingKeeperWithStoreKey(t, nil)
+func CoostakingKeeperWithMocks(t testing.TB, ctrl *gomock.Controller) (*keeper.Keeper, *gomock.Controller, sdk.Context) {
+	if ctrl == nil {
+		ctrl = gomock.NewController(t)
+	}
+	k, ctx := CoostakingKeeperWithStoreKey(t, nil, types.NewMockBankKeeper(ctrl), types.NewMockAccountKeeper(ctrl))
+	return k, ctrl, ctx
 }
 
 func CoostakingKeeperWithStoreKey(
 	t testing.TB,
 	storeKey *storetypes.KVStoreKey,
+	bankK types.BankKeeper,
+	accK types.AccountKeeper,
 ) (*keeper.Keeper, sdk.Context) {
 	db := dbm.NewMemDB()
 	stateStore := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
 
-	k, ctx := CoostakingKeeperWithStore(t, db, stateStore, storeKey)
+	k, ctx := CoostakingKeeperWithStore(t, db, stateStore, storeKey, bankK, accK)
 
 	// Initialize params
 	if err := k.SetParams(ctx, types.DefaultParams()); err != nil {
