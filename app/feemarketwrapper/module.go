@@ -53,6 +53,7 @@ func (am AppModule) EndBlock(ctx context.Context) ([]abci.ValidatorUpdate, error
 
 // customBeginBlock calculates base fee excluding refundable gas transactions.
 // NOTE: this should be mirrored upon original cosmos evm x/feemarket/keeper/abci.go
+// current mirrored version: v0.4.1
 func customBeginBlock(ctx sdk.Context, k feemarketkeeper.Keeper) error {
 	baseFee := k.CalculateBaseFee(ctx)
 
@@ -86,6 +87,7 @@ func customBeginBlock(ctx sdk.Context, k feemarketkeeper.Keeper) error {
 
 // customEndBlock tracks gas usage excluding refundable transactions.
 // NOTE: this should be mirrored upon original cosmos evm x/feemarket/keeper/abci.go
+// current mirrored version: v0.4.1
 func customEndBlock(ctx sdk.Context, k feemarketkeeper.Keeper, tKey *storetypes.TransientStoreKey) ([]abci.ValidatorUpdate, error) {
 	if ctx.BlockGasMeter() == nil {
 		err := errors.New("block gas meter is nil when setting block gas wanted")
