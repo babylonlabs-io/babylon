@@ -3,6 +3,7 @@ package prepare_test
 import (
 	"bytes"
 	"fmt"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	sdktestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
 	"math/rand"
 	"sort"
@@ -726,6 +727,7 @@ func TestPrepareProposalAtVoteExtensionHeight(t *testing.T) {
 				mem,
 				bApp,
 				encCfg,
+				bbn.NewEthSignerExtractionAdapter(mempool.NewDefaultSignerExtractionAdapter()),
 			)
 
 			if scenario.TxVerifier != nil {

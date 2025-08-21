@@ -482,7 +482,6 @@ func (ak *AppKeepers) InitKeepers(
 		ak.Erc20Keeper, // Add ERC20 Keeper for ERC20 transfers
 		appparams.AccGov.String(),
 	)
-
 	ak.EVMKeeper.WithStaticPrecompiles(
 		NewAvailableStaticPrecompiles(
 			appCodec,
@@ -490,7 +489,6 @@ func (ak *AppKeepers) InitKeepers(
 			ak.Erc20Keeper,
 			ak.GovKeeper,
 			ak.SlashingKeeper,
-			ak.EvidenceKeeper,
 		),
 	)
 	// Create the TokenFactory Keeper
