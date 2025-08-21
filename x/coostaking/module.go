@@ -139,8 +139,7 @@ func (am AppModule) BeginBlock(ctx context.Context) error {
 
 // EndBlock implements appmodule.HasEndBlocker.
 func (am AppModule) EndBlock(ctx context.Context) error {
-	_, err := EndBlocker(ctx, am.k)
-	return err
+	return EndBlocker(ctx, am.k)
 }
 
 // ConsensusVersion is a sequence number for state-breaking change of the module. It should be incremented on each consensus-breaking change introduced by the module. To avoid wrong/empty versions, the initial version should be set to 1

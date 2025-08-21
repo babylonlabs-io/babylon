@@ -37,4 +37,9 @@ func (k Keeper) AccumulateCoostakingRewards(ctx context.Context, coostakingRewar
 	if err != nil {
 		panic(err) // this can only be programming error and is unrecoverable
 	}
+
+	err = k.AddCurrentRewards(ctx, coostakingRewards)
+	if err != nil {
+		panic(err)
+	}
 }

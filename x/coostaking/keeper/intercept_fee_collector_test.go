@@ -13,10 +13,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/require"
 )
 
 var (
-	fees = sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(100)))
+	feeCollectorAcc = authtypes.NewEmptyModuleAccount(authtypes.FeeCollectorName)
 )
 
 func FuzzInterceptFeeCollector(f *testing.F) {
@@ -25,11 +26,12 @@ func FuzzInterceptFeeCollector(f *testing.F) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
+		fees := sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(100)))
 		bankK := types.NewMockBankKeeper(ctrl)
 		bankK.EXPECT().GetAllBalances(gomock.Any(), appparams.AccFeeCollector).Return(fees).Times(1)
 
 		accK := types.NewMockAccountKeeper(ctrl)
-		accK.EXPECT().GetModuleAccount(gomock.Any(), authtypes.FeeCollectorName).Return(appparams.AccFeeCollector).Times(1)
+		accK.EXPECT().GetModuleAccount(gomock.Any(), authtypes.FeeCollectorName).Return(feeCollectorAcc).Times(1)
 
 		k, ctx := testkeeper.CoostakingKeeperWithStoreKey(t, nil, bankK, accK)
 
@@ -41,6 +43,11 @@ func FuzzInterceptFeeCollector(f *testing.F) {
 
 		// handle coins in fee collector
 		k.HandleCoinsInFeeCollector(ctx)
+		rwd, err := k.GetCurrentRewards(ctx)
+		require.NoError(t, err)
+		require.Equal(t, coostakingPortion.String(), rwd.Rewards.String())
+		require.Equal(t, rwd.Period, uint64(1))
+		require.Equal(t, rwd.TotalScore.String(), sdkmath.ZeroInt().String())
 	})
 }
 
@@ -57,16 +64,21 @@ func TestInterceptFeeCollectorWithSmallAmount(t *testing.T) {
 	bankK.EXPECT().GetAllBalances(gomock.Any(), appparams.AccFeeCollector).Return(smallFee).Times(1)
 
 	accK := types.NewMockAccountKeeper(ctrl)
-	accK.EXPECT().GetModuleAccount(gomock.Any(), authtypes.FeeCollectorName).Return(appparams.AccFeeCollector).Times(1)
+	accK.EXPECT().GetModuleAccount(gomock.Any(), authtypes.FeeCollectorName).Return(feeCollectorAcc).Times(1)
 
-	keeper, ctx := testkeeper.CoostakingKeeperWithStoreKey(t, nil, bankK, accK)
+	k, ctx := testkeeper.CoostakingKeeperWithStoreKey(t, nil, bankK, accK)
 
 	// mock (thus ensure) that fees with the exact portion is intercepted
-	// NOTE: if the actual fees are different from feesForIncentive the test will fail
-	params := keeper.GetParams(ctx)
-	feesForBTCStaking := ictvtypes.GetCoinsPortion(smallFee, params.CoostakingPortion)
-	bankK.EXPECT().SendCoinsFromModuleToModule(gomock.Any(), gomock.Eq(authtypes.FeeCollectorName), gomock.Eq(types.ModuleName), gomock.Eq(feesForBTCStaking)).Times(1)
+	// NOTE: if the actual fees are different the test will fail
+	params := k.GetParams(ctx)
+	coostakingPortion := ictvtypes.GetCoinsPortion(smallFee, params.CoostakingPortion)
+	bankK.EXPECT().SendCoinsFromModuleToModule(gomock.Any(), gomock.Eq(authtypes.FeeCollectorName), gomock.Eq(types.ModuleName), gomock.Eq(coostakingPortion)).Times(1)
 
 	// handle coins in fee collector
-	keeper.HandleCoinsInFeeCollector(ctx)
+	k.HandleCoinsInFeeCollector(ctx)
+	rwd, err := k.GetCurrentRewards(ctx)
+	require.NoError(t, err)
+	require.Equal(t, coostakingPortion.String(), rwd.Rewards.String())
+	require.Equal(t, rwd.Period, uint64(1))
+	require.Equal(t, rwd.TotalScore.String(), sdkmath.ZeroInt().String())
 }

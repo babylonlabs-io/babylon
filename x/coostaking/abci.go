@@ -4,11 +4,11 @@ import (
 	"context"
 	"time"
 
-	"github.com/babylonlabs-io/babylon/v4/x/coostaking/keeper"
-	"github.com/babylonlabs-io/babylon/v4/x/coostaking/types"
-	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/babylonlabs-io/babylon/v4/x/coostaking/keeper"
+	"github.com/babylonlabs-io/babylon/v4/x/coostaking/types"
 )
 
 func BeginBlocker(ctx context.Context, k keeper.Keeper) error {
@@ -23,8 +23,8 @@ func BeginBlocker(ctx context.Context, k keeper.Keeper) error {
 	return nil
 }
 
-func EndBlocker(ctx context.Context, k keeper.Keeper) ([]abci.ValidatorUpdate, error) {
+func EndBlocker(ctx context.Context, k keeper.Keeper) error {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyEndBlocker)
 
-	return []abci.ValidatorUpdate{}, nil
+	return nil
 }
