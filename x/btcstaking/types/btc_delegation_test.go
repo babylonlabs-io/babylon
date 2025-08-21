@@ -46,8 +46,8 @@ func FuzzBTCDelegation(f *testing.F) {
 				AdaptorSigs: [][]byte{covenantSig.MustMarshal()},
 			}
 			btcDel.CovenantSigs = []*types.CovenantAdaptorSignatures{covSigInfo}
-			btcDel.BtcUndelegation.CovenantSlashingSigs = btcDel.CovenantSigs                                // doesn't matter
-			btcDel.BtcUndelegation.CovenantUnbondingSigList = []*types.SignatureInfo{&types.SignatureInfo{}} // doesn't matter
+			btcDel.BtcUndelegation.CovenantSlashingSigs = btcDel.CovenantSigs            // doesn't matter
+			btcDel.BtcUndelegation.CovenantUnbondingSigList = []*types.SignatureInfo{{}} // doesn't matter
 		}
 
 		// randomise start height and end height

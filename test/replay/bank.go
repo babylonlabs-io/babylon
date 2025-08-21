@@ -2,7 +2,7 @@ package replay
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/test-go/testify/require"
+	"github.com/stretchr/testify/require"
 )
 
 func BankBalancesDiff(coins, coinsToSub map[string]sdk.Coins, addrs ...sdk.AccAddress) map[string]sdk.Coins {

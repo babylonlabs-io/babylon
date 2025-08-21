@@ -6,10 +6,17 @@ import (
 	"testing"
 	"time"
 
+<<<<<<< HEAD
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
 	"github.com/babylonlabs-io/babylon/v3/x/btclightclient/keeper"
 	"github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
 	"github.com/test-go/testify/require"
+=======
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	"github.com/babylonlabs-io/babylon/v4/x/btclightclient/keeper"
+	"github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
+	"github.com/stretchr/testify/require"
+>>>>>>> dfbd055 (chore:  e2e refactory (#1552))
 )
 
 func TestCheckRollBackInvariants(t *testing.T) {

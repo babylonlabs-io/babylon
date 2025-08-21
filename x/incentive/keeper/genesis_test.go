@@ -127,7 +127,7 @@ func TestInitGenesis(t *testing.T) {
 					},
 				},
 				EventRewardTracker: []types.EventsPowerUpdateAtHeightEntry{
-					types.EventsPowerUpdateAtHeightEntry{
+					{
 						Height: datagen.RandomInt(r, 100000) + 1,
 						Events: &types.EventsPowerUpdateAtHeight{
 							Events: []*types.EventPowerUpdate{

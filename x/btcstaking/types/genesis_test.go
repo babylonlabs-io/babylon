@@ -57,7 +57,7 @@ func TestGenesisState_Validate(t *testing.T) {
 			genState: func() *types.GenesisState {
 				return &types.GenesisState{
 					Params: []*types.Params{
-						&types.Params{
+						{
 							CovenantPks:          types.DefaultParams().CovenantPks,
 							CovenantQuorum:       types.DefaultParams().CovenantQuorum,
 							MinStakingValueSat:   10000,
@@ -83,7 +83,7 @@ func TestGenesisState_Validate(t *testing.T) {
 			genState: func() *types.GenesisState {
 				return &types.GenesisState{
 					Params: []*types.Params{
-						&types.Params{
+						{
 							CovenantPks:         types.DefaultParams().CovenantPks,
 							CovenantQuorum:      types.DefaultParams().CovenantQuorum,
 							SlashingPkScript:    types.DefaultParams().SlashingPkScript,

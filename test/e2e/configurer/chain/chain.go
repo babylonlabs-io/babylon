@@ -79,17 +79,6 @@ func (c *Config) CreateNode(initNode *initialization.Node) *NodeConfig {
 	return nodeConfig
 }
 
-// RemoveNode removes node and stops it from running.
-func (c *Config) RemoveNode(nodeName string) error {
-	for i, node := range c.NodeConfigs {
-		if node.Name == nodeName {
-			c.NodeConfigs = append(c.NodeConfigs[:i], c.NodeConfigs[i+1:]...)
-			return node.Stop()
-		}
-	}
-	return fmt.Errorf("node %s not found", nodeName)
-}
-
 // WaitUntilHeight waits for all validators to reach the specified height at the minimum.
 // returns error, if any.
 func (c *Config) WaitUntilHeight(height int64) {

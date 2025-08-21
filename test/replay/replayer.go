@@ -15,9 +15,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/server"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
+<<<<<<< HEAD
 
 	babylonApp "github.com/babylonlabs-io/babylon/v3/app"
 	appsigner "github.com/babylonlabs-io/babylon/v3/app/signer"
+=======
+>>>>>>> dfbd055 (chore:  e2e refactory (#1552))
 )
 
 type BlockReplayer struct {

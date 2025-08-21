@@ -6,10 +6,16 @@ import (
 	"math/rand"
 	"testing"
 
+<<<<<<< HEAD
+=======
+	"github.com/babylonlabs-io/babylon/v4/app"
+	btclightclienttypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
+>>>>>>> dfbd055 (chore:  e2e refactory (#1552))
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
+<<<<<<< HEAD
 	"github.com/babylonlabs-io/babylon/v3/app"
 	btclightclienttypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
 
@@ -18,6 +24,13 @@ import (
 	btcctypes "github.com/babylonlabs-io/babylon/v3/x/btccheckpoint/types"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
 	zctypes "github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
+=======
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	testkeeper "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
+	btcctypes "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
+	zctypes "github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/types"
+>>>>>>> dfbd055 (chore:  e2e refactory (#1552))
 )
 
 type consumerInfo struct {
