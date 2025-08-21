@@ -3,6 +3,7 @@ package app
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/ethereum/go-ethereum/common"
 	"io"
 	"os"
 	"path/filepath"
@@ -80,6 +81,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	evmante "github.com/cosmos/evm/ante"
 	evmencoding "github.com/cosmos/evm/encoding"
 	srvflags "github.com/cosmos/evm/server/flags"
 	evmutils "github.com/cosmos/evm/utils"
@@ -218,6 +220,7 @@ type BabylonApp struct {
 	legacyAmino *codec.LegacyAmino
 	appCodec    codec.Codec
 	txConfig    client.TxConfig
+	clientCtx   client.Context
 
 	interfaceRegistry types.InterfaceRegistry
 	invCheckPeriod    uint
@@ -231,6 +234,9 @@ type BabylonApp struct {
 
 	// module configurator
 	configurator module.Configurator
+
+	// pending tx listeners
+	pendingTxListeners []evmante.PendingTxListener
 }
 
 // NewBabylonApp returns a reference to an initialized BabylonApp.
@@ -587,7 +593,7 @@ func NewBabylonApp(
 
 	// set proposal extension
 	proposalHandler := prepare.NewProposalHandler(
-		logger, &app.CheckpointingKeeper, bApp.Mempool(), bApp, app.EncCfg)
+		logger, &app.CheckpointingKeeper, bApp.Mempool(), bApp, app.EncCfg, bbn.NewEthSignerExtractionAdapter(mempool.NewDefaultSignerExtractionAdapter()))
 	proposalHandler.SetHandlers(bApp)
 
 	// set vote extension
@@ -981,10 +987,19 @@ func getAppMempool(appOpts servertypes.AppOptions) mempool.Mempool {
 		maxTxs     = cast.ToInt(appOpts.Get(server.FlagMempoolMaxTxs))
 		mempoolCfg = mempool.DefaultPriorityNonceMempoolConfig()
 	)
+	mempoolCfg.SignerExtractor = bbn.NewEthSignerExtractionAdapter(mempool.NewDefaultSignerExtractionAdapter())
 	mempoolCfg.MaxTx = maxTxs
 	mp = mempool.NewPriorityMempool(mempoolCfg)
 	if maxTxs < 0 {
 		mp = mempool.NoOpMempool{}
 	}
 	return mp
+}
+
+func (app *BabylonApp) RegisterPendingTxListener(listener func(common.Hash)) {
+	app.pendingTxListeners = append(app.pendingTxListeners, listener)
+}
+
+func (app *BabylonApp) SetClientCtx(clientCtx client.Context) {
+	app.clientCtx = clientCtx
 }
