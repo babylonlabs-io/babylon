@@ -1,0 +1,90 @@
+syntax = "proto3";
+package babylon.coostaking.v1;
+
+import "gogoproto/gogo.proto";
+import "cosmos/base/v1beta1/coin.proto";
+import "cosmos_proto/cosmos.proto";
+
+option go_package = "github.com/babylonlabs-io/babylon/v4/x/coostaking/types";
+
+// HistoricalRewards represents the cumulative rewards ratio of
+// the pool of coostakers per score in that period. The period is ommited here and
+// should be part of the key used to store this structure. Key: Prefix + Period.
+message HistoricalRewards {
+  // CumulativeRewardsPerScore is the cumulative rewards of that period.
+  // This coins will aways increase the value, never reduced, it always
+  // accumulates and when the cumulative rewards will be used to distribute
+  // rewards, 2 periods will be loaded, calculate the difference and multiplied
+  // by the total score amount of each staker
+  // https://github.com/cosmos/cosmos-sdk/blob/e76102f885b71fd6e1c1efb692052173c4b3c3a3/x/distribution/keeper/delegation.go#L47
+  repeated cosmos.base.v1beta1.Coin cumulative_rewards_per_score = 1 [
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
+}
+
+// CurrentRewards represents the current rewards of the pool of coostakers.
+// Note: This rewards are for the stakers that have BTC delegations and BABY
+// delegations.
+// Key: Prefix. Since this will be a single pool of rewards for the entire chain
+// a single CurrentRewards structure is necessary.
+message CurrentRewards {
+  // Rewards is the current rewards for the single pool of rewards for all the
+  // coostakers for the whole chain. If some action happens of satoshi or baby
+  // staked or is unbonded or withdraw of the rewards available, this current
+  // period is sent to an HistoricalRewards and a new period is created and
+  // the rewards property is zerod out.
+  // Note: This rewards have increased simulated decimals (10^20) to increase
+  // precision when calculating the rewards per score and protect against
+  // math overflow issues. The decimals are removed prior to sending out
+  // to the incentives gauge.
+  repeated cosmos.base.v1beta1.Coin rewards = 1 [
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
+  // Period stores the current period that serves as a reference for
+  // creating new historical rewards and correlate with
+  // CoostakerRewardsTracker StartPeriodCumulativeReward.
+  uint64 period = 2;
+  // TotalScore is the total amount of score calulated over
+  // all the stakers score in the chain.
+  bytes total_score = 3 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+}
+
+// CoostakerRewardsTracker represents the structure that holds information
+// from the last time this staker withdraw the coostaking rewards or modified
+// his active staked amount of baby or satoshis.
+// The babylon address of the staker is ommitted here but should be part of the
+// key used to store this structure.
+// Key: Prefix + coostaker babylon address.
+message CoostakerRewardsTracker {
+  // StartPeriodCumulativeReward the starting period the coostaker
+  // made his last withdraw of coostaking rewards or modified his active staking amount
+  // of satoshis or baby.
+  uint64 start_period_cumulative_reward = 1;
+  // ActiveSatoshis is the total amount of active satoshi delegated
+  // from this coostaker babylon address.
+  bytes active_satoshis = 2 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+  // ActiveBaby is the total amount of active baby delegated
+  // from this coostaker babylon address.
+  bytes active_baby = 3 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+  // TotalScore is the total amount of calculated score
+  // of this coostaker.
+  bytes total_score = 4 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+}

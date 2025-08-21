@@ -141,4 +141,6 @@ enum StakeholderType {
   FINALITY_PROVIDER = 0;
   // BTC staker stakeholder type
   BTC_STAKER = 1;
+  // Coostaker stakeholder type
+  COOSTAKER = 2;
 }
