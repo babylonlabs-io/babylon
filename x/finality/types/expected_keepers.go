@@ -39,15 +39,3 @@ type IncentiveKeeper interface {
 	RewardBTCStaking(ctx context.Context, height uint64, filteredDc *VotingPowerDistCache, voters map[string]struct{})
 	IndexRefundableMsg(ctx context.Context, msg sdk.Msg)
 }
-
-// Event Hooks
-// These can be utilized to communicate between a finality keeper and another
-// keeper which must take particular actions when finalty providers/delegators change
-// state. The second keeper must implement this interface, which then the
-// finality keeper can call.
-
-// FinalityHooks event hooks for finality btcdelegation actions
-type FinalityHooks interface {
-	AfterBtcDelegationActivated(ctx context.Context, fpAddr, btcDelAddr sdk.AccAddress, fpSecuresBabylon bool, sats uint64) error
-	AfterBtcDelegationUnbonded(ctx context.Context, fpAddr, btcDelAddr sdk.AccAddress, fpSecuresBabylon bool, sats uint64) error
-}
