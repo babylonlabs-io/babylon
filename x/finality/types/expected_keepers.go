@@ -44,3 +44,15 @@ type IncentiveKeeper interface {
 	BtcDelegationActivated(ctx context.Context, fp, del sdk.AccAddress, sat sdkmath.Int) error
 	BtcDelegationUnbonded(ctx context.Context, fp, del sdk.AccAddress, sat sdkmath.Int) error
 }
+
+// Event Hooks
+// These can be utilized to communicate between a finality keeper and another
+// keeper which must take particular actions when finalty providers/delegators change
+// state. The second keeper must implement this interface, which then the
+// finality keeper can call.
+
+// FinalityHooks event hooks for finality btcdelegation actions
+type FinalityHooks interface {
+	BtcDelegationActivated(ctx context.Context, fpAddr, btcDelAddr sdk.AccAddress, sats uint64) error
+	BtcDelegationUnbonded(ctx context.Context, fpAddr, btcDelAddr sdk.AccAddress, sats uint64) error
+}
