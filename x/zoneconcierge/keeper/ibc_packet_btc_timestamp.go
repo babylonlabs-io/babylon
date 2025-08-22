@@ -239,6 +239,7 @@ func (k Keeper) BroadcastBTCTimestamps(
 
 		headersToBroadcast := k.GetHeadersToBroadcast(ctx, consumerID, headerCache)
 
+		// TODO: do we need to getFinalizedInfo for each consumer?
 		// get all metadata shared across BTC timestamps in the same epoch
 		finalizedInfo, err := k.getFinalizedInfo(ctx, epochNum, headersToBroadcast)
 		if err != nil {
