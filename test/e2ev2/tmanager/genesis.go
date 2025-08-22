@@ -22,6 +22,7 @@ import (
 	btccheckpointtypes "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
 	btclighttypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
 	btcstktypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+	coostakingtypes "github.com/babylonlabs-io/babylon/v4/x/coostaking/types"
 	finalitytypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
 	minttypes "github.com/babylonlabs-io/babylon/v4/x/mint/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -107,6 +108,11 @@ func UpdateGenModulesState(
 	}
 
 	err = UpdateModuleGenesis(appGenState, minttypes.ModuleName, &minttypes.GenesisState{}, UpdateGenesisMint)
+	if err != nil {
+		return err
+	}
+
+	err = UpdateModuleGenesis(appGenState, coostakingtypes.ModuleName, &coostakingtypes.GenesisState{}, UpdateGenesisCoostaking)
 	if err != nil {
 		return err
 	}
@@ -201,6 +207,17 @@ func UpdateGenesisGov(votingPeriod, expeditedVotingPeriod time.Duration) func(go
 
 func UpdateGenesisMint(mintGenState *minttypes.GenesisState) {
 	mintGenState.Minter.BondDenom = appparams.DefaultBondDenom
+}
+
+func UpdateGenesisCoostaking(gs *coostakingtypes.GenesisState) {
+	gs.Params = coostakingtypes.DefaultParams()
+	gs.CurrentRewards = coostakingtypes.CurrentRewardsEntry{
+		Rewards: &coostakingtypes.CurrentRewards{
+			Rewards:    sdk.NewCoins(),
+			Period:     1,
+			TotalScore: sdkmath.ZeroInt(),
+		},
+	}
 }
 
 func UpdateGenesisStake(stakeGenState *staketypes.GenesisState) {
