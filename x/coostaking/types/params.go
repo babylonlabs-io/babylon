@@ -38,6 +38,10 @@ func (p Params) Validate() error {
 		return ErrCoostakingPortionTooHigh
 	}
 
+	if p.CoostakingPortion.LT(math.LegacyZeroDec()) {
+		return ErrInvalidCoostakingPortion.Wrap("lower than zero")
+	}
+
 	if p.ScoreRatioBtcByBaby.IsNil() {
 		return ErrInvalidScoreRatioBtcByBaby
 	}
