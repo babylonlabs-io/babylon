@@ -8,6 +8,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+func (k Keeper) setHistoricalRewards(ctx context.Context, period uint64, histRwd types.HistoricalRewards) error {
+	return k.historicalRewards.Set(ctx, period, histRwd)
+}
+
 func (k Keeper) setCoostakerRewardsTracker(ctx context.Context, addr sdk.AccAddress, rwdTracker types.CoostakerRewardsTracker) error {
 	return k.coostakerRewardsTracker.Set(ctx, addr, rwdTracker)
 }

@@ -138,7 +138,7 @@ func (am AppModule) ExportGenesis(context.Context, appmodule.GenesisTarget) erro
 // InitGenesis implements appmodule.HasGenesis.
 // look at https://github.dev/dysonprotocol/dysonprotocol2/blob/c46695c4f08d4b7b39a89ee776bafed84671d145/x/crontask/module/module.go
 func (am AppModule) InitGenesis(ctx context.Context, gs appmodule.GenesisSource) error {
-	return InitGenesis(ctx, am.k, *types.DefaultGenesis())
+	return InitGenesis(ctx, am.k, gs)
 }
 
 // ValidateGenesis implements appmodule.HasGenesis.

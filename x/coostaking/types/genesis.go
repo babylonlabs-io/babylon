@@ -9,3 +9,7 @@ func DefaultGenesis() *GenesisState {
 		CoostakersRewardsTracker: []CoostakerRewardsTrackerEntry{},
 	}
 }
+
+func (gs GenesisState) Validate() error {
+	return nil
+}

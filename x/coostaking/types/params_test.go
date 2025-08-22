@@ -74,7 +74,7 @@ func TestParamsValidate(t *testing.T) {
 				CoostakingPortion:   math.LegacyMustNewDecFromStr("-0.1"),
 				ScoreRatioBtcByBaby: types.DefaultScoreRatioBtcByBaby,
 			},
-			expErr: types.ErrInvalidCoostakingPortion,
+			expErr: types.ErrInvalidCoostakingPortion.Wrap("lower than zero"),
 		},
 		{
 			name: "nil score ratio btc by baby",
