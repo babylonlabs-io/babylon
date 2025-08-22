@@ -890,11 +890,11 @@ func TestTwoFpsSameAddr(t *testing.T) {
 
 	d.GenerateNewBlockAssertExecutionSuccess()
 
-	qBsnFps, err := d.App.BTCStakingKeeper.FinalityProviders(ctx, &btcstakingtypes.QueryFinalityProvidersRequest{
+	qBbnFps, err := d.App.BTCStakingKeeper.FinalityProviders(ctx, &btcstakingtypes.QueryFinalityProvidersRequest{
 		BsnId: chainID,
 	})
 	require.NoError(t, err)
-	require.Len(t, qBsnFps.FinalityProviders, 1)
+	require.Len(t, qBbnFps.FinalityProviders, 1)
 
 	qCons1Fps, err := d.App.BTCStakingKeeper.FinalityProviders(ctx, &btcstakingtypes.QueryFinalityProvidersRequest{
 		BsnId: consumer1.ID,
@@ -903,4 +903,6 @@ func TestTwoFpsSameAddr(t *testing.T) {
 	require.Len(t, qCons1Fps.FinalityProviders, 1)
 
 	d.GenerateNewBlockAssertExecutionSuccess()
+
+	require.Equal(t, qBbnFps.FinalityProviders[0].Addr, qCons1Fps.FinalityProviders[0].Addr)
 }
