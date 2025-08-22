@@ -3,7 +3,6 @@ package coostaking
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 
 	"cosmossdk.io/core/appmodule"
 	"google.golang.org/grpc"
@@ -24,7 +23,6 @@ import (
 var (
 	_ appmodule.HasBeginBlocker = AppModule{}
 	_ appmodule.HasEndBlocker   = AppModule{}
-	_ appmodule.HasGenesis      = AppModule{}
 	_ appmodule.AppModule       = AppModule{}
 	_ appmodule.HasServices     = AppModule{}
 	_ module.AppModuleBasic     = AppModuleBasic{}
@@ -71,6 +69,7 @@ func (a AppModuleBasic) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json
 // InitGenesis implements module.HasGenesis.
 func (a AppModuleBasic) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, gs json.RawMessage) {
 	var genState types.GenesisState
+
 	cdc.MustUnmarshalJSON(gs, &genState)
 	a.k.InitGenesis(ctx, genState)
 }
@@ -124,41 +123,6 @@ func NewAppModule(
 // RegisterServices implements appmodule.HasServices.
 func (am AppModule) RegisterServices(cfg grpc.ServiceRegistrar) error {
 	types.RegisterMsgServer(cfg, keeper.NewMsgServerImpl(am.k))
-	return nil
-}
-
-// DefaultGenesis implements appmodule.HasGenesis.
-// Subtle: this method shadows the method (AppModuleBasic).DefaultGenesis of AppModule.AppModuleBasic.
-func (am AppModule) DefaultGenesis(target appmodule.GenesisTarget) error {
-	genesisState := types.DefaultGenesis()
-	writer, err := target(types.ModuleName)
-	if err != nil {
-		return fmt.Errorf("failed to get writer for %s genesis state: %w", types.ModuleName, err)
-	}
-	defer writer.Close()
-
-	encoder := json.NewEncoder(writer)
-	if err := encoder.Encode(genesisState); err != nil {
-		return fmt.Errorf("failed to encode %s genesis state: %w", types.ModuleName, err)
-	}
-
-	return nil
-}
-
-// ExportGenesis implements appmodule.HasGenesis.
-func (am AppModule) ExportGenesis(context.Context, appmodule.GenesisTarget) error {
-	return nil
-}
-
-// InitGenesis implements appmodule.HasGenesis.
-// look at https://github.dev/dysonprotocol/dysonprotocol2/blob/c46695c4f08d4b7b39a89ee776bafed84671d145/x/crontask/module/module.go
-func (am AppModule) InitGenesis(ctx context.Context, gs appmodule.GenesisSource) error {
-	return InitGenesis(ctx, am.k, gs)
-}
-
-// ValidateGenesis implements appmodule.HasGenesis.
-// Subtle: this method shadows the method (AppModuleBasic).ValidateGenesis of AppModule.AppModuleBasic.
-func (am AppModule) ValidateGenesis(appmodule.GenesisSource) error {
 	return nil
 }
 
