@@ -71,7 +71,10 @@ func (a AppModuleBasic) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, gs jso
 	var genState types.GenesisState
 
 	cdc.MustUnmarshalJSON(gs, &genState)
-	a.k.InitGenesis(ctx, genState)
+	err := a.k.InitGenesis(ctx, genState)
+	if err != nil {
+		panic(err)
+	}
 }
 
 // DefaultGenesis returns a default GenesisState for the module, marshalled to json.RawMessage. The default GenesisState need to be defined by the module developer and is primarily used for testing
