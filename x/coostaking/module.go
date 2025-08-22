@@ -11,12 +11,14 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 
-	"github.com/babylonlabs-io/babylon/v4/x/coostaking/keeper"
-	"github.com/babylonlabs-io/babylon/v4/x/coostaking/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+
+	"github.com/babylonlabs-io/babylon/v4/x/coostaking/keeper"
+	"github.com/babylonlabs-io/babylon/v4/x/coostaking/types"
 )
 
 var (
@@ -27,6 +29,7 @@ var (
 	_ appmodule.HasServices     = AppModule{}
 	_ module.AppModuleBasic     = AppModuleBasic{}
 	_ module.HasGenesisBasics   = AppModuleBasic{}
+	_ module.HasGenesis         = AppModuleBasic{}
 )
 
 // ----------------------------------------------------------------------------
@@ -36,10 +39,12 @@ var (
 // AppModuleBasic implements the AppModuleBasic interface that defines the independent methods a Cosmos SDK module needs to implement.
 type AppModuleBasic struct {
 	cdc codec.BinaryCodec
+
+	k keeper.Keeper
 }
 
-func NewAppModuleBasic(cdc codec.BinaryCodec) AppModuleBasic {
-	return AppModuleBasic{cdc: cdc}
+func NewAppModuleBasic(cdc codec.BinaryCodec, k keeper.Keeper) AppModuleBasic {
+	return AppModuleBasic{cdc: cdc, k: k}
 }
 
 // Name returns the name of the module as a string
@@ -55,6 +60,19 @@ func (AppModuleBasic) RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 // RegisterInterfaces registers a module's interface types and their concrete implementations as proto.Message
 func (a AppModuleBasic) RegisterInterfaces(reg cdctypes.InterfaceRegistry) {
 	types.RegisterInterfaces(reg)
+}
+
+// ExportGenesis implements module.HasGenesis.
+func (a AppModuleBasic) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.RawMessage {
+	genState := types.DefaultGenesis()
+	return cdc.MustMarshalJSON(genState)
+}
+
+// InitGenesis implements module.HasGenesis.
+func (a AppModuleBasic) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, gs json.RawMessage) {
+	var genState types.GenesisState
+	cdc.MustUnmarshalJSON(gs, &genState)
+	a.k.InitGenesis(ctx, genState)
 }
 
 // DefaultGenesis returns a default GenesisState for the module, marshalled to json.RawMessage. The default GenesisState need to be defined by the module developer and is primarily used for testing
@@ -92,8 +110,6 @@ func (AppModuleBasic) GetQueryCmd() *cobra.Command {
 // AppModule implements the AppModule interface that defines the inter-dependent methods that modules need to implement
 type AppModule struct {
 	AppModuleBasic
-
-	k keeper.Keeper
 }
 
 func NewAppModule(
@@ -101,8 +117,7 @@ func NewAppModule(
 	k keeper.Keeper,
 ) AppModule {
 	return AppModule{
-		AppModuleBasic: NewAppModuleBasic(cdc),
-		k:              k,
+		AppModuleBasic: NewAppModuleBasic(cdc, k),
 	}
 }
 
