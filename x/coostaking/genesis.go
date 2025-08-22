@@ -14,5 +14,5 @@ func InitGenesis(ctx context.Context, k keeper.Keeper, genState types.GenesisSta
 	// 	panic(err)
 	// }
 
-	return k.InitGenesis(ctx, genState)
+	return k.InitGenesis(ctx, *types.DefaultGenesis())
 }
