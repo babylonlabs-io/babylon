@@ -122,7 +122,7 @@ func NewHelper(
 
 	chKeeper := mocks.NewMockZoneConciergeChannelKeeper(ctrl)
 
-	return NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKeeper, ckptKeeper, ictvK, chKeeper, btcStkStoreKey)
+	return NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKeeper, ckptKeeper, ictvK, chKeeper, btcStkStoreKey, nil)
 }
 
 func (h *Helper) WithBlockHeight(height int64) *Helper {
@@ -146,7 +146,7 @@ func NewHelperNoMocksCalls(
 	ckptKeeper := ftypes.NewMockCheckpointingKeeper(ctrl)
 	chKeeper := mocks.NewMockZoneConciergeChannelKeeper(ctrl)
 
-	return NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKeeper, ckptKeeper, ictvK, chKeeper, btcStkStoreKey)
+	return NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKeeper, ckptKeeper, ictvK, chKeeper, btcStkStoreKey, nil)
 }
 
 // NewHelperWithIncentiveKeeper creates a new Helper with the given BTCLightClientKeeper and BtcCheckpointKeeper mocks, and an instance of the incentive keeper.
@@ -168,7 +168,7 @@ func NewHelperWithIncentiveKeeper(
 	ckptKeeper := ftypes.NewMockCheckpointingKeeper(ctrl)
 	chKeeper := mocks.NewMockZoneConciergeChannelKeeper(ctrl)
 
-	return NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKeeper, ckptKeeper, ictvK, chKeeper, nil)
+	return NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKeeper, ckptKeeper, ictvK, chKeeper, nil, nil)
 }
 
 func NewHelperWithBankMock(
@@ -200,6 +200,7 @@ func NewHelperWithStoreAndIncentive(
 	ictvKeeper IctvKeeperI,
 	chKeeper *mocks.MockZoneConciergeChannelKeeper,
 	btcStkStoreKey *storetypes.KVStoreKey,
+	finalityHooks ftypes.FinalityHooks,
 ) *Helper {
 	k, _ := keepertest.BTCStakingKeeperWithStore(t, db, stateStore, btcStkStoreKey, btclcKeeper, btccKForBtcStaking, ictvKeeper, chKeeper)
 	msgSrvr := keeper.NewMsgServerImpl(*k)
@@ -209,6 +210,11 @@ func NewHelperWithStoreAndIncentive(
 
 	fk, ctx := keepertest.FinalityKeeperWithStore(t, db, stateStore, k, ictvKeeper, btccKForFinality)
 	fMsgSrvr := fkeeper.NewMsgServerImpl(*fk)
+	multiHooks := ftypes.NewMultiFinalityHooks()
+	if finalityHooks != nil {
+		multiHooks = ftypes.NewMultiFinalityHooks(finalityHooks)
+	}
+	fk.SetHooks(multiHooks)
 
 	// set all parameters
 	err := k.SetParams(ctx, types.DefaultParams())
@@ -260,6 +266,7 @@ func NewHelperWithStoreIncentiveAndBank(
 
 	fk, ctx := keepertest.FinalityKeeperWithStore(t, db, stateStore, k, ictvKeeper, btccKForFinality)
 	fMsgSrvr := fkeeper.NewMsgServerImpl(*fk)
+	fk.SetHooks(ftypes.NewMultiFinalityHooks())
 
 	// set all parameters
 	err := k.SetParams(ctx, types.DefaultParams())
