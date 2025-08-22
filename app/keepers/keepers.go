@@ -692,6 +692,12 @@ func (ak *AppKeepers) InitKeepers(
 		appparams.AccGov.String(),
 	)
 
+	ak.FinalityKeeper.SetHooks(
+		finalitytypes.NewMultiFinalityHooks(
+			ak.IncentiveKeeper.Hooks(),
+		),
+	)
+
 	monitorKeeper := monitorkeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[monitortypes.StoreKey]),

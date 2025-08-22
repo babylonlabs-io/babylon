@@ -3,7 +3,6 @@ package types
 import (
 	"context"
 
-	sdkmath "cosmossdk.io/math"
 	storetypes "cosmossdk.io/store/types"
 	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 	etypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
@@ -39,8 +38,4 @@ type CheckpointingKeeper interface {
 type IncentiveKeeper interface {
 	RewardBTCStaking(ctx context.Context, height uint64, filteredDc *VotingPowerDistCache, voters map[string]struct{})
 	IndexRefundableMsg(ctx context.Context, msg sdk.Msg)
-	AddEventBtcDelegationActivated(ctx context.Context, height uint64, fp, del sdk.AccAddress, sat uint64) error
-	AddEventBtcDelegationUnbonded(ctx context.Context, height uint64, fp, del sdk.AccAddress, sat uint64) error
-	BtcDelegationActivated(ctx context.Context, fp, del sdk.AccAddress, sat sdkmath.Int) error
-	BtcDelegationUnbonded(ctx context.Context, fp, del sdk.AccAddress, sat sdkmath.Int) error
 }

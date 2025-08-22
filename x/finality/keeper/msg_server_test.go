@@ -777,6 +777,7 @@ func TestBtcDelegationRewardsEarlyUnbondingAndExpire(t *testing.T) {
 	btccKForFinality.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(epochNumber).AnyTimes()
 
 	h := testutil.NewIncentiveHelper(t, btclcKeeper, btccKForBtcStaking, btccKForFinality, chKeeper)
+
 	// set all parameters
 	covenantSKs, _ := h.GenAndApplyParams(r)
 	h.SetFinalityActivationHeight(0)

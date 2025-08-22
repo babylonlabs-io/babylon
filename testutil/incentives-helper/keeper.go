@@ -46,7 +46,7 @@ func NewIncentiveHelper(
 	bankK := keepertest.BankKeeper(t, db, stateStore, accK)
 
 	ictvK, _ := keepertest.IncentiveKeeperWithStore(t, db, stateStore, nil, bankK, accK, nil)
-	btcstkH := btcstkhelper.NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKForBtcStaking, btccKForFinality, ictvK, chKeeper, nil)
+	btcstkH := btcstkhelper.NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKForBtcStaking, btccKForFinality, ictvK, chKeeper, nil, ictvK.Hooks())
 
 	return &IncentiveHelper{
 		Helper:           btcstkH,
