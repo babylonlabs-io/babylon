@@ -26,6 +26,7 @@ var (
 	_ appmodule.AppModule       = AppModule{}
 	_ appmodule.HasServices     = AppModule{}
 	_ module.AppModuleBasic     = AppModuleBasic{}
+	_ module.HasGenesisBasics   = AppModuleBasic{}
 )
 
 // ----------------------------------------------------------------------------

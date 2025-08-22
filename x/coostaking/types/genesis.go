@@ -4,7 +4,7 @@ package types
 func DefaultGenesis() *GenesisState {
 	return &GenesisState{
 		Params:                   DefaultParams(),
-		CurrentRewards:           []CurrentRewardsEntry{},
+		CurrentRewards:           CurrentRewardsEntry{},
 		HistoricalRewards:        []HistoricalRewardsEntry{},
 		CoostakersRewardsTracker: []CoostakerRewardsTrackerEntry{},
 	}
