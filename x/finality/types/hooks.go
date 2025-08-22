@@ -15,18 +15,18 @@ func NewMultiFinalityHooks(hooks ...FinalityHooks) MultiFinalityHooks {
 	return hooks
 }
 
-func (h MultiFinalityHooks) BtcDelegationActivated(ctx context.Context, fpAddr, btcDelAddr sdk.AccAddress, sats uint64) error {
+func (h MultiFinalityHooks) AfterBtcDelegationActivated(ctx context.Context, fpAddr, btcDelAddr sdk.AccAddress, fpSecuresBabylon bool, sats uint64) error {
 	for i := range h {
-		if err := h[i].BtcDelegationActivated(ctx, fpAddr, btcDelAddr, sats); err != nil {
+		if err := h[i].AfterBtcDelegationActivated(ctx, fpAddr, btcDelAddr, fpSecuresBabylon, sats); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (h MultiFinalityHooks) BtcDelegationUnbonded(ctx context.Context, fpAddr, btcDelAddr sdk.AccAddress, sats uint64) error {
+func (h MultiFinalityHooks) AfterBtcDelegationUnbonded(ctx context.Context, fpAddr, btcDelAddr sdk.AccAddress, fpSecuresBabylon bool, sats uint64) error {
 	for i := range h {
-		if err := h[i].BtcDelegationUnbonded(ctx, fpAddr, btcDelAddr, sats); err != nil {
+		if err := h[i].AfterBtcDelegationUnbonded(ctx, fpAddr, btcDelAddr, fpSecuresBabylon, sats); err != nil {
 			return err
 		}
 	}

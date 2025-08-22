@@ -3,7 +3,6 @@ package types
 import (
 	"context"
 
-	sdkmath "cosmossdk.io/math"
 	storetypes "cosmossdk.io/store/types"
 	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 	etypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
@@ -39,10 +38,6 @@ type CheckpointingKeeper interface {
 type IncentiveKeeper interface {
 	RewardBTCStaking(ctx context.Context, height uint64, filteredDc *VotingPowerDistCache, voters map[string]struct{})
 	IndexRefundableMsg(ctx context.Context, msg sdk.Msg)
-	AddEventBtcDelegationActivated(ctx context.Context, height uint64, fp, del sdk.AccAddress, sat uint64) error
-	AddEventBtcDelegationUnbonded(ctx context.Context, height uint64, fp, del sdk.AccAddress, sat uint64) error
-	BtcDelegationActivated(ctx context.Context, fp, del sdk.AccAddress, sat sdkmath.Int) error
-	BtcDelegationUnbonded(ctx context.Context, fp, del sdk.AccAddress, sat sdkmath.Int) error
 }
 
 // Event Hooks
@@ -53,6 +48,6 @@ type IncentiveKeeper interface {
 
 // FinalityHooks event hooks for finality btcdelegation actions
 type FinalityHooks interface {
-	BtcDelegationActivated(ctx context.Context, fpAddr, btcDelAddr sdk.AccAddress, sats uint64) error
-	BtcDelegationUnbonded(ctx context.Context, fpAddr, btcDelAddr sdk.AccAddress, sats uint64) error
+	AfterBtcDelegationActivated(ctx context.Context, fpAddr, btcDelAddr sdk.AccAddress, fpSecuresBabylon bool, sats uint64) error
+	AfterBtcDelegationUnbonded(ctx context.Context, fpAddr, btcDelAddr sdk.AccAddress, fpSecuresBabylon bool, sats uint64) error
 }

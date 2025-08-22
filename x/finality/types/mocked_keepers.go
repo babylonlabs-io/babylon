@@ -8,7 +8,6 @@ import (
 	context "context"
 	reflect "reflect"
 
-	math "cosmossdk.io/math"
 	types "cosmossdk.io/store/types"
 	types0 "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 	types1 "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
@@ -338,62 +337,6 @@ func (m *MockIncentiveKeeper) EXPECT() *MockIncentiveKeeperMockRecorder {
 	return m.recorder
 }
 
-// AddEventBtcDelegationActivated mocks base method.
-func (m *MockIncentiveKeeper) AddEventBtcDelegationActivated(ctx context.Context, height uint64, fp, del types2.AccAddress, sat uint64) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddEventBtcDelegationActivated", ctx, height, fp, del, sat)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// AddEventBtcDelegationActivated indicates an expected call of AddEventBtcDelegationActivated.
-func (mr *MockIncentiveKeeperMockRecorder) AddEventBtcDelegationActivated(ctx, height, fp, del, sat interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddEventBtcDelegationActivated", reflect.TypeOf((*MockIncentiveKeeper)(nil).AddEventBtcDelegationActivated), ctx, height, fp, del, sat)
-}
-
-// AddEventBtcDelegationUnbonded mocks base method.
-func (m *MockIncentiveKeeper) AddEventBtcDelegationUnbonded(ctx context.Context, height uint64, fp, del types2.AccAddress, sat uint64) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddEventBtcDelegationUnbonded", ctx, height, fp, del, sat)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// AddEventBtcDelegationUnbonded indicates an expected call of AddEventBtcDelegationUnbonded.
-func (mr *MockIncentiveKeeperMockRecorder) AddEventBtcDelegationUnbonded(ctx, height, fp, del, sat interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddEventBtcDelegationUnbonded", reflect.TypeOf((*MockIncentiveKeeper)(nil).AddEventBtcDelegationUnbonded), ctx, height, fp, del, sat)
-}
-
-// BtcDelegationActivated mocks base method.
-func (m *MockIncentiveKeeper) BtcDelegationActivated(ctx context.Context, fp, del types2.AccAddress, sat math.Int) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "BtcDelegationActivated", ctx, fp, del, sat)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// BtcDelegationActivated indicates an expected call of BtcDelegationActivated.
-func (mr *MockIncentiveKeeperMockRecorder) BtcDelegationActivated(ctx, fp, del, sat interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BtcDelegationActivated", reflect.TypeOf((*MockIncentiveKeeper)(nil).BtcDelegationActivated), ctx, fp, del, sat)
-}
-
-// BtcDelegationUnbonded mocks base method.
-func (m *MockIncentiveKeeper) BtcDelegationUnbonded(ctx context.Context, fp, del types2.AccAddress, sat math.Int) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "BtcDelegationUnbonded", ctx, fp, del, sat)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// BtcDelegationUnbonded indicates an expected call of BtcDelegationUnbonded.
-func (mr *MockIncentiveKeeperMockRecorder) BtcDelegationUnbonded(ctx, fp, del, sat interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BtcDelegationUnbonded", reflect.TypeOf((*MockIncentiveKeeper)(nil).BtcDelegationUnbonded), ctx, fp, del, sat)
-}
-
 // IndexRefundableMsg mocks base method.
 func (m *MockIncentiveKeeper) IndexRefundableMsg(ctx context.Context, msg types2.Msg) {
 	m.ctrl.T.Helper()
@@ -416,4 +359,55 @@ func (m *MockIncentiveKeeper) RewardBTCStaking(ctx context.Context, height uint6
 func (mr *MockIncentiveKeeperMockRecorder) RewardBTCStaking(ctx, height, filteredDc, voters interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RewardBTCStaking", reflect.TypeOf((*MockIncentiveKeeper)(nil).RewardBTCStaking), ctx, height, filteredDc, voters)
+}
+
+// MockFinalityHooks is a mock of FinalityHooks interface.
+type MockFinalityHooks struct {
+	ctrl     *gomock.Controller
+	recorder *MockFinalityHooksMockRecorder
+}
+
+// MockFinalityHooksMockRecorder is the mock recorder for MockFinalityHooks.
+type MockFinalityHooksMockRecorder struct {
+	mock *MockFinalityHooks
+}
+
+// NewMockFinalityHooks creates a new mock instance.
+func NewMockFinalityHooks(ctrl *gomock.Controller) *MockFinalityHooks {
+	mock := &MockFinalityHooks{ctrl: ctrl}
+	mock.recorder = &MockFinalityHooksMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockFinalityHooks) EXPECT() *MockFinalityHooksMockRecorder {
+	return m.recorder
+}
+
+// AfterBtcDelegationActivated mocks base method.
+func (m *MockFinalityHooks) AfterBtcDelegationActivated(ctx context.Context, fpAddr, btcDelAddr types2.AccAddress, fpSecuresBabylon bool, sats uint64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AfterBtcDelegationActivated", ctx, fpAddr, btcDelAddr, fpSecuresBabylon, sats)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AfterBtcDelegationActivated indicates an expected call of AfterBtcDelegationActivated.
+func (mr *MockFinalityHooksMockRecorder) AfterBtcDelegationActivated(ctx, fpAddr, btcDelAddr, fpSecuresBabylon, sats interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AfterBtcDelegationActivated", reflect.TypeOf((*MockFinalityHooks)(nil).AfterBtcDelegationActivated), ctx, fpAddr, btcDelAddr, fpSecuresBabylon, sats)
+}
+
+// AfterBtcDelegationUnbonded mocks base method.
+func (m *MockFinalityHooks) AfterBtcDelegationUnbonded(ctx context.Context, fpAddr, btcDelAddr types2.AccAddress, fpSecuresBabylon bool, sats uint64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AfterBtcDelegationUnbonded", ctx, fpAddr, btcDelAddr, fpSecuresBabylon, sats)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AfterBtcDelegationUnbonded indicates an expected call of AfterBtcDelegationUnbonded.
+func (mr *MockFinalityHooksMockRecorder) AfterBtcDelegationUnbonded(ctx, fpAddr, btcDelAddr, fpSecuresBabylon, sats interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AfterBtcDelegationUnbonded", reflect.TypeOf((*MockFinalityHooks)(nil).AfterBtcDelegationUnbonded), ctx, fpAddr, btcDelAddr, fpSecuresBabylon, sats)
 }
