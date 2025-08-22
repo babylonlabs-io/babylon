@@ -864,3 +864,43 @@ func TestSlashingFpWithManyMulistakedDelegations(t *testing.T) {
 	require.NoError(t, err)
 	require.True(t, fpBbn.IsSlashed())
 }
+
+func TestTwoFpsSameAddr(t *testing.T) {
+	t.Parallel()
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	d := NewBabylonAppDriverTmpDir(r, t)
+	d.GenerateNewBlock()
+
+	bbnFps := d.CreateNFinalityProviderAccounts(1)
+	require.Len(t, bbnFps, 1)
+	bbnFp := bbnFps[0]
+	bbnFp.RegisterFinalityProvider(chainID)
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	const consumerID1 = "09-localhost-1"
+	ctx := d.Ctx().WithIsCheckTx(false)
+	OpenChannelForConsumer(ctx, d.App, consumerID1)
+
+	consumer1 := d.RegisterConsumer(r, ctx, d.App, consumerID1)
+
+	fpCons := d.CreateNFinalityProviderAccounts(1)[0]
+	fpCons.SenderInfo = bbnFp.SenderInfo
+
+	fpCons.RegisterFinalityProvider(consumer1.ID)
+
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	qBsnFps, err := d.App.BTCStakingKeeper.FinalityProviders(ctx, &btcstakingtypes.QueryFinalityProvidersRequest{
+		BsnId: chainID,
+	})
+	require.NoError(t, err)
+	require.Len(t, qBsnFps.FinalityProviders, 1)
+
+	qCons1Fps, err := d.App.BTCStakingKeeper.FinalityProviders(ctx, &btcstakingtypes.QueryFinalityProvidersRequest{
+		BsnId: consumer1.ID,
+	})
+	require.NoError(t, err)
+	require.Len(t, qCons1Fps.FinalityProviders, 1)
+
+	d.GenerateNewBlockAssertExecutionSuccess()
+}
