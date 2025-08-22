@@ -51,7 +51,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### State Machine Breaking
 
-- [#xx](https://github.com/babylonlabs-io/babylon/pull/xx) New `x/coostaking` module.
+- [#1579](https://github.com/babylonlabs-io/babylon/pull/1579) New `x/coostaking` module.
 
 ## v3.0.0-rc.2
 

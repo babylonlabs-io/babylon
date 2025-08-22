@@ -13,7 +13,7 @@ message GenesisState {
   // params the current params of the state.
   Params params = 1 [ (gogoproto.nullable) = false ];
   // CurrentRewards are the current rewards of coostakers pool.
-  repeated CurrentRewardsEntry current_rewards = 2 [ (gogoproto.nullable) = false ];
+  CurrentRewardsEntry current_rewards = 2 [ (gogoproto.nullable) = false ];
   // HistoricalRewards are the historical rewards of the coostakers for one period.
   repeated HistoricalRewardsEntry historical_rewards = 3 [ (gogoproto.nullable) = false ];
   // CoostakerRewardsTracker are the coostaker rewards tracker stored by coostaker addresses.

@@ -23,6 +23,9 @@ type (
 		// name of the FeeCollector ModuleAccount
 		feeCollectorName string
 
+		bankK types.BankKeeper
+		accK  types.AccountKeeper
+
 		// params stores the module parameter
 		params collections.Item[types.Params]
 
@@ -40,6 +43,8 @@ type (
 func NewKeeper(
 	cdc codec.BinaryCodec,
 	storeService corestoretypes.KVStoreService,
+	bankK types.BankKeeper,
+	accK types.AccountKeeper,
 	authority string,
 	feeCollectorName string,
 ) Keeper {
@@ -51,6 +56,9 @@ func NewKeeper(
 
 		authority:        authority,
 		feeCollectorName: feeCollectorName,
+
+		bankK: bankK,
+		accK:  accK,
 
 		params: collections.NewItem(
 			sb,

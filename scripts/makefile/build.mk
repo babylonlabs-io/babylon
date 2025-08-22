@@ -43,6 +43,7 @@ mocks: $(MOCKS_DIR) ## Generate mock objects for testing
 	$(mockgen_cmd) -source=x/btcstaking/types/expected_keepers.go -package types -destination x/btcstaking/types/mocked_keepers.go
 	$(mockgen_cmd) -source=x/finality/types/expected_keepers.go -package types -destination x/finality/types/mocked_keepers.go
 	$(mockgen_cmd) -source=x/incentive/types/expected_keepers.go -package types -destination x/incentive/types/mocked_keepers.go
+	$(mockgen_cmd) -source=x/coostaking/types/expected_keepers.go -package types -destination x/coostaking/types/mocked_keepers.go
 .PHONY: mocks
 
 $(MOCKS_DIR):
