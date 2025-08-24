@@ -96,7 +96,6 @@ func (s *FeemarketTestSuite) BaseFeeExcludesRefundableGas() {
 	// The base fee should change based on network congestion
 	// With our wrapper, it should exclude refundable gas from the calculation
 	s.validateBaseFeeCalculation(node, initialBaseFee, finalBaseFee, refundableTxResp, nonRefundableTxResp)
-
 	s.T().Log("Base fee excludes refundable gas test passed")
 }
 
@@ -173,7 +172,7 @@ func (s *FeemarketTestSuite) sendNonRefundableTx(node *chain.NodeConfig, from, t
 }
 
 // verifyTxRefunded checks if a transaction was properly refunded
-func (s *FeemarketTestSuite) verifyTxFeeRefunded(node *chain.NodeConfig, txHash string, txResp sdk.TxResponse) {
+func (s *FeemarketTestSuite) verifyTxFeeRefunded(_ *chain.NodeConfig, txHash string, txResp sdk.TxResponse) {
 	refundFound := false
 	for _, event := range txResp.Events {
 		if event.Type == "transfer" || event.Type == "coin_received" {
@@ -193,7 +192,7 @@ func (s *FeemarketTestSuite) verifyTxFeeRefunded(node *chain.NodeConfig, txHash 
 }
 
 // validateBaseFeeCalculation verifies the base fee calculation logic
-func (s *FeemarketTestSuite) validateBaseFeeCalculation(node *chain.NodeConfig, initialBaseFee, finalBaseFee sdkmath.LegacyDec, refundableTx, nonRefundableTx sdk.TxResponse) {
+func (s *FeemarketTestSuite) validateBaseFeeCalculation(_ *chain.NodeConfig, initialBaseFee, finalBaseFee sdkmath.LegacyDec, refundableTx, nonRefundableTx sdk.TxResponse) {
 	s.T().Logf("Validating base fee calculation:")
 	s.T().Logf("  Initial base fee: %s", initialBaseFee.String())
 	s.T().Logf("  Final base fee: %s", finalBaseFee.String())
@@ -202,6 +201,5 @@ func (s *FeemarketTestSuite) validateBaseFeeCalculation(node *chain.NodeConfig, 
 	s.T().Logf("  Non-refundable tx gas wanted: %d", nonRefundableTx.GasWanted)
 	s.T().Logf("  Non-refundable tx gas used: %d", nonRefundableTx.GasUsed)
 
-	// Basic validation: base fee should not be negative and should be reasonable
 	s.Require().True(finalBaseFee.IsPositive(), "Final base fee should be positive")
 }
