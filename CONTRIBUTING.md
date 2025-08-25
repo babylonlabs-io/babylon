@@ -157,7 +157,7 @@ build, in which case we can fall back on `go mod tidy -v`.
 
 ## Protobuf
 
-We use [Protocol Buffers](https://developers.google.com/protocol-buffers) along
+We use [Protocol Buffers](https://protobuf.dev) along
 with [gogoproto](https://github.com/cosmos/gogoproto) to generate code for use
 in Babylon.
 
