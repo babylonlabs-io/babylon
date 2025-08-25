@@ -212,10 +212,10 @@ message Params {
   ];
   // base gas fee for delegation creation
   uint64 delegation_creation_base_gas_fee = 13;
-  // allow_list_expiration_height is the height at which the allow list expires
+  // RESERVED allow_list_expiration_height is the height at which the allow list expires
   // i.e all staking transactions are allowed to enter Babylon chain afterwards
-  // setting it to 0 means allow list is disabled
-  uint64 allow_list_expiration_height = 14;
+  // setting it to 0 means allow list is disabled (LEGACY)
+  reserved 14;
   // btc_activation_height is the btc height from which parameters are activated
   // (inclusive)
   uint32 btc_activation_height = 15;
