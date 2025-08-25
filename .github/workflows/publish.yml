@@ -4,9 +4,7 @@ on:
   push:
     branches:
       - 'main'
-      - 'release/v1.x'
-      - 'release/v2.x'
-      - 'release/v3.x'
+      - "release/*"
     tags:
       - '*'
 
