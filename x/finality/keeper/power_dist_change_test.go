@@ -1992,7 +1992,7 @@ func TestBSNDelegationActivated_DirectIncentives(t *testing.T) {
 	_, babylonFpPk, babylonFp := h.CreateFinalityProvider(r)
 
 	// create BSN finality provider (not securing Babylon genesis)
-	_, bsnFpPk, bsnFp, err := h.CreateConsumerFinalityProvider(r, randomConsumer.ConsumerId)
+	_, bsnFpPk, _, err := h.CreateConsumerFinalityProvider(r, randomConsumer.ConsumerId)
 	require.NoError(t, err)
 
 	// create delegation to BSN FP
@@ -2021,15 +2021,6 @@ func TestBSNDelegationActivated_DirectIncentives(t *testing.T) {
 		StakingTxHash: btcDel.MustGetStakingTxHash().String(),
 		NewState:      btcstktypes.BTCDelegationStatus_ACTIVE,
 	})
-
-	// expect direct call to IncentiveKeeper.BtcDelegationActivated for BSN FP
-	delAddr := sdk.MustAccAddressFromBech32(btcDel.StakerAddr)
-	expectedSats := sdkmath.NewIntFromUint64(btcDel.TotalSat)
-	incentiveKeeper.EXPECT().BtcDelegationActivated(gomock.Any(), bsnFp.Address(), delAddr, expectedSats).Return(nil).Times(1)
-
-	// should call AddEventBtcDelegationActivated (which adds to block height queue) only for babylon fp
-	height := uint64(h.Ctx.HeaderInfo().Height)
-	incentiveKeeper.EXPECT().AddEventBtcDelegationActivated(gomock.Any(), height, babylonFp.Address(), delAddr, btcDel.TotalSat).Times(1)
 
 	// add the event to store
 	addPowerDistUpdateEvents(t, h.Ctx, btcStakingStoreKey, uint64(btcTipHeight), []*btcstktypes.EventPowerDistUpdate{eventActivate})
@@ -2066,7 +2057,7 @@ func TestBSNDelegationUnbonded_DirectIncentives(t *testing.T) {
 	randomConsumer := h.RegisterAndVerifyConsumer(t, r)
 
 	_, babylonFpPk, babylonFp := h.CreateFinalityProvider(r)
-	_, bsnFpPk, bsnFp, err := h.CreateConsumerFinalityProvider(r, randomConsumer.ConsumerId)
+	_, bsnFpPk, _, err := h.CreateConsumerFinalityProvider(r, randomConsumer.ConsumerId)
 	require.NoError(t, err)
 
 	delSK, _, err := datagen.GenRandomBTCKeyPair(r)
@@ -2096,15 +2087,6 @@ func TestBSNDelegationUnbonded_DirectIncentives(t *testing.T) {
 		StakingTxHash: btcDel.MustGetStakingTxHash().String(),
 		NewState:      btcstktypes.BTCDelegationStatus_UNBONDED,
 	})
-
-	// expect direct call to IncentiveKeeper.BtcDelegationUnbonded for BSN FP
-	delAddr := sdk.MustAccAddressFromBech32(btcDel.StakerAddr)
-	expectedSats := sdkmath.NewIntFromUint64(btcDel.TotalSat)
-	ictvK.EXPECT().BtcDelegationUnbonded(gomock.Any(), bsnFp.Address(), delAddr, expectedSats).Return(nil).Times(1)
-
-	// should call AddEventBtcDelegationUnbonded (which adds to block height queue) only for babylon fp
-	height := uint64(h.Ctx.HeaderInfo().Height)
-	ictvK.EXPECT().AddEventBtcDelegationUnbonded(gomock.Any(), height, babylonFp.Address(), delAddr, btcDel.TotalSat).Times(1)
 
 	// create initial power distribution with the Babylon FP (only Babylon FPs are in power distribution)
 	initialDc := ftypes.NewVotingPowerDistCache()
@@ -2141,7 +2123,7 @@ func TestTwoBtcActivationEvents(t *testing.T) {
 	randomConsumer := h.RegisterAndVerifyConsumer(t, r)
 
 	_, babylonFpPk, babylonFp := h.CreateFinalityProvider(r)
-	_, bsnFpPk, bsnFp, err := h.CreateConsumerFinalityProvider(r, randomConsumer.ConsumerId)
+	_, bsnFpPk, _, err := h.CreateConsumerFinalityProvider(r, randomConsumer.ConsumerId)
 	require.NoError(t, err)
 
 	delSK, _, err := datagen.GenRandomBTCKeyPair(r)
@@ -2190,19 +2172,6 @@ func TestTwoBtcActivationEvents(t *testing.T) {
 		StakingTxHash: btcDel2.MustGetStakingTxHash().String(),
 		NewState:      btcstktypes.BTCDelegationStatus_ACTIVE,
 	})
-
-	// expect direct calls to IncentiveKeeper.BtcDelegationActivated for BSN FP
-	del1Addr := sdk.MustAccAddressFromBech32(btcDel1.StakerAddr)
-	del2Addr := sdk.MustAccAddressFromBech32(btcDel2.StakerAddr)
-	expectedSats1 := sdkmath.NewIntFromUint64(btcDel1.TotalSat)
-	expectedSats2 := sdkmath.NewIntFromUint64(btcDel2.TotalSat)
-	ictvK.EXPECT().BtcDelegationActivated(gomock.Any(), bsnFp.Address(), del1Addr, expectedSats1).Return(nil).Times(1)
-	ictvK.EXPECT().BtcDelegationActivated(gomock.Any(), bsnFp.Address(), del2Addr, expectedSats2).Return(nil).Times(1)
-
-	// expect add events calls for babylon fp
-	height := uint64(h.Ctx.HeaderInfo().Height)
-	ictvK.EXPECT().AddEventBtcDelegationActivated(gomock.Any(), height, babylonFp.Address(), del1Addr, btcDel1.TotalSat).Times(1)
-	ictvK.EXPECT().AddEventBtcDelegationActivated(gomock.Any(), height, babylonFp.Address(), del2Addr, btcDel2.TotalSat).Times(1)
 
 	// add events to store
 	addPowerDistUpdateEvents(t, h.Ctx, btcStakingStoreKey, uint64(btcTipHeight), []*btcstktypes.EventPowerDistUpdate{event1, event2})

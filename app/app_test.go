@@ -28,6 +28,7 @@ import (
 	babylonApp "github.com/babylonlabs-io/babylon/v4/app"
 	testsigner "github.com/babylonlabs-io/babylon/v4/testutil/signer"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
+	coostakingtypes "github.com/babylonlabs-io/babylon/v4/x/coostaking/types"
 	incentivetypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
 	minttypes "github.com/babylonlabs-io/babylon/v4/x/mint/types"
 
@@ -44,6 +45,7 @@ var (
 		govtypes.ModuleName:                         {authtypes.Burner},
 		ibctransfertypes.ModuleName:                 {authtypes.Minter, authtypes.Burner},
 		incentivetypes.ModuleName:                   nil, // this line is needed to create an account for incentive module
+		coostakingtypes.ModuleName:                  nil, // this line is needed to create an account for coostaking module
 		tokenfactorytypes.ModuleName:                {authtypes.Minter, authtypes.Burner},
 		icatypes.ModuleName:                         nil,
 		evmtypes.ModuleName:                         {authtypes.Minter, authtypes.Burner},

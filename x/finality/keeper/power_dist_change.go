@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"cosmossdk.io/collections"
-	sdkmath "cosmossdk.io/math"
 	"cosmossdk.io/store/prefix"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/cosmos/cosmos-sdk/runtime"
@@ -438,14 +437,17 @@ func (k Keeper) processPowerDistUpdateEventUnbond(
 		state.DeltaSatsByFpBtcPk[fpBTCPKHex] -= int64(btcDel.TotalSat)
 	}
 	k.processRewardTracker(ctx, state.FpByBtcPk, btcDel, func(fp *types.FinalityProvider, del sdk.AccAddress, sats uint64) {
-		if fp.SecuresBabylonGenesis(sdk.UnwrapSDKContext(ctx)) {
-			k.MustProcessBabylonBtcDelegationUnbonded(ctx, fp.Address(), del, sats)
-			return
+		sdkCtx := sdk.UnwrapSDKContext(ctx)
+
+		fpSecuresBabylon := fp.SecuresBabylonGenesis(sdkCtx)
+		err := k.hooks.AfterBtcDelegationUnbonded(ctx, fp.Address(), del, fpSecuresBabylon, sats)
+		if err != nil {
+			k.Logger(sdkCtx).Error(
+				"failed to add event of activated BTC delegation",
+				"blockHeight", sdkCtx.HeaderInfo().Height,
+			)
+			panic(err)
 		}
-		// BSNs don't need to add to the event list to be processed at some specific babylon height.
-		// Should update the reward tracker structures on the spot and don't care to have the rewards
-		// being distributed based on the latest voting power.
-		k.MustProcessConsumerBtcDelegationUnbonded(ctx, fp.Address(), del, sats)
 	})
 }
 
@@ -470,12 +472,17 @@ func (k Keeper) processPowerDistUpdateEventActive(
 	// FP could be already slashed when it is being activated, but it is okay
 	// since slashed finality providers do not earn rewards
 	k.processRewardTracker(ctx, state.FpByBtcPk, btcDel, func(fp *types.FinalityProvider, del sdk.AccAddress, sats uint64) {
-		if fp.SecuresBabylonGenesis(sdk.UnwrapSDKContext(ctx)) {
-			k.MustProcessBabylonBtcDelegationActivated(ctx, fp.Address(), del, sats)
-			return
+		sdkCtx := sdk.UnwrapSDKContext(ctx)
+
+		fpSecuresBabylon := fp.SecuresBabylonGenesis(sdkCtx)
+		err := k.hooks.AfterBtcDelegationActivated(ctx, fp.Address(), del, fpSecuresBabylon, sats)
+		if err != nil {
+			k.Logger(sdkCtx).Error(
+				"failed to add event of activated BTC delegation",
+				"blockHeight", sdkCtx.HeaderInfo().Height,
+			)
+			panic(err)
 		}
-		// BSNs don't need to add to the events, can be processed instantly
-		k.MustProcessConsumerBtcDelegationActivated(ctx, fp.Address(), del, sats)
 	})
 }
 
@@ -535,66 +542,6 @@ func (k Keeper) processRewardTracker(
 			panic(err)
 		}
 		f(fp, delAddr, btcDel.TotalSat)
-	}
-}
-
-// MustProcessBabylonBtcDelegationActivated calls the IncentiveKeeper.AddEventBtcDelegationActivated
-// and panics if it errors
-func (k Keeper) MustProcessBabylonBtcDelegationActivated(ctx context.Context, fp, del sdk.AccAddress, sats uint64) {
-	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	height := uint64(sdkCtx.HeaderInfo().Height)
-	err := k.IncentiveKeeper.AddEventBtcDelegationActivated(ctx, height, fp, del, sats)
-	if err != nil {
-		k.Logger(sdkCtx).Error(
-			"failed to add event of activated BTC delegation",
-			"blockHeight", height,
-		)
-		panic(err)
-	}
-}
-
-// MustProcessConsumerBtcDelegationActivated calls the IncentiveKeeper.BtcDelegationActivated
-// and panics if it errors
-func (k Keeper) MustProcessConsumerBtcDelegationActivated(ctx context.Context, fp, del sdk.AccAddress, sats uint64) {
-	amtSat := sdkmath.NewIntFromUint64(sats)
-	err := k.IncentiveKeeper.BtcDelegationActivated(ctx, fp, del, amtSat)
-	if err != nil {
-		k.Logger(sdk.UnwrapSDKContext(ctx)).Error(
-			"failed to activate btc delegation",
-			"del", del.String(),
-			"fp", fp.String(),
-		)
-		panic(err)
-	}
-}
-
-// MustProcessBabylonBtcDelegationUnbonded calls the IncentiveKeeper.AddEventBtcDelegationUnbonded
-// and panics if it errors
-func (k Keeper) MustProcessBabylonBtcDelegationUnbonded(ctx context.Context, fp, del sdk.AccAddress, sats uint64) {
-	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	height := uint64(sdkCtx.HeaderInfo().Height)
-	err := k.IncentiveKeeper.AddEventBtcDelegationUnbonded(ctx, height, fp, del, sats)
-	if err != nil {
-		k.Logger(sdkCtx).Error(
-			"failed to add event of unbonded BTC delegation",
-			"blockHeight", height,
-		)
-		panic(err)
-	}
-}
-
-// MustProcessConsumerBtcDelegationUnbonded calls the IncentiveKeeper.BtcDelegationUnbonded
-// and panics if it errors
-func (k Keeper) MustProcessConsumerBtcDelegationUnbonded(ctx context.Context, fp, del sdk.AccAddress, sats uint64) {
-	amtSat := sdkmath.NewIntFromUint64(sats)
-	err := k.IncentiveKeeper.BtcDelegationUnbonded(ctx, fp, del, amtSat)
-	if err != nil {
-		k.Logger(sdk.UnwrapSDKContext(ctx)).Error(
-			"failed to unbond btc delegation",
-			"del", del.String(),
-			"fp", fp.String(),
-		)
-		panic(err)
 	}
 }
 

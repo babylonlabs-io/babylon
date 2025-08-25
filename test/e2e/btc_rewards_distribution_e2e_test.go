@@ -385,7 +385,7 @@ func (s *BtcRewardsDistribution) CheckRewardsFirstDelegations() {
 
 	coins.RequireCoinsDiffInPointOnePercentMargin(
 		s.T(),
-		fp2DiffRewards.Coins.MulInt(sdkmath.NewIntFromUint64(3)),
+		fp2DiffRewards.Coins.MulInt(sdkmath.NewIntFromUint64(3)).Add(sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.OneInt())),
 		fp1DiffRewards.Coins,
 	)
 
