@@ -20,7 +20,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/tx"
 	"github.com/stretchr/testify/require"
 
-	finalitytypes "github.com/babylonlabs-io/babylon/v3/x/finality/types"
+	finalitytypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
 )
 
 type mockCometRPC struct {
