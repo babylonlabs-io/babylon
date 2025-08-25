@@ -9,7 +9,6 @@ import (
 )
 
 var _ sdk.HasValidateBasic = (*MsgRegisterConsumer)(nil)
-
 var MinBabylonRewardsCommission = math.LegacyMustNewDecFromStr("0.01") // 1% minimum
 
 func (m *MsgRegisterConsumer) ValidateBasic() error {
