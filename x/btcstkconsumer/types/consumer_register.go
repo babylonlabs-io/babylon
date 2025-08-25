@@ -5,7 +5,12 @@ import (
 	"unicode/utf8"
 
 	"cosmossdk.io/math"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
+
+var _ sdk.HasValidateBasic = (*MsgRegisterConsumer)(nil)
+
+var minBabylonRewardsCommission = math.LegacyMustNewDecFromStr("0.01") // 1% minimum
 
 func (m *MsgRegisterConsumer) ValidateBasic() error {
 	if len(m.ConsumerId) == 0 {
@@ -25,6 +30,9 @@ func (m *MsgRegisterConsumer) ValidateBasic() error {
 	}
 	if m.BabylonRewardsCommission.GT(math.LegacyOneDec()) {
 		return fmt.Errorf("babylon commission cannot be greater than 1.0")
+	}
+	if m.BabylonRewardsCommission.LT(minBabylonRewardsCommission) {
+		return fmt.Errorf("babylon commission cannot be less than %s", minBabylonRewardsCommission)
 	}
 	return nil
 }
@@ -89,6 +97,15 @@ func (cr ConsumerRegister) Validate() error {
 	}
 	if len(cr.ConsumerDescription) == 0 {
 		return fmt.Errorf("ConsumerDescription must be non-empty")
+	}
+	if cr.BabylonRewardsCommission.IsNegative() {
+		return fmt.Errorf("babylon commission cannot be negative")
+	}
+	if cr.BabylonRewardsCommission.GT(math.LegacyOneDec()) {
+		return fmt.Errorf("babylon commission cannot be greater than 1.0")
+	}
+	if cr.BabylonRewardsCommission.LT(minBabylonRewardsCommission) {
+		return fmt.Errorf("babylon commission cannot be less than %s", minBabylonRewardsCommission)
 	}
 	return nil
 }
