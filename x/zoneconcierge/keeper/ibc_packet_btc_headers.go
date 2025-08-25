@@ -39,6 +39,9 @@ func (k Keeper) BroadcastBTCHeaders(ctx context.Context, consumerChannelMap map[
 	// Create header cache to avoid duplicate DB queries across consumers
 	headerCache := types.NewHeaderCache()
 
+	// Create packet marshal cache to avoid duplicate marshaling across consumers
+	packetCache := types.NewPacketMarshalCache(k.cdc)
+
 	for _, consumerID := range consumerIDs {
 		// Find channels for this consumer using O(1) map lookup
 		channel := consumerChannelMap[consumerID]
@@ -53,8 +56,8 @@ func (k Keeper) BroadcastBTCHeaders(ctx context.Context, consumerChannelMap map[
 
 		packet := types.NewBTCHeadersPacketData(&types.BTCHeaders{Headers: headers})
 
-		// Send to channel for this consumer
-		if err := k.SendIBCPacket(ctx, channel, packet); err != nil {
+		// Send to channel for this consumer using cache to avoid redundant marshaling
+		if err := k.SendIBCPacketWithCache(ctx, channel, packet, packetCache); err != nil {
 			if errors.Is(err, clienttypes.ErrClientNotActive) {
 				k.Logger(sdkCtx).Info("IBC client is not active, skipping channel",
 					"channel", channel.ChannelId,

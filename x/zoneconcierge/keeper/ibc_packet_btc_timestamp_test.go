@@ -40,6 +40,7 @@ func genRandomChain(
 	)
 	err := k.InsertHeadersWithHookAndEvents(ctx, randomChain.ChainToBytes())
 	require.NoError(t, err)
+	k.ResetHeaderCache()
 	tip := k.GetTipInfo(ctx)
 	randomChainTipInfo := randomChain.GetTipInfo()
 	require.True(t, allFieldsEqual(tip, randomChainTipInfo))

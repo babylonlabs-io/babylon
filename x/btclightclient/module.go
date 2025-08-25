@@ -162,7 +162,10 @@ func (am AppModule) BeginBlock(_ context.Context) error {
 
 // EndBlock executes all ABCI EndBlock logic respective to the capability module. It
 // returns no validator updates.
-func (am AppModule) EndBlock(_ context.Context) ([]abci.ValidatorUpdate, error) {
+func (am AppModule) EndBlock(ctx context.Context) ([]abci.ValidatorUpdate, error) {
+	// Reset header cache at the end of each block to prevent unbounded memory growth
+	// and ensure cache consistency across block boundaries
+	am.keeper.ResetHeaderCache()
 	return []abci.ValidatorUpdate{}, nil
 }
 
