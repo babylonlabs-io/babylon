@@ -45,7 +45,7 @@ func FuzzDistributeFpCommissionAndBtcDelRewards(f *testing.F) {
 		heightAfterMultiStakingAllowListExpiration := int64(10)
 		h := testutil.NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKeeper, btccKForFinality, ictvK, chK, nil).WithBlockHeight(heightAfterMultiStakingAllowListExpiration)
 
-		h.GenAndApplyCustomParams(r, 100, 200, 0, 2)
+		h.GenAndApplyCustomParams(r, 100, 200, 2)
 
 		randConsumer := h.RegisterAndVerifyConsumer(t, r)
 
@@ -122,7 +122,7 @@ func FuzzCollectBabylonCommission(f *testing.F) {
 
 		h := testutil.NewHelperWithBankMock(t, btclcKeeper, btccKeeper, bankKeeper, chK, ictvK, nil)
 
-		h.GenAndApplyCustomParams(r, 100, 200, 0, 2)
+		h.GenAndApplyCustomParams(r, 100, 200, 2)
 
 		totalRewards := datagen.GenRandomCoins(r)
 		_, _, err := h.BTCStakingKeeper.CollectBabylonCommission(h.Ctx, invalidBsnConsumerID, totalRewards)
@@ -165,7 +165,7 @@ func FuzzCollectComissionAndDistributeBsnRewards(f *testing.F) {
 
 		h := testutil.NewHelperWithBankMock(t, btclcKeeper, btccKeeper, bankKeeper, chK, ictvK, nil)
 
-		h.GenAndApplyCustomParams(r, 100, 200, 0, 2)
+		h.GenAndApplyCustomParams(r, 100, 200, 2)
 
 		totalRewards := datagen.GenRandomCoins(r)
 		emptyFpRatios := []types.FpRatio{}

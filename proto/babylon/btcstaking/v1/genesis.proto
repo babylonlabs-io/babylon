@@ -24,14 +24,14 @@ message GenesisState {
   repeated BTCDelegator btc_delegators = 6;
   // all the events and its indexes.
   repeated EventIndex events = 7;
-  // collection of the allowed staking transaction hashes (hex encoded)
-  repeated string allowed_staking_tx_hashes = 8;
+  // Reserved for previous collection of the allowed staking transaction hashes (hex encoded)
+  reserved 8;
   // largest BTC block reorg
   LargestBtcReOrg largest_btc_reorg = 9;
   // all consumer chain events
   repeated ConsumerEvent consumer_events = 10;
-  // collection of the allowed multi-staking transaction hashes (hex encoded)
-  repeated string allowed_multi_staking_tx_hashes = 11;
+  // Reserved for previous collection of the allowed multi-staking transaction hashes (hex encoded)
+  reserved 11;
 }
 
 // BlockHeightBbnToBtc stores the btc <-> bbn block.

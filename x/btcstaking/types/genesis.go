@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"slices"
 	"sort"
 
 	types "github.com/babylonlabs-io/babylon/v4/types"
@@ -83,11 +82,9 @@ func (gs GenesisState) Validate() error {
 		return err
 	}
 
-	if err := gs.validateAllowedMultiStakingTxHashes(); err != nil {
-		return err
-	}
-
-	return gs.validateAllowedStakingTxHashes()
+	return types.ValidateEntries(gs.ConsumerEvents, func(e *ConsumerEvent) string {
+		return e.ConsumerId
+	})
 }
 
 // GenesisStateFromAppState returns x/btcstaking GenesisState given raw application
@@ -113,33 +110,6 @@ func (h AllowedStakingTxHashStr) Validate() error {
 	// NewHash validates hash size
 	if _, err := chainhash.NewHash(bz); err != nil {
 		return err
-	}
-	return nil
-}
-
-// validateAllowedStakingTxHashes validates there're no duplicate entries
-// and the hash has the corresponding size
-func (gs GenesisState) validateAllowedStakingTxHashes() error {
-	return validateTxHashes(gs.AllowedStakingTxHashes)
-}
-
-// validateAllowedMultiStakingTxHashes validates there're no duplicate entries
-// and the hash has the corresponding size
-func (gs GenesisState) validateAllowedMultiStakingTxHashes() error {
-	return validateTxHashes(gs.AllowedMultiStakingTxHashes)
-}
-
-func validateTxHashes(hashes []string) error {
-	seen := make(map[string]bool)
-	for _, hStr := range hashes {
-		if _, exists := seen[hStr]; exists {
-			return fmt.Errorf("duplicate staking tx hash: %s", hStr)
-		}
-		seen[hStr] = true
-		h := AllowedStakingTxHashStr(hStr)
-		if err := h.Validate(); err != nil {
-			return err
-		}
 	}
 	return nil
 }
@@ -284,9 +254,6 @@ func SortData(gs *GenesisState) {
 	sort.Slice(gs.ConsumerEvents, func(i, j int) bool {
 		return gs.ConsumerEvents[i].ConsumerId < gs.ConsumerEvents[j].ConsumerId
 	})
-
-	slices.Sort(gs.AllowedStakingTxHashes)
-	slices.Sort(gs.AllowedMultiStakingTxHashes)
 }
 
 func buildDelegationIndexKey(fp, del *types.BIP340PubKey) string {

@@ -338,7 +338,7 @@ func (h *Helper) BeginBlocker() {
 
 func (h *Helper) GenAndApplyParams(r *rand.Rand) ([]*btcec.PrivateKey, []*btcec.PublicKey) {
 	// ensure that unbonding_time is larger than finalizationTimeout
-	return h.GenAndApplyCustomParams(r, 100, 200, 0, 1)
+	return h.GenAndApplyCustomParams(r, 100, 200, 1)
 }
 
 func (h *Helper) SetCtxHeight(height uint64) {
@@ -349,7 +349,6 @@ func (h *Helper) GenAndApplyCustomParams(
 	r *rand.Rand,
 	finalizationTimeout uint32,
 	unbondingTime uint32,
-	allowListExpirationHeight uint64,
 	maxFinalityProviders uint32,
 ) ([]*btcec.PrivateKey, []*btcec.PublicKey) {
 	// mock base header
@@ -369,21 +368,20 @@ func (h *Helper) GenAndApplyCustomParams(
 	slashingPkScript, err := txscript.PayToAddrScript(slashingAddress)
 	h.NoError(err)
 	err = h.BTCStakingKeeper.SetParams(h.Ctx, types.Params{
-		CovenantPks:               bbn.NewBIP340PKsFromBTCPKs(covenantPKs),
-		CovenantQuorum:            3,
-		MinStakingValueSat:        10000,
-		MaxStakingValueSat:        int64(4 * 10e8),
-		MinStakingTimeBlocks:      400,
-		MaxStakingTimeBlocks:      10000,
-		SlashingPkScript:          slashingPkScript,
-		MinSlashingTxFeeSat:       10,
-		MinCommissionRate:         sdkmath.LegacyMustNewDecFromStr("0.01"),
-		SlashingRate:              sdkmath.LegacyNewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2),
-		UnbondingTimeBlocks:       unbondingTime,
-		UnbondingFeeSat:           1000,
-		AllowListExpirationHeight: allowListExpirationHeight,
-		BtcActivationHeight:       1,
-		MaxFinalityProviders:      maxFinalityProviders,
+		CovenantPks:          bbn.NewBIP340PKsFromBTCPKs(covenantPKs),
+		CovenantQuorum:       3,
+		MinStakingValueSat:   10000,
+		MaxStakingValueSat:   int64(4 * 10e8),
+		MinStakingTimeBlocks: 400,
+		MaxStakingTimeBlocks: 10000,
+		SlashingPkScript:     slashingPkScript,
+		MinSlashingTxFeeSat:  10,
+		MinCommissionRate:    sdkmath.LegacyMustNewDecFromStr("0.01"),
+		SlashingRate:         sdkmath.LegacyNewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2),
+		UnbondingTimeBlocks:  unbondingTime,
+		UnbondingFeeSat:      1000,
+		BtcActivationHeight:  1,
+		MaxFinalityProviders: maxFinalityProviders,
 	})
 	h.NoError(err)
 	return covenantSKs, covenantPKs
@@ -623,10 +621,6 @@ func (h *Helper) CreateDelegationWithBtcBlockHeight(
 
 	if !usePreApproval {
 		msgCreateBTCDel.StakingTxInclusionProof = txInclusionProof
-	}
-
-	if addToAllowList {
-		h.BTCStakingKeeper.IndexAllowedStakingTransaction(h.Ctx, &stkTxHash)
 	}
 
 	// mock for testing k-deep stuff
