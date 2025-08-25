@@ -250,6 +250,13 @@ func AddEvidenceOfEquivocationCmd() *cobra.Command {
 				SigningContext:          args[7],
 			}
 
+			genOnly, _ := cmd.Flags().GetBool(flags.FlagGenerateOnly)
+			if !genOnly {
+				if _, err := msg.ParseToEvidence(); err != nil {
+					return fmt.Errorf("failed to parse evidence: %v", err)
+				}
+			}
+
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
 		},
 	}
