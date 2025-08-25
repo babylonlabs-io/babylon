@@ -10,7 +10,7 @@ import (
 
 var _ sdk.HasValidateBasic = (*MsgRegisterConsumer)(nil)
 
-var minBabylonRewardsCommission = math.LegacyMustNewDecFromStr("0.01") // 1% minimum
+var MinBabylonRewardsCommission = math.LegacyMustNewDecFromStr("0.01") // 1% minimum
 
 func (m *MsgRegisterConsumer) ValidateBasic() error {
 	if len(m.ConsumerId) == 0 {
@@ -102,8 +102,8 @@ func validateBbnCommission(bbnCommission math.LegacyDec) error {
 	if bbnCommission.GT(math.LegacyOneDec()) {
 		return fmt.Errorf("babylon commission cannot be greater than 1.0")
 	}
-	if bbnCommission.LT(minBabylonRewardsCommission) {
-		return fmt.Errorf("babylon commission cannot be less than %s", minBabylonRewardsCommission)
+	if bbnCommission.LT(MinBabylonRewardsCommission) {
+		return fmt.Errorf("babylon commission cannot be less than %s", MinBabylonRewardsCommission)
 	}
 	return nil
 }
