@@ -7,14 +7,14 @@ import (
 
 	storetypes "cosmossdk.io/store/types"
 
-	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
-	keepertest "github.com/babylonlabs-io/babylon/v3/testutil/keeper"
-	"github.com/babylonlabs-io/babylon/v3/x/monitor/types"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	keepertest "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
+	"github.com/babylonlabs-io/babylon/v4/x/monitor/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/test-go/testify/require"
+	"github.com/stretchr/testify/require"
 )
 
 func FuzzTestExportGenesis(f *testing.F) {

@@ -16,13 +16,13 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
-	"github.com/babylonlabs-io/babylon/v3/btcstaking"
-	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
-	bbn "github.com/babylonlabs-io/babylon/v3/types"
-	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
-	btcstakingtypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
-	"github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
+	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
+	"github.com/babylonlabs-io/babylon/v4/btcstaking"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+	btcstakingtypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
 )
 
 // TestEpochFinalization checks whether we can finalize some epochs
@@ -802,8 +802,8 @@ func TestSlashingFpWithManyMulistakedDelegations(t *testing.T) {
 	OpenChannelForConsumer(ctx, d.App, consumerID2)
 
 	// 2. Register consumers
-	consumer1 := d.RegisterConsumer(r, consumerID1)
-	consumer2 := d.RegisterConsumer(r, consumerID2)
+	consumer1 := d.RegisterConsumer(r, ctx, d.App, consumerID1)
+	consumer2 := d.RegisterConsumer(r, ctx, d.App, consumerID2)
 	require.NotNil(t, consumer1, consumer2)
 
 	// 3. Create finality providers for each consumer

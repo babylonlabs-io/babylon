@@ -13,17 +13,17 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.org/x/sync/errgroup"
 
-	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
-	"github.com/babylonlabs-io/babylon/v3/app/signingcontext"
-	v3 "github.com/babylonlabs-io/babylon/v3/app/upgrades/v3"
-	"github.com/babylonlabs-io/babylon/v3/test/e2e/configurer"
-	"github.com/babylonlabs-io/babylon/v3/test/e2e/configurer/chain"
-	"github.com/babylonlabs-io/babylon/v3/test/e2e/configurer/config"
-	"github.com/babylonlabs-io/babylon/v3/testutil/coins"
-	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
-	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
-	ftypes "github.com/babylonlabs-io/babylon/v3/x/finality/types"
-	itypes "github.com/babylonlabs-io/babylon/v3/x/incentive/types"
+	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
+	"github.com/babylonlabs-io/babylon/v4/app/signingcontext"
+	v3 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v3"
+	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer"
+	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer/chain"
+	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer/config"
+	"github.com/babylonlabs-io/babylon/v4/testutil/coins"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+	ftypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
+	itypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
 )
 
 const (

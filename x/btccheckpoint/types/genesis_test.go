@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
-	"github.com/babylonlabs-io/babylon/v3/x/btccheckpoint/types"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	"github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
 	"github.com/stretchr/testify/require"
 )
 

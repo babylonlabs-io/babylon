@@ -39,8 +39,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
+- [#1568](https://github.com/babylonlabs-io/babylon/pull/1568) Wrapper feemarket to exclude refundable gas when calculating base fee
+- [#1430](https://github.com/babylonlabs-io/babylon/pull/1430) Bump Cosmos EVM to 0.41 and add signer extractor.
+- [#1553](https://github.com/babylonlabs-io/babylon/pull/1553) Remove native Coin precompile from token pairs.
+- [#1555](https://github.com/babylonlabs-io/babylon/pull/1555) Create new mergify rule for v4.
+- [#1554](https://github.com/babylonlabs-io/babylon/pull/1554) Bump repo to v4.
 - [#1229](https://github.com/babylonlabs-io/babylon/pull/1229) Wire up EVM.
 - [#1540](https://github.com/babylonlabs-io/babylon/pull/1540) Optimizations on `x/zoneconcierge` `EndBlocker` logic.
+- [#1536](https://github.com/babylonlabs-io/babylon/pull/1536) Refactor `x/zoneconcierge` for optimize ibc channel, client io
+- [#1552](https://github.com/babylonlabs-io/babylon/pull/1552) Refactor `e2e` test suite
 - [#1556](https://github.com/babylonlabs-io/babylon/pull/1556) CLI for submitting equivocation evidence in x/finality module
 
 ## v3.0.0-rc.2
@@ -235,6 +242,7 @@ IBC packet size
 - [#1512](https://github.com/babylonlabs-io/babylon/pull/1512) fix: remove base header
 and global segment store
 - [#1470](https://github.com/babylonlabs-io/babylon/pull/1470) fix: debug_traceTransaction with tracer params
+- [#1523](https://github.com/babylonlabs-io/babylon/pull/1523) fix: change SigGasConsumer to accepts ethsecp256k1 as a pubkey
 
 ## v2.2.0
 

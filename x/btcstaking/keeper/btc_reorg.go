@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 )
 
 // HaltIfBtcReorgLargerThanConfirmationDepth safety mechanism to stop the chain in case there is an BTC reorg

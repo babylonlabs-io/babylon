@@ -6,10 +6,10 @@ import (
 	sdktestdata "github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	keepertest "github.com/babylonlabs-io/babylon/v3/testutil/keeper"
-	btclctypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
-	"github.com/babylonlabs-io/babylon/v3/x/incentive/keeper"
-	"github.com/babylonlabs-io/babylon/v3/x/incentive/types"
+	keepertest "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
+	btclctypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
+	"github.com/babylonlabs-io/babylon/v4/x/incentive/keeper"
+	"github.com/babylonlabs-io/babylon/v4/x/incentive/types"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
@@ -44,7 +44,7 @@ func TestCheckTxAndClearIndex(t *testing.T) {
 	defer ctrl.Finish()
 
 	iKeeper, ctx := keepertest.IncentiveKeeper(t, nil, nil, nil)
-	decorator := keeper.NewRefundTxDecorator(iKeeper)
+	decorator := keeper.NewRefundTxDecorator(iKeeper, nil)
 
 	testCases := []struct {
 		name     string
@@ -172,7 +172,7 @@ func TestRefundTxDecorator_AnteHandle(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			decorator := keeper.NewRefundTxDecorator(nil)
+			decorator := keeper.NewRefundTxDecorator(nil, nil)
 
 			// Create a mock FeeTx
 			tx := &mockFeeTx{

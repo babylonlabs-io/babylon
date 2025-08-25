@@ -14,12 +14,12 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/babylonlabs-io/babylon/v3/app/signingcontext"
-	asig "github.com/babylonlabs-io/babylon/v3/crypto/schnorr-adaptor-signature"
-	bbn "github.com/babylonlabs-io/babylon/v3/types"
-	btclctypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
-	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
-	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types/allowlist"
+	"github.com/babylonlabs-io/babylon/v4/app/signingcontext"
+	asig "github.com/babylonlabs-io/babylon/v4/crypto/schnorr-adaptor-signature"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	btclctypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
+	"github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/v4/x/btcstaking/types/allowlist"
 )
 
 // CreateBTCDelegation creates a BTC delegation

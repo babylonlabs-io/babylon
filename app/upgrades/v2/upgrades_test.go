@@ -11,17 +11,17 @@ import (
 	"cosmossdk.io/core/header"
 	"cosmossdk.io/x/upgrade"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
-	"github.com/babylonlabs-io/babylon/v3/app/upgrades"
-	"github.com/babylonlabs-io/babylon/v3/testutil/sample"
-	bbn "github.com/babylonlabs-io/babylon/v3/types"
+	"github.com/babylonlabs-io/babylon/v4/app/upgrades"
+	"github.com/babylonlabs-io/babylon/v4/testutil/sample"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 
-	"github.com/babylonlabs-io/babylon/v3/app"
-	v2 "github.com/babylonlabs-io/babylon/v3/app/upgrades/v2"
-	btclighttypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
+	"github.com/babylonlabs-io/babylon/v4/app"
+	v2 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v2"
+	btclighttypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
 
 	"github.com/stretchr/testify/suite"
 )

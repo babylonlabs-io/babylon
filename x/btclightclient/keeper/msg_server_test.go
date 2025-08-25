@@ -6,13 +6,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/stretchr/testify/require"
 
-	keepertest "github.com/babylonlabs-io/babylon/v3/testutil/keeper"
-	"github.com/babylonlabs-io/babylon/v3/x/btclightclient/keeper"
-	"github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
+	keepertest "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
+	"github.com/babylonlabs-io/babylon/v4/x/btclightclient/keeper"
+	"github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

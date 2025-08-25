@@ -7,7 +7,7 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
-	"github.com/babylonlabs-io/babylon/v3/test/e2e/configurer"
+	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	pfmroutertypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v10/packetforward/types"
@@ -89,7 +89,7 @@ func (s *IBCTransferTestSuite) IBCTransfer() {
 	nA.BankSendFromNode(s.addrA, "10000000ubbn")
 
 	s.addrB = nB.KeysAdd("addr-B")
-	nB.BankSendFromNode(s.addrB, "10000000ubbn")
+	nB.BankSendFromNode(s.addrB, "30000000ubbn")
 
 	nB.WaitForNextBlock()
 	nA.WaitForNextBlock()
@@ -459,7 +459,7 @@ func (s *IBCTransferTestSuite) RateLimitE2EAboveThreshold() {
 	_, err = nB.QueryBalances(s.addrB)
 	s.Require().NoError(err)
 
-	packetAmount := sdkmath.NewInt(1_000_001) // above the threshold and should fail
+	packetAmount := sdkmath.NewInt(10_000001) // above the threshold and should fail
 	channel := "channel-0"
 
 	transferCoin := sdk.NewCoin(nativeDenom, packetAmount)

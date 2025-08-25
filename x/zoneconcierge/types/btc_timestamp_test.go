@@ -10,14 +10,14 @@ import (
 	"github.com/btcsuite/btcd/wire"
 	"github.com/stretchr/testify/require"
 
-	txformat "github.com/babylonlabs-io/babylon/v3/btctxformatter"
-	"github.com/babylonlabs-io/babylon/v3/crypto/bls12381"
-	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
-	testhelper "github.com/babylonlabs-io/babylon/v3/testutil/helper"
-	btcctypes "github.com/babylonlabs-io/babylon/v3/x/btccheckpoint/types"
-	btcstkconsumertypes "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
-	checkpointingtypes "github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
-	"github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
+	txformat "github.com/babylonlabs-io/babylon/v4/btctxformatter"
+	"github.com/babylonlabs-io/babylon/v4/crypto/bls12381"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	testhelper "github.com/babylonlabs-io/babylon/v4/testutil/helper"
+	btcctypes "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
+	btcstkconsumertypes "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
+	"github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/types"
 )
 
 func signBLSWithBitmap(blsSKs []bls12381.PrivateKey, bm bitmap.Bitmap, msg []byte) (bls12381.Signature, error) {
@@ -144,8 +144,8 @@ func FuzzBTCTimestamp(f *testing.F) {
 		// assign BTC submission key and ProofEpochSubmitted
 		btcTs.BtcSubmissionKey = &btcctypes.SubmissionKey{
 			Key: []*btcctypes.TransactionKey{
-				&btcctypes.TransactionKey{Index: uint32(idxs[0]), Hash: btcBlocks[0].HeaderBytes.Hash()},
-				&btcctypes.TransactionKey{Index: uint32(idxs[1]), Hash: btcBlocks[1].HeaderBytes.Hash()},
+				{Index: uint32(idxs[0]), Hash: btcBlocks[0].HeaderBytes.Hash()},
+				{Index: uint32(idxs[1]), Hash: btcBlocks[1].HeaderBytes.Hash()},
 			},
 		}
 		btcTs.Proof.ProofEpochSubmitted = []*btcctypes.TransactionInfo{

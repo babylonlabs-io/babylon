@@ -3,6 +3,7 @@ package app
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/ethereum/go-ethereum/common"
 	"io"
 	"os"
 	"path/filepath"
@@ -29,6 +30,7 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/babylonlabs-io/babylon/v4/x/feemarketwrapper"
 	abci "github.com/cometbft/cometbft/abci/types"
 	cmtos "github.com/cometbft/cometbft/libs/os"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
@@ -80,11 +82,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	evmante "github.com/cosmos/evm/ante"
 	evmencoding "github.com/cosmos/evm/encoding"
 	srvflags "github.com/cosmos/evm/server/flags"
 	evmutils "github.com/cosmos/evm/utils"
 	"github.com/cosmos/evm/x/erc20"
-	"github.com/cosmos/evm/x/feemarket"
 	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
 	"github.com/cosmos/evm/x/precisebank"
 	precisebanktypes "github.com/cosmos/evm/x/precisebank/types"
@@ -108,39 +110,39 @@ import (
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/spf13/cast"
 
-	"github.com/babylonlabs-io/babylon/v3/app/ante"
-	appkeepers "github.com/babylonlabs-io/babylon/v3/app/keepers"
-	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
-	"github.com/babylonlabs-io/babylon/v3/app/upgrades"
-	"github.com/babylonlabs-io/babylon/v3/client/docs"
-	bbn "github.com/babylonlabs-io/babylon/v3/types"
-	"github.com/babylonlabs-io/babylon/v3/x/btccheckpoint"
-	btccheckpointtypes "github.com/babylonlabs-io/babylon/v3/x/btccheckpoint/types"
-	"github.com/babylonlabs-io/babylon/v3/x/btclightclient"
-	btclightclienttypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
-	"github.com/babylonlabs-io/babylon/v3/x/btcstaking"
-	btcstakingtypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
-	"github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer"
-	bsctypes "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
-	btcstkconsumertypes "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
-	"github.com/babylonlabs-io/babylon/v3/x/checkpointing"
-	"github.com/babylonlabs-io/babylon/v3/x/checkpointing/prepare"
-	checkpointingtypes "github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
-	"github.com/babylonlabs-io/babylon/v3/x/checkpointing/vote_extensions"
-	"github.com/babylonlabs-io/babylon/v3/x/epoching"
-	epochingtypes "github.com/babylonlabs-io/babylon/v3/x/epoching/types"
-	"github.com/babylonlabs-io/babylon/v3/x/finality"
-	finalitytypes "github.com/babylonlabs-io/babylon/v3/x/finality/types"
-	"github.com/babylonlabs-io/babylon/v3/x/incentive"
-	incentivekeeper "github.com/babylonlabs-io/babylon/v3/x/incentive/keeper"
-	incentivetypes "github.com/babylonlabs-io/babylon/v3/x/incentive/types"
-	"github.com/babylonlabs-io/babylon/v3/x/mint"
-	minttypes "github.com/babylonlabs-io/babylon/v3/x/mint/types"
-	"github.com/babylonlabs-io/babylon/v3/x/monitor"
-	monitortypes "github.com/babylonlabs-io/babylon/v3/x/monitor/types"
-	"github.com/babylonlabs-io/babylon/v3/x/zoneconcierge"
-	zckeeper "github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/keeper"
-	zctypes "github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
+	"github.com/babylonlabs-io/babylon/v4/app/ante"
+	appkeepers "github.com/babylonlabs-io/babylon/v4/app/keepers"
+	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
+	"github.com/babylonlabs-io/babylon/v4/app/upgrades"
+	"github.com/babylonlabs-io/babylon/v4/client/docs"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	"github.com/babylonlabs-io/babylon/v4/x/btccheckpoint"
+	btccheckpointtypes "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
+	"github.com/babylonlabs-io/babylon/v4/x/btclightclient"
+	btclightclienttypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
+	"github.com/babylonlabs-io/babylon/v4/x/btcstaking"
+	btcstakingtypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer"
+	bsctypes "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
+	btcstkconsumertypes "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
+	"github.com/babylonlabs-io/babylon/v4/x/checkpointing"
+	"github.com/babylonlabs-io/babylon/v4/x/checkpointing/prepare"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
+	"github.com/babylonlabs-io/babylon/v4/x/checkpointing/vote_extensions"
+	"github.com/babylonlabs-io/babylon/v4/x/epoching"
+	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
+	"github.com/babylonlabs-io/babylon/v4/x/finality"
+	finalitytypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
+	"github.com/babylonlabs-io/babylon/v4/x/incentive"
+	incentivekeeper "github.com/babylonlabs-io/babylon/v4/x/incentive/keeper"
+	incentivetypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
+	"github.com/babylonlabs-io/babylon/v4/x/mint"
+	minttypes "github.com/babylonlabs-io/babylon/v4/x/mint/types"
+	"github.com/babylonlabs-io/babylon/v4/x/monitor"
+	monitortypes "github.com/babylonlabs-io/babylon/v4/x/monitor/types"
+	"github.com/babylonlabs-io/babylon/v4/x/zoneconcierge"
+	zckeeper "github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/keeper"
+	zctypes "github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/types"
 	erc20types "github.com/cosmos/evm/x/erc20/types"
 	"github.com/strangelove-ventures/tokenfactory/x/tokenfactory"
 	tokenfactorytypes "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/types"
@@ -218,6 +220,7 @@ type BabylonApp struct {
 	legacyAmino *codec.LegacyAmino
 	appCodec    codec.Codec
 	txConfig    client.TxConfig
+	clientCtx   client.Context
 
 	interfaceRegistry types.InterfaceRegistry
 	invCheckPeriod    uint
@@ -231,6 +234,9 @@ type BabylonApp struct {
 
 	// module configurator
 	configurator module.Configurator
+
+	// pending tx listeners
+	pendingTxListeners []evmante.PendingTxListener
 }
 
 // NewBabylonApp returns a reference to an initialized BabylonApp.
@@ -367,7 +373,7 @@ func NewBabylonApp(
 		incentive.NewAppModule(appCodec, app.IncentiveKeeper, app.AccountKeeper, app.BankKeeper),
 		// Cosmos EVM modules
 		evm.NewAppModule(app.EVMKeeper, app.AccountKeeper, app.AccountKeeper.AddressCodec()),
-		feemarket.NewAppModule(app.FeemarketKeeper),
+		feemarketwrapper.NewAppModule(app.FeemarketKeeper, app.GetTKey(feemarkettypes.TransientKey)),
 		erc20.NewAppModule(app.Erc20Keeper, app.AccountKeeper),
 		precisebank.NewAppModule(app.PreciseBankKeeper, app.BankKeeper, app.AccountKeeper),
 	)
@@ -587,7 +593,7 @@ func NewBabylonApp(
 
 	// set proposal extension
 	proposalHandler := prepare.NewProposalHandler(
-		logger, &app.CheckpointingKeeper, bApp.Mempool(), bApp, app.EncCfg)
+		logger, &app.CheckpointingKeeper, bApp.Mempool(), bApp, app.EncCfg, bbn.NewEthSignerExtractionAdapter(mempool.NewDefaultSignerExtractionAdapter()))
 	proposalHandler.SetHandlers(bApp)
 
 	// set vote extension
@@ -615,7 +621,7 @@ func NewBabylonApp(
 
 	// set postHandler
 	postHandler := sdk.ChainPostDecorators(
-		incentivekeeper.NewRefundTxDecorator(&app.IncentiveKeeper),
+		incentivekeeper.NewRefundTxDecorator(&app.IncentiveKeeper, app.GetTKey(feemarkettypes.TransientKey)),
 		zckeeper.NewIBCHeaderDecorator(&app.ZoneConciergeKeeper),
 	)
 	app.SetPostHandler(postHandler)
@@ -870,8 +876,6 @@ func (a *BabylonApp) DefaultGenesis() map[string]json.RawMessage {
 
 	// Add ERC20 genesis configuration
 	erc20GenState := erc20types.DefaultGenesisState()
-	erc20GenState.TokenPairs = DefaultTokenPairs
-	erc20GenState.NativePrecompiles = []string{WTokenContractMainnet}
 	genesis[erc20types.ModuleName] = a.appCodec.MustMarshalJSON(erc20GenState)
 
 	feemarketGenState := feemarkettypes.DefaultGenesisState()
@@ -983,10 +987,19 @@ func getAppMempool(appOpts servertypes.AppOptions) mempool.Mempool {
 		maxTxs     = cast.ToInt(appOpts.Get(server.FlagMempoolMaxTxs))
 		mempoolCfg = mempool.DefaultPriorityNonceMempoolConfig()
 	)
+	mempoolCfg.SignerExtractor = bbn.NewEthSignerExtractionAdapter(mempool.NewDefaultSignerExtractionAdapter())
 	mempoolCfg.MaxTx = maxTxs
 	mp = mempool.NewPriorityMempool(mempoolCfg)
 	if maxTxs < 0 {
 		mp = mempool.NoOpMempool{}
 	}
 	return mp
+}
+
+func (app *BabylonApp) RegisterPendingTxListener(listener func(common.Hash)) {
+	app.pendingTxListeners = append(app.pendingTxListeners, listener)
+}
+
+func (app *BabylonApp) SetClientCtx(clientCtx client.Context) {
+	app.clientCtx = clientCtx
 }

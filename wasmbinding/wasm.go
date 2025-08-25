@@ -7,13 +7,13 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
-	bbn "github.com/babylonlabs-io/babylon/v3/types"
-	"github.com/babylonlabs-io/babylon/v3/wasmbinding/bindings"
-	lcKeeper "github.com/babylonlabs-io/babylon/v3/x/btclightclient/keeper"
-	checkpointingkeeper "github.com/babylonlabs-io/babylon/v3/x/checkpointing/keeper"
-	epochingkeeper "github.com/babylonlabs-io/babylon/v3/x/epoching/keeper"
-	fkeeper "github.com/babylonlabs-io/babylon/v3/x/finality/keeper"
-	zckeeper "github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/keeper"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	"github.com/babylonlabs-io/babylon/v4/wasmbinding/bindings"
+	lcKeeper "github.com/babylonlabs-io/babylon/v4/x/btclightclient/keeper"
+	checkpointingkeeper "github.com/babylonlabs-io/babylon/v4/x/checkpointing/keeper"
+	epochingkeeper "github.com/babylonlabs-io/babylon/v4/x/epoching/keeper"
+	fkeeper "github.com/babylonlabs-io/babylon/v4/x/finality/keeper"
+	zckeeper "github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/keeper"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -241,7 +241,7 @@ func (m *CustomMessenger) DispatchMsg(ctx sdk.Context, contractAddr sdk.AccAddre
 				return nil, nil, nil, errorsmod.Wrap(err, "failed to encode response")
 			}
 
-			return nil, nil, [][]*codectypes.Any{[]*codectypes.Any{encodedResp}}, nil
+			return nil, nil, [][]*codectypes.Any{{encodedResp}}, nil
 		}
 	}
 	return m.wrapped.DispatchMsg(ctx, contractAddr, contractIBCPortID, msg)

@@ -1,18 +1,18 @@
 package replay
 
 import (
-	"github.com/babylonlabs-io/babylon/v3/btcstaking"
+	"github.com/babylonlabs-io/babylon/v4/btcstaking"
 	"math/rand"
 	"testing"
 
-	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
-	bbn "github.com/babylonlabs-io/babylon/v3/types"
-	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
-	ictvtypes "github.com/babylonlabs-io/babylon/v3/x/incentive/types"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+	ictvtypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	babylonApp "github.com/babylonlabs-io/babylon/v3/app"
+	babylonApp "github.com/babylonlabs-io/babylon/v4/app"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/wire"

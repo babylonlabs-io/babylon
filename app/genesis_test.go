@@ -7,7 +7,7 @@ import (
 
 	erc20types "github.com/cosmos/evm/x/erc20/types"
 
-	"github.com/babylonlabs-io/babylon/v3/app"
+	"github.com/babylonlabs-io/babylon/v4/app"
 )
 
 // BabylonApp DefaultGenesis ERC20 NativePrecompiles test
@@ -23,16 +23,6 @@ func TestBabylonApp_DefaultGenesis_ERC20NativePrecompiles(t *testing.T) {
 	var erc20GenState erc20types.GenesisState
 	err := tmpBabylonApp.AppCodec().UnmarshalJSON(genesis[erc20types.ModuleName], &erc20GenState)
 	require.NoError(t, err, "Should be able to unmarshal ERC20 genesis state")
-
-	// Verify NativePrecompiles contains WTokenContractMainnet
-	require.Contains(t, erc20GenState.NativePrecompiles, app.WTokenContractMainnet,
-		"NativePrecompiles should contain WTokenContractMainnet")
-	require.Len(t, erc20GenState.NativePrecompiles, 1,
-		"Should have exactly one native precompile")
-
-	// Verify it's the correct contract address
-	require.Equal(t, app.WTokenContractMainnet, erc20GenState.NativePrecompiles[0],
-		"First native precompile should be WTokenContractMainnet")
 
 	// Verify the field structure (not nested under Params)
 	require.IsType(t, []string{}, erc20GenState.NativePrecompiles,

@@ -7,8 +7,8 @@ import (
 
 	cmtcrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 
-	bbn "github.com/babylonlabs-io/babylon/v3/types"
-	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 
 	"github.com/stretchr/testify/require"
 )

@@ -12,7 +12,7 @@ import (
 	confixcmd "cosmossdk.io/tools/confix/cmd"
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
+	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
 	cmtcfg "github.com/cometbft/cometbft/config"
 	cmtcli "github.com/cometbft/cometbft/libs/cli"
 	dbm "github.com/cosmos/cosmos-db"
@@ -28,13 +28,13 @@ import (
 	evmserver "github.com/cosmos/evm/server"
 	srvflags "github.com/cosmos/evm/server/flags"
 
-	appsigner "github.com/babylonlabs-io/babylon/v3/app/signer"
+	appsigner "github.com/babylonlabs-io/babylon/v4/app/signer"
 
 	"cosmossdk.io/log"
-	"github.com/babylonlabs-io/babylon/v3/app"
-	"github.com/babylonlabs-io/babylon/v3/app/params"
-	"github.com/babylonlabs-io/babylon/v3/cmd/babylond/cmd/genhelpers"
-	checkpointingtypes "github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
+	"github.com/babylonlabs-io/babylon/v4/app"
+	"github.com/babylonlabs-io/babylon/v4/app/params"
+	"github.com/babylonlabs-io/babylon/v4/cmd/babylond/cmd/genhelpers"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
@@ -321,7 +321,7 @@ func txCommand() *cobra.Command {
 }
 
 // newApp is an appCreator
-func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, appOpts servertypes.AppOptions) servertypes.Application {
+func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, appOpts servertypes.AppOptions) evmserver.Application {
 	baseappOptions := server.DefaultBaseappOptions(appOpts)
 
 	skipUpgradeHeights := make(map[int64]bool)

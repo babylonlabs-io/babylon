@@ -5,16 +5,16 @@ import (
 	"path/filepath"
 	"strconv"
 
-	"github.com/babylonlabs-io/babylon/v3/app/ante"
-	"github.com/babylonlabs-io/babylon/v3/app/signer"
+	"github.com/babylonlabs-io/babylon/v4/app/ante"
+	"github.com/babylonlabs-io/babylon/v4/app/signer"
 	cmtcfg "github.com/cometbft/cometbft/config"
 
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 
 	serverconfig "github.com/cosmos/cosmos-sdk/server/config"
 
-	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
-	bbn "github.com/babylonlabs-io/babylon/v3/types"
+	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	evmserverconfig "github.com/cosmos/evm/server/config"
 )
 
@@ -68,8 +68,7 @@ type BabylonAppConfig struct {
 func DefaultBabylonAppConfig() *BabylonAppConfig {
 	baseConfig := *serverconfig.DefaultConfig()
 	// Update the default Mempool.MaxTxs to be 0 to make sure the PriorityNonceMempool is used
-	// TODO: Using no-op mempool for EVM until issue with mempool support is resolved
-	baseConfig.Mempool.MaxTxs = -1
+	baseConfig.Mempool.MaxTxs = 0
 	// The SDK's default minimum gas price is set to "0.002ubbn" (empty value) inside
 	// app.toml, in order to avoid spamming attacks due to transactions with 0 gas price.
 	baseConfig.MinGasPrices = fmt.Sprintf("%f%s", appparams.GlobalMinGasPrice, appparams.BaseCoinUnit)

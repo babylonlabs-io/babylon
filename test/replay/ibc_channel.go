@@ -9,8 +9,8 @@ import (
 	commitmenttypes "github.com/cosmos/ibc-go/v10/modules/core/23-commitment/types"
 	ibctmtypes "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
 
-	babylonApp "github.com/babylonlabs-io/babylon/v3/app"
-	zctypes "github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
+	babylonApp "github.com/babylonlabs-io/babylon/v4/app"
+	zctypes "github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/types"
 )
 
 func OpenChannelForConsumer(ctx sdk.Context, app *babylonApp.BabylonApp, consumerID string) {

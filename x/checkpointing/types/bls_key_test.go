@@ -8,11 +8,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/babylonlabs-io/babylon/v3/crypto/bls12381"
-	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
-	"github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
+	"github.com/babylonlabs-io/babylon/v4/crypto/bls12381"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	"github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
 
-	"github.com/test-go/testify/require"
+	"github.com/stretchr/testify/require"
 )
 
 func TestValidatorWithBlsKeySetValidate(t *testing.T) {

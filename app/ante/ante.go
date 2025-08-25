@@ -8,15 +8,16 @@ import (
 	wasmapp "github.com/CosmWasm/wasmd/app"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-	bbn "github.com/babylonlabs-io/babylon/v3/types"
-	btcckeeper "github.com/babylonlabs-io/babylon/v3/x/btccheckpoint/keeper"
-	epochingkeeper "github.com/babylonlabs-io/babylon/v3/x/epoching/keeper"
-	incentivekeeper "github.com/babylonlabs-io/babylon/v3/x/incentive/keeper"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	btcckeeper "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/keeper"
+	epochingkeeper "github.com/babylonlabs-io/babylon/v4/x/epoching/keeper"
+	incentivekeeper "github.com/babylonlabs-io/babylon/v4/x/incentive/keeper"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	evmante "github.com/cosmos/evm/ante/evm"
 	anteinterfaces "github.com/cosmos/evm/ante/interfaces"
 	ibckeeper "github.com/cosmos/ibc-go/v10/modules/core/keeper"
 )
@@ -52,7 +53,7 @@ func NewAnteHandler(
 				BankKeeper:      bankKeeper,
 				SignModeHandler: signModeHandler,
 				FeegrantKeeper:  feegrantKeeper,
-				SigGasConsumer:  authante.DefaultSigVerificationGasConsumer,
+				SigGasConsumer:  evmHandlerOptions.SigGasConsumer,
 				// CheckTxFeeWithGlobalMinGasPrices will enforce the global minimum
 				// gas price for all transactions.
 				TxFeeChecker: CheckTxFeeWithGlobalMinGasPrices,
@@ -74,8 +75,9 @@ func NewAnteHandler(
 		NewGasLimitDecorator(mempoolOpts),
 		NewIBCMsgSizeDecorator(),
 		NewWrappedAnteHandler(authAnteHandler),
+		evmante.NewGasWantedDecorator(evmHandlerOptions.EvmKeeper, evmHandlerOptions.FeeMarketKeeper),
 		NewBtcValidationDecorator(btcConfig, btccKeeper),
-		incentivekeeper.NewRefundTxDecorator(nil),
+		incentivekeeper.NewRefundTxDecorator(nil, nil),
 		NewPriorityDecorator(),
 	)
 

@@ -7,7 +7,7 @@ import (
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 
-	"github.com/babylonlabs-io/babylon/v3/crypto/eots"
+	"github.com/babylonlabs-io/babylon/v4/crypto/eots"
 )
 
 type SchnorrPubRand []byte

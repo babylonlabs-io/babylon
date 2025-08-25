@@ -9,11 +9,11 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
-	bbn "github.com/babylonlabs-io/babylon/v3/types"
-	bbntypes "github.com/babylonlabs-io/babylon/v3/types"
-	btcctypes "github.com/babylonlabs-io/babylon/v3/x/btccheckpoint/types"
-	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	bbntypes "github.com/babylonlabs-io/babylon/v4/types"
+	btcctypes "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
+	"github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/txscript"
@@ -57,7 +57,7 @@ func TestGenesisState_Validate(t *testing.T) {
 			genState: func() *types.GenesisState {
 				return &types.GenesisState{
 					Params: []*types.Params{
-						&types.Params{
+						{
 							CovenantPks:          types.DefaultParams().CovenantPks,
 							CovenantQuorum:       types.DefaultParams().CovenantQuorum,
 							MinStakingValueSat:   10000,
@@ -83,7 +83,7 @@ func TestGenesisState_Validate(t *testing.T) {
 			genState: func() *types.GenesisState {
 				return &types.GenesisState{
 					Params: []*types.Params{
-						&types.Params{
+						{
 							CovenantPks:         types.DefaultParams().CovenantPks,
 							CovenantQuorum:      types.DefaultParams().CovenantQuorum,
 							SlashingPkScript:    types.DefaultParams().SlashingPkScript,

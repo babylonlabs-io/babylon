@@ -8,9 +8,9 @@ import (
 	"cosmossdk.io/math"
 	cmtcrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 
-	bbntypes "github.com/babylonlabs-io/babylon/v3/types"
-	btclctypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
-	"github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
+	bbntypes "github.com/babylonlabs-io/babylon/v4/types"
+	btclctypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
+	"github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/types"
 )
 
 func GenRandomIndexedHeader(r *rand.Rand) *types.IndexedHeader {
@@ -57,9 +57,7 @@ func GenRandomIndexedHeaderWithProofAndConsumerId(r *rand.Rand, consumerId strin
 	return &types.IndexedHeaderWithProof{
 		Header: GenRandomIndexedHeaderWithConsumerId(r, consumerId),
 		Proof: &cmtcrypto.ProofOps{
-			Ops: []cmtcrypto.ProofOp{
-				cmtcrypto.ProofOp{},
-			},
+			Ops: []cmtcrypto.ProofOp{{}},
 		},
 	}
 }
@@ -75,14 +73,10 @@ func GenRandomProofEpochSealed(r *rand.Rand) *types.ProofEpochSealed {
 	return &types.ProofEpochSealed{
 		ValidatorSet: vs.ValSet,
 		ProofEpochInfo: &cmtcrypto.ProofOps{
-			Ops: []cmtcrypto.ProofOp{
-				cmtcrypto.ProofOp{},
-			},
+			Ops: []cmtcrypto.ProofOp{{}},
 		},
 		ProofEpochValSet: &cmtcrypto.ProofOps{
-			Ops: []cmtcrypto.ProofOp{
-				cmtcrypto.ProofOp{},
-			},
+			Ops: []cmtcrypto.ProofOp{{}},
 		},
 	}
 }

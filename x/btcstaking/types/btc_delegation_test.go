@@ -10,12 +10,12 @@ import (
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/stretchr/testify/require"
 
-	bbn "github.com/babylonlabs-io/babylon/v3/types"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
 
-	asig "github.com/babylonlabs-io/babylon/v3/crypto/schnorr-adaptor-signature"
-	btctest "github.com/babylonlabs-io/babylon/v3/testutil/bitcoin"
-	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
-	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
+	asig "github.com/babylonlabs-io/babylon/v4/crypto/schnorr-adaptor-signature"
+	btctest "github.com/babylonlabs-io/babylon/v4/testutil/bitcoin"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	"github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 )
 
 func FuzzBTCDelegation(f *testing.F) {
@@ -46,8 +46,8 @@ func FuzzBTCDelegation(f *testing.F) {
 				AdaptorSigs: [][]byte{covenantSig.MustMarshal()},
 			}
 			btcDel.CovenantSigs = []*types.CovenantAdaptorSignatures{covSigInfo}
-			btcDel.BtcUndelegation.CovenantSlashingSigs = btcDel.CovenantSigs                                // doesn't matter
-			btcDel.BtcUndelegation.CovenantUnbondingSigList = []*types.SignatureInfo{&types.SignatureInfo{}} // doesn't matter
+			btcDel.BtcUndelegation.CovenantSlashingSigs = btcDel.CovenantSigs            // doesn't matter
+			btcDel.BtcUndelegation.CovenantUnbondingSigList = []*types.SignatureInfo{{}} // doesn't matter
 		}
 
 		// randomise start height and end height

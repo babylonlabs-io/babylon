@@ -37,14 +37,14 @@ import (
 	evmtypes "github.com/cosmos/evm/crypto/hd"
 	"github.com/spf13/cobra"
 
-	appkeepers "github.com/babylonlabs-io/babylon/v3/app/keepers"
-	"github.com/babylonlabs-io/babylon/v3/cmd/babylond/cmd/genhelpers"
+	appkeepers "github.com/babylonlabs-io/babylon/v4/app/keepers"
+	"github.com/babylonlabs-io/babylon/v4/cmd/babylond/cmd/genhelpers"
 
-	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
-	appsigner "github.com/babylonlabs-io/babylon/v3/app/signer"
-	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
-	bbn "github.com/babylonlabs-io/babylon/v3/types"
-	checkpointingtypes "github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
+	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
+	appsigner "github.com/babylonlabs-io/babylon/v4/app/signer"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
 )
 
 var (
@@ -206,7 +206,7 @@ func InitTestnet(
 	babylonConfig.GRPC.Address = "0.0.0.0:9090"
 
 	// Update babylonConfig to include Ethereum JSON-RPC settings and other settings
-	babylonConfig.Mempool.MaxTxs = -1 // NOTE: No-op mempool required
+	babylonConfig.Mempool.MaxTxs = 0 //
 	babylonConfig.EVM = *servercfg.DefaultEVMConfig()
 	babylonConfig.JSONRPC = *servercfg.DefaultJSONRPCConfig()
 	babylonConfig.JSONRPC.API = []string{"eth", "net", "web3", "debug"} // debug enabled
@@ -463,7 +463,7 @@ func InitTestnet(
 	}
 
 	coins := sdk.Coins{
-		sdk.NewCoin("ubbn", math.NewInt(10e6)),
+		sdk.NewCoin("ubbn", math.NewInt(10e17)),
 	}
 
 	genBalances = append(genBalances, banktypes.Balance{Address: addr.String(), Coins: coins.Sort()})

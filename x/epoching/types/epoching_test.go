@@ -4,8 +4,8 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
-	"github.com/babylonlabs-io/babylon/v3/x/epoching/types"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	"github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 
 	"github.com/stretchr/testify/require"
 )
@@ -241,7 +241,7 @@ func TestDelegationLifecycle_Validate(t *testing.T) {
 			input: types.DelegationLifecycle{
 				DelAddr: validDelAddr,
 				DelLife: []*types.DelegationStateUpdate{
-					&types.DelegationStateUpdate{
+					{
 						ValAddr: "bad",
 					},
 				},
@@ -254,7 +254,7 @@ func TestDelegationLifecycle_Validate(t *testing.T) {
 			input: types.DelegationLifecycle{
 				DelAddr: validDelAddr,
 				DelLife: []*types.DelegationStateUpdate{
-					&types.DelegationStateUpdate{
+					{
 						ValAddr: validValAddr,
 						State:   types.BondState(4654),
 					},

@@ -19,8 +19,8 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/keeper"
-	"github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
+	"github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/keeper"
+	"github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/types"
 )
 
 type zoneconciergeStoreQuerier struct{}
@@ -28,9 +28,7 @@ type zoneconciergeStoreQuerier struct{}
 func (zoneconciergeStoreQuerier) Query(req *storetypes.RequestQuery) (*storetypes.ResponseQuery, error) {
 	return &storetypes.ResponseQuery{
 		ProofOps: &cmtcrypto.ProofOps{
-			Ops: []cmtcrypto.ProofOp{
-				cmtcrypto.ProofOp{},
-			},
+			Ops: []cmtcrypto.ProofOp{{}},
 		},
 	}, nil
 }

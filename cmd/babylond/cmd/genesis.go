@@ -7,15 +7,14 @@ import (
 	"time"
 
 	"cosmossdk.io/math"
-	"github.com/babylonlabs-io/babylon/v3/app"
-	"github.com/babylonlabs-io/babylon/v3/app/keepers"
+	"github.com/babylonlabs-io/babylon/v4/app/keepers"
 	erc20types "github.com/cosmos/evm/x/erc20/types"
 	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
 
 	sdkmath "cosmossdk.io/math"
 
-	minttypes "github.com/babylonlabs-io/babylon/v3/x/mint/types"
+	minttypes "github.com/babylonlabs-io/babylon/v4/x/mint/types"
 	comettypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -35,14 +34,14 @@ import (
 	ibctypes "github.com/cosmos/ibc-go/v10/modules/core/types"
 	"github.com/spf13/cobra"
 
-	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
-	bbn "github.com/babylonlabs-io/babylon/v3/types"
-	btccheckpointtypes "github.com/babylonlabs-io/babylon/v3/x/btccheckpoint/types"
-	btclightclienttypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
-	btcstakingtypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
-	checkpointingtypes "github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
-	epochingtypes "github.com/babylonlabs-io/babylon/v3/x/epoching/types"
-	finalitytypes "github.com/babylonlabs-io/babylon/v3/x/finality/types"
+	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	btccheckpointtypes "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
+	btclightclienttypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
+	btcstakingtypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
+	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
+	finalitytypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
 )
 
 func PrepareGenesisCmd(defaultNodeHome string, mbm module.BasicManager) *cobra.Command {
@@ -234,8 +233,6 @@ func PrepareGenesis(
 
 	// Add ERC20 genesis configuration
 	erc20GenState := erc20types.DefaultGenesisState()
-	erc20GenState.TokenPairs = app.DefaultTokenPairs
-	erc20GenState.NativePrecompiles = []string{app.WTokenContractMainnet}
 	genesisState[erc20types.ModuleName] = cdc.MustMarshalJSON(erc20GenState)
 
 	feemarketGenState := feemarkettypes.DefaultGenesisState()

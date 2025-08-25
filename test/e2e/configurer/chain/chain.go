@@ -14,10 +14,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/v3/test/e2e/configurer/config"
-	"github.com/babylonlabs-io/babylon/v3/test/e2e/containers"
-	"github.com/babylonlabs-io/babylon/v3/test/e2e/initialization"
-	btclighttypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
+	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer/config"
+	"github.com/babylonlabs-io/babylon/v4/test/e2e/containers"
+	"github.com/babylonlabs-io/babylon/v4/test/e2e/initialization"
+	btclighttypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
 )
 
 type Config struct {
@@ -77,17 +77,6 @@ func (c *Config) CreateNode(initNode *initialization.Node) *NodeConfig {
 	}
 	c.NodeConfigs = append(c.NodeConfigs, nodeConfig)
 	return nodeConfig
-}
-
-// RemoveNode removes node and stops it from running.
-func (c *Config) RemoveNode(nodeName string) error {
-	for i, node := range c.NodeConfigs {
-		if node.Name == nodeName {
-			c.NodeConfigs = append(c.NodeConfigs[:i], c.NodeConfigs[i+1:]...)
-			return node.Stop()
-		}
-	}
-	return fmt.Errorf("node %s not found", nodeName)
 }
 
 // WaitUntilHeight waits for all validators to reach the specified height at the minimum.

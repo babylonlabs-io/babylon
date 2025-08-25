@@ -5,7 +5,7 @@ import (
 	"github.com/cosmos/gogoproto/proto"
 	"testing"
 
-	"github.com/babylonlabs-io/babylon/v3/x/epoching/types"
+	"github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
 )

@@ -7,7 +7,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/babylonlabs-io/babylon/v3/app/ante"
+	"github.com/babylonlabs-io/babylon/v4/app/ante"
 
 	"github.com/stretchr/testify/require"
 )

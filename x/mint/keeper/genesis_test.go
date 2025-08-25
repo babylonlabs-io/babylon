@@ -9,13 +9,13 @@ import (
 	"cosmossdk.io/log"
 	"cosmossdk.io/store"
 	storemetrics "cosmossdk.io/store/metrics"
-	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
-	keepertest "github.com/babylonlabs-io/babylon/v3/testutil/keeper"
-	"github.com/babylonlabs-io/babylon/v3/x/mint/types"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	keepertest "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
+	"github.com/babylonlabs-io/babylon/v4/x/mint/types"
 	dbm "github.com/cosmos/cosmos-db"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/test-go/testify/require"
+	"github.com/stretchr/testify/require"
 )
 
 func FuzzTestExportGenesis(f *testing.F) {

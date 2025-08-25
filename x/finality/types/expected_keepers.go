@@ -5,8 +5,8 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	storetypes "cosmossdk.io/store/types"
-	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
-	etypes "github.com/babylonlabs-io/babylon/v3/x/epoching/types"
+	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+	etypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 

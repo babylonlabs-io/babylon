@@ -3,7 +3,7 @@ package types_test
 import (
 	"testing"
 
-	"github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
+	"github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
 	"github.com/stretchr/testify/require"
 )
 
@@ -26,7 +26,7 @@ func TestGenesisState_Validate(t *testing.T) {
 		{
 			desc: "invalid genesis state",
 			genState: &types.GenesisState{
-				BtcHeaders: []*types.BTCHeaderInfo{&types.BTCHeaderInfo{
+				BtcHeaders: []*types.BTCHeaderInfo{{
 					Height: 1,
 				}},
 			},
