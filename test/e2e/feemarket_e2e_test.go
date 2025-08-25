@@ -70,6 +70,7 @@ func (s *FeemarketTestSuite) BaseFeeExcludesRefundableGas() {
 
 	initialBaseFee := s.getCurrentBaseFee(node)
 	initialHeight, err := node.QueryCurrentHeight()
+	s.Require().NoError(err, "Failed to query current height")
 	s.T().Logf("Initial base fee at height %d : %s", initialHeight, initialBaseFee.String())
 
 	refundableTxHash := s.sendRefundableTx(node, s.addrA)
@@ -84,6 +85,7 @@ func (s *FeemarketTestSuite) BaseFeeExcludesRefundableGas() {
 
 	finalBaseFee := s.getCurrentBaseFee(node)
 	finalHeight, err := node.QueryCurrentHeight()
+	s.Require().NoError(err, "Failed to query current height")
 	s.T().Logf("Final base fee at height %d : %s", finalHeight, finalBaseFee.String())
 
 	refundableTxResp, _ := node.QueryTx(refundableTxHash)
