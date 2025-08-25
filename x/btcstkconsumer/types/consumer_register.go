@@ -25,16 +25,7 @@ func (m *MsgRegisterConsumer) ValidateBasic() error {
 	if len(m.ConsumerDescription) == 0 {
 		return fmt.Errorf("ConsumerDescription must be non-empty")
 	}
-	if m.BabylonRewardsCommission.IsNegative() {
-		return fmt.Errorf("babylon commission cannot be negative")
-	}
-	if m.BabylonRewardsCommission.GT(math.LegacyOneDec()) {
-		return fmt.Errorf("babylon commission cannot be greater than 1.0")
-	}
-	if m.BabylonRewardsCommission.LT(minBabylonRewardsCommission) {
-		return fmt.Errorf("babylon commission cannot be less than %s", minBabylonRewardsCommission)
-	}
-	return nil
+	return validateBbnCommission(m.BabylonRewardsCommission)
 }
 
 func NewCosmosConsumerRegister(consumerId, consumerName, consumerDescription string, babylonCommission math.LegacyDec) *ConsumerRegister {
@@ -98,13 +89,20 @@ func (cr ConsumerRegister) Validate() error {
 	if len(cr.ConsumerDescription) == 0 {
 		return fmt.Errorf("ConsumerDescription must be non-empty")
 	}
-	if cr.BabylonRewardsCommission.IsNegative() {
+	return validateBbnCommission(cr.BabylonRewardsCommission)
+}
+
+func validateBbnCommission(bbnCommission math.LegacyDec) error {
+	if bbnCommission.IsNil() {
+		return fmt.Errorf("babylon commission cannot be nil")
+	}
+	if bbnCommission.IsNegative() {
 		return fmt.Errorf("babylon commission cannot be negative")
 	}
-	if cr.BabylonRewardsCommission.GT(math.LegacyOneDec()) {
+	if bbnCommission.GT(math.LegacyOneDec()) {
 		return fmt.Errorf("babylon commission cannot be greater than 1.0")
 	}
-	if cr.BabylonRewardsCommission.LT(minBabylonRewardsCommission) {
+	if bbnCommission.LT(minBabylonRewardsCommission) {
 		return fmt.Errorf("babylon commission cannot be less than %s", minBabylonRewardsCommission)
 	}
 	return nil
