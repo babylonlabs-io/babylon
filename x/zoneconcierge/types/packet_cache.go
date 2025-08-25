@@ -64,9 +64,10 @@ func (cache *PacketMarshalCache) GetOrMarshal(packetData *OutboundPacket) *Marsh
 	}
 }
 
-// TODO: load compare with marshaled data, refactor to be OutboundPacket function
 // generateCacheKey creates a deterministic cache key for the packet data
 // This ensures that identical packet contents get the same cache key
+// this cache key generation is not significantly cheaper than full marshaling, but
+// cached marshaling provides dramatic performance improvements
 func (cache *PacketMarshalCache) generateCacheKey(packetData *OutboundPacket) string {
 	// For BTC headers, we can create a key based on the header hashes
 	// This is more efficient than marshaling the entire packet just for the key

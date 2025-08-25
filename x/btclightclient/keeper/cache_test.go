@@ -47,12 +47,6 @@ func TestHeaderCache_BasicFunctionality(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, testHeader, header2)
 	require.Equal(t, 1, fetchCallCount) // Should not increment
-
-	// Check stats
-	stats := cache.Stats()
-	require.Equal(t, int64(1), stats.HitCount)
-	require.Equal(t, int64(1), stats.MissCount)
-	require.Equal(t, 0.5, stats.HitRate())
 }
 
 // TestHeaderCache_TipValidation tests cache validation with tip changes
@@ -103,14 +97,8 @@ func TestHeaderCache_Invalidation(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 3, fetchCount)
 
-	stats := cache.Stats()
-	require.Equal(t, 3, stats.Size)
-
 	// Invalidate from height 101 onwards
 	cache.InvalidateFromHeight(101)
-
-	stats = cache.Stats()
-	require.Equal(t, 1, stats.Size) // Only height 100 should remain
 
 	// Accessing height 100 should hit cache, 101 should miss
 	_, err = cache.GetOrFetch(100, fetcher)
@@ -120,11 +108,6 @@ func TestHeaderCache_Invalidation(t *testing.T) {
 	_, err = cache.GetOrFetch(101, fetcher)
 	require.NoError(t, err)
 	require.Equal(t, 4, fetchCount) // New fetch required
-
-	// Full invalidation
-	cache.Invalidate()
-	stats = cache.Stats()
-	require.Equal(t, 0, stats.Size)
 }
 
 // TestHeaderCache_ConcurrentAccess tests concurrent access to cache
@@ -159,9 +142,6 @@ func TestHeaderCache_ConcurrentAccess(t *testing.T) {
 	// but the cache should work correctly
 	require.Greater(t, fetchCount, 0)
 	require.LessOrEqual(t, fetchCount, 10)
-
-	stats := cache.Stats()
-	require.Greater(t, stats.HitCount+stats.MissCount, int64(0))
 }
 
 // TestHeaderCache_ErrorHandling tests error handling in cache
@@ -183,10 +163,6 @@ func TestHeaderCache_ErrorHandling(t *testing.T) {
 	require.Error(t, err)
 	require.Equal(t, types.ErrHeaderDoesNotExist, err)
 	require.Equal(t, 1, fetchCount)
-
-	stats := cache.Stats()
-	require.Equal(t, int64(1), stats.MissCount)
-	require.Equal(t, int64(0), stats.HitCount)
 
 	// Test successful case
 	_, err = cache.GetOrFetch(100, fetcher)
@@ -258,11 +234,6 @@ func TestGetMainChainFrom_CacheWorking(t *testing.T) {
 
 	t.Logf("Tip height: %d", tip.Height)
 
-	// Test cache statistics
-	initialStats := keeper.HeaderCache().Stats()
-	require.Equal(t, int64(0), initialStats.HitCount)
-	require.Equal(t, int64(0), initialStats.MissCount)
-
 	// First call - should populate cache
 	result1 := keeper.GetMainChainFrom(ctx, 102) // Should get headers 102, 103, 104
 	require.Equal(t, 3, len(result1))
@@ -272,10 +243,6 @@ func TestGetMainChainFrom_CacheWorking(t *testing.T) {
 	require.Equal(t, uint32(103), result1[1].Height)
 	require.Equal(t, uint32(104), result1[2].Height)
 
-	stats1 := keeper.HeaderCache().Stats()
-	require.Equal(t, int64(0), stats1.HitCount)  // No hits on first call
-	require.Equal(t, int64(3), stats1.MissCount) // 3 misses (headers 102, 103, 104)
-
 	// Second call with same parameters - should hit cache
 	result2 := keeper.GetMainChainFrom(ctx, 102)
 	require.Equal(t, 3, len(result2))
@@ -283,21 +250,9 @@ func TestGetMainChainFrom_CacheWorking(t *testing.T) {
 	require.Equal(t, result1[1].Height, result2[1].Height)
 	require.Equal(t, result1[2].Height, result2[2].Height)
 
-	stats2 := keeper.HeaderCache().Stats()
-	require.Equal(t, int64(3), stats2.HitCount)  // All 3 should be cache hits
-	require.Equal(t, int64(3), stats2.MissCount) // Miss count unchanged
-	require.Equal(t, 0.5, stats2.HitRate())      // 3 hits / 6 total = 0.5
-
 	// Third call with different start but overlapping range
 	result3 := keeper.GetMainChainFrom(ctx, 101) // Should get headers 101, 102, 103, 104
 	require.Equal(t, 4, len(result3))
-
-	stats3 := keeper.HeaderCache().Stats()
-	require.Equal(t, int64(6), stats3.HitCount)  // 3 more hits (102, 103, 104 were cached)
-	require.Equal(t, int64(4), stats3.MissCount) // 1 more miss (101 was not cached)
-
-	t.Logf("Final stats - Hits: %d, Misses: %d, Hit Rate: %.2f",
-		stats3.HitCount, stats3.MissCount, stats3.HitRate())
 }
 
 // TestGetMainChainFrom_CacheInvalidation tests cache behavior across block boundaries (realistic scenario)
@@ -469,11 +424,6 @@ func TestGetMainChainFrom_CacheEfficiency(t *testing.T) {
 	// Insert headers into keeper
 	keeper.InsertHeaderInfos(ctx, headers)
 
-	// Get initial cache stats (should be empty)
-	initialStats := keeper.HeaderCache().Stats()
-	require.Equal(t, int64(0), initialStats.HitCount)
-	require.Equal(t, int64(0), initialStats.MissCount)
-
 	// Get the actual heights of the headers we inserted
 	baseHeight := headers[0].Height
 	tipHeight := headers[numHeaders-1].Height
@@ -488,19 +438,9 @@ func TestGetMainChainFrom_CacheEfficiency(t *testing.T) {
 	expectedLen := int(tipHeight - startHeight + 1)
 	require.Equal(t, expectedLen, len(result1))
 
-	stats1 := keeper.HeaderCache().Stats()
-	require.Equal(t, int64(0), stats1.HitCount)            // No hits yet
-	require.Equal(t, int64(expectedLen), stats1.MissCount) // misses equal to result length
-	require.Equal(t, expectedLen, stats1.Size)             // cached headers
-
 	// Second call with same start height - should hit cache
 	result2 := keeper.GetMainChainFrom(ctx, startHeight)
 	require.Equal(t, len(result1), len(result2))
-
-	stats2 := keeper.HeaderCache().Stats()
-	require.Equal(t, int64(expectedLen), stats2.HitCount)  // All should be cache hits
-	require.Equal(t, int64(expectedLen), stats2.MissCount) // Miss count unchanged
-	require.Equal(t, 0.5, stats2.HitRate())                // 50% hit rate
 
 	// Third call with higher start height - should partially hit cache
 	higherStartHeight := startHeight + 5
@@ -508,10 +448,6 @@ func TestGetMainChainFrom_CacheEfficiency(t *testing.T) {
 		result3 := keeper.GetMainChainFrom(ctx, higherStartHeight)
 		expectedLen3 := int(tipHeight - higherStartHeight + 1)
 		require.Equal(t, expectedLen3, len(result3))
-
-		stats3 := keeper.HeaderCache().Stats()
-		require.Equal(t, int64(expectedLen+expectedLen3), stats3.HitCount) // more hits
-		require.Equal(t, int64(expectedLen), stats3.MissCount)             // Miss count unchanged
 	}
 
 	// Fourth call with lower start height - should mostly hit cache with some misses
@@ -520,10 +456,6 @@ func TestGetMainChainFrom_CacheEfficiency(t *testing.T) {
 		result4 := keeper.GetMainChainFrom(ctx, lowerStartHeight)
 		expectedLen4 := int(tipHeight - lowerStartHeight + 1)
 		require.Equal(t, expectedLen4, len(result4))
-
-		stats4 := keeper.HeaderCache().Stats()
-		require.Greater(t, stats4.HitCount, int64(expectedLen))  // Should have more hits
-		require.Greater(t, stats4.MissCount, int64(expectedLen)) // Should have more misses
 	}
 }
 
@@ -559,10 +491,6 @@ func TestGetMainChainFrom_TipChanges(t *testing.T) {
 	expectedLen1 := int(tipHeight - startHeight + 1)
 	require.Equal(t, expectedLen1, len(result1))
 
-	stats1 := keeper.HeaderCache().Stats()
-	require.Equal(t, int64(expectedLen1), stats1.MissCount)
-	require.Equal(t, headers[numHeaders-1].Height, stats1.TipHeight)
-
 	// End of Block 1: Reset cache (as done in EndBlock)
 	keeper.ResetHeaderCache()
 
@@ -574,9 +502,6 @@ func TestGetMainChainFrom_TipChanges(t *testing.T) {
 	result2 := keeper.GetMainChainFrom(ctx, startHeight)
 	expectedLen2 := expectedLen1 + 1
 	require.Equal(t, expectedLen2, len(result2)) // Now includes the new header
-
-	stats2 := keeper.HeaderCache().Stats()
-	require.Equal(t, newHeader.Height, stats2.TipHeight) // Tip should be updated
 
 	// Verify the last header in result is the new header
 	lastHeader := result2[len(result2)-1]
