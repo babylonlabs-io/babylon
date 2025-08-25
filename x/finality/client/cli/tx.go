@@ -29,6 +29,7 @@ func GetTxCmd() *cobra.Command {
 		NewCommitPubRandListCmd(),
 		NewAddFinalitySigCmd(),
 		NewUnjailFinalityProviderCmd(),
+		AddEvidenceOfEquivocationCmd(),
 	)
 
 	return cmd
@@ -196,6 +197,69 @@ func NewUnjailFinalityProviderCmd() *cobra.Command {
 		},
 	}
 
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+func AddEvidenceOfEquivocationCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "add-evidence [fp_btc_pk] [block_height] [pub_rand] [canonical_app_hash_hex] [fork_app_hash_hex] [canonical_finality_sig_hex] [fork_finality_sig_hex] [signing_context]",
+		Args:  cobra.ExactArgs(8),
+		Short: "Submit evidence of finality provider equivocation",
+		Long: strings.TrimSpace(
+			`Submit evidence that a finality provider signed conflicting blocks.
+            This will slash the finality provider if the evidence is valid.`),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			blockHeight, err := strconv.ParseUint(args[1], 10, 64)
+			if err != nil {
+				return err
+			}
+
+			hexArgs := []struct {
+				val  string
+				name string
+			}{
+				{args[0], "fp_btc_pk"},
+				{args[2], "pub_rand"},
+				{args[3], "canonical_app_hash_hex"},
+				{args[4], "fork_app_hash_hex"},
+				{args[5], "canonical_finality_sig_hex"},
+				{args[6], "fork_finality_sig_hex"},
+			}
+			for _, h := range hexArgs {
+				if _, err := hex.DecodeString(h.val); err != nil {
+					return fmt.Errorf("argument '%s' is not a valid hex string: %v", h.name, err)
+				}
+			}
+
+			msg := types.MsgEquivocationEvidence{
+				Signer:                  clientCtx.FromAddress.String(),
+				FpBtcPkHex:              args[0],
+				BlockHeight:             blockHeight,
+				PubRandHex:              args[2],
+				CanonicalAppHashHex:     args[3],
+				ForkAppHashHex:          args[4],
+				CanonicalFinalitySigHex: args[5],
+				ForkFinalitySigHex:      args[6],
+				SigningContext:          args[7],
+			}
+
+			genOnly, _ := cmd.Flags().GetBool(flags.FlagGenerateOnly)
+			if !genOnly {
+				if _, err := msg.ParseToEvidence(); err != nil {
+					return fmt.Errorf("failed to parse evidence: %v", err)
+				}
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
+		},
+	}
 	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd
