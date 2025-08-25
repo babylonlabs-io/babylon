@@ -11,9 +11,5 @@ func (k Keeper) RemoveAllAllowListsRecords(ctx context.Context) error {
 	if err := k.AllowedStakingTxHashesKeySet.Clear(ctx, nil); err != nil {
 		return err
 	}
-
-	if err := k.allowedMultiStakingTxHashesKeySet.Clear(ctx, nil); err != nil {
-		return err
-	}
-	return nil
+	return k.allowedMultiStakingTxHashesKeySet.Clear(ctx, nil)
 }
