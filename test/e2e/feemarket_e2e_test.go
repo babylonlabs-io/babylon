@@ -69,7 +69,8 @@ func (s *FeemarketTestSuite) BaseFeeExcludesRefundableGas() {
 	node.WaitForNextBlock()
 
 	initialBaseFee := s.getCurrentBaseFee(node)
-	s.T().Logf("Initial base fee: %s", initialBaseFee.String())
+	initialHeight, err := node.QueryCurrentHeight()
+	s.T().Logf("Initial base fee at height %d : %s", initialHeight, initialBaseFee.String())
 
 	refundableTxHash := s.sendRefundableTx(node, s.addrA)
 	s.Require().NotEmpty(refundableTxHash, "Refundable transaction should return valid hash")
@@ -81,6 +82,10 @@ func (s *FeemarketTestSuite) BaseFeeExcludesRefundableGas() {
 
 	node.WaitForNextBlock()
 
+	finalBaseFee := s.getCurrentBaseFee(node)
+	finalHeight, err := node.QueryCurrentHeight()
+	s.T().Logf("Final base fee at height %d : %s", finalHeight, finalBaseFee.String())
+
 	refundableTxResp, _ := node.QueryTx(refundableTxHash)
 	s.Require().Equal(uint32(0), refundableTxResp.Code, "Refundable transaction should succeed")
 
@@ -89,13 +94,11 @@ func (s *FeemarketTestSuite) BaseFeeExcludesRefundableGas() {
 
 	s.verifyTxFeeRefunded(node, refundableTxHash, refundableTxResp)
 
-	finalBaseFee := s.getCurrentBaseFee(node)
-
 	node.WaitForNextBlock()
 
 	// The base fee should change based on network congestion
 	// With our wrapper, it should exclude refundable gas from the calculation
-	s.validateBaseFeeCalculation(node, initialBaseFee, finalBaseFee, refundableTxResp, nonRefundableTxResp)
+	s.validateBaseFeeCalculation(node, initialBaseFee, finalBaseFee, initialHeight, finalHeight, refundableTxResp, nonRefundableTxResp)
 	s.T().Log("Base fee excludes refundable gas test passed")
 }
 
@@ -192,10 +195,10 @@ func (s *FeemarketTestSuite) verifyTxFeeRefunded(_ *chain.NodeConfig, txHash str
 }
 
 // validateBaseFeeCalculation verifies the base fee calculation logic
-func (s *FeemarketTestSuite) validateBaseFeeCalculation(_ *chain.NodeConfig, initialBaseFee, finalBaseFee sdkmath.LegacyDec, refundableTx, nonRefundableTx sdk.TxResponse) {
+func (s *FeemarketTestSuite) validateBaseFeeCalculation(_ *chain.NodeConfig, initialBaseFee, finalBaseFee sdkmath.LegacyDec, initialHeight, finalHeight int64, refundableTx, nonRefundableTx sdk.TxResponse) {
 	s.T().Logf("Validating base fee calculation:")
-	s.T().Logf("  Initial base fee: %s", initialBaseFee.String())
-	s.T().Logf("  Final base fee: %s", finalBaseFee.String())
+	s.T().Logf("  Initial base fee at height %d : %s", initialHeight, initialBaseFee.String())
+	s.T().Logf("  Final base fee at height %d : %s", finalHeight, finalBaseFee.String())
 	s.T().Logf("  Refundable tx gas wanted: %d", refundableTx.GasWanted)
 	s.T().Logf("  Refundable tx gas used: %d", refundableTx.GasUsed)
 	s.T().Logf("  Non-refundable tx gas wanted: %d", nonRefundableTx.GasWanted)
