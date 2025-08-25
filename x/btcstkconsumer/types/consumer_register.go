@@ -24,7 +24,7 @@ func (m *MsgRegisterConsumer) ValidateBasic() error {
 	if len(m.ConsumerDescription) == 0 {
 		return fmt.Errorf("ConsumerDescription must be non-empty")
 	}
-	return validateBbnCommission(m.BabylonRewardsCommission)
+	return ValidateBbnCommission(m.BabylonRewardsCommission)
 }
 
 func NewCosmosConsumerRegister(consumerId, consumerName, consumerDescription string, babylonCommission math.LegacyDec) *ConsumerRegister {
@@ -88,10 +88,10 @@ func (cr ConsumerRegister) Validate() error {
 	if len(cr.ConsumerDescription) == 0 {
 		return fmt.Errorf("ConsumerDescription must be non-empty")
 	}
-	return validateBbnCommission(cr.BabylonRewardsCommission)
+	return ValidateBbnCommission(cr.BabylonRewardsCommission)
 }
 
-func validateBbnCommission(bbnCommission math.LegacyDec) error {
+func ValidateBbnCommission(bbnCommission math.LegacyDec) error {
 	if bbnCommission.IsNil() {
 		return fmt.Errorf("babylon commission cannot be nil")
 	}

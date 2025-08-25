@@ -150,7 +150,7 @@ func TestNewRegisterConsumerCmd(t *testing.T) {
 				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
 				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 10)).String()),
 			},
-			"babylon rewards commission must be between 0.010000000000000000 and 1, got: 1.5",
+			"babylon commission cannot be greater than 1.0",
 		},
 		{
 			"valid cosmos consumer registration (min commission 0.01)",
