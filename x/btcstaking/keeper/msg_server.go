@@ -106,7 +106,7 @@ func (ms msgServer) EditFinalityProvider(goCtx context.Context, req *types.MsgEd
 	// all good, update the finality provider and set back
 	fp.Description = req.Description
 
-	ms.setFinalityProvider(goCtx, fp)
+	ms.SetFinalityProvider(goCtx, fp)
 
 	// notify subscriber
 	ctx := sdk.UnwrapSDKContext(goCtx)
@@ -768,4 +768,16 @@ func (ms msgServer) SelectiveSlashingEvidence(goCtx context.Context, req *types.
 	ms.iKeeper.IndexRefundableMsg(ctx, req)
 
 	return &types.MsgSelectiveSlashingEvidenceResponse{}, nil
+}
+
+// CheckDuplicatedFpBbnAddr verifies if there isn't another FP registered with the same babylon address
+func (k Keeper) CheckDuplicatedFpBbnAddr(ctx context.Context, fpAddr sdk.AccAddress) error {
+	found, err := k.HasFpRegistered(ctx, fpAddr)
+	if err != nil {
+		return status.Errorf(codes.InvalidArgument, "invalid address %s: %v", fpAddr.String(), err)
+	}
+	if found {
+		return types.ErrFpRegistered.Wrapf("there is already an finality provider registered with the same babylon address: %s", fpAddr.String())
+	}
+	return nil
 }

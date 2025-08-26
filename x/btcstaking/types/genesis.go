@@ -5,13 +5,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"slices"
 	"sort"
 
+	bbn "github.com/babylonlabs-io/babylon/v2/types"
+	types "github.com/babylonlabs-io/babylon/v2/types"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/cosmos/cosmos-sdk/codec"
-
-	"github.com/babylonlabs-io/babylon/v2/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // DefaultGenesis returns the default genesis state
@@ -78,7 +78,11 @@ func (gs GenesisState) Validate() error {
 		}
 	}
 
-	return gs.validateAllowedStakingTxHashes()
+	if err := gs.validateFpBbnAddr(gs.FinalityProviders); err != nil {
+		return err
+	}
+
+	return gs.validateDeletedFps(gs.FinalityProviders)
 }
 
 // GenesisStateFromAppState returns x/btcstaking GenesisState given raw application
@@ -108,18 +112,43 @@ func (h AllowedStakingTxHashStr) Validate() error {
 	return nil
 }
 
-// validateAllowedStakingTxHashes validates there're no duplicate entries
-// and the hash has the corresponding size
-func (gs GenesisState) validateAllowedStakingTxHashes() error {
-	hashes := make(map[string]bool)
-	for _, hStr := range gs.AllowedStakingTxHashes {
-		if _, exists := hashes[hStr]; exists {
-			return fmt.Errorf("duplicate staking tx hash: %s", hStr)
+// validateDeletedFps validates there is only valid blocked fp btc pk
+func (gs GenesisState) validateDeletedFps(fps []*FinalityProvider) error {
+	mapFpBtcPk := make(map[string]struct{})
+	for _, fp := range fps {
+		mapFpBtcPk[fp.BtcPk.MarshalHex()] = struct{}{}
+	}
+
+	for _, deletedFpBtcPkHex := range gs.DeletedFpsBtcPkHex {
+		_, exist := mapFpBtcPk[deletedFpBtcPkHex]
+		if !exist {
+			return fmt.Errorf("fp btc pk %s is not in the fp list", deletedFpBtcPkHex)
 		}
-		hashes[hStr] = true
-		h := AllowedStakingTxHashStr(hStr)
-		if err := h.Validate(); err != nil {
-			return err
+
+		_, err := bbn.NewBIP340PubKeyFromHex(deletedFpBtcPkHex)
+		if err != nil {
+			return fmt.Errorf("error decoding deleted fp btc pk hex %s: %w", deletedFpBtcPkHex, err)
+		}
+	}
+	return nil
+}
+
+// validateFpBbnAddr validates there is no duplicate fp bbn addr
+func (gs GenesisState) validateFpBbnAddr(fps []*FinalityProvider) error {
+	mapFpAddr := make(map[string]struct{})
+	for _, fp := range fps {
+		mapFpAddr[fp.Addr] = struct{}{}
+	}
+
+	for _, fpAddr := range gs.FpBbnAddr {
+		_, exist := mapFpAddr[fpAddr]
+		if !exist {
+			return fmt.Errorf("fp addr %s is not in the fp list", fpAddr)
+		}
+
+		_, err := sdk.AccAddressFromBech32(fpAddr)
+		if err != nil {
+			return fmt.Errorf("error decoding fp addr %s: %w", fpAddr, err)
 		}
 	}
 	return nil
@@ -244,7 +273,13 @@ func SortData(gs *GenesisState) {
 		return gs.Events[i].Idx < gs.Events[j].Idx
 	})
 
-	slices.Sort(gs.AllowedStakingTxHashes)
+	sort.Slice(gs.FpBbnAddr, func(i, j int) bool {
+		return gs.FpBbnAddr[i] < gs.FpBbnAddr[j]
+	})
+
+	sort.Slice(gs.DeletedFpsBtcPkHex, func(i, j int) bool {
+		return gs.DeletedFpsBtcPkHex[i] < gs.DeletedFpsBtcPkHex[j]
+	})
 }
 
 func buildDelegationIndexKey(fp, del *types.BIP340PubKey) string {

@@ -10,6 +10,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stktypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
+	bbn "github.com/babylonlabs-io/babylon/v2/types"
 	"github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
 )
 
@@ -18,6 +19,16 @@ import (
 func (k Keeper) AddFinalityProvider(goCtx context.Context, msg *types.MsgCreateFinalityProvider) error {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	params := k.GetParams(ctx)
+
+	fpAddr, err := sdk.AccAddressFromBech32(msg.Addr)
+	if err != nil {
+		return err
+	}
+
+	if err := k.CheckDuplicatedFpBbnAddr(ctx, fpAddr); err != nil {
+		return err
+	}
+
 	// ensure commission rate is
 	// - at least the minimum commission rate in parameters, and
 	// - at most 1 or less than the MaxRate
@@ -48,17 +59,24 @@ func (k Keeper) AddFinalityProvider(goCtx context.Context, msg *types.MsgCreateF
 		CommissionInfo: commissionInfo,
 	}
 
-	k.setFinalityProvider(ctx, &fp)
+	if err := k.SetFpBbnAddr(goCtx, fp.Address()); err != nil {
+		return err
+	}
+	k.SetFinalityProvider(ctx, &fp)
 
 	// notify subscriber
 	return ctx.EventManager().EmitTypedEvent(types.NewEventFinalityProviderCreated(&fp))
 }
 
-// setFinalityProvider adds the given finality provider to KVStore
-func (k Keeper) setFinalityProvider(ctx context.Context, fp *types.FinalityProvider) {
+// SetFinalityProvider adds the given finality provider to KVStore
+func (k Keeper) SetFinalityProvider(ctx context.Context, fp *types.FinalityProvider) {
 	store := k.finalityProviderStore(ctx)
 	fpBytes := k.cdc.MustMarshal(fp)
 	store.Set(fp.BtcPk.MustMarshal(), fpBytes)
+}
+
+func (k Keeper) SetFpBbnAddr(ctx context.Context, fpAddr sdk.AccAddress) error {
+	return k.fpBbnAddr.Set(ctx, fpAddr)
 }
 
 // UpdateFinalityProvider update the given finality provider to KVStore
@@ -67,7 +85,7 @@ func (k Keeper) UpdateFinalityProvider(ctx context.Context, fp *types.FinalityPr
 		return types.ErrFpNotFound
 	}
 
-	k.setFinalityProvider(ctx, fp)
+	k.SetFinalityProvider(ctx, fp)
 
 	return nil
 }
@@ -88,6 +106,46 @@ func (k Keeper) GetFinalityProvider(ctx context.Context, fpBTCPK []byte) (*types
 	var fp types.FinalityProvider
 	k.cdc.MustUnmarshal(fpBytes, &fp)
 	return &fp, nil
+}
+
+// IterateFinalityProvider iterate over all finality providers
+func (k Keeper) IterateFinalityProvider(ctx context.Context, f func(fp types.FinalityProvider) error) error {
+	iter := k.finalityProviderStore(ctx).Iterator(nil, nil)
+	defer iter.Close()
+
+	for ; iter.Valid(); iter.Next() {
+		var fp types.FinalityProvider
+		if err := fp.Unmarshal(iter.Value()); err != nil {
+			return err
+		}
+		if err := f(fp); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// IsFinalityProviderDeleted returns if the finality provider is soft-deleted or not. The state of soft-deleted
+// finality provider currently is only being used to avoid votes of undesired fps.
+// Only upgrades, migrations or genesis can soft delete FPs.
+func (k Keeper) IsFinalityProviderDeleted(ctx context.Context, fpBtcPk *bbn.BIP340PubKey) bool {
+	blocked, err := k.finalityProvidersDeleted.Has(ctx, fpBtcPk.MustMarshal())
+	if err != nil {
+		return true
+	}
+	return blocked
+}
+
+// SoftDeleteFinalityProvider sets one finality provider as deleted.
+// Note: Deleted finality providers can't cast finality votes.
+func (k Keeper) SoftDeleteFinalityProvider(ctx context.Context, fpBtcPk *bbn.BIP340PubKey) error {
+	return k.finalityProvidersDeleted.Set(ctx, fpBtcPk.MustMarshal())
+}
+
+// HasFpRegistered returns if there is already an finality provider registered with the babylon address
+func (k Keeper) HasFpRegistered(ctx context.Context, fpBbnAddr sdk.AccAddress) (bool, error) {
+	return k.fpBbnAddr.Has(ctx, fpBbnAddr)
 }
 
 // SlashFinalityProvider slashes a finality provider with the given PK
@@ -111,7 +169,7 @@ func (k Keeper) SlashFinalityProvider(ctx context.Context, fpBTCPK []byte) error
 		return fmt.Errorf("failed to get current BTC tip")
 	}
 	fp.SlashedBtcHeight = btcTip.Height
-	k.setFinalityProvider(ctx, fp)
+	k.SetFinalityProvider(ctx, fp)
 
 	// record slashed event. The next `BeginBlock` will consume this
 	// event for updating the finality provider set
@@ -143,7 +201,7 @@ func (k Keeper) JailFinalityProvider(ctx context.Context, fpBTCPK []byte) error 
 
 	// set finality provider to be jailed
 	fp.Jailed = true
-	k.setFinalityProvider(ctx, fp)
+	k.SetFinalityProvider(ctx, fp)
 
 	btcTip := k.btclcKeeper.GetTipInfo(ctx)
 	if btcTip == nil {
@@ -172,7 +230,7 @@ func (k Keeper) UnjailFinalityProvider(ctx context.Context, fpBTCPK []byte) erro
 	}
 
 	fp.Jailed = false
-	k.setFinalityProvider(ctx, fp)
+	k.SetFinalityProvider(ctx, fp)
 
 	btcTip := k.btclcKeeper.GetTipInfo(ctx)
 	if btcTip == nil {

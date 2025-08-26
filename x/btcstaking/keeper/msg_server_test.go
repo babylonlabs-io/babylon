@@ -87,7 +87,7 @@ func FuzzMsgCreateFinalityProvider(f *testing.F) {
 
 		// generate new finality providers
 		fps := []*types.FinalityProvider{}
-		for i := 0; i < int(datagen.RandomInt(r, 10)); i++ {
+		for i := 0; i < int(datagen.RandomInt(r, 20)+2); i++ {
 			fp, err := datagen.GenRandomFinalityProvider(r)
 			require.NoError(t, err)
 			msg := &types.MsgCreateFinalityProvider{
@@ -128,6 +128,32 @@ func FuzzMsgCreateFinalityProvider(f *testing.F) {
 			_, err := h.MsgServer.CreateFinalityProvider(h.Ctx, msg)
 			require.Error(t, err)
 		}
+
+		// tries to create another fp with same bbn address as an registered one
+		fp, err := datagen.GenRandomFinalityProvider(r, h.FpPopContext(), "")
+		require.NoError(t, err)
+		dupFpAddr := fps[0].Addr
+
+		btcSK, _, err := datagen.GenRandomBTCKeyPair(r)
+		require.NoError(t, err)
+		pop, err := datagen.NewPoPBTC(h.FpPopContext(), sdk.MustAccAddressFromBech32(dupFpAddr), btcSK)
+		require.NoError(t, err)
+		btcPK := btcSK.PubKey()
+		bip340PK := bbn.NewBIP340PubKeyFromBTCPK(btcPK)
+
+		msg := &types.MsgCreateFinalityProvider{
+			Addr:        dupFpAddr,
+			Description: fp.Description,
+			Commission: types.NewCommissionRates(
+				*fp.Commission,
+				fp.CommissionInfo.MaxRate,
+				fp.CommissionInfo.MaxChangeRate,
+			),
+			BtcPk: bip340PK,
+			Pop:   pop,
+		}
+		_, dupFpBbnAddrErr := h.MsgServer.CreateFinalityProvider(h.Ctx, msg)
+		require.EqualError(t, dupFpBbnAddrErr, types.ErrFpRegistered.Wrapf("there is already an finality provider registered with the same babylon address: %s", dupFpAddr).Error())
 	})
 }
 

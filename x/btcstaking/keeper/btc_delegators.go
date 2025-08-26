@@ -61,6 +61,62 @@ func (k Keeper) getBTCDelegatorDelegations(ctx context.Context, fpBTCPK *bbn.BIP
 	return &types.BTCDelegatorDelegations{Dels: btcDels}
 }
 
+// HandleFPBTCDelegations processes all BTC delegations for a given finality provider using a provided handler function.
+// This function works for both Babylon finality providers and consumer finality providers.
+// It automatically determines and selects the appropriate KV store based on the finality provider type.
+//
+// Parameters:
+// - ctx: The context for the operation
+// - fpBTCPK: The Bitcoin public key of the finality provider
+// - handler: A function that processes each BTCDelegation
+//
+// Returns:
+// - An error if the finality provider is not found or if there's an issue processing the delegations
+func (k Keeper) HandleFPBTCDelegations(ctx context.Context, fpBTCPK *bbn.BIP340PubKey, handler func(*types.BTCDelegation) error) error {
+	if !k.HasFinalityProvider(ctx, fpBTCPK.MustMarshal()) {
+		return types.ErrFpNotFound
+	}
+
+	store := k.btcDelegatorFpStore(ctx, fpBTCPK)
+	iterator := store.Iterator(nil, nil)
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		var btcDelIndex types.BTCDelegatorDelegationIndex
+		if err := btcDelIndex.Unmarshal(iterator.Value()); err != nil {
+			return err
+		}
+
+		for _, stakingTxHashBytes := range btcDelIndex.StakingTxHashList {
+			stakingTxHash, err := chainhash.NewHash(stakingTxHashBytes)
+			if err != nil {
+				return err
+			}
+			btcDel := k.getBTCDelegation(ctx, *stakingTxHash)
+			if btcDel != nil {
+				if err := handler(btcDel); err != nil {
+					return err
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+// FpTotalSatsStaked iterates trought all the finality provider btc delegations and calculates the total amount of
+// sats staked to it
+func (k Keeper) FpTotalSatsStaked(ctx context.Context, fpBTCPK *bbn.BIP340PubKey) (uint64, error) {
+	totalVp := 0
+	if err := k.HandleFPBTCDelegations(ctx, fpBTCPK, func(b *types.BTCDelegation) error {
+		totalVp += int(b.TotalSat)
+		return nil
+	}); err != nil {
+		return 0, err
+	}
+	return uint64(totalVp), nil
+}
+
 // btcDelegatorFpStore returns the KVStore of the BTC delegators
 // prefix: BTCDelegatorKey || finality provider's Bitcoin secp256k1 PK
 // key: delegator's Bitcoin secp256k1 PK
