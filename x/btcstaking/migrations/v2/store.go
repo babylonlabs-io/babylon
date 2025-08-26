@@ -5,13 +5,7 @@ import (
 
 	"cosmossdk.io/store/prefix"
 	storetypes "cosmossdk.io/store/types"
-<<<<<<< HEAD
 	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
-	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types/allowlist"
-	"github.com/btcsuite/btcd/chaincfg/chainhash"
-=======
-	"github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
->>>>>>> 698befc (imp(btcstk): remove allow-lists logic and state (#1585))
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

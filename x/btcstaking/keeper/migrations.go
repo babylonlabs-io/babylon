@@ -3,14 +3,9 @@ package keeper
 import (
 	"context"
 
-<<<<<<< HEAD
 	v2 "github.com/babylonlabs-io/babylon/v3/x/btcstaking/migrations/v2"
+	v3 "github.com/babylonlabs-io/babylon/v3/x/btcstaking/migrations/v3"
 	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
-=======
-	v2 "github.com/babylonlabs-io/babylon/v4/x/btcstaking/migrations/v2"
-	v3 "github.com/babylonlabs-io/babylon/v4/x/btcstaking/migrations/v3"
-	"github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
->>>>>>> 698befc (imp(btcstk): remove allow-lists logic and state (#1585))
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

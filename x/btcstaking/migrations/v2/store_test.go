@@ -7,18 +7,10 @@ import (
 
 	storetypes "cosmossdk.io/store/types"
 
-<<<<<<< HEAD
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
 	keepertest "github.com/babylonlabs-io/babylon/v3/testutil/keeper"
 	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/keeper"
 	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
-	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types/allowlist"
-=======
-	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
-	keepertest "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
-	"github.com/babylonlabs-io/babylon/v4/x/btcstaking/keeper"
-	"github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
->>>>>>> 698befc (imp(btcstk): remove allow-lists logic and state (#1585))
 
 	"github.com/stretchr/testify/require"
 )
