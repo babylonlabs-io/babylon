@@ -14,12 +14,20 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+<<<<<<< HEAD
 	"github.com/babylonlabs-io/babylon/v3/app/signingcontext"
 	asig "github.com/babylonlabs-io/babylon/v3/crypto/schnorr-adaptor-signature"
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
 	btclctypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
 	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types/allowlist"
+=======
+	"github.com/babylonlabs-io/babylon/v4/app/signingcontext"
+	asig "github.com/babylonlabs-io/babylon/v4/crypto/schnorr-adaptor-signature"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	btclctypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
+	"github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+>>>>>>> 698befc (imp(btcstk): remove allow-lists logic and state (#1585))
 )
 
 // CreateBTCDelegation creates a BTC delegation
@@ -62,29 +70,6 @@ func (k Keeper) CreateBTCDelegation(ctx sdk.Context, parsedMsg *types.ParsedCrea
 	// - exactly one FP is from Babylon
 	if err := k.validateMultiStakedFPs(ctx, parsedMsg.FinalityProviderKeys.PublicKeysBbnFormat); err != nil {
 		return err
-	}
-
-	// 7. if allow list is enabled we need to check whether staking transactions hash
-	// is in the allow list
-	if isAllowListEnabled(ctx, params) {
-		if !k.IsStakingTransactionAllowed(ctx, &stakingTxHash) {
-			return types.ErrInvalidStakingTx.Wrapf("staking tx hash: %s, is not in the allow list", stakingTxHash.String())
-		}
-	}
-
-	// Check multi-staking allow list
-	// During multi-staking allow-list period, only existing BTC delegations
-	// in the allow-list can become multi-staked via stake expansion or
-	// already existing multi-staking delegation (extended from the allow-list)
-	isMultiStaking := parsedMsg.FinalityProviderKeys.Len() > 1
-	if isMultiStaking && allowlist.IsMultiStakingAllowListEnabled(ctx.BlockHeight()) {
-		allowed, err := k.IsMultiStakingAllowed(ctx, parsedMsg)
-		if err != nil {
-			return err
-		}
-		if !allowed {
-			return types.ErrInvalidStakingTx.Wrapf("staking tx hash: %s, is not eligible for multi-staking", parsedMsg.StkExp.PreviousActiveStkTxHash.String())
-		}
 	}
 
 	// everything is good, if the staking tx is not included on BTC consume additinal
@@ -353,13 +338,6 @@ func (k Keeper) btcUndelegate(
 		}
 	}
 	return nil
-}
-
-// isAllowListEnabled checks if the allow list is enabled at the given height
-// allow list is enabled if AllowListExpirationHeight is larger than 0,
-// and current block height is less than AllowListExpirationHeight
-func isAllowListEnabled(ctx sdk.Context, p *types.Params) bool {
-	return p.AllowListExpirationHeight > 0 && uint64(ctx.BlockHeight()) < p.AllowListExpirationHeight
 }
 
 func (k Keeper) getTimeInfoAndParams(

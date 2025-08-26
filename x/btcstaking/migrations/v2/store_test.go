@@ -7,11 +7,18 @@ import (
 
 	storetypes "cosmossdk.io/store/types"
 
+<<<<<<< HEAD
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
 	keepertest "github.com/babylonlabs-io/babylon/v3/testutil/keeper"
 	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/keeper"
 	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types/allowlist"
+=======
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	keepertest "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
+	"github.com/babylonlabs-io/babylon/v4/x/btcstaking/keeper"
+	"github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+>>>>>>> 698befc (imp(btcstk): remove allow-lists logic and state (#1585))
 
 	"github.com/stretchr/testify/require"
 )
@@ -50,17 +57,6 @@ func TestMigrateStore(t *testing.T) {
 	for i := 0; i < paramsVersions; i++ {
 		params := btcStakingKeeper.GetParamsByVersion(ctx, uint32(i))
 		require.Equal(t, uint32(1), params.MaxFinalityProviders)
-	}
-
-	// check if multi-staking allow list is indexed
-	txHashes, err := allowlist.LoadMultiStakingAllowList()
-	require.NoError(t, err)
-	require.NotEmpty(t, txHashes)
-	store := ctx.KVStore(storeKey)
-	for _, txHash := range txHashes {
-		key := append(types.AllowedMultiStakingTxHashesKey, txHash[:]...) //nolint:gocritic
-		exists := store.Has(key)
-		require.True(t, exists, "tx hash %s should be indexed in the allow list", txHash.String())
 	}
 
 	// check if all finality providers have the BSN ID set to the test chain ID
