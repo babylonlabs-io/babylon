@@ -23,7 +23,7 @@ func (k Keeper) InitGenesis(ctx context.Context, gs types.GenesisState) error {
 	}
 
 	for _, fp := range gs.FinalityProviders {
-		k.setFinalityProvider(ctx, fp)
+		k.SetFinalityProvider(ctx, fp)
 	}
 
 	for _, btcDel := range gs.BtcDelegations {
@@ -71,6 +71,32 @@ func (k Keeper) InitGenesis(ctx context.Context, gs types.GenesisState) error {
 		}
 	}
 
+	for _, fpAddrStr := range gs.FpBbnAddr {
+		fpAddr, err := sdk.AccAddressFromBech32(fpAddrStr)
+		if err != nil {
+			return fmt.Errorf("error decoding fp addr %s: %w", fpAddrStr, err)
+		}
+		if err := k.SetFpBbnAddr(ctx, fpAddr); err != nil {
+			return err
+		}
+	}
+
+	for _, deletedFpBtcPkHex := range gs.DeletedFpsBtcPkHex {
+		deletedFpBtcPk, err := bbn.NewBIP340PubKeyFromHex(deletedFpBtcPkHex)
+		if err != nil {
+			return fmt.Errorf("error decoding blocked fp btc pk hex %s: %w", deletedFpBtcPkHex, err)
+		}
+		if err := k.SoftDeleteFinalityProvider(ctx, deletedFpBtcPk); err != nil {
+			return err
+		}
+	}
+
+	if gs.LargestBtcReorg != nil {
+		if err := k.SetLargestBtcReorg(ctx, *gs.LargestBtcReorg); err != nil {
+			return err
+		}
+	}
+
 	if gs.LargestBtcReorg != nil {
 		if err := k.SetLargestBtcReorg(ctx, *gs.LargestBtcReorg); err != nil {
 			return err
@@ -102,6 +128,16 @@ func (k Keeper) ExportGenesis(ctx context.Context) (*types.GenesisState, error) 
 		return nil, err
 	}
 
+	fpBbnAddr, err := k.fpBbnAddrs(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	deletedFps, err := k.deletedFps(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	txHashes, err := k.allowedStakingTxHashes(ctx)
 	if err != nil {
 		return nil, err
@@ -116,6 +152,8 @@ func (k Keeper) ExportGenesis(ctx context.Context) (*types.GenesisState, error) 
 		Events:                 evts,
 		AllowedStakingTxHashes: txHashes,
 		LargestBtcReorg:        k.GetLargestBtcReorg(ctx),
+		FpBbnAddr:              fpBbnAddr,
+		DeletedFpsBtcPkHex:     deletedFps,
 	}, nil
 }
 
@@ -124,12 +162,12 @@ func (k Keeper) finalityProviders(ctx context.Context) ([]*types.FinalityProvide
 	iter := k.finalityProviderStore(ctx).Iterator(nil, nil)
 	defer iter.Close()
 
-	for ; iter.Valid(); iter.Next() {
-		var fp types.FinalityProvider
-		if err := fp.Unmarshal(iter.Value()); err != nil {
-			return nil, err
-		}
+	err := k.IterateFinalityProvider(ctx, func(fp types.FinalityProvider) error {
 		fps = append(fps, &fp)
+		return nil
+	})
+	if err != nil {
+		return nil, err
 	}
 
 	return fps, nil
@@ -268,6 +306,47 @@ func (k Keeper) setEventIdx(
 	store.Set(sdk.Uint64ToBigEndian(evt.Idx), bz)
 
 	return nil
+}
+
+func (k Keeper) deletedFps(ctx context.Context) ([]string, error) {
+	entries := make([]string, 0)
+	err := k.finalityProvidersDeleted.Walk(ctx, nil, func(key []byte) (stop bool, err error) {
+		fpBtcPk, err := bbn.NewBIP340PubKey(key)
+		if err != nil {
+			return true, err
+		}
+
+		entries = append(entries, fpBtcPk.MarshalHex())
+		return false, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return entries, nil
+}
+
+func (k Keeper) fpBbnAddrs(ctx context.Context) ([]string, error) {
+	entries := make([]string, 0)
+
+	iterator, err := k.fpBbnAddr.Iterate(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		key, err := iterator.Key()
+		if err != nil {
+			return nil, err
+		}
+		if len(key) == 0 {
+			continue
+		}
+		entries = append(entries, sdk.AccAddress(key).String())
+	}
+
+	return entries, nil
 }
 
 // parseUintsFromStoreKey expects to receive a key with
