@@ -209,7 +209,9 @@ func AddEvidenceOfEquivocationCmd() *cobra.Command {
 		Short: "Submit evidence of finality provider equivocation",
 		Long: strings.TrimSpace(
 			`Submit evidence that a finality provider signed conflicting blocks.
-            This will slash the finality provider if the evidence is valid.`),
+            This will slash the finality provider if the evidence is valid.
+            
+            Requires --signer flag to specify the signer address and --from flag for transaction signing.`),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
@@ -238,8 +240,13 @@ func AddEvidenceOfEquivocationCmd() *cobra.Command {
 				}
 			}
 
+			signer, _ := cmd.Flags().GetString("signer")
+			if signer == "" {
+				return fmt.Errorf("signer address is required")
+			}
+
 			msg := types.MsgEquivocationEvidence{
-				Signer:                  clientCtx.FromAddress.String(),
+				Signer:                  signer,
 				FpBtcPkHex:              args[0],
 				BlockHeight:             blockHeight,
 				PubRandHex:              args[2],
@@ -250,17 +257,16 @@ func AddEvidenceOfEquivocationCmd() *cobra.Command {
 				SigningContext:          args[7],
 			}
 
-			genOnly, _ := cmd.Flags().GetBool(flags.FlagGenerateOnly)
-			if !genOnly {
-				if _, err := msg.ParseToEvidence(); err != nil {
-					return fmt.Errorf("failed to parse evidence: %v", err)
-				}
+			if _, err := msg.ParseToEvidence(); err != nil {
+				return fmt.Errorf("failed to parse evidence: %v", err)
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
 		},
 	}
 	flags.AddTxFlagsToCmd(cmd)
+	cmd.Flags().String("signer", "", "signer address for the evidence (required)")
+	cmd.MarkFlagRequired("signer")
 
 	return cmd
 }
