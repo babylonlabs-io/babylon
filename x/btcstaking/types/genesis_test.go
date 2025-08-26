@@ -1,7 +1,6 @@
 package types_test
 
 import (
-	"encoding/hex"
 	"fmt"
 	"math/rand"
 	"testing"
@@ -23,15 +22,8 @@ import (
 
 func TestGenesisState_Validate(t *testing.T) {
 	entriesCount := 10
-	r := rand.New(rand.NewSource(time.Now().Unix()))
-	txHashes := make([]string, 0, entriesCount)
 	consumerEvents := make([]*types.ConsumerEvent, 0, entriesCount)
 	for i := range entriesCount {
-		txHash := datagen.GenRandomTx(r).TxHash()
-		// hex encode the txHash bytes
-		txHashStr := hex.EncodeToString(txHash[:])
-		txHashes = append(txHashes, txHashStr)
-
 		event := &types.ConsumerEvent{
 			ConsumerId: fmt.Sprintf("consumer%d", i+1),
 			Events: &types.BTCStakingIBCPacket{
@@ -72,8 +64,7 @@ func TestGenesisState_Validate(t *testing.T) {
 							MaxFinalityProviders: 1,
 						},
 					},
-					AllowedStakingTxHashes: txHashes,
-					ConsumerEvents:         consumerEvents,
+					ConsumerEvents: consumerEvents,
 				}
 			},
 			valid: true,
@@ -169,26 +160,6 @@ func TestGenesisState_Validate(t *testing.T) {
 			valid: true,
 		},
 		{
-			desc: "duplicate staking tx hash",
-			genState: func() *types.GenesisState {
-				params1 := types.DefaultParams()
-				params1.BtcActivationHeight = 100
-
-				params2 := types.DefaultParams()
-				params2.BtcActivationHeight = 101
-
-				return &types.GenesisState{
-					Params: []*types.Params{
-						&params1,
-						&params2,
-					},
-					AllowedStakingTxHashes: []string{txHashes[0], txHashes[0]},
-				}
-			},
-			valid:  false,
-			errMsg: "duplicate staking tx hash",
-		},
-		{
 			desc: "duplicate consumer events",
 			genState: func() *types.GenesisState {
 				params1 := types.DefaultParams()
@@ -202,8 +173,7 @@ func TestGenesisState_Validate(t *testing.T) {
 						&params1,
 						&params2,
 					},
-					AllowedStakingTxHashes: txHashes,
-					ConsumerEvents:         []*types.ConsumerEvent{consumerEvents[0], consumerEvents[0]},
+					ConsumerEvents: []*types.ConsumerEvent{consumerEvents[0], consumerEvents[0]},
 				}
 			},
 			valid:  false,
