@@ -54,13 +54,13 @@ func NewKeeper(
 		authority:     authority,
 
 		// Initialize collections
-		ParamsCollection: collections.NewItem[types.Params](
+		ParamsCollection: collections.NewItem(
 			sb,
 			types.ParamsKey,
 			"params",
 			codec.CollValue[types.Params](cdc),
 		),
-		ConsumerRegistry: collections.NewMap[string, types.ConsumerRegister](
+		ConsumerRegistry: collections.NewMap(
 			sb,
 			types.ConsumerRegisterKey,
 			"consumer_registry",
