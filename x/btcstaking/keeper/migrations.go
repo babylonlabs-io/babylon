@@ -7,33 +7,48 @@ import (
 	"github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	v3 "github.com/cosmos/cosmos-sdk/x/gov/migrations/v3"
 )
 
 // Migrator is a struct for handling in-place store migrations.
 type Migrator struct {
-	keeper Keeper
+	k Keeper
 }
 
 // NewMigrator returns a new Migrator instance.
 func NewMigrator(keeper Keeper) Migrator {
 	return Migrator{
-		keeper: keeper,
+		k: keeper,
 	}
 }
 
 // Migrate1to2 migrates from version 1 to 2.
 func (m Migrator) Migrate1to2(ctx sdk.Context) error {
-	store := runtime.KVStoreAdapter(m.keeper.storeService.OpenKVStore(ctx))
+	store := runtime.KVStoreAdapter(m.k.storeService.OpenKVStore(ctx))
 	return v2.MigrateStore(
 		ctx,
 		store,
-		m.keeper.cdc,
+		m.k.cdc,
 		func(ctx context.Context, p *types.Params) error {
 			p.MaxFinalityProviders = 1
 			return nil
 		},
-		m.keeper.IndexAllowedMultiStakingTransaction,
-		m.keeper.migrateBabylonFinalityProviders,
+		m.k.IndexAllowedMultiStakingTransaction,
+		m.k.migrateBabylonFinalityProviders,
+	)
+}
+
+// Migrate2to3 migrates from version 2 to 3.
+func (m Migrator) Migrate2to3(ctx sdk.Context) error {
+	store := runtime.KVStoreAdapter(m.k.storeService.OpenKVStore(ctx))
+	// Remove allow lists records from store:
+	// - initial allow-list
+	// - multi-staking allow-list (if set - only testnet)
+	return v3.MigrateStore(
+		ctx,
+		store,
+		m.k.cdc,
+		m.k.RemoveAllAllowListsRecords,
 	)
 }
 

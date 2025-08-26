@@ -35,7 +35,8 @@ var (
 	LargestBtcReorgInBlocks        = collections.NewPrefix(13) // key prefix for the BTC block height difference of the largest reorg
 	FinalityProviderBsnIndexKey    = []byte{0x14}              // key prefix for the finality provider BSN index
 	AllowedMultiStakingTxHashesKey = collections.NewPrefix(15) // key prefix for allowed multi-staking tx hashes
-
+	FpBbnAddrKey                   = collections.NewPrefix(16) // key prefix for index fpBbnAddr
+	FinalityProvidersDeleted       = collections.NewPrefix(17) // key prefix for the deleted finality provider btcPk
 )
 
 func BuildBsnIndexKey(bsnId string, btcPK *bbn.BIP340PubKey) []byte {
