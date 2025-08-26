@@ -26,8 +26,9 @@ type Keeper struct {
 
 	Schema collections.Schema
 	// Collections for KV store management
-	ParamsCollection collections.Item[types.Params]
-	ConsumerRegistry collections.Map[string, types.ConsumerRegister]
+	ParamsCollection       collections.Item[types.Params]
+	ConsumerRegistry       collections.Map[string, types.ConsumerRegister]
+	FinalityContractIndex  collections.KeySet[string]
 }
 
 func NewKeeper(
@@ -65,6 +66,12 @@ func NewKeeper(
 			"consumer_registry",
 			collections.StringKey,
 			codec.CollValue[types.ConsumerRegister](cdc),
+		),
+		FinalityContractIndex: collections.NewKeySet[string](
+			sb,
+			types.FinalityContractKey,
+			"finality_contract_index",
+			collections.StringKey,
 		),
 	}
 

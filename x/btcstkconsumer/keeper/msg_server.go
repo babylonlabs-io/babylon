@@ -54,6 +54,15 @@ func (ms msgServer) RegisterConsumer(goCtx context.Context, req *types.MsgRegist
 			return nil, types.ErrInvalidRollupConsumerRequest.Wrapf("rollup finality contract does not exist")
 		}
 
+		// check if finality contract is already registered with another consumer
+		isRegistered, err := ms.Keeper.IsFinalityContractRegistered(goCtx, req.RollupFinalityContractAddress)
+		if err != nil {
+			return nil, err
+		}
+		if isRegistered {
+			return nil, types.ErrFinalityContractAlreadyRegistered
+		}
+
 		// all good, register this rollup consumer
 		consumerRegister := types.NewRollupConsumerRegister(
 			req.ConsumerId,
@@ -63,6 +72,9 @@ func (ms msgServer) RegisterConsumer(goCtx context.Context, req *types.MsgRegist
 			req.BabylonRewardsCommission,
 		)
 		if err := ms.Keeper.RegisterConsumer(goCtx, consumerRegister); err != nil {
+			return nil, err
+		}
+		if err := ms.Keeper.registerFinalityContract(goCtx, req.RollupFinalityContractAddress); err != nil {
 			return nil, err
 		}
 	} else {
