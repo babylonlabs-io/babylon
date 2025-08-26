@@ -130,13 +130,13 @@ func FuzzMsgCreateFinalityProvider(f *testing.F) {
 		}
 
 		// tries to create another fp with same bbn address as an registered one
-		fp, err := datagen.GenRandomFinalityProvider(r, h.FpPopContext(), "")
+		fp, err := datagen.GenRandomFinalityProvider(r)
 		require.NoError(t, err)
 		dupFpAddr := fps[0].Addr
 
 		btcSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		require.NoError(t, err)
-		pop, err := datagen.NewPoPBTC(h.FpPopContext(), sdk.MustAccAddressFromBech32(dupFpAddr), btcSK)
+		pop, err := datagen.NewPoPBTC(sdk.MustAccAddressFromBech32(dupFpAddr), btcSK)
 		require.NoError(t, err)
 		btcPK := btcSK.PubKey()
 		bip340PK := bbn.NewBIP340PubKeyFromBTCPK(btcPK)

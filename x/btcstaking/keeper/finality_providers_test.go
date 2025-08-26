@@ -204,15 +204,11 @@ func FuzzSlashConsumerFinalityProvider(f *testing.F) {
 		// mock BTC light client and BTC checkpoint modules
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-		h := testutil.NewHelper(t, btclcKeeper, btccKeeper, nil)
+		h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
 		h.GenAndApplyParams(r)
 
-		// register a random consumer on Babylon
-		randomConsumer := h.RegisterAndVerifyConsumer(t, r)
-
 		// create a consumer finality provider
-		_, _, fp, err := h.CreateConsumerFinalityProvider(r, randomConsumer.ConsumerId)
-		require.NoError(t, err)
+		_, _, fp := h.CreateFinalityProvider(r)
 		fpBTCPK := fp.BtcPk
 
 		// Verify consumer FP exists and is not slashed initially
@@ -245,7 +241,7 @@ func FuzzHasFpRegistered(f *testing.F) {
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		t.Parallel()
-		h := testutil.NewHelper(t, nil, nil, nil)
+		h := testutil.NewHelper(t, nil, nil)
 
 		randAddr := datagen.GenRandomAddress()
 
@@ -268,7 +264,7 @@ func FuzzIsFinalityProviderDeleted(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		t.Parallel()
 		r := rand.New(rand.NewSource(seed))
-		h := testutil.NewHelper(t, nil, nil, nil)
+		h := testutil.NewHelper(t, nil, nil)
 
 		randFpBtcPk, err := datagen.GenRandomBIP340PubKey(r)
 		require.NoError(t, err)
@@ -291,13 +287,13 @@ func FuzzIterateFinalityProvider(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		t.Parallel()
 		r := rand.New(rand.NewSource(seed))
-		h := testutil.NewHelper(t, nil, nil, nil)
+		h := testutil.NewHelper(t, nil, nil)
 
 		numFps := datagen.RandomInt(r, 10) + 1
 
 		fpByBtcPk := make(map[string]struct{}, numFps)
 		for i := 0; i < int(numFps); i++ {
-			fp, err := datagen.GenRandomFinalityProvider(r, h.FpPopContext(), "")
+			fp, err := datagen.GenRandomFinalityProvider(r)
 			require.NoError(t, err)
 			msg := &types.MsgCreateFinalityProvider{
 				Addr:        fp.Addr,
@@ -309,7 +305,6 @@ func FuzzIterateFinalityProvider(f *testing.F) {
 				),
 				BtcPk: fp.BtcPk,
 				Pop:   fp.Pop,
-				BsnId: fp.BsnId,
 			}
 			_, err = h.MsgServer.CreateFinalityProvider(h.Ctx, msg)
 			require.NoError(t, err)
