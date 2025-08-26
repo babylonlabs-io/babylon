@@ -68,11 +68,7 @@ require (
 
 require github.com/gogo/status v1.1.0 // indirect
 
-require (
-	github.com/cosmos/ibc-apps/modules/async-icq/v8 v8.0.1-0.20240124225747-f055ce5b405c // indirect
-	github.com/iancoleman/orderedmap v0.3.0 // indirect
-	github.com/jinzhu/copier v0.3.5 // indirect
-)
+require github.com/iancoleman/orderedmap v0.3.0 // indirect
 
 require (
 	cloud.google.com/go/auth v0.6.0 // indirect
