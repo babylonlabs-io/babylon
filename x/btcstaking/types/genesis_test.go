@@ -157,6 +157,26 @@ func TestGenesisState_Validate(t *testing.T) {
 			},
 			valid: true,
 		},
+		{
+			desc: "duplicate staking tx hash",
+			genState: func() *types.GenesisState {
+				params1 := types.DefaultParams()
+				params1.BtcActivationHeight = 100
+
+				params2 := types.DefaultParams()
+				params2.BtcActivationHeight = 101
+
+				return &types.GenesisState{
+					Params: []*types.Params{
+						&params1,
+						&params2,
+					},
+					AllowedStakingTxHashes: []string{txHashes[0], txHashes[0]},
+				}
+			},
+			valid:  false,
+			errMsg: "duplicate staking tx hash",
+		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.desc, func(t *testing.T) {

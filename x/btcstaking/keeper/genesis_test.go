@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"encoding/hex"
 	"math"
 	"math/rand"
 	"testing"
@@ -140,6 +141,7 @@ func setupTest(t *testing.T) (sdk.Context, *helper.Helper, *types.GenesisState) 
 	btcDelegations := make([]*types.BTCDelegation, 0)
 	events := make([]*types.EventIndex, 0)
 	btcDelegators := make([]*types.BTCDelegator, 0)
+	allowedStkTxHashes := make([]string, 0)
 	fpsBbnAddr := make([]string, 0)
 
 	blkHeight := uint64(r.Int63n(1000)) + math.MaxUint16
@@ -170,6 +172,8 @@ func setupTest(t *testing.T) (sdk.Context, *helper.Helper, *types.GenesisState) 
 			// BTC delegators idx
 			stakingTxHash, err := del.GetStakingTxHash()
 			h.NoError(err)
+
+			allowedStkTxHashes = append(allowedStkTxHashes, hex.EncodeToString(stakingTxHash[:]))
 
 			idxDelegatorStk := types.NewBTCDelegatorDelegationIndex()
 			err = idxDelegatorStk.Add(stakingTxHash)
@@ -214,15 +218,16 @@ func setupTest(t *testing.T) (sdk.Context, *helper.Helper, *types.GenesisState) 
 	}
 
 	gs := &types.GenesisState{
-		Params:             []*types.Params{&params},
-		FinalityProviders:  fps,
-		BtcDelegations:     btcDelegations,
-		BlockHeightChains:  chainsHeight,
-		BtcDelegators:      btcDelegators,
-		Events:             events,
-		LargestBtcReorg:    latestBtcReOrg,
-		FpBbnAddr:          fpsBbnAddr,
-		DeletedFpsBtcPkHex: deletedFps,
+		Params:                 []*types.Params{&params},
+		FinalityProviders:      fps,
+		BtcDelegations:         btcDelegations,
+		BlockHeightChains:      chainsHeight,
+		BtcDelegators:          btcDelegators,
+		Events:                 events,
+		AllowedStakingTxHashes: allowedStkTxHashes,
+		LargestBtcReorg:        latestBtcReOrg,
+		FpBbnAddr:              fpsBbnAddr,
+		DeletedFpsBtcPkHex:     deletedFps,
 	}
 	require.NoError(t, gs.Validate())
 	return ctx, h, gs

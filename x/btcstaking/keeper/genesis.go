@@ -117,7 +117,7 @@ func (k Keeper) ExportGenesis(ctx context.Context) (*types.GenesisState, error) 
 		return nil, err
 	}
 
-	fpBbnAddr, err := k.fpBtcPkByAddrEntries(ctx)
+	fpBbnAddr, err := k.fpBbnAddrs(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -127,16 +127,22 @@ func (k Keeper) ExportGenesis(ctx context.Context) (*types.GenesisState, error) 
 		return nil, err
 	}
 
+	txHashes, err := k.allowedStakingTxHashes(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	return &types.GenesisState{
-		Params:             k.GetAllParams(ctx),
-		FinalityProviders:  fps,
-		BtcDelegations:     dels,
-		BlockHeightChains:  k.blockHeightChains(ctx),
-		BtcDelegators:      btcDels,
-		Events:             evts,
-		LargestBtcReorg:    k.GetLargestBtcReorg(ctx),
-		FpBbnAddr:          fpBbnAddr,
-		DeletedFpsBtcPkHex: deletedFps,
+		Params:                 k.GetAllParams(ctx),
+		FinalityProviders:      fps,
+		BtcDelegations:         dels,
+		BlockHeightChains:      k.blockHeightChains(ctx),
+		BtcDelegators:          btcDels,
+		Events:                 evts,
+		AllowedStakingTxHashes: txHashes,
+		LargestBtcReorg:        k.GetLargestBtcReorg(ctx),
+		FpBbnAddr:              fpBbnAddr,
+		DeletedFpsBtcPkHex:     deletedFps,
 	}, nil
 }
 
@@ -309,7 +315,7 @@ func (k Keeper) deletedFps(ctx context.Context) ([]string, error) {
 	return entries, nil
 }
 
-func (k Keeper) fpBtcPkByAddrEntries(ctx context.Context) ([]string, error) {
+func (k Keeper) fpBbnAddrs(ctx context.Context) ([]string, error) {
 	entries := make([]string, 0)
 
 	iterator, err := k.fpBbnAddr.Iterate(ctx, nil)
