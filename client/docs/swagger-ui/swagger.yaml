@@ -6692,13 +6692,13 @@ paths:
                     type: string
                     format: uint64
                     title: >-
-                      allow_list_expiration_height is the height at which the
-                      allow list expires
+                      DEPRECATED: allow_list_expiration_height is the height at
+                      which the allow list expires
 
                       i.e all staking transactions are allowed to enter Babylon
                       chain afterwards
 
-                      setting it to 0 means allow list is disabled
+                      setting it to 0 means allow list is disabled (LEGACY)
                   btc_activation_height:
                     type: integer
                     format: int64
@@ -7049,13 +7049,13 @@ paths:
                     type: string
                     format: uint64
                     title: >-
-                      allow_list_expiration_height is the height at which the
-                      allow list expires
+                      DEPRECATED: allow_list_expiration_height is the height at
+                      which the allow list expires
 
                       i.e all staking transactions are allowed to enter Babylon
                       chain afterwards
 
-                      setting it to 0 means allow list is disabled
+                      setting it to 0 means allow list is disabled (LEGACY)
                   btc_activation_height:
                     type: integer
                     format: int64
@@ -7416,13 +7416,13 @@ paths:
                     type: string
                     format: uint64
                     title: >-
-                      allow_list_expiration_height is the height at which the
-                      allow list expires
+                      DEPRECATED: allow_list_expiration_height is the height at
+                      which the allow list expires
 
                       i.e all staking transactions are allowed to enter Babylon
                       chain afterwards
 
-                      setting it to 0 means allow list is disabled
+                      setting it to 0 means allow list is disabled (LEGACY)
                   btc_activation_height:
                     type: integer
                     format: int64
@@ -7788,13 +7788,14 @@ paths:
                           type: string
                           format: uint64
                           title: >-
-                            allow_list_expiration_height is the height at which
-                            the allow list expires
+                            DEPRECATED: allow_list_expiration_height is the
+                            height at which the allow list expires
 
                             i.e all staking transactions are allowed to enter
                             Babylon chain afterwards
 
                             setting it to 0 means allow list is disabled
+                            (LEGACY)
                         btc_activation_height:
                           type: integer
                           format: int64
@@ -15405,13 +15406,13 @@ definitions:
         type: string
         format: uint64
         title: >-
-          allow_list_expiration_height is the height at which the allow list
-          expires
+          DEPRECATED: allow_list_expiration_height is the height at which the
+          allow list expires
 
           i.e all staking transactions are allowed to enter Babylon chain
           afterwards
 
-          setting it to 0 means allow list is disabled
+          setting it to 0 means allow list is disabled (LEGACY)
       btc_activation_height:
         type: integer
         format: int64
@@ -16895,13 +16896,13 @@ definitions:
             type: string
             format: uint64
             title: >-
-              allow_list_expiration_height is the height at which the allow list
-              expires
+              DEPRECATED: allow_list_expiration_height is the height at which
+              the allow list expires
 
               i.e all staking transactions are allowed to enter Babylon chain
               afterwards
 
-              setting it to 0 means allow list is disabled
+              setting it to 0 means allow list is disabled (LEGACY)
           btc_activation_height:
             type: integer
             format: int64
@@ -17046,13 +17047,13 @@ definitions:
             type: string
             format: uint64
             title: >-
-              allow_list_expiration_height is the height at which the allow list
-              expires
+              DEPRECATED: allow_list_expiration_height is the height at which
+              the allow list expires
 
               i.e all staking transactions are allowed to enter Babylon chain
               afterwards
 
-              setting it to 0 means allow list is disabled
+              setting it to 0 means allow list is disabled (LEGACY)
           btc_activation_height:
             type: integer
             format: int64
@@ -17191,13 +17192,13 @@ definitions:
             type: string
             format: uint64
             title: >-
-              allow_list_expiration_height is the height at which the allow list
-              expires
+              DEPRECATED: allow_list_expiration_height is the height at which
+              the allow list expires
 
               i.e all staking transactions are allowed to enter Babylon chain
               afterwards
 
-              setting it to 0 means allow list is disabled
+              setting it to 0 means allow list is disabled (LEGACY)
           btc_activation_height:
             type: integer
             format: int64
@@ -17350,13 +17351,13 @@ definitions:
                   type: string
                   format: uint64
                   title: >-
-                    allow_list_expiration_height is the height at which the
-                    allow list expires
+                    DEPRECATED: allow_list_expiration_height is the height at
+                    which the allow list expires
 
                     i.e all staking transactions are allowed to enter Babylon
                     chain afterwards
 
-                    setting it to 0 means allow list is disabled
+                    setting it to 0 means allow list is disabled (LEGACY)
                 btc_activation_height:
                   type: integer
                   format: int64
@@ -17590,13 +17591,13 @@ definitions:
             type: string
             format: uint64
             title: >-
-              allow_list_expiration_height is the height at which the allow list
-              expires
+              DEPRECATED: allow_list_expiration_height is the height at which
+              the allow list expires
 
               i.e all staking transactions are allowed to enter Babylon chain
               afterwards
 
-              setting it to 0 means allow list is disabled
+              setting it to 0 means allow list is disabled (LEGACY)
           btc_activation_height:
             type: integer
             format: int64

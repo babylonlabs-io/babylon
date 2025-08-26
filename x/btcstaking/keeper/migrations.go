@@ -4,6 +4,7 @@ import (
 	"context"
 
 	v2 "github.com/babylonlabs-io/babylon/v4/x/btcstaking/migrations/v2"
+	v3 "github.com/babylonlabs-io/babylon/v4/x/btcstaking/migrations/v3"
 	"github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -32,8 +33,21 @@ func (m Migrator) Migrate1to2(ctx sdk.Context) error {
 			p.MaxFinalityProviders = 1
 			return nil
 		},
-		m.keeper.IndexAllowedMultiStakingTransaction,
 		m.keeper.migrateBabylonFinalityProviders,
+	)
+}
+
+// Migrate2to3 migrates from version 2 to 3.
+func (m Migrator) Migrate2to3(ctx sdk.Context) error {
+	store := runtime.KVStoreAdapter(m.keeper.storeService.OpenKVStore(ctx))
+	// Remove allow lists records from store:
+	// - initial allow-list
+	// - multi-staking allow-list (if set - only testnet)
+	return v3.MigrateStore(
+		ctx,
+		store,
+		m.keeper.cdc,
+		m.keeper.RemoveAllAllowListsRecords,
 	)
 }
 
