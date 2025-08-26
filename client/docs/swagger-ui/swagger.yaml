@@ -5010,6 +5010,13 @@ paths:
                       title: >-
                         bsn_id is the ID of the BSN the finality provider is
                         securing
+                    soft_deleted:
+                      type: boolean
+                      description: >-
+                        soft_deleted defines if the fp is soft deleted or not.
+                        If it is soft
+
+                        deleted he can't cast votes.
                   description: >-
                     FinalityProviderResponse defines a finality provider with
                     voting power
@@ -6083,6 +6090,13 @@ paths:
                     title: >-
                       bsn_id is the ID of the BSN the finality provider is
                       securing
+                  soft_deleted:
+                    type: boolean
+                    description: >-
+                      soft_deleted defines if the fp is soft deleted or not. If
+                      it is soft
+
+                      deleted he can't cast votes.
                 description: >-
                   FinalityProviderResponse defines a finality provider with
                   voting power
@@ -15295,6 +15309,11 @@ definitions:
       bsn_id:
         type: string
         title: bsn_id is the ID of the BSN the finality provider is securing
+      soft_deleted:
+        type: boolean
+        description: |-
+          soft_deleted defines if the fp is soft deleted or not. If it is soft
+          deleted he can't cast votes.
     description: |-
       FinalityProviderResponse defines a finality provider with voting power
       information.
@@ -16545,6 +16564,13 @@ definitions:
           bsn_id:
             type: string
             title: bsn_id is the ID of the BSN the finality provider is securing
+          soft_deleted:
+            type: boolean
+            description: >-
+              soft_deleted defines if the fp is soft deleted or not. If it is
+              soft
+
+              deleted he can't cast votes.
         description: |-
           FinalityProviderResponse defines a finality provider with voting power
           information.
@@ -16685,6 +16711,13 @@ definitions:
             bsn_id:
               type: string
               title: bsn_id is the ID of the BSN the finality provider is securing
+            soft_deleted:
+              type: boolean
+              description: >-
+                soft_deleted defines if the fp is soft deleted or not. If it is
+                soft
+
+                deleted he can't cast votes.
           description: >-
             FinalityProviderResponse defines a finality provider with voting
             power
