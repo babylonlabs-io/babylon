@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"slices"
 	"sort"
 
 	bbn "github.com/babylonlabs-io/babylon/v2/types"
@@ -78,6 +79,10 @@ func (gs GenesisState) Validate() error {
 		}
 	}
 
+	if err := gs.validateAllowedStakingTxHashes(); err != nil {
+		return err
+	}
+
 	if err := gs.validateFpBbnAddr(gs.FinalityProviders); err != nil {
 		return err
 	}
@@ -108,6 +113,23 @@ func (h AllowedStakingTxHashStr) Validate() error {
 	// NewHash validates hash size
 	if _, err := chainhash.NewHash(bz); err != nil {
 		return err
+	}
+	return nil
+}
+
+// validateAllowedStakingTxHashes validates there're no duplicate entries
+// and the hash has the corresponding size
+func (gs GenesisState) validateAllowedStakingTxHashes() error {
+	hashes := make(map[string]bool)
+	for _, hStr := range gs.AllowedStakingTxHashes {
+		if _, exists := hashes[hStr]; exists {
+			return fmt.Errorf("duplicate staking tx hash: %s", hStr)
+		}
+		hashes[hStr] = true
+		h := AllowedStakingTxHashStr(hStr)
+		if err := h.Validate(); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -272,6 +294,8 @@ func SortData(gs *GenesisState) {
 	sort.Slice(gs.Events, func(i, j int) bool {
 		return gs.Events[i].Idx < gs.Events[j].Idx
 	})
+
+	slices.Sort(gs.AllowedStakingTxHashes)
 
 	sort.Slice(gs.FpBbnAddr, func(i, j int) bool {
 		return gs.FpBbnAddr[i] < gs.FpBbnAddr[j]
