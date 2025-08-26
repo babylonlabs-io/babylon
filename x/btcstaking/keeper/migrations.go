@@ -11,29 +11,29 @@ import (
 
 // Migrator is a struct for handling in-place store migrations.
 type Migrator struct {
-	keeper Keeper
+	k Keeper
 }
 
 // NewMigrator returns a new Migrator instance.
 func NewMigrator(keeper Keeper) Migrator {
 	return Migrator{
-		keeper: keeper,
+		k: keeper,
 	}
 }
 
 // Migrate1to2 migrates from version 1 to 2.
 func (m Migrator) Migrate1to2(ctx sdk.Context) error {
-	store := runtime.KVStoreAdapter(m.keeper.storeService.OpenKVStore(ctx))
+	store := runtime.KVStoreAdapter(m.k.storeService.OpenKVStore(ctx))
 	return v2.MigrateStore(
 		ctx,
 		store,
-		m.keeper.cdc,
+		m.k.cdc,
 		func(ctx context.Context, p *types.Params) error {
 			p.MaxFinalityProviders = 1
 			return nil
 		},
-		m.keeper.IndexAllowedMultiStakingTransaction,
-		m.keeper.migrateBabylonFinalityProviders,
+		m.k.IndexAllowedMultiStakingTransaction,
+		m.k.migrateBabylonFinalityProviders,
 	)
 }
 
