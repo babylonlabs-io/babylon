@@ -60,6 +60,17 @@ func (k Keeper) InitGenesis(ctx context.Context, gs types.GenesisState) error {
 		}
 	}
 
+	for _, hStr := range gs.AllowedStakingTxHashes {
+		// hashes are hex encoded for better readability
+		bz, err := hex.DecodeString(hStr)
+		if err != nil {
+			return fmt.Errorf("error decoding tx hash: %w", err)
+		}
+		if err := k.AllowedStakingTxHashesKeySet.Set(ctx, bz); err != nil {
+			return err
+		}
+	}
+
 	for _, fpAddrStr := range gs.FpBbnAddr {
 		fpAddr, err := sdk.AccAddressFromBech32(fpAddrStr)
 		if err != nil {
