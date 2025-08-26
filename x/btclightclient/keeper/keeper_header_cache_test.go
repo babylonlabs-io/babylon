@@ -39,8 +39,8 @@ func TestGetMainChainFrom_CachedTip(t *testing.T) {
 	cachedTip := keeper.HeaderCache().GetCachedTip()
 	require.Nil(t, cachedTip)
 
-	// First call to GetMainChainFrom - should fetch and cache tip
-	result1 := keeper.GetMainChainFrom(ctx, 1002)
+	// First call to GetMainChainFromWithCache - should fetch and cache tip
+	result1 := keeper.GetMainChainFromWithCache(ctx, 1002)
 	require.Equal(t, 3, len(result1))
 
 	// Verify tip is now cached
@@ -49,7 +49,7 @@ func TestGetMainChainFrom_CachedTip(t *testing.T) {
 	require.Equal(t, uint32(1004), cachedTip.Height) // Should be highest header
 
 	// Second call - should use cached tip (no store fetch for tip)
-	result2 := keeper.GetMainChainFrom(ctx, 1003)
+	result2 := keeper.GetMainChainFromWithCache(ctx, 1003)
 	require.Equal(t, 2, len(result2))
 
 	// Cached tip should be the same object
@@ -80,7 +80,7 @@ func TestGetMainChainFrom_TipConsistencyCheck(t *testing.T) {
 	keeper.InsertHeaderInfos(ctx, headers)
 
 	// Block 1: First call - caches tip
-	result1 := keeper.GetMainChainFrom(ctx, 2000)
+	result1 := keeper.GetMainChainFromWithCache(ctx, 2000)
 	require.Equal(t, 3, len(result1))
 
 	originalCachedTip := keeper.HeaderCache().GetCachedTip()
@@ -96,7 +96,7 @@ func TestGetMainChainFrom_TipConsistencyCheck(t *testing.T) {
 	keeper.InsertHeaderInfos(ctx, []*types.BTCHeaderInfo{newHeader})
 
 	// Block 2: Cache is empty, should fetch new tip and return updated results
-	result2 := keeper.GetMainChainFrom(ctx, 2000)
+	result2 := keeper.GetMainChainFromWithCache(ctx, 2000)
 	require.Equal(t, 4, len(result2)) // Should include new header
 
 	// Cached tip should be updated with new tip
@@ -128,7 +128,7 @@ func TestGetMainChainFrom_CachedTipAfterReset(t *testing.T) {
 	keeper.InsertHeaderInfos(ctx, headers)
 
 	// First call - caches tip
-	result1 := keeper.GetMainChainFrom(ctx, 3000)
+	result1 := keeper.GetMainChainFromWithCache(ctx, 3000)
 	require.Equal(t, 3, len(result1))
 
 	cachedTip := keeper.HeaderCache().GetCachedTip()
@@ -143,7 +143,7 @@ func TestGetMainChainFrom_CachedTipAfterReset(t *testing.T) {
 	require.Nil(t, cachedTip)
 
 	// Next call should fetch and cache tip again
-	result2 := keeper.GetMainChainFrom(ctx, 3001)
+	result2 := keeper.GetMainChainFromWithCache(ctx, 3001)
 	require.Equal(t, 2, len(result2))
 
 	// Tip should be cached again
@@ -186,7 +186,7 @@ func TestGetMainChainFrom_TipCacheEfficiency(t *testing.T) {
 	}
 
 	for i, tc := range testCases {
-		result := keeper.GetMainChainFrom(ctx, tc.startHeight)
+		result := keeper.GetMainChainFromWithCache(ctx, tc.startHeight)
 		require.Equal(t, tc.expectedLen, len(result), "Test case %d failed", i)
 
 		// After first call, tip should be cached
@@ -226,13 +226,13 @@ func TestResetHeaderCache_PreservesCorrectness(t *testing.T) {
 	keeper.InsertHeaderInfos(ctx, headers)
 
 	// Get results before cache reset
-	resultBefore := keeper.GetMainChainFrom(ctx, 3005)
+	resultBefore := keeper.GetMainChainFromWithCache(ctx, 3005)
 
 	// Reset cache
 	keeper.ResetHeaderCache()
 
 	// Get results after cache reset - should be identical
-	resultAfter := keeper.GetMainChainFrom(ctx, 3005)
+	resultAfter := keeper.GetMainChainFromWithCache(ctx, 3005)
 
 	require.Equal(t, len(resultBefore), len(resultAfter))
 	for i := range resultBefore {

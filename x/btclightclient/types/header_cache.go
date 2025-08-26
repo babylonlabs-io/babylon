@@ -1,7 +1,7 @@
 package types
 
 // HeaderCache provides caching for individual BTC headers to
-// eliminate duplicate KV store I/O operations across multiple GetMainChainFrom calls
+// eliminate duplicate KV store I/O operations across multiple GetMainChainFromWithCache calls
 type HeaderCache struct {
 	// headers stores cached headers by height
 	// Note: HeadersObjectPrefix mapping: Height -> BTCHeaderInfo, key is height as unique identifier

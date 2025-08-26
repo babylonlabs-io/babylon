@@ -73,7 +73,6 @@ func (k Keeper) getFinalizedInfo(
 		BTCSubmissionKey:    btcSubmissionKey,
 		ProofEpochSealed:    proofEpochSealed,
 		ProofEpochSubmitted: proofEpochSubmitted,
-		//BTCHeaders:          nil, // will be set later
 	}
 
 	return finalizedInfo, nil
@@ -146,7 +145,7 @@ func (k Keeper) createBTCTimestamp(
 func (k Keeper) getDeepEnoughBTCHeaders(ctx context.Context) []*btclctypes.BTCHeaderInfo {
 	kValue := k.btccKeeper.GetParams(ctx).BtcConfirmationDepth
 	startHeight := k.btclcKeeper.GetTipInfo(ctx).Height - kValue
-	return k.btclcKeeper.GetMainChainFrom(ctx, startHeight)
+	return k.btclcKeeper.GetMainChainFromWithCache(ctx, startHeight)
 }
 
 // GetHeadersToBroadcast retrieves headers using the fallback method of k+1.
@@ -187,7 +186,7 @@ func (k Keeper) GetHeadersToBroadcast(ctx context.Context, consumerID string, he
 		return k.getDeepEnoughBTCHeaders(ctx)
 	}
 
-	headersToSend := k.btclcKeeper.GetMainChainFrom(ctx, initHeader.Height+1)
+	headersToSend := k.btclcKeeper.GetMainChainFromWithCache(ctx, initHeader.Height+1)
 
 	return headersToSend
 }

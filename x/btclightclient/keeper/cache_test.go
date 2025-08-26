@@ -171,7 +171,7 @@ func TestHeaderCache_ErrorHandling(t *testing.T) {
 }
 
 // =============================================================================
-// GetMainChainFrom integration tests
+// GetMainChainFromWithCache integration tests
 // =============================================================================
 
 // TestGetMainChainFrom_Simple tests the basic functionality without complex scenarios
@@ -190,16 +190,16 @@ func TestGetMainChainFrom_Simple(t *testing.T) {
 	require.NotNil(t, tip)
 	t.Logf("Tip height: %d, Header height: %d", tip.Height, header.Height)
 
-	// Test GetMainChainFrom from height 0
-	result := keeper.GetMainChainFrom(ctx, 0)
+	// Test GetMainChainFromWithCache from height 0
+	result := keeper.GetMainChainFromWithCache(ctx, 0)
 	t.Logf("Result length: %d", len(result))
 
 	if len(result) > 0 {
 		t.Logf("First header height: %d", result[0].Height)
 	}
 
-	// Test GetMainChainFrom from tip height
-	result2 := keeper.GetMainChainFrom(ctx, tip.Height)
+	// Test GetMainChainFromWithCache from tip height
+	result2 := keeper.GetMainChainFromWithCache(ctx, tip.Height)
 	t.Logf("Result2 length: %d", len(result2))
 }
 
@@ -235,7 +235,7 @@ func TestGetMainChainFrom_CacheWorking(t *testing.T) {
 	t.Logf("Tip height: %d", tip.Height)
 
 	// First call - should populate cache
-	result1 := keeper.GetMainChainFrom(ctx, 102) // Should get headers 102, 103, 104
+	result1 := keeper.GetMainChainFromWithCache(ctx, 102) // Should get headers 102, 103, 104
 	require.Equal(t, 3, len(result1))
 
 	// Verify we got the right headers
@@ -244,14 +244,14 @@ func TestGetMainChainFrom_CacheWorking(t *testing.T) {
 	require.Equal(t, uint32(104), result1[2].Height)
 
 	// Second call with same parameters - should hit cache
-	result2 := keeper.GetMainChainFrom(ctx, 102)
+	result2 := keeper.GetMainChainFromWithCache(ctx, 102)
 	require.Equal(t, 3, len(result2))
 	require.Equal(t, result1[0].Height, result2[0].Height)
 	require.Equal(t, result1[1].Height, result2[1].Height)
 	require.Equal(t, result1[2].Height, result2[2].Height)
 
 	// Third call with different start but overlapping range
-	result3 := keeper.GetMainChainFrom(ctx, 101) // Should get headers 101, 102, 103, 104
+	result3 := keeper.GetMainChainFromWithCache(ctx, 101) // Should get headers 101, 102, 103, 104
 	require.Equal(t, 4, len(result3))
 }
 
@@ -277,7 +277,7 @@ func TestGetMainChainFrom_CacheInvalidation(t *testing.T) {
 	keeper.InsertHeaderInfos(ctx, headers)
 
 	// Block 1: Initial call to populate cache
-	result1 := keeper.GetMainChainFrom(ctx, 200)
+	result1 := keeper.GetMainChainFromWithCache(ctx, 200)
 	require.Equal(t, 3, len(result1))
 
 	oldTip := keeper.GetTipInfo(ctx)
@@ -297,7 +297,7 @@ func TestGetMainChainFrom_CacheInvalidation(t *testing.T) {
 	keeper.InsertHeaderInfos(ctx, []*types.BTCHeaderInfo{newHeader})
 
 	// Block 2: Cache is empty, should fetch new tip and return updated results
-	result2 := keeper.GetMainChainFrom(ctx, 200)
+	result2 := keeper.GetMainChainFromWithCache(ctx, 200)
 	require.Equal(t, 4, len(result2)) // Now should include the new header
 
 	newTip := keeper.GetTipInfo(ctx)
@@ -313,7 +313,7 @@ func TestGetMainChainFrom_CacheInvalidation(t *testing.T) {
 	require.Equal(t, uint32(203), newCachedTip.Height)
 }
 
-// TestGetMainChainFrom_CacheOptimization tests the cache optimization for GetMainChainFrom
+// TestGetMainChainFrom_CacheOptimization tests the cache optimization for GetMainChainFromWithCache
 func TestGetMainChainFrom_CacheOptimization(t *testing.T) {
 	keeper, ctx := testkeeper.BTCLightClientKeeper(t)
 	r := rand.New(rand.NewSource(10))
@@ -340,7 +340,7 @@ func TestGetMainChainFrom_CacheOptimization(t *testing.T) {
 	require.Equal(t, headers[numHeaders-1].Height, tip.Height)
 	require.True(t, headers[numHeaders-1].Hash.Eq(tip.Hash))
 
-	// Test GetMainChainFrom with different start heights based on actual header heights
+	// Test GetMainChainFromWithCache with different start heights based on actual header heights
 	baseHeight := headers[0].Height
 	tipHeight := headers[numHeaders-1].Height
 	midHeight := headers[5].Height
@@ -380,7 +380,7 @@ func TestGetMainChainFrom_CacheOptimization(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			result := keeper.GetMainChainFrom(ctx, tc.startHeight)
+			result := keeper.GetMainChainFromWithCache(ctx, tc.startHeight)
 			require.Equal(t, tc.expected, len(result))
 
 			// Verify the results are correct and in order
@@ -428,24 +428,24 @@ func TestGetMainChainFrom_CacheEfficiency(t *testing.T) {
 	baseHeight := headers[0].Height
 	tipHeight := headers[numHeaders-1].Height
 
-	// First call to GetMainChainFrom - should populate cache
+	// First call to GetMainChainFromWithCache - should populate cache
 	// Calculate start height as base + 10 to ensure we have enough headers
 	startHeight := baseHeight + 10
 	if startHeight > tipHeight {
 		startHeight = baseHeight + 5 // fallback to a smaller offset
 	}
-	result1 := keeper.GetMainChainFrom(ctx, startHeight)
+	result1 := keeper.GetMainChainFromWithCache(ctx, startHeight)
 	expectedLen := int(tipHeight - startHeight + 1)
 	require.Equal(t, expectedLen, len(result1))
 
 	// Second call with same start height - should hit cache
-	result2 := keeper.GetMainChainFrom(ctx, startHeight)
+	result2 := keeper.GetMainChainFromWithCache(ctx, startHeight)
 	require.Equal(t, len(result1), len(result2))
 
 	// Third call with higher start height - should partially hit cache
 	higherStartHeight := startHeight + 5
 	if higherStartHeight <= tipHeight {
-		result3 := keeper.GetMainChainFrom(ctx, higherStartHeight)
+		result3 := keeper.GetMainChainFromWithCache(ctx, higherStartHeight)
 		expectedLen3 := int(tipHeight - higherStartHeight + 1)
 		require.Equal(t, expectedLen3, len(result3))
 	}
@@ -453,7 +453,7 @@ func TestGetMainChainFrom_CacheEfficiency(t *testing.T) {
 	// Fourth call with lower start height - should mostly hit cache with some misses
 	lowerStartHeight := baseHeight + 2
 	if lowerStartHeight < startHeight {
-		result4 := keeper.GetMainChainFrom(ctx, lowerStartHeight)
+		result4 := keeper.GetMainChainFromWithCache(ctx, lowerStartHeight)
 		expectedLen4 := int(tipHeight - lowerStartHeight + 1)
 		require.Equal(t, expectedLen4, len(result4))
 	}
@@ -487,7 +487,7 @@ func TestGetMainChainFrom_TipChanges(t *testing.T) {
 	if startHeight > tipHeight {
 		startHeight = baseHeight + 2
 	}
-	result1 := keeper.GetMainChainFrom(ctx, startHeight)
+	result1 := keeper.GetMainChainFromWithCache(ctx, startHeight)
 	expectedLen1 := int(tipHeight - startHeight + 1)
 	require.Equal(t, expectedLen1, len(result1))
 
@@ -499,7 +499,7 @@ func TestGetMainChainFrom_TipChanges(t *testing.T) {
 	keeper.InsertHeaderInfos(ctx, []*types.BTCHeaderInfo{newHeader})
 
 	// Block 2: Cache is empty, should fetch new tip and return updated results
-	result2 := keeper.GetMainChainFrom(ctx, startHeight)
+	result2 := keeper.GetMainChainFromWithCache(ctx, startHeight)
 	expectedLen2 := expectedLen1 + 1
 	require.Equal(t, expectedLen2, len(result2)) // Now includes the new header
 
@@ -514,10 +514,10 @@ func TestGetMainChainFrom_EmptyChain(t *testing.T) {
 	keeper, ctx := testkeeper.BTCLightClientKeeper(t)
 
 	// Test with empty chain (no headers inserted)
-	result := keeper.GetMainChainFrom(ctx, 0)
+	result := keeper.GetMainChainFromWithCache(ctx, 0)
 	require.Empty(t, result) // Should return empty slice when no tip exists
 
-	result = keeper.GetMainChainFrom(ctx, 100)
+	result = keeper.GetMainChainFromWithCache(ctx, 100)
 	require.Empty(t, result) // Should return empty slice when no tip exists
 }
 
@@ -525,7 +525,7 @@ func TestGetMainChainFrom_EmptyChain(t *testing.T) {
 // Benchmark tests
 // =============================================================================
 
-// BenchmarkGetMainChainFrom_WithCache benchmarks the cached version of GetMainChainFrom
+// BenchmarkGetMainChainFrom_WithCache benchmarks the cached version of GetMainChainFromWithCache
 func BenchmarkGetMainChainFrom_WithCache(b *testing.B) {
 	keeper, ctx := testkeeper.BTCLightClientKeeper(b)
 	r := rand.New(rand.NewSource(10))
@@ -548,7 +548,7 @@ func BenchmarkGetMainChainFrom_WithCache(b *testing.B) {
 	keeper.InsertHeaderInfos(ctx, headers)
 
 	// Pre-populate cache with one call (simulate typical usage where cache gets populated)
-	keeper.GetMainChainFrom(ctx, 1050)
+	keeper.GetMainChainFromWithCache(ctx, 1050)
 
 	b.ResetTimer()
 
@@ -556,7 +556,7 @@ func BenchmarkGetMainChainFrom_WithCache(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		// Alternate between different start heights that have overlapping cached data
 		startHeight := uint32(1050 + (i % 10))
-		result := keeper.GetMainChainFrom(ctx, startHeight)
+		result := keeper.GetMainChainFromWithCache(ctx, startHeight)
 		if len(result) == 0 {
 			b.Errorf("Expected non-empty result for height %d", startHeight)
 		}
@@ -586,12 +586,12 @@ func BenchmarkGetMainChainFrom_CacheVsNoCache(b *testing.B) {
 
 	b.Run("WithCache", func(b *testing.B) {
 		// Pre-populate cache
-		keeper.GetMainChainFrom(ctx, 2025)
+		keeper.GetMainChainFromWithCache(ctx, 2025)
 
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			// This should hit cache for most headers
-			result := keeper.GetMainChainFrom(ctx, 2025)
+			result := keeper.GetMainChainFromWithCache(ctx, 2025)
 			if len(result) != 25 {
 				b.Errorf("Expected 25 headers, got %d", len(result))
 			}
@@ -603,7 +603,7 @@ func BenchmarkGetMainChainFrom_CacheVsNoCache(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			// Clear cache before each call to simulate no-cache scenario
 			keeper.HeaderCache().Invalidate()
-			result := keeper.GetMainChainFrom(ctx, 2025)
+			result := keeper.GetMainChainFromWithCache(ctx, 2025)
 			if len(result) != 25 {
 				b.Errorf("Expected 25 headers, got %d", len(result))
 			}
@@ -638,19 +638,19 @@ func BenchmarkGetMainChainFrom_MultiConsumerScenario(b *testing.B) {
 	// Simulate BroadcastBTCTimestamps scenario with 5 consumers requesting overlapping ranges
 	for i := 0; i < b.N; i++ {
 		// Consumer 1: from height 3010
-		keeper.GetMainChainFrom(ctx, 3010)
+		keeper.GetMainChainFromWithCache(ctx, 3010)
 
 		// Consumer 2: from height 3010 (same range - should be all cache hits)
-		keeper.GetMainChainFrom(ctx, 3010)
+		keeper.GetMainChainFromWithCache(ctx, 3010)
 
 		// Consumer 3: from height 3015 (subset of previous - should be cache hits)
-		keeper.GetMainChainFrom(ctx, 3015)
+		keeper.GetMainChainFromWithCache(ctx, 3015)
 
 		// Consumer 4: from height 3005 (extends the range - partial cache hits)
-		keeper.GetMainChainFrom(ctx, 3005)
+		keeper.GetMainChainFromWithCache(ctx, 3005)
 
 		// Consumer 5: from height 3020 (different range - some cache hits)
-		keeper.GetMainChainFrom(ctx, 3020)
+		keeper.GetMainChainFromWithCache(ctx, 3020)
 	}
 }
 

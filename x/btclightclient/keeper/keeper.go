@@ -256,8 +256,20 @@ func (k Keeper) GetHeaderByHeight(ctx context.Context, height uint32) *types.BTC
 // GetMainChainFrom returns the current canonical chain from the given height up to the tip
 // If the height is higher than the tip, it returns an empty slice
 // If startHeight is 0, it returns the entire main chain
-// Now uses header-level caching to eliminate duplicate store I/O operations
 func (k Keeper) GetMainChainFrom(ctx context.Context, startHeight uint32) []*types.BTCHeaderInfo {
+	headers := make([]*types.BTCHeaderInfo, 0)
+	accHeaderFn := func(header *types.BTCHeaderInfo) bool {
+		headers = append(headers, header)
+		return false
+	}
+	k.headersState(ctx).IterateForwardHeaders(startHeight, accHeaderFn)
+	return headers
+}
+
+// GetMainChainFromWithCache produces the same result as GetMainChainFrom,
+// but minimizes redundant store I/O by using a cache. Since the cache is invalidated every block,
+// it is intended to be used selectively only in logic where redundant I/O occurs frequently.
+func (k Keeper) GetMainChainFromWithCache(ctx context.Context, startHeight uint32) []*types.BTCHeaderInfo {
 	// Try to get tip from cache first
 	currentTip := k.headerCache.GetCachedTip()
 	headers := make([]*types.BTCHeaderInfo, 0)
