@@ -266,7 +266,10 @@ func AddEvidenceOfEquivocationCmd() *cobra.Command {
 	}
 	flags.AddTxFlagsToCmd(cmd)
 	cmd.Flags().String("signer", "", "signer address for the evidence (required)")
-	cmd.MarkFlagRequired("signer")
+	err := cmd.MarkFlagRequired("signer")
+	if err != nil {
+		return nil
+	}
 
 	return cmd
 }
