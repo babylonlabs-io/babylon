@@ -18,6 +18,8 @@ type msgServer struct {
 	Keeper
 }
 
+const DelegateEnqueueGasFee = 500
+
 var _ types.MsgServer = msgServer{}
 
 // NewMsgServerImpl returns an implementation of the MsgServer interface
@@ -189,6 +191,12 @@ func (ms msgServer) WrappedDelegate(goCtx context.Context, msg *types.MsgWrapped
 	}
 
 	ms.EnqueueMsg(ctx, queuedMsg)
+
+	if err := ms.LockFunds(ctx, &queuedMsg); err != nil {
+		return nil, errorsmod.Wrap(err, "failed to lock user funds")
+	}
+
+	ctx.GasMeter().ConsumeGas(DelegateEnqueueGasFee, "epoching delegate enqueue fee")
 
 	err = ctx.EventManager().EmitTypedEvents(
 		&types.EventWrappedDelegate{

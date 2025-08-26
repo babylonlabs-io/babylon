@@ -58,6 +58,8 @@ func (m msgServer) WrappedCreateValidator(goCtx context.Context, msg *types.MsgW
 		Msg: &epochingtypes.QueuedMessage_MsgCreateValidator{MsgCreateValidator: msg.MsgCreateValidator},
 	}
 
+	m.k.epochingKeeper.LockFunds(ctx, &queueMsg)
+
 	m.k.epochingKeeper.EnqueueMsg(ctx, queueMsg)
 
 	return &types.MsgWrappedCreateValidatorResponse{}, nil
