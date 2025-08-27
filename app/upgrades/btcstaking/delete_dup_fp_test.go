@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	_ "github.com/babylonlabs-io/babylon/v4/app/params" // import this to run the init func that sets the address prefixes
 	"github.com/babylonlabs-io/babylon/v4/app/upgrades/btcstaking"
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	btcstktypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
