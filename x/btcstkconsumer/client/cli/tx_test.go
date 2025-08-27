@@ -150,15 +150,15 @@ func TestNewRegisterConsumerCmd(t *testing.T) {
 				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
 				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 10)).String()),
 			},
-			"babylon rewards commission must be between 0 and 1, got: 1.5",
+			"babylon commission cannot be greater than 1.0",
 		},
 		{
-			"valid cosmos consumer registration (commission 0.0)",
+			"valid cosmos consumer registration (min commission 0.01)",
 			[]string{
 				"test-consumer-id",
 				"Test Consumer",
 				"Test Description",
-				"0.0",
+				"0.01",
 				fmt.Sprintf("--%s=%s", flags.FlagFrom, addrs[0]),
 				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),

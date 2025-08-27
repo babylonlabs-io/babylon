@@ -3,16 +3,12 @@ package v2_3
 import (
 	"context"
 
-<<<<<<< HEAD
-	"github.com/babylonlabs-io/babylon/v3/app/upgrades"
-=======
 	store "cosmossdk.io/store/types"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
-	"github.com/babylonlabs-io/babylon/v4/app/keepers"
-	"github.com/babylonlabs-io/babylon/v4/app/upgrades"
->>>>>>> 3bd5721 (fix: `LargestBtcReorg` prefix to follow mainnet (#1608))
+	"github.com/babylonlabs-io/babylon/v3/app/keepers"
+	"github.com/babylonlabs-io/babylon/v3/app/upgrades"
 )
 
 // UpgradeName defines the on-chain upgrade name for the Babylon v2.3 upgrade

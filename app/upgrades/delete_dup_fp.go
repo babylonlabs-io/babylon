@@ -6,17 +6,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-<<<<<<< HEAD
-	upgradetypes "cosmossdk.io/x/upgrade/types"
-	"github.com/cosmos/cosmos-sdk/types/module"
-
-	"github.com/babylonlabs-io/babylon/v3/app/keepers"
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
 	btcstktypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
-=======
-	bbn "github.com/babylonlabs-io/babylon/v4/types"
-	btcstktypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
->>>>>>> 3bd5721 (fix: `LargestBtcReorg` prefix to follow mainnet (#1608))
 )
 
 type (

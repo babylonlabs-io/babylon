@@ -171,7 +171,6 @@ var (
     "unbonding_fee_sat": "2000",
     "min_commission_rate": "0.030000000000000000",
     "delegation_creation_base_gas_fee": "1095000",
-    "allow_list_expiration_height": "26124",
     "btc_activation_height": 235952
 }
 	`

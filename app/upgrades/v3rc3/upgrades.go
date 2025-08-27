@@ -4,9 +4,6 @@ import (
 	"context"
 	"errors"
 
-<<<<<<< HEAD
-	"github.com/babylonlabs-io/babylon/v3/app/upgrades"
-=======
 	"cosmossdk.io/collections"
 	corestoretypes "cosmossdk.io/core/store"
 	store "cosmossdk.io/store/types"
@@ -14,12 +11,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/runtime"
 
-	"github.com/babylonlabs-io/babylon/v4/app/keepers"
-	"github.com/babylonlabs-io/babylon/v4/app/upgrades"
-	btcstakingkeeper "github.com/babylonlabs-io/babylon/v4/x/btcstaking/keeper"
-	btcstktypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/v3/app/keepers"
+	"github.com/babylonlabs-io/babylon/v3/app/upgrades"
+	btcstakingkeeper "github.com/babylonlabs-io/babylon/v3/x/btcstaking/keeper"
+	btcstktypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
->>>>>>> 3bd5721 (fix: `LargestBtcReorg` prefix to follow mainnet (#1608))
 )
 
 // UpgradeName defines the on-chain upgrade name for the Babylon v3rc3 upgrade
