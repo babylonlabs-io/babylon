@@ -114,6 +114,11 @@ func FuzzFinalityProviders(f *testing.F) {
 			if fpsMapByBsn[actualBsnId] == nil {
 				fpsMapByBsn[actualBsnId] = make(map[string]*types.FinalityProvider)
 			}
+			if i%2 == 0 {
+				err = h.BTCStakingKeeper.SoftDeleteFinalityProvider(h.Ctx, fp.BtcPk)
+				require.NoError(t, err)
+			}
+
 			fpsMapByBsn[actualBsnId][fp.BtcPk.MarshalHex()] = fp
 			allFpsMap[fp.BtcPk.MarshalHex()] = fp
 		}
@@ -152,6 +157,8 @@ func FuzzFinalityProviders(f *testing.F) {
 						t.Fatalf("rpc returned a finality provider that was not created for Babylon BSN")
 					}
 					fpsFound[fp.BtcPk.MarshalHex()] = true
+					isDeleted := h.BTCStakingKeeper.IsFinalityProviderDeleted(h.Ctx, fp.BtcPk)
+					require.Equal(t, fp.SoftDeleted, isDeleted)
 				}
 
 				// Break if no more pages
