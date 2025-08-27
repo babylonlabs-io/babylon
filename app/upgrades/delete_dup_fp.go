@@ -6,12 +6,17 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+<<<<<<< HEAD
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
 	"github.com/babylonlabs-io/babylon/v3/app/keepers"
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
 	btcstktypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
+=======
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	btcstktypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+>>>>>>> 3bd5721 (fix: `LargestBtcReorg` prefix to follow mainnet (#1608))
 )
 
 type (
@@ -27,22 +32,6 @@ type (
 		FpTotalSatsStaked(ctx context.Context, fpBTCPK *bbn.BIP340PubKey) (uint64, error)
 	}
 )
-
-func CreateUpgradeHandlerFpSoftDeleteDupAddr(mm *module.Manager, configurator module.Configurator, keepers *keepers.AppKeepers) upgradetypes.UpgradeHandler {
-	return func(ctx context.Context, plan upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
-		migrations, err := mm.RunMigrations(ctx, configurator, fromVM)
-		if err != nil {
-			return nil, err
-		}
-
-		err = FpSoftDeleteDupAddr(ctx, keepers.BTCStakingKeeper)
-		if err != nil {
-			return nil, err
-		}
-
-		return migrations, nil
-	}
-}
 
 // FpSoftDeleteDupAddr Iterates over all the finality providers and sets their fp bbn address
 // To block registration with the same address. It also soft deletes (unables the btc pk to
