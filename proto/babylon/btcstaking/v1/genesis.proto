@@ -32,6 +32,10 @@ message GenesisState {
   repeated ConsumerEvent consumer_events = 10;
   // Reserved for previous collection of the allowed multi-staking transaction hashes (hex encoded)
   reserved 11;
+  // FpBbnAddr defines a list of the finality provider indexed by their babylon address.
+  repeated string fp_bbn_addr = 12;
+  // DeletedFpsBtcPkHex defines a list of deleted finality providers btc pk that can't cast votes.
+  repeated string deleted_fps_btc_pk_hex = 13;
 }
 
 // BlockHeightBbnToBtc stores the btc <-> bbn block.
