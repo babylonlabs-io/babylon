@@ -74,7 +74,7 @@ func (ms msgServer) RegisterConsumer(goCtx context.Context, req *types.MsgRegist
 		if err := ms.Keeper.RegisterConsumer(goCtx, consumerRegister); err != nil {
 			return nil, err
 		}
-		if err := ms.Keeper.registerFinalityContract(goCtx, req.RollupFinalityContractAddress); err != nil {
+		if err := ms.Keeper.RegisterFinalityContract(goCtx, req.RollupFinalityContractAddress); err != nil {
 			return nil, err
 		}
 	} else {

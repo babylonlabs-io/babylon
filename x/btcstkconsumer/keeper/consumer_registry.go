@@ -97,7 +97,7 @@ func (k Keeper) IsFinalityContractRegistered(ctx context.Context, contractAddr s
 	return k.finalityContractIndex.Has(ctx, contractAddr)
 }
 
-// registerFinalityContract adds a finality contract address to the index
-func (k Keeper) registerFinalityContract(ctx context.Context, contractAddr string) error {
+// RegisterFinalityContract adds a finality contract address to the index
+func (k Keeper) RegisterFinalityContract(ctx context.Context, contractAddr string) error {
 	return k.finalityContractIndex.Set(ctx, contractAddr)
 }
