@@ -7,16 +7,12 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-<<<<<<< HEAD
-	"github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
-=======
->>>>>>> 325eb77 (perf(zc): Optimize bottlenecks by caching redundant store io (#1571))
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types" //nolint:staticcheck
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 	"github.com/hashicorp/go-metrics"
 
-	"github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/types"
+	"github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
 )
 
 const (

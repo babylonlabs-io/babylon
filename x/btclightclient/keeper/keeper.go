@@ -7,24 +7,16 @@ import (
 	corestoretypes "cosmossdk.io/core/store"
 	"cosmossdk.io/log"
 
-<<<<<<< HEAD
-	bbn "github.com/babylonlabs-io/babylon/v3/types"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/wire"
 
-	"github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
-=======
-	"github.com/btcsuite/btcd/chaincfg"
-	"github.com/btcsuite/btcd/wire"
-
-	bbn "github.com/babylonlabs-io/babylon/v4/types"
-
->>>>>>> 325eb77 (perf(zc): Optimize bottlenecks by caching redundant store io (#1571))
+	
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	proto "github.com/cosmos/gogoproto/proto"
-
-	"github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
+	
+	bbn "github.com/babylonlabs-io/babylon/v3/types"
+	"github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
 )
 
 type (
