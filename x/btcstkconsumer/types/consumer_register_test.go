@@ -18,37 +18,71 @@ func TestConsumerRegisterValidate(t *testing.T) {
 		{
 			desc: "valid consumer",
 			input: types.ConsumerRegister{
-				ConsumerId:          "c1",
-				ConsumerName:        "Consumer One",
-				ConsumerDescription: "A valid consumer",
+				ConsumerId:               "c1",
+				ConsumerName:             "Consumer One",
+				ConsumerDescription:      "A valid consumer",
+				BabylonRewardsCommission: math.LegacyOneDec(),
 			},
 		},
 		{
 			desc: "missing ConsumerId",
 			input: types.ConsumerRegister{
-				ConsumerId:          "",
-				ConsumerName:        "Consumer One",
-				ConsumerDescription: "A valid consumer",
+				ConsumerId:               "",
+				ConsumerName:             "Consumer One",
+				ConsumerDescription:      "A valid consumer",
+				BabylonRewardsCommission: math.LegacyOneDec(),
 			},
 			expectedErr: "ConsumerId must be non-empty",
 		},
 		{
 			desc: "missing ConsumerName",
 			input: types.ConsumerRegister{
-				ConsumerId:          "c1",
-				ConsumerName:        "",
-				ConsumerDescription: "A valid consumer",
+				ConsumerId:               "c1",
+				ConsumerName:             "",
+				ConsumerDescription:      "A valid consumer",
+				BabylonRewardsCommission: math.LegacyOneDec(),
 			},
 			expectedErr: "ConsumerName must be non-empty",
 		},
 		{
 			desc: "missing ConsumerDescription",
 			input: types.ConsumerRegister{
-				ConsumerId:          "c1",
-				ConsumerName:        "Consumer One",
-				ConsumerDescription: "",
+				ConsumerId:               "c1",
+				ConsumerName:             "Consumer One",
+				ConsumerDescription:      "",
+				BabylonRewardsCommission: math.LegacyOneDec(),
 			},
 			expectedErr: "ConsumerDescription must be non-empty",
+		},
+		{
+			desc: "negative BabylonRewardsCommission",
+			input: types.ConsumerRegister{
+				ConsumerId:               "c1",
+				ConsumerName:             "Consumer One",
+				ConsumerDescription:      "A valid consumer",
+				BabylonRewardsCommission: math.LegacyMustNewDecFromStr("-0.1"),
+			},
+			expectedErr: "babylon commission cannot be negative",
+		},
+		{
+			desc: "BabylonRewardsCommission less than minimum",
+			input: types.ConsumerRegister{
+				ConsumerId:               "c1",
+				ConsumerName:             "Consumer One",
+				ConsumerDescription:      "A valid consumer",
+				BabylonRewardsCommission: math.LegacyMustNewDecFromStr("0.005"),
+			},
+			expectedErr: "babylon commission cannot be less than 0.010000000000000000",
+		},
+		{
+			desc: "BabylonRewardsCommission higher than 1",
+			input: types.ConsumerRegister{
+				ConsumerId:               "c1",
+				ConsumerName:             "Consumer One",
+				ConsumerDescription:      "A valid consumer",
+				BabylonRewardsCommission: math.LegacyMustNewDecFromStr("1.1"),
+			},
+			expectedErr: "babylon commission cannot be greater than 1.0",
 		},
 	}
 
@@ -147,6 +181,17 @@ func TestMsgRegisterConsumerValidateBasic(t *testing.T) {
 				ConsumerName:             "Test Consumer",
 				ConsumerDescription:      "Test Description",
 				BabylonRewardsCommission: math.LegacyZeroDec(),
+			},
+			expected: fmt.Errorf("babylon commission cannot be less than 0.010000000000000000"),
+		},
+		{
+			name: "babylon commission exactly minimum 0.01",
+			msg: &types.MsgRegisterConsumer{
+				Signer:                   "babylon1validaddress",
+				ConsumerId:               "consumer-123",
+				ConsumerName:             "Test Consumer",
+				ConsumerDescription:      "Test Description",
+				BabylonRewardsCommission: math.LegacyMustNewDecFromStr("0.01"),
 			},
 			expected: nil,
 		},
