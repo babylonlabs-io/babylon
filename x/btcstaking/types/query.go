@@ -74,7 +74,7 @@ func (ud *BTCUndelegation) ToResponse() (resp *BTCUndelegationResponse) {
 }
 
 // NewFinalityProviderResponse creates a new finality provider response based on the finality provider
-func NewFinalityProviderResponse(f *FinalityProvider, bbnBlockHeight uint64) *FinalityProviderResponse {
+func NewFinalityProviderResponse(f *FinalityProvider, bbnBlockHeight uint64, softDeleted bool) *FinalityProviderResponse {
 	return &FinalityProviderResponse{
 		Description:          f.Description,
 		Commission:           f.Commission,
@@ -88,5 +88,6 @@ func NewFinalityProviderResponse(f *FinalityProvider, bbnBlockHeight uint64) *Fi
 		HighestVotedHeight:   f.HighestVotedHeight,
 		CommissionInfo:       f.CommissionInfo,
 		BsnId:                f.BsnId,
+		SoftDeleted:          softDeleted,
 	}
 }
