@@ -242,7 +242,7 @@ func FuzzKeeperInsertValidBetterChain(f *testing.F) {
 		extendedChainHeight := forkHeaderParent.Height + newChainLength
 
 		oldTip := blcKeeper.HeadersState(ctx).GetTip()
-		removedBranch := blcKeeper.GetMainChainFrom(ctx, forkHeaderParent.Height+1)
+		removedBranch := blcKeeper.GetMainChainFromWithCache(ctx, forkHeaderParent.Height+1)
 
 		require.True(t, len(removedBranch) > 0)
 
