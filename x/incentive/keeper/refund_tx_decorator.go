@@ -2,16 +2,17 @@ package keeper
 
 import (
 	"bytes"
+	"errors"
+
 	errorsmod "cosmossdk.io/errors"
 	storetypes "cosmossdk.io/store/types"
-	"errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/babylonlabs-io/babylon/v4/x/feemarketwrapper"
 	btcctypes "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
 	btclctypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
 	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/v4/x/feemarketwrapper"
 	ftypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
 	"github.com/babylonlabs-io/babylon/v4/x/incentive/types"
 )

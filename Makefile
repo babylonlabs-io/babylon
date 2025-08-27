@@ -293,6 +293,9 @@ test-e2e-btc-rewards-bsn-rollup:
 test-e2e-cache-btc-stake-expansion:
 	go test -run TestBTCStakeExpansionTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
 
+test-e2e-cache-feemarket:
+	go test -run TestFeemarketTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
+
 test-sim-nondeterminism:
 	@echo "Running non-determinism test..."
 	@go test -mod=readonly $(SIMAPP) -run TestAppStateDeterminism -Enabled=true \
