@@ -56,6 +56,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 - [#1597](https://github.com/babylonlabs-io/babylon/pull/1597) fix: disabled duplicate fp bbn addr registering
 
+### Bug fixes
+
+- [#1608](https://github.com/babylonlabs-io/babylon/pull/1608) fix: `x/btcstaking` prefix of `LargestBtcReOrg` to match mainnet.
+
 ## v3.0.0-rc.2
 
 - [#1529](https://github.com/babylonlabs-io/babylon/pull/1529) Allow `FinalityProviderHistoricalRewards` to have empty coins
