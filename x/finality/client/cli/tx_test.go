@@ -24,9 +24,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/tx"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/v4/app/params"
-	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
-	finalitytypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
+	"github.com/babylonlabs-io/babylon/v3/app/params"
+	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
+	finalitytypes "github.com/babylonlabs-io/babylon/v3/x/finality/types"
 )
 
 type mockCometRPC struct {
