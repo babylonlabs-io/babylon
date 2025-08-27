@@ -361,6 +361,9 @@ message FinalityProviderResponse {
   CommissionInfo commission_info = 11;
   // bsn_id is the ID of the BSN the finality provider is securing
   string bsn_id = 12;
+  // soft_deleted defines if the fp is soft deleted or not. If it is soft
+  // deleted the FP can't cast votes.
+  bool soft_deleted = 13;
 }
 
 // QueryLargestBtcReOrgRequest query request of the largest BTC reorg request
