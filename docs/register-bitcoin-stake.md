@@ -295,9 +295,6 @@ versions managed by the [x/btcstaking](../x/btcstaking) module:
 * `delegation_creation_base_gas_fee`: Defines the minimum
   gas fee to be paid when registering a stake through the pre-staking
   registration flow.
-* `allow_list_expiration_height`: The Babylon block height
-  on which the initial staking transaction allow-list expires.
-  More details on the allow list can be found [here](./phase1-stake-registration-eligibility.md).
 * `btc_activation_height`: The Bitcoin block height on which this parameters version
   takes effect.
 
