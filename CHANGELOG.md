@@ -39,6 +39,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
+- [#1571](https://github.com/babylonlabs-io/babylon/pull/1571) Optimize `x/zoneconcierge` bottlenecks by caching redundant logics.
 - [#1568](https://github.com/babylonlabs-io/babylon/pull/1568) Wrapper feemarket to exclude refundable gas when calculating base fee
 - [#1430](https://github.com/babylonlabs-io/babylon/pull/1430) Bump Cosmos EVM to 0.41 and add signer extractor.
 - [#1553](https://github.com/babylonlabs-io/babylon/pull/1553) Remove native Coin precompile from token pairs.
@@ -48,6 +49,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#1540](https://github.com/babylonlabs-io/babylon/pull/1540) Optimizations on `x/zoneconcierge` `EndBlocker` logic.
 - [#1536](https://github.com/babylonlabs-io/babylon/pull/1536) Refactor `x/zoneconcierge` for optimize ibc channel, client io
 - [#1552](https://github.com/babylonlabs-io/babylon/pull/1552) Refactor `e2e` test suite
+- [#1556](https://github.com/babylonlabs-io/babylon/pull/1556) CLI for submitting equivocation evidence in x/finality module
+- [#1594](https://github.com/babylonlabs-io/babylon/pull/1594) Add soft deleted to finality providers response.
+- [#1589](https://github.com/babylonlabs-io/babylon/pull/1589) Add minimum Babylon commission on `RegisterConsumer`
+
+### Bug fixes
+
+- [#1597](https://github.com/babylonlabs-io/babylon/pull/1597) fix: disabled duplicate fp bbn addr registering
+
+### Bug fixes
+
+- [#1608](https://github.com/babylonlabs-io/babylon/pull/1608) fix: `x/btcstaking` prefix of `LargestBtcReOrg` to match mainnet.
 
 ### State breaking
 

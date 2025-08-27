@@ -71,7 +71,6 @@ func (ms msgServer) CreateFinalityProvider(goCtx context.Context, req *types.Msg
 		return nil, status.Errorf(codes.InvalidArgument, "invalid address %s: %v", req.Addr, err)
 	}
 	ctx := sdk.UnwrapSDKContext(goCtx)
-
 	signingContext := signingcontext.FpPopContextV0(ctx.ChainID(), ms.btcStakingModuleAddress)
 
 	// verify proof of possession
@@ -775,5 +774,17 @@ func validateStakeExpansionAmt(
 			totalInputValue, totalOutputValue)
 	}
 
+	return nil
+}
+
+// CheckDuplicatedFpBbnAddr verifies if there isn't another FP registered with the same babylon address
+func (k Keeper) CheckDuplicatedFpBbnAddr(ctx context.Context, fpAddr sdk.AccAddress) error {
+	found, err := k.HasFpRegistered(ctx, fpAddr)
+	if err != nil {
+		return status.Errorf(codes.InvalidArgument, "invalid address %s: %v", fpAddr.String(), err)
+	}
+	if found {
+		return types.ErrFpRegistered.Wrapf("there is already an finality provider registered with the same babylon address: %s", fpAddr.String())
+	}
 	return nil
 }

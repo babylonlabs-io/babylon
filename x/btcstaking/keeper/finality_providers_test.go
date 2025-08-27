@@ -239,3 +239,91 @@ func FuzzSlashConsumerFinalityProvider(f *testing.F) {
 		require.Equal(t, btcTip.Height, slashedConsumerFP.SlashedBtcHeight)
 	})
 }
+
+func FuzzHasFpRegistered(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		t.Parallel()
+		h := testutil.NewHelper(t, nil, nil, nil)
+
+		randAddr := datagen.GenRandomAddress()
+
+		registered, err := h.BTCStakingKeeper.HasFpRegistered(h.Ctx, randAddr)
+		require.NoError(t, err)
+		require.False(t, registered)
+
+		err = h.BTCStakingKeeper.SetFpBbnAddr(h.Ctx, randAddr)
+		require.NoError(t, err)
+
+		registered, err = h.BTCStakingKeeper.HasFpRegistered(h.Ctx, randAddr)
+		require.NoError(t, err)
+		require.True(t, registered)
+	})
+}
+
+func FuzzIsFinalityProviderDeleted(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		t.Parallel()
+		r := rand.New(rand.NewSource(seed))
+		h := testutil.NewHelper(t, nil, nil, nil)
+
+		randFpBtcPk, err := datagen.GenRandomBIP340PubKey(r)
+		require.NoError(t, err)
+
+		deleted := h.BTCStakingKeeper.IsFinalityProviderDeleted(h.Ctx, randFpBtcPk)
+		require.False(t, deleted)
+
+		err = h.BTCStakingKeeper.SoftDeleteFinalityProvider(h.Ctx, randFpBtcPk)
+		require.NoError(t, err)
+
+		deleted = h.BTCStakingKeeper.IsFinalityProviderDeleted(h.Ctx, randFpBtcPk)
+		require.NoError(t, err)
+		require.True(t, deleted)
+	})
+}
+
+func FuzzIterateFinalityProvider(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		t.Parallel()
+		r := rand.New(rand.NewSource(seed))
+		h := testutil.NewHelper(t, nil, nil, nil)
+
+		numFps := datagen.RandomInt(r, 10) + 1
+
+		fpByBtcPk := make(map[string]struct{}, numFps)
+		for i := 0; i < int(numFps); i++ {
+			fp, err := datagen.GenRandomFinalityProvider(r, h.FpPopContext(), "")
+			require.NoError(t, err)
+			msg := &types.MsgCreateFinalityProvider{
+				Addr:        fp.Addr,
+				Description: fp.Description,
+				Commission: types.NewCommissionRates(
+					*fp.Commission,
+					fp.CommissionInfo.MaxRate,
+					fp.CommissionInfo.MaxChangeRate,
+				),
+				BtcPk: fp.BtcPk,
+				Pop:   fp.Pop,
+				BsnId: fp.BsnId,
+			}
+			_, err = h.MsgServer.CreateFinalityProvider(h.Ctx, msg)
+			require.NoError(t, err)
+			fpByBtcPk[fp.BtcPk.MarshalHex()] = struct{}{}
+		}
+
+		iter := uint64(0)
+		err := h.BTCStakingKeeper.IterateFinalityProvider(h.Ctx, func(fp types.FinalityProvider) error {
+			delete(fpByBtcPk, fp.BtcPk.MarshalHex())
+			iter++
+			return nil
+		})
+		require.NoError(t, err)
+		require.Equal(t, iter, numFps)
+		require.Len(t, fpByBtcPk, 0)
+	})
+}

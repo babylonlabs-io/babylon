@@ -30,10 +30,6 @@ func (ms msgServer) RegisterConsumer(goCtx context.Context, req *types.MsgRegist
 		return nil, errorsmod.Wrapf(govtypes.ErrInvalidSigner, "invalid authority; expected %s, got %s", ms.authority, req.Signer)
 	}
 
-	if err := req.ValidateBasic(); err != nil {
-		return nil, err
-	}
-
 	sdkCtx := sdk.UnwrapSDKContext(goCtx)
 
 	if req.ConsumerId == sdkCtx.ChainID() {
