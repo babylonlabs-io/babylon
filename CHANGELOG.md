@@ -50,11 +50,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#1536](https://github.com/babylonlabs-io/babylon/pull/1536) Refactor `x/zoneconcierge` for optimize ibc channel, client io
 - [#1552](https://github.com/babylonlabs-io/babylon/pull/1552) Refactor `e2e` test suite
 - [#1556](https://github.com/babylonlabs-io/babylon/pull/1556) CLI for submitting equivocation evidence in x/finality module
-<<<<<<< HEAD
-=======
-- [#1594](https://github.com/babylonlabs-io/babylon/pull/1594) Add soft deleted to finality providers response.
 - [#1589](https://github.com/babylonlabs-io/babylon/pull/1589) Add minimum Babylon commission on `RegisterConsumer`
->>>>>>> 831bcfb (imp(btcstkconsumer): add min bbn commission validation (#1589))
 
 ### Bug fixes
 
