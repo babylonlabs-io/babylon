@@ -174,7 +174,6 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 			s.Upgrade,
 			func() {
 				s.PostUpgrade()
-
 			},
 		},
 	}
