@@ -12,12 +12,15 @@ import (
 	"cosmossdk.io/x/upgrade"
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/stretchr/testify/suite"
 
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 	"github.com/babylonlabs-io/babylon/v4/app"
+	"github.com/babylonlabs-io/babylon/v4/app/signingcontext"
 	"github.com/babylonlabs-io/babylon/v4/app/upgrades"
 	v3rc3 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v3rc3"
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
@@ -149,6 +152,9 @@ type UpgradeTestSuite struct {
 	ctx       sdk.Context
 	app       *app.BabylonApp
 	preModule appmodule.HasPreBlocker
+
+	fpBtcPkToDelete *bbn.BIP340PubKey
+	largestBtcReorg *btcstktypes.LargestBtcReOrg
 }
 
 func TestUpgradeTestSuite(t *testing.T) {
@@ -156,6 +162,8 @@ func TestUpgradeTestSuite(t *testing.T) {
 }
 
 func (s *UpgradeTestSuite) TestUpgrade() {
+	r := rand.New(rand.NewSource(time.Now().Unix()))
+
 	tcs := []struct {
 		msg         string
 		preUpgrade  func()
@@ -164,16 +172,131 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 	}{
 		{
 			"Test upgrade v3rc3 with duplicated fp addr and largest btc reorg in prefix 13",
-			s.PreUpgrade,
-			s.Upgrade,
-			s.PostUpgrade,
-		},
-		{
-			"Test upgrade v3rc3 witout duplicated fp addr and without largest btc reorg in any prefix",
-			s.PreUpgrade,
+			func() {
+				s.PreUpgrade()
+
+				btcStkK, ctx := s.app.BTCStakingKeeper, s.ctx
+				sigCtx := signingcontext.FpPopContextV0(ctx.ChainID(), btcStkK.ModuleAddress())
+
+				msgCreateFp, err := datagen.GenRandomMsgCreateFinalityProvider(r, sigCtx)
+				s.NoError(err)
+				err = btcStkK.AddFinalityProvider(ctx, msgCreateFp)
+				s.NoError(err)
+
+				s.fpBtcPkToDelete = msgCreateFp.BtcPk
+				fp, err := btcStkK.GetFinalityProvider(ctx, *msgCreateFp.BtcPk)
+				s.NoError(err)
+
+				// creates another fp with an different btc fp pk, but same babylon addresss
+				// and some vote
+				btcSK, _, err := datagen.GenRandomBTCKeyPair(r)
+				s.NoError(err)
+				btcPK := btcSK.PubKey()
+				bip340PK := bbn.NewBIP340PubKeyFromBTCPK(btcPK)
+
+				pop, err := datagen.NewPoPBTC(sigCtx, sdk.MustAccAddressFromBech32(msgCreateFp.Addr), btcSK)
+				s.NoError(err)
+
+				fp.BtcPk = bip340PK
+				fp.Pop = pop
+				fp.HighestVotedHeight += 2
+				btcStkK.SetFinalityProvider(ctx, fp)
+
+				// set largest btc reorg in prefix 13
+				btcStkStoreKey := s.app.GetKey(btcstktypes.StoreKey)
+				btcStkStoreService := runtime.NewKVStoreService(btcStkStoreKey)
+				sb := collections.NewSchemaBuilder(btcStkStoreService)
+				oldLargestBtcReorgItem := collections.NewItem(
+					sb,
+					v3rc3.OldTestnetLargestBtcReorgInBlocks,
+					"largest_btc_reorg",
+					codec.CollValue[btcstktypes.LargestBtcReOrg](app.GetEncodingConfig().Codec),
+				)
+
+				from, to := datagen.GenRandomBTCHeaderInfo(r), datagen.GenRandomBTCHeaderInfo(r)
+				largestReorg := btcstktypes.NewLargestBtcReOrg(from, to)
+
+				s.largestBtcReorg = &largestReorg
+				err = oldLargestBtcReorgItem.Set(ctx, largestReorg)
+				s.NoError(err)
+
+				err = btcStkK.LargestBtcReorg.Remove(ctx)
+				s.NoError(err)
+			},
 			s.Upgrade,
 			func() {
 				s.PostUpgrade()
+				btcStkK, ctx := s.app.BTCStakingKeeper, s.ctx
+
+				// check that fp was deleted
+				isDeleted := btcStkK.IsFinalityProviderDeleted(ctx, s.fpBtcPkToDelete)
+				s.True(isDeleted)
+
+				err := btcStkK.IterateFinalityProvider(ctx, func(fp btcstktypes.FinalityProvider) error {
+					if fp.BtcPk.Equals(s.fpBtcPkToDelete) {
+						isDeleted := btcStkK.IsFinalityProviderDeleted(ctx, fp.BtcPk)
+						s.True(isDeleted)
+						return nil
+					}
+					isDeleted := btcStkK.IsFinalityProviderDeleted(ctx, fp.BtcPk)
+					s.False(isDeleted)
+					return nil
+				})
+				s.NoError(err)
+
+				largestBtcReorg := btcStkK.GetLargestBtcReorg(ctx)
+				s.EqualValues(s.largestBtcReorg, largestBtcReorg)
+			},
+		},
+		{
+			"Test upgrade v3rc3 witout duplicated fp addr and without largest btc reorg in any prefix",
+			func() {
+				s.PreUpgrade()
+
+				btcStkK, ctx := s.app.BTCStakingKeeper, s.ctx
+				sigCtx := signingcontext.FpPopContextV0(ctx.ChainID(), btcStkK.ModuleAddress())
+
+				msgCreateFp, err := datagen.GenRandomMsgCreateFinalityProvider(r, sigCtx)
+				s.NoError(err)
+				err = btcStkK.AddFinalityProvider(ctx, msgCreateFp)
+				s.NoError(err)
+
+				msgCreateFp2, err := datagen.GenRandomMsgCreateFinalityProvider(r, sigCtx)
+				s.NoError(err)
+				err = btcStkK.AddFinalityProvider(ctx, msgCreateFp2)
+				s.NoError(err)
+
+				// make sure both prefix have nothing
+				btcStkStoreKey := s.app.GetKey(btcstktypes.StoreKey)
+				btcStkStoreService := runtime.NewKVStoreService(btcStkStoreKey)
+				sb := collections.NewSchemaBuilder(btcStkStoreService)
+				oldLargestBtcReorgItem := collections.NewItem(
+					sb,
+					v3rc3.OldTestnetLargestBtcReorgInBlocks,
+					"largest_btc_reorg",
+					codec.CollValue[btcstktypes.LargestBtcReOrg](app.GetEncodingConfig().Codec),
+				)
+
+				err = oldLargestBtcReorgItem.Remove(ctx)
+				s.NoError(err)
+
+				err = btcStkK.LargestBtcReorg.Remove(ctx)
+				s.NoError(err)
+			},
+			s.Upgrade,
+			func() {
+				s.PostUpgrade()
+				btcStkK, ctx := s.app.BTCStakingKeeper, s.ctx
+
+				err := btcStkK.IterateFinalityProvider(ctx, func(fp btcstktypes.FinalityProvider) error {
+					isDeleted := btcStkK.IsFinalityProviderDeleted(ctx, fp.BtcPk)
+					s.False(isDeleted)
+					return nil
+				})
+				s.NoError(err)
+
+				largestBtcReorg := btcStkK.GetLargestBtcReorg(ctx)
+				s.Nil(largestBtcReorg)
 			},
 		},
 	}

@@ -26,7 +26,7 @@ var (
 	// it was modified to prefix 13 and only applied to testnet. This will be changed in this upgrade so that all branches
 	// and babylon chains will follow mainnet and have LargestBtcReorgInBlocks at prefix 11. Luckily the prefix 11 in testnet
 	// was being reserved by BTCCOnsumerDelegatorKey which was not being used and it can be revoked and cleaned.
-	oldTestnetLargestBtcReorgInBlocks = collections.NewPrefix(13)
+	OldTestnetLargestBtcReorgInBlocks = collections.NewPrefix(13)
 
 	// Upgrade for version v3rc3
 	Upgrade = upgrades.Upgrade{
@@ -76,7 +76,7 @@ func UpdatePrefixLargestBtcReorgInBlocks(
 	sb := collections.NewSchemaBuilder(btcStkStoreService)
 	oldLargestBtcReorgItem := collections.NewItem(
 		sb,
-		oldTestnetLargestBtcReorgInBlocks,
+		OldTestnetLargestBtcReorgInBlocks,
 		"largest_btc_reorg",
 		codec.CollValue[btcstktypes.LargestBtcReOrg](cdc),
 	)
