@@ -65,10 +65,6 @@ func (ms msgServer) ResumeFinalityProposal(goCtx context.Context, req *types.Msg
 func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinalitySig) (*types.MsgAddFinalitySigResponse, error) {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), types.MetricsKeyAddFinalitySig)
 
-	if err := req.ValidateBasic(); err != nil {
-		return nil, err
-	}
-
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	activationHeight, errMod := ms.validateActivationHeight(ctx, req.BlockHeight)
 	if errMod != nil {
@@ -261,10 +257,6 @@ func (ms msgServer) ShouldAcceptSigForHeight(ctx context.Context, block *types.I
 // CommitPubRandList commits a list of EOTS public randomness
 func (ms msgServer) CommitPubRandList(goCtx context.Context, req *types.MsgCommitPubRandList) (*types.MsgCommitPubRandListResponse, error) {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), types.MetricsKeyCommitPubRandList)
-
-	if err := req.ValidateBasic(); err != nil {
-		return nil, err
-	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	// check the commit start height is not too far into the future
