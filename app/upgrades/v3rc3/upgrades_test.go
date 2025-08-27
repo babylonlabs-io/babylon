@@ -10,7 +10,7 @@ import (
 	"cosmossdk.io/core/appmodule"
 	"cosmossdk.io/core/header"
 	"cosmossdk.io/x/upgrade"
-	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	bbn "github.com/babylonlabs-io/babylon/v3/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/runtime"
@@ -19,12 +19,12 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	upgradetypes "cosmossdk.io/x/upgrade/types"
-	"github.com/babylonlabs-io/babylon/v4/app"
-	"github.com/babylonlabs-io/babylon/v4/app/signingcontext"
-	"github.com/babylonlabs-io/babylon/v4/app/upgrades"
-	v3rc3 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v3rc3"
-	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
-	btcstktypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/v3/app"
+	"github.com/babylonlabs-io/babylon/v3/app/signingcontext"
+	"github.com/babylonlabs-io/babylon/v3/app/upgrades"
+	v3rc3 "github.com/babylonlabs-io/babylon/v3/app/upgrades/v3rc3"
+	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
+	btcstktypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 	"github.com/stretchr/testify/require"
 )
 
