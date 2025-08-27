@@ -67,8 +67,8 @@ func NewRegisterConsumerCmd() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("invalid babylon rewards commission: %w", err)
 			}
-			if babylonCommission.IsNegative() || babylonCommission.GT(math.LegacyOneDec()) {
-				return fmt.Errorf("babylon rewards commission must be between 0 and 1, got: %s", babylonCommissionStr)
+			if err := types.ValidateBbnCommission(babylonCommission); err != nil {
+				return err
 			}
 			rollupAddress := ""
 			if len(args) > 4 {
