@@ -89,6 +89,10 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 
 	fpPK := req.FpBtcPk
 
+	if ms.BTCStakingKeeper.IsFinalityProviderDeleted(ctx, req.FpBtcPk) {
+		return nil, types.ErrFinalityProviderIsDeleted.Wrapf("fp_btc_pk_hex: %s", req.FpBtcPk.MarshalHex())
+	}
+
 	// ensure the finality provider exists
 	fp, err := ms.BTCStakingKeeper.GetFinalityProvider(ctx, req.FpBtcPk.MustMarshal())
 	if err != nil {

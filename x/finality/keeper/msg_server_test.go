@@ -143,6 +143,7 @@ func FuzzAddFinalitySig(f *testing.F) {
 
 		bsKeeper := types.NewMockBTCStakingKeeper(ctrl)
 		bsKeeper.EXPECT().UpdateFinalityProvider(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+		bsKeeper.EXPECT().IsFinalityProviderDeleted(gomock.Any(), gomock.Any()).Return(false).Times(7)
 		cKeeper := types.NewMockCheckpointingKeeper(ctrl)
 		iKeeper := types.NewMockIncentiveKeeper(ctrl)
 		iKeeper.EXPECT().IndexRefundableMsg(gomock.Any(), gomock.Any()).AnyTimes()
@@ -286,6 +287,15 @@ func FuzzAddFinalitySig(f *testing.F) {
 		cKeeper.EXPECT().GetEpochByHeight(gomock.Any(), msg.BlockHeight).Return(uint64(1)).Times(1)
 		_, err = ms.AddFinalitySig(ctx, msg)
 		require.ErrorIs(t, err, types.ErrSigHeightOutdated)
+
+		// Case 9: add finality vote from a deleted finality provider
+		msg.BlockHeight++
+		ctx = ctx.WithHeaderInfo(header.Info{Height: int64(msg.BlockHeight)})
+		fKeeper.IndexBlock(ctx)
+		cKeeper.EXPECT().GetEpochByHeight(gomock.Any(), msg.BlockHeight).Return(uint64(1)).Times(1)
+		bsKeeper.EXPECT().IsFinalityProviderDeleted(gomock.Any(), msg.FpBtcPk).Return(true).Times(1)
+		_, err = ms.AddFinalitySig(ctx, msg)
+		require.EqualError(t, err, types.ErrFinalityProviderIsDeleted.Wrapf("fp_btc_pk_hex: %s", msg.FpBtcPk.MarshalHex()).Error())
 	})
 }
 
@@ -362,6 +372,7 @@ func TestVoteForConflictingHashShouldRetrieveEvidenceAndSlash(t *testing.T) {
 	defer ctrl.Finish()
 	bsKeeper := types.NewMockBTCStakingKeeper(ctrl)
 	bsKeeper.EXPECT().UpdateFinalityProvider(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+	bsKeeper.EXPECT().IsFinalityProviderDeleted(gomock.Any(), gomock.Any()).Return(false).AnyTimes()
 	cKeeper := types.NewMockCheckpointingKeeper(ctrl)
 	iKeeper := types.NewMockIncentiveKeeper(ctrl)
 	iKeeper.EXPECT().IndexRefundableMsg(gomock.Any(), gomock.Any()).AnyTimes()

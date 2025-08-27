@@ -49,6 +49,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#1536](https://github.com/babylonlabs-io/babylon/pull/1536) Refactor `x/zoneconcierge` for optimize ibc channel, client io
 - [#1552](https://github.com/babylonlabs-io/babylon/pull/1552) Refactor `e2e` test suite
 
+### Bug fixes
+
+- [#1597](https://github.com/babylonlabs-io/babylon/pull/1597) fix: disabled duplicate fp bbn addr registering
+
 ## v3.0.0-rc.2
 
 - [#1529](https://github.com/babylonlabs-io/babylon/pull/1529) Allow `FinalityProviderHistoricalRewards` to have empty coins
