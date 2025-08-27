@@ -7,14 +7,16 @@ import (
 	corestoretypes "cosmossdk.io/core/store"
 	"cosmossdk.io/log"
 
-	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/wire"
 
-	"github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	proto "github.com/cosmos/gogoproto/proto"
+
+	"github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
 )
 
 type (
@@ -26,6 +28,9 @@ type (
 		btcConfig    bbn.BtcConfig
 		bl           *types.BtcLightClient
 		authority    string
+
+		// Header cache to reduce duplicate store I/O
+		headerCache *types.HeaderCache
 	}
 )
 
@@ -48,6 +53,7 @@ func NewKeeper(
 		btcConfig:    btcConfig,
 		bl:           bl,
 		authority:    authority,
+		headerCache:  types.NewHeaderCache(),
 	}
 }
 
@@ -260,6 +266,52 @@ func (k Keeper) GetMainChainFrom(ctx context.Context, startHeight uint32) []*typ
 	return headers
 }
 
+// GetMainChainFromWithCache produces the same result as GetMainChainFrom,
+// but minimizes redundant store I/O by using a cache. Since the cache is invalidated every block,
+// it is intended to be used selectively only in logic where redundant I/O occurs frequently.
+func (k Keeper) GetMainChainFromWithCache(ctx context.Context, startHeight uint32) []*types.BTCHeaderInfo {
+	// Try to get tip from cache first
+	currentTip := k.headerCache.GetCachedTip()
+	headers := make([]*types.BTCHeaderInfo, 0)
+
+	// If no cached tip, fetch from store and cache it
+	if currentTip == nil {
+		currentTip = k.GetTipInfo(ctx)
+		if currentTip == nil {
+			return headers
+		}
+		k.headerCache.UpdateTip(currentTip)
+	}
+
+	// If startHeight is higher than tip, return empty slice
+	if startHeight > currentTip.Height {
+		return headers
+	}
+
+	// Iterate from startHeight to tip, using cache when possible
+	for height := startHeight; height <= currentTip.Height; height++ {
+		header, err := k.headerCache.GetOrFetch(height, func(h uint32) (*types.BTCHeaderInfo, error) {
+			// Cache miss - fetch from store
+			headerInfo, err := k.headersState(ctx).GetHeaderByHeight(h)
+			if err != nil {
+				return nil, err
+			}
+			return headerInfo, nil
+		})
+
+		if err != nil {
+			// If we can't get a header, stop and return what we have so far
+			break
+		}
+
+		if header != nil {
+			headers = append(headers, header)
+		}
+	}
+
+	return headers
+}
+
 // GetMainChainFromWithLimit returns the current canonical chain from the given height up to the tip
 // If the height is higher than the tip, it returns an empty slice
 // If startHeight is 0, it returns the entire main chain
@@ -311,4 +363,15 @@ func (k Keeper) GetMainChainReverse(ctx context.Context) []*types.BTCHeaderInfo 
 
 func (k Keeper) GetBTCNet() *chaincfg.Params {
 	return k.btcConfig.NetParams()
+}
+
+// HeaderCache returns the header cache for testing purposes
+func (k Keeper) HeaderCache() *types.HeaderCache {
+	return k.headerCache
+}
+
+// ResetHeaderCache clears the header cache to prevent unbounded memory growth
+// This should be called at the end of each block to ensure cache consistency
+func (k Keeper) ResetHeaderCache() {
+	k.headerCache.Invalidate()
 }
