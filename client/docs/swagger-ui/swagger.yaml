@@ -5016,7 +5016,7 @@ paths:
                         soft_deleted defines if the fp is soft deleted or not.
                         If it is soft
 
-                        deleted he can't cast votes.
+                        deleted the FP can't cast votes.
                   description: >-
                     FinalityProviderResponse defines a finality provider with
                     voting power
@@ -6096,7 +6096,7 @@ paths:
                       soft_deleted defines if the fp is soft deleted or not. If
                       it is soft
 
-                      deleted he can't cast votes.
+                      deleted the FP can't cast votes.
                 description: >-
                   FinalityProviderResponse defines a finality provider with
                   voting power
@@ -15313,7 +15313,7 @@ definitions:
         type: boolean
         description: |-
           soft_deleted defines if the fp is soft deleted or not. If it is soft
-          deleted he can't cast votes.
+          deleted the FP can't cast votes.
     description: |-
       FinalityProviderResponse defines a finality provider with voting power
       information.
@@ -16570,7 +16570,7 @@ definitions:
               soft_deleted defines if the fp is soft deleted or not. If it is
               soft
 
-              deleted he can't cast votes.
+              deleted the FP can't cast votes.
         description: |-
           FinalityProviderResponse defines a finality provider with voting power
           information.
@@ -16717,7 +16717,7 @@ definitions:
                 soft_deleted defines if the fp is soft deleted or not. If it is
                 soft
 
-                deleted he can't cast votes.
+                deleted the FP can't cast votes.
           description: >-
             FinalityProviderResponse defines a finality provider with voting
             power

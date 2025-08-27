@@ -1343,7 +1343,8 @@ type FinalityProviderResponse struct {
 	CommissionInfo *CommissionInfo `protobuf:"bytes,11,opt,name=commission_info,json=commissionInfo,proto3" json:"commission_info,omitempty"`
 	// bsn_id is the ID of the BSN the finality provider is securing
 	BsnId string `protobuf:"bytes,12,opt,name=bsn_id,json=bsnId,proto3" json:"bsn_id,omitempty"`
-	// soft_deleted defines if the fp is soft deleted or not
+	// soft_deleted defines if the fp is soft deleted or not. If it is soft
+	// deleted the FP can't cast votes.
 	SoftDeleted bool `protobuf:"varint,13,opt,name=soft_deleted,json=softDeleted,proto3" json:"soft_deleted,omitempty"`
 }
 
