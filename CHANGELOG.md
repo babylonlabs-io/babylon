@@ -44,6 +44,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 remove send restrictions
 - [#1398](https://github.com/babylonlabs-io/babylon/pull/1398) Add custom tokenfactory
 bindings (thanks @benluelo for contribution)
+- [#1594](https://github.com/babylonlabs-io/babylon/pull/1594) Add soft deleted to finality providers response.
 
 ### Bug Fixes
 

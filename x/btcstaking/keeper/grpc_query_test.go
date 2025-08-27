@@ -44,6 +44,10 @@ func FuzzFinalityProviders(f *testing.F) {
 
 			AddFinalityProvider(t, ctx, *keeper, fp)
 			fpsMap[fp.BtcPk.MarshalHex()] = fp
+			if i%2 == 0 {
+				err = keeper.SoftDeleteFinalityProvider(ctx, fp.BtcPk)
+				require.NoError(t, err)
+			}
 		}
 		numOfFpsInStore := len(fpsMap)
 
@@ -80,6 +84,9 @@ func FuzzFinalityProviders(f *testing.F) {
 					t.Fatalf("rpc returned a finality provider that was not created")
 				}
 				fpsFound[fp.BtcPk.MarshalHex()] = true
+
+				isDeleted := keeper.IsFinalityProviderDeleted(ctx, fp.BtcPk)
+				require.Equal(t, isDeleted, fp.SoftDeleted)
 			}
 
 			// Construct the next page request

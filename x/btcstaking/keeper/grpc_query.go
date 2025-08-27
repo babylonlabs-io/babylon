@@ -34,7 +34,8 @@ func (k Keeper) FinalityProviders(c context.Context, req *types.QueryFinalityPro
 			return err
 		}
 
-		resp := types.NewFinalityProviderResponse(&fp, currBlockHeight)
+		isDeleted := k.IsFinalityProviderDeleted(ctx, fp.BtcPk)
+		resp := types.NewFinalityProviderResponse(&fp, currBlockHeight, isDeleted)
 		fpResp = append(fpResp, resp)
 		return nil
 	})
@@ -73,7 +74,8 @@ func (k Keeper) FinalityProvider(c context.Context, req *types.QueryFinalityProv
 	}
 
 	currBlockHeight := uint64(ctx.BlockHeight())
-	fpResp := types.NewFinalityProviderResponse(fp, currBlockHeight)
+	isDeleted := k.IsFinalityProviderDeleted(ctx, fp.BtcPk)
+	fpResp := types.NewFinalityProviderResponse(fp, currBlockHeight, isDeleted)
 	return &types.QueryFinalityProviderResponse{FinalityProvider: fpResp}, nil
 }
 

@@ -4853,6 +4853,13 @@ paths:
                           description: >-
                             update_time is the last time the commission rate was
                             changed.
+                    soft_deleted:
+                      type: boolean
+                      description: >-
+                        soft_deleted defines if the fp is soft deleted or not.
+                        If it is soft
+
+                        deleted the FP can't cast votes.
                   description: >-
                     FinalityProviderResponse defines a finality provider with
                     voting power information.
@@ -5837,6 +5844,13 @@ paths:
                         description: >-
                           update_time is the last time the commission rate was
                           changed.
+                  soft_deleted:
+                    type: boolean
+                    description: >-
+                      soft_deleted defines if the fp is soft deleted or not. If
+                      it is soft
+
+                      deleted the FP can't cast votes.
                 description: >-
                   FinalityProviderResponse defines a finality provider with
                   voting power information.
@@ -13606,6 +13620,11 @@ definitions:
             type: string
             format: date-time
             description: update_time is the last time the commission rate was changed.
+      soft_deleted:
+        type: boolean
+        description: |-
+          soft_deleted defines if the fp is soft deleted or not. If it is soft
+          deleted the FP can't cast votes.
     description: >-
       FinalityProviderResponse defines a finality provider with voting power
       information.
@@ -14637,6 +14656,13 @@ definitions:
                 type: string
                 format: date-time
                 description: update_time is the last time the commission rate was changed.
+          soft_deleted:
+            type: boolean
+            description: >-
+              soft_deleted defines if the fp is soft deleted or not. If it is
+              soft
+
+              deleted the FP can't cast votes.
         description: >-
           FinalityProviderResponse defines a finality provider with voting power
           information.
@@ -14772,6 +14798,13 @@ definitions:
                   description: >-
                     update_time is the last time the commission rate was
                     changed.
+            soft_deleted:
+              type: boolean
+              description: >-
+                soft_deleted defines if the fp is soft deleted or not. If it is
+                soft
+
+                deleted the FP can't cast votes.
           description: >-
             FinalityProviderResponse defines a finality provider with voting
             power information.

@@ -308,6 +308,11 @@ message FinalityProviderResponse {
   uint32 highest_voted_height = 10;
   // commission_info contains information details of the finality provider commission.
   CommissionInfo commission_info = 11;
+  // bsn_id is the ID of the BSN the finality provider is securing
+  reserved 12;
+  // soft_deleted defines if the fp is soft deleted or not. If it is soft
+  // deleted the FP can't cast votes.
+  bool soft_deleted = 13;
 }
 
 // QueryLargestBtcReOrgRequest query request of the largest BTC reorg request
