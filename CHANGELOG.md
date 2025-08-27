@@ -42,7 +42,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#1540](https://github.com/babylonlabs-io/babylon/pull/1540) Optimizations on `x/zoneconcierge` `EndBlocker` logic.
 - [#1536](https://github.com/babylonlabs-io/babylon/pull/1536) Refactor `x/zoneconcierge` for optimize ibc channel, client io
 - [#1552](https://github.com/babylonlabs-io/babylon/pull/1552) Refactor `e2e` test suite
+- [#1556](https://github.com/babylonlabs-io/babylon/pull/1556) CLI for submitting equivocation evidence in x/finality module
 - [#1571](https://github.com/babylonlabs-io/babylon/pull/1571) Optimize `x/zoneconcierge` bottlenecks by caching redundant logics.
+
+### Bug fixes
+
+- [#1595](https://github.com/babylonlabs-io/babylon/pull/1595) fix: disabled duplicate fp bbn addr registering
 
 ## v3.0.0-rc.2
 
