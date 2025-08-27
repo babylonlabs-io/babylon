@@ -104,6 +104,19 @@ func (k Keeper) HandleFPBTCDelegations(ctx context.Context, fpBTCPK *bbn.BIP340P
 	return nil
 }
 
+// FpTotalSatsStaked iterates trought all the finality provider btc delegations and calculates the total amount of
+// sats staked to it
+func (k Keeper) FpTotalSatsStaked(ctx context.Context, fpBTCPK *bbn.BIP340PubKey) (uint64, error) {
+	totalVp := 0
+	if err := k.HandleFPBTCDelegations(ctx, fpBTCPK, func(b *types.BTCDelegation) error {
+		totalVp += int(b.TotalSat)
+		return nil
+	}); err != nil {
+		return 0, err
+	}
+	return uint64(totalVp), nil
+}
+
 // btcDelegatorFpStore returns the KVStore of the BTC delegators
 // prefix: BTCDelegatorKey || finality provider's Bitcoin secp256k1 PK
 // key: delegator's Bitcoin secp256k1 PK

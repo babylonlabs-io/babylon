@@ -14,6 +14,7 @@ import (
 
 	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
 	"github.com/babylonlabs-io/babylon/v3/testutil/helper"
+	bbn "github.com/babylonlabs-io/babylon/v3/types"
 	btclightclientt "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
 	"github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
 	bsctypes "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
@@ -52,16 +53,19 @@ func TestExportGenesis(t *testing.T) {
 	fps, delegations, chainsHeight, consumerEvents := gs.FinalityProviders, gs.BtcDelegations, gs.BlockHeightChains, gs.ConsumerEvents
 
 	for i := range gs.FinalityProviders {
+		fp := fps[i]
 		// set finality
-		h.AddFinalityProvider(fps[i])
+		h.AddFinalityProvider(fp)
+		err := k.SetFpBbnAddr(ctx, fp.Address())
+		require.NoError(t, err)
 		// on creating the finality providers, the commission UpdateTime
 		// is set to be the current block time. To check equality afterwards,
 		// we update the randomly generated fps (with UpdateTime = 0) to have UpdateTime = block time
-		fps[i].CommissionInfo.UpdateTime = ctx.BlockHeader().Time
+		fp.CommissionInfo.UpdateTime = ctx.BlockHeader().Time
 
 		// make delegations per fp so event indexes are the same as the
 		// generated data in the setupTest func
-		delegateToFP(h, delegations, fps[i].BtcPk.MustToBTCPK())
+		delegateToFP(h, delegations, fp.BtcPk.MustToBTCPK())
 	}
 
 	// index blocks heights
@@ -111,6 +115,13 @@ func TestExportGenesis(t *testing.T) {
 		hash, err := chainhash.NewHash(hashBz)
 		require.NoError(t, err)
 		k.IndexAllowedMultiStakingTransaction(ctx, hash)
+	}
+
+	for _, deletedFpBtcPkHex := range gs.DeletedFpsBtcPkHex {
+		fpBtcPk, err := bbn.NewBIP340PubKeyFromHex(deletedFpBtcPkHex)
+		require.NoError(t, err)
+		err = k.SoftDeleteFinalityProvider(ctx, fpBtcPk)
+		require.NoError(t, err)
 	}
 
 	exportedGs, err := k.ExportGenesis(ctx)
@@ -194,6 +205,7 @@ func setupTest(t *testing.T) (sdk.Context, *helper.Helper, *types.GenesisState) 
 	allowedStkTxHashes := make([]string, 0)
 	allowedMultiStkTxHashes := make([]string, 0)
 	consumerEvents := make([]*types.ConsumerEvent, 0)
+	fpsBbnAddr := make([]string, 0)
 
 	blkHeight := uint64(r.Int63n(1000)) + math.MaxUint16
 	totalDelegations := 0
@@ -203,15 +215,18 @@ func setupTest(t *testing.T) (sdk.Context, *helper.Helper, *types.GenesisState) 
 	for i := range fps {
 		stakingValue := r.Int31n(200000) + 10000
 		numDelegations := r.Int31n(10)
+		fp := fps[i]
 		delegations := createNDelegationsForFinalityProvider(
 			r,
 			t,
 			h.StakerPopContext(),
-			fps[i].BtcPk.MustToBTCPK(),
+			fp.BtcPk.MustToBTCPK(),
 			int64(stakingValue),
 			int(numDelegations),
 			params.CovenantQuorum,
 		)
+
+		fpsBbnAddr = append(fpsBbnAddr, fp.Addr)
 
 		for _, del := range delegations {
 			totalDelegations++
@@ -258,7 +273,6 @@ func setupTest(t *testing.T) (sdk.Context, *helper.Helper, *types.GenesisState) 
 				},
 			})
 		}
-
 		// chain heights
 		btcHeight := uint32(blkHeight + 100)
 		chainsHeight = append(chainsHeight, &types.BlockHeightBbnToBtc{
@@ -267,6 +281,12 @@ func setupTest(t *testing.T) (sdk.Context, *helper.Helper, *types.GenesisState) 
 		})
 
 		blkHeight++ // each fp increase blk height to modify data in state.
+	}
+
+	deletedNumFps := datagen.RandomInRange(r, 1, len(fps))
+	deletedFps := make([]string, deletedNumFps)
+	for i := 0; i < deletedNumFps; i++ {
+		deletedFps[i] = fps[i].BtcPk.MarshalHex()
 	}
 
 	gs := &types.GenesisState{
@@ -280,6 +300,8 @@ func setupTest(t *testing.T) (sdk.Context, *helper.Helper, *types.GenesisState) 
 		LargestBtcReorg:             latestBtcReOrg,
 		ConsumerEvents:              consumerEvents,
 		AllowedMultiStakingTxHashes: allowedMultiStkTxHashes,
+		FpBbnAddr:                   fpsBbnAddr,
+		DeletedFpsBtcPkHex:          deletedFps,
 	}
 	require.NoError(t, gs.Validate())
 	return ctx, h, gs
