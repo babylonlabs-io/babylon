@@ -45,6 +45,7 @@ remove send restrictions
 - [#1398](https://github.com/babylonlabs-io/babylon/pull/1398) Add custom tokenfactory
 bindings (thanks @benluelo for contribution)
 - [#1594](https://github.com/babylonlabs-io/babylon/pull/1594) Add soft deleted to finality providers response.
+- [#1611](https://github.com/babylonlabs-io/babylon/pull/1611) Rename `x/btcstaking` prefixes as `v3.x`.
 
 ### Bug Fixes
 
