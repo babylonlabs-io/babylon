@@ -42,126 +42,22 @@ func FuzzFinalityProviders(f *testing.F) {
 			fp, err := datagen.GenRandomFinalityProvider(r)
 			require.NoError(t, err)
 
-<<<<<<< HEAD
 			AddFinalityProvider(t, ctx, *keeper, fp)
 			fpsMap[fp.BtcPk.MarshalHex()] = fp
-=======
-			// Randomly choose BSN ID to test both Babylon and consumer cases
-			var bsnId string
-			randomChoice := datagen.RandomInt(r, 3)
-			switch randomChoice {
-			case 0:
-				bsnId = "" // Empty string defaults to Babylon
-			case 1:
-				bsnId = babylonBsnId
-			case 2:
-				bsnId = registeredBsnId // Use registered consumer BSN ID
-			}
-
-			fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, fpSK, h.FpPopContext(), bsnId)
-			require.NoError(t, err)
-
-			// Add the finality provider
-			err = h.BTCStakingKeeper.AddFinalityProvider(h.Ctx, &types.MsgCreateFinalityProvider{
-				Addr:        fp.Addr,
-				Description: fp.Description,
-				Commission: types.NewCommissionRates(
-					*fp.Commission,
-					fp.CommissionInfo.MaxRate,
-					fp.CommissionInfo.MaxChangeRate,
-				),
-				BtcPk: fp.BtcPk,
-				Pop:   fp.Pop,
-				BsnId: fp.BsnId,
-			})
-			require.NoError(t, err)
-
-			// Store in maps, resolving empty BSN ID to Babylon
-			actualBsnId := bsnId
-			if actualBsnId == "" {
-				actualBsnId = babylonBsnId
-			}
-
-			// Update the FP object to have the resolved BSN ID
-			fp.BsnId = actualBsnId
-
-			if fpsMapByBsn[actualBsnId] == nil {
-				fpsMapByBsn[actualBsnId] = make(map[string]*types.FinalityProvider)
-			}
 			if i%2 == 0 {
-				err = h.BTCStakingKeeper.SoftDeleteFinalityProvider(h.Ctx, fp.BtcPk)
+				err = keeper.SoftDeleteFinalityProvider(ctx, fp.BtcPk)
 				require.NoError(t, err)
 			}
-
-			fpsMapByBsn[actualBsnId][fp.BtcPk.MarshalHex()] = fp
-			allFpsMap[fp.BtcPk.MarshalHex()] = fp
->>>>>>> ae7142f (chore: add soft deleted to fp resp (#1594))
 		}
 		numOfFpsInStore := len(fpsMap)
 
 		// Test nil request
-<<<<<<< HEAD
 		resp, err := keeper.FinalityProviders(ctx, nil)
 		if resp != nil {
 			t.Errorf("Nil input led to a non-nil response")
 		}
 		if err == nil {
 			t.Errorf("Nil input led to a nil error")
-=======
-		resp, err := h.BTCStakingKeeper.FinalityProviders(h.Ctx, nil)
-		require.Error(t, err)
-		require.Nil(t, resp)
-
-		// Test 1: Query without BSN ID (should default to Babylon BSN)
-		babylonFpsMap := fpsMapByBsn[babylonBsnId]
-
-		if len(babylonFpsMap) > 0 {
-			// Generate a page request with a limit and a nil key
-			limit := datagen.RandomInt(r, len(babylonFpsMap)) + 1
-			pagination := constructRequestWithLimit(r, limit)
-
-			req := types.QueryFinalityProvidersRequest{
-				Pagination: pagination,
-				// BsnId not provided, should default to Babylon
-			}
-
-			// Test pagination through all Babylon FPs
-			fpsFound := make(map[string]bool)
-			for {
-				resp, err = h.BTCStakingKeeper.FinalityProviders(h.Ctx, &req)
-				require.NoError(t, err)
-				require.NotNil(t, resp)
-
-				for _, fp := range resp.FinalityProviders {
-					// Should be Babylon FPs only
-					require.Equal(t, babylonBsnId, fp.BsnId)
-
-					// Check if the pk exists in the babylon map
-					if _, ok := babylonFpsMap[fp.BtcPk.MarshalHex()]; !ok {
-						t.Fatalf("rpc returned a finality provider that was not created for Babylon BSN")
-					}
-					fpsFound[fp.BtcPk.MarshalHex()] = true
-					isDeleted := h.BTCStakingKeeper.IsFinalityProviderDeleted(h.Ctx, fp.BtcPk)
-					require.Equal(t, fp.SoftDeleted, isDeleted)
-				}
-
-				// Break if no more pages
-				if resp.Pagination.NextKey == nil {
-					break
-				}
-
-				// Construct the next page request
-				pagination = constructRequestWithKeyAndLimit(r, resp.Pagination.NextKey, limit)
-				req = types.QueryFinalityProvidersRequest{
-					Pagination: pagination,
-					// BsnId still not provided
-				}
-			}
-
-			if len(fpsFound) != len(babylonFpsMap) {
-				t.Errorf("Some Babylon finality providers were missed. Got %d while %d were expected", len(fpsFound), len(babylonFpsMap))
-			}
->>>>>>> ae7142f (chore: add soft deleted to fp resp (#1594))
 		}
 
 		// Generate a page request with a limit and a nil key
@@ -188,6 +84,9 @@ func FuzzFinalityProviders(f *testing.F) {
 					t.Fatalf("rpc returned a finality provider that was not created")
 				}
 				fpsFound[fp.BtcPk.MarshalHex()] = true
+
+				isDeleted := keeper.IsFinalityProviderDeleted(ctx, fp.BtcPk)
+				require.Equal(t, isDeleted, fp.SoftDeleted)
 			}
 
 			// Construct the next page request

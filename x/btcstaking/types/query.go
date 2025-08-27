@@ -83,10 +83,6 @@ func NewFinalityProviderResponse(f *FinalityProvider, bbnBlockHeight uint64, sof
 		Height:               bbnBlockHeight,
 		HighestVotedHeight:   f.HighestVotedHeight,
 		CommissionInfo:       f.CommissionInfo,
-<<<<<<< HEAD
-=======
-		BsnId:                f.BsnId,
 		SoftDeleted:          softDeleted,
->>>>>>> ae7142f (chore: add soft deleted to fp resp (#1594))
 	}
 }
