@@ -101,24 +101,24 @@ func UpdatePrefixLargestBtcReorgInBlocks(
 }
 
 func GetLargestBtcReorg(largestBtcReorg, oldLargestBtcReorg btcstktypes.LargestBtcReOrg, err, errOld error) *btcstktypes.LargestBtcReOrg {
-	if err == nil && errOld == nil {
-		// both prefixes have valid largest btc reorgs, get the largest diff than
-		if oldLargestBtcReorg.BlockDiff > largestBtcReorg.BlockDiff {
-			return &oldLargestBtcReorg
-		}
-		return &largestBtcReorg
-	}
-
-	// only the prefix 11 has a valid largest
-	if err == nil {
-		return &largestBtcReorg
+	if err != nil && errOld != nil {
+		// no valid largest btc reorg, should clean it all
+		return nil
 	}
 
 	// only the prefix 13 has a valid largest
-	if errOld == nil {
+	if err != nil {
 		return &oldLargestBtcReorg
 	}
 
-	// no valid largest btc reorg, should clean it all
-	return nil
+	// only the prefix 11 has a valid largest
+	if errOld != nil {
+		return &largestBtcReorg
+	}
+
+	// both prefixes have valid largest btc reorgs, get the largest diff than
+	if oldLargestBtcReorg.BlockDiff > largestBtcReorg.BlockDiff {
+		return &oldLargestBtcReorg
+	}
+	return &largestBtcReorg
 }
