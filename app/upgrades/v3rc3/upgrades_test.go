@@ -39,7 +39,7 @@ func TestGetLargestBtcReorg(t *testing.T) {
 	headerInfo1.Height = 100
 
 	headerInfo2 := datagen.GenRandomBTCHeaderInfo(r)
-	headerInfo1.Height = 200
+	headerInfo2.Height = 200
 
 	tcs := []struct {
 		name               string
