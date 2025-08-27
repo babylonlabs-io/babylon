@@ -4853,6 +4853,21 @@ paths:
                           description: >-
                             update_time is the last time the commission rate was
                             changed.
+<<<<<<< HEAD
+=======
+                    bsn_id:
+                      type: string
+                      title: >-
+                        bsn_id is the ID of the BSN the finality provider is
+                        securing
+                    soft_deleted:
+                      type: boolean
+                      description: >-
+                        soft_deleted defines if the fp is soft deleted or not.
+                        If it is soft
+
+                        deleted the FP can't cast votes.
+>>>>>>> ae7142f (chore: add soft deleted to fp resp (#1594))
                   description: >-
                     FinalityProviderResponse defines a finality provider with
                     voting power information.
@@ -5837,6 +5852,21 @@ paths:
                         description: >-
                           update_time is the last time the commission rate was
                           changed.
+<<<<<<< HEAD
+=======
+                  bsn_id:
+                    type: string
+                    title: >-
+                      bsn_id is the ID of the BSN the finality provider is
+                      securing
+                  soft_deleted:
+                    type: boolean
+                    description: >-
+                      soft_deleted defines if the fp is soft deleted or not. If
+                      it is soft
+
+                      deleted the FP can't cast votes.
+>>>>>>> ae7142f (chore: add soft deleted to fp resp (#1594))
                 description: >-
                   FinalityProviderResponse defines a finality provider with
                   voting power information.
@@ -13606,7 +13636,19 @@ definitions:
             type: string
             format: date-time
             description: update_time is the last time the commission rate was changed.
+<<<<<<< HEAD
     description: >-
+=======
+      bsn_id:
+        type: string
+        title: bsn_id is the ID of the BSN the finality provider is securing
+      soft_deleted:
+        type: boolean
+        description: |-
+          soft_deleted defines if the fp is soft deleted or not. If it is soft
+          deleted the FP can't cast votes.
+    description: |-
+>>>>>>> ae7142f (chore: add soft deleted to fp resp (#1594))
       FinalityProviderResponse defines a finality provider with voting power
       information.
   babylon.btcstaking.v1.Params:
@@ -14637,7 +14679,21 @@ definitions:
                 type: string
                 format: date-time
                 description: update_time is the last time the commission rate was changed.
+<<<<<<< HEAD
         description: >-
+=======
+          bsn_id:
+            type: string
+            title: bsn_id is the ID of the BSN the finality provider is securing
+          soft_deleted:
+            type: boolean
+            description: >-
+              soft_deleted defines if the fp is soft deleted or not. If it is
+              soft
+
+              deleted the FP can't cast votes.
+        description: |-
+>>>>>>> ae7142f (chore: add soft deleted to fp resp (#1594))
           FinalityProviderResponse defines a finality provider with voting power
           information.
         title: finality_provider contains the FinalityProvider
@@ -14772,6 +14828,19 @@ definitions:
                   description: >-
                     update_time is the last time the commission rate was
                     changed.
+<<<<<<< HEAD
+=======
+            bsn_id:
+              type: string
+              title: bsn_id is the ID of the BSN the finality provider is securing
+            soft_deleted:
+              type: boolean
+              description: >-
+                soft_deleted defines if the fp is soft deleted or not. If it is
+                soft
+
+                deleted the FP can't cast votes.
+>>>>>>> ae7142f (chore: add soft deleted to fp resp (#1594))
           description: >-
             FinalityProviderResponse defines a finality provider with voting
             power information.
