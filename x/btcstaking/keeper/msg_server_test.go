@@ -161,7 +161,7 @@ func FuzzMsgCreateFinalityProvider(f *testing.F) {
 		h.ChannelKeeper.EXPECT().ConsumerHasIBCChannelOpen(h.Ctx, registeredBsnId, consumerRegister.GetCosmosConsumerMetadata().ChannelId).Return(true).AnyTimes()
 
 		fps := []*types.FinalityProvider{}
-		for i := 0; i < int(datagen.RandomInt(r, 20)); i++ {
+		for i := 0; i < int(datagen.RandomInt(r, 20)+2); i++ {
 			bsnId := ""
 			if datagen.RandomInt(r, 2) == 0 {
 				bsnId = registeredBsnId
@@ -219,6 +219,32 @@ func FuzzMsgCreateFinalityProvider(f *testing.F) {
 			_, err := h.MsgServer.CreateFinalityProvider(h.Ctx, msg)
 			require.Error(t, err)
 		}
+
+		// tries to create another fp with same bbn address as an registered one
+		fp, err := datagen.GenRandomFinalityProvider(r, h.FpPopContext(), "")
+		require.NoError(t, err)
+		dupFpAddr := fps[0].Addr
+
+		btcSK, _, err := datagen.GenRandomBTCKeyPair(r)
+		require.NoError(t, err)
+		pop, err := datagen.NewPoPBTC(h.FpPopContext(), sdk.MustAccAddressFromBech32(dupFpAddr), btcSK)
+		require.NoError(t, err)
+		btcPK := btcSK.PubKey()
+		bip340PK := bbn.NewBIP340PubKeyFromBTCPK(btcPK)
+
+		msg := &types.MsgCreateFinalityProvider{
+			Addr:        dupFpAddr,
+			Description: fp.Description,
+			Commission: types.NewCommissionRates(
+				*fp.Commission,
+				fp.CommissionInfo.MaxRate,
+				fp.CommissionInfo.MaxChangeRate,
+			),
+			BtcPk: bip340PK,
+			Pop:   pop,
+		}
+		_, dupFpBbnAddrErr := h.MsgServer.CreateFinalityProvider(h.Ctx, msg)
+		require.EqualError(t, dupFpBbnAddrErr, types.ErrFpRegistered.Wrapf("there is already an finality provider registered with the same babylon address: %s", dupFpAddr).Error())
 	})
 }
 func FuzzMsgEditFinalityProvider(f *testing.F) {
@@ -1303,7 +1329,7 @@ func TestCorrectUnbondingTimeInDelegation(t *testing.T) {
 			h := testutil.NewHelper(t, btclcKeeper, btccKeeper, nil)
 
 			// set all parameters
-			_, _ = h.GenAndApplyCustomParams(r, tt.finalizationTimeout, tt.unbondingTimeInParams, 0, 1)
+			_, _ = h.GenAndApplyCustomParams(r, tt.finalizationTimeout, tt.unbondingTimeInParams, 1)
 
 			// generate and insert new finality provider
 			_, fpPK, _ := h.CreateFinalityProvider(r)
@@ -1338,88 +1364,6 @@ func TestCorrectUnbondingTimeInDelegation(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestAllowList(t *testing.T) {
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	// mock BTC light client and BTC checkpoint modules
-	btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
-	btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-	h := testutil.NewHelper(t, btclcKeeper, btccKeeper, nil)
-
-	allowListExpirationHeight := uint64(10)
-	// set all parameters, use the allow list
-	h.GenAndApplyCustomParams(r, 100, 0, allowListExpirationHeight, 1)
-
-	// generate and insert new finality provider
-	_, fpPK, _ := h.CreateFinalityProvider(r)
-
-	usePreApproval := datagen.OneInN(r, 2)
-
-	// generate and insert new BTC delegation
-	stakingValue := int64(2 * 10e8)
-	delSK, _, err := datagen.GenRandomBTCKeyPair(r)
-	h.NoError(err)
-	_, msgCreateBTCDel, _, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
-		r,
-		delSK,
-		[]*btcec.PublicKey{fpPK},
-		stakingValue,
-		1000,
-		0,
-		0,
-		usePreApproval,
-		// add delegation to the allow list, it should succeed
-		true,
-		10,
-		30,
-	)
-	h.NoError(err)
-	require.NotNil(t, msgCreateBTCDel)
-
-	delSK1, _, err := datagen.GenRandomBTCKeyPair(r)
-	h.NoError(err)
-	_, msgCreateBTCDel1, _, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
-		r,
-		delSK1,
-		[]*btcec.PublicKey{fpPK},
-		stakingValue,
-		1000,
-		0,
-		0,
-		usePreApproval,
-		// do not add delegation to the allow list, it should fail
-		false,
-		10,
-		30,
-	)
-	require.Error(t, err)
-	require.ErrorIs(t, err, types.ErrInvalidStakingTx)
-	require.Nil(t, msgCreateBTCDel1)
-
-	// move forward in the block height, allow list should be expired
-	h.Ctx = h.Ctx.WithBlockHeight(int64(allowListExpirationHeight))
-	delSK2, _, err := datagen.GenRandomBTCKeyPair(r)
-	h.NoError(err)
-	_, msgCreateBTCDel2, _, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
-		r,
-		delSK2,
-		[]*btcec.PublicKey{fpPK},
-		stakingValue,
-		1000,
-		0,
-		0,
-		usePreApproval,
-		// do not add delegation to the allow list, it should succeed as allow list is expired
-		false,
-		10,
-		30,
-	)
-	h.NoError(err)
-	require.NotNil(t, msgCreateBTCDel2)
 }
 
 func createNDelegationsForFinalityProvider(
@@ -1578,7 +1522,7 @@ func TestMsgServerAddBsnRewards(t *testing.T) {
 
 	h := testutil.NewHelperWithBankMock(t, btclcKeeper, btccKeeper, bankKeeper, chanKeeper, ictvK, nil)
 
-	h.GenAndApplyCustomParams(r, 100, 200, 0, 2)
+	h.GenAndApplyCustomParams(r, 100, 200, 2)
 
 	consumer := h.RegisterAndVerifyConsumer(t, r)
 
@@ -1806,7 +1750,7 @@ func TestActiveAndExpiredEventsSameBlock(t *testing.T) {
 	h := testutil.NewHelperWithIncentiveKeeper(t, btclcKeeper, btccKeeper).WithBlockHeight(heightAfterMultiStakingAllowListExpiration)
 
 	// set all parameters
-	covenantSKs, _ := h.GenAndApplyCustomParams(r, 100, 200, 0, 2)
+	covenantSKs, _ := h.GenAndApplyCustomParams(r, 100, 200, 2)
 
 	// Get BTC confirmation depth
 	btccParams := btcctypes.DefaultParams()

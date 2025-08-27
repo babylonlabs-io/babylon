@@ -1,0 +1,3102 @@
+[
+  {
+    "addr": "bbn19cy5ndzllcqlrcyggsqjg4mu59kw8ewwwhhcxe",
+    "description": {
+      "moniker": "Simply Staking",
+      "identity": "4095165BF57B60BE",
+      "website": "https://simplystaking.com/",
+      "security_contact": "",
+      "details": "Simply Staking is a trusted blockchain infrastructure provider offering secure staking services across multiple networks. With $1B+ TVL, we empower delegators with uptime reliability, seamless tools, and a commitment to innovation in the blockchain ecosystem."
+    },
+    "commission": "0.030000000000000000",
+    "btc_pk": "03f0aa09112a19685e1514c9fc768a27df953db6abddcb453b96cc3265469af6",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "UuYNKZOTVsWtSLWbd6vAeOK1BNrnohmcKNw3sHh4O43KkyYeXPz1wlbWkdhDUEFXLjcAfVt14XTwz/jr3He7zQ=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 0,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-04-17T14:45:30.402760818Z"
+    }
+  },
+  {
+    "addr": "bbn185hz55mfzh5x7ypj4qps0w6xjgcyn3fperea0j",
+    "description": {
+      "moniker": "equinoxDAO",
+      "identity": "048733E2C6061B87",
+      "website": "https://www.equinoxdao.xyz",
+      "security_contact": "wangzhaozhu1@gmail.com",
+      "details": "professional Node Service Provider by EquinoxDAO"
+    },
+    "commission": "0.050000000000000000",
+    "btc_pk": "04439d165b72bac13c16a22744a55cb249615b23b769fc393188cd4eed33f189",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "DRLFCHlrztZr7gNwHjFD2lHnY2dicNkg7NoCSXasbGMs4tcMOkU4TCpC4oSCp+x0Go5DWwoMcRqI130DuZ2jwA=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 159653,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.100000000000000000",
+      "update_time": "2025-04-08T14:06:43.396821262Z"
+    }
+  },
+  {
+    "addr": "bbn1wlvdscjk3ck6uh6aur9u83uu8pl2ftsfhjrz2r",
+    "description": {
+      "moniker": "Kiln",
+      "identity": "9B74364A5E526BED",
+      "website": "https://www.kiln.fi",
+      "security_contact": "security@kiln.fi",
+      "details": "Democratising value creation in digital assets"
+    },
+    "commission": "0.050000000000000000",
+    "btc_pk": "053107172a3d5a2715754cd5793efdcf5e54364b855ed2305819e372aa685d76",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "WUMt3e61W2Zn27Z2z8Yge/hRccJuZ2/Fv42HBjkrFeNmN3cGkOZ/L/U5n0YGCsyiRIFBoFVWgvaT/k7dvFEhEg=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 1177328,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-04-08T09:56:17.888340864Z"
+    }
+  },
+  {
+    "addr": "bbn18r0uw8jankhvz6rvjcd8vrugjpxkuvsp2zu0fv",
+    "description": {
+      "moniker": "BSquared x CertiK",
+      "identity": "",
+      "website": "",
+      "security_contact": "node@certik.com",
+      "details": ""
+    },
+    "commission": "0.050000000000000000",
+    "btc_pk": "08531e3b282375aa059528283d26c5523658cf47c64ab6dd95634519e6cd14ec",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "yO1Iqw5QbGKb6Pff0aAeCI3NIQ71NmQtzHGDUnqa5twsZE9C3MeuL3jwSYrZg/qOT+NMtRnCqvX9L6a7+sDZrg=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 0,
+    "commission_info": {
+      "max_rate": "0.300000000000000000",
+      "max_change_rate": "0.100000000000000000",
+      "update_time": "2025-04-26T15:21:30.774079952Z"
+    }
+  },
+  {
+    "addr": "bbn1hapc87wjvhdygnyuu9z877n6m4u6zudcum9sek",
+    "description": {
+      "moniker": "DSRV",
+      "identity": "CC434B6FE536F51B",
+      "website": "https://dsrvlabs.com",
+      "security_contact": "validator@dsrvlabs.com",
+      "details": "DSRV is an integrated blockchain solutions company with the mission of enriching the crypto ecosystem via stronger connectivity. We strive to be your gateway to a suite of all-comprehensive blockchain services. Everything distributed, served complete."
+    },
+    "commission": "0.100000000000000000",
+    "btc_pk": "086fe422ec074cb64d7b06eeca4bf985f532eb32dcf8172402b5cb604d7c9a29",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "D7ZNQrJfN98NmhlXhTVpb07eYAva0Yh+Flrwqu0ACWWSMPcrM73RO8BJ11cMRVLIfVZRF2dTLmdu6TJMidhEvA=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 1177328,
+    "commission_info": {
+      "max_rate": "1.000000000000000000",
+      "max_change_rate": "0.100000000000000000",
+      "update_time": "2025-04-08T09:40:14.064486530Z"
+    }
+  },
+  {
+    "addr": "bbn1k27ndplj353tmagxwa6p54mlpwmkyyws9pun00",
+    "description": {
+      "moniker": "Validation Cloud",
+      "identity": "AF9B41F5A7572821",
+      "website": "https://validationcloud.io",
+      "security_contact": "",
+      "details": "Validation Cloud is a Web3 platform that delivers elite, high-performance node and staking infrastructure."
+    },
+    "commission": "0.050000000000000000",
+    "btc_pk": "0b07aef0b971caeb8d677b5fa56547d07ec45be121575f1b94e4a65930bad272",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "mVvzLeiyX3JiWyDdhiY1J7r0XRtqewMCEvRcNXUQhCWpDLj58l/6bhLzq6+6WoVFNEgrFMfYca3YpiaTIRlNuA=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 1177328,
+    "commission_info": {
+      "max_rate": "1.000000000000000000",
+      "max_change_rate": "0.100000000000000000",
+      "update_time": "2025-04-08T08:27:07.294694065Z"
+    }
+  },
+  {
+    "addr": "bbn103dvyrf80x95tcnasnhfyf7ncglgvhg73anvfl",
+    "description": {
+      "moniker": "PumpBTC",
+      "identity": "CAAE6F147CA9D28E",
+      "website": "https://pumpbtc.xyz",
+      "security_contact": "josechef@pumpbtc.xyz",
+      "details": "PumpBTC is a liquid staking protocol on Babylon to allow BTC HODLER to maximize yield."
+    },
+    "commission": "0.050000000000000000",
+    "btc_pk": "0f5c19935a08f661a1c4dfeb5e51ce7f0cfcf4d2eeb405fe4c7d7bd668fc85e4",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "LbF4s5JcfHx/glfSMZ4OYpFbKQ/SMO9IeqW3TSOX3/4RkBYpIk9IIuorm1sei8C2QlnObolcgn9c3AVXNB3oDA=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 1177328,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-04-09T00:43:04.003521669Z"
+    }
+  },
+  {
+    "addr": "bbn15nlcmlkm9c25y70glmp43tc49gsxx9cv6y30rr",
+    "description": {
+      "moniker": "Luganodes",
+      "identity": "4F2E11CB85CB269B",
+      "website": "https://www.luganodes.com/",
+      "security_contact": "devops+security@luganodes.com",
+      "details": "Swiss-Operated Institutional Grade Staking Provider"
+    },
+    "commission": "0.100000000000000000",
+    "btc_pk": "104628a84d0926b866e94c35b54e6dc548cbdb4d8db39e48e85e3f1ff53c60ed",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "lXRGoCZJb6cDgPtClO1FhWkiyTP/OtUYqLyAYbaSXY1pYeCpBkjwAJAgekCzf91NyIf2VKWR3wgH/MClUROksQ=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 0,
+    "commission_info": {
+      "max_rate": "0.300000000000000000",
+      "max_change_rate": "0.100000000000000000",
+      "update_time": "2025-04-10T08:18:28.350808686Z"
+    }
+  },
+  {
+    "addr": "bbn15efndtzpzpujzjset3t4kdfrflsa39suyxlsdn",
+    "description": {
+      "moniker": "Cosmostation",
+      "identity": "AE4C403A6E7AA1AC",
+      "website": "https://www.cosmostation.io",
+      "security_contact": "node@stamper.network",
+      "details": "Cosmostation is an institutional-grade cryptocurrency infrastructure provider, managing billions of dollars across 70 protocols. Since 2018, we have served more than 500k users globally, providing products that enable protocols to scale."
+    },
+    "commission": "0.030000000000000000",
+    "btc_pk": "17167ce2e362080c11e580d4d34f34b8e73ac9f84545dcf391ae56056dc9c32f",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "5Yjxg6wym4eMqAW1HKu35bURHsV0pNfp+d/5lOsJPlYRpeAISYyVMBxLe9UFpXDcarD6uSS44/VcYYr5dsNndA=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 1177328,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.200000000000000000",
+      "update_time": "2025-04-08T08:44:09.817603285Z"
+    }
+  },
+  {
+    "addr": "bbn1vy8rnuk2esks48fk77vphfvtqpr9j2yfn8huh9",
+    "description": {
+      "moniker": "InfraSingularity",
+      "identity": "",
+      "website": "https://infrasingularity.com",
+      "security_contact": "tech@infrasingularity.com",
+      "details": "InfraSingularity aims to radically transform the Web3 ecosystem as a pioneering Web3 Investor and builder."
+    },
+    "commission": "0.050000000000000000",
+    "btc_pk": "192308b034f9ae5b8de60ca0d807834773ca5f077960dfc22998096bc08d8bd9",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "pp0QvUZ62hXPM4xLHz8CtRqm3N/tv4/pz2rnXdpuBpOgWZHAWi05OV67F4TMxakIvZPh0FAPG8qLCiH4ie2Gvg=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 1177328,
+    "commission_info": {
+      "max_rate": "0.150000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-04-08T08:19:58.687925643Z"
+    }
+  },
+  {
+    "addr": "bbn1t4ft3xp4r83c5cmpjt27r95uw6d0uq0ctpt88v",
+    "description": {
+      "moniker": "Lombard x Figment",
+      "identity": "",
+      "website": "",
+      "security_contact": "",
+      "details": ""
+    },
+    "commission": "0.080000000000000000",
+    "btc_pk": "1a1a386b33459740b3ed40737786f698a597efdbeb2c96cdf8952f71c204c029",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "cy7fng0ksm1wAQPdhUeV1cqznSjDr+DKMjl1C1UpEw2hkxmWNFOWABP/GN6MWiKfQl5VzYvvAaflYVWjBVpAqQ=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 1177328,
+    "commission_info": {
+      "max_rate": "0.500000000000000000",
+      "max_change_rate": "0.100000000000000000",
+      "update_time": "2025-04-08T19:47:58.867085155Z"
+    }
+  },
+  {
+    "addr": "bbn1qpp2e3zqru5ya53uw7al0z4pt4hhm5hmetc7yw",
+    "description": {
+      "moniker": "BITMAX",
+      "identity": "",
+      "website": "https://deepmindjapan.com",
+      "security_contact": "contact@deepmindjapan.com",
+      "details": ""
+    },
+    "commission": "0.030000000000000000",
+    "btc_pk": "1e736d1e59fcf1d2b2bba769ae4f0f8bbe75d203c72582132107129c5bdb5120",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "SgRtz5uQcLKke7MlVl8gUsEtr6AQbxKiXhnX7W34g1UZYoh+vmadYq3xfth9hVpIcvF7adLDGNLN90sm6nanlg=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 933372,
+    "commission_info": {
+      "max_rate": "0.050000000000000000",
+      "max_change_rate": "0.050000000000000000",
+      "update_time": "2025-06-12T06:42:56.038670305Z"
+    }
+  },
+  {
+    "addr": "bbn1c4ys8rvt3mntutkx55wgfc6xgauutaeequ33hf",
+    "description": {
+      "moniker": "BlockHunters 🎯",
+      "identity": "",
+      "website": "https://blockhunters.org",
+      "security_contact": "ops@blockhunters.org",
+      "details": "Hunt for the best stake. 🏹"
+    },
+    "commission": "0.050000000000000000",
+    "btc_pk": "1f8ea557fb2684e79a1f971be1e21d99015328c60769d8e27c4c5945a0e2ed6b",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "s1hnsAf6XFNyy1jujIpc1b2OHKx7iMQbKMCqXJSuR4Ccf4dMy8WLQSWx3Cvahv8JI+26sI3IvkVzdhBrgQ3xbw=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 0,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-04-08T15:56:32.013021661Z"
+    }
+  },
+  {
+    "addr": "bbn14rgup5wnlx5yfhv6k93zp7trz6tlkckxn3j7p7",
+    "description": {
+      "moniker": "Finoa Consensus Services",
+      "identity": "0FA38A5EDF5FA362",
+      "website": "https://www.finoa.io/staking-delegation",
+      "security_contact": "",
+      "details": "Stake and grow your assets using Finoa Consensus Services's institutional-grade infrastructure."
+    },
+    "commission": "0.030000000000000000",
+    "btc_pk": "217ac8c60f4a0c75e28922a8478ed2605a31fec8ede23ed922425d58ac47e4ac",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "BlJTtihxdloa6Hnh2wF8MKYpPy/9qU/NsDcDONjrRvqkAYfrDwTESS93GnMjJ+911kC19tbfssGxGOzl8GH2EA=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 0,
+    "commission_info": {
+      "max_rate": "0.100000000000000000",
+      "max_change_rate": "0.100000000000000000",
+      "update_time": "2025-04-11T11:36:11.410964697Z"
+    }
+  },
+  {
+    "addr": "bbn14as870mkhmwlvrjsang4pejun2979025rq8lf4",
+    "description": {
+      "moniker": "Lombard x Kiln",
+      "identity": "",
+      "website": "",
+      "security_contact": "security@kiln.fi",
+      "details": ""
+    },
+    "commission": "0.080000000000000000",
+    "btc_pk": "22fc176efabed006d46cb88bd24d048dafc3a43e10db5a39978ab1e143c32c94",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "sbNOVgczKKBvW5hox/oajWdmZwS25nV669alqiaxk2NBxqSxeVM3JK0DiTCvDqiBkV71xistJrapiCTPJ3w6dw=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 1177328,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-04-08T12:32:07.212730253Z"
+    }
+  },
+  {
+    "addr": "bbn1llns56v0844chclvtsnttnjmpxny40sn64unt3",
+    "description": {
+      "moniker": "Gate Earn",
+      "identity": "51EE937969F9BB4D",
+      "website": "https://www.gate.io/web3",
+      "security_contact": "web3-earn@gate.io",
+      "details": "Gate.io Earn serves as a one-stop shop for all the decentralised earning options available on the Gate.io Web3 platform and we are the leading staking service provider for blockchain projects."
+    },
+    "commission": "0.030000000000000000",
+    "btc_pk": "2877658a1e7608fe84543a75ca879334bb8f2e7aecae71adb7767192bda50739",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "R22+9c8zhH9CRLgRU3EDSOANamrozAv6rO/1KWPjDXs3oZl56ggUjKLFD0meKUTL4OE4m266RU6PFDE8dQm4Vg=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 1177328,
+    "commission_info": {
+      "max_rate": "1.000000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-04-08T08:39:22.972476951Z"
+    }
+  },
+  {
+    "addr": "bbn1rrxhnj6stnxw0wpqnr4avgv3rps9laxkznu0wk",
+    "description": {
+      "moniker": "Hex Trust",
+      "identity": "DEA21069031BB3F4",
+      "website": "https://hextrust.com",
+      "security_contact": "security@hextrust.com",
+      "details": "Hex Trust is a fully licensed digital asset custodian dedicated to providing solutions for protocols, foundations, financial institutions, and the Web3 ecosystem."
+    },
+    "commission": "0.050000000000000000",
+    "btc_pk": "289719ef19e455816e474588007f1824df7f6b1bace7decf8bb1c435e4cb849e",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "+TEZ5+Hocc7OfTI2GQ9HbDNR7DJ2sb16rBPUS9QPANj4I69QMndidqvVkQYM2264fUpOrAoe0k4YF23TfaRFXA=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 1177328,
+    "commission_info": {
+      "max_rate": "1.000000000000000000",
+      "max_change_rate": "0.100000000000000000",
+      "update_time": "2025-04-08T08:16:02.300228710Z"
+    }
+  },
+  {
+    "addr": "bbn1mh5vhl52e48c7v5zxz57m8e0u0k55s0ecmc72e",
+    "description": {
+      "moniker": "BSquaredNetwork",
+      "identity": "",
+      "website": "https://www.bsquared.network/",
+      "security_contact": "contact@bsqaured.network",
+      "details": "The Most Practical Bitcoin Layer-2 Network | The First Bitcoin DA Layer"
+    },
+    "commission": "0.050000000000000000",
+    "btc_pk": "2f8ec74d558fe7a97d10be230bf1485db9be675228abfbf957ba050c714b679a",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "ZHP6LllkYhZ3QjqxFQl2MDfBDHZde/OxZo2ynaEG8keJs9ErsYesUS4mcdayTS454WhcPVH/Vud2ay/IAI394w=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 1177328,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-04-11T11:03:47.892626830Z"
+    }
+  },
+  {
+    "addr": "bbn1zjhf3m8fcte58cfvl70n4ftec6e03egwh6yp73",
+    "description": {
+      "moniker": "Stake&Relax 🦥",
+      "identity": "BD90F7F27099E9E3 ",
+      "website": "https://linktr.ee/stakeandrelax",
+      "security_contact": "stakeandrelax_validator@proton.me",
+      "details": "StakeandRelax to get Stake🥩&Rolex⌚Twitter:@StakeandRelax"
+    },
+    "commission": "0.050000000000000000",
+    "btc_pk": "34bd07bb7370a0a26adc5520e62b4f0aa3fd155e750f2f39ecbae87d1ded89ee",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "9YPaPAvYnPwVRZRlobfYQ1rt25x2WkG5bXYxWbOtdiRCdEb5pqfygV84HueTQYtJSPn1Sdt77Ji9JW9LY6bNYA=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 246147,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-04-08T13:01:58.960500813Z"
+    }
+  },
+  {
+    "addr": "bbn17dtke6vta3sqxqf9k06p448yph654t5ukr25l5",
+    "description": {
+      "moniker": "OKX Earn",
+      "identity": "5E40FD2A1FCF6FE1",
+      "website": "https://www.okx.com",
+      "security_contact": "earn@okx.com",
+      "details": "OKX Earn serves as a one-stop shop for all the decentralised earning options available on the OKX platform and we are the leading staking service provider for blockchain projects"
+    },
+    "commission": "0.030000000000000000",
+    "btc_pk": "374601b4c400b31f3aa78dc16b4e4d589c1284118e2476d83f0c39743881032c",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "YBbAY3skyyGM5lGHebJWVG+NbLFnLc/fkzAuS8ypx6u2ntgcwbEOUGKbsIwcyfM+4uEBzM893r62RuAhGDsC3g=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 1177328,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-04-08T11:31:46.037853770Z"
+    }
+  },
+  {
+    "addr": "bbn19m5t8w4q0asdn3uu5w7uncj0tm9k0y9txdplfx",
+    "description": {
+      "moniker": "HashKeyCloud",
+      "identity": "CB79CF86DBD56A19",
+      "website": "https://www.hashkey.cloud",
+      "security_contact": "",
+      "details": "Cloud for WEB3 More Than Staking"
+    },
+    "commission": "0.050000000000000000",
+    "btc_pk": "3a390fa62f5c8975348b0163d4bc59eb879e66cc7d908171202d57776e069ad4",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "KVJ2jagy3x2pXDZr+6mVD6wtRlLeFzGSf9RAXnH7Icg7q9yOWfUzw7j2N6R3EFmPRhISvRIqQG+L9hTLR5SsAA=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 1177328,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.100000000000000000",
+      "update_time": "2025-07-10T06:35:17.134772549Z"
+    }
+  },
+  {
+    "addr": "bbn1kxtj4xlyyqexyxjrjrf849qdx2p4p047hctqqg",
+    "description": {
+      "moniker": "ViaBTC",
+      "identity": "",
+      "website": "https://www.viabtc.com/",
+      "security_contact": "support@viabtc.com",
+      "details": "ViaBTC is an innovation-driven blockchain service provider that boasts abundant experience, extensive investments, secure and reliable products, and a global user base"
+    },
+    "commission": "0.050000000000000000",
+    "btc_pk": "3cb203cd8cffe8bafab08446bd20a28ca56d3efed650d276675f260e1fe80b3e",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "wYb2CJAZCgLtGoT0weybeVttxx3ldX/T6ARdsEHKF2om1hAZQskL3EwlMXAyBJFajemSupEMv2wGCLizyI1N2A=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 0,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-04-22T11:42:52.951542782Z"
+    }
+  },
+  {
+    "addr": "bbn1xwcde40vf0ejadyx24r3fq2tgusazrctcrc2xv",
+    "description": {
+      "moniker": "BitrueFinalityProvider",
+      "identity": "",
+      "website": "https://www.bitrue.com",
+      "security_contact": "evan@bitrue.com",
+      "details": "Bitrue finality provider for the Babylon network"
+    },
+    "commission": "0.030000000000000000",
+    "btc_pk": "3eaab89389d4c8e820c356eea1a20104f6ac6b4e1a5b3605047336c6dcedaa99",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "zkQZV5J++ZGR8jgV9z1ueVBbUsGdulyfAc5ZGxw5R6lquVeksb4+TVJUQCW/CYLfk4GAqkVuZAuEp/cayGMPgw=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 1177328,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-04-14T08:15:33.822390890Z"
+    }
+  },
+  {
+    "addr": "bbn102sdmclfk2k5p5vxark9mh5dkp04pw5nhf4zpn",
+    "description": {
+      "moniker": "Staketab",
+      "identity": "",
+      "website": "https://staketab.com",
+      "security_contact": "support@staketab.com",
+      "details": "Professional staking provider offering infrastructure solutions for the Web3 ecosystem. Our experience in developing Web3 services since 2017 enables us to create best-in-class, data-rich products for each customer."
+    },
+    "commission": "0.050000000000000000",
+    "btc_pk": "3f642e20468aed388f8f397ca46524548c433e8bb68b348c31e1d66a062ef470",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "ZtP7Em8/hW+5ks+W4QgZo1Ru/2AT/FD0gGebrIhD6GShZCuGZC5MuUBHHwdpq4oKuSzL7CiHzVq0xu+zUxTL3Q=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 0,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-04-08T08:33:55.855636019Z"
+    }
+  },
+  {
+    "addr": "bbn1djx8cuvruzsr4cg4fge2ekqshpvdmrlt6j506y",
+    "description": {
+      "moniker": "01node",
+      "identity": "7BDD4C2E94392626",
+      "website": "https://01node.com",
+      "security_contact": "secops@01node.com",
+      "details": "01node Finality Provider for Babylon Networks"
+    },
+    "commission": "0.030000000000000000",
+    "btc_pk": "4209feea09cd799cae01a0dfc94a2791cf1701e5e5430ec490b169afdb1cc220",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "zIcA0H1LrYOmfZctkaw9kYUajbxAM9D0opMTiRlb6C8jch5yzqgOmnN+RngKCcRklcdGQYgj1MIRWWkwSeDcoQ=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 1177328,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-04-11T14:36:27.762974282Z"
+    }
+  },
+  {
+    "addr": "bbn1ntnyrwqh7fcrkhn7d67w0tad79kgxjhl8p3ryh",
+    "description": {
+      "moniker": "Allo",
+      "identity": "",
+      "website": "https://www.allo.xyz",
+      "security_contact": "kingsley@allo.xyz",
+      "details": "Allo is a protocol that facilitates Bitcoin staking and lending"
+    },
+    "commission": "0.050000000000000000",
+    "btc_pk": "4444a8922b22aaa156fd7d6f3423c581d74156cdccea12fabe98f31d230e463f",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "gfj+5Tj+Cdx0OVTwzL8b37HojqT8c1AdCqPO4EgnvwvqwKDqjlGGrFJqxmDbXoZB1C5b5yS8EMyomO8oz6yezw=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 1177328,
+    "commission_info": {
+      "max_rate": "0.050000000000000000",
+      "max_change_rate": "0.050000000000000000",
+      "update_time": "2025-05-05T09:46:30.833461227Z"
+    }
+  },
+  {
+    "addr": "bbn1009x720qrhvg4wfc9vjzl2fufn36yrrsmmpx3t",
+    "description": {
+      "moniker": "interchain.FM",
+      "identity": "",
+      "website": "https://interchain.fm/",
+      "security_contact": "chjangounchained@gmail.com",
+      "details": "Non-custodial high 99.99% uptime validator w/ 100% return for downtime slashing. Run by your favorite Cosmos Radio Station."
+    },
+    "commission": "0.030000000000000000",
+    "btc_pk": "4b045c89c29e0536b9270c877f89da368391aaa2adbc91659dbb48593253ca32",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "ajKZbdTqAseUnBkgnlGuedC6xvyIX33c36PNbrJXdSKja1QlC5SNjS+5IvUgxCeFYA5wVZJXy1DzYShqt0TCHw=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 0,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-04-08T09:24:56.687411313Z"
+    }
+  },
+  {
+    "addr": "bbn13644g92ay3uvwnxxzgvknzwc8clg0j3m2f4fpu",
+    "description": {
+      "moniker": "Keplr",
+      "identity": "",
+      "website": "https://www.keplr.app",
+      "security_contact": "validator@keplr.app",
+      "details": "Keplr Infra handles hundreds of millions of requests every day, providing robust infrastructure for your seamless Interchain experience. We promise to securely protect both your assets and the network. Stake with us and earn rewards!"
+    },
+    "commission": "0.030000000000000000",
+    "btc_pk": "4c353255924d6da7c953ebdb262d21970515ead8ffb817efaf89ec444c0631fa",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "aiIAjTWSYuJ2K679XDqcDY+XfkJQ/Nx0ddVGE8D2f07XUiNT+WebdcAfvHVtYiGWu6WoKdEtugGVbGpXDuDS9Q=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 1177328,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-04-08T08:34:36.264816226Z"
+    }
+  },
+  {
+    "addr": "bbn1jxt306txupa9t672xq6nlc484h3gr6f756ypvp",
+    "description": {
+      "moniker": "Forbole",
+      "identity": "0F527ED1E029E909",
+      "website": "https://forbole.com",
+      "security_contact": "validator@forbole.com",
+      "details": "We are Bitcoin lovers, blockchain validators, builders, contributors, and your trusted partner in the future of decentralization."
+    },
+    "commission": "0.030000000000000000",
+    "btc_pk": "4d2f9c3234961c5310e106600254b95c00d4e3aa80d0a08467c3bd1c40bb7d94",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "0S0VJJQc3yykjzUszrgat6X4PRq0+XuZfJXgifypK5U6jToZ6Vi+YnGPYXR4w5w2A/wG1TcqTojKZ2VaZX0LQw=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 0,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.100000000000000000",
+      "update_time": "2025-04-08T09:16:58.590137963Z"
+    }
+  },
+  {
+    "addr": "bbn1mrqx7px732r6v52hnuqn7ufmcqh0m4pdqlxwl7",
+    "description": {
+      "moniker": "Nansen",
+      "identity": "B833F689F4C9727A61CB4628B9A66E826BCF9A28",
+      "website": "https://nansen.ai",
+      "security_contact": "stake@nansen.ai",
+      "details": "Nansen is a leading on-chain analytics platform founded in 2020, and is now one of the most trusted names in crypto, serving traders and institutions. Disclaimer: delegating comes with slashing risks"
+    },
+    "commission": "0.030000000000000000",
+    "btc_pk": "513d10a6b689191cdc4ea740a1e8f5a1a508c83198867157008b9c172e911fa0",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "XNxJy9ncCxJUKrQlhcRRmUhjhZ18p7bOcW+YF16eVEyQ4ZDlKD7cy1p67EsKCphg6YYRKXrLZDY/Gi2tBBnq3Q=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 1177328,
+    "commission_info": {
+      "max_rate": "0.100000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-04-08T09:31:34.955028642Z"
+    }
+  },
+  {
+    "addr": "bbn1xvml2jfahyg7rd0csxkgxl7d39andr9wmjzjas",
+    "description": {
+      "moniker": "Provalidator",
+      "identity": "3A7D5C9B0B88BEA1",
+      "website": "https://provalidator.com",
+      "security_contact": "zenon@provalidator.com",
+      "details": "Supporting Blockchain Infrastructure"
+    },
+    "commission": "0.050000000000000000",
+    "btc_pk": "5177889c5509814722828fb18bafb2b518ef02ac68bbc30e4f795f7d8eaf3fd7",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "d+y87dG7QMyZIWWGfD8t9T0mMUq6E3xT2wEnJoVAWJpYwPhXoUH+VoLZ4vjL76o0AvbrZZMtPGzFKgNJZ+hAsw=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 0,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.100000000000000000",
+      "update_time": "2025-04-09T12:18:53.647810348Z"
+    }
+  },
+  {
+    "addr": "bbn165uh0sg3cq47yz4vpxw379l0t75sr73mpu9f3z",
+    "description": {
+      "moniker": "BSquared x P2P.org",
+      "identity": "",
+      "website": "https://www.bsquared.network/",
+      "security_contact": "cosmos-security@p2p.org",
+      "details": "B² Network is the most practical Bitcoin Layer2 Network."
+    },
+    "commission": "0.050000000000000000",
+    "btc_pk": "522c8443813f19a2d9d8d1149f9ba6a8028f778ba5e681ea98b872e17ccb37ef",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "BZxY1on04Ce1gELGaT9+FkI7BG0vhVF4AZgyeH8pJq1svqRmdt0/5pT29RkbekT+fo+l4559c3IcUMqmOXH3AA=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 0,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.050000000000000000",
+      "update_time": "2025-04-08T11:08:57.975868862Z"
+    }
+  },
+  {
+    "addr": "bbn1rz553trx26xyxcxpecay5629fw30kqnmcjw9m4",
+    "description": {
+      "moniker": "Xangle",
+      "identity": "B4036015EC09F392",
+      "website": "https://xangle.io",
+      "security_contact": "node@crossangle.io",
+      "details": "Xangle is Korea's leading Web3 research and explorer/validator service provider, empowering businesses in the evolving Web3 ecosystem."
+    },
+    "commission": "0.030000000000000000",
+    "btc_pk": "55649d9864f992b315a16531a23d92951143bf2d390d22689946dcd7556c008f",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "t8XwfYNZ1C0xCnOXc4csq/BFSoJUIP1+YNjxwzvXkYuRF1QdqyENe7i8CB8GgJO+39SrI0esX65tvh+lvW4Udw=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 616664,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-04-24T02:16:41.681036742Z"
+    }
+  },
+  {
+    "addr": "bbn1dj8cvt95mvz5y50dwq7tulp0wmhgxgm722al6e",
+    "description": {
+      "moniker": "6block.com",
+      "identity": "",
+      "website": "https://6block.com",
+      "security_contact": "contact@6block.com",
+      "details": "Crypto mining and staking solution provider"
+    },
+    "commission": "0.050000000000000000",
+    "btc_pk": "5c04ad094a9d1fe5c907ba9d15de1baea34345d9f46956b5202ab35b21499eee",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "L/S07nOR1joXsfDpqG9PJkIee69JBYnYRcq52Os+CV6BK578JfNKZ6sVX/UFtSo0Q/vAl9UQSxzjY62qg6WAQg=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 1177328,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-04-08T08:24:13.298479979Z"
+    }
+  },
+  {
+    "addr": "bbn1vdktlum85njt3c5vkac5zjws3y0euk4hj5khhv",
+    "description": {
+      "moniker": "Kintsugi Nodes",
+      "identity": "DE50D46AAC2A243C",
+      "website": "https://kintsugi.tech",
+      "security_contact": "security@kintsugi.tech",
+      "details": "Your professional, global PoS validator. Delegate, earn, and join our journey to a golden blockchain."
+    },
+    "commission": "0.050000000000000000",
+    "btc_pk": "5cddd37999a4d8fefee6ee5977f488c51a74506085493aef45c6671684ac27be",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "kw3FwzKGbKlgO3xHOHwT4RF2I9fcbhGLWGwZ9Vnf8zjd/GmSKGj+40ePt8PMiN1Fn5V6cty/H1ajbkOAKSk5Ew=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 0,
+    "commission_info": {
+      "max_rate": "1.000000000000000000",
+      "max_change_rate": "0.200000000000000000",
+      "update_time": "2025-04-23T14:21:24.396097327Z"
+    }
+  },
+  {
+    "addr": "bbn1tgm9hydvuhtaksce7x2ryyq9xvy94h2zdd6a04",
+    "description": {
+      "moniker": "Everstake",
+      "identity": "EF5AC70C00BECEDC",
+      "website": "https://everstake.one",
+      "security_contact": "account-babylon@everstake.one",
+      "details": "Everstake is a staking-as-a-service company. We help institutional investors and regular token holders to profit off their crypto assets. Choose the most promising projects, delegate with Everstake, and make a stable passive income."
+    },
+    "commission": "0.030000000000000000",
+    "btc_pk": "5f61c6a51d91a8cf09f0edfb3d539a8749a0cab2829d52f7c6f028fed7455278",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "cu7BAzCs4CEcTqczBeZUXFSY+vtRstMt3YZXqUnUQKXNMkmoxOLf7ybk9jcEjRvRHqY+A0X1CnrwpWxDOpjDgw=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 1177328,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.100000000000000000",
+      "update_time": "2025-04-08T09:55:50.176405745Z"
+    }
+  },
+  {
+    "addr": "bbn14c5qdchu3lz9xnfww7n38lpuawjtu8jt4em86k",
+    "description": {
+      "moniker": "Lombard Finance",
+      "identity": "",
+      "website": "https://lombard.finance",
+      "security_contact": "stanley@lombard.finance",
+      "details": ""
+    },
+    "commission": "0.050000000000000000",
+    "btc_pk": "609b4b8e27e214fd830e69a83a8270a03f7af356f64dde433a7e4b81b2399806",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "d4eEbu1PInQXDlEAF8KQq9doh9uL+KIF112abns+P6Yq3UEjSXtNiFW2qnzu0fqbZ9tm7hsqwEB52G6ZmJo3KQ=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 1177328,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-04-08T21:57:14.425648062Z"
+    }
+  },
+  {
+    "addr": "bbn1jtk20mqd9q0sx8agsfx42wx6he0vh84zewkp68",
+    "description": {
+      "moniker": "Coinage x DAIC",
+      "identity": "C92C6965D89F07A3",
+      "website": "https://daic.capital/",
+      "security_contact": "office@daic.capital",
+      "details": "Official Coinage x DAIC Finality Provider"
+    },
+    "commission": "0.050000000000000000",
+    "btc_pk": "61d437bcff4512e45075b5c12fc9b0ececd3e7c87512e0d7fb599c3a28e2671c",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "nkdsffM6UxoTn/fVpvZxNXEac5VYfpBwfSvND6IxXvTAGaKRrMaRkNOYsI8Orp13aglbnMClxXpjniEuUToabA=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 435261,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-04-09T00:07:56.117053346Z"
+    }
+  },
+  {
+    "addr": "bbn1gmuf6dftce0kgwd6yxttwre5382ctwr3nempqf",
+    "description": {
+      "moniker": "Nodes.Guru",
+      "identity": "28B672FCE6BBD562",
+      "website": "https://nodes.guru",
+      "security_contact": "security@nodes.guru",
+      "details": "Guru of non-custodial staking. Professional node running, low fees, best uptime and 24/7 customer support"
+    },
+    "commission": "0.050000000000000000",
+    "btc_pk": "625cf6468c65028806b518fe78ad8e80c697a266394736b6bb9dd481e238816d",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "RlmjL/zkF3Qvn5+Iutt6TohzByMllHyA6MJx6B9h9DuZ5E4IzWMNgUnLER5pnXD80CfkOj9SXMDvRNhdvo9jcg=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 154749,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.050000000000000000",
+      "update_time": "2025-04-08T13:31:08.177570289Z"
+    }
+  },
+  {
+    "addr": "bbn1v443lrp6f7tcv3hsz68x82ur8hpmgnsmfwnvfx",
+    "description": {
+      "moniker": "HoodRun",
+      "identity": "D7F99CBB63FFFD9E",
+      "website": "https://hoodrun.io",
+      "security_contact": "contact@hoodrun.io",
+      "details": "Discover and Unlock the HoodRun Advantage; We make the Staking Experience the fastest and safest"
+    },
+    "commission": "0.050000000000000000",
+    "btc_pk": "67732ad150b6bd773f24d250be3c65c6a7aff77abbd1ed4196b8f889374dda8a",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "9Nl9Kbzbs0kniRiqL6HVA8SNyN+hICGLfEHZKEAkMRbirmK3B7j2W9ko0TidX/adtCBsiPtTQmHZctlU37hftg=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 0,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.050000000000000000",
+      "update_time": "2025-04-08T08:36:29.434090128Z"
+    }
+  },
+  {
+    "addr": "bbn1a2vl9cwsjdlucjuuagfm6jq22eh4nwp77ulfa0",
+    "description": {
+      "moniker": "Pier Two",
+      "identity": "",
+      "website": "https://piertwo.com",
+      "security_contact": "",
+      "details": "PierTwo finality provider for the Babylon network"
+    },
+    "commission": "0.050000000000000000",
+    "btc_pk": "6788b40df1c63023711fd01168e9a8644c4a5ac27a6d4fd2f7ca4fe7bdd290f0",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "j5hy8MN2y+0tjzmQmlZ9ktshi1eqFAMWhWHQAAt+Hg5Wu1c/fwkmRykKGlyM/+DGQxkaiMzdIoG0I2LFZlTUqQ=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 1177328,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-04-09T15:22:09.922898592Z"
+    }
+  },
+  {
+    "addr": "bbn18juxk94lrmh080l6jttcn66f500hpnlhhuay9l",
+    "description": {
+      "moniker": "Informal Systems",
+      "identity": "6408AA029ADBE364",
+      "website": "https://informal.systems",
+      "security_contact": "validator@informal.systems",
+      "details": "Informal Systems - infrastructure for decentralized intelligence."
+    },
+    "commission": "0.050000000000000000",
+    "btc_pk": "68db13ba45241bcc1db1e63d998d78d9fce4b3f42772ef355e007a1105100476",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "/VsDeylBQCWw1/nn1cjubXAmO+IXS8ZdBlZvYD6GlHMWso7fSBKZJo4a+8MN3WYGF1HSoqfdgf0HeiGzq1zqkQ=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 1177328,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-04-08T08:55:34.029820845Z"
+    }
+  },
+  {
+    "addr": "bbn1rkn3c4fx96kcdnzplh69jkdckev5dtqelmz35q",
+    "description": {
+      "moniker": "ANTPOOL",
+      "identity": "",
+      "website": "https://www.antpool.com",
+      "security_contact": "",
+      "details": "Antpool always maintains blockchain security as a world-leading mining pool"
+    },
+    "commission": "0.050000000000000000",
+    "btc_pk": "706789fc5e936ad200a4c22b3bda97e50376ff269a8947eb872e9b054419348c",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "f3giw8mva6O1/qNbIvl73GQiZYBaQkiozLrvztO8mJls9aLqJRpsUCRriQp4fpzsF8qG9QKNAdWXGAnFjS+UjQ=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": true,
+    "highest_voted_height": 301449,
+    "commission_info": {
+      "max_rate": "0.050000000000000000",
+      "max_change_rate": "0.050000000000000000",
+      "update_time": "2025-04-14T02:52:54.828343903Z"
+    }
+  },
+  {
+    "addr": "bbn1vat3w3le6dg53u93t5rs5rsukxhuw08xysum8a",
+    "description": {
+      "moniker": "Figment",
+      "identity": "",
+      "website": "",
+      "security_contact": "",
+      "details": ""
+    },
+    "commission": "0.050000000000000000",
+    "btc_pk": "710104ee21393df7b209e7f1202b60425075160aea52b60a9bcb0e996771f069",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "AcOrfGLIW1Vu0MEMlDEqt+TMZvZ4GrxZE9i/HPpBQLiQayWE3L0AplfzKxd3214s+pLjTg9NQdY/S6BT2Aj/Dg=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 1177328,
+    "commission_info": {
+      "max_rate": "0.500000000000000000",
+      "max_change_rate": "0.100000000000000000",
+      "update_time": "2025-04-08T19:40:41.257192078Z"
+    }
+  },
+  {
+    "addr": "bbn16yu62lynwcqqkazjggve2e5phh08gtynmf54c5",
+    "description": {
+      "moniker": "OneKey",
+      "identity": "",
+      "website": "https://onekey.so",
+      "security_contact": "dev@onekey.so",
+      "details": "finality provider for the Babylon Genesis network"
+    },
+    "commission": "0.050000000000000000",
+    "btc_pk": "71226cb6038f899113f380309613c549074d9ca6a6c929356267e6a1c12cafe1",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "PBouIoD7FjD8+H3yWm28duEg7D99Qo32GTH8LON/yAdJyel6JvyHPnw7vApaxu7pi0/MsKl2wFrpf0oDEsKsqw=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 0,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-06-03T03:18:19.199086854Z"
+    }
+  },
+  {
+    "addr": "bbn10aleh9gsfx0v2l5lsape8dlux0rvsc2wm4pvp4",
+    "description": {
+      "moniker": "polkachu.com",
+      "identity": "",
+      "website": "https://polkachu.com",
+      "security_contact": "hello@polkachu.com",
+      "details": "Polkachu is the trusted staking service provider for blockchain projects. 100% refund for downtime slash. Contact us at hello@polkachu.com"
+    },
+    "commission": "0.030000000000000000",
+    "btc_pk": "71eacf315d7e6ccc76e20d4d963379125be95b028190c6534dda8ae53a028dcd",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "BfMcd8j88mMYofGYzSXfzAT0Ikmm6VPtMyH6Yzq+UnoqQlzpS4kpBigJGRTwnsAC9yPO6v2vRiMKMpU5VwCOkw=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 1177328,
+    "commission_info": {
+      "max_rate": "0.050000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-04-19T22:34:17.317723124Z"
+    }
+  },
+  {
+    "addr": "bbn1t2q5343myvhk5twam90urnzms3jf6pr8dg0y3g",
+    "description": {
+      "moniker": "Solv x Kudasai",
+      "identity": "",
+      "website": "https://0xmakase.co.jp",
+      "security_contact": "validator-dev@kudasai.co.jp",
+      "details": ""
+    },
+    "commission": "0.070000000000000000",
+    "btc_pk": "742f1eb3c7fdbd327fa44fcdddf17645d9c6b1287ea97463e046508234fa7537",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "NKN8SlpOM58lykKDzyH61ZKxI7XO000+Sfz0AWbRBImmmAq/w5MkJ+FtD5+1RWIyuubUHNeV/wDie9xdsXPG3g=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 1177328,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-07-09T10:15:15.048132584Z"
+    }
+  },
+  {
+    "addr": "bbn1nxmzh23y3d32p40wujt93p7r838hrus7kqkaj8",
+    "description": {
+      "moniker": "ContributionDAO",
+      "identity": "3034BD2560DD86B4",
+      "website": "https://contributiondao.com",
+      "security_contact": "security@contributiondao.com",
+      "details": "Secure Network with Institutional-Grade Solution"
+    },
+    "commission": "0.030000000000000000",
+    "btc_pk": "74d8171df05860f95f5a63f27bc81a81a178d4a0f32b24fa5abcfb3a4198574e",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "DtTz/rzUxDQJl0fgGcwFjNZlzibzwyIsazY89hnP0ydJJtOcSfJCQPoUDP0MRQXImlYLYgZLTRWP7Gy8AXWS8w=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 693474,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-04-08T13:43:50.333038762Z"
+    }
+  },
+  {
+    "addr": "bbn1rkg8t60ghven636sx2efn49qnd7qh0l7kszrqy",
+    "description": {
+      "moniker": "Hinode Technologies",
+      "identity": "35767D4C8948A0EB",
+      "website": "https://hinode-tech.com/en/",
+      "security_contact": "gumi_node@gu3.co.jp",
+      "details": "Hinode Technologies is a joint venture between gC Labs (a subsidiary of gumi) and TIS. In addition to operating nodes, we support global Web3 projects entering Japan and help Japanese companies engage with the Web3 ecosystem."
+    },
+    "commission": "0.050000000000000000",
+    "btc_pk": "7882d993d72e2dd94282598918aed3c57c69f778e5979239c7b3fee29725d4cd",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "Tm9q+WV0frtio40VZoUfDo8XLEL7SjeyHzlPbd1GH72EDsN7Ludtng34cvCJMydGyqudnBBKDjhdiovUsJjjrQ=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 1177328,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-04-09T05:08:00.980866070Z"
+    }
+  },
+  {
+    "addr": "bbn1crzl9tf4ehzayyz893sl9s79s9k2mnlevw8tqt",
+    "description": {
+      "moniker": "Lombard x Galaxy",
+      "identity": "",
+      "website": "",
+      "security_contact": "",
+      "details": ""
+    },
+    "commission": "0.080000000000000000",
+    "btc_pk": "7e20f50f7882e6f75372dab46b9dd17dd3f91d4c397be25085a9d020b2aa2156",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "alwHd4FUlcbCRPjD/827mz15N+1i/J+2L2DsFyHy39VNKobvCS8S+ZpeY49x58VuSqG/3FS7X8T/k+j+aoMfmA=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 1177328,
+    "commission_info": {
+      "max_rate": "0.080000000000000000",
+      "max_change_rate": "0.020000000000000000",
+      "update_time": "2025-04-09T00:02:09.573710028Z"
+    }
+  },
+  {
+    "addr": "bbn1mjcme5v947tp0rg794m4kr35dmcl5x8j4q3zrq",
+    "description": {
+      "moniker": "DeFimans_SBI",
+      "identity": "",
+      "website": "https://defimans.com/en",
+      "security_contact": "",
+      "details": "DeFimans Co., Ltd (SBI group) Validator"
+    },
+    "commission": "0.100000000000000000",
+    "btc_pk": "7eae0b6c955165d661393e30826409bc5449c1acd550a8936289db5545c4c528",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "YteblrqTPQMiomGfe0V6T/oKEe2kEHrI7jW6JKr39i+Qfvhi/k3fD8UCNToxcyQPPUt4VeSsWYn+JiTq2TFMaQ=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 0,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.050000000000000000",
+      "update_time": "2025-07-02T11:07:36.449685101Z"
+    }
+  },
+  {
+    "addr": "bbn1hdu444ng8kzmvhunww6ef05wf2qmp7jpu2thm0",
+    "description": {
+      "moniker": "blockscape",
+      "identity": "C46C8329BB5F48D8",
+      "website": "https://blockscape.network/",
+      "security_contact": "blockscape@mway.io",
+      "details": "blockscape's finality provider for the Babylon network"
+    },
+    "commission": "0.040000000000000000",
+    "btc_pk": "82332ddabc9e4bfc9017e14bf0b8188d2219ffd26143a1383a42d90b1ab55caa",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "LFTaHu0r2U4Uhx7opS+IduJID4vmlaM3vQy4CEvy+tH3EE4EkYIZiQMDeaiIwcvsfAlRHT65GV/nVHQwPygC8A=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 0,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.200000000000000000",
+      "update_time": "2025-04-16T13:03:31.638014711Z"
+    }
+  },
+  {
+    "addr": "bbn1x9e4n2npavlfygtnv7l32rxh00kt6nck68kgkp",
+    "description": {
+      "moniker": "Staking4All",
+      "identity": "",
+      "website": "https://www.staking4all.org",
+      "security_contact": "info@staking4all.org",
+      "details": "Staking4All finality provider for the Babylon network"
+    },
+    "commission": "0.030000000000000000",
+    "btc_pk": "8277d0e45cadd877f7beec1317f2b5872cd957b810702264b54eaeef97b86ab3",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "uHsvxAMQPLyrQLYketBE8hVh5luYae9OV+jAfqcn5aYf7vIMQmdm77up8zdhH9tpAXo2ntDPeS4HR3FByBFjNA=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 1177328,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-04-08T08:47:34.591478490Z"
+    }
+  },
+  {
+    "addr": "bbn1ffzy448mcgat4r6teyzfmf955kzkusd5j207lr",
+    "description": {
+      "moniker": "Blockdaemon",
+      "identity": "",
+      "website": "https://www.blockdaemon.com/",
+      "security_contact": "support@blockdaemon.com",
+      "details": "Blockdaemon provides maximum uptime for the Babylon network so that you can be confident your node will be there, ready and secure, for optimal reward generation. Contact us to stake on Bitcoin today."
+    },
+    "commission": "0.030000000000000000",
+    "btc_pk": "8380e07bbb271c9811369d20de6f452b9303268bc19cddcc30b1ea20e34ec55c",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "xXSr93IWDaHFlnFm1LP8g2XKYNbG2LvNYJbROOpuqeCTc6fhiEe9jLFyXDg8Q0+UfICSffzMEk4F4yY7ZkLXHA=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 1177328,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.050000000000000000",
+      "update_time": "2025-04-08T14:33:58.460166549Z"
+    }
+  },
+  {
+    "addr": "bbn17yfxaeav3977k74mt27ajl29dxsremzyakx5g3",
+    "description": {
+      "moniker": "✅ CryptoCrew Validators",
+      "identity": "9AE70F9E3EDA8956",
+      "website": "https://ccvalidators.com",
+      "security_contact": "support@ccvalidators.com",
+      "details": "Secure BTC staking with CryptoCrew. We power the interchain | ccvalidators.com"
+    },
+    "commission": "0.030000000000000000",
+    "btc_pk": "84b63c04789c992aec4979599d94245721ec74ffa4474380121f1446be12d2c6",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "c49MJ/rSj32ntwtU+thYMeeIituQNb3SCYrUOl/4VNu3JbcwR+WUg/zDyEjY6zlzV3XoCVTRp1tBxn2PxndKuQ=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 1177328,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-04-08T09:45:38.531562355Z"
+    }
+  },
+  {
+    "addr": "bbn160hn82edeyax594dvsdeadt2gh560hhveuud2k",
+    "description": {
+      "moniker": "Lombard x P2P.org",
+      "identity": "",
+      "website": "https://www.lombard.finance",
+      "security_contact": "cosmos-security@p2p.org",
+      "details": "Lombard is dedicated to expanding the digital economy by transforming Bitcoin's utility from a mere store of value into a productive financial tool."
+    },
+    "commission": "0.080000000000000000",
+    "btc_pk": "8a82a8ca5c005054da640a51f7fe401bf4dbcecc353bd0e76b4ee93a8648b7cd",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "15ZxLyfWBnCIOsM0Sdqa7dliflN2mj3Tci9NulrDJAuW0k9JAutGzjeKFgPy4OwkwXKvtn3I8/r2yiZkI4ASDw=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 1177328,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-04-08T16:18:30.378173649Z"
+    }
+  },
+  {
+    "addr": "bbn14q9h3m6fy9d66p6mzdksc55ljdhxp0a0q3ug7d",
+    "description": {
+      "moniker": "CertiK",
+      "identity": "",
+      "website": "https://www.certik.com/",
+      "security_contact": "node@certik.com",
+      "details": "CertiK is the world's leading smart contract auditor. We provide full-cycle security solutions for enterprises, including auditing, security rating,Compliance&AML,investment and other security-related services, elevating the entire Web3 journey of our clients."
+    },
+    "commission": "0.030000000000000000",
+    "btc_pk": "8c8a20dc13c124ac1f7aa7af69a13a4e121abf5934e6b384c6d13c5663fdc633",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "6/yEwWF5pomWH57MUb4UDPNkqim+MyU0sM7s42CajafCs4a01XwUt6Thvd2C14oSGx50shD0d0pXGSW81pLATA=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 1177328,
+    "commission_info": {
+      "max_rate": "0.300000000000000000",
+      "max_change_rate": "0.100000000000000000",
+      "update_time": "2025-04-08T08:15:41.968945492Z"
+    }
+  },
+  {
+    "addr": "bbn12ytf7as504rsygqxvpuhmkpth5x73s7cvcpt2x",
+    "description": {
+      "moniker": "Ginco",
+      "identity": "",
+      "website": "https://www.ginco.com/",
+      "security_contact": "dev.admin+node@ginco.co.jp",
+      "details": "Ginco finality provider for the Babylon network"
+    },
+    "commission": "0.050000000000000000",
+    "btc_pk": "8e0c042947b42dd1e514c349ce6615c3c7572a2628a4014ed920052b84b7b181",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "GABkRdqxi6u0mt6vVxBmSp5gKDd6T9Lnt2vhLwmVKN07bYDnviEomeWS+JAL9Qhbov6x9CwXSmkTFhvKBf0aNQ=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 0,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-08-08T13:42:13.290383452Z"
+    }
+  },
+  {
+    "addr": "bbn1zgq6echvucyasd7zacmlhu9rpxagmj7hcjyndq",
+    "description": {
+      "moniker": "Cubist",
+      "identity": "A56651055B76A453",
+      "website": "https://cubist.dev",
+      "security_contact": "",
+      "details": "Cubist is the creator of CubeSigner, the premier hardware-backed key management infrastructure. CubeSigner gives high-security, low-latency signing for a wide range of Web3 applications including staking, wallets, trading, and more."
+    },
+    "commission": "0.050000000000000000",
+    "btc_pk": "8e14c575b2cadd5cc0f8584b2dcb98b4c301a53c3cee402a5caf4b4512a1f40a",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "RXwRNz7nERq4smTBv6NGkzG+5qPsPY5sP+AIcnzT+onNeKqVoz2kLCzQcDyFY5t6FCtOobo8hDHtRSHfODTEag=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 1177328,
+    "commission_info": {
+      "max_rate": "0.050000000000000000",
+      "max_change_rate": "0.000000000000000000",
+      "update_time": "2025-04-08T08:40:33.758463262Z"
+    }
+  },
+  {
+    "addr": "bbn1d4dtmz8qa68lm8v86yfk9cj5ue8g7shw6k8ux0",
+    "description": {
+      "moniker": "NodeOps",
+      "identity": "",
+      "website": "https://stake.nodeops.network",
+      "security_contact": "hello@nodeops.xyz",
+      "details": "Simplifying Node Operations. Your Trusted Staking Provider"
+    },
+    "commission": "0.100000000000000000",
+    "btc_pk": "8ffe55319ee3bb2c753b8a88dcbb69e49dfd65f8a5c45af1dd3c6724f3ec2080",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "CBlWYPzy9N1VaIy2n5XCGJ1vfDBbqov2ckJ9dJL0JmkV/G3peVG2dp48ZpOxa/1KRvLaAG06BqV7eIhTDP4aUA=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 0,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-07-23T11:11:14.610285889Z"
+    }
+  },
+  {
+    "addr": "bbn1sdlfp8n5fcfa7qw7770ngqs02k876gf6zjwm6a",
+    "description": {
+      "moniker": "NodeStake",
+      "identity": "",
+      "website": "https://nodestake.org",
+      "security_contact": "info@nodestake.org",
+      "details": "NodeStake is the professional validator, infrastructure provider and IBC relayer. ⚛️7*24h Services | https://twitter.com/Nodestake_top"
+    },
+    "commission": "0.030000000000000000",
+    "btc_pk": "904797a87def7180c58b6d016a00e18a2736aa0f7ec05696ab5f08440e1a5150",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "J6Ds4Mph9aO0h3LlsSe8yNkX0sZpEfqyqw5ftNwpM9M8kHH3ObycLH9ivSgE2WJTrg7S+A7PhdS0m65jcHV1RQ=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 451298,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.050000000000000000",
+      "update_time": "2025-04-08T08:18:15.570170952Z"
+    }
+  },
+  {
+    "addr": "bbn1u96hfw64mga2gqgcpwnyum6gkm35sdvpdyvama",
+    "description": {
+      "moniker": "InfStones",
+      "identity": "",
+      "website": "https://infstones.com",
+      "security_contact": "security@infstones.com",
+      "details": "Ultimate Web3 Infrastructure Platform"
+    },
+    "commission": "0.050000000000000000",
+    "btc_pk": "911421ea9cd3107d81aef2a62bf04d7a3c57b7bc0462af668d0a332e5dd72fa8",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "bkccK+2MW6ebgMDIWyChx7ODM7JNrNWZaQ8+nu4qSJtNA0K2/ziKg6HHI9l0b6T0pGDgAPOAy2XJoy7ymSH9CQ=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 869140,
+    "commission_info": {
+      "max_rate": "1.000000000000000000",
+      "max_change_rate": "0.100000000000000000",
+      "update_time": "2025-04-08T11:26:50.331615536Z"
+    }
+  },
+  {
+    "addr": "bbn14r03f9mmrv74zr7sl05l7mz5t2kpm8rdykgant",
+    "description": {
+      "moniker": "Stakin",
+      "identity": "",
+      "website": "https://stakin.com",
+      "security_contact": "security@stakin.com",
+      "details": "Leading non-custodial staking service with operations on 20+ Cosmos chains, IBC Relaying, slashing guarantees and ISO27001 certified infrastructure"
+    },
+    "commission": "0.030000000000000000",
+    "btc_pk": "996477cf43980aa37e25620aba62676a8bf975ffedb6c8c89b85df1d31bf14fb",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "u/PhwXXEXfh+BIZG9Up03a0b3XgFqwCb8Px2SRalWiYmMOxVWZ/51Jf67JrS4SJHhJt1a5VP1xBftk05y01fxw=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 0,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-04-08T13:53:46.441486437Z"
+    }
+  },
+  {
+    "addr": "bbn1hfnet8x4ey4w4svracvppc7vm09pq7vxl8lj4m",
+    "description": {
+      "moniker": "Kraken",
+      "identity": "F748A43D5B6066ED",
+      "website": "https://www.kraken.com/",
+      "security_contact": "devops@staked.us",
+      "details": "Kraken Exchange finality provider"
+    },
+    "commission": "0.100000000000000000",
+    "btc_pk": "99cab14570d12633326afede842d3a9db729f671d2fa1b8a46585d3f62395c1c",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "xrjMFY6NdD3QQkphCBVHB2CecROSFPe5XCGDnBlpthuN2QJ3FPYDEIcXLAfvfaZDaKHXb+tZFHI1bdd24dqvgw=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 1177328,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-04-10T20:05:01.925503381Z"
+    }
+  },
+  {
+    "addr": "bbn1aqqkk4uzeva4y8x9vyu699ralkr8c6dtn2tc2p",
+    "description": {
+      "moniker": "Twinstake",
+      "identity": "A7823F4D765E18AB",
+      "website": "https://www.twinstake.com",
+      "security_contact": "",
+      "details": "Twinstake is the institutional staking standard for non-custodial staking, designed and built in collaboration with leaders in the digital assets space."
+    },
+    "commission": "0.100000000000000000",
+    "btc_pk": "99fcdc40b7f4bf65043230a188f87f4c11ec72617c797ac00775e40a4d90aaaf",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "vX7bohIrrAEYXgslsoPi42fFrj0sbQDVoUM/LktoXmi0CY9KkK52L5uc9OZNPHnS77gw/kL9ZV+4HFqgwzQjHg=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 862126,
+    "commission_info": {
+      "max_rate": "0.100000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-04-08T11:54:14.819556798Z"
+    }
+  },
+  {
+    "addr": "bbn1c7j3ecvv3fj0t0dsyuhhj6zv2lyf6erpv7dk7a",
+    "description": {
+      "moniker": "CosmosSpaces",
+      "identity": "06B033BAC39DA21C",
+      "website": "https://cosmosspaces.zone",
+      "security_contact": "security@cosmosspaces.zone",
+      "details": "Bare Metal Validators, Relayers, and RPC providers. Top tier infrastructure providers rooted in the Cosmos community."
+    },
+    "commission": "0.050000000000000000",
+    "btc_pk": "9a5e201fe1c1d381457d9d57689673e871641183ab69ce92f6723e883de4be53",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "mTvw6l6s/ZFFLp8A3ozxftj/DEBfUxi7rR0U+khMLnInkFnJ5Hjew2+YMZNqNK/2LuIYlP1XD52qi84ma/y3NA=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 167693,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-04-08T11:39:57.163678430Z"
+    }
+  },
+  {
+    "addr": "bbn1tzz8et7nrq4k457gh3kjw5s84l22r07rne5c2g",
+    "description": {
+      "moniker": "bitManna",
+      "identity": "1D8F197850300072",
+      "website": "https://www.bitmanna.com/",
+      "security_contact": "blockchain@bitManna.com",
+      "details": "bitManna contributes redundant nodes, spec'd for performance at cloud scale. Delegators earn rewards with confidence."
+    },
+    "commission": "0.030000000000000000",
+    "btc_pk": "a09b7d5463f289b6b2db575abcbf9f482c0fa403581ee56651d8d686bf1d493e",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "6wRPu6KfjJvng0NbpnNN2gZusph9RtwtsN/amosO/2ltZYncAFMxnR8rei9PAOT+B4xHjE6wxr1WPLnlGZlUYQ=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 1177328,
+    "commission_info": {
+      "max_rate": "0.300000000000000000",
+      "max_change_rate": "0.100000000000000000",
+      "update_time": "2025-04-24T01:57:06.884662264Z"
+    }
+  },
+  {
+    "addr": "bbn1hedfzg90fcvecrkrvluctapc87xewcxmw3c9pm",
+    "description": {
+      "moniker": "B-Harvest",
+      "identity": "",
+      "website": "https://bharvest.io/",
+      "security_contact": "contact@bharvest.io",
+      "details": "Provides secure validation services for dPoS networks"
+    },
+    "commission": "0.100000000000000000",
+    "btc_pk": "a0cf1cd3a8e2b309dbdccdc8aa82a16c893755bd08b8c4139691f0e38ef4a599",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "PSWSD+wSY2EERKR+yf3m3QUlMyqYbxZjANriiaBImrs646ClOIXYUpmlc5Qu+UTOBLYDmpt9p9UFlypEqL5qAQ=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 1177328,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-04-08T08:59:36.745304831Z"
+    }
+  },
+  {
+    "addr": "bbn1tat9n0uflehmxytwm40ptqlnt7emazv2etv3ft",
+    "description": {
+      "moniker": "Meria",
+      "identity": "",
+      "website": "https://meria.com",
+      "security_contact": "it@meria.com",
+      "details": "French Crypto Investment Company"
+    },
+    "commission": "0.030000000000000000",
+    "btc_pk": "a1f39ed29581fb6ad54be8cdf1a8838b3429e87bdfdd2652c47946221c360f10",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "P5rTrItk/PsNQRC/M47Bq+HrqzRsqkHJZwEp6Amz/K+MoDD0vwqRi4f3Uc1guJj1LoGXTujqsuL3+ghTZXTQlA=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 965991,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.100000000000000000",
+      "update_time": "2025-04-08T09:28:48.049467661Z"
+    }
+  },
+  {
+    "addr": "bbn1z9cwx5fqghdfsyhanjt6z2nvujfkh2qunpfkl3",
+    "description": {
+      "moniker": "Nodeinfra",
+      "identity": "",
+      "website": "https://nodeinfra.com",
+      "security_contact": "security@nodeinfra.com",
+      "details": "Korean validator focused on reliability and security"
+    },
+    "commission": "0.050000000000000000",
+    "btc_pk": "a1f8176fef4f689bfa5f4704255cc566562a13de6f1f1e546413d46aa4dd6f64",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "jO0PsvmpVFr8AORb5l3tJyDDnzL0ji1hFq5FrM8YBsfZZh7SLyFoUblQijPKC42ghPu2ug92XiubkOBDENzO4Q=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 0,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-04-08T09:28:29.553552660Z"
+    }
+  },
+  {
+    "addr": "bbn1azjf0sl0mycqr7pfedlc7y7xw74tlxhxh8d4j2",
+    "description": {
+      "moniker": "0zonaris",
+      "identity": "CB2A5469006ED319",
+      "website": "https://zonaris.io",
+      "security_contact": "contact@zonaris.com",
+      "details": "Bitcoin staking powered by zonaris' green, institutional-grade, CO2-neutral infrastructure."
+    },
+    "commission": "0.050000000000000000",
+    "btc_pk": "a2c2e0cbb10932a3de4ad7c2001e1c51993ea673762fd34196d4fd9e6042b743",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "VpEUvO6+adyJiaNNpOZZHehog770+z4+/X0y6KCyZvUoo1QPvMvBh/d+N9c8n5RPdAORJkuv0QgO7Syjeu2DuQ=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 0,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-04-09T13:34:35.577101523Z"
+    }
+  },
+  {
+    "addr": "bbn1jzw6dnl2ru20e2tplvaj5d09c7sw7h89g0c9sf",
+    "description": {
+      "moniker": "Enigma",
+      "identity": "6223697ACA24A4FF",
+      "website": "https://enigma-validator.com/",
+      "security_contact": "contact@enigma-validator.com",
+      "details": "Highly secure professional validator across 50+ chains - offering a full refund for any downtime slashing - Reach out to us at contact@enigma-validator.com"
+    },
+    "commission": "0.050000000000000000",
+    "btc_pk": "ac53903a0912689060abe4d79965b4cdba40fc98a5cfbd315f31f5c1791cbe75",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "OYZH9EE9TymP2cS+rMcIWoGBbU2NJs3oN/2ADO6cGGu5lz0xQeuEBqoQjApDvK33Lx6/D3q5B45p/SP7v85MMQ=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 172830,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-04-09T02:10:10.799650938Z"
+    }
+  },
+  {
+    "addr": "bbn18pmawneqgfcanpgft0yzu5k69fhga6dref92dd",
+    "description": {
+      "moniker": "GalaxyDigital",
+      "identity": "",
+      "website": "",
+      "security_contact": "",
+      "details": ""
+    },
+    "commission": "0.050000000000000000",
+    "btc_pk": "acc2ddfdaaa3ca7acc13340c22a25dd910b98c08ba789ba5d8dac98e2f721cf9",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "TIuHxTne5Z79k+Dz5TA0CiYNm3NH0NlL/FhXla0tv6fftJIEe05Ab922Joee8br9YEef0XzKV55kZnhWxcV69w=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 1136907,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-04-08T21:00:51.969966926Z"
+    }
+  },
+  {
+    "addr": "bbn1kmr582vmdnuejjj7fxh4lp2adt5jt7xt0r9pr2",
+    "description": {
+      "moniker": "DELIGHT",
+      "identity": "",
+      "website": "https://delightlabs.io",
+      "security_contact": "security@delightlabs.io",
+      "details": "Technology-driven team contributing to a decentralized ecosystem."
+    },
+    "commission": "0.030000000000000000",
+    "btc_pk": "ade15c6d7d371174534b00457aa5bf68f92e0144ef8de23a9425b4845a6a433a",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "1IVGHxQ7A0bxMrXRcPrsHHc1nZIeDIDcicViAmbUVhisKx6UkAbs+xA9DxZIcrpFIaRaFSZIxZGF9nRzCVJHhA=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 1177328,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-08-12T07:01:34.888998222Z"
+    }
+  },
+  {
+    "addr": "bbn1nc3gdkwd9cvs2jjp20njrlm6cpa33tp5sd3nwa",
+    "description": {
+      "moniker": "AltLayer",
+      "identity": "",
+      "website": "https://altlayer.io",
+      "security_contact": "security@altresear.ch",
+      "details": "AltLayer is a decentralized protocol that facilitates the launch of native and restaked rollups with both optimistic and zk rollup stacks."
+    },
+    "commission": "0.050000000000000000",
+    "btc_pk": "ae2f910a7c8d45fa908d4a7e5ce67fd5eb1a5f4390958c90354120b63a7819c8",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "eF5YyO0h6PWmRBkSNqhJc7IoDd9hdoFYxKX8mRM5tPlKZFsNJ1D79HsuB79JmEGyhHDgrPcQwNIurtsLJu3gqQ=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 1177328,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-04-17T11:03:47.243725515Z"
+    }
+  },
+  {
+    "addr": "bbn16vet04vj07nlfj9pq6gm0jwqv3regyxthggdfk",
+    "description": {
+      "moniker": "SenseiNode",
+      "identity": "",
+      "website": "https://senseinode.com",
+      "security_contact": "infra@senseinode.com",
+      "details": "Institutional Grade Staking as a Service"
+    },
+    "commission": "0.050000000000000000",
+    "btc_pk": "ae41630bcd400338c0fcabf7f2c174a2d2539c7f9333ed0b79159ad1e2ab01c6",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "bFbZQRRuei3dzFu21tLxwKO61BnxmPBROBN+DpAqz2mGTsF6YlWTm6JNiO50spHaDKCEmlyU7skOuafn4ipSvg=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 234431,
+    "commission_info": {
+      "max_rate": "0.100000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-04-10T13:03:45.702561358Z"
+    }
+  },
+  {
+    "addr": "bbn14teehkr5vs9ddc0cc04ujhdn8de49jt7p8x8js",
+    "description": {
+      "moniker": "BitGo",
+      "identity": "",
+      "website": "https://bitgo.com",
+      "security_contact": "",
+      "details": "BitGo is the leading regulated infrastructure provider of digital asset solutions, offering custody, wallets, staking, trading, financing, and settlement."
+    },
+    "commission": "0.050000000000000000",
+    "btc_pk": "afd36001666c3ffede8b987862d7cdecea7f484daee037b2da4ee0cc4827472e",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "XrnOul6lAqRh/0ULhToDGUkSCdx1Gi2tLUBw/e5105scMACN4/bywFJ42clSEM8H/Wbe62LixdS8cN6+ZHdL4g=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 0,
+    "commission_info": {
+      "max_rate": "0.500000000000000000",
+      "max_change_rate": "0.100000000000000000",
+      "update_time": "2025-05-26T15:03:30.920306054Z"
+    }
+  },
+  {
+    "addr": "bbn1k9780n5x5kcqqdelevs7w2qgz8x82kuu9ene8n",
+    "description": {
+      "moniker": "Allnodes",
+      "identity": "3999DA33020A4DBC",
+      "website": "https://www.allnodes.com",
+      "security_contact": "support@allnodes.com",
+      "details": "Reliable non-custodial Validator run by the industry leader - Allnodes."
+    },
+    "commission": "0.030000000000000000",
+    "btc_pk": "b08eaaba839a1c36d51a10c74ecf8b23599273469a65a83243348a9fc0bc7605",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "FFsLE0q7SrH2WTNenXgKDYq6MBhmlqr3tFcEnaU0h0ASA6BR1kQ9pdchUvOTe5ayI2i/3//hDd2xM2cyGa+fDw=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 1177328,
+    "commission_info": {
+      "max_rate": "1.000000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-04-09T07:46:37.380283184Z"
+    }
+  },
+  {
+    "addr": "bbn1mh7f8c9qg0vm8rgewvxlx0wf4zwy7a69c7c7qf",
+    "description": {
+      "moniker": "Zellic",
+      "identity": "609C091636D1330B",
+      "website": "https://zellic.io/",
+      "security_contact": "security@zellic.io",
+      "details": "The go-to blockchain security firm for top teams, specializing in Cosmos, EVM, ZK, Move (Aptos and Sui). We solve your hardest security problems.\nTwitter: https://twitter.com/zellic_io\nTelegram: t.me/zellic_io"
+    },
+    "commission": "0.050000000000000000",
+    "btc_pk": "b0f0fbb9e3b818c2d924632ef80e4718145f394f9cdcc0bd9c8820f309db436b",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "taVNyFKGbt1ciUzLvrYqUlSICS0+kSV1qlpts/UAz2fRJWXvQbVKsZVYlSAdnfxqaaAQQdXWpqTAbwRJbu4KpA=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 0,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-04-09T17:48:51.305677330Z"
+    }
+  },
+  {
+    "addr": "bbn1azjf0sl0mycqr7pfedlc7y7xw74tlxhxh8d4j2",
+    "description": {
+      "moniker": "0zonaris",
+      "identity": "CB2A5469006ED319",
+      "website": "https://zonaris.io",
+      "security_contact": "contact@zonaris.com",
+      "details": "Bitcoin staking powered by zonaris' green, institutional-grade, CO2-neutral infrastructure."
+    },
+    "commission": "0.050000000000000000",
+    "btc_pk": "b4cf2cf2b7b3c1d42b5ed7e2f0811e61474eaae2819698b149635656676bd28c",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "L3xoCLym65+9mGwfSnEA6UnhBLO7+VqdjzPSBTsP/iOyv6LEZJP99GLMnmMLCHcjPEY7trRVTkKgoqwruEXm6Q=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 1054091,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-04-11T06:22:29.491077218Z"
+    }
+  },
+  {
+    "addr": "bbn15c9v3hvw7s084rw5f5ltgupevmpqzt60rpj4nt",
+    "description": {
+      "moniker": "Colossus",
+      "identity": "32A5F1629806ED70",
+      "website": "https://colossus.digital",
+      "security_contact": "",
+      "details": ""
+    },
+    "commission": "0.050000000000000000",
+    "btc_pk": "b5b2e5acbfebb565074cbaabc5fe414ce2a7aeddb05c811b2785b8397cffd591",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "j/bI59H0WXBKxbqMDseGbb4yj/Xf9slef4Unbu0nnG+zPITdoiqDw3GYpIk1smWQvjzkMGCeIsJiGPx/ynHddw=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 1177328,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.050000000000000000",
+      "update_time": "2025-04-08T08:21:29.588787662Z"
+    }
+  },
+  {
+    "addr": "bbn1ma0sj9hge02jhha75rz8km63zerfy628fhuvgj",
+    "description": {
+      "moniker": "Stakecito",
+      "identity": "D16E26E5C8154E17",
+      "website": "https://www.stakecito.com",
+      "security_contact": "security@stakecito.com",
+      "details": "Securing & Decentralizing PoS Networks."
+    },
+    "commission": "0.030000000000000000",
+    "btc_pk": "b7a0bc1270c4691140dd739f2db7917cf281547cafe41a693c5f481ca8fbae8c",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "pV54eFEB3gBWcxvv3v1VdFLc83Q1Q+CN8G47DU6UOBDoK323h4zrWxWdH2eePm/8hZ9DRsPpPRFwoHQM38aQjA=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 1177328,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.020000000000000000",
+      "update_time": "2025-04-08T11:38:35.179559402Z"
+    }
+  },
+  {
+    "addr": "bbn18phmwuw269c0rww6wx8zu5l2su9zcdug7zxjmr",
+    "description": {
+      "moniker": "QuantNode",
+      "identity": "08E399BBC31D22E8AB6FDFF5B1CBEF22E3E0004E",
+      "website": "https://quantnode.tech",
+      "security_contact": "security@quantnode.tech",
+      "details": "Non-Custodial Staking Provider with an in-house Web3 development arm. Support over 20 mainnets, including Aptos, Avail, Axelar, dYdX, Graph Network, and Sui with assets under delegation exceeding $170M"
+    },
+    "commission": "0.030000000000000000",
+    "btc_pk": "b7f07be269e95ec92ffb25d4777653a78736cef431020534cf4a8c77fcbbeb9d",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "BVzCJ04hem+CrrmPZASpM+kOAFqgUogvcbSiG6BaF9FX9xrdcCc3Qa3GYq3NR5Ebuh9Afza052ORaodyhQ+Vmw=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 0,
+    "commission_info": {
+      "max_rate": "0.050000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-04-25T11:32:14.058819109Z"
+    }
+  },
+  {
+    "addr": "bbn1wqrawrjlxuqaxlygq0yn8lujhpt4d04er9pntv",
+    "description": {
+      "moniker": "StakeLab.zone",
+      "identity": "",
+      "website": "https://stakelab.zone",
+      "security_contact": "security@stakelab.zone",
+      "details": "Grow your Bitcoin - app.stakelab.zone/babylon"
+    },
+    "commission": "0.050000000000000000",
+    "btc_pk": "b7f804dd08fda86549d01aad1da1d05babed6fc48e70fae59e3c7fb38161f414",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "VtEytWLLFHZRgHQq2JV8tHr5XBrhnzcwtRwd2lG85RsCdDBGveRhYCa8yJyo5sMRXBkqOQYRhUGQ1YnkA5WMRQ=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 0,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-04-09T10:53:40.347085239Z"
+    }
+  },
+  {
+    "addr": "bbn16qefemqnv8kelmd7kt6l6krkqqkmpxslkhvvva",
+    "description": {
+      "moniker": "RockX-Bedrock",
+      "identity": "",
+      "website": "https://bitcoin-staking.rockx.com",
+      "security_contact": "staking@rockx.com",
+      "details": "The largest Asian-based institutional grade staking and RPC provider."
+    },
+    "commission": "0.030000000000000000",
+    "btc_pk": "bb0bceda25d82f10a69feca9c076d85f61d750c9a481b8105d8389325538fdd1",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "oqjpUTM6ipaz9cYgxP2UXcC47v1dmO7KEIAbu5aYf1JTl0sg5DudKqv20KOqW30mDFkT4qncMjtloUZNpsbeFA=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 1177328,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-04-08T08:25:46.387230101Z"
+    }
+  },
+  {
+    "addr": "bbn1ctftd3ccq3mclmmjk9dnrkf24l5pqxwumc3rct",
+    "description": {
+      "moniker": "htx",
+      "identity": "",
+      "website": "https://www.htx.com/",
+      "security_contact": "huobi-pos@outlook.com",
+      "details": "As a world-leading company in the blockchain industry, HTX Group was founded in 2013 with a mission to make breakthroughs in core blockchain technology and the integration of blockchain technology to other industries."
+    },
+    "commission": "0.030000000000000000",
+    "btc_pk": "bb90cbe7d0afb84fda8b4d440ddce1a394878a32aad29929c86e0e9188b003ba",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "rQsAG0kFFW7FlsZmFf61sxKpkIlyo9el6VxQcoMZq0vWEfsL+saYX2+WUnTL30oh5awHvnf36td1mIVJRCYL8A=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 0,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-04-08T15:29:37.388665601Z"
+    }
+  },
+  {
+    "addr": "bbn1ddx2mxmpytusjxv8qvz2jze8958s6fsqdeskee",
+    "description": {
+      "moniker": "BitcoinSuisse",
+      "identity": "",
+      "website": "https://bitcoinsuisse.com",
+      "security_contact": "staking@bitcoinsuisse.com",
+      "details": "Bitcoin Suisse is one of the world\\’s leading custodial staking providers. We offer hassle-free staking services which allow our clients to effortlessly participate in the security of blockchain networks."
+    },
+    "commission": "0.990000000000000000",
+    "btc_pk": "be2f7942c5dfaa826aec61355ef427fad1095491aa04850c450f812f9b9ca9ed",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "++m0sXSJkb9lXxcvE87B3R8q1uyT6yQkwD6MeI0XD1EIRUyJnw1NIeKyd6mFO50pDaBc+Z0sWfzzvqRtE2EtFQ=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 1177328,
+    "commission_info": {
+      "max_rate": "1.000000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-06-16T10:39:21.069701795Z"
+    }
+  },
+  {
+    "addr": "bbn1hm6wlnazzn0t6j88ffr6kpw44rhjx66muaqjq4",
+    "description": {
+      "moniker": "Alchemy",
+      "identity": "“1793CDADD5B812D0”",
+      "website": "https://www.alchemy.com",
+      "security_contact": "validators@alchemy.com",
+      "details": "Guaranteed availability and up-time backed by a professional blockchain infrastructure team."
+    },
+    "commission": "0.050000000000000000",
+    "btc_pk": "c1528b27ec7c68f12d3eca1ea2e019cd17256afc83dc681c6732f5f6c31cb1c6",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "FYpXproeKxDcCSWB7AGTftbbLtPKZwHJpEbzUNPReToWlbCNJEdJg5Phf0Tjngl9X2tra8Xzo9o9sQCrMU3fTg=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 0,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-04-08T08:47:24.485792121Z"
+    }
+  },
+  {
+    "addr": "bbn14gfxczxvcvjrmdv4g8c0mj5qk5ns0dmzgctd90",
+    "description": {
+      "moniker": "Restake",
+      "identity": "98EC2DBC23F1B764",
+      "website": "https://restake.net",
+      "security_contact": "security@restake.net",
+      "details": "Effortless staking with institutional standards"
+    },
+    "commission": "0.030000000000000000",
+    "btc_pk": "c1f57e1d27ab9f4c21e8e4a620f05fde3dae09834cd0620f568fe30832171f76",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "F1VaXxGPhXKTgaGT5u9LMqj5DaG8JPEpkI4H78YK/jgudpCLRSFdZKhC+/k1dyTmRq66UwNvcbb0TjzMclewFg=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 184999,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-04-08T16:18:40.366474936Z"
+    }
+  },
+  {
+    "addr": "bbn1aulfq4hkhcrkn27nftnttr04gpzhvtjm6yql3n",
+    "description": {
+      "moniker": "Anchorage Digital",
+      "identity": "17D0A114A90FD55F",
+      "website": "https://www.anchorage.com/",
+      "security_contact": "protocols-security-alerts@anchorage.com",
+      "details": "Anchorage Digital, a regulated crypto platform, offers institutions an unparalleled combination of secure custody, regulatory compliance, product breadth, and client service."
+    },
+    "commission": "0.050000000000000000",
+    "btc_pk": "c405fd997340c532a3b788b3186e779ed7cf9b5f2d6b8c8ad2351d82cfd0fb87",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "7oyTBAj6eLyfz95MwmSpQXVXMp0fdGm1SxbpgIT566aMhA5OduYW/tnLPvwYcEt7JTCLxdhhgQWhfPSCFMq2LQ=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 1177328,
+    "commission_info": {
+      "max_rate": "0.100000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-04-08T08:59:26.674072827Z"
+    }
+  },
+  {
+    "addr": "bbn1h2x5tjwrpz0s5tm7q936dh6xjyghh4ev077z4z",
+    "description": {
+      "moniker": "Silent",
+      "identity": "A47522A5527DB39F",
+      "website": "https://silentvalidator.com",
+      "security_contact": "",
+      "details": "Silent Validator leverages robust infrastructure and deep expertise to provide highly reliable validation services, enriches the community and furthers the growth of the ecosystem."
+    },
+    "commission": "0.030000000000000000",
+    "btc_pk": "c790b603199b5c06e9a2230c798130cdc5ea24f0ef8250383e483ac9ae57b397",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "+CRxDbqgZsR7vi7lwTCLeRC152U8kHy4/93fnzfRphFiFmUqBxOMyBwhaGyTmgRPFdof0EJ4zMvHodf8G7hDhA=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 660088,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.100000000000000000",
+      "update_time": "2025-04-16T17:30:07.119345683Z"
+    }
+  },
+  {
+    "addr": "bbn1kq2cg90p0wnu2wx4lw528vx3a94ec0xrj7va5s",
+    "description": {
+      "moniker": "GlobalStake",
+      "identity": "82E455D7910FBA4E",
+      "website": "https://globalstake.io/",
+      "security_contact": "support@globalstake.io",
+      "details": "GlobalStake’s next-generation institutional staking offers SOC-2 security, bare-metal infrastructure, and carbon-negative performance. Our independent data centers boost risk management and optimize service delivery to drive results for clients worldwide."
+    },
+    "commission": "0.050000000000000000",
+    "btc_pk": "c89c8c0b70a7178e9b405e16f67712aad664b0aa323f3c285e6f119437d2776e",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "mpjzGJDwLXzUbmTJj5wEtVyCEkUT8cgTerjons4Ji4U+Qk+P/T44t9ClBB02P4I/ETOf1dLFyOvw5N2PVmv64Q=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 0,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-04-24T21:56:43.350238198Z"
+    }
+  },
+  {
+    "addr": "bbn15txpyjy0cpfswcj8rcfc2wlrdnnu5rkqfpmmcl",
+    "description": {
+      "moniker": "YieldKingZ",
+      "identity": "",
+      "website": "https://yieldkingz.io",
+      "security_contact": "support@yieldkingz.io",
+      "details": "Pioneer of WEB 3.0 Crypto Social Casino"
+    },
+    "commission": "0.050000000000000000",
+    "btc_pk": "ca6822a27fda706cac937778d20847a40209e44146e78560966d08e957b31568",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "vg2hh9VSm3vjwUXLGptkie5B/+btpun/69FinVY43htO5kw26hiHPtMFqGGXfblxyHpa+Rj8Z8bdzD+xTVOhoQ=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 0,
+    "commission_info": {
+      "max_rate": "0.050000000000000000",
+      "max_change_rate": "0.050000000000000000",
+      "update_time": "2025-05-07T02:48:33.606353721Z"
+    }
+  },
+  {
+    "addr": "bbn1jqc8rhp3svsmlmpdcfsg8zj5z27m9sgjkg0r0t",
+    "description": {
+      "moniker": "ITRocket",
+      "identity": "",
+      "website": "https://itrocket.net/",
+      "security_contact": "itrocket7@gmail.com",
+      "details": "Trusted Validator & contributor in various ecosystems"
+    },
+    "commission": "0.050000000000000000",
+    "btc_pk": "caa9d01a9982439ad8909aa39027c469e4389e8767660bb06c565a3264e9d133",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "T3UPbugI/9GxGABPCcLziDYJS8JVDZgGO4q2Vm0t6L7BEy3mDirs6mE6mFo+CqKq5nhvjr53sBbFn55qJGReig=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 0,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-04-18T11:29:40.522572928Z"
+    }
+  },
+  {
+    "addr": "bbn1cxhzlk9mfugc40mk5amx8eyys0xfhxjztzrxt0",
+    "description": {
+      "moniker": "Ankr",
+      "identity": "",
+      "website": "www.ankr.com",
+      "security_contact": "security@ankr.com",
+      "details": "Ankr Staking - makes staking, liquid staking, and other yield-earning opportunities easy and accessible to any crypto investor."
+    },
+    "commission": "0.030000000000000000",
+    "btc_pk": "cc25813bdd6fb8a9c2e343536a917598eebc955e88418e57875dd593eaa05f3c",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "EGWaFMPqXsvO3gphS2hT3wIfLGOCbTW+SzmzEokk+U2gyazc0HWYEoRsphMdEuXtW1cxI0pP8LWy/kD4nOpauw=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 618074,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-06-10T07:26:49.316191234Z"
+    }
+  },
+  {
+    "addr": "bbn12m2s4g787we2as0sz0q2epj7fkggwxd9d6g4v3",
+    "description": {
+      "moniker": "Liquify",
+      "identity": "",
+      "website": "https://liquify.com",
+      "security_contact": "contact@liquify.com",
+      "details": "Liquify Finality Provider"
+    },
+    "commission": "0.050000000000000000",
+    "btc_pk": "ccae4ba92f1157c810edc89537f85bb4af2c9d424619410b217a9d82ff27a952",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "4JnUKKbKFjPUe14BP50Ndw4NmQzGzeqs1v9869Hm4ANXo/Xqni2QrJrpAB91Z+pTzvigDfrT58+Vz50hNJ+ROg=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 0,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-04-10T20:52:57.247756572Z"
+    }
+  },
+  {
+    "addr": "bbn1vjxqzn3qe8h5wvkusfn6scevmjzs4jgzzp7dfp",
+    "description": {
+      "moniker": "Vadypto",
+      "identity": "D5DDA6B3AEA376C9",
+      "website": "vadypto@gmail.com",
+      "security_contact": "vadypto@gmail.com",
+      "details": "Cryptocurrency news, market analysis, about, bonuses for validators and more are coming soon on the website and on social networks @Vadypto."
+    },
+    "commission": "0.030000000000000000",
+    "btc_pk": "cd244ba567b4b7250e3a0f4122a29a01c1fe8b6e4507a5167214eaa9c5e9504d",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "VCungClfxAHV7N/EaUz09B67rr43VV8voFxopiElQIn0tAvgN1ReVyMxLnhMbrQqx80bMJRNVsD0ZYDbhV349g=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 0,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-06-03T14:20:15.458695221Z"
+    }
+  },
+  {
+    "addr": "bbn17hsd0j4uq6yst3hj9naqypz2h0xjwnvlzqpjw2",
+    "description": {
+      "moniker": "caliber-fp",
+      "identity": "",
+      "website": "https://caliber.build",
+      "security_contact": "thang@caliber.build",
+      "details": "Caliber offers trusted Proof-of-Stake infrastructure and validation services, allowing you to comfortably stake your Bitcoin and earn rewards with Babylon."
+    },
+    "commission": "0.050000000000000000",
+    "btc_pk": "cdf9a4678bbca14c3e1f2892f15a874122fa2cc372f8b47a558eddbaa2e370e9",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "ryEZfzjxIFuTzEO7QX5wjduoLXy1TW6MYRFvxEpU/lBjRvY7Mp58FnRQXhG9FpM/FmraKPiKsIAEpuwLVrtqkw=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 1177328,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-04-09T07:32:51.635320260Z"
+    }
+  },
+  {
+    "addr": "bbn1eh8sq2002g0w4w6vrc7w8rr5xrqm2tvnyr7873",
+    "description": {
+      "moniker": "Atlas-Staking",
+      "identity": "3FAA58BDC270427D",
+      "website": "https://atlas-staking.com",
+      "security_contact": "info@atlas-staking.com",
+      "details": "Where Your Crypto Works As Hard As You Do."
+    },
+    "commission": "0.030000000000000000",
+    "btc_pk": "cebc260b9220e67f3fa9fdc1d14cca74bf40c7040376287e418014e1c1d0a691",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "JSy+c/id4UDOUjBKUQ8NvZPTsuT6/Bh08GK5ih7LJXRIytAr+5vHzLNAQ4BoudPbiGI7dn/BWPVUQ19meE8qmQ=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": true,
+    "highest_voted_height": 301449,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-04-25T18:55:17.683251133Z"
+    }
+  },
+  {
+    "addr": "bbn15t9cs5uysw590d3nkgerepumrrqfg4npwt9c6r",
+    "description": {
+      "moniker": "Chorus One",
+      "identity": "",
+      "website": "https://chorus.one",
+      "security_contact": "security@chorus.one",
+      "details": "Secure BTC via Babylon and shape its future by delegating to Chorus One, a highly secure and stable validator. By delegating, you agree to the terms of service at: https://chorus.one/tos"
+    },
+    "commission": "0.050000000000000000",
+    "btc_pk": "cef496d86c284f01e9cb293b5993e5e00df2116e4d7d7350d68276859561ae67",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "c4PahgrJcQ48eEcyNsryj48EYqncPnhs/Rgf4RhfypRmEK8Od5rs9cXsd50cYOJLbabn3fvvOm4n9Dy+g/eNxg=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 1106309,
+    "commission_info": {
+      "max_rate": "1.000000000000000000",
+      "max_change_rate": "0.300000000000000000",
+      "update_time": "2025-04-08T09:38:13.363664030Z"
+    }
+  },
+  {
+    "addr": "bbn12aahn9aqx4pcrncwevnsx6nrpqfm2a8wut7g90",
+    "description": {
+      "moniker": "P2P.org",
+      "identity": "",
+      "website": "https://p2p.org",
+      "security_contact": "cosmos-security@p2p.org",
+      "details": "P2P.org is a leading platform for white-label staking infrastructure and staking solutions for enterprises and intermediaries."
+    },
+    "commission": "0.050000000000000000",
+    "btc_pk": "d7442b3c1b2c85313f9440a0a0e783f5d56390bd2e9044bb4e10c48e6b6d5536",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "z88FimYob15ayqCjTVdEAk6aI8dhdic34wdKgNUQCsZ1a1kppR8NIFK3bynK1eGidbXc23+OFC0gzRGYf0DQrg=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 1177328,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-04-08T09:52:54.106220598Z"
+    }
+  },
+  {
+    "addr": "bbn1te96gpumkhtark3ye64p6rrwpungj09kx94pw7",
+    "description": {
+      "moniker": "Bflux",
+      "identity": "",
+      "website": "https://bflux.xyz",
+      "security_contact": "support@blockdaemon.com",
+      "details": "Bflux provides tailored B2B solutions for non-custodial bitcoin staking on the Babylon network. Contact us to customize your rewards from bitcoin staking."
+    },
+    "commission": "0.080000000000000000",
+    "btc_pk": "d8afdb1e6a28f69d9b2bb6386dcab5ac79f62247528a13f4538b947f008593c2",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "iGQQMjx4q3JLK87qGmLoOM6/dHBS1WBEYlZMVsnP6XhxI7F9civyw5ZOqdys0rc/SrCmZvJ9VEWgzeaqePSVrg=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 1177328,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.050000000000000000",
+      "update_time": "2025-06-18T04:16:34.748854717Z"
+    }
+  },
+  {
+    "addr": "bbn1zr8hdvhqsmy3p4s9q5s865e2uwtnnvywxe0x4m",
+    "description": {
+      "moniker": "lorenzo",
+      "identity": "",
+      "website": "https://lorenzo-protocol.xyz",
+      "security_contact": "thorsivodin@gmail.com",
+      "details": "finality provider for the Babylon network"
+    },
+    "commission": "0.050000000000000000",
+    "btc_pk": "db9160428e401753dc1a9952ffd4fa3386c7609cf8411d2b6d79c42323ca9923",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "+3t2WAbr4Sx8H5B++eVM4Z1qXitIPGer5tnaJjmQF7/xDoAUJnU64Fw5aISmh+++iVUdilFKDTFhv1UXX9XRyA=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 1177328,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-04-08T13:52:30.790292665Z"
+    }
+  },
+  {
+    "addr": "bbn18h7h6c3k5stu4hlhtlprthnj6d6d4s83jj3zuj",
+    "description": {
+      "moniker": "P-OPS Team",
+      "identity": "A2B9CAA088770EA6",
+      "website": "https://www.pops.one/",
+      "security_contact": "security@pops.one",
+      "details": "P-OPS TEAM is a decentralized organization providing you with validation and staking services, blockchain consultation, growth acceleration and investment capital for innovative Web 3.0 projects."
+    },
+    "commission": "0.030000000000000000",
+    "btc_pk": "de7654da6e25df51cd0a56217fcde873723a5bb214e55e4e7cfcc19a635e3d71",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "1ktPLkxunXxzUzFLDRfLy3uKosWeeVVd6NOcMefpx3SI80uMuLLwKKtCbkgfEfEMK/vB+p0hy9QlVv+75X0V4g=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 1177328,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.050000000000000000",
+      "update_time": "2025-06-23T15:26:49.821669275Z"
+    }
+  },
+  {
+    "addr": "bbn1eyu3klkll0mhjeepgu80r9wcspg38ukmrpstgr",
+    "description": {
+      "moniker": "Injective Labs",
+      "identity": "2008DAB643ECF438",
+      "website": "injectivelabs.org",
+      "security_contact": "",
+      "details": "Injective is a lightning fast interoperable layer one optimized for building unmatched Web3 finance applications. Injective is incubated by Binance and is backed by prominent investors such as Jump Crypto, Pantera and Mark Cuban."
+    },
+    "commission": "0.050000000000000000",
+    "btc_pk": "e02859d59bad2c011453a295e1f26410a74f4eacda513b2a88f53da7ad230c8f",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "i18jDBBPatzYR14H+3H+515LD8oRR2uFnXPiLMybFfFboAzj2z3dpSxMdoXye17ABikR8FYk9ADsMxsFqg0ZFw=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 245382,
+    "commission_info": {
+      "max_rate": "0.100000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-04-08T08:11:16.568656262Z"
+    }
+  },
+  {
+    "addr": "bbn1x9vz54q6znz9fu79zua4nljqt70s797am3ckph",
+    "description": {
+      "moniker": "Stakeway",
+      "identity": "8950F17AEC66D51C",
+      "website": "https://stakeway.com",
+      "security_contact": "staking@gateway.fm",
+      "details": "Stakeway by Gateway.fm is a premier staking provider offering Enterprise Grade Infrastructure tailored for customers seeking reliable and secure staking solutions."
+    },
+    "commission": "0.050000000000000000",
+    "btc_pk": "e245e8c85759d5410c723b69809c405fedbb2393665a43e44b40752452806555",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "LtBgJ0ccA4IVTyFXaSBs1mSSqbCUL4j5Vvchkhq/x6oXhJK50eQOAPKKtftqn+gUgO9bF8IXJyGQpLWgJy8JgA=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 0,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.100000000000000000",
+      "update_time": "2025-04-11T10:34:22.492734071Z"
+    }
+  },
+  {
+    "addr": "bbn1pwwd3a6403aldk5w7zudrk7a2h52dzr9939c0y",
+    "description": {
+      "moniker": "StakeCapital",
+      "identity": "1417DBC57CB3EB69",
+      "website": "https://stake.capital",
+      "security_contact": "validators@stake.capital",
+      "details": "Stake Capital is a group run by Blockchain and DeFi pioneers standing at the intersection of traditional industries and blockchain technology."
+    },
+    "commission": "0.030000000000000000",
+    "btc_pk": "e3b057e67c335bafc50e63a03d18a74e9e06ee70bf1eefd2d614ad278cac1871",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "WwOWK13DwpMWGCeJDORlS7n+mIWp/d7DyMyjYDMzrnRXCeHXWp9IH+Gwu9oFHFoluqhxCNfjkq4GOzqf86n6iw=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 1177328,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-06-02T17:40:36.153280631Z"
+    }
+  },
+  {
+    "addr": "bbn15xw2qf6zhksutpkusu50zrfcgq5tfk43rrkdt2",
+    "description": {
+      "moniker": "Imperator.co",
+      "identity": "",
+      "website": "https://www.imperator.co",
+      "security_contact": "contact@imperator.co",
+      "details": "100% refund on downtime slashing -- Professional Delegated Proof-of-Stake Network Validator"
+    },
+    "commission": "0.030000000000000000",
+    "btc_pk": "e672df73c301e9f040f79460b0f990001af18f1d421d2e6ed0b9e9c566b1414b",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "mSXrZwCfiMhFqi0nJIZolcGgJ80GbZ43K3zI4SEP5NtMhaSaV5y99OftKWTxryK2nFTsx3ORkfZJkW6qR/3gYA=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 1177328,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.100000000000000000",
+      "update_time": "2025-04-10T09:09:29.836700184Z"
+    }
+  },
+  {
+    "addr": "bbn1x3wle0qzh4j3ql3sqzza9x67vhc5mqaq0swc4n",
+    "description": {
+      "moniker": "UDL",
+      "identity": "",
+      "website": "",
+      "security_contact": "",
+      "details": ""
+    },
+    "commission": "0.050000000000000000",
+    "btc_pk": "e7b20e731f84fb98b7525e7696da077eb7f6155d5534a789b5c7bab9d3257afd",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "brhXK9nqSQEiDPnKx4domZME1qwI4CqnZHt1PF1XWfvEYcMtwRwtAcC2TS7j+jGBe/GqcKawRjK3hLBPzlmMzA=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 0,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-05-10T13:27:24.400822388Z"
+    }
+  },
+  {
+    "addr": "bbn1wy0suercgselfqpknsxv6jxc4zud7h8xvd6mm4",
+    "description": {
+      "moniker": "Next Finance Tech",
+      "identity": "",
+      "website": "https://nxt-fintech.com/",
+      "security_contact": "ssupport@nxt-fintech.com",
+      "details": "Next Finance Tech: Japan's No. 1 Staking Service Provider, Founded by Goldman Sachs Alumni and Trusted by Institutions. We offer secure, audited staking solutions tailored to meet the needs of professional investors."
+    },
+    "commission": "0.050000000000000000",
+    "btc_pk": "e8197e71fdcc9987f95440415fcd852455da871d7c38a436465a3a9a78c682fc",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "QB8mZabElBRhLZV9uPTqYOiTGBSOK+QQ7su2fCE5YyU+2+xCXas5OSu+zBhZkW/Zw1nalKabg4FA2yGBp7elmg=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 1177328,
+    "commission_info": {
+      "max_rate": "0.150000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-04-08T08:09:18.382282801Z"
+    }
+  },
+  {
+    "addr": "bbn1xntzqkftuptyr9slvnhl7wytvy8rgrsw4yzscj",
+    "description": {
+      "moniker": "PRO Delegators",
+      "identity": "44771D06A00DD695",
+      "website": "https://pro-delegators.com",
+      "security_contact": "contact@pro-delegators.com",
+      "details": "Advanced Node Services for Professional Delegators"
+    },
+    "commission": "0.030000000000000000",
+    "btc_pk": "e8a3ef3ca40ade56bd986663f24d5ab3bcc3cd18a88a10a8cd25d8af42314f62",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "jCEknX3j2bJlZ+8PkjKcyf8tz8vbUDJ7S9Ti8nxXLNdQ1aG3XVa6fHs1m8b3dyfpZtEi5yBwbvOW0uXwDu0bsg=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 170115,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-04-08T08:08:04.527695932Z"
+    }
+  },
+  {
+    "addr": "bbn14drfz40gjeu9sm3lx8mv7d95w7ae582gqk93fx",
+    "description": {
+      "moniker": "NexuSecurus",
+      "identity": "D9211330D088E351",
+      "website": "https://nexusecurus.com",
+      "security_contact": "babylon@nexusecurus.com",
+      "details": "NexuSecurus started as a small team of blockchain enthusiasts and IT professionals with 10+ years in crypto our mission is to simplify blockchain for everyone setting up the required infrastructure, tools and resources to enable our users a better way to be part of DeFi."
+    },
+    "commission": "0.050000000000000000",
+    "btc_pk": "e8b0efea2a33494dc6abbcce41fa81c308ab2eef1ae18086f23e007723fd5b7d",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "PdhPKaV3ycxPxxSmGEp8nPQVV0R96hr2J5cvIQhYT5My3wILX1hYgbfLUNubA26SIDhMa2oHWcENlhdanymS4A=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 0,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.100000000000000000",
+      "update_time": "2025-04-26T05:32:34.501682826Z"
+    }
+  },
+  {
+    "addr": "bbn1ray27wzepyyez6dxf63g9029k4cdnpc40ymdhv",
+    "description": {
+      "moniker": "verse2",
+      "identity": "47D8EABCB4F4BF71",
+      "website": "https://verse2.io",
+      "security_contact": "weare@verse2.io",
+      "details": ""
+    },
+    "commission": "0.050000000000000000",
+    "btc_pk": "ec59e67621aca987b11d77a1acb488985852ec840843db871bb9a803341fa66d",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "MaQ9ERyX9sb7jcEJ2E/vT1rAgWb1sEbnD1IYYfoL45EgPGXIrMyte6vRBDjckIgz2CfEkg1ceqcLccK1tEZ2Jg=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 0,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.100000000000000000",
+      "update_time": "2025-04-11T08:58:30.074858091Z"
+    }
+  },
+  {
+    "addr": "bbn16vet04vj07nlfj9pq6gm0jwqv3regyxthggdfk",
+    "description": {
+      "moniker": "senseinode",
+      "identity": "",
+      "website": "https://senseinode.com",
+      "security_contact": "infra@senseinode.com",
+      "details": "Institutional Grade Staking as a Service"
+    },
+    "commission": "0.050000000000000000",
+    "btc_pk": "ecfeb762082dfb7cc073abe0aa0c656c47bd7ed60486a7353000600341110378",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "Cha88/qtJdUmN8r6hOv4Yx46gZkgPG+ZrNhN6tKb8RiUw+ya8FGWg+tOuk0m8GsTHEThz0XUgMIH7SeGZK97bQ=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 0,
+    "commission_info": {
+      "max_rate": "0.100000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-04-09T19:47:00.213834107Z"
+    }
+  },
+  {
+    "addr": "bbn1v57a5r692z3ku8xa9wfghjrw0fkjlp9exre69t",
+    "description": {
+      "moniker": "CoinSummer Labs",
+      "identity": "74d57b2827b0286719fc4ce2938ba410ea28b7e2",
+      "website": "https://coinsummer.io",
+      "security_contact": "lilin@coinsummer.io",
+      "details": "Backed by crypto-native degens, CoinSummer is a trusted liquidity provider, staking validator, and AVS operator supporting the crypto and DeFi evolution."
+    },
+    "commission": "0.030000000000000000",
+    "btc_pk": "ee2a3d3750853f44a0cc4988c3432c37e8acca9557607fa5f9510ca539d8671f",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "wbx0Fs5Tifx05irapZA/Wp9uy0Xz9HIJgENVs//EbaJzvf0Zw8AGSJFt5GMBtNvWzt+SPGu/23t7Lwxc/mPY0w=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 1177328,
+    "commission_info": {
+      "max_rate": "0.100000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-04-08T08:16:38.511357073Z"
+    }
+  },
+  {
+    "addr": "bbn1kmaz92ajg4vnrs9m8pdkddpnjmte6hauuacxs3",
+    "description": {
+      "moniker": "Cobo",
+      "identity": "3B7C85200D5B57A9",
+      "website": "https://www.cobo.com",
+      "security_contact": "devops@cobo.com",
+      "details": "Cobo is a trusted custody and wallet infrastructure provider that simplifies digital asset security. We empower organizations and developers to innovate and scale their blockchain businesses with ease."
+    },
+    "commission": "0.050000000000000000",
+    "btc_pk": "ef21fbe4f755892724c2fd7b00abe94bfcc6a965b7a84bcf087bb7d9529bc627",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "QGKT9jGHsor+407ZZ2xTUgE6MYYSCcXfFcFtIUdqQYKlnLceJyyjgYT8wydJJbFSl2d0o9vkvXTQqs0wRtKjsQ=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 1177328,
+    "commission_info": {
+      "max_rate": "1.000000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-04-08T10:41:29.287396606Z"
+    }
+  },
+  {
+    "addr": "bbn1fdnaxfn5zq575ju032d5kmlwlcwqltmd8mkuxk",
+    "description": {
+      "moniker": "Snow Fall",
+      "identity": "AE7E53FAC7B1CD90",
+      "website": "https://www.snow-fall.io",
+      "security_contact": "contact@snow-fall.io",
+      "details": "Snow Fall finality provider for the Babylon network"
+    },
+    "commission": "0.050000000000000000",
+    "btc_pk": "eff010c66fc56784e708202e49bd875f8b08b8a1a40f0e7638e93ef1366a13d7",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "CVzXDHvQdgZTK92jCPvkas2DbOf31m46EsO0w8lQShR2vNJ1FugeXr63DzlN3xq4VYhVLaUPoryEWbSx6xG1ZQ=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 176683,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-04-11T13:12:21.477233200Z"
+    }
+  },
+  {
+    "addr": "bbn1h2z8ahnj38hvp4thysch8ztcxcr5del9ukjh6r",
+    "description": {
+      "moniker": "Cactus",
+      "identity": "",
+      "website": "https://www.mycactus.com",
+      "security_contact": "msrc@mycactus.com",
+      "details": "Leading Qualified Custodian for Digital Assets"
+    },
+    "commission": "0.030000000000000000",
+    "btc_pk": "f039a30b58a92fe4aee582b47216a04bd487acb0307f32fe69c3fe0760cd01ca",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "fY8tTMgcR1XnhznjUCqMUzanHxyotM/uQV4ks8uuSGloUwI07+3ZQncx6zKLYGDo5gvOuttPrkRsskEZVWpBuw=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 1177328,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-04-24T06:40:43.264712584Z"
+    }
+  },
+  {
+    "addr": "bbn1skmr95p48rl2k8j2s2gwp4dg47xadeezseu9st",
+    "description": {
+      "moniker": "BSquared x Bedrock",
+      "identity": "",
+      "website": "https://www.bsquared.network/",
+      "security_contact": "contact@bsqaured.network",
+      "details": "The Most Practical Bitcoin Layer-2 Network | The First Bitcoin DA Layer"
+    },
+    "commission": "0.050000000000000000",
+    "btc_pk": "f0427621d40010e09d26b34358a8a4e688f8f8a98303af9815c1341b008fda6a",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "w7s0BBK5o6PEgkfkDmoeZeeCi3mDXOCgeE4NAOBtCBwalVBZaELwPOK9BdYgdHfoI7wpscaq84UaKdgbv1T6OQ=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 0,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-04-11T12:33:22.211723618Z"
+    }
+  },
+  {
+    "addr": "bbn1hjfr6muhutdzz89q97uwysqdwl7t3qq2hdpnst",
+    "description": {
+      "moniker": "stakefish",
+      "identity": "",
+      "website": "https://stake.fish",
+      "security_contact": "wilson@stake.fish",
+      "details": "stakefish has been operating validators from 2018. We are one of the largest and most trusted validators in the crypto ecosystem. We support 20+ protocols and help stake over  billion worth of assets for both institutions and retail investors."
+    },
+    "commission": "0.030000000000000000",
+    "btc_pk": "f5669a225dfcc1b257e382c002ad3b651840042ca1efc9123e6398c71dbbe8ab",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "5jAEqA+eKPWMq9+ygsoi0eZGFufOdPxvI1Q8isL91dBXkftzlVLeTMv0/MoLxvQA4n3eI1Xr0fewABIacjWemQ=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 1177328,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-04-08T08:20:29.097805642Z"
+    }
+  },
+  {
+    "addr": "bbn1vf9f5d2epmxphf6pewg009ys3agcwzucw579uy",
+    "description": {
+      "moniker": "Chakra",
+      "identity": "",
+      "website": "https://chakrachain.io",
+      "security_contact": "fp@chakrachain.io",
+      "details": "The first Modular Settlement Network backed by @StarkWareLtd & Bitcoin OGs"
+    },
+    "commission": "0.030000000000000000",
+    "btc_pk": "f9786ffe8735b2d81d56a2aa8f3cc5bc9f73e889fbd9d73a3ce76e324ce661e4",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "4a71JtTn+k5nAl9ibFpMsSSrf2yHG3GC14YdWbDwVxIRh1GcGtX4K1wVr8V3gkeY2ALw02tytyyqqFe6YAGjIQ=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 1177328,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-04-08T08:55:03.714745762Z"
+    }
+  },
+  {
+    "addr": "bbn1zt7gkxfsfj3qsjruza8swec7av3e3ckl30ew4e",
+    "description": {
+      "moniker": "Solv Protocol",
+      "identity": "8E9C1C1E9ADB6512",
+      "website": "https://app.solv.finance",
+      "security_contact": "contact@solv.finance",
+      "details": "Pioneering A Decentralized Bitcoin Reserve with SolvBTC."
+    },
+    "commission": "0.050000000000000000",
+    "btc_pk": "fa7496f63a857d894aa393767325bf6f84560e9141f4ec54496c50f546f48bfb",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "C5f8b5gjUIBCVzRUHIYDobSLUmOEhCtYsSLId9/Siq1FLXrP7fyGXU88araS7nP6hqTOZAHpwP2YmSsaFJYuLw=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 1177328,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.050000000000000000",
+      "update_time": "2025-04-08T13:27:31.734305795Z"
+    }
+  },
+  {
+    "addr": "bbn1sk7cdr9ffsluj5tn0pfak4u5nk9sgapvj5euu0",
+    "description": {
+      "moniker": "Please Unstake",
+      "identity": "--",
+      "website": "https://pstake.finance/",
+      "security_contact": "hello@pstake.finance",
+      "details": "--"
+    },
+    "commission": "0.030000000000000000",
+    "btc_pk": "fc8a5b9930c3383e94bd940890e93cfcf95b2571ad50df8063b7011f120b918a",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "GXFdCigVtJJnY/r/WEr7kks+MSrcqGeQdJO9Px6kD+PP2FO55tDISNWlJ5aEQ/SEjBrnwtylv1RvSkH4Oj7Uqw=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 1177327,
+    "commission_info": {
+      "max_rate": "0.200000000000000000",
+      "max_change_rate": "0.010000000000000000",
+      "update_time": "2025-04-14T10:36:42.971190235Z"
+    }
+  },
+  {
+    "addr": "bbn1jgzxd5pjpt2ntljh3ay6sfjwkpa5xjgazt2wnc",
+    "description": {
+      "moniker": "Binance Finality Provider",
+      "identity": "",
+      "website": "https://binance.com/earn",
+      "security_contact": "",
+      "details": ""
+    },
+    "commission": "0.050000000000000000",
+    "btc_pk": "fdf1dd190adcd4fbf96235db721714e81bbfc2384b55de6cee256bcde11bedbb",
+    "pop": {
+      "btc_sig_type": "BIP340",
+      "btc_sig": "c5TvCU4CEQWLlLmXJnLolQd+TwcVzsH8Wi3U6Xa7s9FRXoFVX5xnryCrp/B+b+lvTmkiY+eO8ywW/nP2hLJRHA=="
+    },
+    "slashed_babylon_height": "0",
+    "slashed_btc_height": 0,
+    "jailed": false,
+    "highest_voted_height": 0,
+    "commission_info": {
+      "max_rate": "1.000000000000000000",
+      "max_change_rate": "0.100000000000000000",
+      "update_time": "2025-05-06T09:43:35.262064061Z"
+    }
+  }
+]
