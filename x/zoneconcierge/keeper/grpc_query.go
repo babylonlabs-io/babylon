@@ -108,9 +108,7 @@ func (k Keeper) FinalizedBSNsInfo(c context.Context, req *types.QueryFinalizedBS
 	return resp, nil
 }
 
-func (k Keeper) LatestEpochHeader(goCtx context.Context,
-	req *types.QueryLatestEpochHeaderRequest) (*types.
-QueryLatestEpochHeaderResponse, error) {
+func (k Keeper) LatestEpochHeader(goCtx context.Context, req *types.QueryLatestEpochHeaderRequest) (*types.QueryLatestEpochHeaderResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
@@ -127,7 +125,16 @@ QueryLatestEpochHeaderResponse, error) {
 	}
 
 	resp := &types.QueryLatestEpochHeaderResponse{
-		Header: h,
+		Header: &types.IndexedHeaderResponse{
+			ConsumerId:          h.ConsumerId,
+			Hash:                h.Hash,
+			Height:              h.BabylonHeaderHeight,
+			Time:                h.Time,
+			BabylonHeaderHash:   h.BabylonTxHash,
+			BabylonHeaderHeight: h.BabylonEpoch,
+			BabylonEpoch:        h.BabylonHeaderHeight,
+			BabylonTxHash:       h.BabylonTxHash,
+		},
 	}
 
 	return resp, nil
@@ -149,7 +156,9 @@ func (k Keeper) BSNLastSentSegment(goCtx context.Context,
 		return nil, status.Error(codes.NotFound, "BSN last sent segment not found")
 	}
 	resp := &types.QueryBSNLastSentSegmentResponse{
-		Segment: s,
+		Segment: &types.BTCChainSegmentResponse{
+			BtcHeaders: s.BtcHeaders,
+		},
 	}
 	return resp, nil
 }
@@ -170,7 +179,11 @@ QueryGetSealedEpochProofResponse, error) {
 		return nil, status.Error(codes.NotFound, "sealed epoch proof not found")
 	}
 	resp := &types.QueryGetSealedEpochProofResponse{
-		Epoch: se,
+		Epoch: &types.ProofEpochSealedResponse{
+			ValidatorSet:     se.ValidatorSet,
+			ProofEpochValSet: se.ProofEpochValSet,
+			ProofEpochInfo:   se.ProofEpochInfo,
+		},
 	}
 	return resp, nil
 }
