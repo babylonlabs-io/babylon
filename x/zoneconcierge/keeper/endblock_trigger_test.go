@@ -263,20 +263,19 @@ func TestProductionScenarios(t *testing.T) {
 			shouldReturnEarly := !btcTriggered && !consumerTriggered
 
 			var actualFlow string
-			if shouldReturnEarly {
+			switch {
+			case shouldReturnEarly:
 				actualFlow = "early_return"
-			} else if btcTriggered && consumerTriggered {
+			case btcTriggered && consumerTriggered:
 				actualFlow = "both_broadcasts"
-			} else if btcTriggered {
+			case btcTriggered:
 				actualFlow = "btc_broadcast_only"
-			} else if consumerTriggered {
+			case consumerTriggered:
 				actualFlow = "consumer_broadcast_only"
 			}
 
 			require.Equal(t, scenario.expectedFlow, actualFlow,
 				"Production scenario should match expected workflow")
-
-			t.Logf("🏭 %s -> %s", scenario.description, actualFlow)
 		})
 	}
 }
