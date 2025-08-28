@@ -83,7 +83,7 @@ func (k Keeper) RewardBTCStaking(ctx context.Context, height uint64, dc *ftypes.
 	}
 
 	// Prune gauges after rewards are distributed to free up storage
-	k.pruneBTCStakingGauge(ctx, height)
+	// k.pruneBTCStakingGauge(ctx, height) // this is used in e2e tests and queries, need to decide what to do
 	k.pruneFPDirectGauge(ctx, height)
 }
 
