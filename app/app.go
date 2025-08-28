@@ -188,6 +188,7 @@ var (
 		erc20types.ModuleName:                       {authtypes.Minter, authtypes.Burner}, // Allows erc20 module to mint/burn for token pairs
 		precisebanktypes.ModuleName:                 {authtypes.Minter, authtypes.Burner},
 		incentivetypes.ModAccCommissionCollectorBSN: nil, // Babylon BSN rewards commission collector
+		"epoching_delegate_pool":                    {authtypes.Minter, authtypes.Burner},
 	}
 
 	// software upgrades and forks

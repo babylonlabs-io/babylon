@@ -277,7 +277,9 @@ func TestExponentiallyEventsEndEpochQueuedMessages(t *testing.T) {
 	require.Len(t, epochMsgs, 1)
 
 	var numDelMessages int = datagen.RandomInRange(r, 5, 25)
+	userAddr := h.GenAccs[0].GetAddress()
 	for i := 0; i < numDelMessages; i++ {
+		balanceBefore := h.App.BankKeeper.GetBalance(ctx, userAddr, "ubbn")
 		msgDel := types.NewMsgWrappedDelegate(
 			stakingtypes.NewMsgDelegate(
 				h.GenAccs[0].GetAddress().String(),
@@ -289,6 +291,10 @@ func TestExponentiallyEventsEndEpochQueuedMessages(t *testing.T) {
 		res, err := h.MsgSrvr.WrappedDelegate(ctx, msgDel)
 		h.NoError(err)
 		require.NotNil(t, res)
+		balanceAfter := h.App.BankKeeper.GetBalance(ctx, userAddr, "ubbn")
+		fmt.Printf("WrappedDelegate %d: balance Before=%s, after=%s, diff=%s\n",
+			i+1, balanceBefore.String(), balanceAfter.String(),
+			balanceBefore.Amount.Sub(balanceAfter.Amount).String())
 	}
 
 	epochMsgs = k.GetCurrentEpochMsgs(ctx)
@@ -308,9 +314,27 @@ func TestExponentiallyEventsEndEpochQueuedMessages(t *testing.T) {
 	// by the x/epoching msg server in WrappedDelegate
 	ctx = sdk.NewContext(ctx.MultiStore(), ctx.BlockHeader(), ctx.IsCheckTx(), ctx.Logger()).WithHeaderInfo(info)
 
+	delegation, err := stkK.GetDelegation(ctx, h.GenAccs[0].GetAddress(), valAddr)
+	var sharesBefore sdkmath.LegacyDec
+	if err == nil {
+		sharesBefore = delegation.Shares
+	} else {
+		sharesBefore = sdkmath.LegacyZeroDec()
+	}
+	fmt.Printf("Delegation shares before: %s\n", sharesBefore.String())
+
 	// with a clean context
 	_, err = epoching.EndBlocker(ctx, k)
 	h.NoError(err)
+
+	delegation, err = stkK.GetDelegation(ctx, h.GenAccs[0].GetAddress(), valAddr)
+	var sharesAfter sdkmath.LegacyDec
+	if err == nil {
+		sharesAfter = delegation.Shares
+	} else {
+		sharesAfter = sdkmath.LegacyZeroDec()
+	}
+	fmt.Printf("Delegation shares before: %s\n", sharesAfter.String())
 
 	var events []abci.Event
 	if evtMgr := ctx.EventManager(); evtMgr != nil {
