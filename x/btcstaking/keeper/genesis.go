@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"context"
-	"encoding/hex"
 	"fmt"
 	"math"
 	"sort"
@@ -63,24 +62,22 @@ func (k Keeper) InitGenesis(ctx context.Context, gs types.GenesisState) error {
 		}
 	}
 
-	for _, hStr := range gs.AllowedStakingTxHashes {
-		// hashes are hex encoded for better readability
-		bz, err := hex.DecodeString(hStr)
+	for _, fpAddrStr := range gs.FpBbnAddr {
+		fpAddr, err := sdk.AccAddressFromBech32(fpAddrStr)
 		if err != nil {
-			return fmt.Errorf("error decoding tx hash: %w", err)
+			return fmt.Errorf("error decoding fp addr %s: %w", fpAddrStr, err)
 		}
-		if err := k.AllowedStakingTxHashesKeySet.Set(ctx, bz); err != nil {
+		if err := k.SetFpBbnAddr(ctx, fpAddr); err != nil {
 			return err
 		}
 	}
 
-	for _, hStr := range gs.AllowedMultiStakingTxHashes {
-		// hashes are hex encoded for better readability
-		bz, err := hex.DecodeString(hStr)
+	for _, deletedFpBtcPkHex := range gs.DeletedFpsBtcPkHex {
+		deletedFpBtcPk, err := bbn.NewBIP340PubKeyFromHex(deletedFpBtcPkHex)
 		if err != nil {
-			return fmt.Errorf("error decoding tx hash: %w", err)
+			return fmt.Errorf("error decoding blocked fp btc pk hex %s: %w", deletedFpBtcPkHex, err)
 		}
-		if err := k.allowedMultiStakingTxHashesKeySet.Set(ctx, bz); err != nil {
+		if err := k.SoftDeleteFinalityProvider(ctx, deletedFpBtcPk); err != nil {
 			return err
 		}
 	}
@@ -120,27 +117,27 @@ func (k Keeper) ExportGenesis(ctx context.Context) (*types.GenesisState, error) 
 		return nil, err
 	}
 
-	txHashes, err := k.allowedStakingTxHashes(ctx)
+	fpBbnAddr, err := k.fpBtcPkByAddrEntries(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	multiStakingTxHashes, err := k.allowedMultiStakingTxHashes(ctx)
+	deletedFps, err := k.deletedFps(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	return &types.GenesisState{
-		Params:                      k.GetAllParams(ctx),
-		FinalityProviders:           fps,
-		BtcDelegations:              dels,
-		BlockHeightChains:           k.blockHeightChains(ctx),
-		BtcDelegators:               btcDels,
-		Events:                      evts,
-		AllowedStakingTxHashes:      txHashes,
-		AllowedMultiStakingTxHashes: multiStakingTxHashes,
-		LargestBtcReorg:             k.GetLargestBtcReorg(ctx),
-		ConsumerEvents:              k.consumerEvents(ctx),
+		Params:             k.GetAllParams(ctx),
+		FinalityProviders:  fps,
+		BtcDelegations:     dels,
+		BlockHeightChains:  k.blockHeightChains(ctx),
+		BtcDelegators:      btcDels,
+		Events:             evts,
+		LargestBtcReorg:    k.GetLargestBtcReorg(ctx),
+		ConsumerEvents:     k.consumerEvents(ctx),
+		FpBbnAddr:          fpBbnAddr,
+		DeletedFpsBtcPkHex: deletedFps,
 	}, nil
 }
 
@@ -149,12 +146,12 @@ func (k Keeper) finalityProviders(ctx context.Context) ([]*types.FinalityProvide
 	iter := k.finalityProviderStore(ctx).Iterator(nil, nil)
 	defer iter.Close()
 
-	for ; iter.Valid(); iter.Next() {
-		var fp types.FinalityProvider
-		if err := fp.Unmarshal(iter.Value()); err != nil {
-			return nil, err
-		}
+	err := k.IterateFinalityProvider(ctx, func(fp types.FinalityProvider) error {
 		fps = append(fps, &fp)
+		return nil
+	})
+	if err != nil {
+		return nil, err
 	}
 
 	return fps, nil
@@ -220,56 +217,6 @@ func (k Keeper) btcDelegatorsWithKey(ctx context.Context, storeKey []byte) ([]*t
 	}
 
 	return dels, nil
-}
-
-// allowedStakingTxHashes loads all allowed staking transactions hashes stored.
-// It encodes the hashes as hex strings to be human readable on exporting the genesis
-// This function has high resource consumption and should be only used on export genesis.
-func (k Keeper) allowedStakingTxHashes(ctx context.Context) ([]string, error) {
-	hashes := make([]string, 0)
-	iterator, err := k.AllowedStakingTxHashesKeySet.Iterate(ctx, nil)
-	if err != nil {
-		return nil, err
-	}
-	defer iterator.Close()
-
-	for ; iterator.Valid(); iterator.Next() {
-		key, err := iterator.Key()
-		if err != nil {
-			return nil, err
-		}
-
-		// encode hash as a hex string
-		hashStr := hex.EncodeToString(key)
-		hashes = append(hashes, hashStr)
-	}
-
-	return hashes, nil
-}
-
-// allowedMultiStakingTxHashes loads all allowed multi-staking transactions hashes stored.
-// It encodes the hashes as hex strings to be human readable on exporting the genesis
-// This function has high resource consumption and should be only used on export genesis.
-func (k Keeper) allowedMultiStakingTxHashes(ctx context.Context) ([]string, error) {
-	hashes := make([]string, 0)
-	iterator, err := k.allowedMultiStakingTxHashesKeySet.Iterate(ctx, nil)
-	if err != nil {
-		return nil, err
-	}
-	defer iterator.Close()
-
-	for ; iterator.Valid(); iterator.Next() {
-		key, err := iterator.Key()
-		if err != nil {
-			return nil, err
-		}
-
-		// encode hash as a hex string
-		hashStr := hex.EncodeToString(key)
-		hashes = append(hashes, hashStr)
-	}
-
-	return hashes, nil
 }
 
 // eventIdxs sets an event into the store.
@@ -359,6 +306,47 @@ func (k Keeper) setConsumerEvents(ctx context.Context, events []*types.ConsumerE
 		store.Set(storeKey, eventsBytes)
 	}
 	return nil
+}
+
+func (k Keeper) deletedFps(ctx context.Context) ([]string, error) {
+	entries := make([]string, 0)
+	err := k.finalityProvidersDeleted.Walk(ctx, nil, func(key []byte) (stop bool, err error) {
+		fpBtcPk, err := bbn.NewBIP340PubKey(key)
+		if err != nil {
+			return true, err
+		}
+
+		entries = append(entries, fpBtcPk.MarshalHex())
+		return false, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return entries, nil
+}
+
+func (k Keeper) fpBtcPkByAddrEntries(ctx context.Context) ([]string, error) {
+	entries := make([]string, 0)
+
+	iterator, err := k.fpBbnAddr.Iterate(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		key, err := iterator.Key()
+		if err != nil {
+			return nil, err
+		}
+		if len(key) == 0 {
+			continue
+		}
+		entries = append(entries, sdk.AccAddress(key).String())
+	}
+
+	return entries, nil
 }
 
 // parseUintsFromStoreKey expects to receive a key with

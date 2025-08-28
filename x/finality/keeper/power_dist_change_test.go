@@ -1551,7 +1551,6 @@ func TestHandleLivenessPanic(t *testing.T) {
 		SlashingRate:              sdkmath.LegacyNewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2),
 		UnbondingTimeBlocks:       100,
 		UnbondingFeeSat:           1000,
-		AllowListExpirationHeight: 0,
 		BtcActivationHeight:       1,
 		MaxFinalityProviders:      1,
 	})
@@ -1976,16 +1975,15 @@ func TestBSNDelegationActivated_DirectIncentives(t *testing.T) {
 	btccKeeper := btcstktypes.NewMockBtcCheckpointKeeper(ctrl)
 	incentiveKeeper := ftypes.NewMockIncentiveKeeper(ctrl)
 	btcStakingStoreKey := storetypes.NewKVStoreKey(btcstktypes.StoreKey)
-	heightAfterMultiStakingAllowListExpiration := int64(10)
 
-	h := testutil.NewHelperNoMocksCalls(t, btclcKeeper, btccKeeper, btcStakingStoreKey).WithBlockHeight(heightAfterMultiStakingAllowListExpiration)
+	h := testutil.NewHelperNoMocksCalls(t, btclcKeeper, btccKeeper, btcStakingStoreKey)
 
 	h.FinalityKeeper.IncentiveKeeper = incentiveKeeper
 
 	// Add required mock expectations for IndexRefundableMsg
 	incentiveKeeper.EXPECT().IndexRefundableMsg(gomock.Any(), gomock.Any()).AnyTimes()
 
-	h.GenAndApplyCustomParams(r, 100, 200, 0, 2)
+	h.GenAndApplyCustomParams(r, 100, 200, 2)
 
 	randomConsumer := h.RegisterAndVerifyConsumer(t, r)
 
@@ -2045,12 +2043,11 @@ func TestBSNDelegationUnbonded_DirectIncentives(t *testing.T) {
 	ictvK := testutil.NewMockIctvKeeperK(ctrl)
 	chanKeeper := mocks.NewMockZoneConciergeChannelKeeper(ctrl)
 
-	heightAfterMultiStakingAllowListExpiration := int64(10)
 	btcStakingStoreKey := storetypes.NewKVStoreKey(btcstktypes.StoreKey)
 
-	h := testutil.NewHelperWithBankMock(t, btclcKeeper, btccKeeper, nil, chanKeeper, ictvK, btcStakingStoreKey).WithBlockHeight(heightAfterMultiStakingAllowListExpiration)
+	h := testutil.NewHelperWithBankMock(t, btclcKeeper, btccKeeper, nil, chanKeeper, ictvK, btcStakingStoreKey)
 
-	covenantSKs, _ := h.GenAndApplyCustomParams(r, 100, 200, 0, 2)
+	covenantSKs, _ := h.GenAndApplyCustomParams(r, 100, 200, 2)
 
 	h.FinalityKeeper.IncentiveKeeper = ictvK
 
@@ -2113,12 +2110,11 @@ func TestTwoBtcActivationEvents(t *testing.T) {
 	btccKeeper := btcstktypes.NewMockBtcCheckpointKeeper(ctrl)
 	ictvK := ftypes.NewMockIncentiveKeeper(ctrl)
 	btcStakingStoreKey := storetypes.NewKVStoreKey(btcstktypes.StoreKey)
-	heightAfterMultiStakingAllowListExpiration := int64(10)
 
-	h := testutil.NewHelperNoMocksCalls(t, btclcKeeper, btccKeeper, btcStakingStoreKey).WithBlockHeight(heightAfterMultiStakingAllowListExpiration)
+	h := testutil.NewHelperNoMocksCalls(t, btclcKeeper, btccKeeper, btcStakingStoreKey)
 	h.FinalityKeeper.IncentiveKeeper = ictvK
 
-	h.GenAndApplyCustomParams(r, 100, 200, 0, 2)
+	h.GenAndApplyCustomParams(r, 100, 200, 2)
 
 	randomConsumer := h.RegisterAndVerifyConsumer(t, r)
 

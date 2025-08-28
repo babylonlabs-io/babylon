@@ -5010,6 +5010,13 @@ paths:
                       title: >-
                         bsn_id is the ID of the BSN the finality provider is
                         securing
+                    soft_deleted:
+                      type: boolean
+                      description: >-
+                        soft_deleted defines if the fp is soft deleted or not.
+                        If it is soft
+
+                        deleted the FP can't cast votes.
                   description: >-
                     FinalityProviderResponse defines a finality provider with
                     voting power
@@ -6083,6 +6090,13 @@ paths:
                     title: >-
                       bsn_id is the ID of the BSN the finality provider is
                       securing
+                  soft_deleted:
+                    type: boolean
+                    description: >-
+                      soft_deleted defines if the fp is soft deleted or not. If
+                      it is soft
+
+                      deleted the FP can't cast votes.
                 description: >-
                   FinalityProviderResponse defines a finality provider with
                   voting power
@@ -6692,13 +6706,13 @@ paths:
                     type: string
                     format: uint64
                     title: >-
-                      allow_list_expiration_height is the height at which the
-                      allow list expires
+                      DEPRECATED: allow_list_expiration_height is the height at
+                      which the allow list expires
 
                       i.e all staking transactions are allowed to enter Babylon
                       chain afterwards
 
-                      setting it to 0 means allow list is disabled
+                      setting it to 0 means allow list is disabled (LEGACY)
                   btc_activation_height:
                     type: integer
                     format: int64
@@ -7049,13 +7063,13 @@ paths:
                     type: string
                     format: uint64
                     title: >-
-                      allow_list_expiration_height is the height at which the
-                      allow list expires
+                      DEPRECATED: allow_list_expiration_height is the height at
+                      which the allow list expires
 
                       i.e all staking transactions are allowed to enter Babylon
                       chain afterwards
 
-                      setting it to 0 means allow list is disabled
+                      setting it to 0 means allow list is disabled (LEGACY)
                   btc_activation_height:
                     type: integer
                     format: int64
@@ -7416,13 +7430,13 @@ paths:
                     type: string
                     format: uint64
                     title: >-
-                      allow_list_expiration_height is the height at which the
-                      allow list expires
+                      DEPRECATED: allow_list_expiration_height is the height at
+                      which the allow list expires
 
                       i.e all staking transactions are allowed to enter Babylon
                       chain afterwards
 
-                      setting it to 0 means allow list is disabled
+                      setting it to 0 means allow list is disabled (LEGACY)
                   btc_activation_height:
                     type: integer
                     format: int64
@@ -7788,13 +7802,14 @@ paths:
                           type: string
                           format: uint64
                           title: >-
-                            allow_list_expiration_height is the height at which
-                            the allow list expires
+                            DEPRECATED: allow_list_expiration_height is the
+                            height at which the allow list expires
 
                             i.e all staking transactions are allowed to enter
                             Babylon chain afterwards
 
                             setting it to 0 means allow list is disabled
+                            (LEGACY)
                         btc_activation_height:
                           type: integer
                           format: int64
@@ -15604,6 +15619,11 @@ definitions:
       bsn_id:
         type: string
         title: bsn_id is the ID of the BSN the finality provider is securing
+      soft_deleted:
+        type: boolean
+        description: |-
+          soft_deleted defines if the fp is soft deleted or not. If it is soft
+          deleted the FP can't cast votes.
     description: |-
       FinalityProviderResponse defines a finality provider with voting power
       information.
@@ -15715,13 +15735,13 @@ definitions:
         type: string
         format: uint64
         title: >-
-          allow_list_expiration_height is the height at which the allow list
-          expires
+          DEPRECATED: allow_list_expiration_height is the height at which the
+          allow list expires
 
           i.e all staking transactions are allowed to enter Babylon chain
           afterwards
 
-          setting it to 0 means allow list is disabled
+          setting it to 0 means allow list is disabled (LEGACY)
       btc_activation_height:
         type: integer
         format: int64
@@ -16854,6 +16874,13 @@ definitions:
           bsn_id:
             type: string
             title: bsn_id is the ID of the BSN the finality provider is securing
+          soft_deleted:
+            type: boolean
+            description: >-
+              soft_deleted defines if the fp is soft deleted or not. If it is
+              soft
+
+              deleted the FP can't cast votes.
         description: |-
           FinalityProviderResponse defines a finality provider with voting power
           information.
@@ -16994,6 +17021,13 @@ definitions:
             bsn_id:
               type: string
               title: bsn_id is the ID of the BSN the finality provider is securing
+            soft_deleted:
+              type: boolean
+              description: >-
+                soft_deleted defines if the fp is soft deleted or not. If it is
+                soft
+
+                deleted the FP can't cast votes.
           description: >-
             FinalityProviderResponse defines a finality provider with voting
             power
@@ -17205,13 +17239,13 @@ definitions:
             type: string
             format: uint64
             title: >-
-              allow_list_expiration_height is the height at which the allow list
-              expires
+              DEPRECATED: allow_list_expiration_height is the height at which
+              the allow list expires
 
               i.e all staking transactions are allowed to enter Babylon chain
               afterwards
 
-              setting it to 0 means allow list is disabled
+              setting it to 0 means allow list is disabled (LEGACY)
           btc_activation_height:
             type: integer
             format: int64
@@ -17356,13 +17390,13 @@ definitions:
             type: string
             format: uint64
             title: >-
-              allow_list_expiration_height is the height at which the allow list
-              expires
+              DEPRECATED: allow_list_expiration_height is the height at which
+              the allow list expires
 
               i.e all staking transactions are allowed to enter Babylon chain
               afterwards
 
-              setting it to 0 means allow list is disabled
+              setting it to 0 means allow list is disabled (LEGACY)
           btc_activation_height:
             type: integer
             format: int64
@@ -17501,13 +17535,13 @@ definitions:
             type: string
             format: uint64
             title: >-
-              allow_list_expiration_height is the height at which the allow list
-              expires
+              DEPRECATED: allow_list_expiration_height is the height at which
+              the allow list expires
 
               i.e all staking transactions are allowed to enter Babylon chain
               afterwards
 
-              setting it to 0 means allow list is disabled
+              setting it to 0 means allow list is disabled (LEGACY)
           btc_activation_height:
             type: integer
             format: int64
@@ -17660,13 +17694,13 @@ definitions:
                   type: string
                   format: uint64
                   title: >-
-                    allow_list_expiration_height is the height at which the
-                    allow list expires
+                    DEPRECATED: allow_list_expiration_height is the height at
+                    which the allow list expires
 
                     i.e all staking transactions are allowed to enter Babylon
                     chain afterwards
 
-                    setting it to 0 means allow list is disabled
+                    setting it to 0 means allow list is disabled (LEGACY)
                 btc_activation_height:
                   type: integer
                   format: int64
@@ -17900,13 +17934,13 @@ definitions:
             type: string
             format: uint64
             title: >-
-              allow_list_expiration_height is the height at which the allow list
-              expires
+              DEPRECATED: allow_list_expiration_height is the height at which
+              the allow list expires
 
               i.e all staking transactions are allowed to enter Babylon chain
               afterwards
 
-              setting it to 0 means allow list is disabled
+              setting it to 0 means allow list is disabled (LEGACY)
           btc_activation_height:
             type: integer
             format: int64

@@ -21,13 +21,20 @@ func TestIBCTransfer(t *testing.T) {
 	bbn, bsn := tm.ChainNodes()
 
 	t.Log("Testing IBC transfer from BSN to BBN...")
-	bsnSender := bsn.DefaultWallet()
+	bsnSender := bsn.CreateWallet("bsn_sender")
 	bsnSender.VerifySentTx = true
+
+	ibcTransferCoin := sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(1_000000))
+	senderCoins := sdk.NewCoins(ibcTransferCoin)
+
+	bsn.DefaultWallet().VerifySentTx = true
+	bsn.SendCoins(bsnSender.Addr(), senderCoins.MulInt(sdkmath.NewInt(5)))
+
+	bsn.UpdateWalletAccSeqNumber(bsnSender.KeyName)
 
 	bsnChannels := bsn.QueryIBCChannels()
 	bsnChannel := bsnChannels.Channels[0]
 	bbnRecipient := datagen.GenRandomAddress().String()
-	ibcTransferCoin := sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(1_000000))
 
 	bsnSenderBalancesBefore := bsn.QueryAllBalances(bsnSender.Addr())
 	bbnRecipientBalancesBefore := bbn.QueryAllBalances(bbnRecipient)
@@ -54,6 +61,7 @@ func TestIBCTransfer(t *testing.T) {
 	bsnSenderBalancesAfter := bsn.QueryAllBalances(bsnSender.Addr())
 	ibcTxResp := bsn.QueryTxByHash(ibcTxHash)
 
-	expBsnSendBalances := bsnSenderBalancesBefore.Sub(ibcTxResp.Tx.GetFee()...).Sub(ibcTransferCoin)
-	require.Equal(t, expBsnSendBalances.String(), bsnSenderBalancesAfter.String(), "Sender should have %s, but has %s", expBsnSendBalances.String(), bsnSenderBalancesAfter.String())
+	fees := ibcTxResp.Tx.GetFee()
+	expBsnSendBalances := bsnSenderBalancesBefore.Sub(fees...).Sub(ibcTransferCoin)
+	require.Equal(t, expBsnSendBalances.String(), bsnSenderBalancesAfter.String(), "Sender should have %s, but has %s, fees %s, ibcTransferCoin: %s", expBsnSendBalances.String(), bsnSenderBalancesAfter.String(), fees.String(), ibcTransferCoin.String())
 }
