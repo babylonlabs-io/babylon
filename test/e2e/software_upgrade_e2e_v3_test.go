@@ -449,9 +449,18 @@ func (s *SoftwareUpgradeV3TestSuite) CheckBtcRewardsAfterUpgrade(expectedUpgrade
 		// estimate the direct FP rewards
 		decCoinsInBlk := sdk.NewDecCoinsFromCoins(coinsInBlk...)
 		feeCollectorInitBal := decCoinsInBlk.QuoDec(ictvParams.BTCStakingPortion())
-		fpDirectRwds, _ := feeCollectorInitBal.MulDecTruncate(ictvParams.FpPortion).TruncateDecimal()
-		fp1DirectRwds := itypes.GetCoinsPortion(fpDirectRwds, fp1Rate)
-		fp2DirectRwds := itypes.GetCoinsPortion(fpDirectRwds, fp2Rate)
+		
+		var fp1DirectRwds, fp2DirectRwds sdk.Coins
+		// check if FpPortion parameter exists (might be nil in upgrade scenarios)
+		if !ictvParams.FpPortion.IsNil() {
+			fpDirectRwds, _ := feeCollectorInitBal.MulDecTruncate(ictvParams.FpPortion).TruncateDecimal()
+			fp1DirectRwds = itypes.GetCoinsPortion(fpDirectRwds, fp1Rate)
+			fp2DirectRwds = itypes.GetCoinsPortion(fpDirectRwds, fp2Rate)
+		} else {
+			// FpPortion not set, so no FP direct rewards
+			fp1DirectRwds = sdk.NewCoins()
+			fp2DirectRwds = sdk.NewCoins()
+		}
 
 		coinsForFp1AndDels := itypes.GetCoinsPortion(coinsInBlk, fp1Rate)
 		fp1Comm := itypes.GetCoinsPortion(coinsForFp1AndDels, *s.fp1.Commission)
