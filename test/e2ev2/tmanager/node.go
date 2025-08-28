@@ -440,7 +440,11 @@ func (n *Node) DefaultWallet() *WalletSender {
 }
 
 func (n *Node) IsChainRunning() bool {
-	return false
+	status, err := n.RpcClient.Status(context.Background())
+	if err != nil {
+		return false
+	}
+	return !status.SyncInfo.CatchingUp
 }
 
 func (n *Node) RunNodeResource() *dockertest.Resource {
