@@ -2,8 +2,6 @@ package epoching
 
 import (
 	"bytes"
-	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
-	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 	"math/big"
 	"reflect"
 
@@ -15,6 +13,9 @@ import (
 	cmn "github.com/cosmos/evm/precompiles/common"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
+	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 )
 
 const (

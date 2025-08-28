@@ -43,11 +43,13 @@ type Precompile struct {
 }
 
 // LoadABI loads the epoching ABI from the embedded abi.json file
-// for the epching precompile.
+// for the epoching precompile.
 func LoadABI() (abi.ABI, error) {
 	return cmn.LoadABI(f, "abi.json")
 }
 
+// NewPrecompile creates a new epoching Precompile instance as a
+// PrecompiledContract interface.
 func NewPrecompile(
 	epochingKeeper keeper.Keeper,
 	epochingMsgServer epochingtypes.MsgServer,
@@ -76,6 +78,7 @@ func NewPrecompile(
 		stakingQuerier:         stakingQuerier,
 		addrCdc:                addrCdc,
 	}
+	// SetAddress defines the address of the epoching precompiled contract.
 	p.SetAddress(common.HexToAddress(EpochingPrecompileAddress))
 
 	return p, nil
@@ -182,6 +185,15 @@ func (p Precompile) run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 	return bz, nil
 }
 
+// IsTransaction checks if the given method name corresponds to a transaction or query.
+//
+// Available epoching transactions are:
+//   - WrappedCreateValidator
+//   - WrappedEditValidator
+//   - WrappedDelegate
+//   - WrappedUndelegate
+//   - WrappedRedelegate
+//   - WrappedCancelUnbondingDelegation
 func (p Precompile) IsTransaction(method *abi.Method) bool {
 	switch method.Name {
 	case WrappedCreateValidatorMethod,

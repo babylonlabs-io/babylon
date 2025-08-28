@@ -6,7 +6,6 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -25,6 +24,7 @@ import (
 
 	"github.com/babylonlabs-io/babylon/v4/crypto/bls12381"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
+	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 )
 
 const (

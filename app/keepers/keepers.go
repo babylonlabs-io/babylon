@@ -590,7 +590,7 @@ func (ak *AppKeepers) InitKeepers(
 
 	ak.GovKeeper = *govKeeper.SetHooks(
 		govtypes.NewMultiGovHooks(
-			// register the governance hooks
+		// register the governance hooks
 		),
 	)
 
