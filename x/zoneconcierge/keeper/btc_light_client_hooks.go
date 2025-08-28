@@ -6,8 +6,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	btclctypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
-	"github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/types"
+	btclctypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
+	"github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
 )
 
 // Implements btclightclient.BTCLightClientHooks interface for ZoneConcierge

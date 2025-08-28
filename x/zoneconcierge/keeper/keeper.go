@@ -5,15 +5,11 @@ import (
 	corestoretypes "cosmossdk.io/core/store"
 	"cosmossdk.io/log"
 	storetypes "cosmossdk.io/store/types"
-<<<<<<< HEAD
-	"github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
-=======
->>>>>>> b10c56e4 (perf(zc): packet broadcast logic trigger only when needed instead of every block (#1612))
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
 
-	"github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/types"
+	"github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
 )
 
 type (

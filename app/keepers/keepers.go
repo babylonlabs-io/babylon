@@ -243,11 +243,7 @@ func (ak *AppKeepers) InitKeepers(
 	ak.keys = keys
 
 	// set transient store keys
-<<<<<<< HEAD
-	ak.tkeys = storetypes.NewTransientStoreKeys(paramstypes.TStoreKey, btccheckpointtypes.TStoreKey)
-=======
-	ak.tkeys = storetypes.NewTransientStoreKeys(paramstypes.TStoreKey, btccheckpointtypes.TStoreKey, evmtypes.TransientKey, feemarkettypes.TransientKey, zctypes.TStoreKey)
->>>>>>> b10c56e4 (perf(zc): packet broadcast logic trigger only when needed instead of every block (#1612))
+	ak.tkeys = storetypes.NewTransientStoreKeys(paramstypes.TStoreKey, btccheckpointtypes.TStoreKey, zctypes.TStoreKey)
 
 	accountKeeper := authkeeper.NewAccountKeeper(
 		appCodec,
