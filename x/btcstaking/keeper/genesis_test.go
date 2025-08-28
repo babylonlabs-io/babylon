@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/btcsuite/btcd/btcec/v2"
-	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
@@ -108,15 +107,6 @@ func TestExportGenesis(t *testing.T) {
 		k.AddBTCStakingConsumerEvent(ctx, e.ConsumerId, event)
 	}
 
-	// store allowed multi staking tx hashes
-	for _, txHash := range gs.AllowedMultiStakingTxHashes {
-		hashBz, err := hex.DecodeString(txHash)
-		require.NoError(t, err)
-		hash, err := chainhash.NewHash(hashBz)
-		require.NoError(t, err)
-		k.IndexAllowedMultiStakingTransaction(ctx, hash)
-	}
-
 	for _, deletedFpBtcPkHex := range gs.DeletedFpsBtcPkHex {
 		fpBtcPk, err := bbn.NewBIP340PubKeyFromHex(deletedFpBtcPkHex)
 		require.NoError(t, err)
@@ -202,8 +192,6 @@ func setupTest(t *testing.T) (sdk.Context, *helper.Helper, *types.GenesisState) 
 	btcDelegations := make([]*types.BTCDelegation, 0)
 	events := make([]*types.EventIndex, 0)
 	btcDelegators := make([]*types.BTCDelegator, 0)
-	allowedStkTxHashes := make([]string, 0)
-	allowedMultiStkTxHashes := make([]string, 0)
 	consumerEvents := make([]*types.ConsumerEvent, 0)
 	fpsBbnAddr := make([]string, 0)
 
@@ -249,9 +237,6 @@ func setupTest(t *testing.T) (sdk.Context, *helper.Helper, *types.GenesisState) 
 				DelBtcPk: del.BtcPk,
 			})
 
-			allowedStkTxHashes = append(allowedStkTxHashes, hex.EncodeToString(stakingTxHash[:]))
-			allowedMultiStkTxHashes = append(allowedMultiStkTxHashes, hex.EncodeToString(stakingTxHash[:]))
-
 			// record event that the BTC delegation will become expired (unbonded) at EndHeight-w
 			unbondedEvent := types.NewEventPowerDistUpdateWithBTCDel(&types.EventBTCDelegationStateUpdate{
 				StakingTxHash: stakingTxHash.String(),
@@ -296,10 +281,8 @@ func setupTest(t *testing.T) (sdk.Context, *helper.Helper, *types.GenesisState) 
 		BlockHeightChains:           chainsHeight,
 		BtcDelegators:               btcDelegators,
 		Events:                      events,
-		AllowedStakingTxHashes:      allowedStkTxHashes,
 		LargestBtcReorg:             latestBtcReOrg,
 		ConsumerEvents:              consumerEvents,
-		AllowedMultiStakingTxHashes: allowedMultiStkTxHashes,
 		FpBbnAddr:                   fpsBbnAddr,
 		DeletedFpsBtcPkHex:          deletedFps,
 	}
@@ -308,18 +291,11 @@ func setupTest(t *testing.T) (sdk.Context, *helper.Helper, *types.GenesisState) 
 }
 
 func delegateToFP(h *helper.Helper, delegations []*types.BTCDelegation, fpBtcPk *btcec.PublicKey) {
-	ctx, k := h.Ctx, h.App.BTCStakingKeeper
 	for _, del := range delegations {
 		if !del.FpBtcPkList[0].MustToBTCPK().IsEqual(fpBtcPk) {
 			continue
 		}
 		// sets delegations
 		h.AddDelegation(del)
-
-		stakingTxHash, err := del.GetStakingTxHash()
-		h.NoError(err)
-
-		// store the staking tx hashes as allowed staking tx
-		k.IndexAllowedStakingTransaction(ctx, &stakingTxHash)
 	}
 }

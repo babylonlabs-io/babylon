@@ -75,12 +75,14 @@ func NewKeeper(
 		ictvKeeper:              iKeeper,
 		bankKeeper:              bankKeeper,
 
+		// TODO can remove after applying store migration for module version 3
 		AllowedStakingTxHashesKeySet: collections.NewKeySet(
 			sb,
 			types.AllowedStakingTxHashesKey,
 			"allowed_staking_tx_hashes_key_set",
 			collections.BytesKey,
 		),
+		// TODO can remove after applying store migration for module version 3
 		allowedMultiStakingTxHashesKeySet: collections.NewKeySet(
 			sb,
 			types.AllowedMultiStakingTxHashesKey,
