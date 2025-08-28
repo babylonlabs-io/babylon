@@ -137,6 +137,61 @@ func FuzzRegisterConsumer(f *testing.F) {
 	})
 }
 
+func TestDuplicateFinalityContractRejection(t *testing.T) {
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+
+	babylonApp, ctx := wasmtest.SetupAppWithContext(t)
+	bscKeeper := babylonApp.BTCStkConsumerKeeper
+	msgServer := keeper.NewMsgServerImpl(bscKeeper)
+
+	// disable gov-gated registration for simplicity
+	err := bscKeeper.SetParams(ctx, types.Params{
+		PermissionedIntegration: false,
+	})
+	require.NoError(t, err)
+
+	// mock the wasm contract
+	contractAddr := mockSmartContract(t, ctx, babylonApp)
+
+	/*
+		Test registering first rollup consumer with finality contract
+	*/
+	consumerRegister1 := datagen.GenRandomRollupRegister(r, contractAddr.String())
+	_, err = msgServer.RegisterConsumer(ctx, &types.MsgRegisterConsumer{
+		ConsumerId:                    consumerRegister1.ConsumerId,
+		ConsumerName:                  consumerRegister1.ConsumerName,
+		ConsumerDescription:           consumerRegister1.ConsumerDescription,
+		RollupFinalityContractAddress: contractAddr.String(),
+		BabylonRewardsCommission:      consumerRegister1.BabylonRewardsCommission,
+	})
+	require.NoError(t, err)
+
+	// verify the finality contract is registered
+	isRegistered, err := bscKeeper.IsFinalityContractRegistered(ctx, contractAddr.String())
+	require.NoError(t, err)
+	require.True(t, isRegistered)
+
+	/*
+		Test registering second rollup consumer with same finality contract (should fail)
+	*/
+	consumerRegister2 := datagen.GenRandomRollupRegister(r, contractAddr.String())
+	consumerRegister2.ConsumerId = "different-consumer-id"
+	_, err = msgServer.RegisterConsumer(ctx, &types.MsgRegisterConsumer{
+		ConsumerId:                    consumerRegister2.ConsumerId,
+		ConsumerName:                  consumerRegister2.ConsumerName,
+		ConsumerDescription:           consumerRegister2.ConsumerDescription,
+		RollupFinalityContractAddress: contractAddr.String(),
+		BabylonRewardsCommission:      consumerRegister2.BabylonRewardsCommission,
+	})
+	require.Error(t, err)
+	require.ErrorIs(t, err, types.ErrFinalityContractAlreadyRegistered)
+
+	// verify the second consumer was not registered
+	_, err = bscKeeper.GetConsumerRegister(ctx, consumerRegister2.ConsumerId)
+	require.Error(t, err)
+	require.ErrorIs(t, err, types.ErrConsumerNotRegistered)
+}
+
 func mockSmartContract(t *testing.T, ctx sdk.Context, babylonApp *app.BabylonApp) sdk.AccAddress {
 	return wasmtest.DeployTestContract(t, ctx, babylonApp, sdk.AccAddress{}, "../../../wasmbinding/testdata/artifacts/testdata.wasm")
 }
