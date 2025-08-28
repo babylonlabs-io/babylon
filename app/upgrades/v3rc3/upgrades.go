@@ -10,12 +10,15 @@ import (
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/runtime"
+	"github.com/cosmos/cosmos-sdk/types/module"
 
 	"github.com/babylonlabs-io/babylon/v4/app/keepers"
 	"github.com/babylonlabs-io/babylon/v4/app/upgrades"
+	"github.com/babylonlabs-io/babylon/v4/app/upgrades/btcstaking"
 	btcstakingkeeper "github.com/babylonlabs-io/babylon/v4/x/btcstaking/keeper"
 	btcstktypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
-	"github.com/cosmos/cosmos-sdk/types/module"
+	bsckeeper "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/keeper"
+	bsctypes "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
 )
 
 // UpgradeName defines the on-chain upgrade name for the Babylon v3rc3 upgrade
@@ -47,7 +50,7 @@ func CreateUpgradeHandler(mm *module.Manager, configurator module.Configurator, 
 			return nil, err
 		}
 
-		err = upgrades.FpSoftDeleteDupAddr(ctx, keepers.BTCStakingKeeper)
+		err = btcstaking.FpSoftDeleteDupAddr(ctx, keepers.BTCStakingKeeper)
 		if err != nil {
 			return nil, err
 		}
@@ -60,6 +63,10 @@ func CreateUpgradeHandler(mm *module.Manager, configurator module.Configurator, 
 		btcStkStoreService := runtime.NewKVStoreService(btcStkStoreKey)
 		err = UpdatePrefixLargestBtcReorgInBlocks(ctx, keepers.EncCfg.Codec, btcStkStoreService, keepers.BTCStakingKeeper)
 		if err != nil {
+			return nil, err
+		}
+
+		if err := IndexFinalityContracts(ctx, keepers.BTCStkConsumerKeeper); err != nil {
 			return nil, err
 		}
 
@@ -121,4 +128,17 @@ func GetLargestBtcReorg(largestBtcReorg, oldLargestBtcReorg btcstktypes.LargestB
 		return &oldLargestBtcReorg
 	}
 	return &largestBtcReorg
+}
+
+// IndexFinalityContracts indexes all finality contracts for registered rollup consumers
+// NOTE: this is only needed for testnet
+func IndexFinalityContracts(ctx context.Context, k bsckeeper.Keeper) error {
+	return k.ConsumerRegistry.Walk(ctx, nil, func(consumerID string, consumerRegister bsctypes.ConsumerRegister) (bool, error) {
+		// Select consumers registered as Cosmos consumer with metadata, IBC init complete with channel ID set
+		metadata := consumerRegister.GetRollupConsumerMetadata()
+		if metadata == nil || metadata.FinalityContractAddress == "" {
+			return false, nil
+		}
+		return false, k.RegisterFinalityContract(ctx, metadata.FinalityContractAddress)
+	})
 }
