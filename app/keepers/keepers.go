@@ -243,7 +243,11 @@ func (ak *AppKeepers) InitKeepers(
 	ak.keys = keys
 
 	// set transient store keys
+<<<<<<< HEAD
 	ak.tkeys = storetypes.NewTransientStoreKeys(paramstypes.TStoreKey, btccheckpointtypes.TStoreKey)
+=======
+	ak.tkeys = storetypes.NewTransientStoreKeys(paramstypes.TStoreKey, btccheckpointtypes.TStoreKey, evmtypes.TransientKey, feemarkettypes.TransientKey, zctypes.TStoreKey)
+>>>>>>> b10c56e4 (perf(zc): packet broadcast logic trigger only when needed instead of every block (#1612))
 
 	accountKeeper := authkeeper.NewAccountKeeper(
 		appCodec,
@@ -609,6 +613,7 @@ func (ak *AppKeepers) InitKeepers(
 	zcKeeper := zckeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[zctypes.StoreKey]),
+		ak.tkeys[zctypes.TStoreKey],
 		ak.IBCKeeper.ChannelKeeper,
 		ak.IBCKeeper.ClientKeeper,
 		ak.IBCKeeper.ConnectionKeeper,
@@ -634,7 +639,7 @@ func (ak *AppKeepers) InitKeepers(
 		checkpointingtypes.NewMultiCheckpointingHooks(epochingKeeper.Hooks(), zcKeeper.Hooks(), monitorKeeper.Hooks()),
 	)
 	btclightclientKeeper.SetHooks(
-		btclightclienttypes.NewMultiBTCLightClientHooks(btcCheckpointKeeper.Hooks(), ak.BTCStakingKeeper.Hooks()),
+		btclightclienttypes.NewMultiBTCLightClientHooks(btcCheckpointKeeper.Hooks(), ak.BTCStakingKeeper.Hooks(), zcKeeper),
 	)
 
 	// wire the keepers with hooks to the app
