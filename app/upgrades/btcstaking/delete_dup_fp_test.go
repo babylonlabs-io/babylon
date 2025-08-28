@@ -11,15 +11,10 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-<<<<<<< HEAD:app/upgrades/delete_dup_fp_test.go
+	_ "github.com/babylonlabs-io/babylon/v3/app/params" // import this to run the init func that sets the address prefixes
+	"github.com/babylonlabs-io/babylon/v3/app/upgrades/btcstaking"
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
 	btcstktypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
-=======
-	_ "github.com/babylonlabs-io/babylon/v4/app/params" // import this to run the init func that sets the address prefixes
-	"github.com/babylonlabs-io/babylon/v4/app/upgrades/btcstaking"
-	bbn "github.com/babylonlabs-io/babylon/v4/types"
-	btcstktypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
->>>>>>> d79f7c56 (imp(btcstkconsumer): add finality contract idx (#1596)):app/upgrades/btcstaking/delete_dup_fp_test.go
 )
 
 type FpFromTestData struct {

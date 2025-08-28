@@ -12,21 +12,13 @@ import (
 	"github.com/cosmos/cosmos-sdk/runtime"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
-<<<<<<< HEAD
 	"github.com/babylonlabs-io/babylon/v3/app/keepers"
 	"github.com/babylonlabs-io/babylon/v3/app/upgrades"
+	"github.com/babylonlabs-io/babylon/v3/app/upgrades/btcstaking"
 	btcstakingkeeper "github.com/babylonlabs-io/babylon/v3/x/btcstaking/keeper"
 	btcstktypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
-	"github.com/cosmos/cosmos-sdk/types/module"
-=======
-	"github.com/babylonlabs-io/babylon/v4/app/keepers"
-	"github.com/babylonlabs-io/babylon/v4/app/upgrades"
-	"github.com/babylonlabs-io/babylon/v4/app/upgrades/btcstaking"
-	btcstakingkeeper "github.com/babylonlabs-io/babylon/v4/x/btcstaking/keeper"
-	btcstktypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
-	bsckeeper "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/keeper"
-	bsctypes "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
->>>>>>> d79f7c56 (imp(btcstkconsumer): add finality contract idx (#1596))
+	bsckeeper "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/keeper"
+	bsctypes "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
 )
 
 // UpgradeName defines the on-chain upgrade name for the Babylon v3rc3 upgrade
