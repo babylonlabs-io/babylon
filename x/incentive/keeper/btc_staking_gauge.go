@@ -17,12 +17,19 @@ import (
 // to the filtered reward distribution cache (that only contains voted finality providers)
 // (adapted from https://github.com/cosmos/cosmos-sdk/blob/release/v0.47.x/x/distribution/keeper/allocation.go#L12-L64)
 func (k Keeper) RewardBTCStaking(ctx context.Context, height uint64, dc *ftypes.VotingPowerDistCache, voters map[string]struct{}) {
+	// Get commission/delegator rewards gauge
 	gauge := k.GetBTCStakingGauge(ctx, height)
 	if gauge == nil {
 		// can happen that there were no fees to intercept, so no staking gauge was stored
 		// Anyways, it is a weird case, and we log it
 		k.Logger(sdk.UnwrapSDKContext(ctx)).Warn("failed to get a reward gauge. Proceeding with empty gauge", "height", height)
 		gauge = types.NewGauge(sdk.NewCoins()...)
+	}
+
+	// Get FP direct rewards gauge
+	fpDirectGauge := k.GetFPDirectGauge(ctx, height)
+	if fpDirectGauge == nil {
+		fpDirectGauge = types.NewGauge(sdk.NewCoins()...)
 	}
 
 	// calculate total voting power of voters
@@ -61,7 +68,12 @@ func (k Keeper) RewardBTCStaking(ctx context.Context, height uint64, dc *ftypes.
 
 		// reward the finality provider with commission
 		coinsForCommission := types.GetCoinsPortion(coinsForFpsAndDels, *fp.Commission)
-		k.accumulateRewardGauge(ctx, types.FINALITY_PROVIDER, fp.GetAddress(), coinsForCommission)
+
+		// add FP direct rewards from fee collector (goes entirely to FP)
+		coinsForFpDirect := fpDirectGauge.GetCoinsPortion(fpPortion)
+		totalCoinsForFp := coinsForCommission.Add(coinsForFpDirect...)
+
+		k.accumulateRewardGauge(ctx, types.FINALITY_PROVIDER, fp.GetAddress(), totalCoinsForFp)
 
 		// reward the rest of coins to each BTC delegation proportional to its voting power portion
 		coinsForBTCDels := coinsForFpsAndDels.Sub(coinsForCommission...)
@@ -69,20 +81,34 @@ func (k Keeper) RewardBTCStaking(ctx context.Context, height uint64, dc *ftypes.
 			panic(fmt.Errorf("failed to add fp rewards for btc delegation %s at height %d: %w", fp.GetAddress().String(), height, err))
 		}
 	}
-	// TODO: prune unnecessary state (delete BTCStakingGauge after the amount is used)
+
+	// Prune gauges after rewards are distributed to free up storage
+	k.pruneBTCStakingGauge(ctx, height)
+	k.pruneFPDirectGauge(ctx, height)
 }
 
-func (k Keeper) accumulateBTCStakingReward(ctx context.Context, btcStakingReward sdk.Coins) {
+// accumulateRewards transfers the btc_staking and fp_portion rewards from fee collector to incentive module
+// and stores them in a separate gauges for later distributing the BTC staking and direct FP rewards
+func (k Keeper) accumulateRewards(ctx context.Context, btcStakingReward, fpDirectRewards sdk.Coins) {
 	// update BTC staking gauge
 	height := uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
 	gauge := types.NewGauge(btcStakingReward...)
 	k.SetBTCStakingGauge(ctx, height, gauge)
 
-	// transfer the BTC staking reward from fee collector account to incentive module account
-	err := k.bankKeeper.SendCoinsFromModuleToModule(ctx, k.feeCollectorName, types.ModuleName, btcStakingReward)
-	if err != nil {
-		// this can only be programming error and is unrecoverable
-		panic(err)
+	// update FP direct rewards gauge
+	if fpDirectRewards.IsAllPositive() {
+		fpGauge := types.NewGauge(fpDirectRewards...)
+		k.SetFPDirectGauge(ctx, height, fpGauge)
+	}
+
+	totalRwds := btcStakingReward.Add(fpDirectRewards...)
+	if totalRwds.IsAllPositive() {
+		// transfer the BTC staking reward from fee collector account to incentive module account
+		err := k.bankKeeper.SendCoinsFromModuleToModule(ctx, k.feeCollectorName, types.ModuleName, totalRwds)
+		if err != nil {
+			// this can only be programming error and is unrecoverable
+			panic(err)
+		}
 	}
 }
 
@@ -112,4 +138,46 @@ func (k Keeper) GetBTCStakingGauge(ctx context.Context, height uint64) *types.Ga
 func (k Keeper) btcStakingGaugeStore(ctx context.Context) prefix.Store {
 	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
 	return prefix.NewStore(storeAdapter, types.BTCStakingGaugeKey)
+}
+
+func (k Keeper) SetFPDirectGauge(ctx context.Context, height uint64, gauge *types.Gauge) {
+	store := k.fpDirectGaugeStore(ctx)
+	gaugeBytes := k.cdc.MustMarshal(gauge)
+	store.Set(sdk.Uint64ToBigEndian(height), gaugeBytes)
+}
+
+func (k Keeper) GetFPDirectGauge(ctx context.Context, height uint64) *types.Gauge {
+	store := k.fpDirectGaugeStore(ctx)
+	gaugeBytes := store.Get(sdk.Uint64ToBigEndian(height))
+	if gaugeBytes == nil {
+		return nil
+	}
+
+	var gauge types.Gauge
+	k.cdc.MustUnmarshal(gaugeBytes, &gauge)
+	return &gauge
+}
+
+// fpDirectGaugeStore returns the KVStore of the gauge of direct FP rewards
+// from fee collector at each height
+// prefix: FPDirectGaugeKey
+// key: gauge height
+// value: gauge of direct FP rewards at this height
+func (k Keeper) fpDirectGaugeStore(ctx context.Context) prefix.Store {
+	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
+	return prefix.NewStore(storeAdapter, types.FPDirectGaugeKey)
+}
+
+// pruneBTCStakingGauge removes the BTC staking gauge at the specified height
+// to free up storage after rewards have been distributed
+func (k Keeper) pruneBTCStakingGauge(ctx context.Context, height uint64) {
+	store := k.btcStakingGaugeStore(ctx)
+	store.Delete(sdk.Uint64ToBigEndian(height))
+}
+
+// pruneFPDirectGauge removes the FP direct rewards gauge at the specified height
+// to free up storage after rewards have been distributed
+func (k Keeper) pruneFPDirectGauge(ctx context.Context, height uint64) {
+	store := k.fpDirectGaugeStore(ctx)
+	store.Delete(sdk.Uint64ToBigEndian(height))
 }
