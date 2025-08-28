@@ -18,8 +18,8 @@ func ParamKeyTable() paramtypes.KeyTable {
 // DefaultParams returns a default set of parameters
 func DefaultParams() Params {
 	return Params{
-		BtcStakingPortion: math.LegacyNewDecWithPrec(4, 1),   // 4 * 10^{-1} = 0.4
-		FpPortion:         math.LegacyNewDecWithPrec(7, 3),   // 7 * 10^{-3} = 0.007
+		BtcStakingPortion: math.LegacyNewDecWithPrec(4, 1), // 4 * 10^{-1} = 0.4
+		FpPortion:         math.LegacyNewDecWithPrec(7, 3), // 7 * 10^{-3} = 0.007
 	}
 }
 
