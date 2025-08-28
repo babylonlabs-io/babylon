@@ -168,13 +168,6 @@ func (k Keeper) fpDirectGaugeStore(ctx context.Context) prefix.Store {
 	return prefix.NewStore(storeAdapter, types.FPDirectGaugeKey)
 }
 
-// pruneBTCStakingGauge removes the BTC staking gauge at the specified height
-// to free up storage after rewards have been distributed
-func (k Keeper) pruneBTCStakingGauge(ctx context.Context, height uint64) {
-	store := k.btcStakingGaugeStore(ctx)
-	store.Delete(sdk.Uint64ToBigEndian(height))
-}
-
 // pruneFPDirectGauge removes the FP direct rewards gauge at the specified height
 // to free up storage after rewards have been distributed
 func (k Keeper) pruneFPDirectGauge(ctx context.Context, height uint64) {
