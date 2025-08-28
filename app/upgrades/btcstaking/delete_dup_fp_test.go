@@ -1,4 +1,4 @@
-package upgrades
+package btcstaking_test
 
 import (
 	"context"
@@ -11,6 +11,8 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	_ "github.com/babylonlabs-io/babylon/v4/app/params" // import this to run the init func that sets the address prefixes
+	"github.com/babylonlabs-io/babylon/v4/app/upgrades/btcstaking"
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	btcstktypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 )
@@ -116,7 +118,7 @@ func TestFpSoftDeleteDupAddr(t *testing.T) {
 			}
 
 			ctx := context.Background()
-			err = FpSoftDeleteDupAddr(ctx, mockBtcStkKeeper)
+			err = btcstaking.FpSoftDeleteDupAddr(ctx, mockBtcStkKeeper)
 			require.NoError(t, err)
 			// Verify that SetFpBbnAddr was called for each FP
 			require.EqualValues(t, mockBtcStkKeeper.setBbnAddrsCount, len(fps), "SetFpBbnAddr should be called for each FP")
