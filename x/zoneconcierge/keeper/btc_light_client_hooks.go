@@ -2,20 +2,12 @@ package keeper
 
 import (
 	"context"
+	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	btclctypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
-)
-
-// Transient store keys for tracking BTC light client modifications during block execution
-var (
-	// BTCHeaderInsertedKey marks that new BTC header(s) were added in this block
-	BTCHeaderInsertedKey = []byte("btc_header_inserted")
-	// BTCReorgOccurredKey marks that a BTC reorg occurred in this block
-	BTCReorgOccurredKey = []byte("btc_reorg_occurred")
-	// NewConsumerChannelKey marks that a new consumer channel was opened in this block
-	NewConsumerChannelKey = []byte("new_consumer_channel")
+	"github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/types"
 )
 
 // Implements btclightclient.BTCLightClientHooks interface for ZoneConcierge
@@ -28,7 +20,7 @@ func (k Keeper) AfterBTCHeaderInserted(ctx context.Context, headerInfo *btclctyp
 	transientStore := sdkCtx.TransientStore(k.transientKey)
 
 	// Mark that new BTC header was inserted - this will trigger broadcasting
-	transientStore.Set(BTCHeaderInsertedKey, []byte{1})
+	transientStore.Set(types.BTCHeaderInsertedKey, []byte{1})
 
 	k.Logger(sdkCtx).Debug("BTC header inserted, will broadcast in EndBlocker",
 		"height", headerInfo.Height,
@@ -43,7 +35,7 @@ func (k Keeper) AfterBTCRollBack(ctx context.Context, rollbackFrom, rollbackTo *
 	transientStore := sdkCtx.TransientStore(k.transientKey)
 
 	// Mark that BTC reorg occurred - this will trigger broadcasting
-	transientStore.Set(BTCReorgOccurredKey, []byte{1})
+	transientStore.Set(types.BTCReorgOccurredKey, []byte{1})
 
 	k.Logger(sdkCtx).Info("BTC chain rollback detected, will broadcast in EndBlocker",
 		"rollback_from_height", rollbackFrom.Height,
@@ -69,7 +61,7 @@ func (k Keeper) MarkNewConsumerChannel(ctx context.Context, consumerID string) {
 	transientStore := sdkCtx.TransientStore(k.transientKey)
 
 	// Mark that new consumer channel was opened - this will trigger broadcasting
-	transientStore.Set(NewConsumerChannelKey, []byte{1})
+	transientStore.Set(types.NewConsumerChannelKey, []byte{1})
 }
 
 // ShouldBroadcastBTCHeaders checks if BTC headers should be broadcast in this block
@@ -82,19 +74,19 @@ func (k Keeper) ShouldBroadcastBTCHeaders(ctx context.Context) bool {
 	transientStore := sdkCtx.TransientStore(k.transientKey)
 
 	// Check for new BTC header insertion
-	if transientStore.Has(BTCHeaderInsertedKey) {
+	if transientStore.Has(types.BTCHeaderInsertedKey) {
 		k.Logger(sdkCtx).Debug("Broadcasting triggered by new BTC header")
 		return true
 	}
 
 	// Check for BTC reorg
-	if transientStore.Has(BTCReorgOccurredKey) {
+	if transientStore.Has(types.BTCReorgOccurredKey) {
 		k.Logger(sdkCtx).Debug("Broadcasting triggered by BTC reorg")
 		return true
 	}
 
 	// Check for new consumer channel
-	if transientStore.Has(NewConsumerChannelKey) {
+	if transientStore.Has(types.NewConsumerChannelKey) {
 		k.Logger(sdkCtx).Debug("Broadcasting triggered by new consumer channel")
 		return true
 	}
@@ -108,15 +100,15 @@ func (k Keeper) GetBroadcastTriggerReason(ctx context.Context) string {
 
 	reasons := []string{}
 
-	if transientStore.Has(BTCHeaderInsertedKey) {
+	if transientStore.Has(types.BTCHeaderInsertedKey) {
 		reasons = append(reasons, "new_btc_header")
 	}
 
-	if transientStore.Has(BTCReorgOccurredKey) {
+	if transientStore.Has(types.BTCReorgOccurredKey) {
 		reasons = append(reasons, "btc_reorg")
 	}
 
-	if transientStore.Has(NewConsumerChannelKey) {
+	if transientStore.Has(types.NewConsumerChannelKey) {
 		reasons = append(reasons, "new_consumer_channel")
 	}
 
@@ -124,11 +116,5 @@ func (k Keeper) GetBroadcastTriggerReason(ctx context.Context) string {
 		return "none"
 	}
 
-	// Join multiple reasons with comma
-	result := reasons[0]
-	for i := 1; i < len(reasons); i++ {
-		result += "," + reasons[i]
-	}
-
-	return result
+	return strings.Join(reasons, ",")
 }

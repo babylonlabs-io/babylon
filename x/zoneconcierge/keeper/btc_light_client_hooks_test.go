@@ -9,7 +9,6 @@ import (
 	"github.com/babylonlabs-io/babylon/v4/app"
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
 	btclctypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
-	"github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/keeper"
 	"github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/types"
 )
 
@@ -169,7 +168,7 @@ func TestHookInterface(t *testing.T) {
 func TestTransientStoreKeys(t *testing.T) {
 	// Test that our transient store keys are properly defined
 	require.Equal(t, "transient_zc", types.TStoreKey)
-	require.Equal(t, []byte("btc_header_inserted"), keeper.BTCHeaderInsertedKey)
-	require.Equal(t, []byte("btc_reorg_occurred"), keeper.BTCReorgOccurredKey)
-	require.Equal(t, []byte("new_consumer_channel"), keeper.NewConsumerChannelKey)
+	require.Equal(t, []byte{100}, types.BTCHeaderInsertedKey)
+	require.Equal(t, []byte{101}, types.BTCReorgOccurredKey)
+	require.Equal(t, []byte{102}, types.NewConsumerChannelKey)
 }
