@@ -49,6 +49,10 @@ func LoadABI() (abi.ABI, error) {
 }
 
 func NewPrecompile(
+	epochingKeeper keeper.Keeper,
+	epochingMsgServer epochingtypes.MsgServer,
+	epochingQuerier epochingtypes.QueryServer,
+	checkpointingMsgServer checkpointingtypes.MsgServer,
 	stakingKeeper stakingkeeper.Keeper,
 	stakingQuerier stakingtypes.QueryServer,
 	addrCdc address.Codec,
@@ -64,9 +68,13 @@ func NewPrecompile(
 			KvGasConfig:          storetypes.KVGasConfig(),
 			TransientKVGasConfig: storetypes.TransientGasConfig(),
 		},
-		stakingKeeper:  stakingKeeper,
-		stakingQuerier: stakingQuerier,
-		addrCdc:        addrCdc,
+		epochingKeeper:         epochingKeeper,
+		epochingMsgServer:      epochingMsgServer,
+		epochingQuerier:        epochingQuerier,
+		checkpointingMsgServer: checkpointingMsgServer,
+		stakingKeeper:          stakingKeeper,
+		stakingQuerier:         stakingQuerier,
+		addrCdc:                addrCdc,
 	}
 	p.SetAddress(common.HexToAddress(EpochingPrecompileAddress))
 
@@ -128,12 +136,19 @@ func (p Precompile) run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 		bz, err = p.WrappedCancelUnbondingDelegation(ctx, contract, stateDB, method, args)
 	// Epoching queries
 	case EpochInfoMethod:
+		bz, err = p.EpochInfo(ctx, contract, method, args)
 	case CurrentEpochMethod:
+		bz, err = p.CurrentEpoch(ctx, contract, method, args)
 	case EpochMsgsMethod:
+		bz, err = p.EpochMsgs(ctx, contract, method, args)
 	case LatestEpochMsgsMethod:
+		bz, err = p.LatestEpochMsgs(ctx, contract, method, args)
 	case ValidatorLifecycleMethod:
+		bz, err = p.ValidatorLifecycle(ctx, contract, method, args)
 	case DelegationLifecycleMethod:
+		bz, err = p.DelegationLifecycle(ctx, contract, method, args)
 	case EpochValSetMethod:
+		bz, err = p.EpochValSet(ctx, contract, method, args)
 	// Staking queries
 	case DelegationMethod:
 		bz, err = p.Delegation(ctx, contract, method, args)
@@ -182,5 +197,5 @@ func (p Precompile) IsTransaction(method *abi.Method) bool {
 }
 
 func (p Precompile) Logger(ctx sdk.Context) log.Logger {
-	return ctx.Logger().With("evm extension", "epoching")
+	return ctx.Logger().With("babylon extension", "epoching")
 }

@@ -183,3 +183,150 @@ func (p Precompile) Redelegations(
 
 	return out.Pack(method.Outputs)
 }
+
+func (p Precompile) EpochInfo(
+	ctx sdk.Context,
+	_ *vm.Contract,
+	method *abi.Method,
+	args []interface{},
+) ([]byte, error) {
+	req, err := NewEpochInfoRequest(args)
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := p.epochingQuerier.EpochInfo(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	out := new(EpochInfoOutput).FromResponse(res)
+
+	return method.Outputs.Pack(out.Epoch)
+}
+
+func (p Precompile) CurrentEpoch(
+	ctx sdk.Context,
+	_ *vm.Contract,
+	method *abi.Method,
+	args []interface{},
+) ([]byte, error) {
+	req, err := NewCurrentEpochRequest(args)
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := p.epochingQuerier.CurrentEpoch(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	out := new(CurrentEpochOutput).FromResponse(res)
+
+	return method.Outputs.Pack(out.CurrentEpoch)
+}
+
+func (p Precompile) EpochMsgs(
+	ctx sdk.Context,
+	_ *vm.Contract,
+	method *abi.Method,
+	args []interface{},
+) ([]byte, error) {
+	req, err := NewEpochMsgsRequest(method, args)
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := p.epochingQuerier.EpochMsgs(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	out := new(EpochMsgsOutput).FromResponse(res)
+
+	return out.Pack(method.Outputs)
+}
+
+func (p Precompile) LatestEpochMsgs(
+	ctx sdk.Context,
+	_ *vm.Contract,
+	method *abi.Method,
+	args []interface{},
+) ([]byte, error) {
+	req, err := NewLatestEpochMsgsRequest(method, args)
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := p.epochingQuerier.LatestEpochMsgs(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	out := new(LatestEpochMsgsOutput).FromResponse(res)
+
+	return out.Pack(method.Outputs)
+}
+
+func (p Precompile) ValidatorLifecycle(
+	ctx sdk.Context,
+	_ *vm.Contract,
+	method *abi.Method,
+	args []interface{},
+) ([]byte, error) {
+	req, err := NewValidatorLifecycleRequest(args, p.addrCdc)
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := p.epochingQuerier.ValidatorLifecycle(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	out := new(ValidatorLifecycleOutput).FromResponse(res)
+
+	return method.Outputs.Pack(out.ValidatorLife)
+}
+
+func (p Precompile) DelegationLifecycle(
+	ctx sdk.Context,
+	_ *vm.Contract,
+	method *abi.Method,
+	args []interface{},
+) ([]byte, error) {
+	req, err := NewDelegationLifecycleRequest(args, p.addrCdc)
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := p.epochingQuerier.DelegationLifecycle(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	out := new(DelegationLifecycleOutput).FromResponse(res)
+
+	return method.Outputs.Pack(out.DelegationLifecycle)
+}
+
+func (p Precompile) EpochValSet(
+	ctx sdk.Context,
+	_ *vm.Contract,
+	method *abi.Method,
+	args []interface{},
+) ([]byte, error) {
+	req, err := NewEpochValSetRequest(method, args)
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := p.epochingQuerier.EpochValSet(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	out := new(EpochValSetOutput).FromResponse(res)
+
+	return method.Outputs.Pack(out.Validators, out.TotalVotingPower, out.PageResponse)
+}

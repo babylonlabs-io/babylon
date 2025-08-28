@@ -558,17 +558,369 @@ func NewRedelegationsRequest(method *abi.Method, args []interface{}, addrCdc add
 	}, nil
 }
 
+// NewEpochInfoRequest create a new QueryEpochInfoRequest instance and does sanity checks
+// on the given arguments before populating the request.
+func NewEpochInfoRequest(args []interface{}) (*epochingtypes.QueryEpochInfoRequest, error) {
+	if len(args) != 1 {
+		return nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, 1, len(args))
+	}
+
+	epochNum, ok := args[0].(uint64)
+	if !ok {
+		return nil, fmt.Errorf(cmn.ErrInvalidType, "epochNum", "uint64", args[0])
+	}
+
+	return &epochingtypes.QueryEpochInfoRequest{
+		EpochNum: epochNum,
+	}, nil
+}
+
+// NewCurrentEpochRequest create a new QueryCurrentEpochRequest instance and does sanity checks
+// on the given arguments before populating the request.
+func NewCurrentEpochRequest(args []interface{}) (*epochingtypes.QueryCurrentEpochRequest, error) {
+	if len(args) != 0 {
+		return nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, 0, len(args))
+	}
+
+	return &epochingtypes.QueryCurrentEpochRequest{}, nil
+}
+
+// NewEpochMsgsRequest create a new QueryEpochMsgsRequest instance and does sanity checks
+// on the given arguments before populating the request.
+func NewEpochMsgsRequest(method *abi.Method, args []interface{}) (*epochingtypes.QueryEpochMsgsRequest, error) {
+	if len(args) != 2 {
+		return nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, 2, len(args))
+	}
+
+	var input EpochMsgsInput
+	if err := method.Inputs.Copy(&input, args); err != nil {
+		return nil, fmt.Errorf("error while unpacking args to EpochMsgsInput struct: %s", err)
+	}
+
+	if bytes.Equal(input.PageRequest.Key, []byte{0}) {
+		input.PageRequest.Key = nil
+	}
+
+	return &epochingtypes.QueryEpochMsgsRequest{
+		EpochNum:   input.EpochNumber,
+		Pagination: &input.PageRequest,
+	}, nil
+}
+
+// NewLatestEpochMsgsRequest create a new QueryLatestEpochMsgsRequest instance and does sanity checks
+// on the given arguments before populating the request.
+func NewLatestEpochMsgsRequest(method *abi.Method, args []interface{}) (*epochingtypes.QueryLatestEpochMsgsRequest, error) {
+	if len(args) != 3 {
+		return nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, 3, len(args))
+	}
+
+	var input LatestEpochMsgsInput
+	if err := method.Inputs.Copy(&input, args); err != nil {
+		return nil, fmt.Errorf("error while unpacking args to LatestEpochMsgsInput struct: %s", err)
+	}
+
+	if bytes.Equal(input.PageRequest.Key, []byte{0}) {
+		input.PageRequest.Key = nil
+	}
+
+	return &epochingtypes.QueryLatestEpochMsgsRequest{
+		EndEpoch:   input.EndEpoch,
+		EpochCount: input.EpochCount,
+		Pagination: &input.PageRequest,
+	}, nil
+}
+
+// NewValidatorLifecycleRequest create a new QueryValidatorLifecycleRequest instance and does sanity checks
+// on the given arguments before populating the request.
+func NewValidatorLifecycleRequest(args []interface{}, addrCdc address.Codec) (*epochingtypes.QueryValidatorLifecycleRequest, error) {
+	if len(args) != 1 {
+		return nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, 1, len(args))
+	}
+
+	validatorAddr, ok := args[0].(common.Address)
+	if !ok || validatorAddr == (common.Address{}) {
+		return nil, fmt.Errorf(cmn.ErrInvalidValidator, args[0])
+	}
+
+	validatorAddrStr, err := addrCdc.BytesToString(validatorAddr.Bytes())
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode validator address: %w", err)
+	}
+
+	return &epochingtypes.QueryValidatorLifecycleRequest{
+		ValAddr: validatorAddrStr,
+	}, nil
+}
+
+// NewDelegationLifecycleRequest create a new QueryDelegationLifecycleRequest instance and does sanity checks
+// on the given arguments before populating the request.
+func NewDelegationLifecycleRequest(args []interface{}, addrCdc address.Codec) (*epochingtypes.QueryDelegationLifecycleRequest, error) {
+	if len(args) != 1 {
+		return nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, 1, len(args))
+	}
+
+	delegatorAddr, ok := args[0].(common.Address)
+	if !ok || delegatorAddr == (common.Address{}) {
+		return nil, fmt.Errorf(cmn.ErrInvalidDelegator, args[0])
+	}
+
+	delegatorAddrStr, err := addrCdc.BytesToString(delegatorAddr.Bytes())
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode delegator address: %w", err)
+	}
+
+	return &epochingtypes.QueryDelegationLifecycleRequest{
+		DelAddr: delegatorAddrStr,
+	}, nil
+}
+
+// NewEpochValSetRequest create a new QueryEpochValSetRequest instance and does sanity checks
+// on the given arguments before populating the request.
+func NewEpochValSetRequest(method *abi.Method, args []interface{}) (*epochingtypes.QueryEpochValSetRequest, error) {
+	if len(args) != 2 {
+		return nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, 2, len(args))
+	}
+
+	var input EpochValSetInput
+	if err := method.Inputs.Copy(&input, args); err != nil {
+		return nil, fmt.Errorf("error while unpacking args to EpochValSetInput struct: %s", err)
+	}
+
+	if bytes.Equal(input.PageRequest.Key, []byte{0}) {
+		input.PageRequest.Key = nil
+	}
+
+	return &epochingtypes.QueryEpochValSetRequest{
+		EpochNum:   input.EpochNumber,
+		Pagination: &input.PageRequest,
+	}, nil
+}
+
+type EpochResponse struct {
+	EpochNumber          uint64
+	CurrentEpochInterval uint64
+	FirstBlockHeight     uint64
+	LastBlockTime        int64
+	SealerAppHashHex     string
+	SealerBlockHash      string
+}
+type EpochInfoOutput struct {
+	Epoch EpochResponse
+}
+
+func (eo *EpochInfoOutput) FromResponse(res *epochingtypes.QueryEpochInfoResponse) *EpochInfoOutput {
+	eo.Epoch.EpochNumber = res.Epoch.EpochNumber
+	eo.Epoch.CurrentEpochInterval = res.Epoch.CurrentEpochInterval
+	eo.Epoch.FirstBlockHeight = res.Epoch.FirstBlockHeight
+	eo.Epoch.LastBlockTime = res.Epoch.LastBlockTime.UTC().Unix()
+	eo.Epoch.SealerAppHashHex = res.Epoch.SealerAppHashHex
+	eo.Epoch.SealerBlockHash = res.Epoch.SealerBlockHash
+	return eo
+}
+
+type CurrentEpochOutput struct {
+	CurrentEpoch  uint64
+	EpochBoundary uint64
+}
+
+func (co *CurrentEpochOutput) FromResponse(res *epochingtypes.QueryCurrentEpochResponse) *CurrentEpochOutput {
+	co.CurrentEpoch = res.CurrentEpoch
+	co.EpochBoundary = res.EpochBoundary
+	return co
+}
+
+type EpochMsgsInput struct {
+	EpochNumber uint64
+	PageRequest query.PageRequest
+}
+
+type QueuedMessageResponse struct {
+	TxId        string
+	MsgId       string
+	BlockHeight uint64
+	BlockTime   int64
+	Msg         string
+	MsgType     string
+}
+
+type EpochMsgsOutput struct {
+	QueuedMsgs   []QueuedMessageResponse
+	PageResponse query.PageResponse
+}
+
+func (eo *EpochMsgsOutput) FromResponse(res *epochingtypes.QueryEpochMsgsResponse) *EpochMsgsOutput {
+	eo.QueuedMsgs = make([]QueuedMessageResponse, len(res.Msgs))
+	for i, msg := range res.Msgs {
+		eo.QueuedMsgs[i] = QueuedMessageResponse{
+			TxId:        msg.TxId,
+			MsgId:       msg.MsgId,
+			BlockHeight: msg.BlockHeight,
+			BlockTime:   msg.BlockTime.UTC().Unix(),
+			Msg:         msg.Msg,
+			MsgType:     msg.MsgType,
+		}
+	}
+
+	if res.Pagination != nil {
+		eo.PageResponse.Total = res.Pagination.Total
+		eo.PageResponse.NextKey = res.Pagination.NextKey
+	}
+
+	return eo
+}
+
+func (eo *EpochMsgsOutput) Pack(args abi.Arguments) ([]byte, error) {
+	return args.Pack(eo.QueuedMsgs, eo.PageResponse)
+}
+
+type LatestEpochMsgsInput struct {
+	EndEpoch    uint64
+	EpochCount  uint64
+	PageRequest query.PageRequest
+}
+
+type QueuedMessageList struct {
+	EpochNumber uint64
+	Msgs        []QueuedMessageResponse
+}
+
+type LatestEpochMsgsOutput struct {
+	LatestEpochMsgs []QueuedMessageList
+	PageResponse    query.PageResponse
+}
+
+func (leo *LatestEpochMsgsOutput) FromResponse(res *epochingtypes.QueryLatestEpochMsgsResponse) *LatestEpochMsgsOutput {
+	leo.LatestEpochMsgs = make([]QueuedMessageList, len(res.LatestEpochMsgs))
+	for i, epochMsgList := range res.LatestEpochMsgs {
+		msgs := make([]QueuedMessageResponse, len(epochMsgList.Msgs))
+		for j, msg := range epochMsgList.Msgs {
+			msgs[j] = QueuedMessageResponse{
+				TxId:        msg.TxId,
+				MsgId:       msg.MsgId,
+				BlockHeight: msg.BlockHeight,
+				BlockTime:   msg.BlockTime.UTC().Unix(),
+				Msg:         msg.Msg,
+				MsgType:     msg.MsgType,
+			}
+		}
+		leo.LatestEpochMsgs[i] = QueuedMessageList{
+			EpochNumber: epochMsgList.EpochNumber,
+			Msgs:        msgs,
+		}
+	}
+
+	if res.Pagination != nil {
+		leo.PageResponse.Total = res.Pagination.Total
+		leo.PageResponse.NextKey = res.Pagination.NextKey
+	}
+
+	return leo
+}
+
+func (leo *LatestEpochMsgsOutput) Pack(args abi.Arguments) ([]byte, error) {
+	return args.Pack(leo.LatestEpochMsgs, leo.PageResponse)
+}
+
+type ValidatorUpdateResponse struct {
+	StateDesc   string
+	BlockHeight uint64
+	BlockTime   int64
+}
+
+type ValidatorLifecycleOutput struct {
+	ValidatorLife []ValidatorUpdateResponse
+}
+
+func (vlo *ValidatorLifecycleOutput) FromResponse(res *epochingtypes.QueryValidatorLifecycleResponse) *ValidatorLifecycleOutput {
+	vlo.ValidatorLife = make([]ValidatorUpdateResponse, len(res.ValLife))
+	for i, valUpdate := range res.ValLife {
+		vlo.ValidatorLife[i] = ValidatorUpdateResponse{
+			StateDesc:   valUpdate.StateDesc,
+			BlockHeight: valUpdate.BlockHeight,
+			BlockTime:   valUpdate.BlockTime.UTC().Unix(),
+		}
+	}
+
+	return vlo
+}
+
+type DelegationStateUpdate struct {
+	State       uint8 // BondState enum as uint8
+	ValAddr     string
+	Amount      cmn.Coin
+	BlockHeight uint64
+	BlockTime   int64
+}
+
+type DelegationLifecycleStruct struct {
+	DelAddr string
+	DelLife []DelegationStateUpdate
+}
+
+type DelegationLifecycleOutput struct {
+	DelegationLifecycle DelegationLifecycleStruct
+}
+
+func (dlo *DelegationLifecycleOutput) FromResponse(res *epochingtypes.QueryDelegationLifecycleResponse) *DelegationLifecycleOutput {
+	delLife := make([]DelegationStateUpdate, len(res.DelLife.DelLife))
+	for i, delUpdate := range res.DelLife.DelLife {
+		delLife[i] = DelegationStateUpdate{
+			State:       uint8(delUpdate.State), // Convert BondState enum to uint8
+			ValAddr:     delUpdate.ValAddr,
+			Amount:      cmn.Coin{Denom: delUpdate.Amount.Denom, Amount: delUpdate.Amount.Amount.BigInt()},
+			BlockHeight: delUpdate.BlockHeight,
+			BlockTime:   delUpdate.BlockTime.UTC().Unix(),
+		}
+	}
+
+	dlo.DelegationLifecycle = DelegationLifecycleStruct{
+		DelAddr: res.DelLife.DelAddr,
+		DelLife: delLife,
+	}
+
+	return dlo
+}
+
+type EpochValSetInput struct {
+	EpochNumber uint64
+	PageRequest query.PageRequest
+}
+
+type SimpleValidator struct {
+	Addr  []byte
+	Power int64
+}
+
+type EpochValSetOutput struct {
+	Validators       []SimpleValidator
+	TotalVotingPower int64
+	PageResponse     query.PageResponse
+}
+
+func (evso *EpochValSetOutput) FromResponse(res *epochingtypes.QueryEpochValSetResponse) *EpochValSetOutput {
+	evso.Validators = make([]SimpleValidator, len(res.Validators))
+	for i, validator := range res.Validators {
+		evso.Validators[i] = SimpleValidator{
+			Addr:  validator.Addr,
+			Power: validator.Power,
+		}
+	}
+
+	evso.TotalVotingPower = res.TotalVotingPower
+
+	if res.Pagination != nil {
+		evso.PageResponse.Total = res.Pagination.Total
+		evso.PageResponse.NextKey = res.Pagination.NextKey
+	}
+
+	return evso
+}
+
 // RedelegationRequest is a struct that contains the information to pass into a redelegation query.
 type RedelegationRequest struct {
 	DelegatorAddress    sdk.AccAddress
 	ValidatorSrcAddress sdk.ValAddress
 	ValidatorDstAddress sdk.ValAddress
-}
-
-// RedelegationsRequest is a struct that contains the information to pass into a redelegations query.
-type RedelegationsRequest struct {
-	DelegatorAddress sdk.AccAddress
-	MaxRetrieve      int64
 }
 
 // UnbondingDelegationEntry is a struct that contains the information about an unbonding delegation entry.

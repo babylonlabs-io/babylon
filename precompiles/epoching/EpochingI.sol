@@ -122,12 +122,81 @@ int256 constant DO_NOT_MODIFY_MIN_SELF_DELEGATION = -1;
         UnbondingDelegationEntry[] entries;
     }
 
+/// @dev Represents epoch information response
+    struct EpochResponse {
+        uint64 epochNumber;
+        uint64 currentEpochInterval;
+        uint64 firstBlockHeight;
+        int64 lastBlockTime;
+        string sealerAppHashHex;
+        string sealerBlockHash;
+    }
+
+/// @dev Represents current epoch information response
+    struct CurrentEpochResponse {
+        uint64 currentEpoch;
+        uint64 epochBoundary;
+    }
+
+/// @dev Represents a queued message in an epoch
+    struct QueuedMessageResponse {
+        string txId;
+        string msgId;
+        uint64 blockHeight;
+        int64 blockTime;
+        string msg;
+        string msgType;
+    }
+
+/// @dev Represents a list of queued messages for an epoch
+    struct QueuedMessageList {
+        uint64 epochNumber;
+        QueuedMessageResponse[] msgs;
+    }
+
+/// @dev Represents a validator lifecycle update event
+    struct ValidatorUpdateResponse {
+        string stateDesc;
+        uint64 blockHeight;
+        int64 blockTime;
+    }
+
+/// @dev Represents a delegation state change event
+    struct DelegationStateUpdate {
+        BondState state;
+        string valAddr;
+        Coin amount;
+        uint64 blockHeight;
+        int64 blockTime;
+    }
+
+/// @dev Represents the complete lifecycle of a delegation
+    struct DelegationLifecycle {
+        address delAddr;
+        DelegationStateUpdate[] delLife;
+    }
+
+/// @dev Represents a simple validator with address and voting power
+    struct SimpleValidator {
+        bytes addr;
+        int64 power;
+    }
+
 /// @dev The status of the validator.
     enum BondStatus {
         Unspecified,
         Unbonded,
         Unbonding,
         Bonded
+    }
+
+/// @dev The status of the delegator
+    enum BondState {
+        CREATED,
+        BONDED,
+        UNBONDING,
+        UNBONDED,
+        REMOVED
     }
 
 /// @author Babylon Team
@@ -301,6 +370,74 @@ interface EpochingI {
     view
     returns (
         RedelegationResponse[] calldata response,
+        PageResponse calldata pageResponse
+    );
+
+    /// @dev Queries epoch information for a given epoch number.
+    /// @param epochNumber The epoch number to query.
+    /// @return response The epoch information.
+    function epochInfo(
+        uint64 epochNumber
+    ) external view returns (EpochResponse calldata response);
+
+    /// @dev Queries current epoch information.
+    /// @return response The current epoch information.
+    function currentEpoch() external view returns (CurrentEpochResponse calldata response);
+
+    /// @dev Queries messages queued in a specific epoch.
+    /// @param epochNumber The epoch number to query.
+    /// @param pageRequest Pagination request parameters.
+    /// @return response Array of queued messages, pageResponse Pagination response.
+    function epochMsgs(
+        uint64 epochNumber,
+        PageRequest calldata pageRequest
+    ) external view returns (
+        QueuedMessageResponse[] calldata response,
+        PageResponse calldata pageResponse
+    );
+
+    /// @dev Queries messages from the latest epochs.
+    /// @param endEpoch The ending epoch number.
+    /// @param epochCount Number of epochs to query backwards from endEpoch.
+    /// @param pageRequest Pagination request parameters.
+    /// @return response Array of epoch message lists, pageResponse Pagination response.
+    function latestEpochMsgs(
+        uint64 endEpoch,
+        uint64 epochCount,
+        PageRequest calldata pageRequest
+    ) external view returns (
+        QueuedMessageList[] calldata response,
+        PageResponse calldata pageResponse
+    );
+
+    /// @dev Queries the lifecycle of a validator.
+    /// @param validatorAddress The validator address to query.
+    /// @return response Array of validator lifecycle events.
+    function validatorLifecycle(
+        address validatorAddress
+    ) external view returns (
+        ValidatorUpdateResponse[] calldata response
+    );
+
+    /// @dev Queries the lifecycle of delegations for a delegator.
+    /// @param delegatorAddress The delegator address to query.
+    /// @return response The delegation lifecycle information.
+    function delegationLifecycle(
+        address delegatorAddress
+    ) external view returns (
+        DelegationLifecycle calldata response
+    );
+
+    /// @dev Queries the validator set for a specific epoch.
+    /// @param epochNumber The epoch number to query.
+    /// @param pageRequest Pagination request parameters.
+    /// @return validators Array of validators in the epoch, totalVotingPower Total voting power of all validators, pageResponse Pagination response.
+    function epochValSet(
+        uint64 epochNumber,
+        PageRequest calldata pageRequest
+    ) external view returns (
+        SimpleValidator[] calldata validators,
+        int64 totalVotingPower,
         PageResponse calldata pageResponse
     );
 
