@@ -23,20 +23,33 @@ func BeginBlocker(ctx context.Context, k keeper.Keeper) error {
 func EndBlocker(ctx context.Context, k keeper.Keeper) ([]abci.ValidatorUpdate, error) {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyEndBlocker)
 
+	// Check if any broadcasts are needed
+	btcHeaderTriggered := k.ShouldBroadcastBTCHeaders(ctx)
+	consumerEventsTriggered := k.HasBTCStakingConsumerIBCPackets(ctx)
+	if !btcHeaderTriggered && !consumerEventsTriggered {
+		// No broadcasts needed, exit early
+		return []abci.ValidatorUpdate{}, nil
+	}
+
 	// Build a map for O(1) channel lookups
 	consumerChannelMap, err := k.GetConsumerChannelMap(ctx)
 	if err != nil {
 		handleBroadcastError(ctx, k, "BuildConsumerChannelMap", err)
 	}
 
-	// Handle BTC headers broadcast with structured error handling
-	if err := k.BroadcastBTCHeaders(ctx, consumerChannelMap); err != nil {
-		handleBroadcastError(ctx, k, "BroadcastBTCHeaders", err)
+	// Conditional BTC headers broadcast - only when triggered by BTC light client events
+	if btcHeaderTriggered {
+		if err := k.BroadcastBTCHeaders(ctx, consumerChannelMap); err != nil {
+			handleBroadcastError(ctx, k, "BroadcastBTCHeaders", err)
+		}
 	}
 
-	// Handle BTC staking consumer events broadcast with structured error handling
-	if err := k.BroadcastBTCStakingConsumerEvents(ctx, consumerChannelMap); err != nil {
-		handleBroadcastError(ctx, k, "BroadcastBTCStakingConsumerEvents", err)
+	// Conditional BTC staking consumer events broadcast - only when there are pending events
+	if consumerEventsTriggered {
+		// Handle BTC staking consumer events broadcast with structured error handling
+		if err := k.BroadcastBTCStakingConsumerEvents(ctx, consumerChannelMap); err != nil {
+			handleBroadcastError(ctx, k, "BroadcastBTCStakingConsumerEvents", err)
+		}
 	}
 
 	return []abci.ValidatorUpdate{}, nil
