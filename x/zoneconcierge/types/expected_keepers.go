@@ -78,6 +78,7 @@ type ConnectionKeeper interface {
 type BTCLightClientKeeper interface {
 	GetTipInfo(ctx context.Context) *btclctypes.BTCHeaderInfo
 	GetMainChainFrom(ctx context.Context, startHeight uint32) []*btclctypes.BTCHeaderInfo
+	GetMainChainFromWithCache(ctx context.Context, startHeight uint32) []*btclctypes.BTCHeaderInfo
 	GetMainChainUpTo(ctx context.Context, depth uint32) []*btclctypes.BTCHeaderInfo
 	GetHeaderByHash(ctx context.Context, hash *bbn.BTCHeaderHashBytes) (*btclctypes.BTCHeaderInfo, error)
 }
@@ -103,6 +104,7 @@ type EpochingKeeper interface {
 
 type BTCStakingKeeper interface {
 	GetAllBTCStakingConsumerIBCPackets(ctx context.Context) map[string]*bstypes.BTCStakingIBCPacket
+	HasBTCStakingConsumerIBCPackets(ctx context.Context) bool
 	DeleteBTCStakingConsumerIBCPacket(ctx context.Context, consumerID string)
 	SlashFinalityProvider(ctx context.Context, fpBTCPK []byte) error
 	GetFinalityProvider(ctx context.Context, fpBTCPK []byte) (*bstypes.FinalityProvider, error)

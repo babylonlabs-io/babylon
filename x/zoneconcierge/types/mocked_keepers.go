@@ -553,6 +553,20 @@ func (mr *MockBTCLightClientKeeperMockRecorder) GetMainChainFrom(ctx, startHeigh
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMainChainFrom", reflect.TypeOf((*MockBTCLightClientKeeper)(nil).GetMainChainFrom), ctx, startHeight)
 }
 
+// GetMainChainFromWithCache mocks base method.
+func (m *MockBTCLightClientKeeper) GetMainChainFromWithCache(ctx context.Context, startHeight uint32) []*types1.BTCHeaderInfo {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetMainChainFromWithCache", ctx, startHeight)
+	ret0, _ := ret[0].([]*types1.BTCHeaderInfo)
+	return ret0
+}
+
+// GetMainChainFromWithCache indicates an expected call of GetMainChainFromWithCache.
+func (mr *MockBTCLightClientKeeperMockRecorder) GetMainChainFromWithCache(ctx, startHeight interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMainChainFromWithCache", reflect.TypeOf((*MockBTCLightClientKeeper)(nil).GetMainChainFromWithCache), ctx, startHeight)
+}
+
 // GetMainChainUpTo mocks base method.
 func (m *MockBTCLightClientKeeper) GetMainChainUpTo(ctx context.Context, depth uint32) []*types1.BTCHeaderInfo {
 	m.ctrl.T.Helper()
@@ -857,6 +871,20 @@ func (m *MockBTCStakingKeeper) GetFinalityProvider(ctx context.Context, fpBTCPK 
 func (mr *MockBTCStakingKeeperMockRecorder) GetFinalityProvider(ctx, fpBTCPK interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFinalityProvider", reflect.TypeOf((*MockBTCStakingKeeper)(nil).GetFinalityProvider), ctx, fpBTCPK)
+}
+
+// HasBTCStakingConsumerIBCPackets mocks base method.
+func (m *MockBTCStakingKeeper) HasBTCStakingConsumerIBCPackets(ctx context.Context) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HasBTCStakingConsumerIBCPackets", ctx)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// HasBTCStakingConsumerIBCPackets indicates an expected call of HasBTCStakingConsumerIBCPackets.
+func (mr *MockBTCStakingKeeperMockRecorder) HasBTCStakingConsumerIBCPackets(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasBTCStakingConsumerIBCPackets", reflect.TypeOf((*MockBTCStakingKeeper)(nil).HasBTCStakingConsumerIBCPackets), ctx)
 }
 
 // SlashFinalityProvider mocks base method.
