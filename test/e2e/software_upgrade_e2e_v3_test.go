@@ -418,7 +418,9 @@ func (s *SoftwareUpgradeV3TestSuite) CheckBtcRewardsAfterUpgrade(expectedUpgrade
 	fp1Rate := sdkmath.LegacyNewDec(vpFp1).QuoTruncate(sdkmath.LegacyNewDec(totalVp))
 	fp2Rate := sdkmath.LegacyNewDec(vpFp2).QuoTruncate(sdkmath.LegacyNewDec(totalVp))
 
-	totalCoinsRewarded := sdk.NewCoins()
+	ictvParams, err := n.QueryIncentiveParams()
+	s.Require().NoError(err)
+
 	fp1CommTotal, fp2CommTotal, fp1CoinsForDels, fp2CoinsForDels := sdk.NewCoins(), sdk.NewCoins(), sdk.NewCoins(), sdk.NewCoins()
 	for blkHeight := firstFinalizedBlock.Height; blkHeight <= lastFinalizedBlock.Height; blkHeight++ {
 		fpsVoted := n.QueryVotesAtHeight(blkHeight)
@@ -441,16 +443,24 @@ func (s *SoftwareUpgradeV3TestSuite) CheckBtcRewardsAfterUpgrade(expectedUpgrade
 		// calculate the rewards given for each block
 		coinsInBlk, err := n.QueryBtcStkGauge(blkHeight)
 		s.Require().NoError(err)
-		totalCoinsRewarded = totalCoinsRewarded.Add(coinsInBlk...)
+
+		// considering the btc_staking_portion did not change
+		// we can backcalculate the fee_collector initial balance and
+		// estimate the direct FP rewards
+		decCoinsInBlk := sdk.NewDecCoinsFromCoins(coinsInBlk...)
+		feeCollectorInitBal := decCoinsInBlk.QuoDec(ictvParams.BTCStakingPortion())
+		fpDirectRwds, _ := feeCollectorInitBal.MulDecTruncate(ictvParams.FpPortion).TruncateDecimal()
+		fp1DirectRwds := itypes.GetCoinsPortion(fpDirectRwds, fp1Rate)
+		fp2DirectRwds := itypes.GetCoinsPortion(fpDirectRwds, fp2Rate)
 
 		coinsForFp1AndDels := itypes.GetCoinsPortion(coinsInBlk, fp1Rate)
 		fp1Comm := itypes.GetCoinsPortion(coinsForFp1AndDels, *s.fp1.Commission)
-		fp1CommTotal = fp1CommTotal.Add(fp1Comm...)
+		fp1CommTotal = fp1CommTotal.Add(fp1Comm...).Add(fp1DirectRwds...)
 		fp1CoinsForDels = fp1CoinsForDels.Add(coinsForFp1AndDels.Sub(fp1Comm...)...)
 
 		coinsForFp2AndDels := itypes.GetCoinsPortion(coinsInBlk, fp2Rate)
 		fp2Comm := itypes.GetCoinsPortion(coinsForFp2AndDels, *s.fp2.Commission)
-		fp2CommTotal = fp2CommTotal.Add(fp2Comm...)
+		fp2CommTotal = fp2CommTotal.Add(fp2Comm...).Add(fp2DirectRwds...)
 		fp2CoinsForDels = fp2CoinsForDels.Add(coinsForFp2AndDels.Sub(fp2Comm...)...)
 	}
 
