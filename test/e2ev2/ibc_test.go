@@ -30,6 +30,8 @@ func TestIBCTransfer(t *testing.T) {
 	bsn.DefaultWallet().VerifySentTx = true
 	bsn.SendCoins(bsnSender.Addr(), senderCoins.MulInt(sdkmath.NewInt(5)))
 
+	bsn.UpdateWalletAccSeqNumber(bsnSender.KeyName)
+
 	bsnChannels := bsn.QueryIBCChannels()
 	bsnChannel := bsnChannels.Channels[0]
 	bbnRecipient := datagen.GenRandomAddress().String()
