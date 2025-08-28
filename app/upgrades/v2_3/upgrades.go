@@ -9,6 +9,7 @@ import (
 
 	"github.com/babylonlabs-io/babylon/v4/app/keepers"
 	"github.com/babylonlabs-io/babylon/v4/app/upgrades"
+	"github.com/babylonlabs-io/babylon/v4/app/upgrades/btcstaking"
 )
 
 // UpgradeName defines the on-chain upgrade name for the Babylon v2.3 upgrade
@@ -30,7 +31,7 @@ func CreateUpgradeHandler(mm *module.Manager, configurator module.Configurator, 
 			return nil, err
 		}
 
-		err = upgrades.FpSoftDeleteDupAddr(ctx, keepers.BTCStakingKeeper)
+		err = btcstaking.FpSoftDeleteDupAddr(ctx, keepers.BTCStakingKeeper)
 		if err != nil {
 			return nil, err
 		}

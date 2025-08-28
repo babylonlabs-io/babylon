@@ -55,7 +55,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Bug fixes
 
+<<<<<<< HEAD
 - [#1597](https://github.com/babylonlabs-io/babylon/pull/1597) fix: disabled duplicate fp bbn addr registering
+=======
+- [#1585](https://github.com/babylonlabs-io/babylon/pull/1585) Remove allow-lists logic and state in `x/btcstaking` module
+- [#1596](https://github.com/babylonlabs-io/babylon/pull/1596) Add rollups finality contract index in `x/btcstkconsumer`
+>>>>>>> d79f7c5 (imp(btcstkconsumer): add finality contract idx (#1596))
 
 ### Bug fixes
 
