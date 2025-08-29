@@ -489,6 +489,9 @@ func (ak *AppKeepers) InitKeepers(
 			ak.Erc20Keeper,
 			ak.GovKeeper,
 			ak.SlashingKeeper,
+			ak.StakingKeeper,
+			ak.EpochingKeeper,
+			ak.CheckpointingKeeper,
 		),
 	)
 	// Create the TokenFactory Keeper
