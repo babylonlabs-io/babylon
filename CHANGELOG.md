@@ -58,6 +58,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 - [#1597](https://github.com/babylonlabs-io/babylon/pull/1597) fix: disabled duplicate fp bbn addr registering
 - [#1608](https://github.com/babylonlabs-io/babylon/pull/1608) fix: `x/btcstaking` prefix of `LargestBtcReOrg` to match mainnet.
+- [#1630](https://github.com/babylonlabs-io/babylon/pull/1630) Remove `HeaderCache` redundant test
 
 ### State Breaking
 
