@@ -7,6 +7,7 @@ import (
 
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	distkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	disttypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 
 	"github.com/stretchr/testify/require"
@@ -100,6 +101,7 @@ func TestCoostakingValidatorDirectRewards(t *testing.T) {
 	// all fee collector balance is distributed
 	require.True(t, finalFeeCollectorBalance.IsZero(), "Expected all fee collector balance to be distributed, but got: %s", finalFeeCollectorBalance.String())
 
+	distQuerier := distkeeper.NewQuerier(distributionK)
 	// Get coostaking parameters
 	params := coostakingK.GetParams(ctx)
 	// calculate expected validator commission based on params
@@ -122,6 +124,16 @@ func TestCoostakingValidatorDirectRewards(t *testing.T) {
 		// Check that withdrawn commission is at least the expected amount
 		diff := sdk.NewDecCoinsFromCoins(commissionRewards...).Sub(expValComm)
 		require.True(t, diff.IsAllPositive(), diff.String())
+
+		// Check that there're some outstanding rewards for delegator
+		delAddr := sdk.AccAddress(valAddr)
+		rewards, err := distQuerier.DelegationRewards(ctx, &disttypes.QueryDelegationRewardsRequest{
+			DelegatorAddress: delAddr.String(),
+			ValidatorAddress: valAddr.String(),
+		})
+		require.NoError(t, err)
+		require.NotNil(t, rewards)
+		require.True(t, rewards.Rewards.IsAllPositive(), "Expected some delegator rewards, got: %s", rewards.Rewards.String())
 	}
 
 	// Verify that coostaking module balance increased
