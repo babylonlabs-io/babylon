@@ -389,6 +389,8 @@ func (ak *AppKeepers) InitKeepers(
 		runtime.NewKVStoreService(keys[coostakingtypes.StoreKey]),
 		ak.BankKeeper,
 		ak.AccountKeeper,
+		ak.StakingKeeper,
+		ak.DistrKeeper,
 		appparams.AccGov.String(),
 		authtypes.FeeCollectorName,
 	)

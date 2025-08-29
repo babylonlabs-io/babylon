@@ -25,6 +25,7 @@ func TestParamsValidate(t *testing.T) {
 			params: types.Params{
 				CoostakingPortion:   math.LegacyMustNewDecFromStr("0.5"),
 				ScoreRatioBtcByBaby: math.NewInt(100),
+				ValidatorsPortion:   math.LegacyMustNewDecFromStr("0.001"),
 			},
 			expErr: nil,
 		},
@@ -33,14 +34,16 @@ func TestParamsValidate(t *testing.T) {
 			params: types.Params{
 				CoostakingPortion:   math.LegacyNewDec(0),
 				ScoreRatioBtcByBaby: math.OneInt(),
+				ValidatorsPortion:   math.LegacyNewDec(0),
 			},
 			expErr: nil,
 		},
 		{
 			name: "valid params with maximum coostaking portion",
 			params: types.Params{
-				CoostakingPortion:   math.LegacyMustNewDecFromStr("0.999999999999999999"),
+				CoostakingPortion:   math.LegacyMustNewDecFromStr("0.5"),
 				ScoreRatioBtcByBaby: math.NewInt(50),
+				ValidatorsPortion:   math.LegacyMustNewDecFromStr("0.4"),
 			},
 			expErr: nil,
 		},
@@ -49,38 +52,43 @@ func TestParamsValidate(t *testing.T) {
 			params: types.Params{
 				CoostakingPortion:   math.LegacyDec{},
 				ScoreRatioBtcByBaby: types.DefaultScoreRatioBtcByBaby,
+				ValidatorsPortion:   types.DefaultValidatorsPortion,
 			},
-			expErr: types.ErrInvalidCoostakingPortion,
+			expErr: types.ErrInvalidPercentage,
 		},
 		{
 			name: "coostaking portion equal to 1",
 			params: types.Params{
 				CoostakingPortion:   math.LegacyOneDec(),
 				ScoreRatioBtcByBaby: types.DefaultScoreRatioBtcByBaby,
+				ValidatorsPortion:   types.DefaultValidatorsPortion,
 			},
-			expErr: types.ErrCoostakingPortionTooHigh,
+			expErr: types.ErrPercentageTooHigh,
 		},
 		{
 			name: "coostaking portion greater than 1",
 			params: types.Params{
 				CoostakingPortion:   math.LegacyMustNewDecFromStr("1.5"),
 				ScoreRatioBtcByBaby: types.DefaultScoreRatioBtcByBaby,
+				ValidatorsPortion:   types.DefaultValidatorsPortion,
 			},
-			expErr: types.ErrCoostakingPortionTooHigh,
+			expErr: types.ErrPercentageTooHigh,
 		},
 		{
 			name: "negative coostaking portion",
 			params: types.Params{
 				CoostakingPortion:   math.LegacyMustNewDecFromStr("-0.1"),
 				ScoreRatioBtcByBaby: types.DefaultScoreRatioBtcByBaby,
+				ValidatorsPortion:   types.DefaultValidatorsPortion,
 			},
-			expErr: types.ErrInvalidCoostakingPortion.Wrap("lower than zero"),
+			expErr: types.ErrInvalidPercentage.Wrap("lower than zero"),
 		},
 		{
 			name: "nil score ratio btc by baby",
 			params: types.Params{
 				CoostakingPortion:   types.DefaultCoostakingPortion,
 				ScoreRatioBtcByBaby: math.Int{},
+				ValidatorsPortion:   types.DefaultValidatorsPortion,
 			},
 			expErr: types.ErrInvalidScoreRatioBtcByBaby,
 		},
@@ -89,6 +97,7 @@ func TestParamsValidate(t *testing.T) {
 			params: types.Params{
 				CoostakingPortion:   types.DefaultCoostakingPortion,
 				ScoreRatioBtcByBaby: math.ZeroInt(),
+				ValidatorsPortion:   types.DefaultValidatorsPortion,
 			},
 			expErr: types.ErrScoreRatioTooLow,
 		},
@@ -97,6 +106,7 @@ func TestParamsValidate(t *testing.T) {
 			params: types.Params{
 				CoostakingPortion:   types.DefaultCoostakingPortion,
 				ScoreRatioBtcByBaby: math.NewInt(-10),
+				ValidatorsPortion:   types.DefaultValidatorsPortion,
 			},
 			expErr: types.ErrScoreRatioTooLow,
 		},
@@ -105,8 +115,63 @@ func TestParamsValidate(t *testing.T) {
 			params: types.Params{
 				CoostakingPortion:   math.LegacyDec{},
 				ScoreRatioBtcByBaby: math.Int{},
+				ValidatorsPortion:   types.DefaultValidatorsPortion,
 			},
-			expErr: types.ErrInvalidCoostakingPortion,
+			expErr: types.ErrInvalidPercentage,
+		},
+		{
+			name: "nil validators portion",
+			params: types.Params{
+				CoostakingPortion:   types.DefaultCoostakingPortion,
+				ScoreRatioBtcByBaby: types.DefaultScoreRatioBtcByBaby,
+				ValidatorsPortion:   math.LegacyDec{},
+			},
+			expErr: types.ErrInvalidPercentage,
+		},
+		{
+			name: "validators portion equal to 1",
+			params: types.Params{
+				CoostakingPortion:   types.DefaultCoostakingPortion,
+				ScoreRatioBtcByBaby: types.DefaultScoreRatioBtcByBaby,
+				ValidatorsPortion:   math.LegacyOneDec(),
+			},
+			expErr: types.ErrPercentageTooHigh,
+		},
+		{
+			name: "validators portion greater than 1",
+			params: types.Params{
+				CoostakingPortion:   types.DefaultCoostakingPortion,
+				ScoreRatioBtcByBaby: types.DefaultScoreRatioBtcByBaby,
+				ValidatorsPortion:   math.LegacyMustNewDecFromStr("1.5"),
+			},
+			expErr: types.ErrPercentageTooHigh,
+		},
+		{
+			name: "negative validators portion",
+			params: types.Params{
+				CoostakingPortion:   types.DefaultCoostakingPortion,
+				ScoreRatioBtcByBaby: types.DefaultScoreRatioBtcByBaby,
+				ValidatorsPortion:   math.LegacyMustNewDecFromStr("-0.01"),
+			},
+			expErr: types.ErrInvalidPercentage.Wrap("lower than zero"),
+		},
+		{
+			name: "coostaking + validators portion equal to 1",
+			params: types.Params{
+				CoostakingPortion:   math.LegacyMustNewDecFromStr("0.5"),
+				ScoreRatioBtcByBaby: types.DefaultScoreRatioBtcByBaby,
+				ValidatorsPortion:   math.LegacyMustNewDecFromStr("0.5"),
+			},
+			expErr: types.ErrPercentageTooHigh,
+		},
+		{
+			name: "coostaking + validators portion greater than 1",
+			params: types.Params{
+				CoostakingPortion:   math.LegacyMustNewDecFromStr("0.6"),
+				ScoreRatioBtcByBaby: types.DefaultScoreRatioBtcByBaby,
+				ValidatorsPortion:   math.LegacyMustNewDecFromStr("0.5"),
+			},
+			expErr: types.ErrPercentageTooHigh,
 		},
 	}
 
@@ -115,7 +180,7 @@ func TestParamsValidate(t *testing.T) {
 			err := tc.params.Validate()
 
 			if tc.expErr != nil {
-				require.EqualError(t, err, tc.expErr.Error())
+				require.ErrorContains(t, err, tc.expErr.Error())
 				return
 			}
 			require.NoError(t, err)
@@ -128,6 +193,7 @@ func TestDefaultParams(t *testing.T) {
 
 	require.Equal(t, types.DefaultCoostakingPortion, params.CoostakingPortion)
 	require.Equal(t, types.DefaultScoreRatioBtcByBaby, params.ScoreRatioBtcByBaby)
+	require.Equal(t, types.DefaultValidatorsPortion, params.ValidatorsPortion)
 
 	err := params.Validate()
 	require.NoError(t, err)
