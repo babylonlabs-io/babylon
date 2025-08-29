@@ -10,6 +10,7 @@ import (
 )
 
 var _ sdk.Msg = (*MsgInsertHeaders)(nil)
+var _ sdk.HasValidateBasic = (*MsgInsertHeaders)(nil)
 
 func NewMsgInsertHeaders(signer sdk.AccAddress, headersHex string) (*MsgInsertHeaders, error) {
 	if len(headersHex) == 0 {
@@ -59,7 +60,8 @@ func (msg *MsgInsertHeaders) ReporterAddress() sdk.AccAddress {
 	return sender
 }
 
-func (msg *MsgInsertHeaders) ValidateStateless() error {
+// ValidateBasic performs stateless validation on MsgInsertHeaders
+func (msg *MsgInsertHeaders) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Signer)
 
 	if err != nil {
