@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/rand"
 	"testing"
+	"time"
 
 	"github.com/babylonlabs-io/babylon/v3/app"
 	btclightclienttypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
@@ -186,4 +187,74 @@ func FuzzFinalizedChainInfo(f *testing.F) {
 			require.Equal(t, consumersInfo[i].numHeaders-1, respData.LatestFinalizedHeader.Height)
 		}
 	})
+}
+
+func TestLatestEpochHeader(t *testing.T) {
+	resp := &zctypes.IndexedHeader{
+		ConsumerId:          "1",
+		Hash:                []byte("hash"),
+		Height:              1,
+		Time:                nil,
+		BabylonTxHash:       []byte("babylon_tx_hash"),
+		BabylonHeaderHeight: 1,
+		BabylonHeaderHash:   []byte("babylon_header_hash"),
+	}
+
+	babylonApp := app.Setup(t, false)
+	ctx := babylonApp.NewContext(false)
+	zcKeeper := babylonApp.ZoneConciergeKeeper
+	zcKeeper.SetLatestEpochHeader(ctx, "1", resp)
+	req1 := &zctypes.QueryLatestEpochHeaderRequest{ConsumerId: "1"}
+	req2 := &zctypes.QueryLatestEpochHeaderRequest{ConsumerId: ""}
+
+	resp1, err := zcKeeper.LatestEpochHeader(ctx, req1)
+	require.NoError(t, err)
+	require.NotNil(t, resp1)
+
+	resp2, err := zcKeeper.LatestEpochHeader(ctx, req2)
+	require.Error(t, err)
+	require.Nil(t, resp2)
+}
+
+func TestBSNLastSentSegment(t *testing.T) {
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	babylonApp := app.Setup(t, false)
+	ctx := babylonApp.NewContext(false)
+	zcKeeper := babylonApp.ZoneConciergeKeeper
+	h := datagen.GenRandomBTCChainSegment(r)
+	zcKeeper.SetBSNLastSentSegment(ctx, "1", h)
+
+	req1 := &zctypes.QueryBSNLastSentSegmentRequest{ConsumerId: "1"}
+	req2 := &zctypes.QueryBSNLastSentSegmentRequest{ConsumerId: ""}
+
+	resp1, err := zcKeeper.BSNLastSentSegment(ctx, req1)
+	require.NoError(t, err)
+	require.NotNil(t, resp1)
+	resp2, err := zcKeeper.BSNLastSentSegment(ctx, req2)
+	require.Error(t, err)
+	require.Nil(t, resp2)
+}
+
+func TestGetSealedEpochProof(t *testing.T) {
+	babylonApp := app.Setup(t, false)
+	ctx := babylonApp.NewContext(false)
+	zcKeeper := babylonApp.ZoneConciergeKeeper
+	req1 := &zctypes.QueryGetSealedEpochProofRequest{EpochNum: 1}
+	req2 := &zctypes.QueryGetSealedEpochProofRequest{EpochNum: 0}
+
+	testProof := zctypes.ProofEpochSealed{
+		ValidatorSet: []*checkpointingtypes.ValidatorWithBlsKey{},
+	}
+
+	err := zcKeeper.SealedEpochProof.Set(ctx, 1, testProof)
+	require.NoError(t, err)
+
+	resp1, err := zcKeeper.GetSealedEpochProof(ctx, req1)
+	require.NoError(t, err)
+	require.NotNil(t, resp1)
+	require.Empty(t, resp1.Epoch.ValidatorSet)
+
+	resp2, err := zcKeeper.GetSealedEpochProof(ctx, req2)
+	require.Error(t, err)
+	require.Nil(t, resp2)
 }
