@@ -6,6 +6,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+type IncentiveKeeper interface {
+	AccumulateRewardGaugeForCoostaker(ctx context.Context, addr sdk.AccAddress, reward sdk.Coins)
+}
+
 type AccountKeeper interface {
 	GetModuleAccount(ctx context.Context, name string) sdk.ModuleAccountI
 }
