@@ -25,6 +25,7 @@ type (
 
 		bankK types.BankKeeper
 		accK  types.AccountKeeper
+		ictvK types.IncentiveKeeper
 
 		// params stores the module parameter
 		params collections.Item[types.Params]
