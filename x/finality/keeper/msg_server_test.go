@@ -16,6 +16,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
+<<<<<<< HEAD
 	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
 	"github.com/babylonlabs-io/babylon/v3/app/signingcontext"
 	"github.com/babylonlabs-io/babylon/v3/crypto/eots"
@@ -30,6 +31,23 @@ import (
 	"github.com/babylonlabs-io/babylon/v3/x/finality/keeper"
 	"github.com/babylonlabs-io/babylon/v3/x/finality/types"
 	ictvtypes "github.com/babylonlabs-io/babylon/v3/x/incentive/types"
+=======
+	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
+	"github.com/babylonlabs-io/babylon/v4/app/signingcontext"
+	"github.com/babylonlabs-io/babylon/v4/crypto/eots"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	testutil "github.com/babylonlabs-io/babylon/v4/testutil/incentives-helper"
+	keepertest "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
+	"github.com/babylonlabs-io/babylon/v4/testutil/mocks"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	btclctypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
+	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
+	"github.com/babylonlabs-io/babylon/v4/x/finality/keeper"
+	"github.com/babylonlabs-io/babylon/v4/x/finality/types"
+	ictvtypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
+	testhelper "github.com/babylonlabs-io/babylon/v4/testutil/helper"
+>>>>>>> 0a999784 (fix: remove duplicated ValidateBasic checks (#1635))
 )
 
 func setupMsgServer(t testing.TB) (*keeper.Keeper, types.MsgServer, context.Context) {
@@ -119,8 +137,7 @@ func FuzzCommitPubRandList(f *testing.F) {
 		overflowStartHeight := math.MaxUint64 - datagen.RandomInt(r, 5)
 		_, msg, err = datagen.GenRandomMsgCommitPubRandList(r, btcSK, signingContext, overflowStartHeight, numPubRand)
 		require.NoError(t, err)
-		_, err = ms.CommitPubRandList(ctx, msg)
-		require.Error(t, err)
+		err = testhelper.ValidateBasicTxMsgs([]sdk.Msg{msg})
 		require.ErrorContains(t, err, types.ErrOverflowInBlockHeight.Error())
 
 		// Case 7: commit a pubrand list with startHeight too far into the future
@@ -465,6 +482,7 @@ func TestDoNotPanicOnNilProof(t *testing.T) {
 
 	bsKeeper := types.NewMockBTCStakingKeeper(ctrl)
 	bsKeeper.EXPECT().UpdateFinalityProvider(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+	bsKeeper.EXPECT().IsFinalityProviderDeleted(gomock.Any(), gomock.Any()).Return(false).AnyTimes()
 	cKeeper := types.NewMockCheckpointingKeeper(ctrl)
 	iKeeper := types.NewMockIncentiveKeeper(ctrl)
 	iKeeper.EXPECT().IndexRefundableMsg(gomock.Any(), gomock.Any()).AnyTimes()
@@ -513,8 +531,9 @@ func TestDoNotPanicOnNilProof(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	// Not panic on empty proof
+	// Not panic on empty proof (error on ValidateBasic)
 	msg.Proof = nil
+
 	// Case 3: successful if the finality provider has voting power and has not casted this vote yet
 	// index this block first
 	ctx = ctx.WithHeaderInfo(header.Info{Height: int64(blockHeight), AppHash: blockAppHash})
@@ -527,9 +546,9 @@ func TestDoNotPanicOnNilProof(t *testing.T) {
 	cKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(lastFinalizedEpoch).AnyTimes()
 	cKeeper.EXPECT().GetEpochByHeight(gomock.Any(), gomock.Any()).Return(lastFinalizedEpoch).AnyTimes()
 
-	// add vote and it should work
-	_, err = ms.AddFinalitySig(ctx, msg)
-	require.Error(t, err)
+	// fail on ValidateBasic before msg server
+	err = testhelper.ValidateBasicTxMsgs([]sdk.Msg{msg})
+	require.ErrorContains(t, err, "empty inclusion proof")
 }
 
 func TestVerifyActivationHeight(t *testing.T) {

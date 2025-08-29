@@ -37,10 +37,6 @@ func (m msgServer) InsertHeaders(ctx context.Context, msg *types.MsgInsertHeader
 	}
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
-	if err := msg.ValidateStateless(); err != nil {
-		return nil, types.ErrInvalidMessageFormat.Wrapf("invalid insert header message: %v", err)
-	}
-
 	reporterAddress := msg.ReporterAddress()
 
 	if !m.canInsertHeaders(sdkCtx, reporterAddress) {

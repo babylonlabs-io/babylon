@@ -20,6 +20,7 @@ import (
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/stretchr/testify/require"
 
+<<<<<<< HEAD
 	"github.com/babylonlabs-io/babylon/v3/app"
 	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
 	"github.com/babylonlabs-io/babylon/v3/app/signingcontext"
@@ -30,6 +31,19 @@ import (
 	checkpointingtypes "github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
 	"github.com/babylonlabs-io/babylon/v3/x/epoching/keeper"
 	"github.com/babylonlabs-io/babylon/v3/x/epoching/types"
+=======
+	"github.com/babylonlabs-io/babylon/v4/app"
+	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
+	"github.com/babylonlabs-io/babylon/v4/app/signingcontext"
+	"github.com/babylonlabs-io/babylon/v4/crypto/bls12381"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	btcstakingtypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
+	"github.com/babylonlabs-io/babylon/v4/x/epoching/keeper"
+	"github.com/babylonlabs-io/babylon/v4/x/epoching/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+>>>>>>> 0a999784 (fix: remove duplicated ValidateBasic checks (#1635))
 )
 
 // Helper is a structure which wraps the entire app and exposes functionalities for testing the epoching module
@@ -341,4 +355,25 @@ func (h *Helper) AddFinalityProvider(fp *btcstakingtypes.FinalityProvider) {
 		BsnId: fp.BsnId,
 	})
 	h.NoError(err)
+}
+
+// ValidateBasicTxMsgs replicates the SDK's baseapp logic for validating message basics testing purposes
+// This function is extracted from cosmos-sdk baseapp to test the exact same logic
+func ValidateBasicTxMsgs(msgs []sdk.Msg) error {
+	if len(msgs) == 0 {
+		return sdkerrors.ErrInvalidRequest.Wrap("must contain at least one message")
+	}
+
+	for _, msg := range msgs {
+		m, ok := msg.(sdk.HasValidateBasic)
+		if !ok {
+			continue
+		}
+
+		if err := m.ValidateBasic(); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
