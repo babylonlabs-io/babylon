@@ -614,17 +614,16 @@ func (n *NodeConfig) QueryMintedAmountFromEvents(blockHeight int64) (sdk.Coins, 
 		if event.Type == minttypes.EventTypeMint {
 			// Find the amount attribute
 			for _, attr := range event.Attributes {
-				if string(attr.Key) == sdk.AttributeKeyAmount {
+				if attr.Key == sdk.AttributeKeyAmount {
 					// Parse the amount
-					amountStr := string(attr.Value)
-					if amountStr == "" {
+					if attr.Value == "" {
 						continue
 					}
 
 					// Parse as integer (amount is just the number without denom)
-					amount, ok := sdkmath.NewIntFromString(amountStr)
+					amount, ok := sdkmath.NewIntFromString(attr.Value)
 					if !ok {
-						return sdk.Coins{}, fmt.Errorf("failed to parse minted amount: %s", amountStr)
+						return sdk.Coins{}, fmt.Errorf("failed to parse minted amount: %s", attr.Value)
 					}
 
 					mintedCoin := sdk.NewCoin(minttypes.DefaultBondDenom, amount)
