@@ -557,10 +557,10 @@ func NewMsgWrappedCancelUnbondingDelegation(args []interface{}, denom string, ad
 	return msg, delegatorAddr, nil
 }
 
-// NewDelegationRequest creates a new QueryDelegationRequest instance and does sanity checks
+// NewDelegationBech32Request creates a new QueryDelegationRequest instance and does sanity checks
 // on the given arguments before populating the request.
 // NOTE: bring this from cosmos EVM v0.4.1
-func NewDelegationRequest(args []interface{}, addrCdc address.Codec) (*stakingtypes.QueryDelegationRequest, error) {
+func NewDelegationBech32Request(args []interface{}, addrCdc address.Codec) (*stakingtypes.QueryDelegationRequest, error) {
 	if len(args) != 2 {
 		return nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, 2, len(args))
 	}
@@ -582,6 +582,35 @@ func NewDelegationRequest(args []interface{}, addrCdc address.Codec) (*stakingty
 	return &stakingtypes.QueryDelegationRequest{
 		DelegatorAddr: delegatorAddrStr,
 		ValidatorAddr: validatorAddress,
+	}, nil
+}
+
+// NewDelegationRequest creates a new QueryDelegationRequest instance and does sanity checks
+// on the given arguments before populating the request.
+// NOTE: bring this from cosmos EVM v0.4.1
+func NewDelegationRequest(args []interface{}, addrCdc address.Codec) (*stakingtypes.QueryDelegationRequest, error) {
+	if len(args) != 2 {
+		return nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, 2, len(args))
+	}
+
+	delegatorAddr, ok := args[0].(common.Address)
+	if !ok || delegatorAddr == (common.Address{}) {
+		return nil, fmt.Errorf(cmn.ErrInvalidDelegator, args[0])
+	}
+
+	validatorAddr, ok := args[1].(common.Address)
+	if !ok || validatorAddr == (common.Address{}) {
+		return nil, fmt.Errorf(cmn.ErrInvalidType, "validatorAddr", "common.Address", args[1])
+	}
+
+	delegatorAddrStr, err := addrCdc.BytesToString(delegatorAddr.Bytes())
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode delegator address: %w", err)
+	}
+	validatorAddrStr := sdk.ValAddress(validatorAddr.Bytes()).String()
+	return &stakingtypes.QueryDelegationRequest{
+		DelegatorAddr: delegatorAddrStr,
+		ValidatorAddr: validatorAddrStr,
 	}, nil
 }
 
@@ -993,7 +1022,7 @@ func (vlo *ValidatorLifecycleOutput) FromResponse(res *epochingtypes.QueryValida
 	return vlo
 }
 
-type DelegationStateUpdate struct {
+type DelegationStateUpdateBech32 struct {
 	State       uint8 // BondState enum as uint8
 	ValAddr     string
 	Amount      cmn.Coin
@@ -1001,19 +1030,36 @@ type DelegationStateUpdate struct {
 	BlockTime   int64
 }
 
-type DelegationLifecycleStruct struct {
+type DelegationStateUpdate struct {
+	State       uint8 // BondState enum as uint8
+	ValAddr     common.Address
+	Amount      cmn.Coin
+	BlockHeight uint64
+	BlockTime   int64
+}
+
+type DelegationLifecycleStructBech32 struct {
 	DelAddr string
+	DelLife []DelegationStateUpdateBech32
+}
+
+type DelegationLifecycleStruct struct {
+	DelAddr common.Address
 	DelLife []DelegationStateUpdate
+}
+
+type DelegationLifecycleOutputBech32 struct {
+	DelegationLifecycle DelegationLifecycleStructBech32
 }
 
 type DelegationLifecycleOutput struct {
 	DelegationLifecycle DelegationLifecycleStruct
 }
 
-func (dlo *DelegationLifecycleOutput) FromResponse(res *epochingtypes.QueryDelegationLifecycleResponse) *DelegationLifecycleOutput {
-	delLife := make([]DelegationStateUpdate, len(res.DelLife.DelLife))
+func (dlo *DelegationLifecycleOutputBech32) FromResponse(res *epochingtypes.QueryDelegationLifecycleResponse) *DelegationLifecycleOutputBech32 {
+	delLife := make([]DelegationStateUpdateBech32, len(res.DelLife.DelLife))
 	for i, delUpdate := range res.DelLife.DelLife {
-		delLife[i] = DelegationStateUpdate{
+		delLife[i] = DelegationStateUpdateBech32{
 			State:       uint8(delUpdate.State), // Convert BondState enum to uint8
 			ValAddr:     delUpdate.ValAddr,
 			Amount:      cmn.Coin{Denom: delUpdate.Amount.Denom, Amount: delUpdate.Amount.Amount.BigInt()},
@@ -1022,8 +1068,42 @@ func (dlo *DelegationLifecycleOutput) FromResponse(res *epochingtypes.QueryDeleg
 		}
 	}
 
-	dlo.DelegationLifecycle = DelegationLifecycleStruct{
+	dlo.DelegationLifecycle = DelegationLifecycleStructBech32{
 		DelAddr: res.DelLife.DelAddr,
+		DelLife: delLife,
+	}
+
+	return dlo
+}
+
+func (dlo *DelegationLifecycleOutput) FromResponse(res *epochingtypes.QueryDelegationLifecycleResponse) *DelegationLifecycleOutput {
+	delLife := make([]DelegationStateUpdate, len(res.DelLife.DelLife))
+	for i, delUpdate := range res.DelLife.DelLife {
+		// convert bech32 validator address to hex
+		valAddr, err := sdk.ValAddressFromBech32(delUpdate.ValAddr)
+		var valAddrHex common.Address
+		if err == nil {
+			valAddrHex = common.BytesToAddress(valAddr.Bytes())
+		}
+
+		delLife[i] = DelegationStateUpdate{
+			State:       uint8(delUpdate.State), // Convert BondState enum to uint8
+			ValAddr:     valAddrHex,
+			Amount:      cmn.Coin{Denom: delUpdate.Amount.Denom, Amount: delUpdate.Amount.Amount.BigInt()},
+			BlockHeight: delUpdate.BlockHeight,
+			BlockTime:   delUpdate.BlockTime.UTC().Unix(),
+		}
+	}
+
+	// Convert bech32 delegator address to hex
+	delegatorAddr, err := sdk.AccAddressFromBech32(res.DelLife.DelAddr)
+	var delegatorAddrHex common.Address
+	if err == nil {
+		delegatorAddrHex = common.BytesToAddress(delegatorAddr.Bytes())
+	}
+
+	dlo.DelegationLifecycle = DelegationLifecycleStruct{
+		DelAddr: delegatorAddrHex,
 		DelLife: delLife,
 	}
 
@@ -1036,7 +1116,7 @@ type EpochValSetInput struct {
 }
 
 type SimpleValidator struct {
-	Addr  []byte
+	Addr  common.Address
 	Power int64
 }
 
@@ -1050,7 +1130,7 @@ func (evso *EpochValSetOutput) FromResponse(res *epochingtypes.QueryEpochValSetR
 	evso.Validators = make([]SimpleValidator, len(res.Validators))
 	for i, validator := range res.Validators {
 		evso.Validators[i] = SimpleValidator{
-			Addr:  validator.Addr,
+			Addr:  common.BytesToAddress(validator.Addr),
 			Power: validator.Power,
 		}
 	}
@@ -1063,6 +1143,11 @@ func (evso *EpochValSetOutput) FromResponse(res *epochingtypes.QueryEpochValSetR
 	}
 
 	return evso
+}
+
+// Pack packs a given slice of abi arguments into a byte array.
+func (evso *EpochValSetOutput) Pack(args abi.Arguments) ([]byte, error) {
+	return args.Pack(evso.Validators, evso.TotalVotingPower, evso.PageResponse)
 }
 
 // RedelegationRequest is a struct that contains the information to pass into a redelegation query.
@@ -1082,11 +1167,23 @@ type UnbondingDelegationEntry struct {
 	UnbondingOnHoldRefCount int64
 }
 
-// UnbondingDelegationResponse is a struct that contains the information about an unbonding delegation.
-type UnbondingDelegationResponse struct {
+// UnbondingDelegationResponseBech32 is a struct that contains the information about an unbonding delegation.
+type UnbondingDelegationResponseBech32 struct {
 	DelegatorAddress string
 	ValidatorAddress string
 	Entries          []UnbondingDelegationEntry
+}
+
+// UnbondingDelegationResponse is a struct that contains the information about an unbonding delegation.
+type UnbondingDelegationResponse struct {
+	DelegatorAddress common.Address
+	ValidatorAddress common.Address
+	Entries          []UnbondingDelegationEntry
+}
+
+// UnbondingDelegationOutputBech32 is the output response returned by the query method.
+type UnbondingDelegationOutputBech32 struct {
+	UnbondingDelegation UnbondingDelegationResponseBech32
 }
 
 // UnbondingDelegationOutput is the output response returned by the query method.
@@ -1094,11 +1191,37 @@ type UnbondingDelegationOutput struct {
 	UnbondingDelegation UnbondingDelegationResponse
 }
 
-// FromResponse populates the DelegationOutput from a QueryDelegationResponse.
-func (do *UnbondingDelegationOutput) FromResponse(res *stakingtypes.QueryUnbondingDelegationResponse) *UnbondingDelegationOutput {
+// FromResponse populates the UnbondingDelegationOutputBech32 from a QueryUnbondingDelegationResponse.
+func (do *UnbondingDelegationOutputBech32) FromResponse(res *stakingtypes.QueryUnbondingDelegationResponse) *UnbondingDelegationOutputBech32 {
 	do.UnbondingDelegation.Entries = make([]UnbondingDelegationEntry, len(res.Unbond.Entries))
 	do.UnbondingDelegation.ValidatorAddress = res.Unbond.ValidatorAddress
 	do.UnbondingDelegation.DelegatorAddress = res.Unbond.DelegatorAddress
+	for i, entry := range res.Unbond.Entries {
+		do.UnbondingDelegation.Entries[i] = UnbondingDelegationEntry{
+			UnbondingId:             entry.UnbondingId,
+			UnbondingOnHoldRefCount: entry.UnbondingOnHoldRefCount,
+			CreationHeight:          entry.CreationHeight,
+			CompletionTime:          entry.CompletionTime.UTC().Unix(),
+			InitialBalance:          entry.InitialBalance.BigInt(),
+			Balance:                 entry.Balance.BigInt(),
+		}
+	}
+	return do
+}
+
+// FromResponse populates the UnbondingDelegationOutput from a QueryUnbondingDelegationResponse.
+func (do *UnbondingDelegationOutput) FromResponse(res *stakingtypes.QueryUnbondingDelegationResponse, addrCdc address.Codec) *UnbondingDelegationOutput {
+	do.UnbondingDelegation.Entries = make([]UnbondingDelegationEntry, len(res.Unbond.Entries))
+	valAddrBytes, err := addrCdc.StringToBytes(res.Unbond.ValidatorAddress)
+	if err != nil {
+		return nil
+	}
+	delAddrBytes, err := addrCdc.StringToBytes(res.Unbond.DelegatorAddress)
+	if err != nil {
+		return nil
+	}
+	do.UnbondingDelegation.ValidatorAddress = common.BytesToAddress(valAddrBytes)
+	do.UnbondingDelegation.DelegatorAddress = common.BytesToAddress(delAddrBytes)
 	for i, entry := range res.Unbond.Entries {
 		do.UnbondingDelegation.Entries[i] = UnbondingDelegationEntry{
 			UnbondingId:             entry.UnbondingId,
@@ -1134,9 +1257,9 @@ func (do *DelegationOutput) Pack(args abi.Arguments) ([]byte, error) {
 	return args.Pack(do.Shares, do.Balance)
 }
 
-// ValidatorInfo is a struct to represent the key information from
-// a validator response.
-type ValidatorInfo struct {
+// ValidatorInfoBech32 is a struct to represent the key information from
+// a validator response with bech32 addresses.
+type ValidatorInfoBech32 struct {
 	OperatorAddress   string   `abi:"operatorAddress"`
 	ConsensusPubkey   string   `abi:"consensusPubkey"`
 	Jailed            bool     `abi:"jailed"`
@@ -1150,14 +1273,34 @@ type ValidatorInfo struct {
 	MinSelfDelegation *big.Int `abi:"minSelfDelegation"`
 }
 
+// ValidatorInfo is a struct to represent the key information from
+// a validator response with hex addresses.
+type ValidatorInfo struct {
+	OperatorAddress   common.Address `abi:"operatorAddress"`
+	ConsensusPubkey   string         `abi:"consensusPubkey"`
+	Jailed            bool           `abi:"jailed"`
+	Status            uint8          `abi:"status"`
+	Tokens            *big.Int       `abi:"tokens"`
+	DelegatorShares   *big.Int       `abi:"delegatorShares"` // TODO: Decimal
+	Description       string         `abi:"description"`
+	UnbondingHeight   int64          `abi:"unbondingHeight"`
+	UnbondingTime     int64          `abi:"unbondingTime"`
+	Commission        *big.Int       `abi:"commission"`
+	MinSelfDelegation *big.Int       `abi:"minSelfDelegation"`
+}
+
+type ValidatorOutputBech32 struct {
+	Validator ValidatorInfoBech32
+}
+
 type ValidatorOutput struct {
 	Validator ValidatorInfo
 }
 
-// DefaultValidatorOutput returns a ValidatorOutput with default values.
-func DefaultValidatorOutput() ValidatorOutput {
-	return ValidatorOutput{
-		ValidatorInfo{
+// DefaultValidatorOutputBech32 returns a ValidatorOutputBech32 with default values.
+func DefaultValidatorOutputBech32() ValidatorOutputBech32 {
+	return ValidatorOutputBech32{
+		ValidatorInfoBech32{
 			OperatorAddress:   "",
 			ConsensusPubkey:   "",
 			Jailed:            false,
@@ -1173,6 +1316,45 @@ func DefaultValidatorOutput() ValidatorOutput {
 	}
 }
 
+// DefaultValidatorOutput returns a ValidatorOutput with default values.
+func DefaultValidatorOutput() ValidatorOutput {
+	return ValidatorOutput{
+		ValidatorInfo{
+			OperatorAddress:   common.Address{},
+			ConsensusPubkey:   "",
+			Jailed:            false,
+			Status:            uint8(0),
+			Tokens:            big.NewInt(0),
+			DelegatorShares:   big.NewInt(0),
+			Description:       "",
+			UnbondingHeight:   int64(0),
+			UnbondingTime:     int64(0),
+			Commission:        big.NewInt(0),
+			MinSelfDelegation: big.NewInt(0),
+		},
+	}
+}
+
+// FromResponse populates the ValidatorOutputBech32 from a QueryValidatorResponse.
+func (vo *ValidatorOutputBech32) FromResponse(res *stakingtypes.QueryValidatorResponse) ValidatorOutputBech32 {
+	return ValidatorOutputBech32{
+		Validator: ValidatorInfoBech32{
+			OperatorAddress: res.Validator.OperatorAddress,
+			ConsensusPubkey: FormatConsensusPubkey(res.Validator.ConsensusPubkey),
+			Jailed:          res.Validator.Jailed,
+			Status:          uint8(stakingtypes.BondStatus_value[res.Validator.Status.String()]), //#nosec G115 // enum will always be convertible to uint8
+			Tokens:          res.Validator.Tokens.BigInt(),
+			DelegatorShares: res.Validator.DelegatorShares.BigInt(), // TODO: Decimal
+			// TODO: create description type,
+			Description:       res.Validator.Description.Details,
+			UnbondingHeight:   res.Validator.UnbondingHeight,
+			UnbondingTime:     res.Validator.UnbondingTime.UTC().Unix(),
+			Commission:        res.Validator.Commission.Rate.BigInt(),
+			MinSelfDelegation: res.Validator.MinSelfDelegation.BigInt(),
+		},
+	}
+}
+
 // FromResponse populates the ValidatorOutput from a QueryValidatorResponse.
 func (vo *ValidatorOutput) FromResponse(res *stakingtypes.QueryValidatorResponse) ValidatorOutput {
 	operatorAddress, err := sdk.ValAddressFromBech32(res.Validator.OperatorAddress)
@@ -1182,7 +1364,7 @@ func (vo *ValidatorOutput) FromResponse(res *stakingtypes.QueryValidatorResponse
 
 	return ValidatorOutput{
 		Validator: ValidatorInfo{
-			OperatorAddress: common.BytesToAddress(operatorAddress.Bytes()).String(),
+			OperatorAddress: common.BytesToAddress(operatorAddress.Bytes()),
 			ConsensusPubkey: FormatConsensusPubkey(res.Validator.ConsensusPubkey),
 			Jailed:          res.Validator.Jailed,
 			Status:          uint8(stakingtypes.BondStatus_value[res.Validator.Status.String()]), //#nosec G115 // enum will always be convertible to uint8
@@ -1205,11 +1387,50 @@ type ValidatorsInput struct {
 	PageRequest query.PageRequest
 }
 
+// ValidatorsOutputBech32 is a struct to represent the key information from
+// a validators response with bech32 addresses.
+type ValidatorsOutputBech32 struct {
+	Validators   []ValidatorInfoBech32
+	PageResponse query.PageResponse
+}
+
 // ValidatorsOutput is a struct to represent the key information from
-// a validators response.
+// a validators response with hex addresses.
 type ValidatorsOutput struct {
 	Validators   []ValidatorInfo
 	PageResponse query.PageResponse
+}
+
+// FromResponse populates the ValidatorsOutputBech32 from a QueryValidatorsResponse.
+func (vo *ValidatorsOutputBech32) FromResponse(res *stakingtypes.QueryValidatorsResponse) *ValidatorsOutputBech32 {
+	vo.Validators = make([]ValidatorInfoBech32, len(res.Validators))
+	for i, v := range res.Validators {
+		vo.Validators[i] = ValidatorInfoBech32{
+			OperatorAddress:   v.OperatorAddress,
+			ConsensusPubkey:   FormatConsensusPubkey(v.ConsensusPubkey),
+			Jailed:            v.Jailed,
+			Status:            uint8(stakingtypes.BondStatus_value[v.Status.String()]), //#nosec G115 // enum will always be convertible to uint8
+			Tokens:            v.Tokens.BigInt(),
+			DelegatorShares:   v.DelegatorShares.BigInt(),
+			Description:       v.Description.Details,
+			UnbondingHeight:   v.UnbondingHeight,
+			UnbondingTime:     v.UnbondingTime.UTC().Unix(),
+			Commission:        v.Commission.Rate.BigInt(),
+			MinSelfDelegation: v.MinSelfDelegation.BigInt(),
+		}
+	}
+
+	if res.Pagination != nil {
+		vo.PageResponse.Total = res.Pagination.Total
+		vo.PageResponse.NextKey = res.Pagination.NextKey
+	}
+
+	return vo
+}
+
+// Pack packs a given slice of abi arguments into a byte array.
+func (vo *ValidatorsOutputBech32) Pack(args abi.Arguments) ([]byte, error) {
+	return args.Pack(vo.Validators, vo.PageResponse)
 }
 
 // FromResponse populates the ValidatorsOutput from a QueryValidatorsResponse.
@@ -1221,7 +1442,7 @@ func (vo *ValidatorsOutput) FromResponse(res *stakingtypes.QueryValidatorsRespon
 			vo.Validators[i] = DefaultValidatorOutput().Validator
 		} else {
 			vo.Validators[i] = ValidatorInfo{
-				OperatorAddress:   common.BytesToAddress(operatorAddress.Bytes()).String(),
+				OperatorAddress:   common.BytesToAddress(operatorAddress.Bytes()),
 				ConsensusPubkey:   FormatConsensusPubkey(v.ConsensusPubkey),
 				Jailed:            v.Jailed,
 				Status:            uint8(stakingtypes.BondStatus_value[v.Status.String()]), //#nosec G115 // enum will always be convertible to uint8
@@ -1258,26 +1479,76 @@ type RedelegationEntry struct {
 	SharesDst      *big.Int
 }
 
-// RedelegationValues is a struct to represent the key information from
-// a redelegation response.
-type RedelegationValues struct {
+// RedelegationValuesBech32 is a struct to represent the key information from
+// a redelegation response with bech32 addresses.
+type RedelegationValuesBech32 struct {
 	DelegatorAddress    string
 	ValidatorSrcAddress string
 	ValidatorDstAddress string
 	Entries             []RedelegationEntry
 }
 
-// RedelegationOutput returns the output for a redelegation query.
+// RedelegationValues is a struct to represent the key information from
+// a redelegation response with hex addresses.
+type RedelegationValues struct {
+	DelegatorAddress    common.Address
+	ValidatorSrcAddress common.Address
+	ValidatorDstAddress common.Address
+	Entries             []RedelegationEntry
+}
+
+// RedelegationOutputBech32 returns the output for a redelegation query with bech32 addresses.
+type RedelegationOutputBech32 struct {
+	Redelegation RedelegationValuesBech32
+}
+
+// RedelegationOutput returns the output for a redelegation query with hex addresses.
 type RedelegationOutput struct {
 	Redelegation RedelegationValues
 }
 
-// FromResponse populates the RedelegationOutput from a QueryRedelegationsResponse.
-func (ro *RedelegationOutput) FromResponse(res stakingtypes.Redelegation) *RedelegationOutput {
+// FromResponse populates the RedelegationOutputBech32 from a QueryRedelegationsResponse.
+func (ro *RedelegationOutputBech32) FromResponse(res stakingtypes.Redelegation) *RedelegationOutputBech32 {
 	ro.Redelegation.Entries = make([]RedelegationEntry, len(res.Entries))
 	ro.Redelegation.DelegatorAddress = res.DelegatorAddress
 	ro.Redelegation.ValidatorSrcAddress = res.ValidatorSrcAddress
 	ro.Redelegation.ValidatorDstAddress = res.ValidatorDstAddress
+	for i, entry := range res.Entries {
+		ro.Redelegation.Entries[i] = RedelegationEntry{
+			CreationHeight: entry.CreationHeight,
+			CompletionTime: entry.CompletionTime.UTC().Unix(),
+			InitialBalance: entry.InitialBalance.BigInt(),
+			SharesDst:      entry.SharesDst.BigInt(),
+		}
+	}
+	return ro
+}
+
+// FromResponse populates the RedelegationOutput from a QueryRedelegationsResponse.
+func (ro *RedelegationOutput) FromResponse(res stakingtypes.Redelegation) *RedelegationOutput {
+	// convert bech32 addresses to hex addresses
+	delegatorAddr, err := sdk.AccAddressFromBech32(res.DelegatorAddress)
+	if err != nil {
+		ro.Redelegation.DelegatorAddress = common.Address{}
+	} else {
+		ro.Redelegation.DelegatorAddress = common.BytesToAddress(delegatorAddr.Bytes())
+	}
+
+	validatorSrcAddr, err := sdk.ValAddressFromBech32(res.ValidatorSrcAddress)
+	if err != nil {
+		ro.Redelegation.ValidatorSrcAddress = common.Address{}
+	} else {
+		ro.Redelegation.ValidatorSrcAddress = common.BytesToAddress(validatorSrcAddr.Bytes())
+	}
+
+	validatorDstAddr, err := sdk.ValAddressFromBech32(res.ValidatorDstAddress)
+	if err != nil {
+		ro.Redelegation.ValidatorDstAddress = common.Address{}
+	} else {
+		ro.Redelegation.ValidatorDstAddress = common.BytesToAddress(validatorDstAddr.Bytes())
+	}
+
+	ro.Redelegation.Entries = make([]RedelegationEntry, len(res.Entries))
 	for i, entry := range res.Entries {
 		ro.Redelegation.Entries[i] = RedelegationEntry{
 			CreationHeight: entry.CreationHeight,
@@ -1297,18 +1568,35 @@ type RedelegationEntryResponse struct {
 	Balance           *big.Int
 }
 
-// Redelegation contains the list of a particular delegator's redelegating bonds
-// from a particular source validator to a particular destination validator.
-type Redelegation struct {
+// RedelegationBech32 contains the list of a particular delegator's redelegating bonds
+// from a particular source validator to a particular destination validator with bech32 addresses.
+type RedelegationBech32 struct {
 	DelegatorAddress    string
 	ValidatorSrcAddress string
 	ValidatorDstAddress string
 	Entries             []RedelegationEntry
 }
 
+// Redelegation contains the list of a particular delegator's redelegating bonds
+// from a particular source validator to a particular destination validator with hex addresses.
+type Redelegation struct {
+	DelegatorAddress    common.Address
+	ValidatorSrcAddress common.Address
+	ValidatorDstAddress common.Address
+	Entries             []RedelegationEntry
+}
+
+// RedelegationResponseBech32 is equivalent to a RedelegationBech32 except that its entries
+// contain a balance in addition to shares which is more suitable for client
+// responses with bech32 addresses.
+type RedelegationResponseBech32 struct {
+	Redelegation RedelegationBech32
+	Entries      []RedelegationEntryResponse
+}
+
 // RedelegationResponse is equivalent to a Redelegation except that its entries
 // contain a balance in addition to shares which is more suitable for client
-// responses.
+// responses with hex addresses.
 type RedelegationResponse struct {
 	Redelegation Redelegation
 	Entries      []RedelegationEntryResponse
@@ -1323,11 +1611,72 @@ type RedelegationsInput struct {
 	PageRequest         query.PageRequest
 }
 
+// RedelegationsOutputBech32 is a struct to represent the key information from
+// a redelegations response with bech32 addresses.
+type RedelegationsOutputBech32 struct {
+	Response     []RedelegationResponseBech32
+	PageResponse query.PageResponse
+}
+
 // RedelegationsOutput is a struct to represent the key information from
-// a redelegations response.
+// a redelegations response with hex addresses.
 type RedelegationsOutput struct {
 	Response     []RedelegationResponse
 	PageResponse query.PageResponse
+}
+
+// FromResponse populates the RedelegationsOutputBech32 from a QueryRedelegationsResponse.
+func (ro *RedelegationsOutputBech32) FromResponse(res *stakingtypes.QueryRedelegationsResponse) *RedelegationsOutputBech32 {
+	ro.Response = make([]RedelegationResponseBech32, len(res.RedelegationResponses))
+	for i, resp := range res.RedelegationResponses {
+		// for each RedelegationResponse
+		// there's a RedelegationEntryResponse array ('Entries' field)
+		entries := make([]RedelegationEntryResponse, len(resp.Entries))
+		for j, e := range resp.Entries {
+			entries[j] = RedelegationEntryResponse{
+				RedelegationEntry: RedelegationEntry{
+					CreationHeight: e.RedelegationEntry.CreationHeight,
+					CompletionTime: e.RedelegationEntry.CompletionTime.Unix(),
+					InitialBalance: e.RedelegationEntry.InitialBalance.BigInt(),
+					SharesDst:      e.RedelegationEntry.SharesDst.BigInt(),
+				},
+				Balance: e.Balance.BigInt(),
+			}
+		}
+
+		// the Redelegation field has also an 'Entries' field of type RedelegationEntry
+		redelEntries := make([]RedelegationEntry, len(resp.Redelegation.Entries))
+		for j, e := range resp.Redelegation.Entries {
+			redelEntries[j] = RedelegationEntry{
+				CreationHeight: e.CreationHeight,
+				CompletionTime: e.CompletionTime.Unix(),
+				InitialBalance: e.InitialBalance.BigInt(),
+				SharesDst:      e.SharesDst.BigInt(),
+			}
+		}
+
+		ro.Response[i] = RedelegationResponseBech32{
+			Entries: entries,
+			Redelegation: RedelegationBech32{
+				DelegatorAddress:    resp.Redelegation.DelegatorAddress,
+				ValidatorSrcAddress: resp.Redelegation.ValidatorSrcAddress,
+				ValidatorDstAddress: resp.Redelegation.ValidatorDstAddress,
+				Entries:             redelEntries,
+			},
+		}
+	}
+
+	if res.Pagination != nil {
+		ro.PageResponse.Total = res.Pagination.Total
+		ro.PageResponse.NextKey = res.Pagination.NextKey
+	}
+
+	return ro
+}
+
+// Pack packs a given slice of abi arguments into a byte array.
+func (ro *RedelegationsOutputBech32) Pack(args abi.Arguments) ([]byte, error) {
+	return args.Pack(ro.Response, ro.PageResponse)
 }
 
 // FromResponse populates the RedelgationsOutput from a QueryRedelegationsResponse.
@@ -1360,12 +1709,31 @@ func (ro *RedelegationsOutput) FromResponse(res *stakingtypes.QueryRedelegations
 			}
 		}
 
+		// Convert bech32 addresses to hex addresses for hex version
+		delegatorAddr, err := sdk.AccAddressFromBech32(resp.Redelegation.DelegatorAddress)
+		var delegatorAddrHex common.Address
+		if err == nil {
+			delegatorAddrHex = common.BytesToAddress(delegatorAddr.Bytes())
+		}
+
+		validatorSrcAddr, err := sdk.ValAddressFromBech32(resp.Redelegation.ValidatorSrcAddress)
+		var validatorSrcAddrHex common.Address
+		if err == nil {
+			validatorSrcAddrHex = common.BytesToAddress(validatorSrcAddr.Bytes())
+		}
+
+		validatorDstAddr, err := sdk.ValAddressFromBech32(resp.Redelegation.ValidatorDstAddress)
+		var validatorDstAddrHex common.Address
+		if err == nil {
+			validatorDstAddrHex = common.BytesToAddress(validatorDstAddr.Bytes())
+		}
+
 		ro.Response[i] = RedelegationResponse{
 			Entries: entries,
 			Redelegation: Redelegation{
-				DelegatorAddress:    resp.Redelegation.DelegatorAddress,
-				ValidatorSrcAddress: resp.Redelegation.ValidatorSrcAddress,
-				ValidatorDstAddress: resp.Redelegation.ValidatorDstAddress,
+				DelegatorAddress:    delegatorAddrHex,
+				ValidatorSrcAddress: validatorSrcAddrHex,
+				ValidatorDstAddress: validatorDstAddrHex,
 				Entries:             redelEntries,
 			},
 		}
@@ -1384,9 +1752,9 @@ func (ro *RedelegationsOutput) Pack(args abi.Arguments) ([]byte, error) {
 	return args.Pack(ro.Response, ro.PageResponse)
 }
 
-// NewUnbondingDelegationRequest creates a new QueryUnbondingDelegationRequest instance and does sanity checks
+// NewUnbondingDelegationBech32Request creates a new QueryUnbondingDelegationRequest instance and does sanity checks
 // on the given arguments before populating the request.
-func NewUnbondingDelegationRequest(args []interface{}, addrCdc address.Codec) (*stakingtypes.QueryUnbondingDelegationRequest, error) {
+func NewUnbondingDelegationBech32Request(args []interface{}, addrCdc address.Codec) (*stakingtypes.QueryUnbondingDelegationRequest, error) {
 	if len(args) != 2 {
 		return nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, 2, len(args))
 	}
@@ -1408,6 +1776,34 @@ func NewUnbondingDelegationRequest(args []interface{}, addrCdc address.Codec) (*
 	return &stakingtypes.QueryUnbondingDelegationRequest{
 		DelegatorAddr: delegatorAddrStr,
 		ValidatorAddr: validatorAddress,
+	}, nil
+}
+
+// NewUnbondingDelegationRequest creates a new QueryUnbondingDelegationRequest instance and does sanity checks
+// on the given arguments before populating the request.
+func NewUnbondingDelegationRequest(args []interface{}, addrCdc address.Codec) (*stakingtypes.QueryUnbondingDelegationRequest, error) {
+	if len(args) != 2 {
+		return nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, 2, len(args))
+	}
+
+	delegatorAddr, ok := args[0].(common.Address)
+	if !ok || delegatorAddr == (common.Address{}) {
+		return nil, fmt.Errorf(cmn.ErrInvalidDelegator, args[0])
+	}
+
+	validatorAddr, ok := args[1].(common.Address)
+	if !ok || validatorAddr == (common.Address{}) {
+		return nil, fmt.Errorf(cmn.ErrInvalidType, "validatorAddr", "common.Address", args[1])
+	}
+
+	delegatorAddrStr, err := addrCdc.BytesToString(delegatorAddr.Bytes())
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode delegator address: %w", err)
+	}
+	validatorAddrStr, err := addrCdc.BytesToString(validatorAddr.Bytes())
+	return &stakingtypes.QueryUnbondingDelegationRequest{
+		DelegatorAddr: delegatorAddrStr,
+		ValidatorAddr: validatorAddrStr,
 	}, nil
 }
 
@@ -1457,6 +1853,82 @@ func checkDelegationUndelegationArgsBech32(args []interface{}) (common.Address, 
 	}
 
 	return delegatorAddr, validatorAddress, amount, nil
+}
+
+// NewRedelegationBech32Request create a new RedelegationRequest instance for Bech32 addresses and does sanity checks
+// on the given arguments before populating the request.
+func NewRedelegationBech32Request(args []interface{}) (*RedelegationRequest, error) {
+	if len(args) != 3 {
+		return nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, 3, len(args))
+	}
+
+	delegatorAddr, ok := args[0].(common.Address)
+	if !ok || delegatorAddr == (common.Address{}) {
+		return nil, fmt.Errorf(cmn.ErrInvalidDelegator, args[0])
+	}
+
+	validatorSrcAddress, ok := args[1].(string)
+	if !ok {
+		return nil, fmt.Errorf(cmn.ErrInvalidType, "validatorSrcAddress", "string", args[1])
+	}
+
+	validatorSrcAddr, err := sdk.ValAddressFromBech32(validatorSrcAddress)
+	if err != nil {
+		return nil, err
+	}
+
+	validatorDstAddress, ok := args[2].(string)
+	if !ok {
+		return nil, fmt.Errorf(cmn.ErrInvalidType, "validatorDstAddress", "string", args[2])
+	}
+
+	validatorDstAddr, err := sdk.ValAddressFromBech32(validatorDstAddress)
+	if err != nil {
+		return nil, err
+	}
+
+	return &RedelegationRequest{
+		DelegatorAddress:    delegatorAddr.Bytes(),
+		ValidatorSrcAddress: validatorSrcAddr,
+		ValidatorDstAddress: validatorDstAddr,
+	}, nil
+}
+
+// NewRedelegationsBech32Request create a new QueryRedelegationsRequest instance for Bech32 addresses and does sanity checks
+// on the given arguments before populating the request.
+func NewRedelegationsBech32Request(method *abi.Method, args []interface{}, addrCdc address.Codec) (*stakingtypes.QueryRedelegationsRequest, error) {
+	if len(args) != 4 {
+		return nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, 4, len(args))
+	}
+
+	var input RedelegationsInput
+	if err := method.Inputs.Copy(&input, args); err != nil {
+		return nil, fmt.Errorf("error while unpacking args to RedelegationsInput struct: %s", err)
+	}
+
+	var (
+		delegatorAddr = ""
+		emptyAddr     = common.Address{}.Hex()
+	)
+	if input.DelegatorAddress.Hex() != emptyAddr {
+		var err error
+		delegatorAddr, err = addrCdc.BytesToString(input.DelegatorAddress.Bytes())
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode delegator address: %w", err)
+		}
+	}
+
+	if delegatorAddr == "" && input.SrcValidatorAddress == "" && input.DstValidatorAddress == "" ||
+		delegatorAddr == "" && input.SrcValidatorAddress == "" && input.DstValidatorAddress != "" {
+		return nil, errors.New("invalid query. Need to specify at least a source validator address or delegator address")
+	}
+
+	return &stakingtypes.QueryRedelegationsRequest{
+		DelegatorAddr:    delegatorAddr,
+		SrcValidatorAddr: input.SrcValidatorAddress,
+		DstValidatorAddr: input.DstValidatorAddress,
+		Pagination:       &input.PageRequest,
+	}, nil
 }
 
 // FormatConsensusPubkey format ConsensusPubkey into a base64 string

@@ -54,8 +54,8 @@ int256 constant DO_NOT_MODIFY_MIN_SELF_DELEGATION = -1;
         uint256 updateTime;
     }
 
-/// @dev Represents a validator in the epoching module.
-    struct Validator {
+/// @dev Represents a validator in the epoching module with bech32 addresses.
+    struct ValidatorBech32 {
         string operatorAddress;
         string consensusPubkey;
         bool jailed;
@@ -69,17 +69,46 @@ int256 constant DO_NOT_MODIFY_MIN_SELF_DELEGATION = -1;
         uint256 minSelfDelegation;
     }
 
-/// @dev Represents the output of a Redelegations query.
+/// @dev Represents a validator in the epoching module with hex addresses.
+    struct Validator {
+        address operatorAddress;
+        string consensusPubkey;
+        bool jailed;
+        BondStatus status;
+        uint256 tokens;
+        uint256 delegatorShares; // TODO: decimal
+        string description;
+        int64 unbondingHeight;
+        int64 unbondingTime;
+        uint256 commission;
+        uint256 minSelfDelegation;
+    }
+
+/// @dev Represents the output of a Redelegations query with bech32 addresses.
+    struct RedelegationResponseBech32 {
+        RedelegationBech32 redelegation;
+        RedelegationEntryResponse[] entries;
+    }
+
+/// @dev Represents the output of a Redelegations query with hex addresses.
     struct RedelegationResponse {
         Redelegation redelegation;
         RedelegationEntryResponse[] entries;
     }
 
-/// @dev Represents a redelegation between a delegator and a validator.
-    struct Redelegation {
+/// @dev Represents a redelegation between a delegator and a validator with bech32 addresses.
+    struct RedelegationBech32 {
         string delegatorAddress;
         string validatorSrcAddress;
         string validatorDstAddress;
+        RedelegationEntry[] entries;
+    }
+
+/// @dev Represents a redelegation between a delegator and a validator with hex addresses.
+    struct Redelegation {
+        address delegatorAddress;
+        address validatorSrcAddress;
+        address validatorDstAddress;
         RedelegationEntry[] entries;
     }
 
@@ -97,11 +126,19 @@ int256 constant DO_NOT_MODIFY_MIN_SELF_DELEGATION = -1;
         uint256 sharesDst; // TODO: decimal
     }
 
-/// @dev Represents the output of the Redelegation query.
-    struct RedelegationOutput {
+/// @dev Represents the output of the Redelegation query with bech32 addresses.
+    struct RedelegationOutputBech32 {
         string delegatorAddress;
         string validatorSrcAddress;
         string validatorDstAddress;
+        RedelegationEntry[] entries;
+    }
+
+/// @dev Represents the output of the Redelegation query with hex addresses.
+    struct RedelegationOutput {
+        address delegatorAddress;
+        address validatorSrcAddress;
+        address validatorDstAddress;
         RedelegationEntry[] entries;
     }
 
@@ -116,9 +153,16 @@ int256 constant DO_NOT_MODIFY_MIN_SELF_DELEGATION = -1;
     }
 
 /// @dev Represents the output of the UnbondingDelegation query.
-    struct UnbondingDelegationOutput {
+    struct UnbondingDelegationOutputBech32 {
         string delegatorAddress;
         string validatorAddress;
+        UnbondingDelegationEntry[] entries;
+    }
+
+/// @dev Represents the output of the UnbondingDelegation query.
+    struct UnbondingDelegationOutput {
+        address delegatorAddress;
+        address validatorAddress;
         UnbondingDelegationEntry[] entries;
     }
 
@@ -161,8 +205,8 @@ int256 constant DO_NOT_MODIFY_MIN_SELF_DELEGATION = -1;
         int64 blockTime;
     }
 
-/// @dev Represents a delegation state change event
-    struct DelegationStateUpdate {
+/// @dev Represents a delegation state change event with bech32 addresses
+    struct DelegationStateUpdateBech32 {
         BondState state;
         string valAddr;
         Coin amount;
@@ -170,7 +214,22 @@ int256 constant DO_NOT_MODIFY_MIN_SELF_DELEGATION = -1;
         int64 blockTime;
     }
 
-/// @dev Represents the complete lifecycle of a delegation
+/// @dev Represents a delegation state change event with hex addresses
+    struct DelegationStateUpdate {
+        BondState state;
+        address valAddr;
+        Coin amount;
+        uint64 blockHeight;
+        int64 blockTime;
+    }
+
+/// @dev Represents the complete lifecycle of a delegation with bech32 addresses
+    struct DelegationLifecycleBech32 {
+        string delAddr;
+        DelegationStateUpdateBech32[] delLife;
+    }
+
+/// @dev Represents the complete lifecycle of a delegation with hex addresses
     struct DelegationLifecycle {
         address delAddr;
         DelegationStateUpdate[] delLife;
@@ -178,7 +237,7 @@ int256 constant DO_NOT_MODIFY_MIN_SELF_DELEGATION = -1;
 
 /// @dev Represents a simple validator with address and voting power
     struct SimpleValidator {
-        bytes addr;
+        address addr;
         int64 power;
     }
 
@@ -354,10 +413,34 @@ interface EpochingI {
     /// @return shares The amount of shares, that the delegator has received.
     /// @return balance The amount in Coin, that the delegator has delegated to the given validator.
     /// This returned balance uses the bond denomination precision stored in the bank metadata.
-    function delegation(
+    function delegationBech32(
         address delegatorAddress,
         string memory validatorAddress
     ) external view returns (uint256 shares, Coin calldata balance);
+
+    /// @dev Queries the given amount of the bond denomination to a validator.
+    /// @param delegatorAddress The address of the delegator.
+    /// @param validatorAddress The address of the validator.
+    /// @return shares The amount of shares, that the delegator has received.
+    /// @return balance The amount in Coin, that the delegator has delegated to the given validator.
+    /// This returned balance uses the bond denomination precision stored in the bank metadata.
+    function delegation(
+        address delegatorAddress,
+        address validatorAddress
+    ) external view returns (uint256 shares, Coin calldata balance);
+
+    /// @dev Returns the delegation shares and coins, that are currently
+    /// unbonding for a given delegator and validator pair.
+    /// @param delegatorAddress The address of the delegator.
+    /// @param validatorAddress The address of the validator.
+    /// @return unbondingDelegation The delegations that are currently unbonding.
+    function unbondingDelegationBech32(
+        address delegatorAddress,
+        string memory validatorAddress
+    )
+    external
+    view
+    returns (UnbondingDelegationOutputBech32 calldata unbondingDelegation);
 
     /// @dev Returns the delegation shares and coins, that are currently
     /// unbonding for a given delegator and validator pair.
@@ -366,7 +449,7 @@ interface EpochingI {
     /// @return unbondingDelegation The delegations that are currently unbonding.
     function unbondingDelegation(
         address delegatorAddress,
-        string memory validatorAddress
+        address validatorAddress
     )
     external
     view
@@ -375,9 +458,30 @@ interface EpochingI {
     /// @dev Queries validator info for a given validator address.
     /// @param validatorAddress The address of the validator.
     /// @return validator The validator info for the given validator address.
+    function validatorBech32(
+        address validatorAddress
+    ) external view returns (ValidatorBech32 calldata validator);
+
+    /// @dev Queries validator info for a given validator address.
+    /// @param validatorAddress The address of the validator.
+    /// @return validator The validator info for the given validator address.
     function validator(
         address validatorAddress
     ) external view returns (Validator calldata validator);
+
+    /// @dev Queries all validators that match the given status.
+    /// @param status Enables to query for validators matching a given status.
+    /// @param pageRequest Defines an optional pagination for the request.
+    function validatorsBech32(
+        string memory status,
+        PageRequest calldata pageRequest
+    )
+    external
+    view
+    returns (
+        ValidatorBech32[] calldata validators,
+        PageResponse calldata pageResponse
+    );
 
     /// @dev Queries all validators that match the given status.
     /// @param status Enables to query for validators matching a given status.
@@ -399,25 +503,59 @@ interface EpochingI {
     /// @param dstValidatorAddress Defines the validator address to redelegate to.
     /// @return redelegation The active redelegations for the given delegator, source and destination
     /// validator combination.
-    function redelegation(
+    function redelegationBech32(
         address delegatorAddress,
         string memory srcValidatorAddress,
         string memory dstValidatorAddress
+    ) external view returns (RedelegationOutputBech32 calldata redelegation);
+
+    /// @dev Queries all redelegations from a source to a destination validator for a given delegator.
+    /// @param delegatorAddress The address of the delegator.
+    /// @param srcValidatorAddress Defines the validator address to redelegate from.
+    /// @param dstValidatorAddress Defines the validator address to redelegate to.
+    /// @return redelegation The active redelegations for the given delegator, source and destination
+    /// validator combination.
+    function redelegation(
+        address delegatorAddress,
+        address srcValidatorAddress,
+        address dstValidatorAddress
     ) external view returns (RedelegationOutput calldata redelegation);
 
     /// @dev Queries all redelegations based on the specified criteria:
     /// for a given delegator and/or origin validator address
     /// and/or destination validator address
     /// in a specified pagination manner.
-    /// @param delegatorAddress The address of the delegator as string (can be a zero address).
+    /// @param delegatorAddress The address of the delegator (can be a zero address).
     /// @param srcValidatorAddress Defines the validator address to redelegate from (can be empty string).
     /// @param dstValidatorAddress Defines the validator address to redelegate to (can be empty string).
     /// @param pageRequest Defines an optional pagination for the request.
     /// @return response Holds the redelegations for the given delegator, source and destination validator combination.
-    function redelegations(
+    function redelegationsBech32(
         address delegatorAddress,
         string memory srcValidatorAddress,
         string memory dstValidatorAddress,
+        PageRequest calldata pageRequest
+    )
+    external
+    view
+    returns (
+        RedelegationResponseBech32[] calldata response,
+        PageResponse calldata pageResponse
+    );
+
+    /// @dev Queries all redelegations based on the specified criteria:
+    /// for a given delegator and/or origin validator address
+    /// and/or destination validator address
+    /// in a specified pagination manner.
+    /// @param delegatorAddress The address of the delegator (can be zero address).
+    /// @param srcValidatorAddress Defines the validator address to redelegate from (can be zero address).
+    /// @param dstValidatorAddress Defines the validator address to redelegate to (can be zero address).
+    /// @param pageRequest Defines an optional pagination for the request.
+    /// @return response Holds the redelegations for the given delegator, source and destination validator combination.
+    function redelegations(
+        address delegatorAddress,
+        address srcValidatorAddress,
+        address dstValidatorAddress,
         PageRequest calldata pageRequest
     )
     external
@@ -471,6 +609,15 @@ interface EpochingI {
         address validatorAddress
     ) external view returns (
         ValidatorUpdateResponse[] calldata response
+    );
+
+    /// @dev Queries the lifecycle of delegations for a delegator.
+    /// @param delegatorAddress The delegator address to query.
+    /// @return response The delegation lifecycle information.
+    function delegationLifecycleBech32(
+        address delegatorAddress
+    ) external view returns (
+        DelegationLifecycleBech32 calldata response
     );
 
     /// @dev Queries the lifecycle of delegations for a delegator.

@@ -152,14 +152,22 @@ func (p Precompile) run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 		bz, err = p.CurrentEpoch(ctx, contract, method, args)
 	case EpochMsgsMethod:
 		bz, err = p.EpochMsgs(ctx, contract, method, args)
+	case EpochMsgsBech32Method:
+		bz, err = p.EpochMsgsBech32(ctx, contract, method, args)
 	case LatestEpochMsgsMethod:
 		bz, err = p.LatestEpochMsgs(ctx, contract, method, args)
+	case LatestEpochMsgsBech32Method:
+		bz, err = p.LatestEpochMsgsBech32(ctx, contract, method, args)
 	case ValidatorLifecycleMethod:
 		bz, err = p.ValidatorLifecycle(ctx, contract, method, args)
 	case DelegationLifecycleMethod:
 		bz, err = p.DelegationLifecycle(ctx, contract, method, args)
+	case DelegationLifecycleBech32Method:
+		bz, err = p.DelegationLifecycleBech32(ctx, contract, method, args)
 	case EpochValSetMethod:
 		bz, err = p.EpochValSet(ctx, contract, method, args)
+	case EpochValSetBech32Method:
+		bz, err = p.EpochValSetBech32(ctx, contract, method, args)
 	// Staking queries
 	case DelegationMethod:
 		bz, err = p.Delegation(ctx, contract, method, args)
@@ -167,12 +175,20 @@ func (p Precompile) run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 		bz, err = p.UnbondingDelegation(ctx, contract, method, args)
 	case ValidatorMethod:
 		bz, err = p.Validator(ctx, method, contract, args)
+	case ValidatorBech32Method:
+		bz, err = p.ValidatorBech32(ctx, method, contract, args)
 	case ValidatorsMethod:
 		bz, err = p.Validators(ctx, method, contract, args)
+	case ValidatorsBech32Method:
+		bz, err = p.ValidatorsBech32(ctx, method, contract, args)
 	case RedelegationMethod:
 		bz, err = p.Redelegation(ctx, method, contract, args)
+	case RedelegationBech32Method:
+		bz, err = p.RedelegationBech32(ctx, method, contract, args)
 	case RedelegationsMethod:
 		bz, err = p.Redelegations(ctx, method, contract, args)
+	case RedelegationsBech32Method:
+		bz, err = p.RedelegationsBech32(ctx, method, contract, args)
 	}
 
 	if err != nil {
