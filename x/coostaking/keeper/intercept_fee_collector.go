@@ -59,6 +59,11 @@ func (k Keeper) allocateValidatorsRewards(ctx context.Context, rwds sdk.Coins) e
 		totalPwr += voteInfo.Validator.Power
 	}
 
+	// safety check
+	if totalPwr == 0 {
+		return nil
+	}
+
 	// Transfer rewards to the distribution module account
 	// 'cause these direct rewards will be allocated to the validators commission
 	err := k.bankK.SendCoinsFromModuleToModule(ctx, k.feeCollectorName, distrtypes.ModuleName, rwds)
@@ -79,12 +84,12 @@ func (k Keeper) allocateValidatorsRewards(ctx context.Context, rwds sdk.Coins) e
 		// set validator commission == 1 to allocate all as rewards for the validator (accumulated in commission)
 		// and 0 for the delegators
 		parsedVal, ok := validator.(stktypes.Validator)
+		// safety check
 		if !ok {
 			return errorsmod.Wrapf(sdkerrors.ErrInvalidType, "expected %T, got %T", parsedVal, validator)
 		}
 		parsedVal.Commission.Rate = math.LegacyOneDec()
-		err = k.distrK.AllocateTokensToValidator(ctx, validator, rwd)
-		if err != nil {
+		if err := k.distrK.AllocateTokensToValidator(ctx, validator, rwd); err != nil {
 			return err
 		}
 	}
