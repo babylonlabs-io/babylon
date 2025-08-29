@@ -58,6 +58,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#1585](https://github.com/babylonlabs-io/babylon/pull/1585) Remove allow-lists logic and state in `x/btcstaking` module
 - [#1596](https://github.com/babylonlabs-io/babylon/pull/1596) Add rollups finality contract index in `x/btcstkconsumer`
 
+### Bug fixes
+
+- [#1630](https://github.com/babylonlabs-io/babylon/pull/1630) Remove `HeaderCache` redundant test
+
 ## v3.0.0-rc.2
 
 - [#1529](https://github.com/babylonlabs-io/babylon/pull/1529) Allow `FinalityProviderHistoricalRewards` to have empty coins
