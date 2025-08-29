@@ -61,6 +61,7 @@ func (m msgServer) WrappedCreateValidator(goCtx context.Context, msg *types.MsgW
 	m.k.epochingKeeper.LockFunds(ctx, &queueMsg)
 
 	m.k.epochingKeeper.EnqueueMsg(ctx, queueMsg)
+	ctx.GasMeter().ConsumeGas(m.k.epochingKeeper.GetParams(ctx).EnqueueGasFees.CreateValidator, "epoching cancel unbonding delegation enqueue fee")
 
 	return &types.MsgWrappedCreateValidatorResponse{}, nil
 }

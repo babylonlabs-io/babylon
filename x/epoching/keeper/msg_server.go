@@ -18,8 +18,6 @@ type msgServer struct {
 	Keeper
 }
 
-const DelegateEnqueueGasFee = 500
-
 var _ types.MsgServer = msgServer{}
 
 // NewMsgServerImpl returns an implementation of the MsgServer interface
@@ -90,6 +88,8 @@ func (ms msgServer) WrappedEditValidator(goCtx context.Context, msgWrapped *type
 
 	ms.EnqueueMsg(ctx, queuedMsg)
 
+	ctx.GasMeter().ConsumeGas(ms.GetParams(ctx).EnqueueGasFees.EditValidator, "epoching staking update params enqueue fee")
+
 	err = ctx.EventManager().EmitTypedEvents(
 		&types.EventWrappedEditValidator{
 			ValidatorAddress: msg.ValidatorAddress,
@@ -131,6 +131,8 @@ func (ms msgServer) WrappedStakingUpdateParams(goCtx context.Context, msgWrapped
 	}
 
 	ms.EnqueueMsg(ctx, queuedMsg)
+
+	ctx.GasMeter().ConsumeGas(ms.GetParams(ctx).EnqueueGasFees.StakingUpdateParams, "epoching staking update params enqueue fee")
 
 	err = ctx.EventManager().EmitTypedEvents(
 		&types.EventWrappedStakingUpdateParams{
@@ -196,7 +198,7 @@ func (ms msgServer) WrappedDelegate(goCtx context.Context, msg *types.MsgWrapped
 		return nil, errorsmod.Wrap(err, "failed to lock user funds")
 	}
 
-	ctx.GasMeter().ConsumeGas(DelegateEnqueueGasFee, "epoching delegate enqueue fee")
+	ctx.GasMeter().ConsumeGas(ms.GetParams(ctx).EnqueueGasFees.Delegate, "epoching delegate enqueue fee")
 
 	err = ctx.EventManager().EmitTypedEvents(
 		&types.EventWrappedDelegate{
@@ -256,6 +258,8 @@ func (ms msgServer) WrappedUndelegate(goCtx context.Context, msg *types.MsgWrapp
 	}
 
 	ms.EnqueueMsg(ctx, queuedMsg)
+
+	ctx.GasMeter().ConsumeGas(ms.GetParams(ctx).EnqueueGasFees.Undelegate, "epoching undelegate enqueue fee")
 
 	err = ctx.EventManager().EmitTypedEvents(
 		&types.EventWrappedUndelegate{
@@ -318,6 +322,9 @@ func (ms msgServer) WrappedBeginRedelegate(goCtx context.Context, msg *types.Msg
 	}
 
 	ms.EnqueueMsg(ctx, queuedMsg)
+
+	ctx.GasMeter().ConsumeGas(ms.GetParams(ctx).EnqueueGasFees.BeginRedelegate, "epoching Redelegate enqueue fee")
+
 	err = ctx.EventManager().EmitTypedEvents(
 		&types.EventWrappedBeginRedelegate{
 			DelegatorAddress:            msg.Msg.DelegatorAddress,
@@ -387,6 +394,9 @@ func (ms msgServer) WrappedCancelUnbondingDelegation(goCtx context.Context, msg 
 	}
 
 	ms.EnqueueMsg(ctx, queuedMsg)
+
+	ctx.GasMeter().ConsumeGas(ms.GetParams(ctx).EnqueueGasFees.CancelUnbondingDelegation, "epoching cancel unbonding delegation enqueue fee")
+
 	err = ctx.EventManager().EmitTypedEvents(
 		&types.EventWrappedCancelUnbondingDelegation{
 			DelegatorAddress: msg.Msg.DelegatorAddress,
