@@ -39,6 +39,47 @@
         },
         {
           "name": "validatorAddress",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "shares",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "balance",
+          "type": "tuple",
+          "internalType": "struct Coin",
+          "components": [
+            {
+              "name": "denom",
+              "type": "string",
+              "internalType": "string"
+            },
+            {
+              "name": "amount",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ]
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "delegationBech32",
+      "inputs": [
+        {
+          "name": "delegatorAddress",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "validatorAddress",
           "type": "string",
           "internalType": "string"
         }
@@ -94,6 +135,76 @@
               "name": "delLife",
               "type": "tuple[]",
               "internalType": "struct DelegationStateUpdate[]",
+              "components": [
+                {
+                  "name": "state",
+                  "type": "uint8",
+                  "internalType": "enum BondState"
+                },
+                {
+                  "name": "valAddr",
+                  "type": "address",
+                  "internalType": "address"
+                },
+                {
+                  "name": "amount",
+                  "type": "tuple",
+                  "internalType": "struct Coin",
+                  "components": [
+                    {
+                      "name": "denom",
+                      "type": "string",
+                      "internalType": "string"
+                    },
+                    {
+                      "name": "amount",
+                      "type": "uint256",
+                      "internalType": "uint256"
+                    }
+                  ]
+                },
+                {
+                  "name": "blockHeight",
+                  "type": "uint64",
+                  "internalType": "uint64"
+                },
+                {
+                  "name": "blockTime",
+                  "type": "int64",
+                  "internalType": "int64"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "delegationLifecycleBech32",
+      "inputs": [
+        {
+          "name": "delegatorAddress",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "response",
+          "type": "tuple",
+          "internalType": "struct DelegationLifecycleBech32",
+          "components": [
+            {
+              "name": "delAddr",
+              "type": "string",
+              "internalType": "string"
+            },
+            {
+              "name": "delLife",
+              "type": "tuple[]",
+              "internalType": "struct DelegationStateUpdateBech32[]",
               "components": [
                 {
                   "name": "state",
@@ -340,8 +451,8 @@
           "components": [
             {
               "name": "addr",
-              "type": "bytes",
-              "internalType": "bytes"
+              "type": "address",
+              "internalType": "address"
             },
             {
               "name": "power",
@@ -503,6 +614,79 @@
         },
         {
           "name": "srcValidatorAddress",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "dstValidatorAddress",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "redelegation",
+          "type": "tuple",
+          "internalType": "struct RedelegationOutput",
+          "components": [
+            {
+              "name": "delegatorAddress",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "validatorSrcAddress",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "validatorDstAddress",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "entries",
+              "type": "tuple[]",
+              "internalType": "struct RedelegationEntry[]",
+              "components": [
+                {
+                  "name": "creationHeight",
+                  "type": "int64",
+                  "internalType": "int64"
+                },
+                {
+                  "name": "completionTime",
+                  "type": "int64",
+                  "internalType": "int64"
+                },
+                {
+                  "name": "initialBalance",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "sharesDst",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "redelegationBech32",
+      "inputs": [
+        {
+          "name": "delegatorAddress",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "srcValidatorAddress",
           "type": "string",
           "internalType": "string"
         },
@@ -516,7 +700,7 @@
         {
           "name": "redelegation",
           "type": "tuple",
-          "internalType": "struct RedelegationOutput",
+          "internalType": "struct RedelegationOutputBech32",
           "components": [
             {
               "name": "delegatorAddress",
@@ -576,6 +760,174 @@
         },
         {
           "name": "srcValidatorAddress",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "dstValidatorAddress",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "pageRequest",
+          "type": "tuple",
+          "internalType": "struct PageRequest",
+          "components": [
+            {
+              "name": "key",
+              "type": "bytes",
+              "internalType": "bytes"
+            },
+            {
+              "name": "offset",
+              "type": "uint64",
+              "internalType": "uint64"
+            },
+            {
+              "name": "limit",
+              "type": "uint64",
+              "internalType": "uint64"
+            },
+            {
+              "name": "countTotal",
+              "type": "bool",
+              "internalType": "bool"
+            },
+            {
+              "name": "reverse",
+              "type": "bool",
+              "internalType": "bool"
+            }
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "response",
+          "type": "tuple[]",
+          "internalType": "struct RedelegationResponse[]",
+          "components": [
+            {
+              "name": "redelegation",
+              "type": "tuple",
+              "internalType": "struct Redelegation",
+              "components": [
+                {
+                  "name": "delegatorAddress",
+                  "type": "address",
+                  "internalType": "address"
+                },
+                {
+                  "name": "validatorSrcAddress",
+                  "type": "address",
+                  "internalType": "address"
+                },
+                {
+                  "name": "validatorDstAddress",
+                  "type": "address",
+                  "internalType": "address"
+                },
+                {
+                  "name": "entries",
+                  "type": "tuple[]",
+                  "internalType": "struct RedelegationEntry[]",
+                  "components": [
+                    {
+                      "name": "creationHeight",
+                      "type": "int64",
+                      "internalType": "int64"
+                    },
+                    {
+                      "name": "completionTime",
+                      "type": "int64",
+                      "internalType": "int64"
+                    },
+                    {
+                      "name": "initialBalance",
+                      "type": "uint256",
+                      "internalType": "uint256"
+                    },
+                    {
+                      "name": "sharesDst",
+                      "type": "uint256",
+                      "internalType": "uint256"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "entries",
+              "type": "tuple[]",
+              "internalType": "struct RedelegationEntryResponse[]",
+              "components": [
+                {
+                  "name": "redelegationEntry",
+                  "type": "tuple",
+                  "internalType": "struct RedelegationEntry",
+                  "components": [
+                    {
+                      "name": "creationHeight",
+                      "type": "int64",
+                      "internalType": "int64"
+                    },
+                    {
+                      "name": "completionTime",
+                      "type": "int64",
+                      "internalType": "int64"
+                    },
+                    {
+                      "name": "initialBalance",
+                      "type": "uint256",
+                      "internalType": "uint256"
+                    },
+                    {
+                      "name": "sharesDst",
+                      "type": "uint256",
+                      "internalType": "uint256"
+                    }
+                  ]
+                },
+                {
+                  "name": "balance",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "pageResponse",
+          "type": "tuple",
+          "internalType": "struct PageResponse",
+          "components": [
+            {
+              "name": "nextKey",
+              "type": "bytes",
+              "internalType": "bytes"
+            },
+            {
+              "name": "total",
+              "type": "uint64",
+              "internalType": "uint64"
+            }
+          ]
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "redelegationsBech32",
+      "inputs": [
+        {
+          "name": "delegatorAddress",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "srcValidatorAddress",
           "type": "string",
           "internalType": "string"
         },
@@ -621,12 +973,12 @@
         {
           "name": "response",
           "type": "tuple[]",
-          "internalType": "struct RedelegationResponse[]",
+          "internalType": "struct RedelegationResponseBech32[]",
           "components": [
             {
               "name": "redelegation",
               "type": "tuple",
-              "internalType": "struct Redelegation",
+              "internalType": "struct RedelegationBech32",
               "components": [
                 {
                   "name": "delegatorAddress",
@@ -744,6 +1096,79 @@
         },
         {
           "name": "validatorAddress",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "unbondingDelegation",
+          "type": "tuple",
+          "internalType": "struct UnbondingDelegationOutput",
+          "components": [
+            {
+              "name": "delegatorAddress",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "validatorAddress",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "entries",
+              "type": "tuple[]",
+              "internalType": "struct UnbondingDelegationEntry[]",
+              "components": [
+                {
+                  "name": "creationHeight",
+                  "type": "int64",
+                  "internalType": "int64"
+                },
+                {
+                  "name": "completionTime",
+                  "type": "int64",
+                  "internalType": "int64"
+                },
+                {
+                  "name": "initialBalance",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "balance",
+                  "type": "uint256",
+                  "internalType": "uint256"
+                },
+                {
+                  "name": "unbondingId",
+                  "type": "uint64",
+                  "internalType": "uint64"
+                },
+                {
+                  "name": "unbondingOnHoldRefCount",
+                  "type": "int64",
+                  "internalType": "int64"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "unbondingDelegationBech32",
+      "inputs": [
+        {
+          "name": "delegatorAddress",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "validatorAddress",
           "type": "string",
           "internalType": "string"
         }
@@ -752,7 +1177,7 @@
         {
           "name": "unbondingDelegation",
           "type": "tuple",
-          "internalType": "struct UnbondingDelegationOutput",
+          "internalType": "struct UnbondingDelegationOutputBech32",
           "components": [
             {
               "name": "delegatorAddress",
@@ -821,6 +1246,82 @@
           "name": "validator",
           "type": "tuple",
           "internalType": "struct Validator",
+          "components": [
+            {
+              "name": "operatorAddress",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "consensusPubkey",
+              "type": "string",
+              "internalType": "string"
+            },
+            {
+              "name": "jailed",
+              "type": "bool",
+              "internalType": "bool"
+            },
+            {
+              "name": "status",
+              "type": "uint8",
+              "internalType": "enum BondStatus"
+            },
+            {
+              "name": "tokens",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "delegatorShares",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "description",
+              "type": "string",
+              "internalType": "string"
+            },
+            {
+              "name": "unbondingHeight",
+              "type": "int64",
+              "internalType": "int64"
+            },
+            {
+              "name": "unbondingTime",
+              "type": "int64",
+              "internalType": "int64"
+            },
+            {
+              "name": "commission",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "minSelfDelegation",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ]
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "validatorBech32",
+      "inputs": [
+        {
+          "name": "validatorAddress",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "validator",
+          "type": "tuple",
+          "internalType": "struct ValidatorBech32",
           "components": [
             {
               "name": "operatorAddress",
@@ -968,6 +1469,131 @@
           "components": [
             {
               "name": "operatorAddress",
+              "type": "address",
+              "internalType": "address"
+            },
+            {
+              "name": "consensusPubkey",
+              "type": "string",
+              "internalType": "string"
+            },
+            {
+              "name": "jailed",
+              "type": "bool",
+              "internalType": "bool"
+            },
+            {
+              "name": "status",
+              "type": "uint8",
+              "internalType": "enum BondStatus"
+            },
+            {
+              "name": "tokens",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "delegatorShares",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "description",
+              "type": "string",
+              "internalType": "string"
+            },
+            {
+              "name": "unbondingHeight",
+              "type": "int64",
+              "internalType": "int64"
+            },
+            {
+              "name": "unbondingTime",
+              "type": "int64",
+              "internalType": "int64"
+            },
+            {
+              "name": "commission",
+              "type": "uint256",
+              "internalType": "uint256"
+            },
+            {
+              "name": "minSelfDelegation",
+              "type": "uint256",
+              "internalType": "uint256"
+            }
+          ]
+        },
+        {
+          "name": "pageResponse",
+          "type": "tuple",
+          "internalType": "struct PageResponse",
+          "components": [
+            {
+              "name": "nextKey",
+              "type": "bytes",
+              "internalType": "bytes"
+            },
+            {
+              "name": "total",
+              "type": "uint64",
+              "internalType": "uint64"
+            }
+          ]
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "validatorsBech32",
+      "inputs": [
+        {
+          "name": "status",
+          "type": "string",
+          "internalType": "string"
+        },
+        {
+          "name": "pageRequest",
+          "type": "tuple",
+          "internalType": "struct PageRequest",
+          "components": [
+            {
+              "name": "key",
+              "type": "bytes",
+              "internalType": "bytes"
+            },
+            {
+              "name": "offset",
+              "type": "uint64",
+              "internalType": "uint64"
+            },
+            {
+              "name": "limit",
+              "type": "uint64",
+              "internalType": "uint64"
+            },
+            {
+              "name": "countTotal",
+              "type": "bool",
+              "internalType": "bool"
+            },
+            {
+              "name": "reverse",
+              "type": "bool",
+              "internalType": "bool"
+            }
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "validators",
+          "type": "tuple[]",
+          "internalType": "struct ValidatorBech32[]",
+          "components": [
+            {
+              "name": "operatorAddress",
               "type": "string",
               "internalType": "string"
             },
@@ -1046,6 +1672,40 @@
     {
       "type": "function",
       "name": "wrappedCancelUnbondingDelegation",
+      "inputs": [
+        {
+          "name": "delegatorAddress",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "validatorAddress",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        },
+        {
+          "name": "creationHeight",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "success",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "wrappedCancelUnbondingDelegationBech32",
       "inputs": [
         {
           "name": "delegatorAddress",
@@ -1198,6 +1858,35 @@
         },
         {
           "name": "validatorAddress",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "success",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "wrappedDelegateBech32",
+      "inputs": [
+        {
+          "name": "delegatorAddress",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "validatorAddress",
           "type": "string",
           "internalType": "string"
         },
@@ -1288,6 +1977,40 @@
         },
         {
           "name": "validatorSrcAddress",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "validatorDstAddress",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "success",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "wrappedRedelegateBech32",
+      "inputs": [
+        {
+          "name": "delegatorAddress",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "validatorSrcAddress",
           "type": "string",
           "internalType": "string"
         },
@@ -1314,6 +2037,35 @@
     {
       "type": "function",
       "name": "wrappedUndelegate",
+      "inputs": [
+        {
+          "name": "delegatorAddress",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "validatorAddress",
+          "type": "address",
+          "internalType": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint256",
+          "internalType": "uint256"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "success",
+          "type": "bool",
+          "internalType": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "wrappedUndelegateBech32",
       "inputs": [
         {
           "name": "delegatorAddress",
