@@ -97,6 +97,18 @@ func (k Keeper) GetAllBTCStakingConsumerIBCPackets(ctx context.Context) map[stri
 	return allEvents
 }
 
+// HasBTCStakingConsumerIBCPackets checks if any BTC staking consumer IBC packets exist in the store.
+// Returns true if at least one packet exists, false otherwise.
+// This function is optimized to return as soon as the first packet is found.
+func (k Keeper) HasBTCStakingConsumerIBCPackets(ctx context.Context) bool {
+	store := k.btcStakingConsumerEventStore(ctx)
+	iter := store.Iterator(nil, nil)
+	defer iter.Close()
+
+	// Return true immediately if any packet exists
+	return iter.Valid()
+}
+
 func (k Keeper) DeleteBTCStakingConsumerIBCPacket(ctx context.Context, consumerID string) {
 	store := k.btcStakingConsumerEventStore(ctx)
 	storeKey := []byte(consumerID)
