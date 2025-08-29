@@ -68,8 +68,8 @@ func TestCoostakingValidatorDirectRewards(t *testing.T) {
 		require.Empty(t, commission.Commission)
 	}
 
-	// Get initial fee collector balance
 	feeCollectorAddr := d.App.AccountKeeper.GetModuleAddress("fee_collector")
+	distrModuleAddr := d.App.AccountKeeper.GetModuleAddress(disttypes.ModuleName)
 
 	// Get initial coostaking module balance
 	coostakingModuleAddr := d.App.AccountKeeper.GetModuleAddress("coostaking")
@@ -134,6 +134,15 @@ func TestCoostakingValidatorDirectRewards(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, rewards)
 		require.True(t, rewards.Rewards.IsAllPositive(), "Expected some delegator rewards, got: %s", rewards.Rewards.String())
+
+		// distribution module should only have the remaining rewards
+		// and community pool funds
+		feePool, err := distributionK.FeePool.Get(ctx)
+		require.NoError(t, err)
+		distModBalance := bankK.GetAllBalances(ctx, distrModuleAddr)
+		distModDecCoins := sdk.NewDecCoinsFromCoins(distModBalance...)
+		diffCoins, _ := distModDecCoins.Sub(rewards.Rewards).Sub(feePool.CommunityPool).TruncateDecimal()
+		require.True(t, diffCoins.IsZero(), diffCoins.String())
 	}
 
 	// Verify that coostaking module balance increased
