@@ -95,10 +95,23 @@ func (k Keeper) accumulateRewards(ctx context.Context, btcStakingReward, fpDirec
 	gauge := types.NewGauge(btcStakingReward...)
 	k.SetBTCStakingGauge(ctx, height, gauge)
 
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	// Emit events to track BTC staking rewards and FP direct rewards
+	if btcStakingReward.IsAllPositive() {
+		sdkCtx.EventManager().EmitEvent(sdk.NewEvent(
+			types.EventTypeBTCStakingReward,
+			sdk.NewAttribute(types.AttributeKeyAmount, btcStakingReward.String()),
+		))
+	}
+
 	// update FP direct rewards gauge
 	if fpDirectRewards.IsAllPositive() {
 		fpGauge := types.NewGauge(fpDirectRewards...)
 		k.SetFPDirectGauge(ctx, height, fpGauge)
+		sdkCtx.EventManager().EmitEvent(sdk.NewEvent(
+			types.EventTypeFPDirectRewards,
+			sdk.NewAttribute(types.AttributeKeyAmount, fpDirectRewards.String()),
+		))
 	}
 
 	totalRwds := btcStakingReward.Add(fpDirectRewards...)
