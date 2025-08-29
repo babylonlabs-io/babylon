@@ -20,7 +20,6 @@ import (
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/stretchr/testify/require"
 
-<<<<<<< HEAD
 	"github.com/babylonlabs-io/babylon/v3/app"
 	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
 	"github.com/babylonlabs-io/babylon/v3/app/signingcontext"
@@ -31,19 +30,7 @@ import (
 	checkpointingtypes "github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
 	"github.com/babylonlabs-io/babylon/v3/x/epoching/keeper"
 	"github.com/babylonlabs-io/babylon/v3/x/epoching/types"
-=======
-	"github.com/babylonlabs-io/babylon/v4/app"
-	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
-	"github.com/babylonlabs-io/babylon/v4/app/signingcontext"
-	"github.com/babylonlabs-io/babylon/v4/crypto/bls12381"
-	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
-	bbn "github.com/babylonlabs-io/babylon/v4/types"
-	btcstakingtypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
-	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
-	"github.com/babylonlabs-io/babylon/v4/x/epoching/keeper"
-	"github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
->>>>>>> 0a999784 (fix: remove duplicated ValidateBasic checks (#1635))
 )
 
 // Helper is a structure which wraps the entire app and exposes functionalities for testing the epoching module

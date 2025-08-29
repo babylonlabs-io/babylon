@@ -8,19 +8,19 @@ import (
 	"github.com/stretchr/testify/require"
 
 	abci "github.com/cometbft/cometbft/abci/types"
+	cmtcrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
+	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdksigning "github.com/cosmos/cosmos-sdk/types/tx/signing"
-	cmtcrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
-	"github.com/cosmos/cosmos-sdk/client"
 
-	"github.com/babylonlabs-io/babylon/v4/app"
-	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
-	testhelper "github.com/babylonlabs-io/babylon/v4/testutil/helper"
-	bbn "github.com/babylonlabs-io/babylon/v4/types"
-	btclightclienttypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
-	finalitytypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
+	"github.com/babylonlabs-io/babylon/v3/app"
+	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
+	testhelper "github.com/babylonlabs-io/babylon/v3/testutil/helper"
+	bbn "github.com/babylonlabs-io/babylon/v3/types"
+	btclightclienttypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
+	finalitytypes "github.com/babylonlabs-io/babylon/v3/x/finality/types"
 )
 
 // TestValidateBasic_AppIntegration tests ValidateBasic at baseapp level via CheckTx
