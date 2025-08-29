@@ -31,6 +31,8 @@ func CoostakingKeeperWithStore(
 	storeKey *storetypes.KVStoreKey,
 	bankK types.BankKeeper,
 	accK types.AccountKeeper,
+	stkK types.StakingKeeper,
+	distK types.DistributionKeeper,
 ) (*keeper.Keeper, sdk.Context) {
 	if storeKey == nil {
 		storeKey = storetypes.NewKVStoreKey(types.StoreKey)
@@ -47,6 +49,8 @@ func CoostakingKeeperWithStore(
 		runtime.NewKVStoreService(storeKey),
 		bankK,
 		accK,
+		stkK,
+		distK,
 		appparams.AccGov.String(),
 		authtypes.FeeCollectorName,
 	)
@@ -68,7 +72,7 @@ func CoostakingKeeperWithMocks(t testing.TB, ctrl *gomock.Controller) (*keeper.K
 	if ctrl == nil {
 		ctrl = gomock.NewController(t)
 	}
-	k, ctx := CoostakingKeeperWithStoreKey(t, nil, types.NewMockBankKeeper(ctrl), types.NewMockAccountKeeper(ctrl))
+	k, ctx := CoostakingKeeperWithStoreKey(t, nil, types.NewMockBankKeeper(ctrl), types.NewMockAccountKeeper(ctrl), types.NewMockStakingKeeper(ctrl), types.NewMockDistributionKeeper(ctrl))
 	return k, ctrl, ctx
 }
 
@@ -77,11 +81,13 @@ func CoostakingKeeperWithStoreKey(
 	storeKey *storetypes.KVStoreKey,
 	bankK types.BankKeeper,
 	accK types.AccountKeeper,
+	stkK types.StakingKeeper,
+	distK types.DistributionKeeper,
 ) (*keeper.Keeper, sdk.Context) {
 	db := dbm.NewMemDB()
 	stateStore := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
 
-	k, ctx := CoostakingKeeperWithStore(t, db, stateStore, storeKey, bankK, accK)
+	k, ctx := CoostakingKeeperWithStore(t, db, stateStore, storeKey, bankK, accK, stkK, distK)
 
 	// Initialize params
 	if err := k.SetParams(ctx, types.DefaultParams()); err != nil {

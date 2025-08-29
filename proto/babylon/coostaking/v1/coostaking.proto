@@ -24,4 +24,12 @@ message Params {
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
+  // ValidatorsPortion is the portion of rewards that goes to Babylon Validators
+  // NOTE: This portion of validators is taken after the incentive module
+  // takes part of the fee_collector balance to give out to validators that correctly voted.
+  string validators_portion = 3 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable) = false
+  ];
 }
