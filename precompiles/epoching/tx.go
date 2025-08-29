@@ -13,15 +13,18 @@ import (
 )
 
 const (
-	WrappedCreateValidatorMethod                 = "wrappedCreateValidator"
-	WrappedEditValidatorMethod                   = "wrappedEditValidator"
-	WrappedDelegateMethod                        = "wrappedDelegate"
+	// epoching precompile transactions
+	WrappedCreateValidatorMethod           = "wrappedCreateValidator"
+	WrappedEditValidatorMethod             = "wrappedEditValidator"
+	WrappedDelegateMethod                  = "wrappedDelegate"
+	WrappedUndelegateMethod                = "wrappedUndelegate"
+	WrappedRedelegateMethod                = "wrappedRedelegate"
+	WrappedCancelUnbondingDelegationMethod = "wrappedCancelUnbondingDelegation"
+
+	// bech32 versions of epoching precompile transactions
 	WrappedDelegateBech32Method                  = "wrappedDelegateBech32"
-	WrappedUndelegateMethod                      = "wrappedUndelegate"
 	WrappedUndelegateBech32Method                = "wrappedUndelegateBech32"
-	WrappedRedelegateMethod                      = "wrappedRedelegate"
 	WrappedRedelegateBech32Method                = "wrappedRedelegateBech32"
-	WrappedCancelUnbondingDelegationMethod       = "wrappedCancelUnbondingDelegation"
 	WrappedCancelUnbondingDelegationBech32Method = "wrappedCancelUnbondingDelegationBech32"
 )
 

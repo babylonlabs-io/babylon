@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	// Staking precompile queries
+	// staking precompile queries
 	DelegationMethod          = "delegation"
 	UnbondingDelegationMethod = "unbondingDelegation"
 	ValidatorMethod           = "validator"
@@ -22,13 +22,13 @@ const (
 	RedelegationMethod        = "redelegation"
 	RedelegationsMethod       = "redelegations"
 
-	// Bech32 versions of staking queries
+	// bech32 versions of staking queries
 	ValidatorBech32Method     = "validatorBech32"
 	ValidatorsBech32Method    = "validatorsBech32"
 	RedelegationBech32Method  = "redelegationBech32"
 	RedelegationsBech32Method = "redelegationsBech32"
 
-	// Epoching precompile queries
+	// epoching precompile queries
 	EpochInfoMethod           = "epochInfo"
 	CurrentEpochMethod        = "currentEpoch"
 	EpochMsgsMethod           = "epochMsgs"
@@ -37,11 +37,8 @@ const (
 	DelegationLifecycleMethod = "delegationLifecycle"
 	EpochValSetMethod         = "epochValSet"
 
-	// Bech32 versions of epoching queries
-	EpochMsgsBech32Method           = "epochMsgsBech32"
-	LatestEpochMsgsBech32Method     = "latestEpochMsgsBech32"
+	// bech32 versions of epoching queries
 	DelegationLifecycleBech32Method = "delegationLifecycleBech32"
-	EpochValSetBech32Method         = "epochValSetBech32"
 )
 
 // DelegationBech32 returns the delegation that a delegator has with a specific validator.

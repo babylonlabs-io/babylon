@@ -152,12 +152,8 @@ func (p Precompile) run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 		bz, err = p.CurrentEpoch(ctx, contract, method, args)
 	case EpochMsgsMethod:
 		bz, err = p.EpochMsgs(ctx, contract, method, args)
-	case EpochMsgsBech32Method:
-		bz, err = p.EpochMsgsBech32(ctx, contract, method, args)
 	case LatestEpochMsgsMethod:
 		bz, err = p.LatestEpochMsgs(ctx, contract, method, args)
-	case LatestEpochMsgsBech32Method:
-		bz, err = p.LatestEpochMsgsBech32(ctx, contract, method, args)
 	case ValidatorLifecycleMethod:
 		bz, err = p.ValidatorLifecycle(ctx, contract, method, args)
 	case DelegationLifecycleMethod:
@@ -166,8 +162,6 @@ func (p Precompile) run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 		bz, err = p.DelegationLifecycleBech32(ctx, contract, method, args)
 	case EpochValSetMethod:
 		bz, err = p.EpochValSet(ctx, contract, method, args)
-	case EpochValSetBech32Method:
-		bz, err = p.EpochValSetBech32(ctx, contract, method, args)
 	// Staking queries
 	case DelegationMethod:
 		bz, err = p.Delegation(ctx, contract, method, args)
@@ -218,6 +212,10 @@ func (p Precompile) run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 //   - WrappedUndelegate
 //   - WrappedRedelegate
 //   - WrappedCancelUnbondingDelegation
+//   - WrappedDelegateBech32
+//   - WrappedUndelegateBech32
+//   - WrappedRedelegateBech32
+//   - WrappedCancelUnbondingDelegationBech32
 func (p Precompile) IsTransaction(method *abi.Method) bool {
 	switch method.Name {
 	case WrappedCreateValidatorMethod,
@@ -225,7 +223,11 @@ func (p Precompile) IsTransaction(method *abi.Method) bool {
 		WrappedDelegateMethod,
 		WrappedUndelegateMethod,
 		WrappedRedelegateMethod,
-		WrappedCancelUnbondingDelegationMethod:
+		WrappedCancelUnbondingDelegationMethod,
+		WrappedDelegateBech32Method,
+		WrappedUndelegateBech32Method,
+		WrappedRedelegateBech32Method,
+		WrappedCancelUnbondingDelegationBech32Method:
 		return true
 	default:
 		return false
