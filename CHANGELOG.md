@@ -53,6 +53,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#1594](https://github.com/babylonlabs-io/babylon/pull/1594) Add soft deleted to finality providers response.
 - [#1589](https://github.com/babylonlabs-io/babylon/pull/1589) Add minimum Babylon commission on `RegisterConsumer`
 - [#1612](https://github.com/babylonlabs-io/babylon/pull/1612) Optimize `x/zoneconcierge` packet broadcast logic trigger only when needed.
+- [#1635](https://github.com/babylonlabs-io/babylon/pull/1635) Remove duplicated ValidateBasic checks.
 
 ### State breaking
 
