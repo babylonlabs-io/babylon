@@ -29,6 +29,7 @@ import (
 const (
 	// commit public randomness list
 	commitStartHeight = uint64(5)
+	feeCollectorAddr  = "bbn17xpfvakm2amg962yls6f84z3kell8c5l88j35y"
 )
 
 type SoftwareUpgradeV3TestSuite struct {
@@ -418,9 +419,6 @@ func (s *SoftwareUpgradeV3TestSuite) CheckBtcRewardsAfterUpgrade(expectedUpgrade
 	fp1Rate := sdkmath.LegacyNewDec(vpFp1).QuoTruncate(sdkmath.LegacyNewDec(totalVp))
 	fp2Rate := sdkmath.LegacyNewDec(vpFp2).QuoTruncate(sdkmath.LegacyNewDec(totalVp))
 
-	ictvParams, err := n.QueryIncentiveParams()
-	s.Require().NoError(err)
-
 	fp1CommTotal, fp2CommTotal, fp1CoinsForDels, fp2CoinsForDels := sdk.NewCoins(), sdk.NewCoins(), sdk.NewCoins(), sdk.NewCoins()
 	for blkHeight := firstFinalizedBlock.Height; blkHeight <= lastFinalizedBlock.Height; blkHeight++ {
 		fpsVoted := n.QueryVotesAtHeight(blkHeight)
@@ -440,34 +438,42 @@ func (s *SoftwareUpgradeV3TestSuite) CheckBtcRewardsAfterUpgrade(expectedUpgrade
 		fp2Vp := n.QueryFinalityProviderPowerAtHeight(s.fp2.BtcPk, blkHeight)
 		s.Require().EqualValues(vpFp2, fp2Vp)
 
-		// calculate the rewards given for each block
-		coinsInBlk, err := n.QueryBtcStkGauge(blkHeight)
+		// Calculate the rewards given for each block
+		// Get fee collector balance at previous block height (what was available at BeginBlock)
+		feeCollectorPrevBal, err := n.QueryBalancesAtHeight(feeCollectorAddr, blkHeight-1)
 		s.Require().NoError(err)
 
-		// considering the btc_staking_portion did not change
-		// we can backcalculate the fee_collector initial balance and
-		// estimate the direct FP rewards
-		decCoinsInBlk := sdk.NewDecCoinsFromCoins(coinsInBlk...)
-		feeCollectorInitBal := decCoinsInBlk.QuoDec(ictvParams.BTCStakingPortion())
-		
+		// Get newly minted amount in current block
+		mintedCoins, err := n.QueryMintedAmountFromEvents(int64(blkHeight))
+		s.Require().NoError(err)
+
+		// initial fee collector balance = fee collector prev block final balance + minted amount in current block
+		feeCollectorInitBal := feeCollectorPrevBal.Add(mintedCoins...)
+
+		// get incentives params at height to calculate the expected rewards
+		ictvParams, err := n.QueryIncentiveParamsAtHeight(blkHeight)
+		s.Require().NoError(err)
+
+		btcStkCoinsInBlk := itypes.GetCoinsPortion(feeCollectorInitBal, ictvParams.BTCStakingPortion())
+
 		var fp1DirectRwds, fp2DirectRwds sdk.Coins
 		// check if FpPortion parameter exists (might be nil in upgrade scenarios)
-		if !ictvParams.FpPortion.IsNil() {
-			fpDirectRwds, _ := feeCollectorInitBal.MulDecTruncate(ictvParams.FpPortion).TruncateDecimal()
+		if !ictvParams.FpPortion.IsNil() && !ictvParams.FpPortion.IsZero() {
+			fpDirectRwds := itypes.GetCoinsPortion(feeCollectorInitBal, ictvParams.FpPortion)
 			fp1DirectRwds = itypes.GetCoinsPortion(fpDirectRwds, fp1Rate)
 			fp2DirectRwds = itypes.GetCoinsPortion(fpDirectRwds, fp2Rate)
 		} else {
-			// FpPortion not set, so no FP direct rewards
+			// FpPortion not set or zero, so no FP direct rewards
 			fp1DirectRwds = sdk.NewCoins()
 			fp2DirectRwds = sdk.NewCoins()
 		}
 
-		coinsForFp1AndDels := itypes.GetCoinsPortion(coinsInBlk, fp1Rate)
+		coinsForFp1AndDels := itypes.GetCoinsPortion(btcStkCoinsInBlk, fp1Rate)
 		fp1Comm := itypes.GetCoinsPortion(coinsForFp1AndDels, *s.fp1.Commission)
 		fp1CommTotal = fp1CommTotal.Add(fp1Comm...).Add(fp1DirectRwds...)
 		fp1CoinsForDels = fp1CoinsForDels.Add(coinsForFp1AndDels.Sub(fp1Comm...)...)
 
-		coinsForFp2AndDels := itypes.GetCoinsPortion(coinsInBlk, fp2Rate)
+		coinsForFp2AndDels := itypes.GetCoinsPortion(btcStkCoinsInBlk, fp2Rate)
 		fp2Comm := itypes.GetCoinsPortion(coinsForFp2AndDels, *s.fp2.Commission)
 		fp2CommTotal = fp2CommTotal.Add(fp2Comm...).Add(fp2DirectRwds...)
 		fp2CoinsForDels = fp2CoinsForDels.Add(coinsForFp2AndDels.Sub(fp2Comm...)...)

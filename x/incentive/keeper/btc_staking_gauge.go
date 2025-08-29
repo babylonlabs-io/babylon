@@ -83,7 +83,7 @@ func (k Keeper) RewardBTCStaking(ctx context.Context, height uint64, dc *ftypes.
 	}
 
 	// Prune gauges after rewards are distributed to free up storage
-	// k.pruneBTCStakingGauge(ctx, height) // this is used in e2e tests and queries, need to decide what to do
+	k.pruneBTCStakingGauge(ctx, height)
 	k.pruneFPDirectGauge(ctx, height)
 }
 
@@ -172,5 +172,12 @@ func (k Keeper) fpDirectGaugeStore(ctx context.Context) prefix.Store {
 // to free up storage after rewards have been distributed
 func (k Keeper) pruneFPDirectGauge(ctx context.Context, height uint64) {
 	store := k.fpDirectGaugeStore(ctx)
+	store.Delete(sdk.Uint64ToBigEndian(height))
+}
+
+// pruneFPDirectGauge removes the FP direct rewards gauge at the specified height
+// to free up storage after rewards have been distributed
+func (k Keeper) pruneBTCStakingGauge(ctx context.Context, height uint64) {
+	store := k.btcStakingGaugeStore(ctx)
 	store.Delete(sdk.Uint64ToBigEndian(height))
 }
