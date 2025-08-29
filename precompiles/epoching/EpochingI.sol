@@ -246,7 +246,31 @@ interface EpochingI {
     /// @param amount The amount of the bond denomination to be delegated to the validator.
     /// This amount should use the bond denomination precision stored in the bank metadata.
     /// @return success Whether or not the delegate was successful
+    function wrappedDelegateBech32(
+        address delegatorAddress,
+        string memory validatorAddress,
+        uint256 amount
+    ) external returns (bool success);
+
+    /// @dev Defines a method for performing a delegation of coins from a delegator to a validator.
+    /// @param delegatorAddress The address of the delegator
+    /// @param validatorAddress The address of the validator
+    /// @param amount The amount of the bond denomination to be delegated to the validator.
+    /// This amount should use the bond denomination precision stored in the bank metadata.
+    /// @return success Whether or not the delegate was successful
     function wrappedDelegate(
+        address delegatorAddress,
+        address validatorAddress,
+        uint256 amount
+    ) external returns (bool success);
+
+    /// @dev Defines a method for performing an undelegation from a delegate and a validator.
+    /// @param delegatorAddress The address of the delegator
+    /// @param validatorAddress The address of the validator
+    /// @param amount The amount of the bond denomination to be undelegated from the validator.
+    /// This amount should use the bond denomination precision stored in the bank metadata.
+    /// @return success Whether or not the redelegate was successfully enqueued
+    function wrappedUndelegateBech32(
         address delegatorAddress,
         string memory validatorAddress,
         uint256 amount
@@ -260,7 +284,22 @@ interface EpochingI {
     /// @return success Whether or not the redelegate was successfully enqueued
     function wrappedUndelegate(
         address delegatorAddress,
-        string memory validatorAddress,
+        address validatorAddress,
+        uint256 amount
+    ) external returns (bool success);
+
+    /// @dev Defines a method for performing a redelegation
+    /// of coins from a delegator and source validator to a destination validator.
+    /// @param delegatorAddress The address of the delegator
+    /// @param validatorSrcAddress The validator from which the redelegation is initiated
+    /// @param validatorDstAddress The validator to which the redelegation is destined
+    /// @param amount The amount of the bond denomination to be redelegated to the validator
+    /// This amount should use the bond denomination precision stored in the bank metadata.
+    /// @return success Whether or not the redelegate was successfully enqueued
+    function wrappedRedelegateBech32(
+        address delegatorAddress,
+        string memory validatorSrcAddress,
+        string memory validatorDstAddress,
         uint256 amount
     ) external returns (bool success);
 
@@ -274,9 +313,24 @@ interface EpochingI {
     /// @return success Whether or not the redelegate was successfully enqueued
     function wrappedRedelegate(
         address delegatorAddress,
-        string memory validatorSrcAddress,
-        string memory validatorDstAddress,
+        address validatorSrcAddress,
+        address validatorDstAddress,
         uint256 amount
+    ) external returns (bool success);
+
+    /// @dev Allows delegators to cancel the unbondingDelegation entry
+    /// and to delegate back to a previous validator.
+    /// @param delegatorAddress The address of the delegator
+    /// @param validatorAddress The address of the validator
+    /// @param amount The amount of the bond denomination
+    /// This amount should use the bond denomination precision stored in the bank metadata.
+    /// @param creationHeight The height at which the unbonding took place
+    /// @return success Whether or not the unbonding delegation was cancelled
+    function wrappedCancelUnbondingDelegationBech32(
+        address delegatorAddress,
+        string memory validatorAddress,
+        uint256 amount,
+        uint256 creationHeight
     ) external returns (bool success);
 
     /// @dev Allows delegators to cancel the unbondingDelegation entry
@@ -289,7 +343,7 @@ interface EpochingI {
     /// @return success Whether or not the unbonding delegation was cancelled
     function wrappedCancelUnbondingDelegation(
         address delegatorAddress,
-        string memory validatorAddress,
+        address validatorAddress,
         uint256 amount,
         uint256 creationHeight
     ) external returns (bool success);

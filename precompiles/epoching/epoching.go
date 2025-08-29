@@ -131,12 +131,20 @@ func (p Precompile) run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 		bz, err = p.WrappedEditValidator(ctx, contract, stateDB, method, args)
 	case WrappedDelegateMethod:
 		bz, err = p.WrappedDelegate(ctx, contract, stateDB, method, args)
+	case WrappedDelegateBech32Method:
+		bz, err = p.WrappedDelegateBech32(ctx, contract, stateDB, method, args)
 	case WrappedUndelegateMethod:
 		bz, err = p.WrappedUndelegate(ctx, contract, stateDB, method, args)
+	case WrappedUndelegateBech32Method:
+		bz, err = p.WrappedUndelegateBech32(ctx, contract, stateDB, method, args)
 	case WrappedRedelegateMethod:
 		bz, err = p.WrappedRedelegate(ctx, contract, stateDB, method, args)
+	case WrappedRedelegateBech32Method:
+		bz, err = p.WrappedRedelegateBech32(ctx, contract, stateDB, method, args)
 	case WrappedCancelUnbondingDelegationMethod:
 		bz, err = p.WrappedCancelUnbondingDelegation(ctx, contract, stateDB, method, args)
+	case WrappedCancelUnbondingDelegationBech32Method:
+		bz, err = p.WrappedCancelUnbondingDelegationBech32(ctx, contract, stateDB, method, args)
 	// Epoching queries
 	case EpochInfoMethod:
 		bz, err = p.EpochInfo(ctx, contract, method, args)

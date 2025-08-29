@@ -13,12 +13,16 @@ import (
 )
 
 const (
-	WrappedCreateValidatorMethod           = "wrappedCreateValidator"
-	WrappedEditValidatorMethod             = "wrappedEditValidator"
-	WrappedDelegateMethod                  = "wrappedDelegate"
-	WrappedUndelegateMethod                = "wrappedUndelegate"
-	WrappedRedelegateMethod                = "wrappedRedelegate"
-	WrappedCancelUnbondingDelegationMethod = "wrappedCancelUnbondingDelegation"
+	WrappedCreateValidatorMethod                 = "wrappedCreateValidator"
+	WrappedEditValidatorMethod                   = "wrappedEditValidator"
+	WrappedDelegateMethod                        = "wrappedDelegate"
+	WrappedDelegateBech32Method                  = "wrappedDelegateBech32"
+	WrappedUndelegateMethod                      = "wrappedUndelegate"
+	WrappedUndelegateBech32Method                = "wrappedUndelegateBech32"
+	WrappedRedelegateMethod                      = "wrappedRedelegate"
+	WrappedRedelegateBech32Method                = "wrappedRedelegateBech32"
+	WrappedCancelUnbondingDelegationMethod       = "wrappedCancelUnbondingDelegation"
+	WrappedCancelUnbondingDelegationBech32Method = "wrappedCancelUnbondingDelegationBech32"
 )
 
 // WrappedCreateValidator performs create validator
@@ -112,6 +116,52 @@ func (p Precompile) WrappedEditValidator(
 	return method.Outputs.Pack(true)
 }
 
+func (p Precompile) WrappedDelegateBech32(
+	ctx sdk.Context,
+	contract *vm.Contract,
+	stateDB vm.StateDB,
+	method *abi.Method,
+	args []interface{},
+) ([]byte, error) {
+	bondDenom, err := p.stakingKeeper.BondDenom(ctx)
+	if err != nil {
+		return nil, err
+	}
+	msg, delegatorHexAddr, err := NewMsgWrappedDelegateBech32(args, bondDenom, p.addrCdc)
+	if err != nil {
+		return nil, err
+	}
+
+	p.Logger(ctx).Debug(
+		"tx called",
+		"method", method.Name,
+		"args", fmt.Sprintf(
+			"{ delegator_address: %s, validator_address: %s, amount: %s }",
+			delegatorHexAddr,
+			msg.Msg.ValidatorAddress,
+			msg.Msg.Amount.Amount,
+		),
+	)
+
+	msgSender := contract.Caller()
+	if msgSender != delegatorHexAddr {
+		return nil, fmt.Errorf(cmn.ErrRequesterIsNotMsgSender, msgSender.String(), delegatorHexAddr.String())
+	}
+
+	if _, err = p.epochingMsgServer.WrappedDelegate(ctx, msg); err != nil {
+		return nil, err
+	}
+
+	epochBoundary := p.epochingKeeper.GetEpoch(ctx).GetLastBlockHeight()
+
+	// Emit the event for the delegate transaction
+	if err = p.EmitWrappedDelegateEvent(ctx, stateDB, msg, delegatorHexAddr, epochBoundary); err != nil {
+		return nil, err
+	}
+
+	return method.Outputs.Pack(true)
+}
+
 func (p Precompile) WrappedDelegate(
 	ctx sdk.Context,
 	contract *vm.Contract,
@@ -152,6 +202,52 @@ func (p Precompile) WrappedDelegate(
 
 	// Emit the event for the delegate transaction
 	if err = p.EmitWrappedDelegateEvent(ctx, stateDB, msg, delegatorHexAddr, epochBoundary); err != nil {
+		return nil, err
+	}
+
+	return method.Outputs.Pack(true)
+}
+
+func (p Precompile) WrappedUndelegateBech32(
+	ctx sdk.Context,
+	contract *vm.Contract,
+	stateDB vm.StateDB,
+	method *abi.Method,
+	args []interface{},
+) ([]byte, error) {
+	bondDenom, err := p.stakingKeeper.BondDenom(ctx)
+	if err != nil {
+		return nil, err
+	}
+	msg, delegatorHexAddr, err := NewMsgWrappedUndelegateBech32(args, bondDenom, p.addrCdc)
+	if err != nil {
+		return nil, err
+	}
+
+	p.Logger(ctx).Debug(
+		"tx called",
+		"method", method.Name,
+		"args", fmt.Sprintf(
+			"{ delegator_address: %s, validator_address: %s, amount: %s }",
+			delegatorHexAddr,
+			msg.Msg.ValidatorAddress,
+			msg.Msg.Amount.Amount,
+		),
+	)
+
+	msgSender := contract.Caller()
+	if msgSender != delegatorHexAddr {
+		return nil, fmt.Errorf(cmn.ErrRequesterIsNotMsgSender, msgSender.String(), delegatorHexAddr.String())
+	}
+
+	if _, err = p.epochingMsgServer.WrappedUndelegate(ctx, msg); err != nil {
+		return nil, err
+	}
+
+	epochBoundary := p.epochingKeeper.GetEpoch(ctx).GetLastBlockHeight()
+
+	// Emit the event for the delegate transaction
+	if err = p.EmitWrappedUnbondEvent(ctx, stateDB, msg, delegatorHexAddr, epochBoundary); err != nil {
 		return nil, err
 	}
 
@@ -204,6 +300,53 @@ func (p Precompile) WrappedUndelegate(
 	return method.Outputs.Pack(true)
 }
 
+func (p Precompile) WrappedRedelegateBech32(
+	ctx sdk.Context,
+	contract *vm.Contract,
+	stateDB vm.StateDB,
+	method *abi.Method,
+	args []interface{},
+) ([]byte, error) {
+	bondDenom, err := p.stakingKeeper.BondDenom(ctx)
+	if err != nil {
+		return nil, err
+	}
+	msg, delegatorHexAddr, err := NewMsgWrappedRedelegateBech32(args, bondDenom, p.addrCdc)
+	if err != nil {
+		return nil, err
+	}
+
+	p.Logger(ctx).Debug(
+		"tx called",
+		"method", method.Name,
+		"args", fmt.Sprintf(
+			"{ delegator_address: %s, validator_src_address: %s, validator_dst_address: %s, amount: %s }",
+			delegatorHexAddr,
+			msg.Msg.ValidatorSrcAddress,
+			msg.Msg.ValidatorDstAddress,
+			msg.Msg.Amount.Amount,
+		),
+	)
+
+	msgSender := contract.Caller()
+	if msgSender != delegatorHexAddr {
+		return nil, fmt.Errorf(cmn.ErrRequesterIsNotMsgSender, msgSender.String(), delegatorHexAddr.String())
+	}
+
+	if _, err = p.epochingMsgServer.WrappedBeginRedelegate(ctx, msg); err != nil {
+		return nil, err
+	}
+
+	epochBoundary := p.epochingKeeper.GetEpoch(ctx).GetLastBlockHeight()
+
+	// Emit the event for the delegate transaction
+	if err = p.EmitWrappedRedelegateEvent(ctx, stateDB, msg, delegatorHexAddr, epochBoundary); err != nil {
+		return nil, err
+	}
+
+	return method.Outputs.Pack(true)
+}
+
 func (p Precompile) WrappedRedelegate(
 	ctx sdk.Context,
 	contract *vm.Contract,
@@ -245,6 +388,49 @@ func (p Precompile) WrappedRedelegate(
 
 	// Emit the event for the delegate transaction
 	if err = p.EmitWrappedRedelegateEvent(ctx, stateDB, msg, delegatorHexAddr, epochBoundary); err != nil {
+		return nil, err
+	}
+
+	return method.Outputs.Pack(true)
+}
+
+func (p Precompile) WrappedCancelUnbondingDelegationBech32(
+	ctx sdk.Context,
+	contract *vm.Contract,
+	stateDB vm.StateDB,
+	method *abi.Method,
+	args []interface{},
+) ([]byte, error) {
+	bondDenom, err := p.stakingKeeper.BondDenom(ctx)
+	if err != nil {
+		return nil, err
+	}
+	msg, delegatorHexAddr, err := NewMsgWrappedCancelUnbondingDelegationBech32(args, bondDenom, p.addrCdc)
+	if err != nil {
+		return nil, err
+	}
+
+	p.Logger(ctx).Debug(
+		"tx called",
+		"method", method.Name,
+		"args", fmt.Sprintf(
+			"{ delegator_address: %s, validator_address: %s, amount: %s, creation_height: %d }",
+			delegatorHexAddr,
+			msg.Msg.ValidatorAddress,
+			msg.Msg.Amount.Amount,
+			msg.Msg.CreationHeight,
+		),
+	)
+
+	msgSender := contract.Caller()
+	if msgSender != delegatorHexAddr {
+		return nil, fmt.Errorf(cmn.ErrRequesterIsNotMsgSender, msgSender.String(), delegatorHexAddr.String())
+	}
+
+	epochBoundary := p.epochingKeeper.GetEpoch(ctx).GetLastBlockHeight()
+
+	// Emit the event for the delegate transaction
+	if err = p.EmitWrappedCancelUnbondingDelegationEvent(ctx, stateDB, msg, delegatorHexAddr, epochBoundary); err != nil {
 		return nil, err
 	}
 

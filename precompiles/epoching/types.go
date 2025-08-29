@@ -264,10 +264,10 @@ func NewMsgWrappedEditValidator(args []interface{}) (*epochingtypes.MsgWrappedEd
 	return msg, validatorHexAddr, nil
 }
 
-// NewMsgWrappedDelegate creates a new MsgDelegate instance and does sanity checks
+// NewMsgWrappedDelegateBech32 creates a new MsgDelegate instance and does sanity checks
 // on the given arguments before populating the message.
-func NewMsgWrappedDelegate(args []interface{}, denom string, addrCdc address.Codec) (*epochingtypes.MsgWrappedDelegate, common.Address, error) {
-	delegatorAddr, validatorAddress, amount, err := checkDelegationUndelegationArgs(args)
+func NewMsgWrappedDelegateBech32(args []interface{}, denom string, addrCdc address.Codec) (*epochingtypes.MsgWrappedDelegate, common.Address, error) {
+	delegatorAddr, validatorAddress, amount, err := checkDelegationUndelegationArgsBech32(args)
 	if err != nil {
 		return nil, common.Address{}, err
 	}
@@ -290,10 +290,37 @@ func NewMsgWrappedDelegate(args []interface{}, denom string, addrCdc address.Cod
 	return msg, delegatorAddr, nil
 }
 
-// NewMsgWrappedUndelegate creates a new MsgUndelegate instance and does sanity checks
+// NewMsgWrappedDelegate creates a new MsgDelegate instance and does sanity checks
 // on the given arguments before populating the message.
-func NewMsgWrappedUndelegate(args []interface{}, denom string, addrCdc address.Codec) (*epochingtypes.MsgWrappedUndelegate, common.Address, error) {
-	delegatorAddr, validatorAddress, amount, err := checkDelegationUndelegationArgs(args)
+func NewMsgWrappedDelegate(args []interface{}, denom string, addrCdc address.Codec) (*epochingtypes.MsgWrappedDelegate, common.Address, error) {
+	delegatorAddr, validatorAddr, amount, err := checkDelegationUndelegationArgs(args)
+	if err != nil {
+		return nil, common.Address{}, err
+	}
+
+	delegatorAddrStr, err := addrCdc.BytesToString(delegatorAddr.Bytes())
+	validatorAddrStr := sdk.ValAddress(validatorAddr.Bytes()).String()
+	if err != nil {
+		return nil, common.Address{}, fmt.Errorf("failed to decode delegator address: %w", err)
+	}
+	msg := &epochingtypes.MsgWrappedDelegate{
+		Msg: &stakingtypes.MsgDelegate{
+			DelegatorAddress: delegatorAddrStr,
+			ValidatorAddress: validatorAddrStr,
+			Amount: sdk.Coin{
+				Denom:  denom,
+				Amount: math.NewIntFromBigInt(amount),
+			},
+		},
+	}
+
+	return msg, delegatorAddr, nil
+}
+
+// NewMsgWrappedUndelegateBech32 creates a new MsgUndelegate instance and does sanity checks
+// on the given arguments before populating the message.
+func NewMsgWrappedUndelegateBech32(args []interface{}, denom string, addrCdc address.Codec) (*epochingtypes.MsgWrappedUndelegate, common.Address, error) {
+	delegatorAddr, validatorAddress, amount, err := checkDelegationUndelegationArgsBech32(args)
 	if err != nil {
 		return nil, common.Address{}, err
 	}
@@ -316,9 +343,36 @@ func NewMsgWrappedUndelegate(args []interface{}, denom string, addrCdc address.C
 	return msg, delegatorAddr, nil
 }
 
-// NewMsgWrappedRedelegate creates a new MsgRedelegate instance and does sanity checks
+// NewMsgWrappedUndelegate creates a new MsgUndelegate instance and does sanity checks
 // on the given arguments before populating the message.
-func NewMsgWrappedRedelegate(args []interface{}, denom string, addrCdc address.Codec) (*epochingtypes.MsgWrappedBeginRedelegate, common.Address, error) {
+func NewMsgWrappedUndelegate(args []interface{}, denom string, addrCdc address.Codec) (*epochingtypes.MsgWrappedUndelegate, common.Address, error) {
+	delegatorAddr, validatorAddr, amount, err := checkDelegationUndelegationArgs(args)
+	if err != nil {
+		return nil, common.Address{}, err
+	}
+
+	delegatorAddrStr, err := addrCdc.BytesToString(delegatorAddr.Bytes())
+	validatorAddrStr := sdk.ValAddress(validatorAddr.Bytes()).String()
+	if err != nil {
+		return nil, common.Address{}, fmt.Errorf("failed to decode delegator address: %w", err)
+	}
+	msg := &epochingtypes.MsgWrappedUndelegate{
+		Msg: &stakingtypes.MsgUndelegate{
+			DelegatorAddress: delegatorAddrStr,
+			ValidatorAddress: validatorAddrStr,
+			Amount: sdk.Coin{
+				Denom:  denom,
+				Amount: math.NewIntFromBigInt(amount),
+			},
+		},
+	}
+
+	return msg, delegatorAddr, nil
+}
+
+// NewMsgWrappedRedelegateBech32 creates a new MsgRedelegate instance and does sanity checks
+// on the given arguments before populating the message.
+func NewMsgWrappedRedelegateBech32(args []interface{}, denom string, addrCdc address.Codec) (*epochingtypes.MsgWrappedBeginRedelegate, common.Address, error) {
 	if len(args) != 4 {
 		return nil, common.Address{}, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, 4, len(args))
 	}
@@ -362,9 +416,57 @@ func NewMsgWrappedRedelegate(args []interface{}, denom string, addrCdc address.C
 	return msg, delegatorAddr, nil
 }
 
-// NewMsgWrappedCancelUnbondingDelegation creates a new MsgCancelUnbondingDelegation instance and does sanity checks
+// NewMsgWrappedRedelegate creates a new MsgRedelegate instance and does sanity checks
 // on the given arguments before populating the message.
-func NewMsgWrappedCancelUnbondingDelegation(args []interface{}, denom string, addrCdc address.Codec) (*epochingtypes.MsgWrappedCancelUnbondingDelegation, common.Address, error) {
+func NewMsgWrappedRedelegate(args []interface{}, denom string, addrCdc address.Codec) (*epochingtypes.MsgWrappedBeginRedelegate, common.Address, error) {
+	if len(args) != 4 {
+		return nil, common.Address{}, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, 4, len(args))
+	}
+
+	delegatorAddr, ok := args[0].(common.Address)
+	if !ok || delegatorAddr == (common.Address{}) {
+		return nil, common.Address{}, fmt.Errorf(cmn.ErrInvalidDelegator, args[0])
+	}
+
+	validatorSrcAddr, ok := args[1].(common.Address)
+	if !ok {
+		return nil, common.Address{}, fmt.Errorf(cmn.ErrInvalidType, "validatorSrcAddress", "common.Address", args[1])
+	}
+
+	validatorDstAddr, ok := args[2].(common.Address)
+	if !ok {
+		return nil, common.Address{}, fmt.Errorf(cmn.ErrInvalidType, "validatorDstAddress", "common.Address", args[2])
+	}
+
+	amount, ok := args[3].(*big.Int)
+	if !ok {
+		return nil, common.Address{}, fmt.Errorf(cmn.ErrInvalidAmount, args[3])
+	}
+
+	delegatorAddrStr, err := addrCdc.BytesToString(delegatorAddr.Bytes())
+	validatorSrcAddrStr := sdk.ValAddress(validatorSrcAddr.Bytes()).String()
+	validatorDstAddrStr := sdk.ValAddress(validatorDstAddr.Bytes()).String()
+	if err != nil {
+		return nil, common.Address{}, fmt.Errorf("failed to decode delegator address: %w", err)
+	}
+	msg := &epochingtypes.MsgWrappedBeginRedelegate{
+		Msg: &stakingtypes.MsgBeginRedelegate{
+			DelegatorAddress:    delegatorAddrStr,
+			ValidatorSrcAddress: validatorSrcAddrStr,
+			ValidatorDstAddress: validatorDstAddrStr,
+			Amount: sdk.Coin{
+				Denom:  denom,
+				Amount: math.NewIntFromBigInt(amount),
+			},
+		},
+	}
+
+	return msg, delegatorAddr, nil
+}
+
+// NewMsgWrappedCancelUnbondingDelegationBech32 creates a new MsgCancelUnbondingDelegation instance and does sanity checks
+// on the given arguments before populating the message.
+func NewMsgWrappedCancelUnbondingDelegationBech32(args []interface{}, denom string, addrCdc address.Codec) (*epochingtypes.MsgWrappedCancelUnbondingDelegation, common.Address, error) {
 	if len(args) != 4 {
 		return nil, common.Address{}, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, 4, len(args))
 	}
@@ -397,6 +499,53 @@ func NewMsgWrappedCancelUnbondingDelegation(args []interface{}, denom string, ad
 		Msg: &stakingtypes.MsgCancelUnbondingDelegation{
 			DelegatorAddress: delegatorAddrStr,
 			ValidatorAddress: validatorAddress,
+			Amount: sdk.Coin{
+				Denom:  denom,
+				Amount: math.NewIntFromBigInt(amount),
+			},
+			CreationHeight: creationHeight.Int64(),
+		},
+	}
+
+	return msg, delegatorAddr, nil
+}
+
+// NewMsgWrappedCancelUnbondingDelegation creates a new MsgCancelUnbondingDelegation instance and does sanity checks
+// on the given arguments before populating the message.
+func NewMsgWrappedCancelUnbondingDelegation(args []interface{}, denom string, addrCdc address.Codec) (*epochingtypes.MsgWrappedCancelUnbondingDelegation, common.Address, error) {
+	if len(args) != 4 {
+		return nil, common.Address{}, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, 4, len(args))
+	}
+
+	delegatorAddr, ok := args[0].(common.Address)
+	if !ok || delegatorAddr == (common.Address{}) {
+		return nil, common.Address{}, fmt.Errorf(cmn.ErrInvalidDelegator, args[0])
+	}
+
+	validatorAddr, ok := args[1].(common.Address)
+	if !ok {
+		return nil, common.Address{}, fmt.Errorf(cmn.ErrInvalidType, "validatorAddr", "common.Address", args[1])
+	}
+
+	amount, ok := args[2].(*big.Int)
+	if !ok {
+		return nil, common.Address{}, fmt.Errorf(cmn.ErrInvalidAmount, args[2])
+	}
+
+	creationHeight, ok := args[3].(*big.Int)
+	if !ok {
+		return nil, common.Address{}, fmt.Errorf("invalid creation height")
+	}
+
+	delegatorAddrStr, err := addrCdc.BytesToString(delegatorAddr.Bytes())
+	validatorAddrStr := sdk.ValAddress(validatorAddr.Bytes()).String()
+	if err != nil {
+		return nil, common.Address{}, fmt.Errorf("failed to decode delegator address: %w", err)
+	}
+	msg := &epochingtypes.MsgWrappedCancelUnbondingDelegation{
+		Msg: &stakingtypes.MsgCancelUnbondingDelegation{
+			DelegatorAddress: delegatorAddrStr,
+			ValidatorAddress: validatorAddrStr,
 			Amount: sdk.Coin{
 				Denom:  denom,
 				Amount: math.NewIntFromBigInt(amount),
@@ -1263,7 +1412,31 @@ func NewUnbondingDelegationRequest(args []interface{}, addrCdc address.Codec) (*
 }
 
 // checkDelegationUndelegationArgs checks the arguments for the delegation and undelegation functions.
-func checkDelegationUndelegationArgs(args []interface{}) (common.Address, string, *big.Int, error) {
+func checkDelegationUndelegationArgs(args []interface{}) (common.Address, common.Address, *big.Int, error) {
+	if len(args) != 3 {
+		return common.Address{}, common.Address{}, nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, 3, len(args))
+	}
+
+	delegatorAddr, ok := args[0].(common.Address)
+	if !ok || delegatorAddr == (common.Address{}) {
+		return common.Address{}, common.Address{}, nil, fmt.Errorf(cmn.ErrInvalidDelegator, args[0])
+	}
+
+	validatorAddr, ok := args[1].(common.Address)
+	if !ok {
+		return common.Address{}, common.Address{}, nil, fmt.Errorf(cmn.ErrInvalidType, "validatorAddr", "common.Address", args[1])
+	}
+
+	amount, ok := args[2].(*big.Int)
+	if !ok {
+		return common.Address{}, common.Address{}, nil, fmt.Errorf(cmn.ErrInvalidAmount, args[2])
+	}
+
+	return delegatorAddr, validatorAddr, amount, nil
+}
+
+// checkDelegationUndelegationArgsBech32 checks the arguments for the delegation and undelegation functions.
+func checkDelegationUndelegationArgsBech32(args []interface{}) (common.Address, string, *big.Int, error) {
 	if len(args) != 3 {
 		return common.Address{}, "", nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, 3, len(args))
 	}
