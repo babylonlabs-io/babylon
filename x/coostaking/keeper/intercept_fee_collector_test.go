@@ -47,7 +47,7 @@ func FuzzInterceptFeeCollector(f *testing.F) {
 
 		rwd, err := k.GetCurrentRewards(ctx)
 		require.NoError(t, err)
-		require.Equal(t, coostakingPortion.String(), rwd.Rewards.String())
+		require.Equal(t, coostakingPortion.MulInt(ictvtypes.DecimalRewards).String(), rwd.Rewards.String())
 		require.Equal(t, rwd.Period, uint64(1))
 		require.Equal(t, rwd.TotalScore.String(), sdkmath.ZeroInt().String())
 	})
@@ -82,7 +82,7 @@ func TestInterceptFeeCollectorWithSmallAmount(t *testing.T) {
 
 	rwd, err := k.GetCurrentRewards(ctx)
 	require.NoError(t, err)
-	require.Equal(t, coostakingPortion.String(), rwd.Rewards.String())
+	require.Equal(t, coostakingPortion.MulInt(ictvtypes.DecimalRewards).String(), rwd.Rewards.String())
 	require.Equal(t, rwd.Period, uint64(1))
 	require.Equal(t, rwd.TotalScore.String(), sdkmath.ZeroInt().String())
 }
