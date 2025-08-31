@@ -12,6 +12,41 @@ import (
 	gomock "github.com/golang/mock/gomock"
 )
 
+// MockIncentiveKeeper is a mock of IncentiveKeeper interface.
+type MockIncentiveKeeper struct {
+	ctrl     *gomock.Controller
+	recorder *MockIncentiveKeeperMockRecorder
+}
+
+// MockIncentiveKeeperMockRecorder is the mock recorder for MockIncentiveKeeper.
+type MockIncentiveKeeperMockRecorder struct {
+	mock *MockIncentiveKeeper
+}
+
+// NewMockIncentiveKeeper creates a new mock instance.
+func NewMockIncentiveKeeper(ctrl *gomock.Controller) *MockIncentiveKeeper {
+	mock := &MockIncentiveKeeper{ctrl: ctrl}
+	mock.recorder = &MockIncentiveKeeperMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockIncentiveKeeper) EXPECT() *MockIncentiveKeeperMockRecorder {
+	return m.recorder
+}
+
+// AccumulateRewardGaugeForCoostaker mocks base method.
+func (m *MockIncentiveKeeper) AccumulateRewardGaugeForCoostaker(ctx context.Context, addr types.AccAddress, reward types.Coins) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "AccumulateRewardGaugeForCoostaker", ctx, addr, reward)
+}
+
+// AccumulateRewardGaugeForCoostaker indicates an expected call of AccumulateRewardGaugeForCoostaker.
+func (mr *MockIncentiveKeeperMockRecorder) AccumulateRewardGaugeForCoostaker(ctx, addr, reward interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AccumulateRewardGaugeForCoostaker", reflect.TypeOf((*MockIncentiveKeeper)(nil).AccumulateRewardGaugeForCoostaker), ctx, addr, reward)
+}
+
 // MockAccountKeeper is a mock of AccountKeeper interface.
 type MockAccountKeeper struct {
 	ctrl     *gomock.Controller

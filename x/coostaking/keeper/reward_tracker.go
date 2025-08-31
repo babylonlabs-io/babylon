@@ -32,7 +32,7 @@ func (k Keeper) AddRewardsForCoostakers(ctx context.Context, rwd sdk.Coins) erro
 // and calls a function prior (preInitializeCoostaker) to initialize a new
 // Coostaker tracker, which is useful to apply subtract or add the total
 // amount of score by the coostaker.
-func (k Keeper) coostakerModifiedWithPreInitalization(
+func (k Keeper) coostakerModifiedWithPreInitalization( //nolint: unused
 	ctx context.Context,
 	coostaker sdk.AccAddress,
 	preInitializeCoostaker func(ctx context.Context, coostaker sdk.AccAddress) error,
@@ -69,10 +69,6 @@ func (k Keeper) IncrementRewardsPeriod(ctx context.Context) (endedPeriod uint64,
 	currentRwd, err := k.GetCurrentRewardsInitialized(ctx)
 	if err != nil {
 		return 0, err
-	}
-	if currentRwd.Period == 1 {
-		// first time, no need to calculate tokens or set historical again
-		return 1, nil
 	}
 
 	currentRewardsPerScore := sdk.NewCoins()
