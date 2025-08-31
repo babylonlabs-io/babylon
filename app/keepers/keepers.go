@@ -389,6 +389,7 @@ func (ak *AppKeepers) InitKeepers(
 		runtime.NewKVStoreService(keys[coostakingtypes.StoreKey]),
 		ak.BankKeeper,
 		ak.AccountKeeper,
+		ak.IncentiveKeeper,
 		appparams.AccGov.String(),
 		authtypes.FeeCollectorName,
 	)
@@ -695,6 +696,12 @@ func (ak *AppKeepers) InitKeepers(
 	ak.FinalityKeeper.SetHooks(
 		finalitytypes.NewMultiFinalityHooks(
 			ak.IncentiveKeeper.Hooks(),
+		),
+	)
+
+	ak.IncentiveKeeper.SetHooks(
+		incentivetypes.NewMultiIncentiveHooks(
+			ak.CoostakingKeeper.Hooks(),
 		),
 	)
 

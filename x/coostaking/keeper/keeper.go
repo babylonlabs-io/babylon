@@ -46,6 +46,7 @@ func NewKeeper(
 	storeService corestoretypes.KVStoreService,
 	bankK types.BankKeeper,
 	accK types.AccountKeeper,
+	ictvK types.IncentiveKeeper,
 	authority string,
 	feeCollectorName string,
 ) Keeper {
@@ -60,6 +61,7 @@ func NewKeeper(
 
 		bankK: bankK,
 		accK:  accK,
+		ictvK: ictvK,
 
 		params: collections.NewItem(
 			sb,

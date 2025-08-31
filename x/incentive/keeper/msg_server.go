@@ -61,6 +61,10 @@ func (ms msgServer) WithdrawReward(goCtx context.Context, req *types.MsgWithdraw
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
+	// TODO: tell coostaking that he needs to send funds to incentive
+	if err := ms.hooks.BeforeRewardWithdraw(ctx, sType, addr); err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
 	// withdraw reward, i.e., send withdrawable reward to the stakeholder address and clear the reward gauge
 	withdrawnCoins, err := ms.withdrawReward(ctx, sType, addr)
 	if err != nil {

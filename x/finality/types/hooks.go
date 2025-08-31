@@ -18,7 +18,7 @@ type FinalityHooks interface {
 	AfterBtcDelegationUnbonded(ctx context.Context, fpAddr, btcDelAddr sdk.AccAddress, fpSecuresBabylon bool, sats uint64) error
 }
 
-// combine multiple staking hooks, all hook functions are run in array sequence
+// combine multiple fnality hooks, all hook functions are run in array sequence
 var _ FinalityHooks = &MultiFinalityHooks{}
 
 type MultiFinalityHooks []FinalityHooks

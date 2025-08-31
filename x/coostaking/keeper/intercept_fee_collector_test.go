@@ -33,7 +33,7 @@ func FuzzInterceptFeeCollector(f *testing.F) {
 		accK := types.NewMockAccountKeeper(ctrl)
 		accK.EXPECT().GetModuleAccount(gomock.Any(), authtypes.FeeCollectorName).Return(feeCollectorAcc).Times(1)
 
-		k, ctx := testkeeper.CoostakingKeeperWithStoreKey(t, nil, bankK, accK)
+		k, ctx := testkeeper.CoostakingKeeperWithStoreKey(t, nil, bankK, accK, nil)
 
 		// mock (thus ensure) that fees with the exact portion is intercepted
 		// NOTE: if the actual fees are different from feesForIncentive the test will fail
@@ -68,7 +68,7 @@ func TestInterceptFeeCollectorWithSmallAmount(t *testing.T) {
 	accK := types.NewMockAccountKeeper(ctrl)
 	accK.EXPECT().GetModuleAccount(gomock.Any(), authtypes.FeeCollectorName).Return(feeCollectorAcc).Times(1)
 
-	k, ctx := testkeeper.CoostakingKeeperWithStoreKey(t, nil, bankK, accK)
+	k, ctx := testkeeper.CoostakingKeeperWithStoreKey(t, nil, bankK, accK, nil)
 
 	// mock (thus ensure) that fees with the exact portion is intercepted
 	// NOTE: if the actual fees are different the test will fail

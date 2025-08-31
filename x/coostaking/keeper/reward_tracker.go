@@ -25,6 +25,12 @@ func (k Keeper) AddRewardsForCoostakers(ctx context.Context, rwd sdk.Coins) erro
 	return k.SetCurrentRewards(ctx, *currentRwd)
 }
 
+func (k Keeper) coostakerModified(ctx context.Context, coostaker sdk.AccAddress) error {
+	return k.coostakerModifiedWithPreInitalization(ctx, coostaker, func(ctx context.Context, coostaker sdk.AccAddress) error {
+		return nil
+	})
+}
+
 // coostakerModifiedWithPreInitalization does the procedure when a Coostaker has
 // some modification in its total amount of score (btc or baby staked). This function
 // increments the global current rewards period (that creates a new historical) with
@@ -110,7 +116,7 @@ func (k Keeper) CalculateCoostakerRewardsAndSendToGauge(ctx context.Context, coo
 	}
 
 	k.ictvK.AccumulateRewardGaugeForCoostaker(ctx, coostaker, rewards)
-	return nil
+	return k.bankK.SendCoinsFromModuleToModule(ctx, types.ModuleName, ictvtypes.ModuleName, rewards)
 }
 
 // CalculateCoostakerRewards calculates the rewards entitled for this coostaker

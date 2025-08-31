@@ -180,6 +180,6 @@ func TestUpdateCurrentRewardsTotalScoreWhenNotFound(t *testing.T) {
 func NewKeeperWithCtx(t *testing.T) (*Keeper, sdk.Context) {
 	encConf := appparams.DefaultEncodingConfig()
 	ctx, kvStore := store.NewStoreWithCtx(t, types.ModuleName)
-	k := NewKeeper(encConf.Codec, kvStore, nil, nil, appparams.AccGov.String(), appparams.AccFeeCollector.String())
+	k := NewKeeper(encConf.Codec, kvStore, nil, nil, nil, appparams.AccGov.String(), appparams.AccFeeCollector.String())
 	return &k, ctx
 }
