@@ -30,7 +30,7 @@ func NewHistoricalRewards(cumulativeRewardsPerScore sdk.Coins) HistoricalRewards
 }
 
 // AddRewards adds the rewards to the CurrentRewards and applies the decimal
-// multiplier to increase precision for calculating rewards per active satoshi staked
+// multiplier to increase precision for calculating rewards per score
 func (f *CurrentRewards) AddRewards(coinsToAdd sdk.Coins) error {
 	coinsToAddWithDecimals, err := bbntypes.CoinsSafeMulInt(coinsToAdd, ictvtypes.DecimalRewards)
 	if err != nil {
