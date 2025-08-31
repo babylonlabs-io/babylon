@@ -5,7 +5,7 @@ migrations, and hard forks) It also defines upgrade & hard fork structs,
 that each upgrade implements. These then get included in the application
 app.go to run the upgrade.
 
-The code is adapted from [Osmosis](https://github.com/osmosis-labs/osmosis/blob/68d546d94acbf1aa99d6b514cb66b2b40afff4a4/app/upgrades).
+The code is adapted from [Osmosis](https://github.com/osmosis-labs/osmosis/tree/68d546d94acbf1aa99d6b514cb66b2b40afff4a4/app/upgrades).
 
 ## Version History
 
