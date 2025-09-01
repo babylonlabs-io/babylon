@@ -177,6 +177,9 @@ func FuzzCalculateCoostakerRewardsAndSendToGauge(f *testing.F) {
 
 		if !calculatedRewards.IsZero() {
 			mockIctvK.EXPECT().AccumulateRewardGaugeForCoostaker(ctx, coostaker, calculatedRewards).Times(1)
+			// Also expect bank transfer from coostaking to incentive module
+			mockBankK := k.bankK.(*types.MockBankKeeper)
+			mockBankK.EXPECT().SendCoinsFromModuleToModule(ctx, types.ModuleName, ictvtypes.ModuleName, calculatedRewards).Return(nil).Times(1)
 		}
 
 		err = k.CalculateCoostakerRewardsAndSendToGauge(ctx, coostaker, endedPeriod)
@@ -323,11 +326,15 @@ func TestCoostakerRewardsFlow(t *testing.T) {
 	require.Equal(t, expRwdCoostaker1.String(), rwd1.String())
 	require.Equal(t, expRwdCoostaker2.String(), rwd2.String())
 
+	// Mock expectations for both incentive gauge accumulation and bank transfer
 	mockIctvK.EXPECT().AccumulateRewardGaugeForCoostaker(ctx, coostaker1, rwd1).Times(1)
+	mockBankK := k.bankK.(*types.MockBankKeeper)
+	mockBankK.EXPECT().SendCoinsFromModuleToModule(ctx, types.ModuleName, ictvtypes.ModuleName, rwd1).Return(nil).Times(1)
 	err = k.CalculateCoostakerRewardsAndSendToGauge(ctx, coostaker1, endedPeriod)
 	require.NoError(t, err)
 
 	mockIctvK.EXPECT().AccumulateRewardGaugeForCoostaker(ctx, coostaker2, rwd2).Times(1)
+	mockBankK.EXPECT().SendCoinsFromModuleToModule(ctx, types.ModuleName, ictvtypes.ModuleName, rwd2).Return(nil).Times(1)
 	err = k.CalculateCoostakerRewardsAndSendToGauge(ctx, coostaker2, endedPeriod)
 	require.NoError(t, err)
 
@@ -365,7 +372,6 @@ func NewKeeperWithMockIncentiveKeeper(t *testing.T, mockIctvK types.IncentiveKee
 	mockBankK := types.NewMockBankKeeper(gomock.NewController(t))
 	mockAccK := types.NewMockAccountKeeper(gomock.NewController(t))
 
-	k := NewKeeper(encConf.Codec, kvStore, mockBankK, mockAccK, appparams.AccGov.String(), appparams.AccFeeCollector.String())
-	k.ictvK = mockIctvK
+	k := NewKeeper(encConf.Codec, kvStore, mockBankK, mockAccK, mockIctvK, appparams.AccGov.String(), appparams.AccFeeCollector.String())
 	return &k, ctx
 }

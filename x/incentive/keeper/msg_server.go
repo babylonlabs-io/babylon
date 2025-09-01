@@ -61,7 +61,7 @@ func (ms msgServer) WithdrawReward(goCtx context.Context, req *types.MsgWithdraw
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	// TODO: tell coostaking that he needs to send funds to incentive
+	// coostaking send rewards to incentives module and gauge
 	if err := ms.hooks.BeforeRewardWithdraw(ctx, sType, addr); err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
