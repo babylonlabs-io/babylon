@@ -280,8 +280,8 @@ func TestCoostakerRewardsFlow(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockIctvK := types.NewMockIncentiveKeeper(ctrl)
-	k, ctx := NewKeeperWithMockIncentiveKeeper(t, mockIctvK)
+	ictvK := types.NewMockIncentiveKeeper(ctrl)
+	k, ctx := NewKeeperWithMockIncentiveKeeper(t, ictvK)
 
 	coostaker1 := datagen.GenRandomAddress()
 	coostaker2 := datagen.GenRandomAddress()
@@ -328,13 +328,13 @@ func TestCoostakerRewardsFlow(t *testing.T) {
 	require.Equal(t, expRwdCoostaker2.String(), rwd2.String())
 
 	// Mock expectations for both incentive gauge accumulation and bank transfer
-	mockIctvK.EXPECT().AccumulateRewardGaugeForCoostaker(ctx, coostaker1, rwd1).Times(1)
+	ictvK.EXPECT().AccumulateRewardGaugeForCoostaker(ctx, coostaker1, rwd1).Times(1)
 	mockBankK := k.bankK.(*types.MockBankKeeper)
 	mockBankK.EXPECT().SendCoinsFromModuleToModule(ctx, types.ModuleName, ictvtypes.ModuleName, rwd1).Return(nil).Times(1)
 	err = k.CalculateCoostakerRewardsAndSendToGauge(ctx, coostaker1, endedPeriod)
 	require.NoError(t, err)
 
-	mockIctvK.EXPECT().AccumulateRewardGaugeForCoostaker(ctx, coostaker2, rwd2).Times(1)
+	ictvK.EXPECT().AccumulateRewardGaugeForCoostaker(ctx, coostaker2, rwd2).Times(1)
 	mockBankK.EXPECT().SendCoinsFromModuleToModule(ctx, types.ModuleName, ictvtypes.ModuleName, rwd2).Return(nil).Times(1)
 	err = k.CalculateCoostakerRewardsAndSendToGauge(ctx, coostaker2, endedPeriod)
 	require.NoError(t, err)
