@@ -493,6 +493,8 @@ func (s *SoftwareUpgradeV3TestSuite) AddFinalityVoteUntilCurrentHeight(n *chain.
 	accNumberFp2 := accFp2.GetAccountNumber()
 	accSequenceFp2 := accFp2.GetSequence()
 
+	n.WaitForNextBlockWithSleep50ms()
+
 	for s.finalityBlockHeightVoted < currentBlock {
 		fp1Flags := []string{
 			"--offline",
