@@ -1,0 +1,33 @@
+{
+    "messages": [
+        {
+            "@type": "/babylon.btcstaking.v1.MsgUpdateParams",
+            "authority": "bbn10d07y265gmmuvt4z0w9aw880jnsr700jduz5f2",
+            "params": {
+                "covenant_pks": [
+                    "ffeaec52a9b407b355ef6967a7ffc15fd6c3fe07de2844d61550475e7a5233e5",
+                    "a5c60c2188e833d39d0fa798ab3f69aa12ed3dd2f3bad659effa252782de3c31",
+                    "59d3532148a597a2d05c0395bf5f7176044b1cd312f37701a9b4d0aad70bc5a4"
+                ],
+                "covenant_quorum": 2,
+                "min_staking_value_sat": "10000",
+                "max_staking_value_sat": "1000000000000",
+                "min_staking_time_blocks": 100,
+                "max_staking_time_blocks": 60000,
+                "slashing_pk_script": "ABT4coPKKrIKGrUMx86ikPciyaJFdA==",
+                "min_slashing_tx_fee_sat": "150000",
+                "slashing_rate": "0.100000000000000000",
+                "unbonding_time_blocks": 301,
+                "unbonding_fee_sat": "800",
+                "min_commission_rate": "0.050000000000000000",
+                "delegation_creation_base_gas_fee": "1000000",
+                "allow_list_expiration_height": "1440",
+                "btc_activation_height": 255785
+            }
+        }
+    ],
+    "expedited": true,
+    "deposit": "20000000ubbn",
+    "title": "Update Unbonding Time and Slashing Fee",
+    "summary": "This proposal updates the staking module parameters to reduce unbonding time to 301 BTC blocks and increase the slashing fee to 150,000 sats."
+}
