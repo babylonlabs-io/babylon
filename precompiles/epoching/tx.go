@@ -40,7 +40,7 @@ func (p Precompile) WrappedCreateValidator(
 	if err != nil {
 		return nil, err
 	}
-	msg, validatorHexAddr, err := NewMsgWrappedCreateValidator(args, bondDenom, p.addrCdc)
+	msg, validatorHexAddr, err := NewMsgWrappedCreateValidator(args, bondDenom, p.valCodec)
 	if err != nil {
 		return nil, err
 	}
@@ -430,6 +430,10 @@ func (p Precompile) WrappedCancelUnbondingDelegationBech32(
 		return nil, fmt.Errorf(cmn.ErrRequesterIsNotMsgSender, msgSender.String(), delegatorHexAddr.String())
 	}
 
+	if _, err = p.epochingMsgServer.WrappedCancelUnbondingDelegation(ctx, msg); err != nil {
+		return nil, err
+	}
+
 	epochBoundary := p.epochingKeeper.GetEpoch(ctx).GetLastBlockHeight()
 
 	// Emit the event for the delegate transaction
@@ -471,6 +475,10 @@ func (p Precompile) WrappedCancelUnbondingDelegation(
 	msgSender := contract.Caller()
 	if msgSender != delegatorHexAddr {
 		return nil, fmt.Errorf(cmn.ErrRequesterIsNotMsgSender, msgSender.String(), delegatorHexAddr.String())
+	}
+
+	if _, err = p.epochingMsgServer.WrappedCancelUnbondingDelegation(ctx, msg); err != nil {
+		return nil, err
 	}
 
 	epochBoundary := p.epochingKeeper.GetEpoch(ctx).GetLastBlockHeight()

@@ -113,7 +113,7 @@ type Commission = struct {
 
 // NewMsgWrappedCreateValidator creates a new MsgWrappedCreateValidator instance and does sanity checks
 // on the given arguments before populating the message.
-func NewMsgWrappedCreateValidator(args []interface{}, denom string, addrCdc address.Codec) (*checkpointingtypes.MsgWrappedCreateValidator, common.Address, error) {
+func NewMsgWrappedCreateValidator(args []interface{}, denom string, valCodec address.Codec) (*checkpointingtypes.MsgWrappedCreateValidator, common.Address, error) {
 	if len(args) != 7 {
 		return nil, common.Address{}, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, 7, len(args))
 	}
@@ -169,7 +169,7 @@ func NewMsgWrappedCreateValidator(args []interface{}, denom string, addrCdc addr
 		return nil, common.Address{}, fmt.Errorf(cmn.ErrInvalidAmount, args[6])
 	}
 
-	delegatorAddr, err := addrCdc.BytesToString(validatorAddress.Bytes())
+	delegatorAddr, err := valCodec.BytesToString(validatorAddress.Bytes())
 	if err != nil {
 		return nil, common.Address{}, fmt.Errorf("failed to decode delegator address: %w", err)
 	}
@@ -1236,9 +1236,9 @@ func (do *UnbondingDelegationOutputBech32) FromResponse(res *stakingtypes.QueryU
 }
 
 // FromResponse populates the UnbondingDelegationOutput from a QueryUnbondingDelegationResponse.
-func (do *UnbondingDelegationOutput) FromResponse(res *stakingtypes.QueryUnbondingDelegationResponse, addrCdc address.Codec) *UnbondingDelegationOutput {
+func (do *UnbondingDelegationOutput) FromResponse(res *stakingtypes.QueryUnbondingDelegationResponse, addrCdc, valCodec address.Codec) *UnbondingDelegationOutput {
 	do.UnbondingDelegation.Entries = make([]UnbondingDelegationEntry, len(res.Unbond.Entries))
-	valAddrBytes, err := addrCdc.StringToBytes(res.Unbond.ValidatorAddress)
+	valAddrBytes, err := valCodec.StringToBytes(res.Unbond.ValidatorAddress)
 	if err != nil {
 		return nil
 	}

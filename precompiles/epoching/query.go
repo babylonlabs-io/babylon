@@ -154,7 +154,7 @@ func (p Precompile) UnbondingDelegation(
 		return nil, err
 	}
 
-	out := new(UnbondingDelegationOutput).FromResponse(res, p.addrCdc)
+	out := new(UnbondingDelegationOutput).FromResponse(res, p.addrCdc, p.valCodec)
 
 	return method.Outputs.Pack(out.UnbondingDelegation)
 }
