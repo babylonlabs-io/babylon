@@ -44,12 +44,12 @@ func (k Keeper) UpdatePowerDist(ctx context.Context) {
 
 	// reconcile old voting power distribution cache and new events
 	// to construct the new distribution
-	newDc := k.ProcessAllPowerDistUpdateEvents(ctx, dc, lastBTCTipHeight, btcTipHeight)
+	newDc, state := k.ProcessAllPowerDistUpdateEvents(ctx, dc, lastBTCTipHeight, btcTipHeight)
 
 	// record voting power and cache for this height
 	k.RecordVotingPowerAndCache(ctx, newDc)
 	// emit events for finality providers with state updates
-	k.HandleFPStateUpdates(ctx, dc, newDc)
+	k.HandleFPStateUpdates(ctx, dc, newDc, state)
 	// record metrics
 	k.recordMetrics(newDc)
 }
@@ -91,7 +91,7 @@ func (k Keeper) RecordVotingPowerAndCache(ctx context.Context, newDc *ftypes.Vot
 }
 
 // HandleFPStateUpdates emits events and triggers hooks for finality providers with state updates
-func (k Keeper) HandleFPStateUpdates(ctx context.Context, prevDc, newDc *ftypes.VotingPowerDistCache) {
+func (k Keeper) HandleFPStateUpdates(ctx context.Context, prevDc, newDc *ftypes.VotingPowerDistCache, state *ftypes.ProcessingState) {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
 	newlyActiveFPs := newDc.FindNewActiveFinalityProviders(prevDc)
@@ -109,9 +109,20 @@ func (k Keeper) HandleFPStateUpdates(ctx context.Context, prevDc, newDc *ftypes.
 
 		k.Logger(sdkCtx).Info("a new finality provider becomes active", "pk", fp.BtcPk.MarshalHex())
 	}
-
+	fpStates := make(map[string]ftypes.FinalityProviderState)
+	if state != nil {
+		fpStates = state.FPStatesByBtcPk
+	}
 	newlyInactiveFPs := newDc.FindNewInactiveFinalityProviders(prevDc)
 	for _, fp := range newlyInactiveFPs {
+		// Can happen that the FP was slashed or jailed and also became inactive
+		// For those cases, we want to ensure that only the correct status is emitted
+		// and avoid emitting the inactive status
+		fpState := fpStates[fp.BtcPk.MarshalHex()]
+		if fpState == ftypes.FinalityProviderState_SLASHED || fpState == ftypes.FinalityProviderState_JAILED {
+			continue
+		}
+
 		statusChangeEvent := types.NewFinalityProviderStatusChangeEvent(fp.BtcPk, types.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_INACTIVE)
 		if err := sdkCtx.EventManager().EmitTypedEvent(statusChangeEvent); err != nil {
 			panic(fmt.Errorf(
@@ -172,7 +183,7 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 	dc *ftypes.VotingPowerDistCache,
 	lastBTCTip uint32,
 	curBTCTip uint32,
-) *ftypes.VotingPowerDistCache {
+) (*ftypes.VotingPowerDistCache, *ftypes.ProcessingState) {
 	state := ftypes.NewProcessingState()
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
@@ -204,7 +215,6 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 			// if this finality provider is slashed, continue to avoid
 			// assigning delegation to it
 			fp.IsSlashed = true
-			newDc.AddFinalityProviderDistInfo(&fp)
 			continue
 		case ftypes.FinalityProviderState_JAILED:
 			// set IsJailed to be true if the fp is jailed
@@ -299,7 +309,7 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 		}
 	}
 
-	return newDc
+	return newDc, state
 }
 
 // processEventsAtHeight processes all power distribution update events at a given BTC height

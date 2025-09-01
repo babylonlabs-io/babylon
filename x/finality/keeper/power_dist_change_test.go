@@ -418,9 +418,9 @@ func FuzzProcessAllPowerDistUpdateEvents_Determinism(f *testing.F) {
 		// add the events to the BTC staking store
 		addPowerDistUpdateEvents(t, h.Ctx, btcStakingStoreKey, uint64(btcTipHeight), events)
 
-		newDc := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, dc, btcTipHeight-1, btcTipHeight)
+		newDc, _ := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, dc, btcTipHeight-1, btcTipHeight)
 		for i := 0; i < 10; i++ {
-			newDc2 := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, dc, btcTipHeight-1, btcTipHeight)
+			newDc2, _ := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, dc, btcTipHeight-1, btcTipHeight)
 			require.Equal(t, newDc, newDc2)
 		}
 	})
@@ -491,7 +491,7 @@ func FuzzProcessAllPowerDistUpdateEvents_ActiveAndUnbondTogether(f *testing.F) {
 
 		btcTipHeight := del.BtcTipHeight
 		addPowerDistUpdateEvents(t, h.Ctx, sk, uint64(btcTipHeight), events)
-		newDc := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, ftypes.NewVotingPowerDistCache(), btcTipHeight-1, btcTipHeight)
+		newDc, _ := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, ftypes.NewVotingPowerDistCache(), btcTipHeight-1, btcTipHeight)
 		require.Len(t, newDc.FinalityProviders, 0)
 	})
 }
@@ -514,7 +514,7 @@ func FuzzProcessAllPowerDistUpdateEvents_ActiveAndSlashTogether(f *testing.F) {
 		addPowerDistUpdateEvents(t, h.Ctx, sk, uint64(btcTipHeight), events)
 
 		dc := ftypes.NewVotingPowerDistCache()
-		newDc := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, dc, btcTipHeight-1, btcTipHeight)
+		newDc, _ := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, dc, btcTipHeight-1, btcTipHeight)
 		require.Len(t, newDc.FinalityProviders, 0)
 	})
 }
@@ -536,7 +536,7 @@ func FuzzProcessAllPowerDistUpdateEvents_PreApprovalWithSlahedFP(f *testing.F) {
 		// seed the event in the store
 		addPowerDistUpdateEvents(t, h.Ctx, sk, uint64(btcTipHeight), []*btcstktypes.EventPowerDistUpdate{eventActive})
 
-		newDc := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, ftypes.NewVotingPowerDistCache(), btcTipHeight-1, btcTipHeight)
+		newDc, _ := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, ftypes.NewVotingPowerDistCache(), btcTipHeight-1, btcTipHeight)
 		// updates as if that fp is timestamping
 		for _, fp := range newDc.FinalityProviders {
 			fp.IsTimestamped = true
@@ -574,7 +574,7 @@ func FuzzProcessAllPowerDistUpdateEvents_PreApprovalWithSlahedFP(f *testing.F) {
 		slashEvent := btcstktypes.NewEventPowerDistUpdateWithSlashedFP(&delPreApproval.FpBtcPkList[0])
 
 		addPowerDistUpdateEvents(t, h.Ctx, sk, uint64(10), []*btcstktypes.EventPowerDistUpdate{slashEvent})
-		newDc = h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, newDc, 9, 10)
+		newDc, _ = h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, newDc, 9, 10)
 
 		// fp should have be erased from the list
 		newDc.ApplyActiveFinalityProviders(100)
@@ -599,7 +599,7 @@ func FuzzProcessAllPowerDistUpdateEvents_PreApprovalWithSlahedFP(f *testing.F) {
 
 		addPowerDistUpdateEvents(t, h.Ctx, sk, uint64(btcTip.Height), []*btcstktypes.EventPowerDistUpdate{eventActive})
 		// it will get included in the new vp dist, but will not have voting power after ApplyActiveFinalityProviders
-		newDc = h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, newDc, btcTip.Height-1, btcTip.Height)
+		newDc, _ = h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, newDc, btcTip.Height-1, btcTip.Height)
 		require.Len(t, newDc.FinalityProviders, 1)
 
 		for _, fp := range newDc.FinalityProviders {
@@ -629,7 +629,7 @@ func FuzzProcessAllPowerDistUpdateEvents_ActiveAndJailTogether(f *testing.F) {
 		btcTipHeight := del.BtcTipHeight
 		addPowerDistUpdateEvents(t, h.Ctx, sk, uint64(btcTipHeight), events)
 
-		newDc := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, ftypes.NewVotingPowerDistCache(), btcTipHeight-1, btcTipHeight)
+		newDc, _ := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, ftypes.NewVotingPowerDistCache(), btcTipHeight-1, btcTipHeight)
 		for _, fp := range newDc.FinalityProviders {
 			fp.IsTimestamped = true
 		}
@@ -657,7 +657,7 @@ func FuzzProcessAllPowerDistUpdateEvents_SlashActiveFp(f *testing.F) {
 		// seed the event in the store
 		addPowerDistUpdateEvents(t, h.Ctx, sk, uint64(btcTipHeight), events)
 
-		newDc := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, ftypes.NewVotingPowerDistCache(), btcTipHeight-1, btcTipHeight)
+		newDc, _ := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, ftypes.NewVotingPowerDistCache(), btcTipHeight-1, btcTipHeight)
 		for _, fp := range newDc.FinalityProviders {
 			fp.IsTimestamped = true
 		}
@@ -671,7 +671,7 @@ func FuzzProcessAllPowerDistUpdateEvents_SlashActiveFp(f *testing.F) {
 
 		addPowerDistUpdateEvents(t, h.Ctx, sk, uint64(btcTipHeight), events)
 
-		newDc = h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, newDc, btcTipHeight-1, btcTipHeight)
+		newDc, _ = h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, newDc, btcTipHeight-1, btcTipHeight)
 		newDc.ApplyActiveFinalityProviders(100)
 		require.Len(t, newDc.FinalityProviders, 0)
 		require.Equal(t, newDc.TotalVotingPower, uint64(0))
@@ -1960,7 +1960,7 @@ func TestIgnoreUnbondingEventIfThereIsNoQuorum(t *testing.T) {
 	addPowerDistUpdateEvents(t, h.Ctx, btcStakingStoreKey, uint64(btcTipHeight), events)
 	// k.IncentiveKeeper.BtcDelegationUnbonded(ctx, fp, del, sats) won't be called
 	// as delegation does not have covenant quorum
-	newDc := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, ftypes.NewVotingPowerDistCache(), btcTipHeight-1, btcTipHeight)
+	newDc, _ := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, ftypes.NewVotingPowerDistCache(), btcTipHeight-1, btcTipHeight)
 
 	require.Len(t, newDc.FinalityProviders, 0)
 }
@@ -2033,7 +2033,7 @@ func TestBSNDelegationActivated_DirectIncentives(t *testing.T) {
 	addPowerDistUpdateEvents(t, h.Ctx, btcStakingStoreKey, uint64(btcTipHeight), []*btcstktypes.EventPowerDistUpdate{eventActivate})
 
 	// process the activation event
-	newDc := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, ftypes.NewVotingPowerDistCache(), btcTipHeight-1, btcTipHeight)
+	newDc, _ := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, ftypes.NewVotingPowerDistCache(), btcTipHeight-1, btcTipHeight)
 
 	// verify that only the babylon FP is included in power distribution
 	require.Len(t, newDc.FinalityProviders, 1)
@@ -2112,7 +2112,7 @@ func TestBSNDelegationUnbonded_DirectIncentives(t *testing.T) {
 	// add events to store
 	addPowerDistUpdateEvents(t, h.Ctx, btcStakingStoreKey, uint64(btcTipHeight), []*btcstktypes.EventPowerDistUpdate{eventUnbond})
 	// process the unbonding event
-	newDc := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, initialDc, btcTipHeight-1, btcTipHeight)
+	newDc, _ := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, initialDc, btcTipHeight-1, btcTipHeight)
 
 	// verify Babylon FP is removed from power distribution (no bonded sats after unbonding)
 	require.Len(t, newDc.FinalityProviders, 0)
@@ -2203,7 +2203,7 @@ func TestTwoBtcActivationEvents(t *testing.T) {
 	// add events to store
 	addPowerDistUpdateEvents(t, h.Ctx, btcStakingStoreKey, uint64(btcTipHeight), []*btcstktypes.EventPowerDistUpdate{event1, event2})
 	// process the events
-	newDc := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, ftypes.NewVotingPowerDistCache(), btcTipHeight-1, btcTipHeight)
+	newDc, _ := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, ftypes.NewVotingPowerDistCache(), btcTipHeight-1, btcTipHeight)
 
 	// verify babylon FP is included in power distribution with correct total voting power
 	require.Len(t, newDc.FinalityProviders, 1)
@@ -2381,7 +2381,7 @@ func TestProcessAllPowerDistUpdateEvents_TotallyUnbondedFP(t *testing.T) {
 	addPowerDistUpdateEvents(t, h.Ctx, sk, uint64(btcTipHeight), events)
 
 	// Process active event to create initial cache with active FP
-	prevDc := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, ftypes.NewVotingPowerDistCache(), btcTipHeight, btcTipHeight)
+	prevDc, _ := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, ftypes.NewVotingPowerDistCache(), btcTipHeight, btcTipHeight)
 	require.Len(t, prevDc.FinalityProviders, 1)
 	require.Equal(t, del.TotalSat, prevDc.FinalityProviders[0].TotalBondedSat)
 
@@ -2398,7 +2398,7 @@ func TestProcessAllPowerDistUpdateEvents_TotallyUnbondedFP(t *testing.T) {
 	btcTipHeight++
 	addPowerDistUpdateEvents(t, h.Ctx, sk, uint64(btcTipHeight), []*btcstktypes.EventPowerDistUpdate{eventUnbond})
 	// Process unbond event
-	newDc := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, prevDc, btcTipHeight, btcTipHeight)
+	newDc, _ := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, prevDc, btcTipHeight, btcTipHeight)
 
 	// The newDc should not contain the FP anymore
 	require.Len(t, newDc.FinalityProviders, 0)
@@ -2429,7 +2429,7 @@ func TestProcessAllPowerDistUpdateEvents_SlashedFP(t *testing.T) {
 	addPowerDistUpdateEvents(t, h.Ctx, sk, uint64(btcTipHeight), events)
 
 	// Process active event to create initial cache with active FP
-	prevDc := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, ftypes.NewVotingPowerDistCache(), btcTipHeight, btcTipHeight)
+	prevDc, _ := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, ftypes.NewVotingPowerDistCache(), btcTipHeight, btcTipHeight)
 	require.Len(t, prevDc.FinalityProviders, 1)
 	require.Equal(t, del.TotalSat, prevDc.FinalityProviders[0].TotalBondedSat)
 
@@ -2444,20 +2444,59 @@ func TestProcessAllPowerDistUpdateEvents_SlashedFP(t *testing.T) {
 	btcTipHeight++
 	addPowerDistUpdateEvents(t, h.Ctx, sk, uint64(btcTipHeight), []*btcstktypes.EventPowerDistUpdate{eventSlash})
 	// Process slashing event
-	newDc := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, prevDc, btcTipHeight, btcTipHeight)
+	newDc, state := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, prevDc, btcTipHeight, btcTipHeight)
 
 	// The newDc should contain the FP but it should be slashed
-	require.Len(t, newDc.FinalityProviders, 1)
-	require.True(t, newDc.FinalityProviders[0].IsSlashed)
+	require.Len(t, newDc.FinalityProviders, 0)
+
+	// There should be a slashed event emitted
+	foundSlashedEvt := false
+	for _, evt := range h.Ctx.EventManager().Events() {
+		if evt.Type == "babylon.btcstaking.v1.EventFinalityProviderStatusChange" {
+			// Check that the event is for the slashed FP and has correct status
+			for _, attr := range evt.Attributes {
+				if attr.Key == "btc_pk" {
+					require.Equal(t, "\""+del.FpBtcPkList[0].MarshalHex()+"\"", attr.Value)
+				}
+				if attr.Key == "new_state" {
+					require.Equal(t, "\""+btcstktypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_SLASHED.String()+"\"", attr.Value)
+				}
+			}
+			foundSlashedEvt = true
+		}
+	}
+	require.True(t, foundSlashedEvt, "Should have found slashed event")
 
 	// Check that the voting power is updated correctly
 	newDc.ApplyActiveFinalityProviders(10)
 	require.Zero(t, newDc.NumActiveFps)
 
 	// Test that FindNewInactiveFinalityProviders works correctly
-	// It should NOT find the slashed FP as newly inactive
+	// It should find the slashed FP as newly inactive
 	newlyInactiveFPs := newDc.FindNewInactiveFinalityProviders(prevDc)
-	require.Len(t, newlyInactiveFPs, 0)
+	require.Len(t, newlyInactiveFPs, 1)
+
+	// But should not emit the inactive event
+	// Clear events to check only new events from HandleFPStateUpdates
+	h.Ctx = h.Ctx.WithEventManager(sdk.NewEventManager())
+	// emit events for finality providers with state updates
+	h.FinalityKeeper.HandleFPStateUpdates(h.Ctx, prevDc, newDc, state)
+	foundInactiveEvt := false
+	for _, evt := range h.Ctx.EventManager().Events() {
+		if evt.Type == "babylon.btcstaking.v1.EventFinalityProviderStatusChange" {
+			// Check that the event is for the slashed FP
+			for _, attr := range evt.Attributes {
+				if attr.Key == "btc_pk" {
+					require.Equal(t, "\""+del.FpBtcPkList[0].MarshalHex()+"\"", attr.Value)
+				}
+				if attr.Key == "new_state" {
+					require.Equal(t, "\""+btcstktypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_INACTIVE.String()+"\"", attr.Value)
+				}
+			}
+			foundInactiveEvt = true
+		}
+	}
+	require.False(t, foundInactiveEvt, "Should have found inactive event")
 }
 
 // addPowerDistUpdateEvents is a helper function that seeds the BTCStaking module store
