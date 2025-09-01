@@ -66,10 +66,10 @@ func readScript(r io.Reader, pver uint32, maxAllowed uint32, fieldName string) (
 // We work on the encoding based on the Leather wallet implementation:
 // https://github.com/leather-wallet/extension/blob/068d3cd465e1a642a763fecfa0e3ce5e94b07286/src/shared/crypto/bitcoin/bip322/bip322-utils.ts#L58
 // More specifically, the signature is encoded as follows:
-// - 1st byte: Elements of the witness stack that are serialized
+// - VarInt: Number of witness stack elements (Bitcoin consensus encoding)
 // - For each element of the stack
-//   - The first byte specifies how many bytes it contains
-//   - The rest are the bytes of the element
+//   - VarInt: Length of the element in bytes (Bitcoin consensus encoding)
+//   - The element bytes
 func SimpleSigToWitness(sig []byte) ([][]byte, error) {
 	// For each input, the witness is encoded as a stack
 	// with one or more items. Therefore, we first read a
