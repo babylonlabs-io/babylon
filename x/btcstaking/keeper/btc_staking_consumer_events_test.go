@@ -94,14 +94,13 @@ func FuzzSetBTCStakingEventStore_ActiveDel(f *testing.F) {
 
 		// register a random consumer on Babylon
 		randomConsumer := h.RegisterAndVerifyConsumer(t, r)
-		// create consumer finality provider
-		_, consumerFpPK, _, err := h.CreateConsumerFinalityProvider(r,
-			randomConsumer.ConsumerId)
+		// create a new consumer finality provider
+		_, consumerFpPK, _, err := h.CreateConsumerFinalityProvider(r, randomConsumer.ConsumerId)
 		require.NoError(t, err)
 		// create new Babylon finality provider
 		_, babylonFpPK, _ := h.CreateFinalityProvider(r)
 
-		// generate and insert new BTC delegation, multi-stake to consumer fp and babylon fp
+		// generate and insert new BTC delegation, multi-stake to 1 consumer fp and 1 babylon fp
 		stakingValue := int64(2 * 10e8)
 		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		h.NoError(err)
