@@ -2442,7 +2442,7 @@ func TestProcessAllPowerDistUpdateEvents_SlashedFP(t *testing.T) {
 	// seed the event in the store
 	btcTipHeight++
 	addPowerDistUpdateEvents(t, h.Ctx, sk, uint64(btcTipHeight), []*btcstktypes.EventPowerDistUpdate{eventSlash})
-	// Process unbond event
+	// Process slashing event
 	newDc := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, prevDc, btcTipHeight, btcTipHeight)
 
 	// The newDc should contain the FP but it should be slashed
