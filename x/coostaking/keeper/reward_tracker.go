@@ -56,18 +56,19 @@ func (k Keeper) coostakerModifiedWithPreInitalization( //nolint: unused
 		return err
 	}
 
-	return k.initializeCoostakerRwdTracker(ctx, coostaker)
+	return k.initializeCoStakerRwdTracker(ctx, coostaker)
 }
 
-// IncrementRewardsPeriod gets or initializes the current rewards structure,
-// increases the period from the current rewards and empty the rewards.
-// It also creates a new historical with the ended period and sets the rewards
-// of the newly historical period as the amount from the previous historical
-// plus the amount of rewards that each score staked is entitled to receive.
-// The rewards in the historical are stored with multiplied decimals
-// (DecimalRewards) to increase precision, and need to be
-// reduced when the rewards are calculated in CalculateCoostakerRewards
-// prior to send out to the coostaker gauge.
+// IncrementRewardsPeriod finalizes the current reward period and starts a new one.
+// It does the following:
+//   - Computes the per-score rewards for the ending period and adds them to the
+//     cumulative historical rewards.
+//   - Stores the updated historical rewards for the ended period.
+//   - Initializes a new empty reward period with the same total score.
+//
+// Note: Rewards in historical entries are stored with extra decimal precision
+// (DecimalRewards). They must be reduced to standard precision in
+// CalculateCoStakerRewards before distribution.
 func (k Keeper) IncrementRewardsPeriod(ctx context.Context) (endedPeriod uint64, err error) {
 	// IncrementPeriod
 	//    gets the current rewards and send to historical the current period (the rewards are stored as "shares" which means the amount of rewards per score)
@@ -135,19 +136,25 @@ func (k Keeper) CalculateCoostakerRewards(ctx context.Context, coostaker sdk.Acc
 		return sdk.NewCoins(), nil
 	}
 
-	return k.calculateCoostakerRewardsBetween(ctx, *coostakerRwdTracker, endPeriod)
+	return k.calculateCoStakerRewardsBetween(ctx, *coostakerRwdTracker, endPeriod)
 }
 
-// calculateCoostakerRewardsBetween calculate the rewards accured of a coostaker between
-// two period, the endingPeriod received in param and the StartPeriodCumulativeReward of
-// the CoostakerRewardsTracker. It gets the CumulativeRewardsPerScore of the ending
-// period and subtracts the CumulativeRewardsPerScore of the starting period
-// that give the total amount of rewards that one score is entitle to receive
-// in rewards between those two period. To get the amount this coostaker should
-// receive, it multiplies by the total amount of active score this coostaker has.
-// One note, before give out the rewards it quotes by the DecimalRewards
-// to get it ready to be sent out to the delegator reward gauge.
-func (k Keeper) calculateCoostakerRewardsBetween(
+// calculateCoStakerRewardsBetween computes the rewards accrued by a coostaker
+// between two periods: the tracker’s StartPeriodCumulativeReward (inclusive)
+// and the provided endingPeriod (inclusive).
+//
+// It derives rewards from the cumulative per-score amounts:
+//
+//	ΔPerScore = Historical[endingPeriod].CumulativeRewardsPerScore
+//	          − Historical[StartPeriod].CumulativeRewardsPerScore
+//
+// The coostaker’s gross rewards (with decimals) are then:
+//
+//	RewardsWithDecimals = ΔPerScore * tracker.TotalScore
+//
+// Finally, rewards are scaled back to standard precision by dividing by
+// ictvtypes.DecimalRewards (truncating), yielding sdk.Coins to distribute.
+func (k Keeper) calculateCoStakerRewardsBetween(
 	ctx context.Context,
 	coostakerRwdTracker types.CoostakerRewardsTracker,
 	endingPeriod uint64,
@@ -185,20 +192,24 @@ func (k Keeper) calculateCoostakerRewardsBetween(
 	return rewards, nil
 }
 
-// initializeCoostakerRwdTracker creates a new CoostakerRewardsTracker from the
-// previous acumulative rewards period of the global pool reward tracker. This function
-// should be called right after a coostaker withdraw his rewards (in our
-// case send the rewards to the reward gauge). Reminder that at every new
-// modification to the amount of satoshi staked or baby staked from this delegator, it
-// should withdraw all rewards (send to gauge) and initialize a new CoostakerRewardsTracker.
-func (k Keeper) initializeCoostakerRwdTracker(ctx context.Context, coostaker sdk.AccAddress) error {
-	// period has already been incremented prior to call this function
-	// it is needed to store the period ended by this delegation action
-	// as a starting point of the delegation rewards calculation
+// initializeCoStakerRwdTracker initializes a CoostakerRewardsTracker for the given
+// coostaker using the cumulative rewards at the end of the *previous* period.
+// This should be called immediately after the coostaker’s rewards are withdrawn
+// (i.e., sent to the reward gauge), or after any change to the coostaker’s
+// staking amount (sat or baby), which requires withdrawing rewards and resetting
+// the tracker.
+//
+// Precondition: the global rewards period has already been incremented before
+// calling this function. The tracker’s start period is set to (current.Period - 1),
+// so subsequent accruals are computed from that point forward while preserving
+// the coostaker’s current TotalScore.
+func (k Keeper) initializeCoStakerRwdTracker(ctx context.Context, coostaker sdk.AccAddress) error {
 	currentRwd, err := k.GetCurrentRewards(ctx)
 	if err != nil {
 		return err
 	}
+	// The global period has been incremented before this call.
+	// Use the ended period as the tracker’s starting point for future accruals.
 	previousPeriod := currentRwd.Period - 1
 
 	coostakerRwdTracker, err := k.GetCoostakerRewards(ctx, coostaker)

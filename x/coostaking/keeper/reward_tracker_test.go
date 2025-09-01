@@ -142,47 +142,48 @@ func FuzzCalculateCoostakerRewardsAndSendToGauge(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		t.Parallel()
 		r := rand.New(rand.NewSource(seed))
-
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		mockIctvK := types.NewMockIncentiveKeeper(ctrl)
-		k, ctx := NewKeeperWithMockIncentiveKeeper(t, mockIctvK)
+		ictvK := types.NewMockIncentiveKeeper(ctrl)
+		k, ctx := NewKeeperWithMockIncentiveKeeper(t, ictvK)
 
 		coostaker := datagen.GenRandomAddress()
-		totalScore := datagen.RandomMathInt(r, 1000000)
-		coostakerScore := datagen.RandomMathInt(r, 10000)
-		rewards := datagen.GenRandomCoins(r)
+		coostakerScore := datagen.RandomMathInt(r, 10000).AddRaw(10)
 
-		initialTracker := types.NewCoostakerRewardsTracker(0, coostakerScore)
-		err := k.setCoostakerRewardsTracker(ctx, coostaker, initialTracker)
+		hist1 := datagen.GenRandomHistoricalRewards(r)
+		hist1.CumulativeRewardsPerScore = hist1.CumulativeRewardsPerScore.MulInt(ictvtypes.DecimalRewards)
+		startPeriod := datagen.RandomInt(r, 10)
+
+		err := k.setHistoricalRewards(ctx, startPeriod, hist1)
 		require.NoError(t, err)
 
-		err = k.AddRewardsForCoostakers(ctx, rewards)
+		hist2 := types.NewHistoricalRewards(hist1.CumulativeRewardsPerScore.MulInt(sdkmath.NewInt(2)))
+		endPeriod := startPeriod + 1 + datagen.RandomInt(r, 10)
+		err = k.setHistoricalRewards(ctx, endPeriod, hist2)
 		require.NoError(t, err)
 
-		err = k.UpdateCurrentRewardsTotalScore(ctx, totalScore)
+		initialTracker := types.NewCoostakerRewardsTracker(startPeriod, coostakerScore)
+		err = k.setCoostakerRewardsTracker(ctx, coostaker, initialTracker)
 		require.NoError(t, err)
 
-		endedPeriod, err := k.IncrementRewardsPeriod(ctx)
-		require.NoError(t, err)
+		expRwds := hist2.CumulativeRewardsPerScore.Sub(hist1.CumulativeRewardsPerScore...).MulInt(coostakerScore).QuoInt(ictvtypes.DecimalRewards)
 
-		calculatedRewards, err := k.CalculateCoostakerRewards(ctx, coostaker, endedPeriod)
-		// For period 1, historical rewards don't exist due to early return logic
-		if err != nil {
-			// Expected error for period 1, skip the gauge accumulation test
-			require.Equal(t, uint64(1), endedPeriod)
-			return
-		}
+		ictvK.EXPECT().AccumulateRewardGaugeForCoostaker(
+			gomock.Any(),
+			gomock.Eq(coostaker),
+			gomock.Eq(expRwds),
+		).Times(1)
 
-		if !calculatedRewards.IsZero() {
-			mockIctvK.EXPECT().AccumulateRewardGaugeForCoostaker(ctx, coostaker, calculatedRewards).Times(1)
-			// Also expect bank transfer from coostaking to incentive module
-			mockBankK := k.bankK.(*types.MockBankKeeper)
-			mockBankK.EXPECT().SendCoinsFromModuleToModule(ctx, types.ModuleName, ictvtypes.ModuleName, calculatedRewards).Return(nil).Times(1)
-		}
+		bankK := k.bankK.(*types.MockBankKeeper)
+		bankK.EXPECT().SendCoinsFromModuleToModule(
+			gomock.Any(),
+			gomock.Eq(types.ModuleName),
+			gomock.Eq(ictvtypes.ModuleName),
+			gomock.Eq(expRwds),
+		).Return(nil).Times(1)
 
-		err = k.CalculateCoostakerRewardsAndSendToGauge(ctx, coostaker, endedPeriod)
+		err = k.CalculateCoostakerRewardsAndSendToGauge(ctx, coostaker, endPeriod)
 		require.NoError(t, err)
 	})
 }
@@ -235,7 +236,7 @@ func TestCalculateCoostakerRewardsBetweenNegativeRewards(t *testing.T) {
 	tracker := types.NewCoostakerRewardsTracker(1, sdkmath.NewInt(100))
 
 	require.Panics(t, func() {
-		k.calculateCoostakerRewardsBetween(ctx, tracker, 2)
+		k.calculateCoStakerRewardsBetween(ctx, tracker, 2)
 	})
 }
 
@@ -261,7 +262,7 @@ func TestInitializeCoostakerRwdTracker(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), endedPeriod)
 
-	err = k.initializeCoostakerRwdTracker(ctx, coostaker)
+	err = k.initializeCoStakerRwdTracker(ctx, coostaker)
 	require.NoError(t, err)
 
 	updatedTracker, err := k.GetCoostakerRewards(ctx, coostaker)
