@@ -94,13 +94,14 @@ func FuzzSetBTCStakingEventStore_ActiveDel(f *testing.F) {
 
 		// register a random consumer on Babylon
 		randomConsumer := h.RegisterAndVerifyConsumer(t, r)
-		// create a new consumer finality provider
-		_, consumerFpPK, _, err := h.CreateConsumerFinalityProvider(r, randomConsumer.ConsumerId)
+		// create consumer finality provider
+		_, consumerFpPK, _, err := h.CreateConsumerFinalityProvider(r,
+			randomConsumer.ConsumerId)
 		require.NoError(t, err)
 		// create new Babylon finality provider
 		_, babylonFpPK, _ := h.CreateFinalityProvider(r)
 
-		// generate and insert new BTC delegation, multi-stake to 1 consumer fp and 1 babylon fp
+		// generate and insert new BTC delegation, multi-stake to consumer fp and babylon fp
 		stakingValue := int64(2 * 10e8)
 		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		h.NoError(err)
@@ -153,7 +154,7 @@ func FuzzSetBTCStakingEventStore_ActiveDel(f *testing.F) {
 		require.NotNil(t, evs)
 		require.NotNil(t, evs.GetActiveDel())
 		require.NotNil(t, evs.GetNewFp())
-		// we created 2 finality providers but only 1 of them is consumer fp, so expect only 1 fp in the event store
+		// we created 1 consumer fp, so expect 1 fp in the event store
 		require.Equal(t, 1, len(evs.GetNewFp()))
 		require.Equal(t, 1, len(evs.GetActiveDel()))
 		// there should be no other events in the store
@@ -463,7 +464,7 @@ func TestHasBTCStakingConsumerIBCPackets(t *testing.T) {
 	hasPackets = h.BTCStakingKeeper.HasBTCStakingConsumerIBCPackets(h.Ctx)
 	require.True(t, hasPackets, "Should return true when at least one packet exists")
 
-	// Register and verify second consumer  
+	// Register and verify second consumer
 	consumer2 := h.RegisterAndVerifyConsumer(t, r)
 
 	// Create another consumer finality provider
@@ -490,4 +491,327 @@ func TestHasBTCStakingConsumerIBCPackets(t *testing.T) {
 	allPackets = h.BTCStakingKeeper.GetAllBTCStakingConsumerIBCPackets(h.Ctx)
 	expectedHasPackets = len(allPackets) > 0
 	require.Equal(t, expectedHasPackets, hasPackets, "HasBTCStakingConsumerIBCPackets should be consistent with GetAllBTCStakingConsumerIBCPackets after deletion")
+}
+
+func FuzzMultiStaking_ConsumerEvents_ActiveDel(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		t.Parallel()
+
+		r := rand.New(rand.NewSource(seed))
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
+		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
+		heightAfterMultiStakingAllowListExpiration := int64(10)
+		h := testutil.NewHelper(t, btclcKeeper, btccKeeper, nil).WithBlockHeight(heightAfterMultiStakingAllowListExpiration)
+
+		covenantSKs, _ := h.GenAndApplyCustomParams(r, 100, 200, 2)
+
+		randomConsumer := h.RegisterAndVerifyConsumer(t, r)
+		_, consumerFpPK, _, err := h.CreateConsumerFinalityProvider(r, randomConsumer.ConsumerId)
+		require.NoError(t, err)
+		_, babylonFpPK, _ := h.CreateFinalityProvider(r)
+
+		stakingValue := int64(2 * 10e8)
+		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
+		h.NoError(err)
+		stakingTxHash, msgCreateBTCDel, actualDel, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
+			r,
+			delSK,
+			[]*btcec.PublicKey{babylonFpPK, consumerFpPK},
+			stakingValue,
+			1000,
+			0,
+			0,
+			false,
+			false,
+			10,
+			30,
+		)
+		h.NoError(err)
+
+		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: 30}).AnyTimes()
+
+		h.CreateCovenantSigs(r, covenantSKs, msgCreateBTCDel, actualDel, 10)
+
+		actualDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
+		h.NoError(err)
+		require.True(t, actualDel.HasCovenantQuorums(h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum, 0))
+		votingPower := actualDel.VotingPower(
+			h.BTCLightClientKeeper.GetTipInfo(h.Ctx).Height,
+			h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum, 0,
+		)
+		require.Equal(t, uint64(stakingValue), votingPower)
+
+		// event store related assertions for multi-staking
+		evs := h.BTCStakingKeeper.GetBTCStakingConsumerIBCPacket(h.Ctx, randomConsumer.ConsumerId)
+		require.NotNil(t, evs)
+		require.NotNil(t, evs.GetActiveDel())
+		require.NotNil(t, evs.GetNewFp())
+		require.Equal(t, 1, len(evs.GetNewFp()))
+		require.Equal(t, 1, len(evs.GetActiveDel()))
+		require.Nil(t, evs.GetUnbondedDel())
+
+		activeDel := evs.GetActiveDel()[0]
+		require.NotNil(t, activeDel)
+		require.Equal(t, actualDel.BtcPk.MarshalHex(), activeDel.BtcPkHex)
+		require.Equal(t, actualDel.StartHeight, activeDel.StartHeight)
+		require.Equal(t, actualDel.EndHeight, activeDel.EndHeight)
+		require.Equal(t, actualDel.TotalSat, activeDel.TotalSat)
+		require.Equal(t, actualDel.StakingTx, activeDel.StakingTx)
+		require.Equal(t, actualDel.StakingOutputIdx, activeDel.StakingOutputIdx)
+		require.Equal(t, actualDel.UnbondingTime, activeDel.UnbondingTime)
+	})
+}
+
+func FuzzMultiStaking_ConsumerEvents_UnbondedDel(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		t.Parallel()
+
+		r := rand.New(rand.NewSource(seed))
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
+		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
+		heightAfterMultiStakingAllowListExpiration := int64(10)
+		h := testutil.NewHelper(t, btclcKeeper, btccKeeper, nil).WithBlockHeight(heightAfterMultiStakingAllowListExpiration)
+
+		covenantSKs, _ := h.GenAndApplyCustomParams(r, 100, 200, 2)
+		bsParams := h.BTCStakingKeeper.GetParams(h.Ctx)
+
+		// register a random consumer on Babylon and create finality providers
+		randomConsumer := h.RegisterAndVerifyConsumer(t, r)
+		_, consumerFpPK, _, err := h.CreateConsumerFinalityProvider(r, randomConsumer.ConsumerId)
+		require.NoError(t, err)
+		_, babylonFpPK, _ := h.CreateFinalityProvider(r)
+
+		stakingValue := int64(2 * 10e8)
+		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
+		h.NoError(err)
+		stakingTime := uint16(1000)
+		stakingTxHash, msgCreateBTCDel, actualDel, _, _, unbondingInfo, err := h.CreateDelegationWithBtcBlockHeight(
+			r,
+			delSK,
+			[]*btcec.PublicKey{babylonFpPK, consumerFpPK},
+			stakingValue,
+			stakingTime,
+			0,
+			0,
+			false,
+			false,
+			10,
+			30,
+		)
+		h.NoError(err)
+
+		h.CreateCovenantSigs(r, covenantSKs, msgCreateBTCDel, actualDel, 10)
+
+		// ensure the multi-staked BTC delegation is active
+		actualDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
+		h.NoError(err)
+		btcTip := uint32(30)
+		status, err := h.BTCStakingKeeper.BtcDelStatus(h.Ctx, actualDel, bsParams.CovenantQuorum, btcTip)
+		h.NoError(err)
+		require.Equal(t, types.BTCDelegationStatus_ACTIVE, status)
+
+		// prepare unbonding message
+		unbondingTx := actualDel.MustGetUnbondingTx()
+		stakingTx := actualDel.MustGetStakingTx()
+
+		serializedUnbondingTxWithWitness, _ := datagen.AddWitnessToUnbondingTx(
+			t,
+			stakingTx.TxOut[0],
+			delSK,
+			covenantSKs,
+			bsParams.CovenantQuorum,
+			[]*btcec.PublicKey{babylonFpPK, consumerFpPK},
+			stakingTime,
+			stakingValue,
+			unbondingTx,
+			h.Net,
+		)
+
+		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: 30}).AnyTimes()
+
+		msg := &types.MsgBTCUndelegate{
+			Signer:                        datagen.GenRandomAccount().Address,
+			StakingTxHash:                 stakingTxHash,
+			StakeSpendingTx:               serializedUnbondingTxWithWitness,
+			StakeSpendingTxInclusionProof: unbondingInfo.UnbondingTxInclusionProof,
+			FundingTransactions: [][]byte{
+				actualDel.StakingTx,
+			},
+		}
+
+		// unbond the multi-staked delegation
+		_, err = h.MsgServer.BTCUndelegate(h.Ctx, msg)
+		h.NoError(err)
+
+		// ensure the multi-staked BTC delegation is unbonded
+		actualDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
+		h.NoError(err)
+		status, err = h.BTCStakingKeeper.BtcDelStatus(h.Ctx, actualDel, bsParams.CovenantQuorum, btcTip)
+		h.NoError(err)
+		require.Equal(t, types.BTCDelegationStatus_UNBONDED, status)
+
+		// event store related assertions for multi-staking unbonding
+		evs := h.BTCStakingKeeper.GetBTCStakingConsumerIBCPacket(h.Ctx, randomConsumer.ConsumerId)
+		require.NotNil(t, evs)
+		require.NotNil(t, evs.GetActiveDel())
+		require.NotNil(t, evs.GetNewFp())
+		require.NotNil(t, evs.GetUnbondedDel())
+		require.Equal(t, 1, len(evs.GetNewFp()))
+		require.Equal(t, 1, len(evs.GetActiveDel()))
+		require.Equal(t, 1, len(evs.GetUnbondedDel()))
+
+		// verify the unbonded delegation event for multi-staking
+		unbondedDel := evs.GetUnbondedDel()[0]
+		require.NotNil(t, unbondedDel)
+		require.Equal(t, actualDel.MustGetStakingTxHash().String(), unbondedDel.StakingTxHash)
+	})
+}
+
+func FuzzMultiStaking_ConsumerEvents_MultipleFPs(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		t.Parallel()
+
+		r := rand.New(rand.NewSource(seed))
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
+		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
+		heightAfterMultiStakingAllowListExpiration := int64(10)
+		h := testutil.NewHelper(t, btclcKeeper, btccKeeper, nil).WithBlockHeight(heightAfterMultiStakingAllowListExpiration)
+		covenantSKs, _ := h.GenAndApplyCustomParams(r, 100, 200, 2)
+
+		consumer1 := h.RegisterAndVerifyConsumer(t, r)
+		consumer2 := h.RegisterAndVerifyConsumer(t, r)
+		// create multiple consumer finality providerss
+		_, consumerFpPK1v1, _, err := h.CreateConsumerFinalityProvider(r, consumer1.ConsumerId)
+		require.NoError(t, err)
+		_, consumerFpPK1v2, _, err := h.CreateConsumerFinalityProvider(r, consumer1.ConsumerId)
+		require.NoError(t, err)
+		_, consumerFpPK2v1, _, err := h.CreateConsumerFinalityProvider(r, consumer2.ConsumerId)
+		require.NoError(t, err)
+
+		_, babylonFpPK1, _ := h.CreateFinalityProvider(r)
+		_, babylonFpPK2, _ := h.CreateFinalityProvider(r)
+
+		stakingValue := int64(2 * 10e8)
+
+		delSK1, _, err := datagen.GenRandomBTCKeyPair(r)
+		h.NoError(err)
+		stakingTxHash1, msgBTCDel1, actualDel1, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
+			r,
+			delSK1,
+			[]*btcec.PublicKey{babylonFpPK1, consumerFpPK1v1},
+			stakingValue,
+			1000,
+			0,
+			0,
+			false,
+			false,
+			10,
+			30,
+		)
+		h.NoError(err)
+
+		delSK2, _, err := datagen.GenRandomBTCKeyPair(r)
+		h.NoError(err)
+		stakingTxHash2, msgBTCDel2, actualDel2, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
+			r,
+			delSK2,
+			[]*btcec.PublicKey{babylonFpPK2, consumerFpPK1v2},
+			stakingValue,
+			1000,
+			0,
+			0,
+			false,
+			false,
+			10,
+			30,
+		)
+		h.NoError(err)
+
+		delSK3, _, err := datagen.GenRandomBTCKeyPair(r)
+		h.NoError(err)
+		stakingTxHash3, msgBTCDel3, actualDel3, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
+			r,
+			delSK3,
+			[]*btcec.PublicKey{babylonFpPK1, consumerFpPK2v1},
+			stakingValue,
+			1000,
+			0,
+			0,
+			false,
+			false,
+			10,
+			30,
+		)
+		h.NoError(err)
+
+		h.CreateCovenantSigs(r, covenantSKs, msgBTCDel1, actualDel1, 10)
+		h.CreateCovenantSigs(r, covenantSKs, msgBTCDel2, actualDel2, 10)
+		h.CreateCovenantSigs(r, covenantSKs, msgBTCDel3, actualDel3, 10)
+
+		// verify consumer1
+		evs1 := h.BTCStakingKeeper.GetBTCStakingConsumerIBCPacket(h.Ctx, consumer1.ConsumerId)
+		require.NotNil(t, evs1)
+		require.NotNil(t, evs1.GetActiveDel())
+		require.NotNil(t, evs1.GetNewFp())
+		require.Equal(t, 2, len(evs1.GetNewFp()))
+		require.Equal(t, 2, len(evs1.GetActiveDel()))
+		require.Nil(t, evs1.GetUnbondedDel())
+
+		// verify consumer2 events
+		evs2 := h.BTCStakingKeeper.GetBTCStakingConsumerIBCPacket(h.Ctx, consumer2.ConsumerId)
+		require.NotNil(t, evs2)
+		require.NotNil(t, evs2.GetActiveDel())
+		require.NotNil(t, evs2.GetNewFp())
+		require.Equal(t, 1, len(evs2.GetNewFp()))
+		require.Equal(t, 1, len(evs2.GetActiveDel()))
+		require.Nil(t, evs2.GetUnbondedDel())
+
+		actualDel1, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash1)
+		h.NoError(err)
+		actualDel2, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash2)
+		h.NoError(err)
+		actualDel3, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash3)
+		h.NoError(err)
+
+		delPkHex1 := actualDel1.BtcPk.MarshalHex()
+		delPkHex2 := actualDel2.BtcPk.MarshalHex()
+		foundDel1, foundDel2 := false, false
+		for _, activeDel := range evs1.GetActiveDel() {
+			if activeDel.BtcPkHex == delPkHex1 {
+				foundDel1 = true
+				require.Equal(t, actualDel1.StakingTx, activeDel.StakingTx)
+			}
+			if activeDel.BtcPkHex == delPkHex2 {
+				foundDel2 = true
+				require.Equal(t, actualDel2.StakingTx, activeDel.StakingTx)
+			}
+		}
+		require.True(t, foundDel1)
+		require.True(t, foundDel2)
+
+		delPkHex3 := actualDel3.BtcPk.MarshalHex()
+		foundDel3 := false
+		for _, activeDel := range evs2.GetActiveDel() {
+			if activeDel.BtcPkHex == delPkHex3 {
+				foundDel3 = true
+				require.Equal(t, actualDel3.StakingTx, activeDel.StakingTx)
+			}
+		}
+		require.True(t, foundDel3)
+	})
 }
