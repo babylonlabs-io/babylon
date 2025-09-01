@@ -695,6 +695,7 @@ func FuzzMultiStaking_ConsumerEvents_MultipleFPs(f *testing.F) {
 
 		consumer1 := h.RegisterAndVerifyConsumer(t, r)
 		consumer2 := h.RegisterAndVerifyConsumer(t, r)
+
 		// create multiple consumer finality providerss
 		_, consumerFpPK1v1, _, err := h.CreateConsumerFinalityProvider(r, consumer1.ConsumerId)
 		require.NoError(t, err)
