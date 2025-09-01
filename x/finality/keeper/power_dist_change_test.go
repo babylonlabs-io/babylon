@@ -1539,20 +1539,20 @@ func TestHandleLivenessPanic(t *testing.T) {
 
 	// 0. BTCStakingKeeper parameter setting
 	err = btcStakingKeeper.SetParams(ctx, btcstktypes.Params{
-		CovenantPks:               bbn.NewBIP340PKsFromBTCPKs(covenantPKs),
-		CovenantQuorum:            1,
-		MinStakingValueSat:        10000,
-		MaxStakingValueSat:        int64(4000 * 10e8),
-		MinStakingTimeBlocks:      400,
-		MaxStakingTimeBlocks:      10000,
-		SlashingPkScript:          slashingPkScript,
-		MinSlashingTxFeeSat:       100,
-		MinCommissionRate:         sdkmath.LegacyMustNewDecFromStr("0.01"),
-		SlashingRate:              sdkmath.LegacyNewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2),
-		UnbondingTimeBlocks:       100,
-		UnbondingFeeSat:           1000,
-		BtcActivationHeight:       1,
-		MaxFinalityProviders:      1,
+		CovenantPks:          bbn.NewBIP340PKsFromBTCPKs(covenantPKs),
+		CovenantQuorum:       1,
+		MinStakingValueSat:   10000,
+		MaxStakingValueSat:   int64(4000 * 10e8),
+		MinStakingTimeBlocks: 400,
+		MaxStakingTimeBlocks: 10000,
+		SlashingPkScript:     slashingPkScript,
+		MinSlashingTxFeeSat:  100,
+		MinCommissionRate:    sdkmath.LegacyMustNewDecFromStr("0.01"),
+		SlashingRate:         sdkmath.LegacyNewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2),
+		UnbondingTimeBlocks:  100,
+		UnbondingFeeSat:      1000,
+		BtcActivationHeight:  1,
+		MaxFinalityProviders: 1,
 	})
 	require.NoError(t, err)
 
@@ -2409,6 +2409,54 @@ func TestProcessAllPowerDistUpdateEvents_TotallyUnbondedFP(t *testing.T) {
 	newlyInactiveFPs := newDc.FindNewInactiveFinalityProviders(prevDc)
 	require.Len(t, newlyInactiveFPs, 1)
 	require.Equal(t, del.FpBtcPkList[0].MarshalHex(), newlyInactiveFPs[0].BtcPk.MarshalHex())
+}
+
+func TestProcessAllPowerDistUpdateEvents_SlashedFP(t *testing.T) {
+	t.Parallel()
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	h, del, _, sk := CreateFpAndBtcDel(t, r)
+
+	// Start with an active delegation
+	eventActive := btcstktypes.NewEventPowerDistUpdateWithBTCDel(&btcstktypes.EventBTCDelegationStateUpdate{
+		StakingTxHash: del.MustGetStakingTxHash().String(),
+		NewState:      btcstktypes.BTCDelegationStatus_ACTIVE,
+	})
+
+	events := []*btcstktypes.EventPowerDistUpdate{eventActive}
+
+	btcTipHeight := del.BtcTipHeight
+	// seed the event in the store
+	addPowerDistUpdateEvents(t, h.Ctx, sk, uint64(btcTipHeight), events)
+
+	// Process active event to create initial cache with active FP
+	prevDc := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, ftypes.NewVotingPowerDistCache(), btcTipHeight, btcTipHeight)
+	require.Len(t, prevDc.FinalityProviders, 1)
+	require.Equal(t, del.TotalSat, prevDc.FinalityProviders[0].TotalBondedSat)
+
+	// Mark FP as timestamped and apply active FPs to set correct NumActiveFps
+	prevDc.FinalityProviders[0].IsTimestamped = true
+	prevDc.ApplyActiveFinalityProviders(10) // Allow up to 10 active FPs
+
+	// Now slash the FP
+	eventSlash := btcstktypes.NewEventPowerDistUpdateWithSlashedFP(&del.FpBtcPkList[0])
+	// seed the event in the store
+	btcTipHeight++
+	addPowerDistUpdateEvents(t, h.Ctx, sk, uint64(btcTipHeight), []*btcstktypes.EventPowerDistUpdate{eventSlash})
+	// Process unbond event
+	newDc := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, prevDc, btcTipHeight, btcTipHeight)
+
+	// The newDc should contain the FP but it should be slashed
+	require.Len(t, newDc.FinalityProviders, 1)
+	require.True(t, newDc.FinalityProviders[0].IsSlashed)
+
+	// Check that the voting power is updated correctly
+	h.FinalityKeeper.RecordVotingPowerAndCache(h.Ctx, newDc)
+	require.Zero(t, newDc.NumActiveFps)
+
+	// Test that FindNewInactiveFinalityProviders works correctly
+	// It should NOT find the slashed FP as newly inactive
+	newlyInactiveFPs := newDc.FindNewInactiveFinalityProviders(prevDc)
+	require.Len(t, newlyInactiveFPs, 0)
 }
 
 // addPowerDistUpdateEvents is a helper function that seeds the BTCStaking module store

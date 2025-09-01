@@ -204,6 +204,7 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 			// if this finality provider is slashed, continue to avoid
 			// assigning delegation to it
 			fp.IsSlashed = true
+			newDc.AddFinalityProviderDistInfo(&fp)
 			continue
 		case ftypes.FinalityProviderState_JAILED:
 			// set IsJailed to be true if the fp is jailed
