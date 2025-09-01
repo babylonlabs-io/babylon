@@ -2496,7 +2496,7 @@ func TestProcessAllPowerDistUpdateEvents_SlashedFP(t *testing.T) {
 			foundInactiveEvt = true
 		}
 	}
-	require.False(t, foundInactiveEvt, "Should have found inactive event")
+	require.False(t, foundInactiveEvt, "Should NOT have found inactive event")
 }
 
 // addPowerDistUpdateEvents is a helper function that seeds the BTCStaking module store
