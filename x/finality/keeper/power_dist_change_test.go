@@ -2436,6 +2436,7 @@ func TestProcessAllPowerDistUpdateEvents_SlashedFP(t *testing.T) {
 	// Mark FP as timestamped and apply active FPs to set correct NumActiveFps
 	prevDc.FinalityProviders[0].IsTimestamped = true
 	prevDc.ApplyActiveFinalityProviders(10) // Allow up to 10 active FPs
+	require.Equal(t, prevDc.NumActiveFps, uint32(1))
 
 	// Now slash the FP
 	eventSlash := btcstktypes.NewEventPowerDistUpdateWithSlashedFP(&del.FpBtcPkList[0])
@@ -2450,7 +2451,7 @@ func TestProcessAllPowerDistUpdateEvents_SlashedFP(t *testing.T) {
 	require.True(t, newDc.FinalityProviders[0].IsSlashed)
 
 	// Check that the voting power is updated correctly
-	h.FinalityKeeper.RecordVotingPowerAndCache(h.Ctx, newDc)
+	newDc.ApplyActiveFinalityProviders(10)
 	require.Zero(t, newDc.NumActiveFps)
 
 	// Test that FindNewInactiveFinalityProviders works correctly
