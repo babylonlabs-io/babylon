@@ -176,8 +176,8 @@ func (k Keeper) calculateCoStakerRewardsBetween(
 
 	// creates the differenceWithDecimals amount of rewards (ending - starting) periods
 	// this differenceWithDecimals is the amount of rewards entitled per score
-	differenceWithDecimals := ending.CumulativeRewardsPerScore.Sub(starting.CumulativeRewardsPerScore...)
-	if differenceWithDecimals.IsAnyNegative() {
+	differenceWithDecimals, isNegative := ending.CumulativeRewardsPerScore.SafeSub(starting.CumulativeRewardsPerScore...)
+	if isNegative {
 		return sdk.Coins{}, types.ErrNegativeRewards.Wrapf("cumulative rewards is negative %s", differenceWithDecimals.String())
 	}
 

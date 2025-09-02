@@ -224,16 +224,18 @@ func TestCalculateCoostakerRewardsBetweenNegativeRewards(t *testing.T) {
 	startingRewards := datagen.GenRandomCoins(r)
 	endingRewards := sdk.NewCoins()
 
-	err := k.setHistoricalRewards(ctx, 1, types.NewHistoricalRewards(startingRewards))
+	startPeriod := uint64(1)
+	endPeriod := startPeriod + 1
+	err := k.setHistoricalRewards(ctx, startPeriod, types.NewHistoricalRewards(startingRewards))
 	require.NoError(t, err)
-	err = k.setHistoricalRewards(ctx, 2, types.NewHistoricalRewards(endingRewards))
+	err = k.setHistoricalRewards(ctx, endPeriod, types.NewHistoricalRewards(endingRewards))
 	require.NoError(t, err)
 
-	tracker := types.NewCoostakerRewardsTracker(1, sdkmath.NewInt(100))
+	tracker := types.NewCoostakerRewardsTracker(startPeriod, sdkmath.NewInt(100))
 
-	differenceWithDecimals := endingRewards.Sub(startingRewards...)
-	_, err = k.calculateCoStakerRewardsBetween(ctx, tracker, 2)
-	require.EqualError(t, err, types.ErrNegativeRewards.Wrapf("cumulative rewards is negative %s", differenceWithDecimals.String()).Error())
+	delta, _ := endingRewards.SafeSub(startingRewards...)
+	_, err = k.calculateCoStakerRewardsBetween(ctx, tracker, endPeriod)
+	require.EqualError(t, err, types.ErrNegativeRewards.Wrapf("cumulative rewards is negative %s", delta.String()).Error())
 }
 
 func TestCalculateCoostakerRewardsBetweenInvalidPeriod(t *testing.T) {
