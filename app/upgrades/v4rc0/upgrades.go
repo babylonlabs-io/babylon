@@ -68,7 +68,6 @@ func InitializeCoStakerRwdsTracker(
 	stkKeeper *stkkeeper.Keeper,
 	btcStkKeeper btcstkkeeper.Keeper,
 ) error {
-
 	btcStakers, err := getAllBTCStakers(ctx, btcStkKeeper)
 	if err != nil {
 		return err
