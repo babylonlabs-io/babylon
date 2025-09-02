@@ -40,7 +40,7 @@ func FuzzInterceptFeeCollector(f *testing.F) {
 		stkK := types.NewMockStakingKeeper(ctrl)
 		distK := types.NewMockDistributionKeeper(ctrl)
 
-		k, ctx := testkeeper.CoostakingKeeperWithStoreKey(t, nil, bankK, accK, stkK, distK)
+		k, ctx := testkeeper.CoostakingKeeperWithStoreKey(t, nil, bankK, accK, nil, stkK, distK)
 
 		// Create a mock validator
 		consAddr := sdk.ConsAddress([]byte("validator1"))
@@ -81,7 +81,7 @@ func FuzzInterceptFeeCollector(f *testing.F) {
 
 		rwd, err := k.GetCurrentRewards(ctxWithVotes)
 		require.NoError(t, err)
-		require.Equal(t, coostakingPortion.String(), rwd.Rewards.String())
+		require.Equal(t, coostakingPortion.MulInt(ictvtypes.DecimalRewards).String(), rwd.Rewards.String())
 		require.Equal(t, rwd.Period, uint64(1))
 		require.Equal(t, rwd.TotalScore.String(), sdkmath.ZeroInt().String())
 	})
@@ -105,7 +105,7 @@ func TestInterceptFeeCollectorWithSmallAmount(t *testing.T) {
 	stkK := types.NewMockStakingKeeper(ctrl)
 	distK := types.NewMockDistributionKeeper(ctrl)
 
-	k, ctx := testkeeper.CoostakingKeeperWithStoreKey(t, nil, bankK, accK, stkK, distK)
+	k, ctx := testkeeper.CoostakingKeeperWithStoreKey(t, nil, bankK, accK, nil, stkK, distK)
 
 	// Create a mock validator
 	consAddr := sdk.ConsAddress([]byte("validator1"))
@@ -147,7 +147,7 @@ func TestInterceptFeeCollectorWithSmallAmount(t *testing.T) {
 
 	rwd, err := k.GetCurrentRewards(ctxWithVotes)
 	require.NoError(t, err)
-	require.Equal(t, coostakingPortion.String(), rwd.Rewards.String())
+	require.Equal(t, coostakingPortion.MulInt(ictvtypes.DecimalRewards).String(), rwd.Rewards.String())
 	require.Equal(t, rwd.Period, uint64(1))
 	require.Equal(t, rwd.TotalScore.String(), sdkmath.ZeroInt().String())
 }

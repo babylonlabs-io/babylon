@@ -16,6 +16,7 @@ type (
 	Keeper struct {
 		cdc          codec.BinaryCodec
 		storeService corestoretypes.KVStoreService
+		hooks        types.IncentiveHooks
 
 		bankKeeper     types.BankKeeper
 		accountKeeper  types.AccountKeeper
@@ -118,4 +119,14 @@ func NewKeeper(
 func (k Keeper) Logger(goCtx context.Context) log.Logger {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
+}
+
+// SetHooks sets the incentive hooks. In contrast to other receivers, this method must take a pointer due to nature
+// of the hooks interface and SDK start up sequence.
+func (k *Keeper) SetHooks(sh types.IncentiveHooks) {
+	if k.hooks != nil {
+		panic("cannot set incentive hooks twice")
+	}
+
+	k.hooks = sh
 }

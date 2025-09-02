@@ -8,6 +8,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+func (k Keeper) GetHistoricalRewards(ctx context.Context, period uint64) (types.HistoricalRewards, error) {
+	return k.historicalRewards.Get(ctx, period)
+}
+
 func (k Keeper) setHistoricalRewards(ctx context.Context, period uint64, histRwd types.HistoricalRewards) error {
 	return k.historicalRewards.Set(ctx, period, histRwd)
 }
@@ -32,19 +36,6 @@ func (k Keeper) UpdateCurrentRewardsTotalScore(ctx context.Context, totalScore m
 }
 
 func (k Keeper) GetCurrentRewards(ctx context.Context) (*types.CurrentRewards, error) {
-	found, err := k.currentRewards.Has(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	if !found {
-		return &types.CurrentRewards{
-			Rewards:    sdk.NewCoins(),
-			Period:     1,
-			TotalScore: math.ZeroInt(),
-		}, nil
-	}
-
 	v, err := k.currentRewards.Get(ctx)
 	if err != nil {
 		return nil, err
@@ -53,12 +44,45 @@ func (k Keeper) GetCurrentRewards(ctx context.Context) (*types.CurrentRewards, e
 	return &v, nil
 }
 
-func (k Keeper) AddCurrentRewards(ctx context.Context, newRewards sdk.Coins) error {
-	currentRwd, err := k.GetCurrentRewards(ctx)
+func (k Keeper) GetCurrentRewardsCheckFound(ctx context.Context) (rwd *types.CurrentRewards, found bool, err error) {
+	found, err = k.currentRewards.Has(ctx)
 	if err != nil {
-		return err
+		return nil, false, err
+	}
+	if !found {
+		return nil, false, nil
 	}
 
-	currentRwd.Rewards = currentRwd.Rewards.Add(newRewards...)
-	return k.SetCurrentRewards(ctx, *currentRwd)
+	rwd, err = k.GetCurrentRewards(ctx)
+	if err != nil {
+		return nil, false, err
+	}
+
+	return rwd, true, nil
+}
+
+func (k Keeper) GetCoostakerRewardsTrackerCheckFound(ctx context.Context, coostaker sdk.AccAddress) (rwd *types.CoostakerRewardsTracker, found bool, err error) {
+	found, err = k.coostakerRewardsTracker.Has(ctx, coostaker)
+	if err != nil {
+		return nil, false, err
+	}
+	if !found {
+		return nil, false, nil
+	}
+
+	rwd, err = k.GetCoostakerRewards(ctx, coostaker)
+	if err != nil {
+		return nil, false, err
+	}
+
+	return rwd, true, nil
+}
+
+func (k Keeper) GetCoostakerRewards(ctx context.Context, coostaker sdk.AccAddress) (*types.CoostakerRewardsTracker, error) {
+	v, err := k.coostakerRewardsTracker.Get(ctx, coostaker)
+	if err != nil {
+		return nil, err
+	}
+
+	return &v, nil
 }

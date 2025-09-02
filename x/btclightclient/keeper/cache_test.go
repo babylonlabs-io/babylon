@@ -3,7 +3,6 @@ package keeper_test
 import (
 	"math/rand"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -108,40 +107,6 @@ func TestHeaderCache_Invalidation(t *testing.T) {
 	_, err = cache.GetOrFetch(101, fetcher)
 	require.NoError(t, err)
 	require.Equal(t, 4, fetchCount) // New fetch required
-}
-
-// TestHeaderCache_ConcurrentAccess tests concurrent access to cache
-func TestHeaderCache_ConcurrentAccess(t *testing.T) {
-	cache := types.NewHeaderCache()
-
-	fetchCount := 0
-	fetcher := func(height uint32) (*types.BTCHeaderInfo, error) { //nolint:unparam
-		fetchCount++
-		hash, _ := bbn.NewBTCHeaderHashBytesFromHex("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f")
-		// Simulate some work
-		time.Sleep(time.Millisecond)
-		return &types.BTCHeaderInfo{Hash: &hash, Height: height}, nil
-	}
-
-	// Test concurrent access to same height
-	done := make(chan bool, 10)
-	for i := 0; i < 10; i++ {
-		go func() {
-			_, err := cache.GetOrFetch(100, fetcher)
-			require.NoError(t, err)
-			done <- true
-		}()
-	}
-
-	// Wait for all goroutines to complete
-	for i := 0; i < 10; i++ {
-		<-done
-	}
-
-	// Due to concurrent access, fetch might be called multiple times
-	// but the cache should work correctly
-	require.Greater(t, fetchCount, 0)
-	require.LessOrEqual(t, fetchCount, 10)
 }
 
 // TestHeaderCache_ErrorHandling tests error handling in cache

@@ -119,5 +119,5 @@ func (k Keeper) accumulateCoostakingRewards(ctx context.Context, coostakingRewar
 		return err
 	}
 
-	return k.AddCurrentRewards(ctx, coostakingRewards)
+	return k.AddRewardsForCoostakers(ctx, coostakingRewards)
 }
