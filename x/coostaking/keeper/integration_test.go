@@ -37,7 +37,7 @@ func TestBankCoStakingModuleCalls(t *testing.T) {
 	err = k.setHistoricalRewards(ctx, endPeriod, types.NewHistoricalRewards(rwdsPerScoreWithDecimals))
 	require.NoError(t, err)
 
-	tracker := types.NewCoostakerRewardsTracker(startPeriod, sdkmath.NewInt(1000))
+	tracker := types.NewCoostakerRewardsTrackerBasic(startPeriod, sdkmath.NewInt(1000))
 	err = k.setCoostakerRewardsTracker(ctx, coostaker, tracker)
 	require.NoError(t, err)
 
@@ -77,7 +77,7 @@ func TestBankModuleIntegrationWithZeroRewards(t *testing.T) {
 	require.NoError(t, err)
 
 	// Set up a tracker with zero score - should result in zero rewards
-	tracker := types.NewCoostakerRewardsTracker(startPeriod, sdkmath.ZeroInt())
+	tracker := types.NewCoostakerRewardsTrackerBasic(startPeriod, sdkmath.ZeroInt())
 	err = k.setCoostakerRewardsTracker(ctx, coostaker, tracker)
 	require.NoError(t, err)
 
@@ -102,7 +102,7 @@ func TestBankModuleIntegrationFailure(t *testing.T) {
 	err = k.setHistoricalRewards(ctx, 1, types.NewHistoricalRewards(rewards.MulInt(ictvtypes.DecimalRewards)))
 	require.NoError(t, err)
 
-	tracker := types.NewCoostakerRewardsTracker(0, sdkmath.NewInt(1000))
+	tracker := types.NewCoostakerRewardsTrackerBasic(0, sdkmath.NewInt(1000))
 	err = k.setCoostakerRewardsTracker(ctx, coostaker, tracker)
 	require.NoError(t, err)
 
@@ -154,7 +154,7 @@ func FuzzBankModuleIntegration(f *testing.F) {
 		err = k.setHistoricalRewards(ctx, 1, types.NewHistoricalRewards(rewardsWithDecimals))
 		require.NoError(t, err)
 
-		tracker := types.NewCoostakerRewardsTracker(0, coostakerScore)
+		tracker := types.NewCoostakerRewardsTrackerBasic(0, coostakerScore)
 		err = k.setCoostakerRewardsTracker(ctx, coostaker, tracker)
 		require.NoError(t, err)
 
@@ -193,7 +193,7 @@ func TestCostakerModified(t *testing.T) {
 
 	// Set up initial tracker and rewards
 	initialScore := sdkmath.NewInt(1000)
-	tracker := types.NewCoostakerRewardsTracker(0, initialScore)
+	tracker := types.NewCoostakerRewardsTrackerBasic(0, initialScore)
 	err = k.setCoostakerRewardsTracker(ctx, coostaker, tracker)
 	require.NoError(t, err)
 
@@ -255,7 +255,7 @@ func TestCoostakerModifiedWithPreInitialization(t *testing.T) {
 	initialScore := sdkmath.NewInt(500)
 	newScore := sdkmath.NewInt(750)
 
-	tracker := types.NewCoostakerRewardsTracker(0, initialScore)
+	tracker := types.NewCoostakerRewardsTrackerBasic(0, initialScore)
 	err = k.setCoostakerRewardsTracker(ctx, coostaker, tracker)
 	require.NoError(t, err)
 
@@ -287,7 +287,7 @@ func TestCoostakerModifiedWithPreInitialization(t *testing.T) {
 			return err
 		}
 
-		updatedTracker := types.NewCoostakerRewardsTracker(
+		updatedTracker := types.NewCoostakerRewardsTrackerBasic(
 			currentTracker.StartPeriodCumulativeReward,
 			newScore,
 		)
