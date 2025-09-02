@@ -623,6 +623,7 @@ func (ak *AppKeepers) InitKeepers(
 		storeQuerier,
 		&ak.BTCStakingKeeper,
 		&ak.BTCStkConsumerKeeper,
+		&ak.FinalityKeeper,
 		appparams.AccGov.String(),
 	)
 

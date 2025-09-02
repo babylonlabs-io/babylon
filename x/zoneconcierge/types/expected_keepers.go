@@ -16,6 +16,7 @@ import (
 	btcstkconsumertypes "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
 	epochingtypes "github.com/babylonlabs-io/babylon/v3/x/epoching/types"
+	ftypes "github.com/babylonlabs-io/babylon/v3/x/finality/types"
 )
 
 // AccountKeeper defines the contract required for account APIs.
@@ -117,4 +118,8 @@ type BTCStkConsumerKeeper interface {
 	IsConsumerRegistered(ctx context.Context, consumerID string) bool
 	GetAllRegisteredCosmosConsumers(ctx context.Context) []*btcstkconsumertypes.ConsumerRegister
 	IsCosmosConsumer(ctx context.Context, consumerID string) (bool, error)
+}
+
+type FinalityKeeper interface {
+	SetEvidence(ctx context.Context, evidence *ftypes.Evidence)
 }
