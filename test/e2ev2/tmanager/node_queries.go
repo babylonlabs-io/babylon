@@ -2,12 +2,13 @@ package tmanager
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/url"
-	"strconv"
+	"time"
 
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/util"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	btclighttypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
 	bsctypes "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
 	ictvtypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
 	zoneconciergetype "github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/types"
@@ -20,6 +21,26 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
+
+// ParseBTCHeaderInfoResponseToInfo converts BTCHeaderInfoResponse to BTCHeaderInfo
+func ParseBTCHeaderInfoResponseToInfo(r *btclighttypes.BTCHeaderInfoResponse) (*btclighttypes.BTCHeaderInfo, error) {
+	header, err := bbn.NewBTCHeaderBytesFromHex(r.HeaderHex)
+	if err != nil {
+		return nil, err
+	}
+
+	hash, err := bbn.NewBTCHeaderHashBytesFromHex(r.HashHex)
+	if err != nil {
+		return nil, err
+	}
+
+	return &btclighttypes.BTCHeaderInfo{
+		Header: &header,
+		Hash:   &hash,
+		Height: r.Height,
+		Work:   &r.Work,
+	}, nil
+}
 
 func (n *Node) GrpcConn(f func(conn *grpc.ClientConn)) {
 	conn, err := grpc.NewClient(n.GrpcEndpoint, grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -212,39 +233,6 @@ func (n *Node) QueryIctvRewardGauges(addrs []string, holderType ictvtypes.Stakeh
 	return rewards
 }
 
-// QueryZoneConciergeParams retrieves the current parameters for the ZoneConcierge module
-func (n *Node) QueryZoneConciergeParams() *zoneconciergetype.Params {
-	bz, err := n.QueryGRPCGateway("/babylon/zoneconcierge/v1/params", url.Values{})
-	require.NoError(n.T(), err)
-
-	var resp zoneconciergetype.QueryParamsResponse
-	err = util.Cdc.UnmarshalJSON(bz, &resp)
-	require.NoError(n.T(), err)
-
-	return &resp.Params
-}
-
-// QueryFinalizedBSNsInfo retrieves finalized BSN (Babylon Secured Network) information
-// for the specified consumer IDs, optionally including proofs if prove is true
-func (n *Node) QueryFinalizedBSNsInfo(consumerIds []string, prove bool) *zoneconciergetype.QueryFinalizedBSNsInfoResponse {
-	params := url.Values{}
-	for _, id := range consumerIds {
-		params.Add("consumer_ids", id)
-	}
-	if prove {
-		params.Set("prove", "true")
-	}
-
-	bz, err := n.QueryGRPCGateway("/babylon/zoneconcierge/v1/finalized_bsns_info", params)
-	require.NoError(n.T(), err)
-
-	var resp zoneconciergetype.QueryFinalizedBSNsInfoResponse
-	err = util.Cdc.UnmarshalJSON(bz, &resp)
-	require.NoError(n.T(), err)
-
-	return &resp
-}
-
 // QueryLatestEpochHeader retrieves the latest epoch header for the specified consumer ID
 func (n *Node) QueryLatestEpochHeader(consumerID string) *zoneconciergetype.QueryLatestEpochHeaderResponse {
 	path := fmt.Sprintf("/babylon/zoneconcierge/v1/latest_epoch_header/%s", consumerID)
@@ -284,41 +272,27 @@ func (n *Node) QueryGetSealedEpochProof(epochNum uint64) *zoneconciergetype.Quer
 	return &resp
 }
 
-// QueryLatestEpochHeaderCLI tests the CLI command for latest epoch header
-func (n *Node) QueryLatestEpochHeaderCLI(consumerID string) *zoneconciergetype.QueryLatestEpochHeaderResponse {
-	cmd := []string{"babylond", "query", "zoneconcierge", "latest-epoch-header", consumerID, "--output=json"}
+func (n *Node) QueryLatestEpochHeaderCLI(consumerID string) string {
+	cmd := []string{"babylond", "query", "zc", "latest-epoch-header", consumerID, "--output=json", "--node", n.GetRpcEndpoint()}
 	outBuf, _, err := n.Tm.ContainerManager.ExecCmd(n.T(), n.Container.Name, cmd, "")
 	require.NoError(n.T(), err)
-
-	var resp zoneconciergetype.QueryLatestEpochHeaderResponse
-	err = json.Unmarshal(outBuf.Bytes(), &resp)
-	require.NoError(n.T(), err)
-
-	return &resp
+	return outBuf.String()
 }
 
-// QueryBSNLastSentSegmentCLI tests the CLI command for BSN last sent segment
-func (n *Node) QueryBSNLastSentSegmentCLI(consumerID string) *zoneconciergetype.QueryBSNLastSentSegmentResponse {
-	cmd := []string{"babylond", "query", "zoneconcierge", "bsn-last-sent-seg", consumerID, "--output=json"}
+func (n *Node) QueryBSNLastSentSegmentCLI(consumerID string) string {
+	cmd := []string{"babylond", "query", "zc", "bsn-last-sent-seg", consumerID, "--output=json", "--node", n.GetRpcEndpoint()}
 	outBuf, _, err := n.Tm.ContainerManager.ExecCmd(n.T(), n.Container.Name, cmd, "")
 	require.NoError(n.T(), err)
-
-	var resp zoneconciergetype.QueryBSNLastSentSegmentResponse
-	err = json.Unmarshal(outBuf.Bytes(), &resp)
-	require.NoError(n.T(), err)
-
-	return &resp
+	return outBuf.String()
 }
 
-// QueryGetSealedEpochProofCLI tests the CLI command for sealed epoch proof
-func (n *Node) QueryGetSealedEpochProofCLI(epochNum uint64) *zoneconciergetype.QueryGetSealedEpochProofResponse {
-	cmd := []string{"babylond", "query", "zoneconcierge", "get-sealed-epoch-proof", strconv.FormatUint(epochNum, 10), "--output=json"}
+func (n *Node) QueryGetSealedEpochProofCLI(epochNum uint64) string {
+	cmd := []string{"babylond", "query", "zc", "get-sealed-epoch-proof", fmt.Sprintf("%d", epochNum), "--output=json", "--node", n.GetRpcEndpoint()}
 	outBuf, _, err := n.Tm.ContainerManager.ExecCmd(n.T(), n.Container.Name, cmd, "")
 	require.NoError(n.T(), err)
+	return outBuf.String()
+}
 
-	var resp zoneconciergetype.QueryGetSealedEpochProofResponse
-	err = json.Unmarshal(outBuf.Bytes(), &resp)
-	require.NoError(n.T(), err)
-
-	return &resp
+func (n *Node) GetRpcEndpoint() string {
+	return fmt.Sprintf("tcp://%s:%d", n.Container.Name, n.Ports.RPC)
 }
