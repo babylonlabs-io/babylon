@@ -43,5 +43,25 @@ func TestPrecompileIntegrationTestSuite(t *testing.T) {
 		BeforeEach(func() {
 			s.SetupTest()
 		})
+
+		Describe("to create validator", func() {
+			var (
+			//defaultDescription = staking.Description{
+			//	Moniker:         "new node",
+			//	Identity:        "",
+			//	Website:         "",
+			//	SecurityContact: "",
+			//	Details:         "",
+			//}
+			//defaultCommission = staking.Commission{
+			//	Rate:          big.NewInt(100000000000000000),
+			//	MaxRate:       big.NewInt(100000000000000000),
+			//	MaxChangeRate: big.NewInt(100000000000000000),
+			//}
+			//defaultMinSelfDelegation = big.NewInt(1)
+			//defaultPubkeyBase64Str   = GenerateBase64PubKey()
+			//defaultValue             = big.NewInt(1)
+			)
+		})
 	})
 }

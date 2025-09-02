@@ -41,10 +41,7 @@ func (s *PrecompileIntegrationTestSuite) TestWrappedDelegateBech32_CallContract(
 	s.Require().Equal("", resp.VmError)
 
 	startEpoch := s.App.EpochingKeeper.GetEpoch(s.Ctx).EpochNumber
-	for !s.App.EpochingKeeper.GetEpoch(s.Ctx).IsLastBlock(s.Ctx) {
-		s.Commit(nil)
-	}
-	s.Commit(nil)
+	s.AdvanceToNextEpoch()
 	s.T().Logf("epoch advanced from %d to %d at height %d", startEpoch, s.App.EpochingKeeper.GetEpoch(s.Ctx).EpochNumber, s.Ctx.BlockHeight())
 
 	delReq := &stakingtypes.QueryDelegationRequest{

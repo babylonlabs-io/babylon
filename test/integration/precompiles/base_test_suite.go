@@ -290,6 +290,14 @@ func (suite *BaseTestSuite) QueryContract(
 	return evmRes, nil
 }
 
+// AdvanceToNextEpoch advances the chain until the epoch number increases.
+func (suite *BaseTestSuite) AdvanceToNextEpoch() {
+	for !suite.App.EpochingKeeper.GetEpoch(suite.Ctx).IsLastBlock(suite.Ctx) {
+		suite.Commit(nil)
+	}
+	suite.Commit(nil)
+}
+
 func (suite *BaseTestSuite) MakeEthTx(
 	priv *ethsecp256k1.PrivKey,
 	txArgs evmtypes.TransactionArgs,
