@@ -28,6 +28,7 @@ func TestMsgUpdateParams(t *testing.T) {
 					Params: types.Params{
 						CoostakingPortion:   math.LegacyMustNewDecFromStr("0.5"),
 						ScoreRatioBtcByBaby: math.NewInt(100),
+						ValidatorsPortion:   math.LegacyMustNewDecFromStr("0.001"),
 					},
 				}
 			},
@@ -61,6 +62,7 @@ func TestMsgUpdateParams(t *testing.T) {
 					Params: types.Params{
 						CoostakingPortion:   math.LegacyDec{},
 						ScoreRatioBtcByBaby: types.DefaultScoreRatioBtcByBaby,
+						ValidatorsPortion:   types.DefaultValidatorsPortion,
 					},
 				}
 			},
@@ -74,6 +76,7 @@ func TestMsgUpdateParams(t *testing.T) {
 					Params: types.Params{
 						CoostakingPortion:   math.LegacyMustNewDecFromStr("1.5"),
 						ScoreRatioBtcByBaby: types.DefaultScoreRatioBtcByBaby,
+						ValidatorsPortion:   types.DefaultValidatorsPortion,
 					},
 				}
 			},
@@ -87,6 +90,7 @@ func TestMsgUpdateParams(t *testing.T) {
 					Params: types.Params{
 						CoostakingPortion:   math.LegacyOneDec(),
 						ScoreRatioBtcByBaby: types.DefaultScoreRatioBtcByBaby,
+						ValidatorsPortion:   types.DefaultValidatorsPortion,
 					},
 				}
 			},
@@ -100,6 +104,7 @@ func TestMsgUpdateParams(t *testing.T) {
 					Params: types.Params{
 						CoostakingPortion:   types.DefaultCoostakingPortion,
 						ScoreRatioBtcByBaby: math.Int{},
+						ValidatorsPortion:   types.DefaultValidatorsPortion,
 					},
 				}
 			},
@@ -113,6 +118,7 @@ func TestMsgUpdateParams(t *testing.T) {
 					Params: types.Params{
 						CoostakingPortion:   types.DefaultCoostakingPortion,
 						ScoreRatioBtcByBaby: math.ZeroInt(),
+						ValidatorsPortion:   types.DefaultValidatorsPortion,
 					},
 				}
 			},
@@ -126,6 +132,7 @@ func TestMsgUpdateParams(t *testing.T) {
 					Params: types.Params{
 						CoostakingPortion:   types.DefaultCoostakingPortion,
 						ScoreRatioBtcByBaby: math.NewInt(-10),
+						ValidatorsPortion:   types.DefaultValidatorsPortion,
 					},
 				}
 			},
@@ -139,6 +146,7 @@ func TestMsgUpdateParams(t *testing.T) {
 					Params: types.Params{
 						CoostakingPortion:   math.LegacyNewDec(0),
 						ScoreRatioBtcByBaby: math.OneInt(),
+						ValidatorsPortion:   math.LegacyNewDec(0),
 					},
 				}
 			},
@@ -150,12 +158,97 @@ func TestMsgUpdateParams(t *testing.T) {
 				return &types.MsgUpdateParams{
 					Authority: appparams.AccGov.String(),
 					Params: types.Params{
-						CoostakingPortion:   math.LegacyMustNewDecFromStr("0.999999999999999999"),
+						CoostakingPortion:   math.LegacyMustNewDecFromStr("0.9"),
 						ScoreRatioBtcByBaby: math.NewInt(50),
+						ValidatorsPortion:   math.LegacyMustNewDecFromStr("0.099"),
 					},
 				}
 			},
 			expErr: nil,
+		},
+		{
+			name: "total portion equal to 1",
+			setupMsg: func() *types.MsgUpdateParams {
+				return &types.MsgUpdateParams{
+					Authority: appparams.AccGov.String(),
+					Params: types.Params{
+						CoostakingPortion:   math.LegacyMustNewDecFromStr("0.5"),
+						ScoreRatioBtcByBaby: math.OneInt(),
+						ValidatorsPortion:   math.LegacyMustNewDecFromStr("0.5"),
+					},
+				}
+			},
+			expErr: govtypes.ErrInvalidProposalMsg,
+		},
+		{
+			name: "total portion exceeds 1",
+			setupMsg: func() *types.MsgUpdateParams {
+				return &types.MsgUpdateParams{
+					Authority: appparams.AccGov.String(),
+					Params: types.Params{
+						CoostakingPortion:   math.LegacyMustNewDecFromStr("0.6"),
+						ScoreRatioBtcByBaby: math.OneInt(),
+						ValidatorsPortion:   math.LegacyMustNewDecFromStr("0.5"),
+					},
+				}
+			},
+			expErr: govtypes.ErrInvalidProposalMsg,
+		},
+		{
+			name: "nil validators portion",
+			setupMsg: func() *types.MsgUpdateParams {
+				return &types.MsgUpdateParams{
+					Authority: appparams.AccGov.String(),
+					Params: types.Params{
+						CoostakingPortion:   types.DefaultCoostakingPortion,
+						ScoreRatioBtcByBaby: types.DefaultScoreRatioBtcByBaby,
+						ValidatorsPortion:   math.LegacyDec{},
+					},
+				}
+			},
+			expErr: govtypes.ErrInvalidProposalMsg,
+		},
+		{
+			name: "validators portion equal to 1",
+			setupMsg: func() *types.MsgUpdateParams {
+				return &types.MsgUpdateParams{
+					Authority: appparams.AccGov.String(),
+					Params: types.Params{
+						CoostakingPortion:   types.DefaultCoostakingPortion,
+						ScoreRatioBtcByBaby: types.DefaultScoreRatioBtcByBaby,
+						ValidatorsPortion:   math.LegacyOneDec(),
+					},
+				}
+			},
+			expErr: govtypes.ErrInvalidProposalMsg,
+		},
+		{
+			name: "validators portion greater than 1",
+			setupMsg: func() *types.MsgUpdateParams {
+				return &types.MsgUpdateParams{
+					Authority: appparams.AccGov.String(),
+					Params: types.Params{
+						CoostakingPortion:   types.DefaultCoostakingPortion,
+						ScoreRatioBtcByBaby: types.DefaultScoreRatioBtcByBaby,
+						ValidatorsPortion:   math.LegacyMustNewDecFromStr("1.5"),
+					},
+				}
+			},
+			expErr: govtypes.ErrInvalidProposalMsg,
+		},
+		{
+			name: "negative validators portion",
+			setupMsg: func() *types.MsgUpdateParams {
+				return &types.MsgUpdateParams{
+					Authority: appparams.AccGov.String(),
+					Params: types.Params{
+						CoostakingPortion:   types.DefaultCoostakingPortion,
+						ScoreRatioBtcByBaby: types.DefaultScoreRatioBtcByBaby,
+						ValidatorsPortion:   math.LegacyMustNewDecFromStr("-0.01"),
+					},
+				}
+			},
+			expErr: govtypes.ErrInvalidProposalMsg,
 		},
 		{
 			name: "valid params with same ratio",
@@ -163,8 +256,9 @@ func TestMsgUpdateParams(t *testing.T) {
 				return &types.MsgUpdateParams{
 					Authority: appparams.AccGov.String(),
 					Params: types.Params{
-						CoostakingPortion:   math.LegacyMustNewDecFromStr("0.999999999999999999"),
+						CoostakingPortion:   math.LegacyMustNewDecFromStr("0.5"),
 						ScoreRatioBtcByBaby: math.OneInt(),
+						ValidatorsPortion:   math.LegacyMustNewDecFromStr("0.4"),
 					},
 				}
 			},
@@ -197,6 +291,7 @@ func TestMsgUpdateParams(t *testing.T) {
 			updatedParams := k.GetParams(ctx)
 			require.Equal(t, msg.Params.CoostakingPortion, updatedParams.CoostakingPortion)
 			require.Equal(t, msg.Params.ScoreRatioBtcByBaby, updatedParams.ScoreRatioBtcByBaby)
+			require.Equal(t, msg.Params.ValidatorsPortion, updatedParams.ValidatorsPortion)
 		})
 	}
 }
