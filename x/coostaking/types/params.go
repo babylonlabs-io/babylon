@@ -1,6 +1,7 @@
 package types
 
 import (
+	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
 )
 
@@ -18,6 +19,9 @@ var (
 	// (5k * conversion baby to ubbn / conversion BTC to sats)
 	// 5_000 * 1_000_000 ubbn / 100_000_000 sats= 50 ubbn per sat
 	DefaultScoreRatioBtcByBaby = math.NewInt(50)
+	// DefaultValidatorsPortion defines how much of the fee_collector
+	// remaining balances will go directly to baby validators
+	DefaultValidatorsPortion = math.LegacyMustNewDecFromStr("0.0013") // 0.13%
 )
 
 // DefaultParams returns a default set of parameters
@@ -25,21 +29,21 @@ func DefaultParams() Params {
 	return Params{
 		CoostakingPortion:   DefaultCoostakingPortion,
 		ScoreRatioBtcByBaby: DefaultScoreRatioBtcByBaby,
+		ValidatorsPortion:   DefaultValidatorsPortion,
 	}
 }
 
 // Validate validates the set of params
 func (p Params) Validate() error {
-	if p.CoostakingPortion.IsNil() {
-		return ErrInvalidCoostakingPortion
+	if err := validatePercentage(p.CoostakingPortion); err != nil {
+		return errorsmod.Wrap(err, "invalid coostaking portion")
+	}
+	if err := validatePercentage(p.ValidatorsPortion); err != nil {
+		return errorsmod.Wrap(err, "invalid validators portion")
 	}
 
-	if p.CoostakingPortion.GTE(math.LegacyOneDec()) {
-		return ErrCoostakingPortionTooHigh
-	}
-
-	if p.CoostakingPortion.LT(math.LegacyZeroDec()) {
-		return ErrInvalidCoostakingPortion.Wrap("lower than zero")
+	if err := validatePercentage(p.CoostakingPortion.Add(p.ValidatorsPortion)); err != nil {
+		return errorsmod.Wrapf(err, "invalid total portion; coostaking (%s) + validators (%s)", p.CoostakingPortion, p.ValidatorsPortion)
 	}
 
 	if p.ScoreRatioBtcByBaby.IsNil() {
@@ -48,6 +52,22 @@ func (p Params) Validate() error {
 
 	if p.ScoreRatioBtcByBaby.LT(math.OneInt()) {
 		return ErrScoreRatioTooLow
+	}
+
+	return nil
+}
+
+func validatePercentage(percentage math.LegacyDec) error {
+	if percentage.IsNil() {
+		return ErrInvalidPercentage
+	}
+
+	if percentage.GTE(math.LegacyOneDec()) {
+		return ErrPercentageTooHigh
+	}
+
+	if percentage.LT(math.LegacyZeroDec()) {
+		return ErrInvalidPercentage.Wrap("lower than zero")
 	}
 
 	return nil

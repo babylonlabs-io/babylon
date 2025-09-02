@@ -370,9 +370,22 @@ func TestCoostakerRewardsFlow(t *testing.T) {
 func NewKeeperWithMockIncentiveKeeper(t *testing.T, mockIctvK types.IncentiveKeeper) (*Keeper, sdk.Context) {
 	encConf := appparams.DefaultEncodingConfig()
 	ctx, kvStore := store.NewStoreWithCtx(t, types.ModuleName)
-	mockBankK := types.NewMockBankKeeper(gomock.NewController(t))
-	mockAccK := types.NewMockAccountKeeper(gomock.NewController(t))
+	ctrl := gomock.NewController(t)
+	mockBankK := types.NewMockBankKeeper(ctrl)
+	mockAccK := types.NewMockAccountKeeper(ctrl)
+	stkK := types.NewMockStakingKeeper(ctrl)
+	dstrK := types.NewMockDistributionKeeper(ctrl)
 
-	k := NewKeeper(encConf.Codec, kvStore, mockBankK, mockAccK, mockIctvK, appparams.AccGov.String(), appparams.AccFeeCollector.String())
+	k := NewKeeper(
+		encConf.Codec,
+		kvStore,
+		mockBankK,
+		mockAccK,
+		mockIctvK,
+		stkK,
+		dstrK,
+		appparams.AccGov.String(),
+		appparams.AccFeeCollector.String(),
+	)
 	return &k, ctx
 }

@@ -390,6 +390,8 @@ func (ak *AppKeepers) InitKeepers(
 		ak.BankKeeper,
 		ak.AccountKeeper,
 		ak.IncentiveKeeper,
+		ak.StakingKeeper,
+		ak.DistrKeeper,
 		appparams.AccGov.String(),
 		authtypes.FeeCollectorName,
 	)

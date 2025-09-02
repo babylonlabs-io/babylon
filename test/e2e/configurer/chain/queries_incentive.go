@@ -3,11 +3,12 @@ package chain
 import (
 	"fmt"
 	"net/url"
+	"strconv"
 
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/util"
 	incentivetypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/require"
+	grpctypes "github.com/cosmos/cosmos-sdk/types/grpc"
 )
 
 func (n *NodeConfig) QueryBTCStakingGauge(height uint64) (*incentivetypes.BTCStakingGaugeResponse, error) {
@@ -25,16 +26,26 @@ func (n *NodeConfig) QueryBTCStakingGauge(height uint64) (*incentivetypes.BTCSta
 	return resp.Gauge, nil
 }
 
-func (n *NodeConfig) QueryIncentiveParams() (*incentivetypes.Params, error) {
-	path := "/babylon/incentive/params"
-	bz, err := n.QueryGRPCGateway(path, url.Values{})
-	require.NoError(n.t, err)
+// QueryIncentiveParamsAtHeight returns the incentive module parameters at a specific block height
+func (n *NodeConfig) QueryIncentiveParamsAtHeight(height uint64) (*incentivetypes.Params, error) {
+	path := "babylon/incentive/params"
+
+	var headers map[string]string
+	if height > 0 {
+		headers = map[string]string{
+			grpctypes.GRPCBlockHeightHeader: strconv.FormatUint(height, 10),
+		}
+	}
+
+	bz, err := n.QueryGRPCGatewayWithHeaders(path, url.Values{}, headers)
+	if err != nil {
+		return nil, err
+	}
 
 	var resp incentivetypes.QueryParamsResponse
 	if err := util.Cdc.UnmarshalJSON(bz, &resp); err != nil {
 		return nil, err
 	}
-
 	return &resp.Params, nil
 }
 

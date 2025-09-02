@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"cosmossdk.io/collections"
+	sdkmath "cosmossdk.io/math"
 	"cosmossdk.io/store/prefix"
 	storetypes "cosmossdk.io/store/types"
 	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
@@ -457,9 +458,12 @@ func setupTest(t *testing.T, seed int64) (sdk.Context, *keeper.Keeper, *storetyp
 		}
 	}
 
+	btcStkPortion := datagen.RandomLegacyDec(r, 10, 1)
+	rem := sdkmath.LegacyOneDec().Sub(btcStkPortion).Quo(sdkmath.LegacyNewDec(2))
 	gs := &types.GenesisState{
 		Params: types.Params{
-			BtcStakingPortion: datagen.RandomLegacyDec(r, 10, 1),
+			BtcStakingPortion: btcStkPortion,
+			FpPortion:         sdkmath.LegacyOneDec().Sub(btcStkPortion).Sub(rem),
 		},
 		BtcStakingGauges:                      bsg,
 		RewardGauges:                          rg,

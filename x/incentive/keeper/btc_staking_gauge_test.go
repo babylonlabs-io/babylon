@@ -30,16 +30,25 @@ func FuzzRewardBTCStaking(f *testing.F) {
 		height := datagen.RandomInt(r, 1000)
 		ctx = datagen.WithCtxHeight(ctx, height)
 
-		var gauge *types.Gauge
+		var btcStkGauge *types.Gauge
+		var fpDirectGauge *types.Gauge
 		if height%2 == 0 {
 			// Case 1: use a randomly generated gauge and store it via keeper
-			gauge = datagen.GenRandomGauge(r)
-			k.SetBTCStakingGauge(ctx, height, gauge)
+			btcStkGauge = datagen.GenRandomGauge(r)
+			k.SetBTCStakingGauge(ctx, height, btcStkGauge)
 		} else {
 			// Case 2: no gauge is stored - no fees to intercept
-			gauge = types.NewGauge(sdk.NewCoins()...)
+			btcStkGauge = types.NewGauge(sdk.NewCoins()...)
 			g := k.GetBTCStakingGauge(ctx, height)
 			require.Nil(t, g)
+		}
+
+		// Sometimes add FP direct rewards gauge (30% chance)
+		if r.Int()%10 < 3 {
+			fpDirectGauge = datagen.GenRandomGauge(r)
+			k.SetFPDirectGauge(ctx, height, fpDirectGauge)
+		} else {
+			fpDirectGauge = types.NewGauge(sdk.NewCoins()...)
 		}
 
 		// generate a random voting power distribution cache
@@ -85,11 +94,16 @@ func FuzzRewardBTCStaking(f *testing.F) {
 			// Calculate portion based on total voting power of voters only
 			fpPortion := sdkmath.LegacyNewDec(int64(fp.TotalBondedSat)).
 				QuoTruncate(sdkmath.LegacyNewDec(int64(totalVotingPowerOfVoters)))
-			coinsForFpsAndDels := gauge.GetCoinsPortion(fpPortion)
+			coinsForFpsAndDels := btcStkGauge.GetCoinsPortion(fpPortion)
 			coinsForCommission := types.GetCoinsPortion(coinsForFpsAndDels, *fp.Commission)
-			if coinsForCommission.IsAllPositive() {
-				fpRewardMap[fp.GetAddress().String()] = coinsForCommission
-				distributedCoins.Add(coinsForCommission...)
+			
+			// Add FP direct rewards from fee collector (goes entirely to FP)
+			coinsForFpDirect := fpDirectGauge.GetCoinsPortion(fpPortion)
+			totalCoinsForFp := coinsForCommission.Add(coinsForFpDirect...)
+			
+			if totalCoinsForFp.IsAllPositive() {
+				fpRewardMap[fp.GetAddress().String()] = totalCoinsForFp
+				distributedCoins.Add(totalCoinsForFp...)
 			}
 
 			coinsForBTCDels := coinsForFpsAndDels.Sub(coinsForCommission...)
@@ -165,8 +179,9 @@ func FuzzRewardBTCStaking(f *testing.F) {
 			sumCoinsForDels.String(), sumRewards.String(),
 		)
 
-		// assert distributedCoins is a subset of coins in gauge
-		require.True(t, gauge.Coins.IsAllGTE(distributedCoins))
+		// assert distributedCoins is a subset of coins in both gauges combined
+		totalGaugeCoins := btcStkGauge.Coins.Add(fpDirectGauge.Coins...)
+		require.True(t, totalGaugeCoins.IsAllGTE(distributedCoins))
 
 		// Additional assertions for non-voters
 		for i, fp := range dc.FinalityProviders {

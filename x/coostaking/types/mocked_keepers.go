@@ -9,6 +9,7 @@ import (
 	reflect "reflect"
 
 	types "github.com/cosmos/cosmos-sdk/types"
+	types0 "github.com/cosmos/cosmos-sdk/x/staking/types"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -133,4 +134,79 @@ func (m *MockBankKeeper) SendCoinsFromModuleToModule(ctx context.Context, sender
 func (mr *MockBankKeeperMockRecorder) SendCoinsFromModuleToModule(ctx, senderModule, recipientModule, amt interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendCoinsFromModuleToModule", reflect.TypeOf((*MockBankKeeper)(nil).SendCoinsFromModuleToModule), ctx, senderModule, recipientModule, amt)
+}
+
+// MockDistributionKeeper is a mock of DistributionKeeper interface.
+type MockDistributionKeeper struct {
+	ctrl     *gomock.Controller
+	recorder *MockDistributionKeeperMockRecorder
+}
+
+// MockDistributionKeeperMockRecorder is the mock recorder for MockDistributionKeeper.
+type MockDistributionKeeperMockRecorder struct {
+	mock *MockDistributionKeeper
+}
+
+// NewMockDistributionKeeper creates a new mock instance.
+func NewMockDistributionKeeper(ctrl *gomock.Controller) *MockDistributionKeeper {
+	mock := &MockDistributionKeeper{ctrl: ctrl}
+	mock.recorder = &MockDistributionKeeperMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockDistributionKeeper) EXPECT() *MockDistributionKeeperMockRecorder {
+	return m.recorder
+}
+
+// AllocateTokensToValidator mocks base method.
+func (m *MockDistributionKeeper) AllocateTokensToValidator(ctx context.Context, val types0.ValidatorI, tokens types.DecCoins) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AllocateTokensToValidator", ctx, val, tokens)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AllocateTokensToValidator indicates an expected call of AllocateTokensToValidator.
+func (mr *MockDistributionKeeperMockRecorder) AllocateTokensToValidator(ctx, val, tokens interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AllocateTokensToValidator", reflect.TypeOf((*MockDistributionKeeper)(nil).AllocateTokensToValidator), ctx, val, tokens)
+}
+
+// MockStakingKeeper is a mock of StakingKeeper interface.
+type MockStakingKeeper struct {
+	ctrl     *gomock.Controller
+	recorder *MockStakingKeeperMockRecorder
+}
+
+// MockStakingKeeperMockRecorder is the mock recorder for MockStakingKeeper.
+type MockStakingKeeperMockRecorder struct {
+	mock *MockStakingKeeper
+}
+
+// NewMockStakingKeeper creates a new mock instance.
+func NewMockStakingKeeper(ctrl *gomock.Controller) *MockStakingKeeper {
+	mock := &MockStakingKeeper{ctrl: ctrl}
+	mock.recorder = &MockStakingKeeperMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockStakingKeeper) EXPECT() *MockStakingKeeperMockRecorder {
+	return m.recorder
+}
+
+// ValidatorByConsAddr mocks base method.
+func (m *MockStakingKeeper) ValidatorByConsAddr(arg0 context.Context, arg1 types.ConsAddress) (types0.ValidatorI, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ValidatorByConsAddr", arg0, arg1)
+	ret0, _ := ret[0].(types0.ValidatorI)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ValidatorByConsAddr indicates an expected call of ValidatorByConsAddr.
+func (mr *MockStakingKeeperMockRecorder) ValidatorByConsAddr(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidatorByConsAddr", reflect.TypeOf((*MockStakingKeeper)(nil).ValidatorByConsAddr), arg0, arg1)
 }

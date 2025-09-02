@@ -23,9 +23,11 @@ type (
 		// name of the FeeCollector ModuleAccount
 		feeCollectorName string
 
-		bankK types.BankKeeper
-		accK  types.AccountKeeper
-		ictvK types.IncentiveKeeper
+		bankK  types.BankKeeper
+		accK   types.AccountKeeper
+		ictvK  types.IncentiveKeeper
+		stkK   types.StakingKeeper
+		distrK types.DistributionKeeper
 
 		// params stores the module parameter
 		params collections.Item[types.Params]
@@ -47,6 +49,8 @@ func NewKeeper(
 	bankK types.BankKeeper,
 	accK types.AccountKeeper,
 	ictvK types.IncentiveKeeper,
+	stkK types.StakingKeeper,
+	distrK types.DistributionKeeper,
 	authority string,
 	feeCollectorName string,
 ) Keeper {
@@ -59,9 +63,11 @@ func NewKeeper(
 		authority:        authority,
 		feeCollectorName: feeCollectorName,
 
-		bankK: bankK,
-		accK:  accK,
-		ictvK: ictvK,
+		bankK:  bankK,
+		accK:   accK,
+		ictvK:  ictvK,
+		stkK:   stkK,
+		distrK: distrK,
 
 		params: collections.NewItem(
 			sb,

@@ -11647,6 +11647,13 @@ paths:
                       power and finality
 
                       provider's commission
+                  fp_portion:
+                    type: string
+                    title: >-
+                      fp_portion is the percentage of fee_collector balance to
+                      collect each block
+
+                      and send to the finality providers reward gauge
                 title: >-
                   Params defines the parameters for the module, including
                   portions of rewards
@@ -13664,6 +13671,17 @@ paths:
 
                       score: min(coostakers_sats_staked, (coostakers_ubbn_staked
                       / score_ratio_btc_by_baby))
+                  validators_portion:
+                    type: string
+                    description: >-
+                      ValidatorsPortion is the portion of rewards that goes to
+                      Babylon Validators
+
+                      NOTE: This portion of validators is taken after the
+                      incentive module
+
+                      takes part of the fee_collector balance to give out to
+                      validators that correctly voted.
             description: >-
               QueryParamsResponse is response type for the Query/Params RPC
               method.
@@ -20744,6 +20762,13 @@ definitions:
           finality
 
           provider's commission
+      fp_portion:
+        type: string
+        title: >-
+          fp_portion is the percentage of fee_collector balance to collect each
+          block
+
+          and send to the finality providers reward gauge
     title: >-
       Params defines the parameters for the module, including portions of
       rewards
@@ -20879,6 +20904,13 @@ definitions:
               finality
 
               provider's commission
+          fp_portion:
+            type: string
+            title: >-
+              fp_portion is the percentage of fee_collector balance to collect
+              each block
+
+              and send to the finality providers reward gauge
         title: >-
           Params defines the parameters for the module, including portions of
           rewards
@@ -22755,6 +22787,16 @@ definitions:
 
           score: min(coostakers_sats_staked, (coostakers_ubbn_staked /
           score_ratio_btc_by_baby))
+      validators_portion:
+        type: string
+        description: >-
+          ValidatorsPortion is the portion of rewards that goes to Babylon
+          Validators
+
+          NOTE: This portion of validators is taken after the incentive module
+
+          takes part of the fee_collector balance to give out to validators that
+          correctly voted.
     description: Params defines the parameters for the module.
   babylon.coostaking.v1.QueryCoostakerRewardsTrackerResponse:
     type: object
@@ -22903,4 +22945,15 @@ definitions:
 
               score: min(coostakers_sats_staked, (coostakers_ubbn_staked /
               score_ratio_btc_by_baby))
+          validators_portion:
+            type: string
+            description: >-
+              ValidatorsPortion is the portion of rewards that goes to Babylon
+              Validators
+
+              NOTE: This portion of validators is taken after the incentive
+              module
+
+              takes part of the fee_collector balance to give out to validators
+              that correctly voted.
     description: QueryParamsResponse is response type for the Query/Params RPC method.
