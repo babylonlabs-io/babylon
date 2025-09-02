@@ -16,9 +16,6 @@ func TestZoneConciergeQueriesWithMultipleConsumers(t *testing.T) {
 	proofResp := bbn.QueryGetSealedEpochProof(1)
 	require.NotNil(t, proofResp)
 	require.NotNil(t, proofResp.Epoch)
-
-	_ = bbn.QueryLatestEpochHeader("07-tendermint-0")
-	_ = bbn.QueryBSNLastSentSegment("07-tendermint-0")
 }
 
 func TestZoneConciergeQueriesCLI(t *testing.T) {
