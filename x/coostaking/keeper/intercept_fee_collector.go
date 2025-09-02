@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"strconv"
 
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
@@ -63,6 +64,7 @@ func (k Keeper) allocateValidatorsRewards(ctx context.Context, rwds sdk.Coins) e
 	if totalPwr == 0 {
 		return nil
 	}
+	totalPwrDec := math.LegacyNewDec(totalPwr)
 
 	// Transfer rewards to the distribution module account
 	// 'cause these direct rewards will be allocated to the validators commission
@@ -77,22 +79,31 @@ func (k Keeper) allocateValidatorsRewards(ctx context.Context, rwds sdk.Coins) e
 			return err
 		}
 
-		powerFraction := math.LegacyNewDec(vote.Validator.Power).QuoTruncate(math.LegacyNewDec(totalPwr))
+		powerFraction := math.LegacyNewDec(vote.Validator.Power).QuoTruncate(totalPwrDec)
 		// get validator reward based on voting power
 		rwd := valsRwds.MulDecTruncate(powerFraction)
 
 		// set validator commission == 1 to allocate all as rewards for the validator (accumulated in commission)
 		// and 0 for the delegators
-		parsedVal, ok := validator.(stktypes.Validator)
+		updatedVal, ok := validator.(stktypes.Validator)
 		// safety check
 		if !ok {
-			return errorsmod.Wrapf(sdkerrors.ErrInvalidType, "expected %T, got %T", parsedVal, validator)
+			return errorsmod.Wrapf(sdkerrors.ErrInvalidType, "expected %T, got %T", updatedVal, validator)
 		}
-		parsedVal.Commission.Rate = math.LegacyOneDec()
-		if err := k.distrK.AllocateTokensToValidator(ctx, validator, rwd); err != nil {
+		updatedVal.Commission.Rate = math.LegacyOneDec()
+		if err := k.distrK.AllocateTokensToValidator(ctx, updatedVal, rwd); err != nil {
 			return err
 		}
 	}
+
+	// emit event for direct validator rewards
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	sdkCtx.EventManager().EmitEvent(sdk.NewEvent(
+		types.EventTypeValidatorDirectRewards,
+		sdk.NewAttribute(types.AttributeKeyAmount, rwds.String()),
+		sdk.NewAttribute(types.AttributeKeyValidatorCount, strconv.Itoa(len(bondedVotes))),
+	))
+
 	return nil
 }
 

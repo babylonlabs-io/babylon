@@ -30,7 +30,7 @@ func FuzzInterceptFeeCollector(f *testing.F) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		fees := sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(100)))
+		fees := sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(100000000000)))
 		bankK := types.NewMockBankKeeper(ctrl)
 		bankK.EXPECT().GetAllBalances(gomock.Any(), appparams.AccFeeCollector).Return(fees).Times(1)
 
@@ -66,11 +66,11 @@ func FuzzInterceptFeeCollector(f *testing.F) {
 		// NOTE: if the actual fees are different from feesForIncentive the test will fail
 		params := k.GetParams(ctx)
 		validatorsPortion := ictvtypes.GetCoinsPortion(fees, params.ValidatorsPortion)
-		if validatorsPortion.IsAllPositive() {
-			stkK.EXPECT().ValidatorByConsAddr(gomock.Any(), consAddr).Return(validator, nil).Times(1)
-			bankK.EXPECT().SendCoinsFromModuleToModule(gomock.Any(), gomock.Eq(authtypes.FeeCollectorName), gomock.Eq(disttypes.ModuleName), gomock.Eq(validatorsPortion)).Times(1)
-			distK.EXPECT().AllocateTokensToValidator(gomock.Any(), validator, sdk.NewDecCoinsFromCoins(validatorsPortion...)).Return(nil).Times(1)
-		}
+		require.True(t, validatorsPortion.IsAllPositive())
+		stkK.EXPECT().ValidatorByConsAddr(gomock.Any(), consAddr).Return(validator, nil).Times(1)
+		bankK.EXPECT().SendCoinsFromModuleToModule(gomock.Any(), gomock.Eq(authtypes.FeeCollectorName), gomock.Eq(disttypes.ModuleName), gomock.Eq(validatorsPortion)).Times(1)
+		validator.Commission.Rate = sdkmath.LegacyOneDec()
+		distK.EXPECT().AllocateTokensToValidator(gomock.Any(), validator, sdk.NewDecCoinsFromCoins(validatorsPortion...)).Return(nil).Times(1)
 
 		coostakingPortion := ictvtypes.GetCoinsPortion(fees, params.CoostakingPortion)
 		bankK.EXPECT().SendCoinsFromModuleToModule(gomock.Any(), gomock.Eq(authtypes.FeeCollectorName), gomock.Eq(types.ModuleName), gomock.Eq(coostakingPortion)).Times(1)
@@ -132,11 +132,11 @@ func TestInterceptFeeCollectorWithSmallAmount(t *testing.T) {
 	params := k.GetParams(ctx)
 
 	validatorsPortion := ictvtypes.GetCoinsPortion(smallFee, params.ValidatorsPortion)
-	if validatorsPortion.IsAllPositive() {
-		stkK.EXPECT().ValidatorByConsAddr(gomock.Any(), consAddr).Return(validator, nil).Times(1)
-		bankK.EXPECT().SendCoinsFromModuleToModule(gomock.Any(), gomock.Eq(authtypes.FeeCollectorName), gomock.Eq(disttypes.ModuleName), gomock.Eq(validatorsPortion)).Times(1)
-		distK.EXPECT().AllocateTokensToValidator(gomock.Any(), validator, sdk.NewDecCoinsFromCoins(validatorsPortion...)).Return(nil).Times(1)
-	}
+	require.True(t, validatorsPortion.IsAllPositive())
+	stkK.EXPECT().ValidatorByConsAddr(gomock.Any(), consAddr).Return(validator, nil).Times(1)
+	bankK.EXPECT().SendCoinsFromModuleToModule(gomock.Any(), gomock.Eq(authtypes.FeeCollectorName), gomock.Eq(disttypes.ModuleName), gomock.Eq(validatorsPortion)).Times(1)
+	validator.Commission.Rate = sdkmath.LegacyOneDec()
+	distK.EXPECT().AllocateTokensToValidator(gomock.Any(), validator, sdk.NewDecCoinsFromCoins(validatorsPortion...)).Return(nil).Times(1)
 
 	coostakingPortion := ictvtypes.GetCoinsPortion(smallFee, params.CoostakingPortion)
 	bankK.EXPECT().SendCoinsFromModuleToModule(gomock.Any(), gomock.Eq(authtypes.FeeCollectorName), gomock.Eq(types.ModuleName), gomock.Eq(coostakingPortion)).Times(1)
