@@ -160,7 +160,7 @@ func (k Keeper) calculateCoStakerRewardsBetween(
 	endingPeriod uint64,
 ) (sdk.Coins, error) {
 	if coostakerRwdTracker.StartPeriodCumulativeReward > endingPeriod {
-		panic("startingPeriod cannot be greater than endingPeriod")
+		return sdk.Coins{}, types.ErrInvalidPeriod.Wrapf("startingPeriod %d cannot be greater than endingPeriod %d", coostakerRwdTracker.StartPeriodCumulativeReward, endingPeriod)
 	}
 
 	// return staking * (ending - starting)
@@ -178,7 +178,7 @@ func (k Keeper) calculateCoStakerRewardsBetween(
 	// this differenceWithDecimals is the amount of rewards entitled per score
 	differenceWithDecimals := ending.CumulativeRewardsPerScore.Sub(starting.CumulativeRewardsPerScore...)
 	if differenceWithDecimals.IsAnyNegative() {
-		panic("negative rewards should not be possible")
+		return sdk.Coins{}, types.ErrNegativeRewards.Wrapf("cumulative rewards is negative %s", differenceWithDecimals.String())
 	}
 
 	rewardsWithDecimals, err := bbntypes.CoinsSafeMulInt(differenceWithDecimals, coostakerRwdTracker.TotalScore)

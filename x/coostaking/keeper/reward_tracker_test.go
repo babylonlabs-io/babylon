@@ -218,11 +218,7 @@ func FuzzGetCurrentRewardsInitialized(f *testing.F) {
 }
 
 func TestCalculateCoostakerRewardsBetweenNegativeRewards(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockIctvK := types.NewMockIncentiveKeeper(ctrl)
-	k, ctx := NewKeeperWithMockIncentiveKeeper(t, mockIctvK)
+	k, ctx := NewKeeperWithMockIncentiveKeeper(t, nil)
 
 	r := rand.New(rand.NewSource(42))
 	startingRewards := datagen.GenRandomCoins(r)
@@ -235,9 +231,20 @@ func TestCalculateCoostakerRewardsBetweenNegativeRewards(t *testing.T) {
 
 	tracker := types.NewCoostakerRewardsTracker(1, sdkmath.NewInt(100))
 
-	require.Panics(t, func() {
-		k.calculateCoStakerRewardsBetween(ctx, tracker, 2)
-	})
+	differenceWithDecimals := endingRewards.Sub(startingRewards...)
+	_, err = k.calculateCoStakerRewardsBetween(ctx, tracker, 2)
+	require.EqualError(t, err, types.ErrNegativeRewards.Wrapf("cumulative rewards is negative %s", differenceWithDecimals.String()).Error())
+}
+
+func TestCalculateCoostakerRewardsBetweenInvalidPeriod(t *testing.T) {
+	k, ctx := NewKeeperWithMockIncentiveKeeper(t, nil)
+
+	startPeriod := uint64(10)
+	tracker := types.NewCoostakerRewardsTracker(startPeriod, sdkmath.NewInt(100))
+
+	endPeriod := uint64(5)
+	_, err := k.calculateCoStakerRewardsBetween(ctx, tracker, endPeriod)
+	require.EqualError(t, err, types.ErrInvalidPeriod.Wrapf("startingPeriod %d cannot be greater than endingPeriod %d", startPeriod, endPeriod).Error())
 }
 
 func TestInitializeCoostakerRwdTracker(t *testing.T) {
@@ -370,7 +377,10 @@ func TestCoostakerRewardsFlow(t *testing.T) {
 func NewKeeperWithMockIncentiveKeeper(t *testing.T, mockIctvK types.IncentiveKeeper) (*Keeper, sdk.Context) {
 	encConf := appparams.DefaultEncodingConfig()
 	ctx, kvStore := store.NewStoreWithCtx(t, types.ModuleName)
+
 	ctrl := gomock.NewController(t)
+	t.Cleanup(ctrl.Finish)
+
 	mockBankK := types.NewMockBankKeeper(ctrl)
 	mockAccK := types.NewMockAccountKeeper(ctrl)
 	stkK := types.NewMockStakingKeeper(ctrl)
