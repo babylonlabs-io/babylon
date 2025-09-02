@@ -107,7 +107,12 @@ func getAllBTCStakers(ctx context.Context, btcStkKeeper btcstkkeeper.Keeper) (ma
 		}
 
 		for _, del := range btcDelRes.BtcDelegations {
-			btcStakers[del.StakerAddr] = btcStakers[del.StakerAddr].Add(math.NewIntFromUint64(del.TotalSat))
+			if staker, found := btcStakers[del.StakerAddr]; found {
+				staker = staker.Add(math.NewIntFromUint64(del.TotalSat))
+				btcStakers[del.StakerAddr] = staker
+				continue
+			}
+			btcStakers[del.StakerAddr] = math.NewIntFromUint64(del.TotalSat)
 		}
 
 		if btcDelRes.Pagination == nil || len(btcDelRes.Pagination.NextKey) == 0 {
