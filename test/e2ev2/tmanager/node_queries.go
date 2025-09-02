@@ -3,6 +3,7 @@ package tmanager
 import (
 	"context"
 	"fmt"
+	"net"
 	"net/url"
 
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/util"
@@ -293,5 +294,5 @@ func (n *Node) QueryGetSealedEpochProofCLI(epochNum uint64) string {
 }
 
 func (n *Node) GetRpcEndpoint() string {
-	return fmt.Sprintf("tcp://%s:%d", n.Container.Name, n.Ports.RPC)
+	return "tcp://" + net.JoinHostPort(n.Container.Name, fmt.Sprintf("%d", n.Ports.RPC))
 }

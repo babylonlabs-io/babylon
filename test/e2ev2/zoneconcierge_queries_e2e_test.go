@@ -1,9 +1,10 @@
 package e2e2
 
 import (
+	"testing"
+
 	"github.com/babylonlabs-io/babylon/v4/test/e2ev2/tmanager"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestZoneConciergeQueriesWithMultipleConsumers(t *testing.T) {
