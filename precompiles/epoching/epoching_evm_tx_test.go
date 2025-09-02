@@ -10,7 +10,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/evm/crypto/ethsecp256k1"
 
-	epochingpc "github.com/babylonlabs-io/babylon/v4/precompiles/epoching"
+	"github.com/babylonlabs-io/babylon/v4/precompiles/epoching"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
@@ -32,7 +32,7 @@ func (s *PrecompileIntegrationTestSuite) TestWrappedDelegateBech32_CallContract(
 		priv,
 		s.addr,
 		s.abi,
-		epochingpc.WrappedDelegateBech32Method,
+		epoching.WrappedDelegateBech32Method,
 		common.Address(priv.PubKey().Address().Bytes()),
 		valBech32,
 		amount,
