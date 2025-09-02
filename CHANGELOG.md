@@ -55,6 +55,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#1589](https://github.com/babylonlabs-io/babylon/pull/1589) Add minimum Babylon commission on `RegisterConsumer`
 - [#1612](https://github.com/babylonlabs-io/babylon/pull/1612) Optimize `x/zoneconcierge` packet broadcast logic trigger only when needed.
 - [#1635](https://github.com/babylonlabs-io/babylon/pull/1635) Remove duplicated ValidateBasic checks.
+- [#1655](https://github.com/babylonlabs-io/babylon/pull/1655) Fix go releaser image not support issue.
 
 ### State breaking
 
