@@ -2,7 +2,6 @@ package epoching_test
 
 import (
 	"encoding/base64"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"math/big"
 	"testing"
 
@@ -23,11 +22,12 @@ import (
 	"cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	appsigner "github.com/babylonlabs-io/babylon/v4/app/signer"
 	"github.com/babylonlabs-io/babylon/v4/crypto/bls12381"
 	"github.com/babylonlabs-io/babylon/v4/precompiles/epoching"
-	"github.com/babylonlabs-io/babylon/v4/test/integration/precompiles"
+	"github.com/babylonlabs-io/babylon/v4/testutil/precompiles"
 )
 
 var s *PrecompileIntegrationTestSuite

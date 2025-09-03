@@ -27,18 +27,11 @@ import (
 )
 
 const (
+	EpochingPrecompileAddress = "0x0000000000000000000000000000000000001000"
 	// DoNotModifyCommissionRate constant used in flags to indicate that commission rate field should not be updated
 	DoNotModifyCommissionRate = -1
 	// DoNotModifyMinSelfDelegation constant used in flags to indicate that min self delegation field should not be updated
 	DoNotModifyMinSelfDelegation = -1
-)
-
-const (
-	EpochingPrecompileAddress = "0x0000000000000000000000000000000000001000"
-)
-
-const (
-	ErrInvalidBlsKey = "invalid bls key %v"
 )
 
 // EventCreateValidator defines the event data for the staking CreateValidator transaction.

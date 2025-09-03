@@ -7,4 +7,6 @@ const (
 	ErrDifferentOriginFromValidator = "origin address %s is not the same as validator operator address %s"
 	// ErrCannotCallFromContract is raised when a function cannot be called from a smart contract.
 	ErrCannotCallFromContract = "this method can only be called directly to the precompile, not from a smart contract"
+	// ErrInvalidBlsKey is raised when a BlsKey type assertion failed
+	ErrInvalidBlsKey = "invalid bls key %v"
 )
