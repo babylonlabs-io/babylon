@@ -189,18 +189,13 @@ func (n *Node) QueryAllBalances(address string) sdk.Coins {
 
 // QueryBTCStkConsumerConsumers queries all registered BTC staking consumer chains
 func (n *Node) QueryBTCStkConsumerConsumers() []*bsctypes.ConsumerRegisterResponse {
-	var (
-		resp *bsctypes.QueryConsumersRegistryResponse
-		err  error
-	)
+	path := "/babylon/btcstkconsumer/v1/consumer_registry_list"
+	bz, err := n.QueryGRPCGateway(path, url.Values{})
+	require.NoError(n.T(), err)
 
-	n.BtcStkConsumerQuery(func(bscClient bsctypes.QueryClient) {
-		resp, err = bscClient.ConsumersRegistry(context.Background(), &bsctypes.QueryConsumersRegistryRequest{
-			// Empty consumer_ids means query all consumers
-			ConsumerIds: []string{},
-		})
-		require.NoError(n.T(), err)
-	})
+	var resp bsctypes.QueryConsumerRegistryListResponse
+	err = util.Cdc.UnmarshalJSON(bz, &resp)
+	require.NoError(n.T(), err)
 
 	return resp.ConsumerRegisters
 }
@@ -272,6 +267,7 @@ func (n *Node) QueryGetSealedEpochProof(epochNum uint64) *zoneconciergetype.Quer
 	return &resp
 }
 
+// QueryLatestEpochHeaderCLI retrieves the latest epoch header for the specified consumer ID using CLI
 func (n *Node) QueryLatestEpochHeaderCLI(consumerID string) string {
 	cmd := []string{"babylond", "query", "zc", "latest-epoch-header", consumerID, "--output=json", "--node", n.GetRpcEndpoint()}
 	outBuf, _, err := n.Tm.ContainerManager.ExecCmd(n.T(), n.Container.Name, cmd, "")
@@ -279,6 +275,7 @@ func (n *Node) QueryLatestEpochHeaderCLI(consumerID string) string {
 	return outBuf.String()
 }
 
+// QueryBSNLastSentSegmentCLI retrieves the last sent segment information for the specified consumer ID using CLI
 func (n *Node) QueryBSNLastSentSegmentCLI(consumerID string) string {
 	cmd := []string{"babylond", "query", "zc", "bsn-last-sent-seg", consumerID, "--output=json", "--node", n.GetRpcEndpoint()}
 	outBuf, _, err := n.Tm.ContainerManager.ExecCmd(n.T(), n.Container.Name, cmd, "")
@@ -286,6 +283,7 @@ func (n *Node) QueryBSNLastSentSegmentCLI(consumerID string) string {
 	return outBuf.String()
 }
 
+// QueryGetSealedEpochProofCLI retrieves the sealed epoch proof for the specified epoch number using CLI
 func (n *Node) QueryGetSealedEpochProofCLI(epochNum uint64) string {
 	cmd := []string{"babylond", "query", "zc", "get-sealed-epoch-proof", fmt.Sprintf("%d", epochNum), "--output=json", "--node", n.GetRpcEndpoint()}
 	outBuf, _, err := n.Tm.ContainerManager.ExecCmd(n.T(), n.Container.Name, cmd, "")
@@ -293,6 +291,7 @@ func (n *Node) QueryGetSealedEpochProofCLI(epochNum uint64) string {
 	return outBuf.String()
 }
 
+// GetRpcEndpoint returns the RPC endpoint of the node
 func (n *Node) GetRpcEndpoint() string {
 	return "tcp://" + net.JoinHostPort(n.Container.Name, fmt.Sprintf("%d", n.Ports.RPC))
 }
