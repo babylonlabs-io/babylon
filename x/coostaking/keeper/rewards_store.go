@@ -86,3 +86,18 @@ func (k Keeper) GetCoostakerRewards(ctx context.Context, coostaker sdk.AccAddres
 
 	return &v, nil
 }
+
+func (k Keeper) GetCoostakerRewardsOrInitialize(ctx context.Context, coostaker sdk.AccAddress) (*types.CoostakerRewardsTracker, error) {
+	coostakerRwdTracker, found, err := k.GetCoostakerRewardsTrackerCheckFound(ctx, coostaker)
+	if err != nil {
+		return nil, err
+	}
+	if !found {
+		zeroInt := math.ZeroInt()
+		// StartPeriodCumulativeReward is correctly populated by initialization of the coostaker
+		rwd := types.NewCoostakerRewardsTracker(0, zeroInt, zeroInt, zeroInt)
+		return &rwd, nil
+	}
+
+	return coostakerRwdTracker, nil
+}
