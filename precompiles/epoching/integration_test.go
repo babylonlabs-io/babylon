@@ -190,10 +190,10 @@ var _ = Describe("Calling epoching precompile directly", func() {
 
 				s.AdvanceToNextEpoch()
 
-				newValAddr := sdk.ValAddress(valHex.Bytes())
-				v, err := s.App.StakingKeeper.GetValidator(s.Ctx, newValAddr)
+				valAddr := sdk.ValAddress(valHex.Bytes())
+				v, err := s.App.StakingKeeper.GetValidator(s.Ctx, valAddr)
 				Expect(err).To(BeNil())
-				Expect(newValAddr.String()).To(Equal(v.OperatorAddress))
+				Expect(valAddr.String()).To(Equal(v.OperatorAddress))
 				Expect(v.Description.Moniker).To(Equal(defaultDescription.Moniker))
 				// other fields should not be modified due to the value "[do-not-modify]"
 				Expect(v.Description.Identity).To(Equal(description.Identity), "expected validator identity not to be updated")
