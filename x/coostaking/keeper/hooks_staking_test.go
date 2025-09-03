@@ -106,8 +106,8 @@ func TestHookStaking_BeforeDelegationSharesModified(t *testing.T) {
 	err := hooks.BeforeDelegationSharesModified(ctx, delAddr, valAddr)
 	require.NoError(t, err)
 
-	// Verify the amount was cached
-	cachedAmount := k.stkCache.GetStakedAmount(delAddr, valAddr)
+	// Verify the amount was cached by retrieving and deleting it
+	cachedAmount := k.stkCache.GetAndDeleteStakedAmount(delAddr, valAddr)
 	require.True(t, shares.Equal(cachedAmount))
 }
 
@@ -132,7 +132,7 @@ func TestHookStaking_BeforeDelegationSharesModified_DelegationNotFound(t *testin
 	require.NoError(t, err)
 
 	// Verify nothing was cached (returns zero)
-	cachedAmount := k.stkCache.GetStakedAmount(delAddr, valAddr)
+	cachedAmount := k.stkCache.GetAndDeleteStakedAmount(delAddr, valAddr)
 	require.True(t, math.LegacyZeroDec().Equal(cachedAmount))
 }
 

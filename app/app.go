@@ -501,8 +501,8 @@ func NewBabylonApp(
 	// can do so safely.
 	genesisModuleOrder := []string{
 		authtypes.ModuleName, banktypes.ModuleName, distrtypes.ModuleName,
-		// tokenomics-related module that subscribes to staking hooks.
-		// init genesis calls AfterDelegationModified
+		// module that subscribes to staking hooks.
+		// staking init genesis calls AfterDelegationModified
 		coostakingtypes.ModuleName,
 		stakingtypes.ModuleName,
 		slashingtypes.ModuleName, govtypes.ModuleName, minttypes.ModuleName,
