@@ -201,11 +201,12 @@ func saveCoStakersToStore(
 	// pairs to storage, the order shouldn't affect the final state
 	for addr, val := range coStakers {
 		sdkAddr := sdk.MustAccAddressFromBech32(addr)
-		rt := costktypes.CoostakerRewardsTracker{
-			StartPeriodCumulativeReward: 1,
-			ActiveSatoshis:              val.ActiveSatoshis,
-			ActiveBaby:                  val.ActiveBaby,
-		}
+		rt := costktypes.NewCoostakerRewardsTracker(
+			1,
+			val.ActiveSatoshis,
+			val.ActiveBaby,
+			math.ZeroInt(),
+		)
 		rt.UpdateScore(dp.ScoreRatioBtcByBaby)
 		if err := rwdTrackers.Set(ctx, []byte(sdkAddr), rt); err != nil {
 			return err
