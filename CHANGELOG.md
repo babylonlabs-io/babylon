@@ -39,6 +39,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
+- [#1605](https://github.com/babylonlabs-io/babylon/pull/1605) Add epoching precompile
 - [#1568](https://github.com/babylonlabs-io/babylon/pull/1568) Wrapper feemarket to exclude refundable gas when calculating base fee
 - [#1430](https://github.com/babylonlabs-io/babylon/pull/1430) Bump Cosmos EVM to 0.41 and add signer extractor.
 - [#1553](https://github.com/babylonlabs-io/babylon/pull/1553) Remove native Coin precompile from token pairs.
