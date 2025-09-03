@@ -295,7 +295,7 @@ func TestCoostakerModifiedWithPreInitialization(t *testing.T) {
 	}
 
 	// Call with pre-initialization
-	err = k.coostakerModifiedWithPreInitalization(ctx, coostaker, preInitFunc)
+	err = k.coostakerModifiedScoreWithPreInitalization(ctx, coostaker, preInitFunc)
 	require.NoError(t, err)
 
 	updatedTracker, err := k.GetCoostakerRewards(ctx, coostaker)
