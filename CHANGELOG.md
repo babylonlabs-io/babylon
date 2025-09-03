@@ -54,6 +54,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#1589](https://github.com/babylonlabs-io/babylon/pull/1589) Add minimum Babylon commission on `RegisterConsumer`
 - [#1612](https://github.com/babylonlabs-io/babylon/pull/1612) Optimize `x/zoneconcierge` packet broadcast logic trigger only when needed.
 - [#1635](https://github.com/babylonlabs-io/babylon/pull/1635) Remove duplicated ValidateBasic checks.
+- [#1655](https://github.com/babylonlabs-io/babylon/pull/1655) Fix go releaser image not support issue.
 - [#1657](https://github.com/babylonlabs-io/babylon/pull/1657) update to e2ev2 tests for queries for zc
 
 ### State breaking
@@ -66,6 +67,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#1608](https://github.com/babylonlabs-io/babylon/pull/1608) fix: `x/btcstaking` prefix of `LargestBtcReOrg` to match mainnet.
 - [#1630](https://github.com/babylonlabs-io/babylon/pull/1630) Remove `HeaderCache` redundant test
 - [#1647](https://github.com/babylonlabs-io/babylon/pull/1647) Fix inactive event emitted on slashed finality provider case.
+- [#1651](https://github.com/babylonlabs-io/babylon/pull/1651) Store Cosmos BSN slashing evidence.
 
 ## v3.0.0-rc.2
 
