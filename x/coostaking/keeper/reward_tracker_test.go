@@ -410,19 +410,20 @@ func TestCoostakerModifiedActiveAmounts(t *testing.T) {
 	require.Equal(t, currRwd.Rewards.String(), sdk.NewCoins().String())
 
 	// simulate new active sats, but since it is less than the the previous the total score doesn't change
+	// also the period doesn't need to change
 	newActiveSats := sdkmath.NewInt(500)
 	err = k.coostakerModifiedActiveAmounts(ctx, coostaker, newActiveSats, activeBaby)
 	require.NoError(t, err)
 	newActCoostaker, err := k.GetCoostakerRewards(ctx, coostaker)
 	require.NoError(t, err)
-	require.Equal(t, newActCoostaker.StartPeriodCumulativeReward, currRwd.Period)
+	require.Equal(t, newActCoostaker.StartPeriodCumulativeReward, uint64(1))
 	require.Equal(t, newActCoostaker.ActiveBaby, activeBaby)
 	require.Equal(t, newActCoostaker.ActiveSatoshis, newActiveSats)
 	require.Equal(t, newActCoostaker.TotalScore, actCoostaker.TotalScore)
 
 	newCurrRwd, err := k.GetCurrentRewards(ctx)
 	require.NoError(t, err)
-	require.Equal(t, newCurrRwd.Period, uint64(3))
+	require.Equal(t, newCurrRwd.Period, uint64(2))
 	require.Equal(t, newCurrRwd.TotalScore, currRwd.TotalScore)
 	require.Equal(t, newCurrRwd.Rewards.String(), currRwd.Rewards.String())
 
@@ -443,7 +444,7 @@ func TestCoostakerModifiedActiveAmounts(t *testing.T) {
 	// check again the current rewards
 	newCurrRwd, err = k.GetCurrentRewards(ctx)
 	require.NoError(t, err)
-	require.Equal(t, newCurrRwd.Period, uint64(4))
+	require.Equal(t, newCurrRwd.Period, uint64(3))
 	require.Equal(t, newCurrRwd.TotalScore, expTotalScore)
 	require.Equal(t, newCurrRwd.Rewards.String(), currRwd.Rewards.String())
 
@@ -462,7 +463,7 @@ func TestCoostakerModifiedActiveAmounts(t *testing.T) {
 	require.NoError(t, err)
 	actCostaker2, err := k.GetCoostakerRewards(ctx, coostaker2)
 	require.NoError(t, err)
-	require.Equal(t, actCostaker2.StartPeriodCumulativeReward, uint64(4))
+	require.Equal(t, actCostaker2.StartPeriodCumulativeReward, uint64(3))
 	require.Equal(t, actCostaker2.ActiveBaby, activeBabyCo2)
 	require.Equal(t, actCostaker2.ActiveSatoshis, activeSatsCo2)
 	require.Equal(t, actCostaker2.TotalScore, sdkmath.NewInt(250))
@@ -470,7 +471,7 @@ func TestCoostakerModifiedActiveAmounts(t *testing.T) {
 	// new period was created with empty rewards
 	curRwd, err := k.GetCurrentRewards(ctx)
 	require.NoError(t, err)
-	require.Equal(t, curRwd.Period, uint64(5))
+	require.Equal(t, curRwd.Period, uint64(4))
 	require.Equal(t, curRwd.TotalScore, actCostaker2.TotalScore.Add(newActCoostaker1.TotalScore))
 	require.Equal(t, curRwd.Rewards.String(), sdk.NewCoins().String())
 
