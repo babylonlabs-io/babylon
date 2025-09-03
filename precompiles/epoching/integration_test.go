@@ -2,6 +2,7 @@ package epoching_test
 
 import (
 	"encoding/base64"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"math/big"
 	"testing"
 
@@ -19,7 +20,7 @@ import (
 
 	cmted25519 "github.com/cometbft/cometbft/crypto/ed25519"
 
-	sdkmath "cosmossdk.io/math"
+	"cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -60,9 +61,9 @@ func (ts *PrecompileIntegrationTestSuite) SetupTest() {
 	ts.Require().NoError(err)
 
 	// fund both with 100 bbn
-	_, err = ts.InitAndFundEVMAccount(ts.validatorPriv, sdkmath.NewInt(100_000_000))
+	_, err = ts.InitAndFundEVMAccount(ts.validatorPriv, math.NewInt(100_000_000))
 	ts.Require().NoError(err)
-	_, err = ts.InitAndFundEVMAccount(ts.delegatorPriv, sdkmath.NewInt(100_000_000))
+	_, err = ts.InitAndFundEVMAccount(ts.delegatorPriv, math.NewInt(100_000_000))
 	ts.Require().NoError(err)
 }
 
@@ -227,12 +228,118 @@ var _ = Describe("Calling epoching precompile directly", func() {
 	})
 
 	Describe("to delegate", func() {
+		var prevDelegation stakingtypes.Delegation
+		var valHex common.Address
+		var valBech32 string
+
+		BeforeEach(func() {
+			// create prevDelegation to compare with the delegator's new share
+			vals, err := s.App.StakingKeeper.GetAllValidators(s.Ctx)
+			Expect(err).To(BeNil())
+			Expect(vals).NotTo(BeNil())
+			valBech32 = vals[0].OperatorAddress
+			valAddr, err := sdk.ValAddressFromBech32(valBech32)
+			Expect(err).To(BeNil())
+			valHex = common.BytesToAddress(valAddr.Bytes())
+
+			amount := big.NewInt(1_000_000) // 1 bbn
+			resp, err := s.CallContract(
+				s.delegatorPriv,
+				s.addr,
+				s.abi,
+				epoching.WrappedDelegateMethod,
+				common.Address(s.delegatorPriv.PubKey().Address().Bytes()),
+				valHex,
+				amount,
+			)
+			Expect(err).To(BeNil(), "error while calling the contract")
+			Expect(resp.VmError).To(Equal(""))
+
+			s.AdvanceToNextEpoch()
+
+			res, err := s.QueryClientStaking.Delegation(s.Ctx, &stakingtypes.QueryDelegationRequest{
+				DelegatorAddr: sdk.AccAddress(s.delegatorPriv.PubKey().Address().Bytes()).String(),
+				ValidatorAddr: valBech32,
+			})
+			Expect(err).To(BeNil())
+			Expect(res.DelegationResponse).NotTo(BeNil())
+
+			prevDelegation = res.DelegationResponse.Delegation
+		})
+
 		Context("as the token owner", func() {
 			It("should delegate", func() {
-				delegatorAcc := sdk.AccAddress(s.delegatorPriv.PubKey().Address().Bytes())
-				valAddr := sdk.ValAddress(s.validatorPriv.PubKey().Address().Bytes())
-				_ = delegatorAcc
-				_ = valAddr
+				delAddr := common.Address(s.delegatorPriv.PubKey().Address().Bytes())
+
+				resp, err := s.CallContract(
+					s.delegatorPriv,
+					s.addr,
+					s.abi,
+					epoching.WrappedDelegateMethod,
+					delAddr,
+					valHex,
+					big.NewInt(1_000_000),
+				)
+				Expect(err).To(BeNil(), "error while calling the contract")
+				Expect(resp.VmError).To(Equal(""))
+
+				s.AdvanceToNextEpoch()
+
+				res, err := s.QueryClientStaking.Delegation(s.Ctx, &stakingtypes.QueryDelegationRequest{
+					DelegatorAddr: sdk.AccAddress(s.delegatorPriv.PubKey().Address().Bytes()).String(),
+					ValidatorAddr: valBech32,
+				})
+				Expect(err).To(BeNil())
+				Expect(res.DelegationResponse).NotTo(BeNil())
+				expShares := prevDelegation.GetShares().Add(math.LegacyNewDecWithPrec(1, 3))
+				Expect(res.DelegationResponse.Delegation.GetShares().Equal(expShares)).To(BeTrue(), "expected delegation shares to be updated")
+			})
+
+			It("should not delegate if the account doesn't have sufficient balance", func() {
+				newPriv, err := ethsecp256k1.GenerateKey()
+				Expect(err).To(BeNil())
+				_, err = s.InitAndFundEVMAccount(newPriv, math.NewInt(10_000))
+				Expect(err).To(BeNil())
+
+				_, err = s.CallContract(
+					s.delegatorPriv,
+					s.addr,
+					s.abi,
+					epoching.WrappedDelegateMethod,
+					common.Address(newPriv.PubKey().Address().Bytes()),
+					valHex,
+					big.NewInt(1_000_000),
+				)
+				Expect(err).NotTo(BeNil(), "expected error while calling the contract")
+			})
+
+			It("should not delegate if the validator doesn't exist", func() {
+				_, err := s.CallContract(
+					s.delegatorPriv,
+					s.addr,
+					s.abi,
+					epoching.WrappedDelegateMethod,
+					common.Address(s.delegatorPriv.PubKey().Address().Bytes()),
+					common.Address(s.validatorPriv.PubKey().Address().Bytes()),
+					big.NewInt(1_000_000),
+				)
+				Expect(err).NotTo(BeNil(), "expected error while calling the contract")
+			})
+		})
+
+		Context("on behalf of another account", func() {
+			It("should not delegate if delegator address is not the msg.sender", func() {
+				differentAddr := common.Address(s.validatorPriv.PubKey().Address().Bytes())
+				_, err := s.CallContract(
+					s.delegatorPriv,
+					s.addr,
+					s.abi,
+					epoching.WrappedDelegateMethod,
+					differentAddr,
+					valHex,
+					big.NewInt(1_000_000),
+				)
+				Expect(err).NotTo(BeNil(), "expected error while calling the contract")
 			})
 		})
 	})
