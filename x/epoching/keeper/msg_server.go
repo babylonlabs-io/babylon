@@ -202,11 +202,10 @@ func (ms msgServer) WrappedDelegate(goCtx context.Context, msg *types.MsgWrapped
 		return nil, err
 	}
 
-	ms.EnqueueMsg(ctx, queuedMsg)
-
 	if err := ms.LockFunds(ctx, &queuedMsg); err != nil {
 		return nil, errorsmod.Wrap(err, "failed to lock user funds")
 	}
+	ms.EnqueueMsg(ctx, queuedMsg)
 
 	ctx.GasMeter().ConsumeGas(ms.GetParams(ctx).EnqueueGasFees.Delegate, "epoching delegate enqueue fee")
 

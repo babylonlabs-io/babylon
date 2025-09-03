@@ -305,7 +305,7 @@ func TestExponentiallyEventsEndEpochQueuedMessages(t *testing.T) {
 	finalBalance := h.App.BankKeeper.GetBalance(ctx, userAddr, "ubbn")
 	calculatedInitialBalance := finalBalance.Amount.Add(totalDiff)
 
-	fmt.Printf("Balance verification: initial=%s, final=%s, totalDiff=%s, calculated=%s\n", initialBalance.String(), finalBalance.String(), totalDiff.String(), calculatedInitialBalance.String())
+	// fmt.Printf("Balance verification: initial=%s, final=%s, totalDiff=%s, calculated=%s\n", initialBalance.String(), finalBalance.String(), totalDiff.String(), calculatedInitialBalance.String())
 
 	require.Equal(t, initialBalance.Amount, calculatedInitialBalance,
 		"Final balance + total diff should equal initial balance")
@@ -334,7 +334,7 @@ func TestExponentiallyEventsEndEpochQueuedMessages(t *testing.T) {
 	} else {
 		sharesBefore = sdkmath.LegacyZeroDec()
 	}
-	fmt.Printf("Delegation shares before: %s\n", sharesBefore.String())
+	// fmt.Printf("Delegation shares before: %s\n", sharesBefore.String())
 
 	// with a clean context
 	_, err = epoching.EndBlocker(ctx, k)
@@ -347,7 +347,7 @@ func TestExponentiallyEventsEndEpochQueuedMessages(t *testing.T) {
 	} else {
 		sharesAfter = sdkmath.LegacyZeroDec()
 	}
-	fmt.Printf("Delegation shares after: %s\n", sharesAfter.String())
+	// fmt.Printf("Delegation shares after: %s\n", sharesAfter.String())
 
 	expectedTotalAmount := sdkmath.NewInt(int64(numDelMessages * 100000))
 	actualSharesIncrease := sharesAfter.Sub(sharesBefore)

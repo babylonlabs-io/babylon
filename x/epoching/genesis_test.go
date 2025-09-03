@@ -28,7 +28,9 @@ func TestInitGenesis(t *testing.T) {
 
 	genesisState := types.GenesisState{
 		Params: types.Params{
-			EpochInterval: 100,
+			EpochInterval:  100,
+			EnqueueGasFees: types.DefaultEnqueueGasFees,
+			MinAmount:      types.DefaultMinAmount,
 		},
 	}
 
