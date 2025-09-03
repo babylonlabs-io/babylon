@@ -34,10 +34,11 @@ import (
 	btclctypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
 	btcstkkeeper "github.com/babylonlabs-io/babylon/v4/x/btcstaking/keeper"
 	btcstktypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+	costkkeeper "github.com/babylonlabs-io/babylon/v4/x/coostaking/keeper"
 	costktypes "github.com/babylonlabs-io/babylon/v4/x/coostaking/types"
 )
 
-func setupTestKeepers(t *testing.T) (sdk.Context, codec.BinaryCodec, corestore.KVStoreService, *stkkeeper.Keeper, btcstkkeeper.Keeper, *gomock.Controller) {
+func setupTestKeepers(t *testing.T) (sdk.Context, codec.BinaryCodec, corestore.KVStoreService, *stkkeeper.Keeper, btcstkkeeper.Keeper, *costkkeeper.Keeper, *gomock.Controller) {
 	ctrl := gomock.NewController(t)
 
 	// Create DB and store
@@ -57,10 +58,9 @@ func setupTestKeepers(t *testing.T) (sdk.Context, codec.BinaryCodec, corestore.K
 	accK := testutilkeeper.AccountKeeper(t, db, stateStore)
 	bankKeeper := testutilkeeper.BankKeeper(t, db, stateStore, accK)
 	stkKeeper := testutilkeeper.StakingKeeper(t, db, stateStore, accK, bankKeeper)
-
 	// Setup coostaking store service
 	costkStoreKey := storetypes.NewKVStoreKey(costktypes.StoreKey)
-	stateStore.MountStoreWithDB(costkStoreKey, storetypes.StoreTypeIAVL, db)
+	costkKeeper, _ := testutilkeeper.CoostakingKeeperWithStore(t, db, stateStore, costkStoreKey, bankKeeper, accK, stkKeeper, nil)
 	require.NoError(t, stateStore.LoadLatestVersion())
 	costkStoreService := runtime.NewKVStoreService(costkStoreKey)
 
@@ -69,11 +69,11 @@ func setupTestKeepers(t *testing.T) (sdk.Context, codec.BinaryCodec, corestore.K
 	cryptocoded.RegisterInterfaces(registry)
 	cdc := codec.NewProtoCodec(registry)
 
-	return btcCtx, cdc, costkStoreService, stkKeeper, *btcStkKeeper, ctrl
+	return btcCtx, cdc, costkStoreService, stkKeeper, *btcStkKeeper, costkKeeper, ctrl
 }
 
 func TestInitializeCoStakerRwdsTracker_EmptyState(t *testing.T) {
-	ctx, cdc, storeService, stkKeeper, btcStkKeeper, ctrl := setupTestKeepers(t)
+	ctx, cdc, storeService, stkKeeper, btcStkKeeper, costkKeeper, ctrl := setupTestKeepers(t)
 	defer ctrl.Finish()
 
 	// Test with empty state (no BTC stakers, no staking delegations)
@@ -83,6 +83,7 @@ func TestInitializeCoStakerRwdsTracker_EmptyState(t *testing.T) {
 		storeService,
 		stkKeeper,
 		btcStkKeeper,
+		*costkKeeper,
 	)
 	require.NoError(t, err)
 
@@ -92,7 +93,7 @@ func TestInitializeCoStakerRwdsTracker_EmptyState(t *testing.T) {
 }
 
 func TestInitializeCoStakerRwdsTracker_WithRealDelegations(t *testing.T) {
-	ctx, cdc, storeService, stkKeeper, btcStkKeeper, ctrl := setupTestKeepers(t)
+	ctx, cdc, storeService, stkKeeper, btcStkKeeper, costkKeeper, ctrl := setupTestKeepers(t)
 	defer ctrl.Finish()
 
 	require.NoError(t, btcStkKeeper.SetParams(ctx, btcstktypes.DefaultParams()))
@@ -112,7 +113,7 @@ func TestInitializeCoStakerRwdsTracker_WithRealDelegations(t *testing.T) {
 
 	// Execute upgrade function
 	err := v3rc4.InitializeCoStakerRwdsTracker(
-		ctx, cdc, storeService, stkKeeper, btcStkKeeper,
+		ctx, cdc, storeService, stkKeeper, btcStkKeeper, *costkKeeper,
 	)
 	require.NoError(t, err)
 
@@ -121,7 +122,7 @@ func TestInitializeCoStakerRwdsTracker_WithRealDelegations(t *testing.T) {
 }
 
 func TestInitializeCoStakerRwdsTracker_OnlyBTCStaking(t *testing.T) {
-	ctx, cdc, storeService, stkKeeper, btcStkKeeper, ctrl := setupTestKeepers(t)
+	ctx, cdc, storeService, stkKeeper, btcStkKeeper, costkKeeper, ctrl := setupTestKeepers(t)
 	defer ctrl.Finish()
 
 	require.NoError(t, btcStkKeeper.SetParams(ctx, btcstktypes.DefaultParams()))
@@ -137,7 +138,7 @@ func TestInitializeCoStakerRwdsTracker_OnlyBTCStaking(t *testing.T) {
 
 	// Execute upgrade function
 	err := v3rc4.InitializeCoStakerRwdsTracker(
-		ctx, cdc, storeService, stkKeeper, btcStkKeeper,
+		ctx, cdc, storeService, stkKeeper, btcStkKeeper, *costkKeeper,
 	)
 	require.NoError(t, err)
 
@@ -146,7 +147,7 @@ func TestInitializeCoStakerRwdsTracker_OnlyBTCStaking(t *testing.T) {
 }
 
 func TestInitializeCoStakerRwdsTracker_MultipleCombinations(t *testing.T) {
-	ctx, cdc, storeService, stkKeeper, btcStkKeeper, ctrl := setupTestKeepers(t)
+	ctx, cdc, storeService, stkKeeper, btcStkKeeper, costkKeeper, ctrl := setupTestKeepers(t)
 	defer ctrl.Finish()
 
 	require.NoError(t, btcStkKeeper.SetParams(ctx, btcstktypes.DefaultParams()))
@@ -175,7 +176,7 @@ func TestInitializeCoStakerRwdsTracker_MultipleCombinations(t *testing.T) {
 
 	// Execute upgrade function
 	err := v3rc4.InitializeCoStakerRwdsTracker(
-		ctx, cdc, storeService, stkKeeper, btcStkKeeper,
+		ctx, cdc, storeService, stkKeeper, btcStkKeeper, *costkKeeper,
 	)
 	require.NoError(t, err)
 
@@ -190,7 +191,7 @@ func TestInitializeCoStakerRwdsTracker_MultipleCombinations(t *testing.T) {
 }
 
 func TestInitializeCoStakerRwdsTracker_MultipleStakingFromSameStaker(t *testing.T) {
-	ctx, cdc, storeService, stkKeeper, btcStkKeeper, ctrl := setupTestKeepers(t)
+	ctx, cdc, storeService, stkKeeper, btcStkKeeper, costkKeeper, ctrl := setupTestKeepers(t)
 	defer ctrl.Finish()
 
 	require.NoError(t, btcStkKeeper.SetParams(ctx, btcstktypes.DefaultParams()))
@@ -220,7 +221,7 @@ func TestInitializeCoStakerRwdsTracker_MultipleStakingFromSameStaker(t *testing.
 
 	// Execute upgrade function
 	err := v3rc4.InitializeCoStakerRwdsTracker(
-		ctx, cdc, storeService, stkKeeper, btcStkKeeper,
+		ctx, cdc, storeService, stkKeeper, btcStkKeeper, *costkKeeper,
 	)
 	require.NoError(t, err)
 

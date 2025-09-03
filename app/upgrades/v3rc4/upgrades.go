@@ -21,6 +21,7 @@ import (
 	"github.com/babylonlabs-io/babylon/v4/app/upgrades"
 	btcstkkeeper "github.com/babylonlabs-io/babylon/v4/x/btcstaking/keeper"
 	btcstktypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+	costkkeeper "github.com/babylonlabs-io/babylon/v4/x/coostaking/keeper"
 	costktypes "github.com/babylonlabs-io/babylon/v4/x/coostaking/types"
 )
 
@@ -51,7 +52,7 @@ func CreateUpgradeHandler(mm *module.Manager, configurator module.Configurator, 
 		}
 
 		coStkStoreService := runtime.NewKVStoreService(costkStoreKey)
-		if err := InitializeCoStakerRwdsTracker(ctx, keepers.EncCfg.Codec, coStkStoreService, keepers.StakingKeeper, keepers.BTCStakingKeeper); err != nil {
+		if err := InitializeCoStakerRwdsTracker(ctx, keepers.EncCfg.Codec, coStkStoreService, keepers.StakingKeeper, keepers.BTCStakingKeeper, keepers.CoostakingKeeper); err != nil {
 			return nil, err
 		}
 
@@ -67,6 +68,7 @@ func InitializeCoStakerRwdsTracker(
 	costkStoreService corestoretypes.KVStoreService,
 	stkKeeper *stkkeeper.Keeper,
 	btcStkKeeper btcstkkeeper.Keeper,
+	coStkKeeper costkkeeper.Keeper,
 ) error {
 	btcStakers, err := getAllBTCStakers(ctx, btcStkKeeper)
 	if err != nil {
@@ -78,7 +80,7 @@ func InitializeCoStakerRwdsTracker(
 		return err
 	}
 
-	return saveCoStakersToStore(ctx, cdc, costkStoreService, coStakers)
+	return saveCoStakersToStore(ctx, cdc, coStkKeeper, costkStoreService, coStakers)
 }
 
 type coStaker struct {
@@ -181,6 +183,7 @@ func buildCoStakersMap(ctx context.Context, btcStakers map[string]math.Int, stkK
 func saveCoStakersToStore(
 	ctx context.Context,
 	cdc codec.BinaryCodec,
+	k costkkeeper.Keeper,
 	costkStoreService corestoretypes.KVStoreService,
 	coStakers map[string]coStaker,
 ) error {
@@ -193,6 +196,7 @@ func saveCoStakersToStore(
 		codec.CollValue[costktypes.CoostakerRewardsTracker](cdc),
 	)
 	dp := costktypes.DefaultParams()
+	totalScore := math.ZeroInt()
 	// we're writing independent key-value
 	// pairs to storage, the order shouldn't affect the final state
 	for addr, val := range coStakers {
@@ -206,7 +210,8 @@ func saveCoStakersToStore(
 		if err := rwdTrackers.Set(ctx, []byte(sdkAddr), rt); err != nil {
 			return err
 		}
+		totalScore = totalScore.Add(rt.TotalScore)
 	}
 
-	return nil
+	return k.UpdateCurrentRewardsTotalScore(ctx, totalScore)
 }
