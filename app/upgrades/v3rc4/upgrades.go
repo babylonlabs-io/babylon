@@ -192,15 +192,18 @@ func saveCoStakersToStore(
 		collections.BytesKey,
 		codec.CollValue[costktypes.CoostakerRewardsTracker](cdc),
 	)
+	dp := costktypes.DefaultParams()
 	// we're writing independent key-value
 	// pairs to storage, the order shouldn't affect the final state
 	for addr, val := range coStakers {
 		sdkAddr := sdk.MustAccAddressFromBech32(addr)
-		if err := rwdTrackers.Set(ctx, []byte(sdkAddr), costktypes.CoostakerRewardsTracker{
+		rt := costktypes.CoostakerRewardsTracker{
 			StartPeriodCumulativeReward: 1,
 			ActiveSatoshis:              val.ActiveSatoshis,
 			ActiveBaby:                  val.ActiveBaby,
-		}); err != nil {
+		}
+		rt.UpdateScore(dp.ScoreRatioBtcByBaby)
+		if err := rwdTrackers.Set(ctx, []byte(sdkAddr), rt); err != nil {
 			return err
 		}
 	}
