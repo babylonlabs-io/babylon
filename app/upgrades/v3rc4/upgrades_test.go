@@ -53,6 +53,7 @@ func setupTestKeepers(t *testing.T) (sdk.Context, codec.BinaryCodec, corestore.K
 	btccKeeper.EXPECT().GetParams(gomock.Any()).Return(btcctypes.DefaultParams()).AnyTimes()
 
 	distK := costktypes.NewMockDistributionKeeper(ctrl)
+	incentiveK := costktypes.NewMockIncentiveKeeper(ctrl)
 
 	btcStoreKey := storetypes.NewKVStoreKey(btcstktypes.StoreKey)
 	btcStkKeeper, btcCtx := testutilkeeper.BTCStakingKeeperWithStore(t, db, stateStore, btcStoreKey, btclcKeeper, btccKeeper, nil, nil)
@@ -62,7 +63,7 @@ func setupTestKeepers(t *testing.T) (sdk.Context, codec.BinaryCodec, corestore.K
 	stkKeeper := testutilkeeper.StakingKeeper(t, db, stateStore, accK, bankKeeper)
 	// Setup coostaking store service
 	costkStoreKey := storetypes.NewKVStoreKey(costktypes.StoreKey)
-	costkKeeper, _ := testutilkeeper.CoostakingKeeperWithStore(t, db, stateStore, costkStoreKey, bankKeeper, accK, stkKeeper, distK)
+	costkKeeper, _ := testutilkeeper.CoostakingKeeperWithStore(t, db, stateStore, costkStoreKey, bankKeeper, accK, incentiveK, stkKeeper, distK)
 	require.NoError(t, stateStore.LoadLatestVersion())
 	costkStoreService := runtime.NewKVStoreService(costkStoreKey)
 

@@ -213,5 +213,10 @@ func saveCoStakersToStore(
 		totalScore = totalScore.Add(rt.TotalScore)
 	}
 
+	// make sure current rewards is initialized
+	if _, err := k.GetCurrentRewardsInitialized(ctx); err != nil {
+		return err
+	}
+
 	return k.UpdateCurrentRewardsTotalScore(ctx, totalScore)
 }
