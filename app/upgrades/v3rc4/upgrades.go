@@ -1,4 +1,4 @@
-package v4rc0
+package v3rc4
 
 import (
 	"context"
@@ -24,10 +24,10 @@ import (
 	costktypes "github.com/babylonlabs-io/babylon/v4/x/coostaking/types"
 )
 
-// UpgradeName defines the on-chain upgrade name for the Babylon v4rc0 upgrade
-const UpgradeName = "v4rc0"
+// UpgradeName defines the on-chain upgrade name for the Babylon v3rc4 upgrade
+const UpgradeName = "v3rc4"
 
-// Upgrade for version v4rc0
+// Upgrade for version v3rc4
 var Upgrade = upgrades.Upgrade{
 	UpgradeName:          UpgradeName,
 	CreateUpgradeHandler: CreateUpgradeHandler,

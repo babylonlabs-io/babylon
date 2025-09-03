@@ -1,4 +1,4 @@
-package v4rc0_test
+package v3rc4_test
 
 import (
 	"context"
@@ -26,7 +26,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
-	v4rc0 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v4rc0"
+	v3rc4 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v3rc4"
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
 	testutilkeeper "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
@@ -77,7 +77,7 @@ func TestInitializeCoStakerRwdsTracker_EmptyState(t *testing.T) {
 	defer ctrl.Finish()
 
 	// Test with empty state (no BTC stakers, no staking delegations)
-	err := v4rc0.InitializeCoStakerRwdsTracker(
+	err := v3rc4.InitializeCoStakerRwdsTracker(
 		ctx,
 		cdc,
 		storeService,
@@ -111,7 +111,7 @@ func TestInitializeCoStakerRwdsTracker_WithRealDelegations(t *testing.T) {
 	createBabyDelegation(t, ctx, stkKeeper, stakerAddr, babyAmount)
 
 	// Execute upgrade function
-	err := v4rc0.InitializeCoStakerRwdsTracker(
+	err := v3rc4.InitializeCoStakerRwdsTracker(
 		ctx, cdc, storeService, stkKeeper, btcStkKeeper,
 	)
 	require.NoError(t, err)
@@ -136,7 +136,7 @@ func TestInitializeCoStakerRwdsTracker_OnlyBTCStaking(t *testing.T) {
 	createTestBTCDelegation(t, r, ctx, btcStkKeeper, stakerAddr, 50000)
 
 	// Execute upgrade function
-	err := v4rc0.InitializeCoStakerRwdsTracker(
+	err := v3rc4.InitializeCoStakerRwdsTracker(
 		ctx, cdc, storeService, stkKeeper, btcStkKeeper,
 	)
 	require.NoError(t, err)
@@ -174,7 +174,7 @@ func TestInitializeCoStakerRwdsTracker_MultipleCombinations(t *testing.T) {
 	createBabyDelegation(t, ctx, stkKeeper, staker3Addr, babyDel3Amt)
 
 	// Execute upgrade function
-	err := v4rc0.InitializeCoStakerRwdsTracker(
+	err := v3rc4.InitializeCoStakerRwdsTracker(
 		ctx, cdc, storeService, stkKeeper, btcStkKeeper,
 	)
 	require.NoError(t, err)
@@ -219,7 +219,7 @@ func TestInitializeCoStakerRwdsTracker_MultipleStakingFromSameStaker(t *testing.
 	// Total Baby: 37k tokens
 
 	// Execute upgrade function
-	err := v4rc0.InitializeCoStakerRwdsTracker(
+	err := v3rc4.InitializeCoStakerRwdsTracker(
 		ctx, cdc, storeService, stkKeeper, btcStkKeeper,
 	)
 	require.NoError(t, err)
