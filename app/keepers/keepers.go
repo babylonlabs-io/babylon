@@ -306,6 +306,7 @@ func (ak *AppKeepers) InitKeepers(
 		stakingKeeper,
 		stakingkeeper.NewMsgServerImpl(stakingKeeper),
 		appparams.AccGov.String(),
+		accountKeeper,
 	)
 
 	checkpointingKeeper := checkpointingkeeper.NewKeeper(

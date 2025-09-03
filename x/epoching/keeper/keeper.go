@@ -26,6 +26,14 @@ type (
 	}
 )
 
+// ValidateDelegatePoolAccount validates that the delegation pool module account exists
+// This should be called before NewKeeper to ensure proper setup
+func ValidateDelegatePoolAccount(ak types.AccountKeeper) {
+	if addr := ak.GetModuleAddress(types.DelegatePoolModuleName); addr == nil {
+		panic(fmt.Sprintf("the %s module account has not been set", types.DelegatePoolModuleName))
+	}
+}
+
 func NewKeeper(
 	cdc codec.BinaryCodec,
 	storeService corestoretypes.KVStoreService,
@@ -33,7 +41,9 @@ func NewKeeper(
 	stk types.StakingKeeper,
 	stkMsgServer stktypes.MsgServer,
 	authority string,
+	ak types.AccountKeeper,
 ) Keeper {
+	ValidateDelegatePoolAccount(ak)
 	return Keeper{
 		cdc:          cdc,
 		storeService: storeService,
