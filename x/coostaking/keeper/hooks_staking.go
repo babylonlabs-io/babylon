@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"cosmossdk.io/math"
+	"github.com/babylonlabs-io/babylon/v4/x/coostaking/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	stktypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -16,59 +17,83 @@ type HookStaking struct {
 	k Keeper
 }
 
+// calculateDelegationDelta calculates the difference between current and previous delegation amounts
+// Returns the delta as math.Int, which can be negative if the previous amount was larger
+func calculateDelegationDelta(beforeAmount, afterAmount math.LegacyDec) math.Int {
+	delta := afterAmount.Sub(beforeAmount)
+	return delta.TruncateInt()
+}
+
 // AfterDelegationModified implements types.StakingHooks.
 func (h HookStaking) AfterDelegationModified(ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) error {
-	panic("unimplemented")
-}
+	del, err := h.k.stkK.GetDelegation(ctx, delAddr, valAddr)
+	if err != nil { // we stop if the delegation is not found, because it must be found
+		return err
+	}
 
-// AfterUnbondingInitiated implements types.StakingHooks.
-func (h HookStaking) AfterUnbondingInitiated(ctx context.Context, id uint64) error {
-	panic("unimplemented")
-}
+	beforeAmount := h.k.stkCache.GetStakedAmount(delAddr, valAddr)
+	afterAmount := del.Shares
 
-// AfterValidatorBeginUnbonding implements types.StakingHooks.
-func (h HookStaking) AfterValidatorBeginUnbonding(ctx context.Context, consAddr sdk.ConsAddress, valAddr sdk.ValAddress) error {
-	panic("unimplemented")
-}
-
-// AfterValidatorBonded implements types.StakingHooks.
-func (h HookStaking) AfterValidatorBonded(ctx context.Context, consAddr sdk.ConsAddress, valAddr sdk.ValAddress) error {
-	panic("unimplemented")
-}
-
-// AfterValidatorCreated implements types.StakingHooks.
-func (h HookStaking) AfterValidatorCreated(ctx context.Context, valAddr sdk.ValAddress) error {
-	panic("unimplemented")
-}
-
-// AfterValidatorRemoved implements types.StakingHooks.
-func (h HookStaking) AfterValidatorRemoved(ctx context.Context, consAddr sdk.ConsAddress, valAddr sdk.ValAddress) error {
-	panic("unimplemented")
-}
-
-// BeforeDelegationCreated implements types.StakingHooks.
-func (h HookStaking) BeforeDelegationCreated(ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) error {
-	panic("unimplemented")
-}
-
-// BeforeDelegationRemoved implements types.StakingHooks.
-func (h HookStaking) BeforeDelegationRemoved(ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) error {
-	panic("unimplemented")
+	delegationChange := calculateDelegationDelta(beforeAmount, afterAmount)
+	return h.k.coostakerModified(ctx, delAddr, func(rwdTracker *types.CoostakerRewardsTracker) {
+		rwdTracker.ActiveBaby = rwdTracker.ActiveBaby.Add(delegationChange)
+	})
 }
 
 // BeforeDelegationSharesModified implements types.StakingHooks.
 func (h HookStaking) BeforeDelegationSharesModified(ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) error {
-	panic("unimplemented")
+	del, err := h.k.stkK.GetDelegation(ctx, delAddr, valAddr)
+	if err != nil { // probably is not found, but we don't want to stop execution for this
+		return nil
+	}
+
+	h.k.stkCache.SetStakedAmount(delAddr, valAddr, del.Shares)
+	return nil
+}
+
+// AfterUnbondingInitiated implements types.StakingHooks.
+func (h HookStaking) AfterUnbondingInitiated(ctx context.Context, id uint64) error {
+	return nil
+}
+
+// AfterValidatorBeginUnbonding implements types.StakingHooks.
+func (h HookStaking) AfterValidatorBeginUnbonding(ctx context.Context, consAddr sdk.ConsAddress, valAddr sdk.ValAddress) error {
+	return nil
+}
+
+// AfterValidatorBonded implements types.StakingHooks.
+func (h HookStaking) AfterValidatorBonded(ctx context.Context, consAddr sdk.ConsAddress, valAddr sdk.ValAddress) error {
+	return nil
+}
+
+// AfterValidatorCreated implements types.StakingHooks.
+func (h HookStaking) AfterValidatorCreated(ctx context.Context, valAddr sdk.ValAddress) error {
+	return nil
+}
+
+// AfterValidatorRemoved implements types.StakingHooks.
+func (h HookStaking) AfterValidatorRemoved(ctx context.Context, consAddr sdk.ConsAddress, valAddr sdk.ValAddress) error {
+	return nil
+}
+
+// BeforeDelegationCreated implements types.StakingHooks.
+func (h HookStaking) BeforeDelegationCreated(ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) error {
+	return nil
+}
+
+// BeforeDelegationRemoved implements types.StakingHooks.
+func (h HookStaking) BeforeDelegationRemoved(ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) error {
+	return nil
 }
 
 // BeforeValidatorModified implements types.StakingHooks.
 func (h HookStaking) BeforeValidatorModified(ctx context.Context, valAddr sdk.ValAddress) error {
-	panic("unimplemented")
+	return nil
 }
 
 // BeforeValidatorSlashed implements types.StakingHooks.
 func (h HookStaking) BeforeValidatorSlashed(ctx context.Context, valAddr sdk.ValAddress, fraction math.LegacyDec) error {
-	panic("unimplemented")
+	return nil
 }
 
 // Create new staking hooks

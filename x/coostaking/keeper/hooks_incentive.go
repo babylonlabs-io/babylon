@@ -25,5 +25,5 @@ func (h HookIncentives) BeforeRewardWithdraw(ctx context.Context, sType ictvtype
 	if sType != ictvtypes.COOSTAKER {
 		return nil
 	}
-	return h.k.coostakerModified(ctx, addr)
+	return h.k.coostakerWithdrawRewards(ctx, addr)
 }

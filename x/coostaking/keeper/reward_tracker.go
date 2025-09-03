@@ -26,17 +26,13 @@ func (k Keeper) AddRewardsForCoostakers(ctx context.Context, rwd sdk.Coins) erro
 	return k.SetCurrentRewards(ctx, *currentRwd)
 }
 
-// coostakerModifiedActiveAmounts anytime an coostaker changes his amount of btc or baby staked this function
-// should be called, for activation of new staking or unbonding of the previous, his score might change and then it should
-// also update the total score of the pool of current rewards
-func (k Keeper) coostakerModifiedActiveAmounts(ctx context.Context, coostaker sdk.AccAddress, newActiveSatoshi, newActiveBaby math.Int) error {
+func (k Keeper) coostakerModified(ctx context.Context, coostaker sdk.AccAddress, modifyCoostaker func(rwdTracker *types.CoostakerRewardsTracker)) error {
 	rwdTracker, err := k.GetCoostakerRewardsOrInitialize(ctx, coostaker)
 	if err != nil {
 		return err
 	}
 
-	rwdTracker.ActiveBaby = newActiveBaby
-	rwdTracker.ActiveSatoshis = newActiveSatoshi
+	modifyCoostaker(rwdTracker)
 
 	params := k.GetParams(ctx)
 	deltaScoreChange := rwdTracker.UpdateScore(params.ScoreRatioBtcByBaby)
@@ -67,7 +63,19 @@ func (k Keeper) coostakerModifiedActiveAmounts(ctx context.Context, coostaker sd
 	})
 }
 
-func (k Keeper) coostakerModified(ctx context.Context, coostaker sdk.AccAddress) error {
+// coostakerModifiedActiveAmounts anytime an coostaker changes his amount of btc or baby staked this function
+// should be called, for activation of new staking or unbonding of the previous, his score might change and then it should
+// also update the total score of the pool of current rewards
+func (k Keeper) coostakerModifiedActiveAmounts(ctx context.Context, coostaker sdk.AccAddress, newActiveSatoshi, newActiveBaby math.Int) error {
+	return k.coostakerModified(ctx, coostaker, func(rwdTracker *types.CoostakerRewardsTracker) {
+		rwdTracker.ActiveBaby = newActiveBaby
+		rwdTracker.ActiveSatoshis = newActiveSatoshi
+	})
+}
+
+// coostakerWithdrawRewards even though the coostaker didn't modified the total score, since he withdraw the rewards
+// there is a need to increase his period and the global rewards pool period as well
+func (k Keeper) coostakerWithdrawRewards(ctx context.Context, coostaker sdk.AccAddress) error {
 	return k.coostakerModifiedScoreWithPreInitalization(ctx, coostaker, func(ctx context.Context, coostaker sdk.AccAddress) error {
 		return nil
 	})

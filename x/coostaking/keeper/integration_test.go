@@ -179,7 +179,7 @@ func FuzzBankModuleIntegration(f *testing.F) {
 	})
 }
 
-func TestCostakerModified(t *testing.T) {
+func TestCoostakerWithdrawRewards(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -226,7 +226,7 @@ func TestCostakerModified(t *testing.T) {
 	).Return(nil).Times(1)
 
 	// Call the function being tested
-	err = k.coostakerModified(ctx, coostaker)
+	err = k.coostakerWithdrawRewards(ctx, coostaker)
 	require.NoError(t, err)
 
 	updatedTracker, err := k.GetCoostakerRewards(ctx, coostaker)

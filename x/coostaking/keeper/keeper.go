@@ -29,6 +29,9 @@ type (
 		stkK   types.StakingKeeper
 		distrK types.DistributionKeeper
 
+		// cache for delta changes in baby delegations
+		stkCache *types.StakingCache
+
 		// params stores the module parameter
 		params collections.Item[types.Params]
 
@@ -68,6 +71,8 @@ func NewKeeper(
 		ictvK:  ictvK,
 		stkK:   stkK,
 		distrK: distrK,
+
+		stkCache: types.NewStakingCache(),
 
 		params: collections.NewItem(
 			sb,
