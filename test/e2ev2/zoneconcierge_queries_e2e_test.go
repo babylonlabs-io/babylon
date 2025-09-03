@@ -69,8 +69,6 @@ func TestZoneConciergeQueries(t *testing.T) {
 		return len(chans.Channels) == 2 && chans.Channels[1].PortId == zoneconciergetype.PortID && chans.Channels[1].State == channeltypes.OPEN
 	}, "timed out waiting for zoneconcierge channel to open")
 
-	bbnChannels = bbn.QueryIBCChannels()
-
 	tm.UpdateWalletsAccSeqNumber()
 	headerWallet := bbn.DefaultWallet()
 	headerWallet.VerifySentTx = true
@@ -97,10 +95,7 @@ func TestZoneConciergeQueries(t *testing.T) {
 	bbn.WaitForCondition(func() bool {
 		proof := bbn.QueryGetSealedEpochProof(1)
 		require.NotNil(t, proof.Epoch)
-		if proof.Epoch == nil {
-			return false
-		}
-		return true
+		return err == nil
 	}, "timed out waiting for epoch 1 to be sealed")
 
 	proofResp := bbn.QueryGetSealedEpochProof(1)
