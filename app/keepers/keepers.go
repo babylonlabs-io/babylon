@@ -703,7 +703,7 @@ func (ak *AppKeepers) InitKeepers(
 
 	ak.IncentiveKeeper.SetHooks(
 		incentivetypes.NewMultiIncentiveHooks(
-			ak.CoostakingKeeper.Hooks(),
+			ak.CoostakingKeeper.HookIncentives(),
 		),
 	)
 
