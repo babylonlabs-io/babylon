@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
-	bbntypes "github.com/babylonlabs-io/babylon/v4/types"
 	"github.com/stretchr/testify/require"
 )
 
@@ -107,7 +106,7 @@ func TestCoostakerRewardsTracker_UpdateScore(t *testing.T) {
 			require.Equal(t, tc.expectedDelta.String(), delta.String(), "delta should match expected")
 
 			// Verify the formula: Min(ActiveSatoshis, ActiveBaby / scoreRatioBtcByBaby)
-			expectedMin := bbntypes.Min(tc.activeSatoshis, tc.activeBaby.Quo(tc.scoreRatioBtcByBaby))
+			expectedMin := sdkmath.MinInt(tc.activeSatoshis, tc.activeBaby.Quo(tc.scoreRatioBtcByBaby))
 			require.Equal(t, expectedMin.String(), tracker.TotalScore.String(), "score should equal min of BTC and baby/ratio")
 		})
 	}
