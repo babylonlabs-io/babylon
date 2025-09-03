@@ -3282,10 +3282,8 @@ paths:
                     title: >-
                       epoch_interval is the number of consecutive blocks to form
                       an epoch
-                  enqueue_gas_fees:
-                    title: >-
-                      enqueue_gas_fees defines gas fees for different enqueue
-                      operations
+                  execute_gas:
+                    description: execute_gas defines raw gas for different executions.
                     type: object
                     properties:
                       delegate:
@@ -3303,15 +3301,9 @@ paths:
                       edit_validator:
                         type: string
                         format: uint64
-                      staking_update_params:
-                        type: string
-                        format: uint64
                       create_validator:
                         type: string
                         format: uint64
-                    description: >-
-                      EnqueueGasFees defines the gasFees for the enque message
-                      execution.
                   min_amount:
                     type: string
                     format: uint64
@@ -11722,6 +11714,258 @@ paths:
                       format: byte
       tags:
         - Query
+  /babylon/zoneconcierge/v1/bsn_last_sent_segment/{consumer_id}:
+    get:
+      summary: BSNLastSentSegment queries the last sent segment of a given consumer ID
+      operationId: BSNLastSentSegment
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              segment:
+                type: object
+                properties:
+                  btc_headers:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        header:
+                          type: string
+                          format: byte
+                        hash:
+                          type: string
+                          format: byte
+                        height:
+                          type: integer
+                          format: int64
+                        work:
+                          type: string
+                          format: byte
+                      description: >-
+                        BTCHeaderInfo is a structure that contains all relevant
+                        information about a
+
+                        BTC header
+                         - Full header bytes
+                         - Header hash for easy retrieval
+                         - Height of the header in the BTC chain
+                         - Total work spent on the header. This is the sum of the work corresponding
+                         to the header Bits field
+                           and the total work of the header.
+                title: >-
+                  Btc light client chain segment response provides a chain
+                  segment grown
+
+                  during
+
+                  last finalized epoch
+            description: |-
+              QueryBSNLastSentSegmentResponse is response type for the
+              QueryBSNLastSentSegmentResponse RPC method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                      description: >-
+                        A URL/resource name that uniquely identifies the type of
+                        the serialized
+
+                        protocol buffer message. This string must contain at
+                        least
+
+                        one "/" character. The last segment of the URL's path
+                        must represent
+
+                        the fully qualified name of the type (as in
+
+                        `path/google.protobuf.Duration`). The name should be in
+                        a canonical form
+
+                        (e.g., leading "." is not accepted).
+
+
+                        In practice, teams usually precompile into the binary
+                        all types that they
+
+                        expect it to use in the context of Any. However, for
+                        URLs which use the
+
+                        scheme `http`, `https`, or no scheme, one can optionally
+                        set up a type
+
+                        server that maps type URLs to message definitions as
+                        follows:
+
+
+                        * If no scheme is provided, `https` is assumed.
+
+                        * An HTTP GET on the URL must yield a
+                        [google.protobuf.Type][]
+                          value in binary format, or produce an error.
+                        * Applications are allowed to cache lookup results based
+                        on the
+                          URL, or have them precompiled into a binary to avoid any
+                          lookup. Therefore, binary compatibility needs to be preserved
+                          on changes to types. (Use versioned type names to manage
+                          breaking changes.)
+
+                        Note: this functionality is not currently available in
+                        the official
+
+                        protobuf release, and it is not used for type URLs
+                        beginning with
+
+                        type.googleapis.com.
+
+
+                        Schemes other than `http`, `https` (or the empty scheme)
+                        might be
+
+                        used with implementation specific semantics.
+                    value:
+                      type: string
+                      format: byte
+                      description: >-
+                        Must be a valid serialized protocol buffer of the above
+                        specified type.
+                  description: >-
+                    `Any` contains an arbitrary serialized protocol buffer
+                    message along with a
+
+                    URL that describes the type of the serialized message.
+
+
+                    Protobuf library provides support to pack/unpack Any values
+                    in the form
+
+                    of utility functions or additional generated methods of the
+                    Any type.
+
+
+                    Example 1: Pack and unpack a message in C++.
+
+                        Foo foo = ...;
+                        Any any;
+                        any.PackFrom(foo);
+                        ...
+                        if (any.UnpackTo(&foo)) {
+                          ...
+                        }
+
+                    Example 2: Pack and unpack a message in Java.
+
+                        Foo foo = ...;
+                        Any any = Any.pack(foo);
+                        ...
+                        if (any.is(Foo.class)) {
+                          foo = any.unpack(Foo.class);
+                        }
+                        // or ...
+                        if (any.isSameTypeAs(Foo.getDefaultInstance())) {
+                          foo = any.unpack(Foo.getDefaultInstance());
+                        }
+
+                    Example 3: Pack and unpack a message in Python.
+
+                        foo = Foo(...)
+                        any = Any()
+                        any.Pack(foo)
+                        ...
+                        if any.Is(Foo.DESCRIPTOR):
+                          any.Unpack(foo)
+                          ...
+
+                    Example 4: Pack and unpack a message in Go
+
+                         foo := &pb.Foo{...}
+                         any, err := anypb.New(foo)
+                         if err != nil {
+                           ...
+                         }
+                         ...
+                         foo := &pb.Foo{}
+                         if err := any.UnmarshalTo(foo); err != nil {
+                           ...
+                         }
+
+                    The pack methods provided by protobuf library will by
+                    default use
+
+                    'type.googleapis.com/full.type.name' as the type URL and the
+                    unpack
+
+                    methods only use the fully qualified type name after the
+                    last '/'
+
+                    in the type URL, for example "foo.bar.com/x/y.z" will yield
+                    type
+
+                    name "y.z".
+
+
+                    JSON
+
+
+                    The JSON representation of an `Any` value uses the regular
+
+                    representation of the deserialized, embedded message, with
+                    an
+
+                    additional field `@type` which contains the type URL.
+                    Example:
+
+                        package google.profile;
+                        message Person {
+                          string first_name = 1;
+                          string last_name = 2;
+                        }
+
+                        {
+                          "@type": "type.googleapis.com/google.profile.Person",
+                          "firstName": <string>,
+                          "lastName": <string>
+                        }
+
+                    If the embedded message type is well-known and has a custom
+                    JSON
+
+                    representation, that representation will be embedded adding
+                    a field
+
+                    `value` which holds the custom JSON in addition to the
+                    `@type`
+
+                    field. Example (for message [google.protobuf.Duration][]):
+
+                        {
+                          "@type": "type.googleapis.com/google.protobuf.Duration",
+                          "value": "1.212s"
+                        }
+      parameters:
+        - name: consumer_id
+          in: path
+          required: true
+          type: string
+      tags:
+        - Query
   /babylon/zoneconcierge/v1/finalized_bsns_info:
     get:
       summary: >-
@@ -12331,6 +12575,282 @@ paths:
           type: boolean
       tags:
         - Query
+  /babylon/zoneconcierge/v1/latest_epoch_header/{consumer_id}:
+    get:
+      summary: >-
+        LatestEpochHeader queries the latest epoch header for a given consumer
+        ID
+      operationId: LatestEpochHeader
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              header:
+                type: object
+                properties:
+                  consumer_id:
+                    type: string
+                    title: consumer_id is the unique ID of the consumer
+                  hash:
+                    type: string
+                    format: byte
+                    title: hash is the hash of this header
+                  height:
+                    type: string
+                    format: uint64
+                    title: >-
+                      height is the height of this header on the BSN's ledger.
+
+                      (hash, height) jointly provide the position of the header
+                      on the BSN ledger
+                  time:
+                    type: string
+                    format: date-time
+                    title: >-
+                      time is the timestamp of this header on the BSN's ledger.
+
+                      It is needed for a BSN to unbond all mature
+                      validators/delegations before
+
+                      this timestamp, when this header is BTC-finalised
+                  babylon_header_hash:
+                    type: string
+                    format: byte
+                    title: >-
+                      babylon_header_hash is the hash of the babylon block that
+                      includes this BSN
+
+                      header
+                  babylon_header_height:
+                    type: string
+                    format: uint64
+                    title: >-
+                      babylon_header_height is the height of the babylon block
+                      that includes this
+
+                      BSN header
+                  babylon_epoch:
+                    type: string
+                    format: uint64
+                    title: epoch is the epoch number of this header on Babylon ledger
+                  babylon_tx_hash:
+                    type: string
+                    format: byte
+                    title: >-
+                      babylon_tx_hash is the hash of the tx that includes this
+                      header
+
+                      (babylon_block_height, babylon_tx_hash) jointly provides
+                      the position of
+
+                      the header on Babylon ledger
+                title: IndexedHeaderResponse provides the metadata of a BSN header
+            description: |-
+              QueryLatestEpochHeaderResponse is response type for the
+              QueryLatestEpochHeaderResponse RPC method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                      description: >-
+                        A URL/resource name that uniquely identifies the type of
+                        the serialized
+
+                        protocol buffer message. This string must contain at
+                        least
+
+                        one "/" character. The last segment of the URL's path
+                        must represent
+
+                        the fully qualified name of the type (as in
+
+                        `path/google.protobuf.Duration`). The name should be in
+                        a canonical form
+
+                        (e.g., leading "." is not accepted).
+
+
+                        In practice, teams usually precompile into the binary
+                        all types that they
+
+                        expect it to use in the context of Any. However, for
+                        URLs which use the
+
+                        scheme `http`, `https`, or no scheme, one can optionally
+                        set up a type
+
+                        server that maps type URLs to message definitions as
+                        follows:
+
+
+                        * If no scheme is provided, `https` is assumed.
+
+                        * An HTTP GET on the URL must yield a
+                        [google.protobuf.Type][]
+                          value in binary format, or produce an error.
+                        * Applications are allowed to cache lookup results based
+                        on the
+                          URL, or have them precompiled into a binary to avoid any
+                          lookup. Therefore, binary compatibility needs to be preserved
+                          on changes to types. (Use versioned type names to manage
+                          breaking changes.)
+
+                        Note: this functionality is not currently available in
+                        the official
+
+                        protobuf release, and it is not used for type URLs
+                        beginning with
+
+                        type.googleapis.com.
+
+
+                        Schemes other than `http`, `https` (or the empty scheme)
+                        might be
+
+                        used with implementation specific semantics.
+                    value:
+                      type: string
+                      format: byte
+                      description: >-
+                        Must be a valid serialized protocol buffer of the above
+                        specified type.
+                  description: >-
+                    `Any` contains an arbitrary serialized protocol buffer
+                    message along with a
+
+                    URL that describes the type of the serialized message.
+
+
+                    Protobuf library provides support to pack/unpack Any values
+                    in the form
+
+                    of utility functions or additional generated methods of the
+                    Any type.
+
+
+                    Example 1: Pack and unpack a message in C++.
+
+                        Foo foo = ...;
+                        Any any;
+                        any.PackFrom(foo);
+                        ...
+                        if (any.UnpackTo(&foo)) {
+                          ...
+                        }
+
+                    Example 2: Pack and unpack a message in Java.
+
+                        Foo foo = ...;
+                        Any any = Any.pack(foo);
+                        ...
+                        if (any.is(Foo.class)) {
+                          foo = any.unpack(Foo.class);
+                        }
+                        // or ...
+                        if (any.isSameTypeAs(Foo.getDefaultInstance())) {
+                          foo = any.unpack(Foo.getDefaultInstance());
+                        }
+
+                    Example 3: Pack and unpack a message in Python.
+
+                        foo = Foo(...)
+                        any = Any()
+                        any.Pack(foo)
+                        ...
+                        if any.Is(Foo.DESCRIPTOR):
+                          any.Unpack(foo)
+                          ...
+
+                    Example 4: Pack and unpack a message in Go
+
+                         foo := &pb.Foo{...}
+                         any, err := anypb.New(foo)
+                         if err != nil {
+                           ...
+                         }
+                         ...
+                         foo := &pb.Foo{}
+                         if err := any.UnmarshalTo(foo); err != nil {
+                           ...
+                         }
+
+                    The pack methods provided by protobuf library will by
+                    default use
+
+                    'type.googleapis.com/full.type.name' as the type URL and the
+                    unpack
+
+                    methods only use the fully qualified type name after the
+                    last '/'
+
+                    in the type URL, for example "foo.bar.com/x/y.z" will yield
+                    type
+
+                    name "y.z".
+
+
+                    JSON
+
+
+                    The JSON representation of an `Any` value uses the regular
+
+                    representation of the deserialized, embedded message, with
+                    an
+
+                    additional field `@type` which contains the type URL.
+                    Example:
+
+                        package google.profile;
+                        message Person {
+                          string first_name = 1;
+                          string last_name = 2;
+                        }
+
+                        {
+                          "@type": "type.googleapis.com/google.profile.Person",
+                          "firstName": <string>,
+                          "lastName": <string>
+                        }
+
+                    If the embedded message type is well-known and has a custom
+                    JSON
+
+                    representation, that representation will be embedded adding
+                    a field
+
+                    `value` which holds the custom JSON in addition to the
+                    `@type`
+
+                    field. Example (for message [google.protobuf.Duration][]):
+
+                        {
+                          "@type": "type.googleapis.com/google.protobuf.Duration",
+                          "value": "1.212s"
+                        }
+      parameters:
+        - name: consumer_id
+          in: path
+          required: true
+          type: string
+      tags:
+        - Query
   /babylon/zoneconcierge/v1/params:
     get:
       summary: Params queries the parameters of the module.
@@ -12550,6 +13070,343 @@ paths:
                           "@type": "type.googleapis.com/google.protobuf.Duration",
                           "value": "1.212s"
                         }
+      tags:
+        - Query
+  /babylon/zoneconcierge/v1/sealed_epoch_proof/{epoch_num}:
+    get:
+      summary: SealedEpochProof queries the proof of a sealed epoch
+      operationId: GetSealedEpochProof
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              epoch:
+                type: object
+                properties:
+                  validator_set:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        validator_address:
+                          type: string
+                          title: validator_address is the address of the validator
+                        bls_pub_key:
+                          type: string
+                          format: byte
+                          title: bls_pub_key is the BLS public key of the validator
+                        voting_power:
+                          type: string
+                          format: uint64
+                          title: >-
+                            voting_power is the voting power of the validator at
+                            the given epoch
+                      title: >-
+                        ValidatorWithBlsKey couples validator address, voting
+                        power, and its bls
+
+                        public key
+                    title: >-
+                      validator_set is the validator set of the sealed epoch
+
+                      This validator set has generated a BLS multisig on
+                      `app_hash` of
+
+                      the sealer header
+                  proof_epoch_info:
+                    title: >-
+                      proof_epoch_info is the Merkle proof that the epoch's
+                      metadata is committed
+
+                      to `app_hash` of the sealer header
+                    type: object
+                    properties:
+                      ops:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            type:
+                              type: string
+                            key:
+                              type: string
+                              format: byte
+                            data:
+                              type: string
+                              format: byte
+                          title: >-
+                            ProofOp defines an operation used for calculating
+                            Merkle root
+
+                            The data could be arbitrary format, providing
+                            nessecary data
+
+                            for example neighbouring node hash
+                  proof_epoch_val_set:
+                    title: >-
+                      proof_epoch_info is the Merkle proof that the epoch's
+                      validator set is
+
+                      committed to `app_hash` of the sealer header
+                    type: object
+                    properties:
+                      ops:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            type:
+                              type: string
+                            key:
+                              type: string
+                              format: byte
+                            data:
+                              type: string
+                              format: byte
+                          title: >-
+                            ProofOp defines an operation used for calculating
+                            Merkle root
+
+                            The data could be arbitrary format, providing
+                            nessecary data
+
+                            for example neighbouring node hash
+                title: >-
+                  ProofEpochSealedResponse provides a complete proof that an
+                  epoch is sealed
+
+                  by the sealer header, containing all metadata and checkpoint
+                  data needed
+
+                  for verification.
+
+                  i.e., the 2nd header of the next epoch With the access of
+                  metadata
+
+                  - Metadata of this epoch, which includes the sealer header
+
+                  - Raw checkpoint of this epoch
+
+                  The verifier can perform the following verification rules:
+
+                  - The raw checkpoint's `app_hash` is same as in the sealer
+                  header
+
+                  - More than 2/3 (in voting power) validators in the validator
+                  set of this
+
+                  epoch have signed `app_hash` of the sealer header
+
+                  - The epoch metadata is committed to the `app_hash` of the
+                  sealer header
+
+                  - The validator set is committed to the `app_hash` of the
+                  sealer header
+            description: |-
+              QuerySealedEpochProofResponse is response type for the
+              QuerySealedEpochProofResponse RPC method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                      description: >-
+                        A URL/resource name that uniquely identifies the type of
+                        the serialized
+
+                        protocol buffer message. This string must contain at
+                        least
+
+                        one "/" character. The last segment of the URL's path
+                        must represent
+
+                        the fully qualified name of the type (as in
+
+                        `path/google.protobuf.Duration`). The name should be in
+                        a canonical form
+
+                        (e.g., leading "." is not accepted).
+
+
+                        In practice, teams usually precompile into the binary
+                        all types that they
+
+                        expect it to use in the context of Any. However, for
+                        URLs which use the
+
+                        scheme `http`, `https`, or no scheme, one can optionally
+                        set up a type
+
+                        server that maps type URLs to message definitions as
+                        follows:
+
+
+                        * If no scheme is provided, `https` is assumed.
+
+                        * An HTTP GET on the URL must yield a
+                        [google.protobuf.Type][]
+                          value in binary format, or produce an error.
+                        * Applications are allowed to cache lookup results based
+                        on the
+                          URL, or have them precompiled into a binary to avoid any
+                          lookup. Therefore, binary compatibility needs to be preserved
+                          on changes to types. (Use versioned type names to manage
+                          breaking changes.)
+
+                        Note: this functionality is not currently available in
+                        the official
+
+                        protobuf release, and it is not used for type URLs
+                        beginning with
+
+                        type.googleapis.com.
+
+
+                        Schemes other than `http`, `https` (or the empty scheme)
+                        might be
+
+                        used with implementation specific semantics.
+                    value:
+                      type: string
+                      format: byte
+                      description: >-
+                        Must be a valid serialized protocol buffer of the above
+                        specified type.
+                  description: >-
+                    `Any` contains an arbitrary serialized protocol buffer
+                    message along with a
+
+                    URL that describes the type of the serialized message.
+
+
+                    Protobuf library provides support to pack/unpack Any values
+                    in the form
+
+                    of utility functions or additional generated methods of the
+                    Any type.
+
+
+                    Example 1: Pack and unpack a message in C++.
+
+                        Foo foo = ...;
+                        Any any;
+                        any.PackFrom(foo);
+                        ...
+                        if (any.UnpackTo(&foo)) {
+                          ...
+                        }
+
+                    Example 2: Pack and unpack a message in Java.
+
+                        Foo foo = ...;
+                        Any any = Any.pack(foo);
+                        ...
+                        if (any.is(Foo.class)) {
+                          foo = any.unpack(Foo.class);
+                        }
+                        // or ...
+                        if (any.isSameTypeAs(Foo.getDefaultInstance())) {
+                          foo = any.unpack(Foo.getDefaultInstance());
+                        }
+
+                    Example 3: Pack and unpack a message in Python.
+
+                        foo = Foo(...)
+                        any = Any()
+                        any.Pack(foo)
+                        ...
+                        if any.Is(Foo.DESCRIPTOR):
+                          any.Unpack(foo)
+                          ...
+
+                    Example 4: Pack and unpack a message in Go
+
+                         foo := &pb.Foo{...}
+                         any, err := anypb.New(foo)
+                         if err != nil {
+                           ...
+                         }
+                         ...
+                         foo := &pb.Foo{}
+                         if err := any.UnmarshalTo(foo); err != nil {
+                           ...
+                         }
+
+                    The pack methods provided by protobuf library will by
+                    default use
+
+                    'type.googleapis.com/full.type.name' as the type URL and the
+                    unpack
+
+                    methods only use the fully qualified type name after the
+                    last '/'
+
+                    in the type URL, for example "foo.bar.com/x/y.z" will yield
+                    type
+
+                    name "y.z".
+
+
+                    JSON
+
+
+                    The JSON representation of an `Any` value uses the regular
+
+                    representation of the deserialized, embedded message, with
+                    an
+
+                    additional field `@type` which contains the type URL.
+                    Example:
+
+                        package google.profile;
+                        message Person {
+                          string first_name = 1;
+                          string last_name = 2;
+                        }
+
+                        {
+                          "@type": "type.googleapis.com/google.profile.Person",
+                          "firstName": <string>,
+                          "lastName": <string>
+                        }
+
+                    If the embedded message type is well-known and has a custom
+                    JSON
+
+                    representation, that representation will be embedded adding
+                    a field
+
+                    `value` which holds the custom JSON in addition to the
+                    `@type`
+
+                    field. Example (for message [google.protobuf.Duration][]):
+
+                        {
+                          "@type": "type.googleapis.com/google.protobuf.Duration",
+                          "value": "1.212s"
+                        }
+      parameters:
+        - name: epoch_num
+          in: path
+          required: true
+          type: string
+          format: uint64
       tags:
         - Query
 definitions:
@@ -13789,31 +14646,6 @@ definitions:
     title: |-
       DelegationStateUpdate is the message that records a state update of a
       delegation
-  babylon.epoching.v1.EnqueueGasFees:
-    type: object
-    properties:
-      delegate:
-        type: string
-        format: uint64
-      undelegate:
-        type: string
-        format: uint64
-      begin_redelegate:
-        type: string
-        format: uint64
-      cancel_unbonding_delegation:
-        type: string
-        format: uint64
-      edit_validator:
-        type: string
-        format: uint64
-      staking_update_params:
-        type: string
-        format: uint64
-      create_validator:
-        type: string
-        format: uint64
-    description: EnqueueGasFees defines the gasFees for the enque message execution.
   babylon.epoching.v1.EpochResponse:
     type: object
     properties:
@@ -13857,6 +14689,28 @@ definitions:
           the validator set has generated a BLS multisig on the hash,
           i.e., hash of the last block in the epoch as hex string.
     title: EpochResponse is a structure that contains the metadata of an epoch
+  babylon.epoching.v1.ExecuteGas:
+    type: object
+    properties:
+      delegate:
+        type: string
+        format: uint64
+      undelegate:
+        type: string
+        format: uint64
+      begin_redelegate:
+        type: string
+        format: uint64
+      cancel_unbonding_delegation:
+        type: string
+        format: uint64
+      edit_validator:
+        type: string
+        format: uint64
+      create_validator:
+        type: string
+        format: uint64
+    description: ExecuteGas defines the raw gas for the enqueued message execution.
   babylon.epoching.v1.Params:
     type: object
     properties:
@@ -13864,8 +14718,8 @@ definitions:
         type: string
         format: uint64
         title: epoch_interval is the number of consecutive blocks to form an epoch
-      enqueue_gas_fees:
-        title: enqueue_gas_fees defines gas fees for different enqueue operations
+      execute_gas:
+        description: execute_gas defines raw gas for different executions.
         type: object
         properties:
           delegate:
@@ -13883,13 +14737,9 @@ definitions:
           edit_validator:
             type: string
             format: uint64
-          staking_update_params:
-            type: string
-            format: uint64
           create_validator:
             type: string
             format: uint64
-        description: EnqueueGasFees defines the gasFees for the enque message execution.
       min_amount:
         type: string
         format: uint64
@@ -14341,8 +15191,8 @@ definitions:
             title: >-
               epoch_interval is the number of consecutive blocks to form an
               epoch
-          enqueue_gas_fees:
-            title: enqueue_gas_fees defines gas fees for different enqueue operations
+          execute_gas:
+            description: execute_gas defines raw gas for different executions.
             type: object
             properties:
               delegate:
@@ -14360,15 +15210,9 @@ definitions:
               edit_validator:
                 type: string
                 format: uint64
-              staking_update_params:
-                type: string
-                format: uint64
               create_validator:
                 type: string
                 format: uint64
-            description: >-
-              EnqueueGasFees defines the gasFees for the enque message
-              execution.
           min_amount:
             type: string
             format: uint64
@@ -20044,6 +20888,32 @@ definitions:
     title: |-
       Each provided OP_RETURN transaction can be identified by hash of block in
       which transaction was included and transaction index in the block
+  babylon.btclightclient.v1.BTCHeaderInfo:
+    type: object
+    properties:
+      header:
+        type: string
+        format: byte
+      hash:
+        type: string
+        format: byte
+      height:
+        type: integer
+        format: int64
+      work:
+        type: string
+        format: byte
+    description: >-
+      BTCHeaderInfo is a structure that contains all relevant information about
+      a
+
+      BTC header
+       - Full header bytes
+       - Header hash for easy retrieval
+       - Height of the header in the BTC chain
+       - Total work spent on the header. This is the sum of the work corresponding
+       to the header Bits field
+         and the total work of the header.
   babylon.checkpointing.v1.RawCheckpoint:
     type: object
     properties:
@@ -20134,6 +21004,41 @@ definitions:
           the validator set has generated a BLS multisig on the hash,
           i.e., hash of the last block in the epoch
     title: Epoch is a structure that contains the metadata of an epoch
+  babylon.zoneconcierge.v1.BTCChainSegmentResponse:
+    type: object
+    properties:
+      btc_headers:
+        type: array
+        items:
+          type: object
+          properties:
+            header:
+              type: string
+              format: byte
+            hash:
+              type: string
+              format: byte
+            height:
+              type: integer
+              format: int64
+            work:
+              type: string
+              format: byte
+          description: >-
+            BTCHeaderInfo is a structure that contains all relevant information
+            about a
+
+            BTC header
+             - Full header bytes
+             - Header hash for easy retrieval
+             - Height of the header in the BTC chain
+             - Total work spent on the header. This is the sum of the work corresponding
+             to the header Bits field
+               and the total work of the header.
+    title: |-
+      Btc light client chain segment response provides a chain segment grown
+      during
+      last finalized epoch
   babylon.zoneconcierge.v1.FinalizedBSNData:
     type: object
     properties:
@@ -20542,6 +21447,65 @@ definitions:
 
           the header on Babylon ledger
     title: IndexedHeader is the metadata of a BSN header
+  babylon.zoneconcierge.v1.IndexedHeaderResponse:
+    type: object
+    properties:
+      consumer_id:
+        type: string
+        title: consumer_id is the unique ID of the consumer
+      hash:
+        type: string
+        format: byte
+        title: hash is the hash of this header
+      height:
+        type: string
+        format: uint64
+        title: >-
+          height is the height of this header on the BSN's ledger.
+
+          (hash, height) jointly provide the position of the header on the BSN
+          ledger
+      time:
+        type: string
+        format: date-time
+        title: >-
+          time is the timestamp of this header on the BSN's ledger.
+
+          It is needed for a BSN to unbond all mature validators/delegations
+          before
+
+          this timestamp, when this header is BTC-finalised
+      babylon_header_hash:
+        type: string
+        format: byte
+        title: >-
+          babylon_header_hash is the hash of the babylon block that includes
+          this BSN
+
+          header
+      babylon_header_height:
+        type: string
+        format: uint64
+        title: >-
+          babylon_header_height is the height of the babylon block that includes
+          this
+
+          BSN header
+      babylon_epoch:
+        type: string
+        format: uint64
+        title: epoch is the epoch number of this header on Babylon ledger
+      babylon_tx_hash:
+        type: string
+        format: byte
+        title: >-
+          babylon_tx_hash is the hash of the tx that includes this header
+
+          (babylon_block_height, babylon_tx_hash) jointly provides the position
+          of
+
+          the header on Babylon ledger
+    title: IndexedHeaderResponse provides the metadata of a BSN header
   babylon.zoneconcierge.v1.Params:
     type: object
     properties:
@@ -20652,6 +21616,97 @@ definitions:
 
       - The epoch metadata is committed to the `app_hash` of the sealer header
 
+      - The validator set is committed to the `app_hash` of the sealer header
+  babylon.zoneconcierge.v1.ProofEpochSealedResponse:
+    type: object
+    properties:
+      validator_set:
+        type: array
+        items:
+          type: object
+          properties:
+            validator_address:
+              type: string
+              title: validator_address is the address of the validator
+            bls_pub_key:
+              type: string
+              format: byte
+              title: bls_pub_key is the BLS public key of the validator
+            voting_power:
+              type: string
+              format: uint64
+              title: >-
+                voting_power is the voting power of the validator at the given
+                epoch
+          title: >-
+            ValidatorWithBlsKey couples validator address, voting power, and its
+            bls
+
+            public key
+        title: |-
+          validator_set is the validator set of the sealed epoch
+          This validator set has generated a BLS multisig on `app_hash` of
+          the sealer header
+      proof_epoch_info:
+        title: >-
+          proof_epoch_info is the Merkle proof that the epoch's metadata is
+          committed
+
+          to `app_hash` of the sealer header
+        type: object
+        properties:
+          ops:
+            type: array
+            items:
+              type: object
+              properties:
+                type:
+                  type: string
+                key:
+                  type: string
+                  format: byte
+                data:
+                  type: string
+                  format: byte
+              title: |-
+                ProofOp defines an operation used for calculating Merkle root
+                The data could be arbitrary format, providing nessecary data
+                for example neighbouring node hash
+      proof_epoch_val_set:
+        title: |-
+          proof_epoch_info is the Merkle proof that the epoch's validator set is
+          committed to `app_hash` of the sealer header
+        type: object
+        properties:
+          ops:
+            type: array
+            items:
+              type: object
+              properties:
+                type:
+                  type: string
+                key:
+                  type: string
+                  format: byte
+                data:
+                  type: string
+                  format: byte
+              title: |-
+                ProofOp defines an operation used for calculating Merkle root
+                The data could be arbitrary format, providing nessecary data
+                for example neighbouring node hash
+    title: |-
+      ProofEpochSealedResponse provides a complete proof that an epoch is sealed
+      by the sealer header, containing all metadata and checkpoint data needed
+      for verification.
+      i.e., the 2nd header of the next epoch With the access of metadata
+      - Metadata of this epoch, which includes the sealer header
+      - Raw checkpoint of this epoch
+      The verifier can perform the following verification rules:
+      - The raw checkpoint's `app_hash` is same as in the sealer header
+      - More than 2/3 (in voting power) validators in the validator set of this
+      epoch have signed `app_hash` of the sealer header
+      - The epoch metadata is committed to the `app_hash` of the sealer header
       - The validator set is committed to the `app_hash` of the sealer header
   babylon.zoneconcierge.v1.ProofFinalizedHeader:
     type: object
@@ -20834,6 +21889,47 @@ definitions:
     title: |-
       ProofFinalizedHeader is a set of proofs that attest a header is
       BTC-finalised
+  babylon.zoneconcierge.v1.QueryBSNLastSentSegmentResponse:
+    type: object
+    properties:
+      segment:
+        type: object
+        properties:
+          btc_headers:
+            type: array
+            items:
+              type: object
+              properties:
+                header:
+                  type: string
+                  format: byte
+                hash:
+                  type: string
+                  format: byte
+                height:
+                  type: integer
+                  format: int64
+                work:
+                  type: string
+                  format: byte
+              description: >-
+                BTCHeaderInfo is a structure that contains all relevant
+                information about a
+
+                BTC header
+                 - Full header bytes
+                 - Header hash for easy retrieval
+                 - Height of the header in the BTC chain
+                 - Total work spent on the header. This is the sum of the work corresponding
+                 to the header Bits field
+                   and the total work of the header.
+        title: |-
+          Btc light client chain segment response provides a chain segment grown
+          during
+          last finalized epoch
+    description: |-
+      QueryBSNLastSentSegmentResponse is response type for the
+      QueryBSNLastSentSegmentResponse RPC method.
   babylon.zoneconcierge.v1.QueryFinalizedBSNsInfoResponse:
     type: object
     properties:
@@ -21198,6 +22294,192 @@ definitions:
     description: |-
       QueryFinalizedBSNsInfoResponse is response type for the
       Query/FinalizedBSNsInfo RPC method.
+  babylon.zoneconcierge.v1.QueryGetSealedEpochProofResponse:
+    type: object
+    properties:
+      epoch:
+        type: object
+        properties:
+          validator_set:
+            type: array
+            items:
+              type: object
+              properties:
+                validator_address:
+                  type: string
+                  title: validator_address is the address of the validator
+                bls_pub_key:
+                  type: string
+                  format: byte
+                  title: bls_pub_key is the BLS public key of the validator
+                voting_power:
+                  type: string
+                  format: uint64
+                  title: >-
+                    voting_power is the voting power of the validator at the
+                    given epoch
+              title: >-
+                ValidatorWithBlsKey couples validator address, voting power, and
+                its bls
+
+                public key
+            title: |-
+              validator_set is the validator set of the sealed epoch
+              This validator set has generated a BLS multisig on `app_hash` of
+              the sealer header
+          proof_epoch_info:
+            title: >-
+              proof_epoch_info is the Merkle proof that the epoch's metadata is
+              committed
+
+              to `app_hash` of the sealer header
+            type: object
+            properties:
+              ops:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                    key:
+                      type: string
+                      format: byte
+                    data:
+                      type: string
+                      format: byte
+                  title: >-
+                    ProofOp defines an operation used for calculating Merkle
+                    root
+
+                    The data could be arbitrary format, providing nessecary data
+
+                    for example neighbouring node hash
+          proof_epoch_val_set:
+            title: >-
+              proof_epoch_info is the Merkle proof that the epoch's validator
+              set is
+
+              committed to `app_hash` of the sealer header
+            type: object
+            properties:
+              ops:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                    key:
+                      type: string
+                      format: byte
+                    data:
+                      type: string
+                      format: byte
+                  title: >-
+                    ProofOp defines an operation used for calculating Merkle
+                    root
+
+                    The data could be arbitrary format, providing nessecary data
+
+                    for example neighbouring node hash
+        title: >-
+          ProofEpochSealedResponse provides a complete proof that an epoch is
+          sealed
+
+          by the sealer header, containing all metadata and checkpoint data
+          needed
+
+          for verification.
+
+          i.e., the 2nd header of the next epoch With the access of metadata
+
+          - Metadata of this epoch, which includes the sealer header
+
+          - Raw checkpoint of this epoch
+
+          The verifier can perform the following verification rules:
+
+          - The raw checkpoint's `app_hash` is same as in the sealer header
+
+          - More than 2/3 (in voting power) validators in the validator set of
+          this
+
+          epoch have signed `app_hash` of the sealer header
+
+          - The epoch metadata is committed to the `app_hash` of the sealer
+          header
+
+          - The validator set is committed to the `app_hash` of the sealer
+          header
+    description: |-
+      QuerySealedEpochProofResponse is response type for the
+      QuerySealedEpochProofResponse RPC method.
+  babylon.zoneconcierge.v1.QueryLatestEpochHeaderResponse:
+    type: object
+    properties:
+      header:
+        type: object
+        properties:
+          consumer_id:
+            type: string
+            title: consumer_id is the unique ID of the consumer
+          hash:
+            type: string
+            format: byte
+            title: hash is the hash of this header
+          height:
+            type: string
+            format: uint64
+            title: >-
+              height is the height of this header on the BSN's ledger.
+
+              (hash, height) jointly provide the position of the header on the
+              BSN ledger
+          time:
+            type: string
+            format: date-time
+            title: >-
+              time is the timestamp of this header on the BSN's ledger.
+
+              It is needed for a BSN to unbond all mature validators/delegations
+              before
+
+              this timestamp, when this header is BTC-finalised
+          babylon_header_hash:
+            type: string
+            format: byte
+            title: >-
+              babylon_header_hash is the hash of the babylon block that includes
+              this BSN
+
+              header
+          babylon_header_height:
+            type: string
+            format: uint64
+            title: >-
+              babylon_header_height is the height of the babylon block that
+              includes this
+
+              BSN header
+          babylon_epoch:
+            type: string
+            format: uint64
+            title: epoch is the epoch number of this header on Babylon ledger
+          babylon_tx_hash:
+            type: string
+            format: byte
+            title: >-
+              babylon_tx_hash is the hash of the tx that includes this header
+
+              (babylon_block_height, babylon_tx_hash) jointly provides the
+              position of
+
+              the header on Babylon ledger
+        title: IndexedHeaderResponse provides the metadata of a BSN header
+    description: |-
+      QueryLatestEpochHeaderResponse is response type for the
+      QueryLatestEpochHeaderResponse RPC method.
   babylon.zoneconcierge.v1.QueryParamsResponse:
     type: object
     properties:

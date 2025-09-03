@@ -157,9 +157,7 @@ it is needed to register the migration there too.
 **Delaying wrapped messages to the end of epochs.** The Epoching module
 maintains a message queue for each epoch. Upon each wrapped message, the
 Epoching module performs basic sanity checks, then enqueues the message to the
-message queue. When the epoch ends, the Epoching module will forward queued
-messages to the Staking module. Consequently, the Staking module receives and
-handles staking-related messages, and performs validator set updates.
+message queue. Before a message is enqueued, the Epoching module locks the associated funds for the duration of the epoch. At epoch completion, it unlocks those funds to enable message execution, making the message eligible for forwarding. When the epoch ends, the Epoching module will forward queued messages to the Staking module. Consequently, the Staking module receives and handles staking-related messages, and performs validator set updates.
 
 **Bitcoin-assisted Unbonding.** Babylon implements the Bitcoin-assisted
 unbonding mechanism by invoking the Staking module upon a checkpointed epoch .
@@ -190,7 +188,27 @@ message Params {
   // epoch_interval is the number of consecutive blocks to form an epoch
   uint64 epoch_interval = 1
       [ (gogoproto.moretags) = "yaml:\"epoch_interval\"" ];
+  
+  // execute_gas defines raw gas for different executions.
+  ExecuteGas execute_gas = 2
+        [ (gogoproto.nullable) = false, (gogoproto.moretags) = "yaml:\"enqueue_gas_fees\"" ];
+    
+  // minimum_amount is a minimum amount for staking message cancel_unbonding_delegation
+  uint64 min_amount = 3
+      [ (gogoproto.moretags) = "yaml:\"min_amount\"" ];
 }
+
+// ExecuteGas defines the raw gas for the enqueued message execution.
+  message ExecuteGas {
+    option (gogoproto.equal) = true;
+
+    uint64 delegate = 1 [(gogoproto.moretags) = "yaml:\"delegate\""];
+    uint64 undelegate = 2 [(gogoproto.moretags) = "yaml:\"undelegate\""];
+    uint64 begin_redelegate = 3 [(gogoproto.moretags) = "yaml:\"begin_redelegate\""];
+    uint64 cancel_unbonding_delegation = 4 [(gogoproto.moretags) = "yaml:\"cancel_unbonding_delegation\""];
+    uint64 edit_validator = 5 [(gogoproto.moretags) = "yaml:\"edit_validator\""];
+    uint64 create_validator = 6 [(gogoproto.moretags) = "yaml:\"create_validator\""];
+  }
 ```
 
 ### Epochs
@@ -422,11 +440,12 @@ Upon `EndBlocker`, the Epoching module of each Babylon node will [execute the
 following](./abci.go) *if at the last block of the current epoch*:
 
 1. Get all queued messages of this epoch in the epoch message queue storage.
-2. Forward each of the queued messages to the corresponding message handler in
+2. Unescrow (unlock) the funds previously locked for these messages so they are available for staking-message execution.
+3. Forward each of the queued messages to the corresponding message handler in
    the Staking module.
-3. Emit events about the execution results of the messages.
-4. Invoke the Staking module to update the validator set.
-5. Trigger hooks and emit events that the chain has ended the current epoch.
+4. Emit events about the execution results of the messages.
+5. Invoke the Staking module to update the validator set.
+6. Trigger hooks and emit events that the chain has ended the current epoch.
 
 ## Hooks
 

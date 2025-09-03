@@ -92,15 +92,13 @@ func EndBlocker(ctx context.Context, k keeper.Keeper) ([]abci.ValidatorUpdate, e
 		for _, msg := range queuedMsgs {
 			msgId := hex.EncodeToString(msg.MsgId)
 
-			unlockCtx, unlockCommit := sdkCtx.CacheContext()
 			// Unlock funds first
-			if err := k.UnLockFunds(unlockCtx, msg); err != nil {
+			if err := k.UnlockFundsForDelegateMsgs(sdkCtx, msg); err != nil {
 				k.Logger(sdkCtx).Error("failed to unlock funds for message",
 					"msgId", msgId,
 					"error", err)
 				continue
 			} else {
-				unlockCommit()
 				k.Logger(sdkCtx).Info("successfully unlocked funds for message", "msgId", msgId)
 			}
 

@@ -53,8 +53,8 @@ func TestLockFunds_WrappedDelegate(t *testing.T) {
 	delegatePoolAddr := helper.App.AccountKeeper.GetModuleAddress(types.DelegatePoolModuleName)
 	poolBalanceBefore := helper.App.BankKeeper.GetBalance(ctx, delegatePoolAddr, "ubbn")
 
-	// Test LockFunds
-	err = helper.App.EpochingKeeper.LockFunds(ctx, queuedMsg)
+	// Test LockFundsForDelegateMsgs
+	err = helper.App.EpochingKeeper.LockFundsForDelegateMsgs(ctx, queuedMsg)
 	require.NoError(t, err)
 
 	// Verify user balance decreased
@@ -67,8 +67,8 @@ func TestLockFunds_WrappedDelegate(t *testing.T) {
 	expectedPoolBalance := poolBalanceBefore.Amount.Add(amount.Amount)
 	require.Equal(t, expectedPoolBalance, poolBalanceAfter.Amount, "Pool balance should increase by locked amount")
 
-	// Test UnLockFunds
-	err = helper.App.EpochingKeeper.UnLockFunds(ctx, queuedMsg)
+	// Test UnlockFundsForDelegateMsgs
+	err = helper.App.EpochingKeeper.UnlockFundsForDelegateMsgs(ctx, queuedMsg)
 	require.NoError(t, err)
 
 	// Verify user balance restored
@@ -130,7 +130,7 @@ func TestLockFunds_WrappedCreateValidator(t *testing.T) {
 	poolBalanceBefore := helper.App.BankKeeper.GetBalance(ctx, delegatePoolAddr, "ubbn")
 
 	// Test LockFunds
-	err = helper.App.EpochingKeeper.LockFunds(ctx, queuedMsg)
+	err = helper.App.EpochingKeeper.LockFundsForDelegateMsgs(ctx, queuedMsg)
 	require.NoError(t, err)
 
 	// Verify validator balance decreased
@@ -143,8 +143,8 @@ func TestLockFunds_WrappedCreateValidator(t *testing.T) {
 	expectedPoolBalance := poolBalanceBefore.Amount.Add(amount.Amount)
 	require.Equal(t, expectedPoolBalance, poolBalanceAfter.Amount, "Pool balance should increase by locked amount")
 
-	// Test UnLockFunds
-	err = helper.App.EpochingKeeper.UnLockFunds(ctx, queuedMsg)
+	// Test UnlockFundsForDelegateMsgs
+	err = helper.App.EpochingKeeper.UnlockFundsForDelegateMsgs(ctx, queuedMsg)
 	require.NoError(t, err)
 
 	// Verify validator balance restored
@@ -190,8 +190,8 @@ func TestLockFunds_UnsupportedMessageType(t *testing.T) {
 	delegatePoolAddr := helper.App.AccountKeeper.GetModuleAddress(types.DelegatePoolModuleName)
 	initialPoolBalance := helper.App.BankKeeper.GetBalance(ctx, delegatePoolAddr, "ubbn")
 
-	// Test LockFunds - should not lock funds for unsupported message types
-	err = helper.App.EpochingKeeper.LockFunds(ctx, queuedMsg)
+	// Test LockFundsForDelegateMsgs - should not lock funds for unsupported message types
+	err = helper.App.EpochingKeeper.LockFundsForDelegateMsgs(ctx, queuedMsg)
 	require.NoError(t, err) // Should not error, but should do nothing
 
 	// Verify no balance changes
@@ -201,8 +201,8 @@ func TestLockFunds_UnsupportedMessageType(t *testing.T) {
 	require.Equal(t, initialUserBalance.Amount, userBalanceAfter.Amount, "User balance should not change for unsupported message")
 	require.Equal(t, initialPoolBalance.Amount, poolBalanceAfter.Amount, "Pool balance should not change for unsupported message")
 
-	// Test UnLockFunds - should also not error
-	err = helper.App.EpochingKeeper.UnLockFunds(ctx, queuedMsg)
+	// Test UnlockFundsForDelegateMsgs - should also not error
+	err = helper.App.EpochingKeeper.UnlockFundsForDelegateMsgs(ctx, queuedMsg)
 	require.NoError(t, err) // Should not error, but should do nothing
 }
 
@@ -376,20 +376,21 @@ func TestIntegrationUnlockMessageExecution_WrappedDelegate(t *testing.T) {
 			finalUserBalance := helper.App.BankKeeper.GetBalance(ctx, delegatorAddr, amount.Denom)
 			finalPoolBalance := helper.App.BankKeeper.GetBalance(ctx, delegatePoolAddr, amount.Denom)
 
-			if tc.expectUnlockErr {
+			switch {
+			case tc.expectUnlockErr:
 				// If unlock failed, pool balance should remain the same (no funds were locked)
 				require.Equal(t, initialPoolBalance.Amount, finalPoolBalance.Amount,
 					"Pool balance should remain unchanged when unlock fails")
 				// User balance should remain unchanged too
 				require.Equal(t, initialUserBalance.Amount, finalUserBalance.Amount,
 					"User balance should remain unchanged when unlock fails")
-			} else if tc.expectMessageExecErr {
+			case tc.expectMessageExecErr:
 				// If unlock succeeded but execution failed, funds should be returned (automatic refund)
 				require.Equal(t, finalUserBalance.Amount, initialUserBalance.Amount,
 					"User balance should return to initial level due to automatic refund after execution failure")
 				require.Equal(t, finalPoolBalance.Amount, initialPoolBalance.Amount,
 					"Pool balance should return to initial level due to automatic refund")
-			} else {
+			default:
 				// If both unlock and execution succeeded, funds should be used for delegation
 				// User balance should remain at locked level (funds transferred to staking module)
 				lockedBalance := initialUserBalance.Amount.Sub(amount.Amount)
@@ -399,7 +400,8 @@ func TestIntegrationUnlockMessageExecution_WrappedDelegate(t *testing.T) {
 
 			// Check delegation changes to verify if execution actually happened
 			// This is the real test of EndBlocker's continue logic
-			finalDelegationShares := sdkmath.LegacyZeroDec()
+
+			var finalDelegationShares sdkmath.LegacyDec
 			delegation, err = helper.App.StakingKeeper.GetDelegation(ctx, delegatorAddr, validatorAddr)
 			if err == nil {
 				finalDelegationShares = delegation.Shares
@@ -408,15 +410,16 @@ func TestIntegrationUnlockMessageExecution_WrappedDelegate(t *testing.T) {
 			}
 
 			// Verify execution behavior based on unlock success/failure
-			if tc.expectUnlockErr {
+			switch {
+			case tc.expectUnlockErr:
 				// Case 2: Unlock failed → EndBlocker continue → execution skipped
 				require.True(t, initialDelegationShares.Equal(finalDelegationShares),
 					"Delegation shares should remain unchanged when unlock fails (execution skipped by EndBlocker continue)")
-			} else if tc.expectMessageExecErr {
+			case tc.expectMessageExecErr:
 				// Case 3: Unlock succeeded but execution failed → no delegation created
 				require.True(t, initialDelegationShares.Equal(finalDelegationShares),
 					"Delegation shares should remain unchanged when execution fails (despite unlock success)")
-			} else {
+			default:
 				// Case 1: Both unlock and execution succeeded → delegation created
 				require.True(t, finalDelegationShares.GT(initialDelegationShares),
 					"Delegation shares should increase when both unlock and execution succeed")
@@ -495,7 +498,7 @@ func TestIntegrationLockUnlock_WrappedDelegate(t *testing.T) {
 				return delegatorAddr, validatorAddr, excessiveAmount, wrappedMsg
 			},
 			expectWrappedMsgErr: true,
-			expectMessageQueued: false, // LockFunds fails first, so EnqueueMsg never executes
+			expectMessageQueued: false, // LockFundsForDelegateMsgs fails first, so EnqueueMsg never executes
 			description:         "Case 3: validation pass → lock fail → no enqueue (atomic failure)",
 		},
 		{
@@ -615,8 +618,8 @@ func TestLockFundsError_InsufficientBalance(t *testing.T) {
 		},
 	}
 
-	// Test LockFunds - should fail due to insufficient balance
-	err = helper.App.EpochingKeeper.LockFunds(ctx, queuedMsg)
+	// Test LockFundsForDelegateMsgs - should fail due to insufficient balance
+	err = helper.App.EpochingKeeper.LockFundsForDelegateMsgs(ctx, queuedMsg)
 	require.Error(t, err, "LockFunds should fail when user has insufficient balance")
 	require.Contains(t, err.Error(), "failed to lock delegate funds", "Error should mention fund locking failure")
 }
@@ -648,12 +651,12 @@ func TestLockUnlockFunds_InvalidAddress(t *testing.T) {
 		},
 	}
 
-	// Test LockFunds - should fail due to invalid address
-	err = helper.App.EpochingKeeper.LockFunds(ctx, queuedMsg)
+	// Test LockFundsForDelegateMsgs - should fail due to invalid address
+	err = helper.App.EpochingKeeper.LockFundsForDelegateMsgs(ctx, queuedMsg)
 	require.Error(t, err, "LockFunds should fail with invalid delegator address")
 
-	// Test UnLockFunds - should also fail due to invalid address
-	err = helper.App.EpochingKeeper.UnLockFunds(ctx, queuedMsg)
+	// Test UnlockFundsForDelegateMsgs - should also fail due to invalid address
+	err = helper.App.EpochingKeeper.UnlockFundsForDelegateMsgs(ctx, queuedMsg)
 	require.Error(t, err, "UnLockFunds should fail with invalid delegator address")
 }
 
@@ -696,11 +699,11 @@ func TestLockUnlockFunds_CreateValidatorInvalidAddress(t *testing.T) {
 		},
 	}
 
-	// Test LockFunds - should fail due to invalid validator address
-	err = helper.App.EpochingKeeper.LockFunds(ctx, queuedMsg)
+	// Test LockFundsForDelegateMsgs - should fail due to invalid validator address
+	err = helper.App.EpochingKeeper.LockFundsForDelegateMsgs(ctx, queuedMsg)
 	require.Error(t, err, "LockFunds should fail with invalid validator address")
 
-	// Test UnLockFunds - should also fail due to invalid validator address
-	err = helper.App.EpochingKeeper.UnLockFunds(ctx, queuedMsg)
+	// Test UnlockFundsForDelegateMsgs - should also fail due to invalid validator address
+	err = helper.App.EpochingKeeper.UnlockFundsForDelegateMsgs(ctx, queuedMsg)
 	require.Error(t, err, "UnLockFunds should fail with invalid validator address")
 }

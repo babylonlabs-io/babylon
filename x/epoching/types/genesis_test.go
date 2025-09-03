@@ -55,9 +55,9 @@ func TestGenesisState_Validate(t *testing.T) {
 			desc: "valid genesis state",
 			genState: &types.GenesisState{
 				Params: types.Params{
-					EpochInterval:  100,
-					EnqueueGasFees: types.DefaultEnqueueGasFees,
-					MinAmount:      types.DefaultMinAmount,
+					EpochInterval: 100,
+					ExecuteGas:    types.DefaultExecuteGas,
+					MinAmount:     types.DefaultMinAmount,
 				},
 			},
 			valid: true,

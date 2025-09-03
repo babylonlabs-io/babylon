@@ -3,7 +3,10 @@ package keeper
 import (
 	"context"
 
+	errorsmod "cosmossdk.io/errors"
+	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 
@@ -58,13 +61,29 @@ func (m msgServer) WrappedCreateValidator(goCtx context.Context, msg *types.MsgW
 		Msg: &epochingtypes.QueuedMessage_MsgCreateValidator{MsgCreateValidator: msg.MsgCreateValidator},
 	}
 
-	err = m.k.epochingKeeper.LockFunds(ctx, &queueMsg)
+	params := m.k.epochingKeeper.GetParams(ctx)
+
+	// check if the delegation amount is above the minimum required amount
+	if msg.MsgCreateValidator.Value.Amount.LT(math.NewIntFromUint64(params.MinAmount)) {
+		return nil, errorsmod.Wrapf(
+			sdkerrors.ErrInvalidRequest,
+			"delegation amount %s is below minimum required amount %d",
+			msg.MsgCreateValidator.Value.Amount.String(),
+			params.MinAmount,
+		)
+	}
+
+	// lock the delegation amount to ensure funds are available when the queued message executes
+	// this prevents spam attacks by requiring actual fund ownership and guarantees successful execution
+	err = m.k.epochingKeeper.LockFundsForDelegateMsgs(ctx, &queueMsg)
 	if err != nil {
 		return nil, err
 	}
 
 	m.k.epochingKeeper.EnqueueMsg(ctx, queueMsg)
-	ctx.GasMeter().ConsumeGas(m.k.epochingKeeper.GetParams(ctx).EnqueueGasFees.CreateValidator, "epoching cancel unbonding delegation enqueue fee")
+
+	// charge gas for executing the message later
+	ctx.GasMeter().ConsumeGas(params.ExecuteGas.CreateValidator, "epoching cancel unbonding delegation enqueue fee")
 
 	return &types.MsgWrappedCreateValidatorResponse{}, nil
 }

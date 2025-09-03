@@ -37,6 +37,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+### Features
+
+- Add spam prevention mechanisms to epoching module with minimum amount validation and gas consumption limits for wrapped delegate operations.
+
 ### Improvements
 
 - [#1571](https://github.com/babylonlabs-io/babylon/pull/1571) Optimize `x/zoneconcierge` bottlenecks by caching redundant logics.

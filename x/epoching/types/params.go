@@ -12,28 +12,27 @@ const (
 	DefaultMinAmount uint64 = 1
 )
 
-var DefaultEnqueueGasFees = EnqueueGasFees{
-	Delegate:                  500,
-	Undelegate:                400,
-	BeginRedelegate:           600,
-	CancelUnbondingDelegation: 300,
-	EditValidator:             200,
-	StakingUpdateParams:       100,
-	CreateValidator:           800,
+var DefaultExecuteGas = ExecuteGas{
+	Delegate:                  61000,  // estimated 50934 + 20%
+	Undelegate:                53000,  // estimated 44146 + 20%
+	BeginRedelegate:           65700,  // estimated 54712 + 20%
+	CancelUnbondingDelegation: 20500,  // estimated 17012 + 20%
+	EditValidator:             20100,  // estimated 16774 + 20
+	CreateValidator:           157300, // estimated 131101 + 20%
 }
 
 // NewParams creates a new Params instance
-func NewParams(epochInterval uint64, enqueueGasFees EnqueueGasFees, minAmount uint64) Params {
+func NewParams(epochInterval uint64, executeGas ExecuteGas, minAmount uint64) Params {
 	return Params{
-		EpochInterval:  epochInterval,
-		EnqueueGasFees: enqueueGasFees,
-		MinAmount:      minAmount,
+		EpochInterval: epochInterval,
+		ExecuteGas:    executeGas,
+		MinAmount:     minAmount,
 	}
 }
 
 // DefaultParams returns a default set of parameters
 func DefaultParams() Params {
-	return NewParams(DefaultEpochInterval, DefaultEnqueueGasFees, DefaultMinAmount)
+	return NewParams(DefaultEpochInterval, DefaultExecuteGas, DefaultMinAmount)
 }
 
 // Validate validates the set of params
@@ -42,7 +41,7 @@ func (p Params) Validate() error {
 		return err
 	}
 
-	if err := validateEnqueueGasFees(p.EnqueueGasFees); err != nil {
+	if err := validateExecuteGas(p.ExecuteGas); err != nil {
 		return err
 	}
 
@@ -62,31 +61,27 @@ func validateEpochInterval(i interface{}) error {
 	return nil
 }
 
-func validateEnqueueGasFees(fees EnqueueGasFees) error {
-	if fees.Delegate == 0 {
+func validateExecuteGas(gas ExecuteGas) error {
+	if gas.Delegate == 0 {
 		return fmt.Errorf("delegate gas fee must be positive")
 	}
-	if fees.Undelegate == 0 {
+	if gas.Undelegate == 0 {
 		return fmt.Errorf("undelegate gas fee must be positive")
 	}
 
-	if fees.BeginRedelegate == 0 {
+	if gas.BeginRedelegate == 0 {
 		return fmt.Errorf("begin redelegate gas fee must be positive")
 	}
 
-	if fees.CancelUnbondingDelegation == 0 {
-		return fmt.Errorf("cancle unbonding delegation gas fee must be positive")
+	if gas.CancelUnbondingDelegation == 0 {
+		return fmt.Errorf("cancel unbonding delegation gas fee must be positive")
 	}
 
-	if fees.EditValidator == 0 {
+	if gas.EditValidator == 0 {
 		return fmt.Errorf("edit validator gas fee must be positive")
 	}
 
-	if fees.StakingUpdateParams == 0 {
-		return fmt.Errorf("staking update params gas fee must be positive")
-	}
-
-	if fees.CreateValidator == 0 {
+	if gas.CreateValidator == 0 {
 		return fmt.Errorf("create validator gas fee must be positive")
 	}
 
