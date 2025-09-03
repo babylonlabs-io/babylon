@@ -3,6 +3,7 @@ package types
 import (
 	"errors"
 	"fmt"
+	"sort"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -75,4 +76,15 @@ func validateAddrStr(addr string) error {
 		return fmt.Errorf("invalid address: %s, error: %w", addr, err)
 	}
 	return nil
+}
+
+// SortData sorts slices to get a deterministic result on the tests
+func SortData(gs *GenesisState) {
+	sort.Slice(gs.HistoricalRewards, func(i, j int) bool {
+		return gs.HistoricalRewards[i].Period < gs.HistoricalRewards[j].Period
+	})
+
+	sort.Slice(gs.CoostakersRewardsTracker, func(i, j int) bool {
+		return gs.CoostakersRewardsTracker[i].CoostakerAddress < gs.CoostakersRewardsTracker[j].CoostakerAddress
+	})
 }

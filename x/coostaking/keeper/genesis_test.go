@@ -25,7 +25,7 @@ func FuzzInitExportGenesis(f *testing.F) {
 		numHistoricalRewards := int(datagen.RandomInt(r, 10))
 		numCoostakerTrackers := int(datagen.RandomInt(r, 10))
 
-		var historicalRewards []types.HistoricalRewardsEntry
+		historicalRewards := []types.HistoricalRewardsEntry{}
 		for i := 0; i < numHistoricalRewards; i++ {
 			historicalRewards = append(historicalRewards, types.HistoricalRewardsEntry{
 				Period: uint64(i),
@@ -35,7 +35,7 @@ func FuzzInitExportGenesis(f *testing.F) {
 			})
 		}
 
-		var coostakerTrackers []types.CoostakerRewardsTrackerEntry
+		coostakerTrackers := []types.CoostakerRewardsTrackerEntry{}
 		addresses := make(map[string]bool) // To avoid duplicates
 		for i := 0; i < numCoostakerTrackers; i++ {
 			addr := datagen.GenRandomAccount().Address
@@ -45,20 +45,22 @@ func FuzzInitExportGenesis(f *testing.F) {
 					CoostakerAddress: addr,
 					Tracker: &types.CoostakerRewardsTracker{
 						StartPeriodCumulativeReward: datagen.RandomInt(r, 100),
-						TotalScore:                  math.NewInt(int64(datagen.RandomInt(r, 1000) + 1)), // Ensure positive
+						TotalScore:                  math.NewInt(int64(datagen.RandomInt(r, 1000) + 1)),
+						ActiveSatoshis:              math.NewInt(int64(datagen.RandomInt(r, 1000) + 1)),
+						ActiveBaby:                  math.NewInt(int64(datagen.RandomInt(r, 1000) + 1)),
 					},
 				})
 			}
 		}
 
 		// Create genesis state
-		genState := types.GenesisState{
+		genState := &types.GenesisState{
 			Params: types.DefaultParams(),
 			CurrentRewards: types.CurrentRewardsEntry{
 				Rewards: &types.CurrentRewards{
 					Rewards:    datagen.GenRandomCoins(r),
 					Period:     datagen.RandomInt(r, 100),
-					TotalScore: math.NewInt(int64(datagen.RandomInt(r, 1000) + 1)), // Ensure positive
+					TotalScore: math.NewInt(int64(datagen.RandomInt(r, 1000) + 1)),
 				},
 			},
 			HistoricalRewards:        historicalRewards,
@@ -70,7 +72,7 @@ func FuzzInitExportGenesis(f *testing.F) {
 		require.NoError(t, err)
 
 		// Initialize genesis
-		err = k.InitGenesis(ctx, genState)
+		err = k.InitGenesis(ctx, *genState)
 		require.NoError(t, err)
 
 		// Export genesis
@@ -78,55 +80,16 @@ func FuzzInitExportGenesis(f *testing.F) {
 		require.NoError(t, err)
 		require.NotNil(t, exportedGenState)
 
+		// Sort exported genesis state for deterministic comparison
+		types.SortData(genState)
+		types.SortData(exportedGenState)
+
 		// Validate exported genesis
 		err = exportedGenState.Validate()
 		require.NoError(t, err)
 
 		// Verify exported state matches original
-		require.Equal(t, genState.Params, exportedGenState.Params)
-
-		// Check current rewards
-		if genState.CurrentRewards.Rewards != nil {
-			require.NotNil(t, exportedGenState.CurrentRewards.Rewards)
-			require.Equal(t, genState.CurrentRewards.Rewards.Rewards.String(), exportedGenState.CurrentRewards.Rewards.Rewards.String())
-			require.Equal(t, genState.CurrentRewards.Rewards.Period, exportedGenState.CurrentRewards.Rewards.Period)
-			require.Equal(t, genState.CurrentRewards.Rewards.TotalScore.String(), exportedGenState.CurrentRewards.Rewards.TotalScore.String())
-		}
-
-		// Check historical rewards count
-		require.Equal(t, len(genState.HistoricalRewards), len(exportedGenState.HistoricalRewards))
-
-		// Check coostaker trackers count
-		require.Equal(t, len(genState.CoostakersRewardsTracker), len(exportedGenState.CoostakersRewardsTracker))
-
-		// Verify specific historical rewards and trackers are present
-		for _, originalEntry := range genState.HistoricalRewards {
-			found := false
-			for _, exportedEntry := range exportedGenState.HistoricalRewards {
-				if originalEntry.Period == exportedEntry.Period {
-					found = true
-					require.Equal(t, originalEntry.Rewards.CumulativeRewardsPerScore.String(),
-						exportedEntry.Rewards.CumulativeRewardsPerScore.String())
-					break
-				}
-			}
-			require.True(t, found, "Historical reward for period %d not found in exported state", originalEntry.Period)
-		}
-
-		for _, originalEntry := range genState.CoostakersRewardsTracker {
-			found := false
-			for _, exportedEntry := range exportedGenState.CoostakersRewardsTracker {
-				if originalEntry.CoostakerAddress == exportedEntry.CoostakerAddress {
-					found = true
-					require.Equal(t, originalEntry.Tracker.StartPeriodCumulativeReward,
-						exportedEntry.Tracker.StartPeriodCumulativeReward)
-					require.Equal(t, originalEntry.Tracker.TotalScore.String(),
-						exportedEntry.Tracker.TotalScore.String())
-					break
-				}
-			}
-			require.True(t, found, "Coostaker tracker for address %s not found in exported state", originalEntry.CoostakerAddress)
-		}
+		require.Equal(t, genState, exportedGenState)
 	})
 }
 
@@ -179,6 +142,10 @@ func TestInitGenesisWithCurrentRewards(t *testing.T) {
 	// Export and verify
 	exportedGenState, err := k.ExportGenesis(ctx)
 	require.NoError(t, err)
+
+	// Sort for deterministic comparison
+	types.SortData(exportedGenState)
+
 	require.NotNil(t, exportedGenState.CurrentRewards.Rewards)
 	require.Equal(t, currentRewards.Rewards.String(), exportedGenState.CurrentRewards.Rewards.Rewards.String())
 	require.Equal(t, currentRewards.Period, exportedGenState.CurrentRewards.Rewards.Period)
@@ -224,6 +191,10 @@ func TestInitGenesisWithHistoricalRewards(t *testing.T) {
 	// Export and verify
 	exportedGenState, err := k.ExportGenesis(ctx)
 	require.NoError(t, err)
+
+	// Sort for deterministic comparison
+	types.SortData(exportedGenState)
+
 	require.Len(t, exportedGenState.HistoricalRewards, len(historicalRewards))
 }
 
@@ -276,6 +247,10 @@ func TestInitGenesisWithCoostakerTrackers(t *testing.T) {
 	// Export and verify
 	exportedGenState, err := k.ExportGenesis(ctx)
 	require.NoError(t, err)
+
+	// Sort for deterministic comparison
+	types.SortData(exportedGenState)
+
 	require.Len(t, exportedGenState.CoostakersRewardsTracker, len(coostakerTrackers))
 }
 
@@ -289,6 +264,9 @@ func TestExportGenesisEmpty(t *testing.T) {
 	exportedGenState, err := k.ExportGenesis(ctx)
 	require.NoError(t, err)
 	require.NotNil(t, exportedGenState)
+
+	// Sort for deterministic comparison
+	types.SortData(exportedGenState)
 
 	require.Equal(t, types.DefaultParams(), exportedGenState.Params)
 	require.Empty(t, exportedGenState.HistoricalRewards)
