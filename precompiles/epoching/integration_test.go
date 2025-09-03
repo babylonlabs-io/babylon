@@ -35,9 +35,10 @@ type PrecompileIntegrationTestSuite struct {
 	suite.Suite
 	precompiles.BaseTestSuite
 
-	abi  abi.ABI
-	addr common.Address
-	priv *ethsecp256k1.PrivKey
+	abi           abi.ABI
+	addr          common.Address
+	validatorPriv *ethsecp256k1.PrivKey
+	delegatorPriv *ethsecp256k1.PrivKey
 }
 
 func TestPrecompileTestSuite(t *testing.T) {
@@ -52,10 +53,16 @@ func (ts *PrecompileIntegrationTestSuite) SetupTest() {
 	ts.abi = a
 	ts.addr = common.HexToAddress(epoching.EpochingPrecompileAddress)
 
-	ts.priv, err = ethsecp256k1.GenerateKey()
+	// create distinct validator and delegator keys
+	ts.validatorPriv, err = ethsecp256k1.GenerateKey()
 	ts.Require().NoError(err)
-	// fund 100 bbn for fees + self-delegation
-	_, err = ts.InitAndFundEVMAccount(ts.priv, sdkmath.NewInt(100_000_000))
+	ts.delegatorPriv, err = ethsecp256k1.GenerateKey()
+	ts.Require().NoError(err)
+
+	// fund both with 100 bbn
+	_, err = ts.InitAndFundEVMAccount(ts.validatorPriv, sdkmath.NewInt(100_000_000))
+	ts.Require().NoError(err)
+	_, err = ts.InitAndFundEVMAccount(ts.delegatorPriv, sdkmath.NewInt(100_000_000))
 	ts.Require().NoError(err)
 }
 
@@ -108,9 +115,9 @@ var _ = Describe("Calling epoching precompile directly", func() {
 
 		Context("when validator address is the msg.sender & EoA", func() {
 			It("should succeed", func() {
-				valHex := common.Address(s.priv.PubKey().Address().Bytes())
+				valHex := common.Address(s.validatorPriv.PubKey().Address().Bytes())
 				resp, err := s.CallContract(
-					s.priv, s.addr, s.abi, epoching.WrappedCreateValidatorMethod,
+					s.validatorPriv, s.addr, s.abi, epoching.WrappedCreateValidatorMethod,
 					blsKey, defaultDescription, defaultCommission, defaultMinSelfDelegation, valHex, consPkB64, defaultValue,
 				)
 				Expect(err).To(BeNil(), "error while calling the contract")
@@ -129,11 +136,10 @@ var _ = Describe("Calling epoching precompile directly", func() {
 
 		Context("when validator address is not the msg.sender", func() {
 			It("should fail", func() {
-				randPriv, err := ethsecp256k1.GenerateKey()
-				Expect(err).To(BeNil())
-				randAddr := common.Address(randPriv.PubKey().Address().Bytes())
-				_, err = s.CallContract(
-					s.priv, s.addr, s.abi, epoching.WrappedCreateValidatorMethod,
+				// use delegator address to force mismatch with signer
+				randAddr := common.Address(s.delegatorPriv.PubKey().Address().Bytes())
+				_, err := s.CallContract(
+					s.validatorPriv, s.addr, s.abi, epoching.WrappedCreateValidatorMethod,
 					blsKey, defaultDescription, defaultCommission, defaultMinSelfDelegation, randAddr, consPkB64, defaultValue,
 				)
 				Expect(err).NotTo(BeNil(), "error while calling the contract")
@@ -156,7 +162,7 @@ var _ = Describe("Calling epoching precompile directly", func() {
 
 		Context("when msg.sender is equal to the validator address", func() {
 			It("should succeed", func() {
-				valHex := common.Address(s.priv.PubKey().Address().Bytes())
+				valHex := common.Address(s.validatorPriv.PubKey().Address().Bytes())
 				description := staking.Description{
 					Moniker:         "new node",
 					Identity:        "",
@@ -173,7 +179,7 @@ var _ = Describe("Calling epoching precompile directly", func() {
 				pubkeyBase64Str := consPkB64
 				value := big.NewInt(1_000_000) // 1bbn
 				resp, err := s.CallContract(
-					s.priv, s.addr, s.abi, epoching.WrappedCreateValidatorMethod,
+					s.validatorPriv, s.addr, s.abi, epoching.WrappedCreateValidatorMethod,
 					blsKey, description, commission, minSelfDelegation, valHex, pubkeyBase64Str, value,
 				)
 				Expect(err).To(BeNil(), "error while calling the contract")
@@ -182,7 +188,7 @@ var _ = Describe("Calling epoching precompile directly", func() {
 				s.AdvanceToNextEpoch()
 
 				resp, err = s.CallContract(
-					s.priv, s.addr, s.abi, epoching.WrappedEditValidatorMethod,
+					s.validatorPriv, s.addr, s.abi, epoching.WrappedEditValidatorMethod,
 					defaultDescription, valHex, defaultCommissionRate, defaultMinSelfDelegation,
 				)
 				Expect(err).To(BeNil(), "error while calling the contract")
@@ -210,10 +216,9 @@ var _ = Describe("Calling epoching precompile directly", func() {
 
 		Context("with msg.sender different than validator address", func() {
 			It("should fail", func() {
-				randPriv, err := ethsecp256k1.GenerateKey()
-				randAddr := common.Address(randPriv.PubKey().Address().Bytes())
-				_, err = s.CallContract(
-					s.priv, s.addr, s.abi, epoching.WrappedEditValidatorMethod,
+				randAddr := common.Address(s.delegatorPriv.PubKey().Address().Bytes())
+				_, err := s.CallContract(
+					s.validatorPriv, s.addr, s.abi, epoching.WrappedEditValidatorMethod,
 					defaultDescription, randAddr, defaultCommissionRate, defaultMinSelfDelegation,
 				)
 				Expect(err).NotTo(BeNil(), "error while calling the contract")
@@ -222,6 +227,13 @@ var _ = Describe("Calling epoching precompile directly", func() {
 	})
 
 	Describe("to delegate", func() {
-
+		Context("as the token owner", func() {
+			It("should delegate", func() {
+				delegatorAcc := sdk.AccAddress(s.delegatorPriv.PubKey().Address().Bytes())
+				valAddr := sdk.ValAddress(s.validatorPriv.PubKey().Address().Bytes())
+				_ = delegatorAcc
+				_ = valAddr
+			})
+		})
 	})
 })
