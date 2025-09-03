@@ -45,6 +45,12 @@ service Query {
     option (google.api.http).get =
         "/babylon/zoneconcierge/v1/sealed_epoch_proof/{epoch_num}";
   }
+  // ConsumerActive queries if a consumer is active with given consumer ID
+  rpc QueryConsumerActive(QueryConsumerActiveRequest) returns
+      (QueryConsumerActiveResponse) {
+    option (google.api.http).get =
+        "/babylon/zoneconcierge/v1/consumer_exists/{consumer_id}";
+  }
 }
 
 // QueryParamsRequest is the request type for the Query/Params RPC method.
@@ -175,4 +181,15 @@ message ProofEpochSealedResponse {
   // proof_epoch_info is the Merkle proof that the epoch's validator set is
   // committed to `app_hash` of the sealer header
   tendermint.crypto.ProofOps proof_epoch_val_set = 3;
+}
+//  QueryConsumerExistsResponse is response type for the
+//  QueryConsumerExistsResponse  RPC method.
+message QueryConsumerActiveRequest {
+  string consumer_id = 1;
+}
+
+//  QueryConsumerExistsResponse is response type for the
+//  QueryConsumerExistsResponse  RPC method.
+message QueryConsumerActiveResponse {
+  bool active = 1;
 }

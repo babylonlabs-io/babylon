@@ -61,7 +61,7 @@ type ZoneConciergeChannelKeeper interface {
 	GetChannelForConsumer(ctx context.Context, consumerID, channelID string) (channeltypes.IdentifiedChannel, bool)
 	GetAllOpenZCChannels(ctx context.Context) []channeltypes.IdentifiedChannel
 	GetClientID(ctx context.Context, channel channeltypes.IdentifiedChannel) (string, error)
-	IsChannelUninitialized(ctx context.Context, channel channeltypes.IdentifiedChannel) bool
+	ConsumerHasIBCChannelOpen(ctx context.Context, channelId string) bool
 }
 
 // ClientKeeper defines the expected IBC client keeper
@@ -117,4 +117,5 @@ type BTCStkConsumerKeeper interface {
 	IsConsumerRegistered(ctx context.Context, consumerID string) bool
 	GetAllRegisteredCosmosConsumers(ctx context.Context) []*btcstkconsumertypes.ConsumerRegister
 	IsCosmosConsumer(ctx context.Context, consumerID string) (bool, error)
+	ConsumerActive(ctx context.Context, consumerID string) (bool, error)
 }

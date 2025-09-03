@@ -3,7 +3,9 @@ package keeper
 import (
 	"context"
 
+	wasmtypes "github.com/CosmWasm/x/wasm/types"
 	bbntypes "github.com/babylonlabs-io/babylon/v4/types"
+	btcstktypes "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
 	"github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"google.golang.org/grpc/codes"
@@ -186,4 +188,33 @@ QueryGetSealedEpochProofResponse, error) {
 		},
 	}
 	return resp, nil
+}
+
+func (k *Keeper) ConsumerExists(goCtx context.Context,
+	req *types.QueryConsumerActiveRequest) (*types.QueryConsumerActiveResponse,
+	error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+
+	if req.ConsumerId == "" {
+		return nil, status.Error(codes.InvalidArgument, "consumer id cannot be empty")
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	consumer, err := k.btcStkKeeper.GetConsumerRegister(ctx, req.ConsumerId)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "consumer cannot be found")
+	}
+
+	switch consumer.Type() {
+	case btcstktypes.ConsumerType_COSMOS:
+		channelID := consumer.GetCosmosConsumerMetadata().ChannelId
+		k.channelKeeper.ConsumerHasIBCChannelOpen(ctx, channelID)
+	case btcstktypes.ConsumerType_ROLLUP:
+		rm := consumer.GetRollupConsumerMetadata()
+		//query should consult registred smart contract and check wheteher it has any labels attach, it it does not consumer is active
+	}
+	resp := &types.QueryConsumerExistsResponse{Active: boolean}
 }
