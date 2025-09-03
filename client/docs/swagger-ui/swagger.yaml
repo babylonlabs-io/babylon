@@ -3282,6 +3282,42 @@ paths:
                     title: >-
                       epoch_interval is the number of consecutive blocks to form
                       an epoch
+                  enqueue_gas_fees:
+                    title: >-
+                      enqueue_gas_fees defines gas fees for different enqueue
+                      operations
+                    type: object
+                    properties:
+                      delegate:
+                        type: string
+                        format: uint64
+                      undelegate:
+                        type: string
+                        format: uint64
+                      begin_redelegate:
+                        type: string
+                        format: uint64
+                      cancel_unbonding_delegation:
+                        type: string
+                        format: uint64
+                      edit_validator:
+                        type: string
+                        format: uint64
+                      staking_update_params:
+                        type: string
+                        format: uint64
+                      create_validator:
+                        type: string
+                        format: uint64
+                    description: >-
+                      EnqueueGasFees defines the gasFees for the enque message
+                      execution.
+                  min_amount:
+                    type: string
+                    format: uint64
+                    title: >-
+                      minimum_amount is a minimum amount for staking message
+                      cancel_unbonding_delegation
             description: >-
               QueryParamsResponse is the response type for the Query/Params RPC
               method.
@@ -13753,6 +13789,31 @@ definitions:
     title: |-
       DelegationStateUpdate is the message that records a state update of a
       delegation
+  babylon.epoching.v1.EnqueueGasFees:
+    type: object
+    properties:
+      delegate:
+        type: string
+        format: uint64
+      undelegate:
+        type: string
+        format: uint64
+      begin_redelegate:
+        type: string
+        format: uint64
+      cancel_unbonding_delegation:
+        type: string
+        format: uint64
+      edit_validator:
+        type: string
+        format: uint64
+      staking_update_params:
+        type: string
+        format: uint64
+      create_validator:
+        type: string
+        format: uint64
+    description: EnqueueGasFees defines the gasFees for the enque message execution.
   babylon.epoching.v1.EpochResponse:
     type: object
     properties:
@@ -13803,6 +13864,38 @@ definitions:
         type: string
         format: uint64
         title: epoch_interval is the number of consecutive blocks to form an epoch
+      enqueue_gas_fees:
+        title: enqueue_gas_fees defines gas fees for different enqueue operations
+        type: object
+        properties:
+          delegate:
+            type: string
+            format: uint64
+          undelegate:
+            type: string
+            format: uint64
+          begin_redelegate:
+            type: string
+            format: uint64
+          cancel_unbonding_delegation:
+            type: string
+            format: uint64
+          edit_validator:
+            type: string
+            format: uint64
+          staking_update_params:
+            type: string
+            format: uint64
+          create_validator:
+            type: string
+            format: uint64
+        description: EnqueueGasFees defines the gasFees for the enque message execution.
+      min_amount:
+        type: string
+        format: uint64
+        title: >-
+          minimum_amount is a minimum amount for staking message
+          cancel_unbonding_delegation
     description: Params defines the parameters for the module.
   babylon.epoching.v1.QueryCurrentEpochResponse:
     type: object
@@ -14248,6 +14341,40 @@ definitions:
             title: >-
               epoch_interval is the number of consecutive blocks to form an
               epoch
+          enqueue_gas_fees:
+            title: enqueue_gas_fees defines gas fees for different enqueue operations
+            type: object
+            properties:
+              delegate:
+                type: string
+                format: uint64
+              undelegate:
+                type: string
+                format: uint64
+              begin_redelegate:
+                type: string
+                format: uint64
+              cancel_unbonding_delegation:
+                type: string
+                format: uint64
+              edit_validator:
+                type: string
+                format: uint64
+              staking_update_params:
+                type: string
+                format: uint64
+              create_validator:
+                type: string
+                format: uint64
+            description: >-
+              EnqueueGasFees defines the gasFees for the enque message
+              execution.
+          min_amount:
+            type: string
+            format: uint64
+            title: >-
+              minimum_amount is a minimum amount for staking message
+              cancel_unbonding_delegation
     description: QueryParamsResponse is the response type for the Query/Params RPC method.
   babylon.epoching.v1.QueryValidatorLifecycleResponse:
     type: object

@@ -93,6 +93,20 @@ func (mr *MockEpochingKeeperMockRecorder) GetEpochNumByHeight(ctx, height interf
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEpochNumByHeight", reflect.TypeOf((*MockEpochingKeeper)(nil).GetEpochNumByHeight), ctx, height)
 }
 
+// GetParams mocks base method.
+func (m *MockEpochingKeeper) GetParams(ctx context.Context) types0.Params {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetParams", ctx)
+	ret0, _ := ret[0].(types0.Params)
+	return ret0
+}
+
+// GetParams indicates an expected call of GetParams.
+func (mr *MockEpochingKeeperMockRecorder) GetParams(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetParams", reflect.TypeOf((*MockEpochingKeeper)(nil).GetParams), ctx)
+}
+
 // GetPubKeyByConsAddr mocks base method.
 func (m *MockEpochingKeeper) GetPubKeyByConsAddr(ctx context.Context, consAddr types1.ConsAddress) (crypto.PublicKey, error) {
 	m.ctrl.T.Helper()
@@ -149,6 +163,20 @@ func (m *MockEpochingKeeper) GetValidatorSet(ctx context.Context, epochNumer uin
 func (mr *MockEpochingKeeperMockRecorder) GetValidatorSet(ctx, epochNumer interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetValidatorSet", reflect.TypeOf((*MockEpochingKeeper)(nil).GetValidatorSet), ctx, epochNumer)
+}
+
+// LockFunds mocks base method.
+func (m *MockEpochingKeeper) LockFunds(ctx types1.Context, msg *types0.QueuedMessage) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "LockFunds", ctx, msg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// LockFunds indicates an expected call of LockFunds.
+func (mr *MockEpochingKeeperMockRecorder) LockFunds(ctx, msg interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LockFunds", reflect.TypeOf((*MockEpochingKeeper)(nil).LockFunds), ctx, msg)
 }
 
 // StkMsgCreateValidator mocks base method.

@@ -21,6 +21,8 @@ type EpochingKeeper interface {
 	StkMsgCreateValidator(ctx context.Context, msg *stakingtypes.MsgCreateValidator) error
 	GetPubKeyByConsAddr(ctx context.Context, consAddr sdk.ConsAddress) (cmtprotocrypto.PublicKey, error)
 	GetValidator(ctx context.Context, addr sdk.ValAddress) (stakingtypes.Validator, error)
+	LockFunds(ctx sdk.Context, msg *epochingtypes.QueuedMessage) error
+	GetParams(ctx context.Context) epochingtypes.Params
 }
 
 // Event Hooks

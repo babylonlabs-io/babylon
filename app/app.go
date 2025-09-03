@@ -3,11 +3,12 @@ package app
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/ethereum/go-ethereum/common"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/ethereum/go-ethereum/common"
 
 	// Force-load the tracer engines to trigger registration due to Go-Ethereum v1.10.15 changes
 	_ "github.com/ethereum/go-ethereum/eth/tracers/js"
@@ -188,6 +189,7 @@ var (
 		erc20types.ModuleName:                       {authtypes.Minter, authtypes.Burner}, // Allows erc20 module to mint/burn for token pairs
 		precisebanktypes.ModuleName:                 {authtypes.Minter, authtypes.Burner},
 		incentivetypes.ModAccCommissionCollectorBSN: nil, // Babylon BSN rewards commission collector
+		epochingtypes.DelegatePoolModuleName:        nil,
 	}
 
 	// software upgrades and forks

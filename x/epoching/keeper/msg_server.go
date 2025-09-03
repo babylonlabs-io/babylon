@@ -88,6 +88,8 @@ func (ms msgServer) WrappedEditValidator(goCtx context.Context, msgWrapped *type
 
 	ms.EnqueueMsg(ctx, queuedMsg)
 
+	ctx.GasMeter().ConsumeGas(ms.GetParams(ctx).EnqueueGasFees.EditValidator, "epoching staking update params enqueue fee")
+
 	err = ctx.EventManager().EmitTypedEvents(
 		&types.EventWrappedEditValidator{
 			ValidatorAddress: msg.ValidatorAddress,
@@ -129,6 +131,8 @@ func (ms msgServer) WrappedStakingUpdateParams(goCtx context.Context, msgWrapped
 	}
 
 	ms.EnqueueMsg(ctx, queuedMsg)
+
+	ctx.GasMeter().ConsumeGas(ms.GetParams(ctx).EnqueueGasFees.StakingUpdateParams, "epoching staking update params enqueue fee")
 
 	err = ctx.EventManager().EmitTypedEvents(
 		&types.EventWrappedStakingUpdateParams{
@@ -176,6 +180,16 @@ func (ms msgServer) WrappedDelegate(goCtx context.Context, msg *types.MsgWrapped
 		)
 	}
 
+	params := ms.GetParams(ctx)
+	if msg.Msg.Amount.Amount.LT(math.NewIntFromUint64(params.MinAmount)) {
+		return nil, errorsmod.Wrapf(
+			sdkerrors.ErrInvalidRequest,
+			"delegation amount %s is below minimum required amount %d",
+			msg.Msg.Amount.Amount.String(),
+			params.MinAmount,
+		)
+	}
+
 	blockHeight := uint64(ctx.HeaderInfo().Height)
 	if blockHeight == 0 {
 		return nil, types.ErrZeroEpochMsg
@@ -189,6 +203,12 @@ func (ms msgServer) WrappedDelegate(goCtx context.Context, msg *types.MsgWrapped
 	}
 
 	ms.EnqueueMsg(ctx, queuedMsg)
+
+	if err := ms.LockFunds(ctx, &queuedMsg); err != nil {
+		return nil, errorsmod.Wrap(err, "failed to lock user funds")
+	}
+
+	ctx.GasMeter().ConsumeGas(ms.GetParams(ctx).EnqueueGasFees.Delegate, "epoching delegate enqueue fee")
 
 	err = ctx.EventManager().EmitTypedEvents(
 		&types.EventWrappedDelegate{
@@ -235,6 +255,16 @@ func (ms msgServer) WrappedUndelegate(goCtx context.Context, msg *types.MsgWrapp
 		)
 	}
 
+	params := ms.GetParams(ctx)
+	if msg.Msg.Amount.Amount.LT(math.NewIntFromUint64(params.MinAmount)) {
+		return nil, errorsmod.Wrapf(
+			sdkerrors.ErrInvalidRequest,
+			"undelegation amount %s is below minimum required amount %d",
+			msg.Msg.Amount.Amount.String(),
+			params.MinAmount,
+		)
+	}
+
 	blockHeight := uint64(ctx.HeaderInfo().Height)
 	if blockHeight == 0 {
 		return nil, types.ErrZeroEpochMsg
@@ -248,6 +278,8 @@ func (ms msgServer) WrappedUndelegate(goCtx context.Context, msg *types.MsgWrapp
 	}
 
 	ms.EnqueueMsg(ctx, queuedMsg)
+
+	ctx.GasMeter().ConsumeGas(ms.GetParams(ctx).EnqueueGasFees.Undelegate, "epoching undelegate enqueue fee")
 
 	err = ctx.EventManager().EmitTypedEvents(
 		&types.EventWrappedUndelegate{
@@ -293,6 +325,17 @@ func (ms msgServer) WrappedBeginRedelegate(goCtx context.Context, msg *types.Msg
 			sdkerrors.ErrInvalidRequest, "invalid coin denomination: got %s, expected %s", msg.Msg.Amount.Denom, bondDenom,
 		)
 	}
+
+	params := ms.GetParams(ctx)
+	if msg.Msg.Amount.Amount.LT(math.NewIntFromUint64(params.MinAmount)) {
+		return nil, errorsmod.Wrapf(
+			sdkerrors.ErrInvalidRequest,
+			"redelegation amount %s is below minimum required amount %d",
+			msg.Msg.Amount.Amount.String(),
+			params.MinAmount,
+		)
+	}
+
 	if _, err := sdk.ValAddressFromBech32(msg.Msg.ValidatorDstAddress); err != nil {
 		return nil, err
 	}
@@ -310,6 +353,9 @@ func (ms msgServer) WrappedBeginRedelegate(goCtx context.Context, msg *types.Msg
 	}
 
 	ms.EnqueueMsg(ctx, queuedMsg)
+
+	ctx.GasMeter().ConsumeGas(ms.GetParams(ctx).EnqueueGasFees.BeginRedelegate, "epoching Redelegate enqueue fee")
+
 	err = ctx.EventManager().EmitTypedEvents(
 		&types.EventWrappedBeginRedelegate{
 			DelegatorAddress:            msg.Msg.DelegatorAddress,
@@ -350,6 +396,16 @@ func (ms msgServer) WrappedCancelUnbondingDelegation(goCtx context.Context, msg 
 		)
 	}
 
+	params := ms.GetParams(ctx)
+	if msg.Msg.Amount.Amount.LT(math.NewIntFromUint64(params.MinAmount)) {
+		return nil, errorsmod.Wrapf(
+			sdkerrors.ErrInvalidRequest,
+			"cancel unbonding delegaion amount %s is below minimum required amount %d",
+			msg.Msg.Amount.Amount.String(),
+			params.MinAmount,
+		)
+	}
+
 	if msg.Msg.CreationHeight <= 0 {
 		return nil, errorsmod.Wrap(
 			sdkerrors.ErrInvalidRequest,
@@ -379,6 +435,9 @@ func (ms msgServer) WrappedCancelUnbondingDelegation(goCtx context.Context, msg 
 	}
 
 	ms.EnqueueMsg(ctx, queuedMsg)
+
+	ctx.GasMeter().ConsumeGas(ms.GetParams(ctx).EnqueueGasFees.CancelUnbondingDelegation, "epoching cancel unbonding delegation enqueue fee")
+
 	err = ctx.EventManager().EmitTypedEvents(
 		&types.EventWrappedCancelUnbondingDelegation{
 			DelegatorAddress: msg.Msg.DelegatorAddress,

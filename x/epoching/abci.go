@@ -2,6 +2,7 @@ package epoching
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 	"time"
 
@@ -89,6 +90,20 @@ func EndBlocker(ctx context.Context, k keeper.Keeper) ([]abci.ValidatorUpdate, e
 		queuedMsgs := k.GetCurrentEpochMsgs(ctx)
 		// forward each msg in the msg queue to the right keeper
 		for _, msg := range queuedMsgs {
+			msgId := hex.EncodeToString(msg.MsgId)
+
+			unlockCtx, unlockCommit := sdkCtx.CacheContext()
+			// Unlock funds first
+			if err := k.UnLockFunds(unlockCtx, msg); err != nil {
+				k.Logger(sdkCtx).Error("failed to unlock funds for message",
+					"msgId", msgId,
+					"error", err)
+				continue
+			} else {
+				unlockCommit()
+				k.Logger(sdkCtx).Info("successfully unlocked funds for message", "msgId", msgId)
+			}
+
 			_, errQueuedMsg := k.HandleQueuedMsg(ctx, msg)
 			// skip this failed msg and emit and event signalling it
 			// we do not panic here as some users may wrap an invalid message
