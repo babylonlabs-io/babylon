@@ -45,6 +45,10 @@ func (p Params) Validate() error {
 		return err
 	}
 
+	if err := validateMinAmount(p.MinAmount); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -85,5 +89,17 @@ func validateExecuteGas(gas ExecuteGas) error {
 		return fmt.Errorf("create validator gas fee must be positive")
 	}
 
+	return nil
+}
+
+func validateMinAmount(i interface{}) error {
+	v, ok := i.(uint64)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	if v < 1 {
+		return fmt.Errorf("min amount must be at least 1: %d", v)
+	}
 	return nil
 }
