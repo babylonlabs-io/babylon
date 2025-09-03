@@ -5,13 +5,12 @@ package types
 
 import (
 	fmt "fmt"
-	io "io"
-	math "math"
-	math_bits "math/bits"
-
 	_ "github.com/cosmos/cosmos-proto"
 	_ "github.com/cosmos/gogoproto/gogoproto"
 	proto "github.com/cosmos/gogoproto/proto"
+	io "io"
+	math "math"
+	math_bits "math/bits"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -273,49 +272,49 @@ type FPDirectGaugeEntry struct {
 	Gauge *Gauge `protobuf:"bytes,2,opt,name=gauge,proto3" json:"gauge,omitempty"`
 }
 
-func (fge *FPDirectGaugeEntry) Reset()         { *fge = FPDirectGaugeEntry{} }
-func (fge *FPDirectGaugeEntry) String() string { return proto.CompactTextString(fge) }
-func (*FPDirectGaugeEntry) ProtoMessage()      {}
+func (m *FPDirectGaugeEntry) Reset()         { *m = FPDirectGaugeEntry{} }
+func (m *FPDirectGaugeEntry) String() string { return proto.CompactTextString(m) }
+func (*FPDirectGaugeEntry) ProtoMessage()    {}
 func (*FPDirectGaugeEntry) Descriptor() ([]byte, []int) {
 	return fileDescriptor_41d5400dc6b4b931, []int{2}
 }
-func (fge *FPDirectGaugeEntry) XXX_Unmarshal(b []byte) error {
-	return fge.Unmarshal(b)
+func (m *FPDirectGaugeEntry) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
 }
-func (fge *FPDirectGaugeEntry) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *FPDirectGaugeEntry) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_FPDirectGaugeEntry.Marshal(b, fge, deterministic)
+		return xxx_messageInfo_FPDirectGaugeEntry.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := fge.MarshalToSizedBuffer(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
 		return b[:n], nil
 	}
 }
-func (fge *FPDirectGaugeEntry) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_FPDirectGaugeEntry.Merge(fge, src)
+func (m *FPDirectGaugeEntry) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_FPDirectGaugeEntry.Merge(m, src)
 }
-func (fge *FPDirectGaugeEntry) XXX_Size() int {
-	return fge.Size()
+func (m *FPDirectGaugeEntry) XXX_Size() int {
+	return m.Size()
 }
-func (fge *FPDirectGaugeEntry) XXX_DiscardUnknown() {
-	xxx_messageInfo_FPDirectGaugeEntry.DiscardUnknown(fge)
+func (m *FPDirectGaugeEntry) XXX_DiscardUnknown() {
+	xxx_messageInfo_FPDirectGaugeEntry.DiscardUnknown(m)
 }
 
 var xxx_messageInfo_FPDirectGaugeEntry proto.InternalMessageInfo
 
-func (fge *FPDirectGaugeEntry) GetHeight() uint64 {
-	if fge != nil {
-		return fge.Height
+func (m *FPDirectGaugeEntry) GetHeight() uint64 {
+	if m != nil {
+		return m.Height
 	}
 	return 0
 }
 
-func (fge *FPDirectGaugeEntry) GetGauge() *Gauge {
-	if fge != nil {
-		return fge.Gauge
+func (m *FPDirectGaugeEntry) GetGauge() *Gauge {
+	if m != nil {
+		return m.Gauge
 	}
 	return nil
 }
@@ -1040,29 +1039,29 @@ func (m *BTCStakingGaugeEntry) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (fge *FPDirectGaugeEntry) Marshal() (dAtA []byte, err error) {
-	size := fge.Size()
+func (m *FPDirectGaugeEntry) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := fge.MarshalToSizedBuffer(dAtA[:size])
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
 	return dAtA[:n], nil
 }
 
-func (fge *FPDirectGaugeEntry) MarshalTo(dAtA []byte) (int, error) {
-	size := fge.Size()
-	return fge.MarshalToSizedBuffer(dAtA[:size])
+func (m *FPDirectGaugeEntry) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (fge *FPDirectGaugeEntry) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *FPDirectGaugeEntry) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if fge.Gauge != nil {
+	if m.Gauge != nil {
 		{
-			size, err := fge.Gauge.MarshalToSizedBuffer(dAtA[:i])
+			size, err := m.Gauge.MarshalToSizedBuffer(dAtA[:i])
 			if err != nil {
 				return 0, err
 			}
@@ -1072,8 +1071,8 @@ func (fge *FPDirectGaugeEntry) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0x12
 	}
-	if fge.Height != 0 {
-		i = encodeVarintGenesis(dAtA, i, uint64(fge.Height))
+	if m.Height != 0 {
+		i = encodeVarintGenesis(dAtA, i, uint64(m.Height))
 		i--
 		dAtA[i] = 0x8
 	}
@@ -1480,17 +1479,17 @@ func (m *BTCStakingGaugeEntry) Size() (n int) {
 	return n
 }
 
-func (fge *FPDirectGaugeEntry) Size() (n int) {
-	if fge == nil {
+func (m *FPDirectGaugeEntry) Size() (n int) {
+	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	if fge.Height != 0 {
-		n += 1 + sovGenesis(uint64(fge.Height))
+	if m.Height != 0 {
+		n += 1 + sovGenesis(uint64(m.Height))
 	}
-	if fge.Gauge != nil {
-		l = fge.Gauge.Size()
+	if m.Gauge != nil {
+		l = m.Gauge.Size()
 		n += 1 + l + sovGenesis(uint64(l))
 	}
 	return n
@@ -2175,7 +2174,7 @@ func (m *BTCStakingGaugeEntry) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (fge *FPDirectGaugeEntry) Unmarshal(dAtA []byte) error {
+func (m *FPDirectGaugeEntry) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -2208,7 +2207,7 @@ func (fge *FPDirectGaugeEntry) Unmarshal(dAtA []byte) error {
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Height", wireType)
 			}
-			fge.Height = 0
+			m.Height = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowGenesis
@@ -2218,7 +2217,7 @@ func (fge *FPDirectGaugeEntry) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				fge.Height |= uint64(b&0x7F) << shift
+				m.Height |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -2252,10 +2251,10 @@ func (fge *FPDirectGaugeEntry) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if fge.Gauge == nil {
-				fge.Gauge = &Gauge{}
+			if m.Gauge == nil {
+				m.Gauge = &Gauge{}
 			}
-			if err := fge.Gauge.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			if err := m.Gauge.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex

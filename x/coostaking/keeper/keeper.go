@@ -25,6 +25,7 @@ type (
 
 		bankK  types.BankKeeper
 		accK   types.AccountKeeper
+		ictvK  types.IncentiveKeeper
 		stkK   types.StakingKeeper
 		distrK types.DistributionKeeper
 
@@ -47,6 +48,7 @@ func NewKeeper(
 	storeService corestoretypes.KVStoreService,
 	bankK types.BankKeeper,
 	accK types.AccountKeeper,
+	ictvK types.IncentiveKeeper,
 	stkK types.StakingKeeper,
 	distrK types.DistributionKeeper,
 	authority string,
@@ -63,6 +65,7 @@ func NewKeeper(
 
 		bankK:  bankK,
 		accK:   accK,
+		ictvK:  ictvK,
 		stkK:   stkK,
 		distrK: distrK,
 
