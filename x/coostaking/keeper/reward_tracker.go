@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 
+	"cosmossdk.io/math"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -25,20 +26,61 @@ func (k Keeper) AddRewardsForCoostakers(ctx context.Context, rwd sdk.Coins) erro
 	return k.SetCurrentRewards(ctx, *currentRwd)
 }
 
+// coostakerModifiedActiveAmounts anytime an coostaker changes his amount of btc or baby staked this function
+// should be called, for activation of new staking or unbonding of the previous, his score might change and then it should
+// also update the total score of the pool of current rewards
+func (k Keeper) coostakerModifiedActiveAmounts(ctx context.Context, coostaker sdk.AccAddress, newActiveSatoshi, newActiveBaby math.Int) error {
+	rwdTracker, err := k.GetCoostakerRewardsOrInitialize(ctx, coostaker)
+	if err != nil {
+		return err
+	}
+
+	rwdTracker.ActiveBaby = newActiveBaby
+	rwdTracker.ActiveSatoshis = newActiveSatoshi
+
+	params := k.GetParams(ctx)
+	deltaScoreChange := rwdTracker.UpdateScore(params.ScoreRatioBtcByBaby)
+
+	if deltaScoreChange.IsZero() {
+		// if there is no change from previous score, just update the coostaker tracker and return
+		return k.setCoostakerRewardsTracker(ctx, coostaker, *rwdTracker)
+	}
+
+	// if there is change on the score, calls the coostaker modified score and set the updated tracker
+	// Note: the coostaker tracker must be updated after incrementing the period and calculating the rewards
+	return k.coostakerModifiedScoreWithPreInitalization(ctx, coostaker, func(ctx context.Context, coostaker sdk.AccAddress) error {
+		// Save the tracker back to storage since ActiveSatoshis/ActiveBaby changed
+		err = k.setCoostakerRewardsTracker(ctx, coostaker, *rwdTracker)
+		if err != nil {
+			return err
+		}
+
+		// updates the rewards pool total score active
+		curRwd, err := k.GetCurrentRewards(ctx)
+		if err != nil {
+			return err
+		}
+
+		// Note: delta score change here can be negative and will reduce the total score
+		curRwd.TotalScore = curRwd.TotalScore.Add(deltaScoreChange)
+		return k.SetCurrentRewards(ctx, *curRwd)
+	})
+}
+
 func (k Keeper) coostakerModified(ctx context.Context, coostaker sdk.AccAddress) error {
-	return k.coostakerModifiedWithPreInitalization(ctx, coostaker, func(ctx context.Context, coostaker sdk.AccAddress) error {
+	return k.coostakerModifiedScoreWithPreInitalization(ctx, coostaker, func(ctx context.Context, coostaker sdk.AccAddress) error {
 		return nil
 	})
 }
 
-// coostakerModifiedWithPreInitalization does the procedure when a Coostaker has
+// coostakerModifiedScoreWithPreInitalization does the procedure when a Coostaker has
 // some modification in its total amount of score (btc or baby staked). This function
 // increments the global current rewards period (that creates a new historical) with
 // the ended period, calculates the coostaker reward and send to the gauge
 // and calls a function prior (preInitializeCoostaker) to initialize a new
 // Coostaker tracker, which is useful to apply subtract or add the total
 // amount of score by the coostaker.
-func (k Keeper) coostakerModifiedWithPreInitalization( //nolint: unused
+func (k Keeper) coostakerModifiedScoreWithPreInitalization(
 	ctx context.Context,
 	coostaker sdk.AccAddress,
 	preInitializeCoostaker func(ctx context.Context, coostaker sdk.AccAddress) error,
@@ -217,8 +259,8 @@ func (k Keeper) initializeCoStakerRwdTracker(ctx context.Context, coostaker sdk.
 		return err
 	}
 
-	rwd := types.NewCoostakerRewardsTracker(previousPeriod, coostakerRwdTracker.TotalScore)
-	return k.setCoostakerRewardsTracker(ctx, coostaker, rwd)
+	coostakerRwdTracker.StartPeriodCumulativeReward = previousPeriod
+	return k.setCoostakerRewardsTracker(ctx, coostaker, *coostakerRwdTracker)
 }
 
 // GetCurrentRewardsInitialized returns the current period, if it is not found it initializes it.
