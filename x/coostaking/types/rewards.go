@@ -8,9 +8,18 @@ import (
 	ictvtypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
 )
 
-func NewCoostakerRewardsTracker(startPeriod uint64, totalScore sdkmath.Int) CoostakerRewardsTracker {
+func NewCoostakerRewardsTrackerBasic(startPeriod uint64, totalScore sdkmath.Int) CoostakerRewardsTracker {
 	return CoostakerRewardsTracker{
 		StartPeriodCumulativeReward: startPeriod,
+		TotalScore:                  totalScore,
+	}
+}
+
+func NewCoostakerRewardsTracker(startPeriod uint64, activeSats, activeBaby, totalScore sdkmath.Int) CoostakerRewardsTracker {
+	return CoostakerRewardsTracker{
+		StartPeriodCumulativeReward: startPeriod,
+		ActiveSatoshis:              activeSats,
+		ActiveBaby:                  activeBaby,
 		TotalScore:                  totalScore,
 	}
 }

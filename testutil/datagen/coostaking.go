@@ -21,5 +21,9 @@ func GenRandomHistoricalRewards(r *rand.Rand) types.HistoricalRewards {
 func GenRandomCoostakerRewardsTracker(r *rand.Rand) types.CoostakerRewardsTracker {
 	startPeriod := RandomInt(r, 1000)
 	totalScore := RandomMathInt(r, 100000)
-	return types.NewCoostakerRewardsTracker(startPeriod, totalScore)
+
+	costakerRwd := types.NewCoostakerRewardsTrackerBasic(startPeriod, totalScore)
+	costakerRwd.ActiveBaby = RandomMathInt(r, 1000)
+	costakerRwd.ActiveSatoshis = RandomMathInt(r, 1000)
+	return costakerRwd
 }
