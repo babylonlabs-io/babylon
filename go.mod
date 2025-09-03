@@ -59,6 +59,7 @@ require (
 	github.com/jsternberg/zap-logfmt v1.3.0
 	github.com/juju/fslock v0.0.0-20160525022230-4d5c94c67b4b
 	github.com/onsi/ginkgo/v2 v2.23.4
+	github.com/onsi/gomega v1.38.0
 	github.com/ory/dockertest/v3 v3.9.1
 	github.com/otiai10/copy v1.14.0
 	github.com/vulpine-io/io-test v1.0.0

@@ -7,70 +7,72 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	sdkmath "cosmossdk.io/math"
-	cmted25519 "github.com/cometbft/cometbft/crypto/ed25519"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/evm/crypto/ethsecp256k1"
 
-	"github.com/babylonlabs-io/babylon/v4/precompiles/epoching"
+	cmted25519 "github.com/cometbft/cometbft/crypto/ed25519"
+
+	sdkmath "cosmossdk.io/math"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	appsigner "github.com/babylonlabs-io/babylon/v4/app/signer"
 	"github.com/babylonlabs-io/babylon/v4/crypto/bls12381"
+	"github.com/babylonlabs-io/babylon/v4/precompiles/epoching"
 )
 
-func (s *PrecompileIntegrationTestSuite) TestWrappedDelegateBech32_CallContract() {
+func (ts *PrecompileIntegrationTestSuite) TestWrappedDelegateBech32_CallContract() {
 	priv, err := ethsecp256k1.GenerateKey()
-	s.Require().NoError(err)
-	_, err = s.InitAndFundEVMAccount(priv, sdkmath.NewInt(10_000_000)) // 10 bbn
-	s.Require().NoError(err)
+	ts.Require().NoError(err)
+	_, err = ts.InitAndFundEVMAccount(priv, sdkmath.NewInt(10_000_000)) // 10 bbn
+	ts.Require().NoError(err)
 
 	delegatorAcc := sdk.AccAddress(priv.PubKey().Address().Bytes())
 
-	vals, err := s.App.StakingKeeper.GetAllValidators(s.Ctx)
-	s.Require().NoError(err)
-	s.Require().NotEmpty(vals)
+	vals, err := ts.App.StakingKeeper.GetAllValidators(ts.Ctx)
+	ts.Require().NoError(err)
+	ts.Require().NotEmpty(vals)
 	valBech32 := vals[0].OperatorAddress
 
 	amount := big.NewInt(1_000_000) // 1 bbn
-	resp, err := s.CallContract(
+	resp, err := ts.CallContract(
 		priv,
-		s.addr,
-		s.abi,
+		ts.addr,
+		ts.abi,
 		epoching.WrappedDelegateBech32Method,
 		common.Address(priv.PubKey().Address().Bytes()),
 		valBech32,
 		amount,
 	)
-	s.Require().NoError(err)
-	s.Require().Equal("", resp.VmError)
+	ts.Require().NoError(err)
+	ts.Require().Equal("", resp.VmError)
 
-	startEpoch := s.App.EpochingKeeper.GetEpoch(s.Ctx).EpochNumber
-	s.AdvanceToNextEpoch()
-	s.T().Logf("epoch advanced from %d to %d at height %d", startEpoch, s.App.EpochingKeeper.GetEpoch(s.Ctx).EpochNumber, s.Ctx.BlockHeight())
+	startEpoch := ts.App.EpochingKeeper.GetEpoch(ts.Ctx).EpochNumber
+	ts.AdvanceToNextEpoch()
+	ts.T().Logf("epoch advanced from %d to %d at height %d", startEpoch, ts.App.EpochingKeeper.GetEpoch(ts.Ctx).EpochNumber, ts.Ctx.BlockHeight())
 
 	delReq := &stakingtypes.QueryDelegationRequest{
 		DelegatorAddr: delegatorAcc.String(),
 		ValidatorAddr: valBech32,
 	}
-	delRes, err := s.QueryClientStaking.Delegation(context.Background(), delReq)
-	s.Require().NoError(err)
-	s.Require().NotNil(delRes.DelegationResponse)
-	s.Require().True(delRes.DelegationResponse.Balance.Amount.GT(sdkmath.ZeroInt()))
+	delRes, err := ts.QueryClientStaking.Delegation(context.Background(), delReq)
+	ts.Require().NoError(err)
+	ts.Require().NotNil(delRes.DelegationResponse)
+	ts.Require().True(delRes.DelegationResponse.Balance.Amount.GT(sdkmath.ZeroInt()))
 }
 
-func (s *PrecompileIntegrationTestSuite) TestWrappedCreateValidator_CallContract() {
+func (ts *PrecompileIntegrationTestSuite) TestWrappedCreateValidator_CallContract() {
 	priv, err := ethsecp256k1.GenerateKey()
-	s.Require().NoError(err)
+	ts.Require().NoError(err)
 	// fund 100 bbn for fees + self-delegation
-	_, err = s.InitAndFundEVMAccount(priv, sdkmath.NewInt(100_000_000))
-	s.Require().NoError(err)
+	_, err = ts.InitAndFundEVMAccount(priv, sdkmath.NewInt(100_000_000))
+	ts.Require().NoError(err)
 
 	// consensus keys and PoP
 	valPriv := cmted25519.GenPrivKey()
 	blsPriv := bls12381.GenPrivKey()
 	valKeys, err := appsigner.NewValidatorKeys(valPriv, blsPriv)
-	s.Require().NoError(err)
+	ts.Require().NoError(err)
 
 	blsKey := epoching.BlsKey{
 		PubKey:     valKeys.BlsPubkey.Bytes(),
@@ -78,25 +80,28 @@ func (s *PrecompileIntegrationTestSuite) TestWrappedCreateValidator_CallContract
 		BlsSig:     valKeys.PoP.BlsSig.Bytes(),
 	}
 	desc := epoching.Description{Moniker: "evm-val"}
-	zero := big.NewInt(0)
-	comm := epoching.Commission{Rate: zero, MaxRate: zero, MaxChangeRate: zero}
+	comm := epoching.Commission{
+		Rate:          big.NewInt(10000000000000000),
+		MaxRate:       big.NewInt(100000000000000000),
+		MaxChangeRate: big.NewInt(100000000000000000),
+	}
 	msd := big.NewInt(1)
 	valHex := common.Address(priv.PubKey().Address().Bytes())
 	consPkB64 := base64.StdEncoding.EncodeToString(valKeys.ValPubkey.Bytes())
 	amount := big.NewInt(1_000_000) // 1 bbn
 
-	resp, err := s.CallContract(
-		priv, s.addr, s.abi, epoching.WrappedCreateValidatorMethod,
+	resp, err := ts.CallContract(
+		priv, ts.addr, ts.abi, epoching.WrappedCreateValidatorMethod,
 		blsKey, desc, comm, msd, valHex, consPkB64, amount,
 	)
-	s.Require().NoError(err)
-	s.Require().Equal("", resp.VmError)
+	ts.Require().NoError(err)
+	ts.Require().Equal("", resp.VmError)
 
-	s.AdvanceToNextEpoch()
+	ts.AdvanceToNextEpoch()
 
 	valAddr := sdk.ValAddress(valHex.Bytes())
-	v, err := s.App.StakingKeeper.GetValidator(s.Ctx, valAddr)
-	s.Require().NoError(err)
-	s.Require().Equal(valAddr.String(), v.OperatorAddress)
-	s.Require().True(v.Tokens.IsPositive())
+	v, err := ts.App.StakingKeeper.GetValidator(ts.Ctx, valAddr)
+	ts.Require().NoError(err)
+	ts.Require().Equal(valAddr.String(), v.OperatorAddress)
+	ts.Require().True(v.Tokens.IsPositive())
 }
