@@ -18,7 +18,7 @@ func TestDefaultGenesis(t *testing.T) {
 	require.Empty(t, genesis.HistoricalRewards)
 	require.Empty(t, genesis.CoostakersRewardsTracker)
 	require.NotNil(t, genesis.CurrentRewards)
-	
+
 	err := genesis.Validate()
 	require.NoError(t, err)
 }
