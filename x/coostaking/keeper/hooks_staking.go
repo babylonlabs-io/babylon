@@ -43,7 +43,9 @@ func (h HookStaking) AfterDelegationModified(ctx context.Context, delAddr sdk.Ac
 // BeforeDelegationSharesModified implements types.StakingHooks.
 func (h HookStaking) BeforeDelegationSharesModified(ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) error {
 	del, err := h.k.stkK.GetDelegation(ctx, delAddr, valAddr)
-	if err != nil { // probably is not found, but we don't want to stop execution for this
+	if err != nil {
+		// probably is not found, but we don't want to stop execution for this
+		h.k.Logger(ctx).Error("hook costaking BeforeDelegationSharesModified: %v", err)
 		return nil
 	}
 

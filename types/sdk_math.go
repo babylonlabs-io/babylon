@@ -49,10 +49,3 @@ func SafeNewCoin(denom string, amount sdkmath.Int) (sdk.Coin, error) {
 
 	return coin, nil
 }
-
-func Min(a, b sdkmath.Int) sdkmath.Int {
-	if a.GT(b) {
-		return b
-	}
-	return a
-}

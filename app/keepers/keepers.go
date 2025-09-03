@@ -412,7 +412,12 @@ func (ak *AppKeepers) InitKeepers(
 	// register the staking hooks
 	// NOTE: stakingKeeper above is passed by reference, so that it will contain these hooks
 	ak.StakingKeeper.SetHooks(
-		stakingtypes.NewMultiStakingHooks(ak.DistrKeeper.Hooks(), ak.SlashingKeeper.Hooks(), epochingKeeper.Hooks()),
+		stakingtypes.NewMultiStakingHooks(
+			ak.DistrKeeper.Hooks(),
+			ak.SlashingKeeper.Hooks(),
+			epochingKeeper.Hooks(),
+			ak.CoostakingKeeper.HookStaking(),
+		),
 	)
 
 	// set the governance module account as the authority for conducting upgrades

@@ -2,8 +2,6 @@ package types
 
 import (
 	sdkmath "cosmossdk.io/math"
-
-	bbntypes "github.com/babylonlabs-io/babylon/v4/types"
 )
 
 // UpdateScore updates the TotalScore property of the coostaker rewards tracker based on the current
@@ -15,7 +13,7 @@ func (c *CoostakerRewardsTracker) UpdateScore(scoreRatioBtcByBaby sdkmath.Int) (
 	previousTotalScore := c.TotalScore
 
 	activeBabyByRatio := c.ActiveBaby.Quo(scoreRatioBtcByBaby)
-	c.TotalScore = bbntypes.Min(c.ActiveSatoshis, activeBabyByRatio)
+	c.TotalScore = sdkmath.MinInt(c.ActiveSatoshis, activeBabyByRatio)
 
 	return c.TotalScore.Sub(previousTotalScore)
 }
