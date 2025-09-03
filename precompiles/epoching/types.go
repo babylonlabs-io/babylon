@@ -6,10 +6,9 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"math/big"
-
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
+	"math/big"
 
 	cmn "github.com/cosmos/evm/precompiles/common"
 
@@ -88,27 +87,27 @@ type EventCancelUnbonding struct {
 	CreationHeight   *big.Int
 }
 
+// BlsKey use golang types alias defines a validator blsKey
 type BlsKey = struct {
-	Pubkey     bls12381.PublicKey "json:\"pubKey\""
-	Ed25519Sig []byte             "json:\"ed25519Sig\""
-	BlsSig     bls12381.Signature "json:\"blsSig\""
+	PubKey     []byte `json:"pubKey"`
+	Ed25519Sig []byte `json:"ed25519Sig"`
+	BlsSig     []byte `json:"blsSig"`
 }
 
-// Description use golang type alias defines a validator description.
+// Description use golang type alias defines a validator description
 type Description = struct {
-	Moniker         string "json:\"moniker\""
-	Identity        string "json:\"identity\""
-	Website         string "json:\"website\""
-	SecurityContact string "json:\"securityContact\""
-	Details         string "json:\"details\""
+	Moniker         string `json:"moniker"`
+	Identity        string `json:"identity"`
+	Website         string `json:"website"`
+	SecurityContact string `json:"securityContact"`
+	Details         string `json:"details"`
 }
 
-// Commission use golang type alias defines a validator commission.
-// since solidity does not support decimals, after passing in the big int, convert the big int into a decimal with a precision of 18
+// Commission use golang type alias defines a validator commission
 type Commission = struct {
-	Rate          *big.Int "json:\"rate\""
-	MaxRate       *big.Int "json:\"maxRate\""
-	MaxChangeRate *big.Int "json:\"maxChangeRate\""
+	Rate          *big.Int `json:"rate"`
+	MaxRate       *big.Int `json:"maxRate"`
+	MaxChangeRate *big.Int `json:"maxChangeRate"`
 }
 
 // NewMsgWrappedCreateValidator creates a new MsgWrappedCreateValidator instance and does sanity checks
@@ -118,7 +117,7 @@ func NewMsgWrappedCreateValidator(args []interface{}, denom string, valCodec add
 		return nil, common.Address{}, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, 7, len(args))
 	}
 
-	blsKey, ok := args[0].(*BlsKey)
+	blsKey, ok := args[0].(BlsKey)
 	if !ok {
 		return nil, common.Address{}, fmt.Errorf(ErrInvalidBlsKey, args[0])
 	}
@@ -173,12 +172,22 @@ func NewMsgWrappedCreateValidator(args []interface{}, denom string, valCodec add
 	if err != nil {
 		return nil, common.Address{}, fmt.Errorf("failed to decode delegator address: %w", err)
 	}
+	// convert ABI-facing bytes into strong BLS types
+	var pk bls12381.PublicKey
+	if err := (&pk).Unmarshal(blsKey.PubKey); err != nil {
+		return nil, common.Address{}, fmt.Errorf("invalid BLS public key: %w", err)
+	}
+	var bs bls12381.Signature
+	if err := (&bs).Unmarshal(blsKey.BlsSig); err != nil {
+		return nil, common.Address{}, fmt.Errorf("invalid BLS signature: %w", err)
+	}
+
 	msg := &checkpointingtypes.MsgWrappedCreateValidator{
 		Key: &checkpointingtypes.BlsKey{
-			Pubkey: &blsKey.Pubkey,
+			Pubkey: &pk,
 			Pop: &checkpointingtypes.ProofOfPossession{
 				Ed25519Sig: blsKey.Ed25519Sig,
-				BlsSig:     &blsKey.BlsSig,
+				BlsSig:     &bs,
 			},
 		},
 		MsgCreateValidator: &stakingtypes.MsgCreateValidator{

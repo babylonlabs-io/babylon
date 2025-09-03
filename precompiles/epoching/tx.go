@@ -30,20 +30,20 @@ const (
 
 // WrappedCreateValidator performs create validator
 func (p Precompile) WrappedCreateValidator(
-	ctx sdk.Context,
-	contract *vm.Contract,
-	stateDB vm.StateDB,
-	method *abi.Method,
-	args []interface{},
+    ctx sdk.Context,
+    contract *vm.Contract,
+    stateDB vm.StateDB,
+    method *abi.Method,
+    args []interface{},
 ) ([]byte, error) {
-	bondDenom, err := p.stakingKeeper.BondDenom(ctx)
-	if err != nil {
-		return nil, err
-	}
-	msg, validatorHexAddr, err := NewMsgWrappedCreateValidator(args, bondDenom, p.valCodec)
-	if err != nil {
-		return nil, err
-	}
+    bondDenom, err := p.stakingKeeper.BondDenom(ctx)
+    if err != nil {
+        return nil, err
+    }
+    msg, validatorHexAddr, err := NewMsgWrappedCreateValidator(args, bondDenom, p.valCodec)
+    if err != nil {
+        return nil, err
+    }
 
 	p.Logger(ctx).Debug(
 		"tx called",
