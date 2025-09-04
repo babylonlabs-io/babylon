@@ -191,7 +191,7 @@ message Params {
   
   // execute_gas defines raw gas for different executions.
   ExecuteGas execute_gas = 2
-        [ (gogoproto.nullable) = false, (gogoproto.moretags) = "yaml:\"enqueue_gas_fees\"" ];
+        [ (gogoproto.nullable) = false, (gogoproto.moretags) = "yaml:\"execute_gas\"" ];
     
   // minimum_amount is a minimum amount for staking message cancel_unbonding_delegation
   uint64 min_amount = 3

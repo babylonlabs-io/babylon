@@ -1,22 +1,43 @@
 package e2e
 
 import (
+	"encoding/base64"
+	"encoding/json"
+	"fmt"
 	"net/url"
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/cometbft/cometbft/crypto/ed25519"
+
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer"
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer/chain"
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/util"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
 	etypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
+
+	sdked25519 "github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
+	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 )
 
 type EpochingSpamPreventionTestSuite struct {
 	suite.Suite
 
 	configurer configurer.Configurer
+}
+
+// createValidatorKeyAndAddress generates a validator private key and returns the key and corresponding address
+func (s *EpochingSpamPreventionTestSuite) createValidatorKeyAndAddress() (ed25519.PrivKey, sdk.AccAddress, error) {
+	// Generate Ed25519 private key (same as datagen does internally)
+	privKey := ed25519.GenPrivKey()
+
+	// Get the public key and convert to address
+	pubKey := privKey.PubKey()
+	addr := sdk.AccAddress(pubKey.Address())
+
+	return privKey, addr, nil
 }
 
 func (s *EpochingSpamPreventionTestSuite) SetupSuite() {
@@ -243,4 +264,204 @@ func (s *EpochingSpamPreventionTestSuite) TestNormalDelegationCase() {
 	s.T().Logf("- Message was processed at epoch end")
 	s.T().Logf("- Module account funds were correctly transferred")
 	s.T().Logf("- Delegation was successfully created")
+}
+
+// TestNormalCreateValidatorCase tests the normal case where:
+// 1. MsgWrappedCreateValidator registers BLS key and enqueues MsgCreateValidator
+// 2. At epoch end block, enqueued message is processed by staking module
+// 3. After processing, new validator is created and added to validator set
+func (s *EpochingSpamPreventionTestSuite) TestNormalCreateValidatorCase() {
+	chainA := s.configurer.GetChainConfig(0)
+	chainA.WaitUntilHeight(1)
+
+	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
+	s.NoError(err)
+
+	// 0) generate new wallet and fund
+	newValidatorWalletName := "test-validator-wallet"
+	newValidatorAddr := nonValidatorNode.KeysAdd(newValidatorWalletName)
+
+	fundingAmount := "100000000ubbn"
+	nonValidatorNode.BankSend(nonValidatorNode.WalletName, newValidatorAddr, fundingAmount)
+	chainA.WaitForNumHeights(2)
+
+	initialBalance, err := nonValidatorNode.QueryBalance(newValidatorAddr, "ubbn")
+
+	s.NoError(err)
+
+	// compute valoper address
+	newValoperAddr := sdk.ValAddress(sdk.MustAccAddressFromBech32(newValidatorAddr)).String()
+
+	stakingAmount := "50000000ubbn"
+	moniker := "test-validator"
+	commissionRate := "0.1"
+	commissionMaxRate := "0.2"
+	commissionMaxChangeRate := "0.01"
+	minSelfDelegation := "1"
+
+	createValidator := func(walletName, delegatorAccAddr string) {
+
+		wcvMsg, err := datagen.BuildMsgWrappedCreateValidator(sdk.MustAccAddressFromBech32(delegatorAccAddr))
+		s.NoError(err)
+
+		// field update
+		amt, err := sdk.ParseCoinNormalized(stakingAmount)
+		s.NoError(err)
+
+		rate, err := sdkmath.LegacyNewDecFromStr(commissionRate)
+		s.NoError(err)
+		maxRate, err := sdkmath.LegacyNewDecFromStr(commissionMaxRate)
+		s.NoError(err)
+		maxChange, err := sdkmath.LegacyNewDecFromStr(commissionMaxChangeRate)
+		s.NoError(err)
+
+		wcvMsg.MsgCreateValidator.Description.Moniker = moniker
+		wcvMsg.MsgCreateValidator.Value = amt
+		wcvMsg.MsgCreateValidator.Commission.Rate = rate
+		wcvMsg.MsgCreateValidator.Commission.MaxRate = maxRate
+		wcvMsg.MsgCreateValidator.Commission.MaxChangeRate = maxChange
+
+		// ---------- validator.json ----------
+		var consPk cryptotypes.PubKey
+		s.NoError(util.Cdc.UnpackAny(wcvMsg.MsgCreateValidator.Pubkey, &consPk))
+		edPk, ok := consPk.(*sdked25519.PubKey)
+		s.Require().True(ok, "consensus pubkey must be ed25519")
+		ed25519B64 := base64.StdEncoding.EncodeToString(edPk.Key)
+
+		validatorData := map[string]any{
+			"pubkey": map[string]string{
+				"@type": wcvMsg.MsgCreateValidator.Pubkey.TypeUrl,
+				"key":   ed25519B64, //
+			},
+			"amount":                     stakingAmount,
+			"moniker":                    moniker,
+			"commission-rate":            commissionRate,
+			"commission-max-rate":        commissionMaxRate,
+			"commission-max-change-rate": commissionMaxChangeRate,
+			"min-self-delegation":        minSelfDelegation,
+		}
+		validatorJSON, err := json.Marshal(validatorData)
+		s.NoError(err)
+		_, _, err = nonValidatorNode.ExecRawCmd([]string{"sh", "-c", fmt.Sprintf(`cat > /tmp/validator.json << 'EOF'
+%s
+EOF`, string(validatorJSON))})
+		s.NoError(err)
+
+		// ---------- bls_pop.json ----------
+		edSigB64 := base64.StdEncoding.EncodeToString(wcvMsg.Key.Pop.Ed25519Sig)
+		blsSigB64 := base64.StdEncoding.EncodeToString(wcvMsg.Key.Pop.BlsSig.Bytes())
+
+		blsPopData := map[string]any{
+			"bls_pub_key": *wcvMsg.Key.Pubkey,
+			"pop": map[string]string{
+				"ed25519_sig": edSigB64,
+				"bls_sig":     blsSigB64,
+			},
+		}
+		blsPopJSON, err := json.Marshal(blsPopData)
+		s.NoError(err)
+		_, _, err = nonValidatorNode.ExecRawCmd([]string{"sh", "-c", fmt.Sprintf(`cat > /tmp/bls_pop.json << 'EOF'
+%s
+EOF`, string(blsPopJSON))})
+		s.NoError(err)
+
+		// transaction broadcast
+		createValCmd := []string{
+			"babylond", "tx", "checkpointing", "create-validator", "/tmp/validator.json",
+			"--bls-pop", "/tmp/bls_pop.json",
+			fmt.Sprintf("--from=%s", walletName),
+			"--keyring-backend=test",
+			"--home=/home/babylon/babylondata",
+			"--chain-id", nonValidatorNode.ChainID(),
+			"--yes",
+			"--gas=auto",
+			"--gas-adjustment=1.3",
+			"--gas-prices=1ubbn",
+			"-b=sync",
+		}
+		_, errBuf, err := nonValidatorNode.ExecRawCmd(createValCmd)
+		if err != nil {
+			s.T().Logf("create-validator failed: %s", errBuf.String())
+		}
+		s.NoError(err)
+	}
+	epochingModuleAddr, err := nonValidatorNode.QueryModuleAddress("epoching_delegate_pool")
+	s.NoError(err)
+	epochingModuleAddrStr := epochingModuleAddr.String()
+	s.T().Logf("Epoching delegate pool module address: %s", epochingModuleAddrStr)
+
+	initialModuleBalance, err := nonValidatorNode.QueryBalance(epochingModuleAddrStr, "ubbn")
+	s.NoError(err)
+	s.T().Logf("Initial epoching module balance: %s", initialModuleBalance.String())
+
+	createValidator(newValidatorWalletName, newValidatorAddr)
+	currentHeight1, err := nonValidatorNode.QueryCurrentHeight()
+	chainA.WaitUntilHeight(currentHeight1 + 1)
+	afterBalance, err := nonValidatorNode.QueryBalance(newValidatorAddr, "ubbn")
+	lockedBalance := initialBalance.Amount.Sub(afterBalance.Amount)
+	s.T().Logf("Validator initial balance: %s, after create-validator: %s, locked: %s",
+		initialBalance.String(), afterBalance.String(), lockedBalance.String())
+	s.Require().True(lockedBalance.GTE(sdkmath.NewInt(50000000)), "at least self-delegation amount should be locked")
+
+	// Verify epoching module balance increased (funds locked in module account)
+	moduleBalanceAfterLock, err := nonValidatorNode.QueryBalance(epochingModuleAddrStr, "ubbn")
+	s.NoError(err)
+	expectedModuleBalance := initialModuleBalance.Amount.Add(sdkmath.NewInt(50000000))
+	s.Require().Equal(expectedModuleBalance, moduleBalanceAfterLock.Amount,
+		"Epoching module balance should increase by delegation amount after locking")
+	s.T().Logf("Step 1b Verified: Module balance after lock: %s (increased by %s)",
+		moduleBalanceAfterLock.String(), sdkmath.NewInt(50000000).String())
+
+	// --- Step 1. Fund lock check ---
+	_, err = nonValidatorNode.QueryGRPCGateway(
+		fmt.Sprintf("/cosmos/staking/v1beta1/validators/%s", newValoperAddr), url.Values{},
+	)
+	s.Error(err, "epoch 종료 전에는 validator가 바로 생성되면 안 됩니다")
+
+	// --- Step 2. Waiting Epoch ends ---
+	paramsBz, err := nonValidatorNode.QueryGRPCGateway("/babylon/epoching/v1/params", url.Values{})
+	s.NoError(err)
+	var pResp etypes.QueryParamsResponse
+	s.NoError(util.Cdc.UnmarshalJSON(paramsBz, &pResp))
+	E := int64(pResp.Params.EpochInterval)
+	s.Require().True(E > 0, "epoch interval must be > 0")
+
+	currentHeight, err := nonValidatorNode.QueryCurrentHeight()
+	s.NoError(err)
+
+	nextEpochEnd := func(h, epochLen int64) int64 {
+		offset := epochLen - ((h - 1) % epochLen)
+		return h + offset - 1
+	}
+	target := nextEpochEnd(currentHeight, E)
+	chainA.WaitUntilHeight(target)
+
+	// --- Step 3. Verify self-delegation processed ----
+	validatorBz, err := nonValidatorNode.QueryGRPCGateway(
+		fmt.Sprintf("/cosmos/staking/v1beta1/validators/%s", newValoperAddr), url.Values{},
+	)
+	s.NoError(err, "epoch 종료 후 validator가 생성되어야 합니다")
+
+	var validatorResp struct {
+		Validator struct {
+			OperatorAddress string `json:"operator_address"`
+			Tokens          string `json:"tokens"`
+			DelegatorShares string `json:"delegator_shares"`
+			Status          string `json:"status"`
+		} `json:"validator"`
+	}
+	s.NoError(json.Unmarshal(validatorBz, &validatorResp))
+
+	totalTokens, ok := sdkmath.NewIntFromString(validatorResp.Validator.Tokens)
+	s.Require().True(ok, "invalid validator tokens amount")
+
+	expectedSelfDelegation := sdkmath.NewInt(50000000) // 50 BBN
+	s.Require().True(totalTokens.GTE(expectedSelfDelegation),
+		"validator tokens %s should be at least %s (self-delegation)",
+		totalTokens.String(), expectedSelfDelegation.String())
+
+	s.T().Logf("Validator created successfully with tokens: %s (status: %s)",
+		totalTokens.String(), validatorResp.Validator.Status)
+	s.T().Logf("Self-delegation verified through validator tokens")
+	s.T().Logf("create-validator enqueued -> epoch end processed -> validator created successfully")
 }
