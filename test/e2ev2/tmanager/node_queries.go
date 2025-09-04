@@ -2,11 +2,22 @@ package tmanager
 
 import (
 	"context"
+	"fmt"
+	"net"
 	"net/url"
 
+<<<<<<< HEAD
 	"github.com/babylonlabs-io/babylon/v3/test/e2e/util"
 	bsctypes "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
 	ictvtypes "github.com/babylonlabs-io/babylon/v3/x/incentive/types"
+=======
+	"github.com/babylonlabs-io/babylon/v4/test/e2e/util"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	btclighttypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
+	bsctypes "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
+	ictvtypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
+	zoneconciergetype "github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/types"
+>>>>>>> c990164c (chore(zc): update to e2ev2 tests for queries (#1657))
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdktx "github.com/cosmos/cosmos-sdk/types/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -16,6 +27,26 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
+
+// ParseBTCHeaderInfoResponseToInfo converts BTCHeaderInfoResponse to BTCHeaderInfo
+func ParseBTCHeaderInfoResponseToInfo(r *btclighttypes.BTCHeaderInfoResponse) (*btclighttypes.BTCHeaderInfo, error) {
+	header, err := bbn.NewBTCHeaderBytesFromHex(r.HeaderHex)
+	if err != nil {
+		return nil, err
+	}
+
+	hash, err := bbn.NewBTCHeaderHashBytesFromHex(r.HashHex)
+	if err != nil {
+		return nil, err
+	}
+
+	return &btclighttypes.BTCHeaderInfo{
+		Header: &header,
+		Hash:   &hash,
+		Height: r.Height,
+		Work:   &r.Work,
+	}, nil
+}
 
 func (n *Node) GrpcConn(f func(conn *grpc.ClientConn)) {
 	conn, err := grpc.NewClient(n.GrpcEndpoint, grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -164,18 +195,13 @@ func (n *Node) QueryAllBalances(address string) sdk.Coins {
 
 // QueryBTCStkConsumerConsumers queries all registered BTC staking consumer chains
 func (n *Node) QueryBTCStkConsumerConsumers() []*bsctypes.ConsumerRegisterResponse {
-	var (
-		resp *bsctypes.QueryConsumersRegistryResponse
-		err  error
-	)
+	path := "/babylon/btcstkconsumer/v1/consumer_registry_list"
+	bz, err := n.QueryGRPCGateway(path, url.Values{})
+	require.NoError(n.T(), err)
 
-	n.BtcStkConsumerQuery(func(bscClient bsctypes.QueryClient) {
-		resp, err = bscClient.ConsumersRegistry(context.Background(), &bsctypes.QueryConsumersRegistryRequest{
-			// Empty consumer_ids means query all consumers
-			ConsumerIds: []string{},
-		})
-		require.NoError(n.T(), err)
-	})
+	var resp bsctypes.QueryConsumerRegistryListResponse
+	err = util.Cdc.UnmarshalJSON(bz, &resp)
+	require.NoError(n.T(), err)
 
 	return resp.ConsumerRegisters
 }
@@ -206,4 +232,72 @@ func (n *Node) QueryIctvRewardGauges(addrs []string, holderType ictvtypes.Stakeh
 	})
 
 	return rewards
+}
+
+// QueryLatestEpochHeader retrieves the latest epoch header for the specified consumer ID
+func (n *Node) QueryLatestEpochHeader(consumerID string) *zoneconciergetype.QueryLatestEpochHeaderResponse {
+	path := fmt.Sprintf("/babylon/zoneconcierge/v1/latest_epoch_header/%s", consumerID)
+	bz, err := n.QueryGRPCGateway(path, url.Values{})
+	require.NoError(n.T(), err)
+
+	var resp zoneconciergetype.QueryLatestEpochHeaderResponse
+	err = util.Cdc.UnmarshalJSON(bz, &resp)
+	require.NoError(n.T(), err)
+
+	return &resp
+}
+
+// QueryBSNLastSentSegment retrieves the last sent segment information for the specified consumer ID
+func (n *Node) QueryBSNLastSentSegment(consumerID string) *zoneconciergetype.QueryBSNLastSentSegmentResponse {
+	path := fmt.Sprintf("/babylon/zoneconcierge/v1/bsn_last_sent_segment/%s", consumerID)
+	bz, err := n.QueryGRPCGateway(path, url.Values{})
+	require.NoError(n.T(), err)
+
+	var resp zoneconciergetype.QueryBSNLastSentSegmentResponse
+	err = util.Cdc.UnmarshalJSON(bz, &resp)
+	require.NoError(n.T(), err)
+
+	return &resp
+}
+
+// QueryGetSealedEpochProof retrieves the sealed epoch proof for the specified epoch number
+func (n *Node) QueryGetSealedEpochProof(epochNum uint64) *zoneconciergetype.QueryGetSealedEpochProofResponse {
+	path := fmt.Sprintf("/babylon/zoneconcierge/v1/sealed_epoch_proof/%d", epochNum)
+	bz, err := n.QueryGRPCGateway(path, url.Values{})
+	require.NoError(n.T(), err)
+
+	var resp zoneconciergetype.QueryGetSealedEpochProofResponse
+	err = util.Cdc.UnmarshalJSON(bz, &resp)
+	require.NoError(n.T(), err)
+
+	return &resp
+}
+
+// QueryLatestEpochHeaderCLI retrieves the latest epoch header for the specified consumer ID using CLI
+func (n *Node) QueryLatestEpochHeaderCLI(consumerID string) string {
+	cmd := []string{"babylond", "query", "zc", "latest-epoch-header", consumerID, "--output=json", "--node", n.GetRpcEndpoint()}
+	outBuf, _, err := n.Tm.ContainerManager.ExecCmd(n.T(), n.Container.Name, cmd, "")
+	require.NoError(n.T(), err)
+	return outBuf.String()
+}
+
+// QueryBSNLastSentSegmentCLI retrieves the last sent segment information for the specified consumer ID using CLI
+func (n *Node) QueryBSNLastSentSegmentCLI(consumerID string) string {
+	cmd := []string{"babylond", "query", "zc", "bsn-last-sent-seg", consumerID, "--output=json", "--node", n.GetRpcEndpoint()}
+	outBuf, _, err := n.Tm.ContainerManager.ExecCmd(n.T(), n.Container.Name, cmd, "")
+	require.NoError(n.T(), err)
+	return outBuf.String()
+}
+
+// QueryGetSealedEpochProofCLI retrieves the sealed epoch proof for the specified epoch number using CLI
+func (n *Node) QueryGetSealedEpochProofCLI(epochNum uint64) string {
+	cmd := []string{"babylond", "query", "zc", "get-sealed-epoch-proof", fmt.Sprintf("%d", epochNum), "--output=json", "--node", n.GetRpcEndpoint()}
+	outBuf, _, err := n.Tm.ContainerManager.ExecCmd(n.T(), n.Container.Name, cmd, "")
+	require.NoError(n.T(), err)
+	return outBuf.String()
+}
+
+// GetRpcEndpoint returns the RPC endpoint of the node
+func (n *Node) GetRpcEndpoint() string {
+	return "tcp://" + net.JoinHostPort(n.Container.Name, fmt.Sprintf("%d", n.Ports.RPC))
 }
