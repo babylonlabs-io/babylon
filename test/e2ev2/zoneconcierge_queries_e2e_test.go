@@ -12,24 +12,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestZoneConciergeQueriesCLI(t *testing.T) {
-	t.Parallel()
-	tm := tmanager.NewTmWithIbc(t)
-	tm.Start()
-
-	bbn, _ := tm.ChainNodes()
-
-	proofOutput := bbn.QueryGetSealedEpochProofCLI(1)
-	require.Contains(t, proofOutput, "validator_set")
-
-	// returns "not found" but commands work
-	headerOutput := bbn.QueryLatestEpochHeaderCLI("07-tendermint-0")
-	require.NotNil(t, headerOutput)
-
-	segmentOutput := bbn.QueryBSNLastSentSegmentCLI("07-tendermint-0")
-	require.NotNil(t, segmentOutput)
-}
-
 func TestZoneConciergeQueries(t *testing.T) {
 	tm := tmanager.NewTmWithIbc(t)
 	tm.Start()
@@ -91,6 +73,16 @@ func TestZoneConciergeQueries(t *testing.T) {
 		"expected non nil segment response even if no segment is available")
 	require.Equal(t, 1, (len(seg.Segment.BtcHeaders)),
 		"expected at most 1 header in initial segment")
+
+	segmentOutput := bbn.QueryBSNLastSentSegmentCLI(consumerID)
+	require.NotNil(t, segmentOutput)
+	require.Contains(t, segmentOutput, seg.Segment.BtcHeaders[0].Header.MarshalHex())
+
+	proofOutput := bbn.QueryGetSealedEpochProofCLI(1)
+	require.Contains(t, proofOutput, "validator_set")
+
+	headerOutput := bbn.QueryLatestEpochHeaderCLI(consumerID)
+	require.NotNil(t, headerOutput)
 
 	bbn.WaitForCondition(func() bool {
 		proof := bbn.QueryGetSealedEpochProof(1)
