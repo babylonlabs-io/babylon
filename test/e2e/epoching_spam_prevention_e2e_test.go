@@ -10,8 +10,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/cometbft/cometbft/crypto/ed25519"
-
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer"
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer/chain"
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/util"
@@ -26,18 +24,6 @@ type EpochingSpamPreventionTestSuite struct {
 	suite.Suite
 
 	configurer configurer.Configurer
-}
-
-// createValidatorKeyAndAddress generates a validator private key and returns the key and corresponding address
-func (s *EpochingSpamPreventionTestSuite) createValidatorKeyAndAddress() (ed25519.PrivKey, sdk.AccAddress, error) {
-	// Generate Ed25519 private key (same as datagen does internally)
-	privKey := ed25519.GenPrivKey()
-
-	// Get the public key and convert to address
-	pubKey := privKey.PubKey()
-	addr := sdk.AccAddress(pubKey.Address())
-
-	return privKey, addr, nil
 }
 
 func (s *EpochingSpamPreventionTestSuite) SetupSuite() {
@@ -396,8 +382,10 @@ EOF`, string(blsPopJSON))})
 
 	createValidator(newValidatorWalletName, newValidatorAddr)
 	currentHeight1, err := nonValidatorNode.QueryCurrentHeight()
+	s.NoError(err)
 	chainA.WaitUntilHeight(currentHeight1 + 1)
 	afterBalance, err := nonValidatorNode.QueryBalance(newValidatorAddr, "ubbn")
+	s.NoError(err)
 	lockedBalance := initialBalance.Amount.Sub(afterBalance.Amount)
 	s.T().Logf("Validator initial balance: %s, after create-validator: %s, locked: %s",
 		initialBalance.String(), afterBalance.String(), lockedBalance.String())
