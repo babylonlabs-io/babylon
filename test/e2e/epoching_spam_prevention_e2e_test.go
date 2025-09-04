@@ -403,7 +403,7 @@ EOF`, string(blsPopJSON))})
 	_, err = nonValidatorNode.QueryGRPCGateway(
 		fmt.Sprintf("/cosmos/staking/v1beta1/validators/%s", newValoperAddr), url.Values{},
 	)
-	s.Error(err, "epoch 종료 전에는 validator가 바로 생성되면 안 됩니다")
+	s.Error(err, "Validators should not be created immediately before the end of the epoch.")
 
 	// --- Step 2. Waiting Epoch ends ---
 	paramsBz, err := nonValidatorNode.QueryGRPCGateway("/babylon/epoching/v1/params", url.Values{})
@@ -427,7 +427,7 @@ EOF`, string(blsPopJSON))})
 	validatorBz, err := nonValidatorNode.QueryGRPCGateway(
 		fmt.Sprintf("/cosmos/staking/v1beta1/validators/%s", newValoperAddr), url.Values{},
 	)
-	s.NoError(err, "epoch 종료 후 validator가 생성되어야 합니다")
+	s.NoError(err, "A validator must be created after the epoch ends")
 
 	var validatorResp struct {
 		Validator struct {
