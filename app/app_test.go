@@ -45,7 +45,7 @@ var (
 		govtypes.ModuleName:                         {authtypes.Burner},
 		ibctransfertypes.ModuleName:                 {authtypes.Minter, authtypes.Burner},
 		incentivetypes.ModuleName:                   nil, // this line is needed to create an account for incentive module
-		costktypes.ModuleName:                       nil, // this line is needed to create an account for ccostakg module
+		costktypes.ModuleName:                       nil, // this line is needed to create an account for costaking module
 		tokenfactorytypes.ModuleName:                {authtypes.Minter, authtypes.Burner},
 		icatypes.ModuleName:                         nil,
 		evmtypes.ModuleName:                         {authtypes.Minter, authtypes.Burner},

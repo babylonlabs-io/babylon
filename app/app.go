@@ -183,7 +183,7 @@ var (
 		govtypes.ModuleName:                         {authtypes.Burner},
 		ibctransfertypes.ModuleName:                 {authtypes.Minter, authtypes.Burner},
 		incentivetypes.ModuleName:                   nil, // this line is needed to create an account for incentive module
-		costktypes.ModuleName:                  nil, // this line is needed to create an account for ccostakg module
+		costktypes.ModuleName:                       nil, // this line is needed to create an account for costaking module
 		tokenfactorytypes.ModuleName:                {authtypes.Minter, authtypes.Burner},
 		icatypes.ModuleName:                         nil,
 		evmtypes.ModuleName:                         {authtypes.Minter, authtypes.Burner},
@@ -479,8 +479,8 @@ func NewBabylonApp(
 		btcstakingtypes.ModuleName,
 		finalitytypes.ModuleName,
 		// tokenomics related modules
-		incentivetypes.ModuleName,  // EndBlock of incentive module does not matter
-		costktypes.ModuleName, // EndBlock of ccostakg module does not matter
+		incentivetypes.ModuleName, // EndBlock of incentive module does not matter
+		costktypes.ModuleName,     // EndBlock of costaking module does not matter
 		// Cosmos EVM
 		evmtypes.ModuleName,
 		erc20types.ModuleName,
