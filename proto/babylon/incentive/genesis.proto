@@ -154,5 +154,5 @@ enum StakeholderType {
   // BTC staker stakeholder type
   BTC_STAKER = 1;
   // Costaker stakeholder type
-  COOSTAKER = 2;
+  COSTAKER = 2;
 }
