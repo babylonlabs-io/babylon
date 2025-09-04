@@ -1,6 +1,8 @@
 package types
 
-import sdk "github.com/cosmos/cosmos-sdk/types"
+import (
+	sdk "github.com/cosmos/cosmos-sdk/types"
+)
 
 // TODO: Rethink how to check whether an fp is a Babylon Genesis fp or not.
 // Checking through the ChainID set by context is very brittle and will

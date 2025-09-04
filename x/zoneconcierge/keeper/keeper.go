@@ -5,10 +5,11 @@ import (
 	corestoretypes "cosmossdk.io/core/store"
 	"cosmossdk.io/log"
 	storetypes "cosmossdk.io/store/types"
-	"github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
+
+	"github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/types"
 )
 
 type (
@@ -30,9 +31,13 @@ type (
 		// used in BTC staking
 		bsKeeper     types.BTCStakingKeeper
 		btcStkKeeper types.BTCStkConsumerKeeper
+		fKeeper      types.FinalityKeeper
 		// The address capable of executing a MsgUpdateParams message.
 		// Typically, this should be the x/gov module account.
 		authority string
+
+		// Transient store key for tracking BTC header and consumer event broadcasting triggers
+		transientKey *storetypes.TransientStoreKey
 
 		// Collections for KV store management
 		Schema                collections.Schema
@@ -47,6 +52,7 @@ type (
 func NewKeeper(
 	cdc codec.BinaryCodec,
 	storeService corestoretypes.KVStoreService,
+	transientKey *storetypes.TransientStoreKey,
 	ics4Wrapper types.ICS4Wrapper,
 	clientKeeper types.ClientKeeper,
 	connectionKeeper types.ConnectionKeeper,
@@ -60,6 +66,7 @@ func NewKeeper(
 	storeQuerier storetypes.Queryable,
 	bsKeeper types.BTCStakingKeeper,
 	btcStkKeeper types.BTCStkConsumerKeeper,
+	fKeeper types.FinalityKeeper,
 	authority string,
 ) *Keeper {
 	sb := collections.NewSchemaBuilder(storeService)
@@ -80,7 +87,9 @@ func NewKeeper(
 		storeQuerier:        storeQuerier,
 		bsKeeper:            bsKeeper,
 		btcStkKeeper:        btcStkKeeper,
+		fKeeper:             fKeeper,
 		authority:           authority,
+		transientKey:        transientKey,
 
 		ParamsCollection: collections.NewItem[types.Params](
 			sb,
