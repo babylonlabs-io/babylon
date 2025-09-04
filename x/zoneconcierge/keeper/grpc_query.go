@@ -2,8 +2,9 @@ package keeper
 
 import (
 	"context"
+	"encoding/json"
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 
-	wasmtypes "github.com/CosmWasm/x/wasm/types"
 	bbntypes "github.com/babylonlabs-io/babylon/v4/types"
 	btcstktypes "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
 	"github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/types"
@@ -190,7 +191,7 @@ QueryGetSealedEpochProofResponse, error) {
 	return resp, nil
 }
 
-func (k *Keeper) ConsumerExists(goCtx context.Context,
+func (k *Keeper) ConsumerActive(goCtx context.Context,
 	req *types.QueryConsumerActiveRequest) (*types.QueryConsumerActiveResponse,
 	error) {
 	if req == nil {
@@ -208,13 +209,33 @@ func (k *Keeper) ConsumerExists(goCtx context.Context,
 		return nil, status.Error(codes.InvalidArgument, "consumer cannot be found")
 	}
 
+	var active bool
 	switch consumer.Type() {
 	case btcstktypes.ConsumerType_COSMOS:
 		channelID := consumer.GetCosmosConsumerMetadata().ChannelId
-		k.channelKeeper.ConsumerHasIBCChannelOpen(ctx, channelID)
+		active = k.channelKeeper.ConsumerHasIBCChannelOpen(ctx, channelID)
 	case btcstktypes.ConsumerType_ROLLUP:
-		rm := consumer.GetRollupConsumerMetadata()
-		//query should consult registred smart contract and check wheteher it has any labels attach, it it does not consumer is active
+		address := consumer.GetRollupConsumerMetadata().FinalityContractAddress
+		contractAddress, err := sdk.AccAddressFromBech32(address)
+		if err != nil {
+			return nil, status.Error(codes.InvalidArgument, "invalid contract address")
+		}
+
+		queryMsg := []byte(`{"labels":{}}`)
+		queryRes, err := k.wasmKeeper.QuerySmart(ctx, contractAddress, queryMsg)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to query contract: %v", err)
+		}
+
+		var labelsResp struct {
+			Labels []interface{} `json:"labels"`
+		}
+
+		if err := json.Unmarshal(queryRes, &labelsResp); err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to unmarshal response: %v", err)
+		}
+		active = len(labelsResp.Labels) == 0
 	}
-	resp := &types.QueryConsumerExistsResponse{Active: boolean}
+
+	return &types.QueryConsumerActiveResponse{Active: active}, nil
 }

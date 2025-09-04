@@ -38,6 +38,8 @@ type (
 		// Transient store key for tracking BTC header and consumer event broadcasting triggers
 		transientKey *storetypes.TransientStoreKey
 
+		wasmKeeper types.WasmKeeper // to allow contract to query zoneconcierge
+
 		// Collections for KV store management
 		Schema                collections.Schema
 		ParamsCollection      collections.Item[types.Params]
@@ -65,6 +67,7 @@ func NewKeeper(
 	storeQuerier storetypes.Queryable,
 	bsKeeper types.BTCStakingKeeper,
 	btcStkKeeper types.BTCStkConsumerKeeper,
+	wasmKeeper types.WasmKeeper,
 	authority string,
 ) *Keeper {
 	sb := collections.NewSchemaBuilder(storeService)
@@ -85,6 +88,7 @@ func NewKeeper(
 		storeQuerier:        storeQuerier,
 		bsKeeper:            bsKeeper,
 		btcStkKeeper:        btcStkKeeper,
+		wasmKeeper:          wasmKeeper,
 		authority:           authority,
 		transientKey:        transientKey,
 

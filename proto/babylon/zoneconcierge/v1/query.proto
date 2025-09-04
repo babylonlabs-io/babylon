@@ -46,7 +46,7 @@ service Query {
         "/babylon/zoneconcierge/v1/sealed_epoch_proof/{epoch_num}";
   }
   // ConsumerActive queries if a consumer is active with given consumer ID
-  rpc QueryConsumerActive(QueryConsumerActiveRequest) returns
+  rpc ConsumerActive(QueryConsumerActiveRequest) returns
       (QueryConsumerActiveResponse) {
     option (google.api.http).get =
         "/babylon/zoneconcierge/v1/consumer_exists/{consumer_id}";

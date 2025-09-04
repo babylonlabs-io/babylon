@@ -42,6 +42,7 @@ func ZoneConciergeKeeper(
 	epochingKeeper types.EpochingKeeper,
 	bsKeeper types.BTCStakingKeeper,
 	btcStkKeeper types.BTCStkConsumerKeeper,
+	wasmKeeper types.WasmKeeper,
 ) (*keeper.Keeper, sdk.Context) {
 	return ZoneConciergeKeeperWithStoreKey(
 		t,
@@ -53,6 +54,7 @@ func ZoneConciergeKeeper(
 		epochingKeeper,
 		bsKeeper,
 		btcStkKeeper,
+		wasmKeeper,
 	)
 }
 
@@ -66,6 +68,7 @@ func ZoneConciergeKeeperWithStoreKey(
 	epochingKeeper types.EpochingKeeper,
 	bsKeeper types.BTCStakingKeeper,
 	btcStkKeeper types.BTCStkConsumerKeeper,
+	wasmKeeper types.WasmKeeper,
 ) (*keeper.Keeper, sdk.Context) {
 	logger := log.NewTestLogger(t)
 	if storeKey == nil {
@@ -104,6 +107,7 @@ func ZoneConciergeKeeperWithStoreKey(
 		zoneconciergeStoreQuerier{},
 		bsKeeper,
 		btcStkKeeper,
+		wasmKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
