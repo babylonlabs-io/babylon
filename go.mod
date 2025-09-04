@@ -42,6 +42,7 @@ require (
 	cosmossdk.io/x/upgrade v0.2.0
 	github.com/CosmWasm/wasmvm/v2 v2.2.4
 	github.com/avast/retry-go/v4 v4.5.1
+	github.com/babylonlabs-io/babylon/v4 v4.0.0-snapshot.250522
 	github.com/bits-and-blooms/bitset v1.22.0
 	github.com/boljen/go-bitmap v0.0.0-20151001105940-23cd2fb0ce7d
 	github.com/btcsuite/btcd/btcec/v2 v2.3.4
@@ -97,9 +98,16 @@ require (
 	github.com/bytedance/sonic v1.13.2 // indirect
 	github.com/bytedance/sonic/loader v0.2.4 // indirect
 	github.com/cloudwego/base64x v0.1.5 // indirect
+	github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8 v8.2.0 // indirect
+	github.com/cosmos/ibc-apps/modules/async-icq/v8 v8.0.1-0.20240124225747-f055ce5b405c // indirect
+	github.com/cosmos/ibc-apps/modules/rate-limiting/v8 v8.0.0 // indirect
+	github.com/cosmos/ibc-go/modules/apps/callbacks v0.2.1-0.20231113120333-342c00b0f8bd // indirect
+	github.com/cosmos/ibc-go/modules/capability v1.0.1 // indirect
+	github.com/cosmos/ibc-go/modules/light-clients/08-wasm v0.0.0-20240429153234-e1e6da7e4ead // indirect
 	github.com/cosmos/ibc-go/v8 v8.7.0 // indirect
 	github.com/gogo/status v1.1.0 // indirect
 	github.com/holiman/uint256 v1.3.2 // indirect
+	github.com/jinzhu/copier v0.3.5 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.10 // indirect
 	github.com/onsi/gomega v1.36.2 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
