@@ -26,7 +26,7 @@ func TestMsgUpdateParams(t *testing.T) {
 				return &types.MsgUpdateParams{
 					Authority: appparams.AccGov.String(),
 					Params: types.Params{
-						CostakingPortion:   math.LegacyMustNewDecFromStr("0.5"),
+						CostakingPortion:    math.LegacyMustNewDecFromStr("0.5"),
 						ScoreRatioBtcByBaby: math.NewInt(100),
 						ValidatorsPortion:   math.LegacyMustNewDecFromStr("0.001"),
 					},
@@ -60,7 +60,7 @@ func TestMsgUpdateParams(t *testing.T) {
 				return &types.MsgUpdateParams{
 					Authority: appparams.AccGov.String(),
 					Params: types.Params{
-						CostakingPortion:   math.LegacyDec{},
+						CostakingPortion:    math.LegacyDec{},
 						ScoreRatioBtcByBaby: types.DefaultScoreRatioBtcByBaby,
 						ValidatorsPortion:   types.DefaultValidatorsPortion,
 					},
@@ -74,7 +74,7 @@ func TestMsgUpdateParams(t *testing.T) {
 				return &types.MsgUpdateParams{
 					Authority: appparams.AccGov.String(),
 					Params: types.Params{
-						CostakingPortion:   math.LegacyMustNewDecFromStr("1.5"),
+						CostakingPortion:    math.LegacyMustNewDecFromStr("1.5"),
 						ScoreRatioBtcByBaby: types.DefaultScoreRatioBtcByBaby,
 						ValidatorsPortion:   types.DefaultValidatorsPortion,
 					},
@@ -88,7 +88,7 @@ func TestMsgUpdateParams(t *testing.T) {
 				return &types.MsgUpdateParams{
 					Authority: appparams.AccGov.String(),
 					Params: types.Params{
-						CostakingPortion:   math.LegacyOneDec(),
+						CostakingPortion:    math.LegacyOneDec(),
 						ScoreRatioBtcByBaby: types.DefaultScoreRatioBtcByBaby,
 						ValidatorsPortion:   types.DefaultValidatorsPortion,
 					},
@@ -102,7 +102,7 @@ func TestMsgUpdateParams(t *testing.T) {
 				return &types.MsgUpdateParams{
 					Authority: appparams.AccGov.String(),
 					Params: types.Params{
-						CostakingPortion:   types.DefaultCostakingPortion,
+						CostakingPortion:    types.DefaultCostakingPortion,
 						ScoreRatioBtcByBaby: math.Int{},
 						ValidatorsPortion:   types.DefaultValidatorsPortion,
 					},
@@ -116,7 +116,7 @@ func TestMsgUpdateParams(t *testing.T) {
 				return &types.MsgUpdateParams{
 					Authority: appparams.AccGov.String(),
 					Params: types.Params{
-						CostakingPortion:   types.DefaultCostakingPortion,
+						CostakingPortion:    types.DefaultCostakingPortion,
 						ScoreRatioBtcByBaby: math.ZeroInt(),
 						ValidatorsPortion:   types.DefaultValidatorsPortion,
 					},
@@ -130,7 +130,7 @@ func TestMsgUpdateParams(t *testing.T) {
 				return &types.MsgUpdateParams{
 					Authority: appparams.AccGov.String(),
 					Params: types.Params{
-						CostakingPortion:   types.DefaultCostakingPortion,
+						CostakingPortion:    types.DefaultCostakingPortion,
 						ScoreRatioBtcByBaby: math.NewInt(-10),
 						ValidatorsPortion:   types.DefaultValidatorsPortion,
 					},
@@ -144,7 +144,7 @@ func TestMsgUpdateParams(t *testing.T) {
 				return &types.MsgUpdateParams{
 					Authority: appparams.AccGov.String(),
 					Params: types.Params{
-						CostakingPortion:   math.LegacyNewDec(0),
+						CostakingPortion:    math.LegacyNewDec(0),
 						ScoreRatioBtcByBaby: math.OneInt(),
 						ValidatorsPortion:   math.LegacyNewDec(0),
 					},
@@ -158,7 +158,7 @@ func TestMsgUpdateParams(t *testing.T) {
 				return &types.MsgUpdateParams{
 					Authority: appparams.AccGov.String(),
 					Params: types.Params{
-						CostakingPortion:   math.LegacyMustNewDecFromStr("0.9"),
+						CostakingPortion:    math.LegacyMustNewDecFromStr("0.9"),
 						ScoreRatioBtcByBaby: math.NewInt(50),
 						ValidatorsPortion:   math.LegacyMustNewDecFromStr("0.099"),
 					},
@@ -172,7 +172,7 @@ func TestMsgUpdateParams(t *testing.T) {
 				return &types.MsgUpdateParams{
 					Authority: appparams.AccGov.String(),
 					Params: types.Params{
-						CostakingPortion:   math.LegacyMustNewDecFromStr("0.5"),
+						CostakingPortion:    math.LegacyMustNewDecFromStr("0.5"),
 						ScoreRatioBtcByBaby: math.OneInt(),
 						ValidatorsPortion:   math.LegacyMustNewDecFromStr("0.5"),
 					},
@@ -186,7 +186,7 @@ func TestMsgUpdateParams(t *testing.T) {
 				return &types.MsgUpdateParams{
 					Authority: appparams.AccGov.String(),
 					Params: types.Params{
-						CostakingPortion:   math.LegacyMustNewDecFromStr("0.6"),
+						CostakingPortion:    math.LegacyMustNewDecFromStr("0.6"),
 						ScoreRatioBtcByBaby: math.OneInt(),
 						ValidatorsPortion:   math.LegacyMustNewDecFromStr("0.5"),
 					},
@@ -200,7 +200,7 @@ func TestMsgUpdateParams(t *testing.T) {
 				return &types.MsgUpdateParams{
 					Authority: appparams.AccGov.String(),
 					Params: types.Params{
-						CostakingPortion:   types.DefaultCostakingPortion,
+						CostakingPortion:    types.DefaultCostakingPortion,
 						ScoreRatioBtcByBaby: types.DefaultScoreRatioBtcByBaby,
 						ValidatorsPortion:   math.LegacyDec{},
 					},
@@ -214,7 +214,7 @@ func TestMsgUpdateParams(t *testing.T) {
 				return &types.MsgUpdateParams{
 					Authority: appparams.AccGov.String(),
 					Params: types.Params{
-						CostakingPortion:   types.DefaultCostakingPortion,
+						CostakingPortion:    types.DefaultCostakingPortion,
 						ScoreRatioBtcByBaby: types.DefaultScoreRatioBtcByBaby,
 						ValidatorsPortion:   math.LegacyOneDec(),
 					},
@@ -228,7 +228,7 @@ func TestMsgUpdateParams(t *testing.T) {
 				return &types.MsgUpdateParams{
 					Authority: appparams.AccGov.String(),
 					Params: types.Params{
-						CostakingPortion:   types.DefaultCostakingPortion,
+						CostakingPortion:    types.DefaultCostakingPortion,
 						ScoreRatioBtcByBaby: types.DefaultScoreRatioBtcByBaby,
 						ValidatorsPortion:   math.LegacyMustNewDecFromStr("1.5"),
 					},
@@ -242,7 +242,7 @@ func TestMsgUpdateParams(t *testing.T) {
 				return &types.MsgUpdateParams{
 					Authority: appparams.AccGov.String(),
 					Params: types.Params{
-						CostakingPortion:   types.DefaultCostakingPortion,
+						CostakingPortion:    types.DefaultCostakingPortion,
 						ScoreRatioBtcByBaby: types.DefaultScoreRatioBtcByBaby,
 						ValidatorsPortion:   math.LegacyMustNewDecFromStr("-0.01"),
 					},
@@ -256,7 +256,7 @@ func TestMsgUpdateParams(t *testing.T) {
 				return &types.MsgUpdateParams{
 					Authority: appparams.AccGov.String(),
 					Params: types.Params{
-						CostakingPortion:   math.LegacyMustNewDecFromStr("0.5"),
+						CostakingPortion:    math.LegacyMustNewDecFromStr("0.5"),
 						ScoreRatioBtcByBaby: math.OneInt(),
 						ValidatorsPortion:   math.LegacyMustNewDecFromStr("0.4"),
 					},

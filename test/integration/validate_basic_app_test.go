@@ -8,12 +8,12 @@ import (
 	"github.com/stretchr/testify/require"
 
 	abci "github.com/cometbft/cometbft/abci/types"
+	cmtcrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
+	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdksigning "github.com/cosmos/cosmos-sdk/types/tx/signing"
-	cmtcrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
-	"github.com/cosmos/cosmos-sdk/client"
 
 	"github.com/babylonlabs-io/babylon/v4/app"
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
