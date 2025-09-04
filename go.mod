@@ -8,7 +8,6 @@ require (
 	github.com/cometbft/cometbft v0.38.17
 	github.com/cometbft/cometbft-db v0.15.0
 	github.com/cosmos/cosmos-sdk v0.53.3
-	github.com/cosmos/ibc-go/modules/light-clients/08-wasm/v10 v10.3.0
 	github.com/ethereum/go-ethereum v1.15.11 // indirect
 	github.com/gorilla/mux v1.8.1
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0
@@ -50,6 +49,7 @@ require (
 	github.com/cosmos/cosmos-db v1.1.1
 	github.com/cosmos/cosmos-proto v1.0.0-beta.5
 	github.com/cosmos/gogoproto v1.7.0
+	github.com/cosmos/ibc-go/modules/light-clients/08-wasm/v10 v10.3.0
 	github.com/cosmos/ibc-go/v10 v10.3.0
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.4.0
 	github.com/golang/mock v1.6.0

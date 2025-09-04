@@ -3,11 +3,15 @@ package babylon.zoneconcierge.v1;
 
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
+import "tendermint/crypto/proof.proto";
+import "babylon/checkpointing/v1/bls_key.proto";
+import "google/protobuf/timestamp.proto";
 import "babylon/btccheckpoint/v1/btccheckpoint.proto";
 import "babylon/checkpointing/v1/checkpoint.proto";
 import "babylon/epoching/v1/epoching.proto";
 import "babylon/zoneconcierge/v1/zoneconcierge.proto";
 import "babylon/zoneconcierge/v1/params.proto";
+import "babylon/btclightclient/v1/btclightclient.proto";
 
 option go_package = "github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types";
 
@@ -22,6 +26,24 @@ service Query {
       returns (QueryFinalizedBSNsInfoResponse) {
     option (google.api.http).get =
         "/babylon/zoneconcierge/v1/finalized_bsns_info";
+  }
+  // LatestEpochHeader queries the latest epoch header for a given consumer ID
+  rpc LatestEpochHeader(QueryLatestEpochHeaderRequest) returns
+      (QueryLatestEpochHeaderResponse){
+    option (google.api.http).get =
+        "/babylon/zoneconcierge/v1/latest_epoch_header/{consumer_id}";
+  }
+  // BSNLastSentSegment queries the last sent segment of a given consumer ID
+  rpc BSNLastSentSegment(QueryBSNLastSentSegmentRequest) returns
+      (QueryBSNLastSentSegmentResponse) {
+    option (google.api.http).get =
+        "/babylon/zoneconcierge/v1/bsn_last_sent_segment/{consumer_id}";
+  }
+  // SealedEpochProof queries the proof of a sealed epoch
+  rpc GetSealedEpochProof(QueryGetSealedEpochProofRequest) returns
+      (QueryGetSealedEpochProofResponse) {
+    option (google.api.http).get =
+        "/babylon/zoneconcierge/v1/sealed_epoch_proof/{epoch_num}";
   }
 }
 
@@ -62,4 +84,95 @@ message FinalizedBSNData {
   babylon.btccheckpoint.v1.SubmissionKey btc_submission_key = 5;
   // Proofs of finality
   ProofFinalizedHeader proof = 6;
+}
+
+// QueryLatestEpochHeadersRequest is request type for the
+// QueryLatestEpochHeadersRequest RPC method.
+message QueryLatestEpochHeaderRequest {
+  string consumer_id = 1;
+}
+
+// QueryLatestEpochHeaderResponse is response type for the
+// QueryLatestEpochHeaderResponse RPC method.
+message QueryLatestEpochHeaderResponse {
+  IndexedHeaderResponse header = 1;
+}
+// QueryBSNLastSentSegmentRequest is request type for the
+// QueryBSNLastSentSegmentRequest RPC method.
+message QueryBSNLastSentSegmentRequest {
+  string consumer_id = 1;
+}
+// QueryBSNLastSentSegmentResponse is response type for the
+// QueryBSNLastSentSegmentResponse RPC method.
+message QueryBSNLastSentSegmentResponse {
+  BTCChainSegmentResponse segment = 1;
+}
+// QuerySealedEpochProofRequest is request type for the
+// QuerySealedEpochProofRequest RPC method.
+message QueryGetSealedEpochProofRequest {
+  uint64 epoch_num = 1;
+}
+// QuerySealedEpochProofResponse is response type for the
+// QuerySealedEpochProofResponse RPC method.
+message QueryGetSealedEpochProofResponse {
+  ProofEpochSealedResponse epoch = 1;
+}
+
+// IndexedHeaderResponse provides the metadata of a BSN header
+message IndexedHeaderResponse {
+  // consumer_id is the unique ID of the consumer
+  string consumer_id = 1;
+  // hash is the hash of this header
+  bytes hash = 2;
+  // height is the height of this header on the BSN's ledger.
+  // (hash, height) jointly provide the position of the header on the BSN ledger
+  uint64 height = 3;
+  // time is the timestamp of this header on the BSN's ledger.
+  // It is needed for a BSN to unbond all mature validators/delegations before
+  // this timestamp, when this header is BTC-finalised
+  google.protobuf.Timestamp time = 4 [ (gogoproto.stdtime) = true ];
+  // babylon_header_hash is the hash of the babylon block that includes this BSN
+  // header
+  bytes babylon_header_hash = 5;
+  // babylon_header_height is the height of the babylon block that includes this
+  // BSN header
+  uint64 babylon_header_height = 6;
+  // epoch is the epoch number of this header on Babylon ledger
+  uint64 babylon_epoch = 7;
+  // babylon_tx_hash is the hash of the tx that includes this header
+  // (babylon_block_height, babylon_tx_hash) jointly provides the position of
+  // the header on Babylon ledger
+  bytes babylon_tx_hash = 8;
+}
+
+// Btc light client chain segment response provides a chain segment grown
+// during
+// last finalized epoch
+message BTCChainSegmentResponse {
+  repeated babylon.btclightclient.v1.BTCHeaderInfo btc_headers = 1;
+}
+
+// ProofEpochSealedResponse provides a complete proof that an epoch is sealed
+// by the sealer header, containing all metadata and checkpoint data needed
+// for verification.
+// i.e., the 2nd header of the next epoch With the access of metadata
+// - Metadata of this epoch, which includes the sealer header
+// - Raw checkpoint of this epoch
+// The verifier can perform the following verification rules:
+// - The raw checkpoint's `app_hash` is same as in the sealer header
+// - More than 2/3 (in voting power) validators in the validator set of this
+// epoch have signed `app_hash` of the sealer header
+// - The epoch metadata is committed to the `app_hash` of the sealer header
+// - The validator set is committed to the `app_hash` of the sealer header
+message ProofEpochSealedResponse {
+  // validator_set is the validator set of the sealed epoch
+  // This validator set has generated a BLS multisig on `app_hash` of
+  // the sealer header
+  repeated babylon.checkpointing.v1.ValidatorWithBlsKey validator_set = 1;
+  // proof_epoch_info is the Merkle proof that the epoch's metadata is committed
+  // to `app_hash` of the sealer header
+  tendermint.crypto.ProofOps proof_epoch_info = 2;
+  // proof_epoch_info is the Merkle proof that the epoch's validator set is
+  // committed to `app_hash` of the sealer header
+  tendermint.crypto.ProofOps proof_epoch_val_set = 3;
 }
