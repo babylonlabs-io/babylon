@@ -46,6 +46,7 @@ remove send restrictions
 bindings (thanks @benluelo for contribution)
 - [#1594](https://github.com/babylonlabs-io/babylon/pull/1594) Add soft deleted to finality providers response.
 - [#1611](https://github.com/babylonlabs-io/babylon/pull/1611) Rename `x/btcstaking` prefixes as `v3.x`.
+- [#1668](https://github.com/babylonlabs-io/babylon/pull/1668) Bump dependencies based on dependabot alerts
 
 ### Bug Fixes
 
