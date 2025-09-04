@@ -31,7 +31,6 @@ import (
 	"github.com/babylonlabs-io/babylon/v4/x/finality/keeper"
 	"github.com/babylonlabs-io/babylon/v4/x/finality/types"
 	ictvtypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
-	testhelper "github.com/babylonlabs-io/babylon/v4/testutil/helper"
 )
 
 func setupMsgServer(t testing.TB) (*keeper.Keeper, types.MsgServer, context.Context) {
