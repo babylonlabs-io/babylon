@@ -463,7 +463,7 @@ func TestHasBTCStakingConsumerIBCPackets(t *testing.T) {
 	hasPackets = h.BTCStakingKeeper.HasBTCStakingConsumerIBCPackets(h.Ctx)
 	require.True(t, hasPackets, "Should return true when at least one packet exists")
 
-	// Register and verify second consumer  
+	// Register and verify second consumer
 	consumer2 := h.RegisterAndVerifyConsumer(t, r)
 
 	// Create another consumer finality provider

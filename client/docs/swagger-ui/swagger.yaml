@@ -13388,10 +13388,10 @@ paths:
           format: uint64
       tags:
         - Query
-  /babylon/coostaking/v1/coostakers/{coostaker_address}/rewards_tracker:
+  /babylon/costaking/v1/costakers/{costaker_address}/rewards_tracker:
     get:
-      summary: CoostakerRewardsTracker queries the coostaker reward tracker.
-      operationId: CoostakerRewardsTracker
+      summary: CostakerRewardsTracker queries the costaker reward tracker.
+      operationId: CostakerRewardsTracker
       responses:
         '200':
           description: A successful response.
@@ -13402,9 +13402,9 @@ paths:
                 type: string
                 format: uint64
                 description: >-
-                  StartPeriodCumulativeReward the starting period the coostaker
+                  StartPeriodCumulativeReward the starting period the costaker
 
-                  made his last withdraw of coostaking rewards or modified his
+                  made his last withdraw of costaking rewards or modified his
                   active staking amount
 
                   of satoshis or baby.
@@ -13413,22 +13413,22 @@ paths:
                 format: byte
                 description: |-
                   ActiveSatoshis is the total amount of active satoshi delegated
-                  from this coostaker babylon address.
+                  from this costaker babylon address.
               active_baby:
                 type: string
                 format: byte
                 description: |-
                   ActiveBaby is the total amount of active baby delegated
-                  from this coostaker babylon address.
+                  from this costaker babylon address.
               total_score:
                 type: string
                 format: byte
                 description: |-
                   TotalScore is the total amount of calculated score
-                  of this coostaker.
+                  of this costaker.
             description: |-
-              QueryCoostakerRewardsTrackerResponse is the response type for the
-              Query/CoostakerRewardsTracker RPC method.
+              QueryCostakerRewardsTrackerResponse is the response type for the
+              Query/CostakerRewardsTracker RPC method.
         default:
           description: An unexpected error response.
           schema:
@@ -13452,17 +13452,17 @@ paths:
                       type: string
                       format: byte
       parameters:
-        - name: coostaker_address
-          description: CoostakerAddress defines the delegator address to query for.
+        - name: costaker_address
+          description: CostakerAddress defines the delegator address to query for.
           in: path
           required: true
           type: string
       tags:
         - Query
-  /babylon/coostaking/v1/current_rewards:
+  /babylon/costaking/v1/current_rewards:
     get:
       summary: >-
-        CurrentRewards queries the current rewards structure for coostaking
+        CurrentRewards queries the current rewards structure for costaking
         single pool.
       operationId: CurrentRewards
       responses:
@@ -13492,7 +13492,7 @@ paths:
                   Rewards is the current rewards for the single pool of rewards
                   for all the
 
-                  coostakers for the whole chain. If some action happens of
+                  costakers for the whole chain. If some action happens of
                   satoshi or baby
 
                   staked or is unbonded or withdraw of the rewards available,
@@ -13522,7 +13522,7 @@ paths:
 
                   creating new historical rewards and correlate with
 
-                  CoostakerRewardsTracker StartPeriodCumulativeReward.
+                  CostakerRewardsTracker StartPeriodCumulativeReward.
               total_score:
                 type: string
                 format: byte
@@ -13556,11 +13556,11 @@ paths:
                       format: byte
       tags:
         - Query
-  /babylon/coostaking/v1/historical_rewards/{period}:
+  /babylon/costaking/v1/historical_rewards/{period}:
     get:
       summary: >-
         HistoricalRewards queries the historical rewards structure per period
-        for coostaking single pool.
+        for costaking single pool.
       operationId: HistoricalRewards
       responses:
         '200':
@@ -13635,10 +13635,10 @@ paths:
           format: uint64
       tags:
         - Query
-  /babylon/coostaking/v1/params:
+  /babylon/costaking/v1/params:
     get:
       summary: Params queries the parameters of the module.
-      operationId: CoostakingParams
+      operationId: CostakingParams
       responses:
         '200':
           description: A successful response.
@@ -13649,13 +13649,13 @@ paths:
                 description: Params holds all the parameters of this module.
                 type: object
                 properties:
-                  coostaking_portion:
+                  costaking_portion:
                     type: string
                     description: >-
-                      CoostakingPortion is the portion of rewards that goes to
-                      Coostakers
+                      CostakingPortion is the portion of rewards that goes to
+                      Costakers
 
-                      NOTE: This portion of coostakers is taken after the
+                      NOTE: This portion of costakers is taken after the
                       incentive module
 
                       takes part of the fee_collector to give out to BTC
@@ -13669,7 +13669,7 @@ paths:
 
                       sats staked to count as score in the formula.
 
-                      score: min(coostakers_sats_staked, (coostakers_ubbn_staked
+                      score: min(costakers_sats_staked, (costakers_ubbn_staked
                       / score_ratio_btc_by_baby))
                   validators_portion:
                     type: string
@@ -22768,14 +22768,14 @@ definitions:
             The data could be arbitrary format, providing nessecary data
             for example neighbouring node hash
     title: ProofOps is Merkle proof defined by the list of ProofOps
-  babylon.coostaking.v1.Params:
+  babylon.costaking.v1.Params:
     type: object
     properties:
-      coostaking_portion:
+      costaking_portion:
         type: string
         description: |-
-          CoostakingPortion is the portion of rewards that goes to Coostakers
-          NOTE: This portion of coostakers is taken after the incentive module
+          CostakingPortion is the portion of rewards that goes to Costakers
+          NOTE: This portion of costakers is taken after the incentive module
           takes part of the fee_collector to give out to BTC stakers.
       score_ratio_btc_by_baby:
         type: string
@@ -22785,7 +22785,7 @@ definitions:
 
           sats staked to count as score in the formula.
 
-          score: min(coostakers_sats_staked, (coostakers_ubbn_staked /
+          score: min(costakers_sats_staked, (costakers_ubbn_staked /
           score_ratio_btc_by_baby))
       validators_portion:
         type: string
@@ -22798,16 +22798,16 @@ definitions:
           takes part of the fee_collector balance to give out to validators that
           correctly voted.
     description: Params defines the parameters for the module.
-  babylon.coostaking.v1.QueryCoostakerRewardsTrackerResponse:
+  babylon.costaking.v1.QueryCostakerRewardsTrackerResponse:
     type: object
     properties:
       start_period_cumulative_reward:
         type: string
         format: uint64
         description: >-
-          StartPeriodCumulativeReward the starting period the coostaker
+          StartPeriodCumulativeReward the starting period the costaker
 
-          made his last withdraw of coostaking rewards or modified his active
+          made his last withdraw of costaking rewards or modified his active
           staking amount
 
           of satoshis or baby.
@@ -22816,23 +22816,23 @@ definitions:
         format: byte
         description: |-
           ActiveSatoshis is the total amount of active satoshi delegated
-          from this coostaker babylon address.
+          from this costaker babylon address.
       active_baby:
         type: string
         format: byte
         description: |-
           ActiveBaby is the total amount of active baby delegated
-          from this coostaker babylon address.
+          from this costaker babylon address.
       total_score:
         type: string
         format: byte
         description: |-
           TotalScore is the total amount of calculated score
-          of this coostaker.
+          of this costaker.
     description: |-
-      QueryCoostakerRewardsTrackerResponse is the response type for the
-      Query/CoostakerRewardsTracker RPC method.
-  babylon.coostaking.v1.QueryCurrentRewardsResponse:
+      QueryCostakerRewardsTrackerResponse is the response type for the
+      Query/CostakerRewardsTracker RPC method.
+  babylon.costaking.v1.QueryCurrentRewardsResponse:
     type: object
     properties:
       rewards:
@@ -22853,7 +22853,7 @@ definitions:
           Rewards is the current rewards for the single pool of rewards for all
           the
 
-          coostakers for the whole chain. If some action happens of satoshi or
+          costakers for the whole chain. If some action happens of satoshi or
           baby
 
           staked or is unbonded or withdraw of the rewards available, this
@@ -22877,7 +22877,7 @@ definitions:
         description: |-
           Period stores the current period that serves as a reference for
           creating new historical rewards and correlate with
-          CoostakerRewardsTracker StartPeriodCumulativeReward.
+          CostakerRewardsTracker StartPeriodCumulativeReward.
       total_score:
         type: string
         format: byte
@@ -22887,7 +22887,7 @@ definitions:
     description: >-
       QueryCurrentRewardsResponse is response type for the Query/CurrentRewards
       RPC method.
-  babylon.coostaking.v1.QueryHistoricalRewardsResponse:
+  babylon.costaking.v1.QueryHistoricalRewardsResponse:
     type: object
     properties:
       cumulative_rewards_per_score:
@@ -22918,20 +22918,20 @@ definitions:
     description: >-
       QueryHistoricalRewardsResponse is response type for the
       Query/HistoricalRewards RPC method.
-  babylon.coostaking.v1.QueryParamsResponse:
+  babylon.costaking.v1.QueryParamsResponse:
     type: object
     properties:
       params:
         description: Params holds all the parameters of this module.
         type: object
         properties:
-          coostaking_portion:
+          costaking_portion:
             type: string
             description: >-
-              CoostakingPortion is the portion of rewards that goes to
-              Coostakers
+              CostakingPortion is the portion of rewards that goes to
+              Costakers
 
-              NOTE: This portion of coostakers is taken after the incentive
+              NOTE: This portion of costakers is taken after the incentive
               module
 
               takes part of the fee_collector to give out to BTC stakers.
@@ -22943,7 +22943,7 @@ definitions:
 
               sats staked to count as score in the formula.
 
-              score: min(coostakers_sats_staked, (coostakers_ubbn_staked /
+              score: min(costakers_sats_staked, (costakers_ubbn_staked /
               score_ratio_btc_by_baby))
           validators_portion:
             type: string
