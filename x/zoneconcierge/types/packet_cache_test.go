@@ -6,14 +6,16 @@ import (
 	"time"
 
 	"cosmossdk.io/math"
+	"github.com/cosmos/cosmos-sdk/codec"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+
+	"github.com/stretchr/testify/require"
+
 	"github.com/babylonlabs-io/babylon/v4/app"
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
 	btclctypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
 	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 	"github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/types"
-	"github.com/cosmos/cosmos-sdk/codec"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	"github.com/stretchr/testify/require"
 )
 
 func TestPacketMarshalCache_BTCHeaders(t *testing.T) {

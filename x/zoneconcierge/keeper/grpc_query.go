@@ -163,9 +163,10 @@ func (k Keeper) BSNLastSentSegment(goCtx context.Context,
 	return resp, nil
 }
 
-func (k Keeper) GetSealedEpochProof(goCtx context.Context,
-	req *types.QueryGetSealedEpochProofRequest) (*types.
-	QueryGetSealedEpochProofResponse, error) {
+func (k Keeper) GetSealedEpochProof(
+	goCtx context.Context,
+	req *types.QueryGetSealedEpochProofRequest,
+) (*types.QueryGetSealedEpochProofResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}

@@ -192,6 +192,9 @@ func (k Keeper) HandleConsumerSlashing(
 		return fmt.Errorf("failed to slash finality provider: %w", err)
 	}
 
+	// Store the evidence to allow sidecar processes retrieve it
+	k.fKeeper.SetEvidence(ctx, evidence)
+
 	// Emit slashed finality provider event so btc slasher/vigilante can slash the finality provider
 	eventSlashing := finalitytypes.NewEventSlashedFinalityProvider(evidence)
 	if err := sdk.UnwrapSDKContext(ctx).EventManager().EmitTypedEvent(eventSlashing); err != nil {
