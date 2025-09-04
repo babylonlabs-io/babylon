@@ -62,7 +62,10 @@ func (a AppModuleBasic) RegisterInterfaces(reg cdctypes.InterfaceRegistry) {
 
 // ExportGenesis implements module.HasGenesis.
 func (a AppModuleBasic) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.RawMessage {
-	genState := types.DefaultGenesis()
+	genState, err := a.k.ExportGenesis(ctx)
+	if err != nil {
+		panic(err)
+	}
 	return cdc.MustMarshalJSON(genState)
 }
 
@@ -84,7 +87,11 @@ func (AppModuleBasic) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
 
 // ValidateGenesis used to validate the GenesisState, given in its json.RawMessage form
 func (AppModuleBasic) ValidateGenesis(cdc codec.JSONCodec, config client.TxEncodingConfig, bz json.RawMessage) error {
-	return nil
+	var genState types.GenesisState
+	if err := cdc.UnmarshalJSON(bz, &genState); err != nil {
+		return err
+	}
+	return genState.Validate()
 }
 
 // RegisterGRPCGatewayRoutes registers the gRPC Gateway routes for the module
