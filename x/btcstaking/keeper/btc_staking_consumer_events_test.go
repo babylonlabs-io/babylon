@@ -722,7 +722,6 @@ func FuzzMultiStaking_ConsumerEvents_MultipleFPs(f *testing.F) {
 		stakingValue := int64(2 * 10e8)
 
 		var stakingTxHashes []string
-		var actualDels []interface{}
 
 		for i := 0; i < numConsumersToTest; i++ {
 			delSK, _, err := datagen.GenRandomBTCKeyPair(r)
@@ -743,7 +742,6 @@ func FuzzMultiStaking_ConsumerEvents_MultipleFPs(f *testing.F) {
 			h.NoError(err)
 
 			stakingTxHashes = append(stakingTxHashes, stakingTxHash)
-			actualDels = append(actualDels, actualDel)
 
 			h.CreateCovenantSigs(r, covenantSKs, msgBTCDel, actualDel, 10)
 		}
