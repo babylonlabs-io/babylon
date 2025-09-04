@@ -563,6 +563,12 @@ func FuzzMultiStaking_ConsumerEvents_ActiveDel(f *testing.F) {
 		require.Equal(t, actualDel.StakingTx, activeDel.StakingTx)
 		require.Equal(t, actualDel.StakingOutputIdx, activeDel.StakingOutputIdx)
 		require.Equal(t, actualDel.UnbondingTime, activeDel.UnbondingTime)
+
+		expFpList := make([]string, len(actualDel.FpBtcPkList))
+		for i, fpBtcPk := range actualDel.FpBtcPkList {
+			expFpList[i] = fpBtcPk.MarshalHex()
+		}
+		require.Equal(t, expFpList, activeDel.FpBtcPkList)
 	})
 }
 
@@ -692,8 +698,11 @@ func FuzzMultiStaking_ConsumerEvents_MultipleFPs(f *testing.F) {
 		h := testutil.NewHelper(t, btclcKeeper, btccKeeper, nil).WithBlockHeight(heightAfterMultiStakingAllowListExpiration)
 		covenantSKs, _ := h.GenAndApplyCustomParams(r, 100, 200, 2)
 
-		consumer1 := h.RegisterAndVerifyConsumer(t, r)
-		consumer2 := h.RegisterAndVerifyConsumer(t, r)
+		numConsumers := r.Intn(5) + 1
+		consumers := make([]*bsctypes.ConsumerRegister, numConsumers)
+		for i := 0; i < numConsumers; i++ {
+			consumers[i] = h.RegisterAndVerifyConsumer(t, r)
+		}
 
 		// create multiple consumer finality providerss
 		_, consumerFpPK1v1, _, err := h.CreateConsumerFinalityProvider(r, consumer1.ConsumerId)
@@ -767,7 +776,6 @@ func FuzzMultiStaking_ConsumerEvents_MultipleFPs(f *testing.F) {
 		evs1 := h.BTCStakingKeeper.GetBTCStakingConsumerIBCPacket(h.Ctx, consumer1.ConsumerId)
 		require.NotNil(t, evs1)
 		require.NotNil(t, evs1.GetActiveDel())
-		require.NotNil(t, evs1.GetNewFp())
 		require.Equal(t, 2, len(evs1.GetNewFp()))
 		require.Equal(t, 2, len(evs1.GetActiveDel()))
 		require.Nil(t, evs1.GetUnbondedDel())
