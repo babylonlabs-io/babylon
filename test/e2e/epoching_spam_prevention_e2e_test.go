@@ -286,7 +286,6 @@ func (s *EpochingSpamPreventionTestSuite) TestNormalCreateValidatorCase() {
 	minSelfDelegation := "1"
 
 	createValidator := func(walletName, delegatorAccAddr string) {
-
 		wcvMsg, err := datagen.BuildMsgWrappedCreateValidator(sdk.MustAccAddressFromBech32(delegatorAccAddr))
 		s.NoError(err)
 
