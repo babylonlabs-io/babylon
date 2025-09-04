@@ -129,8 +129,8 @@ import (
 	"github.com/babylonlabs-io/babylon/v4/x/checkpointing/prepare"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
 	"github.com/babylonlabs-io/babylon/v4/x/checkpointing/vote_extensions"
-	"github.com/babylonlabs-io/babylon/v4/x/coostaking"
-	coostakingtypes "github.com/babylonlabs-io/babylon/v4/x/coostaking/types"
+	"github.com/babylonlabs-io/babylon/v4/x/costaking"
+	costktypes "github.com/babylonlabs-io/babylon/v4/x/costaking/types"
 	"github.com/babylonlabs-io/babylon/v4/x/epoching"
 	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 	"github.com/babylonlabs-io/babylon/v4/x/finality"
@@ -183,7 +183,7 @@ var (
 		govtypes.ModuleName:                         {authtypes.Burner},
 		ibctransfertypes.ModuleName:                 {authtypes.Minter, authtypes.Burner},
 		incentivetypes.ModuleName:                   nil, // this line is needed to create an account for incentive module
-		coostakingtypes.ModuleName:                  nil, // this line is needed to create an account for coostaking module
+		costktypes.ModuleName:                  nil, // this line is needed to create an account for ccostakg module
 		tokenfactorytypes.ModuleName:                {authtypes.Minter, authtypes.Burner},
 		icatypes.ModuleName:                         nil,
 		evmtypes.ModuleName:                         {authtypes.Minter, authtypes.Burner},
@@ -374,7 +374,7 @@ func NewBabylonApp(
 		finality.NewAppModule(appCodec, app.FinalityKeeper),
 		// Babylon modules - tokenomics
 		incentive.NewAppModule(appCodec, app.IncentiveKeeper, app.AccountKeeper, app.BankKeeper),
-		coostaking.NewAppModule(appCodec, app.CoostakingKeeper),
+		costaking.NewAppModule(appCodec, app.CostakingKeeper),
 		// Cosmos EVM modules
 		evm.NewAppModule(app.EVMKeeper, app.AccountKeeper, app.AccountKeeper.AddressCodec()),
 		feemarketwrapper.NewAppModule(app.FeemarketKeeper, app.GetTKey(feemarkettypes.TransientKey)),
@@ -413,9 +413,9 @@ func NewBabylonApp(
 		upgradetypes.ModuleName,
 		// NOTE: incentive module's BeginBlock has to be after mint but before distribution
 		// so that it can intercept a part of new inflation to reward BTC staking stakeholders.
-		// Coostaking module goes right after incentives but before distribution to also take
-		// a cut of the inflation for Coostaking (BABY + BTC) staking.
-		minttypes.ModuleName, incentivetypes.ModuleName, coostakingtypes.ModuleName, distrtypes.ModuleName,
+		// costaking module goes right after incentives but before distribution to also take
+		// a cut of the inflation for costaking (BABY + BTC) staking.
+		minttypes.ModuleName, incentivetypes.ModuleName, costktypes.ModuleName, distrtypes.ModuleName,
 		// Cosmos EVM
 		erc20types.ModuleName,
 		feemarkettypes.ModuleName,
@@ -480,7 +480,7 @@ func NewBabylonApp(
 		finalitytypes.ModuleName,
 		// tokenomics related modules
 		incentivetypes.ModuleName,  // EndBlock of incentive module does not matter
-		coostakingtypes.ModuleName, // EndBlock of coostaking module does not matter
+		costktypes.ModuleName, // EndBlock of ccostakg module does not matter
 		// Cosmos EVM
 		evmtypes.ModuleName,
 		erc20types.ModuleName,
@@ -535,7 +535,7 @@ func NewBabylonApp(
 		finalitytypes.ModuleName,
 		// tokenomics-related modules
 		incentivetypes.ModuleName,
-		coostakingtypes.ModuleName,
+		costktypes.ModuleName,
 	}
 	app.ModuleManager.SetOrderInitGenesis(genesisModuleOrder...)
 	app.ModuleManager.SetOrderExportGenesis(genesisModuleOrder...)

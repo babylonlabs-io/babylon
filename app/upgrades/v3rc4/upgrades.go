@@ -21,8 +21,8 @@ import (
 	"github.com/babylonlabs-io/babylon/v4/app/upgrades"
 	btcstkkeeper "github.com/babylonlabs-io/babylon/v4/x/btcstaking/keeper"
 	btcstktypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
-	costkkeeper "github.com/babylonlabs-io/babylon/v4/x/coostaking/keeper"
-	costktypes "github.com/babylonlabs-io/babylon/v4/x/coostaking/types"
+	costkkeeper "github.com/babylonlabs-io/babylon/v4/x/costaking/keeper"
+	costktypes "github.com/babylonlabs-io/babylon/v4/x/costaking/types"
 )
 
 // UpgradeName defines the on-chain upgrade name for the Babylon v3rc4 upgrade
@@ -48,11 +48,11 @@ func CreateUpgradeHandler(mm *module.Manager, configurator module.Configurator, 
 
 		costkStoreKey := keepers.GetKey(costktypes.StoreKey)
 		if costkStoreKey == nil {
-			return nil, errors.New("invalid coostaking types store key")
+			return nil, errors.New("invalid costaking types store key")
 		}
 
 		coStkStoreService := runtime.NewKVStoreService(costkStoreKey)
-		if err := InitializeCoStakerRwdsTracker(ctx, keepers.EncCfg.Codec, coStkStoreService, keepers.StakingKeeper, keepers.BTCStakingKeeper, keepers.CoostakingKeeper); err != nil {
+		if err := InitializeCoStakerRwdsTracker(ctx, keepers.EncCfg.Codec, coStkStoreService, keepers.StakingKeeper, keepers.BTCStakingKeeper, keepers.CostakingKeeper); err != nil {
 			return nil, err
 		}
 
@@ -60,7 +60,7 @@ func CreateUpgradeHandler(mm *module.Manager, configurator module.Configurator, 
 	}
 }
 
-// InitializeCoStakerRwdsTracker initializes the coostaker rewards tracker
+// InitializeCoStakerRwdsTracker initializes the costaker rewards tracker
 // It looks for all BTC stakers that are also baby stakers
 func InitializeCoStakerRwdsTracker(
 	ctx context.Context,
@@ -190,10 +190,10 @@ func saveCoStakersToStore(
 	sb := collections.NewSchemaBuilder(costkStoreService)
 	rwdTrackers := collections.NewMap(
 		sb,
-		costktypes.CoostakerRewardsTrackerKeyPrefix,
-		"coostaker_rewards_tracker",
+		costktypes.CostakerRewardsTrackerKeyPrefix,
+		"costaker_rewards_tracker",
 		collections.BytesKey,
-		codec.CollValue[costktypes.CoostakerRewardsTracker](cdc),
+		codec.CollValue[costktypes.CostakerRewardsTracker](cdc),
 	)
 	dp := costktypes.DefaultParams()
 	totalScore := math.ZeroInt()
@@ -201,7 +201,7 @@ func saveCoStakersToStore(
 	// pairs to storage, the order shouldn't affect the final state
 	for addr, val := range coStakers {
 		sdkAddr := sdk.MustAccAddressFromBech32(addr)
-		rt := costktypes.NewCoostakerRewardsTracker(
+		rt := costktypes.NewCostakerRewardsTracker(
 			1,
 			val.ActiveSatoshis,
 			val.ActiveBaby,

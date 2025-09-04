@@ -45,7 +45,7 @@ mocks: $(MOCKS_DIR) ## Generate mock objects for testing
 	$(mockgen_cmd) -source=x/finality/types/hooks.go -package types -destination x/finality/types/mocked_hooks.go
 	$(mockgen_cmd) -source=x/incentive/types/expected_keepers.go -package types -destination x/incentive/types/mocked_keepers.go
 	$(mockgen_cmd) -source=x/incentive/types/hooks.go -package types -destination x/incentive/types/mocked_hooks.go
-	$(mockgen_cmd) -source=x/coostaking/types/expected_keepers.go -package types -destination x/coostaking/types/mocked_keepers.go
+	$(mockgen_cmd) -source=x/costaking/types/expected_keepers.go -package types -destination x/costaking/types/mocked_keepers.go
 .PHONY: mocks
 
 $(MOCKS_DIR):

@@ -32,7 +32,7 @@ const (
 	FINALITY_PROVIDER StakeholderType = 0
 	// BTC staker stakeholder type
 	BTC_STAKER StakeholderType = 1
-	// Coostaker stakeholder type
+	// Costaker stakeholder type
 	COOSTAKER StakeholderType = 2
 )
 
@@ -80,8 +80,8 @@ type GenesisState struct {
 	// btc_delegators_to_fps are all the records of the delegators and the
 	// finality providers to which it delegated some BTC
 	BtcDelegatorsToFps []BTCDelegatorToFpEntry `protobuf:"bytes,9,rep,name=btc_delegators_to_fps,json=btcDelegatorsToFps,proto3" json:"btc_delegators_to_fps"`
-	// EventRewardTracker stores the events that will be processed at the babylon block height
-	// prior to the BTC reward distribution.
+	// EventRewardTracker stores the events that will be processed at the babylon
+	// block height prior to the BTC reward distribution.
 	EventRewardTracker []EventsPowerUpdateAtHeightEntry `protobuf:"bytes,10,rep,name=event_reward_tracker,json=eventRewardTracker,proto3" json:"event_reward_tracker"`
 	// LastProcessedHeightEventRewardTracker is the latest block height in which
 	// the reward tracker was processed.

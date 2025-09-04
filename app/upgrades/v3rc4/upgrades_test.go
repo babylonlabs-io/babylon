@@ -34,8 +34,8 @@ import (
 	btclctypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
 	btcstkkeeper "github.com/babylonlabs-io/babylon/v4/x/btcstaking/keeper"
 	btcstktypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
-	costkkeeper "github.com/babylonlabs-io/babylon/v4/x/coostaking/keeper"
-	costktypes "github.com/babylonlabs-io/babylon/v4/x/coostaking/types"
+	costkkeeper "github.com/babylonlabs-io/babylon/v4/x/costaking/keeper"
+	costktypes "github.com/babylonlabs-io/babylon/v4/x/costaking/types"
 )
 
 func setupTestKeepers(t *testing.T) (sdk.Context, codec.BinaryCodec, corestore.KVStoreService, *stkkeeper.Keeper, btcstkkeeper.Keeper, *costkkeeper.Keeper, *gomock.Controller) {
@@ -61,9 +61,9 @@ func setupTestKeepers(t *testing.T) (sdk.Context, codec.BinaryCodec, corestore.K
 	accK := testutilkeeper.AccountKeeper(t, db, stateStore)
 	bankKeeper := testutilkeeper.BankKeeper(t, db, stateStore, accK)
 	stkKeeper := testutilkeeper.StakingKeeper(t, db, stateStore, accK, bankKeeper)
-	// Setup coostaking store service
+	// Setup costaking store service
 	costkStoreKey := storetypes.NewKVStoreKey(costktypes.StoreKey)
-	costkKeeper, _ := testutilkeeper.CoostakingKeeperWithStore(t, db, stateStore, costkStoreKey, bankKeeper, accK, incentiveK, stkKeeper, distK)
+	costkKeeper, _ := testutilkeeper.CostakingKeeperWithStore(t, db, stateStore, costkStoreKey, bankKeeper, accK, incentiveK, stkKeeper, distK)
 	require.NoError(t, stateStore.LoadLatestVersion())
 	costkStoreService := runtime.NewKVStoreService(costkStoreKey)
 
@@ -325,7 +325,7 @@ func verifyNoCoStakerCreated(t *testing.T, ctx sdk.Context, cdc codec.BinaryCode
 func countCoStakers(t *testing.T, ctx sdk.Context, cdc codec.BinaryCodec, storeService corestore.KVStoreService) int {
 	rwdTrackers := rwdTrackerCollection(storeService, cdc)
 	var count int
-	err := rwdTrackers.Walk(ctx, nil, func(key []byte, value costktypes.CoostakerRewardsTracker) (stop bool, err error) {
+	err := rwdTrackers.Walk(ctx, nil, func(key []byte, value costktypes.CostakerRewardsTracker) (stop bool, err error) {
 		count++
 		return false, nil
 	})
@@ -333,14 +333,14 @@ func countCoStakers(t *testing.T, ctx sdk.Context, cdc codec.BinaryCodec, storeS
 	return count
 }
 
-func rwdTrackerCollection(storeService corestore.KVStoreService, cdc codec.BinaryCodec) collections.Map[[]byte, costktypes.CoostakerRewardsTracker] {
+func rwdTrackerCollection(storeService corestore.KVStoreService, cdc codec.BinaryCodec) collections.Map[[]byte, costktypes.CostakerRewardsTracker] {
 	sb := collections.NewSchemaBuilder(storeService)
 	rwdTrackers := collections.NewMap(
 		sb,
-		costktypes.CoostakerRewardsTrackerKeyPrefix,
-		"coostaker_rewards_tracker",
+		costktypes.CostakerRewardsTrackerKeyPrefix,
+		"costaker_rewards_tracker",
 		collections.BytesKey,
-		codec.CollValue[costktypes.CoostakerRewardsTracker](cdc),
+		codec.CollValue[costktypes.CostakerRewardsTracker](cdc),
 	)
 	return rwdTrackers
 }
