@@ -4,10 +4,11 @@ import (
 	"context"
 
 	"cosmossdk.io/math"
-	"github.com/babylonlabs-io/babylon/v4/x/costaking/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	stktypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+
+	bbntypes "github.com/babylonlabs-io/babylon/v4/types"
+	"github.com/babylonlabs-io/babylon/v4/x/costaking/types"
 )
 
 var _ stktypes.StakingHooks = HookStaking{}
@@ -15,13 +16,6 @@ var _ stktypes.StakingHooks = HookStaking{}
 // Wrapper struct
 type HookStaking struct {
 	k Keeper
-}
-
-// calculateDelegationDelta calculates the difference between current and previous delegation amounts
-// Returns the delta as math.Int, which can be negative if the previous amount was larger
-func calculateDelegationDelta(beforeAmount, afterAmount math.LegacyDec) math.Int {
-	delta := afterAmount.Sub(beforeAmount)
-	return delta.TruncateInt()
 }
 
 // AfterDelegationModified implements types.StakingHooks.
@@ -34,7 +28,7 @@ func (h HookStaking) AfterDelegationModified(ctx context.Context, delAddr sdk.Ac
 	beforeAmount := h.k.stkCache.GetAndDeleteStakedAmount(delAddr, valAddr)
 	afterAmount := del.Shares
 
-	delegationChange := calculateDelegationDelta(beforeAmount, afterAmount)
+	delegationChange := bbntypes.CalculateDelegationDelta(beforeAmount, afterAmount)
 	return h.k.costakerModified(ctx, delAddr, func(rwdTracker *types.CostakerRewardsTracker) {
 		rwdTracker.ActiveBaby = rwdTracker.ActiveBaby.Add(delegationChange)
 	})

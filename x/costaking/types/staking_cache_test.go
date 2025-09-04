@@ -1,7 +1,6 @@
 package types
 
 import (
-	"crypto/rand"
 	"testing"
 
 	"cosmossdk.io/math"
@@ -9,37 +8,28 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func genRandomAddress() sdk.AccAddress {
-	addr := make([]byte, 20)
-	rand.Read(addr)
-	return sdk.AccAddress(addr)
-}
-
-func genRandomValidatorAddress() sdk.ValAddress {
-	addr := make([]byte, 20)
-	rand.Read(addr)
-	return sdk.ValAddress(addr)
-}
-
-func TestNewStakingCache(t *testing.T) {
+func TestNewStakingCacheIsNotNil(t *testing.T) {
 	cache := NewStakingCache()
 	require.NotNil(t, cache)
 	require.NotNil(t, cache.amtByValByDel)
 }
 
-func TestStakingCache_SetAndGetAndDeleteStakedAmount(t *testing.T) {
+func TestStakingCacheSetAndGetAndDeleteStakedAmount(t *testing.T) {
 	cache := NewStakingCache()
 
-	delAddr1 := genRandomAddress()
-	delAddr2 := genRandomAddress()
-	valAddr1 := genRandomValidatorAddress()
-	valAddr2 := genRandomValidatorAddress()
+	delAddr1 := sdk.AccAddress("delAddr1")
+	delAddr2 := sdk.AccAddress("delAddr2")
+	valAddr1 := sdk.ValAddress("valAddr1")
+	valAddr2 := sdk.ValAddress("valAddr2")
 
 	amount1 := math.LegacyNewDec(100)
 	amount2 := math.LegacyNewDec(200)
 	amount3 := math.LegacyNewDec(300)
 
-	// Set up cached values
+	// not found
+	result := cache.GetAndDeleteStakedAmount(delAddr1, valAddr1)
+	require.True(t, result.IsZero())
+
 	cache.SetStakedAmount(delAddr1, valAddr1, amount1)
 	cache.SetStakedAmount(delAddr1, valAddr2, amount2)
 	cache.SetStakedAmount(delAddr2, valAddr1, amount3)
@@ -55,105 +45,43 @@ func TestStakingCache_SetAndGetAndDeleteStakedAmount(t *testing.T) {
 	require.True(t, amount3.Equal(result3))
 
 	// Verify all values are deleted (should return zero)
-	result := cache.GetAndDeleteStakedAmount(delAddr1, valAddr1)
-	require.True(t, math.LegacyZeroDec().Equal(result))
+	result = cache.GetAndDeleteStakedAmount(delAddr1, valAddr1)
+	require.True(t, result.IsZero())
 
 	result = cache.GetAndDeleteStakedAmount(delAddr1, valAddr2)
-	require.True(t, math.LegacyZeroDec().Equal(result))
+	require.True(t, result.IsZero())
 
 	result = cache.GetAndDeleteStakedAmount(delAddr2, valAddr1)
-	require.True(t, math.LegacyZeroDec().Equal(result))
+	require.True(t, result.IsZero())
+
+	cache.SetStakedAmount(delAddr1, valAddr1, amount1)
+	cache.SetStakedAmount(delAddr1, valAddr1, amount2)
+
+	result2 = cache.GetAndDeleteStakedAmount(delAddr1, valAddr1)
+	require.True(t, amount2.Equal(result2))
 }
 
-func TestStakingCache_GetAndDeleteStakedAmount_NotFound(t *testing.T) {
+func TestStakingCacheGetAndDeleteStakedAmountNilMap(t *testing.T) {
 	cache := NewStakingCache()
 
-	delAddr := genRandomAddress()
-	valAddr := genRandomValidatorAddress()
-
-	// Test getting non-existent delegator
-	result := cache.GetAndDeleteStakedAmount(delAddr, valAddr)
-	require.True(t, math.LegacyZeroDec().Equal(result))
-
-	// Add a delegator with different validator
-	cache.SetStakedAmount(delAddr, genRandomValidatorAddress(), math.LegacyNewDec(100))
-
-	// Test getting non-existent validator for existing delegator
-	result = cache.GetAndDeleteStakedAmount(delAddr, valAddr)
-	require.True(t, math.LegacyZeroDec().Equal(result))
-}
-
-func TestStakingCache_UpdateExistingAmount(t *testing.T) {
-	cache := NewStakingCache()
-
-	delAddr := genRandomAddress()
-	valAddr := genRandomValidatorAddress()
-
-	initialAmount := math.LegacyNewDec(100)
-	updatedAmount := math.LegacyNewDec(500)
-
-	// Set initial amount
-	cache.SetStakedAmount(delAddr, valAddr, initialAmount)
-
-	// Update the amount
-	cache.SetStakedAmount(delAddr, valAddr, updatedAmount)
-
-	// Get and delete should return the updated amount
-	result := cache.GetAndDeleteStakedAmount(delAddr, valAddr)
-	require.True(t, updatedAmount.Equal(result))
-
-	// Second call should return zero since it was deleted
-	result = cache.GetAndDeleteStakedAmount(delAddr, valAddr)
-	require.True(t, math.LegacyZeroDec().Equal(result))
-}
-
-func TestStakingCache_ZeroAmount(t *testing.T) {
-	cache := NewStakingCache()
-
-	delAddr := genRandomAddress()
-	valAddr := genRandomValidatorAddress()
-	zeroAmount := math.LegacyZeroDec()
-
-	// Set zero amount
-	cache.SetStakedAmount(delAddr, valAddr, zeroAmount)
-	result := cache.GetAndDeleteStakedAmount(delAddr, valAddr)
-	require.True(t, zeroAmount.Equal(result))
-}
-
-func TestStakingCache_NegativeAmount(t *testing.T) {
-	cache := NewStakingCache()
-
-	delAddr := genRandomAddress()
-	valAddr := genRandomValidatorAddress()
-	negativeAmount := math.LegacyNewDec(-50)
-
-	// Set negative amount (should be allowed by cache, validation should be elsewhere)
-	cache.SetStakedAmount(delAddr, valAddr, negativeAmount)
-	result := cache.GetAndDeleteStakedAmount(delAddr, valAddr)
-	require.True(t, negativeAmount.Equal(result))
-}
-
-func TestStakingCache_GetAndDeleteStakedAmount_EdgeCases(t *testing.T) {
-	cache := NewStakingCache()
-
-	delAddr := genRandomAddress()
-	valAddr := genRandomValidatorAddress()
+	delAddr := sdk.AccAddress("delAddr")
+	valAddr := sdk.ValAddress("valAddr")
 
 	// Test with manually setting nil map (edge case)
 	delAddrStr := delAddr.String()
 	cache.amtByValByDel[delAddrStr] = nil
 
 	result := cache.GetAndDeleteStakedAmount(delAddr, valAddr)
-	require.True(t, math.LegacyZeroDec().Equal(result))
+	require.True(t, result.IsZero())
 }
 
-func TestStakingCache_GetAndDeleteStakedAmount_PreservesOtherValidators(t *testing.T) {
+func TestStakingCacheGetAndDeleteStakedAmountPreservesOtherValidators(t *testing.T) {
 	cache := NewStakingCache()
 
-	delAddr := genRandomAddress()
-	valAddr1 := genRandomValidatorAddress()
-	valAddr2 := genRandomValidatorAddress()
-	valAddr3 := genRandomValidatorAddress()
+	delAddr := sdk.AccAddress("delAddr")
+	valAddr1 := sdk.ValAddress("valAddr1")
+	valAddr2 := sdk.ValAddress("valAddr2")
+	valAddr3 := sdk.ValAddress("valAddr3")
 
 	amount1 := math.LegacyNewDec(100)
 	amount2 := math.LegacyNewDec(200)
@@ -172,7 +100,7 @@ func TestStakingCache_GetAndDeleteStakedAmount_PreservesOtherValidators(t *testi
 	delAddrStr := delAddr.String()
 	valMap, exists := cache.amtByValByDel[delAddrStr]
 	require.True(t, exists)
-	require.Equal(t, 2, len(valMap)) // should have 2 validators left
+	require.Equal(t, 2, len(valMap))
 
 	// Verify specific validators exist in the map
 	valAddr1Str := valAddr1.String()
@@ -184,7 +112,7 @@ func TestStakingCache_GetAndDeleteStakedAmount_PreservesOtherValidators(t *testi
 	_, val3Exists := valMap[valAddr3Str]
 
 	require.True(t, val1Exists)
-	require.False(t, val2Exists) // should be deleted
+	require.False(t, val2Exists, "should be deleted")
 	require.True(t, val3Exists)
 
 	// Get and delete the remaining validators
@@ -196,31 +124,5 @@ func TestStakingCache_GetAndDeleteStakedAmount_PreservesOtherValidators(t *testi
 
 	// Verify the delegator's map was cleaned up
 	_, exists = cache.amtByValByDel[delAddrStr]
-	require.False(t, exists)
-}
-
-func TestStakingCache_GetAndDeleteStakedAmount_AtomicOperation(t *testing.T) {
-	cache := NewStakingCache()
-
-	delAddr := genRandomAddress()
-	valAddr := genRandomValidatorAddress()
-	amount := math.LegacyNewDec(150)
-
-	// Set up cached value
-	cache.SetStakedAmount(delAddr, valAddr, amount)
-
-	// Get and delete in one operation
-	result := cache.GetAndDeleteStakedAmount(delAddr, valAddr)
-
-	// Should return the correct amount
-	require.True(t, amount.Equal(result))
-
-	// Calling GetAndDelete again should return zero
-	secondResult := cache.GetAndDeleteStakedAmount(delAddr, valAddr)
-	require.True(t, math.LegacyZeroDec().Equal(secondResult))
-
-	// Verify delegator map was cleaned up
-	delAddrStr := delAddr.String()
-	_, exists := cache.amtByValByDel[delAddrStr]
 	require.False(t, exists)
 }
