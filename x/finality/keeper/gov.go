@@ -138,7 +138,7 @@ func (k Keeper) HandleResumeFinalityProposal(ctx sdk.Context, fpPksHex []string,
 		k.SetVotingPowerDistCache(ctx, blkHeight, newDc)
 
 		// ensure every active finality provider has signing info
-		k.HandleFPStateUpdates(ctx, dc, newDc)
+		k.HandleFPStateUpdates(ctx, dc, newDc, nil)
 	}
 
 	return nil

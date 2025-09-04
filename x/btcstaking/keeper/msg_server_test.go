@@ -1861,7 +1861,7 @@ func TestActiveAndExpiredEventsSameBlock(t *testing.T) {
 	var newDc *ftypes.VotingPowerDistCache
 	require.NotPanics(t, func() {
 		// Process the events after adding covenant signatures
-		newDc = h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, dc, expiredEventHeight, expiredEventHeight)
+		newDc, _ = h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, dc, expiredEventHeight, expiredEventHeight)
 	}, "Processing events should not panic")
 
 	require.Equal(t, dc, newDc)

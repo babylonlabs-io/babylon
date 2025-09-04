@@ -17,6 +17,7 @@ import (
 	btcstkconsumertypes "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
 	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
+	ftypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
 )
 
 // AccountKeeper defines the contract required for account APIs.
@@ -124,4 +125,8 @@ type BTCStkConsumerKeeper interface {
 
 type WasmKeeper interface {
 	QuerySmart(ctx sdk.Context, contractAddress sdk.AccAddress, queryMsg []byte) ([]byte, error)
+}
+
+type FinalityKeeper interface {
+	SetEvidence(ctx context.Context, evidence *ftypes.Evidence)
 }

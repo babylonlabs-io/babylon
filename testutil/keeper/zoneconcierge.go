@@ -108,6 +108,7 @@ func ZoneConciergeKeeperWithStoreKey(
 		bsKeeper,
 		btcStkKeeper,
 		wasmKeeper,
+		nil, // TODO: mock this keeper
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 

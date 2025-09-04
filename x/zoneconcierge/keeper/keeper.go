@@ -31,6 +31,7 @@ type (
 		// used in BTC staking
 		bsKeeper     types.BTCStakingKeeper
 		btcStkKeeper types.BTCStkConsumerKeeper
+		fKeeper      types.FinalityKeeper
 		// The address capable of executing a MsgUpdateParams message.
 		// Typically, this should be the x/gov module account.
 		authority string
@@ -68,6 +69,7 @@ func NewKeeper(
 	bsKeeper types.BTCStakingKeeper,
 	btcStkKeeper types.BTCStkConsumerKeeper,
 	wasmKeeper types.WasmKeeper,
+	fKeeper types.FinalityKeeper,
 	authority string,
 ) *Keeper {
 	sb := collections.NewSchemaBuilder(storeService)
@@ -89,6 +91,7 @@ func NewKeeper(
 		bsKeeper:            bsKeeper,
 		btcStkKeeper:        btcStkKeeper,
 		wasmKeeper:          wasmKeeper,
+		fKeeper:             fKeeper,
 		authority:           authority,
 		transientKey:        transientKey,
 
