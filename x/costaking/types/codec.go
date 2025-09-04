@@ -13,7 +13,7 @@ var (
 )
 
 func RegisterCodec(cdc *codec.LegacyAmino) {
-	cdc.RegisterConcrete(&MsgUpdateParams{}, "coostaking/MsgUpdateParams", nil)
+	cdc.RegisterConcrete(&MsgUpdateParams{}, "costaking/MsgUpdateParams", nil)
 }
 
 func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {

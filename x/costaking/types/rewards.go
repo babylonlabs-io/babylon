@@ -1,6 +1,8 @@
 package types
 
 import (
+	"fmt"
+
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -56,4 +58,37 @@ func (f *CurrentRewards) AddRewards(coinsToAdd sdk.Coins) error {
 		f.Rewards = f.Rewards.Add(coinsToAddWithDecimals...)
 	}()
 	return panicErr
+}
+
+// Validate validates the CurrentRewards struct
+func (cr CurrentRewards) Validate() error {
+	if !cr.Rewards.IsValid() {
+		return fmt.Errorf("invalid rewards: %s", cr.Rewards.String())
+	}
+	if cr.Rewards.IsAnyNegative() {
+		return fmt.Errorf("rewards cannot be negative: %s", cr.Rewards.String())
+	}
+	if cr.TotalScore.IsNil() || cr.TotalScore.IsNegative() {
+		return fmt.Errorf("total score must be non-negative: %s", cr.TotalScore.String())
+	}
+	return nil
+}
+
+// Validate validates the HistoricalRewards struct
+func (hr HistoricalRewards) Validate() error {
+	if !hr.CumulativeRewardsPerScore.IsValid() {
+		return fmt.Errorf("invalid cumulative rewards per score: %s", hr.CumulativeRewardsPerScore.String())
+	}
+	if hr.CumulativeRewardsPerScore.IsAnyNegative() {
+		return fmt.Errorf("cumulative rewards per score cannot be negative: %s", hr.CumulativeRewardsPerScore.String())
+	}
+	return nil
+}
+
+// Validate validates the CostakerRewardsTracker struct
+func (crt CostakerRewardsTracker) Validate() error {
+	if crt.TotalScore.IsNil() || crt.TotalScore.IsNegative() {
+		return fmt.Errorf("total score must be non-negative: %s", crt.TotalScore.String())
+	}
+	return nil
 }
