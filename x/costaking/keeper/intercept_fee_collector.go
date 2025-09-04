@@ -41,7 +41,7 @@ func (k Keeper) HandleCoinsInFeeCollector(ctx context.Context) error {
 	}
 
 	costakingRewards := ictvtypes.GetCoinsPortion(feesCollectedInt, params.CostakingPortion)
-	return k.accumulateCostakngRewards(ctx, costakingRewards)
+	return k.accumulateCostakingRewards(ctx, costakingRewards)
 }
 
 // allocateValidatorsRewards allocates rewards to validators based on their voting power
@@ -107,8 +107,8 @@ func (k Keeper) allocateValidatorsRewards(ctx context.Context, rwds sdk.Coins) e
 	return nil
 }
 
-// accumulateCostakngRewards gets funds from fee collector
-func (k Keeper) accumulateCostakngRewards(ctx context.Context, costakingRewards sdk.Coins) error {
+// accumulateCostakingRewards gets funds from fee collector
+func (k Keeper) accumulateCostakingRewards(ctx context.Context, costakingRewards sdk.Coins) error {
 	if !costakingRewards.IsAllPositive() {
 		return nil
 	}
