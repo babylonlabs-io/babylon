@@ -82,10 +82,10 @@
       }
     },
     {
-      "url": "./tmp-swagger-gen/babylon/coostaking/v1/query.swagger.json",
+      "url": "./tmp-swagger-gen/babylon/costaking/v1/query.swagger.json",
       "operationIds": {
         "rename": {
-          "Params": "CoostakingParams"
+          "Params": "CostakingParams"
         }
       }
     }

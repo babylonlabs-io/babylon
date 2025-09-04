@@ -44,8 +44,8 @@ import (
 	bsctypes "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
 	checkpointingkeeper "github.com/babylonlabs-io/babylon/v4/x/checkpointing/keeper"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
-	coostakingkeeper "github.com/babylonlabs-io/babylon/v4/x/coostaking/keeper"
-	coostakingtypes "github.com/babylonlabs-io/babylon/v4/x/coostaking/types"
+	costakingkeeper "github.com/babylonlabs-io/babylon/v4/x/costaking/keeper"
+	costktypes "github.com/babylonlabs-io/babylon/v4/x/costaking/types"
 	epochingkeeper "github.com/babylonlabs-io/babylon/v4/x/epoching/keeper"
 	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 	finalitykeeper "github.com/babylonlabs-io/babylon/v4/x/finality/keeper"
@@ -167,7 +167,7 @@ type AppKeepers struct {
 	BtcCheckpointKeeper  btccheckpointkeeper.Keeper
 	CheckpointingKeeper  checkpointingkeeper.Keeper
 	MonitorKeeper        monitorkeeper.Keeper
-	CoostakingKeeper     coostakingkeeper.Keeper
+	CostakingKeeper      costakingkeeper.Keeper
 
 	// IBC-related modules
 	IBCKeeper           *ibckeeper.Keeper           // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
@@ -261,7 +261,7 @@ func (ak *AppKeepers) InitKeepers(
 		wasmtypes.StoreKey,
 		// tokenomics-related modules
 		incentivetypes.StoreKey,
-		coostakingtypes.StoreKey,
+		costktypes.StoreKey,
 		// EVM
 		evmtypes.StoreKey,
 		feemarkettypes.StoreKey,
@@ -384,9 +384,9 @@ func (ak *AppKeepers) InitKeepers(
 		authtypes.FeeCollectorName,
 	)
 
-	ak.CoostakingKeeper = coostakingkeeper.NewKeeper(
+	ak.CostakingKeeper = costakingkeeper.NewKeeper(
 		appCodec,
-		runtime.NewKVStoreService(keys[coostakingtypes.StoreKey]),
+		runtime.NewKVStoreService(keys[costktypes.StoreKey]),
 		ak.BankKeeper,
 		ak.AccountKeeper,
 		ak.IncentiveKeeper,
@@ -416,7 +416,7 @@ func (ak *AppKeepers) InitKeepers(
 			ak.DistrKeeper.Hooks(),
 			ak.SlashingKeeper.Hooks(),
 			epochingKeeper.Hooks(),
-			ak.CoostakingKeeper.HookStaking(),
+			ak.CostakingKeeper.HookStaking(),
 		),
 	)
 
@@ -708,7 +708,7 @@ func (ak *AppKeepers) InitKeepers(
 
 	ak.IncentiveKeeper.SetHooks(
 		incentivetypes.NewMultiIncentiveHooks(
-			ak.CoostakingKeeper.HookIncentives(),
+			ak.CostakingKeeper.HookIncentives(),
 		),
 	)
 

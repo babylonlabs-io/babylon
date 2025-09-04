@@ -20,6 +20,7 @@ import (
 	"github.com/babylonlabs-io/babylon/v4/app/signingcontext"
 	"github.com/babylonlabs-io/babylon/v4/crypto/eots"
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	testhelper "github.com/babylonlabs-io/babylon/v4/testutil/helper"
 	testutil "github.com/babylonlabs-io/babylon/v4/testutil/incentives-helper"
 	keepertest "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
 	"github.com/babylonlabs-io/babylon/v4/testutil/mocks"
@@ -30,7 +31,6 @@ import (
 	"github.com/babylonlabs-io/babylon/v4/x/finality/keeper"
 	"github.com/babylonlabs-io/babylon/v4/x/finality/types"
 	ictvtypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
-	testhelper "github.com/babylonlabs-io/babylon/v4/testutil/helper"
 )
 
 func setupMsgServer(t testing.TB) (*keeper.Keeper, types.MsgServer, context.Context) {

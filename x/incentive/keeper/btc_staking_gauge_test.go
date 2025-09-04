@@ -96,11 +96,11 @@ func FuzzRewardBTCStaking(f *testing.F) {
 				QuoTruncate(sdkmath.LegacyNewDec(int64(totalVotingPowerOfVoters)))
 			coinsForFpsAndDels := btcStkGauge.GetCoinsPortion(fpPortion)
 			coinsForCommission := types.GetCoinsPortion(coinsForFpsAndDels, *fp.Commission)
-			
+
 			// Add FP direct rewards from fee collector (goes entirely to FP)
 			coinsForFpDirect := fpDirectGauge.GetCoinsPortion(fpPortion)
 			totalCoinsForFp := coinsForCommission.Add(coinsForFpDirect...)
-			
+
 			if totalCoinsForFp.IsAllPositive() {
 				fpRewardMap[fp.GetAddress().String()] = totalCoinsForFp
 				distributedCoins.Add(totalCoinsForFp...)
