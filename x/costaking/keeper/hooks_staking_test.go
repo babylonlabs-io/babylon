@@ -9,6 +9,7 @@ import (
 
 	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	tmocks "github.com/babylonlabs-io/babylon/v4/testutil/mocks"
 	"github.com/babylonlabs-io/babylon/v4/x/costaking/types"
 	ictvtypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -70,13 +71,17 @@ func TestHookStakingAfterDelegationModified(t *testing.T) {
 		Shares:           expShares,
 	}
 
+	val, err := tmocks.CreateValidator(valAddr, math.NewInt(100))
+	require.NoError(t, err)
+
 	mockStkK := k.stkK.(*types.MockStakingKeeper)
 	mockStkK.EXPECT().GetDelegation(ctx, delAddr, valAddr).Return(delegation, nil).Times(1)
+	mockStkK.EXPECT().Validator(gomock.Any(), gomock.Eq(valAddr)).Return(&val, nil).Times(1)
 
 	hooks := k.HookStaking()
 
 	// Call AfterDelegationModified only
-	err := hooks.AfterDelegationModified(ctx, delAddr, valAddr)
+	err = hooks.AfterDelegationModified(ctx, delAddr, valAddr)
 	require.NoError(t, err)
 
 	// Verify the costaker tracker was updated with the delta
@@ -108,6 +113,7 @@ func TestHookStakingAfterDelegationModified(t *testing.T) {
 	mockBankK.EXPECT().SendCoinsFromModuleToModule(ctx, types.ModuleName, ictvtypes.ModuleName, expRwd).Return(nil).Times(1)
 	mockIctvK.EXPECT().AccumulateRewardGaugeForCostaker(gomock.Any(), gomock.Eq(delAddr), expRwd).Times(1)
 
+	mockStkK.EXPECT().Validator(gomock.Any(), gomock.Eq(valAddr)).Return(&val, nil).Times(1)
 	err = hooks.AfterDelegationModified(ctx, delAddr, valAddr)
 	require.NoError(t, err)
 }
@@ -125,10 +131,7 @@ func TestHookStakingAfterDelegationModifiedErrorDelegationNotFound(t *testing.T)
 }
 
 func TestHookStakingAfterDelegationModifiedReducingAmountStaked(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockIctvK := types.NewMockIncentiveKeeper(ctrl)
+	mockIctvK := types.NewMockIncentiveKeeper(gomock.NewController(t))
 	k, ctx := NewKeeperWithMockIncentiveKeeper(t, mockIctvK)
 
 	delAddr, valAddr := datagen.GenRandomAddress(), datagen.GenRandomValidatorAddress()
@@ -149,6 +152,10 @@ func TestHookStakingAfterDelegationModifiedReducingAmountStaked(t *testing.T) {
 
 	mockStkK := k.stkK.(*types.MockStakingKeeper)
 	mockStkK.EXPECT().GetDelegation(ctx, delAddr, valAddr).Return(delegation, nil).Times(1)
+
+	val, err := tmocks.CreateValidator(valAddr, math.NewInt(100))
+	require.NoError(t, err)
+	mockStkK.EXPECT().Validator(gomock.Any(), gomock.Any()).Return(&val, nil).Times(1)
 
 	hooks := k.HookStaking()
 

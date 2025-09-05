@@ -28,4 +28,5 @@ type DistributionKeeper interface {
 type StakingKeeper interface {
 	GetDelegation(ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) (stakingtypes.Delegation, error)
 	ValidatorByConsAddr(context.Context, sdk.ConsAddress) (stakingtypes.ValidatorI, error)
+	Validator(context.Context, sdk.ValAddress) (stakingtypes.ValidatorI, error)
 }

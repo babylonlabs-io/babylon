@@ -7,7 +7,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stktypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	bbntypes "github.com/babylonlabs-io/babylon/v4/types"
 	"github.com/babylonlabs-io/babylon/v4/x/costaking/types"
 )
 
@@ -28,9 +27,15 @@ func (h HookStaking) AfterDelegationModified(ctx context.Context, delAddr sdk.Ac
 	beforeAmount := h.k.stkCache.GetAndDeleteStakedAmount(delAddr, valAddr)
 	afterAmount := del.Shares
 
-	delegationChange := bbntypes.CalculateDelegationDelta(beforeAmount, afterAmount)
+	valI, err := h.k.stkK.Validator(ctx, valAddr)
+	if err != nil {
+		return err
+	}
+
+	delSharesChange := afterAmount.Sub(beforeAmount)
+	delTokenChange := valI.TokensFromShares(delSharesChange).TruncateInt()
 	return h.k.costakerModified(ctx, delAddr, func(rwdTracker *types.CostakerRewardsTracker) {
-		rwdTracker.ActiveBaby = rwdTracker.ActiveBaby.Add(delegationChange)
+		rwdTracker.ActiveBaby = rwdTracker.ActiveBaby.Add(delTokenChange)
 	})
 }
 
