@@ -500,7 +500,11 @@ func NewBabylonApp(
 	// so that other modules that want to create or claim capabilities afterwards in InitChain
 	// can do so safely.
 	genesisModuleOrder := []string{
-		authtypes.ModuleName, banktypes.ModuleName, distrtypes.ModuleName, stakingtypes.ModuleName,
+		authtypes.ModuleName, banktypes.ModuleName, distrtypes.ModuleName,
+		// module that subscribes to staking hooks.
+		// staking init genesis calls AfterDelegationModified
+		costktypes.ModuleName,
+		stakingtypes.ModuleName,
 		slashingtypes.ModuleName, govtypes.ModuleName, minttypes.ModuleName,
 		// Cosmos EVM modules
 		// NOTE: feemarket module needs to be initialized before genutil module
@@ -535,7 +539,6 @@ func NewBabylonApp(
 		finalitytypes.ModuleName,
 		// tokenomics-related modules
 		incentivetypes.ModuleName,
-		costktypes.ModuleName,
 	}
 	app.ModuleManager.SetOrderInitGenesis(genesisModuleOrder...)
 	app.ModuleManager.SetOrderExportGenesis(genesisModuleOrder...)

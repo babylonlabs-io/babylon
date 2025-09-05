@@ -530,5 +530,8 @@ func NewKeeperWithMockIncentiveKeeper(t *testing.T, mockIctvK types.IncentiveKee
 		appparams.AccGov.String(),
 		appparams.AccFeeCollector.String(),
 	)
+
+	err := k.SetParams(ctx, types.DefaultParams())
+	require.NoError(t, err)
 	return &k, ctx
 }
