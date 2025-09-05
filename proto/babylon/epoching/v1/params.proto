@@ -12,4 +12,24 @@ message Params {
   // epoch_interval is the number of consecutive blocks to form an epoch
   uint64 epoch_interval = 1
       [ (gogoproto.moretags) = "yaml:\"epoch_interval\"" ];
+  
+   // execute_gas defines raw gas for different executions.
+    ExecuteGas execute_gas = 2
+        [ (gogoproto.nullable) = false, (gogoproto.moretags) = "yaml:\"execute_gas\"" ];
+    
+  // minimum_amount is a minimum amount for staking message cancel_unbonding_delegation
+  uint64 min_amount = 3
+      [ (gogoproto.moretags) = "yaml:\"min_amount\"" ];
 }
+
+// ExecuteGas defines the raw gas for the enqueued message execution.
+  message ExecuteGas {
+    option (gogoproto.equal) = true;
+
+    uint64 delegate = 1 [(gogoproto.moretags) = "yaml:\"delegate\""];
+    uint64 undelegate = 2 [(gogoproto.moretags) = "yaml:\"undelegate\""];
+    uint64 begin_redelegate = 3 [(gogoproto.moretags) = "yaml:\"begin_redelegate\""];
+    uint64 cancel_unbonding_delegation = 4 [(gogoproto.moretags) = "yaml:\"cancel_unbonding_delegation\""];
+    uint64 edit_validator = 5 [(gogoproto.moretags) = "yaml:\"edit_validator\""];
+    uint64 create_validator = 6 [(gogoproto.moretags) = "yaml:\"create_validator\""];
+  }

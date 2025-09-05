@@ -2,6 +2,7 @@ package epoching
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 	"time"
 
@@ -89,6 +90,41 @@ func EndBlocker(ctx context.Context, k keeper.Keeper) ([]abci.ValidatorUpdate, e
 		queuedMsgs := k.GetCurrentEpochMsgs(ctx)
 		// forward each msg in the msg queue to the right keeper
 		for _, msg := range queuedMsgs {
+			msgId := hex.EncodeToString(msg.MsgId)
+
+			// Unlock funds first
+			if err := k.UnlockFundsForDelegateMsgs(sdkCtx, msg); err != nil {
+				k.Logger(sdkCtx).Error("failed to unlock funds for message",
+					"msgId", msgId,
+					"error", err)
+				
+				// Determine message type for context
+				msgType := "unknown"
+				switch msg.Msg.(type) {
+				case *types.QueuedMessage_MsgDelegate:
+					msgType = "MsgDelegate"
+				case *types.QueuedMessage_MsgCreateValidator:
+					msgType = "MsgCreateValidator"
+				}
+				
+				// Emit typed event for fund unlock failure
+				if eventErr := sdkCtx.EventManager().EmitTypedEvent(
+					&types.EventUnlockFundsFailed{
+						EpochNumber: epoch.EpochNumber,
+						Height:      msg.BlockHeight,
+						TxId:        msg.TxId,
+						MsgId:       msg.MsgId,
+						Error:       err.Error(),
+						MsgType:     msgType,
+					},
+				); eventErr != nil {
+					k.Logger(sdkCtx).Error("failed to emit EventUnlockFundsFailed", "error", eventErr)
+				}
+				continue
+			} else {
+				k.Logger(sdkCtx).Info("successfully unlocked funds for message", "msgId", msgId)
+			}
+
 			_, errQueuedMsg := k.HandleQueuedMsg(ctx, msg)
 			// skip this failed msg and emit and event signalling it
 			// we do not panic here as some users may wrap an invalid message

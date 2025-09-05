@@ -40,11 +40,12 @@ func (m *MockEpochingKeeper) EXPECT() *MockEpochingKeeperMockRecorder {
 }
 
 // CheckMsgCreateValidator mocks base method.
-func (m *MockEpochingKeeper) CheckMsgCreateValidator(ctx context.Context, msg *types2.MsgCreateValidator) error {
+func (m *MockEpochingKeeper) CheckMsgCreateValidator(ctx context.Context, msg *types2.MsgCreateValidator) (uint64, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CheckMsgCreateValidator", ctx, msg)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(uint64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // CheckMsgCreateValidator indicates an expected call of CheckMsgCreateValidator.
@@ -91,6 +92,20 @@ func (m *MockEpochingKeeper) GetEpochNumByHeight(ctx context.Context, height uin
 func (mr *MockEpochingKeeperMockRecorder) GetEpochNumByHeight(ctx, height interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEpochNumByHeight", reflect.TypeOf((*MockEpochingKeeper)(nil).GetEpochNumByHeight), ctx, height)
+}
+
+// GetParams mocks base method.
+func (m *MockEpochingKeeper) GetParams(ctx context.Context) types0.Params {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetParams", ctx)
+	ret0, _ := ret[0].(types0.Params)
+	return ret0
+}
+
+// GetParams indicates an expected call of GetParams.
+func (mr *MockEpochingKeeperMockRecorder) GetParams(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetParams", reflect.TypeOf((*MockEpochingKeeper)(nil).GetParams), ctx)
 }
 
 // GetPubKeyByConsAddr mocks base method.
@@ -149,6 +164,20 @@ func (m *MockEpochingKeeper) GetValidatorSet(ctx context.Context, epochNumer uin
 func (mr *MockEpochingKeeperMockRecorder) GetValidatorSet(ctx, epochNumer interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetValidatorSet", reflect.TypeOf((*MockEpochingKeeper)(nil).GetValidatorSet), ctx, epochNumer)
+}
+
+// LockFundsForDelegateMsgs mocks base method.
+func (m *MockEpochingKeeper) LockFundsForDelegateMsgs(ctx types1.Context, msg *types0.QueuedMessage) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "LockFundsForDelegateMsgs", ctx, msg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// LockFundsForDelegateMsgs indicates an expected call of LockFundsForDelegateMsgs.
+func (mr *MockEpochingKeeperMockRecorder) LockFundsForDelegateMsgs(ctx, msg interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LockFundsForDelegateMsgs", reflect.TypeOf((*MockEpochingKeeper)(nil).LockFundsForDelegateMsgs), ctx, msg)
 }
 
 // StkMsgCreateValidator mocks base method.

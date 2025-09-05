@@ -56,6 +56,8 @@ func TestGenesisState_Validate(t *testing.T) {
 			genState: &types.GenesisState{
 				Params: types.Params{
 					EpochInterval: 100,
+					ExecuteGas:    types.DefaultExecuteGas,
+					MinAmount:     types.DefaultMinAmount,
 				},
 			},
 			valid: true,

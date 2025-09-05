@@ -68,3 +68,8 @@ func TestBtcRewardsDistributionBsnRollup(t *testing.T) {
 func TestBTCStakeExpansionTestSuite(t *testing.T) {
 	suite.Run(t, new(BTCStakeExpansionTestSuite))
 }
+
+// TestEpochingSpamPreventionTestSuite tests epoching spam prevention end-to-end
+func TestEpochingSpamPreventionTestSuite(t *testing.T) {
+	suite.Run(t, new(EpochingSpamPreventionTestSuite))
+}
