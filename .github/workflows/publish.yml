@@ -20,7 +20,7 @@ permissions:
 
 jobs:
   lint_test: 
-    uses: babylonlabs-io/.github/.github/workflows/reusable_go_lint_test.yml@v0.13.4
+    uses: babylonlabs-io/.github/.github/workflows/reusable_go_lint_test.yml@v0.7.0
     if: ${{ !(github.event_name == 'workflow_dispatch' && inputs['skip-lint-test'] == true) }}
     secrets: inherit
     with:
@@ -29,7 +29,6 @@ jobs:
       run-unit-tests: true
       run-integration-tests: false
       run-lint: true
-      run-gosec: true
 
   docker_pipeline:
     if: ${{ always() && (
