@@ -38,7 +38,7 @@ func (k Keeper) CostakerRewardsTracker(ctx context.Context, req *types.QueryCost
 	}
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	
+
 	costakerAddr, err := sdk.AccAddressFromBech32(req.CostakerAddress)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid costaker address")
@@ -51,9 +51,9 @@ func (k Keeper) CostakerRewardsTracker(ctx context.Context, req *types.QueryCost
 
 	return &types.QueryCostakerRewardsTrackerResponse{
 		StartPeriodCumulativeReward: tracker.StartPeriodCumulativeReward,
-		ActiveSatoshis:             tracker.ActiveSatoshis,
-		ActiveBaby:                 tracker.ActiveBaby,
-		TotalScore:                 tracker.TotalScore,
+		ActiveSatoshis:              tracker.ActiveSatoshis,
+		ActiveBaby:                  tracker.ActiveBaby,
+		TotalScore:                  tracker.TotalScore,
 	}, nil
 }
 
@@ -64,7 +64,7 @@ func (k Keeper) HistoricalRewards(ctx context.Context, req *types.QueryHistorica
 	}
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	
+
 	rewards, err := k.GetHistoricalRewards(sdkCtx, req.Period)
 	if err != nil {
 		return nil, status.Error(codes.NotFound, "historical rewards not found for the given period")
@@ -82,7 +82,7 @@ func (k Keeper) CurrentRewards(ctx context.Context, req *types.QueryCurrentRewar
 	}
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	
+
 	currentRewards, err := k.GetCurrentRewards(sdkCtx)
 	if err != nil {
 		return nil, status.Error(codes.NotFound, "current rewards not found")
