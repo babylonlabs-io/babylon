@@ -97,6 +97,29 @@ func EndBlocker(ctx context.Context, k keeper.Keeper) ([]abci.ValidatorUpdate, e
 				k.Logger(sdkCtx).Error("failed to unlock funds for message",
 					"msgId", msgId,
 					"error", err)
+				
+				// Determine message type for context
+				msgType := "unknown"
+				switch msg.Msg.(type) {
+				case *types.QueuedMessage_MsgDelegate:
+					msgType = "MsgDelegate"
+				case *types.QueuedMessage_MsgCreateValidator:
+					msgType = "MsgCreateValidator"
+				}
+				
+				// Emit typed event for fund unlock failure
+				if eventErr := sdkCtx.EventManager().EmitTypedEvent(
+					&types.EventUnlockFundsFailed{
+						EpochNumber: epoch.EpochNumber,
+						Height:      msg.BlockHeight,
+						TxId:        msg.TxId,
+						MsgId:       msg.MsgId,
+						Error:       err.Error(),
+						MsgType:     msgType,
+					},
+				); eventErr != nil {
+					k.Logger(sdkCtx).Error("failed to emit EventUnlockFundsFailed", "error", eventErr)
+				}
 				continue
 			} else {
 				k.Logger(sdkCtx).Info("successfully unlocked funds for message", "msgId", msgId)
