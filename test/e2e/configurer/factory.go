@@ -179,7 +179,7 @@ func NewSoftwareUpgradeConfigurer(t *testing.T, isDebugLogEnabled bool, upgradeP
 	return NewSoftwareUpgradeConfigurerWithCurrentTag(t, isDebugLogEnabled, upgradePath, preUpgradeFunc, "")
 }
 
-// NewSoftwareUpgradeConfigurer returns a new Configurer for Software Upgrade testing with the specified current tag
+// NewSoftwareUpgradeConfigurerWithCurrentTag returns a new Configurer for Software Upgrade testing with the specified current tag
 func NewSoftwareUpgradeConfigurerWithCurrentTag(t *testing.T, isDebugLogEnabled bool, upgradePath string, preUpgradeFunc PreUpgradeFunc, currentTag string) (*UpgradeConfigurer, error) {
 	identifier := identifierName(t)
 	containerManager, err := containers.NewManager(identifier, isDebugLogEnabled, false, true)
