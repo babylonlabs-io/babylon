@@ -18,23 +18,31 @@ import (
 	cmtabcitypes "github.com/cometbft/cometbft/abci/types"
 	cmttypes "github.com/cometbft/cometbft/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	grpctypes "github.com/cosmos/cosmos-sdk/types/grpc"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	sdktx "github.com/cosmos/cosmos-sdk/types/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	dstrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	icacontrollertypes "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/controller/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/util"
 	blc "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
 	ct "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
+	costaking "github.com/babylonlabs-io/babylon/v4/x/costaking/types"
 	etypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
+	minttypes "github.com/babylonlabs-io/babylon/v4/x/mint/types"
 	mtypes "github.com/babylonlabs-io/babylon/v4/x/monitor/types"
 )
 
 func (n *NodeConfig) QueryGRPCGateway(path string, queryParams url.Values) ([]byte, error) {
+	return n.QueryGRPCGatewayWithHeaders(path, queryParams, nil)
+}
+
+func (n *NodeConfig) QueryGRPCGatewayWithHeaders(path string, queryParams url.Values, headers map[string]string) ([]byte, error) {
 	// add the URL for the given validator ID, and prepend to path.
 	hostPort, err := n.containerManager.GetHostPort(n.Name, "1317/tcp")
 	require.NoError(n.t, err)
@@ -55,6 +63,11 @@ func (n *NodeConfig) QueryGRPCGateway(path string, queryParams url.Values) ([]by
 
 		if len(queryParams) > 0 {
 			req.URL.RawQuery = queryParams.Encode()
+		}
+
+		// Add custom headers
+		for key, value := range headers {
+			req.Header.Set(key, value)
 		}
 
 		resp, err = http.DefaultClient.Do(req)
@@ -118,8 +131,22 @@ func (n *NodeConfig) QueryAccount(address string) (sdk.AccountI, error) {
 
 // QueryBalances returns balances at the address.
 func (n *NodeConfig) QueryBalances(address string) (sdk.Coins, error) {
+	return n.QueryBalancesAtHeight(address, 0)
+}
+
+// QueryBalancesAtHeight returns balances at the address at a specific block height.
+// If height is 0, queries the latest block.
+func (n *NodeConfig) QueryBalancesAtHeight(address string, height uint64) (sdk.Coins, error) {
 	path := fmt.Sprintf("cosmos/bank/v1beta1/balances/%s", address)
-	bz, err := n.QueryGRPCGateway(path, url.Values{})
+
+	var headers map[string]string
+	if height > 0 {
+		headers = map[string]string{
+			grpctypes.GRPCBlockHeightHeader: strconv.FormatUint(height, 10),
+		}
+	}
+
+	bz, err := n.QueryGRPCGatewayWithHeaders(path, url.Values{}, headers)
 	require.NoError(n.t, err)
 
 	var balancesResp banktypes.QueryAllBalancesResponse
@@ -145,11 +172,25 @@ func (n *NodeConfig) QueryDistributionRewards(address string) (sdk.Coins, error)
 
 // QueryBalance returns balance of some address.
 func (n *NodeConfig) QueryBalance(address, denom string) (*sdk.Coin, error) {
+	return n.QueryBalanceAtHeight(address, denom, 0)
+}
+
+// QueryBalanceAtHeight returns balance of some address at a specific block height.
+// If height is 0, queries the latest block.
+func (n *NodeConfig) QueryBalanceAtHeight(address, denom string, height int64) (*sdk.Coin, error) {
 	path := fmt.Sprintf("cosmos/bank/v1beta1/balances/%s/by_denom", address)
 
 	params := url.Values{}
 	params.Set("denom", denom)
-	bz, err := n.QueryGRPCGateway(path, params)
+
+	var headers map[string]string
+	if height > 0 {
+		headers = map[string]string{
+			grpctypes.GRPCBlockHeightHeader: strconv.FormatInt(height, 10),
+		}
+	}
+
+	bz, err := n.QueryGRPCGatewayWithHeaders(path, params, headers)
 	require.NoError(n.t, err)
 
 	var balancesResp banktypes.QueryBalanceResponse
@@ -555,4 +596,114 @@ func (n *NodeConfig) BalancesDiff(f func(), addrs ...string) map[string]sdk.Coin
 		resp[addr] = after[addr].Sub(before[addr]...)
 	}
 	return resp
+}
+
+// QueryMintedAmountFromEvents queries the actual minted amount from mint events in a specific block
+func (n *NodeConfig) QueryMintedAmountFromEvents(blockHeight int64) (sdk.Coins, error) {
+	if blockHeight <= 1 {
+		// No minting for genesis block or block 1
+		return sdk.NewCoins(), nil
+	}
+
+	// Query block results to get events
+	blockResults, err := n.rpcClient.BlockResults(context.Background(), &blockHeight)
+	if err != nil {
+		return sdk.Coins{}, err
+	}
+
+	// Look for mint events in BeginBlockEvents
+	for _, event := range blockResults.FinalizeBlockEvents {
+		if event.Type == minttypes.EventTypeMint {
+			// Find the amount attribute
+			for _, attr := range event.Attributes {
+				if attr.Key == sdk.AttributeKeyAmount {
+					// Parse the amount
+					if attr.Value == "" {
+						continue
+					}
+
+					// Parse as integer (amount is just the number without denom)
+					amount, ok := sdkmath.NewIntFromString(attr.Value)
+					if !ok {
+						return sdk.Coins{}, fmt.Errorf("failed to parse minted amount: %s", attr.Value)
+					}
+
+					mintedCoin := sdk.NewCoin(minttypes.DefaultBondDenom, amount)
+					return sdk.NewCoins(mintedCoin), nil
+				}
+			}
+		}
+	}
+
+	// No mint event found, return empty coins
+	return sdk.NewCoins(), nil
+}
+
+// QueryCostakerRewardsTracker queries the costaker rewards tracker for a given address
+func (n *NodeConfig) QueryCostakerRewardsTracker(costakerAddress string) (*costaking.QueryCostakerRewardsTrackerResponse, error) {
+	path := fmt.Sprintf("babylon/costaking/v1/costakers/%s/rewards_tracker", costakerAddress)
+	bz, err := n.QueryGRPCGateway(path, url.Values{})
+	if err != nil {
+		return nil, err
+	}
+
+	var resp costaking.QueryCostakerRewardsTrackerResponse
+	if err := util.Cdc.UnmarshalJSON(bz, &resp); err != nil {
+		return nil, err
+	}
+
+	return &resp, nil
+}
+
+// QueryValidators returns all validators
+func (n *NodeConfig) QueryValidators() ([]stakingtypes.Validator, error) {
+	path := "cosmos/staking/v1beta1/validators"
+	bz, err := n.QueryGRPCGateway(path, url.Values{})
+	if err != nil {
+		return nil, err
+	}
+
+	var resp stakingtypes.QueryValidatorsResponse
+	if err := util.Cdc.UnmarshalJSON(bz, &resp); err != nil {
+		return nil, err
+	}
+
+	return resp.Validators, nil
+}
+
+// QueryDelegatorDelegations returns delegator delegations for a given address
+func (n *NodeConfig) QueryDelegatorDelegations(delegatorAddr string) ([]stakingtypes.DelegationResponse, error) {
+	path := fmt.Sprintf("cosmos/staking/v1beta1/delegations/%s", delegatorAddr)
+	bz, err := n.QueryGRPCGateway(path, url.Values{})
+	if err != nil {
+		return nil, err
+	}
+
+	var resp stakingtypes.QueryDelegatorDelegationsResponse
+	if err := util.Cdc.UnmarshalJSON(bz, &resp); err != nil {
+		return nil, err
+	}
+
+	return resp.DelegationResponses, nil
+}
+
+// WaitForNextEpoch waits for the next epoch to start
+func (n *NodeConfig) WaitForNextEpoch() (uint64, error) {
+	currentEpoch, err := n.QueryCurrentEpoch()
+	if err != nil {
+		return 0, err
+	}
+	
+	nextEpoch := currentEpoch + 1
+	
+	// Wait until we're in the next epoch
+	require.Eventually(n.t, func() bool {
+		epoch, err := n.QueryCurrentEpoch()
+		if err != nil {
+			return false
+		}
+		return epoch > nextEpoch
+	}, time.Minute*2, time.Millisecond*500, "failed to reach next epoch")
+	
+	return nextEpoch, nil
 }

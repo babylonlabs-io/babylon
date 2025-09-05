@@ -17,6 +17,7 @@ const (
 var (
 	ParamsKey           = []byte("p_btcstkconsumer") // ParamsKey stores module parameters (collections.Item[Params])
 	ConsumerRegisterKey = []byte{0x01}               // ConsumerRegisterKey stores consumer registry per consumer ID (collections.Map[string, ConsumerRegister])
+	FinalityContractKey = []byte{0x02}               // FinalityContractKey stores registered rollups finality contract addresses (collections.KeySet[string])
 )
 
 func KeyPrefix(p string) []byte {

@@ -44,8 +44,8 @@ import (
 	bsctypes "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
 	checkpointingkeeper "github.com/babylonlabs-io/babylon/v4/x/checkpointing/keeper"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
-	coostakingkeeper "github.com/babylonlabs-io/babylon/v4/x/coostaking/keeper"
-	coostakingtypes "github.com/babylonlabs-io/babylon/v4/x/coostaking/types"
+	costakingkeeper "github.com/babylonlabs-io/babylon/v4/x/costaking/keeper"
+	costktypes "github.com/babylonlabs-io/babylon/v4/x/costaking/types"
 	epochingkeeper "github.com/babylonlabs-io/babylon/v4/x/epoching/keeper"
 	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 	finalitykeeper "github.com/babylonlabs-io/babylon/v4/x/finality/keeper"
@@ -167,7 +167,7 @@ type AppKeepers struct {
 	BtcCheckpointKeeper  btccheckpointkeeper.Keeper
 	CheckpointingKeeper  checkpointingkeeper.Keeper
 	MonitorKeeper        monitorkeeper.Keeper
-	CoostakingKeeper     coostakingkeeper.Keeper
+	CostakingKeeper      costakingkeeper.Keeper
 
 	// IBC-related modules
 	IBCKeeper           *ibckeeper.Keeper           // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
@@ -261,7 +261,7 @@ func (ak *AppKeepers) InitKeepers(
 		wasmtypes.StoreKey,
 		// tokenomics-related modules
 		incentivetypes.StoreKey,
-		coostakingtypes.StoreKey,
+		costktypes.StoreKey,
 		// EVM
 		evmtypes.StoreKey,
 		feemarkettypes.StoreKey,
@@ -271,7 +271,7 @@ func (ak *AppKeepers) InitKeepers(
 	ak.keys = keys
 
 	// set transient store keys
-	ak.tkeys = storetypes.NewTransientStoreKeys(paramstypes.TStoreKey, btccheckpointtypes.TStoreKey, evmtypes.TransientKey, feemarkettypes.TransientKey)
+	ak.tkeys = storetypes.NewTransientStoreKeys(paramstypes.TStoreKey, btccheckpointtypes.TStoreKey, evmtypes.TransientKey, feemarkettypes.TransientKey, zctypes.TStoreKey)
 
 	accountKeeper := authkeeper.NewAccountKeeper(
 		appCodec,
@@ -384,11 +384,14 @@ func (ak *AppKeepers) InitKeepers(
 		authtypes.FeeCollectorName,
 	)
 
-	ak.CoostakingKeeper = coostakingkeeper.NewKeeper(
+	ak.CostakingKeeper = costakingkeeper.NewKeeper(
 		appCodec,
-		runtime.NewKVStoreService(keys[coostakingtypes.StoreKey]),
+		runtime.NewKVStoreService(keys[costktypes.StoreKey]),
 		ak.BankKeeper,
 		ak.AccountKeeper,
+		ak.IncentiveKeeper,
+		ak.StakingKeeper,
+		ak.DistrKeeper,
 		appparams.AccGov.String(),
 		authtypes.FeeCollectorName,
 	)
@@ -698,6 +701,12 @@ func (ak *AppKeepers) InitKeepers(
 		),
 	)
 
+	ak.IncentiveKeeper.SetHooks(
+		incentivetypes.NewMultiIncentiveHooks(
+			ak.CostakingKeeper.Hooks(),
+		),
+	)
+
 	monitorKeeper := monitorkeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[monitortypes.StoreKey]),
@@ -713,6 +722,7 @@ func (ak *AppKeepers) InitKeepers(
 	zcKeeper := zckeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[zctypes.StoreKey]),
+		ak.tkeys[zctypes.TStoreKey],
 		ak.IBCKeeper.ChannelKeeper,
 		ak.IBCKeeper.ClientKeeper,
 		ak.IBCKeeper.ConnectionKeeper,
@@ -726,6 +736,7 @@ func (ak *AppKeepers) InitKeepers(
 		storeQuerier,
 		&ak.BTCStakingKeeper,
 		&ak.BTCStkConsumerKeeper,
+		&ak.FinalityKeeper,
 		appparams.AccGov.String(),
 	)
 
@@ -738,7 +749,7 @@ func (ak *AppKeepers) InitKeepers(
 		checkpointingtypes.NewMultiCheckpointingHooks(epochingKeeper.Hooks(), zcKeeper.Hooks(), monitorKeeper.Hooks()),
 	)
 	btclightclientKeeper.SetHooks(
-		btclightclienttypes.NewMultiBTCLightClientHooks(btcCheckpointKeeper.Hooks(), ak.BTCStakingKeeper.Hooks()),
+		btclightclienttypes.NewMultiBTCLightClientHooks(btcCheckpointKeeper.Hooks(), ak.BTCStakingKeeper.Hooks(), zcKeeper),
 	)
 
 	// wire the keepers with hooks to the app

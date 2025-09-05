@@ -72,11 +72,13 @@ func ZoneConciergeKeeperWithStoreKey(
 		storeKey = storetypes.NewKVStoreKey(types.StoreKey)
 	}
 	memStoreKey := storetypes.NewMemoryStoreKey(types.MemStoreKey)
+	transientStoreKey := storetypes.NewTransientStoreKey(types.TStoreKey)
 
 	db := dbm.NewMemDB()
 	stateStore := store.NewCommitMultiStore(db, logger, metrics.NewNoOpMetrics())
 	stateStore.MountStoreWithDB(storeKey, storetypes.StoreTypeIAVL, db)
 	stateStore.MountStoreWithDB(memStoreKey, storetypes.StoreTypeMemory, nil)
+	stateStore.MountStoreWithDB(transientStoreKey, storetypes.StoreTypeTransient, db)
 	require.NoError(t, stateStore.LoadLatestVersion())
 
 	registry := codectypes.NewInterfaceRegistry()
@@ -88,6 +90,7 @@ func ZoneConciergeKeeperWithStoreKey(
 	k := keeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(storeKey),
+		transientStoreKey,
 		nil, // TODO: mock this keeper
 		nil, // TODO: mock this keeper
 		nil, // TODO: mock this keeper
@@ -101,6 +104,7 @@ func ZoneConciergeKeeperWithStoreKey(
 		zoneconciergeStoreQuerier{},
 		bsKeeper,
 		btcStkKeeper,
+		nil, // TODO: mock this keeper
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 

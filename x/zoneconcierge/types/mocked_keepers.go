@@ -15,10 +15,11 @@ import (
 	types3 "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
 	types4 "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
 	types5 "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
-	types6 "github.com/cosmos/cosmos-sdk/types"
-	types7 "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
-	types8 "github.com/cosmos/ibc-go/v10/modules/core/03-connection/types"
-	types9 "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+	types6 "github.com/babylonlabs-io/babylon/v4/x/finality/types"
+	types7 "github.com/cosmos/cosmos-sdk/types"
+	types8 "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
+	types9 "github.com/cosmos/ibc-go/v10/modules/core/03-connection/types"
+	types10 "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 	exported "github.com/cosmos/ibc-go/v10/modules/core/exported"
 	gomock "github.com/golang/mock/gomock"
 )
@@ -47,10 +48,10 @@ func (m *MockAccountKeeper) EXPECT() *MockAccountKeeperMockRecorder {
 }
 
 // GetModuleAccount mocks base method.
-func (m *MockAccountKeeper) GetModuleAccount(ctx context.Context, name string) types6.ModuleAccountI {
+func (m *MockAccountKeeper) GetModuleAccount(ctx context.Context, name string) types7.ModuleAccountI {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetModuleAccount", ctx, name)
-	ret0, _ := ret[0].(types6.ModuleAccountI)
+	ret0, _ := ret[0].(types7.ModuleAccountI)
 	return ret0
 }
 
@@ -61,10 +62,10 @@ func (mr *MockAccountKeeperMockRecorder) GetModuleAccount(ctx, name interface{})
 }
 
 // GetModuleAddress mocks base method.
-func (m *MockAccountKeeper) GetModuleAddress(name string) types6.AccAddress {
+func (m *MockAccountKeeper) GetModuleAddress(name string) types7.AccAddress {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetModuleAddress", name)
-	ret0, _ := ret[0].(types6.AccAddress)
+	ret0, _ := ret[0].(types7.AccAddress)
 	return ret0
 }
 
@@ -98,7 +99,7 @@ func (m *MockBankKeeper) EXPECT() *MockBankKeeperMockRecorder {
 }
 
 // BlockedAddr mocks base method.
-func (m *MockBankKeeper) BlockedAddr(addr types6.AccAddress) bool {
+func (m *MockBankKeeper) BlockedAddr(addr types7.AccAddress) bool {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "BlockedAddr", addr)
 	ret0, _ := ret[0].(bool)
@@ -112,7 +113,7 @@ func (mr *MockBankKeeperMockRecorder) BlockedAddr(addr interface{}) *gomock.Call
 }
 
 // BurnCoins mocks base method.
-func (m *MockBankKeeper) BurnCoins(ctx context.Context, moduleName string, amt types6.Coins) error {
+func (m *MockBankKeeper) BurnCoins(ctx context.Context, moduleName string, amt types7.Coins) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "BurnCoins", ctx, moduleName, amt)
 	ret0, _ := ret[0].(error)
@@ -126,7 +127,7 @@ func (mr *MockBankKeeperMockRecorder) BurnCoins(ctx, moduleName, amt interface{}
 }
 
 // MintCoins mocks base method.
-func (m *MockBankKeeper) MintCoins(ctx context.Context, moduleName string, amt types6.Coins) error {
+func (m *MockBankKeeper) MintCoins(ctx context.Context, moduleName string, amt types7.Coins) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "MintCoins", ctx, moduleName, amt)
 	ret0, _ := ret[0].(error)
@@ -140,7 +141,7 @@ func (mr *MockBankKeeperMockRecorder) MintCoins(ctx, moduleName, amt interface{}
 }
 
 // SendCoins mocks base method.
-func (m *MockBankKeeper) SendCoins(ctx context.Context, fromAddr, toAddr types6.AccAddress, amt types6.Coins) error {
+func (m *MockBankKeeper) SendCoins(ctx context.Context, fromAddr, toAddr types7.AccAddress, amt types7.Coins) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SendCoins", ctx, fromAddr, toAddr, amt)
 	ret0, _ := ret[0].(error)
@@ -154,7 +155,7 @@ func (mr *MockBankKeeperMockRecorder) SendCoins(ctx, fromAddr, toAddr, amt inter
 }
 
 // SendCoinsFromAccountToModule mocks base method.
-func (m *MockBankKeeper) SendCoinsFromAccountToModule(ctx context.Context, senderAddr types6.AccAddress, recipientModule string, amt types6.Coins) error {
+func (m *MockBankKeeper) SendCoinsFromAccountToModule(ctx context.Context, senderAddr types7.AccAddress, recipientModule string, amt types7.Coins) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SendCoinsFromAccountToModule", ctx, senderAddr, recipientModule, amt)
 	ret0, _ := ret[0].(error)
@@ -168,7 +169,7 @@ func (mr *MockBankKeeperMockRecorder) SendCoinsFromAccountToModule(ctx, senderAd
 }
 
 // SendCoinsFromModuleToAccount mocks base method.
-func (m *MockBankKeeper) SendCoinsFromModuleToAccount(ctx context.Context, senderModule string, recipientAddr types6.AccAddress, amt types6.Coins) error {
+func (m *MockBankKeeper) SendCoinsFromModuleToAccount(ctx context.Context, senderModule string, recipientAddr types7.AccAddress, amt types7.Coins) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SendCoinsFromModuleToAccount", ctx, senderModule, recipientAddr, amt)
 	ret0, _ := ret[0].(error)
@@ -205,7 +206,7 @@ func (m *MockICS4Wrapper) EXPECT() *MockICS4WrapperMockRecorder {
 }
 
 // SendPacket mocks base method.
-func (m *MockICS4Wrapper) SendPacket(ctx types6.Context, sourcePort, sourceChannel string, timeoutHeight types7.Height, timeoutTimestamp uint64, data []byte) (uint64, error) {
+func (m *MockICS4Wrapper) SendPacket(ctx types7.Context, sourcePort, sourceChannel string, timeoutHeight types8.Height, timeoutTimestamp uint64, data []byte) (uint64, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SendPacket", ctx, sourcePort, sourceChannel, timeoutHeight, timeoutTimestamp, data)
 	ret0, _ := ret[0].(uint64)
@@ -243,10 +244,10 @@ func (m *MockChannelKeeper) EXPECT() *MockChannelKeeperMockRecorder {
 }
 
 // GetAllChannels mocks base method.
-func (m *MockChannelKeeper) GetAllChannels(ctx types6.Context) []types9.IdentifiedChannel {
+func (m *MockChannelKeeper) GetAllChannels(ctx types7.Context) []types10.IdentifiedChannel {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAllChannels", ctx)
-	ret0, _ := ret[0].([]types9.IdentifiedChannel)
+	ret0, _ := ret[0].([]types10.IdentifiedChannel)
 	return ret0
 }
 
@@ -257,10 +258,10 @@ func (mr *MockChannelKeeperMockRecorder) GetAllChannels(ctx interface{}) *gomock
 }
 
 // GetAllChannelsWithPortPrefix mocks base method.
-func (m *MockChannelKeeper) GetAllChannelsWithPortPrefix(ctx types6.Context, portPrefix string) []types9.IdentifiedChannel {
+func (m *MockChannelKeeper) GetAllChannelsWithPortPrefix(ctx types7.Context, portPrefix string) []types10.IdentifiedChannel {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAllChannelsWithPortPrefix", ctx, portPrefix)
-	ret0, _ := ret[0].([]types9.IdentifiedChannel)
+	ret0, _ := ret[0].([]types10.IdentifiedChannel)
 	return ret0
 }
 
@@ -271,10 +272,10 @@ func (mr *MockChannelKeeperMockRecorder) GetAllChannelsWithPortPrefix(ctx, portP
 }
 
 // GetChannel mocks base method.
-func (m *MockChannelKeeper) GetChannel(ctx types6.Context, srcPort, srcChan string) (types9.Channel, bool) {
+func (m *MockChannelKeeper) GetChannel(ctx types7.Context, srcPort, srcChan string) (types10.Channel, bool) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetChannel", ctx, srcPort, srcChan)
-	ret0, _ := ret[0].(types9.Channel)
+	ret0, _ := ret[0].(types10.Channel)
 	ret1, _ := ret[1].(bool)
 	return ret0, ret1
 }
@@ -286,7 +287,7 @@ func (mr *MockChannelKeeperMockRecorder) GetChannel(ctx, srcPort, srcChan interf
 }
 
 // GetChannelClientState mocks base method.
-func (m *MockChannelKeeper) GetChannelClientState(ctx types6.Context, portID, channelID string) (string, exported.ClientState, error) {
+func (m *MockChannelKeeper) GetChannelClientState(ctx types7.Context, portID, channelID string) (string, exported.ClientState, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetChannelClientState", ctx, portID, channelID)
 	ret0, _ := ret[0].(string)
@@ -302,7 +303,7 @@ func (mr *MockChannelKeeperMockRecorder) GetChannelClientState(ctx, portID, chan
 }
 
 // GetNextSequenceSend mocks base method.
-func (m *MockChannelKeeper) GetNextSequenceSend(ctx types6.Context, portID, channelID string) (uint64, bool) {
+func (m *MockChannelKeeper) GetNextSequenceSend(ctx types7.Context, portID, channelID string) (uint64, bool) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetNextSequenceSend", ctx, portID, channelID)
 	ret0, _ := ret[0].(uint64)
@@ -340,10 +341,10 @@ func (m *MockZoneConciergeChannelKeeper) EXPECT() *MockZoneConciergeChannelKeepe
 }
 
 // GetAllOpenZCChannels mocks base method.
-func (m *MockZoneConciergeChannelKeeper) GetAllOpenZCChannels(ctx context.Context) []types9.IdentifiedChannel {
+func (m *MockZoneConciergeChannelKeeper) GetAllOpenZCChannels(ctx context.Context) []types10.IdentifiedChannel {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAllOpenZCChannels", ctx)
-	ret0, _ := ret[0].([]types9.IdentifiedChannel)
+	ret0, _ := ret[0].([]types10.IdentifiedChannel)
 	return ret0
 }
 
@@ -354,7 +355,7 @@ func (mr *MockZoneConciergeChannelKeeperMockRecorder) GetAllOpenZCChannels(ctx i
 }
 
 // GetChannelClientState mocks base method.
-func (m *MockZoneConciergeChannelKeeper) GetChannelClientState(ctx types6.Context, portID, channelID string) (string, exported.ClientState, error) {
+func (m *MockZoneConciergeChannelKeeper) GetChannelClientState(ctx types7.Context, portID, channelID string) (string, exported.ClientState, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetChannelClientState", ctx, portID, channelID)
 	ret0, _ := ret[0].(string)
@@ -370,10 +371,10 @@ func (mr *MockZoneConciergeChannelKeeperMockRecorder) GetChannelClientState(ctx,
 }
 
 // GetChannelForConsumer mocks base method.
-func (m *MockZoneConciergeChannelKeeper) GetChannelForConsumer(ctx context.Context, consumerID, channelID string) (types9.IdentifiedChannel, bool) {
+func (m *MockZoneConciergeChannelKeeper) GetChannelForConsumer(ctx context.Context, consumerID, channelID string) (types10.IdentifiedChannel, bool) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetChannelForConsumer", ctx, consumerID, channelID)
-	ret0, _ := ret[0].(types9.IdentifiedChannel)
+	ret0, _ := ret[0].(types10.IdentifiedChannel)
 	ret1, _ := ret[1].(bool)
 	return ret0, ret1
 }
@@ -385,7 +386,7 @@ func (mr *MockZoneConciergeChannelKeeperMockRecorder) GetChannelForConsumer(ctx,
 }
 
 // GetClientID mocks base method.
-func (m *MockZoneConciergeChannelKeeper) GetClientID(ctx context.Context, channel types9.IdentifiedChannel) (string, error) {
+func (m *MockZoneConciergeChannelKeeper) GetClientID(ctx context.Context, channel types10.IdentifiedChannel) (string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetClientID", ctx, channel)
 	ret0, _ := ret[0].(string)
@@ -400,7 +401,7 @@ func (mr *MockZoneConciergeChannelKeeperMockRecorder) GetClientID(ctx, channel i
 }
 
 // IsChannelUninitialized mocks base method.
-func (m *MockZoneConciergeChannelKeeper) IsChannelUninitialized(ctx context.Context, channel types9.IdentifiedChannel) bool {
+func (m *MockZoneConciergeChannelKeeper) IsChannelUninitialized(ctx context.Context, channel types10.IdentifiedChannel) bool {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "IsChannelUninitialized", ctx, channel)
 	ret0, _ := ret[0].(bool)
@@ -437,7 +438,7 @@ func (m *MockClientKeeper) EXPECT() *MockClientKeeperMockRecorder {
 }
 
 // GetClientState mocks base method.
-func (m *MockClientKeeper) GetClientState(ctx types6.Context, clientID string) (exported.ClientState, bool) {
+func (m *MockClientKeeper) GetClientState(ctx types7.Context, clientID string) (exported.ClientState, bool) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetClientState", ctx, clientID)
 	ret0, _ := ret[0].(exported.ClientState)
@@ -452,7 +453,7 @@ func (mr *MockClientKeeperMockRecorder) GetClientState(ctx, clientID interface{}
 }
 
 // SetClientState mocks base method.
-func (m *MockClientKeeper) SetClientState(ctx types6.Context, clientID string, clientState exported.ClientState) {
+func (m *MockClientKeeper) SetClientState(ctx types7.Context, clientID string, clientState exported.ClientState) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "SetClientState", ctx, clientID, clientState)
 }
@@ -487,10 +488,10 @@ func (m *MockConnectionKeeper) EXPECT() *MockConnectionKeeperMockRecorder {
 }
 
 // GetConnection mocks base method.
-func (m *MockConnectionKeeper) GetConnection(ctx types6.Context, connectionID string) (types8.ConnectionEnd, bool) {
+func (m *MockConnectionKeeper) GetConnection(ctx types7.Context, connectionID string) (types9.ConnectionEnd, bool) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetConnection", ctx, connectionID)
-	ret0, _ := ret[0].(types8.ConnectionEnd)
+	ret0, _ := ret[0].(types9.ConnectionEnd)
 	ret1, _ := ret[1].(bool)
 	return ret0, ret1
 }
@@ -551,6 +552,20 @@ func (m *MockBTCLightClientKeeper) GetMainChainFrom(ctx context.Context, startHe
 func (mr *MockBTCLightClientKeeperMockRecorder) GetMainChainFrom(ctx, startHeight interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMainChainFrom", reflect.TypeOf((*MockBTCLightClientKeeper)(nil).GetMainChainFrom), ctx, startHeight)
+}
+
+// GetMainChainFromWithCache mocks base method.
+func (m *MockBTCLightClientKeeper) GetMainChainFromWithCache(ctx context.Context, startHeight uint32) []*types1.BTCHeaderInfo {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetMainChainFromWithCache", ctx, startHeight)
+	ret0, _ := ret[0].([]*types1.BTCHeaderInfo)
+	return ret0
+}
+
+// GetMainChainFromWithCache indicates an expected call of GetMainChainFromWithCache.
+func (mr *MockBTCLightClientKeeperMockRecorder) GetMainChainFromWithCache(ctx, startHeight interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMainChainFromWithCache", reflect.TypeOf((*MockBTCLightClientKeeper)(nil).GetMainChainFromWithCache), ctx, startHeight)
 }
 
 // GetMainChainUpTo mocks base method.
@@ -859,6 +874,20 @@ func (mr *MockBTCStakingKeeperMockRecorder) GetFinalityProvider(ctx, fpBTCPK int
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFinalityProvider", reflect.TypeOf((*MockBTCStakingKeeper)(nil).GetFinalityProvider), ctx, fpBTCPK)
 }
 
+// HasBTCStakingConsumerIBCPackets mocks base method.
+func (m *MockBTCStakingKeeper) HasBTCStakingConsumerIBCPackets(ctx context.Context) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HasBTCStakingConsumerIBCPackets", ctx)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// HasBTCStakingConsumerIBCPackets indicates an expected call of HasBTCStakingConsumerIBCPackets.
+func (mr *MockBTCStakingKeeperMockRecorder) HasBTCStakingConsumerIBCPackets(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasBTCStakingConsumerIBCPackets", reflect.TypeOf((*MockBTCStakingKeeper)(nil).HasBTCStakingConsumerIBCPackets), ctx)
+}
+
 // SlashFinalityProvider mocks base method.
 func (m *MockBTCStakingKeeper) SlashFinalityProvider(ctx context.Context, fpBTCPK []byte) error {
 	m.ctrl.T.Helper()
@@ -980,4 +1009,39 @@ func (m *MockBTCStkConsumerKeeper) UpdateConsumer(ctx context.Context, consumerR
 func (mr *MockBTCStkConsumerKeeperMockRecorder) UpdateConsumer(ctx, consumerRegister interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateConsumer", reflect.TypeOf((*MockBTCStkConsumerKeeper)(nil).UpdateConsumer), ctx, consumerRegister)
+}
+
+// MockFinalityKeeper is a mock of FinalityKeeper interface.
+type MockFinalityKeeper struct {
+	ctrl     *gomock.Controller
+	recorder *MockFinalityKeeperMockRecorder
+}
+
+// MockFinalityKeeperMockRecorder is the mock recorder for MockFinalityKeeper.
+type MockFinalityKeeperMockRecorder struct {
+	mock *MockFinalityKeeper
+}
+
+// NewMockFinalityKeeper creates a new mock instance.
+func NewMockFinalityKeeper(ctrl *gomock.Controller) *MockFinalityKeeper {
+	mock := &MockFinalityKeeper{ctrl: ctrl}
+	mock.recorder = &MockFinalityKeeperMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockFinalityKeeper) EXPECT() *MockFinalityKeeperMockRecorder {
+	return m.recorder
+}
+
+// SetEvidence mocks base method.
+func (m *MockFinalityKeeper) SetEvidence(ctx context.Context, evidence *types6.Evidence) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "SetEvidence", ctx, evidence)
+}
+
+// SetEvidence indicates an expected call of SetEvidence.
+func (mr *MockFinalityKeeperMockRecorder) SetEvidence(ctx, evidence interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetEvidence", reflect.TypeOf((*MockFinalityKeeper)(nil).SetEvidence), ctx, evidence)
 }

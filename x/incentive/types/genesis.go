@@ -26,6 +26,7 @@ func DefaultGenesis() *GenesisState {
 		BtcDelegatorsToFps:                    []BTCDelegatorToFpEntry{},
 		EventRewardTracker:                    []EventsPowerUpdateAtHeightEntry{},
 		LastProcessedHeightEventRewardTracker: 0,
+		FpDirectGauges:                        []FPDirectGaugeEntry{},
 	}
 }
 
@@ -82,6 +83,10 @@ func (gs GenesisState) Validate() error {
 		return fmt.Errorf("BTC delegators to finality providers map is not equal to the btc delegations data: %w", err)
 	}
 
+	if err := validateFpDirectGauges(gs.FpDirectGauges); err != nil {
+		return fmt.Errorf("invalid FP direct gauges: %w", err)
+	}
+
 	return gs.Params.Validate()
 }
 
@@ -91,6 +96,16 @@ func (bse BTCStakingGaugeEntry) Validate() error {
 	}
 	if err := bse.Gauge.Validate(); err != nil {
 		return fmt.Errorf("invalid BTC staking gauge at height %d: %w", bse.Height, err)
+	}
+	return nil
+}
+
+func (fge FPDirectGaugeEntry) Validate() error {
+	if fge.Gauge == nil {
+		return fmt.Errorf("FP direct gauge at height %d has nil Gauge", fge.Height)
+	}
+	if err := fge.Gauge.Validate(); err != nil {
+		return fmt.Errorf("invalid FP direct gauge at height %d: %w", fge.Height, err)
 	}
 	return nil
 }
@@ -204,6 +219,12 @@ func validateAddrStr(addr string) error {
 
 func validateBTCStakingGauges(entries []BTCStakingGaugeEntry) error {
 	return types.ValidateEntries(entries, func(e BTCStakingGaugeEntry) uint64 {
+		return e.Height
+	})
+}
+
+func validateFpDirectGauges(entries []FPDirectGaugeEntry) error {
+	return types.ValidateEntries(entries, func(e FPDirectGaugeEntry) uint64 {
 		return e.Height
 	})
 }

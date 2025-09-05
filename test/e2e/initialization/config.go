@@ -26,7 +26,7 @@ import (
 	btccheckpointtypes "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
 	btclighttypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
 	btcstktypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
-	coostakingtypes "github.com/babylonlabs-io/babylon/v4/x/coostaking/types"
+	costktypes "github.com/babylonlabs-io/babylon/v4/x/costaking/types"
 	finalitytypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
 	minttypes "github.com/babylonlabs-io/babylon/v4/x/mint/types"
 	ratelimiter "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/types"
@@ -225,7 +225,7 @@ func initGenesis(
 		return err
 	}
 
-	err = e2ev2.UpdateModuleGenesis(appGenState, coostakingtypes.ModuleName, &coostakingtypes.GenesisState{}, e2ev2.UpdateGenesisCoostaking)
+	err = e2ev2.UpdateModuleGenesis(appGenState, costktypes.ModuleName, &costktypes.GenesisState{}, e2ev2.UpdateGenesisCostaking)
 	if err != nil {
 		return err
 	}

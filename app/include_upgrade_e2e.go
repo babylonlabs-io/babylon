@@ -9,12 +9,12 @@ import (
 	evmtypes "github.com/cosmos/evm/x/vm/types"
 
 	v3 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v3"
-	coostakingtypes "github.com/babylonlabs-io/babylon/v4/x/coostaking/types"
+	costakingtypes "github.com/babylonlabs-io/babylon/v4/x/costaking/types"
 )
 
 // init is used to include v1 upgrade testnet data
 // it is also used for e2e testing
 func init() {
 	IsE2EUpgradeBuildFlag = true
-	v3.StoresToAdd = append(v3.StoresToAdd, erc20types.StoreKey, evmtypes.StoreKey, feemarkettypes.StoreKey, precisebanktypes.StoreKey, coostakingtypes.StoreKey)
+	v3.StoresToAdd = append(v3.StoresToAdd, erc20types.StoreKey, evmtypes.StoreKey, feemarkettypes.StoreKey, precisebanktypes.StoreKey, costakingtypes.StoreKey)
 }

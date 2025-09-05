@@ -41,7 +41,7 @@ func FuzzInterceptFeeCollector(f *testing.F) {
 		// mock epoching keeper
 		epochingKeeper := types.NewMockEpochingKeeper(ctrl)
 
-		keeper, ctx := testkeeper.IncentiveKeeper(t, bankKeeper, accountKeeper, epochingKeeper)
+		keeper, ctx := testkeeper.IncentiveKeeper(t, bankKeeper, accountKeeper, epochingKeeper, nil)
 		height := datagen.RandomInt(r, 1000)
 		ctx = datagen.WithCtxHeight(ctx, height)
 
@@ -84,7 +84,7 @@ func TestInterceptFeeCollectorWithSmallAmount(t *testing.T) {
 	// mock epoching keeper
 	epochingKeeper := types.NewMockEpochingKeeper(ctrl)
 
-	keeper, ctx := testkeeper.IncentiveKeeper(t, bankKeeper, accountKeeper, epochingKeeper)
+	keeper, ctx := testkeeper.IncentiveKeeper(t, bankKeeper, accountKeeper, epochingKeeper, nil)
 	height := datagen.RandomInt(r, 1000)
 	ctx = datagen.WithCtxHeight(ctx, height)
 
@@ -92,7 +92,9 @@ func TestInterceptFeeCollectorWithSmallAmount(t *testing.T) {
 	// NOTE: if the actual fees are different from feesForIncentive the test will fail
 	params := keeper.GetParams(ctx)
 	feesForBTCStaking := types.GetCoinsPortion(smallFee, params.BTCStakingPortion())
-	bankKeeper.EXPECT().SendCoinsFromModuleToModule(gomock.Any(), gomock.Eq(authtypes.FeeCollectorName), gomock.Eq(types.ModuleName), gomock.Eq(feesForBTCStaking)).Times(1)
+	fpDirectRwds := types.GetCoinsPortion(smallFee, params.FpPortion)
+	totalCoinsForIncentive := feesForBTCStaking.Add(fpDirectRwds...)
+	bankKeeper.EXPECT().SendCoinsFromModuleToModule(gomock.Any(), gomock.Eq(authtypes.FeeCollectorName), gomock.Eq(types.ModuleName), gomock.Eq(totalCoinsForIncentive)).Times(1)
 
 	// handle coins in fee collector
 	keeper.HandleCoinsInFeeCollector(ctx)

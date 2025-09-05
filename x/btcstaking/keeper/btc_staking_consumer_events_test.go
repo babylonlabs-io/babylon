@@ -90,7 +90,7 @@ func FuzzSetBTCStakingEventStore_ActiveDel(f *testing.F) {
 		h := testutil.NewHelper(t, btclcKeeper, btccKeeper, nil).WithBlockHeight(heightAfterMultiStakingAllowListExpiration)
 
 		// set all parameters
-		covenantSKs, _ := h.GenAndApplyCustomParams(r, 100, 200, 0, 2)
+		covenantSKs, _ := h.GenAndApplyCustomParams(r, 100, 200, 2)
 
 		// register a random consumer on Babylon
 		randomConsumer := h.RegisterAndVerifyConsumer(t, r)
@@ -188,7 +188,7 @@ func FuzzSetBTCStakingEventStore_UnbondedDel(f *testing.F) {
 		h := testutil.NewHelper(t, btclcKeeper, btccKeeper, nil).WithBlockHeight(heightAfterMultiStakingAllowListExpiration)
 
 		// set all parameters
-		covenantSKs, _ := h.GenAndApplyCustomParams(r, 100, 200, 0, 2)
+		covenantSKs, _ := h.GenAndApplyCustomParams(r, 100, 200, 2)
 
 		bsParams := h.BTCStakingKeeper.GetParams(h.Ctx)
 
@@ -433,4 +433,61 @@ func TestDeterministicOrdering(t *testing.T) {
 	// Verify that the processing order is sorted
 	expectedOrder := []string{"bsn-a", "bsn-b", "bsn-m", "bsn-z"}
 	require.Equal(t, expectedOrder, processOrder1, "Processing should happen in sorted order")
+}
+
+func TestHasBTCStakingConsumerIBCPackets(t *testing.T) {
+	r := rand.New(rand.NewSource(11))
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	// mock BTC light client and BTC checkpoint modules
+	btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
+	btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
+	btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{}).AnyTimes()
+
+	h := testutil.NewHelper(t, btclcKeeper, btccKeeper, nil)
+	h.GenAndApplyParams(r)
+
+	// Test: Initially no BTC staking consumer IBC packets should exist
+	hasPackets := h.BTCStakingKeeper.HasBTCStakingConsumerIBCPackets(h.Ctx)
+	require.False(t, hasPackets, "Should return false when no packets exist")
+
+	// Register and verify first consumer
+	consumer1 := h.RegisterAndVerifyConsumer(t, r)
+
+	// Create consumer finality provider, this will add events to the store
+	_, _, _, err := h.CreateConsumerFinalityProvider(r, consumer1.ConsumerId)
+	require.NoError(t, err)
+
+	// Test: Now packets should exist
+	hasPackets = h.BTCStakingKeeper.HasBTCStakingConsumerIBCPackets(h.Ctx)
+	require.True(t, hasPackets, "Should return true when at least one packet exists")
+
+	// Register and verify second consumer
+	consumer2 := h.RegisterAndVerifyConsumer(t, r)
+
+	// Create another consumer finality provider
+	_, _, _, err = h.CreateConsumerFinalityProvider(r, consumer2.ConsumerId)
+	require.NoError(t, err)
+
+	// Test: Still should return true (multiple packets exist)
+	hasPackets = h.BTCStakingKeeper.HasBTCStakingConsumerIBCPackets(h.Ctx)
+	require.True(t, hasPackets, "Should return true when multiple packets exist")
+
+	// Verify consistency with GetAllBTCStakingConsumerIBCPackets
+	allPackets := h.BTCStakingKeeper.GetAllBTCStakingConsumerIBCPackets(h.Ctx)
+	expectedHasPackets := len(allPackets) > 0
+	require.Equal(t, expectedHasPackets, hasPackets, "HasBTCStakingConsumerIBCPackets should be consistent with GetAllBTCStakingConsumerIBCPackets")
+
+	// Delete all packets and verify HasBTCStakingConsumerIBCPackets returns false
+	h.BTCStakingKeeper.DeleteBTCStakingConsumerIBCPacket(h.Ctx, consumer1.ConsumerId)
+	h.BTCStakingKeeper.DeleteBTCStakingConsumerIBCPacket(h.Ctx, consumer2.ConsumerId)
+
+	hasPackets = h.BTCStakingKeeper.HasBTCStakingConsumerIBCPackets(h.Ctx)
+	require.False(t, hasPackets, "Should return false after deleting all packets")
+
+	// Verify consistency again
+	allPackets = h.BTCStakingKeeper.GetAllBTCStakingConsumerIBCPackets(h.Ctx)
+	expectedHasPackets = len(allPackets) > 0
+	require.Equal(t, expectedHasPackets, hasPackets, "HasBTCStakingConsumerIBCPackets should be consistent with GetAllBTCStakingConsumerIBCPackets after deletion")
 }

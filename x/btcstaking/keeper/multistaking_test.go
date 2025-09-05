@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/btcsuite/btcd/btcec/v2"
-	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
@@ -31,7 +30,7 @@ func FuzzMultiStaking_MultiStakedBTCDelegation(f *testing.F) {
 		h := testutil.NewHelper(t, btclcKeeper, btccKeeper, nil)
 
 		// set all parameters
-		covenantSKs, _ := h.GenAndApplyCustomParams(r, 100, 200, 0, 10)
+		covenantSKs, _ := h.GenAndApplyCustomParams(r, 100, 200, 10)
 
 		bsParams := h.BTCStakingKeeper.GetParams(h.Ctx)
 
@@ -152,30 +151,9 @@ func FuzzMultiStaking_MultiStakedBTCDelegation(f *testing.F) {
 		require.True(t, errors.Is(err, types.ErrInvalidMultiStakingFPs), err)
 
 		/*
-			during multi-staking allow-list -- try multi-staking to a Babylon fp and a consumer fp but not allowed
-		*/
-		lcTip := uint32(30)
-		_, _, _, _, _, _, err = h.CreateDelegationWithBtcBlockHeight(
-			r,
-			delSK,
-			[]*btcec.PublicKey{fpPK, consumerFPPK},
-			stakingValue,
-			1000,
-			0,
-			0,
-			false,
-			false,
-			10,
-			lcTip,
-		)
-		h.Error(err)
-		h.ErrorContains(err, "it is not allowed to create new delegations with multi-staking during the multi-staking allow-list period")
-
-		/*
 			happy case -- multi-staking to a Babylon fp and a consumer fp
 		*/
-		heightAfterMultiStakingAllowListExpiration := int64(10)
-		h = h.WithBlockHeight(heightAfterMultiStakingAllowListExpiration)
+		lcTip := uint32(30)
 		_, msgBTCDel, actualDel, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
 			r,
 			delSK,
@@ -204,227 +182,6 @@ func FuzzMultiStaking_MultiStakedBTCDelegation(f *testing.F) {
 	})
 }
 
-func TestMultiStakingAllowList(t *testing.T) {
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	// mock BTC light client and BTC checkpoint modules
-	btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
-	btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-	h := testutil.NewHelper(t, btclcKeeper, btccKeeper, nil)
-
-	// set all parameters
-	covenantSKs, _ := h.GenAndApplyCustomParams(r, 100, 200, 0, 10)
-
-	// Create a Babylon finality provider
-	_, babylonFPPK, _ := h.CreateFinalityProvider(r)
-
-	// Register a consumer chain and create consumer finality provider
-	consumerRegister := datagen.GenRandomCosmosConsumerRegister(r)
-	err := h.BTCStkConsumerKeeper.RegisterConsumer(h.Ctx, consumerRegister)
-	require.NoError(t, err)
-	_, consumerFPPK, _, err := h.CreateConsumerFinalityProvider(r, consumerRegister.ConsumerId)
-	h.NoError(err)
-
-	// Multi-staking FP list: one Babylon FP + one consumer FP
-	fpPKs := []*btcec.PublicKey{babylonFPPK, consumerFPPK}
-
-	// Create a staker for the previous staking transaction
-	stakingValue := int64(2 * 10e8)
-	delSK, _, err := datagen.GenRandomBTCKeyPair(r)
-	h.NoError(err)
-
-	// Create the previous staking transaction that will be in the allow list
-	// This needs to be a single FP delegation first
-	lcTip := uint32(30)
-
-	// Try to create a new multi-staking delegation
-	// This should not be allowed during multi-staking allow-list period
-	_, _, _, _, _, _, err = h.CreateDelegationWithBtcBlockHeight(
-		r,
-		delSK,
-		fpPKs,
-		stakingValue,
-		1000,
-		0,
-		0,
-		false,
-		true,
-		10,
-		lcTip,
-	)
-	h.Error(err)
-	h.ErrorContains(err, "it is not allowed to create new delegations with multi-staking during the multi-staking allow-list period")
-
-	// Create the previous staking transaction that will be in the allow list
-	// This needs to be a single FP delegation first
-	prevStakingTxHash, prevMsgCreateBTCDel, prevDel, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
-		r,
-		delSK,
-		[]*btcec.PublicKey{babylonFPPK}, // single Babylon FP for the original delegation
-		stakingValue,
-		1000,
-		0,
-		0,
-		false,
-		true,
-		10,
-		lcTip,
-	)
-	h.NoError(err)
-	require.NotNil(t, prevMsgCreateBTCDel)
-
-	// Add covenant signatures to make it active
-	h.CreateCovenantSigs(r, covenantSKs, prevMsgCreateBTCDel, prevDel, 10)
-
-	// Test 1: Create multi-staking BtcStakeExpand with txHash NOT in multi-staking allow list
-	_, _, err = h.CreateBtcStakeExpansionWithBtcTipHeight(
-		r,
-		delSK,
-		fpPKs,
-		stakingValue,
-		1000,
-		prevDel,
-		lcTip,
-	)
-	h.Error(err)
-	h.ErrorContains(err, "not eligible for multi-staking")
-
-	// Add the previous staking tx hash to the allow list
-	prevDelTxHash, err := chainhash.NewHashFromStr(prevStakingTxHash)
-	h.NoError(err)
-	h.BTCStakingKeeper.IndexAllowedMultiStakingTransaction(h.Ctx, prevDelTxHash)
-
-	// Test 2: Try to create BtcStakeExpand with prevDelTxHash in allow list
-	// and increasing staked amount - should not be allowed
-	_, _, err = h.CreateBtcStakeExpansionWithBtcTipHeight(
-		r,
-		delSK,
-		fpPKs,
-		stakingValue+1, // increase the staking amount
-		1000,
-		prevDel,
-		lcTip,
-	)
-	h.Error(err)
-	h.ErrorContains(err, "it is not allowed to modify the staking amount during the multi-staking allow-list period")
-
-	// Test 3: Create BtcStakeExpand with prevDelTxHash in allow list
-	// Create the multi-staking delegation via stake expansion
-	spendingTx, fundingTx, err := h.CreateBtcStakeExpansionWithBtcTipHeight(
-		r,
-		delSK,
-		fpPKs,
-		stakingValue,
-		1000,
-		prevDel,
-		lcTip,
-	)
-	require.NoError(t, err)
-
-	bsParams := h.BTCStakingKeeper.GetParams(h.Ctx)
-
-	expandedDel, err := h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, spendingTx.TxHash().String())
-	require.NoError(t, err)
-	require.True(t, expandedDel.IsStakeExpansion())
-	status, err := h.BTCStakingKeeper.BtcDelStatus(h.Ctx, expandedDel, bsParams.CovenantQuorum, lcTip)
-	h.NoError(err)
-	require.Equal(t, types.BTCDelegationStatus_PENDING, status)
-
-	// Add covenant signatures to make it verified
-	h.CreateCovenantSigs(r, covenantSKs, nil, expandedDel, 10)
-
-	// Add witness for stake expansion tx
-	prevStkTx, err := bbn.NewBTCTxFromBytes(prevDel.GetStakingTx())
-	require.NoError(t, err)
-
-	spendingTxWithWitnessBz, _ := datagen.AddWitnessToStakeExpTx(
-		t,
-		prevStkTx.TxOut[0],
-		fundingTx.TxOut[0],
-		delSK,
-		covenantSKs,
-		bsParams.CovenantQuorum,
-		[]*btcec.PublicKey{babylonFPPK},
-		uint16(1000),
-		stakingValue,
-		spendingTx,
-		h.Net,
-	)
-
-	// build the block with the proofs
-	expansionTxInclusionProof := h.BuildBTCInclusionProofForSpendingTx(r, spendingTx, lcTip)
-
-	// Submit MsgBTCUndelegate for the original delegation to activate stake expansion
-	fundingTxBz, err := bbn.SerializeBTCTx(fundingTx)
-	h.NoError(err)
-	msg := &types.MsgBTCUndelegate{
-		Signer:                        prevDel.StakerAddr,
-		StakingTxHash:                 prevStkTx.TxHash().String(),
-		StakeSpendingTx:               spendingTxWithWitnessBz,
-		StakeSpendingTxInclusionProof: expansionTxInclusionProof,
-		FundingTransactions:           [][]byte{prevDel.GetStakingTx(), fundingTxBz},
-	}
-	// Ensure BTC tip is enough for the undelegate
-	// Spending tx should be above BTC confirmation depth (k = 10)
-	lcTip += 11
-	h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: lcTip}).AnyTimes()
-	_, err = h.MsgServer.BTCUndelegate(h.Ctx, msg)
-	h.NoError(err)
-
-	// Ensure the expanded delegation is active
-	expandedDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, spendingTx.TxHash().String())
-	require.NoError(t, err)
-
-	status, err = h.BTCStakingKeeper.BtcDelStatus(h.Ctx, expandedDel, bsParams.CovenantQuorum, lcTip)
-	h.NoError(err)
-	require.Equal(t, types.BTCDelegationStatus_ACTIVE, status)
-
-	// Test 4: Extend a multi-staking delegation with txHash NOT in allow list
-	// (but original txHash was in multi-staking allow-list)
-	// Register a new consumer chain and add the FP to the new delegation expansion
-	consumerRegister2 := datagen.GenRandomCosmosConsumerRegister(r)
-	err = h.BTCStkConsumerKeeper.RegisterConsumer(h.Ctx, consumerRegister2)
-	require.NoError(t, err)
-	_, consumer2FPPK, _, err := h.CreateConsumerFinalityProvider(r, consumerRegister2.ConsumerId)
-	h.NoError(err)
-
-	// Try to increase staking amt - should not be allowed
-	_, _, err = h.CreateBtcStakeExpansionWithBtcTipHeight(
-		r,
-		delSK,
-		append(fpPKs, consumer2FPPK),
-		stakingValue+1,
-		1000,
-		expandedDel,
-		lcTip,
-	)
-	h.Error(err)
-	h.ErrorContains(err, "it is not allowed to modify the staking amount during the multi-staking allow-list period")
-
-	// Submit the BtcStakeExpand message adding the new consumer FP
-	// and keeping same staking amount
-	doubleExpStakingTx, _, err := h.CreateBtcStakeExpansionWithBtcTipHeight(
-		r,
-		delSK,
-		append(fpPKs, consumer2FPPK),
-		stakingValue,
-		1000,
-		expandedDel,
-		lcTip,
-	)
-	h.NoError(err)
-
-	// Ensure the new expansion is in pending state
-	doubleExpandedDel, err := h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, doubleExpStakingTx.TxHash().String())
-	require.NoError(t, err)
-	require.True(t, expandedDel.IsStakeExpansion())
-	status, err = h.BTCStakingKeeper.BtcDelStatus(h.Ctx, doubleExpandedDel, bsParams.CovenantQuorum, lcTip)
-	h.NoError(err)
-	require.Equal(t, types.BTCDelegationStatus_PENDING, status)
-}
-
 func FuzzFinalityProviderDelegations_RestakingConsumers(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
@@ -439,7 +196,7 @@ func FuzzFinalityProviderDelegations_RestakingConsumers(f *testing.F) {
 		h := testutil.NewHelper(t, btclcKeeper, btccKeeper, nil).WithBlockHeight(heightAfterMultiStakingAllowListExpiration)
 
 		// set all parameters
-		h.GenAndApplyCustomParams(r, 100, 200, 0, 2)
+		h.GenAndApplyCustomParams(r, 100, 200, 2)
 
 		// register a new consumer
 		consumerRegister := datagen.GenRandomCosmosConsumerRegister(r)
@@ -546,7 +303,7 @@ func TestNoActivationEventForRollupConsumer(t *testing.T) {
 	h := testutil.NewHelper(t, btclcKeeper, btccKeeper, nil).WithBlockHeight(heightAfterMultiStakingAllowListExpiration)
 
 	// set all parameters
-	covenantSKs, _ := h.GenAndApplyCustomParams(r, 100, 200, 0, 2)
+	covenantSKs, _ := h.GenAndApplyCustomParams(r, 100, 200, 2)
 
 	// generate and insert new Babylon finality provider
 	_, fpPK, _ := h.CreateFinalityProvider(r)

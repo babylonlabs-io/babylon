@@ -3,7 +3,10 @@ package tmanager
 import (
 	"context"
 	"fmt"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	blc "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
 	"io"
+	"math/rand"
 	"net/http"
 	"net/url"
 	"os"
@@ -418,10 +421,6 @@ func (n *Node) T() *testing.T {
 func (n *Node) CreateWallet(keyName string) *WalletSender {
 	nw := NewWalletSender(keyName, n)
 	n.Wallets[keyName] = nw
-	if n.IsChainRunning() {
-		// set seq and acc number
-		n.UpdateWalletAccSeqNumber(keyName)
-	}
 	return nw
 }
 
@@ -440,7 +439,17 @@ func (n *Node) DefaultWallet() *WalletSender {
 }
 
 func (n *Node) IsChainRunning() bool {
-	return false
+	if n.RpcClient == nil {
+		return false
+	}
+	status, err := n.RpcClient.Status(context.Background())
+	if err != nil {
+		return false
+	}
+	if status == nil {
+		return false
+	}
+	return !status.SyncInfo.CatchingUp
 }
 
 func (n *Node) RunNodeResource() *dockertest.Resource {
@@ -771,4 +780,62 @@ func CreateNodeKey(rootDir, moniker string) (*p2p.NodeKey, error) {
 	}
 
 	return nodeKey, nil
+}
+
+// QueryTip queries the current tip of the BTC light client
+func (n *Node) QueryTip() (*blc.BTCHeaderInfoResponse, error) {
+	bz, err := n.QueryGRPCGateway("/babylon/btclightclient/v1/tip", url.Values{})
+	if err != nil {
+		return nil, err
+	}
+
+	var blcResponse blc.QueryTipResponse
+	if err := util.Cdc.UnmarshalJSON(bz, &blcResponse); err != nil {
+		return nil, err
+	}
+
+	return blcResponse.Header, nil
+}
+
+// WaitUntilBtcHeight waits until the BTC height reaches the specified height
+func (n *Node) WaitUntilBtcHeight(height uint32) {
+	var latestBlockHeight uint32
+	n.WaitForCondition(func() bool {
+		btcTip, err := n.QueryTip()
+		require.NoError(n.T(), err)
+		latestBlockHeight = btcTip.Height
+
+		return latestBlockHeight >= height
+	}, fmt.Sprintf("Timed out waiting for btc height %d", height))
+}
+
+// InsertNewEmptyBtcHeader inserts a new BTC header to the chain
+func (n *Node) InsertNewEmptyBtcHeader(r *rand.Rand) *blc.BTCHeaderInfo {
+	tipResp, err := n.QueryTip()
+	require.NoError(n.T(), err)
+	n.T().Logf("Retrieved current tip of btc headerchain. Height: %d", tipResp.Height)
+
+	tip, err := ParseBTCHeaderInfoResponseToInfo(tipResp)
+	require.NoError(n.T(), err)
+
+	child := datagen.GenRandomValidBTCHeaderInfoWithParent(r, *tip)
+	n.SendHeaderHex(child.Header.MarshalHex())
+	n.WaitUntilBtcHeight(tipResp.Height + 1)
+	return child
+}
+
+// SendHeaderHex sends a BTC header in hex format to the node
+func (n *Node) SendHeaderHex(headerHex string) {
+	wallet := n.Wallet("node-key")
+
+	headerBytes, err := bbn.NewBTCHeaderBytesFromHex(headerHex)
+	require.NoError(n.T(), err)
+
+	msg := &blc.MsgInsertHeaders{
+		Signer:  wallet.Address.String(),
+		Headers: []bbn.BTCHeaderBytes{headerBytes},
+	}
+
+	_, tx := wallet.SubmitMsgs(msg)
+	require.NotNil(n.T(), tx, "RegisterConsumerChain transaction should not be nil")
 }
