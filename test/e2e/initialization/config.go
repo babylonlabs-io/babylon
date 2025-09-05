@@ -29,6 +29,7 @@ import (
 	finalitytypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
 	minttypes "github.com/babylonlabs-io/babylon/v4/x/mint/types"
 	ratelimiter "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/types"
+	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
 )
 
 // NodeConfig is a configuration for the node supplied from the test runner
@@ -262,6 +263,11 @@ func initGenesis(
 	err = e2ev2.UpdateModuleGenesis(appGenState, btcstktypes.ModuleName, &btcstktypes.GenesisState{}, updateGenesisBtcStaking(startingBtcStakingParams))
 	if err != nil {
 		return fmt.Errorf("failed to update rate limiter genesis state: %w", err)
+	}
+
+	err = e2ev2.UpdateModuleGenesis(appGenState, feemarkettypes.ModuleName, &feemarkettypes.GenesisState{}, e2ev2.UpdateGenesisFeemarket)
+	if err != nil {
+		return fmt.Errorf("failed to update feemarket genesis state: %w", err)
 	}
 
 	bz, err := json.MarshalIndent(appGenState, "", "  ")

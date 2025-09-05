@@ -25,6 +25,7 @@ import (
 	finalitytypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
 	minttypes "github.com/babylonlabs-io/babylon/v4/x/mint/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
 	ratelimiter "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/types"
 )
 
@@ -149,6 +150,11 @@ func UpdateGenModulesState(
 	err = UpdateModuleGenesis(appGenState, btcstktypes.ModuleName, &btcstktypes.GenesisState{}, UpdateGenesisBtcStaking(startingBtcStakingParams))
 	if err != nil {
 		return fmt.Errorf("failed to update rate limiter genesis state: %w", err)
+	}
+
+	err = UpdateModuleGenesis(appGenState, feemarkettypes.ModuleName, &feemarkettypes.GenesisState{}, UpdateGenesisFeemarket)
+	if err != nil {
+		return fmt.Errorf("failed to update feemarket genesis state: %w", err)
 	}
 
 	return nil
@@ -300,4 +306,18 @@ func UpdateGenesisTokenFactory(tokenfactoryGenState *tokenfactorytypes.GenesisSt
 	tokenfactoryGenState.Params = tokenfactorytypes.Params{
 		DenomCreationFee: sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(10000))),
 	}
+}
+
+func UpdateGenesisFeemarket(feemarketGenState *feemarkettypes.GenesisState) {
+	// Set custom feemarket parameters for E2E testing
+	feemarketGenState.Params = feemarkettypes.Params{
+		NoBaseFee:                false,
+		BaseFeeChangeDenominator: 8,
+		ElasticityMultiplier:     2,
+		EnableHeight:             0,
+		BaseFee:                  sdkmath.LegacyMustNewDecFromStr("0.01"),  // 0.001 BBN
+		MinGasPrice:              sdkmath.LegacyMustNewDecFromStr("0.001"), // 0.0001 BBN (much lower floor)
+		MinGasMultiplier:         sdkmath.LegacyMustNewDecFromStr("0.5"),
+	}
+	feemarketGenState.BlockGas = 0
 }
