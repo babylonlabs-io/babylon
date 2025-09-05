@@ -38,10 +38,14 @@ type SoftwareUpgradeV3RC4TestSuite struct {
 	fp1 *bstypes.FinalityProvider
 	fp2 *bstypes.FinalityProvider
 
-	// Staking amounts for delegations
+	// BTC Staking amounts for delegations
 	fp1Del1StakingAmt int64
 	fp1Del2StakingAmt int64
 	fp2Del1StakingAmt int64
+
+	// Baby staking amounts for delegations (to validators) to make them co-stakers
+	del1BabyAmt int64
+	del2BabyAmt int64
 
 	// bech32 addresses
 	del1Addr string
@@ -75,6 +79,9 @@ func (s *SoftwareUpgradeV3RC4TestSuite) SetupSuite() {
 	s.fp1Del1StakingAmt = int64(2 * 10e8)
 	s.fp1Del2StakingAmt = int64(4 * 10e8)
 	s.fp2Del1StakingAmt = int64(2 * 10e8)
+
+	s.del1BabyAmt = int64(1000000) // 1 Baby
+	s.del2BabyAmt = int64(2000000) // 2 Baby
 
 	covenantSKs, _, _ := bstypes.DefaultCovenantCommittee()
 	s.covenantSKs = covenantSKs
@@ -237,10 +244,10 @@ func (s *SoftwareUpgradeV3RC4TestSuite) SetupVerifiedBtcDelegationsWithBabyStaki
 	validatorAddr := validators[0].OperatorAddress
 
 	// Delegate Baby tokens for del1 (making them a co-staker)
-	n.Delegate(s.del1Addr, validatorAddr, "1000000ubbn")
+	n.Delegate(s.del1Addr, validatorAddr, fmt.Sprintf("%dubbn", s.del1BabyAmt))
 
 	// Delegate Baby tokens for del2 (making them a co-staker)
-	n.Delegate(s.del2Addr, validatorAddr, "2000000ubbn")
+	n.Delegate(s.del2Addr, validatorAddr, fmt.Sprintf("%dubbn", s.del2BabyAmt))
 
 	// Wait for next epoch as delegations are queued and executed at epoch end
 	s.T().Logf("Waiting for next epoch to process Baby delegations...")
@@ -390,39 +397,43 @@ func (s *SoftwareUpgradeV3RC4TestSuite) CheckCostakerRewardsTrackerAfterUpgrade(
 	s.NoError(err, "should be able to query costaker rewards tracker for del1")
 	s.Require().NotNil(del1Tracker, "del1 should have a costaker rewards tracker")
 
-	// Verify del1 has non-zero active satoshis and baby
-	s.Require().True(del1Tracker.ActiveSatoshis.GT(sdkmath.ZeroInt()), "del1 should have active satoshis")
-	s.Require().True(del1Tracker.ActiveBaby.GT(sdkmath.ZeroInt()), "del1 should have active baby")
-	s.Require().True(del1Tracker.TotalScore.GT(sdkmath.ZeroInt()), "del1 should have a total score")
-	s.Require().Equal(uint64(1), del1Tracker.StartPeriodCumulativeReward, "del1 should start at period 1")
-
 	s.T().Logf("del1 costaker rewards tracker: ActiveSatoshis=%s, ActiveBaby=%s, TotalScore=%s",
 		del1Tracker.ActiveSatoshis.String(), del1Tracker.ActiveBaby.String(), del1Tracker.TotalScore.String())
+
+	// Verify del1 has non-zero active satoshis, baby and score
+	s.Require().True(del1Tracker.TotalScore.GT(sdkmath.ZeroInt()), "del1 should have a total score")
+	s.Require().Equal(uint64(1), del1Tracker.StartPeriodCumulativeReward, "del1 should start at period 1")
+	expectedDel1Sats := sdkmath.NewIntFromUint64(uint64(s.fp1Del1StakingAmt + s.fp2Del1StakingAmt))
+	s.Require().True(del1Tracker.ActiveSatoshis.Equal(expectedDel1Sats),
+		"del1 active satoshis should match expected BTC delegations: expected %s, got %s",
+		expectedDel1Sats.String(), del1Tracker.ActiveSatoshis.String())
+
+	expectedDel1Baby := sdkmath.NewIntFromUint64(uint64(s.del1BabyAmt))
+	s.Require().True(del1Tracker.ActiveBaby.Equal(expectedDel1Baby),
+		"del1 active baby should match expected Baby delegations: expected %s, got %s",
+		expectedDel1Baby.String(), del1Tracker.ActiveBaby.String())
 
 	// Query costaker rewards tracker for del2 (who has both BTC and Baby delegations)
 	del2Tracker, err := n.QueryCostakerRewardsTracker(s.del2Addr)
 	s.NoError(err, "should be able to query costaker rewards tracker for del2")
 	s.Require().NotNil(del2Tracker, "del2 should have a costaker rewards tracker")
 
-	// Verify del2 has non-zero active satoshis and baby
-	s.Require().True(del2Tracker.ActiveSatoshis.GT(sdkmath.ZeroInt()), "del2 should have active satoshis")
-	s.Require().True(del2Tracker.ActiveBaby.GT(sdkmath.ZeroInt()), "del2 should have active baby")
-	s.Require().True(del2Tracker.TotalScore.GT(sdkmath.ZeroInt()), "del2 should have a total score")
-	s.Require().Equal(uint64(1), del2Tracker.StartPeriodCumulativeReward, "del2 should start at period 1")
-
 	s.T().Logf("del2 costaker rewards tracker: ActiveSatoshis=%s, ActiveBaby=%s, TotalScore=%s",
 		del2Tracker.ActiveSatoshis.String(), del2Tracker.ActiveBaby.String(), del2Tracker.TotalScore.String())
 
-	// Verify that the upgrade logic properly calculated expected BTC amounts
-	expectedDel1Sats := sdkmath.NewIntFromUint64(uint64(s.fp1Del1StakingAmt + s.fp2Del1StakingAmt))
-	s.Require().True(del1Tracker.ActiveSatoshis.Equal(expectedDel1Sats),
-		"del1 active satoshis should match expected BTC delegations: expected %s, got %s",
-		expectedDel1Sats.String(), del1Tracker.ActiveSatoshis.String())
+	// Verify del2 values
+	s.Require().True(del2Tracker.TotalScore.GT(sdkmath.ZeroInt()), "del2 should have a total score")
+	s.Require().Equal(uint64(1), del2Tracker.StartPeriodCumulativeReward, "del2 should start at period 1")
 
 	expectedDel2Sats := sdkmath.NewIntFromUint64(uint64(s.fp1Del2StakingAmt))
 	s.Require().True(del2Tracker.ActiveSatoshis.Equal(expectedDel2Sats),
 		"del2 active satoshis should match expected BTC delegations: expected %s, got %s",
 		expectedDel2Sats.String(), del2Tracker.ActiveSatoshis.String())
+
+	expectedDel2Baby := sdkmath.NewIntFromUint64(uint64(s.del2BabyAmt))
+	s.Require().True(del2Tracker.ActiveBaby.Equal(expectedDel2Baby),
+		"del2 active baby should match expected Baby delegations: expected %s, got %s",
+		expectedDel2Baby.String(), del2Tracker.ActiveBaby.String())
 }
 
 func (s *SoftwareUpgradeV3RC4TestSuite) AddFinalityVoteUntilCurrentHeight(n *chain.NodeConfig, fpFinalityVoteContext string) {
