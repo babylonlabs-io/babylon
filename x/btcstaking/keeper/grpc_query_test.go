@@ -8,7 +8,7 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
-
+	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/txscript"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -737,3 +737,64 @@ func FuzzParamsVersions(f *testing.F) {
 		}
 	})
 }
+
+func FuzzMultiStaking_Query_BTCDelegation(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
+		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
+		heightAfterMultiStakingAllowListExpiration := int64(10)
+		h := testutil.NewHelper(t, btclcKeeper, btccKeeper, nil).WithBlockHeight(heightAfterMultiStakingAllowListExpiration)
+
+		covenantSKs, _ := h.GenAndApplyCustomParams(r, 100, 200, 2)
+
+		randomConsumer := h.RegisterAndVerifyConsumer(t, r)
+		_, babylonFpPK, _ := h.CreateFinalityProvider(r)
+		_, consumerFpPK, _, err := h.CreateConsumerFinalityProvider(r, randomConsumer.ConsumerId)
+		h.NoError(err)
+
+		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
+		h.NoError(err)
+		stakingValue := int64(2 * 10e8)
+
+		stakingTxHash, msgBTCDel, btcDel, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
+			r,
+			delSK,
+			[]*btcec.PublicKey{babylonFpPK, consumerFpPK},
+			stakingValue,
+			1000,
+			0,
+			0,
+			false,
+			false,
+			10,
+			30,
+		)
+		h.NoError(err)
+
+		h.CreateCovenantSigs(r, covenantSKs, msgBTCDel, btcDel, 10)
+
+		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: 30}).AnyTimes()
+
+		req := types.QueryBTCDelegationRequest{
+			StakingTxHashHex: stakingTxHash,
+		}
+		resp, err := h.BTCStakingKeeper.BTCDelegation(h.Ctx, &req)
+		h.NoError(err)
+		require.NotNil(t, resp)
+		require.NotNil(t, resp.BtcDelegation)
+
+		require.Len(t, resp.BtcDelegation.FpBtcPkList, 2)
+		babylonBIP340 := bbn.NewBIP340PubKeyFromBTCPK(babylonFpPK)
+		consumerBIP340 := bbn.NewBIP340PubKeyFromBTCPK(consumerFpPK)
+		require.Contains(t, resp.BtcDelegation.FpBtcPkList, *babylonBIP340)
+		require.Contains(t, resp.BtcDelegation.FpBtcPkList, *consumerBIP340)
+		require.Equal(t, btcDel.BtcPk.MarshalHex(), resp.BtcDelegation.BtcPk.MarshalHex())
+		require.Equal(t, btcDel.TotalSat, resp.BtcDelegation.TotalSat)
+	})
+}
+
