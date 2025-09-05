@@ -9,6 +9,7 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
 
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	btcctypes "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
 	btclctypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
@@ -63,6 +64,7 @@ type ZoneConciergeChannelKeeper interface {
 	GetAllOpenZCChannels(ctx context.Context) []channeltypes.IdentifiedChannel
 	GetClientID(ctx context.Context, channel channeltypes.IdentifiedChannel) (string, error)
 	IsChannelUninitialized(ctx context.Context, channel channeltypes.IdentifiedChannel) bool
+	ConsumerHasIBCChannelOpen(ctx context.Context, channelId string) bool
 }
 
 // ClientKeeper defines the expected IBC client keeper
@@ -118,6 +120,11 @@ type BTCStkConsumerKeeper interface {
 	IsConsumerRegistered(ctx context.Context, consumerID string) bool
 	GetAllRegisteredCosmosConsumers(ctx context.Context) []*btcstkconsumertypes.ConsumerRegister
 	IsCosmosConsumer(ctx context.Context, consumerID string) (bool, error)
+	ConsumerActive(ctx context.Context, consumerID string) (bool, error)
+}
+
+type WasmKeeper interface {
+	QuerySmart(ctx sdk.Context, contractAddress sdk.AccAddress, queryMsg []byte) ([]byte, error)
 }
 
 type FinalityKeeper interface {
