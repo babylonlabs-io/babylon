@@ -54,6 +54,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#1589](https://github.com/babylonlabs-io/babylon/pull/1589) Add minimum Babylon commission on `RegisterConsumer`
 - [#1612](https://github.com/babylonlabs-io/babylon/pull/1612) Optimize `x/zoneconcierge` packet broadcast logic trigger only when needed.
 - [#1635](https://github.com/babylonlabs-io/babylon/pull/1635) Remove duplicated ValidateBasic checks.
+- [#1655](https://github.com/babylonlabs-io/babylon/pull/1655) Fix go releaser image not support issue.
+- [#1657](https://github.com/babylonlabs-io/babylon/pull/1657) update to e2ev2 tests for queries for zc
+- [#1668](https://github.com/babylonlabs-io/babylon/pull/1668) Bump dependencies based on dependabot alerts
+
+### State breaking
+
+- [#1585](https://github.com/babylonlabs-io/babylon/pull/1585) Remove allow-lists logic and state in `x/btcstaking` module
+- [#1596](https://github.com/babylonlabs-io/babylon/pull/1596) Add rollups finality contract index in `x/btcstkconsumer`
 
 ### Bug fixes
 
@@ -66,6 +74,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#1579](https://github.com/babylonlabs-io/babylon/pull/1579) New `x/costaking` module.
 - [#1630](https://github.com/babylonlabs-io/babylon/pull/1630) Remove `HeaderCache` redundant test
 - [#1647](https://github.com/babylonlabs-io/babylon/pull/1647) Fix inactive event emitted on slashed finality provider case.
+- [#1630](https://github.com/babylonlabs-io/babylon/pull/1630) Remove `HeaderCache` redundant test
+- [#1647](https://github.com/babylonlabs-io/babylon/pull/1647) Fix inactive event emitted on slashed finality provider case.
+- [#1651](https://github.com/babylonlabs-io/babylon/pull/1651) Store Cosmos BSN slashing evidence.
 
 ## v3.0.0-rc.2
 
