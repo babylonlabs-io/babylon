@@ -33,25 +33,23 @@ func TestHookStakingBeforeDelegationSharesModifiedUpdateCache(t *testing.T) {
 
 	hooks := k.HookStaking()
 
-	// Set the value in cache
 	err := hooks.BeforeDelegationSharesModified(ctx, delAddr, valAddr)
 	require.NoError(t, err)
 
-	// Verify the amount was cached by retrieving and deleting it
-	cachedAmount := k.stkCache.GetAndDeleteStakedAmount(delAddr, valAddr)
+	// Verify the amount was cached by retrieving
+	cachedAmount := k.stkCache.GetStakedAmount(delAddr, valAddr)
 	require.True(t, shares.Equal(cachedAmount))
-
-	// check the value in cache again it should return zero
-	cachedAmount = k.stkCache.GetAndDeleteStakedAmount(delAddr, valAddr)
-	require.True(t, cachedAmount.IsZero())
+	// get again and make sure it is not deleted
+	cachedAmount = k.stkCache.GetStakedAmount(delAddr, valAddr)
+	require.True(t, shares.Equal(cachedAmount))
 
 	mockStkK.EXPECT().GetDelegation(ctx, delAddr, valAddr).Return(stakingtypes.Delegation{}, stakingtypes.ErrNoDelegation).Times(1)
 	// Call BeforeDelegationSharesModified - should not return error even though the get del returned err
 	err = hooks.BeforeDelegationSharesModified(ctx, delAddr, valAddr)
 	require.NoError(t, err)
 
-	cachedAmount = k.stkCache.GetAndDeleteStakedAmount(delAddr, valAddr)
-	require.True(t, cachedAmount.IsZero())
+	cachedAmount = k.stkCache.GetStakedAmount(delAddr, valAddr)
+	require.True(t, shares.Equal(cachedAmount))
 }
 
 func TestHookStakingAfterDelegationModified(t *testing.T) {

@@ -24,7 +24,7 @@ func (h HookStaking) AfterDelegationModified(ctx context.Context, delAddr sdk.Ac
 		return err
 	}
 
-	beforeAmount := h.k.stkCache.GetAndDeleteStakedAmount(delAddr, valAddr)
+	beforeAmount := h.k.stkCache.GetStakedAmount(delAddr, valAddr)
 	afterAmount := del.Shares
 
 	valI, err := h.k.stkK.Validator(ctx, valAddr)

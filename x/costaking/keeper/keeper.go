@@ -109,3 +109,9 @@ func (k Keeper) Logger(goCtx context.Context) log.Logger {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
+
+// EndBlock clears the staking cache at the end of each block
+func (k Keeper) EndBlock(ctx context.Context) error {
+	k.stkCache.Clear()
+	return nil
+}

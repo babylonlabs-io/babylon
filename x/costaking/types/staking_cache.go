@@ -30,9 +30,9 @@ func (sc *StakingCache) SetStakedAmount(delAddr sdk.AccAddress, valAddr sdk.ValA
 	sc.amtByValByDel[delAddrStr][valAddrStr] = amtStaked
 }
 
-// GetAndDeleteStakedAmount gets the value in the cache if it is found and deletes it after.
+// GetStakedAmount gets the value in the cache if it is found.
 // Note: If a value is not found it returns zero dec.
-func (sc *StakingCache) GetAndDeleteStakedAmount(delAddr sdk.AccAddress, valAddr sdk.ValAddress) math.LegacyDec {
+func (sc *StakingCache) GetStakedAmount(delAddr sdk.AccAddress, valAddr sdk.ValAddress) math.LegacyDec {
 	delAddrStr := delAddr.String()
 	valAddrStr := valAddr.String()
 
@@ -45,13 +45,10 @@ func (sc *StakingCache) GetAndDeleteStakedAmount(delAddr sdk.AccAddress, valAddr
 		return math.LegacyZeroDec()
 	}
 
-	// Delete the entry after getting the value
-	delete(sc.amtByValByDel[delAddrStr], valAddrStr)
-
-	// Clean up empty delegator map
-	if len(sc.amtByValByDel[delAddrStr]) == 0 {
-		delete(sc.amtByValByDel, delAddrStr)
-	}
-
 	return amt
+}
+
+// Clear removes all entries from the cache
+func (sc *StakingCache) Clear() {
+	sc.amtByValByDel = make(map[string]map[string]math.LegacyDec)
 }
