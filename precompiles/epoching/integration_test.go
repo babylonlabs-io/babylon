@@ -79,6 +79,8 @@ var _ = Describe("Calling epoching precompile directly", func() {
 	var (
 		blsKey    epoching.BlsKey
 		consPkB64 string
+		valHex    common.Address
+		valBech32 string
 	)
 
 	BeforeEach(func() {
@@ -94,6 +96,38 @@ var _ = Describe("Calling epoching precompile directly", func() {
 			BlsSig:     valKeys.PoP.BlsSig.Bytes(),
 		}
 		consPkB64 = base64.StdEncoding.EncodeToString(valKeys.ValPubkey.Bytes())
+
+		// get validator
+		vals, err := s.App.StakingKeeper.GetAllValidators(s.Ctx)
+		Expect(err).To(BeNil())
+		Expect(vals).NotTo(BeNil())
+		valBech32 = vals[0].OperatorAddress
+		valAddr, err := sdk.ValAddressFromBech32(valBech32)
+		Expect(err).To(BeNil())
+		valHex = common.BytesToAddress(valAddr.Bytes())
+
+		// delegate 1 bbn from pre-defined delegator
+		amount := big.NewInt(1_000_000) // 1 bbn
+		resp, err := s.CallContract(
+			s.delegatorPriv,
+			s.addr,
+			s.abi,
+			epoching.WrappedDelegateMethod,
+			common.Address(s.delegatorPriv.PubKey().Address().Bytes()),
+			valHex,
+			amount,
+		)
+		Expect(err).To(BeNil(), "error while calling the contract")
+		Expect(resp.VmError).To(Equal(""))
+
+		s.AdvanceToNextEpoch()
+
+		res, err := s.QueryClientStaking.Delegation(s.Ctx, &stakingtypes.QueryDelegationRequest{
+			DelegatorAddr: sdk.AccAddress(s.delegatorPriv.PubKey().Address().Bytes()).String(),
+			ValidatorAddr: valBech32,
+		})
+		Expect(err).To(BeNil())
+		Expect(res.DelegationResponse).NotTo(BeNil())
 	})
 
 	Describe("to create validator", func() {
@@ -131,7 +165,6 @@ var _ = Describe("Calling epoching precompile directly", func() {
 				Expect(err).To(BeNil())
 				Expect(valAddr.String()).To(Equal(v.OperatorAddress))
 				Expect(v.Tokens.IsPositive()).To(BeTrue())
-				GinkgoT().Logf("validator: %v\n", v)
 			})
 		})
 
@@ -229,34 +262,9 @@ var _ = Describe("Calling epoching precompile directly", func() {
 
 	Describe("to delegate", func() {
 		var prevDelegation stakingtypes.Delegation
-		var valHex common.Address
-		var valBech32 string
 
 		BeforeEach(func() {
-			// create prevDelegation to compare with the delegator's new share
-			vals, err := s.App.StakingKeeper.GetAllValidators(s.Ctx)
-			Expect(err).To(BeNil())
-			Expect(vals).NotTo(BeNil())
-			valBech32 = vals[0].OperatorAddress
-			valAddr, err := sdk.ValAddressFromBech32(valBech32)
-			Expect(err).To(BeNil())
-			valHex = common.BytesToAddress(valAddr.Bytes())
-
-			amount := big.NewInt(1_000_000) // 1 bbn
-			resp, err := s.CallContract(
-				s.delegatorPriv,
-				s.addr,
-				s.abi,
-				epoching.WrappedDelegateMethod,
-				common.Address(s.delegatorPriv.PubKey().Address().Bytes()),
-				valHex,
-				amount,
-			)
-			Expect(err).To(BeNil(), "error while calling the contract")
-			Expect(resp.VmError).To(Equal(""))
-
-			s.AdvanceToNextEpoch()
-
+			// prevDelegation is the delegation that is available prior to the test
 			res, err := s.QueryClientStaking.Delegation(s.Ctx, &stakingtypes.QueryDelegationRequest{
 				DelegatorAddr: sdk.AccAddress(s.delegatorPriv.PubKey().Address().Bytes()).String(),
 				ValidatorAddr: valBech32,
@@ -340,6 +348,174 @@ var _ = Describe("Calling epoching precompile directly", func() {
 					big.NewInt(1_000_000),
 				)
 				Expect(err).NotTo(BeNil(), "expected error while calling the contract")
+			})
+		})
+	})
+
+	Describe("to undelegate", func() {
+		Context("as the token owner", func() {
+			It("should undelegate", func() {
+				delAddr := common.Address(s.delegatorPriv.PubKey().Address().Bytes())
+				valAddr := sdk.ValAddress(valHex.Bytes())
+
+				res, err := s.QueryClientStaking.ValidatorUnbondingDelegations(s.Ctx, &stakingtypes.QueryValidatorUnbondingDelegationsRequest{ValidatorAddr: valBech32})
+				Expect(err).To(BeNil())
+				Expect(res.UnbondingResponses).To(BeNil())
+				Expect(res.UnbondingResponses).To(HaveLen(0), "expected no unbonding delegations before test")
+
+				_, err = s.CallContract(
+					s.delegatorPriv,
+					s.addr,
+					s.abi,
+					epoching.WrappedUndelegateMethod,
+					delAddr,
+					valHex,
+					big.NewInt(1_000_000),
+				)
+				Expect(err).To(BeNil(), "error while calling the contract")
+
+				s.AdvanceToNextEpoch()
+
+				delUbdRes, err := s.QueryClientStaking.ValidatorUnbondingDelegations(s.Ctx, &stakingtypes.QueryValidatorUnbondingDelegationsRequest{ValidatorAddr: valBech32})
+				Expect(err).To(BeNil())
+				Expect(delUbdRes.UnbondingResponses).To(HaveLen(1), "expected one delegation")
+				Expect(delUbdRes.UnbondingResponses[0].ValidatorAddress).To(Equal(valAddr.String()), "expected validator address to be %s", valAddr)
+			})
+		})
+	})
+
+	Describe("to redelegate", func() {
+		var (
+			defaultDescription = staking.Description{
+				Moniker:         "new node",
+				Identity:        "",
+				Website:         "",
+				SecurityContact: "",
+				Details:         "",
+			}
+			defaultCommission = staking.Commission{
+				Rate:          big.NewInt(100000000000000000),
+				MaxRate:       big.NewInt(100000000000000000),
+				MaxChangeRate: big.NewInt(100000000000000000),
+			}
+			defaultMinSelfDelegation = big.NewInt(1)
+			defaultValue             = big.NewInt(1_000_000) // 1bbn
+		)
+
+		Context("as the token owner", func() {
+			It("should redelegate", func() {
+				delAddr := common.Address(s.delegatorPriv.PubKey().Address().Bytes())
+
+				// create a new validator for a destination of the redelegation
+				newValHex := common.Address(s.validatorPriv.PubKey().Address().Bytes())
+				resp, err := s.CallContract(
+					s.validatorPriv, s.addr, s.abi, epoching.WrappedCreateValidatorMethod,
+					blsKey, defaultDescription, defaultCommission, defaultMinSelfDelegation, newValHex, consPkB64, defaultValue,
+				)
+				Expect(err).To(BeNil(), "error while calling the contract")
+				Expect(resp.VmError).To(Equal(""))
+
+				s.AdvanceToNextEpoch()
+
+				newValAddr := sdk.ValAddress(newValHex.Bytes())
+				v, err := s.App.StakingKeeper.GetValidator(s.Ctx, newValAddr)
+				Expect(err).To(BeNil())
+				Expect(newValAddr.String()).To(Equal(v.OperatorAddress))
+				Expect(v.Tokens.IsPositive()).To(BeTrue())
+
+				// redelegate from valAddr -> newValAddr
+				resp, err = s.CallContract(
+					s.delegatorPriv, s.addr, s.abi, epoching.WrappedRedelegateMethod,
+					delAddr, valHex, newValHex, big.NewInt(1_000_000),
+				)
+				Expect(err).To(BeNil(), "error while calling the contract")
+				Expect(resp.VmError).To(Equal(""))
+
+				s.AdvanceToNextEpoch()
+
+				res, err := s.QueryClientStaking.Redelegations(s.Ctx, &stakingtypes.QueryRedelegationsRequest{
+					DelegatorAddr:    sdk.AccAddress(delAddr.Bytes()).String(),
+					SrcValidatorAddr: valBech32,
+					DstValidatorAddr: sdk.ValAddress(newValAddr.Bytes()).String(),
+				})
+				Expect(err).To(BeNil())
+				Expect(res.RedelegationResponses).To(HaveLen(1), "expected one redelegation to be found")
+				Expect(res.RedelegationResponses[0].Redelegation.DelegatorAddress).To(Equal(sdk.AccAddress(delAddr.Bytes()).String()), "expected delegator address to be %s", sdk.AccAddress(delAddr.Bytes()).String())
+				Expect(res.RedelegationResponses[0].Redelegation.ValidatorSrcAddress).To(Equal(valBech32), "expected source validator address to be %s", valBech32)
+				Expect(res.RedelegationResponses[0].Redelegation.ValidatorDstAddress).To(Equal(sdk.ValAddress(newValAddr.Bytes()).String()), "expected destination validator address to be %s", sdk.ValAddress(newValAddr.Bytes()).String())
+			})
+		})
+	})
+
+	Describe("to cancel an unbonding delegation", func() {
+		var creationHeight int64
+
+		BeforeEach(func() {
+			// set up an unbonding delegation
+			delAddr := common.Address(s.delegatorPriv.PubKey().Address().Bytes())
+			valAddr := sdk.ValAddress(valHex.Bytes())
+			_, err := s.CallContract(
+				s.delegatorPriv,
+				s.addr,
+				s.abi,
+				epoching.WrappedUndelegateMethod,
+				delAddr,
+				valHex,
+				big.NewInt(1_000_000),
+			)
+			Expect(err).To(BeNil(), "error while calling the contract")
+
+			s.AdvanceToNextEpoch()
+			// undelegate is executed at current block - 1 since every message that is queued
+			// is executed at the last block of the current epoch
+			creationHeight = s.Ctx.BlockHeight() - 1
+
+			delUbdRes, err := s.QueryClientStaking.ValidatorUnbondingDelegations(s.Ctx, &stakingtypes.QueryValidatorUnbondingDelegationsRequest{ValidatorAddr: valBech32})
+			Expect(err).To(BeNil())
+			Expect(delUbdRes.UnbondingResponses).To(HaveLen(1), "expected one delegation")
+			Expect(delUbdRes.UnbondingResponses[0].DelegatorAddress).To(Equal(sdk.AccAddress(delAddr.Bytes()).String()), "expected delegator address to be %s", sdk.AccAddress(delAddr.Bytes()).String())
+			Expect(delUbdRes.UnbondingResponses[0].ValidatorAddress).To(Equal(valAddr.String()), "expected validator address to be %s", valAddr)
+			Expect(delUbdRes.UnbondingResponses[0].Entries[0].CreationHeight).To(Equal(creationHeight), "expected different creation height")
+			Expect(delUbdRes.UnbondingResponses[0].Entries).To(HaveLen(1), "expected one unbonding delegation entry to be found")
+			Expect(delUbdRes.UnbondingResponses[0].Entries[0].Balance).To(Equal(math.NewInt(1_000_000)), "expected different balance")
+		})
+
+		Context("as the token owner", func() {
+			It("should cancel the unbonding delegation", func() {
+				delAddr := common.Address(s.delegatorPriv.PubKey().Address().Bytes())
+
+				valDelRes, err := s.QueryClientStaking.ValidatorDelegations(s.Ctx, &stakingtypes.QueryValidatorDelegationsRequest{
+					ValidatorAddr: valBech32,
+				})
+				Expect(err).To(BeNil())
+				Expect(valDelRes.DelegationResponses).To(HaveLen(1), "only one self delegation should be found")
+
+				resp, err := s.CallContract(
+					s.delegatorPriv,
+					s.addr,
+					s.abi,
+					epoching.WrappedCancelUnbondingDelegationMethod,
+					delAddr,
+					valHex,
+					big.NewInt(1_000_000),
+					big.NewInt(creationHeight),
+				)
+				Expect(err).To(BeNil(), "error while calling the contract")
+				Expect(resp.VmError).To(Equal(""))
+
+				s.AdvanceToNextEpoch()
+
+				res, err := s.QueryClientStaking.DelegatorUnbondingDelegations(s.Ctx, &stakingtypes.QueryDelegatorUnbondingDelegationsRequest{
+					DelegatorAddr: sdk.AccAddress(delAddr.Bytes()).String(),
+				})
+				Expect(err).To(BeNil())
+				Expect(res.UnbondingResponses).To(HaveLen(0), "expected unbonding delegation to be canceled")
+
+				valDelRes, err = s.QueryClientStaking.ValidatorDelegations(s.Ctx, &stakingtypes.QueryValidatorDelegationsRequest{
+					ValidatorAddr: valBech32,
+				})
+				Expect(err).To(BeNil())
+				Expect(valDelRes.DelegationResponses).To(HaveLen(2), "expect two delegation to be found")
 			})
 		})
 	})
