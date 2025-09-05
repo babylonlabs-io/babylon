@@ -384,6 +384,29 @@ jobs:
       - name: Run e2e TestSoftwareUpgradeV3TestSuite
         run: |
           make test-e2e-cache-upgrade-v3
+
+  e2e-run-upgrade-v3rc4:
+    needs: [e2e-docker-build-babylon]
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Download babylon artifact (v3)
+        uses: actions/download-artifact@v4
+        with:
+          name: babylond-${{ github.sha }}
+          path: /tmp
+      - name: Docker load babylond (v3)
+        run: |
+          docker load < /tmp/docker-babylond.tar.gz
+      - name: Verify images
+        run: |
+          echo "Available images:"
+          docker images babylonlabs-io/babylond
+      - name: Cache Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.23
       - name: Run e2e TestSoftwareUpgradeV3RC4TestSuite
         run: |
           make test-e2e-cache-upgrade-v3rc4   
