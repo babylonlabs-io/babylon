@@ -479,7 +479,10 @@ func (suite *BaseTestSuite) CommitAfter(txs [][]byte, t time.Duration) *abci.Res
 		Time:            header.Time,
 		ProposerAddress: suite.Ctx.BlockHeader().ProposerAddress,
 	})
-	suite.App.Commit()
+	_, err := suite.App.Commit()
+	if err != nil {
+		panic(err)
+	}
 
 	header.Height++
 	suite.Ctx = suite.App.BaseApp.NewUncachedContext(false, header)
