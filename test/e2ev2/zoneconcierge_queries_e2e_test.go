@@ -7,8 +7,8 @@ import (
 
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 
-	"github.com/babylonlabs-io/babylon/v4/test/e2ev2/tmanager"
-	zoneconciergetype "github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/types"
+	"github.com/babylonlabs-io/babylon/v3/test/e2ev2/tmanager"
+	zoneconciergetype "github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
 	"github.com/stretchr/testify/require"
 )
 
