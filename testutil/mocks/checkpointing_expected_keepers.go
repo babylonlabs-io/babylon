@@ -40,11 +40,12 @@ func (m *MockEpochingKeeper) EXPECT() *MockEpochingKeeperMockRecorder {
 }
 
 // CheckMsgCreateValidator mocks base method.
-func (m *MockEpochingKeeper) CheckMsgCreateValidator(ctx context.Context, msg *types2.MsgCreateValidator) error {
+func (m *MockEpochingKeeper) CheckMsgCreateValidator(ctx context.Context, msg *types2.MsgCreateValidator) (uint64, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CheckMsgCreateValidator", ctx, msg)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(uint64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // CheckMsgCreateValidator indicates an expected call of CheckMsgCreateValidator.
@@ -165,7 +166,7 @@ func (mr *MockEpochingKeeperMockRecorder) GetValidatorSet(ctx, epochNumer interf
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetValidatorSet", reflect.TypeOf((*MockEpochingKeeper)(nil).GetValidatorSet), ctx, epochNumer)
 }
 
-// LockFunds mocks base method.
+// LockFundsForDelegateMsgs mocks base method.
 func (m *MockEpochingKeeper) LockFundsForDelegateMsgs(ctx types1.Context, msg *types0.QueuedMessage) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "LockFundsForDelegateMsgs", ctx, msg)
@@ -173,7 +174,7 @@ func (m *MockEpochingKeeper) LockFundsForDelegateMsgs(ctx types1.Context, msg *t
 	return ret0
 }
 
-// LockFunds indicates an expected call of LockFunds.
+// LockFundsForDelegateMsgs indicates an expected call of LockFundsForDelegateMsgs.
 func (mr *MockEpochingKeeperMockRecorder) LockFundsForDelegateMsgs(ctx, msg interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LockFundsForDelegateMsgs", reflect.TypeOf((*MockEpochingKeeper)(nil).LockFundsForDelegateMsgs), ctx, msg)

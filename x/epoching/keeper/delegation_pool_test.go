@@ -621,7 +621,7 @@ func TestLockFundsError_InsufficientBalance(t *testing.T) {
 	// Test LockFundsForDelegateMsgs - should fail due to insufficient balance
 	err = helper.App.EpochingKeeper.LockFundsForDelegateMsgs(ctx, queuedMsg)
 	require.Error(t, err, "LockFunds should fail when user has insufficient balance")
-	require.Contains(t, err.Error(), "failed to lock delegate funds", "Error should mention fund locking failure")
+	require.Contains(t, err.Error(), "failed to lock funds for msg", "Error should mention fund locking failure")
 }
 
 func TestLockUnlockFunds_InvalidAddress(t *testing.T) {

@@ -41,9 +41,7 @@ func NewKeeper(
 	stk types.StakingKeeper,
 	stkMsgServer stktypes.MsgServer,
 	authority string,
-	ak types.AccountKeeper,
 ) Keeper {
-	ValidateDelegatePoolAccount(ak)
 	return Keeper{
 		cdc:          cdc,
 		storeService: storeService,

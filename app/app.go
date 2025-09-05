@@ -131,6 +131,7 @@ import (
 	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
 	"github.com/babylonlabs-io/babylon/v4/x/checkpointing/vote_extensions"
 	"github.com/babylonlabs-io/babylon/v4/x/epoching"
+	epochingkeeper "github.com/babylonlabs-io/babylon/v4/x/epoching/keeper"
 	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 	"github.com/babylonlabs-io/babylon/v4/x/finality"
 	finalitytypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
@@ -574,7 +575,7 @@ func NewBabylonApp(
 	if err := evmHandlerOpts.Validate(); err != nil {
 		panic(err)
 	}
-
+	epochingkeeper.ValidateDelegatePoolAccount(app.AccountKeeper)
 	// initialize AnteHandler for the app
 	anteHandler := ante.NewAnteHandler(
 		appOpts,

@@ -11,12 +11,10 @@ import (
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/codec/address"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
 	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
@@ -42,19 +40,6 @@ func EpochingKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
 	cryptocodec.RegisterInterfaces(registry)
 	cdc := codec.NewProtoCodec(registry)
 
-	// Create AccountKeeper
-	authKeeper := authkeeper.NewAccountKeeper(
-		cdc,
-		runtime.NewKVStoreService(authStoreKey),
-		authtypes.ProtoBaseAccount,
-		map[string][]string{
-			types.DelegatePoolModuleName: {authtypes.Minter, authtypes.Burner},
-		},
-		address.NewBech32Codec(sdk.Bech32MainPrefix),
-		sdk.Bech32MainPrefix,
-		appparams.AccGov.String(),
-	)
-
 	k := keeper.NewKeeper(
 		cdc,
 		runtime.NewKVStoreService(storeKey),
@@ -63,7 +48,6 @@ func EpochingKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
 		nil,
 		nil,
 		appparams.AccGov.String(),
-		authKeeper,
 	)
 
 	// TODO: add msgServiceRouter?
