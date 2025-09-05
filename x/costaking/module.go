@@ -16,6 +16,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
+	"github.com/babylonlabs-io/babylon/v4/x/costaking/client/cli"
 	"github.com/babylonlabs-io/babylon/v4/x/costaking/keeper"
 	"github.com/babylonlabs-io/babylon/v4/x/costaking/types"
 )
@@ -109,7 +110,7 @@ func (a AppModuleBasic) GetTxCmd() *cobra.Command {
 
 // GetQueryCmd returns the root query command for the module. The subcommands of this root command are used by end-users to generate new queries to the subset of the state defined by the module
 func (AppModuleBasic) GetQueryCmd() *cobra.Command {
-	return nil
+	return cli.GetQueryCmd()
 }
 
 // ----------------------------------------------------------------------------
