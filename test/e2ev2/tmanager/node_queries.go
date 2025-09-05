@@ -6,18 +6,12 @@ import (
 	"net"
 	"net/url"
 
-<<<<<<< HEAD
 	"github.com/babylonlabs-io/babylon/v3/test/e2e/util"
+	bbn "github.com/babylonlabs-io/babylon/v3/types"
+	btclighttypes "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
 	bsctypes "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"
 	ictvtypes "github.com/babylonlabs-io/babylon/v3/x/incentive/types"
-=======
-	"github.com/babylonlabs-io/babylon/v4/test/e2e/util"
-	bbn "github.com/babylonlabs-io/babylon/v4/types"
-	btclighttypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
-	bsctypes "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
-	ictvtypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
-	zoneconciergetype "github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/types"
->>>>>>> c990164c (chore(zc): update to e2ev2 tests for queries (#1657))
+	zoneconciergetype "github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdktx "github.com/cosmos/cosmos-sdk/types/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"

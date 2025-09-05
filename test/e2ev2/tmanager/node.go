@@ -3,8 +3,8 @@ package tmanager
 import (
 	"context"
 	"fmt"
-	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
-	blc "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
+	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
+	blc "github.com/babylonlabs-io/babylon/v3/x/btclightclient/types"
 	"io"
 	"math/rand"
 	"net/http"
