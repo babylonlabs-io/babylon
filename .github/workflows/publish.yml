@@ -19,7 +19,7 @@ permissions:
   contents: read
 
 jobs:
-  lint_test: 
+  lint_test:
     uses: babylonlabs-io/.github/.github/workflows/reusable_go_lint_test.yml@v0.7.0
     if: ${{ !(github.event_name == 'workflow_dispatch' && inputs['skip-lint-test'] == true) }}
     secrets: inherit
@@ -51,13 +51,15 @@ jobs:
 
   docker_testnet_pipeline:
     if: ${{ always() && (
-          (github.event_name == 'workflow_dispatch' && inputs['skip-lint-test'] == true) ||
-          needs.lint_test.result == 'success'
-        )}}
+            startsWith(github.ref, 'refs/tags/') &&
+            (
+              (github.event_name == 'workflow_dispatch' && inputs['skip-lint-test'] == true) ||
+              needs.lint_test.result == 'success'
+            )
+          ) }}
     uses: babylonlabs-io/.github/.github/workflows/reusable_docker_pipeline.yml@v0.13.4
     needs: ["lint_test"]
     secrets: inherit
-    if: startsWith(github.ref, 'refs/tags/')  # Run only on tag push
     permissions:
       # required for all workflows
       security-events: write
