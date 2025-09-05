@@ -33,7 +33,6 @@ type finalizedInfo struct {
 func (k Keeper) getFinalizedInfo(
 	ctx context.Context,
 	epochNum uint64,
-	headersToBroadcast []*btclctypes.BTCHeaderInfo,
 ) (*finalizedInfo, error) {
 	finalizedEpochInfo, err := k.epochingKeeper.GetHistoricalEpoch(ctx, epochNum)
 	if err != nil {
@@ -74,7 +73,6 @@ func (k Keeper) getFinalizedInfo(
 		BTCSubmissionKey:    btcSubmissionKey,
 		ProofEpochSealed:    proofEpochSealed,
 		ProofEpochSubmitted: proofEpochSubmitted,
-		BTCHeaders:          headersToBroadcast,
 	}
 
 	return finalizedInfo, nil
@@ -147,7 +145,7 @@ func (k Keeper) createBTCTimestamp(
 func (k Keeper) getDeepEnoughBTCHeaders(ctx context.Context) []*btclctypes.BTCHeaderInfo {
 	kValue := k.btccKeeper.GetParams(ctx).BtcConfirmationDepth
 	startHeight := k.btclcKeeper.GetTipInfo(ctx).Height - kValue
-	return k.btclcKeeper.GetMainChainFrom(ctx, startHeight)
+	return k.btclcKeeper.GetMainChainFromWithCache(ctx, startHeight)
 }
 
 // GetHeadersToBroadcast retrieves headers using the fallback method of k+1.
@@ -188,7 +186,7 @@ func (k Keeper) GetHeadersToBroadcast(ctx context.Context, consumerID string, he
 		return k.getDeepEnoughBTCHeaders(ctx)
 	}
 
-	headersToSend := k.btclcKeeper.GetMainChainFrom(ctx, initHeader.Height+1)
+	headersToSend := k.btclcKeeper.GetMainChainFromWithCache(ctx, initHeader.Height+1)
 
 	return headersToSend
 }
@@ -232,22 +230,24 @@ func (k Keeper) BroadcastBTCTimestamps(
 	// Create header cache to avoid duplicate DB queries across consumers
 	headerCache := types.NewHeaderCache()
 
+	// Get all metadata shared across BTC timestamps in the same epoch,
+	// BTCHeaders would be set below iteration per consumer
+	finalizedInfo, err := k.getFinalizedInfo(ctx, epochNum)
+	if err != nil {
+		k.Logger(sdkCtx).Error("failed to get finalized info for BTC timestamp broadcast",
+			"epoch", epochNum,
+			"error", err.Error(),
+		)
+		return err
+	}
+
 	// for each registered consumer, find its channels and send BTC timestamp
 	for _, consumerID := range consumerIDs {
 		// Find channels for this consumer using O(1) map lookup
 		channel := consumerChannelMap[consumerID]
 
 		headersToBroadcast := k.GetHeadersToBroadcast(ctx, consumerID, headerCache)
-
-		// get all metadata shared across BTC timestamps in the same epoch
-		finalizedInfo, err := k.getFinalizedInfo(ctx, epochNum, headersToBroadcast)
-		if err != nil {
-			k.Logger(sdkCtx).Error("failed to get finalized info for BTC timestamp broadcast",
-				"epoch", epochNum,
-				"error", err.Error(),
-			)
-			return err
-		}
+		finalizedInfo.BTCHeaders = headersToBroadcast
 
 		// Send to consumer's channel
 		btcTimestamp, err := k.createBTCTimestamp(ctx, consumerID, channel, finalizedInfo)

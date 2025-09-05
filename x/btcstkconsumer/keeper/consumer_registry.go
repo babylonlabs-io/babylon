@@ -91,3 +91,13 @@ func (k Keeper) GetConsumerID(ctx sdk.Context, portID, channelID string) (consum
 func (k Keeper) ConsumerHasIBCChannelOpen(ctx context.Context, consumerID, channelID string) bool {
 	return k.channelKeeper.ConsumerHasIBCChannelOpen(ctx, consumerID, channelID)
 }
+
+// IsFinalityContractRegistered checks if a finality contract address is already registered
+func (k Keeper) IsFinalityContractRegistered(ctx context.Context, contractAddr string) (bool, error) {
+	return k.finalityContractIndex.Has(ctx, contractAddr)
+}
+
+// RegisterFinalityContract adds a finality contract address to the index
+func (k Keeper) RegisterFinalityContract(ctx context.Context, contractAddr string) error {
+	return k.finalityContractIndex.Set(ctx, contractAddr)
+}

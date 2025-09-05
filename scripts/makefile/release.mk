@@ -15,7 +15,7 @@ release-help:
 	@echo ""
 
 # The below is adapted from https://github.com/osmosis-labs/osmosis/blob/main/Makefile
-GO_VERSION := $(shell grep -E '^go [0-9]+\.[0-9]+' go.mod | awk '{print $$2}')
+GO_VERSION := $(shell grep -E '^go [0-9]+\.[0-9]+' go.mod | awk '{split($2, v, "."); print v[1]"."v[2]}')
 GORELEASER_IMAGE := ghcr.io/goreleaser/goreleaser-cross:v$(GO_VERSION)
 COSMWASM_VERSION := $(shell go list -m github.com/CosmWasm/wasmvm/v2 | sed 's/.* //')
 

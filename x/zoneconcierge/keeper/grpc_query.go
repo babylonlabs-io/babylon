@@ -107,3 +107,83 @@ func (k Keeper) FinalizedBSNsInfo(c context.Context, req *types.QueryFinalizedBS
 
 	return resp, nil
 }
+
+func (k Keeper) LatestEpochHeader(goCtx context.Context, req *types.QueryLatestEpochHeaderRequest) (*types.QueryLatestEpochHeaderResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+
+	if req.ConsumerId == "" {
+		return nil, status.Error(codes.InvalidArgument, "consumer id cannot be empty")
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	h := k.GetLatestEpochHeader(ctx, req.ConsumerId)
+	if h == nil {
+		return nil, status.Error(codes.NotFound, "header not found")
+	}
+
+	resp := &types.QueryLatestEpochHeaderResponse{
+		Header: &types.IndexedHeaderResponse{
+			ConsumerId:          h.ConsumerId,
+			Hash:                h.Hash,
+			Height:              h.BabylonHeaderHeight,
+			Time:                h.Time,
+			BabylonHeaderHash:   h.BabylonTxHash,
+			BabylonHeaderHeight: h.BabylonEpoch,
+			BabylonEpoch:        h.BabylonHeaderHeight,
+			BabylonTxHash:       h.BabylonTxHash,
+		},
+	}
+
+	return resp, nil
+}
+
+func (k Keeper) BSNLastSentSegment(goCtx context.Context,
+	req *types.QueryBSNLastSentSegmentRequest) (*types.QueryBSNLastSentSegmentResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+
+	if req.ConsumerId == "" {
+		return nil, status.Error(codes.InvalidArgument, "consumer id cannot be empty")
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	s := k.GetBSNLastSentSegment(ctx, req.ConsumerId)
+	if s == nil {
+		return nil, status.Error(codes.NotFound, "BSN last sent segment not found")
+	}
+	resp := &types.QueryBSNLastSentSegmentResponse{
+		Segment: &types.BTCChainSegmentResponse{
+			BtcHeaders: s.BtcHeaders,
+		},
+	}
+	return resp, nil
+}
+
+func (k Keeper) GetSealedEpochProof(goCtx context.Context,
+	req *types.QueryGetSealedEpochProofRequest) (*types.
+QueryGetSealedEpochProofResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+	if req.EpochNum == 0 {
+		return nil, status.Error(codes.InvalidArgument,
+			"epoch number cannot be 0")
+	}
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	se := k.getSealedEpochProof(ctx, req.EpochNum)
+	if se == nil {
+		return nil, status.Error(codes.NotFound, "sealed epoch proof not found")
+	}
+	resp := &types.QueryGetSealedEpochProofResponse{
+		Epoch: &types.ProofEpochSealedResponse{
+			ValidatorSet:     se.ValidatorSet,
+			ProofEpochValSet: se.ProofEpochValSet,
+			ProofEpochInfo:   se.ProofEpochInfo,
+		},
+	}
+	return resp, nil
+}
