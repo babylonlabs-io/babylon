@@ -384,6 +384,9 @@ jobs:
       - name: Run e2e TestSoftwareUpgradeV3TestSuite
         run: |
           make test-e2e-cache-upgrade-v3
+      - name: Run e2e TestSoftwareUpgradeV3RC4TestSuite
+        run: |
+          make test-e2e-cache-upgrade-v3rc4   
 
 #  e2e-run-finality-contract:
 #    needs: [e2e-docker-build-babylon]

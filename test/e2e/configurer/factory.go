@@ -176,12 +176,19 @@ func NewBabylonConfigurer(t *testing.T, isDebugLogEnabled bool) (Configurer, err
 
 // NewSoftwareUpgradeConfigurer returns a new Configurer for Software Upgrade testing
 func NewSoftwareUpgradeConfigurer(t *testing.T, isDebugLogEnabled bool, upgradePath string, preUpgradeFunc PreUpgradeFunc) (*UpgradeConfigurer, error) {
+	return NewSoftwareUpgradeConfigurerWithCurrentTag(t, isDebugLogEnabled, upgradePath, preUpgradeFunc, "")
+}
+
+// NewSoftwareUpgradeConfigurer returns a new Configurer for Software Upgrade testing with the specified current tag
+func NewSoftwareUpgradeConfigurerWithCurrentTag(t *testing.T, isDebugLogEnabled bool, upgradePath string, preUpgradeFunc PreUpgradeFunc, currentTag string) (*UpgradeConfigurer, error) {
 	identifier := identifierName(t)
 	containerManager, err := containers.NewManager(identifier, isDebugLogEnabled, false, true)
 	if err != nil {
 		return nil, err
 	}
-
+	if currentTag != "" {
+		containerManager.WithCurrentTag(currentTag)
+	}
 	return NewUpgradeConfigurer(t,
 		[]*chain.Config{
 			// we only need 1 chain for testing BTC staking

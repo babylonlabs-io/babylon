@@ -28,12 +28,23 @@ import (
 // UpgradeName defines the on-chain upgrade name for the Babylon v3rc4 upgrade
 const UpgradeName = "v3rc4"
 
+// For the upgrade from v3rc3 to v3rc4 e2e test we need to include the evm
+// related stores because currently this branch contains them
+// TODO remove evm related stores if NOT required
+var evmStores = []string{
+	"evm",
+	"feemarket",
+	"erc20",
+	"precisebank",
+}
+
 // Upgrade for version v3rc4
 var Upgrade = upgrades.Upgrade{
 	UpgradeName:          UpgradeName,
 	CreateUpgradeHandler: CreateUpgradeHandler,
 	StoreUpgrades: store.StoreUpgrades{
-		Added:   []string{costktypes.StoreKey},
+		// TODO remove evm related stores if NOT required
+		Added:   append(evmStores, costktypes.StoreKey), //nolint:gocritic
 		Deleted: []string{},
 	},
 }
