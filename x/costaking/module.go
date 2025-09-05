@@ -133,6 +133,7 @@ func NewAppModule(
 // RegisterServices implements appmodule.HasServices.
 func (am AppModule) RegisterServices(cfg grpc.ServiceRegistrar) error {
 	types.RegisterMsgServer(cfg, keeper.NewMsgServerImpl(am.k))
+	types.RegisterQueryServer(cfg, am.k)
 	return nil
 }
 

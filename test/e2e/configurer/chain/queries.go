@@ -25,12 +25,14 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	dstrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	icacontrollertypes "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/controller/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/util"
 	blc "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
 	ct "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
+	costaking "github.com/babylonlabs-io/babylon/v4/x/costaking/types"
 	etypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 	minttypes "github.com/babylonlabs-io/babylon/v4/x/mint/types"
 	mtypes "github.com/babylonlabs-io/babylon/v4/x/monitor/types"
@@ -635,4 +637,73 @@ func (n *NodeConfig) QueryMintedAmountFromEvents(blockHeight int64) (sdk.Coins, 
 
 	// No mint event found, return empty coins
 	return sdk.NewCoins(), nil
+}
+
+// QueryCostakerRewardsTracker queries the costaker rewards tracker for a given address
+func (n *NodeConfig) QueryCostakerRewardsTracker(costakerAddress string) (*costaking.QueryCostakerRewardsTrackerResponse, error) {
+	path := fmt.Sprintf("babylon/costaking/v1/costakers/%s/rewards_tracker", costakerAddress)
+	bz, err := n.QueryGRPCGateway(path, url.Values{})
+	if err != nil {
+		return nil, err
+	}
+
+	var resp costaking.QueryCostakerRewardsTrackerResponse
+	if err := util.Cdc.UnmarshalJSON(bz, &resp); err != nil {
+		return nil, err
+	}
+
+	return &resp, nil
+}
+
+// QueryValidators returns all validators
+func (n *NodeConfig) QueryValidators() ([]stakingtypes.Validator, error) {
+	path := "cosmos/staking/v1beta1/validators"
+	bz, err := n.QueryGRPCGateway(path, url.Values{})
+	if err != nil {
+		return nil, err
+	}
+
+	var resp stakingtypes.QueryValidatorsResponse
+	if err := util.Cdc.UnmarshalJSON(bz, &resp); err != nil {
+		return nil, err
+	}
+
+	return resp.Validators, nil
+}
+
+// QueryDelegatorDelegations returns delegator delegations for a given address
+func (n *NodeConfig) QueryDelegatorDelegations(delegatorAddr string) ([]stakingtypes.DelegationResponse, error) {
+	path := fmt.Sprintf("cosmos/staking/v1beta1/delegations/%s", delegatorAddr)
+	bz, err := n.QueryGRPCGateway(path, url.Values{})
+	if err != nil {
+		return nil, err
+	}
+
+	var resp stakingtypes.QueryDelegatorDelegationsResponse
+	if err := util.Cdc.UnmarshalJSON(bz, &resp); err != nil {
+		return nil, err
+	}
+
+	return resp.DelegationResponses, nil
+}
+
+// WaitForNextEpoch waits for the next epoch to start
+func (n *NodeConfig) WaitForNextEpoch() (uint64, error) {
+	currentEpoch, err := n.QueryCurrentEpoch()
+	if err != nil {
+		return 0, err
+	}
+	
+	nextEpoch := currentEpoch + 1
+	
+	// Wait until we're in the next epoch
+	require.Eventually(n.t, func() bool {
+		epoch, err := n.QueryCurrentEpoch()
+		if err != nil {
+			return false
+		}
+		return epoch > nextEpoch
+	}, time.Minute*2, time.Millisecond*500, "failed to reach next epoch")
+	
+	return nextEpoch, nil
 }
