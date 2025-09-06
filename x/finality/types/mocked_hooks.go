@@ -8,7 +8,8 @@ import (
 	context "context"
 	reflect "reflect"
 
-	types "github.com/cosmos/cosmos-sdk/types"
+	types "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+	types0 "github.com/cosmos/cosmos-sdk/types"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -36,7 +37,7 @@ func (m *MockFinalityHooks) EXPECT() *MockFinalityHooksMockRecorder {
 }
 
 // AfterBtcDelegationActivated mocks base method.
-func (m *MockFinalityHooks) AfterBtcDelegationActivated(ctx context.Context, fpAddr, btcDelAddr types.AccAddress, fpSecuresBabylon bool, sats uint64) error {
+func (m *MockFinalityHooks) AfterBtcDelegationActivated(ctx context.Context, fpAddr, btcDelAddr types0.AccAddress, fpSecuresBabylon bool, sats uint64) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AfterBtcDelegationActivated", ctx, fpAddr, btcDelAddr, fpSecuresBabylon, sats)
 	ret0, _ := ret[0].(error)
@@ -50,7 +51,7 @@ func (mr *MockFinalityHooksMockRecorder) AfterBtcDelegationActivated(ctx, fpAddr
 }
 
 // AfterBtcDelegationUnbonded mocks base method.
-func (m *MockFinalityHooks) AfterBtcDelegationUnbonded(ctx context.Context, fpAddr, btcDelAddr types.AccAddress, fpSecuresBabylon bool, sats uint64) error {
+func (m *MockFinalityHooks) AfterBtcDelegationUnbonded(ctx context.Context, fpAddr, btcDelAddr types0.AccAddress, fpSecuresBabylon bool, sats uint64) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AfterBtcDelegationUnbonded", ctx, fpAddr, btcDelAddr, fpSecuresBabylon, sats)
 	ret0, _ := ret[0].(error)
@@ -61,4 +62,18 @@ func (m *MockFinalityHooks) AfterBtcDelegationUnbonded(ctx context.Context, fpAd
 func (mr *MockFinalityHooksMockRecorder) AfterBtcDelegationUnbonded(ctx, fpAddr, btcDelAddr, fpSecuresBabylon, sats interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AfterBtcDelegationUnbonded", reflect.TypeOf((*MockFinalityHooks)(nil).AfterBtcDelegationUnbonded), ctx, fpAddr, btcDelAddr, fpSecuresBabylon, sats)
+}
+
+// AfterFpStatusChange mocks base method.
+func (m *MockFinalityHooks) AfterFpStatusChange(ctx context.Context, fpAddr types0.AccAddress, fpSecuresBabylon bool, newStatus types.FinalityProviderStatus) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AfterFpStatusChange", ctx, fpAddr, fpSecuresBabylon, newStatus)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AfterFpStatusChange indicates an expected call of AfterFpStatusChange.
+func (mr *MockFinalityHooksMockRecorder) AfterFpStatusChange(ctx, fpAddr, fpSecuresBabylon, newStatus interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AfterFpStatusChange", reflect.TypeOf((*MockFinalityHooks)(nil).AfterFpStatusChange), ctx, fpAddr, fpSecuresBabylon, newStatus)
 }
