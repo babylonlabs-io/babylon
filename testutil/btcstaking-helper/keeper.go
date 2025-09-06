@@ -122,7 +122,7 @@ func NewHelper(
 
 	chKeeper := mocks.NewMockZoneConciergeChannelKeeper(ctrl)
 
-	return NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKeeper, ckptKeeper, ictvK, chKeeper, btcStkStoreKey, nil)
+	return NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKeeper, ckptKeeper, ictvK, chKeeper, btcStkStoreKey, ftypes.NewMultiFinalityHooks())
 }
 
 func (h *Helper) WithBlockHeight(height int64) *Helper {
