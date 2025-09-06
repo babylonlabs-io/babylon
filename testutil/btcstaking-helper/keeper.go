@@ -208,13 +208,8 @@ func NewHelperWithStoreAndIncentive(
 	bscKeeper := k.BscKeeper.(bsckeeper.Keeper)
 	btcStkConsumerMsgServer := bsckeeper.NewMsgServerImpl(bscKeeper)
 
-	fk, ctx := keepertest.FinalityKeeperWithStore(t, db, stateStore, k, ictvKeeper, btccKForFinality)
+	fk, ctx := keepertest.FinalityKeeperWithStore(t, db, stateStore, k, ictvKeeper, btccKForFinality, finalityHooks)
 	fMsgSrvr := fkeeper.NewMsgServerImpl(*fk)
-	multiHooks := ftypes.NewMultiFinalityHooks()
-	if finalityHooks != nil {
-		multiHooks = ftypes.NewMultiFinalityHooks(finalityHooks)
-	}
-	fk.SetHooks(multiHooks)
 
 	// set all parameters
 	err := k.SetParams(ctx, types.DefaultParams())
@@ -264,9 +259,8 @@ func NewHelperWithStoreIncentiveAndBank(
 	bscKeeper := k.BscKeeper.(bsckeeper.Keeper)
 	btcStkConsumerMsgServer := bsckeeper.NewMsgServerImpl(bscKeeper)
 
-	fk, ctx := keepertest.FinalityKeeperWithStore(t, db, stateStore, k, ictvKeeper, btccKForFinality)
+	fk, ctx := keepertest.FinalityKeeperWithStore(t, db, stateStore, k, ictvKeeper, btccKForFinality, ftypes.NewMultiFinalityHooks())
 	fMsgSrvr := fkeeper.NewMsgServerImpl(*fk)
-	fk.SetHooks(ftypes.NewMultiFinalityHooks())
 
 	// set all parameters
 	err := k.SetParams(ctx, types.DefaultParams())

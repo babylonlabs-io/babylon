@@ -24,6 +24,7 @@ func (k Keeper) HandleResumeFinalityProposal(ctx sdk.Context, fpPksHex []string,
 	header := ctx.HeaderInfo()
 	currentHeight := header.Height
 	currentTime := header.Time
+	state := ftypes.NewProcessingState()
 
 	if uint64(haltingHeight) < params.FinalityActivationHeight {
 		return fmt.Errorf("finality halting height %d cannot be lower than finality activation height %d",
@@ -138,7 +139,8 @@ func (k Keeper) HandleResumeFinalityProposal(ctx sdk.Context, fpPksHex []string,
 		k.SetVotingPowerDistCache(ctx, blkHeight, newDc)
 
 		// ensure every active finality provider has signing info
-		k.HandleFPStateUpdates(ctx, dc, newDc, nil)
+		// TODO: check if we should emit events at every height
+		k.HandleFPStateUpdates(ctx, dc, newDc, state)
 	}
 
 	return nil
