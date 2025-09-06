@@ -34,7 +34,7 @@ func FuzzHandleLiveness(f *testing.F) {
 
 		iKeeper := types.NewMockIncentiveKeeper(ctrl)
 		cKeeper := types.NewMockCheckpointingKeeper(ctrl)
-		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper)
+		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper, nil)
 		blockTime := time.Now()
 		ctx = ctx.WithHeaderInfo(header.Info{Time: blockTime})
 

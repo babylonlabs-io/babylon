@@ -6,6 +6,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 	ftypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
 )
 
@@ -50,4 +51,9 @@ func (h Hooks) AfterBtcDelegationUnbonded(ctx context.Context, fpAddr, btcDelAdd
 	// being distributed based on the latest voting power.
 	amtSat := sdkmath.NewIntFromUint64(sats)
 	return h.k.BtcDelegationUnbonded(ctx, fpAddr, btcDelAddr, amtSat)
+}
+
+// AfterFpStatusChange implements types.FinalityHooks
+func (h Hooks) AfterFpStatusChange(ctx context.Context, fpAddr sdk.AccAddress, fpSecuresBabylon bool, newStatus types.FinalityProviderStatus) error {
+	return nil
 }

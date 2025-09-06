@@ -3,6 +3,7 @@ package types
 import (
 	context "context"
 
+	btcstktypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -16,6 +17,7 @@ import (
 type FinalityHooks interface {
 	AfterBtcDelegationActivated(ctx context.Context, fpAddr, btcDelAddr sdk.AccAddress, fpSecuresBabylon bool, sats uint64) error
 	AfterBtcDelegationUnbonded(ctx context.Context, fpAddr, btcDelAddr sdk.AccAddress, fpSecuresBabylon bool, sats uint64) error
+	AfterFpStatusChange(ctx context.Context, fpAddr sdk.AccAddress, fpSecuresBabylon bool, newStatus btcstktypes.FinalityProviderStatus) error
 }
 
 // combine multiple finality hooks, all hook functions are run in array sequence
@@ -25,6 +27,15 @@ type MultiFinalityHooks []FinalityHooks
 
 func NewMultiFinalityHooks(hooks ...FinalityHooks) MultiFinalityHooks {
 	return hooks
+}
+
+func (h MultiFinalityHooks) AfterFpStatusChange(ctx context.Context, fpAddr sdk.AccAddress, fpSecuresBabylon bool, newStatus btcstktypes.FinalityProviderStatus) error {
+	for i := range h {
+		if err := h[i].AfterFpStatusChange(ctx, fpAddr, fpSecuresBabylon, newStatus); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (h MultiFinalityHooks) AfterBtcDelegationActivated(ctx context.Context, fpAddr, btcDelAddr sdk.AccAddress, fpSecuresBabylon bool, sats uint64) error {
