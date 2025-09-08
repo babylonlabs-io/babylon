@@ -323,24 +323,16 @@ func TestExponentiallyEventsEndEpochQueuedMessages(t *testing.T) {
 	ctx = sdk.NewContext(ctx.MultiStore(), ctx.BlockHeader(), ctx.IsCheckTx(), ctx.Logger()).WithHeaderInfo(info)
 
 	delegation, err := stkK.GetDelegation(ctx, h.GenAccs[0].GetAddress(), valAddr)
-	var sharesBefore sdkmath.LegacyDec
-	if err == nil {
-		sharesBefore = delegation.Shares
-	} else {
-		sharesBefore = sdkmath.LegacyZeroDec()
-	}
+	h.NoError(err)
+	sharesBefore := delegation.Shares
 
 	// with a clean context
 	_, err = epoching.EndBlocker(ctx, k)
 	h.NoError(err)
 
 	delegation, err = stkK.GetDelegation(ctx, h.GenAccs[0].GetAddress(), valAddr)
-	var sharesAfter sdkmath.LegacyDec
-	if err == nil {
-		sharesAfter = delegation.Shares
-	} else {
-		sharesAfter = sdkmath.LegacyZeroDec()
-	}
+	h.NoError(err)
+	sharesAfter := delegation.Shares
 
 	expectedTotalAmount := sdkmath.NewInt(int64(numDelMessages * 100000))
 	actualSharesIncrease := sharesAfter.Sub(sharesBefore)
