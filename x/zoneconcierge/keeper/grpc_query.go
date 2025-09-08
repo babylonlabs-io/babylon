@@ -3,7 +3,6 @@ package keeper
 import (
 	"context"
 	"encoding/json"
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 
 	bbntypes "github.com/babylonlabs-io/babylon/v4/types"
 	btcstktypes "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
@@ -191,7 +190,7 @@ QueryGetSealedEpochProofResponse, error) {
 	return resp, nil
 }
 
-func (k *Keeper) ConsumerActive(goCtx context.Context,
+func (k Keeper) ConsumerActive(goCtx context.Context,
 	req *types.QueryConsumerActiveRequest) (*types.QueryConsumerActiveResponse,
 	error) {
 	if req == nil {
@@ -213,7 +212,7 @@ func (k *Keeper) ConsumerActive(goCtx context.Context,
 	switch consumer.Type() {
 	case btcstktypes.ConsumerType_COSMOS:
 		channelID := consumer.GetCosmosConsumerMetadata().ChannelId
-		active = k.channelKeeper.ConsumerHasIBCChannelOpen(ctx, channelID)
+		active = k.channelKeeper.ConsumerHasIBCChannelOpen(ctx, req.ConsumerId, channelID)
 	case btcstktypes.ConsumerType_ROLLUP:
 		address := consumer.GetRollupConsumerMetadata().FinalityContractAddress
 		contractAddress, err := sdk.AccAddressFromBech32(address)
@@ -222,7 +221,7 @@ func (k *Keeper) ConsumerActive(goCtx context.Context,
 		}
 
 		queryMsg := []byte(`{"labels":{}}`)
-		queryRes, err := k.wasmKeeper.QuerySmart(ctx, contractAddress, queryMsg)
+		queryRes, err := k.wasmKeeper.QuerySmart(goCtx, contractAddress, queryMsg)
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "failed to query contract: %v", err)
 		}

@@ -156,7 +156,7 @@ func FuzzProofEpochSealed_BLSSig(f *testing.F) {
 		channelKeeper.EXPECT().GetAllChannels(gomock.Any()).Return(nil).AnyTimes()
 
 		// create zcKeeper and ctx
-		zcKeeper, ctx := testkeeper.ZoneConciergeKeeper(t, channelKeeper, nil, checkpointingKeeper, nil, epochingKeeper, nil, nil)
+		zcKeeper, ctx := testkeeper.ZoneConciergeKeeper(t, channelKeeper, nil, checkpointingKeeper, nil, epochingKeeper, nil, nil, nil)
 
 		// prove
 		proof, err := zcKeeper.ProveEpochSealed(ctx, epoch.EpochNumber)

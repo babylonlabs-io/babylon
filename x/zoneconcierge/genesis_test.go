@@ -25,7 +25,8 @@ func TestGenesis(t *testing.T) {
 	btcStkConsumerKeeper := types.NewMockBTCStkConsumerKeeper(ctrl)
 	btcStkConsumerKeeper.EXPECT().GetAllRegisteredCosmosConsumers(gomock.Any()).Return([]*btcstkconsumertypes.ConsumerRegister{}).AnyTimes()
 
-	k, ctx := keepertest.ZoneConciergeKeeper(t, nil, nil, nil, nil, nil, nil, btcStkConsumerKeeper)
+	k, ctx := keepertest.ZoneConciergeKeeper(t, nil, nil, nil, nil, nil, nil,
+		btcStkConsumerKeeper, nil)
 	zoneconcierge.InitGenesis(ctx, *k, genesisState)
 	got := zoneconcierge.ExportGenesis(ctx, *k)
 	require.NotNil(t, got)

@@ -31,7 +31,7 @@ func FuzzTestExportGenesis(f *testing.F) {
 		btcStkConsumerKeeper.EXPECT().GetAllRegisteredCosmosConsumers(gomock.Any()).Return([]*btcstkconsumertypes.ConsumerRegister{}).AnyTimes()
 		btcStkConsumerKeeper.EXPECT().IsCosmosConsumer(gomock.Any(), gomock.Any()).Return(true, nil).AnyTimes()
 
-		k, ctx := keepertest.ZoneConciergeKeeper(t, nil, nil, nil, nil, nil, nil, btcStkConsumerKeeper)
+		k, ctx := keepertest.ZoneConciergeKeeper(t, nil, nil, nil, nil, nil, nil, btcStkConsumerKeeper, nil)
 
 		// set values to state using InitGenesis
 		err := k.InitGenesis(ctx, *gs)
@@ -62,7 +62,7 @@ func FuzzTestInitGenesis(f *testing.F) {
 		btcStkConsumerKeeper.EXPECT().GetAllRegisteredCosmosConsumers(gomock.Any()).Return([]*btcstkconsumertypes.ConsumerRegister{}).AnyTimes()
 		btcStkConsumerKeeper.EXPECT().IsCosmosConsumer(gomock.Any(), gomock.Any()).Return(true, nil).AnyTimes()
 
-		k, ctx := keepertest.ZoneConciergeKeeper(t, nil, nil, nil, nil, nil, nil, btcStkConsumerKeeper)
+		k, ctx := keepertest.ZoneConciergeKeeper(t, nil, nil, nil, nil, nil, nil, btcStkConsumerKeeper, nil)
 
 		// Run the InitGenesis
 		err := k.InitGenesis(ctx, *gs)

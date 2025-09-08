@@ -7,6 +7,7 @@ import (
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/util"
 	bsctypes "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
 	ictvtypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
+	zctypes "github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdktx "github.com/cosmos/cosmos-sdk/types/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -57,6 +58,13 @@ func (n *Node) IncentiveQuery(f func(ictvtypes.QueryClient)) {
 	n.GrpcConn(func(conn *grpc.ClientConn) {
 		incentiveClient := ictvtypes.NewQueryClient(conn)
 		f(incentiveClient)
+	})
+}
+
+func (n *Node) ZoneConciergeQuery(f func(zctypes.QueryClient)) {
+	n.GrpcConn(func(conn *grpc.ClientConn) {
+		zcClient := zctypes.NewQueryClient(conn)
+		f(zcClient)
 	})
 }
 
@@ -165,15 +173,12 @@ func (n *Node) QueryAllBalances(address string) sdk.Coins {
 // QueryBTCStkConsumerConsumers queries all registered BTC staking consumer chains
 func (n *Node) QueryBTCStkConsumerConsumers() []*bsctypes.ConsumerRegisterResponse {
 	var (
-		resp *bsctypes.QueryConsumersRegistryResponse
+		resp *bsctypes.QueryConsumerRegistryListResponse
 		err  error
 	)
 
 	n.BtcStkConsumerQuery(func(bscClient bsctypes.QueryClient) {
-		resp, err = bscClient.ConsumersRegistry(context.Background(), &bsctypes.QueryConsumersRegistryRequest{
-			// Empty consumer_ids means query all consumers
-			ConsumerIds: []string{},
-		})
+		resp, err = bscClient.ConsumerRegistryList(context.Background(), &bsctypes.QueryConsumerRegistryListRequest{})
 		require.NoError(n.T(), err)
 	})
 
@@ -206,4 +211,37 @@ func (n *Node) QueryIctvRewardGauges(addrs []string, holderType ictvtypes.Stakeh
 	})
 
 	return rewards
+}
+
+// QueryConsumerActive queries whether a given consumer is currently active
+func (n *Node) QueryConsumerActive(consumerID string) *zctypes.QueryConsumerActiveResponse {
+	var (
+		resp *zctypes.QueryConsumerActiveResponse
+		err  error
+	)
+
+	n.ZoneConciergeQuery(func(zcClient zctypes.QueryClient) {
+		resp, err = zcClient.ConsumerActive(context.Background(), &zctypes.QueryConsumerActiveRequest{
+			ConsumerId: consumerID,
+		})
+		require.NoError(n.T(), err)
+	})
+
+	return resp
+}
+
+// QueryConsumerActiveWithError queries whether a given consumer is currently active, returning error if any
+func (n *Node) QueryConsumerActiveWithError(consumerID string) (*zctypes.QueryConsumerActiveResponse, error) {
+	var (
+		resp *zctypes.QueryConsumerActiveResponse
+		err  error
+	)
+
+	n.ZoneConciergeQuery(func(zcClient zctypes.QueryClient) {
+		resp, err = zcClient.ConsumerActive(context.Background(), &zctypes.QueryConsumerActiveRequest{
+			ConsumerId: consumerID,
+		})
+	})
+
+	return resp, err
 }

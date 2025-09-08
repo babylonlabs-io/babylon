@@ -696,10 +696,10 @@ func (ak *AppKeepers) InitKeepers(
 		appCodec,
 		runtime.NewKVStoreService(keys[zctypes.StoreKey]),
 		ak.tkeys[zctypes.TStoreKey],
-		ak.IBCKeeper.ChannelKeeper,
+		ak.IBCKeeper.ChannelKeeper, // ics4Wrapper
 		ak.IBCKeeper.ClientKeeper,
 		ak.IBCKeeper.ConnectionKeeper,
-		zcChannelKeeper,
+		zcChannelKeeper, // channelKeeper (ZoneConciergeChannelKeeper)
 		ak.AccountKeeper,
 		ak.BankKeeper,
 		&btclightclientKeeper,
@@ -709,6 +709,8 @@ func (ak *AppKeepers) InitKeepers(
 		storeQuerier,
 		&ak.BTCStakingKeeper,
 		&ak.BTCStkConsumerKeeper,
+		&ak.WasmKeeper, // wasmKeeper
+		&ak.FinalityKeeper, // fKeeper
 		appparams.AccGov.String(),
 	)
 

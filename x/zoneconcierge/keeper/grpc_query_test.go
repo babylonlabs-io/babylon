@@ -3,10 +3,12 @@ package keeper_test
 import (
 	"context"
 	"fmt"
+	bsctypes "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
 	"math/rand"
 	"testing"
 	"time"
 
+	"cosmossdk.io/math"
 	"github.com/babylonlabs-io/babylon/v4/app"
 	btclightclienttypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
@@ -137,7 +139,7 @@ func FuzzFinalizedChainInfo(f *testing.F) {
 		btcStkConsumerKeeper.EXPECT().IsConsumerRegistered(gomock.Any(), gomock.Any()).Return(true).AnyTimes()
 		btcStkConsumerKeeper.EXPECT().IsCosmosConsumer(gomock.Any(), gomock.Any()).Return(true, nil).AnyTimes()
 
-		zcKeeper, ctx := testkeeper.ZoneConciergeKeeper(t, channelKeeper, btclcKeeper, checkpointingKeeper, btccKeeper, epochingKeeper, nil, btcStkConsumerKeeper)
+		zcKeeper, ctx := testkeeper.ZoneConciergeKeeper(t, channelKeeper, btclcKeeper, checkpointingKeeper, btccKeeper, epochingKeeper, nil, btcStkConsumerKeeper, nil)
 		hooks := zcKeeper.Hooks()
 
 		var (
@@ -257,4 +259,47 @@ func TestGetSealedEpochProof(t *testing.T) {
 	resp2, err := zcKeeper.GetSealedEpochProof(ctx, req2)
 	require.Error(t, err)
 	require.Nil(t, resp2)
+}
+
+func TestConsumerActive(t *testing.T) {
+	babylonApp := app.Setup(t, false)
+	ctx := babylonApp.NewContext(false)
+	zcKeeper := babylonApp.ZoneConciergeKeeper
+
+	resp, err := zcKeeper.ConsumerActive(ctx, nil)
+	require.Error(t, err)
+	require.Nil(t, resp)
+
+	resp, err = zcKeeper.ConsumerActive(ctx, &zctypes.QueryConsumerActiveRequest{
+		ConsumerId: "",
+	})
+	require.Error(t, err)
+	require.Nil(t, resp)
+
+	resp, err = zcKeeper.ConsumerActive(ctx, &zctypes.QueryConsumerActiveRequest{
+		ConsumerId: "non-existent-consumer",
+	})
+	require.Error(t, err)
+	require.Nil(t, resp)
+
+	consumerRegister := &bsctypes.ConsumerRegister{
+		ConsumerId:          "test-consumer",
+		ConsumerName:        "Test Consumer",
+		ConsumerDescription: "A test consumer",
+		ConsumerMetadata: &bsctypes.ConsumerRegister_CosmosConsumerMetadata{
+			CosmosConsumerMetadata: &bsctypes.CosmosConsumerMetadata{
+				ChannelId: "channel-0",
+			},
+		},
+		BabylonRewardsCommission: math.LegacyMustNewDecFromStr("0.05"),
+	}
+
+	err = babylonApp.BTCStkConsumerKeeper.RegisterConsumer(ctx, consumerRegister)
+	require.NoError(t, err)
+
+	resp, err = zcKeeper.ConsumerActive(ctx, &zctypes.QueryConsumerActiveRequest{
+		ConsumerId: "test-consumer",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, resp)
 }
