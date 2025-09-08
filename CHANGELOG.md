@@ -57,6 +57,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#1655](https://github.com/babylonlabs-io/babylon/pull/1655) Fix go releaser image not support issue.
 - [#1657](https://github.com/babylonlabs-io/babylon/pull/1657) update to e2ev2 tests for queries for zc
 - [#1668](https://github.com/babylonlabs-io/babylon/pull/1668) Bump dependencies based on dependabot alerts
+- [#1690](https://github.com/babylonlabs-io/babylon/pull/1690)add ConsumerActive as a query in x/btcstakingconsumer module
 
 ### State breaking
 
