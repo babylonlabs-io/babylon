@@ -2190,6 +2190,7 @@ func TestGovernanceJailingAfterUnjailInSameBlock(t *testing.T) {
 	btclcKeeper := btcstktypes.NewMockBTCLightClientKeeper(ctrl)
 	btccKeeper := btcstktypes.NewMockBtcCheckpointKeeper(ctrl)
 	h := testutil.NewHelper(t, btclcKeeper, btccKeeper, nil)
+	fHooks := h.FinalityHooks.(*ftypes.MockFinalityHooks)
 
 	// set all parameters
 	covenantSKs, _ := h.GenAndApplyParams(r)
@@ -2296,6 +2297,7 @@ func TestGovernanceJailingAfterUnjailInSameBlock(t *testing.T) {
 	// Step 5: Process the events - this is where the bug manifests
 	babylonHeight += 1
 	h.SetCtxHeight(babylonHeight)
+	fHooks.EXPECT().AfterFpStatusChange(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any())
 	h.BeginBlocker()
 
 	// Step 6: Check the results

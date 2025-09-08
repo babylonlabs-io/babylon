@@ -85,6 +85,7 @@ type Helper struct {
 
 	FinalityKeeper *fkeeper.Keeper
 	FMsgServer     ftypes.MsgServer
+	FinalityHooks  ftypes.FinalityHooks
 
 	BTCLightClientKeeper             *types.MockBTCLightClientKeeper
 	CheckpointingKeeperForBtcStaking *types.MockBtcCheckpointKeeper
@@ -106,6 +107,7 @@ func NewHelper(
 	btcStkStoreKey *storetypes.KVStoreKey,
 ) *Helper {
 	ctrl := gomock.NewController(t)
+	t.Cleanup(ctrl.Finish)
 
 	ictvK := NewMockIctvKeeperK(ctrl)
 
@@ -122,7 +124,7 @@ func NewHelper(
 
 	chKeeper := mocks.NewMockZoneConciergeChannelKeeper(ctrl)
 
-	return NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKeeper, ckptKeeper, ictvK, chKeeper, btcStkStoreKey, ftypes.NewMultiFinalityHooks())
+	return NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKeeper, ckptKeeper, ictvK, chKeeper, btcStkStoreKey, ftypes.NewMockFinalityHooks(ctrl))
 }
 
 func (h *Helper) WithBlockHeight(height int64) *Helper {
@@ -231,6 +233,7 @@ func NewHelperWithStoreAndIncentive(
 
 		FinalityKeeper: fk,
 		FMsgServer:     fMsgSrvr,
+		FinalityHooks:  finalityHooks,
 
 		BTCLightClientKeeper:             btclcKeeper,
 		CheckpointingKeeperForBtcStaking: btccKForBtcStaking,
