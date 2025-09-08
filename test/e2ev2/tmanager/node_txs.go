@@ -138,7 +138,7 @@ func (n *Node) StoreWasmCode(wasmFile, walletName string) {
 
 	wallet.VerifySentTx = true
 	gasLimit := uint64(6000000) // for large contracts
-	txHash, tx := wallet.SubmitMsgsWithGas(gasLimit, msg)
+	_, tx := wallet.SubmitMsgsWithGas(gasLimit, msg)
 	wallet.VerifySentTx = false
 
 	require.NotNil(n.T(), tx, "StoreWasmCode transaction should not be nil")
@@ -161,7 +161,7 @@ func (n *Node) InstantiateWasmContract(codeId, initMsg, walletName string) {
 	}
 
 	wallet.VerifySentTx = true
-	txHash, tx := wallet.SubmitMsgs(msg)
+	_, tx := wallet.SubmitMsgs(msg)
 	wallet.VerifySentTx = false
 
 	require.NotNil(n.T(), tx, "InstantiateWasmContract transaction should not be nil")

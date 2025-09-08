@@ -25,6 +25,7 @@ func GetQueryCmd() *cobra.Command {
 	cmd.AddCommand(CmdQueryParams())
 	cmd.AddCommand(CmdRegisteredConsumer())
 	cmd.AddCommand(CmdRegisteredConsumers())
+	cmd.AddCommand(CmdConsumerActive())
 
 	return cmd
 }
@@ -73,6 +74,33 @@ func CmdRegisteredConsumer() *cobra.Command {
 				cmd.Context(),
 				&types.QueryConsumersRegistryRequest{
 					ConsumerIds: []string{args[0]},
+				},
+			)
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+
+	return cmd
+}
+
+func CmdConsumerActive() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "consumer-active <consumer-id>",
+		Short: "check if a given consumer is active",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			queryClient := types.NewQueryClient(clientCtx)
+			res, err := queryClient.ConsumerActive(
+				cmd.Context(),
+				&types.QueryConsumerActiveRequest{
+					ConsumerId: args[0],
 				},
 			)
 			if err != nil {
