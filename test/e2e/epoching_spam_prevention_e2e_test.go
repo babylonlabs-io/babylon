@@ -208,7 +208,7 @@ func (s *EpochingSpamPreventionTestSuite) TestNormalDelegationCase() {
 	actualDecrease := initialDelegatorBalance.Amount.Sub(delegatorBalanceAfterLock.Amount)
 
 	// With --gas=auto, there are two fees: gas estimation (173903) + actual gas (152632)
-	gasEstimationFee := sdkmath.NewInt(int64(txResponse.GasWanted)) // 173903 from gas estimation
+	gasEstimationFee := sdkmath.NewInt(txResponse.GasWanted) // 173903 from gas estimation
 	expectedDecrease := delegationAmount.Add(gasEstimationFee)
 
 	// Verify that balance decreased by expected amount (delegation + gas estimation fee)
@@ -501,7 +501,7 @@ EOF`, string(blsPopJSON))})
 
 	// Calculate actual decrease accounting for gas estimation fee (--gas=auto charges gas_wanted)
 	actualDecrease := initialBalance.Amount.Sub(afterBalance.Amount)
-	gasEstimationFee := sdkmath.NewInt(int64(txResponse.GasWanted))
+	gasEstimationFee := sdkmath.NewInt(txResponse.GasWanted)
 	expectedDecrease := stakingAmountInt.Add(gasEstimationFee)
 
 	s.T().Logf("Validator initial balance: %s, after create-validator: %s, actual decrease: %s",
