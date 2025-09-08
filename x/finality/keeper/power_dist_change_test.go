@@ -1990,7 +1990,7 @@ func TestBSNDelegationActivated_DirectIncentives(t *testing.T) {
 	_, babylonFpPk, babylonFp := h.CreateFinalityProvider(r)
 
 	// create BSN finality provider (not securing Babylon genesis)
-	_, bsnFpPk, _, err := h.CreateConsumerFinalityProvider(r, randomConsumer.ConsumerId)
+	_, bsnFpPk, bsnFp, err := h.CreateConsumerFinalityProvider(r, randomConsumer.ConsumerId)
 	require.NoError(t, err)
 
 	// create delegation to BSN FP
@@ -2022,6 +2022,9 @@ func TestBSNDelegationActivated_DirectIncentives(t *testing.T) {
 
 	// add the event to store
 	addPowerDistUpdateEvents(t, h.Ctx, btcStakingStoreKey, uint64(btcTipHeight), []*btcstktypes.EventPowerDistUpdate{eventActivate})
+	fHooks := h.FinalityHooks.(*ftypes.MockFinalityHooks)
+	fHooks.EXPECT().AfterBtcDelegationActivated(gomock.Any(), babylonFp.Address(), btcDel.Address(), true, uint64(stakingValue)).Times(1)
+	fHooks.EXPECT().AfterBtcDelegationActivated(gomock.Any(), bsnFp.Address(), btcDel.Address(), false, uint64(stakingValue)).Times(1)
 
 	// process the activation event
 	newDc, _ := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, ftypes.NewVotingPowerDistCache(), btcTipHeight-1, btcTipHeight)
