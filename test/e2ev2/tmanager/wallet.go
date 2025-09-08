@@ -131,13 +131,18 @@ func (ws *WalletSender) ChainID() string {
 
 // SignMsg creates and signs a transaction with the provided messages
 func (ws *WalletSender) SignMsg(msgs ...sdk.Msg) *sdktx.Tx {
+	return ws.SignMsgWithGas(300000, msgs...)
+}
+
+// SignMsgWithGas creates and signs a transaction with custom gas limit
+func (ws *WalletSender) SignMsgWithGas(gasLimit uint64, msgs ...sdk.Msg) *sdktx.Tx {
 	txBuilder := util.EncodingConfig.TxConfig.NewTxBuilder()
 	err := txBuilder.SetMsgs(msgs...)
 	require.NoError(ws.T(), err, "failed to set messages")
 
-	// Set fee and gas
-	txBuilder.SetFeeAmount(sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, math.NewInt(20000))))
-	txBuilder.SetGasLimit(300000)
+	feeAmount := math.NewInt(int64(gasLimit / 15))
+	txBuilder.SetFeeAmount(sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, feeAmount)))
+	txBuilder.SetGasLimit(gasLimit)
 
 	pubKey := ws.PrivKey.PubKey()
 	signerData := authsigning.SignerData{
@@ -212,6 +217,23 @@ func (ws *WalletSender) SubmitMsgs(msgs ...sdk.Msg) (txHash string, tx *sdktx.Tx
 
 	txHash, err := ws.Node.SubmitTx(signedTx)
 	require.NoError(ws.T(), err, "Failed to submit IBC transfer transaction")
+
+	ws.AddTxSent(txHash)
+	if ws.VerifySentTx {
+		ws.Node.WaitForNextBlock()
+		ws.T().Logf("Wallet %s is set to verify tx: %s", ws.KeyName, txHash)
+		ws.Node.RequireTxSuccess(txHash)
+	}
+
+	return txHash, signedTx
+}
+
+// SubmitMsgsWithGas builds the tx with custom gas limit and submits it
+func (ws *WalletSender) SubmitMsgsWithGas(gasLimit uint64, msgs ...sdk.Msg) (txHash string, tx *sdktx.Tx) {
+	signedTx := ws.SignMsgWithGas(gasLimit, msgs...)
+
+	txHash, err := ws.Node.SubmitTx(signedTx)
+	require.NoError(ws.T(), err, "Failed to submit HIGH-GAS transaction")
 
 	ws.AddTxSent(txHash)
 	if ws.VerifySentTx {

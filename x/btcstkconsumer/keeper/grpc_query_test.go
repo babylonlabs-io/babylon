@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"cosmossdk.io/math"
 	"math/rand"
 	"testing"
 
@@ -99,4 +100,47 @@ func FuzzConsumersRegistry(f *testing.F) {
 			require.Equal(t, consumersRegister[i].consumerID, respData.ConsumerId)
 		}
 	})
+}
+
+func TestConsumerActive(t *testing.T) {
+	babylonApp := app.Setup(t, false)
+	ctx := babylonApp.NewContext(false)
+	k := babylonApp.BTCStkConsumerKeeper
+
+	resp, err := k.ConsumerActive(ctx, nil)
+	require.Error(t, err)
+	require.Nil(t, resp)
+
+	resp, err = k.ConsumerActive(ctx, &types.QueryConsumerActiveRequest{
+		ConsumerId: "",
+	})
+	require.Error(t, err)
+	require.Nil(t, resp)
+
+	resp, err = k.ConsumerActive(ctx, &types.QueryConsumerActiveRequest{
+		ConsumerId: "non-existent-consumer",
+	})
+	require.Error(t, err)
+	require.Nil(t, resp)
+
+	consumerRegister := &types.ConsumerRegister{
+		ConsumerId:          "test-consumer",
+		ConsumerName:        "Test Consumer",
+		ConsumerDescription: "A test consumer",
+		ConsumerMetadata: &types.ConsumerRegister_CosmosConsumerMetadata{
+			CosmosConsumerMetadata: &types.CosmosConsumerMetadata{
+				ChannelId: "channel-0",
+			},
+		},
+		BabylonRewardsCommission: math.LegacyMustNewDecFromStr("0.05"),
+	}
+
+	err = babylonApp.BTCStkConsumerKeeper.RegisterConsumer(ctx, consumerRegister)
+	require.NoError(t, err)
+
+	resp, err = k.ConsumerActive(ctx, &types.QueryConsumerActiveRequest{
+		ConsumerId: "test-consumer",
+	})
+	require.NoError(t, err)
+	require.NotNil(t, resp)
 }

@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"encoding/json"
 
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	"github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
@@ -130,4 +131,54 @@ func (k Keeper) ConsumersRegistry(c context.Context, req *types.QueryConsumersRe
 
 	resp := &types.QueryConsumersRegistryResponse{ConsumerRegisters: consumersRegisters}
 	return resp, nil
+}
+
+func (k Keeper) ConsumerActive(goCtx context.Context,
+	req *types.QueryConsumerActiveRequest) (*types.QueryConsumerActiveResponse,
+	error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+
+	if req.ConsumerId == "" {
+		return nil, status.Error(codes.InvalidArgument, "consumer id cannot be empty")
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	consumer, err := k.GetConsumerRegister(ctx, req.ConsumerId)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "consumer cannot be found")
+	}
+
+	var active bool
+	switch consumer.Type() {
+	case types.ConsumerType_COSMOS:
+		channelID := consumer.GetCosmosConsumerMetadata().ChannelId
+		active = k.channelKeeper.ConsumerHasIBCChannelOpen(ctx, req.ConsumerId, channelID)
+	case types.ConsumerType_ROLLUP:
+		address := consumer.GetRollupConsumerMetadata().FinalityContractAddress
+		contractAddress, err := sdk.AccAddressFromBech32(address)
+		if err != nil {
+			return nil, status.Error(codes.InvalidArgument, "invalid contract address")
+		}
+
+		queryMsg := []byte(`{"config":{}}`)
+		queryRes, err := k.wasmKeeper.QuerySmart(goCtx, contractAddress,
+			queryMsg)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to query contract: %v", err)
+		}
+
+		var configResp struct {
+			BsnId string `json:"bsn_id"`
+		}
+
+		if err := json.Unmarshal(queryRes, &configResp); err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to unmarshal response: %v", err)
+		}
+		active = configResp.BsnId != ""
+	}
+
+	return &types.QueryConsumerActiveResponse{Active: active}, nil
 }

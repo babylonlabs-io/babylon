@@ -2,10 +2,12 @@ package tmanager
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"net"
 	"net/url"
 
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/util"
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	btclighttypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
@@ -294,4 +296,87 @@ func (n *Node) QueryGetSealedEpochProofCLI(epochNum uint64) string {
 // GetRpcEndpoint returns the RPC endpoint of the node
 func (n *Node) GetRpcEndpoint() string {
 	return "tcp://" + net.JoinHostPort(n.Container.Name, fmt.Sprintf("%d", n.Ports.RPC))
+}
+
+func (n *Node) QueryConsumerActive(consumerID string) bool {
+	var (
+		resp *bsctypes.QueryConsumerActiveResponse
+		err  error
+	)
+
+	n.BtcStkConsumerQuery(func(bscClient bsctypes.QueryClient) {
+		resp, err = bscClient.ConsumerActive(context.Background(), &bsctypes.QueryConsumerActiveRequest{
+			ConsumerId: consumerID,
+		})
+		require.NoError(n.T(), err)
+	})
+
+	return resp.Active
+}
+
+func (n *Node) QueryConsumerActiveWithError(consumerID string) (bool, error) {
+	var (
+		resp *bsctypes.QueryConsumerActiveResponse
+		err  error
+	)
+
+	n.BtcStkConsumerQuery(func(bscClient bsctypes.QueryClient) {
+		resp, err = bscClient.ConsumerActive(context.Background(), &bsctypes.QueryConsumerActiveRequest{
+			ConsumerId: consumerID,
+		})
+	})
+
+	if err != nil {
+		return false, err
+	}
+	return resp.Active, nil
+}
+
+// QueryLatestWasmCodeID returns the latest WASM code ID
+func (n *Node) QueryLatestWasmCodeID() uint64 {
+	path := "/cosmwasm/wasm/v1/code"
+	bz, err := n.QueryGRPCGateway(path, url.Values{})
+	require.NoError(n.T(), err)
+	
+	var response wasmtypes.QueryCodesResponse
+	err = util.Cdc.UnmarshalJSON(bz, &response)
+	require.NoError(n.T(), err)
+	
+	if len(response.CodeInfos) == 0 {
+		return 0
+	}
+	return response.CodeInfos[len(response.CodeInfos)-1].CodeID
+}
+
+// QueryContractsFromId returns all contract addresses for a given code ID
+func (n *Node) QueryContractsFromId(codeId int) ([]string, error) {
+	path := fmt.Sprintf("/cosmwasm/wasm/v1/code/%d/contracts", codeId)
+	bz, err := n.QueryGRPCGateway(path, url.Values{})
+	if err != nil {
+		return nil, err
+	}
+	
+	var contractsResponse wasmtypes.QueryContractsByCodeResponse
+	if err := util.Cdc.UnmarshalJSON(bz, &contractsResponse); err != nil {
+		return nil, err
+	}
+	return contractsResponse.Contracts, nil
+}
+
+// QueryWasmSmart executes a smart query on a WASM contract
+func (n *Node) QueryWasmSmart(contract string, queryMsg string) (*wasmtypes.QuerySmartContractStateResponse, error) {
+	encodedMsg := base64.StdEncoding.EncodeToString([]byte(queryMsg))
+	path := fmt.Sprintf("/cosmwasm/wasm/v1/contract/%s/smart/%s", contract, encodedMsg)
+	bz, err := n.QueryGRPCGateway(path, url.Values{})
+	if err != nil {
+		return nil, err
+	}
+	
+	var response wasmtypes.QuerySmartContractStateResponse
+	err = util.Cdc.UnmarshalJSON(bz, &response)
+	if err != nil {
+		return nil, err
+	}
+	
+	return &response, nil
 }

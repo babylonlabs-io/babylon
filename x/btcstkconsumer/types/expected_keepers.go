@@ -20,4 +20,5 @@ type ChannelKeeper interface {
 
 type WasmKeeper interface {
 	GetContractInfo(ctx context.Context, contractAddress sdk.AccAddress) *wasmtypes.ContractInfo
+	QuerySmart(ctx context.Context, contractAddr sdk.AccAddress, queryMsg []byte) ([]byte, error)
 }

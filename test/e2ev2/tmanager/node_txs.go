@@ -1,9 +1,14 @@
 package tmanager
 
 import (
+	"io"
+	"os"
+	"path/filepath"
+	"strconv"
 	"time"
 
 	"cosmossdk.io/math"
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
@@ -91,6 +96,116 @@ func (n *Node) RegisterConsumerChain(walletName, consumerID, consumerName, consu
 	_, tx := wallet.SubmitMsgs(msg)
 	require.NotNil(n.T(), tx, "RegisterConsumerChain transaction should not be nil")
 	n.T().Logf("Registered consumer chain: %s (%s)", consumerName, consumerID)
+}
+
+// RegisterRollupConsumer registers a new rollup consumer with contract address
+func (n *Node) RegisterRollupConsumer(walletName, consumerID, consumerName, consumerDescription, commission, contractAddress string) {
+	wallet := n.Wallet(walletName)
+	require.NotNil(n.T(), wallet, "Wallet %s not found", walletName)
+
+	commissionDec, err := math.LegacyNewDecFromStr(commission)
+	require.NoError(n.T(), err, "Invalid commission: %s", commission)
+
+	msg := &bsctypes.MsgRegisterConsumer{
+		Signer:                        wallet.Address.String(),
+		ConsumerId:                    consumerID,
+		ConsumerName:                  consumerName,
+		ConsumerDescription:           consumerDescription,
+		BabylonRewardsCommission:      commissionDec,
+		RollupFinalityContractAddress: contractAddress,
+	}
+
+	_, tx := wallet.SubmitMsgs(msg)
+	require.NotNil(n.T(), tx, "RegisterRollupConsumer transaction should not be nil")
+}
+
+// StoreWasmCode stores WASM bytecode on the blockchain using messages
+func (n *Node) StoreWasmCode(wasmFile, walletName string) {
+	wallet := n.Wallet(walletName)
+	require.NotNil(n.T(), wallet, "Wallet %s not found", walletName)
+
+	wasmCode, err := os.Open(wasmFile)
+	require.NoError(n.T(), err)
+	defer wasmCode.Close()
+
+	code, err := io.ReadAll(wasmCode)
+	require.NoError(n.T(), err)
+
+	msg := &wasmtypes.MsgStoreCode{
+		Sender:       wallet.Address.String(),
+		WASMByteCode: code,
+	}
+
+	wallet.VerifySentTx = true
+	gasLimit := uint64(6000000) // for large contracts
+	txHash, tx := wallet.SubmitMsgsWithGas(gasLimit, msg)
+	wallet.VerifySentTx = false
+
+	require.NotNil(n.T(), tx, "StoreWasmCode transaction should not be nil")
+}
+
+// InstantiateWasmContract instantiates a stored WASM contract using messages
+func (n *Node) InstantiateWasmContract(codeId, initMsg, walletName string) {
+	wallet := n.Wallet(walletName)
+	require.NotNil(n.T(), wallet, "Wallet %s not found", walletName)
+
+	codeIDUint, err := strconv.ParseUint(codeId, 10, 64)
+	require.NoError(n.T(), err, "Invalid code ID: %s", codeId)
+
+	msg := &wasmtypes.MsgInstantiateContract{
+		Sender: wallet.Address.String(),
+		CodeID: codeIDUint,
+		Label:  "contract",
+		Msg:    []byte(initMsg),
+		Funds:  sdk.NewCoins(),
+	}
+
+	wallet.VerifySentTx = true
+	txHash, tx := wallet.SubmitMsgs(msg)
+	wallet.VerifySentTx = false
+
+	require.NotNil(n.T(), tx, "InstantiateWasmContract transaction should not be nil")
+}
+
+// CreateFinalityContract creates a finality contract for the given BSN ID
+func (n *Node) CreateFinalityContract(bsnId string) string {
+	pwd, err := os.Getwd()
+	require.NoError(n.T(), err)
+	finalityContractPath := filepath.Join(pwd, "bytecode", "finality.wasm")
+
+	wasmContractId := int(n.QueryLatestWasmCodeID())
+
+	n.StoreWasmCode(finalityContractPath, n.DefaultWallet().KeyName)
+
+	n.WaitForNextBlock()
+
+	require.Eventually(n.T(), func() bool {
+		newLatestWasmId := int(n.QueryLatestWasmCodeID())
+		if newLatestWasmId >= wasmContractId+1 {
+			wasmContractId = newLatestWasmId
+			return true
+		}
+		return false
+	}, time.Second*15, time.Second*1)
+
+	n.InstantiateWasmContract(
+		strconv.Itoa(wasmContractId),
+		`{
+			"admin": "`+n.DefaultWallet().Address.String()+`",
+			"bsn_id": "`+bsnId+`"
+		}`,
+		n.DefaultWallet().KeyName,
+	)
+
+	var (
+		contracts []string
+	)
+	require.Eventually(n.T(), func() bool {
+		contracts, err = n.QueryContractsFromId(wasmContractId)
+		return err == nil && len(contracts) == 1
+	}, time.Second*10, time.Millisecond*100)
+
+	return contracts[0]
 }
 
 // CreateFinalityProvider creates a finality provider on the given chain/consumer using the specified wallet
