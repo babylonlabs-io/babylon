@@ -86,5 +86,4 @@ func TestConsumerActive(t *testing.T) {
 	require.NotNil(t, rollupResp, "rollup consumer resp should not be nil")
 
 	require.True(t, rollupResp, "rollup should be active with real finality contract")
-
 }

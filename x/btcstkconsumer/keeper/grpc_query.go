@@ -14,7 +14,10 @@ import (
 
 var _ types.QueryServer = Keeper{}
 
-const maxQueryConsumersRegistryLimit = 100
+const (
+	maxQueryConsumersRegistryLimit = 100
+	configQueryMsg                 = `{"config":{}}`
+)
 
 func (k Keeper) ConsumerRegistryList(c context.Context, req *types.QueryConsumerRegistryListRequest) (*types.QueryConsumerRegistryListResponse, error) {
 	if req == nil {
@@ -163,21 +166,21 @@ func (k Keeper) ConsumerActive(goCtx context.Context,
 			return nil, status.Error(codes.InvalidArgument, "invalid contract address")
 		}
 
-		queryMsg := []byte(`{"config":{}}`)
-		queryRes, err := k.wasmKeeper.QuerySmart(goCtx, contractAddress,
-			queryMsg)
+		queryMsg := []byte(configQueryMsg)
+
+		queryRes, err := k.wasmKeeper.QuerySmart(goCtx, contractAddress, queryMsg)
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "failed to query contract: %v", err)
 		}
 
-		var configResp struct {
+		var ContractConfigResponse struct {
 			BsnId string `json:"bsn_id"`
 		}
 
-		if err := json.Unmarshal(queryRes, &configResp); err != nil {
+		if err := json.Unmarshal(queryRes, &ContractConfigResponse); err != nil {
 			return nil, status.Errorf(codes.Internal, "failed to unmarshal response: %v", err)
 		}
-		active = configResp.BsnId != ""
+		active = ContractConfigResponse.BsnId != ""
 	}
 
 	return &types.QueryConsumerActiveResponse{Active: active}, nil
