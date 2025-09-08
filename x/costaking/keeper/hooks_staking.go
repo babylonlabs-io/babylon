@@ -24,14 +24,13 @@ func (h HookStaking) AfterDelegationModified(ctx context.Context, delAddr sdk.Ac
 		return err
 	}
 
-	valI, err := h.k.stkK.Validator(ctx, valAddr)
+	delTokens, err := h.k.TokensFromShares(ctx, valAddr, del.Shares)
 	if err != nil {
 		return err
 	}
 
-	tokenStakedBefore := h.k.stkCache.GetStakedAmount(delAddr, valAddr)
-	tokensStaked := valI.TokensFromShares(del.Shares)
-	delTokenChange := tokensStaked.Sub(tokenStakedBefore).TruncateInt()
+	delTokensBefore := h.k.stkCache.GetStakedAmount(delAddr, valAddr)
+	delTokenChange := delTokens.Sub(delTokensBefore).TruncateInt()
 	return h.k.costakerModified(ctx, delAddr, func(rwdTracker *types.CostakerRewardsTracker) {
 		rwdTracker.ActiveBaby = rwdTracker.ActiveBaby.Add(delTokenChange)
 	})
@@ -46,11 +45,10 @@ func (h HookStaking) BeforeDelegationSharesModified(ctx context.Context, delAddr
 		return nil
 	}
 
-	valI, err := h.k.stkK.Validator(ctx, valAddr)
+	delTokens, err := h.k.TokensFromShares(ctx, valAddr, del.Shares)
 	if err != nil {
 		return err
 	}
-	delTokens := valI.TokensFromShares(del.Shares)
 	h.k.stkCache.SetStakedAmount(delAddr, valAddr, delTokens)
 	return nil
 }
@@ -103,4 +101,14 @@ func (h HookStaking) BeforeValidatorSlashed(ctx context.Context, valAddr sdk.Val
 // Create new staking hooks
 func (k Keeper) HookStaking() HookStaking {
 	return HookStaking{k}
+}
+
+// TokensFromShares gets the validator and returns the tokens based on the amount of shares
+func (k Keeper) TokensFromShares(ctx context.Context, valAddr sdk.ValAddress, delShares math.LegacyDec) (math.LegacyDec, error) {
+	valI, err := k.stkK.Validator(ctx, valAddr)
+	if err != nil {
+		return math.LegacyDec{}, err
+	}
+	delTokens := valI.TokensFromShares(delShares)
+	return delTokens, nil
 }
