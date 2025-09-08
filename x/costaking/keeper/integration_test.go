@@ -179,7 +179,7 @@ func FuzzBankModuleIntegration(f *testing.F) {
 	})
 }
 
-func TestCostakerModified(t *testing.T) {
+func TestCostakerWithdrawRewards(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -226,7 +226,7 @@ func TestCostakerModified(t *testing.T) {
 	).Return(nil).Times(1)
 
 	// Call the function being tested
-	err = k.costakerModified(ctx, costaker)
+	err = k.costakerWithdrawRewards(ctx, costaker)
 	require.NoError(t, err)
 
 	updatedTracker, err := k.GetCostakerRewards(ctx, costaker)
@@ -295,7 +295,7 @@ func TestCostakerModifiedWithPreInitialization(t *testing.T) {
 	}
 
 	// Call with pre-initialization
-	err = k.costakerModifiedScoreWithPreInitalizationModified(ctx, costaker, preInitFunc)
+	err = k.costakerModifiedScoreWithPreInitalization(ctx, costaker, preInitFunc)
 	require.NoError(t, err)
 
 	updatedTracker, err := k.GetCostakerRewards(ctx, costaker)
