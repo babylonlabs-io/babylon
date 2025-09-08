@@ -170,7 +170,7 @@ func NewHelperWithIncentiveKeeper(
 	ckptKeeper := ftypes.NewMockCheckpointingKeeper(ctrl)
 	chKeeper := mocks.NewMockZoneConciergeChannelKeeper(ctrl)
 
-	return NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKeeper, ckptKeeper, ictvK, chKeeper, nil, nil)
+	return NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKeeper, ckptKeeper, ictvK, chKeeper, nil, ftypes.NewMockFinalityHooks(ctrl))
 }
 
 func NewHelperWithBankMock(

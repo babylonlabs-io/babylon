@@ -225,7 +225,7 @@ func FuzzCheckBTCDelegationRewardsTracker(f *testing.F) {
 		require.NoError(t, err)
 
 		count := 0
-		err = k.IterateBTCDelegationRewardsTracker(ctx, fp1, func(fp, del sdk.AccAddress) error {
+		err = k.IterateBTCDelegationRewardsTracker(ctx, fp1, func(fp, del sdk.AccAddress, val types.BTCDelegationRewardsTracker) error {
 			count++
 			require.Equal(t, fp1, fp)
 			require.Equal(t, del1, del)
@@ -239,7 +239,7 @@ func FuzzCheckBTCDelegationRewardsTracker(f *testing.F) {
 		require.NoError(t, err)
 
 		count = 0
-		err = k.IterateBTCDelegationRewardsTracker(ctx, fp1, func(fp, del sdk.AccAddress) error {
+		err = k.IterateBTCDelegationRewardsTracker(ctx, fp1, func(fp, del sdk.AccAddress, val types.BTCDelegationRewardsTracker) error {
 			count++
 			require.Equal(t, fp1, fp)
 			if del1.Equals(del) {
@@ -264,7 +264,7 @@ func FuzzCheckBTCDelegationRewardsTracker(f *testing.F) {
 		require.Equal(t, startPeriodFp2Del1, btcDelRwdTracker.StartPeriodCumulativeReward)
 
 		count = 0
-		err = k.IterateBTCDelegationRewardsTracker(ctx, fp2, func(fp, del sdk.AccAddress) error {
+		err = k.IterateBTCDelegationRewardsTracker(ctx, fp2, func(fp, del sdk.AccAddress, val types.BTCDelegationRewardsTracker) error {
 			count++
 			require.Equal(t, fp2, fp)
 			require.Equal(t, del1, del)
@@ -276,7 +276,7 @@ func FuzzCheckBTCDelegationRewardsTracker(f *testing.F) {
 		// check delete fp2
 		k.deleteKeysFromBTCDelegationRewardsTracker(ctx, fp2, [][]byte{del1.Bytes()})
 		count = 0
-		err = k.IterateBTCDelegationRewardsTracker(ctx, fp2, func(fp, del sdk.AccAddress) error {
+		err = k.IterateBTCDelegationRewardsTracker(ctx, fp2, func(fp, del sdk.AccAddress, val types.BTCDelegationRewardsTracker) error {
 			count++
 			return nil
 		})
@@ -286,7 +286,7 @@ func FuzzCheckBTCDelegationRewardsTracker(f *testing.F) {
 		// check delete all from fp1
 		k.deleteKeysFromBTCDelegationRewardsTracker(ctx, fp1, [][]byte{del1.Bytes(), del2.Bytes()})
 		count = 0
-		err = k.IterateBTCDelegationRewardsTracker(ctx, fp1, func(fp, del sdk.AccAddress) error {
+		err = k.IterateBTCDelegationRewardsTracker(ctx, fp1, func(fp, del sdk.AccAddress, val types.BTCDelegationRewardsTracker) error {
 			count++
 			return nil
 		})

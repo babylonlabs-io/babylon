@@ -69,11 +69,15 @@ func (k Keeper) GetFinalityProviderCurrentRewards(ctx context.Context, fp sdk.Ac
 
 // IterateBTCDelegationRewardsTracker iterates over all the delegation rewards tracker by the finality provider.
 // It stops if the function `it` returns an error.
-func (k Keeper) IterateBTCDelegationRewardsTracker(ctx context.Context, fp sdk.AccAddress, it func(fp, del sdk.AccAddress) error) error {
+func (k Keeper) IterateBTCDelegationRewardsTracker(
+	ctx context.Context,
+	fp sdk.AccAddress,
+	it func(fp, del sdk.AccAddress, val types.BTCDelegationRewardsTracker) error,
+) error {
 	rng := collections.NewPrefixedPairRange[[]byte, []byte](fp.Bytes())
 	return k.btcDelegationRewardsTracker.Walk(ctx, rng, func(key collections.Pair[[]byte, []byte], value types.BTCDelegationRewardsTracker) (stop bool, err error) {
 		del := sdk.AccAddress(key.K2())
-		if err := it(fp, del); err != nil {
+		if err := it(fp, del, value); err != nil {
 			return err != nil, err
 		}
 		return false, nil
