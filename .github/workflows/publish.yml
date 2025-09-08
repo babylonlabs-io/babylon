@@ -7,9 +7,6 @@ on:
       - "release/*"
     tags:
       - '*'
-<<<<<<< HEAD
-
-=======
   workflow_dispatch:
     inputs:
       skip-lint-test:
@@ -18,7 +15,6 @@ on:
         type: boolean
         default: false
         
->>>>>>> ea763118 (chore: allow docker_publish to skip tests and bump workflow version (#1680))
 permissions:
   contents: read
 
