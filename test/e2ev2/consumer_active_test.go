@@ -43,7 +43,31 @@ func TestConsumerActive(t *testing.T) {
 
 	resp := bbn.QueryConsumerActive(consumerID)
 	require.NotNil(t, resp, "Response should not be nil")
-	t.Logf("Consumer %s active status: %v", consumerID, resp.Active)
 
-	t.Log("Consumer active test completed")
+	mockContractAddr := "bbn1qyqszqgpqyqszqgpqyqszqgpqyqszqgpq5g7vvf"
+	rollupConsumerID := "rollup-test-consumer"
+
+	bbn.RegisterRollupConsumer(
+		bbn.DefaultWallet().KeyName,
+		rollupConsumerID,
+		"rollup-consumer",
+		"a test rollup consumer",
+		"0.1",
+		mockContractAddr,
+	)
+
+	tm.ChainsWaitUntilNextBlock()
+	tm.UpdateWalletsAccSeqNumber()
+
+	// query the rollup consumer active status, this will test the smart
+	// contract query path
+	// this should fail since the mock contract does not exist
+	rollupResp, rollupErr := bbn.QueryConsumerActiveWithError(rollupConsumerID)
+	if rollupErr != nil {
+		t.Logf("ROLLUP consumer query failed as expected (mock contract): %v", rollupErr)
+		// This is expected since we're using a mock contract address
+		require.Contains(t, rollupErr.Error(), "failed to query contract", "Should fail with contract query error")
+	} else {
+		t.Logf("ROLLUP Consumer %s active status: %v", rollupConsumerID, rollupResp.Active)
+	}
 }

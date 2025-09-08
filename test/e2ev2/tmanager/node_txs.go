@@ -118,3 +118,24 @@ func (n *Node) CreateFinalityProvider(walletName string, fp *bstypes.FinalityPro
 	require.NotNil(n.T(), tx, "CreateFinalityProvider transaction should not be nil")
 	n.T().Logf("Created finality provider for %s: %s", fp.BsnId, fp.BtcPk.MarshalHex())
 }
+
+
+func (n *Node) RegisterRollupConsumer(walletName, consumerID, consumerName, consumerDescription, commission, contractAddress string) {
+	wallet := n.Wallet(walletName)
+	require.NotNil(n.T(), wallet, "Wallet %s not found", walletName)
+
+	commissionDec, err := math.LegacyNewDecFromStr(commission)
+	require.NoError(n.T(), err, "Invalid commission: %s", commission)
+
+	msg := &bsctypes.MsgRegisterConsumer{
+		Signer:                            wallet.Address.String(),
+		ConsumerId:                        consumerID,
+		ConsumerName:                      consumerName,
+		ConsumerDescription:               consumerDescription,
+		RollupFinalityContractAddress:     contractAddress,
+		BabylonRewardsCommission:          commissionDec,
+	}
+
+	_, tx := wallet.SubmitMsgs(msg)
+	require.NotNil(n.T(), tx, "RegisterRollupConsumer transaction should not be nil")
+}

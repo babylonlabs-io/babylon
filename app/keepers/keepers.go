@@ -710,7 +710,6 @@ func (ak *AppKeepers) InitKeepers(
 		&ak.BTCStakingKeeper,
 		&ak.BTCStkConsumerKeeper,
 		&ak.WasmKeeper, // wasmKeeper
-		&ak.FinalityKeeper, // fKeeper
 		appparams.AccGov.String(),
 	)
 
