@@ -28,12 +28,16 @@ func TestHookStakingBeforeDelegationSharesModifiedUpdateCache(t *testing.T) {
 		Shares:           shares,
 	}
 
+	val, err := tmocks.CreateValidator(valAddr, shares.RoundInt())
+	require.NoError(t, err)
+
 	mockStkK := k.stkK.(*types.MockStakingKeeper)
 	mockStkK.EXPECT().GetDelegation(ctx, delAddr, valAddr).Return(delegation, nil).Times(1)
+	mockStkK.EXPECT().Validator(ctx, valAddr).Return(val, nil).Times(1)
 
 	hooks := k.HookStaking()
 
-	err := hooks.BeforeDelegationSharesModified(ctx, delAddr, valAddr)
+	err = hooks.BeforeDelegationSharesModified(ctx, delAddr, valAddr)
 	require.NoError(t, err)
 
 	// Verify the amount was cached by retrieving
@@ -99,6 +103,7 @@ func TestHookStakingAfterDelegationModified(t *testing.T) {
 	require.NoError(t, err)
 
 	mockStkK.EXPECT().GetDelegation(ctx, delAddr, valAddr).Return(delegation, nil).Times(1)
+	mockStkK.EXPECT().Validator(gomock.Any(), gomock.Eq(valAddr)).Return(&val, nil).Times(1)
 	err = hooks.BeforeDelegationSharesModified(ctx, delAddr, valAddr)
 	require.NoError(t, err)
 

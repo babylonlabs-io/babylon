@@ -24,16 +24,14 @@ func (h HookStaking) AfterDelegationModified(ctx context.Context, delAddr sdk.Ac
 		return err
 	}
 
-	beforeAmount := h.k.stkCache.GetStakedAmount(delAddr, valAddr)
-	afterAmount := del.Shares
-
 	valI, err := h.k.stkK.Validator(ctx, valAddr)
 	if err != nil {
 		return err
 	}
 
-	delSharesChange := afterAmount.Sub(beforeAmount)
-	delTokenChange := valI.TokensFromShares(delSharesChange).TruncateInt()
+	tokenStakedBefore := h.k.stkCache.GetStakedAmount(delAddr, valAddr)
+	tokensStaked := valI.TokensFromShares(del.Shares)
+	delTokenChange := tokensStaked.Sub(tokenStakedBefore).TruncateInt()
 	return h.k.costakerModified(ctx, delAddr, func(rwdTracker *types.CostakerRewardsTracker) {
 		rwdTracker.ActiveBaby = rwdTracker.ActiveBaby.Add(delTokenChange)
 	})
@@ -48,7 +46,12 @@ func (h HookStaking) BeforeDelegationSharesModified(ctx context.Context, delAddr
 		return nil
 	}
 
-	h.k.stkCache.SetStakedAmount(delAddr, valAddr, del.Shares)
+	valI, err := h.k.stkK.Validator(ctx, valAddr)
+	if err != nil {
+		return err
+	}
+	delTokens := valI.TokensFromShares(del.Shares)
+	h.k.stkCache.SetStakedAmount(delAddr, valAddr, delTokens)
 	return nil
 }
 
