@@ -19,16 +19,19 @@ func TestValidatorWithBlsKeySetValidate(t *testing.T) {
 	r := rand.New(rand.NewSource(time.Now().Unix()))
 	testCases := []struct {
 		name      string
+		numPks    int
 		setup     func(vs *types.ValidatorWithBlsKeySet, pks []bls12381.PrivateKey)
 		expectErr error
 	}{
 		{
 			name:      "valid - unique addresses and keys",
+			numPks:    int(datagen.RandomIntOtherThan(r, 0, 10)),
 			setup:     func(vs *types.ValidatorWithBlsKeySet, pks []bls12381.PrivateKey) {},
 			expectErr: nil,
 		},
 		{
-			name: "duplicate validator address",
+			name:   "duplicate validator address",
+			numPks: int(datagen.RandomIntOtherThan(r, 0, 10)),
 			setup: func(vs *types.ValidatorWithBlsKeySet, pks []bls12381.PrivateKey) {
 				l := len(vs.ValSet)
 				vs.ValSet[l-1].ValidatorAddress = vs.ValSet[0].ValidatorAddress
@@ -36,7 +39,8 @@ func TestValidatorWithBlsKeySetValidate(t *testing.T) {
 			expectErr: errors.New("duplicate ValidatorAddress found"),
 		},
 		{
-			name: "duplicate BLS pub key",
+			name:   "duplicate BLS pub key",
+			numPks: int(datagen.RandomIntOtherThan(r, 0, 10)),
 			setup: func(vs *types.ValidatorWithBlsKeySet, pks []bls12381.PrivateKey) {
 				l := len(vs.ValSet)
 				vs.ValSet[l-1].BlsPubKey = pks[0].PubKey()
@@ -44,14 +48,16 @@ func TestValidatorWithBlsKeySetValidate(t *testing.T) {
 			expectErr: errors.New("duplicate BlsPubKey found"),
 		},
 		{
-			name: "invalid BLS pub key length",
+			name:   "invalid BLS pub key length",
+			numPks: int(datagen.RandomIntOtherThan(r, 0, 10)),
 			setup: func(vs *types.ValidatorWithBlsKeySet, pks []bls12381.PrivateKey) {
 				vs.ValSet[0].BlsPubKey = []byte{0x01, 0x02}
 			},
 			expectErr: fmt.Errorf("invalid BLS public key length, got 2, expected 96"),
 		},
 		{
-			name: "invalid BLS pub key - not a valid point on curve",
+			name:   "invalid BLS pub key - not a valid point on curve",
+			numPks: 1,
 			setup: func(vs *types.ValidatorWithBlsKeySet, pks []bls12381.PrivateKey) {
 				// Create a random invalid key
 				invalidKey := make([]byte, bls12381.PubKeySize)
@@ -68,7 +74,7 @@ func TestValidatorWithBlsKeySetValidate(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			vs, privKeys := datagen.GenerateValidatorSetWithBLSPrivKeys(int(datagen.RandomIntOtherThan(r, 0, 10) + 1)) // make sure to always have at least 2 validators
+			vs, privKeys := datagen.GenerateValidatorSetWithBLSPrivKeys(tc.numPks)
 			tc.setup(vs, privKeys)
 			err := vs.Validate()
 			if tc.expectErr == nil {
