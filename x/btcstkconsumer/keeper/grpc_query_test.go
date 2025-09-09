@@ -164,5 +164,4 @@ func TestConsumerActive(t *testing.T) {
 	})
 	require.Error(t, err, "Should return error for empty contract address")
 	require.Nil(t, resp)
-	require.True(t, resp.Active)
 }
