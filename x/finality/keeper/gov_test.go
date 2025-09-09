@@ -241,8 +241,8 @@ func TestHandleResumeFinalityProposalMissingSigningInfo(t *testing.T) {
 	bsKeeper := types.NewMockBTCStakingKeeper(ctrl)
 	iKeeper := types.NewMockIncentiveKeeper(ctrl)
 	cKeeper := types.NewMockCheckpointingKeeper(ctrl)
-	hooks := types.NewMockFinalityHooks(ctrl)
-	fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper, hooks)
+	fHooks := types.NewMockFinalityHooks(ctrl)
+	fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper, fHooks)
 
 	// Setup heights
 	haltingHeight := uint64(100)
@@ -346,9 +346,9 @@ func TestHandleResumeFinalityProposalMissingSigningInfo(t *testing.T) {
 	// TODO: (Rafa & Tom) check if this is actually the expected, call to active event the number of blocks being updated.
 	// Reminder, each time an fp get actived/inactive all his btc delegators will be iterated to update rewards
 	timesFpSetToActive := (ctx.HeaderInfo().Height - int64(haltingHeight)) + 1
-	hooks.EXPECT().AfterFpStatusChange(
+	fHooks.EXPECT().AfterFpStatusChange(
 		gomock.Any(), inactiveFpAddr, true,
-		bstypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_INACTIVE, bstypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_ACTIVE,
+		bstypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_ACTIVE, bstypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_ACTIVE,
 	).Times(int(timesFpSetToActive))
 	err = fKeeper.HandleResumeFinalityProposal(
 		ctx,
