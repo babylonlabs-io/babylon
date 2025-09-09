@@ -18,12 +18,12 @@ import (
 )
 
 // Helper function to setup basic test environment
-func setupTestEnvironment(t *testing.T) (*testhelper.Helper, sdk.Context, *rand.Rand) {
+func setupTestEnvironment(t *testing.T) (*testhelper.Helper, sdk.Context) {
 	r := rand.New(rand.NewSource(time.Now().Unix()))
 	helper := testhelper.NewHelper(t)
 	ctx, err := helper.ApplyEmptyBlockWithVoteExtension(r)
 	require.NoError(t, err)
-	return helper, ctx, r
+	return helper, ctx
 }
 
 // Helper function to get existing validator from helper
@@ -40,9 +40,8 @@ func getExistingValidator(t *testing.T, helper *testhelper.Helper, ctx sdk.Conte
 }
 
 // Helper function to get initial balances and delegation
-func getInitialState(t *testing.T, helper *testhelper.Helper, ctx sdk.Context,
-	delegatorAddr sdk.AccAddress, validatorAddr sdk.ValAddress, amount sdk.Coin) (
-	sdk.Coin, sdk.Coin, sdkmath.LegacyDec) {
+func getInitialState(helper *testhelper.Helper, ctx sdk.Context,
+	delegatorAddr sdk.AccAddress, validatorAddr sdk.ValAddress, amount sdk.Coin) (sdk.Coin, sdk.Coin, sdkmath.LegacyDec) {
 
 	// Get delegate pool address for balance checks
 	delegatePoolAddr := helper.App.AccountKeeper.GetModuleAddress("epoching_delegate_pool")
@@ -64,9 +63,7 @@ func getInitialState(t *testing.T, helper *testhelper.Helper, ctx sdk.Context,
 }
 
 // Helper function to submit wrapped delegate message
-func submitWrappedDelegate(t *testing.T, helper *testhelper.Helper, ctx sdk.Context,
-	delegatorAddr sdk.AccAddress, validatorAddr sdk.ValAddress, amount sdk.Coin, shouldLockFunds bool) {
-
+func submitWrappedDelegate(t *testing.T, helper *testhelper.Helper, ctx sdk.Context, delegatorAddr sdk.AccAddress, validatorAddr sdk.ValAddress, amount sdk.Coin, shouldLockFunds bool) {
 	wrappedMsg := types.NewMsgWrappedDelegate(
 		stakingtypes.NewMsgDelegate(
 			delegatorAddr.String(),
@@ -135,8 +132,7 @@ func executeEndBlocker(t *testing.T, helper *testhelper.Helper, ctx sdk.Context,
 // Helper function to verify final state for unlock/execution scenarios
 func verifyFinalState(t *testing.T, helper *testhelper.Helper, ctx sdk.Context,
 	delegatorAddr sdk.AccAddress, validatorAddr sdk.ValAddress, amount sdk.Coin,
-	initialUserBalance, initialPoolBalance sdk.Coin, initialDelegationShares sdkmath.LegacyDec,
-	expectUnlockErr, expectMessageExecErr bool) {
+	initialUserBalance, initialPoolBalance sdk.Coin, initialDelegationShares sdkmath.LegacyDec, expectUnlockErr, expectMessageExecErr bool) {
 
 	// Get delegate pool address
 	delegatePoolAddr := helper.App.AccountKeeper.GetModuleAddress("epoching_delegate_pool")
@@ -195,9 +191,7 @@ func verifyFinalState(t *testing.T, helper *testhelper.Helper, ctx sdk.Context,
 
 // Helper function to verify WrappedDelegate result and balances
 func verifyWrappedDelegateResult(t *testing.T, helper *testhelper.Helper, ctx sdk.Context,
-	delegatorAddr sdk.AccAddress, amount sdk.Coin, wrappedMsg *types.MsgWrappedDelegate,
-	expectError bool, description string) {
-
+	delegatorAddr sdk.AccAddress, amount sdk.Coin, wrappedMsg *types.MsgWrappedDelegate, expectError bool, description string) {
 	// Get initial balances
 	initialBalance := helper.App.BankKeeper.GetBalance(ctx, delegatorAddr, "ubbn")
 	delegatePoolAddr := helper.App.AccountKeeper.GetModuleAddress(types.DelegatePoolModuleName)
@@ -239,7 +233,7 @@ func verifyWrappedDelegateResult(t *testing.T, helper *testhelper.Helper, ctx sd
 }
 
 func TestLockFunds_WrappedDelegate(t *testing.T) {
-	helper, ctx, _ := setupTestEnvironment(t)
+	helper, ctx := setupTestEnvironment(t)
 
 	delegatorAddr := helper.GenAccs[0].GetAddress()
 	validatorAddr := sdk.ValAddress(delegatorAddr)
@@ -299,7 +293,7 @@ func TestLockFunds_WrappedDelegate(t *testing.T) {
 }
 
 func TestLockFunds_WrappedCreateValidator(t *testing.T) {
-	helper, ctx, _ := setupTestEnvironment(t)
+	helper, ctx := setupTestEnvironment(t)
 
 	validatorAddr := sdk.ValAddress(helper.GenAccs[0].GetAddress())
 	amount := sdk.NewCoin("ubbn", sdkmath.NewInt(1000000))
@@ -372,7 +366,7 @@ func TestLockFunds_WrappedCreateValidator(t *testing.T) {
 }
 
 func TestLockFunds_UnsupportedMessageType(t *testing.T) {
-	helper, ctx, _ := setupTestEnvironment(t)
+	helper, ctx := setupTestEnvironment(t)
 
 	delegatorAddr := helper.GenAccs[0].GetAddress()
 	validatorAddr := sdk.ValAddress(delegatorAddr)
@@ -419,7 +413,7 @@ func TestLockFunds_UnsupportedMessageType(t *testing.T) {
 }
 
 func TestLockFundsError_InsufficientBalance(t *testing.T) {
-	helper, ctx, _ := setupTestEnvironment(t)
+	helper, ctx := setupTestEnvironment(t)
 
 	delegatorAddr := helper.GenAccs[0].GetAddress()
 	validatorAddr := sdk.ValAddress(delegatorAddr)
@@ -454,7 +448,7 @@ func TestLockFundsError_InsufficientBalance(t *testing.T) {
 }
 
 func TestLockUnlockFunds_InvalidAddress(t *testing.T) {
-	helper, ctx, _ := setupTestEnvironment(t)
+	helper, ctx := setupTestEnvironment(t)
 
 	amount := sdk.NewCoin("ubbn", sdkmath.NewInt(100000))
 
@@ -487,7 +481,7 @@ func TestLockUnlockFunds_InvalidAddress(t *testing.T) {
 }
 
 func TestLockUnlockFunds_CreateValidatorInvalidAddress(t *testing.T) {
-	helper, ctx, _ := setupTestEnvironment(t)
+	helper, ctx := setupTestEnvironment(t)
 
 	amount := sdk.NewCoin("ubbn", sdkmath.NewInt(1000000))
 	valPubKey := ed25519.GenPrivKey().PubKey()
@@ -533,12 +527,12 @@ func TestLockUnlockFunds_CreateValidatorInvalidAddress(t *testing.T) {
 }
 
 func TestIntegrationUnlockMessageExecution_UnlockSuccessExecutionSuccess(t *testing.T) {
-	helper, ctx, _ := setupTestEnvironment(t)
+	helper, ctx := setupTestEnvironment(t)
 	delegatorAddr, validatorAddr := getExistingValidator(t, helper, ctx)
 	amount := sdk.NewCoin("ubbn", sdkmath.NewInt(100000))
 
 	// Get initial state
-	initialUserBalance, initialPoolBalance, initialDelegationShares := getInitialState(t, helper, ctx, delegatorAddr, validatorAddr, amount)
+	initialUserBalance, initialPoolBalance, initialDelegationShares := getInitialState(helper, ctx, delegatorAddr, validatorAddr, amount)
 
 	// Submit wrapped delegate message with fund locking
 	submitWrappedDelegate(t, helper, ctx, delegatorAddr, validatorAddr, amount, true)
@@ -552,12 +546,12 @@ func TestIntegrationUnlockMessageExecution_UnlockSuccessExecutionSuccess(t *test
 }
 
 func TestIntegrationUnlockMessageExecution_UnlockFailExecutionSkip(t *testing.T) {
-	helper, ctx, _ := setupTestEnvironment(t)
+	helper, ctx := setupTestEnvironment(t)
 	delegatorAddr, validatorAddr := getExistingValidator(t, helper, ctx)
 	amount := sdk.NewCoin("ubbn", sdkmath.NewInt(100000))
 
 	// Get initial state
-	initialUserBalance, initialPoolBalance, initialDelegationShares := getInitialState(t, helper, ctx, delegatorAddr, validatorAddr, amount)
+	initialUserBalance, initialPoolBalance, initialDelegationShares := getInitialState(helper, ctx, delegatorAddr, validatorAddr, amount)
 
 	// Submit wrapped delegate message without fund locking
 	submitWrappedDelegate(t, helper, ctx, delegatorAddr, validatorAddr, amount, false)
@@ -571,12 +565,12 @@ func TestIntegrationUnlockMessageExecution_UnlockFailExecutionSkip(t *testing.T)
 }
 
 func TestIntegrationUnlockMessageExecution_UnlockSuccessExecutionFailAutomaticRefund(t *testing.T) {
-	helper, ctx, _ := setupTestEnvironment(t)
+	helper, ctx := setupTestEnvironment(t)
 	delegatorAddr, validatorAddr := getExistingValidator(t, helper, ctx)
 	amount := sdk.NewCoin("ubbn", sdkmath.NewInt(100000))
 
 	// Get initial state
-	initialUserBalance, initialPoolBalance, initialDelegationShares := getInitialState(t, helper, ctx, delegatorAddr, validatorAddr, amount)
+	initialUserBalance, initialPoolBalance, initialDelegationShares := getInitialState(helper, ctx, delegatorAddr, validatorAddr, amount)
 
 	// Submit wrapped delegate message with fund locking
 	submitWrappedDelegate(t, helper, ctx, delegatorAddr, validatorAddr, amount, true)
@@ -590,7 +584,7 @@ func TestIntegrationUnlockMessageExecution_UnlockSuccessExecutionFailAutomaticRe
 }
 
 func TestIntegrationLockUnlock_ValidationEnqueueLockAllSuccess(t *testing.T) {
-	helper, ctx, _ := setupTestEnvironment(t)
+	helper, ctx := setupTestEnvironment(t)
 	delegatorAddr := helper.GenAccs[0].GetAddress()
 	validatorAddr := sdk.ValAddress(delegatorAddr)
 	amount := sdk.NewCoin("ubbn", sdkmath.NewInt(50000000))
@@ -608,7 +602,7 @@ func TestIntegrationLockUnlock_ValidationEnqueueLockAllSuccess(t *testing.T) {
 }
 
 func TestIntegrationLockUnlock_ValidationFailMinimumAmount(t *testing.T) {
-	helper, ctx, _ := setupTestEnvironment(t)
+	helper, ctx := setupTestEnvironment(t)
 	delegatorAddr := helper.GenAccs[0].GetAddress()
 	validatorAddr := sdk.ValAddress(delegatorAddr)
 	zeroAmount := sdk.NewCoin("ubbn", sdkmath.NewInt(0))
@@ -626,7 +620,7 @@ func TestIntegrationLockUnlock_ValidationFailMinimumAmount(t *testing.T) {
 }
 
 func TestIntegrationLockUnlock_InsufficientBalanceLockFail(t *testing.T) {
-	helper, ctx, _ := setupTestEnvironment(t)
+	helper, ctx := setupTestEnvironment(t)
 	delegatorAddr := helper.GenAccs[0].GetAddress()
 	validatorAddr := sdk.ValAddress(delegatorAddr)
 
@@ -647,7 +641,7 @@ func TestIntegrationLockUnlock_InsufficientBalanceLockFail(t *testing.T) {
 }
 
 func TestIntegrationLockUnlock_InvalidDenomValidationFail(t *testing.T) {
-	helper, ctx, _ := setupTestEnvironment(t)
+	helper, ctx := setupTestEnvironment(t)
 	delegatorAddr := helper.GenAccs[0].GetAddress()
 	validatorAddr := sdk.ValAddress(delegatorAddr)
 	invalidDenomAmount := sdk.NewCoin("invalid-denom", sdkmath.NewInt(50000000))
