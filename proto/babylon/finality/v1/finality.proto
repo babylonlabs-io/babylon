@@ -7,6 +7,7 @@ import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
 import "amino/amino.proto";
 import "google/protobuf/timestamp.proto";
+import "babylon/btcstaking/v1/events.proto";
 
 // VotingPowerDistCache is the cache for voting power distribution of finality
 // providers and their BTC delegations at a height
@@ -51,6 +52,8 @@ message FinalityProviderDistInfo {
   // is_slashed indicates whether the finality provider
   // is slashed, if so, it should not be assigned voting power
   bool is_slashed = 7;
+  // Status the FP status on the FP distribution info
+  FinalityProviderStatus status = 8;
 }
 
 // IndexedBlock is the necessary metadata and finalization status of a block
