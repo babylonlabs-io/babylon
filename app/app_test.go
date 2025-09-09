@@ -5,7 +5,6 @@ import (
 	"strings"
 	"testing"
 
-
 	tokenfactorytypes "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/types"
 
 	"cosmossdk.io/log"
@@ -22,7 +21,6 @@ import (
 
 	babylonApp "github.com/babylonlabs-io/babylon/v4/app"
 	testsigner "github.com/babylonlabs-io/babylon/v4/testutil/signer"
-	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
 	incentivetypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
 	minttypes "github.com/babylonlabs-io/babylon/v4/x/mint/types"

@@ -5,8 +5,6 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
-
 	"cosmossdk.io/log"
 	babylonApp "github.com/babylonlabs-io/babylon/v4/app"
 	appsigner "github.com/babylonlabs-io/babylon/v4/app/signer"
