@@ -47,6 +47,8 @@ import (
 	costktypes "github.com/babylonlabs-io/babylon/v4/x/costaking/types"
 )
 
+const testDataDir = "testdata"
+
 func setupTestKeepers(t *testing.T, btcTip uint32) (sdk.Context, codec.BinaryCodec, corestore.KVStoreService, *stkkeeper.Keeper, btcstkkeeper.Keeper, *storetypes.KVStoreKey, *costkkeeper.Keeper, *gomock.Controller) {
 	ctrl := gomock.NewController(t)
 
@@ -495,7 +497,6 @@ func convertBTCDelegationResponseToBTCDelegation(resp *btcstktypes.BTCDelegation
 
 // loadAndSeedBTCDelegations loads BTC delegations from file and seeds them into keeper using streaming
 func loadAndSeedBTCDelegations(t *testing.T, ctx sdk.Context, btcStkStoreKey *storetypes.KVStoreKey) (int, error) {
-	testDataDir := "testdata"
 	filePath := filepath.Join(testDataDir, "testnet-btc-delegations.json")
 
 	// Check if file exists. Should be downloaded or got from cache by CI workflow
@@ -591,7 +592,6 @@ func loadAndSeedBTCDelegations(t *testing.T, ctx sdk.Context, btcStkStoreKey *st
 
 // loadAndSeedCosmosDelegations loads cosmos delegations from file and seeds them into keeper using streaming
 func loadAndSeedCosmosDelegations(t *testing.T, ctx sdk.Context, stkKeeper *stkkeeper.Keeper) (int, error) {
-	testDataDir := "testdata"
 	filePath := filepath.Join(testDataDir, "testnet-baby-delegations.json")
 
 	file, err := os.Open(filePath)
@@ -687,7 +687,6 @@ func loadAndSeedCosmosDelegations(t *testing.T, ctx sdk.Context, stkKeeper *stkk
 
 // loadTestnetCostakers loads expected costaker addresses from testnet-costaker-addresses.txt
 func loadTestnetCostakers() ([]string, error) {
-	testDataDir := "testdata"
 	filePath := filepath.Join(testDataDir, "testnet-costaker-addresses.txt")
 
 	file, err := os.Open(filePath)
