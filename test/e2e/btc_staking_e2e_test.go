@@ -359,6 +359,7 @@ func (s *BTCStakingTestSuite) Test4WithdrawReward() {
 
 // Test5SubmitStakerUnbonding is an end-to-end test for user unbonding
 func (s *BTCStakingTestSuite) Test5SubmitStakerUnbonding() {
+	s.T().Logf("logging Test5SubmitStakerUnbonding")
 	chainA := s.configurer.GetChainConfig(0)
 	chainA.WaitUntilHeight(1)
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)

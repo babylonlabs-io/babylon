@@ -39,6 +39,16 @@ func (k Keeper) costakerModified(ctx context.Context, costaker sdk.AccAddress, m
 
 	if deltaScoreChange.IsZero() {
 		// if there is no change from previous score, just update the costaker tracker and return
+		if rwdTracker.StartPeriodCumulativeReward == 0 {
+			// if it was just initialized and there will be no change in the score value
+			// sets the current period as the starting point
+			currentRwd, err := k.GetCurrentRewards(ctx)
+			if err != nil {
+				return err
+			}
+
+			rwdTracker.StartPeriodCumulativeReward = currentRwd.Period
+		}
 		return k.setCostakerRewardsTracker(ctx, costaker, *rwdTracker)
 	}
 
