@@ -13428,7 +13428,7 @@ paths:
                   of this costaker.
             description: |-
               QueryCostakerRewardsTrackerResponse is the response type for the
-              Query/costakerRewardsTracker RPC method.
+              Query/CostakerRewardsTracker RPC method.
         default:
           description: An unexpected error response.
           schema:
@@ -13524,7 +13524,7 @@ paths:
 
                   creating new historical rewards and correlate with
 
-                  costakerRewardsTracker StartPeriodCumulativeReward.
+                  CostakerRewardsTracker StartPeriodCumulativeReward.
               total_score:
                 type: string
                 format: byte
@@ -13658,7 +13658,7 @@ paths:
                   costaking_portion:
                     type: string
                     description: >-
-                      costakingPortion is the portion of rewards that goes to
+                      CostakingPortion is the portion of rewards that goes to
                       costakers
 
                       NOTE: This portion of costakers is taken after the
@@ -22783,7 +22783,7 @@ definitions:
       costaking_portion:
         type: string
         description: |-
-          costakingPortion is the portion of rewards that goes to costakers
+          CostakingPortion is the portion of rewards that goes to costakers
           NOTE: This portion of costakers is taken after the incentive module
           takes part of the fee_collector to give out to BTC stakers.
       score_ratio_btc_by_baby:
@@ -22839,7 +22839,7 @@ definitions:
           of this costaker.
     description: |-
       QueryCostakerRewardsTrackerResponse is the response type for the
-      Query/costakerRewardsTracker RPC method.
+      Query/CostakerRewardsTracker RPC method.
   babylon.costaking.v1.QueryCurrentRewardsResponse:
     type: object
     properties:
@@ -22885,7 +22885,7 @@ definitions:
         description: |-
           Period stores the current period that serves as a reference for
           creating new historical rewards and correlate with
-          costakerRewardsTracker StartPeriodCumulativeReward.
+          CostakerRewardsTracker StartPeriodCumulativeReward.
       total_score:
         type: string
         format: byte
@@ -22938,7 +22938,7 @@ definitions:
           costaking_portion:
             type: string
             description: >-
-              costakingPortion is the portion of rewards that goes to costakers
+              CostakingPortion is the portion of rewards that goes to costakers
 
               NOTE: This portion of costakers is taken after the incentive
               module

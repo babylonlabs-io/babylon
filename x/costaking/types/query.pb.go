@@ -117,7 +117,7 @@ func (m *QueryParamsResponse) GetParams() Params {
 }
 
 // QueryCostakerRewardsTrackerRequest is the request type for the
-// Query/costakerRewardsTracker RPC method.
+// Query/CostakerRewardsTracker RPC method.
 type QueryCostakerRewardsTrackerRequest struct {
 	// costakerAddress defines the delegator address to query for.
 	CostakerAddress string `protobuf:"bytes,1,opt,name=costaker_address,json=costakerAddress,proto3" json:"costaker_address,omitempty"`
@@ -157,7 +157,7 @@ func (m *QueryCostakerRewardsTrackerRequest) XXX_DiscardUnknown() {
 var xxx_messageInfo_QueryCostakerRewardsTrackerRequest proto.InternalMessageInfo
 
 // QueryCostakerRewardsTrackerResponse is the response type for the
-// Query/costakerRewardsTracker RPC method.
+// Query/CostakerRewardsTracker RPC method.
 type QueryCostakerRewardsTrackerResponse struct {
 	// StartPeriodCumulativeReward the starting period the costaker
 	// made his last withdraw of costaking rewards or modified his active staking
@@ -260,7 +260,7 @@ type QueryCurrentRewardsResponse struct {
 	Rewards github_com_cosmos_cosmos_sdk_types.Coins `protobuf:"bytes,1,rep,name=rewards,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coins" json:"rewards"`
 	// Period stores the current period that serves as a reference for
 	// creating new historical rewards and correlate with
-	// costakerRewardsTracker StartPeriodCumulativeReward.
+	// CostakerRewardsTracker StartPeriodCumulativeReward.
 	Period uint64 `protobuf:"varint,2,opt,name=period,proto3" json:"period,omitempty"`
 	// TotalScore is the total amount of score calulated over
 	// all the stakers score in the chain.

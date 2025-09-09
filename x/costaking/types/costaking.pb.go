@@ -27,7 +27,7 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 // Params defines the parameters for the module.
 type Params struct {
-	// costakingPortion is the portion of rewards that goes to costakers
+	// CostakingPortion is the portion of rewards that goes to costakers
 	// NOTE: This portion of costakers is taken after the incentive module
 	// takes part of the fee_collector to give out to BTC stakers.
 	CostakingPortion cosmossdk_io_math.LegacyDec `protobuf:"bytes,1,opt,name=costaking_portion,json=costakingPortion,proto3,customtype=cosmossdk.io/math.LegacyDec" json:"costaking_portion"`
