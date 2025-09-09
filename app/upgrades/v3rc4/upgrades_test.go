@@ -493,63 +493,14 @@ func convertBTCDelegationResponseToBTCDelegation(resp *btcstktypes.BTCDelegation
 	return del, nil
 }
 
-// // downloadFromGoogleDrive downloads a file from Google Drive using the file ID
-// func downloadFromGoogleDrive(fileID, filePath string) error {
-// 	// Use the direct download URL that bypasses the virus scan warning for large files
-// 	url := fmt.Sprintf("https://drive.usercontent.google.com/download?id=%s&export=download&confirm=t", fileID)
-
-// 	client := &http.Client{}
-// 	req, err := http.NewRequest("GET", url, nil)
-// 	if err != nil {
-// 		return fmt.Errorf("failed to create request: %w", err)
-// 	}
-
-// 	// Add user agent to avoid potential blocking
-// 	req.Header.Set("User-Agent", "Mozilla/5.0 (compatible; babylon-test)")
-
-// 	resp, err := client.Do(req)
-// 	if err != nil {
-// 		return fmt.Errorf("failed to download file from Google Drive: %w", err)
-// 	}
-// 	defer resp.Body.Close()
-
-// 	if resp.StatusCode != http.StatusOK {
-// 		return fmt.Errorf("failed to download file: HTTP status %d", resp.StatusCode)
-// 	}
-
-// 	// Create the directory if it doesn't exist
-// 	if err := os.MkdirAll(filepath.Dir(filePath), 0755); err != nil {
-// 		return fmt.Errorf("failed to create directory: %w", err)
-// 	}
-
-// 	file, err := os.Create(filePath)
-// 	if err != nil {
-// 		return fmt.Errorf("failed to create file: %w", err)
-// 	}
-// 	defer file.Close()
-
-// 	_, err = io.Copy(file, resp.Body)
-// 	if err != nil {
-// 		return fmt.Errorf("failed to write file: %w", err)
-// 	}
-
-// 	return nil
-// }
-
 // loadAndSeedBTCDelegations loads BTC delegations from file and seeds them into keeper using streaming
 func loadAndSeedBTCDelegations(t *testing.T, ctx sdk.Context, btcStkStoreKey *storetypes.KVStoreKey) (int, error) {
 	testDataDir := "testdata"
 	filePath := filepath.Join(testDataDir, "testnet-btc-delegations.json")
 
-	// Check if file exists, if not download from Google Drive
-	if _, err := os.Stat(filePath); os.IsNotExist(err) {
-		// t.Logf("File %s does not exist, downloading from Google Drive...", filePath)
-		// fileID := "1yz9CDGU4eWGjUbFXY1rtDZ_D13P8mdBr"
-		// if err := downloadFromGoogleDrive(fileID, filePath); err != nil {
-		// 	return 0, fmt.Errorf("failed to download BTC delegations file: %w", err)
-		// }
-		// t.Logf("Successfully downloaded %s", filePath)
-		return 0, fmt.Errorf("File %s does not exist", filePath)
+	// Check if file exists. Should be downloaded or got from cache by CI workflow
+	if _, err := os.Stat(filePath); err != nil {
+		return 0, fmt.Errorf("Error getting file %s. Error: %w", filePath, err)
 	}
 
 	file, err := os.Open(filePath)
