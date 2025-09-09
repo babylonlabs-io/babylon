@@ -703,6 +703,7 @@ func (ak *AppKeepers) InitKeepers(
 	ak.FinalityKeeper.SetHooks(
 		finalitytypes.NewMultiFinalityHooks(
 			ak.IncentiveKeeper.Hooks(),
+			ak.CostakingKeeper.HookFinality(),
 		),
 	)
 
