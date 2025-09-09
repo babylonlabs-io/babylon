@@ -35,6 +35,14 @@ func (dc *VotingPowerDistCache) AddFinalityProviderDistInfo(v *FinalityProviderD
 	dc.FinalityProviders = append(dc.FinalityProviders, v)
 }
 
+func (dc VotingPowerDistCache) FpsByBtcPkHex() map[string]*FinalityProviderDistInfo {
+	fps := make(map[string]*FinalityProviderDistInfo, len(dc.FinalityProviders))
+	for _, fp := range dc.FinalityProviders {
+		fps[fp.BtcPk.MarshalHex()] = fp
+	}
+	return fps
+}
+
 func (dc *VotingPowerDistCache) FindNewActiveFinalityProviders(prevDc *VotingPowerDistCache) []*FinalityProviderDistInfo {
 	activeFps := dc.GetActiveFinalityProviderSet()
 	prevActiveFps := prevDc.GetActiveFinalityProviderSet()
@@ -154,17 +162,17 @@ func (dc *VotingPowerDistCache) GetInactiveFinalityProviderSet() map[string]*Fin
 	return inactiveFps
 }
 
-func (vpdc VotingPowerDistCache) Validate() error {
+func (dc VotingPowerDistCache) Validate() error {
 	// check fps are unique and total voting power is correct
 	var (
 		accVP uint64
 		fpMap = make(map[string]struct{})
 	)
 
-	SortFinalityProvidersWithZeroedVotingPower(vpdc.FinalityProviders)
+	SortFinalityProvidersWithZeroedVotingPower(dc.FinalityProviders)
 	numActiveFPs := uint32(0)
 
-	for _, fp := range vpdc.FinalityProviders {
+	for _, fp := range dc.FinalityProviders {
 		if _, exists := fpMap[fp.BtcPk.MarshalHex()]; exists {
 			return fmt.Errorf("invalid voting power distribution cache. Duplicate finality provider entry with BTC PK %s", fp.BtcPk.MarshalHex())
 		}
@@ -189,12 +197,12 @@ func (vpdc VotingPowerDistCache) Validate() error {
 		numActiveFPs++
 	}
 
-	if vpdc.TotalVotingPower != accVP {
-		return fmt.Errorf("invalid voting power distribution cache. Provided TotalVotingPower %d is different than FPs accumulated voting power %d", vpdc.TotalVotingPower, accVP)
+	if dc.TotalVotingPower != accVP {
+		return fmt.Errorf("invalid voting power distribution cache. Provided TotalVotingPower %d is different than FPs accumulated voting power %d", dc.TotalVotingPower, accVP)
 	}
 
-	if vpdc.NumActiveFps != numActiveFPs {
-		return fmt.Errorf("invalid voting power distribution cache. NumActiveFps %d is higher than active FPs count %d", vpdc.NumActiveFps, numActiveFPs)
+	if dc.NumActiveFps != numActiveFPs {
+		return fmt.Errorf("invalid voting power distribution cache. NumActiveFps %d is higher than active FPs count %d", dc.NumActiveFps, numActiveFPs)
 	}
 
 	return nil

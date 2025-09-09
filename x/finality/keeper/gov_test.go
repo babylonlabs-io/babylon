@@ -346,7 +346,10 @@ func TestHandleResumeFinalityProposalMissingSigningInfo(t *testing.T) {
 	// TODO: (Rafa & Tom) check if this is actually the expected, call to active event the number of blocks being updated.
 	// Reminder, each time an fp get actived/inactive all his btc delegators will be iterated to update rewards
 	timesFpSetToActive := (ctx.HeaderInfo().Height - int64(haltingHeight)) + 1
-	hooks.EXPECT().AfterFpStatusChange(gomock.Any(), inactiveFpAddr, true, bstypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_ACTIVE).Times(int(timesFpSetToActive))
+	hooks.EXPECT().AfterFpStatusChange(
+		gomock.Any(), inactiveFpAddr, true,
+		bstypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_INACTIVE, bstypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_ACTIVE,
+	).Times(int(timesFpSetToActive))
 	err = fKeeper.HandleResumeFinalityProposal(
 		ctx,
 		[]string{activeFpPks[1].MarshalHex(), activeFpPks[2].MarshalHex()},

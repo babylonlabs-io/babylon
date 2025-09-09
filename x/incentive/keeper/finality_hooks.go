@@ -54,6 +54,6 @@ func (h Hooks) AfterBtcDelegationUnbonded(ctx context.Context, fpAddr, btcDelAdd
 }
 
 // AfterFpStatusChange implements types.FinalityHooks
-func (h Hooks) AfterFpStatusChange(ctx context.Context, fpAddr sdk.AccAddress, fpSecuresBabylon bool, newStatus types.FinalityProviderStatus) error {
+func (h Hooks) AfterFpStatusChange(ctx context.Context, fpAddr sdk.AccAddress, fpSecuresBabylon bool, prevStatus, newStatus types.FinalityProviderStatus) error {
 	return nil
 }

@@ -35,7 +35,7 @@ func FuzzVotingPowerTable(f *testing.F) {
 		fHooks := h.FinalityHooks.(*ftypes.MockFinalityHooks)
 		fHooks.EXPECT().AfterBtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 		fHooks.EXPECT().AfterBtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
-		fHooks.EXPECT().AfterFpStatusChange(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+		fHooks.EXPECT().AfterFpStatusChange(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 
 		// set all parameters
 		covenantSKs, _ := h.GenAndApplyParams(r)
@@ -191,7 +191,7 @@ func FuzzRecordVotingPowerDistCache(f *testing.F) {
 		fHooks := h.FinalityHooks.(*ftypes.MockFinalityHooks)
 		fHooks.EXPECT().AfterBtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 		fHooks.EXPECT().AfterBtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
-		fHooks.EXPECT().AfterFpStatusChange(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+		fHooks.EXPECT().AfterFpStatusChange(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 
 		// set all parameters
 		covenantSKs, _ := h.GenAndApplyParams(r)
@@ -274,7 +274,7 @@ func FuzzVotingPowerTable_ActiveFinalityProviders(f *testing.F) {
 		fHooks := h.FinalityHooks.(*ftypes.MockFinalityHooks)
 		fHooks.EXPECT().AfterBtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 		fHooks.EXPECT().AfterBtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
-		fHooks.EXPECT().AfterFpStatusChange(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+		fHooks.EXPECT().AfterFpStatusChange(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 
 		// set all parameters
 		covenantSKs, _ := h.GenAndApplyParams(r)
@@ -380,7 +380,7 @@ func FuzzVotingPowerTable_ActiveFinalityProviderRotation(f *testing.F) {
 		// TODO: add expected values
 		fHooks := h.FinalityHooks.(*ftypes.MockFinalityHooks)
 		fHooks.EXPECT().AfterBtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
-		fHooks.EXPECT().AfterFpStatusChange(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+		fHooks.EXPECT().AfterFpStatusChange(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 
 		// set all parameters
 		covenantSKs, _ := h.GenAndApplyParams(r)

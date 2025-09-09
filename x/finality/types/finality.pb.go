@@ -4,8 +4,13 @@
 package types
 
 import (
-	cosmossdk_io_math "cosmossdk.io/math"
 	fmt "fmt"
+	io "io"
+	math "math"
+	math_bits "math/bits"
+	time "time"
+
+	cosmossdk_io_math "cosmossdk.io/math"
 	github_com_babylonlabs_io_babylon_v4_types "github.com/babylonlabs-io/babylon/v4/types"
 	_ "github.com/cosmos/cosmos-proto"
 	_ "github.com/cosmos/cosmos-sdk/types/tx/amino"
@@ -13,10 +18,6 @@ import (
 	proto "github.com/cosmos/gogoproto/proto"
 	github_com_cosmos_gogoproto_types "github.com/cosmos/gogoproto/types"
 	_ "google.golang.org/protobuf/types/known/timestamppb"
-	io "io"
-	math "math"
-	math_bits "math/bits"
-	time "time"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -45,35 +46,35 @@ type VotingPowerDistCache struct {
 	NumActiveFps uint32 `protobuf:"varint,3,opt,name=num_active_fps,json=numActiveFps,proto3" json:"num_active_fps,omitempty"`
 }
 
-func (m *VotingPowerDistCache) Reset()         { *m = VotingPowerDistCache{} }
-func (m *VotingPowerDistCache) String() string { return proto.CompactTextString(m) }
-func (*VotingPowerDistCache) ProtoMessage()    {}
+func (dc *VotingPowerDistCache) Reset()         { *dc = VotingPowerDistCache{} }
+func (dc *VotingPowerDistCache) String() string { return proto.CompactTextString(dc) }
+func (*VotingPowerDistCache) ProtoMessage()     {}
 func (*VotingPowerDistCache) Descriptor() ([]byte, []int) {
 	return fileDescriptor_ca5b87e52e3e6d02, []int{0}
 }
-func (m *VotingPowerDistCache) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
+func (dc *VotingPowerDistCache) XXX_Unmarshal(b []byte) error {
+	return dc.Unmarshal(b)
 }
-func (m *VotingPowerDistCache) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (dc *VotingPowerDistCache) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_VotingPowerDistCache.Marshal(b, m, deterministic)
+		return xxx_messageInfo_VotingPowerDistCache.Marshal(b, dc, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
+		n, err := dc.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
 		return b[:n], nil
 	}
 }
-func (m *VotingPowerDistCache) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_VotingPowerDistCache.Merge(m, src)
+func (dc *VotingPowerDistCache) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_VotingPowerDistCache.Merge(dc, src)
 }
-func (m *VotingPowerDistCache) XXX_Size() int {
-	return m.Size()
+func (dc *VotingPowerDistCache) XXX_Size() int {
+	return dc.Size()
 }
-func (m *VotingPowerDistCache) XXX_DiscardUnknown() {
-	xxx_messageInfo_VotingPowerDistCache.DiscardUnknown(m)
+func (dc *VotingPowerDistCache) XXX_DiscardUnknown() {
+	xxx_messageInfo_VotingPowerDistCache.DiscardUnknown(dc)
 }
 
 var xxx_messageInfo_VotingPowerDistCache proto.InternalMessageInfo
@@ -589,35 +590,35 @@ var fileDescriptor_ca5b87e52e3e6d02 = []byte{
 	0x1a, 0x47, 0xef, 0xb5, 0x07, 0x00, 0x00,
 }
 
-func (m *VotingPowerDistCache) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
+func (dc *VotingPowerDistCache) Marshal() (dAtA []byte, err error) {
+	size := dc.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	n, err := dc.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
 	return dAtA[:n], nil
 }
 
-func (m *VotingPowerDistCache) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
+func (dc *VotingPowerDistCache) MarshalTo(dAtA []byte) (int, error) {
+	size := dc.Size()
+	return dc.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *VotingPowerDistCache) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (dc *VotingPowerDistCache) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if m.NumActiveFps != 0 {
-		i = encodeVarintFinality(dAtA, i, uint64(m.NumActiveFps))
+	if dc.NumActiveFps != 0 {
+		i = encodeVarintFinality(dAtA, i, uint64(dc.NumActiveFps))
 		i--
 		dAtA[i] = 0x18
 	}
-	if len(m.FinalityProviders) > 0 {
-		for iNdEx := len(m.FinalityProviders) - 1; iNdEx >= 0; iNdEx-- {
+	if len(dc.FinalityProviders) > 0 {
+		for iNdEx := len(dc.FinalityProviders) - 1; iNdEx >= 0; iNdEx-- {
 			{
-				size, err := m.FinalityProviders[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				size, err := dc.FinalityProviders[iNdEx].MarshalToSizedBuffer(dAtA[:i])
 				if err != nil {
 					return 0, err
 				}
@@ -628,8 +629,8 @@ func (m *VotingPowerDistCache) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 			dAtA[i] = 0x12
 		}
 	}
-	if m.TotalVotingPower != 0 {
-		i = encodeVarintFinality(dAtA, i, uint64(m.TotalVotingPower))
+	if dc.TotalVotingPower != 0 {
+		i = encodeVarintFinality(dAtA, i, uint64(dc.TotalVotingPower))
 		i--
 		dAtA[i] = 0x8
 	}
@@ -1017,23 +1018,23 @@ func encodeVarintFinality(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-func (m *VotingPowerDistCache) Size() (n int) {
-	if m == nil {
+func (dc *VotingPowerDistCache) Size() (n int) {
+	if dc == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	if m.TotalVotingPower != 0 {
-		n += 1 + sovFinality(uint64(m.TotalVotingPower))
+	if dc.TotalVotingPower != 0 {
+		n += 1 + sovFinality(uint64(dc.TotalVotingPower))
 	}
-	if len(m.FinalityProviders) > 0 {
-		for _, e := range m.FinalityProviders {
+	if len(dc.FinalityProviders) > 0 {
+		for _, e := range dc.FinalityProviders {
 			l = e.Size()
 			n += 1 + l + sovFinality(uint64(l))
 		}
 	}
-	if m.NumActiveFps != 0 {
-		n += 1 + sovFinality(uint64(m.NumActiveFps))
+	if dc.NumActiveFps != 0 {
+		n += 1 + sovFinality(uint64(dc.NumActiveFps))
 	}
 	return n
 }
@@ -1195,7 +1196,7 @@ func sovFinality(x uint64) (n int) {
 func sozFinality(x uint64) (n int) {
 	return sovFinality(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-func (m *VotingPowerDistCache) Unmarshal(dAtA []byte) error {
+func (dc *VotingPowerDistCache) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1228,7 +1229,7 @@ func (m *VotingPowerDistCache) Unmarshal(dAtA []byte) error {
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field TotalVotingPower", wireType)
 			}
-			m.TotalVotingPower = 0
+			dc.TotalVotingPower = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowFinality
@@ -1238,7 +1239,7 @@ func (m *VotingPowerDistCache) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.TotalVotingPower |= uint64(b&0x7F) << shift
+				dc.TotalVotingPower |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -1272,8 +1273,8 @@ func (m *VotingPowerDistCache) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.FinalityProviders = append(m.FinalityProviders, &FinalityProviderDistInfo{})
-			if err := m.FinalityProviders[len(m.FinalityProviders)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			dc.FinalityProviders = append(dc.FinalityProviders, &FinalityProviderDistInfo{})
+			if err := dc.FinalityProviders[len(dc.FinalityProviders)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -1281,7 +1282,7 @@ func (m *VotingPowerDistCache) Unmarshal(dAtA []byte) error {
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field NumActiveFps", wireType)
 			}
-			m.NumActiveFps = 0
+			dc.NumActiveFps = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowFinality
@@ -1291,7 +1292,7 @@ func (m *VotingPowerDistCache) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.NumActiveFps |= uint32(b&0x7F) << shift
+				dc.NumActiveFps |= uint32(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}

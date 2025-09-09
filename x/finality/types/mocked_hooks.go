@@ -65,15 +65,15 @@ func (mr *MockFinalityHooksMockRecorder) AfterBtcDelegationUnbonded(ctx, fpAddr,
 }
 
 // AfterFpStatusChange mocks base method.
-func (m *MockFinalityHooks) AfterFpStatusChange(ctx context.Context, fpAddr types0.AccAddress, fpSecuresBabylon bool, newStatus types.FinalityProviderStatus) error {
+func (m *MockFinalityHooks) AfterFpStatusChange(ctx context.Context, fpAddr types0.AccAddress, fpSecuresBabylon bool, prevStatus, newStatus types.FinalityProviderStatus) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AfterFpStatusChange", ctx, fpAddr, fpSecuresBabylon, newStatus)
+	ret := m.ctrl.Call(m, "AfterFpStatusChange", ctx, fpAddr, fpSecuresBabylon, prevStatus, newStatus)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // AfterFpStatusChange indicates an expected call of AfterFpStatusChange.
-func (mr *MockFinalityHooksMockRecorder) AfterFpStatusChange(ctx, fpAddr, fpSecuresBabylon, newStatus interface{}) *gomock.Call {
+func (mr *MockFinalityHooksMockRecorder) AfterFpStatusChange(ctx, fpAddr, fpSecuresBabylon, prevStatus, newStatus interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AfterFpStatusChange", reflect.TypeOf((*MockFinalityHooks)(nil).AfterFpStatusChange), ctx, fpAddr, fpSecuresBabylon, newStatus)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AfterFpStatusChange", reflect.TypeOf((*MockFinalityHooks)(nil).AfterFpStatusChange), ctx, fpAddr, fpSecuresBabylon, prevStatus, newStatus)
 }

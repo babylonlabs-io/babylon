@@ -40,7 +40,7 @@ func TestValidatorWithBlsKeySetValidate(t *testing.T) {
 		},
 		{
 			name:   "duplicate BLS pub key",
-			numPks: int(datagen.RandomIntOtherThan(r, 0, 10)),
+			numPks: 2,
 			setup: func(vs *types.ValidatorWithBlsKeySet, pks []bls12381.PrivateKey) {
 				l := len(vs.ValSet)
 				vs.ValSet[l-1].BlsPubKey = pks[0].PubKey()

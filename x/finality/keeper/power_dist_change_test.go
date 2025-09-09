@@ -2300,7 +2300,7 @@ func TestGovernanceJailingAfterUnjailInSameBlock(t *testing.T) {
 	// Step 5: Process the events - this is where the bug manifests
 	babylonHeight += 1
 	h.SetCtxHeight(babylonHeight)
-	fHooks.EXPECT().AfterFpStatusChange(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any())
+	fHooks.EXPECT().AfterFpStatusChange(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any())
 	h.BeginBlocker()
 
 	// Step 6: Check the results
