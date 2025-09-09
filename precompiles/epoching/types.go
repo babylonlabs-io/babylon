@@ -666,29 +666,22 @@ func NewRedelegationRequest(args []interface{}) (*RedelegationRequest, error) {
 	if !ok || delegatorAddr == (common.Address{}) {
 		return nil, fmt.Errorf(cmn.ErrInvalidDelegator, args[0])
 	}
+	delegatorAddrBech32 := sdk.AccAddress(delegatorAddr.Bytes())
 
-	validatorSrcAddress, ok := args[1].(string)
+	validatorSrcAddress, ok := args[1].(common.Address)
 	if !ok {
-		return nil, fmt.Errorf(cmn.ErrInvalidType, "validatorSrcAddress", "string", args[1])
+		return nil, fmt.Errorf(cmn.ErrInvalidType, "validatorSrcAddress", "common.Address", args[1])
 	}
+	validatorSrcAddr := sdk.ValAddress(validatorSrcAddress.Bytes())
 
-	validatorSrcAddr, err := sdk.ValAddressFromBech32(validatorSrcAddress)
-	if err != nil {
-		return nil, err
-	}
-
-	validatorDstAddress, ok := args[2].(string)
+	validatorDstAddress, ok := args[2].(common.Address)
 	if !ok {
-		return nil, fmt.Errorf(cmn.ErrInvalidType, "validatorDstAddress", "string", args[2])
+		return nil, fmt.Errorf(cmn.ErrInvalidType, "validatorDstAddress", "common.Address", args[2])
 	}
-
-	validatorDstAddr, err := sdk.ValAddressFromBech32(validatorDstAddress)
-	if err != nil {
-		return nil, err
-	}
+	validatorDstAddr := sdk.ValAddress(validatorDstAddress.Bytes())
 
 	return &RedelegationRequest{
-		DelegatorAddress:    delegatorAddr.Bytes(), // bech32 formatted
+		DelegatorAddress:    delegatorAddrBech32,
 		ValidatorSrcAddress: validatorSrcAddr,
 		ValidatorDstAddress: validatorDstAddr,
 	}, nil
@@ -701,11 +694,6 @@ func NewRedelegationsRequest(method *abi.Method, args []interface{}, addrCdc add
 		return nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, 4, len(args))
 	}
 
-	// delAddr, srcValAddr & dstValAddr
-	// can be empty strings. The query will return the
-	// corresponding redelegations according to the addresses specified
-	// however, cannot pass all as empty strings, need to provide at least
-	// the delegator address or the source validator address
 	var input RedelegationsInput
 	if err := method.Inputs.Copy(&input, args); err != nil {
 		return nil, fmt.Errorf("error while unpacking args to RedelegationsInput struct: %s", err)
@@ -725,15 +713,31 @@ func NewRedelegationsRequest(method *abi.Method, args []interface{}, addrCdc add
 		}
 	}
 
-	if delegatorAddr == "" && input.SrcValidatorAddress == "" && input.DstValidatorAddress == "" ||
-		delegatorAddr == "" && input.SrcValidatorAddress == "" && input.DstValidatorAddress != "" {
+	if delegatorAddr == "" && input.SrcValidatorAddress.Hex() == emptyAddr && input.DstValidatorAddress.Hex() == emptyAddr ||
+		delegatorAddr == "" && input.SrcValidatorAddress.Hex() == emptyAddr && input.DstValidatorAddress.Hex() != emptyAddr {
 		return nil, errors.New("invalid query. Need to specify at least a source validator address or delegator address")
 	}
 
+	var (
+		srcValidatorAddr, dstValidatorAddr string
+	)
+
+	if input.SrcValidatorAddress.Hex() == emptyAddr {
+		srcValidatorAddr = ""
+	} else {
+		srcValidatorAddr = sdk.ValAddress(input.SrcValidatorAddress.Bytes()).String()
+	}
+
+	if input.DstValidatorAddress.Hex() == emptyAddr {
+		dstValidatorAddr = ""
+	} else {
+		dstValidatorAddr = sdk.ValAddress(input.DstValidatorAddress.Bytes()).String()
+	}
+
 	return &stakingtypes.QueryRedelegationsRequest{
-		DelegatorAddr:    delegatorAddr, // bech32 formatted
-		SrcValidatorAddr: input.SrcValidatorAddress,
-		DstValidatorAddr: input.DstValidatorAddress,
+		DelegatorAddr:    delegatorAddr,
+		SrcValidatorAddr: srcValidatorAddr,
+		DstValidatorAddr: dstValidatorAddr,
 		Pagination:       &input.PageRequest,
 	}, nil
 }
@@ -1630,12 +1634,21 @@ type RedelegationResponse struct {
 	Entries      []RedelegationEntryResponse
 }
 
+// RedelegationsInputBech32 is a struct to represent the input information for
+// the redelegations query. Needed to unpack arguments into the PageRequest struct.
+type RedelegationsInputBech32 struct {
+	DelegatorAddress    common.Address
+	SrcValidatorAddress string
+	DstValidatorAddress string
+	PageRequest         query.PageRequest
+}
+
 // RedelegationsInput is a struct to represent the input information for
 // the redelegations query. Needed to unpack arguments into the PageRequest struct.
 type RedelegationsInput struct {
 	DelegatorAddress    common.Address
-	SrcValidatorAddress string
-	DstValidatorAddress string
+	SrcValidatorAddress common.Address
+	DstValidatorAddress common.Address
 	PageRequest         query.PageRequest
 }
 
@@ -1932,7 +1945,12 @@ func NewRedelegationsBech32Request(method *abi.Method, args []interface{}, addrC
 		return nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, 4, len(args))
 	}
 
-	var input RedelegationsInput
+	// delAddr, srcValAddr & dstValAddr
+	// can be empty strings. The query will return the
+	// corresponding redelegations according to the addresses specified
+	// however, cannot pass all as empty strings, need to provide at least
+	// the delegator address or the source validator address
+	var input RedelegationsInputBech32
 	if err := method.Inputs.Copy(&input, args); err != nil {
 		return nil, fmt.Errorf("error while unpacking args to RedelegationsInput struct: %s", err)
 	}

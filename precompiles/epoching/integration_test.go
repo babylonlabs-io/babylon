@@ -3,6 +3,7 @@ package epoching_test
 import (
 	"encoding/base64"
 	"math/big"
+	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -22,6 +23,7 @@ import (
 	"cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/query"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	appsigner "github.com/babylonlabs-io/babylon/v4/app/signer"
@@ -634,6 +636,417 @@ var _ = Describe("Calling epoching precompile directly", func() {
 				Expect(err).To(BeNil())
 				Expect(res.UnbondingResponses).To(HaveLen(1), "expected unbonding delegation not to have be canceled")
 			})
+		})
+	})
+
+	Describe("Validator queries", func() {
+		It("should return validator", func() {
+			resp, err := s.QueryContract(
+				s.addr,
+				s.abi,
+				epoching.ValidatorMethod,
+				valHex,
+			)
+			Expect(err).To(BeNil(), "error while calling the contract %v", err)
+			Expect(resp.VmError).To(Equal(""))
+
+			var valOut epoching.ValidatorOutput
+			err = s.abi.UnpackIntoInterface(&valOut, epoching.ValidatorMethod, resp.Ret)
+			Expect(err).To(BeNil(), "error while unpacking the validator output: %v", err)
+			Expect(valOut.Validator.OperatorAddress.String()).To(Equal(valHex.String()), "expected validator address to match")
+			Expect(valOut.Validator.DelegatorShares).To(Equal(big.NewInt(1001000000000000000)), "expected different delegator shares")
+		})
+
+		It("should return an empty validator if the validator is not found", func() {
+			newValHex := common.Address(s.validatorPriv.PubKey().Address().Bytes())
+			resp, err := s.QueryContract(
+				s.addr,
+				s.abi,
+				epoching.ValidatorMethod,
+				newValHex,
+			)
+			Expect(err).To(BeNil(), "error while calling the contract %v", err)
+			Expect(resp.VmError).To(Equal(""))
+
+			var valOut epoching.ValidatorOutput
+			err = s.abi.UnpackIntoInterface(&valOut, epoching.ValidatorMethod, resp.Ret)
+			Expect(err).To(BeNil(), "error while unpacking the validator output: %v", err)
+			Expect(valOut.Validator.OperatorAddress.String()).To(Equal("0x0000000000000000000000000000000000000000"), "expected validator address to be 0x0000000000000000000000000000000000000000")
+			Expect(valOut.Validator.Status).To(BeZero(), "expected unspecified bonding status")
+		})
+	})
+
+	Describe("Validators queries", func() {
+		It("should return validators (default pagination", func() {
+			resp, err := s.QueryContract(
+				s.addr,
+				s.abi,
+				epoching.ValidatorsMethod,
+				stakingtypes.Bonded.String(),
+				query.PageRequest{},
+			)
+			Expect(err).To(BeNil(), "error while calling the contract %v", err)
+			Expect(resp.VmError).To(Equal(""))
+
+			vals, err := s.App.StakingKeeper.GetAllValidators(s.Ctx)
+			Expect(err).To(BeNil())
+			Expect(vals).NotTo(BeNil())
+
+			var valOut epoching.ValidatorsOutput
+			err = s.abi.UnpackIntoInterface(&valOut, epoching.ValidatorsMethod, resp.Ret)
+			Expect(err).To(BeNil())
+
+			Expect(valOut.PageResponse.NextKey).To(BeEmpty())
+			Expect(valOut.PageResponse.Total).To(Equal(uint64(len(vals))))
+
+			Expect(valOut.Validators).To(HaveLen(len(vals)))
+			for _, val := range valOut.Validators {
+				validatorAddrs := make([]string, len(vals))
+				for i, v := range vals {
+					validatorAddrs[i] = v.OperatorAddress
+				}
+				operatorAddress := sdk.ValAddress(val.OperatorAddress.Bytes()).String()
+
+				Expect(slices.Contains(validatorAddrs, operatorAddress)).To(BeTrue(), "operator address not found in test suite validators")
+				Expect(val.DelegatorShares).To(Equal(big.NewInt(1001000000000000000)), "expected different delegator shares")
+			}
+		})
+
+		It("should return validators with pagination limit = 1", func() {
+			const limit = 1
+			resp, err := s.QueryContract(
+				s.addr,
+				s.abi,
+				epoching.ValidatorsMethod,
+				stakingtypes.Bonded.String(),
+				query.PageRequest{Limit: limit, CountTotal: true},
+			)
+			Expect(err).To(BeNil(), "error while calling the contract %v", err)
+			Expect(resp.VmError).To(Equal(""))
+
+			var valOut epoching.ValidatorsOutput
+			err = s.abi.UnpackIntoInterface(&valOut, epoching.ValidatorsMethod, resp.Ret)
+			Expect(err).To(BeNil())
+
+			// next_key is empty since there are no more data rather than one validators output
+			Expect(valOut.PageResponse.NextKey).To(BeEmpty())
+			Expect(valOut.PageResponse.Total).To(Equal(uint64(len(valOut.Validators))))
+
+			Expect(valOut.Validators).To(HaveLen(limit))
+		})
+
+		It("should return an error if the bonding type is not known", func() {
+			_, err := s.QueryContract(
+				s.addr,
+				s.abi,
+				epoching.ValidatorsMethod,
+				"15", // invalid bonding type
+				query.PageRequest{},
+			)
+			Expect(err).NotTo(BeNil(), "error while calling the contract %v", err)
+		})
+
+		It("should return an empty array if there are no validators with the given bonding type", func() {
+			resp, err := s.QueryContract(
+				s.addr,
+				s.abi,
+				epoching.ValidatorsMethod,
+				stakingtypes.Unbonded.String(),
+				query.PageRequest{},
+			)
+			Expect(err).To(BeNil(), "error while calling the contract %v", err)
+			Expect(resp.VmError).To(Equal(""))
+
+			var valOut epoching.ValidatorsOutput
+			err = s.abi.UnpackIntoInterface(&valOut, epoching.ValidatorsMethod, resp.Ret)
+			Expect(err).To(BeNil())
+
+			Expect(valOut.PageResponse.NextKey).To(BeEmpty())
+			Expect(valOut.PageResponse.Total).To(Equal(uint64(0)))
+			Expect(valOut.Validators).To(HaveLen(0), "expected no validators to be returned")
+		})
+	})
+
+	Describe("Delegation queries", func() {
+		It("should return a delegation if it is found", func() {
+			delAddr := common.Address(s.delegatorPriv.PubKey().Address().Bytes())
+
+			resp, err := s.QueryContract(
+				s.addr,
+				s.abi,
+				epoching.DelegationMethod,
+				delAddr,
+				valHex,
+			)
+			Expect(err).To(BeNil(), "error while calling the contract %v", err)
+			Expect(resp.VmError).To(Equal(""))
+
+			var delOut epoching.DelegationOutput
+			err = s.abi.UnpackIntoInterface(&delOut, epoching.DelegationMethod, resp.Ret)
+			Expect(err).To(BeNil(), "error while unpacking the delegation output: %v", err)
+			Expect(delOut.Shares.Cmp(big.NewInt(0))).To(BeNumerically(">", 0), "expected delegation shares to be greater than 0")
+			Expect(delOut.Balance.Amount.Cmp(big.NewInt(0))).To(BeNumerically(">", 0), "expected delegation balance to be greater than 0")
+		})
+
+		It("should return an empty delegation if it is not found", func() {
+			newDelAddr := common.Address(s.validatorPriv.PubKey().Address().Bytes())
+
+			resp, err := s.QueryContract(
+				s.addr,
+				s.abi,
+				epoching.DelegationMethod,
+				newDelAddr,
+				valHex,
+			)
+			Expect(err).To(BeNil(), "error while calling the contract %v", err)
+			Expect(resp.VmError).To(Equal(""))
+
+			var delOut epoching.DelegationOutput
+			err = s.abi.UnpackIntoInterface(&delOut, epoching.DelegationMethod, resp.Ret)
+			Expect(err).To(BeNil(), "error while unpacking the delegation output: %v", err)
+			Expect(delOut.Shares.Int64()).To(BeZero(), "expected no delegation shares")
+			Expect(delOut.Balance.Amount.Int64()).To(BeZero(), "expected zero delegation balance")
+		})
+	})
+
+	Describe("UnbondingDelegation queries", func() {
+		var creationHeight int64
+
+		BeforeEach(func() {
+			// Create an unbonding delegation first
+			delAddr := common.Address(s.delegatorPriv.PubKey().Address().Bytes())
+			_, err := s.CallContract(
+				s.delegatorPriv,
+				s.addr,
+				s.abi,
+				epoching.WrappedUndelegateMethod,
+				delAddr,
+				valHex,
+				big.NewInt(1_000_000), // 1 bbn
+			)
+			Expect(err).To(BeNil(), "error while calling the contract")
+
+			s.AdvanceToNextEpoch()
+			creationHeight = s.Ctx.BlockHeight() - 1
+
+			// Verify unbonding delegation was created
+			res, err := s.QueryClientStaking.ValidatorUnbondingDelegations(s.Ctx, &stakingtypes.QueryValidatorUnbondingDelegationsRequest{ValidatorAddr: valBech32})
+			Expect(err).To(BeNil())
+			Expect(res.UnbondingResponses).To(HaveLen(1), "expected one unbonding delegation")
+		})
+
+		It("should return an unbonding delegation if it is found", func() {
+			delAddr := common.Address(s.delegatorPriv.PubKey().Address().Bytes())
+
+			resp, err := s.QueryContract(
+				s.addr,
+				s.abi,
+				epoching.UnbondingDelegationMethod,
+				delAddr,
+				valHex,
+			)
+			Expect(err).To(BeNil(), "error while calling the contract %v", err)
+			Expect(resp.VmError).To(Equal(""))
+
+			var ubdOut epoching.UnbondingDelegationOutput
+			err = s.abi.UnpackIntoInterface(&ubdOut, epoching.UnbondingDelegationMethod, resp.Ret)
+			Expect(err).To(BeNil(), "error while unpacking the unbonding delegation output: %v", err)
+			Expect(ubdOut.UnbondingDelegation.Entries).To(HaveLen(1), "expected one unbonding delegation entry")
+			Expect(ubdOut.UnbondingDelegation.Entries[0].Balance).To(Equal(big.NewInt(1_000_000)), "expected different balance")
+			Expect(ubdOut.UnbondingDelegation.Entries[0].CreationHeight).To(Equal(creationHeight), "expected different creation height")
+		})
+
+		It("should return an empty slice if the unbonding delegation is not found", func() {
+			newDelAddr := common.Address(s.validatorPriv.PubKey().Address().Bytes())
+
+			resp, err := s.QueryContract(
+				s.addr,
+				s.abi,
+				epoching.UnbondingDelegationMethod,
+				newDelAddr,
+				valHex,
+			)
+			Expect(err).To(BeNil(), "error while calling the contract %v", err)
+			Expect(resp.VmError).To(Equal(""))
+
+			var ubdOut epoching.UnbondingDelegationOutput
+			err = s.abi.UnpackIntoInterface(&ubdOut, epoching.UnbondingDelegationMethod, resp.Ret)
+			Expect(err).To(BeNil(), "error while unpacking the unbonding delegation output: %v", err)
+			Expect(ubdOut.UnbondingDelegation.Entries).To(HaveLen(0), "expected no unbonding delegation entries")
+		})
+	})
+
+	Describe("Redelegation queries", func() {
+		var newValHex common.Address
+
+		BeforeEach(func() {
+			// Create a second validator for redelegation
+			newValHex = common.Address(s.validatorPriv.PubKey().Address().Bytes())
+			description := epoching.Description{
+				Moniker:         "second validator",
+				Identity:        "",
+				Website:         "",
+				SecurityContact: "",
+				Details:         "",
+			}
+			commission := epoching.Commission{
+				Rate:          big.NewInt(100000000000000000),
+				MaxRate:       big.NewInt(100000000000000000),
+				MaxChangeRate: big.NewInt(100000000000000000),
+			}
+			minSelfDelegation := big.NewInt(1)
+			value := big.NewInt(1_000_000) // 1bbn
+
+			resp, err := s.CallContract(
+				s.validatorPriv, s.addr, s.abi, epoching.WrappedCreateValidatorMethod,
+				blsKey, description, commission, minSelfDelegation, newValHex, consPkB64, value,
+			)
+			Expect(err).To(BeNil(), "error while calling the contract")
+			Expect(resp.VmError).To(Equal(""))
+
+			s.AdvanceToNextEpoch()
+
+			// Create a redelegation
+			delAddr := common.Address(s.delegatorPriv.PubKey().Address().Bytes())
+			_, err = s.CallContract(
+				s.delegatorPriv, s.addr, s.abi, epoching.WrappedRedelegateMethod,
+				delAddr, valHex, newValHex, big.NewInt(500_000), // 0.5 bbn
+			)
+			Expect(err).To(BeNil(), "error while calling the contract")
+
+			s.AdvanceToNextEpoch()
+		})
+
+		It("should return the redelegation if it exists", func() {
+			delAddr := common.Address(s.delegatorPriv.PubKey().Address().Bytes())
+
+			resp, err := s.QueryContract(
+				s.addr,
+				s.abi,
+				epoching.RedelegationMethod,
+				delAddr,
+				valHex,
+				newValHex,
+			)
+			Expect(err).To(BeNil(), "error while calling the contract %v", err)
+			Expect(resp.VmError).To(Equal(""))
+
+			var redelOut epoching.RedelegationOutput
+			err = s.abi.UnpackIntoInterface(&redelOut, epoching.RedelegationMethod, resp.Ret)
+			Expect(err).To(BeNil(), "error while unpacking the redelegation output: %v", err)
+			Expect(redelOut.Redelegation.Entries).To(HaveLen(1), "expected one redelegation entry")
+			Expect(redelOut.Redelegation.Entries[0].InitialBalance).To(Equal(big.NewInt(500_000)), "expected different initial balance")
+			Expect(redelOut.Redelegation.DelegatorAddress).To(Equal(delAddr), "expected different delegator address")
+			Expect(redelOut.Redelegation.ValidatorSrcAddress).To(Equal(valHex), "expected different source validator address")
+			Expect(redelOut.Redelegation.ValidatorDstAddress).To(Equal(newValHex), "expected different destination validator address")
+		})
+
+		It("should return an empty output if the redelegation is not found", func() {
+			// Use a different delegator that hasn't redelegated
+			newDelAddr := common.Address(s.validatorPriv.PubKey().Address().Bytes())
+
+			resp, err := s.QueryContract(
+				s.addr,
+				s.abi,
+				epoching.RedelegationMethod,
+				newDelAddr,
+				valHex,
+				newValHex,
+			)
+			Expect(err).To(BeNil(), "error while calling the contract %v", err)
+			Expect(resp.VmError).To(Equal(""))
+
+			var redelOut epoching.RedelegationOutput
+			err = s.abi.UnpackIntoInterface(&redelOut, epoching.RedelegationMethod, resp.Ret)
+			Expect(err).To(BeNil(), "error while unpacking the redelegation output: %v", err)
+			Expect(redelOut.Redelegation.Entries).To(HaveLen(0), "expected no redelegation entries")
+		})
+	})
+
+	Describe("Redelegations queries", func() {
+		var newValHex common.Address
+
+		BeforeEach(func() {
+			// Create a second validator for redelegation
+			newValHex = common.Address(s.validatorPriv.PubKey().Address().Bytes())
+			description := epoching.Description{
+				Moniker:         "second validator",
+				Identity:        "",
+				Website:         "",
+				SecurityContact: "",
+				Details:         "",
+			}
+			commission := epoching.Commission{
+				Rate:          big.NewInt(100000000000000000),
+				MaxRate:       big.NewInt(100000000000000000),
+				MaxChangeRate: big.NewInt(100000000000000000),
+			}
+			minSelfDelegation := big.NewInt(1)
+			value := big.NewInt(1_000_000) // 1bbn
+
+			resp, err := s.CallContract(
+				s.validatorPriv, s.addr, s.abi, epoching.WrappedCreateValidatorMethod,
+				blsKey, description, commission, minSelfDelegation, newValHex, consPkB64, value,
+			)
+			Expect(err).To(BeNil(), "error while calling the contract")
+			Expect(resp.VmError).To(Equal(""))
+
+			s.AdvanceToNextEpoch()
+
+			// Create redelegations
+			delAddr := common.Address(s.delegatorPriv.PubKey().Address().Bytes())
+			_, err = s.CallContract(
+				s.delegatorPriv, s.addr, s.abi, epoching.WrappedRedelegateMethod,
+				delAddr, valHex, newValHex, big.NewInt(500_000), // 0.5 bbn
+			)
+			Expect(err).To(BeNil(), "error while calling the contract")
+
+			s.AdvanceToNextEpoch()
+		})
+
+		It("should return all redelegations for delegator (default pagination)", func() {
+			delAddr := common.Address(s.delegatorPriv.PubKey().Address().Bytes())
+
+			resp, err := s.QueryContract(
+				s.addr,
+				s.abi,
+				epoching.RedelegationsMethod,
+				delAddr,
+				common.Address{},
+				common.Address{},
+				query.PageRequest{},
+			)
+			Expect(err).To(BeNil(), "error while calling the contract %v", err)
+			Expect(resp.VmError).To(Equal(""))
+
+			var redelsOut epoching.RedelegationsOutput
+			err = s.abi.UnpackIntoInterface(&redelsOut, epoching.RedelegationsMethod, resp.Ret)
+			Expect(err).To(BeNil(), "error while unpacking the redelegations output: %v", err)
+			Expect(redelsOut.PageResponse.NextKey).To(BeEmpty())
+			Expect(redelsOut.Response).To(HaveLen(1), "expected one redelegation to be returned")
+			Expect(redelsOut.Response[0].Entries).To(HaveLen(1), "expected one redelegation entry")
+		})
+
+		It("should return empty array if no redelegations found", func() {
+			// Use a different delegator that hasn't redelegated
+			newDelAddr := common.Address(s.validatorPriv.PubKey().Address().Bytes())
+
+			resp, err := s.QueryContract(
+				s.addr,
+				s.abi,
+				epoching.RedelegationsMethod,
+				newDelAddr,
+				common.Address{},
+				common.Address{},
+				query.PageRequest{},
+			)
+			Expect(err).To(BeNil(), "error while calling the contract %v", err)
+			Expect(resp.VmError).To(Equal(""))
+
+			var redelsOut epoching.RedelegationsOutput
+			err = s.abi.UnpackIntoInterface(&redelsOut, epoching.RedelegationsMethod, resp.Ret)
+			Expect(err).To(BeNil(), "error while unpacking the redelegations output: %v", err)
+			Expect(redelsOut.Response).To(HaveLen(0), "expected no redelegations to be returned")
 		})
 	})
 })
