@@ -43,11 +43,14 @@ func (h HookFinality) AfterFpStatusChange(ctx context.Context, fpAddr sdk.AccAdd
 		return h.k.costakerModified(ctx, del, func(rwdTracker *types.CostakerRewardsTracker) {
 			// not first time
 			if newStatus == btcstktypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_ACTIVE {
-				rwdTracker.ActiveBaby = rwdTracker.ActiveBaby.Add(value.TotalActiveSat)
+				rwdTracker.ActiveSatoshis = rwdTracker.ActiveSatoshis.Add(value.TotalActiveSat)
 				return
 			}
 
-			rwdTracker.ActiveBaby = rwdTracker.ActiveBaby.Sub(value.TotalActiveSat)
+			// what if he goes from jailed to slashed?
+
+			// should only reduce the active btc if the fp previous state was active
+			rwdTracker.ActiveSatoshis = rwdTracker.ActiveSatoshis.Sub(value.TotalActiveSat)
 		})
 	})
 }

@@ -191,3 +191,19 @@ func (e *Evidence) ExtractBTCSK() (*btcec.PrivateKey, error) {
 		e.forkMsgToSign(e.SigningContext), e.ForkFinalitySig.ToModNScalar(), // msg and sig for fork block
 	)
 }
+
+func (fp *FinalityProviderDistInfo) Status() btcstktypes.FinalityProviderStatus {
+	if fp.IsSlashed {
+		return btcstktypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_SLASHED
+	}
+
+	if fp.IsJailed {
+		return btcstktypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_JAILED
+	}
+
+	if fp.IsTimestamped && fp.TotalBondedSat > 0 {
+		return btcstktypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_ACTIVE
+	}
+
+	return btcstktypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_INACTIVE
+}
