@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	storetypes "cosmossdk.io/store/types"
-	v1types "github.com/babylonlabs-io/babylon/v4/x/epoching/migrations/v1"
 	"github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -40,8 +39,8 @@ func migrateParams(ctx sdk.Context, s storetypes.KVStore, cdc codec.BinaryCodec)
 	}
 
 	// Unmarshal existing v1 params (EpochInterval only)
-	var v1Params v1types.Params
-	err := cdc.Unmarshal(paramsBz, &v1Params)
+	var params types.Params
+	err := cdc.Unmarshal(paramsBz, &params)
 	if err != nil {
 		return fmt.Errorf("unmarshal existing v1 params: %w", err)
 	}
@@ -49,7 +48,7 @@ func migrateParams(ctx sdk.Context, s storetypes.KVStore, cdc codec.BinaryCodec)
 	// Create v2 params with migrated values + new default fields
 	defaultParams := types.DefaultParams()
 	v2Params := types.Params{
-		EpochInterval: v1Params.EpochInterval,
+		EpochInterval: params.EpochInterval,
 		ExecuteGas:    defaultParams.ExecuteGas,
 		MinAmount:     defaultParams.MinAmount,
 	}

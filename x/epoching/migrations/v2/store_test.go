@@ -10,7 +10,6 @@ import (
 	storetypes "cosmossdk.io/store/types"
 	keepertest "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
 	"github.com/babylonlabs-io/babylon/v4/x/epoching/keeper"
-	v1types "github.com/babylonlabs-io/babylon/v4/x/epoching/migrations/v1"
 	v2 "github.com/babylonlabs-io/babylon/v4/x/epoching/migrations/v2"
 	"github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
@@ -45,11 +44,11 @@ func TestMigrateStore(t *testing.T) {
 		kvStore := stateStore.GetKVStore(storeKey)
 
 		// Manually set v1 params in store (EpochInterval only)
-		v1Params := v1types.Params{
+		params := types.Params{
 			EpochInterval: 100, // Custom test value
 		}
 
-		v1Bz, err := cdc.Marshal(&v1Params)
+		v1Bz, err := cdc.Marshal(&params)
 		require.NoError(t, err)
 		kvStore.Set(types.ParamsKey, v1Bz)
 
