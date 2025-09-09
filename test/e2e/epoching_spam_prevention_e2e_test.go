@@ -30,28 +30,20 @@ type EpochingSpamPreventionTestSuite struct {
 func (s *EpochingSpamPreventionTestSuite) waitForEpochEnd(chainA *chain.Config, nonValidatorNode *chain.NodeConfig, stepName string) {
 	s.T().Logf("Step 2: %s - Waiting for epoch end to process enqueued message", stepName)
 
-	// Query current epoch information including epoch boundary
-	currentEpochResp, err := func() (*etypes.QueryCurrentEpochResponse, error) {
-		bz, err := nonValidatorNode.QueryGRPCGateway("/babylon/epoching/v1/current_epoch", url.Values{})
-		if err != nil {
-			return nil, err
-		}
-		var epochResponse etypes.QueryCurrentEpochResponse
-		if err := util.Cdc.UnmarshalJSON(bz, &epochResponse); err != nil {
-			return nil, err
-		}
-		return &epochResponse, nil
-	}()
+	currentEpoch, err := nonValidatorNode.QueryCurrentEpoch()
 	s.NoError(err)
 
 	currentHeight, err := nonValidatorNode.QueryCurrentHeight()
 	s.NoError(err)
-
+	var epochingParams etypes.Params
+	nonValidatorNode.QueryParams("epoching", &epochingParams)
+	epochInterval := epochingParams.EpochInterval
+	s.NoError(err)
 	// Calculate remaining blocks until epoch end
-	epochBoundary := currentEpochResp.EpochBoundary
+	epochBoundary := epochInterval * (currentEpoch + 1)
 	remainingBlocks := int(epochBoundary-uint64(currentHeight)) + 2 // +2 for safety margin
 
-	s.T().Logf("Current epoch: %d", currentEpochResp.CurrentEpoch)
+	s.T().Logf("Current epoch: %d", currentEpoch)
 	s.T().Logf("Current block height: %d", currentHeight)
 	s.T().Logf("Epoch boundary (last block of epoch): %d", epochBoundary)
 	s.T().Logf("Remaining blocks until epoch end: %d", remainingBlocks)
@@ -106,16 +98,7 @@ func (s *EpochingSpamPreventionTestSuite) TestNormalDelegationCase() {
 	// Try to get validator from the first validator node's operator address
 	s.Require().NotEmpty(chainA.NodeConfigs, "should have validator nodes")
 
-	// Look for a validator node (IsValidator = true)
-	var validatorNode *chain.NodeConfig
-	for _, node := range chainA.NodeConfigs {
-		s.T().Logf("Checking node: %s, IsValidator: %t, OperatorAddress: '%s'",
-			node.Name, node.IsValidator, node.OperatorAddress)
-		if node.IsValidator {
-			validatorNode = node
-			break
-		}
-	}
+	validatorNode := chainA.NodeConfigs[0]
 
 	s.Require().NotNil(validatorNode, "Should have at least one validator node")
 
