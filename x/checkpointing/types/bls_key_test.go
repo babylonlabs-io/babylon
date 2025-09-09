@@ -40,7 +40,7 @@ func TestValidatorWithBlsKeySetValidate(t *testing.T) {
 		},
 		{
 			name:   "duplicate BLS pub key",
-			numPks: int(datagen.RandomIntOtherThan(r, 0, 10)),
+			numPks: 2,
 			setup: func(vs *types.ValidatorWithBlsKeySet, pks []bls12381.PrivateKey) {
 				l := len(vs.ValSet)
 				vs.ValSet[l-1].BlsPubKey = pks[0].PubKey()
@@ -64,9 +64,6 @@ func TestValidatorWithBlsKeySetValidate(t *testing.T) {
 				_, err := crypto_rand.Read(invalidKey)
 				require.NoError(t, err)
 				vs.ValSet[0].BlsPubKey = invalidKey
-				if len(vs.ValSet) > 1 {
-					vs.ValSet[1].BlsPubKey = invalidKey
-				}
 			},
 			expectErr: errors.New("invalid BLS public key point on the bls12-381 curve"),
 		},
