@@ -98,12 +98,18 @@ message EventWrappedStakingUpdateParams {
   string min_commission_rate = 6;
   uint64 epoch_boundary = 7;
 }
-// EventUnlockFundsFailed is the event emmitted when unlocking funds fails.
+// EventUnlockFundsFailed is the event emitted when unlocking funds fails.
 message EventUnlockFundsFailed {
-  uint64 epoch_number =1;
+  // epoch_number is the epoch number when the unlock funds operation failed
+  uint64 epoch_number = 1;
+  // height is the block height when the message was originally submitted
   uint64 height = 2;
-  bytes tx_id =3;
-  bytes msg_id=4;
-  string error =5;
-  string msg_type=6;
+  // tx_id is the ID of the transaction that contains the message
+  bytes tx_id = 3;
+  // msg_id is the ID of the queued message
+  bytes msg_id = 4;
+  // error is the error message describing why the unlock funds operation failed
+  string error = 5;
+  // msg_type is the type of the message that failed to unlock funds
+  string msg_type = 6;
 }

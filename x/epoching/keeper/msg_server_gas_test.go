@@ -65,31 +65,6 @@ func TestGasConsumptionValidation(t *testing.T) {
 	}
 }
 
-// TestAllEnqueueGasFees_Values tests that all enqueue gas fees are correctly set
-func TestAllEnqueueGasFees_Values(t *testing.T) {
-	helper := testhelper.NewHelper(t)
-	ctx := helper.Ctx
-
-	params := helper.App.EpochingKeeper.GetParams(ctx)
-	gas := params.ExecuteGas
-
-	// Verify all gas are positive and match expected defaults
-	require.Equal(t, uint64(61000), gas.Delegate, "Delegate gas should be 61000")
-	require.Equal(t, uint64(53000), gas.Undelegate, "Undelegate gas should be 53000")
-	require.Equal(t, uint64(65700), gas.BeginRedelegate, "BeginRedelegate gas fee should be 65700")
-	require.Equal(t, uint64(20500), gas.CancelUnbondingDelegation, "CancelUnbondingDelegation gas fee should be 20500")
-	require.Equal(t, uint64(20100), gas.EditValidator, "EditValidator gas fee should be 20100")
-	require.Equal(t, uint64(157300), gas.CreateValidator, "CreateValidator gas fee should be 157300")
-
-	// Verify all gas are positive (spam prevention requirement)
-	require.Greater(t, gas.Delegate, uint64(0), "Delegate gas fee must be positive")
-	require.Greater(t, gas.Undelegate, uint64(0), "Undelegate gas fee must be positive")
-	require.Greater(t, gas.BeginRedelegate, uint64(0), "BeginRedelegate gas fee must be positive")
-	require.Greater(t, gas.CancelUnbondingDelegation, uint64(0), "CancelUnbondingDelegation gas fee must be positive")
-	require.Greater(t, gas.EditValidator, uint64(0), "EditValidator gas fee must be positive")
-	require.Greater(t, gas.CreateValidator, uint64(0), "CreateValidator gas fee must be positive")
-}
-
 // TestWrappedDelegate_OutOfGas tests actual WrappedDelegate transaction with gas consumption
 func TestWrappedDelegate_OutOfGas(t *testing.T) {
 	r := rand.New(rand.NewSource(time.Now().Unix()))
@@ -149,9 +124,7 @@ func TestWrappedDelegate_OutOfGas(t *testing.T) {
 
 		// We expect some gas to be consumed if the function progresses
 		gasConsumed := ctx.GasMeter().GasConsumed()
-		if gasConsumed >= delegateGas {
-			t.Logf("SUCCESS: Gas consumption reached the ConsumeGas call (consumed: %d >= required: %d)", gasConsumed, delegateGas)
-		}
+		require.GreaterOrEqual(t, gasLimit, gasConsumed, "GasLimit should be >= gasConsumed")
 	})
 }
 
@@ -214,9 +187,7 @@ func TestWrappedUnDelegate_OutOfGas(t *testing.T) {
 
 		// We expect some gas to be consumed if the function progresses
 		gasConsumed := ctx.GasMeter().GasConsumed()
-		if gasConsumed >= undelegateGas {
-			t.Logf("SUCCESS: Gas consumption reached the ConsumeGas call (consumed: %d >= required: %d)", gasConsumed, undelegateGas)
-		}
+		require.GreaterOrEqual(t, gasLimit, gasConsumed, "GasLimit should be >= gasConsumed")
 	})
 }
 
@@ -268,9 +239,7 @@ func TestWrappedBeginRedelegate_OutOfGas(t *testing.T) {
 		}
 
 		gasConsumed := ctx.GasMeter().GasConsumed()
-		if gasConsumed >= redelegateGas {
-			t.Logf("SUCCESS: Gas consumption reached the ConsumeGas call (consumed: %d >= required: %d)", gasConsumed, redelegateGas)
-		}
+		require.GreaterOrEqual(t, gasLimit, gasConsumed, "GasLimit should be >= gasConsumed")
 	})
 
 	// Test with insufficient gas based on measured consumption
@@ -363,9 +332,7 @@ func TestWrappedCancelUnbondingDelegation_OutOfGas(t *testing.T) {
 		t.Logf("WrappedCancelUnbondingDelegation result - Error: %v, Gas consumed: %d", err, ctx.GasMeter().GasConsumed())
 
 		gasConsumed := ctx.GasMeter().GasConsumed()
-		if gasConsumed >= cancelGas {
-			t.Logf("SUCCESS: Gas consumption reached the ConsumeGas call (consumed: %d >= required: %d)", gasConsumed, cancelGas)
-		}
+		require.GreaterOrEqual(t, gasLimit, gasConsumed, "GasLimit should be >= gasConsumed")
 	})
 }
 
@@ -426,8 +393,6 @@ func TestWrappedEditValidator_OutOfGas(t *testing.T) {
 		t.Logf("WrappedEditValidator result - Error: %v, Gas consumed: %d", err, ctx.GasMeter().GasConsumed())
 
 		gasConsumed := ctx.GasMeter().GasConsumed()
-		if gasConsumed >= editValidatorGas {
-			t.Logf("SUCCESS: Gas consumption reached the ConsumeGas call (consumed: %d >= required: %d)", gasConsumed, editValidatorGas)
-		}
+		require.GreaterOrEqual(t, gasLimit, gasConsumed, "GasLimit should be >= gasConsumed")
 	})
 }

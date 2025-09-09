@@ -737,14 +737,20 @@ func (m *EventWrappedStakingUpdateParams) GetEpochBoundary() uint64 {
 	return 0
 }
 
-// EventUnlockFundsFailed is the event emmitted when unlocking funds fails.
+// EventUnlockFundsFailed is the event emitted when unlocking funds fails.
 type EventUnlockFundsFailed struct {
+	// epoch_number is the epoch number when the unlock funds operation failed
 	EpochNumber uint64 `protobuf:"varint,1,opt,name=epoch_number,json=epochNumber,proto3" json:"epoch_number,omitempty"`
-	Height      uint64 `protobuf:"varint,2,opt,name=height,proto3" json:"height,omitempty"`
-	TxId        []byte `protobuf:"bytes,3,opt,name=tx_id,json=txId,proto3" json:"tx_id,omitempty"`
-	MsgId       []byte `protobuf:"bytes,4,opt,name=msg_id,json=msgId,proto3" json:"msg_id,omitempty"`
-	Error       string `protobuf:"bytes,5,opt,name=error,proto3" json:"error,omitempty"`
-	MsgType     string `protobuf:"bytes,6,opt,name=msg_type,json=msgType,proto3" json:"msg_type,omitempty"`
+	// height is the block height when the message was originally submitted
+	Height uint64 `protobuf:"varint,2,opt,name=height,proto3" json:"height,omitempty"`
+	// tx_id is the ID of the transaction that contains the message
+	TxId []byte `protobuf:"bytes,3,opt,name=tx_id,json=txId,proto3" json:"tx_id,omitempty"`
+	// msg_id is the ID of the queued message
+	MsgId []byte `protobuf:"bytes,4,opt,name=msg_id,json=msgId,proto3" json:"msg_id,omitempty"`
+	// error is the error message describing why the unlock funds operation failed
+	Error string `protobuf:"bytes,5,opt,name=error,proto3" json:"error,omitempty"`
+	// msg_type is the type of the message that failed to unlock funds
+	MsgType string `protobuf:"bytes,6,opt,name=msg_type,json=msgType,proto3" json:"msg_type,omitempty"`
 }
 
 func (m *EventUnlockFundsFailed) Reset()         { *m = EventUnlockFundsFailed{} }

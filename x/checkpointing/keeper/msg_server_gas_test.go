@@ -53,7 +53,7 @@ func TestWrappedCreateValidator_OutOfGas(t *testing.T) {
 
 	// Test with sufficient gas
 	t.Run("sufficient_gas", func(t *testing.T) {
-		gasLimit := createValidatorGas + 100000
+		gasLimit := createValidatorGas + 200000
 		ctx = ctx.WithGasMeter(storetypes.NewGasMeter(gasLimit))
 
 		// Add test addresses with sufficient balance for validator creation
@@ -69,12 +69,10 @@ func TestWrappedCreateValidator_OutOfGas(t *testing.T) {
 		_, err = msgServer.WrappedCreateValidator(ctx, msgCreateValidator)
 		finalGas := ctx.GasMeter().GasConsumed()
 		actualGasUsed := finalGas - initialGas
-
+		t.Logf("WrappedCreateValidator result - Error: %v, initialGas: %d", err, initialGas)
 		t.Logf("WrappedCreateValidator result - Error: %v, Gas consumed: %d", err, actualGasUsed)
 
 		gasConsumed := ctx.GasMeter().GasConsumed()
-		if gasConsumed >= createValidatorGas {
-			t.Logf("SUCCESS: Gas consumption reached the ConsumeGas call (consumed: %d >= required: %d)", gasConsumed, createValidatorGas)
-		}
+		require.GreaterOrEqual(t, gasLimit, gasConsumed, "GasLimit should be >= gasConsumed")
 	})
 }

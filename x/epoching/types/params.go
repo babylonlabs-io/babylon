@@ -13,12 +13,12 @@ const (
 )
 
 var DefaultExecuteGas = ExecuteGas{
-	Delegate:                  61000,  // estimated 50934 + 20%
-	Undelegate:                53000,  // estimated 44146 + 20%
-	BeginRedelegate:           65700,  // estimated 54712 + 20%
+	Delegate:                  130000, // estimated 117519 + 20%
+	Undelegate:                88000,  // estimated 74000 + 20%
+	BeginRedelegate:           220000, // estimated 184712 + 20%
 	CancelUnbondingDelegation: 20500,  // estimated 17012 + 20%
-	EditValidator:             20100,  // estimated 16774 + 20
-	CreateValidator:           157300, // estimated 131101 + 20%
+	EditValidator:             61000,  // estimated 50783 + 20%
+	CreateValidator:           60000,  // estimated 52000 + 20%
 }
 
 // NewParams creates a new Params instance
