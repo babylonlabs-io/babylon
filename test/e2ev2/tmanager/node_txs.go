@@ -135,11 +135,10 @@ func (n *Node) StoreWasmCode(wasmFile, walletName string) {
 		Sender:       wallet.Address.String(),
 		WASMByteCode: code,
 	}
-
-	wallet.VerifySentTx = true
 	gasLimit := uint64(6000000) // for large contracts
+	wVerifySentTx := wallet.VerifySentTx
 	_, tx := wallet.SubmitMsgsWithGas(gasLimit, msg)
-	wallet.VerifySentTx = false
+	wallet.VerifySentTx = wVerifySentTx
 
 	require.NotNil(n.T(), tx, "StoreWasmCode transaction should not be nil")
 }
@@ -160,9 +159,9 @@ func (n *Node) InstantiateWasmContract(codeId, initMsg, walletName string) {
 		Funds:  sdk.NewCoins(),
 	}
 
-	wallet.VerifySentTx = true
+	wVerifySentTx := wallet.VerifySentTx
 	_, tx := wallet.SubmitMsgs(msg)
-	wallet.VerifySentTx = false
+	wallet.VerifySentTx = wVerifySentTx
 
 	require.NotNil(n.T(), tx, "InstantiateWasmContract transaction should not be nil")
 }

@@ -2,8 +2,6 @@ package keeper
 
 import (
 	"context"
-	"encoding/json"
-
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	"github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -16,7 +14,6 @@ var _ types.QueryServer = Keeper{}
 
 const (
 	maxQueryConsumersRegistryLimit = 100
-	configQueryMsg                 = `{"config":{}}`
 )
 
 func (k Keeper) ConsumerRegistryList(c context.Context, req *types.QueryConsumerRegistryListRequest) (*types.QueryConsumerRegistryListResponse, error) {
@@ -166,21 +163,12 @@ func (k Keeper) ConsumerActive(goCtx context.Context,
 			return nil, status.Error(codes.InvalidArgument, "invalid contract address")
 		}
 
-		queryMsg := []byte(configQueryMsg)
-
-		queryRes, err := k.wasmKeeper.QuerySmart(goCtx, contractAddress, queryMsg)
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to query contract: %v", err)
+		queryRes := k.wasmKeeper.GetContractInfo(goCtx, contractAddress)
+		if queryRes == nil {
+			active = false
+		} else {
+			active = queryRes.Label != ""
 		}
-
-		var ContractConfigResponse struct {
-			BsnId string `json:"bsn_id"`
-		}
-
-		if err := json.Unmarshal(queryRes, &ContractConfigResponse); err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to unmarshal response: %v", err)
-		}
-		active = ContractConfigResponse.BsnId != ""
 	}
 
 	return &types.QueryConsumerActiveResponse{Active: active}, nil

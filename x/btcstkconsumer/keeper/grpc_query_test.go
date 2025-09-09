@@ -143,4 +143,26 @@ func TestConsumerActive(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.NotNil(t, resp)
+
+	consumerRegister2 := &types.ConsumerRegister{
+		ConsumerId:          "rollup-empty-addr",
+		ConsumerName:        "Test Rollup Consumer",
+		ConsumerDescription: "A test rollup consumer with empty address",
+		ConsumerMetadata: &types.ConsumerRegister_RollupConsumerMetadata{
+			RollupConsumerMetadata: &types.RollupConsumerMetadata{
+				FinalityContractAddress: "",
+			},
+		},
+		BabylonRewardsCommission: math.LegacyMustNewDecFromStr("0.05"),
+	}
+
+	err = k.RegisterConsumer(ctx, consumerRegister2)
+	require.NoError(t, err)
+
+	resp, err = k.ConsumerActive(ctx, &types.QueryConsumerActiveRequest{
+		ConsumerId: "rollup-empty-addr",
+	})
+	require.Error(t, err, "Should return error for empty contract address")
+	require.Nil(t, resp)
+	require.True(t, resp.Active)
 }

@@ -19,6 +19,9 @@ func TestConsumerActive(t *testing.T) {
 	bsnChain := tm.ChainBSN()
 	bbn, bsn := bbnChain.Nodes[0], bsnChain.Nodes[0]
 
+	_, err := bbn.QueryConsumerActive("does-not-exist")
+	require.Error(t, err, "response should not be nil")
+
 	bbn.RegisterConsumerChain(
 		bbn.DefaultWallet().KeyName,
 		"07-tendermint-0",
@@ -42,7 +45,7 @@ func TestConsumerActive(t *testing.T) {
 	require.NotEmpty(t, bbnChannels.Channels)
 	connectionID := bbnChannels.Channels[0].ConnectionHops[0]
 
-	err := tm.Hermes.CreateZoneConciergeChannel(tm.ChainBBN(), tm.ChainBSN(), connectionID)
+	err = tm.Hermes.CreateZoneConciergeChannel(tm.ChainBBN(), tm.ChainBSN(), connectionID)
 	require.NoError(t, err, "failed to create zoneconcierge channel")
 
 	bbn.WaitForCondition(func() bool {
@@ -56,18 +59,17 @@ func TestConsumerActive(t *testing.T) {
 	consumerID := consumers[0].ConsumerId
 	require.NotEmpty(t, consumerID, "consumer ID should not be empty")
 
-	resp := bbn.QueryConsumerActive(consumerID)
+	resp, err := bbn.QueryConsumerActive(consumerID)
 	require.NotNil(t, resp, "response should not be nil")
 	require.True(t, resp, "cosmos consumer should be active")
 
 	tm.UpdateWalletsAccSeqNumber()
 
-	rollupConsumerID := "rollup-test-consumer"
-	contractAddr := bbn.CreateFinalityContract(rollupConsumerID)
+	contractAddr := bbn.CreateFinalityContract("rollup-test-consumer")
 
 	bbn.RegisterRollupConsumer(
 		bbn.DefaultWallet().KeyName,
-		rollupConsumerID,
+		"rollup-test-consumer",
 		"rollup-consumer",
 		"a test rollup consumer",
 		"0.1",
@@ -82,8 +84,21 @@ func TestConsumerActive(t *testing.T) {
 		return len(consumers) >= 2
 	}, time.Second*10, time.Millisecond*500, "Expected 2 consumers after rollup registration")
 
-	rollupResp := bbn.QueryConsumerActive(rollupConsumerID)
+	rollupResp, err := bbn.QueryConsumerActive("rollup-test-consumer")
 	require.NotNil(t, rollupResp, "rollup consumer resp should not be nil")
-
 	require.True(t, rollupResp, "rollup should be active with real finality contract")
+
+	validButNonExistentAddr := "cosmos1abc123def456ghi789jkl012mno345pqr678st"
+
+	bbn.RegisterRollupConsumer(
+		bbn.DefaultWallet().KeyName,
+		"rollup-nonexistent-contract",
+		"rollup-nonexistent",
+		"a test rollup consumer with non-existent contract",
+		"0.1",
+		validButNonExistentAddr,
+	)
+
+	rollupNonExistentResp, err := bbn.QueryConsumerActive("rollup-nonexistent-contract")
+	require.False(t, rollupNonExistentResp, "rollup with non-existent contract should be inactive")
 }

@@ -298,7 +298,7 @@ func (n *Node) GetRpcEndpoint() string {
 	return "tcp://" + net.JoinHostPort(n.Container.Name, fmt.Sprintf("%d", n.Ports.RPC))
 }
 
-func (n *Node) QueryConsumerActive(consumerID string) bool {
+func (n *Node) QueryConsumerActive(consumerID string) (bool, error) {
 	var (
 		resp *bsctypes.QueryConsumerActiveResponse
 		err  error
@@ -308,10 +308,12 @@ func (n *Node) QueryConsumerActive(consumerID string) bool {
 		resp, err = bscClient.ConsumerActive(context.Background(), &bsctypes.QueryConsumerActiveRequest{
 			ConsumerId: consumerID,
 		})
-		require.NoError(n.T(), err)
 	})
+	if err != nil {
+		return false, err
+	}
 
-	return resp.Active
+	return resp.Active, nil
 }
 
 func (n *Node) QueryConsumerActiveWithError(consumerID string) (bool, error) {
@@ -337,11 +339,11 @@ func (n *Node) QueryLatestWasmCodeID() uint64 {
 	path := "/cosmwasm/wasm/v1/code"
 	bz, err := n.QueryGRPCGateway(path, url.Values{})
 	require.NoError(n.T(), err)
-	
+
 	var response wasmtypes.QueryCodesResponse
 	err = util.Cdc.UnmarshalJSON(bz, &response)
 	require.NoError(n.T(), err)
-	
+
 	if len(response.CodeInfos) == 0 {
 		return 0
 	}
@@ -355,7 +357,7 @@ func (n *Node) QueryContractsFromId(codeId int) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	
+
 	var contractsResponse wasmtypes.QueryContractsByCodeResponse
 	if err := util.Cdc.UnmarshalJSON(bz, &contractsResponse); err != nil {
 		return nil, err
@@ -371,12 +373,12 @@ func (n *Node) QueryWasmSmart(contract string, queryMsg string) (*wasmtypes.Quer
 	if err != nil {
 		return nil, err
 	}
-	
+
 	var response wasmtypes.QuerySmartContractStateResponse
 	err = util.Cdc.UnmarshalJSON(bz, &response)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return &response, nil
 }
