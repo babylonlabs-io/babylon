@@ -286,7 +286,7 @@ func FuzzCheckBTCDelegationRewardsTracker(f *testing.F) {
 		// check delete all from fp1
 		k.deleteKeysFromBTCDelegationRewardsTracker(ctx, fp1, [][]byte{del1.Bytes(), del2.Bytes()})
 		count = 0
-		err = k.IterateBTCDelegationRewardsTracker(ctx, fp1, func(fp, del sdk.AccAddress, val types.BTCDelegationRewardsTracker) error {
+		err = k.IterateBTCDelegationRewardsTracker(ctx, fp1, func(fp, del sdk.AccAddress, rwdTracker types.BTCDelegationRewardsTracker) error {
 			count++
 			return nil
 		})
