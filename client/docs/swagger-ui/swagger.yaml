@@ -13405,9 +13405,9 @@ paths:
                   StartPeriodCumulativeReward the starting period the costaker
 
                   made his last withdraw of costaking rewards or modified his
-                  active staking amount
+                  active staking
 
-                  of satoshis or baby.
+                  amount of satoshis or baby.
               active_satoshis:
                 type: string
                 format: byte
@@ -13428,7 +13428,7 @@ paths:
                   of this costaker.
             description: |-
               QueryCostakerRewardsTrackerResponse is the response type for the
-              Query/CostakerRewardsTracker RPC method.
+              Query/costakerRewardsTracker RPC method.
         default:
           description: An unexpected error response.
           schema:
@@ -13453,7 +13453,7 @@ paths:
                       format: byte
       parameters:
         - name: costaker_address
-          description: CostakerAddress defines the delegator address to query for.
+          description: costakerAddress defines the delegator address to query for.
           in: path
           required: true
           type: string
@@ -13463,7 +13463,9 @@ paths:
     get:
       summary: >-
         CurrentRewards queries the current rewards structure for costaking
-        single pool.
+        single
+
+        pool.
       operationId: CurrentRewards
       responses:
         '200':
@@ -13522,7 +13524,7 @@ paths:
 
                   creating new historical rewards and correlate with
 
-                  CostakerRewardsTracker StartPeriodCumulativeReward.
+                  costakerRewardsTracker StartPeriodCumulativeReward.
               total_score:
                 type: string
                 format: byte
@@ -13531,7 +13533,9 @@ paths:
                   all the stakers score in the chain.
             description: >-
               QueryCurrentRewardsResponse is response type for the
-              Query/CurrentRewards RPC method.
+              Query/CurrentRewards RPC
+
+              method.
         default:
           description: An unexpected error response.
           schema:
@@ -13560,7 +13564,9 @@ paths:
     get:
       summary: >-
         HistoricalRewards queries the historical rewards structure per period
-        for costaking single pool.
+        for
+
+        costaking single pool.
       operationId: HistoricalRewards
       responses:
         '200':
@@ -13599,7 +13605,7 @@ paths:
                   and multiplied
 
                   by the total score amount of each staker
-            description: >-
+            description: |-
               QueryHistoricalRewardsResponse is response type for the
               Query/HistoricalRewards RPC method.
         default:
@@ -13652,8 +13658,8 @@ paths:
                   costaking_portion:
                     type: string
                     description: >-
-                      CostakingPortion is the portion of rewards that goes to
-                      Costakers
+                      costakingPortion is the portion of rewards that goes to
+                      costakers
 
                       NOTE: This portion of costakers is taken after the
                       incentive module
@@ -13669,8 +13675,9 @@ paths:
 
                       sats staked to count as score in the formula.
 
-                      score: min(costakers_sats_staked, (costakers_ubbn_staked
-                      / score_ratio_btc_by_baby))
+                      score: min(costakers_sats_staked, (costakers_ubbn_staked /
+
+                      score_ratio_btc_by_baby))
                   validators_portion:
                     type: string
                     description: >-
@@ -13681,7 +13688,9 @@ paths:
                       incentive module
 
                       takes part of the fee_collector balance to give out to
-                      validators that correctly voted.
+                      validators that
+
+                      correctly voted.
             description: >-
               QueryParamsResponse is response type for the Query/Params RPC
               method.
@@ -22774,17 +22783,15 @@ definitions:
       costaking_portion:
         type: string
         description: |-
-          CostakingPortion is the portion of rewards that goes to Costakers
+          costakingPortion is the portion of rewards that goes to costakers
           NOTE: This portion of costakers is taken after the incentive module
           takes part of the fee_collector to give out to BTC stakers.
       score_ratio_btc_by_baby:
         type: string
         format: byte
-        title: >-
+        title: |-
           ScoreRatioBtcByBaby defines the amount of ubbn necessary for the
-
           sats staked to count as score in the formula.
-
           score: min(costakers_sats_staked, (costakers_ubbn_staked /
           score_ratio_btc_by_baby))
       validators_portion:
@@ -22796,6 +22803,7 @@ definitions:
           NOTE: This portion of validators is taken after the incentive module
 
           takes part of the fee_collector balance to give out to validators that
+
           correctly voted.
     description: Params defines the parameters for the module.
   babylon.costaking.v1.QueryCostakerRewardsTrackerResponse:
@@ -22808,9 +22816,9 @@ definitions:
           StartPeriodCumulativeReward the starting period the costaker
 
           made his last withdraw of costaking rewards or modified his active
-          staking amount
+          staking
 
-          of satoshis or baby.
+          amount of satoshis or baby.
       active_satoshis:
         type: string
         format: byte
@@ -22831,7 +22839,7 @@ definitions:
           of this costaker.
     description: |-
       QueryCostakerRewardsTrackerResponse is the response type for the
-      Query/CostakerRewardsTracker RPC method.
+      Query/costakerRewardsTracker RPC method.
   babylon.costaking.v1.QueryCurrentRewardsResponse:
     type: object
     properties:
@@ -22877,7 +22885,7 @@ definitions:
         description: |-
           Period stores the current period that serves as a reference for
           creating new historical rewards and correlate with
-          CostakerRewardsTracker StartPeriodCumulativeReward.
+          costakerRewardsTracker StartPeriodCumulativeReward.
       total_score:
         type: string
         format: byte
@@ -22886,7 +22894,9 @@ definitions:
           all the stakers score in the chain.
     description: >-
       QueryCurrentRewardsResponse is response type for the Query/CurrentRewards
-      RPC method.
+      RPC
+
+      method.
   babylon.costaking.v1.QueryHistoricalRewardsResponse:
     type: object
     properties:
@@ -22915,7 +22925,7 @@ definitions:
           multiplied
 
           by the total score amount of each staker
-    description: >-
+    description: |-
       QueryHistoricalRewardsResponse is response type for the
       Query/HistoricalRewards RPC method.
   babylon.costaking.v1.QueryParamsResponse:
@@ -22928,8 +22938,7 @@ definitions:
           costaking_portion:
             type: string
             description: >-
-              CostakingPortion is the portion of rewards that goes to
-              Costakers
+              costakingPortion is the portion of rewards that goes to costakers
 
               NOTE: This portion of costakers is taken after the incentive
               module
@@ -22938,11 +22947,9 @@ definitions:
           score_ratio_btc_by_baby:
             type: string
             format: byte
-            title: >-
+            title: |-
               ScoreRatioBtcByBaby defines the amount of ubbn necessary for the
-
               sats staked to count as score in the formula.
-
               score: min(costakers_sats_staked, (costakers_ubbn_staked /
               score_ratio_btc_by_baby))
           validators_portion:
@@ -22955,5 +22962,7 @@ definitions:
               module
 
               takes part of the fee_collector balance to give out to validators
-              that correctly voted.
+              that
+
+              correctly voted.
     description: QueryParamsResponse is response type for the Query/Params RPC method.
