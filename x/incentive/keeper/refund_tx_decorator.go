@@ -2,13 +2,12 @@ package keeper
 
 import (
 	"bytes"
-	errorsmod "cosmossdk.io/errors"
-	storetypes "cosmossdk.io/store/types"
 	"errors"
+
+	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/babylonlabs-io/babylon/v4/x/feemarketwrapper"
 	btcctypes "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
 	btclctypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
 	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
@@ -20,15 +19,13 @@ var _ sdk.PostDecorator = &RefundTxDecorator{}
 var _ sdk.AnteDecorator = &RefundTxDecorator{}
 
 type RefundTxDecorator struct {
-	k    *Keeper
-	tKey *storetypes.TransientStoreKey
+	k *Keeper
 }
 
 // NewRefundTxDecorator creates a new RefundTxDecorator
-func NewRefundTxDecorator(k *Keeper, tKey *storetypes.TransientStoreKey) *RefundTxDecorator {
+func NewRefundTxDecorator(k *Keeper) *RefundTxDecorator {
 	return &RefundTxDecorator{
-		k:    k,
-		tKey: tKey,
+		k: k,
 	}
 }
 
@@ -79,25 +76,6 @@ func (d *RefundTxDecorator) PostHandle(ctx sdk.Context, tx sdk.Tx, simulate, suc
 			d.k.Logger(ctx).Error("failed to refund tx", "error", err)
 			return next(ctx, tx, simulate, success)
 		}
-
-		// set refundable block gas wanted and used for base fee calculation
-		feeTx, ok := tx.(sdk.FeeTx)
-		if !ok {
-			return ctx, errorsmod.Wrap(sdkerrors.ErrTxDecode, "Tx must be a FeeTx")
-		}
-		gasWanted := feeTx.GetGas()
-		currentRefundableBlockGasWanted := feemarketwrapper.GetTransientRefundableBlockGasWanted(ctx, d.tKey)
-		totalRefundableBlockGasWanted := currentRefundableBlockGasWanted + gasWanted
-		feemarketwrapper.SetTransientRefundableBlockGasWanted(ctx, totalRefundableBlockGasWanted, d.tKey)
-
-		/*
-			TODO: there are slightly more gas consumed after this posthandle ~327,
-				find where that gas is consumed and set refundable gas used at that place
-		*/
-		gasUsed := ctx.GasMeter().GasConsumed()
-		currentRefundableBlockGasUsed := feemarketwrapper.GetTransientRefundableBlockGasUsed(ctx, d.tKey)
-		totalRefundableBlockGasUsed := currentRefundableBlockGasUsed + gasUsed
-		feemarketwrapper.SetTransientRefundableBlockGasUsed(ctx, totalRefundableBlockGasUsed, d.tKey)
 	}
 
 	// move to the next PostHandler
@@ -142,14 +120,14 @@ func isRefundTx(tx sdk.Tx) bool {
 	for _, msg := range tx.GetMsgs() {
 		switch msg.(type) {
 		case *btclctypes.MsgInsertHeaders, // BTC light client
-		// BTC timestamping
+			// BTC timestamping
 			*btcctypes.MsgInsertBTCSpvProof,
-		// BTC staking
+			// BTC staking
 			*bstypes.MsgAddCovenantSigs,
 			*bstypes.MsgBTCUndelegate,
 			*bstypes.MsgSelectiveSlashingEvidence,
 			*bstypes.MsgAddBTCDelegationInclusionProof,
-		// BTC staking finality
+			// BTC staking finality
 			*ftypes.MsgAddFinalitySig:
 			continue
 		default:

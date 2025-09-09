@@ -5,11 +5,6 @@ import (
 	"strings"
 	"testing"
 
-	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
-	erc20types "github.com/cosmos/evm/x/erc20/types"
-	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
-	precisebanktypes "github.com/cosmos/evm/x/precisebank/types"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
 
 	tokenfactorytypes "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/types"
 
@@ -27,6 +22,7 @@ import (
 
 	babylonApp "github.com/babylonlabs-io/babylon/v4/app"
 	testsigner "github.com/babylonlabs-io/babylon/v4/testutil/signer"
+	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
 	incentivetypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
 	minttypes "github.com/babylonlabs-io/babylon/v4/x/mint/types"
@@ -36,7 +32,7 @@ import (
 
 var (
 	expectedMaccPerms = map[string][]string{
-		authtypes.FeeCollectorName:                  {authtypes.Burner}, // fee collector account
+		authtypes.FeeCollectorName:                  nil, // fee collector account
 		distrtypes.ModuleName:                       nil,
 		minttypes.ModuleName:                        {authtypes.Minter},
 		stktypes.BondedPoolName:                     {authtypes.Burner, authtypes.Staking},
@@ -46,10 +42,6 @@ var (
 		incentivetypes.ModuleName:                   nil, // this line is needed to create an account for incentive module
 		tokenfactorytypes.ModuleName:                {authtypes.Minter, authtypes.Burner},
 		icatypes.ModuleName:                         nil,
-		evmtypes.ModuleName:                         {authtypes.Minter, authtypes.Burner},
-		erc20types.ModuleName:                       {authtypes.Minter, authtypes.Burner},
-		feemarkettypes.ModuleName:                   nil,
-		precisebanktypes.ModuleName:                 {authtypes.Minter, authtypes.Burner},
 		incentivetypes.ModAccCommissionCollectorBSN: nil, // Babylon BSN rewards commission collector
 	}
 )
@@ -135,8 +127,6 @@ func TestBabylonBlockedAddrs(t *testing.T) {
 		0,
 		&blsSigner,
 		appOpts,
-		appparams.EVMChainID,
-		babylonApp.EVMAppOptions,
 		babylonApp.EmptyWasmOpts,
 	)
 	_, err = app2.ExportAppStateAndValidators(false, []string{}, []string{})

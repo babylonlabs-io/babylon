@@ -61,8 +61,6 @@ func NewBlockReplayer(t *testing.T, nodeDir string) *BlockReplayer {
 		0,
 		blsSigner,
 		appOptions,
-		appparams.EVMChainID,
-		babylonApp.EVMAppOptions,
 		babylonApp.EmptyWasmOpts,
 		baseAppOptions...,
 	)

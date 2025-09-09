@@ -15,7 +15,6 @@ import (
 
 	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
-	evmserverconfig "github.com/cosmos/evm/server/config"
 )
 
 type BtcConfig struct {
@@ -58,11 +57,6 @@ type BabylonAppConfig struct {
 	BlsConfig BlsConfig `mapstructure:"bls-config"`
 
 	BabylonMempoolConfig BabylonMempoolConfig `mapstructure:"babylon-mempool"`
-
-	// EVM config
-	EVM     evmserverconfig.EVMConfig     `mapstructure:"evm"`
-	JSONRPC evmserverconfig.JSONRPCConfig `mapstructure:"json-rpc"`
-	TLS     evmserverconfig.TLSConfig     `mapstructure:"tls"`
 }
 
 func DefaultBabylonAppConfig() *BabylonAppConfig {
@@ -72,24 +66,17 @@ func DefaultBabylonAppConfig() *BabylonAppConfig {
 	// The SDK's default minimum gas price is set to "0.002ubbn" (empty value) inside
 	// app.toml, in order to avoid spamming attacks due to transactions with 0 gas price.
 	baseConfig.MinGasPrices = fmt.Sprintf("%f%s", appparams.GlobalMinGasPrice, appparams.BaseCoinUnit)
-	evmConfig := *evmserverconfig.DefaultEVMConfig()
-	evmConfig.EVMChainID = appparams.EVMChainID
-	jsonRPCConfig := *evmserverconfig.DefaultJSONRPCConfig()
-	jsonRPCConfig.Enable = true
 	return &BabylonAppConfig{
 		Config:               baseConfig,
 		Wasm:                 wasmtypes.DefaultNodeConfig(),
 		BtcConfig:            defaultBabylonBtcConfig(),
 		BlsConfig:            defaultBabylonBlsConfig(),
 		BabylonMempoolConfig: defaultBabylonMempoolConfig(),
-		EVM:                  evmConfig,
-		JSONRPC:              jsonRPCConfig,
-		TLS:                  *evmserverconfig.DefaultTLSConfig(),
 	}
 }
 
 func DefaultBabylonTemplate() string {
-	return serverconfig.DefaultConfigTemplate + evmserverconfig.DefaultEVMConfigTemplate + wasmtypes.DefaultConfigTemplate() + `
+	return serverconfig.DefaultConfigTemplate + wasmtypes.DefaultConfigTemplate() + `
 ###############################################################################
 ###                        BLS configuration                                ###
 ###############################################################################

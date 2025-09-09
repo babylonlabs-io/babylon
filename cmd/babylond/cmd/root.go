@@ -3,7 +3,6 @@ package cmd
 import (
 	"errors"
 	"fmt"
-	"github.com/cosmos/evm/crypto/hd"
 	"io"
 	"os"
 	"strings"
@@ -12,11 +11,11 @@ import (
 	confixcmd "cosmossdk.io/tools/confix/cmd"
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
 	cmtcfg "github.com/cometbft/cometbft/config"
 	cmtcli "github.com/cometbft/cometbft/libs/cli"
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/client/config"
+	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authcodec "github.com/cosmos/cosmos-sdk/x/auth/codec"
@@ -24,9 +23,6 @@ import (
 	authtxconfig "github.com/cosmos/cosmos-sdk/x/auth/tx/config"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
-	evmkeyring "github.com/cosmos/evm/crypto/keyring"
-	evmserver "github.com/cosmos/evm/server"
-	srvflags "github.com/cosmos/evm/server/flags"
 
 	appsigner "github.com/babylonlabs-io/babylon/v4/app/signer"
 
@@ -45,8 +41,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
-	evmcmd "github.com/cosmos/evm/client"
-	evmtypes "github.com/cosmos/evm/types"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
@@ -67,15 +61,7 @@ func NewRootCmd() *cobra.Command {
 		WithInput(os.Stdin).
 		WithAccountRetriever(types.AccountRetriever{}).
 		WithHomeDir(app.DefaultNodeHome).
-		WithViper(""). // In app, we don't use any prefix for env variables.
-		WithBroadcastMode(flags.FlagBroadcastMode).
-		WithKeyringOptions(evmkeyring.Option(), hd.EthSecp256k1Option()).
-		WithLedgerHasProtobuf(true)
-
-	cfg := sdk.GetConfig()
-	cfg.SetCoinType(evmtypes.Bip44CoinType)
-	cfg.SetPurpose(sdk.Purpose)
-	cfg.Seal()
+		WithViper("") // In app, we don't use any prefix for env variables.
 
 	rootCmd := &cobra.Command{
 		Use:   "babylond",
@@ -134,11 +120,6 @@ func NewRootCmd() *cobra.Command {
 	}
 
 	initRootCmd(rootCmd, tempApp.TxConfig(), tempApp.BasicModuleManager)
-
-	// If the regular chain id set, ensure we also set an EVM specific chain id.
-	if err := app.EVMAppOptions(appparams.EVMChainID); err != nil {
-		panic(err)
-	}
 
 	// add keyring to autocli opts
 	autoCliOpts := tempApp.AutoCliOpts()
@@ -238,26 +219,13 @@ func initRootCmd(rootCmd *cobra.Command, txConfig client.TxEncodingConfig, basic
 		confixcmd.ConfigCommand(),
 	)
 
-	evmserver.AddCommands(
-		rootCmd,
-		evmserver.NewDefaultStartOptions(newApp, app.DefaultNodeHome),
-		appExport,
-		addModuleInitFlags,
-	)
-
 	// add keybase, auxiliary RPC, query, and tx child commands
 	rootCmd.AddCommand(
 		server.StatusCommand(),
 		queryCommand(),
 		txCommand(),
-		evmcmd.KeyCommands(app.DefaultNodeHome, false),
+		keys.Commands(),
 	)
-
-	var err error
-	_, err = srvflags.AddTxFlags(rootCmd)
-	if err != nil {
-		panic(err)
-	}
 }
 
 func addModuleInitFlags(startCmd *cobra.Command) {
@@ -321,7 +289,7 @@ func txCommand() *cobra.Command {
 }
 
 // newApp is an appCreator
-func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, appOpts servertypes.AppOptions) evmserver.Application {
+func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, appOpts servertypes.AppOptions) servertypes.Application {
 	baseappOptions := server.DefaultBaseappOptions(appOpts)
 
 	skipUpgradeHeights := make(map[int64]bool)
@@ -359,8 +327,6 @@ func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, appOpts serverty
 		cast.ToUint(appOpts.Get(server.FlagInvCheckPeriod)),
 		&blsSigner,
 		appOpts,
-		appparams.EVMChainID,
-		app.EVMAppOptions,
 		wasmOpts,
 		baseappOptions...,
 	)
@@ -392,13 +358,13 @@ func appExport(
 	blsSigner := checkpointingtypes.BlsSigner(ck.Bls)
 
 	if height != -1 {
-		babylonApp = app.NewBabylonApp(logger, db, traceStore, false, map[int64]bool{}, uint(1), &blsSigner, appOpts, appparams.EVMChainID, app.EVMAppOptions, app.EmptyWasmOpts)
+		babylonApp = app.NewBabylonApp(logger, db, traceStore, false, map[int64]bool{}, uint(1), &blsSigner, appOpts, app.EmptyWasmOpts)
 
 		if err = babylonApp.LoadHeight(height); err != nil {
 			return servertypes.ExportedApp{}, fmt.Errorf("failed to load height: %w", err)
 		}
 	} else {
-		babylonApp = app.NewBabylonApp(logger, db, traceStore, true, map[int64]bool{}, uint(1), &blsSigner, appOpts, appparams.EVMChainID, app.EVMAppOptions, app.EmptyWasmOpts)
+		babylonApp = app.NewBabylonApp(logger, db, traceStore, true, map[int64]bool{}, uint(1), &blsSigner, appOpts, app.EmptyWasmOpts)
 	}
 
 	return babylonApp.ExportAppStateAndValidators(forZeroHeight, jailAllowedAddrs, modulesToExport)
