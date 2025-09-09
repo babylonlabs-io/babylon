@@ -12,6 +12,7 @@ import (
 	v1rc9 "github.com/babylonlabs-io/babylon/v2/app/upgrades/v1rc9/testnet"
 	v2 "github.com/babylonlabs-io/babylon/v2/app/upgrades/v2"
 	v22 "github.com/babylonlabs-io/babylon/v2/app/upgrades/v2_2"
+	v23 "github.com/babylonlabs-io/babylon/v2/app/upgrades/v2_3"
 	v2rc4 "github.com/babylonlabs-io/babylon/v2/app/upgrades/v2rc4/testnet"
 )
 
@@ -19,6 +20,7 @@ import (
 // it is also used for e2e testing
 func init() {
 	Upgrades = []upgrades.Upgrade{
+		v23.Upgrade,
 		v2rc4.Upgrade,
 		v2.CreateUpgrade(true, map[string]struct{}{}),
 		v1_1.Upgrade,
