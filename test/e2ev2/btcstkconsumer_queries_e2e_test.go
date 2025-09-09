@@ -60,6 +60,7 @@ func TestConsumerActive(t *testing.T) {
 	require.NotEmpty(t, consumerID, "consumer ID should not be empty")
 
 	resp, err := bbn.QueryConsumerActive(consumerID)
+	require.NoError(t, err)
 	require.NotNil(t, resp, "response should not be nil")
 	require.True(t, resp, "cosmos consumer should be active")
 
@@ -85,6 +86,7 @@ func TestConsumerActive(t *testing.T) {
 	}, time.Second*10, time.Millisecond*500, "Expected 2 consumers after rollup registration")
 
 	rollupResp, err := bbn.QueryConsumerActive("rollup-test-consumer")
+	require.NoError(t, err)
 	require.NotNil(t, rollupResp, "rollup consumer resp should not be nil")
 	require.True(t, rollupResp, "rollup should be active with real finality contract")
 
@@ -100,5 +102,6 @@ func TestConsumerActive(t *testing.T) {
 	)
 
 	rollupNonExistentResp, err := bbn.QueryConsumerActive("rollup-nonexistent-contract")
+	require.NoError(t, err)
 	require.False(t, rollupNonExistentResp, "rollup with non-existent contract should be inactive")
 }

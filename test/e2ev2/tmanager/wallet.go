@@ -140,9 +140,7 @@ func (ws *WalletSender) SignMsgWithGas(gasLimit uint64, msgs ...sdk.Msg) *sdktx.
 	err := txBuilder.SetMsgs(msgs...)
 	require.NoError(ws.T(), err, "failed to set messages")
 
-	feeAmount := math.NewInt(int64(gasLimit / 15))
-	txBuilder.SetFeeAmount(sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, feeAmount)))
-	txBuilder.SetGasLimit(gasLimit)
+	txBuilder.SetGasLimit(300000)
 
 	pubKey := ws.PrivKey.PubKey()
 	signerData := authsigning.SignerData{
