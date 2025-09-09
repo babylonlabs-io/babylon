@@ -2117,3 +2117,58 @@ func verifyAddBsnRewardsEvent(t *testing.T, h *testutil.Helper, expectedConsumer
 	require.Equal(t, expectedTotalRewards.String(), evt.TotalRewards.String(), "Event should contain correct total rewards")
 	require.Equal(t, len(expectedFpRatios), len(evt.FpRatios), "Event should contain correct number of FPs")
 }
+
+func FuzzMultiStaking_CreateBTCDelegation(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
+		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
+		heightAfterMultiStakingAllowListExpiration := int64(10)
+		h := testutil.NewHelper(t, btclcKeeper, btccKeeper, nil).WithBlockHeight(heightAfterMultiStakingAllowListExpiration)
+
+		h.GenAndApplyCustomParams(r, 100, 200, 2)
+
+		randomConsumer := h.RegisterAndVerifyConsumer(t, r)
+		_, babylonFpPK, _ := h.CreateFinalityProvider(r)
+		_, consumerFpPK, _, err := h.CreateConsumerFinalityProvider(r, randomConsumer.ConsumerId)
+		h.NoError(err)
+
+		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
+		h.NoError(err)
+		stakingValue := int64(2 * 10e8)
+
+		stakingTxHash, msgCreateBTCDel, actualDel, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
+			r,
+			delSK,
+			[]*btcec.PublicKey{babylonFpPK, consumerFpPK},
+			stakingValue,
+			1000,
+			0,
+			0,
+			false,
+			false,
+			10,
+			30,
+		)
+		h.NoError(err)
+
+		require.NotEmpty(t, stakingTxHash)
+		require.NotNil(t, msgCreateBTCDel)
+		require.NotNil(t, actualDel)
+		require.Len(t, actualDel.FpBtcPkList, 2)
+		babylonBIP340 := bbn.NewBIP340PubKeyFromBTCPK(babylonFpPK)
+		consumerBIP340 := bbn.NewBIP340PubKeyFromBTCPK(consumerFpPK)
+		require.Contains(t, actualDel.FpBtcPkList, *babylonBIP340)
+		require.Contains(t, actualDel.FpBtcPkList, *consumerBIP340)
+		require.Equal(t, uint64(stakingValue), actualDel.TotalSat)
+
+		retrievedDel, err := h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
+		h.NoError(err)
+		require.Equal(t, actualDel.BtcPk.MarshalHex(), retrievedDel.BtcPk.MarshalHex())
+		require.Len(t, retrievedDel.FpBtcPkList, 2)
+	})
+}

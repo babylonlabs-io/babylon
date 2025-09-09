@@ -64,9 +64,6 @@ func TestValidatorWithBlsKeySetValidate(t *testing.T) {
 				_, err := crypto_rand.Read(invalidKey)
 				require.NoError(t, err)
 				vs.ValSet[0].BlsPubKey = invalidKey
-				if len(vs.ValSet) > 1 {
-					vs.ValSet[1].BlsPubKey = invalidKey
-				}
 			},
 			expectErr: errors.New("invalid BLS public key point on the bls12-381 curve"),
 		},

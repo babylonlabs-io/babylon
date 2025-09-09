@@ -8,7 +8,7 @@ option go_package = "github.com/babylonlabs-io/babylon/v4/x/costaking/types";
 
 // Params defines the parameters for the module.
 message Params {
-  // costakingPortion is the portion of rewards that goes to costakers
+  // CostakingPortion is the portion of rewards that goes to costakers
   // NOTE: This portion of costakers is taken after the incentive module
   // takes part of the fee_collector to give out to BTC stakers.
   string costaking_portion = 1 [
