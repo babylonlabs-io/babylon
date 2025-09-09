@@ -20,7 +20,7 @@ func (k Keeper) HookIncentives() HookIncentives {
 	return HookIncentives{k}
 }
 
-// BeforeRewardWithdraw updates the coostaking reward tracker and send the reward funds from coostaking to incentive module.
+// BeforeRewardWithdraw updates the costaking reward tracker and send the reward funds from costaking to incentive module.
 func (h HookIncentives) BeforeRewardWithdraw(ctx context.Context, sType ictvtypes.StakeholderType, addr sdk.AccAddress) error {
 	if sType != ictvtypes.COSTAKER {
 		return nil

@@ -46,7 +46,7 @@ message QueryParamsResponse {
 }
 
 // QueryCostakerRewardsTrackerRequest is the request type for the
-// Query/costakerRewardsTracker RPC method.
+// Query/CostakerRewardsTracker RPC method.
 message QueryCostakerRewardsTrackerRequest {
   option (gogoproto.equal) = false;
   option (gogoproto.goproto_getters) = false;
@@ -57,7 +57,7 @@ message QueryCostakerRewardsTrackerRequest {
 }
 
 // QueryCostakerRewardsTrackerResponse is the response type for the
-// Query/costakerRewardsTracker RPC method.
+// Query/CostakerRewardsTracker RPC method.
 message QueryCostakerRewardsTrackerResponse {
   option (gogoproto.equal) = false;
   option (gogoproto.goproto_getters) = false;
@@ -114,7 +114,7 @@ message QueryCurrentRewardsResponse {
   ];
   // Period stores the current period that serves as a reference for
   // creating new historical rewards and correlate with
-  // costakerRewardsTracker StartPeriodCumulativeReward.
+  // CostakerRewardsTracker StartPeriodCumulativeReward.
   uint64 period = 2;
   // TotalScore is the total amount of score calulated over
   // all the stakers score in the chain.
