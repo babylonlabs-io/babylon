@@ -40,8 +40,7 @@ func getExistingValidator(t *testing.T, helper *testhelper.Helper, ctx sdk.Conte
 }
 
 // Helper function to get initial balances and delegation
-func getInitialState(helper *testhelper.Helper, ctx sdk.Context,
-	delegatorAddr sdk.AccAddress, validatorAddr sdk.ValAddress, amount sdk.Coin) (sdk.Coin, sdk.Coin, sdkmath.LegacyDec) {
+func getInitialState(helper *testhelper.Helper, ctx sdk.Context, delegatorAddr sdk.AccAddress, validatorAddr sdk.ValAddress, amount sdk.Coin) (sdk.Coin, sdk.Coin, sdkmath.LegacyDec) {
 
 	// Get delegate pool address for balance checks
 	delegatePoolAddr := helper.App.AccountKeeper.GetModuleAddress("epoching_delegate_pool")
@@ -130,9 +129,7 @@ func executeEndBlocker(t *testing.T, helper *testhelper.Helper, ctx sdk.Context,
 }
 
 // Helper function to verify final state for unlock/execution scenarios
-func verifyFinalState(t *testing.T, helper *testhelper.Helper, ctx sdk.Context,
-	delegatorAddr sdk.AccAddress, validatorAddr sdk.ValAddress, amount sdk.Coin,
-	initialUserBalance, initialPoolBalance sdk.Coin, initialDelegationShares sdkmath.LegacyDec, expectUnlockErr, expectMessageExecErr bool) {
+func verifyFinalState(t *testing.T, helper *testhelper.Helper, ctx sdk.Context, delegatorAddr sdk.AccAddress, validatorAddr sdk.ValAddress, amount sdk.Coin, initialUserBalance, initialPoolBalance sdk.Coin, initialDelegationShares sdkmath.LegacyDec, expectUnlockErr, expectMessageExecErr bool) {
 
 	// Get delegate pool address
 	delegatePoolAddr := helper.App.AccountKeeper.GetModuleAddress("epoching_delegate_pool")
