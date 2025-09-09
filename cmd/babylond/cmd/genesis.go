@@ -6,9 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"cosmossdk.io/math"
-	"github.com/babylonlabs-io/babylon/v4/app/keepers"
-
 	sdkmath "cosmossdk.io/math"
 
 	minttypes "github.com/babylonlabs-io/babylon/v4/x/mint/types"
