@@ -1120,6 +1120,11 @@ func FuzzBTCDelegationEvents_NoPreApproval(f *testing.F) {
 		btclcKeeper := btcstktypes.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := btcstktypes.NewMockBtcCheckpointKeeper(ctrl)
 		h := testutil.NewHelper(t, btclcKeeper, btccKeeper, nil)
+		// TODO: add expected values
+		fHooks := h.FinalityHooks.(*ftypes.MockFinalityHooks)
+		fHooks.EXPECT().AfterBtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+		fHooks.EXPECT().AfterBtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+		fHooks.EXPECT().AfterFpStatusChange(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 
 		// set all parameters
 		covenantSKs, _ := h.GenAndApplyParams(r)
@@ -1235,6 +1240,11 @@ func FuzzBTCDelegationEvents_WithPreApproval(f *testing.F) {
 		btclcKeeper := btcstktypes.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := btcstktypes.NewMockBtcCheckpointKeeper(ctrl)
 		h := testutil.NewHelper(t, btclcKeeper, btccKeeper, nil)
+		// TODO: add expected values
+		fHooks := h.FinalityHooks.(*ftypes.MockFinalityHooks)
+		fHooks.EXPECT().AfterBtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+		fHooks.EXPECT().AfterBtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+		fHooks.EXPECT().AfterFpStatusChange(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 
 		// set all parameters
 		covenantSKs, _ := h.GenAndApplyParams(r)
