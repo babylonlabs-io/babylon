@@ -483,7 +483,6 @@ func convertBTCDelegationResponseToBTCDelegation(resp *btcstktypes.BTCDelegation
 			if err != nil {
 				return nil, fmt.Errorf("failed to decode unbonding tx hex: %w", err)
 			}
-
 		}
 		del.BtcUndelegation = &btcstktypes.BTCUndelegation{
 			UnbondingTx:              unbondingTx,
