@@ -96,8 +96,7 @@ func (k Keeper) HandleFPStateUpdates(ctx context.Context, prevDc, newDc *ftypes.
 
 	newlyActiveFPs := newDc.FindNewActiveFinalityProviders(prevDc)
 	for _, fp := range newlyActiveFPs {
-		// what was the status prior to update the status?
-		prevStatus := fp.Status()
+		prevStatus := fp.Status
 
 		if err := k.HandleActivatedFinalityProvider(ctx, fp.BtcPk); err != nil {
 			panic(fmt.Errorf("failed to execute after finality provider %s activated", fp.BtcPk.MarshalHex()))
@@ -140,7 +139,7 @@ func (k Keeper) processInactiveFp(
 	}
 
 	newStatus := types.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_INACTIVE
-	k.processHooksFp(sdkCtx, state.FpByBtcPk, *fp.BtcPk, fp.Status(), newStatus)
+	k.processHooksFp(sdkCtx, state.FpByBtcPk, *fp.BtcPk, fp.Status, newStatus)
 
 	statusChangeEvent := types.NewFinalityProviderStatusChangeEvent(fp.BtcPk, newStatus)
 	if err := sdkCtx.EventManager().EmitTypedEvent(statusChangeEvent); err != nil {
@@ -376,7 +375,7 @@ func fpDstInfoPrevStatus(prevFpByBtcPkHex map[string]*ftypes.FinalityProviderDis
 	if !found {
 		return btcstktypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_INACTIVE
 	}
-	return fp.Status()
+	return fp.Status
 }
 
 // processBtcDelUpdateImmediate processes a BTC delegation update event immediately.
