@@ -132,7 +132,7 @@ func TestEvidence_ValidateBasic(t *testing.T) {
 	}
 }
 
-func TestFinalityProviderDistInfoFpStatusCalculated(t *testing.T) {
+func TestFinalityProviderDistInfoFpStatus(t *testing.T) {
 	tcs := []struct {
 		name           string
 		fp             types.FinalityProviderDistInfo
@@ -231,7 +231,7 @@ func TestFinalityProviderDistInfoFpStatusCalculated(t *testing.T) {
 
 	for _, tc := range tcs {
 		t.Run(tc.name, func(t *testing.T) {
-			actualStatus := tc.fp.FpStatusCalculated(tc.canBeActive)
+			actualStatus := tc.fp.FpStatus(tc.canBeActive)
 			require.Equal(t, tc.expectedStatus, actualStatus)
 		})
 	}

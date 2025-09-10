@@ -208,7 +208,7 @@ func (e *Evidence) ExtractBTCSK() (*btcec.PrivateKey, error) {
 	)
 }
 
-func (fp *FinalityProviderDistInfo) FpStatusCalculated(canBeActive bool) btcstktypes.FinalityProviderStatus {
+func (fp *FinalityProviderDistInfo) FpStatus(canBeActive bool) btcstktypes.FinalityProviderStatus {
 	if fp.IsSlashed {
 		return btcstktypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_SLASHED
 	}

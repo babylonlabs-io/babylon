@@ -208,7 +208,7 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 		// Populates state.PrevFpStatusByBtcPk before
 		// it is updating the status based on the current events
 		canBeActive := i < int(dc.NumActiveFps) // it should not be <= as i starts at zero
-		state.PrevFpStatusByBtcPk[fp.BtcPk.MarshalHex()] = fp.FpStatusCalculated(canBeActive)
+		state.PrevFpStatusByBtcPk[fp.BtcPk.MarshalHex()] = fp.FpStatus(canBeActive)
 	}
 
 	for btcHeight := lastBTCTip; btcHeight <= curBTCTip; btcHeight++ {
