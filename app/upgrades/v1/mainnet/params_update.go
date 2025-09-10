@@ -22,11 +22,11 @@ var (
 	// Governance params
 	VotingPeriod = 10 * time.Minute
 	// 50k BABY
-	MinDeposit = sdk.NewCoin(appparams.DefaultBondDenom, math.NewInt(50_000_000000))
+	MinDeposit = sdk.NewCoin(appparams.DefaultBondDenom, math.NewInt(500_000000))
 	// 200k BABY
 	MaxDepositPeriod          = 5 * time.Minute
 	ExpeditedVotingPeriod     = 5 * time.Minute
-	ExpeditedMinDeposit       = sdk.NewCoin(appparams.DefaultBondDenom, math.NewInt(200_000_000000))
+	ExpeditedMinDeposit       = sdk.NewCoin(appparams.DefaultBondDenom, math.NewInt(2_000_000000))
 	MinInitialDepositRatio, _ = sdkmath.LegacyNewDecFromStr("0.1")
 
 	// Consensus params
