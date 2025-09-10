@@ -8,9 +8,9 @@ import (
 	context "context"
 	reflect "reflect"
 
-	types "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
-	types0 "github.com/cosmos/cosmos-sdk/types"
-	types1 "github.com/cosmos/cosmos-sdk/x/staking/types"
+	math "cosmossdk.io/math"
+	types "github.com/cosmos/cosmos-sdk/types"
+	types0 "github.com/cosmos/cosmos-sdk/x/staking/types"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -38,7 +38,7 @@ func (m *MockIncentiveKeeper) EXPECT() *MockIncentiveKeeperMockRecorder {
 }
 
 // AccumulateRewardGaugeForCostaker mocks base method.
-func (m *MockIncentiveKeeper) AccumulateRewardGaugeForCostaker(ctx context.Context, addr types0.AccAddress, reward types0.Coins) {
+func (m *MockIncentiveKeeper) AccumulateRewardGaugeForCostaker(ctx context.Context, addr types.AccAddress, reward types.Coins) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "AccumulateRewardGaugeForCostaker", ctx, addr, reward)
 }
@@ -49,18 +49,18 @@ func (mr *MockIncentiveKeeperMockRecorder) AccumulateRewardGaugeForCostaker(ctx,
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AccumulateRewardGaugeForCostaker", reflect.TypeOf((*MockIncentiveKeeper)(nil).AccumulateRewardGaugeForCostaker), ctx, addr, reward)
 }
 
-// IterateBTCDelegationRewardsTracker mocks base method.
-func (m *MockIncentiveKeeper) IterateBTCDelegationRewardsTracker(ctx context.Context, fp types0.AccAddress, it func(types0.AccAddress, types0.AccAddress, types.BTCDelegationRewardsTracker) error) error {
+// IterateBTCDelegationSatsUpdated mocks base method.
+func (m *MockIncentiveKeeper) IterateBTCDelegationSatsUpdated(ctx context.Context, fp types.AccAddress, it func(types.AccAddress, math.Int) error) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "IterateBTCDelegationRewardsTracker", ctx, fp, it)
+	ret := m.ctrl.Call(m, "IterateBTCDelegationSatsUpdated", ctx, fp, it)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// IterateBTCDelegationRewardsTracker indicates an expected call of IterateBTCDelegationRewardsTracker.
-func (mr *MockIncentiveKeeperMockRecorder) IterateBTCDelegationRewardsTracker(ctx, fp, it interface{}) *gomock.Call {
+// IterateBTCDelegationSatsUpdated indicates an expected call of IterateBTCDelegationSatsUpdated.
+func (mr *MockIncentiveKeeperMockRecorder) IterateBTCDelegationSatsUpdated(ctx, fp, it interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IterateBTCDelegationRewardsTracker", reflect.TypeOf((*MockIncentiveKeeper)(nil).IterateBTCDelegationRewardsTracker), ctx, fp, it)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IterateBTCDelegationSatsUpdated", reflect.TypeOf((*MockIncentiveKeeper)(nil).IterateBTCDelegationSatsUpdated), ctx, fp, it)
 }
 
 // MockAccountKeeper is a mock of AccountKeeper interface.
@@ -87,10 +87,10 @@ func (m *MockAccountKeeper) EXPECT() *MockAccountKeeperMockRecorder {
 }
 
 // GetModuleAccount mocks base method.
-func (m *MockAccountKeeper) GetModuleAccount(ctx context.Context, name string) types0.ModuleAccountI {
+func (m *MockAccountKeeper) GetModuleAccount(ctx context.Context, name string) types.ModuleAccountI {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetModuleAccount", ctx, name)
-	ret0, _ := ret[0].(types0.ModuleAccountI)
+	ret0, _ := ret[0].(types.ModuleAccountI)
 	return ret0
 }
 
@@ -124,10 +124,10 @@ func (m *MockBankKeeper) EXPECT() *MockBankKeeperMockRecorder {
 }
 
 // GetAllBalances mocks base method.
-func (m *MockBankKeeper) GetAllBalances(ctx context.Context, addr types0.AccAddress) types0.Coins {
+func (m *MockBankKeeper) GetAllBalances(ctx context.Context, addr types.AccAddress) types.Coins {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAllBalances", ctx, addr)
-	ret0, _ := ret[0].(types0.Coins)
+	ret0, _ := ret[0].(types.Coins)
 	return ret0
 }
 
@@ -138,7 +138,7 @@ func (mr *MockBankKeeperMockRecorder) GetAllBalances(ctx, addr interface{}) *gom
 }
 
 // SendCoinsFromModuleToModule mocks base method.
-func (m *MockBankKeeper) SendCoinsFromModuleToModule(ctx context.Context, senderModule, recipientModule string, amt types0.Coins) error {
+func (m *MockBankKeeper) SendCoinsFromModuleToModule(ctx context.Context, senderModule, recipientModule string, amt types.Coins) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SendCoinsFromModuleToModule", ctx, senderModule, recipientModule, amt)
 	ret0, _ := ret[0].(error)
@@ -175,7 +175,7 @@ func (m *MockDistributionKeeper) EXPECT() *MockDistributionKeeperMockRecorder {
 }
 
 // AllocateTokensToValidator mocks base method.
-func (m *MockDistributionKeeper) AllocateTokensToValidator(ctx context.Context, val types1.ValidatorI, tokens types0.DecCoins) error {
+func (m *MockDistributionKeeper) AllocateTokensToValidator(ctx context.Context, val types0.ValidatorI, tokens types.DecCoins) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AllocateTokensToValidator", ctx, val, tokens)
 	ret0, _ := ret[0].(error)
@@ -212,10 +212,10 @@ func (m *MockStakingKeeper) EXPECT() *MockStakingKeeperMockRecorder {
 }
 
 // GetDelegation mocks base method.
-func (m *MockStakingKeeper) GetDelegation(ctx context.Context, delAddr types0.AccAddress, valAddr types0.ValAddress) (types1.Delegation, error) {
+func (m *MockStakingKeeper) GetDelegation(ctx context.Context, delAddr types.AccAddress, valAddr types.ValAddress) (types0.Delegation, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetDelegation", ctx, delAddr, valAddr)
-	ret0, _ := ret[0].(types1.Delegation)
+	ret0, _ := ret[0].(types0.Delegation)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -227,10 +227,10 @@ func (mr *MockStakingKeeperMockRecorder) GetDelegation(ctx, delAddr, valAddr int
 }
 
 // Validator mocks base method.
-func (m *MockStakingKeeper) Validator(arg0 context.Context, arg1 types0.ValAddress) (types1.ValidatorI, error) {
+func (m *MockStakingKeeper) Validator(arg0 context.Context, arg1 types.ValAddress) (types0.ValidatorI, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Validator", arg0, arg1)
-	ret0, _ := ret[0].(types1.ValidatorI)
+	ret0, _ := ret[0].(types0.ValidatorI)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -242,10 +242,10 @@ func (mr *MockStakingKeeperMockRecorder) Validator(arg0, arg1 interface{}) *gomo
 }
 
 // ValidatorByConsAddr mocks base method.
-func (m *MockStakingKeeper) ValidatorByConsAddr(arg0 context.Context, arg1 types0.ConsAddress) (types1.ValidatorI, error) {
+func (m *MockStakingKeeper) ValidatorByConsAddr(arg0 context.Context, arg1 types.ConsAddress) (types0.ValidatorI, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ValidatorByConsAddr", arg0, arg1)
-	ret0, _ := ret[0].(types1.ValidatorI)
+	ret0, _ := ret[0].(types0.ValidatorI)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

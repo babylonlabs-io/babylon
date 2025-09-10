@@ -96,7 +96,7 @@ func (k Keeper) HandleFPStateUpdates(ctx context.Context, prevDc, newDc *ftypes.
 
 	newlyActiveFPs := newDc.FindNewActiveFinalityProviders(prevDc)
 	for _, fp := range newlyActiveFPs {
-		prevStatus := fp.Status
+		prevStatus := state.PrevFpStatus(fp.BtcPk)
 
 		if err := k.HandleActivatedFinalityProvider(ctx, fp.BtcPk); err != nil {
 			panic(fmt.Errorf("failed to execute after finality provider %s activated", fp.BtcPk.MarshalHex()))
@@ -138,8 +138,9 @@ func (k Keeper) processInactiveFp(
 		return
 	}
 
+	prevStatus := state.PrevFpStatus(fp.BtcPk)
 	newStatus := types.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_INACTIVE
-	k.processHooksFp(sdkCtx, state.FpByBtcPk, *fp.BtcPk, fp.Status, newStatus)
+	k.processHooksFp(sdkCtx, state.FpByBtcPk, *fp.BtcPk, prevStatus, newStatus)
 
 	statusChangeEvent := types.NewFinalityProviderStatusChangeEvent(fp.BtcPk, newStatus)
 	if err := sdkCtx.EventManager().EmitTypedEvent(statusChangeEvent); err != nil {
@@ -201,9 +202,17 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 	state := ftypes.NewProcessingState()
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
-	prevFpByBtcPk := dc.FpsByBtcPkHex()
+	// fill up state.PrevFpStatusByBtcPk prior to processEventsAtHeight
+	// to correctly send out the previous fp status
+	for i, fp := range dc.FinalityProviders {
+		// Populates state.PrevFpStatusByBtcPk before
+		// it is updating the status based on the current events
+		canBeActive := i < int(dc.NumActiveFps) // it should not be <= as i starts at zero
+		state.PrevFpStatusByBtcPk[fp.BtcPk.MarshalHex()] = fp.FpStatusCalculated(canBeActive)
+	}
+
 	for btcHeight := lastBTCTip; btcHeight <= curBTCTip; btcHeight++ {
-		k.processEventsAtHeight(sdkCtx, btcHeight, state, prevFpByBtcPk)
+		k.processEventsAtHeight(sdkCtx, btcHeight, state)
 	}
 
 	// Process events for terminal states (EXPIRED btc delegations and SLASHED finality providers)
@@ -308,7 +317,7 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 		}
 
 		// update the bonded sats for this finality provider
-		// if had any delta sats during the power distribution change
+		// if had any delta sats during the power distibution change
 		fpDeltaSats := state.DeltaSatsByFpBtcPk[fpBTCPKHex]
 		switch {
 		case fpDeltaSats > 0:
@@ -336,7 +345,6 @@ func (k Keeper) processEventsAtHeight(
 	ctx sdk.Context,
 	btcHeight uint32,
 	state *ftypes.ProcessingState,
-	prevFpByBtcPkHex map[string]*ftypes.FinalityProviderDistInfo,
 ) {
 	iter := k.BTCStakingKeeper.PowerDistUpdateEventBtcHeightStoreIterator(ctx, btcHeight)
 	defer iter.Close()
@@ -352,16 +360,16 @@ func (k Keeper) processEventsAtHeight(
 				state.ExpiredEvents = append(state.ExpiredEvents, typedEvent)
 			} else {
 				// Process ACTIVE/UNBONDED events immediately
-				k.processBtcDelUpdateImmediate(ctx, state, typedEvent)
+				k.processBtcDelUpdate(ctx, state, typedEvent)
 			}
 		case *types.EventPowerDistUpdate_SlashedFp:
 			// Defer SLASHED events for later processing
 			state.SlashedEvents = append(state.SlashedEvents, typedEvent)
-			k.processHooksFp(ctx, state.FpByBtcPk, *typedEvent.SlashedFp.Pk, fpDstInfoPrevStatus(prevFpByBtcPkHex, typedEvent.SlashedFp.Pk), btcstktypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_SLASHED)
+			k.processHooksFp(ctx, state.FpByBtcPk, *typedEvent.SlashedFp.Pk, state.PrevFpStatus(typedEvent.SlashedFp.Pk), btcstktypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_SLASHED)
 		case *types.EventPowerDistUpdate_JailedFp:
 			// record jailed fps
 			types.EmitJailedFPEvent(ctx, typedEvent.JailedFp.Pk)
-			k.processHooksFp(ctx, state.FpByBtcPk, *typedEvent.JailedFp.Pk, fpDstInfoPrevStatus(prevFpByBtcPkHex, typedEvent.JailedFp.Pk), btcstktypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_JAILED)
+			k.processHooksFp(ctx, state.FpByBtcPk, *typedEvent.JailedFp.Pk, state.PrevFpStatus(typedEvent.JailedFp.Pk), btcstktypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_JAILED)
 			state.FPStatesByBtcPk[typedEvent.JailedFp.Pk.MarshalHex()] = ftypes.FinalityProviderState_JAILED
 		case *types.EventPowerDistUpdate_UnjailedFp:
 			// record unjailed fps, unjailed fp also triggers active
@@ -370,18 +378,10 @@ func (k Keeper) processEventsAtHeight(
 	}
 }
 
-func fpDstInfoPrevStatus(prevFpByBtcPkHex map[string]*ftypes.FinalityProviderDistInfo, fpBtcPk *bbn.BIP340PubKey) btcstktypes.FinalityProviderStatus {
-	fp, found := prevFpByBtcPkHex[fpBtcPk.MarshalHex()]
-	if !found {
-		return btcstktypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_INACTIVE
-	}
-	return fp.Status
-}
-
-// processBtcDelUpdateImmediate processes a BTC delegation update event immediately.
+// processBtcDelUpdate processes a BTC delegation update event immediately.
 // It handles the BTC delegation state update by checking the new state and
 // updating the processing state accordingly.
-func (k Keeper) processBtcDelUpdateImmediate(ctx context.Context, state *ftypes.ProcessingState, event *types.EventPowerDistUpdate_BtcDelStateUpdate) {
+func (k Keeper) processBtcDelUpdate(ctx context.Context, state *ftypes.ProcessingState, event *types.EventPowerDistUpdate_BtcDelStateUpdate) {
 	delEvent := event.BtcDelStateUpdate
 	delStkTxHash := delEvent.StakingTxHash
 
@@ -472,7 +472,7 @@ func (k Keeper) processPowerDistUpdateEventUnbond(
 	}
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	k.processHooksBtcDel(sdkCtx, state.FpByBtcPk, btcDel, func(fp *types.FinalityProvider, del sdk.AccAddress, fpSecuresBabylon bool, sats uint64) {
-		err := k.hooks.AfterBtcDelegationUnbonded(sdkCtx, fp.Address(), del, fpSecuresBabylon, sats)
+		err := k.hooks.AfterBtcDelegationUnbonded(sdkCtx, fp.Address(), del, fpSecuresBabylon, state.PrevFpStatus(fp.BtcPk), sats)
 		if err != nil {
 			k.Logger(sdkCtx).Error(
 				"failed to add event of activated BTC delegation",
@@ -505,7 +505,7 @@ func (k Keeper) processPowerDistUpdateEventActive(
 	// FP could be already slashed when it is being activated, but it is okay
 	// since slashed finality providers do not earn rewards
 	k.processHooksBtcDel(sdkCtx, state.FpByBtcPk, btcDel, func(fp *types.FinalityProvider, del sdk.AccAddress, fpSecuresBabylon bool, sats uint64) {
-		err := k.hooks.AfterBtcDelegationActivated(sdkCtx, fp.Address(), del, fpSecuresBabylon, sats)
+		err := k.hooks.AfterBtcDelegationActivated(sdkCtx, fp.Address(), del, fpSecuresBabylon, state.PrevFpStatus(fp.BtcPk), sats)
 		if err != nil {
 			k.Logger(sdkCtx).Error(
 				"failed to add event of activated BTC delegation",

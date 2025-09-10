@@ -3,14 +3,14 @@ package types
 import (
 	context "context"
 
-	ictvtypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
 type IncentiveKeeper interface {
 	AccumulateRewardGaugeForCostaker(ctx context.Context, addr sdk.AccAddress, reward sdk.Coins)
-	IterateBTCDelegationRewardsTracker(ctx context.Context, fp sdk.AccAddress, it func(fp, del sdk.AccAddress, val ictvtypes.BTCDelegationRewardsTracker) error) error
+	IterateBTCDelegationSatsUpdated(ctx context.Context, fp sdk.AccAddress, it func(del sdk.AccAddress, activeSats sdkmath.Int) error) error
 }
 
 type AccountKeeper interface {

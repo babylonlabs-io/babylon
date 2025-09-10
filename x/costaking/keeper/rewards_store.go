@@ -94,8 +94,13 @@ func (k Keeper) GetCostakerRewardsOrInitialize(ctx context.Context, costaker sdk
 	}
 	if !found {
 		zeroInt := math.ZeroInt()
+		currentRwd, err := k.GetCurrentRewardsInitialized(ctx)
+		if err != nil {
+			return nil, err
+		}
+
 		// StartPeriodCumulativeReward is correctly populated by initialization of the costaker
-		rwd := types.NewCostakerRewardsTracker(0, zeroInt, zeroInt, zeroInt)
+		rwd := types.NewCostakerRewardsTracker(currentRwd.Period-1, zeroInt, zeroInt, zeroInt)
 		return &rwd, nil
 	}
 

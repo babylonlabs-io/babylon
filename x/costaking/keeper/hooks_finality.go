@@ -3,12 +3,12 @@ package keeper
 import (
 	"context"
 
+	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	btcstktypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 	"github.com/babylonlabs-io/babylon/v4/x/costaking/types"
 	ftypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
-	ictvtypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
 )
 
 var _ ftypes.FinalityHooks = HookFinality{}
@@ -19,8 +19,8 @@ type HookFinality struct {
 }
 
 // AfterBtcDelegationActivated adds new active satoshis to the costaker reward tracker
-func (h HookFinality) AfterBtcDelegationActivated(ctx context.Context, fpAddr sdk.AccAddress, btcDelAddr sdk.AccAddress, fpSecuresBabylon bool, sats uint64) error {
-	if !fpSecuresBabylon {
+func (h HookFinality) AfterBtcDelegationActivated(ctx context.Context, fpAddr sdk.AccAddress, btcDelAddr sdk.AccAddress, fpSecuresBabylon bool, prevStatus btcstktypes.FinalityProviderStatus, sats uint64) error {
+	if !fpSecuresBabylon || !prevStatus.IsActive() {
 		return nil
 	}
 
@@ -30,8 +30,8 @@ func (h HookFinality) AfterBtcDelegationActivated(ctx context.Context, fpAddr sd
 }
 
 // AfterBtcDelegationUnbonded subtracts active satoshis to the costaker reward tracker
-func (h HookFinality) AfterBtcDelegationUnbonded(ctx context.Context, fpAddr sdk.AccAddress, btcDelAddr sdk.AccAddress, fpSecuresBabylon bool, sats uint64) error {
-	if !fpSecuresBabylon {
+func (h HookFinality) AfterBtcDelegationUnbonded(ctx context.Context, fpAddr sdk.AccAddress, btcDelAddr sdk.AccAddress, fpSecuresBabylon bool, fpBbnPrevStatus btcstktypes.FinalityProviderStatus, sats uint64) error {
+	if !fpSecuresBabylon || !fpBbnPrevStatus.IsActive() {
 		return nil
 	}
 
@@ -45,14 +45,9 @@ func (h HookFinality) AfterFpStatusChange(ctx context.Context, fpAddr sdk.AccAdd
 	if !fpSecuresBabylon { // only fps that secure babylon should take into account
 		return nil
 	}
-	// CASE: first time fp is active
-	// what happens the first time? FP was inactive at first and received btc delegation, AfterBtcDelegationActivated is called for this
-	// btc delegation and later the AfterFpStatusChange
 
-	// TODO: find a way to know if it is the first time that the FP is becoming active
-	isFirstTimeActive := false
-	isNewStatusActive := newStatus == btcstktypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_ACTIVE
-	if isFirstTimeActive && isNewStatusActive {
+	isNewStatusActive := newStatus.IsActive()
+	if isNewStatusActive {
 		return nil
 	}
 
@@ -81,20 +76,20 @@ func (h HookFinality) AfterFpStatusChange(ctx context.Context, fpAddr sdk.AccAdd
 	shouldAdd := isPrevStatusDeactivated && isNewStatusActive
 
 	// ACTIVE -> ANY: subtract voting power (shouldAdd remains false)
-	shouldSubtract := prevStatus == btcstktypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_ACTIVE
+	shouldSubtract := prevStatus.IsActive() // reminder that can't go ACTIVE -> ACTIVE, sanity check already made
 
 	if !shouldAdd && !shouldSubtract {
 		// If no action needed, return early
 		return nil
 	}
 
-	return h.k.ictvK.IterateBTCDelegationRewardsTracker(ctx, fpAddr, func(fp, del sdk.AccAddress, value ictvtypes.BTCDelegationRewardsTracker) error {
+	return h.k.ictvK.IterateBTCDelegationSatsUpdated(ctx, fpAddr, func(del sdk.AccAddress, activeSats math.Int) error {
 		return h.k.costakerModified(ctx, del, func(rwdTracker *types.CostakerRewardsTracker) {
 			if shouldAdd {
-				rwdTracker.ActiveSatoshis = rwdTracker.ActiveSatoshis.Add(value.TotalActiveSat)
+				rwdTracker.ActiveSatoshis = rwdTracker.ActiveSatoshis.Add(activeSats)
 				return
 			}
-			rwdTracker.ActiveSatoshis = rwdTracker.ActiveSatoshis.Sub(value.TotalActiveSat)
+			rwdTracker.ActiveSatoshis = rwdTracker.ActiveSatoshis.Sub(activeSats)
 		})
 	})
 }

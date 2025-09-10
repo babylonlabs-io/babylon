@@ -9,6 +9,7 @@ import (
 
 	"github.com/babylonlabs-io/babylon/v4/crypto/eots"
 	"github.com/babylonlabs-io/babylon/v4/types"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	btcstktypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 )
 
@@ -35,6 +36,10 @@ const (
 // The state is updated during the power distribution change process and is used to generate the
 // final power distribution cache
 type ProcessingState struct {
+	// PrevFpStatusByBtcPk is a map of the status of the fp by their status
+	// based on the previous voting power distribution cache, it is useful
+	// for costaking to get the correct status and process
+	PrevFpStatusByBtcPk map[string]btcstktypes.FinalityProviderStatus
 	// FPStatesByBtcPk is a map of the finality providers' state
 	FPStatesByBtcPk map[string]FinalityProviderState
 	// FpByBtcPk is a map where key is finality provider's BTC PK hex and value is the finality provider
@@ -53,12 +58,23 @@ type ProcessingState struct {
 
 func NewProcessingState() *ProcessingState {
 	return &ProcessingState{
-		FPStatesByBtcPk:    map[string]FinalityProviderState{},
-		FpByBtcPk:          map[string]*btcstktypes.FinalityProvider{},
-		DeltaSatsByFpBtcPk: map[string]int64{},
-		ExpiredEvents:      []*btcstktypes.EventPowerDistUpdate_BtcDelStateUpdate{},
-		SlashedEvents:      []*btcstktypes.EventPowerDistUpdate_SlashedFp{},
+		PrevFpStatusByBtcPk: map[string]btcstktypes.FinalityProviderStatus{},
+		FPStatesByBtcPk:     map[string]FinalityProviderState{},
+		FpByBtcPk:           map[string]*btcstktypes.FinalityProvider{},
+		DeltaSatsByFpBtcPk:  map[string]int64{},
+		ExpiredEvents:       []*btcstktypes.EventPowerDistUpdate_BtcDelStateUpdate{},
+		SlashedEvents:       []*btcstktypes.EventPowerDistUpdate_SlashedFp{},
 	}
+}
+
+// PrevFpStatus returns the status of the fp in the previous voting power distribution cache. Returns
+// inactive if not found
+func (ps *ProcessingState) PrevFpStatus(fpBtcPk *bbn.BIP340PubKey) btcstktypes.FinalityProviderStatus {
+	fpStatus, found := ps.PrevFpStatusByBtcPk[fpBtcPk.MarshalHex()]
+	if !found {
+		return btcstktypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_INACTIVE
+	}
+	return fpStatus
 }
 
 func (c *PubRandCommit) IsInRange(height uint64) bool {
@@ -192,7 +208,7 @@ func (e *Evidence) ExtractBTCSK() (*btcec.PrivateKey, error) {
 	)
 }
 
-func (fp *FinalityProviderDistInfo) FpStatusCalculated() btcstktypes.FinalityProviderStatus {
+func (fp *FinalityProviderDistInfo) FpStatusCalculated(canBeActive bool) btcstktypes.FinalityProviderStatus {
 	if fp.IsSlashed {
 		return btcstktypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_SLASHED
 	}
@@ -201,7 +217,7 @@ func (fp *FinalityProviderDistInfo) FpStatusCalculated() btcstktypes.FinalityPro
 		return btcstktypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_JAILED
 	}
 
-	if fp.IsTimestamped && fp.TotalBondedSat > 0 {
+	if canBeActive && fp.IsTimestamped && fp.TotalBondedSat > 0 {
 		return btcstktypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_ACTIVE
 	}
 

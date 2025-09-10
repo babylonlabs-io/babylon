@@ -211,13 +211,6 @@ func UpdateGenesisMint(mintGenState *minttypes.GenesisState) {
 
 func UpdateGenesisCostaking(gs *costktypes.GenesisState) {
 	gs.Params = costktypes.DefaultParams()
-	gs.CurrentRewards = costktypes.CurrentRewardsEntry{
-		Rewards: &costktypes.CurrentRewards{
-			Rewards:    sdk.NewCoins(),
-			Period:     1,
-			TotalScore: sdkmath.ZeroInt(),
-		},
-	}
 }
 
 func UpdateGenesisStake(stakeGenState *staketypes.GenesisState) {
