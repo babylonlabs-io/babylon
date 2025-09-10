@@ -42,7 +42,8 @@ func TestConsumerActive(t *testing.T) {
 	require.NotEmpty(t, bbnChannels.Channels)
 	connectionID := bbnChannels.Channels[0].ConnectionHops[0]
 
-	err = tm.Hermes.CreateZoneConciergeChannel(tm.ChainBBN(), tm.ChainBSN(), connectionID)
+	err := tm.Hermes.CreateZoneConciergeChannel(tm.ChainBBN(), tm.ChainBSN(),
+		connectionID)
 	require.NoError(t, err, "failed to create zoneconcierge channel")
 
 	bbn.WaitForCondition(func() bool {
