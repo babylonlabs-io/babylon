@@ -22,7 +22,6 @@ import (
 	"github.com/cosmos/go-bip39"
 	"github.com/stretchr/testify/require"
 
-	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/util"
 )
 
