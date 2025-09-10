@@ -53,7 +53,7 @@ message FinalityProviderDistInfo {
   // is slashed, if so, it should not be assigned voting power
   bool is_slashed = 7;
   // Status the FP status on the FP distribution info
-  FinalityProviderStatus status = 8;
+  babylon.btcstaking.v1.FinalityProviderStatus status = 8;
 }
 
 // IndexedBlock is the necessary metadata and finalization status of a block
