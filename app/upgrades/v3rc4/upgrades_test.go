@@ -50,6 +50,7 @@ import (
 )
 
 const (
+	mainnet                      = "mainnet"
 	testDataDir                  = "testdata"
 	mainnetBabyDelegationsFile   = "mainnet-baby-delegations.json"
 	testnetBabyDelegationsFile   = "testnet-baby-delegations.json"
@@ -370,11 +371,11 @@ func TestInitializeCoStakerRwdsTracker_TestnetData(t *testing.T) {
 }
 
 func TestInitializeCoStakerRwdsTracker_MainnetData(t *testing.T) {
-	runTestWithEnv(t, "mainnet", 914000)
+	runTestWithEnv(t, mainnet, 914000)
 }
 
 func runTestWithEnv(t *testing.T, env string, btcTip uint32) {
-	require.True(t, env == "mainnet" || env == "testnet", "env must be 'mainnet' or 'testnet'")
+	require.True(t, env == mainnet || env == "testnet", "env must be 'mainnet' or 'testnet'")
 	ctx, cdc, storeService, stkKeeper, btcStkKeeper, btcStkKey, costkKeeper, ctrl := setupTestKeepers(t, btcTip)
 	defer ctrl.Finish()
 
@@ -621,7 +622,7 @@ func loadAndSeedBTCDelegations(t *testing.T, ctx sdk.Context, env string, btcStk
 	// Skip any remaining keys in the JSON object (e.g., if we processed mainnet but testnet is still there)
 	for decoder.More() {
 		// Read key
-		token, err = decoder.Token()
+		_, err = decoder.Token()
 		if err != nil {
 			return 0, fmt.Errorf("failed to read remaining key: %w", err)
 		}
@@ -647,7 +648,7 @@ func loadAndSeedBTCDelegations(t *testing.T, ctx sdk.Context, env string, btcStk
 // loadAndSeedCosmosDelegations loads cosmos delegations from file and seeds them into keeper using streaming
 func loadAndSeedCosmosDelegations(t *testing.T, ctx sdk.Context, env string, stkKeeper *stkkeeper.Keeper) (int, error) {
 	fileName := testnetBabyDelegationsFile
-	if env == "mainnet" {
+	if env == mainnet {
 		fileName = mainnetBabyDelegationsFile
 	}
 	filePath := filepath.Join(testDataDir, fileName)
@@ -746,7 +747,7 @@ func loadAndSeedCosmosDelegations(t *testing.T, ctx sdk.Context, env string, stk
 // loadCostakers loads expected costaker addresses for provided env (testnet/mainnet)
 func loadCostakers(env string) ([]string, error) {
 	fileName := testnetCostakerAddressesFile
-	if env == "mainnet" {
+	if env == mainnet {
 		fileName = mainnetCostakerAddressesFile
 	}
 	filePath := filepath.Join(testDataDir, fileName)
@@ -793,7 +794,7 @@ func getAllCostakers(t *testing.T, ctx sdk.Context, cdc codec.BinaryCodec, store
 func downloadBTCDelegationsFile(filePath string) error {
 	// Use the direct download URL that bypasses the virus scan warning for large files
 	client := &http.Client{}
-	req, err := http.NewRequest("GET", "https://drive.usercontent.google.com/download?id=1PaZe96acfJqCHJrc24VAh77H-z0U9_x1&export=download&confirm=t", nil)
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, "https://drive.usercontent.google.com/download?id=1PaZe96acfJqCHJrc24VAh77H-z0U9_x1&export=download&confirm=t", nil)
 	if err != nil {
 		return fmt.Errorf("failed to create request: %w", err)
 	}
