@@ -11,9 +11,9 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
 
-	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
-	testhelper "github.com/babylonlabs-io/babylon/v4/testutil/helper"
-	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
+	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
+	testhelper "github.com/babylonlabs-io/babylon/v3/testutil/helper"
+	epochingtypes "github.com/babylonlabs-io/babylon/v3/x/epoching/types"
 )
 
 // TestGasConsumptionValidation tests the core principle that gas consumption

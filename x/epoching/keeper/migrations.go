@@ -1,7 +1,7 @@
 package keeper
 
 import (
-	v2 "github.com/babylonlabs-io/babylon/v4/x/epoching/migrations/v2"
+	v2 "github.com/babylonlabs-io/babylon/v3/x/epoching/migrations/v2"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

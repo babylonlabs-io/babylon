@@ -8,17 +8,9 @@ import (
 	"path/filepath"
 	"strings"
 
-<<<<<<< HEAD
 	"github.com/babylonlabs-io/babylon/v3/x/zoneconcierge"
 	zckeeper "github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/keeper"
 	zctypes "github.com/babylonlabs-io/babylon/v3/x/zoneconcierge/types"
-=======
-	"github.com/ethereum/go-ethereum/common"
-
-	// Force-load the tracer engines to trigger registration due to Go-Ethereum v1.10.15 changes
-	_ "github.com/ethereum/go-ethereum/eth/tracers/js"
-	_ "github.com/ethereum/go-ethereum/eth/tracers/native"
->>>>>>> bad5e641 (feat: epoching spam prevention (#1663))
 
 	autocliv1 "cosmossdk.io/api/cosmos/autocli/v1"
 	reflectionv1 "cosmossdk.io/api/cosmos/reflection/v1"
@@ -105,7 +97,6 @@ import (
 	ibctm "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
 	"github.com/spf13/cast"
 
-<<<<<<< HEAD
 	"github.com/babylonlabs-io/babylon/v3/app/ante"
 	appkeepers "github.com/babylonlabs-io/babylon/v3/app/keepers"
 	appparams "github.com/babylonlabs-io/babylon/v3/app/params"
@@ -126,6 +117,7 @@ import (
 	"github.com/babylonlabs-io/babylon/v3/x/checkpointing/vote_extensions"
 	"github.com/babylonlabs-io/babylon/v3/x/epoching"
 	epochingtypes "github.com/babylonlabs-io/babylon/v3/x/epoching/types"
+	epochingkeeper "github.com/babylonlabs-io/babylon/v3/x/epoching/keeper"
 	"github.com/babylonlabs-io/babylon/v3/x/finality"
 	finalitytypes "github.com/babylonlabs-io/babylon/v3/x/finality/types"
 	"github.com/babylonlabs-io/babylon/v3/x/incentive"
@@ -135,43 +127,6 @@ import (
 	minttypes "github.com/babylonlabs-io/babylon/v3/x/mint/types"
 	"github.com/babylonlabs-io/babylon/v3/x/monitor"
 	monitortypes "github.com/babylonlabs-io/babylon/v3/x/monitor/types"
-=======
-	"github.com/babylonlabs-io/babylon/v4/app/ante"
-	appkeepers "github.com/babylonlabs-io/babylon/v4/app/keepers"
-	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
-	"github.com/babylonlabs-io/babylon/v4/app/upgrades"
-	"github.com/babylonlabs-io/babylon/v4/client/docs"
-	bbn "github.com/babylonlabs-io/babylon/v4/types"
-	"github.com/babylonlabs-io/babylon/v4/x/btccheckpoint"
-	btccheckpointtypes "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
-	"github.com/babylonlabs-io/babylon/v4/x/btclightclient"
-	btclightclienttypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
-	"github.com/babylonlabs-io/babylon/v4/x/btcstaking"
-	btcstakingtypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
-	"github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer"
-	bsctypes "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
-	btcstkconsumertypes "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
-	"github.com/babylonlabs-io/babylon/v4/x/checkpointing"
-	"github.com/babylonlabs-io/babylon/v4/x/checkpointing/prepare"
-	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
-	"github.com/babylonlabs-io/babylon/v4/x/checkpointing/vote_extensions"
-	"github.com/babylonlabs-io/babylon/v4/x/epoching"
-	epochingkeeper "github.com/babylonlabs-io/babylon/v4/x/epoching/keeper"
-	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
-	"github.com/babylonlabs-io/babylon/v4/x/finality"
-	finalitytypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
-	"github.com/babylonlabs-io/babylon/v4/x/incentive"
-	incentivekeeper "github.com/babylonlabs-io/babylon/v4/x/incentive/keeper"
-	incentivetypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
-	"github.com/babylonlabs-io/babylon/v4/x/mint"
-	minttypes "github.com/babylonlabs-io/babylon/v4/x/mint/types"
-	"github.com/babylonlabs-io/babylon/v4/x/monitor"
-	monitortypes "github.com/babylonlabs-io/babylon/v4/x/monitor/types"
-	"github.com/babylonlabs-io/babylon/v4/x/zoneconcierge"
-	zckeeper "github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/keeper"
-	zctypes "github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/types"
-	erc20types "github.com/cosmos/evm/x/erc20/types"
->>>>>>> bad5e641 (feat: epoching spam prevention (#1663))
 	"github.com/strangelove-ventures/tokenfactory/x/tokenfactory"
 	tokenfactorytypes "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/types"
 )
@@ -560,16 +515,8 @@ func NewBabylonApp(
 	app.MountTransientStores(app.GetTransientStoreKeys())
 	app.MountMemoryStores(app.GetMemoryStoreKeys())
 
-<<<<<<< HEAD
-=======
-	maxGasWanted := cast.ToUint64(appOpts.Get(srvflags.EVMMaxTxGasWanted))
-	evmHandlerOpts := NewEVMAnteHandlerOptionsFromApp(app, txConfig, maxGasWanted)
-	if err := evmHandlerOpts.Validate(); err != nil {
-		panic(err)
-	}
 	epochingkeeper.ValidateDelegatePoolAccount(app.AccountKeeper)
->>>>>>> bad5e641 (feat: epoching spam prevention (#1663))
-	// initialize AnteHandler for the app
+
 	anteHandler := ante.NewAnteHandler(
 		appOpts,
 		&app.AccountKeeper,

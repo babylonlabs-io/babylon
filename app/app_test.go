@@ -19,21 +19,12 @@ import (
 	icatypes "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 
-<<<<<<< HEAD
 	babylonApp "github.com/babylonlabs-io/babylon/v3/app"
 	testsigner "github.com/babylonlabs-io/babylon/v3/testutil/signer"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/v3/x/checkpointing/types"
+	epochingtypes "github.com/babylonlabs-io/babylon/v3/x/epoching/types"
 	incentivetypes "github.com/babylonlabs-io/babylon/v3/x/incentive/types"
 	minttypes "github.com/babylonlabs-io/babylon/v3/x/mint/types"
-=======
-	babylonApp "github.com/babylonlabs-io/babylon/v4/app"
-	testsigner "github.com/babylonlabs-io/babylon/v4/testutil/signer"
-	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
-	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
-	incentivetypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
-	minttypes "github.com/babylonlabs-io/babylon/v4/x/mint/types"
->>>>>>> bad5e641 (feat: epoching spam prevention (#1663))
-
 	"github.com/stretchr/testify/require"
 )
 

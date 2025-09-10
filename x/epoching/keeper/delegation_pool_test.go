@@ -10,9 +10,9 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
 
-	testhelper "github.com/babylonlabs-io/babylon/v4/testutil/helper"
-	"github.com/babylonlabs-io/babylon/v4/x/epoching"
-	"github.com/babylonlabs-io/babylon/v4/x/epoching/types"
+	testhelper "github.com/babylonlabs-io/babylon/v3/testutil/helper"
+	"github.com/babylonlabs-io/babylon/v3/x/epoching"
+	"github.com/babylonlabs-io/babylon/v3/x/epoching/types"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 )

@@ -9,10 +9,10 @@ import (
 	storetypes "cosmossdk.io/store/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/v4/app"
-	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
-	testhelper "github.com/babylonlabs-io/babylon/v4/testutil/helper"
-	checkpointingkeeper "github.com/babylonlabs-io/babylon/v4/x/checkpointing/keeper"
+	"github.com/babylonlabs-io/babylon/v3/app"
+	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
+	testhelper "github.com/babylonlabs-io/babylon/v3/testutil/helper"
+	checkpointingkeeper "github.com/babylonlabs-io/babylon/v3/x/checkpointing/keeper"
 )
 
 // TestWrappedCreateValidator_OutOfGas tests actual WrappedCreateValidator transaction with gas consumption

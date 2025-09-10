@@ -10,11 +10,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer"
-	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer/chain"
-	"github.com/babylonlabs-io/babylon/v4/test/e2e/util"
-	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
-	etypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
+	"github.com/babylonlabs-io/babylon/v3/test/e2e/configurer"
+	"github.com/babylonlabs-io/babylon/v3/test/e2e/configurer/chain"
+	"github.com/babylonlabs-io/babylon/v3/test/e2e/util"
+	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
+	etypes "github.com/babylonlabs-io/babylon/v3/x/epoching/types"
 
 	sdked25519 "github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
