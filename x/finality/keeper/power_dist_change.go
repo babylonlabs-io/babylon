@@ -317,7 +317,7 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 		}
 
 		// update the bonded sats for this finality provider
-		// if had any delta sats during the power distibution change
+		// if had any delta sats during the power distribution change
 		fpDeltaSats := state.DeltaSatsByFpBtcPk[fpBTCPKHex]
 		switch {
 		case fpDeltaSats > 0:

@@ -100,7 +100,7 @@ func (k Keeper) GetCostakerRewardsOrInitialize(ctx context.Context, costaker sdk
 		}
 
 		// StartPeriodCumulativeReward is correctly populated by initialization of the costaker
-		rwd := types.NewCostakerRewardsTracker(currentRwd.Period-1, zeroInt, zeroInt, zeroInt)
+		rwd := types.NewCostakerRewardsTracker(currentRwd.Period, zeroInt, zeroInt, zeroInt)
 		return &rwd, nil
 	}
 
