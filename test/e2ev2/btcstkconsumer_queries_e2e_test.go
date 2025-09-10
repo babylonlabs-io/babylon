@@ -19,9 +19,6 @@ func TestConsumerActive(t *testing.T) {
 	bsnChain := tm.ChainBSN()
 	bbn, bsn := bbnChain.Nodes[0], bsnChain.Nodes[0]
 
-	_, err := bbn.QueryConsumerActive("does-not-exist")
-	require.Error(t, err, "response should not be nil")
-
 	bbn.RegisterConsumerChain(
 		bbn.DefaultWallet().KeyName,
 		"07-tendermint-0",

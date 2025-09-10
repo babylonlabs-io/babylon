@@ -2,10 +2,10 @@ package tmanager
 
 import (
 	"fmt"
-	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
 	"testing"
 
 	"cosmossdk.io/math"
+	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
 	appsigner "github.com/babylonlabs-io/babylon/v4/app/signer"
 	"github.com/btcsuite/btcd/btcec/v2"
 	cmtcfg "github.com/cometbft/cometbft/config"
@@ -131,7 +131,7 @@ func (ws *WalletSender) ChainID() string {
 
 // SignMsg creates and signs a transaction with the provided messages
 func (ws *WalletSender) SignMsg(msgs ...sdk.Msg) *sdktx.Tx {
-	return ws.SignMsgWithGas(300000, msgs...)
+	return ws.SignMsgWithGas(5000000, msgs...)
 }
 
 // SignMsgWithGas creates and signs a transaction with custom gas limit
@@ -141,8 +141,9 @@ func (ws *WalletSender) SignMsgWithGas(gasLimit uint64, msgs ...sdk.Msg) *sdktx.
 	require.NoError(ws.T(), err, "failed to set messages")
 
 	// Set fee and gas
-	txBuilder.SetFeeAmount(sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, math.NewInt(20000))))
-	txBuilder.SetGasLimit(300000)
+	feeAmount := math.NewInt(int64(float64(gasLimit) * 0.002))
+	txBuilder.SetFeeAmount(sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, feeAmount)))
+	txBuilder.SetGasLimit(gasLimit)
 
 	pubKey := ws.PrivKey.PubKey()
 	signerData := authsigning.SignerData{

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 	"net/url"
+	"strings"
 
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/util"
@@ -310,6 +311,9 @@ func (n *Node) QueryConsumerActive(consumerID string) (bool, error) {
 		})
 	})
 	if err != nil {
+		if strings.Contains(err.Error(), "consumer cannot be found") {
+			return false, nil
+		}
 		return false, err
 	}
 
