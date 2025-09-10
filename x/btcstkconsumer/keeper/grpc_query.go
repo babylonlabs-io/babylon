@@ -167,7 +167,7 @@ func (k Keeper) ConsumerActive(goCtx context.Context,
 		if queryRes == nil {
 			active = false
 		} else {
-			active = queryRes.Label != ""
+			active = queryRes.Label == ""
 		}
 	}
 

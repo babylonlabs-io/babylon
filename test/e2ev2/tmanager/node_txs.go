@@ -154,7 +154,7 @@ func (n *Node) InstantiateWasmContract(codeId, initMsg, walletName string) {
 	msg := &wasmtypes.MsgInstantiateContract{
 		Sender: wallet.Address.String(),
 		CodeID: codeIDUint,
-		Label:  "contract",
+		Label:  "",
 		Msg:    []byte(initMsg),
 		Funds:  sdk.NewCoins(),
 	}
