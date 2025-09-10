@@ -2,6 +2,7 @@ package tmanager
 
 import (
 	"fmt"
+	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
 	"testing"
 
 	"cosmossdk.io/math"
@@ -139,6 +140,8 @@ func (ws *WalletSender) SignMsgWithGas(gasLimit uint64, msgs ...sdk.Msg) *sdktx.
 	err := txBuilder.SetMsgs(msgs...)
 	require.NoError(ws.T(), err, "failed to set messages")
 
+	// Set fee and gas
+	txBuilder.SetFeeAmount(sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, math.NewInt(20000))))
 	txBuilder.SetGasLimit(300000)
 
 	pubKey := ws.PrivKey.PubKey()
