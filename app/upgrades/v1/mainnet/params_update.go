@@ -20,12 +20,12 @@ var (
 	DowntimeJailDuration  = 300 * time.Second
 
 	// Governance params
-	VotingPeriod = 3 * 24 * time.Hour
+	VotingPeriod = 10 * time.Minute
 	// 50k BABY
 	MinDeposit = sdk.NewCoin(appparams.DefaultBondDenom, math.NewInt(50_000_000000))
 	// 200k BABY
-	MaxDepositPeriod          = 14 * 24 * time.Hour
-	ExpeditedVotingPeriod     = 24 * time.Hour
+	MaxDepositPeriod          = 5 * time.Minute
+	ExpeditedVotingPeriod     = 5 * time.Minute
 	ExpeditedMinDeposit       = sdk.NewCoin(appparams.DefaultBondDenom, math.NewInt(200_000_000000))
 	MinInitialDepositRatio, _ = sdkmath.LegacyNewDecFromStr("0.1")
 
@@ -35,8 +35,8 @@ var (
 	BabyMinCommissionRate, _ = sdkmath.LegacyNewDecFromStr("0.03")
 
 	// BTC checkpoint params
-	BTCConfirmationDepth   = uint32(30)
-	BTCFinalizationTimeout = uint32(300)
+	BTCConfirmationDepth   = uint32(7)
+	BTCFinalizationTimeout = uint32(10)
 
 	// Distribution params
 	CommunityTax          = sdkmath.LegacyZeroDec()

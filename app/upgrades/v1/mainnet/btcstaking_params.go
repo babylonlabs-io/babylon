@@ -108,5 +108,26 @@ const BtcStakingParamsStr = `[
     "delegation_creation_base_gas_fee": 1095000,
     "allow_list_expiration_height": 139920,
     "btc_activation_height": 891425
+  },
+  {
+  "covenant_pks": [
+    "a10a06bb3bae360db3aef0326413b55b9e46bf20b9a96fc8a806a99e644fe277",
+    "6f13a6d104446520d1757caec13eaf6fbcf29f488c31e0107e7351d4994cd068",
+    "a5e21514682b87e37fb5d3c9862055041d1e6f4cc4f3034ceaf3d90f86b230a6"
+  ],
+  "covenant_quorum": 2,
+  "min_staking_value_sat": 15000,
+  "max_staking_value_sat": 100000,
+  "min_staking_time_blocks": 50,
+  "max_staking_time_blocks": 64000,
+  "slashing_pk_script": "agdiYWJ5bG9u",
+  "min_slashing_tx_fee_sat": 2000,
+  "slashing_rate": "0.010000000000000000",
+  "unbonding_time_blocks": 21,
+  "unbonding_fee_sat": 2000,
+  "min_commission_rate": "0.03",
+  "delegation_creation_base_gas_fee": 375000,
+  "allow_list_expiration_height": 300,
+  "btc_activation_height": 903828
   }
 ]`

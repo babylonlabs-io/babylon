@@ -5,8 +5,7 @@ package mainnet
 // to upload and everybody to instantiate.
 const CosmWasmParamStr = `{
   "code_upload_access": {
-    "permission": "AnyOfAddresses",
-    "addresses": ["bbn10d07y265gmmuvt4z0w9aw880jnsr700jduz5f2"]
+    "permission": "Everybody"
   },
   "instantiate_default_permission": "Everybody"
 }`
