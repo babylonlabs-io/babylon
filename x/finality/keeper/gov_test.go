@@ -348,7 +348,7 @@ func TestHandleResumeFinalityProposalMissingSigningInfo(t *testing.T) {
 	timesFpSetToActive := (ctx.HeaderInfo().Height - int64(haltingHeight)) + 1
 	fHooks.EXPECT().AfterFpStatusChange(
 		gomock.Any(), inactiveFpAddr, true,
-		bstypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_ACTIVE, bstypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_ACTIVE,
+		bstypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_INACTIVE, bstypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_ACTIVE,
 	).Times(int(timesFpSetToActive))
 	err = fKeeper.HandleResumeFinalityProposal(
 		ctx,

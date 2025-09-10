@@ -2086,7 +2086,7 @@ func TestBSNDelegationActivated_DirectIncentives(t *testing.T) {
 	// add the event to store
 	addPowerDistUpdateEvents(t, h.Ctx, btcStakingStoreKey, uint64(btcTipHeight), []*btcstktypes.EventPowerDistUpdate{eventActivate})
 	fHooks := h.FinalityHooks.(*ftypes.MockFinalityHooks)
-	fHooks.EXPECT().AfterBtcDelegationActivated(gomock.Any(), babylonFp.Address(), btcDel.Address(), true, btcstktypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_ACTIVE, uint64(stakingValue)).Times(1)
+	fHooks.EXPECT().AfterBtcDelegationActivated(gomock.Any(), babylonFp.Address(), btcDel.Address(), true, btcstktypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_INACTIVE, uint64(stakingValue)).Times(1)
 	fHooks.EXPECT().AfterBtcDelegationActivated(gomock.Any(), bsnFp.Address(), btcDel.Address(), false, btcstktypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_INACTIVE, uint64(stakingValue)).Times(1)
 
 	// process the activation event
