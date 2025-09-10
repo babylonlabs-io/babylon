@@ -41,6 +41,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/server/api"
 	"github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
+	"github.com/cosmos/cosmos-sdk/std"
 	"github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/mempool"
@@ -154,7 +155,7 @@ var (
 	DefaultNodeHome string
 	// fee collector account, module accounts and their permissions
 	maccPerms = map[string][]string{
-		authtypes.FeeCollectorName:                  {authtypes.Burner}, // fee collector account, needs Burner role for feemarket burning of BaseFee
+		authtypes.FeeCollectorName:                  nil,
 		distrtypes.ModuleName:                       nil,
 		minttypes.ModuleName:                        {authtypes.Minter},
 		stakingtypes.BondedPoolName:                 {authtypes.Burner, authtypes.Staking},
@@ -238,6 +239,8 @@ func NewBabylonApp(
 	appCodec := encCfg.Codec
 	legacyAmino := encCfg.Amino
 	txConfig := encCfg.TxConfig
+	std.RegisterLegacyAminoCodec(legacyAmino)
+	std.RegisterInterfaces(interfaceRegistry)
 
 	bApp := baseapp.NewBaseApp(appName, logger, db, txConfig.TxDecoder(), baseAppOptions...)
 	bApp.SetCommitMultiStoreTracer(traceStore)
