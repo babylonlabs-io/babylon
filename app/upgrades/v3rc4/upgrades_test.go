@@ -6,7 +6,9 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io"
 	"math/rand"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -47,7 +49,14 @@ import (
 	costktypes "github.com/babylonlabs-io/babylon/v4/x/costaking/types"
 )
 
-const testDataDir = "testdata"
+const (
+	testDataDir                  = "testdata"
+	mainnetBabyDelegationsFile   = "mainnet-baby-delegations.json"
+	testnetBabyDelegationsFile   = "testnet-baby-delegations.json"
+	btcDelegationsFile           = "btc-delegations.json.test" // Note: ".test" suffix to avoid accidental git add of large file
+	mainnetCostakerAddressesFile = "mainnet-costaker-addresses.txt"
+	testnetCostakerAddressesFile = "testnet-costaker-addresses.txt"
+)
 
 func setupTestKeepers(t *testing.T, btcTip uint32) (sdk.Context, codec.BinaryCodec, corestore.KVStoreService, *stkkeeper.Keeper, btcstkkeeper.Keeper, *storetypes.KVStoreKey, *costkkeeper.Keeper, *gomock.Controller) {
 	ctrl := gomock.NewController(t)
@@ -357,7 +366,16 @@ func rwdTrackerCollection(storeService corestore.KVStoreService, cdc codec.Binar
 }
 
 func TestInitializeCoStakerRwdsTracker_TestnetData(t *testing.T) {
-	ctx, cdc, storeService, stkKeeper, btcStkKeeper, btcStkKey, costkKeeper, ctrl := setupTestKeepers(t, 268000)
+	runTestWithEnv(t, "testnet", 268000)
+}
+
+func TestInitializeCoStakerRwdsTracker_MainnetData(t *testing.T) {
+	runTestWithEnv(t, "mainnet", 914000)
+}
+
+func runTestWithEnv(t *testing.T, env string, btcTip uint32) {
+	require.True(t, env == "mainnet" || env == "testnet", "env must be 'mainnet' or 'testnet'")
+	ctx, cdc, storeService, stkKeeper, btcStkKeeper, btcStkKey, costkKeeper, ctrl := setupTestKeepers(t, btcTip)
 	defer ctrl.Finish()
 
 	require.NoError(t, btcStkKeeper.SetParams(ctx, btcstktypes.DefaultParams()))
@@ -366,17 +384,18 @@ func TestInitializeCoStakerRwdsTracker_TestnetData(t *testing.T) {
 	t.Log("Loading testnet data...")
 
 	// Load expected costaker addresses first (small file)
-	expectedCostakers, err := loadTestnetCostakers()
+	expectedCostakers, err := loadCostakers(env)
 	require.NoError(t, err)
-	t.Logf("Expected %d costakers from testnet data", len(expectedCostakers))
+	require.NotEmpty(t, expectedCostakers)
+	t.Logf("Expected %d costakers from %s data", len(expectedCostakers), env)
 
 	// Load and seed BTC delegations using streaming
-	btcDelCount, err := loadAndSeedBTCDelegations(t, ctx, btcStkKey)
+	btcDelCount, err := loadAndSeedBTCDelegations(t, ctx, env, btcStkKey)
 	require.NoError(t, err)
 	t.Logf("Loaded and seeded %d BTC delegations", btcDelCount)
 
 	// Load and seed cosmos delegations using streaming
-	cosmosDelCount, err := loadAndSeedCosmosDelegations(t, ctx, stkKeeper)
+	cosmosDelCount, err := loadAndSeedCosmosDelegations(t, ctx, env, stkKeeper)
 	require.NoError(t, err)
 	t.Logf("Loaded and seeded %d cosmos delegations", cosmosDelCount)
 
@@ -427,7 +446,7 @@ func TestInitializeCoStakerRwdsTracker_TestnetData(t *testing.T) {
 		"Number of created costakers (%d) should match expected (%d)",
 		len(actualCostakers), len(expectedCostakers))
 
-	t.Logf("All %d testnet costakers were created correctly", len(actualCostakers))
+	t.Logf("All %d %s costakers were created correctly", len(actualCostakers), env)
 }
 
 // convertBTCDelegationResponseToBTCDelegation converts a BTCDelegationResponse to BTCDelegation
@@ -495,12 +514,17 @@ func convertBTCDelegationResponseToBTCDelegation(resp *btcstktypes.BTCDelegation
 }
 
 // loadAndSeedBTCDelegations loads BTC delegations from file and seeds them into keeper using streaming
-func loadAndSeedBTCDelegations(t *testing.T, ctx sdk.Context, btcStkStoreKey *storetypes.KVStoreKey) (int, error) {
-	filePath := filepath.Join(testDataDir, "testnet-btc-delegations.json")
+func loadAndSeedBTCDelegations(t *testing.T, ctx sdk.Context, env string, btcStkStoreKey *storetypes.KVStoreKey) (int, error) {
+	filePath := filepath.Join(testDataDir, btcDelegationsFile)
 
 	// Check if file exists. Should be downloaded or got from cache by CI workflow
-	if _, err := os.Stat(filePath); err != nil {
-		return 0, fmt.Errorf("Error getting file %s. Error: %w", filePath, err)
+	// if not (running locally e.g.) download from Google Drive
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		t.Logf("File %s does not exist, downloading from Google Drive...", filePath)
+		if err := downloadBTCDelegationsFile(filePath); err != nil {
+			return 0, fmt.Errorf("failed to download BTC delegations file: %w", err)
+		}
+		t.Logf("Successfully downloaded %s", filePath)
 	}
 
 	file, err := os.Open(filePath)
@@ -520,13 +544,30 @@ func loadAndSeedBTCDelegations(t *testing.T, ctx sdk.Context, btcStkStoreKey *st
 		return 0, fmt.Errorf("expected opening brace, got %v", token)
 	}
 
-	// Read the "btc_delegations" key
-	token, err = decoder.Token()
-	if err != nil {
-		return 0, fmt.Errorf("failed to read btc_delegations key: %w", err)
+	// Read through the JSON keys to find the correct key ("testnet" or "mainnet")
+	var foundEnvKey bool
+	for decoder.More() {
+		token, err = decoder.Token()
+		if err != nil {
+			return 0, fmt.Errorf("failed to read key: %w", err)
+		}
+
+		if key, ok := token.(string); ok {
+			if key == env {
+				foundEnvKey = true
+				break
+			} else {
+				// Skip the value for this key (the array we don't want)
+				var dummy json.RawMessage
+				if err := decoder.Decode(&dummy); err != nil {
+					return 0, fmt.Errorf("failed to skip %s data: %w", key, err)
+				}
+			}
+		}
 	}
-	if key, ok := token.(string); !ok || key != "btc_delegations" {
-		return 0, fmt.Errorf("expected btc_delegations key, got %v", token)
+
+	if !foundEnvKey {
+		return 0, fmt.Errorf("could not find %s key in JSON", env)
 	}
 
 	// Read opening bracket for the array
@@ -577,6 +618,20 @@ func loadAndSeedBTCDelegations(t *testing.T, ctx sdk.Context, btcStkStoreKey *st
 		return 0, fmt.Errorf("expected closing bracket, got %v", token)
 	}
 
+	// Skip any remaining keys in the JSON object (e.g., if we processed mainnet but testnet is still there)
+	for decoder.More() {
+		// Read key
+		token, err = decoder.Token()
+		if err != nil {
+			return 0, fmt.Errorf("failed to read remaining key: %w", err)
+		}
+		// Skip the value for this key
+		var dummy json.RawMessage
+		if err := decoder.Decode(&dummy); err != nil {
+			return 0, fmt.Errorf("failed to skip remaining data: %w", err)
+		}
+	}
+
 	// Read closing brace for the wrapper object
 	token, err = decoder.Token()
 	if err != nil {
@@ -590,8 +645,12 @@ func loadAndSeedBTCDelegations(t *testing.T, ctx sdk.Context, btcStkStoreKey *st
 }
 
 // loadAndSeedCosmosDelegations loads cosmos delegations from file and seeds them into keeper using streaming
-func loadAndSeedCosmosDelegations(t *testing.T, ctx sdk.Context, stkKeeper *stkkeeper.Keeper) (int, error) {
-	filePath := filepath.Join(testDataDir, "testnet-baby-delegations.json")
+func loadAndSeedCosmosDelegations(t *testing.T, ctx sdk.Context, env string, stkKeeper *stkkeeper.Keeper) (int, error) {
+	fileName := testnetBabyDelegationsFile
+	if env == "mainnet" {
+		fileName = mainnetBabyDelegationsFile
+	}
+	filePath := filepath.Join(testDataDir, fileName)
 
 	file, err := os.Open(filePath)
 	if err != nil {
@@ -684,9 +743,13 @@ func loadAndSeedCosmosDelegations(t *testing.T, ctx sdk.Context, stkKeeper *stkk
 	return count, nil
 }
 
-// loadTestnetCostakers loads expected costaker addresses from testnet-costaker-addresses.txt
-func loadTestnetCostakers() ([]string, error) {
-	filePath := filepath.Join(testDataDir, "testnet-costaker-addresses.txt")
+// loadCostakers loads expected costaker addresses for provided env (testnet/mainnet)
+func loadCostakers(env string) ([]string, error) {
+	fileName := testnetCostakerAddressesFile
+	if env == "mainnet" {
+		fileName = mainnetCostakerAddressesFile
+	}
+	filePath := filepath.Join(testDataDir, fileName)
 
 	file, err := os.Open(filePath)
 	if err != nil {
@@ -723,4 +786,46 @@ func getAllCostakers(t *testing.T, ctx sdk.Context, cdc codec.BinaryCodec, store
 	require.NoError(t, err)
 
 	return costakers
+}
+
+// downloadBTCDelegationsFile downloads a file from Google Drive using the file ID
+// This is useful when running tests locally and the test data files are not present
+func downloadBTCDelegationsFile(filePath string) error {
+	// Use the direct download URL that bypasses the virus scan warning for large files
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", "https://drive.usercontent.google.com/download?id=1PaZe96acfJqCHJrc24VAh77H-z0U9_x1&export=download&confirm=t", nil)
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+
+	// Add user agent to avoid potential blocking
+	req.Header.Set("User-Agent", "Mozilla/5.0 (compatible; babylon-test)")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to download file from Google Drive: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("failed to download file: HTTP status %d", resp.StatusCode)
+	}
+
+	// Create the directory if it doesn't exist
+	if err := os.MkdirAll(filepath.Dir(filePath), 0755); err != nil {
+		return fmt.Errorf("failed to create directory: %w", err)
+	}
+
+	file, err := os.Create(filePath)
+	if err != nil {
+		return fmt.Errorf("failed to create file: %w", err)
+	}
+	defer file.Close()
+
+	_, err = io.Copy(file, resp.Body)
+	if err != nil {
+		return fmt.Errorf("failed to write file: %w", err)
+	}
+
+	return nil
 }
