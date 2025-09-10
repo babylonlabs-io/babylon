@@ -44,10 +44,6 @@ type PrecompileIntegrationTestSuite struct {
 	delegatorPriv *ethsecp256k1.PrivKey
 }
 
-func TestPrecompileTestSuite(t *testing.T) {
-	suite.Run(t, new(PrecompileIntegrationTestSuite))
-}
-
 func (ts *PrecompileIntegrationTestSuite) SetupTest() {
 	ts.BaseTestSuite.SetupApp(ts.T())
 
@@ -152,20 +148,20 @@ var _ = Describe("Calling epoching precompile directly", func() {
 
 		Context("when validator address is the msg.sender & EoA", func() {
 			It("should succeed", func() {
-				valHex := common.Address(s.validatorPriv.PubKey().Address().Bytes())
+				newValHex := common.Address(s.validatorPriv.PubKey().Address().Bytes())
 				resp, err := s.CallContract(
 					s.validatorPriv, s.addr, s.abi, epoching.WrappedCreateValidatorMethod,
-					blsKey, defaultDescription, defaultCommission, defaultMinSelfDelegation, valHex, consPkB64, defaultValue,
+					blsKey, defaultDescription, defaultCommission, defaultMinSelfDelegation, newValHex, consPkB64, defaultValue,
 				)
 				Expect(err).To(BeNil(), "error while calling the contract")
 				Expect(resp.VmError).To(Equal(""))
 
 				s.AdvanceToNextEpoch()
 
-				valAddr := sdk.ValAddress(valHex.Bytes())
-				v, err := s.App.StakingKeeper.GetValidator(s.Ctx, valAddr)
+				newValAddr := sdk.ValAddress(newValHex.Bytes())
+				v, err := s.App.StakingKeeper.GetValidator(s.Ctx, newValAddr)
 				Expect(err).To(BeNil())
-				Expect(valAddr.String()).To(Equal(v.OperatorAddress))
+				Expect(newValAddr.String()).To(Equal(v.OperatorAddress))
 				Expect(v.Tokens.IsPositive()).To(BeTrue())
 			})
 		})
@@ -1047,6 +1043,222 @@ var _ = Describe("Calling epoching precompile directly", func() {
 			err = s.abi.UnpackIntoInterface(&redelsOut, epoching.RedelegationsMethod, resp.Ret)
 			Expect(err).To(BeNil(), "error while unpacking the redelegations output: %v", err)
 			Expect(redelsOut.Response).To(HaveLen(0), "expected no redelegations to be returned")
+		})
+	})
+
+	Describe("epochInfo queries", func() {
+		It("should return the epoch info", func() {
+			resp, err := s.QueryContract(
+				s.addr,
+				s.abi,
+				epoching.EpochInfoMethod,
+				uint64(1),
+			)
+			Expect(err).To(BeNil(), "error while calling the contract %v", err)
+			Expect(resp.VmError).To(Equal(""))
+
+			var epochInfo epoching.EpochInfoOutput
+			err = s.abi.UnpackIntoInterface(&epochInfo, epoching.EpochInfoMethod, resp.Ret)
+			Expect(err).To(BeNil(), "error while unpacking the epoch info output: %v", err)
+			Expect(epochInfo.Epoch.EpochNumber).To(Equal(uint64(1)))
+		})
+	})
+
+	Describe("currentEpoch queries", func() {
+		It("should return the current epoch", func() {
+			// NOTE: BeginBlocker is called only when Commit block, so by quering at block height 11,
+			// this will result in non-incremented epoch which is 1, to get epoch 2, we should query
+			// at block height 12
+			s.Commit(nil)
+			resp, err := s.QueryContract(
+				s.addr,
+				s.abi,
+				epoching.CurrentEpochMethod,
+			)
+			Expect(err).To(BeNil(), "error while calling the contract %v", err)
+			Expect(resp.VmError).To(Equal(""))
+
+			var currentEpoch epoching.CurrentEpochOutput
+			err = s.abi.UnpackIntoInterface(&currentEpoch, epoching.CurrentEpochMethod, resp.Ret)
+			Expect(err).To(BeNil(), "error while unpacking the current epoch output: %v", err)
+			Expect(currentEpoch.Response.CurrentEpoch).To(Equal(uint64(2)))
+			Expect(currentEpoch.Response.EpochBoundary).To(Equal(uint64(20)))
+		})
+	})
+
+	Describe("epochMsgs queries", func() {
+		BeforeEach(func() {
+			// make MsgWrappedDelegate and remain this msg in the queue
+			delAddr := common.Address(s.delegatorPriv.PubKey().Address().Bytes())
+
+			resp, err := s.CallContract(
+				s.delegatorPriv,
+				s.addr,
+				s.abi,
+				epoching.WrappedDelegateMethod,
+				delAddr,
+				valHex,
+				big.NewInt(1_000_000),
+			)
+			Expect(err).To(BeNil(), "error while calling the contract")
+			Expect(resp.VmError).To(Equal(""))
+		})
+
+		It("should return the epoch messages", func() {
+			resp, err := s.QueryContract(
+				s.addr,
+				s.abi,
+				epoching.EpochMsgsMethod,
+				uint64(2),
+				query.PageRequest{CountTotal: true},
+			)
+			Expect(err).To(BeNil(), "error while calling the contract %v", err)
+			Expect(resp.VmError).To(Equal(""))
+
+			var epochMsgs epoching.EpochMsgsOutput
+			err = s.abi.UnpackIntoInterface(&epochMsgs, epoching.EpochMsgsMethod, resp.Ret)
+			Expect(err).To(BeNil(), "error while unpacking the epoch msgs: %v", err)
+			Expect(epochMsgs.PageResponse.Total).To(Equal(uint64(1)))
+			Expect(epochMsgs.QueuedMsgs[0].BlockHeight).To(Equal(uint64(11)))
+		})
+
+		It("should return empty array if no epoch messages found", func() {
+			s.AdvanceToNextEpoch()
+			s.Commit(nil)
+
+			resp, err := s.QueryContract(
+				s.addr,
+				s.abi,
+				epoching.EpochMsgsMethod,
+				uint64(3),
+				query.PageRequest{CountTotal: true},
+			)
+			Expect(err).To(BeNil(), "error while calling the contract %v", err)
+			Expect(resp.VmError).To(Equal(""))
+
+			var epochMsgs epoching.EpochMsgsOutput
+			err = s.abi.UnpackIntoInterface(&epochMsgs, epoching.EpochMsgsMethod, resp.Ret)
+			Expect(err).To(BeNil(), "error while unpacking the epoch msgs: %v", err)
+			Expect(epochMsgs.PageResponse.Total).To(Equal(uint64(0)))
+			Expect(epochMsgs.QueuedMsgs).To(HaveLen(0))
+		})
+	})
+
+	Describe("latestEpochMsgs queries", func() {
+		BeforeEach(func() {
+			// make two MsgWrappedDelegate and remain these msgs in the queue
+			delAddr := common.Address(s.delegatorPriv.PubKey().Address().Bytes())
+
+			resp, err := s.CallContract(
+				s.delegatorPriv,
+				s.addr,
+				s.abi,
+				epoching.WrappedDelegateMethod,
+				delAddr,
+				valHex,
+				big.NewInt(1_000_000),
+			)
+			Expect(err).To(BeNil(), "error while calling the contract")
+			Expect(resp.VmError).To(Equal(""))
+
+			resp, err = s.CallContract(
+				s.delegatorPriv,
+				s.addr,
+				s.abi,
+				epoching.WrappedDelegateMethod,
+				delAddr,
+				valHex,
+				big.NewInt(1_000_000),
+			)
+			Expect(err).To(BeNil(), "error while calling the contract")
+			Expect(resp.VmError).To(Equal(""))
+		})
+
+		It("should return the latest epoch messages", func() {
+			resp, err := s.QueryContract(
+				s.addr,
+				s.abi,
+				epoching.LatestEpochMsgsMethod,
+				uint64(0),
+				uint64(2),
+				query.PageRequest{CountTotal: true},
+			)
+			Expect(err).To(BeNil(), "error while calling the contract %v", err)
+			Expect(resp.VmError).To(Equal(""))
+
+			var latestEpochMsgs epoching.LatestEpochMsgsOutput
+			err = s.abi.UnpackIntoInterface(&latestEpochMsgs, epoching.LatestEpochMsgsMethod, resp.Ret)
+			Expect(err).To(BeNil(), "error while unpacking the latest epoch msgs: %v", err)
+			Expect(latestEpochMsgs.PageResponse.Total).To(Equal(uint64(2)))
+			// two msgs in the epoch number two
+			Expect(latestEpochMsgs.LatestEpochMsgs[1].Msgs).To(HaveLen(2))
+		})
+	})
+
+	Describe("validatorLifecycle queries", func() {
+		var (
+			defaultDescription = staking.Description{
+				Moniker:         "new node",
+				Identity:        "",
+				Website:         "",
+				SecurityContact: "",
+				Details:         "",
+			}
+			defaultCommission = staking.Commission{
+				Rate:          big.NewInt(100000000000000000),
+				MaxRate:       big.NewInt(100000000000000000),
+				MaxChangeRate: big.NewInt(100000000000000000),
+			}
+			defaultMinSelfDelegation = big.NewInt(1)
+			defaultValue             = big.NewInt(1_000_000) // 1bbn
+		)
+
+		BeforeEach(func() {
+			newValHex := common.Address(s.validatorPriv.PubKey().Address().Bytes())
+			resp, err := s.CallContract(
+				s.validatorPriv, s.addr, s.abi, epoching.WrappedCreateValidatorMethod,
+				blsKey, defaultDescription, defaultCommission, defaultMinSelfDelegation, newValHex, consPkB64, defaultValue,
+			)
+			Expect(err).To(BeNil(), "error while calling the contract")
+			Expect(resp.VmError).To(Equal(""))
+
+			s.AdvanceToNextEpoch()
+
+			newValAddr := sdk.ValAddress(newValHex.Bytes())
+			v, err := s.App.StakingKeeper.GetValidator(s.Ctx, newValAddr)
+			Expect(err).To(BeNil())
+			Expect(newValAddr.String()).To(Equal(v.OperatorAddress))
+			Expect(v.Tokens.IsPositive()).To(BeTrue())
+		})
+
+		It("should return the validator lifecycle", func() {
+			resp, err := s.QueryContract(
+				s.addr,
+				s.abi,
+				epoching.ValidatorLifecycleMethod,
+				valHex,
+			)
+			Expect(err).To(BeNil(), "error while calling the contract %v", err)
+			Expect(resp.VmError).To(Equal(""))
+
+			var validatorLifecycle epoching.ValidatorLifecycleOutput
+			err = s.abi.UnpackIntoInterface(&validatorLifecycle, epoching.ValidatorLifecycleMethod, resp.Ret)
+			Expect(err).To(BeNil(), "error while unpacking the validator lifecycle: %v", err)
+			s.T().Logf("validator life cycle: %v", validatorLifecycle)
+
+			newValHex := common.Address(s.validatorPriv.PubKey().Address().Bytes())
+			resp, err = s.QueryContract(
+				s.addr,
+				s.abi,
+				epoching.ValidatorLifecycleMethod,
+				newValHex,
+			)
+			Expect(err).To(BeNil(), "error while calling the contract %v", err)
+			Expect(resp.VmError).To(Equal(""))
+
+			err = s.abi.UnpackIntoInterface(&validatorLifecycle, epoching.ValidatorLifecycleMethod, resp.Ret)
+			Expect(err).To(BeNil(), "error while unpacking the validator lifecycle: %v", err)
+			s.T().Logf("validator life cycle: %v", validatorLifecycle)
 		})
 	})
 })

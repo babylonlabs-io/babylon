@@ -469,7 +469,7 @@ func (suite *BaseTestSuite) Commit(txs [][]byte) *abci.ResponseFinalizeBlock {
 func (suite *BaseTestSuite) CommitAfter(txs [][]byte, t time.Duration) *abci.ResponseFinalizeBlock {
 	header := suite.Ctx.BlockHeader()
 	header.Time = header.Time.Add(t)
-	// Run BeginBlocker for this height to trigger epoch transitions
+	// Run BeginBlocker explicitly for this height to trigger epoch transitions
 	if _, err := suite.App.BeginBlocker(suite.Ctx); err != nil {
 		panic(err)
 	}

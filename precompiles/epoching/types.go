@@ -889,7 +889,7 @@ type EpochResponse struct {
 	SealerBlockHash      string `abi:"sealerBlockHash"`
 }
 type EpochInfoOutput struct {
-	Epoch EpochResponse
+	Epoch EpochResponse `abi:"response"`
 }
 
 func (eo *EpochInfoOutput) FromResponse(res *epochingtypes.QueryEpochInfoResponse) *EpochInfoOutput {
@@ -912,7 +912,7 @@ type CurrentEpochResponse struct {
 }
 
 type CurrentEpochOutput struct {
-	Response CurrentEpochResponse
+	Response CurrentEpochResponse `abi:"response"`
 }
 
 func (co *CurrentEpochOutput) FromResponse(res *epochingtypes.QueryCurrentEpochResponse) *CurrentEpochOutput {
@@ -936,8 +936,8 @@ type QueuedMessageResponse struct {
 }
 
 type EpochMsgsOutput struct {
-	QueuedMsgs   []QueuedMessageResponse
-	PageResponse query.PageResponse
+	QueuedMsgs   []QueuedMessageResponse `abi:"response"`
+	PageResponse query.PageResponse      `abi:"pageResponse"`
 }
 
 func (eo *EpochMsgsOutput) FromResponse(res *epochingtypes.QueryEpochMsgsResponse) *EpochMsgsOutput {
@@ -977,8 +977,8 @@ type QueuedMessageList struct {
 }
 
 type LatestEpochMsgsOutput struct {
-	LatestEpochMsgs []QueuedMessageList
-	PageResponse    query.PageResponse
+	LatestEpochMsgs []QueuedMessageList `abi:"response"`
+	PageResponse    query.PageResponse  `abi:"pageResponse"`
 }
 
 func (leo *LatestEpochMsgsOutput) FromResponse(res *epochingtypes.QueryLatestEpochMsgsResponse) *LatestEpochMsgsOutput {
@@ -1153,9 +1153,9 @@ type SimpleValidator struct {
 }
 
 type EpochValSetOutput struct {
-	Validators       []SimpleValidator
-	TotalVotingPower int64 `abi:"totalVotingPower"`
-	PageResponse     query.PageResponse
+	Validators       []SimpleValidator  `abi:"validators"`
+	TotalVotingPower int64              `abi:"totalVotingPower"`
+	PageResponse     query.PageResponse `abi:"pageResponse"`
 }
 
 func (evso *EpochValSetOutput) FromResponse(res *epochingtypes.QueryEpochValSetResponse) *EpochValSetOutput {
@@ -1270,8 +1270,8 @@ func (do *UnbondingDelegationOutput) FromResponse(res *stakingtypes.QueryUnbondi
 // DelegationOutput is a struct to represent the key information from
 // a delegation response.
 type DelegationOutput struct {
-	Shares  *big.Int
-	Balance cmn.Coin
+	Shares  *big.Int `abi:"shares"`
+	Balance cmn.Coin `abi:"balance"`
 }
 
 // FromResponse populates the DelegationOutput from a QueryDelegationResponse.
@@ -1429,8 +1429,8 @@ type ValidatorsOutputBech32 struct {
 // ValidatorsOutput is a struct to represent the key information from
 // a validators response with hex addresses.
 type ValidatorsOutput struct {
-	Validators   []ValidatorInfo
-	PageResponse query.PageResponse
+	Validators   []ValidatorInfo    `abi:"validators"`
+	PageResponse query.PageResponse `abi:"pageResponse"`
 }
 
 // FromResponse populates the ValidatorsOutputBech32 from a QueryValidatorsResponse.
@@ -1662,8 +1662,8 @@ type RedelegationsOutputBech32 struct {
 // RedelegationsOutput is a struct to represent the key information from
 // a redelegations response with hex addresses.
 type RedelegationsOutput struct {
-	Response     []RedelegationResponse
-	PageResponse query.PageResponse
+	Response     []RedelegationResponse `abi:"response"`
+	PageResponse query.PageResponse     `abi:"pageResponse"`
 }
 
 // FromResponse populates the RedelegationsOutputBech32 from a QueryRedelegationsResponse.
