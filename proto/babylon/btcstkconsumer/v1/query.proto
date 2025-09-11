@@ -24,6 +24,11 @@ service Query {
   rpc ConsumersRegistry(QueryConsumersRegistryRequest) returns (QueryConsumersRegistryResponse) {
     option (google.api.http).get = "/babylon/btcstkconsumer/v1/consumers_registry/{consumer_ids}";
   }
+  // ConsumerActive queries if a consumer is active with given consumer ID
+  rpc ConsumerActive(QueryConsumerActiveRequest) returns(QueryConsumerActiveResponse) {
+    option (google.api.http).get =
+        "/babylon/btcstkconsumer/v1/consumer_active/{consumer_id}";
+  }
 }
 
 // QueryParamsRequest is request type for the Query/Params RPC method.
@@ -86,4 +91,16 @@ message ConsumerRegisterResponse {
     (gogoproto.nullable) = false,
     (amino.dont_omitempty) = true
   ];
+}
+
+//  QueryConsumerActiveRequest is request type for the
+//  QueryConsumerActiveRequest  RPC method.
+message QueryConsumerActiveRequest {
+  string consumer_id = 1;
+}
+
+//  QueryConsumerActiveResponse is response type for the
+//  QueryConsumerActiveResponse RPC method.
+message QueryConsumerActiveResponse {
+  bool active = 1;
 }

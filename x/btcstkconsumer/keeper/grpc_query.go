@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"context"
-
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	"github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -13,7 +12,9 @@ import (
 
 var _ types.QueryServer = Keeper{}
 
-const maxQueryConsumersRegistryLimit = 100
+const (
+	maxQueryConsumersRegistryLimit = 100
+)
 
 func (k Keeper) ConsumerRegistryList(c context.Context, req *types.QueryConsumerRegistryListRequest) (*types.QueryConsumerRegistryListResponse, error) {
 	if req == nil {
@@ -130,4 +131,45 @@ func (k Keeper) ConsumersRegistry(c context.Context, req *types.QueryConsumersRe
 
 	resp := &types.QueryConsumersRegistryResponse{ConsumerRegisters: consumersRegisters}
 	return resp, nil
+}
+
+func (k Keeper) ConsumerActive(goCtx context.Context,
+	req *types.QueryConsumerActiveRequest) (*types.QueryConsumerActiveResponse,
+	error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+
+	if req.ConsumerId == "" {
+		return nil, status.Error(codes.InvalidArgument, "consumer id cannot be empty")
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	consumer, err := k.GetConsumerRegister(ctx, req.ConsumerId)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "consumer cannot be found")
+	}
+
+	var active bool
+	switch consumer.Type() {
+	case types.ConsumerType_COSMOS:
+		channelID := consumer.GetCosmosConsumerMetadata().ChannelId
+		active = k.channelKeeper.ConsumerHasIBCChannelOpen(ctx, req.ConsumerId, channelID)
+	case types.ConsumerType_ROLLUP:
+		address := consumer.GetRollupConsumerMetadata().FinalityContractAddress
+		contractAddress, err := sdk.AccAddressFromBech32(address)
+		if err != nil {
+			return nil, status.Error(codes.InvalidArgument, "invalid contract address")
+		}
+
+		queryRes := k.wasmKeeper.GetContractInfo(goCtx, contractAddress)
+		if queryRes == nil {
+			active = false
+		} else {
+			active = queryRes.Label == ""
+		}
+	}
+
+	return &types.QueryConsumerActiveResponse{Active: active}, nil
 }
