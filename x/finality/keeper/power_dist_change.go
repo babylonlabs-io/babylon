@@ -391,18 +391,6 @@ func (k Keeper) processEventsAtHeight(
 	}
 }
 
-func processFPEventImmediate(ctx sdk.Context, state *ftypes.ProcessingState, event types.EventPowerDistUpdate) {
-	switch typedEvent := event.Ev.(type) {
-	case *types.EventPowerDistUpdate_JailedFp:
-		// record jailed fps
-		types.EmitJailedFPEvent(ctx, typedEvent.JailedFp.Pk)
-		state.FPStatesByBtcPk[typedEvent.JailedFp.Pk.MarshalHex()] = ftypes.FinalityProviderState_JAILED
-	case *types.EventPowerDistUpdate_UnjailedFp:
-		// record unjailed fps
-		state.FPStatesByBtcPk[typedEvent.UnjailedFp.Pk.MarshalHex()] = ftypes.FinalityProviderState_UNJAILED
-	}
-}
-
 // processBtcDelUpdate processes a BTC delegation update event immediately.
 // It handles the BTC delegation state update by checking the new state and
 // updating the processing state accordingly.
@@ -430,6 +418,18 @@ func (k Keeper) processBtcDelUpdate(ctx context.Context, state *ftypes.Processin
 			// add the unbonded BTC delegation to the map
 			k.processPowerDistUpdateEventUnbond(ctx, state, btcDel)
 		}
+	}
+}
+
+func processFPEventImmediate(ctx sdk.Context, state *ftypes.ProcessingState, event types.EventPowerDistUpdate) {
+	switch typedEvent := event.Ev.(type) {
+	case *types.EventPowerDistUpdate_JailedFp:
+		// record jailed fps
+		types.EmitJailedFPEvent(ctx, typedEvent.JailedFp.Pk)
+		state.FPStatesByBtcPk[typedEvent.JailedFp.Pk.MarshalHex()] = ftypes.FinalityProviderState_JAILED
+	case *types.EventPowerDistUpdate_UnjailedFp:
+		// record unjailed fps
+		state.FPStatesByBtcPk[typedEvent.UnjailedFp.Pk.MarshalHex()] = ftypes.FinalityProviderState_UNJAILED
 	}
 }
 
