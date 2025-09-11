@@ -10,6 +10,7 @@ import (
 	v3 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v3"
 	v3rc2 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v3rc2/testnet"
 	v3rc3 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v3rc3"
+	v3rc4 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v3rc4/testnet"
 )
 
 // init is used to include v1 upgrade testnet data
@@ -22,5 +23,6 @@ func init() {
 		v2rc4.Upgrade,
 		v2.CreateUpgrade(true, map[string]struct{}{}),
 		v22.Upgrade,
+		v3rc4.Upgrade,
 	}
 }
