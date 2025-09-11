@@ -122,3 +122,41 @@ func FuzzExtract(f *testing.F) {
 		}
 	})
 }
+
+func TestZeroEntropyVulnerability(t *testing.T) {
+	// Create a zero private randomness
+	var zeroPrivateRand secp256k1.ModNScalar
+	// zeroPrivateRand is already zero by default (all bytes are 0)
+
+	// Generate a valid private key using crypto/rand
+	sk, err := eots.KeyGen(rand.Reader)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Try to sign with zero entropy
+	message := []byte("test message")
+	sig, err := eots.Sign(sk, &zeroPrivateRand, message)
+
+	if err != nil {
+		t.Logf("✅ Babylon correctly rejected zero entropy: %v", err)
+	} else {
+		t.Errorf("❌ Babylon ACCEPTED zero entropy - this is a vulnerability!")
+		t.Logf("Signature created: %v", sig)
+
+		// Let's also verify what happens when we use this signature
+		pk := eots.PubGen(sk)
+
+		// Create a zero public randomness (point at infinity)
+		var zeroPublicRand secp256k1.FieldVal
+		// zeroPublicRand is already zero by default
+
+		// Try to verify the signature
+		err = eots.Verify(pk, &zeroPublicRand, message, sig)
+		if err != nil {
+			t.Logf("Verification failed (expected): %v", err)
+		} else {
+			t.Logf("Verification succeeded (unexpected!)")
+		}
+	}
+}
