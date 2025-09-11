@@ -32,6 +32,7 @@ const (
 // DelegationInfo holds cached information about a delegation made by a delegator to one or more finality providers
 type DelegationInfo struct {
 	Delegator sdk.AccAddress
+	FpBtcPk   string
 	TotalSat  uint64
 }
 
@@ -61,9 +62,9 @@ type ProcessingState struct {
 	// A slice of the slashed finality provider events
 	SlashedEvents []*btcstktypes.EventPowerDistUpdate_SlashedFp
 	// ActiveDelegations holds information about active delegations per FP
-	ActiveDelegations map[string][]DelegationInfo
+	ActiveDelegations []DelegationInfo
 	// UnbondingDelegations holds information about unbonding delegations per FP
-	UnbondingDelegations map[string][]DelegationInfo
+	UnbondingDelegations []DelegationInfo
 }
 
 func NewProcessingState() *ProcessingState {
@@ -88,65 +89,21 @@ func (ps *ProcessingState) PrevFpStatus(fpBtcPk *bbn.BIP340PubKey) btcstktypes.F
 }
 
 func (ps *ProcessingState) AddActiveDelegation(delAddr string, fpPubKey bbn.BIP340PubKey, totalSat uint64) {
-	fpPubKeyStr := fpPubKey.MarshalHex()
 	delAccAddr := sdk.MustAccAddressFromBech32(delAddr)
-	if ps.ActiveDelegations == nil {
-		ps.ActiveDelegations = make(map[string][]DelegationInfo)
-	}
-	if delegations, exists := ps.ActiveDelegations[fpPubKeyStr]; exists {
-		// If an entry already exists for this delegator and finality provider, we update the totalSat
-		for i, delInfo := range delegations {
-			if bytes.Equal(delInfo.Delegator, delAccAddr) {
-				ps.ActiveDelegations[fpPubKeyStr][i].TotalSat += totalSat
-				return
-			}
-		}
-		// If no entry exists for this delegator, we append a new one
-		ps.ActiveDelegations[fpPubKeyStr] = append(ps.ActiveDelegations[fpPubKeyStr], DelegationInfo{
-			Delegator: delAccAddr,
-			TotalSat:  totalSat,
-		})
-		return
-	}
-
-	// Otherwise, we create a new entry
-	ps.ActiveDelegations[fpPubKeyStr] = []DelegationInfo{
-		{
-			Delegator: delAccAddr,
-			TotalSat:  totalSat,
-		},
-	}
+	ps.ActiveDelegations = append(ps.ActiveDelegations, DelegationInfo{
+		Delegator: delAccAddr,
+		FpBtcPk:   fpPubKey.MarshalHex(),
+		TotalSat:  totalSat,
+	})
 }
 
 func (ps *ProcessingState) AddUnbondingDelegation(delAddr string, fpPubKey bbn.BIP340PubKey, totalSat uint64) {
-	fpPubKeyStr := fpPubKey.MarshalHex()
 	delAccAddr := sdk.MustAccAddressFromBech32(delAddr)
-	if ps.UnbondingDelegations == nil {
-		ps.UnbondingDelegations = make(map[string][]DelegationInfo)
-	}
-	if delegations, exists := ps.UnbondingDelegations[fpPubKeyStr]; exists {
-		// If an entry already exists for this delegator and finality provider, we update the totalSat
-		for i, delInfo := range delegations {
-			if bytes.Equal(delInfo.Delegator, delAccAddr) {
-				ps.UnbondingDelegations[fpPubKeyStr][i].TotalSat += totalSat
-				return
-			}
-		}
-		// If no entry exists for this delegator, we append a new one
-		ps.UnbondingDelegations[fpPubKeyStr] = append(ps.UnbondingDelegations[fpPubKeyStr], DelegationInfo{
-			Delegator: delAccAddr,
-			TotalSat:  totalSat,
-		})
-		return
-	}
-
-	// Otherwise, we create a new entry
-	ps.UnbondingDelegations[fpPubKeyStr] = []DelegationInfo{
-		{
-			Delegator: delAccAddr,
-			TotalSat:  totalSat,
-		},
-	}
+	ps.UnbondingDelegations = append(ps.UnbondingDelegations, DelegationInfo{
+		Delegator: delAccAddr,
+		FpBtcPk:   fpPubKey.MarshalHex(),
+		TotalSat:  totalSat,
+	})
 }
 
 func (c *PubRandCommit) IsInRange(height uint64) bool {

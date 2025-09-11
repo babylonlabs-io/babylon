@@ -552,7 +552,7 @@ func (k Keeper) votingPowerDistCacheStore(ctx context.Context) prefix.Store {
 func (k Keeper) processBtcDelHook(
 	ctx sdk.Context,
 	state *ftypes.ProcessingState,
-	fpDels map[string][]ftypes.DelegationInfo,
+	fpDels []ftypes.DelegationInfo,
 	hookFn func(
 		ctx context.Context,
 		fpAddr, btcDelAddr sdk.AccAddress,
@@ -561,33 +561,29 @@ func (k Keeper) processBtcDelHook(
 		sats uint64,
 	) error) error {
 	// execute hooks for newly active BTC delegations
-	for fpBtcPk, delegations := range fpDels {
-		fp, err := k.loadFP(ctx, state.FpByBtcPk, fpBtcPk)
+	for _, del := range fpDels {
+		fp, err := k.loadFP(ctx, state.FpByBtcPk, del.FpBtcPk)
 		if err != nil {
 			k.Logger(ctx).Error(
 				"failed to execute hooks for the given fp",
 				err,
-				"fp_btc_pk", fpBtcPk,
+				"fp_btc_pk", del.FpBtcPk,
 			)
-			return fmt.Errorf("failed to load fp %s: %w", fpBtcPk, err)
+			return fmt.Errorf("failed to load fp %s: %w", del.FpBtcPk, err)
 		}
 
 		fpSecuresBabylon := fp.SecuresBabylonGenesis(ctx)
-		for _, del := range delegations {
-			err = hookFn(
-				ctx, fp.Address(),
-				del.Delegator, fpSecuresBabylon,
-				state.PrevFpStatus(fp.BtcPk),
-				del.TotalSat,
+		err = hookFn(
+			ctx, fp.Address(),
+			del.Delegator, fpSecuresBabylon,
+			state.PrevFpStatus(fp.BtcPk),
+			del.TotalSat,
+		)
+		if err != nil {
+			k.Logger(ctx).Error(
+				"fp_btc_pk", del.FpBtcPk,
 			)
-			if err != nil {
-				k.Logger(ctx).Error(
-					"failed to execute hooks for the given fp",
-					err,
-					"fp_btc_pk", fpBtcPk,
-				)
-				return fmt.Errorf("failed to call hook for fp %s: %w", fpBtcPk, err)
-			}
+			return fmt.Errorf("failed to call hook for fp %s: %w", del.FpBtcPk, err)
 		}
 	}
 	return nil
