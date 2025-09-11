@@ -350,12 +350,6 @@ func (n *Node) CreateAppConfig() {
 	appConfig.GRPC.Enable = true
 	appConfig.GRPC.Address = n.GetGRPCAddress()
 
-	// Configure EVM JSON-RPC with dynamic ports
-	appConfig.JSONRPC.Enable = true
-	appConfig.JSONRPC.Address = n.GetEVMRPCAddress()
-	appConfig.JSONRPC.WsAddress = n.GetEVMWSAddress()
-	appConfig.JSONRPC.WSOrigins = []string{"0.0.0.0", "127.0.0.1", "localhost"}
-
 	customTemplate := cmd.DefaultBabylonTemplate()
 
 	srvconfig.SetConfigTemplate(customTemplate)

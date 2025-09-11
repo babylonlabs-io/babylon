@@ -44,7 +44,7 @@ func TestCheckTxAndClearIndex(t *testing.T) {
 	defer ctrl.Finish()
 
 	iKeeper, ctx := keepertest.IncentiveKeeper(t, nil, nil, nil)
-	decorator := keeper.NewRefundTxDecorator(iKeeper, nil)
+	decorator := keeper.NewRefundTxDecorator(iKeeper)
 
 	testCases := []struct {
 		name     string
@@ -172,7 +172,7 @@ func TestRefundTxDecorator_AnteHandle(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			decorator := keeper.NewRefundTxDecorator(nil, nil)
+			decorator := keeper.NewRefundTxDecorator(nil)
 
 			// Create a mock FeeTx
 			tx := &mockFeeTx{

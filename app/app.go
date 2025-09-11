@@ -3,22 +3,16 @@ package app
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/ethereum/go-ethereum/common"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
-
-	// Force-load the tracer engines to trigger registration due to Go-Ethereum v1.10.15 changes
-	_ "github.com/ethereum/go-ethereum/eth/tracers/js"
-	_ "github.com/ethereum/go-ethereum/eth/tracers/native"
 
 	autocliv1 "cosmossdk.io/api/cosmos/autocli/v1"
 	reflectionv1 "cosmossdk.io/api/cosmos/reflection/v1"
 	"cosmossdk.io/client/v2/autocli"
 	"cosmossdk.io/core/appmodule"
 	"cosmossdk.io/log"
-	"cosmossdk.io/math"
 	"cosmossdk.io/x/circuit"
 	circuittypes "cosmossdk.io/x/circuit/types"
 	"cosmossdk.io/x/evidence"
@@ -30,7 +24,6 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-	"github.com/babylonlabs-io/babylon/v4/x/feemarketwrapper"
 	abci "github.com/cometbft/cometbft/abci/types"
 	cmtos "github.com/cometbft/cometbft/libs/os"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
@@ -48,6 +41,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/server/api"
 	"github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
+	"github.com/cosmos/cosmos-sdk/std"
 	"github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/mempool"
@@ -82,16 +76,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	evmante "github.com/cosmos/evm/ante"
-	evmencoding "github.com/cosmos/evm/encoding"
-	srvflags "github.com/cosmos/evm/server/flags"
-	evmutils "github.com/cosmos/evm/utils"
-	"github.com/cosmos/evm/x/erc20"
-	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
-	"github.com/cosmos/evm/x/precisebank"
-	precisebanktypes "github.com/cosmos/evm/x/precisebank/types"
-	evm "github.com/cosmos/evm/x/vm"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
 	"github.com/cosmos/gogoproto/proto"
 	pfmrouter "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v10/packetforward"
 	pfmroutertypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v10/packetforward/types"
@@ -107,7 +91,6 @@ import (
 	ibc "github.com/cosmos/ibc-go/v10/modules/core" // ibc module puts types under `ibchost` rather than `ibctypes`
 	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
 	ibctm "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
-	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/spf13/cast"
 
 	"github.com/babylonlabs-io/babylon/v4/app/ante"
@@ -143,7 +126,6 @@ import (
 	"github.com/babylonlabs-io/babylon/v4/x/zoneconcierge"
 	zckeeper "github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/keeper"
 	zctypes "github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/types"
-	erc20types "github.com/cosmos/evm/x/erc20/types"
 	"github.com/strangelove-ventures/tokenfactory/x/tokenfactory"
 	tokenfactorytypes "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/types"
 )
@@ -173,7 +155,7 @@ var (
 	DefaultNodeHome string
 	// fee collector account, module accounts and their permissions
 	maccPerms = map[string][]string{
-		authtypes.FeeCollectorName:                  {authtypes.Burner}, // fee collector account, needs Burner role for feemarket burning of BaseFee
+		authtypes.FeeCollectorName:                  nil,
 		distrtypes.ModuleName:                       nil,
 		minttypes.ModuleName:                        {authtypes.Minter},
 		stakingtypes.BondedPoolName:                 {authtypes.Burner, authtypes.Staking},
@@ -183,10 +165,6 @@ var (
 		incentivetypes.ModuleName:                   nil, // this line is needed to create an account for incentive module
 		tokenfactorytypes.ModuleName:                {authtypes.Minter, authtypes.Burner},
 		icatypes.ModuleName:                         nil,
-		evmtypes.ModuleName:                         {authtypes.Minter, authtypes.Burner},
-		feemarkettypes.ModuleName:                   nil,
-		erc20types.ModuleName:                       {authtypes.Minter, authtypes.Burner}, // Allows erc20 module to mint/burn for token pairs
-		precisebanktypes.ModuleName:                 {authtypes.Minter, authtypes.Burner},
 		incentivetypes.ModAccCommissionCollectorBSN: nil, // Babylon BSN rewards commission collector
 	}
 
@@ -220,7 +198,6 @@ type BabylonApp struct {
 	legacyAmino *codec.LegacyAmino
 	appCodec    codec.Codec
 	txConfig    client.TxConfig
-	clientCtx   client.Context
 
 	interfaceRegistry types.InterfaceRegistry
 	invCheckPeriod    uint
@@ -234,9 +211,6 @@ type BabylonApp struct {
 
 	// module configurator
 	configurator module.Configurator
-
-	// pending tx listeners
-	pendingTxListeners []evmante.PendingTxListener
 }
 
 // NewBabylonApp returns a reference to an initialized BabylonApp.
@@ -249,8 +223,6 @@ func NewBabylonApp(
 	invCheckPeriod uint,
 	blsSigner *checkpointingtypes.BlsSigner,
 	appOpts servertypes.AppOptions,
-	evmChainID uint64,
-	evmAppOptions EVMOptionsFn,
 	wasmOpts []wasmkeeper.Option,
 	baseAppOptions ...func(*baseapp.BaseApp),
 ) *BabylonApp {
@@ -262,11 +234,13 @@ func NewBabylonApp(
 		homePath = DefaultNodeHome
 	}
 
-	encCfg := evmencoding.MakeConfig(evmChainID)
+	encCfg := appparams.DefaultEncodingConfig()
 	interfaceRegistry := encCfg.InterfaceRegistry
 	appCodec := encCfg.Codec
 	legacyAmino := encCfg.Amino
 	txConfig := encCfg.TxConfig
+	std.RegisterLegacyAminoCodec(legacyAmino)
+	std.RegisterInterfaces(interfaceRegistry)
 
 	bApp := baseapp.NewBaseApp(appName, logger, db, txConfig.TxDecoder(), baseAppOptions...)
 	bApp.SetCommitMultiStoreTracer(traceStore)
@@ -274,12 +248,6 @@ func NewBabylonApp(
 	bApp.SetInterfaceRegistry(interfaceRegistry)
 	bApp.SetTxEncoder(txConfig.TxEncoder())
 	bApp.SetMempool(getAppMempool(appOpts))
-
-	// Add after encoder has been set:
-	if err := evmAppOptions(evmChainID); err != nil {
-		// Initialize the EVM application configuration
-		panic(fmt.Errorf("failed to initialize EVM app configuration: %w", err))
-	}
 
 	wasmConfig, err := wasm.ReadNodeConfig(appOpts)
 	if err != nil {
@@ -371,11 +339,6 @@ func NewBabylonApp(
 		finality.NewAppModule(appCodec, app.FinalityKeeper),
 		// Babylon modules - tokenomics
 		incentive.NewAppModule(appCodec, app.IncentiveKeeper, app.AccountKeeper, app.BankKeeper),
-		// Cosmos EVM modules
-		evm.NewAppModule(app.EVMKeeper, app.AccountKeeper, app.AccountKeeper.AddressCodec()),
-		feemarketwrapper.NewAppModule(app.FeemarketKeeper, app.GetTKey(feemarkettypes.TransientKey)),
-		erc20.NewAppModule(app.Erc20Keeper, app.AccountKeeper),
-		precisebank.NewAppModule(app.PreciseBankKeeper, app.BankKeeper, app.AccountKeeper),
 	)
 
 	// BasicModuleManager defines the module BasicManager which is in charge of setting up basic,
@@ -410,10 +373,6 @@ func NewBabylonApp(
 		// NOTE: incentive module's BeginBlock has to be after mint but before distribution
 		// so that it can intercept a part of new inflation to reward BTC staking stakeholders
 		minttypes.ModuleName, incentivetypes.ModuleName, distrtypes.ModuleName,
-		// Cosmos EVM
-		erc20types.ModuleName,
-		feemarkettypes.ModuleName,
-		evmtypes.ModuleName, // NOTE: EVM BeginBlocker must come after FeeMarket BeginBlocker
 		slashingtypes.ModuleName,
 		evidencetypes.ModuleName, stakingtypes.ModuleName,
 		authtypes.ModuleName, banktypes.ModuleName, govtypes.ModuleName, genutiltypes.ModuleName,
@@ -476,10 +435,6 @@ func NewBabylonApp(
 		finalitytypes.ModuleName,
 		// tokenomics related modules
 		incentivetypes.ModuleName, // EndBlock of incentive module does not matter
-		// Cosmos EVM
-		evmtypes.ModuleName,
-		erc20types.ModuleName,
-		feemarkettypes.ModuleName,
 	)
 	// Babylon does not want EndBlock processing in staking
 	app.ModuleManager.OrderEndBlockers = append(app.ModuleManager.OrderEndBlockers[:1], app.ModuleManager.OrderEndBlockers[1+1:]...) // remove stakingtypes.ModuleName
@@ -497,12 +452,6 @@ func NewBabylonApp(
 	genesisModuleOrder := []string{
 		authtypes.ModuleName, banktypes.ModuleName, distrtypes.ModuleName, stakingtypes.ModuleName,
 		slashingtypes.ModuleName, govtypes.ModuleName, minttypes.ModuleName,
-		// Cosmos EVM modules
-		// NOTE: feemarket module needs to be initialized before genutil module
-		evmtypes.ModuleName,
-		feemarkettypes.ModuleName,
-		erc20types.ModuleName,
-		precisebanktypes.ModuleName,
 		genutiltypes.ModuleName, evidencetypes.ModuleName, authz.ModuleName,
 		feegrant.ModuleName,
 		paramstypes.ModuleName, upgradetypes.ModuleName, vestingtypes.ModuleName, consensusparamtypes.ModuleName, circuittypes.ModuleName,
@@ -567,16 +516,9 @@ func NewBabylonApp(
 	app.MountTransientStores(app.GetTransientStoreKeys())
 	app.MountMemoryStores(app.GetMemoryStoreKeys())
 
-	maxGasWanted := cast.ToUint64(appOpts.Get(srvflags.EVMMaxTxGasWanted))
-	evmHandlerOpts := NewEVMAnteHandlerOptionsFromApp(app, txConfig, maxGasWanted)
-	if err := evmHandlerOpts.Validate(); err != nil {
-		panic(err)
-	}
-
 	// initialize AnteHandler for the app
 	anteHandler := ante.NewAnteHandler(
 		appOpts,
-		evmHandlerOpts.Options(),
 		&app.AccountKeeper,
 		app.BankKeeper,
 		&app.FeeGrantKeeper,
@@ -593,7 +535,7 @@ func NewBabylonApp(
 
 	// set proposal extension
 	proposalHandler := prepare.NewProposalHandler(
-		logger, &app.CheckpointingKeeper, bApp.Mempool(), bApp, app.EncCfg, bbn.NewEthSignerExtractionAdapter(mempool.NewDefaultSignerExtractionAdapter()))
+		logger, &app.CheckpointingKeeper, bApp.Mempool(), bApp, app.EncCfg)
 	proposalHandler.SetHandlers(bApp)
 
 	// set vote extension
@@ -621,7 +563,7 @@ func NewBabylonApp(
 
 	// set postHandler
 	postHandler := sdk.ChainPostDecorators(
-		incentivekeeper.NewRefundTxDecorator(&app.IncentiveKeeper, app.GetTKey(feemarkettypes.TransientKey)),
+		incentivekeeper.NewRefundTxDecorator(&app.IncentiveKeeper),
 		zckeeper.NewIBCHeaderDecorator(&app.ZoneConciergeKeeper),
 	)
 	app.SetPostHandler(postHandler)
@@ -867,24 +809,7 @@ func (app *BabylonApp) RegisterNodeService(clientCtx client.Context, cfg config.
 
 // DefaultGenesis returns a default genesis from the registered AppModuleBasic's.
 func (a *BabylonApp) DefaultGenesis() map[string]json.RawMessage {
-	genesis := a.BasicModuleManager.DefaultGenesis(a.appCodec)
-	// Add EVM genesis configuration
-	evmGenState := evmtypes.DefaultGenesisState()
-	evmGenState.Params.ActiveStaticPrecompiles = evmtypes.AvailableStaticPrecompiles
-	evmGenState.Params.EvmDenom = appparams.BaseCoinUnit
-	genesis[evmtypes.ModuleName] = a.appCodec.MustMarshalJSON(evmGenState)
-
-	// Add ERC20 genesis configuration
-	erc20GenState := erc20types.DefaultGenesisState()
-	genesis[erc20types.ModuleName] = a.appCodec.MustMarshalJSON(erc20GenState)
-
-	feemarketGenState := feemarkettypes.DefaultGenesisState()
-	feemarketGenState.Params.NoBaseFee = false
-	feemarketGenState.Params.BaseFee = math.LegacyMustNewDecFromStr("0.01")
-	feemarketGenState.Params.MinGasPrice = feemarketGenState.Params.BaseFee
-	genesis[feemarkettypes.ModuleName] = a.appCodec.MustMarshalJSON(feemarketGenState)
-
-	return genesis
+	return a.BasicModuleManager.DefaultGenesis(a.appCodec)
 }
 
 func (app *BabylonApp) TxConfig() client.TxConfig {
@@ -964,15 +889,6 @@ func BlockedAddresses() map[string]bool {
 	// allow the following addresses to receive funds
 	delete(blockedAddrs, appparams.AccGov.String())
 
-	// Block precompiled contracts
-	blockedPrecompilesHex := evmtypes.AvailableStaticPrecompiles
-	for _, addr := range vm.PrecompiledAddressesPrague {
-		blockedPrecompilesHex = append(blockedPrecompilesHex, addr.Hex())
-	}
-
-	for _, precompile := range blockedPrecompilesHex {
-		blockedAddrs[evmutils.Bech32StringFromHexAddress(precompile)] = true
-	}
 	return blockedAddrs
 }
 
@@ -987,19 +903,10 @@ func getAppMempool(appOpts servertypes.AppOptions) mempool.Mempool {
 		maxTxs     = cast.ToInt(appOpts.Get(server.FlagMempoolMaxTxs))
 		mempoolCfg = mempool.DefaultPriorityNonceMempoolConfig()
 	)
-	mempoolCfg.SignerExtractor = bbn.NewEthSignerExtractionAdapter(mempool.NewDefaultSignerExtractionAdapter())
 	mempoolCfg.MaxTx = maxTxs
 	mp = mempool.NewPriorityMempool(mempoolCfg)
 	if maxTxs < 0 {
 		mp = mempool.NoOpMempool{}
 	}
 	return mp
-}
-
-func (app *BabylonApp) RegisterPendingTxListener(listener func(common.Hash)) {
-	app.pendingTxListeners = append(app.pendingTxListeners, listener)
-}
-
-func (app *BabylonApp) SetClientCtx(clientCtx client.Context) {
-	app.clientCtx = clientCtx
 }

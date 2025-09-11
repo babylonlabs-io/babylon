@@ -226,8 +226,6 @@ func NewBabylonAppDriver(
 		0,
 		blsSigner,
 		appOptions,
-		appparams.EVMChainID,
-		babylonApp.EVMAppOptions,
 		babylonApp.EmptyWasmOpts,
 		baseAppOptions...,
 	)
