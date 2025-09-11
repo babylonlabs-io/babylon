@@ -47,6 +47,8 @@ import (
 	btcstktypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 	costkkeeper "github.com/babylonlabs-io/babylon/v4/x/costaking/keeper"
 	costktypes "github.com/babylonlabs-io/babylon/v4/x/costaking/types"
+	fkeeper "github.com/babylonlabs-io/babylon/v4/x/finality/keeper"
+	ftypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
 )
 
 const (
@@ -59,14 +61,14 @@ const (
 	testnetCostakerAddressesFile = "testnet-costaker-addresses.txt"
 )
 
-func setupTestKeepers(t *testing.T, btcTip uint32) (sdk.Context, codec.BinaryCodec, corestore.KVStoreService, *stkkeeper.Keeper, btcstkkeeper.Keeper, *storetypes.KVStoreKey, *costkkeeper.Keeper, *gomock.Controller) {
+func setupTestKeepers(t *testing.T, btcTip uint32) (sdk.Context, codec.BinaryCodec, corestore.KVStoreService, *stkkeeper.Keeper, btcstkkeeper.Keeper, *storetypes.KVStoreKey, *costkkeeper.Keeper, *fkeeper.Keeper, *gomock.Controller) {
 	ctrl := gomock.NewController(t)
 
 	// Create DB and store
 	db := dbm.NewMemDB()
 	stateStore := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
 
-	// Setup keepers
+	// Setup mocked keepers
 	btclcKeeper := btcstktypes.NewMockBTCLightClientKeeper(ctrl)
 	btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: btcTip}).AnyTimes()
 
@@ -74,15 +76,18 @@ func setupTestKeepers(t *testing.T, btcTip uint32) (sdk.Context, codec.BinaryCod
 	btccKeeper.EXPECT().GetParams(gomock.Any()).Return(btcctypes.DefaultParams()).AnyTimes()
 
 	distK := costktypes.NewMockDistributionKeeper(ctrl)
-	incentiveK := costktypes.NewMockIncentiveKeeper(ctrl)
 
 	btcStkStoreKey := storetypes.NewKVStoreKey(btcstktypes.StoreKey)
 	btcStkKeeper, btcCtx := testutilkeeper.BTCStakingKeeperWithStore(t, db, stateStore, btcStkStoreKey, btclcKeeper, btccKeeper, nil, nil)
 
+	// Setup keepers
 	accK := testutilkeeper.AccountKeeper(t, db, stateStore)
 	bankKeeper := testutilkeeper.BankKeeper(t, db, stateStore, accK)
 	stkKeeper := testutilkeeper.StakingKeeper(t, db, stateStore, accK, bankKeeper)
-	// Setup costaking store service
+	incentiveK, _ := testutilkeeper.IncentiveKeeperWithStore(t, db, stateStore, nil, bankKeeper, accK, nil)
+	fKeeper, _ := testutilkeeper.FinalityKeeperWithStore(t, db, stateStore, btcStkKeeper, incentiveK, ftypes.NewMockCheckpointingKeeper(ctrl))
+
+	// Setup costaking store service and keeper
 	costkStoreKey := storetypes.NewKVStoreKey(costktypes.StoreKey)
 	costkKeeper, _ := testutilkeeper.CostakingKeeperWithStore(t, db, stateStore, costkStoreKey, bankKeeper, accK, incentiveK, stkKeeper, distK)
 	require.NoError(t, stateStore.LoadLatestVersion())
@@ -93,11 +98,13 @@ func setupTestKeepers(t *testing.T, btcTip uint32) (sdk.Context, codec.BinaryCod
 	cryptocoded.RegisterInterfaces(registry)
 	cdc := codec.NewProtoCodec(registry)
 
-	return btcCtx, cdc, costkStoreService, stkKeeper, *btcStkKeeper, btcStkStoreKey, costkKeeper, ctrl
+	btcCtx = btcCtx.WithBlockHeight(10)
+
+	return btcCtx, cdc, costkStoreService, stkKeeper, *btcStkKeeper, btcStkStoreKey, costkKeeper, fKeeper, ctrl
 }
 
 func TestInitializeCoStakerRwdsTracker_EmptyState(t *testing.T) {
-	ctx, cdc, storeService, stkKeeper, btcStkKeeper, _, costkKeeper, ctrl := setupTestKeepers(t, 10)
+	ctx, cdc, storeService, stkKeeper, btcStkKeeper, _, costkKeeper, fKeeper, ctrl := setupTestKeepers(t, 10)
 	defer ctrl.Finish()
 
 	// Test with empty state (no BTC stakers, no staking delegations)
@@ -108,6 +115,7 @@ func TestInitializeCoStakerRwdsTracker_EmptyState(t *testing.T) {
 		stkKeeper,
 		btcStkKeeper,
 		*costkKeeper,
+		*fKeeper,
 	)
 	require.NoError(t, err)
 
@@ -116,8 +124,73 @@ func TestInitializeCoStakerRwdsTracker_EmptyState(t *testing.T) {
 	require.Equal(t, 0, count, "No co-staker rewards trackers should exist in empty state")
 }
 
+func TestInitializeCoStakerRwdsTracker_WithoutPowerDistCache(t *testing.T) {
+	ctx, cdc, storeService, stkKeeper, btcStkKeeper, _, costkKeeper, fKeeper, ctrl := setupTestKeepers(t, 10)
+	defer ctrl.Finish()
+
+	require.NoError(t, btcStkKeeper.SetParams(ctx, btcstktypes.DefaultParams()))
+	require.NoError(t, stkKeeper.SetParams(ctx, stktypes.DefaultParams()))
+
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+
+	// Create a test staker address
+	stakerAddr := datagen.GenRandomAccount().GetAddress()
+
+	// Create BTC delegation
+	createTestBTCDelegation(t, r, ctx, btcStkKeeper, stakerAddr, 50000)
+
+	// Create baby staking delegation
+	babyAmount := math.NewInt(25000)
+	createBabyDelegation(t, ctx, stkKeeper, stakerAddr, babyAmount)
+
+	// Execute upgrade function
+	err := v3rc4.InitializeCoStakerRwdsTracker(
+		ctx, cdc, storeService, stkKeeper, btcStkKeeper, *costkKeeper, *fKeeper,
+	)
+	require.Error(t, err)
+	require.ErrorContains(t, err, "voting power distribution cache not found")
+
+	// Verify NO co-staker was created (BTC only, no baby staking)
+	verifyNoCoStakerCreated(t, ctx, cdc, storeService, stakerAddr)
+}
+
+func TestInitializeCoStakerRwdsTracker_FpNotActive(t *testing.T) {
+	ctx, cdc, storeService, stkKeeper, btcStkKeeper, _, costkKeeper, fKeeper, ctrl := setupTestKeepers(t, 10)
+	defer ctrl.Finish()
+
+	require.NoError(t, btcStkKeeper.SetParams(ctx, btcstktypes.DefaultParams()))
+	require.NoError(t, stkKeeper.SetParams(ctx, stktypes.DefaultParams()))
+
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+
+	// Create a test staker address
+	stakerAddr := datagen.GenRandomAccount().GetAddress()
+
+	// Create BTC delegation
+	createTestBTCDelegation(t, r, ctx, btcStkKeeper, stakerAddr, 50000)
+
+	// Create baby staking delegation
+	babyAmount := math.NewInt(25000)
+	createBabyDelegation(t, ctx, stkKeeper, stakerAddr, babyAmount)
+
+	// seed voting power dist cache with different FP (not the one the staker is delegating to)
+	vp, _, err := datagen.GenRandomVotingPowerDistCache(r, 10, "")
+	require.NoError(t, err)
+	require.NotEmpty(t, vp.GetActiveFinalityProviderSet())
+	fKeeper.SetVotingPowerDistCache(ctx, uint64(ctx.HeaderInfo().Height)-1, vp)
+
+	// Execute upgrade function
+	err = v3rc4.InitializeCoStakerRwdsTracker(
+		ctx, cdc, storeService, stkKeeper, btcStkKeeper, *costkKeeper, *fKeeper,
+	)
+	require.NoError(t, err)
+
+	// Verify NO co-staker was created (BTC only, no baby staking)
+	verifyNoCoStakerCreated(t, ctx, cdc, storeService, stakerAddr)
+}
+
 func TestInitializeCoStakerRwdsTracker_WithRealDelegations(t *testing.T) {
-	ctx, cdc, storeService, stkKeeper, btcStkKeeper, _, costkKeeper, ctrl := setupTestKeepers(t, 10)
+	ctx, cdc, storeService, stkKeeper, btcStkKeeper, _, costkKeeper, fKeeper, ctrl := setupTestKeepers(t, 10)
 	defer ctrl.Finish()
 
 	require.NoError(t, btcStkKeeper.SetParams(ctx, btcstktypes.DefaultParams()))
@@ -135,9 +208,12 @@ func TestInitializeCoStakerRwdsTracker_WithRealDelegations(t *testing.T) {
 	babyAmount := math.NewInt(25000)
 	createBabyDelegation(t, ctx, stkKeeper, stakerAddr, babyAmount)
 
+	// seed voting power dist cache with FP as active (the one the staker is delegating to)
+	setupVotingPowerDistCacheWithActiveFPs(t, r, ctx, fKeeper, btcDel.FpBtcPkList)
+
 	// Execute upgrade function
 	err := v3rc4.InitializeCoStakerRwdsTracker(
-		ctx, cdc, storeService, stkKeeper, btcStkKeeper, *costkKeeper,
+		ctx, cdc, storeService, stkKeeper, btcStkKeeper, *costkKeeper, *fKeeper,
 	)
 	require.NoError(t, err)
 
@@ -146,7 +222,7 @@ func TestInitializeCoStakerRwdsTracker_WithRealDelegations(t *testing.T) {
 }
 
 func TestInitializeCoStakerRwdsTracker_OnlyBTCStaking(t *testing.T) {
-	ctx, cdc, storeService, stkKeeper, btcStkKeeper, _, costkKeeper, ctrl := setupTestKeepers(t, 10)
+	ctx, cdc, storeService, stkKeeper, btcStkKeeper, _, costkKeeper, fKeeper, ctrl := setupTestKeepers(t, 10)
 	defer ctrl.Finish()
 
 	require.NoError(t, btcStkKeeper.SetParams(ctx, btcstktypes.DefaultParams()))
@@ -158,11 +234,14 @@ func TestInitializeCoStakerRwdsTracker_OnlyBTCStaking(t *testing.T) {
 	stakerAddr := datagen.GenRandomAccount().GetAddress()
 
 	// Create BTC delegation directly in keeper (no staking delegation)
-	createTestBTCDelegation(t, r, ctx, btcStkKeeper, stakerAddr, 50000)
+	btcDel := createTestBTCDelegation(t, r, ctx, btcStkKeeper, stakerAddr, 50000)
+
+	// seed voting power dist cache with FP as active (the one the staker is delegating to)
+	setupVotingPowerDistCacheWithActiveFPs(t, r, ctx, fKeeper, btcDel.FpBtcPkList)
 
 	// Execute upgrade function
 	err := v3rc4.InitializeCoStakerRwdsTracker(
-		ctx, cdc, storeService, stkKeeper, btcStkKeeper, *costkKeeper,
+		ctx, cdc, storeService, stkKeeper, btcStkKeeper, *costkKeeper, *fKeeper,
 	)
 	require.NoError(t, err)
 
@@ -171,7 +250,7 @@ func TestInitializeCoStakerRwdsTracker_OnlyBTCStaking(t *testing.T) {
 }
 
 func TestInitializeCoStakerRwdsTracker_MultipleCombinations(t *testing.T) {
-	ctx, cdc, storeService, stkKeeper, btcStkKeeper, _, costkKeeper, ctrl := setupTestKeepers(t, 10)
+	ctx, cdc, storeService, stkKeeper, btcStkKeeper, _, costkKeeper, fKeeper, ctrl := setupTestKeepers(t, 10)
 	defer ctrl.Finish()
 
 	require.NoError(t, btcStkKeeper.SetParams(ctx, btcstktypes.DefaultParams()))
@@ -185,11 +264,11 @@ func TestInitializeCoStakerRwdsTracker_MultipleCombinations(t *testing.T) {
 
 	// Case 2: Only BTC staking (should NOT create co-staker)
 	staker2Addr := datagen.GenRandomAccount().GetAddress()
-	createTestBTCDelegation(t, r, ctx, btcStkKeeper, staker2Addr, 80000)
+	btcDel2 := createTestBTCDelegation(t, r, ctx, btcStkKeeper, staker2Addr, 80000)
 
-	// Case 3: BTC + Baby staking (should create co-staker)
+	// Case 3: BTC to inactive FP + Baby staking (should NOT create co-staker)
 	staker3Addr := datagen.GenRandomAccount().GetAddress()
-	btcDel3 := createTestBTCDelegation(t, r, ctx, btcStkKeeper, staker3Addr, 100000)
+	createTestBTCDelegation(t, r, ctx, btcStkKeeper, staker3Addr, 100000)
 
 	// create staking delegations - only staker1 and staker3 have baby staking
 	babyDel1Amt := math.NewInt(30000)
@@ -198,24 +277,86 @@ func TestInitializeCoStakerRwdsTracker_MultipleCombinations(t *testing.T) {
 	babyDel3Amt := math.NewInt(50000)
 	createBabyDelegation(t, ctx, stkKeeper, staker3Addr, babyDel3Amt)
 
+	// Collect all FP BTC public keys
+	allFpBtcPks := make([]bbn.BIP340PubKey, 0)
+	allFpBtcPks = append(allFpBtcPks, btcDel1.FpBtcPkList...)
+	allFpBtcPks = append(allFpBtcPks, btcDel2.FpBtcPkList...)
+
+	// seed voting power dist cache with all FPs as active
+	setupVotingPowerDistCacheWithActiveFPs(t, r, ctx, fKeeper, allFpBtcPks)
+
 	// Execute upgrade function
 	err := v3rc4.InitializeCoStakerRwdsTracker(
-		ctx, cdc, storeService, stkKeeper, btcStkKeeper, *costkKeeper,
+		ctx, cdc, storeService, stkKeeper, btcStkKeeper, *costkKeeper, *fKeeper,
 	)
 	require.NoError(t, err)
 
 	// Verify results
 	verifyCoStakerCreated(t, ctx, cdc, storeService, staker1Addr, math.NewIntFromUint64(btcDel1.TotalSat), babyDel1Amt) // Co-staker
 	verifyNoCoStakerCreated(t, ctx, cdc, storeService, staker2Addr)                                                     // BTC only
-	verifyCoStakerCreated(t, ctx, cdc, storeService, staker3Addr, math.NewIntFromUint64(btcDel3.TotalSat), babyDel3Amt) // Co-staker
+	verifyNoCoStakerCreated(t, ctx, cdc, storeService, staker3Addr)                                                     // FP not active
 
 	// Verify total count
 	count := countCoStakers(t, ctx, cdc, storeService)
-	require.Equal(t, 2, count, "Should have exactly 2 co-stakers created")
+	require.Equal(t, 1, count, "Should have exactly 1 co-staker created")
+}
+
+func TestInitializeCoStakerRwdsTracker_WithMultipleActiveFPs(t *testing.T) {
+	ctx, cdc, storeService, stkKeeper, btcStkKeeper, _, costkKeeper, fKeeper, ctrl := setupTestKeepers(t, 10)
+	defer ctrl.Finish()
+
+	require.NoError(t, btcStkKeeper.SetParams(ctx, btcstktypes.DefaultParams()))
+	require.NoError(t, stkKeeper.SetParams(ctx, stktypes.DefaultParams()))
+
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+
+	// Create multiple test staker addresses
+	staker1Addr := datagen.GenRandomAccount().GetAddress()
+	staker2Addr := datagen.GenRandomAccount().GetAddress()
+	staker3Addr := datagen.GenRandomAccount().GetAddress()
+
+	// Create BTC delegations to different FPs
+	btcDel1 := createTestBTCDelegation(t, r, ctx, btcStkKeeper, staker1Addr, 30000)
+	btcDel2 := createTestBTCDelegation(t, r, ctx, btcStkKeeper, staker2Addr, 40000)
+	btcDel3 := createTestBTCDelegation(t, r, ctx, btcStkKeeper, staker3Addr, 50000)
+
+	// Create baby staking delegations
+	babyAmount1 := math.NewInt(15000)
+	createBabyDelegation(t, ctx, stkKeeper, staker1Addr, babyAmount1)
+
+	babyAmount2 := math.NewInt(20000)
+	createBabyDelegation(t, ctx, stkKeeper, staker2Addr, babyAmount2)
+
+	babyAmount3 := math.NewInt(25000)
+	createBabyDelegation(t, ctx, stkKeeper, staker3Addr, babyAmount3)
+
+	// Collect all FP BTC public keys
+	allFpBtcPks := make([]bbn.BIP340PubKey, 0)
+	allFpBtcPks = append(allFpBtcPks, btcDel1.FpBtcPkList...)
+	allFpBtcPks = append(allFpBtcPks, btcDel2.FpBtcPkList...)
+	allFpBtcPks = append(allFpBtcPks, btcDel3.FpBtcPkList...)
+
+	// seed voting power dist cache with all FPs as active
+	setupVotingPowerDistCacheWithActiveFPs(t, r, ctx, fKeeper, allFpBtcPks)
+
+	// Execute upgrade function
+	err := v3rc4.InitializeCoStakerRwdsTracker(
+		ctx, cdc, storeService, stkKeeper, btcStkKeeper, *costkKeeper, *fKeeper,
+	)
+	require.NoError(t, err)
+
+	// Verify all co-stakers were created
+	verifyCoStakerCreated(t, ctx, cdc, storeService, staker1Addr, math.NewIntFromUint64(btcDel1.TotalSat), babyAmount1)
+	verifyCoStakerCreated(t, ctx, cdc, storeService, staker2Addr, math.NewIntFromUint64(btcDel2.TotalSat), babyAmount2)
+	verifyCoStakerCreated(t, ctx, cdc, storeService, staker3Addr, math.NewIntFromUint64(btcDel3.TotalSat), babyAmount3)
+
+	// Verify total count
+	count := countCoStakers(t, ctx, cdc, storeService)
+	require.Equal(t, 3, count, "Should have exactly 3 co-stakers created")
 }
 
 func TestInitializeCoStakerRwdsTracker_MultipleStakingFromSameStaker(t *testing.T) {
-	ctx, cdc, storeService, stkKeeper, btcStkKeeper, _, costkKeeper, ctrl := setupTestKeepers(t, 10)
+	ctx, cdc, storeService, stkKeeper, btcStkKeeper, _, costkKeeper, fKeeper, ctrl := setupTestKeepers(t, 10)
 	defer ctrl.Finish()
 
 	require.NoError(t, btcStkKeeper.SetParams(ctx, btcstktypes.DefaultParams()))
@@ -243,9 +384,18 @@ func TestInitializeCoStakerRwdsTracker_MultipleStakingFromSameStaker(t *testing.
 	createBabyDelegation(t, ctx, stkKeeper, stakerAddr, babyDel3Amt)
 	// Total Baby: 37k tokens
 
+	// Collect all FP BTC public keys
+	allFpBtcPks := make([]bbn.BIP340PubKey, 0)
+	allFpBtcPks = append(allFpBtcPks, btcDel1.FpBtcPkList...)
+	allFpBtcPks = append(allFpBtcPks, btcDel2.FpBtcPkList...)
+	allFpBtcPks = append(allFpBtcPks, btcDel3.FpBtcPkList...)
+
+	// seed voting power dist cache with all FPs as active
+	setupVotingPowerDistCacheWithActiveFPs(t, r, ctx, fKeeper, allFpBtcPks)
+
 	// Execute upgrade function
 	err := v3rc4.InitializeCoStakerRwdsTracker(
-		ctx, cdc, storeService, stkKeeper, btcStkKeeper, *costkKeeper,
+		ctx, cdc, storeService, stkKeeper, btcStkKeeper, *costkKeeper, *fKeeper,
 	)
 	require.NoError(t, err)
 
@@ -260,7 +410,158 @@ func TestInitializeCoStakerRwdsTracker_MultipleStakingFromSameStaker(t *testing.
 	require.Equal(t, 1, count, "Should have exactly 1 co-staker created despite multiple delegations")
 }
 
+func TestInitializeCoStakerRwdsTracker_TestnetData(t *testing.T) {
+	runTestWithEnv(t, "testnet", 268000)
+}
+
+func TestInitializeCoStakerRwdsTracker_MainnetData(t *testing.T) {
+	runTestWithEnv(t, mainnet, 914000)
+}
+
+func runTestWithEnv(t *testing.T, env string, btcTip uint32) {
+	require.True(t, env == mainnet || env == "testnet", "env must be 'mainnet' or 'testnet'")
+	ctx, cdc, storeService, stkKeeper, btcStkKeeper, btcStkKey, costkKeeper, fKeeper, ctrl := setupTestKeepers(t, btcTip)
+	defer ctrl.Finish()
+
+	require.NoError(t, btcStkKeeper.SetParams(ctx, btcstktypes.DefaultParams()))
+	require.NoError(t, stkKeeper.SetParams(ctx, stktypes.DefaultParams()))
+
+	t.Log("Loading testnet data...")
+
+	// Load expected costaker addresses first (small file)
+	expectedCostakers, err := loadCostakers(env)
+	require.NoError(t, err)
+	require.NotEmpty(t, expectedCostakers)
+	t.Logf("Expected %d costakers from %s data", len(expectedCostakers), env)
+
+	// Load and seed BTC delegations using streaming
+	btcDelCount, fpPubKeys, err := loadAndSeedBTCDelegations(t, ctx, env, btcStkKey)
+	require.NoError(t, err)
+	t.Logf("Loaded and seeded %d BTC delegations", btcDelCount)
+	t.Logf("Found %d unique finality providers", len(fpPubKeys))
+
+	// Load and seed cosmos delegations using streaming
+	cosmosDelCount, err := loadAndSeedCosmosDelegations(t, ctx, env, stkKeeper)
+	require.NoError(t, err)
+	t.Logf("Loaded and seeded %d cosmos delegations", cosmosDelCount)
+
+	// Setup voting power distribution cache with active FPs from the loaded data
+	t.Log("Setting up voting power distribution cache with active FPs...")
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	setupVotingPowerDistCacheWithActiveFPs(t, r, ctx, fKeeper, fpPubKeys)
+
+	t.Log("Executing upgrade function...")
+
+	// Execute upgrade function
+	err = v3rc4.InitializeCoStakerRwdsTracker(
+		ctx, cdc, storeService, stkKeeper, btcStkKeeper, *costkKeeper, *fKeeper,
+	)
+	require.NoError(t, err)
+
+	// Verify costakers were created
+	actualCostakers := getAllCostakers(t, ctx, cdc, storeService)
+	t.Logf("Created %d costakers", len(actualCostakers))
+
+	// Verify that created costakers match expected testnet costakers
+	expectedSet := make(map[string]bool)
+	for _, addr := range expectedCostakers {
+		expectedSet[addr] = true
+	}
+
+	actualSet := make(map[string]bool)
+	for addr := range actualCostakers {
+		actualSet[addr] = true
+	}
+
+	// Check that all expected costakers were created
+	missingCostakers := 0
+	for expectedAddr := range expectedSet {
+		if !actualSet[expectedAddr] {
+			t.Errorf("Expected costaker %s was not created", expectedAddr)
+			missingCostakers++
+		}
+	}
+
+	// Check that no unexpected costakers were created
+	unexpectedCostakers := 0
+	for actualAddr := range actualSet {
+		if !expectedSet[actualAddr] {
+			t.Errorf("Unexpected costaker %s was created", actualAddr)
+			unexpectedCostakers++
+		}
+	}
+
+	require.Equal(t, 0, missingCostakers, "Found %d missing costakers", missingCostakers)
+	require.Equal(t, 0, unexpectedCostakers, "Found %d unexpected costakers", unexpectedCostakers)
+	require.Equal(t, len(expectedCostakers), len(actualCostakers),
+		"Number of created costakers (%d) should match expected (%d)",
+		len(actualCostakers), len(expectedCostakers))
+
+	t.Logf("All %d %s costakers were created correctly", len(actualCostakers), env)
+}
+
 // Helper functions
+
+// setupVotingPowerDistCacheWithActiveFPs creates a voting power distribution cache
+// with the specified FP BTC public keys as active finality providers.
+// If the random cache doesn't have enough active FPs, it will replace inactive FPs
+// with the provided ones and mark them as active.
+func setupVotingPowerDistCacheWithActiveFPs(
+	t *testing.T,
+	r *rand.Rand,
+	ctx sdk.Context,
+	fKeeper *fkeeper.Keeper,
+	fpBtcPks []bbn.BIP340PubKey,
+) {
+	// Generate random voting power dist cache
+	vp, _, err := datagen.GenRandomVotingPowerDistCache(r, 10, "")
+	require.NoError(t, err)
+	require.NotEmpty(t, vp.FinalityProviders)
+
+	activeFPsNeeded := len(fpBtcPks)
+
+	// Ensure we have enough FPs in the cache
+	for len(vp.FinalityProviders) < activeFPsNeeded {
+		// Generate additional random FP
+		fp, err := datagen.GenRandomFinalityProvider(r, "", "")
+		require.NoError(t, err)
+		fpDistInfo := ftypes.NewFinalityProviderDistInfo(fp)
+		fpDistInfo.TotalBondedSat = uint64(datagen.RandomInt(r, 10000)) + 1000
+		fpDistInfo.IsTimestamped = true
+		vp.AddFinalityProviderDistInfo(fpDistInfo)
+	}
+
+	// Replace the first N FPs with the desired ones
+	for i, fpBtcPk := range fpBtcPks {
+		if i < len(vp.FinalityProviders) {
+			// Keep the existing FP structure but replace the BTC public key
+			vp.FinalityProviders[i].BtcPk = &fpBtcPk
+			// Ensure this FP is timestamped and has bonded sats to be active
+			vp.FinalityProviders[i].IsTimestamped = true
+			if vp.FinalityProviders[i].TotalBondedSat == 0 {
+				vp.FinalityProviders[i].TotalBondedSat = uint64(datagen.RandomInt(r, 10000)) + 1000
+			}
+		}
+	}
+
+	// Apply active finality providers to ensure they are marked as active
+	vp.ApplyActiveFinalityProviders(uint32(max(activeFPsNeeded, 10)))
+
+	// Verify we have the expected active FPs
+	activeFPs := vp.GetActiveFinalityProviderSet()
+	require.True(t, len(activeFPs) >= activeFPsNeeded,
+		"Expected at least %d active FPs, got %d", activeFPsNeeded, len(activeFPs))
+
+	// Verify our desired FPs are among the active ones
+	for _, fpBtcPk := range fpBtcPks {
+		fpHex := fpBtcPk.MarshalHex()
+		_, found := activeFPs[fpHex]
+		require.True(t, found, "FP %s should be active", fpHex)
+	}
+
+	// Set the voting power distribution cache
+	fKeeper.SetVotingPowerDistCache(ctx, uint64(ctx.HeaderInfo().Height)-1, vp)
+}
 
 func createTestBTCDelegation(t *testing.T, r *rand.Rand, ctx sdk.Context, btcStkKeeper btcstkkeeper.Keeper, stakerAddr sdk.AccAddress, stakingValue uint64) *btcstktypes.BTCDelegation {
 	// Generate random BTC keys
@@ -366,90 +667,6 @@ func rwdTrackerCollection(storeService corestore.KVStoreService, cdc codec.Binar
 	return rwdTrackers
 }
 
-func TestInitializeCoStakerRwdsTracker_TestnetData(t *testing.T) {
-	runTestWithEnv(t, "testnet", 268000)
-}
-
-func TestInitializeCoStakerRwdsTracker_MainnetData(t *testing.T) {
-	runTestWithEnv(t, mainnet, 914000)
-}
-
-func runTestWithEnv(t *testing.T, env string, btcTip uint32) {
-	require.True(t, env == mainnet || env == "testnet", "env must be 'mainnet' or 'testnet'")
-	ctx, cdc, storeService, stkKeeper, btcStkKeeper, btcStkKey, costkKeeper, ctrl := setupTestKeepers(t, btcTip)
-	defer ctrl.Finish()
-
-	require.NoError(t, btcStkKeeper.SetParams(ctx, btcstktypes.DefaultParams()))
-	require.NoError(t, stkKeeper.SetParams(ctx, stktypes.DefaultParams()))
-
-	t.Log("Loading testnet data...")
-
-	// Load expected costaker addresses first (small file)
-	expectedCostakers, err := loadCostakers(env)
-	require.NoError(t, err)
-	require.NotEmpty(t, expectedCostakers)
-	t.Logf("Expected %d costakers from %s data", len(expectedCostakers), env)
-
-	// Load and seed BTC delegations using streaming
-	btcDelCount, err := loadAndSeedBTCDelegations(t, ctx, env, btcStkKey)
-	require.NoError(t, err)
-	t.Logf("Loaded and seeded %d BTC delegations", btcDelCount)
-
-	// Load and seed cosmos delegations using streaming
-	cosmosDelCount, err := loadAndSeedCosmosDelegations(t, ctx, env, stkKeeper)
-	require.NoError(t, err)
-	t.Logf("Loaded and seeded %d cosmos delegations", cosmosDelCount)
-
-	t.Log("Executing upgrade function...")
-
-	// Execute upgrade function
-	err = v3rc4.InitializeCoStakerRwdsTracker(
-		ctx, cdc, storeService, stkKeeper, btcStkKeeper, *costkKeeper,
-	)
-	require.NoError(t, err)
-
-	// Verify costakers were created
-	actualCostakers := getAllCostakers(t, ctx, cdc, storeService)
-	t.Logf("Created %d costakers", len(actualCostakers))
-
-	// Verify that created costakers match expected testnet costakers
-	expectedSet := make(map[string]bool)
-	for _, addr := range expectedCostakers {
-		expectedSet[addr] = true
-	}
-
-	actualSet := make(map[string]bool)
-	for addr := range actualCostakers {
-		actualSet[addr] = true
-	}
-
-	// Check that all expected costakers were created
-	missingCostakers := 0
-	for expectedAddr := range expectedSet {
-		if !actualSet[expectedAddr] {
-			t.Errorf("Expected costaker %s was not created", expectedAddr)
-			missingCostakers++
-		}
-	}
-
-	// Check that no unexpected costakers were created
-	unexpectedCostakers := 0
-	for actualAddr := range actualSet {
-		if !expectedSet[actualAddr] {
-			t.Errorf("Unexpected costaker %s was created", actualAddr)
-			unexpectedCostakers++
-		}
-	}
-
-	require.Equal(t, 0, missingCostakers, "Found %d missing costakers", missingCostakers)
-	require.Equal(t, 0, unexpectedCostakers, "Found %d unexpected costakers", unexpectedCostakers)
-	require.Equal(t, len(expectedCostakers), len(actualCostakers),
-		"Number of created costakers (%d) should match expected (%d)",
-		len(actualCostakers), len(expectedCostakers))
-
-	t.Logf("All %d %s costakers were created correctly", len(actualCostakers), env)
-}
-
 // convertBTCDelegationResponseToBTCDelegation converts a BTCDelegationResponse to BTCDelegation
 func convertBTCDelegationResponseToBTCDelegation(resp *btcstktypes.BTCDelegationResponse) (*btcstktypes.BTCDelegation, error) {
 	// Decode hex strings to bytes
@@ -515,7 +732,8 @@ func convertBTCDelegationResponseToBTCDelegation(resp *btcstktypes.BTCDelegation
 }
 
 // loadAndSeedBTCDelegations loads BTC delegations from file and seeds them into keeper using streaming
-func loadAndSeedBTCDelegations(t *testing.T, ctx sdk.Context, env string, btcStkStoreKey *storetypes.KVStoreKey) (int, error) {
+// It also collects and returns unique finality provider BTC public keys found in the delegations
+func loadAndSeedBTCDelegations(t *testing.T, ctx sdk.Context, env string, btcStkStoreKey *storetypes.KVStoreKey) (int, []bbn.BIP340PubKey, error) {
 	filePath := filepath.Join(testDataDir, btcDelegationsFile)
 
 	// Check if file exists. Should be downloaded or got from cache by CI workflow
@@ -523,14 +741,14 @@ func loadAndSeedBTCDelegations(t *testing.T, ctx sdk.Context, env string, btcStk
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
 		t.Logf("File %s does not exist, downloading from Google Drive...", filePath)
 		if err := downloadBTCDelegationsFile(filePath); err != nil {
-			return 0, fmt.Errorf("failed to download BTC delegations file: %w", err)
+			return 0, nil, fmt.Errorf("failed to download BTC delegations file: %w", err)
 		}
 		t.Logf("Successfully downloaded %s", filePath)
 	}
 
 	file, err := os.Open(filePath)
 	if err != nil {
-		return 0, fmt.Errorf("failed to open BTC delegations file: %w", err)
+		return 0, nil, fmt.Errorf("failed to open BTC delegations file: %w", err)
 	}
 	defer file.Close()
 
@@ -539,10 +757,10 @@ func loadAndSeedBTCDelegations(t *testing.T, ctx sdk.Context, env string, btcStk
 	// Read opening brace for the wrapper object
 	token, err := decoder.Token()
 	if err != nil {
-		return 0, fmt.Errorf("failed to read opening brace: %w", err)
+		return 0, nil, fmt.Errorf("failed to read opening brace: %w", err)
 	}
 	if delim, ok := token.(json.Delim); !ok || delim != '{' {
-		return 0, fmt.Errorf("expected opening brace, got %v", token)
+		return 0, nil, fmt.Errorf("expected opening brace, got %v", token)
 	}
 
 	// Read through the JSON keys to find the correct key ("testnet" or "mainnet")
@@ -550,7 +768,7 @@ func loadAndSeedBTCDelegations(t *testing.T, ctx sdk.Context, env string, btcStk
 	for decoder.More() {
 		token, err = decoder.Token()
 		if err != nil {
-			return 0, fmt.Errorf("failed to read key: %w", err)
+			return 0, nil, fmt.Errorf("failed to read key: %w", err)
 		}
 
 		if key, ok := token.(string); ok {
@@ -561,23 +779,23 @@ func loadAndSeedBTCDelegations(t *testing.T, ctx sdk.Context, env string, btcStk
 				// Skip the value for this key (the array we don't want)
 				var dummy json.RawMessage
 				if err := decoder.Decode(&dummy); err != nil {
-					return 0, fmt.Errorf("failed to skip %s data: %w", key, err)
+					return 0, nil, fmt.Errorf("failed to skip %s data: %w", key, err)
 				}
 			}
 		}
 	}
 
 	if !foundEnvKey {
-		return 0, fmt.Errorf("could not find %s key in JSON", env)
+		return 0, nil, fmt.Errorf("could not find %s key in JSON", env)
 	}
 
 	// Read opening bracket for the array
 	token, err = decoder.Token()
 	if err != nil {
-		return 0, fmt.Errorf("failed to read opening bracket: %w", err)
+		return 0, nil, fmt.Errorf("failed to read opening bracket: %w", err)
 	}
 	if delim, ok := token.(json.Delim); !ok || delim != '[' {
-		return 0, fmt.Errorf("expected opening bracket, got %v", token)
+		return 0, nil, fmt.Errorf("expected opening bracket, got %v", token)
 	}
 
 	codec := appparams.DefaultEncodingConfig().Codec
@@ -585,20 +803,28 @@ func loadAndSeedBTCDelegations(t *testing.T, ctx sdk.Context, env string, btcStk
 	storeAdapter := runtime.KVStoreAdapter(storeService.OpenKVStore(ctx))
 	store := prefix.NewStore(storeAdapter, btcstktypes.BTCDelegationKey)
 
+	// Track unique finality provider public keys
+	fpPubKeyMap := make(map[string]bbn.BIP340PubKey)
 	count := 0
 	for decoder.More() {
 		var delResp btcstktypes.BTCDelegationResponse
 		if err := decoder.Decode(&delResp); err != nil {
-			return 0, fmt.Errorf("failed to decode BTC delegation %d: %w", count, err)
+			return 0, nil, fmt.Errorf("failed to decode BTC delegation %d: %w", count, err)
 		}
 
 		// Convert BTCDelegationResponse to BTCDelegation
 		del, err := convertBTCDelegationResponseToBTCDelegation(&delResp)
 		if err != nil {
-			return 0, fmt.Errorf("failed to convert BTC delegation %d: %w", count, err)
+			return 0, nil, fmt.Errorf("failed to convert BTC delegation %d: %w", count, err)
 		}
 
 		del.ParamsVersion = 0
+
+		// Collect unique FP public keys
+		for _, fpPubKey := range del.FpBtcPkList {
+			fpHex := fpPubKey.MarshalHex()
+			fpPubKeyMap[fpHex] = fpPubKey
+		}
 
 		stakingTxHash := del.MustGetStakingTxHash()
 		btcDelBytes := codec.MustMarshal(del)
@@ -613,10 +839,10 @@ func loadAndSeedBTCDelegations(t *testing.T, ctx sdk.Context, env string, btcStk
 	// Read closing bracket for the array
 	token, err = decoder.Token()
 	if err != nil {
-		return 0, fmt.Errorf("failed to read closing bracket: %w", err)
+		return 0, nil, fmt.Errorf("failed to read closing bracket: %w", err)
 	}
 	if delim, ok := token.(json.Delim); !ok || delim != ']' {
-		return 0, fmt.Errorf("expected closing bracket, got %v", token)
+		return 0, nil, fmt.Errorf("expected closing bracket, got %v", token)
 	}
 
 	// Skip any remaining keys in the JSON object (e.g., if we processed mainnet but testnet is still there)
@@ -624,25 +850,31 @@ func loadAndSeedBTCDelegations(t *testing.T, ctx sdk.Context, env string, btcStk
 		// Read key
 		_, err = decoder.Token()
 		if err != nil {
-			return 0, fmt.Errorf("failed to read remaining key: %w", err)
+			return 0, nil, fmt.Errorf("failed to read remaining key: %w", err)
 		}
 		// Skip the value for this key
 		var dummy json.RawMessage
 		if err := decoder.Decode(&dummy); err != nil {
-			return 0, fmt.Errorf("failed to skip remaining data: %w", err)
+			return 0, nil, fmt.Errorf("failed to skip remaining data: %w", err)
 		}
 	}
 
 	// Read closing brace for the wrapper object
 	token, err = decoder.Token()
 	if err != nil {
-		return 0, fmt.Errorf("failed to read closing brace: %w", err)
+		return 0, nil, fmt.Errorf("failed to read closing brace: %w", err)
 	}
 	if delim, ok := token.(json.Delim); !ok || delim != '}' {
-		return 0, fmt.Errorf("expected closing brace, got %v", token)
+		return 0, nil, fmt.Errorf("expected closing brace, got %v", token)
 	}
 
-	return count, nil
+	// Convert map to slice for return
+	fpPubKeys := make([]bbn.BIP340PubKey, 0, len(fpPubKeyMap))
+	for _, fpPubKey := range fpPubKeyMap {
+		fpPubKeys = append(fpPubKeys, fpPubKey)
+	}
+
+	return count, fpPubKeys, nil
 }
 
 // loadAndSeedCosmosDelegations loads cosmos delegations from file and seeds them into keeper using streaming
