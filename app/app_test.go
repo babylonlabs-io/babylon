@@ -5,12 +5,6 @@ import (
 	"strings"
 	"testing"
 
-	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
-	erc20types "github.com/cosmos/evm/x/erc20/types"
-	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
-	precisebanktypes "github.com/cosmos/evm/x/precisebank/types"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
-
 	tokenfactorytypes "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/types"
 
 	"cosmossdk.io/log"
@@ -37,7 +31,7 @@ import (
 
 var (
 	expectedMaccPerms = map[string][]string{
-		authtypes.FeeCollectorName:                  {authtypes.Burner}, // fee collector account
+		authtypes.FeeCollectorName:                  nil, // fee collector account
 		distrtypes.ModuleName:                       nil,
 		epochingtypes.DelegatePoolModuleName:        nil,
 		minttypes.ModuleName:                        {authtypes.Minter},
@@ -48,10 +42,6 @@ var (
 		incentivetypes.ModuleName:                   nil, // this line is needed to create an account for incentive module
 		tokenfactorytypes.ModuleName:                {authtypes.Minter, authtypes.Burner},
 		icatypes.ModuleName:                         nil,
-		evmtypes.ModuleName:                         {authtypes.Minter, authtypes.Burner},
-		erc20types.ModuleName:                       {authtypes.Minter, authtypes.Burner},
-		feemarkettypes.ModuleName:                   nil,
-		precisebanktypes.ModuleName:                 {authtypes.Minter, authtypes.Burner},
 		incentivetypes.ModAccCommissionCollectorBSN: nil, // Babylon BSN rewards commission collector
 	}
 )
@@ -137,8 +127,6 @@ func TestBabylonBlockedAddrs(t *testing.T) {
 		0,
 		&blsSigner,
 		appOpts,
-		appparams.EVMChainID,
-		babylonApp.EVMAppOptions,
 		babylonApp.EmptyWasmOpts,
 	)
 	_, err = app2.ExportAppStateAndValidators(false, []string{}, []string{})

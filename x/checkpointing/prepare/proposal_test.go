@@ -3,8 +3,6 @@ package prepare_test
 import (
 	"bytes"
 	"fmt"
-	bbn "github.com/babylonlabs-io/babylon/v4/types"
-	sdktestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
 	"math/rand"
 	"sort"
 	"testing"
@@ -33,6 +31,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/babylonlabs-io/babylon/v4/app/ante"
+	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
 	"github.com/babylonlabs-io/babylon/v4/crypto/bls12381"
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
 	"github.com/babylonlabs-io/babylon/v4/testutil/helper"
@@ -482,7 +481,7 @@ func newTxVerifier(txEnc client.TxEncodingConfig) baseapp.ProposalTxVerifier {
 func TestPrepareProposalAtVoteExtensionHeight(t *testing.T) {
 	var (
 		r               = rand.New(rand.NewSource(time.Now().UnixNano()))
-		encCfg          = sdktestutil.MakeTestEncodingConfig()
+		encCfg          = appparams.DefaultEncodingConfig()
 		regularTxCount  = int(datagen.RandomInt(r, 10))
 		livenessTxCount = int(datagen.RandomInt(r, 10))
 	)
@@ -727,7 +726,6 @@ func TestPrepareProposalAtVoteExtensionHeight(t *testing.T) {
 				mem,
 				bApp,
 				encCfg,
-				bbn.NewEthSignerExtractionAdapter(mempool.NewDefaultSignerExtractionAdapter()),
 			)
 
 			if scenario.TxVerifier != nil {

@@ -51,8 +51,6 @@ func NewTmpBabylonApp() *BabylonApp {
 		0,
 		&blsSigner,
 		appOpts,
-		appparams.EVMChainID,
-		NoOpEVMOptions,
 		[]wasmkeeper.Option{})
 }
 

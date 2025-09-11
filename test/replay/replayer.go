@@ -5,8 +5,6 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
-
 	"cosmossdk.io/log"
 	babylonApp "github.com/babylonlabs-io/babylon/v4/app"
 	appsigner "github.com/babylonlabs-io/babylon/v4/app/signer"
@@ -61,8 +59,6 @@ func NewBlockReplayer(t *testing.T, nodeDir string) *BlockReplayer {
 		0,
 		blsSigner,
 		appOptions,
-		appparams.EVMChainID,
-		babylonApp.EVMAppOptions,
 		babylonApp.EmptyWasmOpts,
 		baseAppOptions...,
 	)

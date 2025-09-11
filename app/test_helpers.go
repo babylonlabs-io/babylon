@@ -71,8 +71,6 @@ func setup(t *testing.T, blsSigner checkpointingtypes.BlsSigner, withGenesis boo
 		invCheckPeriod,
 		&blsSigner,
 		appOptions,
-		appparams.EVMChainID,
-		EVMAppOptions,
 		EmptyWasmOpts,
 		baseAppOpts...,
 	)
@@ -117,8 +115,6 @@ func NewBabylonAppWithCustomOptions(t *testing.T, isCheckTx bool, blsSigner chec
 		options.InvCheckPeriod,
 		&blsSigner,
 		options.AppOpts,
-		appparams.EVMChainID,
-		EVMAppOptions,
 		EmptyWasmOpts,
 	)
 	genesisState := app.DefaultGenesis()

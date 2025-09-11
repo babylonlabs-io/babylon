@@ -11,16 +11,11 @@ import (
 const (
 	HumanCoinUnit = "bbn"
 	BaseCoinUnit  = "ubbn"
-	// BaseEVMDenom is the base denomination for 18 decimals.
-	BaseEVMDenom = "abbn"
-
 	BbnExponent = 6
 
 	DefaultBondDenom = BaseCoinUnit
 	// Bech32PrefixAccAddr defines the Bech32 prefix of an account's address.
 	Bech32PrefixAccAddr = "bbn"
-	// EVMChainID is the EVM compatible chain id
-	EVMChainID = 6901
 )
 
 // taken from https://github.com/celestiaorg/celestia-app/pull/2985
@@ -53,7 +48,7 @@ var (
 
 func init() {
 	SetAddressPrefixes()
-	// RegisterDenoms() // TODO: moved to evm_config.go
+	RegisterDenoms()
 }
 
 func RegisterDenoms() {
