@@ -173,6 +173,7 @@ func TestGetRewardTrackerEventsCompiledByBtcDel(t *testing.T) {
 	tcs := []struct {
 		name            string
 		setup           func() (untilBlkHeight uint64)
+		filter          func(fpAddr string) bool
 		expectedResults map[string]int64
 	}{
 		{
@@ -180,6 +181,7 @@ func TestGetRewardTrackerEventsCompiledByBtcDel(t *testing.T) {
 			setup: func() uint64 {
 				return 100
 			},
+			filter:          nil,
 			expectedResults: map[string]int64{},
 		},
 		{
@@ -189,6 +191,7 @@ func TestGetRewardTrackerEventsCompiledByBtcDel(t *testing.T) {
 				require.NoError(t, err)
 				return 50
 			},
+			filter:          nil,
 			expectedResults: map[string]int64{},
 		},
 		{
@@ -202,6 +205,7 @@ func TestGetRewardTrackerEventsCompiledByBtcDel(t *testing.T) {
 
 				return 20
 			},
+			filter: nil,
 			expectedResults: map[string]int64{
 				del1.String(): 1000,
 			},
@@ -217,6 +221,7 @@ func TestGetRewardTrackerEventsCompiledByBtcDel(t *testing.T) {
 
 				return 30
 			},
+			filter: nil,
 			expectedResults: map[string]int64{
 				del1.String(): -300,
 			},
@@ -238,6 +243,7 @@ func TestGetRewardTrackerEventsCompiledByBtcDel(t *testing.T) {
 
 				return 40
 			},
+			filter: nil,
 			expectedResults: map[string]int64{
 				del1.String(): 1100, // 1500 - 600 + 200 = 1100
 			},
@@ -256,6 +262,7 @@ func TestGetRewardTrackerEventsCompiledByBtcDel(t *testing.T) {
 
 				return 50
 			},
+			filter: nil,
 			expectedResults: map[string]int64{
 				del2.String(): -300, // 500 - 800 = -300
 			},
@@ -284,6 +291,7 @@ func TestGetRewardTrackerEventsCompiledByBtcDel(t *testing.T) {
 
 				return 60
 			},
+			filter: nil,
 			expectedResults: map[string]int64{
 				del1.String(): 2000,
 				del2.String(): 1000,
@@ -312,6 +320,7 @@ func TestGetRewardTrackerEventsCompiledByBtcDel(t *testing.T) {
 
 				return 80
 			},
+			filter: nil,
 			expectedResults: map[string]int64{
 				del1.String(): 700, // 1000 - 300 = 700
 				del2.String(): 600, // 600 = 600
@@ -331,8 +340,60 @@ func TestGetRewardTrackerEventsCompiledByBtcDel(t *testing.T) {
 
 				return 90
 			},
+			filter: nil,
 			expectedResults: map[string]int64{
 				del1.String(): 0,
+			},
+		},
+		{
+			name: "filter fp1 only - excludes fp2 events",
+			setup: func() uint64 {
+				err := k.SetRewardTrackerEventLastProcessedHeight(ctx, 90)
+				require.NoError(t, err)
+
+				// fp1 events - should be included
+				err = k.AddEventBtcDelegationActivated(ctx, 95, fp1, del1, 1000)
+				require.NoError(t, err)
+				err = k.AddEventBtcDelegationActivated(ctx, 96, fp1, del2, 500)
+				require.NoError(t, err)
+
+				// fp2 events - should be excluded
+				err = k.AddEventBtcDelegationActivated(ctx, 97, fp2, del1, 2000)
+				require.NoError(t, err)
+				err = k.AddEventBtcDelegationActivated(ctx, 98, fp2, del3, 800)
+				require.NoError(t, err)
+
+				return 100
+			},
+			filter: func(fpAddr string) bool { return fpAddr == fp1.String() }, // Only fp1
+			expectedResults: map[string]int64{
+				del1.String(): 1000, // Only fp1 event
+				del2.String(): 500,
+				// del3 not included because fp2 events are filtered out
+			},
+		},
+		{
+			name: "filter fp2 only - excludes fp1 events",
+			setup: func() uint64 {
+				err := k.SetRewardTrackerEventLastProcessedHeight(ctx, 100)
+				require.NoError(t, err)
+
+				// fp1 events - should be excluded
+				err = k.AddEventBtcDelegationActivated(ctx, 105, fp1, del1, 1500)
+				require.NoError(t, err)
+
+				// fp2 events - should be included
+				err = k.AddEventBtcDelegationActivated(ctx, 106, fp2, del1, 800)
+				require.NoError(t, err)
+				err = k.AddEventBtcDelegationUnbonded(ctx, 107, fp2, del2, 200)
+				require.NoError(t, err)
+
+				return 110
+			},
+			filter: func(fpAddr string) bool { return fpAddr == fp2.String() }, // Only fp2
+			expectedResults: map[string]int64{
+				del1.String(): 800, // Only fp2 event
+				del2.String(): -200,
 			},
 		},
 	}
@@ -341,7 +402,7 @@ func TestGetRewardTrackerEventsCompiledByBtcDel(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			untilHeight := tc.setup()
 
-			result, err := k.GetRewardTrackerEventsCompiledByBtcDel(ctx, untilHeight)
+			result, err := k.GetRewardTrackerEventsCompiledByBtcDel(ctx, untilHeight, tc.filter)
 			require.NoError(t, err)
 
 			require.Len(t, result, len(tc.expectedResults))
@@ -376,7 +437,8 @@ func FuzzGetRewardTrackerEventsCompiledByBtcDel(f *testing.F) {
 		require.NoError(t, err)
 
 		numEvents := datagen.RandomInt(r, 10) + 1
-		expectedSats := make(map[string]int64)
+		expectedSatsAll := make(map[string]int64)
+		expectedSatsFp1Only := make(map[string]int64)
 
 		for i := uint64(0); i < numEvents; i++ {
 			height := lastProcessedHeight + i + 1
@@ -390,22 +452,46 @@ func FuzzGetRewardTrackerEventsCompiledByBtcDel(f *testing.F) {
 			if r.Intn(10) > 4 { // 60% of chance to activate
 				err = k.AddEventBtcDelegationActivated(ctx, height, selectedFp, selectedDel, amt)
 				require.NoError(t, err)
-				expectedSats[selectedDel.String()] += int64(amt)
+				expectedSatsAll[selectedDel.String()] += int64(amt)
+				if selectedFp.Equals(fp1) {
+					expectedSatsFp1Only[selectedDel.String()] += int64(amt)
+				}
 				continue
 			}
 
 			err = k.AddEventBtcDelegationUnbonded(ctx, height, selectedFp, selectedDel, amt)
 			require.NoError(t, err)
-			expectedSats[selectedDel.String()] -= int64(amt)
+			expectedSatsAll[selectedDel.String()] -= int64(amt)
+			if selectedFp.Equals(fp1) {
+				expectedSatsFp1Only[selectedDel.String()] -= int64(amt)
+			}
 		}
 
-		result, err := k.GetRewardTrackerEventsCompiledByBtcDel(ctx, lastProcessedHeight+numEvents)
+		// Test with no filter (include all FPs)
+		result, err := k.GetRewardTrackerEventsCompiledByBtcDel(ctx, lastProcessedHeight+numEvents, nil)
 		require.NoError(t, err)
 
-		for delAddr, expectedAmount := range expectedSats {
+		for delAddr, expectedAmount := range expectedSatsAll {
 			actualSats, exists := result[delAddr]
 			require.True(t, exists, "delegation %s should exist in results", delAddr)
 			require.Equal(t, expectedAmount, actualSats.Int64())
+		}
+
+		// Test with fp1 filter only
+		fp1Filter := func(fpAddr string) bool { return fpAddr == fp1.String() }
+		resultFp1, err := k.GetRewardTrackerEventsCompiledByBtcDel(ctx, lastProcessedHeight+numEvents, fp1Filter)
+		require.NoError(t, err)
+
+		for delAddr, expectedAmount := range expectedSatsFp1Only {
+			actualSats, exists := resultFp1[delAddr]
+			require.True(t, exists, "delegation %s should exist in fp1-filtered results", delAddr)
+			require.Equal(t, expectedAmount, actualSats.Int64())
+		}
+
+		// Ensure fp2 events are excluded from fp1-filtered results
+		for delAddr := range resultFp1 {
+			_, expectedInFp1 := expectedSatsFp1Only[delAddr]
+			require.True(t, expectedInFp1, "unexpected delegation %s in fp1-filtered results", delAddr)
 		}
 	})
 }

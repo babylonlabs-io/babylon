@@ -59,10 +59,21 @@ func (k Keeper) ProcessRewardTrackerEvents(ctx context.Context, untilBlkHeight u
 
 // GetRewardTrackerEventsCompiledByBtcDel compiles all the reward tracker events from the latest processed height + 1
 // until the given block height without updating the store.
-func (k Keeper) GetRewardTrackerEventsCompiledByBtcDel(ctx context.Context, untilBlkHeight uint64) (map[string]sdkmath.Int, error) {
+// It also contains a filter function to filter out undesired fps, if nil is given all the events will be compiled
+func (k Keeper) GetRewardTrackerEventsCompiledByBtcDel(
+	ctx context.Context,
+	untilBlkHeight uint64,
+	filter func(fpAddr string) (include bool),
+) (map[string]sdkmath.Int, error) {
 	lastProcessedHeight, err := k.GetRewardTrackerEventLastProcessedHeight(ctx)
 	if err != nil {
 		return nil, err
+	}
+
+	if filter == nil {
+		filter = func(fpAddr string) (include bool) {
+			return true // include all
+		}
 	}
 
 	satsByBtcDel := make(map[string]sdkmath.Int)
@@ -76,6 +87,10 @@ func (k Keeper) GetRewardTrackerEventsCompiledByBtcDel(ctx context.Context, unti
 			switch typedEvt := untypedEvt.Ev.(type) {
 			case *types.EventPowerUpdate_BtcActivated:
 				evt := typedEvt.BtcActivated
+				if !filter(evt.FpAddr) {
+					continue
+				}
+
 				currentSat, exists := satsByBtcDel[evt.BtcDelAddr]
 				if !exists {
 					currentSat = sdkmath.ZeroInt()
@@ -84,6 +99,10 @@ func (k Keeper) GetRewardTrackerEventsCompiledByBtcDel(ctx context.Context, unti
 
 			case *types.EventPowerUpdate_BtcUnbonded:
 				evt := typedEvt.BtcUnbonded
+				if !filter(evt.FpAddr) {
+					continue
+				}
+
 				currentSat, exists := satsByBtcDel[evt.BtcDelAddr]
 				if !exists {
 					currentSat = sdkmath.ZeroInt()
