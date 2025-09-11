@@ -717,7 +717,9 @@ func TestIterateBTCDelegationSatsUpdated(t *testing.T) {
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	currentHeight := uint64(100)
-	ctx = sdkCtx.WithBlockHeight(int64(currentHeight))
+	header := sdkCtx.HeaderInfo()
+	header.Height = int64(currentHeight)
+	ctx = sdkCtx.WithHeaderInfo(header)
 
 	err := k.SetRewardTrackerEventLastProcessedHeight(ctx, 50)
 	require.NoError(t, err)
