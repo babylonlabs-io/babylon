@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"context"
 	"testing"
 
 	"cosmossdk.io/core/header"
@@ -27,8 +26,6 @@ import (
 )
 
 type MockIncentiveKeeper struct{}
-
-func (mik MockIncentiveKeeper) IndexRefundableMsg(ctx context.Context, msg sdk.Msg) {}
 
 func (mik MockIncentiveKeeper) IncRefundableMsgCount() {}
 

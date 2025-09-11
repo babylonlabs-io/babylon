@@ -421,18 +421,6 @@ func (mr *MockIncentiveKeeperMockRecorder) IncRefundableMsgCount() *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IncRefundableMsgCount", reflect.TypeOf((*MockIncentiveKeeper)(nil).IncRefundableMsgCount))
 }
 
-// IndexRefundableMsg mocks base method.
-func (m *MockIncentiveKeeper) IndexRefundableMsg(ctx context.Context, msg types3.Msg) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "IndexRefundableMsg", ctx, msg)
-}
-
-// IndexRefundableMsg indicates an expected call of IndexRefundableMsg.
-func (mr *MockIncentiveKeeperMockRecorder) IndexRefundableMsg(ctx, msg interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IndexRefundableMsg", reflect.TypeOf((*MockIncentiveKeeper)(nil).IndexRefundableMsg), ctx, msg)
-}
-
 // RewardBTCStaking mocks base method.
 func (m *MockIncentiveKeeper) RewardBTCStaking(ctx context.Context, height uint64, filteredDc *VotingPowerDistCache, voters map[string]struct{}) {
 	m.ctrl.T.Helper()

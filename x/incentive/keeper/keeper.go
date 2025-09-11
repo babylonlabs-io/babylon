@@ -23,6 +23,7 @@ type (
 
 		// RefundableMsgKeySet is the set of hashes of messages that can be refunded
 		// Each key is a hash of the message bytes
+		// TODO: remove it after deciding on removing refundable_msg_hashes in the genesis.proto
 		RefundableMsgKeySet collections.KeySet[[]byte]
 
 		// RefundableMsgCount is the counter for refundable msgs only maintained per-tx

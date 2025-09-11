@@ -40,7 +40,6 @@ type CheckpointingKeeper interface {
 // and refund transaction fee for finality signatures
 type IncentiveKeeper interface {
 	RewardBTCStaking(ctx context.Context, height uint64, filteredDc *VotingPowerDistCache, voters map[string]struct{})
-	IndexRefundableMsg(ctx context.Context, msg sdk.Msg)
 	IncRefundableMsgCount()
 	AddEventBtcDelegationActivated(ctx context.Context, height uint64, fp, del sdk.AccAddress, sat uint64) error
 	AddEventBtcDelegationUnbonded(ctx context.Context, height uint64, fp, del sdk.AccAddress, sat uint64) error

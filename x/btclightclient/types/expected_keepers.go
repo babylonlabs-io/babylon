@@ -2,8 +2,6 @@ package types
 
 import (
 	"context"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 type BTCLightClientHooks interface {
@@ -13,6 +11,5 @@ type BTCLightClientHooks interface {
 }
 
 type IncentiveKeeper interface {
-	IndexRefundableMsg(ctx context.Context, msg sdk.Msg)
 	IncRefundableMsgCount()
 }
