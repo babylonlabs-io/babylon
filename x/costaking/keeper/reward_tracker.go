@@ -33,6 +33,9 @@ func (k Keeper) costakerModified(ctx context.Context, costaker sdk.AccAddress, m
 	}
 
 	modifyCostaker(rwdTracker)
+	if err := rwdTracker.SanityChecks(); err != nil {
+		return err
+	}
 
 	params := k.GetParams(ctx)
 	deltaScoreChange := rwdTracker.UpdateScore(params.ScoreRatioBtcByBaby)

@@ -46,11 +46,6 @@ func (h HookFinality) AfterFpStatusChange(ctx context.Context, fpAddr sdk.AccAdd
 		return nil
 	}
 
-	isNewStatusActive := newStatus.IsActive()
-	if isNewStatusActive {
-		return nil
-	}
-
 	// sanity check? should never happen
 	if prevStatus == newStatus {
 		return nil
@@ -72,6 +67,7 @@ func (h HookFinality) AfterFpStatusChange(ctx context.Context, fpAddr sdk.AccAdd
 		prevStatus == btcstktypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_JAILED ||
 		prevStatus == btcstktypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_SLASHED)
 
+	isNewStatusActive := newStatus.IsActive()
 	// (INACTIVE|JAILED|SLASHED) -> ACTIVE: add voting power
 	shouldAdd := isPrevStatusDeactivated && isNewStatusActive
 

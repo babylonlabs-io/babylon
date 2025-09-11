@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	distkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	disttypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
@@ -148,4 +150,103 @@ func TestCostakingValidatorDirectRewards(t *testing.T) {
 	// Verify that costaking module balance increased
 	costakingIncrease := finalCostakingBalance.Sub(initialCostakingBalance...)
 	require.True(t, costakingIncrease.IsAllPositive())
+}
+
+// TestCostakingRewardsHappyCase creates 2 fps and 3 btc delegations and a few baby delegations
+// checking all the expected rewards are available in the coostaker reward tracker.
+func TestCostakingRewardsHappyCase(t *testing.T) {
+	t.Parallel()
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	d := NewBabylonAppDriverTmpDir(r, t)
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	stkK, costkK := d.App.StakingKeeper, d.App.CostakingKeeper
+
+	// Get all validators to check their commissions
+	validators, err := stkK.GetAllValidators(d.Ctx())
+	require.NoError(d.t, err)
+	val := validators[0]
+	valAddr := sdk.MustValAddressFromBech32(val.OperatorAddress)
+	covSender := d.CreateCovenantSender()
+
+	delegators := d.CreateNStakerAccounts(3)
+	del1 := delegators[0]
+	del1BabyDelegatedAmt := sdkmath.NewInt(20_000000)
+
+	d.MintNativeTo(del1.Address(), 100_000000)
+	d.TxWrappedDelegate(del1.SenderInfo, valAddr.String(), del1BabyDelegatedAmt)
+
+	// gets the current rewards prior to the end of epoch as it will be starting point
+	rwd, err := costkK.GetCurrentRewards(d.Ctx())
+	require.NoError(t, err)
+
+	d.GenerateNewBlockAssertExecutionSuccess()
+	d.ProgressTillFirstBlockTheNextEpoch()
+
+	// confirms that baby delegation was done properly
+	del, err := stkK.GetDelegation(d.Ctx(), del1.Address(), valAddr)
+	require.NoError(t, err)
+	require.Equal(t, del.DelegatorAddress, del1.Address().String())
+
+	// check that baby delegation reached coostaking
+	zero := sdkmath.ZeroInt()
+	d.CheckCostakerRewards(del1.Address(), del1BabyDelegatedAmt, zero, zero, rwd.Period)
+
+	fps := d.CreateNFinalityProviderAccounts(2)
+	fp1 := fps[0]
+	for _, fp := range fps {
+		fp.RegisterFinalityProvider("")
+	}
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	// costaking ratio of btc by baby is 50, so for every sat staked it needs to
+	// have 50 baby staked to take full account of the btcs in the score.
+	del1BtcStakedAmt := del1BabyDelegatedAmt.QuoRaw(50)
+	del1.CreatePreApprovalDelegation(
+		[]*bbn.BIP340PubKey{fp1.BTCPublicKey()},
+		defaultStakingTime,
+		del1BtcStakedAmt.Int64(),
+	)
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	covSender.SendCovenantSignatures()
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	verifiedDels := d.GetVerifiedBTCDelegations(t)
+	require.Len(t, verifiedDels, 1)
+
+	d.ActivateVerifiedDelegations(1)
+	activeDelegations := d.GetActiveBTCDelegations(t)
+	require.Len(t, activeDelegations, 1)
+
+	activeFps := d.GetActiveFpsAtCurrentHeight(d.t)
+	require.Len(t, activeFps, 0)
+
+	// zero active sats and score, because fp is not active
+	d.CheckCostakerRewards(del1.Address(), del1BabyDelegatedAmt, zero, zero, rwd.Period)
+
+	// activate fp
+	fp1.CommitRandomness()
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	// Randomness timestamped
+	currentEpoch := d.GetEpoch().EpochNumber
+	d.ProgressTillFirstBlockTheNextEpoch()
+	d.FinalizeCkptForEpoch(currentEpoch - 1) // previous unfinalized epoch
+	d.FinalizeCkptForEpoch(currentEpoch)
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	// fp should be activated
+	activeFps = d.GetActiveFpsAtCurrentHeight(d.t)
+	require.Len(t, activeFps, 1)
+
+	// score is the same as btc staked as del1 have 50 ubbn to each sat
+	d.CheckCostakerRewards(del1.Address(), del1BabyDelegatedAmt, del1BtcStakedAmt, del1BtcStakedAmt, rwd.Period)
+
+	// del1CostRwd, err = costkK.GetCostakerRewards(d.Ctx(), del1.Address())
+	// require.NoError(t, err)
+	// require.Equal(t, del1CostRwd.ActiveBaby.String(), del1BabyDelegatedAmt.String())
+	// require.Equal(t, del1CostRwd.ActiveSatoshis.String(), del1BtcStakedAmt.String())
+	// require.Equal(t, del1CostRwd.StartPeriodCumulativeReward, rwd.Period+1)
+	// require.Equal(t, del1CostRwd.TotalScore.String(), del1BtcStakedAmt.String())
 }

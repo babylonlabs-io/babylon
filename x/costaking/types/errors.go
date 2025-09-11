@@ -13,4 +13,5 @@ var (
 	ErrInvalidPercentage          = errorsmod.Register(ModuleName, 1106, "percentage is invalid")
 	ErrInvalidPeriod              = errorsmod.Register(ModuleName, 1107, "period is invalid")
 	ErrNegativeRewards            = errorsmod.Register(ModuleName, 1108, "negative rewards should not be possible")
+	ErrInvalidCostakerRwdTracker  = errorsmod.Register(ModuleName, 1109, "costaker reward tracker is invalid")
 )

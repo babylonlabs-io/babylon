@@ -92,3 +92,16 @@ func (crt CostakerRewardsTracker) Validate() error {
 	}
 	return nil
 }
+
+func (crt CostakerRewardsTracker) SanityChecks() error {
+	if crt.TotalScore.IsNegative() {
+		return ErrInvalidCostakerRwdTracker.Wrapf("has negative total score %s", crt.TotalScore.String())
+	}
+	if crt.ActiveBaby.IsNegative() {
+		return ErrInvalidCostakerRwdTracker.Wrapf("has negative active baby %s", crt.ActiveBaby.String())
+	}
+	if crt.ActiveSatoshis.IsNegative() {
+		return ErrInvalidCostakerRwdTracker.Wrapf("has negative active sats %s", crt.ActiveSatoshis.String())
+	}
+	return nil
+}

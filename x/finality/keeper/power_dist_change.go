@@ -364,18 +364,29 @@ func (k Keeper) processEventsAtHeight(
 			}
 		case *types.EventPowerDistUpdate_SlashedFp:
 			// Defer SLASHED events for later processing
-			state.SlashedEvents = append(state.SlashedEvents, typedEvent)
-			k.processHooksFp(ctx, state.FpByBtcPk, *typedEvent.SlashedFp.Pk, state.PrevFpStatus(typedEvent.SlashedFp.Pk), btcstktypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_SLASHED)
+			k.processSlashedFp(ctx, state, typedEvent)
 		case *types.EventPowerDistUpdate_JailedFp:
 			// record jailed fps
-			types.EmitJailedFPEvent(ctx, typedEvent.JailedFp.Pk)
-			k.processHooksFp(ctx, state.FpByBtcPk, *typedEvent.JailedFp.Pk, state.PrevFpStatus(typedEvent.JailedFp.Pk), btcstktypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_JAILED)
-			state.FPStatesByBtcPk[typedEvent.JailedFp.Pk.MarshalHex()] = ftypes.FinalityProviderState_JAILED
+			k.processJailedFp(ctx, state, typedEvent)
 		case *types.EventPowerDistUpdate_UnjailedFp:
 			// record unjailed fps, unjailed fp also triggers active
-			state.FPStatesByBtcPk[typedEvent.UnjailedFp.Pk.MarshalHex()] = ftypes.FinalityProviderState_UNJAILED
+			fpPkHex := typedEvent.UnjailedFp.Pk.MarshalHex()
+			state.FPStatesByBtcPk[fpPkHex] = ftypes.FinalityProviderState_UNJAILED
 		}
 	}
+}
+
+// processSlashedFp appends the slashed event to the state and calls the hook of fp status change
+func (k Keeper) processSlashedFp(ctx sdk.Context, state *ftypes.ProcessingState, event *types.EventPowerDistUpdate_SlashedFp) {
+	state.SlashedEvents = append(state.SlashedEvents, event)
+	k.processHooksFp(ctx, state.FpByBtcPk, *event.SlashedFp.Pk, state.PrevFpStatus(event.SlashedFp.Pk), btcstktypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_SLASHED)
+}
+
+// processJailedFp appends the jailed event to the state and calls the hook of fp status change
+func (k Keeper) processJailedFp(ctx sdk.Context, state *ftypes.ProcessingState, event *types.EventPowerDistUpdate_JailedFp) {
+	types.EmitJailedFPEvent(ctx, event.JailedFp.Pk)
+	k.processHooksFp(ctx, state.FpByBtcPk, *event.JailedFp.Pk, state.PrevFpStatus(event.JailedFp.Pk), btcstktypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_JAILED)
+	state.FPStatesByBtcPk[event.JailedFp.Pk.MarshalHex()] = ftypes.FinalityProviderState_JAILED
 }
 
 // processBtcDelUpdate processes a BTC delegation update event immediately.
