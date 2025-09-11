@@ -35,6 +35,7 @@ type BTCStkConsumerKeeper interface {
 
 type IncentiveKeeper interface {
 	IndexRefundableMsg(ctx context.Context, msg sdk.Msg)
+	IncRefundableMsgCount()
 	AddFinalityProviderRewardsForBtcDelegations(ctx context.Context, fp sdk.AccAddress, rwd sdk.Coins) error
 	AccumulateRewardGaugeForFP(ctx context.Context, addr sdk.AccAddress, reward sdk.Coins)
 }

@@ -103,3 +103,6 @@ func (ik *MockIncentiveKeeper) RewardBTCTimestamping(ctx context.Context, epoch 
 
 func (ik *MockIncentiveKeeper) IndexRefundableMsg(ctx context.Context, msg sdk.Msg) {
 }
+
+func (ik *MockIncentiveKeeper) IncRefundableMsgCount() {
+}

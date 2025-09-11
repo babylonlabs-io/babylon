@@ -8,10 +8,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/babylonlabs-io/babylon/v4/x/feemarketwrapper"
 	btcctypes "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
 	btclctypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
 	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/v4/x/feemarketwrapper"
 	ftypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
 	"github.com/babylonlabs-io/babylon/v4/x/incentive/types"
 )
@@ -105,9 +105,24 @@ func (d *RefundTxDecorator) PostHandle(ctx sdk.Context, tx sdk.Tx, simulate, suc
 }
 
 // CheckTxAndClearIndex parses the given tx and returns a boolean indicating
-// whether the tx is refundable, and clears the refundable messages from the index
+// whether the tx is refundable, and clears the refundable messages count to zero
 // NOTE: a tx is refundable if all of its messages are unique and refundable
-func (d *RefundTxDecorator) CheckTxAndClearIndex(ctx sdk.Context, tx sdk.Tx) bool {
+func (d *RefundTxDecorator) CheckTxAndClearIndex(_ sdk.Context, tx sdk.Tx) bool {
+	// reset RefundableMsgCount to zero since RefundableMsgCount maintained per-tx
+	defer d.k.ResetRefundableMsgCount()
+
+	// check if RefundableMsgCount counted up during msgServer, and total msgs in the tx is the same
+	// NOTE: this is for the case that message execution doesn't return error even tho it fails
+	// you can find these cases in `AddFinalitySig`of x/finality/keeper/msg_server.go
+	if len(tx.GetMsgs()) != int(d.k.RefundableMsgCount) {
+		return false
+	}
+
+	// check if all msgs in the tx is refundable
+	if !isRefundTx(tx) {
+		return false
+	}
+
 	// NOTE: we use a map to avoid duplicated refundable messages, as
 	// otherwise one can fill a tx with duplicate messages to bloat the blockchain
 	refundableMsgHashSet := make(map[string]struct{})
@@ -115,22 +130,13 @@ func (d *RefundTxDecorator) CheckTxAndClearIndex(ctx sdk.Context, tx sdk.Tx) boo
 	// iterate over all messages in the tx, and record whether they are refundable
 	for _, msg := range tx.GetMsgs() {
 		msgHash := types.HashMsg(msg)
-		if d.k.HasRefundableMsg(ctx, msgHash) {
-			refundableMsgHashSet[string(msgHash)] = struct{}{}
+		if _, exists := refundableMsgHashSet[string(msgHash)]; exists {
+			return false
 		}
+		refundableMsgHashSet[string(msgHash)] = struct{}{}
 	}
 
-	// if all messages in the tx are unique and refundable, then this tx is refundable
-	refundable := len(refundableMsgHashSet) == len(tx.GetMsgs())
-
-	// remove the refundable messages from the index, regardless whether the tx is refunded or not
-	// NOTE: If the message with same hash shows up in a later tx, the refunding rule will
-	// consider it duplicated and the tx will not be refunded
-	for msgHash := range refundableMsgHashSet {
-		d.k.RemoveRefundableMsg(ctx, []byte(msgHash))
-	}
-
-	return refundable
+	return true
 }
 
 // isRefundTx returns true if ALL its messages are refundable
@@ -142,14 +148,14 @@ func isRefundTx(tx sdk.Tx) bool {
 	for _, msg := range tx.GetMsgs() {
 		switch msg.(type) {
 		case *btclctypes.MsgInsertHeaders, // BTC light client
-		// BTC timestamping
+			// BTC timestamping
 			*btcctypes.MsgInsertBTCSpvProof,
-		// BTC staking
+			// BTC staking
 			*bstypes.MsgAddCovenantSigs,
 			*bstypes.MsgBTCUndelegate,
 			*bstypes.MsgSelectiveSlashingEvidence,
 			*bstypes.MsgAddBTCDelegationInclusionProof,
-		// BTC staking finality
+			// BTC staking finality
 			*ftypes.MsgAddFinalitySig:
 			continue
 		default:

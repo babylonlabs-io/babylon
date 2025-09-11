@@ -409,6 +409,18 @@ func (mr *MockIncentiveKeeperMockRecorder) BtcDelegationUnbonded(ctx, fp, del, s
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BtcDelegationUnbonded", reflect.TypeOf((*MockIncentiveKeeper)(nil).BtcDelegationUnbonded), ctx, fp, del, sat)
 }
 
+// IncRefundableMsgCount mocks base method.
+func (m *MockIncentiveKeeper) IncRefundableMsgCount() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "IncRefundableMsgCount")
+}
+
+// IncRefundableMsgCount indicates an expected call of IncRefundableMsgCount.
+func (mr *MockIncentiveKeeperMockRecorder) IncRefundableMsgCount() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IncRefundableMsgCount", reflect.TypeOf((*MockIncentiveKeeper)(nil).IncRefundableMsgCount))
+}
+
 // IndexRefundableMsg mocks base method.
 func (m *MockIncentiveKeeper) IndexRefundableMsg(ctx context.Context, msg types3.Msg) {
 	m.ctrl.T.Helper()

@@ -52,7 +52,9 @@ func (m msgServer) InsertHeaders(ctx context.Context, msg *types.MsgInsertHeader
 	// headers extend the current chain or a fork that is longer than
 	// the current chain.
 	// Thus, we can safely consider this message as refundable
+	// TODO: remove IndexRefundableMsg after fixing test cases to make this PR R4R
 	m.k.iKeeper.IndexRefundableMsg(sdkCtx, msg)
+	m.k.iKeeper.IncRefundableMsgCount()
 
 	return &types.MsgInsertHeadersResponse{}, nil
 }
