@@ -526,7 +526,7 @@ func setupVotingPowerDistCacheWithActiveFPs(
 		fp, err := datagen.GenRandomFinalityProvider(r, "", "")
 		require.NoError(t, err)
 		fpDistInfo := ftypes.NewFinalityProviderDistInfo(fp)
-		fpDistInfo.TotalBondedSat = uint64(datagen.RandomInt(r, 10000)) + 1000
+		fpDistInfo.TotalBondedSat = datagen.RandomInt(r, 10000) + 1000
 		fpDistInfo.IsTimestamped = true
 		vp.AddFinalityProviderDistInfo(fpDistInfo)
 	}
@@ -539,7 +539,7 @@ func setupVotingPowerDistCacheWithActiveFPs(
 			// Ensure this FP is timestamped and has bonded sats to be active
 			vp.FinalityProviders[i].IsTimestamped = true
 			if vp.FinalityProviders[i].TotalBondedSat == 0 {
-				vp.FinalityProviders[i].TotalBondedSat = uint64(datagen.RandomInt(r, 10000)) + 1000
+				vp.FinalityProviders[i].TotalBondedSat = datagen.RandomInt(r, 10000) + 1000
 			}
 		}
 	}

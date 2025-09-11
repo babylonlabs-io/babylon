@@ -135,7 +135,7 @@ func getAllBTCStakers(ctx context.Context, btcStkKeeper btcstkkeeper.Keeper, fKe
 
 		for _, del := range btcDelRes.BtcDelegations {
 			// check if delegating to an active FP
-			if !delegatingToActiveFP(ctx, del.FpBtcPkList, activeFps) {
+			if !delegatingToActiveFP(del.FpBtcPkList, activeFps) {
 				continue
 			}
 			if staker, found := btcStakers[del.StakerAddr]; found {
@@ -253,11 +253,11 @@ func saveCoStakersToStore(
 	return k.UpdateCurrentRewardsTotalScore(ctx, totalScore)
 }
 
-func delegatingToActiveFP(ctx context.Context, fpBtcPks []bbn.BIP340PubKey, activeFps map[string]*ftypes.FinalityProviderDistInfo) bool {
+func delegatingToActiveFP(fpBtcPks []bbn.BIP340PubKey, activeFps map[string]*ftypes.FinalityProviderDistInfo) bool {
 	// check if delegating to an active FP
 	isActiveDel := false
 	for _, fpBtcPk := range fpBtcPks {
-		if _, ok := activeFps[string(fpBtcPk.MarshalHex())]; ok {
+		if _, ok := activeFps[fpBtcPk.MarshalHex()]; ok {
 			isActiveDel = true
 			break
 		}
