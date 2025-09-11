@@ -110,6 +110,7 @@ func NewHelper(
 	ictvK := NewMockIctvKeeperK(ctrl)
 
 	ictvK.MockIncentiveKeeper.EXPECT().IndexRefundableMsg(gomock.Any(), gomock.Any()).AnyTimes()
+	ictvK.MockIncentiveKeeper.EXPECT().IncRefundableMsgCount().AnyTimes()
 	ictvK.MockIncentiveKeeper.EXPECT().AddEventBtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 	ictvK.MockIncentiveKeeper.EXPECT().AddEventBtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 

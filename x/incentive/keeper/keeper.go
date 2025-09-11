@@ -25,6 +25,9 @@ type (
 		// Each key is a hash of the message bytes
 		RefundableMsgKeySet collections.KeySet[[]byte]
 
+		// RefundableMsgCount is the counter for refundable msgs only maintained per-tx
+		RefundableMsgCount int64
+
 		// the address capable of executing a MsgUpdateParams message. Typically, this
 		// should be the x/gov module account.
 		authority string

@@ -54,3 +54,13 @@ func (k Keeper) RemoveRefundableMsg(ctx context.Context, msgHash []byte) {
 		panic(err) // encoding issue; this can only be a programming error
 	}
 }
+
+// IncRefundableMsgCount increment RefundableMsgCount by one
+func (k *Keeper) IncRefundableMsgCount() {
+	k.RefundableMsgCount++
+}
+
+// ResetRefundableMsgCount reset RefundableMsgCount to zero
+func (k *Keeper) ResetRefundableMsgCount() {
+	k.RefundableMsgCount = 0
+}

@@ -20,6 +20,7 @@ import (
 	"github.com/babylonlabs-io/babylon/v4/app/signingcontext"
 	"github.com/babylonlabs-io/babylon/v4/crypto/eots"
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	testhelper "github.com/babylonlabs-io/babylon/v4/testutil/helper"
 	testutil "github.com/babylonlabs-io/babylon/v4/testutil/incentives-helper"
 	keepertest "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
 	"github.com/babylonlabs-io/babylon/v4/testutil/mocks"
@@ -30,7 +31,6 @@ import (
 	"github.com/babylonlabs-io/babylon/v4/x/finality/keeper"
 	"github.com/babylonlabs-io/babylon/v4/x/finality/types"
 	ictvtypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
-	testhelper "github.com/babylonlabs-io/babylon/v4/testutil/helper"
 )
 
 func setupMsgServer(t testing.TB) (*keeper.Keeper, types.MsgServer, context.Context) {
@@ -147,6 +147,7 @@ func FuzzAddFinalitySig(f *testing.F) {
 		cKeeper := types.NewMockCheckpointingKeeper(ctrl)
 		iKeeper := types.NewMockIncentiveKeeper(ctrl)
 		iKeeper.EXPECT().IndexRefundableMsg(gomock.Any(), gomock.Any()).AnyTimes()
+		iKeeper.EXPECT().IncRefundableMsgCount().AnyTimes()
 		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper)
 		ms := keeper.NewMsgServerImpl(*fKeeper)
 
@@ -376,6 +377,7 @@ func TestVoteForConflictingHashShouldRetrieveEvidenceAndSlash(t *testing.T) {
 	cKeeper := types.NewMockCheckpointingKeeper(ctrl)
 	iKeeper := types.NewMockIncentiveKeeper(ctrl)
 	iKeeper.EXPECT().IndexRefundableMsg(gomock.Any(), gomock.Any()).AnyTimes()
+	iKeeper.EXPECT().IncRefundableMsgCount().AnyTimes()
 	fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper)
 	ms := keeper.NewMsgServerImpl(*fKeeper)
 	// create and register a random finality provider
@@ -469,6 +471,7 @@ func TestDoNotPanicOnNilProof(t *testing.T) {
 	cKeeper := types.NewMockCheckpointingKeeper(ctrl)
 	iKeeper := types.NewMockIncentiveKeeper(ctrl)
 	iKeeper.EXPECT().IndexRefundableMsg(gomock.Any(), gomock.Any()).AnyTimes()
+	iKeeper.EXPECT().IncRefundableMsgCount().AnyTimes()
 	fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper)
 	ms := keeper.NewMsgServerImpl(*fKeeper)
 
@@ -594,6 +597,7 @@ func FuzzEquivocationEvidence(f *testing.F) {
 		cKeeper := types.NewMockCheckpointingKeeper(ctrl)
 		iKeeper := types.NewMockIncentiveKeeper(ctrl)
 		iKeeper.EXPECT().IndexRefundableMsg(gomock.Any(), gomock.Any()).AnyTimes()
+		iKeeper.EXPECT().IncRefundableMsgCount().AnyTimes()
 		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper)
 		ms := keeper.NewMsgServerImpl(*fKeeper)
 

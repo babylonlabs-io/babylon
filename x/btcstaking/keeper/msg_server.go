@@ -236,7 +236,9 @@ func (ms msgServer) AddBTCDelegationInclusionProof(
 
 	// at this point, the BTC delegation inclusion proof is verified and is not duplicated
 	// thus, we can safely consider this message as refundable
+	// TODO: remove IndexRefundableMsg after fixing test cases to make this PR R4R
 	ms.ictvKeeper.IndexRefundableMsg(ctx, req)
+	ms.ictvKeeper.IncRefundableMsgCount()
 
 	return &types.MsgAddBTCDelegationInclusionProofResponse{}, nil
 }
@@ -389,7 +391,9 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 	// delegation already has a covenant quorum. This is to ensure that covenant
 	// members do not spend transaction fee, even if they submit covenant signatures
 	// late.
+	// TODO: remove IndexRefundableMsg after fixing test cases to make this PR R4R
 	ms.ictvKeeper.IndexRefundableMsg(ctx, req)
+	ms.ictvKeeper.IncRefundableMsgCount()
 
 	return &types.MsgAddCovenantSigsResponse{}, nil
 }
@@ -651,7 +655,9 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 
 	// At this point, the unbonding signature is verified.
 	// Thus, we can safely consider this message as refundable
+	// TODO: remove IndexRefundableMsg after fixing test cases to make this PR R4R
 	ms.ictvKeeper.IndexRefundableMsg(ctx, req)
+	ms.ictvKeeper.IncRefundableMsgCount()
 
 	return &types.MsgBTCUndelegateResponse{}, nil
 }
@@ -686,7 +692,9 @@ func (ms msgServer) SelectiveSlashingEvidence(goCtx context.Context, req *types.
 
 	// At this point, the selective slashing evidence is verified and is not duplicated.
 	// Thus, we can safely consider this message as refundable
+	// TODO: remove IndexRefundableMsg after fixing test cases to make this PR R4R
 	ms.ictvKeeper.IndexRefundableMsg(ctx, req)
+	ms.ictvKeeper.IncRefundableMsgCount()
 
 	return &types.MsgSelectiveSlashingEvidenceResponse{}, nil
 }
