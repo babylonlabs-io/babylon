@@ -29,7 +29,8 @@ func (m msgServer) WrappedCreateValidator(goCtx context.Context, msg *types.MsgW
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// stateless checks on the inside `MsgCreateValidator` msg
-	if err := m.k.epochingKeeper.CheckMsgCreateValidator(ctx, msg.MsgCreateValidator); err != nil {
+	executeGas, err := m.k.epochingKeeper.CheckMsgCreateValidator(ctx, msg.MsgCreateValidator)
+	if err != nil {
 		return nil, err
 	}
 
@@ -57,8 +58,17 @@ func (m msgServer) WrappedCreateValidator(goCtx context.Context, msg *types.MsgW
 	queueMsg := epochingtypes.QueuedMessage{
 		Msg: &epochingtypes.QueuedMessage_MsgCreateValidator{MsgCreateValidator: msg.MsgCreateValidator},
 	}
+	// lock the delegation amount to ensure funds are available when the queued message executes
+	// this prevents spam attacks by requiring actual fund ownership and guarantees successful execution
+	err = m.k.epochingKeeper.LockFundsForDelegateMsgs(ctx, &queueMsg)
+	if err != nil {
+		return nil, err
+	}
 
 	m.k.epochingKeeper.EnqueueMsg(ctx, queueMsg)
+
+	// charge gas upfront for executing the message later at epoch end
+	ctx.GasMeter().ConsumeGas(executeGas, "epoching create validator execution fee")
 
 	return &types.MsgWrappedCreateValidatorResponse{}, nil
 }

@@ -117,6 +117,7 @@ import (
 	"github.com/babylonlabs-io/babylon/v3/x/checkpointing/vote_extensions"
 	"github.com/babylonlabs-io/babylon/v3/x/epoching"
 	epochingtypes "github.com/babylonlabs-io/babylon/v3/x/epoching/types"
+	epochingkeeper "github.com/babylonlabs-io/babylon/v3/x/epoching/keeper"
 	"github.com/babylonlabs-io/babylon/v3/x/finality"
 	finalitytypes "github.com/babylonlabs-io/babylon/v3/x/finality/types"
 	"github.com/babylonlabs-io/babylon/v3/x/incentive"
@@ -166,6 +167,7 @@ var (
 		tokenfactorytypes.ModuleName:                {authtypes.Minter, authtypes.Burner},
 		icatypes.ModuleName:                         nil,
 		incentivetypes.ModAccCommissionCollectorBSN: nil, // Babylon BSN rewards commission collector
+		epochingtypes.DelegatePoolModuleName:        nil,
 	}
 
 	// software upgrades and forks
@@ -513,7 +515,8 @@ func NewBabylonApp(
 	app.MountTransientStores(app.GetTransientStoreKeys())
 	app.MountMemoryStores(app.GetMemoryStoreKeys())
 
-	// initialize AnteHandler for the app
+	epochingkeeper.ValidateDelegatePoolAccount(app.AccountKeeper)
+
 	anteHandler := ante.NewAnteHandler(
 		appOpts,
 		&app.AccountKeeper,

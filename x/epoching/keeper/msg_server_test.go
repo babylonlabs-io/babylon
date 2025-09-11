@@ -277,7 +277,12 @@ func TestExponentiallyEventsEndEpochQueuedMessages(t *testing.T) {
 	require.Len(t, epochMsgs, 1)
 
 	var numDelMessages int = datagen.RandomInRange(r, 5, 25)
+	userAddr := h.GenAccs[0].GetAddress()
+
+	initialBalance := h.App.BankKeeper.GetBalance(ctx, userAddr, "ubbn")
+	totalDiff := sdkmath.ZeroInt()
 	for i := 0; i < numDelMessages; i++ {
+		balanceBefore := h.App.BankKeeper.GetBalance(ctx, userAddr, "ubbn")
 		msgDel := types.NewMsgWrappedDelegate(
 			stakingtypes.NewMsgDelegate(
 				h.GenAccs[0].GetAddress().String(),
@@ -289,7 +294,16 @@ func TestExponentiallyEventsEndEpochQueuedMessages(t *testing.T) {
 		res, err := h.MsgSrvr.WrappedDelegate(ctx, msgDel)
 		h.NoError(err)
 		require.NotNil(t, res)
+		balanceAfter := h.App.BankKeeper.GetBalance(ctx, userAddr, "ubbn")
+		diff := balanceBefore.Amount.Sub(balanceAfter.Amount)
+		totalDiff = totalDiff.Add(diff)
 	}
+
+	finalBalance := h.App.BankKeeper.GetBalance(ctx, userAddr, "ubbn")
+	calculatedInitialBalance := finalBalance.Amount.Add(totalDiff)
+
+	require.Equal(t, initialBalance.Amount, calculatedInitialBalance,
+		"Final balance + total diff should equal initial balance")
 
 	epochMsgs = k.GetCurrentEpochMsgs(ctx)
 	require.Len(t, epochMsgs, numDelMessages+1)
@@ -308,9 +322,27 @@ func TestExponentiallyEventsEndEpochQueuedMessages(t *testing.T) {
 	// by the x/epoching msg server in WrappedDelegate
 	ctx = sdk.NewContext(ctx.MultiStore(), ctx.BlockHeader(), ctx.IsCheckTx(), ctx.Logger()).WithHeaderInfo(info)
 
+	delegation, err := stkK.GetDelegation(ctx, h.GenAccs[0].GetAddress(), valAddr)
+	h.NoError(err)
+	sharesBefore := delegation.Shares
+
 	// with a clean context
 	_, err = epoching.EndBlocker(ctx, k)
 	h.NoError(err)
+
+	delegation, err = stkK.GetDelegation(ctx, h.GenAccs[0].GetAddress(), valAddr)
+	h.NoError(err)
+	sharesAfter := delegation.Shares
+
+	expectedTotalAmount := sdkmath.NewInt(int64(numDelMessages * 100000))
+	actualSharesIncrease := sharesAfter.Sub(sharesBefore)
+	validator, err := stkK.GetValidator(ctx, valAddr)
+	h.NoError(err)
+	actualTokensFromShares := validator.TokensFromShares(actualSharesIncrease)
+
+	require.True(t, actualTokensFromShares.TruncateInt().Equal(expectedTotalAmount),
+		"Delegated tokens should equal expected amount: expected %s, got %s",
+		expectedTotalAmount.String(), actualTokensFromShares.TruncateInt().String())
 
 	var events []abci.Event
 	if evtMgr := ctx.EventManager(); evtMgr != nil {
@@ -320,7 +352,8 @@ func TestExponentiallyEventsEndEpochQueuedMessages(t *testing.T) {
 	eventsGeneratedByMsgEditValidator := 1
 	eventsGeneratedByMsgDelegate := 4
 	eventsGeneratedHealthyEpochEndBlocker := 1
+	eventsGeneratedByFundUnlock := 4
 
-	expEventsLen := (numDelMessages * eventsGeneratedByMsgDelegate) + eventsGeneratedByMsgEditValidator + eventsGeneratedHealthyEpochEndBlocker
+	expEventsLen := (numDelMessages * (eventsGeneratedByMsgDelegate + eventsGeneratedByFundUnlock)) + eventsGeneratedByMsgEditValidator + eventsGeneratedHealthyEpochEndBlocker
 	require.Equal(t, expEventsLen, len(events))
 }
