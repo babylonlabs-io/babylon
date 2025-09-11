@@ -107,8 +107,14 @@ func TestInitializeCoStakerRwdsTracker_EmptyState(t *testing.T) {
 	ctx, cdc, storeService, stkKeeper, btcStkKeeper, _, costkKeeper, fKeeper, ctrl := setupTestKeepers(t, 10)
 	defer ctrl.Finish()
 
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	vp, _, err := datagen.GenRandomVotingPowerDistCache(r, 10, "")
+	require.NoError(t, err)
+	require.NotEmpty(t, vp.GetActiveFinalityProviderSet())
+	fKeeper.SetVotingPowerDistCache(ctx, uint64(ctx.HeaderInfo().Height)-1, vp)
+
 	// Test with empty state (no BTC stakers, no staking delegations)
-	err := v3rc4.InitializeCoStakerRwdsTracker(
+	err = v3rc4.InitializeCoStakerRwdsTracker(
 		ctx,
 		cdc,
 		storeService,
