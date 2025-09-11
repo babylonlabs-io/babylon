@@ -48,7 +48,7 @@ func (p Precompile) DelegationBech32(
 	method *abi.Method,
 	args []interface{},
 ) ([]byte, error) {
-	req, err := NewDelegationBech32Request(args, p.addrCdc)
+	req, err := NewDelegationBech32Request(args)
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +79,7 @@ func (p Precompile) Delegation(
 	method *abi.Method,
 	args []interface{},
 ) ([]byte, error) {
-	req, err := NewDelegationRequest(args, p.addrCdc)
+	req, err := NewDelegationRequest(args)
 	if err != nil {
 		return nil, err
 	}
@@ -111,7 +111,7 @@ func (p Precompile) UnbondingDelegationBech32(
 	method *abi.Method,
 	args []interface{},
 ) ([]byte, error) {
-	req, err := NewUnbondingDelegationBech32Request(args, p.addrCdc)
+	req, err := NewUnbondingDelegationBech32Request(args)
 	if err != nil {
 		return nil, err
 	}
@@ -139,7 +139,7 @@ func (p Precompile) UnbondingDelegation(
 	method *abi.Method,
 	args []interface{},
 ) ([]byte, error) {
-	req, err := NewUnbondingDelegationRequest(args, p.addrCdc, p.valCodec)
+	req, err := NewUnbondingDelegationRequest(args)
 	if err != nil {
 		return nil, err
 	}
@@ -154,7 +154,7 @@ func (p Precompile) UnbondingDelegation(
 		return nil, err
 	}
 
-	out := new(UnbondingDelegationOutput).FromResponse(res, p.addrCdc, p.valCodec)
+	out := new(UnbondingDelegationOutput).FromResponse(res)
 
 	return method.Outputs.Pack(out.UnbondingDelegation)
 }
@@ -305,7 +305,7 @@ func (p Precompile) RedelegationsBech32(
 	_ *vm.Contract,
 	args []interface{},
 ) ([]byte, error) {
-	req, err := NewRedelegationsBech32Request(method, args, p.addrCdc)
+	req, err := NewRedelegationsBech32Request(method, args)
 	if err != nil {
 		return nil, err
 	}
@@ -330,7 +330,7 @@ func (p Precompile) Redelegations(
 	_ *vm.Contract,
 	args []interface{},
 ) ([]byte, error) {
-	req, err := NewRedelegationsRequest(method, args, p.addrCdc)
+	req, err := NewRedelegationsRequest(method, args)
 	if err != nil {
 		return nil, err
 	}
@@ -435,7 +435,7 @@ func (p Precompile) ValidatorLifecycle(
 	method *abi.Method,
 	args []interface{},
 ) ([]byte, error) {
-	req, err := NewValidatorLifecycleRequest(args, p.valCodec)
+	req, err := NewValidatorLifecycleRequest(args)
 	if err != nil {
 		return nil, err
 	}
@@ -456,7 +456,7 @@ func (p Precompile) DelegationLifecycleBech32(
 	method *abi.Method,
 	args []interface{},
 ) ([]byte, error) {
-	req, err := NewDelegationLifecycleRequest(args, p.addrCdc)
+	req, err := NewDelegationLifecycleRequest(args)
 	if err != nil {
 		return nil, err
 	}
@@ -477,7 +477,7 @@ func (p Precompile) DelegationLifecycle(
 	method *abi.Method,
 	args []interface{},
 ) ([]byte, error) {
-	req, err := NewDelegationLifecycleRequest(args, p.addrCdc)
+	req, err := NewDelegationLifecycleRequest(args)
 	if err != nil {
 		return nil, err
 	}

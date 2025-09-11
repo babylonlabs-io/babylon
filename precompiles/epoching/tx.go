@@ -30,20 +30,20 @@ const (
 
 // WrappedCreateValidator performs create validator
 func (p Precompile) WrappedCreateValidator(
-    ctx sdk.Context,
-    contract *vm.Contract,
-    stateDB vm.StateDB,
-    method *abi.Method,
-    args []interface{},
+	ctx sdk.Context,
+	contract *vm.Contract,
+	stateDB vm.StateDB,
+	method *abi.Method,
+	args []interface{},
 ) ([]byte, error) {
-    bondDenom, err := p.stakingKeeper.BondDenom(ctx)
-    if err != nil {
-        return nil, err
-    }
-    msg, validatorHexAddr, err := NewMsgWrappedCreateValidator(args, bondDenom, p.valCodec)
-    if err != nil {
-        return nil, err
-    }
+	bondDenom, err := p.stakingKeeper.BondDenom(ctx)
+	if err != nil {
+		return nil, err
+	}
+	msg, validatorHexAddr, err := NewMsgWrappedCreateValidator(args, bondDenom)
+	if err != nil {
+		return nil, err
+	}
 
 	p.Logger(ctx).Debug(
 		"tx called",
@@ -130,7 +130,7 @@ func (p Precompile) WrappedDelegateBech32(
 	if err != nil {
 		return nil, err
 	}
-	msg, delegatorHexAddr, err := NewMsgWrappedDelegateBech32(args, bondDenom, p.addrCdc)
+	msg, delegatorHexAddr, err := NewMsgWrappedDelegateBech32(args, bondDenom)
 	if err != nil {
 		return nil, err
 	}
@@ -176,7 +176,7 @@ func (p Precompile) WrappedDelegate(
 	if err != nil {
 		return nil, err
 	}
-	msg, delegatorHexAddr, err := NewMsgWrappedDelegate(args, bondDenom, p.addrCdc)
+	msg, delegatorHexAddr, err := NewMsgWrappedDelegate(args, bondDenom)
 	if err != nil {
 		return nil, err
 	}
@@ -222,7 +222,7 @@ func (p Precompile) WrappedUndelegateBech32(
 	if err != nil {
 		return nil, err
 	}
-	msg, delegatorHexAddr, err := NewMsgWrappedUndelegateBech32(args, bondDenom, p.addrCdc)
+	msg, delegatorHexAddr, err := NewMsgWrappedUndelegateBech32(args, bondDenom)
 	if err != nil {
 		return nil, err
 	}
@@ -268,7 +268,7 @@ func (p Precompile) WrappedUndelegate(
 	if err != nil {
 		return nil, err
 	}
-	msg, delegatorHexAddr, err := NewMsgWrappedUndelegate(args, bondDenom, p.addrCdc)
+	msg, delegatorHexAddr, err := NewMsgWrappedUndelegate(args, bondDenom)
 	if err != nil {
 		return nil, err
 	}
@@ -314,7 +314,7 @@ func (p Precompile) WrappedRedelegateBech32(
 	if err != nil {
 		return nil, err
 	}
-	msg, delegatorHexAddr, err := NewMsgWrappedRedelegateBech32(args, bondDenom, p.addrCdc)
+	msg, delegatorHexAddr, err := NewMsgWrappedRedelegateBech32(args, bondDenom)
 	if err != nil {
 		return nil, err
 	}
@@ -361,7 +361,7 @@ func (p Precompile) WrappedRedelegate(
 	if err != nil {
 		return nil, err
 	}
-	msg, delegatorHexAddr, err := NewMsgWrappedRedelegate(args, bondDenom, p.addrCdc)
+	msg, delegatorHexAddr, err := NewMsgWrappedRedelegate(args, bondDenom)
 	if err != nil {
 		return nil, err
 	}
@@ -408,7 +408,7 @@ func (p Precompile) WrappedCancelUnbondingDelegationBech32(
 	if err != nil {
 		return nil, err
 	}
-	msg, delegatorHexAddr, err := NewMsgWrappedCancelUnbondingDelegationBech32(args, bondDenom, p.addrCdc)
+	msg, delegatorHexAddr, err := NewMsgWrappedCancelUnbondingDelegationBech32(args, bondDenom)
 	if err != nil {
 		return nil, err
 	}
@@ -455,7 +455,7 @@ func (p Precompile) WrappedCancelUnbondingDelegation(
 	if err != nil {
 		return nil, err
 	}
-	msg, delegatorHexAddr, err := NewMsgWrappedCancelUnbondingDelegation(args, bondDenom, p.addrCdc)
+	msg, delegatorHexAddr, err := NewMsgWrappedCancelUnbondingDelegation(args, bondDenom)
 	if err != nil {
 		return nil, err
 	}

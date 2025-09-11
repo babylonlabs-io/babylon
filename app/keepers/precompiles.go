@@ -104,7 +104,7 @@ func NewAvailableStaticPrecompiles(
 	checkpointingMsgServer := checkpointingkeeper.NewMsgServerImpl(checkpointingKeeper)
 	stakingQuerier := stakingkeeper.Querier{Keeper: stakingKeeper}
 
-	epochingPrecompile, err := epochingprecompile.NewPrecompile(epochingKeeper, epochingMsgServer, epochingQuerier, checkpointingMsgServer, *stakingKeeper, stakingQuerier, CodecOptions.AddressCodec, CodecOptions.ValidatorAddressCodec)
+	epochingPrecompile, err := epochingprecompile.NewPrecompile(epochingKeeper, epochingMsgServer, epochingQuerier, checkpointingMsgServer, *stakingKeeper, stakingQuerier)
 	if err != nil {
 		panic(fmt.Errorf("failed to instantiate epoching precompile: %w", err))
 	}

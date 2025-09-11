@@ -2,8 +2,6 @@ package epoching
 
 import (
 	"embed"
-	"github.com/cosmos/cosmos-sdk/runtime"
-
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/tracing"
@@ -11,7 +9,6 @@ import (
 
 	cmn "github.com/cosmos/evm/precompiles/common"
 
-	"cosmossdk.io/core/address"
 	"cosmossdk.io/log"
 	storetypes "cosmossdk.io/store/types"
 
@@ -40,8 +37,6 @@ type Precompile struct {
 	checkpointingMsgServer checkpointingtypes.MsgServer
 	stakingKeeper          stakingkeeper.Keeper
 	stakingQuerier         stakingtypes.QueryServer
-	addrCdc                address.Codec
-	valCodec               runtime.ValidatorAddressCodec
 }
 
 // LoadABI loads the epoching ABI from the embedded abi.json file
@@ -59,7 +54,6 @@ func NewPrecompile(
 	checkpointingMsgServer checkpointingtypes.MsgServer,
 	stakingKeeper stakingkeeper.Keeper,
 	stakingQuerier stakingtypes.QueryServer,
-	addrCdc, valCdc address.Codec,
 ) (*Precompile, error) {
 	abi, err := LoadABI()
 	if err != nil {
@@ -78,8 +72,6 @@ func NewPrecompile(
 		checkpointingMsgServer: checkpointingMsgServer,
 		stakingKeeper:          stakingKeeper,
 		stakingQuerier:         stakingQuerier,
-		addrCdc:                addrCdc,
-		valCodec:               valCdc,
 	}
 	// SetAddress defines the address of the epoching precompiled contract.
 	p.SetAddress(common.HexToAddress(EpochingPrecompileAddress))
