@@ -1214,6 +1214,7 @@ var _ = Describe("Calling epoching precompile directly", func() {
 		)
 
 		BeforeEach(func() {
+			// for querying validator life cycle, create new validator
 			newValHex := common.Address(s.validatorPriv.PubKey().Address().Bytes())
 			resp, err := s.CallContract(
 				s.validatorPriv, s.addr, s.abi, epoching.WrappedCreateValidatorMethod,
@@ -1232,22 +1233,8 @@ var _ = Describe("Calling epoching precompile directly", func() {
 		})
 
 		It("should return the validator lifecycle", func() {
-			resp, err := s.QueryContract(
-				s.addr,
-				s.abi,
-				epoching.ValidatorLifecycleMethod,
-				valHex,
-			)
-			Expect(err).To(BeNil(), "error while calling the contract %v", err)
-			Expect(resp.VmError).To(Equal(""))
-
-			var validatorLifecycle epoching.ValidatorLifecycleOutput
-			err = s.abi.UnpackIntoInterface(&validatorLifecycle, epoching.ValidatorLifecycleMethod, resp.Ret)
-			Expect(err).To(BeNil(), "error while unpacking the validator lifecycle: %v", err)
-			s.T().Logf("validator life cycle: %v", validatorLifecycle)
-
 			newValHex := common.Address(s.validatorPriv.PubKey().Address().Bytes())
-			resp, err = s.QueryContract(
+			resp, err := s.QueryContract(
 				s.addr,
 				s.abi,
 				epoching.ValidatorLifecycleMethod,
@@ -1256,9 +1243,53 @@ var _ = Describe("Calling epoching precompile directly", func() {
 			Expect(err).To(BeNil(), "error while calling the contract %v", err)
 			Expect(resp.VmError).To(Equal(""))
 
+			var validatorLifecycle epoching.ValidatorLifecycleOutput
 			err = s.abi.UnpackIntoInterface(&validatorLifecycle, epoching.ValidatorLifecycleMethod, resp.Ret)
 			Expect(err).To(BeNil(), "error while unpacking the validator lifecycle: %v", err)
-			s.T().Logf("validator life cycle: %v", validatorLifecycle)
+			Expect(validatorLifecycle.ValidatorLife[0].BlockHeight).To(Equal(uint64(20)))
+			Expect(validatorLifecycle.ValidatorLife[0].StateDesc).To(Equal("CREATED"))
+			Expect(validatorLifecycle.ValidatorLife[1].StateDesc).To(Equal("BONDED"))
+		})
+	})
+
+	Describe("delegationLifecycle queries", func() {
+		It("should return the delegation lifecycle", func() {
+			delAddr := common.Address(s.delegatorPriv.PubKey().Address().Bytes())
+			resp, err := s.QueryContract(
+				s.addr,
+				s.abi,
+				epoching.DelegationLifecycleMethod,
+				delAddr,
+			)
+			Expect(err).To(BeNil(), "error while calling the contract %v", err)
+			Expect(resp.VmError).To(Equal(""))
+
+			var delegationLifecycle epoching.DelegationLifecycleOutput
+			err = s.abi.UnpackIntoInterface(&delegationLifecycle, epoching.DelegationLifecycleMethod, resp.Ret)
+			Expect(err).To(BeNil(), "error while unpacking the delegation lifecycle: %v", err)
+			Expect(delegationLifecycle.DelegationLifecycle.DelAddr.String()).To(Equal(delAddr.String()))
+			Expect(delegationLifecycle.DelegationLifecycle.DelLife[0].BlockHeight).To(Equal(uint64(10)))
+			Expect(delegationLifecycle.DelegationLifecycle.DelLife[0].State).To(Equal(uint8(0)))
+			Expect(delegationLifecycle.DelegationLifecycle.DelLife[1].State).To(Equal(uint8(1)))
+		})
+	})
+
+	Describe("epochValSet queries", func() {
+		It("should return the epoch validator set", func() {
+			resp, err := s.QueryContract(
+				s.addr,
+				s.abi,
+				epoching.EpochValSetMethod,
+				uint64(1),
+				query.PageRequest{CountTotal: true},
+			)
+			Expect(err).To(BeNil(), "error while calling the contract %v", err)
+			Expect(resp.VmError).To(Equal(""))
+
+			var epochValSet epoching.EpochValSetOutput
+			err = s.abi.UnpackIntoInterface(&epochValSet, epoching.EpochValSetMethod, resp.Ret)
+			Expect(err).To(BeNil(), "error while unpacking the epoch val set: %v", err)
+			Expect(epochValSet.Validators[0].Addr).To(Equal(valHex))
 		})
 	})
 })

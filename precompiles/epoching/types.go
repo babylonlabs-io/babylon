@@ -1053,13 +1053,13 @@ type DelegationStateUpdate struct {
 }
 
 type DelegationLifecycleStructBech32 struct {
-	DelAddr string `abi:"delAddr"`
-	DelLife []DelegationStateUpdateBech32
+	DelAddr string                        `abi:"delAddr"`
+	DelLife []DelegationStateUpdateBech32 `abi:"delLife"`
 }
 
 type DelegationLifecycleStruct struct {
-	DelAddr common.Address `abi:"delAddr"`
-	DelLife []DelegationStateUpdate
+	DelAddr common.Address          `abi:"delAddr"`
+	DelLife []DelegationStateUpdate `abi:"delLife"`
 }
 
 type DelegationLifecycleOutputBech32 struct {

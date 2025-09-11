@@ -12,7 +12,7 @@ EpochingI constant EPOCHING_CONTRACT = EpochingI(EPOCHING_PRECOMPILE_ADDRESS);
 /// @dev Define all the available epoching methods.
 string constant MSG_WRAPPED_CREATE_VALIDATOR = "/babylon.checkpointing.v1.MsgWrappedCreateValidator";
 string constant MSG_WRAPPED_EDIT_VALIDATOR = "/babylon.epoching.v1.MsgWrappedEditValidator";
-string constant MSG_WRAPPED_DELEGATE = "/babylon.epochign.v1.MsgWrappedDelegate";
+string constant MSG_WRAPPED_DELEGATE = "/babylon.epoching.v1.MsgWrappedDelegate";
 string constant MSG_WRAPPED_UNDELEGATE = "/babylon.epoching.v1.MsgWrappedUndelegate";
 string constant MSG_WRAPPED_REDELEGATE = "/babylon.epoching.v1.MsgWrappedBeginRedelegate";
 string constant MSG_WRAPPED_CANCEL_UNDELEGATION = "/babylon.epoching.v1.MsgWrappedCancelUnbondingDelegation";
