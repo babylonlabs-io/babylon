@@ -111,7 +111,7 @@ func FuzzDistributionCache_BtcUndelegateSameBlockAsExpiration(f *testing.F) {
 		require.NoError(t, err)
 
 		prc := &ftypes.PubRandCommit{
-			StartHeight: uint64(ctx.BlockHeader().Height),
+			StartHeight: uint64(ctx.HeaderInfo().Height),
 			NumPubRand:  3000,
 			Commitment:  randListInfo.Commitment,
 		}

@@ -95,9 +95,10 @@ func (k Keeper) IterateBTCDelegationSatsUpdated(
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	fpAddrStr := fp.String()
 
+	blockHeight := uint64(sdkCtx.HeaderInfo().Height)
 	compiledEvents, err := k.GetRewardTrackerEventsCompiledByBtcDel(
 		ctx,
-		uint64(sdkCtx.BlockHeader().Height),
+		blockHeight,
 		func(fpAddr string) (include bool) {
 			return fpAddr == fpAddrStr
 		},
