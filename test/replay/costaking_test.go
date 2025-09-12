@@ -8,6 +8,8 @@ import (
 	"cosmossdk.io/math"
 	sdkmath "cosmossdk.io/math"
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	costktypes "github.com/babylonlabs-io/babylon/v4/x/costaking/types"
+	ictvtypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	distkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	disttypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
@@ -162,6 +164,9 @@ func TestCostakingRewardsHappyCase(t *testing.T) {
 
 	stkK, costkK := d.App.StakingKeeper, d.App.CostakingKeeper
 
+	params := costkK.GetParams(d.Ctx())
+	require.Equal(t, params, costktypes.DefaultParams())
+
 	// Get all validators to check their commissions
 	validators, err := stkK.GetAllValidators(d.Ctx())
 	require.NoError(d.t, err)
@@ -234,6 +239,11 @@ func TestCostakingRewardsHappyCase(t *testing.T) {
 	d.ProgressTillFirstBlockTheNextEpoch()
 	d.FinalizeCkptForEpoch(currentEpoch - 1) // previous unfinalized epoch
 	d.FinalizeCkptForEpoch(currentEpoch)
+
+	rwd, err = costkK.GetCurrentRewards(d.Ctx())
+	require.NoError(t, err)
+
+	// produce block to activate fp
 	d.GenerateNewBlockAssertExecutionSuccess()
 
 	// fp should be activated
@@ -241,12 +251,35 @@ func TestCostakingRewardsHappyCase(t *testing.T) {
 	require.Len(t, activeFps, 1)
 
 	// score is the same as btc staked as del1 have 50 ubbn to each sat
-	d.CheckCostakerRewards(del1.Address(), del1BabyDelegatedAmt, del1BtcStakedAmt, del1BtcStakedAmt, rwd.Period)
+	del1StartCumulativeRewardPeriod := rwd.Period
+	d.CheckCostakerRewards(del1.Address(), del1BabyDelegatedAmt, del1BtcStakedAmt, del1BtcStakedAmt, del1StartCumulativeRewardPeriod)
 
-	// del1CostRwd, err = costkK.GetCostakerRewards(d.Ctx(), del1.Address())
-	// require.NoError(t, err)
-	// require.Equal(t, del1CostRwd.ActiveBaby.String(), del1BabyDelegatedAmt.String())
-	// require.Equal(t, del1CostRwd.ActiveSatoshis.String(), del1BtcStakedAmt.String())
-	// require.Equal(t, del1CostRwd.StartPeriodCumulativeReward, rwd.Period+1)
-	// require.Equal(t, del1CostRwd.TotalScore.String(), del1BtcStakedAmt.String())
+	// new period without rewards is created
+	d.CheckCostakingCurrentRewards(sdk.NewCoins(), rwd.Period+1, del1BtcStakedAmt)
+	// historical will not have any rewards, because costaker didn't participated until the fp become active and no other block
+	// was produced to add rewards.
+	d.CheckCostakingCurrentHistoricalRewards(del1StartCumulativeRewardPeriod, sdk.NewCoins())
+
+	// produce 2 blocks to add rewards to coostaker
+	costakerRewadsTwoBlocks := sdk.NewCoins()
+	costakerRewadsTwoBlocks = costakerRewadsTwoBlocks.Add(d.GenerateNewBlockAssertExecutionSuccessWithCostakerRewards()...)
+	costakerRewadsTwoBlocks = costakerRewadsTwoBlocks.Add(d.GenerateNewBlockAssertExecutionSuccessWithCostakerRewards()...)
+	d.CheckCostakingCurrentRewards(costakerRewadsTwoBlocks, rwd.Period+1, del1BtcStakedAmt)
+
+	del1BalancesBeforeRewardWithdraw := d.App.BankKeeper.GetAllBalances(d.Ctx(), del1.Address())
+
+	resp, err := d.MsgServerIncentive().WithdrawReward(d.Ctx(), &ictvtypes.MsgWithdrawReward{
+		Type:    ictvtypes.COSTAKER.String(),
+		Address: del1.AddressString(),
+	})
+	require.NoError(t, err)
+	require.Equal(t, resp.Coins.String(), costakerRewadsTwoBlocks.String())
+
+	del1BalancesAfterRewardWithdraw := d.App.BankKeeper.GetAllBalances(d.Ctx(), del1.Address())
+	diff := del1BalancesAfterRewardWithdraw.Sub(del1BalancesBeforeRewardWithdraw...).String()
+	require.Equal(t, diff, costakerRewadsTwoBlocks.String())
+
+	// after withdraw of rewards the period must increase
+	del1StartCumulativeRewardPeriod++
+	d.CheckCostakerRewards(del1.Address(), del1BabyDelegatedAmt, del1BtcStakedAmt, del1BtcStakedAmt, del1StartCumulativeRewardPeriod)
 }

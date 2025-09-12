@@ -14,13 +14,14 @@ import (
 
 // AddRewardsForCostakers gets the current costaker pool of rewards
 // and adds rewards to it, without increasing the current period.
-func (k Keeper) AddRewardsForCostakers(ctx context.Context, rwd sdk.Coins) error {
+func (k Keeper) AddRewardsForCostakers(ctx context.Context, rwdToAdd sdk.Coins) error {
 	currentRwd, err := k.GetCurrentRewardsInitialized(ctx)
 	if err != nil {
 		return err
 	}
 
-	if err := currentRwd.AddRewards(rwd); err != nil {
+	k.EmitEventCostakersAddRewards(ctx, rwdToAdd, *currentRwd)
+	if err := currentRwd.AddRewards(rwdToAdd); err != nil {
 		return err
 	}
 	return k.SetCurrentRewards(ctx, *currentRwd)
