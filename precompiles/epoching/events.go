@@ -100,16 +100,15 @@ func (p Precompile) EmitWrappedDelegateEvent(ctx sdk.Context, stateDB vm.StateDB
 		return err
 	}
 
-	// TODO: verify obtaining newShares does make sense for WrappedDelegate method
-	//// Get the validator to estimate the new shares delegated
-	//// NOTE: At this point the validator has already been checked, so no need to check again
-	// validator, _ := p.stakingKeeper.GetValidator(ctx, valAddr)
-	//
-	//// Get only the new shares based on the delegation amount
-	// newShares, err := validator.SharesFromTokens(msg.Msg.Amount.Amount)
-	// if err != nil {
-	//	return err
-	// }
+	// Get the validator to estimate the new shares delegated
+	// NOTE: At this point the validator has already been checked, so no need to check again
+	validator, _ := p.stakingKeeper.GetValidator(ctx, valAddr)
+
+	// Get only the new shares based on the delegation amount
+	newShares, err := validator.SharesFromTokens(msg.Msg.Amount.Amount)
+	if err != nil {
+		return err
+	}
 
 	// Prepare the event topics
 	event := p.Events[EventTypeWrappedDelegate]
@@ -121,7 +120,7 @@ func (p Precompile) EmitWrappedDelegateEvent(ctx sdk.Context, stateDB vm.StateDB
 	// Prepare the event data
 	var b bytes.Buffer
 	b.Write(cmn.PackNum(reflect.ValueOf(msg.Msg.Amount.Amount.BigInt())))
-	// b.Write(cmn.PackNum(reflect.ValueOf(newShares.BigInt())))
+	b.Write(cmn.PackNum(reflect.ValueOf(newShares.BigInt())))
 	b.Write(cmn.PackNum(reflect.ValueOf(epochBoundary)))
 
 	stateDB.AddLog(&ethtypes.Log{

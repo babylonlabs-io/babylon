@@ -665,11 +665,13 @@ interface EpochingI {
     /// @param validatorAddress The address of the validator
     /// @param amount The amount of bond denomination being delegated
     /// This amount has the bond denomination precision stored in the bank metadata.
+    /// @param newShares The new delegation shares being held
     /// @param epochBoundary The epoch boundary when the delegation will be processed
     event WrappedDelegate(
         address indexed delegatorAddress,
         address indexed validatorAddress,
         uint256 amount,
+        uint256 newShares,
         uint64 epochBoundary
     );
 

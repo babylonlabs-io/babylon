@@ -2171,6 +2171,12 @@
           "internalType": "uint256"
         },
         {
+          "name": "newShares",
+          "type": "uint256",
+          "indexed": false,
+          "internalType": "uint256"
+        },
+        {
           "name": "epochBoundary",
           "type": "uint64",
           "indexed": false,
