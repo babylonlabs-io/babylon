@@ -151,8 +151,16 @@ func (k Keeper) processInactiveFp(
 func (k Keeper) processJailedAndSlashedFps(ctx sdk.Context, state *ftypes.ProcessingState) {
 	// get keys and sort them to ensure determinism
 	fpBtcKeys := make([]string, 0, len(state.FPStatesByBtcPk))
-	for fpBtcPk := range state.FPStatesByBtcPk {
+	for fpBtcPk, fpState := range state.FPStatesByBtcPk {
+		// we care only about the jailed and slashed fps
+		if fpState != ftypes.FinalityProviderState_JAILED &&
+			fpState != ftypes.FinalityProviderState_SLASHED {
+			continue
+		}
 		fpBtcKeys = append(fpBtcKeys, fpBtcPk)
+	}
+	if len(fpBtcKeys) == 0 {
+		return
 	}
 	sort.SliceStable(fpBtcKeys, func(i, j int) bool {
 		return fpBtcKeys[i] < fpBtcKeys[j]
