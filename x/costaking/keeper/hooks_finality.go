@@ -51,6 +51,11 @@ func (h HookFinality) AfterFpStatusChange(ctx context.Context, fpAddr sdk.AccAdd
 		return nil
 	}
 
+	// if the fp was slashed there is no further update to him
+	if prevStatus == btcstktypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_SLASHED {
+		return nil
+	}
+
 	// Status transition logic (not first time):
 	//
 	// ACTIVE   -> JAILED, SLASHED, INACTIVE : subtract voting power (-)
@@ -59,16 +64,12 @@ func (h HookFinality) AfterFpStatusChange(ctx context.Context, fpAddr sdk.AccAdd
 	// INACTIVE -> JAILED, SLASHED   : no action
 	// JAILED   -> ACTIVE            : add voting power (+)
 	// JAILED   -> INACTIVE, SLASHED : no action
-	// SLASHED  -> ACTIVE            : add voting power (+)
-	// SLASHED  -> JAILED, INACTIVE  : no action
 
-	// prevStatus == (INACTIVE|JAILED|SLASHED)
-	isPrevStatusDeactivated := (prevStatus == btcstktypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_INACTIVE ||
-		prevStatus == btcstktypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_JAILED ||
-		prevStatus == btcstktypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_SLASHED)
+	// prevStatus == (INACTIVE|JAILED)
+	isPrevStatusDeactivated := (prevStatus == btcstktypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_INACTIVE || prevStatus == btcstktypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_JAILED)
 
 	isNewStatusActive := newStatus.IsActive()
-	// (INACTIVE|JAILED|SLASHED) -> ACTIVE: add voting power
+	// (INACTIVE|JAILED) -> ACTIVE: add voting power
 	shouldAdd := isPrevStatusDeactivated && isNewStatusActive
 
 	// ACTIVE -> ANY: subtract voting power (shouldAdd remains false)

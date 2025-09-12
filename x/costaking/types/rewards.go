@@ -87,20 +87,13 @@ func (hr HistoricalRewards) Validate() error {
 
 // Validate validates the CostakerRewardsTracker struct
 func (crt CostakerRewardsTracker) Validate() error {
-	if crt.TotalScore.IsNil() || crt.TotalScore.IsNegative() {
-		return fmt.Errorf("total score must be non-negative: %s", crt.TotalScore.String())
-	}
-	return nil
-}
-
-func (crt CostakerRewardsTracker) SanityChecks() error {
-	if crt.TotalScore.IsNegative() {
+	if !crt.TotalScore.IsNil() && crt.TotalScore.IsNegative() {
 		return ErrInvalidCostakerRwdTracker.Wrapf("has negative total score %s", crt.TotalScore.String())
 	}
-	if crt.ActiveBaby.IsNegative() {
+	if !crt.ActiveBaby.IsNil() && crt.ActiveBaby.IsNegative() {
 		return ErrInvalidCostakerRwdTracker.Wrapf("has negative active baby %s", crt.ActiveBaby.String())
 	}
-	if crt.ActiveSatoshis.IsNegative() {
+	if !crt.ActiveSatoshis.IsNil() && crt.ActiveSatoshis.IsNegative() {
 		return ErrInvalidCostakerRwdTracker.Wrapf("has negative active sats %s", crt.ActiveSatoshis.String())
 	}
 	return nil

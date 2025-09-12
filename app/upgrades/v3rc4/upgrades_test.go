@@ -261,7 +261,6 @@ func TestInitializeCoStakerRwdsTracker_MultipleStakingFromSameStaker(t *testing.
 }
 
 // Helper functions
-
 func createTestBTCDelegation(t *testing.T, r *rand.Rand, ctx sdk.Context, btcStkKeeper btcstkkeeper.Keeper, stakerAddr sdk.AccAddress, stakingValue uint64) *btcstktypes.BTCDelegation {
 	// Generate random BTC keys
 	delSK, _, err := datagen.GenRandomBTCKeyPair(r)

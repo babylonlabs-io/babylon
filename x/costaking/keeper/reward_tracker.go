@@ -34,7 +34,7 @@ func (k Keeper) costakerModified(ctx context.Context, costaker sdk.AccAddress, m
 	}
 
 	modifyCostaker(rwdTracker)
-	if err := rwdTracker.SanityChecks(); err != nil {
+	if err := rwdTracker.Validate(); err != nil {
 		return err
 	}
 
