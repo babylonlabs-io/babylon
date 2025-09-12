@@ -29,6 +29,13 @@ const (
 	FinalityProviderState_SLASHED
 )
 
+// DelegationInfo holds cached information about a delegation made by a delegator to one or more finality providers
+type DelegationInfo struct {
+	Delegator sdk.AccAddress
+	FpBtcPk   string
+	TotalSat  uint64
+}
+
 // Processing state during the power distribution change process
 // It holds the state of finality providers, BTC delegations, and events
 // It is used to track the changes in the finality providers' states and the BTC delegations
@@ -54,6 +61,10 @@ type ProcessingState struct {
 	ExpiredEvents []*btcstktypes.EventPowerDistUpdate_BtcDelStateUpdate
 	// A slice of the slashed finality provider events
 	SlashedEvents []*btcstktypes.EventPowerDistUpdate_SlashedFp
+	// ActiveDelegations holds information about active delegations per FP
+	ActiveDelegations []DelegationInfo
+	// UnbondingDelegations holds information about unbonding delegations per FP
+	UnbondingDelegations []DelegationInfo
 }
 
 func NewProcessingState() *ProcessingState {
@@ -75,6 +86,24 @@ func (ps *ProcessingState) PrevFpStatus(fpBtcPk *bbn.BIP340PubKey) btcstktypes.F
 		return btcstktypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_INACTIVE
 	}
 	return fpStatus
+}
+
+func (ps *ProcessingState) AddActiveDelegation(delAddr string, fpPubKey bbn.BIP340PubKey, totalSat uint64) {
+	delAccAddr := sdk.MustAccAddressFromBech32(delAddr)
+	ps.ActiveDelegations = append(ps.ActiveDelegations, DelegationInfo{
+		Delegator: delAccAddr,
+		FpBtcPk:   fpPubKey.MarshalHex(),
+		TotalSat:  totalSat,
+	})
+}
+
+func (ps *ProcessingState) AddUnbondingDelegation(delAddr string, fpPubKey bbn.BIP340PubKey, totalSat uint64) {
+	delAccAddr := sdk.MustAccAddressFromBech32(delAddr)
+	ps.UnbondingDelegations = append(ps.UnbondingDelegations, DelegationInfo{
+		Delegator: delAccAddr,
+		FpBtcPk:   fpPubKey.MarshalHex(),
+		TotalSat:  totalSat,
+	})
 }
 
 func (c *PubRandCommit) IsInRange(height uint64) bool {
