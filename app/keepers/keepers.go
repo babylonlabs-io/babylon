@@ -489,6 +489,9 @@ func (ak *AppKeepers) InitKeepers(
 			ak.Erc20Keeper,
 			ak.GovKeeper,
 			ak.SlashingKeeper,
+			ak.StakingKeeper,
+			epochingKeeper,
+			checkpointingKeeper,
 		),
 	)
 	// Create the TokenFactory Keeper
@@ -587,7 +590,7 @@ func (ak *AppKeepers) InitKeepers(
 
 	ak.GovKeeper = *govKeeper.SetHooks(
 		govtypes.NewMultiGovHooks(
-		// register the governance hooks
+			// register the governance hooks
 		),
 	)
 

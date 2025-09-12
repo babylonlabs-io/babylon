@@ -5,11 +5,16 @@ import (
 	"maps"
 
 	"cosmossdk.io/core/address"
-	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
+
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/vm"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	authcodec "github.com/cosmos/cosmos-sdk/x/auth/codec"
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
 	slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
+	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
+
 	bankprecompile "github.com/cosmos/evm/precompiles/bank"
 	"github.com/cosmos/evm/precompiles/bech32"
 	govprecompile "github.com/cosmos/evm/precompiles/gov"
@@ -18,8 +23,11 @@ import (
 	erc20Keeper "github.com/cosmos/evm/x/erc20/keeper"
 	precisebankkeeper "github.com/cosmos/evm/x/precisebank/keeper"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/vm"
+
+	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
+	epochingprecompile "github.com/babylonlabs-io/babylon/v4/precompiles/epoching"
+	checkpointingkeeper "github.com/babylonlabs-io/babylon/v4/x/checkpointing/keeper"
+	epochingkeeper "github.com/babylonlabs-io/babylon/v4/x/epoching/keeper"
 )
 
 const bech32PrecompileBaseGas = 6_000
@@ -34,6 +42,7 @@ var BabylonAvailableStaticPrecompiles = []string{
 	evmtypes.BankPrecompileAddress,
 	evmtypes.GovPrecompileAddress,
 	evmtypes.SlashingPrecompileAddress,
+	epochingprecompile.EpochingPrecompileAddress,
 }
 
 type PrecompileOptions struct {
@@ -59,6 +68,9 @@ func NewAvailableStaticPrecompiles(
 	erc20Keeper erc20Keeper.Keeper,
 	govKeeper govkeeper.Keeper,
 	slashingKeeper slashingkeeper.Keeper,
+	stakingKeeper *stakingkeeper.Keeper,
+	epochingKeeper epochingkeeper.Keeper,
+	checkpointingKeeper checkpointingkeeper.Keeper,
 ) map[common.Address]vm.PrecompiledContract {
 	// TODO: We can add more custom precompiles here for Babylon Modules
 	// Clone the mapping from the latest EVM fork.
@@ -87,6 +99,16 @@ func NewAvailableStaticPrecompiles(
 		panic(fmt.Errorf("failed to instantiate slashing precompile: %w", err))
 	}
 
+	epochingMsgServer := epochingkeeper.NewMsgServerImpl(epochingKeeper)
+	epochingQuerier := epochingkeeper.Querier{Keeper: epochingKeeper}
+	checkpointingMsgServer := checkpointingkeeper.NewMsgServerImpl(checkpointingKeeper)
+	stakingQuerier := stakingkeeper.Querier{Keeper: stakingKeeper}
+
+	epochingPrecompile, err := epochingprecompile.NewPrecompile(epochingKeeper, epochingMsgServer, epochingQuerier, checkpointingMsgServer, *stakingKeeper, stakingQuerier, CodecOptions.AddressCodec, CodecOptions.ValidatorAddressCodec)
+	if err != nil {
+		panic(fmt.Errorf("failed to instantiate epoching precompile: %w", err))
+	}
+
 	// Stateless precompiles
 	precompiles[bech32Precompile.Address()] = bech32Precompile
 	precompiles[p256Precompile.Address()] = p256Precompile
@@ -95,6 +117,7 @@ func NewAvailableStaticPrecompiles(
 	precompiles[bankPrecompile.Address()] = bankPrecompile
 	precompiles[govPrecompile.Address()] = govPrecompile
 	precompiles[slashingPrecompile.Address()] = slashingPrecompile
+	precompiles[epochingPrecompile.Address()] = epochingPrecompile
 
 	return precompiles
 }

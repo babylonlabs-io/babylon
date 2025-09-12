@@ -1,10 +1,10 @@
 package app
 
 import (
-	"bytes"
-	"encoding/json"
-	"testing"
-	"time"
+    "bytes"
+    "encoding/json"
+    "testing"
+    "time"
 
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"
@@ -148,9 +148,9 @@ func NewBabylonAppWithCustomOptions(t *testing.T, isCheckTx bool, blsSigner chec
 }
 
 func genesisStateWithValSet(t *testing.T,
-	app *BabylonApp, genesisState GenesisState,
-	valSet []*checkpointingtypes.GenesisKey, genAccs []authtypes.GenesisAccount,
-	balances ...banktypes.Balance,
+    app *BabylonApp, genesisState GenesisState,
+    valSet []*checkpointingtypes.GenesisKey, genAccs []authtypes.GenesisAccount,
+    balances ...banktypes.Balance,
 ) GenesisState {
 	// set genesis accounts
 	authGenesis := authtypes.NewGenesisState(authtypes.DefaultParams(), genAccs)
