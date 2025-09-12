@@ -117,7 +117,7 @@ func (k Keeper) HandleFPStateUpdates(ctx context.Context, prevDc, newDc *ftypes.
 		k.processInactiveFp(ctx, state, fp)
 	}
 	// call hooks for the jailed and slashed fps
-	k.processJailedAndSlashedFps(ctx, state)
+	k.processJailedAndSlashedFps(sdkCtx, state)
 }
 
 // processInactiveFp process inactive fps event emission and hooks call
@@ -148,7 +148,7 @@ func (k Keeper) processInactiveFp(
 
 // processJailedAndSlashedFps processes the hooks for finality providers that were
 // either jailed or slashed during the power distribution change process
-func (k Keeper) processJailedAndSlashedFps(ctx context.Context, state *ftypes.ProcessingState) {
+func (k Keeper) processJailedAndSlashedFps(ctx sdk.Context, state *ftypes.ProcessingState) {
 	// get keys and sort them to ensure determinism
 	fpBtcKeys := make([]string, 0, len(state.FPStatesByBtcPk))
 	for fpBtcPk := range state.FPStatesByBtcPk {
@@ -163,14 +163,14 @@ func (k Keeper) processJailedAndSlashedFps(ctx context.Context, state *ftypes.Pr
 		switch state.FPStatesByBtcPk[fpBtcPkStr] {
 		case ftypes.FinalityProviderState_SLASHED:
 			k.processHooksFp(
-				sdk.UnwrapSDKContext(ctx), state.FpByBtcPk,
+				ctx, state.FpByBtcPk,
 				*fpBTCPk,
 				state.PrevFpStatus(fpBTCPk),
 				btcstktypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_SLASHED,
 			)
 		case ftypes.FinalityProviderState_JAILED:
 			k.processHooksFp(
-				sdk.UnwrapSDKContext(ctx), state.FpByBtcPk,
+				ctx, state.FpByBtcPk,
 				*fpBTCPk,
 				state.PrevFpStatus(fpBTCPk),
 				btcstktypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_JAILED,
