@@ -112,13 +112,9 @@ func (k Keeper) HandleFPStateUpdates(ctx context.Context, prevDc, newDc *ftypes.
 		k.processHooksFp(sdkCtx, state.FpByBtcPk, *fp.BtcPk, prevStatus, newState)
 	}
 
-	fpStates := make(map[string]ftypes.FinalityProviderState)
-	if state != nil {
-		fpStates = state.FPStatesByBtcPk
-	}
 	newlyInactiveFPs := newDc.FindNewInactiveFinalityProviders(prevDc)
 	for _, fp := range newlyInactiveFPs {
-		k.processInactiveFp(ctx, state, fpStates, fp)
+		k.processInactiveFp(ctx, state, fp)
 	}
 }
 
@@ -129,11 +125,10 @@ func (k Keeper) HandleFPStateUpdates(ctx context.Context, prevDc, newDc *ftypes.
 func (k Keeper) processInactiveFp(
 	ctx context.Context,
 	state *ftypes.ProcessingState,
-	fpStates map[string]ftypes.FinalityProviderState,
 	fp *ftypes.FinalityProviderDistInfo,
 ) {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	fpState := fpStates[fp.BtcPk.MarshalHex()]
+	fpState := state.FPStatesByBtcPk[fp.BtcPk.MarshalHex()]
 	if fpState == ftypes.FinalityProviderState_SLASHED || fpState == ftypes.FinalityProviderState_JAILED {
 		return
 	}
