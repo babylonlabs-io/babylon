@@ -19,10 +19,13 @@ import (
 
 	"github.com/babylonlabs-io/babylon/v4/app/keepers"
 	"github.com/babylonlabs-io/babylon/v4/app/upgrades"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	btcstkkeeper "github.com/babylonlabs-io/babylon/v4/x/btcstaking/keeper"
 	btcstktypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 	costkkeeper "github.com/babylonlabs-io/babylon/v4/x/costaking/keeper"
 	costktypes "github.com/babylonlabs-io/babylon/v4/x/costaking/types"
+	fkeeper "github.com/babylonlabs-io/babylon/v4/x/finality/keeper"
+	ftypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
 )
 
 // UpgradeName defines the on-chain upgrade name for the Babylon v3rc4 upgrade
@@ -63,7 +66,7 @@ func CreateUpgradeHandler(mm *module.Manager, configurator module.Configurator, 
 		}
 
 		coStkStoreService := runtime.NewKVStoreService(costkStoreKey)
-		if err := InitializeCoStakerRwdsTracker(ctx, keepers.EncCfg.Codec, coStkStoreService, keepers.StakingKeeper, keepers.BTCStakingKeeper, keepers.CostakingKeeper); err != nil {
+		if err := InitializeCoStakerRwdsTracker(ctx, keepers.EncCfg.Codec, coStkStoreService, keepers.StakingKeeper, keepers.BTCStakingKeeper, keepers.CostakingKeeper, keepers.FinalityKeeper); err != nil {
 			return nil, err
 		}
 
@@ -80,8 +83,9 @@ func InitializeCoStakerRwdsTracker(
 	stkKeeper *stkkeeper.Keeper,
 	btcStkKeeper btcstkkeeper.Keeper,
 	coStkKeeper costkkeeper.Keeper,
+	fKeeper fkeeper.Keeper,
 ) error {
-	btcStakers, err := getAllBTCStakers(ctx, btcStkKeeper)
+	btcStakers, err := getAllBTCStakers(ctx, btcStkKeeper, fKeeper)
 	if err != nil {
 		return err
 	}
@@ -101,8 +105,19 @@ type coStaker struct {
 }
 
 // getAllBTCStakers retrieves all active BTC stakers with pagination
-func getAllBTCStakers(ctx context.Context, btcStkKeeper btcstkkeeper.Keeper) (map[string]math.Int, error) {
+func getAllBTCStakers(ctx context.Context, btcStkKeeper btcstkkeeper.Keeper, fKeeper fkeeper.Keeper) (map[string]math.Int, error) {
 	btcStakers := make(map[string]math.Int)
+	// To count as btc staker for the co-staking rewards
+	// need to be delegating to a FP within the current active set
+	// This runs on preblocker (before BeginBlock), so the active set to consider should be from previous height
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	height := uint64(sdkCtx.HeaderInfo().Height)
+	vp := fKeeper.GetVotingPowerDistCache(ctx, height-1)
+	if vp == nil {
+		return nil, errors.New("voting power distribution cache not found")
+	}
+	activeFps := vp.GetActiveFinalityProviderSet()
+
 	var nextKey []byte
 
 	for {
@@ -119,11 +134,16 @@ func getAllBTCStakers(ctx context.Context, btcStkKeeper btcstkkeeper.Keeper) (ma
 		}
 
 		for _, del := range btcDelRes.BtcDelegations {
+			// check if delegating to an active FP
+			if !delegatingToActiveFP(del.FpBtcPkList, activeFps) {
+				continue
+			}
 			if staker, found := btcStakers[del.StakerAddr]; found {
 				staker = staker.Add(math.NewIntFromUint64(del.TotalSat))
 				btcStakers[del.StakerAddr] = staker
 				continue
 			}
+
 			btcStakers[del.StakerAddr] = math.NewIntFromUint64(del.TotalSat)
 		}
 
@@ -231,4 +251,17 @@ func saveCoStakersToStore(
 	}
 
 	return k.UpdateCurrentRewardsTotalScore(ctx, totalScore)
+}
+
+func delegatingToActiveFP(fpBtcPks []bbn.BIP340PubKey, activeFps map[string]*ftypes.FinalityProviderDistInfo) bool {
+	// check if delegating to an active FP
+	isActiveDel := false
+	for _, fpBtcPk := range fpBtcPks {
+		if _, ok := activeFps[fpBtcPk.MarshalHex()]; ok {
+			isActiveDel = true
+			break
+		}
+	}
+
+	return isActiveDel
 }
