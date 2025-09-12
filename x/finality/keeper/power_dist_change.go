@@ -562,6 +562,7 @@ func (k Keeper) processBtcDelHook(
 		)
 		if err != nil {
 			k.Logger(ctx).Error(
+				"hook failed", err,
 				"fp_btc_pk", del.FpBtcPk,
 			)
 			return fmt.Errorf("failed to call hook for fp %s: %w", del.FpBtcPk, err)

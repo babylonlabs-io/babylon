@@ -61,9 +61,9 @@ type ProcessingState struct {
 	ExpiredEvents []*btcstktypes.EventPowerDistUpdate_BtcDelStateUpdate
 	// A slice of the slashed finality provider events
 	SlashedEvents []*btcstktypes.EventPowerDistUpdate_SlashedFp
-	// ActiveDelegations holds information about active delegations per FP
+	// ActiveDelegations holds information about active delegations events
 	ActiveDelegations []DelegationInfo
-	// UnbondingDelegations holds information about unbonding delegations per FP
+	// UnbondingDelegations holds information about unbonding delegations events
 	UnbondingDelegations []DelegationInfo
 }
 
@@ -78,8 +78,8 @@ func NewProcessingState() *ProcessingState {
 	}
 }
 
-// PrevFpStatus returns the status of the fp in the previous voting power distribution cache. Returns
-// inactive if not found
+// PrevFpStatus returns the status of the fp in the previous voting power distribution cache.
+// Returns inactive if not found
 func (ps *ProcessingState) PrevFpStatus(fpBtcPk *bbn.BIP340PubKey) btcstktypes.FinalityProviderStatus {
 	fpStatus, found := ps.PrevFpStatusByBtcPk[fpBtcPk.MarshalHex()]
 	if !found {
@@ -88,9 +88,8 @@ func (ps *ProcessingState) PrevFpStatus(fpBtcPk *bbn.BIP340PubKey) btcstktypes.F
 	return fpStatus
 }
 
+// FillPrevFpStatusByBtcPk fill up the state.PrevFpStatusByBtcPk based on the vp dst cache
 func (ps *ProcessingState) FillPrevFpStatusByBtcPk(dc *VotingPowerDistCache) {
-	// fill up state.PrevFpStatusByBtcPk prior to processEventsAtHeight
-	// to correctly send out the previous fp status
 	for idx, fp := range dc.FinalityProviders {
 		canBeActive := idx < int(dc.NumActiveFps) // it should not be <= as idx starts at zero
 		ps.AddPrevFpStatusByBtcPk(fp, canBeActive)
