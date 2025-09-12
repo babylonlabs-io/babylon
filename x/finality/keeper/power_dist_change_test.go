@@ -2082,6 +2082,7 @@ func TestBSNDelegationActivated_DirectIncentives(t *testing.T) {
 		NewState:      btcstktypes.BTCDelegationStatus_ACTIVE,
 	})
 
+	bsnFp.Address()
 	// add the event to store
 	addPowerDistUpdateEvents(t, h.Ctx, btcStakingStoreKey, uint64(btcTipHeight), []*btcstktypes.EventPowerDistUpdate{eventActivate})
 	fHooks := h.FinalityHooks.(*ftypes.MockFinalityHooks)

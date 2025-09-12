@@ -489,12 +489,12 @@ func (k Keeper) processPowerDistUpdateEventUnbond(
 ) {
 	for _, fpBTCPK := range btcDel.FpBtcPkList {
 		fpBTCPKHex := fpBTCPK.MarshalHex()
+		state.AddUnbondingDelegation(btcDel.StakerAddr, fpBTCPK, btcDel.TotalSat)
 		if !k.BTCStakingKeeper.BabylonFinalityProviderExists(ctx, fpBTCPK) {
 			// This is a consumer FP rather than Babylon FP, skip it
 			continue
 		}
 		state.DeltaSatsByFpBtcPk[fpBTCPKHex] -= int64(btcDel.TotalSat)
-		state.AddUnbondingDelegation(btcDel.StakerAddr, fpBTCPK, btcDel.TotalSat)
 	}
 }
 
@@ -509,12 +509,12 @@ func (k Keeper) processPowerDistUpdateEventActive(
 	// add the BTC delegation to each multi-staked finality provider
 	for _, fpBTCPK := range btcDel.FpBtcPkList {
 		fpBTCPKHex := fpBTCPK.MarshalHex()
+		state.AddActiveDelegation(btcDel.StakerAddr, fpBTCPK, btcDel.TotalSat)
 		if !k.BTCStakingKeeper.BabylonFinalityProviderExists(ctx, fpBTCPK) {
 			// This is a consumer FP rather than Babylon FP, skip it
 			continue
 		}
 		state.DeltaSatsByFpBtcPk[fpBTCPKHex] += int64(btcDel.TotalSat)
-		state.AddActiveDelegation(btcDel.StakerAddr, fpBTCPK, btcDel.TotalSat)
 	}
 }
 
