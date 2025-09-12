@@ -17,12 +17,12 @@ import (
 // it is also used for e2e testing
 func init() {
 	Upgrades = []upgrades.Upgrade{
+		v3rc4.Upgrade,
 		v3rc3.Upgrade, // same as v2_3 mainnet
 		v3rc2.Upgrade,
 		v3.CreateUpgrade(false, 10, 264773, 2419200), // TODO: to be updated
 		v2rc4.Upgrade,
 		v2.CreateUpgrade(true, map[string]struct{}{}),
 		v22.Upgrade,
-		v3rc4.Upgrade,
 	}
 }

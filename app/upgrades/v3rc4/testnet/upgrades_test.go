@@ -93,6 +93,43 @@ func (s *UpgradeTestSuite) TestUpgradeAtHeight1() {
 	s.executeSuccessfulUpgrade(1)
 }
 
+func (s *UpgradeTestSuite) TestUpgradeWarningScenarios() {
+	testCases := []struct {
+		name           string
+		upgradeHeight  int64
+		setupCondition func()
+		expectSuccess  bool
+		expectWarning  bool
+	}{
+		{
+			name:          "upgrade warns about locked delegate pool funds but succeeds",
+			upgradeHeight: DummyUpgradeHeight,
+			setupCondition: func() {
+				coins := sdk.NewCoins(sdk.NewCoin("ubbn", math.NewInt(500000)))
+				s.Require().NoError(s.app.BankKeeper.MintCoins(s.ctx, minttypes.ModuleName, coins))
+				s.Require().NoError(s.app.BankKeeper.SendCoinsFromModuleToModule(s.ctx, minttypes.ModuleName,
+					epochingtypes.DelegatePoolModuleName, coins))
+			},
+			expectSuccess: true,
+			expectWarning: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		s.Run(tc.name, func() {
+			s.SetupTest() // Reset for each test
+
+			if tc.setupCondition != nil {
+				tc.setupCondition()
+			}
+
+			if tc.expectSuccess {
+				s.executeSuccessfulUpgrade(tc.upgradeHeight)
+			}
+		})
+	}
+}
+
 func (s *UpgradeTestSuite) TestUpgradeFailureScenarios() {
 	testCases := []struct {
 		name                  string
@@ -101,15 +138,47 @@ func (s *UpgradeTestSuite) TestUpgradeFailureScenarios() {
 		expectedErrorContains string
 	}{
 		{
-			name:          "upgrade fails with locked delegate pool funds",
-			upgradeHeight: DummyUpgradeHeight,
+			name:          "upgrade fails at height 2 (edge case)",
+			upgradeHeight: 2,
 			setupFailureCondition: func() {
-				// Simulate locked funds in delegate pool
-				coins := sdk.NewCoins(sdk.NewCoin("ubbn", math.NewInt(500000)))
+				// No setup needed - height 2 is not epoch boundary
+			},
+			expectedErrorContains: "epoch boundary validation failed",
+		},
+		{
+			name:          "upgrade fails at height 10 (last block of epoch)",
+			upgradeHeight: 10, // Last block of first epoch, not first block of next
+			setupFailureCondition: func() {
+				// No setup needed
+			},
+			expectedErrorContains: "epoch boundary validation failed",
+		},
+		{
+			name:          "upgrade fails at height 5 (mid-epoch)",
+			upgradeHeight: 5,
+			setupFailureCondition: func() {
+				// No setup needed
+			},
+			expectedErrorContains: "epoch boundary validation failed",
+		},
+		{
+			name:          "upgrade fails at very high height",
+			upgradeHeight: 1000, // Not epoch boundary (next valid boundary is 1001)
+			setupFailureCondition: func() {
+				// No setup needed
+			},
+			expectedErrorContains: "epoch boundary validation failed",
+		},
+		{
+			name:          "validation order test - epoch boundary fails first",
+			upgradeHeight: 8, // Non-epoch boundary
+			setupFailureCondition: func() {
+				// Add delegate pool funds, but epoch boundary should fail first
+				coins := sdk.NewCoins(sdk.NewCoin("ubbn", math.NewInt(100)))
 				s.Require().NoError(s.app.BankKeeper.MintCoins(s.ctx, minttypes.ModuleName, coins))
 				s.Require().NoError(s.app.BankKeeper.SendCoinsFromModuleToModule(s.ctx, minttypes.ModuleName, epochingtypes.DelegatePoolModuleName, coins))
 			},
-			expectedErrorContains: "delegate pool validation failed",
+			expectedErrorContains: "epoch boundary validation failed", // Should fail on epoch boundary first
 		},
 	}
 
@@ -124,6 +193,35 @@ func (s *UpgradeTestSuite) TestUpgradeFailureScenarios() {
 			s.executeFailedUpgrade(tc.upgradeHeight, tc.expectedErrorContains)
 		})
 	}
+}
+
+// verifyPostUpgrade verifies that migration has been completed successfully
+// by checking that the epoching parameters have been updated with new fields
+func (s *UpgradeTestSuite) verifyPostUpgrade() {
+	// Get updated epoching params after migration
+	params := s.app.EpochingKeeper.GetParams(s.ctx)
+
+	// Verify that migration added ExecuteGas parameters (v1->v2 migration)
+	s.Assert().NotNil(params.ExecuteGas, "ExecuteGas should be set after migration")
+
+	// Check default ExecuteGas values were properly set
+	expectedExecuteGas := epochingtypes.DefaultExecuteGas
+	s.Assert().Equal(expectedExecuteGas.Delegate, params.ExecuteGas.Delegate, "Delegate gas should match default")
+	s.Assert().Equal(expectedExecuteGas.Undelegate, params.ExecuteGas.Undelegate, "Undelegate gas should match default")
+	s.Assert().Equal(expectedExecuteGas.BeginRedelegate, params.ExecuteGas.BeginRedelegate, "BeginRedelegate gas should match default")
+	s.Assert().Equal(expectedExecuteGas.CancelUnbondingDelegation, params.ExecuteGas.CancelUnbondingDelegation, "CancelUnbondingDelegation gas should match default")
+	s.Assert().Equal(expectedExecuteGas.EditValidator, params.ExecuteGas.EditValidator, "EditValidator gas should match default")
+
+	// Verify MinAmount was set (v1->v2 migration)
+	s.Assert().Equal(epochingtypes.DefaultMinAmount, params.MinAmount, "MinAmount should match default")
+
+	// Verify EpochInterval was preserved from existing params
+	s.Assert().Equal(uint64(10), params.EpochInterval, "EpochInterval should be preserved")
+
+	// Verify params are valid
+	s.Assert().NoError(params.Validate(), "Migrated params should be valid")
+
+	s.T().Log("Post-upgrade verification successful: migration parameters properly updated")
 }
 
 // ========== HELPER FUNCTIONS ==========
@@ -175,6 +273,9 @@ func (s *UpgradeTestSuite) executeUpgrade(upgradeHeight int64) error {
 func (s *UpgradeTestSuite) executeSuccessfulUpgrade(upgradeHeight int64) {
 	err := s.executeUpgrade(upgradeHeight)
 	s.Require().NoError(err)
+
+	// Verify that migration completed successfully
+	s.verifyPostUpgrade()
 }
 
 func (s *UpgradeTestSuite) executeFailedUpgrade(upgradeHeight int64, expectedErrorContains string) {

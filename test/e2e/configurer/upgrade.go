@@ -207,6 +207,18 @@ func (uc *UpgradeConfigurer) runProposalUpgrade() error {
 		}
 
 		chainConfig.UpgradePropHeight = currentHeight + int64(chainConfig.VotingPeriod) + int64(config.PropSubmitBlocks) + int64(config.PropBufferBlocks)
+		
+		// Adjust upgrade height to next epoch boundary (first block of next epoch)
+		// Epochs start at height 1, 11, 21, 31, ... (every 10 blocks)
+		// So epoch boundaries are at heights where (height - 1) % 10 == 0
+		epochInterval := int64(10)
+		if (chainConfig.UpgradePropHeight-1)%epochInterval != 0 {
+			// Calculate next epoch boundary
+			nextEpochBoundary := ((chainConfig.UpgradePropHeight-1)/epochInterval+1)*epochInterval + 1
+			uc.t.Logf("adjusting upgrade height from %d to epoch boundary %d", chainConfig.UpgradePropHeight, nextEpochBoundary)
+			chainConfig.UpgradePropHeight = nextEpochBoundary
+		}
+		
 		err = uc.SetGovPropUpgradeHeight(chainConfig.UpgradePropHeight)
 		if err != nil {
 			return err
