@@ -272,6 +272,7 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 			fp.IsSlashed = true
 			continue
 		case ftypes.FinalityProviderState_JAILED:
+			// set IsJailed to be true if the fp is jailed
 			// Note that jailed fp can still accept delegations
 			// but won't be assigned with voting power
 			fp.IsJailed = true
