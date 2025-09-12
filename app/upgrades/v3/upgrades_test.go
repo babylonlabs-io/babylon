@@ -12,13 +12,14 @@ import (
 	"github.com/babylonlabs-io/babylon/v4/app/upgrades"
 	v3 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v3"
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 )
 
 const (
-	DummyUpgradeHeight               = 5
+	DummyUpgradeHeight               = 11
 	expectedZoneConciergeModuleName  = "zc"
 	expectedBtcStkConsumerModuleName = "btcstkconsumer"
 )
@@ -136,4 +137,28 @@ func (s *UpgradeTestSuite) verifyPostUpgrade(
 	zoneConciergeParams := s.app.ZoneConciergeKeeper.GetParams(s.ctx)
 	s.Require().Equal(expectedIbcPacketTimeoutSeconds, zoneConciergeParams.IbcPacketTimeoutSeconds,
 		"IbcPacketTimeoutSeconds should be set to absolute height")
+
+	params := s.app.EpochingKeeper.GetParams(s.ctx)
+
+	// Verify that migration added ExecuteGas parameters (v1->v2 migration)
+	s.Assert().NotNil(params.ExecuteGas, "ExecuteGas should be set after migration")
+
+	// Check default ExecuteGas values were properly set
+	expectedExecuteGas := epochingtypes.DefaultExecuteGas
+	s.Assert().Equal(expectedExecuteGas.Delegate, params.ExecuteGas.Delegate, "Delegate gas should match default")
+	s.Assert().Equal(expectedExecuteGas.Undelegate, params.ExecuteGas.Undelegate, "Undelegate gas should match default")
+	s.Assert().Equal(expectedExecuteGas.BeginRedelegate, params.ExecuteGas.BeginRedelegate, "BeginRedelegate gas should match default")
+	s.Assert().Equal(expectedExecuteGas.CancelUnbondingDelegation, params.ExecuteGas.CancelUnbondingDelegation, "CancelUnbondingDelegation gas should match default")
+	s.Assert().Equal(expectedExecuteGas.EditValidator, params.ExecuteGas.EditValidator, "EditValidator gas should match default")
+
+	// Verify MinAmount was set (v1->v2 migration)
+	s.Assert().Equal(epochingtypes.DefaultMinAmount, params.MinAmount, "MinAmount should match default")
+
+	// Verify EpochInterval was preserved from existing params
+	s.Assert().Equal(uint64(10), params.EpochInterval, "EpochInterval should be preserved")
+
+	// Verify params are valid
+	s.Assert().NoError(params.Validate(), "Migrated params should be valid")
+
+	s.T().Log("Post-upgrade verification successful: migration parameters properly updated")
 }
