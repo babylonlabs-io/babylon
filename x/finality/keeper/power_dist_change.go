@@ -116,6 +116,8 @@ func (k Keeper) HandleFPStateUpdates(ctx context.Context, prevDc, newDc *ftypes.
 	for _, fp := range newlyInactiveFPs {
 		k.processInactiveFp(ctx, state, fp)
 	}
+	// call hooks for the jailed and slashed fps
+	k.processJailedAndSlashedFps(ctx, state)
 }
 
 // processInactiveFp process inactive fps event emission and hooks call
@@ -142,6 +144,39 @@ func (k Keeper) processInactiveFp(
 		panic(fmt.Errorf("failed to emit FinalityProviderStatusChangeEvent with status %s: %w", newStatus.String(), err))
 	}
 	k.Logger(sdkCtx).Info("a new finality provider becomes inactive", "pk", fp.BtcPk.MarshalHex())
+}
+
+// processJailedAndSlashedFps processes the hooks for finality providers that were
+// either jailed or slashed during the power distribution change process
+func (k Keeper) processJailedAndSlashedFps(ctx context.Context, state *ftypes.ProcessingState) {
+	// get keys and sort them to ensure determinism
+	fpBtcKeys := make([]string, 0, len(state.FPStatesByBtcPk))
+	for fpBtcPk := range state.FPStatesByBtcPk {
+		fpBtcKeys = append(fpBtcKeys, fpBtcPk)
+	}
+	sort.SliceStable(fpBtcKeys, func(i, j int) bool {
+		return fpBtcKeys[i] < fpBtcKeys[j]
+	})
+
+	for _, fpBtcPkStr := range fpBtcKeys {
+		fpBTCPk, _ := bbn.NewBIP340PubKeyFromHex(fpBtcPkStr)
+		switch state.FPStatesByBtcPk[fpBtcPkStr] {
+		case ftypes.FinalityProviderState_SLASHED:
+			k.processHooksFp(
+				sdk.UnwrapSDKContext(ctx), state.FpByBtcPk,
+				*fpBTCPk,
+				state.PrevFpStatus(fpBTCPk),
+				btcstktypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_SLASHED,
+			)
+		case ftypes.FinalityProviderState_JAILED:
+			k.processHooksFp(
+				sdk.UnwrapSDKContext(ctx), state.FpByBtcPk,
+				*fpBTCPk,
+				state.PrevFpStatus(fpBTCPk),
+				btcstktypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_JAILED,
+			)
+		}
+	}
 }
 
 // HandleActivatedFinalityProvider updates the signing info start height or create a new signing info
@@ -232,28 +267,16 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 
 		switch state.FPStatesByBtcPk[fpBTCPKHex] {
 		case ftypes.FinalityProviderState_SLASHED:
-			k.processHooksFp(
-				sdkCtx, state.FpByBtcPk,
-				*fp.BtcPk, state.PrevFpStatus(fp.BtcPk),
-				btcstktypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_SLASHED,
-			)
 			// if this finality provider is slashed, continue to avoid
 			// assigning delegation to it
 			fp.IsSlashed = true
 			continue
 		case ftypes.FinalityProviderState_JAILED:
-			k.processHooksFp(
-				sdkCtx, state.FpByBtcPk,
-				*fp.BtcPk, state.PrevFpStatus(fp.BtcPk),
-				btcstktypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_JAILED,
-			)
-			// set IsJailed to be true if the fp is jailed
 			// Note that jailed fp can still accept delegations
 			// but won't be assigned with voting power
 			fp.IsJailed = true
 		case ftypes.FinalityProviderState_UNJAILED:
-			// Hooks for active fp are called when processing newly active fps
-			// Set IsJailed to be false if the fp is unjailed
+			// set IsJailed to be false if the fp is unjailed
 			fp.IsJailed = false
 		}
 
