@@ -35,6 +35,7 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/cosmos/evm/crypto/ethsecp256k1"
+	"github.com/cosmos/evm/precompiles/testutil"
 	"github.com/cosmos/evm/server/config"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
 
@@ -138,7 +139,7 @@ func (suite *BaseTestSuite) DeployContractWithValue(
 		Data:    (*hexutil.Bytes)(&calldata),
 		ChainID: (*hexutil.Big)(chainID),
 	}
-	evmRes, err := suite.SendEthTransaction(priv, txArgs)
+	evmRes, err := suite.SendEthTransaction(priv, txArgs, testutil.LogCheckArgs{})
 	if err != nil {
 		return common.Address{}, abi.ABI{}, err
 	}
@@ -155,6 +156,7 @@ func (suite *BaseTestSuite) CallContract(
 	contractAddr common.Address,
 	contractABI abi.ABI,
 	methodName string,
+	logCheckArgs testutil.LogCheckArgs,
 	args ...interface{},
 ) (*evmtypes.MsgEthereumTxResponse, error) {
 	return suite.CallContractWithValue(
@@ -163,6 +165,7 @@ func (suite *BaseTestSuite) CallContract(
 		contractAddr,
 		contractABI,
 		methodName,
+		logCheckArgs,
 		args...,
 	)
 }
@@ -173,6 +176,7 @@ func (suite *BaseTestSuite) CallContractWithValue(
 	contractAddr common.Address,
 	contractABI abi.ABI,
 	methodName string,
+	logCheckArgs testutil.LogCheckArgs,
 	args ...interface{},
 ) (*evmtypes.MsgEthereumTxResponse, error) {
 	chainID := evmtypes.GetEthChainConfig().ChainID
@@ -199,7 +203,7 @@ func (suite *BaseTestSuite) CallContractWithValue(
 		Data:    (*hexutil.Bytes)(&calldata),
 		ChainID: (*hexutil.Big)(chainID),
 	}
-	return suite.SendEthTransaction(priv, txArgs)
+	return suite.SendEthTransaction(priv, txArgs, logCheckArgs)
 }
 
 func (suite *BaseTestSuite) SendEthValue(
@@ -224,12 +228,13 @@ func (suite *BaseTestSuite) SendEthValue(
 		Nonce:   (*hexutil.Uint64)(&nonce),
 		ChainID: (*hexutil.Big)(chainID),
 	}
-	return suite.SendEthTransaction(priv, txArgs)
+	return suite.SendEthTransaction(priv, txArgs, testutil.LogCheckArgs{})
 }
 
 func (suite *BaseTestSuite) SendEthTransaction(
 	priv *ethsecp256k1.PrivKey,
 	txArgs evmtypes.TransactionArgs,
+	logCheckArgs testutil.LogCheckArgs,
 ) (*evmtypes.MsgEthereumTxResponse, error) {
 	// make MsgEthereumTx
 	_, txBytes, err := suite.MakeEthTx(priv, txArgs)
@@ -242,13 +247,14 @@ func (suite *BaseTestSuite) SendEthTransaction(
 	if res.TxResults[0].Code != 0 {
 		return nil, fmt.Errorf("transaction failed: %v", res.TxResults[0].Log)
 	}
+	logCheckArgs.Res = *res.TxResults[0]
 
 	evmRes, err := evmtypes.DecodeTxResponse(res.TxResults[0].Data)
 	if err != nil {
 		return nil, err
 	}
 
-	return evmRes, nil
+	return evmRes, testutil.CheckLogs(logCheckArgs)
 }
 
 func (suite *BaseTestSuite) QueryContract(

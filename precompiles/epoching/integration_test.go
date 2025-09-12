@@ -14,6 +14,7 @@ import (
 
 	"github.com/cosmos/evm/crypto/ethsecp256k1"
 	"github.com/cosmos/evm/precompiles/staking"
+	"github.com/cosmos/evm/precompiles/testutil"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
@@ -79,6 +80,11 @@ var _ = Describe("Calling epoching precompile directly", func() {
 		consPkB64 string
 		valHex    common.Address
 		valBech32 string
+
+		// defaultLogCheck instantiates a log check arguments struct with the precompile ABI events populated.
+		defaultLogCheck testutil.LogCheckArgs
+		// passCheck defines the arguments to check if the precompile returns no error
+		passCheck testutil.LogCheckArgs
 	)
 
 	BeforeEach(func() {
@@ -87,6 +93,9 @@ var _ = Describe("Calling epoching precompile directly", func() {
 		blsPriv := bls12381.GenPrivKey()
 		valKeys, err := appsigner.NewValidatorKeys(valPriv, blsPriv)
 		s.Require().NoError(err)
+
+		defaultLogCheck = testutil.LogCheckArgs{ABIEvents: s.abi.Events}
+		passCheck = defaultLogCheck.WithExpPass(true)
 
 		blsKey = epoching.BlsKey{
 			PubKey:     valKeys.BlsPubkey.Bytes(),
@@ -104,6 +113,8 @@ var _ = Describe("Calling epoching precompile directly", func() {
 		Expect(err).To(BeNil())
 		valHex = common.BytesToAddress(valAddr.Bytes())
 
+		logCheckArgs := passCheck.WithExpEvents(epoching.EventTypeWrappedDelegate)
+
 		// delegate 1 bbn from pre-defined delegator
 		amount := big.NewInt(1_000_000) // 1 bbn
 		resp, err := s.CallContract(
@@ -111,6 +122,7 @@ var _ = Describe("Calling epoching precompile directly", func() {
 			s.addr,
 			s.abi,
 			epoching.WrappedDelegateMethod,
+			logCheckArgs,
 			common.Address(s.delegatorPriv.PubKey().Address().Bytes()),
 			valHex,
 			amount,
@@ -149,8 +161,9 @@ var _ = Describe("Calling epoching precompile directly", func() {
 		Context("when validator address is the msg.sender & EoA", func() {
 			It("should succeed", func() {
 				newValHex := common.Address(s.validatorPriv.PubKey().Address().Bytes())
+				logCheckArgs := passCheck.WithExpEvents(epoching.EventTypeWrappedCreateValidator)
 				resp, err := s.CallContract(
-					s.validatorPriv, s.addr, s.abi, epoching.WrappedCreateValidatorMethod,
+					s.validatorPriv, s.addr, s.abi, epoching.WrappedCreateValidatorMethod, logCheckArgs,
 					blsKey, defaultDescription, defaultCommission, defaultMinSelfDelegation, newValHex, consPkB64, defaultValue,
 				)
 				Expect(err).To(BeNil(), "error while calling the contract")
@@ -170,8 +183,9 @@ var _ = Describe("Calling epoching precompile directly", func() {
 			It("should fail", func() {
 				// use delegator address to force mismatch with signer
 				randAddr := common.Address(s.delegatorPriv.PubKey().Address().Bytes())
+				logCheckArgs := passCheck.WithExpEvents(epoching.EventTypeWrappedCreateValidator)
 				_, err := s.CallContract(
-					s.validatorPriv, s.addr, s.abi, epoching.WrappedCreateValidatorMethod,
+					s.validatorPriv, s.addr, s.abi, epoching.WrappedCreateValidatorMethod, logCheckArgs,
 					blsKey, defaultDescription, defaultCommission, defaultMinSelfDelegation, randAddr, consPkB64, defaultValue,
 				)
 				Expect(err).NotTo(BeNil(), "error while calling the contract")
@@ -210,8 +224,9 @@ var _ = Describe("Calling epoching precompile directly", func() {
 				minSelfDelegation := big.NewInt(1)
 				pubkeyBase64Str := consPkB64
 				value := big.NewInt(1_000_000) // 1bbn
+				logCheckArgs := passCheck.WithExpEvents(epoching.EventTypeWrappedCreateValidator)
 				resp, err := s.CallContract(
-					s.validatorPriv, s.addr, s.abi, epoching.WrappedCreateValidatorMethod,
+					s.validatorPriv, s.addr, s.abi, epoching.WrappedCreateValidatorMethod, logCheckArgs,
 					blsKey, description, commission, minSelfDelegation, valHex, pubkeyBase64Str, value,
 				)
 				Expect(err).To(BeNil(), "error while calling the contract")
@@ -219,8 +234,9 @@ var _ = Describe("Calling epoching precompile directly", func() {
 
 				s.AdvanceToNextEpoch()
 
+				logCheckArgs = passCheck.WithExpEvents(epoching.EventTypeWrappedEditValidator)
 				resp, err = s.CallContract(
-					s.validatorPriv, s.addr, s.abi, epoching.WrappedEditValidatorMethod,
+					s.validatorPriv, s.addr, s.abi, epoching.WrappedEditValidatorMethod, logCheckArgs,
 					defaultDescription, valHex, defaultCommissionRate, defaultMinSelfDelegation,
 				)
 				Expect(err).To(BeNil(), "error while calling the contract")
@@ -249,8 +265,9 @@ var _ = Describe("Calling epoching precompile directly", func() {
 		Context("with msg.sender different than validator address", func() {
 			It("should fail", func() {
 				randAddr := common.Address(s.delegatorPriv.PubKey().Address().Bytes())
+				logCheckArgs := passCheck.WithExpEvents(epoching.EventTypeWrappedEditValidator)
 				_, err := s.CallContract(
-					s.validatorPriv, s.addr, s.abi, epoching.WrappedEditValidatorMethod,
+					s.validatorPriv, s.addr, s.abi, epoching.WrappedEditValidatorMethod, logCheckArgs,
 					defaultDescription, randAddr, defaultCommissionRate, defaultMinSelfDelegation,
 				)
 				Expect(err).NotTo(BeNil(), "error while calling the contract")
@@ -277,11 +294,13 @@ var _ = Describe("Calling epoching precompile directly", func() {
 			It("should delegate", func() {
 				delAddr := common.Address(s.delegatorPriv.PubKey().Address().Bytes())
 
+				logCheckArgs := passCheck.WithExpEvents(epoching.EventTypeWrappedDelegate)
 				resp, err := s.CallContract(
 					s.delegatorPriv,
 					s.addr,
 					s.abi,
 					epoching.WrappedDelegateMethod,
+					logCheckArgs,
 					delAddr,
 					valHex,
 					big.NewInt(1_000_000),
@@ -307,11 +326,13 @@ var _ = Describe("Calling epoching precompile directly", func() {
 				_, err = s.InitAndFundEVMAccount(newPriv, math.NewInt(10_000))
 				Expect(err).To(BeNil())
 
+				logCheckArgs := passCheck.WithExpEvents(epoching.EventTypeWrappedDelegate)
 				_, err = s.CallContract(
 					s.delegatorPriv,
 					s.addr,
 					s.abi,
 					epoching.WrappedDelegateMethod,
+					logCheckArgs,
 					common.Address(newPriv.PubKey().Address().Bytes()),
 					valHex,
 					big.NewInt(1_000_000),
@@ -320,11 +341,13 @@ var _ = Describe("Calling epoching precompile directly", func() {
 			})
 
 			It("should not delegate if the validator doesn't exist", func() {
+				logCheckArgs := passCheck.WithExpEvents(epoching.EventTypeWrappedDelegate)
 				_, err := s.CallContract(
 					s.delegatorPriv,
 					s.addr,
 					s.abi,
 					epoching.WrappedDelegateMethod,
+					logCheckArgs,
 					common.Address(s.delegatorPriv.PubKey().Address().Bytes()),
 					common.Address(s.validatorPriv.PubKey().Address().Bytes()),
 					big.NewInt(1_000_000),
@@ -336,11 +359,13 @@ var _ = Describe("Calling epoching precompile directly", func() {
 		Context("on behalf of another account", func() {
 			It("should not delegate if delegator address is not the msg.sender", func() {
 				differentAddr := common.Address(s.validatorPriv.PubKey().Address().Bytes())
+				logCheckArgs := passCheck.WithExpEvents(epoching.EventTypeWrappedDelegate)
 				_, err := s.CallContract(
 					s.delegatorPriv,
 					s.addr,
 					s.abi,
 					epoching.WrappedDelegateMethod,
+					logCheckArgs,
 					differentAddr,
 					valHex,
 					big.NewInt(1_000_000),
@@ -361,11 +386,13 @@ var _ = Describe("Calling epoching precompile directly", func() {
 				Expect(res.UnbondingResponses).To(BeNil())
 				Expect(res.UnbondingResponses).To(HaveLen(0), "expected no unbonding delegations before test")
 
+				logCheckArgs := passCheck.WithExpEvents(epoching.EventTypeWrappedUnbond)
 				_, err = s.CallContract(
 					s.delegatorPriv,
 					s.addr,
 					s.abi,
 					epoching.WrappedUndelegateMethod,
+					logCheckArgs,
 					delAddr,
 					valHex,
 					big.NewInt(1_000_000),
@@ -383,11 +410,13 @@ var _ = Describe("Calling epoching precompile directly", func() {
 			It("should not undelegate if the amount exceeds the delegation", func() {
 				delAddr := common.Address(s.delegatorPriv.PubKey().Address().Bytes())
 
+				logCheckArgs := passCheck.WithExpEvents(epoching.EventTypeWrappedUnbond)
 				_, err := s.CallContract(
 					s.delegatorPriv,
 					s.addr,
 					s.abi,
 					epoching.WrappedUndelegateMethod,
+					logCheckArgs,
 					delAddr,
 					valHex,
 					big.NewInt(2_000_000), // 2 bbn
@@ -397,11 +426,13 @@ var _ = Describe("Calling epoching precompile directly", func() {
 
 			It("should not undelegate if the validator doesn't exist", func() {
 				delAddr := common.Address(s.delegatorPriv.PubKey().Address().Bytes())
+				logCheckArgs := passCheck.WithExpEvents(epoching.EventTypeWrappedUnbond)
 				_, err := s.CallContract(
 					s.delegatorPriv,
 					s.addr,
 					s.abi,
 					epoching.WrappedUndelegateMethod,
+					logCheckArgs,
 					delAddr,
 					common.Address(s.validatorPriv.PubKey().Address().Bytes()),
 					big.NewInt(1_000_000),
@@ -413,11 +444,13 @@ var _ = Describe("Calling epoching precompile directly", func() {
 		Context("on behalf of another account", func() {
 			It("should not undelegate if delegator address is not the msg.sender", func() {
 				diffDelAddr := common.Address(s.validatorPriv.PubKey().Address().Bytes())
+				logCheckArgs := passCheck.WithExpEvents(epoching.EventTypeWrappedUnbond)
 				_, err := s.CallContract(
 					s.delegatorPriv,
 					s.addr,
 					s.abi,
 					epoching.WrappedUndelegateMethod,
+					logCheckArgs,
 					diffDelAddr,
 					valHex,
 					big.NewInt(1_000_000),
@@ -450,8 +483,9 @@ var _ = Describe("Calling epoching precompile directly", func() {
 		BeforeEach(func() {
 			// create a new validator for a destination of the redelegation
 			newValHex = common.Address(s.validatorPriv.PubKey().Address().Bytes())
+			logCheckArgs := passCheck.WithExpEvents(epoching.EventTypeWrappedCreateValidator)
 			resp, err := s.CallContract(
-				s.validatorPriv, s.addr, s.abi, epoching.WrappedCreateValidatorMethod,
+				s.validatorPriv, s.addr, s.abi, epoching.WrappedCreateValidatorMethod, logCheckArgs,
 				blsKey, defaultDescription, defaultCommission, defaultMinSelfDelegation, newValHex, consPkB64, defaultValue,
 			)
 			Expect(err).To(BeNil(), "error while calling the contract")
@@ -470,9 +504,10 @@ var _ = Describe("Calling epoching precompile directly", func() {
 			It("should redelegate", func() {
 				delAddr := common.Address(s.delegatorPriv.PubKey().Address().Bytes())
 
+				logCheckArgs := passCheck.WithExpEvents(epoching.EventTypeWrappedRedelegate)
 				// redelegate from valAddr -> newValAddr
 				resp, err := s.CallContract(
-					s.delegatorPriv, s.addr, s.abi, epoching.WrappedRedelegateMethod,
+					s.delegatorPriv, s.addr, s.abi, epoching.WrappedRedelegateMethod, logCheckArgs,
 					delAddr, valHex, newValHex, big.NewInt(1_000_000),
 				)
 				Expect(err).To(BeNil(), "error while calling the contract")
@@ -494,8 +529,9 @@ var _ = Describe("Calling epoching precompile directly", func() {
 
 			It("should not redelegate if the amount exceeds the delegation", func() {
 				delAddr := common.Address(s.delegatorPriv.PubKey().Address().Bytes())
+				logCheckArgs := passCheck.WithExpEvents(epoching.EventTypeWrappedRedelegate)
 				_, err := s.CallContract(
-					s.delegatorPriv, s.addr, s.abi, epoching.WrappedRedelegateMethod,
+					s.delegatorPriv, s.addr, s.abi, epoching.WrappedRedelegateMethod, logCheckArgs,
 					delAddr, valHex, newValHex, big.NewInt(2_000_000),
 				)
 				Expect(err).NotTo(BeNil())
@@ -505,8 +541,9 @@ var _ = Describe("Calling epoching precompile directly", func() {
 		Context("on behalf of another account", func() {
 			It("should not redelegate if delegator address is not the msg.sender", func() {
 				diffDelAddr := common.Address(s.validatorPriv.PubKey().Address().Bytes())
+				logCheckArgs := passCheck.WithExpEvents(epoching.EventTypeWrappedRedelegate)
 				_, err := s.CallContract(
-					s.delegatorPriv, s.addr, s.abi, epoching.WrappedRedelegateMethod,
+					s.delegatorPriv, s.addr, s.abi, epoching.WrappedRedelegateMethod, logCheckArgs,
 					diffDelAddr, valHex, newValHex, big.NewInt(1_000_000),
 				)
 				Expect(err).NotTo(BeNil())
@@ -521,11 +558,13 @@ var _ = Describe("Calling epoching precompile directly", func() {
 			// set up an unbonding delegation
 			delAddr := common.Address(s.delegatorPriv.PubKey().Address().Bytes())
 			valAddr := sdk.ValAddress(valHex.Bytes())
+			logCheckArgs := passCheck.WithExpEvents(epoching.EventTypeWrappedUnbond)
 			_, err := s.CallContract(
 				s.delegatorPriv,
 				s.addr,
 				s.abi,
 				epoching.WrappedUndelegateMethod,
+				logCheckArgs,
 				delAddr,
 				valHex,
 				big.NewInt(1_000_000),
@@ -557,11 +596,13 @@ var _ = Describe("Calling epoching precompile directly", func() {
 				Expect(err).To(BeNil())
 				Expect(valDelRes.DelegationResponses).To(HaveLen(1), "only one self delegation should be found")
 
+				logCheckArgs := passCheck.WithExpEvents(epoching.EventTypeWrappedCancelUnbondingDelegation)
 				resp, err := s.CallContract(
 					s.delegatorPriv,
 					s.addr,
 					s.abi,
 					epoching.WrappedCancelUnbondingDelegationMethod,
+					logCheckArgs,
 					delAddr,
 					valHex,
 					big.NewInt(1_000_000),
@@ -587,11 +628,13 @@ var _ = Describe("Calling epoching precompile directly", func() {
 
 			It("should not cancel an unbonding delegation if the amount is not correct", func() {
 				delAddr := common.Address(s.delegatorPriv.PubKey().Address().Bytes())
+				logCheckArgs := passCheck.WithExpEvents(epoching.EventTypeWrappedCancelUnbondingDelegation)
 				_, err := s.CallContract(
 					s.delegatorPriv,
 					s.addr,
 					s.abi,
 					epoching.WrappedCancelUnbondingDelegationMethod,
+					logCheckArgs,
 					delAddr,
 					valHex,
 					big.NewInt(2_000_000),
@@ -613,11 +656,13 @@ var _ = Describe("Calling epoching precompile directly", func() {
 
 			It("should not cancel an unbonding delegation if the creation height is not correct", func() {
 				delAddr := common.Address(s.delegatorPriv.PubKey().Address().Bytes())
+				logCheckArgs := passCheck.WithExpEvents(epoching.EventTypeWrappedCancelUnbondingDelegation)
 				_, err := s.CallContract(
 					s.delegatorPriv,
 					s.addr,
 					s.abi,
 					epoching.WrappedCancelUnbondingDelegationMethod,
+					logCheckArgs,
 					delAddr,
 					valHex,
 					big.NewInt(1_000_000),
@@ -811,11 +856,13 @@ var _ = Describe("Calling epoching precompile directly", func() {
 		BeforeEach(func() {
 			// Create an unbonding delegation first
 			delAddr := common.Address(s.delegatorPriv.PubKey().Address().Bytes())
+			logCheckArgs := passCheck.WithExpEvents(epoching.EventTypeWrappedUnbond)
 			_, err := s.CallContract(
 				s.delegatorPriv,
 				s.addr,
 				s.abi,
 				epoching.WrappedUndelegateMethod,
+				logCheckArgs,
 				delAddr,
 				valHex,
 				big.NewInt(1_000_000), // 1 bbn
@@ -893,8 +940,9 @@ var _ = Describe("Calling epoching precompile directly", func() {
 			minSelfDelegation := big.NewInt(1)
 			value := big.NewInt(1_000_000) // 1bbn
 
+			logCheckArgs := passCheck.WithExpEvents(epoching.EventTypeWrappedCreateValidator)
 			resp, err := s.CallContract(
-				s.validatorPriv, s.addr, s.abi, epoching.WrappedCreateValidatorMethod,
+				s.validatorPriv, s.addr, s.abi, epoching.WrappedCreateValidatorMethod, logCheckArgs,
 				blsKey, description, commission, minSelfDelegation, newValHex, consPkB64, value,
 			)
 			Expect(err).To(BeNil(), "error while calling the contract")
@@ -904,8 +952,9 @@ var _ = Describe("Calling epoching precompile directly", func() {
 
 			// Create a redelegation
 			delAddr := common.Address(s.delegatorPriv.PubKey().Address().Bytes())
+			logCheckArgs = passCheck.WithExpEvents(epoching.EventTypeWrappedRedelegate)
 			_, err = s.CallContract(
-				s.delegatorPriv, s.addr, s.abi, epoching.WrappedRedelegateMethod,
+				s.delegatorPriv, s.addr, s.abi, epoching.WrappedRedelegateMethod, logCheckArgs,
 				delAddr, valHex, newValHex, big.NewInt(500_000), // 0.5 bbn
 			)
 			Expect(err).To(BeNil(), "error while calling the contract")
@@ -980,8 +1029,9 @@ var _ = Describe("Calling epoching precompile directly", func() {
 			minSelfDelegation := big.NewInt(1)
 			value := big.NewInt(1_000_000) // 1bbn
 
+			logCheckArgs := passCheck.WithExpEvents(epoching.EventTypeWrappedCreateValidator)
 			resp, err := s.CallContract(
-				s.validatorPriv, s.addr, s.abi, epoching.WrappedCreateValidatorMethod,
+				s.validatorPriv, s.addr, s.abi, epoching.WrappedCreateValidatorMethod, logCheckArgs,
 				blsKey, description, commission, minSelfDelegation, newValHex, consPkB64, value,
 			)
 			Expect(err).To(BeNil(), "error while calling the contract")
@@ -991,8 +1041,9 @@ var _ = Describe("Calling epoching precompile directly", func() {
 
 			// Create redelegations
 			delAddr := common.Address(s.delegatorPriv.PubKey().Address().Bytes())
+			logCheckArgs = passCheck.WithExpEvents(epoching.EventTypeWrappedRedelegate)
 			_, err = s.CallContract(
-				s.delegatorPriv, s.addr, s.abi, epoching.WrappedRedelegateMethod,
+				s.delegatorPriv, s.addr, s.abi, epoching.WrappedRedelegateMethod, logCheckArgs,
 				delAddr, valHex, newValHex, big.NewInt(500_000), // 0.5 bbn
 			)
 			Expect(err).To(BeNil(), "error while calling the contract")
@@ -1091,11 +1142,13 @@ var _ = Describe("Calling epoching precompile directly", func() {
 			// make MsgWrappedDelegate and remain this msg in the queue
 			delAddr := common.Address(s.delegatorPriv.PubKey().Address().Bytes())
 
+			logCheckArgs := passCheck.WithExpEvents(epoching.EventTypeWrappedDelegate)
 			resp, err := s.CallContract(
 				s.delegatorPriv,
 				s.addr,
 				s.abi,
 				epoching.WrappedDelegateMethod,
+				logCheckArgs,
 				delAddr,
 				valHex,
 				big.NewInt(1_000_000),
@@ -1149,11 +1202,13 @@ var _ = Describe("Calling epoching precompile directly", func() {
 			// make two MsgWrappedDelegate and remain these msgs in the queue
 			delAddr := common.Address(s.delegatorPriv.PubKey().Address().Bytes())
 
+			logCheckArgs := passCheck.WithExpEvents(epoching.EventTypeWrappedDelegate)
 			resp, err := s.CallContract(
 				s.delegatorPriv,
 				s.addr,
 				s.abi,
 				epoching.WrappedDelegateMethod,
+				logCheckArgs,
 				delAddr,
 				valHex,
 				big.NewInt(1_000_000),
@@ -1161,11 +1216,13 @@ var _ = Describe("Calling epoching precompile directly", func() {
 			Expect(err).To(BeNil(), "error while calling the contract")
 			Expect(resp.VmError).To(Equal(""))
 
+			logCheckArgs = passCheck.WithExpEvents(epoching.EventTypeWrappedDelegate)
 			resp, err = s.CallContract(
 				s.delegatorPriv,
 				s.addr,
 				s.abi,
 				epoching.WrappedDelegateMethod,
+				logCheckArgs,
 				delAddr,
 				valHex,
 				big.NewInt(1_000_000),
@@ -1216,8 +1273,9 @@ var _ = Describe("Calling epoching precompile directly", func() {
 		BeforeEach(func() {
 			// for querying validator life cycle, create new validator
 			newValHex := common.Address(s.validatorPriv.PubKey().Address().Bytes())
+			logCheckArgs := passCheck.WithExpEvents(epoching.EventTypeWrappedCreateValidator)
 			resp, err := s.CallContract(
-				s.validatorPriv, s.addr, s.abi, epoching.WrappedCreateValidatorMethod,
+				s.validatorPriv, s.addr, s.abi, epoching.WrappedCreateValidatorMethod, logCheckArgs,
 				blsKey, defaultDescription, defaultCommission, defaultMinSelfDelegation, newValHex, consPkB64, defaultValue,
 			)
 			Expect(err).To(BeNil(), "error while calling the contract")
