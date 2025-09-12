@@ -202,15 +202,8 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 	state := ftypes.NewProcessingState()
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
-	// fill up state.PrevFpStatusByBtcPk prior to processEventsAtHeight
-	// to correctly send out the previous fp status
-	for i, fp := range dc.FinalityProviders {
-		// Populates state.PrevFpStatusByBtcPk before
-		// it is updating the status based on the current events
-		canBeActive := i < int(dc.NumActiveFps) // it should not be <= as i starts at zero
-		state.PrevFpStatusByBtcPk[fp.BtcPk.MarshalHex()] = fp.FpStatus(canBeActive)
-	}
-
+	// Populates state.PrevFpStatusByBtcPk before processing events
+	state.FillPrevFpStatusByBtcPk(dc)
 	for btcHeight := lastBTCTip; btcHeight <= curBTCTip; btcHeight++ {
 		k.processEventsAtHeight(sdkCtx, btcHeight, state)
 	}
@@ -273,13 +266,7 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 		fpDeltaSats := state.DeltaSatsByFpBtcPk[fpBTCPKHex]
 		// handle delta sats based on new BTC delegations and
 		// unbonded delegations for this finality provider
-		switch {
-		case fpDeltaSats > 0:
-			fp.AddBondedSats(uint64(fpDeltaSats))
-		case fpDeltaSats < 0:
-			satsToRemove := abs(fpDeltaSats)
-			fp.RemoveBondedSats(uint64(satsToRemove))
-		}
+		fp.ChangeDeltaSats(fpDeltaSats)
 		// remove the finality provider entry in fpActiveSats map, so that
 		// after the for loop the rest entries in fpActiveSats belongs to new
 		// finality providers with new BTC delegations
@@ -338,13 +325,7 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 		// update the bonded sats for this finality provider
 		// if had any delta sats during the power distribution change
 		fpDeltaSats := state.DeltaSatsByFpBtcPk[fpBTCPKHex]
-		switch {
-		case fpDeltaSats > 0:
-			fpDistInfo.AddBondedSats(uint64(fpDeltaSats))
-		case fpDeltaSats < 0:
-			satsToRemove := abs(fpDeltaSats)
-			fpDistInfo.RemoveBondedSats(uint64(satsToRemove))
-		}
+		fpDistInfo.ChangeDeltaSats(fpDeltaSats)
 
 		// add this finality provider to the new cache if it has voting power
 		if fpDistInfo.TotalBondedSat > 0 {
@@ -597,6 +578,8 @@ func (k Keeper) processUnbondingBtcDelHook(ctx sdk.Context, state *ftypes.Proces
 	return k.processBtcDelHook(ctx, state, state.UnbondingDelegations, k.hooks.AfterBtcDelegationUnbonded)
 }
 
+// processBTCDelegationHooks calls all the changes of btc delegation activation and unbonding/withdraw
+// it needs to call all the actives first to avoid reaching negative values of sats.
 func (k Keeper) processBTCDelegationHooks(ctx sdk.Context, state *ftypes.ProcessingState) error {
 	if err := k.processActiveBtcDelHook(ctx, state); err != nil {
 		return fmt.Errorf("failed to execute active btc delegation hooks: %w", err)
@@ -655,17 +638,4 @@ func (k Keeper) loadFP(
 	}
 
 	return fp, nil
-}
-
-// abs returns the absolute value of a signed integer.
-// There's a corner case: int64 minimum
-// value (-9223372036854775808) cannot be negated.
-// For satoshi values in Bitcoin context, this
-// overflow scenario is extremely unlikely since it
-// would represent an impossibly large amount of Bitcoin
-func abs(val int64) int64 {
-	if val < 0 {
-		return -val
-	}
-	return val
 }

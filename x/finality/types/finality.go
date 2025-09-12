@@ -88,6 +88,19 @@ func (ps *ProcessingState) PrevFpStatus(fpBtcPk *bbn.BIP340PubKey) btcstktypes.F
 	return fpStatus
 }
 
+func (ps *ProcessingState) FillPrevFpStatusByBtcPk(dc *VotingPowerDistCache) {
+	// fill up state.PrevFpStatusByBtcPk prior to processEventsAtHeight
+	// to correctly send out the previous fp status
+	for idx, fp := range dc.FinalityProviders {
+		canBeActive := idx < int(dc.NumActiveFps) // it should not be <= as idx starts at zero
+		ps.AddPrevFpStatusByBtcPk(fp, canBeActive)
+	}
+}
+
+func (ps *ProcessingState) AddPrevFpStatusByBtcPk(fp *FinalityProviderDistInfo, canBeActive bool) {
+	ps.PrevFpStatusByBtcPk[fp.BtcPk.MarshalHex()] = fp.FpStatus(canBeActive)
+}
+
 func (ps *ProcessingState) AddActiveDelegation(delAddr string, fpPubKey bbn.BIP340PubKey, totalSat uint64) {
 	delAccAddr := sdk.MustAccAddressFromBech32(delAddr)
 	ps.ActiveDelegations = append(ps.ActiveDelegations, DelegationInfo{
