@@ -78,6 +78,18 @@ func NewProcessingState() *ProcessingState {
 	}
 }
 
+// AddStateForFp adds the state of the given finality provider to the processing state
+// based on the finality provider's distribution info (e.g. if it is jailed or slashed)
+func (ps *ProcessingState) AddStateForFp(fp FinalityProviderDistInfo) {
+	fpBTCPKHex := fp.BtcPk.MarshalHex()
+	if fp.IsSlashed {
+		ps.FPStatesByBtcPk[fpBTCPKHex] = FinalityProviderState_SLASHED
+	}
+	if fp.IsJailed {
+		ps.FPStatesByBtcPk[fpBTCPKHex] = FinalityProviderState_JAILED
+	}
+}
+
 // PrevFpStatus returns the status of the fp in the previous voting power distribution cache.
 // Returns inactive if not found
 func (ps *ProcessingState) PrevFpStatus(fpBtcPk *bbn.BIP340PubKey) btcstktypes.FinalityProviderStatus {

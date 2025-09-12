@@ -119,26 +119,27 @@ func (k Keeper) HandleResumeFinalityProposal(ctx sdk.Context, fpPksHex []string,
 			fp := *dc.FinalityProviders[i]
 			fpBTCPKHex := fp.BtcPk.MarshalHex()
 
+			// record the previous and new statuses of the finality providers at the current height
+			// to be used in the hooks
+			if isCurrHeight {
+				state.AddStateForFp(fp)
+				canBeActive := i < int(dc.NumActiveFps) // it should not be <= as idx starts at zero
+				state.AddPrevFpStatusByBtcPk(&fp, canBeActive)
+			}
+
 			_, shouldJail := fpPksToJail[fpBTCPKHex]
 			if shouldJail {
-				// record the previous and new statuses of the finality providers at the current height
-				// to be used in the hooks
-				if isCurrHeight {
-					canBeActive := i < int(dc.NumActiveFps) // it should not be <= as idx starts at zero
-					state.AddPrevFpStatusByBtcPk(&fp, canBeActive)
-				}
-
 				// if the fp was already slashed at that height, keep as it was
 				// and do not update to jailed.
-				if fp.IsSlashed {
-					state.FPStatesByBtcPk[fpBTCPKHex] = ftypes.FinalityProviderState_SLASHED
-				} else {
+				if !fp.IsSlashed {
 					fp.IsJailed = true
-					state.FPStatesByBtcPk[fpBTCPKHex] = ftypes.FinalityProviderState_JAILED
+					// update the state to be used in the hooks
+					if isCurrHeight {
+						state.FPStatesByBtcPk[fpBTCPKHex] = ftypes.FinalityProviderState_JAILED
+					}
 				}
 
 				k.SetVotingPower(ctx, fp.BtcPk.MustMarshal(), blkHeight, 0)
-
 			}
 
 			// add this finality provider to the new cache if it has voting power
@@ -153,12 +154,12 @@ func (k Keeper) HandleResumeFinalityProposal(ctx sdk.Context, fpPksHex []string,
 
 		// ensure every active finality provider has signing info
 		// TODO: check if we should emit events at every height
-		// don't pass the state here as we want to call the hooks only once at the current height after the loop
-		k.HandleFPStateUpdates(ctx, dc, newDc, nil)
+		// call HandleFPStateUpdates only at the current height
+		// to account for the last changes (jailed FPs on the proposal)
+		if isCurrHeight {
+			k.HandleFPStateUpdates(ctx, dc, newDc, state)
+		}
 	}
-
-	// call the hooks for the jailed finality providers
-	k.processJailedAndSlashedFps(ctx, state)
 
 	return nil
 }
