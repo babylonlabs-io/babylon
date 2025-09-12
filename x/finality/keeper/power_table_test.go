@@ -396,8 +396,7 @@ func FuzzVotingPowerTable_ActiveFinalityProviderRotation(f *testing.F) {
 		err := h.FinalityKeeper.SetParams(h.Ctx, fParams)
 		h.NoError(err)
 
-		// numFps := datagen.RandomInt(r, 20) + 10
-		numFps := uint64(20)
+		numFps := datagen.RandomInt(r, 20) + 10
 		numActiveFPs := int(min(numFps, uint64(fParams.MaxActiveFinalityProviders)))
 
 		/*
@@ -473,7 +472,7 @@ func FuzzVotingPowerTable_ActiveFinalityProviderRotation(f *testing.F) {
 				btcstktypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_ACTIVE,
 			).Times(1)
 		}
-		// Remaining FPs will stay INACTIVE to INACTIVE
+		// Remaining FPs will call INACTIVE to INACTIVE because they just joined the vp dst cache
 		for i := numActiveFPs; i < int(numFps); i++ {
 			fHooks.EXPECT().AfterFpStatusChange(
 				gomock.Any(),

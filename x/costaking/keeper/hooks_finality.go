@@ -46,8 +46,10 @@ func (h HookFinality) AfterFpStatusChange(ctx context.Context, fpAddr sdk.AccAdd
 		return nil
 	}
 
-	// sanity check? should never happen
+	// if there is no change, just don't call it
 	if prevStatus == newStatus {
+		// this usually happens when a new FP has some voting power but still is not in the active set
+		// so it calls AfterFpStatusChange(inactive => inactive)
 		return nil
 	}
 
