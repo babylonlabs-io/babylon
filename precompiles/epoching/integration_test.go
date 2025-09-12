@@ -25,6 +25,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	appsigner "github.com/babylonlabs-io/babylon/v4/app/signer"
@@ -161,6 +162,10 @@ var _ = Describe("Calling epoching precompile directly", func() {
 		Context("when validator address is the msg.sender & EoA", func() {
 			It("should succeed", func() {
 				newValHex := common.Address(s.validatorPriv.PubKey().Address().Bytes())
+				newValAddrStr := sdk.AccAddress(newValHex.Bytes()).String()
+				balResp, err := s.QueryClientBank.Balance(s.Ctx, &banktypes.QueryBalanceRequest{Address: newValAddrStr, Denom: "ubbn"})
+				Expect(err).To(BeNil())
+
 				logCheckArgs := passCheck.WithExpEvents(epoching.EventTypeWrappedCreateValidator)
 				resp, err := s.CallContract(
 					s.validatorPriv, s.addr, s.abi, epoching.WrappedCreateValidatorMethod, logCheckArgs,
@@ -169,7 +174,18 @@ var _ = Describe("Calling epoching precompile directly", func() {
 				Expect(err).To(BeNil(), "error while calling the contract")
 				Expect(resp.VmError).To(Equal(""))
 
+				// record balance right after sending `WrappedCreateValidator` to compare it with
+				// balance after advancing to the next epoch
+				// NOTE: balance decrement right after enqueue msgs feature applied in this [PR#1663](https://github.com/babylonlabs-io/babylon/pull/1663)
+				balBeforeResp, err := s.QueryClientBank.Balance(s.Ctx, &banktypes.QueryBalanceRequest{Address: newValAddrStr, Denom: "ubbn"})
+				Expect(err).To(BeNil())
+				Expect(balResp.Balance.Amount.GT(balBeforeResp.Balance.Amount)).To(BeTrue(), "expected balance to be decreased after enqueue msg")
+
 				s.AdvanceToNextEpoch()
+				// compare balance before and after advancing to the next epoch
+				balAfterResp, err := s.QueryClientBank.Balance(s.Ctx, &banktypes.QueryBalanceRequest{Address: newValAddrStr, Denom: "ubbn"})
+				Expect(err).To(BeNil())
+				Expect(balBeforeResp.Balance.Amount).To(Equal(balAfterResp.Balance.Amount))
 
 				newValAddr := sdk.ValAddress(newValHex.Bytes())
 				v, err := s.App.StakingKeeper.GetValidator(s.Ctx, newValAddr)
@@ -293,6 +309,9 @@ var _ = Describe("Calling epoching precompile directly", func() {
 		Context("as the token owner", func() {
 			It("should delegate", func() {
 				delAddr := common.Address(s.delegatorPriv.PubKey().Address().Bytes())
+				delAddrBech32Str := sdk.AccAddress(delAddr.Bytes()).String()
+				balResp, err := s.QueryClientBank.Balance(s.Ctx, &banktypes.QueryBalanceRequest{Address: delAddrBech32Str, Denom: "ubbn"})
+				Expect(err).To(BeNil())
 
 				logCheckArgs := passCheck.WithExpEvents(epoching.EventTypeWrappedDelegate)
 				resp, err := s.CallContract(
@@ -308,7 +327,18 @@ var _ = Describe("Calling epoching precompile directly", func() {
 				Expect(err).To(BeNil(), "error while calling the contract")
 				Expect(resp.VmError).To(Equal(""))
 
+				// record balance right after sending `WrappedDelegate` to compare it with
+				// balance after advancing to the next epoch
+				// NOTE: balance decrement right after enqueue msgs feature applied in this [PR#1663](https://github.com/babylonlabs-io/babylon/pull/1663)
+				balBeforeResp, err := s.QueryClientBank.Balance(s.Ctx, &banktypes.QueryBalanceRequest{Address: delAddrBech32Str, Denom: "ubbn"})
+				Expect(err).To(BeNil())
+				Expect(balResp.Balance.Amount.GT(balBeforeResp.Balance.Amount)).To(BeTrue(), "expected balance to be decreased after enqueue msg")
+
 				s.AdvanceToNextEpoch()
+
+				balAfterResp, err := s.QueryClientBank.Balance(s.Ctx, &banktypes.QueryBalanceRequest{Address: delAddrBech32Str, Denom: "ubbn"})
+				Expect(err).To(BeNil())
+				Expect(balAfterResp.Balance.Amount).To(Equal(balBeforeResp.Balance.Amount), "expected balance to be same")
 
 				res, err := s.QueryClientStaking.Delegation(s.Ctx, &stakingtypes.QueryDelegationRequest{
 					DelegatorAddr: sdk.AccAddress(s.delegatorPriv.PubKey().Address().Bytes()).String(),
