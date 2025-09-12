@@ -24,7 +24,6 @@ func (k Keeper) HandleResumeFinalityProposal(ctx sdk.Context, fpPksHex []string,
 	header := ctx.HeaderInfo()
 	currentHeight := header.Height
 	currentTime := header.Time
-	state := ftypes.NewProcessingState()
 
 	if uint64(haltingHeight) < params.FinalityActivationHeight {
 		return fmt.Errorf("finality halting height %d cannot be lower than finality activation height %d",
@@ -107,10 +106,13 @@ func (k Keeper) HandleResumeFinalityProposal(ctx sdk.Context, fpPksHex []string,
 		)
 	}
 
+	// we need the status of the jailed finality providers before jailing them for the hooks
+	state := ftypes.NewProcessingState()
 	// set the all the given finality providers voting power to 0 and updates voting power distribution cache
 	for blkHeight := uint64(haltingHeight); blkHeight <= uint64(currentHeight); blkHeight++ {
 		dc := k.GetVotingPowerDistCache(ctx, blkHeight)
 		newDc := ftypes.NewVotingPowerDistCache()
+		isCurrHeight := blkHeight == uint64(currentHeight)
 
 		for i := range dc.FinalityProviders {
 			// create a copy of the finality provider
@@ -119,13 +121,24 @@ func (k Keeper) HandleResumeFinalityProposal(ctx sdk.Context, fpPksHex []string,
 
 			_, shouldJail := fpPksToJail[fpBTCPKHex]
 			if shouldJail {
+				// record the previous and new statuses of the finality providers at the current height
+				// to be used in the hooks
+				if isCurrHeight {
+					canBeActive := i < int(dc.NumActiveFps) // it should not be <= as idx starts at zero
+					state.AddPrevFpStatusByBtcPk(&fp, canBeActive)
+				}
+
 				// if the fp was already slashed at that height, keep as it was
 				// and do not update to jailed.
-				if !fp.IsSlashed {
+				if fp.IsSlashed {
+					state.FPStatesByBtcPk[fpBTCPKHex] = ftypes.FinalityProviderState_SLASHED
+				} else {
 					fp.IsJailed = true
+					state.FPStatesByBtcPk[fpBTCPKHex] = ftypes.FinalityProviderState_JAILED
 				}
 
 				k.SetVotingPower(ctx, fp.BtcPk.MustMarshal(), blkHeight, 0)
+
 			}
 
 			// add this finality provider to the new cache if it has voting power
@@ -140,8 +153,12 @@ func (k Keeper) HandleResumeFinalityProposal(ctx sdk.Context, fpPksHex []string,
 
 		// ensure every active finality provider has signing info
 		// TODO: check if we should emit events at every height
-		k.HandleFPStateUpdates(ctx, dc, newDc, state)
+		// don't pass the state here as we want to call the hooks only once at the current height after the loop
+		k.HandleFPStateUpdates(ctx, dc, newDc, nil)
 	}
+
+	// call the hooks for the jailed finality providers
+	k.processJailedAndSlashedFps(ctx, state)
 
 	return nil
 }
