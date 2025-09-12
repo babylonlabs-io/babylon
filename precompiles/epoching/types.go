@@ -12,6 +12,8 @@ import (
 
 	cmn "github.com/cosmos/evm/precompiles/common"
 
+	"cosmossdk.io/core/address"
+
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
@@ -103,7 +105,7 @@ type Commission = struct {
 
 // NewMsgWrappedCreateValidator creates a new MsgWrappedCreateValidator instance and does sanity checks
 // on the given arguments before populating the message.
-func NewMsgWrappedCreateValidator(args []interface{}, denom string) (*checkpointingtypes.MsgWrappedCreateValidator, common.Address, error) {
+func NewMsgWrappedCreateValidator(args []interface{}, denom string, addrCdc, valCdc address.Codec) (*checkpointingtypes.MsgWrappedCreateValidator, common.Address, error) {
 	if len(args) != 7 {
 		return nil, common.Address{}, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, 7, len(args))
 	}
@@ -159,7 +161,15 @@ func NewMsgWrappedCreateValidator(args []interface{}, denom string) (*checkpoint
 		return nil, common.Address{}, fmt.Errorf(cmn.ErrInvalidAmount, args[6])
 	}
 
-	delegatorAddr := sdk.ValAddress(validatorAddress.Bytes()).String()
+	delegatorAddr, err := addrCdc.BytesToString(validatorAddress.Bytes())
+	if err != nil {
+		return nil, common.Address{}, fmt.Errorf("failed to convert hex address to bech32 address: %w", err)
+	}
+
+	validatorAddr, err := valCdc.BytesToString(validatorAddress.Bytes())
+	if err != nil {
+		return nil, common.Address{}, fmt.Errorf("failed to convert hex address to bech32 address: %w", err)
+	}
 	// convert ABI-facing bytes into strong BLS types
 	var pk bls12381.PublicKey
 	if err := (&pk).Unmarshal(blsKey.PubKey); err != nil {
@@ -193,7 +203,7 @@ func NewMsgWrappedCreateValidator(args []interface{}, denom string) (*checkpoint
 			},
 			MinSelfDelegation: math.NewIntFromBigInt(minSelfDelegation),
 			DelegatorAddress:  delegatorAddr,
-			ValidatorAddress:  sdk.ValAddress(validatorAddress.Bytes()).String(),
+			ValidatorAddress:  validatorAddr,
 			Pubkey:            pubkey,
 			Value:             sdk.Coin{Denom: denom, Amount: math.NewIntFromBigInt(value)},
 		},
@@ -204,7 +214,7 @@ func NewMsgWrappedCreateValidator(args []interface{}, denom string) (*checkpoint
 
 // NewMsgWrappedEditValidator creates a new MsgEditValidator instance and does sanity checks
 // on the given arguments before populating the message.
-func NewMsgWrappedEditValidator(args []interface{}) (*epochingtypes.MsgWrappedEditValidator, common.Address, error) {
+func NewMsgWrappedEditValidator(args []interface{}, valCdc address.Codec) (*epochingtypes.MsgWrappedEditValidator, common.Address, error) {
 	if len(args) != 4 {
 		return nil, common.Address{}, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, 4, len(args))
 	}
@@ -243,6 +253,11 @@ func NewMsgWrappedEditValidator(args []interface{}) (*epochingtypes.MsgWrappedEd
 		minSelfDelegation = &msd
 	}
 
+	validatorAddr, err := valCdc.BytesToString(validatorHexAddr.Bytes())
+	if err != nil {
+		return nil, common.Address{}, fmt.Errorf("failed to convert hex address to bech32 address: %w", err)
+	}
+
 	msg := &epochingtypes.MsgWrappedEditValidator{
 		Msg: &stakingtypes.MsgEditValidator{
 			Description: stakingtypes.Description{
@@ -252,7 +267,7 @@ func NewMsgWrappedEditValidator(args []interface{}) (*epochingtypes.MsgWrappedEd
 				SecurityContact: description.SecurityContact,
 				Details:         description.Details,
 			},
-			ValidatorAddress:  sdk.ValAddress(validatorHexAddr.Bytes()).String(),
+			ValidatorAddress:  validatorAddr,
 			CommissionRate:    commissionRate,
 			MinSelfDelegation: minSelfDelegation,
 		},
@@ -263,17 +278,20 @@ func NewMsgWrappedEditValidator(args []interface{}) (*epochingtypes.MsgWrappedEd
 
 // NewMsgWrappedDelegateBech32 creates a new MsgDelegate instance and does sanity checks
 // on the given arguments before populating the message.
-func NewMsgWrappedDelegateBech32(args []interface{}, denom string) (*epochingtypes.MsgWrappedDelegate, common.Address, error) {
-	delegatorAddr, validatorAddress, amount, err := checkDelegationUndelegationArgsBech32(args)
+func NewMsgWrappedDelegateBech32(args []interface{}, denom string, addrCdc address.Codec) (*epochingtypes.MsgWrappedDelegate, common.Address, error) {
+	delegatorAddr, validatorAddr, amount, err := checkDelegationUndelegationArgsBech32(args)
 	if err != nil {
 		return nil, common.Address{}, err
 	}
 
-	delegatorAddrStr := sdk.AccAddress(delegatorAddr.Bytes()).String()
+	delegatorAddrStr, err := addrCdc.BytesToString(delegatorAddr.Bytes())
+	if err != nil {
+		return nil, common.Address{}, fmt.Errorf("failed to convert hex address to bech32 address: %w", err)
+	}
 	msg := &epochingtypes.MsgWrappedDelegate{
 		Msg: &stakingtypes.MsgDelegate{
 			DelegatorAddress: delegatorAddrStr,
-			ValidatorAddress: validatorAddress,
+			ValidatorAddress: validatorAddr,
 			Amount: sdk.Coin{
 				Denom:  denom,
 				Amount: math.NewIntFromBigInt(amount),
@@ -286,14 +304,20 @@ func NewMsgWrappedDelegateBech32(args []interface{}, denom string) (*epochingtyp
 
 // NewMsgWrappedDelegate creates a new MsgDelegate instance and does sanity checks
 // on the given arguments before populating the message.
-func NewMsgWrappedDelegate(args []interface{}, denom string) (*epochingtypes.MsgWrappedDelegate, common.Address, error) {
+func NewMsgWrappedDelegate(args []interface{}, denom string, addrCdc, valCdc address.Codec) (*epochingtypes.MsgWrappedDelegate, common.Address, error) {
 	delegatorAddr, validatorAddr, amount, err := checkDelegationUndelegationArgs(args)
 	if err != nil {
 		return nil, common.Address{}, err
 	}
 
-	delegatorAddrStr := sdk.AccAddress(delegatorAddr.Bytes()).String()
-	validatorAddrStr := sdk.ValAddress(validatorAddr.Bytes()).String()
+	delegatorAddrStr, err := addrCdc.BytesToString(delegatorAddr.Bytes())
+	if err != nil {
+		return nil, common.Address{}, fmt.Errorf("failed to convert hex address to bech32 address: %w", err)
+	}
+	validatorAddrStr, err := valCdc.BytesToString(validatorAddr.Bytes())
+	if err != nil {
+		return nil, common.Address{}, fmt.Errorf("failed to convert hex address to bech32 address: %w", err)
+	}
 	msg := &epochingtypes.MsgWrappedDelegate{
 		Msg: &stakingtypes.MsgDelegate{
 			DelegatorAddress: delegatorAddrStr,
@@ -310,17 +334,20 @@ func NewMsgWrappedDelegate(args []interface{}, denom string) (*epochingtypes.Msg
 
 // NewMsgWrappedUndelegateBech32 creates a new MsgUndelegate instance and does sanity checks
 // on the given arguments before populating the message.
-func NewMsgWrappedUndelegateBech32(args []interface{}, denom string) (*epochingtypes.MsgWrappedUndelegate, common.Address, error) {
-	delegatorAddr, validatorAddress, amount, err := checkDelegationUndelegationArgsBech32(args)
+func NewMsgWrappedUndelegateBech32(args []interface{}, denom string, addrCdc address.Codec) (*epochingtypes.MsgWrappedUndelegate, common.Address, error) {
+	delegatorAddr, validatorAddr, amount, err := checkDelegationUndelegationArgsBech32(args)
 	if err != nil {
 		return nil, common.Address{}, err
 	}
 
-	delegatorAddrStr := sdk.AccAddress(delegatorAddr.Bytes()).String()
+	delegatorAddrStr, err := addrCdc.BytesToString(delegatorAddr.Bytes())
+	if err != nil {
+		return nil, common.Address{}, fmt.Errorf("failed to convert hex address to bech32 address: %w", err)
+	}
 	msg := &epochingtypes.MsgWrappedUndelegate{
 		Msg: &stakingtypes.MsgUndelegate{
 			DelegatorAddress: delegatorAddrStr,
-			ValidatorAddress: validatorAddress,
+			ValidatorAddress: validatorAddr,
 			Amount: sdk.Coin{
 				Denom:  denom,
 				Amount: math.NewIntFromBigInt(amount),
@@ -333,14 +360,20 @@ func NewMsgWrappedUndelegateBech32(args []interface{}, denom string) (*epochingt
 
 // NewMsgWrappedUndelegate creates a new MsgUndelegate instance and does sanity checks
 // on the given arguments before populating the message.
-func NewMsgWrappedUndelegate(args []interface{}, denom string) (*epochingtypes.MsgWrappedUndelegate, common.Address, error) {
+func NewMsgWrappedUndelegate(args []interface{}, denom string, addrCdc, valCdc address.Codec) (*epochingtypes.MsgWrappedUndelegate, common.Address, error) {
 	delegatorAddr, validatorAddr, amount, err := checkDelegationUndelegationArgs(args)
 	if err != nil {
 		return nil, common.Address{}, err
 	}
 
-	delegatorAddrStr := sdk.AccAddress(delegatorAddr.Bytes()).String()
-	validatorAddrStr := sdk.ValAddress(validatorAddr.Bytes()).String()
+	delegatorAddrStr, err := addrCdc.BytesToString(delegatorAddr.Bytes())
+	if err != nil {
+		return nil, common.Address{}, fmt.Errorf("failed to convert hex address to bech32 address: %w", err)
+	}
+	validatorAddrStr, err := valCdc.BytesToString(validatorAddr.Bytes())
+	if err != nil {
+		return nil, common.Address{}, fmt.Errorf("failed to convert hex address to bech32 address: %w", err)
+	}
 	msg := &epochingtypes.MsgWrappedUndelegate{
 		Msg: &stakingtypes.MsgUndelegate{
 			DelegatorAddress: delegatorAddrStr,
@@ -357,7 +390,7 @@ func NewMsgWrappedUndelegate(args []interface{}, denom string) (*epochingtypes.M
 
 // NewMsgWrappedRedelegateBech32 creates a new MsgRedelegate instance and does sanity checks
 // on the given arguments before populating the message.
-func NewMsgWrappedRedelegateBech32(args []interface{}, denom string) (*epochingtypes.MsgWrappedBeginRedelegate, common.Address, error) {
+func NewMsgWrappedRedelegateBech32(args []interface{}, denom string, addrCdc address.Codec) (*epochingtypes.MsgWrappedBeginRedelegate, common.Address, error) {
 	if len(args) != 4 {
 		return nil, common.Address{}, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, 4, len(args))
 	}
@@ -382,7 +415,10 @@ func NewMsgWrappedRedelegateBech32(args []interface{}, denom string) (*epochingt
 		return nil, common.Address{}, fmt.Errorf(cmn.ErrInvalidAmount, args[3])
 	}
 
-	delegatorAddrStr := sdk.AccAddress(delegatorAddr.Bytes()).String()
+	delegatorAddrStr, err := addrCdc.BytesToString(delegatorAddr.Bytes())
+	if err != nil {
+		return nil, common.Address{}, fmt.Errorf("failed to convert hex address to bech32 address: %w", err)
+	}
 	msg := &epochingtypes.MsgWrappedBeginRedelegate{
 		Msg: &stakingtypes.MsgBeginRedelegate{
 			DelegatorAddress:    delegatorAddrStr,
@@ -400,7 +436,7 @@ func NewMsgWrappedRedelegateBech32(args []interface{}, denom string) (*epochingt
 
 // NewMsgWrappedRedelegate creates a new MsgRedelegate instance and does sanity checks
 // on the given arguments before populating the message.
-func NewMsgWrappedRedelegate(args []interface{}, denom string) (*epochingtypes.MsgWrappedBeginRedelegate, common.Address, error) {
+func NewMsgWrappedRedelegate(args []interface{}, denom string, addrCdc, valCdc address.Codec) (*epochingtypes.MsgWrappedBeginRedelegate, common.Address, error) {
 	if len(args) != 4 {
 		return nil, common.Address{}, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, 4, len(args))
 	}
@@ -425,9 +461,18 @@ func NewMsgWrappedRedelegate(args []interface{}, denom string) (*epochingtypes.M
 		return nil, common.Address{}, fmt.Errorf(cmn.ErrInvalidAmount, args[3])
 	}
 
-	delegatorAddrStr := sdk.AccAddress(delegatorAddr.Bytes()).String()
-	validatorSrcAddrStr := sdk.ValAddress(validatorSrcAddr.Bytes()).String()
-	validatorDstAddrStr := sdk.ValAddress(validatorDstAddr.Bytes()).String()
+	delegatorAddrStr, err := addrCdc.BytesToString(delegatorAddr.Bytes())
+	if err != nil {
+		return nil, common.Address{}, fmt.Errorf("failed to convert hex address to bech32 address: %w", err)
+	}
+	validatorSrcAddrStr, err := valCdc.BytesToString(validatorSrcAddr.Bytes())
+	if err != nil {
+		return nil, common.Address{}, fmt.Errorf("failed to convert hex address to bech32 address: %w", err)
+	}
+	validatorDstAddrStr, err := valCdc.BytesToString(validatorDstAddr.Bytes())
+	if err != nil {
+		return nil, common.Address{}, fmt.Errorf("failed to convert hex address to bech32 address: %w", err)
+	}
 	msg := &epochingtypes.MsgWrappedBeginRedelegate{
 		Msg: &stakingtypes.MsgBeginRedelegate{
 			DelegatorAddress:    delegatorAddrStr,
@@ -445,7 +490,7 @@ func NewMsgWrappedRedelegate(args []interface{}, denom string) (*epochingtypes.M
 
 // NewMsgWrappedCancelUnbondingDelegationBech32 creates a new MsgCancelUnbondingDelegation instance and does sanity checks
 // on the given arguments before populating the message.
-func NewMsgWrappedCancelUnbondingDelegationBech32(args []interface{}, denom string) (*epochingtypes.MsgWrappedCancelUnbondingDelegation, common.Address, error) {
+func NewMsgWrappedCancelUnbondingDelegationBech32(args []interface{}, denom string, addrCdc address.Codec) (*epochingtypes.MsgWrappedCancelUnbondingDelegation, common.Address, error) {
 	if len(args) != 4 {
 		return nil, common.Address{}, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, 4, len(args))
 	}
@@ -470,7 +515,10 @@ func NewMsgWrappedCancelUnbondingDelegationBech32(args []interface{}, denom stri
 		return nil, common.Address{}, fmt.Errorf("invalid creation height")
 	}
 
-	delegatorAddrStr := sdk.AccAddress(delegatorAddr.Bytes()).String()
+	delegatorAddrStr, err := addrCdc.BytesToString(delegatorAddr.Bytes())
+	if err != nil {
+		return nil, common.Address{}, fmt.Errorf("failed to convert hex address to bech32 address: %w", err)
+	}
 	msg := &epochingtypes.MsgWrappedCancelUnbondingDelegation{
 		Msg: &stakingtypes.MsgCancelUnbondingDelegation{
 			DelegatorAddress: delegatorAddrStr,
@@ -488,7 +536,7 @@ func NewMsgWrappedCancelUnbondingDelegationBech32(args []interface{}, denom stri
 
 // NewMsgWrappedCancelUnbondingDelegation creates a new MsgCancelUnbondingDelegation instance and does sanity checks
 // on the given arguments before populating the message.
-func NewMsgWrappedCancelUnbondingDelegation(args []interface{}, denom string) (*epochingtypes.MsgWrappedCancelUnbondingDelegation, common.Address, error) {
+func NewMsgWrappedCancelUnbondingDelegation(args []interface{}, denom string, addrCdc, valCdc address.Codec) (*epochingtypes.MsgWrappedCancelUnbondingDelegation, common.Address, error) {
 	if len(args) != 4 {
 		return nil, common.Address{}, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, 4, len(args))
 	}
@@ -513,8 +561,14 @@ func NewMsgWrappedCancelUnbondingDelegation(args []interface{}, denom string) (*
 		return nil, common.Address{}, fmt.Errorf("invalid creation height")
 	}
 
-	delegatorAddrStr := sdk.AccAddress(delegatorAddr.Bytes()).String()
-	validatorAddrStr := sdk.ValAddress(validatorAddr.Bytes()).String()
+	delegatorAddrStr, err := addrCdc.BytesToString(delegatorAddr.Bytes())
+	if err != nil {
+		return nil, common.Address{}, fmt.Errorf("failed to convert hex address to bech32 address: %w", err)
+	}
+	validatorAddrStr, err := valCdc.BytesToString(validatorAddr.Bytes())
+	if err != nil {
+		return nil, common.Address{}, fmt.Errorf("failed to convert hex address to bech32 address: %w", err)
+	}
 	msg := &epochingtypes.MsgWrappedCancelUnbondingDelegation{
 		Msg: &stakingtypes.MsgCancelUnbondingDelegation{
 			DelegatorAddress: delegatorAddrStr,
@@ -533,7 +587,7 @@ func NewMsgWrappedCancelUnbondingDelegation(args []interface{}, denom string) (*
 // NewDelegationBech32Request creates a new QueryDelegationRequest instance and does sanity checks
 // on the given arguments before populating the request.
 // NOTE: bring this from cosmos EVM v0.4.1
-func NewDelegationBech32Request(args []interface{}) (*stakingtypes.QueryDelegationRequest, error) {
+func NewDelegationBech32Request(args []interface{}, addrCdc address.Codec) (*stakingtypes.QueryDelegationRequest, error) {
 	if len(args) != 2 {
 		return nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, 2, len(args))
 	}
@@ -548,7 +602,10 @@ func NewDelegationBech32Request(args []interface{}) (*stakingtypes.QueryDelegati
 		return nil, fmt.Errorf(cmn.ErrInvalidType, "validatorAddress", "string", args[1])
 	}
 
-	delegatorAddrStr := sdk.AccAddress(delegatorAddr.Bytes()).String()
+	delegatorAddrStr, err := addrCdc.BytesToString(delegatorAddr.Bytes())
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert hex address to bech32 address: %w", err)
+	}
 
 	return &stakingtypes.QueryDelegationRequest{
 		DelegatorAddr: delegatorAddrStr,
@@ -559,7 +616,7 @@ func NewDelegationBech32Request(args []interface{}) (*stakingtypes.QueryDelegati
 // NewDelegationRequest creates a new QueryDelegationRequest instance and does sanity checks
 // on the given arguments before populating the request.
 // NOTE: bring this from cosmos EVM v0.4.1
-func NewDelegationRequest(args []interface{}) (*stakingtypes.QueryDelegationRequest, error) {
+func NewDelegationRequest(args []interface{}, addrCdc, valCdc address.Codec) (*stakingtypes.QueryDelegationRequest, error) {
 	if len(args) != 2 {
 		return nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, 2, len(args))
 	}
@@ -574,8 +631,14 @@ func NewDelegationRequest(args []interface{}) (*stakingtypes.QueryDelegationRequ
 		return nil, fmt.Errorf(cmn.ErrInvalidType, "validatorAddr", "common.Address", args[1])
 	}
 
-	delegatorAddrStr := sdk.AccAddress(delegatorAddr.Bytes()).String()
-	validatorAddrStr := sdk.ValAddress(validatorAddr.Bytes()).String()
+	delegatorAddrStr, err := addrCdc.BytesToString(delegatorAddr.Bytes())
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert hex address to bech32 address: %w", err)
+	}
+	validatorAddrStr, err := valCdc.BytesToString(validatorAddr.Bytes())
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert hex address to bech32 address: %w", err)
+	}
 
 	return &stakingtypes.QueryDelegationRequest{
 		DelegatorAddr: delegatorAddrStr,
@@ -585,7 +648,7 @@ func NewDelegationRequest(args []interface{}) (*stakingtypes.QueryDelegationRequ
 
 // NewValidatorRequest create a new QueryValidatorRequest instance and does sanity checks
 // on the given arguments before populating the request.
-func NewValidatorRequest(args []interface{}) (*stakingtypes.QueryValidatorRequest, error) {
+func NewValidatorRequest(args []interface{}, valCdc address.Codec) (*stakingtypes.QueryValidatorRequest, error) {
 	if len(args) != 1 {
 		return nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, 1, len(args))
 	}
@@ -595,7 +658,10 @@ func NewValidatorRequest(args []interface{}) (*stakingtypes.QueryValidatorReques
 		return nil, fmt.Errorf(cmn.ErrInvalidValidator, args[0])
 	}
 
-	validatorAddress := sdk.ValAddress(validatorHexAddr.Bytes()).String()
+	validatorAddress, err := valCdc.BytesToString(validatorHexAddr.Bytes())
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert hex address to bech32 address: %w", err)
+	}
 
 	return &stakingtypes.QueryValidatorRequest{ValidatorAddr: validatorAddress}, nil
 }
@@ -656,7 +722,7 @@ func NewRedelegationRequest(args []interface{}) (*RedelegationRequest, error) {
 
 // NewRedelegationsRequest create a new QueryRedelegationsRequest instance and does sanity checks
 // on the given arguments before populating the request.
-func NewRedelegationsRequest(method *abi.Method, args []interface{}) (*stakingtypes.QueryRedelegationsRequest, error) {
+func NewRedelegationsRequest(method *abi.Method, args []interface{}, addrCdc, valCdc address.Codec) (*stakingtypes.QueryRedelegationsRequest, error) {
 	if len(args) != 4 {
 		return nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, 4, len(args))
 	}
@@ -673,7 +739,11 @@ func NewRedelegationsRequest(method *abi.Method, args []interface{}) (*stakingty
 		emptyAddr = common.Address{}.Hex()
 	)
 	if input.DelegatorAddress.Hex() != emptyAddr {
-		delegatorAddr = sdk.AccAddress(input.DelegatorAddress.Bytes()).String()
+		var err error
+		delegatorAddr, err = addrCdc.BytesToString(input.DelegatorAddress.Bytes())
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert hex address to bech32 address: %w", err)
+		}
 	}
 
 	if delegatorAddr == "" && input.SrcValidatorAddress.Hex() == emptyAddr && input.DstValidatorAddress.Hex() == emptyAddr ||
@@ -688,13 +758,21 @@ func NewRedelegationsRequest(method *abi.Method, args []interface{}) (*stakingty
 	if input.SrcValidatorAddress.Hex() == emptyAddr {
 		srcValidatorAddr = ""
 	} else {
-		srcValidatorAddr = sdk.ValAddress(input.SrcValidatorAddress.Bytes()).String()
+		var err error
+		srcValidatorAddr, err = valCdc.BytesToString(input.SrcValidatorAddress.Bytes())
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert hex address to bech32 address: %w", err)
+		}
 	}
 
 	if input.DstValidatorAddress.Hex() == emptyAddr {
 		dstValidatorAddr = ""
 	} else {
-		dstValidatorAddr = sdk.ValAddress(input.DstValidatorAddress.Bytes()).String()
+		var err error
+		dstValidatorAddr, err = valCdc.BytesToString(input.DstValidatorAddress.Bytes())
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert hex address to bech32 address: %w", err)
+		}
 	}
 
 	return &stakingtypes.QueryRedelegationsRequest{
@@ -779,7 +857,7 @@ func NewLatestEpochMsgsRequest(method *abi.Method, args []interface{}) (*epochin
 
 // NewValidatorLifecycleRequest create a new QueryValidatorLifecycleRequest instance and does sanity checks
 // on the given arguments before populating the request.
-func NewValidatorLifecycleRequest(args []interface{}) (*epochingtypes.QueryValidatorLifecycleRequest, error) {
+func NewValidatorLifecycleRequest(args []interface{}, valCdc address.Codec) (*epochingtypes.QueryValidatorLifecycleRequest, error) {
 	if len(args) != 1 {
 		return nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, 1, len(args))
 	}
@@ -789,7 +867,10 @@ func NewValidatorLifecycleRequest(args []interface{}) (*epochingtypes.QueryValid
 		return nil, fmt.Errorf(cmn.ErrInvalidValidator, args[0])
 	}
 
-	validatorAddrStr := sdk.ValAddress(validatorAddr.Bytes()).String()
+	validatorAddrStr, err := valCdc.BytesToString(validatorAddr.Bytes())
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert hex address to bech32 address: %w", err)
+	}
 
 	return &epochingtypes.QueryValidatorLifecycleRequest{
 		ValAddr: validatorAddrStr,
@@ -798,7 +879,7 @@ func NewValidatorLifecycleRequest(args []interface{}) (*epochingtypes.QueryValid
 
 // NewDelegationLifecycleRequest create a new QueryDelegationLifecycleRequest instance and does sanity checks
 // on the given arguments before populating the request.
-func NewDelegationLifecycleRequest(args []interface{}) (*epochingtypes.QueryDelegationLifecycleRequest, error) {
+func NewDelegationLifecycleRequest(args []interface{}, addrCdc address.Codec) (*epochingtypes.QueryDelegationLifecycleRequest, error) {
 	if len(args) != 1 {
 		return nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, 1, len(args))
 	}
@@ -808,7 +889,10 @@ func NewDelegationLifecycleRequest(args []interface{}) (*epochingtypes.QueryDele
 		return nil, fmt.Errorf(cmn.ErrInvalidDelegator, args[0])
 	}
 
-	delegatorAddrStr := sdk.AccAddress(delegatorAddr.Bytes()).String()
+	delegatorAddrStr, err := addrCdc.BytesToString(delegatorAddr.Bytes())
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert hex address to bech32 address: %w", err)
+	}
 
 	return &epochingtypes.QueryDelegationLifecycleRequest{
 		DelAddr: delegatorAddrStr,
@@ -1753,7 +1837,7 @@ func (ro *RedelegationsOutput) Pack(args abi.Arguments) ([]byte, error) {
 
 // NewUnbondingDelegationBech32Request creates a new QueryUnbondingDelegationRequest instance and does sanity checks
 // on the given arguments before populating the request.
-func NewUnbondingDelegationBech32Request(args []interface{}) (*stakingtypes.QueryUnbondingDelegationRequest, error) {
+func NewUnbondingDelegationBech32Request(args []interface{}, addrCdc address.Codec) (*stakingtypes.QueryUnbondingDelegationRequest, error) {
 	if len(args) != 2 {
 		return nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, 2, len(args))
 	}
@@ -1768,7 +1852,10 @@ func NewUnbondingDelegationBech32Request(args []interface{}) (*stakingtypes.Quer
 		return nil, fmt.Errorf(cmn.ErrInvalidType, "validatorAddress", "string", args[1])
 	}
 
-	delegatorAddrStr := sdk.AccAddress(delegatorAddr.Bytes()).String()
+	delegatorAddrStr, err := addrCdc.BytesToString(delegatorAddr.Bytes())
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert hex address to bech32 address: %w", err)
+	}
 
 	return &stakingtypes.QueryUnbondingDelegationRequest{
 		DelegatorAddr: delegatorAddrStr,
@@ -1778,7 +1865,7 @@ func NewUnbondingDelegationBech32Request(args []interface{}) (*stakingtypes.Quer
 
 // NewUnbondingDelegationRequest creates a new QueryUnbondingDelegationRequest instance and does sanity checks
 // on the given arguments before populating the request.
-func NewUnbondingDelegationRequest(args []interface{}) (*stakingtypes.QueryUnbondingDelegationRequest, error) {
+func NewUnbondingDelegationRequest(args []interface{}, addrCdc, valCdc address.Codec) (*stakingtypes.QueryUnbondingDelegationRequest, error) {
 	if len(args) != 2 {
 		return nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, 2, len(args))
 	}
@@ -1793,8 +1880,14 @@ func NewUnbondingDelegationRequest(args []interface{}) (*stakingtypes.QueryUnbon
 		return nil, fmt.Errorf(cmn.ErrInvalidType, "validatorAddr", "common.Address", args[1])
 	}
 
-	delegatorAddrStr := sdk.AccAddress(delegatorAddr.Bytes()).String()
-	validatorAddrStr := sdk.ValAddress(validatorAddr.Bytes()).String()
+	delegatorAddrStr, err := addrCdc.BytesToString(delegatorAddr.Bytes())
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert hex address to bech32 address: %w", err)
+	}
+	validatorAddrStr, err := valCdc.BytesToString(validatorAddr.Bytes())
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert hex address to bech32 address: %w", err)
+	}
 
 	return &stakingtypes.QueryUnbondingDelegationRequest{
 		DelegatorAddr: delegatorAddrStr,
@@ -1837,7 +1930,7 @@ func checkDelegationUndelegationArgsBech32(args []interface{}) (common.Address, 
 		return common.Address{}, "", nil, fmt.Errorf(cmn.ErrInvalidDelegator, args[0])
 	}
 
-	validatorAddress, ok := args[1].(string)
+	validatorAddr, ok := args[1].(string)
 	if !ok {
 		return common.Address{}, "", nil, fmt.Errorf(cmn.ErrInvalidType, "validatorAddress", "string", args[1])
 	}
@@ -1847,7 +1940,7 @@ func checkDelegationUndelegationArgsBech32(args []interface{}) (common.Address, 
 		return common.Address{}, "", nil, fmt.Errorf(cmn.ErrInvalidAmount, args[2])
 	}
 
-	return delegatorAddr, validatorAddress, amount, nil
+	return delegatorAddr, validatorAddr, amount, nil
 }
 
 // NewRedelegationBech32Request create a new RedelegationRequest instance for Bech32 addresses and does sanity checks
@@ -1891,7 +1984,7 @@ func NewRedelegationBech32Request(args []interface{}) (*RedelegationRequest, err
 
 // NewRedelegationsBech32Request create a new QueryRedelegationsRequest instance for Bech32 addresses and does sanity checks
 // on the given arguments before populating the request.
-func NewRedelegationsBech32Request(method *abi.Method, args []interface{}) (*stakingtypes.QueryRedelegationsRequest, error) {
+func NewRedelegationsBech32Request(method *abi.Method, args []interface{}, addrCdc address.Codec) (*stakingtypes.QueryRedelegationsRequest, error) {
 	if len(args) != 4 {
 		return nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, 4, len(args))
 	}
@@ -1911,7 +2004,11 @@ func NewRedelegationsBech32Request(method *abi.Method, args []interface{}) (*sta
 		emptyAddr     = common.Address{}.Hex()
 	)
 	if input.DelegatorAddress.Hex() != emptyAddr {
-		delegatorAddr = sdk.AccAddress(input.DelegatorAddress.Bytes()).String()
+		var err error
+		delegatorAddr, err = addrCdc.BytesToString(input.DelegatorAddress.Bytes())
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert hex address to bech32 address: %w", err)
+		}
 	}
 
 	if delegatorAddr == "" && input.SrcValidatorAddress == "" && input.DstValidatorAddress == "" ||
