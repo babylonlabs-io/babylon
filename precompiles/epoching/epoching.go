@@ -165,8 +165,12 @@ func (p Precompile) run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 	// Staking queries
 	case DelegationMethod:
 		bz, err = p.Delegation(ctx, contract, method, args)
+	case DelegationBech32Method:
+		bz, err = p.DelegationBech32(ctx, contract, method, args)
 	case UnbondingDelegationMethod:
 		bz, err = p.UnbondingDelegation(ctx, contract, method, args)
+	case UnbondingDelegationBech32Method:
+		bz, err = p.UnbondingDelegationBech32(ctx, contract, method, args)
 	case ValidatorMethod:
 		bz, err = p.Validator(ctx, method, contract, args)
 	case ValidatorBech32Method:

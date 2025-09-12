@@ -23,10 +23,12 @@ const (
 	RedelegationsMethod       = "redelegations"
 
 	// bech32 versions of staking queries
-	ValidatorBech32Method     = "validatorBech32"
-	ValidatorsBech32Method    = "validatorsBech32"
-	RedelegationBech32Method  = "redelegationBech32"
-	RedelegationsBech32Method = "redelegationsBech32"
+	ValidatorBech32Method           = "validatorBech32"
+	ValidatorsBech32Method          = "validatorsBech32"
+	DelegationBech32Method          = "delegationBech32"
+	UnbondingDelegationBech32Method = "unbondingDelegationBech32"
+	RedelegationBech32Method        = "redelegationBech32"
+	RedelegationsBech32Method       = "redelegationsBech32"
 
 	// epoching precompile queries
 	EpochInfoMethod           = "epochInfo"
@@ -121,7 +123,7 @@ func (p Precompile) UnbondingDelegationBech32(
 		// return empty unbonding delegation output if the unbonding delegation is not found
 		expError := fmt.Sprintf("unbonding delegation with delegator %s not found for validator %s", req.DelegatorAddr, req.ValidatorAddr)
 		if strings.Contains(err.Error(), expError) {
-			return method.Outputs.Pack(UnbondingDelegationResponse{})
+			return method.Outputs.Pack(UnbondingDelegationResponseBech32{})
 		}
 		return nil, err
 	}
