@@ -25,7 +25,7 @@ func benchmarkTallyBlocks(b *testing.B, numFPs int) {
 	bsKeeper := types.NewMockBTCStakingKeeper(ctrl)
 	iKeeper := types.NewMockIncentiveKeeper(ctrl)
 	cKeeper := types.NewMockCheckpointingKeeper(ctrl)
-	fKeeper, ctx := keepertest.FinalityKeeper(b, bsKeeper, iKeeper, cKeeper)
+	fKeeper, ctx := keepertest.FinalityKeeper(b, bsKeeper, iKeeper, cKeeper, nil)
 
 	// activate BTC staking protocol at a random height
 	activatedHeight := uint64(1)

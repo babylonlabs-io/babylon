@@ -85,6 +85,7 @@ type Helper struct {
 
 	FinalityKeeper *fkeeper.Keeper
 	FMsgServer     ftypes.MsgServer
+	FinalityHooks  ftypes.FinalityHooks
 
 	BTCLightClientKeeper             *types.MockBTCLightClientKeeper
 	CheckpointingKeeperForBtcStaking *types.MockBtcCheckpointKeeper
@@ -106,6 +107,7 @@ func NewHelper(
 	btcStkStoreKey *storetypes.KVStoreKey,
 ) *Helper {
 	ctrl := gomock.NewController(t)
+	t.Cleanup(ctrl.Finish)
 
 	ictvK := NewMockIctvKeeperK(ctrl)
 
@@ -122,7 +124,7 @@ func NewHelper(
 
 	chKeeper := mocks.NewMockZoneConciergeChannelKeeper(ctrl)
 
-	return NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKeeper, ckptKeeper, ictvK, chKeeper, btcStkStoreKey, nil)
+	return NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKeeper, ckptKeeper, ictvK, chKeeper, btcStkStoreKey, ftypes.NewMockFinalityHooks(ctrl))
 }
 
 func (h *Helper) WithBlockHeight(height int64) *Helper {
@@ -146,7 +148,7 @@ func NewHelperNoMocksCalls(
 	ckptKeeper := ftypes.NewMockCheckpointingKeeper(ctrl)
 	chKeeper := mocks.NewMockZoneConciergeChannelKeeper(ctrl)
 
-	return NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKeeper, ckptKeeper, ictvK, chKeeper, btcStkStoreKey, nil)
+	return NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKeeper, ckptKeeper, ictvK, chKeeper, btcStkStoreKey, ftypes.NewMockFinalityHooks(ctrl))
 }
 
 // NewHelperWithIncentiveKeeper creates a new Helper with the given BTCLightClientKeeper and BtcCheckpointKeeper mocks, and an instance of the incentive keeper.
@@ -168,7 +170,7 @@ func NewHelperWithIncentiveKeeper(
 	ckptKeeper := ftypes.NewMockCheckpointingKeeper(ctrl)
 	chKeeper := mocks.NewMockZoneConciergeChannelKeeper(ctrl)
 
-	return NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKeeper, ckptKeeper, ictvK, chKeeper, nil, nil)
+	return NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKeeper, ckptKeeper, ictvK, chKeeper, nil, ftypes.NewMockFinalityHooks(ctrl))
 }
 
 func NewHelperWithBankMock(
@@ -208,13 +210,8 @@ func NewHelperWithStoreAndIncentive(
 	bscKeeper := k.BscKeeper.(bsckeeper.Keeper)
 	btcStkConsumerMsgServer := bsckeeper.NewMsgServerImpl(bscKeeper)
 
-	fk, ctx := keepertest.FinalityKeeperWithStore(t, db, stateStore, k, ictvKeeper, btccKForFinality)
+	fk, ctx := keepertest.FinalityKeeperWithStore(t, db, stateStore, k, ictvKeeper, btccKForFinality, finalityHooks)
 	fMsgSrvr := fkeeper.NewMsgServerImpl(*fk)
-	multiHooks := ftypes.NewMultiFinalityHooks()
-	if finalityHooks != nil {
-		multiHooks = ftypes.NewMultiFinalityHooks(finalityHooks)
-	}
-	fk.SetHooks(multiHooks)
 
 	// set all parameters
 	err := k.SetParams(ctx, types.DefaultParams())
@@ -236,6 +233,7 @@ func NewHelperWithStoreAndIncentive(
 
 		FinalityKeeper: fk,
 		FMsgServer:     fMsgSrvr,
+		FinalityHooks:  finalityHooks,
 
 		BTCLightClientKeeper:             btclcKeeper,
 		CheckpointingKeeperForBtcStaking: btccKForBtcStaking,
@@ -264,9 +262,8 @@ func NewHelperWithStoreIncentiveAndBank(
 	bscKeeper := k.BscKeeper.(bsckeeper.Keeper)
 	btcStkConsumerMsgServer := bsckeeper.NewMsgServerImpl(bscKeeper)
 
-	fk, ctx := keepertest.FinalityKeeperWithStore(t, db, stateStore, k, ictvKeeper, btccKForFinality)
+	fk, ctx := keepertest.FinalityKeeperWithStore(t, db, stateStore, k, ictvKeeper, btccKForFinality, ftypes.NewMultiFinalityHooks())
 	fMsgSrvr := fkeeper.NewMsgServerImpl(*fk)
-	fk.SetHooks(ftypes.NewMultiFinalityHooks())
 
 	// set all parameters
 	err := k.SetParams(ctx, types.DefaultParams())

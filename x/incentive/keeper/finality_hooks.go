@@ -6,6 +6,8 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+	btcstktypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 	ftypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
 )
 
@@ -24,7 +26,7 @@ func (k Keeper) Hooks() Hooks {
 // AfterBtcDelegationActivated implements the FinalityHooks interface
 // It handles the activation of a BTC delegation by adding the staked satoshis
 // to the reward tracking system
-func (h Hooks) AfterBtcDelegationActivated(ctx context.Context, fpAddr, btcDelAddr sdk.AccAddress, fpSecuresBabylon bool, sats uint64) error {
+func (h Hooks) AfterBtcDelegationActivated(ctx context.Context, fpAddr, btcDelAddr sdk.AccAddress, fpSecuresBabylon bool, fpBbnPrevStatus btcstktypes.FinalityProviderStatus, sats uint64) error {
 	if fpSecuresBabylon {
 		height := uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
 		return h.k.AddEventBtcDelegationActivated(ctx, height, fpAddr, btcDelAddr, sats)
@@ -38,7 +40,7 @@ func (h Hooks) AfterBtcDelegationActivated(ctx context.Context, fpAddr, btcDelAd
 // AfterBtcDelegationUnbonded implements the FinalityHooks interface
 // It handles the unbonding of a BTC delegation by removing the staked satoshis
 // from the reward tracking system
-func (h Hooks) AfterBtcDelegationUnbonded(ctx context.Context, fpAddr, btcDelAddr sdk.AccAddress, fpSecuresBabylon bool, sats uint64) error {
+func (h Hooks) AfterBtcDelegationUnbonded(ctx context.Context, fpAddr, btcDelAddr sdk.AccAddress, fpSecuresBabylon bool, fpBbnPrevStatus btcstktypes.FinalityProviderStatus, sats uint64) error {
 	if fpSecuresBabylon {
 		// if it secures babylon it should wait until that block height is rewarded to process event tracker related events
 		height := uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
@@ -50,4 +52,9 @@ func (h Hooks) AfterBtcDelegationUnbonded(ctx context.Context, fpAddr, btcDelAdd
 	// being distributed based on the latest voting power.
 	amtSat := sdkmath.NewIntFromUint64(sats)
 	return h.k.BtcDelegationUnbonded(ctx, fpAddr, btcDelAddr, amtSat)
+}
+
+// AfterFpStatusChange implements types.FinalityHooks
+func (h Hooks) AfterFpStatusChange(ctx context.Context, fpAddr sdk.AccAddress, fpSecuresBabylon bool, prevStatus, newStatus types.FinalityProviderStatus) error {
+	return nil
 }

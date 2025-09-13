@@ -26,7 +26,7 @@ func benchmarkAddFinalitySig(b *testing.B) {
 
 	bsKeeper := types.NewMockBTCStakingKeeper(ctrl)
 	cKeeper := types.NewMockCheckpointingKeeper(ctrl)
-	fKeeper, ctx := keepertest.FinalityKeeper(b, bsKeeper, nil, cKeeper)
+	fKeeper, ctx := keepertest.FinalityKeeper(b, bsKeeper, nil, cKeeper, nil)
 	ms := keeper.NewMsgServerImpl(*fKeeper)
 
 	// create a random finality provider

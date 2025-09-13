@@ -490,7 +490,7 @@ func TestGetCostakerRewardsOrInitialize(t *testing.T) {
 
 	emptyInitialized, err := k.GetCostakerRewardsOrInitialize(ctx, costaker)
 	require.NoError(t, err)
-	require.Equal(t, emptyInitialized.StartPeriodCumulativeReward, uint64(0))
+	require.Equal(t, emptyInitialized.StartPeriodCumulativeReward, uint64(1)) // current reward
 	require.Equal(t, emptyInitialized.ActiveBaby, sdkmath.ZeroInt())
 	require.Equal(t, emptyInitialized.ActiveSatoshis, sdkmath.ZeroInt())
 	require.Equal(t, emptyInitialized.TotalScore, sdkmath.ZeroInt())

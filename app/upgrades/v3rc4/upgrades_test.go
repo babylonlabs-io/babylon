@@ -85,7 +85,7 @@ func setupTestKeepers(t *testing.T, btcTip uint32) (sdk.Context, codec.BinaryCod
 	bankKeeper := testutilkeeper.BankKeeper(t, db, stateStore, accK)
 	stkKeeper := testutilkeeper.StakingKeeper(t, db, stateStore, accK, bankKeeper)
 	incentiveK, _ := testutilkeeper.IncentiveKeeperWithStore(t, db, stateStore, nil, bankKeeper, accK, nil)
-	fKeeper, _ := testutilkeeper.FinalityKeeperWithStore(t, db, stateStore, btcStkKeeper, incentiveK, ftypes.NewMockCheckpointingKeeper(ctrl))
+	fKeeper, _ := testutilkeeper.FinalityKeeperWithStore(t, db, stateStore, btcStkKeeper, incentiveK, ftypes.NewMockCheckpointingKeeper(ctrl), ftypes.NewMockFinalityHooks(ctrl))
 
 	// Setup costaking store service and keeper
 	costkStoreKey := storetypes.NewKVStoreKey(costktypes.StoreKey)

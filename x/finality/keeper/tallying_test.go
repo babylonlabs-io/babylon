@@ -26,7 +26,7 @@ func FuzzTallying_FinalizingNoBlock(f *testing.F) {
 		bsKeeper := types.NewMockBTCStakingKeeper(ctrl)
 		iKeeper := types.NewMockIncentiveKeeper(ctrl)
 		cKeeper := types.NewMockCheckpointingKeeper(ctrl)
-		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper)
+		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper, nil)
 
 		// activate BTC staking protocol at a random height
 		activatedHeight := datagen.RandomInt(r, 10) + 1
@@ -68,7 +68,7 @@ func FuzzTallying_FinalizingSomeBlocks(f *testing.F) {
 		bsKeeper := types.NewMockBTCStakingKeeper(ctrl)
 		iKeeper := types.NewMockIncentiveKeeper(ctrl)
 		cKeeper := types.NewMockCheckpointingKeeper(ctrl)
-		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper)
+		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper, nil)
 
 		// activate BTC staking protocol at a random height
 		activatedHeight := datagen.RandomInt(r, 10) + 1
@@ -119,7 +119,7 @@ func FuzzTallying_FinalizingAtMostMaxFinalizedBlocks(f *testing.F) {
 		bsKeeper := types.NewMockBTCStakingKeeper(ctrl)
 		iKeeper := types.NewMockIncentiveKeeper(ctrl)
 		cKeeper := types.NewMockCheckpointingKeeper(ctrl)
-		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper)
+		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper, nil)
 
 		// activate BTC staking protocol at a random height
 		activatedHeight := datagen.RandomInt(r, 10) + 1
@@ -254,7 +254,7 @@ func FuzzConsecutiveFinalization(f *testing.F) {
 		bsKeeper := types.NewMockBTCStakingKeeper(ctrl)
 		iKeeper := types.NewMockIncentiveKeeper(ctrl)
 		cKeeper := types.NewMockCheckpointingKeeper(ctrl)
-		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper)
+		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper, nil)
 
 		// activate BTC staking protocol at a random height
 		activatedHeight := datagen.RandomInt(r, 10) + 1
