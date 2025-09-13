@@ -105,6 +105,7 @@ func (ps *ProcessingState) FillPrevFpStatusByBtcPk(dc *VotingPowerDistCache) {
 	for idx, fp := range dc.FinalityProviders {
 		canBeActive := idx < int(dc.NumActiveFps) // it should not be <= as idx starts at zero
 		ps.AddPrevFpStatusByBtcPk(fp, canBeActive)
+		ps.AddStateForFp(*fp)
 	}
 }
 

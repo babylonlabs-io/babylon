@@ -116,6 +116,11 @@ func (k Keeper) HandleFPStateUpdates(ctx context.Context, prevDc, newDc *ftypes.
 
 	newlyInactiveFPs := newDc.FindNewInactiveFinalityProviders(prevDc)
 	for _, fp := range newlyInactiveFPs {
+		fpstate := state.FPStatesByBtcPk[fp.BtcPk.MarshalHex()]
+		if fpstate == ftypes.FinalityProviderState_JAILED || fpstate == ftypes.FinalityProviderState_SLASHED {
+			// if it is jailed or slashed the event was already emitted
+			continue
+		}
 		k.processInactiveFp(ctx, state, fp)
 	}
 	// call hooks for the jailed and slashed fps

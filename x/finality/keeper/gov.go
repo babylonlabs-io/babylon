@@ -114,18 +114,16 @@ func (k Keeper) HandleResumeFinalityProposal(ctx sdk.Context, fpPksHex []string,
 		newDc := ftypes.NewVotingPowerDistCache()
 		isCurrHeight := blkHeight == uint64(currentHeight)
 
+		// record the previous and new statuses of the finality providers at the current height
+		// to be used in the hooks
+		if isCurrHeight {
+			state.FillPrevFpStatusByBtcPk(dc)
+		}
+
 		for i := range dc.FinalityProviders {
 			// create a copy of the finality provider
 			fp := *dc.FinalityProviders[i]
 			fpBTCPKHex := fp.BtcPk.MarshalHex()
-
-			// record the previous and new statuses of the finality providers at the current height
-			// to be used in the hooks
-			if isCurrHeight {
-				state.AddStateForFp(fp)
-				canBeActive := i < int(dc.NumActiveFps) // it should not be <= as idx starts at zero
-				state.AddPrevFpStatusByBtcPk(&fp, canBeActive)
-			}
 
 			_, shouldJail := fpPksToJail[fpBTCPKHex]
 			if shouldJail {
@@ -158,7 +156,9 @@ func (k Keeper) HandleResumeFinalityProposal(ctx sdk.Context, fpPksHex []string,
 		// to account for the last changes (jailed FPs on the proposal)
 		if isCurrHeight {
 			k.HandleFPStateUpdates(ctx, dc, newDc, state)
+			continue
 		}
+		k.HandleFPStateUpdates(ctx, dc, newDc, nil)
 	}
 
 	return nil
