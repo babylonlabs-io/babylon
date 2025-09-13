@@ -25,7 +25,7 @@ func FuzzHandleRewarding(f *testing.F) {
 		bsKeeper := types.NewMockBTCStakingKeeper(ctrl)
 		iKeeper := types.NewMockIncentiveKeeper(ctrl)
 		cKeeper := types.NewMockCheckpointingKeeper(ctrl)
-		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper)
+		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper, nil)
 
 		// Activate BTC staking protocol at a random height
 		activatedHeight := datagen.RandomInt(r, 10) + 1
@@ -120,7 +120,7 @@ func TestHandleRewardingWithGapsOfUnfinalizedBlocks(t *testing.T) {
 	bsKeeper := types.NewMockBTCStakingKeeper(ctrl)
 	iKeeper := types.NewMockIncentiveKeeper(ctrl)
 	cKeeper := types.NewMockCheckpointingKeeper(ctrl)
-	fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper)
+	fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper, nil)
 
 	fpPK, err := datagen.GenRandomBIP340PubKey(r)
 	require.NoError(t, err)
@@ -178,7 +178,7 @@ func FuzzHandleRewardingLimits(f *testing.F) {
 		bsKeeper := types.NewMockBTCStakingKeeper(ctrl)
 		iKeeper := types.NewMockIncentiveKeeper(ctrl)
 		cKeeper := types.NewMockCheckpointingKeeper(ctrl)
-		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper)
+		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper, nil)
 
 		// Activate BTC staking protocol at a random height
 		activatedHeight := datagen.RandomInt(r, 10) + 1

@@ -48,7 +48,8 @@ service Query {
   rpc FpCurrentRewards(QueryFpCurrentRewardsRequest)
       returns (QueryFpCurrentRewardsResponse) {
     option (google.api.http).get =
-        "/babylon/incentive/finality_providers_current_rewards/{finality_provider_address}";
+        "/babylon/incentive/finality_providers_current_rewards/"
+        "{finality_provider_address}";
   }
 }
 

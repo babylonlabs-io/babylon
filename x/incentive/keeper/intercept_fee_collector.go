@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/babylonlabs-io/babylon/v4/x/incentive/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // HandleCoinsInFeeCollector intercepts a portion of coins in fee collector, and distributes
@@ -24,12 +25,20 @@ func (k Keeper) HandleCoinsInFeeCollector(ctx context.Context) {
 		return
 	}
 
-	// record BTC staking gauge for the current height, and transfer corresponding amount
+	// record FP direct rewards for the current height
+	fpsDirectRwds := sdk.NewCoins()
+	// check new param is not nil in case is not set yet
+	if !params.FpPortion.IsNil() {
+		fpsDirectRwds = types.GetCoinsPortion(feesCollectedInt, params.FpPortion)
+	}
+
+	// record BTC staking gauge for the current height
+	btcStakingPortion := params.BTCStakingPortion()
+	btcStakingReward := types.GetCoinsPortion(feesCollectedInt, btcStakingPortion)
+	// Transfer corresponding amount (fp direct rewards + btc_staking rewards)
 	// from fee collector account to incentive module account
 	// TODO: maybe we should not transfer reward to BTC staking gauge before BTC staking is activated
 	// this is tricky to implement since finality module will depend on incentive and incentive cannot
 	// depend on finality module due to cyclic dependency
-	btcStakingPortion := params.BTCStakingPortion()
-	btcStakingReward := types.GetCoinsPortion(feesCollectedInt, btcStakingPortion)
-	k.accumulateBTCStakingReward(ctx, btcStakingReward)
+	k.accumulateRewards(ctx, btcStakingReward, fpsDirectRwds)
 }

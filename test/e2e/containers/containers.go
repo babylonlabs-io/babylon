@@ -431,3 +431,10 @@ func (m *Manager) HermesContainerName() string {
 func (m *Manager) CosmosRlyrContainerName() string {
 	return fmt.Sprintf("%s-%s", cosmosRelayerContainerName, m.identifier)
 }
+
+// WithCurrentTag sets the current tag of the babylon image in the manager
+// This function is useful when we want to test an upgrade from a specific tag
+// overriding the default BabylonContainerTagBeforeUpgrade value
+func (m *Manager) WithCurrentTag(tag string) {
+	m.ImageConfig.CurrentTag = tag
+}

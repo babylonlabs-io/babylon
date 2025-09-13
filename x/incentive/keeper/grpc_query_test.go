@@ -23,7 +23,7 @@ func FuzzRewardGaugesQuery(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 
-		keeper, ctx := testkeeper.IncentiveKeeper(t, nil, nil, nil)
+		keeper, ctx := testkeeper.IncentiveKeeper(t, nil, nil, nil, nil)
 
 		// generate a list of random RewardGauge map and insert them to KVStore
 		// where in each map, key is stakeholder type and address is the reward gauge
@@ -66,7 +66,7 @@ func FuzzBTCStakingGaugeQuery(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 
-		keeper, ctx := testkeeper.IncentiveKeeper(t, nil, nil, nil)
+		keeper, ctx := testkeeper.IncentiveKeeper(t, nil, nil, nil, nil)
 
 		// generate a list of random Gauges at random heights, then insert them to KVStore
 		heightList := []uint64{datagen.RandomInt(r, 1000) + 1}
@@ -101,7 +101,7 @@ func FuzzDelegationRewardsQuery(f *testing.F) {
 		var (
 			r            = rand.New(rand.NewSource(seed))
 			storeKey     = storetypes.NewKVStoreKey(types.StoreKey)
-			k, ctx       = testkeeper.IncentiveKeeperWithStoreKey(t, storeKey, nil, nil, nil)
+			k, ctx       = testkeeper.IncentiveKeeperWithStoreKey(t, storeKey, nil, nil, nil, nil)
 			fp, del      = datagen.GenRandomAddress(), datagen.GenRandomAddress()
 			storeService = runtime.NewKVStoreService(storeKey)
 			store        = storeService.OpenKVStore(ctx)
@@ -185,7 +185,7 @@ func FuzzFpCurrentRewards(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 
-		k, ctx := testkeeper.IncentiveKeeper(t, nil, nil, nil)
+		k, ctx := testkeeper.IncentiveKeeper(t, nil, nil, nil, nil)
 
 		// invalid query
 		badFp := datagen.GenRandomAddress()

@@ -15,7 +15,7 @@ import (
 func TestGenesis(t *testing.T) {
 	genesisState := types.DefaultGenesis()
 
-	k, ctx := keepertest.IncentiveKeeper(t, nil, nil, nil)
+	k, ctx := keepertest.IncentiveKeeper(t, nil, nil, nil, nil)
 	incentive.InitGenesis(ctx, *k, *genesisState)
 	fp1, fp2, del1, del2 := datagen.GenRandomAddress(), datagen.GenRandomAddress(), datagen.GenRandomAddress(), datagen.GenRandomAddress()
 

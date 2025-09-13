@@ -71,6 +71,11 @@ func (k Keeper) AccumulateRewardGaugeForFP(ctx context.Context, addr sdk.AccAddr
 	k.accumulateRewardGauge(ctx, types.FINALITY_PROVIDER, addr, reward)
 }
 
+// AccumulateRewardGaugeForCostaker accumulates the given reward for a costaker
+func (k Keeper) AccumulateRewardGaugeForCostaker(ctx context.Context, addr sdk.AccAddress, reward sdk.Coins) {
+	k.accumulateRewardGauge(ctx, types.COSTAKER, addr, reward)
+}
+
 func (k Keeper) SetRewardGauge(ctx context.Context, sType types.StakeholderType, addr sdk.AccAddress, rg *types.RewardGauge) {
 	store := k.rewardGaugeStore(ctx, sType)
 	rgBytes := k.cdc.MustMarshal(rg)

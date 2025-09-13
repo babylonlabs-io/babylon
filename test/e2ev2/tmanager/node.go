@@ -421,10 +421,6 @@ func (n *Node) T() *testing.T {
 func (n *Node) CreateWallet(keyName string) *WalletSender {
 	nw := NewWalletSender(keyName, n)
 	n.Wallets[keyName] = nw
-	if n.IsChainRunning() {
-		// set seq and acc number
-		n.UpdateWalletAccSeqNumber(keyName)
-	}
 	return nw
 }
 
@@ -443,7 +439,17 @@ func (n *Node) DefaultWallet() *WalletSender {
 }
 
 func (n *Node) IsChainRunning() bool {
-	return false
+	if n.RpcClient == nil {
+		return false
+	}
+	status, err := n.RpcClient.Status(context.Background())
+	if err != nil {
+		return false
+	}
+	if status == nil {
+		return false
+	}
+	return !status.SyncInfo.CatchingUp
 }
 
 func (n *Node) RunNodeResource() *dockertest.Resource {

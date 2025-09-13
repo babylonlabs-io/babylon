@@ -16,7 +16,7 @@ message GenesisState {
   // Epochs data for each stored epoch
   repeated EpochEntry epochs = 3 [ (gogoproto.nullable) = false ];
   // Submission data for each stored submission key
-  repeated SubmissionEntry submissions = 4  [(gogoproto.nullable) = false ];
+  repeated SubmissionEntry submissions = 4 [ (gogoproto.nullable) = false ];
 }
 
 // EpochEntry represents data for a specific epoch number.

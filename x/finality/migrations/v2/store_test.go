@@ -35,7 +35,7 @@ func TestMigrateStore(t *testing.T) {
 		storeKey     = storetypes.NewKVStoreKey(types.StoreKey)
 		storeService = runtime.NewKVStoreService(storeKey)
 		cdc          = appparams.DefaultEncodingConfig().Codec
-		fKeeper, ctx = keepertest.FinalityKeeperWithStoreKey(t, db, stateStore, storeKey, nil, nil, nil)
+		fKeeper, ctx = keepertest.FinalityKeeperWithStoreKey(t, db, stateStore, storeKey, nil, nil, nil, nil)
 		fpCount      = 5
 		commitCount  = datagen.RandomIntOtherThan(r, 0, 100)
 	)

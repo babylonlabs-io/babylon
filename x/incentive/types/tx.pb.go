@@ -34,7 +34,7 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 // MsgWithdrawReward defines a message for withdrawing reward of a stakeholder.
 type MsgWithdrawReward struct {
-	// type is the stakeholder type {finality_provider, btc_staker}
+	// type is the stakeholder type {finality_provider, btc_staker, costaker}
 	Type string `protobuf:"bytes,1,opt,name=type,proto3" json:"type,omitempty"`
 	// address is the address of the stakeholder in bech32 string
 	// signer of this msg has to be this address

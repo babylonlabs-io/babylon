@@ -19,13 +19,14 @@ service Msg {
   rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
   // SetWithdrawAddress defines a method to change the withdraw address of a
   // stakeholder
-  rpc SetWithdrawAddress(MsgSetWithdrawAddress) returns (MsgSetWithdrawAddressResponse);
+  rpc SetWithdrawAddress(MsgSetWithdrawAddress)
+      returns (MsgSetWithdrawAddressResponse);
 }
 
 // MsgWithdrawReward defines a message for withdrawing reward of a stakeholder.
 message MsgWithdrawReward {
   option (cosmos.msg.v1.signer) = "address";
-  // type is the stakeholder type {finality_provider, btc_staker}
+  // type is the stakeholder type {finality_provider, btc_staker, costaker}
   string type = 1;
   // address is the address of the stakeholder in bech32 string
   // signer of this msg has to be this address
@@ -71,4 +72,3 @@ message MsgSetWithdrawAddress {
 // MsgSetWithdrawAddressResponse defines the Msg/SetWithdrawAddress response
 // type.
 message MsgSetWithdrawAddressResponse {}
-

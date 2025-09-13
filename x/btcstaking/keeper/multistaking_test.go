@@ -149,9 +149,9 @@ func FuzzMultiStaking_MultiStakedBTCDelegation(f *testing.F) {
 		)
 		h.Error(err)
 		require.True(t, errors.Is(err, types.ErrInvalidMultiStakingFPs), err)
-		
+
 		/*
-		happy case -- multi-staking to a Babylon fp and a consumer fp
+			happy case -- multi-staking to a Babylon fp and a consumer fp
 		*/
 		lcTip := uint32(30)
 		_, msgBTCDel, actualDel, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(

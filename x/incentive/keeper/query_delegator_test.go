@@ -10,7 +10,7 @@ import (
 )
 
 func TestDelegatorAddressQuery(t *testing.T) {
-	keeper, ctx := testkeeper.IncentiveKeeper(t, nil, nil, nil)
+	keeper, ctx := testkeeper.IncentiveKeeper(t, nil, nil, nil, nil)
 	withdrawalAddr := datagen.GenRandomAccount().GetAddress()
 	delegatorAddr := datagen.GenRandomAccount().GetAddress()
 	err := keeper.SetWithdrawAddr(ctx, delegatorAddr, withdrawalAddr)

@@ -121,7 +121,7 @@ func setupTest(t *testing.T, fpBtcPK *bbn.BIP340PubKey) (context.Context, corest
 		storeKey     = storetypes.NewKVStoreKey(types.StoreKey)
 		stateStore   = store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
 		storeService = runtime.NewKVStoreService(storeKey)
-		fKeeper, ctx = keepertest.FinalityKeeperWithStoreKey(t, db, stateStore, storeKey, nil, nil, nil)
+		fKeeper, ctx = keepertest.FinalityKeeperWithStoreKey(t, db, stateStore, storeKey, nil, nil, nil, nil)
 	)
 
 	// Setup: Add 3 commits [0-9], [10-19], [20-29]

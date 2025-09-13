@@ -1,10 +1,14 @@
 package replay
 
 import (
+	ictvkeeper "github.com/babylonlabs-io/babylon/v4/x/incentive/keeper"
 	ictvtypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 )
+
+// TODO(rafilx): after costaking genesis, add test checking rewards portions are correctly taken from
+// incentive, costaking, distribution each block from the fee collector
 
 func (d *BabylonAppDriver) GenerateBlocksUntilLastProcessedBtcStkEventsHeightIs(untilBlock uint64) {
 	ictvK := d.App.IncentiveKeeper
@@ -17,6 +21,10 @@ func (d *BabylonAppDriver) GenerateBlocksUntilLastProcessedBtcStkEventsHeightIs(
 		lastProcessedBtcStkEvtsHeight, err = ictvK.GetRewardTrackerEventLastProcessedHeight(d.Ctx())
 		require.NoError(d.t, err)
 	}
+}
+
+func (d *BabylonAppDriver) MsgServerIncentive() ictvtypes.MsgServer {
+	return ictvkeeper.NewMsgServerImpl(d.App.IncentiveKeeper)
 }
 
 func (s *StandardScenario) WithdrawBtcDelRewards() {

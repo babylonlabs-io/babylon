@@ -51,6 +51,7 @@ func TestGenesisState_Validate(t *testing.T) {
 				BtcDelegationRewardsTrackers:       []types.BTCDelegationRewardsTrackerEntry{},
 				BtcDelegatorsToFps:                 []types.BTCDelegatorToFpEntry{},
 				EventRewardTracker:                 []types.EventsPowerUpdateAtHeightEntry{},
+				FpDirectGauges:                     []types.FPDirectGaugeEntry{},
 			},
 			valid: true,
 		},
@@ -70,6 +71,7 @@ func TestGenesisState_Validate(t *testing.T) {
 				BtcDelegationRewardsTrackers:       []types.BTCDelegationRewardsTrackerEntry{},
 				BtcDelegatorsToFps:                 []types.BTCDelegatorToFpEntry{},
 				EventRewardTracker:                 []types.EventsPowerUpdateAtHeightEntry{},
+				FpDirectGauges:                     []types.FPDirectGaugeEntry{},
 			},
 			valid:  false,
 			errMsg: fmt.Sprintf("duplicate reward gauge for address: %s", addrStr1),
@@ -90,6 +92,7 @@ func TestGenesisState_Validate(t *testing.T) {
 				BtcDelegationRewardsTrackers:       []types.BTCDelegationRewardsTrackerEntry{},
 				BtcDelegatorsToFps:                 []types.BTCDelegatorToFpEntry{},
 				EventRewardTracker:                 []types.EventsPowerUpdateAtHeightEntry{},
+				FpDirectGauges:                     []types.FPDirectGaugeEntry{},
 			},
 			valid:  false,
 			errMsg: "invalid BTC staking gauges: duplicate entry for key: 100",
@@ -116,6 +119,7 @@ func TestGenesisState_Validate(t *testing.T) {
 				BtcDelegationRewardsTrackers:       []types.BTCDelegationRewardsTrackerEntry{},
 				BtcDelegatorsToFps:                 []types.BTCDelegatorToFpEntry{},
 				EventRewardTracker:                 []types.EventsPowerUpdateAtHeightEntry{},
+				FpDirectGauges:                     []types.FPDirectGaugeEntry{},
 			},
 			valid:  false,
 			errMsg: fmt.Sprintf("invalid withdraw addresses: duplicate entry for key: %s", addrStr1),
@@ -133,6 +137,7 @@ func TestGenesisState_Validate(t *testing.T) {
 				BtcDelegationRewardsTrackers:       []types.BTCDelegationRewardsTrackerEntry{},
 				BtcDelegatorsToFps:                 []types.BTCDelegatorToFpEntry{},
 				EventRewardTracker:                 []types.EventsPowerUpdateAtHeightEntry{},
+				FpDirectGauges:                     []types.FPDirectGaugeEntry{},
 			},
 			valid:  true,
 			errMsg: "",
@@ -150,6 +155,7 @@ func TestGenesisState_Validate(t *testing.T) {
 				BtcDelegationRewardsTrackers:       []types.BTCDelegationRewardsTrackerEntry{},
 				BtcDelegatorsToFps:                 []types.BTCDelegatorToFpEntry{},
 				EventRewardTracker:                 []types.EventsPowerUpdateAtHeightEntry{},
+				FpDirectGauges:                     []types.FPDirectGaugeEntry{},
 			},
 			valid:  false,
 			errMsg: "empty hash",
@@ -167,6 +173,7 @@ func TestGenesisState_Validate(t *testing.T) {
 				BtcDelegationRewardsTrackers:       []types.BTCDelegationRewardsTrackerEntry{},
 				BtcDelegatorsToFps:                 []types.BTCDelegatorToFpEntry{},
 				EventRewardTracker:                 []types.EventsPowerUpdateAtHeightEntry{},
+				FpDirectGauges:                     []types.FPDirectGaugeEntry{},
 			},
 			valid:  false,
 			errMsg: fmt.Sprintf("duplicate hash: %s", hashStr),
@@ -184,6 +191,7 @@ func TestGenesisState_Validate(t *testing.T) {
 				BtcDelegationRewardsTrackers:       []types.BTCDelegationRewardsTrackerEntry{},
 				BtcDelegatorsToFps:                 []types.BTCDelegatorToFpEntry{},
 				EventRewardTracker:                 []types.EventsPowerUpdateAtHeightEntry{},
+				FpDirectGauges:                     []types.FPDirectGaugeEntry{},
 			},
 			valid:  false,
 			errMsg: fmt.Sprintf("hash size should be %d characters: %s", tmhash.Size, badHashStr),
@@ -201,6 +209,7 @@ func TestGenesisState_Validate(t *testing.T) {
 				BtcDelegationRewardsTrackers:       []types.BTCDelegationRewardsTrackerEntry{},
 				BtcDelegatorsToFps:                 []types.BTCDelegatorToFpEntry{},
 				EventRewardTracker:                 []types.EventsPowerUpdateAtHeightEntry{},
+				FpDirectGauges:                     []types.FPDirectGaugeEntry{},
 			},
 			valid:  false,
 			errMsg: fmt.Sprintf("error decoding msg hash: %s", `encoding/hex: invalid byte: U+00C3 'Ã'`),
@@ -233,6 +242,7 @@ func TestGenesisState_Validate(t *testing.T) {
 				BtcDelegationRewardsTrackers:       []types.BTCDelegationRewardsTrackerEntry{},
 				BtcDelegatorsToFps:                 []types.BTCDelegatorToFpEntry{},
 				EventRewardTracker:                 []types.EventsPowerUpdateAtHeightEntry{},
+				FpDirectGauges:                     []types.FPDirectGaugeEntry{},
 			},
 			valid:  false,
 			errMsg: fmt.Sprintf("invalid finality providers current rewards: duplicate entry for key: %s", addrStr1),
@@ -284,6 +294,7 @@ func TestGenesisState_Validate(t *testing.T) {
 				BtcDelegationRewardsTrackers: []types.BTCDelegationRewardsTrackerEntry{},
 				BtcDelegatorsToFps:           []types.BTCDelegatorToFpEntry{},
 				EventRewardTracker:           []types.EventsPowerUpdateAtHeightEntry{},
+				FpDirectGauges:               []types.FPDirectGaugeEntry{},
 			},
 			valid: true,
 		},
@@ -317,6 +328,7 @@ func TestGenesisState_Validate(t *testing.T) {
 				BtcDelegationRewardsTrackers: []types.BTCDelegationRewardsTrackerEntry{},
 				BtcDelegatorsToFps:           []types.BTCDelegatorToFpEntry{},
 				EventRewardTracker:           []types.EventsPowerUpdateAtHeightEntry{},
+				FpDirectGauges:               []types.FPDirectGaugeEntry{},
 			},
 			valid:  false,
 			errMsg: fmt.Sprintf("duplicate historical rewards for address: %s and period: 1", addrStr1),
@@ -373,6 +385,7 @@ func TestGenesisState_Validate(t *testing.T) {
 					},
 					BtcDelegatorsToFps: []types.BTCDelegatorToFpEntry{},
 					EventRewardTracker: []types.EventsPowerUpdateAtHeightEntry{},
+					FpDirectGauges:     []types.FPDirectGaugeEntry{},
 				}
 			}(),
 			valid:  false,
@@ -439,6 +452,7 @@ func TestGenesisState_Validate(t *testing.T) {
 					DelegatorAddress:        addrStr2,
 				}},
 				EventRewardTracker: []types.EventsPowerUpdateAtHeightEntry{},
+				FpDirectGauges:     []types.FPDirectGaugeEntry{},
 			},
 			valid:  false,
 			errMsg: fmt.Sprintf("duplicate btc delegation rewards tracker for finality provider: %s and delegator: %s", addrStr1, addrStr2),
@@ -501,6 +515,7 @@ func TestGenesisState_Validate(t *testing.T) {
 					},
 				},
 				EventRewardTracker: []types.EventsPowerUpdateAtHeightEntry{},
+				FpDirectGauges:     []types.FPDirectGaugeEntry{},
 			},
 			valid:  false,
 			errMsg: fmt.Sprintf("duplicate entry with finality provider: %s and delegator: %s", addrStr1, addrStr2),
@@ -527,6 +542,7 @@ func TestGenesisState_Validate(t *testing.T) {
 						Events: &types.EventsPowerUpdateAtHeight{},
 					},
 				},
+				FpDirectGauges: []types.FPDirectGaugeEntry{},
 			},
 			valid:  false,
 			errMsg: fmt.Sprintf("invalid events from reward tracker: duplicate entry for key: %d", height),
@@ -562,6 +578,7 @@ func TestGenesisState_Validate(t *testing.T) {
 						},
 					},
 				},
+				FpDirectGauges: []types.FPDirectGaugeEntry{},
 			},
 			valid: true,
 		},
@@ -587,6 +604,7 @@ func TestGenesisState_Validate(t *testing.T) {
 				BtcDelegationRewardsTrackers:       []types.BTCDelegationRewardsTrackerEntry{},
 				BtcDelegatorsToFps:                 []types.BTCDelegatorToFpEntry{},
 				EventRewardTracker:                 []types.EventsPowerUpdateAtHeightEntry{},
+				FpDirectGauges:                     []types.FPDirectGaugeEntry{},
 			},
 			valid:  false,
 			errMsg: fmt.Sprintf("finality provider %s has current rewards with period 3 but no historical rewards", addrStr1),
@@ -630,6 +648,7 @@ func TestGenesisState_Validate(t *testing.T) {
 				BtcDelegationRewardsTrackers: []types.BTCDelegationRewardsTrackerEntry{},
 				BtcDelegatorsToFps:           []types.BTCDelegatorToFpEntry{},
 				EventRewardTracker:           []types.EventsPowerUpdateAtHeightEntry{},
+				FpDirectGauges:               []types.FPDirectGaugeEntry{},
 			},
 			valid:  false,
 			errMsg: fmt.Sprintf("finality provider %s is missing historical rewards for period 1 (current period is 3)", addrStr1),
@@ -681,6 +700,7 @@ func TestGenesisState_Validate(t *testing.T) {
 				BtcDelegationRewardsTrackers: []types.BTCDelegationRewardsTrackerEntry{},
 				BtcDelegatorsToFps:           []types.BTCDelegatorToFpEntry{},
 				EventRewardTracker:           []types.EventsPowerUpdateAtHeightEntry{},
+				FpDirectGauges:               []types.FPDirectGaugeEntry{},
 			},
 			valid:  false,
 			errMsg: fmt.Sprintf("finality provider %s has historical rewards for period 3 which is >= current period 2", addrStr1),
@@ -707,6 +727,7 @@ func TestGenesisState_Validate(t *testing.T) {
 				BtcDelegationRewardsTrackers: []types.BTCDelegationRewardsTrackerEntry{},
 				BtcDelegatorsToFps:           []types.BTCDelegatorToFpEntry{},
 				EventRewardTracker:           []types.EventsPowerUpdateAtHeightEntry{},
+				FpDirectGauges:               []types.FPDirectGaugeEntry{},
 			},
 			valid:  false,
 			errMsg: fmt.Sprintf("finality provider %s has historical rewards but no current rewards", addrStr1),
@@ -758,6 +779,7 @@ func TestGenesisState_Validate(t *testing.T) {
 				BtcDelegationRewardsTrackers: []types.BTCDelegationRewardsTrackerEntry{},
 				BtcDelegatorsToFps:           []types.BTCDelegatorToFpEntry{},
 				EventRewardTracker:           []types.EventsPowerUpdateAtHeightEntry{},
+				FpDirectGauges:               []types.FPDirectGaugeEntry{},
 			},
 			valid: true,
 		},
@@ -787,6 +809,7 @@ func TestGenesisState_Validate(t *testing.T) {
 					DelegatorAddress:        addrStr2,
 				}},
 				EventRewardTracker: []types.EventsPowerUpdateAtHeightEntry{},
+				FpDirectGauges:     []types.FPDirectGaugeEntry{},
 			},
 			valid:  false,
 			errMsg: fmt.Sprintf("delegation tracker for finality provider %s exists but FP has no current rewards", addrStr1),
@@ -843,6 +866,7 @@ func TestGenesisState_Validate(t *testing.T) {
 					DelegatorAddress:        addrStr2,
 				}},
 				EventRewardTracker: []types.EventsPowerUpdateAtHeightEntry{},
+				FpDirectGauges:     []types.FPDirectGaugeEntry{},
 			},
 			valid:  false,
 			errMsg: fmt.Sprintf("delegation tracker for FP %s and delegator %s has StartPeriodCumulativeReward 2 >= FP's current period 2", addrStr1, addrStr2),
@@ -907,6 +931,7 @@ func TestGenesisState_Validate(t *testing.T) {
 					DelegatorAddress:        addrStr2,
 				}},
 				EventRewardTracker: []types.EventsPowerUpdateAtHeightEntry{},
+				FpDirectGauges:     []types.FPDirectGaugeEntry{},
 			},
 			valid: true,
 		},
@@ -950,6 +975,42 @@ func TestBTCStakingGaugeEntry_Validate(t *testing.T) {
 		},
 	}
 
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			err := tc.entry.Validate()
+			if tc.expErr {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tc.errMsg)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestFpDirectGauge_Validate(t *testing.T) {
+	r := rand.New(rand.NewSource(time.Now().Unix()))
+	tests := []struct {
+		name   string
+		entry  types.FPDirectGaugeEntry
+		expErr bool
+		errMsg string
+	}{
+		{
+			name:   "valid FP direct gauge",
+			entry:  types.FPDirectGaugeEntry{Height: 100, Gauge: datagen.GenRandomGauge(r)},
+			expErr: false,
+		},
+		{
+			name: "nil gauge",
+			entry: types.FPDirectGaugeEntry{
+				Height: 100,
+				Gauge:  nil,
+			},
+			expErr: true,
+			errMsg: "FP direct gauge at height 100 has nil Gauge",
+		},
+	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			err := tc.entry.Validate()

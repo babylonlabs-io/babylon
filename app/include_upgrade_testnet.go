@@ -10,12 +10,14 @@ import (
 	v3 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v3"
 	v3rc2 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v3rc2/testnet"
 	v3rc3 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v3rc3"
+	"github.com/babylonlabs-io/babylon/v4/app/upgrades/v3rc4"
 )
 
 // init is used to include v1 upgrade testnet data
 // it is also used for e2e testing
 func init() {
 	Upgrades = []upgrades.Upgrade{
+		v3rc4.Upgrade, // add costaking module
 		v3rc3.Upgrade, // same as v2_3 mainnet
 		v3rc2.Upgrade,
 		v3.CreateUpgrade(false, 10, 264773, 2419200), // TODO: to be updated

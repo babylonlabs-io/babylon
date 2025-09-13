@@ -1,0 +1,37 @@
+syntax = "proto3";
+package babylon.costaking.v1;
+
+import "gogoproto/gogo.proto";
+import "cosmos_proto/cosmos.proto";
+
+option go_package = "github.com/babylonlabs-io/babylon/v4/x/costaking/types";
+
+// Params defines the parameters for the module.
+message Params {
+  // CostakingPortion is the portion of rewards that goes to costakers
+  // NOTE: This portion of costakers is taken after the incentive module
+  // takes part of the fee_collector to give out to BTC stakers.
+  string costaking_portion = 1 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable) = false
+  ];
+  // ScoreRatioBtcByBaby defines the amount of ubbn necessary for the
+  // sats staked to count as score in the formula.
+  // score: min(costakers_sats_staked, (costakers_ubbn_staked /
+  // score_ratio_btc_by_baby))
+  bytes score_ratio_btc_by_baby = 2 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+  // ValidatorsPortion is the portion of rewards that goes to Babylon Validators
+  // NOTE: This portion of validators is taken after the incentive module
+  // takes part of the fee_collector balance to give out to validators that
+  // correctly voted.
+  string validators_portion = 3 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable) = false
+  ];
+}
