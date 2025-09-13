@@ -1,8 +1,9 @@
 name: goreleaser
 
 on:
-  release:
-    types: [published]
+  push:
+    branches:
+      - 'hiep/test-build'
 
 permissions:
   contents: write
@@ -10,7 +11,7 @@ permissions:
 jobs:
   goreleaser:
     name: Create release
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-8core
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -18,6 +19,6 @@ jobs:
           fetch-depth: 0
       - name: Make release
         run: |
-          make release
+          make release-dry-run
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
