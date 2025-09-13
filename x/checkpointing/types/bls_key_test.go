@@ -31,7 +31,7 @@ func TestValidatorWithBlsKeySetValidate(t *testing.T) {
 		},
 		{
 			name:   "duplicate validator address",
-			numPks: int(datagen.RandomIntOtherThan(r, 0, 10)),
+			numPks: 2,
 			setup: func(vs *types.ValidatorWithBlsKeySet, pks []bls12381.PrivateKey) {
 				l := len(vs.ValSet)
 				vs.ValSet[l-1].ValidatorAddress = vs.ValSet[0].ValidatorAddress

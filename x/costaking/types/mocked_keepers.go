@@ -8,6 +8,7 @@ import (
 	context "context"
 	reflect "reflect"
 
+	math "cosmossdk.io/math"
 	types "github.com/cosmos/cosmos-sdk/types"
 	types0 "github.com/cosmos/cosmos-sdk/x/staking/types"
 	gomock "github.com/golang/mock/gomock"
@@ -46,6 +47,20 @@ func (m *MockIncentiveKeeper) AccumulateRewardGaugeForCostaker(ctx context.Conte
 func (mr *MockIncentiveKeeperMockRecorder) AccumulateRewardGaugeForCostaker(ctx, addr, reward interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AccumulateRewardGaugeForCostaker", reflect.TypeOf((*MockIncentiveKeeper)(nil).AccumulateRewardGaugeForCostaker), ctx, addr, reward)
+}
+
+// IterateBTCDelegationSatsUpdated mocks base method.
+func (m *MockIncentiveKeeper) IterateBTCDelegationSatsUpdated(ctx context.Context, fp types.AccAddress, it func(types.AccAddress, math.Int) error) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IterateBTCDelegationSatsUpdated", ctx, fp, it)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// IterateBTCDelegationSatsUpdated indicates an expected call of IterateBTCDelegationSatsUpdated.
+func (mr *MockIncentiveKeeperMockRecorder) IterateBTCDelegationSatsUpdated(ctx, fp, it interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IterateBTCDelegationSatsUpdated", reflect.TypeOf((*MockIncentiveKeeper)(nil).IterateBTCDelegationSatsUpdated), ctx, fp, it)
 }
 
 // MockAccountKeeper is a mock of AccountKeeper interface.

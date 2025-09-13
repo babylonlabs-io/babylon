@@ -134,18 +134,18 @@ type FinalizedBlock struct {
 
 type BabylonAppDriver struct {
 	*SenderInfo
-	r                *rand.Rand
-	t                *testing.T
-	App              *babylonApp.BabylonApp
-	BlsSigner        ckpttypes.BlsSigner
-	BlockExec        *sm.BlockExecutor
-	BlockStore       *store.BlockStore
-	StateStore       sm.Store
-	NodeDir          string
-	ValidatorAddress []byte
-	DelegatorAddress sdk.ValAddress
-	CometPrivKey     cmtcrypto.PrivKey
-	CurrentTime      time.Time
+	r            *rand.Rand
+	t            *testing.T
+	App          *babylonApp.BabylonApp
+	BlsSigner    ckpttypes.BlsSigner
+	BlockExec    *sm.BlockExecutor
+	BlockStore   *store.BlockStore
+	StateStore   sm.Store
+	NodeDir      string
+	CometAddress []byte
+	ValAddress   sdk.ValAddress
+	CometPrivKey cmtcrypto.PrivKey
+	CurrentTime  time.Time
 }
 
 // NewBabylonAppDriverTmpDir initializes Babylon driver for block creation with
@@ -283,13 +283,13 @@ func NewBabylonAppDriver(
 			sequenceNumber: 1,
 			accountNumber:  0,
 		},
-		BlockExec:        blockExec,
-		BlockStore:       blockStore,
-		StateStore:       stateStore,
-		NodeDir:          chain.Nodes[0].ConfigDir,
-		ValidatorAddress: validatorAddress,
-		DelegatorAddress: signerValAddress,
-		CometPrivKey:     ed25519.PrivKey(chain.Nodes[0].CometPrivKey),
+		BlockExec:    blockExec,
+		BlockStore:   blockStore,
+		StateStore:   stateStore,
+		NodeDir:      chain.Nodes[0].ConfigDir,
+		CometAddress: validatorAddress,
+		ValAddress:   signerValAddress,
+		CometPrivKey: ed25519.PrivKey(chain.Nodes[0].CometPrivKey),
 		// initiate time to current time
 		CurrentTime: time.Now(),
 	}
@@ -504,7 +504,7 @@ func (d *BabylonAppDriver) GenerateNewBlock() *abci.ResponseFinalizeBlock {
 		lastState.LastBlockHeight+1,
 		lastState,
 		lastCommit,
-		d.ValidatorAddress,
+		d.CometAddress,
 	)
 	require.NoError(d.t, err)
 	require.NotNil(d.t, block1)
@@ -537,7 +537,7 @@ func (d *BabylonAppDriver) GenerateNewBlock() *abci.ResponseFinalizeBlock {
 	extCommitSig := cmttypes.ExtendedCommitSig{
 		CommitSig: cmttypes.CommitSig{
 			BlockIDFlag:      cmttypes.BlockIDFlagCommit,
-			ValidatorAddress: d.ValidatorAddress,
+			ValidatorAddress: d.CometAddress,
 			Timestamp:        newTime,
 			Signature:        []byte("test"),
 		},
@@ -866,7 +866,7 @@ func (d *BabylonAppDriver) GenCkptForEpoch(r *rand.Rand, t *testing.T, epochNumb
 	d.SendTxWithMsgsFromDriverAccount(t, &msg)
 }
 
-func (d *BabylonAppDriver) FinializeCkptForEpoch(epochNumber uint64) {
+func (d *BabylonAppDriver) FinalizeCkptForEpoch(epochNumber uint64) {
 	lastFinalizedEpoch := d.GetLastFinalizedEpoch()
 	require.Equal(d.t, lastFinalizedEpoch+1, epochNumber)
 
@@ -1179,14 +1179,13 @@ func (d *BabylonAppDriver) BankSendNative(
 }
 
 func (d *BabylonAppDriver) MintNativeTo(
-	t *testing.T,
 	recipient sdk.AccAddress,
 	amt int64,
 ) {
 	mintCoins := sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(amt)))
 	err := d.App.MintKeeper.MintCoins(d.Ctx(), mintCoins)
-	require.NoError(t, err)
+	require.NoError(d.t, err)
 
 	err = d.App.BankKeeper.SendCoinsFromModuleToAccount(d.Ctx(), minttypes.ModuleName, recipient, mintCoins)
-	require.NoError(t, err)
+	require.NoError(d.t, err)
 }

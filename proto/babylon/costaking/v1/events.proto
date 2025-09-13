@@ -1,0 +1,31 @@
+syntax = "proto3";
+package babylon.costaking.v1;
+
+import "cosmos_proto/cosmos.proto";
+import "cosmos/base/v1beta1/coin.proto";
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/babylonlabs-io/babylon/v4/x/costaking/types";
+
+// EventCostakersAddRewards is the event emitted when new rewards are given to costakers.
+message EventCostakersAddRewards {
+  // AddRewards are the coins added to the current coostaker reward tracker pool.
+  repeated cosmos.base.v1beta1.Coin add_rewards = 1 [
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
+  // CurrentRewards are the reward coins available for this period.
+  repeated cosmos.base.v1beta1.Coin current_rewards = 2 [
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
+  // CurrentPeriod is the period where the rewards are being added.
+  uint64 current_period = 3;
+  // CurrentTotalScore is the total amount of score in which the rewards will be
+  // equaly distributed.
+  bytes current_total_score = 4 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+}

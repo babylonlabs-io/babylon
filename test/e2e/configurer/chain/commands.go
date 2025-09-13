@@ -158,7 +158,7 @@ func (n *NodeConfig) SendHeaderHex(headerHex string) {
 func (n *NodeConfig) InsertNewEmptyBtcHeader(r *rand.Rand) *blc.BTCHeaderInfo {
 	tipResp, err := n.QueryTip()
 	require.NoError(n.t, err)
-	n.t.Logf("Retrieved current tip of btc headerchain. Height: %d", tipResp.Height)
+	n.t.Logf("Retrieved current tip of btc headerchain inserting empty header. Height: %d", tipResp.Height)
 
 	tip, err := ParseBTCHeaderInfoResponseToInfo(tipResp)
 	require.NoError(n.t, err)
