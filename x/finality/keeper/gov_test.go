@@ -27,7 +27,7 @@ func TestHandleResumeFinalityProposal(t *testing.T) {
 	bsKeeper := types.NewMockBTCStakingKeeper(ctrl)
 	iKeeper := types.NewMockIncentiveKeeper(ctrl)
 	cKeeper := types.NewMockCheckpointingKeeper(ctrl)
-	fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper, nil)
+	fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper, types.NewMultiFinalityHooks())
 
 	haltingHeight := uint64(100)
 	currentHeight := uint64(110)
@@ -48,6 +48,7 @@ func TestHandleResumeFinalityProposal(t *testing.T) {
 			fKeeper.SetVotingPower(ctx, activeFpPks[i].MustMarshal(), h, 1)
 			dc.AddFinalityProviderDistInfo(&types.FinalityProviderDistInfo{
 				BtcPk:          &activeFpPks[i],
+				Addr:           datagen.GenRandomAddress(),
 				TotalBondedSat: 1,
 				IsTimestamped:  true,
 			})
@@ -72,6 +73,7 @@ func TestHandleResumeFinalityProposal(t *testing.T) {
 	// create a resume finality proposal to jail the last fp
 	bsKeeper.EXPECT().JailFinalityProvider(ctx, gomock.Any()).Return(nil).AnyTimes()
 	bsKeeper.EXPECT().GetFinalityProvider(gomock.Any(), gomock.Any()).Return(&bstypes.FinalityProvider{
+		Addr:   datagen.GenRandomAddress().String(),
 		Jailed: false,
 	}, nil).AnyTimes()
 	err := fKeeper.HandleResumeFinalityProposal(ctx, publicKeysToHex(activeFpPks[1:]), uint32(haltingHeight))
