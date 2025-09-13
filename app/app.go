@@ -132,6 +132,7 @@ import (
 	"github.com/babylonlabs-io/babylon/v4/x/costaking"
 	costktypes "github.com/babylonlabs-io/babylon/v4/x/costaking/types"
 	"github.com/babylonlabs-io/babylon/v4/x/epoching"
+	epochingkeeper "github.com/babylonlabs-io/babylon/v4/x/epoching/keeper"
 	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 	"github.com/babylonlabs-io/babylon/v4/x/finality"
 	finalitytypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
@@ -191,6 +192,7 @@ var (
 		erc20types.ModuleName:                       {authtypes.Minter, authtypes.Burner}, // Allows erc20 module to mint/burn for token pairs
 		precisebanktypes.ModuleName:                 {authtypes.Minter, authtypes.Burner},
 		incentivetypes.ModAccCommissionCollectorBSN: nil, // Babylon BSN rewards commission collector
+		epochingtypes.DelegatePoolModuleName:        nil,
 	}
 
 	// software upgrades and forks
@@ -580,7 +582,7 @@ func NewBabylonApp(
 	if err := evmHandlerOpts.Validate(); err != nil {
 		panic(err)
 	}
-
+	epochingkeeper.ValidateDelegatePoolAccount(app.AccountKeeper)
 	// initialize AnteHandler for the app
 	anteHandler := ante.NewAnteHandler(
 		appOpts,

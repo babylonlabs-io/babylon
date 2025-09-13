@@ -3282,6 +3282,34 @@ paths:
                     title: >-
                       epoch_interval is the number of consecutive blocks to form
                       an epoch
+                  execute_gas:
+                    description: execute_gas defines raw gas for different executions.
+                    type: object
+                    properties:
+                      delegate:
+                        type: string
+                        format: uint64
+                      undelegate:
+                        type: string
+                        format: uint64
+                      begin_redelegate:
+                        type: string
+                        format: uint64
+                      cancel_unbonding_delegation:
+                        type: string
+                        format: uint64
+                      edit_validator:
+                        type: string
+                        format: uint64
+                      create_validator:
+                        type: string
+                        format: uint64
+                  min_amount:
+                    type: string
+                    format: uint64
+                    title: >-
+                      minimum_amount is a minimum amount for staking message
+                      cancel_unbonding_delegation
             description: >-
               QueryParamsResponse is the response type for the Query/Params RPC
               method.
@@ -14998,6 +15026,28 @@ definitions:
           the validator set has generated a BLS multisig on the hash,
           i.e., hash of the last block in the epoch as hex string.
     title: EpochResponse is a structure that contains the metadata of an epoch
+  babylon.epoching.v1.ExecuteGas:
+    type: object
+    properties:
+      delegate:
+        type: string
+        format: uint64
+      undelegate:
+        type: string
+        format: uint64
+      begin_redelegate:
+        type: string
+        format: uint64
+      cancel_unbonding_delegation:
+        type: string
+        format: uint64
+      edit_validator:
+        type: string
+        format: uint64
+      create_validator:
+        type: string
+        format: uint64
+    description: ExecuteGas defines the raw gas for the enqueued message execution.
   babylon.epoching.v1.Params:
     type: object
     properties:
@@ -15005,6 +15055,34 @@ definitions:
         type: string
         format: uint64
         title: epoch_interval is the number of consecutive blocks to form an epoch
+      execute_gas:
+        description: execute_gas defines raw gas for different executions.
+        type: object
+        properties:
+          delegate:
+            type: string
+            format: uint64
+          undelegate:
+            type: string
+            format: uint64
+          begin_redelegate:
+            type: string
+            format: uint64
+          cancel_unbonding_delegation:
+            type: string
+            format: uint64
+          edit_validator:
+            type: string
+            format: uint64
+          create_validator:
+            type: string
+            format: uint64
+      min_amount:
+        type: string
+        format: uint64
+        title: >-
+          minimum_amount is a minimum amount for staking message
+          cancel_unbonding_delegation
     description: Params defines the parameters for the module.
   babylon.epoching.v1.QueryCurrentEpochResponse:
     type: object
@@ -15450,6 +15528,34 @@ definitions:
             title: >-
               epoch_interval is the number of consecutive blocks to form an
               epoch
+          execute_gas:
+            description: execute_gas defines raw gas for different executions.
+            type: object
+            properties:
+              delegate:
+                type: string
+                format: uint64
+              undelegate:
+                type: string
+                format: uint64
+              begin_redelegate:
+                type: string
+                format: uint64
+              cancel_unbonding_delegation:
+                type: string
+                format: uint64
+              edit_validator:
+                type: string
+                format: uint64
+              create_validator:
+                type: string
+                format: uint64
+          min_amount:
+            type: string
+            format: uint64
+            title: >-
+              minimum_amount is a minimum amount for staking message
+              cancel_unbonding_delegation
     description: QueryParamsResponse is the response type for the Query/Params RPC method.
   babylon.epoching.v1.QueryValidatorLifecycleResponse:
     type: object
