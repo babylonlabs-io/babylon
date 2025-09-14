@@ -19,7 +19,6 @@ func DefaultGenesis() *GenesisState {
 		BtcStakingGauges:                      []BTCStakingGaugeEntry{},
 		RewardGauges:                          []RewardGaugeEntry{},
 		WithdrawAddresses:                     []WithdrawAddressEntry{},
-		RefundableMsgHashes:                   []string{},
 		FinalityProvidersCurrentRewards:       []FinalityProviderCurrentRewardsEntry{},
 		FinalityProvidersHistoricalRewards:    []FinalityProviderHistoricalRewardsEntry{},
 		BtcDelegationRewardsTrackers:          []BTCDelegationRewardsTrackerEntry{},
@@ -42,10 +41,6 @@ func (gs GenesisState) Validate() error {
 
 	if err := validateWithdrawAddresses(gs.WithdrawAddresses); err != nil {
 		return fmt.Errorf("invalid withdraw addresses: %w", err)
-	}
-
-	if err := validateMsgHashes(gs.RefundableMsgHashes); err != nil {
-		return fmt.Errorf("invalid msg hashes: %w", err)
 	}
 
 	if err := validateFPCurrentRewards(gs.FinalityProvidersCurrentRewards); err != nil {
@@ -380,10 +375,6 @@ func SortData(gs *GenesisState) {
 
 	sort.Slice(gs.WithdrawAddresses, func(i, j int) bool {
 		return gs.WithdrawAddresses[i].DelegatorAddress < gs.WithdrawAddresses[j].DelegatorAddress
-	})
-
-	sort.Slice(gs.RefundableMsgHashes, func(i, j int) bool {
-		return gs.RefundableMsgHashes[i] < gs.RefundableMsgHashes[j]
 	})
 
 	sort.Slice(gs.FinalityProvidersCurrentRewards, func(i, j int) bool {

@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"context"
-	"encoding/hex"
 	"fmt"
 
 	"cosmossdk.io/store/prefix"
@@ -47,17 +46,6 @@ func (k Keeper) InitGenesis(ctx context.Context, gs types.GenesisState) error {
 		withdrawAddr := sdk.MustAccAddressFromBech32(entry.WithdrawAddress)
 		if err := k.SetWithdrawAddr(ctx, delAddr, withdrawAddr); err != nil {
 			return err
-		}
-	}
-
-	for _, entry := range gs.RefundableMsgHashes {
-		// hashes are hex encoded for better readability
-		bz, err := hex.DecodeString(entry)
-		if err != nil {
-			return fmt.Errorf("error decoding msg hash: %w", err)
-		}
-		if err := k.RefundableMsgKeySet.Set(ctx, bz); err != nil {
-			return fmt.Errorf("error storing msg hash: %w", err)
 		}
 	}
 
@@ -144,11 +132,6 @@ func (k Keeper) ExportGenesis(ctx context.Context) (*types.GenesisState, error) 
 		return nil, err
 	}
 
-	rmh, err := k.refundableMsgHashes(ctx)
-	if err != nil {
-		return nil, err
-	}
-
 	fpCurrentRwd, err := k.finalityProvidersCurrentRewards(ctx)
 	if err != nil {
 		return nil, err
@@ -184,7 +167,6 @@ func (k Keeper) ExportGenesis(ctx context.Context) (*types.GenesisState, error) 
 		BtcStakingGauges:                      bsg,
 		RewardGauges:                          rg,
 		WithdrawAddresses:                     wa,
-		RefundableMsgHashes:                   rmh,
 		FinalityProvidersCurrentRewards:       fpCurrentRwd,
 		FinalityProvidersHistoricalRewards:    fpHistRwd,
 		BtcDelegationRewardsTrackers:          bdrt,
@@ -282,31 +264,6 @@ func (k Keeper) withdrawAddresses(ctx context.Context) ([]types.WithdrawAddressE
 	}
 
 	return entries, nil
-}
-
-// refundableMsgHashes loads all refundable msg hashes stored.
-// It encodes the hashes as hex strings to be human readable on exporting the genesis
-// This function has high resource consumption and should be only used on export genesis.
-func (k Keeper) refundableMsgHashes(ctx context.Context) ([]string, error) {
-	hashes := make([]string, 0)
-	iterator, err := k.RefundableMsgKeySet.Iterate(ctx, nil)
-	if err != nil {
-		return nil, err
-	}
-	defer iterator.Close()
-
-	for ; iterator.Valid(); iterator.Next() {
-		key, err := iterator.Key()
-		if err != nil {
-			return nil, err
-		}
-
-		// encode hash as a hex string
-		hashStr := hex.EncodeToString(key)
-		hashes = append(hashes, hashStr)
-	}
-
-	return hashes, nil
 }
 
 // finalityProvidersCurrentRewards loads all finality providers current rewards stored.

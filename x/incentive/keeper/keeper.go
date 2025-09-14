@@ -21,13 +21,8 @@ type (
 		accountKeeper  types.AccountKeeper
 		epochingKeeper types.EpochingKeeper
 
-		// RefundableMsgKeySet is the set of hashes of messages that can be refunded
-		// Each key is a hash of the message bytes
-		// TODO: remove it after deciding on removing refundable_msg_hashes in the genesis.proto
-		RefundableMsgKeySet collections.KeySet[[]byte]
-
 		// RefundableMsgCount is the counter for refundable msgs only maintained per-tx
-		RefundableMsgCount int64
+		RefundableMsgCount uint64
 
 		// the address capable of executing a MsgUpdateParams message. Typically, this
 		// should be the x/gov module account.
@@ -68,13 +63,6 @@ func NewKeeper(
 		bankKeeper:     bankKeeper,
 		accountKeeper:  accountKeeper,
 		epochingKeeper: epochingKeeper,
-		RefundableMsgKeySet: collections.NewKeySet(
-			sb,
-			types.RefundableMsgKeySetPrefix,
-			"refundable_msg_key_set",
-			collections.BytesKey,
-		),
-
 		// Collections structures for rewards
 		btcDelegationRewardsTracker: collections.NewMap(
 			sb,
