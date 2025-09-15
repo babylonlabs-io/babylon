@@ -1,7 +1,6 @@
 package keeper_test
 
 import (
-	"context"
 	"math/rand"
 	"sort"
 	"testing"
@@ -36,7 +35,8 @@ func FuzzVotingPowerTable(f *testing.F) {
 		fHooks := h.FinalityHooks.(*ftypes.MockFinalityHooks)
 		fHooks.EXPECT().AfterBtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 		fHooks.EXPECT().AfterBtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
-		fHooks.EXPECT().AfterFpStatusChange(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+		fHooks.EXPECT().AfterBbnFpEntersActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
+		fHooks.EXPECT().AfterBbnFpRemovedFromActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
 
 		// set all parameters
 		covenantSKs, _ := h.GenAndApplyParams(r)
@@ -192,7 +192,8 @@ func FuzzRecordVotingPowerDistCache(f *testing.F) {
 		fHooks := h.FinalityHooks.(*ftypes.MockFinalityHooks)
 		fHooks.EXPECT().AfterBtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 		fHooks.EXPECT().AfterBtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
-		fHooks.EXPECT().AfterFpStatusChange(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+		fHooks.EXPECT().AfterBbnFpEntersActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
+		fHooks.EXPECT().AfterBbnFpRemovedFromActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
 
 		// set all parameters
 		covenantSKs, _ := h.GenAndApplyParams(r)
@@ -275,7 +276,8 @@ func FuzzVotingPowerTable_ActiveFinalityProviders(f *testing.F) {
 		fHooks := h.FinalityHooks.(*ftypes.MockFinalityHooks)
 		fHooks.EXPECT().AfterBtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 		fHooks.EXPECT().AfterBtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
-		fHooks.EXPECT().AfterFpStatusChange(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+		fHooks.EXPECT().AfterBbnFpEntersActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
+		fHooks.EXPECT().AfterBbnFpRemovedFromActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
 
 		// set all parameters
 		covenantSKs, _ := h.GenAndApplyParams(r)
@@ -437,7 +439,7 @@ func FuzzVotingPowerTable_ActiveFinalityProviderRotation(f *testing.F) {
 				fp.Address(),
 				del.Address(),
 				true,
-				btcstktypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_INACTIVE,
+				false,
 				stakingValue,
 			).Times(1)
 
@@ -461,27 +463,15 @@ func FuzzVotingPowerTable_ActiveFinalityProviderRotation(f *testing.F) {
 			return fpsWithMeta[i].VotingPower > fpsWithMeta[j].VotingPower
 		})
 
-		// Set expectations for AfterFpStatusChange - it's called for ALL finality providers
-		// Top numActiveFPs will transition from INACTIVE to ACTIVE
+		// Set expectations for the new simplified hooks
+		// Top numActiveFPs will enter the active set
 		for i := 0; i < numActiveFPs; i++ {
-			fHooks.EXPECT().AfterFpStatusChange(
+			fHooks.EXPECT().AfterBbnFpEntersActiveSet(
 				gomock.Any(),
 				gomock.Eq(fpsWithMeta[i].Addr),
-				true,
-				btcstktypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_INACTIVE,
-				btcstktypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_ACTIVE,
 			).Times(1)
 		}
-		// Remaining FPs will call INACTIVE to INACTIVE because they just joined the vp dst cache
-		for i := numActiveFPs; i < int(numFps); i++ {
-			fHooks.EXPECT().AfterFpStatusChange(
-				gomock.Any(),
-				gomock.Eq(fpsWithMeta[i].Addr),
-				true,
-				btcstktypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_INACTIVE,
-				btcstktypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_INACTIVE,
-			).Times(1)
-		}
+		// For inactive FPs, no hook calls are expected since they don't change active set status
 
 		// Set finalized epoch so FPs can have timestamped pub rand and become active
 		h.CheckpointingKeeperForFinality.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(uint64(2)).AnyTimes()
@@ -611,7 +601,7 @@ func FuzzVotingPowerTable_ActiveFinalityProviderRotation(f *testing.F) {
 		// 		continue
 		// 	}
 
-		// 	fHooks.EXPECT().AfterFpStatusChange(
+		// 	fHooks.EXPECT().AfterBbnFpEntersActiveSet(
 		// 		gomock.Any(),
 		// 		fpsWithMeta[i].Addr,
 		// 		true,
@@ -628,7 +618,7 @@ func FuzzVotingPowerTable_ActiveFinalityProviderRotation(f *testing.F) {
 		// 		continue
 		// 	}
 
-		// 	fHooks.EXPECT().AfterFpStatusChange(
+		// 	fHooks.EXPECT().AfterBbnFpEntersActiveSet(
 		// 		gomock.Any(),
 		// 		fpsWithMeta[i].Addr,
 		// 		true,
@@ -712,7 +702,7 @@ func TestVotingPowerTable_ActiveFinalityProviderRotation_Seed0(t *testing.T) {
 			fp.Address(),
 			del.Address(),
 			true,
-			btcstktypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_INACTIVE,
+			false,
 			stakingValue,
 		).Times(1)
 
@@ -743,18 +733,9 @@ func TestVotingPowerTable_ActiveFinalityProviderRotation_Seed0(t *testing.T) {
 			i, fpsWithMeta[i].BtcPk.MarshalHex(), fpsWithMeta[i].Addr.String(), fpsWithMeta[i].VotingPower)
 	}
 
-	// Log all actual calls to see what's happening
-	fHooks.EXPECT().AfterFpStatusChange(
-		gomock.Any(),
-		gomock.Any(),
-		gomock.Any(),
-		gomock.Any(),
-		gomock.Any(),
-	).DoAndReturn(func(ctx context.Context, fpAddr sdk.AccAddress, fpSecuresBabylon bool, prevStatus, newStatus btcstktypes.FinalityProviderStatus) error {
-		t.Logf("ACTUAL CALL: AfterFpStatusChange(addr=%s, prevStatus=%s, newStatus=%s)",
-			fpAddr.String(), prevStatus.String(), newStatus.String())
-		return nil
-	}).AnyTimes()
+	// TODO: Add expected values to hook calls
+	fHooks.EXPECT().AfterBbnFpEntersActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
+	fHooks.EXPECT().AfterBbnFpRemovedFromActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
 
 	h.CheckpointingKeeperForFinality.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(uint64(2)).AnyTimes()
 

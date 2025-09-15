@@ -8,8 +8,7 @@ import (
 	context "context"
 	reflect "reflect"
 
-	types "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
-	types0 "github.com/cosmos/cosmos-sdk/types"
+	types "github.com/cosmos/cosmos-sdk/types"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -36,44 +35,58 @@ func (m *MockFinalityHooks) EXPECT() *MockFinalityHooksMockRecorder {
 	return m.recorder
 }
 
-// AfterBtcDelegationActivated mocks base method.
-func (m *MockFinalityHooks) AfterBtcDelegationActivated(ctx context.Context, fpAddr, btcDelAddr types0.AccAddress, fpSecuresBabylon bool, fpBbnPrevStatus types.FinalityProviderStatus, sats uint64) error {
+// AfterBbnFpEntersActiveSet mocks base method.
+func (m *MockFinalityHooks) AfterBbnFpEntersActiveSet(ctx context.Context, fpAddr types.AccAddress) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AfterBtcDelegationActivated", ctx, fpAddr, btcDelAddr, fpSecuresBabylon, fpBbnPrevStatus, sats)
+	ret := m.ctrl.Call(m, "AfterBbnFpEntersActiveSet", ctx, fpAddr)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AfterBbnFpEntersActiveSet indicates an expected call of AfterBbnFpEntersActiveSet.
+func (mr *MockFinalityHooksMockRecorder) AfterBbnFpEntersActiveSet(ctx, fpAddr interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AfterBbnFpEntersActiveSet", reflect.TypeOf((*MockFinalityHooks)(nil).AfterBbnFpEntersActiveSet), ctx, fpAddr)
+}
+
+// AfterBbnFpRemovedFromActiveSet mocks base method.
+func (m *MockFinalityHooks) AfterBbnFpRemovedFromActiveSet(ctx context.Context, fpAddr types.AccAddress) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AfterBbnFpRemovedFromActiveSet", ctx, fpAddr)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AfterBbnFpRemovedFromActiveSet indicates an expected call of AfterBbnFpRemovedFromActiveSet.
+func (mr *MockFinalityHooksMockRecorder) AfterBbnFpRemovedFromActiveSet(ctx, fpAddr interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AfterBbnFpRemovedFromActiveSet", reflect.TypeOf((*MockFinalityHooks)(nil).AfterBbnFpRemovedFromActiveSet), ctx, fpAddr)
+}
+
+// AfterBtcDelegationActivated mocks base method.
+func (m *MockFinalityHooks) AfterBtcDelegationActivated(ctx context.Context, fpAddr, btcDelAddr types.AccAddress, fpSecuresBabylon, isFpInActiveSet bool, sats uint64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AfterBtcDelegationActivated", ctx, fpAddr, btcDelAddr, fpSecuresBabylon, isFpInActiveSet, sats)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // AfterBtcDelegationActivated indicates an expected call of AfterBtcDelegationActivated.
-func (mr *MockFinalityHooksMockRecorder) AfterBtcDelegationActivated(ctx, fpAddr, btcDelAddr, fpSecuresBabylon, fpBbnPrevStatus, sats interface{}) *gomock.Call {
+func (mr *MockFinalityHooksMockRecorder) AfterBtcDelegationActivated(ctx, fpAddr, btcDelAddr, fpSecuresBabylon, isFpInActiveSet, sats interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AfterBtcDelegationActivated", reflect.TypeOf((*MockFinalityHooks)(nil).AfterBtcDelegationActivated), ctx, fpAddr, btcDelAddr, fpSecuresBabylon, fpBbnPrevStatus, sats)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AfterBtcDelegationActivated", reflect.TypeOf((*MockFinalityHooks)(nil).AfterBtcDelegationActivated), ctx, fpAddr, btcDelAddr, fpSecuresBabylon, isFpInActiveSet, sats)
 }
 
 // AfterBtcDelegationUnbonded mocks base method.
-func (m *MockFinalityHooks) AfterBtcDelegationUnbonded(ctx context.Context, fpAddr, btcDelAddr types0.AccAddress, fpSecuresBabylon bool, fpBbnPrevStatus types.FinalityProviderStatus, sats uint64) error {
+func (m *MockFinalityHooks) AfterBtcDelegationUnbonded(ctx context.Context, fpAddr, btcDelAddr types.AccAddress, fpSecuresBabylon, isFpInActiveSet bool, sats uint64) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AfterBtcDelegationUnbonded", ctx, fpAddr, btcDelAddr, fpSecuresBabylon, fpBbnPrevStatus, sats)
+	ret := m.ctrl.Call(m, "AfterBtcDelegationUnbonded", ctx, fpAddr, btcDelAddr, fpSecuresBabylon, isFpInActiveSet, sats)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // AfterBtcDelegationUnbonded indicates an expected call of AfterBtcDelegationUnbonded.
-func (mr *MockFinalityHooksMockRecorder) AfterBtcDelegationUnbonded(ctx, fpAddr, btcDelAddr, fpSecuresBabylon, fpBbnPrevStatus, sats interface{}) *gomock.Call {
+func (mr *MockFinalityHooksMockRecorder) AfterBtcDelegationUnbonded(ctx, fpAddr, btcDelAddr, fpSecuresBabylon, isFpInActiveSet, sats interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AfterBtcDelegationUnbonded", reflect.TypeOf((*MockFinalityHooks)(nil).AfterBtcDelegationUnbonded), ctx, fpAddr, btcDelAddr, fpSecuresBabylon, fpBbnPrevStatus, sats)
-}
-
-// AfterFpStatusChange mocks base method.
-func (m *MockFinalityHooks) AfterFpStatusChange(ctx context.Context, fpAddr types0.AccAddress, fpSecuresBabylon bool, prevStatus, newStatus types.FinalityProviderStatus) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AfterFpStatusChange", ctx, fpAddr, fpSecuresBabylon, prevStatus, newStatus)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// AfterFpStatusChange indicates an expected call of AfterFpStatusChange.
-func (mr *MockFinalityHooksMockRecorder) AfterFpStatusChange(ctx, fpAddr, fpSecuresBabylon, prevStatus, newStatus interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AfterFpStatusChange", reflect.TypeOf((*MockFinalityHooks)(nil).AfterFpStatusChange), ctx, fpAddr, fpSecuresBabylon, prevStatus, newStatus)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AfterBtcDelegationUnbonded", reflect.TypeOf((*MockFinalityHooks)(nil).AfterBtcDelegationUnbonded), ctx, fpAddr, btcDelAddr, fpSecuresBabylon, isFpInActiveSet, sats)
 }

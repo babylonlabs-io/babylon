@@ -24,10 +24,10 @@ func (d *BabylonAppDriver) CheckCostakerRewards(
 
 	del, err := costkK.GetCostakerRewards(d.Ctx(), addr)
 	require.NoError(d.t, err)
-	require.Equal(d.t, del.ActiveBaby.String(), expActiveBaby.String())
-	require.Equal(d.t, del.ActiveSatoshis.String(), expActiveSats.String())
-	require.Equal(d.t, del.StartPeriodCumulativeReward, expStartPeriod)
-	require.Equal(d.t, del.TotalScore.String(), expTotalScore.String())
+	require.Equal(d.t, expActiveBaby.String(), del.ActiveBaby.String(), "active baby")
+	require.Equal(d.t, expActiveSats.String(), del.ActiveSatoshis.String(), "active sats")
+	require.Equal(d.t, expStartPeriod, del.StartPeriodCumulativeReward, "start period cumulative rewards")
+	require.Equal(d.t, expTotalScore.String(), del.TotalScore.String(), "total score")
 }
 
 func (d *BabylonAppDriver) CheckCostakingCurrentRewards(
@@ -38,11 +38,11 @@ func (d *BabylonAppDriver) CheckCostakingCurrentRewards(
 	costkK := d.App.CostakingKeeper
 
 	rwdWithDecimals := expRewardsWithoutDecimals.MulInt(ictvtypes.DecimalRewards)
-	del, err := costkK.GetCurrentRewards(d.Ctx())
+	currRwd, err := costkK.GetCurrentRewards(d.Ctx())
 	require.NoError(d.t, err)
-	require.Equal(d.t, del.Rewards.String(), rwdWithDecimals.String())
-	require.Equal(d.t, del.Period, expPeriod)
-	require.Equal(d.t, del.TotalScore.String(), expTotalScore.String())
+	require.Equal(d.t, rwdWithDecimals.String(), currRwd.Rewards.String(), "current rewards decimals doesn't match")
+	require.Equal(d.t, expPeriod, currRwd.Period, "current rewards period doesn't match")
+	require.Equal(d.t, expTotalScore.String(), currRwd.TotalScore.String(), "current rewards total score doesn't match")
 }
 
 func (d *BabylonAppDriver) CheckCostakingCurrentHistoricalRewards(
@@ -53,7 +53,7 @@ func (d *BabylonAppDriver) CheckCostakingCurrentHistoricalRewards(
 
 	hist, err := costkK.GetHistoricalRewards(d.Ctx(), period)
 	require.NoError(d.t, err)
-	require.Equal(d.t, hist.CumulativeRewardsPerScore.String(), expCumulativeRewardsPerScore.String())
+	require.Equal(d.t, expCumulativeRewardsPerScore.String(), hist.CumulativeRewardsPerScore.String(), "cumulative rewards per score")
 }
 
 func (d *BabylonAppDriver) GenerateNewBlockAssertExecutionSuccessWithCostakerRewards() sdk.Coins {
@@ -92,24 +92,4 @@ func (d *BabylonAppDriver) GenerateNewBlockAssertExecutionSuccessWithCostakerRew
 	}
 
 	return totalRewardsAdded
-
-	// return totalRewardsAdded
-
-	// for _, evt := range response.Events {
-	// 	if evt.Type != evtTypeCostAddRwd {
-	// 		continue
-	// 	}
-
-	// 	event, err := sdk.ParseTypedEvent(evt)
-	// 	require.NoError(d.t, err)
-
-	// 	evt.Attributes
-	// 	evtCostAddRwd, ok := event.(*costktypes.EventCostakersAddRewards)
-	// 	require.True(d.t, ok)
-
-	// 	// Accumulate the rewards that were added
-	// 	totalRewardsAdded = totalRewardsAdded.Add(evtCostAddRwd.AddRewards...)
-	// }
-
-	// return totalRewardsAdded
 }

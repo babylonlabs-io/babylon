@@ -3,7 +3,6 @@ package types
 import (
 	context "context"
 
-	btcstktypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -15,9 +14,10 @@ import (
 
 // FinalityHooks event hooks for finality btcdelegation actions
 type FinalityHooks interface {
-	AfterBtcDelegationActivated(ctx context.Context, fpAddr, btcDelAddr sdk.AccAddress, fpSecuresBabylon bool, fpBbnPrevStatus btcstktypes.FinalityProviderStatus, sats uint64) error
-	AfterBtcDelegationUnbonded(ctx context.Context, fpAddr, btcDelAddr sdk.AccAddress, fpSecuresBabylon bool, fpBbnPrevStatus btcstktypes.FinalityProviderStatus, sats uint64) error
-	AfterFpStatusChange(ctx context.Context, fpAddr sdk.AccAddress, fpSecuresBabylon bool, prevStatus, newStatus btcstktypes.FinalityProviderStatus) error
+	AfterBtcDelegationUnbonded(ctx context.Context, fpAddr, btcDelAddr sdk.AccAddress, fpSecuresBabylon bool, isFpInActiveSet bool, sats uint64) error
+	AfterBtcDelegationActivated(ctx context.Context, fpAddr, btcDelAddr sdk.AccAddress, fpSecuresBabylon bool, isFpInActiveSet bool, sats uint64) error
+	AfterBbnFpEntersActiveSet(ctx context.Context, fpAddr sdk.AccAddress) error
+	AfterBbnFpRemovedFromActiveSet(ctx context.Context, fpAddr sdk.AccAddress) error
 }
 
 // combine multiple finality hooks, all hook functions are run in array sequence
@@ -29,27 +29,36 @@ func NewMultiFinalityHooks(hooks ...FinalityHooks) MultiFinalityHooks {
 	return hooks
 }
 
-func (h MultiFinalityHooks) AfterFpStatusChange(ctx context.Context, fpAddr sdk.AccAddress, fpSecuresBabylon bool, fpBbnPrevStatus, newStatus btcstktypes.FinalityProviderStatus) error {
+func (h MultiFinalityHooks) AfterBtcDelegationUnbonded(ctx context.Context, fpAddr, btcDelAddr sdk.AccAddress, fpSecuresBabylon bool, isFpInActiveSet bool, sats uint64) error {
 	for i := range h {
-		if err := h[i].AfterFpStatusChange(ctx, fpAddr, fpSecuresBabylon, fpBbnPrevStatus, newStatus); err != nil {
+		if err := h[i].AfterBtcDelegationUnbonded(ctx, fpAddr, btcDelAddr, fpSecuresBabylon, isFpInActiveSet, sats); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (h MultiFinalityHooks) AfterBtcDelegationActivated(ctx context.Context, fpAddr, btcDelAddr sdk.AccAddress, fpSecuresBabylon bool, fpBbnPrevStatus btcstktypes.FinalityProviderStatus, sats uint64) error {
+func (h MultiFinalityHooks) AfterBtcDelegationActivated(ctx context.Context, fpAddr, btcDelAddr sdk.AccAddress, fpSecuresBabylon bool, isFpInActiveSet bool, sats uint64) error {
 	for i := range h {
-		if err := h[i].AfterBtcDelegationActivated(ctx, fpAddr, btcDelAddr, fpSecuresBabylon, fpBbnPrevStatus, sats); err != nil {
+		if err := h[i].AfterBtcDelegationActivated(ctx, fpAddr, btcDelAddr, fpSecuresBabylon, isFpInActiveSet, sats); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (h MultiFinalityHooks) AfterBtcDelegationUnbonded(ctx context.Context, fpAddr, btcDelAddr sdk.AccAddress, fpSecuresBabylon bool, fpPrevStatus btcstktypes.FinalityProviderStatus, sats uint64) error {
+func (h MultiFinalityHooks) AfterBbnFpEntersActiveSet(ctx context.Context, fpAddr sdk.AccAddress) error {
 	for i := range h {
-		if err := h[i].AfterBtcDelegationUnbonded(ctx, fpAddr, btcDelAddr, fpSecuresBabylon, fpPrevStatus, sats); err != nil {
+		if err := h[i].AfterBbnFpEntersActiveSet(ctx, fpAddr); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (h MultiFinalityHooks) AfterBbnFpRemovedFromActiveSet(ctx context.Context, fpAddr sdk.AccAddress) error {
+	for i := range h {
+		if err := h[i].AfterBbnFpRemovedFromActiveSet(ctx, fpAddr); err != nil {
 			return err
 		}
 	}

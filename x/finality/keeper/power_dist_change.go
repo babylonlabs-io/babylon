@@ -49,7 +49,7 @@ func (k Keeper) UpdatePowerDist(ctx context.Context) {
 	// record voting power and cache for this height
 	k.RecordVotingPowerAndCache(ctx, newDc)
 	// emit events for finality providers with state updates
-	k.HandleFPStateUpdates(ctx, dc, newDc, state)
+	k.HandleFPStateUpdates(ctx, state, dc, newDc, true)
 	// record metrics
 	k.recordMetrics(newDc)
 }
@@ -91,114 +91,80 @@ func (k Keeper) RecordVotingPowerAndCache(ctx context.Context, newDc *ftypes.Vot
 }
 
 // HandleFPStateUpdates emits events and triggers hooks for finality providers with state updates
-func (k Keeper) HandleFPStateUpdates(ctx context.Context, prevDc, newDc *ftypes.VotingPowerDistCache, state *ftypes.ProcessingState) {
+func (k Keeper) HandleFPStateUpdates(
+	ctx context.Context,
+	state *ftypes.ProcessingState,
+	prevDc, newDc *ftypes.VotingPowerDistCache,
+	shouldCallHooks bool,
+) {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
 	newlyActiveFPs := newDc.FindNewActiveFinalityProviders(prevDc)
 	for _, fp := range newlyActiveFPs {
-		if err := k.HandleActivatedFinalityProvider(ctx, fp.BtcPk); err != nil {
-			panic(fmt.Errorf("failed to execute after finality provider %s activated", fp.BtcPk.MarshalHex()))
-		}
-
-		newState := types.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_ACTIVE
-		statusChangeEvent := types.NewFinalityProviderStatusChangeEvent(fp.BtcPk, newState)
-		if err := sdkCtx.EventManager().EmitTypedEvent(statusChangeEvent); err != nil {
-			panic(fmt.Errorf("failed to emit FinalityProviderStatusChangeEvent with status %s: %w", newState.String(), err))
-		}
-
-		k.Logger(sdkCtx).Info("a new finality provider becomes active", "pk", fp.BtcPk.MarshalHex())
-		// if there's a processing state, call the corresponding hooks
-		if state != nil {
-			prevStatus := state.PrevFpStatus(fp.BtcPk)
-			k.processHooksFp(sdkCtx, state.FpByBtcPk, *fp.BtcPk, prevStatus, newState)
-		}
+		k.processActiveFp(sdkCtx, fp, shouldCallHooks)
 	}
 
 	newlyInactiveFPs := newDc.FindNewInactiveFinalityProviders(prevDc)
 	for _, fp := range newlyInactiveFPs {
-		fpstate := state.FPStatesByBtcPk[fp.BtcPk.MarshalHex()]
-		if fpstate == ftypes.FinalityProviderState_JAILED || fpstate == ftypes.FinalityProviderState_SLASHED {
-			// if it is jailed or slashed the event was already emitted
-			continue
-		}
-		k.processInactiveFp(ctx, state, fp)
+		k.processInactiveFp(sdkCtx, state, fp, shouldCallHooks)
 	}
-	// call hooks for the jailed and slashed fps
-	k.processJailedAndSlashedFps(sdkCtx, state)
+}
+
+// processActiveFp process newly active fps event emission and hooks call
+func (k Keeper) processActiveFp(
+	ctx sdk.Context,
+	fp *ftypes.FinalityProviderDistInfo,
+	shouldCallHooks bool,
+) {
+	if err := k.HandleActivatedFinalityProvider(ctx, fp.BtcPk); err != nil {
+		panic(fmt.Errorf("failed to execute after finality provider %s activated", fp.BtcPk.MarshalHex()))
+	}
+
+	newState := types.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_ACTIVE
+	statusChangeEvent := types.NewFinalityProviderStatusChangeEvent(fp.BtcPk, newState)
+	if err := ctx.EventManager().EmitTypedEvent(statusChangeEvent); err != nil {
+		panic(fmt.Errorf("failed to emit FinalityProviderStatusChangeEvent with status %s: %w", newState.String(), err))
+	}
+
+	fpBtcPkHex := fp.BtcPk.MarshalHex()
+	k.Logger(ctx).Info("a new finality provider becomes active", "pk", fpBtcPkHex)
+	if !shouldCallHooks {
+		return
+	}
+	err := k.hooks.AfterBbnFpEntersActiveSet(ctx, fp.GetAddress())
+	if err != nil {
+		panic(fmt.Errorf("failed to call hook fp enters active set %s - %s: %w", fpBtcPkHex, fp.GetAddress().String(), err))
+	}
 }
 
 // processInactiveFp process inactive fps event emission and hooks call
-// Can happen that the FP was slashed or jailed and also became inactive
-// For those cases, we want to ensure that only the correct status is emitted
-// and avoid emitting the inactive status
 func (k Keeper) processInactiveFp(
-	ctx context.Context,
+	ctx sdk.Context,
 	state *ftypes.ProcessingState,
 	fp *ftypes.FinalityProviderDistInfo,
+	shouldCallHooks bool,
 ) {
-	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	fpBtcPkHex := fp.BtcPk.MarshalHex()
+
+	if shouldCallHooks && state.IsFpInPrevActiveSet(fp.BtcPk) {
+		fpAddr := fp.GetAddress()
+		err := k.hooks.AfterBbnFpRemovedFromActiveSet(ctx, fpAddr)
+		if err != nil {
+			panic(fmt.Errorf("failed to call hook fp removed from active set %s - %s: %w", fpBtcPkHex, fpAddr.String(), err))
+		}
+	}
+
+	fpstate := state.FPStatesByBtcPk[fpBtcPkHex]
+	if fpstate == ftypes.FinalityProviderState_JAILED || fpstate == ftypes.FinalityProviderState_SLASHED {
+		// if it is jailed or slashed the event was already emitted
+		return
+	}
 	newStatus := types.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_INACTIVE
 	statusChangeEvent := types.NewFinalityProviderStatusChangeEvent(fp.BtcPk, newStatus)
-	if err := sdkCtx.EventManager().EmitTypedEvent(statusChangeEvent); err != nil {
+	if err := ctx.EventManager().EmitTypedEvent(statusChangeEvent); err != nil {
 		panic(fmt.Errorf("failed to emit FinalityProviderStatusChangeEvent with status %s: %w", newStatus.String(), err))
 	}
-	k.Logger(sdkCtx).Info("a new finality provider becomes inactive", "pk", fp.BtcPk.MarshalHex())
-	// if there's a processing state, call the corresponding hooks
-	// for slashed and jailed fps, the hooks will be called in
-	// processJailedAndSlashedFps
-	if state != nil {
-		fpState := state.FPStatesByBtcPk[fp.BtcPk.MarshalHex()]
-		if fpState == ftypes.FinalityProviderState_SLASHED || fpState == ftypes.FinalityProviderState_JAILED {
-			return
-		}
-
-		prevStatus := state.PrevFpStatus(fp.BtcPk)
-		k.processHooksFp(sdkCtx, state.FpByBtcPk, *fp.BtcPk, prevStatus, newStatus)
-	}
-}
-
-// processJailedAndSlashedFps processes the hooks for finality providers that were
-// either jailed or slashed during the power distribution change process
-func (k Keeper) processJailedAndSlashedFps(ctx sdk.Context, state *ftypes.ProcessingState) {
-	if state == nil {
-		return
-	}
-	// get keys and sort them to ensure determinism
-	fpBtcKeys := make([]string, 0, len(state.FPStatesByBtcPk))
-	for fpBtcPk, fpState := range state.FPStatesByBtcPk {
-		// we care only about the jailed and slashed fps
-		if fpState != ftypes.FinalityProviderState_JAILED &&
-			fpState != ftypes.FinalityProviderState_SLASHED {
-			continue
-		}
-		fpBtcKeys = append(fpBtcKeys, fpBtcPk)
-	}
-	if len(fpBtcKeys) == 0 {
-		return
-	}
-	sort.SliceStable(fpBtcKeys, func(i, j int) bool {
-		return fpBtcKeys[i] < fpBtcKeys[j]
-	})
-
-	for _, fpBtcPkStr := range fpBtcKeys {
-		fpBTCPk, _ := bbn.NewBIP340PubKeyFromHex(fpBtcPkStr)
-		switch state.FPStatesByBtcPk[fpBtcPkStr] {
-		case ftypes.FinalityProviderState_SLASHED:
-			k.processHooksFp(
-				ctx, state.FpByBtcPk,
-				*fpBTCPk,
-				state.PrevFpStatus(fpBTCPk),
-				btcstktypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_SLASHED,
-			)
-		case ftypes.FinalityProviderState_JAILED:
-			k.processHooksFp(
-				ctx, state.FpByBtcPk,
-				*fpBTCPk,
-				state.PrevFpStatus(fpBTCPk),
-				btcstktypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_JAILED,
-			)
-		}
-	}
+	k.Logger(ctx).Info("a new finality provider becomes inactive", "pk", fpBtcPkHex)
 }
 
 // HandleActivatedFinalityProvider updates the signing info start height or create a new signing info
@@ -255,7 +221,7 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
 	// Populates state.PrevFpStatusByBtcPk before processing events
-	state.FillPrevFpStatusByBtcPk(dc)
+	state.FillByPrevVpDstCache(dc)
 	for btcHeight := lastBTCTip; btcHeight <= curBTCTip; btcHeight++ {
 		k.processEventsAtHeight(sdkCtx, btcHeight, state)
 	}
@@ -579,7 +545,7 @@ func (k Keeper) processBtcDelHook(
 		ctx context.Context,
 		fpAddr, btcDelAddr sdk.AccAddress,
 		fpSecuresBabylon bool,
-		fpBbnPrevStatus btcstktypes.FinalityProviderStatus,
+		isFpInActiveSet bool,
 		sats uint64,
 	) error) error {
 	// execute hooks for newly active BTC delegations
@@ -598,7 +564,7 @@ func (k Keeper) processBtcDelHook(
 		err = hookFn(
 			ctx, fp.Address(),
 			del.Delegator, fpSecuresBabylon,
-			state.PrevFpStatus(fp.BtcPk),
+			state.IsFpInPrevActiveSet(fp.BtcPk),
 			del.TotalSat,
 		)
 		if err != nil {
@@ -630,35 +596,6 @@ func (k Keeper) processBTCDelegationHooks(ctx sdk.Context, state *ftypes.Process
 		return fmt.Errorf("failed to execute unbonding btc delegation hooks: %w", err)
 	}
 	return nil
-}
-
-// processHooksFp loads Babylon FP from the given fp btc pk
-// and executes the given function over the loaded FP
-// NOTE:
-//   - The function makes uses of the fpByBtcPkHex cache
-//   - Calls the hook AfterFpStatusChange
-func (k Keeper) processHooksFp(
-	ctx sdk.Context,
-	fpByBtcPkHex map[string]*types.FinalityProvider,
-	fpBTCPK bbn.BIP340PubKey,
-	prevStatus, newStatus btcstktypes.FinalityProviderStatus,
-) {
-	fpBtcPk := fpBTCPK.MarshalHex()
-	fp, err := k.loadFP(ctx, fpByBtcPkHex, fpBtcPk)
-	if err != nil {
-		k.Logger(ctx).Error(
-			"failed process the hooks for the given fp",
-			err,
-			"fp_btc_pk", fpBtcPk,
-		)
-		panic(fmt.Errorf("failed to load fp %s: %w", fpByBtcPkHex, err))
-	}
-
-	fpSecuresBabylon := fp.SecuresBabylonGenesis(ctx)
-	err = k.hooks.AfterFpStatusChange(ctx, fp.Address(), fpSecuresBabylon, prevStatus, newStatus)
-	if err != nil {
-		panic(fmt.Errorf("failed to call hook AfterFpStatusChange for fp %s with status %s: %w", fpByBtcPkHex, newStatus.String(), err))
-	}
 }
 
 func (k Keeper) loadFP(
