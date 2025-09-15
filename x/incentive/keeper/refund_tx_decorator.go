@@ -14,7 +14,6 @@ import (
 	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 	"github.com/babylonlabs-io/babylon/v4/x/feemarketwrapper"
 	ftypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
-	"github.com/babylonlabs-io/babylon/v4/x/incentive/types"
 )
 
 var _ sdk.PostDecorator = &RefundTxDecorator{}
@@ -124,18 +123,8 @@ func (d *RefundTxDecorator) CheckTxAndClearIndex(_ sdk.Context, tx sdk.Tx) bool 
 		return false
 	}
 
-	// NOTE: we use a map to avoid duplicated refundable messages, as
-	// otherwise one can fill a tx with duplicate messages to bloat the blockchain
-	refundableMsgHashSet := make(map[string]struct{})
-
-	// iterate over all messages in the tx, and record whether they are refundable
-	for _, msg := range tx.GetMsgs() {
-		msgHash := types.HashMsg(msg)
-		if _, exists := refundableMsgHashSet[string(msgHash)]; exists {
-			return false
-		}
-		refundableMsgHashSet[string(msgHash)] = struct{}{}
-	}
+	// NOTE: we don't need to check for duplicate refundable msgs in the tx,
+	// since it is checked individually in each msg_server.go
 
 	return true
 }

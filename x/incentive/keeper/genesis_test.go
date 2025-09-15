@@ -1,7 +1,6 @@
 package keeper_test
 
 import (
-	"encoding/hex"
 	"fmt"
 	"math"
 	"math/rand"
@@ -469,12 +468,4 @@ func getUniqueHeight(currHeight uint64, usedHeights map[uint64]bool) uint64 {
 		}
 	}
 	return height
-}
-
-func genRandomMsgHashStr() string {
-	msg := types.MsgWithdrawReward{
-		Address: datagen.GenRandomAccount().Address,
-	}
-	msgHash := types.HashMsg(&msg)
-	return hex.EncodeToString(msgHash)
 }

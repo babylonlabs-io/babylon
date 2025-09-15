@@ -1,14 +1,12 @@
 package types
 
 import (
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"reflect"
 	"sort"
 
 	"github.com/babylonlabs-io/babylon/v4/types"
-	"github.com/cometbft/cometbft/crypto/tmhash"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -222,27 +220,6 @@ func validateRewardGauges(entries []RewardGaugeEntry) error {
 		}
 	}
 
-	return nil
-}
-
-func validateMsgHashes(hashes []string) error {
-	hashMap := make(map[string]bool) // To check for duplicate hashes
-	for _, hash := range hashes {
-		if hash == "" {
-			return errors.New("empty hash")
-		}
-		bz, err := hex.DecodeString(hash)
-		if err != nil {
-			return fmt.Errorf("error decoding msg hash: %w", err)
-		}
-		if len(bz) != tmhash.Size {
-			return fmt.Errorf("hash size should be %d characters: %s", tmhash.Size, hash)
-		}
-		if _, exists := hashMap[hash]; exists {
-			return fmt.Errorf("duplicate hash: %s", hash)
-		}
-		hashMap[hash] = true
-	}
 	return nil
 }
 
