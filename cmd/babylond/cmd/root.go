@@ -22,13 +22,6 @@ import (
 	authtxconfig "github.com/cosmos/cosmos-sdk/x/auth/tx/config"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
-<<<<<<< HEAD
-=======
-	"github.com/cosmos/evm/crypto/hd"
-	evmkeyring "github.com/cosmos/evm/crypto/keyring"
-	evmserver "github.com/cosmos/evm/server"
-	srvflags "github.com/cosmos/evm/server/flags"
->>>>>>> 70529b35 (fix(cli): add bls flags to rollback and bootstrap-state cmds (#1714))
 
 	appsigner "github.com/babylonlabs-io/babylon/v3/app/signer"
 
@@ -227,16 +220,13 @@ func initRootCmd(rootCmd *cobra.Command, txConfig client.TxEncodingConfig, basic
 		confixcmd.ConfigCommand(),
 	)
 
-<<<<<<< HEAD
-	server.AddCommands(rootCmd, app.DefaultNodeHome, newApp, appExport, addModuleInitFlags)
-=======
 	addCommandsWithBLSFlags(
 		rootCmd,
-		evmserver.NewDefaultStartOptions(newApp, app.DefaultNodeHome),
+		app.DefaultNodeHome,
+		newApp,
 		appExport,
 		addModuleInitFlags,
 	)
->>>>>>> 70529b35 (fix(cli): add bls flags to rollback and bootstrap-state cmds (#1714))
 
 	// add keybase, auxiliary RPC, query, and tx child commands
 	rootCmd.AddCommand(
@@ -415,12 +405,13 @@ func newCustomBootstrapStateCmd(appCreator servertypes.AppCreator) *cobra.Comman
 // then adds the BLS related flags to specific commands that use newApp (appCreator) function
 func addCommandsWithBLSFlags(
 	rootCmd *cobra.Command,
-	opts evmserver.StartOptions,
+	defaultNodeHome string,
+	appCreator servertypes.AppCreator,
 	appExport servertypes.AppExporter,
 	addStartFlags servertypes.ModuleInitFlags,
 ) {
 	// First, add all commands using the original function
-	evmserver.AddCommands(rootCmd, opts, appExport, addStartFlags)
+	server.AddCommands(rootCmd, defaultNodeHome, appCreator, appExport, addStartFlags)
 
 	// Replace the rollback command with our custom version
 	rollbackCmd := FindSubCommand(rootCmd, "rollback")
@@ -428,7 +419,7 @@ func addCommandsWithBLSFlags(
 		panic("failed to find 'rollback' command")
 	}
 	rootCmd.RemoveCommand(rollbackCmd)
-	rootCmd.AddCommand(newCustomRollbackCmd(opts.AppCreator, opts.DefaultNodeHome))
+	rootCmd.AddCommand(newCustomRollbackCmd(appCreator, defaultNodeHome))
 
 	// Replace the bootstrap command in the comet subcommand
 	cometCmd := FindSubCommand(rootCmd, "comet")
@@ -440,5 +431,5 @@ func addCommandsWithBLSFlags(
 		panic("failed to find 'comet bootstrap-state' command")
 	}
 	cometCmd.RemoveCommand(bootstrapCmd)
-	cometCmd.AddCommand(newCustomBootstrapStateCmd(opts.AppCreator))
+	cometCmd.AddCommand(newCustomBootstrapStateCmd(appCreator))
 }

@@ -40,6 +40,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ### Bug fixes
 
 - [#1651](https://github.com/babylonlabs-io/babylon/pull/1651) Store Cosmos BSN slashing evidence.
+- [#1714](https://github.com/babylonlabs-io/babylon/pull/1714) Add BLS key flags to `rollback` and `bootstrap-state` cmds
 
 ### Improvements
 
@@ -75,17 +76,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#1585](https://github.com/babylonlabs-io/babylon/pull/1585) Remove allow-lists logic and state in `x/btcstaking` module
 - [#1596](https://github.com/babylonlabs-io/babylon/pull/1596) Add rollups finality contract index in `x/btcstkconsumer`
 
-<<<<<<< HEAD
-=======
-### Bug fixes
-
-- [#1608](https://github.com/babylonlabs-io/babylon/pull/1608) fix: `x/btcstaking` prefix of `LargestBtcReOrg` to match mainnet.
-- [#1630](https://github.com/babylonlabs-io/babylon/pull/1630) Remove `HeaderCache` redundant test
-- [#1647](https://github.com/babylonlabs-io/babylon/pull/1647) Fix inactive event emitted on slashed finality provider case.
-- [#1651](https://github.com/babylonlabs-io/babylon/pull/1651) Store Cosmos BSN slashing evidence.
-- [#1714](https://github.com/babylonlabs-io/babylon/pull/1714) Add BLS key flags to `rollback` and `bootstrap-state` cmds
-
->>>>>>> 70529b35 (fix(cli): add bls flags to rollback and bootstrap-state cmds (#1714))
 ## v3.0.0-rc.2
 
 - [#1529](https://github.com/babylonlabs-io/babylon/pull/1529) Allow `FinalityProviderHistoricalRewards` to have empty coins
