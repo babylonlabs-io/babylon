@@ -7,9 +7,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TODO(rafilx): after costaking genesis, add test checking rewards portions are correctly taken from
-// incentive, costaking, distribution each block from the fee collector
-
 func (d *BabylonAppDriver) GenerateBlocksUntilLastProcessedBtcStkEventsHeightIs(untilBlock uint64) {
 	ictvK := d.App.IncentiveKeeper
 

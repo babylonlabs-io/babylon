@@ -92,24 +92,4 @@ func (d *BabylonAppDriver) GenerateNewBlockAssertExecutionSuccessWithCostakerRew
 	}
 
 	return totalRewardsAdded
-
-	// return totalRewardsAdded
-
-	// for _, evt := range response.Events {
-	// 	if evt.Type != evtTypeCostAddRwd {
-	// 		continue
-	// 	}
-
-	// 	event, err := sdk.ParseTypedEvent(evt)
-	// 	require.NoError(d.t, err)
-
-	// 	evt.Attributes
-	// 	evtCostAddRwd, ok := event.(*costktypes.EventCostakersAddRewards)
-	// 	require.True(d.t, ok)
-
-	// 	// Accumulate the rewards that were added
-	// 	totalRewardsAdded = totalRewardsAdded.Add(evtCostAddRwd.AddRewards...)
-	// }
-
-	// return totalRewardsAdded
 }

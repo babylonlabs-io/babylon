@@ -482,7 +482,7 @@ func NewBabylonApp(
 		finalitytypes.ModuleName,
 		// tokenomics related modules
 		incentivetypes.ModuleName, // EndBlock of incentive module does not matter
-		costktypes.ModuleName,     // EndBlock of costaking module does not matter
+		costktypes.ModuleName,
 		// Cosmos EVM
 		evmtypes.ModuleName,
 		erc20types.ModuleName,
