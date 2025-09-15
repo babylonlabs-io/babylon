@@ -35,7 +35,6 @@ func BenchmarkRefundTxDecorator_InMemoryCounter(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-
 		for _, tx := range txs {
 			for range tx.GetMsgs() {
 				iKeeper.IncRefundableMsgCount()
@@ -53,7 +52,6 @@ func BenchmarkRefundTxDecorator_KeySetWithKVStore(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-
 		for _, tx := range txs {
 			for _, msg := range tx.GetMsgs() {
 				msgHash := types.HashMsg(msg)
@@ -155,8 +153,7 @@ func (tx mockTx) ValidateBasic() error {
 func generateDummyRefundableTxs(count int) []sdk.Tx {
 	var txs []sdk.Tx
 	for i := 0; i < count; i++ {
-		var msgs []sdk.Msg
-		msgs = []sdk.Msg{
+		msgs := []sdk.Msg{
 			&ftypes.MsgAddFinalitySig{
 				Signer: fmt.Sprintf("signer_%d", i),
 			},
