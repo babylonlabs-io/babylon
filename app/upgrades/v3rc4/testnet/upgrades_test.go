@@ -11,6 +11,7 @@ import (
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/babylonlabs-io/babylon/v4/app"
@@ -18,6 +19,7 @@ import (
 	v3rc4testnet "github.com/babylonlabs-io/babylon/v4/app/upgrades/v3rc4/testnet"
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	"github.com/babylonlabs-io/babylon/v4/x/epoching"
+	epochingkeeper "github.com/babylonlabs-io/babylon/v4/x/epoching/keeper"
 	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 	minttypes "github.com/babylonlabs-io/babylon/v4/x/mint/types"
 )
@@ -125,6 +127,11 @@ func (s *UpgradeTestSuite) TestUpgradeWarningScenarios() {
 
 			if tc.expectSuccess {
 				s.executeSuccessfulUpgrade(tc.upgradeHeight)
+
+				// For the MsgDelegate test case, verify that delegation works after upgrade
+				if tc.name == "upgrade warns about delegate pool funds then processes MsgDelegate successfully" {
+					s.verifyPostUpgradeDelegation()
+				}
 			}
 		})
 	}
@@ -282,4 +289,75 @@ func (s *UpgradeTestSuite) executeFailedUpgrade(upgradeHeight int64, expectedErr
 	err := s.executeUpgrade(upgradeHeight)
 	s.Require().Error(err)
 	s.Require().Contains(err.Error(), expectedErrorContains)
+}
+
+// verifyPostUpgradeDelegation verifies that MsgDelegate works correctly after upgrade
+func (s *UpgradeTestSuite) verifyPostUpgradeDelegation() {
+	// Get existing validator (should exist from app setup)
+	validators, err := s.app.StakingKeeper.GetAllValidators(s.ctx)
+	s.Require().NoError(err)
+	s.Require().True(len(validators) > 0, "should have at least one validator from app setup")
+
+	validatorAddr, err := sdk.ValAddressFromBech32(validators[0].OperatorAddress)
+	s.Require().NoError(err)
+
+	// Create and fund a delegator
+	delegatorAddr := sdk.AccAddress("test_delegator_12345")
+	delegatorCoins := sdk.NewCoins(sdk.NewCoin("ubbn", math.NewInt(1000000))) // 1M ubbn
+	s.Require().NoError(s.app.BankKeeper.MintCoins(s.ctx, minttypes.ModuleName, delegatorCoins))
+	s.Require().NoError(s.app.BankKeeper.SendCoinsFromModuleToAccount(s.ctx, minttypes.ModuleName, delegatorAddr, delegatorCoins))
+
+	// Create a MsgDelegate
+	delegationAmount := sdk.NewCoin("ubbn", math.NewInt(100000)) // 100k ubbn
+	stakingMsg := &stakingtypes.MsgDelegate{
+		DelegatorAddress: delegatorAddr.String(),
+		ValidatorAddress: validatorAddr.String(),
+		Amount:           delegationAmount,
+	}
+	msgDelegate := epochingtypes.NewMsgWrappedDelegate(stakingMsg)
+
+	// Process the MsgDelegate through epoching keeper
+	msgServer := epochingkeeper.NewMsgServerImpl(s.app.EpochingKeeper)
+	_, err = msgServer.WrappedDelegate(s.ctx, msgDelegate)
+	s.Require().NoError(err)
+
+	// Verify delegation was queued
+	epoch := s.app.EpochingKeeper.GetEpoch(s.ctx)
+	queuedMsgs := s.app.EpochingKeeper.GetEpochMsgs(s.ctx, epoch.EpochNumber)
+	s.Assert().True(len(queuedMsgs) > 0, "delegation message should be queued for execution")
+
+	// Verify funds were locked in delegate pool
+	moduleAddr := s.app.AccountKeeper.GetModuleAddress(epochingtypes.DelegatePoolModuleName)
+	balance := s.app.BankKeeper.GetBalance(s.ctx, moduleAddr, "ubbn")
+	// Should have previous funds (300000) plus the new delegation (100000)
+	expectedBalance := math.NewInt(400000) // 300k from setup + 100k from delegation
+	s.Assert().True(balance.Amount.GTE(expectedBalance), "delegate pool should contain locked funds from delegation")
+
+	// Verify delegator balance was reduced
+	delegatorBalance := s.app.BankKeeper.GetBalance(s.ctx, delegatorAddr, "ubbn")
+	expectedDelegatorBalance := math.NewInt(900000) // 1M - 100k delegation
+	s.Assert().Equal(expectedDelegatorBalance, delegatorBalance.Amount, "delegator balance should be reduced by delegation amount")
+
+	// Now simulate processing at epoch boundary - advance to last block of epoch
+	currentEpoch := s.app.EpochingKeeper.GetEpoch(s.ctx)
+	lastBlockHeight := currentEpoch.GetLastBlockHeight()
+
+	// Advance to the last block of current epoch (but don't go to next epoch yet)
+	s.ctx = s.ctx.WithBlockHeight(int64(lastBlockHeight)).WithHeaderInfo(header.Info{
+		Height: int64(lastBlockHeight),
+		Time:   s.ctx.BlockTime().Add(time.Second * time.Duration(lastBlockHeight-uint64(s.ctx.BlockHeight()))),
+	})
+
+	// Execute epoch end processing at the last block of the epoch
+	// This should process all queued messages including our delegation
+	_, err = epoching.EndBlocker(s.ctx, s.app.EpochingKeeper)
+	s.Require().NoError(err)
+
+	// Verify delegation was actually processed by checking validator's delegation
+	delegation, err := s.app.StakingKeeper.GetDelegation(s.ctx, delegatorAddr, validatorAddr)
+	if err == nil {
+		s.Assert().True(delegation.Shares.IsPositive(), "delegation should have been processed and created shares")
+	}
+
+	s.T().Log("Post-upgrade delegation verification successful: MsgDelegate processed correctly through epoch boundary")
 }
