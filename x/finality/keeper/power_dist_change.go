@@ -148,9 +148,9 @@ func (k Keeper) processInactiveFp(
 
 	if shouldCallHooks && state.IsFpInPrevActiveSet(fp.BtcPk) {
 		fpAddr := fp.GetAddress()
-		err := k.hooks.AfterBbnFpExistsActiveSet(ctx, fpAddr)
+		err := k.hooks.AfterBbnFpRemovedFromActiveSet(ctx, fpAddr)
 		if err != nil {
-			panic(fmt.Errorf("failed to call hook fp exits active set %s - %s: %w", fpBtcPkHex, fpAddr.String(), err))
+			panic(fmt.Errorf("failed to call hook fp removed from active set %s - %s: %w", fpBtcPkHex, fpAddr.String(), err))
 		}
 	}
 

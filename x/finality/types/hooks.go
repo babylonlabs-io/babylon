@@ -17,7 +17,7 @@ type FinalityHooks interface {
 	AfterBtcDelegationUnbonded(ctx context.Context, fpAddr, btcDelAddr sdk.AccAddress, fpSecuresBabylon bool, isFpInActiveSet bool, sats uint64) error
 	AfterBtcDelegationActivated(ctx context.Context, fpAddr, btcDelAddr sdk.AccAddress, fpSecuresBabylon bool, isFpInActiveSet bool, sats uint64) error
 	AfterBbnFpEntersActiveSet(ctx context.Context, fpAddr sdk.AccAddress) error
-	AfterBbnFpExistsActiveSet(ctx context.Context, fpAddr sdk.AccAddress) error
+	AfterBbnFpRemovedFromActiveSet(ctx context.Context, fpAddr sdk.AccAddress) error
 }
 
 // combine multiple finality hooks, all hook functions are run in array sequence
@@ -56,9 +56,9 @@ func (h MultiFinalityHooks) AfterBbnFpEntersActiveSet(ctx context.Context, fpAdd
 	return nil
 }
 
-func (h MultiFinalityHooks) AfterBbnFpExistsActiveSet(ctx context.Context, fpAddr sdk.AccAddress) error {
+func (h MultiFinalityHooks) AfterBbnFpRemovedFromActiveSet(ctx context.Context, fpAddr sdk.AccAddress) error {
 	for i := range h {
-		if err := h[i].AfterBbnFpExistsActiveSet(ctx, fpAddr); err != nil {
+		if err := h[i].AfterBbnFpRemovedFromActiveSet(ctx, fpAddr); err != nil {
 			return err
 		}
 	}

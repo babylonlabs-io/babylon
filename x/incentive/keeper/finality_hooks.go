@@ -57,7 +57,7 @@ func (h Hooks) AfterBbnFpEntersActiveSet(ctx context.Context, fpAddr sdk.AccAddr
 	return nil
 }
 
-// AfterBbnFpExistsActiveSet implements the FinalityHooks interface
-func (h Hooks) AfterBbnFpExistsActiveSet(ctx context.Context, fpAddr sdk.AccAddress) error {
+// AfterBbnFpRemovedFromActiveSet implements the FinalityHooks interface
+func (h Hooks) AfterBbnFpRemovedFromActiveSet(ctx context.Context, fpAddr sdk.AccAddress) error {
 	return nil
 }

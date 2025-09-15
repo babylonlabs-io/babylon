@@ -254,7 +254,7 @@ func TestHandleResumeFinalityProposalMissingSigningInfo(t *testing.T) {
 	fHooks.EXPECT().AfterBtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 	fHooks.EXPECT().AfterBtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 	fHooks.EXPECT().AfterBbnFpEntersActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
-	fHooks.EXPECT().AfterBbnFpExistsActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
+	fHooks.EXPECT().AfterBbnFpRemovedFromActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
 
 	// Setup heights
 	haltingHeight := uint64(100)

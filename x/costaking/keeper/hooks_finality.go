@@ -48,8 +48,8 @@ func (h HookFinality) AfterBbnFpEntersActiveSet(ctx context.Context, fpAddr sdk.
 	})
 }
 
-// AfterBbnFpExistsActiveSet iterates over all the delegators of this fp and subtracts their voting power
-func (h HookFinality) AfterBbnFpExistsActiveSet(ctx context.Context, fpAddr sdk.AccAddress) error {
+// AfterBbnFpRemovedFromActiveSet iterates over all the delegators of this fp and subtracts their voting power
+func (h HookFinality) AfterBbnFpRemovedFromActiveSet(ctx context.Context, fpAddr sdk.AccAddress) error {
 	return h.k.ictvK.IterateBTCDelegationSatsUpdated(ctx, fpAddr, func(del sdk.AccAddress, activeSats math.Int) error {
 		return h.k.costakerModified(ctx, del, func(rwdTracker *types.CostakerRewardsTracker) {
 			rwdTracker.ActiveSatoshis = rwdTracker.ActiveSatoshis.Sub(activeSats)

@@ -375,7 +375,7 @@ func FuzzProcessAllPowerDistUpdateEvents_Determinism(f *testing.F) {
 		fHooks.EXPECT().AfterBtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 		fHooks.EXPECT().AfterBtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 		fHooks.EXPECT().AfterBbnFpEntersActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
-		fHooks.EXPECT().AfterBbnFpExistsActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
+		fHooks.EXPECT().AfterBbnFpRemovedFromActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
 
 		// set all parameters
 		h.GenAndApplyParams(r)
@@ -490,7 +490,7 @@ func FuzzProcessAllPowerDistUpdateEvents_ActiveAndUnbondTogether(f *testing.F) {
 		fHooks.EXPECT().AfterBtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 		fHooks.EXPECT().AfterBtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 		fHooks.EXPECT().AfterBbnFpEntersActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
-		fHooks.EXPECT().AfterBbnFpExistsActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
+		fHooks.EXPECT().AfterBbnFpRemovedFromActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
 
 		eventActive := btcstktypes.NewEventPowerDistUpdateWithBTCDel(&btcstktypes.EventBTCDelegationStateUpdate{
 			StakingTxHash: del.MustGetStakingTxHash().String(),
@@ -521,7 +521,7 @@ func FuzzProcessAllPowerDistUpdateEvents_ActiveAndSlashTogether(f *testing.F) {
 		fHooks.EXPECT().AfterBtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 		fHooks.EXPECT().AfterBtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 		fHooks.EXPECT().AfterBbnFpEntersActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
-		fHooks.EXPECT().AfterBbnFpExistsActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
+		fHooks.EXPECT().AfterBbnFpRemovedFromActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
 
 		eventActive := btcstktypes.NewEventPowerDistUpdateWithBTCDel(&btcstktypes.EventBTCDelegationStateUpdate{
 			StakingTxHash: del.MustGetStakingTxHash().String(),
@@ -551,7 +551,7 @@ func FuzzProcessAllPowerDistUpdateEvents_PreApprovalWithSlahedFP(f *testing.F) {
 		fHooks.EXPECT().AfterBtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 		fHooks.EXPECT().AfterBtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 		fHooks.EXPECT().AfterBbnFpEntersActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
-		fHooks.EXPECT().AfterBbnFpExistsActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
+		fHooks.EXPECT().AfterBbnFpRemovedFromActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
 
 		// activates one delegation to the finality provider without preapproval
 		eventActive := btcstktypes.NewEventPowerDistUpdateWithBTCDel(&btcstktypes.EventBTCDelegationStateUpdate{
@@ -651,7 +651,7 @@ func FuzzProcessAllPowerDistUpdateEvents_ActiveAndJailTogether(f *testing.F) {
 		fHooks.EXPECT().AfterBtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 		fHooks.EXPECT().AfterBtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 		fHooks.EXPECT().AfterBbnFpEntersActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
-		fHooks.EXPECT().AfterBbnFpExistsActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
+		fHooks.EXPECT().AfterBbnFpRemovedFromActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
 
 		eventActive := btcstktypes.NewEventPowerDistUpdateWithBTCDel(&btcstktypes.EventBTCDelegationStateUpdate{
 			StakingTxHash: del.MustGetStakingTxHash().String(),
@@ -686,7 +686,7 @@ func FuzzProcessAllPowerDistUpdateEvents_SlashActiveFp(f *testing.F) {
 		fHooks.EXPECT().AfterBtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 		fHooks.EXPECT().AfterBtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 		fHooks.EXPECT().AfterBbnFpEntersActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
-		fHooks.EXPECT().AfterBbnFpExistsActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
+		fHooks.EXPECT().AfterBbnFpRemovedFromActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
 
 		eventActive := btcstktypes.NewEventPowerDistUpdateWithBTCDel(&btcstktypes.EventBTCDelegationStateUpdate{
 			StakingTxHash: del.MustGetStakingTxHash().String(),
@@ -826,7 +826,7 @@ func FuzzSlashFinalityProviderEvent(f *testing.F) {
 		fHooks.EXPECT().AfterBtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 		fHooks.EXPECT().AfterBtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 		fHooks.EXPECT().AfterBbnFpEntersActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
-		fHooks.EXPECT().AfterBbnFpExistsActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
+		fHooks.EXPECT().AfterBbnFpRemovedFromActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
 
 		// set all parameters
 		covenantSKs, _ := h.GenAndApplyParams(r)
@@ -919,7 +919,7 @@ func FuzzJailFinalityProviderEvents(f *testing.F) {
 		fHooks.EXPECT().AfterBtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 		fHooks.EXPECT().AfterBtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 		fHooks.EXPECT().AfterBbnFpEntersActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
-		fHooks.EXPECT().AfterBbnFpExistsActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
+		fHooks.EXPECT().AfterBbnFpRemovedFromActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
 
 		// set all parameters
 		covenantSKs, _ := h.GenAndApplyParams(r)
@@ -1059,7 +1059,7 @@ func FuzzUnjailFinalityProviderEvents(f *testing.F) {
 		fHooks.EXPECT().AfterBtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 		fHooks.EXPECT().AfterBtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 		fHooks.EXPECT().AfterBbnFpEntersActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
-		fHooks.EXPECT().AfterBbnFpExistsActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
+		fHooks.EXPECT().AfterBbnFpRemovedFromActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
 
 		// set all parameters
 		covenantSKs, _ := h.GenAndApplyParams(r)
@@ -1186,7 +1186,7 @@ func FuzzBTCDelegationEvents_NoPreApproval(f *testing.F) {
 		fHooks.EXPECT().AfterBtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 		fHooks.EXPECT().AfterBtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 		fHooks.EXPECT().AfterBbnFpEntersActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
-		fHooks.EXPECT().AfterBbnFpExistsActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
+		fHooks.EXPECT().AfterBbnFpRemovedFromActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
 
 		// set all parameters
 		covenantSKs, _ := h.GenAndApplyParams(r)
@@ -1307,7 +1307,7 @@ func FuzzBTCDelegationEvents_WithPreApproval(f *testing.F) {
 		fHooks.EXPECT().AfterBtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 		fHooks.EXPECT().AfterBtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 		fHooks.EXPECT().AfterBbnFpEntersActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
-		fHooks.EXPECT().AfterBbnFpExistsActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
+		fHooks.EXPECT().AfterBbnFpRemovedFromActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
 
 		// set all parameters
 		covenantSKs, _ := h.GenAndApplyParams(r)
@@ -2196,7 +2196,7 @@ func TestTwoBtcActivationEvents(t *testing.T) {
 	fHooks.EXPECT().AfterBtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 	fHooks.EXPECT().AfterBtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 	fHooks.EXPECT().AfterBbnFpEntersActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
-	fHooks.EXPECT().AfterBbnFpExistsActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
+	fHooks.EXPECT().AfterBbnFpRemovedFromActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
 
 	h.GenAndApplyCustomParams(r, 100, 200, 2)
 
@@ -2279,7 +2279,7 @@ func TestGovernanceJailingAfterUnjailInSameBlock(t *testing.T) {
 	fHooks.EXPECT().AfterBtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 	fHooks.EXPECT().AfterBtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 	fHooks.EXPECT().AfterBbnFpEntersActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
-	fHooks.EXPECT().AfterBbnFpExistsActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
+	fHooks.EXPECT().AfterBbnFpRemovedFromActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
 
 	// set all parameters
 	covenantSKs, _ := h.GenAndApplyParams(r)
@@ -2387,7 +2387,7 @@ func TestGovernanceJailingAfterUnjailInSameBlock(t *testing.T) {
 	babylonHeight += 1
 	h.SetCtxHeight(babylonHeight)
 	// fHooks.EXPECT().AfterBbnFpEntersActiveSet(gomock.Any(), gomock.Any())
-	// fHooks.EXPECT().AfterBbnFpExistsActiveSet(gomock.Any(), gomock.Any())
+	// fHooks.EXPECT().AfterBbnFpRemovedFromActiveSet(gomock.Any(), gomock.Any())
 	h.BeginBlocker()
 
 	// Step 6: Check the results
@@ -2434,7 +2434,7 @@ func TestProcessAllPowerDistUpdateEvents_TotallyUnbondedFP(t *testing.T) {
 	fHooks.EXPECT().AfterBtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 	fHooks.EXPECT().AfterBtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 	fHooks.EXPECT().AfterBbnFpEntersActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
-	fHooks.EXPECT().AfterBbnFpExistsActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
+	fHooks.EXPECT().AfterBbnFpRemovedFromActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
 
 	// Start with an active delegation
 	eventActive := btcstktypes.NewEventPowerDistUpdateWithBTCDel(&btcstktypes.EventBTCDelegationStateUpdate{
@@ -2489,7 +2489,7 @@ func TestProcessAllPowerDistUpdateEvents_SlashedFP(t *testing.T) {
 	fHooks.EXPECT().AfterBtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 	fHooks.EXPECT().AfterBtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 	fHooks.EXPECT().AfterBbnFpEntersActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
-	fHooks.EXPECT().AfterBbnFpExistsActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
+	fHooks.EXPECT().AfterBbnFpRemovedFromActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
 
 	// Start with an active delegation
 	eventActive := btcstktypes.NewEventPowerDistUpdateWithBTCDel(&btcstktypes.EventBTCDelegationStateUpdate{

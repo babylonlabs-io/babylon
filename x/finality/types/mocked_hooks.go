@@ -49,18 +49,18 @@ func (mr *MockFinalityHooksMockRecorder) AfterBbnFpEntersActiveSet(ctx, fpAddr i
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AfterBbnFpEntersActiveSet", reflect.TypeOf((*MockFinalityHooks)(nil).AfterBbnFpEntersActiveSet), ctx, fpAddr)
 }
 
-// AfterBbnFpExistsActiveSet mocks base method.
-func (m *MockFinalityHooks) AfterBbnFpExistsActiveSet(ctx context.Context, fpAddr types.AccAddress) error {
+// AfterBbnFpRemovedFromActiveSet mocks base method.
+func (m *MockFinalityHooks) AfterBbnFpRemovedFromActiveSet(ctx context.Context, fpAddr types.AccAddress) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AfterBbnFpExistsActiveSet", ctx, fpAddr)
+	ret := m.ctrl.Call(m, "AfterBbnFpRemovedFromActiveSet", ctx, fpAddr)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// AfterBbnFpExistsActiveSet indicates an expected call of AfterBbnFpExistsActiveSet.
-func (mr *MockFinalityHooksMockRecorder) AfterBbnFpExistsActiveSet(ctx, fpAddr interface{}) *gomock.Call {
+// AfterBbnFpRemovedFromActiveSet indicates an expected call of AfterBbnFpRemovedFromActiveSet.
+func (mr *MockFinalityHooksMockRecorder) AfterBbnFpRemovedFromActiveSet(ctx, fpAddr interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AfterBbnFpExistsActiveSet", reflect.TypeOf((*MockFinalityHooks)(nil).AfterBbnFpExistsActiveSet), ctx, fpAddr)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AfterBbnFpRemovedFromActiveSet", reflect.TypeOf((*MockFinalityHooks)(nil).AfterBbnFpRemovedFromActiveSet), ctx, fpAddr)
 }
 
 // AfterBtcDelegationActivated mocks base method.

@@ -264,7 +264,8 @@ func TestCostakingRewardsHappyCase(t *testing.T) {
 	costakerRewadsTwoBlocks := sdk.NewCoins()
 	costakerRewadsTwoBlocks = costakerRewadsTwoBlocks.Add(d.GenerateNewBlockAssertExecutionSuccessWithCostakerRewards()...)
 	costakerRewadsTwoBlocks = costakerRewadsTwoBlocks.Add(d.GenerateNewBlockAssertExecutionSuccessWithCostakerRewards()...)
-	d.CheckCostakingCurrentRewards(costakerRewadsTwoBlocks, rwd.Period+1, del1BtcStakedAmt)
+	currentRwdPeriod := rwd.Period + 1
+	d.CheckCostakingCurrentRewards(costakerRewadsTwoBlocks, currentRwdPeriod, del1BtcStakedAmt)
 
 	del1BalancesBeforeRewardWithdraw := d.App.BankKeeper.GetAllBalances(d.Ctx(), del1.Address())
 
@@ -281,5 +282,7 @@ func TestCostakingRewardsHappyCase(t *testing.T) {
 
 	// after withdraw of rewards the period must increase
 	del1StartCumulativeRewardPeriod++
+	currentRwdPeriod++
 	d.CheckCostakerRewards(del1.Address(), del1BabyDelegatedAmt, del1BtcStakedAmt, del1BtcStakedAmt, del1StartCumulativeRewardPeriod)
+	d.CheckCostakingCurrentRewards(sdk.NewCoins(), currentRwdPeriod, del1BtcStakedAmt)
 }

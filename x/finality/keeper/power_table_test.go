@@ -36,7 +36,7 @@ func FuzzVotingPowerTable(f *testing.F) {
 		fHooks.EXPECT().AfterBtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 		fHooks.EXPECT().AfterBtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 		fHooks.EXPECT().AfterBbnFpEntersActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
-		fHooks.EXPECT().AfterBbnFpExistsActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
+		fHooks.EXPECT().AfterBbnFpRemovedFromActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
 
 		// set all parameters
 		covenantSKs, _ := h.GenAndApplyParams(r)
@@ -193,7 +193,7 @@ func FuzzRecordVotingPowerDistCache(f *testing.F) {
 		fHooks.EXPECT().AfterBtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 		fHooks.EXPECT().AfterBtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 		fHooks.EXPECT().AfterBbnFpEntersActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
-		fHooks.EXPECT().AfterBbnFpExistsActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
+		fHooks.EXPECT().AfterBbnFpRemovedFromActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
 
 		// set all parameters
 		covenantSKs, _ := h.GenAndApplyParams(r)
@@ -277,7 +277,7 @@ func FuzzVotingPowerTable_ActiveFinalityProviders(f *testing.F) {
 		fHooks.EXPECT().AfterBtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 		fHooks.EXPECT().AfterBtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 		fHooks.EXPECT().AfterBbnFpEntersActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
-		fHooks.EXPECT().AfterBbnFpExistsActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
+		fHooks.EXPECT().AfterBbnFpRemovedFromActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
 
 		// set all parameters
 		covenantSKs, _ := h.GenAndApplyParams(r)
@@ -735,7 +735,7 @@ func TestVotingPowerTable_ActiveFinalityProviderRotation_Seed0(t *testing.T) {
 
 	// TODO: Add expected values to hook calls
 	fHooks.EXPECT().AfterBbnFpEntersActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
-	fHooks.EXPECT().AfterBbnFpExistsActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
+	fHooks.EXPECT().AfterBbnFpRemovedFromActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
 
 	h.CheckpointingKeeperForFinality.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(uint64(2)).AnyTimes()
 
