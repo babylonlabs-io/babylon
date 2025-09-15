@@ -43,10 +43,9 @@ type DelegationInfo struct {
 // The state is updated during the power distribution change process and is used to generate the
 // final power distribution cache
 type ProcessingState struct {
-	// PrevFpStatusByBtcPk is a map of the status of the fp by their status
-	// based on the previous voting power distribution cache, it is useful
-	// for costaking to get the correct status and process
-	PrevFpStatusByBtcPk map[string]btcstktypes.FinalityProviderStatus
+	// PrevActiveFpByBtcPk is a map of the active finality providers in the previous
+	// voting power distribution cache
+	PrevActiveFpByBtcPk map[string]struct{}
 	// FPStatesByBtcPk is a map of the finality providers' state
 	FPStatesByBtcPk map[string]FinalityProviderState
 	// FpByBtcPk is a map where key is finality provider's BTC PK hex and value is the finality provider
@@ -69,7 +68,7 @@ type ProcessingState struct {
 
 func NewProcessingState() *ProcessingState {
 	return &ProcessingState{
-		PrevFpStatusByBtcPk: map[string]btcstktypes.FinalityProviderStatus{},
+		PrevActiveFpByBtcPk: map[string]struct{}{},
 		FPStatesByBtcPk:     map[string]FinalityProviderState{},
 		FpByBtcPk:           map[string]*btcstktypes.FinalityProvider{},
 		DeltaSatsByFpBtcPk:  map[string]int64{},
@@ -90,27 +89,20 @@ func (ps *ProcessingState) AddStateForFp(fp FinalityProviderDistInfo) {
 	}
 }
 
-// PrevFpStatus returns the status of the fp in the previous voting power distribution cache.
-// Returns inactive if not found
-func (ps *ProcessingState) PrevFpStatus(fpBtcPk *bbn.BIP340PubKey) btcstktypes.FinalityProviderStatus {
-	fpStatus, found := ps.PrevFpStatusByBtcPk[fpBtcPk.MarshalHex()]
-	if !found {
-		return btcstktypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_INACTIVE
-	}
-	return fpStatus
-}
-
-// FillPrevFpStatusByBtcPk fill up the state.PrevFpStatusByBtcPk based on the vp dst cache
-func (ps *ProcessingState) FillPrevFpStatusByBtcPk(dc *VotingPowerDistCache) {
+// FillByPrevVpDstCache fill up the state.PrevFpStatusByBtcPk based on the previous vp dst cache
+func (ps *ProcessingState) FillByPrevVpDstCache(dc *VotingPowerDistCache) {
 	for idx, fp := range dc.FinalityProviders {
 		canBeActive := idx < int(dc.NumActiveFps) // it should not be <= as idx starts at zero
-		ps.AddPrevFpStatusByBtcPk(fp, canBeActive)
+		if canBeActive {
+			ps.PrevActiveFpByBtcPk[fp.BtcPk.MarshalHex()] = struct{}{}
+		}
 		ps.AddStateForFp(*fp)
 	}
 }
 
-func (ps *ProcessingState) AddPrevFpStatusByBtcPk(fp *FinalityProviderDistInfo, canBeActive bool) {
-	ps.PrevFpStatusByBtcPk[fp.BtcPk.MarshalHex()] = fp.FpStatus(canBeActive)
+func (ps *ProcessingState) IsFpInPrevActiveSet(fpBtcPk *bbn.BIP340PubKey) bool {
+	_, found := ps.PrevActiveFpByBtcPk[fpBtcPk.MarshalHex()]
+	return found
 }
 
 func (ps *ProcessingState) AddActiveDelegation(delAddr string, fpPubKey bbn.BIP340PubKey, totalSat uint64) {
