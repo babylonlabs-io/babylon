@@ -70,6 +70,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#1630](https://github.com/babylonlabs-io/babylon/pull/1630) Remove `HeaderCache` redundant test
 - [#1647](https://github.com/babylonlabs-io/babylon/pull/1647) Fix inactive event emitted on slashed finality provider case.
 - [#1651](https://github.com/babylonlabs-io/babylon/pull/1651) Store Cosmos BSN slashing evidence.
+- [#1714](https://github.com/babylonlabs-io/babylon/pull/1714) Add BLS key flags to `rollback` and `bootstrap-state` cmds
 
 ### State Breaking
 

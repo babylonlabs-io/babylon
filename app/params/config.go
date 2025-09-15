@@ -11,7 +11,7 @@ import (
 const (
 	HumanCoinUnit = "bbn"
 	BaseCoinUnit  = "ubbn"
-	BbnExponent = 6
+	BbnExponent   = 6
 
 	DefaultBondDenom = BaseCoinUnit
 	// Bech32PrefixAccAddr defines the Bech32 prefix of an account's address.
