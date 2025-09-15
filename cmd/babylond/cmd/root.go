@@ -220,7 +220,13 @@ func initRootCmd(rootCmd *cobra.Command, txConfig client.TxEncodingConfig, basic
 		confixcmd.ConfigCommand(),
 	)
 
-	server.AddCommands(rootCmd, app.DefaultNodeHome, newApp, appExport, addModuleInitFlags)
+	addCommandsWithBLSFlags(
+		rootCmd,
+		app.DefaultNodeHome,
+		newApp,
+		appExport,
+		addModuleInitFlags,
+	)
 
 	// add keybase, auxiliary RPC, query, and tx child commands
 	rootCmd.AddCommand(
@@ -371,4 +377,59 @@ func appExport(
 	}
 
 	return babylonApp.ExportAppStateAndValidators(forZeroHeight, jailAllowedAddrs, modulesToExport)
+}
+
+// newCustomRollbackCmd creates a rollback command with custom BLS flags
+func newCustomRollbackCmd(appCreator servertypes.AppCreator, defaultNodeHome string) *cobra.Command {
+	cmd := server.NewRollbackCmd(appCreator, defaultNodeHome)
+
+	// Add custom BLS flags
+	cmd.Flags().Bool(flagNoBlsPassword, false, "Generate BLS key without password protection (suitable for RPC nodes)")
+	cmd.Flags().String(flagBlsPasswordFile, "", "Load a custom file path to the bls password (not recommended)")
+
+	return cmd
+}
+
+// newCustomBootstrapStateCmd creates a bootstrap state command with custom BLS flags
+func newCustomBootstrapStateCmd(appCreator servertypes.AppCreator) *cobra.Command {
+	cmd := server.BootstrapStateCmd(appCreator)
+
+	// Add custom BLS flags
+	cmd.Flags().Bool(flagNoBlsPassword, false, "Generate BLS key without password protection (suitable for RPC nodes)")
+	cmd.Flags().String(flagBlsPasswordFile, "", "Load a custom file path to the bls password (not recommended)")
+
+	return cmd
+}
+
+// addCommandsWithBLSFlags adds commands using server.AddCommands as base,
+// then adds the BLS related flags to specific commands that use newApp (appCreator) function
+func addCommandsWithBLSFlags(
+	rootCmd *cobra.Command,
+	defaultNodeHome string,
+	appCreator servertypes.AppCreator,
+	appExport servertypes.AppExporter,
+	addStartFlags servertypes.ModuleInitFlags,
+) {
+	// First, add all commands using the original function
+	server.AddCommands(rootCmd, defaultNodeHome, appCreator, appExport, addStartFlags)
+
+	// Replace the rollback command with our custom version
+	rollbackCmd := FindSubCommand(rootCmd, "rollback")
+	if rollbackCmd == nil {
+		panic("failed to find 'rollback' command")
+	}
+	rootCmd.RemoveCommand(rollbackCmd)
+	rootCmd.AddCommand(newCustomRollbackCmd(appCreator, defaultNodeHome))
+
+	// Replace the bootstrap command in the comet subcommand
+	cometCmd := FindSubCommand(rootCmd, "comet")
+	if cometCmd == nil {
+		panic("failed to find 'comet' subcommand")
+	}
+	bootstrapCmd := FindSubCommand(cometCmd, "bootstrap-state")
+	if bootstrapCmd == nil {
+		panic("failed to find 'comet bootstrap-state' command")
+	}
+	cometCmd.RemoveCommand(bootstrapCmd)
+	cometCmd.AddCommand(newCustomBootstrapStateCmd(appCreator))
 }
