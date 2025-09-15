@@ -2555,7 +2555,7 @@ func TestProcessAllPowerDistUpdateEvents_SlashedFP(t *testing.T) {
 	// Clear events to check only new events from HandleFPStateUpdates
 	h.Ctx = h.Ctx.WithEventManager(sdk.NewEventManager())
 	// emit events for finality providers with state updates
-	h.FinalityKeeper.HandleFPStateUpdates(h.Ctx, state, prevDc, newDc)
+	h.FinalityKeeper.HandleFPStateUpdates(h.Ctx, state, prevDc, newDc, true)
 	foundInactiveEvt := false
 	for _, evt := range h.Ctx.EventManager().Events() {
 		if evt.Type == "babylon.btcstaking.v1.EventFinalityProviderStatusChange" {

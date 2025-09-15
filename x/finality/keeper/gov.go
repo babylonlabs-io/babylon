@@ -153,7 +153,7 @@ func (k Keeper) HandleResumeFinalityProposal(ctx sdk.Context, fpPksHex []string,
 
 		// ensure every active finality provider has signing info
 		// Calls empty state until reaches the current block height
-		k.HandleFPStateUpdates(ctx, state, dc, newDc)
+		k.HandleFPStateUpdates(ctx, state, dc, newDc, isCurrHeight)
 	}
 
 	return nil

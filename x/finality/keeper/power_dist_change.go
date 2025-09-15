@@ -49,7 +49,7 @@ func (k Keeper) UpdatePowerDist(ctx context.Context) {
 	// record voting power and cache for this height
 	k.RecordVotingPowerAndCache(ctx, newDc)
 	// emit events for finality providers with state updates
-	k.HandleFPStateUpdates(ctx, state, dc, newDc)
+	k.HandleFPStateUpdates(ctx, state, dc, newDc, true)
 	// record metrics
 	k.recordMetrics(newDc)
 }
@@ -95,17 +95,18 @@ func (k Keeper) HandleFPStateUpdates(
 	ctx context.Context,
 	state *ftypes.ProcessingState,
 	prevDc, newDc *ftypes.VotingPowerDistCache,
+	shouldCallHooks bool,
 ) {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
 	newlyActiveFPs := newDc.FindNewActiveFinalityProviders(prevDc)
 	for _, fp := range newlyActiveFPs {
-		k.processActiveFp(sdkCtx, fp)
+		k.processActiveFp(sdkCtx, fp, shouldCallHooks)
 	}
 
 	newlyInactiveFPs := newDc.FindNewInactiveFinalityProviders(prevDc)
 	for _, fp := range newlyInactiveFPs {
-		k.processInactiveFp(sdkCtx, state, fp)
+		k.processInactiveFp(sdkCtx, state, fp, shouldCallHooks)
 	}
 }
 
@@ -113,6 +114,7 @@ func (k Keeper) HandleFPStateUpdates(
 func (k Keeper) processActiveFp(
 	ctx sdk.Context,
 	fp *ftypes.FinalityProviderDistInfo,
+	shouldCallHooks bool,
 ) {
 	if err := k.HandleActivatedFinalityProvider(ctx, fp.BtcPk); err != nil {
 		panic(fmt.Errorf("failed to execute after finality provider %s activated", fp.BtcPk.MarshalHex()))
@@ -126,6 +128,9 @@ func (k Keeper) processActiveFp(
 
 	fpBtcPkHex := fp.BtcPk.MarshalHex()
 	k.Logger(ctx).Info("a new finality provider becomes active", "pk", fpBtcPkHex)
+	if !shouldCallHooks {
+		return
+	}
 	err := k.hooks.AfterBbnFpEntersActiveSet(ctx, fp.GetAddress())
 	if err != nil {
 		panic(fmt.Errorf("failed to call hook fp enters active set %s - %s: %w", fpBtcPkHex, fp.GetAddress().String(), err))
@@ -137,11 +142,11 @@ func (k Keeper) processInactiveFp(
 	ctx sdk.Context,
 	state *ftypes.ProcessingState,
 	fp *ftypes.FinalityProviderDistInfo,
+	shouldCallHooks bool,
 ) {
 	fpBtcPkHex := fp.BtcPk.MarshalHex()
 
-	wasFpActiveInPrevVpDstCache := state.IsFpInPrevActiveSet(fp.BtcPk)
-	if wasFpActiveInPrevVpDstCache {
+	if shouldCallHooks && state.IsFpInPrevActiveSet(fp.BtcPk) {
 		fpAddr := fp.GetAddress()
 		err := k.hooks.AfterBbnFpExistsActiveSet(ctx, fpAddr)
 		if err != nil {
