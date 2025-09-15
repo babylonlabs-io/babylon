@@ -401,7 +401,7 @@ func newCustomBootstrapStateCmd(appCreator servertypes.AppCreator) *cobra.Comman
 	return cmd
 }
 
-// addCommandsWithBLSFlags adds commands using evmserver.AddCommands as base,
+// addCommandsWithBLSFlags adds commands using server.AddCommands as base,
 // then adds the BLS related flags to specific commands that use newApp (appCreator) function
 func addCommandsWithBLSFlags(
 	rootCmd *cobra.Command,
