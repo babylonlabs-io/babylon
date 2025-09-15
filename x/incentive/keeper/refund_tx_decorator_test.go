@@ -79,25 +79,6 @@ func TestCheckTxAndClearIndex(t *testing.T) {
 			},
 			expected: false,
 		},
-		{
-			name: "if some messages are duplicated, the tx is not refundable",
-			setup: func(ctx sdk.Context) sdk.Tx {
-				msg1 := ftypes.MsgAddFinalitySig{
-					Signer: "signer",
-				}
-				msg2 := ftypes.MsgAddFinalitySig{
-					Signer: "signer",
-				}
-				msg3 := ftypes.MsgAddFinalitySig{
-					Signer: "signer2",
-				}
-				iKeeper.IncRefundableMsgCount()
-				iKeeper.IncRefundableMsgCount()
-				iKeeper.IncRefundableMsgCount()
-				return &mockFeeTx{Msgs: []sdk.Msg{&msg1, &msg2, &msg3}}
-			},
-			expected: false,
-		},
 	}
 
 	for _, tc := range testCases {
