@@ -56,6 +56,10 @@ func (d *RefundTxDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool
 }
 
 func (d *RefundTxDecorator) PostHandle(ctx sdk.Context, tx sdk.Tx, simulate, success bool, next sdk.PostHandler) (sdk.Context, error) {
+	// reset RefundableMsgCount to zero since RefundableMsgCount maintained per-tx
+	// Note: to make sure refundable msg count is reset after every tx, we place the reset counter logic here
+	defer d.k.ResetRefundableMsgCount()
+
 	// refund only when finalizing a block or simulating the current tx
 	if ctx.ExecMode() != sdk.ExecModeFinalize && !simulate {
 		return next(ctx, tx, simulate, success)
@@ -108,9 +112,6 @@ func (d *RefundTxDecorator) PostHandle(ctx sdk.Context, tx sdk.Tx, simulate, suc
 // whether the tx is refundable, and clears the refundable messages count to zero
 // NOTE: a tx is refundable if all of its messages are unique and refundable
 func (d *RefundTxDecorator) CheckTxAndClearIndex(_ sdk.Context, tx sdk.Tx) bool {
-	// reset RefundableMsgCount to zero since RefundableMsgCount maintained per-tx
-	defer d.k.ResetRefundableMsgCount()
-
 	// check if RefundableMsgCount counted up during msgServer, and total msgs in the tx is the same
 	// NOTE: this is for the case that message execution doesn't return error even tho it fails
 	// you can find these cases in `AddFinalitySig`of x/finality/keeper/msg_server.go
@@ -138,14 +139,14 @@ func isRefundTx(tx sdk.Tx) bool {
 	for _, msg := range tx.GetMsgs() {
 		switch msg.(type) {
 		case *btclctypes.MsgInsertHeaders, // BTC light client
-			// BTC timestamping
+		// BTC timestamping
 			*btcctypes.MsgInsertBTCSpvProof,
-			// BTC staking
+		// BTC staking
 			*bstypes.MsgAddCovenantSigs,
 			*bstypes.MsgBTCUndelegate,
 			*bstypes.MsgSelectiveSlashingEvidence,
 			*bstypes.MsgAddBTCDelegationInclusionProof,
-			// BTC staking finality
+		// BTC staking finality
 			*ftypes.MsgAddFinalitySig:
 			continue
 		default:
