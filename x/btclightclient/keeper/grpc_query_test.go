@@ -158,7 +158,7 @@ func FuzzContainsQuery(f *testing.F) {
 		query, _ := types.NewQueryContainsRequest(datagen.GenRandomBTCHeaderInfo(r).Hash.MarshalHex())
 		resp, err = blcKeeper.Contains(ctx, query)
 		if err != nil {
-			t.Errorf("Valid input let to an error: %s", err)
+			t.Errorf("Valid input led to an error: %s", err)
 		}
 		if resp == nil {
 			t.Fatalf("Valid input led to nil response")
@@ -171,7 +171,7 @@ func FuzzContainsQuery(f *testing.F) {
 		query, _ = types.NewQueryContainsRequest(chain.GetRandomHeaderInfo(r).Hash.MarshalHex())
 		resp, err = blcKeeper.Contains(ctx, query)
 		if err != nil {
-			t.Errorf("Valid input let to an error: %s", err)
+			t.Errorf("Valid input led to an error: %s", err)
 		}
 		if resp == nil {
 			t.Fatalf("Valid input led to nil response")
