@@ -285,4 +285,44 @@ func TestCostakingRewardsHappyCase(t *testing.T) {
 	currentRwdPeriod++
 	d.CheckCostakerRewards(del1.Address(), del1BabyDelegatedAmt, del1BtcStakedAmt, del1BtcStakedAmt, del1StartCumulativeRewardPeriod)
 	d.CheckCostakingCurrentRewards(sdk.NewCoins(), currentRwdPeriod, del1BtcStakedAmt)
+
+	fp2 := fps[1]
+	del2, del3 := delegators[1], delegators[2]
+	// del1 (400000sats, 20_000000ubbn) = 400000score
+	// del2 (300000sats, 20_000000ubbn) = 300000score
+	// del3 (300000sats, 10_000000ubbn) = 200000score
+	del2BtcStakedAmt := sdkmath.NewInt(300_000)
+	del3BtcStakedAmt := del2BtcStakedAmt
+
+	del2.CreatePreApprovalDelegation(
+		[]*bbn.BIP340PubKey{fp1.BTCPublicKey()},
+		defaultStakingTime,
+		del2BtcStakedAmt.Int64(),
+	)
+
+	del3.CreatePreApprovalDelegation(
+		[]*bbn.BIP340PubKey{fp1.BTCPublicKey()},
+		defaultStakingTime,
+		del3BtcStakedAmt.Int64(),
+	)
+
+	// nothing should change yet in the rewards and score
+	costakerCumulativeRewads := sdk.NewCoins()
+	d.CheckCostakingCurrentRewards(costakerCumulativeRewads, currentRwdPeriod, del1BtcStakedAmt)
+
+	// activate btc delegations del2 and del3
+	costakerCumulativeRewads = costakerCumulativeRewads.Add(d.GenerateNewBlockAssertExecutionSuccessWithCostakerRewards()...)
+	covSender.SendCovenantSignatures()
+	costakerCumulativeRewads = costakerCumulativeRewads.Add(d.GenerateNewBlockAssertExecutionSuccessWithCostakerRewards()...)
+
+	blocksResults := d.ActivateVerifiedDelegations(2)
+	activeDelegations = d.GetActiveBTCDelegations(t)
+	require.Len(t, activeDelegations, 3)
+	costakerCumulativeRewads = costakerCumulativeRewads.Add(EventCostakerRewardsFromBlocks(d.t, blocksResults)...)
+
+	d.CheckCostakingCurrentRewards(costakerCumulativeRewads, currentRwdPeriod, del1BtcStakedAmt)
+
+	// activate fp 2
+	fp2.CommitRandomness()
+	d.GenerateNewBlockAssertExecutionSuccess()
 }

@@ -1,9 +1,10 @@
 package replay
 
 import (
-	"github.com/babylonlabs-io/babylon/v4/btcstaking"
 	"math/rand"
 	"testing"
+
+	"github.com/babylonlabs-io/babylon/v4/btcstaking"
 
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
@@ -405,7 +406,7 @@ func (s *Staker) UnbondDelegation(
 	unbondingTxMsg := infos.UnbondingSlashingInfo.UnbondingTx
 	unbondingTxMsg.TxIn[0].Witness = witness
 
-	blockWithUnbondingTx := s.d.IncludeTxsInBTCAndConfirm([]*wire.MsgTx{unbondingTxMsg})
+	blockWithUnbondingTx, _ := s.d.IncludeTxsInBTCAndConfirm([]*wire.MsgTx{unbondingTxMsg})
 	require.Len(s.t, blockWithUnbondingTx.Proofs, 2)
 
 	stakingTxBz, err := bbn.SerializeBTCTx(stakingTx)

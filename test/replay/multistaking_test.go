@@ -264,10 +264,10 @@ func TestAdditionalGasCostForMultiStakedDelegation(t *testing.T) {
 // - Every tx is less than 10M gas
 // - Block will have less than 300M gas
 func (d *BabylonAppDriver) packVerifiedDelegations() []*abci.ExecTxResult {
-	block := d.IncludeVerifiedStakingTxInBTC(0)
-	acitvationMsgs := blockWithProofsToActivationMessages(block, d.GetDriverAccountAddress())
+	block, _ := d.IncludeVerifiedStakingTxInBTC(0)
+	activationMsgs := blockWithProofsToActivationMessages(block, d.GetDriverAccountAddress())
 
-	for i, msg := range acitvationMsgs {
+	for i, msg := range activationMsgs {
 		var gaslimit uint64
 
 		switch {
