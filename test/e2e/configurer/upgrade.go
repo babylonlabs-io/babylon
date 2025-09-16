@@ -206,7 +206,15 @@ func (uc *UpgradeConfigurer) runProposalUpgrade() error {
 			return err
 		}
 
-		chainConfig.UpgradePropHeight = currentHeight + int64(chainConfig.VotingPeriod) + int64(config.PropSubmitBlocks) + int64(config.PropBufferBlocks)
+		upgradeMsg, err := uc.ParseGovPropFromFile()
+		if err != nil {
+			return err
+		}
+		if upgradeMsg.Plan.Height <= currentHeight {
+			chainConfig.UpgradePropHeight = currentHeight + int64(chainConfig.VotingPeriod) + int64(config.PropSubmitBlocks) + int64(config.PropBufferBlocks)
+		} else {
+			chainConfig.UpgradePropHeight = upgradeMsg.Plan.Height
+		}
 		err = uc.SetGovPropUpgradeHeight(chainConfig.UpgradePropHeight)
 		if err != nil {
 			return err
