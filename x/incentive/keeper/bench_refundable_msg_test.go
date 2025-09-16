@@ -68,6 +68,8 @@ func BenchmarkRefundTxDecorator_KeySetWithKVStore(b *testing.B) {
 	}
 }
 
+var RefundableMsgKeySetPrefix = collections.NewPrefix(5) // key prefix for refundable msg key set
+
 type CollectionsKVStoreApproach struct {
 	refundableMsgKeySet collections.KeySet[[]byte]
 }
@@ -78,7 +80,7 @@ func NewCollectionsKVStoreApproach(kvKey *storetypes.KVStoreKey) *CollectionsKVS
 
 	refundableMsgKeySet := collections.NewKeySet(
 		sb,
-		types.RefundableMsgKeySetPrefix,
+		RefundableMsgKeySetPrefix,
 		"refundable_msg_keyset_kv",
 		collections.BytesKey,
 	)
