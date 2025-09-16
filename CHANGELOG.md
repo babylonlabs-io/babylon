@@ -41,7 +41,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ### Improvements
 
 - [#1663] (https://github.com/babylonlabs-io/babylon/pull/1663) Add spam prevention mechanisms to epoching module with minimum amount validation and gas consumption limits for wrapped delegate operations.
-- [#1571](https://github.com/babylonlabs-io/babylon/pull/1571) Optimize `x/zoneconcierge` bottlenecks by caching redundant logics.
 - [#1584](https://github.com/babylonlabs-io/babylon/pull/1584) Add e2e test for wrapper feemarket
 - [#1568](https://github.com/babylonlabs-io/babylon/pull/1568) Wrapper feemarket to exclude refundable gas when calculating base fee
 - [#1430](https://github.com/babylonlabs-io/babylon/pull/1430) Bump Cosmos EVM to 0.41 and add signer extractor.
@@ -49,15 +48,34 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#1555](https://github.com/babylonlabs-io/babylon/pull/1555) Create new mergify rule for v4.
 - [#1554](https://github.com/babylonlabs-io/babylon/pull/1554) Bump repo to v4.
 - [#1229](https://github.com/babylonlabs-io/babylon/pull/1229) Wire up EVM.
+- [#1657](https://github.com/babylonlabs-io/babylon/pull/1657) update to e2ev2 tests for queries for zc
+
+### Bug fixes
+
+- [#1651](https://github.com/babylonlabs-io/babylon/pull/1651) Store Cosmos BSN slashing evidence.
+- [#1714](https://github.com/babylonlabs-io/babylon/pull/1714) Add BLS key flags to `rollback` and `bootstrap-state` cmds
+
+## v3.0.0-rc.3
+
+### Improvements
+
 - [#1540](https://github.com/babylonlabs-io/babylon/pull/1540) Optimizations on `x/zoneconcierge` `EndBlocker` logic.
 - [#1536](https://github.com/babylonlabs-io/babylon/pull/1536) Refactor `x/zoneconcierge` for optimize ibc channel, client io
 - [#1552](https://github.com/babylonlabs-io/babylon/pull/1552) Refactor `e2e` test suite
-- [#1556](https://github.com/babylonlabs-io/babylon/pull/1556) CLI for submitting equivocation evidence in x/finality module
 - [#1594](https://github.com/babylonlabs-io/babylon/pull/1594) Add soft deleted to finality providers response.
+- [#1556](https://github.com/babylonlabs-io/babylon/pull/1556) CLI for submitting equivocation evidence in x/finality module
+- [#1571](https://github.com/babylonlabs-io/babylon/pull/1571) Optimize `x/zoneconcierge` bottlenecks by caching redundant logics.
 - [#1589](https://github.com/babylonlabs-io/babylon/pull/1589) Add minimum Babylon commission on `RegisterConsumer`
 - [#1612](https://github.com/babylonlabs-io/babylon/pull/1612) Optimize `x/zoneconcierge` packet broadcast logic trigger only when needed.
 - [#1635](https://github.com/babylonlabs-io/babylon/pull/1635) Remove duplicated ValidateBasic checks.
 - [#1655](https://github.com/babylonlabs-io/babylon/pull/1655) Fix go releaser image not support issue.
+
+### Bug fixes
+
+- [#1595](https://github.com/babylonlabs-io/babylon/pull/1595) fix: disabled duplicate fp bbn addr registering
+- [#1608](https://github.com/babylonlabs-io/babylon/pull/1608) fix: `x/btcstaking` prefix of `LargestBtcReOrg` to match mainnet.
+- [#1630](https://github.com/babylonlabs-io/babylon/pull/1630) Remove `HeaderCache` redundant test
+- [#1647](https://github.com/babylonlabs-io/babylon/pull/1647) Fix inactive event emitted on slashed finality provider case.
 - [#1657](https://github.com/babylonlabs-io/babylon/pull/1657) update to e2ev2 tests for queries for zc
 - [#1668](https://github.com/babylonlabs-io/babylon/pull/1668) Bump dependencies based on dependabot alerts
 
@@ -65,14 +83,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 - [#1585](https://github.com/babylonlabs-io/babylon/pull/1585) Remove allow-lists logic and state in `x/btcstaking` module
 - [#1596](https://github.com/babylonlabs-io/babylon/pull/1596) Add rollups finality contract index in `x/btcstkconsumer`
-
-### Bug fixes
-
-- [#1608](https://github.com/babylonlabs-io/babylon/pull/1608) fix: `x/btcstaking` prefix of `LargestBtcReOrg` to match mainnet.
-- [#1630](https://github.com/babylonlabs-io/babylon/pull/1630) Remove `HeaderCache` redundant test
-- [#1647](https://github.com/babylonlabs-io/babylon/pull/1647) Fix inactive event emitted on slashed finality provider case.
-- [#1651](https://github.com/babylonlabs-io/babylon/pull/1651) Store Cosmos BSN slashing evidence.
-- [#1714](https://github.com/babylonlabs-io/babylon/pull/1714) Add BLS key flags to `rollback` and `bootstrap-state` cmds
 
 ## v3.0.0-rc.2
 
