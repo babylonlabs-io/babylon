@@ -8,6 +8,7 @@ import (
 	epochingkeeper "github.com/babylonlabs-io/babylon/v4/x/epoching/keeper"
 	"github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdktypes "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 )
 
@@ -19,6 +20,14 @@ func ValidateDelegatePoolModuleAccount(ctx context.Context, ak types.AccountKeep
 			types.DelegatePoolModuleName)
 	}
 
+	// Check if account exists and is not a module account
+	acc := ak.GetAccount(ctx, moduleAddr)
+	if acc != nil {
+		if _, ok := acc.(sdktypes.ModuleAccountI); !ok {
+			return fmt.Errorf("regular account exists at module address %s - should be removed and replaced by module account",
+				moduleAddr.String())
+		}
+	}
 	// Module account address exists, which means it's properly configured
 	// The actual account object will be created when first used by the module
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
