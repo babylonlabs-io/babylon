@@ -144,18 +144,15 @@ func (k Keeper) processInactiveFp(
 	fp *ftypes.FinalityProviderDistInfo,
 	shouldCallHooks bool,
 ) {
-	fpBtcPkHex := fp.BtcPk.MarshalHex()
-
 	if shouldCallHooks && state.IsFpInPrevActiveSet(fp.BtcPk) {
 		fpAddr := fp.GetAddress()
 		err := k.hooks.AfterBbnFpRemovedFromActiveSet(ctx, fpAddr)
 		if err != nil {
-			panic(fmt.Errorf("failed to call hook fp removed from active set %s - %s: %w", fpBtcPkHex, fpAddr.String(), err))
+			panic(fmt.Errorf("failed to call hook fp removed from active set %s - %s: %w", fp.BtcPk.MarshalHex(), fpAddr.String(), err))
 		}
 	}
 
-	fpstate := state.FPStatesByBtcPk[fpBtcPkHex]
-	if fpstate == ftypes.FinalityProviderState_JAILED || fpstate == ftypes.FinalityProviderState_SLASHED {
+	if isFpSlashedOrJailed(state, fp) {
 		// if it is jailed or slashed the event was already emitted
 		return
 	}
@@ -164,7 +161,17 @@ func (k Keeper) processInactiveFp(
 	if err := ctx.EventManager().EmitTypedEvent(statusChangeEvent); err != nil {
 		panic(fmt.Errorf("failed to emit FinalityProviderStatusChangeEvent with status %s: %w", newStatus.String(), err))
 	}
-	k.Logger(ctx).Info("a new finality provider becomes inactive", "pk", fpBtcPkHex)
+	k.Logger(ctx).Info("a new finality provider becomes inactive", "pk", fp.BtcPk.MarshalHex())
+}
+
+func isFpSlashedOrJailed(state *ftypes.ProcessingState, fp *ftypes.FinalityProviderDistInfo) bool {
+	if fp.IsJailed || fp.IsSlashed {
+		return true
+	}
+
+	fpBtcPkHex := fp.BtcPk.MarshalHex()
+	fpstate := state.FPStatesByBtcPk[fpBtcPkHex]
+	return fpstate == ftypes.FinalityProviderState_JAILED || fpstate == ftypes.FinalityProviderState_SLASHED
 }
 
 // HandleActivatedFinalityProvider updates the signing info start height or create a new signing info

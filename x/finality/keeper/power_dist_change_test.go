@@ -25,6 +25,7 @@ import (
 	"github.com/babylonlabs-io/babylon/v4/testutil/mocks"
 
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	testutilkeeper "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	btcctypes "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
 	btclckeeper "github.com/babylonlabs-io/babylon/v4/x/btclightclient/keeper"
@@ -2525,22 +2526,8 @@ func TestProcessAllPowerDistUpdateEvents_SlashedFP(t *testing.T) {
 	require.Len(t, newDc.FinalityProviders, 0)
 
 	// There should be a slashed event emitted
-	foundSlashedEvt := false
-	for _, evt := range h.Ctx.EventManager().Events() {
-		if evt.Type == "babylon.btcstaking.v1.EventFinalityProviderStatusChange" {
-			// Check that the event is for the slashed FP and has correct status
-			for _, attr := range evt.Attributes {
-				if attr.Key == "btc_pk" {
-					require.Equal(t, "\""+del.FpBtcPkList[0].MarshalHex()+"\"", attr.Value)
-				}
-				if attr.Key == "new_state" {
-					require.Equal(t, "\""+btcstktypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_SLASHED.String()+"\"", attr.Value)
-				}
-			}
-			foundSlashedEvt = true
-		}
-	}
-	require.True(t, foundSlashedEvt, "Should have found slashed event")
+	fpBtcPk := del.FpBtcPkList[0]
+	checkHasEventFpStatusChange(t, h.Ctx, &fpBtcPk, btcstktypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_SLASHED)
 
 	// Check that the voting power is updated correctly
 	newDc.ApplyActiveFinalityProviders(10)
@@ -2556,22 +2543,78 @@ func TestProcessAllPowerDistUpdateEvents_SlashedFP(t *testing.T) {
 	h.Ctx = h.Ctx.WithEventManager(sdk.NewEventManager())
 	// emit events for finality providers with state updates
 	h.FinalityKeeper.HandleFPStateUpdates(h.Ctx, state, prevDc, newDc, true)
+
 	foundInactiveEvt := false
 	for _, evt := range h.Ctx.EventManager().Events() {
 		if evt.Type == "babylon.btcstaking.v1.EventFinalityProviderStatusChange" {
-			// Check that the event is for the slashed FP
-			for _, attr := range evt.Attributes {
-				if attr.Key == "btc_pk" {
-					require.Equal(t, "\""+del.FpBtcPkList[0].MarshalHex()+"\"", attr.Value)
-				}
-				if attr.Key == "new_state" {
-					require.Equal(t, "\""+btcstktypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_INACTIVE.String()+"\"", attr.Value)
-				}
-			}
 			foundInactiveEvt = true
 		}
 	}
 	require.False(t, foundInactiveEvt, "Should NOT have found inactive event")
+}
+
+func TestHandleFPStateUpdatesWithSlashedFp(t *testing.T) {
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	fHooks := ftypes.NewMockFinalityHooks(ctrl)
+	k, ctx := testutilkeeper.FinalityKeeper(t, nil, nil, nil, fHooks)
+
+	prevDc := ftypes.NewVotingPowerDistCache()
+	state := ftypes.NewProcessingState()
+	state.FillByPrevVpDstCache(prevDc)
+
+	fpBtcPk, err := datagen.GenRandomBIP340PubKey(r)
+	require.NoError(t, err)
+	fpAddr := datagen.GenRandomAddress()
+	newFp := ftypes.FinalityProviderDistInfo{
+		BtcPk: fpBtcPk,
+		Addr:  fpAddr,
+	}
+	newDc := ftypes.NewVotingPowerDistCacheWithFinalityProviders([]*ftypes.FinalityProviderDistInfo{&newFp})
+	newDc.NumActiveFps = 1
+
+	fHooks.EXPECT().AfterBbnFpEntersActiveSet(gomock.Any(), fpAddr).Times(1)
+	ctx = ctx.WithEventManager(sdk.NewEventManager())
+	k.HandleFPStateUpdates(ctx, state, prevDc, newDc, true)
+	checkHasEventFpStatusChange(t, ctx, fpBtcPk, btcstktypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_ACTIVE)
+
+	// creates a new vp dst cache where the fp is slashed
+	prevDc = newDc
+	newFp.IsSlashed = true
+	newDc = ftypes.NewVotingPowerDistCacheWithFinalityProviders([]*ftypes.FinalityProviderDistInfo{&newFp})
+	newDc.NumActiveFps = 0
+
+	state = ftypes.NewProcessingState()
+	state.FillByPrevVpDstCache(prevDc)
+
+	fHooks.EXPECT().AfterBbnFpRemovedFromActiveSet(gomock.Any(), fpAddr).Times(1)
+	ctx = ctx.WithEventManager(sdk.NewEventManager())
+	k.HandleFPStateUpdates(ctx, state, prevDc, newDc, true)
+	require.Len(t, ctx.EventManager().Events(), 0, "should have no events emitted, because slash would already be emitted by the ProcessAllPowerDistUpdateEvents")
+}
+
+func checkHasEventFpStatusChange(t *testing.T, ctx sdk.Context, expFpBtcPk *bbn.BIP340PubKey, expFpStatus btcstktypes.FinalityProviderStatus) {
+	evtsCtx := ctx.EventManager().Events()
+	for _, evt := range evtsCtx {
+		if evt.Type != "babylon.btcstaking.v1.EventFinalityProviderStatusChange" {
+			continue
+		}
+		// Check that the event is for the slashed FP
+		require.Len(t, evt.Attributes, 2)
+		for _, attr := range evt.Attributes {
+			if attr.Key == "btc_pk" {
+				require.Equal(t, "\""+expFpBtcPk.MarshalHex()+"\"", attr.Value)
+			}
+			if attr.Key == "new_state" {
+				require.Equal(t, "\""+expFpStatus.String()+"\"", attr.Value)
+			}
+		}
+		return
+	}
+	t.Error("failed to find event EventFinalityProviderStatusChange")
 }
 
 // addPowerDistUpdateEvents is a helper function that seeds the BTCStaking module store
