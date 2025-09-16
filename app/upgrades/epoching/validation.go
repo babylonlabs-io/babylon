@@ -8,6 +8,7 @@ import (
 	epochingkeeper "github.com/babylonlabs-io/babylon/v4/x/epoching/keeper"
 	"github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 )
 
 // ValidateDelegatePoolModuleAccount validates that the delegation pool module account is properly configured
@@ -31,14 +32,23 @@ func ValidateDelegatePoolModuleAccount(ctx context.Context, ak types.AccountKeep
 // ValidateDelegatePoolEmpty validates that the delegation pool module account has no locked funds
 func ValidateDelegatePoolEmpty(ctx context.Context, ak types.AccountKeeper, bk types.BankKeeper) error {
 	moduleAddr := ak.GetModuleAddress(types.DelegatePoolModuleName)
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
-	balance := bk.SpendableCoins(ctx, moduleAddr)
+	balance := bk.GetAllBalances(ctx, moduleAddr)
 	if !balance.IsZero() {
-		return fmt.Errorf("delegation pool has locked funds (balance: %s)",
-			balance.String())
+		// Try to send to fee collector
+		if err := bk.SendCoinsFromModuleToModule(ctx, types.DelegatePoolModuleName, authtypes.FeeCollectorName, balance); err != nil {
+			sdkCtx.Logger().Warn("failed to transfer delegate pool funds to fee collector",
+				"error", err.Error(), "balance", balance.String())
+			return fmt.Errorf("delegation pool has locked funds that couldn't be transferred (balance: %s): %w",
+				balance.String(), err)
+		}
+		sdkCtx.Logger().Info("transferred delegate pool funds to fee collector during upgrade",
+			"amount", balance.String(),
+			"from_module", types.DelegatePoolModuleName,
+			"to_module", authtypes.FeeCollectorName)
 	}
 
-	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	sdkCtx.Logger().Info("delegation pool validation successful",
 		"module", types.DelegatePoolModuleName,
 		"address", moduleAddr.String(),

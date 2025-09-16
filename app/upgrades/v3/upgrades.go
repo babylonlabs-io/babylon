@@ -66,7 +66,7 @@ func CreateUpgradeHandler(
 			}
 			// Validate that delegation pool has no locked funds
 			if err := epoching.ValidateDelegatePoolEmpty(goCtx, keepers.AccountKeeper, keepers.BankKeeper); err != nil {
-				ctx.Logger().Warn("delegate pool validation warning", "error", err.Error())
+				ctx.Logger().Warn("delegate pool had non-zero balance but failed to transfer funds to fee collector - upgrade proceeding", "error", err.Error())
 			}
 
 			migrations, err := mm.RunMigrations(goCtx, configurator, fromVM)
