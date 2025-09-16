@@ -724,15 +724,18 @@ func blockWithProofsToActivationMessages(
 // Activates all verified delegations in two blocks:
 // 1. First block extends light client so that all stakers are confirmed
 // 2. Second block activates all verified delegations
-func (d *BabylonAppDriver) ActivateVerifiedDelegations(expectedVerifiedDelegations int) {
-	block := d.IncludeVerifiedStakingTxInBTC(expectedVerifiedDelegations)
-	acitvationMsgs := blockWithProofsToActivationMessages(block, d.GetDriverAccountAddress())
-	d.SendTxWithMsgsFromDriverAccount(d.t, acitvationMsgs...)
+func (d *BabylonAppDriver) ActivateVerifiedDelegations(expectedVerifiedDelegations int) []*abci.ResponseFinalizeBlock {
+	btcBlock, bbnBlock := d.IncludeVerifiedStakingTxInBTC(expectedVerifiedDelegations)
+	acitvationMsgs := blockWithProofsToActivationMessages(btcBlock, d.GetDriverAccountAddress())
+	return []*abci.ResponseFinalizeBlock{
+		bbnBlock,
+		d.SendTxWithMsgsFromDriverAccount(d.t, acitvationMsgs...),
+	}
 }
 
 // IncludeVerifiedStakingTxInBTC extends light client so that all staking txs are confirmed (k deep).
 // Returns the block with the transactions
-func (d *BabylonAppDriver) IncludeVerifiedStakingTxInBTC(expectedVerifiedDelegations int) *datagen.BlockWithProofs {
+func (d *BabylonAppDriver) IncludeVerifiedStakingTxInBTC(expectedVerifiedDelegations int) (btcBlock *datagen.BlockWithProofs, bbnBlock *abci.ResponseFinalizeBlock) {
 	verifiedDelegations := d.GetVerifiedBTCDelegations(d.t)
 
 	// Only verify number if requested
@@ -750,7 +753,9 @@ func (d *BabylonAppDriver) IncludeVerifiedStakingTxInBTC(expectedVerifiedDelegat
 	return d.IncludeTxsInBTCAndConfirm(transactions)
 }
 
-func (d *BabylonAppDriver) IncludeTxsInBTCAndConfirm(txs []*wire.MsgTx) *datagen.BlockWithProofs {
+func (d *BabylonAppDriver) IncludeTxsInBTCAndConfirm(
+	txs []*wire.MsgTx,
+) (btcBlock *datagen.BlockWithProofs, bbnBlock *abci.ResponseFinalizeBlock) {
 	btcCheckpointParams := d.GetBTCCkptParams(d.t)
 
 	tip, _ := d.GetBTCLCTip()
@@ -768,12 +773,12 @@ func (d *BabylonAppDriver) IncludeTxsInBTCAndConfirm(txs []*wire.MsgTx) *datagen
 	headers = append(headers, confirmationHeaders...)
 
 	// extend our light client so that all stakers are confirmed
-	d.SendTxWithMsgsFromDriverAccount(d.t, &btclighttypes.MsgInsertHeaders{
+	bbnBlock = d.SendTxWithMsgsFromDriverAccount(d.t, &btclighttypes.MsgInsertHeaders{
 		Signer:  d.GetDriverAccountAddress().String(),
 		Headers: headers,
 	})
 
-	return block
+	return block, bbnBlock
 }
 
 func (d *BabylonAppDriver) IncludeTxsInBTC(txs []*wire.MsgTx) *datagen.BlockWithProofs {
@@ -904,7 +909,7 @@ func (d *BabylonAppDriver) WaitTillAllFpsJailed(t *testing.T) {
 func (d *BabylonAppDriver) SendTxWithMsgsFromDriverAccount(
 	t *testing.T,
 	msgs ...sdk.Msg,
-) {
+) *abci.ResponseFinalizeBlock {
 	d.SendTxWithMessagesSuccess(
 		t,
 		d.SenderInfo,
@@ -927,6 +932,7 @@ func (d *BabylonAppDriver) SendTxWithMsgsFromDriverAccount(
 	}
 
 	d.IncSeq()
+	return result
 }
 
 // Funciont to initate different type of senders

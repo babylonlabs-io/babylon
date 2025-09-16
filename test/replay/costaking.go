@@ -2,8 +2,11 @@ package replay
 
 import (
 	"encoding/json"
+	"testing"
 
 	sdkmath "cosmossdk.io/math"
+	abci "github.com/cometbft/cometbft/abci/types"
+	abcitypes "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
@@ -68,11 +71,24 @@ func (d *BabylonAppDriver) GenerateNewBlockAssertExecutionSuccessWithCostakerRew
 		require.Equal(d.t, tx.Code, uint32(0), tx.Log)
 	}
 
+	return FindEventCostakerRewards(d.t, response.Events)
+}
+
+func EventCostakerRewardsFromBlocks(t *testing.T, blocks []*abci.ResponseFinalizeBlock) sdk.Coins {
+	totalRewardsAdded := sdk.NewCoins()
+
+	for _, block := range blocks {
+		totalRewardsAdded = totalRewardsAdded.Add(FindEventCostakerRewards(t, block.Events)...)
+	}
+	return totalRewardsAdded
+}
+
+func FindEventCostakerRewards(t *testing.T, evts []abcitypes.Event) sdk.Coins {
 	// "babylon.costaking.v1.EventCostakersAddRewards"
 	evtTypeCostAddRwd := sdk.MsgTypeURL(&costktypes.EventCostakersAddRewards{})[1:]
 
 	totalRewardsAdded := sdk.NewCoins()
-	for _, evt := range response.Events {
+	for _, evt := range evts {
 		if evt.Type != evtTypeCostAddRwd {
 			continue
 		}
@@ -84,7 +100,7 @@ func (d *BabylonAppDriver) GenerateNewBlockAssertExecutionSuccessWithCostakerRew
 
 			var addRewards sdk.Coins
 			err := json.Unmarshal([]byte(attr.Value), &addRewards)
-			require.NoError(d.t, err)
+			require.NoError(t, err)
 
 			totalRewardsAdded = totalRewardsAdded.Add(addRewards...)
 			break

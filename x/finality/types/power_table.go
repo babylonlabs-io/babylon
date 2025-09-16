@@ -135,7 +135,6 @@ func (dc *VotingPowerDistCache) GetActiveFinalityProviderSet() map[string]*Final
 
 // GetInactiveFinalityProviderSet returns a set of inactive finality providers
 // keyed by the hex string of the finality provider's BTC public key
-// i.e., not within top N of them in terms of voting power and not slashed or jailed
 func (dc *VotingPowerDistCache) GetInactiveFinalityProviderSet() map[string]*FinalityProviderDistInfo {
 	numActiveFPs := dc.NumActiveFps
 
@@ -146,9 +145,7 @@ func (dc *VotingPowerDistCache) GetInactiveFinalityProviderSet() map[string]*Fin
 	inactiveFps := make(map[string]*FinalityProviderDistInfo)
 
 	for _, fp := range dc.FinalityProviders[numActiveFPs:] {
-		if !fp.IsSlashed && !fp.IsJailed {
-			inactiveFps[fp.BtcPk.MarshalHex()] = fp
-		}
+		inactiveFps[fp.BtcPk.MarshalHex()] = fp
 	}
 
 	return inactiveFps

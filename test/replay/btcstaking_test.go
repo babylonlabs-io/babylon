@@ -734,7 +734,7 @@ func TestAcceptSlashingTxAsUnbondingTx(t *testing.T) {
 		driver.App.BTCLightClientKeeper.GetBTCNet(),
 	)
 
-	blockWithProofs := driver.IncludeTxsInBTCAndConfirm([]*wire.MsgTx{slashingTxMsg})
+	blockWithProofs, _ := driver.IncludeTxsInBTCAndConfirm([]*wire.MsgTx{slashingTxMsg})
 	require.Len(t, blockWithProofs.Proofs, 2)
 
 	msg := &bstypes.MsgBTCUndelegate{
