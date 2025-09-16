@@ -57,7 +57,7 @@ func (d *RefundTxDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool
 
 func (d *RefundTxDecorator) PostHandle(ctx sdk.Context, tx sdk.Tx, simulate, success bool, next sdk.PostHandler) (sdk.Context, error) {
 	// reset RefundableMsgCount to zero since RefundableMsgCount maintained per-tx
-	// Note: to make sure refundable msg count is reset after every tx, we place the reset counter logic here
+	// Note: to make sure refundable msg count is reset after each tx, we place the reset counter logic here
 	defer d.k.ResetRefundableMsgCount()
 
 	// refund only when finalizing a block or simulating the current tx
@@ -139,14 +139,14 @@ func isRefundTx(tx sdk.Tx) bool {
 	for _, msg := range tx.GetMsgs() {
 		switch msg.(type) {
 		case *btclctypes.MsgInsertHeaders, // BTC light client
-		// BTC timestamping
+			// BTC timestamping
 			*btcctypes.MsgInsertBTCSpvProof,
-		// BTC staking
+			// BTC staking
 			*bstypes.MsgAddCovenantSigs,
 			*bstypes.MsgBTCUndelegate,
 			*bstypes.MsgSelectiveSlashingEvidence,
 			*bstypes.MsgAddBTCDelegationInclusionProof,
-		// BTC staking finality
+			// BTC staking finality
 			*ftypes.MsgAddFinalitySig:
 			continue
 		default:

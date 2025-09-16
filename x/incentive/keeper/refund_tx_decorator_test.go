@@ -85,6 +85,8 @@ func TestCheckTxAndClearIndex(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			tx := tc.setup(ctx)
 			result := decorator.CheckTxAndClearIndex(ctx, tx)
+			// reset refundable msg count at posthandler
+			iKeeper.ResetRefundableMsgCount()
 
 			require.Equal(t, tc.expected, result)
 
