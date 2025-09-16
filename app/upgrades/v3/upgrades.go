@@ -9,14 +9,9 @@ import (
 	store "cosmossdk.io/store/types"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 
-<<<<<<< HEAD
 	"github.com/babylonlabs-io/babylon/v3/app/keepers"
 	"github.com/babylonlabs-io/babylon/v3/app/upgrades"
-=======
-	"github.com/babylonlabs-io/babylon/v4/app/keepers"
-	"github.com/babylonlabs-io/babylon/v4/app/upgrades"
-	"github.com/babylonlabs-io/babylon/v4/app/upgrades/epoching"
->>>>>>> 5cbf5d53 (Add : Upgrade handler for epoching spam prevention (#1663) (#1703))
+	"github.com/babylonlabs-io/babylon/v3/app/upgrades/epoching"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
 	btcstkconsumertypes "github.com/babylonlabs-io/babylon/v3/x/btcstkconsumer/types"

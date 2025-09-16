@@ -14,14 +14,14 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/babylonlabs-io/babylon/v4/app"
-	"github.com/babylonlabs-io/babylon/v4/app/upgrades"
-	v3rc4testnet "github.com/babylonlabs-io/babylon/v4/app/upgrades/v3rc4/testnet"
-	bbn "github.com/babylonlabs-io/babylon/v4/types"
-	"github.com/babylonlabs-io/babylon/v4/x/epoching"
-	epochingkeeper "github.com/babylonlabs-io/babylon/v4/x/epoching/keeper"
-	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
-	minttypes "github.com/babylonlabs-io/babylon/v4/x/mint/types"
+	"github.com/babylonlabs-io/babylon/v3/app"
+	"github.com/babylonlabs-io/babylon/v3/app/upgrades"
+	v3rc4testnet "github.com/babylonlabs-io/babylon/v3/app/upgrades/v3rc4/testnet"
+	bbn "github.com/babylonlabs-io/babylon/v3/types"
+	"github.com/babylonlabs-io/babylon/v3/x/epoching"
+	epochingkeeper "github.com/babylonlabs-io/babylon/v3/x/epoching/keeper"
+	epochingtypes "github.com/babylonlabs-io/babylon/v3/x/epoching/types"
+	minttypes "github.com/babylonlabs-io/babylon/v3/x/mint/types"
 )
 
 const (

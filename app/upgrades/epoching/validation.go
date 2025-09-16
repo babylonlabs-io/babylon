@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/babylonlabs-io/babylon/v4/app/keepers"
-	epochingkeeper "github.com/babylonlabs-io/babylon/v4/x/epoching/keeper"
-	"github.com/babylonlabs-io/babylon/v4/x/epoching/types"
+	"github.com/babylonlabs-io/babylon/v3/app/keepers"
+	epochingkeeper "github.com/babylonlabs-io/babylon/v3/x/epoching/keeper"
+	"github.com/babylonlabs-io/babylon/v3/x/epoching/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdktypes "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"

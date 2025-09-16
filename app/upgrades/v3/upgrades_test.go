@@ -8,18 +8,11 @@ import (
 	"cosmossdk.io/core/header"
 	"cosmossdk.io/x/upgrade"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
-<<<<<<< HEAD
 	"github.com/babylonlabs-io/babylon/v3/app"
 	"github.com/babylonlabs-io/babylon/v3/app/upgrades"
 	v3 "github.com/babylonlabs-io/babylon/v3/app/upgrades/v3"
 	bbn "github.com/babylonlabs-io/babylon/v3/types"
-=======
-	"github.com/babylonlabs-io/babylon/v4/app"
-	"github.com/babylonlabs-io/babylon/v4/app/upgrades"
-	v3 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v3"
-	bbn "github.com/babylonlabs-io/babylon/v4/types"
-	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
->>>>>>> 5cbf5d53 (Add : Upgrade handler for epoching spam prevention (#1663) (#1703))
+	epochingtypes "github.com/babylonlabs-io/babylon/v3/x/epoching/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"

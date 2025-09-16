@@ -9,9 +9,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
-	"github.com/babylonlabs-io/babylon/v4/app/keepers"
-	"github.com/babylonlabs-io/babylon/v4/app/upgrades"
-	"github.com/babylonlabs-io/babylon/v4/app/upgrades/epoching"
+	"github.com/babylonlabs-io/babylon/v3/app/keepers"
+	"github.com/babylonlabs-io/babylon/v3/app/upgrades"
+	"github.com/babylonlabs-io/babylon/v3/app/upgrades/epoching"
 )
 
 const UpgradeName = "v3rc4"
