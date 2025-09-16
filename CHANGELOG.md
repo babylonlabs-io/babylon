@@ -53,6 +53,7 @@ bindings (thanks @benluelo for contribution)
 - [#1355](https://github.com/babylonlabs-io/babylon/pull/1355) Allow empty fees on genesis transactions
 - [#1453](https://github.com/babylonlabs-io/babylon/pull/1453) fix: inactive FP event on full unbonding
 - [#1593](https://github.com/babylonlabs-io/babylon/pull/1593) fix: disabled duplicate fp bbn addr registering
+- [#1714](https://github.com/babylonlabs-io/babylon/pull/1714) Add BLS key flags to `rollback` and `bootstrap-state` cmds
 
 ## v2.2.0
 
