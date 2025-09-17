@@ -63,6 +63,9 @@ func (k Keeper) costakerModified(ctx context.Context, costaker sdk.AccAddress, m
 
 		// Note: delta score change here can be negative and will reduce the total score
 		curRwd.TotalScore = curRwd.TotalScore.Add(deltaScoreChange)
+		if err := curRwd.Validate(); err != nil {
+			return err
+		}
 		return k.SetCurrentRewards(ctx, *curRwd)
 	})
 }

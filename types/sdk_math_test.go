@@ -12,59 +12,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestCalculateDelegationDelta(t *testing.T) {
-	tests := []struct {
-		name          string
-		beforeAmount  sdkmath.LegacyDec
-		afterAmount   sdkmath.LegacyDec
-		expectedDelta sdkmath.Int
-	}{
-		{
-			name:          "positive delta - increase in delegation",
-			beforeAmount:  sdkmath.LegacyNewDec(100),
-			afterAmount:   sdkmath.LegacyNewDec(150),
-			expectedDelta: sdkmath.NewInt(50),
-		},
-		{
-			name:          "negative delta - decrease in delegation",
-			beforeAmount:  sdkmath.LegacyNewDec(200),
-			afterAmount:   sdkmath.LegacyNewDec(150),
-			expectedDelta: sdkmath.NewInt(-50),
-		},
-		{
-			name:          "zero delta - no change",
-			beforeAmount:  sdkmath.LegacyNewDec(100),
-			afterAmount:   sdkmath.LegacyNewDec(100),
-			expectedDelta: sdkmath.NewInt(0),
-		},
-		{
-			name:          "from zero - new delegation",
-			beforeAmount:  sdkmath.LegacyZeroDec(),
-			afterAmount:   sdkmath.LegacyNewDec(100),
-			expectedDelta: sdkmath.NewInt(100),
-		},
-		{
-			name:          "to zero - full undelegation",
-			beforeAmount:  sdkmath.LegacyNewDec(100),
-			afterAmount:   sdkmath.LegacyZeroDec(),
-			expectedDelta: sdkmath.NewInt(-100),
-		},
-		{
-			name:          "decimal values - truncated result",
-			beforeAmount:  sdkmath.LegacyNewDecWithPrec(1005, 1), // 100.5
-			afterAmount:   sdkmath.LegacyNewDecWithPrec(1505, 1), // 150.5
-			expectedDelta: sdkmath.NewInt(50),                    // truncated from 50.0
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			result := types.CalculateDelegationDelta(tc.beforeAmount, tc.afterAmount)
-			require.Equal(t, tc.expectedDelta.String(), result.String())
-		})
-	}
-}
-
 func TestCoinsSafeMulInt(t *testing.T) {
 	tcs := []struct {
 		title      string

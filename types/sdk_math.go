@@ -3,17 +3,9 @@ package types
 import (
 	"fmt"
 
-	"cosmossdk.io/math"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
-
-// CalculateDelegationDelta calculates the difference between current and previous delegation amounts
-// Returns the delta as math.Int, which can be negative if the previous amount was larger
-func CalculateDelegationDelta(beforeAmount, afterAmount math.LegacyDec) math.Int {
-	delta := afterAmount.Sub(beforeAmount)
-	return delta.TruncateInt()
-}
 
 // CoinsSafeMulInt multiplies the amounts of coins by x. Returns an error
 // if anything fails during the multiplication or coin validation.
