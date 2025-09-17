@@ -11,6 +11,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
+	erc20types "github.com/cosmos/evm/x/erc20/types"
+	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
+	precisebanktypes "github.com/cosmos/evm/x/precisebank/types"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
+
 	"github.com/babylonlabs-io/babylon/v4/app/keepers"
 	"github.com/babylonlabs-io/babylon/v4/app/upgrades"
 	"github.com/babylonlabs-io/babylon/v4/app/upgrades/epoching"
@@ -22,6 +27,8 @@ const UpgradeName = "v3rc4"
 
 var StoresToAdd = []string{
 	costktypes.StoreKey,
+	// evm
+	erc20types.StoreKey, evmtypes.StoreKey, feemarkettypes.StoreKey, precisebanktypes.StoreKey,
 }
 
 var Upgrade = upgrades.Upgrade{

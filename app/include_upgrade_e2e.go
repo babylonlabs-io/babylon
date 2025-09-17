@@ -18,5 +18,7 @@ import (
 func init() {
 	IsE2EUpgradeBuildFlag = true
 	v3.StoresToAdd = append(v3.StoresToAdd, erc20types.StoreKey, evmtypes.StoreKey, feemarkettypes.StoreKey, precisebanktypes.StoreKey, costakingtypes.StoreKey)
-	v3rc4.StoresToAdd = append(v3rc4.StoresToAdd, erc20types.StoreKey, evmtypes.StoreKey, feemarkettypes.StoreKey, precisebanktypes.StoreKey)
+	v3rc4.StoresToAdd = []string{
+		costakingtypes.StoreKey, erc20types.StoreKey, evmtypes.StoreKey, feemarkettypes.StoreKey, precisebanktypes.StoreKey,
+	}
 }
