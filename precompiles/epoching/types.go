@@ -1413,13 +1413,12 @@ func DefaultValidatorOutput() ValidatorOutput {
 func (vo *ValidatorOutputBech32) FromResponse(res *stakingtypes.QueryValidatorResponse) ValidatorOutputBech32 {
 	return ValidatorOutputBech32{
 		Validator: ValidatorInfoBech32{
-			OperatorAddress: res.Validator.OperatorAddress,
-			ConsensusPubkey: FormatConsensusPubkey(res.Validator.ConsensusPubkey),
-			Jailed:          res.Validator.Jailed,
-			Status:          uint8(stakingtypes.BondStatus_value[res.Validator.Status.String()]), //#nosec G115 // enum will always be convertible to uint8
-			Tokens:          res.Validator.Tokens.BigInt(),
-			DelegatorShares: res.Validator.DelegatorShares.BigInt(), // TODO: Decimal
-			// TODO: create description type,
+			OperatorAddress:   res.Validator.OperatorAddress,
+			ConsensusPubkey:   FormatConsensusPubkey(res.Validator.ConsensusPubkey),
+			Jailed:            res.Validator.Jailed,
+			Status:            uint8(stakingtypes.BondStatus_value[res.Validator.Status.String()]), //#nosec G115 // enum will always be convertible to uint8
+			Tokens:            res.Validator.Tokens.BigInt(),
+			DelegatorShares:   res.Validator.DelegatorShares.BigInt(), // TODO: Decimal
 			Description:       res.Validator.Description.Details,
 			UnbondingHeight:   res.Validator.UnbondingHeight,
 			UnbondingTime:     res.Validator.UnbondingTime.UTC().Unix(),
@@ -1438,13 +1437,12 @@ func (vo *ValidatorOutput) FromResponse(res *stakingtypes.QueryValidatorResponse
 
 	return ValidatorOutput{
 		Validator: ValidatorInfo{
-			OperatorAddress: common.BytesToAddress(operatorAddress.Bytes()),
-			ConsensusPubkey: FormatConsensusPubkey(res.Validator.ConsensusPubkey),
-			Jailed:          res.Validator.Jailed,
-			Status:          uint8(stakingtypes.BondStatus_value[res.Validator.Status.String()]), //#nosec G115 // enum will always be convertible to uint8
-			Tokens:          res.Validator.Tokens.BigInt(),
-			DelegatorShares: res.Validator.DelegatorShares.BigInt(), // TODO: Decimal
-			// TODO: create description type,
+			OperatorAddress:   common.BytesToAddress(operatorAddress.Bytes()),
+			ConsensusPubkey:   FormatConsensusPubkey(res.Validator.ConsensusPubkey),
+			Jailed:            res.Validator.Jailed,
+			Status:            uint8(stakingtypes.BondStatus_value[res.Validator.Status.String()]), //#nosec G115 // enum will always be convertible to uint8
+			Tokens:            res.Validator.Tokens.BigInt(),
+			DelegatorShares:   res.Validator.DelegatorShares.BigInt(), // TODO: Decimal
 			Description:       res.Validator.Description.Details,
 			UnbondingHeight:   res.Validator.UnbondingHeight,
 			UnbondingTime:     res.Validator.UnbondingTime.UTC().Unix(),
