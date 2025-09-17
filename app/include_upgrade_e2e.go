@@ -9,6 +9,7 @@ import (
 	evmtypes "github.com/cosmos/evm/x/vm/types"
 
 	v3 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v3"
+	v3rc4 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v3rc4/testnet"
 	costakingtypes "github.com/babylonlabs-io/babylon/v4/x/costaking/types"
 )
 
@@ -17,4 +18,5 @@ import (
 func init() {
 	IsE2EUpgradeBuildFlag = true
 	v3.StoresToAdd = append(v3.StoresToAdd, erc20types.StoreKey, evmtypes.StoreKey, feemarkettypes.StoreKey, precisebanktypes.StoreKey, costakingtypes.StoreKey)
+	v3rc4.StoresToAdd = append(v3.StoresToAdd, erc20types.StoreKey, evmtypes.StoreKey, feemarkettypes.StoreKey, precisebanktypes.StoreKey)
 }

@@ -2,25 +2,33 @@ package testnet
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	store "cosmossdk.io/store/types"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
+	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
 	"github.com/babylonlabs-io/babylon/v4/app/keepers"
 	"github.com/babylonlabs-io/babylon/v4/app/upgrades"
 	"github.com/babylonlabs-io/babylon/v4/app/upgrades/epoching"
+	v3rc4 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v3rc4"
+	costktypes "github.com/babylonlabs-io/babylon/v4/x/costaking/types"
 )
 
 const UpgradeName = "v3rc4"
+
+var StoresToAdd = []string{
+	costktypes.StoreKey,
+}
 
 var Upgrade = upgrades.Upgrade{
 	UpgradeName:          UpgradeName,
 	CreateUpgradeHandler: CreateUpgradeHandler,
 	StoreUpgrades: store.StoreUpgrades{
-		Added:   []string{},
+		Added:   StoresToAdd,
 		Deleted: []string{},
 	},
 }
@@ -61,6 +69,17 @@ func CreateUpgradeHandler(mm *module.Manager, configurator module.Configurator, 
 			"height", currentHeight,
 			"epoch_boundary", true,
 		)
+
+		// coostaking upgrade
+		costkStoreKey := keepers.GetKey(costktypes.StoreKey)
+		if costkStoreKey == nil {
+			return nil, errors.New("invalid costaking types store key")
+		}
+
+		coStkStoreService := runtime.NewKVStoreService(costkStoreKey)
+		if err := v3rc4.InitializeCoStakerRwdsTracker(ctx, keepers.EncCfg.Codec, coStkStoreService, keepers.StakingKeeper, keepers.BTCStakingKeeper, keepers.CostakingKeeper, keepers.FinalityKeeper); err != nil {
+			return nil, err
+		}
 
 		return migrations, nil
 	}
