@@ -121,7 +121,7 @@ func (p Precompile) UnbondingDelegationBech32(
 	res, err := p.stakingQuerier.UnbondingDelegation(ctx, req)
 	if err != nil {
 		// return empty unbonding delegation output if the unbonding delegation is not found
-		expError := fmt.Sprintf("unbonding delegation with delegator %s not found for validator %s", req.DelegatorAddr, req.ValidatorAddr)
+		expError := fmt.Sprintf(ErrUnbondingDelegationNotFound, req.DelegatorAddr, req.ValidatorAddr)
 		if strings.Contains(err.Error(), expError) {
 			return method.Outputs.Pack(UnbondingDelegationResponseBech32{})
 		}
@@ -149,7 +149,7 @@ func (p Precompile) UnbondingDelegation(
 	res, err := p.stakingQuerier.UnbondingDelegation(ctx, req)
 	if err != nil {
 		// return empty unbonding delegation output if the unbonding delegation is not found
-		expError := fmt.Sprintf("unbonding delegation with delegator %s not found for validator %s", req.DelegatorAddr, req.ValidatorAddr)
+		expError := fmt.Sprintf(ErrUnbondingDelegationNotFound, req.DelegatorAddr, req.ValidatorAddr)
 		if strings.Contains(err.Error(), expError) {
 			return method.Outputs.Pack(UnbondingDelegationResponse{})
 		}
@@ -176,7 +176,7 @@ func (p Precompile) ValidatorBech32(
 	res, err := p.stakingQuerier.Validator(ctx, req)
 	if err != nil {
 		// return empty validator info if the validator is not found
-		expError := fmt.Sprintf("validator %s not found", req.ValidatorAddr)
+		expError := fmt.Sprintf(ErrValidatorNotFound, req.ValidatorAddr)
 		if strings.Contains(err.Error(), expError) {
 			return method.Outputs.Pack(DefaultValidatorOutputBech32().Validator)
 		}
@@ -203,7 +203,7 @@ func (p Precompile) Validator(
 	res, err := p.stakingQuerier.Validator(ctx, req)
 	if err != nil {
 		// return empty validator info if the validator is not found
-		expError := fmt.Sprintf("validator %s not found", req.ValidatorAddr)
+		expError := fmt.Sprintf(ErrValidatorNotFound, req.ValidatorAddr)
 		if strings.Contains(err.Error(), expError) {
 			return method.Outputs.Pack(DefaultValidatorOutput().Validator)
 		}

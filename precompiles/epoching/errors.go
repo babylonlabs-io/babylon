@@ -1,12 +1,21 @@
 package epoching
 
+// formatted error messages
 const (
 	// ErrNoDelegationFound is raised when no delegation is found for the given delegator and validator addresses.
 	ErrNoDelegationFound = "delegation with delegator %s not found for validator %s"
 	// ErrDifferentOriginFromValidator is raised when the origin address is not the same as the validator address.
 	ErrDifferentOriginFromValidator = "origin address %s is not the same as validator operator address %s"
-	// ErrCannotCallFromContract is raised when a function cannot be called from a smart contract.
-	ErrCannotCallFromContract = "this method can only be called directly to the precompile, not from a smart contract"
 	// ErrInvalidBlsKey is raised when a BlsKey type assertion failed
 	ErrInvalidBlsKey = "invalid bls key %v"
+	// ErrUnbondingDelegationNotFound is raised when unbonding delegation not found for the given delegator and validator addresses
+	ErrUnbondingDelegationNotFound = "unbonding delegation with delegator %s not found for validator %s"
+	// ErrValidatorNotFound is raised when no validator is found for the given validator address
+	ErrValidatorNotFound = "validator %s not found"
+)
+
+// used with error.New()
+const (
+	// ErrCannotCallFromContract is raised when a function cannot be called from a smart contract.
+	ErrCannotCallFromContract = "this method can only be called directly to the precompile, not from a smart contract"
 )
