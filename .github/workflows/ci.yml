@@ -23,7 +23,7 @@ jobs:
      run-integration-tests: false
      run-lint: true
      testdata-url: "https://drive.usercontent.google.com/download?id=1PaZe96acfJqCHJrc24VAh77H-z0U9_x1&export=download&confirm=t"
-     testdata-path: "app/upgrades/v3rc4/testdata/btc-delegations.json.test"     
+     testdata-path: "app/upgrades/v3rc4/testdata/btc-delegations.json.test"
 
   proto_lint:
     runs-on: ubuntu-22.04
@@ -411,7 +411,7 @@ jobs:
           go-version: 1.23
       - name: Run e2e TestSoftwareUpgradeV3RC4TestSuite
         run: |
-          make test-e2e-cache-upgrade-v3rc4   
+          make test-e2e-cache-upgrade-v3rc4
 
 #  e2e-run-finality-contract:
 #    needs: [e2e-docker-build-babylon]
