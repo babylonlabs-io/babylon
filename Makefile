@@ -287,13 +287,15 @@ test-e2e-cache-finality-contract:
 	go test -run TestFinalityContractTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
 
 test-e2e-cache-upgrade-v3:
-	go test -run TestSoftwareUpgradeV3TestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
+	export BABYLON_BUILD_OPTIONS=e2e_upgrade && \
+	go test -run TestSoftwareUpgradeV3TestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e,e2e_upgrade
 
 test-e2e-cache-upgrade-v3rc4:
 	export BABYLON_VERSION_BEFORE_UPGRADE=v3.0.0-rc.3 && \
+	export BABYLON_BUILD_OPTIONS=e2e_upgrade && \
 	$(MAKE) -C contrib/images e2e-init-chain-rmi && \
 	$(MAKE) -C contrib/images e2e-init-chain && \
-	go test -run TestSoftwareUpgradeV3RC4TestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
+	go test -run TestSoftwareUpgradeV3RC4TestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e,e2e_upgrade
 
 test-e2e-btc-rewards-bsn-rollup:
 	go test -run TestBtcRewardsDistributionBsnRollup -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
