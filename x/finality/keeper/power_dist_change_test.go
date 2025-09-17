@@ -2582,13 +2582,23 @@ func TestHandleFPStateUpdatesWithSlashedFp(t *testing.T) {
 	checkHasEventFpStatusChange(t, ctx, fpBtcPk, btcstktypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_ACTIVE)
 
 	// creates a new vp dst cache where the fp is slashed
-	prevDc = newDc
-	newFp.IsSlashed = true
-	newDc = ftypes.NewVotingPowerDistCacheWithFinalityProviders([]*ftypes.FinalityProviderDistInfo{&newFp})
-	newDc.NumActiveFps = 0
+	prevDc = ftypes.NewVotingPowerDistCache()
+	prevDc.NumActiveFps = 1
+	prevDc.FinalityProviders = []*ftypes.FinalityProviderDistInfo{
+		&ftypes.FinalityProviderDistInfo{
+			BtcPk:          fpBtcPk,
+			Addr:           fpAddr,
+			IsTimestamped:  true,
+			TotalBondedSat: 1,
+		},
+	}
 
 	state = ftypes.NewProcessingState()
 	state.FillByPrevVpDstCache(prevDc)
+
+	newFp.IsSlashed = true
+	newDc = ftypes.NewVotingPowerDistCacheWithFinalityProviders([]*ftypes.FinalityProviderDistInfo{&newFp})
+	newDc.NumActiveFps = 0
 
 	fHooks.EXPECT().AfterBbnFpRemovedFromActiveSet(gomock.Any(), fpAddr).Times(1)
 	ctx = ctx.WithEventManager(sdk.NewEventManager())
