@@ -127,6 +127,10 @@ func (d *RefundTxDecorator) CheckTxAndClearIndex(_ sdk.Context, tx sdk.Tx) bool 
 	// NOTE: we don't need to check for duplicate refundable msgs in the tx,
 	// since it is checked individually in each msg_server.go
 
+	// NOTE: when adding a new refundable message, make sure it checks duplicate
+	// inside the msg handler since CheckTxAndClearIndex doesn't check duplicate and
+	// it will be free spamming txs
+
 	return true
 }
 
@@ -139,14 +143,14 @@ func isRefundTx(tx sdk.Tx) bool {
 	for _, msg := range tx.GetMsgs() {
 		switch msg.(type) {
 		case *btclctypes.MsgInsertHeaders, // BTC light client
-			// BTC timestamping
+		// BTC timestamping
 			*btcctypes.MsgInsertBTCSpvProof,
-			// BTC staking
+		// BTC staking
 			*bstypes.MsgAddCovenantSigs,
 			*bstypes.MsgBTCUndelegate,
 			*bstypes.MsgSelectiveSlashingEvidence,
 			*bstypes.MsgAddBTCDelegationInclusionProof,
-			// BTC staking finality
+		// BTC staking finality
 			*ftypes.MsgAddFinalitySig:
 			continue
 		default:
