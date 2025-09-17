@@ -4,7 +4,6 @@ import (
 	"math/rand"
 	"testing"
 
-	"cosmossdk.io/math"
 	"github.com/stretchr/testify/require"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -37,7 +36,10 @@ func FuzzCheckCurrentRewards(f *testing.F) {
 		err = k.SetCurrentRewards(ctx, expCurRwd)
 		require.NoError(t, err)
 
-		currentRwd, err = k.GetCurrentRewards(ctx)
+		err = k.setHistoricalRewards(ctx, expCurRwd.Period-1, datagen.GenRandomHistoricalRewards(r))
+		require.NoError(t, err)
+
+		currentRwd, err = k.GetCurrentRewardsInitialized(ctx)
 		require.NoError(t, err)
 		require.Equal(t, expCurRwd.Rewards.String(), currentRwd.Rewards.String())
 		require.Equal(t, expCurRwd.Period, currentRwd.Period)
@@ -56,8 +58,8 @@ func FuzzCheckCurrentRewards(f *testing.F) {
 
 		updatedCurrentRwd, err := k.GetCurrentRewards(ctx)
 		require.NoError(t, err)
-		require.Equal(t, expCurRwd.Rewards.String(), updatedCurrentRwd.Rewards.String())
-		require.Equal(t, expCurRwd.Period, updatedCurrentRwd.Period)
+		require.Equal(t, sdk.NewCoins().String(), updatedCurrentRwd.Rewards.String())
+		require.Equal(t, expCurRwd.Period+1, updatedCurrentRwd.Period)
 		require.Equal(t, newTotalScore.String(), updatedCurrentRwd.TotalScore.String())
 	})
 }
@@ -167,14 +169,6 @@ func TestCurrentRewardsAddRewards(t *testing.T) {
 	err = currentRwd.AddRewards(zeroCoins)
 	require.NoError(t, err)
 	require.Equal(t, expectedCoins.String(), currentRwd.Rewards.String())
-}
-
-func TestUpdateCurrentRewardsTotalScoreWhenNotFound(t *testing.T) {
-	k, ctx := NewKeeperWithCtx(t)
-
-	newTotalScore := math.NewInt(1000)
-	err := k.UpdateCurrentRewardsTotalScore(ctx, newTotalScore)
-	require.Error(t, err)
 }
 
 func NewKeeperWithCtx(t *testing.T) (*Keeper, sdk.Context) {

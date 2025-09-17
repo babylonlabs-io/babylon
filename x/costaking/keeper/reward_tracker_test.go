@@ -76,22 +76,22 @@ func FuzzIncrementRewardsPeriod(f *testing.F) {
 		err = k.AddRewardsForCostakers(ctx, rewards)
 		require.NoError(t, err)
 
-		err = k.UpdateCurrentRewardsTotalScore(ctx, totalScore)
+		err = k.UpdateCurrentRewardsTotalScore(ctx, totalScore) // increments the period as well
 		require.NoError(t, err)
 
 		initialCurrentRwd, err := k.GetCurrentRewards(ctx)
 		require.NoError(t, err)
-		require.Equal(t, uint64(2), initialCurrentRwd.Period)
+		require.Equal(t, uint64(3), initialCurrentRwd.Period)
 		require.Equal(t, totalScore.String(), initialCurrentRwd.TotalScore.String())
 
 		endedPeriod, err = k.IncrementRewardsPeriod(ctx)
 		require.NoError(t, err)
-		require.Equal(t, uint64(2), endedPeriod)
+		require.Equal(t, uint64(3), endedPeriod)
 
 		// After increment, period should advance to 3 and create historical rewards for period 2
 		newCurrentRwd, err := k.GetCurrentRewards(ctx)
 		require.NoError(t, err)
-		require.Equal(t, uint64(3), newCurrentRwd.Period)
+		require.Equal(t, uint64(4), newCurrentRwd.Period)
 		require.True(t, newCurrentRwd.Rewards.IsZero())
 		require.Equal(t, totalScore.String(), newCurrentRwd.TotalScore.String())
 

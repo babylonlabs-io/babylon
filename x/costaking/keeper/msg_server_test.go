@@ -272,12 +272,16 @@ func TestMsgUpdateParams(t *testing.T) {
 			defer ctrl.Finish()
 			msgServer := keeper.NewMsgServerImpl(*k)
 
+			// creates proper historical
+			_, err := k.GetCurrentRewardsInitialized(ctx)
+			require.NoError(t, err)
+
 			// Initialize CurrentRewards to avoid collections error
 			initialCurrentRewards := types.CurrentRewards{
 				TotalScore: math.OneInt(),
 				Period:     1,
 			}
-			err := k.SetCurrentRewards(ctx, initialCurrentRewards)
+			err = k.SetCurrentRewards(ctx, initialCurrentRewards)
 			require.NoError(t, err)
 
 			msg := tc.setupMsg()

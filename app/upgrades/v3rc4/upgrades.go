@@ -2,7 +2,6 @@ package v3rc4
 
 import (
 	"context"
-	"errors"
 
 	"cosmossdk.io/collections"
 	corestoretypes "cosmossdk.io/core/store"
@@ -65,7 +64,7 @@ func getAllBTCStakers(ctx context.Context, btcStkKeeper btcstkkeeper.Keeper, fKe
 	height := uint64(sdkCtx.HeaderInfo().Height)
 	vp := fKeeper.GetVotingPowerDistCache(ctx, height-1)
 	if vp == nil {
-		return nil, errors.New("voting power distribution cache not found")
+		vp = ftypes.NewVotingPowerDistCache()
 	}
 	activeFps := vp.GetActiveFinalityProviderSet()
 

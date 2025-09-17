@@ -25,13 +25,17 @@ func (k Keeper) SetCurrentRewards(ctx context.Context, currentRwd types.CurrentR
 }
 
 func (k Keeper) UpdateCurrentRewardsTotalScore(ctx context.Context, totalScore math.Int) error {
+	_, err := k.IncrementRewardsPeriod(ctx)
+	if err != nil {
+		return err
+	}
+
 	currentRwd, err := k.GetCurrentRewards(ctx)
 	if err != nil {
 		return err
 	}
 
 	currentRwd.TotalScore = totalScore
-	// TODO(rafilx): initialize a new period, creates historical...
 	return k.SetCurrentRewards(ctx, *currentRwd)
 }
 

@@ -153,8 +153,7 @@ func TestInitializeCoStakerRwdsTracker_WithoutPowerDistCache(t *testing.T) {
 	err := v3rc4.InitializeCoStakerRwdsTracker(
 		ctx, cdc, storeService, stkKeeper, btcStkKeeper, *costkKeeper, *fKeeper,
 	)
-	require.Error(t, err)
-	require.ErrorContains(t, err, "voting power distribution cache not found")
+	require.NoError(t, err)
 
 	// Verify NO co-staker was created (BTC only, no baby staking)
 	verifyNoCoStakerCreated(t, ctx, cdc, storeService, stakerAddr)

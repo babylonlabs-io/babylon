@@ -197,12 +197,12 @@ func TestCostakerWithdrawRewards(t *testing.T) {
 	err = k.setCostakerRewardsTracker(ctx, costaker, tracker)
 	require.NoError(t, err)
 
+	err = k.UpdateCurrentRewardsTotalScore(ctx, initialScore)
+	require.NoError(t, err)
+
 	// Add some rewards to the system
 	rewards := sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(100000)))
 	err = k.AddRewardsForCostakers(ctx, rewards)
-	require.NoError(t, err)
-
-	err = k.UpdateCurrentRewardsTotalScore(ctx, initialScore)
 	require.NoError(t, err)
 
 	// Calculate expected rewards: rewards should equal the original amount since score == totalScore
@@ -259,11 +259,11 @@ func TestCostakerModifiedWithPreInitialization(t *testing.T) {
 	err = k.setCostakerRewardsTracker(ctx, costaker, tracker)
 	require.NoError(t, err)
 
-	rewards := sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(50000)))
-	err = k.AddRewardsForCostakers(ctx, rewards)
+	err = k.UpdateCurrentRewardsTotalScore(ctx, initialScore)
 	require.NoError(t, err)
 
-	err = k.UpdateCurrentRewardsTotalScore(ctx, initialScore)
+	rewards := sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(50000)))
+	err = k.AddRewardsForCostakers(ctx, rewards)
 	require.NoError(t, err)
 
 	// Expected rewards based on initial score: since score == totalScore, rewards should equal the original amount
@@ -291,6 +291,7 @@ func TestCostakerModifiedWithPreInitialization(t *testing.T) {
 			currentTracker.StartPeriodCumulativeReward,
 			newScore,
 		)
+		currentTracker.TotalScore = newScore
 		return k.setCostakerRewardsTracker(ctx, costakr, updatedTracker)
 	}
 
