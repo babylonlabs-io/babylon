@@ -23,8 +23,6 @@ import (
 	costktypes "github.com/babylonlabs-io/babylon/v4/x/costaking/types"
 )
 
-const UpgradeName = "v3rc4"
-
 var StoresToAdd = []string{
 	costktypes.StoreKey,
 	// evm
@@ -32,7 +30,7 @@ var StoresToAdd = []string{
 }
 
 var Upgrade = upgrades.Upgrade{
-	UpgradeName:          UpgradeName,
+	UpgradeName:          v3rc4.UpgradeName,
 	CreateUpgradeHandler: CreateUpgradeHandler,
 	StoreUpgrades: store.StoreUpgrades{
 		Added:   StoresToAdd,
@@ -71,7 +69,7 @@ func CreateUpgradeHandler(mm *module.Manager, configurator module.Configurator, 
 		}
 		// Log successful upgrade
 		sdkCtx.Logger().Info("spam prevention upgrade completed successfully",
-			"upgrade", UpgradeName,
+			"upgrade", v3rc4.UpgradeName,
 			"epoching_migration", "v3rc3->v3rc4",
 			"height", currentHeight,
 			"epoch_boundary", true,

@@ -16,6 +16,7 @@ import (
 
 	"github.com/babylonlabs-io/babylon/v4/app"
 	"github.com/babylonlabs-io/babylon/v4/app/upgrades"
+	v3rc4 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v3rc4"
 	v3rc4testnet "github.com/babylonlabs-io/babylon/v4/app/upgrades/v3rc4/testnet"
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	"github.com/babylonlabs-io/babylon/v4/x/epoching"
@@ -257,7 +258,7 @@ func (s *UpgradeTestSuite) executeUpgrade(upgradeHeight int64) error {
 
 	// Schedule upgrade
 	s.ctx = s.ctx.WithBlockHeight(upgradeHeight - 1)
-	plan := upgradetypes.Plan{Name: v3rc4testnet.UpgradeName, Height: upgradeHeight}
+	plan := upgradetypes.Plan{Name: v3rc4.UpgradeName, Height: upgradeHeight}
 	err := s.app.UpgradeKeeper.ScheduleUpgrade(s.ctx, plan)
 	s.Require().NoError(err)
 
