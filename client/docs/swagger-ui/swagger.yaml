@@ -2894,9 +2894,8 @@ paths:
     get:
       summary: >-
         LatestEpochMsgs queries the messages within a given number of most
-        recent
-
-        epochs
+        recent epochs
+      description: 'Deprecated: This RPC is deprecated and will be removed in v5.0.0'
       operationId: LatestEpochMsgs
       responses:
         '200':
@@ -2994,9 +2993,13 @@ paths:
                            repeated Bar results = 1;
                            PageResponse page = 2;
                    }
-            title: |-
+            title: >-
               QueryLatestEpochMsgsResponse is the response type for the
+
               Query/LatestEpochMsgs RPC method
+
+              Deprecated: QueryLatestEpochMsgsResponse is deprecated and will be
+              removed in v5.0.0
         default:
           description: An unexpected error response.
           schema:
@@ -15175,9 +15178,13 @@ definitions:
                    repeated Bar results = 1;
                    PageResponse page = 2;
            }
-    title: |-
+    title: >-
       QueryLatestEpochMsgsResponse is the response type for the
+
       Query/LatestEpochMsgs RPC method
+
+      Deprecated: QueryLatestEpochMsgsResponse is deprecated and will be removed
+      in v5.0.0
   babylon.epoching.v1.QueryParamsResponse:
     type: object
     properties:

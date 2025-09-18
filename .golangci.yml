@@ -66,6 +66,23 @@ issues:
     - e2etest
   exclude-rules:
     # Exclude some linters from running on tests files.
+    - path: client/query/epoching.go
+      linters:
+        - staticcheck
+      text: "SA1019"
+    - path: x/epoching/keeper/grpc_query.go
+      linters:
+        - staticcheck
+      text: "SA1019"
+    - path: precompiles/epoching/query.go
+      linters:
+        - staticcheck
+      text: "SA1019"
+
+    - path: precompiles/epoching/types.go
+      linters:
+        - staticcheck
+      text: "SA1019"
     - path: _test\.go
       linters:
         - gocyclo

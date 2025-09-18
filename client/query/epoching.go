@@ -64,6 +64,7 @@ func (c *QueryClient) EpochsInfo(pagination *sdkquerytypes.PageRequest) (*epochi
 
 // LatestEpochMsgs queries the epoching module for the latest messages maintained in its delayed
 // staking queue until a specified endEpoch.
+// Deprecated: This RPC is deprecated and will be removed in v5.0.0
 func (c *QueryClient) LatestEpochMsgs(endEpoch uint64, epochCount uint64, pagination *sdkquerytypes.PageRequest) (*epochingtypes.QueryLatestEpochMsgsResponse, error) {
 	var resp *epochingtypes.QueryLatestEpochMsgsResponse
 	err := c.QueryEpoching(func(ctx context.Context, queryClient epochingtypes.QueryClient) error {
