@@ -24,7 +24,8 @@ import (
 // UpdatePowerDist updates the voting power table and distribution cache.
 // This is triggered upon each `BeginBlock`
 func (k Keeper) UpdatePowerDist(ctx context.Context) {
-	height := uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
+	sdcCtx := sdk.UnwrapSDKContext(ctx)
+	height := uint64(sdcCtx.HeaderInfo().Height)
 	btcTipHeight := k.BTCStakingKeeper.GetCurrentBTCHeight(ctx)
 
 	// get the power dist cache in the last height
@@ -48,6 +49,14 @@ func (k Keeper) UpdatePowerDist(ctx context.Context) {
 
 	// record voting power and cache for this height
 	k.RecordVotingPowerAndCache(ctx, newDc)
+
+	// Execute the hooks logic based on the processed events and
+	// currently updated voting power distribution cache.
+	// It shuld first execute the hooks for BTC delegations and then for finality providers
+	if err := k.processHooksBTCDelegation(sdcCtx, state, newDc); err != nil {
+		panic(fmt.Errorf("failed to execute btc delegation hooks: %w", err))
+	}
+
 	// emit events for finality providers with state updates
 	k.HandleFPStateUpdates(ctx, state, dc, newDc, true)
 	// record metrics
@@ -340,13 +349,6 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 		}
 	}
 
-	// Execute the hooks logic based on the processed events
-	// First execute the hooks for BTC delegations
-	// and then for finality providers
-	if err := k.processBTCDelegationHooks(sdkCtx, state, newDc); err != nil {
-		panic(fmt.Errorf("failed to execute btc delegation hooks: %w", err))
-	}
-
 	return newDc, state
 }
 
@@ -603,9 +605,9 @@ func (k Keeper) processUnbondingBtcDelHook(
 	return k.processBtcDelHook(ctx, state, state.UnbondingDelegations, activeFpsByBtcPk, k.hooks.AfterBtcDelegationUnbonded)
 }
 
-// processBTCDelegationHooks calls all the changes of btc delegation activation and unbonding/withdraw
+// processHooksBTCDelegation calls all the changes of btc delegation activation and unbonding/withdraw
 // it needs to call all the actives first to avoid reaching negative values of sats.
-func (k Keeper) processBTCDelegationHooks(ctx sdk.Context, state *ftypes.ProcessingState, newDc *ftypes.VotingPowerDistCache) error {
+func (k Keeper) processHooksBTCDelegation(ctx sdk.Context, state *ftypes.ProcessingState, newDc *ftypes.VotingPowerDistCache) error {
 	activeFpsByBtcPk := newDc.ActiveFpsByBtcPk()
 	if err := k.processActiveBtcDelHook(ctx, state, activeFpsByBtcPk); err != nil {
 		return fmt.Errorf("failed to execute active btc delegation hooks: %w", err)

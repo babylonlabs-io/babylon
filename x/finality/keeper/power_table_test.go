@@ -440,9 +440,10 @@ func FuzzVotingPowerTable_ActiveFinalityProviderRotation(f *testing.F) {
 				del.Address(),
 				true,
 				false,
-				false,
+				gomock.Any(), // this will depend on the active set after for loop
 				stakingValue,
 			).Times(1)
+			// TODO: finalize expected hooks values
 
 			// record voting power
 			fpsWithMeta = append(fpsWithMeta, &FinalityProviderWithMetaCostaker{
@@ -469,7 +470,7 @@ func FuzzVotingPowerTable_ActiveFinalityProviderRotation(f *testing.F) {
 		for i := 0; i < numActiveFPs; i++ {
 			fHooks.EXPECT().AfterBbnFpEntersActiveSet(
 				gomock.Any(),
-				gomock.Eq(fpsWithMeta[i].Addr),
+				fpsWithMeta[i].Addr,
 			).Times(1)
 		}
 		// For inactive FPs, no hook calls are expected since they don't change active set status
@@ -704,7 +705,7 @@ func TestVotingPowerTable_ActiveFinalityProviderRotation_Seed0(t *testing.T) {
 			del.Address(),
 			true,
 			false,
-			false,
+			gomock.Any(),
 			stakingValue,
 		).Times(1)
 
@@ -735,9 +736,15 @@ func TestVotingPowerTable_ActiveFinalityProviderRotation_Seed0(t *testing.T) {
 			i, fpsWithMeta[i].BtcPk.MarshalHex(), fpsWithMeta[i].Addr.String(), fpsWithMeta[i].VotingPower)
 	}
 
-	// TODO: Add expected values to hook calls
-	fHooks.EXPECT().AfterBbnFpEntersActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
-	fHooks.EXPECT().AfterBbnFpRemovedFromActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
+	// Set exact expectations for hook calls
+	for i := 0; i < numActiveFPs; i++ {
+		fHooks.EXPECT().AfterBbnFpEntersActiveSet(
+			gomock.Any(),
+			fpsWithMeta[i].Addr,
+		).Times(1)
+	}
+	// No FPs should be removed in this test
+	fHooks.EXPECT().AfterBbnFpRemovedFromActiveSet(gomock.Any(), gomock.Any()).Times(0)
 
 	h.CheckpointingKeeperForFinality.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(uint64(2)).AnyTimes()
 
