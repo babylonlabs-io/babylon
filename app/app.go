@@ -873,7 +873,7 @@ func (a *BabylonApp) DefaultGenesis() map[string]json.RawMessage {
 	genesis := a.BasicModuleManager.DefaultGenesis(a.appCodec)
 	// Add EVM genesis configuration
 	evmGenState := evmtypes.DefaultGenesisState()
-	evmGenState.Params.ActiveStaticPrecompiles = evmtypes.AvailableStaticPrecompiles
+	evmGenState.Params.ActiveStaticPrecompiles = appkeepers.BabylonAvailableStaticPrecompiles
 	evmGenState.Params.EvmDenom = appparams.BaseCoinUnit
 	genesis[evmtypes.ModuleName] = a.appCodec.MustMarshalJSON(evmGenState)
 
