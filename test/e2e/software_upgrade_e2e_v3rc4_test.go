@@ -140,7 +140,7 @@ func (s *SoftwareUpgradeV3RC4TestSuite) createTempUpgradeConfig() (string, error
 				"plan": map[string]interface{}{
 					"name":                  "v3rc4",
 					"time":                  "0001-01-01T00:00:00Z",
-					"height":                "190",
+					"height":                "221",
 					"info":                  "Upgrade to v3rc4",
 					"upgraded_client_state": nil,
 				},

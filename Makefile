@@ -290,8 +290,8 @@ test-e2e-cache-upgrade-v3:
 	go test -run TestSoftwareUpgradeV3TestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
 
 test-e2e-cache-upgrade-v3rc4:
-	export BABYLON_VERSION_BEFORE_UPGRADE=v3.0.0-rc.3 && \
 	$(MAKE) -C contrib/images e2e-init-chain-rmi && \
+	export BABYLON_VERSION_BEFORE_UPGRADE=v3.0.0-rc.3 && \
 	$(MAKE) -C contrib/images e2e-init-chain && \
 	go test -run TestSoftwareUpgradeV3RC4TestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
 
