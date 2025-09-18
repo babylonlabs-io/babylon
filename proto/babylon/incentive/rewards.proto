@@ -22,8 +22,10 @@ message FinalityProviderHistoricalRewards {
     (gogoproto.nullable) = false,
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
   ];
-  // TODO(rafilx): add reference count for state prunning
+  // The reference count indicates the number of objects
+  // which might need to reference this historical entry at any point.
   // https://github.com/cosmos/cosmos-sdk/blob/d9c53bfefc1e75a3c6b09065ea8b3a836cda0d18/x/distribution/types/distribution.pb.go#L98
+  uint32 reference_count = 2;
 }
 
 // FinalityProviderCurrentRewards represents the current rewards of the pool of
@@ -31,7 +33,7 @@ message FinalityProviderHistoricalRewards {
 // Note: This rewards are for the BTC delegators that delegated to this FP
 // the FP itself is not the owner or can withdraw this rewards.
 // If a slash event happens with this finality provider, all the delegations
-// need to withdraw to the RewardGauge and the related scrutures should be
+// need to withdraw to the RewardGauge and the related structures should be
 // deleted. Key: Prefix + Finality provider bech32 address.
 message FinalityProviderCurrentRewards {
   // CurrentRewards is the current rewards that the finality provider have and

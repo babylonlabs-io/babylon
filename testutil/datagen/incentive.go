@@ -160,7 +160,7 @@ func GenRandomBTCDelegationRewardsTracker(r *rand.Rand) itypes.BTCDelegationRewa
 
 func GenRandomFPHistRwd(r *rand.Rand) itypes.FinalityProviderHistoricalRewards {
 	rwd := GenRandomCoins(r)
-	return itypes.NewFinalityProviderHistoricalRewards(rwd)
+	return itypes.NewFinalityProviderHistoricalRewards(rwd, uint32(1))
 }
 
 func GenRandomFPHistRwdWithDecimals(r *rand.Rand) itypes.FinalityProviderHistoricalRewards {
