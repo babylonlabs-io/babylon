@@ -237,13 +237,6 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 	k.processExpiredEvents(ctx, sdkCtx, state)
 	processSlashedEvents(sdkCtx, state)
 
-	// Execute the hooks logic based on the processed events
-	// First execute the hooks for BTC delegations
-	// and then for finality providers
-	if err := k.processBTCDelegationHooks(sdkCtx, state); err != nil {
-		panic(fmt.Errorf("failed to execute btc delegation hooks: %w", err))
-	}
-
 	/*
 		At this point, there is voting power update.
 		Then, construct a voting power dist cache by reconciling the previous
@@ -345,6 +338,13 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 		if fpDistInfo.TotalBondedSat > 0 {
 			newDc.AddFinalityProviderDistInfo(fpDistInfo)
 		}
+	}
+
+	// Execute the hooks logic based on the processed events
+	// First execute the hooks for BTC delegations
+	// and then for finality providers
+	if err := k.processBTCDelegationHooks(sdkCtx, state, newDc); err != nil {
+		panic(fmt.Errorf("failed to execute btc delegation hooks: %w", err))
 	}
 
 	return newDc, state
@@ -548,11 +548,11 @@ func (k Keeper) processBtcDelHook(
 	ctx sdk.Context,
 	state *ftypes.ProcessingState,
 	fpDels []ftypes.DelegationInfo,
+	activeFpsByBtcPkInCurrSet map[string]struct{},
 	hookFn func(
 		ctx context.Context,
 		fpAddr, btcDelAddr sdk.AccAddress,
-		fpSecuresBabylon bool,
-		isFpInActiveSet bool,
+		fpSecuresBabylon, isFpActiveInPrevSet, isFpActiveInCurrSet bool,
 		sats uint64,
 	) error) error {
 	// execute hooks for newly active BTC delegations
@@ -568,10 +568,12 @@ func (k Keeper) processBtcDelHook(
 		}
 
 		fpSecuresBabylon := fp.SecuresBabylonGenesis(ctx)
+		_, isFpInCurrActiveSet := activeFpsByBtcPkInCurrSet[fp.BtcPk.MarshalHex()]
 		err = hookFn(
 			ctx, fp.Address(),
 			del.Delegator, fpSecuresBabylon,
 			state.IsFpInPrevActiveSet(fp.BtcPk),
+			isFpInCurrActiveSet,
 			del.TotalSat,
 		)
 		if err != nil {
@@ -585,21 +587,30 @@ func (k Keeper) processBtcDelHook(
 	return nil
 }
 
-func (k Keeper) processActiveBtcDelHook(ctx sdk.Context, state *ftypes.ProcessingState) error {
-	return k.processBtcDelHook(ctx, state, state.ActiveDelegations, k.hooks.AfterBtcDelegationActivated)
+func (k Keeper) processActiveBtcDelHook(
+	ctx sdk.Context,
+	state *ftypes.ProcessingState,
+	activeFpsByBtcPk map[string]struct{},
+) error {
+	return k.processBtcDelHook(ctx, state, state.ActiveDelegations, activeFpsByBtcPk, k.hooks.AfterBtcDelegationActivated)
 }
 
-func (k Keeper) processUnbondingBtcDelHook(ctx sdk.Context, state *ftypes.ProcessingState) error {
-	return k.processBtcDelHook(ctx, state, state.UnbondingDelegations, k.hooks.AfterBtcDelegationUnbonded)
+func (k Keeper) processUnbondingBtcDelHook(
+	ctx sdk.Context,
+	state *ftypes.ProcessingState,
+	activeFpsByBtcPk map[string]struct{},
+) error {
+	return k.processBtcDelHook(ctx, state, state.UnbondingDelegations, activeFpsByBtcPk, k.hooks.AfterBtcDelegationUnbonded)
 }
 
 // processBTCDelegationHooks calls all the changes of btc delegation activation and unbonding/withdraw
 // it needs to call all the actives first to avoid reaching negative values of sats.
-func (k Keeper) processBTCDelegationHooks(ctx sdk.Context, state *ftypes.ProcessingState) error {
-	if err := k.processActiveBtcDelHook(ctx, state); err != nil {
+func (k Keeper) processBTCDelegationHooks(ctx sdk.Context, state *ftypes.ProcessingState, newDc *ftypes.VotingPowerDistCache) error {
+	activeFpsByBtcPk := newDc.ActiveFpsByBtcPk()
+	if err := k.processActiveBtcDelHook(ctx, state, activeFpsByBtcPk); err != nil {
 		return fmt.Errorf("failed to execute active btc delegation hooks: %w", err)
 	}
-	if err := k.processUnbondingBtcDelHook(ctx, state); err != nil {
+	if err := k.processUnbondingBtcDelHook(ctx, state, activeFpsByBtcPk); err != nil {
 		return fmt.Errorf("failed to execute unbonding btc delegation hooks: %w", err)
 	}
 	return nil
