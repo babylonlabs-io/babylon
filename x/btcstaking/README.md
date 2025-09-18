@@ -902,7 +902,7 @@ message EventBTCDelegationCreated {
 // EventCovenantSignatureReceived is the event emitted when a covenant committee
 // sends valid covenant signatures for a BTC delegation
 message EventCovenantSignatureReceived{
-  // staking_tx_hash is the hash of the staking identifing the BTC delegation
+  // staking_tx_hash is the hash of the staking identifying the BTC delegation
   // that this covenant signature is for
   string staking_tx_hash = 1;
   // covenant_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the
@@ -916,7 +916,7 @@ message EventCovenantSignatureReceived{
 // EventCovenantQuorumReached is the event emitted quorum of covenant committee
 // is reached for a BTC delegation
 message EventCovenantQuorumReached {
-  // staking_tx_hash is the hash of the staking identifing the BTC delegation
+  // staking_tx_hash is the hash of the staking identifying the BTC delegation
   // that this covenant signature is for
   string staking_tx_hash = 1;
   // new_state of the BTC delegation
