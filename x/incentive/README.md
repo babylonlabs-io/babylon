@@ -249,13 +249,13 @@ is used to store this structure.
 
 ```protobuf
 // FinalityProviderHistoricalRewards represents the cumulative rewards ratio of
-// the finality provider per sat in that period. The period is ommited here and
+// the finality provider per sat in that period. The period is omitted here and
 // should be part of the key used to store this structure. Key: Prefix +
 // Finality provider bech32 address + Period.
 message FinalityProviderHistoricalRewards {
   // The cumulative rewards of that finality provider per sat until that period
   // This coins will aways increase the value, never be reduced due to keep
-  // acumulation and when the cumulative rewards will be used to distribute
+  // accumulation and when the cumulative rewards will be used to distribute
   // rewards, 2 periods will be loaded, calculate the difference and multiplied
   // by the total sat amount delegated
   // https://github.com/cosmos/cosmos-sdk/blob/e76102f885b71fd6e1c1efb692052173c4b3c3a3/x/distribution/keeper/delegation.go#L47
@@ -317,7 +317,7 @@ satoshis delegated to a specific finality provider. Managed by the
 // BTCDelegationRewardsTracker represents the structure that holds information
 // from the last time this BTC delegator withdraw the rewards or modified his
 // active staked amount to one finality provider.
-// The finality provider address is ommitted here but should be part of the
+// The finality provider address is omitted here but should be part of the
 // key used to store this structure together with the BTC delegator address.
 message BTCDelegationRewardsTracker {
   // StartPeriodCumulativeReward the starting period the the BTC delegator
