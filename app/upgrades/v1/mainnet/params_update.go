@@ -6,8 +6,8 @@ import (
 
 	"cosmossdk.io/math"
 	sdkmath "cosmossdk.io/math"
-	"github.com/babylonlabs-io/babylon/v2/app/keepers"
-	appparams "github.com/babylonlabs-io/babylon/v2/app/params"
+	"github.com/babylonlabs-io/babylon/v4/app/keepers"
+	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
 	"github.com/cometbft/cometbft/proto/tendermint/types"
 	cmttypes "github.com/cometbft/cometbft/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"

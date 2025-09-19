@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+
 	"github.com/spf13/cobra"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -9,7 +10,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/tx"
 
 	// "github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/babylonlabs-io/babylon/v2/x/btccheckpoint/types"
+	"github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
 )
 
 // GetTxCmd returns the transaction commands for this module

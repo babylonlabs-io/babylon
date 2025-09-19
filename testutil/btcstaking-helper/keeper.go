@@ -19,16 +19,16 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
-	keepertest "github.com/babylonlabs-io/babylon/v2/testutil/keeper"
-	bbn "github.com/babylonlabs-io/babylon/v2/types"
-	btcctypes "github.com/babylonlabs-io/babylon/v2/x/btccheckpoint/types"
-	btclctypes "github.com/babylonlabs-io/babylon/v2/x/btclightclient/types"
-	"github.com/babylonlabs-io/babylon/v2/x/btcstaking/keeper"
-	"github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
-	epochingtypes "github.com/babylonlabs-io/babylon/v2/x/epoching/types"
-	fkeeper "github.com/babylonlabs-io/babylon/v2/x/finality/keeper"
-	ftypes "github.com/babylonlabs-io/babylon/v2/x/finality/types"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	keepertest "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	btcctypes "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
+	btclctypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
+	"github.com/babylonlabs-io/babylon/v4/x/btcstaking/keeper"
+	"github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
+	fkeeper "github.com/babylonlabs-io/babylon/v4/x/finality/keeper"
+	ftypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
 )
 
 var (

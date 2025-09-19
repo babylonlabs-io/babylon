@@ -19,11 +19,11 @@ import (
 	transfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
 	tokenfactorytypes "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/types"
 
-	"github.com/babylonlabs-io/babylon/v2/app/keepers"
-	appparams "github.com/babylonlabs-io/babylon/v2/app/params"
-	"github.com/babylonlabs-io/babylon/v2/app/upgrades"
-	incentivekeeper "github.com/babylonlabs-io/babylon/v2/x/incentive/keeper"
-	minttypes "github.com/babylonlabs-io/babylon/v2/x/mint/types"
+	"github.com/babylonlabs-io/babylon/v4/app/keepers"
+	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
+	"github.com/babylonlabs-io/babylon/v4/app/upgrades"
+	incentivekeeper "github.com/babylonlabs-io/babylon/v4/x/incentive/keeper"
+	minttypes "github.com/babylonlabs-io/babylon/v4/x/mint/types"
 )
 
 const (

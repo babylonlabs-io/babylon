@@ -11,9 +11,9 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 
-	"github.com/babylonlabs-io/babylon/v2/x/checkpointing/client/cli"
-	"github.com/babylonlabs-io/babylon/v2/x/checkpointing/keeper"
-	"github.com/babylonlabs-io/babylon/v2/x/checkpointing/types"
+	"github.com/babylonlabs-io/babylon/v4/x/checkpointing/client/cli"
+	"github.com/babylonlabs-io/babylon/v4/x/checkpointing/keeper"
+	"github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"

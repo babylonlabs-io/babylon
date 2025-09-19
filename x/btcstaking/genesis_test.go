@@ -10,11 +10,11 @@ import (
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/stretchr/testify/require"
 
-	keepertest "github.com/babylonlabs-io/babylon/v2/testutil/keeper"
-	"github.com/babylonlabs-io/babylon/v2/testutil/nullify"
-	btcctypes "github.com/babylonlabs-io/babylon/v2/x/btccheckpoint/types"
-	"github.com/babylonlabs-io/babylon/v2/x/btcstaking"
-	"github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
+	keepertest "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
+	"github.com/babylonlabs-io/babylon/v4/testutil/nullify"
+	btcctypes "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
+	"github.com/babylonlabs-io/babylon/v4/x/btcstaking"
+	"github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 	dbm "github.com/cosmos/cosmos-db"
 )
 

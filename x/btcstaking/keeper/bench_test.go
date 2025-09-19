@@ -10,11 +10,11 @@ import (
 
 	"github.com/golang/mock/gomock"
 
-	testutil "github.com/babylonlabs-io/babylon/v2/testutil/btcstaking-helper"
-	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
-	btclctypes "github.com/babylonlabs-io/babylon/v2/x/btclightclient/types"
-	bsmodule "github.com/babylonlabs-io/babylon/v2/x/btcstaking"
-	"github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
+	testutil "github.com/babylonlabs-io/babylon/v4/testutil/btcstaking-helper"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	btclctypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
+	bsmodule "github.com/babylonlabs-io/babylon/v4/x/btcstaking"
+	"github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 )
 
 func benchBeginBlock(b *testing.B, numFPs int, numDelsUnderFP int) {

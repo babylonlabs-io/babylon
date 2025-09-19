@@ -14,8 +14,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	appsigner "github.com/babylonlabs-io/babylon/v2/app/signer"
-	checkpointingtypes "github.com/babylonlabs-io/babylon/v2/x/checkpointing/types"
+	appsigner "github.com/babylonlabs-io/babylon/v4/app/signer"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
 
 	"cosmossdk.io/core/address"
 	sdkerrors "cosmossdk.io/errors"

@@ -3,8 +3,8 @@ package incentive
 import (
 	"context"
 
-	"github.com/babylonlabs-io/babylon/v2/x/incentive/keeper"
-	"github.com/babylonlabs-io/babylon/v2/x/incentive/types"
+	"github.com/babylonlabs-io/babylon/v4/x/incentive/keeper"
+	"github.com/babylonlabs-io/babylon/v4/x/incentive/types"
 )
 
 // InitGenesis initializes the module's state from a provided genesis state.

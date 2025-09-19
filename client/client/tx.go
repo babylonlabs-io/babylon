@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/babylonlabs-io/babylon/v2/client/babylonclient"
+	"github.com/babylonlabs-io/babylon/v4/client/babylonclient"
 
 	signingv1beta1 "cosmossdk.io/api/cosmos/tx/signing/v1beta1"
 	"cosmossdk.io/errors"
 	txsigning "cosmossdk.io/x/tx/signing"
 	"github.com/avast/retry-go/v4"
-	btcctypes "github.com/babylonlabs-io/babylon/v2/x/btccheckpoint/types"
-	btclctypes "github.com/babylonlabs-io/babylon/v2/x/btclightclient/types"
+	btcctypes "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
+	btclctypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	coretypes "github.com/cometbft/cometbft/rpc/core/types"
 	"github.com/cosmos/cosmos-sdk/client"

@@ -8,10 +8,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/babylonlabs-io/babylon/v2/cmd/babylond/cmd/genhelpers"
-	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
-	"github.com/babylonlabs-io/babylon/v2/testutil/helper"
-	btclighttypes "github.com/babylonlabs-io/babylon/v2/x/btclightclient/types"
+	"github.com/babylonlabs-io/babylon/v4/cmd/babylond/cmd/genhelpers"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	"github.com/babylonlabs-io/babylon/v4/testutil/helper"
+	btclighttypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	genutiltest "github.com/cosmos/cosmos-sdk/x/genutil/client/testutil"

@@ -3,7 +3,7 @@ package query
 import (
 	"context"
 
-	btclctypes "github.com/babylonlabs-io/babylon/v2/x/btclightclient/types"
+	btclctypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/cosmos/cosmos-sdk/client"
 	sdkquerytypes "github.com/cosmos/cosmos-sdk/types/query"

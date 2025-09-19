@@ -8,8 +8,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	bbn "github.com/babylonlabs-io/babylon/v2/types"
-	"github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	"github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 )
 
 // InitGenesis initializes the module's state from a provided genesis state.

@@ -7,8 +7,8 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
-	bbn "github.com/babylonlabs-io/babylon/v2/types"
-	"github.com/babylonlabs-io/babylon/v2/x/mint/types"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	"github.com/babylonlabs-io/babylon/v4/x/mint/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/cometbft/cometbft/libs/bytes"
@@ -17,18 +17,18 @@ import (
 	"github.com/stretchr/testify/suite"
 	"golang.org/x/sync/errgroup"
 
-	v2 "github.com/babylonlabs-io/babylon/v2/app/upgrades/v2"
-	"github.com/babylonlabs-io/babylon/v2/testutil/coins"
-	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
-	"github.com/babylonlabs-io/babylon/v2/testutil/sample"
-	btclighttypes "github.com/babylonlabs-io/babylon/v2/x/btclightclient/types"
-	bstypes "github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
-	ftypes "github.com/babylonlabs-io/babylon/v2/x/finality/types"
-	itypes "github.com/babylonlabs-io/babylon/v2/x/incentive/types"
+	v2 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v2"
+	"github.com/babylonlabs-io/babylon/v4/testutil/coins"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	"github.com/babylonlabs-io/babylon/v4/testutil/sample"
+	btclighttypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
+	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+	ftypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
+	itypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
 
-	"github.com/babylonlabs-io/babylon/v2/test/e2e/configurer"
-	"github.com/babylonlabs-io/babylon/v2/test/e2e/configurer/chain"
-	"github.com/babylonlabs-io/babylon/v2/test/e2e/configurer/config"
+	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer"
+	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer/chain"
+	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer/config"
 )
 
 const (

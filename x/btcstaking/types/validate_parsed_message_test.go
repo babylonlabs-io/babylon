@@ -15,11 +15,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/v2/btcstaking"
-	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
-	bbn "github.com/babylonlabs-io/babylon/v2/types"
-	btcckpttypes "github.com/babylonlabs-io/babylon/v2/x/btccheckpoint/types"
-	"github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/v4/btcstaking"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	btcckpttypes "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
+	"github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 )
 
 // testStakingParams generates valid staking parameters with randomized
@@ -38,18 +38,18 @@ func testStakingParams(
 	require.NoError(t, err)
 
 	return &types.Params{
-		CovenantPks:             bbn.NewBIP340PKsFromBTCPKs(covenantPKs),
-		CovenantQuorum:          3,
-		MinStakingValueSat:      100000,
-		MaxStakingValueSat:      int64(4 * 10e8),
-		MinStakingTimeBlocks:    1000,
-		MaxStakingTimeBlocks:    10000,
-		SlashingPkScript:        slashingPkScript,
-		MinSlashingTxFeeSat:     1000,
-		MinCommissionRate:       sdkmath.LegacyMustNewDecFromStr("0.01"),
-		SlashingRate:            sdkmath.LegacyNewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2),
-		UnbondingTimeBlocks:     200,
-		UnbondingFeeSat:         1000,
+		CovenantPks:          bbn.NewBIP340PKsFromBTCPKs(covenantPKs),
+		CovenantQuorum:       3,
+		MinStakingValueSat:   100000,
+		MaxStakingValueSat:   int64(4 * 10e8),
+		MinStakingTimeBlocks: 1000,
+		MaxStakingTimeBlocks: 10000,
+		SlashingPkScript:     slashingPkScript,
+		MinSlashingTxFeeSat:  1000,
+		MinCommissionRate:    sdkmath.LegacyMustNewDecFromStr("0.01"),
+		SlashingRate:         sdkmath.LegacyNewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2),
+		UnbondingTimeBlocks:  200,
+		UnbondingFeeSat:      1000,
 	}
 }
 

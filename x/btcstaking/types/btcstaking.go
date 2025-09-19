@@ -9,9 +9,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stktypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	asig "github.com/babylonlabs-io/babylon/v2/crypto/schnorr-adaptor-signature"
-	bbn "github.com/babylonlabs-io/babylon/v2/types"
-	btclightclienttypes "github.com/babylonlabs-io/babylon/v2/x/btclightclient/types"
+	asig "github.com/babylonlabs-io/babylon/v4/crypto/schnorr-adaptor-signature"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	btclightclienttypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
 )
 
 func (fp *FinalityProvider) IsSlashed() bool {

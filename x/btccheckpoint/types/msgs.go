@@ -6,7 +6,7 @@ import (
 	"math"
 	"math/big"
 
-	txformat "github.com/babylonlabs-io/babylon/v2/btctxformatter"
+	txformat "github.com/babylonlabs-io/babylon/v4/btctxformatter"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )

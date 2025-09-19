@@ -6,13 +6,13 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
-	appparams "github.com/babylonlabs-io/babylon/v2/app/params"
-	"github.com/babylonlabs-io/babylon/v2/btcstaking"
-	btcstktypes "github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
+	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
+	"github.com/babylonlabs-io/babylon/v4/btcstaking"
+	btcstktypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
 )
 
 // TestEpochFinalization checks whether we can finalize some epochs

@@ -8,8 +8,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	appparams "github.com/babylonlabs-io/babylon/v2/app/params"
-	epochingtypes "github.com/babylonlabs-io/babylon/v2/x/epoching/types"
+	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
+	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 

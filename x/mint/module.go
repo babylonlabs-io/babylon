@@ -10,9 +10,9 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 
-	"github.com/babylonlabs-io/babylon/v2/x/mint/client/cli"
-	"github.com/babylonlabs-io/babylon/v2/x/mint/keeper"
-	"github.com/babylonlabs-io/babylon/v2/x/mint/types"
+	"github.com/babylonlabs-io/babylon/v4/x/mint/client/cli"
+	"github.com/babylonlabs-io/babylon/v4/x/mint/keeper"
+	"github.com/babylonlabs-io/babylon/v4/x/mint/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"

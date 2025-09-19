@@ -12,8 +12,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/spf13/cobra"
 
-	bbn "github.com/babylonlabs-io/babylon/v2/types"
-	"github.com/babylonlabs-io/babylon/v2/x/finality/types"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	"github.com/babylonlabs-io/babylon/v4/x/finality/types"
 )
 
 // GetTxCmd returns the transaction commands for this module

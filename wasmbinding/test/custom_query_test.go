@@ -12,7 +12,7 @@ import (
 	"cosmossdk.io/math"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
-	minttypes "github.com/babylonlabs-io/babylon/v2/x/mint/types"
+	minttypes "github.com/babylonlabs-io/babylon/v4/x/mint/types"
 	"github.com/cometbft/cometbft/crypto"
 	"github.com/cometbft/cometbft/crypto/ed25519"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
@@ -20,9 +20,9 @@ import (
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/v2/app"
-	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
-	"github.com/babylonlabs-io/babylon/v2/wasmbinding/bindings"
+	"github.com/babylonlabs-io/babylon/v4/app"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	"github.com/babylonlabs-io/babylon/v4/wasmbinding/bindings"
 )
 
 // TODO consider doing it by environmental variables as currently it may fail on some

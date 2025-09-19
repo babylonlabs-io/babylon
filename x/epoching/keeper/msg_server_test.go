@@ -12,11 +12,11 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
 
-	appparams "github.com/babylonlabs-io/babylon/v2/app/params"
-	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
-	testhelper "github.com/babylonlabs-io/babylon/v2/testutil/helper"
-	"github.com/babylonlabs-io/babylon/v2/x/epoching"
-	"github.com/babylonlabs-io/babylon/v2/x/epoching/types"
+	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	testhelper "github.com/babylonlabs-io/babylon/v4/testutil/helper"
+	"github.com/babylonlabs-io/babylon/v4/x/epoching"
+	"github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 )
 
 // TODO (fuzz tests): replace the following tests with fuzz ones

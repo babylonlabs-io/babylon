@@ -12,7 +12,7 @@ import (
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/babylonlabs-io/babylon/v2/x/mint/types"
+	"github.com/babylonlabs-io/babylon/v4/x/mint/types"
 )
 
 func TestCalculateInflationRate(t *testing.T) {
@@ -83,7 +83,7 @@ func TestCalculateBlockProvision(t *testing.T) {
 	minter := types.DefaultMinter()
 	current := time.Date(2023, 1, 2, 0, 0, 0, 0, time.UTC)
 	blockInterval := 15 * time.Second
-	totalSupply := math.LegacyNewDec(1_000_000_000_000)                          // 1 trillion ubbn
+	totalSupply := math.LegacyNewDec(1_000_000_000_000)                    // 1 trillion ubbn
 	annualProvisions := totalSupply.Mul(types.InitialInflationRateAsDec()) // 80 billion ubbn
 
 	type testCase struct {

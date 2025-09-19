@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/babylonlabs-io/babylon/v2/types"
+	"github.com/babylonlabs-io/babylon/v4/types"
 )
 
 // DefaultIndex is the default capability global index

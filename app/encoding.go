@@ -9,10 +9,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	simsutils "github.com/cosmos/cosmos-sdk/testutil/sims"
 
-	appparams "github.com/babylonlabs-io/babylon/v2/app/params"
-	"github.com/babylonlabs-io/babylon/v2/testutil/signer"
-	bbn "github.com/babylonlabs-io/babylon/v2/types"
-	checkpointingtypes "github.com/babylonlabs-io/babylon/v2/x/checkpointing/types"
+	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
+	"github.com/babylonlabs-io/babylon/v4/testutil/signer"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
 )
 
 // TmpAppOptions returns an app option with tmp dir and btc network. It is up to

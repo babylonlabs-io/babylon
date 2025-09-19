@@ -2,14 +2,15 @@ package keeper
 
 import (
 	"context"
-	corestoretypes "cosmossdk.io/core/store"
 	"fmt"
 	"math"
 
-	ckpttypes "github.com/babylonlabs-io/babylon/v2/x/checkpointing/types"
+	corestoretypes "cosmossdk.io/core/store"
+
+	ckpttypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
 
 	"cosmossdk.io/log"
-	"github.com/babylonlabs-io/babylon/v2/x/monitor/types"
+	"github.com/babylonlabs-io/babylon/v4/x/monitor/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )

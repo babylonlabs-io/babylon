@@ -8,7 +8,7 @@ import (
 	corestoretypes "cosmossdk.io/core/store"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	txformat "github.com/babylonlabs-io/babylon/v2/btctxformatter"
+	txformat "github.com/babylonlabs-io/babylon/v4/btctxformatter"
 
 	"cosmossdk.io/log"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -16,9 +16,9 @@ import (
 
 	cmtprotocrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 
-	"github.com/babylonlabs-io/babylon/v2/crypto/bls12381"
-	"github.com/babylonlabs-io/babylon/v2/x/checkpointing/types"
-	epochingtypes "github.com/babylonlabs-io/babylon/v2/x/epoching/types"
+	"github.com/babylonlabs-io/babylon/v4/crypto/bls12381"
+	"github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
+	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 )
 
 type (

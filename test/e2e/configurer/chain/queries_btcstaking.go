@@ -7,10 +7,10 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/v2/test/e2e/util"
-	bbn "github.com/babylonlabs-io/babylon/v2/types"
-	bstypes "github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
-	ftypes "github.com/babylonlabs-io/babylon/v2/x/finality/types"
+	"github.com/babylonlabs-io/babylon/v4/test/e2e/util"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+	ftypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
 )
 
 func (n *NodeConfig) QueryBTCStakingParams() *bstypes.Params {

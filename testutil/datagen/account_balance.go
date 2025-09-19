@@ -2,7 +2,7 @@ package datagen
 
 import (
 	sdkmath "cosmossdk.io/math"
-	appparams "github.com/babylonlabs-io/babylon/v2/app/params"
+	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
 	sec256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"

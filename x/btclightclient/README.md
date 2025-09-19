@@ -115,10 +115,10 @@ which contains the BTC header along with some metadata.
 message BTCHeaderInfo {
   bytes header = 1
       [ (gogoproto.customtype) =
-            "github.com/babylonlabs-io/babylon/v2/types.BTCHeaderBytes" ];
+            "github.com/babylonlabs-io/babylon/v4/types.BTCHeaderBytes" ];
   bytes hash = 2
       [ (gogoproto.customtype) =
-            "github.com/babylonlabs-io/babylon/v2/types.BTCHeaderHashBytes" ];
+            "github.com/babylonlabs-io/babylon/v4/types.BTCHeaderHashBytes" ];
   uint32 height = 3;
   bytes work = 4
       [ (gogoproto.customtype) = "cosmossdk.io/math.Uint" ];
@@ -153,7 +153,7 @@ message MsgInsertHeaders {
   string signer = 1;
   repeated bytes headers = 2
       [ (gogoproto.customtype) =
-            "github.com/babylonlabs-io/babylon/v2/types.BTCHeaderBytes" ];
+            "github.com/babylonlabs-io/babylon/v4/types.BTCHeaderBytes" ];
 }
 ```
 

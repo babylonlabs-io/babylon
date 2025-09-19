@@ -14,14 +14,14 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	v1 "github.com/babylonlabs-io/babylon/v2/app/upgrades/v1"
-	testnetdata "github.com/babylonlabs-io/babylon/v2/app/upgrades/v1/testnet"
-	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
-	"github.com/babylonlabs-io/babylon/v2/testutil/helper"
-	testutilk "github.com/babylonlabs-io/babylon/v2/testutil/keeper"
-	bbn "github.com/babylonlabs-io/babylon/v2/types"
-	btclightclientt "github.com/babylonlabs-io/babylon/v2/x/btclightclient/types"
-	"github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
+	v1 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v1"
+	testnetdata "github.com/babylonlabs-io/babylon/v4/app/upgrades/v1/testnet"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	"github.com/babylonlabs-io/babylon/v4/testutil/helper"
+	testutilk "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	btclightclientt "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
+	"github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 )
 
 func TestInitGenesisWithSetParams(t *testing.T) {
