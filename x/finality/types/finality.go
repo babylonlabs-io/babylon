@@ -92,8 +92,8 @@ func (ps *ProcessingState) AddStateForFp(fp FinalityProviderDistInfo) {
 // FillByPrevVpDstCache fill up the state.PrevFpStatusByBtcPk based on the previous vp dst cache
 func (ps *ProcessingState) FillByPrevVpDstCache(dc *VotingPowerDistCache) {
 	for idx, fp := range dc.FinalityProviders {
-		canBeActive := idx < int(dc.NumActiveFps) // it should not be <= as idx starts at zero
-		if fp.FpStatus(canBeActive) == btcstktypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_ACTIVE {
+		isActive := idx < int(dc.NumActiveFps) // it should not be <= as idx starts at zero
+		if isActive {
 			ps.PrevActiveFpByBtcPk[fp.BtcPk.MarshalHex()] = struct{}{}
 		}
 		ps.AddStateForFp(*fp)

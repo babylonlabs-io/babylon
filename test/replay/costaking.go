@@ -29,7 +29,7 @@ func (d *BabylonAppDriver) CheckCostakerRewards(
 	require.NoError(d.t, err)
 	require.Equal(d.t, expActiveBaby.String(), del.ActiveBaby.String(), "active baby")
 	require.Equal(d.t, expActiveSats.String(), del.ActiveSatoshis.String(), "active sats")
-	require.Equal(d.t, expStartPeriod, del.StartPeriodCumulativeReward, "start period cumulative rewards")
+	require.Equal(d.t, expStartPeriod, del.StartPeriodCumulativeReward, "start period cumulative rewards exp %d != %d act", expStartPeriod, del.StartPeriodCumulativeReward)
 	require.Equal(d.t, expTotalScore.String(), del.TotalScore.String(), "total score")
 }
 

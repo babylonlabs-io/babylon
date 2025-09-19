@@ -24,7 +24,7 @@ func (k Keeper) Hooks() Hooks {
 // AfterBtcDelegationUnbonded implements the FinalityHooks interface
 // It handles the unbonding of a BTC delegation by removing the staked satoshis
 // from the reward tracking system
-func (h Hooks) AfterBtcDelegationUnbonded(ctx context.Context, fpAddr, btcDelAddr sdk.AccAddress, fpSecuresBabylon bool, isFpInActiveSet bool, sats uint64) error {
+func (h Hooks) AfterBtcDelegationUnbonded(ctx context.Context, fpAddr, btcDelAddr sdk.AccAddress, fpSecuresBabylon, isFpActiveInPrevSet, isFpActiveInCurrSet bool, sats uint64) error {
 	if fpSecuresBabylon {
 		// if it secures babylon it should wait until that block height is rewarded to process event tracker related events
 		height := uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
@@ -41,7 +41,7 @@ func (h Hooks) AfterBtcDelegationUnbonded(ctx context.Context, fpAddr, btcDelAdd
 // AfterBtcDelegationActivated implements the FinalityHooks interface
 // It handles the activation of a BTC delegation by adding the staked satoshis
 // to the reward tracking system
-func (h Hooks) AfterBtcDelegationActivated(ctx context.Context, fpAddr, btcDelAddr sdk.AccAddress, fpSecuresBabylon bool, isFpInActiveSet bool, sats uint64) error {
+func (h Hooks) AfterBtcDelegationActivated(ctx context.Context, fpAddr, btcDelAddr sdk.AccAddress, fpSecuresBabylon, isFpActiveInPrevSet, isFpActiveInCurrSet bool, sats uint64) error {
 	if fpSecuresBabylon {
 		height := uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
 		return h.k.AddEventBtcDelegationActivated(ctx, height, fpAddr, btcDelAddr, sats)

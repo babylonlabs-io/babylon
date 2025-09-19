@@ -1,6 +1,8 @@
 package replay
 
 import (
+	"bytes"
+	"encoding/hex"
 	"math/rand"
 	"testing"
 	"time"
@@ -10,12 +12,15 @@ import (
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	costktypes "github.com/babylonlabs-io/babylon/v4/x/costaking/types"
 	ictvtypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
+	"github.com/btcsuite/btcd/wire"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	distkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	disttypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 
 	"github.com/stretchr/testify/require"
 )
+
+var zeroInt = sdkmath.ZeroInt()
 
 // TestCostakingValidatorDirectRewards tests the intercept_fee_collector logic
 // by generating blocks and verifying that validators receive direct rewards from both
@@ -325,4 +330,280 @@ func TestCostakingRewardsHappyCase(t *testing.T) {
 	// activate fp 2
 	fp2.CommitRandomness()
 	d.GenerateNewBlockAssertExecutionSuccess()
+}
+
+// TestCostakingFpSlasheAndBtcUnbondSameBlockPreventsDoubleSatsRemoval tests the specific case where
+// an FP becomes slashed and a BTC delegation is unbonded in the same block, ensuring satoshis are not removed twice.
+func TestCostakingFpSlashedAndBtcUnbondSameBlockPreventsDoubleSatsRemoval(t *testing.T) {
+	t.Parallel()
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	d := NewBabylonAppDriverTmpDir(r, t)
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	stkK, costkK := d.App.StakingKeeper, d.App.CostakingKeeper
+	covSender := d.CreateCovenantSender()
+
+	// Get the validator
+	validators, err := stkK.GetAllValidators(d.Ctx())
+	require.NoError(t, err)
+	val := validators[0]
+	valAddr := sdk.MustValAddressFromBech32(val.OperatorAddress)
+
+	// Create a delegator and delegate baby tokens
+	delegators := d.CreateNStakerAccounts(1)
+	del1 := delegators[0]
+	del1BabyDelegatedAmt := sdkmath.NewInt(20_000000)
+
+	d.MintNativeTo(del1.Address(), 100_000000)
+	d.TxWrappedDelegate(del1.SenderInfo, valAddr.String(), del1BabyDelegatedAmt)
+
+	d.GenerateNewBlockAssertExecutionSuccess()
+	d.ProgressTillFirstBlockTheNextEpoch()
+
+	// Create and register an FP
+	fps := d.CreateNFinalityProviderAccounts(1)
+	fp1 := fps[0]
+	fp1.RegisterFinalityProvider("")
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	// Create BTC delegation
+	del1BtcStakedAmt := del1BabyDelegatedAmt.QuoRaw(50) // 400k sats
+	del1.CreatePreApprovalDelegation(
+		[]*bbn.BIP340PubKey{fp1.BTCPublicKey()},
+		defaultStakingTime,
+		del1BtcStakedAmt.Int64(),
+	)
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	// Activate the BTC delegation
+	covSender.SendCovenantSignatures()
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	d.ActivateVerifiedDelegations(1)
+	activeDelegations := d.GetActiveBTCDelegations(t)
+	require.Len(t, activeDelegations, 1)
+
+	// Activate the FP by committing randomness and finalizing checkpoints
+	fp1.CommitRandomness()
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	currentEpoch := d.GetEpoch().EpochNumber
+	d.ProgressTillFirstBlockTheNextEpoch()
+	d.FinalizeCkptForEpoch(currentEpoch - 1)
+	d.FinalizeCkptForEpoch(currentEpoch)
+
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	// Verify FP is now active
+	activeFps := d.GetActiveFpsAtCurrentHeight(t)
+	require.Len(t, activeFps, 1)
+
+	// Check that costaker rewards are properly set with active sats
+	currRwd, err := costkK.GetCurrentRewards(d.Ctx())
+	require.NoError(t, err)
+	d.CheckCostakerRewards(del1.Address(), del1BabyDelegatedAmt, del1BtcStakedAmt, del1BtcStakedAmt, currRwd.Period-1)
+
+	// Now create the critical scenario:
+	// 1. FP becomes slashed
+	// 2. BTC delegation is unbonded
+	// In the same babylon block and check if the sats were not removed twice
+
+	// Get the active delegation details for unbonding
+	activation := activeDelegations[0]
+	stakingTx := &wire.MsgTx{}
+	txBytes, err := hex.DecodeString(activation.StakingTxHex)
+	require.NoError(t, err)
+	err = stakingTx.Deserialize(bytes.NewReader(txBytes))
+	require.NoError(t, err)
+	stakingTxHash := stakingTx.TxHash()
+
+	// Prepare both operations to happen in the same block:
+	// 1. FP sends slashing evidence (makes FP slashed/inactive)
+	fp1.SendSelectiveSlashingEvidence()
+
+	// 2. Delegator unbonds their delegation (removes delegation)
+	del1.UnbondDelegation(&stakingTxHash, stakingTx, covSender)
+
+	// Process voting power distribution and finality hooks
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	slashedFp := d.GetFp(*fp1.BTCPublicKey())
+	require.True(t, slashedFp.IsSlashed(), "FP should be slashed")
+
+	unbondedDels := d.GetUnbondedBTCDelegations(t)
+	require.Len(t, unbondedDels, 1, "Delegation should be unbonded")
+
+	// Check the critical part: costaker active satoshis should be zero (removed once)
+	// and NOT negative (which would indicate double removal)
+	zero := sdkmath.ZeroInt()
+	d.CheckCostakerRewards(del1.Address(), del1BabyDelegatedAmt, zero, zero, currRwd.Period)
+}
+
+// TestCostakingFpVotingPowerLossAndBtcUnbondSameBlockPreventsDoubleSatsRemoval tests the specific case where
+// an FP becomes inactive due to losing voting power (being pushed out of the active set) and a BTC delegation
+// is unbonded, ensuring satoshis are not removed twice. Also it creates an btc delegation to an already active
+// finality provider
+func TestCostakingFpVotingPowerLossAndBtcUnbondSameBlockPreventsDoubleSatsRemoval(t *testing.T) {
+	t.Parallel()
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	d := NewBabylonAppDriverTmpDir(r, t)
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	stkK, costkK, finalityK := d.App.StakingKeeper, d.App.CostakingKeeper, d.App.FinalityKeeper
+	covSender := d.CreateCovenantSender()
+
+	// Set finality parameters to allow only 1 active FP to test voting power competition
+	fParams := finalityK.GetParams(d.Ctx())
+	fParams.MaxActiveFinalityProviders = 1
+	err := finalityK.SetParams(d.Ctx(), fParams)
+	require.NoError(t, err)
+
+	validators, err := stkK.GetAllValidators(d.Ctx())
+	require.NoError(t, err)
+	val := validators[0]
+	valAddr := sdk.MustValAddressFromBech32(val.OperatorAddress)
+
+	delegators := d.CreateNStakerAccounts(3)
+	del1 := delegators[0]
+	del1BabyDelegatedAmt := sdkmath.NewInt(20_000000)
+
+	d.MintNativeTo(del1.Address(), 100_000000)
+	d.TxWrappedDelegate(del1.SenderInfo, valAddr.String(), del1BabyDelegatedAmt)
+
+	d.GenerateNewBlockAssertExecutionSuccess()
+	d.ProgressTillFirstBlockTheNextEpoch()
+
+	fps := d.CreateNFinalityProviderAccounts(2)
+	fp1, fp2 := fps[0], fps[1]
+	fp1.RegisterFinalityProvider("")
+	fp2.RegisterFinalityProvider("")
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	// Create BTC delegations for both FPs
+	// FP1 gets a smaller delegation initially
+	del1BtcStakedAmtFp1 := del1BabyDelegatedAmt.QuoRaw(50) // 400k sats
+	del1MsgCreate := del1.CreatePreApprovalDelegation(
+		[]*bbn.BIP340PubKey{fp1.BTCPublicKey()},
+		defaultStakingTime,
+		del1BtcStakedAmtFp1.Int64(),
+	)
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	// Activate the BTC delegation for FP1
+	covSender.SendCovenantSignatures()
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	d.ActivateVerifiedDelegations(1)
+	activeDelegations := d.GetActiveBTCDelegations(t)
+	require.Len(t, activeDelegations, 1)
+
+	// Activate FP1 by committing randomness and finalizing checkpoints
+	fp1.CommitRandomness()
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	currentEpoch := d.GetEpoch().EpochNumber
+	d.ProgressTillFirstBlockTheNextEpoch()
+	d.FinalizeCkptForEpoch(currentEpoch - 1)
+	d.FinalizeCkptForEpoch(currentEpoch)
+
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	// Verify FP1 is now active (since it's the only one with voting power)
+	activeFps := d.GetActiveFpsAtCurrentHeight(t)
+	require.Len(t, activeFps, 1)
+	require.True(t, activeFps[0].BtcPkHex.Equals(fp1.BTCPublicKey()), "FP1 should be the active FP")
+
+	// Check that costaker rewards are properly set with active sats for FP1
+	currRwd, err := costkK.GetCurrentRewards(d.Ctx())
+	require.NoError(t, err)
+	d.CheckCostakerRewards(del1.Address(), del1BabyDelegatedAmt, del1BtcStakedAmtFp1, del1BtcStakedAmtFp1, currRwd.Period-1)
+
+	// Create another btc delegation with half of del1 voting power to fp1
+	del2 := delegators[1]
+	del2BtcStakedAmtFp1 := del1BtcStakedAmtFp1.QuoRaw(2) // 200k sats
+	del2.CreatePreApprovalDelegation(
+		[]*bbn.BIP340PubKey{fp1.BTCPublicKey()},
+		defaultStakingTime,
+		del2BtcStakedAmtFp1.Int64(),
+	)
+	d.GenerateNewBlockAssertExecutionSuccess()
+	covSender.SendCovenantSignatures()
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	d.ActivateVerifiedDelegations(1)
+	activeDelegations = d.GetActiveBTCDelegations(t)
+	require.Len(t, activeDelegations, 2)
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	d.CheckCostakerRewards(del2.Address(), zeroInt, del2BtcStakedAmtFp1, zeroInt, currRwd.Period)
+
+	// Now create a larger delegation for fp2 that will push FP1 out of the active set
+	// Create a new delegator with more voting power
+	del3 := delegators[2]
+	del3BabyDelegatedAmt := del1BabyDelegatedAmt.MulRaw(2)
+	d.MintNativeTo(del3.Address(), 100_000000)
+	d.TxWrappedDelegate(del3.SenderInfo, valAddr.String(), del3BabyDelegatedAmt)
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	// Create larger BTC delegation for fp2 to active fp2 and inactive fp1
+	del3BtcStakedAmtFp2 := del3BabyDelegatedAmt.QuoRaw(50)
+	del3.CreatePreApprovalDelegation(
+		[]*bbn.BIP340PubKey{fp2.BTCPublicKey()},
+		defaultStakingTime,
+		del3BtcStakedAmtFp2.Int64(),
+	)
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	// Activate fp2's delegation
+	covSender.SendCovenantSignatures()
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	d.ActivateVerifiedDelegations(1)
+	activeDelegations = d.GetActiveBTCDelegations(t)
+	require.Len(t, activeDelegations, 3)
+
+	fp2.CommitRandomness()
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	currentEpoch = d.GetEpoch().EpochNumber
+	d.ProgressTillFirstBlockTheNextEpoch()
+	d.FinalizeCkptForEpoch(currentEpoch - 1)
+	d.FinalizeCkptForEpoch(currentEpoch)
+
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	// Verify the active FP state after finalization
+	// fp2 should now be the only active FP since it has more voting power (800k > 600k)
+	// and MaxActiveFinalityProviders = 1, so FP1 should become inactive
+	activeFpsAfterFp2 := d.GetActiveFpsAtCurrentHeight(t)
+	require.Len(t, activeFpsAfterFp2, 1, "Should have exactly 1 active FP due to MaxActiveFinalityProviders = 1")
+	currentlyActiveFp := activeFpsAfterFp2[0].BtcPkHex.MarshalHex()
+	expectedActiveFp := fp2.BTCPublicKey().MarshalHex()
+	require.Equal(t, expectedActiveFp, currentlyActiveFp, "fp2 should be active due to higher voting power, FP1 should be inactive")
+
+	// Now test the critical scenario: unbond FP1's delegation while FP1 is inactive
+	// This tests the double removal prevention logic for inactive FPs
+	stakingTx := &wire.MsgTx{}
+	err = stakingTx.Deserialize(bytes.NewReader(del1MsgCreate.StakingTx))
+	require.NoError(t, err)
+	stakingTxHash := stakingTx.TxHash()
+
+	// Unbond FP1's delegation while FP1 is inactive (due to fp2 taking over)
+	del1.UnbondDelegation(&stakingTxHash, stakingTx, covSender)
+	d.GenerateNewBlockAssertExecutionSuccess()
+	unbondedDels := d.GetUnbondedBTCDelegations(t)
+	require.Len(t, unbondedDels, 1, "FP1's delegation should be unbonded")
+
+	// fp2 should still be the only active FP
+	finalActiveFps := d.GetActiveFpsAtCurrentHeight(t)
+	require.Len(t, finalActiveFps, 1, "Should still have 1 active FP")
+	require.Equal(t, expectedActiveFp, finalActiveFps[0].BtcPkHex.MarshalHex(), "fp2 should remain active")
+
+	// Check the critical part: FP1's (del1, del2) should have zero active satoshis
+	// and NOT negative (which would indicate double removal)
+	d.CheckCostakerRewards(del1.Address(), del1BabyDelegatedAmt, zeroInt, zeroInt, currRwd.Period+1)
+	d.CheckCostakerRewards(del2.Address(), zeroInt, zeroInt, zeroInt, currRwd.Period) // period is not updated as this guy never had score
+
+	// fp2's delegator should still have their correct active satoshis (unaffected)
+	d.CheckCostakerRewards(del3.Address(), del3BabyDelegatedAmt, del3BtcStakedAmtFp2, del3BtcStakedAmtFp2, currRwd.Period)
 }
