@@ -39,7 +39,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
-- [#xxx] Bump repository version to `v4`
+- [#1734] Bump repository version to `v4`
 
 ## v2.3.0
 
