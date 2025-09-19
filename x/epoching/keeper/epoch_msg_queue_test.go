@@ -4,6 +4,7 @@ import (
 	"math/rand"
 	"testing"
 
+	epochingutils "github.com/babylonlabs-io/babylon/v4/app/upgrades/epoching"
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
 	testhelper "github.com/babylonlabs-io/babylon/v4/testutil/helper"
 	"github.com/babylonlabs-io/babylon/v4/x/epoching/types"
@@ -286,4 +287,154 @@ func FuzzHandleQueuedMsg_MsgWrappedBeginRedelegate(f *testing.F) {
 			require.Equal(t, coinWithOnePower.Amount, entry.InitialBalance) // each redelegating entry has tokens of 1 voting power
 		}
 	})
+}
+
+// FuzzEpochMsgCleaning tests epoch message cleaning with various message types
+// It tests multiple messages per epoch and verifies cleaning after epoch transitions
+func FuzzEpochMsgCleaning(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+
+		// Generate random test parameters
+		numEpochs := datagen.RandomInt(r, 5) + 2            // 2-6 epochs
+		delegateMsgsPerEpoch := datagen.RandomInt(r, 5) + 1 // 1-5 delegate messages per epoch
+		undelegateMsgsPerEpoch := datagen.RandomInt(r, 3)   // 0-2 undelegate messages per epoch
+		redelegateMsgsPerEpoch := datagen.RandomInt(r, 3)   // 0-2 redelegate messages per epoch
+
+		helper := testhelper.NewHelper(t)
+		ctx, keeper := helper.Ctx, helper.App.EpochingKeeper
+
+		require.Equal(t, uint64(1), keeper.GetEpoch(ctx).EpochNumber)
+		require.Equal(t, uint64(0), keeper.GetCurrentQueueLength(ctx))
+
+		// Track expected message counts per epoch
+		epochMessageCounts := make(map[uint64]uint64)
+
+		// Step 1: Add messages to multiple epochs and progress through them
+		for epochNum := uint64(1); epochNum <= numEpochs; epochNum++ {
+			currentEpoch := keeper.GetEpoch(ctx).EpochNumber
+			require.Equal(t, epochNum, currentEpoch, "Should be in epoch %d", epochNum)
+
+			// Add different types of messages
+			addDelegateMessages(t, ctx, helper, int(delegateMsgsPerEpoch))
+			if undelegateMsgsPerEpoch > 0 {
+				addUndelegateMessages(t, ctx, helper, int(undelegateMsgsPerEpoch))
+			}
+			if redelegateMsgsPerEpoch > 0 {
+				addRedelegateMessages(t, ctx, helper, int(redelegateMsgsPerEpoch))
+			}
+
+			expectedCount := delegateMsgsPerEpoch + undelegateMsgsPerEpoch + redelegateMsgsPerEpoch
+			epochMessageCounts[epochNum] = expectedCount
+
+			// Verify messages were added
+			currentMsgs := keeper.GetCurrentEpochMsgs(ctx)
+			currentQueueLength := keeper.GetCurrentQueueLength(ctx)
+			require.Equal(t, expectedCount, currentQueueLength)
+			require.Len(t, currentMsgs, int(expectedCount))
+
+			// Progress to next epoch (except for last epoch)
+			if epochNum < numEpochs {
+				var err error
+				ctx, err = epochingutils.ProgressToNextEpoch(ctx, keeper, &epochingutils.ProgressToNextEpochOptions{
+					CallEndBlocker: true,
+				})
+				require.NoError(t, err)
+
+				// Verify epoch transition
+				newEpochNum := keeper.GetEpoch(ctx).EpochNumber
+				require.Equal(t, epochNum+1, newEpochNum)
+
+				// Verify previous epoch was cleaned during BeginBlocker
+				prevEpochMsgs := keeper.GetEpochMsgs(ctx, epochNum)
+				prevEpochQueueLength := keeper.GetQueueLength(ctx, epochNum)
+				require.Equal(t, uint64(0), prevEpochQueueLength, "Previous epoch should be cleaned")
+				require.Empty(t, prevEpochMsgs, "Previous epoch messages should be empty")
+			}
+		}
+
+		// Step 2: Final verification - all historical epochs should be cleaned
+		finalEpoch := keeper.GetEpoch(ctx)
+		require.Equal(t, numEpochs, finalEpoch.EpochNumber)
+
+		// Verify all previous epochs are cleaned (except current)
+		for epochNum := uint64(1); epochNum < numEpochs; epochNum++ {
+			msgs := keeper.GetEpochMsgs(ctx, epochNum)
+			queueLength := keeper.GetQueueLength(ctx, epochNum)
+			require.Equal(t, uint64(0), queueLength, "Historical epoch %d should be cleaned", epochNum)
+			require.Empty(t, msgs, "Historical epoch %d messages should be empty", epochNum)
+		}
+
+		// Verify current epoch still has messages
+		currentEpochMsgs := keeper.GetCurrentEpochMsgs(ctx)
+		currentQueueLength := keeper.GetCurrentQueueLength(ctx)
+		expectedCurrentCount := epochMessageCounts[numEpochs]
+		require.Equal(t, expectedCurrentCount, currentQueueLength, "Current epoch messages should be preserved")
+		require.Len(t, currentEpochMsgs, int(expectedCurrentCount), "Current epoch messages should be preserved")
+	})
+}
+
+// Helper function to add delegate messages to current epoch
+func addDelegateMessages(t *testing.T, ctx sdk.Context, helper *testhelper.Helper, count int) {
+	valSet := helper.App.EpochingKeeper.GetCurrentValidatorSet(ctx)
+	require.NotEmpty(t, valSet)
+	val := sdk.ValAddress(valSet[0].Addr).String()
+	genAddr := helper.GenAccs[0].GetAddress()
+	coinWithOnePower := sdk.NewCoin(appparams.DefaultBondDenom, helper.App.StakingKeeper.TokensFromConsensusPower(ctx, 1))
+
+	for i := 0; i < count; i++ {
+		msgDel := types.NewMsgWrappedDelegate(
+			stakingtypes.NewMsgDelegate(
+				genAddr.String(),
+				val,
+				coinWithOnePower,
+			),
+		)
+		_, err := helper.MsgSrvr.WrappedDelegate(ctx, msgDel)
+		require.NoError(t, err)
+	}
+}
+
+// Helper function to add undelegate messages to current epoch
+func addUndelegateMessages(t *testing.T, ctx sdk.Context, helper *testhelper.Helper, count int) {
+	valSet := helper.App.EpochingKeeper.GetCurrentValidatorSet(ctx)
+	require.NotEmpty(t, valSet)
+	val := sdk.ValAddress(valSet[0].Addr).String()
+	genAddr := helper.GenAccs[0].GetAddress()
+	coinWithOnePower := sdk.NewCoin(appparams.DefaultBondDenom, helper.App.StakingKeeper.TokensFromConsensusPower(ctx, 1))
+
+	for i := 0; i < count; i++ {
+		msgUndel := types.NewMsgWrappedUndelegate(
+			stakingtypes.NewMsgUndelegate(
+				genAddr.String(),
+				val,
+				coinWithOnePower,
+			),
+		)
+		_, err := helper.MsgSrvr.WrappedUndelegate(ctx, msgUndel)
+		require.NoError(t, err)
+	}
+}
+
+// Helper function to add redelegate messages to current epoch
+func addRedelegateMessages(t *testing.T, ctx sdk.Context, helper *testhelper.Helper, count int) {
+	valSet := helper.App.EpochingKeeper.GetCurrentValidatorSet(ctx)
+	require.NotEmpty(t, valSet)
+	val := sdk.ValAddress(valSet[0].Addr).String()
+	genAddr := helper.GenAccs[0].GetAddress()
+	coinWithOnePower := sdk.NewCoin(appparams.DefaultBondDenom, helper.App.StakingKeeper.TokensFromConsensusPower(ctx, 1))
+
+	for i := 0; i < count; i++ {
+		msgRedelegate := types.NewMsgWrappedBeginRedelegate(
+			stakingtypes.NewMsgBeginRedelegate(
+				genAddr.String(),
+				val,
+				val, // same validator for simplicity
+				coinWithOnePower,
+			),
+		)
+		_, err := helper.MsgSrvr.WrappedBeginRedelegate(ctx, msgRedelegate)
+		require.NoError(t, err)
+	}
 }

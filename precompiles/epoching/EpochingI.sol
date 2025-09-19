@@ -588,20 +588,6 @@ interface EpochingI {
         PageResponse calldata pageResponse
     );
 
-    /// @dev Queries messages from the latest epochs.
-    /// @param endEpoch The ending epoch number.
-    /// @param epochCount Number of epochs to query backwards from endEpoch.
-    /// @param pageRequest Pagination request parameters.
-    /// @return response Array of epoch message lists, pageResponse Pagination response.
-    function latestEpochMsgs(
-        uint64 endEpoch,
-        uint64 epochCount,
-        PageRequest calldata pageRequest
-    ) external view returns (
-        QueuedMessageList[] calldata response,
-        PageResponse calldata pageResponse
-    );
-
     /// @dev Queries the lifecycle of a validator.
     /// @param validatorAddress The validator address to query.
     /// @return response Array of validator lifecycle events.

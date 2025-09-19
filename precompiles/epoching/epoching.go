@@ -1,8 +1,9 @@
 package epoching
 
 import (
-	"cosmossdk.io/core/address"
 	"embed"
+
+	"cosmossdk.io/core/address"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/tracing"
@@ -152,8 +153,6 @@ func (p Precompile) run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 		bz, err = p.CurrentEpoch(ctx, contract, method, args)
 	case EpochMsgsMethod:
 		bz, err = p.EpochMsgs(ctx, contract, method, args)
-	case LatestEpochMsgsMethod:
-		bz, err = p.LatestEpochMsgs(ctx, contract, method, args)
 	case ValidatorLifecycleMethod:
 		bz, err = p.ValidatorLifecycle(ctx, contract, method, args)
 	case DelegationLifecycleMethod:

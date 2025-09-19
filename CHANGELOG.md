@@ -40,9 +40,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
-- [#1703] (https://github.com/babylonlabs-io/babylon/pull/1703) Add upgrade handler for spam prevention mechanisms to epoching
+- [#1732](https://github.com/babylonlabs-io/babylon/pull/1732) Optimize `x/epoching` storage overhead by cleaning past message queue.
+- [#1703](https://github.com/babylonlabs-io/babylon/pull/1703) Add upgrade handler for spam prevention mechanisms to epoching
 - [#1605](https://github.com/babylonlabs-io/babylon/pull/1605) Add epoching precompile
-- [#1663] (https://github.com/babylonlabs-io/babylon/pull/1663) Add spam prevention mechanisms to epoching module with minimum amount validation and gas consumption limits for wrapped delegate operations.
+- [#1663](https://github.com/babylonlabs-io/babylon/pull/1663) Add spam prevention mechanisms to epoching module with minimum amount validation and gas consumption limits for wrapped delegate operations.
 - [#1571](https://github.com/babylonlabs-io/babylon/pull/1571) Optimize `x/zoneconcierge` bottlenecks by caching redundant logics.
 - [#1584](https://github.com/babylonlabs-io/babylon/pull/1584) Add e2e test for wrapper feemarket
 - [#1568](https://github.com/babylonlabs-io/babylon/pull/1568) Wrapper feemarket to exclude refundable gas when calculating base fee
@@ -75,6 +76,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#1647](https://github.com/babylonlabs-io/babylon/pull/1647) Fix inactive event emitted on slashed finality provider case.
 - [#1651](https://github.com/babylonlabs-io/babylon/pull/1651) Store Cosmos BSN slashing evidence.
 - [#1714](https://github.com/babylonlabs-io/babylon/pull/1714) Add BLS key flags to `rollback` and `bootstrap-state` cmds
+
+### API Breaking
+
+- [#1715](https://github.com/babylonlabs-io/babylon/pull/1715) Remove `QueryLatestEpochMsgs` query in `x/epoching`. 
 
 ## v3.0.0-rc.2
 

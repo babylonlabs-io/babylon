@@ -2,13 +2,14 @@ package epoching
 
 import (
 	"bytes"
-	"cosmossdk.io/math"
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"math/big"
+
+	"cosmossdk.io/math"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
-	"math/big"
 
 	cmn "github.com/cosmos/evm/precompiles/common"
 
@@ -832,29 +833,6 @@ func NewEpochMsgsRequest(method *abi.Method, args []interface{}) (*epochingtypes
 	}, nil
 }
 
-// NewLatestEpochMsgsRequest create a new QueryLatestEpochMsgsRequest instance and does sanity checks
-// on the given arguments before populating the request.
-func NewLatestEpochMsgsRequest(method *abi.Method, args []interface{}) (*epochingtypes.QueryLatestEpochMsgsRequest, error) {
-	if len(args) != 3 {
-		return nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, 3, len(args))
-	}
-
-	var input LatestEpochMsgsInput
-	if err := method.Inputs.Copy(&input, args); err != nil {
-		return nil, fmt.Errorf("error while unpacking args to LatestEpochMsgsInput struct: %s", err)
-	}
-
-	if bytes.Equal(input.PageRequest.Key, []byte{0}) {
-		input.PageRequest.Key = nil
-	}
-
-	return &epochingtypes.QueryLatestEpochMsgsRequest{
-		EndEpoch:   input.EndEpoch,
-		EpochCount: input.EpochCount,
-		Pagination: &input.PageRequest,
-	}, nil
-}
-
 // NewValidatorLifecycleRequest create a new QueryValidatorLifecycleRequest instance and does sanity checks
 // on the given arguments before populating the request.
 func NewValidatorLifecycleRequest(args []interface{}, valCdc address.Codec) (*epochingtypes.QueryValidatorLifecycleRequest, error) {
@@ -1006,52 +984,9 @@ func (eo *EpochMsgsOutput) Pack(args abi.Arguments) ([]byte, error) {
 	return args.Pack(eo.QueuedMsgs, eo.PageResponse)
 }
 
-type LatestEpochMsgsInput struct {
-	EndEpoch    uint64
-	EpochCount  uint64
-	PageRequest query.PageRequest
-}
-
 type QueuedMessageList struct {
 	EpochNumber uint64 `abi:"epochNumber"`
 	Msgs        []QueuedMessageResponse
-}
-
-type LatestEpochMsgsOutput struct {
-	LatestEpochMsgs []QueuedMessageList `abi:"response"`
-	PageResponse    query.PageResponse  `abi:"pageResponse"`
-}
-
-func (leo *LatestEpochMsgsOutput) FromResponse(res *epochingtypes.QueryLatestEpochMsgsResponse) *LatestEpochMsgsOutput {
-	leo.LatestEpochMsgs = make([]QueuedMessageList, len(res.LatestEpochMsgs))
-	for i, epochMsgList := range res.LatestEpochMsgs {
-		msgs := make([]QueuedMessageResponse, len(epochMsgList.Msgs))
-		for j, msg := range epochMsgList.Msgs {
-			msgs[j] = QueuedMessageResponse{
-				TxId:        msg.TxId,
-				MsgId:       msg.MsgId,
-				BlockHeight: msg.BlockHeight,
-				BlockTime:   msg.BlockTime.UTC().Unix(),
-				Msg:         msg.Msg,
-				MsgType:     msg.MsgType,
-			}
-		}
-		leo.LatestEpochMsgs[i] = QueuedMessageList{
-			EpochNumber: epochMsgList.EpochNumber,
-			Msgs:        msgs,
-		}
-	}
-
-	if res.Pagination != nil {
-		leo.PageResponse.Total = res.Pagination.Total
-		leo.PageResponse.NextKey = res.Pagination.NextKey
-	}
-
-	return leo
-}
-
-func (leo *LatestEpochMsgsOutput) Pack(args abi.Arguments) ([]byte, error) {
-	return args.Pack(leo.LatestEpochMsgs, leo.PageResponse)
 }
 
 type ValidatorUpdateResponse struct {
