@@ -257,7 +257,7 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 		// get the finality provider and initialise its dist info
 		newFP, err := k.loadFP(ctx, state.FpByBtcPk, fpBTCPKHex)
 		if err != nil {
-			panic(fmt.Sprintf("unable to load fp %s - %s", state.FpByBtcPk, err.Error()))
+			panic(fmt.Sprintf("unable to load fp %s - %s", fpBTCPKHex, err.Error()))
 		}
 		// if the fp is slashed it shouldn't be included in the newDc
 		if newFP.IsSlashed() {
