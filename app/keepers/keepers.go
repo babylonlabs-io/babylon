@@ -677,7 +677,7 @@ func (ak *AppKeepers) InitKeepers(
 		appCodec,
 		runtime.NewKVStoreService(keys[finalitytypes.StoreKey]),
 		ak.BTCStakingKeeper,
-		ak.IncentiveKeeper,
+		&ak.IncentiveKeeper,
 		&checkpointingKeeper,
 		appparams.AccFinality.String(),
 		appparams.AccGov.String(),

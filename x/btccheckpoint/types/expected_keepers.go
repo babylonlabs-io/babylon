@@ -5,7 +5,6 @@ import (
 
 	txformat "github.com/babylonlabs-io/babylon/v4/btctxformatter"
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 type BTCLightClientKeeper interface {
@@ -41,5 +40,5 @@ type CheckpointingKeeper interface {
 }
 
 type IncentiveKeeper interface {
-	IndexRefundableMsg(ctx context.Context, msg sdk.Msg)
+	IncRefundableMsgCount()
 }
