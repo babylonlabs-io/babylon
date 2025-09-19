@@ -37,11 +37,8 @@ func (dc *VotingPowerDistCache) AddFinalityProviderDistInfo(v *FinalityProviderD
 
 func (dc *VotingPowerDistCache) ActiveFpsByBtcPk() map[string]struct{} {
 	activeFpByBtcPk := make(map[string]struct{}, 0)
-	for idx, fp := range dc.FinalityProviders {
-		canBeActive := idx < int(dc.NumActiveFps)
-		if fp.FpStatus(canBeActive) == bstypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_ACTIVE {
-			activeFpByBtcPk[fp.BtcPk.MarshalHex()] = struct{}{}
-		}
+	for _, fp := range dc.FinalityProviders[:dc.NumActiveFps] {
+		activeFpByBtcPk[fp.BtcPk.MarshalHex()] = struct{}{}
 	}
 	return activeFpByBtcPk
 }
