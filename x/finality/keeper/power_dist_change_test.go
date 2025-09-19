@@ -1996,7 +1996,7 @@ func TestProcessAllPowerDistUpdateEvents_TotallyUnbondedFP(t *testing.T) {
 		NewState:      btcstktypes.BTCDelegationStatus_UNBONDED,
 	})
 
-	btcTipHeight++
+	btcTipHeight += 10
 	addPowerDistUpdateEvents(t, h.Ctx, sk, uint64(btcTipHeight), []*btcstktypes.EventPowerDistUpdate{eventUnbond})
 
 	// Process unbond event
