@@ -24,7 +24,6 @@ func clearAllHistoricalEpochMsgs(ctx sdk.Context, k epochingkeeper.Keeper) {
 			k.ClearEpochMsgs(ctx, epochNum)
 		}
 	}
-	return
 }
 
 var Upgrade = upgrades.Upgrade{
