@@ -426,21 +426,10 @@ func (k Keeper) processPowerDistUpdateEventUnbond(
 ) {
 	for _, fpBTCPK := range btcDel.FpBtcPkList {
 		fpBTCPKHex := fpBTCPK.MarshalHex()
-		if !k.BTCStakingKeeper.BabylonFinalityProviderExists(ctx, fpBTCPK) {
-			// This is a consumer FP rather than Babylon FP, skip it
-			continue
-		}
 		state.DeltaSatsByFpBtcPk[fpBTCPKHex] -= int64(btcDel.TotalSat)
 	}
-	k.processRewardTracker(ctx, state.FpByBtcPk, btcDel, func(fp *types.FinalityProvider, del sdk.AccAddress, sats uint64) {
-		if fp.SecuresBabylonGenesis(sdk.UnwrapSDKContext(ctx)) {
-			k.MustProcessBabylonBtcDelegationUnbonded(ctx, fp.Address(), del, sats)
-			return
-		}
-		// BSNs don't need to add to the event list to be processed at some specific babylon height.
-		// Should update the reward tracker structures on the spot and don't care to have the rewards
-		// being distributed based on the latest voting power.
-		k.MustProcessConsumerBtcDelegationUnbonded(ctx, fp.Address(), del, sats)
+	k.processRewardTracker(ctx, state.FpByBtcPk, btcDel, func(fp, del sdk.AccAddress, sats uint64) {
+		k.MustProcessBtcDelegationUnbonded(ctx, fp, del, sats)
 	})
 }
 
@@ -455,22 +444,14 @@ func (k Keeper) processPowerDistUpdateEventActive(
 	// add the BTC delegation to each multi-staked finality provider
 	for _, fpBTCPK := range btcDel.FpBtcPkList {
 		fpBTCPKHex := fpBTCPK.MarshalHex()
-		if !k.BTCStakingKeeper.BabylonFinalityProviderExists(ctx, fpBTCPK) {
-			// This is a consumer FP rather than Babylon FP, skip it
-			continue
-		}
 		state.DeltaSatsByFpBtcPk[fpBTCPKHex] += int64(btcDel.TotalSat)
 	}
 
 	// FP could be already slashed when it is being activated, but it is okay
 	// since slashed finality providers do not earn rewards
-	k.processRewardTracker(ctx, state.FpByBtcPk, btcDel, func(fp *types.FinalityProvider, del sdk.AccAddress, sats uint64) {
-		if fp.SecuresBabylonGenesis(sdk.UnwrapSDKContext(ctx)) {
-			k.MustProcessBabylonBtcDelegationActivated(ctx, fp.Address(), del, sats)
-			return
-		}
+	k.processRewardTracker(ctx, state.FpByBtcPk, btcDel, func(fp, del sdk.AccAddress, sats uint64) {
 		// BSNs don't need to add to the events, can be processed instantly
-		k.MustProcessConsumerBtcDelegationActivated(ctx, fp.Address(), del, sats)
+		k.MustProcessBtcDelegationActivated(ctx, fp, del, sats)
 	})
 }
 
@@ -515,7 +496,14 @@ func (k Keeper) processRewardTracker(
 ) {
 	delAddr := sdk.MustAccAddressFromBech32(btcDel.StakerAddr)
 	for _, fpBTCPK := range btcDel.FpBtcPkList {
-		fp := k.loadFP(ctx, fpByBtcPkHex, fpBTCPK.MarshalHex())
+		fp, err := k.loadFP(ctx, fpByBtcPkHex, fpBTCPK.MarshalHex())
+		if err != nil {
+			k.Logger(sdk.UnwrapSDKContext(ctx)).Error(
+				"failed to load finality provider when processing reward tracker",
+				"fpBtcPk", fpBTCPK.MarshalHex(),
+			)
+			panic(err)
+		}
 		f(fp.Address(), delAddr, btcDel.TotalSat)
 	}
 }
@@ -554,21 +542,21 @@ func (k Keeper) loadFP(
 	ctx context.Context,
 	cacheFpByBtcPkHex map[string]*types.FinalityProvider,
 	fpBTCPKHex string,
-) *types.FinalityProvider {
+) (*types.FinalityProvider, error) {
 	fp, found := cacheFpByBtcPkHex[fpBTCPKHex]
 	if !found {
 		fpBTCPK, err := bbn.NewBIP340PubKeyFromHex(fpBTCPKHex)
 		if err != nil {
-			panic(err) // only programming error
+			return nil, err
 		}
 		fp, err = k.BTCStakingKeeper.GetFinalityProvider(ctx, *fpBTCPK)
 		if err != nil {
-			panic(err) // only programming error
+			return nil, err
 		}
 		cacheFpByBtcPkHex[fpBTCPKHex] = fp
 	}
 
-	return fp
+	return fp, nil
 }
 
 // abs returns the absolute value of a signed integer.
