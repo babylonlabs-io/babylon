@@ -20,6 +20,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
+	asig "github.com/babylonlabs-io/babylon/v4/crypto/schnorr-adaptor-signature"
 	testutil "github.com/babylonlabs-io/babylon/v4/testutil/btcstaking-helper"
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
 	testhelper "github.com/babylonlabs-io/babylon/v4/testutil/helper"
@@ -1081,7 +1082,7 @@ func FuzzSelectiveSlashing_StakingTx(f *testing.F) {
 		// mock BTC light client and BTC checkpoint modules
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-		h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
+		h := testutil.NewHelper(t, btclcKeeper, btccKeeper, nil)
 
 		// set all parameters
 		covenantSKs, _ := h.GenAndApplyParams(r)
@@ -1603,7 +1604,7 @@ func TestActiveAndExpiredEventsSameBlock(t *testing.T) {
 	h := testutil.NewHelperWithIncentiveKeeper(t, btclcKeeper, btccKeeper).WithBlockHeight(heightAfterMultiStakingAllowListExpiration)
 
 	// set all parameters
-	covenantSKs, _ := h.GenAndApplyCustomParams(r, 100, 200, 0, 2)
+	covenantSKs, _ := h.GenAndApplyCustomParams(r, 100, 200, 0)
 
 	// Get BTC confirmation depth
 	btccParams := btcctypes.DefaultParams()
@@ -1612,12 +1613,6 @@ func TestActiveAndExpiredEventsSameBlock(t *testing.T) {
 
 	// generate and insert new finality provider
 	_, fpPK, _ := h.CreateFinalityProvider(r)
-
-	// generate and insert new consumer finality provider
-	consumer := h.RegisterAndVerifyConsumer(t, r)
-
-	_, cFpPk, _, err := h.CreateConsumerFinalityProvider(r, consumer.ConsumerId)
-	h.NoError(err)
 
 	// Critical setup to trigger the bug:
 	unbondingTime := uint16(200)
@@ -1631,10 +1626,10 @@ func TestActiveAndExpiredEventsSameBlock(t *testing.T) {
 	h.NoError(err)
 
 	// Create delegation with pre-computed parameters
-	stakingTxHash, _, _, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
+	stakingTxHash, msg, _, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
 		r,
 		delSK,
-		[]*btcec.PublicKey{fpPK, cFpPk},
+		fpPK,
 		stakingValue,
 		stakingTime,
 		0,
@@ -1673,7 +1668,7 @@ func TestActiveAndExpiredEventsSameBlock(t *testing.T) {
 	btclcKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: expiredEventHeight}).AnyTimes()
 
 	// Add covenant signatures to reach  quorum -1
-	msgs := h.GenerateCovenantSignaturesMessages(r, covenantSKs, actualDel)
+	msgs := h.GenerateCovenantSignaturesMessages(r, covenantSKs, msg, actualDel)
 	for i := 0; i < len(msgs)-3; i++ {
 		_, err = h.MsgServer.AddCovenantSigs(h.Ctx, msgs[i])
 		h.NoError(err)
@@ -1682,7 +1677,7 @@ func TestActiveAndExpiredEventsSameBlock(t *testing.T) {
 	// Verify delegation is still PENDING without quorum
 	actualDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
 	h.NoError(err)
-	status := actualDel.GetStatus(expiredEventHeight, h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum, 0)
+	status := actualDel.GetStatus(expiredEventHeight, h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum)
 	require.Equal(t, types.BTCDelegationStatus_PENDING, status, "Should be PENDING without quorum")
 
 	// Add the final covenant signature to reach quorum

@@ -241,7 +241,7 @@ func FuzzHasFpRegistered(f *testing.F) {
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		t.Parallel()
-		h := testutil.NewHelper(t, nil, nil)
+		h := testutil.NewHelper(t, nil, nil, nil)
 
 		randAddr := datagen.GenRandomAddress()
 
@@ -264,7 +264,7 @@ func FuzzIsFinalityProviderDeleted(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		t.Parallel()
 		r := rand.New(rand.NewSource(seed))
-		h := testutil.NewHelper(t, nil, nil)
+		h := testutil.NewHelper(t, nil, nil, nil)
 
 		randFpBtcPk, err := datagen.GenRandomBIP340PubKey(r)
 		require.NoError(t, err)
@@ -287,7 +287,7 @@ func FuzzIterateFinalityProvider(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		t.Parallel()
 		r := rand.New(rand.NewSource(seed))
-		h := testutil.NewHelper(t, nil, nil)
+		h := testutil.NewHelper(t, nil, nil, nil)
 
 		numFps := datagen.RandomInt(r, 10) + 1
 
