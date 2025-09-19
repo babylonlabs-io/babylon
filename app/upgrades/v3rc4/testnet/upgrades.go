@@ -2,25 +2,38 @@ package testnet
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	store "cosmossdk.io/store/types"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
+	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+
+	erc20types "github.com/cosmos/evm/x/erc20/types"
+	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
+	precisebanktypes "github.com/cosmos/evm/x/precisebank/types"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 
 	"github.com/babylonlabs-io/babylon/v4/app/keepers"
 	"github.com/babylonlabs-io/babylon/v4/app/upgrades"
 	"github.com/babylonlabs-io/babylon/v4/app/upgrades/epoching"
+	v3rc4 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v3rc4"
+	costktypes "github.com/babylonlabs-io/babylon/v4/x/costaking/types"
 )
 
-const UpgradeName = "v3rc4"
+var StoresToAdd = []string{
+	costktypes.StoreKey,
+	// evm
+	erc20types.StoreKey, evmtypes.StoreKey, feemarkettypes.StoreKey, precisebanktypes.StoreKey,
+}
 
 var Upgrade = upgrades.Upgrade{
-	UpgradeName:          UpgradeName,
+	UpgradeName:          v3rc4.UpgradeName,
 	CreateUpgradeHandler: CreateUpgradeHandler,
 	StoreUpgrades: store.StoreUpgrades{
-		Added:   []string{},
+		Added:   StoresToAdd,
 		Deleted: []string{},
 	},
 }
@@ -56,11 +69,22 @@ func CreateUpgradeHandler(mm *module.Manager, configurator module.Configurator, 
 		}
 		// Log successful upgrade
 		sdkCtx.Logger().Info("spam prevention upgrade completed successfully",
-			"upgrade", UpgradeName,
+			"upgrade", v3rc4.UpgradeName,
 			"epoching_migration", "v3rc3->v3rc4",
 			"height", currentHeight,
 			"epoch_boundary", true,
 		)
+
+		// coostaking upgrade
+		costkStoreKey := keepers.GetKey(costktypes.StoreKey)
+		if costkStoreKey == nil {
+			return nil, errors.New("invalid costaking types store key")
+		}
+
+		coStkStoreService := runtime.NewKVStoreService(costkStoreKey)
+		if err := v3rc4.InitializeCoStakerRwdsTracker(ctx, keepers.EncCfg.Codec, coStkStoreService, keepers.StakingKeeper, keepers.BTCStakingKeeper, keepers.CostakingKeeper, keepers.FinalityKeeper); err != nil {
+			return nil, err
+		}
 
 		return migrations, nil
 	}

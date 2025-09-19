@@ -6,14 +6,16 @@ import (
 	"time"
 
 	"cosmossdk.io/math"
+	"github.com/cosmos/cosmos-sdk/codec"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+
+	"github.com/stretchr/testify/require"
+
+	"github.com/babylonlabs-io/babylon/v4/app"
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
 	btclctypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
 	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 	"github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/types"
-	"github.com/babylonlabs-io/babylon/v4/app"
-	"github.com/cosmos/cosmos-sdk/codec"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	"github.com/stretchr/testify/require"
 )
 
 func TestPacketMarshalCache_BTCHeaders(t *testing.T) {
@@ -417,7 +419,7 @@ func FuzzTestPacketMarshalCache_CacheKeyConsistency(f *testing.F) {
 		header1.Work = &workUint1                  // Set work directly
 
 		header2 := datagen.GenRandomBTCHeaderInfoWithParent(r, nil)
-		header2.Height = uint32(height2 % 1000000) // Limit height to avoid overflow 
+		header2.Height = uint32(height2 % 1000000) // Limit height to avoid overflow
 		workUint2 := math.NewUint(work2 % 1000000) // Limit work to avoid overflow
 		header2.Work = &workUint2                  // Set work directly
 

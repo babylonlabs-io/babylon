@@ -28,7 +28,7 @@ import (
 
 // optimized approach of refundable msgs
 func BenchmarkRefundTxDecorator_InMemoryCounter(b *testing.B) {
-	iKeeper, ctx := keepertest.IncentiveKeeper(b, nil, nil, nil)
+	iKeeper, ctx := keepertest.IncentiveKeeper(b, nil, nil, nil, nil)
 	tKey := storetypes.NewTransientStoreKey("test_transient")
 	rtd := keeper.NewRefundTxDecorator(iKeeper, tKey)
 	txs := generateDummyRefundableTxs(100)

@@ -11304,6 +11304,13 @@ paths:
                       power and finality
 
                       provider's commission
+                  fp_portion:
+                    type: string
+                    title: >-
+                      fp_portion is the percentage of fee_collector balance to
+                      collect each block
+
+                      and send to the finality providers reward gauge
                 title: >-
                   Params defines the parameters for the module, including
                   portions of rewards
@@ -13036,6 +13043,336 @@ paths:
           required: true
           type: string
           format: uint64
+      tags:
+        - Query
+  /babylon/costaking/v1/costakers/{costaker_address}/rewards_tracker:
+    get:
+      summary: CostakerRewardsTracker queries the costaker reward tracker.
+      operationId: CostakerRewardsTracker
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              start_period_cumulative_reward:
+                type: string
+                format: uint64
+                description: >-
+                  StartPeriodCumulativeReward the starting period the costaker
+
+                  made his last withdraw of costaking rewards or modified his
+                  active staking
+
+                  amount of satoshis or baby.
+              active_satoshis:
+                type: string
+                format: byte
+                description: |-
+                  ActiveSatoshis is the total amount of active satoshi delegated
+                  from this costaker babylon address.
+              active_baby:
+                type: string
+                format: byte
+                description: |-
+                  ActiveBaby is the total amount of active baby delegated
+                  from this costaker babylon address.
+              total_score:
+                type: string
+                format: byte
+                description: |-
+                  TotalScore is the total amount of calculated score
+                  of this costaker.
+            description: |-
+              QueryCostakerRewardsTrackerResponse is the response type for the
+              Query/CostakerRewardsTracker RPC method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      parameters:
+        - name: costaker_address
+          description: costakerAddress defines the delegator address to query for.
+          in: path
+          required: true
+          type: string
+      tags:
+        - Query
+  /babylon/costaking/v1/current_rewards:
+    get:
+      summary: >-
+        CurrentRewards queries the current rewards structure for costaking
+        single
+
+        pool.
+      operationId: CurrentRewards
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              rewards:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    denom:
+                      type: string
+                    amount:
+                      type: string
+                  description: >-
+                    Coin defines a token with a denomination and an amount.
+
+
+                    NOTE: The amount field is an Int which implements the custom
+                    method
+
+                    signatures required by gogoproto.
+                description: >-
+                  Rewards is the current rewards for the single pool of rewards
+                  for all the
+
+                  costakers for the whole chain. If some action happens of
+                  satoshi or baby
+
+                  staked or is unbonded or withdraw of the rewards available,
+                  this current
+
+                  period is sent to an HistoricalRewards and a new period is
+                  created and
+
+                  the rewards property is zerod out.
+
+                  Note: This rewards have increased simulated decimals (10^20)
+                  to increase
+
+                  precision when calculating the rewards per score and protect
+                  against
+
+                  math overflow issues. The decimals are removed prior to
+                  sending out
+
+                  to the incentives gauge.
+              period:
+                type: string
+                format: uint64
+                description: >-
+                  Period stores the current period that serves as a reference
+                  for
+
+                  creating new historical rewards and correlate with
+
+                  CostakerRewardsTracker StartPeriodCumulativeReward.
+              total_score:
+                type: string
+                format: byte
+                description: |-
+                  TotalScore is the total amount of score calulated over
+                  all the stakers score in the chain.
+            description: >-
+              QueryCurrentRewardsResponse is response type for the
+              Query/CurrentRewards RPC
+
+              method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      tags:
+        - Query
+  /babylon/costaking/v1/historical_rewards/{period}:
+    get:
+      summary: >-
+        HistoricalRewards queries the historical rewards structure per period
+        for
+
+        costaking single pool.
+      operationId: HistoricalRewards
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              cumulative_rewards_per_score:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    denom:
+                      type: string
+                    amount:
+                      type: string
+                  description: >-
+                    Coin defines a token with a denomination and an amount.
+
+
+                    NOTE: The amount field is an Int which implements the custom
+                    method
+
+                    signatures required by gogoproto.
+                title: >-
+                  CumulativeRewardsPerScore is the cumulative rewards of that
+                  period.
+
+                  This coins will aways increase the value, never reduced, it
+                  always
+
+                  accumulates and when the cumulative rewards will be used to
+                  distribute
+
+                  rewards, 2 periods will be loaded, calculate the difference
+                  and multiplied
+
+                  by the total score amount of each staker
+            description: |-
+              QueryHistoricalRewardsResponse is response type for the
+              Query/HistoricalRewards RPC method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      parameters:
+        - name: period
+          description: >-
+            Period is the historical period which the HistoricalRewards was
+            stored.
+          in: path
+          required: true
+          type: string
+          format: uint64
+      tags:
+        - Query
+  /babylon/costaking/v1/params:
+    get:
+      summary: Params queries the parameters of the module.
+      operationId: CostakingParams
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              params:
+                description: Params holds all the parameters of this module.
+                type: object
+                properties:
+                  costaking_portion:
+                    type: string
+                    description: >-
+                      CostakingPortion is the portion of rewards that goes to
+                      costakers
+
+                      NOTE: This portion of costakers is taken after the
+                      incentive module
+
+                      takes part of the fee_collector to give out to BTC
+                      stakers.
+                  score_ratio_btc_by_baby:
+                    type: string
+                    format: byte
+                    title: >-
+                      ScoreRatioBtcByBaby defines the amount of ubbn necessary
+                      for the
+
+                      sats staked to count as score in the formula.
+
+                      score: min(costakers_sats_staked, (costakers_ubbn_staked /
+
+                      score_ratio_btc_by_baby))
+                  validators_portion:
+                    type: string
+                    description: >-
+                      ValidatorsPortion is the portion of rewards that goes to
+                      Babylon Validators
+
+                      NOTE: This portion of validators is taken after the
+                      incentive module
+
+                      takes part of the fee_collector balance to give out to
+                      validators that
+
+                      correctly voted.
+            description: >-
+              QueryParamsResponse is response type for the Query/Params RPC
+              method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
       tags:
         - Query
 definitions:
@@ -20029,6 +20366,13 @@ definitions:
           finality
 
           provider's commission
+      fp_portion:
+        type: string
+        title: >-
+          fp_portion is the percentage of fee_collector balance to collect each
+          block
+
+          and send to the finality providers reward gauge
     title: >-
       Params defines the parameters for the module, including portions of
       rewards
@@ -20164,6 +20508,13 @@ definitions:
               finality
 
               provider's commission
+          fp_portion:
+            type: string
+            title: >-
+              fp_portion is the percentage of fee_collector balance to collect
+              each block
+
+              and send to the finality providers reward gauge
         title: >-
           Params defines the parameters for the module, including portions of
           rewards
@@ -22021,3 +22372,192 @@ definitions:
             The data could be arbitrary format, providing nessecary data
             for example neighbouring node hash
     title: ProofOps is Merkle proof defined by the list of ProofOps
+  babylon.costaking.v1.Params:
+    type: object
+    properties:
+      costaking_portion:
+        type: string
+        description: |-
+          CostakingPortion is the portion of rewards that goes to costakers
+          NOTE: This portion of costakers is taken after the incentive module
+          takes part of the fee_collector to give out to BTC stakers.
+      score_ratio_btc_by_baby:
+        type: string
+        format: byte
+        title: |-
+          ScoreRatioBtcByBaby defines the amount of ubbn necessary for the
+          sats staked to count as score in the formula.
+          score: min(costakers_sats_staked, (costakers_ubbn_staked /
+          score_ratio_btc_by_baby))
+      validators_portion:
+        type: string
+        description: >-
+          ValidatorsPortion is the portion of rewards that goes to Babylon
+          Validators
+
+          NOTE: This portion of validators is taken after the incentive module
+
+          takes part of the fee_collector balance to give out to validators that
+
+          correctly voted.
+    description: Params defines the parameters for the module.
+  babylon.costaking.v1.QueryCostakerRewardsTrackerResponse:
+    type: object
+    properties:
+      start_period_cumulative_reward:
+        type: string
+        format: uint64
+        description: >-
+          StartPeriodCumulativeReward the starting period the costaker
+
+          made his last withdraw of costaking rewards or modified his active
+          staking
+
+          amount of satoshis or baby.
+      active_satoshis:
+        type: string
+        format: byte
+        description: |-
+          ActiveSatoshis is the total amount of active satoshi delegated
+          from this costaker babylon address.
+      active_baby:
+        type: string
+        format: byte
+        description: |-
+          ActiveBaby is the total amount of active baby delegated
+          from this costaker babylon address.
+      total_score:
+        type: string
+        format: byte
+        description: |-
+          TotalScore is the total amount of calculated score
+          of this costaker.
+    description: |-
+      QueryCostakerRewardsTrackerResponse is the response type for the
+      Query/CostakerRewardsTracker RPC method.
+  babylon.costaking.v1.QueryCurrentRewardsResponse:
+    type: object
+    properties:
+      rewards:
+        type: array
+        items:
+          type: object
+          properties:
+            denom:
+              type: string
+            amount:
+              type: string
+          description: |-
+            Coin defines a token with a denomination and an amount.
+
+            NOTE: The amount field is an Int which implements the custom method
+            signatures required by gogoproto.
+        description: >-
+          Rewards is the current rewards for the single pool of rewards for all
+          the
+
+          costakers for the whole chain. If some action happens of satoshi or
+          baby
+
+          staked or is unbonded or withdraw of the rewards available, this
+          current
+
+          period is sent to an HistoricalRewards and a new period is created and
+
+          the rewards property is zerod out.
+
+          Note: This rewards have increased simulated decimals (10^20) to
+          increase
+
+          precision when calculating the rewards per score and protect against
+
+          math overflow issues. The decimals are removed prior to sending out
+
+          to the incentives gauge.
+      period:
+        type: string
+        format: uint64
+        description: |-
+          Period stores the current period that serves as a reference for
+          creating new historical rewards and correlate with
+          CostakerRewardsTracker StartPeriodCumulativeReward.
+      total_score:
+        type: string
+        format: byte
+        description: |-
+          TotalScore is the total amount of score calulated over
+          all the stakers score in the chain.
+    description: >-
+      QueryCurrentRewardsResponse is response type for the Query/CurrentRewards
+      RPC
+
+      method.
+  babylon.costaking.v1.QueryHistoricalRewardsResponse:
+    type: object
+    properties:
+      cumulative_rewards_per_score:
+        type: array
+        items:
+          type: object
+          properties:
+            denom:
+              type: string
+            amount:
+              type: string
+          description: |-
+            Coin defines a token with a denomination and an amount.
+
+            NOTE: The amount field is an Int which implements the custom method
+            signatures required by gogoproto.
+        title: >-
+          CumulativeRewardsPerScore is the cumulative rewards of that period.
+
+          This coins will aways increase the value, never reduced, it always
+
+          accumulates and when the cumulative rewards will be used to distribute
+
+          rewards, 2 periods will be loaded, calculate the difference and
+          multiplied
+
+          by the total score amount of each staker
+    description: |-
+      QueryHistoricalRewardsResponse is response type for the
+      Query/HistoricalRewards RPC method.
+  babylon.costaking.v1.QueryParamsResponse:
+    type: object
+    properties:
+      params:
+        description: Params holds all the parameters of this module.
+        type: object
+        properties:
+          costaking_portion:
+            type: string
+            description: >-
+              CostakingPortion is the portion of rewards that goes to costakers
+
+              NOTE: This portion of costakers is taken after the incentive
+              module
+
+              takes part of the fee_collector to give out to BTC stakers.
+          score_ratio_btc_by_baby:
+            type: string
+            format: byte
+            title: |-
+              ScoreRatioBtcByBaby defines the amount of ubbn necessary for the
+              sats staked to count as score in the formula.
+              score: min(costakers_sats_staked, (costakers_ubbn_staked /
+              score_ratio_btc_by_baby))
+          validators_portion:
+            type: string
+            description: >-
+              ValidatorsPortion is the portion of rewards that goes to Babylon
+              Validators
+
+              NOTE: This portion of validators is taken after the incentive
+              module
+
+              takes part of the fee_collector balance to give out to validators
+              that
+
+              correctly voted.
+    description: QueryParamsResponse is response type for the Query/Params RPC method.

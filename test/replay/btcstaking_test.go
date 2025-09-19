@@ -46,7 +46,7 @@ func TestEpochFinalization(t *testing.T) {
 	epoch2 := driver.GetEpoch()
 	require.Equal(t, epoch2.EpochNumber, uint64(2))
 
-	driver.FinializeCkptForEpoch(epoch1.EpochNumber)
+	driver.FinalizeCkptForEpoch(epoch1.EpochNumber)
 }
 
 func FuzzCreatingAndActivatingDelegations(f *testing.F) {
@@ -253,9 +253,9 @@ func TestVoting(t *testing.T) {
 	driver.GenerateNewBlockAssertExecutionSuccess()
 
 	// Randomness timestamped
-	currnetEpochNunber := driver.GetEpoch().EpochNumber
+	currEpochNumber := driver.GetEpoch().EpochNumber
 	driver.ProgressTillFirstBlockTheNextEpoch()
-	driver.FinializeCkptForEpoch(currnetEpochNunber)
+	driver.FinalizeCkptForEpoch(currEpochNumber)
 
 	s1.CreatePreApprovalDelegation(
 		[]*bbn.BIP340PubKey{fp1.BTCPublicKey()},
@@ -637,7 +637,7 @@ func TestPostRegistrationDelegation(t *testing.T) {
 	// Randomness timestamped
 	currnetEpochNunber := driver.GetEpoch().EpochNumber
 	driver.ProgressTillFirstBlockTheNextEpoch()
-	driver.FinializeCkptForEpoch(currnetEpochNunber)
+	driver.FinalizeCkptForEpoch(currnetEpochNunber)
 
 	// Send post-registration delegation i.e first on BTC, then to Babylon
 	msg := s1.CreateDelegationMessage(
@@ -734,7 +734,7 @@ func TestAcceptSlashingTxAsUnbondingTx(t *testing.T) {
 		driver.App.BTCLightClientKeeper.GetBTCNet(),
 	)
 
-	blockWithProofs := driver.IncludeTxsInBTCAndConfirm([]*wire.MsgTx{slashingTxMsg})
+	blockWithProofs, _ := driver.IncludeTxsInBTCAndConfirm([]*wire.MsgTx{slashingTxMsg})
 	require.Len(t, blockWithProofs.Proofs, 2)
 
 	msg := &bstypes.MsgBTCUndelegate{
@@ -778,7 +778,7 @@ func TestSlashingFpWithManyMulistakedDelegations(t *testing.T) {
 
 	currentEpochNumber := d.GetEpoch().EpochNumber
 	d.ProgressTillFirstBlockTheNextEpoch()
-	d.FinializeCkptForEpoch(currentEpochNumber)
+	d.FinalizeCkptForEpoch(currentEpochNumber)
 
 	d.GenerateNewBlockAssertExecutionSuccess()
 
@@ -814,13 +814,13 @@ func TestSlashingFpWithManyMulistakedDelegations(t *testing.T) {
 	d.GenerateNewBlockAssertExecutionSuccess()
 	fps = []*bbn.BIP340PubKey{bbnFp.BTCPublicKey(), fpsCons1.BTCPublicKey(), fpsCons2.BTCPublicKey()}
 
-	d.MintNativeTo(t, covSender.Address(), 10000000_000000)
+	d.MintNativeTo(covSender.Address(), 10000000_000000)
 
 	// creates 200 btc delegations to slash it
 	batchSize := 4
 	totalActiveDels := len(d.GetActiveBTCDelegations(d.t))
 	for _, stk := range stakers {
-		d.MintNativeTo(t, stk.Address(), 10000000_000000)
+		d.MintNativeTo(stk.Address(), 10000000_000000)
 		d.SendAndVerifyNDelegations(t, stk, covSender, fps, batchSize)
 
 		d.GenerateNewBlockAssertExecutionSuccess()

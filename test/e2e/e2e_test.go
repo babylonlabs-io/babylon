@@ -49,6 +49,11 @@ func TestSoftwareUpgradeV3TestSuite(t *testing.T) {
 	suite.Run(t, new(SoftwareUpgradeV3TestSuite))
 }
 
+// TestSoftwareUpgradeV3RC4TestSuite tests software upgrade from v3.0.0-rc3 to v3rc4 end-to-end
+func TestSoftwareUpgradeV3RC4TestSuite(t *testing.T) {
+	suite.Run(t, new(SoftwareUpgradeV3RC4TestSuite))
+}
+
 // TestFinalityContractTestSuite tests rollup finality contracts integration
 func TestFinalityContractTestSuite(t *testing.T) {
 	suite.Run(t, new(FinalityContractTestSuite))

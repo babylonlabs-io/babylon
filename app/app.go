@@ -124,12 +124,13 @@ import (
 	"github.com/babylonlabs-io/babylon/v4/x/btcstaking"
 	btcstakingtypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 	"github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer"
-	bsctypes "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
 	btcstkconsumertypes "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
 	"github.com/babylonlabs-io/babylon/v4/x/checkpointing"
 	"github.com/babylonlabs-io/babylon/v4/x/checkpointing/prepare"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
 	"github.com/babylonlabs-io/babylon/v4/x/checkpointing/vote_extensions"
+	"github.com/babylonlabs-io/babylon/v4/x/costaking"
+	costktypes "github.com/babylonlabs-io/babylon/v4/x/costaking/types"
 	"github.com/babylonlabs-io/babylon/v4/x/epoching"
 	epochingkeeper "github.com/babylonlabs-io/babylon/v4/x/epoching/keeper"
 	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
@@ -183,6 +184,7 @@ var (
 		govtypes.ModuleName:                         {authtypes.Burner},
 		ibctransfertypes.ModuleName:                 {authtypes.Minter, authtypes.Burner},
 		incentivetypes.ModuleName:                   nil, // this line is needed to create an account for incentive module
+		costktypes.ModuleName:                       nil, // this line is needed to create an account for costaking module
 		tokenfactorytypes.ModuleName:                {authtypes.Minter, authtypes.Burner},
 		icatypes.ModuleName:                         nil,
 		evmtypes.ModuleName:                         {authtypes.Minter, authtypes.Burner},
@@ -374,6 +376,7 @@ func NewBabylonApp(
 		finality.NewAppModule(appCodec, app.FinalityKeeper),
 		// Babylon modules - tokenomics
 		incentive.NewAppModule(appCodec, app.IncentiveKeeper, app.AccountKeeper, app.BankKeeper),
+		costaking.NewAppModule(appCodec, app.CostakingKeeper),
 		// Cosmos EVM modules
 		evm.NewAppModule(app.EVMKeeper, app.AccountKeeper, app.AccountKeeper.AddressCodec()),
 		feemarketwrapper.NewAppModule(app.FeemarketKeeper, app.GetTKey(feemarkettypes.TransientKey)),
@@ -411,8 +414,10 @@ func NewBabylonApp(
 	app.ModuleManager.SetOrderBeginBlockers(
 		upgradetypes.ModuleName,
 		// NOTE: incentive module's BeginBlock has to be after mint but before distribution
-		// so that it can intercept a part of new inflation to reward BTC staking stakeholders
-		minttypes.ModuleName, incentivetypes.ModuleName, distrtypes.ModuleName,
+		// so that it can intercept a part of new inflation to reward BTC staking stakeholders.
+		// costaking module goes right after incentives but before distribution to also take
+		// a cut of the inflation for costaking (BABY + BTC) staking.
+		minttypes.ModuleName, incentivetypes.ModuleName, costktypes.ModuleName, distrtypes.ModuleName,
 		// Cosmos EVM
 		erc20types.ModuleName,
 		feemarkettypes.ModuleName,
@@ -437,7 +442,6 @@ func NewBabylonApp(
 		wasmtypes.ModuleName,
 		ratelimittypes.ModuleName,
 		// Integration related modules
-		bsctypes.ModuleName,
 		zctypes.ModuleName,
 		btcstkconsumertypes.ModuleName,
 		// BTC staking related modules
@@ -471,7 +475,6 @@ func NewBabylonApp(
 		wasmtypes.ModuleName,
 		ratelimittypes.ModuleName,
 		// Integration related modules
-		bsctypes.ModuleName,
 		zctypes.ModuleName,
 		btcstkconsumertypes.ModuleName,
 		// BTC staking related modules
@@ -479,6 +482,7 @@ func NewBabylonApp(
 		finalitytypes.ModuleName,
 		// tokenomics related modules
 		incentivetypes.ModuleName, // EndBlock of incentive module does not matter
+		costktypes.ModuleName,
 		// Cosmos EVM
 		evmtypes.ModuleName,
 		erc20types.ModuleName,
@@ -498,7 +502,11 @@ func NewBabylonApp(
 	// so that other modules that want to create or claim capabilities afterwards in InitChain
 	// can do so safely.
 	genesisModuleOrder := []string{
-		authtypes.ModuleName, banktypes.ModuleName, distrtypes.ModuleName, stakingtypes.ModuleName,
+		authtypes.ModuleName, banktypes.ModuleName, distrtypes.ModuleName,
+		// module that subscribes to staking hooks.
+		// staking init genesis calls AfterDelegationModified
+		costktypes.ModuleName,
+		stakingtypes.ModuleName,
 		slashingtypes.ModuleName, govtypes.ModuleName, minttypes.ModuleName,
 		// Cosmos EVM modules
 		// NOTE: feemarket module needs to be initialized before genutil module
@@ -526,7 +534,6 @@ func NewBabylonApp(
 		icatypes.ModuleName,
 		pfmroutertypes.ModuleName,
 		// Integration related modules
-		bsctypes.ModuleName,
 		zctypes.ModuleName,
 		btcstkconsumertypes.ModuleName,
 		// BTC staking related modules

@@ -1,6 +1,7 @@
 package replay
 
 import (
+	ictvkeeper "github.com/babylonlabs-io/babylon/v4/x/incentive/keeper"
 	ictvtypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
@@ -17,6 +18,10 @@ func (d *BabylonAppDriver) GenerateBlocksUntilLastProcessedBtcStkEventsHeightIs(
 		lastProcessedBtcStkEvtsHeight, err = ictvK.GetRewardTrackerEventLastProcessedHeight(d.Ctx())
 		require.NoError(d.t, err)
 	}
+}
+
+func (d *BabylonAppDriver) MsgServerIncentive() ictvtypes.MsgServer {
+	return ictvkeeper.NewMsgServerImpl(d.App.IncentiveKeeper)
 }
 
 func (s *StandardScenario) WithdrawBtcDelRewards() {

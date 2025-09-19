@@ -23,14 +23,20 @@ func (k Keeper) RewardGauges(goCtx context.Context, req *types.QueryRewardGauges
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
+	// costaking send rewards to incentives module and gauge
+	if err := k.hooks.BeforeRewardWithdraw(ctx, types.COSTAKER, address); err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	// btcstaking rewards
+	if err := k.sendAllBtcDelegationTypeToRewardsGauge(ctx, types.BTC_STAKER, address); err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
 	rgMap := map[string]*types.RewardGauge{}
 
 	// find reward gauge
 	for _, sType := range types.GetAllStakeholderTypes() {
-		if err := k.sendAllBtcDelegationTypeToRewardsGauge(ctx, sType, address); err != nil {
-			return nil, status.Error(codes.Internal, err.Error())
-		}
-
 		rg := k.GetRewardGauge(ctx, sType, address)
 		if rg == nil {
 			continue

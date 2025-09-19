@@ -1749,6 +1749,13 @@ func TestActiveAndExpiredEventsSameBlock(t *testing.T) {
 
 	h := testutil.NewHelperWithIncentiveKeeper(t, btclcKeeper, btccKeeper).WithBlockHeight(heightAfterMultiStakingAllowListExpiration)
 
+	// TODO: add expected values
+	fHooks := h.FinalityHooks.(*ftypes.MockFinalityHooks)
+	fHooks.EXPECT().AfterBtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	fHooks.EXPECT().AfterBtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	fHooks.EXPECT().AfterBbnFpEntersActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
+	fHooks.EXPECT().AfterBbnFpRemovedFromActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
+
 	// set all parameters
 	covenantSKs, _ := h.GenAndApplyCustomParams(r, 100, 200, 2)
 

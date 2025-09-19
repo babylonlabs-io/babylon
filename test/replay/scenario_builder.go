@@ -49,7 +49,7 @@ func (s *StandardScenario) InitScenario(
 
 	currentEpochNumber := s.driver.GetEpoch().EpochNumber
 	s.driver.ProgressTillFirstBlockTheNextEpoch()
-	s.driver.FinializeCkptForEpoch(currentEpochNumber)
+	s.driver.FinalizeCkptForEpoch(currentEpochNumber)
 
 	// commit all fps in one block
 	s.driver.GenerateNewBlockAssertExecutionSuccess()

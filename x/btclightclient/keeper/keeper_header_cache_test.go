@@ -1,11 +1,11 @@
 package keeper_test
 
 import (
-	"testing"
 	"math/rand"
+	"testing"
 
-	testkeeper "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	testkeeper "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
 	"github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
 	"github.com/stretchr/testify/require"
 )

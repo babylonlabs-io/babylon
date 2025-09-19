@@ -236,3 +236,7 @@ func EmitJailedFPEvent(sdkCtx sdk.Context, fpBTCPK *bbn.BIP340PubKey) {
 			FinalityProviderStatus_FINALITY_PROVIDER_STATUS_JAILED.String(), err))
 	}
 }
+
+func (fps FinalityProviderStatus) IsActive() bool {
+	return fps == FinalityProviderStatus_FINALITY_PROVIDER_STATUS_ACTIVE
+}

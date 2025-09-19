@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   lint_test:
-    uses: babylonlabs-io/.github/.github/workflows/reusable_go_lint_test.yml@cfbd5e4db5e575edf77a160fe533918c4f3a4498  # v0.13.2
+    uses: babylonlabs-io/.github/.github/workflows/reusable_go_lint_test.yml@v0.7.1
     secrets: inherit
     with:
      go-version: '1.23'
@@ -22,6 +22,8 @@ jobs:
      run-unit-tests: true
      run-integration-tests: false
      run-lint: true
+     testdata-url: "https://drive.usercontent.google.com/download?id=1PaZe96acfJqCHJrc24VAh77H-z0U9_x1&export=download&confirm=t"
+     testdata-path: "app/upgrades/v3rc4/testdata/btc-delegations.json.test"
 
   proto_lint:
     runs-on: ubuntu-22.04
@@ -384,6 +386,32 @@ jobs:
       - name: Run e2e TestSoftwareUpgradeV3TestSuite
         run: |
           make test-e2e-cache-upgrade-v3
+
+  e2e-run-upgrade-v3rc4:
+    needs: [e2e-docker-build-babylon]
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Download babylon artifact (v3)
+        uses: actions/download-artifact@v4
+        with:
+          name: babylond-${{ github.sha }}
+          path: /tmp
+      - name: Docker load babylond (v3)
+        run: |
+          docker load < /tmp/docker-babylond.tar.gz
+      - name: Verify images
+        run: |
+          echo "Available images:"
+          docker images babylonlabs-io/babylond
+      - name: Cache Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.23
+      - name: Run e2e TestSoftwareUpgradeV3RC4TestSuite
+        run: |
+          make test-e2e-cache-upgrade-v3rc4
 
 #  e2e-run-finality-contract:
 #    needs: [e2e-docker-build-babylon]

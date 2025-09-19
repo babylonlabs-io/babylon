@@ -44,6 +44,8 @@ import (
 	bsctypes "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
 	checkpointingkeeper "github.com/babylonlabs-io/babylon/v4/x/checkpointing/keeper"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
+	costakingkeeper "github.com/babylonlabs-io/babylon/v4/x/costaking/keeper"
+	costktypes "github.com/babylonlabs-io/babylon/v4/x/costaking/types"
 	epochingkeeper "github.com/babylonlabs-io/babylon/v4/x/epoching/keeper"
 	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 	finalitykeeper "github.com/babylonlabs-io/babylon/v4/x/finality/keeper"
@@ -165,6 +167,7 @@ type AppKeepers struct {
 	BtcCheckpointKeeper  btccheckpointkeeper.Keeper
 	CheckpointingKeeper  checkpointingkeeper.Keeper
 	MonitorKeeper        monitorkeeper.Keeper
+	CostakingKeeper      costakingkeeper.Keeper
 
 	// IBC-related modules
 	IBCKeeper           *ibckeeper.Keeper           // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
@@ -258,6 +261,7 @@ func (ak *AppKeepers) InitKeepers(
 		wasmtypes.StoreKey,
 		// tokenomics-related modules
 		incentivetypes.StoreKey,
+		costktypes.StoreKey,
 		// EVM
 		evmtypes.StoreKey,
 		feemarkettypes.StoreKey,
@@ -370,13 +374,24 @@ func (ak *AppKeepers) InitKeepers(
 		appparams.AccGov.String(),
 	)
 
-	// set up incentive keeper
 	ak.IncentiveKeeper = incentivekeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[incentivetypes.StoreKey]),
 		ak.BankKeeper,
 		ak.AccountKeeper,
 		&epochingKeeper,
+		appparams.AccGov.String(),
+		authtypes.FeeCollectorName,
+	)
+
+	ak.CostakingKeeper = costakingkeeper.NewKeeper(
+		appCodec,
+		runtime.NewKVStoreService(keys[costktypes.StoreKey]),
+		ak.BankKeeper,
+		ak.AccountKeeper,
+		ak.IncentiveKeeper,
+		ak.StakingKeeper,
+		ak.DistrKeeper,
 		appparams.AccGov.String(),
 		authtypes.FeeCollectorName,
 	)
@@ -397,7 +412,12 @@ func (ak *AppKeepers) InitKeepers(
 	// register the staking hooks
 	// NOTE: stakingKeeper above is passed by reference, so that it will contain these hooks
 	ak.StakingKeeper.SetHooks(
-		stakingtypes.NewMultiStakingHooks(ak.DistrKeeper.Hooks(), ak.SlashingKeeper.Hooks(), epochingKeeper.Hooks()),
+		stakingtypes.NewMultiStakingHooks(
+			ak.DistrKeeper.Hooks(),
+			ak.SlashingKeeper.Hooks(),
+			epochingKeeper.Hooks(),
+			ak.CostakingKeeper.HookStaking(),
+		),
 	)
 
 	// set the governance module account as the authority for conducting upgrades
@@ -681,6 +701,19 @@ func (ak *AppKeepers) InitKeepers(
 		&checkpointingKeeper,
 		appparams.AccFinality.String(),
 		appparams.AccGov.String(),
+	)
+
+	ak.FinalityKeeper.SetHooks(
+		finalitytypes.NewMultiFinalityHooks(
+			ak.IncentiveKeeper.Hooks(),
+			ak.CostakingKeeper.HookFinality(),
+		),
+	)
+
+	ak.IncentiveKeeper.SetHooks(
+		incentivetypes.NewMultiIncentiveHooks(
+			ak.CostakingKeeper.HookIncentives(),
+		),
 	)
 
 	monitorKeeper := monitorkeeper.NewKeeper(

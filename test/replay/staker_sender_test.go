@@ -3,12 +3,13 @@ package replay
 import (
 	"bytes"
 	"encoding/hex"
-	bbn "github.com/babylonlabs-io/babylon/v4/types"
-	"github.com/btcsuite/btcd/wire"
-	"github.com/stretchr/testify/require"
 	"math/rand"
 	"testing"
 	"time"
+
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	"github.com/btcsuite/btcd/wire"
+	"github.com/stretchr/testify/require"
 )
 
 func TestUnbondDelegation(t *testing.T) {
@@ -36,7 +37,7 @@ func TestUnbondDelegation(t *testing.T) {
 
 	currentEpochNumber := d.GetEpoch().EpochNumber
 	d.ProgressTillFirstBlockTheNextEpoch()
-	d.FinializeCkptForEpoch(currentEpochNumber)
+	d.FinalizeCkptForEpoch(currentEpochNumber)
 
 	d.GenerateNewBlockAssertExecutionSuccess()
 

@@ -143,14 +143,14 @@ func isRefundTx(tx sdk.Tx) bool {
 	for _, msg := range tx.GetMsgs() {
 		switch msg.(type) {
 		case *btclctypes.MsgInsertHeaders, // BTC light client
-		// BTC timestamping
+			// BTC timestamping
 			*btcctypes.MsgInsertBTCSpvProof,
-		// BTC staking
+			// BTC staking
 			*bstypes.MsgAddCovenantSigs,
 			*bstypes.MsgBTCUndelegate,
 			*bstypes.MsgSelectiveSlashingEvidence,
 			*bstypes.MsgAddBTCDelegationInclusionProof,
-		// BTC staking finality
+			// BTC staking finality
 			*ftypes.MsgAddFinalitySig:
 			continue
 		default:
