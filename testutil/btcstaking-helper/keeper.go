@@ -50,6 +50,7 @@ type Helper struct {
 	BTCLightClientKeeper             *types.MockBTCLightClientKeeper
 	CheckpointingKeeperForBtcStaking *types.MockBtcCheckpointKeeper
 	CheckpointingKeeperForFinality   *ftypes.MockCheckpointingKeeper
+	IctvKeeperK                      types.IncentiveKeeper
 	Net                              *chaincfg.Params
 }
 
@@ -78,7 +79,7 @@ func NewHelper(
 	ckptKeeper := ftypes.NewMockCheckpointingKeeper(ctrl)
 	ckptKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(timestampedEpoch).AnyTimes()
 
-	return NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKeeper, ckptKeeper, ictvK, btcStkStoreKey)
+	return NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKeeper, ckptKeeper, iKeeper, btcStkStoreKey)
 }
 
 func (h *Helper) WithBlockHeight(height int64) *Helper {
@@ -95,7 +96,7 @@ func NewHelperNoMocksCalls(
 ) *Helper {
 	ctrl := gomock.NewController(t)
 
-	ictvK := NewMockIctvKeeperK(ctrl)
+	ictvK := ftypes.NewMockIncentiveKeeper(ctrl)
 	db := dbm.NewMemDB()
 	stateStore := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
 
@@ -125,24 +126,6 @@ func NewHelperWithIncentiveKeeper(
 	return NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKeeper, ckptKeeper, ictvK, nil)
 }
 
-func NewHelperWithBankMock(
-	t testing.TB,
-	btclcKeeper *types.MockBTCLightClientKeeper,
-	btccKeeper *types.MockBtcCheckpointKeeper,
-	bankKeeper *types.MockBankKeeper,
-	ictvK *IctvKeeperK,
-	btcStkStoreKey *storetypes.KVStoreKey,
-) *Helper {
-	ctrl := gomock.NewController(t)
-
-	db := dbm.NewMemDB()
-	stateStore := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
-
-	ckptKeeper := ftypes.NewMockCheckpointingKeeper(ctrl)
-
-	return NewHelperWithStoreIncentiveAndBank(t, db, stateStore, btclcKeeper, btccKeeper, ckptKeeper, ictvK, bankKeeper, btcStkStoreKey)
-}
-
 func NewHelperWithStoreAndIncentive(
 	t testing.TB,
 	db dbm.DB,
@@ -150,7 +133,7 @@ func NewHelperWithStoreAndIncentive(
 	btclcKeeper *types.MockBTCLightClientKeeper,
 	btccKForBtcStaking *types.MockBtcCheckpointKeeper,
 	btccKForFinality *ftypes.MockCheckpointingKeeper,
-	ictvKeeper IctvKeeperI,
+	ictvKeeper ftypes.IncentiveKeeper,
 	btcStkStoreKey *storetypes.KVStoreKey,
 ) *Helper {
 	k, _ := keepertest.BTCStakingKeeperWithStore(t, db, stateStore, btcStkStoreKey, btclcKeeper, btccKForBtcStaking, ictvKeeper)
@@ -173,55 +156,6 @@ func NewHelperWithStoreAndIncentive(
 
 		BTCStakingKeeper: k,
 		MsgServer:        msgSrvr,
-
-		FinalityKeeper: fk,
-		FMsgServer:     fMsgSrvr,
-
-		BTCLightClientKeeper:             btclcKeeper,
-		CheckpointingKeeperForBtcStaking: btccKForBtcStaking,
-		CheckpointingKeeperForFinality:   btccKForFinality,
-		IctvKeeperK:                      ictvKeeper,
-		Net:                              &chaincfg.SimNetParams,
-	}
-}
-
-func NewHelperWithStoreIncentiveAndBank(
-	t testing.TB,
-	db dbm.DB,
-	stateStore store.CommitMultiStore,
-	btclcKeeper *types.MockBTCLightClientKeeper,
-	btccKForBtcStaking *types.MockBtcCheckpointKeeper,
-	btccKForFinality *ftypes.MockCheckpointingKeeper,
-	ictvKeeper *IctvKeeperK,
-	bankKeeper *types.MockBankKeeper,
-	btcStkStoreKey *storetypes.KVStoreKey,
-) *Helper {
-	k, _ := keepertest.BTCStakingKeeperWithStoreAndBank(t, db, stateStore, btcStkStoreKey, btclcKeeper, btccKForBtcStaking, ictvKeeper, bankKeeper)
-	msgSrvr := keeper.NewMsgServerImpl(*k)
-
-	bscKeeper := k.BscKeeper.(bsckeeper.Keeper)
-	btcStkConsumerMsgServer := bsckeeper.NewMsgServerImpl(bscKeeper)
-
-	fk, ctx := keepertest.FinalityKeeperWithStore(t, db, stateStore, k, ictvKeeper, btccKForFinality)
-	fMsgSrvr := fkeeper.NewMsgServerImpl(*fk)
-
-	// set all parameters
-	err := k.SetParams(ctx, types.DefaultParams())
-	require.NoError(t, err)
-	err = fk.SetParams(ctx, ftypes.DefaultParams())
-	require.NoError(t, err)
-
-	ctx = ctx.WithHeaderInfo(header.Info{Height: 1, Time: time.Now()}).WithBlockHeight(1).WithBlockTime(time.Now())
-
-	return &Helper{
-		t:   t,
-		Ctx: ctx,
-
-		BTCStakingKeeper: k,
-		MsgServer:        msgSrvr,
-
-		BTCStkConsumerKeeper:    &bscKeeper,
-		BtcStkConsumerMsgServer: btcStkConsumerMsgServer,
 
 		FinalityKeeper: fk,
 		FMsgServer:     fMsgSrvr,
