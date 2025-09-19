@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"cosmossdk.io/collections"
+	sdkmath "cosmossdk.io/math"
 	"cosmossdk.io/store/prefix"
 	storetypes "cosmossdk.io/store/types"
 	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
@@ -229,7 +230,7 @@ func TestInitGenesis(t *testing.T) {
 			var (
 				ctrl   = gomock.NewController(t)
 				ak     = types.NewMockAccountKeeper(ctrl)
-				k, ctx = keepertest.IncentiveKeeper(t, nil, ak, nil)
+				k, ctx = keepertest.IncentiveKeeper(t, nil, ak, nil, nil)
 			)
 			defer ctrl.Finish()
 			tc.akMockResp(ak)
@@ -353,7 +354,7 @@ func setupTest(t *testing.T, seed int64) (sdk.Context, *keeper.Keeper, *storetyp
 		r          = rand.New(rand.NewSource(seed))
 		ak         = types.NewMockAccountKeeper(ctrl)
 		storeKey   = storetypes.NewKVStoreKey(types.StoreKey)
-		k, ctx     = keepertest.IncentiveKeeperWithStoreKey(t, storeKey, nil, ak, nil)
+		k, ctx     = keepertest.IncentiveKeeperWithStoreKey(t, storeKey, nil, ak, nil, nil)
 		l          = int(math.Abs(float64(r.Int() % 50))) // cap it to 50 entries
 		bsg        = make([]types.BTCStakingGaugeEntry, l)
 		rg         = make([]types.RewardGaugeEntry, l)
@@ -457,9 +458,12 @@ func setupTest(t *testing.T, seed int64) (sdk.Context, *keeper.Keeper, *storetyp
 		}
 	}
 
+	btcStkPortion := datagen.RandomLegacyDec(r, 10, 1)
+	rem := sdkmath.LegacyOneDec().Sub(btcStkPortion).Quo(sdkmath.LegacyNewDec(2))
 	gs := &types.GenesisState{
 		Params: types.Params{
-			BtcStakingPortion: datagen.RandomLegacyDec(r, 10, 1),
+			BtcStakingPortion: btcStkPortion,
+			FpPortion:         sdkmath.LegacyOneDec().Sub(btcStkPortion).Sub(rem),
 		},
 		BtcStakingGauges:                      bsg,
 		RewardGauges:                          rg,

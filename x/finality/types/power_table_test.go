@@ -123,7 +123,7 @@ func TestVotingPowerDistCache(t *testing.T) {
 			desc:             "one got jailed",
 			maxActiveFPs:     80,
 			numActiveFps:     1,
-			numInactiveFps:   0,
+			numInactiveFps:   1,
 			totalVotingPower: 1000,
 			prevDistCache:    types.NewVotingPowerDistCache(),
 			fps: []*types.FinalityProviderDistInfo{
@@ -144,7 +144,7 @@ func TestVotingPowerDistCache(t *testing.T) {
 			desc:             "one got slashed",
 			maxActiveFPs:     80,
 			numActiveFps:     1,
-			numInactiveFps:   0,
+			numInactiveFps:   1,
 			totalVotingPower: 1000,
 			prevDistCache:    types.NewVotingPowerDistCache(),
 			fps: []*types.FinalityProviderDistInfo{

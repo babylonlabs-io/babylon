@@ -13,7 +13,6 @@ import (
 	feegrantkeeper "cosmossdk.io/x/feegrant/keeper"
 	upgradekeeper "cosmossdk.io/x/upgrade/keeper"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
-
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/runtime"
@@ -151,6 +150,7 @@ type AppKeepers struct {
 	BtcCheckpointKeeper  btccheckpointkeeper.Keeper
 	CheckpointingKeeper  checkpointingkeeper.Keeper
 	MonitorKeeper        monitorkeeper.Keeper
+	CostakingKeeper      costakingkeeper.Keeper
 
 	// IBC-related modules
 	IBCKeeper           *ibckeeper.Keeper           // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
@@ -230,6 +230,7 @@ func (ak *AppKeepers) InitKeepers(
 		wasmtypes.StoreKey,
 		// tokenomics-related modules
 		incentivetypes.StoreKey,
+		costktypes.StoreKey,
 	)
 	ak.keys = keys
 
@@ -337,13 +338,24 @@ func (ak *AppKeepers) InitKeepers(
 		appparams.AccGov.String(),
 	)
 
-	// set up incentive keeper
 	ak.IncentiveKeeper = incentivekeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[incentivetypes.StoreKey]),
 		ak.BankKeeper,
 		ak.AccountKeeper,
 		&epochingKeeper,
+		appparams.AccGov.String(),
+		authtypes.FeeCollectorName,
+	)
+
+	ak.CostakingKeeper = costakingkeeper.NewKeeper(
+		appCodec,
+		runtime.NewKVStoreService(keys[costktypes.StoreKey]),
+		ak.BankKeeper,
+		ak.AccountKeeper,
+		ak.IncentiveKeeper,
+		ak.StakingKeeper,
+		ak.DistrKeeper,
 		appparams.AccGov.String(),
 		authtypes.FeeCollectorName,
 	)
@@ -364,7 +376,12 @@ func (ak *AppKeepers) InitKeepers(
 	// register the staking hooks
 	// NOTE: stakingKeeper above is passed by reference, so that it will contain these hooks
 	ak.StakingKeeper.SetHooks(
-		stakingtypes.NewMultiStakingHooks(ak.DistrKeeper.Hooks(), ak.SlashingKeeper.Hooks(), epochingKeeper.Hooks()),
+		stakingtypes.NewMultiStakingHooks(
+			ak.DistrKeeper.Hooks(),
+			ak.SlashingKeeper.Hooks(),
+			epochingKeeper.Hooks(),
+			ak.CostakingKeeper.HookStaking(),
+		),
 	)
 
 	// set the governance module account as the authority for conducting upgrades
@@ -460,7 +477,7 @@ func (ak *AppKeepers) InitKeepers(
 
 	ak.GovKeeper = *govKeeper.SetHooks(
 		govtypes.NewMultiGovHooks(
-			// register the governance hooks
+		// register the governance hooks
 		),
 	)
 
@@ -558,6 +575,40 @@ func (ak *AppKeepers) InitKeepers(
 		ak.CheckpointingKeeper,
 		appparams.AccGov.String(),
 	)
+
+	ak.FinalityKeeper.SetHooks(
+		finalitytypes.NewMultiFinalityHooks(
+			ak.IncentiveKeeper.Hooks(),
+			ak.CostakingKeeper.HookFinality(),
+		),
+	)
+
+	ak.IncentiveKeeper.SetHooks(
+		incentivetypes.NewMultiIncentiveHooks(
+			ak.CostakingKeeper.HookIncentives(),
+		),
+	)
+
+	monitorKeeper := monitorkeeper.NewKeeper(
+		appCodec,
+		runtime.NewKVStoreService(keys[monitortypes.StoreKey]),
+		&btclightclientKeeper,
+	)
+
+	// set up Checkpointing, BTCCheckpoint, and BTCLightclient keepers
+	checkpointingKeeper.SetHooks(
+		checkpointingtypes.NewMultiCheckpointingHooks(epochingKeeper.Hooks(), monitorKeeper.Hooks()),
+	)
+	btclightclientKeeper.SetHooks(
+		btclightclienttypes.NewMultiBTCLightClientHooks(btcCheckpointKeeper.Hooks(), ak.BTCStakingKeeper.Hooks()),
+	)
+
+	// wire the keepers with hooks to the app
+	ak.EpochingKeeper = epochingKeeper
+	ak.BTCLightClientKeeper = btclightclientKeeper
+	ak.CheckpointingKeeper = checkpointingKeeper
+	ak.BtcCheckpointKeeper = btcCheckpointKeeper
+	ak.MonitorKeeper = monitorKeeper
 
 	// create evidence keeper with router
 	evidenceKeeper := evidencekeeper.NewKeeper(

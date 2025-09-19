@@ -16,7 +16,7 @@ import (
 )
 
 func setupMsgServer(t testing.TB) (types.MsgServer, context.Context) {
-	k, ctx := testkeeper.IncentiveKeeper(t, nil, nil, nil)
+	k, ctx := testkeeper.IncentiveKeeper(t, nil, nil, nil, nil)
 	return keeper.NewMsgServerImpl(*k), ctx
 }
 
@@ -36,8 +36,9 @@ func FuzzWithdrawReward(f *testing.F) {
 
 		// mock bank keeper
 		bk := types.NewMockBankKeeper(ctrl)
+		hook := types.NewMockIncentiveHooks(ctrl)
 
-		ik, ctx := testkeeper.IncentiveKeeper(t, bk, nil, nil)
+		ik, ctx := testkeeper.IncentiveKeeper(t, bk, nil, nil, types.NewMultiIncentiveHooks(hook))
 		ms := keeper.NewMsgServerImpl(*ik)
 
 		// generate and set a random reward gauge with a random set of withdrawable coins
@@ -50,6 +51,7 @@ func FuzzWithdrawReward(f *testing.F) {
 		// mock transfer of withdrawable coins
 		withdrawableCoins := rg.GetWithdrawableCoins()
 		bk.EXPECT().SendCoinsFromModuleToAccount(gomock.Any(), gomock.Eq(types.ModuleName), gomock.Eq(sAddr), gomock.Eq(withdrawableCoins)).Times(1)
+		hook.EXPECT().BeforeRewardWithdraw(gomock.Any(), gomock.Eq(sType), gomock.Eq(sAddr)).Times(1)
 
 		// invoke withdraw and assert consistency
 		resp, err := ms.WithdrawReward(ctx, &types.MsgWithdrawReward{
@@ -84,8 +86,8 @@ func FuzzSetWithdrawAddr(f *testing.F) {
 
 		// mock bank keeper
 		bk := types.NewMockBankKeeper(ctrl)
-
-		ik, ctx := testkeeper.IncentiveKeeper(t, bk, nil, nil)
+		hook := types.NewMockIncentiveHooks(ctrl)
+		ik, ctx := testkeeper.IncentiveKeeper(t, bk, nil, nil, hook)
 		ms := keeper.NewMsgServerImpl(*ik)
 
 		// generate and set a random reward gauge with a random set of withdrawable coins
@@ -123,6 +125,7 @@ func FuzzSetWithdrawAddr(f *testing.F) {
 		require.False(t, rgauge.IsFullyWithdrawn())
 
 		// invoke withdraw and assert consistency
+		hook.EXPECT().BeforeRewardWithdraw(gomock.Any(), gomock.Eq(sType), gomock.Eq(sAddr)).Times(1)
 		resp, err := ms.WithdrawReward(ctx, &types.MsgWithdrawReward{
 			Type:    sType.String(),
 			Address: sAddr.String(),

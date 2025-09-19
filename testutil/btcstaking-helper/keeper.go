@@ -20,6 +20,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/babylonlabs-io/babylon/v3/testutil/mocks"
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
 	keepertest "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
@@ -46,6 +47,7 @@ type Helper struct {
 
 	FinalityKeeper *fkeeper.Keeper
 	FMsgServer     ftypes.MsgServer
+	FinalityHooks  ftypes.FinalityHooks
 
 	BTCLightClientKeeper             *types.MockBTCLightClientKeeper
 	CheckpointingKeeperForBtcStaking *types.MockBtcCheckpointKeeper
@@ -66,6 +68,7 @@ func NewHelper(
 	btcStkStoreKey *storetypes.KVStoreKey,
 ) *Helper {
 	ctrl := gomock.NewController(t)
+	t.Cleanup(ctrl.Finish)
 
 	// mock refundable messages
 	iKeeper := ftypes.NewMockIncentiveKeeper(ctrl)
@@ -79,7 +82,7 @@ func NewHelper(
 	ckptKeeper := ftypes.NewMockCheckpointingKeeper(ctrl)
 	ckptKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(timestampedEpoch).AnyTimes()
 
-	return NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKeeper, ckptKeeper, iKeeper, btcStkStoreKey)
+	return NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKeeper, ckptKeeper, ictvK, btcStkStoreKey, ftypes.NewMockFinalityHooks(ctrl))
 }
 
 func (h *Helper) WithBlockHeight(height int64) *Helper {
@@ -102,7 +105,7 @@ func NewHelperNoMocksCalls(
 
 	ckptKeeper := ftypes.NewMockCheckpointingKeeper(ctrl)
 
-	return NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKeeper, ckptKeeper, ictvK, btcStkStoreKey)
+	return NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKeeper, ckptKeeper, ictvK, btcStkStoreKey, ftypes.NewMockFinalityHooks(ctrl))
 }
 
 // NewHelperWithIncentiveKeeper creates a new Helper with the given BTCLightClientKeeper and BtcCheckpointKeeper mocks, and an instance of the incentive keeper.
@@ -123,7 +126,26 @@ func NewHelperWithIncentiveKeeper(
 
 	ckptKeeper := ftypes.NewMockCheckpointingKeeper(ctrl)
 
-	return NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKeeper, ckptKeeper, ictvK, nil)
+	return NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKeeper, ckptKeeper, ictvK, nil, ftypes.NewMockFinalityHooks(ctrl))
+}
+
+func NewHelperWithBankMock(
+	t testing.TB,
+	btclcKeeper *types.MockBTCLightClientKeeper,
+	btccKeeper *types.MockBtcCheckpointKeeper,
+	bankKeeper *types.MockBankKeeper,
+	chanKeeper *mocks.MockZoneConciergeChannelKeeper,
+	ictvK *IctvKeeperK,
+	btcStkStoreKey *storetypes.KVStoreKey,
+) *Helper {
+	ctrl := gomock.NewController(t)
+
+	db := dbm.NewMemDB()
+	stateStore := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
+
+	ckptKeeper := ftypes.NewMockCheckpointingKeeper(ctrl)
+
+	return NewHelperWithStoreIncentiveAndBank(t, db, stateStore, btclcKeeper, btccKeeper, ckptKeeper, ictvK, bankKeeper, chanKeeper, btcStkStoreKey)
 }
 
 func NewHelperWithStoreAndIncentive(
@@ -135,11 +157,59 @@ func NewHelperWithStoreAndIncentive(
 	btccKForFinality *ftypes.MockCheckpointingKeeper,
 	ictvKeeper ftypes.IncentiveKeeper,
 	btcStkStoreKey *storetypes.KVStoreKey,
+	finalityHooks ftypes.FinalityHooks,
 ) *Helper {
 	k, _ := keepertest.BTCStakingKeeperWithStore(t, db, stateStore, btcStkStoreKey, btclcKeeper, btccKForBtcStaking, ictvKeeper)
 	msgSrvr := keeper.NewMsgServerImpl(*k)
 
-	fk, ctx := keepertest.FinalityKeeperWithStore(t, db, stateStore, k, ictvKeeper, btccKForFinality)
+	fk, ctx := keepertest.FinalityKeeperWithStore(t, db, stateStore, k, ictvKeeper, btccKForFinality, finalityHooks)
+	fMsgSrvr := fkeeper.NewMsgServerImpl(*fk)
+
+	// set all parameters
+	err := k.SetParams(ctx, types.DefaultParams())
+	require.NoError(t, err)
+	err = fk.SetParams(ctx, ftypes.DefaultParams())
+	require.NoError(t, err)
+
+	ctx = ctx.WithHeaderInfo(header.Info{Height: 1, Time: time.Now()}).WithBlockHeight(1).WithBlockTime(time.Now())
+
+	return &Helper{
+		t:   t,
+		Ctx: ctx,
+
+		BTCStakingKeeper: k,
+		MsgServer:        msgSrvr,
+
+		FinalityKeeper: fk,
+		FMsgServer:     fMsgSrvr,
+		FinalityHooks:  finalityHooks,
+
+		BTCLightClientKeeper:             btclcKeeper,
+		CheckpointingKeeperForBtcStaking: btccKForBtcStaking,
+		CheckpointingKeeperForFinality:   btccKForFinality,
+		IctvKeeperK:                      ictvKeeper,
+		Net:                              &chaincfg.SimNetParams,
+	}
+}
+
+func NewHelperWithStoreIncentiveAndBank(
+	t testing.TB,
+	db dbm.DB,
+	stateStore store.CommitMultiStore,
+	btclcKeeper *types.MockBTCLightClientKeeper,
+	btccKForBtcStaking *types.MockBtcCheckpointKeeper,
+	btccKForFinality *ftypes.MockCheckpointingKeeper,
+	ictvKeeper *IctvKeeperK,
+	bankKeeper *types.MockBankKeeper,
+	btcStkStoreKey *storetypes.KVStoreKey,
+) *Helper {
+	k, _ := keepertest.BTCStakingKeeperWithStoreAndBank(t, db, stateStore, btcStkStoreKey, btclcKeeper, btccKForBtcStaking, ictvKeeper, bankKeeper)
+	msgSrvr := keeper.NewMsgServerImpl(*k)
+
+	bscKeeper := k.BscKeeper.(bsckeeper.Keeper)
+	btcStkConsumerMsgServer := bsckeeper.NewMsgServerImpl(bscKeeper)
+
+	fk, ctx := keepertest.FinalityKeeperWithStore(t, db, stateStore, k, ictvKeeper, btccKForFinality, ftypes.NewMultiFinalityHooks())
 	fMsgSrvr := fkeeper.NewMsgServerImpl(*fk)
 
 	// set all parameters

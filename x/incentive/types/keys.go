@@ -32,6 +32,7 @@ var (
 	BTCDelegatorToFPKey                        = []byte{0x9}               // key prefix for storing the map reference from delegation to finality provider (del) => fp
 	RewardTrackerEvents                        = collections.NewPrefix(10) // key prefix for events of update in the voting power of BTC delegations (babylon block height) => []EventsPowerUpdateAtHeight
 	RewardTrackerEventsLastProcessedHeight     = collections.NewPrefix(11) // key prefix for last processed block height of reward tracker events
+	FPDirectGaugeKey                           = []byte{0x12}              // key prefix for FP direct rewards gauge at each height
 )
 
 // GetWithdrawAddrKey creates the key for a delegator's withdraw addr.

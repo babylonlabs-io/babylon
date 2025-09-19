@@ -86,6 +86,7 @@ func TestResumeFinalityOfSlashedFp(t *testing.T) {
 	goodBlock := d.GetIndexedBlock(lastVotedBlkHeight)
 	// fp slashed with bogus vote
 	slashFp.CastVoteForHash(lastVotedBlkHeight, badBlock.AppHash)
+	// TODO: check how it is reducing the stake of an already reduced btc del
 	slashFp.CastVoteForHash(lastVotedBlkHeight, goodBlock.AppHash)
 
 	d.GenerateNewBlockAssertExecutionSuccess()

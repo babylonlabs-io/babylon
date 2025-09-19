@@ -224,6 +224,9 @@ func NewSoftwareUpgradeConfigurer(t *testing.T, isDebugLogEnabled bool, upgradeP
 		chainA.BTCHeaders = btcHeaders
 	}
 
+	if currentTag != "" {
+		containerManager.WithCurrentTag(currentTag)
+	}
 	return NewUpgradeConfigurer(t,
 		[]*chain.Config{
 			// we only need 1 chain for testing upgrade

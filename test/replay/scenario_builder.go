@@ -47,9 +47,9 @@ func (s *StandardScenario) InitScenario(
 		fp.CommitRandomness()
 	}
 
-	currnetEpochNunber := s.driver.GetEpoch().EpochNumber
+	currentEpochNumber := s.driver.GetEpoch().EpochNumber
 	s.driver.ProgressTillFirstBlockTheNextEpoch()
-	s.driver.FinializeCkptForEpoch(currnetEpochNunber)
+	s.driver.FinalizeCkptForEpoch(currentEpochNumber)
 
 	// commit all fps in one block
 	s.driver.GenerateNewBlockAssertExecutionSuccess()

@@ -9,6 +9,7 @@ import (
 
 	"github.com/babylonlabs-io/babylon/v4/crypto/eots"
 	"github.com/babylonlabs-io/babylon/v4/types"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	btcstktypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 )
 
@@ -28,6 +29,13 @@ const (
 	FinalityProviderState_SLASHED
 )
 
+// DelegationInfo holds cached information about a delegation made by a delegator to one or more finality providers
+type DelegationInfo struct {
+	Delegator sdk.AccAddress
+	FpBtcPk   string
+	TotalSat  uint64
+}
+
 // Processing state during the power distribution change process
 // It holds the state of finality providers, BTC delegations, and events
 // It is used to track the changes in the finality providers' states and the BTC delegations
@@ -35,6 +43,9 @@ const (
 // The state is updated during the power distribution change process and is used to generate the
 // final power distribution cache
 type ProcessingState struct {
+	// PrevActiveFpByBtcPk is a map of the active finality providers in the previous
+	// voting power distribution cache
+	PrevActiveFpByBtcPk map[string]struct{}
 	// FPStatesByBtcPk is a map of the finality providers' state
 	FPStatesByBtcPk map[string]FinalityProviderState
 	// FpByBtcPk is a map where key is finality provider's BTC PK hex and value is the finality provider
@@ -49,16 +60,67 @@ type ProcessingState struct {
 	ExpiredEvents []*btcstktypes.EventPowerDistUpdate_BtcDelStateUpdate
 	// A slice of the slashed finality provider events
 	SlashedEvents []*btcstktypes.EventPowerDistUpdate_SlashedFp
+	// ActiveDelegations holds information about active delegations events
+	ActiveDelegations []DelegationInfo
+	// UnbondingDelegations holds information about unbonding delegations events
+	UnbondingDelegations []DelegationInfo
 }
 
 func NewProcessingState() *ProcessingState {
 	return &ProcessingState{
-		FPStatesByBtcPk:    map[string]FinalityProviderState{},
-		FpByBtcPk:          map[string]*btcstktypes.FinalityProvider{},
-		DeltaSatsByFpBtcPk: map[string]int64{},
-		ExpiredEvents:      []*btcstktypes.EventPowerDistUpdate_BtcDelStateUpdate{},
-		SlashedEvents:      []*btcstktypes.EventPowerDistUpdate_SlashedFp{},
+		PrevActiveFpByBtcPk: map[string]struct{}{},
+		FPStatesByBtcPk:     map[string]FinalityProviderState{},
+		FpByBtcPk:           map[string]*btcstktypes.FinalityProvider{},
+		DeltaSatsByFpBtcPk:  map[string]int64{},
+		ExpiredEvents:       []*btcstktypes.EventPowerDistUpdate_BtcDelStateUpdate{},
+		SlashedEvents:       []*btcstktypes.EventPowerDistUpdate_SlashedFp{},
 	}
+}
+
+// AddStateForFp adds the state of the given finality provider to the processing state
+// based on the finality provider's distribution info (e.g. if it is jailed or slashed)
+func (ps *ProcessingState) AddStateForFp(fp FinalityProviderDistInfo) {
+	fpBTCPKHex := fp.BtcPk.MarshalHex()
+	if fp.IsSlashed {
+		ps.FPStatesByBtcPk[fpBTCPKHex] = FinalityProviderState_SLASHED
+	}
+	if fp.IsJailed {
+		ps.FPStatesByBtcPk[fpBTCPKHex] = FinalityProviderState_JAILED
+	}
+}
+
+// FillByPrevVpDstCache fill up the state.PrevFpStatusByBtcPk based on the previous vp dst cache
+func (ps *ProcessingState) FillByPrevVpDstCache(dc *VotingPowerDistCache) {
+	for idx, fp := range dc.FinalityProviders {
+		isActive := idx < int(dc.NumActiveFps) // it should not be <= as idx starts at zero
+		if isActive {
+			ps.PrevActiveFpByBtcPk[fp.BtcPk.MarshalHex()] = struct{}{}
+		}
+		ps.AddStateForFp(*fp)
+	}
+}
+
+func (ps *ProcessingState) IsFpInPrevActiveSet(fpBtcPk *bbn.BIP340PubKey) bool {
+	_, found := ps.PrevActiveFpByBtcPk[fpBtcPk.MarshalHex()]
+	return found
+}
+
+func (ps *ProcessingState) AddActiveDelegation(delAddr string, fpPubKey bbn.BIP340PubKey, totalSat uint64) {
+	delAccAddr := sdk.MustAccAddressFromBech32(delAddr)
+	ps.ActiveDelegations = append(ps.ActiveDelegations, DelegationInfo{
+		Delegator: delAccAddr,
+		FpBtcPk:   fpPubKey.MarshalHex(),
+		TotalSat:  totalSat,
+	})
+}
+
+func (ps *ProcessingState) AddUnbondingDelegation(delAddr string, fpPubKey bbn.BIP340PubKey, totalSat uint64) {
+	delAccAddr := sdk.MustAccAddressFromBech32(delAddr)
+	ps.UnbondingDelegations = append(ps.UnbondingDelegations, DelegationInfo{
+		Delegator: delAccAddr,
+		FpBtcPk:   fpPubKey.MarshalHex(),
+		TotalSat:  totalSat,
+	})
 }
 
 func (c *PubRandCommit) IsInRange(height uint64) bool {
@@ -185,4 +247,20 @@ func (e *Evidence) ExtractBTCSK() (*btcec.PrivateKey, error) {
 		e.canonicalMsgToSign(), e.CanonicalFinalitySig.ToModNScalar(), // msg and sig for canonical block
 		e.forkMsgToSign(), e.ForkFinalitySig.ToModNScalar(), // msg and sig for fork block
 	)
+}
+
+func (fp *FinalityProviderDistInfo) FpStatus(canBeActive bool) btcstktypes.FinalityProviderStatus {
+	if fp.IsSlashed {
+		return btcstktypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_SLASHED
+	}
+
+	if fp.IsJailed {
+		return btcstktypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_JAILED
+	}
+
+	if canBeActive && fp.IsTimestamped && fp.TotalBondedSat > 0 {
+		return btcstktypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_ACTIVE
+	}
+
+	return btcstktypes.FinalityProviderStatus_FINALITY_PROVIDER_STATUS_INACTIVE
 }

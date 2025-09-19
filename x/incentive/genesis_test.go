@@ -13,7 +13,7 @@ import (
 func TestGenesis(t *testing.T) {
 	genesisState := types.DefaultGenesis()
 
-	k, ctx := keepertest.IncentiveKeeper(t, nil, nil, nil)
+	k, ctx := keepertest.IncentiveKeeper(t, nil, nil, nil, nil)
 	incentive.InitGenesis(ctx, *k, *genesisState)
 	got := incentive.ExportGenesis(ctx, *k)
 	require.NotNil(t, got)

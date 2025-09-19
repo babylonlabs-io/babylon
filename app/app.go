@@ -109,6 +109,8 @@ import (
 	"github.com/babylonlabs-io/babylon/v4/x/checkpointing/prepare"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
 	"github.com/babylonlabs-io/babylon/v4/x/checkpointing/vote_extensions"
+	"github.com/babylonlabs-io/babylon/v4/x/costaking"
+	costktypes "github.com/babylonlabs-io/babylon/v4/x/costaking/types"
 	"github.com/babylonlabs-io/babylon/v4/x/epoching"
 	epochingkeeper "github.com/babylonlabs-io/babylon/v4/x/epoching/keeper"
 	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
@@ -158,6 +160,7 @@ var (
 		govtypes.ModuleName:                  {authtypes.Burner},
 		ibctransfertypes.ModuleName:          {authtypes.Minter, authtypes.Burner},
 		incentivetypes.ModuleName:            nil, // this line is needed to create an account for incentive module
+		costktypes.ModuleName:                       nil, // this line is needed to create an account for costaking module
 		tokenfactorytypes.ModuleName:         {authtypes.Minter, authtypes.Burner},
 		icatypes.ModuleName:                  nil,
 		epochingtypes.DelegatePoolModuleName: nil,
@@ -327,6 +330,7 @@ func NewBabylonApp(
 		finality.NewAppModule(appCodec, app.FinalityKeeper),
 		// Babylon modules - tokenomics
 		incentive.NewAppModule(appCodec, app.IncentiveKeeper, app.AccountKeeper, app.BankKeeper),
+		costaking.NewAppModule(appCodec, app.CostakingKeeper),
 	)
 
 	// BasicModuleManager defines the module BasicManager which is in charge of setting up basic,
@@ -337,15 +341,6 @@ func NewBabylonApp(
 		app.ModuleManager,
 		map[string]module.AppModuleBasic{
 			genutiltypes.ModuleName: genutil.NewAppModuleBasic(checkpointingtypes.GenTxMessageValidatorWrappedCreateValidator),
-			govtypes.ModuleName: gov.NewAppModuleBasic(
-				[]govclient.ProposalHandler{
-					paramsclient.ProposalHandler,
-				},
-			),
-		})
-	app.BasicModuleManager.RegisterLegacyAminoCodec(legacyAmino)
-	app.BasicModuleManager.RegisterInterfaces(interfaceRegistry)
-
 	// NOTE: upgrade module is required to be prioritized
 	app.ModuleManager.SetOrderPreBlockers(
 		upgradetypes.ModuleName,
@@ -359,8 +354,10 @@ func NewBabylonApp(
 	app.ModuleManager.SetOrderBeginBlockers(
 		upgradetypes.ModuleName,
 		// NOTE: incentive module's BeginBlock has to be after mint but before distribution
-		// so that it can intercept a part of new inflation to reward BTC staking stakeholders
-		minttypes.ModuleName, incentivetypes.ModuleName, distrtypes.ModuleName,
+		// so that it can intercept a part of new inflation to reward BTC staking stakeholders.
+		// costaking module goes right after incentives but before distribution to also take
+		// a cut of the inflation for costaking (BABY + BTC) staking.
+		minttypes.ModuleName, incentivetypes.ModuleName, costktypes.ModuleName, distrtypes.ModuleName,
 		slashingtypes.ModuleName,
 		evidencetypes.ModuleName, stakingtypes.ModuleName,
 		authtypes.ModuleName, banktypes.ModuleName, govtypes.ModuleName, genutiltypes.ModuleName,
@@ -415,6 +412,7 @@ func NewBabylonApp(
 		finalitytypes.ModuleName,
 		// tokenomics related modules
 		incentivetypes.ModuleName, // EndBlock of incentive module does not matter
+		costktypes.ModuleName,
 	)
 	// Babylon does not want EndBlock processing in staking
 	app.ModuleManager.OrderEndBlockers = append(app.ModuleManager.OrderEndBlockers[:1], app.ModuleManager.OrderEndBlockers[1+1:]...) // remove stakingtypes.ModuleName
@@ -430,7 +428,11 @@ func NewBabylonApp(
 	// so that other modules that want to create or claim capabilities afterwards in InitChain
 	// can do so safely.
 	genesisModuleOrder := []string{
-		authtypes.ModuleName, banktypes.ModuleName, distrtypes.ModuleName, stakingtypes.ModuleName,
+		authtypes.ModuleName, banktypes.ModuleName, distrtypes.ModuleName,
+		// module that subscribes to staking hooks.
+		// staking init genesis calls AfterDelegationModified
+		costktypes.ModuleName,
+		stakingtypes.ModuleName,
 		slashingtypes.ModuleName, govtypes.ModuleName, minttypes.ModuleName,
 		genutiltypes.ModuleName, evidencetypes.ModuleName, authz.ModuleName,
 		feegrant.ModuleName,

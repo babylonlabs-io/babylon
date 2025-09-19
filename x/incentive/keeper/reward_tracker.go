@@ -63,7 +63,7 @@ func (k Keeper) FpSlashed(ctx context.Context, fp sdk.AccAddress) error {
 
 	// remove all the rewards available from the just ended period
 	keysBtcDelRwdTracker := make([][]byte, 0)
-	if err := k.IterateBTCDelegationRewardsTracker(ctx, fp, func(fp, del sdk.AccAddress) error {
+	if err := k.IterateBTCDelegationRewardsTracker(ctx, fp, func(fp, del sdk.AccAddress, val types.BTCDelegationRewardsTracker) error {
 		keysBtcDelRwdTracker = append(keysBtcDelRwdTracker, del.Bytes())
 		return k.CalculateBTCDelegationRewardsAndSendToGauge(ctx, fp, del, endedPeriod)
 	}); err != nil {

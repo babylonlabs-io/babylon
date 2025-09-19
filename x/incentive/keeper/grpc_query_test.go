@@ -23,7 +23,7 @@ func FuzzRewardGaugesQuery(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 
-		keeper, ctx := testkeeper.IncentiveKeeper(t, nil, nil, nil)
+		keeper, ctx := testkeeper.IncentiveKeeper(t, nil, nil, nil, types.NewMultiIncentiveHooks())
 
 		// generate a list of random RewardGauge map and insert them to KVStore
 		// where in each map, key is stakeholder type and address is the reward gauge
@@ -66,7 +66,7 @@ func FuzzBTCStakingGaugeQuery(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 
-		keeper, ctx := testkeeper.IncentiveKeeper(t, nil, nil, nil)
+		keeper, ctx := testkeeper.IncentiveKeeper(t, nil, nil, nil, nil)
 
 		// generate a list of random Gauges at random heights, then insert them to KVStore
 		heightList := []uint64{datagen.RandomInt(r, 1000) + 1}
@@ -102,7 +102,7 @@ func FuzzDelegationRewardsQuery(f *testing.F) {
 			r            = rand.New(rand.NewSource(seed))
 			storeKey     = storetypes.NewKVStoreKey(types.StoreKey)
 			encConfig    = appparams.DefaultEncodingConfig()
-			k, ctx       = testkeeper.IncentiveKeeperWithStoreKey(t, storeKey, nil, nil, nil)
+			k, ctx       = testkeeper.IncentiveKeeperWithStoreKey(t, storeKey, nil, nil, nil, nil)
 			fp, del      = datagen.GenRandomAddress(), datagen.GenRandomAddress()
 			storeService = runtime.NewKVStoreService(storeKey)
 			store        = storeService.OpenKVStore(ctx)
@@ -178,6 +178,39 @@ func FuzzDelegationRewardsQuery(f *testing.F) {
 			},
 		)
 		require.NoError(t, err)
-		require.Equal(t, expectedRwd, res.Rewards)
+		require.Equal(t, expectedRwd.String(), res.Rewards.String())
+	})
+}
+
+func FuzzFpCurrentRewards(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+
+		k, ctx := testkeeper.IncentiveKeeper(t, nil, nil, nil, nil)
+
+		// invalid query
+		badFp := datagen.GenRandomAddress()
+		req := &types.QueryFpCurrentRewardsRequest{
+			FinalityProviderAddress: badFp.String(),
+		}
+		resp, err := k.FpCurrentRewards(ctx, req)
+		require.EqualError(t, err, types.ErrFPCurrentRewardsInvalid.Wrapf("failed to get for addr %s: %s", badFp.String(), types.ErrFPCurrentRewardsNotFound).Error())
+		require.Nil(t, resp)
+
+		// correct query
+		fp := datagen.GenRandomAddress()
+		rwd := datagen.GenRandomFinalityProviderCurrentRewards(r)
+		err = k.SetFinalityProviderCurrentRewards(ctx, fp, rwd)
+		require.NoError(t, err)
+
+		req = &types.QueryFpCurrentRewardsRequest{
+			FinalityProviderAddress: fp.String(),
+		}
+		resp, err = k.FpCurrentRewards(ctx, req)
+		require.NoError(t, err)
+		require.Equal(t, resp.CurrentRewards.String(), rwd.CurrentRewards.String())
+		require.Equal(t, resp.TotalActiveSat.String(), rwd.TotalActiveSat.String())
+		require.Equal(t, resp.Period, rwd.Period)
 	})
 }

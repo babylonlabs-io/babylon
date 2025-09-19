@@ -2,6 +2,7 @@ package keeper_test
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 	"math"
 	"math/rand"
@@ -15,7 +16,9 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/babylonlabs-io/babylon/v3/app/signingcontext"
 	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
+	"github.com/babylonlabs-io/babylon/v4/crypto/eots"
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
 	testutil "github.com/babylonlabs-io/babylon/v4/testutil/incentives-helper"
 	keepertest "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
@@ -29,7 +32,7 @@ import (
 )
 
 func setupMsgServer(t testing.TB) (*keeper.Keeper, types.MsgServer, context.Context) {
-	fKeeper, ctx := keepertest.FinalityKeeper(t, nil, nil, nil)
+	fKeeper, ctx := keepertest.FinalityKeeper(t, nil, nil, nil, nil)
 	return fKeeper, keeper.NewMsgServerImpl(*fKeeper), ctx
 }
 
@@ -49,7 +52,7 @@ func FuzzCommitPubRandList(f *testing.F) {
 
 		bsKeeper := types.NewMockBTCStakingKeeper(ctrl)
 		cKeeper := types.NewMockCheckpointingKeeper(ctrl)
-		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, nil, cKeeper)
+		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, nil, cKeeper, nil)
 		ms := keeper.NewMsgServerImpl(*fKeeper)
 		committedEpochNum := datagen.GenRandomEpochNum(r)
 		cKeeper.EXPECT().GetEpoch(gomock.Any()).Return(&epochingtypes.Epoch{EpochNumber: committedEpochNum}).AnyTimes()
@@ -141,7 +144,7 @@ func FuzzAddFinalitySig(f *testing.F) {
 		cKeeper := types.NewMockCheckpointingKeeper(ctrl)
 		iKeeper := types.NewMockIncentiveKeeper(ctrl)
 		iKeeper.EXPECT().IndexRefundableMsg(gomock.Any(), gomock.Any()).AnyTimes()
-		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper)
+		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper, nil)
 		ms := keeper.NewMsgServerImpl(*fKeeper)
 
 		// create and register a random finality provider
@@ -299,7 +302,7 @@ func FuzzUnjailFinalityProvider(f *testing.F) {
 
 		bsKeeper := types.NewMockBTCStakingKeeper(ctrl)
 		cKeeper := types.NewMockCheckpointingKeeper(ctrl)
-		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, nil, cKeeper)
+		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, nil, cKeeper, nil)
 		ms := keeper.NewMsgServerImpl(*fKeeper)
 
 		// create and register a random finality provider
@@ -364,7 +367,7 @@ func TestVoteForConflictingHashShouldRetrieveEvidenceAndSlash(t *testing.T) {
 	cKeeper := types.NewMockCheckpointingKeeper(ctrl)
 	iKeeper := types.NewMockIncentiveKeeper(ctrl)
 	iKeeper.EXPECT().IndexRefundableMsg(gomock.Any(), gomock.Any()).AnyTimes()
-	fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper)
+	fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper, nil)
 	ms := keeper.NewMsgServerImpl(*fKeeper)
 	// create and register a random finality provider
 	btcSK, btcPK, err := datagen.GenRandomBTCKeyPair(r)
@@ -437,7 +440,7 @@ func TestDoNotPanicOnNilProof(t *testing.T) {
 	cKeeper := types.NewMockCheckpointingKeeper(ctrl)
 	iKeeper := types.NewMockIncentiveKeeper(ctrl)
 	iKeeper.EXPECT().IndexRefundableMsg(gomock.Any(), gomock.Any()).AnyTimes()
-	fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper)
+	fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper, nil)
 	ms := keeper.NewMsgServerImpl(*fKeeper)
 
 	// create and register a random finality provider
@@ -497,7 +500,7 @@ func TestDoNotPanicOnNilProof(t *testing.T) {
 
 func TestVerifyActivationHeight(t *testing.T) {
 	r := rand.New(rand.NewSource(time.Now().Unix()))
-	fKeeper, ctx := keepertest.FinalityKeeper(t, nil, nil, nil)
+	fKeeper, ctx := keepertest.FinalityKeeper(t, nil, nil, nil, nil)
 	ms := keeper.NewMsgServerImpl(*fKeeper)
 	err := fKeeper.SetParams(ctx, types.DefaultParams())
 	require.NoError(t, err)
@@ -536,6 +539,121 @@ func TestVerifyActivationHeight(t *testing.T) {
 		"finality block height: %d is lower than activation height %d",
 		blockHeight, activationHeight,
 	).Error())
+}
+
+func FuzzEquivocationEvidence(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		bsKeeper := types.NewMockBTCStakingKeeper(ctrl)
+		cKeeper := types.NewMockCheckpointingKeeper(ctrl)
+		iKeeper := types.NewMockIncentiveKeeper(ctrl)
+		iKeeper.EXPECT().IncRefundableMsgCount().AnyTimes()
+		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper, nil)
+		ms := keeper.NewMsgServerImpl(*fKeeper)
+
+		// set params with activation height
+		err := fKeeper.SetParams(ctx, types.DefaultParams())
+		require.NoError(t, err)
+		activationHeight := fKeeper.GetParams(ctx).FinalityActivationHeight
+
+		// create and register a random finality provider
+		btcSK, btcPK, err := datagen.GenRandomBTCKeyPair(r)
+		require.NoError(t, err)
+
+		commitRandContext := signingcontext.FpRandCommitContextV0(ctx.ChainID(), fKeeper.ModuleAddress())
+
+		fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, btcSK)
+		require.NoError(t, err)
+		fpBTCPK := bbn.NewBIP340PubKeyFromBTCPK(btcPK)
+		fpBTCPKBytes := fpBTCPK.MustMarshal()
+
+		// test invalid case - without PubRand field in MsgEquivocationEvidence
+		invalidMsg := &types.MsgEquivocationEvidence{
+			Signer:                  datagen.GenRandomAccount().Address,
+			FpBtcPkHex:              fpBTCPK.MarshalHex(),
+			BlockHeight:             activationHeight,
+			CanonicalAppHashHex:     hex.EncodeToString(datagen.GenRandomByteArray(r, 32)),
+			ForkAppHashHex:          hex.EncodeToString(datagen.GenRandomByteArray(r, 32)),
+			CanonicalFinalitySigHex: "",
+			ForkFinalitySigHex:      "",
+		}
+
+		_, err = invalidMsg.ParseToEvidence()
+		require.Error(t, err)
+
+		// test valid case
+		blockHeight := activationHeight + datagen.RandomInt(r, 100)
+
+		// generate proper pub rand data
+		startHeight := blockHeight
+		numPubRand := uint64(200)
+		randListInfo, _, err := datagen.GenRandomMsgCommitPubRandList(r, btcSK, commitRandContext, startHeight, numPubRand)
+		require.NoError(t, err)
+
+		// mock pub rand for evidence
+		pubRand := &randListInfo.PRList[0]
+
+		// mock canonical and fork app hash
+		canonicalAppHash := datagen.GenRandomByteArray(r, 32)
+		forkAppHash := datagen.GenRandomByteArray(r, 32)
+
+		// generate proper EOTS signatures using the same private key and randomness
+		// but different messages (canonical vs fork) - this is what allows secret key extraction
+		// Use the private randomness that corresponds to the public randomness already generated
+		sr := randListInfo.SRList[0]
+
+		// Create canonical message (height || canonical app hash)
+		canonicalMsg := append(sdk.Uint64ToBigEndian(blockHeight), canonicalAppHash...)
+		canonicalSig, err := eots.Sign(btcSK, sr, canonicalMsg)
+		require.NoError(t, err)
+
+		// Create fork message (height || fork app hash) using SAME key and randomness
+		forkMsg := append(sdk.Uint64ToBigEndian(blockHeight), forkAppHash...)
+		forkSig, err := eots.Sign(btcSK, sr, forkMsg)
+		require.NoError(t, err)
+
+		msg := &types.MsgEquivocationEvidence{
+			Signer:                  datagen.GenRandomAccount().Address,
+			FpBtcPkHex:              fpBTCPK.MarshalHex(),
+			BlockHeight:             blockHeight,
+			PubRandHex:              pubRand.MarshalHex(),
+			CanonicalAppHashHex:     hex.EncodeToString(canonicalAppHash),
+			ForkAppHashHex:          hex.EncodeToString(forkAppHash),
+			CanonicalFinalitySigHex: hex.EncodeToString(bbn.NewSchnorrEOTSSigFromModNScalar(canonicalSig).MustMarshal()),
+			ForkFinalitySigHex:      hex.EncodeToString(bbn.NewSchnorrEOTSSigFromModNScalar(forkSig).MustMarshal()),
+			SigningContext:          "", // TODO: test using actual context
+		}
+
+		// set block height in context to be >= evidence height
+		blockAppHash := datagen.GenRandomByteArray(r, 32)
+		ctx = ctx.WithHeaderInfo(header.Info{Height: int64(blockHeight), AppHash: blockAppHash})
+		fKeeper.IndexBlock(ctx)
+		bsKeeper.EXPECT().GetFinalityProvider(gomock.Any(), gomock.Eq(fpBTCPKBytes)).Return(fp, nil).AnyTimes()
+
+		// mock voting power
+		fKeeper.SetVotingPower(ctx, fpBTCPKBytes, blockHeight, 1)
+
+		// mock slashing interface
+		bsKeeper.EXPECT().SlashFinalityProvider(gomock.Any(), gomock.Eq(fpBTCPKBytes)).Return(nil)
+
+		_, err = ms.EquivocationEvidence(ctx, msg)
+		require.NoError(t, err)
+
+		storedEvidence, err := fKeeper.GetEvidence(ctx, fpBTCPK, blockHeight)
+		require.NoError(t, err)
+		require.Equal(t, msg.FpBtcPkHex, storedEvidence.FpBtcPk.MarshalHex())
+		require.Equal(t, msg.BlockHeight, storedEvidence.BlockHeight)
+		require.Equal(t, msg.PubRandHex, storedEvidence.PubRand.MarshalHex())
+		require.Equal(t, msg.CanonicalAppHashHex, hex.EncodeToString(storedEvidence.CanonicalAppHash))
+		require.Equal(t, msg.ForkAppHashHex, hex.EncodeToString(storedEvidence.ForkAppHash))
+		require.Equal(t, msg.CanonicalFinalitySigHex, hex.EncodeToString(storedEvidence.CanonicalFinalitySig.MustMarshal()))
+		require.Equal(t, msg.ForkFinalitySigHex, hex.EncodeToString(storedEvidence.ForkFinalitySig.MustMarshal()))
+	})
 }
 
 func TestBtcDelegationRewards(t *testing.T) {
@@ -628,6 +746,7 @@ func TestBtcDelegationRewardsEarlyUnbondingAndExpire(t *testing.T) {
 	btccKForFinality.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(epochNumber).AnyTimes()
 
 	h := testutil.NewIncentiveHelper(t, btclcKeeper, btccKForBtcStaking, btccKForFinality)
+
 	// set all parameters
 	covenantSKs, _ := h.GenAndApplyParams(r)
 	h.SetFinalityActivationHeight(0)

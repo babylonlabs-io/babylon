@@ -23,6 +23,7 @@ import (
 	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 	ftypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
 	"github.com/babylonlabs-io/babylon/v4/x/incentive/keeper"
+	ictvtypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
 )
 
 type IncentiveHelper struct {
@@ -44,7 +45,8 @@ func NewIncentiveHelper(
 	bankK := keepertest.BankKeeper(t, db, stateStore, accK)
 
 	ictvK, _ := keepertest.IncentiveKeeperWithStore(t, db, stateStore, nil, bankK, accK, nil)
-	btcstkH := btcstkhelper.NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKForBtcStaking, btccKForFinality, ictvK, nil)
+	ictvK.SetHooks(ictvtypes.NewMultiIncentiveHooks())
+	btcstkH := btcstkhelper.NewHelperWithStoreAndIncentive(t, db, stateStore, btclcKeeper, btccKForBtcStaking, btccKForFinality, ictvK, nil, ictvK.Hooks())
 
 	return &IncentiveHelper{
 		Helper:           btcstkH,

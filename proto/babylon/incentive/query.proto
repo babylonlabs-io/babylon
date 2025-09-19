@@ -43,6 +43,14 @@ service Query {
         "/babylon/incentive/finality_providers/{finality_provider_address}/"
         "delegators/{delegator_address}/delegation_rewards";
   }
+
+  // FpCurrentRewards queries the finality provider pool of rewards
+  rpc FpCurrentRewards(QueryFpCurrentRewardsRequest)
+      returns (QueryFpCurrentRewardsResponse) {
+    option (google.api.http).get =
+        "/babylon/incentive/finality_providers_current_rewards/"
+        "{finality_provider_address}";
+  }
 }
 
 // QueryParamsRequest is request type for the Query/Params RPC method.

@@ -69,15 +69,80 @@ func (k Keeper) GetFinalityProviderCurrentRewards(ctx context.Context, fp sdk.Ac
 
 // IterateBTCDelegationRewardsTracker iterates over all the delegation rewards tracker by the finality provider.
 // It stops if the function `it` returns an error.
-func (k Keeper) IterateBTCDelegationRewardsTracker(ctx context.Context, fp sdk.AccAddress, it func(fp, del sdk.AccAddress) error) error {
+func (k Keeper) IterateBTCDelegationRewardsTracker(
+	ctx context.Context,
+	fp sdk.AccAddress,
+	it func(fp, del sdk.AccAddress, btcRwdTracker types.BTCDelegationRewardsTracker) error,
+) error {
 	rng := collections.NewPrefixedPairRange[[]byte, []byte](fp.Bytes())
 	return k.btcDelegationRewardsTracker.Walk(ctx, rng, func(key collections.Pair[[]byte, []byte], value types.BTCDelegationRewardsTracker) (stop bool, err error) {
 		del := sdk.AccAddress(key.K2())
-		if err := it(fp, del); err != nil {
+		if err := it(fp, del, value); err != nil {
 			return err != nil, err
 		}
 		return false, nil
 	})
+}
+
+// IterateBTCDelegationSatsUpdated iterates over all the delegation active sats by the finality provider.
+// It stops if the function `it` returns an error.
+// Note: It takes into account the events that are queued to be processed until the current block height.
+func (k Keeper) IterateBTCDelegationSatsUpdated(
+	ctx context.Context,
+	fp sdk.AccAddress,
+	it func(del sdk.AccAddress, activeSats sdkmath.Int) error,
+) error {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	fpAddrStr := fp.String()
+
+	blockHeight := uint64(sdkCtx.HeaderInfo().Height)
+	compiledEvents, err := k.GetRewardTrackerEventsCompiledByBtcDel(
+		ctx,
+		blockHeight,
+		func(fpAddr string) (include bool) {
+			return fpAddr == fpAddrStr
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	rng := collections.NewPrefixedPairRange[[]byte, []byte](fp.Bytes())
+	err = k.btcDelegationRewardsTracker.Walk(ctx, rng, func(key collections.Pair[[]byte, []byte], rwdTracker types.BTCDelegationRewardsTracker) (stop bool, err error) {
+		del := sdk.AccAddress(key.K2())
+
+		activeSats := rwdTracker.TotalActiveSat
+
+		delStr := del.String()
+		// Add any pending events for this delegation. If there are more unbonding
+		// sats than activation on the events, the pendingSats can be negative
+		if pendingSats, exists := compiledEvents[delStr]; exists {
+			activeSats = activeSats.Add(pendingSats)
+		}
+		delete(compiledEvents, delStr)
+
+		if err := it(del, activeSats); err != nil {
+			return err != nil, err
+		}
+		return false, nil
+	})
+	if err != nil {
+		return err
+	}
+
+	// iterates over the compiled events as some new btc delegation could be activated during the pending events
+	for delStr, sats := range compiledEvents {
+		delAddr, err := sdk.AccAddressFromBech32(delStr)
+		if err != nil {
+			return err
+		}
+
+		if err := it(delAddr, sats); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // deleteKeysFromBTCDelegationRewardsTracker iterates over all the BTC delegation rewards tracker by the finality provider and deletes it.

@@ -15,8 +15,10 @@ import (
 
 type (
 	Keeper struct {
-		cdc          codec.BinaryCodec
-		storeService corestoretypes.KVStoreService
+		cdc                   codec.BinaryCodec
+		storeService          corestoretypes.KVStoreService
+		hooks                 types.FinalityHooks
+		finalityModuleAddress string
 
 		BTCStakingKeeper    types.BTCStakingKeeper
 		IncentiveKeeper     types.IncentiveKeeper
@@ -31,7 +33,7 @@ type (
 		FinalityProviderMissedBlockBitmap collections.Map[collections.Pair[[]byte, uint64], []byte]
 
 		// pubRandCommitIndex key: BIP340PubKey bytes | value: PubRandCommitIndexValue (ordered start heights of commitments)
-		// This index is useful for retrieving PubRandCommits using binary search 
+		// This index is useful for retrieving PubRandCommits using binary search
 		pubRandCommitIndex collections.Map[[]byte, types.PubRandCommitIndexValue]
 	}
 )
@@ -110,4 +112,18 @@ func (k Keeper) IsFinalityActive(ctx context.Context) (activated bool) {
 
 	_, err := k.GetBTCStakingActivatedHeight(ctx)
 	return err == nil
+}
+
+func (k Keeper) ModuleAddress() string {
+	return k.finalityModuleAddress
+}
+
+// SetHooks sets the finality hooks.  In contrast to other receivers, this method must take a pointer due to nature
+// of the hooks interface and SDK start up sequence.
+func (k *Keeper) SetHooks(sh types.FinalityHooks) {
+	if k.hooks != nil {
+		panic("cannot set finality hooks twice")
+	}
+
+	k.hooks = sh
 }

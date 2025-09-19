@@ -8,9 +8,7 @@ option go_package = "github.com/babylonlabs-io/babylon/v4/x/incentive/types";
 
 // EventsPowerUpdateAtHeight stores a slice of events happened at
 // some specific block height, indexed by the block height.
-message EventsPowerUpdateAtHeight {
-  repeated EventPowerUpdate events = 1;
-}
+message EventsPowerUpdateAtHeight { repeated EventPowerUpdate events = 1; }
 
 // EventPowerUpdate is an event that affects voting power distribution
 // of BTC rewards, it is indexed by the babylon block height which
@@ -25,13 +23,12 @@ message EventPowerUpdate {
   }
 }
 
-
 // EventBTCDelegationActivated event that activated a BTC delegation.
 message EventBTCDelegationActivated {
   // FpAddr is the bbn address of the finality provider
-  string fp_addr = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string fp_addr = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   // BtcDelAddr is the bbn address of the BTC delegator
-  string btc_del_addr = 2 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string btc_del_addr = 2 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   // TotalSat the number of satoshis delegated
   bytes total_sat = 3 [
     (cosmos_proto.scalar) = "cosmos.Int",
@@ -43,9 +40,9 @@ message EventBTCDelegationActivated {
 // EventBTCDelegationUnbonded event that unbonded a BTC delegation.
 message EventBTCDelegationUnbonded {
   // FpAddr is the bbn address of the finality provider
-  string fp_addr = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string fp_addr = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   // BtcDelAddr is the bbn address of the BTC delegator
-  string btc_del_addr = 2 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  string btc_del_addr = 2 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   // TotalSat the number of satoshis unbonded withdraw
   bytes total_sat = 3 [
     (cosmos_proto.scalar) = "cosmos.Int",

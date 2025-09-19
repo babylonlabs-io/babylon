@@ -53,14 +53,13 @@ import (
 	"github.com/otiai10/copy"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/v4/app"
 	babylonApp "github.com/babylonlabs-io/babylon/v4/app"
+	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
 	appsigner "github.com/babylonlabs-io/babylon/v4/app/signer"
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/initialization"
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
 	btclighttypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
 	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
-	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
 )
 
 var validatorConfig = &initialization.NodeConfig{
@@ -131,18 +130,18 @@ type FinalizedBlock struct {
 
 type BabylonAppDriver struct {
 	*SenderInfo
-	r                *rand.Rand
-	t                *testing.T
-	App              *app.BabylonApp
-	BlsSigner        checkpointingtypes.BlsSigner
-	BlockExec        *sm.BlockExecutor
-	BlockStore       *store.BlockStore
-	StateStore       sm.Store
-	NodeDir          string
-	ValidatorAddress []byte
-	DelegatorAddress sdk.ValAddress
-	CometPrivKey     cmtcrypto.PrivKey
-	CurrentTime      time.Time
+	r            *rand.Rand
+	t            *testing.T
+	App          *babylonApp.BabylonApp
+	BlsSigner    ckpttypes.BlsSigner
+	BlockExec    *sm.BlockExecutor
+	BlockStore   *store.BlockStore
+	StateStore   sm.Store
+	NodeDir      string
+	CometAddress []byte
+	ValAddress   sdk.ValAddress
+	CometPrivKey cmtcrypto.PrivKey
+	CurrentTime  time.Time
 }
 
 // NewBabylonAppDriverTmpDir initializes Babylon driver for block creation with
@@ -272,13 +271,13 @@ func NewBabylonAppDriver(
 			sequenceNumber: 1,
 			accountNumber:  0,
 		},
-		BlockExec:        blockExec,
-		BlockStore:       blockStore,
-		StateStore:       stateStore,
-		NodeDir:          chain.Nodes[0].ConfigDir,
-		ValidatorAddress: validatorAddress,
-		DelegatorAddress: signerValAddress,
-		CometPrivKey:     ed25519.PrivKey(chain.Nodes[0].CometPrivKey),
+		BlockExec:    blockExec,
+		BlockStore:   blockStore,
+		StateStore:   stateStore,
+		NodeDir:      chain.Nodes[0].ConfigDir,
+		CometAddress: validatorAddress,
+		ValAddress:   signerValAddress,
+		CometPrivKey: ed25519.PrivKey(chain.Nodes[0].CometPrivKey),
 		// initiate time to current time
 		CurrentTime: time.Now(),
 	}
@@ -492,7 +491,7 @@ func (d *BabylonAppDriver) GenerateNewBlock() *abci.ResponseFinalizeBlock {
 		lastState.LastBlockHeight+1,
 		lastState,
 		lastCommit,
-		d.ValidatorAddress,
+		d.CometAddress,
 	)
 	require.NoError(d.t, err)
 	require.NotNil(d.t, block1)
@@ -525,7 +524,7 @@ func (d *BabylonAppDriver) GenerateNewBlock() *abci.ResponseFinalizeBlock {
 	extCommitSig := cmttypes.ExtendedCommitSig{
 		CommitSig: cmttypes.CommitSig{
 			BlockIDFlag:      cmttypes.BlockIDFlagCommit,
-			ValidatorAddress: d.ValidatorAddress,
+			ValidatorAddress: d.CometAddress,
 			Timestamp:        newTime,
 			Signature:        []byte("test"),
 		},
@@ -701,15 +700,18 @@ func blockWithProofsToActivationMessages(
 // Activates all verified delegations in two blocks:
 // 1. First block extends light client so that all stakers are confirmed
 // 2. Second block activates all verified delegations
-func (d *BabylonAppDriver) ActivateVerifiedDelegations(expectedVerifiedDelegations int) {
-	block := d.IncludeVerifiedStakingTxInBTC(expectedVerifiedDelegations)
-	acitvationMsgs := blockWithProofsToActivationMessages(block, d.GetDriverAccountAddress())
-	d.SendTxWithMsgsFromDriverAccount(d.t, acitvationMsgs...)
+func (d *BabylonAppDriver) ActivateVerifiedDelegations(expectedVerifiedDelegations int) []*abci.ResponseFinalizeBlock {
+	btcBlock, bbnBlock := d.IncludeVerifiedStakingTxInBTC(expectedVerifiedDelegations)
+	acitvationMsgs := blockWithProofsToActivationMessages(btcBlock, d.GetDriverAccountAddress())
+	return []*abci.ResponseFinalizeBlock{
+		bbnBlock,
+		d.SendTxWithMsgsFromDriverAccount(d.t, acitvationMsgs...),
+	}
 }
 
 // IncludeVerifiedStakingTxInBTC extends light client so that all staking txs are confirmed (k deep).
 // Returns the block with the transactions
-func (d *BabylonAppDriver) IncludeVerifiedStakingTxInBTC(expectedVerifiedDelegations int) *datagen.BlockWithProofs {
+func (d *BabylonAppDriver) IncludeVerifiedStakingTxInBTC(expectedVerifiedDelegations int) (btcBlock *datagen.BlockWithProofs, bbnBlock *abci.ResponseFinalizeBlock) {
 	verifiedDelegations := d.GetVerifiedBTCDelegations(d.t)
 	btcCheckpointParams := d.GetBTCCkptParams(d.t)
 
@@ -722,6 +724,71 @@ func (d *BabylonAppDriver) IncludeVerifiedStakingTxInBTC(expectedVerifiedDelegat
 	var transactions []*wire.MsgTx
 	for _, del := range verifiedDelegations {
 		stakingTx, _, err := bbn.NewBTCTxFromHex(del.StakingTxHex)
+		require.NoError(d.t, err)
+		transactions = append(transactions, stakingTx)
+	}
+
+	return d.IncludeTxsInBTCAndConfirm(transactions)
+}
+
+func (d *BabylonAppDriver) IncludeTxsInBTCAndConfirm(
+	txs []*wire.MsgTx,
+) (btcBlock *datagen.BlockWithProofs, bbnBlock *abci.ResponseFinalizeBlock) {
+	btcCheckpointParams := d.GetBTCCkptParams(d.t)
+
+	tip, _ := d.GetBTCLCTip()
+
+	block := datagen.GenRandomBtcdBlockWithTransactions(d.r, txs, tip)
+	headers := BlocksWithProofsToHeaderBytes([]*datagen.BlockWithProofs{block})
+
+	confirmationBLocks := datagen.GenNEmptyBlocks(
+		d.r,
+		uint64(btcCheckpointParams.BtcConfirmationDepth),
+		&block.Block.Header,
+	)
+	confirmationHeaders := BlocksWithProofsToHeaderBytes(confirmationBLocks)
+
+	headers = append(headers, confirmationHeaders...)
+
+	// extend our light client so that all stakers are confirmed
+	bbnBlock = d.SendTxWithMsgsFromDriverAccount(d.t, &btclighttypes.MsgInsertHeaders{
+		Signer:  d.GetDriverAccountAddress().String(),
+		Headers: headers,
+	})
+
+	return block, bbnBlock
+}
+
+func (d *BabylonAppDriver) IncludeTxsInBTC(txs []*wire.MsgTx) *datagen.BlockWithProofs {
+	tip, _ := d.GetBTCLCTip()
+
+	block := datagen.GenRandomBtcdBlockWithTransactions(d.r, txs, tip)
+	headers := BlocksWithProofsToHeaderBytes([]*datagen.BlockWithProofs{block})
+
+	// extend our light client so that all stakers are confirmed
+	d.SendTxWithMsgsFromDriverAccount(d.t, &btclighttypes.MsgInsertHeaders{
+		Signer:  d.GetDriverAccountAddress().String(),
+		Headers: headers,
+	})
+
+	return block
+}
+
+// ConfirmStakingTransactionOnBTC confirms staking transactions included in the
+// provided messages on the simulated BTC chain. Afterwards, it fills inclusion
+// proof in the provided messages. It is up to the caller to send the messages
+// to the mempool.
+func (d *BabylonAppDriver) ConfirmStakingTransactionOnBTC(
+	msg []*bstypes.MsgCreateBTCDelegation,
+) {
+	require.NotEmpty(d.t, msg)
+
+	btcCheckpointParams := d.GetBTCCkptParams(d.t)
+
+	tip, _ := d.GetBTCLCTip()
+	var transactions []*wire.MsgTx
+	for _, m := range msg {
+		stakingTx, err := bbn.NewBTCTxFromBytes(m.StakingTx)
 		require.NoError(d.t, err)
 		transactions = append(transactions, stakingTx)
 	}
@@ -777,7 +844,7 @@ func (d *BabylonAppDriver) GenCkptForEpoch(r *rand.Rand, t *testing.T, epochNumb
 	d.SendTxWithMsgsFromDriverAccount(t, &msg)
 }
 
-func (d *BabylonAppDriver) FinializeCkptForEpoch(epochNumber uint64) {
+func (d *BabylonAppDriver) FinalizeCkptForEpoch(epochNumber uint64) {
 	lastFinalizedEpoch := d.GetLastFinalizedEpoch()
 	require.Equal(d.t, lastFinalizedEpoch+1, epochNumber)
 
@@ -815,7 +882,7 @@ func (d *BabylonAppDriver) WaitTillAllFpsJailed(t *testing.T) {
 func (d *BabylonAppDriver) SendTxWithMsgsFromDriverAccount(
 	t *testing.T,
 	msgs ...sdk.Msg,
-) {
+) *abci.ResponseFinalizeBlock {
 	d.SendTxWithMessagesSuccess(
 		t,
 		d.SenderInfo,
@@ -838,6 +905,7 @@ func (d *BabylonAppDriver) SendTxWithMsgsFromDriverAccount(
 	}
 
 	d.IncSeq()
+	return result
 }
 
 // Funciont to initate different type of senders
@@ -993,4 +1061,42 @@ func (d *BabylonAppDriver) GovPropWaitPass(msgInGovProp sdk.Msg) {
 
 		d.GenerateNewBlockAssertExecutionSuccess()
 	}
+}
+
+func (d *BabylonAppDriver) BankSend(
+	t *testing.T,
+	from *SenderInfo,
+	to sdk.AccAddress,
+	coins sdk.Coins,
+) {
+	msgBankSend := banktypes.MsgSend{
+		FromAddress: from.AddressString(),
+		ToAddress:   to.String(),
+		// 100 BBN, should be enough for most tests
+		Amount: coins,
+	}
+
+	DefaultSendTxWithMessagesSuccess(t, d.App, from, &msgBankSend)
+	from.IncSeq()
+}
+
+func (d *BabylonAppDriver) BankSendNative(
+	t *testing.T,
+	from *SenderInfo,
+	to sdk.AccAddress,
+	amt int64,
+) {
+	d.BankSend(t, d.SenderInfo, from.Address(), sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(amt))))
+}
+
+func (d *BabylonAppDriver) MintNativeTo(
+	recipient sdk.AccAddress,
+	amt int64,
+) {
+	mintCoins := sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(amt)))
+	err := d.App.MintKeeper.MintCoins(d.Ctx(), mintCoins)
+	require.NoError(d.t, err)
+
+	err = d.App.BankKeeper.SendCoinsFromModuleToAccount(d.Ctx(), minttypes.ModuleName, recipient, mintCoins)
+	require.NoError(d.t, err)
 }

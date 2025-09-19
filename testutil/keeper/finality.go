@@ -29,6 +29,7 @@ func FinalityKeeperWithStoreKey(
 	bsKeeper types.BTCStakingKeeper,
 	iKeeper types.IncentiveKeeper,
 	ckptKeeper types.CheckpointingKeeper,
+	hooks types.FinalityHooks,
 ) (*keeper.Keeper, sdk.Context) {
 	if storeKey == nil {
 		storeKey = storetypes.NewKVStoreKey(types.StoreKey)
@@ -49,6 +50,8 @@ func FinalityKeeperWithStoreKey(
 		appparams.AccGov.String(),
 	)
 
+	k.SetHooks(types.NewMultiFinalityHooks(hooks))
+
 	ctx := sdk.NewContext(stateStore, cmtproto.Header{}, false, log.NewNopLogger())
 	ctx = ctx.WithHeaderInfo(header.Info{})
 
@@ -62,8 +65,9 @@ func FinalityKeeperWithStore(
 	bsKeeper types.BTCStakingKeeper,
 	iKeeper types.IncentiveKeeper,
 	ckptKeeper types.CheckpointingKeeper,
+	hooks types.FinalityHooks,
 ) (*keeper.Keeper, sdk.Context) {
-	return FinalityKeeperWithStoreKey(t, db, stateStore, nil, bsKeeper, iKeeper, ckptKeeper)
+	return FinalityKeeperWithStoreKey(t, db, stateStore, nil, bsKeeper, iKeeper, ckptKeeper, hooks)
 }
 
 func FinalityKeeper(
@@ -71,11 +75,12 @@ func FinalityKeeper(
 	bsKeeper types.BTCStakingKeeper,
 	iKeeper types.IncentiveKeeper,
 	ckptKeeper types.CheckpointingKeeper,
+	hooks types.FinalityHooks,
 ) (*keeper.Keeper, sdk.Context) {
 	db := dbm.NewMemDB()
 	stateStore := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
 
-	k, ctx := FinalityKeeperWithStore(t, db, stateStore, bsKeeper, iKeeper, ckptKeeper)
+	k, ctx := FinalityKeeperWithStore(t, db, stateStore, bsKeeper, iKeeper, ckptKeeper, hooks)
 
 	// Initialize params
 	dParams := types.DefaultParams()

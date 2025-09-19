@@ -17,6 +17,7 @@ import (
 	btcstakingkeeper "github.com/babylonlabs-io/babylon/v4/x/btcstaking/keeper"
 	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 	"github.com/babylonlabs-io/babylon/v4/x/finality/types"
+	ftypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
 )
 
 func FuzzHandleLiveness(f *testing.F) {
@@ -32,7 +33,7 @@ func FuzzHandleLiveness(f *testing.F) {
 
 		iKeeper := types.NewMockIncentiveKeeper(ctrl)
 		cKeeper := types.NewMockCheckpointingKeeper(ctrl)
-		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper)
+		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper, nil)
 		blockTime := time.Now()
 		ctx = ctx.WithHeaderInfo(header.Info{Time: blockTime})
 
@@ -99,6 +100,18 @@ func FuzzHandleLivenessDeterminism(f *testing.F) {
 		btccKeeper := bstypes.NewMockBtcCheckpointKeeper(ctrl)
 		h1 := testutil.NewHelper(t, btclcKeeper, btccKeeper, nil)
 		h2 := testutil.NewHelper(t, btclcKeeper, btccKeeper, nil)
+
+		// TODO: add expected values
+		fHooks := h1.FinalityHooks.(*ftypes.MockFinalityHooks)
+		fHooks.EXPECT().AfterBtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+		fHooks.EXPECT().AfterBtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+		fHooks.EXPECT().AfterBbnFpEntersActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
+		fHooks.EXPECT().AfterBbnFpRemovedFromActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
+		fHooks = h2.FinalityHooks.(*ftypes.MockFinalityHooks)
+		fHooks.EXPECT().AfterBtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+		fHooks.EXPECT().AfterBtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+		fHooks.EXPECT().AfterBbnFpEntersActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
+		fHooks.EXPECT().AfterBbnFpRemovedFromActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
 
 		// set all parameters
 		covenantSKs, _ := h1.GenAndApplyParams(r)
