@@ -435,6 +435,7 @@ func FuzzProcessAllPowerDistUpdateEvents_Determinism(f *testing.F) {
 func CreateFpAndBtcDel(
 	t *testing.T,
 	r *rand.Rand,
+	addCovenantSigs bool,
 ) (
 	h *testutil.Helper,
 	del *btcstktypes.BTCDelegation,
@@ -473,10 +474,12 @@ func CreateFpAndBtcDel(
 	)
 	h.NoError(err)
 
-	// needed for covenant check in message handler
-	h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: 30})
-
-	h.CreateCovenantSigs(r, covenantSKs, msg, del, 30)
+	if addCovenantSigs {
+		// needed for covenant check in message handler
+		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: 30})
+		// needed for covenant check in message handler
+		h.CreateCovenantSigs(r, covenantSKs, msg, del, 30)
+	}
 
 	return h, del, covenantSKs, btcStakingStoreKey
 }
@@ -486,7 +489,7 @@ func FuzzProcessAllPowerDistUpdateEvents_ActiveAndUnbondTogether(f *testing.F) {
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
-		h, del, _, sk := CreateFpAndBtcDel(t, r)
+		h, del, _, sk := CreateFpAndBtcDel(t, r, true)
 
 		eventActive := btcstktypes.NewEventPowerDistUpdateWithBTCDel(&btcstktypes.EventBTCDelegationStateUpdate{
 			StakingTxHash: del.MustGetStakingTxHash().String(),
@@ -510,7 +513,7 @@ func FuzzProcessAllPowerDistUpdateEvents_ActiveAndSlashTogether(f *testing.F) {
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
-		h, del, _, sk := CreateFpAndBtcDel(t, r)
+		h, del, _, sk := CreateFpAndBtcDel(t, r, true)
 
 		eventActive := btcstktypes.NewEventPowerDistUpdateWithBTCDel(&btcstktypes.EventBTCDelegationStateUpdate{
 			StakingTxHash: del.MustGetStakingTxHash().String(),
@@ -533,7 +536,7 @@ func FuzzProcessAllPowerDistUpdateEvents_PreApprovalWithSlahedFP(f *testing.F) {
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
-		h, delNoPreApproval, covenantSKs, sk := CreateFpAndBtcDel(t, r)
+		h, delNoPreApproval, covenantSKs, sk := CreateFpAndBtcDel(t, r, false)
 
 		// activates one delegation to the finality provider without preapproval
 		eventActive := btcstktypes.NewEventPowerDistUpdateWithBTCDel(&btcstktypes.EventBTCDelegationStateUpdate{
@@ -626,7 +629,7 @@ func FuzzProcessAllPowerDistUpdateEvents_ActiveAndJailTogether(f *testing.F) {
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
-		h, del, _, sk := CreateFpAndBtcDel(t, r)
+		h, del, _, sk := CreateFpAndBtcDel(t, r, false)
 
 		eventActive := btcstktypes.NewEventPowerDistUpdateWithBTCDel(&btcstktypes.EventBTCDelegationStateUpdate{
 			StakingTxHash: del.MustGetStakingTxHash().String(),
@@ -654,7 +657,7 @@ func FuzzProcessAllPowerDistUpdateEvents_SlashActiveFp(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		t.Parallel()
 		r := rand.New(rand.NewSource(seed))
-		h, del, _, sk := CreateFpAndBtcDel(t, r)
+		h, del, _, sk := CreateFpAndBtcDel(t, r, false)
 
 		eventActive := btcstktypes.NewEventPowerDistUpdateWithBTCDel(&btcstktypes.EventBTCDelegationStateUpdate{
 			StakingTxHash: del.MustGetStakingTxHash().String(),
@@ -1962,6 +1965,45 @@ func TestIgnoreUnbondingEventIfThereIsNoQuorum(t *testing.T) {
 	newDc := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, ftypes.NewVotingPowerDistCache(), btcTipHeight-1, btcTipHeight)
 
 	require.Len(t, newDc.FinalityProviders, 0)
+}
+
+func TestProcessAllPowerDistUpdateEvents_TotallyUnbondedFP(t *testing.T) {
+	t.Parallel()
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	h, del, _, _ := CreateFpAndBtcDel(t, r, true)
+
+	// Start with an active delegation
+	eventActive := btcstktypes.NewEventPowerDistUpdateWithBTCDel(&btcstktypes.EventBTCDelegationStateUpdate{
+		StakingTxHash: del.MustGetStakingTxHash().String(),
+		NewState:      btcstktypes.BTCDelegationStatus_ACTIVE,
+	})
+
+	// Process active event to create initial cache with active FP
+	prevDc := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, ftypes.NewVotingPowerDistCache(), []*btcstktypes.EventPowerDistUpdate{eventActive})
+	require.Len(t, prevDc.FinalityProviders, 1)
+	require.Equal(t, del.TotalSat, prevDc.FinalityProviders[0].TotalBondedSat)
+
+	// Mark FP as timestamped and apply active FPs to set correct NumActiveFps
+	prevDc.FinalityProviders[0].IsTimestamped = true
+	prevDc.ApplyActiveFinalityProviders(10) // Allow up to 10 active FPs
+
+	// Now unbond the delegation completely
+	eventUnbond := btcstktypes.NewEventPowerDistUpdateWithBTCDel(&btcstktypes.EventBTCDelegationStateUpdate{
+		StakingTxHash: del.MustGetStakingTxHash().String(),
+		NewState:      btcstktypes.BTCDelegationStatus_UNBONDED,
+	})
+	// Process unbond event
+	newDc := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, prevDc, []*btcstktypes.EventPowerDistUpdate{eventUnbond})
+
+	// The newDc should not contain the FP anymore
+	require.Len(t, newDc.FinalityProviders, 0)
+
+	// Test that FindNewInactiveFinalityProviders works correctly
+	// It should find the FP as newly inactive since it was active before
+	// and now it is unbonded.
+	newlyInactiveFPs := newDc.FindNewInactiveFinalityProviders(prevDc)
+	require.Len(t, newlyInactiveFPs, 1)
+	require.Equal(t, del.FpBtcPkList[0].MarshalHex(), newlyInactiveFPs[0].BtcPk.MarshalHex())
 }
 
 func TestGovernanceJailingAfterUnjailInSameBlock(t *testing.T) {
