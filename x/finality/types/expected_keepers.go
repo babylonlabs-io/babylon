@@ -25,7 +25,6 @@ type BTCStakingKeeper interface {
 	JailFinalityProvider(ctx context.Context, fpBTCPK []byte) error
 	UnjailFinalityProvider(ctx context.Context, fpBTCPK []byte) error
 	UpdateFinalityProvider(ctx context.Context, fp *bstypes.FinalityProvider) error
-	BtcDelHasCovenantQuorums(ctx context.Context, btcDel *bstypes.BTCDelegation, quorum uint32) (bool, error)
 	PowerDistUpdateEventBtcHeightStoreIterator(ctx context.Context, btcHeight uint32) storetypes.Iterator
 }
 

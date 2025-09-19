@@ -347,11 +347,7 @@ func (k Keeper) processBtcDelUpdateImmediate(ctx context.Context, state *ftypes.
 	case types.BTCDelegationStatus_UNBONDED:
 		// In case of delegation transtioning from phase-1 it is possible that
 		// somebody unbonds before receiving the required covenant signatures.
-		hasQuorum, err := k.BTCStakingKeeper.BtcDelHasCovenantQuorums(ctx, btcDel, delParams.CovenantQuorum)
-		if err != nil {
-			panic(err)
-		}
-		if hasQuorum {
+		if btcDel.HasCovenantQuorums(delParams.CovenantQuorum) {
 			// add the unbonded BTC delegation to the map
 			k.processPowerDistUpdateEventUnbond(ctx, state, btcDel)
 		}
@@ -377,11 +373,7 @@ func (k Keeper) processExpiredEvents(ctx context.Context, sdkCtx sdk.Context, st
 		// We process expired event if:
 		// - it hasn't unbonded early
 		// - it has all required covenant signatures
-		hasQuorum, err := k.BTCStakingKeeper.BtcDelHasCovenantQuorums(ctx, btcDel, delParams.CovenantQuorum)
-		if err != nil {
-			panic(err)
-		}
-		if hasQuorum {
+		if btcDel.HasCovenantQuorums(delParams.CovenantQuorum) {
 			// only adds to the new unbonded list if it hasn't
 			// previously unbonded with types.BTCDelegationStatus_UNBONDED
 			k.processPowerDistUpdateEventUnbond(ctx, state, btcDel)

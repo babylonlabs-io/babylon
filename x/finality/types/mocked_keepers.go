@@ -39,21 +39,6 @@ func (m *MockBTCStakingKeeper) EXPECT() *MockBTCStakingKeeperMockRecorder {
 	return m.recorder
 }
 
-// BtcDelHasCovenantQuorums mocks base method.
-func (m *MockBTCStakingKeeper) BtcDelHasCovenantQuorums(ctx context.Context, btcDel *types1.BTCDelegation, quorum uint32) (bool, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "BtcDelHasCovenantQuorums", ctx, btcDel, quorum)
-	ret0, _ := ret[0].(bool)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// BtcDelHasCovenantQuorums indicates an expected call of BtcDelHasCovenantQuorums.
-func (mr *MockBTCStakingKeeperMockRecorder) BtcDelHasCovenantQuorums(ctx, btcDel, quorum interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BtcDelHasCovenantQuorums", reflect.TypeOf((*MockBTCStakingKeeper)(nil).BtcDelHasCovenantQuorums), ctx, btcDel, quorum)
-}
-
 // ClearPowerDistUpdateEvents mocks base method.
 func (m *MockBTCStakingKeeper) ClearPowerDistUpdateEvents(ctx context.Context, btcHeight uint32) {
 	m.ctrl.T.Helper()
