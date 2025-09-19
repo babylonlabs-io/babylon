@@ -123,7 +123,7 @@ func (k Keeper) EpochMsgs(c context.Context, req *types.QueryEpochMsgsRequest) (
 }
 
 // LatestEpochMsgs handles the QueryLatestEpochMsgsRequest query
-// TODO: test this API
+// Deprecated: This RPC is deprecated and will be removed in v5.0.0
 func (k Keeper) LatestEpochMsgs(c context.Context, req *types.QueryLatestEpochMsgsRequest) (*types.QueryLatestEpochMsgsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
