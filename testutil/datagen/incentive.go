@@ -6,9 +6,9 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	btcctypes "github.com/babylonlabs-io/babylon/v2/x/btccheckpoint/types"
-	ftypes "github.com/babylonlabs-io/babylon/v2/x/finality/types"
-	itypes "github.com/babylonlabs-io/babylon/v2/x/incentive/types"
+	btcctypes "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
+	ftypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
+	itypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
 )
 
 const (

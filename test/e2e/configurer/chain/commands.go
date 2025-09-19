@@ -13,15 +13,15 @@ import (
 	"time"
 
 	govv1 "cosmossdk.io/api/cosmos/gov/v1"
-	txformat "github.com/babylonlabs-io/babylon/v2/btctxformatter"
-	"github.com/babylonlabs-io/babylon/v2/test/e2e/containers"
-	"github.com/babylonlabs-io/babylon/v2/test/e2e/initialization"
-	"github.com/babylonlabs-io/babylon/v2/test/e2e/util"
-	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
-	bbn "github.com/babylonlabs-io/babylon/v2/types"
-	btccheckpointtypes "github.com/babylonlabs-io/babylon/v2/x/btccheckpoint/types"
-	blc "github.com/babylonlabs-io/babylon/v2/x/btclightclient/types"
-	cttypes "github.com/babylonlabs-io/babylon/v2/x/checkpointing/types"
+	txformat "github.com/babylonlabs-io/babylon/v4/btctxformatter"
+	"github.com/babylonlabs-io/babylon/v4/test/e2e/containers"
+	"github.com/babylonlabs-io/babylon/v4/test/e2e/initialization"
+	"github.com/babylonlabs-io/babylon/v4/test/e2e/util"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	btccheckpointtypes "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
+	blc "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
+	cttypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 	sdkquerytypes "github.com/cosmos/cosmos-sdk/types/query"
@@ -572,5 +572,3 @@ func (n *NodeConfig) FailICASendTx(from, connectionID, packetMsgPath string) {
 
 	n.LogActionF("Failed to perform ICA send (as expected)")
 }
-
-

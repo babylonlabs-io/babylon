@@ -348,10 +348,10 @@ message MsgCreateBTCDelegation {
   // pop is the proof of possession of btc_pk by the staker_addr.
   ProofOfPossessionBTC pop = 2;
   // btc_pk is the Bitcoin secp256k1 PK of the BTC delegator
-  bytes btc_pk = 3 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/v2/types.BIP340PubKey" ];
+  bytes btc_pk = 3 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/v4/types.BIP340PubKey" ];
   // fp_btc_pk_list is the list of Bitcoin secp256k1 PKs of the finality providers, if there is more than one
   // finality provider pk it means that delegation is re-staked
-  repeated bytes fp_btc_pk_list = 4 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/v2/types.BIP340PubKey" ];
+  repeated bytes fp_btc_pk_list = 4 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/v4/types.BIP340PubKey" ];
   // staking_time is the time lock used in staking transaction
   uint32 staking_time = 5;
   // staking_value  is the amount of satoshis locked in staking output
@@ -367,7 +367,7 @@ message MsgCreateBTCDelegation {
   // It will be a part of the witness for the staking tx output.
   // The staking tx output further needs signatures from covenant and finality provider in
   // order to be spendable.
-  bytes delegator_slashing_sig = 10 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/v2/types.BIP340Signature" ];
+  bytes delegator_slashing_sig = 10 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/v4/types.BIP340Signature" ];
   // unbonding_time is the time lock used when funds are being unbonded. It is be used in:
   // - unbonding transaction, time lock spending path
   // - staking slashing transaction, change output
@@ -385,7 +385,7 @@ message MsgCreateBTCDelegation {
   // Note that the tx itself does not contain signatures, which are off-chain.
   bytes unbonding_slashing_tx = 14 [ (gogoproto.customtype) = "BTCSlashingTx" ];
   // delegator_unbonding_slashing_sig is the signature on the slashing tx by the delegator (i.e., SK corresponding to btc_pk).
-  bytes delegator_unbonding_slashing_sig = 15 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/v2/types.BIP340Signature" ];
+  bytes delegator_unbonding_slashing_sig = 15 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/v4/types.BIP340Signature" ];
 }
 ```
 #### Explanation of Fields
@@ -501,7 +501,7 @@ message MsgCreateBTCDelegation {
     uint32 index = 1;
     bytes hash = 2
       [ (gogoproto.customtype) =
-      "github.com/babylonlabs-io/babylon/v2/types.BTCHeaderHashBytes" ];
+      "github.com/babylonlabs-io/babylon/v4/types.BTCHeaderHashBytes" ];
   }
 
   // in x/btcstaking module types

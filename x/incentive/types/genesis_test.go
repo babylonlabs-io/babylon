@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/babylonlabs-io/babylon/v2/testutil/datagen"
-	"github.com/babylonlabs-io/babylon/v2/x/incentive/types"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	"github.com/babylonlabs-io/babylon/v4/x/incentive/types"
 	"github.com/cometbft/cometbft/crypto/tmhash"
 	"github.com/stretchr/testify/require"
 )

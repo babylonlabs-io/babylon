@@ -8,7 +8,7 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
-	stk "github.com/babylonlabs-io/babylon/v2/btcstaking"
+	stk "github.com/babylonlabs-io/babylon/v4/btcstaking"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/btcsuite/btcd/btcec/v2"
@@ -20,10 +20,10 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/v2/btcstaking"
-	bbn "github.com/babylonlabs-io/babylon/v2/types"
-	"github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
-	bstypes "github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/v4/btcstaking"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	"github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 )
 
 const (

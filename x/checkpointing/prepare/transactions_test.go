@@ -6,7 +6,7 @@ import (
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/v2/x/checkpointing/prepare"
+	"github.com/babylonlabs-io/babylon/v4/x/checkpointing/prepare"
 )
 
 func TestPrepareProposalTxs(t *testing.T) {

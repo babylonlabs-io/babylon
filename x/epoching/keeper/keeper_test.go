@@ -5,8 +5,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	testhelper "github.com/babylonlabs-io/babylon/v2/testutil/helper"
-	"github.com/babylonlabs-io/babylon/v2/x/epoching/types"
+	testhelper "github.com/babylonlabs-io/babylon/v4/testutil/helper"
+	"github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 )
 
 func TestParams(t *testing.T) {

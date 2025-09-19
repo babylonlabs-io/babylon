@@ -3,8 +3,8 @@ package keeper
 import (
 	"context"
 
-	ltypes "github.com/babylonlabs-io/babylon/v2/x/btclightclient/types"
-	etypes "github.com/babylonlabs-io/babylon/v2/x/epoching/types"
+	ltypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
+	etypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 )
 
 // HandledHooks Helper interface to ensure Hooks implements

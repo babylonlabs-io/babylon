@@ -12,7 +12,7 @@ import (
 	cmtos "github.com/cometbft/cometbft/libs/os"
 	"github.com/cometbft/cometbft/privval"
 
-	appsigner "github.com/babylonlabs-io/babylon/v2/app/signer"
+	appsigner "github.com/babylonlabs-io/babylon/v4/app/signer"
 )
 
 // InitializeNodeValidatorFiles creates private validator and p2p configuration files.

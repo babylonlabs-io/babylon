@@ -102,7 +102,7 @@ message RawCheckpoint {
   // sigs
   bytes bls_multi_sig = 4
   [ (gogoproto.customtype) =
-    "github.com/babylonlabs-io/babylon/v2/crypto/bls12381.Signature" ];
+    "github.com/babylonlabs-io/babylon/v4/crypto/bls12381.Signature" ];
 }
 
 // RawCheckpointWithMeta wraps the raw checkpoint with metadata.
@@ -115,7 +115,7 @@ message RawCheckpointWithMeta {
   // bls_aggr_pk defines the aggregated BLS public key
   bytes bls_aggr_pk = 3
   [ (gogoproto.customtype) =
-    "github.com/babylonlabs-io/babylon/v2/crypto/bls12381.PublicKey" ];
+    "github.com/babylonlabs-io/babylon/v4/crypto/bls12381.PublicKey" ];
   // power_sum defines the accumulated voting power for the checkpoint
   uint64 power_sum = 4;
   // lifecycle defines the lifecycle of this checkpoint, i.e., each state
@@ -300,7 +300,7 @@ message VoteExtension {
   // bls_sig is the BLS signature
   bytes bls_sig = 6
   [ (gogoproto.customtype) =
-    "github.com/babylonlabs-io/babylon/v2/crypto/bls12381.Signature" ];
+    "github.com/babylonlabs-io/babylon/v4/crypto/bls12381.Signature" ];
 }
 ```
 

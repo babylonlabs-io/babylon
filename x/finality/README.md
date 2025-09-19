@@ -228,7 +228,7 @@ secp256k1 secret key, as per EOTS's extractability property.
 // signatures with correct public randomness on two conflicting Babylon headers
 message Evidence {
     // fp_btc_pk is the BTC PK of the finality provider that casts this vote
-    bytes fp_btc_pk = 1 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/v2/types.BIP340PubKey" ];
+    bytes fp_btc_pk = 1 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/v4/types.BIP340PubKey" ];
     // block_height is the height of the conflicting blocks
     uint64 block_height = 2;
     // master_pub_rand is the master public randomness the finality provider has committed to
@@ -242,10 +242,10 @@ message Evidence {
     // where finality signature is an EOTS signature, i.e.,
     // the `s` in a Schnorr signature `(r, s)`
     // `r` is the public randomness that is already committed by the finality provider
-    bytes canonical_finality_sig = 6 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/v2/types.SchnorrEOTSSig" ];
+    bytes canonical_finality_sig = 6 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/v4/types.SchnorrEOTSSig" ];
     // fork_finality_sig is the finality signature to the fork block
     // where finality signature is an EOTS signature
-    bytes fork_finality_sig = 7 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/v2/types.SchnorrEOTSSig" ];
+    bytes fork_finality_sig = 7 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/v4/types.SchnorrEOTSSig" ];
 }
 ```
 
@@ -282,7 +282,7 @@ The information stored for tracking finality provider liveness is as follows:
 message FinalityProviderSigningInfo {
   // fp_btc_pk is the BTC PK of the finality provider that casts this finality
   // signature
-  bytes fp_btc_pk = 1 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/v2/types.BIP340PubKey" ];
+  bytes fp_btc_pk = 1 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/v4/types.BIP340PubKey" ];
   // start_height is the block height at which finality provider become active
   int64 start_height = 2;
   // missed_blocks_counter defines a counter to avoid unnecessary array reads.
@@ -321,7 +321,7 @@ message MsgCommitPubRandList {
   option (cosmos.msg.v1.signer) = "signer";
   string signer = 1;
   // fp_btc_pk is the BTC PK of the finality provider that commits the public randomness
-  bytes fp_btc_pk = 2 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/v2/types.BIP340PubKey" ];
+  bytes fp_btc_pk = 2 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/v4/types.BIP340PubKey" ];
   // start_height is the start block height of the list of public randomness
   uint64 start_height = 3;
   // num_pub_rand is the number of public randomness committed
@@ -332,7 +332,7 @@ message MsgCommitPubRandList {
   // sig is the signature on (start_height || num_pub_rand || commitment) signed by 
   // SK corresponding to fp_btc_pk. This prevents others to commit public
   // randomness on behalf of fp_btc_pk
-  bytes sig = 6 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/v2/types.BIP340Signature" ];
+  bytes sig = 6 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/v4/types.BIP340Signature" ];
 }
 ```
 
@@ -362,7 +362,7 @@ message MsgAddFinalitySig {
 
     string signer = 1;
     // fp_btc_pk is the BTC PK of the finality provider that casts this vote
-    bytes fp_btc_pk = 2 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/v2/types.BIP340PubKey" ];
+    bytes fp_btc_pk = 2 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/v4/types.BIP340PubKey" ];
     // block_height is the height of the voted block
     uint64 block_height = 3;
     // block_app_hash is the AppHash of the voted block
@@ -371,7 +371,7 @@ message MsgAddFinalitySig {
     // where finality signature is an EOTS signature, i.e.,
     // the `s` in a Schnorr signature `(r, s)`
     // `r` is the public randomness that is already committed by the finality provider
-    bytes finality_sig = 5 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/v2/types.SchnorrEOTSSig" ];
+    bytes finality_sig = 5 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/v4/types.SchnorrEOTSSig" ];
 }
 ```
 

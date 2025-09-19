@@ -9,9 +9,9 @@ import (
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
-	"github.com/babylonlabs-io/babylon/v2/app/keepers"
-	bbn "github.com/babylonlabs-io/babylon/v2/types"
-	btcstktypes "github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/v4/app/keepers"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	btcstktypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 )
 
 type (

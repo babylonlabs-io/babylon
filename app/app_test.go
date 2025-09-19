@@ -19,11 +19,11 @@ import (
 	icatypes "github.com/cosmos/ibc-go/v8/modules/apps/27-interchain-accounts/types"
 	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
 
-	babylonApp "github.com/babylonlabs-io/babylon/v2/app"
-	testsigner "github.com/babylonlabs-io/babylon/v2/testutil/signer"
-	checkpointingtypes "github.com/babylonlabs-io/babylon/v2/x/checkpointing/types"
-	incentivetypes "github.com/babylonlabs-io/babylon/v2/x/incentive/types"
-	minttypes "github.com/babylonlabs-io/babylon/v2/x/mint/types"
+	babylonApp "github.com/babylonlabs-io/babylon/v4/app"
+	testsigner "github.com/babylonlabs-io/babylon/v4/testutil/signer"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
+	incentivetypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
+	minttypes "github.com/babylonlabs-io/babylon/v4/x/mint/types"
 
 	"github.com/stretchr/testify/require"
 )

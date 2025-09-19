@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	appsigner "github.com/babylonlabs-io/babylon/v2/app/signer"
-	"github.com/babylonlabs-io/babylon/v2/crypto/bls12381"
+	appsigner "github.com/babylonlabs-io/babylon/v4/app/signer"
+	"github.com/babylonlabs-io/babylon/v4/crypto/bls12381"
 	"github.com/cometbft/cometbft/crypto/ed25519"
 	"github.com/stretchr/testify/require"
 )

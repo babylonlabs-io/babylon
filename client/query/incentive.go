@@ -3,7 +3,7 @@ package query
 import (
 	"context"
 
-	incentivetypes "github.com/babylonlabs-io/babylon/v2/x/incentive/types"
+	incentivetypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
 	"github.com/cosmos/cosmos-sdk/client"
 )
 

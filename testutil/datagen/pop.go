@@ -1,10 +1,10 @@
 package datagen
 
 import (
-	"github.com/babylonlabs-io/babylon/v2/crypto/bip322"
-	"github.com/babylonlabs-io/babylon/v2/crypto/ecdsa"
-	bbn "github.com/babylonlabs-io/babylon/v2/types"
-	bstypes "github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/v4/crypto/bip322"
+	"github.com/babylonlabs-io/babylon/v4/crypto/ecdsa"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/btcutil"

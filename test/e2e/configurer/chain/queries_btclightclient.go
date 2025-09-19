@@ -10,8 +10,8 @@ import (
 	sdkquerytypes "github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/v2/test/e2e/util"
-	btclighttypes "github.com/babylonlabs-io/babylon/v2/x/btclightclient/types"
+	"github.com/babylonlabs-io/babylon/v4/test/e2e/util"
+	btclighttypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
 )
 
 func (n *NodeConfig) QueryBtcLightClientMainchain(pagination *query.PageRequest) (*btclighttypes.QueryMainChainResponse, error) {

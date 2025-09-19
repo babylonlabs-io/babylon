@@ -19,7 +19,7 @@ import (
 
 	cfg "github.com/cometbft/cometbft/config"
 
-	checkpointingtypes "github.com/babylonlabs-io/babylon/v2/x/checkpointing/types"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"

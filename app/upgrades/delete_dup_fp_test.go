@@ -11,8 +11,8 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	bbn "github.com/babylonlabs-io/babylon/v2/types"
-	btcstktypes "github.com/babylonlabs-io/babylon/v2/x/btcstaking/types"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	btcstktypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 )
 
 type FpFromTestData struct {

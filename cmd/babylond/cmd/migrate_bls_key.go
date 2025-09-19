@@ -6,10 +6,10 @@ import (
 	"os"
 	"strings"
 
-	"github.com/babylonlabs-io/babylon/v2/app"
+	"github.com/babylonlabs-io/babylon/v4/app"
 
-	appsigner "github.com/babylonlabs-io/babylon/v2/app/signer"
-	"github.com/babylonlabs-io/babylon/v2/crypto/bls12381"
+	appsigner "github.com/babylonlabs-io/babylon/v4/app/signer"
+	"github.com/babylonlabs-io/babylon/v4/crypto/bls12381"
 	cmtcfg "github.com/cometbft/cometbft/config"
 	cmtcrypto "github.com/cometbft/cometbft/crypto"
 	cmtjson "github.com/cometbft/cometbft/libs/json"

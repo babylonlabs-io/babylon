@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/babylonlabs-io/babylon/v2/app"
-	v1 "github.com/babylonlabs-io/babylon/v2/app/upgrades/v1"
-	"github.com/babylonlabs-io/babylon/v2/test/e2e/configurer/config"
+	"github.com/babylonlabs-io/babylon/v4/app"
+	v1 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v1"
+	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer/config"
 	"github.com/stretchr/testify/require"
 )
 

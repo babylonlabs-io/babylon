@@ -3,16 +3,17 @@ package wasmbinding
 import (
 	"encoding/json"
 	"fmt"
+
 	tokenfactorykeeper "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/keeper"
 
 	errorsmod "cosmossdk.io/errors"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/v2/types"
-	bbn "github.com/babylonlabs-io/babylon/v2/types"
-	"github.com/babylonlabs-io/babylon/v2/wasmbinding/bindings"
-	lcKeeper "github.com/babylonlabs-io/babylon/v2/x/btclightclient/keeper"
-	checkpointingkeeper "github.com/babylonlabs-io/babylon/v2/x/checkpointing/keeper"
-	epochingkeeper "github.com/babylonlabs-io/babylon/v2/x/epoching/keeper"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	"github.com/babylonlabs-io/babylon/v4/wasmbinding/bindings"
+	lcKeeper "github.com/babylonlabs-io/babylon/v4/x/btclightclient/keeper"
+	checkpointingkeeper "github.com/babylonlabs-io/babylon/v4/x/checkpointing/keeper"
+	epochingkeeper "github.com/babylonlabs-io/babylon/v4/x/epoching/keeper"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
