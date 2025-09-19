@@ -167,7 +167,7 @@ func TestUpdateFinalityProviderCommission(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			h := testutil.NewHelper(t, nil, nil)
+			h := testutil.NewHelper(t, nil, nil, nil)
 
 			params := h.BTCStakingKeeper.GetParams(h.Ctx)
 			params.MinCommissionRate = tc.minCommission
@@ -204,7 +204,7 @@ func FuzzSlashConsumerFinalityProvider(f *testing.F) {
 		// mock BTC light client and BTC checkpoint modules
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-		h := testutil.NewHelper(t, btclcKeeper, btccKeeper)
+		h := testutil.NewHelper(t, btclcKeeper, btccKeeper, nil)
 		h.GenAndApplyParams(r)
 
 		// create a consumer finality provider
@@ -241,7 +241,7 @@ func FuzzHasFpRegistered(f *testing.F) {
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		t.Parallel()
-		h := testutil.NewHelper(t, nil, nil)
+		h := testutil.NewHelper(t, nil, nil, nil)
 
 		randAddr := datagen.GenRandomAddress()
 
@@ -264,7 +264,7 @@ func FuzzIsFinalityProviderDeleted(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		t.Parallel()
 		r := rand.New(rand.NewSource(seed))
-		h := testutil.NewHelper(t, nil, nil)
+		h := testutil.NewHelper(t, nil, nil, nil)
 
 		randFpBtcPk, err := datagen.GenRandomBIP340PubKey(r)
 		require.NoError(t, err)
@@ -287,7 +287,7 @@ func FuzzIterateFinalityProvider(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		t.Parallel()
 		r := rand.New(rand.NewSource(seed))
-		h := testutil.NewHelper(t, nil, nil)
+		h := testutil.NewHelper(t, nil, nil, nil)
 
 		numFps := datagen.RandomInt(r, 10) + 1
 
