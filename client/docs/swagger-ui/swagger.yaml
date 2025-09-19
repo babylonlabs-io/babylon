@@ -2890,6 +2890,7 @@ paths:
           type: boolean
       tags:
         - Query
+
   /babylon/epoching/v1/params:
     get:
       summary: Params queries the parameters of the module.
@@ -14714,6 +14715,7 @@ definitions:
     title: >-
       QueryEpochsInfoResponse is the response type for the Query/EpochInfos
       method
+
   babylon.epoching.v1.QueryParamsResponse:
     type: object
     properties:
