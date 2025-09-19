@@ -40,6 +40,14 @@ func BeginBlocker(ctx context.Context, k keeper.Keeper) error {
 		// record the AppHash referencing
 		// the last block of the previous epoch
 		k.RecordSealerAppHashForPrevEpoch(ctx)
+
+		// Clean up message queue from the previous epoch to prevent unbounded growth
+		// Only epochs after the first epoch need cleanup as epoch 1 has no previous epoch
+		// This ensures that processed messages don't accumulate over time and consume storage
+		if incEpoch.EpochNumber > 1 {
+			prevEpochNumber := incEpoch.EpochNumber - 1
+			k.ClearEpochMsgs(ctx, prevEpochNumber)
+		}
 		// init the msg queue of this new epoch
 		k.InitMsgQueue(ctx)
 		// init the slashed voting power of this new epoch
@@ -97,7 +105,7 @@ func EndBlocker(ctx context.Context, k keeper.Keeper) ([]abci.ValidatorUpdate, e
 				k.Logger(sdkCtx).Error("failed to unlock funds for message",
 					"msgId", msgId,
 					"error", err)
-				
+
 				// Determine message type for context
 				msgType := "unknown"
 				switch msg.Msg.(type) {
@@ -106,7 +114,7 @@ func EndBlocker(ctx context.Context, k keeper.Keeper) ([]abci.ValidatorUpdate, e
 				case *types.QueuedMessage_MsgCreateValidator:
 					msgType = "MsgCreateValidator"
 				}
-				
+
 				// Emit typed event for fund unlock failure
 				if eventErr := sdkCtx.EventManager().EmitTypedEvent(
 					&types.EventUnlockFundsFailed{

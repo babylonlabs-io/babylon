@@ -341,3 +341,66 @@ func cacheTxContext(ctx sdk.Context, txid []byte, msgid []byte, height uint64) (
 
 	return ctx.WithMultiStore(msCache), msCache
 }
+
+// ClearEpochMsgs clears all processed messages and queue metadata for a given epoch
+func (k Keeper) ClearEpochMsgs(ctx context.Context, epochNumber uint64) {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+
+	// Check for invalid epoch numbers and log warnings instead of returning errors
+	if epochNumber == 0 {
+		sdkCtx.Logger().Warn(
+			"Cannot clear epoch 0 - invalid epoch number",
+			"epoch", epochNumber,
+		)
+		return
+	}
+
+	currentEpoch := k.GetEpoch(ctx).EpochNumber
+	if epochNumber >= currentEpoch {
+		sdkCtx.Logger().Warn(
+			"Cannot clear current or future epoch - skipping",
+			"epoch", epochNumber,
+			"current_epoch", currentEpoch,
+		)
+		return
+	}
+
+	queueLength := k.GetQueueLength(ctx, epochNumber)
+
+	if queueLength == 0 {
+		// No messages to clear
+		sdkCtx.Logger().Info(
+			"No messages to clear for epoch",
+			"epoch", epochNumber,
+		)
+		return
+	}
+
+	// Clear all messages in the queue store
+	store := k.msgQueueStore(ctx, epochNumber)
+
+	// Iterate and delete all messages
+	iterator := storetypes.KVStorePrefixIterator(store, nil)
+	defer func() {
+		if err := iterator.Close(); err != nil {
+			sdkCtx.Logger().Error("Failed to close iterator", "error", err)
+		}
+	}()
+
+	for ; iterator.Valid(); iterator.Next() {
+		store.Delete(iterator.Key())
+	}
+
+	// Clear the queue length entry
+	lengthStore := k.msgQueueLengthStore(ctx)
+	epochNumberBytes := sdk.Uint64ToBigEndian(epochNumber)
+	lengthStore.Delete(epochNumberBytes)
+
+	// Log successful cleanup
+	sdkCtx.Logger().Info(
+		"Successfully cleared epoch message queue",
+		"epoch", epochNumber,
+		"cleared_messages", queueLength,
+		"height", sdkCtx.HeaderInfo().Height,
+	)
+}

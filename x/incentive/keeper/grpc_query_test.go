@@ -23,7 +23,7 @@ func FuzzRewardGaugesQuery(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 
-		keeper, ctx := testkeeper.IncentiveKeeper(t, nil, nil, nil, nil)
+		keeper, ctx := testkeeper.IncentiveKeeper(t, nil, nil, nil, types.NewMultiIncentiveHooks())
 
 		// generate a list of random RewardGauge map and insert them to KVStore
 		// where in each map, key is stakeholder type and address is the reward gauge

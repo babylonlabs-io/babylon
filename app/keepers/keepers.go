@@ -509,6 +509,9 @@ func (ak *AppKeepers) InitKeepers(
 			ak.Erc20Keeper,
 			ak.GovKeeper,
 			ak.SlashingKeeper,
+			ak.StakingKeeper,
+			epochingKeeper,
+			checkpointingKeeper,
 		),
 	)
 	// Create the TokenFactory Keeper
@@ -607,7 +610,7 @@ func (ak *AppKeepers) InitKeepers(
 
 	ak.GovKeeper = *govKeeper.SetHooks(
 		govtypes.NewMultiGovHooks(
-		// register the governance hooks
+			// register the governance hooks
 		),
 	)
 
@@ -694,7 +697,7 @@ func (ak *AppKeepers) InitKeepers(
 		appCodec,
 		runtime.NewKVStoreService(keys[finalitytypes.StoreKey]),
 		ak.BTCStakingKeeper,
-		ak.IncentiveKeeper,
+		&ak.IncentiveKeeper,
 		&checkpointingKeeper,
 		appparams.AccFinality.String(),
 		appparams.AccGov.String(),

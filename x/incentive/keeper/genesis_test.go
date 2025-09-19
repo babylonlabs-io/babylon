@@ -1,7 +1,6 @@
 package keeper_test
 
 import (
-	"encoding/hex"
 	"fmt"
 	"math"
 	"math/rand"
@@ -60,10 +59,6 @@ func TestInitGenesis(t *testing.T) {
 						DelegatorAddress: acc1.Address,
 						WithdrawAddress:  datagen.GenRandomAccount().Address,
 					},
-				},
-				RefundableMsgHashes: []string{
-					genRandomMsgHashStr(),
-					genRandomMsgHashStr(),
 				},
 				FinalityProvidersCurrentRewards: []types.FinalityProviderCurrentRewardsEntry{
 					{
@@ -198,16 +193,6 @@ func TestInitGenesis(t *testing.T) {
 			errMsg:    fmt.Sprintf("delegator account with address %s does not exist", acc1.Address),
 		},
 		{
-			name: "Invalid msg hash string",
-			gs: types.GenesisState{
-				Params:              types.DefaultParams(),
-				RefundableMsgHashes: []string{"invalid_hash"},
-			},
-			akMockResp: func(m *types.MockAccountKeeper) {},
-			expectErr:  true,
-			errMsg:     "error decoding msg hash",
-		},
-		{
 			name: "Invalid block height (future height)",
 			gs: types.GenesisState{
 				Params: types.DefaultParams(),
@@ -266,9 +251,6 @@ func FuzzTestExportGenesis(f *testing.F) {
 			k.SetBTCStakingGauge(ctx, gs.BtcStakingGauges[i].Height, gs.BtcStakingGauges[i].Gauge)
 			k.SetRewardGauge(ctx, gs.RewardGauges[i].StakeholderType, sdk.MustAccAddressFromBech32(gs.RewardGauges[i].Address), gs.RewardGauges[i].RewardGauge)
 			k.SetWithdrawAddr(ctx, sdk.MustAccAddressFromBech32(gs.WithdrawAddresses[i].DelegatorAddress), sdk.MustAccAddressFromBech32(gs.WithdrawAddresses[i].WithdrawAddress))
-			bz, err := hex.DecodeString(gs.RefundableMsgHashes[i])
-			require.NoError(t, err)
-			k.RefundableMsgKeySet.Set(ctx, bz)
 
 			// FP current rewards
 			fpCurrRwdKeyBz, err := collections.EncodeKeyWithPrefix(types.FinalityProviderCurrentRewardsKeyPrefix.Bytes(), collections.BytesKey, sdk.MustAccAddressFromBech32(gs.FinalityProvidersCurrentRewards[i].Address).Bytes())
@@ -359,7 +341,6 @@ func setupTest(t *testing.T, seed int64) (sdk.Context, *keeper.Keeper, *storetyp
 		bsg        = make([]types.BTCStakingGaugeEntry, l)
 		rg         = make([]types.RewardGaugeEntry, l)
 		wa         = make([]types.WithdrawAddressEntry, l)
-		mh         = make([]string, l)
 		fpCurrRwd  = make([]types.FinalityProviderCurrentRewardsEntry, l)
 		bdrt       = make([]types.BTCDelegationRewardsTrackerEntry, l)
 		d2fp       = make([]types.BTCDelegatorToFpEntry, l)
@@ -408,7 +389,6 @@ func setupTest(t *testing.T, seed int64) (sdk.Context, *keeper.Keeper, *storetyp
 			DelegatorAddress: acc1.Address,
 			WithdrawAddress:  datagen.GenRandomAccount().Address,
 		}
-		mh[i] = genRandomMsgHashStr()
 
 		fpCurrRwd[i] = types.FinalityProviderCurrentRewardsEntry{
 			Address: acc1.Address,
@@ -468,7 +448,6 @@ func setupTest(t *testing.T, seed int64) (sdk.Context, *keeper.Keeper, *storetyp
 		BtcStakingGauges:                      bsg,
 		RewardGauges:                          rg,
 		WithdrawAddresses:                     wa,
-		RefundableMsgHashes:                   mh,
 		FinalityProvidersCurrentRewards:       fpCurrRwd,
 		FinalityProvidersHistoricalRewards:    fpHistRwd,
 		BtcDelegationRewardsTrackers:          bdrt,
@@ -493,12 +472,4 @@ func getUniqueHeight(currHeight uint64, usedHeights map[uint64]bool) uint64 {
 		}
 	}
 	return height
-}
-
-func genRandomMsgHashStr() string {
-	msg := types.MsgWithdrawReward{
-		Address: datagen.GenRandomAccount().Address,
-	}
-	msgHash := types.HashMsg(&msg)
-	return hex.EncodeToString(msgHash)
 }

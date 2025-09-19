@@ -8,6 +8,7 @@ import (
 	context "context"
 	reflect "reflect"
 
+	math "cosmossdk.io/math"
 	types "cosmossdk.io/store/types"
 	types0 "github.com/babylonlabs-io/babylon/v4/types"
 	types1 "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
@@ -352,16 +353,72 @@ func (m *MockIncentiveKeeper) EXPECT() *MockIncentiveKeeperMockRecorder {
 	return m.recorder
 }
 
-// IndexRefundableMsg mocks base method.
-func (m *MockIncentiveKeeper) IndexRefundableMsg(ctx context.Context, msg types3.Msg) {
+// AddEventBtcDelegationActivated mocks base method.
+func (m *MockIncentiveKeeper) AddEventBtcDelegationActivated(ctx context.Context, height uint64, fp, del types3.AccAddress, sat uint64) error {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "IndexRefundableMsg", ctx, msg)
+	ret := m.ctrl.Call(m, "AddEventBtcDelegationActivated", ctx, height, fp, del, sat)
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
-// IndexRefundableMsg indicates an expected call of IndexRefundableMsg.
-func (mr *MockIncentiveKeeperMockRecorder) IndexRefundableMsg(ctx, msg interface{}) *gomock.Call {
+// AddEventBtcDelegationActivated indicates an expected call of AddEventBtcDelegationActivated.
+func (mr *MockIncentiveKeeperMockRecorder) AddEventBtcDelegationActivated(ctx, height, fp, del, sat interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IndexRefundableMsg", reflect.TypeOf((*MockIncentiveKeeper)(nil).IndexRefundableMsg), ctx, msg)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddEventBtcDelegationActivated", reflect.TypeOf((*MockIncentiveKeeper)(nil).AddEventBtcDelegationActivated), ctx, height, fp, del, sat)
+}
+
+// AddEventBtcDelegationUnbonded mocks base method.
+func (m *MockIncentiveKeeper) AddEventBtcDelegationUnbonded(ctx context.Context, height uint64, fp, del types3.AccAddress, sat uint64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddEventBtcDelegationUnbonded", ctx, height, fp, del, sat)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AddEventBtcDelegationUnbonded indicates an expected call of AddEventBtcDelegationUnbonded.
+func (mr *MockIncentiveKeeperMockRecorder) AddEventBtcDelegationUnbonded(ctx, height, fp, del, sat interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddEventBtcDelegationUnbonded", reflect.TypeOf((*MockIncentiveKeeper)(nil).AddEventBtcDelegationUnbonded), ctx, height, fp, del, sat)
+}
+
+// BtcDelegationActivated mocks base method.
+func (m *MockIncentiveKeeper) BtcDelegationActivated(ctx context.Context, fp, del types3.AccAddress, sat math.Int) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "BtcDelegationActivated", ctx, fp, del, sat)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// BtcDelegationActivated indicates an expected call of BtcDelegationActivated.
+func (mr *MockIncentiveKeeperMockRecorder) BtcDelegationActivated(ctx, fp, del, sat interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BtcDelegationActivated", reflect.TypeOf((*MockIncentiveKeeper)(nil).BtcDelegationActivated), ctx, fp, del, sat)
+}
+
+// BtcDelegationUnbonded mocks base method.
+func (m *MockIncentiveKeeper) BtcDelegationUnbonded(ctx context.Context, fp, del types3.AccAddress, sat math.Int) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "BtcDelegationUnbonded", ctx, fp, del, sat)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// BtcDelegationUnbonded indicates an expected call of BtcDelegationUnbonded.
+func (mr *MockIncentiveKeeperMockRecorder) BtcDelegationUnbonded(ctx, fp, del, sat interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BtcDelegationUnbonded", reflect.TypeOf((*MockIncentiveKeeper)(nil).BtcDelegationUnbonded), ctx, fp, del, sat)
+}
+
+// IncRefundableMsgCount mocks base method.
+func (m *MockIncentiveKeeper) IncRefundableMsgCount() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "IncRefundableMsgCount")
+}
+
+// IncRefundableMsgCount indicates an expected call of IncRefundableMsgCount.
+func (mr *MockIncentiveKeeperMockRecorder) IncRefundableMsgCount() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IncRefundableMsgCount", reflect.TypeOf((*MockIncentiveKeeper)(nil).IncRefundableMsgCount))
 }
 
 // RewardBTCStaking mocks base method.

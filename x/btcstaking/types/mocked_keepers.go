@@ -301,16 +301,16 @@ func (mr *MockIncentiveKeeperMockRecorder) AddFinalityProviderRewardsForBtcDeleg
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddFinalityProviderRewardsForBtcDelegations", reflect.TypeOf((*MockIncentiveKeeper)(nil).AddFinalityProviderRewardsForBtcDelegations), ctx, fp, rwd)
 }
 
-// IndexRefundableMsg mocks base method.
-func (m *MockIncentiveKeeper) IndexRefundableMsg(ctx context.Context, msg types3.Msg) {
+// IncRefundableMsgCount mocks base method.
+func (m *MockIncentiveKeeper) IncRefundableMsgCount() {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "IndexRefundableMsg", ctx, msg)
+	m.ctrl.Call(m, "IncRefundableMsgCount")
 }
 
-// IndexRefundableMsg indicates an expected call of IndexRefundableMsg.
-func (mr *MockIncentiveKeeperMockRecorder) IndexRefundableMsg(ctx, msg interface{}) *gomock.Call {
+// IncRefundableMsgCount indicates an expected call of IncRefundableMsgCount.
+func (mr *MockIncentiveKeeperMockRecorder) IncRefundableMsgCount() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IndexRefundableMsg", reflect.TypeOf((*MockIncentiveKeeper)(nil).IndexRefundableMsg), ctx, msg)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IncRefundableMsgCount", reflect.TypeOf((*MockIncentiveKeeper)(nil).IncRefundableMsgCount))
 }
 
 // MockBankKeeper is a mock of BankKeeper interface.

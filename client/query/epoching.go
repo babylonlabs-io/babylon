@@ -62,24 +62,6 @@ func (c *QueryClient) EpochsInfo(pagination *sdkquerytypes.PageRequest) (*epochi
 	return resp, err
 }
 
-// LatestEpochMsgs queries the epoching module for the latest messages maintained in its delayed
-// staking queue until a specified endEpoch.
-func (c *QueryClient) LatestEpochMsgs(endEpoch uint64, epochCount uint64, pagination *sdkquerytypes.PageRequest) (*epochingtypes.QueryLatestEpochMsgsResponse, error) {
-	var resp *epochingtypes.QueryLatestEpochMsgsResponse
-	err := c.QueryEpoching(func(ctx context.Context, queryClient epochingtypes.QueryClient) error {
-		var err error
-		req := &epochingtypes.QueryLatestEpochMsgsRequest{
-			EndEpoch:   endEpoch,
-			EpochCount: epochCount,
-			Pagination: pagination,
-		}
-		resp, err = queryClient.LatestEpochMsgs(ctx, req)
-		return err
-	})
-
-	return resp, err
-}
-
 // DelegationLifecycle queries the epoching module for the lifecycle of a delegator.
 func (c *QueryClient) DelegationLifecycle(delegator string) (*epochingtypes.QueryDelegationLifecycleResponse, error) {
 	var resp *epochingtypes.QueryDelegationLifecycleResponse
