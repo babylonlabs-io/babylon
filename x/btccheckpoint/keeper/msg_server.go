@@ -109,7 +109,7 @@ func (ms msgServer) InsertBTCSpvProof(ctx context.Context, req *types.MsgInsertB
 	// At this point, the BTC checkpoint is a valid submission and is
 	// not duplicated (first time seeing the pair of BTC txs)
 	// Thus, we can safely consider this message as refundable
-	ms.k.incentiveKeeper.IndexRefundableMsg(sdkCtx, req)
+	ms.k.incentiveKeeper.IncRefundableMsgCount()
 
 	return &types.MsgInsertBTCSpvProofResponse{}, nil
 }

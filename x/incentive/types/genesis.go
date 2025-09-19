@@ -1,14 +1,12 @@
 package types
 
 import (
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"reflect"
 	"sort"
 
 	"github.com/babylonlabs-io/babylon/v4/types"
-	"github.com/cometbft/cometbft/crypto/tmhash"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -19,7 +17,6 @@ func DefaultGenesis() *GenesisState {
 		BtcStakingGauges:                      []BTCStakingGaugeEntry{},
 		RewardGauges:                          []RewardGaugeEntry{},
 		WithdrawAddresses:                     []WithdrawAddressEntry{},
-		RefundableMsgHashes:                   []string{},
 		FinalityProvidersCurrentRewards:       []FinalityProviderCurrentRewardsEntry{},
 		FinalityProvidersHistoricalRewards:    []FinalityProviderHistoricalRewardsEntry{},
 		BtcDelegationRewardsTrackers:          []BTCDelegationRewardsTrackerEntry{},
@@ -42,10 +39,6 @@ func (gs GenesisState) Validate() error {
 
 	if err := validateWithdrawAddresses(gs.WithdrawAddresses); err != nil {
 		return fmt.Errorf("invalid withdraw addresses: %w", err)
-	}
-
-	if err := validateMsgHashes(gs.RefundableMsgHashes); err != nil {
-		return fmt.Errorf("invalid msg hashes: %w", err)
 	}
 
 	if err := validateFPCurrentRewards(gs.FinalityProvidersCurrentRewards); err != nil {
@@ -230,27 +223,6 @@ func validateRewardGauges(entries []RewardGaugeEntry) error {
 	return nil
 }
 
-func validateMsgHashes(hashes []string) error {
-	hashMap := make(map[string]bool) // To check for duplicate hashes
-	for _, hash := range hashes {
-		if hash == "" {
-			return errors.New("empty hash")
-		}
-		bz, err := hex.DecodeString(hash)
-		if err != nil {
-			return fmt.Errorf("error decoding msg hash: %w", err)
-		}
-		if len(bz) != tmhash.Size {
-			return fmt.Errorf("hash size should be %d characters: %s", tmhash.Size, hash)
-		}
-		if _, exists := hashMap[hash]; exists {
-			return fmt.Errorf("duplicate hash: %s", hash)
-		}
-		hashMap[hash] = true
-	}
-	return nil
-}
-
 func validateFPCurrentRewards(entries []FinalityProviderCurrentRewardsEntry) error {
 	return types.ValidateEntries(entries, func(e FinalityProviderCurrentRewardsEntry) string {
 		return e.Address
@@ -380,10 +352,6 @@ func SortData(gs *GenesisState) {
 
 	sort.Slice(gs.WithdrawAddresses, func(i, j int) bool {
 		return gs.WithdrawAddresses[i].DelegatorAddress < gs.WithdrawAddresses[j].DelegatorAddress
-	})
-
-	sort.Slice(gs.RefundableMsgHashes, func(i, j int) bool {
-		return gs.RefundableMsgHashes[i] < gs.RefundableMsgHashes[j]
 	})
 
 	sort.Slice(gs.FinalityProvidersCurrentRewards, func(i, j int) bool {

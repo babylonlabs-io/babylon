@@ -22,8 +22,9 @@ message GenesisState {
   // Withdraw addresses of the delegators
   repeated WithdrawAddressEntry withdraw_addresses = 4
       [ (gogoproto.nullable) = false ];
+  // DEPRECATED: refundable_msg_hashes is no longer used due to in-memory optimization
   // refundable_msg_hashes is the set of hashes of messages that can be refunded
-  repeated string refundable_msg_hashes = 5;
+  repeated string refundable_msg_hashes = 5 [deprecated = true];
   // finality_providers_current_rewards are the current rewards of finality
   // providers by addr
   repeated FinalityProviderCurrentRewardsEntry

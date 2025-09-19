@@ -30,7 +30,7 @@ func TestAddFinalityProvider_ConsumerValidation(t *testing.T) {
 	ictvKeeper := testutil.NewMockIctvKeeperK(ctrl)
 
 	// Allow any calls to the incentive keeper methods
-	ictvKeeper.MockIncentiveKeeper.EXPECT().IndexRefundableMsg(gomock.Any(), gomock.Any()).AnyTimes()
+	ictvKeeper.MockIncentiveKeeper.EXPECT().IncRefundableMsgCount().AnyTimes()
 
 	h := testutil.NewHelperWithBankMock(t, btclcKeeper, btccKeeper, bankKeeper, chanKeeper, ictvKeeper, nil)
 	h.GenAndApplyParams(r)

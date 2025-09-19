@@ -1980,8 +1980,8 @@ func TestBSNDelegationActivated_DirectIncentives(t *testing.T) {
 
 	h.FinalityKeeper.IncentiveKeeper = incentiveKeeper
 
-	// Add required mock expectations for IndexRefundableMsg
-	incentiveKeeper.EXPECT().IndexRefundableMsg(gomock.Any(), gomock.Any()).AnyTimes()
+	// Add required mock expectations for IncRefundableMsgCount
+	incentiveKeeper.EXPECT().IncRefundableMsgCount().AnyTimes()
 
 	h.GenAndApplyCustomParams(r, 100, 200, 2)
 
@@ -2086,7 +2086,7 @@ func TestBSNDelegationUnbonded_DirectIncentives(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	ictvK.EXPECT().IndexRefundableMsg(gomock.Any(), gomock.Any()).AnyTimes()
+	ictvK.EXPECT().IncRefundableMsgCount().AnyTimes()
 	h.CreateCovenantSigs(r, covenantSKs, delMsg, btcDel, 10)
 
 	eventUnbond := btcstktypes.NewEventPowerDistUpdateWithBTCDel(&btcstktypes.EventBTCDelegationStateUpdate{
