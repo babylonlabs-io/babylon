@@ -34,7 +34,6 @@ const (
 	EpochInfoMethod           = "epochInfo"
 	CurrentEpochMethod        = "currentEpoch"
 	EpochMsgsMethod           = "epochMsgs"
-	LatestEpochMsgsMethod     = "latestEpochMsgs"
 	ValidatorLifecycleMethod  = "validatorLifecycle"
 	DelegationLifecycleMethod = "delegationLifecycle"
 	EpochValSetMethod         = "epochValSet"
@@ -406,27 +405,6 @@ func (p Precompile) EpochMsgs(
 	}
 
 	out := new(EpochMsgsOutput).FromResponse(res)
-
-	return out.Pack(method.Outputs)
-}
-
-func (p Precompile) LatestEpochMsgs(
-	ctx sdk.Context,
-	_ *vm.Contract,
-	method *abi.Method,
-	args []interface{},
-) ([]byte, error) {
-	req, err := NewLatestEpochMsgsRequest(method, args)
-	if err != nil {
-		return nil, err
-	}
-
-	res, err := p.epochingQuerier.LatestEpochMsgs(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-
-	out := new(LatestEpochMsgsOutput).FromResponse(res)
 
 	return out.Pack(method.Outputs)
 }

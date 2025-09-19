@@ -2071,61 +2071,6 @@ var _ = Describe("Calling epoching precompile directly", func() {
 		})
 	})
 
-	Describe("latestEpochMsgs queries", func() {
-		BeforeEach(func() {
-			// make two MsgWrappedDelegate and remain these msgs in the queue
-			delAddr := common.Address(s.delegatorPriv.PubKey().Address().Bytes())
-
-			logCheckArgs := passCheck.WithExpEvents(epoching.EventTypeWrappedDelegate)
-			resp, err := s.CallContract(
-				s.delegatorPriv,
-				s.addr,
-				s.abi,
-				epoching.WrappedDelegateMethod,
-				logCheckArgs,
-				delAddr,
-				valHex,
-				big.NewInt(1_000_000),
-			)
-			Expect(err).To(BeNil(), "error while calling the contract")
-			Expect(resp.VmError).To(Equal(""))
-
-			logCheckArgs = passCheck.WithExpEvents(epoching.EventTypeWrappedDelegate)
-			resp, err = s.CallContract(
-				s.delegatorPriv,
-				s.addr,
-				s.abi,
-				epoching.WrappedDelegateMethod,
-				logCheckArgs,
-				delAddr,
-				valHex,
-				big.NewInt(1_000_000),
-			)
-			Expect(err).To(BeNil(), "error while calling the contract")
-			Expect(resp.VmError).To(Equal(""))
-		})
-
-		It("should return the latest epoch messages", func() {
-			resp, err := s.QueryContract(
-				s.addr,
-				s.abi,
-				epoching.LatestEpochMsgsMethod,
-				uint64(0),
-				uint64(2),
-				query.PageRequest{CountTotal: true},
-			)
-			Expect(err).To(BeNil(), "error while calling the contract %v", err)
-			Expect(resp.VmError).To(Equal(""))
-
-			var latestEpochMsgs epoching.LatestEpochMsgsOutput
-			err = s.abi.UnpackIntoInterface(&latestEpochMsgs, epoching.LatestEpochMsgsMethod, resp.Ret)
-			Expect(err).To(BeNil(), "error while unpacking the latest epoch msgs: %v", err)
-			Expect(latestEpochMsgs.PageResponse.Total).To(Equal(uint64(2)))
-			// two msgs in the epoch number two
-			Expect(latestEpochMsgs.LatestEpochMsgs[1].Msgs).To(HaveLen(2))
-		})
-	})
-
 	Describe("validatorLifecycle queries", func() {
 		var (
 			defaultDescription = staking.Description{

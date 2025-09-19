@@ -41,6 +41,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ### Improvements
 
 - [#1733](https://github.com/babylonlabs-io/babylon/pull/1733) Deprecate LatestEpochMsgs query
+- [#1732](https://github.com/babylonlabs-io/babylon/pull/1732) Optimize `x/epoching` storage overhead by cleaning past message queue.
 - [#1703](https://github.com/babylonlabs-io/babylon/pull/1703) Add upgrade handler for spam prevention mechanisms to epoching
 - [#1605](https://github.com/babylonlabs-io/babylon/pull/1605) Add epoching precompile
 - [#1663](https://github.com/babylonlabs-io/babylon/pull/1663) Add spam prevention mechanisms to epoching module with minimum amount validation and gas consumption limits for wrapped delegate operations.
@@ -78,8 +79,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#1651](https://github.com/babylonlabs-io/babylon/pull/1651) Store Cosmos BSN slashing evidence.
 - [#1714](https://github.com/babylonlabs-io/babylon/pull/1714) Add BLS key flags to `rollback` and `bootstrap-state` cmds
 
-### Deprecated
-- [#1726](https://github.com/babylonlabs-io/babylon/pull/1726) (x/epoching) Deprecate the LatestEpochMsgs gRPC query, as the epoching module now clears the message queue. This query can be fully replaced by EpochMsgs.
+
+### API Breaking
+
+- [#1715](https://github.com/babylonlabs-io/babylon/pull/1715) Remove `QueryLatestEpochMsgs` query in `x/epoching`. 
 
 ## v3.0.0-rc.2
 
