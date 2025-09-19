@@ -1970,7 +1970,8 @@ func TestIgnoreUnbondingEventIfThereIsNoQuorum(t *testing.T) {
 func TestProcessAllPowerDistUpdateEvents_TotallyUnbondedFP(t *testing.T) {
 	t.Parallel()
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	h, del, _, _ := CreateFpAndBtcDel(t, r, true)
+	h, del, _, sk := CreateFpAndBtcDel(t, r, true)
+	btcTipHeight := uint32(30)
 
 	// Start with an active delegation
 	eventActive := btcstktypes.NewEventPowerDistUpdateWithBTCDel(&btcstktypes.EventBTCDelegationStateUpdate{
@@ -1978,8 +1979,10 @@ func TestProcessAllPowerDistUpdateEvents_TotallyUnbondedFP(t *testing.T) {
 		NewState:      btcstktypes.BTCDelegationStatus_ACTIVE,
 	})
 
+	addPowerDistUpdateEvents(t, h.Ctx, sk, uint64(btcTipHeight), []*btcstktypes.EventPowerDistUpdate{eventActive})
+
 	// Process active event to create initial cache with active FP
-	prevDc := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, ftypes.NewVotingPowerDistCache(), []*btcstktypes.EventPowerDistUpdate{eventActive})
+	prevDc := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, ftypes.NewVotingPowerDistCache(), btcTipHeight-1, btcTipHeight)
 	require.Len(t, prevDc.FinalityProviders, 1)
 	require.Equal(t, del.TotalSat, prevDc.FinalityProviders[0].TotalBondedSat)
 
@@ -1992,8 +1995,12 @@ func TestProcessAllPowerDistUpdateEvents_TotallyUnbondedFP(t *testing.T) {
 		StakingTxHash: del.MustGetStakingTxHash().String(),
 		NewState:      btcstktypes.BTCDelegationStatus_UNBONDED,
 	})
+
+	btcTipHeight++
+	addPowerDistUpdateEvents(t, h.Ctx, sk, uint64(btcTipHeight), []*btcstktypes.EventPowerDistUpdate{eventUnbond})
+
 	// Process unbond event
-	newDc := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, prevDc, []*btcstktypes.EventPowerDistUpdate{eventUnbond})
+	newDc := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, prevDc, btcTipHeight-1, btcTipHeight)
 
 	// The newDc should not contain the FP anymore
 	require.Len(t, newDc.FinalityProviders, 0)
