@@ -4,9 +4,11 @@ import (
 	"context"
 
 	"cosmossdk.io/store/prefix"
-	"github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+	storetypes "cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 )
 
 /* voting power distribution update event store */
@@ -78,8 +80,7 @@ func (k Keeper) iteratePowerDistUpdateEvents(
 	btcHeight uint32,
 	handleFunc func(event *types.EventPowerDistUpdate) bool,
 ) {
-	store := k.powerDistUpdateEventBtcHeightStore(ctx, btcHeight)
-	iter := store.Iterator(nil, nil)
+	iter := k.PowerDistUpdateEventBtcHeightStoreIterator(ctx, btcHeight)
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
 		var event types.EventPowerDistUpdate
@@ -89,6 +90,11 @@ func (k Keeper) iteratePowerDistUpdateEvents(
 			break
 		}
 	}
+}
+
+func (k Keeper) PowerDistUpdateEventBtcHeightStoreIterator(ctx context.Context, btcHeight uint32) storetypes.Iterator {
+	store := k.powerDistUpdateEventBtcHeightStore(ctx, btcHeight)
+	return store.Iterator(nil, nil)
 }
 
 // powerDistUpdateEventBtcHeightStore returns the KVStore of events that affect
