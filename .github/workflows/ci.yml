@@ -33,7 +33,7 @@ jobs:
           make proto-lint
 
   docker_pipeline:
-    uses: babylonlabs-io/.github/.github/workflows/reusable_docker_pipeline.yml@v0.7.0
+    uses: babylonlabs-io/.github/.github/workflows/reusable_docker_pipeline.yml@v0.13.2
     secrets: inherit
     with:
      publish: false
