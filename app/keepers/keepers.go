@@ -32,8 +32,6 @@ import (
 	btclightclienttypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
 	btcstakingkeeper "github.com/babylonlabs-io/babylon/v4/x/btcstaking/keeper"
 	btcstakingtypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
-	bsckeeper "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/keeper"
-	bsctypes "github.com/babylonlabs-io/babylon/v4/x/btcstkconsumer/types"
 	checkpointingkeeper "github.com/babylonlabs-io/babylon/v4/x/checkpointing/keeper"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
 	epochingkeeper "github.com/babylonlabs-io/babylon/v4/x/epoching/keeper"
@@ -46,8 +44,6 @@ import (
 	minttypes "github.com/babylonlabs-io/babylon/v4/x/mint/types"
 	monitorkeeper "github.com/babylonlabs-io/babylon/v4/x/monitor/keeper"
 	monitortypes "github.com/babylonlabs-io/babylon/v4/x/monitor/types"
-	zckeeper "github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/keeper"
-	zctypes "github.com/babylonlabs-io/babylon/v4/x/zoneconcierge/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/runtime"
@@ -77,6 +73,7 @@ import (
 	ibccallbacks "github.com/cosmos/ibc-go/v10/modules/apps/callbacks"
 	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
 	ibckeeper "github.com/cosmos/ibc-go/v10/modules/core/keeper"
+	tokenfactorybindings "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/bindings"
 	tokenfactorykeeper "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/keeper"
 	tokenfactorytypes "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/types"
 
@@ -415,8 +412,8 @@ func (ak *AppKeepers) InitKeepers(
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
-	wasmOpts = append(owasm.RegisterCustomPlugins(&ak.TokenFactoryKeeper, &epochingKeeper, &ak.CheckpointingKeeper, &ak.BTCLightClientKeeper, &ak.ZoneConciergeKeeper), wasmOpts...)
-	wasmOpts = append(owasm.RegisterGrpcQueries(*bApp.GRPCQueryRouter(), appCodec), wasmOpts...)
+	wasmOpts = append(owasm.RegisterCustomPlugins(&ak.TokenFactoryKeeper, &epochingKeeper, &ak.CheckpointingKeeper, &ak.BTCLightClientKeeper), wasmOpts...)
+	wasmOpts = append(tokenfactorybindings.RegisterCustomPlugins(ak.BankKeeper, &ak.TokenFactoryKeeper), wasmOpts...)
 
 	ak.WasmKeeper = wasmkeeper.NewKeeper(
 		appCodec,
@@ -466,7 +463,7 @@ func (ak *AppKeepers) InitKeepers(
 
 	ak.GovKeeper = *govKeeper.SetHooks(
 		govtypes.NewMultiGovHooks(
-		// register the governance hooks
+			// register the governance hooks
 		),
 	)
 
