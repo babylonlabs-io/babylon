@@ -40,11 +40,9 @@ func (k Keeper) CreateBTCDelegation(ctx sdk.Context, parsedMsg *types.ParsedCrea
 	}
 
 	// Ensure all finality providers
-	// - are known to Babylon,
-	// - at least 1 one of them is a Babylon finality provider,
-	// - are not slashed, and
-	// - their registered epochs are finalised
-	// and then check whether the BTC stake is restaked to FPs of consumers
+	// - are known to Babylon
+	// - there's only 1 Babylon finality provider
+	// - is not slashed
 	err := k.validateStakedFPs(ctx, parsedMsg.FinalityProviderKeys.PublicKeysBbnFormat)
 	if err != nil {
 		return err
@@ -505,21 +503,16 @@ func (k Keeper) BtcDelHasCovenantQuorums(
 
 // validateStakedFPs ensures all finality providers
 // - are known to Babylon
-// - exactly one of them is a Babylon finality provider
+// - are not slashed
 func (k Keeper) validateStakedFPs(ctx sdk.Context, fpBTCPKs []bbn.BIP340PubKey) error {
-	if len(fpBTCPKs) > 1 {
-		return errors.New("multi-staking is not supported")
-	}
-
 	for i := range fpBTCPKs {
 		fpBTCPK := fpBTCPKs[i]
-
 		fp, err := k.GetFinalityProvider(ctx, fpBTCPK)
 		if err != nil {
 			return types.ErrFpNotFound.Wrapf("finality provider pk %s is not found: %v", fpBTCPK.MarshalHex(), err)
 		}
 		if fp.IsSlashed() {
-			return types.ErrFpAlreadySlashed
+			return types.ErrFpAlreadySlashed.Wrapf("finality key: %s", fpBTCPK.MarshalHex())
 		}
 	}
 	return nil
