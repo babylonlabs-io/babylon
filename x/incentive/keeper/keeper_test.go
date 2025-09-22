@@ -21,7 +21,7 @@ import (
 	minttypes "github.com/babylonlabs-io/babylon/v4/x/mint/types"
 
 	"github.com/stretchr/testify/require"
-	"github.com/test-go/testify/suite"
+	"github.com/stretchr/testify/suite"
 )
 
 type RefundTxTestSuite struct {
