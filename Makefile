@@ -245,6 +245,10 @@ test-e2e-cache:
 	$(MAKE) test-e2e-cache-ibc-transfer
 	$(MAKE) test-e2e-cache-upgrade-v2
 
+clean-e2e:
+	docker container rm -f $(shell docker container ls -a -q) || true
+	docker network prune -f || true
+
 test-e2e-cache-ibc-transfer:
 	go test -run TestIBCTranferTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
 
