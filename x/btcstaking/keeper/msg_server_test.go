@@ -566,8 +566,8 @@ func createActiveBtcDel(t *testing.T, btcLightclientTipHeight uint32) (*testutil
 	require.NotNil(t, actualDel)
 
 	msgs := h.GenerateCovenantSignaturesMessages(r, covenantSKs, msgCreateBTCDel, actualDel)
-	h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: btcBlockHeightTxInserted}).Times(len(msgs) + 1)
 	for _, msg := range msgs {
+		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: btcBlockHeightTxInserted})
 		_, err = h.MsgServer.AddCovenantSigs(h.Ctx, msg)
 		h.NoError(err)
 	}
