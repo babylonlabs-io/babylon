@@ -40,7 +40,7 @@ func (m *MockBTCStakingKeeper) EXPECT() *MockBTCStakingKeeperMockRecorder {
 }
 
 // BtcDelHasCovenantQuorums mocks base method.
-func (m *MockBTCStakingKeeper) BtcDelHasCovenantQuorums(ctx context.Context, btcDel *types0.BTCDelegation, quorum uint32) (bool, error) {
+func (m *MockBTCStakingKeeper) BtcDelHasCovenantQuorums(ctx context.Context, btcDel *types1.BTCDelegation, quorum uint32) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "BtcDelHasCovenantQuorums", ctx, btcDel, quorum)
 	ret0, _ := ret[0].(bool)

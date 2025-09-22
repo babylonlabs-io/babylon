@@ -8,12 +8,9 @@ import (
 	sdkmath "cosmossdk.io/math"
 	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
 	"github.com/babylonlabs-io/babylon/v4/btcstaking"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	btcstktypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 	"github.com/btcsuite/btcd/btcec/v2"
-	"github.com/cometbft/cometbft/crypto/ed25519"
-	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/stretchr/testify/require"
 
@@ -144,7 +141,7 @@ func TestSendingDelegation(t *testing.T) {
 	driver.GenerateNewBlockAssertExecutionSuccess()
 
 	msg := s1.CreatePreApprovalDelegation(
-		fp1.BTCPublicKey(),
+		[]*bbn.BIP340PubKey{fp1.BTCPublicKey()},
 		1000,
 		100000000,
 	)
@@ -176,7 +173,7 @@ func TestSendingCovenantSignatures(t *testing.T) {
 	driver.GenerateNewBlock()
 
 	msg := s1.CreatePreApprovalDelegation(
-		fp1.BTCPublicKey(),
+		[]*bbn.BIP340PubKey{fp1.BTCPublicKey()},
 		1000,
 		100000000,
 	)
@@ -214,7 +211,7 @@ func TestActivatingDelegation(t *testing.T) {
 	driver.GenerateNewBlockAssertExecutionSuccess()
 
 	msg := s1.CreatePreApprovalDelegation(
-		fp1.BTCPublicKey(),
+		[]*bbn.BIP340PubKey{fp1.BTCPublicKey()},
 		1000,
 		100000000,
 	)
@@ -257,7 +254,7 @@ func TestVoting(t *testing.T) {
 	driver.FinializeCkptForEpoch(currnetEpochNunber)
 
 	msg := s1.CreatePreApprovalDelegation(
-		fp1.BTCPublicKey(),
+		[]*bbn.BIP340PubKey{fp1.BTCPublicKey()},
 		1000,
 		100000000,
 	)
@@ -426,7 +423,7 @@ func TestActivatingDelegationOnSlashedFp(t *testing.T) {
 
 	for j := 0; j < 1; j++ {
 		scenario.stakers[0].CreatePreApprovalDelegation(
-			scenario.finalityProviders[0].BTCPublicKey(),
+			[]*bbn.BIP340PubKey{scenario.finalityProviders[0].BTCPublicKey()},
 			1000,
 			100000000,
 		)
@@ -590,7 +587,7 @@ func TestExpandBTCDelegation(t *testing.T) {
 	sinfos := driver.CreateNStakerAccounts(1)
 	s1 := sinfos[0]
 
-	fp1.RegisterFinalityProvider("")
+	fp1.RegisterFinalityProvider()
 	driver.GenerateNewBlockAssertExecutionSuccess()
 
 	var (
@@ -665,11 +662,11 @@ func TestExpandBTCDelegation(t *testing.T) {
 		driver.App.BTCLightClientKeeper.GetBTCNet(),
 	)
 
-	msg := &bstypes.MsgBTCUndelegate{
+	msg := &btcstktypes.MsgBTCUndelegate{
 		Signer:                        s1.AddressString(),
 		StakingTxHash:                 prevStkTx.TxHash().String(),
 		StakeSpendingTx:               spendingTxWithWitnessBz,
-		StakeSpendingTxInclusionProof: bstypes.NewInclusionProofFromSpvProof(blockWithProofs.Proofs[1]),
+		StakeSpendingTxInclusionProof: btcstktypes.NewInclusionProofFromSpvProof(blockWithProofs.Proofs[1]),
 		FundingTransactions:           [][]byte{prevStkTxBz, btcExpMsg.FundingTx},
 	}
 

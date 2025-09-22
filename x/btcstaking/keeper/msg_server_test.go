@@ -1692,7 +1692,7 @@ func TestActiveAndExpiredEventsSameBlock(t *testing.T) {
 	// Verify delegation is still PENDING without quorum
 	actualDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
 	h.NoError(err)
-	status := actualDel.GetStatus(expiredEventHeight, h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum)
+	status := actualDel.GetStatus(expiredEventHeight, h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum, 0)
 	require.Equal(t, types.BTCDelegationStatus_PENDING, status, "Should be PENDING without quorum")
 
 	// Add the final covenant signature to reach quorum
