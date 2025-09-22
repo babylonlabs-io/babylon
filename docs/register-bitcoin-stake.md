@@ -674,9 +674,10 @@ they provide.
 
 The rewards are distributed as follows:
 * A fixed number of native tokens are minted upon the creation of each new block.
-* The minted rewards are allocated among three groups:
+* The minted rewards are allocated among four groups:
   * Native stakers
   * Bitcoin stakers
+  * Costakers (BTC + BABY stakers, see [Section 5.3](#53-costaking-rewards))
   * Community pool
 
   The allocation is controlled by specific parameters:
@@ -714,8 +715,8 @@ message MsgWithdrawReward {
 
 The message defines the following fields:
 * `type`: Specifies the stakeholder type for reward withdrawal. Allowed values:
-  * `finality_provider`
-  * `btc_staker`
+  * `finality_provider` - Finality provider commission and rewards
+  * `btc_staker` - All BTC-related rewards (BTC staking and costaking rewards)
 * `address`: The bech32 address of the stakeholder
   (must match the signer of the message).
 
@@ -735,3 +736,24 @@ Rewards can be checked using the `x/incentive` module:
   `babylond query incentive reward-gauges <bech32-address>`
 * **via TypeScript**: You can use the TypeScript implementation to query rewards.
 Please refer to the [TypeScript library documentation](https://github.com/babylonlabs-io/simple-staking/blob/main/src/app/hooks/client/rpc/queries/useBbnQuery.ts).
+
+### 5.3. Costaking Rewards
+
+Costaking enables earning additional rewards by staking both Bitcoin and BABY
+tokens simultaneously.
+
+For costaking one must have both active BTC delegations (via finality providers)
+and BABY token delegations (via validators).
+Costaking rewards are calculated using a user score based on your combined
+stake amounts. The score is based on `min(active_satoshis, active_baby / 
+score_ratio)`.
+
+**Reward flow:**
+1. Fees collected and are accumulated in the costaking reward pool
+2. Rewards distributed based on user scores
+3. Rewards automatically sent to your incentive gauge alongside regular BTC staking rewards
+4. Withdraw all BTC-related rewards using `MsgWithdrawReward` with `type: "btc_staker"`
+
+**Withdrawing costaking rewards:**
+Costaking rewards are combined with regular BTC staking rewards in the same gauge.
+To withdraw your rewards (BTC staking and costaking), use `type: "btc_staker"`.
