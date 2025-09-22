@@ -247,8 +247,7 @@ func (k Keeper) addCovenantSigsToBTCDelegation(
 					NewState:      types.BTCDelegationStatus_ACTIVE,
 				},
 			)
-			btcTip := k.btclcKeeper.GetTipInfo(ctx)
-			k.addPowerDistUpdateEvent(ctx, btcTip.Height, activeEvent)
+			k.addPowerDistUpdateEvent(ctx, btcTipHeight, activeEvent)
 		} else {
 			quorumReachedEvent := types.NewCovenantQuorumReachedEvent(
 				btcDel,
