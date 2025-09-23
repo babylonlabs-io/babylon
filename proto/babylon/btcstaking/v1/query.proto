@@ -251,6 +251,13 @@ message StakeExpansionResponse {
   // second input (this one) is to pay for fees and optionally to add more
   // stake to the BTC delegation.
   string other_funding_tx_out_hex = 2;
+
+  // previous_stk_covenant_sigs is a list of signatures on the stake expansion
+  // transaction (i.e., the transaction spending the previous staking transaction
+  // {previous_staking_tx_hash}) by each covenant member.
+  // It must be provided to allow the previous staking tx to be spent as
+  // an transaction input of another BTC staking transaction.
+  repeated SignatureInfo previous_stk_covenant_sigs = 3;
 }
 
 // DelegatorUnbondingInfoResponse provides all necessary info about transaction
