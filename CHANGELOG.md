@@ -48,6 +48,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#1747](https://github.com/babylonlabs-io/babylon/pull/1747) bump cosmos-sdk to `v0.53.4`
 - [#1060](https://github.com/babylonlabs-io/babylon/pull/1060) Optimize `PubRandCommit` lookup in `x/finality` module
 
+### Features
+
+- [#1231](https://github.com/babylonlabs-io/babylon/pull/1231) Add BTC stake expansion.
+
 ## v2.3.0
 
 ### Improvements

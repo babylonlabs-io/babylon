@@ -117,164 +117,106 @@ func (ms msgServer) EditFinalityProvider(goCtx context.Context, req *types.MsgEd
 	return &types.MsgEditFinalityProviderResponse{}, nil
 }
 
-// isAllowListEnabled checks if the allow list is enabled at the given height
-// allow list is enabled if AllowListExpirationHeight is larger than 0,
-// and current block height is less than AllowListExpirationHeight
-func (ms msgServer) isAllowListEnabled(ctx sdk.Context, p *types.Params) bool {
-	return p.AllowListExpirationHeight > 0 && uint64(ctx.BlockHeight()) < p.AllowListExpirationHeight
-}
-
-func (ms msgServer) getTimeInfoAndParams(
-	ctx sdk.Context,
-	parsedMsg *types.ParsedCreateDelegationMessage,
-) (*DelegationTimeRangeInfo, *types.Params, uint32, error) {
-	if parsedMsg.IsIncludedOnBTC() {
-		// staking tx is already included on BTC
-		// 1. Validate inclusion proof and retrieve inclusion height
-		// 2. Get params for the validated inclusion height
-		btccParams := ms.btccKeeper.GetParams(ctx)
-
-		timeInfo, err := ms.VerifyInclusionProofAndGetHeight(
-			ctx,
-			btcutil.NewTx(parsedMsg.StakingTx.Transaction),
-			btccParams.BtcConfirmationDepth,
-			uint32(parsedMsg.StakingTime),
-			uint32(parsedMsg.UnbondingTime),
-			parsedMsg.StakingTxProofOfInclusion,
-		)
-
-		if err != nil {
-			return nil, nil, 0, fmt.Errorf("invalid inclusion proof: %w", err)
-		}
-
-		paramsByHeight, version, err := ms.GetParamsForBtcHeight(ctx, uint64(timeInfo.StartHeight))
-		if err != nil {
-			// this error can happen if we receive delegations which is included before
-			// first activation height we support
-			return nil, nil, 0, err
-		}
-
-		return timeInfo, paramsByHeight, version, nil
-	}
-	// staking tx is not included on BTC, retrieve params for the current tip height
-	// and return info about the tip
-	btcTip := ms.btclcKeeper.GetTipInfo(ctx)
-
-	paramsByHeight, version, err := ms.GetParamsForBtcHeight(ctx, uint64(btcTip.Height))
-	if err != nil {
-		return nil, nil, 0, err
-	}
-
-	return &DelegationTimeRangeInfo{
-		StartHeight: 0,
-		EndHeight:   0,
-		TipHeight:   btcTip.Height,
-	}, paramsByHeight, version, nil
-}
-
 // CreateBTCDelegation creates a BTC delegation
 func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCreateBTCDelegation) (*types.MsgCreateBTCDelegationResponse, error) {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), types.MetricsKeyCreateBTCDelegation)
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	// 1. Parse the message into better domain format
-	parsedMsg, err := types.ParseCreateDelegationMessage(req)
-
+	// Parses the message into better domain format
+	parsedMsg, err := req.ToParsed()
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	// 2. Basic stateless checks
-	// - verify proof of possession
-	if err := parsedMsg.ParsedPop.Verify(parsedMsg.StakerAddress, parsedMsg.StakerPK.BIP340PubKey, ms.btcNet); err != nil {
-		return nil, types.ErrInvalidProofOfPossession.Wrap(err.Error())
-	}
-
-	// 3. Check if it is not duplicated staking tx
-	stakingTxHash := parsedMsg.StakingTx.Transaction.TxHash()
-	delegation := ms.getBTCDelegation(ctx, stakingTxHash)
-	if delegation != nil {
-		return nil, types.ErrReusedStakingTx.Wrapf("duplicated tx hash: %s", stakingTxHash.String())
-	}
-
-	// 4. Check finality providers to which message delegate
-	// Ensure all finality providers are known to Babylon, are not slashed
-	for _, fpBTCPK := range parsedMsg.FinalityProviderKeys.PublicKeysBbnFormat {
-		// get this finality provider
-		fp, err := ms.GetFinalityProvider(ctx, fpBTCPK)
-		if err != nil {
-			return nil, err
-		}
-		// ensure the finality provider is not slashed
-		if fp.IsSlashed() {
-			return nil, types.ErrFpAlreadySlashed.Wrapf("finality key: %s", fpBTCPK.MarshalHex())
-		}
-	}
-
-	// 5. Get params for the validated inclusion height either tip or inclusion height
-	timeInfo, params, paramsVersion, err := ms.getTimeInfoAndParams(ctx, parsedMsg)
-	if err != nil {
+	if err := ms.Keeper.CreateBTCDelegation(ctx, parsedMsg); err != nil {
 		return nil, err
-	}
-
-	// 6. Validate the staking tx against the params
-	paramsValidationResult, err := types.ValidateParsedMessageAgainstTheParams(parsedMsg, params, ms.btcNet)
-
-	if err != nil {
-		return nil, err
-	}
-
-	// 7. if allow list is enabled we need to check whether staking transactions hash
-	// is in the allow list
-	if ms.isAllowListEnabled(ctx, params) {
-		if !ms.IsStakingTransactionAllowed(ctx, &stakingTxHash) {
-			return nil, types.ErrInvalidStakingTx.Wrapf("staking tx hash: %s, is not in the allow list", stakingTxHash.String())
-		}
-	}
-
-	// everything is good, if the staking tx is not included on BTC consume additinal
-	// gas
-	if !parsedMsg.IsIncludedOnBTC() {
-		ctx.GasMeter().ConsumeGas(params.DelegationCreationBaseGasFee, "delegation creation fee")
-	}
-
-	// 7.all good, construct BTCDelegation and insert BTC delegation
-	// NOTE: the BTC delegation does not have voting power yet. It will
-	// have voting power only when it receives a covenant signatures
-	newBTCDel := &types.BTCDelegation{
-		StakerAddr:       parsedMsg.StakerAddress.String(),
-		BtcPk:            parsedMsg.StakerPK.BIP340PubKey,
-		Pop:              parsedMsg.ParsedPop,
-		FpBtcPkList:      parsedMsg.FinalityProviderKeys.PublicKeysBbnFormat,
-		StakingTime:      uint32(parsedMsg.StakingTime),
-		StartHeight:      timeInfo.StartHeight,
-		EndHeight:        timeInfo.EndHeight,
-		TotalSat:         uint64(parsedMsg.StakingValue),
-		StakingTx:        parsedMsg.StakingTx.TransactionBytes,
-		StakingOutputIdx: paramsValidationResult.StakingOutputIdx,
-		SlashingTx:       types.NewBtcSlashingTxFromBytes(parsedMsg.StakingSlashingTx.TransactionBytes),
-		DelegatorSig:     parsedMsg.StakerStakingSlashingTxSig.BIP340Signature,
-		UnbondingTime:    uint32(parsedMsg.UnbondingTime),
-		CovenantSigs:     nil, // NOTE: covenant signature will be submitted in a separate msg by covenant
-		BtcUndelegation: &types.BTCUndelegation{
-			UnbondingTx:              parsedMsg.UnbondingTx.TransactionBytes,
-			SlashingTx:               types.NewBtcSlashingTxFromBytes(parsedMsg.UnbondingSlashingTx.TransactionBytes),
-			DelegatorSlashingSig:     parsedMsg.StakerUnbondingSlashingSig.BIP340Signature,
-			CovenantSlashingSigs:     nil, // NOTE: covenant signature will be submitted in a separate msg by covenant
-			CovenantUnbondingSigList: nil, // NOTE: covenant signature will be submitted in a separate msg by covenant
-			DelegatorUnbondingInfo:   nil,
-		},
-		ParamsVersion: paramsVersion,      // version of the params against which delegation was validated
-		BtcTipHeight:  timeInfo.TipHeight, // height of the BTC light client tip at the time of the delegation creation
-	}
-
-	// add this BTC delegation, and emit corresponding events
-	if err := ms.AddBTCDelegation(ctx, newBTCDel); err != nil {
-		panic(fmt.Errorf("failed to add BTC delegation that has passed verification: %w", err))
 	}
 
 	return &types.MsgCreateBTCDelegationResponse{}, nil
+}
+
+// BtcStakeExpand creates a BTCDelegation using a previous active staking transaction as one of inputs.
+func (ms msgServer) BtcStakeExpand(goCtx context.Context, req *types.MsgBtcStakeExpand) (*types.MsgBtcStakeExpandResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	delInfo, isPreviousStkActive, err := ms.IsBtcDelegationActive(ctx, req.PreviousStakingTxHash)
+	if err != nil {
+		return nil, err
+	}
+	prevBtcDel := delInfo.Delegation
+
+	if !isPreviousStkActive {
+		return nil, status.Errorf(codes.InvalidArgument, "previous staking transaction is not active")
+	}
+
+	if prevBtcDel.IsStakeExpansion() {
+		return nil, status.Errorf(codes.InvalidArgument, "the previous BTC staking transaction %s is already a stake expansion", req.PreviousStakingTxHash)
+	}
+
+	if !strings.EqualFold(prevBtcDel.StakerAddr, req.StakerAddr) {
+		return nil, status.Errorf(codes.InvalidArgument, "the previous BTC staking transaction staker address: %s does not match with current staker address: %s", prevBtcDel.StakerAddr, req.StakerAddr)
+	}
+
+	// check FundingTx is not a staking tx
+	// ATM is not possible to combine 2 staking txs into one
+	fundingTx, err := bbn.NewBTCTxFromBytes(req.FundingTx)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	fundingTxDel := ms.getBTCDelegation(ctx, fundingTx.TxHash())
+	if fundingTxDel != nil {
+		return nil, status.Error(codes.InvalidArgument, "the funding tx cannot be a staking transaction")
+	}
+
+	// Parses the message into better domain format
+	parsedMsg, err := req.ToParsed()
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	// Check that the previous delegation and the new expansion have the same FP
+	if !req.FpBtcPkList[0].Equals(&prevBtcDel.FpBtcPkList[0]) {
+		return nil, status.Errorf(codes.InvalidArgument, "the previous BTC staking transaction FP: %+v is not the same as FP of the stake expansion %+v", prevBtcDel.FpBtcPkList, req.FpBtcPkList)
+	}
+
+	stkExpandTx := parsedMsg.StakingTx.Transaction
+	// Check that the input index matches the previous delegation's staking output index
+	if prevBtcDel.StakingOutputIdx != stkExpandTx.TxIn[0].PreviousOutPoint.Index {
+		return nil, status.Errorf(codes.InvalidArgument, "staking expansion tx input index %d does not match previous delegation staking output index %d",
+			stkExpandTx.TxIn[0].PreviousOutPoint.Index, prevBtcDel.StakingOutputIdx)
+	}
+
+	// Check that the new delegation staking output amount is >= old delegation staking output amount
+	// Assume staking output index is the same as previousBtcDel.StakingOutputIdx
+	if int(prevBtcDel.StakingOutputIdx) >= len(stkExpandTx.TxOut) {
+		return nil, status.Errorf(codes.InvalidArgument, "staking expansion tx does not have expected output index %d", prevBtcDel.StakingOutputIdx)
+	}
+
+	// Validate expansion amount
+	newStakingAmt := int64(parsedMsg.StakingValue)
+	oldStakingAmt := int64(prevBtcDel.TotalSat)
+	if err := validateStakeExpansionAmt(parsedMsg, newStakingAmt, oldStakingAmt); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	// Check covenant committee overlap: ensure at least old_quorum covenant members from old params are still active in new params
+	oldParams := delInfo.Params
+	btcTip := ms.btclcKeeper.GetTipInfo(ctx)
+	currentParams, _, err := ms.GetParamsForBtcHeight(ctx, uint64(btcTip.Height))
+	if err != nil {
+		return nil, err
+	}
+	if !hasSufficientCovenantOverlap(oldParams.CovenantPks, currentParams.CovenantPks, oldParams.CovenantQuorum) {
+		return nil, fmt.Errorf("insufficient covenant committee overlap: need at least %d members from old committee in new committee", oldParams.CovenantQuorum)
+	}
+
+	// executes same flow as MsgCreateBTCDelegation pre-approval
+	if err := ms.Keeper.CreateBTCDelegation(ctx, parsedMsg); err != nil {
+		return nil, err
+	}
+
+	return &types.MsgBtcStakeExpandResponse{}, nil
 }
 
 // AddBTCDelegationInclusionProof adds inclusion proof of the given delegation on BTC chain
@@ -287,96 +229,21 @@ func (ms msgServer) AddBTCDelegationInclusionProof(
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// 1. make sure the delegation exists
-	btcDel, params, err := ms.getBTCDelWithParams(ctx, req.StakingTxHash)
+	btcDel, err := ms.GetBTCDelegation(ctx, req.StakingTxHash)
 	if err != nil {
 		return nil, err
 	}
 
-	// 2. check if the delegation already has inclusion proof
-	if btcDel.HasInclusionProof() {
-		return nil, fmt.Errorf("the delegation %s already has inclusion proof", req.StakingTxHash)
+	if btcDel.IsStakeExpansion() {
+		return nil, fmt.Errorf("the BTC delegation %s is a stake expansion, use MsgBTCUndelegate to set the inclusion proof", req.StakingTxHash)
 	}
 
-	// 3. check if the delegation has received a quorum of covenant sigs
-	if !btcDel.HasCovenantQuorums(params.CovenantQuorum) {
-		return nil, fmt.Errorf("the delegation %s has not received a quorum of covenant signatures", req.StakingTxHash)
-	}
-
-	// 4. check if the delegation is already unbonded
-	if btcDel.BtcUndelegation.DelegatorUnbondingInfo != nil {
-		return nil, fmt.Errorf("the delegation %s is already unbonded", req.StakingTxHash)
-	}
-
-	// 5. verify inclusion proof
-	parsedInclusionProof, err := types.NewParsedProofOfInclusion(req.StakingTxInclusionProof)
-	if err != nil {
+	// Creates events and updates the btc del if all the checks are valid
+	// already has inclusion proof, quorum, wasn't unbonded, if the inclusion proof is valid,
+	// k-deep, staking time > unbonding time blocks.
+	if err := ms.Keeper.AddBTCDelegationInclusionProof(ctx, btcDel, req.StakingTxInclusionProof); err != nil {
 		return nil, err
 	}
-	stakingTx, err := bbn.NewBTCTxFromBytes(btcDel.StakingTx)
-	if err != nil {
-		return nil, err
-	}
-
-	btccParams := ms.btccKeeper.GetParams(ctx)
-
-	timeInfo, err := ms.VerifyInclusionProofAndGetHeight(
-		ctx,
-		btcutil.NewTx(stakingTx),
-		btccParams.BtcConfirmationDepth,
-		btcDel.StakingTime,
-		params.UnbondingTimeBlocks,
-		parsedInclusionProof,
-	)
-
-	if err != nil {
-		return nil, fmt.Errorf("invalid inclusion proof: %w", err)
-	}
-
-	// 6. check if the staking tx is included after the BTC tip height at the time of the delegation creation
-	if timeInfo.StartHeight < btcDel.BtcTipHeight {
-		return nil, types.ErrStakingTxIncludedTooEarly.Wrapf(
-			"btc tip height at the time of the delegation creation: %d, staking tx inclusion height: %d",
-			btcDel.BtcTipHeight,
-			timeInfo.StartHeight,
-		)
-	}
-
-	// 7. set start height and end height and save it to db
-	btcDel.StartHeight = timeInfo.StartHeight
-	btcDel.EndHeight = timeInfo.EndHeight
-	ms.setBTCDelegation(ctx, btcDel)
-
-	// 8. emit events
-	stakingTxHash := btcDel.MustGetStakingTxHash()
-
-	newInclusionProofEvent := types.NewInclusionProofEvent(
-		stakingTxHash.String(),
-		btcDel.StartHeight,
-		btcDel.EndHeight,
-		types.BTCDelegationStatus_ACTIVE,
-	)
-
-	if err := ctx.EventManager().EmitTypedEvents(newInclusionProofEvent); err != nil {
-		panic(fmt.Errorf("failed to emit events for the new active BTC delegation: %w", err))
-	}
-
-	activeEvent := types.NewEventPowerDistUpdateWithBTCDel(
-		&types.EventBTCDelegationStateUpdate{
-			StakingTxHash: stakingTxHash.String(),
-			NewState:      types.BTCDelegationStatus_ACTIVE,
-		},
-	)
-
-	ms.addPowerDistUpdateEvent(ctx, timeInfo.TipHeight, activeEvent)
-
-	// record event that the BTC delegation will become unbonded at EndHeight-w
-	expiredEvent := types.NewEventPowerDistUpdateWithBTCDel(&types.EventBTCDelegationStateUpdate{
-		StakingTxHash: req.StakingTxHash,
-		NewState:      types.BTCDelegationStatus_EXPIRED,
-	})
-
-	// NOTE: we should have verified that EndHeight > btcTip.Height + min_unbonding_time
-	ms.addPowerDistUpdateEvent(ctx, btcDel.EndHeight-params.UnbondingTimeBlocks, expiredEvent)
 
 	// at this point, the BTC delegation inclusion proof is verified and is not duplicated
 	// thus, we can safely consider this message as refundable
@@ -385,33 +252,17 @@ func (ms msgServer) AddBTCDelegationInclusionProof(
 	return &types.MsgAddBTCDelegationInclusionProofResponse{}, nil
 }
 
-func (ms msgServer) getBTCDelWithParams(
-	ctx context.Context,
-	stakingTxHash string) (*types.BTCDelegation, *types.Params, error) {
-	btcDel, err := ms.GetBTCDelegation(ctx, stakingTxHash)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	bsParams := ms.GetParamsByVersion(ctx, btcDel.ParamsVersion)
-	if bsParams == nil {
-		panic("params version in BTC delegation is not found")
-	}
-
-	return btcDel, bsParams, nil
-}
-
 // AddCovenantSig adds signatures from covenants to a BTC delegation
 // TODO: refactor this handler. Now it's too convoluted
 func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCovenantSigs) (*types.MsgAddCovenantSigsResponse, error) {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), types.MetricsKeyAddCovenantSigs)
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	btcDel, params, err := ms.getBTCDelWithParams(ctx, req.StakingTxHash)
-
+	delInfo, err := ms.getBTCDelWithParams(ctx, req.StakingTxHash)
 	if err != nil {
 		return nil, err
 	}
+	btcDel, params := delInfo.Delegation, delInfo.Params
 
 	// ensure that the given covenant PK is in the parameter
 	if !params.HasCovenantPK(req.Pk) {
@@ -426,8 +277,11 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 	}
 
 	// ensure BTC delegation is still pending, i.e., not unbonded
-	btcTipHeight := ms.btclcKeeper.GetTipInfo(ctx).Height
-	status := btcDel.GetStatus(btcTipHeight, params.CovenantQuorum)
+	status, btcTip, err := ms.BtcDelStatusWithTip(ctx, delInfo)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get BTC delegation status: %w", err)
+	}
+
 	if status == types.BTCDelegationStatus_UNBONDED || status == types.BTCDelegationStatus_EXPIRED {
 		ms.Logger(ctx).Debug("Received covenant signature after the BTC delegation is already unbonded", "covenant pk", req.Pk.MarshalHex())
 		return nil, types.ErrInvalidCovenantSig.Wrap("the BTC delegation is already unbonded")
@@ -521,16 +375,21 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 		return nil, types.ErrInvalidCovenantSig.Wrapf("err: %v", err)
 	}
 
+	if err := ms.validateStakeExpansionSig(ctx, delInfo, req, stakingInfo); err != nil {
+		return nil, types.ErrInvalidCovenantSig.Wrapf("error validating stake expansion signatures: %v", err)
+	}
+
 	// All is fine add received signatures to the BTC delegation and BtcUndelegation
 	// and emit corresponding events
 	ms.addCovenantSigsToBTCDelegation(
 		ctx,
-		btcDel,
+		delInfo,
 		req.Pk,
 		parsedSlashingAdaptorSignatures,
 		req.UnbondingTxSig,
 		parsedUnbondingSlashingAdaptorSignatures,
-		params,
+		req.StakeExpansionTxSig,
+		btcTip.Height,
 	)
 
 	// at this point, the covenant signatures are verified and are not duplicated.
@@ -542,6 +401,78 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 	ms.iKeeper.IndexRefundableMsg(ctx, req)
 
 	return &types.MsgAddCovenantSigsResponse{}, nil
+}
+
+// validateStakeExpansionSig validates the covenant signature for a stake expansion.
+//
+// It performs the following checks:
+//   - Ensures that the stake expansion signature is not nil.
+//   - Verifies that the signature has not already been received for the given covenant public key.
+//   - Validates the signature against the stake expansion transaction.
+//
+// It returns an error if any of the checks fail.
+func (ms msgServer) validateStakeExpansionSig(
+	ctx sdk.Context,
+	delInfo *btcDelegationWithParams,
+	req *types.MsgAddCovenantSigs,
+	stakingInfo *btcstaking.StakingInfo,
+) error {
+	if delInfo == nil {
+		return fmt.Errorf("nil BTC delegation with params")
+	}
+	btcDel, params := delInfo.Delegation, delInfo.Params
+
+	if !btcDel.IsStakeExpansion() {
+		return nil
+	}
+
+	if req.StakeExpansionTxSig == nil {
+		return fmt.Errorf("empty stake expansion covenant signature")
+	}
+
+	if btcDel.StkExp.IsSignedByCovMember(req.Pk) {
+		ms.Logger(ctx).Debug("Received duplicated covenant signature in stake expansion transaction",
+			"covenant pk", req.Pk.MarshalHex())
+		return errorsmod.Wrapf(types.ErrDuplicatedCovenantSig, "stake expansion transaction")
+	}
+
+	// check if the btc pk was a covenant at the parameters version
+	// of the previous active staking transaction and signed it
+	prevBtcDel, prevParams := delInfo.PrevDel, delInfo.PrevParams
+
+	if !prevParams.HasCovenantPK(req.Pk) {
+		return errorsmod.Wrapf(types.ErrInvalidCovenantSig, "covenant with pk %s was not a member at params (version %d) of the previous stake", req.Pk.MarshalHex(), prevBtcDel.ParamsVersion)
+	}
+
+	if !prevBtcDel.IsSignedByCovMember(req.Pk) {
+		return errorsmod.Wrapf(types.ErrInvalidCovenantSig, "covenant signature for pk %s not found in previous delegation", req.Pk.MarshalHex())
+	}
+
+	// Covenant committee members can rotate, so we need to check
+	// that there is enough overlap in the covenant committee members
+	if !hasSufficientCovenantOverlap(prevParams.CovenantPks, params.CovenantPks, prevParams.CovenantQuorum) {
+		return errorsmod.Wrapf(types.ErrInvalidCovenantSig,
+			"not enough overlap in covenant committee members for stake expansion: quorum=%d", prevParams.CovenantQuorum)
+	}
+
+	otherFundingTxOut, err := btcDel.StkExp.FundingTxOut()
+	if err != nil {
+		return fmt.Errorf("failed to deserialize other funding txout: %w", err)
+	}
+
+	err = btcstaking.VerifyTransactionSigStkExp(
+		btcDel.MustGetStakingTx(), // this is the staking expansion tx
+		stakingInfo.StakingOutput,
+		otherFundingTxOut,
+		stakingInfo.GetPkScript(),
+		req.Pk.MustToBTCPK(),
+		*req.StakeExpansionTxSig,
+	)
+	if err != nil {
+		return errorsmod.Wrapf(types.ErrInvalidCovenantSig, "bad covenant signature of stake expansion: %v", err)
+	}
+
+	return nil
 }
 
 func findInputIdx(
@@ -584,26 +515,22 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), types.MetricsKeyBTCUndelegate)
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	btcDel, bsParams, err := ms.getBTCDelWithParams(ctx, req.StakingTxHash)
 
+	// 1. Check previous delegation exists and is active
+	delInfo, err := ms.getBTCDelWithParams(ctx, req.StakingTxHash)
 	if err != nil {
 		return nil, err
 	}
 
-	// ensure the BTC delegation with the given staking tx hash is active
-	btcTip := ms.btclcKeeper.GetTipInfo(ctx)
-
-	btcDelStatus := btcDel.GetStatus(
-		btcTip.Height,
-		bsParams.CovenantQuorum,
-	)
-
+	btcDelStatus, _, err := ms.BtcDelStatusWithTip(ctx, delInfo)
+	if err != nil {
+		return nil, err
+	}
 	if btcDelStatus == types.BTCDelegationStatus_UNBONDED || btcDelStatus == types.BTCDelegationStatus_EXPIRED {
 		return nil, types.ErrInvalidBTCUndelegateReq.Wrap("cannot unbond an unbonded BTC delegation")
 	}
 
 	stakeSpendingTx, err := bbn.NewBTCTxFromBytes(req.StakeSpendingTx)
-
 	if err != nil {
 		return nil, types.ErrInvalidBTCUndelegateReq.Wrapf("failed to parse staking spending tx: %v", err)
 	}
@@ -614,24 +541,36 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 	}
 
 	btcHeader := stakerSpendigTxHeader.Header.ToBlockHeader()
+	spendStakeTxHash := stakeSpendingTx.TxHash()
 
-	// 1. Verify stake spending tx inclusion proof
-	proofValid := btcckpttypes.VerifyInclusionProof(
-		btcutil.NewTx(stakeSpendingTx),
-		&btcHeader.MerkleRoot,
-		req.StakeSpendingTxInclusionProof.Proof,
-		req.StakeSpendingTxInclusionProof.Key.Index,
-	)
+	stakeExpansionDel := ms.getBTCDelegation(ctx, spendStakeTxHash)
+	isStakeExpansion := stakeExpansionDel != nil && stakeExpansionDel.IsStakeExpansion()
 
-	if !proofValid {
-		return nil, types.ErrInvalidBTCUndelegateReq.Wrap("stake spending tx is not included in the Bitcoin chain: invalid inclusion proof")
+	// 2. Verify stake spending tx inclusion proof
+	if isStakeExpansion {
+		// Add inclusion proof for stake expansion delegation if stake expansion tx is 'k' deep
+		// If successful, this will set stake expansion delegation as active
+		if err := ms.Keeper.AddBTCDelegationInclusionProof(ctx, stakeExpansionDel, req.StakeSpendingTxInclusionProof); err != nil {
+			return nil, types.ErrInvalidBTCUndelegateReq.Wrapf("failed to handle stake expansion inclusion: %s", err)
+		}
+	} else {
+		proofValid := btcckpttypes.VerifyInclusionProof(
+			btcutil.NewTx(stakeSpendingTx),
+			&btcHeader.MerkleRoot,
+			req.StakeSpendingTxInclusionProof.Proof,
+			req.StakeSpendingTxInclusionProof.Key.Index,
+		)
+
+		if !proofValid {
+			return nil, types.ErrInvalidBTCUndelegateReq.Wrap("stake spending tx is not included in the Bitcoin chain: invalid inclusion proof")
+		}
 	}
 
+	btcDel := delInfo.Delegation
 	stakingTx := btcDel.MustGetStakingTx()
-
 	stakingTxHash := stakingTx.TxHash()
 
-	// 2. Verify stake spending tx spends staking output
+	// 3. Verify stake spending tx spends staking output
 	stakingTxInputIdx, err := findInputIdx(
 		stakeSpendingTx,
 		&stakingTxHash,
@@ -648,7 +587,7 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 		return nil, types.ErrInvalidBTCUndelegateReq.Wrapf("failed to parse funding transactions: %s", err)
 	}
 
-	// 3. Verify staker signature on stake spending tx
+	// 4. Verify staker signature on stake spending tx
 	if err := VerifySpendStakeTxStakerSig(
 		btcDel.BtcPk.MustToBTCPK(),
 		stakingTx.TxOut[btcDel.StakingOutputIdx],
@@ -660,30 +599,35 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 	}
 
 	registeredUnbondingTx := btcDel.MustGetUnbondingTx()
-
 	registeredUnbondingTxHash := registeredUnbondingTx.TxHash()
-
-	spendStakeTxHash := stakeSpendingTx.TxHash()
 
 	var delegatorUnbondingInfo *types.DelegatorUnbondingInfo
 
-	// Check if stake spending tx is already registered unbonding tx. If so, we do
-	// not need to save it in database
-	if spendStakeTxHash.IsEqual(&registeredUnbondingTxHash) {
+	switch {
+	case spendStakeTxHash.IsEqual(&registeredUnbondingTxHash):
 		delegatorUnbondingInfo = &types.DelegatorUnbondingInfo{
 			// if the stake spending tx is the same as the registered unbonding tx,
 			// we do not need to save it in the database
 			SpendStakeTx: []byte{},
 		}
-
 		types.EmitEarlyUnbondedEvent(ctx, btcDel.MustGetStakingTxHash().String(), stakerSpendigTxHeader.Height)
-	} else {
+	case isStakeExpansion:
+		// stake expansion case: emit stake expansion activation event
+		delegatorUnbondingInfo = &types.DelegatorUnbondingInfo{
+			SpendStakeTx: req.StakeSpendingTx,
+		}
+		types.EmitStakeExpansionActivatedEvent(ctx,
+			btcDel.MustGetStakingTxHash().String(),
+			spendStakeTxHash.String(),
+			req.StakeSpendingTxInclusionProof.Key.Hash.MarshalHex(),
+			req.StakeSpendingTxInclusionProof.Key.Index,
+		)
+	default:
 		// spend staking tx is not the registered unbonding tx, we need to save it in the database
 		// and emit an event
 		delegatorUnbondingInfo = &types.DelegatorUnbondingInfo{
 			SpendStakeTx: req.StakeSpendingTx,
 		}
-
 		types.EmitUnexpectedUnbondingTxEvent(ctx,
 			btcDel.MustGetStakingTxHash().String(),
 			spendStakeTxHash.String(),
@@ -710,17 +654,20 @@ func (ms msgServer) SelectiveSlashingEvidence(goCtx context.Context, req *types.
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	btcDel, bsParams, err := ms.getBTCDelWithParams(ctx, req.StakingTxHash)
-
+	delInfo, err := ms.getBTCDelWithParams(ctx, req.StakingTxHash)
 	if err != nil {
 		return nil, err
 	}
 
 	// ensure the BTC delegation is active, or its BTC undelegation receives an
 	// unbonding signature from the staker
-	btcTip := ms.btclcKeeper.GetTipInfo(ctx)
-	covQuorum := bsParams.CovenantQuorum
-	if btcDel.GetStatus(btcTip.Height, covQuorum) != types.BTCDelegationStatus_ACTIVE && !btcDel.IsUnbondedEarly() {
+	status, _, err := ms.BtcDelStatusWithTip(ctx, delInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	btcDel := delInfo.Delegation
+	if status != types.BTCDelegationStatus_ACTIVE && !btcDel.IsUnbondedEarly() {
 		return nil, types.ErrBTCDelegationNotFound.Wrap("a BTC delegation that is not active or unbonding early cannot be slashed")
 	}
 
@@ -779,5 +726,72 @@ func (k Keeper) CheckDuplicatedFpBbnAddr(ctx context.Context, fpAddr sdk.AccAddr
 	if found {
 		return types.ErrFpRegistered.Wrapf("there is already an finality provider registered with the same babylon address: %s", fpAddr.String())
 	}
+	return nil
+}
+
+// hasSufficientCovenantOverlap returns true if the intersection of CovCommittee1 and CovCommittee2
+// contains more members than the required overlap.
+func hasSufficientCovenantOverlap(
+	covCommittee1,
+	covCommittee2 []bbn.BIP340PubKey,
+	requiredOverlap uint32,
+) bool {
+	if requiredOverlap == 0 || len(covCommittee1) == 0 || len(covCommittee2) == 0 {
+		return false
+	}
+
+	// Build a lookup set for newCommittee for efficient membership checks
+	newSet := make(map[string]struct{}, len(covCommittee2))
+	for _, pk := range covCommittee2 {
+		newSet[pk.MarshalHex()] = struct{}{}
+	}
+
+	// Count overlapping keys and exit early when quorum is exceeded
+	intersection := 0
+	for _, oldPk := range covCommittee1 {
+		_, found := newSet[oldPk.MarshalHex()]
+		if found {
+			intersection++
+			if uint32(intersection) > requiredOverlap {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+// validateStakeExpansionAmt ensures the inputs and outputs balance correctly
+func validateStakeExpansionAmt(
+	parsedMsg *types.ParsedCreateDelegationMessage,
+	newStakingAmt int64,
+	oldStakingAmt int64,
+) error {
+	if parsedMsg.StkExp == nil {
+		return fmt.Errorf("missing stake expansion data")
+	}
+
+	if newStakingAmt < oldStakingAmt {
+		return fmt.Errorf("staking expansion output amount %d is less than previous delegation amount %d", newStakingAmt, oldStakingAmt)
+	}
+
+	// Calculate expected input value
+	fundingInputValue := parsedMsg.StkExp.OtherFundingOutput.Value
+	totalInputValue := oldStakingAmt + fundingInputValue
+
+	// Calculate total output value
+	stakeExpandTx := parsedMsg.StakingTx.Transaction
+	var totalOutputValue int64
+	for _, output := range stakeExpandTx.TxOut {
+		totalOutputValue += output.Value
+	}
+
+	// Calculate implied fee
+	impliedFee := totalInputValue - totalOutputValue
+	if impliedFee <= 0 {
+		return fmt.Errorf("invalid transaction fee: inputs %d <= outputs %d",
+			totalInputValue, totalOutputValue)
+	}
+
 	return nil
 }
