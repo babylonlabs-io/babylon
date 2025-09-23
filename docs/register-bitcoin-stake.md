@@ -743,13 +743,16 @@ Costaking enables earning additional rewards by staking both Bitcoin and BABY
 tokens simultaneously.
 
 For costaking one must have both active BTC delegations (via finality providers)
-and BABY token delegations (via validators).
+and BABY token delegations (via validators). There is no limit to the number
+of BTC and BABY delegations one can have, and all active delegations
+contribute to the costaking rewards.
 Costaking rewards are calculated using a user score based on your combined
-stake amounts. The score is based on `min(active_satoshis, active_baby / 
-score_ratio)`.
+stake amounts. The score is based on `min(active_satoshis, active_baby / score_ratio)`.
+The `score_ratio` is a parameter defined in the `x/incentive` module
+that determines the relative weight of BABY tokens to Bitcoin in the scoring.
 
 **Reward flow:**
-1. Fees collected and are accumulated in the costaking reward pool
+1. Rewards are collected and accumulated in the costaking reward pool
 2. Rewards distributed based on user scores
 3. Rewards automatically sent to your incentive gauge alongside regular BTC staking rewards
 4. Withdraw all BTC-related rewards using `MsgWithdrawReward` with `type: "btc_staker"`
