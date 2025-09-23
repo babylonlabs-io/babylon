@@ -13,8 +13,8 @@ import (
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/stretchr/testify/require"
 
+	"github.com/babylonlabs-io/babylon/v3/app/signingcontext"
 	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
-	"github.com/babylonlabs-io/babylon/v4/app/signingcontext"
 	v3rc4 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v3rc4"
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer"
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer/chain"
@@ -266,13 +266,10 @@ func (s *SoftwareUpgradeV3RC4TestSuite) SetupVerifiedBtcDelegationsWithBabyStaki
 }
 
 func (s *SoftwareUpgradeV3RC4TestSuite) FpCommitPubRandAndVote(n *chain.NodeConfig) {
-	randCommitContext := signingcontext.FpRandCommitContextV0(n.ChainID(), appparams.AccFinality.String())
-
-	fp1RandListInfo, fp1CommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(s.r, s.fp1BTCSK, randCommitContext, commitStartHeightV3RC4, numPubRand)
+	fp1RandListInfo, fp1CommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(s.r, s.fp1BTCSK, commitStartHeightV3RC4, numPubRand)
 	s.NoError(err)
-	s.fp1RandListInfo = fp1RandListInfo
 
-	fp2RandListInfo, fp2CommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(s.r, s.fp2BTCSK, randCommitContext, commitStartHeightV3RC4, numPubRand)
+	fp2RandListInfo, fp2CommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(s.r, s.fp2BTCSK, commitStartHeightV3RC4, numPubRand)
 	s.NoError(err)
 	s.fp2RandListInfo = fp2RandListInfo
 
