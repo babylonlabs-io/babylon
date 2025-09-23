@@ -280,10 +280,6 @@ func NewBabylonApp(
 	tmLightClientModule := ibctm.NewLightClientModule(appCodec, clientKeeper.GetStoreProvider())
 	clientKeeper.AddRoute(ibctm.ModuleName, &tmLightClientModule)
 
-	// TODO: Do we we need this ?
-	// wasmLightClientModule := ibcwasm.NewLightClientModule(app.WasmClientKeeper, clientKeeper.GetStoreProvider())
-	// clientKeeper.AddRoute(ibcwasmtypes.ModuleName, &wasmLightClientModule)
-
 	/****  Module Options ****/
 
 	// NOTE: Any module instantiated in the module manager that is later modified
