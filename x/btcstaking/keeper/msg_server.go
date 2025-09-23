@@ -158,10 +158,6 @@ func (ms msgServer) BtcStakeExpand(goCtx context.Context, req *types.MsgBtcStake
 		return nil, status.Errorf(codes.InvalidArgument, "the previous BTC staking transaction staker address: %s does not match with current staker address: %s", prevBtcDel.StakerAddr, req.StakerAddr)
 	}
 
-	if !(req.FpBtcPkList[0].Equals(&prevBtcDel.FpBtcPkList[0])) {
-		return nil, status.Errorf(codes.InvalidArgument, "the previous BTC staking transaction FP: %+v is not the same as FP of the stake expansion %+v", prevBtcDel.FpBtcPkList, req.FpBtcPkList)
-	}
-
 	// check FundingTx is not a staking tx
 	// ATM is not possible to combine 2 staking txs into one
 	fundingTx, err := bbn.NewBTCTxFromBytes(req.FundingTx)
@@ -177,6 +173,11 @@ func (ms msgServer) BtcStakeExpand(goCtx context.Context, req *types.MsgBtcStake
 	parsedMsg, err := req.ToParsed()
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	// Check that the previous delegation and the new expansion have the same FP
+	if !(req.FpBtcPkList[0].Equals(&prevBtcDel.FpBtcPkList[0])) {
+		return nil, status.Errorf(codes.InvalidArgument, "the previous BTC staking transaction FP: %+v is not the same as FP of the stake expansion %+v", prevBtcDel.FpBtcPkList, req.FpBtcPkList)
 	}
 
 	stkExpandTx := parsedMsg.StakingTx.Transaction
