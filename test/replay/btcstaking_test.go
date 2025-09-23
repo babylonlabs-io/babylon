@@ -694,15 +694,6 @@ func TestExpandBTCDelegation(t *testing.T) {
 	require.Len(t, unbondedDelegations, 1)
 }
 
-func containsEvent(events []abci.Event, eventType string) bool {
-	for _, event := range events {
-		if event.Type == eventType {
-			return true
-		}
-	}
-	return false
-}
-
 func attributeValueNonEmpty(event abci.Event, attributeKey string) bool {
 	for _, attribute := range event.Attributes {
 		if attribute.Key == attributeKey && len(attribute.Value) > 0 {
