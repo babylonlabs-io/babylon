@@ -47,6 +47,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#1737](https://github.com/babylonlabs-io/babylon/pull/1737) bump ibc-go to `v10` and wire up IBC `v2`
 - [#1747](https://github.com/babylonlabs-io/babylon/pull/1747) bump cosmos-sdk to `v0.53.4`
 - [#1062](https://github.com/babylonlabs-io/babylon/pull/1062) Add `anteHandler` to avoid fee grants on refundable tx (`x/incentive`)
+- [#1060](https://github.com/babylonlabs-io/babylon/pull/1060) Optimize `PubRandCommit` lookup in `x/finality` module
 
 ## v2.3.0
 

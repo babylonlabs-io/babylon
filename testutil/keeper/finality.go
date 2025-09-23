@@ -21,15 +21,18 @@ import (
 	"github.com/babylonlabs-io/babylon/v4/x/finality/types"
 )
 
-func FinalityKeeperWithStore(
+func FinalityKeeperWithStoreKey(
 	t testing.TB,
 	db dbm.DB,
 	stateStore store.CommitMultiStore,
+	storeKey *storetypes.KVStoreKey,
 	bsKeeper types.BTCStakingKeeper,
 	iKeeper types.IncentiveKeeper,
 	ckptKeeper types.CheckpointingKeeper,
 ) (*keeper.Keeper, sdk.Context) {
-	storeKey := storetypes.NewKVStoreKey(types.StoreKey)
+	if storeKey == nil {
+		storeKey = storetypes.NewKVStoreKey(types.StoreKey)
+	}
 
 	stateStore.MountStoreWithDB(storeKey, storetypes.StoreTypeIAVL, db)
 	require.NoError(t, stateStore.LoadLatestVersion())
@@ -50,6 +53,17 @@ func FinalityKeeperWithStore(
 	ctx = ctx.WithHeaderInfo(header.Info{})
 
 	return &k, ctx
+}
+
+func FinalityKeeperWithStore(
+	t testing.TB,
+	db dbm.DB,
+	stateStore store.CommitMultiStore,
+	bsKeeper types.BTCStakingKeeper,
+	iKeeper types.IncentiveKeeper,
+	ckptKeeper types.CheckpointingKeeper,
+) (*keeper.Keeper, sdk.Context) {
+	return FinalityKeeperWithStoreKey(t, db, stateStore, nil, bsKeeper, iKeeper, ckptKeeper)
 }
 
 func FinalityKeeper(
