@@ -45,6 +45,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#1404](https://github.com/babylonlabs-io/babylon/pull/1404) Refactor power dist event processing.
 - [#1347](https://github.com/babylonlabs-io/babylon/pull/1344) Add `MsgType` field to `QueuedMessageResponse` message.
 - [#1737](https://github.com/babylonlabs-io/babylon/pull/1737) bump ibc-go to `v10` and wire up IBC `v2`
+- [#1747][https://github.com/babylonlabs-io/babylon/pull/1747] bump cosmos-sdk to `v0.53.4`
 
 ## v2.3.0
 
