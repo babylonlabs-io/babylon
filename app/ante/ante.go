@@ -15,7 +15,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	ibckeeper "github.com/cosmos/ibc-go/v8/modules/core/keeper"
+	ibckeeper "github.com/cosmos/ibc-go/v10/modules/core/keeper"
 )
 
 // NewAnteHandler creates a new AnteHandler for the Babylon chain.

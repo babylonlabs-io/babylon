@@ -1,12 +1,12 @@
 syntax = "proto3";
 package babylon.epoching.v1;
 
-import "gogoproto/gogo.proto";
-import "google/protobuf/timestamp.proto";
-import "google/api/annotations.proto";
-import "cosmos/base/query/v1beta1/pagination.proto";
-import "babylon/epoching/v1/params.proto";
 import "babylon/epoching/v1/epoching.proto";
+import "babylon/epoching/v1/params.proto";
+import "cosmos/base/query/v1beta1/pagination.proto";
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/babylonlabs-io/babylon/v4/x/epoching/types";
 
@@ -224,6 +224,8 @@ message QueuedMessageResponse {
   // msg is the actual message that is sent by a user and is queued by the
   // epoching module as string.
   string msg = 5;
+  // msg_type is a string that identifies the type of the underlying message.
+  string msg_type = 6;
 }
 
 // QueuedMessageList is a message that contains a list of staking-related
