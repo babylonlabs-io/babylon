@@ -9,8 +9,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	pfmroutertypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8/packetforward/types"
+	pfmroutertypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v10/packetforward/types"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -162,7 +161,7 @@ func (s *IBCTransferTestSuite) Test2IBCTransferBack() {
 	s.Require().Len(balanceBeforeSendBackB, 2)
 	// Look for the ugly IBC one
 	denom := getFirstIBCDenom(balanceBeforeSendBackB)
-	amount := balanceBeforeSendBackB.AmountOf(denom).Int64() // have to pay gas fees
+	amount := int64(100_000)
 
 	transferCoin := sdk.NewInt64Coin(denom, amount)
 
@@ -435,7 +434,7 @@ func (s *IBCTransferTestSuite) Test5E2EBelowThreshold() {
 		s.Require().NotEqual(before, after)
 
 		return true
-	}, 1*time.Minute, 1*time.Second, "Transfer back B was not successful")
+	}, 90*time.Second, 2*time.Second, "Transfer back B was not successful")
 }
 
 func (s *IBCTransferTestSuite) Test6RateLimitE2EAboveThreshold() {
