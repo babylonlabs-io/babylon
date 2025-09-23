@@ -1759,7 +1759,7 @@ func TestBtcStakeExpansion(t *testing.T) {
 	prevDelStakingTxHash, prevMsgCreateBTCDel, prevDel, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
 		r,
 		delSK,
-		[]*btcec.PublicKey{babylonFPPK}, // single Babylon FP
+		babylonFPPK,
 		stakingValue,
 		1000,
 		0,
@@ -1788,7 +1788,7 @@ func TestBtcStakeExpansion(t *testing.T) {
 	spendingTx, fundingTx, err := h.CreateBtcStakeExpansionWithBtcTipHeight(
 		r,
 		delSK,
-		[]*btcec.PublicKey{babylonFPPK},
+		babylonFPPK,
 		stakingValue,
 		1000,
 		prevDel,
