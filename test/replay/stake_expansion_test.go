@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
-	bbn "github.com/babylonlabs-io/babylon/v3/types"
-	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/stretchr/testify/require"
 )
@@ -29,7 +29,7 @@ func TestExpandBTCDelegation(t *testing.T) {
 	sinfos := driver.CreateNStakerAccounts(1)
 	s1 := sinfos[0]
 
-	fp1.RegisterFinalityProvider("")
+	fp1.RegisterFinalityProvider()
 	driver.GenerateNewBlockAssertExecutionSuccess()
 
 	var (
@@ -147,7 +147,7 @@ func TestRejectStakeExpansionUsingPreviousStakingOutput(t *testing.T) {
 	covSender := driver.CreateCovenantSender()
 	infos := driver.CreateNFinalityProviderAccounts(1)
 	fp1 := infos[0]
-	fp1.RegisterFinalityProvider("")
+	fp1.RegisterFinalityProvider()
 	driver.GenerateNewBlockAssertExecutionSuccess()
 
 	sinfos := driver.CreateNStakerAccounts(1)

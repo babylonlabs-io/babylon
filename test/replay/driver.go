@@ -600,7 +600,7 @@ func (d *BabylonAppDriver) GenerateBlocksUntilHeight(untilBlock uint64) {
 	}
 }
 
-func (d *BabylonAppDriver) GenerateNewBlockAssertExecutionSuccess() {
+func (d *BabylonAppDriver) GenerateNewBlockAssertExecutionSuccessWithResults() []*abci.ExecTxResult {
 	response := d.GenerateNewBlock()
 
 	for _, tx := range response.TxResults {
@@ -611,6 +611,11 @@ func (d *BabylonAppDriver) GenerateNewBlockAssertExecutionSuccess() {
 
 		require.Equal(d.t, tx.Code, uint32(0), tx.Log)
 	}
+	return response.TxResults
+}
+
+func (d *BabylonAppDriver) GenerateNewBlockAssertExecutionSuccess() {
+	d.GenerateNewBlockAssertExecutionSuccessWithResults()
 }
 
 func (d *BabylonAppDriver) GenerateNewBlockAssertExecutionFailure() []*abci.ExecTxResult {
