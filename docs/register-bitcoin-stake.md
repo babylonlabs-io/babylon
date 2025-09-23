@@ -740,7 +740,8 @@ Please refer to the [TypeScript library documentation](https://github.com/babylo
 ### 5.3. Costaking Rewards
 
 Costaking enables earning additional rewards by staking both Bitcoin and BABY
-tokens simultaneously.
+tokens simultaneously. Both addresses must be the same for costaking rewards
+to be earned.
 
 For costaking one must have both active BTC delegations (via finality providers)
 and BABY token delegations (via validators). There is no limit to the number
