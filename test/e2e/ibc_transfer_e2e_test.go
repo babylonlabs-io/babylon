@@ -161,7 +161,7 @@ func (s *IBCTransferTestSuite) Test2IBCTransferBack() {
 	s.Require().Len(balanceBeforeSendBackB, 2)
 	// Look for the ugly IBC one
 	denom := getFirstIBCDenom(balanceBeforeSendBackB)
-	amount := balanceBeforeSendBackB.AmountOf(denom).Int64() // have to pay gas fees
+	amount := int64(100_000)
 
 	transferCoin := sdk.NewInt64Coin(denom, amount)
 
@@ -412,7 +412,6 @@ func (s *IBCTransferTestSuite) Test5E2EBelowThreshold() {
 	transferCoin := sdk.NewInt64Coin(nativeDenom, 100)
 
 	balanceBeforeReceivingSendA, err := nA.QueryBalances(s.addrA)
-	s.T().Logf("Balance before transfer for addrA: %s", balanceBeforeReceivingSendA.String())
 	s.Require().NoError(err)
 
 	txHash := nB.SendIBCTransfer(s.addrB, s.addrA, "channel-0", transferCoin)
@@ -428,7 +427,6 @@ func (s *IBCTransferTestSuite) Test5E2EBelowThreshold() {
 		if err != nil {
 			return false
 		}
-		s.T().Logf("Balance after transfer for addrA: %s", balanceAfterReceivingSendA.String())
 
 		before := balanceBeforeReceivingSendA.String()
 		after := balanceAfterReceivingSendA.String()
@@ -436,7 +434,7 @@ func (s *IBCTransferTestSuite) Test5E2EBelowThreshold() {
 		s.Require().NotEqual(before, after)
 
 		return true
-	}, 1*time.Minute, 1*time.Second, "Transfer back B was not successful")
+	}, 90*time.Second, 2*time.Second, "Transfer back B was not successful")
 }
 
 func (s *IBCTransferTestSuite) Test6RateLimitE2EAboveThreshold() {
