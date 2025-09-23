@@ -454,7 +454,9 @@ func (h *Helper) CreateDelegationWithBtcBlockHeight(
 	h.NoError(err)
 
 	// ensure the delegation is still pending
-	require.Equal(h.t, btcDel.GetStatus(btcTipHeight, bsParams.CovenantQuorum), types.BTCDelegationStatus_PENDING)
+	status, err := h.BTCStakingKeeper.BtcDelStatus(h.Ctx, btcDel, bsParams.CovenantQuorum, btcTipHeight)
+	require.NoError(h.t, err)
+	require.Equal(h.t, status, types.BTCDelegationStatus_PENDING)
 
 	if usePreApproval {
 		// the BTC delegation does not have inclusion proof
@@ -571,7 +573,10 @@ func (h *Helper) CreateCovenantSigs(
 	actualDelWithCovenantSigs, err := h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
 	h.NoError(err)
 	require.Equal(h.t, len(actualDelWithCovenantSigs.CovenantSigs), len(covenantMsgs))
-	require.True(h.t, actualDelWithCovenantSigs.HasCovenantQuorums(h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum))
+
+	hasQuorum, err := h.BTCStakingKeeper.BtcDelHasCovenantQuorums(h.Ctx, actualDelWithCovenantSigs, h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum)
+	require.NoError(h.t, err)
+	require.True(h.t, hasQuorum)
 
 	require.NotNil(h.t, actualDelWithCovenantSigs.BtcUndelegation)
 	require.NotNil(h.t, actualDelWithCovenantSigs.BtcUndelegation.CovenantSlashingSigs)
@@ -581,7 +586,9 @@ func (h *Helper) CreateCovenantSigs(
 	require.Len(h.t, actualDelWithCovenantSigs.BtcUndelegation.CovenantSlashingSigs[0].AdaptorSigs, 1)
 
 	// ensure the BTC delegation is verified (if using pre-approval flow) or active
-	status := actualDelWithCovenantSigs.GetStatus(btcTipHeight, bsParams.CovenantQuorum)
+	status, err := h.BTCStakingKeeper.BtcDelStatus(h.Ctx, actualDelWithCovenantSigs, bsParams.CovenantQuorum, btcTipHeight)
+	require.NoError(h.t, err)
+
 	if msgCreateBTCDel.StakingTxInclusionProof != nil {
 		// not pre-approval flow, the BTC delegation should be active
 		require.Equal(h.t, status, types.BTCDelegationStatus_ACTIVE)
@@ -602,7 +609,8 @@ func (h *Helper) AddInclusionProof(
 	// Get the BTC delegation and ensure it's verified
 	del, err := h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
 	h.NoError(err)
-	status := del.GetStatus(btcTipHeight, bsParams.CovenantQuorum)
+	status, err := h.BTCStakingKeeper.BtcDelStatus(h.Ctx, del, bsParams.CovenantQuorum, btcTipHeight)
+	h.NoError(err)
 	require.Equal(h.t, status, types.BTCDelegationStatus_VERIFIED, "the BTC delegation shall be verified")
 
 	// Create the MsgAddBTCDelegationInclusionProof message
@@ -623,7 +631,8 @@ func (h *Helper) AddInclusionProof(
 	// has been activated
 	updatedDel, err := h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
 	h.NoError(err)
-	status = updatedDel.GetStatus(btcTipHeight, bsParams.CovenantQuorum)
+	status, err = h.BTCStakingKeeper.BtcDelStatus(h.Ctx, updatedDel, bsParams.CovenantQuorum, btcTipHeight)
+	h.NoError(err)
 	require.Equal(h.t, status, types.BTCDelegationStatus_ACTIVE, "the BTC delegation shall be active")
 }
 

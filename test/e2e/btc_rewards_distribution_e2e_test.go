@@ -867,7 +867,7 @@ func AddCovdSigsToPendingBtcDels(
 		pendingDel, err := chain.ParseRespBTCDelToBTCDel(pendingDelResp)
 		require.NoError(t, err)
 
-		if pendingDel.HasCovenantQuorums(bsParams.CovenantQuorum) {
+		if pendingDel.HasCovenantQuorums(bsParams.CovenantQuorum, 0) {
 			continue
 		}
 

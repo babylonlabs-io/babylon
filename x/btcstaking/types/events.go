@@ -90,7 +90,7 @@ func NewInclusionProofEvent(
 func NewBtcDelCreationEvent(
 	btcDel *BTCDelegation,
 ) *EventBTCDelegationCreated {
-	return &EventBTCDelegationCreated{
+	e := &EventBTCDelegationCreated{
 		StakingTxHex:              hex.EncodeToString(btcDel.StakingTx),
 		StakingOutputIndex:        strconv.FormatUint(uint64(btcDel.StakingOutputIdx), 10),
 		ParamsVersion:             strconv.FormatUint(uint64(btcDel.ParamsVersion), 10),
@@ -102,6 +102,10 @@ func NewBtcDelCreationEvent(
 		NewState:                  BTCDelegationStatus_PENDING.String(),
 		StakerAddr:                btcDel.StakerAddr,
 	}
+	if btcDel.IsStakeExpansion() {
+		e.PreviousStakingTxHashHex = btcDel.MustGetStakeExpansionTxHash().String()
+	}
+	return e
 }
 
 func NewCovenantSignatureReceivedEvent(
@@ -168,6 +172,18 @@ func NewUnexpectedUnbondingTxEvent(
 	}
 }
 
+func NewStakeExpansionActivatedEvent(
+	previousStakingTxHash, stakeExpansionTxHash, stakeExpansionTxHeaderHash string,
+	stakeExpansionTxBlockIndex uint32,
+) *EventStakeExpansionActivated {
+	return &EventStakeExpansionActivated{
+		PreviousStakingTxHash:      previousStakingTxHash,
+		StakeExpansionTxHash:       stakeExpansionTxHash,
+		StakeExpansionTxHeaderHash: stakeExpansionTxHeaderHash,
+		StakeExpansionTxBlockIndex: stakeExpansionTxBlockIndex,
+	}
+}
+
 // EmitUnexpectedUnbondingTxEvent emits events for an unexpected unbonding tx
 func EmitUnexpectedUnbondingTxEvent(
 	sdkCtx sdk.Context,
@@ -177,6 +193,18 @@ func EmitUnexpectedUnbondingTxEvent(
 	ev := NewUnexpectedUnbondingTxEvent(stakingTxHash, spendStakeTxHash, spendStakeTxHeaderHash, spendStakeTxBlockIndex)
 	if err := sdkCtx.EventManager().EmitTypedEvent(ev); err != nil {
 		panic(fmt.Errorf("failed to emit event the unexpected unbonding tx event: %w", err))
+	}
+}
+
+// EmitStakeExpansionActivatedEvent emits events for a stake expansion activation
+func EmitStakeExpansionActivatedEvent(
+	sdkCtx sdk.Context,
+	previousStakingTxHash, stakeExpansionTxHash, stakeExpansionTxHeaderHash string,
+	stakeExpansionTxBlockIndex uint32,
+) {
+	ev := NewStakeExpansionActivatedEvent(previousStakingTxHash, stakeExpansionTxHash, stakeExpansionTxHeaderHash, stakeExpansionTxBlockIndex)
+	if err := sdkCtx.EventManager().EmitTypedEvent(ev); err != nil {
+		panic(fmt.Errorf("failed to emit stake expansion activated event: %w", err))
 	}
 }
 

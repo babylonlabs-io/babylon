@@ -476,8 +476,6 @@ func CreateFpAndBtcDel(
 
 	if addCovenantSigs {
 		// needed for covenant check in message handler
-		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: 30})
-		// needed for covenant check in message handler
 		h.CreateCovenantSigs(r, covenantSKs, msg, del, 30)
 	}
 
@@ -1203,7 +1201,7 @@ func FuzzBTCDelegationEvents_NoPreApproval(f *testing.F) {
 		// due to no timestamped randomness
 		babylonHeight += 1
 		h.SetCtxHeight(babylonHeight)
-		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(btcTip)
+		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(btcTip).AnyTimes()
 		h.BeginBlocker()
 		require.Zero(t, h.FinalityKeeper.GetVotingPower(h.Ctx, *fp.BtcPk, babylonHeight))
 

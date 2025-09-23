@@ -88,12 +88,116 @@ func (m *MsgEditFinalityProvider) ValidateBasic() error {
 	return nil
 }
 
+// ToParsed returns a parsed ParsedCreateDelegationMessage or error if it fails
+func (m *MsgCreateBTCDelegation) ToParsed() (*ParsedCreateDelegationMessage, error) {
+	if m == nil {
+		return nil, fmt.Errorf("cannot parse nil MsgCreateBTCDelegation")
+	}
+
+	return parseCreateDelegationMessage(m)
+}
+
 func (m *MsgCreateBTCDelegation) ValidateBasic() error {
-	if _, err := ParseCreateDelegationMessage(m); err != nil {
+	if _, err := parseCreateDelegationMessage(m); err != nil {
 		return err
 	}
 
 	return nil
+}
+
+// GetSlashingTx returns the slashing tx
+func (m *MsgBtcStakeExpand) GetSlashingTx() *BTCSlashingTx {
+	return m.SlashingTx
+}
+
+// GetUnbondingSlashingTx returns the unbond slashing tx
+func (m *MsgBtcStakeExpand) GetUnbondingSlashingTx() *BTCSlashingTx {
+	return m.UnbondingSlashingTx
+}
+
+// GetDelegatorSlashingSig returns the slashing signature
+func (m *MsgBtcStakeExpand) GetDelegatorSlashingSig() *bbn.BIP340Signature {
+	return m.DelegatorSlashingSig
+}
+
+// GetDelegatorUnbondingSlashingSig returns the unbonding slashing signature
+func (m *MsgBtcStakeExpand) GetDelegatorUnbondingSlashingSig() *bbn.BIP340Signature {
+	return m.DelegatorUnbondingSlashingSig
+}
+
+// GetFpBtcPkList returns the list of FP BTC PK
+func (m *MsgBtcStakeExpand) GetFpBtcPkList() []bbn.BIP340PubKey {
+	return m.FpBtcPkList
+}
+
+// GetBtcPk returns the btc delegator BTC PK
+func (m *MsgBtcStakeExpand) GetBtcPk() *bbn.BIP340PubKey {
+	return m.BtcPk
+}
+
+// GetStakeExpansion returns the parsed stake expansion
+func (m *MsgBtcStakeExpand) GetStakeExpansion() (*ParsedCreateDelStkExp, error) {
+	previousActiveStkTxHash, err := chainhash.NewHashFromStr(m.PreviousStakingTxHash)
+	if err != nil {
+		return nil, err
+	}
+
+	stkExpandTx, err := bbn.NewBTCTxFromBytes(m.StakingTx)
+	if err != nil {
+		return nil, err
+	}
+
+	fundingTx, err := bbn.NewBTCTxFromBytes(m.FundingTx)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(stkExpandTx.TxIn) != 2 {
+		return nil, fmt.Errorf("stake expansion must have 2 inputs (TxIn)")
+	}
+
+	if !stkExpandTx.TxIn[0].PreviousOutPoint.Hash.IsEqual(previousActiveStkTxHash) {
+		return nil, fmt.Errorf("stake expansion first input must be the previous staking transaction hash %s", m.PreviousStakingTxHash)
+	}
+
+	fundingTxHash := fundingTx.TxHash()
+	if !stkExpandTx.TxIn[1].PreviousOutPoint.Hash.IsEqual(&fundingTxHash) {
+		return nil, fmt.Errorf("stake expansion second input must be the given funding tx hash %s", fundingTxHash.String())
+	}
+	idxOtherInput := stkExpandTx.TxIn[1].PreviousOutPoint.Index
+
+	if len(fundingTx.TxOut) <= int(idxOtherInput) {
+		return nil, fmt.Errorf("the given funding tx doesn't have the expected output index %d (has %d outputs)",
+			idxOtherInput, len(fundingTx.TxOut))
+	}
+
+	otherOutput := fundingTx.TxOut[idxOtherInput]
+
+	// Validate funding output value
+	if otherOutput.Value <= 0 {
+		return nil, fmt.Errorf("funding output has invalid value %d", otherOutput.Value)
+	}
+
+	return &ParsedCreateDelStkExp{
+		PreviousActiveStkTxHash: previousActiveStkTxHash,
+		OtherFundingOutput:      otherOutput,
+	}, nil
+}
+
+// ToParsed returns a parsed ParsedCreateDelegationMessage or error if it fails
+func (m *MsgBtcStakeExpand) ToParsed() (*ParsedCreateDelegationMessage, error) {
+	if m == nil {
+		return nil, fmt.Errorf("cannot parse nil MsgCreateBTCDelegation")
+	}
+
+	return parseBtcExpandMessage(m)
+}
+
+// ValidateBasic does all the checks as MsgCreateBTCDelegation
+// and verifies if the previous staking tx hash is valid
+func (m *MsgBtcStakeExpand) ValidateBasic() error {
+	_, err := parseBtcExpandMessage(m)
+	return err
 }
 
 func (m *MsgAddCovenantSigs) ValidateBasic() error {
