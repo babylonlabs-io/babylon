@@ -496,7 +496,7 @@ func NewSelectiveSlashingEvidenceCmd() *cobra.Command {
 			}
 
 			// get delegator signature for unbonding tx
-			fpSKBytes, err := hex.DecodeString(args[1])
+			fpSKBytes, err := hex.DecodeString(args[0])
 			if err != nil {
 				return err
 			}
