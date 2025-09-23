@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"strconv"
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -35,14 +36,19 @@ func (s *EpochingSpamPreventionTestSuite) waitForEpochEnd(chainA *chain.Config, 
 
 	currentHeight, err := nonValidatorNode.QueryCurrentHeight()
 	s.NoError(err)
-	var epochingParams etypes.Params
-	nonValidatorNode.QueryParams("epoching", &epochingParams)
-	epochInterval := epochingParams.EpochInterval
+	var epochingParamsWrapper struct {
+		Params struct {
+			EpochInterval string `json:"epoch_interval"`
+		} `json:"params"`
+	}
+	nonValidatorNode.QueryParams("epoching", &epochingParamsWrapper)
+	epochInterval, err := strconv.ParseUint(epochingParamsWrapper.Params.EpochInterval, 10, 64)
 	s.NoError(err)
 	// Calculate remaining blocks until epoch end
 	epochBoundary := epochInterval * (currentEpoch + 1)
 	remainingBlocks := int(epochBoundary-uint64(currentHeight)) + 2 // +2 for safety margin
 
+	s.T().Logf("Current epoch interval: %d", epochInterval)
 	s.T().Logf("Current epoch: %d", currentEpoch)
 	s.T().Logf("Current block height: %d", currentHeight)
 	s.T().Logf("Epoch boundary (last block of epoch): %d", epochBoundary)

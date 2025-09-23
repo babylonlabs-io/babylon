@@ -55,9 +55,11 @@ func CreateUpgradeHandler(mm *module.Manager, configurator module.Configurator, 
 			return nil, fmt.Errorf("migration validation failed: %w", err)
 		}
 		// Log successful upgrade
+		epochingPrevVersion := fromVM["epoching"]
+		epochingNewVersion := migrations["epoching"]
 		sdkCtx.Logger().Info("spam prevention upgrade completed successfully",
 			"upgrade", UpgradeName,
-			"epoching_migration", "v3rc3->v3rc4",
+			"epoching_migration", fmt.Sprintf("v%d->v%d", epochingPrevVersion, epochingNewVersion),
 			"height", currentHeight,
 			"epoch_boundary", true,
 		)
