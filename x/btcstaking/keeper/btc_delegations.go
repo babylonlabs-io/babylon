@@ -39,7 +39,7 @@ func (k Keeper) CreateBTCDelegation(ctx sdk.Context, parsedMsg *types.ParsedCrea
 		return types.ErrReusedStakingTx.Wrapf("duplicated tx hash: %s", stakingTxHash.String())
 	}
 
-	// Ensure all finality providers
+	// 4. Ensure all finality providers
 	// - are known to Babylon
 	// - there's only 1 Babylon finality provider
 	// - is not slashed
