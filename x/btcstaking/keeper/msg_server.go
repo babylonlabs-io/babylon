@@ -176,7 +176,7 @@ func (ms msgServer) BtcStakeExpand(goCtx context.Context, req *types.MsgBtcStake
 	}
 
 	// Check that the previous delegation and the new expansion have the same FP
-	if !(req.FpBtcPkList[0].Equals(&prevBtcDel.FpBtcPkList[0])) {
+	if !req.FpBtcPkList[0].Equals(&prevBtcDel.FpBtcPkList[0]) {
 		return nil, status.Errorf(codes.InvalidArgument, "the previous BTC staking transaction FP: %+v is not the same as FP of the stake expansion %+v", prevBtcDel.FpBtcPkList, req.FpBtcPkList)
 	}
 
