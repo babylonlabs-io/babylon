@@ -67,7 +67,7 @@ bindings (thanks @benluelo for contribution)
 - [#1611](https://github.com/babylonlabs-io/babylon/pull/1611) Rename `x/btcstaking` prefixes as `v3.x`.
 - [#1668](https://github.com/babylonlabs-io/babylon/pull/1668) Bump dependencies based on dependabot alerts
 
-### Bug fixes
+### Bug Fixes
 
 - [#1355](https://github.com/babylonlabs-io/babylon/pull/1355) Allow empty fees on genesis transactions
 - [#1453](https://github.com/babylonlabs-io/babylon/pull/1453) fix: inactive FP event on full unbonding
