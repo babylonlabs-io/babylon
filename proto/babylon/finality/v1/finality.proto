@@ -8,21 +8,23 @@ import "gogoproto/gogo.proto";
 import "amino/amino.proto";
 import "google/protobuf/timestamp.proto";
 
-// VotingPowerDistCache is the cache for voting power distribution of finality providers
-// and their BTC delegations at a height
+// VotingPowerDistCache is the cache for voting power distribution of finality
+// providers and their BTC delegations at a height
 message VotingPowerDistCache {
-    option (gogoproto.goproto_getters) = false;
-    // total_voting_power is the total voting power of all (active) finality providers
-    // in the cache
-    uint64 total_voting_power = 1;
-    // finality_providers is a list of finality providers' voting power information
-    repeated FinalityProviderDistInfo finality_providers = 2;
-    // num_active_fps is the number of finality providers that have active BTC
-    // delegations as well as timestamped public randomness
-    uint32 num_active_fps = 3;
+  option (gogoproto.goproto_getters) = false;
+  // total_voting_power is the total voting power of all (active) finality
+  // providers in the cache
+  uint64 total_voting_power = 1;
+  // finality_providers is a list of finality providers' voting power
+  // information
+  repeated FinalityProviderDistInfo finality_providers = 2;
+  // num_active_fps is the number of finality providers that have active BTC
+  // delegations as well as timestamped public randomness
+  uint32 num_active_fps = 3;
 }
 
-// FinalityProviderDistInfo is the reward distribution of a finality provider and its BTC delegations
+// FinalityProviderDistInfo is the reward distribution of a finality provider
+// and its BTC delegations
 message FinalityProviderDistInfo {
     // btc_pk is the Bitcoin secp256k1 PK of this finality provider
     // the PK follows encoding in BIP-340 spec
@@ -50,28 +52,38 @@ message FinalityProviderDistInfo {
 
 // IndexedBlock is the necessary metadata and finalization status of a block
 message IndexedBlock {
-    // height is the height of the block
-    uint64 height = 1;
-    // app_hash is the AppHash of the block
-    bytes app_hash = 2;
-    // finalized indicates whether the IndexedBlock is finalised by 2/3
-    // finality providers or not
-    bool finalized = 3;
+  // height is the height of the block
+  uint64 height = 1;
+  // app_hash is the AppHash of the block
+  bytes app_hash = 2;
+  // finalized indicates whether the IndexedBlock is finalised by 2/3
+  // finality providers or not
+  bool finalized = 3;
 }
 
 // PubRandCommit is a commitment to a series of public randomness
 // currently, the commitment is a root of a Merkle tree that includes
 // a series of public randomness
 message PubRandCommit {
-    // start_height is the height of the first commitment
-    uint64 start_height = 1;
-    // num_pub_rand is the number of committed public randomness
-    uint64 num_pub_rand = 2;
-    // commitment is the value of the commitment
-    // currently, it is the root of the merkle tree constructed by the public randomness
-    bytes commitment = 3;
-    // epoch_num defines the epoch number that the commit falls into
-    uint64 epoch_num = 4;
+  // start_height is the height of the first commitment
+  uint64 start_height = 1;
+  // num_pub_rand is the number of committed public randomness
+  uint64 num_pub_rand = 2;
+  // commitment is the value of the commitment
+  // currently, it is the root of the merkle tree constructed by the public
+  // randomness
+  bytes commitment = 3;
+  // epoch_num defines the epoch number that the commit falls into
+  uint64 epoch_num = 4;
+}
+
+// PubRandCommitIndexValue represents a list of sorted start heights for public
+// randomness commitments.
+message PubRandCommitIndexValue {
+  option (gogoproto.goproto_getters) = false;
+  // A list of start heights corresponding to committed public randomness
+  // ranges.
+  repeated uint64 heights = 1;
 }
 
 // Evidence is the evidence that a finality provider has signed finality
@@ -97,8 +109,8 @@ message Evidence {
     bytes fork_finality_sig = 7 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/v4/types.SchnorrEOTSSig" ];
 }
 
-// FinalityProviderSigningInfo defines a finality provider's signing info for monitoring their
-// liveness activity.
+// FinalityProviderSigningInfo defines a finality provider's signing info for
+// monitoring their liveness activity.
 message FinalityProviderSigningInfo {
     // fp_btc_pk is the BTC PK of the finality provider that casts this vote
     bytes fp_btc_pk = 1 [ (gogoproto.customtype) = "github.com/babylonlabs-io/babylon/v4/types.BIP340PubKey" ];
