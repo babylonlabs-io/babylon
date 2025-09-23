@@ -739,7 +739,7 @@ func (k Keeper) CheckDuplicatedFpBbnAddr(ctx context.Context, fpAddr sdk.AccAddr
 }
 
 // hasSufficientCovenantOverlap returns true if the intersection of CovCommittee1 and CovCommittee2
-// contains more or equal members than the required overlap.
+// contains at least as many members as the required overlap.
 func hasSufficientCovenantOverlap(
 	covCommittee1,
 	covCommittee2 []bbn.BIP340PubKey,
