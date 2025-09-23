@@ -1,14 +1,7 @@
 package keepers
 
 import (
-	"context"
-	"fmt"
-	ratelimitv2 "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/v2"
-	ibccallbacksv2 "github.com/cosmos/ibc-go/v10/modules/apps/callbacks/v2"
-	transferv2 "github.com/cosmos/ibc-go/v10/modules/apps/transfer/v2"
-	ibcapi "github.com/cosmos/ibc-go/v10/modules/core/api"
 	"path/filepath"
-	"strings"
 
 	"cosmossdk.io/log"
 	storetypes "cosmossdk.io/store/types"
@@ -20,35 +13,11 @@ import (
 	feegrantkeeper "cosmossdk.io/x/feegrant/keeper"
 	upgradekeeper "cosmossdk.io/x/upgrade/keeper"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
-	"github.com/CosmWasm/wasmd/x/wasm"
-	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
-	bbn "github.com/babylonlabs-io/babylon/v4/types"
-	owasm "github.com/babylonlabs-io/babylon/v4/wasmbinding"
-	btccheckpointkeeper "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/keeper"
-	btccheckpointtypes "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
-	btclightclientkeeper "github.com/babylonlabs-io/babylon/v4/x/btclightclient/keeper"
-	btclightclienttypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
-	btcstakingkeeper "github.com/babylonlabs-io/babylon/v4/x/btcstaking/keeper"
-	btcstakingtypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
-	checkpointingkeeper "github.com/babylonlabs-io/babylon/v4/x/checkpointing/keeper"
-	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
-	epochingkeeper "github.com/babylonlabs-io/babylon/v4/x/epoching/keeper"
-	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
-	finalitykeeper "github.com/babylonlabs-io/babylon/v4/x/finality/keeper"
-	finalitytypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
-	incentivekeeper "github.com/babylonlabs-io/babylon/v4/x/incentive/keeper"
-	incentivetypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
-	mintkeeper "github.com/babylonlabs-io/babylon/v4/x/mint/keeper"
-	minttypes "github.com/babylonlabs-io/babylon/v4/x/mint/types"
-	monitorkeeper "github.com/babylonlabs-io/babylon/v4/x/monitor/keeper"
-	monitortypes "github.com/babylonlabs-io/babylon/v4/x/monitor/types"
+
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	authcodec "github.com/cosmos/cosmos-sdk/x/auth/codec"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -70,19 +39,33 @@ import (
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	ibccallbacks "github.com/cosmos/ibc-go/v10/modules/apps/callbacks"
-	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
-	ibckeeper "github.com/cosmos/ibc-go/v10/modules/core/keeper"
-	tokenfactorybindings "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/bindings"
-	tokenfactorykeeper "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/keeper"
-	tokenfactorytypes "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/types"
 
-	pfmrouter "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v10/packetforward"
-	pfmrouterkeeper "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v10/packetforward/keeper"
-	pfmroutertypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v10/packetforward/types"
-	ratelimiter "github.com/cosmos/ibc-apps/modules/rate-limiting/v10"
-	ratelimitkeeper "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/keeper"
-	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/types"
+	"github.com/CosmWasm/wasmd/x/wasm"
+	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+
+	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	owasm "github.com/babylonlabs-io/babylon/v4/wasmbinding"
+	btccheckpointkeeper "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/keeper"
+	btccheckpointtypes "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
+	btclightclientkeeper "github.com/babylonlabs-io/babylon/v4/x/btclightclient/keeper"
+	btclightclienttypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
+	btcstakingkeeper "github.com/babylonlabs-io/babylon/v4/x/btcstaking/keeper"
+	btcstakingtypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+	checkpointingkeeper "github.com/babylonlabs-io/babylon/v4/x/checkpointing/keeper"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
+	epochingkeeper "github.com/babylonlabs-io/babylon/v4/x/epoching/keeper"
+	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
+	finalitykeeper "github.com/babylonlabs-io/babylon/v4/x/finality/keeper"
+	finalitytypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
+	incentivekeeper "github.com/babylonlabs-io/babylon/v4/x/incentive/keeper"
+	incentivetypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
+	mintkeeper "github.com/babylonlabs-io/babylon/v4/x/mint/keeper"
+	minttypes "github.com/babylonlabs-io/babylon/v4/x/mint/types"
+	monitorkeeper "github.com/babylonlabs-io/babylon/v4/x/monitor/keeper"
+	monitortypes "github.com/babylonlabs-io/babylon/v4/x/monitor/types"
+
 	ibcwasmkeeper "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/v10/keeper"
 	ibcwasmtypes "github.com/cosmos/ibc-go/modules/light-clients/08-wasm/v10/types"
 	icacontroller "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/controller"
@@ -91,14 +74,29 @@ import (
 	icahost "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/host"
 	icahostkeeper "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/host/keeper"
 	icahosttypes "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/host/types"
-	transfer "github.com/cosmos/ibc-go/v10/modules/apps/transfer"
+	ibccallbacks "github.com/cosmos/ibc-go/v10/modules/apps/callbacks"
+	ibccallbacksv2 "github.com/cosmos/ibc-go/v10/modules/apps/callbacks/v2"
+	"github.com/cosmos/ibc-go/v10/modules/apps/transfer"
 	ibctransferkeeper "github.com/cosmos/ibc-go/v10/modules/apps/transfer/keeper"
 	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
+	transferv2 "github.com/cosmos/ibc-go/v10/modules/apps/transfer/v2"
 	porttypes "github.com/cosmos/ibc-go/v10/modules/core/05-port/types" // ibc module puts types under `ibchost` rather than `ibctypes`
-)
+	ibcapi "github.com/cosmos/ibc-go/v10/modules/core/api"
+	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
+	ibckeeper "github.com/cosmos/ibc-go/v10/modules/core/keeper"
 
-var errBankRestrictionDistribution = fmt.Errorf("the distribution address %s can only receive bond denom %s",
-	appparams.AccDistribution.String(), appparams.DefaultBondDenom)
+	pfmrouter "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v10/packetforward"
+	pfmrouterkeeper "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v10/packetforward/keeper"
+	pfmroutertypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v10/packetforward/types"
+	ratelimiter "github.com/cosmos/ibc-apps/modules/rate-limiting/v10"
+	ratelimitkeeper "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/keeper"
+	ratelimittypes "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/types"
+	ratelimitv2 "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/v2"
+
+	tokenfactorybindings "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/bindings"
+	tokenfactorykeeper "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/keeper"
+	tokenfactorytypes "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/types"
+)
 
 // Enable all default present capabilities.
 var tokenFactoryCapabilities = []string{
@@ -256,7 +254,6 @@ func (ak *AppKeepers) InitKeepers(
 		appparams.AccGov.String(),
 		logger,
 	)
-	bankKeeper.AppendSendRestriction(bankSendRestrictionOnlyBondDenomToDistribution)
 
 	stakingKeeper := stakingkeeper.NewKeeper(
 		appCodec,
@@ -708,24 +705,4 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(ratelimittypes.ModuleName)
 
 	return paramsKeeper
-}
-
-// bankSendRestrictionOnlyBondDenomToDistribution restricts that only the default bond denom should be allowed to send to distribution mod acc.
-func bankSendRestrictionOnlyBondDenomToDistribution(ctx context.Context, fromAddr, toAddr sdk.AccAddress, amt sdk.Coins) (newToAddr sdk.AccAddress, err error) {
-	if toAddr.Equals(appparams.AccDistribution) {
-		denoms := amt.Denoms()
-		switch len(denoms) {
-		case 0:
-			return toAddr, nil
-		case 1:
-			denom := denoms[0]
-			if !strings.EqualFold(denom, appparams.DefaultBondDenom) {
-				return nil, errBankRestrictionDistribution
-			}
-		default: // more than one length
-			return nil, errBankRestrictionDistribution
-		}
-	}
-
-	return toAddr, nil
 }
