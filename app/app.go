@@ -110,6 +110,7 @@ import (
 	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
 	"github.com/babylonlabs-io/babylon/v4/x/checkpointing/vote_extensions"
 	"github.com/babylonlabs-io/babylon/v4/x/epoching"
+	epochingkeeper "github.com/babylonlabs-io/babylon/v4/x/epoching/keeper"
 	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 	"github.com/babylonlabs-io/babylon/v4/x/finality"
 	finalitytypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
@@ -149,16 +150,17 @@ var (
 	DefaultNodeHome string
 	// fee collector account, module accounts and their permissions
 	maccPerms = map[string][]string{
-		authtypes.FeeCollectorName:     nil, // fee collector account
-		distrtypes.ModuleName:          nil,
-		minttypes.ModuleName:           {authtypes.Minter},
-		stakingtypes.BondedPoolName:    {authtypes.Burner, authtypes.Staking},
-		stakingtypes.NotBondedPoolName: {authtypes.Burner, authtypes.Staking},
-		govtypes.ModuleName:            {authtypes.Burner},
-		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
-		incentivetypes.ModuleName:      nil, // this line is needed to create an account for incentive module
-		tokenfactorytypes.ModuleName:   {authtypes.Minter, authtypes.Burner},
-		icatypes.ModuleName:            nil,
+		authtypes.FeeCollectorName:           nil, // fee collector account
+		distrtypes.ModuleName:                nil,
+		minttypes.ModuleName:                 {authtypes.Minter},
+		stakingtypes.BondedPoolName:          {authtypes.Burner, authtypes.Staking},
+		stakingtypes.NotBondedPoolName:       {authtypes.Burner, authtypes.Staking},
+		govtypes.ModuleName:                  {authtypes.Burner},
+		ibctransfertypes.ModuleName:          {authtypes.Minter, authtypes.Burner},
+		incentivetypes.ModuleName:            nil, // this line is needed to create an account for incentive module
+		tokenfactorytypes.ModuleName:         {authtypes.Minter, authtypes.Burner},
+		icatypes.ModuleName:                  nil,
+		epochingtypes.DelegatePoolModuleName: nil,
 	}
 
 	// software upgrades and forks
@@ -494,6 +496,8 @@ func NewBabylonApp(
 	app.MountTransientStores(app.GetTransientStoreKeys())
 	app.MountMemoryStores(app.GetMemoryStoreKeys())
 
+	// Verify Delegate pool account
+	epochingkeeper.ValidateDelegatePoolAccount(app.AccountKeeper)
 	// initialize AnteHandler for the app
 	anteHandler := ante.NewAnteHandler(
 		appOpts,

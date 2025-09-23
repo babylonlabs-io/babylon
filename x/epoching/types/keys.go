@@ -15,6 +15,8 @@ const (
 
 	// MemStoreKey defines the in-memory store key
 	MemStoreKey = "mem_epoching"
+
+	DelegatePoolModuleName = "epoching_delegate_pool"
 )
 
 var (

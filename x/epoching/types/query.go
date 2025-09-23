@@ -2,6 +2,7 @@ package types
 
 import (
 	"encoding/hex"
+	"github.com/cosmos/gogoproto/proto"
 )
 
 // ToResponse parses a Epoch into a query response epoch struct.
@@ -18,12 +19,17 @@ func (e *Epoch) ToResponse() *EpochResponse {
 
 // ToResponse parses a QueuedMessage into a query response queued message struct.
 func (q *QueuedMessage) ToResponse() *QueuedMessageResponse {
+	sdkMsg := q.UnwrapToSdkMsg()
+
+	msgType := proto.MessageName(sdkMsg)
+
 	return &QueuedMessageResponse{
 		TxId:        hex.EncodeToString(q.TxId),
 		MsgId:       hex.EncodeToString(q.MsgId),
 		BlockHeight: q.BlockHeight,
 		BlockTime:   q.BlockTime,
-		Msg:         q.UnwrapToSdkMsg().String(),
+		Msg:         sdkMsg.String(),
+		MsgType:     msgType,
 	}
 }
 
