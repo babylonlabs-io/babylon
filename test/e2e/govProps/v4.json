@@ -1,0 +1,20 @@
+{
+  "messages": [
+    {
+      "@type": "/cosmos.upgrade.v1beta1.MsgSoftwareUpgrade",
+      "authority": "bbn10d07y265gmmuvt4z0w9aw880jnsr700jduz5f2",
+      "plan": {
+        "name": "v4",
+        "time": "0001-01-01T00:00:00Z",
+        "height": "191",
+        "info": "Upgrade to v2",
+        "upgraded_client_state": null
+      }
+    }
+  ],
+  "metadata": "",
+  "deposit": "500000000ubbn",
+  "title": "Upgrade to Babylon v4",
+  "summary": "This upgrade introduces epoching spam prevention and other v4 features",
+  "expedited": false
+}
