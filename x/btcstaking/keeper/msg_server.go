@@ -158,8 +158,8 @@ func (ms msgServer) BtcStakeExpand(goCtx context.Context, req *types.MsgBtcStake
 		return nil, status.Errorf(codes.InvalidArgument, "the previous BTC staking transaction staker address: %s does not match with current staker address: %s", prevBtcDel.StakerAddr, req.StakerAddr)
 	}
 
-	if !bbn.IsSubsetBip340Pks(prevBtcDel.FpBtcPkList, req.FpBtcPkList) {
-		return nil, status.Errorf(codes.InvalidArgument, "the previous BTC staking transaction FPs: %+v are not a subset of the stake expansion FPs %+v", prevBtcDel.FpBtcPkList, req.FpBtcPkList)
+	if !(req.FpBtcPkList[0].Equals(&prevBtcDel.FpBtcPkList[0])) {
+		return nil, status.Errorf(codes.InvalidArgument, "the previous BTC staking transaction FP: %+v is not the same as FP of the stake expansion %+v", prevBtcDel.FpBtcPkList, req.FpBtcPkList)
 	}
 
 	// check FundingTx is not a staking tx
@@ -193,7 +193,7 @@ func (ms msgServer) BtcStakeExpand(goCtx context.Context, req *types.MsgBtcStake
 	}
 
 	// Validate expansion amount
-	newStakingAmt := stkExpandTx.TxOut[prevBtcDel.StakingOutputIdx].Value
+	newStakingAmt := int64(parsedMsg.StakingValue)
 	oldStakingAmt := int64(prevBtcDel.TotalSat)
 	if err := validateStakeExpansionAmt(parsedMsg, newStakingAmt, oldStakingAmt); err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "%v", err)
