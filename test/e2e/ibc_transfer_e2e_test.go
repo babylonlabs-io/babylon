@@ -412,6 +412,7 @@ func (s *IBCTransferTestSuite) Test5E2EBelowThreshold() {
 	transferCoin := sdk.NewInt64Coin(nativeDenom, 100)
 
 	balanceBeforeReceivingSendA, err := nA.QueryBalances(s.addrA)
+	s.T().Logf("Balance before transfer for addrA: %s", balanceBeforeReceivingSendA.String())
 	s.Require().NoError(err)
 
 	txHash := nB.SendIBCTransfer(s.addrB, s.addrA, "channel-0", transferCoin)
@@ -427,6 +428,7 @@ func (s *IBCTransferTestSuite) Test5E2EBelowThreshold() {
 		if err != nil {
 			return false
 		}
+		s.T().Logf("Balance after transfer for addrA: %s", balanceAfterReceivingSendA.String())
 
 		before := balanceBeforeReceivingSendA.String()
 		after := balanceAfterReceivingSendA.String()
