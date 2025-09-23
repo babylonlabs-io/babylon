@@ -298,7 +298,6 @@ func parseBtcExpandMessage(msg *MsgBtcStakeExpand) (*ParsedCreateDelegationMessa
 		StakingTime:                   msg.StakingTime,
 		StakingValue:                  msg.StakingValue,
 		StakingTx:                     msg.StakingTx,
-		StakingTxInclusionProof:       msg.StakingTxInclusionProof,
 		SlashingTx:                    msg.SlashingTx,
 		DelegatorSlashingSig:          msg.DelegatorSlashingSig,
 		UnbondingTime:                 msg.UnbondingTime,
