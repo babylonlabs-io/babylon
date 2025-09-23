@@ -45,7 +45,7 @@ func (k Keeper) UpdatePowerDist(ctx context.Context) {
 
 	// reconcile old voting power distribution cache and new events
 	// to construct the new distribution
-	newDc := k.ProcessAllPowerDistUpdateEvents(ctx, dc, lastBTCTipHeight, btcTipHeight)
+	newDc, state := k.ProcessAllPowerDistUpdateEvents(ctx, dc, lastBTCTipHeight, btcTipHeight)
 
 	// record voting power and cache for this height
 	k.RecordVotingPowerAndCache(ctx, newDc)
@@ -232,7 +232,7 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 	dc *ftypes.VotingPowerDistCache,
 	lastBTCTip uint32,
 	curBTCTip uint32,
-) *ftypes.VotingPowerDistCache {
+) (*ftypes.VotingPowerDistCache, *ftypes.ProcessingState) {
 	state := ftypes.NewProcessingState()
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
@@ -345,7 +345,7 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 		}
 	}
 
-	return newDc
+	return newDc, state
 }
 
 // processEventsAtHeight processes all power distribution update events at a given BTC height
@@ -483,10 +483,6 @@ func (k Keeper) processPowerDistUpdateEventUnbond(
 	for _, fpBTCPK := range btcDel.FpBtcPkList {
 		fpBTCPKHex := fpBTCPK.MarshalHex()
 		state.AddUnbondingDelegation(btcDel.StakerAddr, fpBTCPK, btcDel.TotalSat)
-		if !k.BTCStakingKeeper.BabylonFinalityProviderExists(ctx, fpBTCPK) {
-			// This is a consumer FP rather than Babylon FP, skip it
-			continue
-		}
 		state.DeltaSatsByFpBtcPk[fpBTCPKHex] -= int64(btcDel.TotalSat)
 	}
 }
@@ -503,10 +499,6 @@ func (k Keeper) processPowerDistUpdateEventActive(
 	for _, fpBTCPK := range btcDel.FpBtcPkList {
 		fpBTCPKHex := fpBTCPK.MarshalHex()
 		state.AddActiveDelegation(btcDel.StakerAddr, fpBTCPK, btcDel.TotalSat)
-		if !k.BTCStakingKeeper.BabylonFinalityProviderExists(ctx, fpBTCPK) {
-			// This is a consumer FP rather than Babylon FP, skip it
-			continue
-		}
 		state.DeltaSatsByFpBtcPk[fpBTCPKHex] += int64(btcDel.TotalSat)
 	}
 }
@@ -550,7 +542,7 @@ func (k Keeper) processBtcDelHook(
 	hookFn func(
 		ctx context.Context,
 		fpAddr, btcDelAddr sdk.AccAddress,
-		fpSecuresBabylon, isFpActiveInPrevSet, isFpActiveInCurrSet bool,
+		isFpActiveInPrevSet, isFpActiveInCurrSet bool,
 		sats uint64,
 	) error) error {
 	// execute hooks for newly active BTC delegations

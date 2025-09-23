@@ -18,8 +18,8 @@ type HookFinality struct {
 }
 
 // AfterBtcDelegationUnbonded subtracts active satoshis from the costaker reward tracker
-func (h HookFinality) AfterBtcDelegationUnbonded(ctx context.Context, fpAddr sdk.AccAddress, btcDelAddr sdk.AccAddress, fpSecuresBabylon, isFpActiveInPrevSet, isFpActiveInCurrSet bool, sats uint64) error {
-	if !fpSecuresBabylon || !isFpActiveInPrevSet || !isFpActiveInCurrSet {
+func (h HookFinality) AfterBtcDelegationUnbonded(ctx context.Context, fpAddr sdk.AccAddress, btcDelAddr sdk.AccAddress, isFpActiveInPrevSet, isFpActiveInCurrSet bool, sats uint64) error {
+	if !isFpActiveInPrevSet || !isFpActiveInCurrSet {
 		// It needs to check the fp was active in the previous set and in it is currently active in the current set for the case where:
 		// 1. the fp was active in the block X
 		// 2. block x+1 btc delegation was unbonded (removes sats)
@@ -33,8 +33,8 @@ func (h HookFinality) AfterBtcDelegationUnbonded(ctx context.Context, fpAddr sdk
 }
 
 // AfterBtcDelegationActivated adds new active satoshis to the costaker reward tracker
-func (h HookFinality) AfterBtcDelegationActivated(ctx context.Context, fpAddr sdk.AccAddress, btcDelAddr sdk.AccAddress, fpSecuresBabylon, isFpActiveInPrevSet, isFpActiveInCurrSet bool, sats uint64) error {
-	if !fpSecuresBabylon || !isFpActiveInPrevSet {
+func (h HookFinality) AfterBtcDelegationActivated(ctx context.Context, fpAddr sdk.AccAddress, btcDelAddr sdk.AccAddress, isFpActiveInPrevSet, isFpActiveInCurrSet bool, sats uint64) error {
+	if !isFpActiveInPrevSet {
 		return nil
 	}
 

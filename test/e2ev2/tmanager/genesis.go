@@ -263,8 +263,6 @@ func UpdateGenesisFinality(finalityGenState *finalitytypes.GenesisState) {
 
 func UpdateGenesisBtcStaking(p *StartingBtcStakingParams) func(*btcstktypes.GenesisState) {
 	return func(gen *btcstktypes.GenesisState) {
-		gen.Params[0].MaxFinalityProviders = 5
-
 		if p != nil {
 			gen.Params[0].CovenantPks = p.CovenantCommittee
 			gen.Params[0].CovenantQuorum = p.CovenantQuorum

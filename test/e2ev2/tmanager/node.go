@@ -3,8 +3,6 @@ package tmanager
 import (
 	"context"
 	"fmt"
-	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
-	blc "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
 	"io"
 	"math/rand"
 	"net/http"
@@ -16,6 +14,9 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	blc "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
 
 	"encoding/json"
 
@@ -349,12 +350,6 @@ func (n *Node) CreateAppConfig() {
 
 	appConfig.GRPC.Enable = true
 	appConfig.GRPC.Address = n.GetGRPCAddress()
-
-	// Configure EVM JSON-RPC with dynamic ports
-	appConfig.JSONRPC.Enable = true
-	appConfig.JSONRPC.Address = n.GetEVMRPCAddress()
-	appConfig.JSONRPC.WsAddress = n.GetEVMWSAddress()
-	appConfig.JSONRPC.WSOrigins = []string{"0.0.0.0", "127.0.0.1", "localhost"}
 
 	customTemplate := cmd.DefaultBabylonTemplate()
 

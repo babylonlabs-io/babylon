@@ -19,6 +19,7 @@ import (
 	"github.com/cosmos/gogoproto/proto"
 
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/util"
+	e2ev2 "github.com/babylonlabs-io/babylon/v4/test/e2ev2/tmanager"
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	btccheckpointtypes "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
 	blctypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"

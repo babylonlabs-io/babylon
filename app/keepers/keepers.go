@@ -54,6 +54,8 @@ import (
 	btcstakingtypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 	checkpointingkeeper "github.com/babylonlabs-io/babylon/v4/x/checkpointing/keeper"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
+	costakingkeeper "github.com/babylonlabs-io/babylon/v4/x/costaking/keeper"
+	costktypes "github.com/babylonlabs-io/babylon/v4/x/costaking/types"
 	epochingkeeper "github.com/babylonlabs-io/babylon/v4/x/epoching/keeper"
 	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 	finalitykeeper "github.com/babylonlabs-io/babylon/v4/x/finality/keeper"
@@ -546,9 +548,6 @@ func (ak *AppKeepers) InitKeepers(
 	)
 
 	// set up Checkpointing, BTCCheckpoint, and BTCLightclient keepers
-	ak.CheckpointingKeeper = *checkpointingKeeper.SetHooks(
-		checkpointingtypes.NewMultiCheckpointingHooks(ak.EpochingKeeper.Hooks(), ak.MonitorKeeper.Hooks()),
-	)
 	ak.BtcCheckpointKeeper = btcCheckpointKeeper
 
 	// set up BTC staking keeper
@@ -560,10 +559,6 @@ func (ak *AppKeepers) InitKeepers(
 		&ak.IncentiveKeeper,
 		btcNetParams,
 		appparams.AccGov.String(),
-	)
-
-	ak.BTCLightClientKeeper = *btclightclientKeeper.SetHooks(
-		btclightclienttypes.NewMultiBTCLightClientHooks(ak.BtcCheckpointKeeper.Hooks(), ak.BTCStakingKeeper.Hooks()),
 	)
 
 	// set up finality keeper
@@ -599,8 +594,9 @@ func (ak *AppKeepers) InitKeepers(
 	checkpointingKeeper.SetHooks(
 		checkpointingtypes.NewMultiCheckpointingHooks(epochingKeeper.Hooks(), monitorKeeper.Hooks()),
 	)
-	btclightclientKeeper.SetHooks(
-		btclightclienttypes.NewMultiBTCLightClientHooks(btcCheckpointKeeper.Hooks(), ak.BTCStakingKeeper.Hooks()),
+
+	ak.BTCLightClientKeeper = *btclightclientKeeper.SetHooks(
+		btclightclienttypes.NewMultiBTCLightClientHooks(ak.BtcCheckpointKeeper.Hooks(), ak.BTCStakingKeeper.Hooks()),
 	)
 
 	// wire the keepers with hooks to the app

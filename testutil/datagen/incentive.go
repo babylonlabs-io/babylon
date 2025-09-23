@@ -165,7 +165,7 @@ func GenRandomFPHistRwd(r *rand.Rand) itypes.FinalityProviderHistoricalRewards {
 
 func GenRandomFPHistRwdWithDecimals(r *rand.Rand) itypes.FinalityProviderHistoricalRewards {
 	rwd := GenRandomFPHistRwd(r)
-	rwd.CumulativeRewardsPerSat = rwd.CumulativeRewardsPerSat.MulInt(itypes.DecimalAccumulatedRewards)
+	rwd.CumulativeRewardsPerSat = rwd.CumulativeRewardsPerSat.MulInt(itypes.DecimalRewards)
 	return rwd
 }
 

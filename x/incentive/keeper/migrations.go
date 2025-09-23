@@ -1,7 +1,7 @@
 package keeper
 
 import (
-	v3 "github.com/babylonlabs-io/babylon/v4/x/incentive/migrations/v3"
+	v2 "github.com/babylonlabs-io/babylon/v4/x/incentive/migrations/v2"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -17,7 +17,7 @@ func NewMigrator(k Keeper) Migrator {
 	}
 }
 
-// Migrate2to3 migrates from version 2 to 3.
-func (m Migrator) Migrate2to3(ctx sdk.Context) error {
-	return v3.MigrateStore(ctx, m.k)
+// Migrate1to2 migrates from version 1 to 2.
+func (m Migrator) Migrate1to2(ctx sdk.Context) error {
+	return v2.MigrateStore(ctx, m.k)
 }

@@ -14,8 +14,8 @@ import (
 
 // FinalityHooks event hooks for finality btcdelegation actions
 type FinalityHooks interface {
-	AfterBtcDelegationUnbonded(ctx context.Context, fpAddr, btcDelAddr sdk.AccAddress, fpSecuresBabylon, isFpActiveInPrevSet, isFpActiveInCurrSet bool, sats uint64) error
-	AfterBtcDelegationActivated(ctx context.Context, fpAddr, btcDelAddr sdk.AccAddress, fpSecuresBabylon, isFpActiveInPrevSet, isFpActiveInCurrSet bool, sats uint64) error
+	AfterBtcDelegationUnbonded(ctx context.Context, fpAddr, btcDelAddr sdk.AccAddress, isFpActiveInPrevSet, isFpActiveInCurrSet bool, sats uint64) error
+	AfterBtcDelegationActivated(ctx context.Context, fpAddr, btcDelAddr sdk.AccAddress, isFpActiveInPrevSet, isFpActiveInCurrSet bool, sats uint64) error
 	AfterBbnFpEntersActiveSet(ctx context.Context, fpAddr sdk.AccAddress) error
 	AfterBbnFpRemovedFromActiveSet(ctx context.Context, fpAddr sdk.AccAddress) error
 }
@@ -29,18 +29,18 @@ func NewMultiFinalityHooks(hooks ...FinalityHooks) MultiFinalityHooks {
 	return hooks
 }
 
-func (h MultiFinalityHooks) AfterBtcDelegationUnbonded(ctx context.Context, fpAddr, btcDelAddr sdk.AccAddress, fpSecuresBabylon, isFpActiveInPrevSet, isFpActiveInCurrSet bool, sats uint64) error {
+func (h MultiFinalityHooks) AfterBtcDelegationUnbonded(ctx context.Context, fpAddr, btcDelAddr sdk.AccAddress, isFpActiveInPrevSet, isFpActiveInCurrSet bool, sats uint64) error {
 	for i := range h {
-		if err := h[i].AfterBtcDelegationUnbonded(ctx, fpAddr, btcDelAddr, fpSecuresBabylon, isFpActiveInPrevSet, isFpActiveInCurrSet, sats); err != nil {
+		if err := h[i].AfterBtcDelegationUnbonded(ctx, fpAddr, btcDelAddr, isFpActiveInPrevSet, isFpActiveInCurrSet, sats); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (h MultiFinalityHooks) AfterBtcDelegationActivated(ctx context.Context, fpAddr, btcDelAddr sdk.AccAddress, fpSecuresBabylon, isFpActiveInPrevSet, isFpActiveInCurrSet bool, sats uint64) error {
+func (h MultiFinalityHooks) AfterBtcDelegationActivated(ctx context.Context, fpAddr, btcDelAddr sdk.AccAddress, isFpActiveInPrevSet, isFpActiveInCurrSet bool, sats uint64) error {
 	for i := range h {
-		if err := h[i].AfterBtcDelegationActivated(ctx, fpAddr, btcDelAddr, fpSecuresBabylon, isFpActiveInPrevSet, isFpActiveInCurrSet, sats); err != nil {
+		if err := h[i].AfterBtcDelegationActivated(ctx, fpAddr, btcDelAddr, isFpActiveInPrevSet, isFpActiveInCurrSet, sats); err != nil {
 			return err
 		}
 	}
