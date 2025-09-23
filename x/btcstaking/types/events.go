@@ -116,7 +116,7 @@ func NewCovenantSignatureReceivedEvent(
 ) *EventCovenantSignatureReceived {
 	var stakeExpansionTxSigHex string
 
-	if btcDel.IsStakeExpansion() {
+	if btcDel.IsStakeExpansion() && stakeExpansionTxSig != nil {
 		stakeExpansionTxSigHex = stakeExpansionTxSig.ToHexStr()
 	}
 
