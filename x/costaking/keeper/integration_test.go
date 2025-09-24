@@ -140,7 +140,7 @@ func FuzzBankModuleIntegration(f *testing.F) {
 		k, ctx := NewKeeperWithMockIncentiveKeeper(t, mockIctvK)
 
 		costakr := datagen.GenRandomAddress()
-		costakrScore := datagen.RandomMathInt(r, 10000).AddRaw(1) // Ensure non-zero
+		costakerScore := datagen.RandomMathInt(r, 10000).AddRaw(1) // Ensure non-zero
 		rewards := datagen.GenRandomCoins(r)
 
 		if rewards.IsZero() {
@@ -154,12 +154,12 @@ func FuzzBankModuleIntegration(f *testing.F) {
 		err = k.setHistoricalRewards(ctx, 1, types.NewHistoricalRewards(rewardsWithDecimals))
 		require.NoError(t, err)
 
-		tracker := types.NewCostakerRewardsTrackerBasic(0, costakrScore)
+		tracker := types.NewCostakerRewardsTrackerBasic(0, costakerScore)
 		err = k.setCostakerRewardsTracker(ctx, costakr, tracker)
 		require.NoError(t, err)
 
 		// Calculate expected rewards
-		expectedRewards := rewardsWithDecimals.MulInt(costakrScore).QuoInt(ictvtypes.DecimalRewards)
+		expectedRewards := rewardsWithDecimals.MulInt(costakerScore).QuoInt(ictvtypes.DecimalRewards)
 
 		if !expectedRewards.IsZero() {
 			// Both calls should happen for non-zero rewards
