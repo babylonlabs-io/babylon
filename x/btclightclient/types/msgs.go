@@ -72,3 +72,18 @@ func (msg *MsgInsertHeaders) ValidateStateless() error {
 
 	return nil
 }
+
+// ValidateBasic performs stateless validation on MsgInsertHeaders
+func (msg *MsgInsertHeaders) ValidateBasic() error {
+	_, err := sdk.AccAddressFromBech32(msg.Signer)
+
+	if err != nil {
+		return err
+	}
+
+	if len(msg.Headers) == 0 {
+		return fmt.Errorf("empty headers list")
+	}
+
+	return nil
+}

@@ -32,8 +32,20 @@ func (m *MsgAddFinalitySig) MsgToSign() []byte {
 }
 
 func (m *MsgAddFinalitySig) ValidateBasic() error {
+	if _, err := sdk.AccAddressFromBech32(m.Signer); err != nil {
+		return sdkerrors.ErrInvalidAddress.Wrapf("invalid signer address: got %s", m.Signer)
+	}
+
+	if m.FpBtcPk == nil {
+		return ErrInvalidFinalitySig.Wrap("empty Finality Provider BTC PubKey")
+	}
+
 	if m.FpBtcPk.Size() != bbn.BIP340PubKeyLen {
 		return ErrInvalidFinalitySig.Wrapf("invalid finality provider BTC public key length: got %d, want %d", m.FpBtcPk.Size(), bbn.BIP340PubKeyLen)
+	}
+
+	if m.PubRand == nil {
+		return ErrInvalidFinalitySig.Wrap("empty Public Randomness")
 	}
 
 	if m.PubRand.Size() != bbn.SchnorrPubRandLen {
@@ -42,6 +54,10 @@ func (m *MsgAddFinalitySig) ValidateBasic() error {
 
 	if m.Proof == nil {
 		return ErrInvalidFinalitySig.Wrap("empty inclusion proof")
+	}
+
+	if m.FinalitySig == nil {
+		return ErrInvalidFinalitySig.Wrap("empty finality signature")
 	}
 
 	if m.FinalitySig.Size() != bbn.SchnorrEOTSSigLen {

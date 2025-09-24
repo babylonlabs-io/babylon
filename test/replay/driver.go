@@ -790,6 +790,7 @@ func (d *BabylonAppDriver) ConfirmStakingTransactionOnBTC(
 	}
 
 	block := datagen.GenRandomBtcdBlockWithTransactions(d.r, transactions, tip)
+
 	headers := BlocksWithProofsToHeaderBytes([]*datagen.BlockWithProofs{block})
 
 	confirmationBLocks := datagen.GenNEmptyBlocks(
@@ -806,6 +807,12 @@ func (d *BabylonAppDriver) ConfirmStakingTransactionOnBTC(
 		Signer:  d.GetDriverAccountAddress().String(),
 		Headers: headers,
 	})
+
+	// iterate over all transactions except coinbase, and set inclusion proof in message
+	// to the proof from the block
+	for i := 1; i < len(block.Transactions); i++ {
+		msg[i-1].StakingTxInclusionProof = bstypes.NewInclusionProofFromSpvProof(block.Proofs[i])
+	}
 }
 
 func (d *BabylonAppDriver) GenerateNewBlockAssertExecutionSuccessWithResults() []*abci.ExecTxResult {
