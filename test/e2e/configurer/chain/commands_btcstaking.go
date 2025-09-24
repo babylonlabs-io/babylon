@@ -553,30 +553,24 @@ func (n *NodeConfig) CreateBTCDel(
 	return testStakingInfo
 }
 
-func (n *NodeConfig) CreateBTCStakeExpDelegationMultipleFPsAndCheck(
+func (n *NodeConfig) CreateBTCStakeExpDelegationAndCheck(
 	r *rand.Rand,
 	t *testing.T,
 	btcNet *chaincfg.Params,
 	walletNameSender string,
-	fps []*bstypes.FinalityProvider,
+	fp *bstypes.FinalityProvider,
 	btcStakerSK *btcec.PrivateKey,
 	delAddr string,
 	stakingTimeBlocks uint16,
 	stakingSatAmt int64,
 	prevDel *bstypes.BTCDelegation,
 ) (*datagen.TestStakingSlashingInfo, *wire.MsgTx) {
-	// Convert finality provider BTC PKs to BIP340 PKs
-	fpPKs := make([]*bbn.BIP340PubKey, len(fps))
-	for i, fp := range fps {
-		fpPKs[i] = fp.BtcPk
-	}
-
 	msg, testStakingInfo := n.createBtcStakeExpandMessage(
 		r,
 		t,
 		btcNet,
 		btcStakerSK,
-		fps,
+		[]*bstypes.FinalityProvider{fp},
 		stakingSatAmt,
 		stakingTimeBlocks,
 		prevDel,
@@ -962,12 +956,12 @@ func (n *NodeConfig) CreateBTCDelegationWithExpansionAndCheck(
 	require.True(t, activeDel.HasCovenantQuorums(covenantQuorum, 0))
 
 	// Step 3: create a BTC expansion delegation
-	stkExpDelStakingSlashingInfo, fundingTx := n.CreateBTCStakeExpDelegationMultipleFPsAndCheck(
+	stkExpDelStakingSlashingInfo, fundingTx := n.CreateBTCStakeExpDelegationAndCheck(
 		r,
 		t,
 		btcNet,
 		n.WalletName,
-		fps,
+		fps[0],
 		btcStakerSK,
 		n.PublicAddress,
 		stakingTimeBlocks,
