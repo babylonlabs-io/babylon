@@ -52,3 +52,4 @@ tools-stamp
 mytestnet/
 output/
 dist/
+*.test

@@ -277,14 +277,16 @@ test-e2e-cache-btc-staking-pre-approval:
 test-e2e-cache-ica:
 	go test -run TestICATestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
 
-test-e2e-cache-upgrade-v4:
-	go test -run TestSoftwareUpgradeV23To4TestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
-
 test-e2e-cache-epoching-spam-prevention:
 	go test -run TestEpochingSpamPreventionTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
 
-test-sim-nondeterminism:
-	@echo "Running non-determinism test..."
+test-e2e-cache-upgrade-v4:
+	$(MAKE) -C contrib/images e2e-init-chain-rmi && \
+	export BABYLON_VERSION_BEFORE_UPGRADE=v2.3.0 && \
+	$(MAKE) -C contrib/images e2e-init-chain && \
+	go test -run TestSoftwareUpgradeV23To4TestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
+
+test-sim-nondeterminism:	@echo "Running non-determinism test..."
 	@go test -mod=readonly $(SIMAPP) -run TestAppStateDeterminism -Enabled=true \
 		-NumBlocks=100 -BlockSize=200 -Commit=true -Period=0 -v -timeout 24h
 
