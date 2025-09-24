@@ -113,7 +113,7 @@ func FuzzCalculateCostakerRewards(f *testing.F) {
 		k, ctx := NewKeeperWithMockIncentiveKeeper(t, nil)
 
 		costaker := datagen.GenRandomAddress()
-		costakrScore := datagen.RandomMathInt(r, 10000).AddRaw(10)
+		costakerScore := datagen.RandomMathInt(r, 10000).AddRaw(10)
 
 		hist1 := datagen.GenRandomHistoricalRewards(r)
 		hist1.CumulativeRewardsPerScore = hist1.CumulativeRewardsPerScore.MulInt(ictvtypes.DecimalRewards)
@@ -127,11 +127,11 @@ func FuzzCalculateCostakerRewards(f *testing.F) {
 		err = k.setHistoricalRewards(ctx, endPeriod, hist2)
 		require.NoError(t, err)
 
-		initialTracker := types.NewCostakerRewardsTrackerBasic(startPeriod, costakrScore)
+		initialTracker := types.NewCostakerRewardsTrackerBasic(startPeriod, costakerScore)
 		err = k.setCostakerRewardsTracker(ctx, costaker, initialTracker)
 		require.NoError(t, err)
 
-		expRwds := hist2.CumulativeRewardsPerScore.Sub(hist1.CumulativeRewardsPerScore...).MulInt(costakrScore).QuoInt(ictvtypes.DecimalRewards)
+		expRwds := hist2.CumulativeRewardsPerScore.Sub(hist1.CumulativeRewardsPerScore...).MulInt(costakerScore).QuoInt(ictvtypes.DecimalRewards)
 		rewards, err := k.CalculateCostakerRewards(ctx, costaker, endPeriod)
 		require.NoError(t, err)
 		require.Equal(t, expRwds.String(), rewards.String())
@@ -151,7 +151,7 @@ func FuzzCalculateCostakerRewardsAndSendToGauge(f *testing.F) {
 		k, ctx := NewKeeperWithMockIncentiveKeeper(t, ictvK)
 
 		costaker := datagen.GenRandomAddress()
-		costakrScore := datagen.RandomMathInt(r, 10000).AddRaw(10)
+		costakerScore := datagen.RandomMathInt(r, 10000).AddRaw(10)
 
 		hist1 := datagen.GenRandomHistoricalRewards(r)
 		hist1.CumulativeRewardsPerScore = hist1.CumulativeRewardsPerScore.MulInt(ictvtypes.DecimalRewards)
@@ -165,11 +165,11 @@ func FuzzCalculateCostakerRewardsAndSendToGauge(f *testing.F) {
 		err = k.setHistoricalRewards(ctx, endPeriod, hist2)
 		require.NoError(t, err)
 
-		initialTracker := types.NewCostakerRewardsTrackerBasic(startPeriod, costakrScore)
+		initialTracker := types.NewCostakerRewardsTrackerBasic(startPeriod, costakerScore)
 		err = k.setCostakerRewardsTracker(ctx, costaker, initialTracker)
 		require.NoError(t, err)
 
-		expRwds := hist2.CumulativeRewardsPerScore.Sub(hist1.CumulativeRewardsPerScore...).MulInt(costakrScore).QuoInt(ictvtypes.DecimalRewards)
+		expRwds := hist2.CumulativeRewardsPerScore.Sub(hist1.CumulativeRewardsPerScore...).MulInt(costakerScore).QuoInt(ictvtypes.DecimalRewards)
 
 		ictvK.EXPECT().AccumulateRewardGaugeForCostaker(
 			gomock.Any(),

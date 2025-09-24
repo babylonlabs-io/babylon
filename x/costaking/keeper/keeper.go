@@ -97,7 +97,7 @@ func NewKeeper(
 		costakerRewardsTracker: collections.NewMap(
 			sb,
 			types.CostakerRewardsTrackerKeyPrefix,
-			"costakr_rewards_tracker",
+			"costaker_rewards_tracker",
 			// key: (costakrAddr)
 			collections.BytesKey,
 			codec.CollValue[types.CostakerRewardsTracker](cdc),

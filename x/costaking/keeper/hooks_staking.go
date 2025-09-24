@@ -41,7 +41,7 @@ func (h HookStaking) BeforeDelegationSharesModified(ctx context.Context, delAddr
 	del, err := h.k.stkK.GetDelegation(ctx, delAddr, valAddr)
 	if err != nil {
 		// probably is not found, but we don't want to stop execution for this
-		h.k.Logger(ctx).Error("hook costaking BeforeDelegationSharesModified: %v", err)
+		h.k.Logger(ctx).Error("hook costaking BeforeDelegationSharesModified", err)
 		return nil
 	}
 
