@@ -204,7 +204,7 @@ func TestInvalidStakeExpansion(t *testing.T) {
 				require.NoError(t, err)
 
 				// add tx to BTC and submit headers with proofs
-				blockWithProofs, _ := s.Driver.IncludeTxsInBTCAndConfirm([]*wire.MsgTx{stkExpStakingTx})
+				blockWithProofs := s.Driver.IncludeTxsInBTC([]*wire.MsgTx{stkExpStakingTx})
 				require.Len(t, blockWithProofs.Proofs, 2)
 
 				stakingTime := uint32(1000)
