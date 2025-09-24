@@ -16,7 +16,8 @@
    3. [Withdrawing Remaining Funds after Slashing](#43-withdrawing-remaining-funds-after-slashing)
 5. [Bitcoin Staking Rewards](#5-bitcoin-staking-rewards)
    1. [Rewards Distribution](#51-rewards-distribution)
-   2. [Rewards Withdrawal](#52-rewards-withdrawal)
+   2. [Costaking Rewards](#52-costaking-rewards)
+   3. [Rewards Withdrawal](#53-rewards-withdrawal)
 
 ## 1. Introduction
 
@@ -698,7 +699,48 @@ The rewards are distributed as follows:
   finalized blocks to ensure that all eligible stakers receive their rewards
   based on the voting power and commission rates at the time of finalization.
 
-### 5.2. Rewards Withdrawal
+### 5.2. Costaking Rewards
+
+Costaking enables earning additional rewards by staking both Bitcoin and BABY
+tokens simultaneously. The Babylon address receiving BTC staking rewards and
+the address used for BABY delegations must be the same for costaking rewards
+to be earned.
+
+For costaking one must have both active BTC delegations (via finality providers)
+and BABY delegations (via validators). There is no limit to the number of BTC
+and BABY delegations one can have, and all active delegations contribute to
+the costaking rewards.
+
+Costaking rewards are calculated using a user score based on your combined
+stake amounts. The score is based on `min(active_btc_satoshis, active_baby_tokens / score_ratio)`.
+The `score_ratio` is a parameter defined in the `x/incentive` module that
+determines the relative weight of BABY tokens to Bitcoin in the scoring.
+
+**Algorithm**
+
+Each user's costaking reward is proportional to their score relative to all
+costakers:
+* `user_score = min(active_btc_satoshis, active_baby_tokens / score_ratio)`
+* `user_reward = total_costaking_rewards × (user_score / sum_of_all_scores)`
+
+The `score_ratio` is currently set to 20,000, meaning every 20,000 BABY staked
+makes 1 BTC eligible for costaking rewards. Only BTC staked to active finality
+providers counts toward costaking. All BABY delegations count regardless of
+validator status.
+
+For example, Alice stakes 6 BTC and 50,000 BABY, giving her a score of
+`min(6, 50,000/20,000) = 2.5`. Bob stakes 6 BTC and 150,000 BABY, giving him
+a score of `min(6, 150,000/20,000) = 6`. If the total costaking reward is
+10,000 BABY and they are the only costakers, Alice receives 2,941 BABY and Bob
+receives 7,059 BABY.
+
+**Reward flow:**
+* Rewards are collected and accumulated in the costaking reward pool
+* Rewards distributed based on user scores
+* Rewards automatically sent to your incentive gauge alongside regular BTC staking rewards
+* Withdraw all BTC-related rewards using `MsgWithdrawReward` with `type: "btc_staker"`
+
+### 5.3. Rewards Withdrawal
 
 Rewards can be withdrawn by submitting a `MsgWithdrawReward` message:
 ```protobuf
@@ -735,29 +777,4 @@ Rewards can be checked using the `x/incentive` module:
 * **via the CLI command**
   `babylond query incentive reward-gauges <bech32-address>`
 * **via TypeScript**: You can use the TypeScript implementation to query rewards.
-Please refer to the [TypeScript library documentation](https://github.com/babylonlabs-io/simple-staking/blob/main/src/app/hooks/client/rpc/queries/useBbnQuery.ts).
-
-### 5.3. Costaking Rewards
-
-Costaking enables earning additional rewards by staking both Bitcoin and BABY
-tokens simultaneously. Both addresses must be the same for costaking rewards
-to be earned.
-
-For costaking one must have both active BTC delegations (via finality providers)
-and BABY token delegations (via validators). There is no limit to the number
-of BTC and BABY delegations one can have, and all active delegations
-contribute to the costaking rewards.
-Costaking rewards are calculated using a user score based on your combined
-stake amounts. The score is based on `min(active_satoshis, active_baby / score_ratio)`.
-The `score_ratio` is a parameter defined in the `x/incentive` module
-that determines the relative weight of BABY tokens to Bitcoin in the scoring.
-
-**Reward flow:**
-1. Rewards are collected and accumulated in the costaking reward pool
-2. Rewards distributed based on user scores
-3. Rewards automatically sent to your incentive gauge alongside regular BTC staking rewards
-4. Withdraw all BTC-related rewards using `MsgWithdrawReward` with `type: "btc_staker"`
-
-**Withdrawing costaking rewards:**
-Costaking rewards are combined with regular BTC staking rewards in the same gauge.
-To withdraw your rewards (BTC staking and costaking), use `type: "btc_staker"`.
+  Please refer to the [TypeScript library documentation](https://github.com/babylonlabs-io/simple-staking/blob/main/src/app/hooks/client/rpc/queries/useBbnQuery.ts).
