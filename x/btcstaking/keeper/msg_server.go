@@ -616,16 +616,16 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 		}
 		types.EmitEarlyUnbondedEvent(ctx, btcDel.MustGetStakingTxHash().String(), stakerSpendigTxHeader.Height)
 	case isStakeExpansion:
-		// stake expansion case: emit stake expansion activation event
+		// emit an early unbonded event for the delegation (the one that is being expanded)
+		types.EmitEarlyUnbondedEventByStakeExpansion(
+			ctx,
+			btcDel.MustGetStakingTxHash().String(),
+			spendStakeTxHash.String(),
+			stakerSpendigTxHeader.Height,
+		)
 		delegatorUnbondingInfo = &types.DelegatorUnbondingInfo{
 			SpendStakeTx: req.StakeSpendingTx,
 		}
-		types.EmitStakeExpansionActivatedEvent(ctx,
-			btcDel.MustGetStakingTxHash().String(),
-			spendStakeTxHash.String(),
-			req.StakeSpendingTxInclusionProof.Key.Hash.MarshalHex(),
-			req.StakeSpendingTxInclusionProof.Key.Index,
-		)
 	default:
 		// spend staking tx is not the registered unbonding tx, we need to save it in the database
 		// and emit an event
