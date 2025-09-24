@@ -154,17 +154,6 @@ func (ms msgServer) BtcStakeExpand(goCtx context.Context, req *types.MsgBtcStake
 		return nil, status.Errorf(codes.InvalidArgument, "the previous BTC staking transaction staker address: %s does not match with current staker address: %s", prevBtcDel.StakerAddr, req.StakerAddr)
 	}
 
-	// check FundingTx is not a staking tx
-	// ATM is not possible to combine 2 staking txs into one
-	fundingTx, err := bbn.NewBTCTxFromBytes(req.FundingTx)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-	fundingTxDel := ms.getBTCDelegation(ctx, fundingTx.TxHash())
-	if fundingTxDel != nil {
-		return nil, status.Error(codes.InvalidArgument, "the funding tx cannot be a staking transaction")
-	}
-
 	// Parses the message into better domain format
 	parsedMsg, err := req.ToParsed()
 	if err != nil {
@@ -177,19 +166,22 @@ func (ms msgServer) BtcStakeExpand(goCtx context.Context, req *types.MsgBtcStake
 	}
 
 	stkExpandTx := parsedMsg.StakingTx.Transaction
+
+	// check funding tx output is not some existing staking output
+	fundingTxDel := ms.getBTCDelegation(ctx, parsedMsg.StkExp.FundingTxHash)
+	if fundingTxDel != nil && fundingTxDel.StakingOutputIdx == parsedMsg.StkExp.FundingOutputIndex {
+		return nil, status.Error(codes.InvalidArgument, "the funding output cannot be a staking output")
+	}
+
 	// Check that the input index matches the previous delegation's staking output index
 	if prevBtcDel.StakingOutputIdx != stkExpandTx.TxIn[0].PreviousOutPoint.Index {
 		return nil, status.Errorf(codes.InvalidArgument, "staking expansion tx input index %d does not match previous delegation staking output index %d",
 			stkExpandTx.TxIn[0].PreviousOutPoint.Index, prevBtcDel.StakingOutputIdx)
 	}
 
-	// Check that the new delegation staking output amount is >= old delegation staking output amount
-	// Assume staking output index is the same as previousBtcDel.StakingOutputIdx
-	if int(prevBtcDel.StakingOutputIdx) >= len(stkExpandTx.TxOut) {
-		return nil, status.Errorf(codes.InvalidArgument, "staking expansion tx does not have expected output index %d", prevBtcDel.StakingOutputIdx)
-	}
-
 	// Validate expansion amount
+	// Validation that `parsedMsg.StakingValue` is in fact value committed in stake
+	// expansion tx staking output will happen later in the flow
 	newStakingAmt := int64(parsedMsg.StakingValue)
 	oldStakingAmt := int64(prevBtcDel.TotalSat)
 	if err := validateStakeExpansionAmt(parsedMsg, newStakingAmt, oldStakingAmt); err != nil {
