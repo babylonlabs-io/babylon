@@ -283,7 +283,6 @@ func TestVoting(t *testing.T) {
 }
 
 func TestStakingAndFinalizingBlocks(t *testing.T) {
-	t.Parallel()
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	driverTempDir := t.TempDir()
 	replayerTempDir := t.TempDir()
