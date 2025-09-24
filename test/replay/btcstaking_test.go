@@ -312,7 +312,6 @@ func TestStakingAndFinalizingBlocks(t *testing.T) {
 }
 
 func TestStakingAndFinalizingMultipleBlocksAtOnce(t *testing.T) {
-	t.Parallel()
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	driver := NewBabylonAppDriverTmpDir(r, t)
 	driver.GenerateNewBlock()
@@ -413,7 +412,6 @@ func TestSlashingandFinalizingBlocks(t *testing.T) {
 }
 
 func TestActivatingDelegationOnSlashedFp(t *testing.T) {
-	t.Parallel()
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	driver := NewBabylonAppDriverTmpDir(r, t)
 	driver.GenerateNewBlock()
