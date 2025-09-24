@@ -342,6 +342,9 @@ func NewBabylonApp(
 		},
 	)
 
+	// Register module interfaces with the interface registry
+	app.BasicModuleManager.RegisterInterfaces(interfaceRegistry)
+
 	// NOTE: upgrade module is required to be prioritized
 	app.ModuleManager.SetOrderPreBlockers(
 		upgradetypes.ModuleName,

@@ -548,6 +548,9 @@ func (ak *AppKeepers) InitKeepers(
 	)
 
 	// set up Checkpointing, BTCCheckpoint, and BTCLightclient keepers
+	ak.CheckpointingKeeper = *checkpointingKeeper.SetHooks(
+		checkpointingtypes.NewMultiCheckpointingHooks(ak.EpochingKeeper.Hooks(), ak.MonitorKeeper.Hooks()),
+	)
 	ak.BtcCheckpointKeeper = btcCheckpointKeeper
 
 	// set up BTC staking keeper
@@ -559,6 +562,10 @@ func (ak *AppKeepers) InitKeepers(
 		&ak.IncentiveKeeper,
 		btcNetParams,
 		appparams.AccGov.String(),
+	)
+
+	ak.BTCLightClientKeeper = *btclightclientKeeper.SetHooks(
+		btclightclienttypes.NewMultiBTCLightClientHooks(ak.BtcCheckpointKeeper.Hooks(), ak.BTCStakingKeeper.Hooks()),
 	)
 
 	// set up finality keeper
@@ -583,28 +590,6 @@ func (ak *AppKeepers) InitKeepers(
 			ak.CostakingKeeper.HookIncentives(),
 		),
 	)
-
-	monitorKeeper := monitorkeeper.NewKeeper(
-		appCodec,
-		runtime.NewKVStoreService(keys[monitortypes.StoreKey]),
-		&btclightclientKeeper,
-	)
-
-	// set up Checkpointing, BTCCheckpoint, and BTCLightclient keepers
-	checkpointingKeeper.SetHooks(
-		checkpointingtypes.NewMultiCheckpointingHooks(epochingKeeper.Hooks(), monitorKeeper.Hooks()),
-	)
-
-	ak.BTCLightClientKeeper = *btclightclientKeeper.SetHooks(
-		btclightclienttypes.NewMultiBTCLightClientHooks(ak.BtcCheckpointKeeper.Hooks(), ak.BTCStakingKeeper.Hooks()),
-	)
-
-	// wire the keepers with hooks to the app
-	ak.EpochingKeeper = epochingKeeper
-	ak.BTCLightClientKeeper = btclightclientKeeper
-	ak.CheckpointingKeeper = checkpointingKeeper
-	ak.BtcCheckpointKeeper = btcCheckpointKeeper
-	ak.MonitorKeeper = monitorKeeper
 
 	// create evidence keeper with router
 	evidenceKeeper := evidencekeeper.NewKeeper(

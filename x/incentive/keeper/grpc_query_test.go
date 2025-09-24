@@ -195,7 +195,7 @@ func FuzzFpCurrentRewards(f *testing.F) {
 			FinalityProviderAddress: badFp.String(),
 		}
 		resp, err := k.FpCurrentRewards(ctx, req)
-		require.EqualError(t, err, types.ErrFPCurrentRewardsInvalid.Wrapf("failed to get for addr %s: %s", badFp.String(), types.ErrFPCurrentRewardsNotFound).Error())
+		require.EqualError(t, err, types.ErrFPCurrentRewardsNotFound.Wrapf("failed to get for addr %s: %s", badFp.String(), types.ErrFPCurrentRewardsNotFound).Error())
 		require.Nil(t, resp)
 
 		// correct query

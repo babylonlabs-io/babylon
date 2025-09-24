@@ -1,4 +1,4 @@
-package v3rc4_test
+package v4_test
 
 import (
 	"bufio"
@@ -37,7 +37,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
-	v3rc4 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v3rc4"
+	v4 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v4"
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
 	testutilkeeper "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
@@ -78,7 +78,7 @@ func setupTestKeepers(t *testing.T, btcTip uint32) (sdk.Context, codec.BinaryCod
 	distK := costktypes.NewMockDistributionKeeper(ctrl)
 
 	btcStkStoreKey := storetypes.NewKVStoreKey(btcstktypes.StoreKey)
-	btcStkKeeper, btcCtx := testutilkeeper.BTCStakingKeeperWithStore(t, db, stateStore, btcStkStoreKey, btclcKeeper, btccKeeper, nil, nil)
+	btcStkKeeper, btcCtx := testutilkeeper.BTCStakingKeeperWithStore(t, db, stateStore, btcStkStoreKey, btclcKeeper, btccKeeper, nil)
 
 	// Setup keepers
 	accK := testutilkeeper.AccountKeeper(t, db, stateStore)
@@ -108,13 +108,13 @@ func TestInitializeCoStakerRwdsTracker_EmptyState(t *testing.T) {
 	defer ctrl.Finish()
 
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	vp, _, err := datagen.GenRandomVotingPowerDistCache(r, 10, "")
+	vp, _, err := datagen.GenRandomVotingPowerDistCache(r, 10)
 	require.NoError(t, err)
 	require.NotEmpty(t, vp.GetActiveFinalityProviderSet())
 	fKeeper.SetVotingPowerDistCache(ctx, uint64(ctx.HeaderInfo().Height)-1, vp)
 
 	// Test with empty state (no BTC stakers, no staking delegations)
-	err = v3rc4.InitializeCoStakerRwdsTracker(
+	err = v4.InitializeCoStakerRwdsTracker(
 		ctx,
 		cdc,
 		storeService,
@@ -150,7 +150,7 @@ func TestInitializeCoStakerRwdsTracker_WithoutPowerDistCache(t *testing.T) {
 	createBabyDelegation(t, ctx, stkKeeper, stakerAddr, babyAmount)
 
 	// Execute upgrade function
-	err := v3rc4.InitializeCoStakerRwdsTracker(
+	err := v4.InitializeCoStakerRwdsTracker(
 		ctx, cdc, storeService, stkKeeper, btcStkKeeper, *costkKeeper, *fKeeper,
 	)
 	require.NoError(t, err)
@@ -179,13 +179,13 @@ func TestInitializeCoStakerRwdsTracker_FpNotActive(t *testing.T) {
 	createBabyDelegation(t, ctx, stkKeeper, stakerAddr, babyAmount)
 
 	// seed voting power dist cache with different FP (not the one the staker is delegating to)
-	vp, _, err := datagen.GenRandomVotingPowerDistCache(r, 10, "")
+	vp, _, err := datagen.GenRandomVotingPowerDistCache(r, 10)
 	require.NoError(t, err)
 	require.NotEmpty(t, vp.GetActiveFinalityProviderSet())
 	fKeeper.SetVotingPowerDistCache(ctx, uint64(ctx.HeaderInfo().Height)-1, vp)
 
 	// Execute upgrade function
-	err = v3rc4.InitializeCoStakerRwdsTracker(
+	err = v4.InitializeCoStakerRwdsTracker(
 		ctx, cdc, storeService, stkKeeper, btcStkKeeper, *costkKeeper, *fKeeper,
 	)
 	require.NoError(t, err)
@@ -217,7 +217,7 @@ func TestInitializeCoStakerRwdsTracker_WithRealDelegations(t *testing.T) {
 	setupVotingPowerDistCacheWithActiveFPs(t, r, ctx, fKeeper, btcDel.FpBtcPkList)
 
 	// Execute upgrade function
-	err := v3rc4.InitializeCoStakerRwdsTracker(
+	err := v4.InitializeCoStakerRwdsTracker(
 		ctx, cdc, storeService, stkKeeper, btcStkKeeper, *costkKeeper, *fKeeper,
 	)
 	require.NoError(t, err)
@@ -245,7 +245,7 @@ func TestInitializeCoStakerRwdsTracker_OnlyBTCStaking(t *testing.T) {
 	setupVotingPowerDistCacheWithActiveFPs(t, r, ctx, fKeeper, btcDel.FpBtcPkList)
 
 	// Execute upgrade function
-	err := v3rc4.InitializeCoStakerRwdsTracker(
+	err := v4.InitializeCoStakerRwdsTracker(
 		ctx, cdc, storeService, stkKeeper, btcStkKeeper, *costkKeeper, *fKeeper,
 	)
 	require.NoError(t, err)
@@ -291,7 +291,7 @@ func TestInitializeCoStakerRwdsTracker_MultipleCombinations(t *testing.T) {
 	setupVotingPowerDistCacheWithActiveFPs(t, r, ctx, fKeeper, allFpBtcPks)
 
 	// Execute upgrade function
-	err := v3rc4.InitializeCoStakerRwdsTracker(
+	err := v4.InitializeCoStakerRwdsTracker(
 		ctx, cdc, storeService, stkKeeper, btcStkKeeper, *costkKeeper, *fKeeper,
 	)
 	require.NoError(t, err)
@@ -345,7 +345,7 @@ func TestInitializeCoStakerRwdsTracker_WithMultipleActiveFPs(t *testing.T) {
 	setupVotingPowerDistCacheWithActiveFPs(t, r, ctx, fKeeper, allFpBtcPks)
 
 	// Execute upgrade function
-	err := v3rc4.InitializeCoStakerRwdsTracker(
+	err := v4.InitializeCoStakerRwdsTracker(
 		ctx, cdc, storeService, stkKeeper, btcStkKeeper, *costkKeeper, *fKeeper,
 	)
 	require.NoError(t, err)
@@ -399,7 +399,7 @@ func TestInitializeCoStakerRwdsTracker_MultipleStakingFromSameStaker(t *testing.
 	setupVotingPowerDistCacheWithActiveFPs(t, r, ctx, fKeeper, allFpBtcPks)
 
 	// Execute upgrade function
-	err := v3rc4.InitializeCoStakerRwdsTracker(
+	err := v4.InitializeCoStakerRwdsTracker(
 		ctx, cdc, storeService, stkKeeper, btcStkKeeper, *costkKeeper, *fKeeper,
 	)
 	require.NoError(t, err)
@@ -458,7 +458,7 @@ func runTestWithEnv(t *testing.T, env string, btcTip uint32) {
 	t.Log("Executing upgrade function...")
 
 	// Execute upgrade function
-	err = v3rc4.InitializeCoStakerRwdsTracker(
+	err = v4.InitializeCoStakerRwdsTracker(
 		ctx, cdc, storeService, stkKeeper, btcStkKeeper, *costkKeeper, *fKeeper,
 	)
 	require.NoError(t, err)
@@ -519,7 +519,7 @@ func setupVotingPowerDistCacheWithActiveFPs(
 	fpBtcPks []bbn.BIP340PubKey,
 ) {
 	// Generate random voting power dist cache
-	vp, _, err := datagen.GenRandomVotingPowerDistCache(r, 10, "")
+	vp, _, err := datagen.GenRandomVotingPowerDistCache(r, 10)
 	require.NoError(t, err)
 	require.NotEmpty(t, vp.FinalityProviders)
 
@@ -528,7 +528,7 @@ func setupVotingPowerDistCacheWithActiveFPs(
 	// Ensure we have enough FPs in the cache
 	for len(vp.FinalityProviders) < activeFPsNeeded {
 		// Generate additional random FP
-		fp, err := datagen.GenRandomFinalityProvider(r, "", "")
+		fp, err := datagen.GenRandomFinalityProvider(r)
 		require.NoError(t, err)
 		fpDistInfo := ftypes.NewFinalityProviderDistInfo(fp)
 		fpDistInfo.TotalBondedSat = datagen.RandomInt(r, 10000) + 1000
@@ -574,7 +574,7 @@ func createTestBTCDelegation(t *testing.T, r *rand.Rand, ctx sdk.Context, btcStk
 	require.NoError(t, err)
 
 	// Generate finality provider
-	fp, err := datagen.GenRandomFinalityProvider(r, "", "")
+	fp, err := datagen.GenRandomFinalityProvider(r)
 	require.NoError(t, err)
 	// Create BTC delegation
 	startHeight := uint32(10)
@@ -594,7 +594,6 @@ func createTestBTCDelegation(t *testing.T, r *rand.Rand, ctx sdk.Context, btcStk
 		&chaincfg.RegressionNetParams,
 		[]bbn.BIP340PubKey{*fp.BtcPk},
 		delSK,
-		"",
 		covenantSKs,
 		covenantPKs,
 		covenantQuorum,
