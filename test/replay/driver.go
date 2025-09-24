@@ -915,7 +915,7 @@ func (d *BabylonAppDriver) SendTxWithMsgsFromDriverAccount(
 	return result
 }
 
-// Function to initate different type of senders
+// Function to initiate different type of senders
 
 type NewAccountInfo struct {
 	CreationMsg *banktypes.MsgSend

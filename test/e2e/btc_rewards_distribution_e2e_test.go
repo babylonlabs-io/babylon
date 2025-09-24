@@ -52,9 +52,6 @@ type BaseBtcRewardsDistribution struct {
 type BtcRewardsDistribution struct {
 	BaseBtcRewardsDistribution
 
-	r   *rand.Rand
-	net *chaincfg.Params
-
 	fp1BTCSK  *btcec.PrivateKey
 	fp2BTCSK  *btcec.PrivateKey
 	del1BTCSK *btcec.PrivateKey
