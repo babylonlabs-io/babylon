@@ -562,7 +562,7 @@ func TestBadUnbondingFeeParams(t *testing.T) {
 		Params:    p,
 	}
 	msgToSend := d.NewGovProp(&prop)
-	d.SendTxWithMessagesSuccess(t, d.SenderInfo, defaultGasLimit, defaultFeeCoin, msgToSend)
+	d.SendTxWithMessagesSuccess(t, d.SenderInfo, DefaultGasLimit, defaultFeeCoin, msgToSend)
 
 	txResults := d.GenerateNewBlockAssertExecutionFailure()
 	require.Len(t, txResults, 1)
