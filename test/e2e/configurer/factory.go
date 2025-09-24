@@ -271,3 +271,21 @@ func updateNodeConfigs(cfgs []*initialization.NodeConfig, f func(cfg *initializa
 	}
 	return result
 }
+
+// NewBabylonConfigurer returns a new Configurer for BTC staking service
+func NewBabylonConfigurer(t *testing.T, isDebugLogEnabled bool) (Configurer, error) {
+	identifier := identifierName(t)
+	containerManager, err := containers.NewManager(identifier, isDebugLogEnabled, false, false)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewCurrentBranchConfigurer(t,
+		[]*chain.Config{
+			// we only need 1 chain for testing BTC staking
+			chain.New(t, containerManager, initialization.ChainAID, updateNodeConfigNameWithIdentifier(validatorConfigsChainA, identifier), nil),
+		},
+		baseSetup, // base set up
+		containerManager,
+	), nil
+}

@@ -119,12 +119,13 @@ func TestBlsKeyValidateBasic(t *testing.T) {
 			"invalid: not a valid point on curve",
 			types.BlsKey{
 				Pubkey: func() *bls12381.PublicKey {
-					// Create a random invalid key
+					// Create a deterministic invalid key (all 0xFF bytes are guaranteed to be invalid)
 					invalidKey := make([]byte, bls12381.PubKeySize)
-					_, err := crypto_rand.Read(invalidKey)
-					require.NoError(t, err)
+					for i := range invalidKey {
+						invalidKey[i] = 0xFF
+					}
 					pk := new(bls12381.PublicKey)
-					err = pk.Unmarshal(invalidKey)
+					err := pk.Unmarshal(invalidKey)
 					require.NoError(t, err)
 					return pk
 				}(),

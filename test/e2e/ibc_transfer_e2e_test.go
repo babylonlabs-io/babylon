@@ -9,6 +9,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	pfmroutertypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v10/packetforward/types"
 	"github.com/stretchr/testify/suite"
 )
@@ -30,7 +31,6 @@ func (s *IBCTransferTestSuite) SetupSuite() {
 	)
 
 	s.configurer, err = configurer.NewIBCTransferConfigurer(s.T(), true)
-
 	s.Require().NoError(err)
 
 	err = s.configurer.ConfigureChains()
@@ -47,6 +47,15 @@ func (s *IBCTransferTestSuite) TearDownSuite() {
 	}
 }
 
+func (s *IBCTransferTestSuite) TestAll() {
+	s.IBCTransfer()
+	s.IBCTransferBack()
+	s.PacketForwarding()
+	s.MultiCoinFee()
+	s.E2EBelowThreshold()
+	s.RateLimitE2EAboveThreshold()
+}
+
 func getFirstIBCDenom(balance sdk.Coins) string {
 	// Look up the ugly IBC denom
 	denoms := balance.Denoms()
@@ -60,13 +69,15 @@ func getFirstIBCDenom(balance sdk.Coins) string {
 	return denomB
 }
 
-func (s *IBCTransferTestSuite) Test1IBCTransfer() {
+func (s *IBCTransferTestSuite) IBCTransfer() {
 	amount := int64(100_000)
 
 	transferCoin := sdk.NewInt64Coin(nativeDenom, amount)
 
 	bbnChainA := s.configurer.GetChainConfig(0)
+	bbnChainA.WaitUntilHeight(2)
 	bbnChainB := s.configurer.GetChainConfig(1)
+	bbnChainB.WaitUntilHeight(2)
 
 	nA, err := bbnChainA.GetNodeAtIndex(2)
 	s.NoError(err)
@@ -78,7 +89,7 @@ func (s *IBCTransferTestSuite) Test1IBCTransfer() {
 	nA.BankSendFromNode(s.addrA, "10000000ubbn")
 
 	s.addrB = nB.KeysAdd("addr-B")
-	nB.BankSendFromNode(s.addrB, "10000000ubbn")
+	nB.BankSendFromNode(s.addrB, "30000000ubbn")
 
 	nB.WaitForNextBlock()
 	nA.WaitForNextBlock()
@@ -146,7 +157,7 @@ func (s *IBCTransferTestSuite) Test1IBCTransfer() {
 	}, 1*time.Minute, 1*time.Second, "Transfer was not successful")
 }
 
-func (s *IBCTransferTestSuite) Test2IBCTransferBack() {
+func (s *IBCTransferTestSuite) IBCTransferBack() {
 	bbnChainA := s.configurer.GetChainConfig(0)
 	bbnChainB := s.configurer.GetChainConfig(1)
 
@@ -223,9 +234,9 @@ func (s *IBCTransferTestSuite) Test2IBCTransferBack() {
 	}, 1*time.Minute, 1*time.Second, "Transfer back B was not successful")
 }
 
-// TestPacketForwarding sends a packet from chainB to chainA, and forwards it
+// PacketForwarding sends a packet from chainB to chainA, and forwards it
 // back to chainB
-func (s *IBCTransferTestSuite) TestPacketForwarding() {
+func (s *IBCTransferTestSuite) PacketForwarding() {
 	bbnChainA := s.configurer.GetChainConfig(0)
 	bbnChainB := s.configurer.GetChainConfig(1)
 
@@ -308,7 +319,7 @@ func (s *IBCTransferTestSuite) TestPacketForwarding() {
 	}, 1*time.Minute, 1*time.Second, "Transfer back B was not successful")
 }
 
-func (s *IBCTransferTestSuite) Test4MultiCoinFee() {
+func (s *IBCTransferTestSuite) MultiCoinFee() {
 	amount := int64(1_000)
 
 	transferCoin := sdk.NewInt64Coin(nativeDenom, amount)
@@ -397,7 +408,7 @@ func (s *IBCTransferTestSuite) Test4MultiCoinFee() {
 	}, 90*time.Second, 2*time.Second)
 }
 
-func (s *IBCTransferTestSuite) Test5E2EBelowThreshold() {
+func (s *IBCTransferTestSuite) E2EBelowThreshold() {
 	bbnChainA := s.configurer.GetChainConfig(0)
 	bbnChainB := s.configurer.GetChainConfig(1)
 
@@ -428,16 +439,11 @@ func (s *IBCTransferTestSuite) Test5E2EBelowThreshold() {
 			return false
 		}
 
-		before := balanceBeforeReceivingSendA.String()
-		after := balanceAfterReceivingSendA.String()
-
-		s.Require().NotEqual(before, after)
-
-		return true
+		return !balanceBeforeReceivingSendA.Equal(balanceAfterReceivingSendA)
 	}, 90*time.Second, 2*time.Second, "Transfer back B was not successful")
 }
 
-func (s *IBCTransferTestSuite) Test6RateLimitE2EAboveThreshold() {
+func (s *IBCTransferTestSuite) RateLimitE2EAboveThreshold() {
 	bbnChainA := s.configurer.GetChainConfig(0)
 	bbnChainB := s.configurer.GetChainConfig(1)
 
@@ -453,7 +459,7 @@ func (s *IBCTransferTestSuite) Test6RateLimitE2EAboveThreshold() {
 	_, err = nB.QueryBalances(s.addrB)
 	s.Require().NoError(err)
 
-	packetAmount := sdkmath.NewInt(1_000_001) // above the threshold and should fail
+	packetAmount := sdkmath.NewInt(10_000001) // above the threshold and should fail
 	channel := "channel-0"
 
 	transferCoin := sdk.NewCoin(nativeDenom, packetAmount)
