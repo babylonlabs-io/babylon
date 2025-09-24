@@ -125,7 +125,7 @@ deactivate babylon
 
 Note over vigilante,btc: Watch BTC
 
-btcstaker->>btc: Send Stake Expanion BTC Tx (spends the staking output)
+btcstaker->>btc: Send Stake Expansion BTC Tx (spends the staking output)
 activate btc
 btc-->>btcstaker: Stake Expansion tx mined
 deactivate btc
@@ -159,7 +159,7 @@ The Stake Expansion protocol defines certain rules for
 the expanded staking transaction in relation to both the original
 staking transaction and its state on Babylon Genesis.
 
-- **Exactly Two Inputs** The expanded staking transaction should have
+- **Exactly Two Inputs**: The expanded staking transaction should have
   exactly two inputs:
   (1) the original staking output and
   (2) the funding UTXO
