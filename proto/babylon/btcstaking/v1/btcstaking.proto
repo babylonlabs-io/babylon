@@ -46,7 +46,7 @@ message FinalityProvider {
   uint32 highest_voted_height = 9;
   // NOTE: consumer_id field is not yet backported to the release branch.
   // To keep it consistent with the code on main branch, consumer_info has field number 11 instead of 10.
-  
+
   // commission_info contains information details of the finality provider commission.
   CommissionInfo commission_info = 11;
 }
@@ -295,7 +295,8 @@ message CovenantAdaptorSignatures {
 message SelectiveSlashingEvidence {
   // staking_tx_hash is the hash of the staking tx.
   // It uniquely identifies a BTC delegation
-  string staking_tx_hash = 1;
+  reserved 1;
+  reserved "staking_tx_hash";
   // fp_btc_pk is the BTC PK of the finality provider who
   // launches the selective slashing offence
   bytes fp_btc_pk = 2
