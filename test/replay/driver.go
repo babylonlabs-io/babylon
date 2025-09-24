@@ -805,7 +805,6 @@ func (d *BabylonAppDriver) ConfirmStakingTransactionOnBTC(
 	}
 }
 
-
 func (d *BabylonAppDriver) IncludeTxsInBTC(txs []*wire.MsgTx) *datagen.BlockWithProofs {
 	tip, _ := d.GetBTCLCTip()
 
