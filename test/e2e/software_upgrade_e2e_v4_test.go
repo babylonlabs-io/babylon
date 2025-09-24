@@ -104,7 +104,7 @@ func (s *SoftwareUpgradeV23To4TestSuite) SetupSuite() {
 		true,
 		s.tempUpgradeConfigPath,
 		preUpgradeFunc,
-		"v2.3", // Start from this tag
+		"v2.3.0", // Start from this tag
 	)
 	s.NoError(err)
 
