@@ -105,6 +105,8 @@ func NewStakeHolderType(stBytes []byte) (StakeholderType, error) {
 		return FINALITY_PROVIDER, nil
 	case byte(BTC_STAKER):
 		return BTC_STAKER, nil
+	case byte(COSTAKER):
+		return COSTAKER, nil
 	default:
 		return FINALITY_PROVIDER, fmt.Errorf("invalid stBytes")
 	}
