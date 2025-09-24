@@ -214,7 +214,6 @@ func TestResumeFinalityOfJailedSlashedFp(t *testing.T) {
 }
 
 func TestMissingSignInfoNewlyActiveFpSet(t *testing.T) {
-	t.Parallel()
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	d := NewBabylonAppDriverTmpDir(r, t)
 	d.GenerateNewBlockAssertExecutionSuccess()
