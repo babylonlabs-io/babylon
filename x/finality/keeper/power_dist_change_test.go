@@ -2,7 +2,6 @@ package keeper_test
 
 import (
 	"math/rand"
-	"strings"
 	"testing"
 	"time"
 
@@ -213,7 +212,6 @@ func FuzzDistributionCacheVpCheck_FpSlashedBeforeInclusionProof(f *testing.F) {
 
 		var (
 			btcDelWithoutInclusionProof   *datagen.CreateDelegationInfo
-			fpToBeSlashed                 *btcstktypes.MsgCreateFinalityProvider
 			fpSlashedSK                   *secp256k1.PrivateKey
 			delegationInfosToIncludeProof []*datagen.CreateDelegationInfo
 		)
@@ -249,7 +247,6 @@ func FuzzDistributionCacheVpCheck_FpSlashedBeforeInclusionProof(f *testing.F) {
 				}
 
 				if btcDelWithoutInclusionProof == nil {
-					fpToBeSlashed = fpMsg
 					btcDelWithoutInclusionProof = delCreationInfo
 					fpSlashedSK = fpBtcSK
 					// the first one will be slashed, and the inclusion proof sent later
@@ -304,18 +301,8 @@ func FuzzDistributionCacheVpCheck_FpSlashedBeforeInclusionProof(f *testing.F) {
 		activeFps := vpDstCache.GetActiveFinalityProviderSet()
 		require.Equal(t, len(activeFps), int(createdFps))
 
-		// gets any active delegation from the fp to be slashed
-		var delSlashed *datagen.CreateDelegationInfo
-		for _, activeDel := range delegationInfosToIncludeProof {
-			if strings.EqualFold(fpToBeSlashed.BtcPk.MarshalHex(), activeDel.MsgCreateBTCDelegation.FpBtcPkList[0].MarshalHex()) {
-				delSlashed = activeDel
-				break
-			}
-		}
-
 		_, err := msgSrvrBtcStk.SelectiveSlashingEvidence(ctx, &btcstktypes.MsgSelectiveSlashingEvidence{
 			Signer:           datagen.GenRandomAddress().String(),
-			StakingTxHash:    delSlashed.StakingTxHash,
 			RecoveredFpBtcSk: fpSlashedSK.Serialize(),
 		})
 		require.NoError(t, err)
@@ -1669,10 +1656,10 @@ func createDelegationWithFinalityProvider(
 	r *rand.Rand,
 	fpIndex int,
 	fpInfo *btcstktypes.FinalityProvider, // Must be non-nil
-	fpSK *btcec.PrivateKey, // Must be non-nil
+	fpSK *btcec.PrivateKey,               // Must be non-nil
 	btcStakingMsgServer btcstktypes.MsgServer,
 	btcLcMsgServer btclctypes.MsgServer,
-	finalityMsgServer ftypes.MsgServer, // Use finality related MsgServer type
+	finalityMsgServer ftypes.MsgServer,       // Use finality related MsgServer type
 	btcStakingKeeper btcstakingkeeper.Keeper, // keeper (passed by value)
 	btcLcKeeper btclckeeper.Keeper,
 	covenantSKs []*btcec.PrivateKey,

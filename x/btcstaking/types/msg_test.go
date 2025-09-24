@@ -3,7 +3,7 @@ package types_test
 import (
 	"fmt"
 	"math/rand"
-	reflect "reflect"
+	"reflect"
 	"testing"
 
 	"cosmossdk.io/errors"
@@ -11,6 +11,7 @@ import (
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
 	bbntypes "github.com/babylonlabs-io/babylon/v4/types"
 	"github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+	"github.com/btcsuite/btcd/btcec/v2"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	stktypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
@@ -322,5 +323,52 @@ func TestStructFieldConsistency(t *testing.T) {
 	}
 	if len(missingFromCreate) > 0 {
 		t.Errorf("MsgCreateBTCDelegation is missing fields (except final 2) from MsgBtcStakeExpand: %v", missingFromCreate)
+	}
+}
+
+func TestMsgSelectiveSlashingEvidence_ValidateBasic(t *testing.T) {
+	validAddr := datagen.GenRandomAddress().String()
+	validSk := make([]byte, btcec.PrivKeyBytesLen) // 32 bytes
+
+	testCases := []struct {
+		name   string
+		msg    types.MsgSelectiveSlashingEvidence
+		expErr string
+	}{
+		{
+			name: "valid message",
+			msg: types.MsgSelectiveSlashingEvidence{
+				Signer:           validAddr,
+				RecoveredFpBtcSk: validSk,
+			},
+		},
+		{
+			name: "invalid signer address",
+			msg: types.MsgSelectiveSlashingEvidence{
+				Signer:           "not_bech32",
+				RecoveredFpBtcSk: validSk,
+			},
+			expErr: "invalid signer addr",
+		},
+		{
+			name: "invalid BTC SK length",
+			msg: types.MsgSelectiveSlashingEvidence{
+				Signer:           validAddr,
+				RecoveredFpBtcSk: make([]byte, 16), // too short
+			},
+			expErr: fmt.Sprintf("malformed BTC SK. Expected length: %d", btcec.PrivKeyBytesLen),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := tc.msg.ValidateBasic()
+			if tc.expErr == "" {
+				require.NoError(t, err)
+				return
+			}
+			require.Error(t, err)
+			require.Contains(t, err.Error(), tc.expErr)
+		})
 	}
 }

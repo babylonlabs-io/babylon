@@ -52,6 +52,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#1352](https://github.com/babylonlabs-io/babylon/pull/1352) Add stake expansion signatures in BTC delegation query response
 - [#1369](https://github.com/babylonlabs-io/babylon/pull/1369) fix: update stake expansion validation to allow expanding
 - [#1418](https://github.com/babylonlabs-io/babylon/pull/1418) fix: add stake expansion covenant signature to the events
+- [#1740](https://github.com/babylonlabs-io/babylon/pull/1740) Simplify selective slashing message handler
 - [#1416](https://github.com/babylonlabs-io/babylon/pull/1416) Relax requirements for stake expansion funding output
 
 ### Features
