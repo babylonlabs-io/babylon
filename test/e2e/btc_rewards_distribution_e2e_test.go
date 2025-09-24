@@ -371,6 +371,18 @@ func (s *BtcRewardsDistribution) CheckRewardsFirstDelegations() {
 		_, errDel1 := n2.QueryRewardGauge(sdk.MustAccAddressFromBech32(s.del1Addr))
 		_, errDel2 := n2.QueryRewardGauge(sdk.MustAccAddressFromBech32(s.del2Addr))
 		n2.WaitForNextBlock()
+		if errFp1 != nil {
+			s.T().Logf("errFp1", errFp1.Error())
+		}
+		if errFp2 != nil {
+			s.T().Logf("errFp2", errFp2.Error())
+		}
+		if errDel1 != nil {
+			s.T().Logf("errDel1", errDel1.Error())
+		}
+		if errDel2 != nil {
+			s.T().Logf("errDel2", errDel2.Error())
+		}
 		return errFp1 == nil && errFp2 == nil && errDel1 == nil && errDel2 == nil
 	}, time.Minute*3, time.Second*3, "wait to have some rewards available in the gauge")
 

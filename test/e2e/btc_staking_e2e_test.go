@@ -245,6 +245,7 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 	// commit public randomness list
 	numPubRand := uint64(100)
 	commitStartHeight := uint64(1)
+
 	randListInfo, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(s.r, s.fptBTCSK, commitStartHeight, numPubRand)
 	s.NoError(err)
 	nonValidatorNode.CommitPubRandListFromNode(
@@ -254,6 +255,21 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 		msgCommitPubRandList.Commitment,
 		msgCommitPubRandList.Sig,
 	)
+
+	// Query the public randomness commitment for the finality provider
+	var commitEpoch uint64
+	s.Eventually(func() bool {
+		pubRandCommitMap := nonValidatorNode.QueryListPubRandCommit(msgCommitPubRandList.FpBtcPk)
+		if len(pubRandCommitMap) == 0 {
+			return false
+		}
+		for _, commit := range pubRandCommitMap {
+			commitEpoch = commit.EpochNum
+		}
+		return true
+	}, time.Minute, time.Second)
+
+	s.T().Logf("Successfully queried public randomness commitment for finality provider at epoch %d", commitEpoch)
 
 	// no reward gauge for finality provider and delegation yet
 	fpBabylonAddr, err := sdk.AccAddressFromBech32(s.cacheFP.Addr)

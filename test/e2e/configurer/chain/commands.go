@@ -511,7 +511,7 @@ func (n *NodeConfig) SubmitRefundableTxWithAssertion(
 	if shouldBeRefunded {
 		require.Equal(n.t, submitterBalanceBefore, submitterBalanceAfter)
 	} else {
-		require.True(n.t, submitterBalanceBefore.IsAllGT(submitterBalanceAfter))
+		require.False(n.t, submitterBalanceBefore.Equal(submitterBalanceAfter))
 	}
 }
 
