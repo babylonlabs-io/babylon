@@ -22,8 +22,7 @@
 
 This document walks through the process of expanding existing Bitcoin stakes on
 the Babylon Genesis chain. Bitcoin Stake Expansion allows existing active delegations to
-add new finality providers to secure new BSNs,
-increase staking amounts, or extend timelock
+increase staking amounts or extend timelock
 periods without requiring the traditional unbonding process.
 
 **Target Audience**: This document is intended as a reference for technical
@@ -37,8 +36,6 @@ extended without having to wait for the on-demand unbonding period. This
 process maintains continuous reward earning and voting power while allowing
 stakers to:
 
-- **Add New Finality Providers**: Extend security to additional BSNs by
-  delegating to new finality providers
 - **Increase Staking Amount**: Add more BTC to existing stakes using additional
   funding UTXOs
 - **Extend Timelock Periods**: Renew or extend the staking duration
@@ -49,9 +46,10 @@ stakers to:
 - Atomic activation process (unbond and activation in the same Babylon Genesis block)
 - Maintains security guarantees throughout expansion
 
-**Limitations**: The stake expansion protocol, can't be used for the following:
-- Modify the finality provider selection of an already secured BSN
-- Remove delegation from a finality provider.
+**Limitations**: The stake expansion protocol can't be used for the following:
+- Add new finality providers
+- Remove existing finality providers
+- Modify finality provider selections
 
 The only way to achieve those is by on-demand unbonding and
 staking again.
@@ -125,7 +123,7 @@ deactivate babylon
 
 Note over vigilante,btc: Watch BTC
 
-btcstaker->>btc: Send Stake Expansion BTC Tx (spends the staking output)
+btcstaker->>btc: Send Stake Expanion BTC Tx (spends the staking output)
 activate btc
 btc-->>btcstaker: Stake Expansion tx mined
 deactivate btc
@@ -159,15 +157,14 @@ The Stake Expansion protocol defines certain rules for
 the expanded staking transaction in relation to both the original
 staking transaction and its state on Babylon Genesis.
 
-- **Exactly Two Inputs**: The expanded staking transaction should have
+- **Exactly Two Inputs** The expanded staking transaction should have
   exactly two inputs:
   (1) the original staking output and
   (2) the funding UTXO
 - **Funding UTXO**: The funding UTXO should not correspond
   to any BTC Staking Output known to Babylon Genesis.
-- **Finality Providers**: The finality providers list in the expanded staking transaction should
-  contain *all* finality providers from the original staking transaction
-  and optionally new ones corresponding to different BSNs.
+- **Finality Providers**: The finality providers list in the expanded staking transaction must
+  contain exactly the same finality providers as the original staking transaction.
 - **Original Staking Status**: The original staking transaction must have an `ACTIVE` on Babylon Genesis.
 - **Expanded Stake Staking Amount**: The staking amount in the expanded staking transaction must be ≥ original amount
   > This requirement is the primary reason the stake expansion staking transaction
@@ -206,8 +203,7 @@ containing:
    delegation to expand.
 2. **Expansion transaction**: A special 2-input Bitcoin transaction spending
    the original staking output and the funding output.
-3. **Updated delegation values**: New finality providers (superset) and/or
-  updated amounts and timelock.
+3. **Updated delegation values**: Updated amounts and/or timelock.
   > **Note**: Each stake expansion transaction starts with a new timelock
   > which is the value defined here.
 4. **Funding Transaction**: The Bitcoin transaction from which an output will
@@ -274,7 +270,7 @@ These transactions include:
 >   number of outputs, with one of those serving as the expanded stake
 >   staking output. This output:
 >   * Must follow the [staking output format](./staking-script.md)
->   * Uses the expanded finality provider list (superset of original)
+>   * Uses the same finality provider list as the original
 >   * Contains the new total staking value (≥ of the original amount)
 >   * Must use current Babylon staking parameters
 >
@@ -309,7 +305,7 @@ message MsgBtcStakeExpand {
   string staker_addr = 1;
   ProofOfPossessionBTC pop = 2;
   bytes btc_pk = 3;
-  repeated bytes fp_btc_pk_list = 4;  // Must be superset of previous FPs
+  repeated bytes fp_btc_pk_list = 4;  // Must be identical to previous FPs
   uint32 staking_time = 5;            // New/extended timelock period  
   int64 staking_value = 6;            // Total new amount (≥ previous)
   bytes staking_tx = 7;               // Expansion transaction
@@ -365,7 +361,6 @@ message MsgBtcStakeExpand {
     "btc_sig": "f1e2d3c4b5a69788c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2"
   }
   ```
-  <!-- TODO: This is outdated, we need new documentation for PoP using the signing context -->
 
 * `btc_pk`:
   This Bitcoin `secp256k1` public key of the BTC staker,
@@ -382,10 +377,10 @@ message MsgBtcStakeExpand {
   A list of the `secp256k1` public keys of the finality providers
   (FPs) to which the expanded stake is delegated in BIP-340 format (Schnorr
   signatures)
-  and compact 32-byte representation. **This list must be a superset of the
+  and compact 32-byte representation. **This list must be identical to the
   finality
-  providers from the original delegation** - you cannot remove existing finality
-  providers, only add new ones.
+  providers from the original delegation** - you cannot add or remove finality
+  providers.
   
   Example: 
   ```json
@@ -397,10 +392,8 @@ message MsgBtcStakeExpand {
   ```
   
   > **⚠️ Critical Requirement**: The expansion finality provider list must
-  > include
-  > all finality providers from the original delegation and optionally additional ones
-  > from new BSNs.
-  > The Babylon Genesis chain will reject expansions that attempt to remove existing
+  > be identical to the finality providers from the original delegation.
+  > The Babylon Genesis chain will reject expansions that attempt to add or remove
   > finality providers. Query the original delegation to retrieve the current
   > finality provider list before constructing the expansion.
 
