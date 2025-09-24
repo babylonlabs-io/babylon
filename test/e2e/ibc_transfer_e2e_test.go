@@ -354,6 +354,10 @@ func (s *IBCTransferTestSuite) MultiCoinFee() {
 
 		ibcDenomB = getFirstIBCDenom(balanceAfterSendAddrB)
 		if ibcDenomB == "" {
+			s.T().Logf(
+				"failed to get first ibcDenomB  BbalanceAfterSendAddrB: %s, coinTransfer: %s",
+				balanceAfterSendAddrB.String(), transferCoin.String(),
+			)
 			return false
 		}
 		expAmt := balanceBeforeSendAddrB.AmountOf(ibcDenomB).Add(transferCoin.Amount)
