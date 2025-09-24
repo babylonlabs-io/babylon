@@ -180,18 +180,6 @@ func NewUnexpectedUnbondingTxEvent(
 	}
 }
 
-func NewStakeExpansionActivatedEvent(
-	previousStakingTxHash, stakeExpansionTxHash, stakeExpansionTxHeaderHash string,
-	stakeExpansionTxBlockIndex uint32,
-) *EventStakeExpansionActivated {
-	return &EventStakeExpansionActivated{
-		PreviousStakingTxHash:      previousStakingTxHash,
-		StakeExpansionTxHash:       stakeExpansionTxHash,
-		StakeExpansionTxHeaderHash: stakeExpansionTxHeaderHash,
-		StakeExpansionTxBlockIndex: stakeExpansionTxBlockIndex,
-	}
-}
-
 // EmitUnexpectedUnbondingTxEvent emits events for an unexpected unbonding tx
 func EmitUnexpectedUnbondingTxEvent(
 	sdkCtx sdk.Context,
@@ -204,21 +192,19 @@ func EmitUnexpectedUnbondingTxEvent(
 	}
 }
 
-// EmitStakeExpansionActivatedEvent emits events for a stake expansion activation
-func EmitStakeExpansionActivatedEvent(
-	sdkCtx sdk.Context,
-	previousStakingTxHash, stakeExpansionTxHash, stakeExpansionTxHeaderHash string,
-	stakeExpansionTxBlockIndex uint32,
-) {
-	ev := NewStakeExpansionActivatedEvent(previousStakingTxHash, stakeExpansionTxHash, stakeExpansionTxHeaderHash, stakeExpansionTxBlockIndex)
-	if err := sdkCtx.EventManager().EmitTypedEvent(ev); err != nil {
-		panic(fmt.Errorf("failed to emit stake expansion activated event: %w", err))
-	}
-}
-
 // EmitEarlyUnbondedEvent emits events for an early unbonded BTC delegation
 func EmitEarlyUnbondedEvent(sdkCtx sdk.Context, stakingTxHash string, inclusionHeight uint32) {
 	ev := NewDelegationUnbondedEarlyEvent(stakingTxHash, inclusionHeight)
+	if err := sdkCtx.EventManager().EmitTypedEvent(ev); err != nil {
+		panic(fmt.Errorf("failed to emit event the early unbonded BTC delegation: %w", err))
+	}
+}
+
+// EmitEarlyUnbondedEventByStakeExpansion emits events for an early unbonded BTC delegation
+// due to stake expansion
+func EmitEarlyUnbondedEventByStakeExpansion(sdkCtx sdk.Context, stakingTxHash, stakeExpansionTxHash string, inclusionHeight uint32) {
+	ev := NewDelegationUnbondedEarlyEvent(stakingTxHash, inclusionHeight)
+	ev.StakeExpansionTxHash = stakeExpansionTxHash
 	if err := sdkCtx.EventManager().EmitTypedEvent(ev); err != nil {
 		panic(fmt.Errorf("failed to emit event the early unbonded BTC delegation: %w", err))
 	}
