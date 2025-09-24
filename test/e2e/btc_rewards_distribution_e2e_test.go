@@ -18,6 +18,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"golang.org/x/sync/errgroup"
 
+	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
 	"github.com/babylonlabs-io/babylon/v4/crypto/eots"
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer"
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer/chain"
@@ -37,6 +38,17 @@ const (
 	wFp2              = "fp2"
 	numPubRand        = uint64(600)
 )
+
+type BaseBtcRewardsDistribution struct {
+	suite.Suite
+
+	r   *rand.Rand
+	net *chaincfg.Params
+
+	// covenant helpers
+	covenantSKs     []*btcec.PrivateKey
+	covenantWallets []string
+}
 
 type BtcRewardsDistribution struct {
 	suite.Suite
@@ -838,6 +850,7 @@ func SendCovenantSigsToPendingDel(
 			covenantSlashingSigs[i].AdaptorSigs,
 			bbn.NewBIP340SignatureFromBTCSig(covUnbondingSigs[i]),
 			covenantUnbondingSlashingSigs[i].AdaptorSigs,
+			nil,
 		)
 	}
 }
@@ -875,4 +888,93 @@ func AddCovdSigsToPendingBtcDels(
 
 		n.WaitForNextBlock()
 	}
+}
+
+func (s *BaseBtcRewardsDistribution) CreateCovenantsAndSubmitSignaturesToPendDels(
+	n *chain.NodeConfig,
+	fps ...*bstypes.FinalityProvider,
+) {
+	params := n.QueryBTCStakingParams()
+
+	covAddrs := make([]string, params.CovenantQuorum)
+	covWallets := make([]string, params.CovenantQuorum)
+	for i := 0; i < int(params.CovenantQuorum); i++ {
+		covWallet := fmt.Sprintf("cov%d", i)
+		covWallets[i] = covWallet
+		covAddrs[i] = n.KeysAdd(covWallet)
+	}
+	s.covenantWallets = covWallets
+
+	n.BankMultiSendFromNode(covAddrs, "200000000ubbn")
+
+	fpBtcPks := make([]string, len(fps))
+	for i, fp := range fps {
+		fpBtcPks[i] = fp.BtcPk.MarshalHex()
+	}
+
+	// tx bank send needs to take effect
+	n.WaitForNextBlock()
+	pendingDelsResp := n.QueryFinalityProvidersDelegations(fpBtcPks...)
+	s.Require().Equal(len(pendingDelsResp), 3)
+
+	for _, pendingDelResp := range pendingDelsResp {
+		pendingDel, err := chain.ParseRespBTCDelToBTCDel(pendingDelResp)
+		s.NoError(err)
+
+		n.SendCovenantSigs(s.r, s.T(), s.net, s.covenantSKs, s.covenantWallets, pendingDel)
+
+		n.WaitForNextBlock()
+	}
+
+	// ensure the BTC delegation has covenant sigs now
+	activeDelsSet := n.QueryFinalityProvidersDelegations(fpBtcPks...)
+	s.Require().Len(activeDelsSet, 3)
+	for _, activeDel := range activeDelsSet {
+		s.Require().True(activeDel.Active)
+	}
+	s.T().Log("All BTC delegations are active")
+}
+
+// QueryFpRewards returns the rewards available for fp1, fp2, fp3, fp4
+func (s *BaseBtcRewardsDistribution) QueryFpRewards(n *chain.NodeConfig, fpAddrs ...string) map[string]sdk.Coins {
+	return s.QueryRewards(n, itypes.FINALITY_PROVIDER, fpAddrs...)
+}
+
+// QueryDelRewards returns the rewards available for fp1, fp2, fp3, fp4
+func (s *BaseBtcRewardsDistribution) QueryDelRewards(n *chain.NodeConfig, delAddrs ...string) map[string]sdk.Coins {
+	return s.QueryRewards(n, itypes.BTC_STAKER, delAddrs...)
+}
+
+// QueryRewards returns the rewards available for fp1, fp2, fp3, fp4
+func (s *BaseBtcRewardsDistribution) QueryRewards(n *chain.NodeConfig, stkholderType itypes.StakeholderType, addrs ...string) map[string]sdk.Coins {
+	ret := make(map[string]sdk.Coins, len(addrs))
+
+	for _, addr := range addrs {
+		rwd := sdk.NewCoins()
+
+		rwdGauge, err := n.QueryRewardGauge(sdk.MustAccAddressFromBech32(addr))
+		if err != nil {
+			ret[addr] = rwd
+			continue
+		}
+
+		fpRwdResp, ok := rwdGauge[stkholderType.String()]
+		if ok {
+			rwd = fpRwdResp.Coins
+		}
+		ret[addr] = rwd
+	}
+
+	return ret
+}
+
+func (s *BaseBtcRewardsDistribution) CreateBTCDelegationAndCheck(
+	n *chain.NodeConfig,
+	wDel string,
+	fp *bstypes.FinalityProvider,
+	btcStakerSK *btcec.PrivateKey,
+	delAddr string,
+	stakingSatAmt int64,
+) {
+	n.CreateBTCDelegationAndCheck(s.r, s.T(), s.net, wDel, fp, btcStakerSK, delAddr, stakingTimeBlocks, stakingSatAmt)
 }

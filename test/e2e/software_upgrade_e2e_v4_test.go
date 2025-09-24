@@ -15,7 +15,7 @@ import (
 
 	"github.com/babylonlabs-io/babylon/v3/app/signingcontext"
 	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
-	v3rc4 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v3rc4"
+	v4 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v4"
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer"
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer/chain"
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
@@ -24,10 +24,10 @@ import (
 
 const (
 	commitStartHeightV3RC4 = uint64(5)
-	govPropFileV3RC4       = "v3rc4_upgrade_temp.json"
+	govPropFileV4          = "v4_upgrade_temp.json"
 )
 
-type SoftwareUpgradeV3RC4TestSuite struct {
+type SoftwareUpgradeV23To4TestSuite struct {
 	BaseBtcRewardsDistribution
 
 	fp1BTCSK  *btcec.PrivateKey
@@ -65,8 +65,8 @@ type SoftwareUpgradeV3RC4TestSuite struct {
 	tempUpgradeConfigPath string
 }
 
-func (s *SoftwareUpgradeV3RC4TestSuite) SetupSuite() {
-	s.T().Log("setting up e2e integration test suite for v3.0.0-rc3 to v3rc4 upgrade...")
+func (s *SoftwareUpgradeV23To4TestSuite) SetupSuite() {
+	s.T().Log("setting up e2e integration test suite for v2.3 to v4 upgrade...")
 	s.r = rand.New(rand.NewSource(time.Now().UnixNano()))
 	var err error
 
@@ -116,11 +116,11 @@ func (s *SoftwareUpgradeV3RC4TestSuite) SetupSuite() {
 	s.Require().NoError(err)
 }
 
-func (s *SoftwareUpgradeV3RC4TestSuite) TearDownSuite() {
+func (s *SoftwareUpgradeV23To4TestSuite) TearDownSuite() {
 	// Clean up temporary upgrade config file
 	if s.tempUpgradeConfigPath != "" {
 		// Remove the local file created in govProps directory
-		localFilePath := filepath.Join("govProps", govPropFileV3RC4)
+		localFilePath := filepath.Join("govProps", govPropFileV4)
 		os.Remove(localFilePath)
 	}
 
@@ -131,7 +131,7 @@ func (s *SoftwareUpgradeV3RC4TestSuite) TearDownSuite() {
 }
 
 // createTempUpgradeConfig creates a temporary upgrade configuration file for v3rc4
-func (s *SoftwareUpgradeV3RC4TestSuite) createTempUpgradeConfig() (string, error) {
+func (s *SoftwareUpgradeV23To4TestSuite) createTempUpgradeConfig() (string, error) {
 	upgradeConfig := map[string]interface{}{
 		"messages": []map[string]interface{}{
 			{
@@ -160,7 +160,7 @@ func (s *SoftwareUpgradeV3RC4TestSuite) createTempUpgradeConfig() (string, error
 	}
 
 	// Create temporary file in the govProps directory with a fixed name for this test
-	tempFilePath := filepath.Join(govPropsDir, govPropFileV3RC4)
+	tempFilePath := filepath.Join(govPropsDir, govPropFileV4)
 	tempFile, err := os.Create(tempFilePath)
 	if err != nil {
 		return "", err
@@ -178,10 +178,10 @@ func (s *SoftwareUpgradeV3RC4TestSuite) createTempUpgradeConfig() (string, error
 	}
 
 	// Return the path that will be accessible in Docker containers
-	return "/govProps/" + govPropFileV3RC4, nil
+	return "/govProps/" + govPropFileV4, nil
 }
 
-func (s *SoftwareUpgradeV3RC4TestSuite) SetupFps(n *chain.NodeConfig) {
+func (s *SoftwareUpgradeV23To4TestSuite) SetupFps(n *chain.NodeConfig) {
 	n.WaitForNextBlock()
 
 	s.fp1Addr = n.KeysAdd(wFp1)
@@ -196,7 +196,6 @@ func (s *SoftwareUpgradeV3RC4TestSuite) SetupFps(n *chain.NodeConfig) {
 		s.fp1BTCSK,
 		n,
 		s.fp1Addr,
-		n.ChainID(),
 	)
 
 	s.fp2 = CreateNodeFP(
@@ -205,17 +204,16 @@ func (s *SoftwareUpgradeV3RC4TestSuite) SetupFps(n *chain.NodeConfig) {
 		s.fp2BTCSK,
 		n,
 		s.fp2Addr,
-		n.ChainID(),
 	)
 	n.WaitForNextBlock()
 
-	actualFps := n.QueryFinalityProviders(n.ChainID())
+	actualFps := n.QueryFinalityProviders()
 	s.Require().Len(actualFps, 2)
 }
 
 // SetupVerifiedBtcDelegationsWithBabyStaking sets up BTC delegations and also delegates Baby tokens
 // This is important for the v3rc4 upgrade test as it creates co-stakers (BTC stakers who also stake Baby)
-func (s *SoftwareUpgradeV3RC4TestSuite) SetupVerifiedBtcDelegationsWithBabyStaking(n *chain.NodeConfig) {
+func (s *SoftwareUpgradeV23To4TestSuite) SetupVerifiedBtcDelegationsWithBabyStaking(n *chain.NodeConfig) {
 	s.del1Addr = n.KeysAdd(wDel1)
 	s.del2Addr = n.KeysAdd(wDel2)
 
@@ -265,9 +263,10 @@ func (s *SoftwareUpgradeV3RC4TestSuite) SetupVerifiedBtcDelegationsWithBabyStaki
 	s.Require().NotEmpty(del2Delegations, "del2 should have Baby delegations after epoch boundary")
 }
 
-func (s *SoftwareUpgradeV3RC4TestSuite) FpCommitPubRandAndVote(n *chain.NodeConfig) {
+func (s *SoftwareUpgradeV23To4TestSuite) FpCommitPubRandAndVote(n *chain.NodeConfig) {
 	fp1RandListInfo, fp1CommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(s.r, s.fp1BTCSK, commitStartHeightV3RC4, numPubRand)
 	s.NoError(err)
+	s.fp1RandListInfo = fp1RandListInfo
 
 	fp2RandListInfo, fp2CommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(s.r, s.fp2BTCSK, commitStartHeightV3RC4, numPubRand)
 	s.NoError(err)
@@ -305,7 +304,7 @@ func (s *SoftwareUpgradeV3RC4TestSuite) FpCommitPubRandAndVote(n *chain.NodeConf
 	s.Require().GreaterOrEqual(finalizedEpoch, fp1PubRand.EpochNum)
 	s.Require().GreaterOrEqual(finalizedEpoch, fp2PubRand.EpochNum)
 
-	fps := n.QueryFinalityProviders(n.ChainID())
+	fps := n.QueryFinalityProviders()
 	s.Require().Len(fps, 2)
 
 	for _, fp := range fps {
@@ -363,7 +362,7 @@ func (s *SoftwareUpgradeV3RC4TestSuite) FpCommitPubRandAndVote(n *chain.NodeConf
 }
 
 // TestUpgradeV3RC4 checks if the upgrade from v3.0.0-rc3 to v3rc4 was successful
-func (s *SoftwareUpgradeV3RC4TestSuite) Test1UpgradeV3RC4() {
+func (s *SoftwareUpgradeV23To4TestSuite) Test1UpgradeV3RC4() {
 	chainA := s.configurer.GetChainConfig(0)
 	n, err := chainA.GetNodeAtIndex(1)
 	s.NoError(err)
@@ -375,7 +374,7 @@ func (s *SoftwareUpgradeV3RC4TestSuite) Test1UpgradeV3RC4() {
 	chainA.WaitUntilHeight(govProp.Plan.Height + 1)
 
 	expectedUpgradeHeight := govProp.Plan.Height
-	resp := n.QueryAppliedPlan(v3rc4.UpgradeName)
+	resp := n.QueryAppliedPlan(v4.UpgradeName)
 	s.EqualValues(expectedUpgradeHeight, resp.Height, "the plan should be applied at the height %d", expectedUpgradeHeight)
 
 	s.CheckCostakerRewardsTrackerAfterUpgrade(n)
@@ -388,7 +387,7 @@ func (s *SoftwareUpgradeV3RC4TestSuite) Test1UpgradeV3RC4() {
 }
 
 // CheckCostakerRewardsTrackerAfterUpgrade verifies that the CostakerRewardsTracker was properly initialized
-func (s *SoftwareUpgradeV3RC4TestSuite) CheckCostakerRewardsTrackerAfterUpgrade(n *chain.NodeConfig) {
+func (s *SoftwareUpgradeV23To4TestSuite) CheckCostakerRewardsTrackerAfterUpgrade(n *chain.NodeConfig) {
 	// Query costaker rewards tracker for del1 (who has both BTC and Baby delegations)
 	del1Tracker, err := n.QueryCostakerRewardsTracker(s.del1Addr)
 	s.NoError(err, "should be able to query costaker rewards tracker for del1")
@@ -433,7 +432,7 @@ func (s *SoftwareUpgradeV3RC4TestSuite) CheckCostakerRewardsTrackerAfterUpgrade(
 		expectedDel2Baby.String(), del2Tracker.ActiveBaby.String())
 }
 
-func (s *SoftwareUpgradeV3RC4TestSuite) AddFinalityVoteUntilCurrentHeight(n *chain.NodeConfig, fpFinalityVoteContext string) {
+func (s *SoftwareUpgradeV23To4TestSuite) AddFinalityVoteUntilCurrentHeight(n *chain.NodeConfig, fpFinalityVoteContext string) {
 	currentBlock := n.LatestBlockNumber()
 
 	accFp1, err := n.QueryAccount(s.fp1.Addr)
@@ -469,7 +468,7 @@ func (s *SoftwareUpgradeV3RC4TestSuite) AddFinalityVoteUntilCurrentHeight(n *cha
 	}
 }
 
-func (s *SoftwareUpgradeV3RC4TestSuite) AddFinalityVote(n *chain.NodeConfig, fpFinalityVoteContext string, flagsFp1, flagsFp2 []string) {
+func (s *SoftwareUpgradeV23To4TestSuite) AddFinalityVote(n *chain.NodeConfig, fpFinalityVoteContext string, flagsFp1, flagsFp2 []string) {
 	n.AddFinalitySignatureToBlockWithContext(
 		s.fp2BTCSK,
 		s.fp2.BtcPk,

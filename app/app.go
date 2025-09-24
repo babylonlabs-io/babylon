@@ -66,8 +66,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	"github.com/cosmos/cosmos-sdk/x/gov"
+	govclient "github.com/cosmos/cosmos-sdk/x/gov/client"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/cosmos/cosmos-sdk/x/params"
+	paramsclient "github.com/cosmos/cosmos-sdk/x/params/client"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/cosmos/cosmos-sdk/x/slashing"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
@@ -158,7 +160,7 @@ var (
 		govtypes.ModuleName:                  {authtypes.Burner},
 		ibctransfertypes.ModuleName:          {authtypes.Minter, authtypes.Burner},
 		incentivetypes.ModuleName:            nil, // this line is needed to create an account for incentive module
-		costktypes.ModuleName:                       nil, // this line is needed to create an account for costaking module
+		costktypes.ModuleName:                nil, // this line is needed to create an account for costaking module
 		tokenfactorytypes.ModuleName:         {authtypes.Minter, authtypes.Burner},
 		icatypes.ModuleName:                  nil,
 		epochingtypes.DelegatePoolModuleName: nil,
@@ -339,10 +341,16 @@ func NewBabylonApp(
 		app.ModuleManager,
 		map[string]module.AppModuleBasic{
 			genutiltypes.ModuleName: genutil.NewAppModuleBasic(checkpointingtypes.GenTxMessageValidatorWrappedCreateValidator),
+			govtypes.ModuleName: gov.NewAppModuleBasic(
+				[]govclient.ProposalHandler{
+					paramsclient.ProposalHandler,
+				},
+			),
 		},
 	)
 
 	// Register module interfaces with the interface registry
+	app.BasicModuleManager.RegisterLegacyAminoCodec(legacyAmino)
 	app.BasicModuleManager.RegisterInterfaces(interfaceRegistry)
 
 	// NOTE: upgrade module is required to be prioritized

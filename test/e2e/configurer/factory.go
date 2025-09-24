@@ -11,7 +11,6 @@ import (
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/containers"
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/initialization"
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
-	btclighttypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
 )
 
 type Configurer interface {
@@ -211,26 +210,20 @@ func NewBTCStakingConfigurer(t *testing.T, isDebugLogEnabled bool) (Configurer, 
 	), nil
 }
 
-// NewSoftwareUpgradeConfigurer returns a new Configurer for Software Upgrade testing
-func NewSoftwareUpgradeConfigurer(t *testing.T, isDebugLogEnabled bool, upgradePath string, btcHeaders []*btclighttypes.BTCHeaderInfo, preUpgradeFunc PreUpgradeFunc) (*UpgradeConfigurer, error) {
+// NewSoftwareUpgradeConfigurerWithCurrentTag returns a new Configurer for Software Upgrade testing with the specified current tag
+func NewSoftwareUpgradeConfigurerWithCurrentTag(t *testing.T, isDebugLogEnabled bool, upgradePath string, preUpgradeFunc PreUpgradeFunc, currentTag string) (*UpgradeConfigurer, error) {
 	identifier := identifierName(t)
 	containerManager, err := containers.NewManager(identifier, isDebugLogEnabled, false, true)
 	if err != nil {
 		return nil, err
 	}
-
-	chainA := chain.New(t, containerManager, initialization.ChainAID, updateNodeConfigNameWithIdentifier(validatorConfigsChainA, identifier), nil)
-	if btcHeaders != nil {
-		chainA.BTCHeaders = btcHeaders
-	}
-
 	if currentTag != "" {
 		containerManager.WithCurrentTag(currentTag)
 	}
 	return NewUpgradeConfigurer(t,
 		[]*chain.Config{
-			// we only need 1 chain for testing upgrade
-			chainA,
+			// we only need 1 chain for testing BTC staking
+			chain.New(t, containerManager, initialization.ChainAID, updateNodeConfigNameWithIdentifier(validatorConfigsChainA, identifier), nil),
 		},
 		withUpgrade(baseSetup), // base set up with upgrade
 		containerManager,
@@ -238,6 +231,11 @@ func NewSoftwareUpgradeConfigurer(t *testing.T, isDebugLogEnabled bool, upgradeP
 		0,
 		preUpgradeFunc,
 	), nil
+}
+
+// NewSoftwareUpgradeConfigurer returns a new Configurer for Software Upgrade testing
+func NewSoftwareUpgradeConfigurer(t *testing.T, isDebugLogEnabled bool, upgradePath string, preUpgradeFunc PreUpgradeFunc) (*UpgradeConfigurer, error) {
+	return NewSoftwareUpgradeConfigurerWithCurrentTag(t, isDebugLogEnabled, upgradePath, preUpgradeFunc, "")
 }
 
 func identifierName(t *testing.T) string {

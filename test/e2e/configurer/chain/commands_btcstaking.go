@@ -142,7 +142,8 @@ func (n *NodeConfig) AddCovenantSigs(
 	slashingSigs [][]byte,
 	unbondingSig *bbn.BIP340Signature,
 	unbondingSlashingSigs [][]byte,
-) {
+	stakeExpTxSig *bbn.BIP340Signature,
+) string {
 	n.LogActionF("adding covenant signature from nodeName: %s", n.Name)
 
 	covPKHex := covPK.MarshalHex()
@@ -166,14 +167,21 @@ func (n *NodeConfig) AddCovenantSigs(
 	unbondingSlashingSigStr := strings.Join(unbondingSlashingSigStrList, ",")
 	cmd = append(cmd, unbondingSlashingSigStr)
 
+	if stakeExpTxSig != nil {
+		cmd = append(cmd, stakeExpTxSig.ToHexStr())
+	}
+
 	// used key
 	cmd = append(cmd, fmt.Sprintf("--from=%s", fromWalletName))
 	// gas
-	cmd = append(cmd, "--gas-adjustment=2")
+	cmd = append(cmd, "--gas=3000000")
+	cmd = append(cmd, "--gas-adjustment=1.2")
 
-	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
+	outBuf, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
 	require.NoError(n.t, err)
 	n.LogActionF("successfully added covenant signatures")
+
+	return GetTxHashFromOutput(outBuf.String())
 }
 
 func (n *NodeConfig) CommitPubRandList(fpBTCPK *bbn.BIP340PubKey, startHeight uint64, numPubrand uint64, commitment []byte, sig *bbn.BIP340Signature) {
@@ -513,4 +521,111 @@ func CovenantBTCPKs(params *bstypes.Params) []*btcec.PublicKey {
 		covenantBTCPKs[i] = covenantPK.MustToBTCPK()
 	}
 	return covenantBTCPKs
+}
+
+func (n *NodeConfig) SendCovenantSigs(
+	r *rand.Rand,
+	t testing.TB,
+	btcNet *chaincfg.Params,
+	covenantSKs []*btcec.PrivateKey,
+	covWallets []string,
+	pendingDel *bstypes.BTCDelegation,
+) []string {
+	require.Len(t, pendingDel.CovenantSigs, 0)
+
+	params := n.QueryBTCStakingParams()
+	slashingTx := pendingDel.SlashingTx
+	stakingTx := pendingDel.StakingTx
+
+	stakingMsgTx, err := bbn.NewBTCTxFromBytes(stakingTx)
+	require.NoError(t, err)
+	stakingTxHash := stakingMsgTx.TxHash().String()
+
+	fpBTCPKs, err := bbn.NewBTCPKsFromBIP340PKs(pendingDel.FpBtcPkList)
+	require.NoError(t, err)
+
+	stakingInfo, err := pendingDel.GetStakingInfo(params, btcNet)
+	require.NoError(t, err)
+
+	stakingSlashingPathInfo, err := stakingInfo.SlashingPathSpendInfo()
+	require.NoError(t, err)
+
+	/*
+		generate and insert new covenant signature, in order to activate the BTC delegation
+	*/
+	// covenant signatures on slashing tx
+	covenantSlashingSigs, err := datagen.GenCovenantAdaptorSigs(
+		covenantSKs,
+		fpBTCPKs,
+		stakingMsgTx,
+		stakingSlashingPathInfo.GetPkScriptPath(),
+		slashingTx,
+	)
+	require.NoError(t, err)
+
+	// cov Schnorr sigs on unbonding signature
+	unbondingPathInfo, err := stakingInfo.UnbondingPathSpendInfo()
+	require.NoError(t, err)
+	unbondingTx, err := bbn.NewBTCTxFromBytes(pendingDel.BtcUndelegation.UnbondingTx)
+	require.NoError(t, err)
+
+	covUnbondingSigs, err := datagen.GenCovenantUnbondingSigs(
+		covenantSKs,
+		stakingMsgTx,
+		pendingDel.StakingOutputIdx,
+		unbondingPathInfo.GetPkScriptPath(),
+		unbondingTx,
+	)
+	require.NoError(t, err)
+
+	unbondingInfo, err := pendingDel.GetUnbondingInfo(params, btcNet)
+	require.NoError(t, err)
+	unbondingSlashingPathInfo, err := unbondingInfo.SlashingPathSpendInfo()
+	require.NoError(t, err)
+	covenantUnbondingSlashingSigs, err := datagen.GenCovenantAdaptorSigs(
+		covenantSKs,
+		fpBTCPKs,
+		unbondingTx,
+		unbondingSlashingPathInfo.GetPkScriptPath(),
+		pendingDel.BtcUndelegation.SlashingTx,
+	)
+	require.NoError(t, err)
+
+	covStkExpSigs := []*bbn.BIP340Signature{}
+	if pendingDel.IsStakeExpansion() {
+		prevDelTxHash, err := chainhash.NewHash(pendingDel.StkExp.PreviousStakingTxHash)
+		require.NoError(t, err)
+		prevDelRes := n.QueryBtcDelegation(prevDelTxHash.String())
+		require.NotNil(t, prevDelRes)
+		prevDel := prevDelRes.BtcDelegation
+		require.NotNil(t, prevDel)
+		prevParams := n.QueryBTCStakingParamsByVersion(prevDel.ParamsVersion)
+		pDel, err := ParseRespBTCDelToBTCDel(prevDel)
+		require.NoError(t, err)
+		prevDelStakingInfo, err := pDel.GetStakingInfo(prevParams, btcNet)
+		require.NoError(t, err)
+		covStkExpSigs, err = datagen.GenCovenantStakeExpSig(covenantSKs, pendingDel, prevDelStakingInfo)
+		require.NoError(t, err)
+	}
+
+	txHashes := make([]string, params.CovenantQuorum)
+	for i := 0; i < int(params.CovenantQuorum); i++ {
+		// add covenant sigs
+		var stkExpSig *bbn.BIP340Signature
+		if pendingDel.IsStakeExpansion() {
+			stkExpSig = covStkExpSigs[i]
+		}
+		// add covenant sigs
+		txHashes[i] = n.AddCovenantSigs(
+			covWallets[i],
+			covenantSlashingSigs[i].CovPk,
+			stakingTxHash,
+			covenantSlashingSigs[i].AdaptorSigs,
+			bbn.NewBIP340SignatureFromBTCSig(covUnbondingSigs[i]),
+			covenantUnbondingSlashingSigs[i].AdaptorSigs,
+			stkExpSig,
+		)
+		n.WaitForNextBlock()
+	}
+	return txHashes
 }

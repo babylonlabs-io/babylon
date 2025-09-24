@@ -171,8 +171,6 @@ message QueryDelegationRewardsResponse {
   ];
 }
 
-
-
 // QueryFpCurrentRewardsRequest is the request type for the
 // Query/FpCurrentRewards RPC method.
 message QueryFpCurrentRewardsRequest {

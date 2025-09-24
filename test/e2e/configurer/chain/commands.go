@@ -572,3 +572,12 @@ func (n *NodeConfig) FailICASendTx(from, connectionID, packetMsgPath string) {
 
 	n.LogActionF("Failed to perform ICA send (as expected)")
 }
+
+func (n *NodeConfig) Delegate(fromWallet, validator string, amount string, overallFlags ...string) {
+	n.LogActionF("delegating from %s to validator %s", fromWallet, validator)
+	cmd := []string{"babylond", "tx", "epoching", "delegate", validator, amount, fmt.Sprintf("--from=%s", fromWallet)}
+	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, append(cmd, overallFlags...))
+
+	require.NoError(n.t, err)
+	n.LogActionF("successfully delegated %s to validator %s", fromWallet, validator)
+}
