@@ -162,10 +162,10 @@ staking transaction and its state on Babylon Genesis.
   (1) the original staking output and
   (2) the funding UTXO
 - **Funding UTXO**: The funding UTXO should not correspond
-  to any BTC Staking Output known to Babylon Genesis.
+  to any BTC staking output known to Babylon Genesis.
 - **Finality Providers**: The finality providers list in the expanded staking transaction must
   contain exactly the same finality providers as the original staking transaction.
-- **Original Staking Status**: The original staking transaction must have an `ACTIVE` on Babylon Genesis.
+- **Original Staking Status**: The original staking transaction must have an `ACTIVE` status on Babylon Genesis.
 - **Expanded Stake Staking Amount**: The staking amount in the expanded staking transaction must be ≥ original amount
   > This requirement is the primary reason the stake expansion staking transaction
   > needs an additional funding UTXO input:
