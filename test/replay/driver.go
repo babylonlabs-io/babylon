@@ -776,6 +776,21 @@ func (d *BabylonAppDriver) IncludeTxsInBTC(txs []*wire.MsgTx) *datagen.BlockWith
 	return block
 }
 
+func (d *BabylonAppDriver) GenerateNewBlockAssertExecutionSuccessWithResults() []*abci.ExecTxResult {
+	response := d.GenerateNewBlock()
+
+	for _, tx := range response.TxResults {
+		// ignore checkpoint txs
+		if tx.GasWanted == 0 {
+			continue
+		}
+
+		require.Equal(d.t, tx.Code, uint32(0), tx.Log)
+	}
+
+	return response.TxResults
+}
+
 // ConfirmStakingTransactionOnBTC confirms staking transactions included in the
 // provided messages on the simulated BTC chain. Afterwards, it fills inclusion
 // proof in the provided messages. It is up to the caller to send the messages
@@ -819,21 +834,6 @@ func (d *BabylonAppDriver) ConfirmStakingTransactionOnBTC(
 	for i := 1; i < len(block.Transactions); i++ {
 		msg[i-1].StakingTxInclusionProof = bstypes.NewInclusionProofFromSpvProof(block.Proofs[i])
 	}
-}
-
-func (d *BabylonAppDriver) GenerateNewBlockAssertExecutionSuccessWithResults() []*abci.ExecTxResult {
-	response := d.GenerateNewBlock()
-
-	for _, tx := range response.TxResults {
-		// ignore checkpoint txs
-		if tx.GasWanted == 0 {
-			continue
-		}
-
-		require.Equal(d.t, tx.Code, uint32(0), tx.Log)
-	}
-
-	return response.TxResults
 }
 
 func (d *BabylonAppDriver) GenCkptForEpoch(r *rand.Rand, t *testing.T, epochNumber uint64) {
