@@ -60,6 +60,7 @@ import (
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
 	btclighttypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
 	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+	minttypes "github.com/babylonlabs-io/babylon/v4/x/mint/types"
 )
 
 var validatorConfig = &initialization.NodeConfig{
@@ -82,6 +83,7 @@ const (
 )
 
 var (
+	DefaultGasLimit                = uint64(1_000_000)
 	defaultFeeCoin                 = sdk.NewCoin("ubbn", math.NewInt(defaultFee))
 	BtcParams                      = &chaincfg.SimNetParams
 	covenantSKs, _, CovenantQuorum = bstypes.DefaultCovenantCommittee()
@@ -380,6 +382,11 @@ func (d *BabylonAppDriver) CreateTx(
 	msgs ...sdk.Msg,
 ) []byte {
 	return createTx(t, d.App.TxConfig(), senderInfo, gas, fee, msgs...)
+}
+
+func (d *BabylonAppDriver) GenerateNewBlockReturnResults() []*abci.ExecTxResult {
+	response := d.GenerateNewBlock()
+	return response.TxResults
 }
 
 // SendTxWithMessagesSuccess sends tx with msgs to the mempool and asserts that
@@ -713,14 +720,12 @@ func (d *BabylonAppDriver) ActivateVerifiedDelegations(expectedVerifiedDelegatio
 // Returns the block with the transactions
 func (d *BabylonAppDriver) IncludeVerifiedStakingTxInBTC(expectedVerifiedDelegations int) (btcBlock *datagen.BlockWithProofs, bbnBlock *abci.ResponseFinalizeBlock) {
 	verifiedDelegations := d.GetVerifiedBTCDelegations(d.t)
-	btcCheckpointParams := d.GetBTCCkptParams(d.t)
 
 	// Only verify number if requested
 	if expectedVerifiedDelegations != 0 {
 		require.Equal(d.t, len(verifiedDelegations), expectedVerifiedDelegations)
 	}
 
-	tip, _ := d.GetBTCLCTip()
 	var transactions []*wire.MsgTx
 	for _, del := range verifiedDelegations {
 		stakingTx, _, err := bbn.NewBTCTxFromHex(del.StakingTxHex)
@@ -810,8 +815,21 @@ func (d *BabylonAppDriver) ConfirmStakingTransactionOnBTC(
 		Signer:  d.GetDriverAccountAddress().String(),
 		Headers: headers,
 	})
+}
 
-	return block
+func (d *BabylonAppDriver) GenerateNewBlockAssertExecutionSuccessWithResults() []*abci.ExecTxResult {
+	response := d.GenerateNewBlock()
+
+	for _, tx := range response.TxResults {
+		// ignore checkpoint txs
+		if tx.GasWanted == 0 {
+			continue
+		}
+
+		require.Equal(d.t, tx.Code, uint32(0), tx.Log)
+	}
+
+	return response.TxResults
 }
 
 func (d *BabylonAppDriver) GenCkptForEpoch(r *rand.Rand, t *testing.T, epochNumber uint64) {

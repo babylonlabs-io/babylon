@@ -30,7 +30,7 @@ func TestUnbondDelegation(t *testing.T) {
 	stakers := d.CreateNStakerAccounts(numStakers)
 	d.GenerateNewBlockAssertExecutionSuccess()
 
-	bbnFp.RegisterFinalityProvider("")
+	bbnFp.RegisterFinalityProvider()
 	d.GenerateNewBlockAssertExecutionSuccess()
 
 	bbnFp.CommitRandomness()

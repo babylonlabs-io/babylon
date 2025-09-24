@@ -205,7 +205,7 @@ func TestCostakingRewardsHappyCase(t *testing.T) {
 	fps := d.CreateNFinalityProviderAccounts(2)
 	fp1 := fps[0]
 	for _, fp := range fps {
-		fp.RegisterFinalityProvider("")
+		fp.RegisterFinalityProvider()
 	}
 	d.GenerateNewBlockAssertExecutionSuccess()
 
@@ -363,7 +363,7 @@ func TestCostakingFpSlashedAndBtcUnbondSameBlockPreventsDoubleSatsRemoval(t *tes
 	// Create and register an FP
 	fps := d.CreateNFinalityProviderAccounts(1)
 	fp1 := fps[0]
-	fp1.RegisterFinalityProvider("")
+	fp1.RegisterFinalityProvider()
 	d.GenerateNewBlockAssertExecutionSuccess()
 
 	// Create BTC delegation
@@ -475,8 +475,8 @@ func TestCostakingFpVotingPowerLossAndBtcUnbondSameBlockPreventsDoubleSatsRemova
 
 	fps := d.CreateNFinalityProviderAccounts(2)
 	fp1, fp2 := fps[0], fps[1]
-	fp1.RegisterFinalityProvider("")
-	fp2.RegisterFinalityProvider("")
+	fp1.RegisterFinalityProvider()
+	fp2.RegisterFinalityProvider()
 	d.GenerateNewBlockAssertExecutionSuccess()
 
 	// Create BTC delegations for both FPs

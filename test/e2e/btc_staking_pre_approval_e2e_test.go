@@ -227,6 +227,7 @@ func (s *BTCStakingPreApprovalTestSuite) Test2SubmitCovenantSignature() {
 				covenantSlashingSigs[i].AdaptorSigs,
 				bbn.NewBIP340SignatureFromBTCSig(covUnbondingSigs[i]),
 				covenantUnbondingSlashingSigs[i].AdaptorSigs,
+				nil, // stakeExpTxSig - nil for regular delegations
 			)
 			// wait for a block so that above txs take effect
 			nonValidatorNode.WaitForNextBlock()
@@ -301,7 +302,7 @@ func (s *BTCStakingPreApprovalTestSuite) Test4CommitPublicRandomnessAndSubmitFin
 	commitStartHeight := uint64(1)
 	randListInfo, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(s.r, s.fptBTCSK, commitStartHeight, numPubRand)
 	s.NoError(err)
-	nonValidatorNode.CommitPubRandList(
+	nonValidatorNode.CommitPubRandListFromNode(
 		msgCommitPubRandList.FpBtcPk,
 		msgCommitPubRandList.StartHeight,
 		msgCommitPubRandList.NumPubRand,

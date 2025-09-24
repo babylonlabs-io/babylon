@@ -13,8 +13,6 @@ import (
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/v3/app/signingcontext"
-	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
 	v4 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v4"
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer"
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer/chain"
@@ -358,7 +356,7 @@ func (s *SoftwareUpgradeV23To4TestSuite) FpCommitPubRandAndVote(n *chain.NodeCon
 
 	s.finalityIdx++
 	s.finalityBlockHeightVoted++
-	s.AddFinalityVoteUntilCurrentHeight(n, "")
+	s.AddFinalityVoteUntilCurrentHeight(n)
 }
 
 // TestUpgradeV3RC4 checks if the upgrade from v3.0.0-rc3 to v3rc4 was successful
@@ -382,8 +380,7 @@ func (s *SoftwareUpgradeV23To4TestSuite) Test1UpgradeV3RC4() {
 	n.WaitForNextBlock()
 
 	// Send finality votes until upgrade height plus 10 blocks
-	fpFinVoteContext := signingcontext.FpFinVoteContextV0(n.ChainID(), appparams.AccFinality.String())
-	s.AddFinalityVoteUntilCurrentHeight(n, fpFinVoteContext)
+	s.AddFinalityVoteUntilCurrentHeight(n)
 }
 
 // CheckCostakerRewardsTrackerAfterUpgrade verifies that the CostakerRewardsTracker was properly initialized
@@ -432,7 +429,9 @@ func (s *SoftwareUpgradeV23To4TestSuite) CheckCostakerRewardsTrackerAfterUpgrade
 		expectedDel2Baby.String(), del2Tracker.ActiveBaby.String())
 }
 
-func (s *SoftwareUpgradeV23To4TestSuite) AddFinalityVoteUntilCurrentHeight(n *chain.NodeConfig, fpFinalityVoteContext string) {
+func (s *SoftwareUpgradeV23To4TestSuite) AddFinalityVoteUntilCurrentHeight(
+	n *chain.NodeConfig,
+) {
 	currentBlock := n.LatestBlockNumber()
 
 	accFp1, err := n.QueryAccount(s.fp1.Addr)
@@ -461,14 +460,14 @@ func (s *SoftwareUpgradeV23To4TestSuite) AddFinalityVoteUntilCurrentHeight(n *ch
 			fmt.Sprintf("--sequence=%d", accSequenceFp2),
 			fmt.Sprintf("--from=%s", s.fp2.Addr),
 		}
-		s.AddFinalityVote(n, fpFinalityVoteContext, fp1Flags, fp2Flags)
+		s.AddFinalityVote(n, fp1Flags, fp2Flags)
 
 		accSequenceFp1++
 		accSequenceFp2++
 	}
 }
 
-func (s *SoftwareUpgradeV23To4TestSuite) AddFinalityVote(n *chain.NodeConfig, fpFinalityVoteContext string, flagsFp1, flagsFp2 []string) {
+func (s *SoftwareUpgradeV23To4TestSuite) AddFinalityVote(n *chain.NodeConfig, flagsFp1, flagsFp2 []string) {
 	n.AddFinalitySignatureToBlockWithContext(
 		s.fp2BTCSK,
 		s.fp2.BtcPk,
@@ -476,7 +475,6 @@ func (s *SoftwareUpgradeV23To4TestSuite) AddFinalityVote(n *chain.NodeConfig, fp
 		s.fp2RandListInfo.SRList[s.finalityIdx],
 		&s.fp2RandListInfo.PRList[s.finalityIdx],
 		*s.fp2RandListInfo.ProofList[s.finalityIdx].ToProto(),
-		fpFinalityVoteContext,
 		flagsFp2...,
 	)
 
@@ -487,7 +485,6 @@ func (s *SoftwareUpgradeV23To4TestSuite) AddFinalityVote(n *chain.NodeConfig, fp
 		s.fp1RandListInfo.SRList[s.finalityIdx],
 		&s.fp1RandListInfo.PRList[s.finalityIdx],
 		*s.fp1RandListInfo.ProofList[s.finalityIdx].ToProto(),
-		fpFinalityVoteContext,
 		flagsFp1...,
 	)
 

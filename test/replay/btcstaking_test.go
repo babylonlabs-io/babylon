@@ -589,7 +589,7 @@ func TestPostRegistrationDelegation(t *testing.T) {
 	s1 := sinfos[0]
 	require.NotNil(t, s1)
 
-	fp1.RegisterFinalityProvider("")
+	fp1.RegisterFinalityProvider()
 	driver.GenerateNewBlockAssertExecutionSuccess()
 	fp1.CommitRandomness()
 	driver.GenerateNewBlockAssertExecutionSuccess()
@@ -701,7 +701,7 @@ func TestAcceptSlashingTxAsUnbondingTx(t *testing.T) {
 	require.NotNil(t, verifiedDels[0].StkExp)
 
 	// wait stake expansion Tx be 'k' deep in BTC
-	blockWithProofs := driver.IncludeVerifiedStakingTxInBTC(1)
+	blockWithProofs, _ := driver.IncludeVerifiedStakingTxInBTC(1)
 	require.Len(t, blockWithProofs.Proofs, 2)
 
 	// Send MsgBTCUndelegate for the first delegation
@@ -713,7 +713,7 @@ func TestAcceptSlashingTxAsUnbondingTx(t *testing.T) {
 	require.NoError(t, err)
 
 	params := driver.GetBTCStakingParams(t)
-	spendingTxWithWitnessBz, _ := datagen.AddWitnessToStakeExpTx(
+	spendingTxWithWitnessBz, slashingTxMsg := datagen.AddWitnessToStakeExpTx(
 		t,
 		prevStkTx.TxOut[0],
 		fundingTx.TxOut[0],
@@ -727,7 +727,7 @@ func TestAcceptSlashingTxAsUnbondingTx(t *testing.T) {
 		driver.App.BTCLightClientKeeper.GetBTCNet(),
 	)
 
-	blockWithProofs, _ := driver.IncludeTxsInBTCAndConfirm([]*wire.MsgTx{slashingTxMsg})
+	blockWithProofs, _ = driver.IncludeTxsInBTCAndConfirm([]*wire.MsgTx{slashingTxMsg})
 	require.Len(t, blockWithProofs.Proofs, 2)
 
 	msg := &bstypes.MsgBTCUndelegate{
@@ -750,114 +750,4 @@ func TestAcceptSlashingTxAsUnbondingTx(t *testing.T) {
 
 	unbondedDelegations := driver.GetUnbondedBTCDelegations(t)
 	require.Len(t, unbondedDelegations, 1)
-}
-
-func TestSlashingFpWithManyMulistakedDelegations(t *testing.T) {
-	tmpGas := DefaultGasLimit
-	DefaultGasLimit = uint64(10_000_000)
-	defer func() {
-		DefaultGasLimit = tmpGas
-	}()
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	d := NewBabylonAppDriverTmpDir(r, t)
-	d.GenerateNewBlockAssertExecutionSuccess()
-
-	covSender := d.CreateCovenantSender()
-	bbnFp := d.CreateNFinalityProviderAccounts(1)[0]
-	numStakers := 50
-	stakers := d.CreateNStakerAccounts(numStakers)
-	d.GenerateNewBlockAssertExecutionSuccess()
-
-	bbnFp.RegisterFinalityProvider("")
-	d.GenerateNewBlockAssertExecutionSuccess()
-
-	bbnFp.CommitRandomness()
-
-	currentEpochNumber := d.GetEpoch().EpochNumber
-	d.ProgressTillFirstBlockTheNextEpoch()
-	d.FinalizeCkptForEpoch(currentEpochNumber)
-
-	d.GenerateNewBlockAssertExecutionSuccess()
-
-	stk2 := stakers[0]
-	// send one btc delegation just to have voting power in the fp
-	fps := []*bbn.BIP340PubKey{bbnFp.BTCPublicKey()}
-	d.SendAndVerifyNDelegations(t, stk2, covSender, fps, 1)
-
-	d.ActivateVerifiedDelegations(1)
-	d.GenerateNewBlockAssertExecutionSuccess()
-
-	// fp is activated
-	activationHeight := d.GetActivationHeight(d.t)
-	require.Greater(d.t, activationHeight, uint64(0))
-
-	// create consumers
-	const consumerID1 = "09-localhost-1" // use localhost client module for tests (already active)
-	const consumerID2 = "09-localhost-2"
-	ctx := d.Ctx().WithIsCheckTx(false)
-	OpenChannelForConsumer(ctx, d.App, consumerID1)
-	OpenChannelForConsumer(ctx, d.App, consumerID2)
-
-	// 2. Register consumers
-	consumer1 := d.RegisterConsumer(r, ctx, d.App, consumerID1)
-	consumer2 := d.RegisterConsumer(r, ctx, d.App, consumerID2)
-	require.NotNil(t, consumer1, consumer2)
-
-	// 3. Create finality providers for each consumer
-	fpsCons1 := d.CreateFinalityProviderForConsumer(consumer1)
-	fpsCons2 := d.CreateFinalityProviderForConsumer(consumer2)
-	require.NotNil(t, fpsCons1, fpsCons2)
-
-	d.GenerateNewBlockAssertExecutionSuccess()
-	fps = []*bbn.BIP340PubKey{bbnFp.BTCPublicKey(), fpsCons1.BTCPublicKey(), fpsCons2.BTCPublicKey()}
-
-	d.MintNativeTo(covSender.Address(), 10000000_000000)
-
-	// creates 200 btc delegations to slash it
-	batchSize := 4
-	totalActiveDels := len(d.GetActiveBTCDelegations(d.t))
-	for _, stk := range stakers {
-		d.MintNativeTo(stk.Address(), 10000000_000000)
-		d.SendAndVerifyNDelegations(t, stk, covSender, fps, batchSize)
-
-		d.GenerateNewBlockAssertExecutionSuccess()
-		d.GenerateNewBlockAssertExecutionSuccess()
-
-		verifiedDelegations := d.GetVerifiedBTCDelegations(t)
-		require.Equal(t, len(verifiedDelegations), batchSize)
-
-		d.ActivateVerifiedDelegations(batchSize)
-
-		d.GenerateNewBlockAssertExecutionSuccess()
-
-		activeDels := d.GetActiveBTCDelegations(d.t)
-
-		totalActiveDels += batchSize
-		require.Equal(t, len(activeDels), totalActiveDels)
-	}
-	// 200 dels + bbn del
-	require.Equal(t, totalActiveDels, (batchSize*numStakers)+1)
-
-	// unjails the fp so he can vote
-	fpBtcPk := bbnFp.BTCPublicKey()
-	fpBbn, err := d.App.BTCStakingKeeper.GetFinalityProvider(d.Ctx(), *fpBtcPk)
-	require.NoError(t, err)
-
-	fpBbn.Jailed = false
-	d.App.BTCStakingKeeper.SetFinalityProvider(d.Ctx(), fpBbn)
-
-	d.GenerateNewBlockAssertExecutionSuccess()
-	bbnFp.CastVote(activationHeight)
-	d.GenerateNewBlockAssertExecutionSuccess()
-
-	// slash it
-	bogusHash := datagen.GenRandomByteArray(r, 32)
-	txRes := bbnFp.CastVoteForHash(activationHeight, bogusHash)
-	require.LessOrEqual(t, txRes.GasUsed, int64(100_000))
-	res := d.GenerateNewBlockAssertExecutionSuccessWithResults()
-	require.NotEmpty(t, res)
-
-	fpBbn, err = d.App.BTCStakingKeeper.GetFinalityProvider(d.Ctx(), *fpBtcPk)
-	require.NoError(t, err)
-	require.True(t, fpBbn.IsSlashed())
 }

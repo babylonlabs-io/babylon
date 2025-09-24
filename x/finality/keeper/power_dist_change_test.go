@@ -379,8 +379,8 @@ func FuzzProcessAllPowerDistUpdateEvents_Determinism(f *testing.F) {
 
 		// TODO: add expected values
 		fHooks := h.FinalityHooks.(*ftypes.MockFinalityHooks)
-		fHooks.EXPECT().AfterBtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
-		fHooks.EXPECT().AfterBtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+		fHooks.EXPECT().AfterBtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+		fHooks.EXPECT().AfterBtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 		fHooks.EXPECT().AfterBbnFpEntersActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
 		fHooks.EXPECT().AfterBbnFpRemovedFromActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
 
@@ -431,9 +431,9 @@ func FuzzProcessAllPowerDistUpdateEvents_Determinism(f *testing.F) {
 		// add the events to the BTC staking store
 		addPowerDistUpdateEvents(t, h.Ctx, btcStakingStoreKey, uint64(btcTipHeight), events)
 
-		newDc := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, dc, btcTipHeight-1, btcTipHeight)
+		newDc, _ := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, dc, btcTipHeight-1, btcTipHeight)
 		for i := 0; i < 10; i++ {
-			newDc2 := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, dc, btcTipHeight-1, btcTipHeight)
+			newDc2, _ := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, dc, btcTipHeight-1, btcTipHeight)
 			require.Equal(t, newDc, newDc2)
 		}
 	})
@@ -498,8 +498,8 @@ func FuzzProcessAllPowerDistUpdateEvents_ActiveAndUnbondTogether(f *testing.F) {
 
 		// TODO: add expected values
 		fHooks := h.FinalityHooks.(*ftypes.MockFinalityHooks)
-		fHooks.EXPECT().AfterBtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
-		fHooks.EXPECT().AfterBtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+		fHooks.EXPECT().AfterBtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+		fHooks.EXPECT().AfterBtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 		fHooks.EXPECT().AfterBbnFpEntersActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
 		fHooks.EXPECT().AfterBbnFpRemovedFromActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
 
@@ -515,7 +515,7 @@ func FuzzProcessAllPowerDistUpdateEvents_ActiveAndUnbondTogether(f *testing.F) {
 
 		btcTipHeight := del.BtcTipHeight
 		addPowerDistUpdateEvents(t, h.Ctx, sk, uint64(btcTipHeight), events)
-		newDc := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, ftypes.NewVotingPowerDistCache(), btcTipHeight-1, btcTipHeight)
+		newDc, _ := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, ftypes.NewVotingPowerDistCache(), btcTipHeight-1, btcTipHeight)
 		require.Len(t, newDc.FinalityProviders, 0)
 	})
 }
@@ -529,8 +529,8 @@ func FuzzProcessAllPowerDistUpdateEvents_ActiveAndSlashTogether(f *testing.F) {
 
 		// TODO: add expected values
 		fHooks := h.FinalityHooks.(*ftypes.MockFinalityHooks)
-		fHooks.EXPECT().AfterBtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
-		fHooks.EXPECT().AfterBtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+		fHooks.EXPECT().AfterBtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+		fHooks.EXPECT().AfterBtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 		fHooks.EXPECT().AfterBbnFpEntersActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
 		fHooks.EXPECT().AfterBbnFpRemovedFromActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
 
@@ -545,7 +545,7 @@ func FuzzProcessAllPowerDistUpdateEvents_ActiveAndSlashTogether(f *testing.F) {
 		addPowerDistUpdateEvents(t, h.Ctx, sk, uint64(btcTipHeight), events)
 
 		dc := ftypes.NewVotingPowerDistCache()
-		newDc := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, dc, btcTipHeight-1, btcTipHeight)
+		newDc, _ := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, dc, btcTipHeight-1, btcTipHeight)
 		require.Len(t, newDc.FinalityProviders, 0)
 	})
 }
@@ -559,8 +559,8 @@ func FuzzProcessAllPowerDistUpdateEvents_PreApprovalWithSlahedFP(f *testing.F) {
 
 		// TODO: add expected values
 		fHooks := h.FinalityHooks.(*ftypes.MockFinalityHooks)
-		fHooks.EXPECT().AfterBtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
-		fHooks.EXPECT().AfterBtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+		fHooks.EXPECT().AfterBtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+		fHooks.EXPECT().AfterBtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 		fHooks.EXPECT().AfterBbnFpEntersActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
 		fHooks.EXPECT().AfterBbnFpRemovedFromActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
 
@@ -574,7 +574,7 @@ func FuzzProcessAllPowerDistUpdateEvents_PreApprovalWithSlahedFP(f *testing.F) {
 		// seed the event in the store
 		addPowerDistUpdateEvents(t, h.Ctx, sk, uint64(btcTipHeight), []*btcstktypes.EventPowerDistUpdate{eventActive})
 
-		newDc := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, ftypes.NewVotingPowerDistCache(), btcTipHeight-1, btcTipHeight)
+		newDc, _ := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, ftypes.NewVotingPowerDistCache(), btcTipHeight-1, btcTipHeight)
 		// updates as if that fp is timestamping
 		for _, fp := range newDc.FinalityProviders {
 			fp.IsTimestamped = true
@@ -612,7 +612,7 @@ func FuzzProcessAllPowerDistUpdateEvents_PreApprovalWithSlahedFP(f *testing.F) {
 		slashEvent := btcstktypes.NewEventPowerDistUpdateWithSlashedFP(&delPreApproval.FpBtcPkList[0])
 
 		addPowerDistUpdateEvents(t, h.Ctx, sk, uint64(10), []*btcstktypes.EventPowerDistUpdate{slashEvent})
-		newDc = h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, newDc, 9, 10)
+		newDc, _ = h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, newDc, 9, 10)
 
 		// fp should have be erased from the list
 		newDc.ApplyActiveFinalityProviders(100)
@@ -637,7 +637,7 @@ func FuzzProcessAllPowerDistUpdateEvents_PreApprovalWithSlahedFP(f *testing.F) {
 
 		addPowerDistUpdateEvents(t, h.Ctx, sk, uint64(btcTip.Height), []*btcstktypes.EventPowerDistUpdate{eventActive})
 		// it will get included in the new vp dist, but will not have voting power after ApplyActiveFinalityProviders
-		newDc = h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, newDc, btcTip.Height-1, btcTip.Height)
+		newDc, _ = h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, newDc, btcTip.Height-1, btcTip.Height)
 		require.Len(t, newDc.FinalityProviders, 1)
 
 		for _, fp := range newDc.FinalityProviders {
@@ -659,8 +659,8 @@ func FuzzProcessAllPowerDistUpdateEvents_ActiveAndJailTogether(f *testing.F) {
 
 		// TODO: add expected values
 		fHooks := h.FinalityHooks.(*ftypes.MockFinalityHooks)
-		fHooks.EXPECT().AfterBtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
-		fHooks.EXPECT().AfterBtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+		fHooks.EXPECT().AfterBtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+		fHooks.EXPECT().AfterBtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 		fHooks.EXPECT().AfterBbnFpEntersActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
 		fHooks.EXPECT().AfterBbnFpRemovedFromActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
 
@@ -674,7 +674,7 @@ func FuzzProcessAllPowerDistUpdateEvents_ActiveAndJailTogether(f *testing.F) {
 		btcTipHeight := del.BtcTipHeight
 		addPowerDistUpdateEvents(t, h.Ctx, sk, uint64(btcTipHeight), events)
 
-		newDc := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, ftypes.NewVotingPowerDistCache(), btcTipHeight-1, btcTipHeight)
+		newDc, _ := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, ftypes.NewVotingPowerDistCache(), btcTipHeight-1, btcTipHeight)
 		for _, fp := range newDc.FinalityProviders {
 			fp.IsTimestamped = true
 		}
@@ -694,8 +694,8 @@ func FuzzProcessAllPowerDistUpdateEvents_SlashActiveFp(f *testing.F) {
 
 		// TODO: add expected values
 		fHooks := h.FinalityHooks.(*ftypes.MockFinalityHooks)
-		fHooks.EXPECT().AfterBtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
-		fHooks.EXPECT().AfterBtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+		fHooks.EXPECT().AfterBtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+		fHooks.EXPECT().AfterBtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 		fHooks.EXPECT().AfterBbnFpEntersActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
 		fHooks.EXPECT().AfterBbnFpRemovedFromActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
 
@@ -709,7 +709,7 @@ func FuzzProcessAllPowerDistUpdateEvents_SlashActiveFp(f *testing.F) {
 		// seed the event in the store
 		addPowerDistUpdateEvents(t, h.Ctx, sk, uint64(btcTipHeight), events)
 
-		newDc := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, ftypes.NewVotingPowerDistCache(), btcTipHeight-1, btcTipHeight)
+		newDc, _ := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, ftypes.NewVotingPowerDistCache(), btcTipHeight-1, btcTipHeight)
 		for _, fp := range newDc.FinalityProviders {
 			fp.IsTimestamped = true
 		}
@@ -723,7 +723,7 @@ func FuzzProcessAllPowerDistUpdateEvents_SlashActiveFp(f *testing.F) {
 
 		addPowerDistUpdateEvents(t, h.Ctx, sk, uint64(btcTipHeight), events)
 
-		newDc = h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, newDc, btcTipHeight-1, btcTipHeight)
+		newDc, _ = h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, newDc, btcTipHeight-1, btcTipHeight)
 		newDc.ApplyActiveFinalityProviders(100)
 		require.Len(t, newDc.FinalityProviders, 0)
 		require.Equal(t, newDc.TotalVotingPower, uint64(0))
@@ -834,8 +834,8 @@ func FuzzSlashFinalityProviderEvent(f *testing.F) {
 		h := testutil.NewHelper(t, btclcKeeper, btccKeeper, nil)
 		// TODO: add expected values
 		fHooks := h.FinalityHooks.(*ftypes.MockFinalityHooks)
-		fHooks.EXPECT().AfterBtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
-		fHooks.EXPECT().AfterBtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+		fHooks.EXPECT().AfterBtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+		fHooks.EXPECT().AfterBtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 		fHooks.EXPECT().AfterBbnFpEntersActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
 		fHooks.EXPECT().AfterBbnFpRemovedFromActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
 
@@ -927,8 +927,8 @@ func FuzzJailFinalityProviderEvents(f *testing.F) {
 
 		// TODO: add expected values
 		fHooks := h.FinalityHooks.(*ftypes.MockFinalityHooks)
-		fHooks.EXPECT().AfterBtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
-		fHooks.EXPECT().AfterBtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+		fHooks.EXPECT().AfterBtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+		fHooks.EXPECT().AfterBtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 		fHooks.EXPECT().AfterBbnFpEntersActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
 		fHooks.EXPECT().AfterBbnFpRemovedFromActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
 
@@ -1067,8 +1067,8 @@ func FuzzUnjailFinalityProviderEvents(f *testing.F) {
 
 		// TODO: add expected values
 		fHooks := h.FinalityHooks.(*ftypes.MockFinalityHooks)
-		fHooks.EXPECT().AfterBtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
-		fHooks.EXPECT().AfterBtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+		fHooks.EXPECT().AfterBtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+		fHooks.EXPECT().AfterBtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 		fHooks.EXPECT().AfterBbnFpEntersActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
 		fHooks.EXPECT().AfterBbnFpRemovedFromActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
 
@@ -1194,8 +1194,8 @@ func FuzzBTCDelegationEvents_NoPreApproval(f *testing.F) {
 		h := testutil.NewHelper(t, btclcKeeper, btccKeeper, nil)
 		// TODO: add expected values
 		fHooks := h.FinalityHooks.(*ftypes.MockFinalityHooks)
-		fHooks.EXPECT().AfterBtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
-		fHooks.EXPECT().AfterBtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+		fHooks.EXPECT().AfterBtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+		fHooks.EXPECT().AfterBtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 		fHooks.EXPECT().AfterBbnFpEntersActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
 		fHooks.EXPECT().AfterBbnFpRemovedFromActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
 
@@ -1315,8 +1315,8 @@ func FuzzBTCDelegationEvents_WithPreApproval(f *testing.F) {
 		h := testutil.NewHelper(t, btclcKeeper, btccKeeper, nil)
 		// TODO: add expected values
 		fHooks := h.FinalityHooks.(*ftypes.MockFinalityHooks)
-		fHooks.EXPECT().AfterBtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
-		fHooks.EXPECT().AfterBtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+		fHooks.EXPECT().AfterBtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+		fHooks.EXPECT().AfterBtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 		fHooks.EXPECT().AfterBbnFpEntersActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
 		fHooks.EXPECT().AfterBbnFpRemovedFromActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
 
@@ -2034,7 +2034,7 @@ func TestIgnoreUnbondingEventIfThereIsNoQuorum(t *testing.T) {
 	addPowerDistUpdateEvents(t, h.Ctx, btcStakingStoreKey, uint64(btcTipHeight), events)
 	// k.IncentiveKeeper.BtcDelegationUnbonded(ctx, fp, del, sats) won't be called
 	// as delegation does not have covenant quorum
-	newDc := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, ftypes.NewVotingPowerDistCache(), btcTipHeight-1, btcTipHeight)
+	newDc, _ := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, ftypes.NewVotingPowerDistCache(), btcTipHeight-1, btcTipHeight)
 
 	require.Len(t, newDc.FinalityProviders, 0)
 }
@@ -2043,7 +2043,13 @@ func TestProcessAllPowerDistUpdateEvents_TotallyUnbondedFP(t *testing.T) {
 	t.Parallel()
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	h, del, _, sk := CreateFpAndBtcDel(t, r, true)
-	btcTipHeight := uint32(30)
+
+	// TODO: add expected values
+	fHooks := h.FinalityHooks.(*ftypes.MockFinalityHooks)
+	fHooks.EXPECT().AfterBtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	fHooks.EXPECT().AfterBtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	fHooks.EXPECT().AfterBbnFpEntersActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
+	fHooks.EXPECT().AfterBbnFpRemovedFromActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
 
 	// Start with an active delegation
 	eventActive := btcstktypes.NewEventPowerDistUpdateWithBTCDel(&btcstktypes.EventBTCDelegationStateUpdate{
@@ -2051,17 +2057,41 @@ func TestProcessAllPowerDistUpdateEvents_TotallyUnbondedFP(t *testing.T) {
 		NewState:      btcstktypes.BTCDelegationStatus_ACTIVE,
 	})
 
-	bsnFp.Address()
-	// add the event to store
-	addPowerDistUpdateEvents(t, h.Ctx, btcStakingStoreKey, uint64(btcTipHeight), []*btcstktypes.EventPowerDistUpdate{eventActivate})
+	events := []*btcstktypes.EventPowerDistUpdate{eventActive}
 
-	// process the activation event
-	newDc, _ := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, ftypes.NewVotingPowerDistCache(), btcTipHeight-1, btcTipHeight)
+	btcTipHeight := del.BtcTipHeight
+	// seed the event in the store
+	addPowerDistUpdateEvents(t, h.Ctx, sk, uint64(btcTipHeight), events)
 
-	// verify that only the babylon FP is included in power distribution
-	require.Len(t, newDc.FinalityProviders, 1)
-	require.Equal(t, babylonFp.BtcPk.MustMarshal(), newDc.FinalityProviders[0].BtcPk.MustMarshal())
-	require.Equal(t, btcDel.TotalSat, newDc.FinalityProviders[0].TotalBondedSat)
+	// Process active event to create initial cache with active FP
+	prevDc, _ := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, ftypes.NewVotingPowerDistCache(), btcTipHeight, btcTipHeight)
+	require.Len(t, prevDc.FinalityProviders, 1)
+	require.Equal(t, del.TotalSat, prevDc.FinalityProviders[0].TotalBondedSat)
+
+	// Mark FP as timestamped and apply active FPs to set correct NumActiveFps
+	prevDc.FinalityProviders[0].IsTimestamped = true
+	prevDc.ApplyActiveFinalityProviders(10) // Allow up to 10 active FPs
+
+	// Now unbond the delegation completely
+	eventUnbond := btcstktypes.NewEventPowerDistUpdateWithBTCDel(&btcstktypes.EventBTCDelegationStateUpdate{
+		StakingTxHash: del.MustGetStakingTxHash().String(),
+		NewState:      btcstktypes.BTCDelegationStatus_UNBONDED,
+	})
+	// seed the event in the store
+	btcTipHeight++
+	addPowerDistUpdateEvents(t, h.Ctx, sk, uint64(btcTipHeight), []*btcstktypes.EventPowerDistUpdate{eventUnbond})
+	// Process unbond event
+	newDc, _ := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, prevDc, btcTipHeight, btcTipHeight)
+
+	// The newDc should not contain the FP anymore
+	require.Len(t, newDc.FinalityProviders, 0)
+
+	// Test that FindNewInactiveFinalityProviders works correctly
+	// It should find the FP as newly inactive since it was active before
+	// and now it is unbonded.
+	newlyInactiveFPs := newDc.FindNewInactiveFinalityProviders(prevDc)
+	require.Len(t, newlyInactiveFPs, 1)
+	require.Equal(t, del.FpBtcPkList[0].MarshalHex(), newlyInactiveFPs[0].BtcPk.MarshalHex())
 }
 
 func TestTwoBtcActivationEvents(t *testing.T) {
@@ -2080,18 +2110,14 @@ func TestTwoBtcActivationEvents(t *testing.T) {
 
 	// TODO: add expected values
 	fHooks := h.FinalityHooks.(*ftypes.MockFinalityHooks)
-	fHooks.EXPECT().AfterBtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
-	fHooks.EXPECT().AfterBtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	fHooks.EXPECT().AfterBtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	fHooks.EXPECT().AfterBtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 	fHooks.EXPECT().AfterBbnFpEntersActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
 	fHooks.EXPECT().AfterBbnFpRemovedFromActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
 
 	h.GenAndApplyCustomParams(r, 100, 200, 2)
 
-	randomConsumer := h.RegisterAndVerifyConsumer(t, r)
-
 	_, babylonFpPk, babylonFp := h.CreateFinalityProvider(r)
-	_, bsnFpPk, _, err := h.CreateConsumerFinalityProvider(r, randomConsumer.ConsumerId)
-	require.NoError(t, err)
 
 	delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 	require.NoError(t, err)
@@ -2102,7 +2128,7 @@ func TestTwoBtcActivationEvents(t *testing.T) {
 	_, _, btcDel1, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
 		r,
 		delSK,
-		[]*btcec.PublicKey{babylonFpPk, bsnFpPk},
+		babylonFpPk,
 		stakingValue1,
 		1000,
 		0,
@@ -2117,7 +2143,7 @@ func TestTwoBtcActivationEvents(t *testing.T) {
 	_, _, btcDel2, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
 		r,
 		delSK,
-		[]*btcec.PublicKey{babylonFpPk, bsnFpPk},
+		babylonFpPk,
 		stakingValue2,
 		1000,
 		0,
@@ -2163,8 +2189,8 @@ func TestGovernanceJailingAfterUnjailInSameBlock(t *testing.T) {
 	h := testutil.NewHelper(t, btclcKeeper, btccKeeper, nil)
 	// TODO: add expected values
 	fHooks := h.FinalityHooks.(*ftypes.MockFinalityHooks)
-	fHooks.EXPECT().AfterBtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
-	fHooks.EXPECT().AfterBtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	fHooks.EXPECT().AfterBtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	fHooks.EXPECT().AfterBtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 	fHooks.EXPECT().AfterBbnFpEntersActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
 	fHooks.EXPECT().AfterBbnFpRemovedFromActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
 
@@ -2311,70 +2337,15 @@ func TestGovernanceJailingAfterUnjailInSameBlock(t *testing.T) {
 	require.True(t, fpFromKeeper.IsJailed(), "FP is marked as jailed in keeper")
 }
 
-func TestProcessAllPowerDistUpdateEvents_TotallyUnbondedFP(t *testing.T) {
-	t.Parallel()
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	h, del, _, sk := CreateFpAndBtcDel(t, r)
-
-	// TODO: add expected values
-	fHooks := h.FinalityHooks.(*ftypes.MockFinalityHooks)
-	fHooks.EXPECT().AfterBtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
-	fHooks.EXPECT().AfterBtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
-	fHooks.EXPECT().AfterBbnFpEntersActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
-	fHooks.EXPECT().AfterBbnFpRemovedFromActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
-
-	// Start with an active delegation
-	eventActive := btcstktypes.NewEventPowerDistUpdateWithBTCDel(&btcstktypes.EventBTCDelegationStateUpdate{
-		StakingTxHash: del.MustGetStakingTxHash().String(),
-		NewState:      btcstktypes.BTCDelegationStatus_ACTIVE,
-	})
-
-	events := []*btcstktypes.EventPowerDistUpdate{eventActive}
-
-	btcTipHeight := del.BtcTipHeight
-	// seed the event in the store
-	addPowerDistUpdateEvents(t, h.Ctx, sk, uint64(btcTipHeight), events)
-
-	// Process active event to create initial cache with active FP
-	prevDc, _ := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, ftypes.NewVotingPowerDistCache(), btcTipHeight, btcTipHeight)
-	require.Len(t, prevDc.FinalityProviders, 1)
-	require.Equal(t, del.TotalSat, prevDc.FinalityProviders[0].TotalBondedSat)
-
-	// Mark FP as timestamped and apply active FPs to set correct NumActiveFps
-	prevDc.FinalityProviders[0].IsTimestamped = true
-	prevDc.ApplyActiveFinalityProviders(10) // Allow up to 10 active FPs
-
-	// Now unbond the delegation completely
-	eventUnbond := btcstktypes.NewEventPowerDistUpdateWithBTCDel(&btcstktypes.EventBTCDelegationStateUpdate{
-		StakingTxHash: del.MustGetStakingTxHash().String(),
-		NewState:      btcstktypes.BTCDelegationStatus_UNBONDED,
-	})
-	// seed the event in the store
-	btcTipHeight++
-	addPowerDistUpdateEvents(t, h.Ctx, sk, uint64(btcTipHeight), []*btcstktypes.EventPowerDistUpdate{eventUnbond})
-	// Process unbond event
-	newDc, _ := h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, prevDc, btcTipHeight, btcTipHeight)
-
-	// The newDc should not contain the FP anymore
-	require.Len(t, newDc.FinalityProviders, 0)
-
-	// Test that FindNewInactiveFinalityProviders works correctly
-	// It should find the FP as newly inactive since it was active before
-	// and now it is unbonded.
-	newlyInactiveFPs := newDc.FindNewInactiveFinalityProviders(prevDc)
-	require.Len(t, newlyInactiveFPs, 1)
-	require.Equal(t, del.FpBtcPkList[0].MarshalHex(), newlyInactiveFPs[0].BtcPk.MarshalHex())
-}
-
 func TestProcessAllPowerDistUpdateEvents_SlashedFP(t *testing.T) {
 	t.Parallel()
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	h, del, _, sk := CreateFpAndBtcDel(t, r)
+	h, del, _, sk := CreateFpAndBtcDel(t, r, true)
 
 	// TODO: add expected values
 	fHooks := h.FinalityHooks.(*ftypes.MockFinalityHooks)
-	fHooks.EXPECT().AfterBtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
-	fHooks.EXPECT().AfterBtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	fHooks.EXPECT().AfterBtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	fHooks.EXPECT().AfterBtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 	fHooks.EXPECT().AfterBbnFpEntersActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
 	fHooks.EXPECT().AfterBbnFpRemovedFromActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
 

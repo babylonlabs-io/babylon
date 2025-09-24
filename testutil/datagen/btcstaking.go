@@ -1001,3 +1001,108 @@ func GenFundingTx(
 
 	return fundingTx
 }
+
+func GenBTCStakingSlashingInfoWithChangeAmt(
+	r *rand.Rand,
+	t testing.TB,
+	btcNet *chaincfg.Params,
+	stakerSK *btcec.PrivateKey,
+	fpPKs []*btcec.PublicKey,
+	covenantPKs []*btcec.PublicKey,
+	covenantQuorum uint32,
+	stakingTimeBlocks uint16,
+	stakingValue int64,
+	slashingPkScript []byte,
+	slashingRate sdkmath.LegacyDec,
+	slashingChangeLockTime uint16,
+	changeAmt int64,
+) *TestStakingSlashingInfo {
+	// an arbitrary input
+	spend := makeSpendableOutWithRandOutPoint(r, btcutil.Amount(stakingValue+UnbondingTxFee))
+	outPoint := &spend.prevOut
+	return GenBTCStakingSlashingInfoWithInputsAndChange(
+		r,
+		t,
+		btcNet,
+		[]*wire.OutPoint{outPoint},
+		stakerSK,
+		fpPKs,
+		covenantPKs,
+		covenantQuorum,
+		stakingTimeBlocks,
+		stakingValue,
+		slashingPkScript,
+		slashingRate,
+		slashingChangeLockTime,
+		changeAmt,
+	)
+}
+
+func GenBTCStakingSlashingInfoWithInputsAndChange(
+	r *rand.Rand,
+	t testing.TB,
+	btcNet *chaincfg.Params,
+	outPoints []*wire.OutPoint,
+	stakerSK *btcec.PrivateKey,
+	fpPKs []*btcec.PublicKey,
+	covenantPKs []*btcec.PublicKey,
+	covenantQuorum uint32,
+	stakingTimeBlocks uint16,
+	stakingValue int64,
+	slashingPkScript []byte,
+	slashingRate sdkmath.LegacyDec,
+	slashingChangeLockTime uint16,
+	changeAmt int64,
+) *TestStakingSlashingInfo {
+	require.NotEmpty(t, outPoints)
+
+	stakingInfo, err := btcstaking.BuildStakingInfo(
+		stakerSK.PubKey(),
+		fpPKs,
+		covenantPKs,
+		covenantQuorum,
+		stakingTimeBlocks,
+		btcutil.Amount(stakingValue),
+		btcNet,
+	)
+	require.NoError(t, err)
+
+	tx := wire.NewMsgTx(2)
+
+	// Add all given inputs
+	for _, outPoint := range outPoints {
+		tx.AddTxIn(wire.NewTxIn(outPoint, nil, nil))
+	}
+
+	// Add staking output
+	tx.AddTxOut(stakingInfo.StakingOutput)
+
+	// Add dummy change output
+	changeScript, err := GenRandomPubKeyHashScript(r, btcNet)
+	require.NoError(t, err)
+	require.False(t, txscript.GetScriptClass(changeScript) == txscript.NonStandardTy)
+
+	tx.AddTxOut(wire.NewTxOut(changeAmt, changeScript))
+
+	// Build slashing tx
+	slashingMsgTx, err := btcstaking.BuildSlashingTxFromStakingTxStrict(
+		tx,
+		StakingOutIdx,
+		slashingPkScript,
+		stakerSK.PubKey(),
+		slashingChangeLockTime,
+		2000,
+		slashingRate,
+		btcNet,
+	)
+	require.NoError(t, err)
+
+	slashingTx, err := bstypes.NewBTCSlashingTxFromMsgTx(slashingMsgTx)
+	require.NoError(t, err)
+
+	return &TestStakingSlashingInfo{
+		StakingTx:   tx,
+		SlashingTx:  slashingTx,
+		StakingInfo: stakingInfo,
+	}
+}

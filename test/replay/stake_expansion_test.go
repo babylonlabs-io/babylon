@@ -402,7 +402,7 @@ func setupTest(t *testing.T) *testSetup {
 	covSender := driver.CreateCovenantSender()
 	infos := driver.CreateNFinalityProviderAccounts(1)
 	fp1 := infos[0]
-	fp1.RegisterFinalityProvider("")
+	fp1.RegisterFinalityProvider()
 	driver.GenerateNewBlockAssertExecutionSuccess()
 
 	sinfos := driver.CreateNStakerAccounts(1)

@@ -24,6 +24,10 @@ type CovenantSender struct {
 	app *babylonApp.BabylonApp
 }
 
+func (c *CovenantSender) CovenantPrivateKeys() []*btcec.PrivateKey {
+	return covenantSKs
+}
+
 type StakingInfos struct {
 	FpPKs                 []*btcec.PublicKey
 	CovenantPks           []*btcec.PublicKey

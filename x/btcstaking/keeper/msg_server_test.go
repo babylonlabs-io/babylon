@@ -1620,8 +1620,8 @@ func TestActiveAndExpiredEventsSameBlock(t *testing.T) {
 
 	// TODO: add expected values
 	fHooks := h.FinalityHooks.(*ftypes.MockFinalityHooks)
-	fHooks.EXPECT().AfterBtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
-	fHooks.EXPECT().AfterBtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	fHooks.EXPECT().AfterBtcDelegationActivated(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	fHooks.EXPECT().AfterBtcDelegationUnbonded(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 	fHooks.EXPECT().AfterBbnFpEntersActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
 	fHooks.EXPECT().AfterBbnFpRemovedFromActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
 
@@ -1731,7 +1731,7 @@ func TestActiveAndExpiredEventsSameBlock(t *testing.T) {
 	var newDc *ftypes.VotingPowerDistCache
 	require.NotPanics(t, func() {
 		// Process the events after adding covenant signatures
-		newDc = h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, dc, expiredEventHeight, expiredEventHeight)
+		newDc, _ = h.FinalityKeeper.ProcessAllPowerDistUpdateEvents(h.Ctx, dc, expiredEventHeight, expiredEventHeight)
 	}, "Processing events should not panic")
 
 	require.Equal(t, dc, newDc)
