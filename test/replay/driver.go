@@ -83,10 +83,10 @@ const (
 )
 
 var (
-	DefaultGasLimit                = uint64(1_000_000)
-	defaultFeeCoin                 = sdk.NewCoin("ubbn", math.NewInt(defaultFee))
-	BtcParams                      = &chaincfg.SimNetParams
-	covenantSKs, _, CovenantQuorum = bstypes.DefaultCovenantCommittee()
+	DefaultGasLimit                  = uint64(1_000_000)
+	defaultFeeCoin                   = sdk.NewCoin("ubbn", math.NewInt(defaultFee))
+	BtcParams                        = &chaincfg.SimNetParams
+	covenantSKs, pks, CovenantQuorum = bstypes.LargeDefaultCovenantCommittee()
 )
 
 func getGenDoc(
@@ -171,6 +171,12 @@ func NewBabylonAppDriver(
 		expeditedVotingPeriod,   // expedited
 		1,
 		[]*btclighttypes.BTCHeaderInfo{},
+		// 300M is gas limit set for testnet and mainnet
+		300_000_000,
+		&initialization.StartingBtcStakingParams{
+			CovenantCommittee: bbn.NewBIP340PKsFromBTCPKs(pks),
+			CovenantQuorum:    CovenantQuorum,
+		},
 	)
 	require.NoError(t, err)
 	require.NotNil(t, chain)

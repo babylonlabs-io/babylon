@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/babylonlabs-io/babylon/v4/app"
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/initialization"
 	btclighttypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
 )
@@ -54,7 +55,17 @@ func main() {
 	}
 
 	btcHeaders := btcHeaderFromFlag(btcHeadersBytesHexStr)
-	createdChain, err := initialization.InitChain(chainId, dataDir, valConfig, votingPeriod, expeditedVotingPeriod, forkHeight, btcHeaders)
+	createdChain, err := initialization.InitChain(
+		chainId,
+		dataDir,
+		valConfig,
+		votingPeriod,
+		expeditedVotingPeriod,
+		forkHeight,
+		btcHeaders,
+		app.DefaultGasLimit,
+		nil,
+	)
 	if err != nil {
 		panic(err)
 	}
