@@ -905,7 +905,7 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 
 			msg, params, _ := tt.fn(r, t)
 
-			parsed, err := types.ParseCreateDelegationMessage(msg)
+			parsed, err := msg.ToParsed()
 
 			if tt.errParsing != nil {
 				require.Error(t, err)

@@ -48,3 +48,8 @@ func TestICATestSuite(t *testing.T) {
 func TestSoftwareUpgradeV2TestSuite(t *testing.T) {
 	suite.Run(t, new(SoftwareUpgradeV2TestSuite))
 }
+
+// TestEpochingSpamPreventionTestSuite tests epoching spam prevention end-to-end
+func TestEpochingSpamPreventionTestSuite(t *testing.T) {
+	suite.Run(t, new(EpochingSpamPreventionTestSuite))
+}

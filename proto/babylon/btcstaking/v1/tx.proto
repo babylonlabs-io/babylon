@@ -40,6 +40,8 @@ service Msg {
       returns (MsgSelectiveSlashingEvidenceResponse);
   // UpdateParams updates the btcstaking module parameters.
   rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
+  // BtcStakeExpand expands an previous active BTC delegation into a new one
+  rpc BtcStakeExpand(MsgBtcStakeExpand) returns (MsgBtcStakeExpandResponse);
 }
 
 // MsgCreateFinalityProvider is the message for creating a finality provider
@@ -187,6 +189,75 @@ message MsgCreateBTCDelegation {
 // MsgCreateBTCDelegationResponse is the response for MsgCreateBTCDelegation
 message MsgCreateBTCDelegationResponse {}
 
+// MsgBtcStakeExpand is the message for creating a BTC delegation
+message MsgBtcStakeExpand {
+  option (cosmos.msg.v1.signer) = "staker_addr";
+  // staker_addr is the address to receive rewards from BTC delegation.
+  string staker_addr = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  // pop is the proof of possession of btc_pk by the staker_addr.
+  ProofOfPossessionBTC pop = 2;
+  // btc_pk is the Bitcoin secp256k1 PK of the BTC delegator
+  bytes btc_pk = 3
+      [ (gogoproto.customtype) =
+            "github.com/babylonlabs-io/babylon/v4/types.BIP340PubKey" ];
+  // fp_btc_pk_list is the list of Bitcoin secp256k1 PKs of the finality
+  // providers, if there is more than one finality provider pk it means that
+  // delegation is re-staked
+  repeated bytes fp_btc_pk_list = 4
+      [ (gogoproto.customtype) =
+            "github.com/babylonlabs-io/babylon/v4/types.BIP340PubKey" ];
+  // staking_time is the time lock used in staking transaction
+  uint32 staking_time = 5;
+  // staking_value  is the amount of satoshis locked in staking output
+  int64 staking_value = 6;
+  // staking_tx is a bitcoin staking transaction i.e transaction that locks
+  // funds
+  bytes staking_tx = 7;
+  // slashing_tx is the slashing tx
+  // Note that the tx itself does not contain signatures, which are off-chain.
+  bytes slashing_tx = 8 [ (gogoproto.customtype) = "BTCSlashingTx" ];
+  // delegator_slashing_sig is the signature on the slashing tx by the delegator
+  // (i.e., SK corresponding to btc_pk). It will be a part of the witness for
+  // the staking tx output. The staking tx output further needs signatures from
+  // covenant and finality provider in order to be spendable.
+  bytes delegator_slashing_sig = 9
+      [ (gogoproto.customtype) =
+            "github.com/babylonlabs-io/babylon/v4/types.BIP340Signature" ];
+  // unbonding_time is the time lock used when funds are being unbonded. It is
+  // be used in:
+  // - unbonding transaction, time lock spending path
+  // - staking slashing transaction, change output
+  // - unbonding slashing transaction, change output
+  // It must be smaller than math.MaxUInt16 and larger that
+  // max(MinUnbondingTime, CheckpointFinalizationTimeout)
+  uint32 unbonding_time = 10;
+  // fields related to unbonding transaction
+  // unbonding_tx is a bitcoin unbonding transaction i.e transaction that spends
+  // staking output and sends it to the unbonding output
+  bytes unbonding_tx = 11;
+  // unbonding_value is amount of satoshis locked in unbonding output.
+  // NOTE: staking_value and unbonding_value could be different because of the
+  // difference between the fee for staking tx and that for unbonding
+  int64 unbonding_value = 12;
+  // unbonding_slashing_tx is the slashing tx which slash unbonding contract
+  // Note that the tx itself does not contain signatures, which are off-chain.
+  bytes unbonding_slashing_tx = 13 [ (gogoproto.customtype) = "BTCSlashingTx" ];
+  // delegator_unbonding_slashing_sig is the signature on the slashing tx by the
+  // delegator (i.e., SK corresponding to btc_pk).
+  bytes delegator_unbonding_slashing_sig = 14
+      [ (gogoproto.customtype) =
+            "github.com/babylonlabs-io/babylon/v4/types.BIP340Signature" ];
+  // previous_staking_tx_hash is the hash of the staking tx that will be used as input.
+  string previous_staking_tx_hash = 15;
+  // funding_tx is a bitcoin transaction that was used to fund the BTC stake expansion
+  // to at least pay the fees for it. It can also be used to increase the total amount
+  // of satoshi staked. This will be parsed into a *wire.MsgTx
+  bytes funding_tx = 16;
+}
+
+// MsgBtcStakeExpandResponse is the response for MsgBtcStakeExpand
+message MsgBtcStakeExpandResponse {}
+
 // MsgAddBTCDelegationInclusionProof is the message for adding proof of
 // inclusion of BTC delegation on BTC chain
 message MsgAddBTCDelegationInclusionProof {
@@ -230,6 +301,12 @@ message MsgAddCovenantSigs {
   // the order of sigs should respect the order of finality providers
   // of the corresponding delegation
   repeated bytes slashing_unbonding_tx_sigs = 6;
+  // stake_expansion_tx_sig is the signature of the covenant to spend the
+  // previous staking transaction to create a new BTC delegation
+  // submitted to babylon. The signature follows encoding in BIP-340 spec
+  bytes stake_expansion_tx_sig = 7
+      [ (gogoproto.customtype) =
+            "github.com/babylonlabs-io/babylon/v4/types.BIP340Signature" ];
 }
 // MsgAddCovenantSigsResponse is the response for MsgAddCovenantSigs
 message MsgAddCovenantSigsResponse {}

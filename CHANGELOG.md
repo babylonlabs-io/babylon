@@ -40,9 +40,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ### Improvements
 
 - [#1734] Bump repository version to `v4`
-- [#1404](https://github.com/babylonlabs-io/babylon/pull/1404) Refactor power dist event processing.
 - [#1736](https://github.com/babylonlabs-io/babylon/pull/1736) bump cosmos-sdk to `v0.53.2`
+- [#1633](https://github.com/babylonlabs-io/babylon/pull/1663) Add spam prevention mechanisms to epoching module with minimum amount validation and gas consumption limits for wrapped delegate operations.
+- [#1404](https://github.com/babylonlabs-io/babylon/pull/1404) Refactor power dist event processing.
+- [#1347](https://github.com/babylonlabs-io/babylon/pull/1344) Add `MsgType` field to `QueuedMessageResponse` message.
+- [#1737](https://github.com/babylonlabs-io/babylon/pull/1737) bump ibc-go to `v10` and wire up IBC `v2`
+- [#1747](https://github.com/babylonlabs-io/babylon/pull/1747) bump cosmos-sdk to `v0.53.4`
+- [#1062](https://github.com/babylonlabs-io/babylon/pull/1062) Add `anteHandler` to avoid fee grants on refundable tx (`x/incentive`)
+- [#1060](https://github.com/babylonlabs-io/babylon/pull/1060) Optimize `PubRandCommit` lookup in `x/finality` module
+- [#1335](https://github.com/babylonlabs-io/babylon/pull/1335) Tweaks on BTC stake expansion feature.
+- [#1352](https://github.com/babylonlabs-io/babylon/pull/1352) Add stake expansion signatures in BTC delegation query response
+- [#1369](https://github.com/babylonlabs-io/babylon/pull/1369) fix: update stake expansion validation to allow expanding
+- [#1418](https://github.com/babylonlabs-io/babylon/pull/1418) fix: add stake expansion covenant signature to the events
 - [#1740](https://github.com/babylonlabs-io/babylon/pull/1740) Simplify selective slashing message handler
+
+### Features
+
+- [#1231](https://github.com/babylonlabs-io/babylon/pull/1231) Add BTC stake expansion.
 
 ## v2.3.0
 

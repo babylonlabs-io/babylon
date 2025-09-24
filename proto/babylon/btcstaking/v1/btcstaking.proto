@@ -160,6 +160,31 @@ message BTCDelegation {
   // btc_tip_height is the height of the BTC light client tip at the time of
   // the delegation creation
   uint32 btc_tip_height = 17;
+  // stk_exp is contains the relevant information about the previous staking that
+  // originated this stake. If nil it is NOT a stake expansion.
+  StakeExpansion stk_exp = 18;
+}
+
+// StakeExpansion stores information necessary to construct the expanded BTC staking
+// transaction created from a previous BTC staking.
+message StakeExpansion {
+  // previous_staking_tx_hash is the hash of the staking tx that was used as
+  // input to the stake expansion.
+  bytes previous_staking_tx_hash = 1;
+
+  // other_funding_tx_out is the other funding output (TxOut) which was used
+  // as input to construct the BTC delegation. The stake expansion has a set of
+  // 2 inputs, the first input is the previous staking transaction and the
+  // second input (this one) is to pay for fees and optionally to add more
+  // stake to the BTC delegation.
+  bytes other_funding_tx_out = 2;
+
+  // previous_stk_covenant_sigs is a list of signatures on the stake expansion
+  // transaction (i.e., the transaction spending the previous staking transaction
+  // {previous_staking_tx_hash}) by each covenant member.
+  // It must be provided to allow the previous staking tx to be spent as
+  // an transaction input of another BTC staking transaction.
+  repeated SignatureInfo previous_stk_covenant_sigs = 3;
 }
 
 // DelegatorUnbondingInfo contains the information about transaction which spent

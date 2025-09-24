@@ -2,9 +2,12 @@ package types
 
 import (
 	"bytes"
+	"encoding/hex"
+	"errors"
 	"fmt"
 	"math"
 
+	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/btcsuite/btcd/btcec/v2"
@@ -69,9 +72,9 @@ func (d *BTCDelegation) Address() sdk.AccAddress {
 func (d *BTCDelegation) GetCovSlashingAdaptorSig(
 	covBTCPK *bbn.BIP340PubKey,
 	valIdx int,
-	quorum uint32,
+	quorum, quorumPreviousStk uint32,
 ) (*asig.AdaptorSignature, error) {
-	if !d.HasCovenantQuorums(quorum) {
+	if !d.HasCovenantQuorums(quorum, quorumPreviousStk) {
 		return nil, ErrInvalidDelegationState.Wrap("BTC delegation does not have a covenant quorum yet")
 	}
 	for _, covASigs := range d.CovenantSigs {
@@ -115,14 +118,14 @@ func (d *BTCDelegation) FinalityProviderKeys() []string {
 // BTC delegation has received a signature on unbonding tx from the delegator
 func (d *BTCDelegation) GetStatus(
 	btcHeight uint32,
-	covenantQuorum uint32,
+	covenantQuorum, quorumPreviousStk uint32,
 ) BTCDelegationStatus {
 	if d.IsUnbondedEarly() {
 		return BTCDelegationStatus_UNBONDED
 	}
 
 	// we are still pending covenant quorum
-	if !d.HasCovenantQuorums(covenantQuorum) {
+	if !d.HasCovenantQuorums(covenantQuorum, quorumPreviousStk) {
 		return BTCDelegationStatus_PENDING
 	}
 
@@ -160,8 +163,8 @@ func (d *BTCDelegation) GetStatus(
 
 // VotingPower returns the voting power of the BTC delegation at a given BTC height
 // The BTC delegation d has voting power iff it is active.
-func (d *BTCDelegation) VotingPower(btcHeight uint32, covenantQuorum uint32) uint64 {
-	if d.GetStatus(btcHeight, covenantQuorum) != BTCDelegationStatus_ACTIVE {
+func (d *BTCDelegation) VotingPower(btcHeight uint32, covenantQuorum, quorumPreviousStk uint32) uint64 {
+	if d.GetStatus(btcHeight, covenantQuorum, quorumPreviousStk) != BTCDelegationStatus_ACTIVE {
 		return 0
 	}
 	return d.GetTotalSat()
@@ -205,6 +208,21 @@ func (d *BTCDelegation) MustGetUnbondingTx() *wire.MsgTx {
 	}
 
 	return unbondingTx
+}
+
+func (d *BTCDelegation) StakeExpansionTxHash() (*chainhash.Hash, error) {
+	if !d.IsStakeExpansion() {
+		return nil, errors.New("stake expansion not found. This is not a stake expansion delegation")
+	}
+	return d.StkExp.StakeExpansionTxHash()
+}
+
+func (d *BTCDelegation) MustGetStakeExpansionTxHash() *chainhash.Hash {
+	txHash, err := d.StakeExpansionTxHash()
+	if err != nil {
+		panic(fmt.Errorf("failed to parse %+v as chain hash", d.StkExp.PreviousStakingTxHash))
+	}
+	return txHash
 }
 
 func (d *BTCDelegation) ValidateBasic() error {
@@ -262,6 +280,12 @@ func (d *BTCDelegation) ValidateBasic() error {
 		return fmt.Errorf("staking time %d must be lower than %d", d.StakingTime, math.MaxUint16)
 	}
 
+	if d.IsStakeExpansion() {
+		if err := d.StkExp.Validate(); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -270,8 +294,12 @@ func (d *BTCDelegation) ValidateBasic() error {
 // - adaptor signatures on slashing tx
 // - Schnorr signatures on unbonding tx
 // - adaptor signatrues on unbonding slashing tx
-func (d *BTCDelegation) HasCovenantQuorums(quorum uint32) bool {
-	return len(d.CovenantSigs) >= int(quorum) && d.BtcUndelegation.HasCovenantQuorums(quorum)
+func (d *BTCDelegation) HasCovenantQuorums(quorum, quorumPreviousStk uint32) bool {
+	hasQuorum := len(d.CovenantSigs) >= int(quorum) && d.BtcUndelegation.HasCovenantQuorums(quorum)
+	if d.IsStakeExpansion() {
+		return hasQuorum && d.StkExp.HasCovenantQuorums(quorumPreviousStk)
+	}
+	return hasQuorum
 }
 
 // IsSignedByCovMember checks whether the given covenant PK has signed the delegation
@@ -295,6 +323,7 @@ func (d *BTCDelegation) AddCovenantSigs(
 	stakingSlashingSigs []asig.AdaptorSignature,
 	unbondingSig *bbn.BIP340Signature,
 	unbondingSlashingSigs []asig.AdaptorSignature,
+	stkExpSig *bbn.BIP340Signature,
 ) {
 	adaptorSigs := make([][]byte, 0, len(stakingSlashingSigs))
 	for _, s := range stakingSlashingSigs {
@@ -305,6 +334,10 @@ func (d *BTCDelegation) AddCovenantSigs(
 	d.CovenantSigs = append(d.CovenantSigs, covSigs)
 	// add unbonding sig and unbonding slashing adaptor sig
 	d.BtcUndelegation.addCovenantSigs(covPk, unbondingSig, unbondingSlashingSigs)
+
+	if d.IsStakeExpansion() {
+		d.StkExp.AddCovenantSigs(covPk, stkExpSig)
+	}
 }
 
 // GetStakingInfo returns the staking info of the BTC delegation
@@ -513,6 +546,104 @@ func (d *BTCDelegation) BuildUnbondingSlashingTxWithWitness(bsParams *Params, bt
 	}
 
 	return slashingMsgTxWithWitness, nil
+}
+
+// IsStakeExpansion returns true if the BTC delegation was created
+// using a previous staking transaction
+func (d *BTCDelegation) IsStakeExpansion() bool {
+	return d.StkExp != nil
+}
+
+func (s *StakeExpansion) AddCovenantSigs(
+	covPk *bbn.BIP340PubKey,
+	stkExpSig *bbn.BIP340Signature,
+) {
+	prevStkCovSigs := &SignatureInfo{Pk: covPk, Sig: stkExpSig}
+	s.PreviousStkCovenantSigs = append(s.PreviousStkCovenantSigs, prevStkCovSigs)
+}
+
+func (s *StakeExpansion) StakeExpansionTxHash() (*chainhash.Hash, error) {
+	return chainhash.NewHash(s.PreviousStakingTxHash)
+}
+
+func (s *StakeExpansion) FundingTxOut() (*wire.TxOut, error) {
+	return btcstaking.DeserializeTxOut(s.OtherFundingTxOut)
+}
+
+func (s *StakeExpansion) HasCovenantQuorums(quorumPreviousStk uint32) bool {
+	return len(s.PreviousStkCovenantSigs) >= int(quorumPreviousStk)
+}
+
+func (s *StakeExpansion) ToResponse() *StakeExpansionResponse {
+	previousStk, err := s.StakeExpansionTxHash()
+	if err != nil {
+		return nil
+	}
+
+	otherFundingTxOutHex := hex.EncodeToString(s.OtherFundingTxOut)
+
+	return &StakeExpansionResponse{
+		PreviousStakingTxHashHex: previousStk.String(),
+		OtherFundingTxOutHex:     otherFundingTxOutHex,
+		PreviousStkCovenantSigs:  s.PreviousStkCovenantSigs,
+	}
+}
+
+func (s *StakeExpansion) Validate() error {
+	if len(s.PreviousStakingTxHash) == 0 {
+		return errorsmod.Wrapf(ErrInvalidStakeExpansion, "PreviousStakingTxHash is required")
+	}
+
+	if _, err := s.StakeExpansionTxHash(); err != nil {
+		return errorsmod.Wrap(ErrInvalidStakeExpansion, err.Error())
+	}
+
+	if len(s.OtherFundingTxOut) == 0 {
+		return errorsmod.Wrapf(ErrInvalidStakeExpansion, "OtherFundingTxOut is required")
+	}
+
+	if _, err := s.FundingTxOut(); err != nil {
+		return errorsmod.Wrap(ErrInvalidStakeExpansion, err.Error())
+	}
+	for i, sig := range s.PreviousStkCovenantSigs {
+		if sig == nil {
+			return errorsmod.Wrapf(ErrInvalidStakeExpansion, "PreviousStkCovenantSigs[%d] is nil", i)
+		}
+		if err := sig.Validate(); err != nil {
+			return errorsmod.Wrapf(ErrInvalidStakeExpansion, "invalid signature at index %d: %v", i, err)
+		}
+	}
+
+	return nil
+}
+
+// IsSignedByCovMember checks whether the given covenant PK has signed the delegation
+func (s *StakeExpansion) IsSignedByCovMember(covPk *bbn.BIP340PubKey) bool {
+	for _, sigInfo := range s.PreviousStkCovenantSigs {
+		if covPk.Equals(sigInfo.Pk) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (si *SignatureInfo) Validate() error {
+	if si.Pk == nil {
+		return fmt.Errorf("public key is nil")
+	}
+	if si.Pk.Size() != schnorr.PubKeyBytesLen {
+		return fmt.Errorf("public key is invalid")
+	}
+
+	if si.Sig == nil {
+		return fmt.Errorf("signature is nil")
+	}
+	if si.Sig.Size() != schnorr.SignatureSize {
+		return fmt.Errorf("signature is invalid")
+	}
+
+	return nil
 }
 
 func NewBTCDelegatorDelegationIndex() *BTCDelegatorDelegationIndex {

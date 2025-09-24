@@ -33,4 +33,5 @@ var (
 	ErrStakingTxIncludedTooEarly = errorsmod.Register(ModuleName, 1124, "the staking transaction is included too early in BTC chain")
 	ErrEmptyCommissionRates      = errorsmod.Register(ModuleName, 1125, "empty commission")
 	ErrLargestBtcReorgNotFound   = errorsmod.Register(ModuleName, 1128, "there is no BTC reorg currently set")
+	ErrInvalidStakeExpansion     = errorsmod.Register(ModuleName, 1129, "invalid stake expansion")
 )
