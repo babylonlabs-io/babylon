@@ -25,12 +25,12 @@ func (k Keeper) RewardGauges(goCtx context.Context, req *types.QueryRewardGauges
 
 	// costaking send rewards to incentives module and gauge
 	if err := k.hooks.BeforeRewardWithdraw(ctx, types.COSTAKER, address); err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		k.Logger(goCtx).Info("failing to call hook of costaker", "error", err.Error())
 	}
 
 	// btcstaking rewards
 	if err := k.sendAllBtcDelegationTypeToRewardsGauge(ctx, types.BTC_STAKER, address); err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		k.Logger(goCtx).Info("failing to withdraw btc staker rewards", "error", err.Error())
 	}
 
 	rgMap := map[string]*types.RewardGauge{}
