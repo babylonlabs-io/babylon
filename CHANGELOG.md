@@ -55,6 +55,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#1740](https://github.com/babylonlabs-io/babylon/pull/1740) Simplify selective slashing message handler
 - [#1416](https://github.com/babylonlabs-io/babylon/pull/1416) Relax requirements for stake expansion funding output
 - [#1428](https://github.com/babylonlabs-io/babylon/pull/1428) Update stake expansion events
+- [#1545](https://github.com/babylonlabs-io/babylon/pull/1545) fix: remove unnecessary covenant verification for stake expansion delegation
 
 ### Features
 
