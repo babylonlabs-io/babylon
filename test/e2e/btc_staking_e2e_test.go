@@ -207,7 +207,7 @@ func (s *BTCStakingTestSuite) Test2SubmitCovenantSignature() {
 				covenantSlashingSigs[i].AdaptorSigs,
 				bbn.NewBIP340SignatureFromBTCSig(covUnbondingSigs[i]),
 				covenantUnbondingSlashingSigs[i].AdaptorSigs,
-				nil, // stakeExpTxSig - nil for regular delegations
+				nil,
 			)
 			// wait for a block so that above txs take effect
 			nonValidatorNode.WaitForNextBlock()

@@ -109,6 +109,7 @@ func FuzzFinalityProviderCurrentVotingPower(f *testing.F) {
 
 		// Setup keeper and context
 		bk := types.NewMockBTCStakingKeeper(ctrl)
+		bk.EXPECT().HasFinalityProvider(gomock.Any(), gomock.Any()).Return(true).AnyTimes()
 		keeper, ctx := testkeeper.FinalityKeeper(t, bk, nil, nil, nil)
 
 		// random finality provider

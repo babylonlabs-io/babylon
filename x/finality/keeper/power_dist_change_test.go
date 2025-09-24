@@ -2102,7 +2102,7 @@ func TestTwoBtcActivationEvents(t *testing.T) {
 	fHooks.EXPECT().AfterBbnFpEntersActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
 	fHooks.EXPECT().AfterBbnFpRemovedFromActiveSet(gomock.Any(), gomock.Any()).AnyTimes()
 
-	h.GenAndApplyCustomParams(r, 100, 200, 2)
+	h.GenAndApplyCustomParams(r, 100, 200, 0)
 
 	_, babylonFpPk, babylonFp := h.CreateFinalityProvider(r)
 
