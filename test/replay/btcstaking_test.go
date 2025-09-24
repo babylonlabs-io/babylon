@@ -358,7 +358,6 @@ func TestStakingAndFinalizingMultipleBlocksAtOnce(t *testing.T) {
 }
 
 func TestSlashingandFinalizingBlocks(t *testing.T) {
-	t.Parallel()
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	driver := NewBabylonAppDriverTmpDir(r, t)
 	driver.GenerateNewBlock()
