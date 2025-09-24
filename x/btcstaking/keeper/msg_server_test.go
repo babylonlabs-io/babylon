@@ -547,7 +547,7 @@ func createActiveBtcDel(t *testing.T, btcLightclientTipHeight uint32) (*testutil
 	h.NoError(err)
 
 	btcBlockHeightTxInserted := btcLightclientTipHeight - btcctParams.BtcConfirmationDepth
-	stakingTxHash, msgCreateBTCDel, _, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
+	stakingTxHash, _, _, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
 		r,
 		delSK,
 		fpPK,
@@ -566,7 +566,7 @@ func createActiveBtcDel(t *testing.T, btcLightclientTipHeight uint32) (*testutil
 	h.NoError(err)
 	require.NotNil(t, actualDel)
 
-	msgs := h.GenerateCovenantSignaturesMessages(r, covenantSKs, msgCreateBTCDel, actualDel)
+	msgs := h.GenerateCovenantSignaturesMessages(r, covenantSKs, actualDel)
 	for _, msg := range msgs {
 		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: btcBlockHeightTxInserted})
 		_, err = h.MsgServer.AddCovenantSigs(h.Ctx, msg)
@@ -621,7 +621,7 @@ func TestRejectActivationThatShouldNotUsePreApprovalFlow(t *testing.T) {
 	stakingValue := int64(2 * 10e8)
 	delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 	h.NoError(err)
-	stakingTxHash, msgCreateBTCDel, _, headerInfo, inclusionProof, _, err := h.CreateDelegationWithBtcBlockHeight(
+	stakingTxHash, _, _, headerInfo, inclusionProof, _, err := h.CreateDelegationWithBtcBlockHeight(
 		r,
 		delSK,
 		fpPK,
@@ -646,7 +646,7 @@ func TestRejectActivationThatShouldNotUsePreApprovalFlow(t *testing.T) {
 	h.NoError(err)
 	require.NotNil(t, actualDel)
 
-	msgs := h.GenerateCovenantSignaturesMessages(r, covenantSKs, msgCreateBTCDel, actualDel)
+	msgs := h.GenerateCovenantSignaturesMessages(r, covenantSKs, actualDel)
 	for _, msg := range msgs {
 		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: 10})
 		_, err = h.MsgServer.AddCovenantSigs(h.Ctx, msg)
@@ -705,9 +705,8 @@ func FuzzAddCovenantSigs(f *testing.F) {
 		h.NoError(err)
 
 		var stakingTxHash string
-		var msgCreateBTCDel *types.MsgCreateBTCDelegation
 
-		stakingTxHash, msgCreateBTCDel, _, _, _, _, err = h.CreateDelegationWithBtcBlockHeight(
+		stakingTxHash, _, _, _, _, _, err = h.CreateDelegationWithBtcBlockHeight(
 			r,
 			delSK,
 			fpPK,
@@ -730,7 +729,7 @@ func FuzzAddCovenantSigs(f *testing.F) {
 		h.NoError(err)
 		require.False(h.T(), hasQuorum)
 
-		msgs := h.GenerateCovenantSignaturesMessages(r, covenantSKs, msgCreateBTCDel, actualDel)
+		msgs := h.GenerateCovenantSignaturesMessages(r, covenantSKs, actualDel)
 		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: 30}).AnyTimes()
 		// ensure the system does not panick due to a bogus covenant sig request
 		bogusMsg := *msgs[0]
@@ -1532,7 +1531,7 @@ func TestActiveAndExpiredEventsSameBlock(t *testing.T) {
 	h.NoError(err)
 
 	// Create delegation with pre-computed parameters
-	stakingTxHash, msg, _, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
+	stakingTxHash, _, _, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
 		r,
 		delSK,
 		fpPK,
@@ -1574,7 +1573,7 @@ func TestActiveAndExpiredEventsSameBlock(t *testing.T) {
 	btclcKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: expiredEventHeight}).AnyTimes()
 
 	// Add covenant signatures to reach  quorum -1
-	msgs := h.GenerateCovenantSignaturesMessages(r, covenantSKs, msg, actualDel)
+	msgs := h.GenerateCovenantSignaturesMessages(r, covenantSKs, actualDel)
 	for i := 0; i < len(msgs)-3; i++ {
 		_, err = h.MsgServer.AddCovenantSigs(h.Ctx, msgs[i])
 		h.NoError(err)

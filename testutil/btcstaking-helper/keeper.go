@@ -13,6 +13,7 @@ import (
 	storetypes "cosmossdk.io/store/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
 	dbm "github.com/cosmos/cosmos-db"
@@ -475,7 +476,6 @@ func (h *Helper) CreateDelegationWithBtcBlockHeight(
 func (h *Helper) GenerateCovenantSignaturesMessages(
 	r *rand.Rand,
 	covenantSKs []*btcec.PrivateKey,
-	msgCreateBTCDel *types.MsgCreateBTCDelegation,
 	del *types.BTCDelegation,
 ) []*types.MsgAddCovenantSigs {
 	stakingTx, err := bbn.NewBTCTxFromBytes(del.StakingTx)
@@ -501,7 +501,7 @@ func (h *Helper) GenerateCovenantSignaturesMessages(
 		vPKs,
 		stakingTx,
 		slashingPathInfo.GetPkScriptPath(),
-		msgCreateBTCDel.SlashingTx,
+		del.SlashingTx,
 	)
 	h.NoError(err)
 
@@ -531,17 +531,35 @@ func (h *Helper) GenerateCovenantSignaturesMessages(
 	covUnbondingSigs, err := datagen.GenCovenantUnbondingSigs(covenantSKs, stakingTx, del.StakingOutputIdx, unbondingPathInfo.GetPkScriptPath(), unbondingTx)
 	h.NoError(err)
 
+	covStkExpSigs := []*bbn.BIP340Signature{}
+	if del.IsStakeExpansion() {
+		prevTxHash, err := chainhash.NewHash(del.StkExp.PreviousStakingTxHash)
+		h.NoError(err)
+		prevDel, err := h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, prevTxHash.String())
+		h.NoError(err)
+		params := h.BTCStakingKeeper.GetParams(h.Ctx)
+		prevDelStakingInfo, err := prevDel.GetStakingInfo(&params, h.Net)
+		h.NoError(err)
+		covStkExpSigs, err = datagen.GenCovenantStakeExpSig(covenantSKs, del, prevDelStakingInfo)
+		h.NoError(err)
+	}
+
 	msgs := make([]*types.MsgAddCovenantSigs, len(bsParams.CovenantPks))
 
 	for i := 0; i < len(bsParams.CovenantPks); i++ {
 		msgAddCovenantSig := &types.MsgAddCovenantSigs{
-			Signer:                  msgCreateBTCDel.StakerAddr,
+			Signer:                  del.StakerAddr,
 			Pk:                      covenantSlashingTxSigs[i].CovPk,
 			StakingTxHash:           stakingTxHash,
 			SlashingTxSigs:          covenantSlashingTxSigs[i].AdaptorSigs,
 			UnbondingTxSig:          bbn.NewBIP340SignatureFromBTCSig(covUnbondingSigs[i]),
 			SlashingUnbondingTxSigs: covenantUnbondingSlashingTxSigs[i].AdaptorSigs,
 		}
+
+		if del.IsStakeExpansion() {
+			msgAddCovenantSig.StakeExpansionTxSig = covStkExpSigs[i]
+		}
+
 		msgs[i] = msgAddCovenantSig
 	}
 	return msgs
@@ -560,7 +578,7 @@ func (h *Helper) CreateCovenantSigs(
 	h.NoError(err)
 	stakingTxHash := stakingTx.TxHash().String()
 
-	covenantMsgs := h.GenerateCovenantSignaturesMessages(r, covenantSKs, msgCreateBTCDel, del)
+	covenantMsgs := h.GenerateCovenantSignaturesMessages(r, covenantSKs, del)
 	for _, m := range covenantMsgs {
 		msgCopy := m
 		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: lightClientTipHeight})
@@ -589,7 +607,7 @@ func (h *Helper) CreateCovenantSigs(
 	status, err := h.BTCStakingKeeper.BtcDelStatus(h.Ctx, actualDelWithCovenantSigs, bsParams.CovenantQuorum, btcTipHeight)
 	require.NoError(h.t, err)
 
-	if msgCreateBTCDel.StakingTxInclusionProof != nil {
+	if msgCreateBTCDel != nil && msgCreateBTCDel.StakingTxInclusionProof != nil {
 		// not pre-approval flow, the BTC delegation should be active
 		require.Equal(h.t, status, types.BTCDelegationStatus_ACTIVE)
 	} else {
@@ -677,7 +695,6 @@ func (h *Helper) AddFinalityProvider(fp *types.FinalityProvider) {
 	})
 	h.NoError(err)
 }
-
 
 func (h *Helper) BuildBTCInclusionProofForSpendingTx(r *rand.Rand, spendingTx *wire.MsgTx, btcHeight uint32) *types.InclusionProof {
 	prevBlockForSpendingTx, _ := datagen.GenRandomBtcdBlock(r, 0, nil)
