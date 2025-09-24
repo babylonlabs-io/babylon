@@ -920,12 +920,12 @@ func (n *NodeConfig) CreateBTCDelegationWithExpansionAndCheck(
 ) (*datagen.TestStakingSlashingInfo, *datagen.TestStakingSlashingInfo, *wire.MsgTx) {
 	// Step 1: we create a BTC delegation
 	// NOTE: we use the node's address for the BTC delegation
-	prevDelStakingInfo := n.CreateBTCDelegationMultipleFPsAndCheck(
+	prevDelStakingInfo := n.CreateBTCDelegationAndCheck(
 		r,
 		t,
 		btcNet,
 		n.WalletName,
-		fps,
+		fps[0],
 		btcStakerSK,
 		delAddr,
 		stakingTimeBlocks,

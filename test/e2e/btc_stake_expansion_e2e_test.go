@@ -10,11 +10,11 @@ import (
 	"github.com/btcsuite/btcd/wire"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/babylonlabs-io/babylon/v3/test/e2e/configurer"
-	"github.com/babylonlabs-io/babylon/v3/test/e2e/configurer/chain"
-	"github.com/babylonlabs-io/babylon/v3/test/e2e/initialization"
-	"github.com/babylonlabs-io/babylon/v3/testutil/datagen"
-	bstypes "github.com/babylonlabs-io/babylon/v3/x/btcstaking/types"
+	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer"
+	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer/chain"
+	"github.com/babylonlabs-io/babylon/v4/test/e2e/initialization"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 )
 
 type BTCStakeExpansionTestSuite struct {
@@ -48,7 +48,7 @@ func (s *BTCStakeExpansionTestSuite) SetupSuite() {
 	//
 	// 1. Configure 1 chain with some validator nodes
 	// 2. Execute various e2e tests
-	s.configurer, err = configurer.NewBabylonConfigurer(s.T(), true)
+	s.configurer, err = configurer.NewBTCStakingConfigurer(s.T(), true)
 	s.NoError(err)
 	err = s.configurer.ConfigureChains()
 	s.NoError(err)
