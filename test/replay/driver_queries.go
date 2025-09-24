@@ -52,14 +52,14 @@ func (d *BabylonAppDriver) GetUnbondedBTCDelegations(t *testing.T) []*bstypes.BT
 	return d.getDelegationWithStatus(t, bstypes.BTCDelegationStatus_UNBONDED)
 }
 
-// GetBTCDelegation gets a specific BTC delegation by staking transaction hash
-func (d *BabylonAppDriver) GetBTCDelegation(t *testing.T, stakingTxHash string) *bstypes.BTCDelegationResponse {
-	ctx := d.GetContextForLastFinalizedBlock()
-	resp, err := d.App.BTCStakingKeeper.BTCDelegation(ctx, &bstypes.QueryBTCDelegationRequest{
-		StakingTxHashHex: stakingTxHash,
+func (d *BabylonAppDriver) GetBTCDelegation(t *testing.T, stakingTxHex string) *bstypes.BTCDelegationResponse {
+	ctx, err := d.App.CreateQueryContext(0, false)
+	require.NoError(t, err)
+	res, err := d.App.BTCStakingKeeper.BTCDelegation(ctx, &bstypes.QueryBTCDelegationRequest{
+		StakingTxHashHex: stakingTxHex,
 	})
 	require.NoError(t, err)
-	return resp.BtcDelegation
+	return res.BtcDelegation
 }
 
 func (d *BabylonAppDriver) GetBTCStakingParams(t *testing.T) *bstypes.Params {

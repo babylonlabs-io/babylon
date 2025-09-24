@@ -219,6 +219,7 @@ func (k Keeper) addCovenantSigsToBTCDelegation(
 		btcDel,
 		covPK,
 		unbondingTxSig,
+		stakeExpansionTxSig,
 	)); err != nil {
 		panic(fmt.Errorf("failed to emit EventCovenantSignatureRecevied for the new active BTC delegation: %w", err))
 	}

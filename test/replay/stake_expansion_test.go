@@ -73,7 +73,7 @@ func TestExpandBTCDelegation(t *testing.T) {
 			for _, result := range results {
 				for _, event := range result.Events {
 					if testutilevents.IsEventType(event, &bstypes.EventCovenantSignatureReceived{}) {
-						require.True(t, attributeValueNonEmpty(event, "covenant_stake_expansion_signature_hex"))
+						require.True(t, attributeValueCovenantStakeExpNonEmpty(event))
 					}
 				}
 			}
@@ -191,7 +191,7 @@ func TestInvalidStakeExpansion(t *testing.T) {
 				for _, result := range results {
 					for _, event := range result.Events {
 						if testutilevents.IsEventType(event, &bstypes.EventCovenantSignatureReceived{}) {
-							require.True(t, attributeValueNonEmpty(event, "covenant_stake_expansion_signature_hex"))
+							require.True(t, attributeValueCovenantStakeExpNonEmpty(event))
 						}
 					}
 				}
@@ -282,7 +282,7 @@ func TestInvalidStakeExpansion(t *testing.T) {
 				for _, result := range results {
 					for _, event := range result.Events {
 						if testutilevents.IsEventType(event, &bstypes.EventCovenantSignatureReceived{}) {
-							require.True(t, attributeValueNonEmpty(event, "covenant_stake_expansion_signature_hex"))
+							require.True(t, attributeValueCovenantStakeExpNonEmpty(event))
 						}
 					}
 				}

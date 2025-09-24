@@ -4018,6 +4018,34 @@ paths:
                           optionally to add more
 
                           stake to the BTC delegation.
+                      previous_stk_covenant_sigs:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            pk:
+                              type: string
+                              format: byte
+                            sig:
+                              type: string
+                              format: byte
+                          title: >-
+                            SignatureInfo is a BIP-340 signature together with
+                            its signer's BIP-340 PK
+                        description: >-
+                          previous_stk_covenant_sigs is a list of signatures on
+                          the stake expansion
+
+                          transaction (i.e., the transaction spending the
+                          previous staking transaction
+
+                          {previous_staking_tx_hash}) by each covenant member.
+
+                          It must be provided to allow the previous staking tx
+                          to be spent as
+
+                          an transaction input of another BTC staking
+                          transaction.
             title: >-
               QueryBTCDelegationResponse is response type matching
               QueryBTCDelegationRequest
@@ -4504,6 +4532,34 @@ paths:
                             optionally to add more
 
                             stake to the BTC delegation.
+                        previous_stk_covenant_sigs:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              pk:
+                                type: string
+                                format: byte
+                              sig:
+                                type: string
+                                format: byte
+                            title: >-
+                              SignatureInfo is a BIP-340 signature together with
+                              its signer's BIP-340 PK
+                          description: >-
+                            previous_stk_covenant_sigs is a list of signatures
+                            on the stake expansion
+
+                            transaction (i.e., the transaction spending the
+                            previous staking transaction
+
+                            {previous_staking_tx_hash}) by each covenant member.
+
+                            It must be provided to allow the previous staking tx
+                            to be spent as
+
+                            an transaction input of another BTC staking
+                            transaction.
                   description: >-
                     BTCDelegationResponse is the client needed information from
                     a BTCDelegation with the current status based on parameters.
@@ -5523,6 +5579,35 @@ paths:
                                   optionally to add more
 
                                   stake to the BTC delegation.
+                              previous_stk_covenant_sigs:
+                                type: array
+                                items:
+                                  type: object
+                                  properties:
+                                    pk:
+                                      type: string
+                                      format: byte
+                                    sig:
+                                      type: string
+                                      format: byte
+                                  title: >-
+                                    SignatureInfo is a BIP-340 signature
+                                    together with its signer's BIP-340 PK
+                                description: >-
+                                  previous_stk_covenant_sigs is a list of
+                                  signatures on the stake expansion
+
+                                  transaction (i.e., the transaction spending
+                                  the previous staking transaction
+
+                                  {previous_staking_tx_hash}) by each covenant
+                                  member.
+
+                                  It must be provided to allow the previous
+                                  staking tx to be spent as
+
+                                  an transaction input of another BTC staking
+                                  transaction.
                         description: >-
                           BTCDelegationResponse is the client needed information
                           from a BTCDelegation with the current status based on
@@ -13725,6 +13810,33 @@ definitions:
               more
 
               stake to the BTC delegation.
+          previous_stk_covenant_sigs:
+            type: array
+            items:
+              type: object
+              properties:
+                pk:
+                  type: string
+                  format: byte
+                sig:
+                  type: string
+                  format: byte
+              title: >-
+                SignatureInfo is a BIP-340 signature together with its signer's
+                BIP-340 PK
+            description: >-
+              previous_stk_covenant_sigs is a list of signatures on the stake
+              expansion
+
+              transaction (i.e., the transaction spending the previous staking
+              transaction
+
+              {previous_staking_tx_hash}) by each covenant member.
+
+              It must be provided to allow the previous staking tx to be spent
+              as
+
+              an transaction input of another BTC staking transaction.
     description: >-
       BTCDelegationResponse is the client needed information from a
       BTCDelegation with the current status based on parameters.
@@ -14029,6 +14141,33 @@ definitions:
                     add more
 
                     stake to the BTC delegation.
+                previous_stk_covenant_sigs:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      pk:
+                        type: string
+                        format: byte
+                      sig:
+                        type: string
+                        format: byte
+                    title: >-
+                      SignatureInfo is a BIP-340 signature together with its
+                      signer's BIP-340 PK
+                  description: >-
+                    previous_stk_covenant_sigs is a list of signatures on the
+                    stake expansion
+
+                    transaction (i.e., the transaction spending the previous
+                    staking transaction
+
+                    {previous_staking_tx_hash}) by each covenant member.
+
+                    It must be provided to allow the previous staking tx to be
+                    spent as
+
+                    an transaction input of another BTC staking transaction.
           description: >-
             BTCDelegationResponse is the client needed information from a
             BTCDelegation with the current status based on parameters.
@@ -14725,6 +14864,33 @@ definitions:
                   add more
 
                   stake to the BTC delegation.
+              previous_stk_covenant_sigs:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    pk:
+                      type: string
+                      format: byte
+                    sig:
+                      type: string
+                      format: byte
+                  title: >-
+                    SignatureInfo is a BIP-340 signature together with its
+                    signer's BIP-340 PK
+                description: >-
+                  previous_stk_covenant_sigs is a list of signatures on the
+                  stake expansion
+
+                  transaction (i.e., the transaction spending the previous
+                  staking transaction
+
+                  {previous_staking_tx_hash}) by each covenant member.
+
+                  It must be provided to allow the previous staking tx to be
+                  spent as
+
+                  an transaction input of another BTC staking transaction.
     title: >-
       QueryBTCDelegationResponse is response type matching
       QueryBTCDelegationRequest
@@ -14988,6 +15154,33 @@ definitions:
                     add more
 
                     stake to the BTC delegation.
+                previous_stk_covenant_sigs:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      pk:
+                        type: string
+                        format: byte
+                      sig:
+                        type: string
+                        format: byte
+                    title: >-
+                      SignatureInfo is a BIP-340 signature together with its
+                      signer's BIP-340 PK
+                  description: >-
+                    previous_stk_covenant_sigs is a list of signatures on the
+                    stake expansion
+
+                    transaction (i.e., the transaction spending the previous
+                    staking transaction
+
+                    {previous_staking_tx_hash}) by each covenant member.
+
+                    It must be provided to allow the previous staking tx to be
+                    spent as
+
+                    an transaction input of another BTC staking transaction.
           description: >-
             BTCDelegationResponse is the client needed information from a
             BTCDelegation with the current status based on parameters.
@@ -15289,6 +15482,34 @@ definitions:
                           optionally to add more
 
                           stake to the BTC delegation.
+                      previous_stk_covenant_sigs:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            pk:
+                              type: string
+                              format: byte
+                            sig:
+                              type: string
+                              format: byte
+                          title: >-
+                            SignatureInfo is a BIP-340 signature together with
+                            its signer's BIP-340 PK
+                        description: >-
+                          previous_stk_covenant_sigs is a list of signatures on
+                          the stake expansion
+
+                          transaction (i.e., the transaction spending the
+                          previous staking transaction
+
+                          {previous_staking_tx_hash}) by each covenant member.
+
+                          It must be provided to allow the previous staking tx
+                          to be spent as
+
+                          an transaction input of another BTC staking
+                          transaction.
                 description: >-
                   BTCDelegationResponse is the client needed information from a
                   BTCDelegation with the current status based on parameters.
@@ -16305,6 +16526,32 @@ definitions:
           second input (this one) is to pay for fees and optionally to add more
 
           stake to the BTC delegation.
+      previous_stk_covenant_sigs:
+        type: array
+        items:
+          type: object
+          properties:
+            pk:
+              type: string
+              format: byte
+            sig:
+              type: string
+              format: byte
+          title: >-
+            SignatureInfo is a BIP-340 signature together with its signer's
+            BIP-340 PK
+        description: >-
+          previous_stk_covenant_sigs is a list of signatures on the stake
+          expansion
+
+          transaction (i.e., the transaction spending the previous staking
+          transaction
+
+          {previous_staking_tx_hash}) by each covenant member.
+
+          It must be provided to allow the previous staking tx to be spent as
+
+          an transaction input of another BTC staking transaction.
     description: >-
       StakeExpansionResponse stores information necessary to construct the
       expanded BTC staking

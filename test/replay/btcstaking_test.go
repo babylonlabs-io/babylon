@@ -617,13 +617,8 @@ func TestPostRegistrationDelegation(t *testing.T) {
 	require.Len(t, activeDelegations, 1)
 }
 
-func containsEvent(events []abci.Event, eventType string) bool {
-	for _, event := range events {
-		if event.Type == eventType {
-			return true
-		}
-	}
-	return false
+func attributeValueCovenantStakeExpNonEmpty(event abci.Event) bool {
+	return attributeValueNonEmpty(event, "covenant_stake_expansion_signature_hex")
 }
 
 func attributeValueNonEmpty(event abci.Event, attributeKey string) bool {
@@ -692,7 +687,16 @@ func TestAcceptSlashingTxAsUnbondingTx(t *testing.T) {
 	require.NotNil(t, pendingDelegations[0].StkExp)
 
 	covSender.SendCovenantSignatures()
-	driver.GenerateNewBlockAssertExecutionSuccess()
+	results := driver.GenerateNewBlockAssertExecutionSuccessWithResults()
+	require.NotEmpty(t, results)
+
+	for _, result := range results {
+		for _, event := range result.Events {
+			if event.Type == "babylon.btcstaking.v1.EventCovenantSignatureReceived" {
+				require.True(t, attributeValueCovenantStakeExpNonEmpty(event))
+			}
+		}
+	}
 
 	// After getting covenant sigs, stake expansion delegation
 	// should be verified

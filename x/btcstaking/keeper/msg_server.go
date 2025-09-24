@@ -150,10 +150,6 @@ func (ms msgServer) BtcStakeExpand(goCtx context.Context, req *types.MsgBtcStake
 		return nil, status.Errorf(codes.InvalidArgument, "previous staking transaction is not active")
 	}
 
-	if prevBtcDel.IsStakeExpansion() {
-		return nil, status.Errorf(codes.InvalidArgument, "the previous BTC staking transaction %s is already a stake expansion", req.PreviousStakingTxHash)
-	}
-
 	if !strings.EqualFold(prevBtcDel.StakerAddr, req.StakerAddr) {
 		return nil, status.Errorf(codes.InvalidArgument, "the previous BTC staking transaction staker address: %s does not match with current staker address: %s", prevBtcDel.StakerAddr, req.StakerAddr)
 	}
@@ -375,7 +371,7 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 		return nil, types.ErrInvalidCovenantSig.Wrapf("err: %v", err)
 	}
 
-	if err := ms.validateStakeExpansionSig(ctx, delInfo, req, stakingInfo); err != nil {
+	if err := ms.validateStakeExpansionSig(ctx, delInfo, req); err != nil {
 		return nil, types.ErrInvalidCovenantSig.Wrapf("error validating stake expansion signatures: %v", err)
 	}
 
@@ -415,21 +411,27 @@ func (ms msgServer) validateStakeExpansionSig(
 	ctx sdk.Context,
 	delInfo *btcDelegationWithParams,
 	req *types.MsgAddCovenantSigs,
-	stakingInfo *btcstaking.StakingInfo,
 ) error {
 	if delInfo == nil {
 		return fmt.Errorf("nil BTC delegation with params")
 	}
 	btcDel, params := delInfo.Delegation, delInfo.Params
 
-	if !btcDel.IsStakeExpansion() {
+	if !btcDel.IsStakeExpansion() && req.StakeExpansionTxSig != nil {
+		return fmt.Errorf("stake expansion tx signature provided for non-stake expansion delegation")
+	}
+
+	if !btcDel.IsStakeExpansion() && req.StakeExpansionTxSig == nil {
+		// not stake expansion, no signature provided, ok
 		return nil
 	}
 
-	if req.StakeExpansionTxSig == nil {
+	if btcDel.IsStakeExpansion() && req.StakeExpansionTxSig == nil {
 		return fmt.Errorf("empty stake expansion covenant signature")
 	}
 
+	// this is stake expansion delegation, the signature is provided
+	// in the message, verify it
 	if btcDel.StkExp.IsSignedByCovMember(req.Pk) {
 		ms.Logger(ctx).Debug("Received duplicated covenant signature in stake expansion transaction",
 			"covenant pk", req.Pk.MarshalHex())
@@ -460,11 +462,21 @@ func (ms msgServer) validateStakeExpansionSig(
 		return fmt.Errorf("failed to deserialize other funding txout: %w", err)
 	}
 
+	// build staking info of prev delegation
+	prevDelStakingInfo, err := prevBtcDel.GetStakingInfo(prevParams, ms.btcNet)
+	if err != nil {
+		return fmt.Errorf("failed to get staking info of previous delegation: %w", err)
+	}
+	prevDelUnbondingPathSpendInfo, err := prevDelStakingInfo.UnbondingPathSpendInfo()
+	if err != nil {
+		return fmt.Errorf("failed to get unbonding path spend info: %w", err)
+	}
+
 	err = btcstaking.VerifyTransactionSigStkExp(
 		btcDel.MustGetStakingTx(), // this is the staking expansion tx
-		stakingInfo.StakingOutput,
+		prevBtcDel.MustGetStakingTx().TxOut[prevBtcDel.StakingOutputIdx],
 		otherFundingTxOut,
-		stakingInfo.GetPkScript(),
+		prevDelUnbondingPathSpendInfo.GetPkScriptPath(),
 		req.Pk.MustToBTCPK(),
 		*req.StakeExpansionTxSig,
 	)
@@ -654,54 +666,19 @@ func (ms msgServer) SelectiveSlashingEvidence(goCtx context.Context, req *types.
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	delInfo, err := ms.getBTCDelWithParams(ctx, req.StakingTxHash)
-	if err != nil {
-		return nil, err
-	}
-
-	// ensure the BTC delegation is active, or its BTC undelegation receives an
-	// unbonding signature from the staker
-	status, _, err := ms.BtcDelStatusWithTip(ctx, delInfo)
-	if err != nil {
-		return nil, err
-	}
-
-	btcDel := delInfo.Delegation
-	if status != types.BTCDelegationStatus_ACTIVE && !btcDel.IsUnbondedEarly() {
-		return nil, types.ErrBTCDelegationNotFound.Wrap("a BTC delegation that is not active or unbonding early cannot be slashed")
-	}
-
 	// decode the finality provider's BTC SK/PK
 	fpSK, fpPK := btcec.PrivKeyFromBytes(req.RecoveredFpBtcSk)
 	fpBTCPK := bbn.NewBIP340PubKeyFromBTCPK(fpPK)
 
-	// ensure the BTC delegation is staked to the given finality provider
-	fpIdx := btcDel.GetFpIdx(fpBTCPK)
-	if fpIdx == -1 {
-		return nil, types.ErrFpNotFound.Wrapf("BTC delegation is not staked to the finality provider")
-	}
-
-	// ensure the finality provider exists
-	fp, err := ms.GetFinalityProvider(ctx, fpBTCPK.MustMarshal())
-	if err != nil {
-		panic(types.ErrFpNotFound.Wrapf("failing to find the finality provider with BTC delegations"))
-	}
-	// ensure the finality provider is not slashed
-	if fp.IsSlashed() {
-		return nil, types.ErrFpAlreadySlashed
-	}
-
-	// at this point, the finality provider must have done selective slashing and must be
-	// adversarial
-
-	// slash the finality provider now
+	// slashing the provider - this method also checks:
+	// - that the fp first exists and can be found
+	// - that the finality provider isnt already slashed
 	if err := ms.SlashFinalityProvider(ctx, fpBTCPK.MustMarshal()); err != nil {
-		panic(err) // failed to slash the finality provider, must be programming error
+		return nil, err
 	}
 
 	// emit selective slashing event
 	evidence := &types.SelectiveSlashingEvidence{
-		StakingTxHash:    req.StakingTxHash,
 		FpBtcPk:          fpBTCPK,
 		RecoveredFpBtcSk: fpSK.Serialize(),
 	}
@@ -730,7 +707,7 @@ func (k Keeper) CheckDuplicatedFpBbnAddr(ctx context.Context, fpAddr sdk.AccAddr
 }
 
 // hasSufficientCovenantOverlap returns true if the intersection of CovCommittee1 and CovCommittee2
-// contains more members than the required overlap.
+// contains at least as many members as the required overlap.
 func hasSufficientCovenantOverlap(
 	covCommittee1,
 	covCommittee2 []bbn.BIP340PubKey,
@@ -752,7 +729,7 @@ func hasSufficientCovenantOverlap(
 		_, found := newSet[oldPk.MarshalHex()]
 		if found {
 			intersection++
-			if uint32(intersection) > requiredOverlap {
+			if uint32(intersection) >= requiredOverlap {
 				return true
 			}
 		}

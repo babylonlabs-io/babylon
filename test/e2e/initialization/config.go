@@ -313,17 +313,6 @@ func updateMintGenesis(mintGenState *minttypes.GenesisState) {
 	mintGenState.Minter.BondDenom = BabylonDenom
 }
 
-func updateStakeGenesis(stakeGenState *staketypes.GenesisState) {
-	stakeGenState.Params = staketypes.Params{
-		BondDenom:         BabylonDenom,
-		MaxValidators:     100,
-		MaxEntries:        7,
-		HistoricalEntries: 10000,
-		UnbondingTime:     staketypes.DefaultUnbondingTime,
-		MinCommissionRate: sdkmath.LegacyZeroDec(),
-	}
-}
-
 func updateBtcLightClientGenesis(btcHeaders []*btclighttypes.BTCHeaderInfo) func(blcGenState *blctypes.GenesisState) {
 	return func(blcGenState *btclighttypes.GenesisState) {
 		if len(btcHeaders) > 0 {

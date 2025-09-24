@@ -258,7 +258,6 @@ func NewBTCStakeExpandCmd() *cobra.Command {
 				StakingTime:                   parsed.StakingTime,
 				StakingValue:                  parsed.StakingValue,
 				StakingTx:                     parsed.StakingTx,
-				StakingTxInclusionProof:       parsed.StakingTxInclusionProof,
 				SlashingTx:                    parsed.SlashingTx,
 				DelegatorSlashingSig:          parsed.DelegatorSlashingSig,
 				UnbondingTx:                   parsed.UnbondingTx,
@@ -448,8 +447,8 @@ func NewBTCUndelegateCmd() *cobra.Command {
 
 func NewSelectiveSlashingEvidenceCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "selective-slashing-evidence [staking_tx_hash] [recovered_fp_btc_sk]",
-		Args:  cobra.ExactArgs(2),
+		Use:   "selective-slashing-evidence [recovered_fp_btc_sk]",
+		Args:  cobra.ExactArgs(1),
 		Short: "Add the recovered BTC SK of a finality provider that launched selective slashing offence.",
 		Long: strings.TrimSpace(
 			`Add the recovered BTC SK of a finality provider that launched selective slashing offence. The SK is recovered from a pair of Schnorr/adaptor signatures`, // TODO: example
@@ -460,18 +459,14 @@ func NewSelectiveSlashingEvidenceCmd() *cobra.Command {
 				return err
 			}
 
-			// get staking tx hash
-			stakingTxHash := args[0]
-
 			// get delegator signature for unbonding tx
-			fpSKBytes, err := hex.DecodeString(args[1])
+			fpSKBytes, err := hex.DecodeString(args[0])
 			if err != nil {
 				return err
 			}
 
 			msg := types.MsgSelectiveSlashingEvidence{
 				Signer:           clientCtx.FromAddress.String(),
-				StakingTxHash:    stakingTxHash,
 				RecoveredFpBtcSk: fpSKBytes,
 			}
 

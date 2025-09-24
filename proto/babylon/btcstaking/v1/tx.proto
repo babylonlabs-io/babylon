@@ -213,17 +213,14 @@ message MsgBtcStakeExpand {
   // staking_tx is a bitcoin staking transaction i.e transaction that locks
   // funds
   bytes staking_tx = 7;
-  // staking_tx_inclusion_proof is the inclusion proof of the staking tx in BTC
-  // chain
-  InclusionProof staking_tx_inclusion_proof = 8;
   // slashing_tx is the slashing tx
   // Note that the tx itself does not contain signatures, which are off-chain.
-  bytes slashing_tx = 9 [ (gogoproto.customtype) = "BTCSlashingTx" ];
+  bytes slashing_tx = 8 [ (gogoproto.customtype) = "BTCSlashingTx" ];
   // delegator_slashing_sig is the signature on the slashing tx by the delegator
   // (i.e., SK corresponding to btc_pk). It will be a part of the witness for
   // the staking tx output. The staking tx output further needs signatures from
   // covenant and finality provider in order to be spendable.
-  bytes delegator_slashing_sig = 10
+  bytes delegator_slashing_sig = 9
       [ (gogoproto.customtype) =
             "github.com/babylonlabs-io/babylon/v4/types.BIP340Signature" ];
   // unbonding_time is the time lock used when funds are being unbonded. It is
@@ -233,29 +230,29 @@ message MsgBtcStakeExpand {
   // - unbonding slashing transaction, change output
   // It must be smaller than math.MaxUInt16 and larger that
   // max(MinUnbondingTime, CheckpointFinalizationTimeout)
-  uint32 unbonding_time = 11;
+  uint32 unbonding_time = 10;
   // fields related to unbonding transaction
   // unbonding_tx is a bitcoin unbonding transaction i.e transaction that spends
   // staking output and sends it to the unbonding output
-  bytes unbonding_tx = 12;
+  bytes unbonding_tx = 11;
   // unbonding_value is amount of satoshis locked in unbonding output.
   // NOTE: staking_value and unbonding_value could be different because of the
   // difference between the fee for staking tx and that for unbonding
-  int64 unbonding_value = 13;
+  int64 unbonding_value = 12;
   // unbonding_slashing_tx is the slashing tx which slash unbonding contract
   // Note that the tx itself does not contain signatures, which are off-chain.
-  bytes unbonding_slashing_tx = 14 [ (gogoproto.customtype) = "BTCSlashingTx" ];
+  bytes unbonding_slashing_tx = 13 [ (gogoproto.customtype) = "BTCSlashingTx" ];
   // delegator_unbonding_slashing_sig is the signature on the slashing tx by the
   // delegator (i.e., SK corresponding to btc_pk).
-  bytes delegator_unbonding_slashing_sig = 15
+  bytes delegator_unbonding_slashing_sig = 14
       [ (gogoproto.customtype) =
             "github.com/babylonlabs-io/babylon/v4/types.BIP340Signature" ];
   // previous_staking_tx_hash is the hash of the staking tx that will be used as input.
-  string previous_staking_tx_hash = 16;
+  string previous_staking_tx_hash = 15;
   // funding_tx is a bitcoin transaction that was used to fund the BTC stake expansion
   // to at least pay the fees for it. It can also be used to increase the total amount
   // of satoshi staked. This will be parsed into a *wire.MsgTx
-  bytes funding_tx = 17;
+  bytes funding_tx = 16;
 }
 
 // MsgBtcStakeExpandResponse is the response for MsgBtcStakeExpand
@@ -343,9 +340,10 @@ message MsgSelectiveSlashingEvidence {
   option (cosmos.msg.v1.signer) = "signer";
 
   string signer = 1;
-  // staking_tx_hash is the hash of the staking tx.
-  // It uniquely identifies a BTC delegation
-  string staking_tx_hash = 2;
+
+  reserved 2;
+  reserved "staking_tx_hash";
+
   // recovered_fp_btc_sk is the BTC SK of the finality provider who
   // launches the selective slashing offence. The SK is recovered by
   // using a covenant adaptor signature and the corresponding Schnorr

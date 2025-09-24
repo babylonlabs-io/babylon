@@ -607,16 +607,7 @@ func (d *BabylonAppDriver) GenerateBlocksUntilHeight(untilBlock uint64) {
 }
 
 func (d *BabylonAppDriver) GenerateNewBlockAssertExecutionSuccess() {
-	response := d.GenerateNewBlock()
-
-	for _, tx := range response.TxResults {
-		// ignore checkpoint txs
-		if tx.GasWanted == 0 {
-			continue
-		}
-
-		require.Equal(d.t, tx.Code, uint32(0), tx.Log)
-	}
+	d.GenerateNewBlockAssertExecutionSuccessWithResults()
 }
 
 func (d *BabylonAppDriver) GenerateNewBlockAssertExecutionFailure() []*abci.ExecTxResult {

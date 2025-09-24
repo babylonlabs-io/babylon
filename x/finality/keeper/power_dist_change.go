@@ -399,7 +399,7 @@ func (k Keeper) processBtcDelUpdate(ctx context.Context, state *ftypes.Processin
 
 	switch delEvent.NewState {
 	case types.BTCDelegationStatus_ACTIVE:
-		k.processPowerDistUpdateEventActive(ctx, state, btcDel)
+		k.processPowerDistUpdateEventActive(state, btcDel)
 	case types.BTCDelegationStatus_UNBONDED:
 		// In case of delegation transtioning from phase-1 it is possible that
 		// somebody unbonds before receiving the required covenant signatures.
@@ -409,7 +409,7 @@ func (k Keeper) processBtcDelUpdate(ctx context.Context, state *ftypes.Processin
 		}
 		if hasQuorum {
 			// add the unbonded BTC delegation to the map
-			k.processPowerDistUpdateEventUnbond(ctx, state, btcDel)
+			k.processPowerDistUpdateEventUnbond(state, btcDel)
 		}
 	}
 }
@@ -452,7 +452,7 @@ func (k Keeper) processExpiredEvents(ctx context.Context, sdkCtx sdk.Context, st
 		if hasQuorum {
 			// only adds to the new unbonded list if it hasn't
 			// previously unbonded with types.BTCDelegationStatus_UNBONDED
-			k.processPowerDistUpdateEventUnbond(ctx, state, btcDel)
+			k.processPowerDistUpdateEventUnbond(state, btcDel)
 		}
 	}
 }
@@ -476,7 +476,6 @@ func processSlashedEvents(ctx sdk.Context, state *ftypes.ProcessingState) {
 // processPowerDistUpdateEventUnbond actively updates the unbonded sats
 // map and process the incentives reward tracking structures for unbonded btc dels.
 func (k Keeper) processPowerDistUpdateEventUnbond(
-	ctx context.Context,
 	state *ftypes.ProcessingState,
 	btcDel *types.BTCDelegation,
 ) {
@@ -490,7 +489,6 @@ func (k Keeper) processPowerDistUpdateEventUnbond(
 // processPowerDistUpdateEventActive actively handles the activated sats
 // map and process the incentives reward tracking structures for activated btc dels.
 func (k Keeper) processPowerDistUpdateEventActive(
-	ctx context.Context,
 	state *ftypes.ProcessingState,
 	btcDel *types.BTCDelegation,
 ) {
