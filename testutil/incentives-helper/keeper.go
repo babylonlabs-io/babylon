@@ -155,7 +155,7 @@ func (h *IncentiveHelper) GenerateAndSendCovenantSignatures(
 	msgCreateBTCDel *types.MsgCreateBTCDelegation,
 	del *types.BTCDelegation,
 ) {
-	covMsgs := h.GenerateCovenantSignaturesMessages(r, covenantSKs, msgCreateBTCDel, del)
+	covMsgs := h.GenerateCovenantSignaturesMessages(r, covenantSKs, del)
 	for _, msg := range covMsgs {
 		_, err := h.MsgServer.AddCovenantSigs(h.Ctx, msg)
 		h.NoError(err)
