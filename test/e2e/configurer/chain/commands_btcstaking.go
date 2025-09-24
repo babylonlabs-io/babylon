@@ -278,7 +278,10 @@ func (n *NodeConfig) AddFinalitySig(
 	appHashHex := hex.EncodeToString(appHash)
 	finalitySigHex := finalitySig.ToHexStr()
 
-	cmd := []string{"babylond", "tx", "finality", "add-finality-sig", fpBTCPKHex, blockHeightStr, pubRandHex, proofHex, appHashHex, finalitySigHex, "--gas=500000"}
+	cmd := []string{
+		"babylond", "tx", "finality", "add-finality-sig",
+		fpBTCPKHex, blockHeightStr, pubRandHex, proofHex, appHashHex, finalitySigHex, "--gas=500000",
+	}
 	additionalArgs := []string{fmt.Sprintf("--chain-id=%s", n.chainId), "--gas-prices=0.1ubbn", "-b=sync", "--yes", "--keyring-backend=test", "--log_format=json", "--home=/home/babylon/babylondata"}
 	cmd = append(cmd, additionalArgs...)
 

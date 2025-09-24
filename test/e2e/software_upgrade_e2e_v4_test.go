@@ -337,7 +337,6 @@ func (s *SoftwareUpgradeV23To4TestSuite) FpCommitPubRandAndVote(n *chain.NodeCon
 		s.fp2RandListInfo.SRList[s.finalityIdx],
 		&s.fp2RandListInfo.PRList[s.finalityIdx],
 		*s.fp2RandListInfo.ProofList[s.finalityIdx].ToProto(),
-		"",
 		fmt.Sprintf("--from=%s", wFp2),
 	)
 
@@ -348,7 +347,6 @@ func (s *SoftwareUpgradeV23To4TestSuite) FpCommitPubRandAndVote(n *chain.NodeCon
 		s.fp1RandListInfo.SRList[s.finalityIdx],
 		&s.fp1RandListInfo.PRList[s.finalityIdx],
 		*s.fp1RandListInfo.ProofList[s.finalityIdx].ToProto(),
-		"",
 		fmt.Sprintf("--from=%s", wFp1),
 	)
 
