@@ -5,7 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/test-go/testify/require"
+	"github.com/stretchr/testify/require"
 )
 
 func RequireEventAttribute(t *testing.T, event sdk.Event, key, expectedValue string, msgAndArgs ...any) {
