@@ -263,7 +263,7 @@ These transactions include:
 > by the Babylon Genesis chain:
 > - **Input 0**: Original staking transaction output
 >   * Must reference the exact UTXO from the original staking transaction
->   * Spent via the unbonding path of the staking script (requires staker + covenant signatures) .
+>   * Spent via the unbonding path of the staking script (requires staker + covenant signatures).
 > - **Input 1**: Additional funding UTXO utilized to ensure that
 >   the expanded stake staking amount is >= the original stake staking amount.
 > - **Outputs**: The stake expansion transaction can have an arbitrary
