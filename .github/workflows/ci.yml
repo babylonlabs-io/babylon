@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   lint_test:
-    uses: babylonlabs-io/.github/.github/workflows/reusable_go_lint_test.yml@v0.7.0
+    uses: babylonlabs-io/.github/.github/workflows/reusable_go_lint_test.yml@v0.7.1
     secrets: inherit
     with:
      go-version: '1.23'
@@ -256,7 +256,7 @@ jobs:
         run: |
           make test-e2e-cache-epoching-spam-prevention
 
-  e2e-run-upgrade-v2:
+  e2e-run-upgrade-v4:
     needs: [e2e-docker-build-babylon, e2e-docker-build-e2e-init-chain]
     runs-on: ubuntu-22.04
     steps:
@@ -284,9 +284,9 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: 1.23
-      - name: Run e2e TestSoftwareUpgradeV2TestSuite
+      - name: Run e2e TestSoftwareUpgradeV23To4TestSuite
         run: |
-          sudo make test-e2e-cache-upgrade-v2
+          sudo make test-e2e-cache-upgrade-v4
       - name: Dump docker logs on failure
         if: failure()
         uses: jwalton/gh-docker-logs@v2

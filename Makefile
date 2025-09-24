@@ -277,8 +277,8 @@ test-e2e-cache-btc-staking-pre-approval:
 test-e2e-cache-ica:
 	go test -run TestICATestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
 
-test-e2e-cache-upgrade-v2:
-	go test -run TestSoftwareUpgradeV2TestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
+test-e2e-cache-upgrade-v4:
+	go test -run TestSoftwareUpgradeV23To4TestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
 
 test-e2e-cache-epoching-spam-prevention:
 	go test -run TestEpochingSpamPreventionTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
