@@ -182,6 +182,10 @@ message EventCovenantSignatureReceived{
   // covenant_unbonding_signature_hex is the hex str of the BIP340 Schnorr
   // signature of the covenant committee on the unbonding tx
   string covenant_unbonding_signature_hex = 3 [(amino.dont_omitempty) = true];
+  // covenant_stake_expansion_signature_hex is the hex str of the BIP340 Schnorr
+  // signature of the covenant committee on the stake expansion tx
+  // if delegation was not stake expansion, this field will be an empty string
+  string covenant_stake_expansion_signature_hex = 4 [(amino.dont_omitempty) = true];
 }
 
 // EventCovenantQuorumReached is the event emitted quorum of covenant committee

@@ -585,6 +585,7 @@ func (s *StakeExpansion) ToResponse() *StakeExpansionResponse {
 	return &StakeExpansionResponse{
 		PreviousStakingTxHashHex: previousStk.String(),
 		OtherFundingTxOutHex:     otherFundingTxOutHex,
+		PreviousStkCovenantSigs:  s.PreviousStkCovenantSigs,
 	}
 }
 
