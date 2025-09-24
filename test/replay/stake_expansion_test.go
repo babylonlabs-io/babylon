@@ -82,7 +82,7 @@ func TestExpandBTCDelegation(t *testing.T) {
 			require.Len(t, verifiedDels, 1)
 			require.NotNil(t, verifiedDels[0].StkExp)
 
-			blockWithProofs := s.Driver.IncludeVerifiedStakingTxInBTC(1)
+			blockWithProofs, _ := s.Driver.IncludeVerifiedStakingTxInBTC(1)
 			require.Len(t, blockWithProofs.Proofs, 2)
 
 			spendingTx, err := bbn.NewBTCTxFromBytes(btcExpMsg.StakingTx)
@@ -330,7 +330,7 @@ func TestInvalidStakeExpansion(t *testing.T) {
 				// staking output should be already spent by the unbonding tx
 				stkExpStakingTx, err := bbn.NewBTCTxFromBytes(stakeExpandMsg.StakingTx)
 				require.NoError(t, err)
-				blockWithProofs = s.Driver.IncludeVerifiedStakingTxInBTC(1)
+				blockWithProofs, _ = s.Driver.IncludeVerifiedStakingTxInBTC(1)
 				require.Len(t, blockWithProofs.Proofs, 2)
 
 				spendingTxWithWitnessBz, _ := datagen.AddWitnessToStakeExpTx(
