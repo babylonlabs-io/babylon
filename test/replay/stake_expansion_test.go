@@ -158,7 +158,7 @@ func TestInvalidStakeExpansion(t *testing.T) {
 				s.Staker.SendMessage(stakeExpandMsg)
 				res := s.Driver.GenerateNewBlockAssertExecutionFailure()
 				require.Len(t, res, 1)
-				require.Equal(t, res[0].Log, "failed to execute message; message index: 0: rpc error: code = InvalidArgument desc = the funding output cannot be a staking output")
+				require.Equal(t, res[0].Log, "failed to execute message; message index: 0: rpc error: code = InvalidArgument desc = the funding tx cannot be a staking transaction")
 			},
 		},
 		{
