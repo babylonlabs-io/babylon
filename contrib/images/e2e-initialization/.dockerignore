@@ -1,0 +1,11 @@
+**/*_test.go
+**/testdata/
+test/
+!test/e2e/initialization/
+docs/
+*.md
+.git/
+.github/
+build/
+.vscode/
+.idea/

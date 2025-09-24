@@ -4,7 +4,7 @@ ARG E2E_SCRIPT_NAME
 # Version to build. Default is empty
 ARG VERSION
 
-# Copy All
+# Copy source (excluding tests via .dockerignore)
 WORKDIR /go/src/github.com/babylonlabs-io/babylon
 COPY ./ /go/src/github.com/babylonlabs-io/babylon/
 

@@ -21,8 +21,8 @@ import (
 )
 
 const (
-	commitStartHeightV3RC4 = uint64(5)
-	govPropFileV4          = "v4_upgrade_temp.json"
+	commitStartHeightV23 = uint64(5)
+	govPropFileV4        = "v4_upgrade_temp.json"
 )
 
 type SoftwareUpgradeV23To4TestSuite struct {
@@ -128,7 +128,7 @@ func (s *SoftwareUpgradeV23To4TestSuite) TearDownSuite() {
 	}
 }
 
-// createTempUpgradeConfig creates a temporary upgrade configuration file for v3rc4
+// createTempUpgradeConfig creates a temporary upgrade configuration file for v4
 func (s *SoftwareUpgradeV23To4TestSuite) createTempUpgradeConfig() (string, error) {
 	upgradeConfig := map[string]interface{}{
 		"messages": []map[string]interface{}{
@@ -136,17 +136,17 @@ func (s *SoftwareUpgradeV23To4TestSuite) createTempUpgradeConfig() (string, erro
 				"@type":     "/cosmos.upgrade.v1beta1.MsgSoftwareUpgrade",
 				"authority": "bbn10d07y265gmmuvt4z0w9aw880jnsr700jduz5f2",
 				"plan": map[string]interface{}{
-					"name":                  "v3rc4",
+					"name":                  "v4",
 					"time":                  "0001-01-01T00:00:00Z",
 					"height":                "221",
-					"info":                  "Upgrade to v3rc4",
+					"info":                  "Upgrade to v4",
 					"upgraded_client_state": nil,
 				},
 			},
 		},
 		"metadata":  "",
 		"deposit":   "500000000ubbn",
-		"title":     "Upgrade to Babylon v3rc4",
+		"title":     "Upgrade to Babylon v4",
 		"summary":   "This upgrade introduces the costaking module for BTC stakers with Baby delegation",
 		"expedited": false,
 	}
@@ -210,7 +210,7 @@ func (s *SoftwareUpgradeV23To4TestSuite) SetupFps(n *chain.NodeConfig) {
 }
 
 // SetupVerifiedBtcDelegationsWithBabyStaking sets up BTC delegations and also delegates Baby tokens
-// This is important for the v3rc4 upgrade test as it creates co-stakers (BTC stakers who also stake Baby)
+// This is important for the v4 upgrade test as it creates co-stakers (BTC stakers who also stake Baby)
 func (s *SoftwareUpgradeV23To4TestSuite) SetupVerifiedBtcDelegationsWithBabyStaking(n *chain.NodeConfig) {
 	s.del1Addr = n.KeysAdd(wDel1)
 	s.del2Addr = n.KeysAdd(wDel2)
@@ -232,7 +232,7 @@ func (s *SoftwareUpgradeV23To4TestSuite) SetupVerifiedBtcDelegationsWithBabyStak
 	s.CreateCovenantsAndSubmitSignaturesToPendDels(n, s.fp1, s.fp2)
 
 	// Now create Baby delegations to validators to make them co-stakers
-	// This is crucial for the v3rc4 upgrade test as it will register these as CostakerRewardsTracker
+	// This is crucial for the v4 upgrade test as it will register these as CostakerRewardsTracker
 	validators, err := n.QueryValidators()
 	s.NoError(err)
 	s.Require().NotEmpty(validators, "No validators found")
@@ -262,11 +262,11 @@ func (s *SoftwareUpgradeV23To4TestSuite) SetupVerifiedBtcDelegationsWithBabyStak
 }
 
 func (s *SoftwareUpgradeV23To4TestSuite) FpCommitPubRandAndVote(n *chain.NodeConfig) {
-	fp1RandListInfo, fp1CommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(s.r, s.fp1BTCSK, commitStartHeightV3RC4, numPubRand)
+	fp1RandListInfo, fp1CommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(s.r, s.fp1BTCSK, commitStartHeightV23, numPubRand)
 	s.NoError(err)
 	s.fp1RandListInfo = fp1RandListInfo
 
-	fp2RandListInfo, fp2CommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(s.r, s.fp2BTCSK, commitStartHeightV3RC4, numPubRand)
+	fp2RandListInfo, fp2CommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(s.r, s.fp2BTCSK, commitStartHeightV23, numPubRand)
 	s.NoError(err)
 	s.fp2RandListInfo = fp2RandListInfo
 
@@ -291,11 +291,11 @@ func (s *SoftwareUpgradeV23To4TestSuite) FpCommitPubRandAndVote(n *chain.NodeCon
 	n.WaitForNextBlocks(2)
 
 	fp1CommitPubRand := n.QueryListPubRandCommit(fp1CommitPubRandList.FpBtcPk)
-	fp1PubRand := fp1CommitPubRand[commitStartHeightV3RC4]
+	fp1PubRand := fp1CommitPubRand[commitStartHeightV23]
 	s.Require().Equal(fp1PubRand.NumPubRand, numPubRand)
 
 	fp2CommitPubRand := n.QueryListPubRandCommit(fp2CommitPubRandList.FpBtcPk)
-	fp2PubRand := fp2CommitPubRand[commitStartHeightV3RC4]
+	fp2PubRand := fp2CommitPubRand[commitStartHeightV23]
 	s.Require().Equal(fp2PubRand.NumPubRand, numPubRand)
 
 	finalizedEpoch := n.WaitUntilCurrentEpochIsSealedAndFinalized(1)
@@ -325,7 +325,7 @@ func (s *SoftwareUpgradeV23To4TestSuite) FpCommitPubRandAndVote(n *chain.NodeCon
 	}
 
 	s.finalityBlockHeightVoted = n.WaitFinalityIsActivated()
-	s.finalityIdx = s.finalityBlockHeightVoted - commitStartHeightV3RC4
+	s.finalityIdx = s.finalityBlockHeightVoted - commitStartHeightV23
 
 	n.WaitForNextBlockWithSleep50ms()
 
@@ -359,8 +359,8 @@ func (s *SoftwareUpgradeV23To4TestSuite) FpCommitPubRandAndVote(n *chain.NodeCon
 	s.AddFinalityVoteUntilCurrentHeight(n)
 }
 
-// TestUpgradeV3RC4 checks if the upgrade from v3.0.0-rc3 to v3rc4 was successful
-func (s *SoftwareUpgradeV23To4TestSuite) Test1UpgradeV3RC4() {
+// Test1UpgradeV4 checks if the upgrade from v2.3 to v3 was successful
+func (s *SoftwareUpgradeV23To4TestSuite) Test1UpgradeV4() {
 	chainA := s.configurer.GetChainConfig(0)
 	n, err := chainA.GetNodeAtIndex(1)
 	s.NoError(err)
