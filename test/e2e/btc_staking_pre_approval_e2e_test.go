@@ -143,6 +143,10 @@ func (s *BTCStakingPreApprovalTestSuite) Test1CreateFinalityProviderAndDelegatio
 	delegation := nonValidatorNode.QueryBtcDelegation(testStakingInfo.StakingTx.TxHash().String())
 	s.NotNil(delegation)
 	s.Equal(delegation.BtcDelegation.StakerAddr, nonValidatorNode.PublicAddress)
+
+	fps := nonValidatorNode.QueryFinalityProviders()
+	s.Equal(len(fps), 1)
+	s.Equal(fps[0].Addr, s.cacheFP.Addr)
 }
 
 func (s *BTCStakingPreApprovalTestSuite) Test2SubmitCovenantSignature() {

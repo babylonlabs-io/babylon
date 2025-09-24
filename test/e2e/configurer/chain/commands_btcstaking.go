@@ -296,7 +296,7 @@ func (n *NodeConfig) AddFinalitySigFromVal(
 	finalitySig *bbn.SchnorrEOTSSig,
 	overallFlags ...string,
 ) {
-	n.AddFinalitySig(fpBTCPK, blockHeight, pubRand, proof, appHash, finalitySig, append(overallFlags, "--from=val")...)
+	n.AddFinalitySig(fpBTCPK, blockHeight, pubRand, proof, appHash, finalitySig, append(overallFlags, fmt.Sprintf("--from=%s", n.PublicAddress))...)
 }
 
 func (n *NodeConfig) AddCovenantUnbondingSigs(
