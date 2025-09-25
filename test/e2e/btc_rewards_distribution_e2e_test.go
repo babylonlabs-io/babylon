@@ -17,7 +17,6 @@ import (
 	"github.com/stretchr/testify/suite"
 	"golang.org/x/sync/errgroup"
 
-	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
 	"github.com/babylonlabs-io/babylon/v4/crypto/eots"
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer"
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer/chain"
@@ -392,7 +391,7 @@ func (s *BtcRewardsDistribution) CheckRewardsFirstDelegations() {
 
 	coins.RequireCoinsDiffInPointOnePercentMargin(
 		s.T(),
-		fp2DiffRewards.Coins.MulInt(sdkmath.NewIntFromUint64(3)).Add(sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.OneInt())),
+		fp2DiffRewards.Coins.MulInt(sdkmath.NewIntFromUint64(3)),
 		fp1DiffRewards.Coins,
 	)
 
