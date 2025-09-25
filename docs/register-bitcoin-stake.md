@@ -678,7 +678,7 @@ The rewards are distributed as follows:
 * The minted rewards are allocated among four groups:
   * Native stakers
   * Bitcoin stakers
-  * Costakers (BTC + BABY stakers, see [Section 5.3](#53-costaking-rewards))
+  * Costakers (BTC + BABY stakers, see [Section 5.2](#52-costaking-rewards))
   * Community pool
 
   The allocation is controlled by specific parameters:
@@ -738,7 +738,7 @@ receives 7,059 BABY.
 * Rewards are collected and accumulated in the costaking reward pool
 * Rewards distributed based on user scores
 * Rewards automatically sent to your incentive gauge alongside regular BTC staking rewards
-* Withdraw all BTC-related rewards using `MsgWithdrawReward` with `type: "btc_staker"`
+* Withdraw all Bitcoin and Costaker rewards using `MsgWithdrawReward` with `type: "btc_staker"`
 
 ### 5.3. Rewards Withdrawal
 
@@ -759,6 +759,7 @@ The message defines the following fields:
 * `type`: Specifies the stakeholder type for reward withdrawal. Allowed values:
   * `finality_provider` - Finality provider commission and rewards
   * `btc_staker` - All BTC-related rewards (BTC staking and costaking rewards)
+  * `costaker` - Costaking rewards only
 * `address`: The bech32 address of the stakeholder
   (must match the signer of the message).
 
