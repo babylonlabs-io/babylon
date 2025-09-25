@@ -198,7 +198,7 @@ func TestCostakingRewardsHappyCase(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, del.DelegatorAddress, del1.Address().String())
 
-	// check that baby delegation reached coostaking
+	// check that baby delegation reached costaking
 	zero := sdkmath.ZeroInt()
 	d.CheckCostakerRewards(del1.Address(), del1BabyDelegatedAmt, zero, zero, rwd.Period)
 

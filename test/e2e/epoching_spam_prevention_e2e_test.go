@@ -69,7 +69,7 @@ func (s *EpochingSpamPreventionTestSuite) SetupSuite() {
 	var err error
 
 	// Configure 1 chain with some validator nodes
-	s.configurer, err = configurer.NewBTCStakingConfigurer(s.T(), true)
+	s.configurer, err = configurer.NewBabylonConfigurer(s.T(), true)
 	s.NoError(err)
 	err = s.configurer.ConfigureChains()
 	s.NoError(err)

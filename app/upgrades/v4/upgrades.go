@@ -84,7 +84,7 @@ func CreateUpgradeHandler(mm *module.Manager, configurator module.Configurator, 
 			"epoch_boundary", true,
 		)
 
-		// coostaking upgrade
+		// costaking upgrade
 		costkStoreKey := keepers.GetKey(costktypes.StoreKey)
 		if costkStoreKey == nil {
 			return nil, errors.New("invalid costaking types store key")

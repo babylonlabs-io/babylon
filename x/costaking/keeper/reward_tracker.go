@@ -290,7 +290,7 @@ func (k Keeper) GetCurrentRewardsInitialized(ctx context.Context) (rwd *types.Cu
 	if !found {
 		// initialize reward tracking system and set the period as 1 as ended period due
 		// to the created historical FP rewards starts at period 0
-		currentRwd, err = k.initializeRewardsTracker(ctx)
+		currentRwd, err = k.initializeCurrentRewards(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -299,10 +299,10 @@ func (k Keeper) GetCurrentRewardsInitialized(ctx context.Context) (rwd *types.Cu
 	return currentRwd, nil
 }
 
-// initializeRewardsTracker initializes a new current rewards tracker at period 1, empty rewards and zero score
+// initializeCurrentRewards initializes a new current rewards tracker at period 1, empty rewards and zero score
 // and also creates a new historical rewards at period 0 and zero rewards as well.
 // It does not verifies if it exists prior to overwrite, who calls it needs to verify.
-func (k Keeper) initializeRewardsTracker(ctx context.Context) (*types.CurrentRewards, error) {
+func (k Keeper) initializeCurrentRewards(ctx context.Context) (*types.CurrentRewards, error) {
 	// historical rewards starts at the period 0
 	err := k.setHistoricalRewards(ctx, 0, types.NewHistoricalRewards(sdk.NewCoins()))
 	if err != nil {

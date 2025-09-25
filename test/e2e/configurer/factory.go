@@ -192,24 +192,6 @@ func NewBTCTimestampingPhase2RlyConfigurer(t *testing.T, isDebugLogEnabled bool)
 	), nil
 }
 
-// NewBTCStakingConfigurer returns a new Configurer for BTC staking service
-func NewBTCStakingConfigurer(t *testing.T, isDebugLogEnabled bool) (Configurer, error) {
-	identifier := identifierName(t)
-	containerManager, err := containers.NewManager(identifier, isDebugLogEnabled, false, false)
-	if err != nil {
-		return nil, err
-	}
-
-	return NewCurrentBranchConfigurer(t,
-		[]*chain.Config{
-			// we only need 1 chain for testing BTC staking
-			chain.New(t, containerManager, initialization.ChainAID, updateNodeConfigNameWithIdentifier(validatorConfigsChainA, identifier), nil),
-		},
-		baseSetup, // base set up
-		containerManager,
-	), nil
-}
-
 // NewSoftwareUpgradeConfigurerWithCurrentTag returns a new Configurer for Software Upgrade testing with the specified current tag
 func NewSoftwareUpgradeConfigurerWithCurrentTag(t *testing.T, isDebugLogEnabled bool, upgradePath string, preUpgradeFunc PreUpgradeFunc, currentTag string) (*UpgradeConfigurer, error) {
 	identifier := identifierName(t)

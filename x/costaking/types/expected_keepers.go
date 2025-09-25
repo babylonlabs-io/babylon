@@ -15,6 +15,7 @@ type IncentiveKeeper interface {
 
 type AccountKeeper interface {
 	GetModuleAccount(ctx context.Context, name string) sdk.ModuleAccountI
+	GetModuleAddress(moduleName string) sdk.AccAddress
 }
 
 type BankKeeper interface {
