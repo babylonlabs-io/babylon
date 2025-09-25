@@ -19,7 +19,7 @@ import (
 
 var (
 	feeCollectorAcc = authtypes.NewEmptyModuleAccount(authtypes.FeeCollectorName)
-	fees            = sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(100)))
+	fees            = sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(10000)))
 )
 
 func FuzzInterceptFeeCollector(f *testing.F) {
@@ -41,22 +41,23 @@ func FuzzInterceptFeeCollector(f *testing.F) {
 		// mock epoching keeper
 		epochingKeeper := types.NewMockEpochingKeeper(ctrl)
 
-		keeper, ctx := testkeeper.IncentiveKeeper(t, bankKeeper, accountKeeper, epochingKeeper, nil)
+		k, ctx := testkeeper.IncentiveKeeper(t, bankKeeper, accountKeeper, epochingKeeper, nil)
 		height := datagen.RandomInt(r, 1000)
 		ctx = datagen.WithCtxHeight(ctx, height)
 
 		// mock (thus ensure) that fees with the exact portion is intercepted
 		// NOTE: if the actual fees are different from feesForIncentive the test will fail
-		params := keeper.GetParams(ctx)
-		feesForBTCStaking := types.GetCoinsPortion(fees, params.BTCStakingPortion())
+		params := k.GetParams(ctx)
+		feesForBTCStaking := types.GetCoinsPortion(fees, params.TotalPortion())
+
 		bankKeeper.EXPECT().SendCoinsFromModuleToModule(gomock.Any(), gomock.Eq(authtypes.FeeCollectorName), gomock.Eq(types.ModuleName), gomock.Eq(feesForBTCStaking)).Times(1)
 
 		// handle coins in fee collector
-		keeper.HandleCoinsInFeeCollector(ctx)
+		k.HandleCoinsInFeeCollector(ctx)
 
 		// assert correctness of BTC staking gauge at height
 		btcStakingFee := types.GetCoinsPortion(fees, params.BTCStakingPortion())
-		btcStakingGauge := keeper.GetBTCStakingGauge(ctx, height)
+		btcStakingGauge := k.GetBTCStakingGauge(ctx, height)
 		require.NotNil(t, btcStakingGauge)
 		require.Equal(t, btcStakingFee, btcStakingGauge.Coins)
 	})

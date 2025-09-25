@@ -22,6 +22,7 @@ func MigrateStore(
 ) error {
 	dp := types.DefaultParams()
 	currParams := k.GetParams(ctx)
+	currParams.BtcStakingPortion = dp.BtcStakingPortion
 	currParams.FpPortion = dp.FpPortion
 	return k.SetParams(ctx, currParams)
 }
