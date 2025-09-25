@@ -181,7 +181,7 @@ func (s *BtcRewardsDistribution) CreateFinalityProviders() {
 	s.Len(actualFps, 2)
 }
 
-// Test2CreateFinalityProviders creates the first 3 btc delegations
+// CreateFirstBtcDelegations creates the first 3 btc delegations
 // with the same values, but different satoshi staked amounts
 func (s *BtcRewardsDistribution) CreateFirstBtcDelegations() {
 	n2, err := s.configurer.GetChainConfig(0).GetNodeAtIndex(2)

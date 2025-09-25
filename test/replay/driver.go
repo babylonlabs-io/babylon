@@ -835,6 +835,21 @@ func (d *BabylonAppDriver) ConfirmStakingTransactionOnBTC(
 	}
 }
 
+func (d *BabylonAppDriver) IncludeTxsInBTC(txs []*wire.MsgTx) *datagen.BlockWithProofs {
+	tip, _ := d.GetBTCLCTip()
+
+	block := datagen.GenRandomBtcdBlockWithTransactions(d.r, txs, tip)
+	headers := BlocksWithProofsToHeaderBytes([]*datagen.BlockWithProofs{block})
+
+	// extend our light client so that all stakers are confirmed
+	d.SendTxWithMsgsFromDriverAccount(d.t, &btclighttypes.MsgInsertHeaders{
+		Signer:  d.GetDriverAccountAddress().String(),
+		Headers: headers,
+	})
+
+	return block
+}
+
 func (d *BabylonAppDriver) GenCkptForEpoch(r *rand.Rand, t *testing.T, epochNumber uint64) {
 	ckptWithMeta := d.GetCheckpoint(t, epochNumber)
 	subAddress := d.GetDriverAccountAddress()
@@ -929,7 +944,7 @@ func (d *BabylonAppDriver) SendTxWithMsgsFromDriverAccount(
 	return result
 }
 
-// Funciont to initate different type of senders
+// Function to initiate different type of senders
 
 type NewAccountInfo struct {
 	CreationMsg *banktypes.MsgSend

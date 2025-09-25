@@ -247,6 +247,7 @@ test-e2e-cache:
 	$(MAKE) test-e2e-cache-ibc-transfer
 	$(MAKE) test-e2e-cache-upgrade-v2
 	$(MAKE) test-e2e-cache-epoching-spam-prevention
+	$(MAKE) test-e2e-cache-btc-stake-expansion
 
 clean-e2e:
 	docker container rm -f $(shell docker container ls -a -q) || true
@@ -291,7 +292,11 @@ test-e2e-cache-upgrade-v4:
 	$(MAKE) -C contrib/images e2e-init-chain && \
 	go test -run TestSoftwareUpgradeV23To4TestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
 
-test-sim-nondeterminism:	@echo "Running non-determinism test..."
+test-e2e-cache-btc-stake-expansion:
+	go test -run TestBTCStakeExpansionTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
+
+test-sim-nondeterminism:
+	@echo "Running non-determinism test..."
 	@go test -mod=readonly $(SIMAPP) -run TestAppStateDeterminism -Enabled=true \
 		-NumBlocks=100 -BlockSize=200 -Commit=true -Period=0 -v -timeout 24h
 

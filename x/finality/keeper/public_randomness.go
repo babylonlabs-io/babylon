@@ -21,7 +21,7 @@ import (
 */
 
 // GetPubRandCommitForHeight finds the public randomness commitment that includes the given
-// height for the given finality provider. 
+// height for the given finality provider.
 // Uses binary search on the indexed start heights to find the commitment.
 func (k Keeper) GetPubRandCommitForHeight(ctx context.Context, fpBtcPK *bbn.BIP340PubKey, height uint64) (*types.PubRandCommit, error) {
 	index, err := k.pubRandCommitIndex.Get(ctx, fpBtcPK.MustMarshal())
@@ -62,7 +62,6 @@ func (k Keeper) GetPubRandCommitForHeight(ctx context.Context, fpBtcPK *bbn.BIP3
 
 	return &prCommit, nil
 }
-
 
 // GetTimestampedPubRandCommitForHeight finds the public randomness commitment that includes the given
 // height for the given finality provider
