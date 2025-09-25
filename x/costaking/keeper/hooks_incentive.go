@@ -20,7 +20,17 @@ func (k Keeper) HookIncentives() HookIncentives {
 	return HookIncentives{k}
 }
 
-// BeforeRewardWithdraw updates the costaking reward tracker and send the reward funds from costaking to incentive module.
+// BeforeRewardWithdraw handles costaker reward withdrawal preparation.
+// This hook is triggered before the incentive module processes a reward withdrawal.
+// For costakers, it calculates and transfers the appropriate reward amounts from the
+// costaking module account to the incentive module account before distribution.
+//
+// Note: This is also being used in a query context to calculate the total rewards available.
+//
+// State Changes:
+// - Updates costaker's reward period tracking
+// - Transfers calculated rewards from costaking module to incentive module
+// - Only processes COSTAKER stakeholder type, ignores others
 func (h HookIncentives) BeforeRewardWithdraw(ctx context.Context, sType ictvtypes.StakeholderType, addr sdk.AccAddress) error {
 	if sType != ictvtypes.COSTAKER {
 		return nil

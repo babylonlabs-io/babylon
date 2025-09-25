@@ -9,9 +9,6 @@ var (
 	// DefaultCostakingPortion defines how much of the fee_collector
 	// balances will go to costakers. Reminder that incentives gets
 	// his portion first, than costaking than the rest goes to distribution.
-	// Goal: 3% to BTC stakers, 3% to BABY stakers, 2% costakers.
-	// Since incentives get it first it should get 37% of total fee collector
-	// balance and costaking should get 40%
 	DefaultCostakingPortion = math.LegacyMustNewDecFromStr("0.4")
 	// DefaultScoreRatioBtcByBaby defines the min number of baby staked to
 	// make one BTC count as score. Each BTC staked should have at least 5k

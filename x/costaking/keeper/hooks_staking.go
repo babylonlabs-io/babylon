@@ -17,7 +17,15 @@ type HookStaking struct {
 	k Keeper
 }
 
-// AfterDelegationModified implements types.StakingHooks.
+// AfterDelegationModified handles Baby token delegation modification events.
+// This hook is triggered when an existing cosmos staking delegation amount is changed
+// (increased or decreased). It updates the costaker's Baby token amount accordingly.
+//
+// State Changes:
+// - ActiveBaby += (new_amount - old_amount)
+// - If differece is negative, ActiveBaby is subtracted
+//
+// Note: This hook uses a cache to track previous delegation amounts to calculate the delta.
 func (h HookStaking) AfterDelegationModified(ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) error {
 	del, err := h.k.stkK.GetDelegation(ctx, delAddr, valAddr)
 	if err != nil { // we stop if the delegation is not found, because it must be found
@@ -36,7 +44,12 @@ func (h HookStaking) AfterDelegationModified(ctx context.Context, delAddr sdk.Ac
 	})
 }
 
-// BeforeDelegationSharesModified implements types.StakingHooks.
+// BeforeDelegationSharesModified handles pre-modification state caching.
+// This hook is triggered before a cosmos staking delegation is modified. It caches
+// the current delegation amount so that AfterDelegationModified can calculate the delta.
+//
+// State Changes:
+// - Caches current delegation amount in temporary storage
 func (h HookStaking) BeforeDelegationSharesModified(ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) error {
 	del, err := h.k.stkK.GetDelegation(ctx, delAddr, valAddr)
 	if err != nil {
