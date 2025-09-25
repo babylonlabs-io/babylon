@@ -62,6 +62,10 @@ func TestHookStakingAfterDelegationModified(t *testing.T) {
 
 	mockIctvK := types.NewMockIncentiveKeeper(ctrl)
 	k, ctx := NewKeeperWithMockIncentiveKeeper(t, mockIctvK)
+	p := k.GetParams(ctx)
+	p.ScoreRatioBtcByBaby = math.NewInt(50)
+	err := k.SetParams(ctx, p)
+	require.NoError(t, err)
 
 	delAddr, valAddr := datagen.GenRandomAddress(), datagen.GenRandomValidatorAddress()
 

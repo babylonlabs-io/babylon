@@ -209,9 +209,10 @@ func TestCostakingRewardsHappyCase(t *testing.T) {
 	}
 	d.GenerateNewBlockAssertExecutionSuccess()
 
-	// costaking ratio of btc by baby is 50, so for every sat staked it needs to
-	// have 50 baby staked to take full account of the btcs in the score.
-	del1BtcStakedAmt := del1BabyDelegatedAmt.QuoRaw(50)
+	p := costkK.GetParams(d.Ctx())
+	// costaking ratio of btc by baby is 200, so for every sat staked it needs to
+	// have 200 baby staked to take full account of the btcs in the score.
+	del1BtcStakedAmt := del1BabyDelegatedAmt.Quo(p.ScoreRatioBtcByBaby)
 	del1.CreatePreApprovalDelegation(
 		[]*bbn.BIP340PubKey{fp1.BTCPublicKey()},
 		defaultStakingTime,
@@ -366,8 +367,10 @@ func TestCostakingFpSlashedAndBtcUnbondSameBlockPreventsDoubleSatsRemoval(t *tes
 	fp1.RegisterFinalityProvider()
 	d.GenerateNewBlockAssertExecutionSuccess()
 
+	p := costkK.GetParams(d.Ctx())
+
 	// Create BTC delegation
-	del1BtcStakedAmt := del1BabyDelegatedAmt.QuoRaw(50) // 400k sats
+	del1BtcStakedAmt := del1BabyDelegatedAmt.Quo(p.ScoreRatioBtcByBaby)
 	del1.CreatePreApprovalDelegation(
 		[]*bbn.BIP340PubKey{fp1.BTCPublicKey()},
 		defaultStakingTime,
@@ -480,7 +483,8 @@ func TestCostakingFpVotingPowerLossAndBtcUnbondSameBlockPreventsDoubleSatsRemova
 
 	// Create BTC delegations for both FPs
 	// FP1 gets a smaller delegation initially
-	del1BtcStakedAmtFp1 := del1BabyDelegatedAmt.QuoRaw(50) // 400k sats
+	p := costkK.GetParams(d.Ctx())
+	del1BtcStakedAmtFp1 := del1BabyDelegatedAmt.Quo(p.ScoreRatioBtcByBaby)
 	del1MsgCreate := del1.CreatePreApprovalDelegation(
 		[]*bbn.BIP340PubKey{fp1.BTCPublicKey()},
 		defaultStakingTime,
@@ -545,7 +549,7 @@ func TestCostakingFpVotingPowerLossAndBtcUnbondSameBlockPreventsDoubleSatsRemova
 	d.GenerateNewBlockAssertExecutionSuccess()
 
 	// Create larger BTC delegation for fp2 to active fp2 and inactive fp1
-	del3BtcStakedAmtFp2 := del3BabyDelegatedAmt.QuoRaw(50)
+	del3BtcStakedAmtFp2 := del3BabyDelegatedAmt.Quo(p.ScoreRatioBtcByBaby)
 	del3.CreatePreApprovalDelegation(
 		[]*bbn.BIP340PubKey{fp2.BTCPublicKey()},
 		defaultStakingTime,

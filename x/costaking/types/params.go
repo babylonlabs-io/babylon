@@ -11,11 +11,11 @@ var (
 	// his portion first, than costaking than the rest goes to distribution.
 	DefaultCostakingPortion = math.LegacyMustNewDecFromStr("0.4")
 	// DefaultScoreRatioBtcByBaby defines the min number of baby staked to
-	// make one BTC count as score. Each BTC staked should have at least 5k
+	// make one BTC count as score. Each BTC staked should have at least 20k
 	// BABY staked. Tranlating that into sats and ubbn the ratio should be
-	// (5k * conversion baby to ubbn / conversion BTC to sats)
-	// 5_000 * 1_000_000 ubbn / 100_000_000 sats= 50 ubbn per sat
-	DefaultScoreRatioBtcByBaby = math.NewInt(50)
+	// (20k * conversion baby to ubbn / conversion BTC to sats)
+	// 20_000 * 1_000_000 ubbn / 100_000_000 sats= 200 ubbn per sat
+	DefaultScoreRatioBtcByBaby = math.NewInt(200)
 	// DefaultValidatorsPortion defines how much of the fee_collector
 	// remaining balances will go directly to baby validators
 	DefaultValidatorsPortion = math.LegacyMustNewDecFromStr("0.0013") // 0.13%
