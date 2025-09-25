@@ -58,7 +58,7 @@ func NewKeeper(
 	feeCollectorName string,
 ) Keeper {
 	if addr := accK.GetModuleAddress(types.ModuleName); addr == nil {
-		panic("the mint module account has not been set")
+		panic("the costaking module account has not been set")
 	}
 
 	sb := collections.NewSchemaBuilder(storeService)

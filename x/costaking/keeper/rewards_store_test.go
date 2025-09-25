@@ -4,6 +4,7 @@ import (
 	"math/rand"
 	"testing"
 
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -13,6 +14,7 @@ import (
 	"github.com/babylonlabs-io/babylon/v4/testutil/store"
 	"github.com/babylonlabs-io/babylon/v4/x/costaking/types"
 	ictvtypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 )
 
 func FuzzCheckCurrentRewards(f *testing.F) {
@@ -172,8 +174,15 @@ func TestCurrentRewardsAddRewards(t *testing.T) {
 }
 
 func NewKeeperWithCtx(t *testing.T) (*Keeper, sdk.Context) {
+	ctrl := gomock.NewController(t)
+	t.Cleanup(ctrl.Finish)
+
 	encConf := appparams.DefaultEncodingConfig()
 	ctx, kvStore := store.NewStoreWithCtx(t, types.ModuleName)
-	k := NewKeeper(encConf.Codec, kvStore, nil, nil, nil, nil, nil, appparams.AccGov.String(), appparams.AccFeeCollector.String())
+
+	accK := types.NewMockAccountKeeper(ctrl)
+	accK.EXPECT().GetModuleAddress(gomock.Any()).Return(authtypes.NewModuleAddress(types.ModuleName)).AnyTimes()
+
+	k := NewKeeper(encConf.Codec, kvStore, nil, accK, nil, nil, nil, appparams.AccGov.String(), appparams.AccFeeCollector.String())
 	return &k, ctx
 }

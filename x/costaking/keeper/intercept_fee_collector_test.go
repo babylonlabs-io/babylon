@@ -36,6 +36,7 @@ func FuzzInterceptFeeCollector(f *testing.F) {
 
 		accK := types.NewMockAccountKeeper(ctrl)
 		accK.EXPECT().GetModuleAccount(gomock.Any(), authtypes.FeeCollectorName).Return(feeCollectorAcc).Times(1)
+		accK.EXPECT().GetModuleAddress(gomock.Any()).Return(authtypes.NewModuleAddress(types.ModuleName)).AnyTimes()
 
 		stkK := types.NewMockStakingKeeper(ctrl)
 		distK := types.NewMockDistributionKeeper(ctrl)
@@ -101,6 +102,7 @@ func TestInterceptFeeCollectorWithSmallAmount(t *testing.T) {
 
 	accK := types.NewMockAccountKeeper(ctrl)
 	accK.EXPECT().GetModuleAccount(gomock.Any(), authtypes.FeeCollectorName).Return(feeCollectorAcc).Times(1)
+	accK.EXPECT().GetModuleAddress(gomock.Any()).Return(authtypes.NewModuleAddress(types.ModuleName)).AnyTimes()
 
 	stkK := types.NewMockStakingKeeper(ctrl)
 	distK := types.NewMockDistributionKeeper(ctrl)

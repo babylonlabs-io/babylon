@@ -16,6 +16,7 @@ import (
 	"github.com/babylonlabs-io/babylon/v4/x/costaking/types"
 	ictvtypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 )
 
 func FuzzAddRewardsForCostakers(f *testing.F) {
@@ -518,6 +519,8 @@ func NewKeeperWithMockIncentiveKeeper(t *testing.T, mockIctvK types.IncentiveKee
 	mockAccK := types.NewMockAccountKeeper(ctrl)
 	stkK := types.NewMockStakingKeeper(ctrl)
 	dstrK := types.NewMockDistributionKeeper(ctrl)
+
+	mockAccK.EXPECT().GetModuleAddress(gomock.Any()).Return(authtypes.NewModuleAddress(types.ModuleName)).AnyTimes()
 
 	k := NewKeeper(
 		encConf.Codec,

@@ -74,7 +74,11 @@ func CostakingKeeperWithMocks(t testing.TB, ctrl *gomock.Controller) (*keeper.Ke
 	if ctrl == nil {
 		ctrl = gomock.NewController(t)
 	}
-	k, ctx := CostakingKeeperWithStoreKey(t, nil, types.NewMockBankKeeper(ctrl), types.NewMockAccountKeeper(ctrl), types.NewMockIncentiveKeeper(ctrl), types.NewMockStakingKeeper(ctrl), types.NewMockDistributionKeeper(ctrl))
+
+	accK := types.NewMockAccountKeeper(ctrl)
+	accK.EXPECT().GetModuleAddress(gomock.Any()).Return(authtypes.NewModuleAddress(types.ModuleName)).AnyTimes()
+
+	k, ctx := CostakingKeeperWithStoreKey(t, nil, types.NewMockBankKeeper(ctrl), accK, types.NewMockIncentiveKeeper(ctrl), types.NewMockStakingKeeper(ctrl), types.NewMockDistributionKeeper(ctrl))
 	return k, ctrl, ctx
 }
 
