@@ -31,6 +31,7 @@ import (
 	cryptocoded "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	stkkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stktypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/golang/mock/gomock"
@@ -83,6 +84,10 @@ func setupTestKeepers(t *testing.T, btcTip uint32) (sdk.Context, codec.BinaryCod
 	// Setup keepers
 	accK := testutilkeeper.AccountKeeper(t, db, stateStore)
 	bankKeeper := testutilkeeper.BankKeeper(t, db, stateStore, accK)
+
+	// Create costaking module account
+	costkModuleAcc := authtypes.NewEmptyModuleAccount(costktypes.ModuleName)
+	accK.SetModuleAccount(btcCtx, costkModuleAcc)
 	stkKeeper := testutilkeeper.StakingKeeper(t, db, stateStore, accK, bankKeeper)
 	incentiveK, _ := testutilkeeper.IncentiveKeeperWithStore(t, db, stateStore, nil, bankKeeper, accK, nil)
 	fKeeper, _ := testutilkeeper.FinalityKeeperWithStore(t, db, stateStore, btcStkKeeper, incentiveK, ftypes.NewMockCheckpointingKeeper(ctrl), ftypes.NewMockFinalityHooks(ctrl))
