@@ -49,6 +49,12 @@ func TestInitGenesis(t *testing.T) {
 						Gauge:  datagen.GenRandomGauge(r),
 					},
 				},
+				FpDirectGauges: []types.FPDirectGaugeEntry{
+					{
+						Height: uint64(0),
+						Gauge:  datagen.GenRandomGauge(r),
+					},
+				},
 				RewardGauges: []types.RewardGaugeEntry{
 					{
 						Address:     acc1.Address,
@@ -264,6 +270,7 @@ func FuzzTestExportGenesis(f *testing.F) {
 		l := len(gs.BtcStakingGauges)
 		for i := 0; i < l; i++ {
 			k.SetBTCStakingGauge(ctx, gs.BtcStakingGauges[i].Height, gs.BtcStakingGauges[i].Gauge)
+			k.SetFPDirectGauge(ctx, gs.FpDirectGauges[i].Height, gs.FpDirectGauges[i].Gauge)
 			k.SetRewardGauge(ctx, gs.RewardGauges[i].StakeholderType, sdk.MustAccAddressFromBech32(gs.RewardGauges[i].Address), gs.RewardGauges[i].RewardGauge)
 			k.SetWithdrawAddr(ctx, sdk.MustAccAddressFromBech32(gs.WithdrawAddresses[i].DelegatorAddress), sdk.MustAccAddressFromBech32(gs.WithdrawAddresses[i].WithdrawAddress))
 			bz, err := hex.DecodeString(gs.RefundableMsgHashes[i])
@@ -357,6 +364,7 @@ func setupTest(t *testing.T, seed int64) (sdk.Context, *keeper.Keeper, *storetyp
 		k, ctx     = keepertest.IncentiveKeeperWithStoreKey(t, storeKey, nil, ak, nil, nil)
 		l          = int(math.Abs(float64(r.Int() % 50))) // cap it to 50 entries
 		bsg        = make([]types.BTCStakingGaugeEntry, l)
+		fpDirectG  = make([]types.FPDirectGaugeEntry, l)
 		rg         = make([]types.RewardGaugeEntry, l)
 		wa         = make([]types.WithdrawAddressEntry, l)
 		mh         = make([]string, l)
@@ -395,6 +403,11 @@ func setupTest(t *testing.T, seed int64) (sdk.Context, *keeper.Keeper, *storetyp
 		ak.EXPECT().GetAccount(gomock.Any(), acc2.GetAddress()).Return(acc2).AnyTimes()
 
 		bsg[i] = types.BTCStakingGaugeEntry{
+			Height: blkHeight,
+			Gauge:  datagen.GenRandomGauge(r),
+		}
+
+		fpDirectG[i] = types.FPDirectGaugeEntry{
 			Height: blkHeight,
 			Gauge:  datagen.GenRandomGauge(r),
 		}
@@ -466,6 +479,7 @@ func setupTest(t *testing.T, seed int64) (sdk.Context, *keeper.Keeper, *storetyp
 			FpPortion:         sdkmath.LegacyOneDec().Sub(btcStkPortion).Sub(rem),
 		},
 		BtcStakingGauges:                      bsg,
+		FpDirectGauges:                        fpDirectG,
 		RewardGauges:                          rg,
 		WithdrawAddresses:                     wa,
 		RefundableMsgHashes:                   mh,

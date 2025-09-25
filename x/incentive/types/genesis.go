@@ -436,4 +436,7 @@ func SortData(gs *GenesisState) {
 	sort.Slice(gs.EventRewardTracker, func(i, j int) bool {
 		return gs.EventRewardTracker[i].Height < gs.EventRewardTracker[j].Height
 	})
+	sort.Slice(gs.FpDirectGauges, func(i, j int) bool {
+		return gs.FpDirectGauges[i].Height < gs.FpDirectGauges[j].Height
+	})
 }
