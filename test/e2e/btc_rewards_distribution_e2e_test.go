@@ -743,6 +743,9 @@ func CheckWithdrawReward(
 	accDelAddr := sdk.MustAccAddressFromBech32(delAddr)
 	n.WaitForNextBlockWithSleep50ms()
 
+	delRwdGaugeBefore, errRwdGauge := n.QueryRewardGauge(accDelAddr)
+	require.NoError(t, errRwdGauge)
+
 	delBalanceBeforeWithdraw, err := n.QueryBalances(delAddr)
 	require.NoError(t, err)
 
@@ -752,7 +755,7 @@ func CheckWithdrawReward(
 
 	_, txResp := n.QueryTx(txHash)
 
-	delRwdGauge, errRwdGauge := n.QueryRewardGauge(accDelAddr)
+	delRwdGaugeAfter, errRwdGauge := n.QueryRewardGauge(accDelAddr)
 	require.NoError(t, errRwdGauge)
 
 	delBalanceAfterWithdraw, err := n.QueryBalances(delAddr)
@@ -760,12 +763,16 @@ func CheckWithdrawReward(
 
 	// note that the rewards might not be precise as more or less blocks were produced and given out rewards
 	// while the query balance / withdraw / query gauge was running
-	delRewardGauge, ok := delRwdGauge[itypes.BTC_STAKER.String()]
+	delRewardGaugeBefore, ok := delRwdGaugeBefore[itypes.BTC_STAKER.String()]
 	require.True(t, ok)
-	require.True(t, delRewardGauge.Coins.IsAllPositive())
+	require.True(t, delRewardGaugeBefore.Coins.IsAllPositive())
+	delRewardGaugeAfter, ok := delRwdGaugeAfter[itypes.BTC_STAKER.String()]
+	require.True(t, ok)
+	require.True(t, delRewardGaugeAfter.Coins.IsAllPositive())
 
+	coinsWithdraw := delRewardGaugeAfter.WithdrawnCoins.Sub(delRewardGaugeBefore.WithdrawnCoins...)
 	actualAmt := delBalanceAfterWithdraw.String()
-	expectedAmt := delBalanceBeforeWithdraw.Add(delRewardGauge.WithdrawnCoins...).Sub(txResp.AuthInfo.Fee.Amount...).String()
+	expectedAmt := delBalanceBeforeWithdraw.Add(coinsWithdraw...).Sub(txResp.AuthInfo.Fee.Amount...).String()
 	require.Equal(t, expectedAmt, actualAmt)
 }
 
