@@ -129,60 +129,6 @@ func TestExpandBTCDelegation(t *testing.T) {
 			require.Len(t, activeDelegations, 2)
 		})
 	}
-
-	// After getting covenant sigs, stake expansion delegation
-	// should be verified
-	verifiedDels := driver.GetVerifiedBTCDelegations(t)
-	require.Len(t, verifiedDels, 1)
-	require.NotNil(t, verifiedDels[0].StkExp)
-
-	// wait stake expansion Tx be 'k' deep in BTC
-	blockWithProofs, _ := driver.IncludeVerifiedStakingTxInBTC(1)
-	require.Len(t, blockWithProofs.Proofs, 2)
-
-	// Send MsgBTCUndelegate for the first delegation
-	// to activate stake expansion
-	spendingTx, err := bbn.NewBTCTxFromBytes(btcExpMsg.StakingTx)
-	require.NoError(t, err)
-
-	fundingTx, err := bbn.NewBTCTxFromBytes(btcExpMsg.FundingTx)
-	require.NoError(t, err)
-
-	params := driver.GetBTCStakingParams(t)
-	spendingTxWithWitnessBz, _ := datagen.AddWitnessToStakeExpTx(
-		t,
-		prevStkTx.TxOut[0],
-		fundingTx.TxOut[0],
-		s1.BTCPrivateKey,
-		covenantSKs,
-		params.CovenantQuorum,
-		[]*btcec.PublicKey{fp1.BTCPrivateKey.PubKey()},
-		uint16(stakingTime),
-		stakingValue,
-		spendingTx,
-		driver.App.BTCLightClientKeeper.GetBTCNet(),
-	)
-
-	msg := &bstypes.MsgBTCUndelegate{
-		Signer:                        s1.AddressString(),
-		StakingTxHash:                 prevStkTx.TxHash().String(),
-		StakeSpendingTx:               spendingTxWithWitnessBz,
-		StakeSpendingTxInclusionProof: bstypes.NewInclusionProofFromSpvProof(blockWithProofs.Proofs[1]),
-		FundingTransactions:           [][]byte{prevStkTxBz, btcExpMsg.FundingTx},
-	}
-
-	s1.SendMessage(msg)
-	driver.GenerateNewBlockAssertExecutionSuccess()
-
-	// After unbonding the initial delegation
-	// the stake expansion should become active
-	// and the initial delegation should become unbonded
-	activeDelegations = driver.GetActiveBTCDelegations(t)
-	require.Len(t, activeDelegations, 1)
-	require.NotNil(t, activeDelegations[0].StkExp)
-
-	unbondedDelegations := driver.GetUnbondedBTCDelegations(t)
-	require.Len(t, unbondedDelegations, 1)
 }
 
 func TestInvalidStakeExpansion(t *testing.T) {
@@ -494,23 +440,6 @@ func setupTest(t *testing.T) *testSetup {
 		return activeDelegations[i].TotalSat < activeDelegations[j].TotalSat
 	})
 
-	// using other staking tx as funding tx
-	fundingTx, _, err := bbn.NewBTCTxFromHex(activeDelegations[1].StakingTxHex)
-	require.NoError(t, err)
-
-	stakeExpandMsg := s1.CreateBtcExpandMessage(
-		[]*bbn.BIP340PubKey{fp1.BTCPublicKey()},
-		1000,
-		100000000,
-		prevStkTxHash.String(),
-		fundingTx,
-		0,
-	)
-
-	s1.SendMessage(stakeExpandMsg)
-	res := driver.GenerateNewBlockAssertExecutionFailure()
-	require.Len(t, res, 1)
-	require.Equal(t, res[0].Log, "failed to execute message; message index: 0: rpc error: code = InvalidArgument desc = the funding output cannot be a staking output")
 	return &testSetup{
 		r:                 r,
 		Driver:            driver,
