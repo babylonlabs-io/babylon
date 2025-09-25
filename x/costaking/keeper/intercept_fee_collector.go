@@ -44,8 +44,15 @@ func (k Keeper) HandleCoinsInFeeCollector(ctx context.Context) error {
 	return k.accumulateCostakingRewards(ctx, costakingRewards)
 }
 
-// allocateValidatorsRewards allocates rewards to validators based on their voting power
-// It transfers the rewards to the distribution module account and updates the validator's commission.
+// allocateValidatorsRewards allocates rwds proportionally to validators' voting power,
+// but credits them directly to validators' commission, not to delegators.
+//
+// Implementation detail:
+//
+//	We reuse distribution’s AllocateTokensToValidator, which pays out according to the
+//	validator’s commission rate. To force “all to validator, none to delegators”,
+//	we pass a **temporary copy** of the validator with Commission.Rate = 1.0.
+//	This copy is NOT written to state. Only the distribution accounting is affected for this allocation.
 func (k Keeper) allocateValidatorsRewards(ctx context.Context, rwds sdk.Coins) error {
 	if !rwds.IsAllPositive() {
 		return nil
