@@ -18,9 +18,9 @@ const (
 	NanosecondsPerYear = NanosecondsPerSecond * SecondsPerYear                                // 31,556,952,000,000,000
 
 	// InitialInflationRate is the inflation rate that the network starts at.
-	InitialInflationRate = 0.08
+	InitialInflationRate = 0.055
 	// DisinflationRate is the rate at which the inflation rate decreases each year.
-	DisinflationRate = 0.1
+	DisinflationRate = 0
 	// TargetInflationRate is the inflation rate that the network aims to
 	// stabilize at. In practice, TargetInflationRate acts as a minimum so that
 	// the inflation rate doesn't decrease after reaching it.
