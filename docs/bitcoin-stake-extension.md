@@ -86,7 +86,7 @@ The stake extension procedure operates as follows:
    necessary signatures submits the fully signed extended staking
    transaction to Bitcoin.
 4. **Monitoring for Confirmation**: A vigilante tracker (or the staker themself)
-   monitor Bitcoin for the confirmation status of the stake extension transaction.
+   monitors Bitcoin for the confirmation status of the stake extension transaction.
    Once this happens, the inclusion proof is submitted to Babylon Genesis.
 5. **Stake Extension Activation**: Once a valid proof of inclusion in a sufficiently confirmed block
    is submitted for a stake extension, the extended staking transaction becomes active
@@ -129,8 +129,8 @@ btc-->>btcstaker: Stake Extension tx mined
 deactivate btc
 
 
-Note over btcstaker, btc: Stake extension is K deep
-vigilante->>babylon: Reports BTC stake extension is K deep<br>MsgBTCUndelegate
+Note over btcstaker, btc: Stake extension is k deep
+vigilante->>babylon: Reports BTC stake extension is k deep<br>MsgBTCUndelegate
 activate babylon
 babylon-->>vigilante: Stake extension is confirmed
 deactivate babylon
@@ -333,7 +333,7 @@ message MsgBtcStakeExpand {
   A Bech32-encoded Babylon address (`bbn...`) representing the
   staker's Babylon account where staking rewards will be accumulated.
   *This must be the same address that signed the original delegation and 
-  must also sign the extension registration transaction*. The babylon signer
+  must also sign the extension registration transaction*. The Babylon signer
   address must be the same from the old stake (staker_addr).
   
   Example: `"bbn1abc123def456ghi789jkl012mno345pqr678stu901vwx234yz"`
