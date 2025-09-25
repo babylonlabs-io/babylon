@@ -1656,10 +1656,10 @@ func createDelegationWithFinalityProvider(
 	r *rand.Rand,
 	fpIndex int,
 	fpInfo *btcstktypes.FinalityProvider, // Must be non-nil
-	fpSK *btcec.PrivateKey,               // Must be non-nil
+	fpSK *btcec.PrivateKey, // Must be non-nil
 	btcStakingMsgServer btcstktypes.MsgServer,
 	btcLcMsgServer btclctypes.MsgServer,
-	finalityMsgServer ftypes.MsgServer,       // Use finality related MsgServer type
+	finalityMsgServer ftypes.MsgServer, // Use finality related MsgServer type
 	btcStakingKeeper btcstakingkeeper.Keeper, // keeper (passed by value)
 	btcLcKeeper btclckeeper.Keeper,
 	covenantSKs []*btcec.PrivateKey,

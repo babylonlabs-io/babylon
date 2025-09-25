@@ -31,7 +31,7 @@ type (
 		FinalityProviderMissedBlockBitmap collections.Map[collections.Pair[[]byte, uint64], []byte]
 
 		// pubRandCommitIndex key: BIP340PubKey bytes | value: PubRandCommitIndexValue (ordered start heights of commitments)
-		// This index is useful for retrieving PubRandCommits using binary search 
+		// This index is useful for retrieving PubRandCommits using binary search
 		pubRandCommitIndex collections.Map[[]byte, types.PubRandCommitIndexValue]
 	}
 )

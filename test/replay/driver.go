@@ -707,23 +707,21 @@ func blockWithProofsToActivationMessages(
 // 1. First block extends light client so that all stakers are confirmed
 // 2. Second block activates all verified delegations
 func (d *BabylonAppDriver) ActivateVerifiedDelegations(expectedVerifiedDelegations int) {
-	block := d.IncludeVerifiedStakingTxInBTC(expectedVerifiedDelegations)
+	block, _ := d.IncludeVerifiedStakingTxInBTC(expectedVerifiedDelegations)
 	acitvationMsgs := blockWithProofsToActivationMessages(block, d.GetDriverAccountAddress())
 	d.SendTxWithMsgsFromDriverAccount(d.t, acitvationMsgs...)
 }
 
 // IncludeVerifiedStakingTxInBTC extends light client so that all staking txs are confirmed (k deep).
 // Returns the block with the transactions
-func (d *BabylonAppDriver) IncludeVerifiedStakingTxInBTC(expectedVerifiedDelegations int) *datagen.BlockWithProofs {
+func (d *BabylonAppDriver) IncludeVerifiedStakingTxInBTC(expectedVerifiedDelegations int) (btcBlock *datagen.BlockWithProofs, bbnBlock *abci.ResponseFinalizeBlock) {
 	verifiedDelegations := d.GetVerifiedBTCDelegations(d.t)
-	btcCheckpointParams := d.GetBTCCkptParams(d.t)
 
 	// Only verify number if requested
 	if expectedVerifiedDelegations != 0 {
 		require.Equal(d.t, len(verifiedDelegations), expectedVerifiedDelegations)
 	}
 
-	tip, _ := d.GetBTCLCTip()
 	var transactions []*wire.MsgTx
 	for _, del := range verifiedDelegations {
 		stakingTx, _, err := bbn.NewBTCTxFromHex(del.StakingTxHex)
@@ -731,7 +729,17 @@ func (d *BabylonAppDriver) IncludeVerifiedStakingTxInBTC(expectedVerifiedDelegat
 		transactions = append(transactions, stakingTx)
 	}
 
-	block := datagen.GenRandomBtcdBlockWithTransactions(d.r, transactions, tip)
+	return d.IncludeTxsInBTCAndConfirm(transactions)
+}
+
+func (d *BabylonAppDriver) IncludeTxsInBTCAndConfirm(
+	txs []*wire.MsgTx,
+) (btcBlock *datagen.BlockWithProofs, bbnBlock *abci.ResponseFinalizeBlock) {
+	btcCheckpointParams := d.GetBTCCkptParams(d.t)
+
+	tip, _ := d.GetBTCLCTip()
+
+	block := datagen.GenRandomBtcdBlockWithTransactions(d.r, txs, tip)
 	headers := BlocksWithProofsToHeaderBytes([]*datagen.BlockWithProofs{block})
 
 	confirmationBLocks := datagen.GenNEmptyBlocks(
@@ -744,12 +752,12 @@ func (d *BabylonAppDriver) IncludeVerifiedStakingTxInBTC(expectedVerifiedDelegat
 	headers = append(headers, confirmationHeaders...)
 
 	// extend our light client so that all stakers are confirmed
-	d.SendTxWithMsgsFromDriverAccount(d.t, &btclighttypes.MsgInsertHeaders{
+	bbnBlock = d.SendTxWithMsgsFromDriverAccount(d.t, &btclighttypes.MsgInsertHeaders{
 		Signer:  d.GetDriverAccountAddress().String(),
 		Headers: headers,
 	})
 
-	return block
+	return block, bbnBlock
 }
 
 // ConfirmStakingTransactionOnBTC confirms staking transactions included in the
@@ -795,6 +803,21 @@ func (d *BabylonAppDriver) ConfirmStakingTransactionOnBTC(
 	for i := 1; i < len(block.Transactions); i++ {
 		msg[i-1].StakingTxInclusionProof = bstypes.NewInclusionProofFromSpvProof(block.Proofs[i])
 	}
+}
+
+func (d *BabylonAppDriver) IncludeTxsInBTC(txs []*wire.MsgTx) *datagen.BlockWithProofs {
+	tip, _ := d.GetBTCLCTip()
+
+	block := datagen.GenRandomBtcdBlockWithTransactions(d.r, txs, tip)
+	headers := BlocksWithProofsToHeaderBytes([]*datagen.BlockWithProofs{block})
+
+	// extend our light client so that all stakers are confirmed
+	d.SendTxWithMsgsFromDriverAccount(d.t, &btclighttypes.MsgInsertHeaders{
+		Signer:  d.GetDriverAccountAddress().String(),
+		Headers: headers,
+	})
+
+	return block
 }
 
 func (d *BabylonAppDriver) GenCkptForEpoch(r *rand.Rand, t *testing.T, epochNumber uint64) {
@@ -865,7 +888,7 @@ func (d *BabylonAppDriver) WaitTillAllFpsJailed(t *testing.T) {
 func (d *BabylonAppDriver) SendTxWithMsgsFromDriverAccount(
 	t *testing.T,
 	msgs ...sdk.Msg,
-) {
+) *abci.ResponseFinalizeBlock {
 	d.SendTxWithMessagesSuccess(
 		t,
 		d.SenderInfo,
@@ -888,9 +911,10 @@ func (d *BabylonAppDriver) SendTxWithMsgsFromDriverAccount(
 	}
 
 	d.IncSeq()
+	return result
 }
 
-// Funciont to initate different type of senders
+// Function to initiate different type of senders
 
 type NewAccountInfo struct {
 	CreationMsg *banktypes.MsgSend
