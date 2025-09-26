@@ -1628,158 +1628,244 @@ func TestActiveAndExpiredEventsSameBlock(t *testing.T) {
 }
 
 func TestBtcStakeExpansion(t *testing.T) {
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+	testCases := []struct {
+		name                    string
+		setupOriginalDelegation func(t *testing.T, h *testutil.Helper, r *rand.Rand, covenantSKs []*btcec.PrivateKey, babylonFPPK *btcec.PublicKey, delSK *btcec.PrivateKey, stakingValue int64) (*types.BTCDelegation, string, uint32)
+	}{
+		{
+			name: "expand regular delegation",
+			setupOriginalDelegation: func(t *testing.T, h *testutil.Helper, r *rand.Rand, covenantSKs []*btcec.PrivateKey, babylonFPPK *btcec.PublicKey, delSK *btcec.PrivateKey, stakingValue int64) (*types.BTCDelegation, string, uint32) {
+				lcTip := uint32(30)
+				prevDelStakingTxHash, prevMsgCreateBTCDel, prevDel, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
+					r,
+					delSK,
+					babylonFPPK,
+					stakingValue,
+					1000,
+					0,
+					0,
+					false,
+					true,
+					10,
+					lcTip,
+				)
+				h.NoError(err)
+				require.NotNil(t, prevMsgCreateBTCDel)
 
-	// mock BTC light client and BTC checkpoint modules
-	btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
-	btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-	h := testutil.NewHelper(t, btclcKeeper, btccKeeper, nil)
+				h.CreateCovenantSigs(r, covenantSKs, prevMsgCreateBTCDel, prevDel, 10)
 
-	// set all parameters
-	covenantSKs, _ := h.GenAndApplyParams(r)
+				bsParams := h.BTCStakingKeeper.GetParams(h.Ctx)
+				prevDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, prevDelStakingTxHash)
+				require.NoError(t, err)
+				status, err := h.BTCStakingKeeper.BtcDelStatus(h.Ctx, prevDel, bsParams.CovenantQuorum, lcTip)
+				h.NoError(err)
+				require.Equal(t, types.BTCDelegationStatus_ACTIVE, status)
 
-	// Create a Babylon finality provider
-	_, babylonFPPK, _ := h.CreateFinalityProvider(r)
+				return prevDel, prevDelStakingTxHash, lcTip
+			},
+		},
+		{
+			name: "expand expanded delegation",
+			setupOriginalDelegation: func(t *testing.T, h *testutil.Helper, r *rand.Rand, covenantSKs []*btcec.PrivateKey, babylonFPPK *btcec.PublicKey, delSK *btcec.PrivateKey, stakingValue int64) (*types.BTCDelegation, string, uint32) {
+				lcTip := uint32(30)
+				originalDelStakingTxHash, originalMsgCreateBTCDel, originalDel, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
+					r,
+					delSK,
+					babylonFPPK,
+					stakingValue,
+					1000,
+					0,
+					0,
+					false,
+					true,
+					10,
+					lcTip,
+				)
+				h.NoError(err)
+				require.NotNil(t, originalMsgCreateBTCDel)
 
-	// Create a staker for the previous staking transaction
-	stakingValue := int64(2 * 10e8)
-	delSK, _, err := datagen.GenRandomBTCKeyPair(r)
-	h.NoError(err)
+				h.CreateCovenantSigs(r, covenantSKs, originalMsgCreateBTCDel, originalDel, 10)
 
-	// Step 1: Create the previous staking transaction that will be in the allow list
-	// This needs to be a single FP delegation first
-	lcTip := uint32(30)
-	prevDelStakingTxHash, prevMsgCreateBTCDel, prevDel, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
-		r,
-		delSK,
-		babylonFPPK,
-		stakingValue,
-		1000,
-		0,
-		0,
-		false,
-		true,
-		10,
-		lcTip,
-	)
-	h.NoError(err)
-	require.NotNil(t, prevMsgCreateBTCDel)
+				bsParams := h.BTCStakingKeeper.GetParams(h.Ctx)
+				originalDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, originalDelStakingTxHash)
+				require.NoError(t, err)
+				status, err := h.BTCStakingKeeper.BtcDelStatus(h.Ctx, originalDel, bsParams.CovenantQuorum, lcTip)
+				h.NoError(err)
+				require.Equal(t, types.BTCDelegationStatus_ACTIVE, status)
 
-	// Add covenant signatures to make it active
-	h.CreateCovenantSigs(r, covenantSKs, prevMsgCreateBTCDel, prevDel, 10)
+				firstExpansionSpendingTx, firstExpansionFundingTx, err := h.CreateBtcStakeExpansionWithBtcTipHeight(
+					r,
+					delSK,
+					babylonFPPK,
+					stakingValue,
+					1000,
+					originalDel,
+					lcTip,
+				)
+				require.NoError(t, err)
 
-	// Ensure the previous delegation is active
-	bsParams := h.BTCStakingKeeper.GetParams(h.Ctx)
-	prevDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, prevDelStakingTxHash)
-	require.NoError(t, err)
-	status, err := h.BTCStakingKeeper.BtcDelStatus(h.Ctx, prevDel, bsParams.CovenantQuorum, lcTip)
-	h.NoError(err)
-	require.Equal(t, types.BTCDelegationStatus_ACTIVE, status)
+				firstExpandedDel, err := h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, firstExpansionSpendingTx.TxHash().String())
+				require.NoError(t, err)
+				require.True(t, firstExpandedDel.IsStakeExpansion())
 
-	// Step 2: Create BtcStakeExpand
-	// Create a delegation via stake expansion
-	spendingTx, fundingTx, err := h.CreateBtcStakeExpansionWithBtcTipHeight(
-		r,
-		delSK,
-		babylonFPPK,
-		stakingValue,
-		1000,
-		prevDel,
-		lcTip,
-	)
-	require.NoError(t, err)
+				h.CreateCovenantSigs(r, covenantSKs, nil, firstExpandedDel, 10)
+				firstExpandedDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, firstExpansionSpendingTx.TxHash().String())
+				require.NoError(t, err)
 
-	expandedDel, err := h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, spendingTx.TxHash().String())
-	require.NoError(t, err)
-	require.True(t, expandedDel.IsStakeExpansion())
-	status, err = h.BTCStakingKeeper.BtcDelStatus(h.Ctx, expandedDel, bsParams.CovenantQuorum, lcTip)
-	h.NoError(err)
-	require.Equal(t, types.BTCDelegationStatus_PENDING, status)
+				originalStkTx, err := bbn.NewBTCTxFromBytes(originalDel.GetStakingTx())
+				require.NoError(t, err)
 
-	// Step 3: Add covenant signatures to make it verified
-	h.CreateCovenantSigs(r, covenantSKs, nil, expandedDel, 10)
-	expandedDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, spendingTx.TxHash().String())
-	require.NoError(t, err)
-	status, err = h.BTCStakingKeeper.BtcDelStatus(h.Ctx, expandedDel, bsParams.CovenantQuorum, lcTip)
-	h.NoError(err)
-	require.Equal(t, types.BTCDelegationStatus_VERIFIED, status)
-	// Ensure the expanded delegation is verified
+				firstExpansionSpendingTxWithWitnessBz, _ := datagen.AddWitnessToStakeExpTx(
+					t,
+					originalStkTx.TxOut[0],
+					firstExpansionFundingTx.TxOut[0],
+					delSK,
+					covenantSKs,
+					bsParams.CovenantQuorum,
+					[]*btcec.PublicKey{babylonFPPK},
+					uint16(1000),
+					stakingValue,
+					firstExpansionSpendingTx,
+					h.Net,
+				)
 
-	// Step 4: Submit MsgBTCUndelegate to activate stake expansion (inclusion proof should be k-deep)
-	// Add witness for stake expansion tx
-	prevStkTx, err := bbn.NewBTCTxFromBytes(prevDel.GetStakingTx())
-	require.NoError(t, err)
+				firstExpansionTxInclusionProof := h.BuildBTCInclusionProofForSpendingTx(r, firstExpansionSpendingTx, lcTip)
 
-	spendingTxWithWitnessBz, _ := datagen.AddWitnessToStakeExpTx(
-		t,
-		prevStkTx.TxOut[0],
-		fundingTx.TxOut[0],
-		delSK,
-		covenantSKs,
-		bsParams.CovenantQuorum,
-		[]*btcec.PublicKey{babylonFPPK},
-		uint16(1000),
-		stakingValue,
-		spendingTx,
-		h.Net,
-	)
+				fundingTxBz, err := bbn.SerializeBTCTx(firstExpansionFundingTx)
+				h.NoError(err)
+				msg := &types.MsgBTCUndelegate{
+					Signer:                        originalDel.StakerAddr,
+					StakingTxHash:                 originalStkTx.TxHash().String(),
+					StakeSpendingTx:               firstExpansionSpendingTxWithWitnessBz,
+					StakeSpendingTxInclusionProof: firstExpansionTxInclusionProof,
+					FundingTransactions:           [][]byte{originalDel.GetStakingTx(), fundingTxBz},
+				}
 
-	// build the block with the proofs
-	expansionTxInclusionProof := h.BuildBTCInclusionProofForSpendingTx(r, spendingTx, lcTip)
+				lcTip += 11
+				h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: lcTip}).Times(3)
+				_, err = h.MsgServer.BTCUndelegate(h.Ctx, msg)
+				h.NoError(err)
 
-	// Submit MsgBTCUndelegate for the original delegation to activate stake expansion
-	fundingTxBz, err := bbn.SerializeBTCTx(fundingTx)
-	h.NoError(err)
-	msg := &types.MsgBTCUndelegate{
-		Signer:                        prevDel.StakerAddr,
-		StakingTxHash:                 prevStkTx.TxHash().String(),
-		StakeSpendingTx:               spendingTxWithWitnessBz,
-		StakeSpendingTxInclusionProof: expansionTxInclusionProof,
-		FundingTransactions:           [][]byte{prevDel.GetStakingTx(), fundingTxBz},
+				firstExpandedDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, firstExpansionSpendingTx.TxHash().String())
+				require.NoError(t, err)
+				status, err = h.BTCStakingKeeper.BtcDelStatus(h.Ctx, firstExpandedDel, bsParams.CovenantQuorum, lcTip)
+				h.NoError(err)
+				require.Equal(t, types.BTCDelegationStatus_ACTIVE, status)
+
+				return firstExpandedDel, firstExpansionSpendingTx.TxHash().String(), lcTip
+			},
+		},
 	}
-	// Ensure BTC tip is enough for the undelegate
-	// Spending tx should be above BTC confirmation depth (k = 10)
-	lcTip += 11
-	h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: lcTip}).AnyTimes()
-	_, err = h.MsgServer.BTCUndelegate(h.Ctx, msg)
-	h.NoError(err)
 
-	// Ensure 2 events are emitted:
-	// - one InclusionProofEvent for the stake expansion delegation
-	// - one EarlyUnbondedEvent for the unbonding of the original delegation
-	events := h.Ctx.EventManager().Events()
-	evtCount := len(events)
-	require.GreaterOrEqual(t, evtCount, 2)
-	var foundInclusionProofEvent, foundEarlyUnbondedEvent bool
-	// the event manager holds events of all the previous steps
-	// We care only about the last step which should emit 2 events
-	for _, event := range events[evtCount-2:] {
-		switch fmt.Sprintf("/%s", event.Type) {
-		case sdk.MsgTypeURL(&types.EventBTCDelegationInclusionProofReceived{}):
-			foundInclusionProofEvent = true
-			testutilevents.RequireEventAttribute(t, event, "staking_tx_hash", fmt.Sprintf("\"%s\"", spendingTx.TxHash().String()), "Inclusion proof event should match the stake expansion delegation tx hash")
-		case sdk.MsgTypeURL(&types.EventBTCDelgationUnbondedEarly{}):
-			foundEarlyUnbondedEvent = true
-			testutilevents.RequireEventAttribute(t, event, "staking_tx_hash", fmt.Sprintf("\"%s\"", prevDelStakingTxHash), "Early unbonded event should match the original delegation tx hash")
-			testutilevents.RequireEventAttribute(t, event, "stake_expansion_tx_hash", fmt.Sprintf("\"%s\"", spendingTx.TxHash().String()), "Early unbonded event should match the stake expansion tx hash")
-		}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			r := rand.New(rand.NewSource(time.Now().UnixNano()))
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
+			btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
+			h := testutil.NewHelper(t, btclcKeeper, btccKeeper, nil)
+
+			covenantSKs, _ := h.GenAndApplyParams(r)
+
+			_, babylonFPPK, _ := h.CreateFinalityProvider(r)
+
+			stakingValue := int64(2 * 10e8)
+			delSK, _, err := datagen.GenRandomBTCKeyPair(r)
+			h.NoError(err)
+
+			prevDel, prevDelStakingTxHash, lcTip := tc.setupOriginalDelegation(t, h, r, covenantSKs, babylonFPPK, delSK, stakingValue)
+
+			spendingTx, fundingTx, err := h.CreateBtcStakeExpansionWithBtcTipHeight(
+				r,
+				delSK,
+				babylonFPPK,
+				stakingValue,
+				1000,
+				prevDel,
+				lcTip,
+			)
+			require.NoError(t, err)
+
+			expandedDel, err := h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, spendingTx.TxHash().String())
+			require.NoError(t, err)
+			require.True(t, expandedDel.IsStakeExpansion())
+			bsParams := h.BTCStakingKeeper.GetParams(h.Ctx)
+			status, err := h.BTCStakingKeeper.BtcDelStatus(h.Ctx, expandedDel, bsParams.CovenantQuorum, lcTip)
+			h.NoError(err)
+			require.Equal(t, types.BTCDelegationStatus_PENDING, status)
+
+			h.CreateCovenantSigs(r, covenantSKs, nil, expandedDel, 10)
+			expandedDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, spendingTx.TxHash().String())
+			require.NoError(t, err)
+			status, err = h.BTCStakingKeeper.BtcDelStatus(h.Ctx, expandedDel, bsParams.CovenantQuorum, lcTip)
+			h.NoError(err)
+			require.Equal(t, types.BTCDelegationStatus_VERIFIED, status)
+
+			prevStkTx, err := bbn.NewBTCTxFromBytes(prevDel.GetStakingTx())
+			require.NoError(t, err)
+
+			spendingTxWithWitnessBz, _ := datagen.AddWitnessToStakeExpTx(
+				t,
+				prevStkTx.TxOut[0],
+				fundingTx.TxOut[0],
+				delSK,
+				covenantSKs,
+				bsParams.CovenantQuorum,
+				[]*btcec.PublicKey{babylonFPPK},
+				uint16(1000),
+				stakingValue,
+				spendingTx,
+				h.Net,
+			)
+
+			expansionTxInclusionProof := h.BuildBTCInclusionProofForSpendingTx(r, spendingTx, lcTip)
+
+			fundingTxBz, err := bbn.SerializeBTCTx(fundingTx)
+			h.NoError(err)
+			msg := &types.MsgBTCUndelegate{
+				Signer:                        prevDel.StakerAddr,
+				StakingTxHash:                 prevStkTx.TxHash().String(),
+				StakeSpendingTx:               spendingTxWithWitnessBz,
+				StakeSpendingTxInclusionProof: expansionTxInclusionProof,
+				FundingTransactions:           [][]byte{prevDel.GetStakingTx(), fundingTxBz},
+			}
+
+			lcTip += 11
+			h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: lcTip}).Times(3)
+			_, err = h.MsgServer.BTCUndelegate(h.Ctx, msg)
+			h.NoError(err)
+
+			events := h.Ctx.EventManager().Events()
+			evtCount := len(events)
+			require.GreaterOrEqual(t, evtCount, 2)
+			var foundInclusionProofEvent, foundEarlyUnbondedEvent bool
+			for _, event := range events[evtCount-2:] {
+				switch fmt.Sprintf("/%s", event.Type) {
+				case sdk.MsgTypeURL(&types.EventBTCDelegationInclusionProofReceived{}):
+					foundInclusionProofEvent = true
+					testutilevents.RequireEventAttribute(t, event, "staking_tx_hash", fmt.Sprintf("\"%s\"", spendingTx.TxHash().String()), "Inclusion proof event should match the stake expansion delegation tx hash")
+				case sdk.MsgTypeURL(&types.EventBTCDelgationUnbondedEarly{}):
+					foundEarlyUnbondedEvent = true
+					testutilevents.RequireEventAttribute(t, event, "staking_tx_hash", fmt.Sprintf("\"%s\"", prevDelStakingTxHash), "Early unbonded event should match the original delegation tx hash")
+					testutilevents.RequireEventAttribute(t, event, "stake_expansion_tx_hash", fmt.Sprintf("\"%s\"", spendingTx.TxHash().String()), "Early unbonded event should match the stake expansion tx hash")
+				}
+			}
+			require.True(t, foundInclusionProofEvent, "EventBTCDelegationInclusionProofReceived should be emitted")
+			require.True(t, foundEarlyUnbondedEvent, "EventBTCDelgationUnbondedEarly should be emitted")
+
+			expandedDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, spendingTx.TxHash().String())
+			require.NoError(t, err)
+			status, err = h.BTCStakingKeeper.BtcDelStatus(h.Ctx, expandedDel, bsParams.CovenantQuorum, lcTip)
+			h.NoError(err)
+			require.Equal(t, types.BTCDelegationStatus_ACTIVE, status)
+
+			prevDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, prevDelStakingTxHash)
+			require.NoError(t, err)
+			status, err = h.BTCStakingKeeper.BtcDelStatus(h.Ctx, prevDel, bsParams.CovenantQuorum, lcTip)
+			h.NoError(err)
+			require.Equal(t, types.BTCDelegationStatus_UNBONDED, status)
+		})
 	}
-	require.True(t, foundInclusionProofEvent, "EventBTCDelegationInclusionProofReceived should be emitted")
-	require.True(t, foundEarlyUnbondedEvent, "EventBTCDelgationUnbondedEarly should be emitted")
-
-	// Ensure the expanded delegation is active
-	expandedDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, spendingTx.TxHash().String())
-	require.NoError(t, err)
-	status, err = h.BTCStakingKeeper.BtcDelStatus(h.Ctx, expandedDel, bsParams.CovenantQuorum, lcTip)
-	h.NoError(err)
-	require.Equal(t, types.BTCDelegationStatus_ACTIVE, status)
-
-	// Ensure the original delegation is now UNBONDED
-	prevDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, prevDelStakingTxHash)
-	require.NoError(t, err)
-	status, err = h.BTCStakingKeeper.BtcDelStatus(h.Ctx, prevDel, bsParams.CovenantQuorum, lcTip)
-	h.NoError(err)
-	require.Equal(t, types.BTCDelegationStatus_UNBONDED, status)
 }
