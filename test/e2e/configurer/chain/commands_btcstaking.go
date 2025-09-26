@@ -19,6 +19,7 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	"github.com/cometbft/cometbft/libs/bytes"
+	cometbytes "github.com/cometbft/cometbft/libs/bytes"
 	cmtcrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -200,8 +201,8 @@ func (n *NodeConfig) CreateBTCStakeExpansionDelegation(
 	return outBuff.String()
 }
 
-func (n *NodeConfig) AddCovenantSigsFromVal(covPK *bbn.BIP340PubKey, stakingTxHash string, slashingSigs [][]byte, unbondingSig *bbn.BIP340Signature, unbondingSlashingSigs [][]byte) {
-	n.AddCovenantSigs("val", covPK, stakingTxHash, slashingSigs, unbondingSig, unbondingSlashingSigs, nil)
+func (n *NodeConfig) AddCovenantSigsFromVal(covPK *bbn.BIP340PubKey, stakingTxHash string, slashingSigs [][]byte, unbondingSig *bbn.BIP340Signature, unbondingSlashingSigs [][]byte, stakeExpTxSig *bbn.BIP340Signature) {
+	n.AddCovenantSigs("val", covPK, stakingTxHash, slashingSigs, unbondingSig, unbondingSlashingSigs, stakeExpTxSig)
 }
 
 func (n *NodeConfig) AddCovenantSigsFromValForStakeExp(covPK *bbn.BIP340PubKey, stakingTxHash string, slashingSigs [][]byte, unbondingSig *bbn.BIP340Signature, unbondingSlashingSigs [][]byte, stkExpSig *bbn.BIP340Signature) string {
@@ -247,7 +248,8 @@ func (n *NodeConfig) AddCovenantSigs(
 	// used key
 	cmd = append(cmd, fmt.Sprintf("--from=%s", fromWalletName))
 	// gas
-	cmd = append(cmd, "--gas-adjustment=2")
+	cmd = append(cmd, "--gas=3000000")
+	cmd = append(cmd, "--gas-adjustment=1.2")
 
 	outBuf, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
 	require.NoError(n.t, err)
@@ -256,7 +258,44 @@ func (n *NodeConfig) AddCovenantSigs(
 	return GetTxHashFromOutput(outBuf.String())
 }
 
-func (n *NodeConfig) CommitPubRandList(fpBTCPK *bbn.BIP340PubKey, startHeight uint64, numPubrand uint64, commitment []byte, sig *bbn.BIP340Signature) {
+func (n *NodeConfig) AddFinalitySignatureToBlockWithContext(
+	fpBTCSK *secp256k1.PrivateKey,
+	fpBTCPK *bbn.BIP340PubKey,
+	blockHeight uint64,
+	privateRand *secp256k1.ModNScalar,
+	pubRand *bbn.SchnorrPubRand,
+	proof cmtcrypto.Proof,
+	overallFlags ...string,
+) (blockVotedAppHash cometbytes.HexBytes) {
+	blockToVote, err := n.QueryBlock(int64(blockHeight))
+	require.NoError(n.t, err)
+	appHash := blockToVote.AppHash
+
+	msgToSign := append(sdk.Uint64ToBigEndian(uint64(blockToVote.Height)), appHash...)
+	// generate EOTS signature
+	fp1Sig, err := eots.Sign(fpBTCSK, privateRand, msgToSign)
+	require.NoError(n.t, err)
+
+	finalitySig := bbn.NewSchnorrEOTSSigFromModNScalar(fp1Sig)
+
+	// submit finality signature
+	n.AddFinalitySig(
+		fpBTCPK,
+		blockHeight,
+		pubRand,
+		proof,
+		appHash,
+		finalitySig,
+		overallFlags...,
+	)
+	return appHash
+}
+
+func (n *NodeConfig) CommitPubRandListFromNode(fpBTCPK *bbn.BIP340PubKey, startHeight uint64, numPubrand uint64, commitment []byte, sig *bbn.BIP340Signature) {
+	n.CommitPubRandList("val", fpBTCPK, startHeight, numPubrand, commitment, sig)
+}
+
+func (n *NodeConfig) CommitPubRandList(fromWallet string, fpBTCPK *bbn.BIP340PubKey, startHeight uint64, numPubrand uint64, commitment []byte, sig *bbn.BIP340Signature) {
 	n.LogActionF("committing public randomness list")
 
 	cmd := []string{"babylond", "tx", "finality", "commit-pubrand-list"}
@@ -282,7 +321,7 @@ func (n *NodeConfig) CommitPubRandList(fpBTCPK *bbn.BIP340PubKey, startHeight ui
 	cmd = append(cmd, sigHex)
 
 	// specify used key
-	cmd = append(cmd, "--from=val")
+	cmd = append(cmd, fmt.Sprintf("--from=%s", fromWallet))
 
 	// gas
 	cmd = append(cmd, "--gas=500000")
@@ -312,7 +351,10 @@ func (n *NodeConfig) AddFinalitySig(
 	appHashHex := hex.EncodeToString(appHash)
 	finalitySigHex := finalitySig.ToHexStr()
 
-	cmd := []string{"babylond", "tx", "finality", "add-finality-sig", fpBTCPKHex, blockHeightStr, pubRandHex, proofHex, appHashHex, finalitySigHex, "--gas=500000"}
+	cmd := []string{
+		"babylond", "tx", "finality", "add-finality-sig",
+		fpBTCPKHex, blockHeightStr, pubRandHex, proofHex, appHashHex, finalitySigHex, "--gas=500000",
+	}
 	additionalArgs := []string{fmt.Sprintf("--chain-id=%s", n.chainId), "--gas-prices=0.1ubbn", "-b=sync", "--yes", "--keyring-backend=test", "--log_format=json", "--home=/home/babylon/babylondata"}
 	cmd = append(cmd, additionalArgs...)
 
@@ -330,7 +372,7 @@ func (n *NodeConfig) AddFinalitySigFromVal(
 	finalitySig *bbn.SchnorrEOTSSig,
 	overallFlags ...string,
 ) {
-	n.AddFinalitySig(fpBTCPK, blockHeight, pubRand, proof, appHash, finalitySig, append(overallFlags, "--from=val")...)
+	n.AddFinalitySig(fpBTCPK, blockHeight, pubRand, proof, appHash, finalitySig, append(overallFlags, fmt.Sprintf("--from=%s", n.PublicAddress))...)
 }
 
 func (n *NodeConfig) AddCovenantUnbondingSigs(

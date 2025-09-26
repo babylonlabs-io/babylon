@@ -157,7 +157,7 @@ func (n *NodeConfig) SendHeaderHex(headerHex string) {
 func (n *NodeConfig) InsertNewEmptyBtcHeader(r *rand.Rand) *blc.BTCHeaderInfo {
 	tipResp, err := n.QueryTip()
 	require.NoError(n.t, err)
-	n.t.Logf("Retrieved current tip of btc headerchain. Height: %d", tipResp.Height)
+	n.t.Logf("Retrieved current tip of btc headerchain inserting empty header. Height: %d", tipResp.Height)
 
 	tip, err := ParseBTCHeaderInfoResponseToInfo(tipResp)
 	require.NoError(n.t, err)
@@ -511,7 +511,7 @@ func (n *NodeConfig) SubmitRefundableTxWithAssertion(
 	if shouldBeRefunded {
 		require.Equal(n.t, submitterBalanceBefore, submitterBalanceAfter)
 	} else {
-		require.True(n.t, submitterBalanceBefore.IsAllGT(submitterBalanceAfter))
+		require.False(n.t, submitterBalanceBefore.Equal(submitterBalanceAfter))
 	}
 }
 
@@ -571,4 +571,13 @@ func (n *NodeConfig) FailICASendTx(from, connectionID, packetMsgPath string) {
 	require.NoError(n.t, err)
 
 	n.LogActionF("Failed to perform ICA send (as expected)")
+}
+
+func (n *NodeConfig) Delegate(fromWallet, validator string, amount string, overallFlags ...string) {
+	n.LogActionF("delegating from %s to validator %s", fromWallet, validator)
+	cmd := []string{"babylond", "tx", "epoching", "delegate", validator, amount, fmt.Sprintf("--from=%s", fromWallet)}
+	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, append(cmd, overallFlags...))
+
+	require.NoError(n.t, err)
+	n.LogActionF("successfully delegated %s to validator %s", fromWallet, validator)
 }

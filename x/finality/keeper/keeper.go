@@ -15,8 +15,10 @@ import (
 
 type (
 	Keeper struct {
-		cdc          codec.BinaryCodec
-		storeService corestoretypes.KVStoreService
+		cdc                   codec.BinaryCodec
+		storeService          corestoretypes.KVStoreService
+		hooks                 types.FinalityHooks
+		finalityModuleAddress string
 
 		BTCStakingKeeper    types.BTCStakingKeeper
 		IncentiveKeeper     types.IncentiveKeeper
@@ -110,4 +112,18 @@ func (k Keeper) IsFinalityActive(ctx context.Context) (activated bool) {
 
 	_, err := k.GetBTCStakingActivatedHeight(ctx)
 	return err == nil
+}
+
+func (k Keeper) ModuleAddress() string {
+	return k.finalityModuleAddress
+}
+
+// SetHooks sets the finality hooks.  In contrast to other receivers, this method must take a pointer due to nature
+// of the hooks interface and SDK start up sequence.
+func (k *Keeper) SetHooks(sh types.FinalityHooks) {
+	if k.hooks != nil {
+		panic("cannot set finality hooks twice")
+	}
+
+	k.hooks = sh
 }

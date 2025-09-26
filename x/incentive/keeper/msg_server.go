@@ -61,13 +61,34 @@ func (ms msgServer) WithdrawReward(goCtx context.Context, req *types.MsgWithdraw
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
+	// costaking send rewards to incentives module and gauge
+	if err := ms.hooks.BeforeRewardWithdraw(ctx, sType, addr); err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
 	// withdraw reward, i.e., send withdrawable reward to the stakeholder address and clear the reward gauge
 	withdrawnCoins, err := ms.withdrawReward(ctx, sType, addr)
 	if err != nil {
 		return nil, err
 	}
 
-	// all good
+	// if it is btc staker type, also withdraws it from the costaker
+	if sType == types.BTC_STAKER {
+		sType = types.COSTAKER
+		// costaking send rewards to incentives module and gauge
+		err := ms.hooks.BeforeRewardWithdraw(ctx, sType, addr)
+		if err != nil {
+			ms.Logger(goCtx).Info("failing to call hook of costaker BeforeRewardWithdraw", "error", err.Error())
+		}
+
+		withdrawnCoinsCostaker, err := ms.withdrawReward(ctx, sType, addr)
+		if err != nil {
+			ms.Logger(goCtx).Info("failing to call withdraw rewards of costaker from the btc staker", "error", err.Error())
+		} else {
+			withdrawnCoins = withdrawnCoins.Add(withdrawnCoinsCostaker...)
+		}
+	}
+
 	return &types.MsgWithdrawRewardResponse{
 		Coins: withdrawnCoins,
 	}, nil

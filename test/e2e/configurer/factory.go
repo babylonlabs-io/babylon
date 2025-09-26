@@ -11,7 +11,6 @@ import (
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/containers"
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/initialization"
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
-	btclighttypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
 )
 
 type Configurer interface {
@@ -193,41 +192,20 @@ func NewBTCTimestampingPhase2RlyConfigurer(t *testing.T, isDebugLogEnabled bool)
 	), nil
 }
 
-// NewBTCStakingConfigurer returns a new Configurer for BTC staking service
-func NewBTCStakingConfigurer(t *testing.T, isDebugLogEnabled bool) (Configurer, error) {
-	identifier := identifierName(t)
-	containerManager, err := containers.NewManager(identifier, isDebugLogEnabled, false, false)
-	if err != nil {
-		return nil, err
-	}
-
-	return NewCurrentBranchConfigurer(t,
-		[]*chain.Config{
-			// we only need 1 chain for testing BTC staking
-			chain.New(t, containerManager, initialization.ChainAID, updateNodeConfigNameWithIdentifier(validatorConfigsChainA, identifier), nil),
-		},
-		baseSetup, // base set up
-		containerManager,
-	), nil
-}
-
-// NewSoftwareUpgradeConfigurer returns a new Configurer for Software Upgrade testing
-func NewSoftwareUpgradeConfigurer(t *testing.T, isDebugLogEnabled bool, upgradePath string, btcHeaders []*btclighttypes.BTCHeaderInfo, preUpgradeFunc PreUpgradeFunc) (*UpgradeConfigurer, error) {
+// NewSoftwareUpgradeConfigurerWithCurrentTag returns a new Configurer for Software Upgrade testing with the specified current tag
+func NewSoftwareUpgradeConfigurerWithCurrentTag(t *testing.T, isDebugLogEnabled bool, upgradePath string, preUpgradeFunc PreUpgradeFunc, currentTag string) (*UpgradeConfigurer, error) {
 	identifier := identifierName(t)
 	containerManager, err := containers.NewManager(identifier, isDebugLogEnabled, false, true)
 	if err != nil {
 		return nil, err
 	}
-
-	chainA := chain.New(t, containerManager, initialization.ChainAID, updateNodeConfigNameWithIdentifier(validatorConfigsChainA, identifier), nil)
-	if btcHeaders != nil {
-		chainA.BTCHeaders = btcHeaders
+	if currentTag != "" {
+		containerManager.WithCurrentTag(currentTag)
 	}
-
 	return NewUpgradeConfigurer(t,
 		[]*chain.Config{
-			// we only need 1 chain for testing upgrade
-			chainA,
+			// we only need 1 chain for testing BTC staking
+			chain.New(t, containerManager, initialization.ChainAID, updateNodeConfigNameWithIdentifier(validatorConfigsChainA, identifier), nil),
 		},
 		withUpgrade(baseSetup), // base set up with upgrade
 		containerManager,
@@ -235,6 +213,11 @@ func NewSoftwareUpgradeConfigurer(t *testing.T, isDebugLogEnabled bool, upgradeP
 		0,
 		preUpgradeFunc,
 	), nil
+}
+
+// NewSoftwareUpgradeConfigurer returns a new Configurer for Software Upgrade testing
+func NewSoftwareUpgradeConfigurer(t *testing.T, isDebugLogEnabled bool, upgradePath string, preUpgradeFunc PreUpgradeFunc) (*UpgradeConfigurer, error) {
+	return NewSoftwareUpgradeConfigurerWithCurrentTag(t, isDebugLogEnabled, upgradePath, preUpgradeFunc, "")
 }
 
 func identifierName(t *testing.T) string {
@@ -269,4 +252,22 @@ func updateNodeConfigs(cfgs []*initialization.NodeConfig, f func(cfg *initializa
 		result[i] = f(cfg)
 	}
 	return result
+}
+
+// NewBabylonConfigurer returns a new Configurer for BTC staking service
+func NewBabylonConfigurer(t *testing.T, isDebugLogEnabled bool) (Configurer, error) {
+	identifier := identifierName(t)
+	containerManager, err := containers.NewManager(identifier, isDebugLogEnabled, false, false)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewCurrentBranchConfigurer(t,
+		[]*chain.Config{
+			// we only need 1 chain for testing BTC staking
+			chain.New(t, containerManager, initialization.ChainAID, updateNodeConfigNameWithIdentifier(validatorConfigsChainA, identifier), nil),
+		},
+		baseSetup, // base set up
+		containerManager,
+	), nil
 }

@@ -190,7 +190,7 @@ func FuzzCheckBTCDelegationRewardsTracker(f *testing.F) {
 		require.NoError(t, err)
 
 		count := 0
-		err = k.IterateBTCDelegationRewardsTracker(ctx, fp1, func(fp, del sdk.AccAddress) error {
+		err = k.IterateBTCDelegationRewardsTracker(ctx, fp1, func(fp, del sdk.AccAddress, val types.BTCDelegationRewardsTracker) error {
 			count++
 			require.Equal(t, fp1, fp)
 			require.Equal(t, del1, del)
@@ -204,7 +204,7 @@ func FuzzCheckBTCDelegationRewardsTracker(f *testing.F) {
 		require.NoError(t, err)
 
 		count = 0
-		err = k.IterateBTCDelegationRewardsTracker(ctx, fp1, func(fp, del sdk.AccAddress) error {
+		err = k.IterateBTCDelegationRewardsTracker(ctx, fp1, func(fp, del sdk.AccAddress, val types.BTCDelegationRewardsTracker) error {
 			count++
 			require.Equal(t, fp1, fp)
 			if del1.Equals(del) {
@@ -229,7 +229,7 @@ func FuzzCheckBTCDelegationRewardsTracker(f *testing.F) {
 		require.Equal(t, startPeriodFp2Del1, btcDelRwdTracker.StartPeriodCumulativeReward)
 
 		count = 0
-		err = k.IterateBTCDelegationRewardsTracker(ctx, fp2, func(fp, del sdk.AccAddress) error {
+		err = k.IterateBTCDelegationRewardsTracker(ctx, fp2, func(fp, del sdk.AccAddress, val types.BTCDelegationRewardsTracker) error {
 			count++
 			require.Equal(t, fp2, fp)
 			require.Equal(t, del1, del)
@@ -241,7 +241,7 @@ func FuzzCheckBTCDelegationRewardsTracker(f *testing.F) {
 		// check delete fp2
 		k.deleteKeysFromBTCDelegationRewardsTracker(ctx, fp2, [][]byte{del1.Bytes()})
 		count = 0
-		err = k.IterateBTCDelegationRewardsTracker(ctx, fp2, func(fp, del sdk.AccAddress) error {
+		err = k.IterateBTCDelegationRewardsTracker(ctx, fp2, func(fp, del sdk.AccAddress, val types.BTCDelegationRewardsTracker) error {
 			count++
 			return nil
 		})
@@ -251,7 +251,7 @@ func FuzzCheckBTCDelegationRewardsTracker(f *testing.F) {
 		// check delete all from fp1
 		k.deleteKeysFromBTCDelegationRewardsTracker(ctx, fp1, [][]byte{del1.Bytes(), del2.Bytes()})
 		count = 0
-		err = k.IterateBTCDelegationRewardsTracker(ctx, fp1, func(fp, del sdk.AccAddress) error {
+		err = k.IterateBTCDelegationRewardsTracker(ctx, fp1, func(fp, del sdk.AccAddress, rwdTracker types.BTCDelegationRewardsTracker) error {
 			count++
 			return nil
 		})
@@ -277,7 +277,7 @@ func FuzzCheckFinalityProviderCurrentRewards(f *testing.F) {
 		require.EqualError(t, err, types.ErrFPCurrentRewardsNotFound.Error())
 
 		expectedCurrentRwdFp1 := datagen.GenRandomFinalityProviderCurrentRewards(r)
-		err = k.setFinalityProviderCurrentRewards(ctx, fp1, expectedCurrentRwdFp1)
+		err = k.SetFinalityProviderCurrentRewards(ctx, fp1, expectedCurrentRwdFp1)
 		require.NoError(t, err)
 
 		currentRwdFp1, err := k.GetFinalityProviderCurrentRewards(ctx, fp1)
@@ -291,7 +291,7 @@ func FuzzCheckFinalityProviderCurrentRewards(f *testing.F) {
 		require.EqualError(t, err, types.ErrFPCurrentRewardsNotFound.Error())
 
 		// sets a new fp
-		err = k.setFinalityProviderCurrentRewards(ctx, fp2, datagen.GenRandomFinalityProviderCurrentRewards(r))
+		err = k.SetFinalityProviderCurrentRewards(ctx, fp2, datagen.GenRandomFinalityProviderCurrentRewards(r))
 		require.NoError(t, err)
 
 		_, err = k.GetFinalityProviderCurrentRewards(ctx, fp2)
@@ -334,7 +334,7 @@ func FuzzCheckFinalityProviderHistoricalRewards(f *testing.F) {
 		require.NoError(t, err)
 
 		// sets a new current fp rwd to check the delete all
-		err = k.setFinalityProviderCurrentRewards(ctx, fp2, datagen.GenRandomFinalityProviderCurrentRewards(r))
+		err = k.SetFinalityProviderCurrentRewards(ctx, fp2, datagen.GenRandomFinalityProviderCurrentRewards(r))
 		require.NoError(t, err)
 
 		_, err = k.GetFinalityProviderCurrentRewards(ctx, fp2)
@@ -369,7 +369,7 @@ func FuzzCheckSubFinalityProviderStaked(f *testing.F) {
 		require.EqualError(t, err, types.ErrFPCurrentRewardsNotFound.Error())
 
 		fp2Set := datagen.GenRandomFinalityProviderCurrentRewards(r)
-		err = k.setFinalityProviderCurrentRewards(ctx, fp2, fp2Set)
+		err = k.SetFinalityProviderCurrentRewards(ctx, fp2, fp2Set)
 		require.NoError(t, err)
 
 		err = k.subFinalityProviderStaked(ctx, fp2, fp2Set.TotalActiveSat)
@@ -406,7 +406,7 @@ func FuzzCheckSubDelegationSat(f *testing.F) {
 
 		fpCurrentRwd := datagen.GenRandomFinalityProviderCurrentRewards(r)
 		fpCurrentRwd.TotalActiveSat = amtInRwd
-		err = k.setFinalityProviderCurrentRewards(ctx, fp, fpCurrentRwd)
+		err = k.SetFinalityProviderCurrentRewards(ctx, fp, fpCurrentRwd)
 		require.NoError(t, err)
 
 		err = k.subDelegationSat(ctx, fp, del, amtToSub)
@@ -670,6 +670,136 @@ func checkFpDelTotalSat(t *testing.T, ctx sdk.Context, k *Keeper, fp, del sdk.Ac
 	rwd, err := k.GetBTCDelegationRewardsTracker(ctx, fp, del)
 	require.NoError(t, err)
 	require.Equal(t, expectedSat.String(), rwd.TotalActiveSat.String())
+}
+
+func TestIterateBTCDelegationSatsUpdated(t *testing.T) {
+	k, ctx := NewKeeperWithCtx(t)
+
+	fp1, fp2 := datagen.GenRandomAddress(), datagen.GenRandomAddress()
+	del1, del2, del3 := datagen.GenRandomAddress(), datagen.GenRandomAddress(), datagen.GenRandomAddress()
+
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	currentHeight := uint64(100)
+	header := sdkCtx.HeaderInfo()
+	header.Height = int64(currentHeight)
+	ctx = sdkCtx.WithHeaderInfo(header)
+
+	err := k.SetRewardTrackerEventLastProcessedHeight(ctx, 50)
+	require.NoError(t, err)
+
+	// fp1 delegations:
+	// (fp1, del1): 5000 sats
+	// (fp1, del2): 3000 sats
+	// (fp1, del3): 2000 sats
+	err = k.addDelegationSat(ctx, fp1, del1, sdkmath.NewInt(5000))
+	require.NoError(t, err)
+	err = k.addDelegationSat(ctx, fp1, del2, sdkmath.NewInt(3000))
+	require.NoError(t, err)
+	err = k.addDelegationSat(ctx, fp1, del3, sdkmath.NewInt(2000))
+	require.NoError(t, err)
+
+	// fp2 delegations:
+	// (fp2, del1): 4000 sats
+	// (fp2, del2): 1500 sats
+	err = k.addDelegationSat(ctx, fp2, del1, sdkmath.NewInt(4000))
+	require.NoError(t, err)
+	err = k.addDelegationSat(ctx, fp2, del2, sdkmath.NewInt(1500))
+	require.NoError(t, err)
+
+	// Block 55: (fp1, del1) add 1000
+	err = k.AddEventBtcDelegationActivated(ctx, 55, fp1, del1, 1000)
+	require.NoError(t, err)
+
+	// Block 60: (fp1, del2) add 500
+	err = k.AddEventBtcDelegationUnbonded(ctx, 60, fp1, del2, 500)
+	require.NoError(t, err)
+
+	// Block 65: (fp1, del3) add 800
+	err = k.AddEventBtcDelegationActivated(ctx, 65, fp1, del3, 800)
+	require.NoError(t, err)
+
+	// Block 70: (fp2, del1) sub 1200
+	err = k.AddEventBtcDelegationUnbonded(ctx, 70, fp2, del1, 1200)
+	require.NoError(t, err)
+
+	// Block 75: (fp2, del2) add 600
+	err = k.AddEventBtcDelegationActivated(ctx, 75, fp2, del2, 600)
+	require.NoError(t, err)
+
+	// Block 80: (fp1, del1) sub 600
+	err = k.AddEventBtcDelegationUnbonded(ctx, 80, fp1, del1, 300)
+	require.NoError(t, err)
+
+	// Block 85: (fp2, del3) add 1000
+	err = k.AddEventBtcDelegationActivated(ctx, 85, fp2, del3, 1000)
+	require.NoError(t, err)
+
+	// Block 90: (fp2, del2) sub 200
+	err = k.AddEventBtcDelegationUnbonded(ctx, 90, fp2, del2, 200)
+	require.NoError(t, err)
+
+	expectedFp1Results := map[string]int64{
+		del1.String(): 5700, // 5000 + (1000-300) = 5700
+		del2.String(): 2500, // 3000 - 500 = 2500
+		del3.String(): 2800, // 2000 + 800 = 2800
+	}
+
+	actualFp1Results := make(map[string]int64)
+	err = k.IterateBTCDelegationSatsUpdated(ctx, fp1, func(del sdk.AccAddress, activeSats sdkmath.Int) error {
+		actualFp1Results[del.String()] = activeSats.Int64()
+		return nil
+	})
+	require.NoError(t, err)
+	require.Equal(t, expectedFp1Results, actualFp1Results, "fp1 delegation amounts should match expected values")
+
+	expectedFp2Results := map[string]int64{
+		del1.String(): 2800, // 4000 - 1200 = 2800
+		del2.String(): 1900, // 1500 + (600-200) = 1900
+		del3.String(): 1000, // new delegation from events
+	}
+
+	actualFp2Results := make(map[string]int64)
+	err = k.IterateBTCDelegationSatsUpdated(ctx, fp2, func(del sdk.AccAddress, activeSats sdkmath.Int) error {
+		actualFp2Results[del.String()] = activeSats.Int64()
+		return nil
+	})
+	require.NoError(t, err)
+	require.Equal(t, expectedFp2Results, actualFp2Results, "fp2 delegation amounts should match expected values")
+
+	// Check delegations count
+	fp1Count := 0
+	err = k.IterateBTCDelegationSatsUpdated(ctx, fp1, func(del sdk.AccAddress, activeSats sdkmath.Int) error {
+		fp1Count++
+		return nil
+	})
+	require.NoError(t, err)
+	require.Equal(t, 3, fp1Count, "fp1 should have exactly 3 delegations")
+
+	fp2Count := 0
+	err = k.IterateBTCDelegationSatsUpdated(ctx, fp2, func(del sdk.AccAddress, activeSats sdkmath.Int) error {
+		fp2Count++
+		return nil
+	})
+	require.NoError(t, err)
+	require.Equal(t, 3, fp2Count, "fp2 should have exactly 3 delegations")
+
+	// Check error handling
+	expectedErr := errorsmod.Wrap(types.ErrBTCDelegationRewardsTrackerNotFound, "test error")
+	err = k.IterateBTCDelegationSatsUpdated(ctx, fp1, func(del sdk.AccAddress, activeSats sdkmath.Int) error {
+		return expectedErr
+	})
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "test error")
+
+	// Check edge case - no stored data should result in empty iteration
+	fp3 := datagen.GenRandomAddress()
+	fp3Count := 0
+	err = k.IterateBTCDelegationSatsUpdated(ctx, fp3, func(del sdk.AccAddress, activeSats sdkmath.Int) error {
+		fp3Count++
+		return nil
+	})
+	require.NoError(t, err)
+	require.Equal(t, 0, fp3Count, "fp3 with no stored data should have 0 delegations")
 }
 
 func NewKeeperWithCtx(t *testing.T) (*Keeper, sdk.Context) {

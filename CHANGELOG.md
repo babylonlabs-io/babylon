@@ -57,6 +57,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#1428](https://github.com/babylonlabs-io/babylon/pull/1428) Update stake expansion events
 - [#1545](https://github.com/babylonlabs-io/babylon/pull/1545) fix: remove unnecessary covenant verification for stake expansion delegation
 - [#1410](https://github.com/babylonlabs-io/babylon/pull/1410) Add stake expansion e2e test
+- [#1707](https://github.com/babylonlabs-io/babylon/pull/1707) Add `x/costaking`
 
 ### Features
 

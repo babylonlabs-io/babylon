@@ -62,6 +62,14 @@
           "Params": "IncentiveParams"
         }
       }
+    },
+    {
+      "url": "./tmp-swagger-gen/babylon/costaking/v1/query.swagger.json",
+      "operationIds": {
+        "rename": {
+          "Params": "CostakingParams"
+        }
+      }
     }
   ]
 }

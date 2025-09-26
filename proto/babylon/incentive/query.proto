@@ -43,6 +43,14 @@ service Query {
         "/babylon/incentive/finality_providers/{finality_provider_address}/"
         "delegators/{delegator_address}/delegation_rewards";
   }
+
+  // FpCurrentRewards queries the finality provider pool of rewards
+  rpc FpCurrentRewards(QueryFpCurrentRewardsRequest)
+      returns (QueryFpCurrentRewardsResponse) {
+    option (google.api.http).get =
+        "/babylon/incentive/finality_providers_current_rewards/"
+        "{finality_provider_address}";
+  }
 }
 
 // QueryParamsRequest is request type for the Query/Params RPC method.
@@ -160,5 +168,41 @@ message QueryDelegationRewardsResponse {
   repeated cosmos.base.v1beta1.Coin rewards = 1 [
     (gogoproto.nullable) = false,
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
+}
+
+// QueryFpCurrentRewardsRequest is the request type for the
+// Query/FpCurrentRewards RPC method.
+message QueryFpCurrentRewardsRequest {
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
+
+  // finality_provider_address defines the finality provider address of the
+  // delegation.
+  string finality_provider_address = 1
+      [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+}
+
+// QueryFpCurrentRewardsResponse is the response type for the
+// Query/FpCurrentRewards RPC method.
+message QueryFpCurrentRewardsResponse {
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
+
+  // CurrentRewards is the current rewards that the finality provider have
+  // to be distributed for his BTC stakers.
+  repeated cosmos.base.v1beta1.Coin current_rewards = 1 [
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
+  // Period is the current period that serves as a reference for
+  // creating new historical rewards.
+  uint64 period = 2;
+  // TotalActiveSat is the total amount of active satoshi delegated
+  // to this finality provider.
+  bytes total_active_sat = 3 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
   ];
 }

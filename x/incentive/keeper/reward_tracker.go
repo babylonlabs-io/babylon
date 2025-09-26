@@ -23,7 +23,7 @@ func (k Keeper) AddFinalityProviderRewardsForBtcDelegations(ctx context.Context,
 	}
 
 	fpCurrentRwd.AddRewards(rwd)
-	return k.setFinalityProviderCurrentRewards(ctx, fp, fpCurrentRwd)
+	return k.SetFinalityProviderCurrentRewards(ctx, fp, fpCurrentRwd)
 }
 
 // BtcDelegationActivated adds new amount of active satoshi to the delegation
@@ -63,7 +63,7 @@ func (k Keeper) FpSlashed(ctx context.Context, fp sdk.AccAddress) error {
 
 	// remove all the rewards available from the just ended period
 	keysBtcDelRwdTracker := make([][]byte, 0)
-	if err := k.IterateBTCDelegationRewardsTracker(ctx, fp, func(fp, del sdk.AccAddress) error {
+	if err := k.IterateBTCDelegationRewardsTracker(ctx, fp, func(fp, del sdk.AccAddress, val types.BTCDelegationRewardsTracker) error {
 		keysBtcDelRwdTracker = append(keysBtcDelRwdTracker, del.Bytes())
 		return k.CalculateBTCDelegationRewardsAndSendToGauge(ctx, fp, del, endedPeriod)
 	}); err != nil {
@@ -144,7 +144,7 @@ func (k Keeper) CalculateBTCDelegationRewardsAndSendToGauge(ctx context.Context,
 
 // CalculateBTCDelegationRewards calculates the rewards entitled for this delegation
 // from the starting period cumulative reward and the ending period received as parameter
-// It returns the amount of rewards without decimals (it removes the DecimalAccumulatedRewards).
+// It returns the amount of rewards without decimals (it removes the DecimalRewards).
 func (k Keeper) CalculateBTCDelegationRewards(ctx context.Context, fp, del sdk.AccAddress, endPeriod uint64) (sdk.Coins, error) {
 	btcDelRwdTracker, err := k.GetBTCDelegationRewardsTracker(ctx, fp, del)
 	if err != nil {
@@ -165,7 +165,7 @@ func (k Keeper) CalculateBTCDelegationRewards(ctx context.Context, fp, del sdk.A
 // that give the total amount of rewards that one satoshi is entitle to receive
 // in rewards between those two period. To get the amount this delegation should
 // receive, it multiplies by the total amount of active satoshi this delegation has.
-// One note, before give out the rewards it quotes by the DecimalAccumulatedRewards
+// One note, before give out the rewards it quotes by the DecimalRewards
 // to get it ready to be sent out to the delegator reward gauge.
 func (k Keeper) calculateDelegationRewardsBetween(
 	ctx context.Context,
@@ -198,7 +198,7 @@ func (k Keeper) calculateDelegationRewardsBetween(
 	rewardsWithDecimals := differenceWithDecimals.MulInt(btcDelRwdTracker.TotalActiveSat)
 	// note: necessary to truncate so we don't allow withdrawing more rewardsWithDecimals than owed
 	// QuoInt already truncates
-	rewards := rewardsWithDecimals.QuoInt(types.DecimalAccumulatedRewards)
+	rewards := rewardsWithDecimals.QuoInt(types.DecimalRewards)
 	return rewards, nil
 }
 
@@ -208,7 +208,7 @@ func (k Keeper) calculateDelegationRewardsBetween(
 // of the newly historical period as the amount from the previous historical
 // plus the amount of rewards that each satoshi staked is entitled to receive.
 // The rewards in the historical are stored with multiplied decimals
-// (DecimalAccumulatedRewards) to increase precision, and need to be
+// (DecimalRewards) to increase precision, and need to be
 // reduced when the rewards are calculated in calculateDelegationRewardsBetween
 // prior to send out to the delegator gauge.
 func (k Keeper) IncrementFinalityProviderPeriod(ctx context.Context, fp sdk.AccAddress) (endedPeriod uint64, err error) {
@@ -231,7 +231,7 @@ func (k Keeper) IncrementFinalityProviderPeriod(ctx context.Context, fp sdk.AccA
 
 	currentRewardsPerSat := sdk.NewCoins()
 	if !fpCurrentRwd.TotalActiveSat.IsZero() {
-		currentRewardsPerSatWithDecimals := fpCurrentRwd.CurrentRewards.MulInt(types.DecimalAccumulatedRewards)
+		currentRewardsPerSatWithDecimals := fpCurrentRwd.CurrentRewards.MulInt(types.DecimalRewards)
 		currentRewardsPerSat = currentRewardsPerSatWithDecimals.QuoInt(fpCurrentRwd.TotalActiveSat)
 	}
 
@@ -247,7 +247,7 @@ func (k Keeper) IncrementFinalityProviderPeriod(ctx context.Context, fp sdk.AccA
 
 	// initiates a new period with empty rewards and the same amount of active sat
 	newCurrentRwd := types.NewFinalityProviderCurrentRewards(sdk.NewCoins(), fpCurrentRwd.Period+1, fpCurrentRwd.TotalActiveSat)
-	if err := k.setFinalityProviderCurrentRewards(ctx, fp, newCurrentRwd); err != nil {
+	if err := k.SetFinalityProviderCurrentRewards(ctx, fp, newCurrentRwd); err != nil {
 		return 0, err
 	}
 
@@ -266,7 +266,7 @@ func (k Keeper) initializeFinalityProvider(ctx context.Context, fp sdk.AccAddres
 
 	// set current rewards (starting at period 1)
 	newFp := types.NewFinalityProviderCurrentRewards(sdk.NewCoins(), 1, sdkmath.ZeroInt())
-	return newFp, k.setFinalityProviderCurrentRewards(ctx, fp, newFp)
+	return newFp, k.SetFinalityProviderCurrentRewards(ctx, fp, newFp)
 }
 
 // initializeBTCDelegation creates a new BTCDelegationRewardsTracker from the

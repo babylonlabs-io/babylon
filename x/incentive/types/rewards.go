@@ -9,11 +9,12 @@ import (
 )
 
 var (
-	// it is needed to add decimal points when reducing the rewards amount
-	// per sat to latter when giving out the rewards to the gauge, reduce
-	// the decimal points back, currently 20 decimal points are being added
-	// the sdkmath.Int holds a big int which support up to 2^256 integers
-	DecimalAccumulatedRewards, _ = sdkmath.NewIntFromString("100000000000000000000")
+	// DecimalRewards is a precision multiplier used for reward calculations.
+	// It adds 20 decimal places (10^20) to increase precision when calculating
+	// rewards per satoshi. This prevents precision loss during division operations.
+	// The value is later divided out when distributing final rewards to gauges.
+	// Using sdkmath.Int which supports up to 2^256 integers for overflow safety.
+	DecimalRewards, _ = sdkmath.NewIntFromString("100000000000000000000")
 )
 
 // NewEventBtcDelegationActivated returns a new EventPowerUpdate of type activated
@@ -77,6 +78,16 @@ func (f *FinalityProviderCurrentRewards) AddTotalActiveSat(amt sdkmath.Int) {
 
 func (f *FinalityProviderCurrentRewards) SubTotalActiveSat(amt sdkmath.Int) {
 	f.TotalActiveSat = f.TotalActiveSat.Sub(amt)
+}
+
+// ToResponse converts FinalityProviderCurrentRewards to QueryFpCurrentRewardsResponse
+// for gRPC query responses.
+func (f *FinalityProviderCurrentRewards) ToResponse() *QueryFpCurrentRewardsResponse {
+	return &QueryFpCurrentRewardsResponse{
+		CurrentRewards: f.CurrentRewards,
+		Period:         f.Period,
+		TotalActiveSat: f.TotalActiveSat,
+	}
 }
 
 func (f *FinalityProviderCurrentRewards) Validate() error {

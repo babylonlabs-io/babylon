@@ -28,8 +28,9 @@ help:
 	@echo ""
 
 PACKAGES_NOSIMULATION=$(shell go list ./... | grep -v '/simulation')
+PACKAGES_TEST_NO_E2EV2=$(shell go list ./... | grep -v '/e2ev2')
+PACKAGES_TEST_ONLY_E2EV2=$(shell go list ./... | grep '/e2ev2')
 PACKAGES_SIMTEST=$(shell go list ./... | grep '/simulation')
-COMMIT := $(shell git log -1 --format='%H')
 LEDGER_ENABLED ?= true
 BINDIR ?= $(GOPATH)/bin
 PROJECT_NAME ?= babylon
@@ -209,6 +210,7 @@ TEST_TARGETS := test-unit test-unit-amino test-unit-proto test-ledger-mock test-
 # a new rule, customise ARGS or TEST_PACKAGES ad libitum, and
 # append the new rule to the TEST_TARGETS list.
 test-unit: ARGS=-tags='cgo ledger test_ledger_mock norace'
+test-unit: TEST_PACKAGES=$(PACKAGES_TEST_NO_E2EV2)
 test-unit-amino: ARGS=-tags='ledger test_ledger_mock test_amino norace'
 test-ledger: ARGS=-tags='cgo ledger norace'
 test-ledger-mock: ARGS=-tags='ledger test_ledger_mock norace'
@@ -251,6 +253,9 @@ clean-e2e:
 	docker container rm -f $(shell docker container ls -a -q) || true
 	docker network prune -f || true
 
+test-e2ev2:
+	go test -mod=readonly -timeout=60m --tags=e2e $(PACKAGES_TEST_ONLY_E2EV2)
+
 test-e2e-cache-ibc-transfer:
 	go test -run TestIBCTranferTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
 
@@ -278,11 +283,14 @@ test-e2e-cache-btc-staking-pre-approval:
 test-e2e-cache-ica:
 	go test -run TestICATestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
 
-test-e2e-cache-upgrade-v2:
-	go test -run TestSoftwareUpgradeV2TestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
-
 test-e2e-cache-epoching-spam-prevention:
 	go test -run TestEpochingSpamPreventionTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
+
+test-e2e-cache-upgrade-v4:
+	$(MAKE) -C contrib/images e2e-init-chain-rmi && \
+	export BABYLON_VERSION_BEFORE_UPGRADE=v2.3.0 && \
+	$(MAKE) -C contrib/images e2e-init-chain && \
+	go test -run TestSoftwareUpgradeV23To4TestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
 
 test-e2e-cache-btc-stake-expansion:
 	go test -run TestBTCStakeExpansionTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e

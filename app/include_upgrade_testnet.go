@@ -4,8 +4,6 @@ package app
 
 import (
 	"github.com/babylonlabs-io/babylon/v4/app/upgrades"
-	v1 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v1"
-	"github.com/babylonlabs-io/babylon/v4/app/upgrades/v1/testnet"
 	v1_1 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v1_1"
 	v1rc5 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v1rc5/testnet"
 	v1rc8 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v1rc8/testnet"
@@ -27,15 +25,6 @@ func init() {
 		v2rc4.Upgrade,
 		v2.CreateUpgrade(true, map[string]struct{}{}),
 		v1_1.Upgrade,
-		v1.CreateUpgrade(v1.UpgradeDataString{
-			BtcStakingParamsStr:       testnet.BtcStakingParamsStr,
-			FinalityParamStr:          testnet.FinalityParamStr,
-			IncentiveParamStr:         testnet.IncentiveParamStr,
-			CosmWasmParamStr:          testnet.CosmWasmParamStr,
-			NewBtcHeadersStr:          testnet.NewBtcHeadersStr,
-			TokensDistributionStr:     testnet.TokensDistributionStr,
-			AllowedStakingTxHashesStr: testnet.AllowedStakingTxHashesStr,
-		}, testnet.ParamUpgrade),
 		v1rc5.CreateUpgrade(),
 		v1rc8.CreateUpgrade(),
 		v1rc9.CreateUpgrade(),

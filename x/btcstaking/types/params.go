@@ -411,3 +411,16 @@ func (m *HeightToVersionMap) Validate() error {
 
 	return nil
 }
+
+// LargeDefaultCovenantCommittee deterministically generates a covenant committee
+// with 9 members and quorum size of 6
+func LargeDefaultCovenantCommittee() ([]*btcec.PrivateKey, []*btcec.PublicKey, uint32) {
+	sks, pks := []*btcec.PrivateKey{}, []*btcec.PublicKey{}
+	for i := uint8(0); i < 9; i++ {
+		skBytes := tmhash.Sum([]byte{i})
+		sk, pk := btcec.PrivKeyFromBytes(skBytes)
+		sks = append(sks, sk)
+		pks = append(pks, pk)
+	}
+	return sks, pks, 6
+}

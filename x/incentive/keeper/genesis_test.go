@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"cosmossdk.io/collections"
+	sdkmath "cosmossdk.io/math"
 	"cosmossdk.io/store/prefix"
 	storetypes "cosmossdk.io/store/types"
 	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
@@ -43,6 +44,12 @@ func TestInitGenesis(t *testing.T) {
 			gs: types.GenesisState{
 				Params: types.DefaultParams(),
 				BtcStakingGauges: []types.BTCStakingGaugeEntry{
+					{
+						Height: uint64(0),
+						Gauge:  datagen.GenRandomGauge(r),
+					},
+				},
+				FpDirectGauges: []types.FPDirectGaugeEntry{
 					{
 						Height: uint64(0),
 						Gauge:  datagen.GenRandomGauge(r),
@@ -229,7 +236,7 @@ func TestInitGenesis(t *testing.T) {
 			var (
 				ctrl   = gomock.NewController(t)
 				ak     = types.NewMockAccountKeeper(ctrl)
-				k, ctx = keepertest.IncentiveKeeper(t, nil, ak, nil)
+				k, ctx = keepertest.IncentiveKeeper(t, nil, ak, nil, nil)
 			)
 			defer ctrl.Finish()
 			tc.akMockResp(ak)
@@ -263,6 +270,7 @@ func FuzzTestExportGenesis(f *testing.F) {
 		l := len(gs.BtcStakingGauges)
 		for i := 0; i < l; i++ {
 			k.SetBTCStakingGauge(ctx, gs.BtcStakingGauges[i].Height, gs.BtcStakingGauges[i].Gauge)
+			k.SetFPDirectGauge(ctx, gs.FpDirectGauges[i].Height, gs.FpDirectGauges[i].Gauge)
 			k.SetRewardGauge(ctx, gs.RewardGauges[i].StakeholderType, sdk.MustAccAddressFromBech32(gs.RewardGauges[i].Address), gs.RewardGauges[i].RewardGauge)
 			k.SetWithdrawAddr(ctx, sdk.MustAccAddressFromBech32(gs.WithdrawAddresses[i].DelegatorAddress), sdk.MustAccAddressFromBech32(gs.WithdrawAddresses[i].WithdrawAddress))
 			bz, err := hex.DecodeString(gs.RefundableMsgHashes[i])
@@ -353,9 +361,10 @@ func setupTest(t *testing.T, seed int64) (sdk.Context, *keeper.Keeper, *storetyp
 		r          = rand.New(rand.NewSource(seed))
 		ak         = types.NewMockAccountKeeper(ctrl)
 		storeKey   = storetypes.NewKVStoreKey(types.StoreKey)
-		k, ctx     = keepertest.IncentiveKeeperWithStoreKey(t, storeKey, nil, ak, nil)
+		k, ctx     = keepertest.IncentiveKeeperWithStoreKey(t, storeKey, nil, ak, nil, nil)
 		l          = int(math.Abs(float64(r.Int() % 50))) // cap it to 50 entries
 		bsg        = make([]types.BTCStakingGaugeEntry, l)
+		fpDirectG  = make([]types.FPDirectGaugeEntry, l)
 		rg         = make([]types.RewardGaugeEntry, l)
 		wa         = make([]types.WithdrawAddressEntry, l)
 		mh         = make([]string, l)
@@ -394,6 +403,11 @@ func setupTest(t *testing.T, seed int64) (sdk.Context, *keeper.Keeper, *storetyp
 		ak.EXPECT().GetAccount(gomock.Any(), acc2.GetAddress()).Return(acc2).AnyTimes()
 
 		bsg[i] = types.BTCStakingGaugeEntry{
+			Height: blkHeight,
+			Gauge:  datagen.GenRandomGauge(r),
+		}
+
+		fpDirectG[i] = types.FPDirectGaugeEntry{
 			Height: blkHeight,
 			Gauge:  datagen.GenRandomGauge(r),
 		}
@@ -457,11 +471,15 @@ func setupTest(t *testing.T, seed int64) (sdk.Context, *keeper.Keeper, *storetyp
 		}
 	}
 
+	btcStkPortion := datagen.RandomLegacyDec(r, 10, 1)
+	rem := sdkmath.LegacyOneDec().Sub(btcStkPortion).Quo(sdkmath.LegacyNewDec(2))
 	gs := &types.GenesisState{
 		Params: types.Params{
-			BtcStakingPortion: datagen.RandomLegacyDec(r, 10, 1),
+			BtcStakingPortion: btcStkPortion,
+			FpPortion:         sdkmath.LegacyOneDec().Sub(btcStkPortion).Sub(rem),
 		},
 		BtcStakingGauges:                      bsg,
+		FpDirectGauges:                        fpDirectG,
 		RewardGauges:                          rg,
 		WithdrawAddresses:                     wa,
 		RefundableMsgHashes:                   mh,

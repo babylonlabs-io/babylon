@@ -106,10 +106,20 @@ func (k Keeper) HandleResumeFinalityProposal(ctx sdk.Context, fpPksHex []string,
 		)
 	}
 
+	// we need the status of the jailed finality providers before jailing them for the hooks
+	var state *ftypes.ProcessingState
 	// set the all the given finality providers voting power to 0 and updates voting power distribution cache
 	for blkHeight := uint64(haltingHeight); blkHeight <= uint64(currentHeight); blkHeight++ {
 		dc := k.GetVotingPowerDistCache(ctx, blkHeight)
 		newDc := ftypes.NewVotingPowerDistCache()
+		isCurrHeight := blkHeight == uint64(currentHeight)
+
+		// record the previous and new statuses of the finality providers at the current height
+		// to be used in the hooks
+		if isCurrHeight {
+			state = ftypes.NewProcessingState()
+			state.FillByPrevVpDstCache(dc)
+		}
 
 		for i := range dc.FinalityProviders {
 			// create a copy of the finality provider
@@ -122,6 +132,10 @@ func (k Keeper) HandleResumeFinalityProposal(ctx sdk.Context, fpPksHex []string,
 				// and do not update to jailed.
 				if !fp.IsSlashed {
 					fp.IsJailed = true
+					// update the state to be used in the hooks
+					if isCurrHeight {
+						state.FPStatesByBtcPk[fpBTCPKHex] = ftypes.FinalityProviderState_JAILED
+					}
 				}
 
 				k.SetVotingPower(ctx, fp.BtcPk.MustMarshal(), blkHeight, 0)
@@ -138,7 +152,8 @@ func (k Keeper) HandleResumeFinalityProposal(ctx sdk.Context, fpPksHex []string,
 		k.SetVotingPowerDistCache(ctx, blkHeight, newDc)
 
 		// ensure every active finality provider has signing info
-		k.HandleFPStateUpdates(ctx, dc, newDc)
+		// Calls empty state until reaches the current block height
+		k.HandleFPStateUpdates(ctx, state, dc, newDc, isCurrHeight)
 	}
 
 	return nil

@@ -28,7 +28,7 @@ func FuzzActivatedHeight(f *testing.F) {
 		r := rand.New(rand.NewSource(seed))
 
 		// Setup keeper and context
-		keeper, ctx := testkeeper.FinalityKeeper(t, nil, nil, nil)
+		keeper, ctx := testkeeper.FinalityKeeper(t, nil, nil, nil, nil)
 		ctx = sdk.UnwrapSDKContext(ctx)
 
 		// not activated yet
@@ -56,7 +56,7 @@ func FuzzFinalityProviderPowerAtHeight(f *testing.F) {
 
 		// Setup keeper and context
 		bk := types.NewMockBTCStakingKeeper(ctrl)
-		keeper, ctx := testkeeper.FinalityKeeper(t, bk, nil, nil)
+		keeper, ctx := testkeeper.FinalityKeeper(t, bk, nil, nil, nil)
 
 		// random finality provider
 		fp, err := datagen.GenRandomFinalityProvider(r)
@@ -110,7 +110,7 @@ func FuzzFinalityProviderCurrentVotingPower(f *testing.F) {
 		// Setup keeper and context
 		bk := types.NewMockBTCStakingKeeper(ctrl)
 		bk.EXPECT().HasFinalityProvider(gomock.Any(), gomock.Any()).Return(true).AnyTimes()
-		keeper, ctx := testkeeper.FinalityKeeper(t, bk, nil, nil)
+		keeper, ctx := testkeeper.FinalityKeeper(t, bk, nil, nil, nil)
 
 		// random finality provider
 		fp, err := datagen.GenRandomFinalityProvider(r)
@@ -225,7 +225,7 @@ func FuzzBlock(f *testing.F) {
 		r := rand.New(rand.NewSource(seed))
 
 		// Setup keeper and context
-		keeper, ctx := testkeeper.FinalityKeeper(t, nil, nil, nil)
+		keeper, ctx := testkeeper.FinalityKeeper(t, nil, nil, nil, nil)
 		ctx = sdk.UnwrapSDKContext(ctx)
 
 		height := datagen.RandomInt(r, 100)
@@ -256,7 +256,7 @@ func FuzzListBlocks(f *testing.F) {
 		r := rand.New(rand.NewSource(seed))
 
 		// Setup keeper and context
-		keeper, ctx := testkeeper.FinalityKeeper(t, nil, nil, nil)
+		keeper, ctx := testkeeper.FinalityKeeper(t, nil, nil, nil, nil)
 		ctx = sdk.UnwrapSDKContext(ctx)
 
 		// index a random list of finalised blocks
@@ -347,7 +347,7 @@ func FuzzVotesAtHeight(f *testing.F) {
 		r := rand.New(rand.NewSource(seed))
 
 		// Setup keeper and context
-		keeper, ctx := testkeeper.FinalityKeeper(t, nil, nil, nil)
+		keeper, ctx := testkeeper.FinalityKeeper(t, nil, nil, nil, nil)
 		ctx = sdk.UnwrapSDKContext(ctx)
 
 		// Add random number of voted finality providers to the store
@@ -393,7 +393,7 @@ func FuzzListPubRandCommit(f *testing.F) {
 		// Setup keeper and context
 		bsKeeper := types.NewMockBTCStakingKeeper(ctrl)
 		cKeeper := types.NewMockCheckpointingKeeper(ctrl)
-		fKeeper, ctx := testkeeper.FinalityKeeper(t, bsKeeper, nil, cKeeper)
+		fKeeper, ctx := testkeeper.FinalityKeeper(t, bsKeeper, nil, cKeeper, nil)
 		ctx = sdk.UnwrapSDKContext(ctx)
 		ms := keeper.NewMsgServerImpl(*fKeeper)
 
@@ -463,7 +463,7 @@ func FuzzQueryEvidence(f *testing.F) {
 		r := rand.New(rand.NewSource(seed))
 
 		// Setup keeper and context
-		keeper, ctx := testkeeper.FinalityKeeper(t, nil, nil, nil)
+		keeper, ctx := testkeeper.FinalityKeeper(t, nil, nil, nil, nil)
 		ctx = sdk.UnwrapSDKContext(ctx)
 
 		// set random BTC SK PK
@@ -508,7 +508,7 @@ func FuzzListEvidences(f *testing.F) {
 		r := rand.New(rand.NewSource(seed))
 
 		// Setup keeper and context
-		keeper, ctx := testkeeper.FinalityKeeper(t, nil, nil, nil)
+		keeper, ctx := testkeeper.FinalityKeeper(t, nil, nil, nil, nil)
 		ctx = sdk.UnwrapSDKContext(ctx)
 
 		// generate a random list of evidences since startHeight
@@ -573,7 +573,7 @@ func FuzzSigningInfo(f *testing.F) {
 		r := rand.New(rand.NewSource(seed))
 
 		// Setup keeper and context
-		fKeeper, ctx := testkeeper.FinalityKeeper(t, nil, nil, nil)
+		fKeeper, ctx := testkeeper.FinalityKeeper(t, nil, nil, nil, nil)
 		ctx = sdk.UnwrapSDKContext(ctx)
 
 		// generate a random list of signing info

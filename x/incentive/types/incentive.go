@@ -93,7 +93,7 @@ func GetCoinsPortion(coinsInt sdk.Coins, portion math.LegacyDec) sdk.Coins {
 }
 
 func GetAllStakeholderTypes() []StakeholderType {
-	return []StakeholderType{FINALITY_PROVIDER, BTC_STAKER}
+	return []StakeholderType{FINALITY_PROVIDER, BTC_STAKER, COSTAKER}
 }
 
 func NewStakeHolderType(stBytes []byte) (StakeholderType, error) {
@@ -105,6 +105,8 @@ func NewStakeHolderType(stBytes []byte) (StakeholderType, error) {
 		return FINALITY_PROVIDER, nil
 	case byte(BTC_STAKER):
 		return BTC_STAKER, nil
+	case byte(COSTAKER):
+		return COSTAKER, nil
 	default:
 		return FINALITY_PROVIDER, fmt.Errorf("invalid stBytes")
 	}

@@ -51,6 +51,7 @@ func CreateFpFromNodeAddr(
 		return newFP
 	}
 
+	t.Error("failed to create finality provider")
 	return nil
 }
 

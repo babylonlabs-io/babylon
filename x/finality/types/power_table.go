@@ -35,6 +35,14 @@ func (dc *VotingPowerDistCache) AddFinalityProviderDistInfo(v *FinalityProviderD
 	dc.FinalityProviders = append(dc.FinalityProviders, v)
 }
 
+func (dc *VotingPowerDistCache) ActiveFpsByBtcPk() map[string]struct{} {
+	activeFpByBtcPk := make(map[string]struct{}, 0)
+	for _, fp := range dc.FinalityProviders[:dc.NumActiveFps] {
+		activeFpByBtcPk[fp.BtcPk.MarshalHex()] = struct{}{}
+	}
+	return activeFpByBtcPk
+}
+
 func (dc *VotingPowerDistCache) FindNewActiveFinalityProviders(prevDc *VotingPowerDistCache) []*FinalityProviderDistInfo {
 	activeFps := dc.GetActiveFinalityProviderSet()
 	prevActiveFps := prevDc.GetActiveFinalityProviderSet()
@@ -135,7 +143,6 @@ func (dc *VotingPowerDistCache) GetActiveFinalityProviderSet() map[string]*Final
 
 // GetInactiveFinalityProviderSet returns a set of inactive finality providers
 // keyed by the hex string of the finality provider's BTC public key
-// i.e., not within top N of them in terms of voting power and not slashed or jailed
 func (dc *VotingPowerDistCache) GetInactiveFinalityProviderSet() map[string]*FinalityProviderDistInfo {
 	numActiveFPs := dc.NumActiveFps
 
@@ -146,25 +153,23 @@ func (dc *VotingPowerDistCache) GetInactiveFinalityProviderSet() map[string]*Fin
 	inactiveFps := make(map[string]*FinalityProviderDistInfo)
 
 	for _, fp := range dc.FinalityProviders[numActiveFPs:] {
-		if !fp.IsSlashed && !fp.IsJailed {
-			inactiveFps[fp.BtcPk.MarshalHex()] = fp
-		}
+		inactiveFps[fp.BtcPk.MarshalHex()] = fp
 	}
 
 	return inactiveFps
 }
 
-func (vpdc VotingPowerDistCache) Validate() error {
+func (dc VotingPowerDistCache) Validate() error {
 	// check fps are unique and total voting power is correct
 	var (
 		accVP uint64
 		fpMap = make(map[string]struct{})
 	)
 
-	SortFinalityProvidersWithZeroedVotingPower(vpdc.FinalityProviders)
+	SortFinalityProvidersWithZeroedVotingPower(dc.FinalityProviders)
 	numActiveFPs := uint32(0)
 
-	for _, fp := range vpdc.FinalityProviders {
+	for _, fp := range dc.FinalityProviders {
 		if _, exists := fpMap[fp.BtcPk.MarshalHex()]; exists {
 			return fmt.Errorf("invalid voting power distribution cache. Duplicate finality provider entry with BTC PK %s", fp.BtcPk.MarshalHex())
 		}
@@ -189,12 +194,12 @@ func (vpdc VotingPowerDistCache) Validate() error {
 		numActiveFPs++
 	}
 
-	if vpdc.TotalVotingPower != accVP {
-		return fmt.Errorf("invalid voting power distribution cache. Provided TotalVotingPower %d is different than FPs accumulated voting power %d", vpdc.TotalVotingPower, accVP)
+	if dc.TotalVotingPower != accVP {
+		return fmt.Errorf("invalid voting power distribution cache. Provided TotalVotingPower %d is different than FPs accumulated voting power %d", dc.TotalVotingPower, accVP)
 	}
 
-	if vpdc.NumActiveFps != numActiveFPs {
-		return fmt.Errorf("invalid voting power distribution cache. NumActiveFps %d is higher than active FPs count %d", vpdc.NumActiveFps, numActiveFPs)
+	if dc.NumActiveFps != numActiveFPs {
+		return fmt.Errorf("invalid voting power distribution cache. NumActiveFps %d is higher than active FPs count %d", dc.NumActiveFps, numActiveFPs)
 	}
 
 	return nil
@@ -217,6 +222,16 @@ func NewFinalityProviderDistInfo(fp *bstypes.FinalityProvider) *FinalityProvider
 
 func (v *FinalityProviderDistInfo) GetAddress() sdk.AccAddress {
 	return v.Addr
+}
+
+func (v *FinalityProviderDistInfo) ChangeDeltaSats(fpDeltaSats int64) {
+	switch {
+	case fpDeltaSats > 0:
+		v.AddBondedSats(uint64(fpDeltaSats))
+	case fpDeltaSats < 0:
+		satsToRemove := abs(fpDeltaSats)
+		v.RemoveBondedSats(uint64(satsToRemove))
+	}
 }
 
 func (v *FinalityProviderDistInfo) AddBondedSats(sats uint64) {
@@ -300,4 +315,17 @@ func SortFinalityProvidersWithZeroedVotingPower(fps []*FinalityProviderDistInfo)
 
 		return fps[i].TotalBondedSat > fps[j].TotalBondedSat
 	})
+}
+
+// abs returns the absolute value of a signed integer.
+// There's a corner case: int64 minimum
+// value (-9223372036854775808) cannot be negated.
+// For satoshi values in Bitcoin context, this
+// overflow scenario is extremely unlikely since it
+// would represent an impossibly large amount of Bitcoin
+func abs(val int64) int64 {
+	if val < 0 {
+		return -val
+	}
+	return val
 }

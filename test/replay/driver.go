@@ -53,14 +53,14 @@ import (
 	"github.com/otiai10/copy"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonlabs-io/babylon/v4/app"
 	babylonApp "github.com/babylonlabs-io/babylon/v4/app"
+	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
 	appsigner "github.com/babylonlabs-io/babylon/v4/app/signer"
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/initialization"
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
 	btclighttypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
 	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
-	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
+	minttypes "github.com/babylonlabs-io/babylon/v4/x/mint/types"
 )
 
 var validatorConfig = &initialization.NodeConfig{
@@ -74,18 +74,18 @@ var validatorConfig = &initialization.NodeConfig{
 }
 
 const (
-	chainID         = initialization.ChainAID
-	testPartSize    = 65536
-	defaultGasLimit = 750000
-	defaultFee      = 500000
-	epochLength     = 10
-	blkTime         = time.Second * 5
+	chainID      = initialization.ChainAID
+	testPartSize = 65536
+	defaultFee   = 500000
+	epochLength  = 10
+	blkTime      = time.Second * 5
 )
 
 var (
-	defaultFeeCoin                 = sdk.NewCoin("ubbn", math.NewInt(defaultFee))
-	BtcParams                      = &chaincfg.SimNetParams
-	covenantSKs, _, CovenantQuorum = bstypes.DefaultCovenantCommittee()
+	DefaultGasLimit                  = uint64(1_000_000)
+	defaultFeeCoin                   = sdk.NewCoin("ubbn", math.NewInt(defaultFee))
+	BtcParams                        = &chaincfg.SimNetParams
+	covenantSKs, pks, CovenantQuorum = bstypes.LargeDefaultCovenantCommittee()
 )
 
 func getGenDoc(
@@ -131,18 +131,18 @@ type FinalizedBlock struct {
 
 type BabylonAppDriver struct {
 	*SenderInfo
-	r                *rand.Rand
-	t                *testing.T
-	App              *app.BabylonApp
-	BlsSigner        checkpointingtypes.BlsSigner
-	BlockExec        *sm.BlockExecutor
-	BlockStore       *store.BlockStore
-	StateStore       sm.Store
-	NodeDir          string
-	ValidatorAddress []byte
-	DelegatorAddress sdk.ValAddress
-	CometPrivKey     cmtcrypto.PrivKey
-	CurrentTime      time.Time
+	r            *rand.Rand
+	t            *testing.T
+	App          *babylonApp.BabylonApp
+	BlsSigner    ckpttypes.BlsSigner
+	BlockExec    *sm.BlockExecutor
+	BlockStore   *store.BlockStore
+	StateStore   sm.Store
+	NodeDir      string
+	CometAddress []byte
+	ValAddress   sdk.ValAddress
+	CometPrivKey cmtcrypto.PrivKey
+	CurrentTime  time.Time
 }
 
 // NewBabylonAppDriverTmpDir initializes Babylon driver for block creation with
@@ -170,6 +170,12 @@ func NewBabylonAppDriver(
 		expeditedVotingPeriod,   // expedited
 		1,
 		[]*btclighttypes.BTCHeaderInfo{},
+		// 300M is gas limit set for testnet and mainnet
+		300_000_000,
+		&initialization.StartingBtcStakingParams{
+			CovenantCommittee: bbn.NewBIP340PKsFromBTCPKs(pks),
+			CovenantQuorum:    CovenantQuorum,
+		},
 	)
 	require.NoError(t, err)
 	require.NotNil(t, chain)
@@ -272,13 +278,13 @@ func NewBabylonAppDriver(
 			sequenceNumber: 1,
 			accountNumber:  0,
 		},
-		BlockExec:        blockExec,
-		BlockStore:       blockStore,
-		StateStore:       stateStore,
-		NodeDir:          chain.Nodes[0].ConfigDir,
-		ValidatorAddress: validatorAddress,
-		DelegatorAddress: signerValAddress,
-		CometPrivKey:     ed25519.PrivKey(chain.Nodes[0].CometPrivKey),
+		BlockExec:    blockExec,
+		BlockStore:   blockStore,
+		StateStore:   stateStore,
+		NodeDir:      chain.Nodes[0].ConfigDir,
+		CometAddress: validatorAddress,
+		ValAddress:   signerValAddress,
+		CometPrivKey: ed25519.PrivKey(chain.Nodes[0].CometPrivKey),
 		// initiate time to current time
 		CurrentTime: time.Now(),
 	}
@@ -383,6 +389,11 @@ func (d *BabylonAppDriver) CreateTx(
 	return createTx(t, d.App.TxConfig(), senderInfo, gas, fee, msgs...)
 }
 
+func (d *BabylonAppDriver) GenerateNewBlockReturnResults() []*abci.ExecTxResult {
+	response := d.GenerateNewBlock()
+	return response.TxResults
+}
+
 // SendTxWithMessagesSuccess sends tx with msgs to the mempool and asserts that
 // execution was successful
 func (d *BabylonAppDriver) SendTxWithMessagesSuccess(
@@ -427,7 +438,7 @@ func SendTxWithMessages(
 	senderInfo *SenderInfo,
 	msgs ...sdk.Msg,
 ) (*abci.ResponseCheckTx, error) {
-	txBytes := createTx(t, app.TxConfig(), senderInfo, defaultGasLimit, defaultFeeCoin, msgs...)
+	txBytes := createTx(t, app.TxConfig(), senderInfo, DefaultGasLimit, defaultFeeCoin, msgs...)
 
 	return app.CheckTx(&abci.RequestCheckTx{
 		Tx:   txBytes,
@@ -445,7 +456,7 @@ func DefaultSendTxWithMessagesSuccess(
 		t,
 		app,
 		senderInfo,
-		defaultGasLimit,
+		DefaultGasLimit,
 		defaultFeeCoin,
 		msgs...,
 	)
@@ -492,7 +503,7 @@ func (d *BabylonAppDriver) GenerateNewBlock() *abci.ResponseFinalizeBlock {
 		lastState.LastBlockHeight+1,
 		lastState,
 		lastCommit,
-		d.ValidatorAddress,
+		d.CometAddress,
 	)
 	require.NoError(d.t, err)
 	require.NotNil(d.t, block1)
@@ -525,7 +536,7 @@ func (d *BabylonAppDriver) GenerateNewBlock() *abci.ResponseFinalizeBlock {
 	extCommitSig := cmttypes.ExtendedCommitSig{
 		CommitSig: cmttypes.CommitSig{
 			BlockIDFlag:      cmttypes.BlockIDFlagCommit,
-			ValidatorAddress: d.ValidatorAddress,
+			ValidatorAddress: d.CometAddress,
 			Timestamp:        newTime,
 			Signature:        []byte("test"),
 		},
@@ -598,20 +609,6 @@ func (d *BabylonAppDriver) GenerateBlocksUntilHeight(untilBlock uint64) {
 	for i := blkHeight; i < int64(untilBlock); i++ {
 		d.GenerateNewBlockAssertExecutionSuccess()
 	}
-}
-
-func (d *BabylonAppDriver) GenerateNewBlockAssertExecutionSuccessWithResults() []*abci.ExecTxResult {
-	response := d.GenerateNewBlock()
-
-	for _, tx := range response.TxResults {
-		// ignore checkpoint txs
-		if tx.GasWanted == 0 {
-			continue
-		}
-
-		require.Equal(d.t, tx.Code, uint32(0), tx.Log)
-	}
-	return response.TxResults
 }
 
 func (d *BabylonAppDriver) GenerateNewBlockAssertExecutionSuccess() {
@@ -706,10 +703,13 @@ func blockWithProofsToActivationMessages(
 // Activates all verified delegations in two blocks:
 // 1. First block extends light client so that all stakers are confirmed
 // 2. Second block activates all verified delegations
-func (d *BabylonAppDriver) ActivateVerifiedDelegations(expectedVerifiedDelegations int) {
-	block, _ := d.IncludeVerifiedStakingTxInBTC(expectedVerifiedDelegations)
-	acitvationMsgs := blockWithProofsToActivationMessages(block, d.GetDriverAccountAddress())
-	d.SendTxWithMsgsFromDriverAccount(d.t, acitvationMsgs...)
+func (d *BabylonAppDriver) ActivateVerifiedDelegations(expectedVerifiedDelegations int) []*abci.ResponseFinalizeBlock {
+	btcBlock, bbnBlock := d.IncludeVerifiedStakingTxInBTC(expectedVerifiedDelegations)
+	acitvationMsgs := blockWithProofsToActivationMessages(btcBlock, d.GetDriverAccountAddress())
+	return []*abci.ResponseFinalizeBlock{
+		bbnBlock,
+		d.SendTxWithMsgsFromDriverAccount(d.t, acitvationMsgs...),
+	}
 }
 
 // IncludeVerifiedStakingTxInBTC extends light client so that all staking txs are confirmed (k deep).
@@ -760,6 +760,36 @@ func (d *BabylonAppDriver) IncludeTxsInBTCAndConfirm(
 	return block, bbnBlock
 }
 
+func (d *BabylonAppDriver) IncludeTxsInBTC(txs []*wire.MsgTx) *datagen.BlockWithProofs {
+	tip, _ := d.GetBTCLCTip()
+
+	block := datagen.GenRandomBtcdBlockWithTransactions(d.r, txs, tip)
+	headers := BlocksWithProofsToHeaderBytes([]*datagen.BlockWithProofs{block})
+
+	// extend our light client so that all stakers are confirmed
+	d.SendTxWithMsgsFromDriverAccount(d.t, &btclighttypes.MsgInsertHeaders{
+		Signer:  d.GetDriverAccountAddress().String(),
+		Headers: headers,
+	})
+
+	return block
+}
+
+func (d *BabylonAppDriver) GenerateNewBlockAssertExecutionSuccessWithResults() []*abci.ExecTxResult {
+	response := d.GenerateNewBlock()
+
+	for _, tx := range response.TxResults {
+		// ignore checkpoint txs
+		if tx.GasWanted == 0 {
+			continue
+		}
+
+		require.Equal(d.t, tx.Code, uint32(0), tx.Log)
+	}
+
+	return response.TxResults
+}
+
 // ConfirmStakingTransactionOnBTC confirms staking transactions included in the
 // provided messages on the simulated BTC chain. Afterwards, it fills inclusion
 // proof in the provided messages. It is up to the caller to send the messages
@@ -805,21 +835,6 @@ func (d *BabylonAppDriver) ConfirmStakingTransactionOnBTC(
 	}
 }
 
-func (d *BabylonAppDriver) IncludeTxsInBTC(txs []*wire.MsgTx) *datagen.BlockWithProofs {
-	tip, _ := d.GetBTCLCTip()
-
-	block := datagen.GenRandomBtcdBlockWithTransactions(d.r, txs, tip)
-	headers := BlocksWithProofsToHeaderBytes([]*datagen.BlockWithProofs{block})
-
-	// extend our light client so that all stakers are confirmed
-	d.SendTxWithMsgsFromDriverAccount(d.t, &btclighttypes.MsgInsertHeaders{
-		Signer:  d.GetDriverAccountAddress().String(),
-		Headers: headers,
-	})
-
-	return block
-}
-
 func (d *BabylonAppDriver) GenCkptForEpoch(r *rand.Rand, t *testing.T, epochNumber uint64) {
 	ckptWithMeta := d.GetCheckpoint(t, epochNumber)
 	subAddress := d.GetDriverAccountAddress()
@@ -850,7 +865,7 @@ func (d *BabylonAppDriver) GenCkptForEpoch(r *rand.Rand, t *testing.T, epochNumb
 	d.SendTxWithMsgsFromDriverAccount(t, &msg)
 }
 
-func (d *BabylonAppDriver) FinializeCkptForEpoch(epochNumber uint64) {
+func (d *BabylonAppDriver) FinalizeCkptForEpoch(epochNumber uint64) {
 	lastFinalizedEpoch := d.GetLastFinalizedEpoch()
 	require.Equal(d.t, lastFinalizedEpoch+1, epochNumber)
 
@@ -892,7 +907,7 @@ func (d *BabylonAppDriver) SendTxWithMsgsFromDriverAccount(
 	d.SendTxWithMessagesSuccess(
 		t,
 		d.SenderInfo,
-		defaultGasLimit,
+		DefaultGasLimit,
 		defaultFeeCoin,
 		msgs...,
 	)
@@ -1067,4 +1082,42 @@ func (d *BabylonAppDriver) GovPropWaitPass(msgInGovProp sdk.Msg) {
 
 		d.GenerateNewBlockAssertExecutionSuccess()
 	}
+}
+
+func (d *BabylonAppDriver) BankSend(
+	t *testing.T,
+	from *SenderInfo,
+	to sdk.AccAddress,
+	coins sdk.Coins,
+) {
+	msgBankSend := banktypes.MsgSend{
+		FromAddress: from.AddressString(),
+		ToAddress:   to.String(),
+		// 100 BBN, should be enough for most tests
+		Amount: coins,
+	}
+
+	DefaultSendTxWithMessagesSuccess(t, d.App, from, &msgBankSend)
+	from.IncSeq()
+}
+
+func (d *BabylonAppDriver) BankSendNative(
+	t *testing.T,
+	from *SenderInfo,
+	to sdk.AccAddress,
+	amt int64,
+) {
+	d.BankSend(t, d.SenderInfo, from.Address(), sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(amt))))
+}
+
+func (d *BabylonAppDriver) MintNativeTo(
+	recipient sdk.AccAddress,
+	amt int64,
+) {
+	mintCoins := sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(amt)))
+	err := d.App.MintKeeper.MintCoins(d.Ctx(), mintCoins)
+	require.NoError(d.t, err)
+
+	err = d.App.BankKeeper.SendCoinsFromModuleToAccount(d.Ctx(), minttypes.ModuleName, recipient, mintCoins)
+	require.NoError(d.t, err)
 }

@@ -41,18 +41,30 @@ message GenesisState {
   // finality providers to which it delegated some BTC
   repeated BTCDelegatorToFpEntry btc_delegators_to_fps = 9
       [ (gogoproto.nullable) = false ];
-  // EventRewardTracker stores the events that will be processed at the babylon block height
-  // prior to the BTC reward distribution.
+  // EventRewardTracker stores the events that will be processed at the babylon
+  // block height prior to the BTC reward distribution.
   repeated EventsPowerUpdateAtHeightEntry event_reward_tracker = 10
       [ (gogoproto.nullable) = false ];
   // LastProcessedHeightEventRewardTracker is the latest block height in which
   // the reward tracker was processed.
   uint64 last_processed_height_event_reward_tracker = 11;
+  // FP direct rewards gauge on every height
+  repeated FPDirectGaugeEntry fp_direct_gauges = 12
+      [ (gogoproto.nullable) = false ];
 }
 
 // BTCStakingGaugeEntry represents a gauge for BTC staking rewards at a specific
 // height.
 message BTCStakingGaugeEntry {
+  // Block height at which this gauge is set
+  uint64 height = 1;
+  // The gauge object storing rewards info
+  Gauge gauge = 2;
+}
+
+// FPDirectGaugeEntry represents a gauge for FP direct rewards at a specific
+// height.
+message FPDirectGaugeEntry {
   // Block height at which this gauge is set
   uint64 height = 1;
   // The gauge object storing rewards info
@@ -141,4 +153,6 @@ enum StakeholderType {
   FINALITY_PROVIDER = 0;
   // BTC staker stakeholder type
   BTC_STAKER = 1;
+  // Costaker stakeholder type
+  COSTAKER = 2;
 }

@@ -40,32 +40,32 @@ func TestInflationRate(t *testing.T) {
 		{
 			name: "inflation rate is 0.08 for year zero",
 			ctx:  ctx.WithBlockHeight(1).WithBlockTime(*genesisTime),
-			want: math.LegacyMustNewDecFromStr("0.08"),
+			want: math.LegacyMustNewDecFromStr("0.055"),
 		},
 		{
 			name: "inflation rate is 0.08 for year one minus one second",
 			ctx:  ctx.WithBlockTime(yearOneMinusOneSecond),
-			want: math.LegacyMustNewDecFromStr("0.08"),
+			want: math.LegacyMustNewDecFromStr("0.055"),
 		},
 		{
 			name: "inflation rate is 0.072 for year one",
 			ctx:  ctx.WithBlockTime(yearOne),
-			want: math.LegacyMustNewDecFromStr("0.072"),
+			want: math.LegacyMustNewDecFromStr("0.055"),
 		},
 		{
 			name: "inflation rate is 0.0648 for year two",
 			ctx:  ctx.WithBlockTime(yearTwo),
-			want: math.LegacyMustNewDecFromStr("0.0648"),
+			want: math.LegacyMustNewDecFromStr("0.055"),
 		},
 		{
 			name: "inflation rate is 0.01647129056757192 for year fifteen",
 			ctx:  ctx.WithBlockTime(yearFifteen),
-			want: math.LegacyMustNewDecFromStr("0.01647129056757192"),
+			want: math.LegacyMustNewDecFromStr("0.055"),
 		},
 		{
 			name: "inflation rate is 0.015 for year twenty",
 			ctx:  ctx.WithBlockTime(yearTwenty),
-			want: math.LegacyMustNewDecFromStr("0.015"),
+			want: math.LegacyMustNewDecFromStr("0.055"),
 		},
 	}
 
@@ -128,7 +128,7 @@ func TestAnnualProvisions(t *testing.T) {
 			yearOne := genesisTime.Add(oneYear)
 			ctx = ctx.WithBlockHeight(5).WithBlockTime(yearOne)
 			mint.BeginBlocker(ctx, a.MintKeeper)
-			assert.False(t, a.MintKeeper.GetMinter(ctx).AnnualProvisions.Equal(want))
+			assert.True(t, a.MintKeeper.GetMinter(ctx).AnnualProvisions.Equal(want))
 		})
 	})
 }

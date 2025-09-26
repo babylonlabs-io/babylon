@@ -13,6 +13,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	cosmosed "github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -323,4 +324,25 @@ func (h *Helper) AddFinalityProvider(fp *btcstakingtypes.FinalityProvider) {
 		Pop:   fp.Pop,
 	})
 	h.NoError(err)
+}
+
+// ValidateBasicTxMsgs replicates the SDK's baseapp logic for validating message basics testing purposes
+// This function is extracted from cosmos-sdk baseapp to test the exact same logic
+func ValidateBasicTxMsgs(msgs []sdk.Msg) error {
+	if len(msgs) == 0 {
+		return sdkerrors.ErrInvalidRequest.Wrap("must contain at least one message")
+	}
+
+	for _, msg := range msgs {
+		m, ok := msg.(sdk.HasValidateBasic)
+		if !ok {
+			continue
+		}
+
+		if err := m.ValidateBasic(); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

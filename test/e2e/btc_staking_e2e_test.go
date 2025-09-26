@@ -64,7 +64,7 @@ func (s *BTCStakingTestSuite) SetupSuite() {
 	//
 	// 1. Configure 1 chain with some validator nodes
 	// 2. Execute various e2e tests
-	s.configurer, err = configurer.NewBTCStakingConfigurer(s.T(), true)
+	s.configurer, err = configurer.NewBabylonConfigurer(s.T(), true)
 	s.NoError(err)
 	err = s.configurer.ConfigureChains()
 	s.NoError(err)
@@ -207,6 +207,7 @@ func (s *BTCStakingTestSuite) Test2SubmitCovenantSignature() {
 				covenantSlashingSigs[i].AdaptorSigs,
 				bbn.NewBIP340SignatureFromBTCSig(covUnbondingSigs[i]),
 				covenantUnbondingSlashingSigs[i].AdaptorSigs,
+				nil,
 			)
 			// wait for a block so that above txs take effect
 			nonValidatorNode.WaitForNextBlock()
@@ -244,15 +245,31 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 	// commit public randomness list
 	numPubRand := uint64(100)
 	commitStartHeight := uint64(1)
+
 	randListInfo, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(s.r, s.fptBTCSK, commitStartHeight, numPubRand)
 	s.NoError(err)
-	nonValidatorNode.CommitPubRandList(
+	nonValidatorNode.CommitPubRandListFromNode(
 		msgCommitPubRandList.FpBtcPk,
 		msgCommitPubRandList.StartHeight,
 		msgCommitPubRandList.NumPubRand,
 		msgCommitPubRandList.Commitment,
 		msgCommitPubRandList.Sig,
 	)
+
+	// Query the public randomness commitment for the finality provider
+	var commitEpoch uint64
+	s.Eventually(func() bool {
+		pubRandCommitMap := nonValidatorNode.QueryListPubRandCommit(msgCommitPubRandList.FpBtcPk)
+		if len(pubRandCommitMap) == 0 {
+			return false
+		}
+		for _, commit := range pubRandCommitMap {
+			commitEpoch = commit.EpochNum
+		}
+		return true
+	}, time.Minute, time.Second)
+
+	s.T().Logf("Successfully queried public randomness commitment for finality provider at epoch %d", commitEpoch)
 
 	// no reward gauge for finality provider and delegation yet
 	fpBabylonAddr, err := sdk.AccAddressFromBech32(s.cacheFP.Addr)
@@ -327,6 +344,7 @@ func (s *BTCStakingTestSuite) Test4WithdrawReward() {
 
 // Test5SubmitStakerUnbonding is an end-to-end test for user unbonding
 func (s *BTCStakingTestSuite) Test5SubmitStakerUnbonding() {
+	s.T().Logf("logging Test5SubmitStakerUnbonding")
 	chainA := s.configurer.GetChainConfig(0)
 	chainA.WaitUntilHeight(1)
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
