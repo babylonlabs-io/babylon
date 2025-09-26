@@ -745,8 +745,8 @@ commission on co-staking rewards due to Cosmos SDK limitations. These different
 reward types can be withdrawn separately using the appropriate message types
 in `MsgWithdrawReward`.
 
-**Note:** The actual `score_ratio` value is configurable through governance and
-may vary between networks or be updated over time.
+**Note:** The actual `score_ratio` is a params value configurable through 
+governance.
 
 **Reward flow:**
 * Rewards are collected and accumulated in the costaking reward pool
