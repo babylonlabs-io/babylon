@@ -723,16 +723,30 @@ costakers:
 * `user_score = min(active_btc_satoshis, active_baby_tokens / score_ratio)`
 * `user_reward = total_costaking_rewards × (user_score / sum_of_all_scores)`
 
-The `score_ratio` is currently set to 20,000, meaning every 20,000 BABY staked
-makes 1 BTC eligible for costaking rewards. Only BTC staked to active finality
-providers counts toward costaking. All BABY delegations count regardless of
-validator status.
+The `score_ratio` parameter determines the conversion rate between BABY and BTC
+for costaking rewards eligibility. This governance-adjustable parameter defines
+how many BABY tokens are equivalent to 1 BTC in the scoring calculation. Only
+BTC staked to active finality providers counts toward costaking. All BABY
+delegations count regardless of validator status.
 
-For example, Alice stakes 6 BTC and 50,000 BABY, giving her a score of
-`min(6, 50,000/20,000) = 2.5`. Bob stakes 6 BTC and 150,000 BABY, giving him
-a score of `min(6, 150,000/20,000) = 6`. If the total costaking reward is
-10,000 BABY and they are the only costakers, Alice receives 2,941 BABY and Bob
-receives 7,059 BABY.
+For example, if the score_ratio parameter was set to 20,000, Alice stakes 6
+BTC and 50,000 BABY, giving her a score of min(6, 50,000/20,000) = 2.5. Bob
+stakes 6 BTC and 150,000 BABY, giving him a score of min(6, 150,000/20,000) =
+6. If the total costaking reward is 10,000 BABY and they are the only
+costakers, Alice would receive 2,941 BABY and Bob would receive 7,059 BABY.
+
+**Finality Providers and Validators**
+
+Active finality providers receive 0.075% of total inflation distributed
+proportionally based on their BTC delegation size. Active CometBFT validators
+receive 0.075% of total inflation distributed proportionally based on their
+BABY delegation size. These allocations compensate for the inability to charge
+commission on co-staking rewards due to Cosmos SDK limitations. These different
+reward types can be withdrawn separately using the appropriate message types
+in `MsgWithdrawReward`.
+
+**Note:** The actual `score_ratio` value is configurable through governance and
+may vary between networks or be updated over time.
 
 **Reward flow:**
 * Rewards are collected and accumulated in the costaking reward pool
