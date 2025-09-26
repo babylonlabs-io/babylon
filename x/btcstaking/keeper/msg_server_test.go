@@ -1709,8 +1709,6 @@ func TestBtcStakeExpansion(t *testing.T) {
 				require.True(t, firstExpandedDel.IsStakeExpansion())
 
 				h.CreateCovenantSigs(r, covenantSKs, nil, firstExpandedDel, 10)
-				firstExpandedDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, firstExpansionSpendingTx.TxHash().String())
-				require.NoError(t, err)
 
 				originalStkTx, err := bbn.NewBTCTxFromBytes(originalDel.GetStakingTx())
 				require.NoError(t, err)
