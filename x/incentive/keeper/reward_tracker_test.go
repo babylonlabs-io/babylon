@@ -541,14 +541,14 @@ func TestIncrementFinalityProviderPeriod(t *testing.T) {
 	require.Equal(t, fp1EndedPeriod, uint64(1))
 
 	checkFpCurrentRwd(t, ctx, k, fp1, fp1EndedPeriod, sdk.NewCoins(), math.NewInt(0))
-	checkFpHistoricalRwd(t, ctx, k, fp1, 0, sdk.NewCoins())
+	checkFpHistoricalRwdWithRefCount(t, ctx, k, fp1, 0, sdk.NewCoins(), uint32(1))
 
 	rwdAddedToPeriod1 := newBaseCoins(2_000000) // 2bbn
 	err = k.AddFinalityProviderRewardsForBtcDelegations(ctx, fp1, rwdAddedToPeriod1)
 	require.NoError(t, err)
 
 	// historical should not modify the rewards for the period already created
-	checkFpHistoricalRwd(t, ctx, k, fp1, 0, sdk.NewCoins())
+	checkFpHistoricalRwdWithRefCount(t, ctx, k, fp1, 0, sdk.NewCoins(), uint32(1))
 	checkFpCurrentRwd(t, ctx, k, fp1, fp1EndedPeriod, rwdAddedToPeriod1, math.NewInt(0))
 
 	// needs to add some voting power so it can calculate the amount of rewards per share
@@ -561,7 +561,7 @@ func TestIncrementFinalityProviderPeriod(t *testing.T) {
 	require.Equal(t, fp1EndedPeriod, uint64(1))
 
 	// now the historical that just ended should have as cumulative rewards 4000ubbn 2_000000ubbn/500sats
-	checkFpHistoricalRwd(t, ctx, k, fp1, fp1EndedPeriod, newBaseCoins(4000).MulInt(types.DecimalRewards))
+	checkFpHistoricalRwdWithRefCount(t, ctx, k, fp1, fp1EndedPeriod, newBaseCoins(4000).MulInt(types.DecimalRewards), uint32(1))
 	checkFpCurrentRwd(t, ctx, k, fp1, fp1EndedPeriod+1, sdk.NewCoins(), satsDelegated)
 
 	fp2EndedPeriod, err := k.IncrementFinalityProviderPeriod(ctx, fp2)
@@ -569,10 +569,11 @@ func TestIncrementFinalityProviderPeriod(t *testing.T) {
 	require.Equal(t, fp2EndedPeriod, uint64(1))
 }
 
-func checkFpHistoricalRwd(t *testing.T, ctx sdk.Context, k *Keeper, fp sdk.AccAddress, period uint64, expectedRwd sdk.Coins) {
+func checkFpHistoricalRwdWithRefCount(t *testing.T, ctx sdk.Context, k *Keeper, fp sdk.AccAddress, period uint64, expectedRwd sdk.Coins, expectedRefCount uint32) {
 	historical, err := k.GetFinalityProviderHistoricalRewards(ctx, fp, period)
 	require.NoError(t, err)
 	require.Equal(t, historical.CumulativeRewardsPerSat.String(), expectedRwd.String())
+	require.Equal(t, historical.ReferenceCount, expectedRefCount)
 }
 
 func checkFpCurrentRwd(t *testing.T, ctx sdk.Context, k *Keeper, fp sdk.AccAddress, expectedPeriod uint64, expectedRwd sdk.Coins, totalActiveSat math.Int) {
