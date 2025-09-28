@@ -355,7 +355,7 @@ func FuzzCheckCalculateDelegationRewardsBetween(f *testing.F) {
 		endingPeriod := btcRwd.StartPeriodCumulativeReward + 1
 
 		// creates a bad historical ending period that has less rewards than the starting one
-		err = k.setFinalityProviderHistoricalRewards(ctx, fp, endingPeriod, types.NewFinalityProviderHistoricalRewards(historicalStartPeriod.CumulativeRewardsPerSat.QuoInt(math.NewInt(2))))
+		err = k.setFinalityProviderHistoricalRewards(ctx, fp, endingPeriod, types.NewFinalityProviderHistoricalRewards(historicalStartPeriod.CumulativeRewardsPerSat.QuoInt(math.NewInt(2)), uint32(1)))
 		require.NoError(t, err)
 		require.Panics(t, func() {
 			_, _ = k.calculateDelegationRewardsBetween(ctx, fp, btcRwd, endingPeriod)
@@ -432,7 +432,7 @@ func FuzzCheckIncrementFinalityProviderPeriod(f *testing.F) {
 		require.NoError(t, err)
 
 		amtRwdInHistorical := fpCurrentRwd.CurrentRewards.MulInt(types.DecimalRewards).QuoInt(math.NewInt(2))
-		err = k.setFinalityProviderHistoricalRewards(ctx, fp, fpCurrentRwd.Period-1, types.NewFinalityProviderHistoricalRewards(amtRwdInHistorical))
+		err = k.setFinalityProviderHistoricalRewards(ctx, fp, fpCurrentRwd.Period-1, types.NewFinalityProviderHistoricalRewards(amtRwdInHistorical, uint32(1)))
 		require.NoError(t, err)
 
 		endedPeriod, err = k.IncrementFinalityProviderPeriod(ctx, fp)
@@ -470,18 +470,31 @@ func FuzzCheckInitializeBTCDelegation(f *testing.F) {
 		require.NoError(t, err)
 
 		err = k.initializeBTCDelegation(ctx, fp, del)
+		require.EqualError(t, err, types.ErrFPHistoricalRewardsNotFound.Error())
+
+		fpHistoricalRwd := datagen.GenRandomFPHistRwd(r)
+		err = k.setFinalityProviderHistoricalRewards(ctx, fp, fpCurrentRwd.Period-1, fpHistoricalRwd)
+		require.NoError(t, err)
+
+		err = k.initializeBTCDelegation(ctx, fp, del)
 		require.EqualError(t, err, types.ErrBTCDelegationRewardsTrackerNotFound.Error())
 
 		delBtcRwdTrackerBeforeInitialize := datagen.GenRandomBTCDelegationRewardsTracker(r)
 		err = k.setBTCDelegationRewardsTracker(ctx, fp, del, delBtcRwdTrackerBeforeInitialize)
 		require.NoError(t, err)
 
+		// increment period since reference count is already increased in the previous
+		// initializeBTCDelegation
+		endedPeriod, err := k.IncrementFinalityProviderPeriod(ctx, fp)
+		require.NoError(t, err)
+		require.Equal(t, endedPeriod, fpCurrentRwd.Period)
+
 		err = k.initializeBTCDelegation(ctx, fp, del)
 		require.NoError(t, err)
 
 		actBtcDelRwdTracker, err := k.GetBTCDelegationRewardsTracker(ctx, fp, del)
 		require.NoError(t, err)
-		require.Equal(t, fpCurrentRwd.Period-1, actBtcDelRwdTracker.StartPeriodCumulativeReward)
+		require.Equal(t, fpCurrentRwd.Period, actBtcDelRwdTracker.StartPeriodCumulativeReward)
 		require.Equal(t, delBtcRwdTrackerBeforeInitialize.TotalActiveSat, actBtcDelRwdTracker.TotalActiveSat)
 	})
 }
@@ -528,14 +541,14 @@ func TestIncrementFinalityProviderPeriod(t *testing.T) {
 	require.Equal(t, fp1EndedPeriod, uint64(1))
 
 	checkFpCurrentRwd(t, ctx, k, fp1, fp1EndedPeriod, sdk.NewCoins(), math.NewInt(0))
-	checkFpHistoricalRwd(t, ctx, k, fp1, 0, sdk.NewCoins())
+	checkFpHistoricalRwdWithRefCount(t, ctx, k, fp1, 0, sdk.NewCoins(), uint32(1))
 
 	rwdAddedToPeriod1 := newBaseCoins(2_000000) // 2bbn
 	err = k.AddFinalityProviderRewardsForBtcDelegations(ctx, fp1, rwdAddedToPeriod1)
 	require.NoError(t, err)
 
 	// historical should not modify the rewards for the period already created
-	checkFpHistoricalRwd(t, ctx, k, fp1, 0, sdk.NewCoins())
+	checkFpHistoricalRwdWithRefCount(t, ctx, k, fp1, 0, sdk.NewCoins(), uint32(1))
 	checkFpCurrentRwd(t, ctx, k, fp1, fp1EndedPeriod, rwdAddedToPeriod1, math.NewInt(0))
 
 	// needs to add some voting power so it can calculate the amount of rewards per share
@@ -548,7 +561,7 @@ func TestIncrementFinalityProviderPeriod(t *testing.T) {
 	require.Equal(t, fp1EndedPeriod, uint64(1))
 
 	// now the historical that just ended should have as cumulative rewards 4000ubbn 2_000000ubbn/500sats
-	checkFpHistoricalRwd(t, ctx, k, fp1, fp1EndedPeriod, newBaseCoins(4000).MulInt(types.DecimalRewards))
+	checkFpHistoricalRwdWithRefCount(t, ctx, k, fp1, fp1EndedPeriod, newBaseCoins(4000).MulInt(types.DecimalRewards), uint32(1))
 	checkFpCurrentRwd(t, ctx, k, fp1, fp1EndedPeriod+1, sdk.NewCoins(), satsDelegated)
 
 	fp2EndedPeriod, err := k.IncrementFinalityProviderPeriod(ctx, fp2)
@@ -556,10 +569,11 @@ func TestIncrementFinalityProviderPeriod(t *testing.T) {
 	require.Equal(t, fp2EndedPeriod, uint64(1))
 }
 
-func checkFpHistoricalRwd(t *testing.T, ctx sdk.Context, k *Keeper, fp sdk.AccAddress, period uint64, expectedRwd sdk.Coins) {
+func checkFpHistoricalRwdWithRefCount(t *testing.T, ctx sdk.Context, k *Keeper, fp sdk.AccAddress, period uint64, expectedRwd sdk.Coins, expectedRefCount uint32) {
 	historical, err := k.GetFinalityProviderHistoricalRewards(ctx, fp, period)
 	require.NoError(t, err)
 	require.Equal(t, historical.CumulativeRewardsPerSat.String(), expectedRwd.String())
+	require.Equal(t, historical.ReferenceCount, expectedRefCount)
 }
 
 func checkFpCurrentRwd(t *testing.T, ctx sdk.Context, k *Keeper, fp sdk.AccAddress, expectedPeriod uint64, expectedRwd sdk.Coins, totalActiveSat math.Int) {

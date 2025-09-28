@@ -58,9 +58,10 @@ func NewFinalityProviderCurrentRewards(currentRewards sdk.Coins, period uint64, 
 	}
 }
 
-func NewFinalityProviderHistoricalRewards(cumulativeRewardsPerSat sdk.Coins) FinalityProviderHistoricalRewards {
+func NewFinalityProviderHistoricalRewards(cumulativeRewardsPerSat sdk.Coins, referenceCount uint32) FinalityProviderHistoricalRewards {
 	return FinalityProviderHistoricalRewards{
 		CumulativeRewardsPerSat: cumulativeRewardsPerSat,
+		ReferenceCount:          referenceCount,
 	}
 }
 

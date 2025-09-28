@@ -213,6 +213,13 @@ func (k Keeper) setFinalityProviderHistoricalRewards(ctx context.Context, fp sdk
 	return k.finalityProviderHistoricalRewards.Set(ctx, collections.Join(fp.Bytes(), period), rwd)
 }
 
+// deleteFinalityProviderHistoricalRewards deletes the historical rewards of FP based on the (fp, period) pair
+func (k Keeper) deleteFinalityProviderHistoricalRewards(ctx context.Context, fp sdk.AccAddress, period uint64) {
+	if err := k.finalityProviderHistoricalRewards.Remove(ctx, collections.Join(fp.Bytes(), period)); err != nil {
+		k.Logger(sdk.UnwrapSDKContext(ctx)).Error("error deleting FinalityProviderHistoricalRewards", "error", err)
+	}
+}
+
 // subDelegationSat subtracts an amount of active stake from the BTCDelegationRewardsTracker
 // and the FinalityProviderCurrentRewards.
 // There is no need to check if the fp or delegation exists, because they should exist
