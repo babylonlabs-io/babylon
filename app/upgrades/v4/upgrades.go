@@ -100,7 +100,7 @@ func CreateUpgradeHandler(mm *module.Manager, configurator module.Configurator, 
 }
 
 // InitializeCoStakerRwdsTracker initializes the costaker rewards tracker
-// It looks for all BTC stakers that are also baby stakers
+// It creates trackers for all BTC stakers, BABY stakers, and combined stakers
 func InitializeCoStakerRwdsTracker(
 	ctx context.Context,
 	cdc codec.BinaryCodec,
@@ -110,28 +110,127 @@ func InitializeCoStakerRwdsTracker(
 	coStkKeeper costkkeeper.Keeper,
 	fKeeper fkeeper.Keeper,
 ) error {
-	btcStakers, err := getAllBTCStakers(ctx, btcStkKeeper, fKeeper)
+	// Save co-staker rwd tracker for all BTC stakers
+	if err := saveBTCStakersRwdTracker(ctx, cdc, costkStoreService, btcStkKeeper, fKeeper); err != nil {
+		return err
+	}
+
+	// Update co-staker rwd tracker with all BABY stakers
+	totalScore, err := saveBABYStakersRwdTracker(ctx, cdc, costkStoreService, stkKeeper)
 	if err != nil {
 		return err
 	}
 
-	coStakers, err := buildCoStakersMap(ctx, btcStakers, stkKeeper)
-	if err != nil {
+	// make sure current rewards is initialized
+	if _, err := coStkKeeper.GetCurrentRewardsInitialized(ctx); err != nil {
 		return err
 	}
 
-	return saveCoStakersToStore(ctx, cdc, coStkKeeper, costkStoreService, coStakers)
+	return coStkKeeper.UpdateCurrentRewardsTotalScore(ctx, totalScore)
 }
 
-type coStaker struct {
-	Address        string
-	ActiveSatoshis math.Int
-	ActiveBaby     math.Int
+// saveBABYStakersRwdTracker retrieves all active BABY stakers with pagination and saves them to the costaker rewards tracker
+// Returns the total score of the co-staker rewards tracker
+func saveBABYStakersRwdTracker(ctx context.Context, cdc codec.BinaryCodec, costkStoreService corestoretypes.KVStoreService, stkKeeper *stkkeeper.Keeper) (math.Int, error) {
+	totalScore := math.ZeroInt()
+	// Get all BABY stakers
+	babyStakers, err := getAllBABYStakers(ctx, stkKeeper)
+	if err != nil {
+		return totalScore, fmt.Errorf("failed to get all BABY stakers: %w", err)
+	}
+
+	// Save BABY stakers to costaker rewards tracker
+	for addr, totalBaby := range babyStakers {
+		rt, err := upsertCostakerRewardsTracker(ctx, cdc, costkStoreService, addr, math.ZeroInt(), totalBaby)
+		if err != nil {
+			return totalScore, fmt.Errorf("failed to upsert costaker rewards tracker for BABY staker %s: %w", addr, err)
+		}
+
+		totalScore = totalScore.Add(rt.TotalScore)
+	}
+
+	return totalScore, nil
 }
 
-// getAllBTCStakers retrieves all active BTC stakers with pagination
-func getAllBTCStakers(ctx context.Context, btcStkKeeper btcstkkeeper.Keeper, fKeeper fkeeper.Keeper) (map[string]math.Int, error) {
-	btcStakers := make(map[string]math.Int)
+// getAllBABYStakers retrieves all BABY stakers with pagination
+func getAllBABYStakers(ctx context.Context, stkKeeper *stkkeeper.Keeper) (map[string]math.Int, error) {
+	stkQuerier := stkkeeper.NewQuerier(stkKeeper)
+	babyStakers := make(map[string]math.Int)
+
+	// First get all validators
+	var nextKey []byte
+	for {
+		req := &stktypes.QueryValidatorsRequest{
+			Pagination: &query.PageRequest{
+				Key: nextKey,
+			},
+		}
+
+		res, err := stkQuerier.Validators(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+
+		// For each validator, get all delegations
+		for _, validator := range res.Validators {
+			if err := getValidatorDelegations(ctx, stkQuerier, validator.OperatorAddress, babyStakers); err != nil {
+				return nil, err
+			}
+		}
+
+		if res.Pagination == nil || len(res.Pagination.NextKey) == 0 {
+			break
+		}
+		nextKey = res.Pagination.NextKey
+	}
+
+	return babyStakers, nil
+}
+
+// getValidatorDelegations gets all delegations for a specific validator
+func getValidatorDelegations(ctx context.Context, stkQuerier stkkeeper.Querier, validatorAddr string, babyStakers map[string]math.Int) error {
+	var nextKey []byte
+
+	for {
+		req := &stktypes.QueryValidatorDelegationsRequest{
+			ValidatorAddr: validatorAddr,
+			Pagination: &query.PageRequest{
+				Key: nextKey,
+			},
+		}
+
+		res, err := stkQuerier.ValidatorDelegations(ctx, req)
+		if err != nil {
+			return err
+		}
+
+		for _, delegation := range res.DelegationResponses {
+			delegatorAddr := delegation.Delegation.DelegatorAddress
+			amount := delegation.Balance.Amount
+
+			if existing, found := babyStakers[delegatorAddr]; found {
+				babyStakers[delegatorAddr] = existing.Add(amount)
+			} else {
+				babyStakers[delegatorAddr] = amount
+			}
+		}
+
+		if res.Pagination == nil || len(res.Pagination.NextKey) == 0 {
+			break
+		}
+		nextKey = res.Pagination.NextKey
+	}
+
+	return nil
+}
+
+// saveBTCStakersRwdTracker retrieves all active BTC stakers with pagination and saves them to the costaker rewards tracker
+func saveBTCStakersRwdTracker(ctx context.Context,
+	cdc codec.BinaryCodec,
+	costkStoreService corestoretypes.KVStoreService,
+	btcStkKeeper btcstkkeeper.Keeper,
+	fKeeper fkeeper.Keeper,
+) error {
 	// To count as btc staker for the co-staking rewards
 	// need to be delegating to a FP within the current active set
 	// This runs on preblocker (before BeginBlock), so the active set to consider should be from previous height
@@ -155,7 +254,7 @@ func getAllBTCStakers(ctx context.Context, btcStkKeeper btcstkkeeper.Keeper, fKe
 
 		btcDelRes, err := btcStkKeeper.BTCDelegations(ctx, req)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		for _, del := range btcDelRes.BtcDelegations {
@@ -163,13 +262,10 @@ func getAllBTCStakers(ctx context.Context, btcStkKeeper btcstkkeeper.Keeper, fKe
 			if !delegatingToActiveFP(del.FpBtcPkList, activeFps) {
 				continue
 			}
-			if staker, found := btcStakers[del.StakerAddr]; found {
-				staker = staker.Add(math.NewIntFromUint64(del.TotalSat))
-				btcStakers[del.StakerAddr] = staker
-				continue
+			_, err := upsertCostakerRewardsTracker(ctx, cdc, costkStoreService, del.StakerAddr, math.NewIntFromUint64(del.TotalSat), math.ZeroInt())
+			if err != nil {
+				return err
 			}
-
-			btcStakers[del.StakerAddr] = math.NewIntFromUint64(del.TotalSat)
 		}
 
 		if btcDelRes.Pagination == nil || len(btcDelRes.Pagination.NextKey) == 0 {
@@ -178,71 +274,18 @@ func getAllBTCStakers(ctx context.Context, btcStkKeeper btcstkkeeper.Keeper, fKe
 		nextKey = btcDelRes.Pagination.NextKey
 	}
 
-	return btcStakers, nil
+	return nil
 }
 
-// getBabyStakingAmount retrieves total baby staking amount for a staker with pagination
-func getBabyStakingAmount(ctx context.Context, stkQuerier stkkeeper.Querier, stakerAddr string) (math.Int, error) {
-	totalBaby := math.ZeroInt()
-	var nextKey []byte
-
-	for {
-		req := &stktypes.QueryDelegatorDelegationsRequest{
-			DelegatorAddr: stakerAddr,
-			Pagination: &query.PageRequest{
-				Key: nextKey,
-			},
-		}
-
-		res, err := stkQuerier.DelegatorDelegations(ctx, req)
-		if err != nil {
-			return math.ZeroInt(), err
-		}
-
-		for _, del := range res.DelegationResponses {
-			totalBaby = totalBaby.Add(del.Balance.Amount)
-		}
-
-		if res.Pagination == nil || len(res.Pagination.NextKey) == 0 {
-			break
-		}
-		nextKey = res.Pagination.NextKey
-	}
-
-	return totalBaby, nil
-}
-
-// buildCoStakersMap builds a map of co-stakers from BTC stakers and their baby staking amounts
-func buildCoStakersMap(ctx context.Context, btcStakers map[string]math.Int, stkKeeper *stkkeeper.Keeper) (map[string]coStaker, error) {
-	stkQuerier := stkkeeper.NewQuerier(stkKeeper)
-	coStakers := make(map[string]coStaker)
-
-	for stkAddr, activeSat := range btcStakers {
-		totalBaby, err := getBabyStakingAmount(ctx, stkQuerier, stkAddr)
-		if err != nil {
-			return nil, err
-		}
-
-		if totalBaby.GT(math.ZeroInt()) {
-			coStakers[stkAddr] = coStaker{
-				Address:        stkAddr,
-				ActiveSatoshis: activeSat,
-				ActiveBaby:     totalBaby,
-			}
-		}
-	}
-
-	return coStakers, nil
-}
-
-// saveCoStakersToStore saves co-stakers to the rewards tracker store
-func saveCoStakersToStore(
+// upsertCostakerRewardsTracker creates or updates a costaker rewards tracker
+func upsertCostakerRewardsTracker(
 	ctx context.Context,
 	cdc codec.BinaryCodec,
-	k costkkeeper.Keeper,
 	costkStoreService corestoretypes.KVStoreService,
-	coStakers map[string]coStaker,
-) error {
+	stakerAddr string,
+	btcAmount math.Int,
+	babyAmount math.Int,
+) (*costktypes.CostakerRewardsTracker, error) {
 	sb := collections.NewSchemaBuilder(costkStoreService)
 	rwdTrackers := collections.NewMap(
 		sb,
@@ -251,31 +294,42 @@ func saveCoStakersToStore(
 		collections.BytesKey,
 		codec.CollValue[costktypes.CostakerRewardsTracker](cdc),
 	)
-	dp := costktypes.DefaultParams()
-	totalScore := math.ZeroInt()
-	// we're writing independent key-value
-	// pairs to storage, the order shouldn't affect the final state
-	for addr, val := range coStakers {
-		sdkAddr := sdk.MustAccAddressFromBech32(addr)
-		rt := costktypes.NewCostakerRewardsTracker(
+
+	sdkAddr := sdk.MustAccAddressFromBech32(stakerAddr)
+	addrKey := []byte(sdkAddr)
+
+	// Try to get existing tracker
+	existing, err := rwdTrackers.Get(ctx, addrKey)
+	if err != nil && !errors.Is(err, collections.ErrNotFound) {
+		return nil, err
+	}
+
+	var rt costktypes.CostakerRewardsTracker
+	if errors.Is(err, collections.ErrNotFound) {
+		// Create new tracker
+		rt = costktypes.NewCostakerRewardsTracker(
 			1,
-			val.ActiveSatoshis,
-			val.ActiveBaby,
+			btcAmount,
+			babyAmount,
 			math.ZeroInt(),
 		)
-		rt.UpdateScore(dp.ScoreRatioBtcByBaby)
-		if err := rwdTrackers.Set(ctx, []byte(sdkAddr), rt); err != nil {
-			return err
-		}
-		totalScore = totalScore.Add(rt.TotalScore)
+	} else {
+		// Update existing tracker
+		rt = existing
+		rt.ActiveSatoshis = rt.ActiveSatoshis.Add(btcAmount)
+		rt.ActiveBaby = rt.ActiveBaby.Add(babyAmount)
 	}
 
-	// make sure current rewards is initialized
-	if _, err := k.GetCurrentRewardsInitialized(ctx); err != nil {
-		return err
+	// Update score
+	dp := costktypes.DefaultParams()
+	rt.UpdateScore(dp.ScoreRatioBtcByBaby)
+
+	// Save tracker
+	if err := rwdTrackers.Set(ctx, addrKey, rt); err != nil {
+		return nil, err
 	}
 
-	return k.UpdateCurrentRewardsTotalScore(ctx, totalScore)
+	return &rt, nil
 }
 
 func delegatingToActiveFP(fpBtcPks []bbn.BIP340PubKey, activeFps map[string]*ftypes.FinalityProviderDistInfo) bool {
