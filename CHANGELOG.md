@@ -37,6 +37,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+### Bug fixes
+
+- [#1763] Fix `v4` upgrade logic to store co-staker reward tracker for all stakers (baby and/or BTC)
+
 ## v4.0.0-rc.0
 
 ### Improvements
