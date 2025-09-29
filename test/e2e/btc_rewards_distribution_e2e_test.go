@@ -210,7 +210,7 @@ func (s *BtcRewardsDistribution) SubmitCovenantSignature() {
 	n1, err := s.configurer.GetChainConfig(0).GetNodeAtIndex(1)
 	s.NoError(err)
 
-	s.CreateCovenantsAndSubmitSignaturesToPendDels(n1, s.fp1, s.fp2)
+	s.CreateCovenantsAndSubmitSignaturesToPendDels(n1, 3, s.fp1, s.fp2)
 }
 
 // CommitPublicRandomnessAndSealed commits public randomness for
@@ -724,6 +724,7 @@ func (s *BaseBtcRewardsDistribution) CreateBTCDelegationAndCheck(
 
 func (s *BaseBtcRewardsDistribution) CreateCovenantsAndSubmitSignaturesToPendDels(
 	n *chain.NodeConfig,
+	expDelCount int,
 	fps ...*bstypes.FinalityProvider,
 ) {
 	params := n.QueryBTCStakingParams()
@@ -747,7 +748,7 @@ func (s *BaseBtcRewardsDistribution) CreateCovenantsAndSubmitSignaturesToPendDel
 	// tx bank send needs to take effect
 	n.WaitForNextBlock()
 	pendingDelsResp := n.QueryFinalityProvidersDelegations(fpBtcPks...)
-	s.Require().Equal(len(pendingDelsResp), 3)
+	s.Require().Equal(len(pendingDelsResp), expDelCount)
 
 	for _, pendingDelResp := range pendingDelsResp {
 		pendingDel, err := chain.ParseRespBTCDelToBTCDel(pendingDelResp)
@@ -760,7 +761,7 @@ func (s *BaseBtcRewardsDistribution) CreateCovenantsAndSubmitSignaturesToPendDel
 
 	// ensure the BTC delegation has covenant sigs now
 	activeDelsSet := n.QueryFinalityProvidersDelegations(fpBtcPks...)
-	s.Require().Len(activeDelsSet, 3)
+	s.Require().Len(activeDelsSet, expDelCount)
 	for _, activeDel := range activeDelsSet {
 		s.Require().True(activeDel.Active)
 	}

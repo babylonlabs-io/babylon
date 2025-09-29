@@ -236,7 +236,7 @@ func (s *SoftwareUpgradeV23To4TestSuite) SetupVerifiedBtcDelegationsWithBabyStak
 	resp := n.QueryBtcDelegations(bstypes.BTCDelegationStatus_ANY)
 	require.Len(s.T(), resp.BtcDelegations, 4)
 
-	s.CreateCovenantsAndSubmitSignaturesToPendDels(n, s.fp1, s.fp2)
+	s.CreateCovenantsAndSubmitSignaturesToPendDels(n, 4, s.fp1, s.fp2)
 
 	// Now create Baby delegations to validators to make them co-stakers
 	// This is crucial for the v4 upgrade test as it will register these as CostakerRewardsTracker
