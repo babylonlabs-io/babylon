@@ -318,7 +318,7 @@ func (s *SoftwareUpgradeV23To4TestSuite) FpCommitPubRandAndVote(n *chain.NodeCon
 
 		fpDels := n.QueryFinalityProviderDelegations(fp.BtcPk.MarshalHex())
 		if fp.BtcPk.Equals(s.fp1.BtcPk) {
-			s.Require().Len(fpDels, 2)
+			s.Require().Len(fpDels, 3)
 		} else {
 			s.Require().Len(fpDels, 1)
 		}
