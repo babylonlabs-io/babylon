@@ -664,13 +664,6 @@ func verifyCoStakerCreated(t *testing.T, ctx sdk.Context, cdc codec.BinaryCodec,
 	require.True(t, tracker.ActiveBaby.Equal(expectedBabyAmount), "ActiveBaby should match expected baby amount: expected %s, got %s", expectedBabyAmount.String(), tracker.ActiveBaby.String())
 }
 
-func verifyNoCoStakerCreated(t *testing.T, ctx sdk.Context, cdc codec.BinaryCodec, storeService corestore.KVStoreService, stakerAddr sdk.AccAddress) {
-	rwdTrackers := rwdTrackerCollection(storeService, cdc)
-	_, err := rwdTrackers.Get(ctx, []byte(stakerAddr))
-	require.Error(t, err, "Co-staker rewards tracker should not exist for %s", stakerAddr.String())
-	require.ErrorIs(t, err, collections.ErrNotFound)
-}
-
 func countCoStakers(t *testing.T, ctx sdk.Context, cdc codec.BinaryCodec, storeService corestore.KVStoreService) int {
 	rwdTrackers := rwdTrackerCollection(storeService, cdc)
 	var count int
