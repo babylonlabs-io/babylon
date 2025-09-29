@@ -308,7 +308,7 @@ func TestInitializeCoStakerRwdsTracker_MultipleCombinations(t *testing.T) {
 
 	// Verify total count
 	count := countCoStakers(t, ctx, cdc, storeService)
-	require.Equal(t, 3, count, "Should have exactly 3 co-staker created")
+	require.Equal(t, 3, count, "Should have exactly 3 co-stakers created")
 }
 
 func TestInitializeCoStakerRwdsTracker_WithMultipleActiveFPs(t *testing.T) {
