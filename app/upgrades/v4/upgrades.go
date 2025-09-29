@@ -110,13 +110,14 @@ func InitializeCoStakerRwdsTracker(
 	coStkKeeper costkkeeper.Keeper,
 	fKeeper fkeeper.Keeper,
 ) error {
+	dp := costktypes.DefaultParams()
 	// Save co-staker rwd tracker for all BTC stakers
-	if err := saveBTCStakersRwdTracker(ctx, cdc, costkStoreService, btcStkKeeper, fKeeper); err != nil {
+	if err := saveBTCStakersRwdTracker(ctx, cdc, costkStoreService, btcStkKeeper, fKeeper, dp); err != nil {
 		return err
 	}
 
 	// Update co-staker rwd tracker with all BABY stakers
-	totalScore, err := saveBABYStakersRwdTracker(ctx, cdc, costkStoreService, stkKeeper)
+	totalScore, err := saveBABYStakersRwdTracker(ctx, cdc, costkStoreService, stkKeeper, dp)
 	if err != nil {
 		return err
 	}
@@ -131,7 +132,7 @@ func InitializeCoStakerRwdsTracker(
 
 // saveBABYStakersRwdTracker retrieves all active BABY stakers with pagination and saves them to the costaker rewards tracker
 // Returns the total score of the co-staker rewards tracker
-func saveBABYStakersRwdTracker(ctx context.Context, cdc codec.BinaryCodec, costkStoreService corestoretypes.KVStoreService, stkKeeper *stkkeeper.Keeper) (math.Int, error) {
+func saveBABYStakersRwdTracker(ctx context.Context, cdc codec.BinaryCodec, costkStoreService corestoretypes.KVStoreService, stkKeeper *stkkeeper.Keeper, params costktypes.Params) (math.Int, error) {
 	totalScore := math.ZeroInt()
 	// Get all BABY stakers
 	babyStakers, err := getAllBABYStakers(ctx, stkKeeper)
@@ -141,7 +142,7 @@ func saveBABYStakersRwdTracker(ctx context.Context, cdc codec.BinaryCodec, costk
 
 	// Save BABY stakers to costaker rewards tracker
 	for addr, totalBaby := range babyStakers {
-		rt, err := upsertCostakerRewardsTracker(ctx, cdc, costkStoreService, addr, math.ZeroInt(), totalBaby)
+		rt, err := upsertCostakerRewardsTracker(ctx, cdc, costkStoreService, addr, math.ZeroInt(), totalBaby, params)
 		if err != nil {
 			return totalScore, fmt.Errorf("failed to upsert costaker rewards tracker for BABY staker %s: %w", addr, err)
 		}
@@ -230,6 +231,7 @@ func saveBTCStakersRwdTracker(ctx context.Context,
 	costkStoreService corestoretypes.KVStoreService,
 	btcStkKeeper btcstkkeeper.Keeper,
 	fKeeper fkeeper.Keeper,
+	params costktypes.Params,
 ) error {
 	// To count as btc staker for the co-staking rewards
 	// need to be delegating to a FP within the current active set
@@ -262,7 +264,7 @@ func saveBTCStakersRwdTracker(ctx context.Context,
 			if !delegatingToActiveFP(del.FpBtcPkList, activeFps) {
 				continue
 			}
-			_, err := upsertCostakerRewardsTracker(ctx, cdc, costkStoreService, del.StakerAddr, math.NewIntFromUint64(del.TotalSat), math.ZeroInt())
+			_, err := upsertCostakerRewardsTracker(ctx, cdc, costkStoreService, del.StakerAddr, math.NewIntFromUint64(del.TotalSat), math.ZeroInt(), params)
 			if err != nil {
 				return err
 			}
@@ -285,6 +287,7 @@ func upsertCostakerRewardsTracker(
 	stakerAddr string,
 	btcAmount math.Int,
 	babyAmount math.Int,
+	params costktypes.Params,
 ) (*costktypes.CostakerRewardsTracker, error) {
 	sb := collections.NewSchemaBuilder(costkStoreService)
 	rwdTrackers := collections.NewMap(
@@ -321,8 +324,7 @@ func upsertCostakerRewardsTracker(
 	}
 
 	// Update score
-	dp := costktypes.DefaultParams()
-	rt.UpdateScore(dp.ScoreRatioBtcByBaby)
+	rt.UpdateScore(params.ScoreRatioBtcByBaby)
 
 	// Save tracker
 	if err := rwdTrackers.Set(ctx, addrKey, rt); err != nil {
