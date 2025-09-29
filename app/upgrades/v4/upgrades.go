@@ -226,7 +226,8 @@ func getValidatorDelegations(ctx context.Context, stkQuerier stkkeeper.Querier, 
 }
 
 // saveBTCStakersRwdTracker retrieves all active BTC stakers with pagination and saves them to the costaker rewards tracker
-func saveBTCStakersRwdTracker(ctx context.Context,
+func saveBTCStakersRwdTracker(
+	ctx context.Context,
 	cdc codec.BinaryCodec,
 	costkStoreService corestoretypes.KVStoreService,
 	btcStkKeeper btcstkkeeper.Keeper,

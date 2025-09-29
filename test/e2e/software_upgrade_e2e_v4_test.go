@@ -32,6 +32,7 @@ type SoftwareUpgradeV23To4TestSuite struct {
 	fp2BTCSK  *btcec.PrivateKey
 	del1BTCSK *btcec.PrivateKey
 	del2BTCSK *btcec.PrivateKey
+	del3BTCSK *btcec.PrivateKey // New delegator without baby delegations
 
 	fp1 *bstypes.FinalityProvider
 	fp2 *bstypes.FinalityProvider
@@ -40,6 +41,7 @@ type SoftwareUpgradeV23To4TestSuite struct {
 	fp1Del1StakingAmt int64
 	fp1Del2StakingAmt int64
 	fp2Del1StakingAmt int64
+	fp1Del3StakingAmt int64 // New delegator amount
 
 	// Baby staking amounts for delegations (to validators) to make them co-stakers
 	del1BabyAmt int64
@@ -48,6 +50,7 @@ type SoftwareUpgradeV23To4TestSuite struct {
 	// bech32 addresses
 	del1Addr string
 	del2Addr string
+	del3Addr string // New delegator address
 	fp1Addr  string
 	fp2Addr  string
 
@@ -73,10 +76,12 @@ func (s *SoftwareUpgradeV23To4TestSuite) SetupSuite() {
 	s.fp2BTCSK, _, _ = datagen.GenRandomBTCKeyPair(s.r)
 	s.del1BTCSK, _, _ = datagen.GenRandomBTCKeyPair(s.r)
 	s.del2BTCSK, _, _ = datagen.GenRandomBTCKeyPair(s.r)
+	s.del3BTCSK, _, _ = datagen.GenRandomBTCKeyPair(s.r)
 
 	s.fp1Del1StakingAmt = int64(2 * 10e8)
 	s.fp1Del2StakingAmt = int64(4 * 10e8)
 	s.fp2Del1StakingAmt = int64(2 * 10e8)
+	s.fp1Del3StakingAmt = int64(3 * 10e8) // Del3 only has BTC delegation, no baby
 
 	s.del1BabyAmt = int64(1000000) // 1 Baby
 	s.del2BabyAmt = int64(2000000) // 2 Baby
@@ -214,9 +219,10 @@ func (s *SoftwareUpgradeV23To4TestSuite) SetupFps(n *chain.NodeConfig) {
 func (s *SoftwareUpgradeV23To4TestSuite) SetupVerifiedBtcDelegationsWithBabyStaking(n *chain.NodeConfig) {
 	s.del1Addr = n.KeysAdd(wDel1)
 	s.del2Addr = n.KeysAdd(wDel2)
+	s.del3Addr = n.KeysAdd(wDel3) // Del3 will only have BTC delegation, no baby
 
 	// Fund delegators with both ubbn and additional amount for Baby staking
-	n.BankMultiSendFromNode([]string{s.del1Addr, s.del2Addr}, "10000000ubbn")
+	n.BankMultiSendFromNode([]string{s.del1Addr, s.del2Addr, s.del3Addr}, "10000000ubbn")
 
 	n.WaitForNextBlock()
 
@@ -224,10 +230,11 @@ func (s *SoftwareUpgradeV23To4TestSuite) SetupVerifiedBtcDelegationsWithBabyStak
 	s.CreateBTCDelegationAndCheck(n, wDel1, s.fp1, s.del1BTCSK, s.del1Addr, s.fp1Del1StakingAmt)
 	s.CreateBTCDelegationAndCheck(n, wDel1, s.fp2, s.del1BTCSK, s.del1Addr, s.fp2Del1StakingAmt)
 	s.CreateBTCDelegationAndCheck(n, wDel2, s.fp1, s.del2BTCSK, s.del2Addr, s.fp1Del2StakingAmt)
+	s.CreateBTCDelegationAndCheck(n, wDel3, s.fp1, s.del3BTCSK, s.del3Addr, s.fp1Del3StakingAmt) // Del3 only has BTC delegation
 
 	// Verify BTC delegations
 	resp := n.QueryBtcDelegations(bstypes.BTCDelegationStatus_ANY)
-	require.Len(s.T(), resp.BtcDelegations, 3)
+	require.Len(s.T(), resp.BtcDelegations, 4)
 
 	s.CreateCovenantsAndSubmitSignaturesToPendDels(n, s.fp1, s.fp2)
 
@@ -379,6 +386,12 @@ func (s *SoftwareUpgradeV23To4TestSuite) Test1UpgradeV4() {
 
 	// Send finality votes until upgrade height plus 10 blocks
 	s.AddFinalityVoteUntilCurrentHeight(n)
+
+	// Jail fp1 and check that costaker rewards tracker is updated
+	s.JailFinalityProviderAndCheckRewards(n)
+
+	// Make sure chain is still producing blocks
+	s.VerifyChainContinuesProducingBlocks(n)
 }
 
 // CheckCostakerRewardsTrackerAfterUpgrade verifies that the CostakerRewardsTracker was properly initialized
@@ -425,6 +438,171 @@ func (s *SoftwareUpgradeV23To4TestSuite) CheckCostakerRewardsTrackerAfterUpgrade
 	s.Require().True(del2Tracker.ActiveBaby.Equal(expectedDel2Baby),
 		"del2 active baby should match expected Baby delegations: expected %s, got %s",
 		expectedDel2Baby.String(), del2Tracker.ActiveBaby.String())
+
+	// Query costaker rewards tracker for del3 (who has BTC delegation but NO Baby delegations)
+	del3Tracker, err := n.QueryCostakerRewardsTracker(s.del3Addr)
+	s.NoError(err, "should be able to query costaker rewards tracker for del3")
+	s.Require().NotNil(del3Tracker, "del3 should have a costaker rewards tracker")
+
+	s.T().Logf("del3 costaker rewards tracker: ActiveSatoshis=%s, ActiveBaby=%s, TotalScore=%s",
+		del3Tracker.ActiveSatoshis.String(), del3Tracker.ActiveBaby.String(), del3Tracker.TotalScore.String())
+
+	// Verify del3 has BTC delegation but zero baby delegation
+	s.Require().True(del3Tracker.TotalScore.GT(sdkmath.ZeroInt()), "del3 should have a total score")
+	s.Require().Equal(uint64(1), del3Tracker.StartPeriodCumulativeReward, "del3 should start at period 1")
+
+	expectedDel3Sats := sdkmath.NewIntFromUint64(uint64(s.fp1Del3StakingAmt))
+	s.Require().True(del3Tracker.ActiveSatoshis.Equal(expectedDel3Sats),
+		"del3 active satoshis should match expected BTC delegations: expected %s, got %s",
+		expectedDel3Sats.String(), del3Tracker.ActiveSatoshis.String())
+
+	// del3 should have zero baby delegations
+	s.Require().True(del3Tracker.ActiveBaby.IsZero(),
+		"del3 active baby should be zero since no baby delegations were made: got %s",
+		del3Tracker.ActiveBaby.String())
+}
+
+// JailFinalityProviderAndCheckRewards jails fp1 by making it miss blocks and verifies reward tracker updates
+func (s *SoftwareUpgradeV23To4TestSuite) JailFinalityProviderAndCheckRewards(n *chain.NodeConfig) {
+	s.T().Logf("Starting to jail fp1 by making it miss blocks...")
+
+	// Query finality params to understand jailing thresholds
+	finalityParams := n.QueryFinalityParams()
+	s.T().Logf("Finality params: SignedBlocksWindow=%d, MinSignedPerWindow=%s",
+		finalityParams.SignedBlocksWindow, finalityParams.MinSignedPerWindow.String())
+
+	signedBlocksWindow := finalityParams.SignedBlocksWindow
+	minSignedPerWindow := finalityParams.MinSignedPerWindowInt()
+	maxMissed := signedBlocksWindow - minSignedPerWindow
+
+	s.T().Logf("Jailing thresholds: maxMissed=%d blocks within window of %d blocks", maxMissed, signedBlocksWindow)
+
+	// Verify fp1 is initially not jailed
+	fps := n.QueryFinalityProviders()
+	var fp1Response *bstypes.FinalityProviderResponse
+	for _, fp := range fps {
+		if fp.BtcPk.Equals(s.fp1.BtcPk) {
+			fp1Response = fp
+			break
+		}
+	}
+	s.Require().NotNil(fp1Response, "fp1 should be found")
+	s.Require().False(fp1Response.Jailed, "fp1 should initially not be jailed")
+
+	// Make fp1 miss blocks by having only fp2 vote for finality
+	// We need to miss more than maxMissed blocks to trigger jailing
+	blocksToMiss := maxMissed + 1
+	s.T().Logf("Making fp1 miss %d blocks to trigger jailing...", blocksToMiss)
+
+	// Get fp2 account info for offline signing
+	accFp2, err := n.QueryAccount(s.fp2.Addr)
+	s.NoError(err)
+	accNumberFp2 := accFp2.GetAccountNumber()
+	accSequenceFp2 := accFp2.GetSequence()
+
+	// Miss blocks by only having fp2 vote (fp1 won't vote)
+	for i := int64(0); i < blocksToMiss; i++ {
+		n.WaitForNextBlockWithSleep50ms()
+
+		// Only fp2 submits finality signature, fp1 misses this block
+		fp2Flags := []string{
+			"--offline",
+			fmt.Sprintf("--account-number=%d", accNumberFp2),
+			fmt.Sprintf("--sequence=%d", accSequenceFp2),
+			fmt.Sprintf("--from=%s", s.fp2.Addr),
+		}
+
+		n.AddFinalitySignatureToBlockWithContext(
+			s.fp2BTCSK,
+			s.fp2.BtcPk,
+			s.finalityBlockHeightVoted,
+			s.fp2RandListInfo.SRList[s.finalityIdx],
+			&s.fp2RandListInfo.PRList[s.finalityIdx],
+			*s.fp2RandListInfo.ProofList[s.finalityIdx].ToProto(),
+			fp2Flags...,
+		)
+
+		s.finalityIdx++
+		s.finalityBlockHeightVoted++
+		accSequenceFp2++
+
+		s.T().Logf("Block %d: fp1 missed, fp2 voted", s.finalityBlockHeightVoted-1)
+	}
+
+	// Wait a few more blocks to ensure jailing is processed
+	n.WaitForNextBlocks(3)
+
+	// Verify fp1 is now jailed
+	fps = n.QueryFinalityProviders()
+	for _, fp := range fps {
+		if fp.BtcPk.Equals(s.fp1.BtcPk) {
+			fp1Response = fp
+			break
+		}
+	}
+	s.Require().True(fp1Response.Jailed, "fp1 should be jailed after missing blocks")
+	s.T().Logf("✓ fp1 successfully jailed at height %d", n.LatestBlockNumber())
+
+	// Now check that costaker rewards trackers are updated
+	s.CheckCostakerRewardsAfterJailing(n)
+}
+
+// CheckCostakerRewardsAfterJailing verifies that costaker rewards are updated after fp1 is jailed
+func (s *SoftwareUpgradeV23To4TestSuite) CheckCostakerRewardsAfterJailing(n *chain.NodeConfig) {
+	s.T().Logf("Checking costaker rewards after fp1 jailing...")
+
+	// Query updated costaker rewards trackers
+	del1Tracker, err := n.QueryCostakerRewardsTracker(s.del1Addr)
+	s.NoError(err)
+	s.Require().NotNil(del1Tracker)
+
+	del2Tracker, err := n.QueryCostakerRewardsTracker(s.del2Addr)
+	s.NoError(err)
+	s.Require().NotNil(del2Tracker)
+
+	del3Tracker, err := n.QueryCostakerRewardsTracker(s.del3Addr)
+	s.NoError(err)
+	s.Require().NotNil(del3Tracker)
+
+	s.T().Logf("After jailing - del1: ActiveSats=%s, del2: ActiveSats=%s, del3: ActiveSats=%s",
+		del1Tracker.ActiveSatoshis.String(), del2Tracker.ActiveSatoshis.String(), del3Tracker.ActiveSatoshis.String())
+
+	// del1 had delegations to both fp1 and fp2, so should only have fp2 delegation active
+	// fp1Del1StakingAmt should be removed, fp2Del1StakingAmt should remain
+	expectedDel1Sats := sdkmath.NewIntFromUint64(uint64(s.fp2Del1StakingAmt)) // Only fp2 delegation remains
+	s.Require().True(del1Tracker.ActiveSatoshis.Equal(expectedDel1Sats),
+		"del1 active satoshis should only include fp2 delegation after fp1 jailing: expected %s, got %s",
+		expectedDel1Sats.String(), del1Tracker.ActiveSatoshis.String())
+
+	// del2 had delegation only to fp1, so should have 0 active sats
+	s.Require().True(del2Tracker.ActiveSatoshis.IsZero(),
+		"del2 active satoshis should be zero after fp1 jailing: got %s",
+		del2Tracker.ActiveSatoshis.String())
+
+	// del3 had delegation only to fp1, so should have 0 active sats
+	s.Require().True(del3Tracker.ActiveSatoshis.IsZero(),
+		"del3 active satoshis should be zero after fp1 jailing: got %s",
+		del3Tracker.ActiveSatoshis.String())
+
+	s.T().Logf("✓ Costaker rewards trackers correctly updated after fp1 jailing")
+}
+
+// VerifyChainContinuesProducingBlocks ensures the chain is still operational after jailing
+func (s *SoftwareUpgradeV23To4TestSuite) VerifyChainContinuesProducingBlocks(n *chain.NodeConfig) {
+	s.T().Logf("Verifying chain continues producing blocks...")
+
+	startHeight := n.LatestBlockNumber()
+	blocksToWait := uint64(5)
+
+	// Wait for several blocks to ensure chain is still operational
+	n.WaitForNextBlocks(blocksToWait)
+
+	endHeight := n.LatestBlockNumber()
+	s.Require().GreaterOrEqual(endHeight, startHeight+blocksToWait,
+		"chain should continue producing blocks after fp1 jailing")
+
+	s.T().Logf("✓ Chain successfully produced %d blocks after jailing (height %d -> %d)",
+		endHeight-startHeight, startHeight, endHeight)
 }
 
 func (s *SoftwareUpgradeV23To4TestSuite) AddFinalityVoteUntilCurrentHeight(

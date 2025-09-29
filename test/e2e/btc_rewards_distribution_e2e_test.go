@@ -32,6 +32,7 @@ const (
 	stakingTimeBlocks = uint16(math.MaxUint16)
 	wDel1             = "del1"
 	wDel2             = "del2"
+	wDel3             = "del3"
 	wFp1              = "fp1"
 	wFp2              = "fp2"
 	numPubRand        = uint64(600)
