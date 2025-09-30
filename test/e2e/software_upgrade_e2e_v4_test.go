@@ -6,17 +6,21 @@ import (
 	"math/rand"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	sdkmath "cosmossdk.io/math"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/chaincfg"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
 	v4 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v4"
+	"github.com/babylonlabs-io/babylon/v4/crypto/eots"
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer"
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer/chain"
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 )
 
@@ -78,10 +82,10 @@ func (s *SoftwareUpgradeV23To4TestSuite) SetupSuite() {
 	s.del2BTCSK, _, _ = datagen.GenRandomBTCKeyPair(s.r)
 	s.del3BTCSK, _, _ = datagen.GenRandomBTCKeyPair(s.r)
 
-	s.fp1Del1StakingAmt = int64(2 * 10e8)
-	s.fp1Del2StakingAmt = int64(4 * 10e8)
-	s.fp2Del1StakingAmt = int64(2 * 10e8)
-	s.fp1Del3StakingAmt = int64(3 * 10e8) // Del3 only has BTC delegation, no baby
+	s.fp1Del1StakingAmt = int64(2 * 10e7)
+	s.fp1Del2StakingAmt = int64(4 * 10e7)
+	s.fp2Del1StakingAmt = int64(5 * 10e8)
+	s.fp1Del3StakingAmt = int64(3 * 10e7) // Del3 only has BTC delegation, no baby
 
 	s.del1BabyAmt = int64(1000000) // 1 Baby
 	s.del2BabyAmt = int64(2000000) // 2 Baby
@@ -380,19 +384,22 @@ func (s *SoftwareUpgradeV23To4TestSuite) Test1UpgradeV4() {
 	resp := n.QueryAppliedPlan(v4.UpgradeName)
 	s.EqualValues(expectedUpgradeHeight, resp.Height, "the plan should be applied at the height %d", expectedUpgradeHeight)
 
-	s.CheckCostakerRewardsTrackerAfterUpgrade(n)
+	s.checkCostakerRewardsTrackerAfterUpgrade(n)
 
 	n.WaitForNextBlock()
 
-	// Jail fp1 and check that costaker rewards tracker is updated
-	s.JailFinalityProviderAndCheckRewards(n)
+	s.AddFinalityVoteUntilCurrentHeight(n)
+	n.WaitForNextBlocks(3)
+
+	// Slash fp1 and check that costaker rewards tracker is updated
+	s.slashFinalityProviderAndCheckRewards(n)
 
 	// Make sure chain is still producing blocks
-	// s.VerifyChainContinuesProducingBlocks(n)
+	s.verifyChainContinuesProducingBlocks(n)
 }
 
-// CheckCostakerRewardsTrackerAfterUpgrade verifies that the CostakerRewardsTracker was properly initialized
-func (s *SoftwareUpgradeV23To4TestSuite) CheckCostakerRewardsTrackerAfterUpgrade(n *chain.NodeConfig) {
+// checkCostakerRewardsTrackerAfterUpgrade verifies that the CostakerRewardsTracker was properly initialized
+func (s *SoftwareUpgradeV23To4TestSuite) checkCostakerRewardsTrackerAfterUpgrade(n *chain.NodeConfig) {
 	// Query costaker rewards tracker for del1 (who has both BTC and Baby delegations)
 	del1Tracker, err := n.QueryCostakerRewardsTracker(s.del1Addr)
 	s.NoError(err, "should be able to query costaker rewards tracker for del1")
@@ -459,70 +466,53 @@ func (s *SoftwareUpgradeV23To4TestSuite) CheckCostakerRewardsTrackerAfterUpgrade
 		del3Tracker.ActiveBaby.String())
 }
 
-// JailFinalityProviderAndCheckRewards jails fp1 by making it miss blocks and verifies reward tracker updates
-func (s *SoftwareUpgradeV23To4TestSuite) JailFinalityProviderAndCheckRewards(n *chain.NodeConfig) {
-	s.T().Logf("Starting to jail fp1 by making it miss blocks...")
+// slashFinalityProviderAndCheckRewards slashes fp1 and verifies reward tracker updates
+func (s *SoftwareUpgradeV23To4TestSuite) slashFinalityProviderAndCheckRewards(n *chain.NodeConfig) {
+	badBlockHeightToVote := s.finalityBlockHeightVoted + 1
 
-	// Query finality params to understand jailing thresholds
-	finalityParams := n.QueryFinalityParams()
-	s.T().Logf("Finality params: SignedBlocksWindow=%d, MinSignedPerWindow=%s",
-		finalityParams.SignedBlocksWindow, finalityParams.MinSignedPerWindow.String())
+	blockToVote, err := n.QueryBlock(int64(badBlockHeightToVote))
+	s.NoError(err)
+	appHash := blockToVote.AppHash
 
-	signedBlocksWindow := finalityParams.SignedBlocksWindow
-	minSignedPerWindow := finalityParams.MinSignedPerWindowInt()
-	maxMissed := signedBlocksWindow - minSignedPerWindow
+	// generate bad EOTS signature with a diff block height to vote
+	msgToSign := append(sdk.Uint64ToBigEndian(s.finalityBlockHeightVoted-1), appHash...)
 
-	s.T().Logf("Jailing thresholds: maxMissed=%d blocks within window of %d blocks", maxMissed, signedBlocksWindow)
+	fp1Sig, err := eots.Sign(s.fp1BTCSK, s.fp1RandListInfo.SRList[s.finalityIdx], msgToSign)
+	s.NoError(err)
 
-	// Verify fp1 is initially not jailed
+	finalitySig := bbn.NewSchnorrEOTSSigFromModNScalar(fp1Sig)
+
+	// submit finality signature to slash
+	n.AddFinalitySigFromVal(
+		s.fp1.BtcPk,
+		s.finalityBlockHeightVoted-1,
+		&s.fp1RandListInfo.PRList[s.finalityIdx],
+		*s.fp1RandListInfo.ProofList[s.finalityIdx].ToProto(),
+		appHash,
+		finalitySig,
+	)
+
+	n.WaitForNextBlocks(2)
+
 	fps := n.QueryFinalityProviders()
-	var fp1Response *bstypes.FinalityProviderResponse
+	require.Len(s.T(), fps, 2)
 	for _, fp := range fps {
-		if fp.BtcPk.Equals(s.fp1.BtcPk) {
-			fp1Response = fp
-			break
+		if strings.EqualFold(fp.Addr, s.fp1Addr) {
+			require.NotZero(s.T(), fp.SlashedBabylonHeight)
+			continue
 		}
-	}
-	s.Require().NotNil(fp1Response, "fp1 should be found")
-	s.Require().False(fp1Response.Jailed, "fp1 should initially not be jailed")
-
-	// Make fp1 miss blocks by having only fp2 vote for finality
-	// We need to miss more than maxMissed blocks to trigger jailing
-	blocksToMiss := maxMissed + 1
-	s.T().Logf("Making fp1 miss %d blocks to trigger jailing...", blocksToMiss)
-
-	// Miss blocks by only having fp2 vote (fp1 won't vote)
-	for i := int64(0); i < blocksToMiss; i++ {
-		n.WaitForNextBlockWithSleep50ms()
-		currentBlock := n.LatestBlockNumber()
-
-		if currentBlock > s.finalityBlockHeightVoted {
-			s.AddFinalityVoteUntilHeight(n, currentBlock, false, true)
-			s.T().Logf("Block %d: fp1 missed, fp2 voted", s.finalityBlockHeightVoted-1)
-		}
+		require.Zero(s.T(), fp.SlashedBabylonHeight)
 	}
 
-	// Wait a few more blocks to ensure jailing is processed
-	n.WaitForNextBlocks(3)
-
-	// Verify fp1 is now jailed
-	fps = n.QueryFinalityProviders()
-	for _, fp := range fps {
-		if fp.BtcPk.Equals(s.fp1.BtcPk) {
-			fp1Response = fp
-			break
-		}
-	}
-	s.Require().True(fp1Response.Jailed, "fp1 should be jailed after missing blocks")
-	s.T().Logf("✓ fp1 successfully jailed at height %d", n.LatestBlockNumber())
-
+	// wait a few blocks to check if it doesn't panic when rewards are being produced
+	n.WaitForNextBlocks(5)
 	// Now check that costaker rewards trackers are updated
-	s.CheckCostakerRewardsAfterJailing(n)
+	s.checkCostakerRewardsAfterSlashing(n)
 }
 
-// CheckCostakerRewardsAfterJailing verifies that costaker rewards are updated after fp1 is jailed
-func (s *SoftwareUpgradeV23To4TestSuite) CheckCostakerRewardsAfterJailing(n *chain.NodeConfig) {
-	s.T().Logf("Checking costaker rewards after fp1 jailing...")
+// checkCostakerRewardsAfterSlashing verifies that costaker rewards are updated after fp1 is slashed
+func (s *SoftwareUpgradeV23To4TestSuite) checkCostakerRewardsAfterSlashing(n *chain.NodeConfig) {
+	s.T().Logf("Checking costaker rewards after fp1 slashing...")
 
 	// Query updated costaker rewards trackers
 	del1Tracker, err := n.QueryCostakerRewardsTracker(s.del1Addr)
@@ -560,8 +550,8 @@ func (s *SoftwareUpgradeV23To4TestSuite) CheckCostakerRewardsAfterJailing(n *cha
 	s.T().Logf("✓ Costaker rewards trackers correctly updated after fp1 jailing")
 }
 
-// VerifyChainContinuesProducingBlocks ensures the chain is still operational after jailing
-func (s *SoftwareUpgradeV23To4TestSuite) VerifyChainContinuesProducingBlocks(n *chain.NodeConfig) {
+// verifyChainContinuesProducingBlocks ensures the chain is still operational after jailing
+func (s *SoftwareUpgradeV23To4TestSuite) verifyChainContinuesProducingBlocks(n *chain.NodeConfig) {
 	s.T().Logf("Verifying chain continues producing blocks...")
 
 	startHeight := n.LatestBlockNumber()
