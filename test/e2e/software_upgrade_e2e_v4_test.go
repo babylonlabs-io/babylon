@@ -527,30 +527,30 @@ func (s *SoftwareUpgradeV23To4TestSuite) checkCostakerRewardsAfterSlashing(n *ch
 	s.NoError(err)
 	s.Require().NotNil(del3Tracker)
 
-	s.T().Logf("After jailing - del1: ActiveSats=%s, del2: ActiveSats=%s, del3: ActiveSats=%s",
+	s.T().Logf("After slashing - del1: ActiveSats=%s, del2: ActiveSats=%s, del3: ActiveSats=%s",
 		del1Tracker.ActiveSatoshis.String(), del2Tracker.ActiveSatoshis.String(), del3Tracker.ActiveSatoshis.String())
 
 	// del1 had delegations to both fp1 and fp2, so should only have fp2 delegation active
 	// fp1Del1StakingAmt should be removed, fp2Del1StakingAmt should remain
 	expectedDel1Sats := sdkmath.NewIntFromUint64(uint64(s.fp2Del1StakingAmt)) // Only fp2 delegation remains
 	s.Require().True(del1Tracker.ActiveSatoshis.Equal(expectedDel1Sats),
-		"del1 active satoshis should only include fp2 delegation after fp1 jailing: expected %s, got %s",
+		"del1 active satoshis should only include fp2 delegation after fp1 slashing: expected %s, got %s",
 		expectedDel1Sats.String(), del1Tracker.ActiveSatoshis.String())
 
 	// del2 had delegation only to fp1, so should have 0 active sats
 	s.Require().True(del2Tracker.ActiveSatoshis.IsZero(),
-		"del2 active satoshis should be zero after fp1 jailing: got %s",
+		"del2 active satoshis should be zero after fp1 slashing: got %s",
 		del2Tracker.ActiveSatoshis.String())
 
 	// del3 had delegation only to fp1, so should have 0 active sats
 	s.Require().True(del3Tracker.ActiveSatoshis.IsZero(),
-		"del3 active satoshis should be zero after fp1 jailing: got %s",
+		"del3 active satoshis should be zero after fp1 slashing: got %s",
 		del3Tracker.ActiveSatoshis.String())
 
-	s.T().Logf("✓ Costaker rewards trackers correctly updated after fp1 jailing")
+	s.T().Logf("✓ Costaker rewards trackers correctly updated after fp1 slashing")
 }
 
-// verifyChainContinuesProducingBlocks ensures the chain is still operational after jailing
+// verifyChainContinuesProducingBlocks ensures the chain is still operational after slashing
 func (s *SoftwareUpgradeV23To4TestSuite) verifyChainContinuesProducingBlocks(n *chain.NodeConfig) {
 	s.T().Logf("Verifying chain continues producing blocks...")
 
