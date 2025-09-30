@@ -37,6 +37,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+### Improvements
+
+- [#1764] Add mergify yaml file for automatic backporting
+
 ## v4.0.0-rc.0
 
 ### Improvements
