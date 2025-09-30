@@ -37,6 +37,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+<<<<<<< HEAD
+=======
+### Improvements
+
+- [#1762](https://github.com/babylonlabs-io/babylon/pull/1762) Add new test case on stake expansion
+- [#1764] Add mergify yaml file for automatic backporting
+
+>>>>>>> 0297f3c (imp(test): add btc expansion of expanded del test case (#1762))
 ### Bug fixes
 
 - [#1763] Fix `v4` upgrade logic to store co-staker reward tracker for all stakers (baby and/or BTC)
