@@ -160,8 +160,8 @@ func TestInitializeCoStakerRwdsTracker_WithoutPowerDistCache(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	// Verify NO co-staker was created (BTC only, no baby staking)
-	verifyNoCoStakerCreated(t, ctx, cdc, storeService, stakerAddr)
+	// Verify co-staker was created with zero active sats (baby staking only)
+	verifyCoStakerCreated(t, ctx, cdc, storeService, stakerAddr, math.ZeroInt(), babyAmount)
 }
 
 func TestInitializeCoStakerRwdsTracker_FpNotActive(t *testing.T) {
@@ -195,8 +195,8 @@ func TestInitializeCoStakerRwdsTracker_FpNotActive(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	// Verify NO co-staker was created (BTC only, no baby staking)
-	verifyNoCoStakerCreated(t, ctx, cdc, storeService, stakerAddr)
+	// Verify co-staker was created with zero active sats (baby staking only, FP not active)
+	verifyCoStakerCreated(t, ctx, cdc, storeService, stakerAddr, math.ZeroInt(), babyAmount)
 }
 
 func TestInitializeCoStakerRwdsTracker_WithRealDelegations(t *testing.T) {
@@ -255,8 +255,8 @@ func TestInitializeCoStakerRwdsTracker_OnlyBTCStaking(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	// Verify NO co-staker was created (BTC only, no baby staking)
-	verifyNoCoStakerCreated(t, ctx, cdc, storeService, stakerAddr)
+	// Verify co-staker was created (BTC only, no baby staking)
+	verifyCoStakerCreated(t, ctx, cdc, storeService, stakerAddr, math.NewIntFromUint64(btcDel.TotalSat), math.ZeroInt())
 }
 
 func TestInitializeCoStakerRwdsTracker_MultipleCombinations(t *testing.T) {
@@ -272,11 +272,11 @@ func TestInitializeCoStakerRwdsTracker_MultipleCombinations(t *testing.T) {
 	staker1Addr := datagen.GenRandomAccount().GetAddress()
 	btcDel1 := createTestBTCDelegation(t, r, ctx, btcStkKeeper, staker1Addr, 60000)
 
-	// Case 2: Only BTC staking (should NOT create co-staker)
+	// Case 2: Only BTC staking (should create co-staker with 0 baby amt)
 	staker2Addr := datagen.GenRandomAccount().GetAddress()
 	btcDel2 := createTestBTCDelegation(t, r, ctx, btcStkKeeper, staker2Addr, 80000)
 
-	// Case 3: BTC to inactive FP + Baby staking (should NOT create co-staker)
+	// Case 3: BTC to inactive FP + Baby staking (should create co-staker with 0 BTC amt)
 	staker3Addr := datagen.GenRandomAccount().GetAddress()
 	createTestBTCDelegation(t, r, ctx, btcStkKeeper, staker3Addr, 100000)
 
@@ -302,13 +302,13 @@ func TestInitializeCoStakerRwdsTracker_MultipleCombinations(t *testing.T) {
 	require.NoError(t, err)
 
 	// Verify results
-	verifyCoStakerCreated(t, ctx, cdc, storeService, staker1Addr, math.NewIntFromUint64(btcDel1.TotalSat), babyDel1Amt) // Co-staker
-	verifyNoCoStakerCreated(t, ctx, cdc, storeService, staker2Addr)                                                     // BTC only
-	verifyNoCoStakerCreated(t, ctx, cdc, storeService, staker3Addr)                                                     // FP not active
+	verifyCoStakerCreated(t, ctx, cdc, storeService, staker1Addr, math.NewIntFromUint64(btcDel1.TotalSat), babyDel1Amt)    // Co-staker
+	verifyCoStakerCreated(t, ctx, cdc, storeService, staker2Addr, math.NewIntFromUint64(btcDel2.TotalSat), math.ZeroInt()) // BTC only
+	verifyCoStakerCreated(t, ctx, cdc, storeService, staker3Addr, math.ZeroInt(), babyDel3Amt)                             // FP not active
 
 	// Verify total count
 	count := countCoStakers(t, ctx, cdc, storeService)
-	require.Equal(t, 1, count, "Should have exactly 1 co-staker created")
+	require.Equal(t, 3, count, "Should have exactly 3 co-stakers created")
 }
 
 func TestInitializeCoStakerRwdsTracker_WithMultipleActiveFPs(t *testing.T) {
@@ -492,22 +492,40 @@ func runTestWithEnv(t *testing.T, env string, btcTip uint32) {
 		}
 	}
 
-	// Check that no unexpected costakers were created
-	unexpectedCostakers := 0
-	for actualAddr := range actualSet {
-		if !expectedSet[actualAddr] {
-			t.Errorf("Unexpected costaker %s was created", actualAddr)
-			unexpectedCostakers++
+	require.Equal(t, 0, missingCostakers, "Found %d missing costakers", missingCostakers)
+
+	// Verify tracker content: expected costakers should have both activeSat > 0 AND activeBaby > 0
+	// All other costakers should have either activeSat = 0 OR activeBaby = 0
+	expectedCostakersWithBothActive := 0
+	otherCostakersWithBothActive := 0
+
+	for addr, tracker := range actualCostakers {
+		hasBothActive := tracker.ActiveSatoshis.GT(math.ZeroInt()) && tracker.ActiveBaby.GT(math.ZeroInt())
+
+		if expectedSet[addr] {
+			// This is an expected costaker - should have both BTC and BABY > 0
+			if !hasBothActive {
+				t.Errorf("Expected costaker %s should have both activeSat > 0 AND activeBaby > 0, but got activeSat=%s, activeBaby=%s",
+					addr, tracker.ActiveSatoshis.String(), tracker.ActiveBaby.String())
+			} else {
+				expectedCostakersWithBothActive++
+			}
+		} else {
+			// This costaker was not in the expected list - should have either activeSat = 0 OR activeBaby = 0
+			if hasBothActive {
+				t.Errorf("Non-expected costaker %s should have either activeSat = 0 OR activeBaby = 0, but got both > 0: activeSat=%s, activeBaby=%s",
+					addr, tracker.ActiveSatoshis.String(), tracker.ActiveBaby.String())
+				otherCostakersWithBothActive++
+			}
 		}
 	}
 
-	require.Equal(t, 0, missingCostakers, "Found %d missing costakers", missingCostakers)
-	require.Equal(t, 0, unexpectedCostakers, "Found %d unexpected costakers", unexpectedCostakers)
-	require.Equal(t, len(expectedCostakers), len(actualCostakers),
+	require.Equal(t, len(expectedCostakers), expectedCostakersWithBothActive,
 		"Number of created costakers (%d) should match expected (%d)",
-		len(actualCostakers), len(expectedCostakers))
+		expectedCostakersWithBothActive, len(expectedCostakers))
 
-	t.Logf("All %d %s costakers were created correctly", len(actualCostakers), env)
+	t.Logf("Verification complete: %d expected costakers have both BTC and BABY staking active", expectedCostakersWithBothActive)
+	t.Logf("All %d %s costakers were created correctly with proper staking amounts", len(actualCostakers), env)
 }
 
 // Helper functions
@@ -644,13 +662,6 @@ func verifyCoStakerCreated(t *testing.T, ctx sdk.Context, cdc codec.BinaryCodec,
 	require.Equal(t, uint64(1), tracker.StartPeriodCumulativeReward, "StartPeriodCumulativeReward should be 1")
 	require.True(t, tracker.ActiveSatoshis.Equal(expectedBTCAmount), "ActiveSatoshis should match expected BTC amount: expected %s, got %s", expectedBTCAmount.String(), tracker.ActiveSatoshis.String())
 	require.True(t, tracker.ActiveBaby.Equal(expectedBabyAmount), "ActiveBaby should match expected baby amount: expected %s, got %s", expectedBabyAmount.String(), tracker.ActiveBaby.String())
-}
-
-func verifyNoCoStakerCreated(t *testing.T, ctx sdk.Context, cdc codec.BinaryCodec, storeService corestore.KVStoreService, stakerAddr sdk.AccAddress) {
-	rwdTrackers := rwdTrackerCollection(storeService, cdc)
-	_, err := rwdTrackers.Get(ctx, []byte(stakerAddr))
-	require.Error(t, err, "Co-staker rewards tracker should not exist for %s", stakerAddr.String())
-	require.ErrorIs(t, err, collections.ErrNotFound)
 }
 
 func countCoStakers(t *testing.T, ctx sdk.Context, cdc codec.BinaryCodec, storeService corestore.KVStoreService) int {

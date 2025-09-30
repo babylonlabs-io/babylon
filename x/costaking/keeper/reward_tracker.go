@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"fmt"
 
 	"cosmossdk.io/math"
 	sdkmath "cosmossdk.io/math"
@@ -35,7 +36,7 @@ func (k Keeper) costakerModified(ctx context.Context, costaker sdk.AccAddress, m
 
 	modifyCostaker(rwdTracker)
 	if err := rwdTracker.Validate(); err != nil {
-		return err
+		return fmt.Errorf("failed to validate costaker: %s - %w", costaker.String(), err)
 	}
 
 	params := k.GetParams(ctx)

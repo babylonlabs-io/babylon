@@ -6,17 +6,21 @@ import (
 	"math/rand"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	sdkmath "cosmossdk.io/math"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/chaincfg"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
 	v4 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v4"
+	"github.com/babylonlabs-io/babylon/v4/crypto/eots"
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer"
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer/chain"
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 )
 
@@ -32,6 +36,7 @@ type SoftwareUpgradeV23To4TestSuite struct {
 	fp2BTCSK  *btcec.PrivateKey
 	del1BTCSK *btcec.PrivateKey
 	del2BTCSK *btcec.PrivateKey
+	del3BTCSK *btcec.PrivateKey // New delegator without baby delegations
 
 	fp1 *bstypes.FinalityProvider
 	fp2 *bstypes.FinalityProvider
@@ -40,6 +45,7 @@ type SoftwareUpgradeV23To4TestSuite struct {
 	fp1Del1StakingAmt int64
 	fp1Del2StakingAmt int64
 	fp2Del1StakingAmt int64
+	fp1Del3StakingAmt int64 // New delegator amount
 
 	// Baby staking amounts for delegations (to validators) to make them co-stakers
 	del1BabyAmt int64
@@ -48,6 +54,7 @@ type SoftwareUpgradeV23To4TestSuite struct {
 	// bech32 addresses
 	del1Addr string
 	del2Addr string
+	del3Addr string // New delegator address
 	fp1Addr  string
 	fp2Addr  string
 
@@ -73,10 +80,12 @@ func (s *SoftwareUpgradeV23To4TestSuite) SetupSuite() {
 	s.fp2BTCSK, _, _ = datagen.GenRandomBTCKeyPair(s.r)
 	s.del1BTCSK, _, _ = datagen.GenRandomBTCKeyPair(s.r)
 	s.del2BTCSK, _, _ = datagen.GenRandomBTCKeyPair(s.r)
+	s.del3BTCSK, _, _ = datagen.GenRandomBTCKeyPair(s.r)
 
-	s.fp1Del1StakingAmt = int64(2 * 10e8)
-	s.fp1Del2StakingAmt = int64(4 * 10e8)
-	s.fp2Del1StakingAmt = int64(2 * 10e8)
+	s.fp1Del1StakingAmt = int64(2 * 10e7)
+	s.fp1Del2StakingAmt = int64(4 * 10e7)
+	s.fp2Del1StakingAmt = int64(5 * 10e8)
+	s.fp1Del3StakingAmt = int64(3 * 10e7) // Del3 only has BTC delegation, no baby
 
 	s.del1BabyAmt = int64(1000000) // 1 Baby
 	s.del2BabyAmt = int64(2000000) // 2 Baby
@@ -138,7 +147,7 @@ func (s *SoftwareUpgradeV23To4TestSuite) createTempUpgradeConfig() (string, erro
 				"plan": map[string]interface{}{
 					"name":                  "v4",
 					"time":                  "0001-01-01T00:00:00Z",
-					"height":                "221",
+					"height":                "231",
 					"info":                  "Upgrade to v4",
 					"upgraded_client_state": nil,
 				},
@@ -214,9 +223,10 @@ func (s *SoftwareUpgradeV23To4TestSuite) SetupFps(n *chain.NodeConfig) {
 func (s *SoftwareUpgradeV23To4TestSuite) SetupVerifiedBtcDelegationsWithBabyStaking(n *chain.NodeConfig) {
 	s.del1Addr = n.KeysAdd(wDel1)
 	s.del2Addr = n.KeysAdd(wDel2)
+	s.del3Addr = n.KeysAdd(wDel3) // Del3 will only have BTC delegation, no baby
 
 	// Fund delegators with both ubbn and additional amount for Baby staking
-	n.BankMultiSendFromNode([]string{s.del1Addr, s.del2Addr}, "10000000ubbn")
+	n.BankMultiSendFromNode([]string{s.del1Addr, s.del2Addr, s.del3Addr}, "10000000ubbn")
 
 	n.WaitForNextBlock()
 
@@ -224,12 +234,13 @@ func (s *SoftwareUpgradeV23To4TestSuite) SetupVerifiedBtcDelegationsWithBabyStak
 	s.CreateBTCDelegationAndCheck(n, wDel1, s.fp1, s.del1BTCSK, s.del1Addr, s.fp1Del1StakingAmt)
 	s.CreateBTCDelegationAndCheck(n, wDel1, s.fp2, s.del1BTCSK, s.del1Addr, s.fp2Del1StakingAmt)
 	s.CreateBTCDelegationAndCheck(n, wDel2, s.fp1, s.del2BTCSK, s.del2Addr, s.fp1Del2StakingAmt)
+	s.CreateBTCDelegationAndCheck(n, wDel3, s.fp1, s.del3BTCSK, s.del3Addr, s.fp1Del3StakingAmt) // Del3 only has BTC delegation
 
 	// Verify BTC delegations
 	resp := n.QueryBtcDelegations(bstypes.BTCDelegationStatus_ANY)
-	require.Len(s.T(), resp.BtcDelegations, 3)
+	require.Len(s.T(), resp.BtcDelegations, 4)
 
-	s.CreateCovenantsAndSubmitSignaturesToPendDels(n, s.fp1, s.fp2)
+	s.CreateCovenantsAndSubmitSignaturesToPendDels(n, 4, s.fp1, s.fp2)
 
 	// Now create Baby delegations to validators to make them co-stakers
 	// This is crucial for the v4 upgrade test as it will register these as CostakerRewardsTracker
@@ -311,7 +322,7 @@ func (s *SoftwareUpgradeV23To4TestSuite) FpCommitPubRandAndVote(n *chain.NodeCon
 
 		fpDels := n.QueryFinalityProviderDelegations(fp.BtcPk.MarshalHex())
 		if fp.BtcPk.Equals(s.fp1.BtcPk) {
-			s.Require().Len(fpDels, 2)
+			s.Require().Len(fpDels, 3)
 		} else {
 			s.Require().Len(fpDels, 1)
 		}
@@ -373,16 +384,22 @@ func (s *SoftwareUpgradeV23To4TestSuite) Test1UpgradeV4() {
 	resp := n.QueryAppliedPlan(v4.UpgradeName)
 	s.EqualValues(expectedUpgradeHeight, resp.Height, "the plan should be applied at the height %d", expectedUpgradeHeight)
 
-	s.CheckCostakerRewardsTrackerAfterUpgrade(n)
+	s.checkCostakerRewardsTrackerAfterUpgrade(n)
 
 	n.WaitForNextBlock()
 
-	// Send finality votes until upgrade height plus 10 blocks
 	s.AddFinalityVoteUntilCurrentHeight(n)
+	n.WaitForNextBlocks(3)
+
+	// Slash fp1 and check that costaker rewards tracker is updated
+	s.slashFinalityProviderAndCheckRewards(n)
+
+	// Make sure chain is still producing blocks
+	s.verifyChainContinuesProducingBlocks(n)
 }
 
-// CheckCostakerRewardsTrackerAfterUpgrade verifies that the CostakerRewardsTracker was properly initialized
-func (s *SoftwareUpgradeV23To4TestSuite) CheckCostakerRewardsTrackerAfterUpgrade(n *chain.NodeConfig) {
+// checkCostakerRewardsTrackerAfterUpgrade verifies that the CostakerRewardsTracker was properly initialized
+func (s *SoftwareUpgradeV23To4TestSuite) checkCostakerRewardsTrackerAfterUpgrade(n *chain.NodeConfig) {
 	// Query costaker rewards tracker for del1 (who has both BTC and Baby delegations)
 	del1Tracker, err := n.QueryCostakerRewardsTracker(s.del1Addr)
 	s.NoError(err, "should be able to query costaker rewards tracker for del1")
@@ -425,13 +442,138 @@ func (s *SoftwareUpgradeV23To4TestSuite) CheckCostakerRewardsTrackerAfterUpgrade
 	s.Require().True(del2Tracker.ActiveBaby.Equal(expectedDel2Baby),
 		"del2 active baby should match expected Baby delegations: expected %s, got %s",
 		expectedDel2Baby.String(), del2Tracker.ActiveBaby.String())
+
+	// Query costaker rewards tracker for del3 (who has BTC delegation but NO Baby delegations)
+	del3Tracker, err := n.QueryCostakerRewardsTracker(s.del3Addr)
+	s.NoError(err, "should be able to query costaker rewards tracker for del3")
+	s.Require().NotNil(del3Tracker, "del3 should have a costaker rewards tracker")
+
+	s.T().Logf("del3 costaker rewards tracker: ActiveSatoshis=%s, ActiveBaby=%s, TotalScore=%s",
+		del3Tracker.ActiveSatoshis.String(), del3Tracker.ActiveBaby.String(), del3Tracker.TotalScore.String())
+
+	// Verify del3 has BTC delegation but zero baby delegation
+	s.Require().True(del3Tracker.TotalScore.Equal(sdkmath.ZeroInt()), "del3 should have a total score of 0 since no baby delegation was made")
+	s.Require().Equal(uint64(1), del3Tracker.StartPeriodCumulativeReward, "del3 should start at period 1")
+
+	expectedDel3Sats := sdkmath.NewIntFromUint64(uint64(s.fp1Del3StakingAmt))
+	s.Require().True(del3Tracker.ActiveSatoshis.Equal(expectedDel3Sats),
+		"del3 active satoshis should match expected BTC delegations: expected %s, got %s",
+		expectedDel3Sats.String(), del3Tracker.ActiveSatoshis.String())
+
+	// del3 should have zero baby delegations
+	s.Require().True(del3Tracker.ActiveBaby.IsZero(),
+		"del3 active baby should be zero since no baby delegations were made: got %s",
+		del3Tracker.ActiveBaby.String())
 }
 
-func (s *SoftwareUpgradeV23To4TestSuite) AddFinalityVoteUntilCurrentHeight(
-	n *chain.NodeConfig,
-) {
-	currentBlock := n.LatestBlockNumber()
+// slashFinalityProviderAndCheckRewards slashes fp1 and verifies reward tracker updates
+func (s *SoftwareUpgradeV23To4TestSuite) slashFinalityProviderAndCheckRewards(n *chain.NodeConfig) {
+	badBlockHeightToVote := s.finalityBlockHeightVoted + 1
 
+	blockToVote, err := n.QueryBlock(int64(badBlockHeightToVote))
+	s.NoError(err)
+	appHash := blockToVote.AppHash
+
+	// generate bad EOTS signature with a diff block height to vote
+	msgToSign := append(sdk.Uint64ToBigEndian(s.finalityBlockHeightVoted-1), appHash...)
+
+	fp1Sig, err := eots.Sign(s.fp1BTCSK, s.fp1RandListInfo.SRList[s.finalityIdx-1], msgToSign)
+	s.NoError(err)
+
+	finalitySig := bbn.NewSchnorrEOTSSigFromModNScalar(fp1Sig)
+
+	// submit finality signature to slash
+	n.AddFinalitySigFromVal(
+		s.fp1.BtcPk,
+		s.finalityBlockHeightVoted-1,
+		&s.fp1RandListInfo.PRList[s.finalityIdx-1],
+		*s.fp1RandListInfo.ProofList[s.finalityIdx-1].ToProto(),
+		appHash,
+		finalitySig,
+	)
+
+	n.WaitForNextBlocks(2)
+
+	fps := n.QueryFinalityProviders()
+	require.Len(s.T(), fps, 2)
+	for _, fp := range fps {
+		if strings.EqualFold(fp.Addr, s.fp1Addr) {
+			require.NotZero(s.T(), fp.SlashedBabylonHeight)
+			continue
+		}
+		require.Zero(s.T(), fp.SlashedBabylonHeight)
+	}
+
+	// wait a few blocks to check if it doesn't panic when rewards are being produced
+	n.WaitForNextBlocks(5)
+	// Now check that costaker rewards trackers are updated
+	s.checkCostakerRewardsAfterSlashing(n)
+}
+
+// checkCostakerRewardsAfterSlashing verifies that costaker rewards are updated after fp1 is slashed
+func (s *SoftwareUpgradeV23To4TestSuite) checkCostakerRewardsAfterSlashing(n *chain.NodeConfig) {
+	s.T().Logf("Checking costaker rewards after fp1 slashing...")
+
+	// Query updated costaker rewards trackers
+	del1Tracker, err := n.QueryCostakerRewardsTracker(s.del1Addr)
+	s.NoError(err)
+	s.Require().NotNil(del1Tracker)
+
+	del2Tracker, err := n.QueryCostakerRewardsTracker(s.del2Addr)
+	s.NoError(err)
+	s.Require().NotNil(del2Tracker)
+
+	del3Tracker, err := n.QueryCostakerRewardsTracker(s.del3Addr)
+	s.NoError(err)
+	s.Require().NotNil(del3Tracker)
+
+	s.T().Logf("After slashing - del1: ActiveSats=%s, del2: ActiveSats=%s, del3: ActiveSats=%s",
+		del1Tracker.ActiveSatoshis.String(), del2Tracker.ActiveSatoshis.String(), del3Tracker.ActiveSatoshis.String())
+
+	// del1 had delegations to both fp1 and fp2, so should only have fp2 delegation active
+	// fp1Del1StakingAmt should be removed, fp2Del1StakingAmt should remain
+	expectedDel1Sats := sdkmath.NewIntFromUint64(uint64(s.fp2Del1StakingAmt)) // Only fp2 delegation remains
+	s.Require().True(del1Tracker.ActiveSatoshis.Equal(expectedDel1Sats),
+		"del1 active satoshis should only include fp2 delegation after fp1 slashing: expected %s, got %s",
+		expectedDel1Sats.String(), del1Tracker.ActiveSatoshis.String())
+
+	// del2 had delegation only to fp1, so should have 0 active sats
+	s.Require().True(del2Tracker.ActiveSatoshis.IsZero(),
+		"del2 active satoshis should be zero after fp1 slashing: got %s",
+		del2Tracker.ActiveSatoshis.String())
+
+	// del3 had delegation only to fp1, so should have 0 active sats
+	s.Require().True(del3Tracker.ActiveSatoshis.IsZero(),
+		"del3 active satoshis should be zero after fp1 slashing: got %s",
+		del3Tracker.ActiveSatoshis.String())
+
+	s.T().Logf("✓ Costaker rewards trackers correctly updated after fp1 slashing")
+}
+
+// verifyChainContinuesProducingBlocks ensures the chain is still operational after slashing
+func (s *SoftwareUpgradeV23To4TestSuite) verifyChainContinuesProducingBlocks(n *chain.NodeConfig) {
+	s.T().Logf("Verifying chain continues producing blocks...")
+
+	startHeight := n.LatestBlockNumber()
+	blocksToWait := uint64(3)
+
+	// Wait for several blocks to ensure chain is still operational
+	n.WaitForNextBlocks(blocksToWait)
+
+	endHeight := n.LatestBlockNumber()
+	s.Require().GreaterOrEqual(endHeight, startHeight+blocksToWait,
+		"chain should continue producing blocks after fp1 jailing")
+
+	s.T().Logf("✓ Chain successfully produced %d blocks after jailing (height %d -> %d)",
+		endHeight-startHeight, startHeight, endHeight)
+}
+
+func (s *SoftwareUpgradeV23To4TestSuite) AddFinalityVoteUntilHeight(
+	n *chain.NodeConfig,
+	height uint64,
+	fp1Signs,
+	fp2Signs bool,
+) {
 	accFp1, err := n.QueryAccount(s.fp1.Addr)
 	s.NoError(err)
 	accFp2, err := n.QueryAccount(s.fp2.Addr)
@@ -445,18 +587,23 @@ func (s *SoftwareUpgradeV23To4TestSuite) AddFinalityVoteUntilCurrentHeight(
 
 	n.WaitForNextBlockWithSleep50ms()
 
-	for s.finalityBlockHeightVoted < currentBlock {
-		fp1Flags := []string{
-			"--offline",
-			fmt.Sprintf("--account-number=%d", accNumberFp1),
-			fmt.Sprintf("--sequence=%d", accSequenceFp1),
-			fmt.Sprintf("--from=%s", s.fp1.Addr),
+	fp1Flags, fp2Flags := []string{}, []string{}
+	for s.finalityBlockHeightVoted < height {
+		if fp1Signs {
+			fp1Flags = []string{
+				"--offline",
+				fmt.Sprintf("--account-number=%d", accNumberFp1),
+				fmt.Sprintf("--sequence=%d", accSequenceFp1),
+				fmt.Sprintf("--from=%s", s.fp1.Addr),
+			}
 		}
-		fp2Flags := []string{
-			"--offline",
-			fmt.Sprintf("--account-number=%d", accNumberFp2),
-			fmt.Sprintf("--sequence=%d", accSequenceFp2),
-			fmt.Sprintf("--from=%s", s.fp2.Addr),
+		if fp2Signs {
+			fp2Flags = []string{
+				"--offline",
+				fmt.Sprintf("--account-number=%d", accNumberFp2),
+				fmt.Sprintf("--sequence=%d", accSequenceFp2),
+				fmt.Sprintf("--from=%s", s.fp2.Addr),
+			}
 		}
 		s.AddFinalityVote(n, fp1Flags, fp2Flags)
 
@@ -465,27 +612,37 @@ func (s *SoftwareUpgradeV23To4TestSuite) AddFinalityVoteUntilCurrentHeight(
 	}
 }
 
+func (s *SoftwareUpgradeV23To4TestSuite) AddFinalityVoteUntilCurrentHeight(
+	n *chain.NodeConfig,
+) {
+	currentBlock := n.LatestBlockNumber()
+	s.AddFinalityVoteUntilHeight(n, currentBlock, true, true)
+}
+
 func (s *SoftwareUpgradeV23To4TestSuite) AddFinalityVote(n *chain.NodeConfig, flagsFp1, flagsFp2 []string) {
-	n.AddFinalitySignatureToBlockWithContext(
-		s.fp2BTCSK,
-		s.fp2.BtcPk,
-		s.finalityBlockHeightVoted,
-		s.fp2RandListInfo.SRList[s.finalityIdx],
-		&s.fp2RandListInfo.PRList[s.finalityIdx],
-		*s.fp2RandListInfo.ProofList[s.finalityIdx].ToProto(),
-		flagsFp2...,
-	)
+	if len(flagsFp2) > 0 {
+		n.AddFinalitySignatureToBlockWithContext(
+			s.fp2BTCSK,
+			s.fp2.BtcPk,
+			s.finalityBlockHeightVoted,
+			s.fp2RandListInfo.SRList[s.finalityIdx],
+			&s.fp2RandListInfo.PRList[s.finalityIdx],
+			*s.fp2RandListInfo.ProofList[s.finalityIdx].ToProto(),
+			flagsFp2...,
+		)
+	}
 
-	n.AddFinalitySignatureToBlockWithContext(
-		s.fp1BTCSK,
-		s.fp1.BtcPk,
-		s.finalityBlockHeightVoted,
-		s.fp1RandListInfo.SRList[s.finalityIdx],
-		&s.fp1RandListInfo.PRList[s.finalityIdx],
-		*s.fp1RandListInfo.ProofList[s.finalityIdx].ToProto(),
-		flagsFp1...,
-	)
-
+	if len(flagsFp1) > 0 {
+		n.AddFinalitySignatureToBlockWithContext(
+			s.fp1BTCSK,
+			s.fp1.BtcPk,
+			s.finalityBlockHeightVoted,
+			s.fp1RandListInfo.SRList[s.finalityIdx],
+			&s.fp1RandListInfo.PRList[s.finalityIdx],
+			*s.fp1RandListInfo.ProofList[s.finalityIdx].ToProto(),
+			flagsFp1...,
+		)
+	}
 	s.finalityIdx++
 	s.finalityBlockHeightVoted++
 }

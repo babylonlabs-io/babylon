@@ -71,6 +71,18 @@ func (n *NodeConfig) QueryFinalityProvider(btcPkHex string) *bstypes.FinalityPro
 	return resp.FinalityProvider
 }
 
+func (n *NodeConfig) QueryFinalityProviderSigningInfo(btcPkHex string) ftypes.SigningInfoResponse {
+	path := fmt.Sprintf("/babylon/finality/v1/signing_infos/%s", btcPkHex)
+	bz, err := n.QueryGRPCGateway(path, url.Values{})
+	require.NoError(n.t, err)
+
+	var resp ftypes.QuerySigningInfoResponse
+	err = util.Cdc.UnmarshalJSON(bz, &resp)
+	require.NoError(n.t, err)
+
+	return resp.SigningInfo
+}
+
 func (n *NodeConfig) QueryActiveFinalityProvidersAtHeight(height uint64) []*ftypes.ActiveFinalityProvidersAtHeightResponse {
 	path := fmt.Sprintf("/babylon/finality/v1/finality_providers/%d", height)
 	bz, err := n.QueryGRPCGateway(path, url.Values{})
