@@ -477,7 +477,7 @@ func (s *SoftwareUpgradeV23To4TestSuite) slashFinalityProviderAndCheckRewards(n 
 	// generate bad EOTS signature with a diff block height to vote
 	msgToSign := append(sdk.Uint64ToBigEndian(s.finalityBlockHeightVoted-1), appHash...)
 
-	fp1Sig, err := eots.Sign(s.fp1BTCSK, s.fp1RandListInfo.SRList[s.finalityIdx], msgToSign)
+	fp1Sig, err := eots.Sign(s.fp1BTCSK, s.fp1RandListInfo.SRList[s.finalityIdx-1], msgToSign)
 	s.NoError(err)
 
 	finalitySig := bbn.NewSchnorrEOTSSigFromModNScalar(fp1Sig)
@@ -486,8 +486,8 @@ func (s *SoftwareUpgradeV23To4TestSuite) slashFinalityProviderAndCheckRewards(n 
 	n.AddFinalitySigFromVal(
 		s.fp1.BtcPk,
 		s.finalityBlockHeightVoted-1,
-		&s.fp1RandListInfo.PRList[s.finalityIdx],
-		*s.fp1RandListInfo.ProofList[s.finalityIdx].ToProto(),
+		&s.fp1RandListInfo.PRList[s.finalityIdx-1],
+		*s.fp1RandListInfo.ProofList[s.finalityIdx-1].ToProto(),
 		appHash,
 		finalitySig,
 	)
