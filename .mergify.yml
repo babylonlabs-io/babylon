@@ -11,15 +11,6 @@ queue_rules:
       {{ body }}
     merge_method: squash
 pull_request_rules:
-  - name: auto-add v4.x backport label when v3.x label is added
-    conditions:
-      - base=main
-      - label=backport-to-release/v3.x
-      - -label=backport-to-release/v4.x
-    actions:
-      label:
-        add:
-          - backport-to-release/v4.x
   - name: backport changes to v4.x branch
     conditions:
       - base=main
@@ -28,15 +19,7 @@ pull_request_rules:
       backport:
         branches:
           - release/v4.x
-  - name: backport changes to v3.x branch
-    conditions:
-      - base=main
-      - label=backport-to-release/v3.x
-    actions:
-      backport:
-        branches:
-          - release/v3.x
-  - name: backport changes to v2.2.x, v2.3.x, v3.x
+  - name: backport changes to v2.2.x, v2.3.x
     conditions:
       - base=main
       - label=backport-to-release/v2.2.x
@@ -45,8 +28,7 @@ pull_request_rules:
         branches:
           - release/v2.2.x
           - release/v2.3.x
-          - release/v3.x
-  - name: backport changes to v2.3.x, v3.x
+  - name: backport changes to v2.3.x
     conditions:
       - base=main
       - label=backport-to-release/v2.3.x
@@ -54,7 +36,6 @@ pull_request_rules:
       backport:
         branches:
           - release/v2.3.x
-          - release/v3.x
   - name: automerge to main with label automerge and branch protection passing
     conditions: []
     actions:
