@@ -622,22 +622,22 @@ func TestMainnetInflationDistributionAmount(t *testing.T) {
 	// example with 100 ubbn to be distributed
 	// 1. incentives 2. costaking 3. distribution
 
-	// 1% of 5.5% goes to btc stakers
-	// 0,181818182 * 100 ≃ 18,181818ubbn
+	// (1 / 5.5) ≈ 0.181818182 of total inflation goes to btc stakers
+	// percentageBtcStakers * 100 ubbn ≈ 18.181818 ubbn
 
-	// 0.075% of 5.5% goes to fp directly
-	// 0,013636364 * 100 ≃ 1,3636364ubbn
+	// (0.075 / 5.5) ≈ 0.013636364 of total inflation goes to fp directly
+	// percentageFpDirect * 100 ubbn ≈ 1.3636364 ubbn
 
 	// 2. costaking
-	// 100 ubbn - (18 + 1) ≃ 81ubbn
+	// 100 ubbn - (btc stakers + fp direct) ≈ 81.4545456 ubbn
 
-	// 2.35% of 5.5% to costakers
-	// 0,531073446 * 81ubbn ≃ 43,016949153 ubbn
+	// (2.35 / 5.5) ≈ 0.427272727 of total inflation to costakers
+	// percentageCostakers * remaining ubbn ≈ 43.016949153 ubbn
 
-	// 0.075% of 5.5% goes to baby validators
-	// 0,016949153 * 81ubbn ≃ 1,372881356 ubbn
+	// (0.075 / 5.5) ≈ 0.013636364 of remaining inflation goes to baby validators
+	// percentageBabyValidators * remaining ubbn ≈ 1.372881356 ubbn
 
-	// rest goes to baby stakers and validators 36,619414447ubbn
+	// rest goes to baby stakers and validators ≈ 36.619414447 ubbn
 	inflation := sdkmath.LegacyMustNewDecFromStr("5.5")
 
 	percentageBtcStakers := sdkmath.LegacyMustNewDecFromStr("1").Quo(inflation)
