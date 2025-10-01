@@ -619,7 +619,7 @@ func TestMainnetInflationDistributionAmount(t *testing.T) {
 	d.GenerateNewBlockAssertExecutionSuccess()
 	d.GenerateNewBlockAssertExecutionSuccess()
 
-	// exmaple with 100 ubbn to be distributed
+	// example with 100 ubbn to be distributed
 	// 1. incentives 2. costaking 3. distribution
 
 	// 1% of 5.5% goes to btc stakers
@@ -680,7 +680,7 @@ func TestMainnetInflationDistributionAmount(t *testing.T) {
 	require.False(t, actualBabyVals.IsZero())
 	require.Equal(t, expectedBabyVal.String(), actualBabyVals.String())
 
-	// baby vals are not subtracted here, as the amount are transfered to the distribution module account as well
+	// baby vals are not subtracted here, as the amount are transferred to the distribution module account as well
 	expectedDistributionModule := amountMinted.Sub(expectedBtcStaker...).Sub(expectedFpDirect...).Sub(expectedCostakers...)
 	actualDistributionModule := dstrModBalancesAfter.Sub(dstrModBalancesBefore...)
 	require.False(t, actualDistributionModule.IsZero())
