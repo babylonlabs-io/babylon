@@ -155,7 +155,7 @@ const BtcStakingParamsStr = `[
       "40afaf47c4ffa56de86410d8e47baa2bb6f04b604f4ea24323737ddc3fe092df",
       "f5199efae3f28bb82476163a7e458c7ad445d9bffb0682d10d3bdb2cb41f8e8e"
     ],
-    "covenant_quorum": 3,
+    "covenant_quorum": 2,
     "min_staking_value_sat": 50000,
     "max_staking_value_sat": 35000000000,
     "min_staking_time_blocks": 10000,
