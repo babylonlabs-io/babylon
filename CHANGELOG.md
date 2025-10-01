@@ -40,17 +40,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ### Improvements
 
 - [#1762](https://github.com/babylonlabs-io/babylon/pull/1762) Add new test case on stake expansion
-- [#1764] Add mergify yaml file for automatic backporting
+- [#1764](https://github.com/babylonlabs-io/babylon/pull/1764) Add mergify yaml file for automatic backporting
 
 ### Bug fixes
 
-- [#1763] Fix `v4` upgrade logic to store co-staker reward tracker for all stakers (baby and/or BTC)
+- [#1763](https://github.com/babylonlabs-io/babylon/pull/1763) Fix `v4` upgrade logic to store co-staker reward tracker for all stakers (baby and/or BTC)
 
 ## v4.0.0-rc.0
 
 ### Improvements
 
-- [#1734] Bump repository version to `v4`
+- [#1734](https://github.com/babylonlabs-io/babylon/pull/1734) Bump repository version to `v4`
 - [#1736](https://github.com/babylonlabs-io/babylon/pull/1736) bump cosmos-sdk to `v0.53.2`
 - [#1633](https://github.com/babylonlabs-io/babylon/pull/1663) Add spam prevention mechanisms to epoching module with minimum amount validation and gas consumption limits for wrapped delegate operations.
 - [#1404](https://github.com/babylonlabs-io/babylon/pull/1404) Refactor power dist event processing.
