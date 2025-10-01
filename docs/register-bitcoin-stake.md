@@ -284,7 +284,7 @@ versions managed by the [x/btcstaking](../x/btcstaking) module:
 > from a trusted node and you verify their authenticity using additional
 > sources. Failure to use the correct BTC Staking parameters might make your
 > stake unverifiable or temporarily frozen on Bitcoin (in the case of an
-> invalid covenant emulation committee). 
+> invalid covenant emulation committee).
 
 > **⚡ Choosing the Correct Staking Parameters**
 >
@@ -654,7 +654,7 @@ which it was delegated to double-signs. Slashing involves
 broadcasting a [slashing transaction](./staking-script.md)
 that sends a portion of the slashed funds to a burn address
 (as defined in the staking params in [Section 3.2.](#32-babylon-chain-btc-staking-parameters)),
-while the remaining funds are transfered to a timelock script,
+while the remaining funds are transferred to a timelock script,
 which can later be withdrawn using the same withdrawal process
 defined in the previous section.
 
@@ -745,7 +745,7 @@ commission on co-staking rewards due to Cosmos SDK limitations. These different
 reward types can be withdrawn separately using the appropriate message types
 in `MsgWithdrawReward`.
 
-**Note:** The actual `score_ratio` is a params value configurable through 
+**Note:** The actual `score_ratio` is a params value configurable through
 governance.
 
 **Reward flow:**

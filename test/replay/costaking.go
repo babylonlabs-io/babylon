@@ -5,13 +5,14 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
-	abci "github.com/cometbft/cometbft/abci/types"
+	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
 	abcitypes "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
 	costktypes "github.com/babylonlabs-io/babylon/v4/x/costaking/types"
 	ictvtypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
+	minttypes "github.com/babylonlabs-io/babylon/v4/x/mint/types"
 )
 
 const (
@@ -74,7 +75,7 @@ func (d *BabylonAppDriver) GenerateNewBlockAssertExecutionSuccessWithCostakerRew
 	return FindEventCostakerRewards(d.t, response.Events)
 }
 
-func EventCostakerRewardsFromBlocks(t *testing.T, blocks []*abci.ResponseFinalizeBlock) sdk.Coins {
+func EventCostakerRewardsFromBlocks(t *testing.T, blocks []*abcitypes.ResponseFinalizeBlock) sdk.Coins {
 	totalRewardsAdded := sdk.NewCoins()
 
 	for _, block := range blocks {
@@ -83,29 +84,67 @@ func EventCostakerRewardsFromBlocks(t *testing.T, blocks []*abci.ResponseFinaliz
 	return totalRewardsAdded
 }
 
-func FindEventCostakerRewards(t *testing.T, evts []abcitypes.Event) sdk.Coins {
-	// "babylon.costaking.v1.EventCostakersAddRewards"
-	evtTypeCostAddRwd := sdk.MsgTypeURL(&costktypes.EventCostakersAddRewards{})[1:]
+type eventCoinsExtractor func(t *testing.T, attr abcitypes.EventAttribute) (sdk.Coins, error)
 
-	totalRewardsAdded := sdk.NewCoins()
+func findEventCoins(t *testing.T, evts []abcitypes.Event, eventType, attrKey string, extractor eventCoinsExtractor) sdk.Coins {
+	totalCoins := sdk.NewCoins()
 	for _, evt := range evts {
-		if evt.Type != evtTypeCostAddRwd {
+		if evt.Type != eventType {
 			continue
 		}
 
 		for _, attr := range evt.Attributes {
-			if attr.Key != evtAttrAddRewards {
+			if attr.Key != attrKey {
 				continue
 			}
 
-			var addRewards sdk.Coins
-			err := json.Unmarshal([]byte(attr.Value), &addRewards)
+			coins, err := extractor(t, attr)
 			require.NoError(t, err)
-
-			totalRewardsAdded = totalRewardsAdded.Add(addRewards...)
+			totalCoins = totalCoins.Add(coins...)
 			break
 		}
 	}
+	return totalCoins
+}
 
-	return totalRewardsAdded
+func extractCoinsFromJSON(t *testing.T, attr abcitypes.EventAttribute) (sdk.Coins, error) {
+	var coins sdk.Coins
+	err := json.Unmarshal([]byte(attr.Value), &coins)
+	return coins, err
+}
+
+func extractCoinsFromInt(t *testing.T, attr abcitypes.EventAttribute) (sdk.Coins, error) {
+	amt, ok := sdkmath.NewIntFromString(attr.Value)
+	require.True(t, ok, "failed to parse int from %s", attr.Value)
+	return sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, amt)), nil
+}
+
+func extractCoinsFromDecCoins(t *testing.T, attr abcitypes.EventAttribute) (sdk.Coins, error) {
+	decCoins, err := sdk.ParseDecCoins(attr.Value)
+	if err != nil {
+		return nil, err
+	}
+	coins, _ := decCoins.TruncateDecimal()
+	return coins, nil
+}
+
+func FindEventCostakerRewards(t *testing.T, evts []abcitypes.Event) sdk.Coins {
+	evtTypeCostAddRwd := sdk.MsgTypeURL(&costktypes.EventCostakersAddRewards{})[1:]
+	return findEventCoins(t, evts, evtTypeCostAddRwd, evtAttrAddRewards, extractCoinsFromJSON)
+}
+
+func FindEventMint(t *testing.T, evts []abcitypes.Event) sdk.Coins {
+	return findEventCoins(t, evts, minttypes.EventTypeMint, sdk.AttributeKeyAmount, extractCoinsFromInt)
+}
+
+func FindEventBtcStakers(t *testing.T, evts []abcitypes.Event) sdk.Coins {
+	return findEventCoins(t, evts, ictvtypes.EventTypeBTCStakingReward, sdk.AttributeKeyAmount, extractCoinsFromDecCoins)
+}
+
+func FindEventTypeFPDirectRewards(t *testing.T, evts []abcitypes.Event) sdk.Coins {
+	return findEventCoins(t, evts, ictvtypes.EventTypeFPDirectRewards, sdk.AttributeKeyAmount, extractCoinsFromDecCoins)
+}
+
+func FindEventTypeValidatorDirectRewards(t *testing.T, evts []abcitypes.Event) sdk.Coins {
+	return findEventCoins(t, evts, costktypes.EventTypeValidatorDirectRewards, sdk.AttributeKeyAmount, extractCoinsFromDecCoins)
 }
