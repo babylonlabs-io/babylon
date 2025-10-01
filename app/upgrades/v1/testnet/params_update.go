@@ -15,7 +15,7 @@ import (
 var (
 	// Governance params
 	VotingPeriod          = 24 * time.Hour
-	ExpeditedVotingPeriod = 12 * time.Hour
+	ExpeditedVotingPeriod = 5 * time.Minute
 	// 10 BABY
 	MinDeposit = sdk.NewCoin(appparams.DefaultBondDenom, math.NewInt(10000000))
 	// 20 BABY
