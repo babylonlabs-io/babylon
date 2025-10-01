@@ -67,7 +67,7 @@ two such transactions are constructed to contain
 the whole checkpoint data.
 After their inclusion,
 an off-chain program called the
-[Vigilante Reporter](https://docs.babylonlabs.io/docs/developer-guides/modules/reporter)
+[Vigilante Reporter](https://docs.babylonlabs.io/guides/architecture/vigilantes/reporter/)
 submits inclusion proofs to the
 [BTC Checkpoint module](../../x/btccheckpoint/README.md),
 which is responsible for monitoring their confirmation status and
