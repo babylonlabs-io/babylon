@@ -27,7 +27,7 @@ var (
 	// Distribution params
 	CommunityTax, _ = sdkmath.LegacyNewDecFromStr("0.001")
 	// BTC checkpoint params
-	BTCCheckpointTag = hex.EncodeToString([]byte("bbt5"))
+	BTCCheckpointTag = hex.EncodeToString([]byte("bbt6"))
 	// Additional allow address to BTC light client
 	ReporterAllowAddress = "bbn1cferwuxd95mdnyh4qnptahmzym0xt9sp9asqnw"
 )
