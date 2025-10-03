@@ -27,6 +27,22 @@ type HookStaking struct {
 //
 // Note: This hook uses a cache to track previous delegation amounts to calculate the delta.
 func (h HookStaking) AfterDelegationModified(ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) error {
+	// Check if validator is in the active set
+	valSet, err := h.k.stkCache.GetActiveValidatorSet(ctx, h.k.buildActiveValSetMap)
+	if err != nil {
+		return err
+	}
+
+	// NOTE: co-staking genesis is called before staking genesis.
+	// The active set will be populated during the staking genesis but after calling the hooks, so the active validators map will be empty.
+	// Thus, for testing purposes, we assume all validators are active if the set is empty and block height is 0.
+	assumeActiveValidatorIfGenesis(ctx, valSet, valAddr)
+
+	if _, ok := valSet[valAddr.String()]; !ok {
+		// Validator not in active set, skip processing
+		return nil
+	}
+
 	del, err := h.k.stkK.GetDelegation(ctx, delAddr, valAddr)
 	if err != nil { // we stop if the delegation is not found, because it must be found
 		return err
@@ -51,6 +67,22 @@ func (h HookStaking) AfterDelegationModified(ctx context.Context, delAddr sdk.Ac
 // State Changes:
 // - Caches current delegation amount in temporary storage
 func (h HookStaking) BeforeDelegationSharesModified(ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) error {
+	// Check if validator is in the active set
+	valSet, err := h.k.stkCache.GetActiveValidatorSet(ctx, h.k.buildActiveValSetMap)
+	if err != nil {
+		return err
+	}
+
+	// NOTE: co-staking genesis is called before staking genesis.
+	// The active set will be populated during the staking genesis but after calling the hooks, so the active validators map will be empty.
+	// Thus, for testing purposes, we assume all validators are active if the set is empty and block height is 0.
+	assumeActiveValidatorIfGenesis(ctx, valSet, valAddr)
+
+	if _, ok := valSet[valAddr.String()]; !ok {
+		// Validator not in active set, skip processing
+		return nil
+	}
+
 	del, err := h.k.stkK.GetDelegation(ctx, delAddr, valAddr)
 	if err != nil {
 		// probably is not found, but we don't want to stop execution for this
@@ -124,4 +156,29 @@ func (k Keeper) TokensFromShares(ctx context.Context, valAddr sdk.ValAddress, de
 	}
 	delTokens := valI.TokensFromShares(delShares)
 	return delTokens, nil
+}
+
+// buildActiveValSetMap builds the active validator set map
+// from the staking module's last validator powers
+func (k Keeper) buildActiveValSetMap(ctx context.Context) (map[string]struct{}, error) {
+	valMap := make(map[string]struct{})
+
+	err := k.stkK.IterateLastValidatorPowers(ctx, func(valAddr sdk.ValAddress, power int64) bool {
+		valMap[valAddr.String()] = struct{}{}
+		return false // continue iteration
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return valMap, nil
+}
+
+// assumeActiveValidatorIfGenesis adds the given validator to the active set if the set is empty and block height is genesis height (0)
+func assumeActiveValidatorIfGenesis(ctx context.Context, valSet map[string]struct{}, valAddr sdk.ValAddress) {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	if len(valSet) == 0 && sdkCtx.BlockHeader().Height == 0 {
+		valSet[valAddr.String()] = struct{}{}
+	}
 }

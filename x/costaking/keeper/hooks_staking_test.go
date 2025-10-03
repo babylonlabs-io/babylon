@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"context"
 	"testing"
 
 	"cosmossdk.io/math"
@@ -32,6 +33,13 @@ func TestHookStakingBeforeDelegationSharesModifiedUpdateCache(t *testing.T) {
 	require.NoError(t, err)
 
 	mockStkK := k.stkK.(*types.MockStakingKeeper)
+	// Mock IterateLastValidatorPowers to mark validator as active
+	mockStkK.EXPECT().IterateLastValidatorPowers(gomock.Any(), gomock.Any()).DoAndReturn(
+		func(ctx context.Context, fn func(sdk.ValAddress, int64) bool) error {
+			fn(valAddr, 1000) // Mark valAddr as active with some power
+			return nil
+		},
+	).Times(1)
 	mockStkK.EXPECT().GetDelegation(ctx, delAddr, valAddr).Return(delegation, nil).Times(1)
 	mockStkK.EXPECT().Validator(ctx, valAddr).Return(val, nil).Times(1)
 
@@ -81,6 +89,13 @@ func TestHookStakingAfterDelegationModified(t *testing.T) {
 	require.NoError(t, err)
 
 	mockStkK := k.stkK.(*types.MockStakingKeeper)
+	// Mock IterateLastValidatorPowers to mark validator as active
+	mockStkK.EXPECT().IterateLastValidatorPowers(gomock.Any(), gomock.Any()).DoAndReturn(
+		func(ctx context.Context, fn func(sdk.ValAddress, int64) bool) error {
+			fn(valAddr, 100) // Mark valAddr as active
+			return nil
+		},
+	).Times(1)
 	mockStkK.EXPECT().GetDelegation(ctx, delAddr, valAddr).Return(delegation, nil).Times(1)
 	mockStkK.EXPECT().Validator(gomock.Any(), gomock.Eq(valAddr)).Return(&val, nil).Times(1)
 
@@ -130,6 +145,13 @@ func TestHookStakingAfterDelegationModifiedErrorDelegationNotFound(t *testing.T)
 	delAddr, valAddr := datagen.GenRandomAddress(), datagen.GenRandomValidatorAddress()
 
 	mockStkK := k.stkK.(*types.MockStakingKeeper)
+	// Mock IterateLastValidatorPowers to mark validator as active
+	mockStkK.EXPECT().IterateLastValidatorPowers(gomock.Any(), gomock.Any()).DoAndReturn(
+		func(ctx context.Context, fn func(sdk.ValAddress, int64) bool) error {
+			fn(valAddr, 100) // Mark valAddr as active
+			return nil
+		},
+	).Times(1)
 	mockStkK.EXPECT().GetDelegation(ctx, delAddr, valAddr).Return(stakingtypes.Delegation{}, stakingtypes.ErrNoDelegation).Times(1)
 
 	hooks := k.HookStaking()
@@ -158,6 +180,13 @@ func TestHookStakingAfterDelegationModifiedReducingAmountStaked(t *testing.T) {
 	}
 
 	mockStkK := k.stkK.(*types.MockStakingKeeper)
+	// Mock IterateLastValidatorPowers to mark validator as active
+	mockStkK.EXPECT().IterateLastValidatorPowers(gomock.Any(), gomock.Any()).DoAndReturn(
+		func(ctx context.Context, fn func(sdk.ValAddress, int64) bool) error {
+			fn(valAddr, 100) // Mark valAddr as active
+			return nil
+		},
+	).Times(1)
 	mockStkK.EXPECT().GetDelegation(ctx, delAddr, valAddr).Return(delegation, nil).Times(1)
 
 	val, err := tmocks.CreateValidator(valAddr, math.NewInt(100))
@@ -173,4 +202,181 @@ func TestHookStakingAfterDelegationModifiedReducingAmountStaked(t *testing.T) {
 	tracker, err := k.GetCostakerRewards(ctx, delAddr)
 	require.NoError(t, err)
 	require.Equal(t, afterShares.TruncateInt().String(), tracker.ActiveBaby.String())
+}
+
+func TestHookStakingAfterDelegationModified_InactiveValidator(t *testing.T) {
+	k, ctx := NewKeeperWithMockIncentiveKeeper(t, nil)
+	// Set block height > 0 to avoid genesis special case
+	ctx = ctx.WithBlockHeight(100)
+
+	delAddr, valAddr := datagen.GenRandomAddress(), datagen.GenRandomValidatorAddress()
+
+	mockStkK := k.stkK.(*types.MockStakingKeeper)
+	// Mock IterateLastValidatorPowers to return empty (no active validators)
+	// This simulates the validator NOT being in the active set
+	mockStkK.EXPECT().IterateLastValidatorPowers(gomock.Any(), gomock.Any()).DoAndReturn(
+		func(ctx context.Context, fn func(sdk.ValAddress, int64) bool) error {
+			// Don't call fn - no active validators
+			return nil
+		},
+	).Times(1)
+
+	hooks := k.HookStaking()
+
+	// Call AfterDelegationModified - should skip processing because validator is not active
+	err := hooks.AfterDelegationModified(ctx, delAddr, valAddr)
+	require.NoError(t, err)
+
+	// Verify no costaker tracker was created (validator was not active)
+	_, err = k.GetCostakerRewards(ctx, delAddr)
+	require.Error(t, err) // Should return error because no tracker exists
+}
+
+func TestHookStakingBeforeDelegationSharesModified_InactiveValidator(t *testing.T) {
+	k, ctx := NewKeeperWithMockIncentiveKeeper(t, nil)
+	// Set block height > 0 to avoid genesis special case
+	ctx = ctx.WithBlockHeight(100)
+
+	delAddr, valAddr := datagen.GenRandomAddress(), datagen.GenRandomValidatorAddress()
+
+	mockStkK := k.stkK.(*types.MockStakingKeeper)
+	// Mock IterateLastValidatorPowers to return empty (no active validators)
+	mockStkK.EXPECT().IterateLastValidatorPowers(gomock.Any(), gomock.Any()).DoAndReturn(
+		func(ctx context.Context, fn func(sdk.ValAddress, int64) bool) error {
+			// Don't call fn - no active validators
+			return nil
+		},
+	).Times(1)
+
+	hooks := k.HookStaking()
+
+	// Call BeforeDelegationSharesModified - should skip processing
+	err := hooks.BeforeDelegationSharesModified(ctx, delAddr, valAddr)
+	require.NoError(t, err)
+
+	// Verify nothing was cached (validator was not active)
+	cachedAmount := k.stkCache.GetStakedAmount(delAddr, valAddr)
+	require.True(t, cachedAmount.IsZero())
+}
+
+func TestHookStakingMultipleValidators_MixedActiveInactive(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockIctvK := types.NewMockIncentiveKeeper(ctrl)
+	k, ctx := NewKeeperWithMockIncentiveKeeper(t, mockIctvK)
+	// Set block height > 0 to avoid genesis special case
+	ctx = ctx.WithBlockHeight(100)
+
+	delAddr := datagen.GenRandomAddress()
+	activeValAddr := datagen.GenRandomValidatorAddress()
+	inactiveValAddr := datagen.GenRandomValidatorAddress()
+
+	activeShares := math.LegacyNewDec(1000)
+
+	activeDelegation := stakingtypes.Delegation{
+		DelegatorAddress: delAddr.String(),
+		ValidatorAddress: activeValAddr.String(),
+		Shares:           activeShares,
+	}
+
+	activeVal, err := tmocks.CreateValidator(activeValAddr, activeShares.RoundInt())
+	require.NoError(t, err)
+
+	mockStkK := k.stkK.(*types.MockStakingKeeper)
+
+	// First call: delegate to active validator
+	mockStkK.EXPECT().IterateLastValidatorPowers(gomock.Any(), gomock.Any()).DoAndReturn(
+		func(ctx context.Context, fn func(sdk.ValAddress, int64) bool) error {
+			fn(activeValAddr, 1000) // Only activeValAddr is active
+			return nil
+		},
+	).Times(1)
+	mockStkK.EXPECT().GetDelegation(ctx, delAddr, activeValAddr).Return(activeDelegation, nil).Times(1)
+	mockStkK.EXPECT().Validator(gomock.Any(), gomock.Eq(activeValAddr)).Return(&activeVal, nil).Times(1)
+
+	hooks := k.HookStaking()
+
+	// Delegate to active validator - should be tracked
+	err = hooks.AfterDelegationModified(ctx, delAddr, activeValAddr)
+	require.NoError(t, err)
+
+	// Verify tracker was created with active validator's amount
+	tracker, err := k.GetCostakerRewards(ctx, delAddr)
+	require.NoError(t, err)
+	require.Equal(t, activeShares.TruncateInt().String(), tracker.ActiveBaby.String())
+
+	// Second call: try to delegate to inactive validator
+	// Note: cache is already populated, so no IterateLastValidatorPowers call
+	err = hooks.AfterDelegationModified(ctx, delAddr, inactiveValAddr)
+	require.NoError(t, err)
+
+	// Verify tracker amount didn't change (inactive validator was skipped)
+	tracker, err = k.GetCostakerRewards(ctx, delAddr)
+	require.NoError(t, err)
+	require.Equal(t, activeShares.TruncateInt().String(), tracker.ActiveBaby.String())
+}
+
+func TestHookStakingValidatorBecomesInactive(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockIctvK := types.NewMockIncentiveKeeper(ctrl)
+	k, ctx := NewKeeperWithMockIncentiveKeeper(t, mockIctvK)
+	// Set block height > 0 to avoid genesis special case
+	ctx = ctx.WithBlockHeight(100)
+
+	delAddr, valAddr := datagen.GenRandomAddress(), datagen.GenRandomValidatorAddress()
+	shares := math.LegacyNewDec(1000)
+
+	delegation := stakingtypes.Delegation{
+		DelegatorAddress: delAddr.String(),
+		ValidatorAddress: valAddr.String(),
+		Shares:           shares,
+	}
+
+	val, err := tmocks.CreateValidator(valAddr, shares.RoundInt())
+	require.NoError(t, err)
+
+	mockStkK := k.stkK.(*types.MockStakingKeeper)
+
+	hooks := k.HookStaking()
+
+	// First: validator is active
+	mockStkK.EXPECT().IterateLastValidatorPowers(gomock.Any(), gomock.Any()).DoAndReturn(
+		func(ctx context.Context, fn func(sdk.ValAddress, int64) bool) error {
+			fn(valAddr, 1000) // Validator is active
+			return nil
+		},
+	).Times(1)
+	mockStkK.EXPECT().GetDelegation(gomock.Any(), delAddr, valAddr).Return(delegation, nil).Times(1)
+	mockStkK.EXPECT().Validator(gomock.Any(), gomock.Eq(valAddr)).Return(&val, nil).Times(1)
+
+	// Delegate while validator is active
+	err = hooks.AfterDelegationModified(ctx, delAddr, valAddr)
+	require.NoError(t, err)
+
+	tracker, err := k.GetCostakerRewards(ctx, delAddr)
+	require.NoError(t, err)
+	require.Equal(t, shares.TruncateInt().String(), tracker.ActiveBaby.String())
+
+	// Clear the cache to simulate new block/epoch
+	k.stkCache.Clear()
+
+	// Now validator becomes inactive (not in LastValidatorPowers)
+	mockStkK.EXPECT().IterateLastValidatorPowers(gomock.Any(), gomock.Any()).DoAndReturn(
+		func(ctx context.Context, fn func(sdk.ValAddress, int64) bool) error {
+			// Don't call fn - validator is no longer active
+			return nil
+		},
+	).Times(1)
+
+	// Try to modify delegation while validator is inactive - should be skipped
+	err = hooks.AfterDelegationModified(ctx, delAddr, valAddr)
+	require.NoError(t, err)
+
+	// Tracker should still have the old amount (no change because validator is inactive)
+	tracker, err = k.GetCostakerRewards(ctx, delAddr)
+	require.NoError(t, err)
+	require.Equal(t, shares.TruncateInt().String(), tracker.ActiveBaby.String())
 }

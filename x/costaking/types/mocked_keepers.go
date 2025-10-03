@@ -240,6 +240,35 @@ func (mr *MockStakingKeeperMockRecorder) GetDelegation(ctx, delAddr, valAddr int
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDelegation", reflect.TypeOf((*MockStakingKeeper)(nil).GetDelegation), ctx, delAddr, valAddr)
 }
 
+// GetValidatorDelegations mocks base method.
+func (m *MockStakingKeeper) GetValidatorDelegations(ctx context.Context, valAddr types.ValAddress) ([]types0.Delegation, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetValidatorDelegations", ctx, valAddr)
+	ret0, _ := ret[0].([]types0.Delegation)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetValidatorDelegations indicates an expected call of GetValidatorDelegations.
+func (mr *MockStakingKeeperMockRecorder) GetValidatorDelegations(ctx, valAddr interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetValidatorDelegations", reflect.TypeOf((*MockStakingKeeper)(nil).GetValidatorDelegations), ctx, valAddr)
+}
+
+// IterateLastValidatorPowers mocks base method.
+func (m *MockStakingKeeper) IterateLastValidatorPowers(ctx context.Context, handler func(types.ValAddress, int64) bool) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IterateLastValidatorPowers", ctx, handler)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// IterateLastValidatorPowers indicates an expected call of IterateLastValidatorPowers.
+func (mr *MockStakingKeeperMockRecorder) IterateLastValidatorPowers(ctx, handler interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IterateLastValidatorPowers", reflect.TypeOf((*MockStakingKeeper)(nil).IterateLastValidatorPowers), ctx, handler)
+}
+
 // Validator mocks base method.
 func (m *MockStakingKeeper) Validator(arg0 context.Context, arg1 types.ValAddress) (types0.ValidatorI, error) {
 	m.ctrl.T.Helper()

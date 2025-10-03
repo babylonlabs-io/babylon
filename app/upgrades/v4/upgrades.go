@@ -134,7 +134,7 @@ func InitializeCoStakerRwdsTracker(
 // Returns the total score of the co-staker rewards tracker
 func saveBABYStakersRwdTracker(ctx context.Context, cdc codec.BinaryCodec, costkStoreService corestoretypes.KVStoreService, stkKeeper *stkkeeper.Keeper, params costktypes.Params) (math.Int, error) {
 	totalScore := math.ZeroInt()
-	// Get all BABY stakers
+	// Get all BABY stakers that are staking to an active validator
 	babyStakers, err := getAllBABYStakers(ctx, stkKeeper)
 	if err != nil {
 		return totalScore, fmt.Errorf("failed to get all BABY stakers: %w", err)
@@ -153,36 +153,23 @@ func saveBABYStakersRwdTracker(ctx context.Context, cdc codec.BinaryCodec, costk
 	return totalScore, nil
 }
 
-// getAllBABYStakers retrieves all BABY stakers with pagination
+// getAllBABYStakers retrieves all BABY stakers by iterating only over active validators
 func getAllBABYStakers(ctx context.Context, stkKeeper *stkkeeper.Keeper) (map[string]math.Int, error) {
 	stkQuerier := stkkeeper.NewQuerier(stkKeeper)
 	babyStakers := make(map[string]math.Int)
 
-	// First get all validators
-	var nextKey []byte
-	for {
-		req := &stktypes.QueryValidatorsRequest{
-			Pagination: &query.PageRequest{
-				Key: nextKey,
-			},
+	// Iterate directly over active validators (last validator powers)
+	err := stkKeeper.IterateLastValidatorPowers(ctx, func(valAddr sdk.ValAddress, power int64) bool {
+		// Get all delegations for this active validator
+		if err := getValidatorDelegations(ctx, stkQuerier, valAddr.String(), babyStakers); err != nil {
+			// Return true to stop iteration on error
+			return true
 		}
+		return false // continue iteration
+	})
 
-		res, err := stkQuerier.Validators(ctx, req)
-		if err != nil {
-			return nil, err
-		}
-
-		// For each validator, get all delegations
-		for _, validator := range res.Validators {
-			if err := getValidatorDelegations(ctx, stkQuerier, validator.OperatorAddress, babyStakers); err != nil {
-				return nil, err
-			}
-		}
-
-		if res.Pagination == nil || len(res.Pagination.NextKey) == 0 {
-			break
-		}
-		nextKey = res.Pagination.NextKey
+	if err != nil {
+		return nil, fmt.Errorf("failed to iterate active validators: %w", err)
 	}
 
 	return babyStakers, nil
