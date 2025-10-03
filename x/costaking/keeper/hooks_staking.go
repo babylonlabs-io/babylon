@@ -31,7 +31,7 @@ func (h HookStaking) AfterDelegationModified(ctx context.Context, delAddr sdk.Ac
 	valSet := h.k.stkCache.GetValidatorSet(ctx, h.k.epochingK)
 	if _, _, err := valSet.FindValidatorWithIndex(valAddr); err != nil {
 		// Validator not in active set, skip processing
-		return nil
+		return nil //nolint:nilerr
 	}
 
 	del, err := h.k.stkK.GetDelegation(ctx, delAddr, valAddr)
@@ -62,7 +62,7 @@ func (h HookStaking) BeforeDelegationSharesModified(ctx context.Context, delAddr
 	valSet := h.k.stkCache.GetValidatorSet(ctx, h.k.epochingK)
 	if _, _, err := valSet.FindValidatorWithIndex(valAddr); err != nil {
 		// Validator not in active set, skip processing
-		return nil
+		return nil //nolint:nilerr
 	}
 
 	del, err := h.k.stkK.GetDelegation(ctx, delAddr, valAddr)
