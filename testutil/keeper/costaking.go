@@ -34,6 +34,7 @@ func CostakingKeeperWithStore(
 	ictvK types.IncentiveKeeper,
 	stkK types.StakingKeeper,
 	distK types.DistributionKeeper,
+	epochingK types.EpochingKeeper,
 ) (*keeper.Keeper, sdk.Context) {
 	if storeKey == nil {
 		storeKey = storetypes.NewKVStoreKey(types.StoreKey)
@@ -53,6 +54,7 @@ func CostakingKeeperWithStore(
 		ictvK,
 		stkK,
 		distK,
+		epochingK,
 		appparams.AccGov.String(),
 		authtypes.FeeCollectorName,
 	)
@@ -78,7 +80,7 @@ func CostakingKeeperWithMocks(t testing.TB, ctrl *gomock.Controller) (*keeper.Ke
 	accK := types.NewMockAccountKeeper(ctrl)
 	accK.EXPECT().GetModuleAddress(gomock.Any()).Return(authtypes.NewModuleAddress(types.ModuleName)).AnyTimes()
 
-	k, ctx := CostakingKeeperWithStoreKey(t, nil, types.NewMockBankKeeper(ctrl), accK, types.NewMockIncentiveKeeper(ctrl), types.NewMockStakingKeeper(ctrl), types.NewMockDistributionKeeper(ctrl))
+	k, ctx := CostakingKeeperWithStoreKey(t, nil, types.NewMockBankKeeper(ctrl), accK, types.NewMockIncentiveKeeper(ctrl), types.NewMockStakingKeeper(ctrl), types.NewMockDistributionKeeper(ctrl), types.NewMockEpochingKeeper(ctrl))
 	return k, ctrl, ctx
 }
 
@@ -90,11 +92,12 @@ func CostakingKeeperWithStoreKey(
 	ictvK types.IncentiveKeeper,
 	stkK types.StakingKeeper,
 	distK types.DistributionKeeper,
+	epochingK types.EpochingKeeper,
 ) (*keeper.Keeper, sdk.Context) {
 	db := dbm.NewMemDB()
 	stateStore := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
 
-	k, ctx := CostakingKeeperWithStore(t, db, stateStore, storeKey, bankK, accK, ictvK, stkK, distK)
+	k, ctx := CostakingKeeperWithStore(t, db, stateStore, storeKey, bankK, accK, ictvK, stkK, distK, epochingK)
 
 	// Initialize params
 	if err := k.SetParams(ctx, types.DefaultParams()); err != nil {

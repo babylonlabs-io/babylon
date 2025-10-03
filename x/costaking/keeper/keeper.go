@@ -23,11 +23,12 @@ type (
 		// name of the FeeCollector ModuleAccount
 		feeCollectorName string
 
-		bankK  types.BankKeeper
-		accK   types.AccountKeeper
-		ictvK  types.IncentiveKeeper
-		stkK   types.StakingKeeper
-		distrK types.DistributionKeeper
+		bankK     types.BankKeeper
+		accK      types.AccountKeeper
+		ictvK     types.IncentiveKeeper
+		stkK      types.StakingKeeper
+		distrK    types.DistributionKeeper
+		epochingK types.EpochingKeeper
 
 		// cache for delta changes in baby delegations
 		stkCache *types.StakingCache
@@ -54,6 +55,7 @@ func NewKeeper(
 	ictvK types.IncentiveKeeper,
 	stkK types.StakingKeeper,
 	distrK types.DistributionKeeper,
+	epochingK types.EpochingKeeper,
 	authority string,
 	feeCollectorName string,
 ) Keeper {
@@ -70,11 +72,12 @@ func NewKeeper(
 		authority:        authority,
 		feeCollectorName: feeCollectorName,
 
-		bankK:  bankK,
-		accK:   accK,
-		ictvK:  ictvK,
-		stkK:   stkK,
-		distrK: distrK,
+		bankK:     bankK,
+		accK:      accK,
+		ictvK:     ictvK,
+		stkK:      stkK,
+		distrK:    distrK,
+		epochingK: epochingK,
 
 		stkCache: types.NewStakingCache(),
 

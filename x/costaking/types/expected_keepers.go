@@ -4,9 +4,14 @@ import (
 	context "context"
 
 	sdkmath "cosmossdk.io/math"
+	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
+
+type EpochingKeeper interface {
+	GetCurrentValidatorSet(ctx context.Context) epochingtypes.ValidatorSet
+}
 
 type IncentiveKeeper interface {
 	AccumulateRewardGaugeForCostaker(ctx context.Context, addr sdk.AccAddress, reward sdk.Coins)
@@ -30,6 +35,8 @@ type DistributionKeeper interface {
 // StakingKeeper expected staking keeper (noalias)
 type StakingKeeper interface {
 	GetDelegation(ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) (stakingtypes.Delegation, error)
+	GetValidatorDelegations(ctx context.Context, valAddr sdk.ValAddress) ([]stakingtypes.Delegation, error)
+	IterateLastValidatorPowers(ctx context.Context, handler func(operator sdk.ValAddress, power int64) bool) error
 	ValidatorByConsAddr(context.Context, sdk.ConsAddress) (stakingtypes.ValidatorI, error)
 	Validator(context.Context, sdk.ValAddress) (stakingtypes.ValidatorI, error)
 }

@@ -1,7 +1,10 @@
 package types
 
 import (
+	"context"
+
 	"cosmossdk.io/math"
+	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -12,6 +15,8 @@ type StakingCache struct {
 	// amtByValByDel stores the amount it had before the delegation
 	// was modified DelAddr => ValAddr => Amt
 	amtByValByDel map[string]map[string]math.LegacyDec
+	// validatorSet caches the current validator set from epoching keeper
+	validatorSet *epochingtypes.ValidatorSet
 }
 
 func NewStakingCache() *StakingCache {
@@ -48,7 +53,17 @@ func (sc *StakingCache) GetStakedAmount(delAddr sdk.AccAddress, valAddr sdk.ValA
 	return amt
 }
 
+// GetValidatorSet returns the cached validator set, fetching it if not present
+func (sc *StakingCache) GetValidatorSet(ctx context.Context, epochingK EpochingKeeper) epochingtypes.ValidatorSet {
+	if sc.validatorSet == nil {
+		valSet := epochingK.GetCurrentValidatorSet(ctx)
+		sc.validatorSet = &valSet
+	}
+	return *sc.validatorSet
+}
+
 // Clear removes all entries from the cache
 func (sc *StakingCache) Clear() {
 	sc.amtByValByDel = make(map[string]map[string]math.LegacyDec)
+	sc.validatorSet = nil
 }

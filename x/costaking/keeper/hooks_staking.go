@@ -27,6 +27,13 @@ type HookStaking struct {
 //
 // Note: This hook uses a cache to track previous delegation amounts to calculate the delta.
 func (h HookStaking) AfterDelegationModified(ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) error {
+	// Check if validator is in the active set
+	valSet := h.k.stkCache.GetValidatorSet(ctx, h.k.epochingK)
+	if _, _, err := valSet.FindValidatorWithIndex(valAddr); err != nil {
+		// Validator not in active set, skip processing
+		return nil
+	}
+
 	del, err := h.k.stkK.GetDelegation(ctx, delAddr, valAddr)
 	if err != nil { // we stop if the delegation is not found, because it must be found
 		return err
@@ -51,6 +58,13 @@ func (h HookStaking) AfterDelegationModified(ctx context.Context, delAddr sdk.Ac
 // State Changes:
 // - Caches current delegation amount in temporary storage
 func (h HookStaking) BeforeDelegationSharesModified(ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) error {
+	// Check if validator is in the active set
+	valSet := h.k.stkCache.GetValidatorSet(ctx, h.k.epochingK)
+	if _, _, err := valSet.FindValidatorWithIndex(valAddr); err != nil {
+		// Validator not in active set, skip processing
+		return nil
+	}
+
 	del, err := h.k.stkK.GetDelegation(ctx, delAddr, valAddr)
 	if err != nil {
 		// probably is not found, but we don't want to stop execution for this
