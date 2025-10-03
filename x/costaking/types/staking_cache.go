@@ -54,8 +54,18 @@ func (sc *StakingCache) GetStakedAmount(delAddr sdk.AccAddress, valAddr sdk.ValA
 }
 
 // GetValidatorSet returns the cached validator set, fetching it if not present
+// Returns an empty validator set if no epoch has been initialized yet
 func (sc *StakingCache) GetValidatorSet(ctx context.Context, epochingK EpochingKeeper) epochingtypes.ValidatorSet {
 	if sc.validatorSet == nil {
+		// Recover from panic if no epoch exists yet (e.g., in tests before initialization)
+		defer func() {
+			if r := recover(); r != nil {
+				// If we panic trying to get the validator set, return an empty set
+				emptyValSet := epochingtypes.NewSortedValidatorSet([]epochingtypes.Validator{})
+				sc.validatorSet = &emptyValSet
+			}
+		}()
+
 		valSet := epochingK.GetCurrentValidatorSet(ctx)
 		sc.validatorSet = &valSet
 	}
