@@ -199,6 +199,54 @@ func TestInitializeCoStakerRwdsTracker_FpNotActive(t *testing.T) {
 	verifyCoStakerCreated(t, ctx, cdc, storeService, stakerAddr, math.ZeroInt(), babyAmount)
 }
 
+func TestInitializeCoStakerRwdsTracker_ValidatorNotActive(t *testing.T) {
+	ctx, cdc, storeService, stkKeeper, btcStkKeeper, _, costkKeeper, fKeeper, ctrl := setupTestKeepers(t, 10)
+	defer ctrl.Finish()
+
+	require.NoError(t, btcStkKeeper.SetParams(ctx, btcstktypes.DefaultParams()))
+	require.NoError(t, stkKeeper.SetParams(ctx, stktypes.DefaultParams()))
+
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+
+	// Create a test staker address
+	stakerAddr := datagen.GenRandomAccount().GetAddress()
+
+	// Create BTC delegation
+	btcDel := createTestBTCDelegation(t, r, ctx, btcStkKeeper, stakerAddr, 50000)
+
+	// Create baby staking delegation to an INACTIVE validator (not in LastValidatorPowers)
+	validatorAddr := datagen.GenRandomValidatorAddress()
+	babyAmount := math.NewInt(25000)
+	delegation := stktypes.Delegation{
+		DelegatorAddress: stakerAddr.String(),
+		ValidatorAddress: validatorAddr.String(),
+		Shares:           math.LegacyNewDecFromInt(babyAmount),
+	}
+
+	// Create validator but DON'T add to LastValidatorPowers (making it inactive)
+	validator := stktypes.Validator{
+		OperatorAddress: validatorAddr.String(),
+		Tokens:          babyAmount,
+		DelegatorShares: math.LegacyNewDecFromInt(babyAmount),
+		Status:          stktypes.Unbonded, // Inactive validator
+	}
+	require.NoError(t, stkKeeper.SetValidator(ctx, validator))
+	require.NoError(t, stkKeeper.SetDelegation(ctx, delegation))
+	// NOTE: Not calling SetLastValidatorPower - validator is NOT in active set
+
+	// seed voting power dist cache with FP as active
+	setupVotingPowerDistCacheWithActiveFPs(t, r, ctx, fKeeper, btcDel.FpBtcPkList)
+
+	// Execute upgrade function
+	err := v4.InitializeCoStakerRwdsTracker(
+		ctx, cdc, storeService, stkKeeper, btcStkKeeper, *costkKeeper, *fKeeper,
+	)
+	require.NoError(t, err)
+
+	// Verify co-staker was created with zero active baby (validator not active, BTC only)
+	verifyCoStakerCreated(t, ctx, cdc, storeService, stakerAddr, math.NewIntFromUint64(btcDel.TotalSat), math.ZeroInt())
+}
+
 func TestInitializeCoStakerRwdsTracker_WithRealDelegations(t *testing.T) {
 	ctx, cdc, storeService, stkKeeper, btcStkKeeper, _, costkKeeper, fKeeper, ctrl := setupTestKeepers(t, 10)
 	defer ctrl.Finish()
@@ -257,6 +305,73 @@ func TestInitializeCoStakerRwdsTracker_OnlyBTCStaking(t *testing.T) {
 
 	// Verify co-staker was created (BTC only, no baby staking)
 	verifyCoStakerCreated(t, ctx, cdc, storeService, stakerAddr, math.NewIntFromUint64(btcDel.TotalSat), math.ZeroInt())
+}
+
+func TestInitializeCoStakerRwdsTracker_MixedActiveInactiveValidators(t *testing.T) {
+	ctx, cdc, storeService, stkKeeper, btcStkKeeper, _, costkKeeper, fKeeper, ctrl := setupTestKeepers(t, 10)
+	defer ctrl.Finish()
+
+	require.NoError(t, btcStkKeeper.SetParams(ctx, btcstktypes.DefaultParams()))
+	require.NoError(t, stkKeeper.SetParams(ctx, stktypes.DefaultParams()))
+
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+
+	// Create a test staker address
+	stakerAddr := datagen.GenRandomAccount().GetAddress()
+
+	// Create BTC delegation
+	btcDel := createTestBTCDelegation(t, r, ctx, btcStkKeeper, stakerAddr, 50000)
+
+	// Create delegation to ACTIVE validator
+	activeValAddr := datagen.GenRandomValidatorAddress()
+	activeBabyAmount := math.NewInt(15000)
+	activeDelegation := stktypes.Delegation{
+		DelegatorAddress: stakerAddr.String(),
+		ValidatorAddress: activeValAddr.String(),
+		Shares:           math.LegacyNewDecFromInt(activeBabyAmount),
+	}
+	activeValidator := stktypes.Validator{
+		OperatorAddress: activeValAddr.String(),
+		Tokens:          activeBabyAmount,
+		DelegatorShares: math.LegacyNewDecFromInt(activeBabyAmount),
+		Status:          stktypes.Bonded,
+	}
+	require.NoError(t, stkKeeper.SetValidator(ctx, activeValidator))
+	require.NoError(t, stkKeeper.SetDelegation(ctx, activeDelegation))
+	// Mark as active validator
+	power := stkKeeper.TokensToConsensusPower(ctx, activeBabyAmount)
+	require.NoError(t, stkKeeper.SetLastValidatorPower(ctx, activeValAddr, power))
+
+	// Create delegation to INACTIVE validator
+	inactiveValAddr := datagen.GenRandomValidatorAddress()
+	inactiveBabyAmount := math.NewInt(10000)
+	inactiveDelegation := stktypes.Delegation{
+		DelegatorAddress: stakerAddr.String(),
+		ValidatorAddress: inactiveValAddr.String(),
+		Shares:           math.LegacyNewDecFromInt(inactiveBabyAmount),
+	}
+	inactiveValidator := stktypes.Validator{
+		OperatorAddress: inactiveValAddr.String(),
+		Tokens:          inactiveBabyAmount,
+		DelegatorShares: math.LegacyNewDecFromInt(inactiveBabyAmount),
+		Status:          stktypes.Unbonded, // Not bonded
+	}
+	require.NoError(t, stkKeeper.SetValidator(ctx, inactiveValidator))
+	require.NoError(t, stkKeeper.SetDelegation(ctx, inactiveDelegation))
+	// NOTE: Not calling SetLastValidatorPower - validator is NOT active
+
+	// seed voting power dist cache with FP as active
+	setupVotingPowerDistCacheWithActiveFPs(t, r, ctx, fKeeper, btcDel.FpBtcPkList)
+
+	// Execute upgrade function
+	err := v4.InitializeCoStakerRwdsTracker(
+		ctx, cdc, storeService, stkKeeper, btcStkKeeper, *costkKeeper, *fKeeper,
+	)
+	require.NoError(t, err)
+
+	// Verify co-staker was created with only the active validator's baby amount
+	// Total baby should be 15000 (from active validator), not 25000 (15000 + 10000)
+	verifyCoStakerCreated(t, ctx, cdc, storeService, stakerAddr, math.NewIntFromUint64(btcDel.TotalSat), activeBabyAmount)
 }
 
 func TestInitializeCoStakerRwdsTracker_MultipleCombinations(t *testing.T) {
@@ -646,12 +761,19 @@ func createBabyDelegation(t *testing.T, ctx context.Context, stkKeeper *stkkeepe
 		Shares:           math.LegacyNewDecFromInt(delAmount),
 	}
 
-	require.NoError(t, stkKeeper.SetValidator(ctx, stktypes.Validator{
+	// Create validator and mark it as active (bonded with power)
+	validator := stktypes.Validator{
 		OperatorAddress: validatorAddr.String(),
 		Tokens:          delAmount,
 		DelegatorShares: math.LegacyNewDecFromInt(delAmount),
-	}))
+		Status:          stktypes.Bonded,
+	}
+	require.NoError(t, stkKeeper.SetValidator(ctx, validator))
 	require.NoError(t, stkKeeper.SetDelegation(ctx, delegation))
+
+	// Add to LastValidatorPowers to mark as active validator
+	power := stkKeeper.TokensToConsensusPower(ctx, delAmount)
+	require.NoError(t, stkKeeper.SetLastValidatorPower(ctx, validatorAddr, power))
 }
 
 func verifyCoStakerCreated(t *testing.T, ctx sdk.Context, cdc codec.BinaryCodec, storeService corestore.KVStoreService, stakerAddr sdk.AccAddress, expectedBTCAmount, expectedBabyAmount math.Int) {
@@ -949,6 +1071,7 @@ func loadAndSeedCosmosDelegations(t *testing.T, ctx sdk.Context, env string, stk
 				OperatorAddress: rawDel.Delegation.ValidatorAddress,
 				Tokens:          math.ZeroInt(),
 				DelegatorShares: math.LegacyZeroDec(),
+				Status:          stktypes.Bonded, // Mark as bonded so it's considered active
 			}
 			if err := stkKeeper.SetValidator(ctx, validator); err != nil {
 				return 0, fmt.Errorf("failed to set validator %s: %w", rawDel.Delegation.ValidatorAddress, err)
@@ -968,7 +1091,8 @@ func loadAndSeedCosmosDelegations(t *testing.T, ctx sdk.Context, env string, stk
 		}
 
 		// Update validator shares and tokens
-		validator, err := stkKeeper.GetValidator(ctx, sdk.MustValAddressFromBech32(rawDel.Delegation.ValidatorAddress))
+		valAddr := sdk.MustValAddressFromBech32(rawDel.Delegation.ValidatorAddress)
+		validator, err := stkKeeper.GetValidator(ctx, valAddr)
 		if err != nil {
 			return 0, fmt.Errorf("validator %s not found after creation", rawDel.Delegation.ValidatorAddress)
 		}
@@ -976,6 +1100,12 @@ func loadAndSeedCosmosDelegations(t *testing.T, ctx sdk.Context, env string, stk
 		validator.DelegatorShares = validator.DelegatorShares.Add(shares)
 		if err := stkKeeper.SetValidator(ctx, validator); err != nil {
 			return 0, fmt.Errorf("failed to update validator %s: %w", rawDel.Delegation.ValidatorAddress, err)
+		}
+
+		// Mark validator as active by adding to LastValidatorPowers
+		power := stkKeeper.TokensToConsensusPower(ctx, validator.Tokens)
+		if err := stkKeeper.SetLastValidatorPower(ctx, valAddr, power); err != nil {
+			return 0, fmt.Errorf("failed to set last validator power for %s: %w", rawDel.Delegation.ValidatorAddress, err)
 		}
 
 		count++
