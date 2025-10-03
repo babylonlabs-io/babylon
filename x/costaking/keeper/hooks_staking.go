@@ -175,11 +175,10 @@ func (k Keeper) buildActiveValSetMap(ctx context.Context) (map[string]struct{}, 
 	return valMap, nil
 }
 
-// assumeActiveValidatorIfGenesis adds the given validator to the active set if the set is empty and block height is 0
-func assumeActiveValidatorIfGenesis(ctx context.Context, valSet map[string]struct{}, valAddr sdk.ValAddress) map[string]struct{} {
+// assumeActiveValidatorIfGenesis adds the given validator to the active set if the set is empty and block height is genesis height (0)
+func assumeActiveValidatorIfGenesis(ctx context.Context, valSet map[string]struct{}, valAddr sdk.ValAddress) {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	if len(valSet) == 0 && sdkCtx.BlockHeader().Height == 0 {
 		valSet[valAddr.String()] = struct{}{}
 	}
-	return valSet
 }
