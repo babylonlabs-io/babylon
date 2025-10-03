@@ -89,7 +89,7 @@ func (h HookEpoching) updateCoStkTrackerForDelegators(
 				"delegator", delAddr.String(),
 				"validator", valAddrStr,
 				"error", err)
-			continue
+			return err
 		}
 
 		// Update ActiveBaby using the provided update function
@@ -99,6 +99,7 @@ func (h HookEpoching) updateCoStkTrackerForDelegators(
 			h.k.Logger(ctx).Error("failed to update costaker tracker",
 				"delegator", delAddr.String(),
 				"error", err)
+			return err
 		}
 	}
 

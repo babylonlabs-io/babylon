@@ -36,10 +36,7 @@ func (h HookStaking) AfterDelegationModified(ctx context.Context, delAddr sdk.Ac
 	// NOTE: co-staking genesis is called before staking genesis.
 	// The active set will be populated during the staking genesis but after calling the hooks, so the active validators map will be empty.
 	// Thus, for testing purposes, we assume all validators are active if the set is empty and block height is 0.
-	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	if len(valSet) == 0 && sdkCtx.BlockHeader().Height == 0 {
-		valSet[valAddr.String()] = struct{}{}
-	}
+	assumeActiveValidatorIfGenesis(ctx, valSet, valAddr)
 
 	if _, ok := valSet[valAddr.String()]; !ok {
 		// Validator not in active set, skip processing
@@ -79,10 +76,7 @@ func (h HookStaking) BeforeDelegationSharesModified(ctx context.Context, delAddr
 	// NOTE: co-staking genesis is called before staking genesis.
 	// The active set will be populated during the staking genesis but after calling the hooks, so the active validators map will be empty.
 	// Thus, for testing purposes, we assume all validators are active if the set is empty and block height is 0.
-	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	if len(valSet) == 0 && sdkCtx.BlockHeader().Height == 0 {
-		valSet[valAddr.String()] = struct{}{}
-	}
+	assumeActiveValidatorIfGenesis(ctx, valSet, valAddr)
 
 	if _, ok := valSet[valAddr.String()]; !ok {
 		// Validator not in active set, skip processing
@@ -179,4 +173,13 @@ func (k Keeper) buildActiveValSetMap(ctx context.Context) (map[string]struct{}, 
 	}
 
 	return valMap, nil
+}
+
+// assumeActiveValidatorIfGenesis adds the given validator to the active set if the set is empty and block height is 0
+func assumeActiveValidatorIfGenesis(ctx context.Context, valSet map[string]struct{}, valAddr sdk.ValAddress) map[string]struct{} {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	if len(valSet) == 0 && sdkCtx.BlockHeader().Height == 0 {
+		valSet[valAddr.String()] = struct{}{}
+	}
+	return valSet
 }
