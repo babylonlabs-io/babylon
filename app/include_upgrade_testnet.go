@@ -12,6 +12,7 @@ import (
 	v1rc9 "github.com/babylonlabs-io/babylon/v2/app/upgrades/v1rc9/testnet"
 	v2 "github.com/babylonlabs-io/babylon/v2/app/upgrades/v2"
 	v22 "github.com/babylonlabs-io/babylon/v2/app/upgrades/v2_2"
+	v23 "github.com/babylonlabs-io/babylon/v2/app/upgrades/v2_3"
 	v2rc4 "github.com/babylonlabs-io/babylon/v2/app/upgrades/v2rc4/testnet"
 )
 
@@ -35,5 +36,6 @@ func init() {
 		v1rc8.CreateUpgrade(),
 		v1rc9.CreateUpgrade(),
 		v22.Upgrade,
+		v23.Upgrade,
 	}
 }
