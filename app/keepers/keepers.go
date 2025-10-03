@@ -358,7 +358,7 @@ func (ak *AppKeepers) InitKeepers(
 		ak.IncentiveKeeper,
 		ak.StakingKeeper,
 		ak.DistrKeeper,
-		ak.EpochingKeeper,
+		&epochingKeeper,
 		appparams.AccGov.String(),
 		authtypes.FeeCollectorName,
 	)
@@ -545,7 +545,10 @@ func (ak *AppKeepers) InitKeepers(
 
 	// make ZoneConcierge and Monitor to subscribe to the epoching's hooks
 	ak.EpochingKeeper = *epochingKeeper.SetHooks(
-		epochingtypes.NewMultiEpochingHooks(ak.MonitorKeeper.Hooks()),
+		epochingtypes.NewMultiEpochingHooks(
+			ak.MonitorKeeper.Hooks(),
+			ak.CostakingKeeper.HookEpoching(),
+		),
 	)
 
 	// set up Checkpointing, BTCCheckpoint, and BTCLightclient keepers
