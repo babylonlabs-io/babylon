@@ -28,10 +28,14 @@ type HookStaking struct {
 // Note: This hook uses a cache to track previous delegation amounts to calculate the delta.
 func (h HookStaking) AfterDelegationModified(ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) error {
 	// Check if validator is in the active set
-	valSet := h.k.stkCache.GetValidatorSet(ctx, h.k.epochingK)
-	if _, _, err := valSet.FindValidatorWithIndex(valAddr); err != nil {
+	valSet, err := h.k.stkCache.GetActiveValidatorSet(ctx, h.k.buildActiveValSetMap)
+	if err != nil {
+		return err
+	}
+
+	if _, ok := valSet[valAddr.String()]; !ok {
 		// Validator not in active set, skip processing
-		return nil //nolint:nilerr
+		return nil
 	}
 
 	del, err := h.k.stkK.GetDelegation(ctx, delAddr, valAddr)
@@ -59,10 +63,14 @@ func (h HookStaking) AfterDelegationModified(ctx context.Context, delAddr sdk.Ac
 // - Caches current delegation amount in temporary storage
 func (h HookStaking) BeforeDelegationSharesModified(ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) error {
 	// Check if validator is in the active set
-	valSet := h.k.stkCache.GetValidatorSet(ctx, h.k.epochingK)
-	if _, _, err := valSet.FindValidatorWithIndex(valAddr); err != nil {
+	valSet, err := h.k.stkCache.GetActiveValidatorSet(ctx, h.k.buildActiveValSetMap)
+	if err != nil {
+		return err
+	}
+
+	if _, ok := valSet[valAddr.String()]; !ok {
 		// Validator not in active set, skip processing
-		return nil //nolint:nilerr
+		return nil
 	}
 
 	del, err := h.k.stkK.GetDelegation(ctx, delAddr, valAddr)
@@ -138,4 +146,21 @@ func (k Keeper) TokensFromShares(ctx context.Context, valAddr sdk.ValAddress, de
 	}
 	delTokens := valI.TokensFromShares(delShares)
 	return delTokens, nil
+}
+
+// buildActiveValSetMap builds the active validator set map
+// from the staking module's last validator powers
+func (k Keeper) buildActiveValSetMap(ctx context.Context) (map[string]struct{}, error) {
+	valMap := make(map[string]struct{})
+
+	err := k.stkK.IterateLastValidatorPowers(ctx, func(valAddr sdk.ValAddress, power int64) bool {
+		valMap[valAddr.String()] = struct{}{}
+		return false // continue iteration
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return valMap, nil
 }

@@ -519,7 +519,6 @@ func NewKeeperWithMockIncentiveKeeper(t *testing.T, mockIctvK types.IncentiveKee
 	mockAccK := types.NewMockAccountKeeper(ctrl)
 	stkK := types.NewMockStakingKeeper(ctrl)
 	dstrK := types.NewMockDistributionKeeper(ctrl)
-	epochK := types.NewMockEpochingKeeper(ctrl)
 
 	mockAccK.EXPECT().GetModuleAddress(gomock.Any()).Return(authtypes.NewModuleAddress(types.ModuleName)).AnyTimes()
 
@@ -531,7 +530,6 @@ func NewKeeperWithMockIncentiveKeeper(t *testing.T, mockIctvK types.IncentiveKee
 		mockIctvK,
 		stkK,
 		dstrK,
-		epochK,
 		appparams.AccGov.String(),
 		appparams.AccFeeCollector.String(),
 	)

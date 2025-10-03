@@ -27,26 +27,24 @@ func (h HookEpoching) AfterEpochBegins(ctx context.Context, epoch uint64) {
 // - Newly inactive validators: remove their delegators' baby tokens from ActiveBaby
 func (h HookEpoching) AfterEpochEnds(ctx context.Context, epoch uint64) {
 	// Get the validator set from the ending epoch (cached in stkCache)
-	prevValSet := h.k.stkCache.GetValidatorSet(ctx, h.k.epochingK)
+	prevValMap, err := h.k.stkCache.GetActiveValidatorSet(ctx, h.k.buildActiveValSetMap)
+	if err != nil {
+		h.k.Logger(ctx).Error("failed to get previous validator set", "error", err)
+		return
+	}
 
 	// Build the new validator set map from the staking module
 	// Note: This is called after ApplyAndReturnValidatorSetUpdates, so the staking
 	// module's last validator powers reflect the NEW epoch's validator set
-	newValMap, err := h.buildNewValSetMap(ctx)
+	newValMap, err := h.k.buildActiveValSetMap(ctx)
 	if err != nil {
 		h.k.Logger(ctx).Error("failed to build new validator set", "error", err)
 		return
 	}
 
-	// Build map for previous validator set
-	prevValMap := make(map[string]bool)
-	for _, val := range prevValSet {
-		prevValMap[val.GetValAddress().String()] = true
-	}
-
 	// Identify newly active validators (in new set but not in prev set)
 	for valAddr := range newValMap {
-		if !prevValMap[valAddr] {
+		if _, found := prevValMap[valAddr]; !found {
 			// Newly active validator - add baby tokens for all delegators
 			if err := h.addBabyForDelegators(ctx, valAddr); err != nil {
 				h.k.Logger(ctx).Error("failed to add baby tokens for newly active validator", "validator", valAddr, "error", err)
@@ -55,33 +53,14 @@ func (h HookEpoching) AfterEpochEnds(ctx context.Context, epoch uint64) {
 	}
 
 	// Identify newly inactive validators (in prev set but not in new set)
-	for _, val := range prevValSet {
-		valAddr := val.GetValAddress()
-		valAddrStr := valAddr.String()
-		if !newValMap[valAddrStr] {
+	for prevValAddr := range prevValMap {
+		if _, found := newValMap[prevValAddr]; !found {
 			// Newly inactive validator - remove baby tokens for all delegators
-			if err := h.removeBabyForDelegators(ctx, valAddrStr); err != nil {
-				h.k.Logger(ctx).Error("failed to remove baby tokens for newly inactive validator", "validator", valAddrStr, "error", err)
+			if err := h.removeBabyForDelegators(ctx, prevValAddr); err != nil {
+				h.k.Logger(ctx).Error("failed to remove baby tokens for newly inactive validator", "validator", prevValAddr, "error", err)
 			}
 		}
 	}
-}
-
-// buildNewValSetMap builds the new validator set from the staking module's last validator powers
-// Returns both a map for efficient lookups and a slice for iteration
-func (h HookEpoching) buildNewValSetMap(ctx context.Context) (map[string]bool, error) {
-	newValMap := make(map[string]bool)
-
-	err := h.k.stkK.IterateLastValidatorPowers(ctx, func(valAddr sdk.ValAddress, power int64) bool {
-		newValMap[valAddr.String()] = true
-		return false // continue iteration
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	return newValMap, nil
 }
 
 // updateCoStkTrackerForDelegators updates costaking tracker for all delegators of a validator

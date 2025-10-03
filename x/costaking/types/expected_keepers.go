@@ -4,14 +4,9 @@ import (
 	context "context"
 
 	sdkmath "cosmossdk.io/math"
-	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
-
-type EpochingKeeper interface {
-	GetCurrentValidatorSet(ctx context.Context) epochingtypes.ValidatorSet
-}
 
 type IncentiveKeeper interface {
 	AccumulateRewardGaugeForCostaker(ctx context.Context, addr sdk.AccAddress, reward sdk.Coins)

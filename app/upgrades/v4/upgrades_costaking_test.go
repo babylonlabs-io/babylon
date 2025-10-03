@@ -78,8 +78,6 @@ func setupTestKeepers(t *testing.T, btcTip uint32) (sdk.Context, codec.BinaryCod
 
 	distK := costktypes.NewMockDistributionKeeper(ctrl)
 
-	epochingK := costktypes.NewMockEpochingKeeper(ctrl)
-
 	btcStkStoreKey := storetypes.NewKVStoreKey(btcstktypes.StoreKey)
 	btcStkKeeper, btcCtx := testutilkeeper.BTCStakingKeeperWithStore(t, db, stateStore, btcStkStoreKey, btclcKeeper, btccKeeper, nil)
 
@@ -96,7 +94,7 @@ func setupTestKeepers(t *testing.T, btcTip uint32) (sdk.Context, codec.BinaryCod
 
 	// Setup costaking store service and keeper
 	costkStoreKey := storetypes.NewKVStoreKey(costktypes.StoreKey)
-	costkKeeper, _ := testutilkeeper.CostakingKeeperWithStore(t, db, stateStore, costkStoreKey, bankKeeper, accK, incentiveK, stkKeeper, distK, epochingK)
+	costkKeeper, _ := testutilkeeper.CostakingKeeperWithStore(t, db, stateStore, costkStoreKey, bankKeeper, accK, incentiveK, stkKeeper, distK)
 	require.NoError(t, stateStore.LoadLatestVersion())
 	costkStoreService := runtime.NewKVStoreService(costkStoreKey)
 

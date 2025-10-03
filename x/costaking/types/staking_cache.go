@@ -1,10 +1,9 @@
 package types
 
 import (
-	"context"
+	context "context"
 
 	"cosmossdk.io/math"
-	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -15,8 +14,8 @@ type StakingCache struct {
 	// amtByValByDel stores the amount it had before the delegation
 	// was modified DelAddr => ValAddr => Amt
 	amtByValByDel map[string]map[string]math.LegacyDec
-	// validatorSet caches the current validator set from epoching keeper
-	validatorSet *epochingtypes.ValidatorSet
+	// activeValSet caches the current active validator set from epoching keeper
+	activeValSet map[string]struct{}
 }
 
 func NewStakingCache() *StakingCache {
@@ -53,27 +52,23 @@ func (sc *StakingCache) GetStakedAmount(delAddr sdk.AccAddress, valAddr sdk.ValA
 	return amt
 }
 
-// GetValidatorSet returns the cached validator set, fetching it if not present
-// Returns an empty validator set if no epoch has been initialized yet
-func (sc *StakingCache) GetValidatorSet(ctx context.Context, epochingK EpochingKeeper) epochingtypes.ValidatorSet {
-	if sc.validatorSet == nil {
-		// Recover from panic if no epoch exists yet (e.g., in tests before initialization)
-		defer func() {
-			if r := recover(); r != nil {
-				// If we panic trying to get the validator set, return an empty set
-				emptyValSet := epochingtypes.NewSortedValidatorSet([]epochingtypes.Validator{})
-				sc.validatorSet = &emptyValSet
-			}
-		}()
-
-		valSet := epochingK.GetCurrentValidatorSet(ctx)
-		sc.validatorSet = &valSet
+// GetActiveValidatorSet returns the cached active validator set, fetching it if not present
+func (sc *StakingCache) GetActiveValidatorSet(ctx context.Context, fetchFn func(ctx context.Context) (map[string]struct{}, error)) (map[string]struct{}, error) {
+	if sc.activeValSet != nil {
+		return sc.activeValSet, nil
 	}
-	return *sc.validatorSet
+
+	valSet, err := fetchFn(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	sc.activeValSet = valSet
+	return sc.activeValSet, nil
 }
 
 // Clear removes all entries from the cache
 func (sc *StakingCache) Clear() {
 	sc.amtByValByDel = make(map[string]map[string]math.LegacyDec)
-	sc.validatorSet = nil
+	sc.activeValSet = nil
 }
