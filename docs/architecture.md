@@ -167,7 +167,7 @@ has been developed to enable these functionalities:
 
 - [BTC Staker Daemon](https://github.com/babylonlabs-io/btc-staker):
   Daemon program connecting to a Bitcoin wallet and Babylon.
-- [BTC Staker Dashboard](https://github.com/babylonlabs-io/btc-staking-dashboard):
+- [BTC Staker Dashboard](https://github.com/babylonlabs-io/staking-api-service):
   Web application connecting to a Bitcoin wallet extension and the Babylon API.
   It should only be used for testing purposes.
 - Wallet Integrations (TBD)
