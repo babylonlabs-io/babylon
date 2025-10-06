@@ -1,3 +1,5 @@
+version: 1
+
 run:
   timeout: 5m
 # TODO: enable all linters
