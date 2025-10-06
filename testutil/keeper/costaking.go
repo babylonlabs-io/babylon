@@ -9,6 +9,8 @@ import (
 	"cosmossdk.io/store"
 	storemetrics "cosmossdk.io/store/metrics"
 	storetypes "cosmossdk.io/store/types"
+	tstore "github.com/babylonlabs-io/babylon/v4/testutil/store"
+	costakingkeeper "github.com/babylonlabs-io/babylon/v4/x/costaking/keeper"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -102,4 +104,35 @@ func CostakingKeeperWithStoreKey(
 	}
 
 	return k, ctx
+}
+
+func NewKeeperWithMockIncentiveKeeper(t *testing.T, mockIctvK types.IncentiveKeeper) (*costakingkeeper.Keeper, sdk.Context) {
+	encConf := appparams.DefaultEncodingConfig()
+	ctx, kvStore := tstore.NewStoreWithCtx(t, types.ModuleName)
+
+	ctrl := gomock.NewController(t)
+	t.Cleanup(ctrl.Finish)
+
+	mockBankK := types.NewMockBankKeeper(ctrl)
+	mockAccK := types.NewMockAccountKeeper(ctrl)
+	stkK := types.NewMockStakingKeeper(ctrl)
+	dstrK := types.NewMockDistributionKeeper(ctrl)
+
+	mockAccK.EXPECT().GetModuleAddress(gomock.Any()).Return(authtypes.NewModuleAddress(types.ModuleName)).AnyTimes()
+
+	k := costakingkeeper.NewKeeper(
+		encConf.Codec,
+		kvStore,
+		mockBankK,
+		mockAccK,
+		mockIctvK,
+		stkK,
+		dstrK,
+		appparams.AccGov.String(),
+		appparams.AccFeeCollector.String(),
+	)
+
+	err := k.SetParams(ctx, types.DefaultParams())
+	require.NoError(t, err)
+	return &k, ctx
 }
