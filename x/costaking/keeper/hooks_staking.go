@@ -163,6 +163,14 @@ func (k Keeper) TokensFromShares(ctx context.Context, valAddr sdk.ValAddress, de
 func (k Keeper) buildCurrEpochValSetMap(ctx context.Context) (map[string]struct{}, error) {
 	valMap := make(map[string]struct{})
 
+	// During genesis, the epoching store may not be initialized yet.
+	// In this case, we return an empty map and rely on assumeActiveValidatorIfGenesis
+	// to populate validators as needed.
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	if sdkCtx.BlockHeader().Height == 0 {
+		return valMap, nil
+	}
+
 	// Get the current epoch's validator set from the epoching keeper
 	valSet := k.epochingK.GetCurrentValidatorSet(ctx)
 
