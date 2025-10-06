@@ -11,16 +11,42 @@ import (
 
 func (k Keeper) UpdateAllCostakersScore(ctx context.Context, scoreRatioBtcByBaby math.Int) error {
 	totalScore := math.ZeroInt()
-	err := k.IterateCostakers(ctx, func(addr sdk.AccAddress, rwdTracker types.CostakerRewardsTracker) error {
-		rwdTracker.UpdateScore(scoreRatioBtcByBaby)
-		if err := k.setCostakerRewardsTracker(ctx, addr, rwdTracker); err != nil {
+
+	endedPeriod, err := k.IncrementRewardsPeriod(ctx)
+	if err != nil {
+		return err
+	}
+
+	currentRwd, err := k.GetCurrentRewards(ctx)
+	if err != nil {
+		return err
+	}
+
+	err = k.IterateCostakers(ctx, func(costaker sdk.AccAddress, rwdTracker types.CostakerRewardsTracker) error {
+		deltaScoreChange := rwdTracker.UpdateScore(scoreRatioBtcByBaby)
+
+		totalScore = totalScore.Add(rwdTracker.TotalScore)
+		if deltaScoreChange.IsZero() {
+			// if there is no change from previous score, continue
+			return k.setCostakerRewardsTracker(ctx, costaker, rwdTracker)
+		}
+
+		if err := k.CalculateCostakerRewardsAndSendToGauge(ctx, costaker, endedPeriod); err != nil {
 			return err
 		}
 
-		totalScore = totalScore.Add(rwdTracker.TotalScore)
-		return nil
+		if err := k.setCostakerRewardsTracker(ctx, costaker, rwdTracker); err != nil {
+			return err
+		}
+
+		return k.initializeCoStakerRwdTracker(ctx, costaker)
 	})
 	if err != nil {
+		return err
+	}
+
+	currentRwd.TotalScore = totalScore
+	if err := currentRwd.Validate(); err != nil {
 		return err
 	}
 
