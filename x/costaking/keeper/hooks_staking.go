@@ -6,8 +6,6 @@ import (
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stktypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-
-	"github.com/babylonlabs-io/babylon/v4/x/costaking/types"
 )
 
 var _ stktypes.StakingHooks = HookStaking{}
@@ -27,21 +25,13 @@ type HookStaking struct {
 //
 // Note: This hook uses a cache to track previous delegation amounts to calculate the delta.
 func (h HookStaking) AfterDelegationModified(ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) error {
-	del, err := h.k.stkK.GetDelegation(ctx, delAddr, valAddr)
-	if err != nil { // we stop if the delegation is not found, because it must be found
-		return err
-	}
+	return h.k.BabyDelegationMoved(ctx, delAddr, valAddr)
+}
 
-	delTokens, err := h.k.TokensFromShares(ctx, valAddr, del.Shares)
-	if err != nil {
-		return err
-	}
-
-	delTokensBefore := h.k.stkCache.GetStakedAmount(delAddr, valAddr)
-	delTokenChange := delTokens.Sub(delTokensBefore).TruncateInt()
-	return h.k.costakerModified(ctx, delAddr, func(rwdTracker *types.CostakerRewardsTracker) {
-		rwdTracker.ActiveBaby = rwdTracker.ActiveBaby.Add(delTokenChange)
-	})
+// BeforeDelegationRemoved calls the same as AfterDelegationModified, as even removing all shares BeforeDelegationSharesModified
+// is properly called seting the cache.
+func (h HookStaking) BeforeDelegationRemoved(ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) error {
+	return h.k.BabyDelegationMoved(ctx, delAddr, valAddr)
 }
 
 // BeforeDelegationSharesModified handles pre-modification state caching.
@@ -93,11 +83,6 @@ func (h HookStaking) AfterValidatorRemoved(ctx context.Context, consAddr sdk.Con
 
 // BeforeDelegationCreated implements types.StakingHooks.
 func (h HookStaking) BeforeDelegationCreated(ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) error {
-	return nil
-}
-
-// BeforeDelegationRemoved implements types.StakingHooks.
-func (h HookStaking) BeforeDelegationRemoved(ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) error {
 	return nil
 }
 
