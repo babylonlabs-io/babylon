@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	sdkmath "cosmossdk.io/math"
+	"github.com/babylonlabs-io/babylon/v4/testutil/coins"
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
 	"github.com/babylonlabs-io/babylon/v4/x/costaking/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -15,7 +16,7 @@ import (
 	ictvtypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
 )
 
-func TestUpdateAllCostakersScore_VulnerabilityNoMocks(t *testing.T) {
+func TestMsgUpdateParamsUpdateAllCostakersScore(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	t.Cleanup(ctrl.Finish)
 
@@ -23,9 +24,13 @@ func TestUpdateAllCostakersScore_VulnerabilityNoMocks(t *testing.T) {
 	k, ctx := NewKeeperWithMockIncentiveKeeper(t, ictvK)
 
 	bankK := k.bankK.(*types.MockBankKeeper)
-	// Setup two costakers
-	attacker := datagen.GenRandomAddress()
-	victim := datagen.GenRandomAddress()
+	// Setup three costakers
+	// 1 => 1000 score
+	// 2 => 2000 score
+	// 3 => 0 score
+	costk1 := datagen.GenRandomAddress()
+	costk2 := datagen.GenRandomAddress()
+	costk3 := datagen.GenRandomAddress()
 	initialRatio := sdkmath.NewInt(50)
 
 	dp := types.DefaultParams()
@@ -33,106 +38,112 @@ func TestUpdateAllCostakersScore_VulnerabilityNoMocks(t *testing.T) {
 	err := k.SetParams(ctx, dp)
 	require.NoError(t, err)
 
-	// Attacker: 5000 sats, 50000 baby -> score = min(5000, 50000/50) = 1000
-	activeSats1 := sdkmath.NewInt(5000)
-	activeBaby1 := sdkmath.NewInt(50000)
-	err = k.costakerModifiedActiveAmounts(ctx, attacker, activeSats1, activeBaby1)
+	// Costaker 1: 5000 sats, 50000 baby -> score = min(5000, 50000/50) = 1000
+	err = k.costakerModifiedActiveAmounts(ctx, costk1, sdkmath.NewInt(5000), sdkmath.NewInt(50000))
 	require.NoError(t, err)
-	// Victim: 10000 sats, 100000 baby -> score = min(10000, 100000/50) = 2000
-	activeSats2 := sdkmath.NewInt(10000)
-	activeBaby2 := sdkmath.NewInt(100000)
-	err = k.costakerModifiedActiveAmounts(ctx, victim, activeSats2, activeBaby2)
+
+	// Costaker 2: 10000 sats, 100000 baby -> score = min(10000, 100000/50) = 2000
+	err = k.costakerModifiedActiveAmounts(ctx, costk2, sdkmath.NewInt(10000), sdkmath.NewInt(100000))
 	require.NoError(t, err)
+
+	// Costaker 3: 5000 sats, 0 baby -> score = min(5000, 0/50) = 0
+	err = k.costakerModifiedActiveAmounts(ctx, costk3, sdkmath.NewInt(5000), sdkmath.ZeroInt())
+	require.NoError(t, err)
+
 	// Verify total score: 3000
 	currentRwd, err := k.GetCurrentRewards(ctx)
 	require.NoError(t, err)
 	require.Equal(t, sdkmath.NewInt(3000), currentRwd.TotalScore)
+
 	// Deposit 30,000 tokens as rewards
 	totalDeposited := sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(30000)))
 	err = k.AddRewardsForCostakers(ctx, totalDeposited)
 	require.NoError(t, err)
-	// Finalize the period so rewards become claimable
+
+	// Finalize the period so rewards becomes claimable
 	periodBeforeUpdate, err := k.IncrementRewardsPeriod(ctx)
 	require.NoError(t, err)
+
 	// BEFORE UPDATE: Calculate total claimable rewards
-	attackerRewardsBefore, err := k.CalculateCostakerRewards(ctx, attacker, periodBeforeUpdate)
+	cost1RewardsBefore, err := k.CalculateCostakerRewards(ctx, costk1, periodBeforeUpdate)
 	require.NoError(t, err)
-	victimRewardsBefore, err := k.CalculateCostakerRewards(ctx, victim, periodBeforeUpdate)
+	cost2RewardsBefore, err := k.CalculateCostakerRewards(ctx, costk2, periodBeforeUpdate)
 	require.NoError(t, err)
-	totalClaimableBefore := attackerRewardsBefore.Add(victimRewardsBefore...)
-	t.Logf("\n=== BEFORE GOVERNANCE UPDATE ===")
-	t.Logf("Total deposited rewards: %s", totalDeposited)
-	t.Logf("Attacker claimable: %s (score: 1000)", attackerRewardsBefore)
-	t.Logf("Victim claimable: %s (score: 2000)", victimRewardsBefore)
-	t.Logf("Total claimable: %s", totalClaimableBefore)
-	t.Logf("Invariant check: %s <= %s ✓", totalClaimableBefore, totalDeposited)
-	// Verify invariant BEFORE update: claimable <= deposited
-	require.True(t, totalClaimableBefore.IsAllLTE(totalDeposited), "BEFORE update: total claimable (%s) should be <= deposited (%s)", totalClaimableBefore, totalDeposited)
+	cost3RewardsBefore, err := k.CalculateCostakerRewards(ctx, costk3, periodBeforeUpdate)
+	require.NoError(t, err)
+	require.True(t, cost3RewardsBefore.IsZero())
+
+	totalClaimableBefore := cost1RewardsBefore.Add(cost2RewardsBefore...)
+	require.Equal(t, totalDeposited.String(), totalClaimableBefore.String())
+
 	// GOVERNANCE UPDATES PARAMETER
 	// This changes the ratio from 50 to 25, doubling scores for these costakers
 	newRatio := sdkmath.NewInt(25)
 	t.Logf("\n=== GOVERNANCE PARAMETER UPDATE ===")
 	t.Logf("ScoreRatioBtcByBaby: 50 -> 25")
 
-	ictvK.EXPECT().AccumulateRewardGaugeForCostaker(gomock.Any(), attacker, attackerRewardsBefore).Times(1)
-	bankK.EXPECT().SendCoinsFromModuleToModule(gomock.Any(), types.ModuleName, ictvtypes.ModuleName, attackerRewardsBefore).Times(1)
-	ictvK.EXPECT().AccumulateRewardGaugeForCostaker(gomock.Any(), victim, victimRewardsBefore).Times(1)
-	bankK.EXPECT().SendCoinsFromModuleToModule(gomock.Any(), types.ModuleName, ictvtypes.ModuleName, victimRewardsBefore).Times(1)
+	ictvK.EXPECT().AccumulateRewardGaugeForCostaker(gomock.Any(), costk1, cost1RewardsBefore).Times(1)
+	bankK.EXPECT().SendCoinsFromModuleToModule(gomock.Any(), types.ModuleName, ictvtypes.ModuleName, cost1RewardsBefore).Times(1)
+	ictvK.EXPECT().AccumulateRewardGaugeForCostaker(gomock.Any(), costk2, cost2RewardsBefore).Times(1)
+	bankK.EXPECT().SendCoinsFromModuleToModule(gomock.Any(), types.ModuleName, ictvtypes.ModuleName, cost2RewardsBefore).Times(1)
 
 	err = k.UpdateAllCostakersScore(ctx, newRatio)
 	require.NoError(t, err)
 	currentStartCumulativeRewardPeriod := periodBeforeUpdate + 1
 
 	// Verify scores doubled
-	attackerTrackerAfter, err := k.GetCostakerRewards(ctx, attacker)
+	costk1TrackerAfter, err := k.GetCostakerRewards(ctx, costk1)
 	require.NoError(t, err)
-	victimTrackerAfter, err := k.GetCostakerRewards(ctx, victim)
+	require.Equal(t, sdkmath.NewInt(2000), costk1TrackerAfter.TotalScore, "score should double")
+	require.Equal(t, currentStartCumulativeRewardPeriod, costk1TrackerAfter.StartPeriodCumulativeReward)
+
+	costk2TrackerAfter, err := k.GetCostakerRewards(ctx, costk2)
 	require.NoError(t, err)
-	require.Equal(t, sdkmath.NewInt(2000), attackerTrackerAfter.TotalScore, "Attacker score should double")
-	require.Equal(t, sdkmath.NewInt(4000), victimTrackerAfter.TotalScore, "Victim score should double")
-	require.Equal(t, currentStartCumulativeRewardPeriod, attackerTrackerAfter.StartPeriodCumulativeReward)
-	require.Equal(t, currentStartCumulativeRewardPeriod, victimTrackerAfter.StartPeriodCumulativeReward)
-	t.Logf("Attacker NEW score: %s (doubled from 1000)", attackerTrackerAfter.TotalScore)
-	t.Logf("Victim NEW score: %s (doubled from 2000)", victimTrackerAfter.TotalScore)
-	t.Logf("Attacker StartPeriodCumulativeReward: %d", attackerTrackerAfter.StartPeriodCumulativeReward)
-	t.Logf("Victim StartPeriodCumulativeReward: %d", victimTrackerAfter.StartPeriodCumulativeReward)
-	t.Logf("Period that was finalized: %d", periodBeforeUpdate)
+	require.Equal(t, sdkmath.NewInt(4000), costk2TrackerAfter.TotalScore, "score should double")
+	require.Equal(t, currentStartCumulativeRewardPeriod, costk2TrackerAfter.StartPeriodCumulativeReward)
 
-	t.Logf("\n=== TRACKER STATE CHECK ===")
-	// AFTER UPDATE: Calculate total claimable rewards
-	// The key bug: we calculate from the ORIGINAL period (periodBeforeUpdate)
-	// but with the NEW inflated scores!
-	attackerRewardsAfter, err := k.CalculateCostakerRewards(ctx, attacker, periodBeforeUpdate)
-	require.EqualError(t, err, types.ErrInvalidPeriod.Wrapf("startingPeriod %d cannot be greater than endingPeriod %d", attackerTrackerAfter.StartPeriodCumulativeReward, periodBeforeUpdate).Error())
-	victimRewardsAfter, err := k.CalculateCostakerRewards(ctx, victim, periodBeforeUpdate)
-	require.EqualError(t, err, types.ErrInvalidPeriod.Wrapf("startingPeriod %d cannot be greater than endingPeriod %d", victimTrackerAfter.StartPeriodCumulativeReward, periodBeforeUpdate).Error())
+	costk3TrackerAfter, err := k.GetCostakerRewards(ctx, costk3)
+	require.NoError(t, err)
+	require.True(t, costk3TrackerAfter.TotalScore.IsZero())
+	require.Equal(t, periodBeforeUpdate, costk3TrackerAfter.StartPeriodCumulativeReward, "as costaker 3 didn't had any score, there was no need to change his start cummulative reward ratio")
 
-	totalClaimableAfter := attackerRewardsAfter.Add(victimRewardsAfter...)
-	t.Logf("\n=== AFTER GOVERNANCE UPDATE ===")
-	t.Logf("Total deposited rewards: %s (UNCHANGED)", totalDeposited)
-	t.Logf("Attacker claimable: %s (score: 2000)", attackerRewardsAfter)
-	t.Logf("Victim claimable: %s (score: 4000)", victimRewardsAfter)
-	t.Logf("Total claimable: %s", totalClaimableAfter)
-	t.Logf("Invariant check: %s <= %s ✗ VIOLATED!", totalClaimableAfter, totalDeposited)
+	currentRwd, err = k.GetCurrentRewards(ctx)
+	require.NoError(t, err)
+	require.Equal(t, currentRwd.TotalScore.String(), costk1TrackerAfter.TotalScore.Add(costk2TrackerAfter.TotalScore).String())
+
+	// AFTER UPDATE: calculate the reward tracker with previous period should error as the period was incremented
+	costk1RewardsAfter, err := k.CalculateCostakerRewards(ctx, costk1, periodBeforeUpdate)
+	require.EqualError(t, err, types.ErrInvalidPeriod.Wrapf("startingPeriod %d cannot be greater than endingPeriod %d", costk1TrackerAfter.StartPeriodCumulativeReward, periodBeforeUpdate).Error())
+	costk2RewardsAfter, err := k.CalculateCostakerRewards(ctx, costk2, periodBeforeUpdate)
+	require.EqualError(t, err, types.ErrInvalidPeriod.Wrapf("startingPeriod %d cannot be greater than endingPeriod %d", costk2TrackerAfter.StartPeriodCumulativeReward, periodBeforeUpdate).Error())
+	costk3RewardsAfter, err := k.CalculateCostakerRewards(ctx, costk3, periodBeforeUpdate)
+	require.NoError(t, err)
+	require.True(t, costk3RewardsAfter.IsZero())
+
+	totalClaimableAfter := costk1RewardsAfter.Add(costk2RewardsAfter...)
 	require.True(t, totalClaimableAfter.IsZero(), "fix of start cumulative rewards ratio in MsgUpdateParams")
 
-	// Verify invariant is broken after update
-	require.False(t, totalClaimableAfter.IsAllLTE(totalDeposited), "BUG DEMONSTRATED: total claimable (%s) EXCEEDS deposited (%s)!", totalClaimableAfter, totalDeposited)
-	require.Equal(t, "20000ubbn", attackerRewardsAfter.String(), "Attacker can claim 20000 (was 10000) - DOUBLED")
-	require.Equal(t, "40000ubbn", victimRewardsAfter.String(), "Victim can claim 40000 (was 20000) - DOUBLED")
-	require.Equal(t, "60000ubbn", totalClaimableAfter.String(), "Total claimable is 60000 but only 30000 was deposited!")
-	// Calculate the excess
-	excessClaimable := totalClaimableAfter.Sub(totalDeposited...)
-	t.Logf("\n=== VULNERABILITY SUMMARY ===")
-	t.Logf("Deposited: %s", totalDeposited)
-	t.Logf("Claimable before: %s (invariant holds)", totalClaimableBefore)
-	t.Logf("Claimable after: %s (invariant BROKEN)", totalClaimableAfter)
-	t.Logf("EXCESS: %s (200%% of deposits!)", excessClaimable)
-	t.Logf("")
-	t.Logf("ROOT CAUSE: UpdateAllCostakersScore updates scores but does NOT")
-	t.Logf("update StartPeriodCumulativeReward, allowing costakers to claim")
-	t.Logf("historical rewards retroactively with their NEW inflated scores.")
-	t.Logf("")
-	t.Logf("IMPACT: First withdrawers drain the module, leaving it insolvent.")
-	t.Logf("Remaining costakers cannot claim their legitimate rewards.")
+	// after the update deposits it again, increment period and check the rewards of each one.
+	totalDeposited = sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(50000)))
+	err = k.AddRewardsForCostakers(ctx, totalDeposited)
+	require.NoError(t, err)
+
+	// Finalize the period so rewards becomes claimable
+	finalizedPeriod, err := k.IncrementRewardsPeriod(ctx)
+	require.NoError(t, err)
+
+	// BEFORE UPDATE: Calculate total claimable rewards
+	cost1Rewards, err := k.CalculateCostakerRewards(ctx, costk1, finalizedPeriod)
+	require.NoError(t, err)
+	cost2Rewards, err := k.CalculateCostakerRewards(ctx, costk2, finalizedPeriod)
+	require.NoError(t, err)
+	cost3Rewards, err := k.CalculateCostakerRewards(ctx, costk3, finalizedPeriod)
+	require.NoError(t, err)
+	require.True(t, cost3Rewards.IsZero())
+
+	// costk 2 should earn double of costk 1
+	coins.RequireCoinsDiffInPointOnePercentMargin(t, cost2Rewards, cost1Rewards.MulInt(sdkmath.NewInt(2)))
+
+	totalClaimable := cost1Rewards.Add(cost2Rewards...)
+	coins.RequireCoinsDiffInPointOnePercentMargin(t, totalDeposited, totalClaimable)
 }
