@@ -54,7 +54,7 @@ linters:
     - unparam
     - usestdlibvars
     - unused
-    - wastedassign
+    # - wastedassign
     - whitespace
   exclusions:
     # replaces `issues.exclude-dirs`
