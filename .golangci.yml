@@ -52,7 +52,6 @@ linters:
     - tenv
     - testableexamples
     # - tparallel
-    - typecheck
     - unconvert
     - unparam
     - usestdlibvars
