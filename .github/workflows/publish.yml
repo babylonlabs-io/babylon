@@ -4,12 +4,6 @@ on:
   push:
     branches:
       - 'main'
-<<<<<<< HEAD
-      - 'release/v1.x'
-      - 'release/v2.x'
-    tags:
-      - '*'
-=======
       - "release/*"
     tags:
       - '*'
@@ -23,7 +17,6 @@ on:
         
 permissions:
   contents: read
->>>>>>> f5f4115 (chore: Sync latest CI changes from legacy/main (#1778))
 
 jobs:
   lint_test:
