@@ -21,7 +21,7 @@ type HookStaking struct {
 //
 // State Changes:
 // - ActiveBaby += (new_amount - old_amount)
-// - If differece is negative, ActiveBaby is subtracted
+// - If difference is negative, ActiveBaby is subtracted
 //
 // Note: This hook uses a cache to track previous delegation amounts to calculate the delta.
 func (h HookStaking) AfterDelegationModified(ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) error {
@@ -29,7 +29,7 @@ func (h HookStaking) AfterDelegationModified(ctx context.Context, delAddr sdk.Ac
 }
 
 // BeforeDelegationRemoved calls the same as AfterDelegationModified, as even removing all shares BeforeDelegationSharesModified
-// is properly called seting the cache.
+// is properly called setting the cache.
 func (h HookStaking) BeforeDelegationRemoved(ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) error {
 	return h.k.BabyDelegationMoved(ctx, delAddr, valAddr)
 }

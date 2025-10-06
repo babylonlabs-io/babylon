@@ -321,7 +321,7 @@ func (k Keeper) initializeCurrentRewards(ctx context.Context) (*types.CurrentRew
 //
 // State Changes:
 // - ActiveBaby += (new_amount - old_amount)
-// - If differece is negative, ActiveBaby is subtracted
+// - If difference is negative, ActiveBaby is subtracted
 //
 // Note: This hook uses a cache to track previous delegation amounts to calculate the delta.
 func (k Keeper) BabyDelegationMoved(ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) error {
