@@ -105,7 +105,7 @@ func TestMsgUpdateParamsUpdateAllCostakersScore(t *testing.T) {
 	costk3TrackerAfter, err := k.GetCostakerRewards(ctx, costk3)
 	require.NoError(t, err)
 	require.True(t, costk3TrackerAfter.TotalScore.IsZero())
-	require.Equal(t, periodBeforeUpdate, costk3TrackerAfter.StartPeriodCumulativeReward, "as costaker 3 didn't had any score, there was no need to change his start cummulative reward ratio")
+	require.Equal(t, periodBeforeUpdate, costk3TrackerAfter.StartPeriodCumulativeReward, "as costaker 3 didn't have any score, there was no need to change his start cumulative reward ratio")
 
 	currentRwd, err = k.GetCurrentRewards(ctx)
 	require.NoError(t, err)
@@ -121,7 +121,7 @@ func TestMsgUpdateParamsUpdateAllCostakersScore(t *testing.T) {
 	require.True(t, costk3RewardsAfter.IsZero())
 
 	totalClaimableAfter := costk1RewardsAfter.Add(costk2RewardsAfter...)
-	require.True(t, totalClaimableAfter.IsZero(), "fix of start cumulative rewards ratio in MsgUpdateParams")
+	require.True(t, totalClaimableAfter.IsZero(), "After updating params, all costaker reward trackers have their start period set to the current period, so no rewards can be claimed for previous periods; thus, total claimable rewards should be zero.")
 
 	// after the update deposits it again, increment period and check the rewards of each one.
 	totalDeposited = sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(50000)))
