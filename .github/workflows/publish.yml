@@ -4,14 +4,24 @@ on:
   push:
     branches:
       - 'main'
-      - 'release/*'
+      - "release/*"
     tags:
       - '*'
   workflow_dispatch:
+    inputs:
+      skip-lint-test:
+        description: "Skip tests"
+        required: false
+        type: boolean
+        default: false
+        
+permissions:
+  contents: read
 
 jobs:
   lint_test:
-    uses: babylonlabs-io/.github/.github/workflows/reusable_go_lint_test.yml@v0.7.0
+    uses: babylonlabs-io/.github/.github/workflows/reusable_go_lint_test.yml@cfbd5e4db5e575edf77a160fe533918c4f3a4498  # v0.13.2
+    if: ${{ !(github.event_name == 'workflow_dispatch' && inputs['skip-lint-test'] == true) }}
     secrets: inherit
     with:
       go-version: '1.23'
@@ -21,7 +31,11 @@ jobs:
       run-lint: true
 
   docker_pipeline:
-    uses: babylonlabs-io/.github/.github/workflows/reusable_docker_pipeline.yml@v0.13.2
+    if: ${{ always() && (
+          (github.event_name == 'workflow_dispatch' && inputs['skip-lint-test'] == true) ||
+          needs.lint_test.result == 'success'
+        )}}
+    uses: babylonlabs-io/.github/.github/workflows/reusable_docker_pipeline.yml@5151754256060bf160c411d0784f831f29882106  # v0.13.4
     needs: ["lint_test"]
     secrets: inherit
     permissions:
@@ -34,3 +48,29 @@ jobs:
       dockerfile: ./contrib/images/babylond/Dockerfile
       repoName: babylond
       docker_scan: true
+
+  docker_testnet_pipeline:
+    if: ${{ always() && (
+            startsWith(github.ref, 'refs/tags/') &&
+            (
+              (github.event_name == 'workflow_dispatch' && inputs['skip-lint-test'] == true) ||
+              needs.lint_test.result == 'success'
+            )
+          ) }}
+    uses: babylonlabs-io/.github/.github/workflows/reusable_docker_pipeline.yml@5151754256060bf160c411d0784f831f29882106  # v0.13.4
+    needs: ["lint_test"]
+    secrets: inherit
+    permissions:
+      # required for all workflows
+      security-events: write
+      # required to fetch internal or private CodeQL packs
+      packages: read
+    with:
+      publish: true
+      dockerfile: ./contrib/images/babylond/Dockerfile
+      repoName: babylond
+      imageTag: ${{ github.ref_name }}-testnet  # Append '-testnet' to the tag name
+      buildArgs: |
+        BABYLON_BUILD_OPTIONS=testnet
+      docker_scan: true
+      buildArtifactPrefix: "testnet-"
