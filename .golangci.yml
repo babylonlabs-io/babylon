@@ -1,11 +1,8 @@
-version: "2"
-
 run:
   timeout: 5m
-  skip-files:
-    - ".*_test\\.go$"
 # TODO: enable all linters
 linters:
+  disable-all: true
   enable:
     - asasalint
     - asciicheck
@@ -21,7 +18,7 @@ linters:
     - errname
     # - errorlint
     # - exhaustive
-    # - forbidigo
+    - forbidigo
     # - forcetypeassert
     - goconst
     - gocritic
@@ -53,6 +50,7 @@ linters:
     - tenv
     - testableexamples
     # - tparallel
+    - typecheck
     - unconvert
     - unparam
     - usestdlibvars
@@ -60,12 +58,20 @@ linters:
     - wastedassign
     - whitespace
     # - wrapcheck
-  exclusions:
-    paths:
-      - e2etest
-      - "test/"
-      - "_test.go"
 
 issues:
   max-same-issues: 0
-
+  # Default: https://golangci-lint.run/usage/false-positives/#default-exclusions
+  exclude-dirs:
+    - e2etest
+  exclude-rules:
+    # Exclude some linters from running on tests files.
+    - path: _test\.go
+      linters:
+        - gocyclo
+        - errcheck
+        - dupl
+        - gosec
+    - path-except: _test\.go
+      linters:
+        - forbidigo
