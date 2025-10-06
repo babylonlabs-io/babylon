@@ -295,6 +295,15 @@ func (s *ValidatorJailingTestSuite) TestValidatorJailingWithExtraDelegation() {
 	s.Require().True(finalSigningInfo.JailedUntil.After(time.Now()),
 		"JailedUntil timestamp should be in the future")
 
+	// Need to wait for epoch to end so that co-staking tracker updates
+	s.T().Log("Waiting for epoch to end so co-staking trackers update after jailing...")
+	_, err = nonValidatorNode.WaitForNextEpoch()
+	s.NoError(err)
+	s.T().Log("Epoch ended, co-staking trackers should now be updated")
+
+	// Wait a few more blocks to ensure everything is settled
+	chainA.WaitForNumHeights(2)
+
 	// Check co-staking trackers after jailing
 	s.T().Log("Checking co-staking trackers AFTER jailing validator 2...")
 	trackersAfter := s.getCostakingTrackers(nonValidatorNode, delegatorsList)
