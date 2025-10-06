@@ -20,6 +20,13 @@ func (k Keeper) AfterEpochBegins(ctx context.Context, epoch uint64) {
 	}
 }
 
+// BeforeEpochEnds - call hook if registered
+func (k Keeper) BeforeEpochEnds(ctx context.Context, epoch uint64) {
+	if k.hooks != nil {
+		k.hooks.BeforeEpochEnds(ctx, epoch)
+	}
+}
+
 // AfterEpochEnds - call hook if registered
 func (k Keeper) AfterEpochEnds(ctx context.Context, epoch uint64) {
 	if k.hooks != nil {

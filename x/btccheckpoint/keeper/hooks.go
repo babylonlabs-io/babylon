@@ -34,6 +34,8 @@ func (h Hooks) AfterBTCHeaderInserted(_ context.Context, _ *ltypes.BTCHeaderInfo
 
 func (h Hooks) AfterEpochBegins(_ context.Context, _ uint64) {}
 
+func (h Hooks) BeforeEpochEnds(_ context.Context, _ uint64) {}
+
 func (h Hooks) AfterEpochEnds(_ context.Context, _ uint64) {}
 
 func (h Hooks) BeforeSlashThreshold(_ context.Context, _ etypes.ValidatorSet) {}

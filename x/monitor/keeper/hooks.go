@@ -23,6 +23,8 @@ func (k Keeper) Hooks() Hooks { return Hooks{k} }
 
 func (h Hooks) AfterEpochBegins(ctx context.Context, epoch uint64) {}
 
+func (h Hooks) BeforeEpochEnds(ctx context.Context, epoch uint64) {}
+
 func (h Hooks) AfterEpochEnds(ctx context.Context, epoch uint64) {
 	h.k.updateBtcLightClientHeightForEpoch(ctx, epoch)
 }

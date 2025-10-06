@@ -21,6 +21,15 @@ type HookEpoching struct {
 func (h HookEpoching) AfterEpochBegins(ctx context.Context, epoch uint64) {
 }
 
+// BeforeEpochEnds is called before an epoch ends
+func (h HookEpoching) BeforeEpochEnds(ctx context.Context, epoch uint64) {
+	// make sure the validator set from the ending epoch is cached in stkCache
+	_, err := h.k.stkCache.GetActiveValidatorSet(ctx, h.k.buildActiveValSetMap)
+	if err != nil {
+		h.k.Logger(ctx).Error("failed to cache validator set before epoch ends", "error", err)
+	}
+}
+
 // AfterEpochEnds is called after an epoch ends
 // It handles the transition of validators between active and inactive states:
 // - Newly active validators: add their delegators' baby tokens to ActiveBaby
