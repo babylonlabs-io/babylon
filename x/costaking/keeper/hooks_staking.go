@@ -175,23 +175,6 @@ func (k Keeper) buildCurrEpochValSetMap(ctx context.Context) (map[string]struct{
 	return valMap, nil
 }
 
-// buildNewActiveValSetMap builds the new active validator set map
-// from the staking module's last validator powers (for next epoch)
-func (k Keeper) buildNewActiveValSetMap(ctx context.Context) (map[string]struct{}, error) {
-	valMap := make(map[string]struct{})
-
-	err := k.stkK.IterateLastValidatorPowers(ctx, func(valAddr sdk.ValAddress, power int64) bool {
-		valMap[valAddr.String()] = struct{}{}
-		return false // continue iteration
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	return valMap, nil
-}
-
 // assumeActiveValidatorIfGenesis adds the given validator to the active set if block height is genesis height (0)
 // and the validator is not already in the set
 func assumeActiveValidatorIfGenesis(ctx context.Context, valSet map[string]struct{}, valAddr sdk.ValAddress) {

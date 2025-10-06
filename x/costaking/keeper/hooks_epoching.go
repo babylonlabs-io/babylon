@@ -36,7 +36,7 @@ func (h HookEpoching) AfterEpochEnds(ctx context.Context, epoch uint64) {
 	// Build the new validator set map from the staking module
 	// Note: This is called after ApplyAndReturnValidatorSetUpdates, so the staking
 	// module's last validator powers reflect the NEW epoch's validator set
-	newValMap, err := h.k.buildNewActiveValSetMap(ctx)
+	newValMap, err := h.buildNewActiveValSetMap(ctx)
 	if err != nil {
 		h.k.Logger(ctx).Error("failed to build new validator set", "error", err)
 		return
@@ -123,6 +123,24 @@ func (h HookEpoching) removeBabyForDelegators(ctx context.Context, valAddrStr st
 // BeforeSlashThreshold is called before a certain threshold of validators are slashed
 func (h HookEpoching) BeforeSlashThreshold(ctx context.Context, valSet epochingtypes.ValidatorSet) {
 }
+
+// buildNewActiveValSetMap builds the new active validator set map
+// from the staking module's last validator powers (for next epoch)
+func (h HookEpoching) buildNewActiveValSetMap(ctx context.Context) (map[string]struct{}, error) {
+	valMap := make(map[string]struct{})
+
+	err := h.k.stkK.IterateLastValidatorPowers(ctx, func(valAddr sdk.ValAddress, power int64) bool {
+		valMap[valAddr.String()] = struct{}{}
+		return false // continue iteration
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return valMap, nil
+}
+
 
 // Create new epoching hooks
 func (k Keeper) HookEpoching() HookEpoching {
