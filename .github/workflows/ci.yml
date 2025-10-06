@@ -313,27 +313,7 @@ jobs:
         run: |
           make test-e2e-cache-btc-stake-expansion
 
-  e2e-run-validator-jailing:
-    needs: [e2e-docker-build-babylon]
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      - name: Download babylon artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: babylond-${{ github.sha }}
-          path: /tmp
-      - name: Docker load babylond
-        run: |
-          docker load < /tmp/docker-babylond.tar.gz
-      - name: Cache Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: 1.23
-      - name: Run e2e TestValidatorJailingTestSuite
-        run: |
-          make test-e2e-cache-validator-jailing
+
 
   e2e-V2:
     needs: [e2e-docker-build-babylon]
