@@ -12,6 +12,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
+	ictvtypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
 )
 
 func TestUpdateAllCostakersScore_VulnerabilityNoMocks(t *testing.T) {
@@ -20,6 +21,8 @@ func TestUpdateAllCostakersScore_VulnerabilityNoMocks(t *testing.T) {
 
 	ictvK := types.NewMockIncentiveKeeper(ctrl)
 	k, ctx := NewKeeperWithMockIncentiveKeeper(t, ictvK)
+
+	bankK := k.bankK.(*types.MockBankKeeper)
 	// Setup two costakers
 	attacker := datagen.GenRandomAddress()
 	victim := datagen.GenRandomAddress()
@@ -70,8 +73,16 @@ func TestUpdateAllCostakersScore_VulnerabilityNoMocks(t *testing.T) {
 	newRatio := sdkmath.NewInt(25)
 	t.Logf("\n=== GOVERNANCE PARAMETER UPDATE ===")
 	t.Logf("ScoreRatioBtcByBaby: 50 -> 25")
+
+	ictvK.EXPECT().AccumulateRewardGaugeForCostaker(gomock.Any(), attacker, attackerRewardsBefore).Times(1)
+	bankK.EXPECT().SendCoinsFromModuleToModule(gomock.Any(), types.ModuleName, ictvtypes.ModuleName, attackerRewardsBefore).Times(1)
+	ictvK.EXPECT().AccumulateRewardGaugeForCostaker(gomock.Any(), victim, victimRewardsBefore).Times(1)
+	bankK.EXPECT().SendCoinsFromModuleToModule(gomock.Any(), types.ModuleName, ictvtypes.ModuleName, victimRewardsBefore).Times(1)
+
 	err = k.UpdateAllCostakersScore(ctx, newRatio)
 	require.NoError(t, err)
+	currentStartCumulativeRewardPeriod := periodBeforeUpdate + 1
+
 	// Verify scores doubled
 	attackerTrackerAfter, err := k.GetCostakerRewards(ctx, attacker)
 	require.NoError(t, err)
@@ -79,24 +90,23 @@ func TestUpdateAllCostakersScore_VulnerabilityNoMocks(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, sdkmath.NewInt(2000), attackerTrackerAfter.TotalScore, "Attacker score should double")
 	require.Equal(t, sdkmath.NewInt(4000), victimTrackerAfter.TotalScore, "Victim score should double")
+	require.Equal(t, currentStartCumulativeRewardPeriod, attackerTrackerAfter.StartPeriodCumulativeReward)
+	require.Equal(t, currentStartCumulativeRewardPeriod, victimTrackerAfter.StartPeriodCumulativeReward)
 	t.Logf("Attacker NEW score: %s (doubled from 1000)", attackerTrackerAfter.TotalScore)
 	t.Logf("Victim NEW score: %s (doubled from 2000)", victimTrackerAfter.TotalScore)
-	// CHECK: What happened to StartPeriodCumulativeReward?
-	attackerTrackerBefore, err := k.GetCostakerRewards(ctx, attacker)
-	require.NoError(t, err)
-	victimTrackerBefore, err := k.GetCostakerRewards(ctx, victim)
-	require.NoError(t, err)
-	t.Logf("\n=== TRACKER STATE CHECK ===")
-	t.Logf("Attacker StartPeriodCumulativeReward: %d", attackerTrackerBefore.StartPeriodCumulativeReward)
-	t.Logf("Victim StartPeriodCumulativeReward: %d", victimTrackerBefore.StartPeriodCumulativeReward)
+	t.Logf("Attacker StartPeriodCumulativeReward: %d", attackerTrackerAfter.StartPeriodCumulativeReward)
+	t.Logf("Victim StartPeriodCumulativeReward: %d", victimTrackerAfter.StartPeriodCumulativeReward)
 	t.Logf("Period that was finalized: %d", periodBeforeUpdate)
+
+	t.Logf("\n=== TRACKER STATE CHECK ===")
 	// AFTER UPDATE: Calculate total claimable rewards
 	// The key bug: we calculate from the ORIGINAL period (periodBeforeUpdate)
 	// but with the NEW inflated scores!
 	attackerRewardsAfter, err := k.CalculateCostakerRewards(ctx, attacker, periodBeforeUpdate)
-	require.NoError(t, err)
+	require.EqualError(t, err, types.ErrInvalidPeriod.Wrapf("startingPeriod %d cannot be greater than endingPeriod %d", attackerTrackerAfter.StartPeriodCumulativeReward, periodBeforeUpdate).Error())
 	victimRewardsAfter, err := k.CalculateCostakerRewards(ctx, victim, periodBeforeUpdate)
-	require.NoError(t, err)
+	require.EqualError(t, err, types.ErrInvalidPeriod.Wrapf("startingPeriod %d cannot be greater than endingPeriod %d", victimTrackerAfter.StartPeriodCumulativeReward, periodBeforeUpdate).Error())
+
 	totalClaimableAfter := attackerRewardsAfter.Add(victimRewardsAfter...)
 	t.Logf("\n=== AFTER GOVERNANCE UPDATE ===")
 	t.Logf("Total deposited rewards: %s (UNCHANGED)", totalDeposited)
@@ -104,6 +114,8 @@ func TestUpdateAllCostakersScore_VulnerabilityNoMocks(t *testing.T) {
 	t.Logf("Victim claimable: %s (score: 4000)", victimRewardsAfter)
 	t.Logf("Total claimable: %s", totalClaimableAfter)
 	t.Logf("Invariant check: %s <= %s ✗ VIOLATED!", totalClaimableAfter, totalDeposited)
+	require.True(t, totalClaimableAfter.IsZero(), "fix of start cumulative rewards ratio in MsgUpdateParams")
+
 	// Verify invariant is broken after update
 	require.False(t, totalClaimableAfter.IsAllLTE(totalDeposited), "BUG DEMONSTRATED: total claimable (%s) EXCEEDS deposited (%s)!", totalClaimableAfter, totalDeposited)
 	require.Equal(t, "20000ubbn", attackerRewardsAfter.String(), "Attacker can claim 20000 (was 10000) - DOUBLED")
