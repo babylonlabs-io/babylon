@@ -149,5 +149,6 @@ func (s *RefundTxTestSuite) SetupTest(t *testing.T) {
 	coins := sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(100)))
 	err := s.app.BankKeeper.MintCoins(s.ctx, minttypes.ModuleName, coins)
 	s.NoError(err)
-	s.app.BankKeeper.SendCoinsFromModuleToModule(s.ctx, minttypes.ModuleName, authtypes.FeeCollectorName, coins)
+	err = s.app.BankKeeper.SendCoinsFromModuleToModule(s.ctx, minttypes.ModuleName, authtypes.FeeCollectorName, coins)
+	s.NoError(err)
 }

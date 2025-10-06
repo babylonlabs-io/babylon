@@ -90,10 +90,11 @@ func TestMigrate(t *testing.T) {
 		require.FileExists(t, newBlsPasswordFile)
 
 		t.Run("verify separated files", func(t *testing.T) {
-			verifySeparateFiles(
+			err = verifySeparateFiles(
 				newPvKeyFile, newPvStateFile, newBlsKeyFile, newBlsPasswordFile,
 				pvKey.PrivKey, pvKey.BlsPrivKey,
 			)
+			require.NoError(t, err)
 		})
 	})
 }

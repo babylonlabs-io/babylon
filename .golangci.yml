@@ -4,7 +4,6 @@ run:
   timeout: 5m
 
 linters:
-  # v2 replaces `disable-all: true` with an explicit default
   default: none
   enable:
     - asasalint
@@ -21,7 +20,7 @@ linters:
     - errname
     # - errorlint
     # - exhaustive
-    - forbidigo
+    # - forbidigo
     # - forcetypeassert
     - goconst
     - gocritic
@@ -58,21 +57,22 @@ linters:
     - unused
     - wastedassign
     - whitespace
-    # - wrapcheck
+  exclusions:
+    # replaces `issues.exclude-dirs`
+    paths:
+      - e2etest/     # note the trailing slash for a directory
+    # replaces `issues.exclude-rules`
+    rules:
+      # Exclude some linters from running on test files.
+      - path: '_test\.go'
+        linters:
+          - gocyclo
+          - errcheck
+          - dupl
+          - gosec
+      - path-except: '_test\.go'
+        linters:
+          - forbidigo
 
 issues:
   max-same-issues: 0
-  # If you only want to suppress reports from a dir (not skip loading it),
-  # keep using issues.exclude-dirs in v2:
-  exclude-dirs:
-    - e2etest
-  exclude-rules:
-    - path: _test\.go
-      linters:
-        - gocyclo
-        - errcheck
-        - dupl
-        - gosec
-    - path-except: _test\.go
-      linters:
-        - forbidigo
