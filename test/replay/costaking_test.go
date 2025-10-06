@@ -14,6 +14,7 @@ import (
 	ictvtypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
 	"github.com/btcsuite/btcd/wire"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	distkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	disttypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 
@@ -609,4 +610,79 @@ func TestCostakingFpVotingPowerLossAndBtcUnbondSameBlockPreventsDoubleSatsRemova
 
 	// fp2's delegator should still have their correct active satoshis (unaffected)
 	d.CheckCostakerRewards(del3.Address(), del3BabyDelegatedAmt, del3BtcStakedAmtFp2, del3BtcStakedAmtFp2, currRwd.Period)
+}
+
+func TestMainnetInflationDistributionAmount(t *testing.T) {
+	t.Parallel()
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	d := NewBabylonAppDriverTmpDir(r, t)
+	d.GenerateNewBlockAssertExecutionSuccess()
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	// example with 100 ubbn to be distributed
+	// 1. incentives 2. costaking 3. distribution
+
+	// (1 / 5.5) ≈ 0.181818182 of total inflation goes to btc stakers
+	// percentageBtcStakers * 100 ubbn ≈ 18.181818 ubbn
+
+	// (0.075 / 5.5) ≈ 0.013636364 of total inflation goes to fp directly
+	// percentageFpDirect * 100 ubbn ≈ 1.3636364 ubbn
+
+	// 2. costaking
+	// 100 ubbn - (btc stakers + fp direct) ≈ 81.4545456 ubbn
+
+	// (2.35 / 5.5) ≈ 0.427272727 of total inflation to costakers
+	// percentageCostakers * remaining ubbn ≈ 43.016949153 ubbn
+
+	// (0.075 / 5.5) ≈ 0.013636364 of remaining inflation goes to baby validators
+	// percentageBabyValidators * remaining ubbn ≈ 1.372881356 ubbn
+
+	// rest goes to baby stakers and validators ≈ 36.619414447 ubbn
+	inflation := sdkmath.LegacyMustNewDecFromStr("5.5")
+
+	percentageBtcStakers := sdkmath.LegacyMustNewDecFromStr("1").Quo(inflation)
+	require.Equal(t, "0.181818181818181818", percentageBtcStakers.String())
+
+	percentageFpDirect := sdkmath.LegacyMustNewDecFromStr("0.075").Quo(inflation)
+	require.Equal(t, "0.013636363636363636", percentageFpDirect.String())
+
+	percentageCostakers := sdkmath.LegacyMustNewDecFromStr("2.35").Quo(inflation)
+	require.Equal(t, "0.427272727272727273", percentageCostakers.String())
+
+	percentageBabyValDirect := sdkmath.LegacyMustNewDecFromStr("0.075").Quo(inflation)
+	require.Equal(t, "0.013636363636363636", percentageBabyValDirect.String())
+
+	dstrModAcc := authtypes.NewModuleAddress(disttypes.ModuleName)
+	dstrModBalancesBefore := d.App.BankKeeper.GetAllBalances(d.Ctx(), dstrModAcc)
+
+	block := d.GenerateNewBlock()
+	amountMinted := FindEventMint(t, block.Events)
+
+	dstrModBalancesAfter := d.App.BankKeeper.GetAllBalances(d.Ctx(), dstrModAcc)
+
+	expectedBtcStaker, _ := sdk.NewDecCoinsFromCoins(amountMinted...).MulDecTruncate(percentageBtcStakers).TruncateDecimal()
+	actualBtcStakers := FindEventBtcStakers(t, block.Events)
+	require.False(t, actualBtcStakers.IsZero())
+	require.Equal(t, expectedBtcStaker.String(), actualBtcStakers.String())
+
+	expectedFpDirect, _ := sdk.NewDecCoinsFromCoins(amountMinted...).MulDecTruncate(percentageFpDirect).TruncateDecimal()
+	actualFpDirect := FindEventTypeFPDirectRewards(t, block.Events)
+	require.False(t, actualFpDirect.IsZero())
+	require.Equal(t, expectedFpDirect.String(), actualFpDirect.String())
+
+	expectedCostakers, _ := sdk.NewDecCoinsFromCoins(amountMinted...).MulDecTruncate(percentageCostakers).TruncateDecimal()
+	actualCostakers := FindEventCostakerRewards(t, block.Events)
+	require.False(t, actualCostakers.IsZero())
+	require.Equal(t, expectedCostakers.String(), actualCostakers.String())
+
+	expectedBabyVal, _ := sdk.NewDecCoinsFromCoins(amountMinted...).MulDecTruncate(percentageBabyValDirect).TruncateDecimal()
+	actualBabyVals := FindEventTypeValidatorDirectRewards(t, block.Events)
+	require.False(t, actualBabyVals.IsZero())
+	require.Equal(t, expectedBabyVal.String(), actualBabyVals.String())
+
+	// baby vals are not subtracted here, as the amount are transferred to the distribution module account as well
+	expectedDistributionModule := amountMinted.Sub(expectedBtcStaker...).Sub(expectedFpDirect...).Sub(expectedCostakers...)
+	actualDistributionModule := dstrModBalancesAfter.Sub(dstrModBalancesBefore...)
+	require.False(t, actualDistributionModule.IsZero())
+	require.Equal(t, expectedDistributionModule.String(), actualDistributionModule.String())
 }
