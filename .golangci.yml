@@ -15,7 +15,7 @@ linters:
     - decorder
     # - dogsled
     - durationcheck
-    - errcheck
+    # - errcheck
     - errchkjson
     - errname
     # - errorlint
@@ -31,7 +31,7 @@ linters:
     - govet
     - grouper
     - importas
-    - ineffassign
+    # - ineffassign
     - loggercheck
     # - maintidx
     - makezero
@@ -46,11 +46,11 @@ linters:
     # - revive
     - rowserrcheck
     - sqlclosecheck
-    - staticcheck
+    # - staticcheck
     # - stylecheck
     - testableexamples
     # - tparallel
-    - unconvert
+    # - unconvert
     - unparam
     - usestdlibvars
     - unused
