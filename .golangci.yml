@@ -50,10 +50,8 @@ linters:
     - sqlclosecheck
     - staticcheck
     # - stylecheck
-    - tenv
     - testableexamples
     # - tparallel
-    - typecheck
     - unconvert
     - unparam
     - usestdlibvars
