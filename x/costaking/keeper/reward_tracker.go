@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"cosmossdk.io/math"
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -74,7 +73,7 @@ func (k Keeper) costakerModified(ctx context.Context, costaker sdk.AccAddress, m
 // costakerModifiedActiveAmounts anytime an costaker changes his amount of btc or baby staked this function
 // should be called, for activation of new staking or unbonding of the previous, his score might change and then it should
 // also update the total score of the pool of current rewards
-func (k Keeper) costakerModifiedActiveAmounts(ctx context.Context, costaker sdk.AccAddress, newActiveSatoshi, newActiveBaby math.Int) error {
+func (k Keeper) costakerModifiedActiveAmounts(ctx context.Context, costaker sdk.AccAddress, newActiveSatoshi, newActiveBaby sdkmath.Int) error {
 	return k.costakerModified(ctx, costaker, func(rwdTracker *types.CostakerRewardsTracker) {
 		rwdTracker.ActiveBaby = newActiveBaby
 		rwdTracker.ActiveSatoshis = newActiveSatoshi
