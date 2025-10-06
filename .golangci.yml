@@ -1,8 +1,11 @@
+version: "2"
+
 run:
   timeout: 5m
-# TODO: enable all linters
+
 linters:
-  disable-all: true
+  # v2 replaces `disable-all: true` with an explicit default
+  default: none
   enable:
     - asasalint
     - asciicheck
@@ -61,11 +64,11 @@ linters:
 
 issues:
   max-same-issues: 0
-  # Default: https://golangci-lint.run/usage/false-positives/#default-exclusions
+  # If you only want to suppress reports from a dir (not skip loading it),
+  # keep using issues.exclude-dirs in v2:
   exclude-dirs:
     - e2etest
   exclude-rules:
-    # Exclude some linters from running on tests files.
     - path: _test\.go
       linters:
         - gocyclo
