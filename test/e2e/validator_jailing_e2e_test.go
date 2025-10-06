@@ -301,9 +301,6 @@ func (s *ValidatorJailingTestSuite) TestValidatorJailingWithExtraDelegation() {
 	s.NoError(err)
 	s.T().Log("Epoch ended, co-staking trackers should now be updated")
 
-	// Wait a few more blocks to ensure everything is settled
-	chainA.WaitForNumHeights(2)
-
 	// Check co-staking trackers after jailing
 	s.T().Log("Checking co-staking trackers AFTER jailing validator 2...")
 	trackersAfter := s.getCostakingTrackers(nonValidatorNode, delegatorsList)
