@@ -2,9 +2,10 @@ version: "2"
 
 run:
   timeout: 5m
+  skip-files:
+    - ".*_test\\.go$"
 # TODO: enable all linters
 linters:
-  presets: []
   enable:
     - asasalint
     - asciicheck
@@ -67,6 +68,4 @@ linters:
 
 issues:
   max-same-issues: 0
-  exclude-files:
-    - ".*_test\\.go$"
 
