@@ -248,6 +248,7 @@ test-e2e-cache:
 	$(MAKE) test-e2e-cache-upgrade-v2
 	$(MAKE) test-e2e-cache-epoching-spam-prevention
 	$(MAKE) test-e2e-cache-btc-stake-expansion
+	$(MAKE) test-e2e-cache-validator-jailing
 
 clean-e2e:
 	docker container rm -f $(shell docker container ls -a -q) || true
