@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"context"
-	"fmt"
 
 	"cosmossdk.io/math"
 	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
@@ -22,22 +21,13 @@ type HookEpoching struct {
 func (h HookEpoching) AfterEpochBegins(ctx context.Context, epoch uint64) {
 }
 
-// BeforeEpochEnds is called before an epoch ends
-func (h HookEpoching) BeforeEpochEnds(ctx context.Context, epoch uint64) {
-	// make sure the validator set from the ending epoch is cached in stkCache
-	_, err := h.k.stkCache.GetActiveValidatorSet(ctx, h.k.buildActiveValSetMap)
-	if err != nil {
-		panic(fmt.Sprintf("failed to cache validator set before epoch ends: %v", err))
-	}
-}
-
 // AfterEpochEnds is called after an epoch ends
 // It handles the transition of validators between active and inactive states:
 // - Newly active validators: add their delegators' baby tokens to ActiveBaby
 // - Newly inactive validators: remove their delegators' baby tokens from ActiveBaby
 func (h HookEpoching) AfterEpochEnds(ctx context.Context, epoch uint64) {
 	// Get the validator set from the ending epoch (cached in stkCache)
-	prevValMap, err := h.k.stkCache.GetActiveValidatorSet(ctx, h.k.buildActiveValSetMap)
+	prevValMap, err := h.k.stkCache.GetActiveValidatorSet(ctx, h.k.buildCurrEpochValSetMap)
 	if err != nil {
 		h.k.Logger(ctx).Error("failed to get previous validator set", "error", err)
 		return
@@ -46,7 +36,7 @@ func (h HookEpoching) AfterEpochEnds(ctx context.Context, epoch uint64) {
 	// Build the new validator set map from the staking module
 	// Note: This is called after ApplyAndReturnValidatorSetUpdates, so the staking
 	// module's last validator powers reflect the NEW epoch's validator set
-	newValMap, err := h.k.buildActiveValSetMap(ctx)
+	newValMap, err := h.k.buildNewActiveValSetMap(ctx)
 	if err != nil {
 		h.k.Logger(ctx).Error("failed to build new validator set", "error", err)
 		return

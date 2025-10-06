@@ -11,6 +11,7 @@ import (
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
 	tmocks "github.com/babylonlabs-io/babylon/v4/testutil/mocks"
 	"github.com/babylonlabs-io/babylon/v4/x/costaking/types"
+	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
@@ -38,19 +39,15 @@ func TestHookEpochingAfterEpochEnds_ValidatorBecomesActive(t *testing.T) {
 	require.NoError(t, err)
 
 	mockStkK := k.stkK.(*types.MockStakingKeeper)
+	mockEpochingK := k.epochingK.(*types.MockEpochingKeeper)
 
 	// Initially no validators are active (previous epoch had empty active set)
-	mockStkK.EXPECT().IterateLastValidatorPowers(gomock.Any(), gomock.Any()).DoAndReturn(
-		func(ctx context.Context, fn func(sdk.ValAddress, int64) bool) error {
-			// Empty - no active validators in previous epoch
-			return nil
-		},
-	).Times(1)
+	mockEpochingK.EXPECT().GetCurrentValidatorSet(gomock.Any()).Return(epochingtypes.ValidatorSet{}).Times(1)
 
 	hooks := k.HookEpoching()
 
 	// Populate the cache with empty set (simulating previous epoch state)
-	_, err = k.stkCache.GetActiveValidatorSet(ctx, k.buildActiveValSetMap)
+	_, err = k.stkCache.GetActiveValidatorSet(ctx, k.buildCurrEpochValSetMap)
 	require.NoError(t, err)
 
 	// Now validator becomes active (new epoch)
@@ -100,19 +97,17 @@ func TestHookEpochingAfterEpochEnds_ValidatorBecomesInactive(t *testing.T) {
 	require.NoError(t, err)
 
 	mockStkK := k.stkK.(*types.MockStakingKeeper)
+	mockEpochingK := k.epochingK.(*types.MockEpochingKeeper)
 
 	// Initially validator is active (previous epoch)
-	mockStkK.EXPECT().IterateLastValidatorPowers(gomock.Any(), gomock.Any()).DoAndReturn(
-		func(ctx context.Context, fn func(sdk.ValAddress, int64) bool) error {
-			fn(valAddr, 1000) // Validator was active
-			return nil
-		},
-	).Times(1)
+	mockEpochingK.EXPECT().GetCurrentValidatorSet(gomock.Any()).Return(epochingtypes.ValidatorSet{
+		{Addr: valAddr},
+	}).Times(1)
 
 	hooks := k.HookEpoching()
 
 	// Populate the cache with validator as active (simulating previous epoch state)
-	_, err = k.stkCache.GetActiveValidatorSet(ctx, k.buildActiveValSetMap)
+	_, err = k.stkCache.GetActiveValidatorSet(ctx, k.buildCurrEpochValSetMap)
 	require.NoError(t, err)
 
 	// Now validator becomes inactive (new epoch)
@@ -176,20 +171,18 @@ func TestHookEpochingAfterEpochEnds_MultipleValidatorsTransition(t *testing.T) {
 	require.NoError(t, err)
 
 	mockStkK := k.stkK.(*types.MockStakingKeeper)
+	mockEpochingK := k.epochingK.(*types.MockEpochingKeeper)
 
 	// Previous epoch: val1 and val2 were active
-	mockStkK.EXPECT().IterateLastValidatorPowers(gomock.Any(), gomock.Any()).DoAndReturn(
-		func(ctx context.Context, fn func(sdk.ValAddress, int64) bool) error {
-			fn(val1Addr, 1000)
-			fn(val2Addr, 500)
-			return nil
-		},
-	).Times(1)
+	mockEpochingK.EXPECT().GetCurrentValidatorSet(gomock.Any()).Return(epochingtypes.ValidatorSet{
+		{Addr: val1Addr},
+		{Addr: val2Addr},
+	}).Times(1)
 
 	hooks := k.HookEpoching()
 
 	// Populate the cache with previous epoch state
-	_, err = k.stkCache.GetActiveValidatorSet(ctx, k.buildActiveValSetMap)
+	_, err = k.stkCache.GetActiveValidatorSet(ctx, k.buildCurrEpochValSetMap)
 	require.NoError(t, err)
 
 	// New epoch: val1 and val3 are active (val2 became inactive, val3 became active)
@@ -238,19 +231,17 @@ func TestHookEpochingAfterEpochEnds_NoValidatorChanges(t *testing.T) {
 	require.NoError(t, err)
 
 	mockStkK := k.stkK.(*types.MockStakingKeeper)
+	mockEpochingK := k.epochingK.(*types.MockEpochingKeeper)
 
 	// Previous epoch: validator was active
-	mockStkK.EXPECT().IterateLastValidatorPowers(gomock.Any(), gomock.Any()).DoAndReturn(
-		func(ctx context.Context, fn func(sdk.ValAddress, int64) bool) error {
-			fn(valAddr, 1000)
-			return nil
-		},
-	).Times(1)
+	mockEpochingK.EXPECT().GetCurrentValidatorSet(gomock.Any()).Return(epochingtypes.ValidatorSet{
+		{Addr: valAddr},
+	}).Times(1)
 
 	hooks := k.HookEpoching()
 
 	// Populate the cache
-	_, err = k.stkCache.GetActiveValidatorSet(ctx, k.buildActiveValSetMap)
+	_, err = k.stkCache.GetActiveValidatorSet(ctx, k.buildCurrEpochValSetMap)
 	require.NoError(t, err)
 
 	// New epoch: same validator is still active (no change)
@@ -310,18 +301,15 @@ func TestHookEpochingAfterEpochEnds_MultipleDelegators(t *testing.T) {
 	require.NoError(t, err)
 
 	mockStkK := k.stkK.(*types.MockStakingKeeper)
+	mockEpochingK := k.epochingK.(*types.MockEpochingKeeper)
 
 	// Previous epoch: no active validators
-	mockStkK.EXPECT().IterateLastValidatorPowers(gomock.Any(), gomock.Any()).DoAndReturn(
-		func(ctx context.Context, fn func(sdk.ValAddress, int64) bool) error {
-			return nil
-		},
-	).Times(1)
+	mockEpochingK.EXPECT().GetCurrentValidatorSet(gomock.Any()).Return(epochingtypes.ValidatorSet{}).Times(1)
 
 	hooks := k.HookEpoching()
 
 	// Populate the cache with empty set
-	_, err = k.stkCache.GetActiveValidatorSet(ctx, k.buildActiveValSetMap)
+	_, err = k.stkCache.GetActiveValidatorSet(ctx, k.buildCurrEpochValSetMap)
 	require.NoError(t, err)
 
 	// New epoch: validator becomes active

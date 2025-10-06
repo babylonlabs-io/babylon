@@ -28,7 +28,7 @@ type HookStaking struct {
 // Note: This hook uses a cache to track previous delegation amounts to calculate the delta.
 func (h HookStaking) AfterDelegationModified(ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) error {
 	// Check if validator is in the active set
-	valSet, err := h.k.stkCache.GetActiveValidatorSet(ctx, h.k.buildActiveValSetMap)
+	valSet, err := h.k.stkCache.GetActiveValidatorSet(ctx, h.k.buildCurrEpochValSetMap)
 	if err != nil {
 		return err
 	}
@@ -68,7 +68,7 @@ func (h HookStaking) AfterDelegationModified(ctx context.Context, delAddr sdk.Ac
 // - Caches current delegation amount in temporary storage
 func (h HookStaking) BeforeDelegationSharesModified(ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) error {
 	// Check if validator is in the active set
-	valSet, err := h.k.stkCache.GetActiveValidatorSet(ctx, h.k.buildActiveValSetMap)
+	valSet, err := h.k.stkCache.GetActiveValidatorSet(ctx, h.k.buildCurrEpochValSetMap)
 	if err != nil {
 		return err
 	}
@@ -158,9 +158,26 @@ func (k Keeper) TokensFromShares(ctx context.Context, valAddr sdk.ValAddress, de
 	return delTokens, nil
 }
 
-// buildActiveValSetMap builds the active validator set map
-// from the staking module's last validator powers
-func (k Keeper) buildActiveValSetMap(ctx context.Context) (map[string]struct{}, error) {
+// buildCurrEpochValSetMap builds the current epoch's validator set map
+// from the epoching module
+func (k Keeper) buildCurrEpochValSetMap(ctx context.Context) (map[string]struct{}, error) {
+	valMap := make(map[string]struct{})
+
+	// Get the current epoch's validator set from the epoching keeper
+	valSet := k.epochingK.GetCurrentValidatorSet(ctx)
+
+	// Convert epoching ValidatorSet to map
+	for _, val := range valSet {
+		valAddr := sdk.ValAddress(val.Addr)
+		valMap[valAddr.String()] = struct{}{}
+	}
+
+	return valMap, nil
+}
+
+// buildNewActiveValSetMap builds the new active validator set map
+// from the staking module's last validator powers (for next epoch)
+func (k Keeper) buildNewActiveValSetMap(ctx context.Context) (map[string]struct{}, error) {
 	valMap := make(map[string]struct{})
 
 	err := k.stkK.IterateLastValidatorPowers(ctx, func(valAddr sdk.ValAddress, power int64) bool {

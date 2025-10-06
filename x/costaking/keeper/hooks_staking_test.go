@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"context"
 	"testing"
 
 	"cosmossdk.io/math"
@@ -12,6 +11,7 @@ import (
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
 	tmocks "github.com/babylonlabs-io/babylon/v4/testutil/mocks"
 	"github.com/babylonlabs-io/babylon/v4/x/costaking/types"
+	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 	ictvtypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -33,13 +33,12 @@ func TestHookStakingBeforeDelegationSharesModifiedUpdateCache(t *testing.T) {
 	require.NoError(t, err)
 
 	mockStkK := k.stkK.(*types.MockStakingKeeper)
-	// Mock IterateLastValidatorPowers to mark validator as active
-	mockStkK.EXPECT().IterateLastValidatorPowers(gomock.Any(), gomock.Any()).DoAndReturn(
-		func(ctx context.Context, fn func(sdk.ValAddress, int64) bool) error {
-			fn(valAddr, 1000) // Mark valAddr as active with some power
-			return nil
-		},
-	).Times(1)
+	mockEpochingK := k.epochingK.(*types.MockEpochingKeeper)
+
+	// Mock GetCurrentValidatorSet to mark validator as active
+	mockEpochingK.EXPECT().GetCurrentValidatorSet(gomock.Any()).Return(epochingtypes.ValidatorSet{
+		{Addr: valAddr},
+	}).Times(1)
 	mockStkK.EXPECT().GetDelegation(ctx, delAddr, valAddr).Return(delegation, nil).Times(1)
 	mockStkK.EXPECT().Validator(ctx, valAddr).Return(val, nil).Times(1)
 
@@ -89,13 +88,12 @@ func TestHookStakingAfterDelegationModified(t *testing.T) {
 	require.NoError(t, err)
 
 	mockStkK := k.stkK.(*types.MockStakingKeeper)
-	// Mock IterateLastValidatorPowers to mark validator as active
-	mockStkK.EXPECT().IterateLastValidatorPowers(gomock.Any(), gomock.Any()).DoAndReturn(
-		func(ctx context.Context, fn func(sdk.ValAddress, int64) bool) error {
-			fn(valAddr, 100) // Mark valAddr as active
-			return nil
-		},
-	).Times(1)
+	mockEpochingK := k.epochingK.(*types.MockEpochingKeeper)
+
+	// Mock GetCurrentValidatorSet to mark validator as active
+	mockEpochingK.EXPECT().GetCurrentValidatorSet(gomock.Any()).Return(epochingtypes.ValidatorSet{
+		{Addr: valAddr},
+	}).Times(1)
 	mockStkK.EXPECT().GetDelegation(ctx, delAddr, valAddr).Return(delegation, nil).Times(1)
 	mockStkK.EXPECT().Validator(gomock.Any(), gomock.Eq(valAddr)).Return(&val, nil).Times(1)
 
@@ -145,13 +143,12 @@ func TestHookStakingAfterDelegationModifiedErrorDelegationNotFound(t *testing.T)
 	delAddr, valAddr := datagen.GenRandomAddress(), datagen.GenRandomValidatorAddress()
 
 	mockStkK := k.stkK.(*types.MockStakingKeeper)
-	// Mock IterateLastValidatorPowers to mark validator as active
-	mockStkK.EXPECT().IterateLastValidatorPowers(gomock.Any(), gomock.Any()).DoAndReturn(
-		func(ctx context.Context, fn func(sdk.ValAddress, int64) bool) error {
-			fn(valAddr, 100) // Mark valAddr as active
-			return nil
-		},
-	).Times(1)
+	mockEpochingK := k.epochingK.(*types.MockEpochingKeeper)
+
+	// Mock GetCurrentValidatorSet to mark validator as active
+	mockEpochingK.EXPECT().GetCurrentValidatorSet(gomock.Any()).Return(epochingtypes.ValidatorSet{
+		{Addr: valAddr},
+	}).Times(1)
 	mockStkK.EXPECT().GetDelegation(ctx, delAddr, valAddr).Return(stakingtypes.Delegation{}, stakingtypes.ErrNoDelegation).Times(1)
 
 	hooks := k.HookStaking()
@@ -180,13 +177,12 @@ func TestHookStakingAfterDelegationModifiedReducingAmountStaked(t *testing.T) {
 	}
 
 	mockStkK := k.stkK.(*types.MockStakingKeeper)
-	// Mock IterateLastValidatorPowers to mark validator as active
-	mockStkK.EXPECT().IterateLastValidatorPowers(gomock.Any(), gomock.Any()).DoAndReturn(
-		func(ctx context.Context, fn func(sdk.ValAddress, int64) bool) error {
-			fn(valAddr, 100) // Mark valAddr as active
-			return nil
-		},
-	).Times(1)
+	mockEpochingK := k.epochingK.(*types.MockEpochingKeeper)
+
+	// Mock GetCurrentValidatorSet to mark validator as active
+	mockEpochingK.EXPECT().GetCurrentValidatorSet(gomock.Any()).Return(epochingtypes.ValidatorSet{
+		{Addr: valAddr},
+	}).Times(1)
 	mockStkK.EXPECT().GetDelegation(ctx, delAddr, valAddr).Return(delegation, nil).Times(1)
 
 	val, err := tmocks.CreateValidator(valAddr, math.NewInt(100))
@@ -211,15 +207,11 @@ func TestHookStakingAfterDelegationModified_InactiveValidator(t *testing.T) {
 
 	delAddr, valAddr := datagen.GenRandomAddress(), datagen.GenRandomValidatorAddress()
 
-	mockStkK := k.stkK.(*types.MockStakingKeeper)
-	// Mock IterateLastValidatorPowers to return empty (no active validators)
+	mockEpochingK := k.epochingK.(*types.MockEpochingKeeper)
+
+	// Mock GetCurrentValidatorSet to return empty (no active validators)
 	// This simulates the validator NOT being in the active set
-	mockStkK.EXPECT().IterateLastValidatorPowers(gomock.Any(), gomock.Any()).DoAndReturn(
-		func(ctx context.Context, fn func(sdk.ValAddress, int64) bool) error {
-			// Don't call fn - no active validators
-			return nil
-		},
-	).Times(1)
+	mockEpochingK.EXPECT().GetCurrentValidatorSet(gomock.Any()).Return(epochingtypes.ValidatorSet{}).Times(1)
 
 	hooks := k.HookStaking()
 
@@ -239,14 +231,10 @@ func TestHookStakingBeforeDelegationSharesModified_InactiveValidator(t *testing.
 
 	delAddr, valAddr := datagen.GenRandomAddress(), datagen.GenRandomValidatorAddress()
 
-	mockStkK := k.stkK.(*types.MockStakingKeeper)
-	// Mock IterateLastValidatorPowers to return empty (no active validators)
-	mockStkK.EXPECT().IterateLastValidatorPowers(gomock.Any(), gomock.Any()).DoAndReturn(
-		func(ctx context.Context, fn func(sdk.ValAddress, int64) bool) error {
-			// Don't call fn - no active validators
-			return nil
-		},
-	).Times(1)
+	mockEpochingK := k.epochingK.(*types.MockEpochingKeeper)
+
+	// Mock GetCurrentValidatorSet to return empty (no active validators)
+	mockEpochingK.EXPECT().GetCurrentValidatorSet(gomock.Any()).Return(epochingtypes.ValidatorSet{}).Times(1)
 
 	hooks := k.HookStaking()
 
@@ -284,14 +272,13 @@ func TestHookStakingMultipleValidators_MixedActiveInactive(t *testing.T) {
 	require.NoError(t, err)
 
 	mockStkK := k.stkK.(*types.MockStakingKeeper)
+	mockEpochingK := k.epochingK.(*types.MockEpochingKeeper)
 
 	// First call: delegate to active validator
-	mockStkK.EXPECT().IterateLastValidatorPowers(gomock.Any(), gomock.Any()).DoAndReturn(
-		func(ctx context.Context, fn func(sdk.ValAddress, int64) bool) error {
-			fn(activeValAddr, 1000) // Only activeValAddr is active
-			return nil
-		},
-	).Times(1)
+	// Mock GetCurrentValidatorSet to mark only activeValAddr as active
+	mockEpochingK.EXPECT().GetCurrentValidatorSet(gomock.Any()).Return(epochingtypes.ValidatorSet{
+		{Addr: activeValAddr},
+	}).Times(1)
 	mockStkK.EXPECT().GetDelegation(ctx, delAddr, activeValAddr).Return(activeDelegation, nil).Times(1)
 	mockStkK.EXPECT().Validator(gomock.Any(), gomock.Eq(activeValAddr)).Return(&activeVal, nil).Times(1)
 
@@ -339,16 +326,14 @@ func TestHookStakingValidatorBecomesInactive(t *testing.T) {
 	require.NoError(t, err)
 
 	mockStkK := k.stkK.(*types.MockStakingKeeper)
+	mockEpochingK := k.epochingK.(*types.MockEpochingKeeper)
 
 	hooks := k.HookStaking()
 
 	// First: validator is active
-	mockStkK.EXPECT().IterateLastValidatorPowers(gomock.Any(), gomock.Any()).DoAndReturn(
-		func(ctx context.Context, fn func(sdk.ValAddress, int64) bool) error {
-			fn(valAddr, 1000) // Validator is active
-			return nil
-		},
-	).Times(1)
+	mockEpochingK.EXPECT().GetCurrentValidatorSet(gomock.Any()).Return(epochingtypes.ValidatorSet{
+		{Addr: valAddr},
+	}).Times(1)
 	mockStkK.EXPECT().GetDelegation(gomock.Any(), delAddr, valAddr).Return(delegation, nil).Times(1)
 	mockStkK.EXPECT().Validator(gomock.Any(), gomock.Eq(valAddr)).Return(&val, nil).Times(1)
 
@@ -363,13 +348,8 @@ func TestHookStakingValidatorBecomesInactive(t *testing.T) {
 	// Clear the cache to simulate new block/epoch
 	k.stkCache.Clear()
 
-	// Now validator becomes inactive (not in LastValidatorPowers)
-	mockStkK.EXPECT().IterateLastValidatorPowers(gomock.Any(), gomock.Any()).DoAndReturn(
-		func(ctx context.Context, fn func(sdk.ValAddress, int64) bool) error {
-			// Don't call fn - validator is no longer active
-			return nil
-		},
-	).Times(1)
+	// Now validator becomes inactive (not in active validator set)
+	mockEpochingK.EXPECT().GetCurrentValidatorSet(gomock.Any()).Return(epochingtypes.ValidatorSet{}).Times(1)
 
 	// Try to modify delegation while validator is inactive - should be skipped
 	err = hooks.AfterDelegationModified(ctx, delAddr, valAddr)

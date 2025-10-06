@@ -9,8 +9,9 @@ import (
 	reflect "reflect"
 
 	math "cosmossdk.io/math"
-	types "github.com/cosmos/cosmos-sdk/types"
-	types0 "github.com/cosmos/cosmos-sdk/x/staking/types"
+	types "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
+	types0 "github.com/cosmos/cosmos-sdk/types"
+	types1 "github.com/cosmos/cosmos-sdk/x/staking/types"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -38,7 +39,7 @@ func (m *MockIncentiveKeeper) EXPECT() *MockIncentiveKeeperMockRecorder {
 }
 
 // AccumulateRewardGaugeForCostaker mocks base method.
-func (m *MockIncentiveKeeper) AccumulateRewardGaugeForCostaker(ctx context.Context, addr types.AccAddress, reward types.Coins) {
+func (m *MockIncentiveKeeper) AccumulateRewardGaugeForCostaker(ctx context.Context, addr types0.AccAddress, reward types0.Coins) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "AccumulateRewardGaugeForCostaker", ctx, addr, reward)
 }
@@ -50,7 +51,7 @@ func (mr *MockIncentiveKeeperMockRecorder) AccumulateRewardGaugeForCostaker(ctx,
 }
 
 // IterateBTCDelegationSatsUpdated mocks base method.
-func (m *MockIncentiveKeeper) IterateBTCDelegationSatsUpdated(ctx context.Context, fp types.AccAddress, it func(types.AccAddress, math.Int) error) error {
+func (m *MockIncentiveKeeper) IterateBTCDelegationSatsUpdated(ctx context.Context, fp types0.AccAddress, it func(types0.AccAddress, math.Int) error) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "IterateBTCDelegationSatsUpdated", ctx, fp, it)
 	ret0, _ := ret[0].(error)
@@ -87,10 +88,10 @@ func (m *MockAccountKeeper) EXPECT() *MockAccountKeeperMockRecorder {
 }
 
 // GetModuleAccount mocks base method.
-func (m *MockAccountKeeper) GetModuleAccount(ctx context.Context, name string) types.ModuleAccountI {
+func (m *MockAccountKeeper) GetModuleAccount(ctx context.Context, name string) types0.ModuleAccountI {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetModuleAccount", ctx, name)
-	ret0, _ := ret[0].(types.ModuleAccountI)
+	ret0, _ := ret[0].(types0.ModuleAccountI)
 	return ret0
 }
 
@@ -101,10 +102,10 @@ func (mr *MockAccountKeeperMockRecorder) GetModuleAccount(ctx, name interface{})
 }
 
 // GetModuleAddress mocks base method.
-func (m *MockAccountKeeper) GetModuleAddress(moduleName string) types.AccAddress {
+func (m *MockAccountKeeper) GetModuleAddress(moduleName string) types0.AccAddress {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetModuleAddress", moduleName)
-	ret0, _ := ret[0].(types.AccAddress)
+	ret0, _ := ret[0].(types0.AccAddress)
 	return ret0
 }
 
@@ -138,10 +139,10 @@ func (m *MockBankKeeper) EXPECT() *MockBankKeeperMockRecorder {
 }
 
 // GetAllBalances mocks base method.
-func (m *MockBankKeeper) GetAllBalances(ctx context.Context, addr types.AccAddress) types.Coins {
+func (m *MockBankKeeper) GetAllBalances(ctx context.Context, addr types0.AccAddress) types0.Coins {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAllBalances", ctx, addr)
-	ret0, _ := ret[0].(types.Coins)
+	ret0, _ := ret[0].(types0.Coins)
 	return ret0
 }
 
@@ -152,7 +153,7 @@ func (mr *MockBankKeeperMockRecorder) GetAllBalances(ctx, addr interface{}) *gom
 }
 
 // SendCoinsFromModuleToModule mocks base method.
-func (m *MockBankKeeper) SendCoinsFromModuleToModule(ctx context.Context, senderModule, recipientModule string, amt types.Coins) error {
+func (m *MockBankKeeper) SendCoinsFromModuleToModule(ctx context.Context, senderModule, recipientModule string, amt types0.Coins) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SendCoinsFromModuleToModule", ctx, senderModule, recipientModule, amt)
 	ret0, _ := ret[0].(error)
@@ -189,7 +190,7 @@ func (m *MockDistributionKeeper) EXPECT() *MockDistributionKeeperMockRecorder {
 }
 
 // AllocateTokensToValidator mocks base method.
-func (m *MockDistributionKeeper) AllocateTokensToValidator(ctx context.Context, val types0.ValidatorI, tokens types.DecCoins) error {
+func (m *MockDistributionKeeper) AllocateTokensToValidator(ctx context.Context, val types1.ValidatorI, tokens types0.DecCoins) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AllocateTokensToValidator", ctx, val, tokens)
 	ret0, _ := ret[0].(error)
@@ -226,10 +227,10 @@ func (m *MockStakingKeeper) EXPECT() *MockStakingKeeperMockRecorder {
 }
 
 // GetDelegation mocks base method.
-func (m *MockStakingKeeper) GetDelegation(ctx context.Context, delAddr types.AccAddress, valAddr types.ValAddress) (types0.Delegation, error) {
+func (m *MockStakingKeeper) GetDelegation(ctx context.Context, delAddr types0.AccAddress, valAddr types0.ValAddress) (types1.Delegation, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetDelegation", ctx, delAddr, valAddr)
-	ret0, _ := ret[0].(types0.Delegation)
+	ret0, _ := ret[0].(types1.Delegation)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -241,10 +242,10 @@ func (mr *MockStakingKeeperMockRecorder) GetDelegation(ctx, delAddr, valAddr int
 }
 
 // GetValidatorDelegations mocks base method.
-func (m *MockStakingKeeper) GetValidatorDelegations(ctx context.Context, valAddr types.ValAddress) ([]types0.Delegation, error) {
+func (m *MockStakingKeeper) GetValidatorDelegations(ctx context.Context, valAddr types0.ValAddress) ([]types1.Delegation, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetValidatorDelegations", ctx, valAddr)
-	ret0, _ := ret[0].([]types0.Delegation)
+	ret0, _ := ret[0].([]types1.Delegation)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -256,7 +257,7 @@ func (mr *MockStakingKeeperMockRecorder) GetValidatorDelegations(ctx, valAddr in
 }
 
 // IterateLastValidatorPowers mocks base method.
-func (m *MockStakingKeeper) IterateLastValidatorPowers(ctx context.Context, handler func(types.ValAddress, int64) bool) error {
+func (m *MockStakingKeeper) IterateLastValidatorPowers(ctx context.Context, handler func(types0.ValAddress, int64) bool) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "IterateLastValidatorPowers", ctx, handler)
 	ret0, _ := ret[0].(error)
@@ -270,10 +271,10 @@ func (mr *MockStakingKeeperMockRecorder) IterateLastValidatorPowers(ctx, handler
 }
 
 // Validator mocks base method.
-func (m *MockStakingKeeper) Validator(arg0 context.Context, arg1 types.ValAddress) (types0.ValidatorI, error) {
+func (m *MockStakingKeeper) Validator(arg0 context.Context, arg1 types0.ValAddress) (types1.ValidatorI, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Validator", arg0, arg1)
-	ret0, _ := ret[0].(types0.ValidatorI)
+	ret0, _ := ret[0].(types1.ValidatorI)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -285,10 +286,10 @@ func (mr *MockStakingKeeperMockRecorder) Validator(arg0, arg1 interface{}) *gomo
 }
 
 // ValidatorByConsAddr mocks base method.
-func (m *MockStakingKeeper) ValidatorByConsAddr(arg0 context.Context, arg1 types.ConsAddress) (types0.ValidatorI, error) {
+func (m *MockStakingKeeper) ValidatorByConsAddr(arg0 context.Context, arg1 types0.ConsAddress) (types1.ValidatorI, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ValidatorByConsAddr", arg0, arg1)
-	ret0, _ := ret[0].(types0.ValidatorI)
+	ret0, _ := ret[0].(types1.ValidatorI)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -297,4 +298,41 @@ func (m *MockStakingKeeper) ValidatorByConsAddr(arg0 context.Context, arg1 types
 func (mr *MockStakingKeeperMockRecorder) ValidatorByConsAddr(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidatorByConsAddr", reflect.TypeOf((*MockStakingKeeper)(nil).ValidatorByConsAddr), arg0, arg1)
+}
+
+// MockEpochingKeeper is a mock of EpochingKeeper interface.
+type MockEpochingKeeper struct {
+	ctrl     *gomock.Controller
+	recorder *MockEpochingKeeperMockRecorder
+}
+
+// MockEpochingKeeperMockRecorder is the mock recorder for MockEpochingKeeper.
+type MockEpochingKeeperMockRecorder struct {
+	mock *MockEpochingKeeper
+}
+
+// NewMockEpochingKeeper creates a new mock instance.
+func NewMockEpochingKeeper(ctrl *gomock.Controller) *MockEpochingKeeper {
+	mock := &MockEpochingKeeper{ctrl: ctrl}
+	mock.recorder = &MockEpochingKeeperMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockEpochingKeeper) EXPECT() *MockEpochingKeeperMockRecorder {
+	return m.recorder
+}
+
+// GetCurrentValidatorSet mocks base method.
+func (m *MockEpochingKeeper) GetCurrentValidatorSet(ctx context.Context) types.ValidatorSet {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetCurrentValidatorSet", ctx)
+	ret0, _ := ret[0].(types.ValidatorSet)
+	return ret0
+}
+
+// GetCurrentValidatorSet indicates an expected call of GetCurrentValidatorSet.
+func (mr *MockEpochingKeeperMockRecorder) GetCurrentValidatorSet(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCurrentValidatorSet", reflect.TypeOf((*MockEpochingKeeper)(nil).GetCurrentValidatorSet), ctx)
 }

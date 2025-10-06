@@ -19,12 +19,6 @@ func (h MultiEpochingHooks) AfterEpochBegins(ctx context.Context, epoch uint64) 
 	}
 }
 
-func (h MultiEpochingHooks) BeforeEpochEnds(ctx context.Context, epoch uint64) {
-	for i := range h {
-		h[i].BeforeEpochEnds(ctx, epoch)
-	}
-}
-
 func (h MultiEpochingHooks) AfterEpochEnds(ctx context.Context, epoch uint64) {
 	for i := range h {
 		h[i].AfterEpochEnds(ctx, epoch)
