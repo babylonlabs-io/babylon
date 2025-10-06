@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"fmt"
 
 	"cosmossdk.io/math"
 	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
@@ -26,7 +27,7 @@ func (h HookEpoching) BeforeEpochEnds(ctx context.Context, epoch uint64) {
 	// make sure the validator set from the ending epoch is cached in stkCache
 	_, err := h.k.stkCache.GetActiveValidatorSet(ctx, h.k.buildActiveValSetMap)
 	if err != nil {
-		h.k.Logger(ctx).Error("failed to cache validator set before epoch ends", "error", err)
+		panic(fmt.Sprintf("failed to cache validator set before epoch ends: %v", err))
 	}
 }
 

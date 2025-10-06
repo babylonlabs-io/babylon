@@ -295,6 +295,9 @@ test-e2e-cache-upgrade-v4:
 test-e2e-cache-btc-stake-expansion:
 	go test -run TestBTCStakeExpansionTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
 
+test-e2e-cache-validator-jailing:
+	go test -run TestValidatorJailingTestSuite -mod=readonly -timeout=60m -v $(PACKAGES_E2E) --tags=e2e
+
 test-sim-nondeterminism:
 	@echo "Running non-determinism test..."
 	@go test -mod=readonly $(SIMAPP) -run TestAppStateDeterminism -Enabled=true \
