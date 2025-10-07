@@ -687,7 +687,7 @@ func TestMainnetInflationDistributionAmount(t *testing.T) {
 	require.Equal(t, expectedDistributionModule.String(), actualDistributionModule.String())
 }
 
-// TestCostakingRewardsHappyCase creates 1 fp and 1 btc delegation and a one baby delegations
+// TestCostakingRewardsUnbondAllBaby creates 1 fp and 1 btc delegation and a one baby delegations
 // getting rewards and later unbonding all this baby delegation, it will call the staking hook
 // BeforeDelegationRemoved.
 func TestCostakingRewardsUnbondAllBaby(t *testing.T) {
