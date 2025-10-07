@@ -149,7 +149,8 @@ func TestBlsPublicKeyList(t *testing.T) {
 		valAddr, err := v.Addr()
 		require.NoError(t, err)
 
-		k.RegistrationState(ctx).CreateRegistration(v.BlsPubKey, valAddr)
+		err = k.RegistrationState(ctx).CreateRegistration(v.BlsPubKey, valAddr)
+		require.NoError(t, err)
 	}
 
 	tcs := []struct {
