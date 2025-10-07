@@ -50,6 +50,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 baby ratio where it wasn't increasing the costaker cumulative rewards and neither sending the previous rewards to gauge.
 - [#1783](https://github.com/babylonlabs-io/babylon/pull/1783) Fix `x/costaking` calls baby delegation modified in hook `BeforeDelegationRemoved`
 as the completely removal of an baby delegation doesn't calls `AfterDelegationModified
+- [#1790](https://github.com/babylonlabs-io/babylon/pull/1790) Fix withdraw reward to only error if both `BTC_STAKER` and `COSTAKER` types have zero rewards available.
 
 ## v4.0.0-rc.0
 

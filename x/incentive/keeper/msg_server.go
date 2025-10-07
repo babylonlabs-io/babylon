@@ -69,7 +69,8 @@ func (ms msgServer) WithdrawReward(goCtx context.Context, req *types.MsgWithdraw
 	// withdraw reward, i.e., send withdrawable reward to the stakeholder address and clear the reward gauge
 	withdrawnCoins, err := ms.withdrawReward(ctx, sType, addr)
 	if err != nil {
-		return nil, err
+		ms.Logger(goCtx).Info("failing to call withdraw rewards", "error", err.Error(), "type", sType.String())
+		withdrawnCoins = sdk.NewCoins()
 	}
 
 	// if it is btc staker type, also withdraws it from the costaker
@@ -87,6 +88,10 @@ func (ms msgServer) WithdrawReward(goCtx context.Context, req *types.MsgWithdraw
 		} else {
 			withdrawnCoins = withdrawnCoins.Add(withdrawnCoinsCostaker...)
 		}
+	}
+
+	if withdrawnCoins.IsZero() {
+		return nil, types.ErrNoWithdrawableCoins
 	}
 
 	return &types.MsgWithdrawRewardResponse{
