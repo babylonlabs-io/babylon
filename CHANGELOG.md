@@ -41,12 +41,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 - [#1762](https://github.com/babylonlabs-io/babylon/pull/1762) Add new test case on stake expansion
 - [#1764](https://github.com/babylonlabs-io/babylon/pull/1764) Add mergify yaml file for automatic backporting
+- [#1785](https://github.com/babylonlabs-io/babylon/pull/1785) CI reusable to v0.13.5 and golang lint version 2
 - [#1776](https://github.com/babylonlabs-io/babylon/pull/1776) Track baby staked to active validators only
 
 ### Bug fixes
 
 - [#1763](https://github.com/babylonlabs-io/babylon/pull/1763) Fix `v4` upgrade logic to store co-staker reward tracker for all stakers (baby and/or BTC)
 - [#1771](https://github.com/babylonlabs-io/babylon/pull/1771) Fix `x/costaking` costakers portion to 2.35% of 5.5%
+- [#1780](https://github.com/babylonlabs-io/babylon/pull/1780) Fix `x/costaking` `MsgUpdateParams` update score to
+baby ratio where it wasn't increasing the costaker cumulative rewards and neither sending the previous rewards to gauge.
 
 ## v4.0.0-rc.0
 
