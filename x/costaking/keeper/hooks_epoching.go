@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"cosmossdk.io/collections"
 	"cosmossdk.io/math"
 	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -20,7 +21,23 @@ type HookEpoching struct {
 }
 
 // AfterEpochBegins is called after an epoch begins
-func (h HookEpoching) AfterEpochBegins(ctx context.Context, epoch uint64) {}
+func (h HookEpoching) AfterEpochBegins(ctx context.Context, epoch uint64) {
+	// Initialize the validator set for the first epoch if not already done
+	// For subsequent epochs, the validator set is updated in AfterEpochEnds
+	_, err := h.k.validatorSet.Get(ctx)
+	if err != nil && err == collections.ErrNotFound {
+		// First epoch, initialize validator set
+		_, valAddrs, err := h.buildNewActiveValSetMap(ctx)
+		if err != nil {
+			h.k.Logger(ctx).Error("failed to build initial validator set", "error", err)
+			return
+		}
+		if err := h.k.updateValidatorSet(ctx, valAddrs); err != nil {
+			h.k.Logger(ctx).Error("failed to store initial validator set", "error", err)
+			return
+		}
+	}
+}
 
 // AfterEpochEnds is called after an epoch ends
 // It handles the transition of validators between active and inactive states:
