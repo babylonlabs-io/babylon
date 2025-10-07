@@ -829,3 +829,149 @@ func TestCostakingRewardsUnbondAllBaby(t *testing.T) {
 
 	d.CheckCostakerRewards(del1.Address(), zero, del1BtcStakedAmt, zero, currentRwdPeriod+1)
 }
+
+// TestCostakingRewardsWithdraw creates 1 fp and 1 btc delegation and a one baby delegation
+// getting rewards and later stop voting in btc staking so it doesn't earn rewards
+// and continue to earn rewards in costaking
+func TestCostakingRewardsWithdraw(t *testing.T) {
+	t.Parallel()
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	d := NewBabylonAppDriverTmpDir(r, t)
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	stkK, costkK := d.App.StakingKeeper, d.App.CostakingKeeper
+
+	params := costkK.GetParams(d.Ctx())
+	require.Equal(t, params, costktypes.DefaultParams())
+
+	// Get all validators to check their commissions
+	validators, err := stkK.GetAllValidators(d.Ctx())
+	require.NoError(d.t, err)
+	val := validators[0]
+	valAddr := sdk.MustValAddressFromBech32(val.OperatorAddress)
+	covSender := d.CreateCovenantSender()
+
+	delegators := d.CreateNStakerAccounts(1)
+	del1 := delegators[0]
+	del1BabyDelegatedAmt := sdkmath.NewInt(20_000000)
+
+	d.MintNativeTo(del1.Address(), 100_000000)
+	d.TxWrappedDelegate(del1.SenderInfo, valAddr.String(), del1BabyDelegatedAmt)
+
+	// gets the current rewards prior to the end of epoch as it will be starting point
+	rwd, err := costkK.GetCurrentRewards(d.Ctx())
+	require.NoError(t, err)
+
+	d.GenerateNewBlockAssertExecutionSuccess()
+	d.ProgressTillFirstBlockTheNextEpoch()
+
+	// confirms that baby delegation was done properly
+	del, err := stkK.GetDelegation(d.Ctx(), del1.Address(), valAddr)
+	require.NoError(t, err)
+	require.Equal(t, del.DelegatorAddress, del1.Address().String())
+
+	// check that baby delegation reached costaking
+	zero := sdkmath.ZeroInt()
+	d.CheckCostakerRewards(del1.Address(), del1BabyDelegatedAmt, zero, zero, rwd.Period)
+
+	fps := d.CreateNFinalityProviderAccounts(1)
+	fp1 := fps[0]
+	fp1.RegisterFinalityProvider()
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	p := costkK.GetParams(d.Ctx())
+	// costaking ratio of btc by baby is 200, so for every sat staked it needs to
+	// have 200 baby staked to take full account of the btcs in the score.
+	del1BtcStakedAmt := del1BabyDelegatedAmt.Quo(p.ScoreRatioBtcByBaby)
+	del1.CreatePreApprovalDelegation(
+		[]*bbn.BIP340PubKey{fp1.BTCPublicKey()},
+		defaultStakingTime,
+		del1BtcStakedAmt.Int64(),
+	)
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	covSender.SendCovenantSignatures()
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	verifiedDels := d.GetVerifiedBTCDelegations(t)
+	require.Len(t, verifiedDels, 1)
+
+	d.ActivateVerifiedDelegations(1)
+	activeDelegations := d.GetActiveBTCDelegations(t)
+	require.Len(t, activeDelegations, 1)
+
+	activeFps := d.GetActiveFpsAtCurrentHeight(d.t)
+	require.Len(t, activeFps, 0)
+
+	// zero active sats and score, because fp is not active
+	d.CheckCostakerRewards(del1.Address(), del1BabyDelegatedAmt, zero, zero, rwd.Period)
+
+	// activate fp
+	fp1.CommitRandomness()
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	// Randomness timestamped
+	currentEpoch := d.GetEpoch().EpochNumber
+	d.ProgressTillFirstBlockTheNextEpoch()
+	d.FinalizeCkptForEpoch(currentEpoch - 1) // previous unfinalized epoch
+	d.FinalizeCkptForEpoch(currentEpoch)
+
+	rwd, err = costkK.GetCurrentRewards(d.Ctx())
+	require.NoError(t, err)
+
+	// produce block to activate fp
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	// fp should be activated
+	activeFps = d.GetActiveFpsAtCurrentHeight(d.t)
+	require.Len(t, activeFps, 1)
+
+	// score is the same as btc staked as del1 have 50 ubbn to each sat
+	del1StartCumulativeRewardPeriod := rwd.Period
+	d.CheckCostakerRewards(del1.Address(), del1BabyDelegatedAmt, del1BtcStakedAmt, del1BtcStakedAmt, del1StartCumulativeRewardPeriod)
+
+	// new period without rewards is created
+	d.CheckCostakingCurrentRewards(sdk.NewCoins(), rwd.Period+1, del1BtcStakedAmt)
+	// historical will not have any rewards, because costaker didn't participated until the fp become active and no other block
+	// was produced to add rewards.
+	d.CheckCostakingCurrentHistoricalRewards(del1StartCumulativeRewardPeriod, sdk.NewCoins())
+
+	// produce 2 blocks to add rewards to coostaker
+	costakerRewadsTwoBlocks := sdk.NewCoins()
+	costakerRewadsTwoBlocks = costakerRewadsTwoBlocks.Add(d.GenerateNewBlockAssertExecutionSuccessWithCostakerRewards()...)
+	costakerRewadsTwoBlocks = costakerRewadsTwoBlocks.Add(d.GenerateNewBlockAssertExecutionSuccessWithCostakerRewards()...)
+	currentRwdPeriod := rwd.Period + 1
+	d.CheckCostakingCurrentRewards(costakerRewadsTwoBlocks, currentRwdPeriod, del1BtcStakedAmt)
+
+	del1BalancesBeforeRewardWithdraw := d.App.BankKeeper.GetAllBalances(d.Ctx(), del1.Address())
+
+	resp, err := d.MsgServerIncentive().WithdrawReward(d.Ctx(), &ictvtypes.MsgWithdrawReward{
+		Type:    ictvtypes.BTC_STAKER.String(),
+		Address: del1.AddressString(),
+	})
+	require.NoError(t, err)
+	require.Equal(t, resp.Coins.String(), costakerRewadsTwoBlocks.String())
+
+	del1BalancesAfterRewardWithdraw := d.App.BankKeeper.GetAllBalances(d.Ctx(), del1.Address())
+	diff := del1BalancesAfterRewardWithdraw.Sub(del1BalancesBeforeRewardWithdraw...).String()
+	require.Equal(t, diff, costakerRewadsTwoBlocks.String())
+
+	// checks with query that there is no reward for btc staker, only costaking
+	costakerRewadsOneBlock := d.GenerateNewBlockAssertExecutionSuccessWithCostakerRewards()
+	rwds, err := d.App.IncentiveKeeper.RewardGauges(d.Ctx(), &ictvtypes.QueryRewardGaugesRequest{
+		Address: del1.AddressString(),
+	})
+	require.NoError(t, err)
+	costk := rwds.RewardGauges[ictvtypes.COSTAKER.String()]
+	_, existBtcRewards := rwds.RewardGauges[ictvtypes.BTC_STAKER.String()]
+	require.False(t, existBtcRewards)
+	require.Equal(t, costk.Coins.Sub(costk.WithdrawnCoins...).String(), costakerRewadsOneBlock.String())
+
+	// withdraws the costaker rewards without btc staking rewards
+	resp, err = d.MsgServerIncentive().WithdrawReward(d.Ctx(), &ictvtypes.MsgWithdrawReward{
+		Type:    ictvtypes.BTC_STAKER.String(),
+		Address: del1.AddressString(),
+	})
+	require.NoError(t, err)
+	require.Equal(t, resp.Coins.String(), costakerRewadsOneBlock.String())
+}
