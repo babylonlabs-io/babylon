@@ -9,14 +9,10 @@ import (
 
 // updateValidatorSet stores the current validator set with their original tokens
 // This is called upon AfterEpochBegins
-func (k Keeper) updateValidatorSet(ctx context.Context, newValSetMap map[string]struct{}) error {
+func (k Keeper) updateValidatorSet(ctx context.Context, newValAddrs []sdk.ValAddress) error {
 	var validatorSet types.ValidatorSet
 	// Iterate over the new validator set map
-	for valAddrStr := range newValSetMap {
-		valAddr, err := sdk.ValAddressFromBech32(valAddrStr)
-		if err != nil {
-			return err
-		}
+	for _, valAddr := range newValAddrs {
 		// store the original tokens delegated to the validator
 		// We can get the validator from staking keeper
 		val, err := k.stkK.GetValidator(ctx, valAddr)

@@ -45,7 +45,7 @@ func (h HookEpoching) AfterEpochEnds(ctx context.Context, epoch uint64) {
 	// Build the new validator set map from the staking module
 	// Note: This is called after ApplyAndReturnValidatorSetUpdates, so the staking
 	// module's last validator powers reflect the NEW epoch's validator set
-	newValMap, err := h.buildNewActiveValSetMap(ctx)
+	newValMap, newValAddrs, err := h.buildNewActiveValSetMap(ctx)
 	if err != nil {
 		h.k.Logger(ctx).Error("failed to build new validator set", "error", err)
 		return
@@ -75,7 +75,7 @@ func (h HookEpoching) AfterEpochEnds(ctx context.Context, epoch uint64) {
 	}
 
 	// Store the validator set for the NEXT epoch (epoch+1)
-	if err := h.k.updateValidatorSet(ctx, newValMap); err != nil {
+	if err := h.k.updateValidatorSet(ctx, newValAddrs); err != nil {
 		h.k.Logger(ctx).Error("failed to store validator set for next epoch", "error", err)
 	}
 }
@@ -150,19 +150,21 @@ func (h HookEpoching) BeforeSlashThreshold(ctx context.Context, valSet epochingt
 
 // buildNewActiveValSetMap builds the new active validator set map
 // from the staking module's last validator powers (for next epoch)
-func (h HookEpoching) buildNewActiveValSetMap(ctx context.Context) (map[string]struct{}, error) {
+func (h HookEpoching) buildNewActiveValSetMap(ctx context.Context) (map[string]struct{}, []sdk.ValAddress, error) {
 	valMap := make(map[string]struct{})
+	valAddrs := make([]sdk.ValAddress, 0)
 
 	err := h.k.stkK.IterateLastValidatorPowers(ctx, func(valAddr sdk.ValAddress, power int64) bool {
 		valMap[valAddr.String()] = struct{}{}
+		valAddrs = append(valAddrs, valAddr)
 		return false // continue iteration
 	})
 
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return valMap, nil
+	return valMap, valAddrs, nil
 }
 
 // Create new epoching hooks
