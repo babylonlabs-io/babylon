@@ -18,3 +18,13 @@ func (d *BabylonAppDriver) TxWrappedDelegate(delegator *SenderInfo, valAddr stri
 	d.SendTxWithMessagesSuccess(d.t, delegator, DefaultGasLimit, defaultFeeCoin, msg)
 	delegator.IncSeq()
 }
+
+func (d *BabylonAppDriver) TxWrappedUndelegate(delegator *SenderInfo, valAddr string, amount sdkmath.Int) {
+	msgUndelegate := stktypes.NewMsgUndelegate(
+		delegator.AddressString(), valAddr, sdk.NewCoin(appparams.DefaultBondDenom, amount),
+	)
+
+	msg := epochingtypes.NewMsgWrappedUndelegate(msgUndelegate)
+	d.SendTxWithMessagesSuccess(d.t, delegator, DefaultGasLimit, defaultFeeCoin, msg)
+	delegator.IncSeq()
+}
