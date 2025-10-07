@@ -43,8 +43,10 @@ func (h HookStaking) AfterDelegationModified(ctx context.Context, delAddr sdk.Ac
 	})
 }
 
-// BeforeDelegationRemoved Remove all tokens cached by BeforeDelegationSharesModified
-// as it is properly called right before this hook.
+// BeforeDelegationRemoved This hook is called when an baby delegation removes his entire baby delegation from one validator.
+// The AfterDelegationModified hooks is not called in this case as there is no delegation after is modified, so in costaking
+// it should remove all tokens that this pair (del, val) had staked. This value can be achieved by caching the tokens
+// prior to BeforeDelegationRemoved hook call, which is done by BeforeDelegationSharesModified.
 func (h HookStaking) BeforeDelegationRemoved(ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) error {
 	delTokensBefore := h.k.stkCache.GetStakedAmount(delAddr, valAddr)
 	delTokenChange := delTokensBefore.TruncateInt()
