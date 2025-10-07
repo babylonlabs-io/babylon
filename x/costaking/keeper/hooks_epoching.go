@@ -2,10 +2,8 @@ package keeper
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
-	"cosmossdk.io/collections"
 	"cosmossdk.io/math"
 	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -26,7 +24,8 @@ func (h HookEpoching) AfterEpochBegins(ctx context.Context, epoch uint64) {
 	// Initialize the validator set for the first epoch if not already done
 	// For subsequent epochs, the validator set is updated in AfterEpochEnds
 	_, err := h.k.validatorSet.Get(ctx)
-	if err != nil && errors.Is(err, collections.ErrNotFound) {
+	if err != nil {
+		h.k.Logger(ctx).Info("Initializing validator set for the first epoch. Got error:", err)
 		// First epoch, initialize validator set
 		_, valAddrs, err := h.buildNewActiveValSetMap(ctx)
 		if err != nil {
