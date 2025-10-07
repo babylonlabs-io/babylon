@@ -714,7 +714,8 @@ func TestPrepareProposalAtVoteExtensionHeight(t *testing.T) {
 			ek.EXPECT().GetValidatorSet(gomock.Any(), ec.Epoch.EpochNumber).Return(et.NewSortedValidatorSet(ToValidatorSet(scenario.ValidatorSet))).AnyTimes()
 
 			// if there're txs in the scenario, add them to the mempool
-			addTxsToMempool(scenario.Txs, mem)
+			err := addTxsToMempool(scenario.Txs, mem)
+			require.NoError(t, err)
 
 			logger := log.NewTestLogger(t)
 			db := dbm.NewMemDB()

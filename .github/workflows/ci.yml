@@ -14,14 +14,16 @@ permissions:
 
 jobs:
   lint_test:
-    uses: babylonlabs-io/.github/.github/workflows/reusable_go_lint_test.yml@cfbd5e4db5e575edf77a160fe533918c4f3a4498  # v0.13.2
+    uses: babylonlabs-io/.github/.github/workflows/reusable_go_lint_test.yml@92817762adb32ebbe832abfebe98efa09f7072e2  # v0.13.5
     secrets: inherit
     with:
-     go-version: '1.23'
-     go-lint-version: 'v1.60.2'
-     run-unit-tests: true
-     run-integration-tests: false
-     run-lint: true
+      go-version: '1.23'
+      go-lint-version: 'v2.1.0'
+      run-unit-tests: true
+      run-integration-tests: false
+      run-lint: true
+      testdata-url: "https://drive.usercontent.google.com/download?id=1PaZe96acfJqCHJrc24VAh77H-z0U9_x1&export=download&confirm=t"
+      testdata-path: "app/upgrades/v3rc4/testdata/btc-delegations.json.test"
 
   proto_lint:
     runs-on: ubuntu-22.04
