@@ -241,8 +241,8 @@ func (k Keeper) assumeActiveValidatorIfGenesis(ctx context.Context, valSet map[s
 	if sdkCtx.BlockHeader().Height == 0 {
 		// Add validator to active set during genesis
 		valSet[valAddr.String()] = types.ValidatorInfo{
-			ValAddress:     valAddr,
-			IsSlashed:      false,
+			ValAddress: valAddr,
+			IsSlashed:  false,
 		}
 	}
 	return nil

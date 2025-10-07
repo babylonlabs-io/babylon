@@ -51,14 +51,6 @@ func (h HookEpoching) AfterEpochEnds(ctx context.Context, epoch uint64) {
 		return
 	}
 
-	h.k.Logger(ctx).Info(fmt.Sprintf("Epoch %d ended. Previous active validators: %v", epoch, func() []types.ValidatorInfo {
-		vals := make([]types.ValidatorInfo, 0, len(prevValMap))
-		for _, val := range prevValMap {
-			vals = append(vals, val)
-		}
-		return vals
-	}()))
-
 	// Build the new validator set map from the staking module
 	// Note: This is called after ApplyAndReturnValidatorSetUpdates, so the staking
 	// module's last validator powers reflect the NEW epoch's validator set
@@ -135,7 +127,8 @@ func (h HookEpoching) updateCoStkTrackerForDelegators(
 
 // addBabyForDelegators adds baby tokens to all delegators of a newly active validator
 func (h HookEpoching) addBabyForDelegators(ctx context.Context, valAddrStr string) error {
-	val, err := h.k.stkK.GetValidator(ctx, sdk.ValAddress(valAddrStr))
+	valAddr := sdk.MustValAddressFromBech32(valAddrStr)
+	val, err := h.k.stkK.GetValidator(ctx, valAddr)
 	if err != nil {
 		return fmt.Errorf("failed to get validator %s: %w", valAddrStr, err)
 	}

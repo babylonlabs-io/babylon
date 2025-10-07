@@ -29,7 +29,6 @@ type ValidatorInfo struct {
 func NewStakingCache() *StakingCache {
 	return &StakingCache{
 		amtByValByDel: make(map[string]map[string]math.LegacyDec),
-		activeValSet:  make(map[string]ValidatorInfo),
 	}
 }
 

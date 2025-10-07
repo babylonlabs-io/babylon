@@ -41,11 +41,11 @@ func TestHookEpochingAfterEpochEnds_ValidatorBecomesActive(t *testing.T) {
 
 	hooks := k.HookEpoching()
 
-	// Populate the cache with empty set (simulating previous epoch state)
-	_, err = k.stkCache.GetActiveValidatorSet(ctx, k.buildCurrEpochValSetMap)
+	// Store an initial empty validator set to simulate previous epoch
+	err = k.updateValidatorSet(ctx, []sdk.ValAddress{})
 	require.NoError(t, err)
 
-	// Now validator becomes active (new epoch)
+	// Now validator becomes active (new epoch) - IterateLastValidatorPowers is called to build new validator set
 	mockStkK.EXPECT().IterateLastValidatorPowers(gomock.Any(), gomock.Any()).DoAndReturn(
 		func(ctx context.Context, fn func(sdk.ValAddress, int64) bool) error {
 			fn(valAddr, 1000) // Validator is now active
@@ -53,9 +53,11 @@ func TestHookEpochingAfterEpochEnds_ValidatorBecomesActive(t *testing.T) {
 		},
 	).Times(1)
 
+	// Mock getting validator for updateValidatorSet (to store validator set for next epoch)
+	mockStkK.EXPECT().GetValidator(gomock.Any(), valAddr).Return(val, nil).AnyTimes()
+
 	// Mock getting delegations for the newly active validator
 	mockStkK.EXPECT().GetValidatorDelegations(gomock.Any(), valAddr).Return([]stakingtypes.Delegation{delegation}, nil).Times(1)
-	mockStkK.EXPECT().GetValidator(gomock.Any(), valAddr).Return(&val, nil).Times(1)
 
 	// Call AfterEpochEnds - should add baby tokens for the newly active validator
 	hooks.AfterEpochEnds(ctx, 1)
@@ -95,8 +97,9 @@ func TestHookEpochingAfterEpochEnds_ValidatorBecomesInactive(t *testing.T) {
 
 	hooks := k.HookEpoching()
 
-	// Populate the cache with validator as active (simulating previous epoch state)
-	_, err = k.stkCache.GetActiveValidatorSet(ctx, k.buildCurrEpochValSetMap)
+	// Store validator set with validator as active (simulating previous epoch state)
+	mockStkK.EXPECT().GetValidator(gomock.Any(), valAddr).Return(val, nil).Times(1)
+	err = k.updateValidatorSet(ctx, []sdk.ValAddress{valAddr})
 	require.NoError(t, err)
 
 	// Now validator becomes inactive (new epoch)
@@ -109,15 +112,15 @@ func TestHookEpochingAfterEpochEnds_ValidatorBecomesInactive(t *testing.T) {
 
 	// Mock getting delegations for the newly inactive validator
 	mockStkK.EXPECT().GetValidatorDelegations(gomock.Any(), valAddr).Return([]stakingtypes.Delegation{delegation}, nil).Times(1)
-	mockStkK.EXPECT().GetValidator(gomock.Any(), valAddr).Return(&val, nil).Times(1)
 
 	// Call AfterEpochEnds - should remove baby tokens for the newly inactive validator
+	mockStkK.EXPECT().GetValidator(gomock.Any(), valAddr).Return(val, nil).Times(2)
 	hooks.AfterEpochEnds(ctx, 1)
 
 	// Verify the costaker tracker was updated (ActiveBaby should be zero)
 	tracker, err := k.GetCostakerRewards(ctx, delAddr)
 	require.NoError(t, err)
-	require.True(t, tracker.ActiveBaby.IsZero(), "ActiveBaby should be zero after validator becomes inactive")
+	require.True(t, tracker.ActiveBaby.IsZero(), "ActiveBaby should be zero after validator becomes inactive", "active baby", tracker.ActiveBaby.String())
 }
 
 func TestHookEpochingAfterEpochEnds_MultipleValidatorsTransition(t *testing.T) {
@@ -149,6 +152,8 @@ func TestHookEpochingAfterEpochEnds_MultipleValidatorsTransition(t *testing.T) {
 		Shares:           shares3,
 	}
 
+	val1, err := tmocks.CreateValidator(val1Addr, shares2.RoundInt())
+	require.NoError(t, err)
 	val2, err := tmocks.CreateValidator(val2Addr, shares2.RoundInt())
 	require.NoError(t, err)
 	val3, err := tmocks.CreateValidator(val3Addr, shares3.RoundInt())
@@ -163,8 +168,10 @@ func TestHookEpochingAfterEpochEnds_MultipleValidatorsTransition(t *testing.T) {
 
 	hooks := k.HookEpoching()
 
-	// Populate the cache with previous epoch state
-	_, err = k.stkCache.GetActiveValidatorSet(ctx, k.buildCurrEpochValSetMap)
+	// Store validator set with val1 and val2 active (simulating previous epoch state)
+	mockStkK.EXPECT().GetValidator(gomock.Any(), val1Addr).Return(val1, nil).Times(1)
+	mockStkK.EXPECT().GetValidator(gomock.Any(), val2Addr).Return(val2, nil).Times(1)
+	err = k.updateValidatorSet(ctx, []sdk.ValAddress{val1Addr, val2Addr})
 	require.NoError(t, err)
 
 	// New epoch: val1 and val3 are active (val2 became inactive, val3 became active)
@@ -176,13 +183,16 @@ func TestHookEpochingAfterEpochEnds_MultipleValidatorsTransition(t *testing.T) {
 		},
 	).Times(1)
 
+	// Mock getting delegations for val1 (no change - active)
+	mockStkK.EXPECT().GetValidator(gomock.Any(), val1Addr).Return(val1, nil).Times(2)
+
 	// Mock getting delegations for val3 (newly active)
 	mockStkK.EXPECT().GetValidatorDelegations(gomock.Any(), val3Addr).Return([]stakingtypes.Delegation{delegation3}, nil).Times(1)
-	mockStkK.EXPECT().GetValidator(gomock.Any(), val3Addr).Return(&val3, nil).Times(1)
+	mockStkK.EXPECT().GetValidator(gomock.Any(), val3Addr).Return(val3, nil).Times(2)
 
 	// Mock getting delegations for val2 (newly inactive)
 	mockStkK.EXPECT().GetValidatorDelegations(gomock.Any(), val2Addr).Return([]stakingtypes.Delegation{delegation2}, nil).Times(1)
-	mockStkK.EXPECT().GetValidator(gomock.Any(), val2Addr).Return(&val2, nil).Times(1)
+	mockStkK.EXPECT().GetValidator(gomock.Any(), val2Addr).Return(val2, nil).Times(2)
 
 	// Call AfterEpochEnds
 	hooks.AfterEpochEnds(ctx, 1)
@@ -214,11 +224,20 @@ func TestHookEpochingAfterEpochEnds_NoValidatorChanges(t *testing.T) {
 
 	mockStkK := k.stkK.(*types.MockStakingKeeper)
 
+	val, err := tmocks.CreateValidator(valAddr, shares.RoundInt())
+	require.NoError(t, err)
+
+	// Mock GetValidator for the setup phase (when storing initial validator set)
+	mockStkK.EXPECT().GetValidator(gomock.Any(), gomock.Any()).Return(val, nil).AnyTimes()
+
 	hooks := k.HookEpoching()
 
-	// Populate the cache
-	_, err = k.stkCache.GetActiveValidatorSet(ctx, k.buildCurrEpochValSetMap)
+	// Store validator set with validator as active (simulating previous epoch state)
+	err = k.updateValidatorSet(ctx, []sdk.ValAddress{valAddr})
 	require.NoError(t, err)
+
+	// Mock GetValidator for buildCurrEpochValSetMap (reads previous epoch's validator set)
+	mockStkK.EXPECT().GetValidator(gomock.Any(), gomock.Any()).Return(val, nil).AnyTimes()
 
 	// New epoch: same validator is still active (no change)
 	mockStkK.EXPECT().IterateLastValidatorPowers(gomock.Any(), gomock.Any()).DoAndReturn(
@@ -227,6 +246,9 @@ func TestHookEpochingAfterEpochEnds_NoValidatorChanges(t *testing.T) {
 			return nil
 		},
 	).Times(1)
+
+	// Mock getting validator for updateValidatorSet
+	mockStkK.EXPECT().GetValidator(gomock.Any(), gomock.Any()).Return(val, nil).AnyTimes()
 
 	// Call AfterEpochEnds - should not modify anything since no validator transitions
 	hooks.AfterEpochEnds(ctx, 1)
@@ -280,8 +302,8 @@ func TestHookEpochingAfterEpochEnds_MultipleDelegators(t *testing.T) {
 
 	hooks := k.HookEpoching()
 
-	// Populate the cache with empty set
-	_, err = k.stkCache.GetActiveValidatorSet(ctx, k.buildCurrEpochValSetMap)
+	// Store an initial empty validator set
+	err = k.updateValidatorSet(ctx, []sdk.ValAddress{})
 	require.NoError(t, err)
 
 	// New epoch: validator becomes active
@@ -292,9 +314,11 @@ func TestHookEpochingAfterEpochEnds_MultipleDelegators(t *testing.T) {
 		},
 	).Times(1)
 
+	// Mock getting validator for every call
+	mockStkK.EXPECT().GetValidator(gomock.Any(), valAddr).Return(val, nil).AnyTimes()
+
 	// Mock getting all delegations for the validator
 	mockStkK.EXPECT().GetValidatorDelegations(gomock.Any(), valAddr).Return(delegations, nil).Times(1)
-	mockStkK.EXPECT().GetValidator(gomock.Any(), valAddr).Return(&val, nil).Times(3) // Called once per delegator
 
 	// Call AfterEpochEnds - should add baby tokens for all delegators
 	hooks.AfterEpochEnds(ctx, 1)
