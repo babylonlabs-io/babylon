@@ -49,6 +49,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#1771](https://github.com/babylonlabs-io/babylon/pull/1771) Fix `x/costaking` costakers portion to 2.35% of 5.5%
 - [#1780](https://github.com/babylonlabs-io/babylon/pull/1780) Fix `x/costaking` `MsgUpdateParams` update score to
 baby ratio where it wasn't increasing the costaker cumulative rewards and neither sending the previous rewards to gauge.
+- [#1783](https://github.com/babylonlabs-io/babylon/pull/1783) Fix `x/costaking` calls baby delegation modified in hook `BeforeDelegationRemoved`
+as the completely removal of an baby delegation doesn't calls `AfterDelegationModified
 
 ## v4.0.0-rc.0
 

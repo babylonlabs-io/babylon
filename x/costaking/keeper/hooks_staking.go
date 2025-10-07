@@ -4,10 +4,9 @@ import (
 	"context"
 
 	"cosmossdk.io/math"
+	"github.com/babylonlabs-io/babylon/v4/x/costaking/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stktypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-
-	"github.com/babylonlabs-io/babylon/v4/x/costaking/types"
 )
 
 var _ stktypes.StakingHooks = HookStaking{}
@@ -23,7 +22,7 @@ type HookStaking struct {
 //
 // State Changes:
 // - ActiveBaby += (new_amount - old_amount)
-// - If differece is negative, ActiveBaby is subtracted
+// - If difference is negative, ActiveBaby is subtracted
 //
 // Note: This hook uses a cache to track previous delegation amounts to calculate the delta.
 func (h HookStaking) AfterDelegationModified(ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) error {
@@ -41,6 +40,21 @@ func (h HookStaking) AfterDelegationModified(ctx context.Context, delAddr sdk.Ac
 	delTokenChange := delTokens.Sub(delTokensBefore).TruncateInt()
 	return h.k.costakerModified(ctx, delAddr, func(rwdTracker *types.CostakerRewardsTracker) {
 		rwdTracker.ActiveBaby = rwdTracker.ActiveBaby.Add(delTokenChange)
+	})
+}
+
+// BeforeDelegationRemoved This hook is called when an baby delegation removes his entire baby delegation from one validator.
+// The AfterDelegationModified hooks is not called in this case as there is no delegation after is modified, so in costaking
+// it should remove all tokens that this pair (del, val) had staked. This value can be achieved by caching the tokens
+// prior to BeforeDelegationRemoved hook call, which is done by BeforeDelegationSharesModified.
+func (h HookStaking) BeforeDelegationRemoved(ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) error {
+	delTokensBefore := h.k.stkCache.GetStakedAmount(delAddr, valAddr)
+	delTokenChange := delTokensBefore.TruncateInt()
+	if delTokenChange.IsZero() {
+		return nil
+	}
+	return h.k.costakerModified(ctx, delAddr, func(rwdTracker *types.CostakerRewardsTracker) {
+		rwdTracker.ActiveBaby = rwdTracker.ActiveBaby.Sub(delTokenChange)
 	})
 }
 
@@ -93,11 +107,6 @@ func (h HookStaking) AfterValidatorRemoved(ctx context.Context, consAddr sdk.Con
 
 // BeforeDelegationCreated implements types.StakingHooks.
 func (h HookStaking) BeforeDelegationCreated(ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) error {
-	return nil
-}
-
-// BeforeDelegationRemoved implements types.StakingHooks.
-func (h HookStaking) BeforeDelegationRemoved(ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) error {
 	return nil
 }
 
