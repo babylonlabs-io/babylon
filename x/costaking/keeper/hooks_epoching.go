@@ -20,12 +20,7 @@ type HookEpoching struct {
 }
 
 // AfterEpochBegins is called after an epoch begins
-func (h HookEpoching) AfterEpochBegins(ctx context.Context, epoch uint64) {
-	// store the current validator set with their original tokens
-	if err := h.k.updateValidatorSet(ctx); err != nil {
-		h.k.Logger(ctx).Error("failed to store validator set", "error", err)
-	}
-}
+func (h HookEpoching) AfterEpochBegins(ctx context.Context, epoch uint64) {}
 
 // AfterEpochEnds is called after an epoch ends
 // It handles the transition of validators between active and inactive states:
@@ -38,6 +33,14 @@ func (h HookEpoching) AfterEpochEnds(ctx context.Context, epoch uint64) {
 		h.k.Logger(ctx).Error("failed to get previous validator set", "error", err)
 		return
 	}
+
+	h.k.Logger(ctx).Info(fmt.Sprintf("Epoch %d ended. Previous active validators: %v", epoch, func() []types.ValidatorInfo {
+		vals := make([]types.ValidatorInfo, 0, len(prevValMap))
+		for _, val := range prevValMap {
+			vals = append(vals, val)
+		}
+		return vals
+	}()))
 
 	// Build the new validator set map from the staking module
 	// Note: This is called after ApplyAndReturnValidatorSetUpdates, so the staking
@@ -62,12 +65,18 @@ func (h HookEpoching) AfterEpochEnds(ctx context.Context, epoch uint64) {
 	// Identify newly inactive validators (in prev set but not in new set)
 	for prevValAddr, prevVal := range prevValMap {
 		if _, found := newValMap[prevValAddr]; !found {
+			h.k.Logger(ctx).Info("Newly inactive validator", "validator", prevVal)
 			// Newly inactive validator - remove baby tokens for all delegators
 			if err := h.removeBabyForDelegators(ctx, prevVal); err != nil {
 				h.k.Logger(ctx).Error("failed to remove baby tokens for newly inactive validator", "validator", prevValAddr, "error", err)
 				return
 			}
 		}
+	}
+
+	// Store the validator set for the NEXT epoch (epoch+1)
+	if err := h.k.updateValidatorSet(ctx, newValMap); err != nil {
+		h.k.Logger(ctx).Error("failed to store validator set for next epoch", "error", err)
 	}
 }
 
