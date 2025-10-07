@@ -130,11 +130,12 @@ func FuzzDistributionCache_BtcUndelegateSameBlockAsExpiration(f *testing.F) {
 
 		inclusionProof := bstypes.NewInclusionProofFromSpvProof(block.Proofs[1])
 		// send proofs
-		msgSrvrBtcStk.AddBTCDelegationInclusionProof(ctx, &bstypes.MsgAddBTCDelegationInclusionProof{
+		_, err = msgSrvrBtcStk.AddBTCDelegationInclusionProof(ctx, &bstypes.MsgAddBTCDelegationInclusionProof{
 			Signer:                  datagen.GenRandomAccount().Address,
 			StakingTxHash:           stakingTransactions[0].TxHash().String(),
 			StakingTxInclusionProof: inclusionProof,
 		})
+		require.NoError(t, err)
 
 		// produce btc block to update tip height
 		ctx = ProduceBlock(t, r, app, ctx)
@@ -283,11 +284,12 @@ func FuzzDistributionCacheVpCheck_FpSlashedBeforeInclusionProof(f *testing.F) {
 
 		// send proofs
 		for i, stakingTx := range stakingTransactions {
-			msgSrvrBtcStk.AddBTCDelegationInclusionProof(ctx, &bstypes.MsgAddBTCDelegationInclusionProof{
+			_, err := msgSrvrBtcStk.AddBTCDelegationInclusionProof(ctx, &bstypes.MsgAddBTCDelegationInclusionProof{
 				Signer:                  datagen.GenRandomAccount().Address,
 				StakingTxHash:           stakingTx.TxHash().String(),
 				StakingTxInclusionProof: bstypes.NewInclusionProofFromSpvProof(block.Proofs[i+1]),
 			})
+			require.NoError(t, err)
 		}
 
 		// produce btc block to update tip height
@@ -325,11 +327,12 @@ func FuzzDistributionCacheVpCheck_FpSlashedBeforeInclusionProof(f *testing.F) {
 
 		// send proofs
 		for i, stakingTx := range stakingSlashedTx {
-			msgSrvrBtcStk.AddBTCDelegationInclusionProof(ctx, &bstypes.MsgAddBTCDelegationInclusionProof{
+			_, err := msgSrvrBtcStk.AddBTCDelegationInclusionProof(ctx, &bstypes.MsgAddBTCDelegationInclusionProof{
 				Signer:                  datagen.GenRandomAccount().Address,
 				StakingTxHash:           stakingTx.TxHash().String(),
 				StakingTxInclusionProof: bstypes.NewInclusionProofFromSpvProof(block.Proofs[i+1]),
 			})
+			require.NoError(t, err)
 		}
 
 		// check if the event to update delegation is there
