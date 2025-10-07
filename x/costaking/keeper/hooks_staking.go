@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"cosmossdk.io/math"
+	"github.com/babylonlabs-io/babylon/v4/x/costaking/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stktypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
@@ -25,13 +26,34 @@ type HookStaking struct {
 //
 // Note: This hook uses a cache to track previous delegation amounts to calculate the delta.
 func (h HookStaking) AfterDelegationModified(ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) error {
-	return h.k.BabyDelegationMoved(ctx, delAddr, valAddr)
+	del, err := h.k.stkK.GetDelegation(ctx, delAddr, valAddr)
+	if err != nil { // we stop if the delegation is not found, because it must be found
+		return err
+	}
+
+	delTokens, err := h.k.TokensFromShares(ctx, valAddr, del.Shares)
+	if err != nil {
+		return err
+	}
+
+	delTokensBefore := h.k.stkCache.GetStakedAmount(delAddr, valAddr)
+	delTokenChange := delTokens.Sub(delTokensBefore).TruncateInt()
+	return h.k.costakerModified(ctx, delAddr, func(rwdTracker *types.CostakerRewardsTracker) {
+		rwdTracker.ActiveBaby = rwdTracker.ActiveBaby.Add(delTokenChange)
+	})
 }
 
-// BeforeDelegationRemoved calls the same as AfterDelegationModified, as even removing all shares BeforeDelegationSharesModified
-// is properly called setting the cache.
+// BeforeDelegationRemoved Remove all tokens cached by BeforeDelegationSharesModified
+// as it is properly called right before this hook.
 func (h HookStaking) BeforeDelegationRemoved(ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) error {
-	return h.k.BabyDelegationMoved(ctx, delAddr, valAddr)
+	delTokensBefore := h.k.stkCache.GetStakedAmount(delAddr, valAddr)
+	delTokenChange := delTokensBefore.TruncateInt()
+	if delTokenChange.IsZero() {
+		return nil
+	}
+	return h.k.costakerModified(ctx, delAddr, func(rwdTracker *types.CostakerRewardsTracker) {
+		rwdTracker.ActiveBaby = rwdTracker.ActiveBaby.Sub(delTokenChange)
+	})
 }
 
 // BeforeDelegationSharesModified handles pre-modification state caching.

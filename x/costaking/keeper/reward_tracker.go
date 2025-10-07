@@ -313,30 +313,3 @@ func (k Keeper) initializeCurrentRewards(ctx context.Context) (*types.CurrentRew
 	curRwd := types.NewCurrentRewards(sdk.NewCoins(), 1, sdkmath.ZeroInt())
 	return &curRwd, k.SetCurrentRewards(ctx, curRwd)
 }
-
-// BabyDelegationMoved handles Baby token delegation modification events.
-// This hook is triggered when an existing cosmos staking delegation amount is changed
-// (increased or decreased). It updates the costaker's Baby token amount accordingly.
-//
-// State Changes:
-// - ActiveBaby += (new_amount - old_amount)
-// - If difference is negative, ActiveBaby is subtracted
-//
-// Note: This hook uses a cache to track previous delegation amounts to calculate the delta.
-func (k Keeper) BabyDelegationMoved(ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) error {
-	del, err := k.stkK.GetDelegation(ctx, delAddr, valAddr)
-	if err != nil { // we stop if the delegation is not found, because it must be found
-		return err
-	}
-
-	delTokens, err := k.TokensFromShares(ctx, valAddr, del.Shares)
-	if err != nil {
-		return err
-	}
-
-	delTokensBefore := k.stkCache.GetStakedAmount(delAddr, valAddr)
-	delTokenChange := delTokens.Sub(delTokensBefore).TruncateInt()
-	return k.costakerModified(ctx, delAddr, func(rwdTracker *types.CostakerRewardsTracker) {
-		rwdTracker.ActiveBaby = rwdTracker.ActiveBaby.Add(delTokenChange)
-	})
-}
