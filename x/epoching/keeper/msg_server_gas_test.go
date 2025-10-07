@@ -96,7 +96,7 @@ func TestWrappedDelegate_OutOfGas(t *testing.T) {
 
 		// Should panic due to insufficient gas
 		require.Panics(t, func() {
-			helper.MsgSrvr.WrappedDelegate(ctx, msgDelegate)
+			_, _ = helper.MsgSrvr.WrappedDelegate(ctx, msgDelegate)
 		}, "Expected OutOfGas panic when gasLimit (%d) < required (%d)", gasLimit, delegateGas)
 
 		t.Logf("SUCCESS: OutOfGas panic occurred as expected with gasLimit %d < required %d", gasLimit, delegateGas)
@@ -159,7 +159,7 @@ func TestWrappedUnDelegate_OutOfGas(t *testing.T) {
 
 		// Should panic due to insufficient gas
 		require.Panics(t, func() {
-			helper.MsgSrvr.WrappedUndelegate(ctx, msgUndelegate)
+			_, _ = helper.MsgSrvr.WrappedUndelegate(ctx, msgUndelegate)
 		}, "Expected OutOfGas panic when gasLimit (%d) < required (%d)", gasLimit, undelegateGas)
 
 		t.Logf("SUCCESS: OutOfGas panic occurred as expected with gasLimit %d < required %d", gasLimit, undelegateGas)
@@ -306,7 +306,7 @@ func TestWrappedCancelUnbondingDelegation_OutOfGas(t *testing.T) {
 
 		// Should panic due to insufficient gas
 		require.Panics(t, func() {
-			helper.MsgSrvr.WrappedCancelUnbondingDelegation(ctx, msgCancel)
+			_, _ = helper.MsgSrvr.WrappedCancelUnbondingDelegation(ctx, msgCancel)
 		}, "Expected OutOfGas panic when gasLimit (%d) < required (%d)", gasLimit, cancelGas)
 
 		t.Logf("SUCCESS: OutOfGas panic occurred as expected with gasLimit %d < required %d", gasLimit, cancelGas)
@@ -367,7 +367,7 @@ func TestWrappedEditValidator_OutOfGas(t *testing.T) {
 
 		// Should panic due to insufficient gas
 		require.Panics(t, func() {
-			helper.MsgSrvr.WrappedEditValidator(ctx, msgEditValidator)
+			_, _ = helper.MsgSrvr.WrappedEditValidator(ctx, msgEditValidator)
 		}, "Expected OutOfGas panic when gasLimit (%d) < required (%d)", gasLimit, editValidatorGas)
 
 		t.Logf("SUCCESS: OutOfGas panic occurred as expected with gasLimit %d < required %d", gasLimit, editValidatorGas)

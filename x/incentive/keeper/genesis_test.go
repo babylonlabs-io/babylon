@@ -272,10 +272,12 @@ func FuzzTestExportGenesis(f *testing.F) {
 			k.SetBTCStakingGauge(ctx, gs.BtcStakingGauges[i].Height, gs.BtcStakingGauges[i].Gauge)
 			k.SetFPDirectGauge(ctx, gs.FpDirectGauges[i].Height, gs.FpDirectGauges[i].Gauge)
 			k.SetRewardGauge(ctx, gs.RewardGauges[i].StakeholderType, sdk.MustAccAddressFromBech32(gs.RewardGauges[i].Address), gs.RewardGauges[i].RewardGauge)
-			k.SetWithdrawAddr(ctx, sdk.MustAccAddressFromBech32(gs.WithdrawAddresses[i].DelegatorAddress), sdk.MustAccAddressFromBech32(gs.WithdrawAddresses[i].WithdrawAddress))
+			err := k.SetWithdrawAddr(ctx, sdk.MustAccAddressFromBech32(gs.WithdrawAddresses[i].DelegatorAddress), sdk.MustAccAddressFromBech32(gs.WithdrawAddresses[i].WithdrawAddress))
+			require.NoError(t, err)
 			bz, err := hex.DecodeString(gs.RefundableMsgHashes[i])
 			require.NoError(t, err)
-			k.RefundableMsgKeySet.Set(ctx, bz)
+			err = k.RefundableMsgKeySet.Set(ctx, bz)
+			require.NoError(t, err)
 
 			// FP current rewards
 			fpCurrRwdKeyBz, err := collections.EncodeKeyWithPrefix(types.FinalityProviderCurrentRewardsKeyPrefix.Bytes(), collections.BytesKey, sdk.MustAccAddressFromBech32(gs.FinalityProvidersCurrentRewards[i].Address).Bytes())

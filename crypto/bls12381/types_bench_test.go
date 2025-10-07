@@ -3,12 +3,15 @@ package bls12381
 import (
 	"crypto/rand"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func BenchmarkVerifyCompressed(b *testing.B) {
 	// Generate random messages, keys and signatures
 	msg := make([]byte, 32)
-	rand.Read(msg)
+	_, err := rand.Read(msg)
+	require.NoError(b, err)
 
 	// Generate a random key pair
 	sk, pk := GenKeyPair()
