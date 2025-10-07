@@ -14,13 +14,22 @@ type StakingCache struct {
 	// amtByValByDel stores the amount it had before the delegation
 	// was modified DelAddr => ValAddr => Amt
 	amtByValByDel map[string]map[string]math.LegacyDec
-	// activeValSet caches the current active validator set from epoching keeper
-	activeValSet map[string]struct{}
+	// activeValSet caches the current active validator set map
+	// ValAddr => Tokens
+	activeValSet map[string]ValidatorInfo
+}
+
+type ValidatorInfo struct {
+	ValAddress     sdk.ValAddress
+	OriginalTokens math.Int
+	CurrentTokens  math.Int
+	IsSlashed      bool
 }
 
 func NewStakingCache() *StakingCache {
 	return &StakingCache{
 		amtByValByDel: make(map[string]map[string]math.LegacyDec),
+		activeValSet:  make(map[string]ValidatorInfo),
 	}
 }
 
@@ -53,7 +62,7 @@ func (sc *StakingCache) GetStakedAmount(delAddr sdk.AccAddress, valAddr sdk.ValA
 }
 
 // GetActiveValidatorSet returns the cached active validator set, fetching it if not present
-func (sc *StakingCache) GetActiveValidatorSet(ctx context.Context, fetchFn func(ctx context.Context) (map[string]struct{}, error)) (map[string]struct{}, error) {
+func (sc *StakingCache) GetActiveValidatorSet(ctx context.Context, fetchFn func(ctx context.Context) (map[string]ValidatorInfo, error)) (map[string]ValidatorInfo, error) {
 	if sc.activeValSet != nil {
 		return sc.activeValSet, nil
 	}
@@ -65,6 +74,26 @@ func (sc *StakingCache) GetActiveValidatorSet(ctx context.Context, fetchFn func(
 
 	sc.activeValSet = valSet
 	return sc.activeValSet, nil
+}
+
+func (sc *StakingCache) UpdateCurrentTokens(valAddr sdk.ValAddress, newTokens math.Int) {
+	valInfo, ok := sc.activeValSet[valAddr.String()]
+	if !ok {
+		return
+	}
+
+	valInfo.CurrentTokens = newTokens
+	sc.activeValSet[valAddr.String()] = valInfo
+}
+
+func (sc *StakingCache) UpdateOriginalTokens(valAddr sdk.ValAddress, newTokens math.Int) {
+	valInfo, ok := sc.activeValSet[valAddr.String()]
+	if !ok {
+		return
+	}
+
+	valInfo.OriginalTokens = newTokens
+	sc.activeValSet[valAddr.String()] = valInfo
 }
 
 // Clear removes all entries from the cache

@@ -40,9 +40,8 @@ func FuzzInterceptFeeCollector(f *testing.F) {
 
 		stkK := types.NewMockStakingKeeper(ctrl)
 		distK := types.NewMockDistributionKeeper(ctrl)
-		epochK := types.NewMockEpochingKeeper(ctrl)
 
-		k, ctx := testkeeper.CostakingKeeperWithStoreKey(t, nil, bankK, accK, nil, stkK, distK, epochK)
+		k, ctx := testkeeper.CostakingKeeperWithStoreKey(t, nil, bankK, accK, nil, stkK, distK)
 
 		// Create a mock validator
 		consAddr := sdk.ConsAddress([]byte("validator1"))
@@ -107,9 +106,8 @@ func TestInterceptFeeCollectorWithSmallAmount(t *testing.T) {
 
 	stkK := types.NewMockStakingKeeper(ctrl)
 	distK := types.NewMockDistributionKeeper(ctrl)
-	epochK := types.NewMockEpochingKeeper(ctrl)
 
-	k, ctx := testkeeper.CostakingKeeperWithStoreKey(t, nil, bankK, accK, nil, stkK, distK, epochK)
+	k, ctx := testkeeper.CostakingKeeperWithStoreKey(t, nil, bankK, accK, nil, stkK, distK)
 
 	// Create a mock validator
 	consAddr := sdk.ConsAddress([]byte("validator1"))

@@ -769,3 +769,31 @@ func (n *NodeConfig) QuerySlashingParams() (slashingtypes.Params, error) {
 
 	return resp.Params, nil
 }
+
+// QueryEpochValSet queries the validator set of a given epoch
+func (n *NodeConfig) QueryEpochValSet(epochNum uint64) (*etypes.QueryEpochValSetResponse, error) {
+	path := fmt.Sprintf("babylon/epoching/v1/epochs/%d/validator_set", epochNum)
+	bz, err := n.QueryGRPCGateway(path, url.Values{})
+	if err != nil {
+		return nil, err
+	}
+
+	var resp etypes.QueryEpochValSetResponse
+	if err := util.Cdc.UnmarshalJSON(bz, &resp); err != nil {
+		return nil, err
+	}
+
+	return &resp, nil
+}
+
+// QueryCurrentEpochValSet queries the validator set of the current epoch
+func (n *NodeConfig) QueryCurrentEpochValSet() (*etypes.QueryEpochValSetResponse, error) {
+	// First get the current epoch number
+	currentEpoch, err := n.QueryCurrentEpoch()
+	if err != nil {
+		return nil, err
+	}
+
+	// Then query the validator set for that epoch
+	return n.QueryEpochValSet(currentEpoch)
+}

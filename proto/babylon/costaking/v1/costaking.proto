@@ -35,3 +35,21 @@ message Params {
     (gogoproto.nullable) = false
   ];
 }
+
+// Validator is a message that denotes a validator
+message Validator {
+  // addr is the validator's address (in sdk.ValAddress)
+  bytes addr = 1;
+  // tokens define the delegated tokens (incl. self-delegation).
+  bytes tokens = 2 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+}
+
+// ValidatorSet is a message that denotes a set of validators
+message ValidatorSet {
+  // validators is the list of all validators and their delegated tokens.
+  repeated Validator validators = 1;
+}

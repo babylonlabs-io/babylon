@@ -6,8 +6,6 @@ import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-
-	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 )
 
 type IncentiveKeeper interface {
@@ -35,10 +33,5 @@ type StakingKeeper interface {
 	GetValidatorDelegations(ctx context.Context, valAddr sdk.ValAddress) ([]stakingtypes.Delegation, error)
 	IterateLastValidatorPowers(ctx context.Context, handler func(operator sdk.ValAddress, power int64) bool) error
 	ValidatorByConsAddr(context.Context, sdk.ConsAddress) (stakingtypes.ValidatorI, error)
-	Validator(context.Context, sdk.ValAddress) (stakingtypes.ValidatorI, error)
-}
-
-// EpochingKeeper defines the expected interface for the epoching keeper
-type EpochingKeeper interface {
-	GetCurrentValidatorSet(ctx context.Context) epochingtypes.ValidatorSet
+	GetValidator(ctx context.Context, addr sdk.ValAddress) (validator stakingtypes.Validator, err error)
 }
