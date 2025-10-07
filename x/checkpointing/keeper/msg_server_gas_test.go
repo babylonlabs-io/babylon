@@ -45,7 +45,7 @@ func TestWrappedCreateValidator_OutOfGas(t *testing.T) {
 
 		// Should panic due to insufficient gas
 		require.Panics(t, func() {
-			msgServer.WrappedCreateValidator(ctx, msgCreateValidator)
+			_, _ = msgServer.WrappedCreateValidator(ctx, msgCreateValidator)
 		}, "Expected OutOfGas panic when gasLimit (%d) < required (%d)", gasLimit, createValidatorGas)
 
 		t.Logf("SUCCESS: OutOfGas panic occurred as expected with gasLimit %d < required %d", gasLimit, createValidatorGas)
