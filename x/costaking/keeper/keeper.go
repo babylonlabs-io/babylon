@@ -43,7 +43,8 @@ type (
 		historicalRewards collections.Map[uint64, types.HistoricalRewards]
 		// costakerRewardsTracker maps (costakerAddr) => costakerRewardsTracker
 		costakerRewardsTracker collections.Map[[]byte, types.CostakerRewardsTracker]
-		validatorSet           collections.Item[types.ValidatorSet]
+		// validatorSet stores the active validator set for the current epoch
+		validatorSet collections.Item[types.ValidatorSet]
 	}
 )
 

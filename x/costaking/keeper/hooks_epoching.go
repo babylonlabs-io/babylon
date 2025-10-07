@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"cosmossdk.io/collections"
@@ -25,7 +26,7 @@ func (h HookEpoching) AfterEpochBegins(ctx context.Context, epoch uint64) {
 	// Initialize the validator set for the first epoch if not already done
 	// For subsequent epochs, the validator set is updated in AfterEpochEnds
 	_, err := h.k.validatorSet.Get(ctx)
-	if err != nil && err == collections.ErrNotFound {
+	if err != nil && errors.Is(err, collections.ErrNotFound) {
 		// First epoch, initialize validator set
 		_, valAddrs, err := h.buildNewActiveValSetMap(ctx)
 		if err != nil {
