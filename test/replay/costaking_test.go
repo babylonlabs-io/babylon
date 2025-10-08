@@ -1140,9 +1140,6 @@ func TestBabyCoStaking(t *testing.T) {
 		height := d.Ctx().BlockHeight()
 		val, err := stkK.GetValidator(d.Ctx(), val2ValAddr)
 		require.NoError(t, err)
-
-		// TODO delegator delegates / unbonds at same block that validator gets jailed
-
 		if val.Jailed {
 			jailedHeight = height
 			epoch := epochK.GetEpoch(d.Ctx())
