@@ -1,6 +1,7 @@
 package e2e
 
 import (
+	"bytes"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -16,6 +17,7 @@ import (
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/util"
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
 	etypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	sdked25519 "github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
@@ -108,22 +110,32 @@ func (s *EpochingSpamPreventionTestSuite) TestNormalDelegationCase() {
 
 	s.Require().NotNil(validatorNode, "Should have at least one validator node")
 
-	// Get validator operator address
-	if validatorNode.OperatorAddress != "" {
-		validatorAddr = validatorNode.OperatorAddress
-	} else {
-		s.T().Logf("OperatorAddress is empty, converting PublicAddress using SDK...")
-		// Convert account address to validator address using proper bech32 conversion
-		if validatorNode.PublicAddress != "" {
-			accAddr, err := sdk.AccAddressFromBech32(validatorNode.PublicAddress)
-			s.NoError(err)
-			// Convert account address to validator address
-			valAddr := sdk.ValAddress(accAddr)
-			validatorAddr = valAddr.String()
-		} else {
-			s.T().Fatalf("Cannot derive validator address from empty PublicAddress")
+	// Get consensus pubkeys from each validator node to map them to on-chain validators
+	s.T().Log("Mapping validator nodes to on-chain validators...")
+	nodeConsPubKey := validatorNode.ValidatorConsPubKey()
+	s.T().Logf("Node consensus pubkey: %s", nodeConsPubKey)
+
+	// Query validators from the chain
+	validators, err := nonValidatorNode.QueryValidators()
+	s.NoError(err)
+	s.Require().Len(validators, 2, "Need exactly 2 validators")
+	s.T().Logf("Initial validator count: %d", len(validators))
+
+	// Map nodes to validators by matching consensus pubkey
+	var val *stakingtypes.Validator
+	for i := range validators {
+		// Unmarshal the consensus pubkey using the codec
+		var valConsPubKey cryptotypes.PubKey
+		err := util.Cdc.UnpackAny(validators[i].ConsensusPubkey, &valConsPubKey)
+		s.Require().NoError(err, "failed to unmarshal consensus pubkey")
+
+		if bytes.Equal(valConsPubKey.Bytes(), nodeConsPubKey.Bytes()) {
+			val = &validators[i]
+			s.T().Logf("Node maps to validator: %s (tokens: %s)", validators[i].OperatorAddress, validators[i].Tokens.String())
 		}
 	}
+	s.Require().NotNil(val, "Could not map node to validator")
+	validatorAddr = val.OperatorAddress
 
 	s.T().Logf("Using validator address: '%s'", validatorAddr)
 	s.Require().NotEmpty(validatorAddr, "Validator address should not be empty")
@@ -158,27 +170,8 @@ func (s *EpochingSpamPreventionTestSuite) TestNormalDelegationCase() {
 		validatorAddr, delegationAmountCoin, nonValidatorNode.WalletName)
 
 	// Execute the epoching delegate transaction and capture txHash (similar to createValidator approach)
-	delegateCmd := []string{
-		"babylond", "tx", "epoching", "delegate", validatorAddr, delegationAmountCoin,
-		fmt.Sprintf("--from=%s", nonValidatorNode.WalletName),
-		"--keyring-backend=test",
-		"--home=/home/babylon/babylondata",
-		"--chain-id", nonValidatorNode.GetChainID(),
-		"--yes",
-		"--gas=auto",
-		"--gas-adjustment=1.3",
-		"--gas-prices=1ubbn",
-		"-b=sync",
-	}
-	outBuf, errBuf, err := nonValidatorNode.ExecRawCmd(delegateCmd)
-	if err != nil {
-		s.T().Logf("delegate failed: %s", errBuf.String())
-	}
-	s.NoError(err)
+	txHash := nonValidatorNode.Delegate(nonValidatorNode.WalletName, validatorAddr, delegationAmountCoin, "--gas=500000")
 
-	// Extract txHash from output
-	txOutput := outBuf.String()
-	txHash := chain.GetTxHashFromOutput(txOutput)
 	s.Require().NotEmpty(txHash, "Failed to extract txHash from transaction output")
 	s.T().Logf("WrappedMsgDelegate sent successfully, txHash: %s", txHash)
 
@@ -186,8 +179,8 @@ func (s *EpochingSpamPreventionTestSuite) TestNormalDelegationCase() {
 	chainA.WaitForNumHeights(2)
 
 	// Query the transaction to get actual gas used (following reviewer's example)
-	txResponse, _, err := nonValidatorNode.QueryTxWithError(txHash)
-	s.NoError(err)
+	txResponse, _ := nonValidatorNode.QueryTx(txHash)
+	s.Equal(txResponse.Code, uint32(0), txResponse.RawLog)
 
 	// Step 1 Verification: Check that funds are locked (delegator balance decreased, module balance increased)
 	delegatorBalanceAfterLock, err := nonValidatorNode.QueryBalance(delegatorAddr, "ubbn")
@@ -253,7 +246,7 @@ func (s *EpochingSpamPreventionTestSuite) TestNormalDelegationCase() {
 		"babylond", "query", "staking", "delegation", delegatorAddr, validatorAddr,
 		"--output=json", "--home=/home/babylon/babylondata",
 	}
-	outBuf, errBuf, err = nonValidatorNode.ExecRawCmd(delegationCmd)
+	outBuf, errBuf, err := nonValidatorNode.ExecRawCmd(delegationCmd)
 	if err != nil {
 		s.T().Logf("delegation query failed: %s", errBuf.String())
 	}
