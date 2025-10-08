@@ -9,14 +9,17 @@ import (
 
 	"cosmossdk.io/math"
 	sdkmath "cosmossdk.io/math"
+	"github.com/babylonlabs-io/babylon/v4/test/e2e/util"
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	costktypes "github.com/babylonlabs-io/babylon/v4/x/costaking/types"
 	ictvtypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
 	"github.com/btcsuite/btcd/wire"
+	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	distkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	disttypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
+	stktypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/stretchr/testify/require"
 )
@@ -685,4 +688,137 @@ func TestMainnetInflationDistributionAmount(t *testing.T) {
 	actualDistributionModule := dstrModBalancesAfter.Sub(dstrModBalancesBefore...)
 	require.False(t, actualDistributionModule.IsZero())
 	require.Equal(t, expectedDistributionModule.String(), actualDistributionModule.String())
+}
+
+// TestBabyCoStaking creates 2 validators and jails one
+// Performs delegations to the jailed validator and makes corresponding checks
+func TestBabyCoStaking(t *testing.T) {
+	t.Parallel()
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	d := NewBabylonAppDriverTmpDir(r, t)
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	stkK, costkK, _, epochK := d.App.StakingKeeper, d.App.CostakingKeeper, d.App.SlashingKeeper, d.App.EpochingKeeper
+
+	// Get all validators to check their commissions
+	validators, err := stkK.GetAllValidators(d.Ctx())
+	require.NoError(d.t, err)
+	require.Len(d.t, validators, 1, "There should be exactly one validator in the test setup")
+	val := validators[0]
+	valAddr := sdk.MustValAddressFromBech32(val.OperatorAddress)
+	// covSender := d.CreateCovenantSender()
+
+	delegators := d.CreateNStakerAccounts(3)
+	val2Oper := delegators[0]
+	// del1BabyDelegatedAmt := sdkmath.NewInt(20_000000)
+
+	d.MintNativeTo(val2Oper.Address(), 1000_000000)
+	// Create a new validator
+	newValSelfDelegatedAmt := sdkmath.NewInt(1_000000)
+	d.TxCreateValidator(val2Oper.SenderInfo, valAddr.String(), newValSelfDelegatedAmt)
+
+	d.GenerateNewBlockAssertExecutionSuccess()
+	d.ProgressTillFirstBlockTheNextEpoch()
+
+	// Check if new validator is in the list
+	validators, err = stkK.GetAllValidators(d.Ctx())
+	require.NoError(d.t, err)
+	require.Len(d.t, validators, 2, "There should be exactly two validators in the test setup")
+	var val2 stktypes.Validator
+	var val2ConsPubKey cryptotypes.PubKey
+	for _, v := range validators {
+		if v.OperatorAddress != val.OperatorAddress {
+			val2 = v
+			err := util.Cdc.UnpackAny(v.ConsensusPubkey, &val2ConsPubKey)
+			require.NoError(t, err)
+			break
+		}
+	}
+	require.Equal(t, val2.Status, stktypes.Bonded, "New validator should be in Bonded status")
+
+	// new validator should have a costaker tracker created with the self delegation
+	val2Tracker, err := costkK.GetCostakerRewards(d.Ctx(), val2Oper.Address())
+	require.NoError(t, err)
+	require.NotNil(t, val2Tracker)
+	require.Equal(t, val2Tracker.ActiveBaby, newValSelfDelegatedAmt, "active baby should be self delegation amount", val2Tracker.ActiveBaby.String())
+	require.True(t, val2Tracker.ActiveSatoshis.IsZero(), "Active sats should be zero as validator is jailed")
+	require.True(t, val2Tracker.TotalScore.IsZero(), "Active score should be zero as validator is jailed")
+
+	// delegate to new validator
+	del3 := delegators[2]
+	del3BabyDelegatedAmt := sdkmath.NewInt(10000)
+	d.TxWrappedDelegate(del3.SenderInfo, val2.OperatorAddress, del3BabyDelegatedAmt)
+	d.GenerateNewBlockAssertExecutionSuccess()
+	d.ProgressTillFirstBlockTheNextEpoch()
+
+	// check costaking tracker is created accordingly
+	del3Tracker, err := costkK.GetCostakerRewards(d.Ctx(), del3.Address())
+	require.NoError(t, err)
+	require.NotNil(t, del3Tracker)
+	require.Equal(t, del3Tracker.ActiveBaby, del3BabyDelegatedAmt, "active baby should be self delegation amount", del3Tracker.ActiveBaby.String())
+	require.True(t, del3Tracker.ActiveSatoshis.IsZero(), "Active sats should be zero as validator is jailed")
+	require.True(t, del3Tracker.TotalScore.IsZero(), "Active score should be zero as validator is jailed")
+
+	// Produce new blocks till new validator gets jailed for missing blocks
+	val2ValAddr := sdk.MustValAddressFromBech32(val2.OperatorAddress)
+	jailedHeight := int64(0) // validator is jailed at height 111
+	for jailedHeight == 0 {
+		d.GenerateNewBlockAssertExecutionSuccess()
+		height := d.Ctx().BlockHeight()
+		val, err := stkK.GetValidator(d.Ctx(), val2ValAddr)
+		require.NoError(t, err)
+		if val.Jailed {
+			jailedHeight = height
+			epoch := epochK.GetEpoch(d.Ctx())
+			valset := epochK.GetValidatorSet(d.Ctx(), epoch.EpochNumber)
+			// check that jailed validator is still on epoch validator set
+			require.Len(t, valset, 2, "Jailed validator should still be in the validator set")
+		}
+	}
+
+	// Make a NEW delegation to validator on same epoch that it gets jailed
+	del2 := delegators[1]
+	del2BabyDelegatedAmt := sdkmath.NewInt(10000000)
+	d.TxWrappedDelegate(del2.SenderInfo, val2.OperatorAddress, del2BabyDelegatedAmt)
+
+	// Extend the del3 delegation
+	del3BabyDelegatedAmt = sdkmath.NewInt(5000)
+	d.TxWrappedDelegate(del3.SenderInfo, val2.OperatorAddress, del3BabyDelegatedAmt)
+
+	d.GenerateNewBlockAssertExecutionSuccess()
+	// progress to next epoch to ensure delegation and jailing are processed
+	d.ProgressTillFirstBlockTheNextEpoch()
+
+	// check active set stored in epoching module removed the jailed validator
+	epoch := epochK.GetEpoch(d.Ctx())
+	valset := epochK.GetValidatorSet(d.Ctx(), epoch.EpochNumber)
+	// check that jailed validator is still on epoch validator set
+	require.Len(t, valset, 1, "Jailed validator should not be in the validator set")
+
+	// check delegation was created
+	del, err := stkK.GetDelegation(d.Ctx(), del2.Address(), val2ValAddr)
+	require.NoError(t, err)
+	require.Equal(t, del.DelegatorAddress, del2.Address().String())
+
+	// Check costaker trackers are correct
+	// del2 created a delegation at same epoch that the validator got jailed, so the tracker was not even created (skipped due to jailing)
+	_, err = costkK.GetCostakerRewards(d.Ctx(), del2.Address())
+	require.Error(t, err)
+	require.ErrorContains(t, err, "not found")
+
+	// validator 2 tracker (self delegation) should be zeroed
+	val2Tracker, err = costkK.GetCostakerRewards(d.Ctx(), val2Oper.Address())
+	require.NoError(t, err)
+	require.NotNil(t, val2Tracker)
+	require.True(t, val2Tracker.ActiveBaby.IsZero(), "active baby should be zero as validator is jailed", val2Tracker.ActiveBaby.String())
+	require.True(t, val2Tracker.ActiveSatoshis.IsZero(), "Active sats should be zero as validator is jailed")
+	require.True(t, val2Tracker.TotalScore.IsZero(), "Active score should be zero as validator is jailed")
+
+	// delegator 3 tracker should be zeroed as well
+	del3Tracker, err = costkK.GetCostakerRewards(d.Ctx(), del3.Address())
+	require.NoError(t, err)
+	require.NotNil(t, del3Tracker)
+	require.True(t, del3Tracker.ActiveBaby.IsZero(), "active baby should be zero as validator is jailed", del3Tracker.ActiveBaby.String())
+	require.True(t, del3Tracker.ActiveSatoshis.IsZero(), "Active sats should be zero as validator is jailed")
+	require.True(t, del3Tracker.TotalScore.IsZero(), "Active score should be zero as validator is jailed")
 }

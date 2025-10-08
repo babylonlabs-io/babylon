@@ -46,6 +46,12 @@ message Validator {
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
+  // shares defines total shares issued to a validator's delegators.
+  string shares = 3 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable) = false
+  ];
 }
 
 // ValidatorSet is a message that denotes a set of validators

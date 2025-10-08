@@ -42,19 +42,22 @@ func TestHookStakingBeforeDelegationSharesModifiedUpdateCache(t *testing.T) {
 	require.NoError(t, err)
 
 	// Verify the amount was cached by retrieving
-	cachedAmount := k.stkCache.GetStakedAmount(delAddr, valAddr)
-	require.True(t, shares.Equal(cachedAmount))
+	info := k.stkCache.GetStakedInfo(delAddr, valAddr)
+	require.True(t, shares.Equal(info.Amount))
+	require.True(t, shares.Equal(info.Shares))
 	// get again and make sure it is not deleted
-	cachedAmount = k.stkCache.GetStakedAmount(delAddr, valAddr)
-	require.True(t, shares.Equal(cachedAmount))
+	info = k.stkCache.GetStakedInfo(delAddr, valAddr)
+	require.True(t, shares.Equal(info.Amount))
+	require.True(t, shares.Equal(info.Shares))
 
 	mockStkK.EXPECT().GetDelegation(ctx, delAddr, valAddr).Return(stakingtypes.Delegation{}, stakingtypes.ErrNoDelegation).Times(1)
 	// Call BeforeDelegationSharesModified - should not return error even though the get del returned err
 	err = hooks.BeforeDelegationSharesModified(ctx, delAddr, valAddr)
 	require.NoError(t, err)
 
-	cachedAmount = k.stkCache.GetStakedAmount(delAddr, valAddr)
-	require.True(t, shares.Equal(cachedAmount))
+	info = k.stkCache.GetStakedInfo(delAddr, valAddr)
+	require.True(t, shares.Equal(info.Amount))
+	require.True(t, shares.Equal(info.Shares))
 }
 
 func TestHookStakingAfterDelegationModified(t *testing.T) {
@@ -153,7 +156,7 @@ func TestHookStakingAfterDelegationModifiedReducingAmountStaked(t *testing.T) {
 	err := k.setCostakerRewardsTracker(ctx, delAddr, types.NewCostakerRewardsTracker(0, math.ZeroInt(), initShares, math.ZeroInt()))
 	require.NoError(t, err)
 
-	k.stkCache.SetStakedAmount(delAddr, valAddr, initShares.ToLegacyDec())
+	k.stkCache.SetStakedInfo(delAddr, valAddr, initShares.ToLegacyDec(), initShares.ToLegacyDec())
 
 	// reduces it by 500
 	afterShares := math.LegacyNewDec(1500)
@@ -223,8 +226,8 @@ func TestHookStakingBeforeDelegationSharesModified_InactiveValidator(t *testing.
 	require.NoError(t, err)
 
 	// Verify nothing was cached (validator was not active)
-	cachedAmount := k.stkCache.GetStakedAmount(delAddr, valAddr)
-	require.True(t, cachedAmount.IsZero())
+	info := k.stkCache.GetStakedInfo(delAddr, valAddr)
+	require.True(t, info.Amount.IsZero())
 }
 
 func TestHookStakingMultipleValidators_MixedActiveInactive(t *testing.T) {

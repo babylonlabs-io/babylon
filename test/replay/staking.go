@@ -5,6 +5,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
 	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 	stktypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
@@ -17,4 +18,19 @@ func (d *BabylonAppDriver) TxWrappedDelegate(delegator *SenderInfo, valAddr stri
 	msg := epochingtypes.NewMsgWrappedDelegate(msgDelegate)
 	d.SendTxWithMessagesSuccess(d.t, delegator, DefaultGasLimit, defaultFeeCoin, msg)
 	delegator.IncSeq()
+}
+
+func (d *BabylonAppDriver) TxCreateValidator(operator *SenderInfo, valAddr string, amount sdkmath.Int) {
+	msgCreateValidator, err := datagen.BuildMsgWrappedCreateValidatorWithAmount(operator.Address(), amount)
+	if err != nil {
+		d.t.Fatal(err)
+	}
+	msgCreateValidator.MsgCreateValidator.Commission = stktypes.NewCommissionRates(
+		sdkmath.LegacyMustNewDecFromStr("0.1"),
+		sdkmath.LegacyMustNewDecFromStr("0.9"),
+		sdkmath.LegacyMustNewDecFromStr("0.05"),
+	)
+
+	d.SendTxWithMessagesSuccess(d.t, operator, DefaultGasLimit, defaultFeeCoin, msgCreateValidator)
+	operator.IncSeq()
 }

@@ -56,16 +56,18 @@ func (h HookStaking) AfterDelegationModified(ctx context.Context, delAddr sdk.Ac
 		return err
 	}
 
-	delTokensBefore := h.k.stkCache.GetStakedAmount(delAddr, valAddr)
-	delTokenChange := delTokens.Sub(delTokensBefore).TruncateInt()
+	infoBefore := h.k.stkCache.GetStakedInfo(delAddr, valAddr)
+	delTokenChange := delTokens.Sub(infoBefore.Amount).TruncateInt()
 
-	// In the case of unstaking to a slashed validator,
-	// to properly account for the slashing, we need to ensure
-	// the original tokens are updated based on the reduced tokens
-	// to avoid duplicated reductions.
-	if delTokenChange.IsNegative() && valInfo.IsSlashed {
-		updatedOriginalTokens := valInfo.OriginalTokens.Add(delTokenChange) // delTokenChange is negative
-		h.k.stkCache.UpdateOriginalTokens(valInfo.ValAddress, updatedOriginalTokens)
+	// if validator is jailed/slashed, don't update the costaker tracker
+	// but keep track of the delta shares (due to unstaking/redelegating/restaking) to remove the remaining shares
+	// when updating the validator's delegators co-staking trackers
+	if valInfo.IsSlashed {
+		// cache the delta shares for future use
+		// NOTE: once the validator is slashed, the 1:1 ratio between tokens and shares is broken
+		deltaShares := del.Shares.Sub(infoBefore.Shares)
+		h.k.stkCache.AddDeltaShares(valAddr, delAddr, deltaShares)
+		return nil
 	}
 
 	return h.k.costakerModified(ctx, delAddr, func(rwdTracker *types.CostakerRewardsTracker) {
@@ -110,7 +112,7 @@ func (h HookStaking) BeforeDelegationSharesModified(ctx context.Context, delAddr
 	if err != nil {
 		return err
 	}
-	h.k.stkCache.SetStakedAmount(delAddr, valAddr, delTokens)
+	h.k.stkCache.SetStakedInfo(delAddr, valAddr, delTokens, del.Shares)
 	return nil
 }
 
@@ -173,23 +175,7 @@ func (k Keeper) TokensFromShares(ctx context.Context, valInfo types.ValidatorInf
 	if err != nil {
 		return math.LegacyDec{}, err
 	}
-	// Consider the case where the validator has been slashed.
-	// The AddValidatorTokensAndShares is called before the AfterDelegationModified, so we need to correct the tokens
-	// so the reduced amount in the epoching hook is the same as the one in the staking hook
-	// The RemoveValidatorTokensAndShares is called after the AfterDelegationModified, so in unstaking case delTokens should be 0
-	if valInfo.IsSlashed {
-		delTokens := val.Tokens.Sub(valInfo.CurrentTokens)
-		// update the tracked current tokens to avoid
-		// double counting if multiple delegations to the same validator
-		k.stkCache.UpdateCurrentTokens(valInfo.ValAddress, val.Tokens)
-		// Restore the original tokens before slashing for token from share calculation
-		// and update the original tokens in the validator info
-		val.Tokens = valInfo.OriginalTokens.Add(delTokens)
-		k.stkCache.UpdateOriginalTokens(valInfo.ValAddress, val.Tokens)
-		if delTokens.IsPositive() {
-			return delTokens.ToLegacyDec(), nil
-		}
-	}
+
 	delTokens := val.TokensFromShares(delShares)
 	return delTokens, nil
 }
@@ -226,6 +212,7 @@ func (k Keeper) buildCurrEpochValSetMap(ctx context.Context) (map[string]types.V
 		valMap[valAddr.String()] = types.ValidatorInfo{
 			ValAddress:     valAddr,
 			OriginalTokens: val.Tokens,
+			OriginalShares: val.Shares,
 			CurrentTokens:  currentTokens,
 			IsSlashed:      currentTokens.LT(val.Tokens), // consider slashed if current tokens < original tokens
 		}

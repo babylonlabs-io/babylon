@@ -669,6 +669,22 @@ func (n *NodeConfig) QueryValidators() ([]stakingtypes.Validator, error) {
 	return resp.Validators, nil
 }
 
+// QueryValidators returns all validators
+func (n *NodeConfig) QueryValidator(valAddr string) (*stakingtypes.Validator, error) {
+	path := fmt.Sprintf("cosmos/staking/v1beta1/validators/%s", valAddr)
+	bz, err := n.QueryGRPCGateway(path, url.Values{})
+	if err != nil {
+		return nil, err
+	}
+
+	var resp stakingtypes.QueryValidatorResponse
+	if err := util.Cdc.UnmarshalJSON(bz, &resp); err != nil {
+		return nil, err
+	}
+
+	return &resp.Validator, nil
+}
+
 // QueryDelegatorDelegations returns delegator delegations for a given address
 func (n *NodeConfig) QueryDelegatorDelegations(delegatorAddr string) ([]stakingtypes.DelegationResponse, error) {
 	path := fmt.Sprintf("cosmos/staking/v1beta1/delegations/%s", delegatorAddr)

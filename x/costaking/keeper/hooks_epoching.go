@@ -39,6 +39,18 @@ func (h HookEpoching) AfterEpochBegins(ctx context.Context, epoch uint64) {
 	}
 }
 
+// BeforeEpochEnds is called before an epoch ends, before ApplyAndReturnValidatorSetUpdates
+// This populates the cache with the current validator set to ensure we have the correct
+// validator tokens before processing any delegations/undelegations in AfterEpochEnds
+func (h HookEpoching) BeforeEpochEnds(ctx context.Context, epoch uint64) {
+	// Populate the cache with the current active validator set
+	// This ensures that when AfterEpochEnds runs, we have the correct previous validator set
+	_, err := h.k.stkCache.GetActiveValidatorSet(ctx, h.k.buildCurrEpochValSetMap)
+	if err != nil {
+		h.k.Logger(ctx).Error("failed to populate validator set cache in BeforeEpochEnds", "error", err)
+	}
+}
+
 // AfterEpochEnds is called after an epoch ends
 // It handles the transition of validators between active and inactive states:
 // - Newly active validators: add their delegators' baby tokens to ActiveBaby
@@ -74,7 +86,6 @@ func (h HookEpoching) AfterEpochEnds(ctx context.Context, epoch uint64) {
 	// Identify newly inactive validators (in prev set but not in new set)
 	for prevValAddr, prevVal := range prevValMap {
 		if _, found := newValMap[prevValAddr]; !found {
-			h.k.Logger(ctx).Info("Newly inactive validator", "validator", prevVal)
 			// Newly inactive validator - remove baby tokens for all delegators
 			if err := h.removeBabyForDelegators(ctx, prevVal); err != nil {
 				h.k.Logger(ctx).Error("failed to remove baby tokens for newly inactive validator", "validator", prevValAddr, "error", err)
@@ -92,7 +103,7 @@ func (h HookEpoching) AfterEpochEnds(ctx context.Context, epoch uint64) {
 // updateCoStkTrackerForDelegators updates costaking tracker for all delegators of a validator
 func (h HookEpoching) updateCoStkTrackerForDelegators(
 	ctx context.Context,
-	val stakingtypes.ValidatorI,
+	val stakingtypes.Validator,
 	updateFn func(*types.CostakerRewardsTracker, math.Int),
 ) error {
 	valAddr, err := sdk.ValAddressFromBech32(val.GetOperator())
@@ -108,8 +119,24 @@ func (h HookEpoching) updateCoStkTrackerForDelegators(
 	for _, del := range delegations {
 		delAddr := sdk.MustAccAddressFromBech32(del.DelegatorAddress)
 
-		// Get delegation tokens
-		delTokens := val.TokensFromShares(del.Shares)
+		// We should only update the costaker tracker based on the remaining shares
+		remainingShares := del.Shares
+		// In case the validator is jailed/slashed,
+		// check if there are any cached delta shares to consider
+		cachedDeltas := h.k.stkCache.GetDeltaShares(valAddr, delAddr)
+		for _, deltaShares := range cachedDeltas {
+			// Should remove the delta to update properly the costaker tracker
+			// with remaining shares only
+			remainingShares = remainingShares.Sub(deltaShares)
+		}
+
+		if remainingShares.IsZero() {
+			// No shares left to process
+			continue
+		}
+
+		// Get delegation tokens using truncated division to avoid precision loss
+		delTokens := val.TokensFromShares(remainingShares)
 
 		// Update ActiveBaby using the provided update function
 		if err := h.k.costakerModified(ctx, delAddr, func(rwdTracker *types.CostakerRewardsTracker) {
@@ -148,6 +175,8 @@ func (h HookEpoching) removeBabyForDelegators(ctx context.Context, valInfo types
 		// If the validator has been slashed, we need to restore the original tokens
 		// before removing the baby tokens to avoid miscalculating the token amount
 		val.Tokens = valInfo.OriginalTokens
+		// restore original shares in case validator was slashed
+		val.DelegatorShares = valInfo.OriginalShares
 	}
 	return h.updateCoStkTrackerForDelegators(ctx, val, func(rwdTracker *types.CostakerRewardsTracker, amount math.Int) {
 		rwdTracker.ActiveBaby = rwdTracker.ActiveBaby.Sub(amount)

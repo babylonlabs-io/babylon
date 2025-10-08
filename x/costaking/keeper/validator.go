@@ -7,7 +7,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// updateValidatorSet stores the current validator set with their original tokens
+// updateValidatorSet stores the current validator set with their original tokens and shares
 // This is called upon AfterEpochBegins
 func (k Keeper) updateValidatorSet(ctx context.Context, newValAddrs []sdk.ValAddress) error {
 	var validatorSet types.ValidatorSet
@@ -24,6 +24,7 @@ func (k Keeper) updateValidatorSet(ctx context.Context, newValAddrs []sdk.ValAdd
 			&types.Validator{
 				Addr:   valAddr,
 				Tokens: val.Tokens,
+				Shares: val.DelegatorShares,
 			},
 		)
 	}
