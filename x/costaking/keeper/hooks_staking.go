@@ -30,20 +30,11 @@ type HookStaking struct {
 func (h HookStaking) AfterDelegationModified(ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) error {
 	defer h.k.stkCache.Delete(delAddr, valAddr)
 	// Check if validator is in the active set
-	valSet, err := h.k.stkCache.GetActiveValidatorSet(ctx, h.k.buildCurrEpochValSetMap)
+	active, valInfo, err := h.isActiveValidator(ctx, valAddr)
 	if err != nil {
 		return err
 	}
-
-	// NOTE: co-staking genesis is called before staking genesis.
-	// The active set will be populated during the staking genesis but after calling the hooks, so the active validators map will be empty.
-	// Thus, for testing purposes, we assume all validators are active if the block height is 0.
-	if err := h.k.assumeActiveValidatorIfGenesis(ctx, valSet, valAddr); err != nil {
-		return err
-	}
-
-	valInfo, ok := valSet[valAddr.String()]
-	if !ok {
+	if !active {
 		// Validator not in active set, skip processing
 		return nil
 	}
@@ -88,19 +79,11 @@ func (h HookStaking) BeforeDelegationRemoved(ctx context.Context, delAddr sdk.Ac
 	defer h.k.stkCache.Delete(delAddr, valAddr)
 
 	// Check if validator is in the active set
-	valSet, err := h.k.stkCache.GetActiveValidatorSet(ctx, h.k.buildCurrEpochValSetMap)
+	active, valInfo, err := h.isActiveValidator(ctx, valAddr)
 	if err != nil {
 		return err
 	}
-	// NOTE: co-staking genesis is called before staking genesis.
-	// The active set will be populated during the staking genesis but after calling the hooks, so the active validators map will be empty.
-	// Thus, for testing purposes, we assume all validators are active if the set is empty and block height is 0.
-	if err := h.k.assumeActiveValidatorIfGenesis(ctx, valSet, valAddr); err != nil {
-		return err
-	}
-
-	valInfo, ok := valSet[valAddr.String()]
-	if !ok {
+	if !active {
 		// Validator not in active set, skip processing
 		return nil
 	}
@@ -134,20 +117,11 @@ func (h HookStaking) BeforeDelegationRemoved(ctx context.Context, delAddr sdk.Ac
 // - Caches current delegation amount in temporary storage
 func (h HookStaking) BeforeDelegationSharesModified(ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) error {
 	// Check if validator is in the active set
-	valSet, err := h.k.stkCache.GetActiveValidatorSet(ctx, h.k.buildCurrEpochValSetMap)
+	active, valInfo, err := h.isActiveValidator(ctx, valAddr)
 	if err != nil {
 		return err
 	}
-
-	// NOTE: co-staking genesis is called before staking genesis.
-	// The active set will be populated during the staking genesis but after calling the hooks, so the active validators map will be empty.
-	// Thus, for testing purposes, we assume all validators are active if the set is empty and block height is 0.
-	if err := h.k.assumeActiveValidatorIfGenesis(ctx, valSet, valAddr); err != nil {
-		return err
-	}
-
-	valInfo, ok := valSet[valAddr.String()]
-	if !ok {
+	if !active {
 		// Validator not in active set, skip processing
 		return nil
 	}
@@ -279,4 +253,25 @@ func (k Keeper) assumeActiveValidatorIfGenesis(ctx context.Context, valSet map[s
 		}
 	}
 	return nil
+}
+
+func (h HookStaking) isActiveValidator(ctx context.Context, valAddr sdk.ValAddress) (bool, types.ValidatorInfo, error) {
+	// Check if validator is in the active set
+	valSet, err := h.k.stkCache.GetActiveValidatorSet(ctx, h.k.buildCurrEpochValSetMap)
+	if err != nil {
+		return false, types.ValidatorInfo{}, err
+	}
+
+	// NOTE: co-staking genesis is called before staking genesis.
+	// The active set will be populated during the staking genesis but after calling the hooks, so the active validators map will be empty.
+	// Thus, for testing purposes, we assume all validators are active if the set is empty and block height is 0.
+	if err := h.k.assumeActiveValidatorIfGenesis(ctx, valSet, valAddr); err != nil {
+		return false, types.ValidatorInfo{}, err
+	}
+	valInfo, ok := valSet[valAddr.String()]
+	if !ok {
+		// Validator not in active set, skip processing
+		return false, types.ValidatorInfo{}, nil
+	}
+	return true, valInfo, nil
 }
