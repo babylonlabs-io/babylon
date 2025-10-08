@@ -975,3 +975,64 @@ func TestCostakingRewardsWithdraw(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, resp.Coins.String(), costakerRewadsOneBlock.String())
 }
+
+// TestCostakingBabyBondUnbondAllBondAgain creates one baby delegation it unbonds in the same block
+// and bond it again with an different value all in the same block
+func TestCostakingBabyBondUnbondAllBondAgain(t *testing.T) {
+	t.Parallel()
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	d := NewBabylonAppDriverTmpDir(r, t)
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	stkK, costkK := d.App.StakingKeeper, d.App.CostakingKeeper
+
+	params := costkK.GetParams(d.Ctx())
+	require.Equal(t, params, costktypes.DefaultParams())
+
+	// Get all validators to check their commissions
+	validators, err := stkK.GetAllValidators(d.Ctx())
+	require.NoError(d.t, err)
+	val := validators[0]
+	valAddr := sdk.MustValAddressFromBech32(val.OperatorAddress)
+
+	delegators := d.CreateNStakerAccounts(1)
+	del1 := delegators[0]
+	del1BabyDelegatedAmt := sdkmath.NewInt(20_000000)
+
+	d.MintNativeTo(del1.Address(), 100_000000)
+	d.TxWrappedDelegate(del1.SenderInfo, valAddr.String(), del1BabyDelegatedAmt)
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	// gets the current rewards prior to the end of epoch as it will be starting point
+	rwd, err := costkK.GetCurrentRewards(d.Ctx())
+	require.NoError(t, err)
+
+	// goes until end of epoch
+	d.ProgressTillFirstBlockTheNextEpoch()
+
+	// confirms that baby delegation was done properly
+	del, err := stkK.GetDelegation(d.Ctx(), del1.Address(), valAddr)
+	require.NoError(t, err)
+	require.Equal(t, del.DelegatorAddress, del1.Address().String())
+
+	// check that baby delegation reached costaking
+	zero := sdkmath.ZeroInt()
+	d.CheckCostakerRewards(del1.Address(), del1BabyDelegatedAmt, zero, zero, rwd.Period)
+
+	d.TxWrappedUndelegate(del1.SenderInfo, valAddr.String(), del1BabyDelegatedAmt)
+
+	del1BabyDelegatedAmtAgain := sdkmath.NewInt(35_000000)
+	d.TxWrappedDelegate(del1.SenderInfo, valAddr.String(), del1BabyDelegatedAmtAgain)
+
+	d.ProgressTillFirstBlockTheNextEpoch()
+
+	// confirms that baby delegation is still there
+	del, err = stkK.GetDelegation(d.Ctx(), del1.Address(), valAddr)
+	require.NoError(t, err)
+	require.Equal(t, del.DelegatorAddress, del1.Address().String())
+	require.Equal(t, del.Shares.TruncateInt().String(), del1BabyDelegatedAmtAgain.String())
+
+	// verify that the amount of active baby is the second amount staked
+	d.CheckCostakerRewards(del1.Address(), del1BabyDelegatedAmtAgain, zero, zero, rwd.Period)
+	// period doesn't change as the delegator has zero score
+}

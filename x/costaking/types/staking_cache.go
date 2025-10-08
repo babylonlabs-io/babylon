@@ -52,3 +52,15 @@ func (sc *StakingCache) GetStakedAmount(delAddr sdk.AccAddress, valAddr sdk.ValA
 func (sc *StakingCache) Clear() {
 	sc.amtByValByDel = make(map[string]map[string]math.LegacyDec)
 }
+
+// Delete removes one entry from the cache
+func (sc *StakingCache) Delete(delAddr sdk.AccAddress, valAddr sdk.ValAddress) {
+	delAddrStr := delAddr.String()
+	_, exists := sc.amtByValByDel[delAddrStr]
+	if !exists {
+		return
+	}
+
+	valAddrStr := valAddr.String()
+	delete(sc.amtByValByDel[delAddrStr], valAddrStr)
+}
