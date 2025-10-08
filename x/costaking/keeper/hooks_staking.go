@@ -243,7 +243,7 @@ func (k Keeper) buildCurrEpochValSetMap(ctx context.Context) (map[string]types.V
 
 // assumeActiveValidatorIfGenesis adds the given validator to the active set if block height is genesis height (0)
 // and the validator is not already in the set
-func (k Keeper) assumeActiveValidatorIfGenesis(ctx context.Context, valSet map[string]types.ValidatorInfo, valAddr sdk.ValAddress) error {
+func (k Keeper) assumeActiveValidatorIfGenesis(ctx context.Context, valSet map[string]types.ValidatorInfo, valAddr sdk.ValAddress) {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	if sdkCtx.BlockHeader().Height == 0 {
 		// Add validator to active set during genesis
@@ -252,7 +252,6 @@ func (k Keeper) assumeActiveValidatorIfGenesis(ctx context.Context, valSet map[s
 			IsSlashed:  false,
 		}
 	}
-	return nil
 }
 
 func (h HookStaking) isActiveValidator(ctx context.Context, valAddr sdk.ValAddress) (bool, types.ValidatorInfo, error) {
@@ -265,9 +264,8 @@ func (h HookStaking) isActiveValidator(ctx context.Context, valAddr sdk.ValAddre
 	// NOTE: co-staking genesis is called before staking genesis.
 	// The active set will be populated during the staking genesis but after calling the hooks, so the active validators map will be empty.
 	// Thus, for testing purposes, we assume all validators are active if the set is empty and block height is 0.
-	if err := h.k.assumeActiveValidatorIfGenesis(ctx, valSet, valAddr); err != nil {
-		return false, types.ValidatorInfo{}, err
-	}
+	h.k.assumeActiveValidatorIfGenesis(ctx, valSet, valAddr)
+
 	valInfo, ok := valSet[valAddr.String()]
 	if !ok {
 		// Validator not in active set, skip processing

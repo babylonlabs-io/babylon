@@ -5,9 +5,7 @@ import (
 )
 
 func (d *BabylonAppDriver) TxUnjailValidator(operator *SenderInfo, valAddr string) {
-
 	msgUnjail := slashingtypes.NewMsgUnjail(valAddr)
-
 	d.SendTxWithMessagesSuccess(d.t, operator, DefaultGasLimit, defaultFeeCoin, msgUnjail)
 	operator.IncSeq()
 }
