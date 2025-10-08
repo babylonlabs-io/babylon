@@ -143,3 +143,77 @@ func TestStakingCacheClear(t *testing.T) {
 	result = cache.GetStakedInfo(delAddr, valAddr)
 	require.True(t, result.Amount.IsZero())
 }
+
+func TestStakingCacheDelete(t *testing.T) {
+	cache := NewStakingCache()
+
+	delAddr := sdk.AccAddress("delAddr")
+	valAddr := sdk.ValAddress("valAddr")
+	amount := math.LegacyNewDec(100)
+
+	cache.SetStakedAmount(delAddr, valAddr, amount)
+
+	result := cache.GetStakedAmount(delAddr, valAddr)
+	require.True(t, result.Equal(amount))
+
+	cache.Delete(delAddr, valAddr)
+
+	result = cache.GetStakedAmount(delAddr, valAddr)
+	require.True(t, result.IsZero())
+}
+
+func TestStakingCacheDeleteNonExistentDelegator(t *testing.T) {
+	cache := NewStakingCache()
+
+	delAddr := sdk.AccAddress("delAddr")
+	valAddr := sdk.ValAddress("valAddr")
+
+	cache.Delete(delAddr, valAddr)
+
+	result := cache.GetStakedAmount(delAddr, valAddr)
+	require.True(t, result.IsZero())
+}
+
+func TestStakingCacheDeleteNonExistentValidator(t *testing.T) {
+	cache := NewStakingCache()
+
+	delAddr := sdk.AccAddress("delAddr")
+	valAddr1 := sdk.ValAddress("valAddr1")
+	valAddr2 := sdk.ValAddress("valAddr2")
+	amount := math.LegacyNewDec(100)
+
+	cache.SetStakedAmount(delAddr, valAddr1, amount)
+
+	cache.Delete(delAddr, valAddr2)
+
+	result := cache.GetStakedAmount(delAddr, valAddr1)
+	require.True(t, result.Equal(amount))
+}
+
+func TestStakingCacheDeletePreservesOtherValidators(t *testing.T) {
+	cache := NewStakingCache()
+
+	delAddr := sdk.AccAddress("delAddr")
+	valAddr1 := sdk.ValAddress("valAddr1")
+	valAddr2 := sdk.ValAddress("valAddr2")
+	valAddr3 := sdk.ValAddress("valAddr3")
+
+	amount1 := math.LegacyNewDec(100)
+	amount2 := math.LegacyNewDec(200)
+	amount3 := math.LegacyNewDec(300)
+
+	cache.SetStakedAmount(delAddr, valAddr1, amount1)
+	cache.SetStakedAmount(delAddr, valAddr2, amount2)
+	cache.SetStakedAmount(delAddr, valAddr3, amount3)
+
+	cache.Delete(delAddr, valAddr2)
+
+	result1 := cache.GetStakedAmount(delAddr, valAddr1)
+	require.True(t, result1.Equal(amount1))
+
+	result2 := cache.GetStakedAmount(delAddr, valAddr2)
+	require.True(t, result2.IsZero())
+
+	result3 := cache.GetStakedAmount(delAddr, valAddr3)
+	require.True(t, result3.Equal(amount3))
+}

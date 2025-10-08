@@ -4,10 +4,9 @@ import (
 	"context"
 
 	"cosmossdk.io/math"
+	"github.com/babylonlabs-io/babylon/v4/x/costaking/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stktypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-
-	"github.com/babylonlabs-io/babylon/v4/x/costaking/types"
 )
 
 var _ stktypes.StakingHooks = HookStaking{}
@@ -23,10 +22,13 @@ type HookStaking struct {
 //
 // State Changes:
 // - ActiveBaby += (new_amount - old_amount)
-// - If differece is negative, ActiveBaby is subtracted
+// - If difference is negative, ActiveBaby is subtracted
 //
 // Note: This hook uses a cache to track previous delegation amounts to calculate the delta.
+// Defer: Deletes the value from cache after reading it to avoid cases where an (del, val) pair has more than one action
+// in the same block as bond, unbond, bond again
 func (h HookStaking) AfterDelegationModified(ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) error {
+	defer h.k.stkCache.Delete(delAddr, valAddr)
 	// Check if validator is in the active set
 	valSet, err := h.k.stkCache.GetActiveValidatorSet(ctx, h.k.buildCurrEpochValSetMap)
 	if err != nil {
@@ -72,6 +74,55 @@ func (h HookStaking) AfterDelegationModified(ctx context.Context, delAddr sdk.Ac
 
 	return h.k.costakerModified(ctx, delAddr, func(rwdTracker *types.CostakerRewardsTracker) {
 		rwdTracker.ActiveBaby = rwdTracker.ActiveBaby.Add(delTokenChange)
+	})
+}
+
+// BeforeDelegationRemoved This hook is called when an baby delegation removes his entire baby delegation from one validator.
+// The AfterDelegationModified hooks is not called in this case as there is no delegation after is modified, so in costaking
+// it should remove all tokens that this pair (del, val) had staked. This value can be achieved by caching the tokens
+// prior to BeforeDelegationRemoved hook call, which is done by BeforeDelegationSharesModified.
+//
+// Defer: Deletes the value from cache after reading it to avoid cases where an (del, val) pair has more than one action
+// in the same block as bond, unbond, bond again
+func (h HookStaking) BeforeDelegationRemoved(ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) error {
+	defer h.k.stkCache.Delete(delAddr, valAddr)
+
+	// Check if validator is in the active set
+	valSet, err := h.k.stkCache.GetActiveValidatorSet(ctx, h.k.buildCurrEpochValSetMap)
+	if err != nil {
+		return err
+	}
+	// NOTE: co-staking genesis is called before staking genesis.
+	// The active set will be populated during the staking genesis but after calling the hooks, so the active validators map will be empty.
+	// Thus, for testing purposes, we assume all validators are active if the set is empty and block height is 0.
+	if err := h.k.assumeActiveValidatorIfGenesis(ctx, valSet, valAddr); err != nil {
+		return err
+	}
+
+	valInfo, ok := valSet[valAddr.String()]
+	if !ok {
+		// Validator not in active set, skip processing
+		return nil
+	}
+
+	info := h.k.stkCache.GetStakedInfo(delAddr, valAddr)
+	delTokenChange := info.Amount.TruncateInt()
+	if delTokenChange.IsZero() {
+		return nil
+	}
+
+	// if validator is jailed/slashed, don't update the costaker tracker
+	// but keep track of the delta shares (due to full unstaking).
+	// These will be removed from co-staker tracker 
+	// when updating the validator's delegators co-staking trackers
+	if valInfo.IsSlashed {
+		deltaShares := math.LegacyZeroDec().Sub(info.Shares)
+		h.k.stkCache.AddDeltaShares(valAddr, delAddr, deltaShares)
+		return nil
+	}
+
+	return h.k.costakerModified(ctx, delAddr, func(rwdTracker *types.CostakerRewardsTracker) {
+		rwdTracker.ActiveBaby = rwdTracker.ActiveBaby.Sub(delTokenChange)
 	})
 }
 
@@ -143,11 +194,6 @@ func (h HookStaking) AfterValidatorRemoved(ctx context.Context, consAddr sdk.Con
 
 // BeforeDelegationCreated implements types.StakingHooks.
 func (h HookStaking) BeforeDelegationCreated(ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) error {
-	return nil
-}
-
-// BeforeDelegationRemoved implements types.StakingHooks.
-func (h HookStaking) BeforeDelegationRemoved(ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) error {
 	return nil
 }
 

@@ -686,3 +686,484 @@ func TestMainnetInflationDistributionAmount(t *testing.T) {
 	require.False(t, actualDistributionModule.IsZero())
 	require.Equal(t, expectedDistributionModule.String(), actualDistributionModule.String())
 }
+
+// TestCostakingRewardsUnbondAllBaby creates 1 fp and 1 btc delegation and a one baby delegations
+// getting rewards and later unbonding all this baby delegation, it will call the staking hook
+// BeforeDelegationRemoved.
+func TestCostakingRewardsUnbondAllBaby(t *testing.T) {
+	t.Parallel()
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	d := NewBabylonAppDriverTmpDir(r, t)
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	stkK, costkK := d.App.StakingKeeper, d.App.CostakingKeeper
+
+	params := costkK.GetParams(d.Ctx())
+	require.Equal(t, params, costktypes.DefaultParams())
+
+	// Get all validators to check their commissions
+	validators, err := stkK.GetAllValidators(d.Ctx())
+	require.NoError(d.t, err)
+	val := validators[0]
+	valAddr := sdk.MustValAddressFromBech32(val.OperatorAddress)
+	covSender := d.CreateCovenantSender()
+
+	delegators := d.CreateNStakerAccounts(1)
+	del1 := delegators[0]
+	del1BabyDelegatedAmt := sdkmath.NewInt(20_000000)
+
+	d.MintNativeTo(del1.Address(), 100_000000)
+	d.TxWrappedDelegate(del1.SenderInfo, valAddr.String(), del1BabyDelegatedAmt)
+
+	// gets the current rewards prior to the end of epoch as it will be starting point
+	rwd, err := costkK.GetCurrentRewards(d.Ctx())
+	require.NoError(t, err)
+
+	d.GenerateNewBlockAssertExecutionSuccess()
+	d.ProgressTillFirstBlockTheNextEpoch()
+
+	// confirms that baby delegation was done properly
+	del, err := stkK.GetDelegation(d.Ctx(), del1.Address(), valAddr)
+	require.NoError(t, err)
+	require.Equal(t, del.DelegatorAddress, del1.Address().String())
+
+	// check that baby delegation reached costaking
+	zero := sdkmath.ZeroInt()
+	d.CheckCostakerRewards(del1.Address(), del1BabyDelegatedAmt, zero, zero, rwd.Period)
+
+	fps := d.CreateNFinalityProviderAccounts(1)
+	fp1 := fps[0]
+	fp1.RegisterFinalityProvider()
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	p := costkK.GetParams(d.Ctx())
+	// costaking ratio of btc by baby is 200, so for every sat staked it needs to
+	// have 200 baby staked to take full account of the btcs in the score.
+	del1BtcStakedAmt := del1BabyDelegatedAmt.Quo(p.ScoreRatioBtcByBaby)
+	del1.CreatePreApprovalDelegation(
+		[]*bbn.BIP340PubKey{fp1.BTCPublicKey()},
+		defaultStakingTime,
+		del1BtcStakedAmt.Int64(),
+	)
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	covSender.SendCovenantSignatures()
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	verifiedDels := d.GetVerifiedBTCDelegations(t)
+	require.Len(t, verifiedDels, 1)
+
+	d.ActivateVerifiedDelegations(1)
+	activeDelegations := d.GetActiveBTCDelegations(t)
+	require.Len(t, activeDelegations, 1)
+
+	activeFps := d.GetActiveFpsAtCurrentHeight(d.t)
+	require.Len(t, activeFps, 0)
+
+	// zero active sats and score, because fp is not active
+	d.CheckCostakerRewards(del1.Address(), del1BabyDelegatedAmt, zero, zero, rwd.Period)
+
+	// activate fp
+	fp1.CommitRandomness()
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	// Randomness timestamped
+	currentEpoch := d.GetEpoch().EpochNumber
+	d.ProgressTillFirstBlockTheNextEpoch()
+	d.FinalizeCkptForEpoch(currentEpoch - 1) // previous unfinalized epoch
+	d.FinalizeCkptForEpoch(currentEpoch)
+
+	rwd, err = costkK.GetCurrentRewards(d.Ctx())
+	require.NoError(t, err)
+
+	// produce block to activate fp
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	// fp should be activated
+	activeFps = d.GetActiveFpsAtCurrentHeight(d.t)
+	require.Len(t, activeFps, 1)
+
+	// score is the same as btc staked as del1 have 50 ubbn to each sat
+	del1StartCumulativeRewardPeriod := rwd.Period
+	d.CheckCostakerRewards(del1.Address(), del1BabyDelegatedAmt, del1BtcStakedAmt, del1BtcStakedAmt, del1StartCumulativeRewardPeriod)
+
+	// new period without rewards is created
+	d.CheckCostakingCurrentRewards(sdk.NewCoins(), rwd.Period+1, del1BtcStakedAmt)
+	// historical will not have any rewards, because costaker didn't participated until the fp become active and no other block
+	// was produced to add rewards.
+	d.CheckCostakingCurrentHistoricalRewards(del1StartCumulativeRewardPeriod, sdk.NewCoins())
+
+	// produce 2 blocks to add rewards to coostaker
+	costakerRewadsTwoBlocks := sdk.NewCoins()
+	costakerRewadsTwoBlocks = costakerRewadsTwoBlocks.Add(d.GenerateNewBlockAssertExecutionSuccessWithCostakerRewards()...)
+	costakerRewadsTwoBlocks = costakerRewadsTwoBlocks.Add(d.GenerateNewBlockAssertExecutionSuccessWithCostakerRewards()...)
+	currentRwdPeriod := rwd.Period + 1
+	d.CheckCostakingCurrentRewards(costakerRewadsTwoBlocks, currentRwdPeriod, del1BtcStakedAmt)
+
+	del1BalancesBeforeRewardWithdraw := d.App.BankKeeper.GetAllBalances(d.Ctx(), del1.Address())
+
+	resp, err := d.MsgServerIncentive().WithdrawReward(d.Ctx(), &ictvtypes.MsgWithdrawReward{
+		Type:    ictvtypes.COSTAKER.String(),
+		Address: del1.AddressString(),
+	})
+	require.NoError(t, err)
+	require.Equal(t, resp.Coins.String(), costakerRewadsTwoBlocks.String())
+
+	del1BalancesAfterRewardWithdraw := d.App.BankKeeper.GetAllBalances(d.Ctx(), del1.Address())
+	diff := del1BalancesAfterRewardWithdraw.Sub(del1BalancesBeforeRewardWithdraw...).String()
+	require.Equal(t, diff, costakerRewadsTwoBlocks.String())
+
+	// reduces unbonding time
+	stkP, err := stkK.GetParams(d.Ctx())
+	require.NoError(t, err)
+	stkP.UnbondingTime = time.Second * 20
+	err = stkK.SetParams(d.Ctx(), stkP)
+	require.NoError(t, err)
+
+	d.TxWrappedUndelegate(del1.SenderInfo, valAddr.String(), del1BabyDelegatedAmt)
+	d.ProgressTillFirstBlockTheNextEpoch()
+
+	for i := 0; i < 10; i++ {
+		d.GenerateNewBlockAssertExecutionSuccess()
+	}
+
+	d.CheckCostakerRewards(del1.Address(), zero, del1BtcStakedAmt, zero, currentRwdPeriod+1)
+}
+
+// TestCostakingRewardsWithdraw creates 1 fp and 1 btc delegation and a one baby delegation
+// getting rewards and later stop voting in btc staking so it doesn't earn rewards
+// and continue to earn rewards in costaking
+func TestCostakingRewardsWithdraw(t *testing.T) {
+	t.Parallel()
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	d := NewBabylonAppDriverTmpDir(r, t)
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	stkK, costkK := d.App.StakingKeeper, d.App.CostakingKeeper
+
+	params := costkK.GetParams(d.Ctx())
+	require.Equal(t, params, costktypes.DefaultParams())
+
+	// Get all validators to check their commissions
+	validators, err := stkK.GetAllValidators(d.Ctx())
+	require.NoError(d.t, err)
+	val := validators[0]
+	valAddr := sdk.MustValAddressFromBech32(val.OperatorAddress)
+	covSender := d.CreateCovenantSender()
+
+	delegators := d.CreateNStakerAccounts(1)
+	del1 := delegators[0]
+	del1BabyDelegatedAmt := sdkmath.NewInt(20_000000)
+
+	d.MintNativeTo(del1.Address(), 100_000000)
+	d.TxWrappedDelegate(del1.SenderInfo, valAddr.String(), del1BabyDelegatedAmt)
+
+	// gets the current rewards prior to the end of epoch as it will be starting point
+	rwd, err := costkK.GetCurrentRewards(d.Ctx())
+	require.NoError(t, err)
+
+	d.GenerateNewBlockAssertExecutionSuccess()
+	d.ProgressTillFirstBlockTheNextEpoch()
+
+	// confirms that baby delegation was done properly
+	del, err := stkK.GetDelegation(d.Ctx(), del1.Address(), valAddr)
+	require.NoError(t, err)
+	require.Equal(t, del.DelegatorAddress, del1.Address().String())
+
+	// check that baby delegation reached costaking
+	zero := sdkmath.ZeroInt()
+	d.CheckCostakerRewards(del1.Address(), del1BabyDelegatedAmt, zero, zero, rwd.Period)
+
+	fps := d.CreateNFinalityProviderAccounts(1)
+	fp1 := fps[0]
+	fp1.RegisterFinalityProvider()
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	p := costkK.GetParams(d.Ctx())
+	// costaking ratio of btc by baby is 200, so for every sat staked it needs to
+	// have 200 baby staked to take full account of the btcs in the score.
+	del1BtcStakedAmt := del1BabyDelegatedAmt.Quo(p.ScoreRatioBtcByBaby)
+	del1.CreatePreApprovalDelegation(
+		[]*bbn.BIP340PubKey{fp1.BTCPublicKey()},
+		defaultStakingTime,
+		del1BtcStakedAmt.Int64(),
+	)
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	covSender.SendCovenantSignatures()
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	verifiedDels := d.GetVerifiedBTCDelegations(t)
+	require.Len(t, verifiedDels, 1)
+
+	d.ActivateVerifiedDelegations(1)
+	activeDelegations := d.GetActiveBTCDelegations(t)
+	require.Len(t, activeDelegations, 1)
+
+	activeFps := d.GetActiveFpsAtCurrentHeight(d.t)
+	require.Len(t, activeFps, 0)
+
+	// zero active sats and score, because fp is not active
+	d.CheckCostakerRewards(del1.Address(), del1BabyDelegatedAmt, zero, zero, rwd.Period)
+
+	// activate fp
+	fp1.CommitRandomness()
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	// Randomness timestamped
+	currentEpoch := d.GetEpoch().EpochNumber
+	d.ProgressTillFirstBlockTheNextEpoch()
+	d.FinalizeCkptForEpoch(currentEpoch - 1) // previous unfinalized epoch
+	d.FinalizeCkptForEpoch(currentEpoch)
+
+	rwd, err = costkK.GetCurrentRewards(d.Ctx())
+	require.NoError(t, err)
+
+	// produce block to activate fp
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	// fp should be activated
+	activeFps = d.GetActiveFpsAtCurrentHeight(d.t)
+	require.Len(t, activeFps, 1)
+
+	// score is the same as btc staked as del1 have 50 ubbn to each sat
+	del1StartCumulativeRewardPeriod := rwd.Period
+	d.CheckCostakerRewards(del1.Address(), del1BabyDelegatedAmt, del1BtcStakedAmt, del1BtcStakedAmt, del1StartCumulativeRewardPeriod)
+
+	// new period without rewards is created
+	d.CheckCostakingCurrentRewards(sdk.NewCoins(), rwd.Period+1, del1BtcStakedAmt)
+	// historical will not have any rewards, because costaker didn't participated until the fp become active and no other block
+	// was produced to add rewards.
+	d.CheckCostakingCurrentHistoricalRewards(del1StartCumulativeRewardPeriod, sdk.NewCoins())
+
+	// produce 2 blocks to add rewards to coostaker
+	costakerRewadsTwoBlocks := sdk.NewCoins()
+	costakerRewadsTwoBlocks = costakerRewadsTwoBlocks.Add(d.GenerateNewBlockAssertExecutionSuccessWithCostakerRewards()...)
+	costakerRewadsTwoBlocks = costakerRewadsTwoBlocks.Add(d.GenerateNewBlockAssertExecutionSuccessWithCostakerRewards()...)
+	currentRwdPeriod := rwd.Period + 1
+	d.CheckCostakingCurrentRewards(costakerRewadsTwoBlocks, currentRwdPeriod, del1BtcStakedAmt)
+
+	del1BalancesBeforeRewardWithdraw := d.App.BankKeeper.GetAllBalances(d.Ctx(), del1.Address())
+
+	resp, err := d.MsgServerIncentive().WithdrawReward(d.Ctx(), &ictvtypes.MsgWithdrawReward{
+		Type:    ictvtypes.BTC_STAKER.String(),
+		Address: del1.AddressString(),
+	})
+	require.NoError(t, err)
+	require.Equal(t, resp.Coins.String(), costakerRewadsTwoBlocks.String())
+
+	del1BalancesAfterRewardWithdraw := d.App.BankKeeper.GetAllBalances(d.Ctx(), del1.Address())
+	diff := del1BalancesAfterRewardWithdraw.Sub(del1BalancesBeforeRewardWithdraw...).String()
+	require.Equal(t, diff, costakerRewadsTwoBlocks.String())
+
+	// checks with query that there is no reward for btc staker, only costaking
+	costakerRewadsOneBlock := d.GenerateNewBlockAssertExecutionSuccessWithCostakerRewards()
+	rwds, err := d.App.IncentiveKeeper.RewardGauges(d.Ctx(), &ictvtypes.QueryRewardGaugesRequest{
+		Address: del1.AddressString(),
+	})
+	require.NoError(t, err)
+	costk := rwds.RewardGauges[ictvtypes.COSTAKER.String()]
+	_, existBtcRewards := rwds.RewardGauges[ictvtypes.BTC_STAKER.String()]
+	require.False(t, existBtcRewards)
+	require.Equal(t, costk.Coins.Sub(costk.WithdrawnCoins...).String(), costakerRewadsOneBlock.String())
+
+	// withdraws the costaker rewards without btc staking rewards
+	resp, err = d.MsgServerIncentive().WithdrawReward(d.Ctx(), &ictvtypes.MsgWithdrawReward{
+		Type:    ictvtypes.BTC_STAKER.String(),
+		Address: del1.AddressString(),
+	})
+	require.NoError(t, err)
+	require.Equal(t, resp.Coins.String(), costakerRewadsOneBlock.String())
+}
+
+// TestCostakingBabyBondUnbondAllBondAgain creates one baby delegation it unbonds in the same block
+// and bond it again with an different value all in the same block
+func TestCostakingBabyBondUnbondAllBondAgain(t *testing.T) {
+	t.Parallel()
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	d := NewBabylonAppDriverTmpDir(r, t)
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	stkK, costkK := d.App.StakingKeeper, d.App.CostakingKeeper
+
+	params := costkK.GetParams(d.Ctx())
+	require.Equal(t, params, costktypes.DefaultParams())
+
+	// Get all validators to check their commissions
+	validators, err := stkK.GetAllValidators(d.Ctx())
+	require.NoError(d.t, err)
+	val := validators[0]
+	valAddr := sdk.MustValAddressFromBech32(val.OperatorAddress)
+
+	delegators := d.CreateNStakerAccounts(1)
+	del1 := delegators[0]
+	del1BabyDelegatedAmt := sdkmath.NewInt(20_000000)
+
+	d.MintNativeTo(del1.Address(), 100_000000)
+	d.TxWrappedDelegate(del1.SenderInfo, valAddr.String(), del1BabyDelegatedAmt)
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	// gets the current rewards prior to the end of epoch as it will be starting point
+	rwd, err := costkK.GetCurrentRewards(d.Ctx())
+	require.NoError(t, err)
+
+	// goes until end of epoch
+	d.ProgressTillFirstBlockTheNextEpoch()
+
+	// confirms that baby delegation was done properly
+	del, err := stkK.GetDelegation(d.Ctx(), del1.Address(), valAddr)
+	require.NoError(t, err)
+	require.Equal(t, del.DelegatorAddress, del1.Address().String())
+
+	// check that baby delegation reached costaking
+	zero := sdkmath.ZeroInt()
+	d.CheckCostakerRewards(del1.Address(), del1BabyDelegatedAmt, zero, zero, rwd.Period)
+
+	d.TxWrappedUndelegate(del1.SenderInfo, valAddr.String(), del1BabyDelegatedAmt)
+
+	del1BabyDelegatedAmtAgain := sdkmath.NewInt(35_000000)
+	d.TxWrappedDelegate(del1.SenderInfo, valAddr.String(), del1BabyDelegatedAmtAgain)
+
+	d.ProgressTillFirstBlockTheNextEpoch()
+
+	// confirms that baby delegation is still there
+	del, err = stkK.GetDelegation(d.Ctx(), del1.Address(), valAddr)
+	require.NoError(t, err)
+	require.Equal(t, del.DelegatorAddress, del1.Address().String())
+	require.Equal(t, del.Shares.TruncateInt().String(), del1BabyDelegatedAmtAgain.String())
+
+	// verify that the amount of active baby is the second amount staked
+	d.CheckCostakerRewards(del1.Address(), del1BabyDelegatedAmtAgain, zero, zero, rwd.Period)
+	// period doesn't change as the delegator has zero score
+}
+
+// TestBabyCoStaking creates 2 validators and jails one
+// Performs delegations to the jailed validator and makes corresponding checks
+func TestBabyCoStaking(t *testing.T) {
+	t.Parallel()
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	d := NewBabylonAppDriverTmpDir(r, t)
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	stkK, costkK, _, epochK := d.App.StakingKeeper, d.App.CostakingKeeper, d.App.SlashingKeeper, d.App.EpochingKeeper
+
+	// Get all validators to check their commissions
+	validators, err := stkK.GetAllValidators(d.Ctx())
+	require.NoError(d.t, err)
+	require.Len(d.t, validators, 1, "There should be exactly one validator in the test setup")
+	val := validators[0]
+	valAddr := sdk.MustValAddressFromBech32(val.OperatorAddress)
+
+	delegators := d.CreateNStakerAccounts(3)
+	val2Oper := delegators[0]
+
+	d.MintNativeTo(val2Oper.Address(), 1000_000000)
+	// Create a new validator
+	newValSelfDelegatedAmt := sdkmath.NewInt(1_000000)
+	d.TxCreateValidator(val2Oper.SenderInfo, valAddr.String(), newValSelfDelegatedAmt)
+
+	d.GenerateNewBlockAssertExecutionSuccess()
+	d.ProgressTillFirstBlockTheNextEpoch()
+
+	// Check if new validator is in the list
+	validators, err = stkK.GetAllValidators(d.Ctx())
+	require.NoError(d.t, err)
+	require.Len(d.t, validators, 2, "There should be exactly two validators in the test setup")
+	var val2 stktypes.Validator
+	var val2ConsPubKey cryptotypes.PubKey
+	for _, v := range validators {
+		if v.OperatorAddress != val.OperatorAddress {
+			val2 = v
+			err := util.Cdc.UnpackAny(v.ConsensusPubkey, &val2ConsPubKey)
+			require.NoError(t, err)
+			break
+		}
+	}
+	require.Equal(t, val2.Status, stktypes.Bonded, "New validator should be in Bonded status")
+
+	// new validator should have a costaker tracker created with the self delegation
+	val2Tracker, err := costkK.GetCostakerRewards(d.Ctx(), val2Oper.Address())
+	require.NoError(t, err)
+	require.NotNil(t, val2Tracker)
+	require.Equal(t, val2Tracker.ActiveBaby, newValSelfDelegatedAmt, "active baby should be self delegation amount", val2Tracker.ActiveBaby.String())
+	require.True(t, val2Tracker.ActiveSatoshis.IsZero(), "Active sats should be zero")
+	require.True(t, val2Tracker.TotalScore.IsZero(), "Active score should be zero as validator is jailed")
+
+	// delegate to new validator
+	del3 := delegators[2]
+	del3BabyDelegatedAmt := sdkmath.NewInt(10000)
+	d.TxWrappedDelegate(del3.SenderInfo, val2.OperatorAddress, del3BabyDelegatedAmt)
+	d.GenerateNewBlockAssertExecutionSuccess()
+	d.ProgressTillFirstBlockTheNextEpoch()
+
+	// check costaking tracker is created accordingly
+	del3Tracker, err := costkK.GetCostakerRewards(d.Ctx(), del3.Address())
+	require.NoError(t, err)
+	require.NotNil(t, del3Tracker)
+	require.Equal(t, del3Tracker.ActiveBaby, del3BabyDelegatedAmt, "active baby should be self delegation amount", del3Tracker.ActiveBaby.String())
+	require.True(t, del3Tracker.ActiveSatoshis.IsZero(), "Active sats should be zero as validator is jailed")
+	require.True(t, del3Tracker.TotalScore.IsZero(), "Active score should be zero as validator is jailed")
+
+	// Produce new blocks till new validator gets jailed for missing blocks
+	val2ValAddr := sdk.MustValAddressFromBech32(val2.OperatorAddress)
+	jailedHeight := int64(0) // validator is jailed at height 111
+	for jailedHeight == 0 {
+		d.GenerateNewBlockAssertExecutionSuccess()
+		height := d.Ctx().BlockHeight()
+		val, err := stkK.GetValidator(d.Ctx(), val2ValAddr)
+		require.NoError(t, err)
+		if val.Jailed {
+			jailedHeight = height
+			epoch := epochK.GetEpoch(d.Ctx())
+			valset := epochK.GetValidatorSet(d.Ctx(), epoch.EpochNumber)
+			// check that jailed validator is still on epoch validator set
+			require.Len(t, valset, 2, "Jailed validator should still be in the validator set")
+		}
+	}
+
+	// Make a NEW delegation to validator on same epoch that it gets jailed
+	del2 := delegators[1]
+	del2BabyDelegatedAmt := sdkmath.NewInt(10000000)
+	d.TxWrappedDelegate(del2.SenderInfo, val2.OperatorAddress, del2BabyDelegatedAmt)
+
+	// Extend the del3 delegation
+	del3BabyDelegatedAmt = sdkmath.NewInt(5000)
+	d.TxWrappedDelegate(del3.SenderInfo, val2.OperatorAddress, del3BabyDelegatedAmt)
+
+	d.GenerateNewBlockAssertExecutionSuccess()
+	// progress to next epoch to ensure delegation and jailing are processed
+	d.ProgressTillFirstBlockTheNextEpoch()
+
+	// check active set stored in epoching module removed the jailed validator
+	epoch := epochK.GetEpoch(d.Ctx())
+	valset := epochK.GetValidatorSet(d.Ctx(), epoch.EpochNumber)
+	// check that jailed validator is still on epoch validator set
+	require.Len(t, valset, 1, "Jailed validator should not be in the validator set")
+
+	// check delegation was created
+	del, err := stkK.GetDelegation(d.Ctx(), del2.Address(), val2ValAddr)
+	require.NoError(t, err)
+	require.Equal(t, del.DelegatorAddress, del2.Address().String())
+
+	// Check costaker trackers are correct
+	// del2 created a delegation at same epoch that the validator got jailed, so the tracker was not even created (skipped due to jailing)
+	_, err = costkK.GetCostakerRewards(d.Ctx(), del2.Address())
+	require.Error(t, err)
+	require.ErrorContains(t, err, "not found")
+
+	// validator 2 tracker (self delegation) should be zeroed
+	val2Tracker, err = costkK.GetCostakerRewards(d.Ctx(), val2Oper.Address())
+	require.NoError(t, err)
+	require.NotNil(t, val2Tracker)
+	require.True(t, val2Tracker.ActiveBaby.IsZero(), "active baby should be zero as validator is jailed", val2Tracker.ActiveBaby.String())
+	require.True(t, val2Tracker.ActiveSatoshis.IsZero(), "Active sats should be zero as validator is jailed")
+	require.True(t, val2Tracker.TotalScore.IsZero(), "Active score should be zero as validator is jailed")
+
+	// delegator 3 tracker should be zeroed as well
+	del3Tracker, err = costkK.GetCostakerRewards(d.Ctx(), del3.Address())
+	require.NoError(t, err)
+	require.NotNil(t, del3Tracker)
+	require.True(t, del3Tracker.ActiveBaby.IsZero(), "active baby should be zero as validator is jailed", del3Tracker.ActiveBaby.String())
+	require.True(t, del3Tracker.ActiveSatoshis.IsZero(), "Active sats should be zero as validator is jailed")
+	require.True(t, del3Tracker.TotalScore.IsZero(), "Active score should be zero as validator is jailed")
+}
