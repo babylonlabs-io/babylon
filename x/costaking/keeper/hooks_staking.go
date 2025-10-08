@@ -25,7 +25,11 @@ type HookStaking struct {
 // - If difference is negative, ActiveBaby is subtracted
 //
 // Note: This hook uses a cache to track previous delegation amounts to calculate the delta.
+// Defer: Deletes the value from cache after reading it to avoid cases where an (del, val) pair has more than one action
+// in the same block as bond, unbond, bond again
 func (h HookStaking) AfterDelegationModified(ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) error {
+	defer h.k.stkCache.Delete(delAddr, valAddr)
+
 	del, err := h.k.stkK.GetDelegation(ctx, delAddr, valAddr)
 	if err != nil { // we stop if the delegation is not found, because it must be found
 		return err
@@ -47,7 +51,12 @@ func (h HookStaking) AfterDelegationModified(ctx context.Context, delAddr sdk.Ac
 // The AfterDelegationModified hooks is not called in this case as there is no delegation after is modified, so in costaking
 // it should remove all tokens that this pair (del, val) had staked. This value can be achieved by caching the tokens
 // prior to BeforeDelegationRemoved hook call, which is done by BeforeDelegationSharesModified.
+//
+// Defer: Deletes the value from cache after reading it to avoid cases where an (del, val) pair has more than one action
+// in the same block as bond, unbond, bond again
 func (h HookStaking) BeforeDelegationRemoved(ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) error {
+	defer h.k.stkCache.Delete(delAddr, valAddr)
+
 	delTokensBefore := h.k.stkCache.GetStakedAmount(delAddr, valAddr)
 	delTokenChange := delTokensBefore.TruncateInt()
 	if delTokenChange.IsZero() {
