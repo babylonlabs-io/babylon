@@ -57,7 +57,7 @@ that is included in the next block proposal.
 Once a valid checkpoint is generated,
 it is checkpointed into the Bitcoin ledger through
 an off-chain program
-[Vigilante Submitter](https://docs.babylonlabs.io/docs/developer-guides/modules/submitter).
+[Vigilante Submitter](https://docs.babylonlabs.io/guides/architecture/vigilantes/submitter/).
 It is responsible for constructing Bitcoin transactions that
 contain outputs utilizing the
 [`OP_RETURN`](https://en.bitcoin.it/wiki/OP_RETURN) script code
