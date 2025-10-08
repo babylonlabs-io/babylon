@@ -2,6 +2,7 @@ package replay
 
 import (
 	"bytes"
+	"context"
 	"encoding/hex"
 	"math/rand"
 	"testing"
@@ -11,6 +12,7 @@ import (
 	sdkmath "cosmossdk.io/math"
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/util"
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	costkkeeper "github.com/babylonlabs-io/babylon/v4/x/costaking/keeper"
 	costktypes "github.com/babylonlabs-io/babylon/v4/x/costaking/types"
 	ictvtypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
 	"github.com/btcsuite/btcd/wire"
@@ -1048,7 +1050,7 @@ func TestBabyCoStaking(t *testing.T) {
 	d := NewBabylonAppDriverTmpDir(r, t)
 	d.GenerateNewBlockAssertExecutionSuccess()
 
-	stkK, costkK, _, epochK := d.App.StakingKeeper, d.App.CostakingKeeper, d.App.SlashingKeeper, d.App.EpochingKeeper
+	stkK, costkK, slashK, epochK := d.App.StakingKeeper, d.App.CostakingKeeper, d.App.SlashingKeeper, d.App.EpochingKeeper
 
 	// Get all validators to check their commissions
 	validators, err := stkK.GetAllValidators(d.Ctx())
@@ -1057,7 +1059,7 @@ func TestBabyCoStaking(t *testing.T) {
 	val := validators[0]
 	valAddr := sdk.MustValAddressFromBech32(val.OperatorAddress)
 
-	delegators := d.CreateNStakerAccounts(3)
+	delegators := d.CreateNStakerAccounts(5)
 	val2Oper := delegators[0]
 
 	d.MintNativeTo(val2Oper.Address(), 1000_000000)
@@ -1094,18 +1096,41 @@ func TestBabyCoStaking(t *testing.T) {
 
 	// delegate to new validator
 	del3 := delegators[2]
-	del3BabyDelegatedAmt := sdkmath.NewInt(10000)
-	d.TxWrappedDelegate(del3.SenderInfo, val2.OperatorAddress, del3BabyDelegatedAmt)
+	del3BabyDelegatedAmtBeforeJailing := sdkmath.NewInt(10000)
+	d.TxWrappedDelegate(del3.SenderInfo, val2.OperatorAddress, del3BabyDelegatedAmtBeforeJailing)
+
+	del4 := delegators[3]
+	del4BabyDelegatedAmt := sdkmath.NewInt(100)
+	d.TxWrappedDelegate(del4.SenderInfo, val2.OperatorAddress, del4BabyDelegatedAmt)
+
+	del5 := delegators[4]
+	del5BabyDelegatedAmt := sdkmath.NewInt(1000)
+	d.TxWrappedDelegate(del5.SenderInfo, val2.OperatorAddress, del5BabyDelegatedAmt)
+
 	d.GenerateNewBlockAssertExecutionSuccess()
 	d.ProgressTillFirstBlockTheNextEpoch()
 
-	// check costaking tracker is created accordingly
+	// check costaking trackers are created accordingly
 	del3Tracker, err := costkK.GetCostakerRewards(d.Ctx(), del3.Address())
 	require.NoError(t, err)
 	require.NotNil(t, del3Tracker)
-	require.Equal(t, del3Tracker.ActiveBaby, del3BabyDelegatedAmt, "active baby should be self delegation amount", del3Tracker.ActiveBaby.String())
+	require.Equal(t, del3Tracker.ActiveBaby, del3BabyDelegatedAmtBeforeJailing, "active baby should be self delegation amount", del3Tracker.ActiveBaby.String())
 	require.True(t, del3Tracker.ActiveSatoshis.IsZero(), "Active sats should be zero as validator is jailed")
 	require.True(t, del3Tracker.TotalScore.IsZero(), "Active score should be zero as validator is jailed")
+
+	del4Tracker, err := costkK.GetCostakerRewards(d.Ctx(), del4.Address())
+	require.NoError(t, err)
+	require.NotNil(t, del4Tracker)
+	require.Equal(t, del4Tracker.ActiveBaby, del4BabyDelegatedAmt, "active baby should be self delegation amount", del4Tracker.ActiveBaby.String())
+	require.True(t, del4Tracker.ActiveSatoshis.IsZero(), "Active sats should be zero as validator is jailed")
+	require.True(t, del4Tracker.TotalScore.IsZero(), "Active score should be zero as validator is jailed")
+
+	del5Tracker, err := costkK.GetCostakerRewards(d.Ctx(), del5.Address())
+	require.NoError(t, err)
+	require.NotNil(t, del5Tracker)
+	require.Equal(t, del5Tracker.ActiveBaby, del5BabyDelegatedAmt, "active baby should be self delegation amount", del5Tracker.ActiveBaby.String())
+	require.True(t, del5Tracker.ActiveSatoshis.IsZero(), "Active sats should be zero as validator is jailed")
+	require.True(t, del5Tracker.TotalScore.IsZero(), "Active score should be zero as validator is jailed")
 
 	// Produce new blocks till new validator gets jailed for missing blocks
 	val2ValAddr := sdk.MustValAddressFromBech32(val2.OperatorAddress)
@@ -1115,6 +1140,9 @@ func TestBabyCoStaking(t *testing.T) {
 		height := d.Ctx().BlockHeight()
 		val, err := stkK.GetValidator(d.Ctx(), val2ValAddr)
 		require.NoError(t, err)
+
+		// TODO delegator delegates / unbonds at same block that validator gets jailed
+
 		if val.Jailed {
 			jailedHeight = height
 			epoch := epochK.GetEpoch(d.Ctx())
@@ -1124,14 +1152,41 @@ func TestBabyCoStaking(t *testing.T) {
 		}
 	}
 
-	// Make a NEW delegation to validator on same epoch that it gets jailed
+	// =================================================
+	// OPERATIONS ON SAME EPOCH THAT VALIDATOR IS JAILED
+	// =================================================
+	val2, err = stkK.GetValidator(d.Ctx(), val2ValAddr)
+	require.NoError(d.t, err)
+
+	// Make a NEW delegation to validator
 	del2 := delegators[1]
 	del2BabyDelegatedAmt := sdkmath.NewInt(10000000)
 	d.TxWrappedDelegate(del2.SenderInfo, val2.OperatorAddress, del2BabyDelegatedAmt)
 
-	// Extend the del3 delegation
-	del3BabyDelegatedAmt = sdkmath.NewInt(5000)
-	d.TxWrappedDelegate(del3.SenderInfo, val2.OperatorAddress, del3BabyDelegatedAmt)
+	// Extend the existing del3 delegation
+	del3BabyDelegatedAmtAfterJailing := sdkmath.NewInt(5000)
+	d.TxWrappedDelegate(del3.SenderInfo, val2.OperatorAddress, del3BabyDelegatedAmtAfterJailing)
+
+	// The first delegation of del3 was slashed. Get the new delegation amount
+	del3Delegation, err := stkK.GetDelegation(d.Ctx(), del3.Address(), val2ValAddr)
+	require.NoError(d.t, err)
+	del3FirstDelAmtAfterSlashing := val2.TokensFromShares(del3Delegation.Shares).TruncateInt()
+
+	// Totally unbond a delegation
+	// Tokens are already slashed, so for total unbonding need to get the new tokens per shares
+	del4Delegation, err := stkK.GetDelegation(d.Ctx(), del4.Address(), val2ValAddr)
+	require.NoError(d.t, err)
+	del4TotalUnbondAmt := val2.TokensFromShares(del4Delegation.Shares).TruncateInt()
+	d.TxWrappedUndelegate(del4.SenderInfo, val2.OperatorAddress, del4TotalUnbondAmt)
+
+	// get updated delegation amount for del5 after slashing
+	del5Delegation, err := stkK.GetDelegation(d.Ctx(), del5.Address(), val2ValAddr)
+	require.NoError(d.t, err)
+	del5TotalAmtAfterSlashing := val2.TokensFromShares(del5Delegation.Shares).TruncateInt()
+
+	// Partially unbond a delegation
+	del5BabyUnstakeAmt := sdkmath.NewInt(7)
+	d.TxWrappedUndelegate(del5.SenderInfo, val2.OperatorAddress, del5BabyUnstakeAmt)
 
 	d.GenerateNewBlockAssertExecutionSuccess()
 	// progress to next epoch to ensure delegation and jailing are processed
@@ -1154,19 +1209,97 @@ func TestBabyCoStaking(t *testing.T) {
 	require.Error(t, err)
 	require.ErrorContains(t, err, "not found")
 
-	// validator 2 tracker (self delegation) should be zeroed
+	// Trackers for val2, del3, del4 y del5 should be zeroed
+	for _, addr := range []sdk.AccAddress{val2Oper.Address(), del3.Address(), del4.Address(), del5.Address()} {
+		assertZeroCostkTracker(d.t, d.Ctx(), costkK, addr)
+	}
+
+	// =================================================
+	// OPERATIONS AFTER VALIDATOR IS JAILED
+	// =================================================
+
+	// New delegation to already jailed validator (should continue as zero active baby)
+	del3DelegatedAmtAfterJailing := sdkmath.NewInt(100000)
+	d.TxWrappedDelegate(del3.SenderInfo, val2.OperatorAddress, del3DelegatedAmtAfterJailing)
+
+	d.GenerateNewBlockAssertExecutionSuccess()
+	d.ProgressTillFirstBlockTheNextEpoch()
+
+	// check costk tracker is still zero
+	assertZeroCostkTracker(d.t, d.Ctx(), costkK, del3.Address())
+
+	// Unjail the jail validator
+	// make sure block time is after the jail timeout
+	var valConsPubKey cryptotypes.PubKey
+	err = util.Cdc.UnpackAny(val2.ConsensusPubkey, &valConsPubKey)
+	require.NoError(d.t, err)
+	// check unjailing time
+	val2ConsAddr := sdk.ConsAddress(valConsPubKey.Address())
+	info, err := slashK.GetValidatorSigningInfo(d.Ctx(), val2ConsAddr)
+	require.NoError(d.t, err)
+	currBlckTime := d.Ctx().BlockTime()
+	timeToUnjail := info.JailedUntil.Sub(currBlckTime)
+	require.True(d.t, timeToUnjail > 0)
+
+	// produce blocks till after unjail time
+	for currBlckTime.Before(info.JailedUntil.Add(1 * time.Second)) {
+		currBlckTime = d.Ctx().BlockTime()
+		d.GenerateNewBlockAssertExecutionSuccess()
+	}
+
+	d.TxUnjailValidator(val2Oper.SenderInfo, val2.OperatorAddress)
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	// Wait for an epoch
+	d.ProgressTillFirstBlockTheNextEpoch()
+	// check unjailed validator is back in active set
+	epoch = epochK.GetEpoch(d.Ctx())
+	valset = epochK.GetValidatorSet(d.Ctx(), epoch.EpochNumber)
+	require.Len(t, valset, 2, "Unjailed validator should be in the validator set")
+
+	// Check the active baby is properly set back for delegations to this validator
+	// NOTE: Consider that the ones that were slashed will be less than the original staking amount
+
+	// val2 self delegation was slashed
+	selfDel, err := stkK.GetDelegation(d.Ctx(), val2Oper.Address(), val2ValAddr)
+	require.NoError(t, err)
+	expSelfDelAmt := val2.TokensFromShares(selfDel.Shares).TruncateInt()
+	require.True(t, expSelfDelAmt.LT(newValSelfDelegatedAmt), "self delegation should be less than original amount due to slashing", expSelfDelAmt.String())
+	// active baby should be less than self delegation amount due to slashing
 	val2Tracker, err = costkK.GetCostakerRewards(d.Ctx(), val2Oper.Address())
 	require.NoError(t, err)
 	require.NotNil(t, val2Tracker)
-	require.True(t, val2Tracker.ActiveBaby.IsZero(), "active baby should be zero as validator is jailed", val2Tracker.ActiveBaby.String())
-	require.True(t, val2Tracker.ActiveSatoshis.IsZero(), "Active sats should be zero as validator is jailed")
-	require.True(t, val2Tracker.TotalScore.IsZero(), "Active score should be zero as validator is jailed")
+	require.Equal(t, val2Tracker.ActiveBaby, expSelfDelAmt, "active baby should be less than self delegation amount after slashing", val2Tracker.ActiveBaby.String())
+	require.True(t, val2Tracker.ActiveSatoshis.IsZero(), "Active sats should be zero")
+	require.True(t, val2Tracker.TotalScore.IsZero(), "Active score should be zero as validator was jailed entire epoch")
 
-	// delegator 3 tracker should be zeroed as well
 	del3Tracker, err = costkK.GetCostakerRewards(d.Ctx(), del3.Address())
 	require.NoError(t, err)
 	require.NotNil(t, del3Tracker)
-	require.True(t, del3Tracker.ActiveBaby.IsZero(), "active baby should be zero as validator is jailed", del3Tracker.ActiveBaby.String())
-	require.True(t, del3Tracker.ActiveSatoshis.IsZero(), "Active sats should be zero as validator is jailed")
-	require.True(t, del3Tracker.TotalScore.IsZero(), "Active score should be zero as validator is jailed")
+
+	expectedDel3ActiveBaby := del3FirstDelAmtAfterSlashing.Add(del3BabyDelegatedAmtAfterJailing).Add(del3DelegatedAmtAfterJailing)
+	require.Equal(t, del3Tracker.ActiveBaby, expectedDel3ActiveBaby, "active baby should be less than total delegation amount after slashing", del3Tracker.ActiveBaby.String())
+	require.True(t, del3Tracker.ActiveSatoshis.IsZero(), "Active sats should be zero")
+	require.True(t, del3Tracker.TotalScore.IsZero(), "Active score should be zero as validator was jailed entire epoch")
+
+	// del4 fully unbonded so tracker should still be zero
+	assertZeroCostkTracker(d.t, d.Ctx(), costkK, del4.Address())
+
+	// del5 got slashed first and then partially unbonded
+	del5Tracker, err = costkK.GetCostakerRewards(d.Ctx(), del5.Address())
+	require.NoError(t, err)
+	require.NotNil(t, del5Tracker)
+	expectedDel5ActiveBaby := del5TotalAmtAfterSlashing.Sub(del5BabyUnstakeAmt)
+	require.Equal(t, del5Tracker.ActiveBaby, expectedDel5ActiveBaby, "active baby should be less than total delegation amount after slashing and unstaking", del5Tracker.ActiveBaby.String())
+	require.True(t, del5Tracker.ActiveSatoshis.IsZero(), "Active sats should be zero")
+	require.True(t, del5Tracker.TotalScore.IsZero(), "Active score should be zero as validator was jailed entire epoch")
+}
+
+func assertZeroCostkTracker(t *testing.T, ctx context.Context, costkK costkkeeper.Keeper, addr sdk.AccAddress) {
+	trk, err := costkK.GetCostakerRewards(ctx, addr)
+	require.NoError(t, err)
+	require.NotNil(t, trk)
+	require.True(t, trk.ActiveBaby.IsZero(), "active baby should be zero", trk.ActiveBaby.String())
+	require.True(t, trk.ActiveSatoshis.IsZero(), "Active sats should be zero", trk.ActiveSatoshis.String())
+	require.True(t, trk.TotalScore.IsZero(), "Active score should be zero", trk.TotalScore.String())
 }

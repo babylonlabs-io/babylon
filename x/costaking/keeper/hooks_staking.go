@@ -113,7 +113,7 @@ func (h HookStaking) BeforeDelegationRemoved(ctx context.Context, delAddr sdk.Ac
 
 	// if validator is jailed/slashed, don't update the costaker tracker
 	// but keep track of the delta shares (due to full unstaking).
-	// These will be removed from co-staker tracker 
+	// These will be removed from co-staker tracker
 	// when updating the validator's delegators co-staking trackers
 	if valInfo.IsSlashed {
 		deltaShares := math.LegacyZeroDec().Sub(info.Shares)
