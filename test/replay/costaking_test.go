@@ -1057,7 +1057,6 @@ func TestBabyCoStaking(t *testing.T) {
 	require.NoError(d.t, err)
 	require.Len(d.t, validators, 1, "There should be exactly one validator in the test setup")
 	val := validators[0]
-	valAddr := sdk.MustValAddressFromBech32(val.OperatorAddress)
 
 	delegators := d.CreateNStakerAccounts(5)
 	val2Oper := delegators[0]
@@ -1065,7 +1064,7 @@ func TestBabyCoStaking(t *testing.T) {
 	d.MintNativeTo(val2Oper.Address(), 1000_000000)
 	// Create a new validator
 	newValSelfDelegatedAmt := sdkmath.NewInt(1_000000)
-	d.TxCreateValidator(val2Oper.SenderInfo, valAddr.String(), newValSelfDelegatedAmt)
+	d.TxCreateValidator(val2Oper.SenderInfo, newValSelfDelegatedAmt)
 
 	d.GenerateNewBlockAssertExecutionSuccess()
 	d.ProgressTillFirstBlockTheNextEpoch()

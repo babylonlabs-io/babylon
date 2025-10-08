@@ -20,7 +20,7 @@ func (d *BabylonAppDriver) TxWrappedDelegate(delegator *SenderInfo, valAddr stri
 	delegator.IncSeq()
 }
 
-func (d *BabylonAppDriver) TxCreateValidator(operator *SenderInfo, valAddr string, amount sdkmath.Int) {
+func (d *BabylonAppDriver) TxCreateValidator(operator *SenderInfo, amount sdkmath.Int) {
 	msgCreateValidator, err := datagen.BuildMsgWrappedCreateValidatorWithAmount(operator.Address(), amount)
 	if err != nil {
 		d.t.Fatal(err)
