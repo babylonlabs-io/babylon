@@ -706,11 +706,9 @@ func TestBabyCoStaking(t *testing.T) {
 	require.Len(d.t, validators, 1, "There should be exactly one validator in the test setup")
 	val := validators[0]
 	valAddr := sdk.MustValAddressFromBech32(val.OperatorAddress)
-	// covSender := d.CreateCovenantSender()
 
 	delegators := d.CreateNStakerAccounts(3)
 	val2Oper := delegators[0]
-	// del1BabyDelegatedAmt := sdkmath.NewInt(20_000000)
 
 	d.MintNativeTo(val2Oper.Address(), 1000_000000)
 	// Create a new validator
@@ -741,7 +739,7 @@ func TestBabyCoStaking(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, val2Tracker)
 	require.Equal(t, val2Tracker.ActiveBaby, newValSelfDelegatedAmt, "active baby should be self delegation amount", val2Tracker.ActiveBaby.String())
-	require.True(t, val2Tracker.ActiveSatoshis.IsZero(), "Active sats should be zero as validator is jailed")
+	require.True(t, val2Tracker.ActiveSatoshis.IsZero(), "Active sats should be zero")
 	require.True(t, val2Tracker.TotalScore.IsZero(), "Active score should be zero as validator is jailed")
 
 	// delegate to new validator
