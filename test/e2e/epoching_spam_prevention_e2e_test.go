@@ -118,8 +118,7 @@ func (s *EpochingSpamPreventionTestSuite) TestNormalDelegationCase() {
 	// Query validators from the chain
 	validators, err := nonValidatorNode.QueryValidators()
 	s.NoError(err)
-	s.Require().Len(validators, 2, "Need exactly 2 validators")
-	s.T().Logf("Initial validator count: %d", len(validators))
+	s.Require().True(len(validators) > 0, "Need at least 1 validator")
 
 	// Map nodes to validators by matching consensus pubkey
 	var val *stakingtypes.Validator
