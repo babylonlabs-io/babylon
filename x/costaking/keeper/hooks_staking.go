@@ -29,6 +29,15 @@ type HookStaking struct {
 // in the same block as bond, unbond, bond again
 func (h HookStaking) AfterDelegationModified(ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) error {
 	defer h.k.stkCache.Delete(delAddr, valAddr)
+	// Check if validator is in the active set
+	active, valInfo, err := h.isActiveValidator(ctx, valAddr)
+	if err != nil {
+		return err
+	}
+	if !active {
+		// Validator not in active set, skip processing
+		return nil
+	}
 
 	del, err := h.k.stkK.GetDelegation(ctx, delAddr, valAddr)
 	if err != nil { // we stop if the delegation is not found, because it must be found
@@ -40,8 +49,20 @@ func (h HookStaking) AfterDelegationModified(ctx context.Context, delAddr sdk.Ac
 		return err
 	}
 
-	delTokensBefore := h.k.stkCache.GetStakedAmount(delAddr, valAddr)
-	delTokenChange := delTokens.Sub(delTokensBefore).TruncateInt()
+	infoBefore := h.k.stkCache.GetStakedInfo(delAddr, valAddr)
+	delTokenChange := delTokens.Sub(infoBefore.Amount).TruncateInt()
+
+	// if validator is jailed/slashed, don't update the costaker tracker
+	// but keep track of the delta shares (due to unstaking/redelegating/restaking) to remove the remaining shares
+	// when updating the validator's delegators co-staking trackers
+	if valInfo.IsSlashed {
+		// cache the delta shares for future use
+		// NOTE: once the validator is slashed, the 1:1 ratio between tokens and shares is broken
+		deltaShares := del.Shares.Sub(infoBefore.Shares)
+		h.k.stkCache.AddDeltaShares(valAddr, delAddr, deltaShares)
+		return nil
+	}
+
 	return h.k.costakerModified(ctx, delAddr, func(rwdTracker *types.CostakerRewardsTracker) {
 		rwdTracker.ActiveBaby = rwdTracker.ActiveBaby.Add(delTokenChange)
 	})
@@ -57,11 +78,29 @@ func (h HookStaking) AfterDelegationModified(ctx context.Context, delAddr sdk.Ac
 func (h HookStaking) BeforeDelegationRemoved(ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) error {
 	defer h.k.stkCache.Delete(delAddr, valAddr)
 
-	delTokensBefore := h.k.stkCache.GetStakedAmount(delAddr, valAddr)
-	delTokenChange := delTokensBefore.TruncateInt()
+	// Check if validator is in the active set
+	active, valInfo, err := h.isActiveValidator(ctx, valAddr)
+	if err != nil {
+		return err
+	}
+	if !active {
+		// Validator not in active set, skip processing
+		return nil
+	}
+
+	info := h.k.stkCache.GetStakedInfo(delAddr, valAddr)
+	delTokenChange := info.Amount.TruncateInt()
 	if delTokenChange.IsZero() {
 		return nil
 	}
+
+	// if validator is jailed/slashed, update the costaker tracker
+	// but we need to correct here the tokens to be removed to from the co-staking tracker
+	// which is the amount of tokens before slashing
+	if valInfo.IsSlashed {
+		delTokenChange = info.Shares.MulInt(valInfo.OriginalTokens).Quo(valInfo.OriginalShares).TruncateInt()
+	}
+
 	return h.k.costakerModified(ctx, delAddr, func(rwdTracker *types.CostakerRewardsTracker) {
 		rwdTracker.ActiveBaby = rwdTracker.ActiveBaby.Sub(delTokenChange)
 	})
@@ -74,6 +113,16 @@ func (h HookStaking) BeforeDelegationRemoved(ctx context.Context, delAddr sdk.Ac
 // State Changes:
 // - Caches current delegation amount in temporary storage
 func (h HookStaking) BeforeDelegationSharesModified(ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) error {
+	// Check if validator is in the active set
+	active, _, err := h.isActiveValidator(ctx, valAddr)
+	if err != nil {
+		return err
+	}
+	if !active {
+		// Validator not in active set, skip processing
+		return nil
+	}
+
 	del, err := h.k.stkK.GetDelegation(ctx, delAddr, valAddr)
 	if err != nil {
 		// probably is not found, but we don't want to stop execution for this
@@ -85,7 +134,7 @@ func (h HookStaking) BeforeDelegationSharesModified(ctx context.Context, delAddr
 	if err != nil {
 		return err
 	}
-	h.k.stkCache.SetStakedAmount(delAddr, valAddr, delTokens)
+	h.k.stkCache.SetStakedInfo(delAddr, valAddr, delTokens, del.Shares)
 	return nil
 }
 
@@ -135,11 +184,89 @@ func (k Keeper) HookStaking() HookStaking {
 }
 
 // TokensFromShares gets the validator and returns the tokens based on the amount of shares
+// This function uses the validator's original tokens stored in the module state
+// to calculate the delegation tokens from shares. In this way, we avoid issues
+// that may arise from changes in the validator's tokens due to slashing
 func (k Keeper) TokensFromShares(ctx context.Context, valAddr sdk.ValAddress, delShares math.LegacyDec) (math.LegacyDec, error) {
-	valI, err := k.stkK.Validator(ctx, valAddr)
+	val, err := k.stkK.GetValidator(ctx, valAddr)
 	if err != nil {
 		return math.LegacyDec{}, err
 	}
-	delTokens := valI.TokensFromShares(delShares)
+
+	delTokens := val.TokensFromShares(delShares)
 	return delTokens, nil
+}
+
+// buildCurrEpochValSetMap builds the current epoch's validator set map
+// with their original tokens stored in the module state
+func (k Keeper) buildCurrEpochValSetMap(ctx context.Context) (map[string]types.ValidatorInfo, error) {
+	valMap := make(map[string]types.ValidatorInfo)
+
+	// During genesis, the epoching store may not be initialized yet.
+	// In this case, we return an empty map and rely on assumeActiveValidatorIfGenesis
+	// to populate validators as needed.
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	if sdkCtx.BlockHeader().Height == 0 {
+		return valMap, nil
+	}
+
+	// Get the current epoch's validator set from the epoching keeper
+	valSet, err := k.validatorSet.Get(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert epoching ValidatorSet to map
+	for _, val := range valSet.Validators {
+		valAddr := sdk.ValAddress(val.Addr)
+		// Get current state of validators from staking keeper
+		stkVal, err := k.stkK.GetValidator(ctx, valAddr)
+		if err != nil {
+			return nil, err
+		}
+
+		currentTokens := stkVal.GetTokens()
+		valMap[valAddr.String()] = types.ValidatorInfo{
+			ValAddress:     valAddr,
+			OriginalTokens: val.Tokens,
+			OriginalShares: val.Shares,
+			CurrentTokens:  currentTokens,
+			IsSlashed:      currentTokens.LT(val.Tokens), // consider slashed if current tokens < original tokens
+		}
+	}
+
+	return valMap, nil
+}
+
+// assumeActiveValidatorIfGenesis adds the given validator to the active set if block height is genesis height (0)
+// and the validator is not already in the set
+func (k Keeper) assumeActiveValidatorIfGenesis(ctx context.Context, valSet map[string]types.ValidatorInfo, valAddr sdk.ValAddress) {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	if sdkCtx.BlockHeader().Height == 0 {
+		// Add validator to active set during genesis
+		valSet[valAddr.String()] = types.ValidatorInfo{
+			ValAddress: valAddr,
+			IsSlashed:  false,
+		}
+	}
+}
+
+func (h HookStaking) isActiveValidator(ctx context.Context, valAddr sdk.ValAddress) (bool, types.ValidatorInfo, error) {
+	// Check if validator is in the active set
+	valSet, err := h.k.stkCache.GetActiveValidatorSet(ctx, h.k.buildCurrEpochValSetMap)
+	if err != nil {
+		return false, types.ValidatorInfo{}, err
+	}
+
+	// NOTE: co-staking genesis is called before staking genesis.
+	// The active set will be populated during the staking genesis but after calling the hooks, so the active validators map will be empty.
+	// Thus, for testing purposes, we assume all validators are active if the set is empty and block height is 0.
+	h.k.assumeActiveValidatorIfGenesis(ctx, valSet, valAddr)
+
+	valInfo, ok := valSet[valAddr.String()]
+	if !ok {
+		// Validator not in active set, skip processing
+		return false, types.ValidatorInfo{}, nil
+	}
+	return true, valInfo, nil
 }

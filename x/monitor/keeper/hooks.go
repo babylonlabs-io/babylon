@@ -27,6 +27,8 @@ func (h Hooks) AfterEpochEnds(ctx context.Context, epoch uint64) {
 	h.k.updateBtcLightClientHeightForEpoch(ctx, epoch)
 }
 
+func (h Hooks) BeforeEpochEnds(ctx context.Context, epoch uint64) {}
+
 func (h Hooks) BeforeSlashThreshold(ctx context.Context, valSet etypes.ValidatorSet) {}
 
 func (h Hooks) AfterBlsKeyRegistered(ctx context.Context, valAddr sdk.ValAddress) error {

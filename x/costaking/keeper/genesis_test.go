@@ -65,6 +65,15 @@ func FuzzInitExportGenesis(f *testing.F) {
 			},
 			HistoricalRewards:       historicalRewards,
 			CostakersRewardsTracker: costakerTrackers,
+			ValidatorSet: types.ValidatorSet{
+				Validators: []*types.Validator{
+					{
+						Addr:   datagen.GenRandomAddress().Bytes(),
+						Tokens: math.NewInt(1000),
+						Shares: math.LegacyNewDec(1000),
+					},
+				},
+			},
 		}
 
 		// Validate genesis state
@@ -127,6 +136,15 @@ func TestInitGenesisWithCurrentRewards(t *testing.T) {
 		},
 		HistoricalRewards:       []types.HistoricalRewardsEntry{},
 		CostakersRewardsTracker: []types.CostakerRewardsTrackerEntry{},
+		ValidatorSet: types.ValidatorSet{
+			Validators: []*types.Validator{
+				{
+					Addr:   datagen.GenRandomAddress().Bytes(),
+					Tokens: math.NewInt(1000),
+					Shares: math.LegacyNewDec(1000),
+				},
+			},
+		},
 	}
 
 	err := k.InitGenesis(ctx, genState)
@@ -175,6 +193,15 @@ func TestInitGenesisWithHistoricalRewards(t *testing.T) {
 		CurrentRewards:          types.CurrentRewardsEntry{},
 		HistoricalRewards:       historicalRewards,
 		CostakersRewardsTracker: []types.CostakerRewardsTrackerEntry{},
+		ValidatorSet: types.ValidatorSet{
+			Validators: []*types.Validator{
+				{
+					Addr:   datagen.GenRandomAddress().Bytes(),
+					Tokens: math.NewInt(1000),
+					Shares: math.LegacyNewDec(1000),
+				},
+			},
+		},
 	}
 
 	err := k.InitGenesis(ctx, genState)
@@ -226,6 +253,15 @@ func TestInitGenesisWithCostakerTrackers(t *testing.T) {
 		CurrentRewards:          types.CurrentRewardsEntry{},
 		HistoricalRewards:       []types.HistoricalRewardsEntry{},
 		CostakersRewardsTracker: costakerTrackers,
+		ValidatorSet: types.ValidatorSet{
+			Validators: []*types.Validator{
+				{
+					Addr:   datagen.GenRandomAddress().Bytes(),
+					Tokens: math.NewInt(1000),
+					Shares: math.LegacyNewDec(1000),
+				},
+			},
+		},
 	}
 
 	err := k.InitGenesis(ctx, genState)
@@ -271,4 +307,5 @@ func TestExportGenesisEmpty(t *testing.T) {
 	require.Equal(t, types.DefaultParams(), exportedGenState.Params)
 	require.Empty(t, exportedGenState.HistoricalRewards)
 	require.Empty(t, exportedGenState.CostakersRewardsTracker)
+	require.Empty(t, exportedGenState.ValidatorSet)
 }

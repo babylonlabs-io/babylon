@@ -98,3 +98,11 @@ func (crt CostakerRewardsTracker) Validate() error {
 	}
 	return nil
 }
+
+func (crt *CostakerRewardsTracker) Sanitize() {
+	// Handle the case where ActiveBaby is -1 due to rounding when the validator
+	// lost its 1:1 ratio between shares and tokens due to slashing
+	if crt.ActiveBaby.Equal(sdkmath.NewInt(-1)) {
+		crt.ActiveBaby = sdkmath.ZeroInt()
+	}
+}

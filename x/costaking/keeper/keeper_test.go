@@ -14,16 +14,16 @@ func TestKeeperEndBlock(t *testing.T) {
 	delAddr, valAddr := datagen.GenRandomAddress(), datagen.GenRandomValidatorAddress()
 	shares := math.LegacyNewDec(1500)
 
-	k.stkCache.SetStakedAmount(delAddr, valAddr, shares)
+	k.stkCache.SetStakedInfo(delAddr, valAddr, shares, shares)
 
-	cachedAmount := k.stkCache.GetStakedAmount(delAddr, valAddr)
-	require.True(t, shares.Equal(cachedAmount))
+	cachedInfo := k.stkCache.GetStakedInfo(delAddr, valAddr)
+	require.True(t, shares.Equal(cachedInfo.Amount))
 
-	k.stkCache.SetStakedAmount(delAddr, valAddr, shares)
+	k.stkCache.SetStakedInfo(delAddr, valAddr, shares, shares)
 
 	err := k.EndBlock(ctx)
 	require.NoError(t, err)
 
-	cachedAmount = k.stkCache.GetStakedAmount(delAddr, valAddr)
-	require.True(t, cachedAmount.IsZero())
+	cachedInfo = k.stkCache.GetStakedInfo(delAddr, valAddr)
+	require.True(t, cachedInfo.Amount.IsZero())
 }

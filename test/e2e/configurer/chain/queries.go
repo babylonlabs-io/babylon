@@ -24,6 +24,7 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	icacontrollertypes "github.com/cosmos/ibc-go/v10/modules/apps/27-interchain-accounts/controller/types"
 	"github.com/stretchr/testify/require"
@@ -668,6 +669,22 @@ func (n *NodeConfig) QueryValidators() ([]stakingtypes.Validator, error) {
 	return resp.Validators, nil
 }
 
+// QueryValidators returns all validators
+func (n *NodeConfig) QueryValidator(valAddr string) (*stakingtypes.Validator, error) {
+	path := fmt.Sprintf("cosmos/staking/v1beta1/validators/%s", valAddr)
+	bz, err := n.QueryGRPCGateway(path, url.Values{})
+	if err != nil {
+		return nil, err
+	}
+
+	var resp stakingtypes.QueryValidatorResponse
+	if err := util.Cdc.UnmarshalJSON(bz, &resp); err != nil {
+		return nil, err
+	}
+
+	return &resp.Validator, nil
+}
+
 // QueryDelegatorDelegations returns delegator delegations for a given address
 func (n *NodeConfig) QueryDelegatorDelegations(delegatorAddr string) ([]stakingtypes.DelegationResponse, error) {
 	path := fmt.Sprintf("cosmos/staking/v1beta1/delegations/%s", delegatorAddr)
@@ -677,6 +694,22 @@ func (n *NodeConfig) QueryDelegatorDelegations(delegatorAddr string) ([]stakingt
 	}
 
 	var resp stakingtypes.QueryDelegatorDelegationsResponse
+	if err := util.Cdc.UnmarshalJSON(bz, &resp); err != nil {
+		return nil, err
+	}
+
+	return resp.DelegationResponses, nil
+}
+
+// QueryValidatorDelegations returns validator delegations for a given address
+func (n *NodeConfig) QueryValidatorDelegations(validatorAddr string) ([]stakingtypes.DelegationResponse, error) {
+	path := fmt.Sprintf("/cosmos/staking/v1beta1/validators/%s/delegations", validatorAddr)
+	bz, err := n.QueryGRPCGateway(path, url.Values{})
+	if err != nil {
+		return nil, err
+	}
+
+	var resp stakingtypes.QueryValidatorDelegationsResponse
 	if err := util.Cdc.UnmarshalJSON(bz, &resp); err != nil {
 		return nil, err
 	}
@@ -703,4 +736,80 @@ func (n *NodeConfig) WaitForNextEpoch() (uint64, error) {
 	}, time.Minute*2, time.Millisecond*500, "failed to reach next epoch")
 
 	return nextEpoch, nil
+}
+
+// QueryAllSigningInfos queries all validator signing infos
+func (n *NodeConfig) QueryAllSigningInfos() ([]slashingtypes.ValidatorSigningInfo, error) {
+	path := "cosmos/slashing/v1beta1/signing_infos"
+	bz, err := n.QueryGRPCGateway(path, url.Values{})
+	if err != nil {
+		return nil, err
+	}
+
+	var resp slashingtypes.QuerySigningInfosResponse
+	if err := util.Cdc.UnmarshalJSON(bz, &resp); err != nil {
+		return nil, err
+	}
+
+	return resp.Info, nil
+}
+
+// QuerySigningInfo queries the signing info for a validator
+func (n *NodeConfig) QuerySigningInfo(consAddr string) (slashingtypes.ValidatorSigningInfo, error) {
+	path := fmt.Sprintf("cosmos/slashing/v1beta1/signing_infos/%s", consAddr)
+	bz, err := n.QueryGRPCGateway(path, url.Values{})
+	if err != nil {
+		return slashingtypes.ValidatorSigningInfo{}, err
+	}
+
+	var resp slashingtypes.QuerySigningInfoResponse
+	if err := util.Cdc.UnmarshalJSON(bz, &resp); err != nil {
+		return slashingtypes.ValidatorSigningInfo{}, err
+	}
+
+	return resp.ValSigningInfo, nil
+}
+
+// QuerySlashingParams queries the slashing module parameters
+func (n *NodeConfig) QuerySlashingParams() (slashingtypes.Params, error) {
+	path := "cosmos/slashing/v1beta1/params"
+	bz, err := n.QueryGRPCGateway(path, url.Values{})
+	if err != nil {
+		return slashingtypes.Params{}, err
+	}
+
+	var resp slashingtypes.QueryParamsResponse
+	if err := util.Cdc.UnmarshalJSON(bz, &resp); err != nil {
+		return slashingtypes.Params{}, err
+	}
+
+	return resp.Params, nil
+}
+
+// QueryEpochValSet queries the validator set of a given epoch
+func (n *NodeConfig) QueryEpochValSet(epochNum uint64) (*etypes.QueryEpochValSetResponse, error) {
+	path := fmt.Sprintf("babylon/epoching/v1/epochs/%d/validator_set", epochNum)
+	bz, err := n.QueryGRPCGateway(path, url.Values{})
+	if err != nil {
+		return nil, err
+	}
+
+	var resp etypes.QueryEpochValSetResponse
+	if err := util.Cdc.UnmarshalJSON(bz, &resp); err != nil {
+		return nil, err
+	}
+
+	return &resp, nil
+}
+
+// QueryCurrentEpochValSet queries the validator set of the current epoch
+func (n *NodeConfig) QueryCurrentEpochValSet() (*etypes.QueryEpochValSetResponse, error) {
+	// First get the current epoch number
+	currentEpoch, err := n.QueryCurrentEpoch()
+	if err != nil {
+		return nil, err
+	}
+
+	// Then query the validator set for that epoch
+	return n.QueryEpochValSet(currentEpoch)
 }
