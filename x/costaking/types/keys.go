@@ -20,4 +20,5 @@ var (
 	HistoricalRewardsKeyPrefix      = collections.NewPrefix(2) // key prefix for (period) => HistoricalRewards
 	CurrentRewardsKeyPrefix         = collections.NewPrefix(3) // key prefix for CurrentRewards
 	CostakerRewardsTrackerKeyPrefix = collections.NewPrefix(4) // key prefix for (costaker_addr) => CostakerRewardsTracker
+	ValidatorsKeyPrefix             = collections.NewPrefix(5) // key prefix for validator set
 )

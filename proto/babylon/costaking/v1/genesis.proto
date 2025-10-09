@@ -22,6 +22,9 @@ message GenesisState {
   // costaker addresses.
   repeated CostakerRewardsTrackerEntry costakers_rewards_tracker = 4
       [ (gogoproto.nullable) = false ];
+  // validator_set contains all validators and their delegated tokens.
+  ValidatorSet validator_set = 5
+      [ (gogoproto.nullable) = false ];
 }
 
 // CurrentRewardsEntry represents the chain current rewards.

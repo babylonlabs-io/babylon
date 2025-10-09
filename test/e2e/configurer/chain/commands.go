@@ -22,6 +22,9 @@ import (
 	btccheckpointtypes "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
 	blc "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
 	cttypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
+	cmtjson "github.com/cometbft/cometbft/libs/json"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
+	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 	sdkquerytypes "github.com/cosmos/cosmos-sdk/types/query"
@@ -573,11 +576,29 @@ func (n *NodeConfig) FailICASendTx(from, connectionID, packetMsgPath string) {
 	n.LogActionF("Failed to perform ICA send (as expected)")
 }
 
-func (n *NodeConfig) Delegate(fromWallet, validator string, amount string, overallFlags ...string) {
+func (n *NodeConfig) Delegate(fromWallet, validator string, amount string, overallFlags ...string) (txHash string) {
 	n.LogActionF("delegating from %s to validator %s", fromWallet, validator)
 	cmd := []string{"babylond", "tx", "epoching", "delegate", validator, amount, fmt.Sprintf("--from=%s", fromWallet)}
-	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, append(cmd, overallFlags...))
+	outBuf, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, append(cmd, overallFlags...))
 
 	require.NoError(n.t, err)
 	n.LogActionF("successfully delegated %s to validator %s", fromWallet, validator)
+	return GetTxHashFromOutput(outBuf.String())
+}
+
+// ValidatorConsPubKey gets the consensus pubkey base64 key from a validator node
+func (n *NodeConfig) ValidatorConsPubKey() cryptotypes.PubKey {
+	cmd := []string{"babylond", "comet", "show-validator", "--home=/home/babylon/babylondata"}
+	outBuf, _, err := n.containerManager.ExecCmd(n.t, n.Name, cmd, "")
+	require.NoError(n.t, err)
+
+	// Parse the JSON output to extract the base64 key
+	// Format: {"@type":"/cosmos.crypto.ed25519.PubKey","key":"<base64>"}
+	var pubKey ed25519.PubKey
+	output := strings.TrimSpace(outBuf.String())
+
+	err = cmtjson.Unmarshal([]byte(output), &pubKey)
+	require.NoError(n.t, err)
+
+	return &pubKey
 }

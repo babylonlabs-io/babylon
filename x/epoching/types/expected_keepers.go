@@ -63,6 +63,7 @@ type StakingKeeper interface {
 // EpochingHooks event hooks for epoching validator object (noalias)
 type EpochingHooks interface {
 	AfterEpochBegins(ctx context.Context, epoch uint64)            // Must be called after an epoch begins
+	BeforeEpochEnds(ctx context.Context, epoch uint64)             // Must be called before an epoch ends
 	AfterEpochEnds(ctx context.Context, epoch uint64)              // Must be called after an epoch ends
 	BeforeSlashThreshold(ctx context.Context, valSet ValidatorSet) // Must be called before a certain threshold (1/3 or 2/3) of validators are slashed in a single epoch
 }

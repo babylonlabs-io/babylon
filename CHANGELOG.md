@@ -41,6 +41,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 - [#1762](https://github.com/babylonlabs-io/babylon/pull/1762) Add new test case on stake expansion
 - [#1785](https://github.com/babylonlabs-io/babylon/pull/1785) CI reusable to v0.13.5 and golang lint version 2
+- [#1776](https://github.com/babylonlabs-io/babylon/pull/1776) Track baby staked to active validators only
 
 ### Bug fixes
 

@@ -11,7 +11,7 @@ import (
 func TestNewStakingCacheIsNotNil(t *testing.T) {
 	cache := NewStakingCache()
 	require.NotNil(t, cache)
-	require.NotNil(t, cache.amtByValByDel)
+	require.NotNil(t, cache.stkInfoByValByDel)
 }
 
 func TestStakingCacheSetAndGetAndDeleteStakedAmount(t *testing.T) {
@@ -27,40 +27,40 @@ func TestStakingCacheSetAndGetAndDeleteStakedAmount(t *testing.T) {
 	amount3 := math.LegacyNewDec(300)
 
 	// not found
-	result := cache.GetStakedAmount(delAddr1, valAddr1)
-	require.True(t, result.IsZero())
+	result := cache.GetStakedInfo(delAddr1, valAddr1)
+	require.True(t, result.Amount.IsZero())
 
-	cache.SetStakedAmount(delAddr1, valAddr1, amount1)
-	cache.SetStakedAmount(delAddr1, valAddr2, amount2)
-	cache.SetStakedAmount(delAddr2, valAddr1, amount3)
+	cache.SetStakedInfo(delAddr1, valAddr1, amount1, amount1)
+	cache.SetStakedInfo(delAddr1, valAddr2, amount2, amount2)
+	cache.SetStakedInfo(delAddr2, valAddr1, amount3, amount3)
 
 	// Get and delete values, verifying they return correct amounts
-	result1 := cache.GetStakedAmount(delAddr1, valAddr1)
-	require.True(t, amount1.Equal(result1))
+	result1 := cache.GetStakedInfo(delAddr1, valAddr1)
+	require.True(t, amount1.Equal(result1.Amount))
 
-	result2 := cache.GetStakedAmount(delAddr1, valAddr2)
-	require.True(t, amount2.Equal(result2))
+	result2 := cache.GetStakedInfo(delAddr1, valAddr2)
+	require.True(t, amount2.Equal(result2.Amount))
 
-	result3 := cache.GetStakedAmount(delAddr2, valAddr1)
-	require.True(t, amount3.Equal(result3))
+	result3 := cache.GetStakedInfo(delAddr2, valAddr1)
+	require.True(t, amount3.Equal(result3.Amount))
 
 	cache.Clear()
 
 	// Verify all values are deleted (should return zero)
-	result = cache.GetStakedAmount(delAddr1, valAddr1)
-	require.True(t, result.IsZero())
+	result = cache.GetStakedInfo(delAddr1, valAddr1)
+	require.True(t, result.Amount.IsZero())
 
-	result = cache.GetStakedAmount(delAddr1, valAddr2)
-	require.True(t, result.IsZero())
+	result = cache.GetStakedInfo(delAddr1, valAddr2)
+	require.True(t, result.Amount.IsZero())
 
-	result = cache.GetStakedAmount(delAddr2, valAddr1)
-	require.True(t, result.IsZero())
+	result = cache.GetStakedInfo(delAddr2, valAddr1)
+	require.True(t, result.Amount.IsZero())
 
-	cache.SetStakedAmount(delAddr1, valAddr1, amount1)
-	cache.SetStakedAmount(delAddr1, valAddr1, amount2)
+	cache.SetStakedInfo(delAddr1, valAddr1, amount1, amount1)
+	cache.SetStakedInfo(delAddr1, valAddr1, amount2, amount2) // overwrite
 
-	result2 = cache.GetStakedAmount(delAddr1, valAddr1)
-	require.True(t, amount2.Equal(result2))
+	result2 = cache.GetStakedInfo(delAddr1, valAddr1)
+	require.True(t, amount2.Equal(result2.Amount))
 }
 
 func TestStakingCacheGetAndDeleteStakedAmountNilMap(t *testing.T) {
@@ -71,10 +71,10 @@ func TestStakingCacheGetAndDeleteStakedAmountNilMap(t *testing.T) {
 
 	// Test with manually setting nil map (edge case)
 	delAddrStr := delAddr.String()
-	cache.amtByValByDel[delAddrStr] = nil
+	cache.stkInfoByValByDel[delAddrStr] = nil
 
-	result := cache.GetStakedAmount(delAddr, valAddr)
-	require.True(t, result.IsZero())
+	result := cache.GetStakedInfo(delAddr, valAddr)
+	require.True(t, result.Amount.IsZero())
 }
 
 func TestStakingCacheGetAndDeleteStakedAmountPreservesOtherValidators(t *testing.T) {
@@ -90,19 +90,19 @@ func TestStakingCacheGetAndDeleteStakedAmountPreservesOtherValidators(t *testing
 	amount3 := math.LegacyNewDec(300)
 
 	// Set up multiple validators for the same delegator
-	cache.SetStakedAmount(delAddr, valAddr1, amount1)
-	cache.SetStakedAmount(delAddr, valAddr2, amount2)
-	cache.SetStakedAmount(delAddr, valAddr3, amount3)
+	cache.SetStakedInfo(delAddr, valAddr1, amount1, amount1)
+	cache.SetStakedInfo(delAddr, valAddr2, amount2, amount2)
+	cache.SetStakedInfo(delAddr, valAddr3, amount3, amount3)
 
-	result := cache.GetStakedAmount(delAddr, valAddr2)
-	require.True(t, amount2.Equal(result))
+	result := cache.GetStakedInfo(delAddr, valAddr2)
+	require.True(t, amount2.Equal(result.Amount))
 	// check again the value
-	result = cache.GetStakedAmount(delAddr, valAddr2)
-	require.True(t, amount2.Equal(result))
+	result = cache.GetStakedInfo(delAddr, valAddr2)
+	require.True(t, amount2.Equal(result.Amount))
 
 	// Verify the delegator's map still exists and contains the correct validators
 	delAddrStr := delAddr.String()
-	valMap, exists := cache.amtByValByDel[delAddrStr]
+	valMap, exists := cache.stkInfoByValByDel[delAddrStr]
 	require.True(t, exists)
 	require.Equal(t, 3, len(valMap))
 
@@ -122,7 +122,7 @@ func TestStakingCacheGetAndDeleteStakedAmountPreservesOtherValidators(t *testing
 	cache.Clear()
 
 	// Verify the delegator's map was cleaned up
-	_, exists = cache.amtByValByDel[delAddrStr]
+	_, exists = cache.stkInfoByValByDel[delAddrStr]
 	require.False(t, exists)
 }
 
@@ -133,15 +133,15 @@ func TestStakingCacheClear(t *testing.T) {
 	valAddr := sdk.ValAddress("valAddr")
 	amount3 := math.LegacyNewDec(300)
 
-	cache.SetStakedAmount(delAddr, valAddr, amount3)
+	cache.SetStakedInfo(delAddr, valAddr, amount3, amount3)
 
-	result := cache.GetStakedAmount(delAddr, valAddr)
-	require.True(t, result.Equal(amount3))
+	result := cache.GetStakedInfo(delAddr, valAddr)
+	require.True(t, amount3.Equal(result.Amount))
 
 	cache.Clear()
 
-	result = cache.GetStakedAmount(delAddr, valAddr)
-	require.True(t, result.IsZero())
+	result = cache.GetStakedInfo(delAddr, valAddr)
+	require.True(t, result.Amount.IsZero())
 }
 
 func TestStakingCacheDelete(t *testing.T) {
@@ -151,15 +151,17 @@ func TestStakingCacheDelete(t *testing.T) {
 	valAddr := sdk.ValAddress("valAddr")
 	amount := math.LegacyNewDec(100)
 
-	cache.SetStakedAmount(delAddr, valAddr, amount)
+	cache.SetStakedInfo(delAddr, valAddr, amount, amount)
 
-	result := cache.GetStakedAmount(delAddr, valAddr)
-	require.True(t, result.Equal(amount))
+	result := cache.GetStakedInfo(delAddr, valAddr)
+	require.True(t, amount.Equal(result.Amount))
+	require.True(t, amount.Equal(result.Shares))
 
 	cache.Delete(delAddr, valAddr)
 
-	result = cache.GetStakedAmount(delAddr, valAddr)
-	require.True(t, result.IsZero())
+	result = cache.GetStakedInfo(delAddr, valAddr)
+	require.True(t, result.Amount.IsZero())
+	require.True(t, result.Shares.IsZero())
 }
 
 func TestStakingCacheDeleteNonExistentDelegator(t *testing.T) {
@@ -170,8 +172,9 @@ func TestStakingCacheDeleteNonExistentDelegator(t *testing.T) {
 
 	cache.Delete(delAddr, valAddr)
 
-	result := cache.GetStakedAmount(delAddr, valAddr)
-	require.True(t, result.IsZero())
+	result := cache.GetStakedInfo(delAddr, valAddr)
+	require.True(t, result.Amount.IsZero())
+	require.True(t, result.Shares.IsZero())
 }
 
 func TestStakingCacheDeleteNonExistentValidator(t *testing.T) {
@@ -182,12 +185,13 @@ func TestStakingCacheDeleteNonExistentValidator(t *testing.T) {
 	valAddr2 := sdk.ValAddress("valAddr2")
 	amount := math.LegacyNewDec(100)
 
-	cache.SetStakedAmount(delAddr, valAddr1, amount)
+	cache.SetStakedInfo(delAddr, valAddr1, amount, amount)
 
 	cache.Delete(delAddr, valAddr2)
 
-	result := cache.GetStakedAmount(delAddr, valAddr1)
-	require.True(t, result.Equal(amount))
+	result := cache.GetStakedInfo(delAddr, valAddr1)
+	require.True(t, amount.Equal(result.Amount))
+	require.True(t, amount.Equal(result.Shares))
 }
 
 func TestStakingCacheDeletePreservesOtherValidators(t *testing.T) {
@@ -202,18 +206,21 @@ func TestStakingCacheDeletePreservesOtherValidators(t *testing.T) {
 	amount2 := math.LegacyNewDec(200)
 	amount3 := math.LegacyNewDec(300)
 
-	cache.SetStakedAmount(delAddr, valAddr1, amount1)
-	cache.SetStakedAmount(delAddr, valAddr2, amount2)
-	cache.SetStakedAmount(delAddr, valAddr3, amount3)
+	cache.SetStakedInfo(delAddr, valAddr1, amount1, amount1)
+	cache.SetStakedInfo(delAddr, valAddr2, amount2, amount2)
+	cache.SetStakedInfo(delAddr, valAddr3, amount3, amount3)
 
 	cache.Delete(delAddr, valAddr2)
 
-	result1 := cache.GetStakedAmount(delAddr, valAddr1)
-	require.True(t, result1.Equal(amount1))
+	result1 := cache.GetStakedInfo(delAddr, valAddr1)
+	require.True(t, amount1.Equal(result1.Amount))
+	require.True(t, amount1.Equal(result1.Shares))
 
-	result2 := cache.GetStakedAmount(delAddr, valAddr2)
-	require.True(t, result2.IsZero())
+	result2 := cache.GetStakedInfo(delAddr, valAddr2)
+	require.True(t, result2.Amount.IsZero())
+	require.True(t, result2.Shares.IsZero())
 
-	result3 := cache.GetStakedAmount(delAddr, valAddr3)
-	require.True(t, result3.Equal(amount3))
+	result3 := cache.GetStakedInfo(delAddr, valAddr3)
+	require.True(t, amount3.Equal(result3.Amount))
+	require.True(t, amount3.Equal(result3.Shares))
 }

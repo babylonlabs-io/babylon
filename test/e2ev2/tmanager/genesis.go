@@ -309,4 +309,3 @@ func UpdateGenesisTokenFactory(tokenfactoryGenState *tokenfactorytypes.GenesisSt
 		DenomCreationFee: sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(10000))),
 	}
 }
-

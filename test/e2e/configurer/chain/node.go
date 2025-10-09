@@ -5,7 +5,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"regexp"
-	"strings"
 	"testing"
 	"time"
 
@@ -175,13 +174,26 @@ func (n *NodeConfig) extractOperatorAddressIfValidator() error {
 
 	cmd := []string{"babylond", "debug", "addr", hex.EncodeToString(n.PublicKey)}
 	n.t.Logf("extracting validator operator addresses for validator: %s", n.Name)
-	_, errBuf, err := n.containerManager.ExecCmd(n.t, n.Name, cmd, "")
+	outBuf, errBuf, err := n.containerManager.ExecCmd(n.t, n.Name, cmd, "")
 	if err != nil {
 		return err
 	}
-	re := regexp.MustCompile("bbnvaloper(.{39})")
-	operAddr := fmt.Sprintf("%s\n", re.FindString(errBuf.String()))
-	n.OperatorAddress = strings.TrimSuffix(operAddr, "\n")
+
+	// Try to find the operator address in stdout first, then stderr
+	output := outBuf.String()
+	if output == "" {
+		output = errBuf.String()
+	}
+
+	// Match the full bech32 validator operator address (bbnvaloper1... with ~59 chars total)
+	re := regexp.MustCompile(`bbnvaloper1[a-z0-9]{38,59}`)
+	operAddr := re.FindString(output)
+	n.OperatorAddress = operAddr
+
+	if n.OperatorAddress == "" {
+		n.t.Logf("Warning: could not extract operator address for validator %s from output: %s", n.Name, output)
+	}
+
 	return nil
 }
 
