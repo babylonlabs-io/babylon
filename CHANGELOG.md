@@ -83,6 +83,13 @@ as the completely removal of an baby delegation doesn't calls `AfterDelegationMo
 
 - [#1231](https://github.com/babylonlabs-io/babylon/pull/1231) Add BTC stake expansion.
 
+## v2.3.1
+
+### Improvements
+
+- [#1775](https://github.com/babylonlabs-io/babylon/pull/1775) testnet: add upgrade `v23` to testnet build tag
+for bbn-test-6
+
 ## v2.3.0
 
 ### Improvements
