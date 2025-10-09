@@ -1095,15 +1095,15 @@ func TestBabyCoStaking(t *testing.T) {
 
 	// delegate to new validator
 	del3 := delegators[2]
-	del3BabyDelegatedAmtBeforeJailing := sdkmath.NewInt(10000)
+	del3BabyDelegatedAmtBeforeJailing := sdkmath.NewInt(1_000000)
 	d.TxWrappedDelegate(del3.SenderInfo, val2.OperatorAddress, del3BabyDelegatedAmtBeforeJailing)
 
 	del4 := delegators[3]
-	del4BabyDelegatedAmt := sdkmath.NewInt(100)
+	del4BabyDelegatedAmt := sdkmath.NewInt(2_000000)
 	d.TxWrappedDelegate(del4.SenderInfo, val2.OperatorAddress, del4BabyDelegatedAmt)
 
 	del5 := delegators[4]
-	del5BabyDelegatedAmt := sdkmath.NewInt(1000)
+	del5BabyDelegatedAmt := sdkmath.NewInt(1_000000)
 	d.TxWrappedDelegate(del5.SenderInfo, val2.OperatorAddress, del5BabyDelegatedAmt)
 
 	d.GenerateNewBlockAssertExecutionSuccess()
@@ -1156,11 +1156,11 @@ func TestBabyCoStaking(t *testing.T) {
 
 	// Make a NEW delegation to validator
 	del2 := delegators[1]
-	del2BabyDelegatedAmt := sdkmath.NewInt(10000000)
+	del2BabyDelegatedAmt := sdkmath.NewInt(1000000)
 	d.TxWrappedDelegate(del2.SenderInfo, val2.OperatorAddress, del2BabyDelegatedAmt)
 
 	// Extend the existing del3 delegation
-	del3BabyDelegatedAmtAfterJailing := sdkmath.NewInt(5000)
+	del3BabyDelegatedAmtAfterJailing := sdkmath.NewInt(500000)
 	d.TxWrappedDelegate(del3.SenderInfo, val2.OperatorAddress, del3BabyDelegatedAmtAfterJailing)
 
 	// The first delegation of del3 was slashed. Get the new delegation amount
