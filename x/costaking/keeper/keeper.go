@@ -43,6 +43,8 @@ type (
 		historicalRewards collections.Map[uint64, types.HistoricalRewards]
 		// costakerRewardsTracker maps (costakerAddr) => costakerRewardsTracker
 		costakerRewardsTracker collections.Map[[]byte, types.CostakerRewardsTracker]
+		// validatorSet stores the active validator set for the current epoch
+		validatorSet collections.Item[types.ValidatorSet]
 	}
 )
 
@@ -105,6 +107,12 @@ func NewKeeper(
 			// key: (costakrAddr)
 			collections.BytesKey,
 			codec.CollValue[types.CostakerRewardsTracker](cdc),
+		),
+		validatorSet: collections.NewItem(
+			sb,
+			types.ValidatorsKeyPrefix,
+			"validators",
+			codec.CollValue[types.ValidatorSet](cdc),
 		),
 	}
 }

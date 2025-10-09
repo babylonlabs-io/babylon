@@ -58,3 +58,8 @@ func TestEpochingSpamPreventionTestSuite(t *testing.T) {
 func TestBTCStakeExpansionTestSuite(t *testing.T) {
 	suite.Run(t, new(BTCStakeExpansionTestSuite))
 }
+
+// TestValidatorJailingTestSuite tests validator jailing scenario end-to-end
+func TestValidatorJailingTestSuite(t *testing.T) {
+	suite.Run(t, new(ValidatorJailingTestSuite))
+}

@@ -34,6 +34,10 @@ func (k Keeper) costakerModified(ctx context.Context, costaker sdk.AccAddress, m
 	}
 
 	modifyCostaker(rwdTracker)
+	// sanitize and validate the costaker tracker
+	// this is necessary because the ActiveBaby can be -1 due to rounding when the validator
+	// lost its 1:1 ratio between shares and tokens due to slashing
+	rwdTracker.Sanitize()
 	if err := rwdTracker.Validate(); err != nil {
 		return fmt.Errorf("failed to validate costaker: %s - %w", costaker.String(), err)
 	}

@@ -76,8 +76,106 @@ func (m *Params) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_Params proto.InternalMessageInfo
 
+// Validator is a message that denotes a validator
+type Validator struct {
+	// addr is the validator's address (in sdk.ValAddress)
+	Addr []byte `protobuf:"bytes,1,opt,name=addr,proto3" json:"addr,omitempty"`
+	// tokens define the delegated tokens (incl. self-delegation).
+	Tokens cosmossdk_io_math.Int `protobuf:"bytes,2,opt,name=tokens,proto3,customtype=cosmossdk.io/math.Int" json:"tokens"`
+	// shares defines total shares issued to a validator's delegators.
+	Shares cosmossdk_io_math.LegacyDec `protobuf:"bytes,3,opt,name=shares,proto3,customtype=cosmossdk.io/math.LegacyDec" json:"shares"`
+}
+
+func (m *Validator) Reset()         { *m = Validator{} }
+func (m *Validator) String() string { return proto.CompactTextString(m) }
+func (*Validator) ProtoMessage()    {}
+func (*Validator) Descriptor() ([]byte, []int) {
+	return fileDescriptor_e3ebc90d718f5cee, []int{1}
+}
+func (m *Validator) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *Validator) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_Validator.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *Validator) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Validator.Merge(m, src)
+}
+func (m *Validator) XXX_Size() int {
+	return m.Size()
+}
+func (m *Validator) XXX_DiscardUnknown() {
+	xxx_messageInfo_Validator.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Validator proto.InternalMessageInfo
+
+func (m *Validator) GetAddr() []byte {
+	if m != nil {
+		return m.Addr
+	}
+	return nil
+}
+
+// ValidatorSet is a message that denotes a set of validators
+type ValidatorSet struct {
+	// validators is the list of all validators and their delegated tokens.
+	Validators []*Validator `protobuf:"bytes,1,rep,name=validators,proto3" json:"validators,omitempty"`
+}
+
+func (m *ValidatorSet) Reset()         { *m = ValidatorSet{} }
+func (m *ValidatorSet) String() string { return proto.CompactTextString(m) }
+func (*ValidatorSet) ProtoMessage()    {}
+func (*ValidatorSet) Descriptor() ([]byte, []int) {
+	return fileDescriptor_e3ebc90d718f5cee, []int{2}
+}
+func (m *ValidatorSet) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *ValidatorSet) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_ValidatorSet.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *ValidatorSet) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ValidatorSet.Merge(m, src)
+}
+func (m *ValidatorSet) XXX_Size() int {
+	return m.Size()
+}
+func (m *ValidatorSet) XXX_DiscardUnknown() {
+	xxx_messageInfo_ValidatorSet.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ValidatorSet proto.InternalMessageInfo
+
+func (m *ValidatorSet) GetValidators() []*Validator {
+	if m != nil {
+		return m.Validators
+	}
+	return nil
+}
+
 func init() {
 	proto.RegisterType((*Params)(nil), "babylon.costaking.v1.Params")
+	proto.RegisterType((*Validator)(nil), "babylon.costaking.v1.Validator")
+	proto.RegisterType((*ValidatorSet)(nil), "babylon.costaking.v1.ValidatorSet")
 }
 
 func init() {
@@ -85,28 +183,33 @@ func init() {
 }
 
 var fileDescriptor_e3ebc90d718f5cee = []byte{
-	// 325 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x91, 0xc1, 0x4a, 0x02, 0x51,
-	0x18, 0x85, 0x67, 0x0c, 0x84, 0x86, 0x16, 0x39, 0x19, 0x99, 0xc1, 0x28, 0xd1, 0x42, 0x08, 0xe7,
-	0x22, 0x45, 0x0f, 0x30, 0xb8, 0x11, 0x5a, 0x88, 0xcb, 0x16, 0x4d, 0xff, 0xbd, 0x0e, 0xe3, 0x45,
-	0x67, 0x7e, 0x99, 0xfb, 0x37, 0x74, 0xdf, 0xa2, 0x17, 0x69, 0xd7, 0x43, 0xb8, 0x94, 0x56, 0xd1,
-	0x42, 0x42, 0x5f, 0x24, 0xf4, 0x4e, 0x2a, 0xb4, 0x6b, 0x77, 0x0f, 0xe7, 0xdc, 0xef, 0xe7, 0x70,
-	0x9c, 0x2b, 0x0e, 0x5c, 0x4f, 0x30, 0x65, 0x02, 0x15, 0xc1, 0x58, 0xa6, 0x31, 0xcb, 0x3b, 0x3b,
-	0xe1, 0x4f, 0x33, 0x24, 0x74, 0xab, 0x45, 0xca, 0xdf, 0x19, 0x79, 0xa7, 0x5e, 0x8d, 0x31, 0xc6,
-	0x4d, 0x80, 0xad, 0x5f, 0x26, 0x5b, 0x3f, 0x17, 0xa8, 0x12, 0x54, 0xa1, 0x31, 0x8c, 0x30, 0xd6,
-	0xe5, 0x5b, 0xc9, 0x29, 0xf7, 0x21, 0x83, 0x44, 0xb9, 0x8f, 0x4e, 0x65, 0xcb, 0x0a, 0xa7, 0x98,
-	0x91, 0xc4, 0xb4, 0x66, 0x37, 0xed, 0xd6, 0x61, 0xd0, 0x99, 0x2d, 0x1a, 0xd6, 0xd7, 0xa2, 0x71,
-	0x61, 0xfe, 0xaa, 0xe1, 0xd8, 0x97, 0xc8, 0x12, 0xa0, 0x91, 0x7f, 0x1f, 0xc5, 0x20, 0x74, 0x37,
-	0x12, 0x1f, 0xef, 0x6d, 0xa7, 0x40, 0x77, 0x23, 0x31, 0x38, 0xde, 0xb2, 0xfa, 0x06, 0xe5, 0x82,
-	0x73, 0xa6, 0x04, 0x66, 0x51, 0x98, 0x01, 0x49, 0x0c, 0x39, 0x89, 0x90, 0xeb, 0x70, 0x5d, 0xa3,
-	0x56, 0x6a, 0xda, 0xad, 0xa3, 0xe0, 0xba, 0xb8, 0x72, 0xfa, 0xf7, 0x4a, 0x2f, 0xa5, 0x3d, 0x7e,
-	0x2f, 0xa5, 0xc1, 0xc9, 0x86, 0x35, 0x58, 0xa3, 0x02, 0x12, 0x81, 0x0e, 0x80, 0x6b, 0xf7, 0xc9,
-	0x71, 0x73, 0x98, 0xc8, 0x21, 0x10, 0x66, 0x6a, 0xdb, 0xe1, 0xe0, 0xbf, 0x1d, 0x2a, 0x3b, 0x58,
-	0x51, 0x22, 0xe8, 0xcf, 0x96, 0x9e, 0x3d, 0x5f, 0x7a, 0xf6, 0xf7, 0xd2, 0xb3, 0x5f, 0x57, 0x9e,
-	0x35, 0x5f, 0x79, 0xd6, 0xe7, 0xca, 0xb3, 0x1e, 0xee, 0x62, 0x49, 0xa3, 0x67, 0xee, 0x0b, 0x4c,
-	0x58, 0xb1, 0xcd, 0x04, 0xb8, 0x6a, 0x4b, 0xfc, 0x95, 0x2c, 0xbf, 0x65, 0x2f, 0x7b, 0xab, 0x92,
-	0x9e, 0x46, 0x8a, 0x97, 0x37, 0x43, 0xdc, 0xfc, 0x04, 0x00, 0x00, 0xff, 0xff, 0xc6, 0xb0, 0x76,
-	0x45, 0xf7, 0x01, 0x00, 0x00,
+	// 403 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x92, 0xc1, 0xca, 0xd3, 0x40,
+	0x10, 0xc7, 0xb3, 0xad, 0x04, 0xba, 0xf6, 0x60, 0xd7, 0x8a, 0xb5, 0x42, 0x5a, 0x8a, 0x87, 0x82,
+	0x34, 0xa1, 0x2a, 0x5e, 0x85, 0xd8, 0x4b, 0x41, 0xb0, 0x44, 0xf0, 0xe0, 0xc1, 0xb8, 0xbb, 0x59,
+	0xd2, 0xd0, 0x26, 0x53, 0x76, 0xd7, 0x60, 0xde, 0xc2, 0x17, 0x11, 0x2f, 0x3e, 0x44, 0x8f, 0xc5,
+	0x93, 0x78, 0x28, 0x1f, 0xed, 0x8b, 0x7c, 0x34, 0x49, 0x93, 0xc2, 0xf7, 0x9d, 0x7a, 0x9b, 0xd9,
+	0x99, 0xff, 0x6f, 0xe6, 0xbf, 0x0c, 0x7e, 0xc1, 0x28, 0xcb, 0xd6, 0x90, 0x38, 0x1c, 0x94, 0xa6,
+	0xab, 0x28, 0x09, 0x9d, 0x74, 0x5a, 0x27, 0xf6, 0x46, 0x82, 0x06, 0xd2, 0x2d, 0xbb, 0xec, 0xba,
+	0x90, 0x4e, 0xfb, 0xdd, 0x10, 0x42, 0xc8, 0x1b, 0x9c, 0x53, 0x54, 0xf4, 0xf6, 0x9f, 0x71, 0x50,
+	0x31, 0x28, 0xbf, 0x28, 0x14, 0x49, 0x51, 0x1a, 0xfd, 0x6a, 0x60, 0x73, 0x41, 0x25, 0x8d, 0x15,
+	0xf9, 0x8a, 0x3b, 0x15, 0xcb, 0xdf, 0x80, 0xd4, 0x11, 0x24, 0x3d, 0x34, 0x44, 0xe3, 0x96, 0x3b,
+	0xdd, 0xee, 0x07, 0xc6, 0xff, 0xfd, 0xe0, 0x79, 0xa1, 0x55, 0xc1, 0xca, 0x8e, 0xc0, 0x89, 0xa9,
+	0x5e, 0xda, 0x1f, 0x44, 0x48, 0x79, 0x36, 0x13, 0xfc, 0xef, 0x9f, 0x09, 0x2e, 0xd1, 0x33, 0xc1,
+	0xbd, 0x47, 0x15, 0x6b, 0x51, 0xa0, 0x08, 0xc5, 0x4f, 0x15, 0x07, 0x29, 0x7c, 0x49, 0x75, 0x04,
+	0x3e, 0xd3, 0xdc, 0x67, 0x99, 0x7f, 0xb2, 0xd1, 0x6b, 0x0c, 0xd1, 0xb8, 0xed, 0xbe, 0x2c, 0xa7,
+	0x3c, 0xb9, 0x3b, 0x65, 0x9e, 0xe8, 0x0b, 0xfe, 0x3c, 0xd1, 0xde, 0xe3, 0x9c, 0xe5, 0x9d, 0x50,
+	0xae, 0xe6, 0x6e, 0xe6, 0x52, 0x96, 0x91, 0x6f, 0x98, 0xa4, 0x74, 0x1d, 0x05, 0x54, 0x83, 0x54,
+	0x95, 0x87, 0xe6, 0xb5, 0x1e, 0x3a, 0x35, 0xac, 0x34, 0x31, 0xfa, 0x8d, 0x70, 0xeb, 0xf3, 0xf9,
+	0x95, 0x10, 0xfc, 0x80, 0x06, 0x81, 0xcc, 0x7f, 0xa9, 0xed, 0xe5, 0x31, 0x79, 0x8f, 0x4d, 0x0d,
+	0x2b, 0x91, 0xa8, 0x6b, 0x5c, 0x95, 0x52, 0x32, 0xc7, 0xa6, 0x5a, 0x52, 0x29, 0xd4, 0xf5, 0xcb,
+	0x97, 0x80, 0xd1, 0x47, 0xdc, 0xae, 0x16, 0xfe, 0x24, 0x34, 0x79, 0x87, 0x71, 0x6d, 0xab, 0x87,
+	0x86, 0xcd, 0xf1, 0xc3, 0x57, 0x03, 0xfb, 0xbe, 0x6b, 0xb2, 0x2b, 0x9d, 0x77, 0x21, 0x71, 0x17,
+	0xdb, 0x83, 0x85, 0x76, 0x07, 0x0b, 0xdd, 0x1c, 0x2c, 0xf4, 0xf3, 0x68, 0x19, 0xbb, 0xa3, 0x65,
+	0xfc, 0x3b, 0x5a, 0xc6, 0x97, 0xb7, 0x61, 0xa4, 0x97, 0xdf, 0x99, 0xcd, 0x21, 0x76, 0x4a, 0xe0,
+	0x9a, 0x32, 0x35, 0x89, 0xe0, 0x9c, 0x3a, 0xe9, 0x1b, 0xe7, 0xc7, 0xc5, 0x61, 0xeb, 0x6c, 0x23,
+	0x14, 0x33, 0xf3, 0x5b, 0x7c, 0x7d, 0x1b, 0x00, 0x00, 0xff, 0xff, 0x7d, 0xba, 0xa9, 0xb1, 0xfa,
+	0x02, 0x00, 0x00,
 }
 
 func (m *Params) Marshal() (dAtA []byte, err error) {
@@ -162,6 +265,93 @@ func (m *Params) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
+func (m *Validator) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *Validator) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *Validator) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	{
+		size := m.Shares.Size()
+		i -= size
+		if _, err := m.Shares.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintCostaking(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x1a
+	{
+		size := m.Tokens.Size()
+		i -= size
+		if _, err := m.Tokens.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintCostaking(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x12
+	if len(m.Addr) > 0 {
+		i -= len(m.Addr)
+		copy(dAtA[i:], m.Addr)
+		i = encodeVarintCostaking(dAtA, i, uint64(len(m.Addr)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *ValidatorSet) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *ValidatorSet) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *ValidatorSet) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Validators) > 0 {
+		for iNdEx := len(m.Validators) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Validators[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintCostaking(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0xa
+		}
+	}
+	return len(dAtA) - i, nil
+}
+
 func encodeVarintCostaking(dAtA []byte, offset int, v uint64) int {
 	offset -= sovCostaking(v)
 	base := offset
@@ -185,6 +375,38 @@ func (m *Params) Size() (n int) {
 	n += 1 + l + sovCostaking(uint64(l))
 	l = m.ValidatorsPortion.Size()
 	n += 1 + l + sovCostaking(uint64(l))
+	return n
+}
+
+func (m *Validator) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Addr)
+	if l > 0 {
+		n += 1 + l + sovCostaking(uint64(l))
+	}
+	l = m.Tokens.Size()
+	n += 1 + l + sovCostaking(uint64(l))
+	l = m.Shares.Size()
+	n += 1 + l + sovCostaking(uint64(l))
+	return n
+}
+
+func (m *ValidatorSet) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if len(m.Validators) > 0 {
+		for _, e := range m.Validators {
+			l = e.Size()
+			n += 1 + l + sovCostaking(uint64(l))
+		}
+	}
 	return n
 }
 
@@ -321,6 +543,241 @@ func (m *Params) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if err := m.ValidatorsPortion.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipCostaking(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthCostaking
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *Validator) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowCostaking
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: Validator: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: Validator: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Addr", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowCostaking
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthCostaking
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthCostaking
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Addr = append(m.Addr[:0], dAtA[iNdEx:postIndex]...)
+			if m.Addr == nil {
+				m.Addr = []byte{}
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Tokens", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowCostaking
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthCostaking
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthCostaking
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.Tokens.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Shares", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowCostaking
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthCostaking
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthCostaking
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.Shares.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipCostaking(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthCostaking
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *ValidatorSet) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowCostaking
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: ValidatorSet: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: ValidatorSet: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Validators", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowCostaking
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthCostaking
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthCostaking
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Validators = append(m.Validators, &Validator{})
+			if err := m.Validators[len(m.Validators)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex

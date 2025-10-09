@@ -545,13 +545,30 @@ func (d *BabylonAppDriver) GenerateNewBlock() *abci.ResponseFinalizeBlock {
 	}
 	d.CurrentTime = newTime
 
+	// Get current validator set to build proper commit
+	validators := lastState.Validators
+	extendedSignatures := make([]cmttypes.ExtendedCommitSig, len(validators.Validators))
+
+	// Build commit signatures for each validator
+	for i, val := range validators.Validators {
+		if bytes.Equal(val.Address.Bytes(), d.CometAddress) {
+			// This is our signing validator
+			extendedSignatures[i] = extCommitSig
+		} else {
+			// Other validators are absent (not voting)
+			extendedSignatures[i] = cmttypes.ExtendedCommitSig{
+				CommitSig: cmttypes.CommitSig{
+					BlockIDFlag: cmttypes.BlockIDFlagAbsent,
+				},
+			}
+		}
+	}
+
 	oneValExtendedCommit := &cmttypes.ExtendedCommit{
-		Height:  block1.Height,
-		Round:   0,
-		BlockID: block1ID,
-		ExtendedSignatures: []cmttypes.ExtendedCommitSig{
-			extCommitSig,
-		},
+		Height:             block1.Height,
+		Round:              0,
+		BlockID:            block1ID,
+		ExtendedSignatures: extendedSignatures,
 	}
 
 	accepted, err := d.BlockExec.ProcessProposal(block1, lastState)

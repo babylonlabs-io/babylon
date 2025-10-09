@@ -17,6 +17,7 @@ func DefaultGenesis() *GenesisState {
 		CurrentRewards:          CurrentRewardsEntry{},
 		HistoricalRewards:       []HistoricalRewardsEntry{},
 		CostakersRewardsTracker: []CostakerRewardsTrackerEntry{},
+		ValidatorSet:            ValidatorSet{},
 	}
 }
 
@@ -36,6 +37,8 @@ func (gs GenesisState) Validate() error {
 	}); err != nil {
 		return fmt.Errorf("invalid costakers rewards tracker: %w", err)
 	}
+
+	// TODO validate validator set
 
 	return gs.Params.Validate()
 }
