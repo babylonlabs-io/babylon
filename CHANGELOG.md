@@ -37,7 +37,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+## v1.0.3
+
+### Improvements
+
+- [#1769](https://github.com/babylonlabs-io/babylon/pull/1769) testnet: update `v1` upgrade data for bbn-test-6
+
 ## v1.0.2
+
+### Improvements
 
 - [#802](https://github.com/babylonlabs-io/babylon/pull/802) fix: clean up resources allocated by TmpAppOptions
 - [#805](https://github.com/babylonlabs-io/babylon/pull/805) chore: upgrade the make file: linting
