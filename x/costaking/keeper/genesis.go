@@ -35,8 +35,10 @@ func (k Keeper) InitGenesis(ctx context.Context, gs types.GenesisState) error {
 		}
 	}
 
-	if err := k.initValidatorSet(ctx, gs); err != nil {
-		return err
+	if len(gs.ValidatorSet.Validators) > 0 {
+		if err := k.validatorSet.Set(ctx, gs.ValidatorSet); err != nil {
+			return err
+		}
 	}
 
 	return k.SetParams(ctx, gs.Params)
@@ -154,30 +156,4 @@ func (k Keeper) getCostakerRewardsTrackerEntries(ctx context.Context) ([]types.C
 	}
 
 	return entries, nil
-}
-
-func (k Keeper) initValidatorSet(ctx context.Context, gs types.GenesisState) error {
-	if len(gs.ValidatorSet.Validators) > 0 {
-		if err := k.validatorSet.Set(ctx, gs.ValidatorSet); err != nil {
-			return err
-		}
-		return nil
-	}
-	// If empty validator set is provided, try to initialize it from the current staking validators
-	valAddrs := make([]sdk.ValAddress, 0)
-	if err := k.stkK.IterateLastValidatorPowers(ctx, func(valAddr sdk.ValAddress, power int64) bool {
-		valAddrs = append(valAddrs, valAddr)
-		return false // continue iteration
-	}); err != nil {
-		if err := k.validatorSet.Set(ctx, gs.ValidatorSet); err != nil {
-			return err
-		}
-	}
-
-	if err := k.updateValidatorSet(ctx, valAddrs); err != nil {
-		if err := k.validatorSet.Set(ctx, gs.ValidatorSet); err != nil {
-			return err
-		}
-	}
-	return nil
 }

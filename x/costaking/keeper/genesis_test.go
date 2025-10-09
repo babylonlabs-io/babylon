@@ -1,13 +1,11 @@
 package keeper
 
 import (
-	"context"
 	"math/rand"
 	"testing"
 
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
@@ -106,13 +104,6 @@ func FuzzInitExportGenesis(f *testing.F) {
 
 func TestInitGenesisEmpty(t *testing.T) {
 	k, ctx := NewKeeperWithCtx(t)
-
-	mockStkK := k.stkK.(*types.MockStakingKeeper)
-	mockStkK.EXPECT().IterateLastValidatorPowers(gomock.Any(), gomock.Any()).DoAndReturn(
-		func(ctx context.Context, fn func(sdk.ValAddress, int64) bool) error {
-			return nil
-		},
-	).Times(1)
 
 	// Test with default genesis
 	genState := *types.DefaultGenesis()
