@@ -42,6 +42,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ### Improvements
 
 - [#1775](https://github.com/babylonlabs-io/babylon/pull/1775) testnet: add upgrade `v23` to testnet build tag
+for bbn-test-6
 
 ## v2.3.0
 
