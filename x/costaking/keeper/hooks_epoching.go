@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 	"fmt"
+	"sort"
 
 	"cosmossdk.io/math"
 	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
@@ -63,6 +64,15 @@ func (h HookEpoching) AfterEpochEnds(ctx context.Context, epoch uint64) {
 		return
 	}
 
+	// Build an array of previous validator addresses for deterministic iteration
+	// when checking for newly inactive validators
+	prevValAddrs := make([]string, 0, len(prevValMap))
+	for valAddr := range prevValMap {
+		prevValAddrs = append(prevValAddrs, valAddr)
+	}
+	// Sort the previous validator addresses for deterministic iteration
+	sort.Strings(prevValAddrs)
+
 	// Build the new validator set map from the staking module
 	// Note: This is called after ApplyAndReturnValidatorSetUpdates, so the staking
 	// module's last validator powers reflect the NEW epoch's validator set
@@ -73,20 +83,22 @@ func (h HookEpoching) AfterEpochEnds(ctx context.Context, epoch uint64) {
 	}
 
 	// Identify newly active validators (in new set but not in prev set)
-	for valAddr := range newValMap {
-		if _, found := prevValMap[valAddr]; !found {
+	for _, valAddr := range newValAddrs {
+		valAddrStr := valAddr.String()
+		if _, found := prevValMap[valAddrStr]; !found {
 			// Newly active validator - add baby tokens for all delegators
-			if err := h.addBabyForDelegators(ctx, valAddr); err != nil {
-				h.k.Logger(ctx).Error("failed to add baby tokens for newly active validator", "validator", valAddr, "error", err)
+			if err := h.addBabyForDelegators(ctx, valAddrStr); err != nil {
+				h.k.Logger(ctx).Error("failed to add baby tokens for newly active validator", "validator", valAddrStr, "error", err)
 				return
 			}
 		}
 	}
 
 	// Identify newly inactive validators (in prev set but not in new set)
-	for prevValAddr, prevVal := range prevValMap {
+	for _, prevValAddr := range prevValAddrs {
 		if _, found := newValMap[prevValAddr]; !found {
 			// Newly inactive validator - remove baby tokens for all delegators
+			prevVal := prevValMap[prevValAddr]
 			if err := h.removeBabyForDelegators(ctx, prevVal); err != nil {
 				h.k.Logger(ctx).Error("failed to remove baby tokens for newly inactive validator", "validator", prevValAddr, "error", err)
 				return
