@@ -11,7 +11,7 @@ import (
 func TestNewStakingCacheIsNotNil(t *testing.T) {
 	cache := NewStakingCache()
 	require.NotNil(t, cache)
-	require.NotNil(t, cache.amtByValByDel)
+	require.NotNil(t, cache.stkInfoByValByDel)
 }
 
 func TestStakingCacheSetAndGetAndDeleteStakedAmount(t *testing.T) {
@@ -71,7 +71,7 @@ func TestStakingCacheGetAndDeleteStakedAmountNilMap(t *testing.T) {
 
 	// Test with manually setting nil map (edge case)
 	delAddrStr := delAddr.String()
-	cache.amtByValByDel[delAddrStr] = nil
+	cache.stkInfoByValByDel[delAddrStr] = nil
 
 	result := cache.GetStakedInfo(delAddr, valAddr)
 	require.True(t, result.Amount.IsZero())
@@ -102,7 +102,7 @@ func TestStakingCacheGetAndDeleteStakedAmountPreservesOtherValidators(t *testing
 
 	// Verify the delegator's map still exists and contains the correct validators
 	delAddrStr := delAddr.String()
-	valMap, exists := cache.amtByValByDel[delAddrStr]
+	valMap, exists := cache.stkInfoByValByDel[delAddrStr]
 	require.True(t, exists)
 	require.Equal(t, 3, len(valMap))
 
@@ -122,7 +122,7 @@ func TestStakingCacheGetAndDeleteStakedAmountPreservesOtherValidators(t *testing
 	cache.Clear()
 
 	// Verify the delegator's map was cleaned up
-	_, exists = cache.amtByValByDel[delAddrStr]
+	_, exists = cache.stkInfoByValByDel[delAddrStr]
 	require.False(t, exists)
 }
 

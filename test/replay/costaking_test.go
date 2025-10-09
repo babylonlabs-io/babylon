@@ -1180,9 +1180,11 @@ func TestBabyCoStaking(t *testing.T) {
 	require.NoError(d.t, err)
 	del5TotalAmtAfterSlashing := val2.TokensFromShares(del5Delegation.Shares).TruncateInt()
 
-	// Partially unbond a delegation
+	// Partially unbond a delegation with many msgs and re-delegate
 	del5BabyUnstakeAmt := sdkmath.NewInt(7)
 	d.TxWrappedUndelegate(del5.SenderInfo, val2.OperatorAddress, del5BabyUnstakeAmt)
+	d.TxWrappedUndelegate(del5.SenderInfo, val2.OperatorAddress, del5BabyUnstakeAmt)
+	d.TxWrappedDelegate(del5.SenderInfo, val2.OperatorAddress, del5BabyUnstakeAmt)
 
 	d.GenerateNewBlockAssertExecutionSuccess()
 	// progress to next epoch to ensure delegation and jailing are processed
@@ -1281,10 +1283,12 @@ func TestBabyCoStaking(t *testing.T) {
 	// del4 fully unbonded so tracker should still be zero
 	assertZeroCostkTracker(d.t, d.Ctx(), costkK, del4.Address())
 
-	// del5 got slashed first and then partially unbonded
+	// del5 got slashed first and then partially unbonded with 2 msgs
 	del5Tracker, err = costkK.GetCostakerRewards(d.Ctx(), del5.Address())
 	require.NoError(t, err)
 	require.NotNil(t, del5Tracker)
+	// expected active baby is total delegation after slashing minus the unstake amount
+	// There're 2 undelegate msgs of 7 ubbn each, but after the second one, there's a re-delegation for same amount
 	expectedDel5ActiveBaby := del5TotalAmtAfterSlashing.Sub(del5BabyUnstakeAmt)
 	require.Equal(t, del5Tracker.ActiveBaby, expectedDel5ActiveBaby, "active baby should be less than total delegation amount after slashing and unstaking", del5Tracker.ActiveBaby.String())
 	require.True(t, del5Tracker.ActiveSatoshis.IsZero(), "Active sats should be zero")

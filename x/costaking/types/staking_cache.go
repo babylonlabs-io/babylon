@@ -11,9 +11,9 @@ import (
 // BeforeDelegationSharesModified sets the value and
 // AfterDelegationModified to calculate the delta change.
 type StakingCache struct {
-	// amtByValByDel stores the amount it had before the delegation
-	// was modified DelAddr => ValAddr => Amt
-	amtByValByDel map[string]map[string]StakeInfo
+	// stkInfoByValByDel stores the amount and shares it had before the delegation
+	// was modified DelAddr => ValAddr => StakeInfo (amount, shares)
+	stkInfoByValByDel map[string]map[string]StakeInfo
 	// activeValSet caches the current active validator set map
 	// ValAddr => Tokens
 	activeValSet map[string]ValidatorInfo
@@ -40,7 +40,7 @@ var zeroStakeInfo = StakeInfo{
 
 func NewStakingCache() *StakingCache {
 	return &StakingCache{
-		amtByValByDel: make(map[string]map[string]StakeInfo),
+		stkInfoByValByDel: make(map[string]map[string]StakeInfo),
 	}
 }
 
@@ -48,10 +48,10 @@ func (sc *StakingCache) SetStakedInfo(delAddr sdk.AccAddress, valAddr sdk.ValAdd
 	delAddrStr := delAddr.String()
 	valAddrStr := valAddr.String()
 
-	if sc.amtByValByDel[delAddrStr] == nil {
-		sc.amtByValByDel[delAddrStr] = make(map[string]StakeInfo)
+	if sc.stkInfoByValByDel[delAddrStr] == nil {
+		sc.stkInfoByValByDel[delAddrStr] = make(map[string]StakeInfo)
 	}
-	sc.amtByValByDel[delAddrStr][valAddrStr] = StakeInfo{
+	sc.stkInfoByValByDel[delAddrStr][valAddrStr] = StakeInfo{
 		Amount: amtStaked,
 		Shares: delShares,
 	}
@@ -63,11 +63,11 @@ func (sc *StakingCache) GetStakedInfo(delAddr sdk.AccAddress, valAddr sdk.ValAdd
 	delAddrStr := delAddr.String()
 	valAddrStr := valAddr.String()
 
-	if sc.amtByValByDel[delAddrStr] == nil {
+	if sc.stkInfoByValByDel[delAddrStr] == nil {
 		return zeroStakeInfo
 	}
 
-	info, found := sc.amtByValByDel[delAddrStr][valAddrStr]
+	info, found := sc.stkInfoByValByDel[delAddrStr][valAddrStr]
 	if !found {
 		return zeroStakeInfo
 	}
@@ -121,18 +121,18 @@ func (sc *StakingCache) GetDeltaShares(valAddr sdk.ValAddress, delAddr sdk.AccAd
 
 // Clear removes all entries from the cache
 func (sc *StakingCache) Clear() {
-	sc.amtByValByDel = make(map[string]map[string]StakeInfo)
+	sc.stkInfoByValByDel = make(map[string]map[string]StakeInfo)
 	sc.activeValSet = nil
 }
 
 // Delete removes one entry from the cache
 func (sc *StakingCache) Delete(delAddr sdk.AccAddress, valAddr sdk.ValAddress) {
 	delAddrStr := delAddr.String()
-	_, exists := sc.amtByValByDel[delAddrStr]
+	_, exists := sc.stkInfoByValByDel[delAddrStr]
 	if !exists {
 		return
 	}
 
 	valAddrStr := valAddr.String()
-	delete(sc.amtByValByDel[delAddrStr], valAddrStr)
+	delete(sc.stkInfoByValByDel[delAddrStr], valAddrStr)
 }
