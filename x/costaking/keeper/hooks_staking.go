@@ -44,7 +44,7 @@ func (h HookStaking) AfterDelegationModified(ctx context.Context, delAddr sdk.Ac
 		return err
 	}
 
-	delTokens, err := h.k.TokensFromShares(ctx, valInfo, del.Shares)
+	delTokens, err := h.k.TokensFromShares(ctx, valAddr, del.Shares)
 	if err != nil {
 		return err
 	}
@@ -114,7 +114,7 @@ func (h HookStaking) BeforeDelegationRemoved(ctx context.Context, delAddr sdk.Ac
 // - Caches current delegation amount in temporary storage
 func (h HookStaking) BeforeDelegationSharesModified(ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) error {
 	// Check if validator is in the active set
-	active, valInfo, err := h.isActiveValidator(ctx, valAddr)
+	active, _, err := h.isActiveValidator(ctx, valAddr)
 	if err != nil {
 		return err
 	}
@@ -130,7 +130,7 @@ func (h HookStaking) BeforeDelegationSharesModified(ctx context.Context, delAddr
 		return nil
 	}
 
-	delTokens, err := h.k.TokensFromShares(ctx, valInfo, del.Shares)
+	delTokens, err := h.k.TokensFromShares(ctx, valAddr, del.Shares)
 	if err != nil {
 		return err
 	}
@@ -187,8 +187,8 @@ func (k Keeper) HookStaking() HookStaking {
 // This function uses the validator's original tokens stored in the module state
 // to calculate the delegation tokens from shares. In this way, we avoid issues
 // that may arise from changes in the validator's tokens due to slashing
-func (k Keeper) TokensFromShares(ctx context.Context, valInfo types.ValidatorInfo, delShares math.LegacyDec) (math.LegacyDec, error) {
-	val, err := k.stkK.GetValidator(ctx, valInfo.ValAddress)
+func (k Keeper) TokensFromShares(ctx context.Context, valAddr sdk.ValAddress, delShares math.LegacyDec) (math.LegacyDec, error) {
+	val, err := k.stkK.GetValidator(ctx, valAddr)
 	if err != nil {
 		return math.LegacyDec{}, err
 	}
