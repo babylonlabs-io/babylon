@@ -56,7 +56,9 @@ func (k Keeper) ExportGenesis(ctx context.Context) (*types.GenesisState, error) 
 
 	valSet, err := k.validatorSet.Get(ctx)
 	if err != nil {
-		return nil, err
+		// If the key is empty, will return an error. Log the error and return empty validator set.
+		k.Logger(ctx).Error("failed to get validator set from store during export genesis", "error", err)
+		valSet = types.ValidatorSet{} // return empty validator set on error
 	}
 
 	return &types.GenesisState{

@@ -1,11 +1,13 @@
 package keeper
 
 import (
+	"context"
 	"math/rand"
 	"testing"
 
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
@@ -65,6 +67,15 @@ func FuzzInitExportGenesis(f *testing.F) {
 			},
 			HistoricalRewards:       historicalRewards,
 			CostakersRewardsTracker: costakerTrackers,
+			ValidatorSet: types.ValidatorSet{
+				Validators: []*types.Validator{
+					{
+						Addr:   datagen.GenRandomAddress().Bytes(),
+						Tokens: math.NewInt(1000),
+						Shares: math.LegacyNewDec(1000),
+					},
+				},
+			},
 		}
 
 		// Validate genesis state
@@ -95,6 +106,13 @@ func FuzzInitExportGenesis(f *testing.F) {
 
 func TestInitGenesisEmpty(t *testing.T) {
 	k, ctx := NewKeeperWithCtx(t)
+
+	mockStkK := k.stkK.(*types.MockStakingKeeper)
+	mockStkK.EXPECT().IterateLastValidatorPowers(gomock.Any(), gomock.Any()).DoAndReturn(
+		func(ctx context.Context, fn func(sdk.ValAddress, int64) bool) error {
+			return nil
+		},
+	).Times(1)
 
 	// Test with default genesis
 	genState := *types.DefaultGenesis()
@@ -127,6 +145,15 @@ func TestInitGenesisWithCurrentRewards(t *testing.T) {
 		},
 		HistoricalRewards:       []types.HistoricalRewardsEntry{},
 		CostakersRewardsTracker: []types.CostakerRewardsTrackerEntry{},
+		ValidatorSet: types.ValidatorSet{
+			Validators: []*types.Validator{
+				{
+					Addr:   datagen.GenRandomAddress().Bytes(),
+					Tokens: math.NewInt(1000),
+					Shares: math.LegacyNewDec(1000),
+				},
+			},
+		},
 	}
 
 	err := k.InitGenesis(ctx, genState)
@@ -175,6 +202,15 @@ func TestInitGenesisWithHistoricalRewards(t *testing.T) {
 		CurrentRewards:          types.CurrentRewardsEntry{},
 		HistoricalRewards:       historicalRewards,
 		CostakersRewardsTracker: []types.CostakerRewardsTrackerEntry{},
+		ValidatorSet: types.ValidatorSet{
+			Validators: []*types.Validator{
+				{
+					Addr:   datagen.GenRandomAddress().Bytes(),
+					Tokens: math.NewInt(1000),
+					Shares: math.LegacyNewDec(1000),
+				},
+			},
+		},
 	}
 
 	err := k.InitGenesis(ctx, genState)
@@ -226,6 +262,15 @@ func TestInitGenesisWithCostakerTrackers(t *testing.T) {
 		CurrentRewards:          types.CurrentRewardsEntry{},
 		HistoricalRewards:       []types.HistoricalRewardsEntry{},
 		CostakersRewardsTracker: costakerTrackers,
+		ValidatorSet: types.ValidatorSet{
+			Validators: []*types.Validator{
+				{
+					Addr:   datagen.GenRandomAddress().Bytes(),
+					Tokens: math.NewInt(1000),
+					Shares: math.LegacyNewDec(1000),
+				},
+			},
+		},
 	}
 
 	err := k.InitGenesis(ctx, genState)
@@ -271,4 +316,5 @@ func TestExportGenesisEmpty(t *testing.T) {
 	require.Equal(t, types.DefaultParams(), exportedGenState.Params)
 	require.Empty(t, exportedGenState.HistoricalRewards)
 	require.Empty(t, exportedGenState.CostakersRewardsTracker)
+	require.Empty(t, exportedGenState.ValidatorSet)
 }

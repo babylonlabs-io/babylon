@@ -183,6 +183,8 @@ func NewKeeperWithCtx(t *testing.T) (*Keeper, sdk.Context) {
 	accK := types.NewMockAccountKeeper(ctrl)
 	accK.EXPECT().GetModuleAddress(gomock.Any()).Return(authtypes.NewModuleAddress(types.ModuleName)).AnyTimes()
 
-	k := NewKeeper(encConf.Codec, kvStore, nil, accK, nil, nil, nil, appparams.AccGov.String(), appparams.AccFeeCollector.String())
+	stkK := types.NewMockStakingKeeper(ctrl)
+
+	k := NewKeeper(encConf.Codec, kvStore, nil, accK, nil, stkK, nil, appparams.AccGov.String(), appparams.AccFeeCollector.String())
 	return &k, ctx
 }
