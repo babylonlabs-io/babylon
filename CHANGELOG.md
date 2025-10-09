@@ -237,7 +237,15 @@ when the babylon block is being BTC rewarded.
 - [#905](https://github.com/babylonlabs-io/babylon/pull/905) Add `ValidateBasic` for `CommitPubRandList`
 - [#906](https://github.com/babylonlabs-io/babylon/pull/906) Add distribution bank wrapper.
 
+## v1.0.3
+
+### Improvements
+
+- [#1769](https://github.com/babylonlabs-io/babylon/pull/1769) testnet: update `v1` upgrade data for bbn-test-6
+
 ## v1.0.2
+
+### Improvements
 
 - [#802](https://github.com/babylonlabs-io/babylon/pull/802) fix: clean up resources allocated by TmpAppOptions
 - [#805](https://github.com/babylonlabs-io/babylon/pull/805) chore: upgrade the make file: linting
