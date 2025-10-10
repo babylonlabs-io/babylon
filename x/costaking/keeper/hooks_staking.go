@@ -225,7 +225,7 @@ func (k Keeper) buildCurrEpochValSetMap(ctx context.Context) (map[string]types.V
 			return nil, err
 		}
 
-		// There're 2 cases where a validators tokens and shares
+		// There are 2 cases where a validator's tokens and shares
 		// may differ from the original tokens and shares
 		// stored in the costaking module state at epoch start:
 		// 1. The validator has been slashed - this reduces only validator tokens
