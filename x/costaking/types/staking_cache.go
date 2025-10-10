@@ -28,7 +28,6 @@ type ValidatorInfo struct {
 	ValAddress              sdk.ValAddress
 	OriginalTokens          math.Int
 	OriginalShares          math.LegacyDec
-	CurrentTokens           math.Int
 	IsSlashed               bool
 	DeltaSharesPerDelegator map[string][]math.LegacyDec // DelAddrStr => []DeltaShares
 }
