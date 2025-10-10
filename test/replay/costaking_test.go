@@ -1532,7 +1532,7 @@ func isValidatorIncluded(valset []epochingtypes.Validator, valAddr sdk.ValAddres
 }
 
 // assertActiveBabyWithinRange checks if actual is within expected ± tolerance (for rounding differences)
-func assertActiveBabyWithinRange(t *testing.T, expected, actual sdkmath.Int, tolerance int64, msgAndArgs ...interface{}) {
+func assertActiveBabyWithinRange(t *testing.T, expected, actual sdkmath.Int, tolerance int64, msgAndArgs ...interface{}) { //nolint:unparam
 	diff := actual.Sub(expected).Abs()
 	maxDiff := sdkmath.NewInt(tolerance)
 	require.True(t, diff.LTE(maxDiff), "ActiveBaby difference exceeds tolerance: expected %s ± %d, got %s (diff: %s). %v",
