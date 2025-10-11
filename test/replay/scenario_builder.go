@@ -32,7 +32,6 @@ func (s *StandardScenario) InitScenario(
 	numFps int,
 	delegationsPerFp int,
 ) {
-
 	validators, err := s.driver.App.StakingKeeper.GetAllValidators(s.driver.Ctx())
 	require.NoError(s.driver.t, err)
 	val := validators[0]
