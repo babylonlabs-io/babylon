@@ -55,6 +55,10 @@ func (dc *VotingPowerDistCache) FindNewActiveFinalityProviders(prevDc *VotingPow
 		}
 	}
 
+	sort.SliceStable(newActiveFps, func(i, j int) bool {
+		return newActiveFps[i].BtcPk.MarshalHex() < newActiveFps[j].BtcPk.MarshalHex()
+	})
+
 	return newActiveFps
 }
 
@@ -85,6 +89,10 @@ func (dc *VotingPowerDistCache) FindNewInactiveFinalityProviders(prevDc *VotingP
 			newInactiveFps = append(newInactiveFps, fp)
 		}
 	}
+
+	sort.SliceStable(newInactiveFps, func(i, j int) bool {
+		return newInactiveFps[i].BtcPk.MarshalHex() < newInactiveFps[j].BtcPk.MarshalHex()
+	})
 
 	return newInactiveFps
 }
