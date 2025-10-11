@@ -18,7 +18,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 542159,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -44,7 +44,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 1783114,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -70,7 +70,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 378359,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -96,7 +96,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 254816,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -122,7 +122,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 1692198,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -148,7 +148,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -174,7 +174,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 261838,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -200,7 +200,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -226,7 +226,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -278,7 +278,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 254966,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -304,7 +304,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 1669190,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -330,7 +330,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 1783113,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -356,7 +356,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 547887,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -382,7 +382,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 1047400,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -408,7 +408,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 1783114,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -434,7 +434,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -460,7 +460,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 510529,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -486,7 +486,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 254815,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -512,7 +512,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -538,7 +538,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -564,7 +564,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 1783114,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -616,7 +616,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 944622,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -668,7 +668,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 1783114,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -694,7 +694,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -720,7 +720,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 1692198,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -746,7 +746,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 254977,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -772,7 +772,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 542159,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -798,7 +798,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -824,7 +824,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 1768843,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -850,7 +850,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 752536,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -876,7 +876,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 1783114,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -902,7 +902,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 542159,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -928,7 +928,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -954,7 +954,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -980,7 +980,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 266166,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -1006,7 +1006,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 1452429,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -1084,7 +1084,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -1110,7 +1110,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 1692198,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -1136,7 +1136,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 409234,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -1162,7 +1162,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -1188,7 +1188,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 409235,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -1214,7 +1214,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -1240,7 +1240,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -1266,7 +1266,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 1406501,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -1292,7 +1292,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 542159,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -1318,7 +1318,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 274821,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -1344,7 +1344,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 1783114,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -1370,7 +1370,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -1396,7 +1396,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 463676,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -1422,7 +1422,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 57397,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -1448,7 +1448,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 542159,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -1474,7 +1474,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -1500,7 +1500,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 542159,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -1526,7 +1526,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 1783114,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -1552,7 +1552,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.500000000000000000",
       "max_change_rate": "0.100000000000000000",
@@ -1578,7 +1578,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 696595,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -1604,7 +1604,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -1630,7 +1630,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 542159,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -1656,7 +1656,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -1682,7 +1682,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 542159,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -1708,7 +1708,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 1783114,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -1734,7 +1734,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 1783114,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -1760,7 +1760,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 1692198,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -1786,7 +1786,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 707783,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -1812,7 +1812,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 1783114,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -1838,7 +1838,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -1864,7 +1864,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 542159,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -1890,7 +1890,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -1916,7 +1916,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -1942,7 +1942,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 542159,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -1968,7 +1968,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 521401,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -1994,7 +1994,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 542159,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -2020,7 +2020,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -2046,7 +2046,7 @@
     "slashed_btc_height": 260699,
     "jailed": false,
     "highest_voted_height": 1473639,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.050000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -2072,7 +2072,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -2098,7 +2098,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -2124,7 +2124,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -2150,7 +2150,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -2176,7 +2176,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -2202,7 +2202,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 542159,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -2228,7 +2228,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 542159,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -2254,7 +2254,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 1783114,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -2280,7 +2280,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 1473421,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -2306,7 +2306,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 1783114,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -2332,7 +2332,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -2358,7 +2358,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 542159,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -2384,7 +2384,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 254815,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -2410,7 +2410,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -2436,7 +2436,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 1699086,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -2462,7 +2462,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 1268118,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -2488,7 +2488,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.050000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -2514,7 +2514,7 @@
     "slashed_btc_height": 242297,
     "jailed": false,
     "highest_voted_height": 664199,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "1.000000000000000000",
       "max_change_rate": "0.100000000000000000",
@@ -2540,7 +2540,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 254977,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -2566,7 +2566,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 542159,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -2592,7 +2592,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 409233,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -2618,7 +2618,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 1783114,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -2644,7 +2644,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -2670,7 +2670,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 64646,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -2696,7 +2696,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 254977,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -2722,7 +2722,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 1047674,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -2748,7 +2748,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 373802,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -2774,7 +2774,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -2800,7 +2800,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -2826,7 +2826,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 1783114,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -2852,7 +2852,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 619419,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -2878,7 +2878,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -2904,7 +2904,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 1783114,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -2930,7 +2930,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -2956,7 +2956,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -2982,7 +2982,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -3008,7 +3008,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 537650,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -3034,7 +3034,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -3060,7 +3060,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 542159,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -3086,7 +3086,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 56129,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -3112,7 +3112,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 542159,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -3138,7 +3138,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 1341399,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -3164,7 +3164,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 1783114,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -3190,7 +3190,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 1310221,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -3216,7 +3216,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 747015,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -3242,7 +3242,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 1783114,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -3268,7 +3268,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 542159,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -3320,7 +3320,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -3346,7 +3346,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 526079,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -3372,7 +3372,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -3398,7 +3398,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -3424,7 +3424,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 1406845,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -3476,7 +3476,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 1623544,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -3502,7 +3502,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 542159,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -3528,7 +3528,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 1783114,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -3554,7 +3554,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 542159,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -3580,7 +3580,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 1783113,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -3606,7 +3606,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 1783114,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -3632,7 +3632,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -3658,7 +3658,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 1692198,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -3684,7 +3684,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 542159,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -3710,7 +3710,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 1783114,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -3736,7 +3736,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -3762,7 +3762,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 139543,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -3788,7 +3788,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 595891,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -3814,7 +3814,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 409234,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -3840,7 +3840,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 542159,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -3866,7 +3866,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 1783114,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -3892,7 +3892,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 1266660,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -3918,7 +3918,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 1783114,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -3944,7 +3944,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 254966,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -3970,7 +3970,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 326119,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -4022,7 +4022,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 1756657,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -4048,7 +4048,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 1783114,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -4074,7 +4074,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 542159,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -4100,7 +4100,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 67167,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -4126,7 +4126,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 542159,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -4152,7 +4152,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 1626459,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -4178,7 +4178,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -4204,7 +4204,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -4230,7 +4230,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 1783114,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -4256,7 +4256,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 1783114,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -4282,7 +4282,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -4308,7 +4308,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 1783114,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -4334,7 +4334,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 542159,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -4386,7 +4386,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 542159,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -4412,7 +4412,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 254988,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -4438,7 +4438,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -4464,7 +4464,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.050000000000000000",
       "max_change_rate": "0.050000000000000000",
@@ -4490,7 +4490,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 1783114,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -4516,7 +4516,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 542159,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -4542,7 +4542,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -4568,7 +4568,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 1783114,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -4594,7 +4594,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -4620,7 +4620,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 1072401,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -4646,7 +4646,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 940981,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -4672,7 +4672,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 64824,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -4698,7 +4698,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 409232,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -4724,7 +4724,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 425333,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -4750,7 +4750,7 @@
     "slashed_btc_height": 234362,
     "jailed": false,
     "highest_voted_height": 238537,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -4776,7 +4776,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -4802,7 +4802,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 1692198,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -4828,7 +4828,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 1692198,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -4854,7 +4854,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "1.000000000000000000",
       "max_change_rate": "1.000000000000000000",
@@ -4880,7 +4880,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -4906,7 +4906,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 409232,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -4932,7 +4932,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 1783114,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -4958,7 +4958,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -4984,7 +4984,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 542159,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -5010,7 +5010,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 70209,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -5036,7 +5036,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 1783114,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -5062,7 +5062,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 1783114,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -5088,7 +5088,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 254966,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -5114,7 +5114,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -5140,7 +5140,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 481315,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -5166,7 +5166,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -5192,7 +5192,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 1783114,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -5218,7 +5218,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -5244,7 +5244,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 1691940,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -5270,7 +5270,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 542159,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -5296,7 +5296,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -5322,7 +5322,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 1783114,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -5348,7 +5348,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -5374,7 +5374,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 542159,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -5400,7 +5400,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 298699,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -5426,7 +5426,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -5452,7 +5452,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 1692198,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -5478,7 +5478,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 542159,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -5504,7 +5504,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 379079,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -5556,7 +5556,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 542159,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -5582,7 +5582,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 1692198,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -5608,7 +5608,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 610220,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -5634,7 +5634,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 975672,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -5660,7 +5660,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 1783114,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -5686,7 +5686,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 1783114,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -5712,7 +5712,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 441001,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -5738,7 +5738,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 1546335,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -5764,7 +5764,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -5790,7 +5790,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -5816,7 +5816,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 677264,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -5842,7 +5842,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 1692198,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -5868,7 +5868,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 1692198,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -5894,7 +5894,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -5920,7 +5920,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -5946,7 +5946,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 409235,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -5972,7 +5972,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -5998,7 +5998,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 1692197,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -6024,7 +6024,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -6050,7 +6050,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.100000000000000000",
@@ -6076,7 +6076,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 1692198,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -6102,7 +6102,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 1783114,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -6154,7 +6154,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -6180,7 +6180,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -6206,7 +6206,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 254976,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -6232,7 +6232,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -6258,7 +6258,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 542159,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -6284,7 +6284,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 1783113,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -6310,7 +6310,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 540358,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -6336,7 +6336,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 1783114,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.500000000000000000",
       "max_change_rate": "0.100000000000000000",
@@ -6362,7 +6362,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 1783114,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -6414,7 +6414,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 1783114,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -6440,7 +6440,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 1783114,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -6492,7 +6492,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -6518,7 +6518,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -6544,7 +6544,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 1783114,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -6570,7 +6570,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 254948,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -6622,7 +6622,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -6648,7 +6648,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 542159,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -6700,7 +6700,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 63847,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -6726,7 +6726,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -6752,7 +6752,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -6778,7 +6778,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -6804,7 +6804,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -6830,7 +6830,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 1206361,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -6856,7 +6856,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 1783114,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -6882,7 +6882,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -6908,7 +6908,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 763388,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -6934,7 +6934,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -6960,7 +6960,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 1783114,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -6986,7 +6986,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 1783114,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -7012,7 +7012,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 1692198,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.080000000000000000",
       "max_change_rate": "0.020000000000000000",
@@ -7038,7 +7038,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -7064,7 +7064,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 855429,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -7090,7 +7090,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 1783114,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -7116,7 +7116,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 254976,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -7168,7 +7168,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -7194,7 +7194,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 66167,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -7220,7 +7220,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 1194163,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -7246,7 +7246,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 254948,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -7298,7 +7298,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -7324,7 +7324,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 1783114,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -7350,7 +7350,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 409231,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -7376,7 +7376,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 542159,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -7402,7 +7402,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 1783114,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -7428,7 +7428,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 747110,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -7454,7 +7454,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 1783114,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -7480,7 +7480,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 513002,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -7506,7 +7506,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 542159,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -7532,7 +7532,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -7558,7 +7558,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -7610,7 +7610,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.050000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -7662,7 +7662,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 1441340,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -7688,7 +7688,7 @@
     "slashed_btc_height": 0,
     "jailed": false,
     "highest_voted_height": 0,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
@@ -7714,7 +7714,7 @@
     "slashed_btc_height": 0,
     "jailed": true,
     "highest_voted_height": 1320115,
-    "bsn_id": "bbn-test-5",
+    "bsn_id": "bbn-test-6",
     "commission_info": {
       "max_rate": "0.200000000000000000",
       "max_change_rate": "0.010000000000000000",
