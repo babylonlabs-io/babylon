@@ -44,7 +44,6 @@ func (s *StandardScenario) InitScenario(
 
 	for _, del := range stakers {
 		delAmt := sdkmath.NewInt(20_000000)
-		s.driver.MintNativeTo(del.Address(), 100_000000)
 		s.driver.TxWrappedDelegate(del.SenderInfo, valAddr.String(), delAmt)
 	}
 
