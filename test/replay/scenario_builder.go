@@ -38,7 +38,6 @@ func (s *StandardScenario) InitScenario(
 	valAddr := sdk.MustValAddressFromBech32(val.OperatorAddress)
 
 	covSender := s.driver.CreateCovenantSender()
-	fps := s.driver.CreateNFinalityProviderAccounts(numFps)
 	// each staker will delegate to same fp
 	stakers := s.driver.CreateNStakerAccounts(numFps)
 
@@ -53,15 +52,7 @@ func (s *StandardScenario) InitScenario(
 	s.driver.ProgressTillFirstBlockTheNextEpoch()
 	s.driver.FinalizeCkptForEpoch(oldEpochNumber)
 
-	for _, fp := range fps {
-		fp.RegisterFinalityProvider()
-	}
-	// register all fps in one block
-	s.driver.GenerateNewBlockAssertExecutionSuccess()
-
-	for _, fp := range fps {
-		fp.CommitRandomness()
-	}
+	fps := s.CreateFpRegisterAndCommitRandomness(numFps)
 
 	currentEpochNumber := s.driver.GetEpoch().EpochNumber
 	s.driver.ProgressTillFirstBlockTheNextEpoch()
@@ -105,6 +96,22 @@ func (s *StandardScenario) InitScenario(
 	s.activationHeight = activationHeight
 }
 
+func (s *StandardScenario) CreateFpRegisterAndCommitRandomness(n int) []*FinalityProvider {
+	fps := s.driver.CreateNFinalityProviderAccounts(n)
+	s.driver.GenerateNewBlockAssertExecutionSuccess()
+	for _, fp := range fps {
+		fp.RegisterFinalityProvider()
+	}
+	// register all fps in one block
+	s.driver.GenerateNewBlockAssertExecutionSuccess()
+
+	for _, fp := range fps {
+		fp.CommitRandomness()
+	}
+
+	return fps
+}
+
 func (s *StandardScenario) CreateActiveBtcDel(fp *FinalityProvider, staker *Staker, totalSat int64) {
 	staker.CreatePreApprovalDelegation(
 		[]*bbn.BIP340PubKey{fp.BTCPublicKey()},
@@ -123,6 +130,11 @@ func (s *StandardScenario) CreateActiveBtcDel(fp *FinalityProvider, staker *Stak
 
 func (s *StandardScenario) FinalityFinalizeBlocksAllVotes(fromBlockToFinalize, numBlocksToFinalize uint64) uint64 {
 	return s.FinalityFinalizeBlocks(fromBlockToFinalize, numBlocksToFinalize, s.FpMapBtcPkHex())
+}
+
+func (s *StandardScenario) FinalityFinalizeBlocksAllVotesUntilCurrentHeight(fromBlockToFinalize uint64) uint64 {
+	currHeight := uint64(s.driver.Ctx().BlockHeader().Height)
+	return s.FinalityFinalizeBlocks(fromBlockToFinalize, currHeight-fromBlockToFinalize, s.FpMapBtcPkHex())
 }
 
 func (s *StandardScenario) FpMapBtcPkHex() map[string]struct{} {
