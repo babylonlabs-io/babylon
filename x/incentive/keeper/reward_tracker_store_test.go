@@ -11,7 +11,9 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	"github.com/babylonlabs-io/babylon/v4/testutil/store"
 	"github.com/babylonlabs-io/babylon/v4/x/incentive/types"
 )
 
@@ -867,4 +869,11 @@ func FuzzIterateBTCDelegationSatsUpdatedDeterminism(f *testing.F) {
 			}
 		}
 	})
+}
+
+func NewKeeperWithCtx(t *testing.T) (*Keeper, sdk.Context) {
+	encConf := appparams.DefaultEncodingConfig()
+	ctx, kvStore := store.NewStoreWithCtx(t, types.ModuleName)
+	k := NewKeeper(encConf.Codec, kvStore, nil, nil, nil, appparams.AccGov.String(), appparams.AccFeeCollector.String())
+	return &k, ctx
 }
