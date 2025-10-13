@@ -1295,11 +1295,11 @@ func TestBabyCoStaking(t *testing.T) {
 
 	// Redelegation msg made it to the last epoch block, so it is processed
 	// And the redelegation is slashed, so the tracker should be updated accordingly
-	del6Delegation, err := stkK.GetDelegation(d.Ctx(), del6.Address(), val2ValAddr)
+	_, err = stkK.GetDelegation(d.Ctx(), del6.Address(), val2ValAddr)
 	require.Error(d.t, err)
 	require.ErrorContains(d.t, err, "no delegation")
 
-	del6Delegation, err = stkK.GetDelegation(d.Ctx(), del6.Address(), val1ValAddr)
+	del6Delegation, err := stkK.GetDelegation(d.Ctx(), del6.Address(), val1ValAddr)
 	require.NoError(d.t, err)
 
 	val1, err = stkK.GetValidator(d.Ctx(), val1ValAddr)
@@ -1313,11 +1313,11 @@ func TestBabyCoStaking(t *testing.T) {
 	require.True(t, del6Tracker.ActiveSatoshis.IsZero())
 	require.True(t, del6Tracker.TotalScore.IsZero())
 
-	del7Delegation, err := stkK.GetDelegation(d.Ctx(), del7.Address(), val2ValAddr)
+	_, err = stkK.GetDelegation(d.Ctx(), del7.Address(), val2ValAddr)
 	require.Error(d.t, err)
 	require.ErrorContains(d.t, err, "no delegation")
 
-	del7Delegation, err = stkK.GetDelegation(d.Ctx(), del7.Address(), val6ValAddr)
+	del7Delegation, err := stkK.GetDelegation(d.Ctx(), del7.Address(), val6ValAddr)
 	require.NoError(d.t, err)
 
 	val6, err := stkK.GetValidator(d.Ctx(), val6ValAddr)

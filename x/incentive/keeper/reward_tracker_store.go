@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 	"errors"
+	"sort"
 
 	"cosmossdk.io/collections"
 	sdkmath "cosmossdk.io/math"
@@ -131,7 +132,15 @@ func (k Keeper) IterateBTCDelegationSatsUpdated(
 	}
 
 	// iterates over the compiled events as some new btc delegation could be activated during the pending events
-	for delStr, sats := range compiledEvents {
+	// Sort the keys to ensure deterministic iteration order
+	delStrs := make([]string, 0, len(compiledEvents))
+	for delStr := range compiledEvents {
+		delStrs = append(delStrs, delStr)
+	}
+	sort.Strings(delStrs)
+
+	for _, delStr := range delStrs {
+		sats := compiledEvents[delStr]
 		delAddr, err := sdk.AccAddressFromBech32(delStr)
 		if err != nil {
 			return err

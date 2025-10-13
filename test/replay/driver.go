@@ -896,12 +896,12 @@ func (d *BabylonAppDriver) FinalizeCkptForEpoch(epochNumber uint64) {
 }
 
 func (d *BabylonAppDriver) ProgressTillFirstBlockTheNextEpoch() {
-	currnetEpochNunber := d.GetEpoch().EpochNumber
-	nextEpochNumber := currnetEpochNunber + 1
+	currentEpochNumber := d.GetEpoch().EpochNumber
+	nextEpochNumber := currentEpochNumber + 1
 
-	for currnetEpochNunber < nextEpochNumber {
+	for currentEpochNumber < nextEpochNumber {
 		d.GenerateNewBlock()
-		currnetEpochNunber = d.GetEpoch().EpochNumber
+		currentEpochNumber = d.GetEpoch().EpochNumber
 	}
 }
 
