@@ -32,20 +32,9 @@ func (s *StandardScenario) InitScenario(
 	delegationsPerFp int,
 ) {
 	covSender := s.driver.CreateCovenantSender()
-	fps := s.driver.CreateNFinalityProviderAccounts(numFps)
 	// each staker will delegate to same fp
 	stakers := s.driver.CreateNStakerAccounts(numFps)
-	s.driver.GenerateNewBlockAssertExecutionSuccess()
-
-	for _, fp := range fps {
-		fp.RegisterFinalityProvider()
-	}
-	// register all fps in one block
-	s.driver.GenerateNewBlockAssertExecutionSuccess()
-
-	for _, fp := range fps {
-		fp.CommitRandomness()
-	}
+	fps := s.CreateFpRegisterAndCommitRandomness(numFps)
 
 	currentEpochNumber := s.driver.GetEpoch().EpochNumber
 	s.driver.ProgressTillFirstBlockTheNextEpoch()
@@ -89,6 +78,63 @@ func (s *StandardScenario) InitScenario(
 	s.activationHeight = activationHeight
 }
 
+func (s *StandardScenario) CreateFpRegisterAndCommitRandomness(n int) []*FinalityProvider {
+	fps := s.driver.CreateNFinalityProviderAccounts(n)
+	s.driver.GenerateNewBlockAssertExecutionSuccess()
+	for _, fp := range fps {
+		fp.RegisterFinalityProvider()
+	}
+	// register all fps in one block
+	s.driver.GenerateNewBlockAssertExecutionSuccess()
+
+	for _, fp := range fps {
+		fp.CommitRandomness()
+	}
+
+	return fps
+}
+
+func (s *StandardScenario) AddNewFp(
+	delegationsNum int,
+) *FinalityProvider {
+	fp := s.CreateFpRegisterAndCommitRandomness(1)[0]
+
+	currentEpochNumber := s.driver.GetEpoch().EpochNumber
+	s.driver.ProgressTillFirstBlockTheNextEpoch()
+	s.driver.FinalizeCkptForEpoch(currentEpochNumber - 1)
+
+	// commit randomness
+	s.driver.GenerateNewBlockAssertExecutionSuccess()
+
+	for i := 0; i < delegationsNum; i++ {
+		stkIdx := delegationsNum % len(s.stakers)
+		s.stakers[stkIdx].CreatePreApprovalDelegation(
+			[]*bbn.BIP340PubKey{fp.BTCPublicKey()},
+			defaultStakingTime,
+			100000000,
+		)
+	}
+
+	s.driver.GenerateNewBlockAssertExecutionSuccess()
+	pendingDelegations := s.driver.GetPendingBTCDelegations(s.driver.t)
+	require.Equal(s.driver.t, len(pendingDelegations), delegationsNum)
+
+	s.covenant.SendCovenantSignatures()
+	s.driver.GenerateNewBlockAssertExecutionSuccess()
+
+	verifiedDelegations := s.driver.GetVerifiedBTCDelegations(s.driver.t)
+	require.Equal(s.driver.t, len(verifiedDelegations), delegationsNum)
+
+	s.driver.ActivateVerifiedDelegations(delegationsNum)
+	s.driver.GenerateNewBlockAssertExecutionSuccess()
+
+	activeFps := s.driver.GetActiveFpsAtHeight(s.driver.t, uint64(s.driver.Ctx().BlockHeight()))
+	require.GreaterOrEqual(s.driver.t, delegationsNum, len(activeFps))
+
+	s.finalityProviders = append(s.finalityProviders, fp)
+	return fp
+}
+
 func (s *StandardScenario) CreateActiveBtcDel(fp *FinalityProvider, staker *Staker, totalSat int64) {
 	staker.CreatePreApprovalDelegation(
 		[]*bbn.BIP340PubKey{fp.BTCPublicKey()},
@@ -107,6 +153,11 @@ func (s *StandardScenario) CreateActiveBtcDel(fp *FinalityProvider, staker *Stak
 
 func (s *StandardScenario) FinalityFinalizeBlocksAllVotes(fromBlockToFinalize, numBlocksToFinalize uint64) uint64 {
 	return s.FinalityFinalizeBlocks(fromBlockToFinalize, numBlocksToFinalize, s.FpMapBtcPkHex())
+}
+
+func (s *StandardScenario) FinalityFinalizeBlocksAllVotesUntilCurrentHeight(fromBlockToFinalize uint64) uint64 {
+	currHeight := uint64(s.driver.Ctx().BlockHeader().Height)
+	return s.FinalityFinalizeBlocks(fromBlockToFinalize, currHeight-fromBlockToFinalize, s.FpMapBtcPkHex())
 }
 
 func (s *StandardScenario) FpMapBtcPkHex() map[string]struct{} {
