@@ -112,47 +112,6 @@ func (s *StandardScenario) CreateFpRegisterAndCommitRandomness(n int) []*Finalit
 	return fps
 }
 
-func (s *StandardScenario) AddNewFp(
-	delegationsNum int,
-) *FinalityProvider {
-	fp := s.CreateFpRegisterAndCommitRandomness(1)[0]
-
-	currentEpochNumber := s.driver.GetEpoch().EpochNumber
-	s.driver.ProgressTillFirstBlockTheNextEpoch()
-	s.driver.FinalizeCkptForEpoch(currentEpochNumber - 1)
-
-	// commit randomness
-	s.driver.GenerateNewBlockAssertExecutionSuccess()
-
-	for i := 0; i < delegationsNum; i++ {
-		stkIdx := delegationsNum % len(s.stakers)
-		s.stakers[stkIdx].CreatePreApprovalDelegation(
-			[]*bbn.BIP340PubKey{fp.BTCPublicKey()},
-			defaultStakingTime,
-			100000000,
-		)
-	}
-
-	s.driver.GenerateNewBlockAssertExecutionSuccess()
-	pendingDelegations := s.driver.GetPendingBTCDelegations(s.driver.t)
-	require.Equal(s.driver.t, len(pendingDelegations), delegationsNum)
-
-	s.covenant.SendCovenantSignatures()
-	s.driver.GenerateNewBlockAssertExecutionSuccess()
-
-	verifiedDelegations := s.driver.GetVerifiedBTCDelegations(s.driver.t)
-	require.Equal(s.driver.t, len(verifiedDelegations), delegationsNum)
-
-	s.driver.ActivateVerifiedDelegations(delegationsNum)
-	s.driver.GenerateNewBlockAssertExecutionSuccess()
-
-	activeFps := s.driver.GetActiveFpsAtHeight(s.driver.t, uint64(s.driver.Ctx().BlockHeight()))
-	require.GreaterOrEqual(s.driver.t, delegationsNum, len(activeFps))
-
-	s.finalityProviders = append(s.finalityProviders, fp)
-	return fp
-}
-
 func (s *StandardScenario) CreateActiveBtcDel(fp *FinalityProvider, staker *Staker, totalSat int64) {
 	staker.CreatePreApprovalDelegation(
 		[]*bbn.BIP340PubKey{fp.BTCPublicKey()},
