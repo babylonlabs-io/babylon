@@ -11,9 +11,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
-	"github.com/babylonlabs-io/babylon/v4/testutil/store"
 	"github.com/babylonlabs-io/babylon/v4/x/incentive/types"
 )
 
@@ -869,71 +867,4 @@ func FuzzIterateBTCDelegationSatsUpdatedDeterminism(f *testing.F) {
 			}
 		}
 	})
-}
-
-func TestIterateBTCDelegationSatsUpdatedDeterminism(t *testing.T) {
-	k, ctx := NewKeeperWithCtx(t)
-
-	fp := datagen.GenRandomAddress()
-	numDelegations := 20
-	delegators := make([]sdk.AccAddress, numDelegations)
-
-	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	currentHeight := uint64(100)
-	header := sdkCtx.HeaderInfo()
-	header.Height = int64(currentHeight)
-	ctx = sdkCtx.WithHeaderInfo(header)
-
-	err := k.SetRewardTrackerEventLastProcessedHeight(ctx, 50)
-	require.NoError(t, err)
-
-	for i := 0; i < numDelegations; i++ {
-		delegators[i] = datagen.GenRandomAddress()
-		err := k.AddEventBtcDelegationActivated(ctx, uint64(55+i), fp, delegators[i], uint64(1000+i*100))
-		require.NoError(t, err)
-	}
-
-	runIteration := func() []string {
-		var order []string
-		err := k.IterateBTCDelegationSatsUpdated(ctx, fp, func(del sdk.AccAddress, activeSats sdkmath.Int) error {
-			order = append(order, del.String())
-			return nil
-		})
-		require.NoError(t, err)
-		return order
-	}
-
-	iterations := 10
-	orders := make([][]string, iterations)
-	for i := 0; i < iterations; i++ {
-		orders[i] = runIteration()
-	}
-
-	firstOrder := orders[0]
-	for i := 1; i < iterations; i++ {
-		require.ElementsMatch(t, firstOrder, orders[i], "all iterations should contain the same delegators")
-
-		// elements match but might not be in the same order
-		for j := range firstOrder {
-			if firstOrder[j] == orders[i][j] {
-				continue
-			}
-			t.Logf("Non-deterministic ordering detected!")
-			t.Logf("First iteration order:  %v", firstOrder)
-			t.Logf("Iteration %d order: %v", i, orders[i])
-			t.Fatalf("IterateBTCDelegationSatsUpdated produced different ordering on iteration %d. "+
-				"This is caused by unordered map iteration in reward_tracker_store.go:142. "+
-				"The map 'compiledEvents' should be iterated using the sorted 'delStrs' slice instead.", i)
-
-		}
-	}
-
-	t.Log("All iterations produced consistent ordering (test may not have triggered the bug)")
-}
-
-func NewKeeperWithCtx(t *testing.T) (*Keeper, sdk.Context) {
-	encConf := appparams.DefaultEncodingConfig()
-	ctx, kvStore := store.NewStoreWithCtx(t, types.ModuleName)
-	k := NewKeeper(encConf.Codec, kvStore, nil, nil, nil, appparams.AccGov.String(), appparams.AccFeeCollector.String())
-	return &k, ctx
 }

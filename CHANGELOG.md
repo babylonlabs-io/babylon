@@ -54,6 +54,8 @@ baby ratio where it wasn't increasing the costaker cumulative rewards and neithe
 as the completely removal of an baby delegation doesn't calls `AfterDelegationModified
 - [#1790](https://github.com/babylonlabs-io/babylon/pull/1790) Fix withdraw reward to only error if both `BTC_STAKER` and `COSTAKER` types have zero rewards available.
 - [#1792](https://github.com/babylonlabs-io/babylon/pull/1792) Fix costaking baby bond unbond and bond again for the same delegation pair (del, val) in the same block
+- [#1800](https://github.com/babylonlabs-io/babylon/pull/1800) Handle co-staking edge cases for baby stakers 
+- [#1802](https://github.com/babylonlabs-io/babylon/pull/1802) Fix non-determinism in co-staking
 
 ## v4.0.0-rc.0
 

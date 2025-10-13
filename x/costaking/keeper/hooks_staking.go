@@ -225,13 +225,42 @@ func (k Keeper) buildCurrEpochValSetMap(ctx context.Context) (map[string]types.V
 			return nil, err
 		}
 
+		// There are 2 cases where a validator's tokens and shares
+		// may differ from the original tokens and shares
+		// stored in the costaking module state at epoch start:
+		// 1. The validator has been slashed - this reduces only validator tokens
+		// 2. A redelegation has been slashed - this reduces both tokens and shares on the DESTINATION validator. This preserves the token/share ratio
+
+		// To define if a validator has been slashed, conditions are:
+		// - If current tokens < original tokens && current shares == original shares
+		// - if current tokens < original tokens && current shares < original shares, there're 2 possible cases: (1) redelegation slashed happened (should NOT flag as slashed), (2) both redelegation and validator slashing happened (should flag as slashed)
+
+		// In conclusion, we can determine if a validator has been slashed
+		// by checking if the token/share ratio changed
+
+		isSlashed := false
 		currentTokens := stkVal.GetTokens()
+		currentShares := stkVal.DelegatorShares
+		if currentTokens.LT(val.Tokens) && !val.Shares.IsZero() && !currentShares.IsZero() {
+			originalRatio := math.LegacyNewDecFromInt(val.Tokens).Quo(val.Shares)
+			currentRatio := math.LegacyNewDecFromInt(currentTokens).Quo(currentShares)
+
+			// Use a small tolerance to account for rounding errors in ratio calculations
+			// With 18 decimal precision, we tolerate differences of 1 part in 10^12 (1e-12)
+			// This handles precision issues from truncation in slashing/redelegation calculations
+			// while still detecting actual validator slashing (which typically changes ratio by ~1% or more)
+			diff := originalRatio.Sub(currentRatio).Abs()
+			tolerance := originalRatio.Mul(math.LegacyNewDecWithPrec(1, 12)) // 1e-12 relative tolerance
+
+			// If ratios differ beyond tolerance, validator has been slashed
+			isSlashed = diff.GT(tolerance)
+		}
+
 		valMap[valAddr.String()] = types.ValidatorInfo{
 			ValAddress:     valAddr,
 			OriginalTokens: val.Tokens,
 			OriginalShares: val.Shares,
-			CurrentTokens:  currentTokens,
-			IsSlashed:      currentTokens.LT(val.Tokens), // consider slashed if current tokens < original tokens
+			IsSlashed:      isSlashed,
 		}
 	}
 
