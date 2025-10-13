@@ -1,6 +1,7 @@
 package replay
 
 import (
+	sdkmath "cosmossdk.io/math"
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
@@ -31,11 +32,26 @@ func (s *StandardScenario) InitScenario(
 	numFps int,
 	delegationsPerFp int,
 ) {
+	validators, err := s.driver.App.StakingKeeper.GetAllValidators(s.driver.Ctx())
+	require.NoError(s.driver.t, err)
+	val := validators[0]
+	valAddr := sdk.MustValAddressFromBech32(val.OperatorAddress)
+
 	covSender := s.driver.CreateCovenantSender()
 	fps := s.driver.CreateNFinalityProviderAccounts(numFps)
 	// each staker will delegate to same fp
 	stakers := s.driver.CreateNStakerAccounts(numFps)
+
+	for _, del := range stakers {
+		delAmt := sdkmath.NewInt(20_000000)
+		s.driver.TxWrappedDelegate(del.SenderInfo, valAddr.String(), delAmt)
+	}
+
 	s.driver.GenerateNewBlockAssertExecutionSuccess()
+
+	oldEpochNumber := s.driver.GetEpoch().EpochNumber
+	s.driver.ProgressTillFirstBlockTheNextEpoch()
+	s.driver.FinalizeCkptForEpoch(oldEpochNumber)
 
 	for _, fp := range fps {
 		fp.RegisterFinalityProvider()
