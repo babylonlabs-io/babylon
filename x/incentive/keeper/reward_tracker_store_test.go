@@ -913,10 +913,7 @@ func TestIterateBTCDelegationSatsUpdatedDeterminism(t *testing.T) {
 	for i := 1; i < iterations; i++ {
 		require.ElementsMatch(t, firstOrder, orders[i], "all iterations should contain the same delegators")
 
-		if len(firstOrder) != len(orders[i]) {
-			t.Fatalf("iteration %d has different length than first iteration", i)
-		}
-
+		// elements match but might not be in the same order
 		for j := range firstOrder {
 			if firstOrder[j] == orders[i][j] {
 				continue

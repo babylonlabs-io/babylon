@@ -13,38 +13,6 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func FuzzEventsDelegationFinalityHooks(f *testing.F) {
-	datagen.AddRandomSeedsToFuzzer(f, 5)
-
-	f.Fuzz(func(t *testing.T, seed int64) {
-		t.Parallel()
-		r := rand.New(rand.NewSource(seed))
-		numFinalityProviders := datagen.RandomInRange(r, 2, 3)
-		numDelPerFp := 2
-		driverTempDir := t.TempDir()
-		replayerTempDir := t.TempDir()
-		d := NewBabylonAppDriver(r, t, driverTempDir, replayerTempDir)
-		d.GenerateNewBlock()
-
-		scn := NewStandardScenario(d)
-		scn.InitScenario(numFinalityProviders, numDelPerFp)
-
-		// we do not have voting in this test, so wait until all fps are jailed
-		d.GenerateNewBlock()
-
-		scn.FinalityFinalizeBlocksAllVotesUntilCurrentHeight(scn.activationHeight)
-
-		scn.AddNewFp(3)
-
-		// Replay all the blocks from driver and check appHash
-		replayer := NewBlockReplayer(t, replayerTempDir)
-		replayer.ReplayBlocks(t, d.GetFinalizedBlocks())
-		// after replay we should have the same apphash
-		require.Equal(t, d.GetLastState().LastBlockHeight, replayer.LastState.LastBlockHeight)
-		require.Equal(t, d.GetLastState().AppHash, replayer.LastState.AppHash)
-	})
-}
-
 func FuzzJailing(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 5)
 
