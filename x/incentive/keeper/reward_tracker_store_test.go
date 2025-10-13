@@ -802,6 +802,75 @@ func TestIterateBTCDelegationSatsUpdated(t *testing.T) {
 	require.Equal(t, 0, fp3Count, "fp3 with no stored data should have 0 delegations")
 }
 
+func FuzzIterateBTCDelegationSatsUpdatedDeterminism(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+
+		k, ctx := NewKeeperWithCtx(t)
+
+		fp := datagen.GenRandomAddress()
+		numDelegations := datagen.RandomInt(r, 5) + 5
+		delegators := make([]sdk.AccAddress, numDelegations)
+
+		sdkCtx := sdk.UnwrapSDKContext(ctx)
+		currentHeight := uint64(100)
+		header := sdkCtx.HeaderInfo()
+		header.Height = int64(currentHeight)
+		ctx = sdkCtx.WithHeaderInfo(header)
+
+		startHeight := datagen.RandomInt(r, 50) + 10
+		err := k.SetRewardTrackerEventLastProcessedHeight(ctx, startHeight)
+		require.NoError(t, err)
+
+		for i := uint64(0); i < numDelegations; i++ {
+			delegators[i] = datagen.GenRandomAddress()
+			// add the events to iterate over
+			err := k.AddEventBtcDelegationActivated(ctx, uint64(startHeight+2+i), fp, delegators[i], datagen.RandomInt(r, 1000)+100)
+			require.NoError(t, err)
+		}
+
+		// as the func doesn't delete the events we just iterate over it multiple times and check that all iterations were the same
+		runIteration := func() []string {
+			var order []string
+			err := k.IterateBTCDelegationSatsUpdated(ctx, fp, func(del sdk.AccAddress, activeSats sdkmath.Int) error {
+				order = append(order, del.String())
+				return nil
+			})
+			require.NoError(t, err)
+			return order
+		}
+
+		iterations := 10
+		orders := make([][]string, iterations)
+		for i := 0; i < iterations; i++ {
+			orders[i] = runIteration()
+		}
+
+		// check the first order against all the others
+		firstOrder := orders[0]
+		for i := 1; i < iterations; i++ {
+			require.ElementsMatch(t, firstOrder, orders[i], "all iterations should contain the same delegators")
+
+			if len(firstOrder) != len(orders[i]) {
+				t.Fatalf("iteration %d has different length than first iteration", i)
+			}
+
+			for j := range firstOrder {
+				if firstOrder[j] == orders[i][j] {
+					continue
+				}
+
+				t.Logf("Non-deterministic ordering detected!")
+				t.Logf("First iteration order:  %v", firstOrder)
+				t.Logf("Iteration %d order: %v", i, orders[i])
+				t.Fatalf("IterateBTCDelegationSatsUpdated produced different ordering on iteration %d. - seed %d", i, seed)
+			}
+		}
+	})
+}
+
 func NewKeeperWithCtx(t *testing.T) (*Keeper, sdk.Context) {
 	encConf := appparams.DefaultEncodingConfig()
 	ctx, kvStore := store.NewStoreWithCtx(t, types.ModuleName)
