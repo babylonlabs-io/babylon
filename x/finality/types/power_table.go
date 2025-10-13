@@ -43,7 +43,12 @@ func (dc *VotingPowerDistCache) ActiveFpsByBtcPk() map[string]struct{} {
 	return activeFpByBtcPk
 }
 
-func (dc *VotingPowerDistCache) FindNewActiveFinalityProviders(prevDc *VotingPowerDistCache) []*FinalityProviderDistInfo {
+// FindNewActiveFinalityProviders compares the current active finality provider set with
+// the previous one and returns the finality providers that are newly active
+// The returned list is sorted by BTC public key in ascending order.
+func (dc *VotingPowerDistCache) FindNewActiveFinalityProviders(
+	prevDc *VotingPowerDistCache,
+) []*FinalityProviderDistInfo {
 	activeFps := dc.GetActiveFinalityProviderSet()
 	prevActiveFps := prevDc.GetActiveFinalityProviderSet()
 	newActiveFps := make([]*FinalityProviderDistInfo, 0)
@@ -62,7 +67,12 @@ func (dc *VotingPowerDistCache) FindNewActiveFinalityProviders(prevDc *VotingPow
 	return newActiveFps
 }
 
-func (dc *VotingPowerDistCache) FindNewInactiveFinalityProviders(prevDc *VotingPowerDistCache) []*FinalityProviderDistInfo {
+// FindNewInactiveFinalityProviders compares the current finality provider set with
+// the previous one and returns the finality providers that are newly inactive.
+// The returned list is sorted by BTC public key in ascending order.
+func (dc *VotingPowerDistCache) FindNewInactiveFinalityProviders(
+	prevDc *VotingPowerDistCache,
+) []*FinalityProviderDistInfo {
 	inactiveFps := dc.GetInactiveFinalityProviderSet()
 	prevInactiveFps := prevDc.GetInactiveFinalityProviderSet()
 	newInactiveFps := make([]*FinalityProviderDistInfo, 0)
