@@ -5,7 +5,11 @@ module github.com/babylonlabs-io/babylon/v2
 require (
 	github.com/CosmWasm/wasmd v0.54.1
 	github.com/btcsuite/btcd v0.24.2
+<<<<<<< HEAD
 	github.com/cometbft/cometbft v0.38.17
+=======
+	github.com/cometbft/cometbft v0.38.19
+>>>>>>> fa19b52 (chore: update cometbft to v0.38.19 (#1808))
 	github.com/cometbft/cometbft-db v0.15.0
 	github.com/cosmos/cosmos-sdk v0.50.14
 	github.com/cosmos/ibc-go/modules/light-clients/08-wasm v0.0.0-20240429153234-e1e6da7e4ead

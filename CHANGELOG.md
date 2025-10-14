@@ -37,6 +37,59 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+<<<<<<< HEAD
+=======
+### Improvements
+
+- [#1762](https://github.com/babylonlabs-io/babylon/pull/1762) Add new test case on stake expansion
+- [#1764](https://github.com/babylonlabs-io/babylon/pull/1764) Add mergify yaml file for automatic backporting
+- [#1785](https://github.com/babylonlabs-io/babylon/pull/1785) CI reusable to v0.13.5 and golang lint version 2
+- [#1776](https://github.com/babylonlabs-io/babylon/pull/1776) Track baby staked to active validators only
+
+### Bug fixes
+
+- [#1763](https://github.com/babylonlabs-io/babylon/pull/1763) Fix `v4` upgrade logic to store co-staker reward tracker for all stakers (baby and/or BTC)
+- [#1771](https://github.com/babylonlabs-io/babylon/pull/1771) Fix `x/costaking` costakers portion to 2.35% of 5.5%
+- [#1780](https://github.com/babylonlabs-io/babylon/pull/1780) Fix `x/costaking` `MsgUpdateParams` update score to
+baby ratio where it wasn't increasing the costaker cumulative rewards and neither sending the previous rewards to gauge.
+- [#1783](https://github.com/babylonlabs-io/babylon/pull/1783) Fix `x/costaking` calls baby delegation modified in hook `BeforeDelegationRemoved`
+as the completely removal of an baby delegation doesn't calls `AfterDelegationModified
+- [#1790](https://github.com/babylonlabs-io/babylon/pull/1790) Fix withdraw reward to only error if both `BTC_STAKER` and `COSTAKER` types have zero rewards available.
+- [#1792](https://github.com/babylonlabs-io/babylon/pull/1792) Fix costaking baby bond unbond and bond again for the same delegation pair (del, val) in the same block
+- [#1800](https://github.com/babylonlabs-io/babylon/pull/1800) Handle co-staking edge cases for baby stakers
+- [#1802](https://github.com/babylonlabs-io/babylon/pull/1802) Fix non-determinism in co-staking
+- [#1805](https://github.com/babylonlabs-io/babylon/pull/1805) Fix non-determinism in incentives `IterateBTCDelegationSatsUpdated`
+- [#1808](https://github.com/babylonlabs-io/babylon/pull/1808) Updates cometbft to v0.38.19 fix ASA-2025-003.
+
+## v4.0.0-rc.0
+
+### Improvements
+
+- [#1734](https://github.com/babylonlabs-io/babylon/pull/1734) Bump repository version to `v4`
+- [#1736](https://github.com/babylonlabs-io/babylon/pull/1736) bump cosmos-sdk to `v0.53.2`
+- [#1633](https://github.com/babylonlabs-io/babylon/pull/1663) Add spam prevention mechanisms to epoching module with minimum amount validation and gas consumption limits for wrapped delegate operations.
+- [#1404](https://github.com/babylonlabs-io/babylon/pull/1404) Refactor power dist event processing.
+- [#1347](https://github.com/babylonlabs-io/babylon/pull/1344) Add `MsgType` field to `QueuedMessageResponse` message.
+- [#1737](https://github.com/babylonlabs-io/babylon/pull/1737) bump ibc-go to `v10` and wire up IBC `v2`
+- [#1747](https://github.com/babylonlabs-io/babylon/pull/1747) bump cosmos-sdk to `v0.53.4`
+- [#1062](https://github.com/babylonlabs-io/babylon/pull/1062) Add `anteHandler` to avoid fee grants on refundable tx (`x/incentive`)
+- [#1060](https://github.com/babylonlabs-io/babylon/pull/1060) Optimize `PubRandCommit` lookup in `x/finality` module
+- [#1335](https://github.com/babylonlabs-io/babylon/pull/1335) Tweaks on BTC stake expansion feature.
+- [#1352](https://github.com/babylonlabs-io/babylon/pull/1352) Add stake expansion signatures in BTC delegation query response
+- [#1369](https://github.com/babylonlabs-io/babylon/pull/1369) fix: update stake expansion validation to allow expanding
+- [#1418](https://github.com/babylonlabs-io/babylon/pull/1418) fix: add stake expansion covenant signature to the events
+- [#1740](https://github.com/babylonlabs-io/babylon/pull/1740) Simplify selective slashing message handler
+- [#1416](https://github.com/babylonlabs-io/babylon/pull/1416) Relax requirements for stake expansion funding output
+- [#1428](https://github.com/babylonlabs-io/babylon/pull/1428) Update stake expansion events
+- [#1545](https://github.com/babylonlabs-io/babylon/pull/1545) fix: remove unnecessary covenant verification for stake expansion delegation
+- [#1410](https://github.com/babylonlabs-io/babylon/pull/1410) Add stake expansion e2e test
+- [#1707](https://github.com/babylonlabs-io/babylon/pull/1707) Add `x/costaking`
+
+### Features
+
+- [#1231](https://github.com/babylonlabs-io/babylon/pull/1231) Add BTC stake expansion.
+
+>>>>>>> fa19b52 (chore: update cometbft to v0.38.19 (#1808))
 ## v2.3.1
 
 ### Improvements
