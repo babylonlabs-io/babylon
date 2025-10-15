@@ -37,6 +37,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+### Improvements
+
+- [#1808](https://github.com/babylonlabs-io/babylon/pull/1808) Updates cometbft to v0.38.19 fix ASA-2025-003.
+
 ## v2.3.1
 
 ### Improvements
