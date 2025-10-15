@@ -59,10 +59,6 @@ as the completely removal of an baby delegation doesn't calls `AfterDelegationMo
 - [#1805](https://github.com/babylonlabs-io/babylon/pull/1805) Fix non-determinism in incentives `IterateBTCDelegationSatsUpdated`
 - [#1815](https://github.com/babylonlabs-io/babylon/pull/1815) Fix export genesis with Costaker type in `x/incentive`
 
-## v2.3.2
-
-- [#1808](https://github.com/babylonlabs-io/babylon/pull/1808) Updates cometbft to v0.38.19 fix ASA-2025-003.
-
 ## v4.0.0-rc.0
 
 ### Improvements
@@ -90,6 +86,10 @@ as the completely removal of an baby delegation doesn't calls `AfterDelegationMo
 ### Features
 
 - [#1231](https://github.com/babylonlabs-io/babylon/pull/1231) Add BTC stake expansion.
+
+## v2.3.2
+
+- [#1808](https://github.com/babylonlabs-io/babylon/pull/1808) Updates cometbft to v0.38.19 fix ASA-2025-003.
 
 ## v2.3.1
 
