@@ -43,6 +43,7 @@ func TestGenesisState_Validate(t *testing.T) {
 				RewardGauges: []types.RewardGaugeEntry{
 					{StakeholderType: types.BTC_STAKER, Address: addrStr1, RewardGauge: datagen.GenRandomRewardGauge(r)},
 					{StakeholderType: types.FINALITY_PROVIDER, Address: addrStr1, RewardGauge: datagen.GenRandomRewardGauge(r)},
+					{StakeholderType: types.COSTAKER, Address: addrStr1, RewardGauge: datagen.GenRandomRewardGauge(r)},
 				},
 				WithdrawAddresses:                  []types.WithdrawAddressEntry{},
 				RefundableMsgHashes:                []string{},
