@@ -27,4 +27,5 @@ var (
 	ErrInvalidPubRandCommit           = errorsmod.Register(ModuleName, 1118, "the public randomness commitment is invalid")
 	ErrInvalidResumeFinality          = errorsmod.Register(ModuleName, 1121, "resume finality proposal message is not valid")
 	ErrFinalityProviderIsDeleted      = errorsmod.Register(ModuleName, 1122, "finality provider is deleted")
+	ErrInvalidSats                    = errorsmod.Register(ModuleName, 1123, "invalid satoshi amount")
 )

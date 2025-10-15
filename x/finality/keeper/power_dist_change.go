@@ -282,7 +282,9 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 		fpDeltaSats := state.DeltaSatsByFpBtcPk[fpBTCPKHex]
 		// handle delta sats based on new BTC delegations and
 		// unbonded delegations for this finality provider
-		fp.ChangeDeltaSats(fpDeltaSats)
+		if err := fp.ChangeDeltaSats(fpDeltaSats); err != nil {
+			panic(fmt.Sprintf("unable to update delta sats %d fp %s - %s", fpDeltaSats, fpBTCPKHex, err.Error()))
+		}
 		// remove the finality provider entry in fpActiveSats map, so that
 		// after the for loop the rest entries in fpActiveSats belongs to new
 		// finality providers with new BTC delegations
@@ -337,7 +339,9 @@ func (k Keeper) ProcessAllPowerDistUpdateEvents(
 		// update the bonded sats for this finality provider
 		// if had any delta sats during the power distribution change
 		fpDeltaSats := state.DeltaSatsByFpBtcPk[fpBTCPKHex]
-		fpDistInfo.ChangeDeltaSats(fpDeltaSats)
+		if err := fpDistInfo.ChangeDeltaSats(fpDeltaSats); err != nil {
+			panic(fmt.Sprintf("unable to update delta sats %d fp %s - %s", fpDeltaSats, fpBTCPKHex, err.Error()))
+		}
 
 		// add this finality provider to the new cache if it has voting power
 		if fpDistInfo.TotalBondedSat > 0 {
