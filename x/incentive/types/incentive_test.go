@@ -174,6 +174,11 @@ func TestStakeholderTypeValidate(t *testing.T) {
 			expectErr: false,
 		},
 		{
+			name:      "Valid COSTAKER",
+			shType:    types.COSTAKER,
+			expectErr: false,
+		},
+		{
 			name:      "Invalid StakeholderType",
 			shType:    types.StakeholderType(999),
 			expectErr: true,
