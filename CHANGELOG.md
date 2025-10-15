@@ -86,9 +86,9 @@ as the completely removal of an baby delegation doesn't calls `AfterDelegationMo
 
 - [#1231](https://github.com/babylonlabs-io/babylon/pull/1231) Add BTC stake expansion.
 
-<<<<<<< HEAD
-=======
 ## v2.3.2
+
+### Bug fixes
 
 - [#1808](https://github.com/babylonlabs-io/babylon/pull/1808) Updates cometbft to v0.38.19 fix ASA-2025-003.
 
@@ -99,7 +99,6 @@ as the completely removal of an baby delegation doesn't calls `AfterDelegationMo
 - [#1775](https://github.com/babylonlabs-io/babylon/pull/1775) testnet: add upgrade `v23` to testnet build tag
 for bbn-test-6
 
->>>>>>> b02eb38 (fix: export genesis incentives (#1815))
 ## v2.3.0
 
 ### Improvements
