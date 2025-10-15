@@ -89,6 +89,8 @@ as the completely removal of an baby delegation doesn't calls `AfterDelegationMo
 
 ## v2.3.2
 
+### Bug fixes
+
 - [#1808](https://github.com/babylonlabs-io/babylon/pull/1808) Updates cometbft to v0.38.19 fix ASA-2025-003.
 
 ## v2.3.1
