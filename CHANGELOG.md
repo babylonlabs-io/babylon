@@ -57,6 +57,7 @@ as the completely removal of an baby delegation doesn't calls `AfterDelegationMo
 - [#1800](https://github.com/babylonlabs-io/babylon/pull/1800) Handle co-staking edge cases for baby stakers
 - [#1802](https://github.com/babylonlabs-io/babylon/pull/1802) Fix non-determinism in co-staking
 - [#1805](https://github.com/babylonlabs-io/babylon/pull/1805) Fix non-determinism in incentives `IterateBTCDelegationSatsUpdated`
+- [#1815](https://github.com/babylonlabs-io/babylon/pull/1815) Fix export genesis with Costaker type in `x/incentive`
 
 ## v4.0.0-rc.0
 
