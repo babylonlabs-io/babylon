@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   lint_test:
-    uses: babylonlabs-io/.github/.github/workflows/reusable_go_lint_test.yml@92817762adb32ebbe832abfebe98efa09f7072e2  # v0.13.5
+    uses: babylonlabs-io/.github/.github/workflows/reusable_go_lint_test.yml@4cb00d8b8edbcd22684ecb2b26b5f915beb7f58c
     secrets: inherit
     with:
       go-version: '1.23'
