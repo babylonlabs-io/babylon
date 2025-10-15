@@ -367,11 +367,11 @@ func FuzzSortingDeterminism(f *testing.F) {
 
 func TestFinalityProviderDistInfoChangeDeltaSats(t *testing.T) {
 	tests := []struct {
-		name           string
-		initialSats    uint64
-		deltaSats      int64
-		expectedSats   uint64
-		expectedErrMsg string
+		name         string
+		initialSats  uint64
+		deltaSats    int64
+		expectedSats uint64
+		expErr       error
 	}{
 		{
 			name:         "add positive delta",
@@ -398,16 +398,16 @@ func TestFinalityProviderDistInfoChangeDeltaSats(t *testing.T) {
 			expectedSats: 0,
 		},
 		{
-			name:           "negative delta causing underflow",
-			initialSats:    1000,
-			deltaSats:      -1500,
-			expectedErrMsg: "removed amount: 1500 is bigger than the current total bonded: 1000",
+			name:        "negative delta causing underflow",
+			initialSats: 1000,
+			deltaSats:   -1500,
+			expErr:      types.ErrInvalidSats.Wrapf("removed amount: %d is bigger than the current total bonded: %d", 1500, 1000),
 		},
 		{
-			name:           "negative delta on zero balance",
-			initialSats:    0,
-			deltaSats:      -100,
-			expectedErrMsg: "removed amount: 100 is bigger than the current total bonded: 0",
+			name:        "negative delta on zero balance",
+			initialSats: 0,
+			deltaSats:   -100,
+			expErr:      types.ErrInvalidSats.Wrapf("removed amount: %d is bigger than the current total bonded: %d", 100, 0),
 		},
 	}
 
@@ -420,14 +420,12 @@ func TestFinalityProviderDistInfoChangeDeltaSats(t *testing.T) {
 				Commission:     &validComm,
 			}
 
-			err := fpDistInfo.ChangeDeltaSats(tc.deltaSats)
-
-			if tc.expectedErrMsg != "" {
-				require.Error(t, err)
-				require.ErrorContains(t, err, tc.expectedErrMsg)
+			actErr := fpDistInfo.ChangeDeltaSats(tc.deltaSats)
+			if tc.expErr != nil {
+				require.EqualError(t, actErr, tc.expErr.Error())
 				return
 			}
-			require.NoError(t, err)
+			require.NoError(t, actErr)
 			require.Equal(t, tc.expectedSats, fpDistInfo.TotalBondedSat)
 		})
 	}
