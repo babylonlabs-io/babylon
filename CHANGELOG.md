@@ -43,7 +43,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#1764](https://github.com/babylonlabs-io/babylon/pull/1764) Add mergify yaml file for automatic backporting
 - [#1785](https://github.com/babylonlabs-io/babylon/pull/1785) CI reusable to v0.13.5 and golang lint version 2
 - [#1776](https://github.com/babylonlabs-io/babylon/pull/1776) Track baby staked to active validators only
-- [#1821](https://github.com/babylonlabs-io/babylon/pull/1821) Support multisig for btc staker in btcstaking library
+- [#1822](https://github.com/babylonlabs-io/babylon/pull/1822) Support multisig for btc staker in btcstaking library
 
 ### Bug fixes
 
