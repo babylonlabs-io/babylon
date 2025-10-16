@@ -13,10 +13,12 @@ import (
 // private helper to assemble multisig script
 // if `withVerify` is true script will end with OP_NUMEQUALVERIFY otherwise with OP_NUMEQUAL
 // SCRIPT: <Pk1> OP_CHEKCSIG <Pk2> OP_CHECKSIGADD <Pk3> OP_CHECKSIGADD ... <PkN> OP_CHECKSIGADD <threshold> OP_NUMEQUALVERIFY (or OP_NUMEQUAL)
+// withLockTime SCRIPT: <...existing script...> <stakingTime> OP_CHECKSEQUENCEVERIFY
 func assembleMultiSigScript(
 	pubkeys []*btcec.PublicKey,
 	threshold uint32,
 	withVerify bool,
+	withLockTime uint16,
 ) ([]byte, error) {
 	builder := txscript.NewScriptBuilder()
 
@@ -34,6 +36,11 @@ func assembleMultiSigScript(
 		builder.AddOp(txscript.OP_NUMEQUALVERIFY)
 	} else {
 		builder.AddOp(txscript.OP_NUMEQUAL)
+	}
+
+	if withLockTime > 0 {
+		builder.AddInt64(int64(withLockTime))
+		builder.AddOp(txscript.OP_CHECKSEQUENCEVERIFY)
 	}
 
 	return builder.Script()
@@ -72,11 +79,14 @@ func prepareKeysForMultisigScript(keys []*btcec.PublicKey) ([]*btcec.PublicKey, 
 // successfully execute script
 // it validates whether threshold is not greater than number of keys
 // If there is only one key provided it will return single key sig script
+// withLockTime is enabled when assemble multisig script with lockTime which is used for
+// build multisig timelock script
 // Note: It is up to the caller to ensure that the keys are unique
 func buildMultiSigScript(
 	keys []*btcec.PublicKey,
 	threshold uint32,
 	withVerify bool,
+	withLockTime uint16,
 ) ([]byte, error) {
 	if len(keys) == 0 {
 		return nil, fmt.Errorf("no keys provided")
@@ -97,7 +107,7 @@ func buildMultiSigScript(
 		return nil, err
 	}
 
-	return assembleMultiSigScript(sortedKeys, threshold, withVerify)
+	return assembleMultiSigScript(sortedKeys, threshold, withVerify, withLockTime)
 }
 
 // Only holder of private key for given pubKey can spend after relative lock time
