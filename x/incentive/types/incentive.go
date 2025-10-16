@@ -127,7 +127,7 @@ func (st StakeholderType) Bytes() []byte {
 
 func (st StakeholderType) Validate() error {
 	switch st {
-	case FINALITY_PROVIDER, BTC_STAKER:
+	case FINALITY_PROVIDER, BTC_STAKER, COSTAKER:
 		return nil
 	default:
 		return fmt.Errorf("invalid stakeholder type: %d", st)
