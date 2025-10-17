@@ -937,8 +937,8 @@ func VerifyTransactionMultiSigWithOutput(
 		return fmt.Errorf("tx to sign must have exactly one input")
 	}
 
-	if len(pubKey2Sig) <= 1 {
-		return fmt.Errorf("multisig public key must be greater or equal than 1")
+	if len(pubKey2Sig) < 1 {
+		return fmt.Errorf("must provide at least one signature")
 	}
 
 	return verifyTaprootScriptSpendSignature(
