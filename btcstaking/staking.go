@@ -182,6 +182,64 @@ func BuildSlashingTxFromStakingTxStrict(
 		slashingRate)
 }
 
+// BuildMultisigSlashingTxFromStakingTxStrict constructs a valid slashing transaction using information from a staking transaction,
+// a specified staking output index, and additional parameters such as slashing and change addresses, transaction fee,
+// staking script, script version, and network. This function performs stricter validation compared to BuildSlashingTxFromStakingTx.
+//
+// Parameters:
+//   - stakingTx: The staking transaction from which the staking output is to be used for slashing.
+//   - stakingOutputIdx: The index of the staking output in the staking transaction.
+//   - stakerPks: public keys of the staker i.e., the btc holder who can spend staking output after lock time
+//   - stakerQuorum: threshold of the staker's signature
+//   - slashChangeLockTime: lock time for change output in slashing transaction
+//   - fee: The transaction fee to be paid.
+//   - slashingRate: The rate at which the staked funds will be slashed, expressed as a decimal.
+//   - net: The network on which transactions should take place (e.g., mainnet, testnet).
+//
+// Returns:
+//   - *wire.MsgTx: The constructed slashing transaction without script signature or witness.
+//   - error: An error if any validation or construction step fails.
+func BuildMultisigSlashingTxFromStakingTxStrict(
+	stakingTx *wire.MsgTx,
+	stakingOutputIdx uint32,
+	slashingPkScript []byte,
+	stakerPks []*btcec.PublicKey,
+	stakerQuorum uint32,
+	slashChangeLockTime uint16,
+	fee int64,
+	slashingRate sdkmath.LegacyDec,
+	net *chaincfg.Params,
+) (*wire.MsgTx, error) {
+	// Get the staking output at the specified index from the staking transaction
+	stakingOutput, err := getPossibleStakingOutput(stakingTx, stakingOutputIdx)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create an OutPoint for the staking output
+	stakingTxHash := stakingTx.TxHash()
+	stakingOutpoint := wire.NewOutPoint(&stakingTxHash, stakingOutputIdx)
+
+	// Create taproot address committing to timelock script
+	si, err := BuildMultisigRelativeTimelockTaprootScript(
+		stakerPks,
+		stakerQuorum,
+		slashChangeLockTime,
+		net,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Build slashing tx with the staking output information
+	return buildSlashingTxFromOutpoint(
+		*stakingOutpoint,
+		stakingOutput.Value, fee,
+		slashingPkScript, si.TapAddress,
+		slashingRate)
+}
+
 // IsTransferTx Transfer transaction is a transaction which:
 // - has exactly one input
 // - has exactly one output
