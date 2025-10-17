@@ -252,6 +252,92 @@ func FuzzGeneratingSignatureValidation(f *testing.F) {
 	})
 }
 
+func FuzzGeneratingMultisigSignatureValidation(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+
+		// generate 2-5 staker keys
+		numStakers := r.Intn(4) + 2 // 2-5 stakers
+		stakerPrivKeys := make([]*btcec.PrivateKey, numStakers)
+		stakerPubKeys := make([]*btcec.PublicKey, numStakers)
+		for i := 0; i < numStakers; i++ {
+			pk, err := btcec.NewPrivateKey()
+			require.NoError(t, err)
+			stakerPrivKeys[i] = pk
+			stakerPubKeys[i] = pk.PubKey()
+		}
+
+		// pick random M-of-N quorum (at least 1, at most N)
+		stakerQuorum := r.Intn(numStakers) + 1
+
+		inputHash, err := chainhash.NewHash(datagen.GenRandomByteArray(r, 32))
+		require.NoError(t, err)
+
+		tx := wire.NewMsgTx(2)
+		foundingOutput := wire.NewTxOut(int64(r.Intn(1000)+1000), datagen.GenRandomByteArray(r, 32))
+		tx.AddTxIn(
+			wire.NewTxIn(wire.NewOutPoint(inputHash, uint32(r.Intn(20))), nil, nil),
+		)
+		tx.AddTxOut(
+			wire.NewTxOut(int64(r.Intn(1000)+500), datagen.GenRandomByteArray(r, 32)),
+		)
+		script := datagen.GenRandomByteArray(r, 150)
+
+		// sign with exactly M stakers (the quorum)
+		pubKey2Sig := make(map[*btcec.PublicKey][]byte)
+		for i := 0; i < stakerQuorum; i++ {
+			sig, err := btcstaking.SignTxWithOneScriptSpendInputFromScript(
+				tx,
+				foundingOutput,
+				stakerPrivKeys[i],
+				script,
+			)
+			require.NoError(t, err)
+			pubKey2Sig[stakerPubKeys[i]] = sig.Serialize()
+		}
+
+		// verify multisig
+		err = btcstaking.VerifyTransactionMultiSigWithOutput(
+			tx,
+			foundingOutput,
+			script,
+			pubKey2Sig,
+		)
+
+		require.NoError(t, err)
+
+		// test with wrong signature should fail
+		wrongPk, err := btcec.NewPrivateKey()
+		require.NoError(t, err)
+		wrongSig, err := btcstaking.SignTxWithOneScriptSpendInputFromScript(
+			tx,
+			foundingOutput,
+			wrongPk,
+			script,
+		)
+		require.NoError(t, err)
+
+		// replace one valid signature with wrong one
+		if stakerQuorum > 0 {
+			pubKey2SigWrong := make(map[*btcec.PublicKey][]byte)
+			for k, v := range pubKey2Sig {
+				pubKey2SigWrong[k] = v
+			}
+			pubKey2SigWrong[stakerPubKeys[0]] = wrongSig.Serialize()
+
+			err = btcstaking.VerifyTransactionMultiSigWithOutput(
+				tx,
+				foundingOutput,
+				script,
+				pubKey2SigWrong,
+			)
+			require.Error(t, err)
+			require.Contains(t, err.Error(), "signature")
+		}
+	})
+}
+
 func TestSlashingTxWithOverflowMustNotAccepted(t *testing.T) {
 	r := rand.New(rand.NewSource(time.Now().Unix()))
 	// we do not care for inputs in staking tx
