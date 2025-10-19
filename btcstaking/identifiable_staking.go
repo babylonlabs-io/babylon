@@ -252,6 +252,9 @@ func BuildV0IdentifiableMultisigStakingOutputs(
 		return nil, err
 	}
 
+	// NOTE: unlike single sig btc staker case, multisig btc staker information is not stored in
+	// OP_RETURN since it has limited space and we don't use OP_RETURN data anywhere after phase-1,
+	// so it's okay to exclude extra stakerKeys in OP_RETURN.
 	opReturnData, err := NewV0OpReturnDataFromParsed(tag, stakerKeys[0], fpKey, stakingTime)
 
 	if err != nil {
