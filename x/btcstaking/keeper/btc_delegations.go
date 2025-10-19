@@ -68,15 +68,15 @@ func (k Keeper) CreateBTCDelegation(ctx sdk.Context, parsedMsg *types.ParsedCrea
 		}
 	}
 
-	// everything is good, if the staking tx is not included on BTC consume additinal
+	// everything is good, if the staking tx is not included on BTC consume additional
 	// gas
 	if !parsedMsg.IsIncludedOnBTC() {
 		ctx.GasMeter().ConsumeGas(params.DelegationCreationBaseGasFee, "delegation creation fee")
 	}
 
-	// 7.all good, construct BTCDelegation and insert BTC delegation
+	// 7. all good, construct BTCDelegation and insert BTC delegation
 	// NOTE: the BTC delegation does not have voting power yet. It will
-	// have voting power only when it receives a covenant signatures
+	// have voting power only when it receives covenant signatures
 	newBTCDel := &types.BTCDelegation{
 		StakerAddr:       parsedMsg.StakerAddress.String(),
 		BtcPk:            parsedMsg.StakerPK.BIP340PubKey,
@@ -107,6 +107,11 @@ func (k Keeper) CreateBTCDelegation(ctx sdk.Context, parsedMsg *types.ParsedCrea
 	newBTCDel.StkExp, err = buildStakeExpansion(parsedMsg.StkExp)
 	if err != nil {
 		return fmt.Errorf("error building stake expansion: %w", err)
+	}
+
+	newBTCDel.ExtraStakerInfo, err = buildExtraStakerInfo(parsedMsg.ExtraStakerInfo)
+	if err != nil {
+		return fmt.Errorf("error building extra staker info: %w", err)
 	}
 
 	// add this BTC delegation, and emit corresponding events
@@ -532,5 +537,35 @@ func buildStakeExpansion(stkExp *types.ParsedCreateDelStkExp) (*types.StakeExpan
 		PreviousStakingTxHash:   stkExp.PreviousActiveStkTxHash[:],
 		OtherFundingTxOut:       fundingOut,
 		PreviousStkCovenantSigs: nil,
+	}, nil
+}
+
+func buildExtraStakerInfo(extraStakerInfo *types.ParsedAdditionalStakerInfo) (*types.AdditionalStakerInfo, error) {
+	if extraStakerInfo == nil {
+		return nil, nil
+	}
+
+	slashingSignatureInfo := make([]*types.SignatureInfo, len(extraStakerInfo.StakerStakingSlashingSigs))
+	unbondingSlashingSignatureInfo := make([]*types.SignatureInfo, len(extraStakerInfo.StakerUnbondingSlashingSigs))
+
+	for i, si := range extraStakerInfo.StakerStakingSlashingSigs {
+		slashingSignatureInfo[i] = &types.SignatureInfo{
+			Pk:  si.PublicKey.BIP340PubKey,
+			Sig: si.Sig.BIP340Signature,
+		}
+	}
+
+	for i, si := range extraStakerInfo.StakerUnbondingSlashingSigs {
+		unbondingSlashingSignatureInfo[i] = &types.SignatureInfo{
+			Pk:  si.PublicKey.BIP340PubKey,
+			Sig: si.Sig.BIP340Signature,
+		}
+	}
+
+	return &types.AdditionalStakerInfo{
+		StakerBtcPkList:                extraStakerInfo.StakerBTCPkList.PublicKeysBbnFormat,
+		StakerQuorum:                   extraStakerInfo.StakerQuorum,
+		DelegatorSlashingSigs:          slashingSignatureInfo,
+		DelegatorUnbondingSlashingSigs: unbondingSlashingSignatureInfo,
 	}, nil
 }

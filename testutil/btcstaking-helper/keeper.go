@@ -334,6 +334,8 @@ func (h *Helper) GenAndApplyCustomParams(
 		UnbondingFeeSat:           1000,
 		AllowListExpirationHeight: allowListExpirationHeight,
 		BtcActivationHeight:       1,
+		MaxStakerQuorum:           2,
+		MaxStakerNum:              3,
 	})
 	h.NoError(err)
 	return covenantSKs, covenantPKs

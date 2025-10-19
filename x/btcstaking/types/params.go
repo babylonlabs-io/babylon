@@ -84,6 +84,9 @@ func DefaultParams() Params {
 		// Allow list can only be enabled by upgrade
 		AllowListExpirationHeight: 0,
 		BtcActivationHeight:       0,
+		// The default multisig scheme is 2-of-3 multisig.
+		MaxStakerQuorum: 2,
+		MaxStakerNum:    3,
 	}
 }
 
@@ -198,6 +201,17 @@ func validateNoDustSlashingOutput(p *Params) error {
 	return nil
 }
 
+func validateMaxStakerQuorumAndNum(maxStakerQuorum, maxStakerNum uint32) error {
+	if maxStakerQuorum == 0 {
+		return fmt.Errorf("max staker quorum has to be positive")
+	}
+	if maxStakerQuorum*2 <= maxStakerNum {
+		return fmt.Errorf("max staker quorum size has to be more than 1/2 of the max staker num")
+	}
+
+	return nil
+}
+
 // Validate validates the set of params
 func (p Params) Validate() error {
 	if p.CovenantQuorum == 0 {
@@ -240,6 +254,10 @@ func (p Params) Validate() error {
 	}
 
 	if err := validateUnbondingTime(p.UnbondingTimeBlocks); err != nil {
+		return err
+	}
+
+	if err := validateMaxStakerQuorumAndNum(p.MaxStakerQuorum, p.MaxStakerNum); err != nil {
 		return err
 	}
 
