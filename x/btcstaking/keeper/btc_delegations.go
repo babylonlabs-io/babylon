@@ -109,10 +109,7 @@ func (k Keeper) CreateBTCDelegation(ctx sdk.Context, parsedMsg *types.ParsedCrea
 		return fmt.Errorf("error building stake expansion: %w", err)
 	}
 
-	newBTCDel.ExtraStakerInfo, err = buildExtraStakerInfo(parsedMsg.ExtraStakerInfo)
-	if err != nil {
-		return fmt.Errorf("error building extra staker info: %w", err)
-	}
+	newBTCDel.ExtraStakerInfo = buildExtraStakerInfo(parsedMsg.ExtraStakerInfo)
 
 	// add this BTC delegation, and emit corresponding events
 	if err := k.AddBTCDelegation(ctx, newBTCDel); err != nil {
@@ -540,9 +537,9 @@ func buildStakeExpansion(stkExp *types.ParsedCreateDelStkExp) (*types.StakeExpan
 	}, nil
 }
 
-func buildExtraStakerInfo(extraStakerInfo *types.ParsedAdditionalStakerInfo) (*types.AdditionalStakerInfo, error) {
+func buildExtraStakerInfo(extraStakerInfo *types.ParsedAdditionalStakerInfo) *types.AdditionalStakerInfo {
 	if extraStakerInfo == nil {
-		return nil, nil
+		return nil
 	}
 
 	slashingSignatureInfo := make([]*types.SignatureInfo, len(extraStakerInfo.StakerStakingSlashingSigs))
@@ -567,5 +564,5 @@ func buildExtraStakerInfo(extraStakerInfo *types.ParsedAdditionalStakerInfo) (*t
 		StakerQuorum:                   extraStakerInfo.StakerQuorum,
 		DelegatorSlashingSigs:          slashingSignatureInfo,
 		DelegatorUnbondingSlashingSigs: unbondingSlashingSignatureInfo,
-	}, nil
+	}
 }
