@@ -242,26 +242,27 @@ func (v *FinalityProviderDistInfo) GetAddress() sdk.AccAddress {
 	return v.Addr
 }
 
-func (v *FinalityProviderDistInfo) ChangeDeltaSats(fpDeltaSats int64) {
+func (v *FinalityProviderDistInfo) ChangeDeltaSats(fpDeltaSats int64) error {
 	switch {
 	case fpDeltaSats > 0:
 		v.AddBondedSats(uint64(fpDeltaSats))
 	case fpDeltaSats < 0:
 		satsToRemove := abs(fpDeltaSats)
-		v.RemoveBondedSats(uint64(satsToRemove))
+		return v.RemoveBondedSats(uint64(satsToRemove))
 	}
+	return nil
 }
 
 func (v *FinalityProviderDistInfo) AddBondedSats(sats uint64) {
 	v.TotalBondedSat += sats
 }
 
-func (v *FinalityProviderDistInfo) RemoveBondedSats(sats uint64) {
-	// safeguard against underflow in total bonded satoshis
+func (v *FinalityProviderDistInfo) RemoveBondedSats(sats uint64) error {
 	if v.TotalBondedSat < sats {
-		sats = v.TotalBondedSat
+		return ErrInvalidSats.Wrapf("removed amount: %d is bigger than the current total bonded: %d", sats, v.TotalBondedSat)
 	}
 	v.TotalBondedSat -= sats
+	return nil
 }
 
 // GetBTCDelPortion returns the portion of a BTC delegation's voting power out of
