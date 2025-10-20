@@ -34,4 +34,5 @@ var (
 	ErrEmptyCommissionRates      = errorsmod.Register(ModuleName, 1125, "empty commission")
 	ErrLargestBtcReorgNotFound   = errorsmod.Register(ModuleName, 1128, "there is no BTC reorg currently set")
 	ErrInvalidStakeExpansion     = errorsmod.Register(ModuleName, 1129, "invalid stake expansion")
+	ErrInvalidMultisigInfo       = errorsmod.Register(ModuleName, 1130, "invalid multisig info")
 )

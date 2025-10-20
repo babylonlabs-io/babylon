@@ -554,6 +554,11 @@ func (d *BTCDelegation) IsStakeExpansion() bool {
 	return d.StkExp != nil
 }
 
+// IsMultisigBtcDel return true if the BTC delegation contains `ExtraStakerInfo`
+func (d *BTCDelegation) IsMultisigBtcDel() bool {
+	return d.ExtraStakerInfo != nil
+}
+
 func (s *StakeExpansion) AddCovenantSigs(
 	covPk *bbn.BIP340PubKey,
 	stkExpSig *bbn.BIP340Signature,
