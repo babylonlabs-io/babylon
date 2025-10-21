@@ -236,6 +236,31 @@ message BTCDelegationResponse {
   uint32 params_version = 17;
   // stk_exp contains the stake expansion information, if nil it is NOT a stake expansion.
   StakeExpansionResponse stk_exp = 18;
+  // extra_staker_info is used when the given btc delegation is M-of-N multisig.
+  // If nil, it is not a M-of-N multisig.
+  AdditionalStakerInfoResponse extra_staker_info = 19;
+}
+
+// AdditionalStakerInfoResponse provides multisig info for the given btc staker
+// NOTE: this structure doesn't contain original btc staker's signature, i.e., length of
+// delegator_slashing_sigs and delegator_unbonding_slashing_sigs is M-1, and the length of
+// staker_btc_pk_list is N-1
+message AdditionalStakerInfoResponse {
+  // staker_btc_pk_list is the list of pubkeys of the btc staker that is using M-of-N multisig
+  // length of staker_btc_pk_list is N-1
+  repeated bytes staker_btc_pk_list = 1
+  [ (gogoproto.customtype) =
+      "github.com/babylonlabs-io/babylon/v4/types.BIP340PubKey"];
+  // staker_quorum is threshold of M-of-N multisig, which value itself represent M
+  uint32 staker_quorum = 2;
+  // delegator_slashing_sigs is the (btc_pk, signature) pair on the slashing tx
+  // by delegators (i.e., SK corresponding to btc_pk).
+  // It will be a part of the witness for the staking tx output.
+  repeated SignatureInfo delegator_slashing_sigs = 3;
+  // delegator_unbonding_slashing_sigs is the (btc_pk, signature) pair on the slashing tx
+  // by delegators (i.e., SK corresponding to btc_pk).
+  // It will be a part of the witness for the unbonding tx output.
+  repeated SignatureInfo delegator_unbonding_slashing_sigs = 4;
 }
 
 // StakeExpansionResponse stores information necessary to construct the expanded BTC staking
