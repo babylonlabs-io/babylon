@@ -69,7 +69,7 @@ func ValidateParsedMessageAgainstTheParams(
 		}
 
 		// compare the length of pubkey -> sig map and the `StakerQuorum`
-		if len(slashingPubkey2Sig) != int(stakerQuorum) || len(unbondingSlashingPubkey2Sig) != int(stakerQuorum) {
+		if len(slashingPubkey2Sig) < int(stakerQuorum) || len(unbondingSlashingPubkey2Sig) < int(stakerQuorum) {
 			return nil, ErrInvalidMultisigInfo.Wrapf("invalid %d-of-%d signatures: %d slashing signatures, %d unbonding slashing signatures",
 				pm.ExtraStakerInfo.StakerQuorum, len(pm.ExtraStakerInfo.StakerBTCPkList.PublicKeys)+1, len(slashingPubkey2Sig), len(unbondingSlashingPubkey2Sig))
 		}
