@@ -401,6 +401,7 @@ func parseBtcExpandMessage(msg *MsgBtcStakeExpand) (*ParsedCreateDelegationMessa
 		UnbondingValue:                msg.UnbondingValue,
 		UnbondingSlashingTx:           msg.UnbondingSlashingTx,
 		DelegatorUnbondingSlashingSig: msg.DelegatorUnbondingSlashingSig,
+		ExtraStakerInfo:               msg.ExtraStakerInfo,
 	})
 	if err != nil {
 		return nil, err
