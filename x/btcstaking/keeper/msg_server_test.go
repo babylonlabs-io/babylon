@@ -1991,6 +1991,37 @@ func TestMultisigCreateBTCDelegationWithMaxStakerParams(t *testing.T) {
 				require.Positive(h.T(), actualDel.StartHeight)
 				require.Positive(h.T(), actualDel.EndHeight)
 			}
+
+			// check events emitted
+			events := h.Ctx.EventManager().Events()
+			var foundBtcDelCreatedEvent bool
+
+			// build expected extra staker pk hexs from delSKs (skip first key since it's the main staker key)
+			expectedExtraStakerPkHexs := ""
+			if tc.stakerNum > 1 {
+				extraPkHexs := make([]string, 0, tc.stakerNum-1)
+				for i := 1; i < int(tc.stakerNum); i++ {
+					extraPkHexs = append(extraPkHexs, hex.EncodeToString(delSKs[i].PubKey().SerializeCompressed()[1:]))
+				}
+				expectedExtraStakerPkHexs = "[" + fmt.Sprintf("\"%s\"", extraPkHexs[0])
+				for i := 1; i < len(extraPkHexs); i++ {
+					expectedExtraStakerPkHexs += fmt.Sprintf(",\"%s\"", extraPkHexs[i])
+				}
+				expectedExtraStakerPkHexs += "]"
+			}
+
+			for _, event := range events {
+				if fmt.Sprintf("/%s", event.Type) == sdk.MsgTypeURL(&types.EventBTCDelegationCreated{}) {
+					foundBtcDelCreatedEvent = true
+					testutilevents.RequireEventAttribute(t, event, "staking_tx_hex", fmt.Sprintf("\"%s\"", hex.EncodeToString(actualDel.StakingTx)), "BTC Delegation created event should match the staking tx hash")
+
+					if tc.stakerNum > 1 {
+						// for multisig, extra_staker_btc_pk_hexs should have N-1 keys
+						testutilevents.RequireEventAttribute(t, event, "extra_staker_btc_pk_hexs", expectedExtraStakerPkHexs, "BTC Delegation Created event should have extra staker info field with correct keys")
+					}
+				}
+			}
+			require.True(t, foundBtcDelCreatedEvent, "EventBTCDelegationCreated should be emitted")
 		})
 	}
 }
