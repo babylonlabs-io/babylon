@@ -320,14 +320,12 @@ func newBabylonScriptPaths(
 	covenantQuorum uint32,
 	lockTime uint16,
 ) (*babylonScriptPaths, error) {
-	if stakerKeys == nil || len(stakerKeys) == 0 {
-		return nil, fmt.Errorf("staker key is nil")
+	if len(stakerKeys) == 0 {
+		return nil, fmt.Errorf("no staker key is provided")
 	}
 
-	if len(stakerKeys) > 1 {
-		if stakerQuorum < 1 {
-			return nil, fmt.Errorf("staker quorum must be greater than 0, if there are more than one staker keys")
-		}
+	if stakerQuorum < 1 {
+		return nil, fmt.Errorf("staker quorum must be greater than 0")
 	}
 
 	if err := checkForDuplicateKeys(stakerKeys, fpKeys, covenantKeys); err != nil {
