@@ -202,8 +202,17 @@ func validateNoDustSlashingOutput(p *Params) error {
 }
 
 func validateMaxStakerQuorumAndNum(maxStakerQuorum, maxStakerNum uint32) error {
+	// allow both to be 0 to disable multisig support
+	if maxStakerQuorum == 0 && maxStakerNum == 0 {
+		return nil
+	}
+
+	// if either is non-zero, both must be positive and satisfy quorum rules
 	if maxStakerQuorum == 0 {
-		return fmt.Errorf("max staker quorum has to be positive")
+		return fmt.Errorf("max staker quorum has to be positive when max staker num is non-zero")
+	}
+	if maxStakerNum == 0 {
+		return fmt.Errorf("max staker num has to be positive when max staker quorum is non-zero")
 	}
 	if maxStakerQuorum*2 <= maxStakerNum {
 		return fmt.Errorf("max staker quorum size has to be more than 1/2 of the max staker num")
