@@ -447,6 +447,130 @@ func ParseV0StakingTxWithoutTag(
 	}, nil
 }
 
+// ParseV0MultisigStakingTx takes a btc transaction and checks whether it is a staking transaction and if so parses it
+// for easy data retrieval.
+// It does all necessary checks to ensure that the transaction is valid staking transaction.
+func ParseV0MultisigStakingTx(
+	tx *wire.MsgTx,
+	expectedTag []byte,
+	stakerKeys []*btcec.PublicKey,
+	stakerQuorum uint32,
+	covenantKeys []*btcec.PublicKey,
+	covenantQuorum uint32,
+	net *chaincfg.Params,
+) (*ParsedV0StakingTx, error) {
+	if len(expectedTag) != TagLen {
+		return nil, fmt.Errorf("invalid tag length: %d, expected: %d", len(expectedTag), TagLen)
+	}
+
+	v0MultisigStakingTx, err := ParseV0MultisigStakingTxWithoutTag(tx, stakerKeys, stakerQuorum, covenantKeys, covenantQuorum, net)
+	if err != nil {
+		return nil, err
+	}
+
+	// at this point we know that transaction has op return output which seems to match
+	// the expected shape. Check the tag and version.
+	if !bytes.Equal(v0MultisigStakingTx.OpReturnData.Tag, expectedTag) {
+		return nil, fmt.Errorf("unexpected tag: %s, expected: %s",
+			hex.EncodeToString(v0MultisigStakingTx.OpReturnData.Tag),
+			hex.EncodeToString(expectedTag),
+		)
+	}
+
+	return v0MultisigStakingTx, nil
+}
+
+// ParseV0MultisigStakingTxWithoutTag takes a btc transaction and checks whether it is a staking transaction and if so parses it
+// for easy data retrieval.
+// It does all necessary checks to ensure that the transaction is valid staking transaction.
+func ParseV0MultisigStakingTxWithoutTag(
+	tx *wire.MsgTx,
+	stakerKeys []*btcec.PublicKey,
+	stakerQuorum uint32,
+	covenantKeys []*btcec.PublicKey,
+	covenantQuorum uint32,
+	net *chaincfg.Params,
+) (*ParsedV0StakingTx, error) {
+	// 1. Basic arguments checks
+	if tx == nil {
+		return nil, fmt.Errorf("nil tx")
+	}
+
+	if len(stakerKeys) == 0 {
+		return nil, fmt.Errorf("no staker keys specified")
+	}
+
+	if int(stakerQuorum) > len(stakerKeys) {
+		return nil, fmt.Errorf("staker quorum is greater than the number of staker keys")
+	}
+
+	if len(covenantKeys) == 0 {
+		return nil, fmt.Errorf("no covenant keys specified")
+	}
+
+	if int(covenantQuorum) > len(covenantKeys) {
+		return nil, fmt.Errorf("covenant quorum is greater than the number of covenant keys")
+	}
+
+	// 2. Identify whether the transaction has expected shape
+	if len(tx.TxOut) < 2 {
+		return nil, fmt.Errorf("staking tx must have at least 2 outputs")
+	}
+
+	opReturnData, opReturnOutputIdx, err := tryToGetOpReturnDataFromOutputs(tx.TxOut)
+
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse staking transaction: %w", err)
+	}
+
+	if opReturnData == nil {
+		return nil, fmt.Errorf("transaction does not have expected op return output")
+	}
+
+	if opReturnData.Version != 0 {
+		return nil, fmt.Errorf("unexpected version: %d, expected: %d", opReturnData.Version, 0)
+	}
+
+	// 3. Op return seems to be valid V0 op return output. Now, we need to check whether
+	// the staking output exists and is valid.
+	// Note: unlike single sig btc staker case, multisig btc staker information is not stored in
+	// OP_RETURN since it has limited space and we don't use OP_RETURN data anywhere after phase-1,
+	// so it's okay to exclude extra stakerKeys in OP_RETURN.
+	stakingInfo, err := BuildMultisigStakingInfo(
+		stakerKeys,
+		stakerQuorum,
+		[]*btcec.PublicKey{opReturnData.FinalityProviderPublicKey.PubKey},
+		covenantKeys,
+		covenantQuorum,
+		opReturnData.StakingTime,
+		// we can pass 0 here, as staking amount is not used when creating taproot address
+		0,
+		net,
+	)
+
+	if err != nil {
+		return nil, fmt.Errorf("cannot build staking info: %w", err)
+	}
+
+	stakingOutput, stakingOutputIdx, err := tryToGetStakingOutput(tx.TxOut, stakingInfo.StakingOutput.PkScript)
+
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse staking transaction: %w", err)
+	}
+
+	if stakingOutput == nil {
+		return nil, fmt.Errorf("staking output not found in potential staking transaction")
+	}
+
+	return &ParsedV0StakingTx{
+		StakingOutput:     stakingOutput,
+		StakingOutputIdx:  stakingOutputIdx,
+		OpReturnOutput:    tx.TxOut[opReturnOutputIdx],
+		OpReturnOutputIdx: opReturnOutputIdx,
+		OpReturnData:      opReturnData,
+	}, nil
+}
+
 // IsPossibleV0StakingTx checks whether transaction may be a valid staking transaction
 // checks:
 // 1. Whether the transaction has at least 2 outputs
