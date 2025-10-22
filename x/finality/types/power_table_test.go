@@ -365,6 +365,72 @@ func FuzzSortingDeterminism(f *testing.F) {
 	})
 }
 
+func TestFinalityProviderDistInfoChangeDeltaSats(t *testing.T) {
+	tests := []struct {
+		name         string
+		initialSats  uint64
+		deltaSats    int64
+		expectedSats uint64
+		expErr       error
+	}{
+		{
+			name:         "add positive delta",
+			initialSats:  1000,
+			deltaSats:    500,
+			expectedSats: 1500,
+		},
+		{
+			name:         "remove valid negative delta",
+			initialSats:  1000,
+			deltaSats:    -500,
+			expectedSats: 500,
+		},
+		{
+			name:         "zero delta - no change",
+			initialSats:  1000,
+			deltaSats:    0,
+			expectedSats: 1000,
+		},
+		{
+			name:         "remove all with negative delta",
+			initialSats:  1000,
+			deltaSats:    -1000,
+			expectedSats: 0,
+		},
+		{
+			name:        "negative delta causing underflow",
+			initialSats: 1000,
+			deltaSats:   -1500,
+			expErr:      types.ErrInvalidSats.Wrapf("removed amount: %d is bigger than the current total bonded: %d", 1500, 1000),
+		},
+		{
+			name:        "negative delta on zero balance",
+			initialSats: 0,
+			deltaSats:   -100,
+			expErr:      types.ErrInvalidSats.Wrapf("removed amount: %d is bigger than the current total bonded: %d", 100, 0),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			fpDistInfo := &types.FinalityProviderDistInfo{
+				BtcPk:          fpPubKey1,
+				TotalBondedSat: tc.initialSats,
+				Addr:           fpAddr1,
+				Commission:     &validComm,
+			}
+
+			actErr := fpDistInfo.ChangeDeltaSats(tc.deltaSats)
+			if tc.expErr != nil {
+				require.EqualError(t, actErr, tc.expErr.Error())
+				return
+			}
+			require.NoError(t, actErr)
+			require.Equal(t, tc.expectedSats, fpDistInfo.TotalBondedSat)
+		})
+	}
+}
+
 func TestVotingPowerDistCache_Validate(t *testing.T) {
 	t.Parallel()
 	tcs := []struct {
