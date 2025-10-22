@@ -182,6 +182,64 @@ func BuildSlashingTxFromStakingTxStrict(
 		slashingRate)
 }
 
+// BuildMultisigSlashingTxFromStakingTxStrict constructs a valid slashing transaction using information from a staking transaction,
+// a specified staking output index, and additional parameters such as slashing and change addresses, transaction fee,
+// staking script, script version, and network. This function performs stricter validation compared to BuildSlashingTxFromStakingTx.
+//
+// Parameters:
+//   - stakingTx: The staking transaction from which the staking output is to be used for slashing.
+//   - stakingOutputIdx: The index of the staking output in the staking transaction.
+//   - stakerPks: public keys of the staker i.e., the btc holder who can spend staking output after lock time
+//   - stakerQuorum: threshold of the staker's signature
+//   - slashChangeLockTime: lock time for change output in slashing transaction
+//   - fee: The transaction fee to be paid.
+//   - slashingRate: The rate at which the staked funds will be slashed, expressed as a decimal.
+//   - net: The network on which transactions should take place (e.g., mainnet, testnet).
+//
+// Returns:
+//   - *wire.MsgTx: The constructed slashing transaction without script signature or witness.
+//   - error: An error if any validation or construction step fails.
+func BuildMultisigSlashingTxFromStakingTxStrict(
+	stakingTx *wire.MsgTx,
+	stakingOutputIdx uint32,
+	slashingPkScript []byte,
+	stakerPks []*btcec.PublicKey,
+	stakerQuorum uint32,
+	slashChangeLockTime uint16,
+	fee int64,
+	slashingRate sdkmath.LegacyDec,
+	net *chaincfg.Params,
+) (*wire.MsgTx, error) {
+	// Get the staking output at the specified index from the staking transaction
+	stakingOutput, err := getPossibleStakingOutput(stakingTx, stakingOutputIdx)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create an OutPoint for the staking output
+	stakingTxHash := stakingTx.TxHash()
+	stakingOutpoint := wire.NewOutPoint(&stakingTxHash, stakingOutputIdx)
+
+	// Create taproot address committing to timelock script
+	si, err := BuildMultisigRelativeTimelockTaprootScript(
+		stakerPks,
+		stakerQuorum,
+		slashChangeLockTime,
+		net,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Build slashing tx with the staking output information
+	return buildSlashingTxFromOutpoint(
+		*stakingOutpoint,
+		stakingOutput.Value, fee,
+		slashingPkScript, si.TapAddress,
+		slashingRate)
+}
+
 // IsTransferTx Transfer transaction is a transaction which:
 // - has exactly one input
 // - has exactly one output
@@ -328,7 +386,8 @@ func validateSlashingTx(
 	slashingPkScript []byte,
 	slashingRate sdkmath.LegacyDec,
 	slashingTxMinFee, stakingOutputValue int64,
-	stakerPk *btcec.PublicKey,
+	stakerPks []*btcec.PublicKey,
+	stakerQuorum uint32,
 	slashingChangeLockTime uint16,
 	net *chaincfg.Params,
 ) error {
@@ -352,8 +411,9 @@ func validateSlashingTx(
 
 	// Verify that the second output pays to the taproot address which locks funds for
 	// slashingChangeLockTime
-	si, err := BuildRelativeTimelockTaprootScript(
-		stakerPk,
+	si, err := BuildMultisigRelativeTimelockTaprootScript(
+		stakerPks,
+		stakerQuorum,
 		slashingChangeLockTime,
 		net,
 	)
@@ -443,6 +503,9 @@ func CheckSlashingTxMatchFundingTx(
 		return fmt.Errorf("invalid funding output index %d, tx has %d outputs", fundingOutputIdx, len(fundingTransaction.TxOut))
 	}
 
+	// convert stakerPk into stakerPks to ensure backward compatibility of the function
+	stakerPks := []*btcec.PublicKey{stakerPk}
+
 	stakingOutput := fundingTransaction.TxOut[fundingOutputIdx]
 	// 3. Check if slashing transaction is valid
 	if err := validateSlashingTx(
@@ -451,7 +514,75 @@ func CheckSlashingTxMatchFundingTx(
 		slashingRate,
 		slashingTxMinFee,
 		stakingOutput.Value,
-		stakerPk,
+		stakerPks,
+		1,
+		slashingChangeLockTime,
+		net); err != nil {
+		return err
+	}
+
+	// 4. Check that slashing transaction input is pointing to staking transaction
+	stakingTxHash := fundingTransaction.TxHash()
+	if !slashingTx.TxIn[0].PreviousOutPoint.Hash.IsEqual(&stakingTxHash) {
+		return fmt.Errorf("slashing transaction must spend staking output")
+	}
+
+	// 5. Check that index of the fund output matches index of the input in slashing transaction
+	if slashingTx.TxIn[0].PreviousOutPoint.Index != fundingOutputIdx {
+		return fmt.Errorf("slashing transaction input must spend staking output")
+	}
+	return nil
+}
+
+// CheckSlashingTxMatchFundingTxMultisig validates all relevant data of slashing and funding transaction.
+// - both transactions are valid from pov of BTC rules
+// - slashing transaction is valid
+// - slashing transaction input hash is pointing to funding transaction hash
+// - slashing transaction input index is pointing to funding transaction output committing to the script
+func CheckSlashingTxMatchFundingTxMultisig(
+	slashingTx *wire.MsgTx,
+	fundingTransaction *wire.MsgTx,
+	fundingOutputIdx uint32,
+	slashingTxMinFee int64,
+	slashingRate sdkmath.LegacyDec,
+	slashingPkScript []byte,
+	stakerPks []*btcec.PublicKey,
+	stakerQuorum uint32,
+	slashingChangeLockTime uint16,
+	net *chaincfg.Params,
+) error {
+	if slashingTx == nil || fundingTransaction == nil {
+		return fmt.Errorf("slashing and funding transactions must not be nil")
+	}
+
+	if err := blockchain.CheckTransactionSanity(btcutil.NewTx(fundingTransaction)); err != nil {
+		return fmt.Errorf("funding transaction does not obey BTC rules: %w", err)
+	}
+
+	// Check if slashing tx min fee is valid
+	if slashingTxMinFee <= 0 {
+		return fmt.Errorf("slashing transaction min fee must be larger than 0")
+	}
+
+	// Check if slashing rate is in the valid range (0,1)
+	if !IsSlashingRateValid(slashingRate) {
+		return ErrInvalidSlashingRate
+	}
+
+	if int(fundingOutputIdx) >= len(fundingTransaction.TxOut) {
+		return fmt.Errorf("invalid funding output index %d, tx has %d outputs", fundingOutputIdx, len(fundingTransaction.TxOut))
+	}
+
+	stakingOutput := fundingTransaction.TxOut[fundingOutputIdx]
+	// 3. Check if slashing transaction is valid
+	if err := validateSlashingTx(
+		slashingTx,
+		slashingPkScript,
+		slashingRate,
+		slashingTxMinFee,
+		stakingOutput.Value,
+		stakerPks,
+		stakerQuorum,
 		slashingChangeLockTime,
 		net); err != nil {
 		return err
@@ -768,6 +899,10 @@ func VerifyTransactionSigWithOutput(
 		return fmt.Errorf("public key must not be nil")
 	}
 
+	pubKey2Sig := map[*btcec.PublicKey][]byte{
+		pubKey: signature,
+	}
+
 	return verifyTaprootScriptSpendSignature(
 		transaction,
 		0,
@@ -775,8 +910,45 @@ func VerifyTransactionSigWithOutput(
 			transaction.TxIn[0].PreviousOutPoint: fundingOutput,
 		},
 		txscript.NewBaseTapLeaf(script),
-		pubKey,
-		signature,
+		pubKey2Sig,
+	)
+}
+
+// VerifyTransactionMultiSigWithOutput verifies that:
+// - provided transaction has exactly one input
+// - provided signatures are valid schnorr BIP340 signatures
+// - provided signatures are signing whole provided transaction	(SigHashDefault)
+// - pubkey to signature map should be provided to ensure verification order
+func VerifyTransactionMultiSigWithOutput(
+	transaction *wire.MsgTx,
+	fundingOutput *wire.TxOut,
+	script []byte,
+	pubKey2Sig map[*btcec.PublicKey][]byte,
+) error {
+	if fundingOutput == nil {
+		return fmt.Errorf("funding output must not be nil")
+	}
+
+	if transaction == nil {
+		return fmt.Errorf("tx to verify not be nil")
+	}
+
+	if len(transaction.TxIn) != 1 {
+		return fmt.Errorf("tx to sign must have exactly one input")
+	}
+
+	if len(pubKey2Sig) < 1 {
+		return fmt.Errorf("must provide at least one signature")
+	}
+
+	return verifyTaprootScriptSpendSignature(
+		transaction,
+		0,
+		map[wire.OutPoint]*wire.TxOut{
+			transaction.TxIn[0].PreviousOutPoint: fundingOutput,
+		},
+		txscript.NewBaseTapLeaf(script),
+		pubKey2Sig,
 	)
 }
 
@@ -811,6 +983,10 @@ func VerifyTransactionSigStkExp(
 		return fmt.Errorf("stake spend tx must have exactly two inputs")
 	}
 
+	pubKey2Sig := map[*btcec.PublicKey][]byte{
+		pubKey: signatureOverPrevStkSpend,
+	}
+
 	return verifyTaprootScriptSpendSignature(
 		stkSpendTx,
 		0,
@@ -819,8 +995,7 @@ func VerifyTransactionSigStkExp(
 			stkSpendTx.TxIn[1].PreviousOutPoint: fundingOutputIdx1,
 		},
 		txscript.NewBaseTapLeaf(script),
-		pubKey,
-		signatureOverPrevStkSpend,
+		pubKey2Sig,
 	)
 }
 
@@ -830,19 +1005,20 @@ func VerifyTransactionSigStkExp(
 // - The signature commits to the entire transaction with SigHashDefault.
 // - The TapLeaf script is what was signed.
 // - All prevOutputs must be supplied in full (for all inputs).
+// - pubKey2Sig maps public key to signature in order to verify signature corresponding to its public key.
+// NOTE: in this function, we assume pubKey2Sig map is correctly mapped
 func verifyTaprootScriptSpendSignature(
 	tx *wire.MsgTx,
 	inputIdx int,
 	prevOutputs map[wire.OutPoint]*wire.TxOut,
 	tapLeaf txscript.TapLeaf,
-	pubKey *btcec.PublicKey,
-	signature []byte,
+	pubKey2Sig map[*btcec.PublicKey][]byte,
 ) error {
 	if tx == nil {
 		return fmt.Errorf("tx to verify must not be nil")
 	}
-	if pubKey == nil {
-		return fmt.Errorf("public key must not be nil")
+	if len(pubKey2Sig) < 1 {
+		return fmt.Errorf("public key must be at least one")
 	}
 	if inputIdx < 0 || inputIdx >= len(tx.TxIn) {
 		return fmt.Errorf("input index %d out of bounds", inputIdx)
@@ -868,13 +1044,19 @@ func verifyTaprootScriptSpendSignature(
 		return err
 	}
 
-	parsedSig, err := schnorr.ParseSignature(signature)
-	if err != nil {
-		return err
-	}
+	for pubKey, signature := range pubKey2Sig {
+		if pubKey == nil {
+			return fmt.Errorf("public key must not be nil")
+		}
 
-	if !parsedSig.Verify(sigHash, pubKey) {
-		return fmt.Errorf("signature is not valid")
+		parsedSig, err := schnorr.ParseSignature(signature)
+		if err != nil {
+			return err
+		}
+
+		if !parsedSig.Verify(sigHash, pubKey) {
+			return fmt.Errorf("signature is not valid")
+		}
 	}
 
 	return nil
