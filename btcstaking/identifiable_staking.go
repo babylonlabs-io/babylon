@@ -226,57 +226,6 @@ func BuildV0IdentifiableStakingOutputs(
 	}, nil
 }
 
-// BuildV0IdentifiableMultisigStakingOutputs creates outputs which every staking transaction must have
-func BuildV0IdentifiableMultisigStakingOutputs(
-	tag []byte,
-	stakerKeys []*btcec.PublicKey,
-	stakerQuorum uint32,
-	fpKey *btcec.PublicKey,
-	covenantKeys []*btcec.PublicKey,
-	covenantQuorum uint32,
-	stakingTime uint16,
-	stakingAmount btcutil.Amount,
-	net *chaincfg.Params,
-) (*IdentifiableStakingInfo, error) {
-	info, err := BuildMultisigStakingInfo(
-		stakerKeys,
-		stakerQuorum,
-		[]*btcec.PublicKey{fpKey},
-		covenantKeys,
-		covenantQuorum,
-		stakingTime,
-		stakingAmount,
-		net,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	// NOTE: unlike single sig btc staker case, multisig btc staker information is not stored in
-	// OP_RETURN since it has limited space and we don't use OP_RETURN data anywhere after phase-1,
-	// so it's okay to exclude extra stakerKeys in OP_RETURN.
-	opReturnData, err := NewV0OpReturnDataFromParsed(tag, stakerKeys[0], fpKey, stakingTime)
-
-	if err != nil {
-		return nil, err
-	}
-
-	dataOutput, err := opReturnData.ToTxOutput()
-
-	if err != nil {
-		return nil, err
-	}
-
-	return &IdentifiableStakingInfo{
-		StakingOutput:         info.StakingOutput,
-		scriptHolder:          info.scriptHolder,
-		timeLockPathLeafHash:  info.timeLockPathLeafHash,
-		unbondingPathLeafHash: info.unbondingPathLeafHash,
-		slashingPathLeafHash:  info.slashingPathLeafHash,
-		OpReturnOutput:        dataOutput,
-	}, nil
-}
-
 // BuildV0IdentifiableStakingOutputsAndTx creates outputs which every staking transaction must have and
 // returns the not-funded transaction with these outputs
 func BuildV0IdentifiableStakingOutputsAndTx(
@@ -292,40 +241,6 @@ func BuildV0IdentifiableStakingOutputsAndTx(
 	info, err := BuildV0IdentifiableStakingOutputs(
 		tag,
 		stakerKey,
-		fpKey,
-		covenantKeys,
-		covenantQuorum,
-		stakingTime,
-		stakingAmount,
-		net,
-	)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	tx := wire.NewMsgTx(2)
-	tx.AddTxOut(info.StakingOutput)
-	tx.AddTxOut(info.OpReturnOutput)
-	return info, tx, nil
-}
-
-// BuildV0IdentifiableMultisigStakingOutputsAndTx creates outputs which every staking transaction must have and
-// returns the not-funded transaction with these outputs
-func BuildV0IdentifiableMultisigStakingOutputsAndTx(
-	tag []byte,
-	stakerKeys []*btcec.PublicKey,
-	stakerQuorum uint32,
-	fpKey *btcec.PublicKey,
-	covenantKeys []*btcec.PublicKey,
-	covenantQuorum uint32,
-	stakingTime uint16,
-	stakingAmount btcutil.Amount,
-	net *chaincfg.Params,
-) (*IdentifiableStakingInfo, *wire.MsgTx, error) {
-	info, err := BuildV0IdentifiableMultisigStakingOutputs(
-		tag,
-		stakerKeys,
-		stakerQuorum,
 		fpKey,
 		covenantKeys,
 		covenantQuorum,
