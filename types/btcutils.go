@@ -87,15 +87,29 @@ func SerializeBTCTx(tx *wire.MsgTx) ([]byte, error) {
 }
 
 func GetOutputIdxInBTCTx(tx *wire.MsgTx, output *wire.TxOut) (uint32, error) {
+	matchIdx := -1
+
 	for i, txOut := range tx.TxOut {
-		if bytes.Equal(txOut.PkScript, output.PkScript) && txOut.Value == output.Value {
-			if i <= math.MaxUint32 {
-				return uint32(i), nil
-			} else {
-				return 0, fmt.Errorf("output index out of acceptable range")
-			}
+		if txOut.Value != output.Value {
+			continue
 		}
+		if !bytes.Equal(txOut.PkScript, output.PkScript) {
+			continue
+		}
+
+		if matchIdx != -1 {
+			return 0, ErrMultipleOutputsMatch
+		}
+		matchIdx = i
 	}
 
-	return 0, fmt.Errorf("output not found")
+	if matchIdx == -1 {
+		return 0, ErrOutputNotFound
+	}
+
+	if matchIdx > math.MaxUint32 {
+		return 0, fmt.Errorf("output index out of acceptable range")
+	}
+
+	return uint32(matchIdx), nil
 }
