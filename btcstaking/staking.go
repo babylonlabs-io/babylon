@@ -911,6 +911,7 @@ func VerifyTransactionSigWithOutput(
 		},
 		txscript.NewBaseTapLeaf(script),
 		pubKey2Sig,
+		1,
 	)
 }
 
@@ -919,11 +920,13 @@ func VerifyTransactionSigWithOutput(
 // - provided signatures are valid schnorr BIP340 signatures
 // - provided signatures are signing whole provided transaction	(SigHashDefault)
 // - pubkey to signature map should be provided to ensure verification order
+// - staker quorum is the threshold of M-of-N multisig
 func VerifyTransactionMultiSigWithOutput(
 	transaction *wire.MsgTx,
 	fundingOutput *wire.TxOut,
 	script []byte,
 	pubKey2Sig map[*btcec.PublicKey][]byte,
+	stakerQuorum uint32,
 ) error {
 	if fundingOutput == nil {
 		return fmt.Errorf("funding output must not be nil")
@@ -949,6 +952,7 @@ func VerifyTransactionMultiSigWithOutput(
 		},
 		txscript.NewBaseTapLeaf(script),
 		pubKey2Sig,
+		stakerQuorum,
 	)
 }
 
@@ -996,6 +1000,7 @@ func VerifyTransactionSigStkExp(
 		},
 		txscript.NewBaseTapLeaf(script),
 		pubKey2Sig,
+		1,
 	)
 }
 
@@ -1006,6 +1011,7 @@ func VerifyTransactionSigStkExp(
 // - The TapLeaf script is what was signed.
 // - All prevOutputs must be supplied in full (for all inputs).
 // - pubKey2Sig maps public key to signature in order to verify signature corresponding to its public key.
+// - stakerQuorum is the threshold of M-of-N multisig and valid signatures must be greater or equal to stakerQuorum.
 // NOTE: in this function, we assume pubKey2Sig map is correctly mapped
 func verifyTaprootScriptSpendSignature(
 	tx *wire.MsgTx,
@@ -1013,6 +1019,7 @@ func verifyTaprootScriptSpendSignature(
 	prevOutputs map[wire.OutPoint]*wire.TxOut,
 	tapLeaf txscript.TapLeaf,
 	pubKey2Sig map[*btcec.PublicKey][]byte,
+	stakerQuorum uint32,
 ) error {
 	if tx == nil {
 		return fmt.Errorf("tx to verify must not be nil")
@@ -1044,6 +1051,7 @@ func verifyTaprootScriptSpendSignature(
 		return err
 	}
 
+	validSigCount := uint32(0)
 	for pubKey, signature := range pubKey2Sig {
 		if pubKey == nil {
 			return fmt.Errorf("public key must not be nil")
@@ -1054,9 +1062,14 @@ func verifyTaprootScriptSpendSignature(
 			return err
 		}
 
-		if !parsedSig.Verify(sigHash, pubKey) {
-			return fmt.Errorf("signature is not valid")
+		if parsedSig.Verify(sigHash, pubKey) {
+			validSigCount++
 		}
+	}
+
+	// check if there are enough valid signatures
+	if validSigCount < stakerQuorum {
+		return fmt.Errorf("not enough valid signatures: got %d, need at least %d", validSigCount, stakerQuorum)
 	}
 
 	return nil
