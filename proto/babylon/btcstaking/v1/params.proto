@@ -68,6 +68,10 @@ message Params {
   // btc_activation_height is the btc height from which parameters are activated
   // (inclusive)
   uint32 btc_activation_height = 15;
+  // max_staker_quorum is the max M from M-of-N multisig
+  uint32 max_staker_quorum = 16;
+  // max_staker_num is the max N from M-of-N multisig
+  uint32 max_staker_num = 17;
 }
 
 // HeightVersionPair pairs a btc height with a version of the parameters
