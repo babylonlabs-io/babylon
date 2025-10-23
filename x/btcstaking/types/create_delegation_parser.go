@@ -188,10 +188,10 @@ type ParsedCreateDelegationMessage struct {
 	// contain the necessary information to validate and
 	// create the BTC delegation as a stake expansion.
 	StkExp *ParsedCreateDelStkExp
-	// ExtraStakerInfo is an optional field. if this field is nil,
+	// MultisigInfo is an optional field. if this field is nil,
 	// this BTC delegation is not M-of-N multisig. else, it is an M-of-N multisig and
 	// should contain the necessary information to validate.
-	ExtraStakerInfo *ParsedAdditionalStakerInfo
+	MultisigInfo *ParsedAdditionalStakerInfo
 }
 
 type ParsedCreateDelStkExp struct {
@@ -224,6 +224,14 @@ func parseAdditionalStakerInfo(asi *AdditionalStakerInfo) (*ParsedAdditionalStak
 	stakerBTCPkList, err := NewParsedPublicKeyList(asi.StakerBtcPkList)
 	if err != nil {
 		return nil, err
+	}
+
+	duplicate, err := ExistsDup(stakerBTCPkList.PublicKeysBbnFormat)
+	if err != nil {
+		return nil, fmt.Errorf("error in staker public keys: %v", err)
+	}
+	if duplicate {
+		return nil, ErrDuplicatedStakerKey
 	}
 
 	for _, si := range asi.DelegatorSlashingSigs {
@@ -351,9 +359,9 @@ func parseCreateDelegationMessage(msg *MsgCreateBTCDelegation) (*ParsedCreateDel
 	}
 
 	// 9. Parse extra staker info
-	var parsedExtraStakerInfo *ParsedAdditionalStakerInfo
-	if msg.GetExtraStakerInfo() != nil {
-		parsedExtraStakerInfo, err = parseAdditionalStakerInfo(msg.GetExtraStakerInfo())
+	var parsedMultisigInfo *ParsedAdditionalStakerInfo
+	if msg.GetMultisigInfo() != nil {
+		parsedMultisigInfo, err = parseAdditionalStakerInfo(msg.GetMultisigInfo())
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse extra staker info: %v", err)
 		}
@@ -375,7 +383,7 @@ func parseCreateDelegationMessage(msg *MsgCreateBTCDelegation) (*ParsedCreateDel
 		StakerUnbondingSlashingSig: stakerUnbondingSlashingSig,
 		FinalityProviderKeys:       fpPKs,
 		ParsedPop:                  msg.GetPop(),
-		ExtraStakerInfo:            parsedExtraStakerInfo,
+		MultisigInfo:               parsedMultisigInfo,
 	}, nil
 }
 
@@ -401,7 +409,7 @@ func parseBtcExpandMessage(msg *MsgBtcStakeExpand) (*ParsedCreateDelegationMessa
 		UnbondingValue:                msg.UnbondingValue,
 		UnbondingSlashingTx:           msg.UnbondingSlashingTx,
 		DelegatorUnbondingSlashingSig: msg.DelegatorUnbondingSlashingSig,
-		ExtraStakerInfo:               msg.ExtraStakerInfo,
+		MultisigInfo:                  msg.MultisigInfo,
 	})
 	if err != nil {
 		return nil, err

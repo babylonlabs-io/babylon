@@ -287,7 +287,7 @@ func (d *BTCDelegation) ValidateBasic() error {
 	}
 
 	if d.IsMultisigBtcDel() {
-		if err := d.ExtraStakerInfo.Validate(); err != nil {
+		if err := d.MultisigInfo.Validate(); err != nil {
 			return err
 		}
 	}
@@ -560,9 +560,9 @@ func (d *BTCDelegation) IsStakeExpansion() bool {
 	return d.StkExp != nil
 }
 
-// IsMultisigBtcDel return true if the BTC delegation contains `ExtraStakerInfo`
+// IsMultisigBtcDel return true if the BTC delegation contains `MultisigInfo`
 func (d *BTCDelegation) IsMultisigBtcDel() bool {
-	return d.ExtraStakerInfo != nil
+	return d.MultisigInfo != nil
 }
 
 func (s *StakeExpansion) AddCovenantSigs(

@@ -106,11 +106,11 @@ func NewBtcDelCreationEvent(
 		e.PreviousStakingTxHashHex = btcDel.MustGetStakeExpansionTxHash().String()
 	}
 	if btcDel.IsMultisigBtcDel() {
-		var extraStakerBtcPkHexs []string
-		for _, btcPk := range btcDel.ExtraStakerInfo.StakerBtcPkList {
-			extraStakerBtcPkHexs = append(extraStakerBtcPkHexs, btcPk.MarshalHex())
+		var multisigStakerBtcPkHexs []string
+		for _, btcPk := range btcDel.MultisigInfo.StakerBtcPkList {
+			multisigStakerBtcPkHexs = append(multisigStakerBtcPkHexs, btcPk.MarshalHex())
 		}
-		e.ExtraStakerBtcPkHexs = extraStakerBtcPkHexs
+		e.MultisigStakerBtcPkHexs = multisigStakerBtcPkHexs
 	}
 	return e
 }

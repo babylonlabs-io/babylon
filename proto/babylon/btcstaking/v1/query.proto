@@ -236,9 +236,9 @@ message BTCDelegationResponse {
   uint32 params_version = 17;
   // stk_exp contains the stake expansion information, if nil it is NOT a stake expansion.
   StakeExpansionResponse stk_exp = 18;
-  // extra_staker_info is used when the given btc delegation is M-of-N multisig.
+  // multisig_info is used when the given btc delegation is M-of-N multisig.
   // If nil, it is not a M-of-N multisig.
-  AdditionalStakerInfoResponse extra_staker_info = 19;
+  AdditionalStakerInfoResponse multisig_info = 19;
 }
 
 // AdditionalStakerInfoResponse provides multisig info for the given btc staker

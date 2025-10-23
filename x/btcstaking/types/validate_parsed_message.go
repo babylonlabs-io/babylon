@@ -35,43 +35,49 @@ func ValidateParsedMessageAgainstTheParams(
 	covenantPks := parameters.MustGetCovenantPks()
 
 	// handle multi-sig btc delegation and single-sig btc delegation separately
-	if pm.ExtraStakerInfo != nil {
+	if pm.MultisigInfo != nil {
 		// this is the M-of-N multisig btc delegation
-		if len(pm.ExtraStakerInfo.StakerBTCPkList.PublicKeys) < 1 || pm.ExtraStakerInfo.StakerQuorum < 1 {
+		if len(pm.MultisigInfo.StakerBTCPkList.PublicKeys) < 1 || pm.MultisigInfo.StakerQuorum < 1 {
 			return nil, ErrInvalidMultisigInfo.Wrapf("number of staker btc pk list and staker quorum must be greater than 0, got: %d, %d",
-				len(pm.ExtraStakerInfo.StakerBTCPkList.PublicKeys), pm.ExtraStakerInfo.StakerQuorum,
+				len(pm.MultisigInfo.StakerBTCPkList.PublicKeys), pm.MultisigInfo.StakerQuorum,
 			)
 		}
 
 		// validate staker quorum and length of staker btc pk list doesn't exceed max M-of-N
-		if int(parameters.MaxStakerNum) < len(pm.ExtraStakerInfo.StakerBTCPkList.PublicKeys)+1 ||
-			parameters.MaxStakerQuorum < pm.ExtraStakerInfo.StakerQuorum {
+		if int(parameters.MaxStakerNum) < len(pm.MultisigInfo.StakerBTCPkList.PublicKeys)+1 ||
+			parameters.MaxStakerQuorum < pm.MultisigInfo.StakerQuorum {
 			return nil, ErrInvalidMultisigInfo.Wrapf("invalid M-of-N parameters: staker quorum %d, staker num %d, max %d-of-%d",
-				pm.ExtraStakerInfo.StakerQuorum, len(pm.ExtraStakerInfo.StakerBTCPkList.PublicKeys)+1, parameters.MaxStakerQuorum, parameters.MaxStakerNum)
+				pm.MultisigInfo.StakerQuorum, len(pm.MultisigInfo.StakerBTCPkList.PublicKeys)+1, parameters.MaxStakerQuorum, parameters.MaxStakerNum)
 		}
 
-		// construct the complete list of staker pubkeys from `ExtraStakerInfo` and `StakerPk`
-		stakerKeys := pm.ExtraStakerInfo.StakerBTCPkList.PublicKeys
+		// construct the complete list of staker pubkeys from `MultisigInfo` and `StakerPk`
+		stakerKeys := pm.MultisigInfo.StakerBTCPkList.PublicKeys
+		// check if MultisigInfo contains duplicated `btc_pk`
+		for _, extraPk := range pm.MultisigInfo.StakerBTCPkList.PublicKeysBbnFormat {
+			if bytes.Equal(extraPk.MustMarshal(), pm.StakerPK.BIP340PubKey.MustMarshal()) {
+				return nil, ErrDuplicatedStakerKey.Wrapf("staker pk list contains the main staker pk")
+			}
+		}
 		stakerKeys = append(stakerKeys, pm.StakerPK.PublicKey)
-		stakerQuorum := pm.ExtraStakerInfo.StakerQuorum
+		stakerQuorum := pm.MultisigInfo.StakerQuorum
 
 		// construct pubkey -> bip340 signature map for each slashing tx and unbonding slashing tx
 		slashingPubkey2Sig := make(map[*btcec.PublicKey][]byte)
 		slashingPubkey2Sig[pm.StakerPK.PublicKey] = pm.StakerStakingSlashingTxSig.BIP340Signature.MustMarshal()
-		for _, si := range pm.ExtraStakerInfo.StakerStakingSlashingSigs {
+		for _, si := range pm.MultisigInfo.StakerStakingSlashingSigs {
 			slashingPubkey2Sig[si.PublicKey.PublicKey] = si.Sig.BIP340Signature.MustMarshal()
 		}
 
 		unbondingSlashingPubkey2Sig := make(map[*btcec.PublicKey][]byte)
 		unbondingSlashingPubkey2Sig[pm.StakerPK.PublicKey] = pm.StakerUnbondingSlashingSig.BIP340Signature.MustMarshal()
-		for _, si := range pm.ExtraStakerInfo.StakerUnbondingSlashingSigs {
+		for _, si := range pm.MultisigInfo.StakerUnbondingSlashingSigs {
 			unbondingSlashingPubkey2Sig[si.PublicKey.PublicKey] = si.Sig.BIP340Signature.MustMarshal()
 		}
 
 		// compare the length of pubkey -> sig map and the `StakerQuorum`
 		if len(slashingPubkey2Sig) < int(stakerQuorum) || len(unbondingSlashingPubkey2Sig) < int(stakerQuorum) {
 			return nil, ErrInvalidMultisigInfo.Wrapf("invalid %d-of-%d signatures: %d slashing signatures, %d unbonding slashing signatures",
-				pm.ExtraStakerInfo.StakerQuorum, len(pm.ExtraStakerInfo.StakerBTCPkList.PublicKeys)+1, len(slashingPubkey2Sig), len(unbondingSlashingPubkey2Sig))
+				pm.MultisigInfo.StakerQuorum, len(pm.MultisigInfo.StakerBTCPkList.PublicKeys)+1, len(slashingPubkey2Sig), len(unbondingSlashingPubkey2Sig))
 		}
 
 		// 2. Validate all data related to staking tx:
@@ -128,6 +134,7 @@ func ValidateParsedMessageAgainstTheParams(
 			pm.StakingTx.Transaction.TxOut[stakingOutputIdx],
 			slashingSpendInfo.RevealedLeaf.Script,
 			slashingPubkey2Sig,
+			stakerQuorum,
 		); err != nil {
 			return nil, ErrInvalidSlashingTx.Wrapf("invalid delegator signature: %v", err)
 		}
@@ -195,6 +202,7 @@ func ValidateParsedMessageAgainstTheParams(
 			pm.UnbondingTx.Transaction.TxOut[0], // unbonding output always has only 1 output
 			unbondingSlashingSpendInfo.RevealedLeaf.Script,
 			unbondingSlashingPubkey2Sig,
+			stakerQuorum,
 		); err != nil {
 			return nil, ErrInvalidSlashingTx.Wrapf("invalid delegator signature: %v", err)
 		}

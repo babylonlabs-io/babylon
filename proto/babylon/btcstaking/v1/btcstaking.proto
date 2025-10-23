@@ -163,9 +163,9 @@ message BTCDelegation {
   // stk_exp is contains the relevant information about the previous staking that
   // originated this stake. If nil it is NOT a stake expansion.
   StakeExpansion stk_exp = 18;
-  // extra_staker_info is used when the given btc delegation is M-of-N multisig.
+  // multisig_info is used when the given btc delegation is M-of-N multisig.
   // If nil, it is not a M-of-N multisig.
-  AdditionalStakerInfo extra_staker_info = 19;
+  AdditionalStakerInfo multisig_info = 19;
 }
 
 // StakeExpansion stores information necessary to construct the expanded BTC staking

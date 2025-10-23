@@ -109,7 +109,7 @@ func (k Keeper) CreateBTCDelegation(ctx sdk.Context, parsedMsg *types.ParsedCrea
 		return fmt.Errorf("error building stake expansion: %w", err)
 	}
 
-	newBTCDel.ExtraStakerInfo = buildExtraStakerInfo(parsedMsg.ExtraStakerInfo)
+	newBTCDel.MultisigInfo = buildMultisigInfo(parsedMsg.MultisigInfo)
 
 	// add this BTC delegation, and emit corresponding events
 	if err := k.AddBTCDelegation(ctx, newBTCDel); err != nil {
@@ -537,22 +537,22 @@ func buildStakeExpansion(stkExp *types.ParsedCreateDelStkExp) (*types.StakeExpan
 	}, nil
 }
 
-func buildExtraStakerInfo(extraStakerInfo *types.ParsedAdditionalStakerInfo) *types.AdditionalStakerInfo {
-	if extraStakerInfo == nil {
+func buildMultisigInfo(multisigInfo *types.ParsedAdditionalStakerInfo) *types.AdditionalStakerInfo {
+	if multisigInfo == nil {
 		return nil
 	}
 
-	slashingSignatureInfo := make([]*types.SignatureInfo, len(extraStakerInfo.StakerStakingSlashingSigs))
-	unbondingSlashingSignatureInfo := make([]*types.SignatureInfo, len(extraStakerInfo.StakerUnbondingSlashingSigs))
+	slashingSignatureInfo := make([]*types.SignatureInfo, len(multisigInfo.StakerStakingSlashingSigs))
+	unbondingSlashingSignatureInfo := make([]*types.SignatureInfo, len(multisigInfo.StakerUnbondingSlashingSigs))
 
-	for i, si := range extraStakerInfo.StakerStakingSlashingSigs {
+	for i, si := range multisigInfo.StakerStakingSlashingSigs {
 		slashingSignatureInfo[i] = &types.SignatureInfo{
 			Pk:  si.PublicKey.BIP340PubKey,
 			Sig: si.Sig.BIP340Signature,
 		}
 	}
 
-	for i, si := range extraStakerInfo.StakerUnbondingSlashingSigs {
+	for i, si := range multisigInfo.StakerUnbondingSlashingSigs {
 		unbondingSlashingSignatureInfo[i] = &types.SignatureInfo{
 			Pk:  si.PublicKey.BIP340PubKey,
 			Sig: si.Sig.BIP340Signature,
@@ -560,8 +560,8 @@ func buildExtraStakerInfo(extraStakerInfo *types.ParsedAdditionalStakerInfo) *ty
 	}
 
 	return &types.AdditionalStakerInfo{
-		StakerBtcPkList:                extraStakerInfo.StakerBTCPkList.PublicKeysBbnFormat,
-		StakerQuorum:                   extraStakerInfo.StakerQuorum,
+		StakerBtcPkList:                multisigInfo.StakerBTCPkList.PublicKeysBbnFormat,
+		StakerQuorum:                   multisigInfo.StakerQuorum,
 		DelegatorSlashingSigs:          slashingSignatureInfo,
 		DelegatorUnbondingSlashingSigs: unbondingSlashingSignatureInfo,
 	}

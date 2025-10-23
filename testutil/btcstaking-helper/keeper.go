@@ -724,7 +724,7 @@ func (h *Helper) CreateMultisigDelegationWithBtcBlockHeight(
 		stBtcPkList[i] = *bbn.NewBIP340PubKeyFromBTCPK(delSK.PubKey())
 	}
 
-	extraStakerInfo := &types.AdditionalStakerInfo{
+	multisigInfo := &types.AdditionalStakerInfo{
 		StakerBtcPkList:                stBtcPkList,
 		StakerQuorum:                   delQuorum,
 		DelegatorSlashingSigs:          delegatorSI,
@@ -748,7 +748,7 @@ func (h *Helper) CreateMultisigDelegationWithBtcBlockHeight(
 		UnbondingValue:                unbondingValue,
 		UnbondingSlashingTx:           testUnbondingInfo.SlashingTx,
 		DelegatorUnbondingSlashingSig: delSlashingTxSig,
-		ExtraStakerInfo:               extraStakerInfo,
+		MultisigInfo:                  multisigInfo,
 	}
 
 	if !usePreApproval {

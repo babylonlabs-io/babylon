@@ -2,6 +2,7 @@ package keeper_test
 
 import (
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math"
@@ -284,8 +285,8 @@ func FuzzCreateBTCDelegation(f *testing.F) {
 		require.Equal(h.T(), msgCreateBTCDel.Pop, actualDel.Pop)
 		require.Equal(h.T(), msgCreateBTCDel.StakingTx, actualDel.StakingTx)
 		require.Equal(h.T(), msgCreateBTCDel.SlashingTx, actualDel.SlashingTx)
-		// actual btc delegation has a field `ExtraStakerInfo`
-		require.Nil(h.T(), actualDel.ExtraStakerInfo)
+		// actual btc delegation has a field `MultisigInfo`
+		require.Nil(h.T(), actualDel.MultisigInfo)
 		// ensure the BTC delegation in DB is correctly formatted
 		err = actualDel.ValidateBasic()
 		h.NoError(err)
@@ -1969,12 +1970,12 @@ func TestMultisigCreateBTCDelegationWithMaxStakerParams(t *testing.T) {
 			require.Equal(h.T(), msgCreateBTCDel.Pop, actualDel.Pop)
 			require.Equal(h.T(), msgCreateBTCDel.StakingTx, actualDel.StakingTx)
 			require.Equal(h.T(), msgCreateBTCDel.SlashingTx, actualDel.SlashingTx)
-			require.Equal(h.T(), msgCreateBTCDel.ExtraStakerInfo, actualDel.ExtraStakerInfo)
+			require.Equal(h.T(), msgCreateBTCDel.MultisigInfo, actualDel.MultisigInfo)
 
-			// ExtraStakerInfo contains staker info except the one representative staker info,
-			// that is, for M-of-N multisig, length of StakerBtcPkList of ExtraStakerInfo is N-1
-			require.Equal(h.T(), int(tc.stakerNum), len(actualDel.ExtraStakerInfo.StakerBtcPkList)+1)
-			require.Equal(h.T(), tc.stakerQuorum, actualDel.ExtraStakerInfo.StakerQuorum)
+			// MultisigInfo contains staker info except the one representative staker info,
+			// that is, for M-of-N multisig, length of StakerBtcPkList of MultisigInfo is N-1
+			require.Equal(h.T(), int(tc.stakerNum), len(actualDel.MultisigInfo.StakerBtcPkList)+1)
+			require.Equal(h.T(), tc.stakerQuorum, actualDel.MultisigInfo.StakerQuorum)
 
 			// ensure the BTC delegation in DB is correctly formatted
 			err = actualDel.ValidateBasic()
@@ -1996,18 +1997,17 @@ func TestMultisigCreateBTCDelegationWithMaxStakerParams(t *testing.T) {
 			events := h.Ctx.EventManager().Events()
 			var foundBtcDelCreatedEvent bool
 
-			// build expected extra staker pk hexs from delSKs (skip first key since it's the main staker key)
-			expectedExtraStakerPkHexs := ""
+			// build expected multisig staker pk hexs from delSKs (skip first key since it's the main staker key)
+			var expectedMultisigStakerPkHexs string
 			if tc.stakerNum > 1 {
-				extraPkHexs := make([]string, 0, tc.stakerNum-1)
+				multisigPkHexs := make([]string, 0, tc.stakerNum-1)
 				for i := 1; i < int(tc.stakerNum); i++ {
-					extraPkHexs = append(extraPkHexs, hex.EncodeToString(delSKs[i].PubKey().SerializeCompressed()[1:]))
+					multisigPkHexs = append(multisigPkHexs, hex.EncodeToString(delSKs[i].PubKey().SerializeCompressed()[1:]))
 				}
-				expectedExtraStakerPkHexs = "[" + fmt.Sprintf("\"%s\"", extraPkHexs[0])
-				for i := 1; i < len(extraPkHexs); i++ {
-					expectedExtraStakerPkHexs += fmt.Sprintf(",\"%s\"", extraPkHexs[i])
-				}
-				expectedExtraStakerPkHexs += "]"
+
+				jsonBytes, err := json.Marshal(multisigPkHexs)
+				require.NoError(t, err)
+				expectedMultisigStakerPkHexs = string(jsonBytes)
 			}
 
 			for _, event := range events {
@@ -2016,8 +2016,8 @@ func TestMultisigCreateBTCDelegationWithMaxStakerParams(t *testing.T) {
 					testutilevents.RequireEventAttribute(t, event, "staking_tx_hex", fmt.Sprintf("\"%s\"", hex.EncodeToString(actualDel.StakingTx)), "BTC Delegation created event should match the staking tx hash")
 
 					if tc.stakerNum > 1 {
-						// for multisig, extra_staker_btc_pk_hexs should have N-1 keys
-						testutilevents.RequireEventAttribute(t, event, "extra_staker_btc_pk_hexs", expectedExtraStakerPkHexs, "BTC Delegation Created event should have extra staker info field with correct keys")
+						// for multisig, multisig_staker_btc_pk_hexs should have N-1 keys
+						testutilevents.RequireEventAttribute(t, event, "multisig_staker_btc_pk_hexs", expectedMultisigStakerPkHexs, "BTC Delegation Created event should have extra staker info field with correct keys")
 					}
 				}
 			}

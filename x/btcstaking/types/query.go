@@ -50,7 +50,7 @@ func NewBTCDelegationResponse(btcDel *BTCDelegation, status BTCDelegationStatus)
 	}
 
 	if btcDel.IsMultisigBtcDel() {
-		resp.ExtraStakerInfo = btcDel.ExtraStakerInfo.ToResponse()
+		resp.MultisigInfo = btcDel.MultisigInfo.ToResponse()
 	}
 
 	return resp
