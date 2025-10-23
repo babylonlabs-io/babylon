@@ -47,6 +47,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 finality provider distribution info
 - [#1822](https://github.com/babylonlabs-io/babylon/pull/1822) Support multisig for btc staker in btcstaking library
 - [#1824](https://github.com/babylonlabs-io/babylon/pull/1824) Support multisig for btc staker in babylon genesis
+- [#1827](https://github.com/babylonlabs-io/babylon/pull/1827) Upgrade handler to support multisig
 
 ### Bug fixes
 
