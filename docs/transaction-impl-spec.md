@@ -69,13 +69,21 @@ and commits to a script tree composed of three scripts::
 timelock script, unbonding script, slashing script.
 This output is henceforth known as the `staking_output` and
 the value in this output is known as `staking_amount`
-- Have `OP_RETURN` output which contains: `global_parameters.tag`,
- `version`, `staker_pk`, `finality_provider_pk`, `staking_time`
+- **[Phase-1 only]** Have `OP_RETURN` output which contains:
+`global_parameters.tag`, `version`, `staker_pk`, `finality_provider_pk`,
+`staking_time`. This requirement applies only to phase-1 BTC staking
+transactions. Post-phase-1 transactions do not require this OP_RETURN
+format and use alternative mechanisms for transaction identification.
 - All the values must be valid for the `global_parameters` which are applicable at
 the height in which the staking transaction is included in the BTC ledger.
 
 
 #### OP_RETURN output description
+
+> **Note: This section describes phase-1 BTC staking transactions only.**
+The OP_RETURN format described below was used exclusively in phase-1 of
+the BTC staking protocol. Post-phase-1 transactions do not utilize this
+OP_RETURN format and are identified through different mechanisms.
 
 Data in the OP_RETURN output is described by the following struct:
 
@@ -160,6 +168,8 @@ members required to authorize spending using the `unbonding_script` or `slashing
 - `btc_network` - the BTC network on which staking transactions will take place.
 
 #### Building OP_RETURN and staking output implementation
+
+> **Note: This section describes phase-1 BTC staking transactions only.**
 
 The Babylon staking library exposes the [BuildV0IdentifiableStakingOutputsAndTx](../btcstaking/identifiable_staking.go?plain=1#L231)
 function with the following signature:
