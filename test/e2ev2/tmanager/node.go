@@ -679,6 +679,13 @@ func (n *Node) RequireTxSuccess(txHash string) {
 	require.Equal(n.T(), uint32(0), txResp.TxResponse.Code, "Transaction %s failed with code %d: %s", txHash, txResp.TxResponse.Code, txResp.TxResponse.RawLog)
 }
 
+// RequireTxErrorContain queries a transaction by hash and requires it to have code 0 (success)
+func (n *Node) RequireTxErrorContain(txHash string, err string) {
+	txResp := n.QueryTxByHash(txHash)
+	require.NotEqual(n.T(), uint32(0), txResp.TxResponse.Code, "Transaction %s response code shouldn't be 0", txHash)
+	require.Contains(n.T(), txResp.TxResponse.RawLog, err, "Transaction %s doesn't contain expected error %s", txHash, err)
+}
+
 // UpdateWalletsAccSeqNumber updates all wallets in a node by querying the chain
 func (n *Node) UpdateWalletsAccSeqNumber() {
 	addrs := make([]string, 0)
