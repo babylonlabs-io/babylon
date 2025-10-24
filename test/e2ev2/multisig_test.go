@@ -17,61 +17,117 @@ import (
 	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 )
 
-func Test2of3MultisigBtcDel(t *testing.T) {
-	t.Parallel()
-	tm := tmanager.NewTestManager(t)
-	cfg := tmanager.NewChainConfig(tm.TempDir, tmanager.CHAIN_ID_BABYLON)
-	cfg.NodeCount = 2
-	tm.Chains[tmanager.CHAIN_ID_BABYLON] = tmanager.NewChain(tm, cfg)
-	tm.Start()
+func TestMultisigBtcDel(t *testing.T) {
+	testCases := []struct {
+		title        string
+		stakerQuorum uint32
+		stakerCount  uint32
+		sigsCount    uint32
+		expErr       string
+	}{
+		{
+			title:        "2-of-3 multisig delegation, 2 valid signatures",
+			stakerQuorum: 2,
+			stakerCount:  3,
+			sigsCount:    2,
+			expErr:       "",
+		},
+		{
+			title:        "2-of-3 multisig delegation, 3 valid signatures",
+			stakerQuorum: 2,
+			stakerCount:  3,
+			sigsCount:    3,
+			expErr:       "",
+		},
+		{
+			title:        "3-of-5 multisig delegation, 3 valid signatures - max 2-of-3 multisig params",
+			stakerQuorum: 3,
+			stakerCount:  5,
+			sigsCount:    3,
+			expErr:       "invalid multisig info",
+		},
+		{
+			title:        "2-of-3 multisig delegation, 1 valid signatures",
+			stakerQuorum: 2,
+			stakerCount:  3,
+			sigsCount:    1,
+			expErr:       "invalid multisig info",
+		},
+		// TODO: add more tests about duplicate staker btc pk, signatures
+	}
 
-	tm.ChainsWaitUntilHeight(3)
+	for _, tc := range testCases {
+		t.Run(tc.title, func(t *testing.T) {
+			t.Parallel()
+			tm := tmanager.NewTestManager(t)
+			cfg := tmanager.NewChainConfig(tm.TempDir, tmanager.CHAIN_ID_BABYLON)
+			cfg.NodeCount = 2
+			tm.Chains[tmanager.CHAIN_ID_BABYLON] = tmanager.NewChain(tm, cfg)
+			tm.Start()
 
-	bbns := tm.ChainNodes()
-	bbn1 := bbns[0]
-	bbn2 := bbns[1]
-	bbn1.DefaultWallet().VerifySentTx = true
-	bbn2.DefaultWallet().VerifySentTx = true
+			tm.ChainsWaitUntilHeight(3)
 
-	// create bbn1 as a fp
-	r := rand.New(rand.NewSource(time.Now().Unix()))
-	fpSK, _, err := datagen.GenRandomBTCKeyPair(r)
-	require.NoError(t, err)
-	fp, err := datagen.GenCustomFinalityProvider(r, fpSK, bbn1.DefaultWallet().Address)
-	require.NoError(t, err)
-	bbn1.CreateFinalityProvider(bbn1.DefaultWallet().KeyName, fp)
-	bbn1.WaitForNextBlock()
+			bbns := tm.ChainNodes()
+			bbn1 := bbns[0]
+			bbn2 := bbns[1]
+			bbn1.DefaultWallet().VerifySentTx = true
+			bbn2.DefaultWallet().VerifySentTx = true
+			// override VerifySentTx if it expects error
+			if tc.expErr != "" {
+				bbn2.DefaultWallet().VerifySentTx = false
+			}
 
-	fpResp := bbn1.QueryFinalityProvider(fp.BtcPk.MarshalHex())
-	require.NotNil(t, fpResp)
+			// create bbn1 as a fp
+			r := rand.New(rand.NewSource(time.Now().Unix()))
+			fpSK, _, err := datagen.GenRandomBTCKeyPair(r)
+			require.NoError(t, err)
+			fp, err := datagen.GenCustomFinalityProvider(r, fpSK, bbn1.DefaultWallet().Address)
+			require.NoError(t, err)
+			bbn1.CreateFinalityProvider(bbn1.DefaultWallet().KeyName, fp)
+			bbn1.WaitForNextBlock()
 
-	// 2-of-3 multisig delegation from bbn2 to fp (bbn1)
-	stkSKs, _, err := datagen.GenRandomBTCKeyPairs(r, 3)
-	require.NoError(t, err)
+			fpResp := bbn1.QueryFinalityProvider(fp.BtcPk.MarshalHex())
+			require.NotNil(t, fpResp)
 
-	msg, stakingInfo := buildMultisigDelegationMsg(
-		t, r, bbn2,
-		bbn2.DefaultWallet(),
-		stkSKs,
-		2,
-		fpSK.PubKey(),
-		int64(2*10e8),
-		1000,
-	)
+			// multisig delegation from bbn2 to fp (bbn1)
+			stkSKs, _, err := datagen.GenRandomBTCKeyPairs(r, int(tc.stakerCount))
+			require.NoError(t, err)
 
-	bbn2.CreateBTCDelegation(bbn2.DefaultWallet().KeyName, msg)
-	bbn2.WaitForNextBlock()
+			msg, stakingInfo := buildMultisigDelegationMsgWithExactSigs(
+				t, r, bbn2,
+				bbn2.DefaultWallet(),
+				stkSKs,
+				tc.stakerQuorum,
+				fpSK.PubKey(),
+				int64(2*10e8),
+				1000,
+				tc.sigsCount,
+			)
 
-	// query and verify delegation
-	del := bbn2.QueryBTCDelegation(stakingInfo.StakingTx.TxHash().String())
-	require.NotNil(t, del)
-	require.Equal(t, "PENDING", del.StatusDesc)
-	require.NotNil(t, del.MultisigInfo)
-	require.Equal(t, uint32(2), del.MultisigInfo.StakerQuorum)
-	require.Len(t, del.MultisigInfo.StakerBtcPkList, 2)
+			txHash := bbn2.CreateBTCDelegation(bbn2.DefaultWallet().KeyName, msg)
+			bbn2.WaitForNextBlock()
+
+			// if it expects error, don't query btc delegation and stop here
+			if tc.expErr != "" {
+				bbn2.RequireTxErrorContain(txHash, tc.expErr)
+				return
+			}
+
+			// query and verify delegation
+			del := bbn2.QueryBTCDelegation(stakingInfo.StakingTx.TxHash().String())
+			require.NotNil(t, del)
+			require.Equal(t, "PENDING", del.StatusDesc)
+			require.NotNil(t, del.MultisigInfo)
+			require.Equal(t, tc.stakerQuorum, del.MultisigInfo.StakerQuorum)
+			require.Len(t, del.MultisigInfo.StakerBtcPkList, int(tc.stakerCount-1))
+			require.Len(t, del.MultisigInfo.DelegatorSlashingSigs, int(tc.sigsCount-1))
+		})
+	}
 }
 
-func buildMultisigDelegationMsg(
+// buildMultisigDelegationWithExactSigs construct multisig btc delegation msg
+// - exactSigs is true when constructing exact M signatures
+func buildMultisigDelegationMsgWithExactSigs(
 	t *testing.T,
 	r *rand.Rand,
 	node *tmanager.Node,
@@ -81,6 +137,7 @@ func buildMultisigDelegationMsg(
 	fpPK *btcec.PublicKey,
 	stakingValue int64,
 	stakingTime uint16,
+	sigsCount uint32,
 ) (*bstypes.MsgCreateBTCDelegation, *datagen.TestStakingSlashingInfo) {
 	params := node.QueryBtcStakingParams()
 	net := &chaincfg.SimNetParams
@@ -135,7 +192,8 @@ func buildMultisigDelegationMsg(
 
 	// generate extra staker signatures (for remaining stakers)
 	var extraSlashingSigs []*bstypes.SignatureInfo
-	for _, sk := range stakerSKs[1:] {
+	stakerSKList := stakerSKs[1:sigsCount]
+	for _, sk := range stakerSKList {
 		sig, err := stakingInfo.SlashingTx.Sign(
 			stakingInfo.StakingTx, 0,
 			slashingSpendInfo.GetPkScriptPath(),
@@ -155,7 +213,7 @@ func buildMultisigDelegationMsg(
 
 	// generate extra unbonding signatures
 	var extraUnbondingSigs []*bstypes.SignatureInfo
-	for _, sk := range stakerSKs[1:] {
+	for _, sk := range stakerSKList {
 		sig, err := unbondingInfo.GenDelSlashingTxSig(sk)
 		require.NoError(t, err)
 
