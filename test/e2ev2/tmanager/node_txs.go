@@ -95,3 +95,14 @@ func (n *Node) CreateFinalityProvider(walletName string, fp *bstypes.FinalityPro
 	require.NotNil(n.T(), tx, "CreateFinalityProvider transaction should not be nil")
 	n.T().Logf("Created finality provider: %s", fp.BtcPk.MarshalHex())
 }
+
+// CreateBTCDelegation submits a BTC delegation transaction with a specified wallet
+func (n *Node) CreateBTCDelegation(walletName string, msg *bstypes.MsgCreateBTCDelegation) string {
+	wallet := n.Wallet(walletName)
+	require.NotNil(n.T(), wallet, "Wallet %s not found", walletName)
+
+	txHash, tx := wallet.SubmitMsgs(msg)
+	require.NotNil(n.T(), tx, "CreateBTCDelegation transaction should not be nil")
+	n.T().Logf("BTC delegation created, tx hash: %s", txHash)
+	return txHash
+}
