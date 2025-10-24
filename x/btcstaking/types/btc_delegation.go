@@ -286,6 +286,12 @@ func (d *BTCDelegation) ValidateBasic() error {
 		}
 	}
 
+	if d.IsMultisigBtcDel() {
+		if err := d.MultisigInfo.Validate(); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -554,6 +560,11 @@ func (d *BTCDelegation) IsStakeExpansion() bool {
 	return d.StkExp != nil
 }
 
+// IsMultisigBtcDel return true if the BTC delegation contains `MultisigInfo`
+func (d *BTCDelegation) IsMultisigBtcDel() bool {
+	return d.MultisigInfo != nil
+}
+
 func (s *StakeExpansion) AddCovenantSigs(
 	covPk *bbn.BIP340PubKey,
 	stkExpSig *bbn.BIP340Signature,
@@ -680,6 +691,53 @@ func (i *BTCDelegatorDelegationIndex) Add(stakingTxHash chainhash.Hash) error {
 	}
 	// add
 	i.StakingTxHashList = append(i.StakingTxHashList, stakingTxHash[:])
+
+	return nil
+}
+
+func (a *AdditionalStakerInfo) ToResponse() *AdditionalStakerInfoResponse {
+	return &AdditionalStakerInfoResponse{
+		StakerBtcPkList:                a.StakerBtcPkList,
+		StakerQuorum:                   a.StakerQuorum,
+		DelegatorSlashingSigs:          a.DelegatorSlashingSigs,
+		DelegatorUnbondingSlashingSigs: a.DelegatorUnbondingSlashingSigs,
+	}
+}
+
+func (a *AdditionalStakerInfo) Validate() error {
+	if len(a.StakerBtcPkList) == 0 {
+		return fmt.Errorf("length of the stakerBtcPkList is zero")
+	}
+
+	if a.StakerQuorum < 0 {
+		return fmt.Errorf("stakerQuorum is negative")
+	}
+
+	if len(a.DelegatorSlashingSigs) == 0 {
+		return fmt.Errorf("length of the delegatorSlashingSigs is zero")
+	}
+
+	if len(a.DelegatorUnbondingSlashingSigs) == 0 {
+		return fmt.Errorf("length of the delegatorUnbondingSlashingSigs is zero")
+	}
+
+	for i, sig := range a.DelegatorSlashingSigs {
+		if sig == nil {
+			return errorsmod.Wrapf(ErrInvalidMultisigInfo, "DelegatorSlashingSigs[%d] is nil", i)
+		}
+		if err := sig.Validate(); err != nil {
+			return errorsmod.Wrapf(ErrInvalidMultisigInfo, "invalid signature at index %d: %v", i, err)
+		}
+	}
+
+	for i, sig := range a.DelegatorUnbondingSlashingSigs {
+		if sig == nil {
+			return errorsmod.Wrapf(ErrInvalidMultisigInfo, "DelegatorUnbondingSlashingSigs[%d] is nil", i)
+		}
+		if err := sig.Validate(); err != nil {
+			return errorsmod.Wrapf(ErrInvalidMultisigInfo, "invalid signature at index %d: %v", i, err)
+		}
+	}
 
 	return nil
 }

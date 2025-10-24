@@ -1,0 +1,264 @@
+package e2e2
+
+import (
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	"github.com/btcsuite/btcd/wire"
+	"math/rand"
+	"testing"
+	"time"
+
+	"github.com/stretchr/testify/require"
+
+	"github.com/btcsuite/btcd/btcec/v2"
+	"github.com/btcsuite/btcd/chaincfg"
+
+	"github.com/babylonlabs-io/babylon/v4/test/e2ev2/tmanager"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+)
+
+func TestMultisigBtcDel(t *testing.T) {
+	testCases := []struct {
+		title        string
+		stakerQuorum uint32
+		stakerCount  uint32
+		sigsCount    uint32
+		expErr       string
+	}{
+		{
+			title:        "2-of-3 multisig delegation, 2 valid signatures",
+			stakerQuorum: 2,
+			stakerCount:  3,
+			sigsCount:    2,
+			expErr:       "",
+		},
+		{
+			title:        "2-of-3 multisig delegation, 3 valid signatures",
+			stakerQuorum: 2,
+			stakerCount:  3,
+			sigsCount:    3,
+			expErr:       "",
+		},
+		{
+			title:        "3-of-5 multisig delegation, 3 valid signatures - max 2-of-3 multisig params",
+			stakerQuorum: 3,
+			stakerCount:  5,
+			sigsCount:    3,
+			expErr:       "invalid multisig info",
+		},
+		{
+			title:        "2-of-3 multisig delegation, 1 valid signatures",
+			stakerQuorum: 2,
+			stakerCount:  3,
+			sigsCount:    1,
+			expErr:       "invalid multisig info",
+		},
+		// TODO: add more tests about duplicate staker btc pk, signatures
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.title, func(t *testing.T) {
+			t.Parallel()
+			tm := tmanager.NewTestManager(t)
+			cfg := tmanager.NewChainConfig(tm.TempDir, tmanager.CHAIN_ID_BABYLON)
+			cfg.NodeCount = 2
+			tm.Chains[tmanager.CHAIN_ID_BABYLON] = tmanager.NewChain(tm, cfg)
+			tm.Start()
+
+			tm.ChainsWaitUntilHeight(3)
+
+			bbns := tm.ChainNodes()
+			bbn1 := bbns[0]
+			bbn2 := bbns[1]
+			bbn1.DefaultWallet().VerifySentTx = true
+			bbn2.DefaultWallet().VerifySentTx = true
+			// override VerifySentTx if it expects error
+			if tc.expErr != "" {
+				bbn2.DefaultWallet().VerifySentTx = false
+			}
+
+			// create bbn1 as a fp
+			r := rand.New(rand.NewSource(time.Now().Unix()))
+			fpSK, _, err := datagen.GenRandomBTCKeyPair(r)
+			require.NoError(t, err)
+			fp, err := datagen.GenCustomFinalityProvider(r, fpSK, bbn1.DefaultWallet().Address)
+			require.NoError(t, err)
+			bbn1.CreateFinalityProvider(bbn1.DefaultWallet().KeyName, fp)
+			bbn1.WaitForNextBlock()
+
+			fpResp := bbn1.QueryFinalityProvider(fp.BtcPk.MarshalHex())
+			require.NotNil(t, fpResp)
+
+			// multisig delegation from bbn2 to fp (bbn1)
+			stkSKs, _, err := datagen.GenRandomBTCKeyPairs(r, int(tc.stakerCount))
+			require.NoError(t, err)
+
+			msg, stakingInfo := buildMultisigDelegationMsgWithExactSigs(
+				t, r, bbn2,
+				bbn2.DefaultWallet(),
+				stkSKs,
+				tc.stakerQuorum,
+				fpSK.PubKey(),
+				int64(2*10e8),
+				1000,
+				tc.sigsCount,
+			)
+
+			txHash := bbn2.CreateBTCDelegation(bbn2.DefaultWallet().KeyName, msg)
+			bbn2.WaitForNextBlock()
+
+			// if it expects error, don't query btc delegation and stop here
+			if tc.expErr != "" {
+				bbn2.RequireTxErrorContain(txHash, tc.expErr)
+				return
+			}
+
+			// query and verify delegation
+			del := bbn2.QueryBTCDelegation(stakingInfo.StakingTx.TxHash().String())
+			require.NotNil(t, del)
+			require.Equal(t, "PENDING", del.StatusDesc)
+			require.NotNil(t, del.MultisigInfo)
+			require.Equal(t, tc.stakerQuorum, del.MultisigInfo.StakerQuorum)
+			require.Len(t, del.MultisigInfo.StakerBtcPkList, int(tc.stakerCount-1))
+			require.Len(t, del.MultisigInfo.DelegatorSlashingSigs, int(tc.sigsCount-1))
+		})
+	}
+}
+
+// buildMultisigDelegationWithExactSigs construct multisig btc delegation msg
+// - exactSigs is true when constructing exact M signatures
+func buildMultisigDelegationMsgWithExactSigs(
+	t *testing.T,
+	r *rand.Rand,
+	node *tmanager.Node,
+	wallet *tmanager.WalletSender,
+	stakerSKs []*btcec.PrivateKey,
+	stakerQuorum uint32,
+	fpPK *btcec.PublicKey,
+	stakingValue int64,
+	stakingTime uint16,
+	sigsCount uint32,
+) (*bstypes.MsgCreateBTCDelegation, *datagen.TestStakingSlashingInfo) {
+	params := node.QueryBtcStakingParams()
+	net := &chaincfg.SimNetParams
+
+	covPKs, err := bbn.NewBTCPKsFromBIP340PKs(params.Params.CovenantPks)
+	require.NoError(t, err)
+
+	// generate staking + slashing info
+	stakingInfo := datagen.GenMultisigBTCStakingSlashingInfo(
+		r, t, net,
+		stakerSKs,
+		stakerQuorum,
+		[]*btcec.PublicKey{fpPK},
+		covPKs,
+		params.Params.CovenantQuorum,
+		stakingTime,
+		stakingValue,
+		params.Params.SlashingPkScript,
+		params.Params.SlashingRate,
+		uint16(params.Params.UnbondingTimeBlocks),
+	)
+
+	// generate unbonding info
+	unbondingValue := stakingValue - params.Params.UnbondingFeeSat
+	stkTxHash := stakingInfo.StakingTx.TxHash()
+
+	unbondingInfo := datagen.GenMultisigBTCUnbondingSlashingInfo(
+		r, t, net,
+		stakerSKs,
+		stakerQuorum,
+		[]*btcec.PublicKey{fpPK},
+		covPKs,
+		params.Params.CovenantQuorum,
+		&wire.OutPoint{Hash: stkTxHash, Index: 0},
+		uint16(params.Params.UnbondingTimeBlocks),
+		unbondingValue,
+		params.Params.SlashingPkScript,
+		params.Params.SlashingRate,
+		uint16(params.Params.UnbondingTimeBlocks),
+	)
+
+	// sign slashing tx with primary staker (first one)
+	slashingSpendInfo, err := stakingInfo.StakingInfo.SlashingPathSpendInfo()
+	require.NoError(t, err)
+
+	delegatorSig, err := stakingInfo.SlashingTx.Sign(
+		stakingInfo.StakingTx, 0,
+		slashingSpendInfo.GetPkScriptPath(),
+		stakerSKs[0],
+	)
+	require.NoError(t, err)
+
+	// generate extra staker signatures (for remaining stakers)
+	var extraSlashingSigs []*bstypes.SignatureInfo
+	stakerSKList := stakerSKs[1:sigsCount]
+	for _, sk := range stakerSKList {
+		sig, err := stakingInfo.SlashingTx.Sign(
+			stakingInfo.StakingTx, 0,
+			slashingSpendInfo.GetPkScriptPath(),
+			sk,
+		)
+		require.NoError(t, err)
+
+		extraSlashingSigs = append(extraSlashingSigs, &bstypes.SignatureInfo{
+			Pk:  bbn.NewBIP340PubKeyFromBTCPK(sk.PubKey()),
+			Sig: sig,
+		})
+	}
+
+	// sign unbonding slashing tx with primary staker
+	delUnbondingSig, err := unbondingInfo.GenDelSlashingTxSig(stakerSKs[0])
+	require.NoError(t, err)
+
+	// generate extra unbonding signatures
+	var extraUnbondingSigs []*bstypes.SignatureInfo
+	for _, sk := range stakerSKList {
+		sig, err := unbondingInfo.GenDelSlashingTxSig(sk)
+		require.NoError(t, err)
+
+		extraUnbondingSigs = append(extraUnbondingSigs, &bstypes.SignatureInfo{
+			Pk:  bbn.NewBIP340PubKeyFromBTCPK(sk.PubKey()),
+			Sig: sig,
+		})
+	}
+
+	// generate PoP for primary staker
+	pop, err := datagen.NewPoPBTC(wallet.Address, stakerSKs[0])
+	require.NoError(t, err)
+
+	// serialize transactions
+	serializedStakingTx, err := bbn.SerializeBTCTx(stakingInfo.StakingTx)
+	require.NoError(t, err)
+	serializedUnbondingTx, err := bbn.SerializeBTCTx(unbondingInfo.UnbondingTx)
+	require.NoError(t, err)
+
+	// build extra staker PK list (all stakers except the first one)
+	extraStakerPKs := make([]bbn.BIP340PubKey, len(stakerSKs)-1)
+	for i, sk := range stakerSKs[1:] {
+		extraStakerPKs[i] = *bbn.NewBIP340PubKeyFromBTCPK(sk.PubKey())
+	}
+
+	return &bstypes.MsgCreateBTCDelegation{
+		StakerAddr:                    wallet.Address.String(),
+		BtcPk:                         bbn.NewBIP340PubKeyFromBTCPK(stakerSKs[0].PubKey()),
+		FpBtcPkList:                   []bbn.BIP340PubKey{*bbn.NewBIP340PubKeyFromBTCPK(fpPK)},
+		Pop:                           pop,
+		StakingTime:                   uint32(stakingTime),
+		StakingValue:                  stakingValue,
+		StakingTx:                     serializedStakingTx,
+		SlashingTx:                    stakingInfo.SlashingTx,
+		DelegatorSlashingSig:          delegatorSig,
+		UnbondingTx:                   serializedUnbondingTx,
+		UnbondingTime:                 params.Params.UnbondingTimeBlocks,
+		UnbondingValue:                unbondingValue,
+		UnbondingSlashingTx:           unbondingInfo.SlashingTx,
+		DelegatorUnbondingSlashingSig: delUnbondingSig,
+		MultisigInfo: &bstypes.AdditionalStakerInfo{
+			StakerBtcPkList:                extraStakerPKs,
+			StakerQuorum:                   stakerQuorum,
+			DelegatorSlashingSigs:          extraSlashingSigs,
+			DelegatorUnbondingSlashingSigs: extraUnbondingSigs,
+		},
+	}, stakingInfo
+}

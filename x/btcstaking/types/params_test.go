@@ -230,3 +230,100 @@ func TestDefaultParamsAreValid(t *testing.T) {
 	params := types.DefaultParams()
 	require.NoError(t, params.Validate())
 }
+
+func TestParamsValidateMaxStakerQuorumAndNum(t *testing.T) {
+	testCases := []struct {
+		name          string
+		modifyParams  func(p *types.Params)
+		expectedError string
+	}{
+		{
+			name: "valid 2-of-3 multisig (default)",
+			modifyParams: func(p *types.Params) {
+				p.MaxStakerQuorum = 2
+				p.MaxStakerNum = 3
+			},
+			expectedError: "",
+		},
+		{
+			name: "valid 3-of-5 multisig",
+			modifyParams: func(p *types.Params) {
+				p.MaxStakerQuorum = 3
+				p.MaxStakerNum = 5
+			},
+			expectedError: "",
+		},
+		{
+			name: "valid 5-of-9 multisig",
+			modifyParams: func(p *types.Params) {
+				p.MaxStakerQuorum = 5
+				p.MaxStakerNum = 9
+			},
+			expectedError: "",
+		},
+		{
+			name: "disabled multisig with both zero",
+			modifyParams: func(p *types.Params) {
+				p.MaxStakerQuorum = 0
+				p.MaxStakerNum = 0
+			},
+			expectedError: "",
+		},
+		{
+			name: "invalid: quorum is 0 but num is non-zero",
+			modifyParams: func(p *types.Params) {
+				p.MaxStakerQuorum = 0
+				p.MaxStakerNum = 3
+			},
+			expectedError: "max staker quorum has to be positive when max staker num is non-zero",
+		},
+		{
+			name: "invalid: num is 0 but quorum is non-zero",
+			modifyParams: func(p *types.Params) {
+				p.MaxStakerQuorum = 2
+				p.MaxStakerNum = 0
+			},
+			expectedError: "max staker num has to be positive when max staker quorum is non-zero",
+		},
+		{
+			name: "invalid: quorum not more than 1/2",
+			modifyParams: func(p *types.Params) {
+				p.MaxStakerQuorum = 2
+				p.MaxStakerNum = 4
+			},
+			expectedError: "max staker quorum size has to be more than 1/2 of the max staker num",
+		},
+		{
+			name: "invalid: quorum equals num/2",
+			modifyParams: func(p *types.Params) {
+				p.MaxStakerQuorum = 3
+				p.MaxStakerNum = 6
+			},
+			expectedError: "max staker quorum size has to be more than 1/2 of the max staker num",
+		},
+		{
+			name: "invalid: quorum less than num/2",
+			modifyParams: func(p *types.Params) {
+				p.MaxStakerQuorum = 1
+				p.MaxStakerNum = 5
+			},
+			expectedError: "max staker quorum size has to be more than 1/2 of the max staker num",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			params := types.DefaultParams()
+			tc.modifyParams(&params)
+
+			err := params.Validate()
+
+			if tc.expectedError == "" {
+				require.NoError(t, err)
+			} else {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tc.expectedError)
+			}
+		})
+	}
+}

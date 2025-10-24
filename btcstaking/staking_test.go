@@ -303,6 +303,7 @@ func FuzzGeneratingMultisigSignatureValidation(f *testing.F) {
 			foundingOutput,
 			script,
 			pubKey2Sig,
+			uint32(stakerQuorum),
 		)
 
 		require.NoError(t, err)
@@ -331,6 +332,7 @@ func FuzzGeneratingMultisigSignatureValidation(f *testing.F) {
 				foundingOutput,
 				script,
 				pubKey2SigWrong,
+				uint32(stakerQuorum),
 			)
 			require.Error(t, err)
 			require.Contains(t, err.Error(), "signature")

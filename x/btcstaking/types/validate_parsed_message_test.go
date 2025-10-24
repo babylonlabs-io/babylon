@@ -229,6 +229,219 @@ func createMsgDelegationForParams(
 	return msgCreateBTCDel, delSK
 }
 
+type unbondingInfoWithMultisig struct {
+	unbondingSlashingTx      *types.BTCSlashingTx
+	unbondingSlashinSig      *bbn.BIP340Signature
+	serializedUnbondingTx    []byte
+	extraStakerUnbondingSigs []*types.SignatureInfo
+}
+
+// generateMultisigUnbondingInfo generates unbonding info for multisig
+func generateMultisigUnbondingInfo(
+	r *rand.Rand,
+	t *testing.T,
+	delSKs []*btcec.PrivateKey,
+	stakerQuorum uint32,
+	fpPk *btcec.PublicKey,
+	stkTxHash chainhash.Hash,
+	stkOutputIdx uint32,
+	unbondingTime uint16,
+	unbondingValue int64,
+	p *types.Params,
+) *unbondingInfoWithMultisig {
+	covPKs, err := bbn.NewBTCPKsFromBIP340PKs(p.CovenantPks)
+	require.NoError(t, err)
+
+	testUnbondingInfo := datagen.GenMultisigBTCUnbondingSlashingInfo(
+		r,
+		t,
+		&chaincfg.MainNetParams,
+		delSKs,
+		stakerQuorum,
+		[]*btcec.PublicKey{fpPk},
+		covPKs,
+		p.CovenantQuorum,
+		wire.NewOutPoint(&stkTxHash, stkOutputIdx),
+		unbondingTime,
+		unbondingValue,
+		p.SlashingPkScript,
+		p.SlashingRate,
+		unbondingTime,
+	)
+
+	// main staker signature
+	unbondingSlashingPathInfo, err := testUnbondingInfo.UnbondingInfo.SlashingPathSpendInfo()
+	require.NoError(t, err)
+	mainStakerSig, err := testUnbondingInfo.SlashingTx.Sign(
+		testUnbondingInfo.UnbondingTx,
+		0,
+		unbondingSlashingPathInfo.GetPkScriptPath(),
+		delSKs[0],
+	)
+	require.NoError(t, err)
+
+	// extra staker signatures
+	extraStakerSigs := make([]*types.SignatureInfo, len(delSKs)-1)
+	for i := 1; i < len(delSKs); i++ {
+		sig, err := testUnbondingInfo.SlashingTx.Sign(
+			testUnbondingInfo.UnbondingTx,
+			0,
+			unbondingSlashingPathInfo.GetPkScriptPath(),
+			delSKs[i],
+		)
+		require.NoError(t, err)
+		pk := bbn.NewBIP340PubKeyFromBTCPK(delSKs[i].PubKey())
+		extraStakerSigs[i-1] = types.NewSignatureInfo(pk, sig)
+	}
+
+	serializedUnbondingTx, err := bbn.SerializeBTCTx(testUnbondingInfo.UnbondingTx)
+	require.NoError(t, err)
+
+	return &unbondingInfoWithMultisig{
+		unbondingSlashingTx:      testUnbondingInfo.SlashingTx,
+		unbondingSlashinSig:      mainStakerSig,
+		serializedUnbondingTx:    serializedUnbondingTx,
+		extraStakerUnbondingSigs: extraStakerSigs,
+	}
+}
+
+// createMultisigMsgDelegationForParams creates a valid M-of-N multisig delegation message
+func createMultisigMsgDelegationForParams(
+	r *rand.Rand,
+	t *testing.T,
+	p *types.Params,
+	stakerQuorum uint32,
+	stakerNum uint32,
+) *types.MsgCreateBTCDelegation {
+	// generate N staker key pairs
+	delSKs, delPKs, err := datagen.GenRandomBTCKeyPairs(r, int(stakerNum))
+	require.NoError(t, err)
+
+	// first key is the main staker
+	mainStakerSK := delSKs[0]
+	mainStakerPK := bbn.NewBIP340PubKeyFromBTCPK(delPKs[0])
+
+	// rest are extra stakers
+	extraStakerPKs := make([]bbn.BIP340PubKey, stakerNum-1)
+	for i := 1; i < int(stakerNum); i++ {
+		extraStakerPKs[i-1] = *bbn.NewBIP340PubKeyFromBTCPK(delPKs[i])
+	}
+
+	// staker address
+	staker := sdk.MustAccAddressFromBech32(datagen.GenRandomAccount().Address)
+	pop, err := datagen.NewPoPBTC(staker, mainStakerSK)
+	require.NoError(t, err)
+
+	// finality provider
+	_, fpPk, err := datagen.GenRandomBTCKeyPair(r)
+	require.NoError(t, err)
+	fpPkBBn := bbn.NewBIP340PubKeyFromBTCPK(fpPk)
+
+	// covenants
+	covPKs, err := bbn.NewBTCPKsFromBIP340PKs(p.CovenantPks)
+	require.NoError(t, err)
+
+	stakingTimeBlocks := uint16(randRange(r, int(p.MinStakingTimeBlocks), int(p.MaxStakingTimeBlocks)))
+	stakingValue := int64(randRange(r, int(p.MinStakingValueSat), int(p.MaxStakingValueSat)))
+	unbondingTime := p.UnbondingTimeBlocks
+
+	// create multisig staking info
+	testStakingInfo := datagen.GenMultisigBTCStakingSlashingInfo(
+		r,
+		t,
+		&chaincfg.MainNetParams,
+		delSKs,
+		stakerQuorum,
+		[]*btcec.PublicKey{fpPk},
+		covPKs,
+		p.CovenantQuorum,
+		stakingTimeBlocks,
+		stakingValue,
+		p.SlashingPkScript,
+		p.SlashingRate,
+		uint16(unbondingTime),
+	)
+
+	slashingSpendInfo, err := testStakingInfo.StakingInfo.SlashingPathSpendInfo()
+	require.NoError(t, err)
+
+	// generate main staker signature
+	mainStakerSig, err := testStakingInfo.SlashingTx.Sign(
+		testStakingInfo.StakingTx,
+		0,
+		slashingSpendInfo.GetPkScriptPath(),
+		mainStakerSK,
+	)
+	require.NoError(t, err)
+
+	// generate extra staker signatures
+	extraStakerSlashingSigs := make([]*types.SignatureInfo, stakerNum-1)
+	for i := 1; i < int(stakerNum); i++ {
+		sig, err := testStakingInfo.SlashingTx.Sign(
+			testStakingInfo.StakingTx,
+			0,
+			slashingSpendInfo.GetPkScriptPath(),
+			delSKs[i],
+		)
+		require.NoError(t, err)
+		extraStakerSlashingSigs[i-1] = types.NewSignatureInfo(&extraStakerPKs[i-1], sig)
+	}
+
+	// transaction inclusion proof
+	prevBlock, _ := datagen.GenRandomBtcdBlock(r, 0, nil)
+	btcHeaderWithProof := datagen.CreateBlockWithTransaction(r, &prevBlock.Header, testStakingInfo.StakingTx)
+	btcHeader := btcHeaderWithProof.HeaderBytes
+	serializedStakingTx, err := bbn.SerializeBTCTx(testStakingInfo.StakingTx)
+	require.NoError(t, err)
+
+	txInclusionProof := types.NewInclusionProof(
+		&btcckpttypes.TransactionKey{Index: 1, Hash: btcHeader.Hash()},
+		btcHeaderWithProof.SpvProof.MerkleNodes,
+	)
+
+	// unbonding info
+	stkTxHash := testStakingInfo.StakingTx.TxHash()
+	stkOutputIdx := uint32(0)
+	unbondingValue := stakingValue - p.UnbondingFeeSat
+
+	unbondingInfo := generateMultisigUnbondingInfo(
+		r,
+		t,
+		delSKs,
+		stakerQuorum,
+		fpPk,
+		stkTxHash,
+		stkOutputIdx,
+		uint16(unbondingTime),
+		unbondingValue,
+		p,
+	)
+
+	return &types.MsgCreateBTCDelegation{
+		StakerAddr:                    staker.String(),
+		BtcPk:                         mainStakerPK,
+		FpBtcPkList:                   []bbn.BIP340PubKey{*fpPkBBn},
+		Pop:                           pop,
+		StakingTime:                   uint32(stakingTimeBlocks),
+		StakingValue:                  stakingValue,
+		StakingTx:                     serializedStakingTx,
+		StakingTxInclusionProof:       txInclusionProof,
+		SlashingTx:                    testStakingInfo.SlashingTx,
+		DelegatorSlashingSig:          mainStakerSig,
+		UnbondingTx:                   unbondingInfo.serializedUnbondingTx,
+		UnbondingTime:                 unbondingTime,
+		UnbondingValue:                unbondingValue,
+		UnbondingSlashingTx:           unbondingInfo.unbondingSlashingTx,
+		DelegatorUnbondingSlashingSig: unbondingInfo.unbondingSlashinSig,
+		MultisigInfo: &types.AdditionalStakerInfo{
+			StakerBtcPkList:                extraStakerPKs,
+			StakerQuorum:                   stakerQuorum,
+			DelegatorSlashingSigs:          extraStakerSlashingSigs,
+			DelegatorUnbondingSlashingSigs: unbondingInfo.extraStakerUnbondingSigs,
+		},
+	}
+}
+
 func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 	tests := []struct {
 		name          string
@@ -897,6 +1110,231 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 			},
 			errParsing:    nil,
 			errValidation: types.ErrInvalidUnbondingTx.Wrapf("unbonding tx fee must be larger that 0"),
+		},
+		{
+			name: "multisig: duplicate staker pk in ExtraStakerInfo.StakerBtcPkList",
+			fn: func(r *rand.Rand, t *testing.T) (*types.MsgCreateBTCDelegation, *types.Params, *btcckpttypes.Params) {
+				params := testStakingParams(r, t)
+				// set max multisig params to allow 3-of-5
+				params.MaxStakerQuorum = 3
+				params.MaxStakerNum = 5
+				checkpointParams := testCheckpointParams()
+
+				// create 3-of-3 multisig delegation
+				msg := createMultisigMsgDelegationForParams(r, t, params, 2, 3)
+
+				// duplicate the first extra staker pk
+				if msg.MultisigInfo != nil {
+					msg.MultisigInfo.StakerBtcPkList = append(
+						msg.MultisigInfo.StakerBtcPkList,
+						msg.MultisigInfo.StakerBtcPkList[0],
+					)
+				}
+
+				return msg, params, checkpointParams
+			},
+			errParsing:    types.ErrDuplicatedStakerKey,
+			errValidation: nil,
+		},
+		{
+			name: "multisig: duplicate between BtcPk and ExtraStakerInfo.StakerBtcPkList",
+			fn: func(r *rand.Rand, t *testing.T) (*types.MsgCreateBTCDelegation, *types.Params, *btcckpttypes.Params) {
+				params := testStakingParams(r, t)
+				params.MaxStakerQuorum = 3
+				params.MaxStakerNum = 5
+				checkpointParams := testCheckpointParams()
+
+				msg := createMultisigMsgDelegationForParams(r, t, params, 2, 3)
+
+				// add the main staker BtcPk to the MultisigInfo list (duplicate)
+				if msg.MultisigInfo != nil {
+					msg.MultisigInfo.StakerBtcPkList = append(
+						msg.MultisigInfo.StakerBtcPkList,
+						*msg.BtcPk,
+					)
+				}
+
+				return msg, params, checkpointParams
+			},
+			errParsing:    nil,
+			errValidation: types.ErrDuplicatedStakerKey,
+		},
+		{
+			name: "multisig: N valid signatures - success",
+			fn: func(r *rand.Rand, t *testing.T) (*types.MsgCreateBTCDelegation, *types.Params, *btcckpttypes.Params) {
+				params := testStakingParams(r, t)
+				params.MaxStakerQuorum = 3
+				params.MaxStakerNum = 5
+				checkpointParams := testCheckpointParams()
+
+				// create 2-of-3 multisig with all 3 valid signatures
+				msg := createMultisigMsgDelegationForParams(r, t, params, 2, 3)
+
+				return msg, params, checkpointParams
+			},
+			errParsing:    nil,
+			errValidation: nil,
+		},
+		{
+			name: "multisig: M valid signatures - success",
+			fn: func(r *rand.Rand, t *testing.T) (*types.MsgCreateBTCDelegation, *types.Params, *btcckpttypes.Params) {
+				params := testStakingParams(r, t)
+				params.MaxStakerQuorum = 3
+				params.MaxStakerNum = 5
+				checkpointParams := testCheckpointParams()
+
+				// create 2-of-3 multisig with all 3 valid signatures
+				msg := createMultisigMsgDelegationForParams(r, t, params, 2, 3)
+
+				if msg.MultisigInfo != nil {
+					// keep only 2 signatures
+					msg.MultisigInfo.DelegatorSlashingSigs = msg.MultisigInfo.DelegatorSlashingSigs[:1]
+					msg.MultisigInfo.DelegatorUnbondingSlashingSigs = msg.MultisigInfo.DelegatorUnbondingSlashingSigs[:1]
+				}
+
+				return msg, params, checkpointParams
+			},
+			errParsing:    nil,
+			errValidation: nil,
+		},
+		{
+			name: "multisig: M valid signatures + (N-M) invalid signatures - success",
+			fn: func(r *rand.Rand, t *testing.T) (*types.MsgCreateBTCDelegation, *types.Params, *btcckpttypes.Params) {
+				params := testStakingParams(r, t)
+				params.MaxStakerQuorum = 3
+				params.MaxStakerNum = 5
+				checkpointParams := testCheckpointParams()
+
+				msg := createMultisigMsgDelegationForParams(r, t, params, 2, 3)
+
+				// replace last signature of msg.MultisigInfo with invalid ones (keep first valid)
+				if msg.MultisigInfo != nil {
+					validSig := msg.MultisigInfo.DelegatorSlashingSigs[1].Sig.MustMarshal()
+					invalidSig := make([]byte, len(validSig))
+					copy(invalidSig, validSig)
+					invalidSig[len(validSig)-1] ^= 0x01
+
+					dummyPk := msg.MultisigInfo.StakerBtcPkList[1]
+					dummySig, err := bbn.NewBIP340Signature(invalidSig)
+					require.NoError(t, err)
+					msg.MultisigInfo.DelegatorSlashingSigs[1] = types.NewSignatureInfo(&dummyPk, dummySig)
+					msg.MultisigInfo.DelegatorUnbondingSlashingSigs[1] = types.NewSignatureInfo(&dummyPk, dummySig)
+				}
+
+				return msg, params, checkpointParams
+			},
+			errParsing:    nil,
+			errValidation: nil,
+		},
+		{
+			name: "multisig: M-1 valid signatures - fail",
+			fn: func(r *rand.Rand, t *testing.T) (*types.MsgCreateBTCDelegation, *types.Params, *btcckpttypes.Params) {
+				params := testStakingParams(r, t)
+				params.MaxStakerQuorum = 3
+				params.MaxStakerNum = 5
+				checkpointParams := testCheckpointParams()
+
+				// create 3-of-5 multisig but only provide 2 valid signatures (M-1)
+				msg := createMultisigMsgDelegationForParams(r, t, params, 3, 5)
+
+				// make all but M-1 signatures invalid
+				if msg.MultisigInfo != nil && len(msg.MultisigInfo.DelegatorSlashingSigs) >= 2 {
+					validSig := msg.MultisigInfo.DelegatorSlashingSigs[1].Sig.MustMarshal()
+					invalidSig := make([]byte, len(validSig))
+					copy(invalidSig, validSig)
+					invalidSig[len(validSig)-1] ^= 0x01
+
+					// keep first signature valid (main staker)
+					// keep second signature valid (first extra staker)
+					// make rest invalid (need 3, only have 2 valid)
+					for i := 1; i < len(msg.MultisigInfo.DelegatorSlashingSigs); i++ {
+						dummyPk := msg.MultisigInfo.StakerBtcPkList[i]
+						dummySig, _ := bbn.NewBIP340Signature(invalidSig)
+						msg.MultisigInfo.DelegatorSlashingSigs[i] = types.NewSignatureInfo(&dummyPk, dummySig)
+						msg.MultisigInfo.DelegatorUnbondingSlashingSigs[i] = types.NewSignatureInfo(&dummyPk, dummySig)
+					}
+				}
+
+				return msg, params, checkpointParams
+			},
+			errParsing:    nil,
+			errValidation: types.ErrInvalidSlashingTx,
+		},
+		{
+			name: "multisig: quorum exceeds number of stakers - fail",
+			fn: func(r *rand.Rand, t *testing.T) (*types.MsgCreateBTCDelegation, *types.Params, *btcckpttypes.Params) {
+				params := testStakingParams(r, t)
+				params.MaxStakerQuorum = 3
+				params.MaxStakerNum = 5
+				checkpointParams := testCheckpointParams()
+
+				msg := createMultisigMsgDelegationForParams(r, t, params, 2, 3)
+
+				if msg.MultisigInfo != nil {
+					msg.MultisigInfo.StakerQuorum = 4 // Quorum > N (3)
+				}
+
+				return msg, params, checkpointParams
+			},
+			errParsing:    nil,
+			errValidation: types.ErrInvalidMultisigInfo,
+		},
+		{
+			name: "multisig: zero quorum - fail",
+			fn: func(r *rand.Rand, t *testing.T) (*types.MsgCreateBTCDelegation, *types.Params, *btcckpttypes.Params) {
+				params := testStakingParams(r, t)
+				params.MaxStakerQuorum = 3
+				params.MaxStakerNum = 5
+				checkpointParams := testCheckpointParams()
+
+				msg := createMultisigMsgDelegationForParams(r, t, params, 2, 3)
+
+				if msg.MultisigInfo != nil {
+					msg.MultisigInfo.StakerQuorum = 0
+				}
+
+				return msg, params, checkpointParams
+			},
+			errParsing:    nil,
+			errValidation: types.ErrInvalidMultisigInfo,
+		},
+		{
+			name: "multisig: fewer signatures than quorum - fail",
+			fn: func(r *rand.Rand, t *testing.T) (*types.MsgCreateBTCDelegation, *types.Params, *btcckpttypes.Params) {
+				params := testStakingParams(r, t)
+				params.MaxStakerQuorum = 3
+				params.MaxStakerNum = 5
+				checkpointParams := testCheckpointParams()
+
+				msg := createMultisigMsgDelegationForParams(r, t, params, 3, 5)
+
+				// remove signatures to have fewer than quorum
+				if msg.MultisigInfo != nil && len(msg.MultisigInfo.DelegatorSlashingSigs) > 0 {
+					// keep only 2 signatures when quorum is 3
+					msg.MultisigInfo.DelegatorSlashingSigs = msg.MultisigInfo.DelegatorSlashingSigs[:1]
+					msg.MultisigInfo.DelegatorUnbondingSlashingSigs = msg.MultisigInfo.DelegatorUnbondingSlashingSigs[:1]
+				}
+
+				return msg, params, checkpointParams
+			},
+			errParsing:    nil,
+			errValidation: types.ErrInvalidMultisigInfo,
+		},
+		{
+			name: "multisig: exceeds max params - fail",
+			fn: func(r *rand.Rand, t *testing.T) (*types.MsgCreateBTCDelegation, *types.Params, *btcckpttypes.Params) {
+				params := testStakingParams(r, t)
+				params.MaxStakerQuorum = 2
+				params.MaxStakerNum = 3
+				checkpointParams := testCheckpointParams()
+
+				// try to create 3-of-5 when max is 2-of-3
+				msg := createMultisigMsgDelegationForParams(r, t, params, 3, 5)
+
+				return msg, params, checkpointParams
+			},
+			errParsing:    nil,
+			errValidation: types.ErrInvalidMultisigInfo,
 		},
 	}
 	for _, tt := range tests {
