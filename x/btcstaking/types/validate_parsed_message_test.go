@@ -1112,7 +1112,7 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 			errValidation: types.ErrInvalidUnbondingTx.Wrapf("unbonding tx fee must be larger that 0"),
 		},
 		{
-			name: "multisig: duplicate staker pk in ExtraStakerInfo.StakerBtcPkList",
+			name: "multisig: duplicate staker pk in MultisigInfo.StakerBtcPkList",
 			fn: func(r *rand.Rand, t *testing.T) (*types.MsgCreateBTCDelegation, *types.Params, *btcckpttypes.Params) {
 				params := testStakingParams(r, t)
 				// set max multisig params to allow 3-of-5
@@ -1137,7 +1137,7 @@ func TestValidateParsedMessageAgainstTheParams(t *testing.T) {
 			errValidation: nil,
 		},
 		{
-			name: "multisig: duplicate between BtcPk and ExtraStakerInfo.StakerBtcPkList",
+			name: "multisig: duplicate between BtcPk and MultisigInfo.StakerBtcPkList",
 			fn: func(r *rand.Rand, t *testing.T) (*types.MsgCreateBTCDelegation, *types.Params, *btcckpttypes.Params) {
 				params := testStakingParams(r, t)
 				params.MaxStakerQuorum = 3
