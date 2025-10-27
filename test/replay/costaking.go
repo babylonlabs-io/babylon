@@ -84,9 +84,9 @@ func EventCostakerRewardsFromBlocks(t *testing.T, blocks []*abcitypes.ResponseFi
 	return totalRewardsAdded
 }
 
-type eventCoinsExtractor func(t *testing.T, attr abcitypes.EventAttribute) (sdk.Coins, error)
+type EventCoinsExtractor func(t *testing.T, attr abcitypes.EventAttribute) (sdk.Coins, error)
 
-func findEventCoins(t *testing.T, evts []abcitypes.Event, eventType, attrKey string, extractor eventCoinsExtractor) sdk.Coins {
+func FindEventCoins(t *testing.T, evts []abcitypes.Event, eventType, attrKey string, extractor EventCoinsExtractor) sdk.Coins {
 	totalCoins := sdk.NewCoins()
 	for _, evt := range evts {
 		if evt.Type != eventType {
@@ -107,19 +107,19 @@ func findEventCoins(t *testing.T, evts []abcitypes.Event, eventType, attrKey str
 	return totalCoins
 }
 
-func extractCoinsFromJSON(t *testing.T, attr abcitypes.EventAttribute) (sdk.Coins, error) {
+func ExtractCoinsFromJSON(t *testing.T, attr abcitypes.EventAttribute) (sdk.Coins, error) {
 	var coins sdk.Coins
 	err := json.Unmarshal([]byte(attr.Value), &coins)
 	return coins, err
 }
 
-func extractCoinsFromInt(t *testing.T, attr abcitypes.EventAttribute) (sdk.Coins, error) {
+func ExtractCoinsFromInt(t *testing.T, attr abcitypes.EventAttribute) (sdk.Coins, error) {
 	amt, ok := sdkmath.NewIntFromString(attr.Value)
 	require.True(t, ok, "failed to parse int from %s", attr.Value)
 	return sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, amt)), nil
 }
 
-func extractCoinsFromDecCoins(t *testing.T, attr abcitypes.EventAttribute) (sdk.Coins, error) {
+func ExtractCoinsFromDecCoins(t *testing.T, attr abcitypes.EventAttribute) (sdk.Coins, error) {
 	decCoins, err := sdk.ParseDecCoins(attr.Value)
 	if err != nil {
 		return nil, err
@@ -130,21 +130,21 @@ func extractCoinsFromDecCoins(t *testing.T, attr abcitypes.EventAttribute) (sdk.
 
 func FindEventCostakerRewards(t *testing.T, evts []abcitypes.Event) sdk.Coins {
 	evtTypeCostAddRwd := sdk.MsgTypeURL(&costktypes.EventCostakersAddRewards{})[1:]
-	return findEventCoins(t, evts, evtTypeCostAddRwd, evtAttrAddRewards, extractCoinsFromJSON)
+	return FindEventCoins(t, evts, evtTypeCostAddRwd, evtAttrAddRewards, ExtractCoinsFromJSON)
 }
 
 func FindEventMint(t *testing.T, evts []abcitypes.Event) sdk.Coins {
-	return findEventCoins(t, evts, minttypes.EventTypeMint, sdk.AttributeKeyAmount, extractCoinsFromInt)
+	return FindEventCoins(t, evts, minttypes.EventTypeMint, sdk.AttributeKeyAmount, ExtractCoinsFromInt)
 }
 
 func FindEventBtcStakers(t *testing.T, evts []abcitypes.Event) sdk.Coins {
-	return findEventCoins(t, evts, ictvtypes.EventTypeBTCStakingReward, sdk.AttributeKeyAmount, extractCoinsFromDecCoins)
+	return FindEventCoins(t, evts, ictvtypes.EventTypeBTCStakingReward, sdk.AttributeKeyAmount, ExtractCoinsFromDecCoins)
 }
 
 func FindEventTypeFPDirectRewards(t *testing.T, evts []abcitypes.Event) sdk.Coins {
-	return findEventCoins(t, evts, ictvtypes.EventTypeFPDirectRewards, sdk.AttributeKeyAmount, extractCoinsFromDecCoins)
+	return FindEventCoins(t, evts, ictvtypes.EventTypeFPDirectRewards, sdk.AttributeKeyAmount, ExtractCoinsFromDecCoins)
 }
 
 func FindEventTypeValidatorDirectRewards(t *testing.T, evts []abcitypes.Event) sdk.Coins {
-	return findEventCoins(t, evts, costktypes.EventTypeValidatorDirectRewards, sdk.AttributeKeyAmount, extractCoinsFromDecCoins)
+	return FindEventCoins(t, evts, costktypes.EventTypeValidatorDirectRewards, sdk.AttributeKeyAmount, ExtractCoinsFromDecCoins)
 }
