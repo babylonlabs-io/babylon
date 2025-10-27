@@ -1627,6 +1627,8 @@ func TestHandleLivenessPanic(t *testing.T) {
 		UnbondingFeeSat:           1000,
 		AllowListExpirationHeight: 0,
 		BtcActivationHeight:       1,
+		MaxStakerQuorum:           2,
+		MaxStakerNum:              3,
 	})
 	require.NoError(t, err)
 

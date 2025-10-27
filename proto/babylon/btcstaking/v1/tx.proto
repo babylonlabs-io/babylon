@@ -185,6 +185,9 @@ message MsgCreateBTCDelegation {
   bytes delegator_unbonding_slashing_sig = 15
       [ (gogoproto.customtype) =
             "github.com/babylonlabs-io/babylon/v4/types.BIP340Signature" ];
+  // multisig_info is used when the given btc delegation is M-of-N multisig.
+  // If nil, it is not a M-of-N multisig.
+  AdditionalStakerInfo multisig_info = 16;
 }
 // MsgCreateBTCDelegationResponse is the response for MsgCreateBTCDelegation
 message MsgCreateBTCDelegationResponse {}
@@ -253,6 +256,9 @@ message MsgBtcStakeExpand {
   // to at least pay the fees for it. It can also be used to increase the total amount
   // of satoshi staked. This will be parsed into a *wire.MsgTx
   bytes funding_tx = 16;
+  // multisig_info is used when the given btc delegation is M-of-N multisig.
+  // If nil, it is not a M-of-N multisig.
+  AdditionalStakerInfo multisig_info = 17;
 }
 
 // MsgBtcStakeExpandResponse is the response for MsgBtcStakeExpand
