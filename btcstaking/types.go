@@ -83,7 +83,6 @@ func DeriveTaprootAddress(
 
 func DeriveTaprootPkScript(
 	tapScriptTree *txscript.IndexedTapScriptTree,
-	internalPubKey *btcec.PublicKey,
 	net *chaincfg.Params,
 ) ([]byte, error) {
 	taprootAddress, err := DeriveTaprootAddress(
@@ -172,7 +171,6 @@ func (t *taprootScriptHolder) scriptSpendInfoByName(
 func (t *taprootScriptHolder) taprootPkScript(net *chaincfg.Params) ([]byte, error) {
 	return DeriveTaprootPkScript(
 		t.scriptTree,
-		t.internalPubKey,
 		net,
 	)
 }

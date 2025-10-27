@@ -45,6 +45,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#1776](https://github.com/babylonlabs-io/babylon/pull/1776) Track baby staked to active validators only
 - [#1813](https://github.com/babylonlabs-io/babylon/pull/1813) Panic if there is an invalid amount of sats in the
 finality provider distribution info
+- [#1831](https://github.com/babylonlabs-io/babylon/pull/1831) Removed unused parameter in `DeriveTaprootPkScript`
+- [#1832](https://github.com/babylonlabs-io/babylon/pull/1832) Add check for multiple txOut with same pk and value
+in `GetOutputIdxInBTCTx`
 - [#1822](https://github.com/babylonlabs-io/babylon/pull/1822) Support multisig for btc staker in btcstaking library
 - [#1824](https://github.com/babylonlabs-io/babylon/pull/1824) Support multisig for btc staker in babylon genesis
 
