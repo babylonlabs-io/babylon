@@ -48,6 +48,7 @@ finality provider distribution info
 - [#1831](https://github.com/babylonlabs-io/babylon/pull/1831) Removed unused parameter in `DeriveTaprootPkScript`
 - [#1832](https://github.com/babylonlabs-io/babylon/pull/1832) Add check for multiple txOut with same pk and value
 in `GetOutputIdxInBTCTx`
+- [#1839](https://github.com/babylonlabs-io/babylon/pull/1839) update helper functions to public to avoid code duplication
 
 ### Bug fixes
 
