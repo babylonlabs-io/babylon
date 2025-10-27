@@ -1,8 +1,6 @@
 package e2e2
 
 import (
-	bbn "github.com/babylonlabs-io/babylon/v4/types"
-	"github.com/btcsuite/btcd/wire"
 	"math/rand"
 	"testing"
 	"time"
@@ -11,9 +9,11 @@ import (
 
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/wire"
 
 	"github.com/babylonlabs-io/babylon/v4/test/e2ev2/tmanager"
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 )
 
