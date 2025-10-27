@@ -37,6 +37,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+### State breaking
+
+- [#1832](https://github.com/babylonlabs-io/babylon/pull/1832) Add check for multiple txOut with same pk and
+value in `GetOutputIdxInBTCTx`
+
 ## v4.0.0-rc.1
 
 ### Improvements
