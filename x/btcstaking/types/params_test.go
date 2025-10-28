@@ -262,12 +262,12 @@ func TestParamsValidateMaxStakerQuorumAndNum(t *testing.T) {
 			expectedError: "",
 		},
 		{
-			name: "disabled multisig with both zero",
+			name: "invalid: max staker quorum and num both zero",
 			modifyParams: func(p *types.Params) {
 				p.MaxStakerQuorum = 0
 				p.MaxStakerNum = 0
 			},
-			expectedError: "",
+			expectedError: "max staker quorum has to be positive when max staker num is non-zero",
 		},
 		{
 			name: "invalid: quorum is 0 but num is non-zero",

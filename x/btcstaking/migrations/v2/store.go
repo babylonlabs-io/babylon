@@ -10,19 +10,22 @@ import (
 
 // Keeper exposes minimal methods used by the migration.
 type Keeper interface {
-	GetParamsWithVersion(ctx context.Context) types.StoredParams
+	GetAllStoredParams(ctx context.Context) []*types.StoredParams
 	OverwriteParamsAtVersion(ctx context.Context, version uint32, params types.Params) error
 }
 
 // MigrateStore performs in-place store migrations from v1 to v2.
 func MigrateStore(ctx sdk.Context, k Keeper) error {
-	dp := types.DefaultParams()
+	allParams := k.GetAllStoredParams(ctx)
 
-	storedParams := k.GetParamsWithVersion(ctx)
-	currParams := storedParams.Params
+	for _, params := range allParams {
+		params.Params.MaxStakerNum = 1
+		params.Params.MaxStakerQuorum = 1
 
-	currParams.MaxStakerQuorum = dp.MaxStakerQuorum
-	currParams.MaxStakerNum = dp.MaxStakerNum
+		if err := k.OverwriteParamsAtVersion(ctx, params.Version, params.Params); err != nil {
+			return err
+		}
+	}
 
-	return k.OverwriteParamsAtVersion(ctx, storedParams.Version, currParams)
+	return nil
 }

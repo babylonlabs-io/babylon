@@ -56,8 +56,8 @@ func (s *UpgradeTestSuite) SetupTest() {
 	// reset multisig params to simulate pre-upgrade state
 	params := s.app.BTCStakingKeeper.GetParams(s.ctx)
 	storedParams := s.app.BTCStakingKeeper.GetParamsWithVersion(s.ctx)
-	params.MaxStakerQuorum = 0
-	params.MaxStakerNum = 0
+	params.MaxStakerQuorum = 1 // cannot reset to zero since it fails at Validate()
+	params.MaxStakerNum = 1    // cannot reset to zero since it fails at Validate()
 	err = s.app.BTCStakingKeeper.OverwriteParamsAtVersion(s.ctx, storedParams.Version, params)
 	s.NoError(err)
 }
@@ -80,15 +80,15 @@ func (s *UpgradeTestSuite) TestUpgrade() {
 				s.NoError(err)
 				s.Equal(uint64(2), vm["btcstaking"], "btcstaking should be version 2 after upgrade")
 
-				params := s.app.BTCStakingKeeper.GetParams(s.ctx)
-				s.Equal(uint32(2), params.MaxStakerQuorum, "MaxStakerQuorum should be 2")
-				s.Equal(uint32(3), params.MaxStakerNum, "MaxStakerNum should be 3")
+				allParams := s.app.BTCStakingKeeper.GetAllParams(s.ctx)
 
-				err = params.Validate()
-				s.NoError(err, "migrated params should be valid")
+				for _, params := range allParams {
+					s.Equal(uint32(1), params.MaxStakerQuorum, "MaxStakerQuorum should be 1")
+					s.Equal(uint32(1), params.MaxStakerNum, "MaxStakerNum should be 1")
 
-				s.Equal(uint32(3), params.CovenantQuorum, "CovenantQuorum should remain unchanged")
-				s.Equal(int(params.MinStakingValueSat), 10000, "MinStakingValueSat should remain set")
+					err = params.Validate()
+					s.NoError(err, "migrated params should be valid")
+				}
 			},
 		},
 		{

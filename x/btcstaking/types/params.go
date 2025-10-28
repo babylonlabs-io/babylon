@@ -85,8 +85,8 @@ func DefaultParams() Params {
 		AllowListExpirationHeight: 0,
 		BtcActivationHeight:       0,
 		// The default multisig scheme is 2-of-3 multisig.
-		MaxStakerQuorum: 2,
-		MaxStakerNum:    3,
+		MaxStakerQuorum: 1,
+		MaxStakerNum:    1,
 	}
 }
 
@@ -202,11 +202,6 @@ func validateNoDustSlashingOutput(p *Params) error {
 }
 
 func validateMaxStakerQuorumAndNum(maxStakerQuorum, maxStakerNum uint32) error {
-	// allow both to be 0 to disable multisig support
-	if maxStakerQuorum == 0 && maxStakerNum == 0 {
-		return nil
-	}
-
 	// if either is non-zero, both must be positive and satisfy quorum rules
 	if maxStakerQuorum == 0 {
 		return fmt.Errorf("max staker quorum has to be positive when max staker num is non-zero")
