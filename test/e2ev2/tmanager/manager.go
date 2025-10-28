@@ -142,6 +142,18 @@ func (tm *TestManager) ChainsWaitUntilNextBlock() {
 	}
 }
 
+func (tm *TestManager) ChainNodes() []*Node {
+	var nodes []*Node
+	for _, chain := range tm.Chains {
+		nodes = append(nodes, chain.Nodes...)
+	}
+	return nodes
+}
+
+func (tm *TestManager) ChainValidator() *ValidatorNode {
+	return tm.Chains[CHAIN_ID_BABYLON].Validators[0]
+}
+
 // GenerateNetworkID creates a unique network identifier for the test
 func GenerateNetworkID(t *testing.T) string {
 	// Use test name + timestamp + random to ensure uniqueness

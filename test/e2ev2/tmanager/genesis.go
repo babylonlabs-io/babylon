@@ -261,6 +261,9 @@ func UpdateGenesisBtcStaking(p *StartingBtcStakingParams) func(*btcstktypes.Gene
 			gen.Params[0].CovenantPks = p.CovenantCommittee
 			gen.Params[0].CovenantQuorum = p.CovenantQuorum
 		}
+
+		gen.Params[0].MaxStakerQuorum = 2
+		gen.Params[0].MaxStakerNum = 3
 	}
 }
 

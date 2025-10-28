@@ -119,6 +119,14 @@ func (ws *WalletSender) IncSeq() {
 	ws.SequenceNumber++
 }
 
+// DecSeq decrements the sequence number
+func (ws *WalletSender) DecSeq() {
+	if ws.SequenceNumber == 0 {
+		ws.T().Fatalf("sequence number is 0")
+	}
+	ws.SequenceNumber--
+}
+
 // Addr returns the account address
 func (ws *WalletSender) Addr() string {
 	return ws.Address.String()
@@ -211,7 +219,7 @@ func (ws *WalletSender) SubmitMsgs(msgs ...sdk.Msg) (txHash string, tx *sdktx.Tx
 	signedTx := ws.SignMsg(msgs...)
 
 	txHash, err := ws.Node.SubmitTx(signedTx)
-	require.NoError(ws.T(), err, "Failed to submit IBC transfer transaction")
+	require.NoError(ws.T(), err, "Failed to submit transaction")
 
 	ws.AddTxSent(txHash)
 	if ws.VerifySentTx {

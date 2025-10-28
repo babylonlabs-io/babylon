@@ -679,6 +679,13 @@ func (n *Node) RequireTxSuccess(txHash string) {
 	require.Equal(n.T(), uint32(0), txResp.TxResponse.Code, "Transaction %s failed with code %d: %s", txHash, txResp.TxResponse.Code, txResp.TxResponse.RawLog)
 }
 
+// RequireTxErrorContain queries a transaction by hash and requires it to have code 0 (success)
+func (n *Node) RequireTxErrorContain(txHash string, err string) {
+	txResp := n.QueryTxByHash(txHash)
+	require.NotEqual(n.T(), uint32(0), txResp.TxResponse.Code, "Transaction %s response code shouldn't be 0", txHash)
+	require.Contains(n.T(), txResp.TxResponse.RawLog, err, "Transaction %s doesn't contain expected error %s", txHash, err)
+}
+
 // UpdateWalletsAccSeqNumber updates all wallets in a node by querying the chain
 func (n *Node) UpdateWalletsAccSeqNumber() {
 	addrs := make([]string, 0)
@@ -819,6 +826,15 @@ func (n *Node) InsertNewEmptyBtcHeader(r *rand.Rand) *blc.BTCHeaderInfo {
 	return child
 }
 
+// InsertHeader inserts a BTC header to the chain
+func (n *Node) InsertHeader(h *bbn.BTCHeaderBytes) {
+	tip, err := n.QueryTip()
+	require.NoError(n.T(), err)
+	n.T().Logf("Retrieved current tip of btc headerchain. Height: %d", tip.Height)
+	n.SendHeaderHex(h.MarshalHex())
+	n.WaitUntilBtcHeight(tip.Height + 1)
+}
+
 // SendHeaderHex sends a BTC header in hex format to the node
 func (n *Node) SendHeaderHex(headerHex string) {
 	wallet := n.Wallet("node-key")
@@ -833,4 +849,29 @@ func (n *Node) SendHeaderHex(headerHex string) {
 
 	_, tx := wallet.SubmitMsgs(msg)
 	require.NotNil(n.T(), tx, "RegisterConsumerChain transaction should not be nil")
+}
+
+// SubmitRefundableTxWithAssertion submits a refundable transaction,
+// and asserts that the tx fee is refunded
+func (n *Node) SubmitRefundableTxWithAssertion(
+	f func(),
+	shouldBeRefunded bool,
+	walletName string,
+) {
+	wallet := n.Wallet(walletName)
+	require.NotNil(n.T(), wallet, "Wallet %s should not be nil", walletName)
+
+	// balance before submitting the refundable tx
+	submitterBalanceBefore := n.QueryAllBalances(wallet.Address.String())
+
+	// submit refundable tx
+	f()
+
+	// ensure the tx fee is refunded and the balance is not changed
+	submitterBalanceAfter := n.QueryAllBalances(wallet.Address.String())
+	if shouldBeRefunded {
+		require.Equal(n.T(), submitterBalanceBefore, submitterBalanceAfter)
+	} else {
+		require.False(n.T(), submitterBalanceBefore.Equal(submitterBalanceAfter))
+	}
 }
