@@ -19,7 +19,7 @@ import (
 )
 
 func TestMultisigBtcDel(t *testing.T) {
-	_, bbn2, fpSK, r := startChainAndCreateFp(t)
+	bbn2, fpSK, r := startChainAndCreateFp(t)
 	bbn2.DefaultWallet().VerifySentTx = true
 
 	testCases := []struct {
@@ -105,7 +105,7 @@ func TestMultisigBtcDel(t *testing.T) {
 // TestSingleSigBtcDel tests original single-signature BTC delegation (no multisig info)
 // this is a regression test to ensure multisig changes don't break single-sig functionality
 func TestSingleSigBtcDel(t *testing.T) {
-	_, bbn2, fpSK, r := startChainAndCreateFp(t)
+	bbn2, fpSK, r := startChainAndCreateFp(t)
 	bbn2.DefaultWallet().VerifySentTx = true
 
 	// single-sig delegation from bbn2 to fp (bbn1)
@@ -245,7 +245,7 @@ func TestSingleSigBtcDel(t *testing.T) {
 
 // TestMultisigBtcDelWithDuplicates tests that duplicate staker keys and signatures
 func TestMultisigBtcDelWithDuplicates(t *testing.T) {
-	_, bbn2, fpSK, r := startChainAndCreateFp(t)
+	bbn2, fpSK, r := startChainAndCreateFp(t)
 
 	testCases := []struct {
 		title    string
@@ -318,7 +318,7 @@ func TestMultisigBtcDelWithDuplicates(t *testing.T) {
 }
 
 func TestMultisigBtcDelWithZeroQuorum(t *testing.T) {
-	_, bbn2, fpSK, r := startChainAndCreateFp(t)
+	bbn2, fpSK, r := startChainAndCreateFp(t)
 
 	// multisig delegation from bbn2 to fp (bbn1)
 	stkSKs, _, err := datagen.GenRandomBTCKeyPairs(r, 3)
@@ -342,7 +342,7 @@ func TestMultisigBtcDelWithZeroQuorum(t *testing.T) {
 	bbn2.RequireTxErrorContain(txHash, "number of staker btc pk list and staker quorum must be greater than 0")
 }
 
-func startChainAndCreateFp(t *testing.T) (bbn1, bbn2 *tmanager.Node, fpSK *btcec.PrivateKey, r *rand.Rand) {
+func startChainAndCreateFp(t *testing.T) (bbn2 *tmanager.Node, fpSK *btcec.PrivateKey, r *rand.Rand) {
 	t.Parallel()
 	tm := tmanager.NewTestManager(t)
 	cfg := tmanager.NewChainConfig(tm.TempDir, tmanager.CHAIN_ID_BABYLON)
@@ -353,7 +353,7 @@ func startChainAndCreateFp(t *testing.T) (bbn1, bbn2 *tmanager.Node, fpSK *btcec
 	tm.ChainsWaitUntilHeight(3)
 
 	bbns := tm.ChainNodes()
-	bbn1 = bbns[0]
+	bbn1 := bbns[0]
 	bbn2 = bbns[1]
 	bbn1.DefaultWallet().VerifySentTx = true
 	bbn2.DefaultWallet().VerifySentTx = false
