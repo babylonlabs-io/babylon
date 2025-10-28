@@ -119,6 +119,14 @@ func (ws *WalletSender) IncSeq() {
 	ws.SequenceNumber++
 }
 
+// DecSeq decrements the sequence number
+func (ws *WalletSender) DecSeq() {
+	if ws.SequenceNumber == 0 {
+		ws.T().Fatalf("sequence number is 0")
+	}
+	ws.SequenceNumber--
+}
+
 // Addr returns the account address
 func (ws *WalletSender) Addr() string {
 	return ws.Address.String()

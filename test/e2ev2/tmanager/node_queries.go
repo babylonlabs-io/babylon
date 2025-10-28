@@ -3,13 +3,13 @@ package tmanager
 import (
 	"context"
 	"fmt"
-	btcstktypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 	"net"
 	"net/url"
 
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/util"
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	btclighttypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
+	btcstktypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 	ictvtypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdktx "github.com/cosmos/cosmos-sdk/types/tx"
@@ -214,7 +214,7 @@ func (n *Node) QueryIctvRewardGauges(addrs []string, holderType ictvtypes.Stakeh
 	return rewards
 }
 
-func (n *Node) QueryBtcStakingParams() *btcstktypes.QueryParamsResponse {
+func (n *Node) QueryBtcStakingParams() *btcstktypes.Params {
 	var (
 		resp *btcstktypes.QueryParamsResponse
 		err  error
@@ -225,7 +225,7 @@ func (n *Node) QueryBtcStakingParams() *btcstktypes.QueryParamsResponse {
 		require.NoError(n.T(), err)
 	})
 
-	return resp
+	return &resp.Params
 }
 
 func (n *Node) QueryBTCDelegation(stakingTxHash string) *btcstktypes.BTCDelegationResponse {

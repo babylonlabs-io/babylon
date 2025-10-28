@@ -3,14 +3,16 @@ package tmanager
 import (
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 	tokenfactorytypes "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/types"
-	"github.com/stretchr/testify/require"
 
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 )
 
@@ -105,4 +107,48 @@ func (n *Node) CreateBTCDelegation(walletName string, msg *bstypes.MsgCreateBTCD
 	require.NotNil(n.T(), tx, "CreateBTCDelegation transaction should not be nil")
 	n.T().Logf("BTC delegation created, tx hash: %s", txHash)
 	return txHash
+}
+
+func (n *Node) AddCovenantSigs(
+	walletName string,
+	covPK *bbn.BIP340PubKey,
+	stakingTxHash string,
+	slashingSigs [][]byte,
+	unbondingSig *bbn.BIP340Signature,
+	unbondingSlashingSigs [][]byte,
+	stakeExpTxSig *bbn.BIP340Signature,
+) {
+	wallet := n.Wallet(walletName)
+	require.NotNil(n.T(), wallet, "Wallet %s not found", walletName)
+
+	msg := &bstypes.MsgAddCovenantSigs{
+		Signer:                  wallet.Address.String(),
+		Pk:                      covPK,
+		StakingTxHash:           stakingTxHash,
+		SlashingTxSigs:          slashingSigs,
+		UnbondingTxSig:          unbondingSig,
+		SlashingUnbondingTxSigs: unbondingSlashingSigs,
+		StakeExpansionTxSig:     stakeExpTxSig,
+	}
+	_, tx := wallet.SubmitMsgs(msg)
+	require.NotNil(n.T(), tx, "AddCovenantSigs transaction should not be nil")
+	n.T().Logf("Covenant signatures added")
+}
+
+func (n *Node) AddBTCDelegationInclusionProof(
+	walletName string,
+	stakingTxHash string,
+	inclusionProof *bstypes.InclusionProof,
+) {
+	wallet := n.Wallet(walletName)
+	require.NotNil(n.T(), wallet, "Wallet %s not found", walletName)
+
+	msg := &bstypes.MsgAddBTCDelegationInclusionProof{
+		Signer:                  wallet.Address.String(),
+		StakingTxHash:           stakingTxHash,
+		StakingTxInclusionProof: inclusionProof,
+	}
+	_, tx := wallet.SubmitMsgs(msg)
+	require.NotNil(n.T(), tx, "AddBTCDelegationInclusionProof transaction should not be nil")
+	n.T().Logf("BTC delegation inclusion proof added")
 }

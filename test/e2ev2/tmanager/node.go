@@ -673,52 +673,6 @@ func (n *Node) SubmitTx(tx *sdktx.Tx) (string, error) {
 	return result.Hash.String(), nil
 }
 
-// SubmitTxWithCheckTxErrContain submits a signed transaction to the network via RPC client
-func (n *Node) SubmitTxWithCheckTxErrContain(tx *sdktx.Tx, expErr string) (string, error) {
-	// Convert *sdktx.Tx back to transaction bytes for broadcasting
-	// We need to encode the transaction using the raw message approach
-	rawTx := &sdktx.TxRaw{
-		BodyBytes:     make([]byte, 0),
-		AuthInfoBytes: make([]byte, 0),
-		Signatures:    tx.Signatures,
-	}
-
-	// Marshal body and auth info
-	if tx.Body != nil {
-		bodyBytes, err := util.Cdc.Marshal(tx.Body)
-		if err != nil {
-			return "", fmt.Errorf("failed to marshal tx body: %w", err)
-		}
-		rawTx.BodyBytes = bodyBytes
-	}
-
-	if tx.AuthInfo != nil {
-		authInfoBytes, err := util.Cdc.Marshal(tx.AuthInfo)
-		if err != nil {
-			return "", fmt.Errorf("failed to marshal auth info: %w", err)
-		}
-		rawTx.AuthInfoBytes = authInfoBytes
-	}
-
-	// Marshal the raw transaction
-	txBytes, err := util.Cdc.Marshal(rawTx)
-	if err != nil {
-		return "", fmt.Errorf("failed to marshal raw transaction: %w", err)
-	}
-
-	// Submit transaction via RPC client using BroadcastTxSync
-	result, err := n.RpcClient.BroadcastTxSync(context.Background(), txBytes)
-	if err != nil {
-		return "", fmt.Errorf("failed to broadcast transaction: %w", err)
-	}
-
-	if result.Code != 0 {
-		return "", fmt.Errorf("transaction failed with log: %s", result.Log)
-	}
-
-	return result.Hash.String(), nil
-}
-
 // RequireTxSuccess queries a transaction by hash and requires it to have code 0 (success)
 func (n *Node) RequireTxSuccess(txHash string) {
 	txResp := n.QueryTxByHash(txHash)
@@ -872,6 +826,15 @@ func (n *Node) InsertNewEmptyBtcHeader(r *rand.Rand) *blc.BTCHeaderInfo {
 	return child
 }
 
+// InsertHeader inserts a BTC header to the chain
+func (n *Node) InsertHeader(h *bbn.BTCHeaderBytes) {
+	tip, err := n.QueryTip()
+	require.NoError(n.T(), err)
+	n.T().Logf("Retrieved current tip of btc headerchain. Height: %d", tip.Height)
+	n.SendHeaderHex(h.MarshalHex())
+	n.WaitUntilBtcHeight(tip.Height + 1)
+}
+
 // SendHeaderHex sends a BTC header in hex format to the node
 func (n *Node) SendHeaderHex(headerHex string) {
 	wallet := n.Wallet("node-key")
@@ -886,4 +849,29 @@ func (n *Node) SendHeaderHex(headerHex string) {
 
 	_, tx := wallet.SubmitMsgs(msg)
 	require.NotNil(n.T(), tx, "RegisterConsumerChain transaction should not be nil")
+}
+
+// SubmitRefundableTxWithAssertion submits a refundable transaction,
+// and asserts that the tx fee is refunded
+func (n *Node) SubmitRefundableTxWithAssertion(
+	f func(),
+	shouldBeRefunded bool,
+	walletName string,
+) {
+	wallet := n.Wallet(walletName)
+	require.NotNil(n.T(), wallet, "Wallet %s should not be nil", walletName)
+
+	// balance before submitting the refundable tx
+	submitterBalanceBefore := n.QueryAllBalances(wallet.Address.String())
+
+	// submit refundable tx
+	f()
+
+	// ensure the tx fee is refunded and the balance is not changed
+	submitterBalanceAfter := n.QueryAllBalances(wallet.Address.String())
+	if shouldBeRefunded {
+		require.Equal(n.T(), submitterBalanceBefore, submitterBalanceAfter)
+	} else {
+		require.False(n.T(), submitterBalanceBefore.Equal(submitterBalanceAfter))
+	}
 }
