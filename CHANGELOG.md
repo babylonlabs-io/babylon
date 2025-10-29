@@ -49,7 +49,8 @@ finality provider distribution info
 - [#1832](https://github.com/babylonlabs-io/babylon/pull/1832) Add check for multiple txOut with same pk and value
 in `GetOutputIdxInBTCTx`
 - [#1841](https://github.com/babylonlabs-io/babylon/pull/1841) Add validation for max concurrent unbonding and
-redelegation in `MsgWrappedUndelegate` and `MsgWrappedBeginRedelegate`.
+redelegation in `MsgWrappedUndelegate` and `MsgWrappedBeginRedelegate`
+- [#1842](https://github.com/babylonlabs-io/babylon/pull/1842) Add `MsgWrappedCreateValidator` queue msg details
 
 ### Bug fixes
 
