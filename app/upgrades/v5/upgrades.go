@@ -11,6 +11,7 @@ import (
 
 	"github.com/babylonlabs-io/babylon/v4/app/keepers"
 	"github.com/babylonlabs-io/babylon/v4/app/upgrades"
+	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 )
 
 const UpgradeName = "v5"
@@ -29,15 +30,15 @@ func CreateUpgradeHandler(mm *module.Manager, configurator module.Configurator, 
 		sdkCtx := sdk.UnwrapSDKContext(ctx)
 		currentHeight := uint64(sdkCtx.HeaderInfo().Height)
 
-		// Run migrations (includes btcstaking v1->v2 migration for multisig support)
+		// run migrations (includes btcstaking v1->v2 migration for multisig support)
 		migrations, err := mm.RunMigrations(ctx, configurator, fromVM)
 		if err != nil {
 			return nil, fmt.Errorf("failed to run migrations: %w", err)
 		}
 
-		// Log successful upgrade
-		btcStakingPrevVersion := fromVM["btcstaking"]
-		btcStakingNewVersion := migrations["btcstaking"]
+		// log successful upgrade
+		btcStakingPrevVersion := fromVM[bstypes.ModuleName]
+		btcStakingNewVersion := migrations[bstypes.ModuleName]
 		sdkCtx.Logger().Info("multisig BTC staker upgrade completed successfully",
 			"upgrade", UpgradeName,
 			"btcstaking_migration", fmt.Sprintf("v%d->v%d", btcStakingPrevVersion, btcStakingNewVersion),

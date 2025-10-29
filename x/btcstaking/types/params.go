@@ -84,7 +84,7 @@ func DefaultParams() Params {
 		// Allow list can only be enabled by upgrade
 		AllowListExpirationHeight: 0,
 		BtcActivationHeight:       0,
-		// The default multisig scheme is 2-of-3 multisig.
+		// The default multisig scheme is 1-of-1 multisig, which is equivalent to single-sig
 		MaxStakerQuorum: 1,
 		MaxStakerNum:    1,
 	}
