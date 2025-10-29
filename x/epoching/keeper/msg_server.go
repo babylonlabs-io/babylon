@@ -258,6 +258,15 @@ func (ms msgServer) WrappedUndelegate(goCtx context.Context, msg *types.MsgWrapp
 		)
 	}
 
+	hasMaxEntries, err := ms.stk.HasMaxUnbondingDelegationEntries(ctx, delegatorAddress, valAddr)
+	if err != nil {
+		return nil, err
+	}
+
+	if hasMaxEntries {
+		return nil, stktypes.ErrMaxUnbondingDelegationEntries
+	}
+
 	params := ms.GetParams(ctx)
 	// check if the undelegation amount is above the minimum required amount
 	if msg.Msg.Amount.Amount.LT(math.NewIntFromUint64(params.MinAmount)) {
@@ -314,6 +323,10 @@ func (ms msgServer) WrappedBeginRedelegate(goCtx context.Context, msg *types.Msg
 	if err != nil {
 		return nil, err
 	}
+	valDstAddr, err := sdk.ValAddressFromBech32(msg.Msg.ValidatorDstAddress)
+	if err != nil {
+		return nil, err
+	}
 	delegatorAddress, err := sdk.AccAddressFromBech32(msg.Msg.DelegatorAddress)
 	if err != nil {
 		return nil, err
@@ -331,6 +344,25 @@ func (ms msgServer) WrappedBeginRedelegate(goCtx context.Context, msg *types.Msg
 		)
 	}
 
+	// check if this is a transitive redelegation
+	hasRecRedel, err := ms.stk.HasReceivingRedelegation(ctx, delegatorAddress, valSrcAddr)
+	if err != nil {
+		return nil, err
+	}
+
+	if hasRecRedel {
+		return nil, stktypes.ErrTransitiveRedelegation
+	}
+
+	hasMaxRedels, err := ms.stk.HasMaxRedelegationEntries(ctx, delegatorAddress, valSrcAddr, valDstAddr)
+	if err != nil {
+		return nil, err
+	}
+
+	if hasMaxRedels {
+		return nil, stktypes.ErrMaxRedelegationEntries
+	}
+
 	params := ms.GetParams(ctx)
 	// check if the redelegation amount is above the minimum required amount
 	if msg.Msg.Amount.Amount.LT(math.NewIntFromUint64(params.MinAmount)) {
@@ -340,10 +372,6 @@ func (ms msgServer) WrappedBeginRedelegate(goCtx context.Context, msg *types.Msg
 			msg.Msg.Amount.Amount.String(),
 			params.MinAmount,
 		)
-	}
-
-	if _, err := sdk.ValAddressFromBech32(msg.Msg.ValidatorDstAddress); err != nil {
-		return nil, err
 	}
 
 	blockHeight := uint64(ctx.HeaderInfo().Height)
