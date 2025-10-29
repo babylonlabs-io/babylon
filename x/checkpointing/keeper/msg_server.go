@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 
+	"github.com/cometbft/cometbft/crypto/tmhash"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
@@ -45,7 +46,8 @@ func (m msgServer) WrappedCreateValidator(goCtx context.Context, msg *types.MsgW
 		return nil, err
 	}
 
-	if ctx.HeaderInfo().Height == 0 {
+	blockHeight := uint64(ctx.HeaderInfo().Height)
+	if blockHeight == 0 {
 		// no need to put in a queue if it is a genesis transactions
 		err = m.k.epochingKeeper.StkMsgCreateValidator(ctx, msg.MsgCreateValidator)
 		if err != nil {
@@ -54,10 +56,13 @@ func (m msgServer) WrappedCreateValidator(goCtx context.Context, msg *types.MsgW
 		return &types.MsgWrappedCreateValidatorResponse{}, nil
 	}
 
-	// enqueue the msg into the epoching module
-	queueMsg := epochingtypes.QueuedMessage{
-		Msg: &epochingtypes.QueuedMessage_MsgCreateValidator{MsgCreateValidator: msg.MsgCreateValidator},
+	blockTime := ctx.HeaderInfo().Time
+	txid := tmhash.Sum(ctx.TxBytes())
+	queueMsg, err := epochingtypes.NewQueuedMessage(blockHeight, blockTime, txid, msg.MsgCreateValidator)
+	if err != nil {
+		return nil, err
 	}
+
 	// lock the delegation amount to ensure funds are available when the queued message executes
 	// this prevents spam attacks by requiring actual fund ownership and guarantees successful execution
 	err = m.k.epochingKeeper.LockFundsForDelegateMsgs(ctx, &queueMsg)
