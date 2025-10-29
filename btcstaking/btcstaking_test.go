@@ -26,6 +26,15 @@ type TestScenario struct {
 	StakingTime          uint16
 }
 
+type MultisigTestScenario struct {
+	StakerKeys           []*btcec.PrivateKey
+	FinalityProviderKeys []*btcec.PrivateKey
+	CovenantKeys         []*btcec.PrivateKey
+	RequiredCovenantSigs uint32
+	StakingAmount        btcutil.Amount
+	StakingTime          uint16
+}
+
 func GenerateTestScenario(
 	r *rand.Rand,
 	t *testing.T,
@@ -76,6 +85,81 @@ func (t *TestScenario) CovenantPublicKeys() []*btcec.PublicKey {
 }
 
 func (t *TestScenario) FinalityProviderPublicKeys() []*btcec.PublicKey {
+	finalityProviderPubKeys := make([]*btcec.PublicKey, len(t.FinalityProviderKeys))
+
+	for i, fpKey := range t.FinalityProviderKeys {
+		finalityProviderPubKeys[i] = fpKey.PubKey()
+	}
+
+	return finalityProviderPubKeys
+}
+
+func GenerateMultisigTestScenario(
+	r *rand.Rand,
+	t *testing.T,
+	numStakerKeys uint32,
+	requiredStakerSigs uint32,
+	numFinalityProviderKeys uint32,
+	numCovenantKeys uint32,
+	requiredCovenantSigs uint32,
+	stakingAmount btcutil.Amount,
+	stakingTime uint16,
+) *MultisigTestScenario {
+	stakerPrivKeys := make([]*btcec.PrivateKey, numStakerKeys)
+	for i := uint32(0); i < numStakerKeys; i++ {
+		stakerPrivKey, err := btcec.NewPrivateKey()
+		require.NoError(t, err)
+
+		stakerPrivKeys[i] = stakerPrivKey
+	}
+
+	finalityProviderKeys := make([]*btcec.PrivateKey, numFinalityProviderKeys)
+	for i := uint32(0); i < numFinalityProviderKeys; i++ {
+		covenantPrivKey, err := btcec.NewPrivateKey()
+		require.NoError(t, err)
+
+		finalityProviderKeys[i] = covenantPrivKey
+	}
+
+	covenantKeys := make([]*btcec.PrivateKey, numCovenantKeys)
+	for i := uint32(0); i < numCovenantKeys; i++ {
+		covenantPrivKey, err := btcec.NewPrivateKey()
+		require.NoError(t, err)
+
+		covenantKeys[i] = covenantPrivKey
+	}
+
+	return &MultisigTestScenario{
+		StakerKeys:           stakerPrivKeys,
+		FinalityProviderKeys: finalityProviderKeys,
+		CovenantKeys:         covenantKeys,
+		RequiredCovenantSigs: requiredCovenantSigs,
+		StakingAmount:        stakingAmount,
+		StakingTime:          stakingTime,
+	}
+}
+
+func (t *MultisigTestScenario) StakerPublicKeys() []*btcec.PublicKey {
+	stakerPubKeys := make([]*btcec.PublicKey, len(t.StakerKeys))
+
+	for i, stakerKey := range t.StakerKeys {
+		stakerPubKeys[i] = stakerKey.PubKey()
+	}
+
+	return stakerPubKeys
+}
+
+func (t *MultisigTestScenario) CovenantPublicKeys() []*btcec.PublicKey {
+	covenantPubKeys := make([]*btcec.PublicKey, len(t.CovenantKeys))
+
+	for i, covenantKey := range t.CovenantKeys {
+		covenantPubKeys[i] = covenantKey.PubKey()
+	}
+
+	return covenantPubKeys
+}
+
+func (t *MultisigTestScenario) FinalityProviderPublicKeys() []*btcec.PublicKey {
 	finalityProviderPubKeys := make([]*btcec.PublicKey, len(t.FinalityProviderKeys))
 
 	for i, fpKey := range t.FinalityProviderKeys {
