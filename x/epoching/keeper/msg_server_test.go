@@ -54,60 +54,247 @@ func TestMsgWrappedUndelegate(t *testing.T) {
 	r := rand.New(rand.NewSource(time.Now().Unix()))
 	helper := testhelper.NewHelper(t)
 	msgSrvr := helper.MsgSrvr
-	// enter 1st epoch, in which BBN starts handling validator-related msgs
+	stkK := helper.App.StakingKeeper
 	ctx, err := helper.ApplyEmptyBlockWithVoteExtension(r)
 	require.NoError(t, err)
 
+	delegatorAddr := helper.GenAccs[0].GetAddress()
+
+	vals, err := stkK.GetValidators(ctx, 1)
+	require.NoError(t, err)
+	require.Len(t, vals, 1)
+
+	valAddr, err := sdk.ValAddressFromBech32(vals[0].OperatorAddress)
+	require.NoError(t, err)
+
+	params := helper.App.EpochingKeeper.GetParams(ctx)
+	stkParams, err := stkK.GetParams(ctx)
+	require.NoError(t, err)
+
+	delegationAmt := sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(int64(params.MinAmount)*int64(stkParams.MaxEntries+5)))
+	delegateMsg := types.NewMsgWrappedDelegate(
+		stakingtypes.NewMsgDelegate(
+			delegatorAddr.String(),
+			valAddr.String(),
+			delegationAmt,
+		),
+	)
+	_, err = msgSrvr.WrappedDelegate(ctx, delegateMsg)
+	require.NoError(t, err)
+
+	epoch := helper.App.EpochingKeeper.GetEpoch(ctx)
+	info := ctx.HeaderInfo()
+	info.Height = int64(epoch.GetLastBlockHeight())
+	epochEndCtx := ctx.WithHeaderInfo(info)
+	_, err = epoching.EndBlocker(epochEndCtx, helper.App.EpochingKeeper)
+	require.NoError(t, err)
+
 	testCases := []struct {
-		name      string
-		req       *stakingtypes.MsgUndelegate
-		expectErr bool
+		name   string
+		setup  func(sdk.Context) (sdk.Context, *stakingtypes.MsgUndelegate)
+		expErr error
 	}{
 		{
-			"empty wrapped msg",
-			&stakingtypes.MsgUndelegate{},
-			true,
+			name: "empty wrapped msg",
+			setup: func(testCtx sdk.Context) (sdk.Context, *stakingtypes.MsgUndelegate) {
+				return testCtx, &stakingtypes.MsgUndelegate{}
+			},
+			expErr: nil,
+		},
+		{
+			name: "max unbonding delegation entries",
+			setup: func(testCtx sdk.Context) (sdk.Context, *stakingtypes.MsgUndelegate) {
+				currentCtx := testCtx.WithBlockTime(time.Now())
+
+				delegation, err := stkK.GetDelegation(currentCtx, delegatorAddr, valAddr)
+				require.NoError(t, err)
+
+				totalShares := delegation.GetShares()
+				undelegateShares := totalShares.Quo(sdkmath.LegacyNewDec(int64(stkParams.MaxEntries + 2)))
+
+				unbondingTime := stkParams.UnbondingTime
+
+				for i := uint32(0); i < stkParams.MaxEntries; i++ {
+					blkHeader := currentCtx.BlockHeader()
+					blkHeader.Time = blkHeader.Time.Add(unbondingTime + time.Hour)
+					blkHeader.Height++
+					currentCtx = currentCtx.WithBlockHeader(blkHeader)
+
+					_, _, err := stkK.Undelegate(currentCtx, delegatorAddr, valAddr, undelegateShares)
+					require.NoError(t, err)
+
+					ubd, err := stkK.GetUnbondingDelegation(currentCtx, delegatorAddr, valAddr)
+					require.NoError(t, err)
+					t.Logf("After iteration %d: entries = %d", i+1, len(ubd.Entries))
+				}
+
+				ubd, err := stkK.GetUnbondingDelegation(currentCtx, delegatorAddr, valAddr)
+				require.NoError(t, err)
+				t.Logf("Unbonding delegation entries: %d (max: %d)", len(ubd.Entries), stkParams.MaxEntries)
+
+				return currentCtx, stakingtypes.NewMsgUndelegate(
+					delegatorAddr.String(),
+					valAddr.String(),
+					sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(int64(params.MinAmount))),
+				)
+			},
+			expErr: stakingtypes.ErrMaxUnbondingDelegationEntries,
 		},
 	}
+
 	for _, tc := range testCases {
-		wrappedMsg := types.NewMsgWrappedUndelegate(tc.req)
-		_, err := msgSrvr.WrappedUndelegate(ctx, wrappedMsg)
-		if tc.expectErr {
-			require.Error(t, err)
-		} else {
-			require.NoError(t, err)
-		}
+		t.Run(tc.name, func(t *testing.T) {
+			testCtx, req := tc.setup(ctx)
+			wrappedMsg := types.NewMsgWrappedUndelegate(req)
+			_, actErr := msgSrvr.WrappedUndelegate(testCtx, wrappedMsg)
+			if tc.expErr != nil {
+				require.EqualError(t, actErr, tc.expErr.Error())
+				return
+			}
+			require.Error(t, actErr)
+		})
 	}
 }
 
 func TestMsgWrappedBeginRedelegate(t *testing.T) {
 	r := rand.New(rand.NewSource(time.Now().Unix()))
-	helper := testhelper.NewHelper(t)
+
+	valSet, blsSigner, err := datagen.GenesisValidatorSetWithPrivSigner(3)
+	require.NoError(t, err)
+	helper := testhelper.NewHelperWithValSet(t, valSet, blsSigner)
 	msgSrvr := helper.MsgSrvr
-	// enter 1st epoch, in which BBN starts handling validator-related msgs
+	stkK := helper.App.StakingKeeper
+
 	ctx, err := helper.ApplyEmptyBlockWithVoteExtension(r)
 	require.NoError(t, err)
 
+	delegatorAddr := helper.GenAccs[0].GetAddress()
+
+	vals, err := stkK.GetValidators(ctx, 3)
+	require.NoError(t, err)
+	require.Len(t, vals, 3)
+
+	val1Addr, err := sdk.ValAddressFromBech32(vals[0].OperatorAddress)
+	require.NoError(t, err)
+	val2Addr, err := sdk.ValAddressFromBech32(vals[1].OperatorAddress)
+	require.NoError(t, err)
+	val3Addr, err := sdk.ValAddressFromBech32(vals[2].OperatorAddress)
+	require.NoError(t, err)
+
+	params := helper.App.EpochingKeeper.GetParams(ctx)
+	stkParams, err := stkK.GetParams(ctx)
+	require.NoError(t, err)
+
+	delegationAmt := sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(int64(params.MinAmount)*int64(stkParams.MaxEntries+5)))
+	delegateMsg := types.NewMsgWrappedDelegate(
+		stakingtypes.NewMsgDelegate(
+			delegatorAddr.String(),
+			val1Addr.String(),
+			delegationAmt,
+		),
+	)
+	_, err = msgSrvr.WrappedDelegate(ctx, delegateMsg)
+	require.NoError(t, err)
+
+	delegateToVal2 := types.NewMsgWrappedDelegate(
+		stakingtypes.NewMsgDelegate(
+			delegatorAddr.String(),
+			val2Addr.String(),
+			delegationAmt,
+		),
+	)
+	_, err = msgSrvr.WrappedDelegate(ctx, delegateToVal2)
+	require.NoError(t, err)
+
 	testCases := []struct {
-		name      string
-		req       *stakingtypes.MsgBeginRedelegate
-		expectErr bool
+		name   string
+		setup  func(sdk.Context) (sdk.Context, *stakingtypes.MsgBeginRedelegate)
+		expErr error
 	}{
 		{
-			"empty wrapped msg",
-			&stakingtypes.MsgBeginRedelegate{},
-			true,
+			name: "empty wrapped msg",
+			setup: func(testCtx sdk.Context) (sdk.Context, *stakingtypes.MsgBeginRedelegate) {
+				return testCtx, &stakingtypes.MsgBeginRedelegate{}
+			},
+			expErr: nil,
+		},
+		{
+			name: "transitive redelegation",
+			setup: func(testCtx sdk.Context) (sdk.Context, *stakingtypes.MsgBeginRedelegate) {
+				redelegateAmt := sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(int64(params.MinAmount)))
+				firstRedelegation := types.NewMsgWrappedBeginRedelegate(
+					stakingtypes.NewMsgBeginRedelegate(
+						delegatorAddr.String(),
+						val1Addr.String(),
+						val2Addr.String(),
+						redelegateAmt,
+					),
+				)
+				_, err := msgSrvr.WrappedBeginRedelegate(testCtx, firstRedelegation)
+				require.NoError(t, err)
+
+				epoch := helper.App.EpochingKeeper.GetEpoch(testCtx)
+				info := testCtx.HeaderInfo()
+				info.Height = int64(epoch.GetLastBlockHeight())
+				epochEndCtx := testCtx.WithHeaderInfo(info)
+				_, err = epoching.EndBlocker(epochEndCtx, helper.App.EpochingKeeper)
+				require.NoError(t, err)
+
+				return testCtx, stakingtypes.NewMsgBeginRedelegate(
+					delegatorAddr.String(),
+					val2Addr.String(),
+					val3Addr.String(),
+					redelegateAmt,
+				)
+			},
+			expErr: stakingtypes.ErrTransitiveRedelegation,
+		},
+		{
+			name: "max redelegation entries",
+			setup: func(testCtx sdk.Context) (sdk.Context, *stakingtypes.MsgBeginRedelegate) {
+				redelegateAmt := sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(int64(params.MinAmount)))
+				for i := uint32(0); i < stkParams.MaxEntries; i++ {
+					redelegation := types.NewMsgWrappedBeginRedelegate(
+						stakingtypes.NewMsgBeginRedelegate(
+							delegatorAddr.String(),
+							val1Addr.String(),
+							val2Addr.String(),
+							redelegateAmt,
+						),
+					)
+					_, err := msgSrvr.WrappedBeginRedelegate(testCtx, redelegation)
+					require.NoError(t, err)
+				}
+
+				epoch := helper.App.EpochingKeeper.GetEpoch(testCtx)
+				info := testCtx.HeaderInfo()
+				info.Height = int64(epoch.GetLastBlockHeight())
+				epochEndCtx := testCtx.WithHeaderInfo(info)
+				_, err := epoching.EndBlocker(epochEndCtx, helper.App.EpochingKeeper)
+				require.NoError(t, err)
+
+				return testCtx, stakingtypes.NewMsgBeginRedelegate(
+					delegatorAddr.String(),
+					val1Addr.String(),
+					val2Addr.String(),
+					redelegateAmt,
+				)
+			},
+			expErr: stakingtypes.ErrMaxRedelegationEntries,
 		},
 	}
-	for _, tc := range testCases {
-		wrappedMsg := types.NewMsgWrappedBeginRedelegate(tc.req)
 
-		_, err := msgSrvr.WrappedBeginRedelegate(ctx, wrappedMsg)
-		if tc.expectErr {
-			require.Error(t, err)
-		} else {
-			require.NoError(t, err)
-		}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			testCtx, req := tc.setup(ctx)
+			wrappedMsg := types.NewMsgWrappedBeginRedelegate(req)
+			_, actErr := msgSrvr.WrappedBeginRedelegate(testCtx, wrappedMsg)
+			if tc.expErr != nil {
+				require.EqualError(t, actErr, tc.expErr.Error())
+				return
+			}
+			require.Error(t, actErr)
+		})
 	}
 }
 
