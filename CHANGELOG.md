@@ -41,6 +41,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 - [#1832](https://github.com/babylonlabs-io/babylon/pull/1832) Add check for multiple txOut with same pk and
 value in `GetOutputIdxInBTCTx`
+- [#1841](https://github.com/babylonlabs-io/babylon/pull/1841) Add validation for max concurrent unbonding and
+redelegation in `MsgWrappedUndelegate` and `MsgWrappedBeginRedelegate`.
 
 ### Improvements
 
@@ -55,14 +57,6 @@ value in `GetOutputIdxInBTCTx`
 - [#1776](https://github.com/babylonlabs-io/babylon/pull/1776) Track baby staked to active validators only
 - [#1813](https://github.com/babylonlabs-io/babylon/pull/1813) Panic if there is an invalid amount of sats in the
 finality provider distribution info
-<<<<<<< HEAD
-=======
-- [#1831](https://github.com/babylonlabs-io/babylon/pull/1831) Removed unused parameter in `DeriveTaprootPkScript`
-- [#1832](https://github.com/babylonlabs-io/babylon/pull/1832) Add check for multiple txOut with same pk and value
-in `GetOutputIdxInBTCTx`
-- [#1841](https://github.com/babylonlabs-io/babylon/pull/1841) Add validation for max concurrent unbonding and
-redelegation in `MsgWrappedUndelegate` and `MsgWrappedBeginRedelegate`.
->>>>>>> aa4c4b3 (chore: add checks for wrapped redelegate and unbond (#1841))
 
 ### Bug fixes
 
