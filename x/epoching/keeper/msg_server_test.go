@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"errors"
 	"fmt"
 	"math/rand"
 	"testing"
@@ -99,7 +100,7 @@ func TestMsgWrappedUndelegate(t *testing.T) {
 			setup: func(testCtx sdk.Context) (sdk.Context, *stakingtypes.MsgUndelegate) {
 				return testCtx, &stakingtypes.MsgUndelegate{}
 			},
-			expErr: nil,
+			expErr: errors.New("empty address string is not allowed"),
 		},
 		{
 			name: "max unbonding delegation entries",
@@ -151,7 +152,7 @@ func TestMsgWrappedUndelegate(t *testing.T) {
 				require.EqualError(t, actErr, tc.expErr.Error())
 				return
 			}
-			require.Error(t, actErr)
+			require.NoError(t, actErr)
 		})
 	}
 }
@@ -216,7 +217,7 @@ func TestMsgWrappedBeginRedelegate(t *testing.T) {
 			setup: func(testCtx sdk.Context) (sdk.Context, *stakingtypes.MsgBeginRedelegate) {
 				return testCtx, &stakingtypes.MsgBeginRedelegate{}
 			},
-			expErr: nil,
+			expErr: errors.New("empty address string is not allowed"),
 		},
 		{
 			name: "transitive redelegation",
@@ -293,7 +294,7 @@ func TestMsgWrappedBeginRedelegate(t *testing.T) {
 				require.EqualError(t, actErr, tc.expErr.Error())
 				return
 			}
-			require.Error(t, actErr)
+			require.NoError(t, actErr)
 		})
 	}
 }
