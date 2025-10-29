@@ -50,6 +50,7 @@ finality provider distribution info
 in `GetOutputIdxInBTCTx`
 - [#1822](https://github.com/babylonlabs-io/babylon/pull/1822) Support multisig for btc staker in btcstaking library
 - [#1824](https://github.com/babylonlabs-io/babylon/pull/1824) Support multisig for btc staker in babylon genesis
+- [#1827](https://github.com/babylonlabs-io/babylon/pull/1827) Upgrade handler to support multisig
 
 ### Bug fixes
 
