@@ -37,6 +37,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+## v4.0.0-rc.2
+
 ### State breaking
 
 - [#1832](https://github.com/babylonlabs-io/babylon/pull/1832) Add check for multiple txOut with same pk and
