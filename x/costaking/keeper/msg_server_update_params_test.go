@@ -39,15 +39,15 @@ func TestMsgUpdateParamsUpdateAllCostakersScore(t *testing.T) {
 	require.NoError(t, err)
 
 	// Costaker 1: 5000 sats, 50000 baby -> score = min(5000, 50000/50) = 1000
-	err = k.costakerModifiedActiveAmounts(ctx, costk1, sdkmath.NewInt(5000), sdkmath.NewInt(50000))
+	err = k.CostakerModifiedActiveAmounts(ctx, costk1, sdkmath.NewInt(5000), sdkmath.NewInt(50000))
 	require.NoError(t, err)
 
 	// Costaker 2: 10000 sats, 100000 baby -> score = min(10000, 100000/50) = 2000
-	err = k.costakerModifiedActiveAmounts(ctx, costk2, sdkmath.NewInt(10000), sdkmath.NewInt(100000))
+	err = k.CostakerModifiedActiveAmounts(ctx, costk2, sdkmath.NewInt(10000), sdkmath.NewInt(100000))
 	require.NoError(t, err)
 
 	// Costaker 3: 5000 sats, 0 baby -> score = min(5000, 0/50) = 0
-	err = k.costakerModifiedActiveAmounts(ctx, costk3, sdkmath.NewInt(5000), sdkmath.ZeroInt())
+	err = k.CostakerModifiedActiveAmounts(ctx, costk3, sdkmath.NewInt(5000), sdkmath.ZeroInt())
 	require.NoError(t, err)
 
 	// Verify total score: 3000
