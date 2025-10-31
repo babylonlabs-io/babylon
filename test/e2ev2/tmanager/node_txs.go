@@ -8,6 +8,7 @@ import (
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 	tokenfactorytypes "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/types"
@@ -73,6 +74,9 @@ func (n *Node) MintDenom(walletName, amount, denom string) {
 	n.T().Logf("Minted %s %s to %s", amount, denom, wallet.Address.String())
 }
 
+/*
+	x/btcstaking txs
+*/
 // CreateFinalityProvider creates a finality provider on the given chain/consumer using the specified wallet
 func (n *Node) CreateFinalityProvider(walletName string, fp *bstypes.FinalityProvider) {
 	wallet := n.Wallet(walletName)
@@ -109,6 +113,7 @@ func (n *Node) CreateBTCDelegation(walletName string, msg *bstypes.MsgCreateBTCD
 	return txHash
 }
 
+// AddCovenantSigs submits covenant signatures of the covenant committee with a specified wallet
 func (n *Node) AddCovenantSigs(
 	walletName string,
 	covPK *bbn.BIP340PubKey,
@@ -135,6 +140,7 @@ func (n *Node) AddCovenantSigs(
 	n.T().Logf("Covenant signatures added")
 }
 
+// AddBTCDelegationInclusionProof adds btc delegation inclusion proof with a specified wallet
 func (n *Node) AddBTCDelegationInclusionProof(
 	walletName string,
 	stakingTxHash string,
@@ -151,4 +157,32 @@ func (n *Node) AddBTCDelegationInclusionProof(
 	_, tx := wallet.SubmitMsgs(msg)
 	require.NotNil(n.T(), tx, "AddBTCDelegationInclusionProof transaction should not be nil")
 	n.T().Logf("BTC delegation inclusion proof added")
+}
+
+/*
+	x/gov txs
+*/
+// SubmitProposal submits a governance proposal with a specified wallet
+func (n *Node) SubmitProposal(walletName string, govMsg *govtypes.MsgSubmitProposal) {
+	wallet := n.Wallet(walletName)
+	require.NotNil(n.T(), wallet, "Wallet %s not found", walletName)
+
+	_, tx := wallet.SubmitMsgs(govMsg)
+	require.NotNil(n.T(), tx, "SubmitProposal transaction should not be nil")
+	n.T().Logf("Governance proposal submitted")
+}
+
+func (n *Node) Vote(walletName string, proposalID uint64, voteOption govtypes.VoteOption) {
+	wallet := n.Wallet(walletName)
+	require.NotNil(n.T(), wallet, "Wallet %s not found", walletName)
+
+	govMsg := &govtypes.MsgVote{
+		ProposalId: proposalID,
+		Voter:      wallet.Address.String(),
+		Option:     voteOption,
+		Metadata:   "",
+	}
+	_, tx := wallet.SubmitMsgs(govMsg)
+	require.NotNil(n.T(), tx, "Vote transaction should not be nil")
+	n.T().Logf("Governance vote submitted")
 }

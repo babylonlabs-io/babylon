@@ -262,8 +262,9 @@ func UpdateGenesisBtcStaking(p *StartingBtcStakingParams) func(*btcstktypes.Gene
 			gen.Params[0].CovenantQuorum = p.CovenantQuorum
 		}
 
-		gen.Params[0].MaxStakerQuorum = 2
-		gen.Params[0].MaxStakerNum = 3
+		// TODO: uncomment this except testing e2e upgrade with e2ev2 package
+		//gen.Params[0].MaxStakerQuorum = 2
+		//gen.Params[0].MaxStakerNum = 3
 	}
 }
 
