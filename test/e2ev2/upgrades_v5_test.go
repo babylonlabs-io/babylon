@@ -11,20 +11,22 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 
+	v5 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v5"
 	"github.com/babylonlabs-io/babylon/v4/test/e2ev2/tmanager"
 )
 
 func TestUpgradeV5(t *testing.T) {
 	t.Parallel()
 	tm := tmanager.NewTmWithUpgrade(t, 0, "")
-	nodes := tm.ChainNodes()
-	validator := nodes[0]
-	//bbn := nodes[1]
-	govMsg, preUpgradeFunc, err := createGovPropAndPreUpgradeFunc(validator.DefaultWallet())
+	validator := tm.ChainValidator()
+	govMsg, preUpgradeFunc, err := createGovPropAndPreUpgradeFunc(validator.Wallet.WalletSender)
 	require.NoError(t, err)
 
 	tm.Start(govMsg, preUpgradeFunc)
 
+	bsParams := validator.QueryBtcStakingParams()
+	require.Equal(t, uint32(1), bsParams.MaxStakerQuorum)
+	require.Equal(t, uint32(1), bsParams.MaxStakerNum)
 }
 
 func createGovPropAndPreUpgradeFunc(valWallet *tmanager.WalletSender) (*govtypes.MsgSubmitProposal, tmanager.PreUpgradeFunc, error) {
@@ -32,7 +34,7 @@ func createGovPropAndPreUpgradeFunc(valWallet *tmanager.WalletSender) (*govtypes
 	upgradeMsg := &upgradetypes.MsgSoftwareUpgrade{
 		Authority: "bbn10d07y265gmmuvt4z0w9aw880jnsr700jduz5f2",
 		Plan: upgradetypes.Plan{
-			Name:   "v5",
+			Name:   v5.UpgradeName,
 			Height: int64(20),
 			Info:   "Upgrade to v5",
 		},

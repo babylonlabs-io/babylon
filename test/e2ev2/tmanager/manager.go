@@ -2,13 +2,16 @@ package tmanager
 
 import (
 	"fmt"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	"math/rand"
 	"testing"
 	"time"
 
 	"github.com/ory/dockertest/v3"
 	"github.com/stretchr/testify/require"
+
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
+
+	v5 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v5"
 )
 
 // TestManager manages isolated Docker networks for tests
@@ -167,6 +170,18 @@ func (tm *TestManagerUpgrade) Start(govMsg *govtypes.MsgSubmitProposal, preUpgra
 	} else {
 		if err := tm.runProposalUpgrade(govMsg); err != nil {
 			tm.T.Fatalf("failed to run proposal upgrade: %v", err)
+		}
+	}
+
+	for _, chain := range tm.Chains {
+		for _, node := range chain.AllNodes() {
+			height, err := node.LatestBlockNumber()
+			if err != nil {
+				tm.T.Fatalf("failed to get latest block height: %v", err)
+			}
+			tm.T.Logf("latest block height on chain %s: %d", chain.ChainID(), height)
+			appliedHeight := node.QueryAppliedPlan(v5.UpgradeName)
+			tm.T.Logf("%s plan applied at height: %d", v5.UpgradeName, appliedHeight)
 		}
 	}
 }

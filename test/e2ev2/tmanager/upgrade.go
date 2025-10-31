@@ -11,6 +11,7 @@ import (
 var (
 	ErrInvalidUpgradeMsg   = fmt.Errorf("invalid upgrade message type")
 	ErrNoProposalSubmitted = fmt.Errorf("no proposal submitted")
+	ErrProposalNotPassed   = fmt.Errorf("proposal is not passed")
 )
 
 func (tm *TestManagerUpgrade) runForkUpgrade() error {
@@ -52,13 +53,20 @@ func (tm *TestManagerUpgrade) runProposalUpgrade(govMsg *govtypes.MsgSubmitPropo
 		chain.Config.UpgradePropHeight = upgradeMsg.Plan.Height
 
 		// submit upgrade gov proposal and vote yes
-		validator.SubmitProposal(validator.DefaultWallet().KeyName, govMsg)
+		// force increase sequence of validator
+		validator.Wallet.WalletSender.IncSeq()
+		validator.SubmitProposal(validator.Wallet.KeyName, govMsg)
+		validator.WaitForNextBlock()
 		propsResp := validator.QueryProposals()
 		if len(propsResp.Proposals) == 0 {
 			return ErrNoProposalSubmitted
 		}
 		proposalID := propsResp.Proposals[0].Id
-		validator.Vote(validator.DefaultWallet().KeyName, proposalID, govtypes.VoteOption_VOTE_OPTION_YES)
+		tm.T.Logf("proposal %d submitted, current status: %d", proposalID, propsResp.Proposals[0].Status)
+		validator.Vote(validator.Wallet.KeyName, proposalID, govtypes.VoteOption_VOTE_OPTION_YES)
+		validator.WaitForNextBlock()
+		tallyResult := validator.QueryTallyResult(proposalID)
+		tm.T.Logf("tally result from validator: %v", tallyResult)
 	}
 
 	// wait till all chains halt at upgrade height
@@ -66,6 +74,13 @@ func (tm *TestManagerUpgrade) runProposalUpgrade(govMsg *govtypes.MsgSubmitPropo
 		tm.T.Logf("waiting to reach ugprade height on chain %s", chain.ChainID())
 		chain.WaitUntilBlkHeight(uint32(chain.Config.UpgradePropHeight))
 		tm.T.Logf("upgrade height %d reached on chain %s", chain.Config.UpgradePropHeight, chain.ChainID())
+	}
+
+	// check proposal status
+	validator := tm.ChainValidator()
+	propsResp := validator.QueryProposals()
+	if propsResp.Proposals[0].Status != 3 {
+		return ErrProposalNotPassed
 	}
 
 	// remove all containers so we can upgrade them to the new version
@@ -91,7 +106,7 @@ func (tm *TestManagerUpgrade) upgradeContainers(chain *Chain, propHeight int64) 
 	tm.T.Logf("starting upgrade for chain-if: %s...", chain.ChainID())
 	// update all nodes current repository and current tag
 	for _, node := range chain.AllNodes() {
-		node.Container.Name = BabylonContainerName
+		node.Container.Repository = BabylonContainerName
 		node.Container.Tag = "latest"
 	}
 

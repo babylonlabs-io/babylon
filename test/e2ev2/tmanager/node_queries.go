@@ -290,6 +290,22 @@ func (n *Node) QueryProposals() *govtypes.QueryProposalsResponse {
 	return resp
 }
 
+func (n *Node) QueryTallyResult(propID uint64) *govtypes.TallyResult {
+	var (
+		resp *govtypes.QueryTallyResultResponse
+		err  error
+	)
+
+	n.GovQuery(func(govClient govtypes.QueryClient) {
+		resp, err = govClient.TallyResult(context.Background(), &govtypes.QueryTallyResultRequest{
+			ProposalId: propID,
+		})
+		require.NoError(n.T(), err)
+	})
+
+	return resp.Tally
+}
+
 func (n *Node) QueryAppliedPlan(planName string) int64 {
 	var (
 		resp *upgradetypes.QueryAppliedPlanResponse
