@@ -393,7 +393,7 @@ func TestCostakerModifiedActiveAmounts(t *testing.T) {
 	activeSats := sdkmath.NewInt(1000)
 	activeBaby := sdkmath.NewInt(150)
 
-	err = k.costakerModifiedActiveAmounts(ctx, costaker, activeSats, activeBaby)
+	err = k.CostakerModifiedActiveAmounts(ctx, costaker, activeSats, activeBaby)
 	require.NoError(t, err)
 
 	// min(1000, 150/50) = 3
@@ -413,7 +413,7 @@ func TestCostakerModifiedActiveAmounts(t *testing.T) {
 	// simulate new active sats, but since it is less than the the previous the total score doesn't change
 	// also the period doesn't need to change
 	newActiveSats := sdkmath.NewInt(500)
-	err = k.costakerModifiedActiveAmounts(ctx, costaker, newActiveSats, activeBaby)
+	err = k.CostakerModifiedActiveAmounts(ctx, costaker, newActiveSats, activeBaby)
 	require.NoError(t, err)
 	newActCostaker, err := k.GetCostakerRewards(ctx, costaker)
 	require.NoError(t, err)
@@ -431,7 +431,7 @@ func TestCostakerModifiedActiveAmounts(t *testing.T) {
 	// simulate a change in the baby and sats amount
 	newActiveBaby := sdkmath.NewInt(45000)
 	newActiveSats = sdkmath.NewInt(500)
-	err = k.costakerModifiedActiveAmounts(ctx, costaker, newActiveSats, newActiveBaby)
+	err = k.CostakerModifiedActiveAmounts(ctx, costaker, newActiveSats, newActiveBaby)
 	require.NoError(t, err)
 	newActCostaker1, err := k.GetCostakerRewards(ctx, costaker)
 	require.NoError(t, err)
@@ -460,7 +460,7 @@ func TestCostakerModifiedActiveAmounts(t *testing.T) {
 	activeBabyCo2 := sdkmath.NewInt(12500)
 
 	// min(500, 12500/50) = 250
-	err = k.costakerModifiedActiveAmounts(ctx, costakr2, activeSatsCo2, activeBabyCo2)
+	err = k.CostakerModifiedActiveAmounts(ctx, costakr2, activeSatsCo2, activeBabyCo2)
 	require.NoError(t, err)
 	actCostaker2, err := k.GetCostakerRewards(ctx, costakr2)
 	require.NoError(t, err)
