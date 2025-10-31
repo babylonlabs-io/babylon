@@ -71,7 +71,7 @@ func (tm *TestManagerUpgrade) runProposalUpgrade(govMsg *govtypes.MsgSubmitPropo
 
 	// wait till all chains halt at upgrade height
 	for _, chain := range tm.Chains {
-		tm.T.Logf("waiting to reach ugprade height on chain %s", chain.ChainID())
+		tm.T.Logf("waiting to reach upgrade height on chain %s", chain.ChainID())
 		chain.WaitUntilBlkHeight(uint32(chain.Config.UpgradePropHeight))
 		tm.T.Logf("upgrade height %d reached on chain %s", chain.Config.UpgradePropHeight, chain.ChainID())
 	}
