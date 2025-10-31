@@ -3,6 +3,7 @@ package tmanager
 import (
 	"context"
 	"fmt"
+	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 	"io"
 	"math/rand"
 	"net/http"
@@ -106,13 +107,19 @@ func NewNodeWithoutBls(tm *TestManager, name string, cfg *ChainConfig) *Node {
 	nPorts, err := tm.PortMgr.AllocateNodePorts()
 	require.NoError(tm.T, err)
 
-	cointanerName := fmt.Sprintf("%s-%s-%s", cfg.ChainID, name, tm.NetworkID()[:4])
+	containerName := fmt.Sprintf("%s-%s-%s", cfg.ChainID, name, tm.NetworkID()[:4])
+	container := NewContainerBbnNode(containerName)
+	if cfg.IsUpgrade {
+		// build a container with the given tag before upgrade
+		container = NewContainerOldBbnNode(containerName, cfg.Tag)
+	}
+
 	n := &Node{
 		Tm:          tm,
 		ChainConfig: cfg,
 		Name:        name,
 		Home:        filepath.Join(cfg.Home, name),
-		Container:   NewContainerBbnNode(cointanerName),
+		Container:   container,
 		Ports:       nPorts,
 		Wallets:     make(map[string]*WalletSender, 0),
 	}
@@ -120,6 +127,7 @@ func NewNodeWithoutBls(tm *TestManager, name string, cfg *ChainConfig) *Node {
 	// each node starts with at least one wallet
 	n.CreateWallet(DefaultNodeWalletKey)
 	n.CreateConfigDir()
+	// TODO: should be initialized based on the binary version of the node
 	n.WriteConfigAndGenesis()
 	n.CreateNodeKeyP2P()
 	n.CreateAppConfig()
@@ -165,6 +173,18 @@ func (n *Node) HostPort(portID int) string {
 
 func (n *Node) ContainerResource() *dockertest.Resource {
 	return n.Tm.ContainerManager.Resources[n.Container.Name]
+}
+
+func (n *Node) RemoveResource() error {
+	resource := n.ContainerResource()
+	var opts docker.RemoveContainerOptions
+	opts.ID = resource.Container.ID
+	opts.Force = true
+	if err := n.Tm.Pool.Client.RemoveContainer(opts); err != nil {
+		return err
+	}
+	delete(n.Tm.ContainerManager.Resources, n.Container.Name)
+	return nil
 }
 
 func (n *ValidatorNode) CreateValidatorMsg(selfDelegationAmt sdk.Coin) sdk.Msg {
@@ -370,6 +390,36 @@ func (n *Node) WriteConfigAndGenesis() {
 	// Create a temp app to get the default genesis state
 	tempApp := bbnapp.NewTmpBabylonApp()
 	appState, err := json.MarshalIndent(tempApp.DefaultGenesis(), "", " ")
+	require.NoError(n.T(), err)
+
+	// TODO: ultimately we need to build binary before upgrade and init genesis based on that binary
+	// remove MaxStakerQuorum and MaxStakerNum field from x/btcstaking default genesis
+	var appGenState map[string]json.RawMessage
+	err = json.Unmarshal(appState, &appGenState)
+	require.NoError(n.T(), err)
+
+	// get the btcstaking module genesis as a map to manipulate JSON directly
+	var btcStakingGen map[string]interface{}
+	err = json.Unmarshal(appGenState[bstypes.ModuleName], &btcStakingGen)
+	require.NoError(n.T(), err)
+
+	// navigate to params array and remove v5-specific fields
+	if params, ok := btcStakingGen["params"].([]interface{}); ok && len(params) > 0 {
+		if param0, ok := params[0].(map[string]interface{}); ok {
+			delete(param0, "max_staker_num")
+			delete(param0, "max_staker_quorum")
+		}
+	}
+
+	// marshal the modified btcstaking genesis back to JSON
+	btcStakingGenBz, err := json.Marshal(btcStakingGen)
+	require.NoError(n.T(), err)
+
+	// update the app state with modified btcstaking genesis
+	appGenState[bstypes.ModuleName] = btcStakingGenBz
+
+	// marshal the entire app state back
+	appState, err = json.MarshalIndent(appGenState, "", " ")
 	require.NoError(n.T(), err)
 
 	appGenesis.ChainID = n.ChainConfig.ChainID

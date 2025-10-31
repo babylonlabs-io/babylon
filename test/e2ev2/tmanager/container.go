@@ -20,6 +20,12 @@ const (
 	// Images that do not have specified tag, latest will be used by default.
 	// name of babylon image produced by running `make build-docker`
 	BabylonContainerName = "babylonlabs-io/babylond"
+	// name of babylon image before the upgrade
+	BabylonContainerNameBeforeUpgrade = "babylonlabs/babylond"
+	BabylonContainerTagBeforeUpgrade  = "v4.0.0-rc.1"
+
+	// name of the image produced by running `make e2e-init-chain` in contrib/images
+	InitChainContainerE2E = "babylonlabs-io/babylond-e2e-init-chain"
 
 	HermesRelayerRepository = "informalsystems/hermes"
 	HermesRelayerTag        = "1.13.1"
@@ -72,6 +78,20 @@ func NewContainerBbnNode(containerName string) *Container {
 		Name:       containerName,
 		Repository: BabylonContainerName,
 		Tag:        "latest",
+	}
+}
+
+// NewContainerOldBbnNode create an older binary version of a bbn node which is used before upgrade
+func NewContainerOldBbnNode(containerName, tag string) *Container {
+	cTag := BabylonContainerTagBeforeUpgrade
+	if tag != "" {
+		cTag = tag
+	}
+
+	return &Container{
+		Name:       containerName,
+		Repository: BabylonContainerNameBeforeUpgrade,
+		Tag:        cTag,
 	}
 }
 

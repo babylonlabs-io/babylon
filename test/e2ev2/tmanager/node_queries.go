@@ -2,7 +2,9 @@ package tmanager
 
 import (
 	"context"
+	upgradetypes "cosmossdk.io/x/upgrade/types"
 	"fmt"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	"net"
 	"net/url"
 
@@ -81,6 +83,20 @@ func (n *Node) BtcStkQuery(f func(btcstktypes.QueryClient)) {
 	n.GrpcConn(func(conn *grpc.ClientConn) {
 		btcStakingClient := btcstktypes.NewQueryClient(conn)
 		f(btcStakingClient)
+	})
+}
+
+func (n *Node) GovQuery(f func(govtypes.QueryClient)) {
+	n.GrpcConn(func(conn *grpc.ClientConn) {
+		govClient := govtypes.NewQueryClient(conn)
+		f(govClient)
+	})
+}
+
+func (n *Node) UpgradeQuery(f func(upgradetypes.QueryClient)) {
+	n.GrpcConn(func(conn *grpc.ClientConn) {
+		upgradeClient := upgradetypes.NewQueryClient(conn)
+		f(upgradeClient)
 	})
 }
 
@@ -258,6 +274,36 @@ func (n *Node) QueryFinalityProvider(fpBtcPkHex string) *btcstktypes.FinalityPro
 	})
 
 	return resp.FinalityProvider
+}
+
+func (n *Node) QueryProposals() *govtypes.QueryProposalsResponse {
+	var (
+		resp *govtypes.QueryProposalsResponse
+		err  error
+	)
+
+	n.GovQuery(func(govClient govtypes.QueryClient) {
+		resp, err = govClient.Proposals(context.Background(), &govtypes.QueryProposalsRequest{})
+		require.NoError(n.T(), err)
+	})
+
+	return resp
+}
+
+func (n *Node) QueryAppliedPlan(planName string) int64 {
+	var (
+		resp *upgradetypes.QueryAppliedPlanResponse
+		err  error
+	)
+
+	n.UpgradeQuery(func(upgradeClient upgradetypes.QueryClient) {
+		resp, err = upgradeClient.AppliedPlan(context.Background(), &upgradetypes.QueryAppliedPlanRequest{
+			Name: planName,
+		})
+		require.NoError(n.T(), err)
+	})
+
+	return resp.Height
 }
 
 // QueryLatestEpochHeaderCLI retrieves the latest epoch header for the specified consumer ID using CLI

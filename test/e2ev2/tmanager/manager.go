@@ -2,6 +2,7 @@ package tmanager
 
 import (
 	"fmt"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	"math/rand"
 	"testing"
 	"time"
@@ -28,6 +29,14 @@ type TestManagerIbc struct {
 	*TestManager
 	Hermes *HermesRelayer
 }
+
+// TestManagerUpgrade manages software upgrade, which includes proposal upgrade and fork upgrade
+type TestManagerUpgrade struct {
+	*TestManager
+	ForkHeight int64 // ForkHeight > 0 implies that this is a fork upgrade, otherwise, proposal upgrade
+}
+
+type PreUpgradeFunc func([]*Node)
 
 // NewTestManager creates a new network manager with isolated Docker network
 func NewTestManager(t *testing.T) *TestManager {
@@ -90,6 +99,24 @@ func NewTmWithIbc(t *testing.T) *TestManagerIbc {
 	}
 }
 
+func NewTmWithUpgrade(
+	t *testing.T,
+	forkHeight int64,
+	tag string,
+) *TestManagerUpgrade {
+	tm := NewTestManager(t)
+	bbnCfg := NewChainConfig(tm.TempDir, CHAIN_ID_BABYLON)
+	bbnCfg.IsUpgrade = true
+	// if tag is empty string, use default tag v4.0.0-rc.1
+	bbnCfg.Tag = tag
+	tm.Chains[CHAIN_ID_BABYLON] = NewChain(tm, bbnCfg)
+
+	return &TestManagerUpgrade{
+		TestManager: tm,
+		ForkHeight:  forkHeight,
+	}
+}
+
 func (tm *TestManager) NetworkID() string {
 	return tm.Network.Network.ID
 }
@@ -117,6 +144,31 @@ func (tm *TestManagerIbc) Start() {
 
 	// creating channels by hermes modifies the acc sequence
 	tm.UpdateWalletsAccSeqNumber()
+}
+
+// Start runs all the nodes, PreUpgradeFunc and processes upgrade to the latest tag
+func (tm *TestManagerUpgrade) Start(govMsg *govtypes.MsgSubmitProposal, preUpgradeFunc PreUpgradeFunc) {
+	tm.TestManager.Start()
+
+	// wait for chains to produce at least one block
+	tm.ChainsWaitUntilHeight(1)
+
+	var nodes []*Node
+	for _, chain := range tm.Chains {
+		nodes = append(nodes, chain.AllNodes()...)
+	}
+	preUpgradeFunc(nodes)
+
+	// run upgrade either fork or proposal upgrade
+	if tm.ForkHeight > 0 {
+		if err := tm.runForkUpgrade(); err != nil {
+			tm.T.Fatalf("failed to run fork upgrade: %v", err)
+		}
+	} else {
+		if err := tm.runProposalUpgrade(govMsg); err != nil {
+			tm.T.Fatalf("failed to run proposal upgrade: %v", err)
+		}
+	}
 }
 
 // UpdateWalletsAccSeqNumber iterates over all chains, nodes and wallets
