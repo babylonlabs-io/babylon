@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -586,6 +587,62 @@ func runTestWithEnv(t *testing.T, env string, btcTip uint32) {
 	// Verify costakers were created
 	actualCostakers := getAllCostakers(t, ctx, cdc, storeService)
 	t.Logf("Created %d costakers", len(actualCostakers))
+
+	activeCostakers := make(map[string]costktypes.CostakerRewardsTracker)
+	totalScore := math.ZeroInt()
+	maxCostkTotalScore := math.ZeroInt()
+	for addr, costaker := range actualCostakers {
+		if !costaker.TotalScore.IsPositive() {
+			continue
+		}
+
+		if costaker.TotalScore.GT(maxCostkTotalScore) {
+			maxCostkTotalScore = costaker.TotalScore
+		}
+
+		activeCostakers[addr] = costaker
+
+		totalScore = totalScore.Add(costaker.TotalScore)
+	}
+
+	totalScoreDec := totalScore.ToLegacyDec()
+	maxPct := math.LegacyZeroDec()
+	percentageOfScore := make(map[string]math.LegacyDec, len(activeCostakers))
+	sliceActiveCostakers := make([]struct {
+		costktypes.CostakerRewardsTracker
+		address string
+	}, 0, len(activeCostakers))
+	for addr, activeCostaker := range activeCostakers {
+		legCostk := activeCostaker.TotalScore.ToLegacyDec()
+		pct := legCostk.Quo(totalScoreDec)
+		if pct.GT(maxPct) {
+			maxPct = pct
+		}
+
+		percentageOfScore[addr] = pct
+		sliceActiveCostakers = append(sliceActiveCostakers, struct {
+			costktypes.CostakerRewardsTracker
+			address string
+		}{
+			CostakerRewardsTracker: activeCostaker,
+			address:                addr,
+		})
+	}
+
+	sort.Slice(sliceActiveCostakers, func(i, j int) bool {
+		return sliceActiveCostakers[i].TotalScore.GT(sliceActiveCostakers[j].TotalScore)
+	})
+
+	totalCostakers := len(actualCostakers)
+	lenActiveCostaker := len(activeCostakers)
+	fmt.Printf("The total Costakers after upgrade %d and active costakers is %d\nThe sum of total score is %s and the costaker with the higher score %s and corresponds to the percentage is %s\n",
+		totalCostakers, lenActiveCostaker, totalScore.String(), maxCostkTotalScore.String(), maxPct.String())
+	t.Logf("The total Costakers after upgrade %d and active costakers is %d\nThe sum of total score is %s and the costaker with the higher score %s and corresponds to the percentage is %s",
+		totalCostakers, lenActiveCostaker, totalScore.String(), maxCostkTotalScore.String(), maxPct.String())
+
+	for i, topCostaker := range sliceActiveCostakers[:10] {
+		fmt.Printf("\nTop costaker %d - %+v", i+1, topCostaker)
+	}
 
 	// Verify that created costakers match expected testnet costakers
 	expectedSet := make(map[string]bool)
