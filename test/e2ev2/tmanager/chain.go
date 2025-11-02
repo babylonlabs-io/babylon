@@ -108,7 +108,6 @@ func NewChain(tm *TestManager, cfg *ChainConfig) *Chain {
 		},
 	}
 
-	// TODO: should be initialized based on the binary version of the node
 	c.InitGenesis()
 	c.WritePeers()
 

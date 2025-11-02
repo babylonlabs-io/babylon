@@ -125,7 +125,6 @@ func NewNodeWithoutBls(tm *TestManager, name string, cfg *ChainConfig) *Node {
 	// each node starts with at least one wallet
 	n.CreateWallet(DefaultNodeWalletKey)
 	n.CreateConfigDir()
-	// TODO: should be initialized based on the binary version of the node
 	n.WriteConfigAndGenesis()
 	n.CreateNodeKeyP2P()
 	n.CreateAppConfig()
