@@ -7,8 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ory/dockertest/v3"
-
 	sdkmath "cosmossdk.io/math"
 	appkeepers "github.com/babylonlabs-io/babylon/v4/app/keepers"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
@@ -168,54 +166,6 @@ func (c *Chain) InitGenesis() {
 
 	// write the same genesis to all nodes
 	c.WriteGenesis(genDoc)
-}
-
-// RunChainInitResource runs a chain init container to initialize genesis and configs for a chain with chainId.
-// The chain is to be configured with chainVotingPeriod and validators deserialized from validatorConfigBytes.
-// The genesis and configs are to be mounted on the init container as volume on mountDir path.
-// Returns the container resource and error if any. This method does not Purge the container. The caller
-// must deal with removing the resource.
-func (c *Chain) RunChainInitResource(
-	chainId string,
-	chainVotingPeriod, chainExpeditedVotingPeriod int,
-	validatorInitConfigBytesHexEncoded string,
-	mountDir string,
-	forkHeight int,
-	btcHeaders string,
-) (*dockertest.Resource, error) {
-	votingPeriodDuration := time.Duration(chainVotingPeriod * 1000000000)
-	expeditedVotingPeriodDuration := time.Duration(chainExpeditedVotingPeriod * 1000000000)
-
-	// Note: any change that needs to take effect in older releases, lets say
-	// that it is needed to update the config of some node in the TGE chain
-	// for software upgrade testing, it is needed to also update the version
-	// from that babylon node, probably a new tag will need to be pushed in
-	// older releases branches increasing the minor patch.
-	initResource, err := c.Tm.ContainerManager.Pool.RunWithOptions(
-		&dockertest.RunOptions{
-			Name:       chainId,
-			Repository: InitChainContainerE2E,
-			NetworkID:  c.Tm.NetworkID(),
-			Cmd: []string{
-				fmt.Sprintf("--data-dir=%s", mountDir),
-				fmt.Sprintf("--chain-id=%s", chainId),
-				fmt.Sprintf("--config=%s", validatorInitConfigBytesHexEncoded),
-				fmt.Sprintf("--voting-period=%v", votingPeriodDuration),
-				fmt.Sprintf("--expedited-voting-period=%v", expeditedVotingPeriodDuration),
-				fmt.Sprintf("--fork-height=%v", forkHeight),
-				fmt.Sprintf("--btc-headers=%s", btcHeaders),
-			},
-			User: "root:root",
-			Mounts: []string{
-				fmt.Sprintf("%s:%s", mountDir, mountDir),
-			},
-		},
-		NoRestart,
-	)
-	if err != nil {
-		return nil, err
-	}
-	return initResource, nil
 }
 
 // UpdateWalletSequenceAndAccountNumbers updates the sequence and account numbers for all wallets
