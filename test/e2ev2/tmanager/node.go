@@ -94,7 +94,7 @@ type ValidatorNode struct {
 func NewNode(tm *TestManager, name string, cfg *ChainConfig) *Node {
 	n := NewNodeWithoutBls(tm, name, cfg)
 	// even regular nodes needs bls keys
-	// to avoid erors in signer.LoadOrGenBlsKey
+	// to avoid errors in signer.LoadOrGenBlsKey
 	_, err := GenBlsKey(n.Home)
 	require.NoError(n.T(), err)
 	return n
