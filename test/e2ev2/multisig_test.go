@@ -112,7 +112,7 @@ func TestSingleSigBtcDel(t *testing.T) {
 	stakerSK, _, err := datagen.GenRandomBTCKeyPair(r)
 	require.NoError(t, err)
 
-	msg, stakingInfoBuilt := buildSingleSigDelegationMsg(
+	msg, stakingInfoBuilt := BuildSingleSigDelegationMsg(
 		t, r, bbn2,
 		bbn2.DefaultWallet(),
 		stakerSK,
@@ -347,6 +347,10 @@ func startChainAndCreateFp(t *testing.T) (bbn2 *tmanager.Node, fpSK *btcec.Priva
 	tm := tmanager.NewTestManager(t)
 	cfg := tmanager.NewChainConfig(tm.TempDir, tmanager.CHAIN_ID_BABYLON)
 	cfg.NodeCount = 2
+	cfg.StartingBtcStakingParams = &tmanager.StartingBtcStakingParams{
+		MaxStakerNum:    3,
+		MaxStakerQuorum: 2,
+	}
 	tm.Chains[tmanager.CHAIN_ID_BABYLON] = tmanager.NewChain(tm, cfg)
 	tm.Start()
 
@@ -511,8 +515,8 @@ func buildMultisigDelegationMsgWithSigCount(
 	}, stakingInfo
 }
 
-// buildSingleSigDelegationMsg constructs a original single-sig BTC delegation message
-func buildSingleSigDelegationMsg(
+// BuildSingleSigDelegationMsg constructs a original single-sig BTC delegation message
+func BuildSingleSigDelegationMsg(
 	t *testing.T,
 	r *rand.Rand,
 	node *tmanager.Node,

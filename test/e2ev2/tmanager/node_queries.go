@@ -260,6 +260,22 @@ func (n *Node) QueryBTCDelegation(stakingTxHash string) *btcstktypes.BTCDelegati
 	return resp.BtcDelegation
 }
 
+func (n *Node) QueryBTCDelegations(status btcstktypes.BTCDelegationStatus) []*btcstktypes.BTCDelegationResponse {
+	var (
+		resp *btcstktypes.QueryBTCDelegationsResponse
+		err  error
+	)
+
+	n.BtcStkQuery(func(btcStkClient btcstktypes.QueryClient) {
+		resp, err = btcStkClient.BTCDelegations(context.Background(), &btcstktypes.QueryBTCDelegationsRequest{
+			Status: status,
+		})
+		require.NoError(n.T(), err)
+	})
+
+	return resp.BtcDelegations
+}
+
 func (n *Node) QueryFinalityProvider(fpBtcPkHex string) *btcstktypes.FinalityProviderResponse {
 	var (
 		resp *btcstktypes.QueryFinalityProviderResponse

@@ -53,6 +53,8 @@ type InitGenesis struct {
 type StartingBtcStakingParams struct {
 	CovenantCommittee []bbn.BIP340PubKey
 	CovenantQuorum    uint32
+	MaxStakerQuorum   uint32
+	MaxStakerNum      uint32
 }
 
 func UpdateGenAccounts(
@@ -96,6 +98,7 @@ func UpdateGenModulesState(
 	btcHeaders []*btclighttypes.BTCHeaderInfo,
 	startingBtcStakingParams *StartingBtcStakingParams,
 	bankBalancesToAdd []banktypes.Balance,
+	isUpgrade bool,
 ) error {
 	err := UpdateModuleGenesis(appGenState, banktypes.ModuleName, &banktypes.GenesisState{}, UpdateGenesisBank(bankBalancesToAdd))
 	if err != nil {
@@ -152,9 +155,13 @@ func UpdateGenModulesState(
 		return fmt.Errorf("failed to update tokenfactory genesis state: %w", err)
 	}
 
-	err = UpdateModuleGenesis(appGenState, btcstktypes.ModuleName, &btcstktypes.GenesisState{}, UpdateGenesisBtcStaking(startingBtcStakingParams))
-	if err != nil {
-		return fmt.Errorf("failed to update btc staking genesis state: %w", err)
+	// NOTE: in case of the software upgrade test, we don't want to update
+	// genesis state since it will introduce version incompatibility of genesis.json
+	if !isUpgrade {
+		err = UpdateModuleGenesis(appGenState, btcstktypes.ModuleName, &btcstktypes.GenesisState{}, UpdateGenesisBtcStaking(startingBtcStakingParams))
+		if err != nil {
+			return fmt.Errorf("failed to update btc staking genesis state: %w", err)
+		}
 	}
 
 	return nil
@@ -258,13 +265,9 @@ func UpdateGenesisFinality(finalityGenState *finalitytypes.GenesisState) {
 func UpdateGenesisBtcStaking(p *StartingBtcStakingParams) func(*btcstktypes.GenesisState) {
 	return func(gen *btcstktypes.GenesisState) {
 		if p != nil {
-			gen.Params[0].CovenantPks = p.CovenantCommittee
-			gen.Params[0].CovenantQuorum = p.CovenantQuorum
+			gen.Params[0].MaxStakerNum = p.MaxStakerNum
+			gen.Params[0].MaxStakerQuorum = p.MaxStakerQuorum
 		}
-
-		// TODO: uncomment this except testing e2e upgrade with e2ev2 package
-		//gen.Params[0].MaxStakerQuorum = 2
-		//gen.Params[0].MaxStakerNum = 3
 	}
 }
 

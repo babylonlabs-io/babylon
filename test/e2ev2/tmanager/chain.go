@@ -34,19 +34,21 @@ var (
 
 // ChainConfig defines configuration for a blockchain
 type ChainConfig struct {
-	ChainID               string
-	Home                  string
-	ValidatorCount        int
-	NodeCount             int
-	BlockTime             time.Duration
-	EpochLength           int64
-	VotingPeriod          time.Duration
-	ExpeditedVotingPeriod time.Duration
-	BTCConfirmationDepth  int
-	GasLimit              int64
-	IsUpgrade             bool
-	Tag                   string
-	UpgradePropHeight     int64
+	ChainID                  string
+	Home                     string
+	ValidatorCount           int
+	NodeCount                int
+	BlockTime                time.Duration
+	EpochLength              int64
+	VotingPeriod             time.Duration
+	ExpeditedVotingPeriod    time.Duration
+	BTCConfirmationDepth     int
+	GasLimit                 int64
+	IsUpgrade                bool
+	Tag                      string
+	UpgradePropHeight        int64
+	BootstrapRepository      string
+	StartingBtcStakingParams *StartingBtcStakingParams
 }
 
 // Chain represents a blockchain with multiple nodes
@@ -154,27 +156,12 @@ func (c *Chain) InitGenesis() {
 	c.UpdateWalletSequenceAndAccountNumbers(sanitizedAccs)
 
 	// update all other modules
-	err = UpdateGenModulesState(appGenState, *c.InitialGenesis, c.Validators, nil, nil, balancesToAdd)
-	require.NoError(c.T(), err, "failed to update gen state for all other modules")
-
-	// TODO: ultimately we need to build binary before upgrade and init genesis based on that binary
-	// remove v5-specific fields from btcstaking module for backward compatibility
-	var btcStakingGen map[string]interface{}
-	err = json.Unmarshal(appGenState["btcstaking"], &btcStakingGen)
-	require.NoError(c.T(), err)
-
-	// navigate to params array and remove v5-specific fields
-	if params, ok := btcStakingGen["params"].([]interface{}); ok && len(params) > 0 {
-		if param0, ok := params[0].(map[string]interface{}); ok {
-			delete(param0, "max_staker_num")
-			delete(param0, "max_staker_quorum")
-		}
+	var startingBtcStakingParams *StartingBtcStakingParams
+	if c.Config.StartingBtcStakingParams != nil {
+		startingBtcStakingParams = c.Config.StartingBtcStakingParams
 	}
-
-	// marshal the modified btcstaking genesis back
-	btcStakingGenBz, err := json.Marshal(btcStakingGen)
-	require.NoError(c.T(), err)
-	appGenState["btcstaking"] = btcStakingGenBz
+	err = UpdateGenModulesState(appGenState, *c.InitialGenesis, c.Validators, nil, startingBtcStakingParams, balancesToAdd, c.Config.IsUpgrade)
+	require.NoError(c.T(), err, "failed to update gen state for all other modules")
 
 	appStateJSON, err := json.Marshal(appGenState)
 	require.NoError(c.T(), err, "failed to marshal application genesis state")

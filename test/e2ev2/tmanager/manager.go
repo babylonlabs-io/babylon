@@ -111,7 +111,11 @@ func NewTmWithUpgrade(
 	bbnCfg := NewChainConfig(tm.TempDir, CHAIN_ID_BABYLON)
 	bbnCfg.IsUpgrade = true
 	// if tag is empty string, use default tag v4.0.0-rc.1
+	if tag == "" {
+		tag = BabylonContainerTagBeforeUpgrade
+	}
 	bbnCfg.Tag = tag
+	bbnCfg.BootstrapRepository = BabylonContainerNameBeforeUpgrade
 	tm.Chains[CHAIN_ID_BABYLON] = NewChain(tm, bbnCfg)
 
 	return &TestManagerUpgrade{
@@ -179,9 +183,9 @@ func (tm *TestManagerUpgrade) Start(govMsg *govtypes.MsgSubmitProposal, preUpgra
 			if err != nil {
 				tm.T.Fatalf("failed to get latest block height: %v", err)
 			}
-			tm.T.Logf("latest block height on chain %s: %d", chain.ChainID(), height)
+			tm.T.Logf("node %s: latest block height on chain %s: %d", node.Name, chain.ChainID(), height)
 			appliedHeight := node.QueryAppliedPlan(v5.UpgradeName)
-			tm.T.Logf("%s plan applied at height: %d", v5.UpgradeName, appliedHeight)
+			tm.T.Logf("node %s: %s plan applied at height: %d", node.Name, v5.UpgradeName, appliedHeight)
 		}
 	}
 }

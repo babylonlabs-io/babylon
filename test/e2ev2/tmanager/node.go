@@ -2,8 +2,8 @@ package tmanager
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 	"io"
 	"math/rand"
 	"net/http"
@@ -18,8 +18,6 @@ import (
 
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
 	blc "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
-
-	"encoding/json"
 
 	sdkmath "cosmossdk.io/math"
 	appsigner "github.com/babylonlabs-io/babylon/v4/app/signer"
@@ -384,48 +382,28 @@ func (n *Node) WriteConfigAndGenesis() {
 	config.SetRoot(n.Home)
 	config.Moniker = n.Name
 
+	if n.ChainConfig.BootstrapRepository != "" {
+		n.ensureBootstrapGenesis(config)
+	}
+
 	appGenesis, err := AppGenesisFromConfig(n.Home)
 	require.NoError(n.T(), err)
 
-	// Create a temp app to get the default genesis state
-	tempApp := bbnapp.NewTmpBabylonApp()
-	appState, err := json.MarshalIndent(tempApp.DefaultGenesis(), "", " ")
-	require.NoError(n.T(), err)
-
-	// TODO: ultimately we need to build binary before upgrade and init genesis based on that binary
-	// remove MaxStakerQuorum and MaxStakerNum field from x/btcstaking default genesis
-	var appGenState map[string]json.RawMessage
-	err = json.Unmarshal(appState, &appGenState)
-	require.NoError(n.T(), err)
-
-	// get the btcstaking module genesis as a map to manipulate JSON directly
-	var btcStakingGen map[string]interface{}
-	err = json.Unmarshal(appGenState[bstypes.ModuleName], &btcStakingGen)
-	require.NoError(n.T(), err)
-
-	// navigate to params array and remove v5-specific fields
-	if params, ok := btcStakingGen["params"].([]interface{}); ok && len(params) > 0 {
-		if param0, ok := params[0].(map[string]interface{}); ok {
-			delete(param0, "max_staker_num")
-			delete(param0, "max_staker_quorum")
-		}
+	if len(appGenesis.AppState) == 0 {
+		tempApp := bbnapp.NewTmpBabylonApp()
+		appState, err := json.MarshalIndent(tempApp.DefaultGenesis(), "", " ")
+		require.NoError(n.T(), err)
+		appGenesis.AppState = appState
 	}
 
-	// marshal the modified btcstaking genesis back to JSON
-	btcStakingGenBz, err := json.Marshal(btcStakingGen)
-	require.NoError(n.T(), err)
-
-	// update the app state with modified btcstaking genesis
-	appGenState[bstypes.ModuleName] = btcStakingGenBz
-
-	// marshal the entire app state back
-	appState, err = json.MarshalIndent(appGenState, "", " ")
-	require.NoError(n.T(), err)
-
 	appGenesis.ChainID = n.ChainConfig.ChainID
-	appGenesis.AppState = appState
-	appGenesis.Consensus = &genutiltypes.ConsensusGenesis{
-		Params: cmttypes.DefaultConsensusParams(),
+	if appGenesis.Consensus == nil {
+		appGenesis.Consensus = &genutiltypes.ConsensusGenesis{
+			Params: cmttypes.DefaultConsensusParams(),
+		}
+	}
+	if appGenesis.Consensus.Params == nil {
+		appGenesis.Consensus.Params = cmttypes.DefaultConsensusParams()
 	}
 	appGenesis.Consensus.Params.Block.MaxGas = n.ChainConfig.GasLimit
 	appGenesis.Consensus.Params.ABCI.VoteExtensionsEnableHeight = bbnapp.DefaultVoteExtensionsEnableHeight
@@ -433,6 +411,56 @@ func (n *Node) WriteConfigAndGenesis() {
 	err = genutil.ExportGenesisFile(appGenesis, config.GenesisFile())
 	require.NoError(n.T(), err)
 	cmtconfig.WriteConfigFile(filepath.Join(n.ConfigDirPath(), "config.toml"), config)
+}
+
+func (n *Node) ensureBootstrapGenesis(config *cmtconfig.Config) {
+	genesisFile := config.GenesisFile()
+
+	_, err := os.Stat(genesisFile)
+	if err == nil {
+		return
+	}
+	require.Truef(n.T(), os.IsNotExist(err), "failed to check genesis file before bootstrap: %v", err)
+
+	currentUser, err := user.Current()
+	require.NoError(n.T(), err)
+
+	userSpec := fmt.Sprintf("%s:%s", currentUser.Uid, currentUser.Gid)
+	containerName := fmt.Sprintf("%s-bootstrap-%s", n.Container.Name, n.Name)
+
+	script := fmt.Sprintf(`
+set -euo pipefail
+export BABYLON_HOME=%s
+export BABYLON_BLS_PASSWORD=password
+mkdir -p "$BABYLON_HOME/config"
+rm -f "$BABYLON_HOME/config/genesis.json"
+rm -f "$BABYLON_HOME/config/app.toml"
+rm -f "$BABYLON_HOME/config/config.toml"
+rm -rf "$BABYLON_HOME/data"
+babylond init %s --chain-id %s --home $BABYLON_HOME
+`, BabylonHomePathInContainer, n.Name, n.ChainConfig.ChainID)
+
+	runOpts := &dockertest.RunOptions{
+		Name:       containerName,
+		Repository: n.ChainConfig.BootstrapRepository,
+		Tag:        n.ChainConfig.Tag,
+		NetworkID:  n.Tm.NetworkID(),
+		User:       userSpec,
+		Entrypoint: []string{"sh", "-c", script},
+		Mounts: []string{
+			fmt.Sprintf("%s/:%s", n.Home, BabylonHomePathInContainer),
+		},
+	}
+
+	resource, err := n.Tm.ContainerManager.Pool.RunWithOptions(runOpts, NoRestart)
+	require.NoError(n.T(), err, "failed to run bootstrap container")
+
+	exitCode, err := n.Tm.ContainerManager.Pool.Client.WaitContainer(resource.Container.ID)
+	require.NoError(n.T(), err, "failed waiting for bootstrap container")
+	require.Equal(n.T(), 0, exitCode, "bootstrap container exited with non-zero code")
+
+	err = resource.Close()
+	require.NoError(n.T(), err, "failed to clean up bootstrap container")
 }
 
 func (n *Node) InitConfigWithPeers(persistentPeers []string) {
@@ -503,7 +531,7 @@ func (n *Node) RunNodeResource() *dockertest.Resource {
 
 	if !n.Container.ImageExistsLocally() { // builds it locally if it doesn't have
 		// needs to be in the path where the makefile is located '-'
-		err := RunMakeCommand(filepath.Join(pwd, "../../"), "build-docker-e2e")
+		err := RunMakeCommand(filepath.Join(pwd, "../../contrib/images"), "babylond-e2e")
 		require.NoError(n.T(), err)
 	}
 
