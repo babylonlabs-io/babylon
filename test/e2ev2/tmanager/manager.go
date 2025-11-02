@@ -168,9 +168,7 @@ func (tm *TestManagerUpgrade) Start(govMsg *govtypes.MsgSubmitProposal, preUpgra
 
 	// run upgrade either fork or proposal upgrade
 	if tm.ForkHeight > 0 {
-		if err := tm.runForkUpgrade(); err != nil {
-			tm.T.Fatalf("failed to run fork upgrade: %v", err)
-		}
+		tm.runForkUpgrade()
 	} else {
 		if err := tm.runProposalUpgrade(govMsg); err != nil {
 			tm.T.Fatalf("failed to run proposal upgrade: %v", err)

@@ -374,7 +374,7 @@ func startChainAndCreateFp(t *testing.T) (bbn2 *tmanager.Node, fpSK *btcec.Priva
 	fpResp := bbn1.QueryFinalityProvider(fp.BtcPk.MarshalHex())
 	require.NotNil(t, fpResp)
 
-	return
+	return bbn2, fpSK, r
 }
 
 // buildMultisigDelegationWithSigCount construct multisig btc delegation msg

@@ -14,11 +14,10 @@ var (
 	ErrProposalNotPassed   = fmt.Errorf("proposal is not passed")
 )
 
-func (tm *TestManagerUpgrade) runForkUpgrade() error {
+func (tm *TestManagerUpgrade) runForkUpgrade() {
 	tm.T.Logf("waiting to reach fork height on chain")
 	tm.ChainsWaitUntilHeight(uint32(tm.ForkHeight))
 	tm.T.Logf("fork height reached on chain")
-	return nil
 }
 
 func (tm *TestManagerUpgrade) runProposalUpgrade(govMsg *govtypes.MsgSubmitProposal) error {
