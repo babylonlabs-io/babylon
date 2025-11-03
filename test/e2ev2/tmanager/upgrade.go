@@ -2,9 +2,9 @@ package tmanager
 
 import (
 	"fmt"
-	"github.com/cosmos/cosmos-sdk/codec/types"
 
 	upgradetypes "cosmossdk.io/x/upgrade/types"
+	"github.com/cosmos/cosmos-sdk/codec/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 )
 

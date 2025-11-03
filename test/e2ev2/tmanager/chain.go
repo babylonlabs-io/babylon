@@ -42,11 +42,11 @@ type ChainConfig struct {
 	ExpeditedVotingPeriod    time.Duration
 	BTCConfirmationDepth     int
 	GasLimit                 int64
-	IsUpgrade                bool
-	Tag                      string
-	UpgradePropHeight        int64
-	BootstrapRepository      string
-	StartingBtcStakingParams *StartingBtcStakingParams
+	IsUpgrade                bool                      // true when chain is used for upgrade test
+	Tag                      string                    // Tag is only used for upgrade test
+	UpgradePropHeight        int64                     // height for upgrade plan
+	BootstrapRepository      string                    // repository that will be used before upgrade
+	StartingBtcStakingParams *StartingBtcStakingParams // customizable x/btcstaking params when starting the new chain
 }
 
 // Chain represents a blockchain with multiple nodes

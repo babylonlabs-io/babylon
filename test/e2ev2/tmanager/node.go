@@ -16,8 +16,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
-	blc "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
+	"github.com/ory/dockertest/v3"
+	"github.com/ory/dockertest/v3/docker"
+	"github.com/spf13/viper"
+	"github.com/stretchr/testify/require"
 
 	sdkmath "cosmossdk.io/math"
 	appsigner "github.com/babylonlabs-io/babylon/v4/app/signer"
@@ -36,16 +38,14 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/ory/dockertest/v3"
-	"github.com/ory/dockertest/v3/docker"
-	"github.com/spf13/viper"
-	"github.com/stretchr/testify/require"
 
 	bbnapp "github.com/babylonlabs-io/babylon/v4/app"
 	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
 	"github.com/babylonlabs-io/babylon/v4/cmd/babylond/cmd"
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/util"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	blc "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
 )
 
