@@ -31,7 +31,10 @@ func TestUpgradeV5(t *testing.T) {
 	govMsg, preUpgradeFunc, err := createGovPropAndPreUpgradeFunc(t, validator.Wallet.WalletSender)
 	require.NoError(t, err)
 
-	tm.Start(govMsg, preUpgradeFunc)
+	// start chain with previous binary
+	tm.Start()
+	// execute preUpgradeFunc, submit a proposal, vote, and then process upgrade
+	tm.Upgrade(govMsg, preUpgradeFunc)
 
 	// post-upgrade state verification
 	bsParams := validator.QueryBtcStakingParams()

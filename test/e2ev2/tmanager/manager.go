@@ -153,13 +153,17 @@ func (tm *TestManagerIbc) Start() {
 	tm.UpdateWalletsAccSeqNumber()
 }
 
-// Start runs all the nodes, PreUpgradeFunc and processes upgrade to the latest tag
-func (tm *TestManagerUpgrade) Start(govMsg *govtypes.MsgSubmitProposal, preUpgradeFunc PreUpgradeFunc) {
+// Start runs all the nodes and wait for block 1
+func (tm *TestManagerUpgrade) Start() {
 	tm.TestManager.Start()
 
 	// wait for chains to produce at least one block
 	tm.ChainsWaitUntilHeight(1)
+}
 
+// Upgrade executes preUpgradeFunc and processes upgrade
+// NOTE: this function must be invoked after Start()
+func (tm *TestManagerUpgrade) Upgrade(govMsg *govtypes.MsgSubmitProposal, preUpgradeFunc PreUpgradeFunc) {
 	var nodes []*Node
 	for _, chain := range tm.Chains {
 		nodes = append(nodes, chain.AllNodes()...)
@@ -175,6 +179,7 @@ func (tm *TestManagerUpgrade) Start(govMsg *govtypes.MsgSubmitProposal, preUpgra
 		}
 	}
 
+	// check if the upgrade was applied
 	for _, chain := range tm.Chains {
 		for _, node := range chain.AllNodes() {
 			height, err := node.LatestBlockNumber()

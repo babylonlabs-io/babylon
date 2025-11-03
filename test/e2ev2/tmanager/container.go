@@ -24,9 +24,6 @@ const (
 	BabylonContainerNameBeforeUpgrade = "babylonlabs/babylond"
 	BabylonContainerTagBeforeUpgrade  = "v4.0.0-rc.1"
 
-	// name of the image produced by running `make e2e-init-chain` in contrib/images
-	InitChainContainerE2E = "babylonlabs-io/babylond-e2e-init-chain"
-
 	HermesRelayerRepository = "informalsystems/hermes"
 	HermesRelayerTag        = "1.13.1"
 )
