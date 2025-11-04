@@ -6,19 +6,23 @@ import (
 	"net"
 	"net/url"
 
+	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+
+	upgradetypes "cosmossdk.io/x/upgrade/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdktx "github.com/cosmos/cosmos-sdk/types/tx"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
+	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
+
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/util"
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	btclighttypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
 	btcstktypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 	ictvtypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdktx "github.com/cosmos/cosmos-sdk/types/tx"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
-	"github.com/stretchr/testify/require"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 // ParseBTCHeaderInfoResponseToInfo converts BTCHeaderInfoResponse to BTCHeaderInfo
@@ -81,6 +85,20 @@ func (n *Node) BtcStkQuery(f func(btcstktypes.QueryClient)) {
 	n.GrpcConn(func(conn *grpc.ClientConn) {
 		btcStakingClient := btcstktypes.NewQueryClient(conn)
 		f(btcStakingClient)
+	})
+}
+
+func (n *Node) GovQuery(f func(govtypes.QueryClient)) {
+	n.GrpcConn(func(conn *grpc.ClientConn) {
+		govClient := govtypes.NewQueryClient(conn)
+		f(govClient)
+	})
+}
+
+func (n *Node) UpgradeQuery(f func(upgradetypes.QueryClient)) {
+	n.GrpcConn(func(conn *grpc.ClientConn) {
+		upgradeClient := upgradetypes.NewQueryClient(conn)
+		f(upgradeClient)
 	})
 }
 
@@ -244,6 +262,22 @@ func (n *Node) QueryBTCDelegation(stakingTxHash string) *btcstktypes.BTCDelegati
 	return resp.BtcDelegation
 }
 
+func (n *Node) QueryBTCDelegations(status btcstktypes.BTCDelegationStatus) []*btcstktypes.BTCDelegationResponse {
+	var (
+		resp *btcstktypes.QueryBTCDelegationsResponse
+		err  error
+	)
+
+	n.BtcStkQuery(func(btcStkClient btcstktypes.QueryClient) {
+		resp, err = btcStkClient.BTCDelegations(context.Background(), &btcstktypes.QueryBTCDelegationsRequest{
+			Status: status,
+		})
+		require.NoError(n.T(), err)
+	})
+
+	return resp.BtcDelegations
+}
+
 func (n *Node) QueryFinalityProvider(fpBtcPkHex string) *btcstktypes.FinalityProviderResponse {
 	var (
 		resp *btcstktypes.QueryFinalityProviderResponse
@@ -258,6 +292,52 @@ func (n *Node) QueryFinalityProvider(fpBtcPkHex string) *btcstktypes.FinalityPro
 	})
 
 	return resp.FinalityProvider
+}
+
+func (n *Node) QueryProposals() *govtypes.QueryProposalsResponse {
+	var (
+		resp *govtypes.QueryProposalsResponse
+		err  error
+	)
+
+	n.GovQuery(func(govClient govtypes.QueryClient) {
+		resp, err = govClient.Proposals(context.Background(), &govtypes.QueryProposalsRequest{})
+		require.NoError(n.T(), err)
+	})
+
+	return resp
+}
+
+func (n *Node) QueryTallyResult(propID uint64) *govtypes.TallyResult {
+	var (
+		resp *govtypes.QueryTallyResultResponse
+		err  error
+	)
+
+	n.GovQuery(func(govClient govtypes.QueryClient) {
+		resp, err = govClient.TallyResult(context.Background(), &govtypes.QueryTallyResultRequest{
+			ProposalId: propID,
+		})
+		require.NoError(n.T(), err)
+	})
+
+	return resp.Tally
+}
+
+func (n *Node) QueryAppliedPlan(planName string) int64 {
+	var (
+		resp *upgradetypes.QueryAppliedPlanResponse
+		err  error
+	)
+
+	n.UpgradeQuery(func(upgradeClient upgradetypes.QueryClient) {
+		resp, err = upgradeClient.AppliedPlan(context.Background(), &upgradetypes.QueryAppliedPlanRequest{
+			Name: planName,
+		})
+		require.NoError(n.T(), err)
+	})
+
+	return resp.Height
 }
 
 // QueryLatestEpochHeaderCLI retrieves the latest epoch header for the specified consumer ID using CLI

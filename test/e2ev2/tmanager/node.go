@@ -2,6 +2,7 @@ package tmanager
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"math/rand"
@@ -15,10 +16,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
-	blc "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
-
-	"encoding/json"
+	"github.com/ory/dockertest/v3"
+	"github.com/ory/dockertest/v3/docker"
+	"github.com/spf13/viper"
+	"github.com/stretchr/testify/require"
 
 	sdkmath "cosmossdk.io/math"
 	appsigner "github.com/babylonlabs-io/babylon/v4/app/signer"
@@ -37,16 +38,14 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/ory/dockertest/v3"
-	"github.com/ory/dockertest/v3/docker"
-	"github.com/spf13/viper"
-	"github.com/stretchr/testify/require"
 
 	bbnapp "github.com/babylonlabs-io/babylon/v4/app"
 	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
 	"github.com/babylonlabs-io/babylon/v4/cmd/babylond/cmd"
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/util"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	blc "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
 )
 
@@ -95,7 +94,7 @@ type ValidatorNode struct {
 func NewNode(tm *TestManager, name string, cfg *ChainConfig) *Node {
 	n := NewNodeWithoutBls(tm, name, cfg)
 	// even regular nodes needs bls keys
-	// to avoid erros in signer.LoadOrGenBlsKey
+	// to avoid errors in signer.LoadOrGenBlsKey
 	_, err := GenBlsKey(n.Home)
 	require.NoError(n.T(), err)
 	return n
@@ -106,13 +105,19 @@ func NewNodeWithoutBls(tm *TestManager, name string, cfg *ChainConfig) *Node {
 	nPorts, err := tm.PortMgr.AllocateNodePorts()
 	require.NoError(tm.T, err)
 
-	cointanerName := fmt.Sprintf("%s-%s-%s", cfg.ChainID, name, tm.NetworkID()[:4])
+	containerName := fmt.Sprintf("%s-%s-%s", cfg.ChainID, name, tm.NetworkID()[:4])
+	container := NewContainerBbnNode(containerName)
+	if cfg.IsUpgrade {
+		// build a container with the given tag before upgrade
+		container = NewContainerOldBbnNode(containerName, cfg.Tag)
+	}
+
 	n := &Node{
 		Tm:          tm,
 		ChainConfig: cfg,
 		Name:        name,
 		Home:        filepath.Join(cfg.Home, name),
-		Container:   NewContainerBbnNode(cointanerName),
+		Container:   container,
 		Ports:       nPorts,
 		Wallets:     make(map[string]*WalletSender, 0),
 	}
@@ -165,6 +170,18 @@ func (n *Node) HostPort(portID int) string {
 
 func (n *Node) ContainerResource() *dockertest.Resource {
 	return n.Tm.ContainerManager.Resources[n.Container.Name]
+}
+
+func (n *Node) RemoveResource() error {
+	resource := n.ContainerResource()
+	var opts docker.RemoveContainerOptions
+	opts.ID = resource.Container.ID
+	opts.Force = true
+	if err := n.Tm.Pool.Client.RemoveContainer(opts); err != nil {
+		return err
+	}
+	delete(n.Tm.ContainerManager.Resources, n.Container.Name)
+	return nil
 }
 
 func (n *ValidatorNode) CreateValidatorMsg(selfDelegationAmt sdk.Coin) sdk.Msg {
@@ -364,18 +381,28 @@ func (n *Node) WriteConfigAndGenesis() {
 	config.SetRoot(n.Home)
 	config.Moniker = n.Name
 
+	if n.ChainConfig.BootstrapRepository != "" {
+		n.ensureBootstrapGenesis(config)
+	}
+
 	appGenesis, err := AppGenesisFromConfig(n.Home)
 	require.NoError(n.T(), err)
 
-	// Create a temp app to get the default genesis state
-	tempApp := bbnapp.NewTmpBabylonApp()
-	appState, err := json.MarshalIndent(tempApp.DefaultGenesis(), "", " ")
-	require.NoError(n.T(), err)
+	if len(appGenesis.AppState) == 0 {
+		tempApp := bbnapp.NewTmpBabylonApp()
+		appState, err := json.MarshalIndent(tempApp.DefaultGenesis(), "", " ")
+		require.NoError(n.T(), err)
+		appGenesis.AppState = appState
+	}
 
 	appGenesis.ChainID = n.ChainConfig.ChainID
-	appGenesis.AppState = appState
-	appGenesis.Consensus = &genutiltypes.ConsensusGenesis{
-		Params: cmttypes.DefaultConsensusParams(),
+	if appGenesis.Consensus == nil {
+		appGenesis.Consensus = &genutiltypes.ConsensusGenesis{
+			Params: cmttypes.DefaultConsensusParams(),
+		}
+	}
+	if appGenesis.Consensus.Params == nil {
+		appGenesis.Consensus.Params = cmttypes.DefaultConsensusParams()
 	}
 	appGenesis.Consensus.Params.Block.MaxGas = n.ChainConfig.GasLimit
 	appGenesis.Consensus.Params.ABCI.VoteExtensionsEnableHeight = bbnapp.DefaultVoteExtensionsEnableHeight
@@ -383,6 +410,56 @@ func (n *Node) WriteConfigAndGenesis() {
 	err = genutil.ExportGenesisFile(appGenesis, config.GenesisFile())
 	require.NoError(n.T(), err)
 	cmtconfig.WriteConfigFile(filepath.Join(n.ConfigDirPath(), "config.toml"), config)
+}
+
+func (n *Node) ensureBootstrapGenesis(config *cmtconfig.Config) {
+	genesisFile := config.GenesisFile()
+
+	_, err := os.Stat(genesisFile)
+	if err == nil {
+		return
+	}
+	require.Truef(n.T(), os.IsNotExist(err), "failed to check genesis file before bootstrap: %v", err)
+
+	currentUser, err := user.Current()
+	require.NoError(n.T(), err)
+
+	userSpec := fmt.Sprintf("%s:%s", currentUser.Uid, currentUser.Gid)
+	containerName := fmt.Sprintf("%s-bootstrap-%s", n.Container.Name, n.Name)
+
+	script := fmt.Sprintf(`
+set -euo pipefail
+export BABYLON_HOME=%s
+export BABYLON_BLS_PASSWORD=password
+mkdir -p "$BABYLON_HOME/config"
+rm -f "$BABYLON_HOME/config/genesis.json"
+rm -f "$BABYLON_HOME/config/app.toml"
+rm -f "$BABYLON_HOME/config/config.toml"
+rm -rf "$BABYLON_HOME/data"
+babylond init %s --chain-id %s --home $BABYLON_HOME
+`, BabylonHomePathInContainer, n.Name, n.ChainConfig.ChainID)
+
+	runOpts := &dockertest.RunOptions{
+		Name:       containerName,
+		Repository: n.ChainConfig.BootstrapRepository,
+		Tag:        n.ChainConfig.Tag,
+		NetworkID:  n.Tm.NetworkID(),
+		User:       userSpec,
+		Entrypoint: []string{"sh", "-c", script},
+		Mounts: []string{
+			fmt.Sprintf("%s/:%s", n.Home, BabylonHomePathInContainer),
+		},
+	}
+
+	resource, err := n.Tm.ContainerManager.Pool.RunWithOptions(runOpts, NoRestart)
+	require.NoError(n.T(), err, "failed to run bootstrap container")
+
+	exitCode, err := n.Tm.ContainerManager.Pool.Client.WaitContainer(resource.Container.ID)
+	require.NoError(n.T(), err, "failed waiting for bootstrap container")
+	require.Equal(n.T(), 0, exitCode, "bootstrap container exited with non-zero code")
+
+	err = resource.Close()
+	require.NoError(n.T(), err, "failed to clean up bootstrap container")
 }
 
 func (n *Node) InitConfigWithPeers(persistentPeers []string) {
@@ -453,7 +530,7 @@ func (n *Node) RunNodeResource() *dockertest.Resource {
 
 	if !n.Container.ImageExistsLocally() { // builds it locally if it doesn't have
 		// needs to be in the path where the makefile is located '-'
-		err := RunMakeCommand(filepath.Join(pwd, "../../"), "build-docker-e2e")
+		err := RunMakeCommand(filepath.Join(pwd, "../../contrib/images"), "babylond-e2e")
 		require.NoError(n.T(), err)
 	}
 
