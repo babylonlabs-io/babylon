@@ -202,6 +202,42 @@ func FuzzWrappedCreateValidator(f *testing.F) {
 	})
 }
 
+func TestWrappedCreateValidatorQueuedMessageFields(t *testing.T) {
+	r := rand.New(rand.NewSource(1))
+	helper := testhelper.NewHelper(t)
+	ek := helper.App.EpochingKeeper
+	ck := helper.App.CheckpointingKeeper
+	msgServer := checkpointingkeeper.NewMsgServerImpl(ck)
+
+	ctx, err := helper.ApplyEmptyBlockWithVoteExtension(r)
+	require.NoError(t, err)
+
+	epoch := ek.GetEpoch(ctx)
+	require.Equal(t, uint64(1), epoch.EpochNumber)
+
+	addrs, err := app.AddTestAddrs(helper.App, ctx, 1, math.NewInt(100000000))
+	require.NoError(t, err)
+
+	msg, err := buildMsgWrappedCreateValidator(addrs[0])
+	require.NoError(t, err)
+
+	expectedHeight := uint64(ctx.HeaderInfo().Height)
+	expectedTime := ctx.HeaderInfo().Time
+
+	_, err = msgServer.WrappedCreateValidator(ctx, msg)
+	require.NoError(t, err)
+
+	queuedMsgs := ek.GetCurrentEpochMsgs(ctx)
+	require.Len(t, queuedMsgs, 1)
+
+	queuedMsg := queuedMsgs[0]
+	require.Equal(t, expectedHeight, queuedMsg.BlockHeight)
+	require.NotNil(t, queuedMsg.BlockTime)
+	require.Equal(t, expectedTime, *queuedMsg.BlockTime)
+	require.NotEmpty(t, queuedMsg.TxId)
+	require.Len(t, queuedMsg.TxId, 32)
+}
+
 func buildMsgWrappedCreateValidator(addr sdk.AccAddress) (*types.MsgWrappedCreateValidator, error) {
 	bondTokens := sdk.TokensFromConsensusPower(10, sdk.DefaultPowerReduction)
 	return buildMsgWrappedCreateValidatorWithAmount(addr, bondTokens)
