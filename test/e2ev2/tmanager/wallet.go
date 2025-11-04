@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"testing"
 
-	"cosmossdk.io/math"
-	appsigner "github.com/babylonlabs-io/babylon/v4/app/signer"
+	"github.com/stretchr/testify/require"
+
 	"github.com/btcsuite/btcd/btcec/v2"
+
+	"cosmossdk.io/math"
 	cmtcfg "github.com/cometbft/cometbft/config"
 	"github.com/cometbft/cometbft/crypto/ed25519"
 	"github.com/cometbft/cometbft/privval"
@@ -20,9 +22,9 @@ import (
 	sdksigning "github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	"github.com/cosmos/go-bip39"
-	"github.com/stretchr/testify/require"
 
 	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
+	appsigner "github.com/babylonlabs-io/babylon/v4/app/signer"
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/util"
 )
 
