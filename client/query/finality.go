@@ -22,7 +22,7 @@ type QueryVotingPowerDistributionResponseMap struct {
 
 type FinalityProviderDistResponse struct {
 	finalitytypes.FinalityProviderDistInfoResponse
-	IsActive bool `json:"isActive,omitempty"`
+	IsActive bool `json:"is_active,omitempty"`
 }
 
 // QueryFinality queries the Finality module of the Babylon node according to the given function
