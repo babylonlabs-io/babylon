@@ -373,6 +373,42 @@ func (d *BTCDelegation) GetStakingInfo(bsParams *Params, btcNet *chaincfg.Params
 	return stakingInfo, nil
 }
 
+// GetMultisigStakingInfo returns the staking info of the BTC delegation
+// the multisig staking info can be used for constructing witness of slashing tx
+// with access to a finality provider's SK
+func (d *BTCDelegation) GetMultisigStakingInfo(bsParams *Params, btcNet *chaincfg.Params) (*btcstaking.StakingInfo, error) {
+	fpBtcPkList, err := bbn.NewBTCPKsFromBIP340PKs(d.FpBtcPkList)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert finality provider pks to BTC pks %v", err)
+	}
+	covenantBtcPkList, err := bbn.NewBTCPKsFromBIP340PKs(bsParams.CovenantPks)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert covenant pks to BTC pks %v", err)
+	}
+
+	// construct stakerPKs from both multisig info and BtcPk
+	stakerPKs, err := bbn.NewBTCPKsFromBIP340PKs(d.MultisigInfo.StakerBtcPkList)
+	if err != nil {
+		return nil, fmt.Errorf("failed to BIP340 pks to BTC pks %v", err)
+	}
+	stakerPKs = append(stakerPKs, d.BtcPk.MustToBTCPK())
+
+	stakingInfo, err := btcstaking.BuildMultisigStakingInfo(
+		stakerPKs,
+		d.MultisigInfo.StakerQuorum,
+		fpBtcPkList,
+		covenantBtcPkList,
+		bsParams.CovenantQuorum,
+		d.MustGetValidStakingTime(),
+		btcutil.Amount(d.TotalSat),
+		btcNet,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("could not create BTC staking info: %v", err)
+	}
+	return stakingInfo, nil
+}
+
 func (d *BTCDelegation) SignUnbondingTx(bsParams *Params, btcNet *chaincfg.Params, sk *btcec.PrivateKey) (*schnorr.Signature, error) {
 	stakingTx, err := bbn.NewBTCTxFromBytes(d.StakingTx)
 	if err != nil {
@@ -424,6 +460,48 @@ func (d *BTCDelegation) GetUnbondingInfo(bsParams *Params, btcNet *chaincfg.Para
 
 	unbondingInfo, err := btcstaking.BuildUnbondingInfo(
 		d.BtcPk.MustToBTCPK(),
+		fpBtcPkList,
+		covenantBtcPkList,
+		bsParams.CovenantQuorum,
+		uint16(d.GetUnbondingTime()),
+		btcutil.Amount(unbondingTx.TxOut[0].Value),
+		btcNet,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("could not create BTC staking info: %v", err)
+	}
+
+	return unbondingInfo, nil
+}
+
+// GetMultisigUnbondingInfo returns the multisig unbonding info of the BTC delegation
+// the unbonding info can be used for constructing witness of unbonding slashing
+// tx with access to a finality provider's SK
+func (d *BTCDelegation) GetMultisigUnbondingInfo(bsParams *Params, btcNet *chaincfg.Params) (*btcstaking.UnbondingInfo, error) {
+	fpBtcPkList, err := bbn.NewBTCPKsFromBIP340PKs(d.FpBtcPkList)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert finality provider pks to BTC pks: %v", err)
+	}
+
+	covenantBtcPkList, err := bbn.NewBTCPKsFromBIP340PKs(bsParams.CovenantPks)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert covenant pks to BTC pks: %v", err)
+	}
+	unbondingTx, err := bbn.NewBTCTxFromBytes(d.BtcUndelegation.UnbondingTx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse unbonding transaction: %v", err)
+	}
+
+	// construct stakerPKs from both multisig info and BtcPk
+	stakerPKs, err := bbn.NewBTCPKsFromBIP340PKs(d.MultisigInfo.StakerBtcPkList)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert staker pks to BTC pks: %v", err)
+	}
+	stakerPKs = append(stakerPKs, d.BtcPk.MustToBTCPK())
+
+	unbondingInfo, err := btcstaking.BuildMultisigUnbondingInfo(
+		stakerPKs,
+		d.MultisigInfo.StakerQuorum,
 		fpBtcPkList,
 		covenantBtcPkList,
 		bsParams.CovenantQuorum,

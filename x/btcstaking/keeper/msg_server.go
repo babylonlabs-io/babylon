@@ -290,10 +290,16 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 	if err != nil {
 		panic(fmt.Errorf("failed to get staking info from a verified delegation: %w", err))
 	}
+	if btcDel.IsMultisigBtcDel() {
+		stakingInfo, err = btcDel.GetMultisigStakingInfo(params, ms.btcNet)
+	}
+	if err != nil {
+		panic(fmt.Errorf("failed to get multisig staking info from a verified delegation: %w", err))
+	}
 	slashingSpendInfo, err := stakingInfo.SlashingPathSpendInfo()
 	if err != nil {
-		// our staking info was constructed by using BuildStakingInfo constructor, so if
-		// this fails, it is a programming error
+		// our staking info was constructed by using BuildStakingInfo or
+		// BuildMultisigStakingInfo constructor, so if this fails, it is a programming error
 		panic(err)
 	}
 	parsedSlashingAdaptorSignatures, err := btcDel.SlashingTx.ParseEncVerifyAdaptorSignatures(
@@ -346,10 +352,16 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 	if err != nil {
 		panic(err)
 	}
+	if btcDel.IsMultisigBtcDel() {
+		unbondingInfo, err = btcDel.GetMultisigUnbondingInfo(params, ms.btcNet)
+		if err != nil {
+			panic(err)
+		}
+	}
 	unbondingSlashingSpendInfo, err := unbondingInfo.SlashingPathSpendInfo()
 	if err != nil {
-		// our unbonding info was constructed by using BuildStakingInfo constructor, so if
-		// this fails, it is a programming error
+		// our unbonding info was constructed by using BuildUnbondingInfo or
+		// BuildMultisigUnbondingInfo constructor, so if this fails, it is a programming error
 		panic(err)
 	}
 	parsedUnbondingSlashingAdaptorSignatures, err := btcDel.BtcUndelegation.SlashingTx.ParseEncVerifyAdaptorSignatures(
