@@ -787,8 +787,8 @@ func (a *AdditionalStakerInfo) Validate() error {
 		return fmt.Errorf("length of the stakerBtcPkList is zero")
 	}
 
-	if a.StakerQuorum < 0 {
-		return fmt.Errorf("stakerQuorum is negative")
+	if a.StakerQuorum == 0 {
+		return fmt.Errorf("stakerQuorum is zero")
 	}
 
 	if len(a.DelegatorSlashingSigs) == 0 {

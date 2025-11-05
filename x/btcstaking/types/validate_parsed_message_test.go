@@ -231,7 +231,7 @@ func createMsgDelegationForParams(
 
 type unbondingInfoWithMultisig struct {
 	unbondingSlashingTx      *types.BTCSlashingTx
-	unbondingSlashinSig      *bbn.BIP340Signature
+	unbondingSlashingSig     *bbn.BIP340Signature
 	serializedUnbondingTx    []byte
 	extraStakerUnbondingSigs []*types.SignatureInfo
 }
@@ -299,7 +299,7 @@ func generateMultisigUnbondingInfo(
 
 	return &unbondingInfoWithMultisig{
 		unbondingSlashingTx:      testUnbondingInfo.SlashingTx,
-		unbondingSlashinSig:      mainStakerSig,
+		unbondingSlashingSig:     mainStakerSig,
 		serializedUnbondingTx:    serializedUnbondingTx,
 		extraStakerUnbondingSigs: extraStakerSigs,
 	}
@@ -432,7 +432,7 @@ func createMultisigMsgDelegationForParams(
 		UnbondingTime:                 unbondingTime,
 		UnbondingValue:                unbondingValue,
 		UnbondingSlashingTx:           unbondingInfo.unbondingSlashingTx,
-		DelegatorUnbondingSlashingSig: unbondingInfo.unbondingSlashinSig,
+		DelegatorUnbondingSlashingSig: unbondingInfo.unbondingSlashingSig,
 		MultisigInfo: &types.AdditionalStakerInfo{
 			StakerBtcPkList:                extraStakerPKs,
 			StakerQuorum:                   stakerQuorum,
