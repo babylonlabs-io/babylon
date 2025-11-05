@@ -12,12 +12,17 @@ import (
 type QueryVotingPowerDistributionResponseMap struct {
 	// total_voting_power is the total voting power of all (active) finality
 	// providers in the cache
-	TotalVotingPower uint64 `protobuf:"varint,1,opt,name=total_voting_power,json=totalVotingPower,proto3" json:"total_voting_power,omitempty"`
+	TotalVotingPower uint64 `json:"total_voting_power,omitempty"`
 	// finality_providers is map of finality providers by their btc pk hex
-	FinalityProviders map[string]*finalitytypes.FinalityProviderDistInfoResponse `protobuf:"bytes,2,rep,name=finality_providers,json=finalityProviders,proto3" json:"finality_providers,omitempty"`
+	FinalityProviders map[string]*FinalityProviderDistResponse `json:"finality_providers,omitempty"`
 	// num_active_fps is the number of finality providers that have active BTC
 	// delegations as well as timestamped public randomness
-	NumActiveFps uint64 `protobuf:"varint,3,opt,name=num_active_fps,json=numActiveFps,proto3" json:"num_active_fps,omitempty"`
+	NumActiveFps uint64 `json:"num_active_fps,omitempty"`
+}
+
+type FinalityProviderDistResponse struct {
+	finalitytypes.FinalityProviderDistInfoResponse
+	IsActive bool `json:"isActive,omitempty"`
 }
 
 // QueryFinality queries the Finality module of the Babylon node according to the given function
@@ -186,9 +191,12 @@ func (c *QueryClient) VotingPowerDistributionMap(height uint64) (*QueryVotingPow
 		return nil, err
 	}
 
-	fps := make(map[string]*finalitytypes.FinalityProviderDistInfoResponse, len(resp.FinalityProviders))
-	for _, fp := range resp.FinalityProviders {
-		fps[fp.BtcPkHex] = fp
+	fps := make(map[string]*FinalityProviderDistResponse, len(resp.FinalityProviders))
+	for idx, fp := range resp.FinalityProviders {
+		fps[fp.BtcPkHex] = &FinalityProviderDistResponse{
+			FinalityProviderDistInfoResponse: *fp,
+			IsActive:                         uint64(idx) < resp.NumActiveFps,
+		}
 	}
 
 	return &QueryVotingPowerDistributionResponseMap{
