@@ -391,8 +391,8 @@ func buildAndVerifyStakerKeysAndPubKey2Sig(
 	pm *ParsedCreateDelegationMessage,
 ) ([]*btcec.PublicKey, map[*btcec.PublicKey][]byte, map[*btcec.PublicKey][]byte, error) {
 	// construct the complete list of staker pubkeys from `MultisigInfo` and `StakerPk`
-	stakerKeys := make([]*btcec.PublicKey, len(pm.MultisigInfo.StakerBTCPkList.PublicKeys))
-	copy(stakerKeys, pm.MultisigInfo.StakerBTCPkList.PublicKeys)
+	stakerKeys := make([]*btcec.PublicKey, 0, len(pm.MultisigInfo.StakerBTCPkList.PublicKeys)+1)
+	stakerKeys = append(stakerKeys, pm.MultisigInfo.StakerBTCPkList.PublicKeys...)
 	// check if MultisigInfo contains duplicated `btc_pk`
 	for _, extraPk := range pm.MultisigInfo.StakerBTCPkList.PublicKeysBbnFormat {
 		if bytes.Equal(extraPk.MustMarshal(), pm.StakerPK.BIP340PubKey.MustMarshal()) {
