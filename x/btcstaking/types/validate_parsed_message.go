@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/btcsuite/btcd/btcec/v2"
-
+	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/chaincfg"
 
 	"github.com/babylonlabs-io/babylon/v4/btcstaking"
@@ -391,7 +391,8 @@ func buildAndVerifyStakerKeysAndPubKey2Sig(
 	pm *ParsedCreateDelegationMessage,
 ) ([]*btcec.PublicKey, map[*btcec.PublicKey][]byte, map[*btcec.PublicKey][]byte, error) {
 	// construct the complete list of staker pubkeys from `MultisigInfo` and `StakerPk`
-	stakerKeys := pm.MultisigInfo.StakerBTCPkList.PublicKeys
+	stakerKeys := make([]*btcec.PublicKey, len(pm.MultisigInfo.StakerBTCPkList.PublicKeys))
+	copy(stakerKeys, pm.MultisigInfo.StakerBTCPkList.PublicKeys)
 	// check if MultisigInfo contains duplicated `btc_pk`
 	for _, extraPk := range pm.MultisigInfo.StakerBTCPkList.PublicKeysBbnFormat {
 		if bytes.Equal(extraPk.MustMarshal(), pm.StakerPK.BIP340PubKey.MustMarshal()) {
@@ -400,17 +401,58 @@ func buildAndVerifyStakerKeysAndPubKey2Sig(
 	}
 	stakerKeys = append(stakerKeys, pm.StakerPK.PublicKey)
 
+	// used to detect duplicates
+	stakerKeyByBytes := make(map[string]*btcec.PublicKey, len(stakerKeys))
+	for _, pk := range stakerKeys {
+		if pk == nil {
+			return nil, nil, nil, ErrInvalidMultisigInfo.Wrap("staker pk list contains nil key")
+		}
+
+		keyBytes := schnorr.SerializePubKey(pk)
+		keyStr := string(keyBytes)
+
+		if _, exists := stakerKeyByBytes[keyStr]; exists {
+			return nil, nil, nil, ErrDuplicatedStakerKey.Wrapf("staker pk list contains duplicate key %x", keyBytes)
+		}
+
+		stakerKeyByBytes[keyStr] = pk
+	}
+
 	// construct pubkey -> bip340 signature map for each slashing tx and unbonding slashing tx
 	slashingPubkey2Sig := make(map[*btcec.PublicKey][]byte)
 	slashingPubkey2Sig[pm.StakerPK.PublicKey] = pm.StakerStakingSlashingTxSig.BIP340Signature.MustMarshal()
 	for _, si := range pm.MultisigInfo.StakerStakingSlashingSigs {
-		slashingPubkey2Sig[si.PublicKey.PublicKey] = si.Sig.BIP340Signature.MustMarshal()
+		keyBytes := si.PublicKey.BIP340PubKey.MustMarshal()
+		keyStr := string(keyBytes)
+
+		canonicalPk, exists := stakerKeyByBytes[keyStr]
+		if !exists {
+			return nil, nil, nil, ErrInvalidMultisigInfo.Wrapf("signature key %s not found in staker set", si.PublicKey.BIP340PubKey.MarshalHex())
+		}
+
+		if _, dup := slashingPubkey2Sig[canonicalPk]; dup {
+			return nil, nil, nil, ErrDuplicatedStakerKey.Wrapf("duplicate slashing signature for key %s", si.PublicKey.BIP340PubKey.MarshalHex())
+		}
+
+		slashingPubkey2Sig[canonicalPk] = si.Sig.BIP340Signature.MustMarshal()
 	}
 
 	unbondingSlashingPubkey2Sig := make(map[*btcec.PublicKey][]byte)
 	unbondingSlashingPubkey2Sig[pm.StakerPK.PublicKey] = pm.StakerUnbondingSlashingSig.BIP340Signature.MustMarshal()
 	for _, si := range pm.MultisigInfo.StakerUnbondingSlashingSigs {
-		unbondingSlashingPubkey2Sig[si.PublicKey.PublicKey] = si.Sig.BIP340Signature.MustMarshal()
+		keyBytes := si.PublicKey.BIP340PubKey.MustMarshal()
+		keyStr := string(keyBytes)
+
+		canonicalPk, exists := stakerKeyByBytes[keyStr]
+		if !exists {
+			return nil, nil, nil, ErrInvalidMultisigInfo.Wrapf("unbonding signature key %s not found in staker set", si.PublicKey.BIP340PubKey.MarshalHex())
+		}
+
+		if _, dup := unbondingSlashingPubkey2Sig[canonicalPk]; dup {
+			return nil, nil, nil, ErrDuplicatedStakerKey.Wrapf("duplicate unbonding slashing signature for key %s", si.PublicKey.BIP340PubKey.MarshalHex())
+		}
+
+		unbondingSlashingPubkey2Sig[canonicalPk] = si.Sig.BIP340Signature.MustMarshal()
 	}
 
 	// compare the length of pubkey -> sig map and the `StakerQuorum`
