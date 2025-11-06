@@ -9565,6 +9565,122 @@ paths:
           format: uint64
       tags:
         - Query
+  /babylon/finality/v1/vp_dst_cache/{height}:
+    get:
+      summary: >-
+        VotingPowerDistribution queries the voting power distribution cache
+
+        Note: The vp dst cache is only kept at the store until that block height
+        is finalized
+      operationId: VotingPowerDistribution
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              total_voting_power:
+                type: string
+                format: uint64
+                title: >-
+                  total_voting_power is the total voting power of all (active)
+                  finality
+
+                  providers in the cache
+              finality_providers:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    btc_pk_hex:
+                      type: string
+                      title: >-
+                        btc_pk_hex is the hex str of Bitcoin secp256k1 PK of
+                        this finality provider
+
+                        the PK follows encoding in BIP-340 spec
+                    addr:
+                      type: string
+                      title: >-
+                        addr is the babylon address to receive commission from
+                        delegations
+                    commission:
+                      type: string
+                      title: >-
+                        commission defines the commission rate of finality
+                        provider
+                    total_bonded_sat:
+                      type: string
+                      format: uint64
+                      title: >-
+                        total_bonded_sat is the total amount of bonded BTC stake
+                        (in Satoshi) of the finality provider
+                    is_timestamped:
+                      type: boolean
+                      title: |-
+                        is_timestamped indicates whether the finality provider
+                        has timestamped public randomness committed
+                        if no, it should not be assigned voting power
+                    is_jailed:
+                      type: boolean
+                      title: |-
+                        is_jailed indicates whether the finality provider
+                        is jailed, if so, it should not be assigned voting power
+                    is_slashed:
+                      type: boolean
+                      title: >-
+                        is_slashed indicates whether the finality provider
+
+                        is slashed, if so, it should not be assigned voting
+                        power
+                  title: >-
+                    FinalityProviderDistInfoResponse is the voting power
+                    distribution information
+
+                    of a finality provider and its BTC delegations combined
+                title: finality_providers is a list of finality providers information
+              num_active_fps:
+                type: string
+                format: uint64
+                title: >-
+                  num_active_fps is the number of finality providers that have
+                  active BTC
+
+                  delegations as well as timestamped public randomness
+            description: |-
+              QueryVotingPowerDistributionResponse is the response type for the
+              Query/VotingPowerDistribution RPC method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      parameters:
+        - name: height
+          description: height defines at which block height to query the vp dst cache.
+          in: path
+          required: true
+          type: string
+          format: uint64
+      tags:
+        - Query
   /cosmos/mint/v1beta1/annual_provisions:
     get:
       summary: AnnualProvisions returns the current annual provisions.
@@ -16816,6 +16932,49 @@ definitions:
 
       signatures with correct public randomness on two conflicting Babylon
       headers
+  babylon.finality.v1.FinalityProviderDistInfoResponse:
+    type: object
+    properties:
+      btc_pk_hex:
+        type: string
+        title: >-
+          btc_pk_hex is the hex str of Bitcoin secp256k1 PK of this finality
+          provider
+
+          the PK follows encoding in BIP-340 spec
+      addr:
+        type: string
+        title: addr is the babylon address to receive commission from delegations
+      commission:
+        type: string
+        title: commission defines the commission rate of finality provider
+      total_bonded_sat:
+        type: string
+        format: uint64
+        title: >-
+          total_bonded_sat is the total amount of bonded BTC stake (in Satoshi)
+          of the finality provider
+      is_timestamped:
+        type: boolean
+        title: |-
+          is_timestamped indicates whether the finality provider
+          has timestamped public randomness committed
+          if no, it should not be assigned voting power
+      is_jailed:
+        type: boolean
+        title: |-
+          is_jailed indicates whether the finality provider
+          is jailed, if so, it should not be assigned voting power
+      is_slashed:
+        type: boolean
+        title: |-
+          is_slashed indicates whether the finality provider
+          is slashed, if so, it should not be assigned voting power
+    title: >-
+      FinalityProviderDistInfoResponse is the voting power distribution
+      information
+
+      of a finality provider and its BTC delegations combined
   babylon.finality.v1.IndexedBlock:
     type: object
     properties:
@@ -17506,6 +17665,74 @@ definitions:
     description: |-
       QueryVotesAtHeightResponse is the response type for the
       Query/VotesAtHeight RPC method.
+  babylon.finality.v1.QueryVotingPowerDistributionResponse:
+    type: object
+    properties:
+      total_voting_power:
+        type: string
+        format: uint64
+        title: |-
+          total_voting_power is the total voting power of all (active) finality
+          providers in the cache
+      finality_providers:
+        type: array
+        items:
+          type: object
+          properties:
+            btc_pk_hex:
+              type: string
+              title: >-
+                btc_pk_hex is the hex str of Bitcoin secp256k1 PK of this
+                finality provider
+
+                the PK follows encoding in BIP-340 spec
+            addr:
+              type: string
+              title: >-
+                addr is the babylon address to receive commission from
+                delegations
+            commission:
+              type: string
+              title: commission defines the commission rate of finality provider
+            total_bonded_sat:
+              type: string
+              format: uint64
+              title: >-
+                total_bonded_sat is the total amount of bonded BTC stake (in
+                Satoshi) of the finality provider
+            is_timestamped:
+              type: boolean
+              title: |-
+                is_timestamped indicates whether the finality provider
+                has timestamped public randomness committed
+                if no, it should not be assigned voting power
+            is_jailed:
+              type: boolean
+              title: |-
+                is_jailed indicates whether the finality provider
+                is jailed, if so, it should not be assigned voting power
+            is_slashed:
+              type: boolean
+              title: |-
+                is_slashed indicates whether the finality provider
+                is slashed, if so, it should not be assigned voting power
+          title: >-
+            FinalityProviderDistInfoResponse is the voting power distribution
+            information
+
+            of a finality provider and its BTC delegations combined
+        title: finality_providers is a list of finality providers information
+      num_active_fps:
+        type: string
+        format: uint64
+        title: >-
+          num_active_fps is the number of finality providers that have active
+          BTC
+
+          delegations as well as timestamped public randomness
+    description: |-
+      QueryVotingPowerDistributionResponse is the response type for the
+      Query/VotingPowerDistribution RPC method.
   babylon.finality.v1.SigningInfoResponse:
     type: object
     properties:

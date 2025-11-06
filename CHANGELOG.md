@@ -88,7 +88,59 @@ as the completely removal of an baby delegation doesn't calls `AfterDelegationMo
 
 ### Improvements
 
-- [#1734] Bump repository version to `v4`
+- [#1764](https://github.com/babylonlabs-io/babylon/pull/1764) Add mergify yaml file for automatic backporting
+
+## v4.0.0-rc.3
+
+### Improvements
+
+- [#1848](https://github.com/babylonlabs-io/babylon/pull/1848) Add testnet v4rc3 upgrade handler
+
+## v4.0.0-rc.2
+
+### State breaking
+
+- [#1832](https://github.com/babylonlabs-io/babylon/pull/1832) Add check for multiple txOut with same pk and
+value in `GetOutputIdxInBTCTx`
+- [#1841](https://github.com/babylonlabs-io/babylon/pull/1841) Add validation for max concurrent unbonding and
+redelegation in `MsgWrappedUndelegate` and `MsgWrappedBeginRedelegate`.
+- [#1842](https://github.com/babylonlabs-io/babylon/pull/1842) Add `MsgWrappedCreateValidator` queue msg details
+
+### Improvements
+
+- [#1831](https://github.com/babylonlabs-io/babylon/pull/1831) Removed unused parameter in `DeriveTaprootPkScript`
+
+## v4.0.0-rc.1
+
+### Improvements
+
+- [#1762](https://github.com/babylonlabs-io/babylon/pull/1762) Add new test case on stake expansion
+- [#1785](https://github.com/babylonlabs-io/babylon/pull/1785) CI reusable to v0.13.5 and golang lint version 2
+- [#1776](https://github.com/babylonlabs-io/babylon/pull/1776) Track baby staked to active validators only
+- [#1813](https://github.com/babylonlabs-io/babylon/pull/1813) Panic if there is an invalid amount of sats in the
+finality provider distribution info
+- [#1839](https://github.com/babylonlabs-io/babylon/pull/1839) update helper functions to public to avoid code duplication
+
+### Bug fixes
+
+- [#1763](https://github.com/babylonlabs-io/babylon/pull/1763) Fix `v4` upgrade logic to store co-staker reward tracker for all stakers (baby and/or BTC)
+- [#1771](https://github.com/babylonlabs-io/babylon/pull/1771) Fix `x/costaking` costakers portion to 2.35% of 5.5%
+- [#1780](https://github.com/babylonlabs-io/babylon/pull/1780) Fix `x/costaking` `MsgUpdateParams` update score to
+baby ratio where it wasn't increasing the costaker cumulative rewards and neither sending the previous rewards to gauge.
+- [#1783](https://github.com/babylonlabs-io/babylon/pull/1783) Fix `x/costaking` calls baby delegation modified in hook `BeforeDelegationRemoved`
+as the completely removal of an baby delegation doesn't calls `AfterDelegationModified
+- [#1790](https://github.com/babylonlabs-io/babylon/pull/1790) Fix withdraw reward to only error if both `BTC_STAKER` and `COSTAKER` types have zero rewards available.
+- [#1792](https://github.com/babylonlabs-io/babylon/pull/1792) Fix costaking baby bond unbond and bond again for the same delegation pair (del, val) in the same block
+- [#1800](https://github.com/babylonlabs-io/babylon/pull/1800) Handle co-staking edge cases for baby stakers
+- [#1802](https://github.com/babylonlabs-io/babylon/pull/1802) Fix non-determinism in co-staking
+- [#1805](https://github.com/babylonlabs-io/babylon/pull/1805) Fix non-determinism in incentives `IterateBTCDelegationSatsUpdated`
+- [#1815](https://github.com/babylonlabs-io/babylon/pull/1815) Fix export genesis with Costaker type in `x/incentive`
+
+## v4.0.0-rc.0
+
+### Improvements
+
+- [#1734](https://github.com/babylonlabs-io/babylon/pull/1734) Bump repository version to `v4`
 - [#1736](https://github.com/babylonlabs-io/babylon/pull/1736) bump cosmos-sdk to `v0.53.2`
 - [#1633](https://github.com/babylonlabs-io/babylon/pull/1663) Add spam prevention mechanisms to epoching module with minimum amount validation and gas consumption limits for wrapped delegate operations.
 - [#1404](https://github.com/babylonlabs-io/babylon/pull/1404) Refactor power dist event processing.
@@ -280,7 +332,15 @@ when the babylon block is being BTC rewarded.
 - [#905](https://github.com/babylonlabs-io/babylon/pull/905) Add `ValidateBasic` for `CommitPubRandList`
 - [#906](https://github.com/babylonlabs-io/babylon/pull/906) Add distribution bank wrapper.
 
+## v1.0.3
+
+### Improvements
+
+- [#1769](https://github.com/babylonlabs-io/babylon/pull/1769) testnet: update `v1` upgrade data for bbn-test-6
+
 ## v1.0.2
+
+### Improvements
 
 - [#802](https://github.com/babylonlabs-io/babylon/pull/802) fix: clean up resources allocated by TmpAppOptions
 - [#805](https://github.com/babylonlabs-io/babylon/pull/805) chore: upgrade the make file: linting
