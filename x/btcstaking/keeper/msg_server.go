@@ -742,6 +742,9 @@ func validateStakeExpansionAmt(
 
 	// Calculate expected input value
 	fundingInputValue := parsedMsg.StkExp.OtherFundingOutput.Value
+	if fundingInputValue <= 0 {
+		return fmt.Errorf("stake expansion funding output has invalid value %d", fundingInputValue)
+	}
 	totalInputValue := oldStakingAmt + fundingInputValue
 
 	// Calculate total output value

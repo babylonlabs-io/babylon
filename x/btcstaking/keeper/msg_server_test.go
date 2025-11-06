@@ -1867,3 +1867,83 @@ func TestBtcStakeExpansion(t *testing.T) {
 		})
 	}
 }
+
+func TestBtcStakeExpansionInvalidFundingValue(t *testing.T) {
+	testCases := []struct {
+		name         string
+		fundingValue int64
+		expErr       error
+	}{
+		{
+			name:         "zero funding value",
+			fundingValue: 0,
+			expErr:       status.Errorf(codes.InvalidArgument, "funding output has invalid value 0"),
+		},
+		{
+			name:         "negative funding value",
+			fundingValue: -1,
+			expErr:       status.Errorf(codes.InvalidArgument, "funding output has invalid value -1"),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			r := rand.New(rand.NewSource(time.Now().UnixNano()))
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
+			btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
+			h := testutil.NewHelper(t, btclcKeeper, btccKeeper, nil)
+
+			covenantSKs, _ := h.GenAndApplyParams(r)
+
+			_, babylonFPPK, _ := h.CreateFinalityProvider(r)
+
+			stakingValue := int64(2 * 10e8)
+			delSK, _, err := datagen.GenRandomBTCKeyPair(r)
+			h.NoError(err)
+
+			lcTip := uint32(30)
+			prevDelStakingTxHash, prevMsgCreateBTCDel, prevDel, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
+				r,
+				delSK,
+				babylonFPPK,
+				stakingValue,
+				1000,
+				0,
+				0,
+				false,
+				true,
+				10,
+				lcTip,
+			)
+			h.NoError(err)
+			require.NotNil(t, prevMsgCreateBTCDel)
+
+			h.CreateCovenantSigs(r, covenantSKs, prevMsgCreateBTCDel, prevDel, 10)
+
+			bsParams := h.BTCStakingKeeper.GetParams(h.Ctx)
+			prevDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, prevDelStakingTxHash)
+			require.NoError(t, err)
+			status, err := h.BTCStakingKeeper.BtcDelStatus(h.Ctx, prevDel, bsParams.CovenantQuorum, lcTip)
+			h.NoError(err)
+			require.Equal(t, types.BTCDelegationStatus_ACTIVE, status)
+
+			expandMsg := h.CreateBtcStakeExpandMessageWithFundingValue(
+				r,
+				delSK,
+				babylonFPPK,
+				stakingValue,
+				1000,
+				prevDel,
+				tc.fundingValue,
+			)
+
+			h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: lcTip}).Times(1)
+
+			_, err = h.MsgServer.BtcStakeExpand(h.Ctx, expandMsg)
+			require.EqualError(t, err, tc.expErr.Error())
+		})
+	}
+}
