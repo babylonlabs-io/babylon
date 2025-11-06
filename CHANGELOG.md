@@ -68,6 +68,7 @@ redelegation in `MsgWrappedUndelegate` and `MsgWrappedBeginRedelegate`.
 - [#1776](https://github.com/babylonlabs-io/babylon/pull/1776) Track baby staked to active validators only
 - [#1813](https://github.com/babylonlabs-io/babylon/pull/1813) Panic if there is an invalid amount of sats in the
 finality provider distribution info
+- [#1839](https://github.com/babylonlabs-io/babylon/pull/1839) update helper functions to public to avoid code duplication
 
 ### Bug fixes
 

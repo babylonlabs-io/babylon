@@ -28,4 +28,5 @@ var (
 	ErrInvalidResumeFinality          = errorsmod.Register(ModuleName, 1121, "resume finality proposal message is not valid")
 	ErrFinalityProviderIsDeleted      = errorsmod.Register(ModuleName, 1122, "finality provider is deleted")
 	ErrInvalidSats                    = errorsmod.Register(ModuleName, 1123, "invalid satoshi amount")
+	ErrVotingPowerTableNotFound       = errorsmod.Register(ModuleName, 1124, "voting power table was not found")
 )
