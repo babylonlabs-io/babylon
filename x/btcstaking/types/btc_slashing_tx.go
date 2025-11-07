@@ -342,3 +342,108 @@ func (tx *BTCSlashingTx) BuildSlashingTxWithWitness(
 
 	return slashingMsgTxWithWitness, nil
 }
+
+// BuildMultisigSlashingTxWithWitness builds the witness for the slashing tx, including
+// - a (covenant_quorum, covenant_committee_size) multisig from covenant committee
+// - a (1, num_restaked_finality_providers) multisig from the slashed finality provider
+// - a (staker_quorum, staker_pks_list) multisig from the staker
+func (tx *BTCSlashingTx) BuildMultisigSlashingTxWithWitness(
+	fpSK *btcec.PrivateKey,
+	fpBTCPKs []bbn.BIP340PubKey,
+	fundingMsgTx *wire.MsgTx,
+	outputIdx uint32,
+	delegatorSigs []*bbn.BIP340Signature,
+	delQuorum uint32,
+	covenantSigs []*asig.AdaptorSignature,
+	covenantQuorum uint32,
+	slashingPathSpendInfo *btcstaking.SpendInfo,
+) (*wire.MsgTx, error) {
+	/*
+		construct covenant committee's part of witness, i.e.,
+		a quorum number of covenant Schnorr signatures
+	*/
+	// decrypt covenant adaptor signature to Schnorr signature using finality provider's SK,
+	// then marshal
+	decKey, err := asig.NewDecryptionKeyFromBTCSK(fpSK)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get decryption key from BTC SK: %w", err)
+	}
+	// decrypt each covenant adaptor signature to Schnorr signature
+	covSigs := make([]*schnorr.Signature, len(covenantSigs))
+	numSigs := uint32(0)
+	for i, covenantSig := range covenantSigs {
+		if covenantSig != nil {
+			covSig, err := covenantSig.Decrypt(decKey)
+			if err != nil {
+				return nil, fmt.Errorf("failed to decrypt covenant adaptor signature: %w", err)
+			}
+			covSigs[i] = covSig
+			numSigs++
+		} else {
+			covSigs[i] = nil
+		}
+		if numSigs == covenantQuorum {
+			break
+		}
+	}
+	// ensure the number of covenant signatures is at least the quorum number
+	if numSigs < covenantQuorum {
+		return nil, fmt.Errorf("not enough covenant signatures to reach quorum")
+	}
+
+	/*
+		construct finality providers' part of witness, i.e.,
+		1 out of numRestakedFPs signature
+	*/
+	fpIdxInWitness, err := findFPIdxInWitness(fpSK, fpBTCPKs)
+	if err != nil {
+		return nil, err
+	}
+	fpSigs := make([]*schnorr.Signature, len(fpBTCPKs))
+	fpSig, err := tx.Sign(fundingMsgTx, outputIdx, slashingPathSpendInfo.GetPkScriptPath(), fpSK)
+	if err != nil {
+		return nil, fmt.Errorf("failed to sign slashing tx for the finality provider: %w", err)
+	}
+	fpSigs[fpIdxInWitness] = fpSig.MustToBTCSig()
+
+	/*
+		construct staker's part of witness, i.e.,
+		a quorum number of staker Schnorr signatures
+	*/
+	delSigs := make([]*schnorr.Signature, len(delegatorSigs))
+	numDelSigs := uint32(0)
+	for i, delSig := range delegatorSigs {
+		if delSig != nil {
+			delSigs[i] = delSig.MustToBTCSig()
+			numDelSigs++
+		} else {
+			delSigs[i] = nil
+		}
+		if numDelSigs == delQuorum {
+			break
+		}
+	}
+	// ensure the number of delegator signatures is at least the quorum number
+	if numDelSigs < delQuorum {
+		return nil, fmt.Errorf("not enough delegator signatures to reach quorum")
+	}
+
+	// construct witness
+	witness, err := slashingPathSpendInfo.CreateMultisigSlashingPathWitness(
+		covSigs,
+		fpSigs,
+		delSigs,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// add witness to slashing tx
+	slashingMsgTxWithWitness, err := tx.ToMsgTx()
+	if err != nil {
+		return nil, err
+	}
+	slashingMsgTxWithWitness.TxIn[0].Witness = witness
+
+	return slashingMsgTxWithWitness, nil
+}

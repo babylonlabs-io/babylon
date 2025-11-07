@@ -1,8 +1,10 @@
 package types
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
+	"sort"
 	time "time"
 
 	"cosmossdk.io/math"
@@ -135,6 +137,38 @@ func GetOrderedCovenantSignatures(fpIdx int, covSigsList []*CovenantAdaptorSigna
 	}
 
 	return orderedCovSigs, nil
+}
+
+// GetOrderedDelegatorSignatures returns the ordered delegator Schnorr signatures.
+// The order follows the reverse lexicographical order of delegator public keys so
+// the resulting slice can be plugged directly into the BTC witness.
+func GetOrderedDelegatorSignatures(delPK2Sig map[string]*bbn.BIP340Signature) ([]*bbn.BIP340Signature, error) {
+	type pkSig struct {
+		pk  bbn.BIP340PubKey
+		sig *bbn.BIP340Signature
+	}
+
+	entries := make([]pkSig, 0, len(delPK2Sig))
+	for delPKStr, sig := range delPK2Sig {
+		delPK, err := bbn.NewBIP340PubKeyFromHex(delPKStr)
+		if err != nil {
+			return nil, err
+		}
+		entries = append(entries, pkSig{pk: *delPK, sig: sig})
+	}
+
+	sort.SliceStable(entries, func(i, j int) bool {
+		keyIBytes := entries[i].pk.MustMarshal()
+		keyJBytes := entries[j].pk.MustMarshal()
+		return bytes.Compare(keyIBytes, keyJBytes) == 1
+	})
+
+	orderedDelSigs := make([]*bbn.BIP340Signature, len(entries))
+	for i, entry := range entries {
+		orderedDelSigs[i] = entry.sig
+	}
+
+	return orderedDelSigs, nil
 }
 
 // NewLargestBtcReOrg creates a new Largest BTC reorg based on the rollback vars
