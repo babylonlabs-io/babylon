@@ -869,6 +869,30 @@ func GenerateSignatures(
 	return sigs
 }
 
+// GenerateSignaturesInGivenOrder doesn't sort signatures, it returns signatures in given keys order
+func GenerateSignaturesInGivenOrder(
+	t *testing.T,
+	keys []*btcec.PrivateKey,
+	tx *wire.MsgTx,
+	fundingOutput *wire.TxOut,
+	leaf txscript.TapLeaf,
+) []*bbn.BIP340Signature {
+	sigs := make([]*bbn.BIP340Signature, 0, len(keys))
+
+	for _, key := range keys {
+		schnorrSig, err := btcstaking.SignTxWithOneScriptSpendInputFromTapLeaf(
+			tx,
+			fundingOutput,
+			key,
+			leaf,
+		)
+		require.NoError(t, err)
+		sigs = append(sigs, bbn.NewBIP340SignatureFromBTCSig(schnorrSig))
+	}
+
+	return sigs
+}
+
 func GenerateSignaturesForStakeExpansion(
 	t *testing.T,
 	keys []*btcec.PrivateKey,

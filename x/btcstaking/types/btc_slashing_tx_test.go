@@ -247,3 +247,156 @@ func FuzzSlashingTxWithWitness(f *testing.F) {
 		btctest.AssertSlashingTxExecution(t, testStakingInfo.StakingInfo.StakingOutput, slashingMsgTxWithWitness)
 	})
 }
+
+func FuzzMultisigSlashingTxWithWitness(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+		var (
+			stakingValue      = int64(2 * 10e8)
+			stakingTimeBlocks = uint16(5)
+			net               = &chaincfg.SimNetParams
+		)
+
+		// slashing address and key pairs
+		slashingAddress, err := datagen.GenRandomBTCAddress(r, net)
+		require.NoError(t, err)
+		slashingPkScript, err := txscript.PayToAddrScript(slashingAddress)
+		require.NoError(t, err)
+
+		// Generate a slashing rate in the range [0.1, 0.50] i.e., 10-50%.
+		// NOTE - if the rate is higher or lower, it may produce slashing or change outputs
+		// with value below the dust threshold, causing test failure.
+		// Our goal is not to test failure due to such extreme cases here;
+		// this is already covered in FuzzGeneratingValidStakingSlashingTx
+		slashingRate := sdkmath.LegacyNewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2)
+
+		// restaked to a random number of finality providers
+		numRestakedFPs := int(datagen.RandomInt(r, 10) + 1)
+		fpSKs, fpPKs, err := datagen.GenRandomBTCKeyPairs(r, numRestakedFPs)
+		require.NoError(t, err)
+		fpBTCPKs := bbn.NewBIP340PKsFromBTCPKs(fpPKs)
+
+		// a random finality provider gets slashed
+		fpIdx := int(datagen.RandomInt(r, numRestakedFPs))
+		fpSK, fpPK := fpSKs[fpIdx], fpPKs[fpIdx]
+		encKey, err := asig.NewEncryptionKeyFromBTCPK(fpPK)
+		require.NoError(t, err)
+		decKey, err := asig.NewDecryptionKeyFromBTCSK(fpSK)
+		require.NoError(t, err)
+
+		// (2, 3) multisig staker
+		delSKs, _, err := datagen.GenRandomBTCKeyPairs(r, 3)
+		require.NoError(t, err)
+		delQuorum := uint32(2)
+
+		// (3, 5) covenant committee
+		covenantSKs, covenantPKs, err := datagen.GenRandomBTCKeyPairs(r, 5)
+		require.NoError(t, err)
+		covenantQuorum := uint32(3)
+		bsParams := types.Params{
+			CovenantPks:    bbn.NewBIP340PKsFromBTCPKs(covenantPKs),
+			CovenantQuorum: covenantQuorum,
+		}
+		slashingChangeLockTime := uint16(101)
+
+		// generate staking/slashing tx
+		testStakingInfo := datagen.GenMultisigBTCStakingSlashingInfo(
+			r,
+			t,
+			net,
+			delSKs,
+			delQuorum,
+			fpPKs,
+			covenantPKs,
+			covenantQuorum,
+			stakingTimeBlocks,
+			stakingValue,
+			slashingPkScript,
+			slashingRate,
+			slashingChangeLockTime,
+		)
+
+		slashingTx := testStakingInfo.SlashingTx
+		slashingMsgTx, err := slashingTx.ToMsgTx()
+		require.NoError(t, err)
+		stakingMsgTx := testStakingInfo.StakingTx
+
+		slashingSpendInfo, err := testStakingInfo.StakingInfo.SlashingPathSpendInfo()
+		require.NoError(t, err)
+		slashingPkScriptPath := slashingSpendInfo.GetPkScriptPath()
+
+		// delegator signs slashing tx in given SKs order
+		delSigs := datagen.GenerateSignaturesInGivenOrder(
+			t,
+			delSKs,
+			slashingMsgTx,
+			stakingMsgTx.TxOut[0],
+			txscript.NewBaseTapLeaf(slashingPkScriptPath),
+		)
+		require.NoError(t, err)
+
+		// sort delegator PKs in reverse lexicographical order
+		delPK2Sig := make(map[string]*bbn.BIP340Signature)
+		for i, sk := range delSKs {
+			delPKHex := bbn.NewBIP340PubKeyFromBTCPK(sk.PubKey()).MarshalHex()
+			delPK2Sig[delPKHex] = delSigs[i]
+		}
+		// NOTE: we can simply use GenerateSignatures but here, intentionally use
+		// GenerateSignaturesInGivenOrder to test GenerateDelegatorSignatures
+		delSortedSigs, err := types.GetOrderedDelegatorSignatures(delPK2Sig)
+		require.NoError(t, err)
+
+		// ensure that event if all covenant members provide covenant signatures,
+		// BuildSlashingTxWithWitness will only take a quorum number of signatures
+		// to construct the witness
+		covenantSigners := covenantSKs
+		// get covenant Schnorr signatures
+		covenantSigs, err := datagen.GenCovenantAdaptorSigs(
+			covenantSigners,
+			fpPKs,
+			stakingMsgTx,
+			slashingPkScriptPath,
+			slashingTx,
+		)
+		require.NoError(t, err)
+		covSigsForFP, err := types.GetOrderedCovenantSignatures(fpIdx, covenantSigs, &bsParams)
+		require.NoError(t, err)
+
+		// ensure all covenant signatures encrypted by the slashed
+		// finality provider's PK are verified
+		orderedCovenantPKs := bbn.SortBIP340PKs(bsParams.CovenantPks)
+		for i := range covSigsForFP {
+			if covSigsForFP[i] == nil {
+				continue
+			}
+
+			err := slashingTx.EncVerifyAdaptorSignature(
+				testStakingInfo.StakingInfo.StakingOutput,
+				slashingPkScriptPath,
+				orderedCovenantPKs[i].MustToBTCPK(),
+				encKey,
+				covSigsForFP[i],
+			)
+			require.NoError(t, err, "verifying covenant adaptor sig at %d", i)
+
+			covSchnorrSig, err := covSigsForFP[i].Decrypt(decKey)
+			require.NoError(t, err)
+			err = slashingTx.VerifySignature(
+				testStakingInfo.StakingInfo.StakingOutput,
+				slashingPkScriptPath,
+				orderedCovenantPKs[i].MustToBTCPK(),
+				bbn.NewBIP340SignatureFromBTCSig(covSchnorrSig),
+			)
+			require.NoError(t, err, "verifying covenant Schnorr sig at %d", i)
+		}
+
+		// create slashing tx with witness
+		slashingMsgTxWithWitness, err := slashingTx.BuildMultisigSlashingTxWithWitness(fpSK, fpBTCPKs, stakingMsgTx, 0, delSortedSigs, delQuorum, covSigsForFP, covenantQuorum, slashingSpendInfo)
+		require.NoError(t, err)
+
+		// verify slashing tx with witness
+		btctest.AssertSlashingTxExecution(t, testStakingInfo.StakingInfo.StakingOutput, slashingMsgTxWithWitness)
+	})
+}
