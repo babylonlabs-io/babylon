@@ -39,18 +39,39 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
-- [#1762](https://github.com/babylonlabs-io/babylon/pull/1762) Add new test case on stake expansion
 - [#1764](https://github.com/babylonlabs-io/babylon/pull/1764) Add mergify yaml file for automatic backporting
+
+## v4.0.0
+
+## v4.0.0-rc.3
+
+### Improvements
+
+- [#1848](https://github.com/babylonlabs-io/babylon/pull/1848) Add testnet v4rc3 upgrade handler
+
+## v4.0.0-rc.2
+
+### State breaking
+
+- [#1832](https://github.com/babylonlabs-io/babylon/pull/1832) Add check for multiple txOut with same pk and
+value in `GetOutputIdxInBTCTx`
+- [#1841](https://github.com/babylonlabs-io/babylon/pull/1841) Add validation for max concurrent unbonding and
+redelegation in `MsgWrappedUndelegate` and `MsgWrappedBeginRedelegate`.
+- [#1842](https://github.com/babylonlabs-io/babylon/pull/1842) Add `MsgWrappedCreateValidator` queue msg details
+
+### Improvements
+
+- [#1831](https://github.com/babylonlabs-io/babylon/pull/1831) Removed unused parameter in `DeriveTaprootPkScript`
+
+## v4.0.0-rc.1
+
+### Improvements
+
+- [#1762](https://github.com/babylonlabs-io/babylon/pull/1762) Add new test case on stake expansion
 - [#1785](https://github.com/babylonlabs-io/babylon/pull/1785) CI reusable to v0.13.5 and golang lint version 2
 - [#1776](https://github.com/babylonlabs-io/babylon/pull/1776) Track baby staked to active validators only
 - [#1813](https://github.com/babylonlabs-io/babylon/pull/1813) Panic if there is an invalid amount of sats in the
 finality provider distribution info
-- [#1831](https://github.com/babylonlabs-io/babylon/pull/1831) Removed unused parameter in `DeriveTaprootPkScript`
-- [#1832](https://github.com/babylonlabs-io/babylon/pull/1832) Add check for multiple txOut with same pk and value
-in `GetOutputIdxInBTCTx`
-- [#1841](https://github.com/babylonlabs-io/babylon/pull/1841) Add validation for max concurrent unbonding and
-redelegation in `MsgWrappedUndelegate` and `MsgWrappedBeginRedelegate`
-- [#1842](https://github.com/babylonlabs-io/babylon/pull/1842) Add `MsgWrappedCreateValidator` queue msg details
 
 ### Bug fixes
 
