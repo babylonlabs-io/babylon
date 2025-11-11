@@ -240,7 +240,7 @@ func (ms msgServer) AddBTCDelegationInclusionProof(
 	return &types.MsgAddBTCDelegationInclusionProofResponse{}, nil
 }
 
-// AddCovenantSig adds signatures from covenants to a BTC delegation
+// AddCovenantSigs adds signatures from covenants to a BTC delegation
 // TODO: refactor this handler. Now it's too convoluted
 func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCovenantSigs) (*types.MsgAddCovenantSigsResponse, error) {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), types.MetricsKeyAddCovenantSigs)
