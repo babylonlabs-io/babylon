@@ -40,6 +40,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ### Improvements
 
 - [#1764](https://github.com/babylonlabs-io/babylon/pull/1764) Add mergify yaml file for automatic backporting
+- [#1839](https://github.com/babylonlabs-io/babylon/pull/1839) Add query to get the voting power distribution
+cache (is only available until that block is finalized)
 
 ## v4.0.0-rc.3
 
@@ -70,7 +72,6 @@ redelegation in `MsgWrappedUndelegate` and `MsgWrappedBeginRedelegate`.
 - [#1776](https://github.com/babylonlabs-io/babylon/pull/1776) Track baby staked to active validators only
 - [#1813](https://github.com/babylonlabs-io/babylon/pull/1813) Panic if there is an invalid amount of sats in the
 finality provider distribution info
-- [#1839](https://github.com/babylonlabs-io/babylon/pull/1839) update helper functions to public to avoid code duplication
 
 ### Bug fixes
 
