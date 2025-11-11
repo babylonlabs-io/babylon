@@ -63,7 +63,7 @@ staking again.
   that is now getting extended through the Stake Extension protocol.
 - **Extended Staking Transaction**: The new staking transaction extending
   the original staking transaction by using its staking output as an input
-  and following the rules of the Stake Extension protocol. 
+  and following the rules of the Stake Extension protocol.
   > **Note**: An extended staking transaction can serve as the original
   > staking transaction for a subsequent stake extension operation.
 
@@ -172,7 +172,7 @@ staking transaction and its state on Babylon Genesis.
   > the original staking output alone wouldn’t suffice,
   > as Bitcoin transaction fees must be deducted,
   > and those fees can't be covered by the staking output itself
-  > as the new staking output should at least have the same BTC as it. 
+  > as the new staking output should at least have the same BTC as it.
 - **BTC Staking Params**: The staking extension should use the current Babylon Genesis staking parameters.
   Documentation on how to select the appropriate parameters can be found
   in the [staking registration document](./register-bitcoin-stake.md#32-babylon-genesis-chain-btc-staking-parameters).
@@ -259,7 +259,7 @@ These transactions include:
   slashing during the unbonding process in case of double-signing
 
 > **Important**:
-> The extension transaction must follow a strict two-input structure validated 
+> The extension transaction must follow a strict two-input structure validated
 > by the Babylon Genesis chain:
 > - **Input 0**: Original staking transaction output
 >   * Must reference the exact UTXO from the original staking transaction
@@ -280,15 +280,15 @@ These transactions include:
 **Transaction Construction:**
 You can create these transactions using:
 - [The Golang BTC staking library](../btcstaking) with extension utilities
-- [The TypeScript BTC staking library](https://github.com/babylonlabs-io/btc-staking-ts) 
+- [The TypeScript BTC staking library](https://github.com/babylonlabs-io/btc-staking-ts)
 - Your own implementation following the [Bitcoin staking script specification](./staking-script.md)
 
-> **⚡ Note**: All transactions must use the current Babylon staking parameters 
+> **⚡ Note**: All transactions must use the current Babylon staking parameters
 > retrieved from the Bitcoin light client tip height at extension submission time.
 
-> **⚠️ Critical Warning**: The extension transaction must spend exactly 2 inputs 
-> in the specified order. The btcstaking module's validation will reject 
-> non-conforming transactions. Additionally, all transaction fee calculations 
+> **⚠️ Critical Warning**: The extension transaction must spend exactly 2 inputs
+> in the specified order. The btcstaking module's validation will reject
+> non-conforming transactions. Additionally, all transaction fee calculations
 > must account for the minimum fees specified in the staking parameters.
 
 ### 3.4. The `MsgBtcStakeExpand` Babylon Message
@@ -300,16 +300,16 @@ is used to submit the Stake Extension request.
 // MsgBtcStakeExpand is the message for extending existing BTC stakes
 message MsgBtcStakeExpand {
   option (cosmos.msg.v1.signer) = "staker_addr";
-  
+
   // Standard delegation fields (same as MsgCreateBTCDelegation)
   string staker_addr = 1;
   ProofOfPossessionBTC pop = 2;
   bytes btc_pk = 3;
   repeated bytes fp_btc_pk_list = 4;  // Must be identical to previous FPs
-  uint32 staking_time = 5;            // New/extended timelock period  
+  uint32 staking_time = 5;            // New/extended timelock period
   int64 staking_value = 6;            // Total new amount (≥ previous)
   bytes staking_tx = 7;               // Extension transaction
-  
+
   // Slashing transactions for extended stake
   bytes slashing_tx = 8;
   bytes delegator_slashing_sig = 9;
@@ -318,11 +318,11 @@ message MsgBtcStakeExpand {
   int64 unbonding_value = 12;
   bytes unbonding_slashing_tx = 13;
   bytes delegator_unbonding_slashing_sig = 14;
-  
+
   // Extension-specific fields
   string previous_staking_tx_hash = 15;  // Hash of original delegation
   bytes funding_tx = 16;                 // Transaction with funding UTXO
-  
+
   // Note: staking_tx_inclusion_proof omitted (pre-staking flow)
 }
 ```
@@ -332,10 +332,10 @@ message MsgBtcStakeExpand {
 * `staker_addr`:
   A Bech32-encoded Babylon address (`bbn...`) representing the
   staker's Babylon account where staking rewards will be accumulated.
-  *This must be the same address that signed the original delegation and 
+  *This must be the same address that signed the original delegation and
   must also sign the extension registration transaction*. The Babylon signer
   address must be the same from the old stake (staker_addr).
-  
+
   Example: `"bbn1abc123def456ghi789jkl012mno345pqr678stu901vwx234yz"`
 
 * `pop` (Proof of Possession):
@@ -353,7 +353,7 @@ message MsgBtcStakeExpand {
   * **BIP-340**: The hash of the staker address bytes should be signed.
   * **BIP-322**: Bytes of the bech32 encoded address should be signed.
   * **ECDSA**: Bytes of the bech32 encoded address should be signed.
-  
+
   Example (BIP-340):
   ```json
   {
@@ -367,10 +367,10 @@ message MsgBtcStakeExpand {
   in BIP-340 format (Schnorr signatures). It is a compact, 32-byte
   value derived from the staker's private key. This public key must be
   exactly the same as the one used in the original delegation being extended,
-  as it corresponds to the staker public key used to construct the 
+  as it corresponds to the staker public key used to construct the
   [staking script](./staking-script.md) used in both the original and extension
   BTC Staking transactions.
-  
+
   Example: `"7b3a9c8e5f1d2a4c6b8d9e0f1a2c3e4f5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e"`
 
 * `fp_btc_pk_list`:
@@ -381,8 +381,8 @@ message MsgBtcStakeExpand {
   finality
   providers from the original delegation** - you cannot add or remove finality
   providers.
-  
-  Example: 
+
+  Example:
   ```json
   [
     "7b3a9c8e5f1d2a4c6b8d9e0f1a2c3e4f5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e",
@@ -390,7 +390,7 @@ message MsgBtcStakeExpand {
     "a9b8c7d6e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1b0c9d8e7f6a5b4c3d2e1f0a9b8"
   ]
   ```
-  
+
   > **⚠️ Critical Requirement**: The extension finality provider list must
   > be identical to the finality providers from the original delegation.
   > The Babylon Genesis chain will reject extensions that attempt to add or remove
@@ -398,11 +398,11 @@ message MsgBtcStakeExpand {
   > finality provider list before constructing the extension.
 
 * `staking_time`:
-  The duration of staking in Bitcoin blocks for the extended delegation. 
-  This can be the same as or longer than the original delegation's staking time.
-  This is the same as the timelock used when constructing the 
+  The duration of staking in Bitcoin blocks for the extended delegation.
+  This is the same as the timelock used when constructing the
   [staking script](./staking-script.md) and must comply with the current
-  Babylon staking parameters.
+  Babylon staking parameters by by being higher or equal than
+  `min_staking_time_blocks` and lower or equal than `max_staking_time_blocks`.
   > **Important Note**: Every stake extension transaction starts
   > with a fresh timelock, meaning that the time the original
   > staking transaction spent being active will not be deducted from
@@ -476,24 +476,24 @@ message MsgBtcStakeExpand {
 > funding transaction. Ensure all extension fields are consistent with the
 > original delegation and current staking parameters.
 
-> **⚡ Note**: The extension message follows the pre-staking registration pattern. 
-> The inclusion proof is submitted later after Bitcoin confirmation via 
+> **⚡ Note**: The extension message follows the pre-staking registration pattern.
+> The inclusion proof is submitted later after Bitcoin confirmation via
 > `MsgBTCUndelegate`.
 
 ### 3.5. Constructing the `MsgBtcStakeExpand`
 
 There are multiple ways to construct and broadcast the `MsgBtcStakeExpand`
   message to the Babylon network:
-* **Command Line Interface (CLI)**: 
+* **Command Line Interface (CLI)**:
   Use the `babylond tx btcstaking btc-stake-extend` command.
-* **TypeScript Implementation**: 
+* **TypeScript Implementation**:
   Generate the message using TypeScript following the
   [TypeScript staking library](https://github.com/babylonlabs-io/btc-staking-ts).
-* **Golang Implementation**: 
+* **Golang Implementation**:
   Construct the message using Golang based on this
   [type reference](../x/btcstaking/types/tx.pb.go) and broadcast to the Babylon
   network.
-* **External References**: 
+* **External References**:
   For detailed instructions on broadcasting transactions, refer to the external
   [Cosmos SDK documentation](https://docs.cosmos.network/main/learn/advanced/transactions#broadcasting-the-transaction).
 
@@ -541,10 +541,10 @@ path to create the fully signed stake extension transaction:
   timelock path
 - ❌ Missing covenant signatures in witness - transaction will be invalid
 
-> **⚡ Note**: Once you submit `MsgBtcStakeExpand` to Babylon, it creates a 
-> pending delegation. Covenants then read the pending delegation and provide 
-> the missing signatures needed to spend the original stake. After receiving 
-> covenant signatures, the BTC staker adds their signature and broadcasts 
+> **⚡ Note**: Once you submit `MsgBtcStakeExpand` to Babylon, it creates a
+> pending delegation. Covenants then read the pending delegation and provide
+> the missing signatures needed to spend the original stake. After receiving
+> covenant signatures, the BTC staker adds their signature and broadcasts
 > the extension transaction to Bitcoin.
 
 ## 4. Managing your Bitcoin Stake Extension
@@ -560,7 +560,7 @@ remains `ACTIVE`.
 # Query the new extended delegation
 babylond query btcstaking btc-delegation [extension-delegation-hash]
 
-# Query the original delegation  
+# Query the original delegation
 babylond query btcstaking btc-delegation [previous-staking-tx-hash]
 ```
 
