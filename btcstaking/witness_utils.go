@@ -20,7 +20,9 @@ func (si *SpendInfo) CreateTimeLockPathWitness(delegatorSig *schnorr.Signature) 
 // CreateUnbondingPathWitness helper function to create a witness to spend
 // transaction through the unbonding path.
 // It is up to the caller to ensure that the amount of covenantSigs matches the
-// expected quorum of covenenant members and the transaction has unbonding path.
+// expected quorum of covenant members and the transaction has unbonding path.
+// NOTE: M-of-N multisig with OP_CHECKSIGADD requires exact amount of signatures equal to the number
+// of total size of the multisig party (N), even though it's nil.
 func (si *SpendInfo) CreateUnbondingPathWitness(
 	covenantSigs []*schnorr.Signature,
 	delegatorSig *schnorr.Signature,
@@ -56,8 +58,10 @@ func (si *SpendInfo) CreateUnbondingPathWitness(
 // CreateSlashingPathWitness helper function to create a witness to spend
 // transaction through the slashing path.
 // It is up to the caller to ensure that the amount of covenantSigs matches the
-// expected quorum of covenenant members, the finality provider sigs respect the finality providers
+// expected quorum of covenant members, the finality provider sigs respect the finality providers
 // that the delegation belongs to, and the transaction has slashing path.
+// NOTE: M-of-N multisig with OP_CHECKSIGADD requires exact amount of signatures equal to the number
+// of total size of the multisig party (N), even though it's nil.
 func (si *SpendInfo) CreateSlashingPathWitness(
 	covenantSigs []*schnorr.Signature,
 	fpSigs []*schnorr.Signature,
@@ -104,7 +108,67 @@ func (si *SpendInfo) CreateSlashingPathWitness(
 	return CreateWitness(si, witnessStack)
 }
 
-// createWitness creates witness for spending the tx corresponding to
+// CreateMultisigSlashingPathWitness helper function to create a witness to spend
+// transaction through the slashing path.
+// It is up to the caller to ensure that the amount of covenantSigs matches the
+// expected quorum of covenant members, the finality provider sigs respect the finality providers
+// that the delegation belongs to, and the transaction has slashing path.
+// NOTE: M-of-N multisig with OP_CHECKSIGADD requires exact amount of signatures equal to the number
+// of total size of the multisig party (N), even though it's nil.
+func (si *SpendInfo) CreateMultisigSlashingPathWitness(
+	covenantSigs []*schnorr.Signature,
+	fpSigs []*schnorr.Signature,
+	delegatorSigs []*schnorr.Signature,
+) (wire.TxWitness, error) {
+	if si == nil {
+		panic("cannot build witness without spend info")
+	}
+
+	var witnessStack [][]byte
+
+	// add covenant signatures to witness stack
+	// NOTE: only a quorum number of covenant signatures needs to be non-nil
+	if len(covenantSigs) == 0 {
+		return nil, fmt.Errorf("covenant signatures should not be empty")
+	}
+	for _, covSig := range covenantSigs {
+		if covSig == nil {
+			witnessStack = append(witnessStack, []byte{})
+		} else {
+			witnessStack = append(witnessStack, covSig.Serialize())
+		}
+	}
+
+	// add finality provider signatures to witness stack
+	// NOTE: only 1 of the finality provider signatures needs to be non-nil
+	if len(fpSigs) == 0 {
+		return nil, fmt.Errorf("finality provider signatures should not be empty")
+	}
+	for _, fpSig := range fpSigs {
+		if fpSig == nil {
+			witnessStack = append(witnessStack, []byte{})
+		} else {
+			witnessStack = append(witnessStack, fpSig.Serialize())
+		}
+	}
+
+	// add delegator signatures to witness stack
+	// NOTE: only a quorum number of delegator signatures needs to be non-nil
+	if len(delegatorSigs) == 0 {
+		return nil, fmt.Errorf("delegator signatures should not be empty")
+	}
+	for _, delegatorSig := range delegatorSigs {
+		if delegatorSig == nil {
+			witnessStack = append(witnessStack, []byte{})
+		} else {
+			witnessStack = append(witnessStack, delegatorSig.Serialize())
+		}
+	}
+
+	return CreateWitness(si, witnessStack)
+}
+
+// CreateWitness creates witness for spending the tx corresponding to
 // the given spend info with the given stack of signatures
 // The returned witness stack follows the structure below:
 // - first come signatures
