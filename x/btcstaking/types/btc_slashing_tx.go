@@ -286,6 +286,9 @@ func (tx *BTCSlashingTx) BuildSlashingTxWithWitness(
 		return nil, fmt.Errorf("failed to get decryption key from BTC SK: %w", err)
 	}
 	// decrypt each covenant adaptor signature to Schnorr signature
+	// NOTE: some elements of the covenantSigs can be nil since it comes from the result
+	// of GetOrderedCovenantSignatures which outputs ordered covenant sigs in total size
+	// of covenant committee
 	covSigs := make([]*schnorr.Signature, len(covenantSigs))
 	numSigs := uint32(0)
 	for i, covenantSig := range covenantSigs {
@@ -369,6 +372,9 @@ func (tx *BTCSlashingTx) BuildMultisigSlashingTxWithWitness(
 		return nil, fmt.Errorf("failed to get decryption key from BTC SK: %w", err)
 	}
 	// decrypt each covenant adaptor signature to Schnorr signature
+	// NOTE: some elements of the covenantSigs can be nil since it comes from the result
+	// of GetOrderedCovenantSignatures which outputs ordered covenant sigs in total size
+	// of covenant committee
 	covSigs := make([]*schnorr.Signature, len(covenantSigs))
 	numSigs := uint32(0)
 	for i, covenantSig := range covenantSigs {
