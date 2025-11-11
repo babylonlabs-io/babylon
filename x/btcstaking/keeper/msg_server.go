@@ -462,16 +462,18 @@ func (ms msgServer) validateStakeExpansionSig(
 		return fmt.Errorf("failed to deserialize other funding txout: %w", err)
 	}
 
-	// build staking info of prev delegation
-	prevDelStakingInfo, err := prevBtcDel.GetStakingInfo(prevParams, ms.btcNet)
-	if err != nil {
-		return fmt.Errorf("failed to get staking info of previous delegation: %w", err)
-	}
+	var prevDelStakingInfo *btcstaking.StakingInfo
 	// if prevBtcDel is a multisig btc delegation, we need to build multisig staking info
 	if prevBtcDel.IsMultisigBtcDel() {
 		prevDelStakingInfo, err = prevBtcDel.GetMultisigStakingInfo(prevParams, ms.btcNet)
 		if err != nil {
 			return fmt.Errorf("failed to get multisig staking info of previous delegation: %w", err)
+		}
+	} else {
+		// build staking info of prev delegation
+		prevDelStakingInfo, err = prevBtcDel.GetStakingInfo(prevParams, ms.btcNet)
+		if err != nil {
+			return fmt.Errorf("failed to get staking info of previous delegation: %w", err)
 		}
 	}
 	prevDelUnbondingPathSpendInfo, err := prevDelStakingInfo.UnbondingPathSpendInfo()
