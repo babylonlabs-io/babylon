@@ -20,7 +20,9 @@ func (si *SpendInfo) CreateTimeLockPathWitness(delegatorSig *schnorr.Signature) 
 // CreateUnbondingPathWitness helper function to create a witness to spend
 // transaction through the unbonding path.
 // It is up to the caller to ensure that the amount of covenantSigs matches the
-// expected quorum of covenenant members and the transaction has unbonding path.
+// expected quorum of covenant members and the transaction has unbonding path.
+// NOTE: M-of-N multisig with OP_CHECKSIGADD requires exact amount of signatures equal to the number
+// of total size of the multisig party (N), even though it's nil.
 func (si *SpendInfo) CreateUnbondingPathWitness(
 	covenantSigs []*schnorr.Signature,
 	delegatorSig *schnorr.Signature,
@@ -56,8 +58,10 @@ func (si *SpendInfo) CreateUnbondingPathWitness(
 // CreateSlashingPathWitness helper function to create a witness to spend
 // transaction through the slashing path.
 // It is up to the caller to ensure that the amount of covenantSigs matches the
-// expected quorum of covenenant members, the finality provider sigs respect the finality providers
+// expected quorum of covenant members, the finality provider sigs respect the finality providers
 // that the delegation belongs to, and the transaction has slashing path.
+// NOTE: M-of-N multisig with OP_CHECKSIGADD requires exact amount of signatures equal to the number
+// of total size of the multisig party (N), even though it's nil.
 func (si *SpendInfo) CreateSlashingPathWitness(
 	covenantSigs []*schnorr.Signature,
 	fpSigs []*schnorr.Signature,
@@ -107,8 +111,10 @@ func (si *SpendInfo) CreateSlashingPathWitness(
 // CreateMultisigSlashingPathWitness helper function to create a witness to spend
 // transaction through the slashing path.
 // It is up to the caller to ensure that the amount of covenantSigs matches the
-// expected quorum of covenenant members, the finality provider sigs respect the finality providers
+// expected quorum of covenant members, the finality provider sigs respect the finality providers
 // that the delegation belongs to, and the transaction has slashing path.
+// NOTE: M-of-N multisig with OP_CHECKSIGADD requires exact amount of signatures equal to the number
+// of total size of the multisig party (N), even though it's nil.
 func (si *SpendInfo) CreateMultisigSlashingPathWitness(
 	covenantSigs []*schnorr.Signature,
 	fpSigs []*schnorr.Signature,
@@ -146,7 +152,8 @@ func (si *SpendInfo) CreateMultisigSlashingPathWitness(
 		}
 	}
 
-	// add delegator signature to witness stack
+	// add delegator signatures to witness stack
+	// NOTE: only a quorum number of delegator signatures needs to be non-nil
 	if len(delegatorSigs) == 0 {
 		return nil, fmt.Errorf("delegator signatures should not be empty")
 	}
@@ -161,7 +168,7 @@ func (si *SpendInfo) CreateMultisigSlashingPathWitness(
 	return CreateWitness(si, witnessStack)
 }
 
-// createWitness creates witness for spending the tx corresponding to
+// CreateWitness creates witness for spending the tx corresponding to
 // the given spend info with the given stack of signatures
 // The returned witness stack follows the structure below:
 // - first come signatures
