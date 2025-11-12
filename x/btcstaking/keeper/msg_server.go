@@ -286,15 +286,17 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 	/*
 		Verify each covenant adaptor signature over slashing tx
 	*/
-	stakingInfo, err := btcDel.GetStakingInfo(params, ms.btcNet)
-	if err != nil {
-		panic(fmt.Errorf("failed to get staking info from a verified delegation: %w", err))
-	}
+	var stakingInfo *btcstaking.StakingInfo
 	if btcDel.IsMultisigBtcDel() {
 		stakingInfo, err = btcDel.GetMultisigStakingInfo(params, ms.btcNet)
-	}
-	if err != nil {
-		panic(fmt.Errorf("failed to get multisig staking info from a verified delegation: %w", err))
+		if err != nil {
+			panic(fmt.Errorf("failed to get multisig staking info from a verified delegation: %w", err))
+		}
+	} else {
+		stakingInfo, err = btcDel.GetStakingInfo(params, ms.btcNet)
+		if err != nil {
+			panic(fmt.Errorf("failed to get staking info from a verified delegation: %w", err))
+		}
 	}
 	slashingSpendInfo, err := stakingInfo.SlashingPathSpendInfo()
 	if err != nil {
