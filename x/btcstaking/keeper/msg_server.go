@@ -348,12 +348,14 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 		verify each adaptor signature on slashing unbonding tx
 	*/
 	unbondingOutput := unbondingMsgTx.TxOut[0] // unbonding tx always have only one output
-	unbondingInfo, err := btcDel.GetUnbondingInfo(params, ms.btcNet)
-	if err != nil {
-		panic(err)
-	}
+	var unbondingInfo *btcstaking.UnbondingInfo
 	if btcDel.IsMultisigBtcDel() {
 		unbondingInfo, err = btcDel.GetMultisigUnbondingInfo(params, ms.btcNet)
+		if err != nil {
+			panic(err)
+		}
+	} else {
+		unbondingInfo, err = btcDel.GetUnbondingInfo(params, ms.btcNet)
 		if err != nil {
 			panic(err)
 		}
