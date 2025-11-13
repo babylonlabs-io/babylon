@@ -55,6 +55,51 @@ func (si *SpendInfo) CreateUnbondingPathWitness(
 	return CreateWitness(si, witnessStack)
 }
 
+// CreateMultisigUnbondingPathWitness helper function to create a witness to spend
+// transaction through the unbonding path.
+// It is up to the caller to ensure that the amount of covenantSigs matches the
+// expected quorum of covenant members and the transaction has unbonding path.
+// NOTE: M-of-N multisig with OP_CHECKSIGADD requires exact amount of signatures equal to the number
+// of total size of the multisig party (N), even though it's nil.
+func (si *SpendInfo) CreateMultisigUnbondingPathWitness(
+	covenantSigs []*schnorr.Signature,
+	delegatorSigs []*schnorr.Signature,
+) (wire.TxWitness, error) {
+	if si == nil {
+		panic("cannot build witness without spend info")
+	}
+
+	var witnessStack [][]byte
+
+	// add covenant signatures to witness stack
+	// NOTE: only a quorum number of covenant signatures needs to be non-nil
+	if len(covenantSigs) == 0 {
+		return nil, fmt.Errorf("covenant signatures should not be empty")
+	}
+	for _, covSig := range covenantSigs {
+		if covSig == nil {
+			witnessStack = append(witnessStack, []byte{})
+		} else {
+			witnessStack = append(witnessStack, covSig.Serialize())
+		}
+	}
+
+	// add delegator signatures to witness stack
+	// NOTE: only a quorum number of delegator signatures needs to be non-nil
+	if len(delegatorSigs) == 0 {
+		return nil, fmt.Errorf("delegator signatures should not be empty")
+	}
+	for _, delegatorSig := range delegatorSigs {
+		if delegatorSig == nil {
+			witnessStack = append(witnessStack, []byte{})
+		} else {
+			witnessStack = append(witnessStack, delegatorSig.Serialize())
+		}
+	}
+
+	return CreateWitness(si, witnessStack)
+}
+
 // CreateSlashingPathWitness helper function to create a witness to spend
 // transaction through the slashing path.
 // It is up to the caller to ensure that the amount of covenantSigs matches the
