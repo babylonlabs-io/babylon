@@ -160,13 +160,14 @@ func VerifySpendStakeTxStakerSig(
 
 	// Staker key is always first in the script, therefore signature will be last.
 	// It is true regardless of the path used to spend the staking output (timelock, unbonding, slashing)
-	// TODO: stakerRawSig is not only one element in case of multisig staker, therefore we need to deal
-	// with it properly. In addition to this, some of the btc delegation would be empty byte, so we need to
-	// skip parsing that signature.
+	// index of stakerRawSigs started from len(stakeSpendWitness)-2-stakerCount to len(stakeSpendWitness)-3
+	// NOTE: if single sig btc delegation, length of the stakerRawSigs is 1, otherwise (M-of-N multisig btc delegation),
+	// the length of stakerRawSigs is same with the length of stakerPubKeys (N)
 	stakerCount := len(stakerPubKeys)
 	stakerRawSigs := stakeSpendWitness[len(stakeSpendWitness)-2-stakerCount : len(stakeSpendWitness)-2]
 
 	for i, stakerRawSig := range stakerRawSigs {
+		// stakerRawSig could be an empty byte to match the total length of stakerPubKeys
 		if len(stakerRawSig) == 0 {
 			continue
 		}
@@ -198,7 +199,8 @@ func VerifySpendStakeTxStakerSig(
 			return fmt.Errorf("failed to calculate tapscript signature hash: %w", err)
 		}
 
-		// sort stakerPubKeys in reverse lexicographical order before verify it with signature
+		// sort stakerPubKeys in reverse lexicographical order before verify it with the given signature
+		// NOTE: staker signatures are also sorted in reverse lexicographical order
 		stakerBIP340PKs := bbn.NewBIP340PKsFromBTCPKs(stakerPubKeys)
 		sortedStakerBIP340PKs := bbn.SortBIP340PKs(stakerBIP340PKs)
 		sortedStakerBTCPks, err := bbn.NewBTCPKsFromBIP340PKs(sortedStakerBIP340PKs)
