@@ -168,7 +168,7 @@ func FuzzSigVerification(f *testing.F) {
 		spendStakeTx.TxIn[stakingInputIdx].Witness = witness
 
 		err = keeper.VerifySpendStakeTxStakerSig(
-			stakerPubKey,
+			[]*btcec.PublicKey{stakerPubKey},
 			stakingInfo.StakingOutput,
 			stakingInputIdx,
 			fundingTxs,

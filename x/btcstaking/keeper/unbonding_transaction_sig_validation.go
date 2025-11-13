@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
 
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
@@ -94,11 +95,12 @@ func buildOutputFetcher(
 // Funding transactions are necessary, as taproot signature commits to values and
 // pkScripts of all the inputs to the spend stake transaction.
 func VerifySpendStakeTxStakerSig(
-	stakerPubKey *btcec.PublicKey,
+	stakerPubKeys []*btcec.PublicKey,
 	stakingOutput *wire.TxOut,
 	stakingInputIdx uint32,
 	fundingTransactions []*wire.MsgTx,
-	spendStakeTx *wire.MsgTx) error {
+	spendStakeTx *wire.MsgTx,
+) error {
 	// sanity check protecting against passing non-staking outputs
 	if !txscript.IsPayToTaproot(stakingOutput.PkScript) {
 		return fmt.Errorf("staking output must be a pay-to-taproot output")
@@ -158,42 +160,57 @@ func VerifySpendStakeTxStakerSig(
 
 	// Staker key is always first in the script, therefore signature will be last.
 	// It is true regardless of the path used to spend the staking output (timelock, unbonding, slashing)
-	stakerRawSig := stakeSpendWitness[len(stakeSpendWitness)-3]
+	// TODO: stakerRawSig is not only one element in case of multisig staker, therefore we need to deal
+	// with it properly. In addition to this, some of the btc delegation would be empty byte, so we need to
+	// skip parsing that signature.
+	stakerCount := len(stakerPubKeys)
+	stakerRawSigs := stakeSpendWitness[len(stakeSpendWitness)-2-stakerCount : len(stakeSpendWitness)-2]
 
-	stakerSig, sigHashType, err := parseSchnorrSigFromWitness(stakerRawSig)
+	for i, stakerRawSig := range stakerRawSigs {
+		if len(stakerRawSig) == 0 {
+			continue
+		}
+		stakerSig, sigHashType, err := parseSchnorrSigFromWitness(stakerRawSig)
+		if err != nil {
+			return fmt.Errorf("failed to parse schnorr signature from witness: %w", err)
+		}
+		prevOuts, err := buildOutputFetcher(fundingTransactions, spendStakeTx)
+		if err != nil {
+			return fmt.Errorf("failed to build output fetcher from provided funding transactions: %w", err)
+		}
 
-	if err != nil {
-		return fmt.Errorf("failed to parse schnorr signature from witness: %w", err)
-	}
+		var opts []txscript.TaprootSigHashOption
+		if len(annex) > 0 {
+			opts = append(opts, txscript.WithAnnex(annex))
+		}
 
-	prevOuts, err := buildOutputFetcher(fundingTransactions, spendStakeTx)
-	if err != nil {
-		return fmt.Errorf("failed to build output fetcher from provided funding transactions: %w", err)
-	}
+		sigHash, err := txscript.CalcTapscriptSignaturehash(
+			txscript.NewTxSigHashes(spendStakeTx, prevOuts),
+			sigHashType,
+			spendStakeTx,
+			int(stakingInputIdx),
+			prevOuts,
+			txscript.NewBaseTapLeaf(witnessScript),
+			opts...,
+		)
 
-	var opts []txscript.TaprootSigHashOption
-	if len(annex) > 0 {
-		opts = append(opts, txscript.WithAnnex(annex))
-	}
+		if err != nil {
+			return fmt.Errorf("failed to calculate tapscript signature hash: %w", err)
+		}
 
-	sigHash, err := txscript.CalcTapscriptSignaturehash(
-		txscript.NewTxSigHashes(spendStakeTx, prevOuts),
-		sigHashType,
-		spendStakeTx,
-		int(stakingInputIdx),
-		prevOuts,
-		txscript.NewBaseTapLeaf(witnessScript),
-		opts...,
-	)
+		// sort stakerPubKeys in reverse lexicographical order before verify it with signature
+		stakerBIP340PKs := bbn.NewBIP340PKsFromBTCPKs(stakerPubKeys)
+		sortedStakerBIP340PKs := bbn.SortBIP340PKs(stakerBIP340PKs)
+		sortedStakerBTCPks, err := bbn.NewBTCPKsFromBIP340PKs(sortedStakerBIP340PKs)
+		if err != nil {
+			return fmt.Errorf("failed to build bip340 pks: %w", err)
+		}
 
-	if err != nil {
-		return fmt.Errorf("failed to calculate tapscript signature hash: %w", err)
-	}
+		valid := stakerSig.Verify(sigHash, sortedStakerBTCPks[i])
 
-	valid := stakerSig.Verify(sigHash, stakerPubKey)
-
-	if !valid {
-		return fmt.Errorf("failed to verify schnorr signature: %w", err)
+		if !valid {
+			return fmt.Errorf("failed to verify %d schnorr signature of %d: %w", i, stakerCount, err)
+		}
 	}
 
 	return nil
