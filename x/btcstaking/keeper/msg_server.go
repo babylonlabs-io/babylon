@@ -612,9 +612,23 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 		return nil, types.ErrInvalidBTCUndelegateReq.Wrapf("failed to parse funding transactions: %s", err)
 	}
 
+	// construct stakerPKs, if it's a single-sig btc delegation, len(stakerPKs) is 1,
+	// otherwise, it's a multisig btc delegation with non-one stakerCount.
+	var stakerPKs []*btcec.PublicKey
+	if btcDel.IsMultisigBtcDel() {
+		stakerPKs = append(stakerPKs, btcDel.BtcPk.MustToBTCPK())
+		stakerBtcPKs, err := bbn.NewBTCPKsFromBIP340PKs(btcDel.MultisigInfo.StakerBtcPkList)
+		if err != nil {
+			return nil, err
+		}
+		stakerPKs = append(stakerPKs, stakerBtcPKs...)
+	} else {
+		stakerPKs = append(stakerPKs, btcDel.BtcPk.MustToBTCPK())
+	}
+
 	// 4. Verify staker signature on stake spending tx
 	if err := VerifySpendStakeTxStakerSig(
-		btcDel.BtcPk.MustToBTCPK(),
+		stakerPKs,
 		stakingTx.TxOut[btcDel.StakingOutputIdx],
 		stakingTxInputIdx,
 		fundingTxs,
