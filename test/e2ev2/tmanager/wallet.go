@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"testing"
 
-	"cosmossdk.io/math"
-	appsigner "github.com/babylonlabs-io/babylon/v4/app/signer"
+	"github.com/stretchr/testify/require"
+
 	"github.com/btcsuite/btcd/btcec/v2"
+
+	"cosmossdk.io/math"
 	cmtcfg "github.com/cometbft/cometbft/config"
 	"github.com/cometbft/cometbft/crypto/ed25519"
 	"github.com/cometbft/cometbft/privval"
@@ -20,9 +22,9 @@ import (
 	sdksigning "github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	"github.com/cosmos/go-bip39"
-	"github.com/stretchr/testify/require"
 
 	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
+	appsigner "github.com/babylonlabs-io/babylon/v4/app/signer"
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/util"
 )
 
@@ -119,6 +121,14 @@ func (ws *WalletSender) IncSeq() {
 	ws.SequenceNumber++
 }
 
+// DecSeq decrements the sequence number
+func (ws *WalletSender) DecSeq() {
+	if ws.SequenceNumber == 0 {
+		ws.T().Fatalf("sequence number is 0")
+	}
+	ws.SequenceNumber--
+}
+
 // Addr returns the account address
 func (ws *WalletSender) Addr() string {
 	return ws.Address.String()
@@ -211,7 +221,7 @@ func (ws *WalletSender) SubmitMsgs(msgs ...sdk.Msg) (txHash string, tx *sdktx.Tx
 	signedTx := ws.SignMsg(msgs...)
 
 	txHash, err := ws.Node.SubmitTx(signedTx)
-	require.NoError(ws.T(), err, "Failed to submit IBC transfer transaction")
+	require.NoError(ws.T(), err, "Failed to submit transaction")
 
 	ws.AddTxSent(txHash)
 	if ws.VerifySentTx {

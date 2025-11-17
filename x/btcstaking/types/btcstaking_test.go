@@ -1,9 +1,12 @@
 package types_test
 
 import (
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	"math/rand"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
 	"github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
@@ -98,4 +101,20 @@ func TestLargestBtcReOrg_Validate(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestExistDup(t *testing.T) {
+	r := rand.New(rand.NewSource(time.Now().Unix()))
+	_, btcPks, err := datagen.GenRandomBTCKeyPairs(r, 3)
+	require.NoError(t, err)
+
+	pks := bbn.NewBIP340PKsFromBTCPKs(btcPks)
+	duplicate, err := types.ExistsDup(pks)
+	require.NoError(t, err)
+	require.False(t, duplicate)
+
+	pks = append(pks, pks[0])
+	duplicate, err = types.ExistsDup(pks)
+	require.NoError(t, err)
+	require.True(t, duplicate)
 }

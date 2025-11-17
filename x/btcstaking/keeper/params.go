@@ -144,6 +144,21 @@ func (k Keeper) GetAllParams(ctx context.Context) []*types.Params {
 	return p
 }
 
+func (k Keeper) GetAllStoredParams(ctx context.Context) []*types.StoredParams {
+	paramsStore := k.paramsStore(ctx)
+	it := paramsStore.Iterator(nil, nil)
+	defer it.Close()
+
+	var sps []*types.StoredParams
+	for ; it.Valid(); it.Next() {
+		var sp types.StoredParams
+		k.cdc.MustUnmarshal(it.Value(), &sp)
+		sps = append(sps, &sp)
+	}
+
+	return sps
+}
+
 func (k Keeper) GetParamsByVersion(ctx context.Context, v uint32) *types.Params {
 	paramsStore := k.paramsStore(ctx)
 	spBytes := paramsStore.Get(uint32ToBytes(v))

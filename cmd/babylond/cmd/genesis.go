@@ -108,6 +108,8 @@ Example:
 					genesisCliArgs.FinalitySigTimeout,
 					genesisCliArgs.JailDuration,
 					genesisCliArgs.FinalityActivationBlockHeight,
+					genesisCliArgs.MaxStakerQuorum,
+					genesisCliArgs.MaxStakerNum,
 				)
 			case "mainnet":
 				panic("Mainnet params not implemented.")
@@ -297,6 +299,8 @@ func TestnetGenesisParams(
 	finalitySigTimeout int64,
 	jailDuration time.Duration,
 	finalityActivationBlockHeight uint64,
+	maxStakerQuorum uint32,
+	maxStakerNum uint32,
 ) GenesisParams {
 	genParams := GenesisParams{}
 
@@ -392,6 +396,8 @@ func TestnetGenesisParams(
 	genParams.BtcstakingParams.SlashingRate = slashingRate
 	genParams.BtcstakingParams.UnbondingTimeBlocks = uint32(unbondingTime)
 	genParams.BtcstakingParams.UnbondingFeeSat = unbondingFeeSat
+	genParams.BtcstakingParams.MaxStakerQuorum = maxStakerQuorum
+	genParams.BtcstakingParams.MaxStakerNum = maxStakerNum
 	if err := genParams.BtcstakingParams.Validate(); err != nil {
 		panic(err)
 	}

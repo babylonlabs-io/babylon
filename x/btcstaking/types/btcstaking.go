@@ -1,8 +1,10 @@
 package types
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
+	"sort"
 	time "time"
 
 	"cosmossdk.io/math"
@@ -99,6 +101,7 @@ func NewSignatureInfo(pk *bbn.BIP340PubKey, sig *bbn.BIP340Signature) *Signature
 // covenant signatures
 // the order of covenant adaptor signatures will follow the reverse lexicographical order
 // of signing public keys, in order to be used as tx witness
+// NOTE: the number of covenant signatures returned as an output is the total size of covenant committee
 func GetOrderedCovenantSignatures(fpIdx int, covSigsList []*CovenantAdaptorSignatures, params *Params) ([]*asig.AdaptorSignature, error) {
 	// construct the map where
 	// - key is the covenant PK, and
@@ -135,6 +138,36 @@ func GetOrderedCovenantSignatures(fpIdx int, covSigsList []*CovenantAdaptorSigna
 	}
 
 	return orderedCovSigs, nil
+}
+
+// GetOrderedDelegatorSignatures returns the ordered delegator Schnorr signatures.
+// The order follows the reverse lexicographical order of delegator public keys so
+// the resulting slice can be plugged directly into the BTC witness.
+// NOTE: the returned slice must contain one slot per multisig participant (the full N),
+// and entries can be nil for any delegator that failed to provide its signature.
+func GetOrderedDelegatorSignatures(delPK2Sig map[string]*bbn.BIP340Signature) ([]*bbn.BIP340Signature, error) {
+	entries := make([]SignatureInfo, 0, len(delPK2Sig))
+	for delPKStr, sig := range delPK2Sig {
+		delPK, err := bbn.NewBIP340PubKeyFromHex(delPKStr)
+		if err != nil {
+			return nil, err
+		}
+		entries = append(entries, SignatureInfo{Pk: delPK, Sig: sig})
+	}
+
+	// sort delegator PKs in reverse lexicographical order
+	sort.SliceStable(entries, func(i, j int) bool {
+		keyIBytes := entries[i].Pk.MustMarshal()
+		keyJBytes := entries[j].Pk.MustMarshal()
+		return bytes.Compare(keyIBytes, keyJBytes) == 1
+	})
+
+	orderedDelSigs := make([]*bbn.BIP340Signature, len(entries))
+	for i, entry := range entries {
+		orderedDelSigs[i] = entry.Sig
+	}
+
+	return orderedDelSigs, nil
 }
 
 // NewLargestBtcReOrg creates a new Largest BTC reorg based on the rollback vars

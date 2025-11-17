@@ -271,13 +271,21 @@ func keyToString(key *btcec.PublicKey) string {
 }
 
 func checkForDuplicateKeys(
-	stakerKey *btcec.PublicKey,
+	stakerKeys []*btcec.PublicKey,
 	fpKeys []*btcec.PublicKey,
 	covenantKeys []*btcec.PublicKey,
 ) error {
 	keyMap := make(map[string]struct{})
 
-	keyMap[keyToString(stakerKey)] = struct{}{}
+	for _, key := range stakerKeys {
+		keyStr := keyToString(key)
+
+		if _, ok := keyMap[keyStr]; ok {
+			return fmt.Errorf("key: %s: %w", keyStr, ErrDuplicatedKeyInScript)
+		}
+
+		keyMap[keyStr] = struct{}{}
+	}
 
 	for _, key := range fpKeys {
 		keyStr := keyToString(key)
@@ -303,24 +311,45 @@ func checkForDuplicateKeys(
 }
 
 func newBabylonScriptPaths(
-	stakerKey *btcec.PublicKey,
+	stakerKeys []*btcec.PublicKey,
+	stakerQuorum uint32,
 	fpKeys []*btcec.PublicKey,
 	covenantKeys []*btcec.PublicKey,
 	covenantQuorum uint32,
 	lockTime uint16,
 ) (*babylonScriptPaths, error) {
-	if stakerKey == nil {
-		return nil, fmt.Errorf("staker key is nil")
+	if len(stakerKeys) == 0 {
+		return nil, fmt.Errorf("no staker key is provided")
 	}
 
-	if err := checkForDuplicateKeys(stakerKey, fpKeys, covenantKeys); err != nil {
+	if stakerQuorum < 1 {
+		return nil, fmt.Errorf("staker quorum must be greater than 0")
+	}
+
+	if err := checkForDuplicateKeys(stakerKeys, fpKeys, covenantKeys); err != nil {
 		return nil, fmt.Errorf("error building scripts: %w", err)
 	}
 
-	timeLockPathScript, err := buildTimeLockScript(stakerKey, lockTime)
+	var (
+		timeLockPathScript []byte
+		stakerSigScript    []byte
+		err                error
+	)
 
-	if err != nil {
-		return nil, err
+	if len(stakerKeys) == 1 {
+		if timeLockPathScript, err = buildTimeLockScript(stakerKeys[0], lockTime); err != nil {
+			return nil, err
+		}
+		if stakerSigScript, err = buildSingleKeySigScript(stakerKeys[0], true); err != nil {
+			return nil, err
+		}
+	} else {
+		if timeLockPathScript, err = buildMultiSigScript(stakerKeys, stakerQuorum, true, lockTime); err != nil {
+			return nil, err
+		}
+		if stakerSigScript, err = buildMultiSigScript(stakerKeys, stakerQuorum, true, 0); err != nil {
+			return nil, err
+		}
 	}
 
 	covenantMultisigScript, err := buildMultiSigScript(
@@ -330,13 +359,8 @@ func newBabylonScriptPaths(
 		// last value on the stack. If we do not leave at least one element on the stack
 		// script will always error
 		false,
+		0,
 	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	stakerSigScript, err := buildSingleKeySigScript(stakerKey, true)
 
 	if err != nil {
 		return nil, err
@@ -348,6 +372,7 @@ func newBabylonScriptPaths(
 		1,
 		// we need to run verify to clear the stack, as finality provider multisig is in the middle of the script
 		true,
+		0,
 	)
 
 	if err != nil {
@@ -389,8 +414,78 @@ func BuildStakingInfo(
 ) (*StakingInfo, error) {
 	unspendableKeyPathKey := unspendableKeyPathInternalPubKey()
 
+	// convert stakerKey to stakerKeys with one element
+	stakerKeys := []*btcec.PublicKey{stakerKey}
+
 	babylonScripts, err := newBabylonScriptPaths(
-		stakerKey,
+		stakerKeys,
+		1,
+		fpKeys,
+		covenantKeys,
+		covenantQuorum,
+		stakingTime,
+	)
+
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", errBuildingStakingInfo, err)
+	}
+
+	var unbondingPaths [][]byte
+	unbondingPaths = append(unbondingPaths, babylonScripts.timeLockPathScript)
+	unbondingPaths = append(unbondingPaths, babylonScripts.unbondingPathScript)
+	unbondingPaths = append(unbondingPaths, babylonScripts.slashingPathScript)
+
+	timeLockLeafHash := txscript.NewBaseTapLeaf(babylonScripts.timeLockPathScript).TapHash()
+	unbondingPathLeafHash := txscript.NewBaseTapLeaf(babylonScripts.unbondingPathScript).TapHash()
+	slashingLeafHash := txscript.NewBaseTapLeaf(babylonScripts.slashingPathScript).TapHash()
+
+	sh, err := newTaprootScriptHolder(
+		&unspendableKeyPathKey,
+		unbondingPaths,
+	)
+
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", errBuildingStakingInfo, err)
+	}
+
+	taprootPkScript, err := sh.taprootPkScript(net)
+
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", errBuildingStakingInfo, err)
+	}
+
+	stakingOutput := wire.NewTxOut(int64(stakingAmount), taprootPkScript)
+
+	return &StakingInfo{
+		StakingOutput:         stakingOutput,
+		scriptHolder:          sh,
+		timeLockPathLeafHash:  timeLockLeafHash,
+		unbondingPathLeafHash: unbondingPathLeafHash,
+		slashingPathLeafHash:  slashingLeafHash,
+	}, nil
+}
+
+// BuildMultisigStakingInfo builds all Babylon specific BTC scripts that must
+// be committed to in the staking output.
+// Returned `StakingInfo` object exposes methods to build spend info for each
+// of the script spending paths which later must be included in the witness.
+// It is up to the caller to verify whether parameters provided to this function
+// obey parameters expected by Babylon chain.
+func BuildMultisigStakingInfo(
+	stakerKeys []*btcec.PublicKey,
+	stakerQuorum uint32,
+	fpKeys []*btcec.PublicKey,
+	covenantKeys []*btcec.PublicKey,
+	covenantQuorum uint32,
+	stakingTime uint16,
+	stakingAmount btcutil.Amount,
+	net *chaincfg.Params,
+) (*StakingInfo, error) {
+	unspendableKeyPathKey := unspendableKeyPathInternalPubKey()
+
+	babylonScripts, err := newBabylonScriptPaths(
+		stakerKeys,
+		stakerQuorum,
 		fpKeys,
 		covenantKeys,
 		covenantQuorum,
@@ -475,8 +570,75 @@ func BuildUnbondingInfo(
 ) (*UnbondingInfo, error) {
 	unspendableKeyPathKey := unspendableKeyPathInternalPubKey()
 
+	// convert stakerKey to stakerKeys with one element
+	stakerKeys := []*btcec.PublicKey{stakerKey}
+
 	babylonScripts, err := newBabylonScriptPaths(
-		stakerKey,
+		stakerKeys,
+		1,
+		fpKeys,
+		covenantKeys,
+		covenantQuorum,
+		unbondingTime,
+	)
+
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", errBuildingUnbondingInfo, err)
+	}
+
+	var unbondingPaths [][]byte
+	unbondingPaths = append(unbondingPaths, babylonScripts.timeLockPathScript)
+	unbondingPaths = append(unbondingPaths, babylonScripts.slashingPathScript)
+
+	timeLockLeafHash := txscript.NewBaseTapLeaf(babylonScripts.timeLockPathScript).TapHash()
+	slashingLeafHash := txscript.NewBaseTapLeaf(babylonScripts.slashingPathScript).TapHash()
+
+	sh, err := newTaprootScriptHolder(
+		&unspendableKeyPathKey,
+		unbondingPaths,
+	)
+
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", errBuildingUnbondingInfo, err)
+	}
+
+	taprootPkScript, err := sh.taprootPkScript(net)
+
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", errBuildingUnbondingInfo, err)
+	}
+
+	unbondingOutput := wire.NewTxOut(int64(unbondingAmount), taprootPkScript)
+
+	return &UnbondingInfo{
+		UnbondingOutput:      unbondingOutput,
+		scriptHolder:         sh,
+		timeLockPathLeafHash: timeLockLeafHash,
+		slashingPathLeafHash: slashingLeafHash,
+	}, nil
+}
+
+// BuildMultisigUnbondingInfo builds all Babylon specific BTC scripts that must
+// be committed to in the unbonding output.
+// Returned `UnbondingInfo` object exposes methods to build spend info for each
+// of the script spending paths which later must be included in the witness.
+// It is up to the caller to verify whether parameters provided to this function
+// obey parameters expected by Babylon chain.
+func BuildMultisigUnbondingInfo(
+	stakerKeys []*btcec.PublicKey,
+	stakerQuorum uint32,
+	fpKeys []*btcec.PublicKey,
+	covenantKeys []*btcec.PublicKey,
+	covenantQuorum uint32,
+	unbondingTime uint16,
+	unbondingAmount btcutil.Amount,
+	net *chaincfg.Params,
+) (*UnbondingInfo, error) {
+	unspendableKeyPathKey := unspendableKeyPathInternalPubKey()
+
+	babylonScripts, err := newBabylonScriptPaths(
+		stakerKeys,
+		stakerQuorum,
 		fpKeys,
 		covenantKeys,
 		covenantQuorum,
@@ -564,6 +726,70 @@ func BuildRelativeTimelockTaprootScript(
 	unspendableKeyPathKey := unspendableKeyPathInternalPubKey()
 
 	script, err := buildTimeLockScript(pk, lockTime)
+
+	if err != nil {
+		return nil, err
+	}
+
+	sh, err := newTaprootScriptHolder(
+		&unspendableKeyPathKey,
+		[][]byte{script},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// there is only one script path in tree, so we can use index 0
+	proof := sh.scriptTree.LeafMerkleProofs[0]
+
+	spendInfo := &SpendInfo{
+		ControlBlock: proof.ToControlBlock(&unspendableKeyPathKey),
+		RevealedLeaf: proof.TapLeaf,
+	}
+
+	taprootAddress, err := DeriveTaprootAddress(
+		sh.scriptTree,
+		&unspendableKeyPathKey,
+		net,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	taprootPkScript, err := txscript.PayToAddrScript(taprootAddress)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &RelativeTimeLockTapScriptInfo{
+		SpendInfo:  spendInfo,
+		LockTime:   lockTime,
+		TapAddress: taprootAddress,
+		PkScript:   taprootPkScript,
+	}, nil
+}
+
+func BuildMultisigRelativeTimelockTaprootScript(
+	pks []*btcec.PublicKey,
+	quorum uint32,
+	lockTime uint16,
+	net *chaincfg.Params,
+) (*RelativeTimeLockTapScriptInfo, error) {
+	unspendableKeyPathKey := unspendableKeyPathInternalPubKey()
+
+	var (
+		script []byte
+		err    error
+	)
+
+	if len(pks) == 1 && quorum == 1 {
+		script, err = buildTimeLockScript(pks[0], lockTime)
+	} else {
+		script, err = buildMultiSigScript(pks, quorum, true, lockTime)
+	}
 
 	if err != nil {
 		return nil, err
