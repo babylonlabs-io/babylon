@@ -426,3 +426,35 @@ func convertToActiveFinalityProvidersAtHeightResponse(finalityProvidersWithMeta 
 	}
 	return activeFinalityProvidersAtHeightResponse
 }
+
+// VotingPowerDistribution returns the voting power distribution cache at a given height
+func (k Keeper) VotingPowerDistribution(ctx context.Context, req *types.QueryVotingPowerDistributionRequest) (*types.QueryVotingPowerDistributionResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
+
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	dc := k.GetVotingPowerDistCache(sdkCtx, req.Height)
+	if dc == nil {
+		return nil, types.ErrVotingPowerTableNotFound.Wrapf("height: %d", req.Height)
+	}
+
+	fpDistInfoResponses := make([]*types.FinalityProviderDistInfoResponse, 0, len(dc.FinalityProviders))
+	for _, fpDistInfo := range dc.FinalityProviders {
+		fpDistInfoResponses = append(fpDistInfoResponses, &types.FinalityProviderDistInfoResponse{
+			BtcPkHex:       fpDistInfo.BtcPk.MarshalHex(),
+			Addr:           sdk.AccAddress(fpDistInfo.Addr).String(),
+			Commission:     fpDistInfo.Commission,
+			TotalBondedSat: fpDistInfo.TotalBondedSat,
+			IsTimestamped:  fpDistInfo.IsTimestamped,
+			IsJailed:       fpDistInfo.IsJailed,
+			IsSlashed:      fpDistInfo.IsSlashed,
+		})
+	}
+
+	return &types.QueryVotingPowerDistributionResponse{
+		TotalVotingPower:  dc.TotalVotingPower,
+		FinalityProviders: fpDistInfoResponses,
+		NumActiveFps:      uint64(dc.NumActiveFps),
+	}, nil
+}
