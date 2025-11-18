@@ -40,6 +40,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ### Improvements
 
 - [#1764](https://github.com/babylonlabs-io/babylon/pull/1764) Add mergify yaml file for automatic backporting
+- [#1867](https://github.com/babylonlabs-io/babylon/pull/1867) bump wasmd `v0.60.2`
 
 ## v4.0.0
 
