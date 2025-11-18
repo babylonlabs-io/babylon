@@ -3,7 +3,7 @@ go 1.23.8
 module github.com/babylonlabs-io/babylon/v4
 
 require (
-	github.com/CosmWasm/wasmd v0.55.1
+	github.com/CosmWasm/wasmd v0.60.2
 	github.com/btcsuite/btcd v0.24.2
 	github.com/cometbft/cometbft v0.38.19
 	github.com/cometbft/cometbft-db v0.15.0
@@ -296,8 +296,12 @@ replace (
 	// use cosmos fork of keyring
 	github.com/99designs/keyring => github.com/cosmos/keyring v1.2.0
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
+	// Fix protoc-gen-validate moved to envoyproxy
+	github.com/lyft/protoc-gen-validate => github.com/envoyproxy/protoc-gen-validate v1.1.0
 
 	github.com/strangelove-ventures/tokenfactory => github.com/babylonlabs-io/tokenfactory v0.50.6-wasmvm2
 	// Downgraded to stable version see: https://github.com/cosmos/cosmos-sdk/pull/14952
 	github.com/syndtr/goleveldb => github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7
+	// Fix websocket version conflict
+	nhooyr.io/websocket => nhooyr.io/websocket v1.8.17
 )

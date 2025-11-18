@@ -43,6 +43,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#1839](https://github.com/babylonlabs-io/babylon/pull/1839) Add query to get the voting power distribution
 cache (is only available until that block is finalized)
 
+### State breaking
+
+- [#1867](https://github.com/babylonlabs-io/babylon/pull/1867) bump wasmd `v0.60.2`
+
 ## v4.0.0
 
 ## v4.0.0-rc.3
