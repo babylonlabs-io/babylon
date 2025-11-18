@@ -9,6 +9,22 @@ import (
 	finalitytypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
 )
 
+type QueryVotingPowerDistributionResponseMap struct {
+	// total_voting_power is the total voting power of all (active) finality
+	// providers in the cache
+	TotalVotingPower uint64 `json:"total_voting_power,omitempty"`
+	// finality_providers is map of finality providers by their btc pk hex
+	FinalityProviders map[string]*FinalityProviderDistResponse `json:"finality_providers,omitempty"`
+	// num_active_fps is the number of finality providers that have active BTC
+	// delegations as well as timestamped public randomness
+	NumActiveFps uint64 `json:"num_active_fps,omitempty"`
+}
+
+type FinalityProviderDistResponse struct {
+	finalitytypes.FinalityProviderDistInfoResponse
+	IsActive bool `json:"is_active,omitempty"`
+}
+
 // QueryFinality queries the Finality module of the Babylon node according to the given function
 func (c *QueryClient) QueryFinality(f func(ctx context.Context, queryClient finalitytypes.QueryClient) error) error {
 	ctx, cancel := c.getQueryContext()
@@ -152,4 +168,40 @@ func (c *QueryClient) ListEvidences(startHeight uint64, pagination *sdkquerytype
 	})
 
 	return resp, err
+}
+
+// VotingPowerDistribution queries the voting power distribution cache at a given height
+func (c *QueryClient) VotingPowerDistribution(height uint64) (*finalitytypes.QueryVotingPowerDistributionResponse, error) {
+	var resp *finalitytypes.QueryVotingPowerDistributionResponse
+	err := c.QueryFinality(func(ctx context.Context, queryClient finalitytypes.QueryClient) error {
+		var err error
+		req := &finalitytypes.QueryVotingPowerDistributionRequest{
+			Height: height,
+		}
+		resp, err = queryClient.VotingPowerDistribution(ctx, req)
+		return err
+	})
+
+	return resp, err
+}
+
+func (c *QueryClient) VotingPowerDistributionMap(height uint64) (*QueryVotingPowerDistributionResponseMap, error) {
+	resp, err := c.VotingPowerDistribution(height)
+	if err != nil {
+		return nil, err
+	}
+
+	fps := make(map[string]*FinalityProviderDistResponse, len(resp.FinalityProviders))
+	for idx, fp := range resp.FinalityProviders {
+		fps[fp.BtcPkHex] = &FinalityProviderDistResponse{
+			FinalityProviderDistInfoResponse: *fp,
+			IsActive:                         uint64(idx) < resp.NumActiveFps,
+		}
+	}
+
+	return &QueryVotingPowerDistributionResponseMap{
+		TotalVotingPower:  resp.TotalVotingPower,
+		FinalityProviders: fps,
+		NumActiveFps:      resp.NumActiveFps,
+	}, nil
 }
