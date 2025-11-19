@@ -30,6 +30,8 @@ constructed, registered, and operated on Babylon. It complements the
 [Bitcoin stake registration](./register-bitcoin-stake.md) and
 [stake extension](./bitcoin-stake-extension.md) guides by focusing on the data
 and validation rules that are unique to M-of-N BTC stakers.
+**Single-signature delegators can safely ignore this document—if `multisig_info`
+remains unset in your messages, the keeper follows the regular single-sig flow.**
 
 ## 1. Introduction
 
@@ -39,7 +41,7 @@ Many institutional or custodial stakers require shared control over their
 staking keys. Babylon supports Taproot-based M-of-N multisig delegations so
 that organizations can:
 
-- split signing authority across multiple HSMs or operators
+- split signing authority across multiple operators
 - enforce recovery policies without sacrificing liveness guarantees
 - keep the same security story as self-custodial single-signature stakers
 
@@ -86,6 +88,43 @@ The difference is the content of each script leaf:
 - **Unbonding path**: requires `M` delegator signatures plus the covenant quorum.
 - **Slashing path**: requires `M` delegator signatures, one finality provider
   signature, and the covenant quorum.
+
+For a concrete `2-of-3` staker multisig, `1-of-1` finality provider, and
+`3-of-5` covenant configuration the Taproot leaves look like:
+
+```text
+// Time-lock path (staker-only, relative timelock enforced)
+<StakerPk1> OP_CHECKSIG
+<StakerPk2> OP_CHECKSIGADD
+<StakerPk3> OP_CHECKSIGADD
+2 OP_NUMEQUALVERIFY
+<staking_time> OP_CHECKSEQUENCEVERIFY
+
+// Unbonding path (stakers + covenant, cooperative exit)
+<StakerPk1> OP_CHECKSIG
+<StakerPk2> OP_CHECKSIGADD
+<StakerPk3> OP_CHECKSIGADD
+2 OP_NUMEQUALVERIFY
+<CovPk1> OP_CHECKSIG
+<CovPk2> OP_CHECKSIGADD
+<CovPk3> OP_CHECKSIGADD
+<CovPk4> OP_CHECKSIGADD
+<CovPk5> OP_CHECKSIGADD
+3 OP_NUMEQUAL
+
+// Slashing path (stakers + finality provider + covenant)
+<StakerPk1> OP_CHECKSIG
+<StakerPk2> OP_CHECKSIGADD
+<StakerPk3> OP_CHECKSIGADD
+2 OP_NUMEQUALVERIFY
+<FpPk1> OP_CHECKSIGVERIFY
+<CovPk1> OP_CHECKSIG
+<CovPk2> OP_CHECKSIGADD
+<CovPk3> OP_CHECKSIGADD
+<CovPk4> OP_CHECKSIGADD
+<CovPk5> OP_CHECKSIGADD
+3 OP_NUMEQUAL
+```
 
 The Bitcoin scripts are generated through
 `btcstaking.BuildMultisigStakingInfo/BuildMultisigUnbondingInfo` which sort the
@@ -143,6 +182,11 @@ These limits are governance-controlled and can be inspected via
 Besides the standard data described in
 [Bitcoin Stake Registration](./register-bitcoin-stake.md#3-bitcoin-stake-registration),
 a multisig delegation requires the following preparatory steps:
+
+> **NOTE**: `multisig_info` is optional. If you submit `MsgCreateBTCDelegation`
+> or `MsgBtcStakeExpand` without this field (i.e., it is `nil`), the keeper treats
+> the delegation as a single-signature BTC stake and runs the standard validation
+> path. Populate `multisig_info` only when you actually need an M-of-N scheme.
 
 1. **Generate keys**: produce the primary staker key (owner) plus the `N-1`
    additional staker keys. Each key must be a BIP-340 Schnorr key.
@@ -218,7 +262,7 @@ or `MsgBtcStakeExpand` payload:
 ### 5.1. End-to-End Flow
 
 The high-level flow follows the same steps as single-sig delegations
-(see [Section 2](./register-bitcoin-stake.md#2-bitcoin-stake-registration)):
+(see [Section 2](./register-bitcoin-stake.md#2-bitcoin-stake-registration-methods)):
 
 1. Build staking/unbonding Bitcoin transactions that include multisig scripts.
 2. Gather slashing signatures from all staker keys.
@@ -245,14 +289,22 @@ Witness requirements enforced by the Babylon keeper.
   and include the same finality provider set. Babylon rebuilds the multisig
   scripts using the provided keys to verify the covenant signatures before
   they are refunded.
-- **`MsgAddCovenantSigs`**: unchanged, but covenant signatures are now applied
-  over multisig scripts. Babylon automatically includes the multisig witness
-  paths when verifying adaptor signatures.
-- **`MsgBTCUndelegate`**: when a multisig delegation unbonds early, the message
-  must include a witness where the staker signature vector contains one entry
-  per multisig participant (empty byte arrays for non-signers). The keeper
-  reconstructs the staker key set from `multisig_info` and validates the
-  Schnorr signatures accordingly.
+- **`MsgAddCovenantSigs`**: the fields stay the same, but each adaptor
+  signature now corresponds to the multisig Taproot leaves. Covenant members
+  must ensure the adaptor signature list they submit spans the *same* number of
+  staker entries Babylon stored (the keeper expands the witness builder with
+  empty slots for missing cosigners). In other words, no extra payload is
+  required, yet the verifier checks the adaptor signatures against the
+  multisig spending path rather than the single-sig one.
+- **`MsgBTCUndelegate`**: the message itself is unchanged, but the included
+  `stake_spending_tx` witness needs one Schnorr signature placeholder per
+  multisig staker. Wallets should serialize the witness exactly as
+  `btcstaking.VerifySpendStakeTxStakerSig` expects covenant signatures (and
+  finality provider signatures for slashing spends) come first, followed by the
+  `N` staker signatures (empty byte slices for non-signers), and finally the
+  script plus control block. The keeper reconstructs the expected key order from
+  `multisig_info` and rejects the undelegation if any signature is missing or
+  out of order.
 
 ## 6. Managing Multisig Delegations
 
@@ -274,6 +326,13 @@ Additional multisig-specific considerations:
   slashing transactions. Even if the staker set changes, Babylon will re-run
   the same validation path as for brand-new delegations.
 - Covenant overlap requirements apply exactly as in the single-sig flow.
+- It is valid to toggle between single-sig and multisig during an extension
+  (e.g., the previous staking tx was single-sig, the new staking tx carries
+  `multisig_info`). Babylon treats the extension as whatever you submit—if
+  `multisig_info` is omitted it stays single-sig, and if it is present the new
+  Taproot output must satisfy all multisig rules. Bitcoin simply sees a new
+  transaction spending the old output, so switching modes is seamless provided
+  you craft a valid multisig script and supply the required signatures.
 
 ### 6.2. On-demand Unbonding and Slashing
 
@@ -286,12 +345,14 @@ transaction (or by broadcasting a stake-spending transaction). The keeper
   `btc_pk` + `multisig_info`
 - the funding transactions referenced in the witness are valid
 
-During slashing events, Babylon uses the stored `delegator_slashing_sigs` /
-`delegator_unbonding_slashing_sigs` vectors to assemble full witnesses together
-with the covenant and finality provider signatures. Because OP_CHECKSIGADD
-requires **exactly** one witness element per key, the keeper stores the
-signatures in the order returned by `buildMultiSigScript`. Wallets must follow
-the same ordering when broadcasting on Bitcoin (fill missing signatures with
+During slashing events, off-chain components such as Vigilante read the stored
+`delegator_slashing_sigs` / `delegator_unbonding_slashing_sigs` via the Babylon
+API and reorder them with `GetOrderedDelegatorSignatures`, which sorts slots in
+reverse lexicographical order of the staker public keys. The resulting vector
+(with `nil` entries for missing signatures) is then combined with covenant and
+finality provider signatures to build the witness. Because OP_CHECKSIGADD
+requires **exactly** one witness element per key, external wallets must follow
+the same ordering when crafting on-chain transactions (fill unused slots with
 empty byte slices).
 
 ## 7. Observability and Troubleshooting
@@ -319,11 +380,3 @@ empty byte slices).
 - **Witness ordering**: when spending multisig staking or unbonding outputs on
   Bitcoin, the witness must contain exactly `N` entries (empty entries for
   non-signers). This matches the order returned by the Taproot script builder.
-- **CLI support**: the current `babylond tx btcstaking create-btc-delegation`
-  command does not provide convenience flags for `multisig_info`. Integrations
-  should construct the message via gRPC/REST or extend the CLI to include the
-  additional JSON payload.
-
-For any other issues, consult the module-level documentation under
-`x/btcstaking` or inspect the keeper logic around `buildMultisigStakingInfo`
-and `MsgBTCUndelegate` to understand the exact validation error.
