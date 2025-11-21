@@ -2,7 +2,9 @@ package types
 
 import (
 	"encoding/hex"
+	"encoding/json"
 	"errors"
+	"fmt"
 
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 )
@@ -76,6 +78,33 @@ func (sig BIP340Signature) MarshalTo(data []byte) (int, error) {
 func (sig *BIP340Signature) Unmarshal(data []byte) error {
 	*sig = data
 	return nil
+}
+
+func (sig *BIP340Signature) UnmarshalHex(sigHex string) error {
+	sigBytes, err := hex.DecodeString(sigHex)
+	if err != nil {
+		return err
+	}
+
+	if len(sigBytes) != BIP340SignatureLen {
+		return fmt.Errorf("malformed data for BIP340 signature")
+	}
+
+	return sig.Unmarshal(sigBytes)
+}
+
+func (sig BIP340Signature) MarshalJSON() ([]byte, error) {
+	return json.Marshal(sig.ToHexStr())
+}
+
+func (sig *BIP340Signature) UnmarshalJSON(bz []byte) error {
+	var sigHex string
+
+	if err := json.Unmarshal(bz, &sigHex); err != nil {
+		return err
+	}
+
+	return sig.UnmarshalHex(sigHex)
 }
 
 func (sig *BIP340Signature) ToHexStr() string {
