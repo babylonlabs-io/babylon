@@ -231,7 +231,6 @@ Where multisig.json contains:
     }
   ]
 }
-
 `,
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -273,7 +272,34 @@ func NewBTCStakeExpandCmd() *cobra.Command {
 		Args:  cobra.ExactArgs(16),
 		Short: "Expand a BTC delegation",
 		Long: strings.TrimSpace(
-			`Expand a BTC delegation.`,
+			`Expand a BTC delegation.
+When btc staker is multisig, use the optional field --multisig-info-json [path/to/multisig.json]. Keys and signatures are hex-encoded x-only BIP340 values.
+
+Example:
+$ babylond tx btcstaking btc-stake-expand [btc_pk] [pop_hex] [staking_tx] [inclusion_proof] [fp_pk1],[fp_pk2],... [staking_time] [staking_value] [slashing_tx] [delegator_slashing_sig] [unbonding_tx] [unbonding_slashing_tx] [unbonding_time] [unbonding_value] [delegator_unbonding_slashing_sig] [previous_staking_tx_hash] [funding_tx] --multisig-info-json ./temp/multisig.json
+
+Where multisig.json contains:
+
+{
+  "staker_btc_pk_list": [
+    "f9308a019258c31049344f85f89d5229b531c845836f99b08601f113bce036f9",
+    "dff1d77f2a671c5f36183726db2341be58feae1da2deced843240f7b502ba659"
+  ],
+  "staker_quorum": 2,
+  "delegator_slashing_sigs": [
+    {
+      "pk": "f9308a019258c31049344f85f89d5229b531c845836f99b08601f113bce036f9",
+      "sig": "04e7f9037658a92afeb4f25bae5339e3ddca81a353493827d26f16d92308e49e2a25e92208678a2df86970da91b03a8af8815a8a60498b358daf560b347aa557"
+    }
+  ],
+  "delegator_unbonding_slashing_sigs": [
+    {
+      "pk": "f9308a019258c31049344f85f89d5229b531c845836f99b08601f113bce036f9",
+      "sig": "5831aaeed7b44bb74e5eab94ba9d4294c49bcf2a60728d8b4c200f50dd313c1bab745879a5ad954a72c45a91c3a51d3c7adea98d82f8481e0e1e03674a6f3fb7"
+    }
+  ]
+}
+`,
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
