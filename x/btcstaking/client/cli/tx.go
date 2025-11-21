@@ -29,6 +29,8 @@ const (
 	FlagCommissionRate          = "commission-rate"
 	FlagCommissionMaxRate       = "commission-max-rate"
 	FlagCommissionMaxChangeRate = "commission-max-change-rate"
+
+	FlagMultisigInfoJSON = "multisig-info-json"
 )
 
 // GetTxCmd returns the transaction commands for this module
@@ -202,7 +204,34 @@ func NewCreateBTCDelegationCmd() *cobra.Command {
 		Args:  cobra.ExactArgs(14),
 		Short: "Create a BTC delegation",
 		Long: strings.TrimSpace(
-			`Create a BTC delegation.`, // TODO: example
+			`Create a BTC delegation.
+When btc staker is multisig, use the optional field --multisig-info-json [path/to/multisig.json]. Public keys are hex-encoded x-only BIP340 values; signatures are base64-encoded.
+
+Example:
+$ babylond tx btcstaking create-btc-delegation [btc_pk] [pop_hex] [staking_tx] [inclusion_proof] [fp_pk] [staking_time] [staking_value] [slashing_tx] [delegator_slashing_sig] [unbonding_tx] [unbonding_slashing_tx] [unbonding_time] [unbonding_value] [delegator_unbonding_slashing_sig] --multisig-info-json ./temp/multisig.json
+
+Where multisig.json contains:
+
+{
+  "staker_btc_pk_list": [
+    "f9308a019258c31049344f85f89d5229b531c845836f99b08601f113bce036f9",
+    "dff1d77f2a671c5f36183726db2341be58feae1da2deced843240f7b502ba659"
+  ],
+  "staker_quorum": 2,
+  "delegator_slashing_sigs": [
+    {
+      "pk": "f9308a019258c31049344f85f89d5229b531c845836f99b08601f113bce036f9",
+      "sig": "BOf5A3ZYqSr+tPJbrlM5493KgaNTSTgn0m8W2SMI5J4qJekiCGeKLfhpcNqRsDqK+IFaimBJizWNr1YLNHqlVw=="
+    }
+  ],
+  "delegator_unbonding_slashing_sigs": [
+    {
+      "pk": "f9308a019258c31049344f85f89d5229b531c845836f99b08601f113bce036f9",
+      "sig": "WDGq7te0S7dOXquUup1ClMSbzypgco2LTCAPUN0xPBurdFh5pa2VSnLEWpHDpR08et6pjYL4SB4OHgNnSm8/tw=="
+    }
+  ]
+}
+`,
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
@@ -217,9 +246,20 @@ func NewCreateBTCDelegationCmd() *cobra.Command {
 
 			msg.StakerAddr = clientCtx.FromAddress.String()
 
+			// parse multisig info json if exist
+			fs := cmd.Flags()
+			multisigInfo, err := parseMultisigInfoJSON(fs)
+			if err != nil {
+				return err
+			}
+			msg.MultisigInfo = multisigInfo
+
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
+
+	// optional multisig info flag
+	cmd.Flags().String(FlagMultisigInfoJSON, "", "The btc staking multisig info (optional)")
 
 	flags.AddTxFlagsToCmd(cmd)
 
@@ -232,7 +272,34 @@ func NewBTCStakeExpandCmd() *cobra.Command {
 		Args:  cobra.ExactArgs(16),
 		Short: "Expand a BTC delegation",
 		Long: strings.TrimSpace(
-			`Expand a BTC delegation.`,
+			`Expand a BTC delegation.
+When btc staker is multisig, use the optional field --multisig-info-json [path/to/multisig.json]. Keys and signatures are hex-encoded x-only BIP340 values; signatures are base64-encoded.
+
+Example:
+$ babylond tx btcstaking btc-stake-expand [btc_pk] [pop_hex] [staking_tx] [inclusion_proof] [fp_pk1],[fp_pk2],... [staking_time] [staking_value] [slashing_tx] [delegator_slashing_sig] [unbonding_tx] [unbonding_slashing_tx] [unbonding_time] [unbonding_value] [delegator_unbonding_slashing_sig] [previous_staking_tx_hash] [funding_tx] --multisig-info-json ./temp/multisig.json
+
+Where multisig.json contains:
+
+{
+  "staker_btc_pk_list": [
+    "f9308a019258c31049344f85f89d5229b531c845836f99b08601f113bce036f9",
+    "dff1d77f2a671c5f36183726db2341be58feae1da2deced843240f7b502ba659"
+  ],
+  "staker_quorum": 2,
+  "delegator_slashing_sigs": [
+    {
+      "pk": "f9308a019258c31049344f85f89d5229b531c845836f99b08601f113bce036f9",
+      "sig": "BOf5A3ZYqSr+tPJbrlM5493KgaNTSTgn0m8W2SMI5J4qJekiCGeKLfhpcNqRsDqK+IFaimBJizWNr1YLNHqlVw=="
+    }
+  ],
+  "delegator_unbonding_slashing_sigs": [
+    {
+      "pk": "f9308a019258c31049344f85f89d5229b531c845836f99b08601f113bce036f9",
+      "sig": "WDGq7te0S7dOXquUup1ClMSbzypgco2LTCAPUN0xPBurdFh5pa2VSnLEWpHDpR08et6pjYL4SB4OHgNnSm8/tw=="
+    }
+  ]
+}
+`,
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
@@ -246,6 +313,13 @@ func NewBTCStakeExpandCmd() *cobra.Command {
 			}
 
 			fundingTx, err := hex.DecodeString(args[15])
+			if err != nil {
+				return err
+			}
+
+			// parse multisig info json if exist
+			fs := cmd.Flags()
+			multisigInfo, err := parseMultisigInfoJSON(fs)
 			if err != nil {
 				return err
 			}
@@ -267,11 +341,14 @@ func NewBTCStakeExpandCmd() *cobra.Command {
 				DelegatorUnbondingSlashingSig: parsed.DelegatorUnbondingSlashingSig,
 				PreviousStakingTxHash:         args[14],
 				FundingTx:                     fundingTx,
+				MultisigInfo:                  multisigInfo,
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
+
+	cmd.Flags().String(FlagMultisigInfoJSON, "", "The btc staking multisig info (optional)")
 
 	flags.AddTxFlagsToCmd(cmd)
 
@@ -614,5 +691,6 @@ func parseArgsIntoMsgCreateBTCDelegation(args []string) (*types.MsgCreateBTCDele
 		UnbondingValue:                int64(unbondingValue),
 		UnbondingSlashingTx:           unbondingSlashingTx,
 		DelegatorUnbondingSlashingSig: delegatorUnbondingSlashingSig,
+		MultisigInfo:                  nil,
 	}, nil
 }
