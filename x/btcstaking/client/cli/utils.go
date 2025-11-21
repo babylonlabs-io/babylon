@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"encoding/json"
 	"fmt"
 	"math"
 	"os"
@@ -74,7 +73,7 @@ func parseMultisigInfoJSON(fs *pflag.FlagSet) (*types.AdditionalStakerInfo, erro
 		return nil, err
 	}
 
-	err = json.Unmarshal(contents, &multisigInfo)
+	err = types.ModuleCdc.UnmarshalJSON(contents, &multisigInfo)
 	if err != nil {
 		return nil, err
 	}
