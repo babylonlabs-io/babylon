@@ -43,6 +43,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#1839](https://github.com/babylonlabs-io/babylon/pull/1839) Add query to get the voting power distribution
 cache (is only available until that block is finalized)
 
+### Bug fixes
+
+- [GHSA-2fcv-qww3-9v6h](https://github.com/babylonlabs-io/babylon-ghsa-2fcv-qww3-9v6h/pull/1) Add unkown fields check on vote extension validation
+
 ## v4.0.0
 
 ## v4.0.0-rc.3
