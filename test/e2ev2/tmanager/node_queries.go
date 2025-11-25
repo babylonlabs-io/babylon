@@ -248,6 +248,22 @@ func (n *Node) QueryBtcStakingParams() *btcstktypes.Params {
 	return &resp.Params
 }
 
+func (n *Node) QueryBtcStakingParamsByVersion(version uint32) *btcstktypes.Params {
+	var (
+		resp *btcstktypes.QueryParamsByVersionResponse
+		err  error
+	)
+
+	n.BtcStkQuery(func(btcStkClient btcstktypes.QueryClient) {
+		resp, err = btcStkClient.ParamsByVersion(context.Background(), &btcstktypes.QueryParamsByVersionRequest{
+			Version: version,
+		})
+		require.NoError(n.T(), err)
+	})
+
+	return &resp.Params
+}
+
 func (n *Node) QueryBTCDelegation(stakingTxHash string) *btcstktypes.BTCDelegationResponse {
 	var (
 		resp *btcstktypes.QueryBTCDelegationResponse
