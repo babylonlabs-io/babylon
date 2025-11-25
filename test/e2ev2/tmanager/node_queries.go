@@ -2,10 +2,12 @@ package tmanager
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 	"net"
 	"net/url"
 
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -367,4 +369,106 @@ func (n *Node) QueryGetSealedEpochProofCLI(epochNum uint64) string {
 // GetRpcEndpoint returns the RPC endpoint of the node
 func (n *Node) GetRpcEndpoint() string {
 	return "tcp://" + net.JoinHostPort(n.Container.Name, fmt.Sprintf("%d", n.Ports.RPC))
+}
+
+// ParseRespBTCDelToBTCDel parses an BTC delegation response to BTC Delegation
+func ParseRespBTCDelToBTCDel(resp *btcstktypes.BTCDelegationResponse) (btcDel *btcstktypes.BTCDelegation, err error) {
+	stakingTx, err := hex.DecodeString(resp.StakingTxHex)
+	if err != nil {
+		return nil, err
+	}
+
+	delSig, err := bbn.NewBIP340SignatureFromHex(resp.DelegatorSlashSigHex)
+	if err != nil {
+		return nil, err
+	}
+
+	slashingTx, err := btcstktypes.NewBTCSlashingTxFromHex(resp.SlashingTxHex)
+	if err != nil {
+		return nil, err
+	}
+
+	btcDel = &btcstktypes.BTCDelegation{
+		StakerAddr:       resp.StakerAddr,
+		BtcPk:            resp.BtcPk,
+		FpBtcPkList:      resp.FpBtcPkList,
+		StartHeight:      resp.StartHeight,
+		StakingTime:      resp.StakingTime,
+		EndHeight:        resp.EndHeight,
+		TotalSat:         resp.TotalSat,
+		StakingTx:        stakingTx,
+		DelegatorSig:     delSig,
+		StakingOutputIdx: resp.StakingOutputIdx,
+		CovenantSigs:     resp.CovenantSigs,
+		UnbondingTime:    resp.UnbondingTime,
+		SlashingTx:       slashingTx,
+	}
+
+	if resp.UndelegationResponse != nil {
+		ud := resp.UndelegationResponse
+		unbondTx, err := hex.DecodeString(ud.UnbondingTxHex)
+		if err != nil {
+			return nil, err
+		}
+
+		slashTx, err := btcstktypes.NewBTCSlashingTxFromHex(ud.SlashingTxHex)
+		if err != nil {
+			return nil, err
+		}
+
+		delSlashingSig, err := bbn.NewBIP340SignatureFromHex(ud.DelegatorSlashingSigHex)
+		if err != nil {
+			return nil, err
+		}
+
+		btcDel.BtcUndelegation = &btcstktypes.BTCUndelegation{
+			UnbondingTx:              unbondTx,
+			CovenantUnbondingSigList: ud.CovenantUnbondingSigList,
+			CovenantSlashingSigs:     ud.CovenantSlashingSigs,
+			SlashingTx:               slashTx,
+			DelegatorSlashingSig:     delSlashingSig,
+		}
+
+		if ud.DelegatorUnbondingInfoResponse != nil {
+			var spendStakeTx []byte = make([]byte, 0)
+			if ud.DelegatorUnbondingInfoResponse.SpendStakeTxHex != "" {
+				spendStakeTx, err = hex.DecodeString(ud.DelegatorUnbondingInfoResponse.SpendStakeTxHex)
+				if err != nil {
+					return nil, err
+				}
+			}
+
+			btcDel.BtcUndelegation.DelegatorUnbondingInfo = &btcstktypes.DelegatorUnbondingInfo{
+				SpendStakeTx: spendStakeTx,
+			}
+		}
+	}
+
+	if resp.StkExp != nil {
+		prevTxHash, err := chainhash.NewHashFromStr(resp.StkExp.PreviousStakingTxHashHex)
+		if err != nil {
+			return nil, err
+		}
+
+		otherFundOutput, err := hex.DecodeString(resp.StkExp.OtherFundingTxOutHex)
+		if err != nil {
+			return nil, err
+		}
+		btcDel.StkExp = &btcstktypes.StakeExpansion{
+			PreviousStakingTxHash:   prevTxHash.CloneBytes(),
+			OtherFundingTxOut:       otherFundOutput,
+			PreviousStkCovenantSigs: resp.StkExp.PreviousStkCovenantSigs,
+		}
+	}
+
+	if resp.MultisigInfo != nil {
+		btcDel.MultisigInfo = &btcstktypes.AdditionalStakerInfo{
+			StakerBtcPkList:                resp.MultisigInfo.StakerBtcPkList,
+			StakerQuorum:                   resp.MultisigInfo.StakerQuorum,
+			DelegatorSlashingSigs:          resp.MultisigInfo.DelegatorSlashingSigs,
+			DelegatorUnbondingSlashingSigs: resp.MultisigInfo.DelegatorUnbondingSlashingSigs,
+		}
+	}
+
+	return btcDel, nil
 }

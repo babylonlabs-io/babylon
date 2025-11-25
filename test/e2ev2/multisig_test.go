@@ -11,11 +11,16 @@ import (
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/wire"
 
-	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer/chain"
 	"github.com/babylonlabs-io/babylon/v4/test/e2ev2/tmanager"
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+)
+
+const (
+	BTCDelegationPending  = "PENDING"
+	BTCDelegationVerified = "VERIFIED"
+	BTCDelegationActive   = "ACTIVE"
 )
 
 func TestMultisigBtcDel(t *testing.T) {
@@ -93,7 +98,7 @@ func TestMultisigBtcDel(t *testing.T) {
 			// query and verify delegation
 			del := bbn2.QueryBTCDelegation(stakingInfo.StakingTx.TxHash().String())
 			require.NotNil(t, del)
-			require.Equal(t, "PENDING", del.StatusDesc)
+			require.Equal(t, BTCDelegationVerified, del.StatusDesc)
 			require.NotNil(t, del.MultisigInfo)
 			require.Equal(t, tc.stakerQuorum, del.MultisigInfo.StakerQuorum)
 			require.Len(t, del.MultisigInfo.StakerBtcPkList, int(tc.stakerCount-1))
@@ -126,117 +131,18 @@ func TestSingleSigBtcDel(t *testing.T) {
 
 	pendingDelResp := bbn2.QueryBTCDelegation(stakingInfoBuilt.StakingTx.TxHash().String())
 	require.NotNil(t, pendingDelResp)
-	require.Equal(t, "PENDING", pendingDelResp.StatusDesc)
+	require.Equal(t, BTCDelegationPending, pendingDelResp.StatusDesc)
 
 	/*
 		generate and insert new covenant signatures, in order to verify the BTC delegation
 	*/
-	pendingDel, err := chain.ParseRespBTCDelToBTCDel(pendingDelResp)
-	require.NoError(t, err)
-	require.Len(t, pendingDel.CovenantSigs, 0)
-	stakingMsgTx, err := bbn.NewBTCTxFromBytes(pendingDel.StakingTx)
-	require.NoError(t, err)
-
-	slashingTx := pendingDel.SlashingTx
-	stakingTxHash := stakingMsgTx.TxHash().String()
-	bsParams := bbn2.QueryBtcStakingParams()
-
-	fpBTCPKs, err := bbn.NewBTCPKsFromBIP340PKs(pendingDel.FpBtcPkList)
-	require.NoError(t, err)
-
-	btcCfg := &chaincfg.SimNetParams
-	stakingInfo, err := pendingDel.GetStakingInfo(bsParams, btcCfg)
-	require.NoError(t, err)
-
-	stakingSlashingPathInfo, err := stakingInfo.SlashingPathSpendInfo()
-	require.NoError(t, err)
-
-	// it should be changed when modifying covenant pk on chain start
-	covSKs, _, _ := bstypes.DefaultCovenantCommittee()
-
-	// covenant signatures on slashing tx
-	covenantSlashingSigs, err := datagen.GenCovenantAdaptorSigs(
-		covSKs,
-		fpBTCPKs,
-		stakingMsgTx,
-		stakingSlashingPathInfo.GetPkScriptPath(),
-		slashingTx,
-	)
-	require.NoError(t, err)
-
-	// cov Schnorr sigs on unbonding signature
-	unbondingPathInfo, err := stakingInfo.UnbondingPathSpendInfo()
-	require.NoError(t, err)
-	unbondingTx, err := bbn.NewBTCTxFromBytes(pendingDel.BtcUndelegation.UnbondingTx)
-	require.NoError(t, err)
-
-	covUnbondingSigs, err := datagen.GenCovenantUnbondingSigs(
-		covSKs,
-		stakingMsgTx,
-		pendingDel.StakingOutputIdx,
-		unbondingPathInfo.GetPkScriptPath(),
-		unbondingTx,
-	)
-	require.NoError(t, err)
-
-	unbondingInfo, err := pendingDel.GetUnbondingInfo(bsParams, btcCfg)
-	require.NoError(t, err)
-	unbondingSlashingPathInfo, err := unbondingInfo.SlashingPathSpendInfo()
-	require.NoError(t, err)
-	covenantUnbondingSlashingSigs, err := datagen.GenCovenantAdaptorSigs(
-		covSKs,
-		fpBTCPKs,
-		unbondingTx,
-		unbondingSlashingPathInfo.GetPkScriptPath(),
-		pendingDel.BtcUndelegation.SlashingTx,
-	)
-	require.NoError(t, err)
-
-	for i := 0; i < int(bsParams.CovenantQuorum); i++ {
-		bbn2.SubmitRefundableTxWithAssertion(func() {
-			bbn2.AddCovenantSigs(
-				bbn2.DefaultWallet().KeyName,
-				covenantSlashingSigs[i].CovPk,
-				stakingTxHash,
-				covenantSlashingSigs[i].AdaptorSigs,
-				bbn.NewBIP340SignatureFromBTCSig(covUnbondingSigs[i]),
-				covenantUnbondingSlashingSigs[i].AdaptorSigs,
-				nil,
-			)
-		}, true, bbn2.DefaultWallet().KeyName)
-	}
-
-	verifiedDelResp := bbn2.QueryBTCDelegation(stakingTxHash)
-	require.Equal(t, "VERIFIED", verifiedDelResp.StatusDesc)
-	verifiedDel, err := chain.ParseRespBTCDelToBTCDel(verifiedDelResp)
-	require.NoError(t, err)
-	require.Len(t, verifiedDel.CovenantSigs, int(bsParams.CovenantQuorum))
-	require.True(t, verifiedDel.HasCovenantQuorums(bsParams.CovenantQuorum, 0))
+	stakingMsgTx, stakingTxHash, bsParams := verifyBTCDelegation(t, bbn2, pendingDelResp)
 
 	/*
 		generate and add inclusion proof, in order to activate the BTC delegation
 	*/
-	// wait for btc delegation is k-deep
-	currentBtcTipResp, err := bbn2.QueryTip()
-	require.NoError(t, err)
-	currentBtcTip, err := chain.ParseBTCHeaderInfoResponseToInfo(currentBtcTipResp)
-	blockWithStakingTx := datagen.CreateBlockWithTransaction(r, currentBtcTip.Header.ToBlockHeader(), stakingMsgTx)
-	bbn2.InsertHeader(&blockWithStakingTx.HeaderBytes)
+	activeBtcDel := waitBtcBlockForKDeep(t, r, bbn2, stakingMsgTx, stakingTxHash)
 
-	inclusionProof := bstypes.NewInclusionProofFromSpvProof(blockWithStakingTx.SpvProof)
-	for i := 0; i < tmanager.BabylonBtcConfirmationPeriod; i++ {
-		bbn2.InsertNewEmptyBtcHeader(r)
-	}
-
-	// add btc inclusion proof
-	bbn2.SubmitRefundableTxWithAssertion(func() {
-		bbn2.AddBTCDelegationInclusionProof(bbn2.DefaultWallet().KeyName, stakingTxHash, inclusionProof)
-	}, true, bbn2.DefaultWallet().KeyName)
-
-	activeBtcDelResp := bbn2.QueryBTCDelegation(stakingTxHash)
-	require.Equal(t, "ACTIVE", activeBtcDelResp.StatusDesc)
-	activeBtcDel, err := chain.ParseRespBTCDelToBTCDel(activeBtcDelResp)
-	require.NoError(t, err)
 	require.Len(t, activeBtcDel.CovenantSigs, int(bsParams.CovenantQuorum))
 	require.True(t, activeBtcDel.HasCovenantQuorums(bsParams.CovenantQuorum, 0))
 	require.Nil(t, activeBtcDel.MultisigInfo, "Single-sig delegation should not have MultisigInfo")
@@ -340,6 +246,45 @@ func TestMultisigBtcDelWithZeroQuorum(t *testing.T) {
 	bbn2.WaitForNextBlock()
 
 	bbn2.RequireTxErrorContain(txHash, "number of staker btc pk list and staker quorum must be greater than 0")
+}
+
+func TestMultisigBtcStkExpansionFlow(t *testing.T) {
+	// step 0. create a fp
+	bbn2, fpSK, r := startChainAndCreateFp(t)
+	bbn2.DefaultWallet().VerifySentTx = true
+
+	// step 1. multisig delegation from bbn2 to fp (bbn1), and activate btc delegation
+	stkSKs, _, err := datagen.GenRandomBTCKeyPairs(r, 3)
+	require.NoError(t, err)
+
+	msg, stakingInfoBuilt := buildMultisigDelegationMsgWithSigCount(
+		t, r, bbn2,
+		bbn2.DefaultWallet(),
+		stkSKs,
+		2,
+		fpSK.PubKey(),
+		int64(2*10e8),
+		1000,
+		2,
+	)
+
+	// submit a creating multisig btc delegation tx
+	bbn2.CreateBTCDelegation(bbn2.DefaultWallet().KeyName, msg)
+	bbn2.WaitForNextBlock()
+
+	pendingDelResp := bbn2.QueryBTCDelegation(stakingInfoBuilt.StakingTx.TxHash().String())
+	require.NotNil(t, pendingDelResp)
+	require.Equal(t, BTCDelegationPending, pendingDelResp.StatusDesc)
+
+	// verify multisig btc delegation by sending covenant signatures
+	stakingMsgTx, stakingTxHash, _ := verifyMultisigBTCDelegation(t, bbn2, pendingDelResp)
+
+	// wait for btc block k-deep
+	prevActiveDel := waitBtcBlockForKDeep(t, r, bbn2, stakingMsgTx, stakingTxHash)
+	require.NotNil(t, prevActiveDel)
+
+	// step 2. multisig btc stake expansion of prev multisig btc delegation
+	// bbn2.BtcStakeExpand(bbn2.DefaultWallet().KeyName, prevActiveDel)
 }
 
 func startChainAndCreateFp(t *testing.T) (bbn2 *tmanager.Node, fpSK *btcec.PrivateKey, r *rand.Rand) {
@@ -606,4 +551,207 @@ func BuildSingleSigDelegationMsg(
 		DelegatorUnbondingSlashingSig: delUnbondingSig,
 		MultisigInfo:                  nil, // no multisig info for single-sig delegation
 	}, stakingInfo
+}
+
+// verifyBTCDelegation generate and insert new covenant signatures,
+// in order to verify the single-sig BTC delegation
+func verifyBTCDelegation(t *testing.T, bbn2 *tmanager.Node, pendingDelResp *bstypes.BTCDelegationResponse) (*wire.MsgTx, string, *bstypes.Params) {
+	pendingDel, err := tmanager.ParseRespBTCDelToBTCDel(pendingDelResp)
+	require.NoError(t, err)
+	require.Len(t, pendingDel.CovenantSigs, 0)
+	stakingMsgTx, err := bbn.NewBTCTxFromBytes(pendingDel.StakingTx)
+	require.NoError(t, err)
+
+	slashingTx := pendingDel.SlashingTx
+	stakingTxHash := stakingMsgTx.TxHash().String()
+	bsParams := bbn2.QueryBtcStakingParams()
+
+	fpBTCPKs, err := bbn.NewBTCPKsFromBIP340PKs(pendingDel.FpBtcPkList)
+	require.NoError(t, err)
+
+	btcCfg := &chaincfg.SimNetParams
+	stakingInfo, err := pendingDel.GetStakingInfo(bsParams, btcCfg)
+	require.NoError(t, err)
+
+	stakingSlashingPathInfo, err := stakingInfo.SlashingPathSpendInfo()
+	require.NoError(t, err)
+
+	// NOTE: covSKs should be changed when modifying covenant pk on chain start
+	covSKs, _, _ := bstypes.DefaultCovenantCommittee()
+
+	// covenant signatures on slashing tx
+	covenantSlashingSigs, err := datagen.GenCovenantAdaptorSigs(
+		covSKs,
+		fpBTCPKs,
+		stakingMsgTx,
+		stakingSlashingPathInfo.GetPkScriptPath(),
+		slashingTx,
+	)
+	require.NoError(t, err)
+
+	// cov Schnorr sigs on unbonding signature
+	unbondingPathInfo, err := stakingInfo.UnbondingPathSpendInfo()
+	require.NoError(t, err)
+	unbondingTx, err := bbn.NewBTCTxFromBytes(pendingDel.BtcUndelegation.UnbondingTx)
+	require.NoError(t, err)
+
+	covUnbondingSigs, err := datagen.GenCovenantUnbondingSigs(
+		covSKs,
+		stakingMsgTx,
+		pendingDel.StakingOutputIdx,
+		unbondingPathInfo.GetPkScriptPath(),
+		unbondingTx,
+	)
+	require.NoError(t, err)
+
+	unbondingInfo, err := pendingDel.GetUnbondingInfo(bsParams, btcCfg)
+	require.NoError(t, err)
+	unbondingSlashingPathInfo, err := unbondingInfo.SlashingPathSpendInfo()
+	require.NoError(t, err)
+	covenantUnbondingSlashingSigs, err := datagen.GenCovenantAdaptorSigs(
+		covSKs,
+		fpBTCPKs,
+		unbondingTx,
+		unbondingSlashingPathInfo.GetPkScriptPath(),
+		pendingDel.BtcUndelegation.SlashingTx,
+	)
+	require.NoError(t, err)
+
+	for i := 0; i < int(bsParams.CovenantQuorum); i++ {
+		bbn2.SubmitRefundableTxWithAssertion(func() {
+			bbn2.AddCovenantSigs(
+				bbn2.DefaultWallet().KeyName,
+				covenantSlashingSigs[i].CovPk,
+				stakingTxHash,
+				covenantSlashingSigs[i].AdaptorSigs,
+				bbn.NewBIP340SignatureFromBTCSig(covUnbondingSigs[i]),
+				covenantUnbondingSlashingSigs[i].AdaptorSigs,
+				nil,
+			)
+		}, true, bbn2.DefaultWallet().KeyName)
+	}
+
+	verifiedDelResp := bbn2.QueryBTCDelegation(stakingTxHash)
+	require.Equal(t, BTCDelegationVerified, verifiedDelResp.StatusDesc)
+	verifiedDel, err := tmanager.ParseRespBTCDelToBTCDel(verifiedDelResp)
+	require.NoError(t, err)
+	require.Len(t, verifiedDel.CovenantSigs, int(bsParams.CovenantQuorum))
+	require.True(t, verifiedDel.HasCovenantQuorums(bsParams.CovenantQuorum, 0))
+
+	return stakingMsgTx, stakingTxHash, bsParams
+}
+
+// verifyMultisigBTCDelegation generate and insert new covenant signatures,
+// in order to verify the multi-sig BTC delegation
+func verifyMultisigBTCDelegation(t *testing.T, bbn2 *tmanager.Node, pendingDelResp *bstypes.BTCDelegationResponse) (*wire.MsgTx, string, *bstypes.Params) {
+	pendingDel, err := tmanager.ParseRespBTCDelToBTCDel(pendingDelResp)
+	require.NoError(t, err)
+	require.Len(t, pendingDel.CovenantSigs, 0)
+	stakingMsgTx, err := bbn.NewBTCTxFromBytes(pendingDel.StakingTx)
+	require.NoError(t, err)
+
+	slashingTx := pendingDel.SlashingTx
+	stakingTxHash := stakingMsgTx.TxHash().String()
+	bsParams := bbn2.QueryBtcStakingParams()
+
+	fpBTCPKs, err := bbn.NewBTCPKsFromBIP340PKs(pendingDel.FpBtcPkList)
+	require.NoError(t, err)
+
+	btcCfg := &chaincfg.SimNetParams
+	stakingInfo, err := pendingDel.GetMultisigStakingInfo(bsParams, btcCfg)
+	require.NoError(t, err)
+
+	stakingSlashingPathInfo, err := stakingInfo.SlashingPathSpendInfo()
+	require.NoError(t, err)
+
+	// NOTE: covSKs should be changed when modifying covenant pk on chain start
+	covSKs, _, _ := bstypes.DefaultCovenantCommittee()
+
+	// covenant signatures on slashing tx
+	covenantSlashingSigs, err := datagen.GenCovenantAdaptorSigs(
+		covSKs,
+		fpBTCPKs,
+		stakingMsgTx,
+		stakingSlashingPathInfo.GetPkScriptPath(),
+		slashingTx,
+	)
+	require.NoError(t, err)
+
+	// cov Schnorr sigs on unbonding signature
+	unbondingPathInfo, err := stakingInfo.UnbondingPathSpendInfo()
+	require.NoError(t, err)
+	unbondingTx, err := bbn.NewBTCTxFromBytes(pendingDel.BtcUndelegation.UnbondingTx)
+	require.NoError(t, err)
+
+	covUnbondingSigs, err := datagen.GenCovenantUnbondingSigs(
+		covSKs,
+		stakingMsgTx,
+		pendingDel.StakingOutputIdx,
+		unbondingPathInfo.GetPkScriptPath(),
+		unbondingTx,
+	)
+	require.NoError(t, err)
+
+	unbondingInfo, err := pendingDel.GetMultisigUnbondingInfo(bsParams, btcCfg)
+	require.NoError(t, err)
+	unbondingSlashingPathInfo, err := unbondingInfo.SlashingPathSpendInfo()
+	require.NoError(t, err)
+	covenantUnbondingSlashingSigs, err := datagen.GenCovenantAdaptorSigs(
+		covSKs,
+		fpBTCPKs,
+		unbondingTx,
+		unbondingSlashingPathInfo.GetPkScriptPath(),
+		pendingDel.BtcUndelegation.SlashingTx,
+	)
+	require.NoError(t, err)
+
+	for i := 0; i < int(bsParams.CovenantQuorum); i++ {
+		bbn2.SubmitRefundableTxWithAssertion(func() {
+			bbn2.AddCovenantSigs(
+				bbn2.DefaultWallet().KeyName,
+				covenantSlashingSigs[i].CovPk,
+				stakingTxHash,
+				covenantSlashingSigs[i].AdaptorSigs,
+				bbn.NewBIP340SignatureFromBTCSig(covUnbondingSigs[i]),
+				covenantUnbondingSlashingSigs[i].AdaptorSigs,
+				nil,
+			)
+		}, true, bbn2.DefaultWallet().KeyName)
+	}
+
+	verifiedDelResp := bbn2.QueryBTCDelegation(stakingTxHash)
+	require.Equal(t, BTCDelegationVerified, verifiedDelResp.StatusDesc)
+	verifiedDel, err := tmanager.ParseRespBTCDelToBTCDel(verifiedDelResp)
+	require.NoError(t, err)
+	require.Len(t, verifiedDel.CovenantSigs, int(bsParams.CovenantQuorum))
+	require.True(t, verifiedDel.HasCovenantQuorums(bsParams.CovenantQuorum, 0))
+
+	return stakingMsgTx, stakingTxHash, bsParams
+}
+
+func waitBtcBlockForKDeep(t *testing.T, r *rand.Rand, bbn2 *tmanager.Node, stakingMsgTx *wire.MsgTx, stakingTxHash string) *bstypes.BTCDelegation {
+	// wait for btc block k-deep
+	currentBtcTipResp, err := bbn2.QueryTip()
+	require.NoError(t, err)
+	currentBtcTip, err := tmanager.ParseBTCHeaderInfoResponseToInfo(currentBtcTipResp)
+	blockWithStakingTx := datagen.CreateBlockWithTransaction(r, currentBtcTip.Header.ToBlockHeader(), stakingMsgTx)
+	bbn2.InsertHeader(&blockWithStakingTx.HeaderBytes)
+
+	// make block k-deep
+	for i := 0; i < tmanager.BabylonBtcConfirmationPeriod; i++ {
+		bbn2.InsertNewEmptyBtcHeader(r)
+	}
+	inclusionProof := bstypes.NewInclusionProofFromSpvProof(blockWithStakingTx.SpvProof)
+
+	// activate btc delegation by adding btc inclusion proof
+	bbn2.SubmitRefundableTxWithAssertion(func() {
+		bbn2.AddBTCDelegationInclusionProof(bbn2.DefaultWallet().KeyName, stakingTxHash, inclusionProof)
+	}, true, bbn2.DefaultWallet().KeyName)
+
+	activeBtcDelResp := bbn2.QueryBTCDelegation(stakingTxHash)
+	require.Equal(t, BTCDelegationActive, activeBtcDelResp.StatusDesc)
+	activeBtcDel, err := tmanager.ParseRespBTCDelToBTCDel(activeBtcDelResp)
+	require.NoError(t, err)
+
+	return activeBtcDel
 }

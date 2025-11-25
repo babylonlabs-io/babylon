@@ -159,6 +159,14 @@ func (n *Node) AddBTCDelegationInclusionProof(
 	n.T().Logf("BTC delegation inclusion proof added")
 }
 
+func (n *Node) BtcStakeExpand(
+	walletName string,
+	prevDel *bstypes.BTCDelegation,
+) {
+	wallet := n.Wallet(walletName)
+	require.NotNil(n.T(), wallet, "Wallet %s not found", walletName)
+}
+
 /*
 	x/gov txs
 */
@@ -186,3 +194,7 @@ func (n *Node) Vote(walletName string, proposalID uint64, voteOption govtypes.Vo
 	require.NotNil(n.T(), tx, "Vote transaction should not be nil")
 	n.T().Logf("Governance vote submitted")
 }
+
+/*
+	helper functions
+*/
