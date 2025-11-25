@@ -37,6 +37,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+### Bug Fixes
+
+- [#1875](https://github.com/babylonlabs-io/babylon/pull/1875) chore: ensure soft-deleted FPs cannot receive new/extended BTC stake, or commit pub rand
+
 ## v4.1.0
 
 ### Improvements
