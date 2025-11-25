@@ -277,6 +277,11 @@ func (ms msgServer) CommitPubRandList(goCtx context.Context, req *types.MsgCommi
 		return nil, bstypes.ErrFpNotFound.Wrapf("the finality provider with BTC PK %v is not registered", fpBTCPKBytes)
 	}
 
+	// ensure the finality provider is not deleted
+	if ms.BTCStakingKeeper.IsFinalityProviderDeleted(ctx, req.FpBtcPk) {
+		return nil, types.ErrFinalityProviderIsDeleted.Wrapf("fp_btc_pk_hex: %s", req.FpBtcPk.MarshalHex())
+	}
+
 	// verify signature over the public randomness commitment
 	if err := req.VerifySig(); err != nil {
 		return nil, types.ErrInvalidPubRand.Wrapf("invalid signature over the public randomness list: %v", err)

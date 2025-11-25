@@ -70,6 +70,8 @@ func FuzzCommitPubRandList(f *testing.F) {
 		require.Error(t, err)
 		// register the finality provider
 		bsKeeper.EXPECT().HasFinalityProvider(gomock.Any(), gomock.Eq(fpBTCPKBytes)).Return(true).AnyTimes()
+		// finality provider is not deleted
+		bsKeeper.EXPECT().IsFinalityProviderDeleted(gomock.Any(), gomock.Any()).Return(false).AnyTimes()
 
 		// Case 2: commit a list of <minPubRand pubrand and it should fail
 		startHeight = datagen.RandomInt(r, 10)
@@ -137,7 +139,6 @@ func FuzzAddFinalitySig(f *testing.F) {
 
 		bsKeeper := types.NewMockBTCStakingKeeper(ctrl)
 		bsKeeper.EXPECT().UpdateFinalityProvider(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
-		bsKeeper.EXPECT().IsFinalityProviderDeleted(gomock.Any(), gomock.Any()).Return(false).Times(7)
 		cKeeper := types.NewMockCheckpointingKeeper(ctrl)
 		iKeeper := types.NewMockIncentiveKeeper(ctrl)
 		iKeeper.EXPECT().IndexRefundableMsg(gomock.Any(), gomock.Any()).AnyTimes()
@@ -153,6 +154,8 @@ func FuzzAddFinalitySig(f *testing.F) {
 		fpBTCPKBytes := fpBTCPK.MustMarshal()
 		require.NoError(t, err)
 		bsKeeper.EXPECT().HasFinalityProvider(gomock.Any(), gomock.Eq(fpBTCPKBytes)).Return(true).AnyTimes()
+
+		bsKeeper.EXPECT().IsFinalityProviderDeleted(gomock.Any(), gomock.Any()).Return(false).Times(8)
 
 		// set committed epoch num
 		committedEpochNum := datagen.GenRandomEpochNum(r) + 1
@@ -449,6 +452,7 @@ func TestDoNotPanicOnNilProof(t *testing.T) {
 	fpBTCPKBytes := fpBTCPK.MustMarshal()
 	require.NoError(t, err)
 	bsKeeper.EXPECT().HasFinalityProvider(gomock.Any(), gomock.Eq(fpBTCPKBytes)).Return(true).AnyTimes()
+	bsKeeper.EXPECT().IsFinalityProviderDeleted(gomock.Any(), gomock.Any()).Return(false).AnyTimes()
 
 	// set committed epoch num
 	committedEpochNum := datagen.GenRandomEpochNum(r) + 1
