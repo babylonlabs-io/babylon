@@ -280,7 +280,7 @@ func TestMultisigBtcStkExpansionFlow(t *testing.T) {
 	// verify multisig btc delegation by sending covenant signatures
 	stakingMsgTx, stakingTxHash, bsParams := verifyMultisigBTCDelegation(t, bbn2, pendingDelResp)
 
-	// wait for btc block k-deep
+	// wait for btc block k-deep and add btc delegation inclusion proof
 	prevActiveDel := waitBtcBlockForKDeepWithInclusionProof(t, r, bbn2, stakingMsgTx, stakingTxHash)
 	require.NotNil(t, prevActiveDel)
 
