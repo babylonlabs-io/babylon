@@ -37,6 +37,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+## v4.1.0
+
 ### Improvements
 
 - [#1764](https://github.com/babylonlabs-io/babylon/pull/1764) Add mergify yaml file for automatic backporting
@@ -46,6 +48,7 @@ cache (is only available until that block is finalized)
 ### Bug fixes
 
 - [GHSA-2fcv-qww3-9v6h](https://github.com/babylonlabs-io/babylon-ghsa-2fcv-qww3-9v6h/pull/1) Add unkown fields check on vote extension validation
+- [GHSA-xq4h-wqm2-668w](https://github.com/babylonlabs-io/babylon-ghsa-xq4h-wqm2-668w/pull/2) crypto: ensure BIP-322 signatures are using `SIGHASH_ALL` or `SIGHASH_DEFAULT`
 
 ## v4.0.0
 

@@ -2,6 +2,7 @@ package bip322
 
 import (
 	"crypto/sha256"
+	"fmt"
 
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
@@ -139,11 +140,75 @@ func GetToSignTx(toSpend *wire.MsgTx) *wire.MsgTx {
 	return toSign
 }
 
-func Verify(
+// validateSigHashType validates that the witness uses an allowed SIGHASH type
+// according to BIP-322 specification.
+// For Taproot (P2TR): SIGHASH_DEFAULT (implicit, no byte) or SIGHASH_ALL (0x01)
+// For P2WPKH: SIGHASH_ALL (0x01)
+func validateSigHashType(witness wire.TxWitness, address btcutil.Address) error {
+	if len(witness) == 0 {
+		return fmt.Errorf("empty witness")
+	}
+
+	// The signature is always in the first element of the witness
+	sig := witness[0]
+	if len(sig) == 0 {
+		return fmt.Errorf("empty signature in witness")
+	}
+
+	script, err := txscript.PayToAddrScript(address)
+	if err != nil {
+		return err
+	}
+	switch {
+	case txscript.IsPayToTaproot(script):
+		// For Taproot:
+		// - SIGHASH_DEFAULT: signature is 64 bytes (no sighash byte appended)
+		// - SIGHASH_ALL: signature is 65 bytes with 0x01 as the last byte
+		switch len(sig) {
+		case 64:
+			// SIGHASH_DEFAULT - valid
+			return nil
+		case 65:
+			// Must be SIGHASH_ALL (0x01)
+			sighash := txscript.SigHashType(sig[64])
+			if sighash != txscript.SigHashAll {
+				return fmt.Errorf("invalid sighash type for taproot: 0x%02x, expected SIGHASH_ALL (0x01) or SIGHASH_DEFAULT", sighash)
+			}
+			return nil
+		default:
+			return fmt.Errorf("invalid taproot signature length: %d, expected 64 (SIGHASH_DEFAULT) or 65 (with sighash byte)", len(sig))
+		}
+	case txscript.IsPayToWitnessPubKeyHash(script):
+		// For P2WPKH: signature must end with SIGHASH_ALL (0x01)
+		// DER-encoded ECDSA signature format: 0x30 [total-length] 0x02 [R-length] [R] 0x02 [S-length] [S] [sighash]
+		// Minimum length is ~70 bytes for ECDSA + 1 byte sighash
+		if len(sig) < 9 {
+			return fmt.Errorf("signature too short for P2WPKH: %d bytes", len(sig))
+		}
+
+		// The last byte should be the sighash type
+		sighash := txscript.SigHashType(sig[len(sig)-1])
+		if sighash != txscript.SigHashAll {
+			return fmt.Errorf("invalid sighash type for P2WPKH: 0x%02x, expected SIGHASH_ALL (0x01)", sighash)
+		}
+		return nil
+	default:
+		return fmt.Errorf("unsupported address type: %T", address)
+	}
+}
+
+// VerifyP2WPKHAndP2TR validates a BIP-322 signature for either a P2WPKH or Taproot (P2TR) address.
+func VerifyP2WPKHAndP2TR(
 	msg []byte,
 	witness wire.TxWitness,
 	address btcutil.Address,
-	net *chaincfg.Params) error {
+	net *chaincfg.Params,
+) error {
+	// First, validate that the witness uses allowed SIGHASH types
+	if err := validateSigHashType(witness, address); err != nil {
+		return fmt.Errorf("sighash validation failed: %w", err)
+	}
+
 	toSpend, err := GetToSpendTx(msg, address)
 	if err != nil {
 		return err
