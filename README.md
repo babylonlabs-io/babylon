@@ -57,15 +57,14 @@ make install
 For user-facing documents, please visit
 [docs.babylonlabs.io](https://docs.babylonlabs.io). For technical documents
 about high-level designs of Babylon, please visit
-[docs/README.md](./docs/README.md). Each module under `x/` also contains a
+[docs](./docs). Each module under `x/` also contains a
 document about its design and implementation.
 
-## Joining the testnet
+## Joining the Babylon networks
 
-Please follow the instructions on the [User
-Guides](https://docs.babylonchain.io/docs/user-guides/overview).
+Please follow the instructions on the [networks](https://github.com/babylonlabs-io/networks).
 
 ## Contributing
 
-The [docs](./docs) directory contains the necessary information on how to get
-started using the babylond executable for development purposes.
+The [CONTRIBUTING](./CONTRIBUTING.md) guide contains the necessary information
+on how to get started using the babylond executable for development purposes.
