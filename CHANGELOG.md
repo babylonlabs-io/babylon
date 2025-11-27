@@ -37,11 +37,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
-- [#1878](https://github.com/babylonlabs-io/babylon/pull/1878) Remove unnecessary []byte allocations in IBC size checks
+### State breaking
+
+- [#1867](https://github.com/babylonlabs-io/babylon/pull/1867) bump wasmd `v0.60.2`
 
 ### Bug Fixes
 
 - [#1875](https://github.com/babylonlabs-io/babylon/pull/1875) chore: ensure soft-deleted FPs cannot receive new/extended BTC stake, or commit pub rand
+
+### Improvements
+
+- [#1878](https://github.com/babylonlabs-io/babylon/pull/1878) Remove unnecessary []byte allocations in IBC size checks
 
 ## v4.1.0
 
@@ -55,10 +61,6 @@ cache (is only available until that block is finalized)
 
 - [GHSA-2fcv-qww3-9v6h](https://github.com/babylonlabs-io/babylon-ghsa-2fcv-qww3-9v6h/pull/1) Add unkown fields check on vote extension validation
 - [GHSA-xq4h-wqm2-668w](https://github.com/babylonlabs-io/babylon-ghsa-xq4h-wqm2-668w/pull/2) crypto: ensure BIP-322 signatures are using `SIGHASH_ALL` or `SIGHASH_DEFAULT`
-
-### State breaking
-
-- [#1867](https://github.com/babylonlabs-io/babylon/pull/1867) bump wasmd `v0.60.2`
 
 ## v4.0.0
 
