@@ -40,10 +40,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ### State breaking
 
 - [#1855](https://github.com/babylonlabs-io/babylon/pull/1855) Add check for `fundingInputValue <= 0` in stake extension
+- [#1878](https://github.com/babylonlabs-io/babylon/pull/1878) Remove unnecessary []byte allocations in IBC size checks
+
+### Bug Fixes
+
+- [#1875](https://github.com/babylonlabs-io/babylon/pull/1875) chore: ensure soft-deleted FPs cannot receive new/extended BTC stake, or commit pub rand
+
+## v4.1.0
 
 ### Improvements
 
 - [#1764](https://github.com/babylonlabs-io/babylon/pull/1764) Add mergify yaml file for automatic backporting
+- [#1839](https://github.com/babylonlabs-io/babylon/pull/1839) Add query to get the voting power distribution
+cache (is only available until that block is finalized)
+
+### Bug fixes
+
+- [GHSA-2fcv-qww3-9v6h](https://github.com/babylonlabs-io/babylon-ghsa-2fcv-qww3-9v6h/pull/1) Add unkown fields check on vote extension validation
+- [GHSA-xq4h-wqm2-668w](https://github.com/babylonlabs-io/babylon-ghsa-xq4h-wqm2-668w/pull/2) crypto: ensure BIP-322 signatures are using `SIGHASH_ALL` or `SIGHASH_DEFAULT`
+
+## v4.0.0
 
 ## v4.0.0-rc.3
 

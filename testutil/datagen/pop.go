@@ -33,6 +33,25 @@ func SignWithP2WPKHAddress(
 	privKey *btcec.PrivateKey,
 	net *chaincfg.Params,
 ) (*btcutil.AddressWitnessPubKeyHash, []byte, error) {
+	return SignWithP2WPKHAddressWithSigHashType(msg, privKey, net, txscript.SigHashAll)
+}
+
+func SignWithP2TrSpendAddress(
+	msg []byte,
+	privKey *btcec.PrivateKey,
+	net *chaincfg.Params,
+) (*btcutil.AddressTaproot, []byte, error) {
+	return SignWithP2TrSpendAddressWithSigHashType(msg, privKey, net, txscript.SigHashDefault)
+}
+
+// SignWithP2WPKHAddressWithSigHashType creates a BIP-322 signature with a custom SIGHASH type for P2WPKH
+// This is useful for testing invalid SIGHASH types
+func SignWithP2WPKHAddressWithSigHashType(
+	msg []byte,
+	privKey *btcec.PrivateKey,
+	net *chaincfg.Params,
+	sigHashType txscript.SigHashType,
+) (*btcutil.AddressWitnessPubKeyHash, []byte, error) {
 	pubKey := privKey.PubKey()
 
 	witnessAddr, err := PubkeyToP2WPKHAddress(pubKey, net)
@@ -56,9 +75,9 @@ func SignWithP2WPKHAddress(
 
 	hashCache := txscript.NewTxSigHashes(toSign, fetcher)
 
-	// always use compressed pubkey
+	// Use the custom sigHashType parameter
 	witness, err := txscript.WitnessSignature(toSign, hashCache, 0,
-		toSpend.TxOut[0].Value, toSpend.TxOut[0].PkScript, txscript.SigHashAll, privKey, true)
+		toSpend.TxOut[0].Value, toSpend.TxOut[0].PkScript, sigHashType, privKey, true)
 
 	if err != nil {
 		return nil, nil, err
@@ -73,10 +92,13 @@ func SignWithP2WPKHAddress(
 	return witnessAddr, serializedWitness, nil
 }
 
-func SignWithP2TrSpendAddress(
+// SignWithP2TrSpendAddressWithSigHashType creates a BIP-322 signature with a custom SIGHASH type for P2TR
+// This is useful for testing invalid SIGHASH types
+func SignWithP2TrSpendAddressWithSigHashType(
 	msg []byte,
 	privKey *btcec.PrivateKey,
 	net *chaincfg.Params,
+	sigHashType txscript.SigHashType,
 ) (*btcutil.AddressTaproot, []byte, error) {
 	pubKey := privKey.PubKey()
 
@@ -101,9 +123,10 @@ func SignWithP2TrSpendAddress(
 
 	hashCache := txscript.NewTxSigHashes(toSign, fetcher)
 
+	// Use the custom sigHashType parameter
 	witness, err := txscript.TaprootWitnessSignature(
 		toSign, hashCache, 0, toSpend.TxOut[0].Value, toSpend.TxOut[0].PkScript,
-		txscript.SigHashDefault, privKey,
+		sigHashType, privKey,
 	)
 
 	if err != nil {

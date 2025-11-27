@@ -165,6 +165,11 @@ func (ms msgServer) BtcStakeExpand(goCtx context.Context, req *types.MsgBtcStake
 		return nil, status.Errorf(codes.InvalidArgument, "the previous BTC staking transaction FP: %+v is not the same as FP of the stake expansion %+v", prevBtcDel.FpBtcPkList, req.FpBtcPkList)
 	}
 
+	// Ensure the finality provider is not deleted
+	if ms.IsFinalityProviderDeleted(ctx, &req.FpBtcPkList[0]) {
+		return nil, types.ErrFinalityProviderIsDeleted.Wrapf("finality provider pk %s has been deleted", req.FpBtcPkList[0].MarshalHex())
+	}
+
 	stkExpandTx := parsedMsg.StakingTx.Transaction
 
 	// check funding tx output is not some existing staking output

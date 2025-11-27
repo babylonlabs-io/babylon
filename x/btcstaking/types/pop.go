@@ -202,7 +202,7 @@ func VerifyBIP322SigPop(
 		return err
 	}
 
-	if err := bip322.Verify(msg, witness, btcAddress, net); err != nil {
+	if err := bip322.VerifyP2WPKHAndP2TR(msg, witness, btcAddress, net); err != nil {
 		return err
 	}
 

@@ -504,6 +504,7 @@ func (k Keeper) BtcDelHasCovenantQuorums(
 // validateStakedFPs ensures all finality providers
 // - are known to Babylon
 // - are not slashed
+// - are not deleted
 func (k Keeper) validateStakedFPs(ctx sdk.Context, fpBTCPKs []bbn.BIP340PubKey) error {
 	for i := range fpBTCPKs {
 		fpBTCPK := fpBTCPKs[i]
@@ -513,6 +514,9 @@ func (k Keeper) validateStakedFPs(ctx sdk.Context, fpBTCPKs []bbn.BIP340PubKey) 
 		}
 		if fp.IsSlashed() {
 			return types.ErrFpAlreadySlashed.Wrapf("finality key: %s", fpBTCPK.MarshalHex())
+		}
+		if k.IsFinalityProviderDeleted(ctx, &fpBTCPK) {
+			return types.ErrFinalityProviderIsDeleted.Wrapf("finality provider pk %s has been deleted", fpBTCPK.MarshalHex())
 		}
 	}
 	return nil
