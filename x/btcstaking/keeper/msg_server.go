@@ -165,6 +165,11 @@ func (ms msgServer) BtcStakeExpand(goCtx context.Context, req *types.MsgBtcStake
 		return nil, status.Errorf(codes.InvalidArgument, "the previous BTC staking transaction FP: %+v is not the same as FP of the stake expansion %+v", prevBtcDel.FpBtcPkList, req.FpBtcPkList)
 	}
 
+	// check that the previous delegation and the new expansion has the same staker btc pk
+	if err := validateStakerBtcPks(parsedMsg, prevBtcDel); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
 	// Ensure the finality provider is not deleted
 	if ms.IsFinalityProviderDeleted(ctx, &req.FpBtcPkList[0]) {
 		return nil, types.ErrFinalityProviderIsDeleted.Wrapf("finality provider pk %s has been deleted", req.FpBtcPkList[0].MarshalHex())
@@ -800,6 +805,45 @@ func validateStakeExpansionAmt(
 	if impliedFee <= 0 {
 		return fmt.Errorf("invalid transaction fee: inputs %d <= outputs %d",
 			totalInputValue, totalOutputValue)
+	}
+
+	return nil
+}
+
+func validateStakerBtcPks(
+	parsedMsg *types.ParsedCreateDelegationMessage,
+	prevBtcDel *types.BTCDelegation,
+) error {
+	// check primary staker pk is the same
+	oldBtcPk := prevBtcDel.BtcPk.MarshalHex()
+	newBtcPk := parsedMsg.StakerPK.BIP340PubKey.MarshalHex()
+	if oldBtcPk != newBtcPk {
+		return fmt.Errorf("primary staker pk %s does not match previous primary staker pk %s", newBtcPk, oldBtcPk)
+	}
+
+	// check multisig staker pks if prevBtcDel is multisig
+	if prevBtcDel.IsMultisigBtcDel() {
+		// if prev btc del is multisig, new btc del must be multisig as well
+		if parsedMsg.MultisigInfo == nil {
+			return fmt.Errorf("new btc delegation is not multisig but previous one is")
+		}
+
+		// check the length of old btc del and new btc del
+		if len(prevBtcDel.MultisigInfo.StakerBtcPkList) != len(parsedMsg.MultisigInfo.StakerBTCPkList.PublicKeysBbnFormat) {
+			return fmt.Errorf("number of staker pks in multisig delegation does not match")
+		}
+
+		// sort staker pks in reverse lexicographical order to compare both staker pk list
+		// from old btc del and new btc del in equal level
+		sortedOldBtcPks := bbn.SortBIP340PKs(prevBtcDel.MultisigInfo.StakerBtcPkList)
+		sortedNewBtcPks := bbn.SortBIP340PKs(parsedMsg.MultisigInfo.StakerBTCPkList.PublicKeysBbnFormat)
+
+		// compare both old and new staker btc pk list
+		for i, pk := range sortedOldBtcPks {
+			if pk.MarshalHex() != sortedNewBtcPks[i].MarshalHex() {
+				return fmt.Errorf("staker pk list in multisig delegation does not match")
+			}
+		}
 	}
 
 	return nil
