@@ -34,6 +34,7 @@ var (
 	ErrEmptyCommissionRates      = errorsmod.Register(ModuleName, 1125, "empty commission")
 	ErrLargestBtcReorgNotFound   = errorsmod.Register(ModuleName, 1128, "there is no BTC reorg currently set")
 	ErrInvalidStakeExpansion     = errorsmod.Register(ModuleName, 1129, "invalid stake expansion")
+	ErrFinalityProviderIsDeleted = errorsmod.Register(ModuleName, 1130, "the finality provider has been deleted")
 	ErrInvalidMultisigInfo       = errorsmod.Register(ModuleName, 1130, "invalid multisig info")
 	ErrDuplicatedStakerKey       = errorsmod.Register(ModuleName, 1131, "multisig staker key is duplicated")
 )

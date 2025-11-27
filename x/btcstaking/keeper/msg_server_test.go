@@ -448,6 +448,131 @@ func TestProperVersionInDelegation(t *testing.T) {
 	require.Equal(t, uint32(2), actualDel1.ParamsVersion)
 }
 
+// TestCreateBTCDelegation_DeletedFinalityProvider tests that delegations to deleted finality providers are rejected
+func TestCreateBTCDelegation_DeletedFinalityProvider(t *testing.T) {
+	r := rand.New(rand.NewSource(time.Now().Unix()))
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	// mock BTC light client and BTC checkpoint modules
+	btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
+	btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
+	h := testutil.NewHelper(t, btclcKeeper, btccKeeper, nil)
+
+	// set all parameters
+	h.GenAndApplyParams(r)
+	bsParams := h.BTCStakingKeeper.GetParams(h.Ctx)
+
+	// generate and insert new finality provider
+	_, fpPK, _ := h.CreateFinalityProvider(r)
+	fpBIP340PK := bbn.NewBIP340PubKeyFromBTCPK(fpPK)
+
+	// soft-delete the finality provider
+	err := h.BTCStakingKeeper.SoftDeleteFinalityProvider(h.Ctx, fpBIP340PK)
+	h.NoError(err)
+
+	// verify the finality provider is deleted
+	isDeleted := h.BTCStakingKeeper.IsFinalityProviderDeleted(h.Ctx, fpBIP340PK)
+	require.True(t, isDeleted)
+
+	// generate BTC delegation message manually to avoid mock expectation issues
+	stakingValue := int64(2 * 10e8)
+	delSK, _, err := datagen.GenRandomBTCKeyPair(r)
+	h.NoError(err)
+
+	// generate staking info
+	covPKs, err := bbn.NewBTCPKsFromBIP340PKs(bsParams.CovenantPks)
+	h.NoError(err)
+	stakingTimeBlocks := uint16(1000)
+	unbondingTime := uint16(bsParams.UnbondingTimeBlocks)
+	unbondingValue := stakingValue - 1000
+
+	testStakingInfo := datagen.GenBTCStakingSlashingInfo(
+		r,
+		t,
+		h.Net,
+		delSK,
+		[]*btcec.PublicKey{fpPK},
+		covPKs,
+		bsParams.CovenantQuorum,
+		stakingTimeBlocks,
+		stakingValue,
+		bsParams.SlashingPkScript,
+		bsParams.SlashingRate,
+		unbondingTime,
+	)
+	h.NoError(err)
+
+	// generate staking tx info
+	prevBlock, _ := datagen.GenRandomBtcdBlock(r, 0, nil)
+	btcHeaderWithProof := datagen.CreateBlockWithTransaction(r, &prevBlock.Header, testStakingInfo.StakingTx)
+	btcHeader := btcHeaderWithProof.HeaderBytes
+	serializedStakingTx, err := bbn.SerializeBTCTx(testStakingInfo.StakingTx)
+	h.NoError(err)
+	txInclusionProof := types.NewInclusionProof(&btcctypes.TransactionKey{Index: 1, Hash: btcHeader.Hash()}, btcHeaderWithProof.SpvProof.MerkleNodes)
+
+	slashingSpendInfo, err := testStakingInfo.StakingInfo.SlashingPathSpendInfo()
+	h.NoError(err)
+	delegatorSig, err := testStakingInfo.SlashingTx.Sign(testStakingInfo.StakingTx, 0, slashingSpendInfo.GetPkScriptPath(), delSK)
+	h.NoError(err)
+
+	// generate unbonding info
+	stkTxHash := testStakingInfo.StakingTx.TxHash()
+	stkOutputIdx := uint32(0)
+	testUnbondingInfo := datagen.GenBTCUnbondingSlashingInfo(
+		r,
+		t,
+		h.Net,
+		delSK,
+		[]*btcec.PublicKey{fpPK},
+		covPKs,
+		bsParams.CovenantQuorum,
+		wire.NewOutPoint(&stkTxHash, stkOutputIdx),
+		unbondingTime,
+		unbondingValue,
+		bsParams.SlashingPkScript,
+		bsParams.SlashingRate,
+		unbondingTime,
+	)
+	h.NoError(err)
+	delSlashingTxSig, err := testUnbondingInfo.GenDelSlashingTxSig(delSK)
+	h.NoError(err)
+	serializedUnbondingTx, err := bbn.SerializeBTCTx(testUnbondingInfo.UnbondingTx)
+	h.NoError(err)
+
+	// construct message
+	stakerPk := delSK.PubKey()
+	stPk := bbn.NewBIP340PubKeyFromBTCPK(stakerPk)
+	staker := sdk.MustAccAddressFromBech32(datagen.GenRandomAccount().Address)
+	pop, err := datagen.NewPoPBTC(staker, delSK)
+	h.NoError(err)
+
+	msgCreateBTCDel := &types.MsgCreateBTCDelegation{
+		StakerAddr:                    staker.String(),
+		BtcPk:                         stPk,
+		FpBtcPkList:                   []bbn.BIP340PubKey{*fpBIP340PK},
+		Pop:                           pop,
+		StakingTime:                   uint32(stakingTimeBlocks),
+		StakingValue:                  stakingValue,
+		StakingTx:                     serializedStakingTx,
+		SlashingTx:                    testStakingInfo.SlashingTx,
+		DelegatorSlashingSig:          delegatorSig,
+		UnbondingTx:                   serializedUnbondingTx,
+		UnbondingTime:                 uint32(unbondingTime),
+		UnbondingValue:                unbondingValue,
+		UnbondingSlashingTx:           testUnbondingInfo.SlashingTx,
+		DelegatorUnbondingSlashingSig: delSlashingTxSig,
+		StakingTxInclusionProof:       txInclusionProof,
+	}
+
+	// attempt to create delegation - should fail with ErrFinalityProviderIsDeleted
+	_, err = h.MsgServer.CreateBTCDelegation(h.Ctx, msgCreateBTCDel)
+	require.Error(t, err)
+	require.ErrorIs(t, err, types.ErrFinalityProviderIsDeleted)
+	require.Contains(t, err.Error(), "has been deleted")
+	require.Contains(t, err.Error(), fpBIP340PK.MarshalHex())
+}
+
 // TestBtcStakingWithBtcReOrg creates an BTC staking delegation
 // with enough covenant signatures submitted to be considered ACTIVE.
 func TestBtcStakingWithBtcReOrg(t *testing.T) {
