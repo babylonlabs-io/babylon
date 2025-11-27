@@ -10,6 +10,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	testutil "github.com/babylonlabs-io/babylon/v4/testutil/btcstaking-helper"
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
@@ -407,6 +409,7 @@ func FuzzListPubRandCommit(f *testing.F) {
 		require.NoError(t, err)
 		bsKeeper.EXPECT().GetFinalityProvider(gomock.Any(), gomock.Eq(bip340PK.MustMarshal())).Return(fp, nil).AnyTimes()
 		bsKeeper.EXPECT().HasFinalityProvider(gomock.Any(), gomock.Eq(bip340PK.MustMarshal())).Return(true).AnyTimes()
+		bsKeeper.EXPECT().IsFinalityProviderDeleted(gomock.Any(), gomock.Any()).Return(false).AnyTimes()
 		cKeeper.EXPECT().GetEpoch(gomock.Any()).Return(&epochingtypes.Epoch{EpochNumber: 1}).AnyTimes()
 
 		numPrCommitList := datagen.RandomInt(r, 10) + 1
@@ -669,4 +672,98 @@ func constructRequestWithKeyAndLimit(r *rand.Rand, key []byte, limit uint64) *qu
 
 func constructRequestWithLimit(r *rand.Rand, limit uint64) *query.PageRequest {
 	return constructRequestWithKeyAndLimit(r, nil, limit)
+}
+
+func FuzzVotingPowerDistribution(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+
+		keeper, ctx := testkeeper.FinalityKeeper(t, nil, nil, nil, nil)
+		ctx = sdk.UnwrapSDKContext(ctx)
+
+		height := datagen.RandomInt(r, 100) + 1
+
+		numFps := datagen.RandomInt(r, 10) + 1
+		numActiveFps := datagen.RandomInt(r, int(numFps)) + 1
+
+		dc := types.NewVotingPowerDistCache()
+		dc.NumActiveFps = uint32(numActiveFps)
+
+		expectedFps := make(map[string]*types.FinalityProviderDistInfo)
+
+		for i := uint64(0); i < numFps; i++ {
+			fpBtcPk, err := datagen.GenRandomBIP340PubKey(r)
+			require.NoError(t, err)
+
+			addr := datagen.GenRandomAccount().Address
+			commission := datagen.GenRandomCommission(r)
+			totalBondedSat := datagen.RandomInt(r, 1000000) + 1
+			votingPower := datagen.RandomInt(r, 100000) + 1
+
+			isTimestamped := datagen.RandomInt(r, 2) == 1
+			isJailed := datagen.RandomInt(r, 2) == 1
+			isSlashed := datagen.RandomInt(r, 2) == 1
+
+			fpDistInfo := &types.FinalityProviderDistInfo{
+				BtcPk:          fpBtcPk,
+				Addr:           sdk.MustAccAddressFromBech32(addr),
+				Commission:     &commission,
+				TotalBondedSat: totalBondedSat,
+				IsTimestamped:  isTimestamped,
+				IsJailed:       isJailed,
+				IsSlashed:      isSlashed,
+			}
+
+			dc.AddFinalityProviderDistInfo(fpDistInfo)
+			expectedFps[fpBtcPk.MarshalHex()] = fpDistInfo
+
+			keeper.SetVotingPower(ctx, fpBtcPk.MustMarshal(), height, votingPower)
+
+			dc.TotalVotingPower += votingPower
+		}
+
+		keeper.SetVotingPowerDistCache(ctx, height, dc)
+
+		resp, err := keeper.VotingPowerDistribution(ctx, &types.QueryVotingPowerDistributionRequest{
+			Height: height,
+		})
+		require.NoError(t, err)
+		require.NotNil(t, resp)
+		require.Equal(t, dc.TotalVotingPower, resp.TotalVotingPower)
+		require.Equal(t, uint64(dc.NumActiveFps), resp.NumActiveFps)
+		require.Len(t, resp.FinalityProviders, int(numFps))
+
+		for _, fpResp := range resp.FinalityProviders {
+			expectedFp, exists := expectedFps[fpResp.BtcPkHex]
+			require.True(t, exists)
+			require.Equal(t, expectedFp.BtcPk.MarshalHex(), fpResp.BtcPkHex)
+			require.Equal(t, sdk.AccAddress(expectedFp.Addr).String(), fpResp.Addr)
+			require.True(t, expectedFp.Commission.Equal(*fpResp.Commission))
+			require.Equal(t, expectedFp.TotalBondedSat, fpResp.TotalBondedSat)
+			require.Equal(t, expectedFp.IsTimestamped, fpResp.IsTimestamped)
+			require.Equal(t, expectedFp.IsJailed, fpResp.IsJailed)
+			require.Equal(t, expectedFp.IsSlashed, fpResp.IsSlashed)
+		}
+	})
+}
+
+func TestVotingPowerDistributionErrors(t *testing.T) {
+	keeper, ctx := testkeeper.FinalityKeeper(t, nil, nil, nil, nil)
+
+	t.Run("nil request", func(t *testing.T) {
+		resp, err := keeper.VotingPowerDistribution(ctx, nil)
+		require.EqualError(t, err, status.Error(codes.InvalidArgument, "empty request").Error())
+		require.Nil(t, resp)
+	})
+
+	t.Run("vp dst cache not found at height", func(t *testing.T) {
+		height := uint64(999999)
+		req := &types.QueryVotingPowerDistributionRequest{
+			Height: height,
+		}
+		resp, err := keeper.VotingPowerDistribution(ctx, req)
+		require.Nil(t, resp)
+		require.EqualError(t, err, types.ErrVotingPowerTableNotFound.Wrapf("height: %d", height).Error())
+	})
 }
