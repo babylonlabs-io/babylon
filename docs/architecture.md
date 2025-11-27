@@ -167,7 +167,7 @@ has been developed to enable these functionalities:
 
 - [BTC Staker Daemon](https://github.com/babylonlabs-io/btc-staker):
   Daemon program connecting to a Bitcoin wallet and Babylon.
-- [BTC Staker Dashboard](https://github.com/babylonlabs-io/btc-staking-dashboard):
+- [BTC Staker Dashboard](https://github.com/babylonlabs-io/staking-api-service):
   Web application connecting to a Bitcoin wallet extension and the Babylon API.
   It should only be used for testing purposes.
 - Wallet Integrations (TBD)
@@ -210,7 +210,7 @@ this function. Most notably:
 
 - [Cosmos Relayer](https://github.com/cosmos/relayer):
   A fully functional relayer written in Go.
-- [Babylon Relayer](https://github.com/babylonlabs-io/babylon-relayer/):
+- [Babylon Relayer](https://github.com/babylonlabs-io/babylon/blob/f23219536b996b308a59923a4e5716f2a090303d/docs/ibc-relayer.md):
   A wrapper of the Cosmos Relayer that can maintain a one-way IBC connection.
   It is recommended to be used when the Consumer Zone does not deploy the
   Babylon smart contract.
