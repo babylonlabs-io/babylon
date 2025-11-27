@@ -821,11 +821,16 @@ func validateStakerBtcPks(
 		return fmt.Errorf("primary staker pk %s does not match previous primary staker pk %s", newBtcPk, oldBtcPk)
 	}
 
-	// check multisig staker pks if prevBtcDel is multisig
-	if prevBtcDel.IsMultisigBtcDel() {
+	// check multisig staker pks if prevBtcDel or new btc del is multisig
+	if prevBtcDel.IsMultisigBtcDel() || parsedMsg.MultisigInfo != nil {
 		// if prev btc del is multisig, new btc del must be multisig as well
 		if parsedMsg.MultisigInfo == nil {
 			return fmt.Errorf("new btc delegation is not multisig but previous one is")
+		}
+
+		// if new btc del is multisig, prev btc del must be multisig as well
+		if prevBtcDel.IsMultisigBtcDel() == false {
+			return fmt.Errorf("previous btc delegation is not multisig but new one is")
 		}
 
 		// check the length of old btc del and new btc del

@@ -1271,6 +1271,106 @@ func AddWitnessToStakeExpTx(
 	return serializedUnbondingTxWithWitness, spendingTx
 }
 
+func AddMultisigWitnessToStakeExpTx(
+	t *testing.T,
+	stakingOutput *wire.TxOut,
+	fundingOutput *wire.TxOut,
+	stakerSks []*btcec.PrivateKey,
+	stakerQuorum uint32,
+	covenantSks []*btcec.PrivateKey,
+	covenantQuorum uint32,
+	finalityProviderPKs []*btcec.PublicKey,
+	stakingTime uint16,
+	stakingValue int64,
+	spendingTx *wire.MsgTx, // this is the stake expansion transaction
+	net *chaincfg.Params,
+) ([]byte, *wire.MsgTx) {
+	var covenatnPks []*btcec.PublicKey
+	for _, sk := range covenantSks {
+		covenatnPks = append(covenatnPks, sk.PubKey())
+	}
+
+	stakerPKs := make([]*btcec.PublicKey, 0, len(stakerSks))
+	for _, sk := range stakerSks {
+		stakerPKs = append(stakerPKs, sk.PubKey())
+	}
+
+	stakingInfo, err := stk.BuildMultisigStakingInfo(
+		stakerPKs,
+		stakerQuorum,
+		finalityProviderPKs,
+		covenatnPks,
+		covenantQuorum,
+		stakingTime,
+		btcutil.Amount(stakingValue),
+		net,
+	)
+	require.NoError(t, err)
+
+	// sanity check that what we re-build is the same as what we have in the BTC delegation
+	require.Equal(t, stakingOutput, stakingInfo.StakingOutput)
+
+	unbondingSpendInfo, err := stakingInfo.UnbondingPathSpendInfo()
+	require.NoError(t, err)
+
+	unbondingScirpt := unbondingSpendInfo.RevealedLeaf.Script
+	require.NotNil(t, unbondingScirpt)
+
+	covenantSigs := GenerateSignaturesForStakeExpansion(
+		t,
+		covenantSks,
+		spendingTx,
+		stakingOutput,
+		fundingOutput,
+		unbondingSpendInfo.RevealedLeaf,
+	)
+	require.NoError(t, err)
+
+	delPK2Sig := make(map[string]*bbn.BIP340Signature)
+	for _, stakerSk := range stakerSks {
+		stakerSchnorrSig, err := stk.SignTxForFirstScriptSpendWithTwoInputsFromTapLeaf(
+			spendingTx,
+			stakingOutput,
+			fundingOutput,
+			stakerSk,
+			unbondingSpendInfo.RevealedLeaf,
+		)
+		require.NoError(t, err)
+
+		stakerBIP340Sig := bbn.NewBIP340SignatureFromBTCSig(stakerSchnorrSig)
+		stakerPKHex := bbn.NewBIP340PubKeyFromBTCPK(stakerSk.PubKey()).MarshalHex()
+		delPK2Sig[stakerPKHex] = stakerBIP340Sig
+	}
+
+	sortedBIP340StakerSigs, err := bstypes.GetOrderedDelegatorSignatures(delPK2Sig)
+	require.NoError(t, err)
+
+	// only construct quorum number of staker signatures as witnesses
+	sortedStakerSigs := make([]*schnorr.Signature, len(sortedBIP340StakerSigs))
+	numDelSigs := uint32(0)
+	for i, sig := range sortedBIP340StakerSigs {
+		if sig != nil {
+			sortedStakerSigs[i] = sig.MustToBTCSig()
+			numDelSigs++
+		} else {
+			sortedStakerSigs[i] = nil
+		}
+		if numDelSigs == stakerQuorum {
+			break
+		}
+	}
+
+	ubWitness, err := unbondingSpendInfo.CreateMultisigUnbondingPathWitness(covenantSigs, sortedStakerSigs)
+	require.NoError(t, err)
+
+	spendingTx.TxIn[0].Witness = ubWitness
+
+	serializedUnbondingTxWithWitness, err := bbn.SerializeBTCTx(spendingTx)
+	require.NoError(t, err)
+
+	return serializedUnbondingTxWithWitness, spendingTx
+}
+
 func GenFundingTx(
 	t *testing.T,
 	r *rand.Rand,
