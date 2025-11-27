@@ -30,7 +30,7 @@ constructed, registered, and operated on Babylon. It complements the
 [Bitcoin stake registration](./register-bitcoin-stake.md) and
 [stake extension](./bitcoin-stake-extension.md) guides by focusing on the data
 and validation rules that are unique to M-of-N BTC stakers.
-**Single-signature delegators can safely ignore this document—if `multisig_info`
+**Single-signature delegators can safely ignore this document if `multisig_info`
 remains unset in your messages, the keeper follows the regular single-sig flow.**
 
 ## 1. Introduction
@@ -151,7 +151,7 @@ This metadata allows the chain to verify:
 - no duplicate keys exist across staker, covenant, and finality provider sets
 
 Once stored, the metadata is exposed through the
-`babylon.btcstaking.v1.Query/BTCDelegation` response so wallet software and
+`babylon.btcstaking.v1.QueryBTCDelegationRequest` response so wallet software and
 monitoring systems can fetch the current quorum, keys, and signatures.
 
 ## 3. Parameters and Limits
@@ -173,7 +173,7 @@ Additional constraints enforced by the keeper (`x/btcstaking/types/validate_pars
   transactions before accepting the delegation
 
 These limits are governance-controlled and can be inspected via
-`babylond q btcstaking params`.
+`babylon.btcstaking.v1.QueryParamsRequest`.
 
 ## 4. Preparing a Multisig Delegation
 
@@ -221,7 +221,12 @@ raised when the message is parsed.
 ### 4.3. Sample JSON Payload
 
 Below is an illustrative JSON fragment that can be embedded in a `MsgCreateBTCDelegation`
-or `MsgBtcStakeExpand` payload:
+or `MsgBtcStakeExpand` payload. This payload should be used with `--multisig-info-json`
+flag when sending multisig btc delegation or stake extension in CLI.
+
+`babylond tx btcstaking create-btc-delegation [args] --multisig-info-json [path/to/multisig.json]`
+
+multisig.json:
 
 ```json
 {
@@ -318,21 +323,8 @@ Stake extension for multisig delegations follows the same rules described in
   funding UTXO) and at least one output recreating the staking Taproot script.
 - The staking amount must be ≥ the previous amount.
 - The finality provider list cannot change.
-
-Additional multisig-specific considerations:
-
-- The staker key set and quorum can change only if the new `multisig_info`
-  satisfies Babylon parameters and provides `M` signatures for the new
-  slashing transactions. Even if the staker set changes, Babylon will re-run
-  the same validation path as for brand-new delegations.
+- The **staker key set and quorum cannot be changed.**
 - Covenant overlap requirements apply exactly as in the single-sig flow.
-- It is valid to toggle between single-sig and multisig during an extension
-  (e.g., the previous staking tx was single-sig, the new staking tx carries
-  `multisig_info`). Babylon treats the extension as whatever you submit—if
-  `multisig_info` is omitted it stays single-sig, and if it is present the new
-  Taproot output must satisfy all multisig rules. Bitcoin simply sees a new
-  transaction spending the old output, so switching modes is seamless provided
-  you craft a valid multisig script and supply the required signatures.
 
 ### 6.2. On-demand Unbonding and Slashing
 
