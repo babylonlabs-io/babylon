@@ -183,7 +183,7 @@ The message handler is defined at
 
 ### MsgWrappedCreateValidator
 
-The `MsgWrappedCreateValidator` message wraps the [`MsgCreateValidator`](https://github.com/cosmos/cosmos-sdk/blob/9814f684b9dd7e384064ca86876688c05e685e54/proto/cosmos/staking/v1beta1/tx.proto#L51)
+The `MsgWrappedCreateValidator` message wraps the [`MsgCreateValidator`](https://github.com/cosmos/cosmos-sdk/blob/main/proto/cosmos/staking/v1beta1/tx.proto#L52)
 defined in the staking module of the Cosmos SDK
 in order to also include the BLS public key.
 The message is used for registering a new validator and storing its BLS public

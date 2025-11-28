@@ -401,8 +401,8 @@ message MsgBtcStakeExpand {
   The duration of staking in Bitcoin blocks for the extended delegation.
   This is the same as the timelock used when constructing the
   [staking script](./staking-script.md) and must comply with the current
-  Babylon staking parameters by being higher or equal than
-  `min_staking_time_blocks` and lower or equal than `max_staking_time_blocks`.
+  Babylon staking parameters by being higher than or equal to
+  `min_staking_time_blocks` and lower than or equal to `max_staking_time_blocks`
   > **Important Note**: Every stake extension transaction starts
   > with a fresh timelock, meaning that the time the original
   > staking transaction spent being active will not be deducted from
