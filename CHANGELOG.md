@@ -37,6 +37,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+### State breaking
+
+- [#1855](https://github.com/babylonlabs-io/babylon/pull/1855) Add check for `fundingInputValue <= 0` in stake extension
 - [#1878](https://github.com/babylonlabs-io/babylon/pull/1878) Remove unnecessary []byte allocations in IBC size checks
 
 ### Bug Fixes
