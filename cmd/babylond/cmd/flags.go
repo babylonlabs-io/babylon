@@ -55,6 +55,8 @@ const (
 	flagJailDuration               = "jail-duration"
 	flagNoBlsPassword              = "no-bls-password"
 	flagBlsPasswordFile            = "bls-password-file"
+	flagMaxStakerQuorum            = "max-staker-quorum"
+	flagMaxStakerNum               = "max-staker-num"
 )
 
 type GenesisCLIArgs struct {
@@ -93,6 +95,8 @@ type GenesisCLIArgs struct {
 	FinalitySigTimeout            int64
 	JailDuration                  time.Duration
 	FinalityActivationBlockHeight uint64
+	MaxStakerQuorum               uint32
+	MaxStakerNum                  uint32
 }
 
 func addGenesisFlags(cmd *cobra.Command) {
@@ -124,6 +128,8 @@ func addGenesisFlags(cmd *cobra.Command) {
 	cmd.Flags().Uint32(flagMaxActiveFinalityProviders, 100, "Bitcoin staking maximum active finality providers")
 	cmd.Flags().Uint16(flagUnbondingTime, 21, "Required timelock on unbonding transaction in btc blocks. Must be larger than btc-finalization-timeout")
 	cmd.Flags().Int64(flagUnbondingFeeSat, 1000, "Required fee for unbonding transaction in satoshis")
+	cmd.Flags().Uint32(flagMaxStakerQuorum, 2, "Bitcoin staking max staker quorum")
+	cmd.Flags().Uint32(flagMaxStakerNum, 3, "Bitcoin staking max staker num")
 	// inflation args
 	cmd.Flags().Float64(flagInflationRateChange, 0.13, "Inflation rate change")
 	cmd.Flags().Float64(flagInflationMax, 0.2, "Maximum inflation")
@@ -179,6 +185,8 @@ func parseGenesisFlags(cmd *cobra.Command) (*GenesisCLIArgs, error) {
 	finalitySigTimeout, _ := cmd.Flags().GetInt64(flagFinalitySigTimeout)
 	jailDurationStr, _ := cmd.Flags().GetString(flagJailDuration)
 	finalityActivationBlockHeight, _ := cmd.Flags().GetUint64(flagActivationHeight)
+	maxStakerQuorum, _ := cmd.Flags().GetUint32(flagMaxStakerQuorum)
+	maxStakerNum, _ := cmd.Flags().GetUint32(flagMaxStakerNum)
 
 	if chainID == "" {
 		chainID = "chain-" + tmrand.NewRand().Str(6)
@@ -237,5 +245,7 @@ func parseGenesisFlags(cmd *cobra.Command) (*GenesisCLIArgs, error) {
 		FinalitySigTimeout:            finalitySigTimeout,
 		JailDuration:                  jailDuration,
 		FinalityActivationBlockHeight: finalityActivationBlockHeight,
+		MaxStakerQuorum:               maxStakerQuorum,
+		MaxStakerNum:                  maxStakerNum,
 	}, nil
 }

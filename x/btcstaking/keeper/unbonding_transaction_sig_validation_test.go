@@ -168,7 +168,7 @@ func FuzzSigVerification(f *testing.F) {
 		spendStakeTx.TxIn[stakingInputIdx].Witness = witness
 
 		err = keeper.VerifySpendStakeTxStakerSig(
-			stakerPubKey,
+			[]*btcec.PublicKey{stakerPubKey},
 			stakingInfo.StakingOutput,
 			stakingInputIdx,
 			fundingTxs,
@@ -176,4 +176,144 @@ func FuzzSigVerification(f *testing.F) {
 		)
 		require.NoError(t, err)
 	})
+}
+
+func TestVerifySpendStakeTxStakerSig(t *testing.T) {
+	t.Run("accepts 2-of-3 multisig staker witness", func(t *testing.T) {
+		fixture := newMultisigSpendStakeFixture(t, 3, 2)
+
+		stakerSigs := datagen.GenerateSignatures(
+			t,
+			fixture.stakerPrivs,
+			fixture.spendStakeTx,
+			fixture.stakingInfo.StakingOutput,
+			fixture.unbondingSpendInfo.RevealedLeaf,
+		)
+		stakerSigs[len(stakerSigs)-1] = nil
+
+		covenantSig, err := btcstaking.SignTxWithOneScriptSpendInputFromTapLeaf(
+			fixture.spendStakeTx,
+			fixture.stakingInfo.StakingOutput,
+			covenantSk,
+			fixture.unbondingSpendInfo.RevealedLeaf,
+		)
+		require.NoError(t, err)
+
+		witness, err := fixture.unbondingSpendInfo.CreateMultisigUnbondingPathWitness(
+			[]*schnorr.Signature{covenantSig},
+			stakerSigs,
+		)
+		require.NoError(t, err)
+
+		fixture.spendStakeTx.TxIn[fixture.stakingInputIdx].Witness = witness
+
+		err = keeper.VerifySpendStakeTxStakerSig(
+			fixture.stakerPubKeys,
+			fixture.stakingInfo.StakingOutput,
+			fixture.stakingInputIdx,
+			fixture.fundingTxs,
+			fixture.spendStakeTx,
+		)
+		require.NoError(t, err)
+	})
+
+	t.Run("rejects witness with misordered staker signatures", func(t *testing.T) {
+		fixture := newMultisigSpendStakeFixture(t, 3, 2)
+
+		validStakerSigs := datagen.GenerateSignatures(
+			t,
+			fixture.stakerPrivs,
+			fixture.spendStakeTx,
+			fixture.stakingInfo.StakingOutput,
+			fixture.unbondingSpendInfo.RevealedLeaf,
+		)
+
+		invalidOrderSigs := append([]*schnorr.Signature(nil), validStakerSigs...)
+		invalidOrderSigs[0], invalidOrderSigs[1] = invalidOrderSigs[1], invalidOrderSigs[0]
+
+		covenantSig, err := btcstaking.SignTxWithOneScriptSpendInputFromTapLeaf(
+			fixture.spendStakeTx,
+			fixture.stakingInfo.StakingOutput,
+			covenantSk,
+			fixture.unbondingSpendInfo.RevealedLeaf,
+		)
+		require.NoError(t, err)
+
+		witness, err := fixture.unbondingSpendInfo.CreateMultisigUnbondingPathWitness(
+			[]*schnorr.Signature{covenantSig},
+			invalidOrderSigs,
+		)
+		require.NoError(t, err)
+		fixture.spendStakeTx.TxIn[fixture.stakingInputIdx].Witness = witness
+
+		err = keeper.VerifySpendStakeTxStakerSig(
+			fixture.stakerPubKeys,
+			fixture.stakingInfo.StakingOutput,
+			fixture.stakingInputIdx,
+			fixture.fundingTxs,
+			fixture.spendStakeTx,
+		)
+		require.Error(t, err)
+	})
+}
+
+type multisigSpendStakeFixture struct {
+	stakerPrivs        []*btcec.PrivateKey
+	stakerPubKeys      []*btcec.PublicKey
+	stakingInfo        *btcstaking.StakingInfo
+	fundingTxs         []*wire.MsgTx
+	spendStakeTx       *wire.MsgTx
+	stakingInputIdx    uint32
+	unbondingSpendInfo *btcstaking.SpendInfo
+}
+
+func newMultisigSpendStakeFixture(t *testing.T, stakerCount int, stakerQuorum uint32) *multisigSpendStakeFixture {
+	t.Helper()
+
+	stakerPrivs := make([]*btcec.PrivateKey, stakerCount)
+	stakerPubKeys := make([]*btcec.PublicKey, stakerCount)
+	for i := 0; i < stakerCount; i++ {
+		sk, err := btcec.NewPrivateKey()
+		require.NoError(t, err)
+		stakerPrivs[i] = sk
+		stakerPubKeys[i] = sk.PubKey()
+	}
+
+	stakingInfo, err := btcstaking.BuildMultisigStakingInfo(
+		stakerPubKeys,
+		stakerQuorum,
+		[]*btcec.PublicKey{finalityProviderSK.PubKey()},
+		[]*btcec.PublicKey{covenantSk.PubKey()},
+		1,
+		stakingTime,
+		stakingAmount,
+		&chainParams,
+	)
+	require.NoError(t, err)
+
+	fundingTx := wire.NewMsgTx(2)
+	fundingTx.AddTxOut(stakingInfo.StakingOutput)
+
+	spendStakeTx := wire.NewMsgTx(2)
+	stakingOutPoint := wire.OutPoint{Hash: fundingTx.TxHash(), Index: 0}
+	spendStakeTx.AddTxIn(wire.NewTxIn(&stakingOutPoint, nil, nil))
+	spendStakeTx.AddTxOut(
+		wire.NewTxOut(
+			stakingInfo.StakingOutput.Value-1000,
+			stakingInfo.StakingOutput.PkScript,
+		),
+	)
+
+	unbondingSpendInfo, err := stakingInfo.UnbondingPathSpendInfo()
+	require.NoError(t, err)
+
+	return &multisigSpendStakeFixture{
+		stakerPrivs:        stakerPrivs,
+		stakerPubKeys:      stakerPubKeys,
+		stakingInfo:        stakingInfo,
+		fundingTxs:         []*wire.MsgTx{fundingTx},
+		spendStakeTx:       spendStakeTx,
+		stakingInputIdx:    0,
+		unbondingSpendInfo: unbondingSpendInfo,
+	}
 }

@@ -128,6 +128,8 @@ Example:
 				genesisCliArgs.FinalitySigTimeout,
 				genesisCliArgs.JailDuration,
 				genesisCliArgs.FinalityActivationBlockHeight,
+				genesisCliArgs.MaxStakerQuorum,
+				genesisCliArgs.MaxStakerNum,
 			)
 
 			return InitTestnet(

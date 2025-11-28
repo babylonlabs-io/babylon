@@ -186,6 +186,8 @@ staking transaction and its state on Babylon Genesis.
   > the stake extension staking transaction to use different staking parameters.
 - **Submitter Address**: The Babylon Genesis address used to submit the stake extension transaction to Babylon Genesis
   should be the same as the owner of the original staking transaction.
+- **Staker Bitcoin Public Keys**: The Bitcoin public keys used in the extended staking transaction staking output should 
+  be the same as the original staking output.
 
 > **⚠️ Critical**: All stake extension transactions that do not follow
 > the aforementioned rules will be rejected.

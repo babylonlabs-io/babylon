@@ -303,11 +303,15 @@ func TestStructFieldConsistency(t *testing.T) {
 		}
 	}
 
-	// Reverse check: all fields in MsgBtcStakeExpand (except last two: PreviousStakingTxHash and FundingTx) must be in MsgCreateBTCDelegation
+	// Reverse check: all fields in MsgBtcStakeExpand (except unique two: PreviousStakingTxHash and FundingTx) must be in MsgCreateBTCDelegation
 	var missingFromCreate []string
-	for i := 0; i < expandType.NumField()-2; i++ {
+	for i := 0; i < expandType.NumField(); i++ {
 		expandField := expandType.Field(i)
 		createField, ok := createType.FieldByName(expandField.Name)
+		// skip the two fields unique to MsgBtcStakeExpand
+		if expandField.Name == "PreviousStakingTxHash" || expandField.Name == "FundingTx" {
+			continue
+		}
 		if !ok {
 			missingFromCreate = append(missingFromCreate, expandField.Name)
 			continue

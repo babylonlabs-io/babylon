@@ -742,6 +742,211 @@ func GenBTCUnbondingSlashingInfo(
 	}
 }
 
+func GenMultisigBTCStakingSlashingInfo(
+	r *rand.Rand,
+	t testing.TB,
+	btcNet *chaincfg.Params,
+	stakerSKs []*btcec.PrivateKey,
+	stakerQuorum uint32,
+	fpPKs []*btcec.PublicKey,
+	covenantPKs []*btcec.PublicKey,
+	covenantQuorum uint32,
+	stakingTimeBlocks uint16,
+	stakingValue int64,
+	slashingPkScript []byte,
+	slashingRate sdkmath.LegacyDec,
+	slashingChangeLockTime uint16,
+) *TestStakingSlashingInfo {
+	// an arbitrary input
+	spend := makeSpendableOutWithRandOutPoint(r, btcutil.Amount(stakingValue+UnbondingTxFee))
+	outPoint := &spend.prevOut
+
+	return GenMultisigBTCStakingSlashingInfoWithOutpoint(
+		r, t,
+		btcNet,
+		outPoint,
+		stakerSKs,
+		stakerQuorum,
+		fpPKs,
+		covenantPKs,
+		covenantQuorum,
+		stakingTimeBlocks,
+		stakingValue,
+		slashingPkScript,
+		slashingRate,
+		slashingChangeLockTime,
+	)
+}
+
+func GenMultisigBTCStakingSlashingInfoWithOutpoint(
+	r *rand.Rand,
+	t testing.TB,
+	btcNet *chaincfg.Params,
+	outPoint *wire.OutPoint,
+	stakerSKs []*btcec.PrivateKey,
+	stakerQuorum uint32,
+	fpPKs []*btcec.PublicKey,
+	covenantPKs []*btcec.PublicKey,
+	covenantQuorum uint32,
+	stakingTimeBlocks uint16,
+	stakingValue int64,
+	slashingPkScript []byte,
+	slashingRate sdkmath.LegacyDec,
+	slashingChangeLockTime uint16,
+) *TestStakingSlashingInfo {
+	return GenMultisigBTCStakingSlashingInfoWithInputs(
+		r, t,
+		btcNet,
+		[]*wire.OutPoint{outPoint},
+		stakerSKs,
+		stakerQuorum,
+		fpPKs,
+		covenantPKs,
+		covenantQuorum,
+		stakingTimeBlocks,
+		stakingValue,
+		slashingPkScript,
+		slashingRate,
+		slashingChangeLockTime,
+		10000,
+	)
+}
+
+func GenMultisigBTCStakingSlashingInfoWithInputs(
+	r *rand.Rand,
+	t testing.TB,
+	btcNet *chaincfg.Params,
+	outPoints []*wire.OutPoint,
+	stakerSKs []*btcec.PrivateKey,
+	stakerQuorum uint32,
+	fpPKs []*btcec.PublicKey,
+	covenantPKs []*btcec.PublicKey,
+	covenantQuorum uint32,
+	stakingTimeBlocks uint16,
+	stakingValue int64,
+	slashingPkScript []byte,
+	slashingRate sdkmath.LegacyDec,
+	slashingChangeLockTime uint16,
+	changeAmt int64,
+) *TestStakingSlashingInfo {
+	stakerPubKeys := make([]*btcec.PublicKey, len(stakerSKs))
+	for i, sk := range stakerSKs {
+		stakerPubKeys[i] = sk.PubKey()
+	}
+
+	stakingInfo, err := btcstaking.BuildMultisigStakingInfo(
+		stakerPubKeys,
+		stakerQuorum,
+		fpPKs,
+		covenantPKs,
+		covenantQuorum,
+		stakingTimeBlocks,
+		btcutil.Amount(stakingValue),
+		btcNet,
+	)
+	require.NoError(t, err)
+
+	tx := wire.NewMsgTx(2)
+
+	// Add given input
+	for _, outPoint := range outPoints {
+		tx.AddTxIn(wire.NewTxIn(outPoint, nil, nil))
+	}
+
+	// Add staking output
+	tx.AddTxOut(stakingInfo.StakingOutput)
+
+	// Add dummy change output
+	changeScript, err := GenRandomPubKeyHashScript(r, btcNet)
+	require.NoError(t, err)
+	require.False(t, txscript.GetScriptClass(changeScript) == txscript.NonStandardTy)
+
+	tx.AddTxOut(wire.NewTxOut(changeAmt, changeScript))
+
+	// Build slashing tx
+	slashingMsgTx, err := btcstaking.BuildMultisigSlashingTxFromStakingTxStrict(
+		tx,
+		StakingOutIdx,
+		slashingPkScript,
+		stakerPubKeys,
+		stakerQuorum,
+		slashingChangeLockTime,
+		2000,
+		slashingRate,
+		btcNet,
+	)
+	require.NoError(t, err)
+
+	slashingTx, err := bstypes.NewBTCSlashingTxFromMsgTx(slashingMsgTx)
+	require.NoError(t, err)
+
+	return &TestStakingSlashingInfo{
+		StakingTx:   tx,
+		SlashingTx:  slashingTx,
+		StakingInfo: stakingInfo,
+	}
+}
+
+func GenMultisigBTCUnbondingSlashingInfo(
+	r *rand.Rand,
+	t testing.TB,
+	btcNet *chaincfg.Params,
+	stakerSKs []*btcec.PrivateKey,
+	stakerQuorum uint32,
+	fpPKs []*btcec.PublicKey,
+	covenantPKs []*btcec.PublicKey,
+	covenantQuorum uint32,
+	stakingTransactionOutpoint *wire.OutPoint,
+	stakingTimeBlocks uint16,
+	stakingValue int64,
+	slashingPkScript []byte,
+	slashingRate sdkmath.LegacyDec,
+	slashingChangeLockTime uint16,
+) *TestUnbondingSlashingInfo {
+	stakerPubKeys := make([]*btcec.PublicKey, len(stakerSKs))
+	for i, sk := range stakerSKs {
+		stakerPubKeys[i] = sk.PubKey()
+	}
+
+	unbondingInfo, err := btcstaking.BuildMultisigUnbondingInfo(
+		stakerPubKeys,
+		stakerQuorum,
+		fpPKs,
+		covenantPKs,
+		covenantQuorum,
+		slashingChangeLockTime,
+		btcutil.Amount(stakingValue),
+		btcNet,
+	)
+
+	require.NoError(t, err)
+	tx := wire.NewMsgTx(2)
+	// add the given tx input
+	txIn := wire.NewTxIn(stakingTransactionOutpoint, nil, nil)
+	tx.AddTxIn(txIn)
+	tx.AddTxOut(unbondingInfo.UnbondingOutput)
+
+	slashingMsgTx, err := btcstaking.BuildMultisigSlashingTxFromStakingTxStrict(
+		tx,
+		StakingOutIdx,
+		slashingPkScript,
+		stakerPubKeys,
+		stakerQuorum,
+		slashingChangeLockTime,
+		2000,
+		slashingRate,
+		btcNet)
+	require.NoError(t, err)
+	slashingTx, err := bstypes.NewBTCSlashingTxFromMsgTx(slashingMsgTx)
+	require.NoError(t, err)
+
+	return &TestUnbondingSlashingInfo{
+		UnbondingTx:   tx,
+		SlashingTx:    slashingTx,
+		UnbondingInfo: unbondingInfo,
+	}
+}
+
 func (info *TestUnbondingSlashingInfo) GenDelSlashingTxSig(sk *btcec.PrivateKey) (*bbn.BIP340Signature, error) {
 	unbondingTxMsg := info.UnbondingTx
 	unbondingTxSlashingPathInfo, err := info.UnbondingInfo.SlashingPathSpendInfo()
@@ -864,6 +1069,30 @@ func GenerateSignatures(
 	for i, sigInfo := range sortedSigInfo {
 		sig := sigInfo
 		sigs[i] = sig.Signature
+	}
+
+	return sigs
+}
+
+// GenerateSignaturesInGivenOrder doesn't sort signatures, it returns signatures in given keys order
+func GenerateSignaturesInGivenOrder(
+	t *testing.T,
+	keys []*btcec.PrivateKey,
+	tx *wire.MsgTx,
+	fundingOutput *wire.TxOut,
+	leaf txscript.TapLeaf,
+) []*bbn.BIP340Signature {
+	sigs := make([]*bbn.BIP340Signature, 0, len(keys))
+
+	for _, key := range keys {
+		schnorrSig, err := btcstaking.SignTxWithOneScriptSpendInputFromTapLeaf(
+			tx,
+			fundingOutput,
+			key,
+			leaf,
+		)
+		require.NoError(t, err)
+		sigs = append(sigs, bbn.NewBIP340SignatureFromBTCSig(schnorrSig))
 	}
 
 	return sigs
@@ -1032,6 +1261,106 @@ func AddWitnessToStakeExpTx(
 	require.NoError(t, err)
 
 	ubWitness, err := unbondingSpendInfo.CreateUnbondingPathWitness(covenantSigs, stakerSig)
+	require.NoError(t, err)
+
+	spendingTx.TxIn[0].Witness = ubWitness
+
+	serializedUnbondingTxWithWitness, err := bbn.SerializeBTCTx(spendingTx)
+	require.NoError(t, err)
+
+	return serializedUnbondingTxWithWitness, spendingTx
+}
+
+func AddMultisigWitnessToStakeExpTx(
+	t *testing.T,
+	stakingOutput *wire.TxOut,
+	fundingOutput *wire.TxOut,
+	stakerSks []*btcec.PrivateKey,
+	stakerQuorum uint32,
+	covenantSks []*btcec.PrivateKey,
+	covenantQuorum uint32,
+	finalityProviderPKs []*btcec.PublicKey,
+	stakingTime uint16,
+	stakingValue int64,
+	spendingTx *wire.MsgTx, // this is the stake expansion transaction
+	net *chaincfg.Params,
+) ([]byte, *wire.MsgTx) {
+	var covenatnPks []*btcec.PublicKey
+	for _, sk := range covenantSks {
+		covenatnPks = append(covenatnPks, sk.PubKey())
+	}
+
+	stakerPKs := make([]*btcec.PublicKey, 0, len(stakerSks))
+	for _, sk := range stakerSks {
+		stakerPKs = append(stakerPKs, sk.PubKey())
+	}
+
+	stakingInfo, err := stk.BuildMultisigStakingInfo(
+		stakerPKs,
+		stakerQuorum,
+		finalityProviderPKs,
+		covenatnPks,
+		covenantQuorum,
+		stakingTime,
+		btcutil.Amount(stakingValue),
+		net,
+	)
+	require.NoError(t, err)
+
+	// sanity check that what we re-build is the same as what we have in the BTC delegation
+	require.Equal(t, stakingOutput, stakingInfo.StakingOutput)
+
+	unbondingSpendInfo, err := stakingInfo.UnbondingPathSpendInfo()
+	require.NoError(t, err)
+
+	unbondingScirpt := unbondingSpendInfo.RevealedLeaf.Script
+	require.NotNil(t, unbondingScirpt)
+
+	covenantSigs := GenerateSignaturesForStakeExpansion(
+		t,
+		covenantSks,
+		spendingTx,
+		stakingOutput,
+		fundingOutput,
+		unbondingSpendInfo.RevealedLeaf,
+	)
+	require.NoError(t, err)
+
+	delPK2Sig := make(map[string]*bbn.BIP340Signature)
+	for _, stakerSk := range stakerSks {
+		stakerSchnorrSig, err := stk.SignTxForFirstScriptSpendWithTwoInputsFromTapLeaf(
+			spendingTx,
+			stakingOutput,
+			fundingOutput,
+			stakerSk,
+			unbondingSpendInfo.RevealedLeaf,
+		)
+		require.NoError(t, err)
+
+		stakerBIP340Sig := bbn.NewBIP340SignatureFromBTCSig(stakerSchnorrSig)
+		stakerPKHex := bbn.NewBIP340PubKeyFromBTCPK(stakerSk.PubKey()).MarshalHex()
+		delPK2Sig[stakerPKHex] = stakerBIP340Sig
+	}
+
+	sortedBIP340StakerSigs, err := bstypes.GetOrderedDelegatorSignatures(delPK2Sig)
+	require.NoError(t, err)
+
+	// only construct quorum number of staker signatures as witnesses
+	sortedStakerSigs := make([]*schnorr.Signature, len(sortedBIP340StakerSigs))
+	numDelSigs := uint32(0)
+	for i, sig := range sortedBIP340StakerSigs {
+		if sig != nil {
+			sortedStakerSigs[i] = sig.MustToBTCSig()
+			numDelSigs++
+		} else {
+			sortedStakerSigs[i] = nil
+		}
+		if numDelSigs == stakerQuorum {
+			break
+		}
+	}
+
+	ubWitness, err := unbondingSpendInfo.CreateMultisigUnbondingPathWitness(covenantSigs, sortedStakerSigs)
 	require.NoError(t, err)
 
 	spendingTx.TxIn[0].Witness = ubWitness

@@ -165,6 +165,11 @@ func (ms msgServer) BtcStakeExpand(goCtx context.Context, req *types.MsgBtcStake
 		return nil, status.Errorf(codes.InvalidArgument, "the previous BTC staking transaction FP: %+v is not the same as FP of the stake expansion %+v", prevBtcDel.FpBtcPkList, req.FpBtcPkList)
 	}
 
+	// check that the previous delegation and the new expansion has the same staker btc pk
+	if err := validateStakerBtcPks(parsedMsg, prevBtcDel); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
 	// Ensure the finality provider is not deleted
 	if ms.IsFinalityProviderDeleted(ctx, &req.FpBtcPkList[0]) {
 		return nil, types.ErrFinalityProviderIsDeleted.Wrapf("finality provider pk %s has been deleted", req.FpBtcPkList[0].MarshalHex())
@@ -245,7 +250,7 @@ func (ms msgServer) AddBTCDelegationInclusionProof(
 	return &types.MsgAddBTCDelegationInclusionProofResponse{}, nil
 }
 
-// AddCovenantSig adds signatures from covenants to a BTC delegation
+// AddCovenantSigs adds signatures from covenants to a BTC delegation
 // TODO: refactor this handler. Now it's too convoluted
 func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCovenantSigs) (*types.MsgAddCovenantSigsResponse, error) {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), types.MetricsKeyAddCovenantSigs)
@@ -291,14 +296,22 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 	/*
 		Verify each covenant adaptor signature over slashing tx
 	*/
-	stakingInfo, err := btcDel.GetStakingInfo(params, ms.btcNet)
-	if err != nil {
-		panic(fmt.Errorf("failed to get staking info from a verified delegation: %w", err))
+	var stakingInfo *btcstaking.StakingInfo
+	if btcDel.IsMultisigBtcDel() {
+		stakingInfo, err = btcDel.GetMultisigStakingInfo(params, ms.btcNet)
+		if err != nil {
+			panic(fmt.Errorf("failed to get multisig staking info from a verified delegation: %w", err))
+		}
+	} else {
+		stakingInfo, err = btcDel.GetStakingInfo(params, ms.btcNet)
+		if err != nil {
+			panic(fmt.Errorf("failed to get staking info from a verified delegation: %w", err))
+		}
 	}
 	slashingSpendInfo, err := stakingInfo.SlashingPathSpendInfo()
 	if err != nil {
-		// our staking info was constructed by using BuildStakingInfo constructor, so if
-		// this fails, it is a programming error
+		// our staking info was constructed by using BuildStakingInfo or
+		// BuildMultisigStakingInfo constructor, so if this fails, it is a programming error
 		panic(err)
 	}
 	parsedSlashingAdaptorSignatures, err := btcDel.SlashingTx.ParseEncVerifyAdaptorSignatures(
@@ -347,14 +360,22 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 		verify each adaptor signature on slashing unbonding tx
 	*/
 	unbondingOutput := unbondingMsgTx.TxOut[0] // unbonding tx always have only one output
-	unbondingInfo, err := btcDel.GetUnbondingInfo(params, ms.btcNet)
-	if err != nil {
-		panic(err)
+	var unbondingInfo *btcstaking.UnbondingInfo
+	if btcDel.IsMultisigBtcDel() {
+		unbondingInfo, err = btcDel.GetMultisigUnbondingInfo(params, ms.btcNet)
+		if err != nil {
+			panic(err)
+		}
+	} else {
+		unbondingInfo, err = btcDel.GetUnbondingInfo(params, ms.btcNet)
+		if err != nil {
+			panic(err)
+		}
 	}
 	unbondingSlashingSpendInfo, err := unbondingInfo.SlashingPathSpendInfo()
 	if err != nil {
-		// our unbonding info was constructed by using BuildStakingInfo constructor, so if
-		// this fails, it is a programming error
+		// our unbonding info was constructed by using BuildUnbondingInfo or
+		// BuildMultisigUnbondingInfo constructor, so if this fails, it is a programming error
 		panic(err)
 	}
 	parsedUnbondingSlashingAdaptorSignatures, err := btcDel.BtcUndelegation.SlashingTx.ParseEncVerifyAdaptorSignatures(
@@ -455,10 +476,19 @@ func (ms msgServer) validateStakeExpansionSig(
 		return fmt.Errorf("failed to deserialize other funding txout: %w", err)
 	}
 
-	// build staking info of prev delegation
-	prevDelStakingInfo, err := prevBtcDel.GetStakingInfo(prevParams, ms.btcNet)
-	if err != nil {
-		return fmt.Errorf("failed to get staking info of previous delegation: %w", err)
+	var prevDelStakingInfo *btcstaking.StakingInfo
+	// if prevBtcDel is a multisig btc delegation, we need to build multisig staking info
+	if prevBtcDel.IsMultisigBtcDel() {
+		prevDelStakingInfo, err = prevBtcDel.GetMultisigStakingInfo(prevParams, ms.btcNet)
+		if err != nil {
+			return fmt.Errorf("failed to get multisig staking info of previous delegation: %w", err)
+		}
+	} else {
+		// build staking info of prev delegation
+		prevDelStakingInfo, err = prevBtcDel.GetStakingInfo(prevParams, ms.btcNet)
+		if err != nil {
+			return fmt.Errorf("failed to get staking info of previous delegation: %w", err)
+		}
 	}
 	prevDelUnbondingPathSpendInfo, err := prevDelStakingInfo.UnbondingPathSpendInfo()
 	if err != nil {
@@ -592,9 +622,23 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 		return nil, types.ErrInvalidBTCUndelegateReq.Wrapf("failed to parse funding transactions: %s", err)
 	}
 
+	// construct stakerPKs, if it's a single-sig btc delegation, len(stakerPKs) is 1,
+	// otherwise, it's a multisig btc delegation with non-one stakerCount.
+	var stakerPKs []*btcec.PublicKey
+	if btcDel.IsMultisigBtcDel() {
+		stakerPKs = append(stakerPKs, btcDel.BtcPk.MustToBTCPK())
+		stakerBtcPKs, err := bbn.NewBTCPKsFromBIP340PKs(btcDel.MultisigInfo.StakerBtcPkList)
+		if err != nil {
+			return nil, err
+		}
+		stakerPKs = append(stakerPKs, stakerBtcPKs...)
+	} else {
+		stakerPKs = append(stakerPKs, btcDel.BtcPk.MustToBTCPK())
+	}
+
 	// 4. Verify staker signature on stake spending tx
 	if err := VerifySpendStakeTxStakerSig(
-		btcDel.BtcPk.MustToBTCPK(),
+		stakerPKs,
 		stakingTx.TxOut[btcDel.StakingOutputIdx],
 		stakingTxInputIdx,
 		fundingTxs,
@@ -761,6 +805,50 @@ func validateStakeExpansionAmt(
 	if impliedFee <= 0 {
 		return fmt.Errorf("invalid transaction fee: inputs %d <= outputs %d",
 			totalInputValue, totalOutputValue)
+	}
+
+	return nil
+}
+
+func validateStakerBtcPks(
+	parsedMsg *types.ParsedCreateDelegationMessage,
+	prevBtcDel *types.BTCDelegation,
+) error {
+	// check primary staker pk is the same
+	oldBtcPk := prevBtcDel.BtcPk.MarshalHex()
+	newBtcPk := parsedMsg.StakerPK.BIP340PubKey.MarshalHex()
+	if oldBtcPk != newBtcPk {
+		return fmt.Errorf("primary staker pk %s does not match previous primary staker pk %s", newBtcPk, oldBtcPk)
+	}
+
+	// check multisig staker pks if prevBtcDel or new btc del is multisig
+	if prevBtcDel.IsMultisigBtcDel() || parsedMsg.MultisigInfo != nil {
+		// if prev btc del is multisig, new btc del must be multisig as well
+		if parsedMsg.MultisigInfo == nil {
+			return fmt.Errorf("new btc delegation is not multisig but previous one is")
+		}
+
+		// if new btc del is multisig, prev btc del must be multisig as well
+		if prevBtcDel.IsMultisigBtcDel() == false {
+			return fmt.Errorf("previous btc delegation is not multisig but new one is")
+		}
+
+		// check the length of old btc del and new btc del
+		if len(prevBtcDel.MultisigInfo.StakerBtcPkList) != len(parsedMsg.MultisigInfo.StakerBTCPkList.PublicKeysBbnFormat) {
+			return fmt.Errorf("number of staker pks in multisig delegation does not match")
+		}
+
+		// sort staker pks in reverse lexicographical order to compare both staker pk list
+		// from old btc del and new btc del in equal level
+		sortedOldBtcPks := bbn.SortBIP340PKs(prevBtcDel.MultisigInfo.StakerBtcPkList)
+		sortedNewBtcPks := bbn.SortBIP340PKs(parsedMsg.MultisigInfo.StakerBTCPkList.PublicKeysBbnFormat)
+
+		// compare both old and new staker btc pk list
+		for i, pk := range sortedOldBtcPks {
+			if pk.MarshalHex() != sortedNewBtcPks[i].MarshalHex() {
+				return fmt.Errorf("staker pk list in multisig delegation does not match")
+			}
+		}
 	}
 
 	return nil
