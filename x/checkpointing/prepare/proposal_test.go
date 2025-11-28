@@ -2,6 +2,7 @@ package prepare_test
 
 import (
 	"bytes"
+	"encoding/binary"
 	"fmt"
 	"math/rand"
 	"sort"
@@ -696,6 +697,40 @@ func TestPrepareProposalAtVoteExtensionHeight(t *testing.T) {
 			},
 			expectError: false,
 		},
+		{
+			name: "Malicious validator with oversized vote extension should be rejected",
+			scenarioSetup: func(ec *EpochAndCtx, ek *mocks.MockCheckpointingKeeper) *Scenario {
+				bh := randomBlockHash()
+				validatorAndExtensions, totalPower := generateNValidatorAndVoteExtensions(t, 4, &bh, ec.Epoch.EpochNumber)
+
+				var signedVoteExtensions []cbftt.ExtendedVoteInfo
+				for i, val := range validatorAndExtensions.Vals {
+					validator := val
+					ek.EXPECT().GetPubKeyByConsAddr(gomock.Any(), sdk.ConsAddress(validator.ValidatorAddress(t).Bytes())).Return(validator.ProtoPubkey(), nil).AnyTimes()
+					ek.EXPECT().VerifyBLSSig(gomock.Any(), validatorAndExtensions.Extensions[i].ToBLSSig()).Return(nil).AnyTimes()
+					ek.EXPECT().GetBlsPubKey(gomock.Any(), validator.ValidatorAddress(t)).Return(validator.BlsPubKey(), nil).AnyTimes()
+					marshaledExtension, err := validatorAndExtensions.Extensions[i].Marshal()
+					require.NoError(t, err)
+
+					// First validator adds malicious padding to make the vote extension oversized
+					if i == 0 {
+						marshaledExtension = appendProtobufPadding(marshaledExtension, 1*1024*1024-100)
+					}
+
+					signedExtension := validator.SignVoteExtension(t, marshaledExtension, ec.Ctx.HeaderInfo().Height-1, ec.Ctx.ChainID())
+					signedVoteExtensions = append(signedVoteExtensions, signedExtension)
+				}
+
+				return &Scenario{
+					TotalPower:   totalPower,
+					ValidatorSet: validatorAndExtensions.Vals,
+					Extensions:   signedVoteExtensions,
+					TxVerifier:   newTxVerifier(encCfg.TxConfig),
+					ExpectedAbsentVotes: 1, // malicious validator's vote extension should be considered absent
+				}
+			},
+			expectError: false,
+		},
 		// TODO: Add scenarios testing compatibility of prepareProposal, processProposal and preBlocker
 	}
 
@@ -781,4 +816,31 @@ func TestPrepareProposalAtVoteExtensionHeight(t *testing.T) {
 			}
 		})
 	}
+}
+
+// appendProtobufPadding adds padding bytes to a protobuf message using an unknown field
+// This simulates a malicious validator trying to inflate the size of their vote extension
+func appendProtobufPadding(data []byte, paddingSize int) []byte {
+	// Protobuf tag for field 7, wire type 2 (length-delimited)
+	tag := byte(58) // (7 << 3) | 2
+
+	var lengthBuf [binary.MaxVarintLen64]byte
+	n := binary.PutUvarint(lengthBuf[:], uint64(paddingSize))
+
+	result := make([]byte, len(data)+1+n+paddingSize)
+
+	copy(result, data)
+	offset := len(data)
+
+	result[offset] = tag
+	offset++
+
+	copy(result[offset:], lengthBuf[:n])
+	offset += n
+
+	for i := 0; i < paddingSize; i++ {
+		result[offset+i] = byte(i % 256)
+	}
+
+	return result
 }

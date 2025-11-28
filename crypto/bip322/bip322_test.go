@@ -11,6 +11,7 @@ import (
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/txscript"
 	"github.com/stretchr/testify/require"
 )
 
@@ -67,7 +68,7 @@ func TestBIP322_Verify(t *testing.T) {
 	witness, err := bip322.SimpleSigToWitness(emptyBytesSig)
 	require.NoError(t, err)
 
-	err = bip322.Verify(msg, witness, addressDecoded, net)
+	err = bip322.VerifyP2WPKHAndP2TR(msg, witness, addressDecoded, net)
 	require.NoError(t, err)
 }
 
@@ -84,7 +85,7 @@ func FuzzBip322ValidP2WPKHSignature(f *testing.F) {
 		witnessDecoded, err := bip322.SimpleSigToWitness(witness)
 		require.NoError(t, err)
 
-		err = bip322.Verify(
+		err = bip322.VerifyP2WPKHAndP2TR(
 			dataToSign,
 			witnessDecoded,
 			address,
@@ -107,12 +108,135 @@ func FuzzBip322ValidP2TrSpendSignature(f *testing.F) {
 		witnessDecoded, err := bip322.SimpleSigToWitness(witness)
 		require.NoError(t, err)
 
-		err = bip322.Verify(
+		err = bip322.VerifyP2WPKHAndP2TR(
 			dataToSign,
 			witnessDecoded,
 			address,
 			net,
 		)
 		require.NoError(t, err)
+	})
+}
+
+func FuzzBip322SigHashTypeP2WPKH(f *testing.F) {
+	// Add corpus entries: seed and sigHashType
+	// Valid SIGHASH types
+	f.Add(int64(1), uint8(0x01)) // SIGHASH_ALL - valid
+	// Invalid SIGHASH types
+	f.Add(int64(2), uint8(0x02)) // SIGHASH_NONE
+	f.Add(int64(3), uint8(0x03)) // SIGHASH_SINGLE
+	f.Add(int64(4), uint8(0x81)) // SIGHASH_ALL_ANYONECANPAY
+	f.Add(int64(5), uint8(0x82)) // SIGHASH_NONE_ANYONECANPAY
+	f.Add(int64(6), uint8(0x83)) // SIGHASH_SINGLE_ANYONECANPAY
+
+	f.Fuzz(func(t *testing.T, seed int64, sigHashTypeByte uint8) {
+		r := rand.New(rand.NewSource(seed))
+		privkey, err := btcec.NewPrivateKey()
+		require.NoError(t, err)
+
+		dataLen := r.Int31n(200) + 1
+		dataToSign := datagen.GenRandomByteArray(r, uint64(dataLen))
+
+		sigHashType := txscript.SigHashType(sigHashTypeByte)
+		address, witness, err := datagen.SignWithP2WPKHAddressWithSigHashType(
+			dataToSign,
+			privkey,
+			net,
+			sigHashType,
+		)
+
+		// btcd's WitnessSignature does not validate SIGHASH types during signing for P2WPKH
+		// It allows any SIGHASH type to be signed, leaving validation to script execution
+		// Therefore, signing should ALWAYS succeed regardless of SIGHASH type
+		require.NoError(t, err, "P2WPKH signing should always succeed with any sighash type, got error for 0x%02x: %v", sigHashTypeByte, err)
+
+		witnessDecoded, err := bip322.SimpleSigToWitness(witness)
+		require.NoError(t, err)
+
+		err = bip322.VerifyP2WPKHAndP2TR(
+			dataToSign,
+			witnessDecoded,
+			address,
+			net,
+		)
+
+		// BIP-322 requires SIGHASH_ALL for P2WPKH
+		// btcd allowed signing with any sighash type (no validation during signing)
+		// Our verification layer must enforce the BIP-322 requirement
+		if sigHashType == txscript.SigHashAll {
+			require.NoError(t, err, "BIP-322 should accept SIGHASH_ALL (0x01) for P2WPKH")
+		} else {
+			// btcd allowed signing, but our BIP-322 verification must reject
+			require.Error(t, err, "BIP-322 should reject sighash type 0x%02x for P2WPKH (only SIGHASH_ALL is allowed)", sigHashTypeByte)
+			require.Contains(t, err.Error(), "sighash validation failed")
+		}
+	})
+}
+
+func FuzzBip322SigHashTypeP2TR(f *testing.F) {
+	// Add corpus entries: seed and sigHashType
+	// Valid SIGHASH types
+	f.Add(int64(1), uint8(0x00)) // SIGHASH_DEFAULT - valid
+	f.Add(int64(2), uint8(0x01)) // SIGHASH_ALL - valid
+	// Invalid SIGHASH types
+	f.Add(int64(3), uint8(0x02)) // SIGHASH_NONE
+	f.Add(int64(4), uint8(0x03)) // SIGHASH_SINGLE
+	f.Add(int64(5), uint8(0x81)) // SIGHASH_ALL_ANYONECANPAY
+	f.Add(int64(6), uint8(0x82)) // SIGHASH_NONE_ANYONECANPAY
+	f.Add(int64(7), uint8(0x83)) // SIGHASH_SINGLE_ANYONECANPAY
+
+	f.Fuzz(func(t *testing.T, seed int64, sigHashTypeByte uint8) {
+		r := rand.New(rand.NewSource(seed))
+		privkey, err := btcec.NewPrivateKey()
+		require.NoError(t, err)
+
+		dataLen := r.Int31n(200) + 1
+		dataToSign := datagen.GenRandomByteArray(r, uint64(dataLen))
+
+		sigHashType := txscript.SigHashType(sigHashTypeByte)
+		address, witness, err := datagen.SignWithP2TrSpendAddressWithSigHashType(
+			dataToSign,
+			privkey,
+			net,
+			sigHashType,
+		)
+
+		// btcd's TaprootWitnessSignature validates SIGHASH types according to BIP 341
+		// Valid Taproot sighash types are: 0x00-0x03 (DEFAULT, ALL, NONE, SINGLE)
+		// and 0x81-0x83 (with ANYONECANPAY flag)
+		isValidTaprootSigHash := (sigHashTypeByte <= 0x03) ||
+			(sigHashTypeByte >= 0x81 && sigHashTypeByte <= 0x83)
+
+		if isValidTaprootSigHash {
+			// btcd should allow signing with any valid BIP 341 sighash type
+			require.NoError(t, err, "Signing with valid Taproot sighash type 0x%02x should succeed: %v", sigHashTypeByte, err)
+		} else {
+			// btcd should reject invalid sighash types during signing for Taproot
+			require.Error(t, err, "btcd should reject invalid Taproot sighash type 0x%02x during signing", sigHashTypeByte)
+			// Can't test our verification layer if btcd rejects during signing
+			return
+		}
+
+		witnessDecoded, err := bip322.SimpleSigToWitness(witness)
+		require.NoError(t, err)
+
+		err = bip322.VerifyP2WPKHAndP2TR(
+			dataToSign,
+			witnessDecoded,
+			address,
+			net,
+		)
+
+		// BIP-322 is more restrictive than BIP 341 for Taproot
+		// BIP 341 allows: 0x00-0x03, 0x81-0x83 (btcd validated this during signing)
+		// BIP-322 only allows: 0x00 (DEFAULT) and 0x01 (ALL)
+		// Our verification layer must reject all other sighash types
+		if sigHashType == txscript.SigHashDefault || sigHashType == txscript.SigHashAll {
+			require.NoError(t, err, "BIP-322 should accept SIGHASH_DEFAULT (0x00) and SIGHASH_ALL (0x01) for P2TR")
+		} else {
+			// btcd allowed signing (valid BIP 341), but our BIP-322 verification must reject
+			require.Error(t, err, "BIP-322 should reject sighash type 0x%02x for P2TR (even though it's valid in BIP 341)", sigHashTypeByte)
+			require.Contains(t, err.Error(), "sighash validation failed")
+		}
 	})
 }

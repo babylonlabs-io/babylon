@@ -132,6 +132,7 @@ func NewBIP340PKsFromBTCPKs(btcPKs []*btcec.PublicKey) []BIP340PubKey {
 	return pks
 }
 
+// SortBIP340PKs sort pubkey in reverse lexicographic order
 func SortBIP340PKs(keys []BIP340PubKey) []BIP340PubKey {
 	sortedPKs := make([]BIP340PubKey, len(keys))
 	copy(sortedPKs, keys)
