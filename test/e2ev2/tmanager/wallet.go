@@ -147,7 +147,7 @@ func (ws *WalletSender) SignMsg(msgs ...sdk.Msg) *sdktx.Tx {
 
 	// Set fee and gas
 	txBuilder.SetFeeAmount(sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, math.NewInt(20000))))
-	txBuilder.SetGasLimit(300000)
+	txBuilder.SetGasLimit(500000)
 
 	pubKey := ws.PrivKey.PubKey()
 	signerData := authsigning.SignerData{
