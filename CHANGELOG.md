@@ -35,6 +35,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## Unreleased
+
+### Improvements
+
+- [#1764](https://github.com/babylonlabs-io/babylon/pull/1764) Add mergify yaml file for automatic backporting
+- [#1839](https://github.com/babylonlabs-io/babylon/pull/1839) Add query to get the voting power distribution
+cache (is only available until that block is finalized)
+
 ## v4.1.0
 
 ### Bug fixes

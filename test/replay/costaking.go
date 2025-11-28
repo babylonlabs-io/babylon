@@ -2,6 +2,7 @@ package replay
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
@@ -84,9 +85,15 @@ func EventCostakerRewardsFromBlocks(t *testing.T, blocks []*abcitypes.ResponseFi
 	return totalRewardsAdded
 }
 
-type eventCoinsExtractor func(t *testing.T, attr abcitypes.EventAttribute) (sdk.Coins, error)
+type EventCoinsExtractor func(attr abcitypes.EventAttribute) (sdk.Coins, error)
 
-func findEventCoins(t *testing.T, evts []abcitypes.Event, eventType, attrKey string, extractor eventCoinsExtractor) sdk.Coins {
+func FindEventCoinsT(t *testing.T, evts []abcitypes.Event, eventType, attrKey string, extractor EventCoinsExtractor) sdk.Coins {
+	total, err := FindEventCoins(evts, eventType, attrKey, extractor)
+	require.NoError(t, err)
+	return total
+}
+
+func FindEventCoins(evts []abcitypes.Event, eventType, attrKey string, extractor EventCoinsExtractor) (sdk.Coins, error) {
 	totalCoins := sdk.NewCoins()
 	for _, evt := range evts {
 		if evt.Type != eventType {
@@ -98,28 +105,32 @@ func findEventCoins(t *testing.T, evts []abcitypes.Event, eventType, attrKey str
 				continue
 			}
 
-			coins, err := extractor(t, attr)
-			require.NoError(t, err)
+			coins, err := extractor(attr)
+			if err != nil {
+				return sdk.NewCoins(), err
+			}
 			totalCoins = totalCoins.Add(coins...)
 			break
 		}
 	}
-	return totalCoins
+	return totalCoins, nil
 }
 
-func extractCoinsFromJSON(t *testing.T, attr abcitypes.EventAttribute) (sdk.Coins, error) {
+func ExtractCoinsFromJSON(attr abcitypes.EventAttribute) (sdk.Coins, error) {
 	var coins sdk.Coins
 	err := json.Unmarshal([]byte(attr.Value), &coins)
 	return coins, err
 }
 
-func extractCoinsFromInt(t *testing.T, attr abcitypes.EventAttribute) (sdk.Coins, error) {
+func ExtractCoinsFromInt(attr abcitypes.EventAttribute) (sdk.Coins, error) {
 	amt, ok := sdkmath.NewIntFromString(attr.Value)
-	require.True(t, ok, "failed to parse int from %s", attr.Value)
+	if !ok {
+		return sdk.NewCoins(), fmt.Errorf("failed to parse int from %s", attr.Value)
+	}
 	return sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, amt)), nil
 }
 
-func extractCoinsFromDecCoins(t *testing.T, attr abcitypes.EventAttribute) (sdk.Coins, error) {
+func ExtractCoinsFromDecCoins(attr abcitypes.EventAttribute) (sdk.Coins, error) {
 	decCoins, err := sdk.ParseDecCoins(attr.Value)
 	if err != nil {
 		return nil, err
@@ -130,21 +141,21 @@ func extractCoinsFromDecCoins(t *testing.T, attr abcitypes.EventAttribute) (sdk.
 
 func FindEventCostakerRewards(t *testing.T, evts []abcitypes.Event) sdk.Coins {
 	evtTypeCostAddRwd := sdk.MsgTypeURL(&costktypes.EventCostakersAddRewards{})[1:]
-	return findEventCoins(t, evts, evtTypeCostAddRwd, evtAttrAddRewards, extractCoinsFromJSON)
+	return FindEventCoinsT(t, evts, evtTypeCostAddRwd, evtAttrAddRewards, ExtractCoinsFromJSON)
 }
 
 func FindEventMint(t *testing.T, evts []abcitypes.Event) sdk.Coins {
-	return findEventCoins(t, evts, minttypes.EventTypeMint, sdk.AttributeKeyAmount, extractCoinsFromInt)
+	return FindEventCoinsT(t, evts, minttypes.EventTypeMint, sdk.AttributeKeyAmount, ExtractCoinsFromInt)
 }
 
 func FindEventBtcStakers(t *testing.T, evts []abcitypes.Event) sdk.Coins {
-	return findEventCoins(t, evts, ictvtypes.EventTypeBTCStakingReward, sdk.AttributeKeyAmount, extractCoinsFromDecCoins)
+	return FindEventCoinsT(t, evts, ictvtypes.EventTypeBTCStakingReward, sdk.AttributeKeyAmount, ExtractCoinsFromDecCoins)
 }
 
 func FindEventTypeFPDirectRewards(t *testing.T, evts []abcitypes.Event) sdk.Coins {
-	return findEventCoins(t, evts, ictvtypes.EventTypeFPDirectRewards, sdk.AttributeKeyAmount, extractCoinsFromDecCoins)
+	return FindEventCoinsT(t, evts, ictvtypes.EventTypeFPDirectRewards, sdk.AttributeKeyAmount, ExtractCoinsFromDecCoins)
 }
 
 func FindEventTypeValidatorDirectRewards(t *testing.T, evts []abcitypes.Event) sdk.Coins {
-	return findEventCoins(t, evts, costktypes.EventTypeValidatorDirectRewards, sdk.AttributeKeyAmount, extractCoinsFromDecCoins)
+	return FindEventCoinsT(t, evts, costktypes.EventTypeValidatorDirectRewards, sdk.AttributeKeyAmount, ExtractCoinsFromDecCoins)
 }

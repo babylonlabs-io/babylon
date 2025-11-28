@@ -38,6 +38,7 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 		CmdBlock(),
 		CmdListBlocks(),
 		CmdVotesAtHeight(),
+		CmdVotingPowerDistribution(),
 		CmdListEvidences(),
 		CmdSigningInfo(),
 		CmdAllSigningInfo(),
@@ -155,6 +156,35 @@ func CmdVotesAtHeight() *cobra.Command {
 			}
 
 			res, err := queryClient.VotesAtHeight(cmd.Context(), &types.QueryVotesAtHeightRequest{Height: height})
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+
+	return cmd
+}
+
+func CmdVotingPowerDistribution() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "vp-dst-cache [height]",
+		Short: "retrieve the voting power distribution at a given height",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx := client.GetClientContextFromCmd(cmd)
+
+			queryClient := types.NewQueryClient(clientCtx)
+
+			height, err := strconv.ParseUint(args[0], 10, 64)
+			if err != nil {
+				return err
+			}
+
+			res, err := queryClient.VotingPowerDistribution(cmd.Context(), &types.QueryVotingPowerDistributionRequest{Height: height})
 			if err != nil {
 				return err
 			}
