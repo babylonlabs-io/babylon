@@ -519,6 +519,8 @@ func startChainAndCreateFp(t *testing.T) (bbn2 *tmanager.Node, fpSK *btcec.Priva
 
 // buildMultisigDelegationWithSigCount construct multisig btc delegation msg
 // - sigsCount is the number of signatures
+//
+//nolint:unparam
 func buildMultisigDelegationMsgWithSigCount(
 	t *testing.T,
 	r *rand.Rand,
