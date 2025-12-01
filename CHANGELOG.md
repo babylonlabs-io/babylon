@@ -37,17 +37,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
-### State Machine Breaking
+### State breaking
 
+- [#1867](https://github.com/babylonlabs-io/babylon/pull/1867) bump wasmd `v0.60.2`
 - [#1883](https://github.com/babylonlabs-io/babylon/pull/1883) Validate staker btc pk is the same with the previous btc del when stake extension
-
-### Improvements
-
-- [#1878](https://github.com/babylonlabs-io/babylon/pull/1878) Remove unnecessary []byte allocations in IBC size checks
 
 ### Bug Fixes
 
 - [#1875](https://github.com/babylonlabs-io/babylon/pull/1875) chore: ensure soft-deleted FPs cannot receive new/extended BTC stake, or commit pub rand
+
+### Improvements
+
+- [#1878](https://github.com/babylonlabs-io/babylon/pull/1878) Remove unnecessary []byte allocations in IBC size checks
 
 ## v4.1.0
 
