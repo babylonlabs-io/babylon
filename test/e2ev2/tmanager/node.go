@@ -756,7 +756,7 @@ func (n *Node) RequireTxSuccess(txHash string) {
 	require.Equal(n.T(), uint32(0), txResp.TxResponse.Code, "Transaction %s failed with code %d: %s", txHash, txResp.TxResponse.Code, txResp.TxResponse.RawLog)
 }
 
-// RequireTxErrorContain queries a transaction by hash and requires it to have code 0 (success)
+// RequireTxErrorContain queries a transaction by hash and requires it to have code other than 0 (fail)
 func (n *Node) RequireTxErrorContain(txHash string, err string) {
 	txResp := n.QueryTxByHash(txHash)
 	require.NotEqual(n.T(), uint32(0), txResp.TxResponse.Code, "Transaction %s response code shouldn't be 0", txHash)

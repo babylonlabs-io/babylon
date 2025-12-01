@@ -233,6 +233,37 @@ func (ws *WalletSender) SubmitMsgs(msgs ...sdk.Msg) (txHash string, tx *sdktx.Tx
 	return txHash, signedTx
 }
 
+// SubmitMsgsWithErrContain builds the tx with the messages and sign it.
+// If the wallet is tagged to wait to verify the transaction it waits for one block
+// and checks if the transaction execution was success or contain expected error.
+func (ws *WalletSender) SubmitMsgsWithErrContain(expErr error, msgs ...sdk.Msg) (txHash string, tx *sdktx.Tx) {
+	// Sign and submit the transaction
+	signedTx := ws.SignMsg(msgs...)
+
+	txHash, err := ws.Node.SubmitTx(signedTx)
+	if expErr != nil && err != nil {
+		require.Error(ws.T(), err, "Expected error not found")
+		require.Contains(ws.T(), err.Error(), expErr.Error(), "Expected error not found")
+		// revert sequence increment since it fails to submit tx, transaction rejected before block inclusion
+		ws.DecSeq()
+		return txHash, signedTx
+	}
+	require.NoError(ws.T(), err, "Failed to submit transaction")
+
+	ws.AddTxSent(txHash)
+	if ws.VerifySentTx {
+		ws.Node.WaitForNextBlock()
+		ws.T().Logf("Wallet %s is set to verify tx: %s", ws.KeyName, txHash)
+		if expErr != nil {
+			ws.Node.RequireTxErrorContain(txHash, expErr.Error())
+			return txHash, signedTx
+		}
+		ws.Node.RequireTxSuccess(txHash)
+	}
+
+	return txHash, signedTx
+}
+
 func (ws *WalletSender) AddTxSent(txHash string) {
 	ws.Txs = append(ws.Txs, txHash)
 }

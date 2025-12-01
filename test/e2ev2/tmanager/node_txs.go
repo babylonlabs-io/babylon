@@ -172,21 +172,41 @@ func (n *Node) BtcStakeExpand(
 	stakerSKs []*btcec.PrivateKey,
 	stakerQuorum uint32,
 	fpPK *btcec.PublicKey,
+	expErr error,
 ) (*datagen.TestStakingSlashingInfo, *wire.MsgTx) {
 	wallet := n.Wallet(walletName)
 	require.NotNil(n.T(), wallet, "Wallet %s not found", walletName)
 
-	msg, testStakingInfo, fundingTx := n.createMultisigBtcStakeExpandMessage(
-		n.T(), r,
-		wallet,
-		stakerSKs,
-		stakerQuorum,
-		fpPK,
-		int64(2*10e8),
-		1000,
-		prevDel,
+	var (
+		msg             *bstypes.MsgBtcStakeExpand
+		testStakingInfo *datagen.TestStakingSlashingInfo
+		fundingTx       *wire.MsgTx
 	)
-	_, tx := wallet.SubmitMsgs(msg)
+
+	if len(stakerSKs) == 1 {
+		msg, testStakingInfo, fundingTx = n.createBtcStakeExpandMessage(
+			n.T(), r,
+			wallet,
+			stakerSKs[0],
+			fpPK,
+			int64(2*10e8),
+			1000,
+			prevDel,
+		)
+	} else {
+		msg, testStakingInfo, fundingTx = n.createMultisigBtcStakeExpandMessage(
+			n.T(), r,
+			wallet,
+			stakerSKs,
+			stakerQuorum,
+			fpPK,
+			int64(2*10e8),
+			1000,
+			prevDel,
+		)
+	}
+
+	_, tx := wallet.SubmitMsgsWithErrContain(expErr, msg)
 	require.NotNil(n.T(), tx, "BtcStakeExpand transaction should not be nil")
 	n.T().Logf("BtcStakeExpand transaction submitted")
 
@@ -255,7 +275,123 @@ func (n *Node) Vote(walletName string, proposalID uint64, voteOption govtypes.Vo
 /*
 	helper functions
 */
-// createBtcStakeExpandMessage
+
+// createBtcStakeExpandMessage create a btc stake expansion message and return
+// MsgBtcStakeExpand, staking info, and funding tx
+func (n *Node) createBtcStakeExpandMessage(
+	t *testing.T,
+	r *rand.Rand,
+	wallet *WalletSender,
+	stakerSK *btcec.PrivateKey,
+	fpPK *btcec.PublicKey,
+	stakingValue int64,
+	stakingTime uint16,
+	prevDel *bstypes.BTCDelegation,
+) (*bstypes.MsgBtcStakeExpand, *datagen.TestStakingSlashingInfo, *wire.MsgTx) {
+	params := n.QueryBtcStakingParams()
+	net := &chaincfg.SimNetParams
+
+	covPKs, err := bbn.NewBTCPKsFromBIP340PKs(params.CovenantPks)
+	require.NoError(t, err)
+
+	// create funding transaction
+	fundingTx := datagen.GenRandomTxWithOutputValue(r, 10000000)
+
+	// convert previousStakingTxHash to OutPoint
+	prevDelTxHash := prevDel.MustGetStakingTxHash()
+	prevStakingOutPoint := wire.NewOutPoint(&prevDelTxHash, datagen.StakingOutIdx)
+
+	// convert fundingTxHash to OutPoint
+	fundingTxHash := fundingTx.TxHash()
+	fundingOutPoint := wire.NewOutPoint(&fundingTxHash, 0)
+	outPoints := []*wire.OutPoint{prevStakingOutPoint, fundingOutPoint}
+
+	// Generate staking slashing info using multiple inputs
+	stakingSlashingInfo := datagen.GenBTCStakingSlashingInfoWithInputs(
+		r,
+		t,
+		net,
+		outPoints,
+		stakerSK,
+		[]*btcec.PublicKey{fpPK},
+		covPKs,
+		params.CovenantQuorum,
+		stakingTime,
+		stakingValue,
+		params.SlashingPkScript,
+		params.SlashingRate,
+		uint16(params.UnbondingTimeBlocks),
+	)
+
+	slashingPathSpendInfo, err := stakingSlashingInfo.StakingInfo.SlashingPathSpendInfo()
+	require.NoError(t, err)
+
+	// sign the slashing tx with the staker
+	delegatorSig, err := stakingSlashingInfo.SlashingTx.Sign(
+		stakingSlashingInfo.StakingTx, 0,
+		slashingPathSpendInfo.GetPkScriptPath(),
+		stakerSK,
+	)
+	require.NoError(t, err)
+
+	stkTxHash := stakingSlashingInfo.StakingTx.TxHash()
+	unbondingValue := uint64(stakingValue) - uint64(params.UnbondingFeeSat)
+
+	// Generate unbonding slashing info
+	unbondingSlashingInfo := datagen.GenBTCUnbondingSlashingInfo(
+		r,
+		t,
+		net,
+		stakerSK,
+		[]*btcec.PublicKey{fpPK},
+		covPKs,
+		params.CovenantQuorum,
+		wire.NewOutPoint(&stkTxHash, datagen.StakingOutIdx),
+		uint16(params.UnbondingTimeBlocks),
+		int64(unbondingValue),
+		params.SlashingPkScript,
+		params.SlashingRate,
+		uint16(params.UnbondingTimeBlocks),
+	)
+
+	// sign unbonding slashing tx with staker
+	delUnbondingSig, err := unbondingSlashingInfo.GenDelSlashingTxSig(stakerSK)
+	require.NoError(t, err)
+
+	// generate PoP for primary staker
+	pop, err := datagen.NewPoPBTC(wallet.Address, stakerSK)
+	require.NoError(t, err)
+
+	// serialize transactions
+	serializedStakingTx, err := bbn.SerializeBTCTx(stakingSlashingInfo.StakingTx)
+	require.NoError(t, err)
+	serializedUnbondingTx, err := bbn.SerializeBTCTx(unbondingSlashingInfo.UnbondingTx)
+	require.NoError(t, err)
+	fundingTxBz, err := bbn.SerializeBTCTx(fundingTx)
+	require.NoError(t, err)
+
+	return &bstypes.MsgBtcStakeExpand{
+		StakerAddr:                    prevDel.StakerAddr,
+		Pop:                           pop,
+		BtcPk:                         bbn.NewBIP340PubKeyFromBTCPK(stakerSK.PubKey()),
+		FpBtcPkList:                   []bbn.BIP340PubKey{*bbn.NewBIP340PubKeyFromBTCPK(fpPK)},
+		StakingTime:                   uint32(stakingTime),
+		StakingValue:                  stakingValue,
+		StakingTx:                     serializedStakingTx,
+		SlashingTx:                    stakingSlashingInfo.SlashingTx,
+		DelegatorSlashingSig:          delegatorSig,
+		UnbondingValue:                int64(unbondingValue),
+		UnbondingTime:                 params.UnbondingTimeBlocks,
+		UnbondingTx:                   serializedUnbondingTx,
+		UnbondingSlashingTx:           unbondingSlashingInfo.SlashingTx,
+		DelegatorUnbondingSlashingSig: delUnbondingSig,
+		PreviousStakingTxHash:         prevDelTxHash.String(),
+		FundingTx:                     fundingTxBz,
+	}, stakingSlashingInfo, fundingTx
+}
+
+// createMultisigBtcStakeExpandMessage create a multisig btc stake expansion message and return
+// MsgBtcStakeExpand, staking info, and funding tx
 func (n *Node) createMultisigBtcStakeExpandMessage(
 	t *testing.T,
 	r *rand.Rand,
