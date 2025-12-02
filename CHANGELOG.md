@@ -35,6 +35,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## Unreleased
+
+### Improvements
+
+- [#1839](https://github.com/babylonlabs-io/babylon/pull/1839) Add query to get the voting power distribution
+cache (is only available until that block is finalized)
+
 ## v4.1.0
 
 ### Bug fixes
@@ -42,15 +49,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [GHSA-2fcv-qww3-9v6h](https://github.com/babylonlabs-io/babylon-ghsa-2fcv-qww3-9v6h/pull/1) Add unkown fields check on vote extension validation
 - [GHSA-xq4h-wqm2-668w](https://github.com/babylonlabs-io/babylon-ghsa-xq4h-wqm2-668w/pull/2) crypto: ensure BIP-322 signatures are using `SIGHASH_ALL` or `SIGHASH_DEFAULT`
 
-<<<<<<< HEAD
-=======
-### Improvements
-
-- [#1764](https://github.com/babylonlabs-io/babylon/pull/1764) Add mergify yaml file for automatic backporting
-- [#1839](https://github.com/babylonlabs-io/babylon/pull/1839) Add query to get the voting power distribution
-cache (is only available until that block is finalized)
-
->>>>>>> be16eb0 (chore: make helper functions public (#1839))
 ## v4.0.0
 
 ## v4.0.0-rc.3
