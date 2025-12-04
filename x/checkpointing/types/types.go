@@ -215,6 +215,22 @@ func BytesToCkptWithMeta(cdc codec.BinaryCodec, bz []byte) (*RawCheckpointWithMe
 	return ckptWithMeta, err
 }
 
+func (ve *VoteExtension) Validate() error {
+	if ve.Signer == "" {
+		return fmt.Errorf("empty signer address")
+	}
+	if ve.ValidatorAddress == "" {
+		return fmt.Errorf("empty validator address")
+	}
+	if ve.BlockHash == nil {
+		return fmt.Errorf("empty block hash")
+	}
+	if ve.BlsSig == nil {
+		return fmt.Errorf("empty BLS signature")
+	}
+	return nil
+}
+
 func (ve *VoteExtension) ToBLSSig() *BlsSig {
 	return &BlsSig{
 		EpochNum:         ve.EpochNum,
