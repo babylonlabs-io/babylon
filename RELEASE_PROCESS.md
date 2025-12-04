@@ -72,16 +72,26 @@ branch (see [CONTRIBUTING.md](./CONTRIBUTING.md#pull-requests)).
 
 ### Creating a new release branch
 
-- create a new release branch, e.g., `release/v2.x`
-    ```bash
-    git checkout main
-    git pull
-    git checkout -b release/v2.x
-    ```
-- push the release branch upstream
-    ```bash
-    git push
-    ```
+**For major releases** (e.g., `release/v3.x`, `release/v4.x`):
+Create the release branch from `main`:
+
+```bash
+git checkout main
+git pull
+git checkout -b release/v4.x
+git push
+```
+
+**For minor releases** (e.g., `release/v4.2.x` when `release/v4.1.x` exists):
+Create the release branch from the previous minor release branch:
+
+```bash
+git checkout release/v4.1.x
+git pull
+git checkout -b release/v4.2.x
+git push
+```
+
 ### Cutting a new release
 
 Before cutting a release (e.g., `v2.0.0-rc.0`), the
