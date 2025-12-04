@@ -159,7 +159,8 @@ func validateSigHashType(witness wire.TxWitness, address btcutil.Address) error 
 	if err != nil {
 		return err
 	}
-	if txscript.IsPayToTaproot(script) {
+	switch {
+	case txscript.IsPayToTaproot(script):
 		// For Taproot:
 		// - SIGHASH_DEFAULT: signature is 64 bytes (no sighash byte appended)
 		// - SIGHASH_ALL: signature is 65 bytes with 0x01 as the last byte
@@ -177,7 +178,7 @@ func validateSigHashType(witness wire.TxWitness, address btcutil.Address) error 
 		default:
 			return fmt.Errorf("invalid taproot signature length: %d, expected 64 (SIGHASH_DEFAULT) or 65 (with sighash byte)", len(sig))
 		}
-	} else if txscript.IsPayToWitnessPubKeyHash(script) {
+	case txscript.IsPayToWitnessPubKeyHash(script):
 		// For P2WPKH: signature must end with SIGHASH_ALL (0x01)
 		// DER-encoded ECDSA signature format: 0x30 [total-length] 0x02 [R-length] [R] 0x02 [S-length] [S] [sighash]
 		// Minimum length is ~70 bytes for ECDSA + 1 byte sighash
@@ -191,7 +192,7 @@ func validateSigHashType(witness wire.TxWitness, address btcutil.Address) error 
 			return fmt.Errorf("invalid sighash type for P2WPKH: 0x%02x, expected SIGHASH_ALL (0x01)", sighash)
 		}
 		return nil
-	} else {
+	default:
 		return fmt.Errorf("unsupported address type: %T", address)
 	}
 }

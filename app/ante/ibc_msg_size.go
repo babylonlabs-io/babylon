@@ -45,7 +45,7 @@ func validateIBCMsgTransfer(msg *ibctransfertypes.MsgTransfer) error {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "msg size is too large. max_msg_size %d", MaxMsgSize)
 	}
 
-	if len([]byte(msg.Memo)) > MaxMemoSize {
+	if len(msg.Memo) > MaxMemoSize {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "memo is too large. max_memo_size %d", MaxMemoSize)
 	}
 
@@ -60,7 +60,7 @@ func validateICAMsgSendTx(msg *icacontrollertypes.MsgSendTx) error {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "packet data is too large. max_msg_size %d", MaxMsgSize)
 	}
 
-	if len([]byte(msg.Owner)) > MaxAddressSize {
+	if len(msg.Owner) > MaxAddressSize {
 		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "owner address is too large. max_address_size %d", MaxAddressSize)
 	}
 	return nil

@@ -57,7 +57,7 @@ that is included in the next block proposal.
 Once a valid checkpoint is generated,
 it is checkpointed into the Bitcoin ledger through
 an off-chain program
-[Vigilante Submitter](https://docs.babylonlabs.io/docs/developer-guides/modules/submitter).
+[Vigilante Submitter](https://docs.babylonlabs.io/guides/architecture/vigilantes/submitter/).
 It is responsible for constructing Bitcoin transactions that
 contain outputs utilizing the
 [`OP_RETURN`](https://en.bitcoin.it/wiki/OP_RETURN) script code
@@ -67,7 +67,7 @@ two such transactions are constructed to contain
 the whole checkpoint data.
 After their inclusion,
 an off-chain program called the
-[Vigilante Reporter](https://docs.babylonlabs.io/docs/developer-guides/modules/reporter)
+[Vigilante Reporter](https://docs.babylonlabs.io/guides/architecture/vigilantes/reporter/)
 submits inclusion proofs to the
 [BTC Checkpoint module](../../x/btccheckpoint/README.md),
 which is responsible for monitoring their confirmation status and
@@ -83,7 +83,7 @@ The Checkpointing module maintains the following KV stores.
 
 ### Checkpoint
 
-The [checkpoint state](./keeper/ckpt_state.go) maintains all the checkpoints. 
+The [checkpoint state](./keeper/ckpt_state.go) maintains all the checkpoints.
 The key is the epoch number and the value is a `RawCheckpointWithMeta`
 [object](../../proto/babylon/checkpointing/v1/checkpoint.proto) representing a
 raw checkpoint along with some metadata.
@@ -131,7 +131,7 @@ The [registration state](./keeper/registration_state.go) maintains
 a two-way mapping between the validator address and its BLS public key.
 
 The Checkpoint module also stores the [validator set](../../proto/babylon/checkpointing/v1/bls_key.proto)
-of every epoch with their public BLS keys. The key of the storage is the epoch 
+of every epoch with their public BLS keys. The key of the storage is the epoch
 number.
 
 ```protobuf
@@ -152,7 +152,7 @@ message ValidatorWithBlsKey {
 
 ### Genesis
 
-The [genesis state](./keeper/genesis_bls.go) maintains the BLS keys of the 
+The [genesis state](./keeper/genesis_bls.go) maintains the BLS keys of the
 genesis validators for the Checkpointing module.
 
 ```protobuf
@@ -183,7 +183,7 @@ The message handler is defined at
 
 ### MsgWrappedCreateValidator
 
-The `MsgWrappedCreateValidator` message wraps the [`MsgCreateValidator`](https://github.com/cosmos/cosmos-sdk/blob/9814f684b9dd7e384064ca86876688c05e685e54/proto/cosmos/staking/v1beta1/tx.proto#L51) 
+The `MsgWrappedCreateValidator` message wraps the [`MsgCreateValidator`](https://github.com/cosmos/cosmos-sdk/blob/main/proto/cosmos/staking/v1beta1/tx.proto#L52)
 defined in the staking module of the Cosmos SDK
 in order to also include the BLS public key.
 The message is used for registering a new validator and storing its BLS public
@@ -213,7 +213,7 @@ Upon `MsgWrappedCreateValidator`, a Babylon node will execute as follows:
 ## Checkpointing via ABCI++
 
 [ABCI++](https://docs.cometbft.com/v0.38/spec/abci/) or ABCI 2.0 is the middle
-layer that controls the communication between the underlying consensus and the 
+layer that controls the communication between the underlying consensus and the
 application. We use ABCI++ interfaces to generate checkpoints a part
 of the CometBFT consensus. Particularly, validators are responsible for
 submitting a `VoteExtension` that includes their BLS signature at the end
