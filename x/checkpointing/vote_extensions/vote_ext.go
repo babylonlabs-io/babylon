@@ -1,6 +1,7 @@
 package vote_extensions
 
 import (
+	"bytes"
 	"fmt"
 
 	"cosmossdk.io/log"
@@ -130,6 +131,12 @@ func (h *VoteExtensionHandler) VerifyVoteExtension() sdk.VerifyVoteExtensionHand
 			return resReject, nil
 		}
 
+		if err := ve.Validate(); err != nil {
+			h.logger.Info("invalid vote extension",
+				"error", err, "height", req.Height, "validator", extensionSigner)
+			return resReject, nil
+		}
+
 		// 1. verify epoch number
 		if epoch.EpochNumber != ve.EpochNum {
 			h.logger.Info("invalid epoch number in the vote extension",
@@ -147,9 +154,9 @@ func (h *VoteExtensionHandler) VerifyVoteExtension() sdk.VerifyVoteExtensionHand
 		}
 
 		// 3. verify signing hash
-		if !blsSig.BlockHash.Equal(req.Hash) {
+		if !bytes.Equal(*blsSig.BlockHash, req.Hash) {
 			// processed BlsSig message is for invalid last commit hash
-			h.logger.Info("in valid block ID in BLS sig",
+			h.logger.Info("invalid BlockHash BLS sig",
 				"want", req.Hash, "got", blsSig.BlockHash, "validator", extensionSigner, "height", req.Height)
 			return resReject, nil
 		}

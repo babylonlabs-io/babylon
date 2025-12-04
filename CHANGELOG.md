@@ -35,6 +35,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
+## Unreleased
+
+### Bug Fixes
+
+- [GHSA-m6wq-66p2-c8pc](https://github.com/babylonlabs-io/babylon/security/advisories/GHSA-m6wq-66p2-c8pc) fix: nil check of block hash in vote extension
+
 ## v4.1.0
 
 ### Bug fixes
