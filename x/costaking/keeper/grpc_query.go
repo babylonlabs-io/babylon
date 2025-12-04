@@ -108,25 +108,25 @@ func (k Keeper) QueryValidateCostakers(ctx context.Context, req *types.QueryVali
 	totalActiveBaby := math.ZeroInt()
 	totalScore := math.ZeroInt()
 
-	babyVals := make(map[string]int64)
-	valset, err := k.validatorSet.Get(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get current active valset: %s", err.Error())
-	}
-
 	costkActiveBaby := make(map[string]uint64)
-	for _, val := range valset.Validators {
-		babyVals[val.String()] = val.Shares.TruncateInt64()
-		valDels, err := k.stkK.GetValidatorDelegations(ctx, sdk.ValAddress(val.Addr))
+	k.stkK.IterateLastValidatorPowers(ctx, func(operator sdk.ValAddress, power int64) bool {
+		val, err := k.stkK.GetValidator(ctx, operator)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get val dels: %s", err.Error())
+			return false
+		}
+
+		valDels, err := k.stkK.GetValidatorDelegations(ctx, operator)
+		if err != nil {
+			return false
 		}
 
 		for _, del := range valDels {
-			tokens := (del.Shares.MulInt(val.Tokens)).Quo(val.Shares)
-			costkActiveBaby[del.DelegatorAddress] += tokens.BigInt().Uint64()
+			tokens := val.TokensFromShares(del.Shares)
+			costkActiveBaby[del.DelegatorAddress] += tokens.TruncateInt().Uint64()
 		}
-	}
+
+		return false
+	})
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
