@@ -37,9 +37,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+## v4.2.0
+
 ### Bug Fixes
 
 - [GHSA-m6wq-66p2-c8pc](https://github.com/babylonlabs-io/babylon/security/advisories/GHSA-m6wq-66p2-c8pc) fix: nil check of block hash in vote extension
+- [GHSA-4rmq-mc2c-r495](https://github.com/babylonlabs-io/babylon-ghsa-4rmq-mc2c-r495/pull/1) Fix conditional logic in `AfterBtcDelegationUnbonded` hook
 
 ## v4.1.0
 
