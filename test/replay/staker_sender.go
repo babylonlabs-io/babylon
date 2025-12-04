@@ -29,6 +29,14 @@ type Staker struct {
 	BTCPrivateKey *btcec.PrivateKey
 }
 
+// UnbondingInfo holds the data needed to submit an unbonding transaction
+type UnbondingInfo struct {
+	Staker        *Staker
+	StakingTx     *wire.MsgTx
+	StakingTxHash *chainhash.Hash
+	UnbondingTx   *wire.MsgTx
+}
+
 func (s *Staker) BTCPublicKey() *bbn.BIP340PubKey {
 	pk := bbn.NewBIP340PubKeyFromBTCPK(s.BTCPrivateKey.PubKey())
 	return pk
@@ -456,4 +464,53 @@ func (s *Staker) UnbondDelegation(
 	}
 
 	s.SendMessage(msg)
+}
+
+// PrepareUnbonding prepares unbonding data without including it in BTC or sending the message.
+// Returns the UnbondingInfo which can be used with BatchUnbondDelegations.
+func (s *Staker) PrepareUnbonding(
+	stakingTxHash *chainhash.Hash,
+	stakingTx *wire.MsgTx,
+	covSender *CovenantSender,
+) *UnbondingInfo {
+	params := s.d.GetBTCStakingParams(s.t)
+
+	delegation := s.d.GetBTCDelegation(s.t, stakingTxHash.String())
+	require.NotNil(s.t, delegation, "delegation should exist")
+	infos := parseInfos(s.t, delegation, params)
+
+	unbondingPathSpendInfo, err := infos.StakingSlashingInfo.StakingInfo.UnbondingPathSpendInfo()
+	require.NoError(s.t, err)
+
+	stakingOutput := stakingTx.TxOut[delegation.StakingOutputIdx]
+
+	covenantSKs := covSender.CovenantPrivateKeys()
+	covenantSigs := datagen.GenerateSignatures(
+		s.t,
+		covenantSKs,
+		infos.UnbondingSlashingInfo.UnbondingTx,
+		stakingOutput,
+		unbondingPathSpendInfo.RevealedLeaf,
+	)
+
+	stakerSig, err := btcstaking.SignTxWithOneScriptSpendInputFromTapLeaf(
+		infos.UnbondingSlashingInfo.UnbondingTx,
+		stakingOutput,
+		s.BTCPrivateKey,
+		unbondingPathSpendInfo.RevealedLeaf,
+	)
+	require.NoError(s.t, err)
+
+	witness, err := unbondingPathSpendInfo.CreateUnbondingPathWitness(covenantSigs, stakerSig)
+	require.NoError(s.t, err)
+
+	unbondingTxMsg := infos.UnbondingSlashingInfo.UnbondingTx
+	unbondingTxMsg.TxIn[0].Witness = witness
+
+	return &UnbondingInfo{
+		Staker:        s,
+		StakingTx:     stakingTx,
+		StakingTxHash: stakingTxHash,
+		UnbondingTx:   unbondingTxMsg,
+	}
 }
