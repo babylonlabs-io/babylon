@@ -50,6 +50,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ### Improvements
 
 - [#1878](https://github.com/babylonlabs-io/babylon/pull/1878) Remove unnecessary []byte allocations in IBC size checks
+- [#1891](https://github.com/babylonlabs-io/babylon/pull/1891) fix: golangci lint misspell and removed unused func
 
 ## v4.1.0
 
