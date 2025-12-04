@@ -78,6 +78,10 @@ func (k Keeper) FinalityProvider(c context.Context, req *types.QueryFinalityProv
 	return &types.QueryFinalityProviderResponse{FinalityProvider: fpResp}, nil
 }
 
+func (k Keeper) BtcTip(ctx context.Context) uint32 {
+	return k.btclcKeeper.GetTipInfo(ctx).Height
+}
+
 // BTCDelegations returns all BTC delegations under a given status
 func (k Keeper) BTCDelegations(ctx context.Context, req *types.QueryBTCDelegationsRequest) (*types.QueryBTCDelegationsResponse, error) {
 	if req == nil {

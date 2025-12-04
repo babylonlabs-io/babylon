@@ -391,6 +391,138 @@ func (m *QueryHistoricalRewardsResponse) GetCumulativeRewardsPerScore() github_c
 	return nil
 }
 
+// QueryValidateCostakersRequest is the request type for the
+// Query/QueryValidateCostakers RPC method.
+type QueryValidateCostakersRequest struct {
+}
+
+func (m *QueryValidateCostakersRequest) Reset()         { *m = QueryValidateCostakersRequest{} }
+func (m *QueryValidateCostakersRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryValidateCostakersRequest) ProtoMessage()    {}
+func (*QueryValidateCostakersRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_7e71aa2f7fa447c3, []int{8}
+}
+func (m *QueryValidateCostakersRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryValidateCostakersRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryValidateCostakersRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryValidateCostakersRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryValidateCostakersRequest.Merge(m, src)
+}
+func (m *QueryValidateCostakersRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryValidateCostakersRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryValidateCostakersRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryValidateCostakersRequest proto.InternalMessageInfo
+
+// CostakerDelegation contains information about a costaker's delegations.
+type CostakerDelegation struct {
+	// CostakerAddress is the Babylon address of the costaker.
+	CostakerAddress string `protobuf:"bytes,1,opt,name=costaker_address,json=costakerAddress,proto3" json:"costaker_address,omitempty"`
+	// ActiveSatoshis is the total amount of active satoshi delegated
+	// from this costaker babylon address.
+	ActiveSatoshis cosmossdk_io_math.Int `protobuf:"bytes,2,opt,name=active_satoshis,json=activeSatoshis,proto3,customtype=cosmossdk.io/math.Int" json:"active_satoshis"`
+	// ActiveBaby is the total amount of active baby delegated
+	// from this costaker babylon address.
+	ActiveBaby cosmossdk_io_math.Int `protobuf:"bytes,3,opt,name=active_baby,json=activeBaby,proto3,customtype=cosmossdk.io/math.Int" json:"active_baby"`
+	// TotalScore is the total amount of calculated score
+	// of this costaker.
+	TotalScore cosmossdk_io_math.Int `protobuf:"bytes,4,opt,name=total_score,json=totalScore,proto3,customtype=cosmossdk.io/math.Int" json:"total_score"`
+}
+
+func (m *CostakerDelegation) Reset()         { *m = CostakerDelegation{} }
+func (m *CostakerDelegation) String() string { return proto.CompactTextString(m) }
+func (*CostakerDelegation) ProtoMessage()    {}
+func (*CostakerDelegation) Descriptor() ([]byte, []int) {
+	return fileDescriptor_7e71aa2f7fa447c3, []int{9}
+}
+func (m *CostakerDelegation) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *CostakerDelegation) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_CostakerDelegation.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *CostakerDelegation) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CostakerDelegation.Merge(m, src)
+}
+func (m *CostakerDelegation) XXX_Size() int {
+	return m.Size()
+}
+func (m *CostakerDelegation) XXX_DiscardUnknown() {
+	xxx_messageInfo_CostakerDelegation.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_CostakerDelegation proto.InternalMessageInfo
+
+// QueryValidateCostakersResponse is the response type for the
+// Query/QueryValidateCostakers RPC method.
+type QueryValidateCostakersResponse struct {
+	// Costakers is the list of all costakers with their active delegations.
+	Costakers []CostakerDelegation `protobuf:"bytes,1,rep,name=costakers,proto3" json:"costakers"`
+	// TotalActiveSatoshis is the sum of all active satoshis across all costakers.
+	TotalActiveSatoshis cosmossdk_io_math.Int `protobuf:"bytes,2,opt,name=total_active_satoshis,json=totalActiveSatoshis,proto3,customtype=cosmossdk.io/math.Int" json:"total_active_satoshis"`
+	// TotalActiveBaby is the sum of all active baby across all costakers.
+	TotalActiveBaby cosmossdk_io_math.Int `protobuf:"bytes,3,opt,name=total_active_baby,json=totalActiveBaby,proto3,customtype=cosmossdk.io/math.Int" json:"total_active_baby"`
+	// TotalScore is the sum of all scores across all costakers.
+	TotalScore cosmossdk_io_math.Int `protobuf:"bytes,4,opt,name=total_score,json=totalScore,proto3,customtype=cosmossdk.io/math.Int" json:"total_score"`
+}
+
+func (m *QueryValidateCostakersResponse) Reset()         { *m = QueryValidateCostakersResponse{} }
+func (m *QueryValidateCostakersResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryValidateCostakersResponse) ProtoMessage()    {}
+func (*QueryValidateCostakersResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_7e71aa2f7fa447c3, []int{10}
+}
+func (m *QueryValidateCostakersResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryValidateCostakersResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryValidateCostakersResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryValidateCostakersResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryValidateCostakersResponse.Merge(m, src)
+}
+func (m *QueryValidateCostakersResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryValidateCostakersResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryValidateCostakersResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryValidateCostakersResponse proto.InternalMessageInfo
+
 func init() {
 	proto.RegisterType((*QueryParamsRequest)(nil), "babylon.costaking.v1.QueryParamsRequest")
 	proto.RegisterType((*QueryParamsResponse)(nil), "babylon.costaking.v1.QueryParamsResponse")
@@ -400,63 +532,74 @@ func init() {
 	proto.RegisterType((*QueryCurrentRewardsResponse)(nil), "babylon.costaking.v1.QueryCurrentRewardsResponse")
 	proto.RegisterType((*QueryHistoricalRewardsRequest)(nil), "babylon.costaking.v1.QueryHistoricalRewardsRequest")
 	proto.RegisterType((*QueryHistoricalRewardsResponse)(nil), "babylon.costaking.v1.QueryHistoricalRewardsResponse")
+	proto.RegisterType((*QueryValidateCostakersRequest)(nil), "babylon.costaking.v1.QueryValidateCostakersRequest")
+	proto.RegisterType((*CostakerDelegation)(nil), "babylon.costaking.v1.CostakerDelegation")
+	proto.RegisterType((*QueryValidateCostakersResponse)(nil), "babylon.costaking.v1.QueryValidateCostakersResponse")
 }
 
 func init() { proto.RegisterFile("babylon/costaking/v1/query.proto", fileDescriptor_7e71aa2f7fa447c3) }
 
 var fileDescriptor_7e71aa2f7fa447c3 = []byte{
-	// 807 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xb4, 0x55, 0x31, 0x4f, 0x1b, 0x49,
-	0x18, 0xf5, 0x82, 0xf1, 0xdd, 0x0d, 0x27, 0xb8, 0x9b, 0xf3, 0x21, 0x63, 0x7c, 0x6b, 0xe4, 0x23,
-	0x8a, 0xa3, 0xc8, 0x3b, 0x18, 0x50, 0x14, 0xe8, 0xb0, 0x53, 0x84, 0x28, 0x85, 0x59, 0xa8, 0xd2,
-	0x58, 0xb3, 0xeb, 0x91, 0xbd, 0xc2, 0xde, 0x31, 0x33, 0x63, 0x27, 0x16, 0xa2, 0x49, 0x9a, 0x14,
-	0x29, 0x22, 0xe5, 0x0f, 0x50, 0xa4, 0x4a, 0x93, 0x86, 0x26, 0xff, 0x80, 0x22, 0x05, 0x22, 0x4d,
-	0x92, 0x82, 0x44, 0x10, 0x45, 0xf9, 0x01, 0xf9, 0x01, 0xd1, 0xce, 0x8c, 0x1d, 0x03, 0x8b, 0x15,
-	0x50, 0x52, 0xc1, 0xce, 0xbc, 0xf7, 0xe6, 0x7d, 0x6f, 0xbe, 0xf9, 0x0c, 0xa6, 0x1d, 0xec, 0x74,
-	0xea, 0xd4, 0x47, 0x2e, 0xe5, 0x02, 0x6f, 0x78, 0x7e, 0x15, 0xb5, 0xf3, 0x68, 0xb3, 0x45, 0x58,
-	0xc7, 0x6a, 0x32, 0x2a, 0x28, 0x8c, 0x6b, 0x84, 0xd5, 0x43, 0x58, 0xed, 0x7c, 0x32, 0x5e, 0xa5,
-	0x55, 0x2a, 0x01, 0x28, 0xf8, 0x4f, 0x61, 0x93, 0xa9, 0x2a, 0xa5, 0xd5, 0x3a, 0x41, 0xb8, 0xe9,
-	0x21, 0xec, 0xfb, 0x54, 0x60, 0xe1, 0x51, 0x9f, 0xeb, 0xdd, 0x49, 0x97, 0xf2, 0x06, 0xe5, 0x65,
-	0x45, 0x53, 0x1f, 0x7a, 0x6b, 0x26, 0xd4, 0xc6, 0xf7, 0x13, 0x15, 0xca, 0x54, 0x1c, 0xe4, 0x60,
-	0x4e, 0x50, 0x3b, 0xef, 0x10, 0x81, 0x03, 0x90, 0xe7, 0xab, 0xfd, 0x4c, 0x1c, 0xc0, 0xd5, 0xc0,
-	0x79, 0x09, 0x33, 0xdc, 0xe0, 0x36, 0xd9, 0x6c, 0x11, 0x2e, 0x32, 0xab, 0xe0, 0x9f, 0x13, 0xab,
-	0xbc, 0x49, 0x7d, 0x4e, 0xe0, 0x12, 0x88, 0x35, 0xe5, 0x4a, 0xc2, 0x98, 0x36, 0xb2, 0xa3, 0x73,
-	0x29, 0x2b, 0xac, 0x50, 0x4b, 0xb1, 0x0a, 0xd1, 0xbd, 0xc3, 0x74, 0xc4, 0xd6, 0x8c, 0x0c, 0x07,
-	0x19, 0x29, 0x59, 0x94, 0x48, 0xc2, 0x6c, 0x72, 0x1f, 0xb3, 0x0a, 0x5f, 0x67, 0xd8, 0x95, 0x5f,
-	0xf2, 0x60, 0x58, 0x04, 0x7f, 0xb9, 0x1a, 0x50, 0xc6, 0x95, 0x0a, 0x23, 0x5c, 0x9d, 0xf5, 0x47,
-	0x21, 0x71, 0xb0, 0x9b, 0x8b, 0xeb, 0x00, 0x96, 0xd5, 0xce, 0x9a, 0x60, 0x9e, 0x5f, 0xb5, 0xc7,
-	0xbb, 0x0c, 0xbd, 0xbc, 0xf4, 0xfb, 0xe3, 0x9d, 0x74, 0xe4, 0xcb, 0x4e, 0x3a, 0x92, 0xf9, 0x3c,
-	0x04, 0xfe, 0x1f, 0x78, 0xaa, 0x2e, 0xac, 0x08, 0x4c, 0x2e, 0x30, 0x13, 0xe5, 0x26, 0x61, 0x1e,
-	0xad, 0x94, 0xdd, 0x56, 0xa3, 0x55, 0xc7, 0xc2, 0x6b, 0x93, 0x32, 0x93, 0x0c, 0x69, 0x22, 0x6a,
-	0x4f, 0x49, 0x54, 0x49, 0x82, 0x8a, 0x3d, 0x8c, 0x12, 0x85, 0xeb, 0x60, 0x1c, 0xbb, 0x92, 0xc3,
-	0xb1, 0xa0, 0xbc, 0xe6, 0xf1, 0xc4, 0xd0, 0xb4, 0x91, 0xfd, 0xb3, 0x70, 0x3d, 0x08, 0xe2, 0xfd,
-	0x61, 0xfa, 0x5f, 0x65, 0x9f, 0x57, 0x36, 0x2c, 0x8f, 0xa2, 0x06, 0x16, 0x35, 0x6b, 0xc5, 0x17,
-	0x07, 0xbb, 0x39, 0xa0, 0xeb, 0x5a, 0xf1, 0x85, 0x3d, 0xa6, 0x34, 0xd6, 0xb4, 0x04, 0xbc, 0x0b,
-	0x46, 0xb5, 0x6a, 0x90, 0x75, 0x62, 0xf8, 0xe2, 0x8a, 0x40, 0xf1, 0x0b, 0xd8, 0xe9, 0x04, 0x6a,
-	0x82, 0x0a, 0x5c, 0x2f, 0x73, 0x97, 0x32, 0x92, 0x88, 0x5e, 0x42, 0x4d, 0xf2, 0xd7, 0x02, 0x7a,
-	0x5f, 0xd0, 0x29, 0x90, 0x54, 0x39, 0xb7, 0x18, 0x23, 0xbe, 0xd0, 0x31, 0x77, 0xdb, 0xe9, 0xab,
-	0x01, 0xa6, 0x42, 0xb7, 0x75, 0xfc, 0x04, 0xfc, 0xa6, 0x62, 0x0e, 0x2e, 0x7b, 0x38, 0x3b, 0x3a,
-	0x37, 0x69, 0xe9, 0x13, 0x83, 0xb6, 0xb5, 0x74, 0xdb, 0x5a, 0x45, 0xea, 0xf9, 0x85, 0xd9, 0xc0,
-	0xec, 0x8b, 0x0f, 0xe9, 0x6c, 0xd5, 0x13, 0xb5, 0x96, 0x63, 0xb9, 0xb4, 0xa1, 0xdf, 0x85, 0xfe,
-	0x93, 0xe3, 0x95, 0x0d, 0x24, 0x3a, 0x4d, 0xc2, 0x25, 0x81, 0xdb, 0x5d, 0x6d, 0x38, 0x01, 0x62,
-	0xea, 0x7e, 0xe5, 0xbd, 0x44, 0x6d, 0xfd, 0x75, 0x3a, 0x94, 0xe1, 0x9f, 0x15, 0xca, 0x32, 0xf8,
-	0x4f, 0x56, 0x7d, 0xdb, 0xe3, 0x82, 0x32, 0xcf, 0xc5, 0xf5, 0x93, 0xb9, 0xf4, 0x19, 0x32, 0xfa,
-	0x0d, 0xf5, 0x49, 0xbc, 0x34, 0x80, 0x79, 0x9e, 0x86, 0x0e, 0xef, 0x89, 0x01, 0x52, 0x67, 0xfa,
-	0x95, 0x07, 0x9d, 0xac, 0xeb, 0xf9, 0x05, 0x91, 0x4e, 0xba, 0xa7, 0x9a, 0x9f, 0x97, 0x08, 0x93,
-	0xe5, 0xcf, 0xbd, 0x1e, 0x01, 0x23, 0xd2, 0x31, 0x7c, 0x64, 0x80, 0x98, 0x1a, 0x05, 0x30, 0x1b,
-	0x3e, 0x28, 0xce, 0x4e, 0x9e, 0xe4, 0xb5, 0x1f, 0x40, 0xaa, 0xc2, 0x33, 0x33, 0x0f, 0xdf, 0x7c,
-	0x7a, 0x36, 0x64, 0xc2, 0x14, 0x0a, 0x9d, 0x84, 0x6a, 0xee, 0xc0, 0x77, 0x06, 0x98, 0x08, 0x7f,
-	0xfd, 0xf0, 0xe6, 0x80, 0xb3, 0x06, 0x8e, 0xa9, 0xe4, 0xe2, 0x25, 0x98, 0xda, 0xf5, 0x1d, 0xe9,
-	0xfa, 0x16, 0x2c, 0xa0, 0x01, 0xf3, 0x9b, 0x30, 0x8e, 0xb6, 0x4e, 0x0f, 0xc2, 0x6d, 0xd4, 0xbd,
-	0x5b, 0xa1, 0x0b, 0x78, 0x65, 0x80, 0xbf, 0xcf, 0x34, 0x06, 0x9c, 0x1f, 0x60, 0xee, 0xbc, 0x56,
-	0x4c, 0x2e, 0x5c, 0x8c, 0xa4, 0x8b, 0x59, 0x94, 0xc5, 0xcc, 0xc3, 0x7c, 0x78, 0x31, 0xb5, 0x1e,
-	0xb1, 0xdb, 0x96, 0x68, 0x4b, 0xb5, 0xf8, 0x36, 0x7c, 0x6e, 0x80, 0xb1, 0x93, 0xe3, 0x00, 0xce,
-	0x0e, 0x4a, 0x35, 0x6c, 0xb0, 0x24, 0xf3, 0x17, 0x60, 0x68, 0xcb, 0x39, 0x69, 0xf9, 0x2a, 0xbc,
-	0x72, 0x4e, 0xfe, 0x8a, 0xd5, 0xf5, 0x5b, 0x28, 0xed, 0x1d, 0x99, 0xc6, 0xfe, 0x91, 0x69, 0x7c,
-	0x3c, 0x32, 0x8d, 0xa7, 0xc7, 0x66, 0x64, 0xff, 0xd8, 0x8c, 0xbc, 0x3d, 0x36, 0x23, 0xf7, 0x6e,
-	0xf4, 0xbd, 0x16, 0x2d, 0x55, 0xc7, 0x0e, 0xcf, 0x79, 0xb4, 0xa7, 0xdc, 0x5e, 0x40, 0x0f, 0xfa,
-	0xe4, 0xe5, 0x0b, 0x72, 0x62, 0xf2, 0x87, 0x77, 0xfe, 0x5b, 0x00, 0x00, 0x00, 0xff, 0xff, 0x8f,
-	0xd5, 0xf7, 0x3c, 0x47, 0x08, 0x00, 0x00,
+	// 937 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe4, 0x56, 0x41, 0x6f, 0x1b, 0x45,
+	0x14, 0xf6, 0x26, 0x21, 0xa5, 0x13, 0xd4, 0xd0, 0x69, 0x1a, 0x39, 0xae, 0x59, 0x47, 0x4b, 0x11,
+	0x2e, 0xc8, 0x3b, 0x71, 0x52, 0x21, 0xda, 0x5b, 0xec, 0x1e, 0x28, 0xea, 0xc1, 0xdd, 0x54, 0x20,
+	0x71, 0x59, 0xcd, 0xae, 0x47, 0xeb, 0x55, 0xd6, 0x3b, 0xee, 0xcc, 0xd8, 0x60, 0x55, 0x95, 0x10,
+	0x70, 0xe0, 0xc0, 0x01, 0x89, 0x3f, 0xd0, 0x03, 0x27, 0x2e, 0x5c, 0xca, 0x81, 0x7f, 0xd0, 0x63,
+	0x55, 0x84, 0x04, 0x1c, 0x0a, 0x4a, 0x10, 0xe2, 0x07, 0xf0, 0x03, 0xd0, 0xce, 0xcc, 0xba, 0xeb,
+	0x78, 0xbd, 0x22, 0x51, 0x72, 0xe2, 0x64, 0xef, 0xce, 0xfb, 0xbe, 0xf7, 0xde, 0xf7, 0xde, 0xbc,
+	0xb7, 0x60, 0xd3, 0xc3, 0xde, 0x38, 0xa2, 0x31, 0xf2, 0x29, 0x17, 0x78, 0x3f, 0x8c, 0x03, 0x34,
+	0x6a, 0xa2, 0xfb, 0x43, 0xc2, 0xc6, 0xf6, 0x80, 0x51, 0x41, 0xe1, 0x9a, 0xb6, 0xb0, 0x27, 0x16,
+	0xf6, 0xa8, 0x59, 0x59, 0x0b, 0x68, 0x40, 0xa5, 0x01, 0x4a, 0xfe, 0x29, 0xdb, 0x4a, 0x35, 0xa0,
+	0x34, 0x88, 0x08, 0xc2, 0x83, 0x10, 0xe1, 0x38, 0xa6, 0x02, 0x8b, 0x90, 0xc6, 0x5c, 0x9f, 0x6e,
+	0xf8, 0x94, 0xf7, 0x29, 0x77, 0x15, 0x4c, 0x3d, 0xe8, 0xa3, 0xab, 0xb9, 0x61, 0xbc, 0xf0, 0xa8,
+	0xac, 0x4c, 0x85, 0x41, 0x1e, 0xe6, 0x04, 0x8d, 0x9a, 0x1e, 0x11, 0x38, 0x31, 0x0a, 0x63, 0x75,
+	0x6e, 0xad, 0x01, 0x78, 0x37, 0x89, 0xbc, 0x83, 0x19, 0xee, 0x73, 0x87, 0xdc, 0x1f, 0x12, 0x2e,
+	0xac, 0xbb, 0xe0, 0xd2, 0xd4, 0x5b, 0x3e, 0xa0, 0x31, 0x27, 0xf0, 0x26, 0x58, 0x1e, 0xc8, 0x37,
+	0x65, 0x63, 0xd3, 0xa8, 0xaf, 0x6c, 0x57, 0xed, 0xbc, 0x44, 0x6d, 0x85, 0x6a, 0x2d, 0x3d, 0x79,
+	0x5e, 0x2b, 0x39, 0x1a, 0x61, 0x71, 0x60, 0x49, 0xca, 0xb6, 0xb4, 0x24, 0xcc, 0x21, 0x1f, 0x63,
+	0xd6, 0xe5, 0xf7, 0x18, 0xf6, 0xe5, 0x93, 0x74, 0x0c, 0xdb, 0xe0, 0x55, 0x5f, 0x1b, 0xb8, 0xb8,
+	0xdb, 0x65, 0x84, 0x2b, 0x5f, 0xe7, 0x5b, 0xe5, 0x67, 0x8f, 0x1b, 0x6b, 0x5a, 0x80, 0x5d, 0x75,
+	0xb2, 0x27, 0x58, 0x18, 0x07, 0xce, 0x6a, 0x8a, 0xd0, 0xaf, 0x6f, 0xbe, 0xfc, 0xe5, 0xa3, 0x5a,
+	0xe9, 0xef, 0x47, 0xb5, 0x92, 0xf5, 0xd7, 0x02, 0x78, 0xbd, 0xd0, 0xab, 0x4e, 0xac, 0x0d, 0x4c,
+	0x2e, 0x30, 0x13, 0xee, 0x80, 0xb0, 0x90, 0x76, 0x5d, 0x7f, 0xd8, 0x1f, 0x46, 0x58, 0x84, 0x23,
+	0xe2, 0x32, 0x89, 0x90, 0x41, 0x2c, 0x39, 0x57, 0xa4, 0x55, 0x47, 0x1a, 0xb5, 0x27, 0x36, 0x8a,
+	0x14, 0xde, 0x03, 0xab, 0xd8, 0x97, 0x18, 0x8e, 0x05, 0xe5, 0xbd, 0x90, 0x97, 0x17, 0x36, 0x8d,
+	0xfa, 0x2b, 0xad, 0xb7, 0x13, 0x21, 0x7e, 0x7b, 0x5e, 0xbb, 0xac, 0xc2, 0xe7, 0xdd, 0x7d, 0x3b,
+	0xa4, 0xa8, 0x8f, 0x45, 0xcf, 0xbe, 0x1d, 0x8b, 0x67, 0x8f, 0x1b, 0x40, 0xe7, 0x75, 0x3b, 0x16,
+	0xce, 0x05, 0xc5, 0xb1, 0xa7, 0x29, 0xe0, 0x1d, 0xb0, 0xa2, 0x59, 0x13, 0xad, 0xcb, 0x8b, 0xc7,
+	0x67, 0x04, 0x0a, 0xdf, 0xc2, 0xde, 0x38, 0x61, 0x13, 0x54, 0xe0, 0xc8, 0xe5, 0x3e, 0x65, 0xa4,
+	0xbc, 0x74, 0x02, 0x36, 0x89, 0xdf, 0x4b, 0xe0, 0x19, 0xa1, 0xab, 0xa0, 0xa2, 0x74, 0x1e, 0x32,
+	0x46, 0x62, 0xa1, 0x65, 0x4e, 0xdb, 0xe9, 0x1f, 0x03, 0x5c, 0xc9, 0x3d, 0xd6, 0xf2, 0x13, 0x70,
+	0x4e, 0xc9, 0x9c, 0x14, 0x7b, 0xb1, 0xbe, 0xb2, 0xbd, 0x61, 0x6b, 0x8f, 0x49, 0xdb, 0xda, 0xba,
+	0x6d, 0xed, 0x36, 0x0d, 0xe3, 0xd6, 0x56, 0x12, 0xec, 0x77, 0xbf, 0xd7, 0xea, 0x41, 0x28, 0x7a,
+	0x43, 0xcf, 0xf6, 0x69, 0x5f, 0xdf, 0x0b, 0xfd, 0xd3, 0xe0, 0xdd, 0x7d, 0x24, 0xc6, 0x03, 0xc2,
+	0x25, 0x80, 0x3b, 0x29, 0x37, 0x5c, 0x07, 0xcb, 0xaa, 0xbe, 0xb2, 0x2e, 0x4b, 0x8e, 0x7e, 0x3a,
+	0x2a, 0xca, 0xe2, 0x69, 0x89, 0xb2, 0x0b, 0x5e, 0x93, 0x59, 0xbf, 0x17, 0x72, 0x41, 0x59, 0xe8,
+	0xe3, 0x68, 0x5a, 0x97, 0x4c, 0x40, 0x46, 0x36, 0xa0, 0x0c, 0xc5, 0xf7, 0x06, 0x30, 0xe7, 0x71,
+	0x68, 0xf1, 0xbe, 0x32, 0x40, 0x75, 0xa6, 0x5f, 0x79, 0xd2, 0xc9, 0x3a, 0x9f, 0x33, 0x90, 0x74,
+	0xc3, 0x3f, 0xd2, 0xfc, 0xbc, 0x43, 0x98, 0x4c, 0xdf, 0xba, 0xa6, 0x93, 0xfe, 0x00, 0x47, 0x61,
+	0x17, 0x0b, 0x92, 0xde, 0xbc, 0x34, 0xe9, 0x4c, 0x72, 0x3f, 0x2f, 0x00, 0x98, 0x1e, 0xdf, 0x22,
+	0x11, 0x09, 0xe4, 0xe8, 0x3b, 0x95, 0x19, 0xf0, 0xbf, 0xbe, 0x8c, 0x9f, 0x2e, 0xea, 0xa6, 0xc9,
+	0xa9, 0x81, 0x6e, 0x9a, 0x3b, 0xe0, 0x7c, 0xaa, 0x58, 0x7a, 0xe7, 0xea, 0xf9, 0xc3, 0x7c, 0xb6,
+	0x40, 0x7a, 0xb0, 0xbf, 0x20, 0x80, 0x2e, 0xb8, 0xac, 0x12, 0x39, 0x05, 0xc9, 0x2f, 0x49, 0xa6,
+	0xdd, 0x69, 0xdd, 0x3f, 0x04, 0x17, 0xa7, 0x1c, 0x9c, 0x54, 0xfd, 0xd5, 0x0c, 0xf9, 0x59, 0x96,
+	0x60, 0xfb, 0x8b, 0x73, 0xe0, 0x25, 0x59, 0x02, 0xf8, 0xb9, 0x01, 0x96, 0xd5, 0x42, 0x84, 0x73,
+	0x14, 0x9e, 0xdd, 0xbf, 0x95, 0x6b, 0xff, 0xc1, 0x52, 0x55, 0xd2, 0xba, 0xfa, 0xd9, 0x4f, 0x7f,
+	0x7e, 0xb3, 0x60, 0xc2, 0x2a, 0xca, 0xfd, 0x1e, 0x50, 0xdb, 0x17, 0xfe, 0x6a, 0x80, 0xf5, 0xfc,
+	0x1d, 0x08, 0xdf, 0x2d, 0xf0, 0x55, 0xb8, 0xac, 0x2b, 0x37, 0x4e, 0x80, 0xd4, 0x51, 0xbf, 0x2f,
+	0xa3, 0xbe, 0x05, 0x5b, 0xa8, 0xe0, 0x2b, 0x86, 0x30, 0x8e, 0x1e, 0x1c, 0x1d, 0x05, 0x0f, 0x51,
+	0x3a, 0xe1, 0x84, 0x4e, 0xe0, 0x47, 0x03, 0x5c, 0x9c, 0x19, 0x8f, 0x70, 0xa7, 0x20, 0xb8, 0x79,
+	0x03, 0xb9, 0x72, 0xfd, 0x78, 0x20, 0x9d, 0xcc, 0x0d, 0x99, 0xcc, 0x0e, 0x6c, 0xe6, 0x27, 0xd3,
+	0x9b, 0x00, 0xd3, 0xe1, 0x8c, 0x1e, 0xa8, 0x41, 0xff, 0x10, 0x7e, 0x6b, 0x80, 0x0b, 0xd3, 0x4b,
+	0x11, 0x6e, 0x15, 0xa9, 0x9a, 0xb7, 0x5e, 0x2b, 0xcd, 0x63, 0x20, 0x74, 0xc8, 0x0d, 0x19, 0xf2,
+	0x9b, 0xf0, 0x8d, 0x39, 0xfa, 0x2b, 0x54, 0x1a, 0x2f, 0xfc, 0xc1, 0x00, 0xeb, 0xf9, 0x13, 0xa5,
+	0x50, 0xe7, 0x79, 0x3b, 0xa0, 0x50, 0xe7, 0xb9, 0x43, 0xcb, 0xda, 0x92, 0x41, 0xbf, 0x05, 0xeb,
+	0xf9, 0x41, 0x8f, 0x34, 0xd0, 0x9d, 0x74, 0x4f, 0xab, 0xf3, 0xe4, 0xc0, 0x34, 0x9e, 0x1e, 0x98,
+	0xc6, 0x1f, 0x07, 0xa6, 0xf1, 0xf5, 0xa1, 0x59, 0x7a, 0x7a, 0x68, 0x96, 0x7e, 0x39, 0x34, 0x4b,
+	0x1f, 0xbd, 0x93, 0xd9, 0x75, 0x9a, 0x2d, 0xc2, 0x1e, 0x6f, 0x84, 0x74, 0x42, 0x3e, 0xba, 0x8e,
+	0x3e, 0xc9, 0x78, 0x90, 0xfb, 0xcf, 0x5b, 0x96, 0x9f, 0xcd, 0x3b, 0xff, 0x06, 0x00, 0x00, 0xff,
+	0xff, 0x53, 0x78, 0x8b, 0xdf, 0x05, 0x0c, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -481,6 +624,9 @@ type QueryClient interface {
 	// CurrentRewards queries the current rewards structure for costaking single
 	// pool.
 	CurrentRewards(ctx context.Context, in *QueryCurrentRewardsRequest, opts ...grpc.CallOption) (*QueryCurrentRewardsResponse, error)
+	// QueryValidateCostakers queries all costakers and validates their active
+	// satoshis and active baby amounts.
+	QueryValidateCostakers(ctx context.Context, in *QueryValidateCostakersRequest, opts ...grpc.CallOption) (*QueryValidateCostakersResponse, error)
 }
 
 type queryClient struct {
@@ -527,6 +673,15 @@ func (c *queryClient) CurrentRewards(ctx context.Context, in *QueryCurrentReward
 	return out, nil
 }
 
+func (c *queryClient) QueryValidateCostakers(ctx context.Context, in *QueryValidateCostakersRequest, opts ...grpc.CallOption) (*QueryValidateCostakersResponse, error) {
+	out := new(QueryValidateCostakersResponse)
+	err := c.cc.Invoke(ctx, "/babylon.costaking.v1.Query/QueryValidateCostakers", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // QueryServer is the server API for Query service.
 type QueryServer interface {
 	// Params queries the parameters of the module.
@@ -539,6 +694,9 @@ type QueryServer interface {
 	// CurrentRewards queries the current rewards structure for costaking single
 	// pool.
 	CurrentRewards(context.Context, *QueryCurrentRewardsRequest) (*QueryCurrentRewardsResponse, error)
+	// QueryValidateCostakers queries all costakers and validates their active
+	// satoshis and active baby amounts.
+	QueryValidateCostakers(context.Context, *QueryValidateCostakersRequest) (*QueryValidateCostakersResponse, error)
 }
 
 // UnimplementedQueryServer can be embedded to have forward compatible implementations.
@@ -556,6 +714,9 @@ func (*UnimplementedQueryServer) HistoricalRewards(ctx context.Context, req *Que
 }
 func (*UnimplementedQueryServer) CurrentRewards(ctx context.Context, req *QueryCurrentRewardsRequest) (*QueryCurrentRewardsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CurrentRewards not implemented")
+}
+func (*UnimplementedQueryServer) QueryValidateCostakers(ctx context.Context, req *QueryValidateCostakersRequest) (*QueryValidateCostakersResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method QueryValidateCostakers not implemented")
 }
 
 func RegisterQueryServer(s grpc1.Server, srv QueryServer) {
@@ -634,6 +795,24 @@ func _Query_CurrentRewards_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Query_QueryValidateCostakers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryValidateCostakersRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).QueryValidateCostakers(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/babylon.costaking.v1.Query/QueryValidateCostakers",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).QueryValidateCostakers(ctx, req.(*QueryValidateCostakersRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Query_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "babylon.costaking.v1.Query",
 	HandlerType: (*QueryServer)(nil),
@@ -653,6 +832,10 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CurrentRewards",
 			Handler:    _Query_CurrentRewards_Handler,
+		},
+		{
+			MethodName: "QueryValidateCostakers",
+			Handler:    _Query_QueryValidateCostakers_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -943,6 +1126,156 @@ func (m *QueryHistoricalRewardsResponse) MarshalToSizedBuffer(dAtA []byte) (int,
 	return len(dAtA) - i, nil
 }
 
+func (m *QueryValidateCostakersRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryValidateCostakersRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryValidateCostakersRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *CostakerDelegation) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *CostakerDelegation) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *CostakerDelegation) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	{
+		size := m.TotalScore.Size()
+		i -= size
+		if _, err := m.TotalScore.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintQuery(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x22
+	{
+		size := m.ActiveBaby.Size()
+		i -= size
+		if _, err := m.ActiveBaby.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintQuery(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x1a
+	{
+		size := m.ActiveSatoshis.Size()
+		i -= size
+		if _, err := m.ActiveSatoshis.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintQuery(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x12
+	if len(m.CostakerAddress) > 0 {
+		i -= len(m.CostakerAddress)
+		copy(dAtA[i:], m.CostakerAddress)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.CostakerAddress)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryValidateCostakersResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryValidateCostakersResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryValidateCostakersResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	{
+		size := m.TotalScore.Size()
+		i -= size
+		if _, err := m.TotalScore.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintQuery(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x22
+	{
+		size := m.TotalActiveBaby.Size()
+		i -= size
+		if _, err := m.TotalActiveBaby.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintQuery(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x1a
+	{
+		size := m.TotalActiveSatoshis.Size()
+		i -= size
+		if _, err := m.TotalActiveSatoshis.MarshalTo(dAtA[i:]); err != nil {
+			return 0, err
+		}
+		i = encodeVarintQuery(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x12
+	if len(m.Costakers) > 0 {
+		for iNdEx := len(m.Costakers) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Costakers[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintQuery(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0xa
+		}
+	}
+	return len(dAtA) - i, nil
+}
+
 func encodeVarintQuery(dAtA []byte, offset int, v uint64) int {
 	offset -= sovQuery(v)
 	base := offset
@@ -1058,6 +1391,55 @@ func (m *QueryHistoricalRewardsResponse) Size() (n int) {
 			n += 1 + l + sovQuery(uint64(l))
 		}
 	}
+	return n
+}
+
+func (m *QueryValidateCostakersRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *CostakerDelegation) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.CostakerAddress)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	l = m.ActiveSatoshis.Size()
+	n += 1 + l + sovQuery(uint64(l))
+	l = m.ActiveBaby.Size()
+	n += 1 + l + sovQuery(uint64(l))
+	l = m.TotalScore.Size()
+	n += 1 + l + sovQuery(uint64(l))
+	return n
+}
+
+func (m *QueryValidateCostakersResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if len(m.Costakers) > 0 {
+		for _, e := range m.Costakers {
+			l = e.Size()
+			n += 1 + l + sovQuery(uint64(l))
+		}
+	}
+	l = m.TotalActiveSatoshis.Size()
+	n += 1 + l + sovQuery(uint64(l))
+	l = m.TotalActiveBaby.Size()
+	n += 1 + l + sovQuery(uint64(l))
+	l = m.TotalScore.Size()
+	n += 1 + l + sovQuery(uint64(l))
 	return n
 }
 
@@ -1765,6 +2147,420 @@ func (m *QueryHistoricalRewardsResponse) Unmarshal(dAtA []byte) error {
 			}
 			m.CumulativeRewardsPerScore = append(m.CumulativeRewardsPerScore, types.Coin{})
 			if err := m.CumulativeRewardsPerScore[len(m.CumulativeRewardsPerScore)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryValidateCostakersRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryValidateCostakersRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryValidateCostakersRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *CostakerDelegation) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: CostakerDelegation: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: CostakerDelegation: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CostakerAddress", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.CostakerAddress = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ActiveSatoshis", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.ActiveSatoshis.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ActiveBaby", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.ActiveBaby.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field TotalScore", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.TotalScore.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryValidateCostakersResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryValidateCostakersResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryValidateCostakersResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Costakers", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Costakers = append(m.Costakers, CostakerDelegation{})
+			if err := m.Costakers[len(m.Costakers)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field TotalActiveSatoshis", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.TotalActiveSatoshis.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field TotalActiveBaby", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.TotalActiveBaby.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field TotalScore", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.TotalScore.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex

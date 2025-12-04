@@ -29,6 +29,9 @@ type (
 		stkK   types.StakingKeeper
 		distrK types.DistributionKeeper
 
+		finalityK types.FinalityKeeper
+		btcStkK   types.BtcStkKeeper
+
 		// cache for delta changes in baby delegations
 		stkCache *types.StakingCache
 
@@ -126,4 +129,12 @@ func (k Keeper) Logger(goCtx context.Context) log.Logger {
 func (k Keeper) EndBlock(ctx context.Context) error {
 	k.stkCache.Clear()
 	return nil
+}
+
+func (k *Keeper) SetFinality(fk types.FinalityKeeper) {
+	k.finalityK = fk
+}
+
+func (k *Keeper) SetBtcStkK(btck types.BtcStkKeeper) {
+	k.btcStkK = btck
 }

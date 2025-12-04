@@ -5,6 +5,10 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	btcstktypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+	ftypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
@@ -34,4 +38,14 @@ type StakingKeeper interface {
 	IterateLastValidatorPowers(ctx context.Context, handler func(operator sdk.ValAddress, power int64) bool) error
 	ValidatorByConsAddr(context.Context, sdk.ConsAddress) (stakingtypes.ValidatorI, error)
 	GetValidator(ctx context.Context, addr sdk.ValAddress) (validator stakingtypes.Validator, err error)
+}
+
+type FinalityKeeper interface {
+	GetVotingPowerDistCache(ctx context.Context, height uint64) *ftypes.VotingPowerDistCache
+}
+
+type BtcStkKeeper interface {
+	HandleFPBTCDelegations(ctx context.Context, fpBTCPK *bbn.BIP340PubKey, handler func(*btcstktypes.BTCDelegation) error) error
+	GetParamsByVersion(ctx context.Context, v uint32) *btcstktypes.Params
+	BtcTip(ctx context.Context) uint32
 }

@@ -11614,6 +11614,95 @@ paths:
                       format: byte
       tags:
         - Query
+  /babylon/costaking/v1/validate_costakers:
+    get:
+      summary: |-
+        QueryValidateCostakers queries all costakers and validates their active
+        satoshis and active baby amounts.
+      operationId: QueryValidateCostakers
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              costakers:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    costaker_address:
+                      type: string
+                      description: CostakerAddress is the Babylon address of the costaker.
+                    active_satoshis:
+                      type: string
+                      format: byte
+                      description: >-
+                        ActiveSatoshis is the total amount of active satoshi
+                        delegated
+
+                        from this costaker babylon address.
+                    active_baby:
+                      type: string
+                      format: byte
+                      description: |-
+                        ActiveBaby is the total amount of active baby delegated
+                        from this costaker babylon address.
+                    total_score:
+                      type: string
+                      format: byte
+                      description: |-
+                        TotalScore is the total amount of calculated score
+                        of this costaker.
+                  description: >-
+                    CostakerDelegation contains information about a costaker's
+                    delegations.
+                description: >-
+                  Costakers is the list of all costakers with their active
+                  delegations.
+              total_active_satoshis:
+                type: string
+                format: byte
+                description: >-
+                  TotalActiveSatoshis is the sum of all active satoshis across
+                  all costakers.
+              total_active_baby:
+                type: string
+                format: byte
+                description: >-
+                  TotalActiveBaby is the sum of all active baby across all
+                  costakers.
+              total_score:
+                type: string
+                format: byte
+                description: TotalScore is the sum of all scores across all costakers.
+            description: |-
+              QueryValidateCostakersResponse is the response type for the
+              Query/QueryValidateCostakers RPC method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      tags:
+        - Query
 definitions:
   babylon.btccheckpoint.v1.BTCCheckpointInfoResponse:
     type: object
@@ -18658,6 +18747,31 @@ definitions:
     title: |-
       RewardGaugesResponse is an object that stores rewards distributed to a BTC
       staking stakeholder
+  babylon.costaking.v1.CostakerDelegation:
+    type: object
+    properties:
+      costaker_address:
+        type: string
+        description: CostakerAddress is the Babylon address of the costaker.
+      active_satoshis:
+        type: string
+        format: byte
+        description: |-
+          ActiveSatoshis is the total amount of active satoshi delegated
+          from this costaker babylon address.
+      active_baby:
+        type: string
+        format: byte
+        description: |-
+          ActiveBaby is the total amount of active baby delegated
+          from this costaker babylon address.
+      total_score:
+        type: string
+        format: byte
+        description: |-
+          TotalScore is the total amount of calculated score
+          of this costaker.
+    description: CostakerDelegation contains information about a costaker's delegations.
   babylon.costaking.v1.Params:
     type: object
     properties:
@@ -18847,3 +18961,53 @@ definitions:
 
               correctly voted.
     description: QueryParamsResponse is response type for the Query/Params RPC method.
+  babylon.costaking.v1.QueryValidateCostakersResponse:
+    type: object
+    properties:
+      costakers:
+        type: array
+        items:
+          type: object
+          properties:
+            costaker_address:
+              type: string
+              description: CostakerAddress is the Babylon address of the costaker.
+            active_satoshis:
+              type: string
+              format: byte
+              description: |-
+                ActiveSatoshis is the total amount of active satoshi delegated
+                from this costaker babylon address.
+            active_baby:
+              type: string
+              format: byte
+              description: |-
+                ActiveBaby is the total amount of active baby delegated
+                from this costaker babylon address.
+            total_score:
+              type: string
+              format: byte
+              description: |-
+                TotalScore is the total amount of calculated score
+                of this costaker.
+          description: >-
+            CostakerDelegation contains information about a costaker's
+            delegations.
+        description: Costakers is the list of all costakers with their active delegations.
+      total_active_satoshis:
+        type: string
+        format: byte
+        description: >-
+          TotalActiveSatoshis is the sum of all active satoshis across all
+          costakers.
+      total_active_baby:
+        type: string
+        format: byte
+        description: TotalActiveBaby is the sum of all active baby across all costakers.
+      total_score:
+        type: string
+        format: byte
+        description: TotalScore is the sum of all scores across all costakers.
+    description: |-
+      QueryValidateCostakersResponse is the response type for the
+      Query/QueryValidateCostakers RPC method.

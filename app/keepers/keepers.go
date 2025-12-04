@@ -581,6 +581,9 @@ func (ak *AppKeepers) InitKeepers(
 		appparams.AccGov.String(),
 	)
 
+	ak.CostakingKeeper.SetFinality(ak.FinalityKeeper)
+	ak.CostakingKeeper.SetBtcStkK(ak.BTCStakingKeeper)
+
 	ak.FinalityKeeper.SetHooks(
 		finalitytypes.NewMultiFinalityHooks(
 			ak.IncentiveKeeper.Hooks(),

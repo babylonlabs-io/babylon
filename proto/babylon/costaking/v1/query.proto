@@ -34,6 +34,13 @@ service Query {
       returns (QueryCurrentRewardsResponse) {
     option (google.api.http).get = "/babylon/costaking/v1/current_rewards";
   }
+  // QueryValidateCostakers queries all costakers and validates their active
+  // satoshis and active baby amounts.
+  rpc QueryValidateCostakers(QueryValidateCostakersRequest)
+      returns (QueryValidateCostakersResponse) {
+    option (google.api.http).get =
+        "/babylon/costaking/v1/validate_costakers";
+  }
 }
 
 // QueryParamsRequest is request type for the Query/Params RPC method.
@@ -146,5 +153,71 @@ message QueryHistoricalRewardsResponse {
   repeated cosmos.base.v1beta1.Coin cumulative_rewards_per_score = 1 [
     (gogoproto.nullable) = false,
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
+}
+
+// QueryValidateCostakersRequest is the request type for the
+// Query/QueryValidateCostakers RPC method.
+message QueryValidateCostakersRequest {
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
+}
+
+// CostakerDelegation contains information about a costaker's delegations.
+message CostakerDelegation {
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
+
+  // CostakerAddress is the Babylon address of the costaker.
+  string costaker_address = 1
+      [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  // ActiveSatoshis is the total amount of active satoshi delegated
+  // from this costaker babylon address.
+  bytes active_satoshis = 2 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+  // ActiveBaby is the total amount of active baby delegated
+  // from this costaker babylon address.
+  bytes active_baby = 3 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+  // TotalScore is the total amount of calculated score
+  // of this costaker.
+  bytes total_score = 4 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+}
+
+// QueryValidateCostakersResponse is the response type for the
+// Query/QueryValidateCostakers RPC method.
+message QueryValidateCostakersResponse {
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
+
+  // Costakers is the list of all costakers with their active delegations.
+  repeated CostakerDelegation costakers = 1 [ (gogoproto.nullable) = false ];
+  // TotalActiveSatoshis is the sum of all active satoshis across all costakers.
+  bytes total_active_satoshis = 2 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+  // TotalActiveBaby is the sum of all active baby across all costakers.
+  bytes total_active_baby = 3 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+  // TotalScore is the sum of all scores across all costakers.
+  bytes total_score = 4 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
   ];
 }

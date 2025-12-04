@@ -28,6 +28,7 @@ func GetQueryCmd() *cobra.Command {
 		CmdQueryCostakerRewardsTracker(),
 		CmdQueryHistoricalRewards(),
 		CmdQueryCurrentRewards(),
+		CmdQueryValidateCostakers(),
 	)
 
 	return cmd
@@ -142,6 +143,32 @@ func CmdQueryCurrentRewards() *cobra.Command {
 
 			queryClient := types.NewQueryClient(clientCtx)
 			res, err := queryClient.CurrentRewards(cmd.Context(), &types.QueryCurrentRewardsRequest{})
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+
+	return cmd
+}
+
+func CmdQueryValidateCostakers() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "validate-costakers",
+		Short: "validates all costakers and their active satoshis and active baby amounts",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			queryClient := types.NewQueryClient(clientCtx)
+			res, err := queryClient.QueryValidateCostakers(cmd.Context(), &types.QueryValidateCostakersRequest{})
 			if err != nil {
 				return err
 			}
