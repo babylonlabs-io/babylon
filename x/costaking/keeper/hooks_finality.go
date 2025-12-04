@@ -22,8 +22,8 @@ type HookFinality struct {
 //
 // Possible State Changes (previous -> current):
 // - inactive -> active: no-op
-// - active -> active: substract ActiveSatoshis
-// - active -> inactive: substract ActiveSatoshis (there's no risk of double counting
+// - active -> active: subtract ActiveSatoshis
+// - active -> inactive: subtract ActiveSatoshis (there's no risk of double counting
 // because the AfterBbnFpRemovedFromActiveSet hook gets the updated active sats amount)
 // - inactive -> inactive: no-op
 // More concisely if the FP was active in the previous set, we subtract the sats.
