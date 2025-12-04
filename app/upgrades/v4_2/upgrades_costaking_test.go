@@ -41,7 +41,7 @@ import (
 	ftypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
 )
 
-func setupTestKeepers(t *testing.T, btcTip uint32) (sdk.Context, codec.BinaryCodec, corestore.KVStoreService, *stkkeeper.Keeper, btcstkkeeper.Keeper, *costkkeeper.Keeper, *fkeeper.Keeper, *gomock.Controller) {
+func setupTestKeepers(t *testing.T) (sdk.Context, codec.BinaryCodec, corestore.KVStoreService, *stkkeeper.Keeper, btcstkkeeper.Keeper, *costkkeeper.Keeper, *fkeeper.Keeper, *gomock.Controller) {
 	ctrl := gomock.NewController(t)
 
 	// Create DB and store
@@ -50,7 +50,7 @@ func setupTestKeepers(t *testing.T, btcTip uint32) (sdk.Context, codec.BinaryCod
 
 	// Setup mocked keepers
 	btclcKeeper := btcstktypes.NewMockBTCLightClientKeeper(ctrl)
-	btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: btcTip}).AnyTimes()
+	btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: 10}).AnyTimes()
 
 	btccKeeper := btcstktypes.NewMockBtcCheckpointKeeper(ctrl)
 	btccKeeper.EXPECT().GetParams(gomock.Any()).Return(btcctypes.DefaultParams()).AnyTimes()
@@ -90,7 +90,7 @@ func setupTestKeepers(t *testing.T, btcTip uint32) (sdk.Context, codec.BinaryCod
 // TestResetCoStakerRwdsTracker_WithPreexistingTrackers tests that existing trackers are reset
 // and recalculated correctly with pre-existing costaker rewards trackers
 func TestResetCoStakerRwdsTracker_WithPreexistingTrackers(t *testing.T) {
-	ctx, cdc, storeService, stkKeeper, btcStkKeeper, costkKeeper, fKeeper, ctrl := setupTestKeepers(t, 10)
+	ctx, cdc, storeService, stkKeeper, btcStkKeeper, costkKeeper, fKeeper, ctrl := setupTestKeepers(t)
 	defer ctrl.Finish()
 
 	require.NoError(t, btcStkKeeper.SetParams(ctx, btcstktypes.DefaultParams()))
@@ -136,7 +136,7 @@ func TestResetCoStakerRwdsTracker_WithPreexistingTrackers(t *testing.T) {
 
 // TestResetCoStakerRwdsTracker_MultiplePreexistingTrackers tests resetting multiple trackers
 func TestResetCoStakerRwdsTracker_MultiplePreexistingTrackers(t *testing.T) {
-	ctx, cdc, storeService, stkKeeper, btcStkKeeper, costkKeeper, fKeeper, ctrl := setupTestKeepers(t, 10)
+	ctx, cdc, storeService, stkKeeper, btcStkKeeper, costkKeeper, fKeeper, ctrl := setupTestKeepers(t)
 	defer ctrl.Finish()
 
 	require.NoError(t, btcStkKeeper.SetParams(ctx, btcstktypes.DefaultParams()))
@@ -230,7 +230,7 @@ func TestResetCoStakerRwdsTracker_MultiplePreexistingTrackers(t *testing.T) {
 // TestResetCoStakerRwdsTracker_TrackerNoLongerValid tests that trackers for stakers
 // who no longer have delegations are zeroed out
 func TestResetCoStakerRwdsTracker_TrackerNoLongerValid(t *testing.T) {
-	ctx, cdc, storeService, stkKeeper, btcStkKeeper, costkKeeper, fKeeper, ctrl := setupTestKeepers(t, 10)
+	ctx, cdc, storeService, stkKeeper, btcStkKeeper, costkKeeper, fKeeper, ctrl := setupTestKeepers(t)
 	defer ctrl.Finish()
 
 	require.NoError(t, btcStkKeeper.SetParams(ctx, btcstktypes.DefaultParams()))
@@ -289,7 +289,7 @@ func TestResetCoStakerRwdsTracker_TrackerNoLongerValid(t *testing.T) {
 
 // TestResetCoStakerRwdsTracker_InactiveFPAndValidator tests resetting when FP or validator becomes inactive
 func TestResetCoStakerRwdsTracker_InactiveFPAndValidator(t *testing.T) {
-	ctx, cdc, storeService, stkKeeper, btcStkKeeper, costkKeeper, fKeeper, ctrl := setupTestKeepers(t, 10)
+	ctx, cdc, storeService, stkKeeper, btcStkKeeper, costkKeeper, fKeeper, ctrl := setupTestKeepers(t)
 	defer ctrl.Finish()
 
 	require.NoError(t, btcStkKeeper.SetParams(ctx, btcstktypes.DefaultParams()))
@@ -436,29 +436,6 @@ func createTestBTCDelegation(t *testing.T, r *rand.Rand, ctx sdk.Context, btcStk
 	require.NoError(t, btcStkKeeper.AddBTCDelegation(ctx, del))
 
 	return del
-}
-
-func createBabyDelegation(t *testing.T, ctx context.Context, stkKeeper *stkkeeper.Keeper, stakerAddr sdk.AccAddress, delAmount math.Int) {
-	validatorAddr := datagen.GenRandomValidatorAddress()
-	delegation := stktypes.Delegation{
-		DelegatorAddress: stakerAddr.String(),
-		ValidatorAddress: validatorAddr.String(),
-		Shares:           math.LegacyNewDecFromInt(delAmount),
-	}
-
-	// Create validator and mark it as active (bonded with power)
-	validator := stktypes.Validator{
-		OperatorAddress: validatorAddr.String(),
-		Tokens:          delAmount,
-		DelegatorShares: math.LegacyNewDecFromInt(delAmount),
-		Status:          stktypes.Bonded,
-	}
-	require.NoError(t, stkKeeper.SetValidator(ctx, validator))
-	require.NoError(t, stkKeeper.SetDelegation(ctx, delegation))
-
-	// Add to LastValidatorPowers to mark as active validator
-	power := stkKeeper.TokensToConsensusPower(ctx, delAmount)
-	require.NoError(t, stkKeeper.SetLastValidatorPower(ctx, validatorAddr, power))
 }
 
 func createCostakerRewardsTracker(t *testing.T, ctx context.Context, cdc codec.BinaryCodec, storeService corestore.KVStoreService, stakerAddr sdk.AccAddress, tracker costktypes.CostakerRewardsTracker) {
