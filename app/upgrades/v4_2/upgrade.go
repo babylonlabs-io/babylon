@@ -68,7 +68,7 @@ func CreateUpgradeHandler(mm *module.Manager, configurator module.Configurator, 
 }
 
 // ResetCoStakerRwdsTracker resets the costaker rewards tracker
-// It resets tracked ActiveSats and ActiveBaby for all BTC stakers, BABY stakers, and combined stakers
+// It resets tracked ActiveSats for all BTC stakers
 func ResetCoStakerRwdsTracker(
 	ctx context.Context,
 	cdc codec.BinaryCodec,
@@ -98,7 +98,7 @@ func ResetCoStakerRwdsTracker(
 		return err
 	}
 
-	// Save co-staker rwd tracker for all BTC stakers
+	// Update co-staker rwd tracker for all BTC stakers
 	if err := updateBTCStakersRwdTracker(ctx, endedPeriod, rwdTrackers, accsWithActiveSats, btcStkKeeper, fKeeper, coStkKeeper, params); err != nil {
 		return err
 	}
