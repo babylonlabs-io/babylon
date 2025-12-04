@@ -159,7 +159,7 @@ func validateSigHashType(witness wire.TxWitness, address btcutil.Address) error 
 	if err != nil {
 		return err
 	}
-	if txscript.IsPayToTaproot(script) { // nolint:gocritic
+	if txscript.IsPayToTaproot(script) { // nolint: gocritic
 		// For Taproot:
 		// - SIGHASH_DEFAULT: signature is 64 bytes (no sighash byte appended)
 		// - SIGHASH_ALL: signature is 65 bytes with 0x01 as the last byte

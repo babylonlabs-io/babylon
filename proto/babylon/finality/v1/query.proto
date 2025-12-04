@@ -8,6 +8,7 @@ import "babylon/finality/v1/params.proto";
 import "babylon/finality/v1/finality.proto";
 import "google/protobuf/timestamp.proto";
 import "amino/amino.proto";
+import "cosmos_proto/cosmos.proto";
 
 option go_package = "github.com/babylonlabs-io/babylon/v4/x/finality/types";
 
@@ -85,6 +86,12 @@ service Query {
   // SigningInfos queries the signing info of all the active finality providers
   rpc SigningInfos(QuerySigningInfosRequest) returns (QuerySigningInfosResponse) {
     option (google.api.http).get = "/babylon/finality/v1/signing_infos";
+  }
+
+  // VotingPowerDistribution queries the voting power distribution cache
+  // Note: The vp dst cache is only kept at the store until that block height is finalized
+  rpc VotingPowerDistribution(QueryVotingPowerDistributionRequest) returns (QueryVotingPowerDistributionResponse) {
+    option (google.api.http).get = "/babylon/finality/v1/vp_dst_cache/{height}";
   }
 }
 
@@ -395,4 +402,51 @@ message QuerySigningInfosResponse {
   // info is the signing info of all finality providers with signing info
   repeated SigningInfoResponse signing_infos = 1 [(gogoproto.nullable) = false];
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryVotingPowerDistributionRequest is the request type for the
+// Query/VotingPowerDistribution RPC method.
+message QueryVotingPowerDistributionRequest {
+  // height defines at which block height to query the vp dst cache.
+  uint64 height = 1;
+}
+
+// FinalityProviderDistInfoResponse is the voting power distribution information
+// of a finality provider and its BTC delegations combined
+message FinalityProviderDistInfoResponse {
+  // btc_pk_hex is the hex str of Bitcoin secp256k1 PK of this finality provider
+  // the PK follows encoding in BIP-340 spec
+  string btc_pk_hex = 1;
+  // addr is the babylon address to receive commission from delegations
+  string addr = 2;
+  // commission defines the commission rate of finality provider
+  string commission = 3 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec"
+  ];
+  // total_bonded_sat is the total amount of bonded BTC stake (in Satoshi) of the finality provider
+  uint64 total_bonded_sat = 4;
+  // is_timestamped indicates whether the finality provider
+  // has timestamped public randomness committed
+  // if no, it should not be assigned voting power
+  bool is_timestamped = 5;
+  // is_jailed indicates whether the finality provider
+  // is jailed, if so, it should not be assigned voting power
+  bool is_jailed = 6;
+  // is_slashed indicates whether the finality provider
+  // is slashed, if so, it should not be assigned voting power
+  bool is_slashed = 7;
+}
+
+// QueryVotingPowerDistributionResponse is the response type for the
+// Query/VotingPowerDistribution RPC method.
+message QueryVotingPowerDistributionResponse {
+  // total_voting_power is the total voting power of all (active) finality
+  // providers in the cache
+  uint64 total_voting_power = 1;
+  // finality_providers is a list of finality providers information
+  repeated FinalityProviderDistInfoResponse finality_providers = 2;
+  // num_active_fps is the number of finality providers that have active BTC
+  // delegations as well as timestamped public randomness
+  uint64 num_active_fps = 3;
 }

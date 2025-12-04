@@ -8,7 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"cosmossdk.io/math"
 	sdkmath "cosmossdk.io/math"
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/util"
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
@@ -92,7 +91,7 @@ func TestCostakingValidatorDirectRewards(t *testing.T) {
 	initialCostakingBalance := bankK.GetAllBalances(ctx, costakingModuleAddr)
 
 	// Add some existing fees to fee collector (simulating accumulated transaction fees)
-	existingFees := sdk.NewCoins(sdk.NewCoin("ubbn", math.NewInt(50000000))) // 50 BBN
+	existingFees := sdk.NewCoins(sdk.NewCoin("ubbn", sdkmath.NewInt(50000000))) // 50 BBN
 	err = bankK.MintCoins(ctx, "mint", existingFees)
 	require.NoError(t, err)
 	err = bankK.SendCoinsFromModuleToModule(ctx, "mint", "fee_collector", existingFees)
