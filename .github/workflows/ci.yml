@@ -331,7 +331,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: 1.23
-      - name: Run e2e TestValidatorJailingTestSuite
+      - name: Run e2e TestCostakingTestSuite
         run: |
           make test-e2e-cache-cache-costaking
 
