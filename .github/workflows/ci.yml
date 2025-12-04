@@ -333,7 +333,7 @@ jobs:
           go-version: 1.23
       - name: Run e2e TestCostakingTestSuite
         run: |
-          make test-e2e-cache-cache-costaking
+          make test-e2e-cache-costaking
 
   e2e-run-validator-jailing:
     needs: [e2e-docker-build-babylon]
