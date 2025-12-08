@@ -53,13 +53,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#1878](https://github.com/babylonlabs-io/babylon/pull/1878) Remove unnecessary []byte allocations in IBC size checks
 - [#1891](https://github.com/babylonlabs-io/babylon/pull/1891) fix: golangci lint misspell and removed unused func
 
+## v4.2.1
+
+### Improvements
+
+- [#1839](https://github.com/babylonlabs-io/babylon/pull/1839) Add query to get the voting power distribution
+
 ## v4.1.0
 
 ### Improvements
 
 - [#1764](https://github.com/babylonlabs-io/babylon/pull/1764) Add mergify yaml file for automatic backporting
-- [#1839](https://github.com/babylonlabs-io/babylon/pull/1839) Add query to get the voting power distribution
-cache (is only available until that block is finalized)
 
 ### Bug fixes
 
