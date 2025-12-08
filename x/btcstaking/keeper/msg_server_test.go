@@ -1756,7 +1756,7 @@ func TestBtcStakeExpansion(t *testing.T) {
 	testCases := []struct {
 		name                    string
 		expStkExpErr            string
-		diffOgDel               bool // diffOgDel is true when using different delegator when creating original delegation
+		diffDelKey              bool // diffDelKey is true when using different delegator when creating original delegation
 		setupOriginalDelegation func(t *testing.T, h *testutil.Helper, r *rand.Rand, covenantSKs []*btcec.PrivateKey, babylonFPPK *btcec.PublicKey, delSK *btcec.PrivateKey, stakingValue int64) (*types.BTCDelegation, string, uint32)
 	}{
 		{
@@ -1883,7 +1883,7 @@ func TestBtcStakeExpansion(t *testing.T) {
 		{
 			name:         "expand delegation with different delegator btc pk",
 			expStkExpErr: "does not match previous staker pk",
-			diffOgDel:    true,
+			diffDelKey:   true,
 			setupOriginalDelegation: func(t *testing.T, h *testutil.Helper, r *rand.Rand, covenantSKs []*btcec.PrivateKey, babylonFPPK *btcec.PublicKey, delSK *btcec.PrivateKey, stakingValue int64) (*types.BTCDelegation, string, uint32) {
 				lcTip := uint32(30)
 				prevDelStakingTxHash, prevMsgCreateBTCDel, prevDel, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
@@ -1939,7 +1939,7 @@ func TestBtcStakeExpansion(t *testing.T) {
 				prevDelStakingTxHash string
 				lcTip                uint32
 			)
-			if tc.diffOgDel {
+			if tc.diffDelKey {
 				ogDelSK, _, err := datagen.GenRandomBTCKeyPair(r)
 				h.NoError(err)
 				prevDel, prevDelStakingTxHash, lcTip = tc.setupOriginalDelegation(t, h, r, covenantSKs, babylonFPPK, ogDelSK, stakingValue)
