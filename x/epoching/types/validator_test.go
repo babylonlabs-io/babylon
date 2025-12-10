@@ -110,7 +110,7 @@ func makeAddr(marker byte) sdk.ValAddress {
 	copy(addr, basePrefix) // first 8 bytes identical
 	addr[8] = marker       // first differing byte outside BigEndianToUint64 range
 	for i := 9; i < len(addr); i++ {
-		addr[i] = 0x90 + marker
+		addr[i] = 0x50 + marker
 	}
 	return sdk.ValAddress(addr)
 }
