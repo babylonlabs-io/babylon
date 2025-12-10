@@ -45,8 +45,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ### Bug Fixes
 
 - [#1875](https://github.com/babylonlabs-io/babylon/pull/1875) chore: ensure soft-deleted FPs cannot receive new/extended BTC stake, or commit pub rand
-- [GHSA-m6wq-66p2-c8pc](https://github.com/babylonlabs-io/babylon/security/advisories/GHSA-m6wq-66p2-c8pc) fix: nil check of block hash in vote extension
-- [GHSA-4rmq-mc2c-r495](https://github.com/babylonlabs-io/babylon-ghsa-4rmq-mc2c-r495/pull/1) Fix conditional logic in `AfterBtcDelegationUnbonded` hook
 
 ### Improvements
 
@@ -58,6 +56,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ### Improvements
 
 - [#1839](https://github.com/babylonlabs-io/babylon/pull/1839) Add query to get the voting power distribution
+
+## v4.2.0
+
+### Bug Fixes
+
+- [GHSA-m6wq-66p2-c8pc](https://github.com/babylonlabs-io/babylon/security/advisories/GHSA-m6wq-66p2-c8pc) fix: nil check of block hash in vote extension
+- [GHSA-4rmq-mc2c-r495](https://github.com/babylonlabs-io/babylon-ghsa-4rmq-mc2c-r495/pull/1) Fix conditional logic in `AfterBtcDelegationUnbonded` hook
 
 ## v4.1.0
 
