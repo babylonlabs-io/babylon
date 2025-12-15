@@ -11,6 +11,10 @@ babylond-e2e:
 	docker build --tag babylonlabs-io/babylond -f babylond/Dockerfile ${BABYLON_FULL_PATH} \
 		--build-arg BABYLON_BUILD_OPTIONS="testnet e2e_upgrade"
 
+babylond-e2e-bad:
+	docker build --tag babylonlabs-io/babylond-bad -f babylond/Dockerfile ${BABYLON_FULL_PATH} \
+		--build-arg BABYLON_BUILD_OPTIONS="testnet e2e_upgrade"
+
 babylond-rmi:
 	docker rmi babylonlabs-io/babylond --force 2>/dev/null; true
 

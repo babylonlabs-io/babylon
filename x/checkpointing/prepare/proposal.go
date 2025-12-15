@@ -490,6 +490,12 @@ func (h *ProposalHandler) buildInjectedTxBytes(ckpt *ckpttypes.RawCheckpointWith
 		ExtendedCommitInfo: info,
 	}
 
+	// msg := &banktypes.MsgSend{
+	// 	FromAddress: "bbn1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqg0j3r7",
+	// 	ToAddress:   "bbn1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqg0j3r7",
+	// 	Amount:      sdk.NewCoins(sdk.NewInt64Coin("ubbn", 1)),
+	// }
+
 	return EncodeMsgsIntoTxBytes(h.txConfig, msg)
 }
 
