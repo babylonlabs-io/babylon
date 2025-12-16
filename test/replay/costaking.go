@@ -1,17 +1,23 @@
 package replay
 
 import (
+	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
 	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
 	abcitypes "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	stktypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
 
+	costkkeeper "github.com/babylonlabs-io/babylon/v4/x/costaking/keeper"
 	costktypes "github.com/babylonlabs-io/babylon/v4/x/costaking/types"
+	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 	ictvtypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
 	minttypes "github.com/babylonlabs-io/babylon/v4/x/mint/types"
 )
@@ -158,4 +164,43 @@ func FindEventTypeFPDirectRewards(t *testing.T, evts []abcitypes.Event) sdk.Coin
 
 func FindEventTypeValidatorDirectRewards(t *testing.T, evts []abcitypes.Event) sdk.Coins {
 	return FindEventCoinsT(t, evts, costktypes.EventTypeValidatorDirectRewards, sdk.AttributeKeyAmount, ExtractCoinsFromDecCoins)
+}
+
+func assertZeroCostkTracker(t *testing.T, ctx context.Context, costkK costkkeeper.Keeper, addr sdk.AccAddress) {
+	trk, err := costkK.GetCostakerRewards(ctx, addr)
+	require.NoError(t, err)
+	require.NotNil(t, trk)
+	require.True(t, trk.ActiveBaby.IsZero(), "active baby should be zero", trk.ActiveBaby.String())
+	require.True(t, trk.ActiveSatoshis.IsZero(), "Active sats should be zero", trk.ActiveSatoshis.String())
+	require.True(t, trk.TotalScore.IsZero(), "Active score should be zero", trk.TotalScore.String())
+}
+
+func isValidatorIncluded(valset []epochingtypes.Validator, valAddr sdk.ValAddress) bool {
+	return FindValInValset(valset, valAddr) != nil
+}
+
+func FindValInValset(valset []epochingtypes.Validator, valAddr sdk.ValAddress) *epochingtypes.Validator {
+	for _, v := range valset {
+		if bytes.Equal(v.GetValAddress().Bytes(), valAddr.Bytes()) {
+			return &v
+		}
+	}
+	return nil
+}
+
+func FindValInValidators(validators []stktypes.Validator, valAddr sdk.ValAddress) *stktypes.Validator {
+	for _, v := range validators {
+		if strings.EqualFold(v.OperatorAddress, valAddr.String()) {
+			return &v
+		}
+	}
+	return nil
+}
+
+// assertActiveBabyWithinRange checks if actual is within expected ± tolerance (for rounding differences)
+func assertActiveBabyWithinRange(t *testing.T, expected, actual sdkmath.Int, tolerance int64, msgAndArgs ...interface{}) { //nolint:unparam
+	diff := actual.Sub(expected).Abs()
+	maxDiff := sdkmath.NewInt(tolerance)
+	require.True(t, diff.LTE(maxDiff), "ActiveBaby difference exceeds tolerance: expected %s ± %d, got %s (diff: %s). %v",
+		expected.String(), tolerance, actual.String(), diff.String(), msgAndArgs)
 }
