@@ -2073,4 +2073,13 @@ func TestCostakingSlashingAndUnbondAll(t *testing.T) {
 
 	// verify that the costaker still has the amount of the first baby delegation
 	d.CheckCostakerRewards(delegator.Address(), delegateAmtValA, zeroInt, zeroInt, currRwd.Period)
+
+	// d.TxUnjailValidator(delSelfDelegation.SenderInfo, valBAddr.String())
+
+	// d.GenerateNewBlockAssertExecutionSuccess()
+	// d.ProgressTillFirstBlockTheNextEpoch()
+
+	// valBState, err = stkK.GetValidator(d.Ctx(), valBAddr)
+	// require.NoError(t, err)
+	// require.True(t, valBState.IsBonded())
 }
