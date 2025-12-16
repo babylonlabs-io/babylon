@@ -5,7 +5,7 @@ module github.com/babylonlabs-io/babylon/v4
 require (
 	github.com/CosmWasm/wasmd v0.60.2
 	github.com/btcsuite/btcd v0.24.2
-	github.com/cometbft/cometbft v0.38.19
+	github.com/cometbft/cometbft v0.38.20
 	github.com/cometbft/cometbft-db v0.15.0
 	github.com/cosmos/cosmos-sdk v0.53.4
 	github.com/cosmos/ibc-go/modules/light-clients/08-wasm/v10 v10.3.0
