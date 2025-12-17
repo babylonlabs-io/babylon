@@ -175,7 +175,7 @@ func assertZeroCostkTracker(t *testing.T, ctx context.Context, costkK costkkeepe
 	require.True(t, trk.TotalScore.IsZero(), "Active score should be zero", trk.TotalScore.String())
 }
 
-func isValidatorIncluded(valset []epochingtypes.Validator, valAddr sdk.ValAddress) bool {
+func isValidatorInValset(valset []epochingtypes.Validator, valAddr sdk.ValAddress) bool {
 	return FindValInValset(valset, valAddr) != nil
 }
 
@@ -203,4 +203,31 @@ func assertActiveBabyWithinRange(t *testing.T, expected, actual sdkmath.Int, tol
 	maxDiff := sdkmath.NewInt(tolerance)
 	require.True(t, diff.LTE(maxDiff), "ActiveBaby difference exceeds tolerance: expected %s ± %d, got %s (diff: %s). %v",
 		expected.String(), tolerance, actual.String(), diff.String(), msgAndArgs)
+}
+
+func (d *BabylonAppDriver) IsValsInCurrActiveValset(expLenValset int, valAddrs ...sdk.ValAddress) {
+	epochK := d.App.EpochingKeeper
+	epoch := epochK.GetEpoch(d.Ctx())
+	valset := epochK.GetValidatorSet(d.Ctx(), epoch.EpochNumber)
+	require.Lenf(d.t, valset, expLenValset, "expected %d validators in active set", expLenValset)
+
+	for _, valAddr := range valAddrs {
+		val := FindValInValset(valset, valAddr)
+		require.NotNil(d.t, val)
+	}
+}
+
+// JailValidatorForDowntime returns the validator if the validator indeed got jailed
+func (d *BabylonAppDriver) JailValidatorForDowntime(val sdk.ValAddress) *stktypes.Validator {
+	stkK := d.App.StakingKeeper
+	for i := 0; i < 1000; i++ { // it should get jailed before that
+		d.GenerateNewBlockAssertExecutionSuccess()
+		val, err := stkK.GetValidator(d.Ctx(), val)
+		require.NoError(d.t, err)
+
+		if val.IsJailed() {
+			return &val
+		}
+	}
+	return nil
 }

@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"fmt"
 
 	"cosmossdk.io/math"
 	"github.com/babylonlabs-io/babylon/v4/x/costaking/types"
@@ -60,6 +61,11 @@ func (h HookStaking) AfterDelegationModified(ctx context.Context, delAddr sdk.Ac
 		// NOTE: once the validator is slashed, the 1:1 ratio between tokens and shares is broken
 		deltaShares := del.Shares.Sub(infoBefore.Shares)
 		h.k.stkCache.AddDeltaShares(valAddr, delAddr, deltaShares)
+		fmt.Println(">>> BeforeDelegationModified: val IsSlashed true", delAddr.String(), valAddr.String())
+		fmt.Println(">>> BeforeDelegationModified: delTokenChange:", delTokenChange.String())
+		fmt.Println(">>> BeforeDelegationModified: del.Shares:", del.Shares)
+		fmt.Println(">>> BeforeDelegationModified: deltaShares:", deltaShares)
+		fmt.Println("--------------------------------")
 		return nil
 	}
 
@@ -100,6 +106,10 @@ func (h HookStaking) BeforeDelegationRemoved(ctx context.Context, delAddr sdk.Ac
 	if valInfo.IsSlashed {
 		delTokenChange = info.Shares.MulInt(valInfo.OriginalTokens).Quo(valInfo.OriginalShares).TruncateInt()
 	}
+	fmt.Println(">>> BeforeDelegationRemoved: IsSlashed", valInfo.IsSlashed, delAddr.String(), valAddr.String())
+	fmt.Println(">>> BeforeDelegationRemoved: info.Shares:", info.Shares.String(), "valInfo.OriginalTokens:", valInfo.OriginalTokens.String(), "valInfo.OriginalShares:", valInfo.OriginalShares.String())
+	fmt.Println(">>> BeforeDelegationRemoved: delTokenChange (original ratio): -", delTokenChange.String())
+	fmt.Println("--------------------------------")
 
 	return h.k.costakerModified(ctx, delAddr, func(rwdTracker *types.CostakerRewardsTracker) {
 		rwdTracker.ActiveBaby = rwdTracker.ActiveBaby.Sub(delTokenChange)

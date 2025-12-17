@@ -208,7 +208,9 @@ func NewBabylonAppDriver(
 	blsSigner, err := appsigner.InitBlsSigner(chain.Nodes[0].ConfigDir)
 	require.NoError(t, err)
 	require.NotNil(t, blsSigner)
-	signerValAddress := sdk.ValAddress(chain.Nodes[0].PublicAddress)
+
+	valAccAddr := sdk.MustAccAddressFromBech32(chain.Nodes[0].PublicAddress)
+	signerValAddress := sdk.ValAddress(valAccAddr)
 	require.NoError(t, err)
 
 	appOptions := NewAppOptionsWithFlagHome(chain.Nodes[0].ConfigDir)

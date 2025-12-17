@@ -150,6 +150,10 @@ func (h HookEpoching) updateCoStkTrackerForDelegators(
 		// Get delegation tokens using truncated division to avoid precision loss
 		delTokens := val.TokensFromShares(remainingShares)
 
+		fmt.Println(">>> updateCoStkTrackerForDelegators: val IsSlashed true", delAddr.String(), valAddr.String())
+		fmt.Println(">>> updateCoStkTrackerForDelegators: delTokenChange:", delTokens.TruncateInt().String())
+		fmt.Println("--------------------------------")
+
 		// Update ActiveBaby using the provided update function
 		if err := h.k.costakerModified(ctx, delAddr, func(rwdTracker *types.CostakerRewardsTracker) {
 			updateFn(rwdTracker, delTokens.TruncateInt())
@@ -191,6 +195,9 @@ func (h HookEpoching) removeBabyForDelegators(ctx context.Context, valInfo types
 		val.DelegatorShares = valInfo.OriginalShares
 	}
 	return h.updateCoStkTrackerForDelegators(ctx, val, func(rwdTracker *types.CostakerRewardsTracker, amount math.Int) {
+		fmt.Println(">>> removeBabyForDelegators: val removed from valset, slashed", val.OperatorAddress, valInfo.IsSlashed)
+		fmt.Println(">>> removeBabyForDelegators: amt:", amount.String())
+		fmt.Println("--------------------------------")
 		rwdTracker.ActiveBaby = rwdTracker.ActiveBaby.Sub(amount)
 	})
 }

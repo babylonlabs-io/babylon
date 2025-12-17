@@ -1142,8 +1142,8 @@ func TestBabyCoStaking(t *testing.T) {
 	epoch := epochK.GetEpoch(d.Ctx())
 	valset := epochK.GetValidatorSet(d.Ctx(), epoch.EpochNumber)
 	require.Len(t, valset, maxVals)
-	require.True(t, isValidatorIncluded(valset, sdk.MustValAddressFromBech32(val2.OperatorAddress)), "New validator should be in the validator set")
-	require.True(t, isValidatorIncluded(valset, sdk.MustValAddressFromBech32(val5.OperatorAddress)), "New validator should be in the validator set")
+	require.True(t, isValidatorInValset(valset, sdk.MustValAddressFromBech32(val2.OperatorAddress)), "New validator should be in the validator set")
+	require.True(t, isValidatorInValset(valset, sdk.MustValAddressFromBech32(val5.OperatorAddress)), "New validator should be in the validator set")
 
 	// new validators should have a costaker tracker created with the self delegation
 	val2Tracker, err := costkK.GetCostakerRewards(d.Ctx(), val2Oper.Address())
@@ -1227,9 +1227,9 @@ func TestBabyCoStaking(t *testing.T) {
 	epoch = epochK.GetEpoch(d.Ctx())
 	valset = epochK.GetValidatorSet(d.Ctx(), epoch.EpochNumber)
 	require.Len(t, valset, maxVals)
-	require.True(t, isValidatorIncluded(valset, sdk.MustValAddressFromBech32(val2.OperatorAddress)), "Validator 2 should be in the validator set")
-	require.True(t, isValidatorIncluded(valset, sdk.MustValAddressFromBech32(val4.OperatorAddress)), "Validator 4 should be in the validator set")
-	require.False(t, isValidatorIncluded(valset, sdk.MustValAddressFromBech32(val5.OperatorAddress)), "Validator 5 should not be in the validator set")
+	require.True(t, isValidatorInValset(valset, sdk.MustValAddressFromBech32(val2.OperatorAddress)), "Validator 2 should be in the validator set")
+	require.True(t, isValidatorInValset(valset, sdk.MustValAddressFromBech32(val4.OperatorAddress)), "Validator 4 should be in the validator set")
+	require.False(t, isValidatorInValset(valset, sdk.MustValAddressFromBech32(val5.OperatorAddress)), "Validator 5 should not be in the validator set")
 
 	// Check that val5 co-staker tracker is zeroed
 	assertZeroCostkTracker(d.t, d.Ctx(), costkK, val5Oper.Address())
@@ -1271,7 +1271,7 @@ func TestBabyCoStaking(t *testing.T) {
 			val6, err := stkK.GetValidator(d.Ctx(), val6ValAddr)
 			require.NoError(t, err)
 			require.Equal(t, stktypes.Bonded, val6.Status, "Validator 6 should be in Bonded status")
-			require.True(t, isValidatorIncluded(valset, val6ValAddr), "Validator 6 should be in the validator set")
+			require.True(t, isValidatorInValset(valset, val6ValAddr), "Validator 6 should be in the validator set")
 			// redelegate to val6
 			d.TxWrappedBeginRedelegate(del7.SenderInfo, val2.OperatorAddress, val6ValAddr.String(), del7BabyDelegatedAmt)
 		}
@@ -1285,7 +1285,7 @@ func TestBabyCoStaking(t *testing.T) {
 			valset := epochK.GetValidatorSet(d.Ctx(), epoch.EpochNumber)
 			// check that jailed validator is still on epoch validator set
 			require.Len(t, valset, maxVals, "Jailed validator should still be in the validator set")
-			require.True(t, isValidatorIncluded(valset, val2ValAddr), "Jailed validator should not be in the validator set")
+			require.True(t, isValidatorInValset(valset, val2ValAddr), "Jailed validator should not be in the validator set")
 		}
 	}
 
@@ -1377,8 +1377,8 @@ func TestBabyCoStaking(t *testing.T) {
 	valset = epochK.GetValidatorSet(d.Ctx(), epoch.EpochNumber)
 	// check that jailed validator is still on epoch validator set
 	require.Len(t, valset, maxVals, "Jailed validator should not be in the validator set")
-	require.False(t, isValidatorIncluded(valset, val2ValAddr), "Jailed validator should not be in the validator set")
-	require.False(t, isValidatorIncluded(valset, val6ValAddr), "validator 6 should not be in the validator set")
+	require.False(t, isValidatorInValset(valset, val2ValAddr), "Jailed validator should not be in the validator set")
+	require.False(t, isValidatorInValset(valset, val6ValAddr), "validator 6 should not be in the validator set")
 
 	// check delegation was created
 	del, err := stkK.GetDelegation(d.Ctx(), del2.Address(), val2ValAddr)
@@ -1432,7 +1432,7 @@ func TestBabyCoStaking(t *testing.T) {
 	epoch = epochK.GetEpoch(d.Ctx())
 	valset = epochK.GetValidatorSet(d.Ctx(), epoch.EpochNumber)
 	require.Len(t, valset, 3)
-	require.False(t, isValidatorIncluded(valset, val2ValAddr), "jailed validator should not be in the validator set")
+	require.False(t, isValidatorInValset(valset, val2ValAddr), "jailed validator should not be in the validator set")
 
 	// check costk tracker is still zero
 	assertZeroCostkTracker(d.t, d.Ctx(), costkK, del3.Address())
@@ -1465,7 +1465,7 @@ func TestBabyCoStaking(t *testing.T) {
 	epoch = epochK.GetEpoch(d.Ctx())
 	valset = epochK.GetValidatorSet(d.Ctx(), epoch.EpochNumber)
 	require.Len(t, valset, 2, "Unjailed validator should be in the validator set")
-	require.True(t, isValidatorIncluded(valset, val2ValAddr), "Unjailed validator should be in the validator set")
+	require.True(t, isValidatorInValset(valset, val2ValAddr), "Unjailed validator should be in the validator set")
 
 	// Check the active baby is properly set back for delegations to this validator
 	// NOTE: Consider that the ones that were slashed will be less than the original staking amount
@@ -1881,8 +1881,8 @@ func TestCostakingSlashedSteal(t *testing.T) {
 	epoch := epochK.GetEpoch(d.Ctx())
 	valset := epochK.GetValidatorSet(d.Ctx(), epoch.EpochNumber)
 	require.Len(t, valset, 2, "expected 2 validators in active set")
-	require.True(t, isValidatorIncluded(valset, valAAddr), "validator A should be in active set")
-	require.True(t, isValidatorIncluded(valset, valBAddr), "validator B should be in active set")
+	require.True(t, isValidatorInValset(valset, valAAddr), "validator A should be in active set")
+	require.True(t, isValidatorInValset(valset, valBAddr), "validator B should be in active set")
 
 	// Slash validator B.
 	// This changes the token/share ratio (costaking marks IsSlashed=true) while keeping B in the active set.
@@ -1975,11 +1975,11 @@ func TestCostakingSlashingAndUnbondAll(t *testing.T) {
 	valA := validators[0]
 	valAAddr := sdk.MustValAddressFromBech32(valA.OperatorAddress)
 
-	// Delegates to validator A
 	dels := d.CreateNStakerAccounts(2)
 	delegator := dels[0]
 	delSelfDelegation := dels[1]
 
+	// Delegates to validator A
 	delegateAmtValA := sdkmath.NewInt(20_000000)
 	d.TxWrappedDelegate(delegator.SenderInfo, valAAddr.String(), delegateAmtValA)
 	d.GenerateNewBlockAssertExecutionSuccess()
@@ -1992,8 +1992,7 @@ func TestCostakingSlashingAndUnbondAll(t *testing.T) {
 	// Allow 2 validators in the active set so the new validator (B) can enter.
 	d.StakingUpdateParams(2)
 
-	valBSelfAmt := sdkmath.NewInt(10_000000)
-	d.TxCreateValidator(delSelfDelegation.SenderInfo, valBSelfAmt)
+	d.TxCreateValidator(delSelfDelegation.SenderInfo, sdkmath.NewInt(10_000000))
 	d.GenerateNewBlockAssertExecutionSuccess()
 	d.ProgressTillFirstBlockTheNextEpoch()
 
@@ -2002,14 +2001,10 @@ func TestCostakingSlashingAndUnbondAll(t *testing.T) {
 	require.Len(t, validators, 2)
 
 	valBAddr := sdk.ValAddress(delSelfDelegation.Address())
-	valB := FindValInValidators(validators, valAAddr)
+	valB := FindValInValidators(validators, valBAddr)
 	require.True(t, valB.IsBonded())
 
-	epoch := epochK.GetEpoch(d.Ctx())
-	valset := epochK.GetValidatorSet(d.Ctx(), epoch.EpochNumber)
-	require.Len(t, valset, 2, "expected 2 validators in active set")
-	require.True(t, isValidatorIncluded(valset, valAAddr), "validator A should be in active set")
-	require.True(t, isValidatorIncluded(valset, valBAddr), "validator B should be in active set")
+	d.IsValsInCurrActiveValset(2, valAAddr, valBAddr)
 
 	// delegates to new val B
 	delegateAmtValB := sdkmath.NewInt(3_000000)
@@ -2020,26 +2015,14 @@ func TestCostakingSlashingAndUnbondAll(t *testing.T) {
 	amtValAPlusB := delegateAmtValA.Add(delegateAmtValB) // 20 + 3
 	d.CheckCostakerRewards(delegator.Address(), amtValAPlusB, zeroInt, zeroInt, currRwd.Period)
 
-	for i := 0; i < 1000; i++ { // it should get jailed before
-		d.GenerateNewBlockAssertExecutionSuccess()
-		val, err := stkK.GetValidator(d.Ctx(), valBAddr)
-		require.NoError(t, err)
+	d.JailValidatorForDowntime(valBAddr)
 
-		if val.IsJailed() {
-			break
-		}
-	}
-	// validator got jailed and jailing is also an slash offence
-	// creates an baby delegation to it and costaking will not apply that as the val is jailed
-	delegateAmtValB2 := sdkmath.NewInt(1_500000)
-	d.TxWrappedDelegate(delegator.SenderInfo, valBAddr.String(), delegateAmtValB2)
-	d.GenerateNewBlockAssertExecutionSuccess()
-	d.ProgressTillFirstBlockTheNextEpoch()
+	// B is still in the active set, will be removed at the end of the epoch
+	d.IsValsInCurrActiveValset(2, valAAddr, valBAddr)
 
-	// now the only validator active is Val A, so the amount that counts is A
-	d.CheckCostakerRewards(delegator.Address(), delegateAmtValA, zeroInt, zeroInt, currRwd.Period)
+	// still 20+3
+	d.CheckCostakerRewards(delegator.Address(), amtValAPlusB, zeroInt, zeroInt, currRwd.Period)
 
-	// if an full unbond happens it breaks costaking
 	delBDelegation, err := stkK.GetDelegation(d.Ctx(), delegator.Address(), valBAddr)
 	require.NoError(t, err)
 
@@ -2048,38 +2031,158 @@ func TestCostakingSlashingAndUnbondAll(t *testing.T) {
 	unbondAmt := valBState.TokensFromShares(delBDelegation.Shares).TruncateInt()
 	require.True(t, unbondAmt.IsPositive(), "expected positive unbond amount for B delegation")
 
-	// calculates the slashed portion of the delegation that was done prior to slash infraction
-	// and adds the portion which was delegated after the slash
+	// confirm the slashed portion
 	slashP, err := slashK.GetParams(d.Ctx())
 	require.NoError(t, err)
 	decDelegateAmtValB := delegateAmtValB.ToLegacyDec()
 	slashedPortion := decDelegateAmtValB.Mul(slashP.SlashFractionDowntime)
-
 	amtValBDel1AfterSlash := decDelegateAmtValB.Sub(slashedPortion).TruncateInt()
-	require.Equal(t, unbondAmt.String(), amtValBDel1AfterSlash.Add(delegateAmtValB2).String(), "The delegateAmtValB that was delegated prior to jailing slash offence gets slashed")
+	require.Equal(t, unbondAmt.String(), amtValBDel1AfterSlash.String(), "The delegateAmtValB that was delegated prior to jailing slash offence gets slashed")
 
-	// now it unbonds everything from val B (2 + 1.5)
+	// PoC
+	// Trigger Hook BeforeDelegationRemoved
+	// Reset, no delegation tokens after this
 	d.TxWrappedUndelegate(delegator.SenderInfo, valBAddr.String(), unbondAmt)
 	d.GenerateNewBlockAssertExecutionSuccess()
+
+	delegateAmtValB2 := sdkmath.NewInt(2_000000)
+	// Trigger Hook AfterDelegationModified
+	// New delegation, increase delta shares
+	d.TxWrappedDelegate(delegator.SenderInfo, valBAddr.String(), delegateAmtValB2)
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	// Trigger Hook BeforeDelegationRemoved
+	// Trigger the **misaccounting of the ActiveBaby**, steal from A
+	d.TxWrappedUndelegate(delegator.SenderInfo, valBAddr.String(), delegateAmtValB2)
+	d.GenerateNewBlockAssertExecutionSuccess()
+	// ends the epoch and causes the misscalc
 	d.ProgressTillFirstBlockTheNextEpoch()
 
-	_, err = stkK.GetDelegation(d.Ctx(), delegator.Address(), valBAddr)
+	// Delegation to B is removed
+	delBDelegation, err = stkK.GetDelegation(d.Ctx(), delegator.Address(), valBAddr)
 	require.EqualError(t, err, "no delegation for (address, validator) tuple")
 
+	// Validator B is removed from the active set
+	epoch := epochK.GetEpoch(d.Ctx())
+	valset := epochK.GetValidatorSet(d.Ctx(), epoch.EpochNumber)
+	require.Len(t, valset, 1, "expected only A validator in active set")
+	require.True(t, isValidatorInValset(valset, valAAddr), "validator A should be in active set")
+	require.False(t, isValidatorInValset(valset, valBAddr), "validator B should not be in active set")
+
 	d.GenerateNewBlockAssertExecutionSuccess()
 	d.ProgressTillFirstBlockTheNextEpoch()
 	d.GenerateNewBlockAssertExecutionSuccess()
 	d.ProgressTillFirstBlockTheNextEpoch()
 
-	// verify that the costaker still has the amount of the first baby delegation
+	// verify that the costaker still??? has the amount of the first baby delegation
+	// This is all debugging code.
+	t.Logf("This part shows the bug where the amount staked from the valA got reduced from 20 -> 17.9")
+	t.Logf("Question is how do the amount gets deducted to 17979798 from 20000000")
+	t.Logf("The reason for the amount reduced is due to the second unbond: %s", delegateAmtValA.Sub(amtValBDel1AfterSlash).String())
+	t.Logf("ValA: %s", valAAddr.String())
+	t.Logf("ValB slashed: %s", valBAddr.String())
+	t.Logf("delegateAmtValA: %s", delegateAmtValA.String())
+	t.Logf("delegateAmtValBBeforeSlash: %s", delegateAmtValB.String())
+	t.Logf("delegateAmtValBAfterSlash: %s", amtValBDel1AfterSlash.String())
+	t.Logf("delegateAmtValB2: %s", delegateAmtValB2.String())
+	t.Logf("slashedPortion: %s", slashedPortion.TruncateInt().String())
+
+	// double checks that the delegation of validator A is still healthy
+	delADelegation, err := stkK.GetDelegation(d.Ctx(), delegator.Address(), valAAddr)
+	require.NoError(t, err)
+
+	valAState, err := stkK.GetValidator(d.Ctx(), valAAddr)
+	require.NoError(t, err)
+	delegationAAmt := valAState.TokensFromShares(delADelegation.Shares).TruncateInt()
+	require.Equal(t, delegationAAmt.String(), delegateAmtValA.String())
+
+	// This check fails and shows the bug where the second full unbond of an slashed baby validator can cause the issue
 	d.CheckCostakerRewards(delegator.Address(), delegateAmtValA, zeroInt, zeroInt, currRwd.Period)
+}
 
-	// d.TxUnjailValidator(delSelfDelegation.SenderInfo, valBAddr.String())
+func TestCostakingSlashingAndUnbondSameEpoch(t *testing.T) {
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	d := NewBabylonAppDriverTmpDir(r, t)
+	d.GenerateNewBlockAssertExecutionSuccess()
 
-	// d.GenerateNewBlockAssertExecutionSuccess()
-	// d.ProgressTillFirstBlockTheNextEpoch()
+	// stkK, costkK, epochK, slashK := d.App.StakingKeeper, d.App.CostakingKeeper, d.App.EpochingKeeper, d.App.SlashingKeeper
+	stkK, _, _, slashK := d.App.StakingKeeper, d.App.CostakingKeeper, d.App.EpochingKeeper, d.App.SlashingKeeper
 
-	// valBState, err = stkK.GetValidator(d.Ctx(), valBAddr)
-	// require.NoError(t, err)
-	// require.True(t, valBState.IsBonded())
+	dels := d.CreateNStakerAccounts(2)
+	validatorStkAcc := dels[0]
+	valAddr := sdk.ValAddress(validatorStkAcc.Address())
+	delStkAcc := dels[1]
+
+	// start delegating to the first valid validator
+	delegateAmtToActiveVal := sdkmath.NewInt(20_000000)
+	d.TxWrappedDelegate(delStkAcc.SenderInfo, d.ValAddress.String(), delegateAmtToActiveVal)
+	d.GenerateNewBlockAssertExecutionSuccess()
+	d.ProgressTillFirstBlockTheNextEpoch()
+
+	// allows 2 vals
+	d.StakingUpdateParams(2)
+
+	// creates validator
+	d.TxCreateValidator(validatorStkAcc.SenderInfo, sdkmath.NewInt(10_000000))
+	d.GenerateNewBlockAssertExecutionSuccess()
+	d.ProgressTillFirstBlockTheNextEpoch()
+
+	_, err := stkK.GetValidator(d.Ctx(), valAddr)
+	require.NoError(t, err)
+
+	// Delegates to validator slashed
+	delegateAmtToSlashVal := sdkmath.NewInt(10_000000)
+	d.TxWrappedDelegate(delStkAcc.SenderInfo, valAddr.String(), delegateAmtToSlashVal)
+	d.GenerateNewBlockAssertExecutionSuccess()
+	d.ProgressTillFirstBlockTheNextEpoch()
+
+	currExpActiveBaby := delegateAmtToSlashVal.Add(delegateAmtToActiveVal)
+	d.CheckCostakerRewards(delStkAcc.Address(), currExpActiveBaby, zeroInt, zeroInt, 1)
+
+	d.JailValidatorForDowntime(valAddr)
+
+	// There is 2 vals and the new added val is in the current epoch valset
+	d.IsValsInCurrActiveValset(2, valAddr)
+	// jails the validator (slash infraction)
+	val := d.JailValidatorForDowntime(valAddr)
+	// and continues in the active valset until end of epoch
+	d.IsValsInCurrActiveValset(2, valAddr)
+
+	d.CheckCostakerRewards(delStkAcc.Address(), currExpActiveBaby, zeroInt, zeroInt, 1)
+
+	del, err := stkK.GetDelegation(d.Ctx(), delStkAcc.Address(), valAddr)
+	require.NoError(t, err)
+
+	slashP, err := slashK.GetParams(d.Ctx())
+	require.NoError(t, err)
+
+	// checks the amount after slash is less than it was before
+	fullUbdAmt := val.TokensFromShares(del.Shares).TruncateInt()
+
+	legacyDecDelegateAmt := delegateAmtToSlashVal.ToLegacyDec()
+	slashedPortion := legacyDecDelegateAmt.Mul(slashP.SlashFractionDowntime)
+	delegatAmtAfterSlash := legacyDecDelegateAmt.Sub(slashedPortion).TruncateInt()
+	require.Equal(t, fullUbdAmt.String(), delegatAmtAfterSlash.String())
+	require.True(t, delegatAmtAfterSlash.LT(delegateAmtToSlashVal))
+
+	// we are still in the same epoch that the val was jailed
+	d.TxWrappedUndelegate(delStkAcc.SenderInfo, valAddr.String(), fullUbdAmt)
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	delAmt2 := sdkmath.NewInt(2_000000)
+	// Trigger Hook AfterDelegationModified
+	// New delegation, increase delta shares
+	d.TxWrappedDelegate(delStkAcc.SenderInfo, valAddr.String(), delAmt2)
+	d.GenerateNewBlockAssertExecutionSuccess()
+
+	// Trigger Hook BeforeDelegationRemoved
+	// Trigger the **misaccounting of the ActiveBaby**, steal from A
+	d.TxWrappedUndelegate(delStkAcc.SenderInfo, valAddr.String(), delAmt2)
+	d.GenerateNewBlockAssertExecutionSuccess()
+	// ends the epoch and causes the misscalc
+	d.ProgressTillFirstBlockTheNextEpoch()
+
+	// This show the bug where it reduced the amount from the delegation where the validator was active
+	// instead of just removing the assets from the slashed delegation.
+	d.CheckCostakerRewards(delStkAcc.Address(), currExpActiveBaby, zeroInt, zeroInt, 1)
 }
