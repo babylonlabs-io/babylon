@@ -2181,6 +2181,16 @@ func TestCostakingSlashingAndUnbondSameEpoch(t *testing.T) {
 	d.GenerateNewBlockAssertExecutionSuccess()
 	// ends the epoch and causes the misscalc
 	d.ProgressTillFirstBlockTheNextEpoch()
+	d.GenerateNewBlockAssertExecutionSuccess()
+	currExpActiveBaby = delegateAmtToActiveVal
+
+	// freeze of funds (it doesn't fully unbond from the active and healthy validator)
+	d.TxWrappedUndelegate(delStkAcc.SenderInfo, d.ValAddress.String(), delegateAmtToActiveVal)
+	d.GenerateNewBlockAssertExecutionSuccess()
+	d.ProgressTillFirstBlockTheNextEpoch()
+	healthyDel, err := stkK.GetDelegation(d.Ctx(), delStkAcc.Address(), d.ValAddress)
+	require.NoError(t, err)
+	require.NotNil(t, healthyDel, "should be nil and unbonded")
 
 	// This show the bug where it reduced the amount from the delegation where the validator was active
 	// instead of just removing the assets from the slashed delegation.
