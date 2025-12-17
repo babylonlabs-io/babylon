@@ -205,7 +205,7 @@ func assertActiveBabyWithinRange(t *testing.T, expected, actual sdkmath.Int, tol
 		expected.String(), tolerance, actual.String(), diff.String(), msgAndArgs)
 }
 
-func (d *BabylonAppDriver) IsValsInCurrActiveValset(expLenValset int, valAddrs ...sdk.ValAddress) {
+func (d *BabylonAppDriver) IsValsInCurrActiveValset(expLenValset int, valAddrs ...sdk.ValAddress) epochingtypes.ValidatorSet {
 	epochK := d.App.EpochingKeeper
 	epoch := epochK.GetEpoch(d.Ctx())
 	valset := epochK.GetValidatorSet(d.Ctx(), epoch.EpochNumber)
@@ -215,6 +215,7 @@ func (d *BabylonAppDriver) IsValsInCurrActiveValset(expLenValset int, valAddrs .
 		val := FindValInValset(valset, valAddr)
 		require.NotNil(d.t, val)
 	}
+	return valset
 }
 
 // JailValidatorForDowntime returns the validator if the validator indeed got jailed

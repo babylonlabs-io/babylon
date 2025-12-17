@@ -31,7 +31,7 @@ type HookStaking struct {
 func (h HookStaking) AfterDelegationModified(ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) error {
 	defer h.k.stkCache.Delete(delAddr, valAddr)
 	// Check if validator is in the active set
-	active, valInfo, err := h.isActiveValidator(ctx, valAddr)
+	active, _, err := h.isActiveValidator(ctx, valAddr)
 	if err != nil {
 		return err
 	}
@@ -53,22 +53,8 @@ func (h HookStaking) AfterDelegationModified(ctx context.Context, delAddr sdk.Ac
 	infoBefore := h.k.stkCache.GetStakedInfo(delAddr, valAddr)
 	delTokenChange := delTokens.Sub(infoBefore.Amount).TruncateInt()
 
-	// if validator is jailed/slashed, don't update the costaker tracker
-	// but keep track of the delta shares (due to unstaking/redelegating/restaking) to remove the remaining shares
-	// when updating the validator's delegators co-staking trackers
-	if valInfo.IsSlashed {
-		// cache the delta shares for future use
-		// NOTE: once the validator is slashed, the 1:1 ratio between tokens and shares is broken
-		deltaShares := del.Shares.Sub(infoBefore.Shares)
-		h.k.stkCache.AddDeltaShares(valAddr, delAddr, deltaShares)
-		fmt.Println(">>> BeforeDelegationModified: val IsSlashed true", delAddr.String(), valAddr.String())
-		fmt.Println(">>> BeforeDelegationModified: delTokenChange:", delTokenChange.String())
-		fmt.Println(">>> BeforeDelegationModified: del.Shares:", del.Shares)
-		fmt.Println(">>> BeforeDelegationModified: deltaShares:", deltaShares)
-		fmt.Println("--------------------------------")
-		return nil
-	}
-
+	// Always update ActiveBaby if validator is in active set
+	// (removed the IsSlashed check - slashing is now handled in BeforeValidatorSlashed)
 	return h.k.costakerModified(ctx, delAddr, func(rwdTracker *types.CostakerRewardsTracker) {
 		rwdTracker.ActiveBaby = rwdTracker.ActiveBaby.Add(delTokenChange)
 	})
@@ -85,7 +71,7 @@ func (h HookStaking) BeforeDelegationRemoved(ctx context.Context, delAddr sdk.Ac
 	defer h.k.stkCache.Delete(delAddr, valAddr)
 
 	// Check if validator is in the active set
-	active, valInfo, err := h.isActiveValidator(ctx, valAddr)
+	active, _, err := h.isActiveValidator(ctx, valAddr)
 	if err != nil {
 		return err
 	}
@@ -100,17 +86,8 @@ func (h HookStaking) BeforeDelegationRemoved(ctx context.Context, delAddr sdk.Ac
 		return nil
 	}
 
-	// if validator is jailed/slashed, update the costaker tracker
-	// but we need to correct here the tokens to be removed to from the co-staking tracker
-	// which is the amount of tokens before slashing
-	if valInfo.IsSlashed {
-		delTokenChange = info.Shares.MulInt(valInfo.OriginalTokens).Quo(valInfo.OriginalShares).TruncateInt()
-	}
-	fmt.Println(">>> BeforeDelegationRemoved: IsSlashed", valInfo.IsSlashed, delAddr.String(), valAddr.String())
-	fmt.Println(">>> BeforeDelegationRemoved: info.Shares:", info.Shares.String(), "valInfo.OriginalTokens:", valInfo.OriginalTokens.String(), "valInfo.OriginalShares:", valInfo.OriginalShares.String())
-	fmt.Println(">>> BeforeDelegationRemoved: delTokenChange (original ratio): -", delTokenChange.String())
-	fmt.Println("--------------------------------")
-
+	// Always subtract from ActiveBaby if validator is in active set
+	// (removed all delta shares logic - slashing is now handled in BeforeValidatorSlashed)
 	return h.k.costakerModified(ctx, delAddr, func(rwdTracker *types.CostakerRewardsTracker) {
 		rwdTracker.ActiveBaby = rwdTracker.ActiveBaby.Sub(delTokenChange)
 	})
@@ -128,6 +105,8 @@ func (h HookStaking) BeforeDelegationSharesModified(ctx context.Context, delAddr
 	if err != nil {
 		return err
 	}
+	fmt.Println(">>> BeforeDelegationSharesModified: val removed from valset, active", valAddr.String(), delAddr.String(), active)
+
 	if !active {
 		// Validator not in active set, skip processing
 		return nil
@@ -144,6 +123,10 @@ func (h HookStaking) BeforeDelegationSharesModified(ctx context.Context, delAddr
 	if err != nil {
 		return err
 	}
+	fmt.Println(">>> BeforeDelegationSharesModified: delShares:", del.Shares.String())
+	fmt.Println(">>> BeforeDelegationSharesModified: delTokens:", delTokens.String())
+	fmt.Println("--------------------------------")
+
 	h.k.stkCache.SetStakedInfo(delAddr, valAddr, delTokens, del.Shares)
 	return nil
 }
@@ -184,7 +167,55 @@ func (h HookStaking) BeforeValidatorModified(ctx context.Context, valAddr sdk.Va
 }
 
 // BeforeValidatorSlashed implements types.StakingHooks.
+// It reduces the ActiveBaby amount for all delegators by the slash fraction
 func (h HookStaking) BeforeValidatorSlashed(ctx context.Context, valAddr sdk.ValAddress, fraction math.LegacyDec) error {
+	// Check if validator is in the active set
+	active, _, err := h.isActiveValidator(ctx, valAddr)
+	if err != nil {
+		return err
+	}
+	if !active {
+		// Validator not in active set, no ActiveBaby to reduce
+		return nil
+	}
+
+	// Get all delegations to this validator
+	delegations, err := h.k.stkK.GetValidatorDelegations(ctx, valAddr)
+	if err != nil {
+		return err
+	}
+
+	// For each delegator, reduce their ActiveBaby by the slash fraction
+	for _, del := range delegations {
+		delAddr := sdk.MustAccAddressFromBech32(del.DelegatorAddress)
+
+		// Get validator to calculate delegation tokens from shares
+		val, err := h.k.stkK.GetValidator(ctx, valAddr)
+		if err != nil {
+			return err
+		}
+
+		// Calculate delegation tokens (before slash)
+		delTokens := val.TokensFromShares(del.Shares).TruncateInt()
+
+		// Calculate the amount to slash from ActiveBaby
+		slashAmount := fraction.MulInt(delTokens).TruncateInt()
+
+		// Reduce ActiveBaby by the slash amount
+		if err := h.k.costakerModified(ctx, delAddr, func(rwdTracker *types.CostakerRewardsTracker) {
+			rwdTracker.ActiveBaby = rwdTracker.ActiveBaby.Sub(slashAmount)
+		}); err != nil {
+			h.k.Logger(ctx).Error(
+				"failed to reduce ActiveBaby for slashed validator",
+				"delegator", delAddr.String(),
+				"validator", valAddr.String(),
+				"slash_amount", slashAmount.String(),
+				"error", err,
+			)
+			return err
+		}
+	}
+
 	return nil
 }
 

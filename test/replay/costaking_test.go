@@ -1835,12 +1835,11 @@ func TestCostakingFpBecomesActiveAndBtcUnbondSameBlockKeepsActiveSatsZero(t *tes
 
 func TestCostakingSlashedSteal(t *testing.T) {
 	t.Parallel()
-
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	d := NewBabylonAppDriverTmpDir(r, t)
 	d.GenerateNewBlockAssertExecutionSuccess()
 
-	stkK, costkK, epochK := d.App.StakingKeeper, d.App.CostakingKeeper, d.App.EpochingKeeper
+	stkK, costkK := d.App.StakingKeeper, d.App.CostakingKeeper
 
 	// Allow 2 validators in the active set so the new validator (B) can enter.
 	d.StakingUpdateParams(2)
@@ -1868,7 +1867,6 @@ func TestCostakingSlashedSteal(t *testing.T) {
 	d.CheckCostakerRewards(delegator.Address(), delAmtValA, zeroInt, zeroInt, currRwd.Period)
 
 	// Validator B: create and ensure it is in the active set
-	d.MintNativeTo(selfDelValB.Address(), 1000_000000)
 	d.TxCreateValidator(selfDelValB.SenderInfo, sdkmath.NewInt(3_000000))
 	d.GenerateNewBlockAssertExecutionSuccess()
 	d.ProgressTillFirstBlockTheNextEpoch()
@@ -1878,11 +1876,7 @@ func TestCostakingSlashedSteal(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, stktypes.Bonded, valB.Status, "validator B should be bonded")
 
-	epoch := epochK.GetEpoch(d.Ctx())
-	valset := epochK.GetValidatorSet(d.Ctx(), epoch.EpochNumber)
-	require.Len(t, valset, 2, "expected 2 validators in active set")
-	require.True(t, isValidatorInValset(valset, valAAddr), "validator A should be in active set")
-	require.True(t, isValidatorInValset(valset, valBAddr), "validator B should be in active set")
+	valset := d.IsValsInCurrActiveValset(2, valAAddr, valBAddr)
 
 	// Slash validator B.
 	// This changes the token/share ratio (costaking marks IsSlashed=true) while keeping B in the active set.
@@ -1946,19 +1940,23 @@ func TestCostakingSlashedSteal(t *testing.T) {
 	d.GenerateNewBlockAssertExecutionSuccess()
 	d.ProgressTillFirstBlockTheNextEpoch()
 
-	// BUG REPRODUCER: ActiveBaby should equal A-only delegation, but is reduced (steals from A).
+	// AFTER FIX: ActiveBaby should equal A-only delegation (no steal from A).
 	trk, err := costkK.GetCostakerRewards(d.Ctx(), delegator.Address())
 	require.NoError(t, err)
 	activeBabyAfter := trk.ActiveBaby
 
-	// Output the before/after values for the PoC. Use `go test -v` to always show t.Logf output.
-	t.Logf("PoC ActiveBaby before B delegate/undelegate: %s", activeBabyBefore.String())
-	t.Logf("PoC ActiveBaby after B delegate/undelegate: %s", activeBabyAfter.String())
+	// Output the before/after values. Use `go test -v` to always show t.Logf output.
+	t.Logf("ActiveBaby before B delegate/undelegate: %s", activeBabyBefore.String())
+	t.Logf("ActiveBaby after B delegate/undelegate: %s", activeBabyAfter.String())
+	t.Logf("Expected ActiveBaby from A delegation: %s", expActiveBabyFromA.String())
 
-	require.False(t, trk.ActiveBaby.IsNegative(), "ActiveBaby should be non-negative in the X>=Y case")
-	require.True(t, trk.ActiveBaby.LT(expActiveBabyFromA),
-		"expected ActiveBaby to be incorrectly reduced below A-only amount (silent steal). got=%s want<%s",
-		trk.ActiveBaby.String(), expActiveBabyFromA.String(),
+	// After the fix: ActiveBaby should be unchanged (equal to A-only delegation)
+	// because the post-slash delegation to B was never added to ActiveBaby
+	// and therefore shouldn't be subtracted when undelegating
+	require.False(t, trk.ActiveBaby.IsNegative(), "ActiveBaby should be non-negative")
+	require.True(t, trk.ActiveBaby.Equal(activeBabyBefore),
+		"ActiveBaby should be unchanged after delegate/undelegate to slashed validator. got=%s want=%s",
+		trk.ActiveBaby.String(), activeBabyBefore.String(),
 	)
 	d.CheckCostakerRewards(delegator.Address(), delAmtValA, zeroInt, zeroInt, currRwd.Period)
 }
@@ -2020,9 +2018,6 @@ func TestCostakingSlashingAndUnbondAll(t *testing.T) {
 	// B is still in the active set, will be removed at the end of the epoch
 	d.IsValsInCurrActiveValset(2, valAAddr, valBAddr)
 
-	// still 20+3
-	d.CheckCostakerRewards(delegator.Address(), amtValAPlusB, zeroInt, zeroInt, currRwd.Period)
-
 	delBDelegation, err := stkK.GetDelegation(d.Ctx(), delegator.Address(), valBAddr)
 	require.NoError(t, err)
 
@@ -2039,26 +2034,32 @@ func TestCostakingSlashingAndUnbondAll(t *testing.T) {
 	amtValBDel1AfterSlash := decDelegateAmtValB.Sub(slashedPortion).TruncateInt()
 	require.Equal(t, unbondAmt.String(), amtValBDel1AfterSlash.String(), "The delegateAmtValB that was delegated prior to jailing slash offence gets slashed")
 
-	// PoC
-	// Trigger Hook BeforeDelegationRemoved
-	// Reset, no delegation tokens after this
+	t.Logf("slash fraction: %s", slashedPortion.String())
+	t.Logf("slash slashP.SlashFractionDowntime: %s", slashP.SlashFractionDowntime.String())
+
+	// After slashing: ActiveBaby = (ValA 20 BABY) + (Val B 3BABY - slashed (3 * 0.01) ≃ 0.03) = 22.97
+	// BeforeValidatorSlashed hook reduces ActiveBaby by the slash fraction
+	expectedActiveBabyAfterSlash := delegateAmtValA.Add(amtValBDel1AfterSlash)
+	d.CheckCostakerRewards(delegator.Address(), expectedActiveBabyAfterSlash, zeroInt, zeroInt, currRwd.Period)
+
+	// Undelegates all from ValB (it will only take effect after epoch ends)
 	d.TxWrappedUndelegate(delegator.SenderInfo, valBAddr.String(), unbondAmt)
 	d.GenerateNewBlockAssertExecutionSuccess()
 
+	// add and unbonds again before the epoch ends
 	delegateAmtValB2 := sdkmath.NewInt(2_000000)
-	// Trigger Hook AfterDelegationModified
-	// New delegation, increase delta shares
 	d.TxWrappedDelegate(delegator.SenderInfo, valBAddr.String(), delegateAmtValB2)
 	d.GenerateNewBlockAssertExecutionSuccess()
 
-	// Trigger Hook BeforeDelegationRemoved
-	// Trigger the **misaccounting of the ActiveBaby**, steal from A
 	d.TxWrappedUndelegate(delegator.SenderInfo, valBAddr.String(), delegateAmtValB2)
 	d.GenerateNewBlockAssertExecutionSuccess()
-	// ends the epoch and causes the misscalc
+	// reach end of epoch
 	d.ProgressTillFirstBlockTheNextEpoch()
 
-	// Delegation to B is removed
+	// check that amt staked to healthy ValA is still active
+	d.CheckCostakerRewards(delegator.Address(), delegateAmtValA, zeroInt, zeroInt, currRwd.Period)
+
+	// Delegation to B should be removed
 	delBDelegation, err = stkK.GetDelegation(d.Ctx(), delegator.Address(), valBAddr)
 	require.EqualError(t, err, "no delegation for (address, validator) tuple")
 
@@ -2073,19 +2074,6 @@ func TestCostakingSlashingAndUnbondAll(t *testing.T) {
 	d.ProgressTillFirstBlockTheNextEpoch()
 	d.GenerateNewBlockAssertExecutionSuccess()
 	d.ProgressTillFirstBlockTheNextEpoch()
-
-	// verify that the costaker still??? has the amount of the first baby delegation
-	// This is all debugging code.
-	t.Logf("This part shows the bug where the amount staked from the valA got reduced from 20 -> 17.9")
-	t.Logf("Question is how do the amount gets deducted to 17979798 from 20000000")
-	t.Logf("The reason for the amount reduced is due to the second unbond: %s", delegateAmtValA.Sub(amtValBDel1AfterSlash).String())
-	t.Logf("ValA: %s", valAAddr.String())
-	t.Logf("ValB slashed: %s", valBAddr.String())
-	t.Logf("delegateAmtValA: %s", delegateAmtValA.String())
-	t.Logf("delegateAmtValBBeforeSlash: %s", delegateAmtValB.String())
-	t.Logf("delegateAmtValBAfterSlash: %s", amtValBDel1AfterSlash.String())
-	t.Logf("delegateAmtValB2: %s", delegateAmtValB2.String())
-	t.Logf("slashedPortion: %s", slashedPortion.TruncateInt().String())
 
 	// double checks that the delegation of validator A is still healthy
 	delADelegation, err := stkK.GetDelegation(d.Ctx(), delegator.Address(), valAAddr)
@@ -2165,34 +2153,35 @@ func TestCostakingSlashingAndUnbondSameEpoch(t *testing.T) {
 	require.Equal(t, fullUbdAmt.String(), delegatAmtAfterSlash.String())
 	require.True(t, delegatAmtAfterSlash.LT(delegateAmtToSlashVal))
 
-	// we are still in the same epoch that the val was jailed
+	// we are still in the same epoch that the val was jailed and fully unbonding
 	d.TxWrappedUndelegate(delStkAcc.SenderInfo, valAddr.String(), fullUbdAmt)
 	d.GenerateNewBlockAssertExecutionSuccess()
 
+	// creates a new delegation and unbonds again
 	delAmt2 := sdkmath.NewInt(2_000000)
-	// Trigger Hook AfterDelegationModified
-	// New delegation, increase delta shares
 	d.TxWrappedDelegate(delStkAcc.SenderInfo, valAddr.String(), delAmt2)
 	d.GenerateNewBlockAssertExecutionSuccess()
 
-	// Trigger Hook BeforeDelegationRemoved
-	// Trigger the **misaccounting of the ActiveBaby**, steal from A
 	d.TxWrappedUndelegate(delStkAcc.SenderInfo, valAddr.String(), delAmt2)
 	d.GenerateNewBlockAssertExecutionSuccess()
-	// ends the epoch and causes the misscalc
+
+	// reach the end of epoch
 	d.ProgressTillFirstBlockTheNextEpoch()
 	d.GenerateNewBlockAssertExecutionSuccess()
 	currExpActiveBaby = delegateAmtToActiveVal
 
-	// freeze of funds (it doesn't fully unbond from the active and healthy validator)
+	// after unbonding all from the slashed validator it still has the active amount from healthy validator
+	d.CheckCostakerRewards(delStkAcc.Address(), currExpActiveBaby, zeroInt, zeroInt, 1)
+
+	// Should be able to fully unbond from the active and healthy validator
 	d.TxWrappedUndelegate(delStkAcc.SenderInfo, d.ValAddress.String(), delegateAmtToActiveVal)
 	d.GenerateNewBlockAssertExecutionSuccess()
 	d.ProgressTillFirstBlockTheNextEpoch()
-	healthyDel, err := stkK.GetDelegation(d.Ctx(), delStkAcc.Address(), d.ValAddress)
-	require.NoError(t, err)
-	require.NotNil(t, healthyDel, "should be nil and unbonded")
 
-	// This show the bug where it reduced the amount from the delegation where the validator was active
-	// instead of just removing the assets from the slashed delegation.
-	d.CheckCostakerRewards(delStkAcc.Address(), currExpActiveBaby, zeroInt, zeroInt, 1)
+	// check that there is no more delegation (even the healthy one was unbonded)
+	_, err = stkK.GetDelegation(d.Ctx(), delStkAcc.Address(), d.ValAddress)
+	require.EqualError(t, err, "no delegation for (address, validator) tuple")
+
+	// Verify ActiveBaby is zerod out and correctly tracked after all operations
+	d.CheckCostakerRewards(delStkAcc.Address(), zeroInt, zeroInt, zeroInt, 1)
 }
