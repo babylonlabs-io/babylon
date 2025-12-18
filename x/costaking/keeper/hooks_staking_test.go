@@ -622,10 +622,11 @@ func TestHookStakingSlashedValidator_MultipleDeltaShares(t *testing.T) {
 
 	// Delegate before slashing
 	preSlashShares := math.LegacyNewDec(1000)
-	val, err := tmocks.CreateValidator(valAddr, math.NewInt(1000))
+	val, err := tmocks.CreateValidator(valAddr, preSlashShares.TruncateInt())
 	require.NoError(t, err)
 
-	mockStkK.EXPECT().GetValidator(gomock.Any(), valAddr).Return(val, nil).AnyTimes()
+	// 5 times, buildCurrEpochValSetMap, updateValidatorSet, TokensFromShares, BeforeValidatorSlashed
+	mockStkK.EXPECT().GetValidator(gomock.Any(), valAddr).Return(val, nil).Times(4)
 	err = k.updateValidatorSet(ctx, []sdk.ValAddress{valAddr})
 	require.NoError(t, err)
 
@@ -638,16 +639,25 @@ func TestHookStakingSlashedValidator_MultipleDeltaShares(t *testing.T) {
 	err = hooks.AfterDelegationModified(ctx, delAddr, valAddr)
 	require.NoError(t, err)
 
+	// slash the validator current shares by 1/10
+	mockStkK.EXPECT().GetValidatorDelegations(gomock.Any(), valAddr).Return([]stakingtypes.Delegation{delegation}, nil).Times(1)
+	slashRatio := math.LegacyMustNewDecFromStr("0.1")
+	hooks.BeforeValidatorSlashed(ctx, valAddr, slashRatio)
+
 	// Slash validator
 	slashedVal := val
 	slashedVal.Tokens = math.NewInt(900)
 	k.stkCache.Clear()
-	mockStkK.EXPECT().GetValidator(gomock.Any(), valAddr).Return(slashedVal, nil).AnyTimes()
-	// Don't update validator set - keeps original tokens for slashing detection
+
+	// slash should reduce the active baby staked
+	tracker, err := k.GetCostakerRewards(ctx, delAddr)
+	require.NoError(t, err)
+	require.Equal(t, "900", tracker.ActiveBaby.String())
 
 	// First post-slash delegation: 100 tokens
-	firstDelta := math.LegacyMustNewDecFromStr("111.111111111111111111")
-	sharesAfterFirst := preSlashShares.Add(firstDelta)
+
+	// buildCurrEpochValSetMap, TokensFromShares
+	mockStkK.EXPECT().GetValidator(gomock.Any(), valAddr).Return(slashedVal, nil).Times(2)
 
 	// BeforeDelegationSharesModified before first post-slash delegation
 	delegationBeforeFirst := stakingtypes.Delegation{
@@ -659,6 +669,18 @@ func TestHookStakingSlashedValidator_MultipleDeltaShares(t *testing.T) {
 	err = hooks.BeforeDelegationSharesModified(ctx, delAddr, valAddr)
 	require.NoError(t, err)
 
+	// added 100 tokens to slashed val
+	amtTokensToAddFirstDel := math.NewInt(100)
+
+	var addedShares math.LegacyDec
+	slashedVal, addedShares = slashedVal.AddTokensFromDel(amtTokensToAddFirstDel)
+
+	// TokensFromShares, TokensFromShares
+	mockStkK.EXPECT().GetValidator(gomock.Any(), valAddr).Return(slashedVal, nil).Times(2)
+
+	sharesAfterFirst := preSlashShares.Add(addedShares)
+	require.Equal(t, sharesAfterFirst.String(), "1111.111111111111111111")
+
 	delegationAfterFirst := stakingtypes.Delegation{
 		DelegatorAddress: delAddr.String(),
 		ValidatorAddress: valAddr.String(),
@@ -668,19 +690,23 @@ func TestHookStakingSlashedValidator_MultipleDeltaShares(t *testing.T) {
 	err = hooks.AfterDelegationModified(ctx, delAddr, valAddr)
 	require.NoError(t, err)
 
-	// Second post-slash delegation: 50 tokens
-	secondDelta := math.LegacyMustNewDecFromStr("55.555555555555555555")
-	totalShares := sharesAfterFirst.Add(secondDelta)
+	// First stake should add 100 tokens
+	tracker, err = k.GetCostakerRewards(ctx, delAddr)
+	require.NoError(t, err)
+	require.Equal(t, "1000", tracker.ActiveBaby.String())
 
-	// BeforeDelegationSharesModified before second post-slash delegation
-	delegationBeforeSecond := stakingtypes.Delegation{
-		DelegatorAddress: delAddr.String(),
-		ValidatorAddress: valAddr.String(),
-		Shares:           sharesAfterFirst,
-	}
-	mockStkK.EXPECT().GetDelegation(gomock.Any(), delAddr, valAddr).Return(delegationBeforeSecond, nil).Times(1)
+	mockStkK.EXPECT().GetDelegation(gomock.Any(), delAddr, valAddr).Return(delegationAfterFirst, nil).Times(1)
 	err = hooks.BeforeDelegationSharesModified(ctx, delAddr, valAddr)
 	require.NoError(t, err)
+
+	// Second post-slash delegation: 50 tokens
+	amtTokensToAddSecondDel := math.NewInt(50)
+
+	slashedVal, addedShares = slashedVal.AddTokensFromDel(amtTokensToAddSecondDel)
+	totalShares := sharesAfterFirst.Add(addedShares)
+
+	// TokensFromShares (AfterDelegationModified), TokensFromShares (BeforeDelegationSharesModified of ubd), TokensFromShares (BeforeDelegationRemoved)
+	mockStkK.EXPECT().GetValidator(gomock.Any(), valAddr).Return(slashedVal, nil).Times(3)
 
 	delegationAfterSecond := stakingtypes.Delegation{
 		DelegatorAddress: delAddr.String(),
@@ -691,35 +717,30 @@ func TestHookStakingSlashedValidator_MultipleDeltaShares(t *testing.T) {
 	err = hooks.AfterDelegationModified(ctx, delAddr, valAddr)
 	require.NoError(t, err)
 
-	// Verify both deltas were cached
-	deltaShares := k.stkCache.GetDeltaShares(valAddr, delAddr)
-	require.Len(t, deltaShares, 2)
+	// Second stake should add 50 tokens
+	tracker, err = k.GetCostakerRewards(ctx, delAddr)
+	require.NoError(t, err)
+	require.Equal(t, "1050", tracker.ActiveBaby.String())
 
 	// Unbond all shares
 	// BeforeDelegationSharesModified before unbonding
-	delegationBeforeUnbond := stakingtypes.Delegation{
-		DelegatorAddress: delAddr.String(),
-		ValidatorAddress: valAddr.String(),
-		Shares:           totalShares,
-	}
-	mockStkK.EXPECT().GetDelegation(gomock.Any(), delAddr, valAddr).Return(delegationBeforeUnbond, nil).Times(1)
+	mockStkK.EXPECT().GetDelegation(gomock.Any(), delAddr, valAddr).Return(delegationAfterSecond, nil).Times(2)
 	err = hooks.BeforeDelegationSharesModified(ctx, delAddr, valAddr)
 	require.NoError(t, err)
 
 	err = hooks.BeforeDelegationRemoved(ctx, delAddr, valAddr)
 	require.NoError(t, err)
 
-	// Should only subtract pre-slash amount (1000)
-	// totalDeltaShares = 111.11 + 55.55 = 166.66
-	// originalShares = 1166.66 - 166.66 = 1000
-	// delTokenChange = 1000 * 1000 / 1000 = 1000
-	tracker, err := k.GetCostakerRewards(ctx, delAddr)
+	// Should unbond all from the costaking tracker
+	tracker, err = k.GetCostakerRewards(ctx, delAddr)
 	require.NoError(t, err)
 	require.Equal(t, "0", tracker.ActiveBaby.String())
 }
 
 // TestHookStakingSlashedValidator_OnlyPostSlashDelegationExists tests the edge case
 // where a delegator only has post-slash delegation (no pre-slash delegation existed).
+// If the validator is active in the active set (even if he is slashed) the new delegations
+// should count. Once the validator leaves the active set it should reduce it.
 func TestHookStakingSlashedValidator_OnlyPostSlashDelegationExists(t *testing.T) {
 	k, ctx := NewKeeperWithMockIncentiveKeeper(t, nil)
 	ctx = ctx.WithBlockHeight(100)
@@ -759,7 +780,7 @@ func TestHookStakingSlashedValidator_OnlyPostSlashDelegationExists(t *testing.T)
 	// Should not add to ActiveBaby
 	tracker, err := k.GetCostakerRewards(ctx, delAddr)
 	require.NoError(t, err)
-	require.Equal(t, "0", tracker.ActiveBaby.String())
+	require.Equal(t, "100", tracker.ActiveBaby.String())
 
 	// Unbond the post-slash delegation
 	// BeforeDelegationSharesModified before unbonding
@@ -775,7 +796,7 @@ func TestHookStakingSlashedValidator_OnlyPostSlashDelegationExists(t *testing.T)
 	err = hooks.BeforeDelegationRemoved(ctx, delAddr, valAddr)
 	require.NoError(t, err)
 
-	// Should not subtract from ActiveBaby (it was never added)
+	// Should subtract from ActiveBaby
 	tracker, err = k.GetCostakerRewards(ctx, delAddr)
 	require.NoError(t, err)
 	require.Equal(t, "0", tracker.ActiveBaby.String())

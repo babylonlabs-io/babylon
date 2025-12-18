@@ -2136,22 +2136,22 @@ func TestCostakingSlashingAndUnbondSameEpoch(t *testing.T) {
 	// and continues in the active valset until end of epoch
 	d.IsValsInCurrActiveValset(2, valAddr)
 
-	d.CheckCostakerRewards(delStkAcc.Address(), currExpActiveBaby, zeroInt, zeroInt, 1)
+	// After slashing, ActiveBaby should be reduced by the slash fraction
+	// Get slash params to calculate expected ActiveBaby
+	slashP, err := slashK.GetParams(d.Ctx())
+	require.NoError(t, err)
+	slashedPortion := delegateAmtToSlashVal.ToLegacyDec().Mul(slashP.SlashFractionDowntime)
+	delegateAmtToSlashValAfterSlash := delegateAmtToSlashVal.Sub(slashedPortion.TruncateInt())
+	expectedActiveBabyAfterSlash := delegateAmtToActiveVal.Add(delegateAmtToSlashValAfterSlash)
+	d.CheckCostakerRewards(delStkAcc.Address(), expectedActiveBabyAfterSlash, zeroInt, zeroInt, 1)
 
 	del, err := stkK.GetDelegation(d.Ctx(), delStkAcc.Address(), valAddr)
 	require.NoError(t, err)
 
-	slashP, err := slashK.GetParams(d.Ctx())
-	require.NoError(t, err)
-
-	// checks the amount after slash is less than it was before
 	fullUbdAmt := val.TokensFromShares(del.Shares).TruncateInt()
 
-	legacyDecDelegateAmt := delegateAmtToSlashVal.ToLegacyDec()
-	slashedPortion := legacyDecDelegateAmt.Mul(slashP.SlashFractionDowntime)
-	delegatAmtAfterSlash := legacyDecDelegateAmt.Sub(slashedPortion).TruncateInt()
-	require.Equal(t, fullUbdAmt.String(), delegatAmtAfterSlash.String())
-	require.True(t, delegatAmtAfterSlash.LT(delegateAmtToSlashVal))
+	require.Equal(t, fullUbdAmt.String(), delegateAmtToSlashValAfterSlash.String())
+	require.True(t, delegateAmtToSlashValAfterSlash.LT(delegateAmtToSlashVal))
 
 	// we are still in the same epoch that the val was jailed and fully unbonding
 	d.TxWrappedUndelegate(delStkAcc.SenderInfo, valAddr.String(), fullUbdAmt)

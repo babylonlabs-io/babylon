@@ -89,6 +89,7 @@ func (sc *StakingCache) GetActiveValidatorSet(ctx context.Context, fetchFn func(
 	return sc.activeValSet, nil
 }
 
+// might be removed
 func (sc *StakingCache) AddDeltaShares(valAddr sdk.ValAddress, delAddr sdk.AccAddress, deltaShares math.LegacyDec) {
 	valInfo, ok := sc.activeValSet[valAddr.String()]
 	if !ok {
