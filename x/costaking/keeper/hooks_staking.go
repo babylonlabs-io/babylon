@@ -28,6 +28,10 @@ type HookStaking struct {
 // Note: This hook uses a cache to track previous delegation amounts to calculate the delta.
 // Defer: Deletes the value from cache after reading it to avoid cases where an (del, val) pair has more than one action
 // in the same block as bond, unbond, bond again
+//
+// We track all operations normally, even for jailed validators.
+// Any accounting discrepancies will be corrected at epoch boundary when the
+// validator leaves the active set and removeBabyForDelegators zeros out ActiveBaby.
 func (h HookStaking) AfterDelegationModified(ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) error {
 	defer h.k.stkCache.Delete(delAddr, valAddr)
 	// Check if validator is in the active set
@@ -59,7 +63,8 @@ func (h HookStaking) AfterDelegationModified(ctx context.Context, delAddr sdk.Ac
 	fmt.Println(">>> AfterDelegationModified: infoBefore amount:", infoBefore.Amount.String())
 	fmt.Println(">>> AfterDelegationModified: delTokenChange:", delTokenChange.String())
 	fmt.Println("--------------------------------")
-	// Always update ActiveBaby if validator is in active set
+
+	// Update ActiveBaby if validator is in active set
 	return h.k.costakerModified(ctx, delAddr, func(rwdTracker *types.CostakerRewardsTracker) {
 		rwdTracker.ActiveBaby = rwdTracker.ActiveBaby.Add(delTokenChange)
 	})
@@ -72,6 +77,10 @@ func (h HookStaking) AfterDelegationModified(ctx context.Context, delAddr sdk.Ac
 //
 // Defer: Deletes the value from cache after reading it to avoid cases where an (del, val) pair has more than one action
 // in the same block as bond, unbond, bond again
+//
+// We track all operations normally, even for jailed validators.
+// Any accounting discrepancies will be corrected at epoch boundary when the
+// validator leaves the active set and removeBabyForDelegators zeros out ActiveBaby.
 func (h HookStaking) BeforeDelegationRemoved(ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) error {
 	defer h.k.stkCache.Delete(delAddr, valAddr)
 
@@ -80,6 +89,7 @@ func (h HookStaking) BeforeDelegationRemoved(ctx context.Context, delAddr sdk.Ac
 	if err != nil {
 		return err
 	}
+	fmt.Println(">>> BeforeDelegationRemoved: val active?", valAddr.String(), delAddr.String(), active)
 	if !active {
 		// Validator not in active set, skip processing
 		return nil
@@ -100,7 +110,7 @@ func (h HookStaking) BeforeDelegationRemoved(ctx context.Context, delAddr sdk.Ac
 		return nil
 	}
 
-	// Always subtract from ActiveBaby if validator is in active set
+	// Subtract from ActiveBaby if validator is in active set
 	return h.k.costakerModified(ctx, delAddr, func(rwdTracker *types.CostakerRewardsTracker) {
 		rwdTracker.ActiveBaby = rwdTracker.ActiveBaby.Sub(delTokenChange)
 	})
@@ -125,6 +135,10 @@ func (h HookStaking) BeforeDelegationSharesModified(ctx context.Context, delAddr
 		return nil
 	}
 
+	// NOTE: We do NOT skip jailed validators here because we need to cache the before state
+	// to calculate the delta in AfterDelegationModified, which will decide whether to skip
+	// based on whether the delta is positive (new delegation) or negative (unbonding).
+
 	del, err := h.k.stkK.GetDelegation(ctx, delAddr, valAddr)
 	if err != nil {
 		// probably is not found, but we don't want to stop execution for this
@@ -147,11 +161,13 @@ func (h HookStaking) BeforeDelegationSharesModified(ctx context.Context, delAddr
 // BeforeValidatorSlashed implements types.StakingHooks.
 // It reduces the ActiveBaby amount for all delegators by the slash fraction
 func (h HookStaking) BeforeValidatorSlashed(ctx context.Context, valAddr sdk.ValAddress, fraction math.LegacyDec) error {
+	fmt.Println(">>> BeforeValidatorSlashed: validator", valAddr.String(), "fraction", fraction.String())
 	// Check if validator is in the active set
 	active, _, err := h.isActiveValidator(ctx, valAddr)
 	if err != nil {
 		return err
 	}
+	fmt.Println(">>> BeforeValidatorSlashed: validator active?", active)
 	if !active {
 		// Validator not in active set, no ActiveBaby to reduce
 		return nil

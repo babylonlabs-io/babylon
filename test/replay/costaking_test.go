@@ -1048,19 +1048,8 @@ func TestBabyCoStaking(t *testing.T) {
 	d.GenerateNewBlockAssertExecutionSuccess()
 
 	stkK, costkK, slashK, epochK := d.App.StakingKeeper, d.App.CostakingKeeper, d.App.SlashingKeeper, d.App.EpochingKeeper
-
-	stkParams, err := stkK.GetParams(d.Ctx())
-	require.NoError(d.t, err)
 	maxVals := 3
-	stkParams.MaxValidators = uint32(maxVals)
-
-	err = stkK.SetParams(d.Ctx(), stkParams)
-	require.NoError(d.t, err)
-
-	d.GenerateNewBlockAssertExecutionSuccess()
-	stkParams, err = stkK.GetParams(d.Ctx())
-	require.NoError(d.t, err)
-	require.Equal(d.t, maxVals, int(stkParams.MaxValidators))
+	d.StakingUpdateParams(uint32(maxVals))
 
 	// Get all validators to check their commissions
 	validators, err := stkK.GetAllValidators(d.Ctx())

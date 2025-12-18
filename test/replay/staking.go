@@ -61,7 +61,7 @@ func (d *BabylonAppDriver) StakingUpdateParams(maxValidators uint32) {
 
 	stkParams, err := stkK.GetParams(d.Ctx())
 	require.NoError(d.t, err)
-	stkParams.MaxValidators = 2
+	stkParams.MaxValidators = maxValidators
 	err = stkK.SetParams(d.Ctx(), stkParams)
 	require.NoError(d.t, err)
 	d.GenerateNewBlockAssertExecutionSuccess()
