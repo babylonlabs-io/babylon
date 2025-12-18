@@ -170,9 +170,9 @@ func assertZeroCostkTracker(t *testing.T, ctx context.Context, costkK costkkeepe
 	trk, err := costkK.GetCostakerRewards(ctx, addr)
 	require.NoError(t, err)
 	require.NotNil(t, trk)
-	require.True(t, trk.ActiveBaby.IsZero(), "active baby should be zero", trk.ActiveBaby.String())
-	require.True(t, trk.ActiveSatoshis.IsZero(), "Active sats should be zero", trk.ActiveSatoshis.String())
-	require.True(t, trk.TotalScore.IsZero(), "Active score should be zero", trk.TotalScore.String())
+	require.Truef(t, trk.ActiveBaby.IsZero(), "active baby should be zero %s", trk.ActiveBaby.String())
+	require.Truef(t, trk.ActiveSatoshis.IsZero(), "Active sats should be zero %s", trk.ActiveSatoshis.String())
+	require.Truef(t, trk.TotalScore.IsZero(), "Active score should be zero %s", trk.TotalScore.String())
 }
 
 func isValidatorInValset(valset []epochingtypes.Validator, valAddr sdk.ValAddress) bool {

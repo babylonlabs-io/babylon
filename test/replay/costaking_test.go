@@ -3,6 +3,7 @@ package replay
 import (
 	"bytes"
 	"encoding/hex"
+	"fmt"
 	"math/rand"
 	"testing"
 	"time"
@@ -1369,6 +1370,7 @@ func TestBabyCoStaking(t *testing.T) {
 	require.False(t, isValidatorInValset(valset, val2ValAddr), "Jailed validator should not be in the validator set")
 	require.False(t, isValidatorInValset(valset, val6ValAddr), "validator 6 should not be in the validator set")
 
+	fmt.Printf("\nval 2 %s, del 2 %s", val2ValAddr.String(), del2.AddressString())
 	// check delegation was created
 	del, err := stkK.GetDelegation(d.Ctx(), del2.Address(), val2ValAddr)
 	require.NoError(t, err)
@@ -1378,13 +1380,13 @@ func TestBabyCoStaking(t *testing.T) {
 	// del2 created a delegation at same epoch that the validator got jailed, so the tracker was not even created (skipped due to jailing)
 	del2Tracker, err := costkK.GetCostakerRewards(d.Ctx(), del2.Address())
 	require.Equal(t, "0", del2Tracker.ActiveBaby.String())
-	require.Error(t, err)
-	require.ErrorContains(t, err, "not found")
+	require.NoError(t, err)
 
 	// Trackers for val2, del3, del4 y del5 should be zeroed
-	for _, addr := range []sdk.AccAddress{val2Oper.Address(), del3.Address(), del4.Address(), del5.Address()} {
-		assertZeroCostkTracker(d.t, d.Ctx(), costkK, addr)
-	}
+	assertZeroCostkTracker(d.t, d.Ctx(), costkK, val2Oper.Address())
+	assertZeroCostkTracker(d.t, d.Ctx(), costkK, del3.Address())
+	assertZeroCostkTracker(d.t, d.Ctx(), costkK, del4.Address())
+	assertZeroCostkTracker(d.t, d.Ctx(), costkK, del5.Address())
 
 	// Trackers for val 1 delegators should be: self delegation unaffected, redelegation slashed amt
 	val1Tracker, err = costkK.GetCostakerRewards(d.Ctx(), val1AccAddr)

@@ -183,13 +183,6 @@ func (h HookEpoching) removeBabyForDelegators(ctx context.Context, valInfo types
 	if err != nil {
 		return fmt.Errorf("failed to get validator %s: %w", valInfo.ValAddress.String(), err)
 	}
-	if valInfo.IsSlashed {
-		// If the validator has been slashed, we need to restore the original tokens
-		// before removing the baby tokens to avoid miscalculating the token amount
-		val.Tokens = valInfo.OriginalTokens
-		// restore original shares in case validator was slashed
-		val.DelegatorShares = valInfo.OriginalShares
-	}
 	return h.updateCoStkTrackerForDelegators(ctx, val, func(rwdTracker *types.CostakerRewardsTracker, amount math.Int) {
 		rwdTracker.ActiveBaby = rwdTracker.ActiveBaby.Sub(amount)
 	})
