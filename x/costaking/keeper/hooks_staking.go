@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"context"
-	"fmt"
 
 	"cosmossdk.io/math"
 	"github.com/babylonlabs-io/babylon/v4/x/costaking/types"
@@ -53,16 +52,9 @@ func (h HookStaking) AfterDelegationModified(ctx context.Context, delAddr sdk.Ac
 	if err != nil {
 		return err
 	}
-	fmt.Println(">>> AfterDelegationModified: delShares:", del.Shares.String())
-	fmt.Println(">>> AfterDelegationModified: delTokens:", delTokens.String())
 
 	infoBefore := h.k.stkCache.GetStakedInfo(delAddr, valAddr)
 	delTokenChange := delTokens.Sub(infoBefore.Amount).TruncateInt()
-
-	fmt.Println(">>> AfterDelegationModified: infoBefore shares:", infoBefore.Shares.String())
-	fmt.Println(">>> AfterDelegationModified: infoBefore amount:", infoBefore.Amount.String())
-	fmt.Println(">>> AfterDelegationModified: delTokenChange:", delTokenChange.String())
-	fmt.Println("--------------------------------")
 
 	// Update ActiveBaby if validator is in active set
 	return h.k.costakerModified(ctx, delAddr, func(rwdTracker *types.CostakerRewardsTracker) {
@@ -89,7 +81,6 @@ func (h HookStaking) BeforeDelegationRemoved(ctx context.Context, delAddr sdk.Ac
 	if err != nil {
 		return err
 	}
-	fmt.Println(">>> BeforeDelegationRemoved: val active?", valAddr.String(), delAddr.String(), active)
 	if !active {
 		// Validator not in active set, skip processing
 		return nil
@@ -128,7 +119,6 @@ func (h HookStaking) BeforeDelegationSharesModified(ctx context.Context, delAddr
 	if err != nil {
 		return err
 	}
-	fmt.Println(">>> BeforeDelegationSharesModified: val active?", valAddr.String(), delAddr.String(), active)
 
 	if !active {
 		// Validator not in active set, skip processing
@@ -150,9 +140,6 @@ func (h HookStaking) BeforeDelegationSharesModified(ctx context.Context, delAddr
 	if err != nil {
 		return err
 	}
-	fmt.Println(">>> BeforeDelegationSharesModified: delShares:", del.Shares.String())
-	fmt.Println(">>> BeforeDelegationSharesModified: delTokens:", delTokens.String())
-	fmt.Println("--------------------------------")
 
 	h.k.stkCache.SetStakedInfo(delAddr, valAddr, delTokens, del.Shares)
 	return nil
@@ -161,13 +148,11 @@ func (h HookStaking) BeforeDelegationSharesModified(ctx context.Context, delAddr
 // BeforeValidatorSlashed implements types.StakingHooks.
 // It reduces the ActiveBaby amount for all delegators by the slash fraction
 func (h HookStaking) BeforeValidatorSlashed(ctx context.Context, valAddr sdk.ValAddress, fraction math.LegacyDec) error {
-	fmt.Println(">>> BeforeValidatorSlashed: validator", valAddr.String(), "fraction", fraction.String())
 	// Check if validator is in the active set
 	active, _, err := h.isActiveValidator(ctx, valAddr)
 	if err != nil {
 		return err
 	}
-	fmt.Println(">>> BeforeValidatorSlashed: validator active?", active)
 	if !active {
 		// Validator not in active set, no ActiveBaby to reduce
 		return nil
@@ -264,9 +249,6 @@ func (k Keeper) TokensFromShares(ctx context.Context, valAddr sdk.ValAddress, de
 	}
 
 	delTokens := val.TokensFromShares(delShares)
-	fmt.Println(">>> TokensFromShares: valTokens:", val.Tokens.String())
-	fmt.Println(">>> TokensFromShares: delShares:", delShares.String())
-	fmt.Println(">>> TokensFromShares: delTokens:", delTokens.String())
 	return delTokens, nil
 }
 

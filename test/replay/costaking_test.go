@@ -1042,7 +1042,7 @@ func TestCostakingBabyBondUnbondAllBondAgain(t *testing.T) {
 // TestBabyCoStaking creates 2 validators and jails one
 // Performs delegations to the jailed validator and makes corresponding checks
 func TestBabyCoStaking(t *testing.T) {
-	t.Parallel()
+	// t.Parallel()
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	d := NewBabylonAppDriverTmpDir(r, t)
 	d.GenerateNewBlockAssertExecutionSuccess()
@@ -1376,7 +1376,8 @@ func TestBabyCoStaking(t *testing.T) {
 
 	// Check costaker trackers are correct
 	// del2 created a delegation at same epoch that the validator got jailed, so the tracker was not even created (skipped due to jailing)
-	_, err = costkK.GetCostakerRewards(d.Ctx(), del2.Address())
+	del2Tracker, err := costkK.GetCostakerRewards(d.Ctx(), del2.Address())
+	require.Equal(t, "0", del2Tracker.ActiveBaby.String())
 	require.Error(t, err)
 	require.ErrorContains(t, err, "not found")
 
