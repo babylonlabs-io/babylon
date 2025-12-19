@@ -10,8 +10,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
-
-	v5 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v5"
 )
 
 // TestManager manages isolated Docker networks for tests
@@ -110,7 +108,7 @@ func NewTmWithUpgrade(
 	tm := NewTestManager(t)
 	bbnCfg := NewChainConfig(tm.TempDir, CHAIN_ID_BABYLON)
 	bbnCfg.IsUpgrade = true
-	// if tag is empty string, use default tag v4.0.0-rc.1
+	// if tag is empty string, use default tag v4.2.2
 	if tag == "" {
 		tag = BabylonContainerTagBeforeUpgrade
 	}
@@ -161,6 +159,10 @@ func (tm *TestManagerUpgrade) Start() {
 	tm.ChainsWaitUntilHeight(1)
 }
 
+func (tm *TestManager) ChainValidator() *ValidatorNode {
+	return tm.Chains[CHAIN_ID_BABYLON].Validators[0]
+}
+
 // Upgrade executes preUpgradeFunc and processes upgrade
 // NOTE: this function must be invoked after Start()
 func (tm *TestManagerUpgrade) Upgrade(govMsg *govtypes.MsgSubmitProposal, preUpgradeFunc PreUpgradeFunc) {
@@ -187,8 +189,8 @@ func (tm *TestManagerUpgrade) Upgrade(govMsg *govtypes.MsgSubmitProposal, preUpg
 				tm.T.Fatalf("failed to get latest block height: %v", err)
 			}
 			tm.T.Logf("node %s: latest block height on chain %s: %d", node.Name, chain.ChainID(), height)
-			appliedHeight := node.QueryAppliedPlan(v5.UpgradeName)
-			tm.T.Logf("node %s: %s plan applied at height: %d", node.Name, v5.UpgradeName, appliedHeight)
+			appliedHeight := node.QueryAppliedPlan(govMsg.Title) // make the title same name as upgrade plan
+			tm.T.Logf("node %s: %s plan applied at height: %d", node.Name, govMsg.Title, appliedHeight)
 		}
 	}
 }

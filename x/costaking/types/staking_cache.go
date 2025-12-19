@@ -25,11 +25,7 @@ type StakeInfo struct {
 }
 
 type ValidatorInfo struct {
-	ValAddress              sdk.ValAddress
-	OriginalTokens          math.Int
-	OriginalShares          math.LegacyDec
-	IsSlashed               bool
-	DeltaSharesPerDelegator map[string][]math.LegacyDec // DelAddrStr => []DeltaShares
+	ValAddress sdk.ValAddress
 }
 
 var zeroStakeInfo = StakeInfo{
@@ -87,36 +83,6 @@ func (sc *StakingCache) GetActiveValidatorSet(ctx context.Context, fetchFn func(
 
 	sc.activeValSet = valSet
 	return sc.activeValSet, nil
-}
-
-// might be removed
-func (sc *StakingCache) AddDeltaShares(valAddr sdk.ValAddress, delAddr sdk.AccAddress, deltaShares math.LegacyDec) {
-	valInfo, ok := sc.activeValSet[valAddr.String()]
-	if !ok {
-		return
-	}
-
-	if valInfo.DeltaSharesPerDelegator == nil {
-		valInfo.DeltaSharesPerDelegator = make(map[string][]math.LegacyDec)
-	}
-
-	delAddrStr := delAddr.String()
-	valInfo.DeltaSharesPerDelegator[delAddrStr] = append(valInfo.DeltaSharesPerDelegator[delAddrStr], deltaShares)
-	sc.activeValSet[valAddr.String()] = valInfo
-}
-
-func (sc *StakingCache) GetDeltaShares(valAddr sdk.ValAddress, delAddr sdk.AccAddress) []math.LegacyDec {
-	valInfo, ok := sc.activeValSet[valAddr.String()]
-	if !ok {
-		return nil
-	}
-
-	if valInfo.DeltaSharesPerDelegator == nil {
-		return nil
-	}
-
-	delAddrStr := delAddr.String()
-	return valInfo.DeltaSharesPerDelegator[delAddrStr]
 }
 
 // Clear removes all entries from the cache

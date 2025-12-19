@@ -668,11 +668,6 @@ func (n *Node) IsHealthy() bool {
 	return true
 }
 
-func (n *Node) WaitForHeight(height int64) error {
-	// Implementation will be added later
-	return nil
-}
-
 // QueryGRPCGateway performs a query via the gRPC gateway
 func (n *Node) QueryGRPCGateway(path string, params url.Values) ([]byte, error) {
 	if n.Ports == nil {
@@ -910,4 +905,38 @@ func (n *Node) SendHeaderHex(headerHex string) {
 
 	_, tx := wallet.SubmitMsgs(msg)
 	require.NotNil(n.T(), tx, "RegisterConsumerChain transaction should not be nil")
+}
+
+// InsertHeader inserts a BTC header to the chain
+func (n *Node) InsertHeader(h *bbn.BTCHeaderBytes) {
+	tip, err := n.QueryTip()
+	require.NoError(n.T(), err)
+	n.T().Logf("Retrieved current tip of btc headerchain. Height: %d", tip.Height)
+	n.SendHeaderHex(h.MarshalHex())
+	n.WaitUntilBtcHeight(tip.Height + 1)
+}
+
+// SubmitRefundableTxWithAssertion submits a refundable transaction,
+// and asserts that the tx fee is refunded
+func (n *Node) SubmitRefundableTxWithAssertion(
+	f func(),
+	shouldBeRefunded bool,
+	walletName string,
+) {
+	wallet := n.Wallet(walletName)
+	require.NotNil(n.T(), wallet, "Wallet %s should not be nil", walletName)
+
+	// balance before submitting the refundable tx
+	submitterBalanceBefore := n.QueryAllBalances(wallet.Address.String())
+
+	// submit refundable tx
+	f()
+
+	// ensure the tx fee is refunded and the balance is not changed
+	submitterBalanceAfter := n.QueryAllBalances(wallet.Address.String())
+	if shouldBeRefunded {
+		require.Equal(n.T(), submitterBalanceBefore, submitterBalanceAfter)
+	} else {
+		require.False(n.T(), submitterBalanceBefore.Equal(submitterBalanceAfter))
+	}
 }

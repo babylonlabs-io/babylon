@@ -22,7 +22,7 @@ const (
 	BabylonContainerName = "babylonlabs-io/babylond"
 	// name of babylon image before the upgrade
 	BabylonContainerNameBeforeUpgrade = "babylonlabs/babylond"
-	BabylonContainerTagBeforeUpgrade  = "v4.0.0-rc.1"
+	BabylonContainerTagBeforeUpgrade  = "v4.2.2"
 
 	HermesRelayerRepository = "informalsystems/hermes"
 	HermesRelayerTag        = "1.13.1"

@@ -266,8 +266,6 @@ func UpdateGenesisFinality(finalityGenState *finalitytypes.GenesisState) {
 func UpdateGenesisBtcStaking(p *StartingBtcStakingParams) func(*btcstktypes.GenesisState) {
 	return func(gen *btcstktypes.GenesisState) {
 		if p != nil {
-			gen.Params[0].MaxStakerNum = p.MaxStakerNum
-			gen.Params[0].MaxStakerQuorum = p.MaxStakerQuorum
 			if len(p.CovenantCommittee) != 0 && p.CovenantQuorum != 0 {
 				gen.Params[0].CovenantPks = p.CovenantCommittee
 				gen.Params[0].CovenantQuorum = p.CovenantQuorum

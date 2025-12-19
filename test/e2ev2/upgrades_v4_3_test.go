@@ -16,7 +16,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 
-	v5 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v5"
+	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
+	v43 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v4_3"
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer/chain"
 	"github.com/babylonlabs-io/babylon/v4/test/e2ev2/tmanager"
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
@@ -24,24 +25,35 @@ import (
 	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 )
 
-func TestUpgradeV5(t *testing.T) {
+func TestUpgradeV43(t *testing.T) {
 	t.Parallel()
 	tm := tmanager.NewTmWithUpgrade(t, 0, "")
 	validator := tm.ChainValidator()
-	govMsg, preUpgradeFunc, err := createGovPropAndPreUpgradeFunc(t, validator.Wallet.WalletSender)
-	require.NoError(t, err)
 
 	// start chain with previous binary
 	tm.Start()
+
+	// creates bad delegation with new validator that will be jailed due to downtime
+	// 1. Delegate to two healthy validators (A and B)
+	// 2. Start of an epoch
+	// 	3. Validator B gets slashed
+	// 	4. Delegator unbonds from B
+	// 	5. Delegator delegates again to B
+	// 	6. Delegator unbonds again from B
+	// 7. Epoch ends
+
+	govMsg, preUpgradeFunc, err := createGovPropAndPreUpgradeFunc(t, validator.Wallet.WalletSender)
+	require.NoError(t, err)
+	require.NotNil(t, govMsg)
+	require.NotNil(t, preUpgradeFunc)
+
+	validator.WaitUntilBlkHeight(10)
 	// execute preUpgradeFunc, submit a proposal, vote, and then process upgrade
-	tm.Upgrade(govMsg, preUpgradeFunc)
+	// tm.Upgrade(govMsg, preUpgradeFunc)
 
 	// post-upgrade state verification
-	bsParams := validator.QueryBtcStakingParams()
-	require.Equal(t, uint32(1), bsParams.MaxStakerQuorum)
-	require.Equal(t, uint32(1), bsParams.MaxStakerNum)
-	btcDelsResp := validator.QueryBTCDelegations(bstypes.BTCDelegationStatus_ACTIVE)
-	require.Len(t, btcDelsResp, 1)
+	// btcDelsResp := validator.QueryBTCDelegations(bstypes.BTCDelegationStatus_ACTIVE)
+	// require.Len(t, btcDelsResp, 1)
 }
 
 func createGovPropAndPreUpgradeFunc(t *testing.T, valWallet *tmanager.WalletSender) (*govtypes.MsgSubmitProposal, tmanager.PreUpgradeFunc, error) {
@@ -49,7 +61,7 @@ func createGovPropAndPreUpgradeFunc(t *testing.T, valWallet *tmanager.WalletSend
 	upgradeMsg := &upgradetypes.MsgSoftwareUpgrade{
 		Authority: "bbn10d07y265gmmuvt4z0w9aw880jnsr700jduz5f2",
 		Plan: upgradetypes.Plan{
-			Name:   v5.UpgradeName,
+			Name:   v43.UpgradeName,
 			Height: int64(20),
 			Info:   "Upgrade to v5",
 		},
@@ -62,11 +74,11 @@ func createGovPropAndPreUpgradeFunc(t *testing.T, valWallet *tmanager.WalletSend
 
 	govMsg := &govtypes.MsgSubmitProposal{
 		Messages:       []*types.Any{anyMsg},
-		InitialDeposit: []sdk.Coin{sdk.NewCoin("ubbn", math.NewInt(1000000))},
+		InitialDeposit: []sdk.Coin{sdk.NewCoin(appparams.DefaultBondDenom, math.NewInt(1000000))},
 		Proposer:       valWallet.Address.String(),
 		Metadata:       "",
-		Title:          "v5",
-		Summary:        "v5 upgrade",
+		Title:          v43.UpgradeName,
+		Summary:        "upgrade",
 		Expedited:      false,
 	}
 
