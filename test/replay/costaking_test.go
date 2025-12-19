@@ -1181,7 +1181,7 @@ func TestBabyCoStaking(t *testing.T) {
 
 	// Produce new blocks till new validator gets jailed for missing blocks
 	var height int64
-	jailedHeight := int64(0) // validator is jailed at height 111 or 101?
+	jailedHeight := int64(0) // height at which the validator gets jailed (determined dynamically) ≃ 101
 	for jailedHeight == 0 {
 		// begin a redelgation from val2 to val1 one block before jailing
 
@@ -1302,7 +1302,6 @@ func TestBabyCoStaking(t *testing.T) {
 
 	// Check costaker trackers are correct
 	// del2 created a delegation at same epoch that the validator got jailed, so the tracker was not even created (skipped due to jailing)
-	d.ZeroCostakerRewards(del2.Address())
 	d.ZeroCostakerRewards(del2.Address())
 
 	// Trackers for val2, del3, del4 y del5 should be zeroed

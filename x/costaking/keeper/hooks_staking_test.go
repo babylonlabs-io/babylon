@@ -340,10 +340,9 @@ func TestHookStakingValidatorBecomesInactive(t *testing.T) {
 	require.Equal(t, shares.TruncateInt().String(), tracker.ActiveBaby.String())
 }
 
-// TestHookStakingSlashedValidator_PostSlashDelegationUnbond tests the fix for the bug where
-// unbonding a delegation made AFTER validator slashing incorrectly subtracted from ActiveBaby.
-// This delegation was never added to ActiveBaby (because validator was slashed), so it should
-// not be subtracted when unbonded.
+// TestHookStakingSlashedValidator_PostSlashDelegationUnbond delegations made after slashing ARE added to ActiveBaby as
+// long as the validator remains in the active set, and they ARE correctly subtracted when
+// unbonded. This test ensures that this behavior is preserved.
 func TestHookStakingSlashedValidator_PostSlashDelegationUnbond(t *testing.T) {
 	k, ctx := NewKeeperWithMockIncentiveKeeper(t, nil)
 	ctx = ctx.WithBlockHeight(100)
