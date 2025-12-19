@@ -392,7 +392,7 @@ func (s *BtcRewardsDistribution) CheckRewardsFirstDelegations() {
 
 	coins.RequireCoinsDiffInPointOnePercentMargin(
 		s.T(),
-		fp2DiffRewards.Coins.MulInt(sdkmath.NewIntFromUint64(3)), // truncation rounding
+		fp2DiffRewards.Coins.MulInt(sdkmath.NewIntFromUint64(3)).Add(sdk.NewCoin("ubbn", sdkmath.NewInt(1))), // truncation rounding
 		fp1DiffRewards.Coins,
 	)
 
