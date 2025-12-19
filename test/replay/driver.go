@@ -1189,6 +1189,13 @@ func (d *BabylonAppDriver) BankSendNative(
 	d.BankSend(t, d.SenderInfo, from.Address(), sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(amt))))
 }
 
+func (d *BabylonAppDriver) BankSendNativeFromSender(
+	to sdk.AccAddress,
+	amt int64,
+) {
+	d.BankSend(d.t, d.SenderInfo, to, sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(amt))))
+}
+
 func (d *BabylonAppDriver) MintNativeTo(
 	recipient sdk.AccAddress,
 	amt int64,

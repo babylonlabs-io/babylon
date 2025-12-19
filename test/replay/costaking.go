@@ -9,6 +9,7 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
+	"github.com/babylonlabs-io/babylon/v4/testutil/coins"
 	abcitypes "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stktypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -37,6 +38,19 @@ func (d *BabylonAppDriver) CheckCostakerRewards(
 	require.Equal(d.t, expActiveSats.String(), del.ActiveSatoshis.String(), "active sats")
 	require.Equal(d.t, expStartPeriod, del.StartPeriodCumulativeReward, "start period cumulative rewards exp %d != %d act", expStartPeriod, del.StartPeriodCumulativeReward)
 	require.Equal(d.t, expTotalScore.String(), del.TotalScore.String(), "total score")
+}
+
+func (d *BabylonAppDriver) CheckCostakerRewardsInPointOnePercentMargin(
+	addr sdk.AccAddress,
+	expActiveBaby, expActiveSats, expTotalScore sdkmath.Int,
+) {
+	costkK := d.App.CostakingKeeper
+
+	del, err := costkK.GetCostakerRewards(d.Ctx(), addr)
+	require.NoError(d.t, err)
+	coins.RequireIntDiffInPointOnePercentMargin(d.t, expActiveBaby, del.ActiveBaby, "active baby")
+	coins.RequireIntDiffInPointOnePercentMargin(d.t, expActiveSats, del.ActiveSatoshis, "active sats")
+	coins.RequireIntDiffInPointOnePercentMargin(d.t, expTotalScore, del.TotalScore, "total score")
 }
 
 func (d *BabylonAppDriver) ZeroCostakerRewards(addr sdk.AccAddress) {
@@ -194,14 +208,6 @@ func FindValInValidators(validators []stktypes.Validator, valAddr sdk.ValAddress
 		}
 	}
 	return nil
-}
-
-// assertActiveBabyWithinRange checks if actual is within expected ± tolerance (for rounding differences)
-func assertActiveBabyWithinRange(t *testing.T, expected, actual sdkmath.Int, tolerance int64, msgAndArgs ...interface{}) { //nolint:unparam
-	diff := actual.Sub(expected).Abs()
-	maxDiff := sdkmath.NewInt(tolerance)
-	require.True(t, diff.LTE(maxDiff), "ActiveBaby difference exceeds tolerance: expected %s ± %d, got %s (diff: %s). %v",
-		expected.String(), tolerance, actual.String(), diff.String(), msgAndArgs)
 }
 
 func (d *BabylonAppDriver) IsValsActiveInCurrValset(expLenValset int, valAddrs ...sdk.ValAddress) epochingtypes.ValidatorSet {

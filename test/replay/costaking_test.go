@@ -1081,8 +1081,8 @@ func TestBabyCoStaking(t *testing.T) {
 	val5Oper := delegators[9]
 	val6Oper := delegators[10]
 
-	d.MintNativeTo(val2Oper.Address(), 1000_000000)
-	d.MintNativeTo(val6Oper.Address(), 1000_000000)
+	d.BankSendNativeFromSender(val2Oper.Address(), 1000_000000)
+	d.BankSendNativeFromSender(val6Oper.Address(), 1000_000000)
 
 	// Create a new validator
 	newValSelfDelegatedAmt := sdkmath.NewInt(10_000000)
@@ -1090,7 +1090,7 @@ func TestBabyCoStaking(t *testing.T) {
 
 	otherValSelfDelegatedAmt := sdkmath.NewInt(1_000000)
 	for i, val := range []*Staker{val3Oper, val4Oper, val5Oper} {
-		d.MintNativeTo(val.Address(), 1000_000000)
+		d.BankSendNativeFromSender(val.Address(), 1000_000000)
 		d.TxCreateValidator(val.SenderInfo, otherValSelfDelegatedAmt.AddRaw(int64(i)*1_000000))
 	}
 
@@ -1215,6 +1215,10 @@ func TestBabyCoStaking(t *testing.T) {
 		}
 	}
 
+	val2, err = stkK.GetValidator(d.Ctx(), val2Addr)
+	require.NoError(t, err)
+	require.True(t, val2.Jailed)
+
 	// Redelegation msg made it to the last epoch block, so it is processed
 	// And the redelegation is slashed, so the tracker should be updated accordingly
 	_, err = stkK.GetDelegation(d.Ctx(), del6.Address(), val2Addr)
@@ -1227,12 +1231,7 @@ func TestBabyCoStaking(t *testing.T) {
 	require.NoError(d.t, err)
 	del6AmtAfterSlashing := val1.TokensFromShares(del6Delegation.Shares).TruncateInt()
 
-	del6Tracker, err := costkK.GetCostakerRewards(d.Ctx(), del6.Address())
-	require.NoError(t, err)
-	require.NotNil(t, del6Tracker)
-	assertActiveBabyWithinRange(t, del6AmtAfterSlashing, del6Tracker.ActiveBaby, 1, "del6 active baby after redelegation slashing (during jailing)")
-	require.True(t, del6Tracker.ActiveSatoshis.IsZero())
-	require.True(t, del6Tracker.TotalScore.IsZero())
+	d.CheckCostakerRewardsInPointOnePercentMargin(del6.Address(), del6AmtAfterSlashing, zeroInt, zeroInt)
 
 	_, err = stkK.GetDelegation(d.Ctx(), del7.Address(), val2Addr)
 	require.EqualError(d.t, err, stktypes.ErrNoDelegation.Error())
@@ -1244,12 +1243,7 @@ func TestBabyCoStaking(t *testing.T) {
 	require.NoError(d.t, err)
 	del7AmtAfterSlashing := val6.TokensFromShares(del7Delegation.Shares).TruncateInt()
 
-	del7Tracker, err := costkK.GetCostakerRewards(d.Ctx(), del7.Address())
-	require.NoError(t, err)
-	require.NotNil(t, del7Tracker)
-	assertActiveBabyWithinRange(t, del7AmtAfterSlashing, del7Tracker.ActiveBaby, 1, "del7 active baby after redelegation slashing")
-	require.True(t, del7Tracker.ActiveSatoshis.IsZero())
-	require.True(t, del7Tracker.TotalScore.IsZero())
+	d.CheckCostakerRewardsInPointOnePercentMargin(del7.Address(), del7AmtAfterSlashing, zeroInt, zeroInt)
 
 	// =================================================
 	// OPERATIONS ON SAME EPOCH THAT VALIDATOR IS JAILED
@@ -1317,20 +1311,14 @@ func TestBabyCoStaking(t *testing.T) {
 	d.ZeroCostakerRewards(del5.Address())
 
 	// tokens were slashed, it might round up and miss calcs by one micro baby
-	del4Tracker, err := costkK.GetCostakerRewards(d.Ctx(), del4.Address())
-	require.NoError(t, err)
-	assertActiveBabyWithinRange(d.t, zeroInt, del4Tracker.ActiveBaby, 1)
+	d.CheckCostakerRewardsInPointOnePercentMargin(del4.Address(), zeroInt, zeroInt, zeroInt)
 
 	// Trackers for val 1 delegators should be: self delegation unaffected, redelegation slashed amt
 	d.CheckCostakerRewards(val1AccAddr, val1SelfDelAmt, zeroInt, zeroInt, currentRwdPeriod)
 
 	// del6 redelegated, so should not have delegation to val2
 	// and should have the slashed delegation to val1
-	del6Tracker, err = costkK.GetCostakerRewards(d.Ctx(), del6.Address())
-	require.NoError(t, err)
-	assertActiveBabyWithinRange(t, del6AmtAfterSlashing, del6Tracker.ActiveBaby, 1, "del6 active baby after redelegation slashing")
-	require.True(t, del6Tracker.ActiveSatoshis.IsZero())
-	require.True(t, del6Tracker.TotalScore.IsZero())
+	d.CheckCostakerRewardsInPointOnePercentMargin(del6.Address(), del6AmtAfterSlashing, zeroInt, zeroInt)
 
 	// del7 redelegated to val6, which got kicked out of active set, so co-staker tracker should be zeroed
 	d.ZeroCostakerRewards(del7.Address())
@@ -1389,37 +1377,19 @@ func TestBabyCoStaking(t *testing.T) {
 	expSelfDelAmt := val2.TokensFromShares(selfDel.Shares).TruncateInt()
 	require.True(t, expSelfDelAmt.LT(newValSelfDelegatedAmt), "self delegation should be less than original amount due to slashing", expSelfDelAmt.String())
 	// active baby should be less than self delegation amount due to slashing
-	val2Tracker, err := costkK.GetCostakerRewards(d.Ctx(), val2Oper.Address())
-	require.NoError(t, err)
-	require.NotNil(t, val2Tracker)
-	assertActiveBabyWithinRange(t, expSelfDelAmt, val2Tracker.ActiveBaby, 1, "val2 active baby after slashing")
-	require.True(t, val2Tracker.ActiveSatoshis.IsZero(), "Active sats should be zero")
-	require.True(t, val2Tracker.TotalScore.IsZero(), "Active score should be zero as validator was jailed entire epoch")
-
-	del3Tracker, err := costkK.GetCostakerRewards(d.Ctx(), del3.Address())
-	require.NoError(t, err)
-	require.NotNil(t, del3Tracker)
+	d.CheckCostakerRewardsInPointOnePercentMargin(val2Oper.Address(), expSelfDelAmt, zeroInt, zeroInt)
 
 	expectedDel3ActiveBaby := del3FirstDelAmtAfterSlashing.Add(del3BabyDelegatedAmtAfterJailing).Add(del3DelegatedAmtAfterJailing)
-	assertActiveBabyWithinRange(t, expectedDel3ActiveBaby, del3Tracker.ActiveBaby, 1, "del3 active baby after slashing")
-	require.True(t, del3Tracker.ActiveSatoshis.IsZero(), "Active sats should be zero")
-	require.True(t, del3Tracker.TotalScore.IsZero(), "Active score should be zero as validator was jailed entire epoch")
+	d.CheckCostakerRewardsInPointOnePercentMargin(del3.Address(), expectedDel3ActiveBaby, zeroInt, zeroInt)
 
 	// del4 fully unbonded so tracker should still be zero or one micro, might round up in calcs
-	del4Tracker, err = costkK.GetCostakerRewards(d.Ctx(), del4.Address())
-	require.NoError(t, err)
-	assertActiveBabyWithinRange(d.t, zeroInt, del4Tracker.ActiveBaby, 1)
+	d.CheckCostakerRewardsInPointOnePercentMargin(del4.Address(), zeroInt, zeroInt, zeroInt)
 
 	// del5 got slashed first and then partially unbonded with 2 msgs
-	del5Tracker, err := costkK.GetCostakerRewards(d.Ctx(), del5.Address())
-	require.NoError(t, err)
-	require.NotNil(t, del5Tracker)
 	// expected active baby is total delegation after slashing minus the unstake amount
 	// There're 2 undelegate msgs of 7 ubbn each, but after the second one, there's a re-delegation for same amount
 	expectedDel5ActiveBaby := del5TotalAmtAfterSlashing.Sub(del5BabyUnstakeAmt)
-	assertActiveBabyWithinRange(t, expectedDel5ActiveBaby, del5Tracker.ActiveBaby, 1, "del5 active baby after slashing and unstaking")
-	require.True(t, del5Tracker.ActiveSatoshis.IsZero(), "Active sats should be zero")
-	require.True(t, del5Tracker.TotalScore.IsZero(), "Active score should be zero as validator was jailed entire epoch")
+	d.CheckCostakerRewardsInPointOnePercentMargin(del5.Address(), expectedDel5ActiveBaby, zeroInt, zeroInt)
 }
 
 func TestCostakingFpRemovalAndBtcUnbondSameBlockClearsActiveSats(t *testing.T) {

@@ -325,7 +325,7 @@ func (s *ValidatorJailingTestSuite) TestValidatorJailingWithExtraDelegation() {
 		s.T().Logf("  - Active baby after jailing: %s", activeBabyAfter.String())
 		s.T().Logf("  - Expected active baby after: %s", expectedBabyAfter.String())
 
-		// Verify exact expected amount within margin of error 1 ubbn
+		// Verify expected amount within margin of error 1 ubbn
 		s.T().Logf("Delegator %s active baby after jailing should equal only val1 delegation amount", delegator)
 		coins.RequireIntDiffInPointOnePercentMargin(s.T(), expectedBabyAfter, activeBabyAfter)
 
