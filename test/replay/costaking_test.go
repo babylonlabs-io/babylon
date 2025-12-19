@@ -3,7 +3,6 @@ package replay
 import (
 	"bytes"
 	"encoding/hex"
-	"fmt"
 	"math/rand"
 	"testing"
 	"time"
@@ -1043,16 +1042,15 @@ func TestCostakingBabyBondUnbondAllBondAgain(t *testing.T) {
 // TestBabyCoStaking creates 2 validators and jails one
 // Performs delegations to the jailed validator and makes corresponding checks
 func TestBabyCoStaking(t *testing.T) {
-	// t.Parallel()
+	t.Parallel()
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	d := NewBabylonAppDriverTmpDir(r, t)
 	d.GenerateNewBlockAssertExecutionSuccess()
 
-	stkK, costkK, slashK, epochK := d.App.StakingKeeper, d.App.CostakingKeeper, d.App.SlashingKeeper, d.App.EpochingKeeper
+	stkK, costkK, slashK := d.App.StakingKeeper, d.App.CostakingKeeper, d.App.SlashingKeeper
 	maxVals := 3
 	d.StakingUpdateParams(uint32(maxVals))
 
-	// Get all validators to check their commissions
 	validators, err := stkK.GetAllValidators(d.Ctx())
 	require.NoError(d.t, err)
 	require.Len(d.t, validators, 1, "There should be exactly one validator in the test setup")
@@ -1121,7 +1119,7 @@ func TestBabyCoStaking(t *testing.T) {
 	val2Addr := sdk.MustValAddressFromBech32(val2.OperatorAddress)
 	val4Addr := sdk.MustValAddressFromBech32(val4.OperatorAddress)
 	val5Addr := sdk.MustValAddressFromBech32(val5.OperatorAddress)
-	d.IsValsInCurrActiveValset(maxVals, val2Addr, val5Addr)
+	d.IsValsActiveInCurrValset(maxVals, val2Addr, val5Addr)
 
 	// new validators should have a costaker tracker created with the self delegation
 	d.CheckCostakerRewards(val2Oper.Address(), newValSelfDelegatedAmt, zeroInt, zeroInt, currentRwdPeriod)
@@ -1168,11 +1166,11 @@ func TestBabyCoStaking(t *testing.T) {
 	d.CheckCostakerRewards(del6.Address(), del6BabyDelegatedAmt, zeroInt, zeroInt, currentRwdPeriod)
 
 	// Check that val5 dropped from the active set and val4 entered
-	valset := d.IsValsInCurrActiveValset(maxVals, val2Addr, val4Addr)
+	valset := d.IsValsActiveInCurrValset(maxVals, val2Addr, val4Addr)
 	require.False(t, isValidatorInValset(valset, sdk.MustValAddressFromBech32(val5.OperatorAddress)), "Validator 5 should not be in the validator set")
 
 	// Check that val5 co-staker tracker is zeroed
-	assertZeroCostkTracker(d.t, d.Ctx(), costkK, val5Oper.Address())
+	d.ZeroCostakerRewards(val5Oper.Address())
 
 	// Check that val4 co-staker tracker is created with self delegation amount
 	d.CheckCostakerRewards(val4Oper.Address(), otherValSelfDelegatedAmt.AddRaw(1_000000).Add(val4DelAmt), zeroInt, zeroInt, currentRwdPeriod)
@@ -1198,7 +1196,7 @@ func TestBabyCoStaking(t *testing.T) {
 			// Redelegate to a validator that will remain active
 			// redelegate to a validator that will drop active set (due to unbonding) on same epoch that jailing is processed
 			d.TxWrappedBeginRedelegate(del6.SenderInfo, val2.OperatorAddress, val1.OperatorAddress, del6BabyDelegatedAmt)
-			d.IsValsInCurrActiveValset(maxVals, val6Addr) // Check that the val6 is in active set
+			d.IsValsActiveInCurrValset(maxVals, val6Addr) // Check that the val6 is in active set
 			val6, err := stkK.GetValidator(d.Ctx(), val6Addr)
 			require.NoError(t, err)
 			require.True(t, val6.IsBonded(), "Validator 6 should be in Bonded status")
@@ -1213,7 +1211,7 @@ func TestBabyCoStaking(t *testing.T) {
 		if val2.Jailed {
 			jailedHeight = height
 			// val2 is jailed, it is active in current valset, once epoch ends it will leave
-			d.IsValsInCurrActiveValset(maxVals, val2Addr)
+			d.IsValsActiveInCurrValset(maxVals, val2Addr)
 		}
 	}
 
@@ -1300,15 +1298,8 @@ func TestBabyCoStaking(t *testing.T) {
 	d.GenerateNewBlockAssertExecutionSuccess()
 
 	// check active set stored in epoching module removed the jailed validator
-	epoch := epochK.GetEpoch(d.Ctx())
-	valset = epochK.GetValidatorSet(d.Ctx(), epoch.EpochNumber)
 	// check that jailed validator is still on epoch validator set
-	require.Len(t, valset, maxVals, "Jailed validator should not be in the validator set")
-	require.False(t, isValidatorInValset(valset, val2Addr), "Jailed validator should not be in the validator set")
-	require.False(t, isValidatorInValset(valset, val6Addr), "validator 6 should not be in the validator set")
-
-	fmt.Printf("\nval 2 %s, del 2 %s", val2Addr.String(), del2.AddressString())
-	fmt.Printf("\nval 2 %s, del 4 %s", val2Addr.String(), del4.AddressString())
+	d.IsValsInactiveInCurrValset(maxVals, val2Addr, val6Addr)
 
 	// check delegation was created
 	del, err := stkK.GetDelegation(d.Ctx(), del2.Address(), val2Addr)
@@ -1317,12 +1308,13 @@ func TestBabyCoStaking(t *testing.T) {
 
 	// Check costaker trackers are correct
 	// del2 created a delegation at same epoch that the validator got jailed, so the tracker was not even created (skipped due to jailing)
-	assertZeroCostkTracker(d.t, d.Ctx(), costkK, del2.Address())
+	d.ZeroCostakerRewards(del2.Address())
+	d.ZeroCostakerRewards(del2.Address())
 
 	// Trackers for val2, del3, del4 y del5 should be zeroed
-	assertZeroCostkTracker(d.t, d.Ctx(), costkK, val2Oper.Address())
-	assertZeroCostkTracker(d.t, d.Ctx(), costkK, del3.Address())
-	assertZeroCostkTracker(d.t, d.Ctx(), costkK, del5.Address())
+	d.ZeroCostakerRewards(val2Oper.Address())
+	d.ZeroCostakerRewards(del3.Address())
+	d.ZeroCostakerRewards(del5.Address())
 
 	// tokens were slashed, it might round up and miss calcs by one micro baby
 	del4Tracker, err := costkK.GetCostakerRewards(d.Ctx(), del4.Address())
@@ -1341,9 +1333,9 @@ func TestBabyCoStaking(t *testing.T) {
 	require.True(t, del6Tracker.TotalScore.IsZero())
 
 	// del7 redelegated to val6, which got kicked out of active set, so co-staker tracker should be zeroed
-	assertZeroCostkTracker(d.t, d.Ctx(), costkK, del7.Address())
+	d.ZeroCostakerRewards(del7.Address())
 	// val6 dropped out of active set, so co-staker tracker should be zeroed
-	assertZeroCostkTracker(d.t, d.Ctx(), costkK, val6Oper.Address())
+	d.ZeroCostakerRewards(val6Oper.Address())
 
 	// =================================================
 	// OPERATIONS AFTER VALIDATOR IS JAILED
@@ -1356,13 +1348,10 @@ func TestBabyCoStaking(t *testing.T) {
 	d.GenerateNewBlockAssertExecutionSuccess()
 	d.ProgressTillFirstBlockTheNextEpoch()
 
-	epoch = epochK.GetEpoch(d.Ctx())
-	valset = epochK.GetValidatorSet(d.Ctx(), epoch.EpochNumber)
-	require.Len(t, valset, 3)
-	require.False(t, isValidatorInValset(valset, val2Addr), "jailed validator should not be in the validator set")
+	d.IsValsInactiveInCurrValset(3, val2Addr)
 
 	// check costk tracker is still zero
-	assertZeroCostkTracker(d.t, d.Ctx(), costkK, del3.Address())
+	d.ZeroCostakerRewards(del3.Address())
 
 	// Unjail the jail validator
 	// make sure block time is after the jail timeout
@@ -1389,10 +1378,7 @@ func TestBabyCoStaking(t *testing.T) {
 	// Wait for an epoch
 	d.ProgressTillFirstBlockTheNextEpoch()
 	// check unjailed validator is back in active set
-	epoch = epochK.GetEpoch(d.Ctx())
-	valset = epochK.GetValidatorSet(d.Ctx(), epoch.EpochNumber)
-	require.Len(t, valset, 2, "Unjailed validator should be in the validator set")
-	require.True(t, isValidatorInValset(valset, val2Addr), "Unjailed validator should be in the validator set")
+	d.IsValsActiveInCurrValset(2, val2Addr)
 
 	// Check the active baby is properly set back for delegations to this validator
 	// NOTE: Consider that the ones that were slashed will be less than the original staking amount
@@ -1805,7 +1791,7 @@ func TestCostakingSlashedSteal(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, stktypes.Bonded, valB.Status, "validator B should be bonded")
 
-	valset := d.IsValsInCurrActiveValset(2, valAAddr, valBAddr)
+	valset := d.IsValsActiveInCurrValset(2, valAAddr, valBAddr)
 
 	// Slash validator B.
 	// This changes the token/share ratio (costaking marks IsSlashed=true) while keeping B in the active set.
@@ -1931,7 +1917,7 @@ func TestCostakingSlashingAndUnbondAll(t *testing.T) {
 	valB := FindValInValidators(validators, valBAddr)
 	require.True(t, valB.IsBonded())
 
-	d.IsValsInCurrActiveValset(2, valAAddr, valBAddr)
+	d.IsValsActiveInCurrValset(2, valAAddr, valBAddr)
 
 	// delegates to new val B
 	delegateAmtValB := sdkmath.NewInt(3_000000)
@@ -1945,7 +1931,7 @@ func TestCostakingSlashingAndUnbondAll(t *testing.T) {
 	d.JailValidatorForDowntime(valBAddr)
 
 	// B is still in the active set, will be removed at the end of the epoch
-	d.IsValsInCurrActiveValset(2, valAAddr, valBAddr)
+	d.IsValsActiveInCurrValset(2, valAAddr, valBAddr)
 
 	delBDelegation, err := stkK.GetDelegation(d.Ctx(), delegator.Address(), valBAddr)
 	require.NoError(t, err)
@@ -2059,11 +2045,11 @@ func TestCostakingSlashingAndUnbondSameEpoch(t *testing.T) {
 	d.JailValidatorForDowntime(valAddr)
 
 	// There is 2 vals and the new added val is in the current epoch valset
-	d.IsValsInCurrActiveValset(2, valAddr)
+	d.IsValsActiveInCurrValset(2, valAddr)
 	// jails the validator (slash infraction)
 	val := d.JailValidatorForDowntime(valAddr)
 	// and continues in the active valset until end of epoch
-	d.IsValsInCurrActiveValset(2, valAddr)
+	d.IsValsActiveInCurrValset(2, valAddr)
 
 	// After slashing, ActiveBaby should be reduced by the slash fraction
 	// Get slash params to calculate expected ActiveBaby

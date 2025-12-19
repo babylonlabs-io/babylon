@@ -2,7 +2,6 @@ package replay
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -15,7 +14,6 @@ import (
 	stktypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
 
-	costkkeeper "github.com/babylonlabs-io/babylon/v4/x/costaking/keeper"
 	costktypes "github.com/babylonlabs-io/babylon/v4/x/costaking/types"
 	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 	ictvtypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
@@ -39,6 +37,16 @@ func (d *BabylonAppDriver) CheckCostakerRewards(
 	require.Equal(d.t, expActiveSats.String(), del.ActiveSatoshis.String(), "active sats")
 	require.Equal(d.t, expStartPeriod, del.StartPeriodCumulativeReward, "start period cumulative rewards exp %d != %d act", expStartPeriod, del.StartPeriodCumulativeReward)
 	require.Equal(d.t, expTotalScore.String(), del.TotalScore.String(), "total score")
+}
+
+func (d *BabylonAppDriver) ZeroCostakerRewards(addr sdk.AccAddress) {
+	costkK := d.App.CostakingKeeper
+
+	del, err := costkK.GetCostakerRewards(d.Ctx(), addr)
+	require.NoError(d.t, err)
+	require.Truef(d.t, del.ActiveBaby.IsZero(), "active baby should be zero %s", del.ActiveBaby.String())
+	require.Truef(d.t, del.ActiveSatoshis.IsZero(), "active sats should be zero %s", del.ActiveSatoshis.String())
+	require.Truef(d.t, del.TotalScore.IsZero(), "active score should be zero %s", del.TotalScore.String())
 }
 
 func (d *BabylonAppDriver) CheckCostakingCurrentRewards(
@@ -166,15 +174,6 @@ func FindEventTypeValidatorDirectRewards(t *testing.T, evts []abcitypes.Event) s
 	return FindEventCoinsT(t, evts, costktypes.EventTypeValidatorDirectRewards, sdk.AttributeKeyAmount, ExtractCoinsFromDecCoins)
 }
 
-func assertZeroCostkTracker(t *testing.T, ctx context.Context, costkK costkkeeper.Keeper, addr sdk.AccAddress) {
-	trk, err := costkK.GetCostakerRewards(ctx, addr)
-	require.NoError(t, err)
-	require.NotNil(t, trk)
-	require.Truef(t, trk.ActiveBaby.IsZero(), "active baby should be zero %s", trk.ActiveBaby.String())
-	require.Truef(t, trk.ActiveSatoshis.IsZero(), "Active sats should be zero %s", trk.ActiveSatoshis.String())
-	require.Truef(t, trk.TotalScore.IsZero(), "Active score should be zero %s", trk.TotalScore.String())
-}
-
 func isValidatorInValset(valset []epochingtypes.Validator, valAddr sdk.ValAddress) bool {
 	return FindValInValset(valset, valAddr) != nil
 }
@@ -205,7 +204,15 @@ func assertActiveBabyWithinRange(t *testing.T, expected, actual sdkmath.Int, tol
 		expected.String(), tolerance, actual.String(), diff.String(), msgAndArgs)
 }
 
-func (d *BabylonAppDriver) IsValsInCurrActiveValset(expLenValset int, valAddrs ...sdk.ValAddress) epochingtypes.ValidatorSet {
+func (d *BabylonAppDriver) IsValsActiveInCurrValset(expLenValset int, valAddrs ...sdk.ValAddress) epochingtypes.ValidatorSet {
+	return d.CheckValsForCurrValset(expLenValset, true, valAddrs...)
+}
+
+func (d *BabylonAppDriver) IsValsInactiveInCurrValset(expLenValset int, valAddrs ...sdk.ValAddress) epochingtypes.ValidatorSet {
+	return d.CheckValsForCurrValset(expLenValset, false, valAddrs...)
+}
+
+func (d *BabylonAppDriver) CheckValsForCurrValset(expLenValset int, valsInValset bool, valAddrs ...sdk.ValAddress) epochingtypes.ValidatorSet {
 	epochK := d.App.EpochingKeeper
 	epoch := epochK.GetEpoch(d.Ctx())
 	valset := epochK.GetValidatorSet(d.Ctx(), epoch.EpochNumber)
@@ -213,7 +220,11 @@ func (d *BabylonAppDriver) IsValsInCurrActiveValset(expLenValset int, valAddrs .
 
 	for _, valAddr := range valAddrs {
 		val := FindValInValset(valset, valAddr)
-		require.NotNil(d.t, val)
+		if valsInValset {
+			require.NotNil(d.t, val)
+		} else {
+			require.Nil(d.t, val)
+		}
 	}
 	return valset
 }
