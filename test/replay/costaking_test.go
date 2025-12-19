@@ -1361,6 +1361,7 @@ func TestBabyCoStaking(t *testing.T) {
 	d.GenerateNewBlockAssertExecutionSuccess()
 	// progress to next epoch to ensure delegation and jailing are processed
 	d.ProgressTillFirstBlockTheNextEpoch()
+	d.GenerateNewBlockAssertExecutionSuccess()
 
 	// check active set stored in epoching module removed the jailed validator
 	epoch = epochK.GetEpoch(d.Ctx())
