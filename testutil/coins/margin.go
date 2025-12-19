@@ -8,6 +8,16 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func RequireIntDiffInPointOnePercentMargin(t *testing.T, v1, v2 math.Int) {
+	inMargin := IntDiffInPointOnePercentMargin(v1, v2)
+	if !inMargin {
+		t.Log("Int are not in 0.1% margin")
+		t.Logf("v1: %s", v1.String())
+		t.Logf("v2: %s", v2.String())
+	}
+	require.True(t, inMargin)
+}
+
 func RequireCoinsDiffInPointOnePercentMargin(t *testing.T, c1, c2 sdk.Coins) {
 	inMargin := CoinsDiffInPointOnePercentMargin(c1, c2)
 	if !inMargin {
@@ -16,6 +26,15 @@ func RequireCoinsDiffInPointOnePercentMargin(t *testing.T, c1, c2 sdk.Coins) {
 		t.Logf("c2: %s", c2.String())
 	}
 	require.True(t, inMargin)
+}
+
+func IntDiffInPointOnePercentMargin(c1, c2 math.Int) bool {
+	diff, err := c1.SafeSub(c2)
+	if err != nil {
+		diff = diff.Abs()
+	}
+	margin := CalculatePointOnePercentOrMinOneForInt(c1)
+	return margin.GTE(diff)
 }
 
 func CoinsDiffInPointOnePercentMargin(c1, c2 sdk.Coins) bool {
@@ -42,6 +61,15 @@ func CalculatePointOnePercentOrMinOne(value sdk.Coins) sdk.Coins {
 	denominator := math.NewInt(1000)
 	result := value.MulInt(numerator).QuoInt(denominator)
 	return coinsAtLeastMinAmount(result, math.OneInt())
+}
+
+// CalculatePointOnePercentOrMinOneForInt transforms 10000 = 10
+// if 0.1% is of the value is less 1, sets one as value in the coin
+func CalculatePointOnePercentOrMinOneForInt(value math.Int) math.Int {
+	numerator := math.NewInt(1)
+	denominator := math.NewInt(1000)
+	result := value.Mul(numerator).Quo(denominator)
+	return math.MinInt(result, math.OneInt())
 }
 
 // CalculatePercentageOfCoins if percentage is 30, transforms 100bbn = 30bbn
