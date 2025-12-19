@@ -1057,9 +1057,6 @@ func TestBabyCoStaking(t *testing.T) {
 	require.NoError(d.t, err)
 	require.Len(d.t, validators, 1, "There should be exactly one validator in the test setup")
 	val1 := validators[0]
-	var val1ConsPubKey cryptotypes.PubKey
-	err = util.Cdc.UnpackAny(val1.ConsensusPubkey, &val1ConsPubKey)
-	require.NoError(d.t, err)
 
 	// get val1 self delegation
 	val1ValAddr := sdk.MustValAddressFromBech32(val1.OperatorAddress)
@@ -1067,16 +1064,11 @@ func TestBabyCoStaking(t *testing.T) {
 	val1Dels, err := stkK.GetValidatorDelegations(d.Ctx(), val1ValAddr)
 	require.NoError(d.t, err)
 	require.Len(d.t, val1Dels, 1, "There should be exactly one delegation for the initial validator")
-	val1SelfDel := val1Dels[0]
-	require.Equal(d.t, val1SelfDel.DelegatorAddress, val1AccAddr.String(), "The delegation should be the self-delegation of the initial validator")
-	val1SelfDelAmt := val1SelfDel.Shares.TruncateInt()
+	require.Equal(d.t, val1Dels[0].DelegatorAddress, val1AccAddr.String(), "The delegation should be the self-delegation of the initial validator")
+	val1SelfDelAmt := val1Dels[0].Shares.TruncateInt()
 
-	val1Tracker, err := costkK.GetCostakerRewards(d.Ctx(), val1AccAddr)
-	require.NoError(t, err)
-	require.NotNil(t, val1Tracker)
-	require.Equal(t, val1Tracker.ActiveBaby, val1SelfDelAmt, "active baby should be self delegation amount", val1Tracker.ActiveBaby.String())
-	require.True(t, val1Tracker.ActiveSatoshis.IsZero(), "Active sats should be zero")
-	require.True(t, val1Tracker.TotalScore.IsZero())
+	currentRwdPeriod := uint64(1)
+	d.CheckCostakerRewards(val1AccAddr, val1SelfDelAmt, zeroInt, zeroInt, currentRwdPeriod)
 
 	delegators := d.CreateNStakerAccounts(11)
 	val2Oper := delegators[0]
@@ -1112,13 +1104,10 @@ func TestBabyCoStaking(t *testing.T) {
 	require.NoError(d.t, err)
 	require.Len(d.t, validators, 5, "There should be exactly five validators in the test setup")
 	var val2, val4, val5 stktypes.Validator
-	var val2ConsPubKey cryptotypes.PubKey
 	for _, v := range validators {
 		valAddrBz := sdk.MustValAddressFromBech32(v.OperatorAddress)
 		if bytes.Equal(valAddrBz.Bytes(), val2Oper.Address().Bytes()) {
 			val2 = v
-			err := util.Cdc.UnpackAny(v.ConsensusPubkey, &val2ConsPubKey)
-			require.NoError(t, err)
 		}
 		if bytes.Equal(valAddrBz.Bytes(), val4Oper.Address().Bytes()) {
 			val4 = v
@@ -1127,28 +1116,16 @@ func TestBabyCoStaking(t *testing.T) {
 			val5 = v
 		}
 	}
-	require.Equal(t, val2.Status, stktypes.Bonded, "New validator should be in Bonded status")
+	require.True(t, val2.IsBonded(), "New validator should be in Bonded status")
 
-	epoch := epochK.GetEpoch(d.Ctx())
-	valset := epochK.GetValidatorSet(d.Ctx(), epoch.EpochNumber)
-	require.Len(t, valset, maxVals)
-	require.True(t, isValidatorInValset(valset, sdk.MustValAddressFromBech32(val2.OperatorAddress)), "New validator should be in the validator set")
-	require.True(t, isValidatorInValset(valset, sdk.MustValAddressFromBech32(val5.OperatorAddress)), "New validator should be in the validator set")
+	val2Addr := sdk.MustValAddressFromBech32(val2.OperatorAddress)
+	val4Addr := sdk.MustValAddressFromBech32(val4.OperatorAddress)
+	val5Addr := sdk.MustValAddressFromBech32(val5.OperatorAddress)
+	d.IsValsInCurrActiveValset(maxVals, val2Addr, val5Addr)
 
 	// new validators should have a costaker tracker created with the self delegation
-	val2Tracker, err := costkK.GetCostakerRewards(d.Ctx(), val2Oper.Address())
-	require.NoError(t, err)
-	require.NotNil(t, val2Tracker)
-	require.Equal(t, val2Tracker.ActiveBaby, newValSelfDelegatedAmt, "active baby should be self delegation amount", val2Tracker.ActiveBaby.String())
-	require.True(t, val2Tracker.ActiveSatoshis.IsZero(), "Active sats should be zero")
-	require.True(t, val2Tracker.TotalScore.IsZero())
-
-	val5Tracker, err := costkK.GetCostakerRewards(d.Ctx(), val5Oper.Address())
-	require.NoError(t, err)
-	require.NotNil(t, val5Tracker)
-	require.Equal(t, val5Tracker.ActiveBaby, otherValSelfDelegatedAmt.AddRaw(2*1_000000), "active baby should be self delegation amount", val5Tracker.ActiveBaby.String())
-	require.True(t, val5Tracker.ActiveSatoshis.IsZero(), "Active sats should be zero")
-	require.True(t, val5Tracker.TotalScore.IsZero())
+	d.CheckCostakerRewards(val2Oper.Address(), newValSelfDelegatedAmt, zeroInt, zeroInt, currentRwdPeriod)
+	d.CheckCostakerRewards(val5Oper.Address(), otherValSelfDelegatedAmt.AddRaw(2*1_000000), zeroInt, zeroInt, currentRwdPeriod)
 
 	// Others validators outside the active set should not have a costaker tracker created
 	_, err = costkK.GetCostakerRewards(d.Ctx(), val3Oper.Address())
@@ -1185,61 +1162,28 @@ func TestBabyCoStaking(t *testing.T) {
 	d.ProgressTillFirstBlockTheNextEpoch()
 
 	// check costaking trackers are created accordingly
-	del3Tracker, err := costkK.GetCostakerRewards(d.Ctx(), del3.Address())
-	require.NoError(t, err)
-	require.NotNil(t, del3Tracker)
-	require.Equal(t, del3Tracker.ActiveBaby, del3BabyDelegatedAmtBeforeJailing, "active baby should be delegation amount", del3Tracker.ActiveBaby.String())
-	require.True(t, del3Tracker.ActiveSatoshis.IsZero())
-	require.True(t, del3Tracker.TotalScore.IsZero())
-
-	del4Tracker, err := costkK.GetCostakerRewards(d.Ctx(), del4.Address())
-	require.NoError(t, err)
-	require.NotNil(t, del4Tracker)
-	require.Equal(t, del4Tracker.ActiveBaby, del4BabyDelegatedAmt, "active baby should be delegation amount", del4Tracker.ActiveBaby.String())
-	require.True(t, del4Tracker.ActiveSatoshis.IsZero())
-	require.True(t, del4Tracker.TotalScore.IsZero())
-
-	del5Tracker, err := costkK.GetCostakerRewards(d.Ctx(), del5.Address())
-	require.NoError(t, err)
-	require.NotNil(t, del5Tracker)
-	require.Equal(t, del5Tracker.ActiveBaby, del5BabyDelegatedAmt, "active baby should be delegation amount", del5Tracker.ActiveBaby.String())
-	require.True(t, del5Tracker.ActiveSatoshis.IsZero())
-	require.True(t, del5Tracker.TotalScore.IsZero())
-
-	del6Tracker, err := costkK.GetCostakerRewards(d.Ctx(), del6.Address())
-	require.NoError(t, err)
-	require.NotNil(t, del6Tracker)
-	require.Equal(t, del6Tracker.ActiveBaby, del6BabyDelegatedAmt, del6Tracker.ActiveBaby.String())
-	require.True(t, del6Tracker.ActiveSatoshis.IsZero())
-	require.True(t, del6Tracker.TotalScore.IsZero())
+	d.CheckCostakerRewards(del3.Address(), del3BabyDelegatedAmtBeforeJailing, zeroInt, zeroInt, currentRwdPeriod)
+	d.CheckCostakerRewards(del4.Address(), del4BabyDelegatedAmt, zeroInt, zeroInt, currentRwdPeriod)
+	d.CheckCostakerRewards(del5.Address(), del5BabyDelegatedAmt, zeroInt, zeroInt, currentRwdPeriod)
+	d.CheckCostakerRewards(del6.Address(), del6BabyDelegatedAmt, zeroInt, zeroInt, currentRwdPeriod)
 
 	// Check that val5 dropped from the active set and val4 entered
-	epoch = epochK.GetEpoch(d.Ctx())
-	valset = epochK.GetValidatorSet(d.Ctx(), epoch.EpochNumber)
-	require.Len(t, valset, maxVals)
-	require.True(t, isValidatorInValset(valset, sdk.MustValAddressFromBech32(val2.OperatorAddress)), "Validator 2 should be in the validator set")
-	require.True(t, isValidatorInValset(valset, sdk.MustValAddressFromBech32(val4.OperatorAddress)), "Validator 4 should be in the validator set")
+	valset := d.IsValsInCurrActiveValset(maxVals, val2Addr, val4Addr)
 	require.False(t, isValidatorInValset(valset, sdk.MustValAddressFromBech32(val5.OperatorAddress)), "Validator 5 should not be in the validator set")
 
 	// Check that val5 co-staker tracker is zeroed
 	assertZeroCostkTracker(d.t, d.Ctx(), costkK, val5Oper.Address())
 
 	// Check that val4 co-staker tracker is created with self delegation amount
-	val4Tracker, err := costkK.GetCostakerRewards(d.Ctx(), val4Oper.Address())
-	require.NoError(t, err)
-	require.NotNil(t, val4Tracker)
-	require.Equal(t, val4Tracker.ActiveBaby, otherValSelfDelegatedAmt.AddRaw(1_000000).Add(val4DelAmt), "active baby should be self delegation amount", val4Tracker.ActiveBaby.String())
-	require.True(t, val4Tracker.ActiveSatoshis.IsZero())
-	require.True(t, val4Tracker.TotalScore.IsZero())
+	d.CheckCostakerRewards(val4Oper.Address(), otherValSelfDelegatedAmt.AddRaw(1_000000).Add(val4DelAmt), zeroInt, zeroInt, currentRwdPeriod)
 
 	// validator 6 is the one that will receive a slashed redelegation and drop active set
 	val6SelfDelegatedAmt := sdkmath.NewInt(20_000000)
-	val6ValAddr := sdk.ValAddress(val6Oper.SenderInfo.Address())
+	val6Addr := sdk.ValAddress(val6Oper.SenderInfo.Address())
 
-	val2ValAddr := sdk.MustValAddressFromBech32(val2.OperatorAddress)
 	// Produce new blocks till new validator gets jailed for missing blocks
 	var height int64
-	jailedHeight := int64(0) // validator is jailed at height 111
+	jailedHeight := int64(0) // validator is jailed at height 111 or 101?
 	for jailedHeight == 0 {
 		// begin a redelgation from val2 to val1 one block before jailing
 
@@ -1252,38 +1196,31 @@ func TestBabyCoStaking(t *testing.T) {
 		if height == 100 {
 			// On slashing due to downtime, the SlashRedelegation func is called
 			// Redelegate to a validator that will remain active
-			d.TxWrappedBeginRedelegate(del6.SenderInfo, val2.OperatorAddress, val1.OperatorAddress, del6BabyDelegatedAmt)
 			// redelegate to a validator that will drop active set (due to unbonding) on same epoch that jailing is processed
-			// Check that the val6 is in active set
-			epoch = epochK.GetEpoch(d.Ctx())
-			valset = epochK.GetValidatorSet(d.Ctx(), epoch.EpochNumber)
-			require.Len(t, valset, maxVals)
-			val6, err := stkK.GetValidator(d.Ctx(), val6ValAddr)
+			d.TxWrappedBeginRedelegate(del6.SenderInfo, val2.OperatorAddress, val1.OperatorAddress, del6BabyDelegatedAmt)
+			d.IsValsInCurrActiveValset(maxVals, val6Addr) // Check that the val6 is in active set
+			val6, err := stkK.GetValidator(d.Ctx(), val6Addr)
 			require.NoError(t, err)
-			require.Equal(t, stktypes.Bonded, val6.Status, "Validator 6 should be in Bonded status")
-			require.True(t, isValidatorInValset(valset, val6ValAddr), "Validator 6 should be in the validator set")
+			require.True(t, val6.IsBonded(), "Validator 6 should be in Bonded status")
+
 			// redelegate to val6
-			d.TxWrappedBeginRedelegate(del7.SenderInfo, val2.OperatorAddress, val6ValAddr.String(), del7BabyDelegatedAmt)
+			d.TxWrappedBeginRedelegate(del7.SenderInfo, val2.OperatorAddress, val6Addr.String(), del7BabyDelegatedAmt)
 		}
 		d.GenerateNewBlockAssertExecutionSuccess()
 		height = d.Ctx().BlockHeight()
-		val, err := stkK.GetValidator(d.Ctx(), val2ValAddr)
+		val2, err := stkK.GetValidator(d.Ctx(), val2Addr)
 		require.NoError(t, err)
-		if val.Jailed {
+		if val2.Jailed {
 			jailedHeight = height
-			epoch := epochK.GetEpoch(d.Ctx())
-			valset := epochK.GetValidatorSet(d.Ctx(), epoch.EpochNumber)
-			// check that jailed validator is still on epoch validator set
-			require.Len(t, valset, maxVals, "Jailed validator should still be in the validator set")
-			require.True(t, isValidatorInValset(valset, val2ValAddr), "Jailed validator should not be in the validator set")
+			// val2 is jailed, it is active in current valset, once epoch ends it will leave
+			d.IsValsInCurrActiveValset(maxVals, val2Addr)
 		}
 	}
 
 	// Redelegation msg made it to the last epoch block, so it is processed
 	// And the redelegation is slashed, so the tracker should be updated accordingly
-	_, err = stkK.GetDelegation(d.Ctx(), del6.Address(), val2ValAddr)
-	require.Error(d.t, err)
-	require.ErrorContains(d.t, err, "no delegation")
+	_, err = stkK.GetDelegation(d.Ctx(), del6.Address(), val2Addr)
+	require.EqualError(d.t, err, stktypes.ErrNoDelegation.Error())
 
 	del6Delegation, err := stkK.GetDelegation(d.Ctx(), del6.Address(), val1ValAddr)
 	require.NoError(d.t, err)
@@ -1292,21 +1229,20 @@ func TestBabyCoStaking(t *testing.T) {
 	require.NoError(d.t, err)
 	del6AmtAfterSlashing := val1.TokensFromShares(del6Delegation.Shares).TruncateInt()
 
-	del6Tracker, err = costkK.GetCostakerRewards(d.Ctx(), del6.Address())
+	del6Tracker, err := costkK.GetCostakerRewards(d.Ctx(), del6.Address())
 	require.NoError(t, err)
 	require.NotNil(t, del6Tracker)
 	assertActiveBabyWithinRange(t, del6AmtAfterSlashing, del6Tracker.ActiveBaby, 1, "del6 active baby after redelegation slashing (during jailing)")
 	require.True(t, del6Tracker.ActiveSatoshis.IsZero())
 	require.True(t, del6Tracker.TotalScore.IsZero())
 
-	_, err = stkK.GetDelegation(d.Ctx(), del7.Address(), val2ValAddr)
-	require.Error(d.t, err)
-	require.ErrorContains(d.t, err, "no delegation")
+	_, err = stkK.GetDelegation(d.Ctx(), del7.Address(), val2Addr)
+	require.EqualError(d.t, err, stktypes.ErrNoDelegation.Error())
 
-	del7Delegation, err := stkK.GetDelegation(d.Ctx(), del7.Address(), val6ValAddr)
+	del7Delegation, err := stkK.GetDelegation(d.Ctx(), del7.Address(), val6Addr)
 	require.NoError(d.t, err)
 
-	val6, err := stkK.GetValidator(d.Ctx(), val6ValAddr)
+	val6, err := stkK.GetValidator(d.Ctx(), val6Addr)
 	require.NoError(d.t, err)
 	del7AmtAfterSlashing := val6.TokensFromShares(del7Delegation.Shares).TruncateInt()
 
@@ -1320,7 +1256,7 @@ func TestBabyCoStaking(t *testing.T) {
 	// =================================================
 	// OPERATIONS ON SAME EPOCH THAT VALIDATOR IS JAILED
 	// =================================================
-	val2, err = stkK.GetValidator(d.Ctx(), val2ValAddr)
+	val2, err = stkK.GetValidator(d.Ctx(), val2Addr)
 	require.NoError(d.t, err)
 
 	// Make a NEW delegation to validator
@@ -1332,19 +1268,19 @@ func TestBabyCoStaking(t *testing.T) {
 	d.TxWrappedDelegate(del3.SenderInfo, val2.OperatorAddress, del3BabyDelegatedAmtAfterJailing)
 
 	// The first delegation of del3 was slashed. Get the new delegation amount
-	del3Delegation, err := stkK.GetDelegation(d.Ctx(), del3.Address(), val2ValAddr)
+	del3Delegation, err := stkK.GetDelegation(d.Ctx(), del3.Address(), val2Addr)
 	require.NoError(d.t, err)
 	del3FirstDelAmtAfterSlashing := val2.TokensFromShares(del3Delegation.Shares).TruncateInt()
 
 	// Totally unbond a delegation
 	// Tokens are already slashed, so for total unbonding need to get the new tokens per shares
-	del4Delegation, err := stkK.GetDelegation(d.Ctx(), del4.Address(), val2ValAddr)
+	del4Delegation, err := stkK.GetDelegation(d.Ctx(), del4.Address(), val2Addr)
 	require.NoError(d.t, err)
 	del4TotalUnbondAmt := val2.TokensFromShares(del4Delegation.Shares).TruncateInt()
 	d.TxWrappedUndelegate(del4.SenderInfo, val2.OperatorAddress, del4TotalUnbondAmt)
 
 	// get updated delegation amount for del5 after slashing
-	del5Delegation, err := stkK.GetDelegation(d.Ctx(), del5.Address(), val2ValAddr)
+	del5Delegation, err := stkK.GetDelegation(d.Ctx(), del5.Address(), val2Addr)
 	require.NoError(d.t, err)
 	del5TotalAmtAfterSlashing := val2.TokensFromShares(del5Delegation.Shares).TruncateInt()
 
@@ -1356,7 +1292,7 @@ func TestBabyCoStaking(t *testing.T) {
 
 	// new validator should drop active set on same epoch that jailing is processed
 	// undelegate here enough tokens to drop active set
-	d.TxWrappedUndelegate(val6Oper.SenderInfo, val6ValAddr.String(), val6SelfDelegatedAmt.Sub(sdkmath.NewInt(5000)))
+	d.TxWrappedUndelegate(val6Oper.SenderInfo, val6Addr.String(), val6SelfDelegatedAmt.Sub(sdkmath.NewInt(5000)))
 
 	d.GenerateNewBlockAssertExecutionSuccess()
 	// progress to next epoch to ensure delegation and jailing are processed
@@ -1364,44 +1300,42 @@ func TestBabyCoStaking(t *testing.T) {
 	d.GenerateNewBlockAssertExecutionSuccess()
 
 	// check active set stored in epoching module removed the jailed validator
-	epoch = epochK.GetEpoch(d.Ctx())
+	epoch := epochK.GetEpoch(d.Ctx())
 	valset = epochK.GetValidatorSet(d.Ctx(), epoch.EpochNumber)
 	// check that jailed validator is still on epoch validator set
 	require.Len(t, valset, maxVals, "Jailed validator should not be in the validator set")
-	require.False(t, isValidatorInValset(valset, val2ValAddr), "Jailed validator should not be in the validator set")
-	require.False(t, isValidatorInValset(valset, val6ValAddr), "validator 6 should not be in the validator set")
+	require.False(t, isValidatorInValset(valset, val2Addr), "Jailed validator should not be in the validator set")
+	require.False(t, isValidatorInValset(valset, val6Addr), "validator 6 should not be in the validator set")
 
-	fmt.Printf("\nval 2 %s, del 2 %s", val2ValAddr.String(), del2.AddressString())
+	fmt.Printf("\nval 2 %s, del 2 %s", val2Addr.String(), del2.AddressString())
+	fmt.Printf("\nval 2 %s, del 4 %s", val2Addr.String(), del4.AddressString())
+
 	// check delegation was created
-	del, err := stkK.GetDelegation(d.Ctx(), del2.Address(), val2ValAddr)
+	del, err := stkK.GetDelegation(d.Ctx(), del2.Address(), val2Addr)
 	require.NoError(t, err)
 	require.Equal(t, del.DelegatorAddress, del2.Address().String())
 
 	// Check costaker trackers are correct
 	// del2 created a delegation at same epoch that the validator got jailed, so the tracker was not even created (skipped due to jailing)
-	del2Tracker, err := costkK.GetCostakerRewards(d.Ctx(), del2.Address())
-	require.Equal(t, "0", del2Tracker.ActiveBaby.String())
-	require.NoError(t, err)
+	assertZeroCostkTracker(d.t, d.Ctx(), costkK, del2.Address())
 
 	// Trackers for val2, del3, del4 y del5 should be zeroed
 	assertZeroCostkTracker(d.t, d.Ctx(), costkK, val2Oper.Address())
 	assertZeroCostkTracker(d.t, d.Ctx(), costkK, del3.Address())
-	assertZeroCostkTracker(d.t, d.Ctx(), costkK, del4.Address())
 	assertZeroCostkTracker(d.t, d.Ctx(), costkK, del5.Address())
 
-	// Trackers for val 1 delegators should be: self delegation unaffected, redelegation slashed amt
-	val1Tracker, err = costkK.GetCostakerRewards(d.Ctx(), val1AccAddr)
+	// tokens were slashed, it might round up and miss calcs by one micro baby
+	del4Tracker, err := costkK.GetCostakerRewards(d.Ctx(), del4.Address())
 	require.NoError(t, err)
-	require.NotNil(t, val1Tracker)
-	require.Equal(t, val1Tracker.ActiveBaby, val1SelfDelAmt, "active baby should be self delegation amount", val1Tracker.ActiveBaby.String())
-	require.True(t, val1Tracker.ActiveSatoshis.IsZero(), "Active sats should be zero")
-	require.True(t, val1Tracker.TotalScore.IsZero())
+	assertActiveBabyWithinRange(d.t, zeroInt, del4Tracker.ActiveBaby, 1)
+
+	// Trackers for val 1 delegators should be: self delegation unaffected, redelegation slashed amt
+	d.CheckCostakerRewards(val1AccAddr, val1SelfDelAmt, zeroInt, zeroInt, currentRwdPeriod)
 
 	// del6 redelegated, so should not have delegation to val2
 	// and should have the slashed delegation to val1
 	del6Tracker, err = costkK.GetCostakerRewards(d.Ctx(), del6.Address())
 	require.NoError(t, err)
-	require.NotNil(t, del6Tracker)
 	assertActiveBabyWithinRange(t, del6AmtAfterSlashing, del6Tracker.ActiveBaby, 1, "del6 active baby after redelegation slashing")
 	require.True(t, del6Tracker.ActiveSatoshis.IsZero())
 	require.True(t, del6Tracker.TotalScore.IsZero())
@@ -1425,7 +1359,7 @@ func TestBabyCoStaking(t *testing.T) {
 	epoch = epochK.GetEpoch(d.Ctx())
 	valset = epochK.GetValidatorSet(d.Ctx(), epoch.EpochNumber)
 	require.Len(t, valset, 3)
-	require.False(t, isValidatorInValset(valset, val2ValAddr), "jailed validator should not be in the validator set")
+	require.False(t, isValidatorInValset(valset, val2Addr), "jailed validator should not be in the validator set")
 
 	// check costk tracker is still zero
 	assertZeroCostkTracker(d.t, d.Ctx(), costkK, del3.Address())
@@ -1458,25 +1392,25 @@ func TestBabyCoStaking(t *testing.T) {
 	epoch = epochK.GetEpoch(d.Ctx())
 	valset = epochK.GetValidatorSet(d.Ctx(), epoch.EpochNumber)
 	require.Len(t, valset, 2, "Unjailed validator should be in the validator set")
-	require.True(t, isValidatorInValset(valset, val2ValAddr), "Unjailed validator should be in the validator set")
+	require.True(t, isValidatorInValset(valset, val2Addr), "Unjailed validator should be in the validator set")
 
 	// Check the active baby is properly set back for delegations to this validator
 	// NOTE: Consider that the ones that were slashed will be less than the original staking amount
 
 	// val2 self delegation was slashed
-	selfDel, err := stkK.GetDelegation(d.Ctx(), val2Oper.Address(), val2ValAddr)
+	selfDel, err := stkK.GetDelegation(d.Ctx(), val2Oper.Address(), val2Addr)
 	require.NoError(t, err)
 	expSelfDelAmt := val2.TokensFromShares(selfDel.Shares).TruncateInt()
 	require.True(t, expSelfDelAmt.LT(newValSelfDelegatedAmt), "self delegation should be less than original amount due to slashing", expSelfDelAmt.String())
 	// active baby should be less than self delegation amount due to slashing
-	val2Tracker, err = costkK.GetCostakerRewards(d.Ctx(), val2Oper.Address())
+	val2Tracker, err := costkK.GetCostakerRewards(d.Ctx(), val2Oper.Address())
 	require.NoError(t, err)
 	require.NotNil(t, val2Tracker)
 	assertActiveBabyWithinRange(t, expSelfDelAmt, val2Tracker.ActiveBaby, 1, "val2 active baby after slashing")
 	require.True(t, val2Tracker.ActiveSatoshis.IsZero(), "Active sats should be zero")
 	require.True(t, val2Tracker.TotalScore.IsZero(), "Active score should be zero as validator was jailed entire epoch")
 
-	del3Tracker, err = costkK.GetCostakerRewards(d.Ctx(), del3.Address())
+	del3Tracker, err := costkK.GetCostakerRewards(d.Ctx(), del3.Address())
 	require.NoError(t, err)
 	require.NotNil(t, del3Tracker)
 
@@ -1485,11 +1419,13 @@ func TestBabyCoStaking(t *testing.T) {
 	require.True(t, del3Tracker.ActiveSatoshis.IsZero(), "Active sats should be zero")
 	require.True(t, del3Tracker.TotalScore.IsZero(), "Active score should be zero as validator was jailed entire epoch")
 
-	// del4 fully unbonded so tracker should still be zero
-	assertZeroCostkTracker(d.t, d.Ctx(), costkK, del4.Address())
+	// del4 fully unbonded so tracker should still be zero or one micro, might round up in calcs
+	del4Tracker, err = costkK.GetCostakerRewards(d.Ctx(), del4.Address())
+	require.NoError(t, err)
+	assertActiveBabyWithinRange(d.t, zeroInt, del4Tracker.ActiveBaby, 1)
 
 	// del5 got slashed first and then partially unbonded with 2 msgs
-	del5Tracker, err = costkK.GetCostakerRewards(d.Ctx(), del5.Address())
+	del5Tracker, err := costkK.GetCostakerRewards(d.Ctx(), del5.Address())
 	require.NoError(t, err)
 	require.NotNil(t, del5Tracker)
 	// expected active baby is total delegation after slashing minus the unstake amount

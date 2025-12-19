@@ -131,24 +131,8 @@ func (h HookEpoching) updateCoStkTrackerForDelegators(
 	for _, del := range delegations {
 		delAddr := sdk.MustAccAddressFromBech32(del.DelegatorAddress)
 
-		// We should only update the costaker tracker based on the remaining shares
-		remainingShares := del.Shares
-		// In case the validator is jailed/slashed,
-		// check if there are any cached delta shares to consider
-		cachedDeltas := h.k.stkCache.GetDeltaShares(valAddr, delAddr)
-		for _, deltaShares := range cachedDeltas {
-			// Should remove the delta to update properly the costaker tracker
-			// with remaining shares only
-			remainingShares = remainingShares.Sub(deltaShares)
-		}
-
-		if remainingShares.IsZero() {
-			// No shares left to process
-			continue
-		}
-
 		// Get delegation tokens using truncated division to avoid precision loss
-		delTokens := val.TokensFromShares(remainingShares)
+		delTokens := val.TokensFromShares(del.Shares)
 
 		// Update ActiveBaby using the provided update function
 		if err := h.k.costakerModified(ctx, delAddr, func(rwdTracker *types.CostakerRewardsTracker) {

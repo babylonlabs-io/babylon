@@ -325,7 +325,7 @@ func (s *ValidatorJailingTestSuite) TestValidatorJailingWithExtraDelegation() {
 		s.T().Logf("  - Expected active baby after: %s", expectedBabyAfter.String())
 
 		// Verify exact expected amount
-		s.Require().Equal(expectedBabyAfter, activeBabyAfter,
+		s.Require().Equal(expectedBabyAfter.String(), activeBabyAfter.String(),
 			"Delegator %s active baby after jailing should equal only val1 delegation amount", delegator)
 
 		// Additional specific checks based on delegation pattern
