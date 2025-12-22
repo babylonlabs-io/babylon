@@ -139,4 +139,8 @@ func TestResetCoStakerRwdsTracker_WithPreexistingTrackers(t *testing.T) {
 	costkP := costkK.GetParams(ctx)
 	expScore := costktypes.CalculateScore(costkP.ScoreRatioBtcByBaby, correctAmtBaby, rndAmtSats)
 	require.Equal(t, costkRwd.TotalScore.String(), expScore.String())
+
+	currenRwd, err := costkK.GetCurrentRewards(ctx)
+	require.NoError(t, err)
+	require.Equal(t, currenRwd.TotalScore.String(), expScore.String())
 }
