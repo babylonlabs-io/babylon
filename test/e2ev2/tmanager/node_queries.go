@@ -12,6 +12,7 @@ import (
 
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/query"
 	sdktx "github.com/cosmos/cosmos-sdk/types/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -21,8 +22,10 @@ import (
 
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/util"
 	btcstktypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
 	costktypes "github.com/babylonlabs-io/babylon/v4/x/costaking/types"
 	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
+	ftypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
 	ictvtypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
 )
 
@@ -73,6 +76,20 @@ func (n *Node) BtcStkQuery(f func(btcstktypes.QueryClient)) {
 	n.GrpcConn(func(conn *grpc.ClientConn) {
 		btcStakingClient := btcstktypes.NewQueryClient(conn)
 		f(btcStakingClient)
+	})
+}
+
+func (n *Node) FinalityQuery(f func(ftypes.QueryClient)) {
+	n.GrpcConn(func(conn *grpc.ClientConn) {
+		qc := ftypes.NewQueryClient(conn)
+		f(qc)
+	})
+}
+
+func (n *Node) CheckpointingQuery(f func(checkpointingtypes.QueryClient)) {
+	n.GrpcConn(func(conn *grpc.ClientConn) {
+		qc := checkpointingtypes.NewQueryClient(conn)
+		f(qc)
 	})
 }
 
@@ -262,6 +279,61 @@ func (n *Node) QueryBtcStakingParams() *btcstktypes.Params {
 	return &resp.Params
 }
 
+func (n *Node) QueryRawCheckpoints(pagination *query.PageRequest) *checkpointingtypes.QueryRawCheckpointsResponse {
+	var (
+		resp *checkpointingtypes.QueryRawCheckpointsResponse
+		err  error
+	)
+
+	n.CheckpointingQuery(func(qc checkpointingtypes.QueryClient) {
+		resp, err = qc.RawCheckpoints(context.Background(), &checkpointingtypes.QueryRawCheckpointsRequest{
+			Pagination: pagination,
+		})
+		require.NoError(n.T(), err)
+	})
+
+	return resp
+}
+
+func (n *Node) QueryRawCheckpoint(epochNum uint64) *checkpointingtypes.RawCheckpointWithMetaResponse {
+	rawCkpt, err := n.QueryRawCheckpointWithErr(epochNum)
+	require.NoError(n.T(), err)
+	return rawCkpt
+}
+
+func (n *Node) QueryRawCheckpointWithErr(epochNum uint64) (*checkpointingtypes.RawCheckpointWithMetaResponse, error) {
+	var (
+		resp *checkpointingtypes.QueryRawCheckpointResponse
+		err  error
+	)
+
+	n.CheckpointingQuery(func(qc checkpointingtypes.QueryClient) {
+		resp, err = qc.RawCheckpoint(context.Background(), &checkpointingtypes.QueryRawCheckpointRequest{
+			EpochNum: epochNum,
+		})
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return resp.RawCheckpoint, nil
+}
+
+func (n *Node) QueryLastCheckpointWithStatusResponse() *checkpointingtypes.RawCheckpointResponse {
+	var (
+		resp *checkpointingtypes.QueryLastCheckpointWithStatusResponse
+		err  error
+	)
+
+	n.CheckpointingQuery(func(qc checkpointingtypes.QueryClient) {
+		resp, err = qc.LastCheckpointWithStatus(context.Background(), &checkpointingtypes.QueryLastCheckpointWithStatusRequest{})
+		require.NoError(n.T(), err)
+	})
+
+	return resp.RawCheckpoint
+}
+
 func (n *Node) QueryStakingParams() stktypes.Params {
 	var (
 		resp *stktypes.QueryParamsResponse
@@ -357,6 +429,20 @@ func (n *Node) QueryFinalityProvider(fpBtcPkHex string) *btcstktypes.FinalityPro
 	return resp.FinalityProvider
 }
 
+func (n *Node) QueryActivatedHeight() uint64 {
+	var (
+		resp *ftypes.QueryActivatedHeightResponse
+		err  error
+	)
+
+	n.FinalityQuery(func(qc ftypes.QueryClient) {
+		resp, err = qc.ActivatedHeight(context.Background(), &ftypes.QueryActivatedHeightRequest{})
+		require.NoError(n.T(), err)
+	})
+
+	return resp.Height
+}
+
 func (n *Node) QueryProposals() *govtypes.QueryProposalsResponse {
 	var (
 		resp *govtypes.QueryProposalsResponse
@@ -385,6 +471,20 @@ func (n *Node) QueryCostkRwdTrck(addr sdk.AccAddress) *costktypes.QueryCostakerR
 	})
 
 	return resp
+}
+
+func (n *Node) QueryCostkParams() *costktypes.Params {
+	var (
+		resp *costktypes.QueryParamsResponse
+		err  error
+	)
+
+	n.CostkQuery(func(qc costktypes.QueryClient) {
+		resp, err = qc.Params(context.Background(), &costktypes.QueryParamsRequest{})
+		require.NoError(n.T(), err)
+	})
+
+	return &resp.Params
 }
 
 func (n *Node) QueryTallyResult(propID uint64) *govtypes.TallyResult {

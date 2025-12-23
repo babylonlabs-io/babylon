@@ -526,6 +526,13 @@ func (n *Node) IsChainRunning() bool {
 	return !status.SyncInfo.CatchingUp
 }
 
+// QueryBlock gets block at a specific height
+func (n *Node) QueryBlock(height int64) *cmttypes.Block {
+	resultBlock, err := n.RpcClient.Block(context.Background(), &height)
+	require.NoError(n.T(), err)
+	return resultBlock.Block
+}
+
 func (n *Node) RunNodeResource() *dockertest.Resource {
 	pwd, err := os.Getwd()
 	require.NoError(n.T(), err)
@@ -568,6 +575,36 @@ func (n *Node) RunNodeResource() *dockertest.Resource {
 
 	n.Tm.ContainerManager.Resources[n.Container.Name] = resource
 	return resource
+}
+
+func (n *Node) WaitFinalityIsActivated() (activatedHeight uint64) {
+	require.Eventually(n.T(), func() bool {
+		activatedHeight = n.QueryActivatedHeight()
+		return activatedHeight > 0
+	}, time.Minute*4, 10*time.Second)
+	n.T().Logf("the activated height is %d", activatedHeight)
+	return activatedHeight
+}
+
+func (n *Node) WaitUntilCurrentEpochIsSealedAndFinalized(startEpoch uint64) (lastFinalizedEpoch uint64) {
+	currentEpoch := n.QueryCurrentEpoch()
+
+	n.WaitForConditionWithPause(func() bool {
+		resp, err := n.QueryRawCheckpointWithErr(currentEpoch.CurrentEpoch)
+		if err != nil {
+			return false
+		}
+		return resp.Status == checkpointingtypes.Sealed
+	}, "failed to wait for epoch to be finalized", time.Second*4)
+	n.FinalizeSealedEpochs(startEpoch, currentEpoch.CurrentEpoch)
+
+	// ensure the committed epoch is finalized
+	require.Eventually(n.T(), func() bool {
+		resp := n.QueryLastCheckpointWithStatusResponse()
+		lastFinalizedEpoch = resp.EpochNum
+		return lastFinalizedEpoch >= currentEpoch.CurrentEpoch
+	}, time.Minute*2, time.Millisecond*200)
+	return lastFinalizedEpoch
 }
 
 func (n *Node) WaitForNextBlock() {
@@ -795,10 +832,12 @@ func (n *Node) UpdateWalletsAccSeqNumber() {
 }
 
 // UpdateWalletAccSeqNumber updates one wallet seq and acc number by querying the chain
-func (n *Node) UpdateWalletAccSeqNumber(walletKeyName string) {
-	w := n.Wallets[walletKeyName]
-	num, seq := n.QueryAccountInfo(w.Addr())
-	w.UpdateAccNumberAndSeq(num, seq)
+func (n *Node) UpdateWalletAccSeqNumber(walletKeyNames ...string) {
+	for _, walletKeyName := range walletKeyNames {
+		w := n.Wallets[walletKeyName]
+		num, seq := n.QueryAccountInfo(w.Addr())
+		w.UpdateAccNumberAndSeq(num, seq)
+	}
 }
 
 func NoRestart(config *docker.HostConfig) {

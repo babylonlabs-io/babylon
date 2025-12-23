@@ -1,12 +1,9 @@
 package e2e2
 
 import (
-	"math/rand"
 	"testing"
 
 	"github.com/stretchr/testify/require"
-
-	"github.com/btcsuite/btcd/btcec/v2"
 
 	sdkmath "cosmossdk.io/math"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
@@ -17,8 +14,8 @@ import (
 	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
 	v43 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v4_3"
 	"github.com/babylonlabs-io/babylon/v4/test/e2ev2/tmanager"
-	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
 	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+	costktypes "github.com/babylonlabs-io/babylon/v4/x/costaking/types"
 )
 
 // TestUpgradeV43 creates the scenario where an misscalculation in costaking
@@ -48,19 +45,35 @@ func TestUpgradeV43(t *testing.T) {
 	delegator := n.CreateWallet("delegator")
 	delegator.VerifySentTx = true
 
+	wFp := n.CreateWallet("healthy_fp")
+	wFp.VerifySentTx = true
+
 	initAmtOfWallets := sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(100_000000))
 	n.SendCoins(valSlashWallet.Address.String(), sdk.NewCoins(initAmtOfWallets))
 	n.WaitForNextBlock()
+	n.SendCoins(wFp.Address.String(), sdk.NewCoins(initAmtOfWallets))
+	n.WaitForNextBlock()
+	n.SendCoins(delegator.Address.String(), sdk.NewCoins(initAmtOfWallets))
+	n.WaitForNextBlock()
 
-	n.UpdateWalletAccSeqNumber(valSlashWallet.KeyName)
+	n.UpdateWalletAccSeqNumber(valSlashWallet.KeyName, delegator.KeyName, wFp.KeyName)
+
+	// creates the FP
+	fp := n.NewFpWithWallet(wFp)
+	fp.CommitPubRand()
+
+	btcDel := n.CreateBtcDelegation(delegator, fp.PublicKey.MustToBTCPK())
+
+	n.WaitUntilCurrentEpochIsSealedAndFinalized(1)
+	n.WaitFinalityIsActivated()
+
+	fp.AddFinalityVoteUntilCurrentHeight()
 
 	// create validator to be slashed
 	valSlashAddr := sdk.ValAddress(valSlashWallet.Address)
 	n.WrappedCreateValidator(valSlashWallet.KeyName, valSlashWallet.Address)
 
-	n.SendCoins(delegator.Address.String(), sdk.NewCoins(initAmtOfWallets))
 	n.WaitForEpochEnd() // validator must wait for end of epoch
-	n.UpdateWalletAccSeqNumber(delegator.KeyName)
 
 	valSlash := n.QueryValidator(valSlashAddr)
 	require.True(t, valSlash.IsBonded())
@@ -70,17 +83,27 @@ func TestUpgradeV43(t *testing.T) {
 	n.WrappedDelegate(delegator.KeyName, validator.Wallet.ValidatorAddress, amtHealthyDel)
 	n.WrappedDelegate(delegator.KeyName, valSlashAddr, amtSlashDel)
 
-	fpSK := setupFp(t, tm.R, n)
-	n.CreateBtcDelegation(delegator, fpSK.PubKey())
-
 	n.WaitForEpochEnd() // to process the new baby delegations
 
+	fp.AddFinalityVoteUntilCurrentHeight()
+
+	costkP := n.QueryCostkParams()
+
+	expSat := sdkmath.NewInt(int64(btcDel.TotalSat))
+	expBaby := amtHealthyDel.Add(amtSlashDel)
+	expScore := costktypes.CalculateScore(costkP.ScoreRatioBtcByBaby, expBaby, expSat)
+
 	costkRwdTracker := n.QueryCostkRwdTrckCli(delegator.Address)
-	require.Equal(t, amtHealthyDel.Add(amtSlashDel).String(), costkRwdTracker.ActiveBaby.String())
+	require.Equal(t, expBaby.String(), costkRwdTracker.ActiveBaby.String())
+	require.Equal(t, expSat.String(), costkRwdTracker.ActiveSatoshis.String())
+	require.Equal(t, expScore.String(), costkRwdTracker.TotalScore.String())
+
+	n.WaitForEpochEnd() // to process the new baby delegations
 
 	slashedVal := n.QueryValidator(valSlashAddr)
 	require.False(t, slashedVal.Jailed)
 
+	// after validator gets jailed it also slashes the amount staked in 10%
 	slashedVal = n.WaitForValidatorBeJailed(valSlashAddr)
 
 	slashDelegation := n.QueryDelegation(delegator.Address, valSlashAddr)
@@ -88,9 +111,8 @@ func TestUpgradeV43(t *testing.T) {
 	sharesToUbd := slashedVal.TokensFromShares(slashDelegation.Delegation.Shares)
 	n.WrappedUndelegate(delegator.KeyName, valSlashAddr, sharesToUbd.TruncateInt())
 
-	amtSlashDel2 := sdkmath.NewInt(1_500000) // this amount needs to be less than amtSlashDel
+	amtSlashDel2 := sdkmath.NewInt(1_500000) // NOTE: this amount needs to be less than first del to slashed val (amtSlashDel)
 	n.WrappedDelegate(delegator.KeyName, valSlashAddr, amtSlashDel2)
-	n.WaitForNextBlock()
 	n.WrappedUndelegate(delegator.KeyName, valSlashAddr, amtSlashDel2)
 
 	n.WaitForEpochEnd()
@@ -100,19 +122,26 @@ func TestUpgradeV43(t *testing.T) {
 	costkRwdTracker = n.QueryCostkRwdTrckCli(delegator.Address)
 	t.Logf("costaker reward tracker is in bad state where it should have the amount %s, but has %s due to bug", amtHealthyDel.String(), costkRwdTracker.ActiveBaby.String())
 	require.True(t, amtHealthyDel.GT(costkRwdTracker.ActiveBaby))
+	require.Equal(t, expSat.String(), costkRwdTracker.ActiveSatoshis.String())
 
-	govMsg, preUpgradeFunc := createGovPropAndPreUpgradeFunc(t, validator.Wallet.WalletSender)
+	expScoreAfterSlash := costktypes.CalculateScore(costkP.ScoreRatioBtcByBaby, costkRwdTracker.ActiveBaby, expSat)
+	require.Equal(t, expScoreAfterSlash.String(), costkRwdTracker.TotalScore.String())
+
 	// execute preUpgradeFunc, submit a proposal, vote, and then process upgrade
+	govMsg, preUpgradeFunc := createGovPropAndPreUpgradeFunc(t, validator.Wallet.WalletSender)
 	tm.Upgrade(govMsg, preUpgradeFunc)
 
+	btcDelsResp := validator.QueryBTCDelegations(bstypes.BTCDelegationStatus_ACTIVE)
+	require.Len(t, btcDelsResp, 1)
 	// post-upgrade state verification
+
+	expScore = costktypes.CalculateScore(costkP.ScoreRatioBtcByBaby, amtHealthyDel, expSat)
 
 	// The costaking should reflect the actual amount of baby staked to the healthy validator
 	costkRwdTracker = n.QueryCostkRwdTrckCli(delegator.Address)
 	require.Equal(t, amtHealthyDel.String(), costkRwdTracker.ActiveBaby.String())
-
-	btcDelsResp := validator.QueryBTCDelegations(bstypes.BTCDelegationStatus_ACTIVE)
-	require.Len(t, btcDelsResp, 1)
+	require.Equal(t, expSat.String(), costkRwdTracker.ActiveSatoshis.String())
+	require.Equal(t, expScore.String(), costkRwdTracker.TotalScore.String())
 }
 
 func createGovPropAndPreUpgradeFunc(t *testing.T, valWallet *tmanager.WalletSender) (*govtypes.MsgSubmitProposal, tmanager.PreUpgradeFunc) {
@@ -140,18 +169,4 @@ func createGovPropAndPreUpgradeFunc(t *testing.T, valWallet *tmanager.WalletSend
 
 	preUpgradeFunc := func(nodes []*tmanager.Node) {}
 	return govMsg, preUpgradeFunc
-}
-
-func setupFp(t *testing.T, r *rand.Rand, n *tmanager.Node) *btcec.PrivateKey {
-	fpSK, _, err := datagen.GenRandomBTCKeyPair(r)
-	require.NoError(t, err)
-	fp, err := datagen.GenCustomFinalityProvider(r, fpSK, n.DefaultWallet().Address)
-	require.NoError(t, err)
-	n.CreateFinalityProvider(n.DefaultWallet().KeyName, fp)
-	n.WaitForNextBlock()
-
-	fpResp := n.QueryFinalityProvider(fp.BtcPk.MarshalHex())
-	require.NotNil(t, fpResp)
-
-	return fpSK
 }

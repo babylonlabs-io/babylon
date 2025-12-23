@@ -1,18 +1,24 @@
 package tmanager
 
 import (
+	"encoding/hex"
 	"time"
 
 	"cosmossdk.io/math"
 	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
+	txformat "github.com/babylonlabs-io/babylon/v4/btctxformatter"
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
 	tkeeper "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	btccheckpointtypes "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
+	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
 	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/wire"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/bech32"
+	sdkquerytypes "github.com/cosmos/cosmos-sdk/types/query"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	stktypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -109,6 +115,94 @@ func (n *Node) CreateFinalityProvider(walletName string, fp *bstypes.FinalityPro
 	n.T().Logf("Created finality provider: %s", fp.BtcPk.MarshalHex())
 }
 
+func (n *Node) FinalizeSealedEpochs(startEpoch uint64, lastEpoch uint64) {
+	n.T().Logf("start finalizing epochs from  %d to %d", startEpoch, lastEpoch)
+	madeProgress := false
+
+	pageLimit := lastEpoch - startEpoch + 1
+	pagination := &sdkquerytypes.PageRequest{
+		Key:   checkpointingtypes.CkptsObjectKey(startEpoch),
+		Limit: pageLimit,
+	}
+
+	resp := n.QueryRawCheckpoints(pagination)
+	require.Equal(n.T(), int(pageLimit), len(resp.RawCheckpoints))
+
+	for _, checkpoint := range resp.RawCheckpoints {
+		require.Equal(n.T(), checkpoint.Status, checkpointingtypes.Sealed)
+
+		currentBtcTipResp, err := n.QueryTip()
+		require.NoError(n.T(), err)
+
+		_, submitterAddr, err := bech32.DecodeAndConvert(n.DefaultWallet().Addr())
+		require.NoError(n.T(), err)
+
+		rawCheckpoint, err := checkpoint.Ckpt.ToRawCheckpoint()
+		require.NoError(n.T(), err)
+
+		btcCheckpoint, err := checkpointingtypes.FromRawCkptToBTCCkpt(rawCheckpoint, submitterAddr)
+		require.NoError(n.T(), err)
+
+		babylonTagBytes, err := hex.DecodeString(BabylonOpReturnTag)
+		require.NoError(n.T(), err)
+
+		p1, p2, err := txformat.EncodeCheckpointData(
+			babylonTagBytes,
+			txformat.CurrentVersion,
+			btcCheckpoint,
+		)
+		require.NoError(n.T(), err)
+
+		tx1 := datagen.CreatOpReturnTransaction(n.Tm.R, p1)
+		currentBtcTip, err := tkeeper.ParseBTCHeaderInfoResponseToInfo(currentBtcTipResp)
+		require.NoError(n.T(), err)
+
+		opReturn1 := datagen.CreateBlockWithTransaction(n.Tm.R, currentBtcTip.Header.ToBlockHeader(), tx1)
+		tx2 := datagen.CreatOpReturnTransaction(n.Tm.R, p2)
+		opReturn2 := datagen.CreateBlockWithTransaction(n.Tm.R, opReturn1.HeaderBytes.ToBlockHeader(), tx2)
+
+		n.SubmitRefundableTxWithAssertion(func() {
+			n.InsertHeader(&opReturn1.HeaderBytes)
+			n.InsertHeader(&opReturn2.HeaderBytes)
+		}, true, n.DefaultWallet().KeyName)
+
+		n.SubmitRefundableTxWithAssertion(func() {
+			n.InsertProofs(opReturn1.SpvProof, opReturn2.SpvProof)
+		}, true, n.DefaultWallet().KeyName)
+
+		n.WaitForCondition(func() bool {
+			ckpt := n.QueryRawCheckpoint(checkpoint.Ckpt.EpochNum)
+			return ckpt.Status == checkpointingtypes.Submitted
+		}, "Checkpoint should be submitted ")
+
+		madeProgress = true
+	}
+
+	if madeProgress {
+		// we made progress in above loop, which means the last header of btc chain is
+		// valid op return header, by finalizing it, we will also finalize all older
+		// checkpoints
+
+		for i := 0; i < BabylonBtcFinalizationPeriod; i++ {
+			n.InsertNewEmptyBtcHeader(n.Tm.R)
+		}
+	}
+}
+
+func (n *Node) InsertProofs(p1 *btccheckpointtypes.BTCSpvProof, p2 *btccheckpointtypes.BTCSpvProof) string {
+	n.T().Log("btccheckpoint sending proofs")
+
+	msg := &btccheckpointtypes.MsgInsertBTCSpvProof{
+		Submitter: n.DefaultWallet().Addr(),
+		Proofs:    []*btccheckpointtypes.BTCSpvProof{p1, p2},
+	}
+
+	txHash, tx := n.DefaultWallet().SubmitMsgs(msg)
+	require.NotNil(n.T(), tx, "Failed to create BTC SPV proofs")
+	n.T().Logf("successfully inserted btc spv proofs, tx hash: %s", txHash)
+	return txHash
+}
+
 // CreateBTCDelegation submits a BTC delegation transaction with a specified wallet
 func (n *Node) CreateBTCDelegation(walletName string, msg *bstypes.MsgCreateBTCDelegation) string {
 	wallet := n.Wallet(walletName)
@@ -164,6 +258,31 @@ func (n *Node) AddBTCDelegationInclusionProof(
 	_, tx := wallet.SubmitMsgs(msg)
 	require.NotNil(n.T(), tx, "AddBTCDelegationInclusionProof transaction should not be nil")
 	n.T().Logf("BTC delegation inclusion proof added")
+}
+
+// CommitPubRandList commits a finality provider public randomness
+func (n *Node) CommitPubRandList(walletName string, fp *bstypes.FinalityProvider) {
+	wallet := n.Wallet(walletName)
+	require.NotNil(n.T(), wallet, "Wallet %s not found", walletName)
+
+	// Create commission rates
+	commission := bstypes.NewCommissionRates(
+		*fp.Commission,
+		fp.CommissionInfo.MaxRate,
+		fp.CommissionInfo.MaxChangeRate,
+	)
+
+	msg := &bstypes.MsgCreateFinalityProvider{
+		Addr:        wallet.Address.String(),
+		BtcPk:       fp.BtcPk,
+		Pop:         fp.Pop,
+		Commission:  commission,
+		Description: fp.Description,
+	}
+
+	_, tx := wallet.SubmitMsgs(msg)
+	require.NotNil(n.T(), tx, "CreateFinalityProvider transaction should not be nil")
+	n.T().Logf("Created finality provider: %s", fp.BtcPk.MarshalHex())
 }
 
 /*
@@ -327,7 +446,7 @@ func (n *Node) BuildSingleSigDelegationMsg(
 	}, stakingInfo
 }
 
-func (n *Node) CreateBtcDelegation(wallet *WalletSender, fpPK *btcec.PublicKey) {
+func (n *Node) CreateBtcDelegation(wallet *WalletSender, fpPK *btcec.PublicKey) *bstypes.BTCDelegationResponse {
 	wallet.VerifySentTx = true
 
 	// single-sig delegation from n to fp
@@ -457,4 +576,5 @@ func (n *Node) CreateBtcDelegation(wallet *WalletSender, fpPK *btcec.PublicKey) 
 
 	activeBtcDelResp := n.QueryBTCDelegation(stakingTxHash)
 	require.Equal(n.T(), "ACTIVE", activeBtcDelResp.StatusDesc)
+	return activeBtcDelResp
 }

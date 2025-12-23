@@ -66,14 +66,6 @@ type ValidatorWallet struct {
 	ValidatorAddress sdk.ValAddress
 }
 
-// FinalityProvider represents a finality provider actor
-type FinalityProvider struct {
-	*WalletSender
-	BtcPrivKey  *btcec.PrivateKey
-	Description string
-	Commission  math.LegacyDec
-}
-
 // BtcStaker represents a Bitcoin staker actor
 type BtcStaker struct {
 	*WalletSender
