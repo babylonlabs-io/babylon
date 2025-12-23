@@ -119,17 +119,17 @@ func TestUpgradeV43(t *testing.T) {
 
 	// costk is in an bad state created by the bug in v4.2.2
 	// 2 stakes, val slash, unbond, bond, unbond again
-	costkRwdTracker = n.QueryCostkRwdTrckCli(delegator.Address)
-	t.Logf("costaker reward tracker is in bad state where it should have the amount %s, but has %s due to bug", amtHealthyDel.String(), costkRwdTracker.ActiveBaby.String())
-	require.True(t, amtHealthyDel.GT(costkRwdTracker.ActiveBaby))
-	require.Equal(t, expSat.String(), costkRwdTracker.ActiveSatoshis.String())
+	costkRwdTrackerBeforeUpgrade := n.QueryCostkRwdTrckCli(delegator.Address)
+	t.Logf("costaker reward tracker is in bad state where it should have the amount %s, but has %s due to bug", amtHealthyDel.String(), costkRwdTrackerBeforeUpgrade.ActiveBaby.String())
+	require.True(t, amtHealthyDel.GT(costkRwdTrackerBeforeUpgrade.ActiveBaby))
+	require.Equal(t, expSat.String(), costkRwdTrackerBeforeUpgrade.ActiveSatoshis.String())
 
-	expScoreAfterSlash := costktypes.CalculateScore(costkP.ScoreRatioBtcByBaby, costkRwdTracker.ActiveBaby, expSat)
-	require.Equal(t, expScoreAfterSlash.String(), costkRwdTracker.TotalScore.String())
+	expScoreAfterSlash := costktypes.CalculateScore(costkP.ScoreRatioBtcByBaby, costkRwdTrackerBeforeUpgrade.ActiveBaby, expSat)
+	require.Equal(t, expScoreAfterSlash.String(), costkRwdTrackerBeforeUpgrade.TotalScore.String())
 
 	currRwdBeforeUpgrade := n.QueryCostkCurrRwdCli()
-	require.Equal(t, currRwdBeforeUpgrade.Period, costkRwdTracker.StartPeriodCumulativeReward+1)
-	require.Equal(t, currRwdBeforeUpgrade.TotalScore.String(), costkRwdTracker.TotalScore.String())
+	require.Equal(t, currRwdBeforeUpgrade.Period, costkRwdTrackerBeforeUpgrade.StartPeriodCumulativeReward+1)
+	require.Equal(t, currRwdBeforeUpgrade.TotalScore.String(), costkRwdTrackerBeforeUpgrade.TotalScore.String())
 
 	// execute preUpgradeFunc, submit a proposal, vote, and then process upgrade
 	govMsg, preUpgradeFunc := createGovPropAndPreUpgradeFunc(t, validator.Wallet.WalletSender)
@@ -142,13 +142,14 @@ func TestUpgradeV43(t *testing.T) {
 	expScore = costktypes.CalculateScore(costkP.ScoreRatioBtcByBaby, amtHealthyDel, expSat)
 
 	// The costaking should reflect the actual amount of baby staked to the healthy validator
-	costkRwdTracker = n.QueryCostkRwdTrckCli(delegator.Address)
-	require.Equal(t, amtHealthyDel.String(), costkRwdTracker.ActiveBaby.String())
-	require.Equal(t, expSat.String(), costkRwdTracker.ActiveSatoshis.String())
-	require.Equal(t, expScore.String(), costkRwdTracker.TotalScore.String())
+	costkRwdTrackerAfterUpgrade := n.QueryCostkRwdTrckCli(delegator.Address)
+	require.Equal(t, amtHealthyDel.String(), costkRwdTrackerAfterUpgrade.ActiveBaby.String())
+	require.Equal(t, expSat.String(), costkRwdTrackerAfterUpgrade.ActiveSatoshis.String())
+	require.Equal(t, expScore.String(), costkRwdTrackerAfterUpgrade.TotalScore.String())
 
 	currRwdAfterUpgrade := n.QueryCostkCurrRwdCli()
-	require.Equal(t, currRwdAfterUpgrade.Period, costkRwdTracker.StartPeriodCumulativeReward)
+	require.Equal(t, costkRwdTrackerBeforeUpgrade.StartPeriodCumulativeReward+1, costkRwdTrackerAfterUpgrade.StartPeriodCumulativeReward)
+	require.Equal(t, currRwdAfterUpgrade.Period, costkRwdTrackerAfterUpgrade.StartPeriodCumulativeReward+1)
 	require.Equal(t, currRwdAfterUpgrade.Period, currRwdBeforeUpgrade.Period+1)
 	require.Equal(t, currRwdAfterUpgrade.TotalScore.String(), costkRwdTracker.TotalScore.String())
 }
