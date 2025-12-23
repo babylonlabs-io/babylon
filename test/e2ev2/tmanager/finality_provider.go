@@ -56,7 +56,7 @@ func (fp *FinalityProvider) CommitPubRand() {
 
 	_, tx := fp.SubmitMsgs(msgCommitPubRandList)
 	require.NotNil(fp.T(), tx, "FP CommitPubRandList transaction should not be nil")
-	fp.T().Logf("Commited FP pub rand list: %s", fp.PublicKey.MarshalHex())
+	fp.T().Logf("Committed FP pub rand list: %s", fp.PublicKey.MarshalHex())
 
 	fp.PubRandList = randListInfo
 	fp.CommitStartHeight = commitStartHeight
