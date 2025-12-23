@@ -7,7 +7,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/btcsuite/btcd/btcec/v2"
-	"github.com/btcsuite/btcd/chaincfg"
 
 	sdkmath "cosmossdk.io/math"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
@@ -17,13 +16,22 @@ import (
 
 	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
 	v43 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v4_3"
-	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer/chain"
 	"github.com/babylonlabs-io/babylon/v4/test/e2ev2/tmanager"
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
-	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 )
 
+// TestUpgradeV43 creates the scenario where an misscalculation in costaking
+// reward tracker in version v4.2.2 where one delegator:
+// 1. Creates two healthy baby delegations (A and B)
+// 2. Some epoch starts
+// 3. Validator B gets slashed
+// 4. Delegator unbonds from B
+// 5. Delegator delegates again to B
+// 6. Delegator unbonds again from B
+// 7. Epoch ends
+// Results in misscalculation of active baby, the upgrade to v4.3 should
+// recalculate all the active baby and score in the system
 func TestUpgradeV43(t *testing.T) {
 	t.Parallel()
 	tm := tmanager.NewTmWithUpgrade(t, 0, "")
@@ -31,18 +39,8 @@ func TestUpgradeV43(t *testing.T) {
 
 	n := tm.Chains[tmanager.CHAIN_ID_BABYLON].Nodes[0]
 
-	// start chain with previous binary
-	tm.Start()
+	tm.Start() // start chain with v4.2.2 binary
 	validator.WaitUntilBlkHeight(3)
-
-	// creates bad delegation with new validator that will be jailed due to downtime
-	// 1. Delegate to two healthy validators (A and B)
-	// 2. Start of an epoch
-	// 	3. Validator B gets slashed
-	// 	4. Delegator unbonds from B
-	// 	5. Delegator delegates again to B
-	// 	6. Delegator unbonds again from B
-	// 7. Epoch ends
 
 	valSlashWallet := n.CreateWallet("slashed")
 	valSlashWallet.VerifySentTx = true
@@ -61,8 +59,7 @@ func TestUpgradeV43(t *testing.T) {
 	n.WrappedCreateValidator(valSlashWallet.KeyName, valSlashWallet.Address)
 
 	n.SendCoins(delegator.Address.String(), sdk.NewCoins(initAmtOfWallets))
-	// validator must wait for end of epoch
-	n.WaitForEpochEnd()
+	n.WaitForEpochEnd() // validator must wait for end of epoch
 	n.UpdateWalletAccSeqNumber(delegator.KeyName)
 
 	valSlash := n.QueryValidator(valSlashAddr)
@@ -74,9 +71,9 @@ func TestUpgradeV43(t *testing.T) {
 	n.WrappedDelegate(delegator.KeyName, valSlashAddr, amtSlashDel)
 
 	fpSK := setupFp(t, tm.R, n)
-	createSingleSigBtcDel(t, tm.R, n, delegator, fpSK)
+	n.CreateBtcDelegation(delegator, fpSK.PubKey())
 
-	n.WaitForEpochEnd() // to validate the baby delegations
+	n.WaitForEpochEnd() // to process the new baby delegations
 
 	costkRwdTracker := n.QueryCostkRwdTrckCli(delegator.Address)
 	require.Equal(t, amtHealthyDel.Add(amtSlashDel).String(), costkRwdTracker.ActiveBaby.String())
@@ -91,34 +88,31 @@ func TestUpgradeV43(t *testing.T) {
 	sharesToUbd := slashedVal.TokensFromShares(slashDelegation.Delegation.Shares)
 	n.WrappedUndelegate(delegator.KeyName, valSlashAddr, sharesToUbd.TruncateInt())
 
-	amtSlashDel2 := sdkmath.NewInt(1_500000)
+	amtSlashDel2 := sdkmath.NewInt(1_500000) // this amount needs to be less than amtSlashDel
 	n.WrappedDelegate(delegator.KeyName, valSlashAddr, amtSlashDel2)
 	n.WaitForNextBlock()
 	n.WrappedUndelegate(delegator.KeyName, valSlashAddr, amtSlashDel2)
 
 	n.WaitForEpochEnd()
 
-	// costk should be
+	// costk is in an bad state created by the bug in v4.2.2
+	// 2 stakes, val slash, unbond, bond, unbond again
+	costkRwdTracker = n.QueryCostkRwdTrckCli(delegator.Address)
+	t.Logf("costaker reward tracker is in bad state where it should have the amount %s, but has %s due to bug", amtHealthyDel.String(), costkRwdTracker.ActiveBaby.String())
+	require.True(t, amtHealthyDel.GT(costkRwdTracker.ActiveBaby))
+
+	govMsg, preUpgradeFunc := createGovPropAndPreUpgradeFunc(t, validator.Wallet.WalletSender)
+	// execute preUpgradeFunc, submit a proposal, vote, and then process upgrade
+	tm.Upgrade(govMsg, preUpgradeFunc)
+
+	// post-upgrade state verification
+
+	// The costaking should reflect the actual amount of baby staked to the healthy validator
 	costkRwdTracker = n.QueryCostkRwdTrckCli(delegator.Address)
 	require.Equal(t, amtHealthyDel.String(), costkRwdTracker.ActiveBaby.String())
-	// unbonds from slash
-	// bonds again
-	// unbonds again
 
-	// check that reaches bad value of active baby
-
-	// stakerWallet := n.DefaultWallet()
-
-	// 	validator.WaitUntilBlkHeight(25)
-	govMsg, preUpgradeFunc := createGovPropAndPreUpgradeFunc(t, validator.Wallet.WalletSender)
-	require.NotNil(t, govMsg)
-	require.NotNil(t, preUpgradeFunc)
-	// 	// execute preUpgradeFunc, submit a proposal, vote, and then process upgrade
-	// 	tm.Upgrade(govMsg, preUpgradeFunc)
-
-	// // post-upgrade state verification
-	// btcDelsResp := validator.QueryBTCDelegations(bstypes.BTCDelegationStatus_ACTIVE)
-	// require.Len(t, btcDelsResp, 1)
+	btcDelsResp := validator.QueryBTCDelegations(bstypes.BTCDelegationStatus_ACTIVE)
+	require.Len(t, btcDelsResp, 1)
 }
 
 func createGovPropAndPreUpgradeFunc(t *testing.T, valWallet *tmanager.WalletSender) (*govtypes.MsgSubmitProposal, tmanager.PreUpgradeFunc) {
@@ -161,137 +155,4 @@ func setupFp(t *testing.T, r *rand.Rand, n *tmanager.Node) *btcec.PrivateKey {
 	require.NotNil(t, fpResp)
 
 	return fpSK
-}
-
-func createSingleSigBtcDel(t *testing.T, r *rand.Rand, n *tmanager.Node, wallet *tmanager.WalletSender, fpSK *btcec.PrivateKey) {
-	n.DefaultWallet().VerifySentTx = true
-
-	// single-sig delegation from n to fp
-	stakerSK, _, err := datagen.GenRandomBTCKeyPair(r)
-	require.NoError(t, err)
-
-	msg, stakingInfoBuilt := BuildSingleSigDelegationMsg(
-		t, r, n,
-		n.DefaultWallet(),
-		stakerSK,
-		fpSK.PubKey(),
-		int64(2*10e8),
-		1000,
-	)
-
-	n.CreateBTCDelegation(n.DefaultWallet().KeyName, msg)
-	n.WaitForNextBlock()
-
-	pendingDelResp := n.QueryBTCDelegation(stakingInfoBuilt.StakingTx.TxHash().String())
-	require.NotNil(t, pendingDelResp)
-	require.Equal(t, "PENDING", pendingDelResp.StatusDesc)
-
-	/*
-		generate and insert new covenant signatures, in order to verify the BTC delegation
-	*/
-	pendingDel, err := chain.ParseRespBTCDelToBTCDel(pendingDelResp)
-	require.NoError(t, err)
-	require.Len(t, pendingDel.CovenantSigs, 0)
-	stakingMsgTx, err := bbn.NewBTCTxFromBytes(pendingDel.StakingTx)
-	require.NoError(t, err)
-
-	slashingTx := pendingDel.SlashingTx
-	stakingTxHash := stakingMsgTx.TxHash().String()
-	bsParams := n.QueryBtcStakingParams()
-
-	fpBTCPKs, err := bbn.NewBTCPKsFromBIP340PKs(pendingDel.FpBtcPkList)
-	require.NoError(t, err)
-
-	btcCfg := &chaincfg.SimNetParams
-	stakingInfo, err := pendingDel.GetStakingInfo(bsParams, btcCfg)
-	require.NoError(t, err)
-
-	stakingSlashingPathInfo, err := stakingInfo.SlashingPathSpendInfo()
-	require.NoError(t, err)
-
-	// it should be changed when modifying covenant pk on chain start
-	covSKs, _, _ := bstypes.DefaultCovenantCommittee()
-
-	// covenant signatures on slashing tx
-	covenantSlashingSigs, err := datagen.GenCovenantAdaptorSigs(
-		covSKs,
-		fpBTCPKs,
-		stakingMsgTx,
-		stakingSlashingPathInfo.GetPkScriptPath(),
-		slashingTx,
-	)
-	require.NoError(t, err)
-
-	// cov Schnorr sigs on unbonding signature
-	unbondingPathInfo, err := stakingInfo.UnbondingPathSpendInfo()
-	require.NoError(t, err)
-	unbondingTx, err := bbn.NewBTCTxFromBytes(pendingDel.BtcUndelegation.UnbondingTx)
-	require.NoError(t, err)
-
-	covUnbondingSigs, err := datagen.GenCovenantUnbondingSigs(
-		covSKs,
-		stakingMsgTx,
-		pendingDel.StakingOutputIdx,
-		unbondingPathInfo.GetPkScriptPath(),
-		unbondingTx,
-	)
-	require.NoError(t, err)
-
-	unbondingInfo, err := pendingDel.GetUnbondingInfo(bsParams, btcCfg)
-	require.NoError(t, err)
-	unbondingSlashingPathInfo, err := unbondingInfo.SlashingPathSpendInfo()
-	require.NoError(t, err)
-	covenantUnbondingSlashingSigs, err := datagen.GenCovenantAdaptorSigs(
-		covSKs,
-		fpBTCPKs,
-		unbondingTx,
-		unbondingSlashingPathInfo.GetPkScriptPath(),
-		pendingDel.BtcUndelegation.SlashingTx,
-	)
-	require.NoError(t, err)
-
-	for i := 0; i < int(bsParams.CovenantQuorum); i++ {
-		n.SubmitRefundableTxWithAssertion(func() {
-			n.AddCovenantSigs(
-				n.DefaultWallet().KeyName,
-				covenantSlashingSigs[i].CovPk,
-				stakingTxHash,
-				covenantSlashingSigs[i].AdaptorSigs,
-				bbn.NewBIP340SignatureFromBTCSig(covUnbondingSigs[i]),
-				covenantUnbondingSlashingSigs[i].AdaptorSigs,
-				nil,
-			)
-		}, true, n.DefaultWallet().KeyName)
-	}
-
-	verifiedDelResp := n.QueryBTCDelegation(stakingTxHash)
-	require.Equal(t, "VERIFIED", verifiedDelResp.StatusDesc)
-	verifiedDel, err := chain.ParseRespBTCDelToBTCDel(verifiedDelResp)
-	require.NoError(t, err)
-	require.Len(t, verifiedDel.CovenantSigs, int(bsParams.CovenantQuorum))
-	require.True(t, verifiedDel.HasCovenantQuorums(bsParams.CovenantQuorum, 0))
-
-	/*
-		generate and add inclusion proof, in order to activate the BTC delegation
-	*/
-	// wait for btc delegation is k-deep
-	currentBtcTipResp, err := n.QueryTip()
-	require.NoError(t, err)
-	currentBtcTip, err := chain.ParseBTCHeaderInfoResponseToInfo(currentBtcTipResp)
-	require.NoError(t, err)
-	blockWithStakingTx := datagen.CreateBlockWithTransaction(r, currentBtcTip.Header.ToBlockHeader(), stakingMsgTx)
-	n.InsertHeader(&blockWithStakingTx.HeaderBytes)
-
-	inclusionProof := bstypes.NewInclusionProofFromSpvProof(blockWithStakingTx.SpvProof)
-	for i := 0; i < tmanager.BabylonBtcConfirmationPeriod; i++ {
-		n.InsertNewEmptyBtcHeader(r)
-	}
-
-	// add btc inclusion proof
-	n.SubmitRefundableTxWithAssertion(func() {
-		n.AddBTCDelegationInclusionProof(n.DefaultWallet().KeyName, stakingTxHash, inclusionProof)
-	}, true, n.DefaultWallet().KeyName)
-
-	activeBtcDelResp := n.QueryBTCDelegation(stakingTxHash)
-	require.Equal(t, "ACTIVE", activeBtcDelResp.StatusDesc)
 }

@@ -23,6 +23,7 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	appsigner "github.com/babylonlabs-io/babylon/v4/app/signer"
+	tkeeper "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
 	cmtconfig "github.com/cometbft/cometbft/config"
 	"github.com/cometbft/cometbft/p2p"
 	rpchttp "github.com/cometbft/cometbft/rpc/client/http"
@@ -906,7 +907,7 @@ func (n *Node) InsertNewEmptyBtcHeader(r *rand.Rand) *blc.BTCHeaderInfo {
 	require.NoError(n.T(), err)
 	n.T().Logf("Retrieved current tip of btc headerchain. Height: %d", tipResp.Height)
 
-	tip, err := ParseBTCHeaderInfoResponseToInfo(tipResp)
+	tip, err := tkeeper.ParseBTCHeaderInfoResponseToInfo(tipResp)
 	require.NoError(n.T(), err)
 
 	child := datagen.GenRandomValidBTCHeaderInfoWithParent(r, *tip)

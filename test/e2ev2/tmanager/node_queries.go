@@ -20,33 +20,11 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/util"
-	bbn "github.com/babylonlabs-io/babylon/v4/types"
-	btclighttypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
 	btcstktypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 	costktypes "github.com/babylonlabs-io/babylon/v4/x/costaking/types"
 	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 	ictvtypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
 )
-
-// ParseBTCHeaderInfoResponseToInfo converts BTCHeaderInfoResponse to BTCHeaderInfo
-func ParseBTCHeaderInfoResponseToInfo(r *btclighttypes.BTCHeaderInfoResponse) (*btclighttypes.BTCHeaderInfo, error) {
-	header, err := bbn.NewBTCHeaderBytesFromHex(r.HeaderHex)
-	if err != nil {
-		return nil, err
-	}
-
-	hash, err := bbn.NewBTCHeaderHashBytesFromHex(r.HashHex)
-	if err != nil {
-		return nil, err
-	}
-
-	return &btclighttypes.BTCHeaderInfo{
-		Header: &header,
-		Hash:   &hash,
-		Height: r.Height,
-		Work:   &r.Work,
-	}, nil
-}
 
 func (n *Node) GrpcConn(f func(conn *grpc.ClientConn)) {
 	conn, err := grpc.NewClient(n.GrpcEndpoint, grpc.WithTransportCredentials(insecure.NewCredentials()))
