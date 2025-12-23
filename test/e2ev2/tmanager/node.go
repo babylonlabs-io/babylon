@@ -38,6 +38,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	stktypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	bbnapp "github.com/babylonlabs-io/babylon/v4/app"
 	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
@@ -581,6 +582,29 @@ func (n *Node) WaitForNextBlocks(numberOfBlocks uint64) {
 		require.NoError(n.T(), err)
 		return newLatest > blockToWait
 	}, fmt.Sprintf("Timed out waiting for block %d. Current height is: %d", latest, blockToWait))
+}
+
+func (n *Node) WaitForEpochEnd() {
+	currEpoch := n.QueryCurrentEpoch().CurrentEpoch
+
+	n.WaitForCondition(func() bool {
+		newLatest := n.QueryCurrentEpoch().CurrentEpoch
+		return newLatest > currEpoch
+	}, fmt.Sprintf("Timed out waiting for epoch %d. Current epoch is: %d", currEpoch+1, currEpoch))
+}
+
+func (n *Node) WaitForValidatorBeJailed(valAddr sdk.ValAddress) stktypes.Validator {
+	val := n.QueryValidator(valAddr)
+	if val.IsJailed() {
+		n.T().Logf("val %s is already jailed", valAddr.String())
+		return val
+	}
+
+	n.WaitForConditionWithPause(func() bool {
+		val = n.QueryValidator(valAddr)
+		return val.IsJailed()
+	}, fmt.Sprintf("Timed out waiting for validator %s to be jailed", valAddr.String()), time.Second*5)
+	return val
 }
 
 func (n *Node) WaitUntilBlkHeight(blkHeight uint32) {

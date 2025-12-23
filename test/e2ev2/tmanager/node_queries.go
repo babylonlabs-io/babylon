@@ -16,12 +16,15 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
+	stktypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/util"
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	btclighttypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
 	btcstktypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+	costktypes "github.com/babylonlabs-io/babylon/v4/x/costaking/types"
+	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 	ictvtypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
 )
 
@@ -81,6 +84,13 @@ func (n *Node) IncentiveQuery(f func(ictvtypes.QueryClient)) {
 	})
 }
 
+func (n *Node) EpochingQuery(f func(epochingtypes.QueryClient)) {
+	n.GrpcConn(func(conn *grpc.ClientConn) {
+		incentiveClient := epochingtypes.NewQueryClient(conn)
+		f(incentiveClient)
+	})
+}
+
 func (n *Node) BtcStkQuery(f func(btcstktypes.QueryClient)) {
 	n.GrpcConn(func(conn *grpc.ClientConn) {
 		btcStakingClient := btcstktypes.NewQueryClient(conn)
@@ -88,9 +98,23 @@ func (n *Node) BtcStkQuery(f func(btcstktypes.QueryClient)) {
 	})
 }
 
+func (n *Node) CostkQuery(f func(costktypes.QueryClient)) {
+	n.GrpcConn(func(conn *grpc.ClientConn) {
+		qc := costktypes.NewQueryClient(conn)
+		f(qc)
+	})
+}
+
 func (n *Node) GovQuery(f func(govtypes.QueryClient)) {
 	n.GrpcConn(func(conn *grpc.ClientConn) {
 		govClient := govtypes.NewQueryClient(conn)
+		f(govClient)
+	})
+}
+
+func (n *Node) StakingQuery(f func(stktypes.QueryClient)) {
+	n.GrpcConn(func(conn *grpc.ClientConn) {
+		govClient := stktypes.NewQueryClient(conn)
 		f(govClient)
 	})
 }
@@ -214,6 +238,21 @@ func (n *Node) QueryDelegatorRewards(delAddrs []string) map[string]sdk.Coins {
 	return n.QueryIctvRewardGauges(delAddrs, ictvtypes.BTC_STAKER)
 }
 
+// QueryCurrentEpoch queries the current epoch
+func (n *Node) QueryCurrentEpoch() *epochingtypes.QueryCurrentEpochResponse {
+	var (
+		resp *epochingtypes.QueryCurrentEpochResponse
+		err  error
+	)
+
+	n.EpochingQuery(func(qc epochingtypes.QueryClient) {
+		resp, err = qc.CurrentEpoch(context.Background(), &epochingtypes.QueryCurrentEpochRequest{})
+		require.NoError(n.T(), err)
+
+	})
+	return resp
+}
+
 // QueryIctvRewardGauges queries rewards for multiple delegators
 func (n *Node) QueryIctvRewardGauges(addrs []string, holderType ictvtypes.StakeholderType) map[string]sdk.Coins {
 	rewards := make(map[string]sdk.Coins, len(addrs))
@@ -244,6 +283,53 @@ func (n *Node) QueryBtcStakingParams() *btcstktypes.Params {
 	})
 
 	return &resp.Params
+}
+
+func (n *Node) QueryStakingParams() stktypes.Params {
+	var (
+		resp *stktypes.QueryParamsResponse
+		err  error
+	)
+
+	n.StakingQuery(func(qc stktypes.QueryClient) {
+		resp, err = qc.Params(context.Background(), &stktypes.QueryParamsRequest{})
+		require.NoError(n.T(), err)
+	})
+
+	return resp.Params
+}
+
+func (n *Node) QueryValidator(valAddr sdk.ValAddress) stktypes.Validator {
+	var (
+		resp *stktypes.QueryValidatorResponse
+		err  error
+	)
+
+	n.StakingQuery(func(qc stktypes.QueryClient) {
+		resp, err = qc.Validator(context.Background(), &stktypes.QueryValidatorRequest{
+			ValidatorAddr: valAddr.String(),
+		})
+		require.NoError(n.T(), err)
+	})
+
+	return resp.Validator
+}
+
+func (n *Node) QueryDelegation(delAddr sdk.AccAddress, valAddr sdk.ValAddress) stktypes.DelegationResponse {
+	var (
+		resp *stktypes.QueryDelegationResponse
+		err  error
+	)
+
+	n.StakingQuery(func(qc stktypes.QueryClient) {
+		resp, err = qc.Delegation(context.Background(), &stktypes.QueryDelegationRequest{
+			DelegatorAddr: delAddr.String(),
+			ValidatorAddr: valAddr.String(),
+		})
+		require.NoError(n.T(), err)
+	})
+
+	return *resp.DelegationResponse
 }
 
 func (n *Node) QueryBTCDelegation(stakingTxHash string) *btcstktypes.BTCDelegationResponse {
@@ -308,6 +394,22 @@ func (n *Node) QueryProposals() *govtypes.QueryProposalsResponse {
 	return resp
 }
 
+func (n *Node) QueryCostkRwdTrck(addr sdk.AccAddress) *costktypes.QueryCostakerRewardsTrackerResponse {
+	var (
+		resp *costktypes.QueryCostakerRewardsTrackerResponse
+		err  error
+	)
+
+	n.CostkQuery(func(qc costktypes.QueryClient) {
+		resp, err = qc.CostakerRewardsTracker(context.Background(), &costktypes.QueryCostakerRewardsTrackerRequest{
+			CostakerAddress: addr.String(),
+		})
+		require.NoError(n.T(), err)
+	})
+
+	return resp
+}
+
 func (n *Node) QueryTallyResult(propID uint64) *govtypes.TallyResult {
 	var (
 		resp *govtypes.QueryTallyResultResponse
@@ -338,6 +440,18 @@ func (n *Node) QueryAppliedPlan(planName string) int64 {
 	})
 
 	return resp.Height
+}
+
+func (n *Node) QueryCostkRwdTrckCli(addr sdk.AccAddress) *costktypes.QueryCostakerRewardsTrackerResponse {
+	cmd := []string{"babylond", "query", "costaking", "costaker-rewards-tracker", addr.String(), "--output=json", "--node", n.GetRpcEndpoint()}
+	outBuf, _, err := n.Tm.ContainerManager.ExecCmd(n.T(), n.Container.Name, cmd, "")
+	require.NoError(n.T(), err)
+
+	resp := &costktypes.QueryCostakerRewardsTrackerResponse{}
+	err = util.Cdc.UnmarshalJSON(outBuf.Bytes(), resp)
+	require.NoError(n.T(), err)
+
+	return resp
 }
 
 // QueryLatestEpochHeaderCLI retrieves the latest epoch header for the specified consumer ID using CLI

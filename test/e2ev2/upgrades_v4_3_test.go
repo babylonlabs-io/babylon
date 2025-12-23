@@ -3,14 +3,13 @@ package e2e2
 import (
 	"math/rand"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/require"
 
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/chaincfg"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 	"github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -30,8 +29,11 @@ func TestUpgradeV43(t *testing.T) {
 	tm := tmanager.NewTmWithUpgrade(t, 0, "")
 	validator := tm.ChainValidator()
 
+	n := tm.Chains[tmanager.CHAIN_ID_BABYLON].Nodes[0]
+
 	// start chain with previous binary
 	tm.Start()
+	validator.WaitUntilBlkHeight(3)
 
 	// creates bad delegation with new validator that will be jailed due to downtime
 	// 1. Delegate to two healthy validators (A and B)
@@ -42,39 +44,99 @@ func TestUpgradeV43(t *testing.T) {
 	// 	6. Delegator unbonds again from B
 	// 7. Epoch ends
 
-	govMsg, preUpgradeFunc, err := createGovPropAndPreUpgradeFunc(t, validator.Wallet.WalletSender)
-	require.NoError(t, err)
+	valSlashWallet := n.CreateWallet("slashed")
+	valSlashWallet.VerifySentTx = true
+
+	delegator := n.CreateWallet("delegator")
+	delegator.VerifySentTx = true
+
+	initAmtOfWallets := sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(100_000000))
+	n.SendCoins(valSlashWallet.Address.String(), sdk.NewCoins(initAmtOfWallets))
+	n.WaitForNextBlock()
+
+	n.UpdateWalletAccSeqNumber(valSlashWallet.KeyName)
+
+	// create validator to be slashed
+	valSlashAddr := sdk.ValAddress(valSlashWallet.Address)
+	n.WrappedCreateValidator(valSlashWallet.KeyName, valSlashWallet.Address)
+
+	n.SendCoins(delegator.Address.String(), sdk.NewCoins(initAmtOfWallets))
+	// validator must wait for end of epoch
+	n.WaitForEpochEnd()
+	n.UpdateWalletAccSeqNumber(delegator.KeyName)
+
+	valSlash := n.QueryValidator(valSlashAddr)
+	require.True(t, valSlash.IsBonded())
+
+	// creates healthy two delegations
+	amtHealthyDel, amtSlashDel := sdkmath.NewInt(10_000000), sdkmath.NewInt(2_000000)
+	n.WrappedDelegate(delegator.KeyName, validator.Wallet.ValidatorAddress, amtHealthyDel)
+	n.WrappedDelegate(delegator.KeyName, valSlashAddr, amtSlashDel)
+
+	fpSK := setupFp(t, tm.R, n)
+	createSingleSigBtcDel(t, tm.R, n, delegator, fpSK)
+
+	n.WaitForEpochEnd() // to validate the baby delegations
+
+	costkRwdTracker := n.QueryCostkRwdTrckCli(delegator.Address)
+	require.Equal(t, amtHealthyDel.Add(amtSlashDel).String(), costkRwdTracker.ActiveBaby.String())
+
+	slashedVal := n.QueryValidator(valSlashAddr)
+	require.False(t, slashedVal.Jailed)
+
+	slashedVal = n.WaitForValidatorBeJailed(valSlashAddr)
+
+	slashDelegation := n.QueryDelegation(delegator.Address, valSlashAddr)
+
+	sharesToUbd := slashedVal.TokensFromShares(slashDelegation.Delegation.Shares)
+	n.WrappedUndelegate(delegator.KeyName, valSlashAddr, sharesToUbd.TruncateInt())
+
+	amtSlashDel2 := sdkmath.NewInt(2_500000)
+	n.WrappedDelegate(delegator.KeyName, valSlashAddr, amtSlashDel2)
+	n.WrappedUndelegate(delegator.KeyName, valSlashAddr, amtSlashDel2)
+
+	n.WaitForEpochEnd()
+
+	// costk should be
+	costkRwdTracker = n.QueryCostkRwdTrckCli(delegator.Address)
+	require.Equal(t, amtHealthyDel.String(), costkRwdTracker.ActiveBaby.String())
+	// unbonds from slash
+	// bonds again
+	// unbonds again
+
+	// check that reaches bad value of active baby
+
+	// stakerWallet := n.DefaultWallet()
+
+	// 	validator.WaitUntilBlkHeight(25)
+	govMsg, preUpgradeFunc := createGovPropAndPreUpgradeFunc(t, validator.Wallet.WalletSender)
 	require.NotNil(t, govMsg)
 	require.NotNil(t, preUpgradeFunc)
+	// 	// execute preUpgradeFunc, submit a proposal, vote, and then process upgrade
+	// 	tm.Upgrade(govMsg, preUpgradeFunc)
 
-	validator.WaitUntilBlkHeight(10)
-	// execute preUpgradeFunc, submit a proposal, vote, and then process upgrade
-	// tm.Upgrade(govMsg, preUpgradeFunc)
-
-	// post-upgrade state verification
+	// // post-upgrade state verification
 	// btcDelsResp := validator.QueryBTCDelegations(bstypes.BTCDelegationStatus_ACTIVE)
 	// require.Len(t, btcDelsResp, 1)
 }
 
-func createGovPropAndPreUpgradeFunc(t *testing.T, valWallet *tmanager.WalletSender) (*govtypes.MsgSubmitProposal, tmanager.PreUpgradeFunc, error) {
+func createGovPropAndPreUpgradeFunc(t *testing.T, valWallet *tmanager.WalletSender) (*govtypes.MsgSubmitProposal, tmanager.PreUpgradeFunc) {
 	// create the upgrade message
 	upgradeMsg := &upgradetypes.MsgSoftwareUpgrade{
 		Authority: "bbn10d07y265gmmuvt4z0w9aw880jnsr700jduz5f2",
 		Plan: upgradetypes.Plan{
 			Name:   v43.UpgradeName,
 			Height: int64(20),
-			Info:   "Upgrade to v5",
+			Info:   "Upgrade to v4.3",
 		},
 	}
 
 	anyMsg, err := types.NewAnyWithValue(upgradeMsg)
-	if err != nil {
-		return nil, nil, err
-	}
+	require.NoError(t, err)
 
 	govMsg := &govtypes.MsgSubmitProposal{
 		Messages:       []*types.Any{anyMsg},
-		InitialDeposit: []sdk.Coin{sdk.NewCoin(appparams.DefaultBondDenom, math.NewInt(1000000))},
+		InitialDeposit: []sdk.Coin{sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(1000000))},
 		Proposer:       valWallet.Address.String(),
 		Metadata:       "",
 		Title:          v43.UpgradeName,
@@ -82,15 +144,8 @@ func createGovPropAndPreUpgradeFunc(t *testing.T, valWallet *tmanager.WalletSend
 		Expedited:      false,
 	}
 
-	// create PreUpgradeFunc for a v5 upgrade scenario. this function will be executed before upgrade.
-	preUpgradeFunc := func(nodes []*tmanager.Node) {
-		r := rand.New(rand.NewSource(time.Now().Unix()))
-		fpSK := setupFp(t, r, nodes[0])
-		createSingleSigBtcDel(t, r, nodes[1], fpSK)
-	}
-
-	// return the path that will be accessible in Docker containers
-	return govMsg, preUpgradeFunc, nil
+	preUpgradeFunc := func(nodes []*tmanager.Node) {}
+	return govMsg, preUpgradeFunc
 }
 
 func setupFp(t *testing.T, r *rand.Rand, n *tmanager.Node) *btcec.PrivateKey {
@@ -107,7 +162,7 @@ func setupFp(t *testing.T, r *rand.Rand, n *tmanager.Node) *btcec.PrivateKey {
 	return fpSK
 }
 
-func createSingleSigBtcDel(t *testing.T, r *rand.Rand, n *tmanager.Node, fpSK *btcec.PrivateKey) {
+func createSingleSigBtcDel(t *testing.T, r *rand.Rand, n *tmanager.Node, wallet *tmanager.WalletSender, fpSK *btcec.PrivateKey) {
 	n.DefaultWallet().VerifySentTx = true
 
 	// single-sig delegation from n to fp
@@ -222,6 +277,7 @@ func createSingleSigBtcDel(t *testing.T, r *rand.Rand, n *tmanager.Node, fpSK *b
 	currentBtcTipResp, err := n.QueryTip()
 	require.NoError(t, err)
 	currentBtcTip, err := chain.ParseBTCHeaderInfoResponseToInfo(currentBtcTipResp)
+	require.NoError(t, err)
 	blockWithStakingTx := datagen.CreateBlockWithTransaction(r, currentBtcTip.Header.ToBlockHeader(), stakingMsgTx)
 	n.InsertHeader(&blockWithStakingTx.HeaderBytes)
 

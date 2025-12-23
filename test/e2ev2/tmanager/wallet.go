@@ -213,7 +213,7 @@ func (ws *WalletSender) SubmitMsgs(msgs ...sdk.Msg) (txHash string, tx *sdktx.Tx
 	signedTx := ws.SignMsg(msgs...)
 
 	txHash, err := ws.Node.SubmitTx(signedTx)
-	require.NoError(ws.T(), err, "Failed to submit IBC transfer transaction")
+	require.NoErrorf(ws.T(), err, "Failed to submit tx: %+v", msgs)
 
 	ws.AddTxSent(txHash)
 	if ws.VerifySentTx {

@@ -4,10 +4,15 @@ import (
 	"time"
 
 	"cosmossdk.io/math"
+	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
+	"github.com/cosmos/cosmos-sdk/x/staking/types"
+	stktypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 	tokenfactorytypes "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/types"
@@ -39,8 +44,8 @@ func (n *Node) SendIBCTransfer(wallet *WalletSender, recipient string, token sdk
 }
 
 // SendCoins sends coins to a recipient address using the node's default wallet
-func (n *Node) SendCoins(recipient string, coins sdk.Coins) {
-	recipientAddr, err := sdk.AccAddressFromBech32(recipient)
+func (n *Node) SendCoins(receiverAddrStr string, coins sdk.Coins) {
+	recipientAddr, err := sdk.AccAddressFromBech32(receiverAddrStr)
 	require.NoError(n.T(), err)
 
 	msg := banktypes.NewMsgSend(n.DefaultWallet().Address, recipientAddr, coins)
@@ -184,4 +189,48 @@ func (n *Node) Vote(walletName string, proposalID uint64, voteOption govtypes.Vo
 	_, tx := wallet.SubmitMsgs(govMsg)
 	require.NotNil(n.T(), tx, "Vote transaction should not be nil")
 	n.T().Logf("Governance vote submitted")
+}
+
+func (n *Node) WrappedDelegate(walletName string, valAddr sdk.ValAddress, amt math.Int) {
+	wallet := n.Wallet(walletName)
+	require.NotNil(n.T(), wallet, "Wallet %s not found", walletName)
+
+	amtDelegate := sdk.NewCoin(appparams.DefaultBondDenom, amt)
+	msg := epochingtypes.NewMsgWrappedDelegate(stktypes.NewMsgDelegate(wallet.Addr(), valAddr.String(), amtDelegate))
+
+	_, tx := wallet.SubmitMsgs(msg)
+	require.NotNil(n.T(), tx, "Delegate tx should not be nil")
+	n.T().Logf("delegation created %+v", msg)
+}
+
+func (n *Node) WrappedUndelegate(walletName string, valAddr sdk.ValAddress, amt math.Int) {
+	wallet := n.Wallet(walletName)
+	require.NotNil(n.T(), wallet, "Wallet %s not found", walletName)
+
+	amtDelegate := sdk.NewCoin(appparams.DefaultBondDenom, amt)
+	msg := epochingtypes.NewMsgWrappedUndelegate(stktypes.NewMsgUndelegate(wallet.Addr(), valAddr.String(), amtDelegate))
+
+	_, tx := wallet.SubmitMsgs(msg)
+	require.NotNil(n.T(), tx, "Undelegate tx should not be nil")
+	n.T().Logf("undelegation created %+v", msg)
+}
+
+func (n *Node) WrappedCreateValidator(walletName string, addr sdk.AccAddress) {
+	wallet := n.Wallet(walletName)
+	require.NotNil(n.T(), wallet, "Wallet %s not found", walletName)
+
+	stkParams := n.QueryStakingParams()
+
+	wcvMsg, err := datagen.BuildMsgWrappedCreateValidator(addr)
+	require.NoError(n.T(), err)
+
+	wcvMsg.MsgCreateValidator.Commission = types.NewCommissionRates(
+		stkParams.MinCommissionRate,
+		stkParams.MinCommissionRate.Add(math.LegacyNewDecWithPrec(1, 2)),
+		math.LegacyNewDecWithPrec(1, 3),
+	)
+
+	_, tx := wallet.SubmitMsgs(wcvMsg)
+	require.NotNil(n.T(), tx, "Wrapped create validator msg should not be nil")
+	n.T().Logf("new validator created %+v", wcvMsg)
 }

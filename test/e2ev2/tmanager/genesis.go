@@ -14,6 +14,7 @@ import (
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
+	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	staketypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/gogoproto/proto"
 	ratelimiter "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/types"
@@ -26,6 +27,7 @@ import (
 	btclighttypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
 	btcstktypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 	costktypes "github.com/babylonlabs-io/babylon/v4/x/costaking/types"
+	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 	finalitytypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
 	minttypes "github.com/babylonlabs-io/babylon/v4/x/mint/types"
 )
@@ -154,6 +156,16 @@ func UpdateGenModulesState(
 	err = UpdateModuleGenesis(appGenState, tokenfactorytypes.ModuleName, &tokenfactorytypes.GenesisState{}, UpdateGenesisTokenFactory)
 	if err != nil {
 		return fmt.Errorf("failed to update tokenfactory genesis state: %w", err)
+	}
+
+	err = UpdateModuleGenesis(appGenState, slashingtypes.ModuleName, &slashingtypes.GenesisState{}, UpdateGenesisSlashing)
+	if err != nil {
+		return fmt.Errorf("failed to update slashing genesis state: %w", err)
+	}
+
+	err = UpdateModuleGenesis(appGenState, epochingtypes.ModuleName, &epochingtypes.GenesisState{}, UpdateGenesisEpoching)
+	if err != nil {
+		return fmt.Errorf("failed to update epoching genesis state: %w", err)
 	}
 
 	// NOTE: in case of the software upgrade test, we don't want to update
@@ -318,4 +330,14 @@ func UpdateGenesisTokenFactory(tokenfactoryGenState *tokenfactorytypes.GenesisSt
 	tokenfactoryGenState.Params = tokenfactorytypes.Params{
 		DenomCreationFee: sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(10000))),
 	}
+}
+
+func UpdateGenesisSlashing(gs *slashingtypes.GenesisState) {
+	gs.Params.SignedBlocksWindow = 150
+	gs.Params.MinSignedPerWindow = sdkmath.LegacyMustNewDecFromStr("0.8")
+	gs.Params.SlashFractionDowntime = sdkmath.LegacyMustNewDecFromStr("0.1")
+}
+
+func UpdateGenesisEpoching(gs *epochingtypes.GenesisState) {
+	gs.Params.EpochInterval = 20
 }
