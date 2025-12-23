@@ -32,16 +32,21 @@ var (
 
 // ChainConfig defines configuration for a blockchain
 type ChainConfig struct {
-	ChainID               string
-	Home                  string
-	ValidatorCount        int
-	NodeCount             int
-	BlockTime             time.Duration
-	EpochLength           int64
-	VotingPeriod          time.Duration
-	ExpeditedVotingPeriod time.Duration
-	BTCConfirmationDepth  int
-	GasLimit              int64
+	ChainID                  string
+	Home                     string
+	ValidatorCount           int
+	NodeCount                int
+	BlockTime                time.Duration
+	EpochLength              int64
+	VotingPeriod             time.Duration
+	ExpeditedVotingPeriod    time.Duration
+	BTCConfirmationDepth     int
+	GasLimit                 int64
+	IsUpgrade                bool                      // true when chain is used for upgrade test
+	Tag                      string                    // Tag is only used for upgrade test
+	UpgradePropHeight        int64                     // height for upgrade plan
+	BootstrapRepository      string                    // repository that will be used before upgrade
+	StartingBtcStakingParams *StartingBtcStakingParams // customizable x/btcstaking params when starting the new chain
 }
 
 // Chain represents a blockchain with multiple nodes
@@ -148,7 +153,11 @@ func (c *Chain) InitGenesis() {
 	c.UpdateWalletSequenceAndAccountNumbers(sanitizedAccs)
 
 	// update all other modules
-	err = UpdateGenModulesState(appGenState, *c.InitialGenesis, c.Validators, nil, nil, balancesToAdd)
+	var startingBtcStakingParams *StartingBtcStakingParams
+	if c.Config.StartingBtcStakingParams != nil {
+		startingBtcStakingParams = c.Config.StartingBtcStakingParams
+	}
+	err = UpdateGenModulesState(appGenState, *c.InitialGenesis, c.Validators, nil, startingBtcStakingParams, balancesToAdd, c.Config.IsUpgrade)
 	require.NoError(c.T(), err, "failed to update gen state for all other modules")
 
 	appStateJSON, err := json.Marshal(appGenState)

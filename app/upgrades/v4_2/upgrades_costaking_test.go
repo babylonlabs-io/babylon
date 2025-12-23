@@ -1,12 +1,10 @@
 package v4_2_test
 
 import (
-	"context"
 	"math/rand"
 	"testing"
 	"time"
 
-	"cosmossdk.io/collections"
 	corestore "cosmossdk.io/core/store"
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"
@@ -30,6 +28,7 @@ import (
 	v4_2 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v4_2"
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
 	testutilkeeper "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
+	tkeeper "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	btcctypes "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
 	btclctypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
@@ -108,7 +107,7 @@ func TestResetCoStakerRwdsTracker_WithPreexistingTrackers(t *testing.T) {
 		ActiveSatoshis:              math.NewInt(999999), // Wrong value
 		ActiveBaby:                  math.NewInt(888888), // Wrong value
 	}
-	createCostakerRewardsTracker(t, ctx, cdc, storeService, stakerAddr, preexistingTracker)
+	tkeeper.CreateCostakerRewardsTracker(t, ctx, cdc, storeService, stakerAddr, preexistingTracker)
 
 	currPeriod := uint64(10)
 	setCurrentRewardsPeriod(t, ctx, costkKeeper, currPeriod)
@@ -157,17 +156,17 @@ func TestResetCoStakerRwdsTracker_MultiplePreexistingTrackers(t *testing.T) {
 	babyAmount4 := math.NewInt(0)
 
 	// Create pre-existing trackers with incorrect values
-	createCostakerRewardsTracker(t, ctx, cdc, storeService, staker1Addr, costktypes.CostakerRewardsTracker{
+	tkeeper.CreateCostakerRewardsTracker(t, ctx, cdc, storeService, staker1Addr, costktypes.CostakerRewardsTracker{
 		StartPeriodCumulativeReward: uint64(10),
 		ActiveSatoshis:              math.NewInt(111111),
 		ActiveBaby:                  babyAmount1,
 	})
-	createCostakerRewardsTracker(t, ctx, cdc, storeService, staker2Addr, costktypes.CostakerRewardsTracker{
+	tkeeper.CreateCostakerRewardsTracker(t, ctx, cdc, storeService, staker2Addr, costktypes.CostakerRewardsTracker{
 		StartPeriodCumulativeReward: uint64(15),
 		ActiveSatoshis:              math.NewInt(333333),
 		ActiveBaby:                  babyAmount2,
 	})
-	createCostakerRewardsTracker(t, ctx, cdc, storeService, staker3Addr, costktypes.CostakerRewardsTracker{
+	tkeeper.CreateCostakerRewardsTracker(t, ctx, cdc, storeService, staker3Addr, costktypes.CostakerRewardsTracker{
 		StartPeriodCumulativeReward: uint64(20),
 		ActiveSatoshis:              math.NewInt(555555),
 		ActiveBaby:                  babyAmount3,
@@ -175,7 +174,7 @@ func TestResetCoStakerRwdsTracker_MultiplePreexistingTrackers(t *testing.T) {
 
 	startPeriod4 := uint64(25)
 	activeSats4 := math.NewInt(75000)
-	createCostakerRewardsTracker(t, ctx, cdc, storeService, staker4Addr, costktypes.CostakerRewardsTracker{
+	tkeeper.CreateCostakerRewardsTracker(t, ctx, cdc, storeService, staker4Addr, costktypes.CostakerRewardsTracker{
 		StartPeriodCumulativeReward: startPeriod4,
 		ActiveSatoshis:              activeSats4,
 		ActiveBaby:                  babyAmount4,
@@ -248,13 +247,13 @@ func TestResetCoStakerRwdsTracker_TrackerNoLongerValid(t *testing.T) {
 	babyAmount2 := math.NewInt(100000)
 
 	startPeriod1 := uint64(5)
-	createCostakerRewardsTracker(t, ctx, cdc, storeService, staker1Addr, costktypes.CostakerRewardsTracker{
+	tkeeper.CreateCostakerRewardsTracker(t, ctx, cdc, storeService, staker1Addr, costktypes.CostakerRewardsTracker{
 		StartPeriodCumulativeReward: startPeriod1,
 		ActiveSatoshis:              math.NewInt(100000),
 		ActiveBaby:                  babyAmount1,
 	})
 	startPeriod2 := uint64(10)
-	createCostakerRewardsTracker(t, ctx, cdc, storeService, staker2Addr, costktypes.CostakerRewardsTracker{
+	tkeeper.CreateCostakerRewardsTracker(t, ctx, cdc, storeService, staker2Addr, costktypes.CostakerRewardsTracker{
 		StartPeriodCumulativeReward: startPeriod2,
 		ActiveSatoshis:              math.NewInt(200000),
 		ActiveBaby:                  babyAmount2,
@@ -304,14 +303,14 @@ func TestResetCoStakerRwdsTracker_InactiveFPAndValidator(t *testing.T) {
 	// Create pre-existing tracker with both BTC and BABY
 	babyAmount := math.NewInt(25000)
 	startPeriod := uint64(5)
-	createCostakerRewardsTracker(t, ctx, cdc, storeService, stakerAddr1, costktypes.CostakerRewardsTracker{
+	tkeeper.CreateCostakerRewardsTracker(t, ctx, cdc, storeService, stakerAddr1, costktypes.CostakerRewardsTracker{
 		StartPeriodCumulativeReward: startPeriod,
 		ActiveSatoshis:              math.NewInt(100000),
 		ActiveBaby:                  babyAmount,
 	})
 
 	// staker 2 has costaker tracker with 0 sats and some baby
-	createCostakerRewardsTracker(t, ctx, cdc, storeService, stakerAddr2, costktypes.CostakerRewardsTracker{
+	tkeeper.CreateCostakerRewardsTracker(t, ctx, cdc, storeService, stakerAddr2, costktypes.CostakerRewardsTracker{
 		StartPeriodCumulativeReward: startPeriod,
 		ActiveSatoshis:              math.ZeroInt(),
 		ActiveBaby:                  babyAmount,
@@ -438,14 +437,8 @@ func createTestBTCDelegation(t *testing.T, r *rand.Rand, ctx sdk.Context, btcStk
 	return del
 }
 
-func createCostakerRewardsTracker(t *testing.T, ctx context.Context, cdc codec.BinaryCodec, storeService corestore.KVStoreService, stakerAddr sdk.AccAddress, tracker costktypes.CostakerRewardsTracker) {
-	rwdTrackers := rwdTrackerCollection(storeService, cdc)
-	err := rwdTrackers.Set(ctx, []byte(stakerAddr), tracker)
-	require.NoError(t, err)
-}
-
 func verifyCoStakerUpdated(t *testing.T, ctx sdk.Context, cdc codec.BinaryCodec, storeService corestore.KVStoreService, stakerAddr sdk.AccAddress, expectedBTCAmount, expectedBabyAmount math.Int, expectedStartPeriod uint64) {
-	rwdTrackers := rwdTrackerCollection(storeService, cdc)
+	rwdTrackers := tkeeper.RwdTrackerCollection(storeService, cdc)
 	tracker, err := rwdTrackers.Get(ctx, []byte(stakerAddr))
 
 	require.NoError(t, err, "Co-staker rewards tracker should exist for %s", stakerAddr.String())
@@ -455,7 +448,7 @@ func verifyCoStakerUpdated(t *testing.T, ctx sdk.Context, cdc codec.BinaryCodec,
 }
 
 func countCoStakers(t *testing.T, ctx sdk.Context, cdc codec.BinaryCodec, storeService corestore.KVStoreService) int {
-	rwdTrackers := rwdTrackerCollection(storeService, cdc)
+	rwdTrackers := tkeeper.RwdTrackerCollection(storeService, cdc)
 	var count int
 	err := rwdTrackers.Walk(ctx, nil, func(key []byte, value costktypes.CostakerRewardsTracker) (stop bool, err error) {
 		count++
@@ -463,18 +456,6 @@ func countCoStakers(t *testing.T, ctx sdk.Context, cdc codec.BinaryCodec, storeS
 	})
 	require.NoError(t, err)
 	return count
-}
-
-func rwdTrackerCollection(storeService corestore.KVStoreService, cdc codec.BinaryCodec) collections.Map[[]byte, costktypes.CostakerRewardsTracker] {
-	sb := collections.NewSchemaBuilder(storeService)
-	rwdTrackers := collections.NewMap(
-		sb,
-		costktypes.CostakerRewardsTrackerKeyPrefix,
-		"costaker_rewards_tracker",
-		collections.BytesKey,
-		codec.CollValue[costktypes.CostakerRewardsTracker](cdc),
-	)
-	return rwdTrackers
 }
 
 func setCurrentRewardsPeriod(t *testing.T, ctx sdk.Context, costkKeeper *costkkeeper.Keeper, period uint64) {

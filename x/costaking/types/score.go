@@ -12,8 +12,12 @@ import (
 func (c *CostakerRewardsTracker) UpdateScore(scoreRatioBtcByBaby sdkmath.Int) (deltaPreviousScore sdkmath.Int) {
 	previousTotalScore := c.TotalScore
 
-	activeBabyByRatio := c.ActiveBaby.Quo(scoreRatioBtcByBaby)
-	c.TotalScore = sdkmath.MinInt(c.ActiveSatoshis, activeBabyByRatio)
-
+	c.TotalScore = CalculateScore(scoreRatioBtcByBaby, c.ActiveBaby, c.ActiveSatoshis)
 	return c.TotalScore.Sub(previousTotalScore)
+}
+
+// CalculateScore only calculates the total score based on the func min(ActiveSats, ActiveBaby/ScoreRatioBtcByBaby)
+func CalculateScore(scoreRatioBtcByBaby, activeBaby, activeSats sdkmath.Int) (totalScore sdkmath.Int) {
+	activeBabyByRatio := activeBaby.Quo(scoreRatioBtcByBaby)
+	return sdkmath.MinInt(activeSats, activeBabyByRatio)
 }

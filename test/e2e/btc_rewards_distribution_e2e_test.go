@@ -22,6 +22,7 @@ import (
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer/chain"
 	"github.com/babylonlabs-io/babylon/v4/testutil/coins"
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	tkeeper "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 	ftypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
@@ -432,7 +433,7 @@ func (s *BtcRewardsDistribution) ActiveLastDelegation() {
 	}
 
 	s.Equal(len(pendingDels), 1)
-	pendingDel, err := chain.ParseRespBTCDelToBTCDel(pendingDels[0])
+	pendingDel, err := tkeeper.ParseRespBTCDelToBTCDel(pendingDels[0])
 	s.NoError(err)
 
 	n1.SendCovenantSigs(s.r, s.T(), s.net, s.covenantSKs, s.covenantWallets, pendingDel)
@@ -751,7 +752,7 @@ func (s *BaseBtcRewardsDistribution) CreateCovenantsAndSubmitSignaturesToPendDel
 	s.Require().Equal(len(pendingDelsResp), expDelCount)
 
 	for _, pendingDelResp := range pendingDelsResp {
-		pendingDel, err := chain.ParseRespBTCDelToBTCDel(pendingDelResp)
+		pendingDel, err := tkeeper.ParseRespBTCDelToBTCDel(pendingDelResp)
 		s.NoError(err)
 
 		n.SendCovenantSigs(s.r, s.T(), s.net, s.covenantSKs, s.covenantWallets, pendingDel)

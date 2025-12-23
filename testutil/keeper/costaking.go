@@ -1,16 +1,20 @@
 package keeper
 
 import (
+	"context"
 	"testing"
 	"time"
 
+	"cosmossdk.io/collections"
 	"cosmossdk.io/core/header"
+	corestore "cosmossdk.io/core/store"
 	"cosmossdk.io/log"
 	"cosmossdk.io/store"
 	storemetrics "cosmossdk.io/store/metrics"
 	storetypes "cosmossdk.io/store/types"
 	tstore "github.com/babylonlabs-io/babylon/v4/testutil/store"
 	costakingkeeper "github.com/babylonlabs-io/babylon/v4/x/costaking/keeper"
+	costktypes "github.com/babylonlabs-io/babylon/v4/x/costaking/types"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -135,4 +139,22 @@ func NewKeeperWithMockIncentiveKeeper(t *testing.T, mockIctvK types.IncentiveKee
 	err := k.SetParams(ctx, types.DefaultParams())
 	require.NoError(t, err)
 	return &k, ctx
+}
+
+func RwdTrackerCollection(storeService corestore.KVStoreService, cdc codec.BinaryCodec) collections.Map[[]byte, costktypes.CostakerRewardsTracker] {
+	sb := collections.NewSchemaBuilder(storeService)
+	rwdTrackers := collections.NewMap(
+		sb,
+		costktypes.CostakerRewardsTrackerKeyPrefix,
+		"costaker_rewards_tracker",
+		collections.BytesKey,
+		codec.CollValue[costktypes.CostakerRewardsTracker](cdc),
+	)
+	return rwdTrackers
+}
+
+func CreateCostakerRewardsTracker(t *testing.T, ctx context.Context, cdc codec.BinaryCodec, storeService corestore.KVStoreService, stakerAddr sdk.AccAddress, tracker costktypes.CostakerRewardsTracker) {
+	rwdTrackers := RwdTrackerCollection(storeService, cdc)
+	err := rwdTrackers.Set(ctx, []byte(stakerAddr), tracker)
+	require.NoError(t, err)
 }

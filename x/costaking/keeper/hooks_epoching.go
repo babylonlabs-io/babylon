@@ -131,24 +131,8 @@ func (h HookEpoching) updateCoStkTrackerForDelegators(
 	for _, del := range delegations {
 		delAddr := sdk.MustAccAddressFromBech32(del.DelegatorAddress)
 
-		// We should only update the costaker tracker based on the remaining shares
-		remainingShares := del.Shares
-		// In case the validator is jailed/slashed,
-		// check if there are any cached delta shares to consider
-		cachedDeltas := h.k.stkCache.GetDeltaShares(valAddr, delAddr)
-		for _, deltaShares := range cachedDeltas {
-			// Should remove the delta to update properly the costaker tracker
-			// with remaining shares only
-			remainingShares = remainingShares.Sub(deltaShares)
-		}
-
-		if remainingShares.IsZero() {
-			// No shares left to process
-			continue
-		}
-
 		// Get delegation tokens using truncated division to avoid precision loss
-		delTokens := val.TokensFromShares(remainingShares)
+		delTokens := val.TokensFromShares(del.Shares)
 
 		// Update ActiveBaby using the provided update function
 		if err := h.k.costakerModified(ctx, delAddr, func(rwdTracker *types.CostakerRewardsTracker) {
@@ -183,20 +167,9 @@ func (h HookEpoching) removeBabyForDelegators(ctx context.Context, valInfo types
 	if err != nil {
 		return fmt.Errorf("failed to get validator %s: %w", valInfo.ValAddress.String(), err)
 	}
-	if valInfo.IsSlashed {
-		// If the validator has been slashed, we need to restore the original tokens
-		// before removing the baby tokens to avoid miscalculating the token amount
-		val.Tokens = valInfo.OriginalTokens
-		// restore original shares in case validator was slashed
-		val.DelegatorShares = valInfo.OriginalShares
-	}
 	return h.updateCoStkTrackerForDelegators(ctx, val, func(rwdTracker *types.CostakerRewardsTracker, amount math.Int) {
 		rwdTracker.ActiveBaby = rwdTracker.ActiveBaby.Sub(amount)
 	})
-}
-
-// BeforeSlashThreshold is called before a certain threshold of validators are slashed
-func (h HookEpoching) BeforeSlashThreshold(ctx context.Context, valSet epochingtypes.ValidatorSet) {
 }
 
 // buildNewActiveValSetMap builds the new active validator set map
@@ -216,6 +189,10 @@ func (h HookEpoching) buildNewActiveValSetMap(ctx context.Context) (map[string]s
 	}
 
 	return valMap, valAddrs, nil
+}
+
+// BeforeSlashThreshold implements types.EpochingHooks.
+func (h HookEpoching) BeforeSlashThreshold(ctx context.Context, valSet epochingtypes.ValidatorSet) {
 }
 
 // Create new epoching hooks
