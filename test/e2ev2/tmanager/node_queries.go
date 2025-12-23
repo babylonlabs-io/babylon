@@ -226,7 +226,6 @@ func (n *Node) QueryCurrentEpoch() *epochingtypes.QueryCurrentEpochResponse {
 	n.EpochingQuery(func(qc epochingtypes.QueryClient) {
 		resp, err = qc.CurrentEpoch(context.Background(), &epochingtypes.QueryCurrentEpochRequest{})
 		require.NoError(n.T(), err)
-
 	})
 	return resp
 }

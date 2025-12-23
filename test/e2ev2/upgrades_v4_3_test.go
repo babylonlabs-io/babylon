@@ -116,7 +116,6 @@ func TestUpgradeV43(t *testing.T) {
 }
 
 func createGovPropAndPreUpgradeFunc(t *testing.T, valWallet *tmanager.WalletSender) (*govtypes.MsgSubmitProposal, tmanager.PreUpgradeFunc) {
-	// create the upgrade message
 	upgradeMsg := &upgradetypes.MsgSoftwareUpgrade{
 		Authority: "bbn10d07y265gmmuvt4z0w9aw880jnsr700jduz5f2",
 		Plan: upgradetypes.Plan{
