@@ -127,8 +127,8 @@ func TestUpgradeV43(t *testing.T) {
 	expScoreAfterSlash := costktypes.CalculateScore(costkP.ScoreRatioBtcByBaby, costkRwdTracker.ActiveBaby, expSat)
 	require.Equal(t, expScoreAfterSlash.String(), costkRwdTracker.TotalScore.String())
 
-	currRwdBeforeUpgrade := n.QueryCostkCurrRwd()
-	require.Equal(t, currRwdBeforeUpgrade.Period, costkRwdTracker.StartPeriodCumulativeReward)
+	currRwdBeforeUpgrade := n.QueryCostkCurrRwdCli()
+	require.Equal(t, currRwdBeforeUpgrade.Period, costkRwdTracker.StartPeriodCumulativeReward+1)
 	require.Equal(t, currRwdBeforeUpgrade.TotalScore.String(), costkRwdTracker.TotalScore.String())
 
 	// execute preUpgradeFunc, submit a proposal, vote, and then process upgrade
@@ -147,7 +147,7 @@ func TestUpgradeV43(t *testing.T) {
 	require.Equal(t, expSat.String(), costkRwdTracker.ActiveSatoshis.String())
 	require.Equal(t, expScore.String(), costkRwdTracker.TotalScore.String())
 
-	currRwdAfterUpgrade := n.QueryCostkCurrRwd()
+	currRwdAfterUpgrade := n.QueryCostkCurrRwdCli()
 	require.Equal(t, currRwdAfterUpgrade.Period, costkRwdTracker.StartPeriodCumulativeReward)
 	require.Equal(t, currRwdAfterUpgrade.Period, currRwdBeforeUpgrade.Period+1)
 	require.Equal(t, currRwdAfterUpgrade.TotalScore.String(), costkRwdTracker.TotalScore.String())

@@ -545,6 +545,18 @@ func (n *Node) QueryCostkRwdTrckCli(addr sdk.AccAddress) *costktypes.QueryCostak
 	return resp
 }
 
+func (n *Node) QueryCostkCurrRwdCli() *costktypes.QueryCurrentRewardsResponse {
+	cmd := []string{"babylond", "query", "costaking", "current-rewards", "--output=json", "--node", n.GetRpcEndpoint()}
+	outBuf, _, err := n.Tm.ContainerManager.ExecCmd(n.T(), n.Container.Name, cmd, "")
+	require.NoError(n.T(), err)
+
+	resp := &costktypes.QueryCurrentRewardsResponse{}
+	err = util.Cdc.UnmarshalJSON(outBuf.Bytes(), resp)
+	require.NoError(n.T(), err)
+
+	return resp
+}
+
 // QueryLatestEpochHeaderCLI retrieves the latest epoch header for the specified consumer ID using CLI
 func (n *Node) QueryLatestEpochHeaderCLI(consumerID string) string {
 	cmd := []string{"babylond", "query", "zc", "latest-epoch-header", consumerID, "--output=json", "--node", n.GetRpcEndpoint()}
