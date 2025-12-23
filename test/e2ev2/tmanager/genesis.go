@@ -331,8 +331,8 @@ func UpdateGenesisTokenFactory(tokenfactoryGenState *tokenfactorytypes.GenesisSt
 }
 
 func UpdateGenesisSlashing(gs *slashingtypes.GenesisState) {
-	gs.Params.SignedBlocksWindow = 150
-	gs.Params.MinSignedPerWindow = sdkmath.LegacyMustNewDecFromStr("0.65")
+	gs.Params.SignedBlocksWindow = 85
+	gs.Params.MinSignedPerWindow = sdkmath.LegacyMustNewDecFromStr("0.80")
 	gs.Params.SlashFractionDowntime = sdkmath.LegacyMustNewDecFromStr("0.1")
 }
 

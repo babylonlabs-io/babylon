@@ -638,10 +638,10 @@ func (n *Node) WaitForValidatorBeJailed(valAddr sdk.ValAddress) stktypes.Validat
 		return val
 	}
 
-	n.WaitForConditionWithPause(func() bool {
+	require.Eventually(n.T(), func() bool {
 		val = n.QueryValidator(valAddr)
 		return val.IsJailed()
-	}, fmt.Sprintf("Timed out waiting for validator %s to be jailed", valAddr.String()), time.Second*6)
+	}, time.Minute*5, 3*time.Second)
 	return val
 }
 
