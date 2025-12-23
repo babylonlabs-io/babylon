@@ -56,8 +56,6 @@ type InitGenesis struct {
 type StartingBtcStakingParams struct {
 	CovenantCommittee []bbn.BIP340PubKey
 	CovenantQuorum    uint32
-	MaxStakerQuorum   uint32
-	MaxStakerNum      uint32
 }
 
 func UpdateGenAccounts(
@@ -334,7 +332,7 @@ func UpdateGenesisTokenFactory(tokenfactoryGenState *tokenfactorytypes.GenesisSt
 
 func UpdateGenesisSlashing(gs *slashingtypes.GenesisState) {
 	gs.Params.SignedBlocksWindow = 150
-	gs.Params.MinSignedPerWindow = sdkmath.LegacyMustNewDecFromStr("0.7")
+	gs.Params.MinSignedPerWindow = sdkmath.LegacyMustNewDecFromStr("0.65")
 	gs.Params.SlashFractionDowntime = sdkmath.LegacyMustNewDecFromStr("0.1")
 }
 

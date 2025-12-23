@@ -473,6 +473,20 @@ func (n *Node) QueryCostkRwdTrck(addr sdk.AccAddress) *costktypes.QueryCostakerR
 	return resp
 }
 
+func (n *Node) QueryCostkCurrRwd() *costktypes.QueryCurrentRewardsResponse {
+	var (
+		resp *costktypes.QueryCurrentRewardsResponse
+		err  error
+	)
+
+	n.CostkQuery(func(qc costktypes.QueryClient) {
+		resp, err = qc.CurrentRewards(context.Background(), &costktypes.QueryCurrentRewardsRequest{})
+		require.NoError(n.T(), err)
+	})
+
+	return resp
+}
+
 func (n *Node) QueryCostkParams() *costktypes.Params {
 	var (
 		resp *costktypes.QueryParamsResponse
