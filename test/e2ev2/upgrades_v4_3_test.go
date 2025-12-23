@@ -151,7 +151,7 @@ func TestUpgradeV43(t *testing.T) {
 	require.Equal(t, costkRwdTrackerBeforeUpgrade.StartPeriodCumulativeReward+1, costkRwdTrackerAfterUpgrade.StartPeriodCumulativeReward)
 	require.Equal(t, currRwdAfterUpgrade.Period, costkRwdTrackerAfterUpgrade.StartPeriodCumulativeReward+1)
 	require.Equal(t, currRwdAfterUpgrade.Period, currRwdBeforeUpgrade.Period+1)
-	require.Equal(t, currRwdAfterUpgrade.TotalScore.String(), currRwdAfterUpgrade.TotalScore.String())
+	require.Equal(t, currRwdAfterUpgrade.TotalScore.String(), costkRwdTrackerAfterUpgrade.TotalScore.String())
 }
 
 func createGovPropAndPreUpgradeFunc(t *testing.T, valWallet *tmanager.WalletSender) (*govtypes.MsgSubmitProposal, tmanager.PreUpgradeFunc) {
