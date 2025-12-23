@@ -134,22 +134,6 @@ func TestMultiCheckpointingHooks_AfterRawCheckpointForgotten(t *testing.T) {
 	}
 }
 
-func TestMultiCheckpointingHooks_AfterRawCheckpointForgotten_AllHooksCalled(t *testing.T) {
-	hook1 := &mockCheckpointingHook{}
-	hook2 := &mockCheckpointingHook{}
-	hook3 := &mockCheckpointingHook{}
-
-	multiHooks := types.NewMultiCheckpointingHooks(hook1, hook2, hook3)
-
-	ckpt := &types.RawCheckpoint{EpochNum: 1}
-	err := multiHooks.AfterRawCheckpointForgotten(context.Background(), ckpt)
-
-	require.NoError(t, err)
-	require.Equal(t, 1, hook1.rawCheckpointForgottenCalls, "first hook should be called")
-	require.Equal(t, 1, hook2.rawCheckpointForgottenCalls, "second hook should be called")
-	require.Equal(t, 1, hook3.rawCheckpointForgottenCalls, "third hook should be called")
-}
-
 func TestMultiCheckpointingHooks_OtherMethods_AllHooksCalled(t *testing.T) {
 	hook1 := &mockCheckpointingHook{}
 	hook2 := &mockCheckpointingHook{}
@@ -157,7 +141,13 @@ func TestMultiCheckpointingHooks_OtherMethods_AllHooksCalled(t *testing.T) {
 	multiHooks := types.NewMultiCheckpointingHooks(hook1, hook2)
 	ctx := context.Background()
 
-	err := multiHooks.AfterRawCheckpointSealed(ctx, 1)
+	valAddr := sdk.ValAddress("validator1")
+	err := multiHooks.AfterBlsKeyRegistered(ctx, valAddr)
+	require.NoError(t, err)
+	require.Equal(t, 1, hook1.blsKeyRegisteredCalls)
+	require.Equal(t, 1, hook2.blsKeyRegisteredCalls)
+
+	err = multiHooks.AfterRawCheckpointSealed(ctx, 1)
 	require.NoError(t, err)
 	require.Equal(t, 1, hook1.rawCheckpointSealedCalls)
 	require.Equal(t, 1, hook2.rawCheckpointSealedCalls)
