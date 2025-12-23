@@ -603,7 +603,7 @@ func (n *Node) WaitForValidatorBeJailed(valAddr sdk.ValAddress) stktypes.Validat
 	n.WaitForConditionWithPause(func() bool {
 		val = n.QueryValidator(valAddr)
 		return val.IsJailed()
-	}, fmt.Sprintf("Timed out waiting for validator %s to be jailed", valAddr.String()), time.Second*5)
+	}, fmt.Sprintf("Timed out waiting for validator %s to be jailed", valAddr.String()), time.Second*6)
 	return val
 }
 

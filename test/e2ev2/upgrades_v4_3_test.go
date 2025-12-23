@@ -91,8 +91,9 @@ func TestUpgradeV43(t *testing.T) {
 	sharesToUbd := slashedVal.TokensFromShares(slashDelegation.Delegation.Shares)
 	n.WrappedUndelegate(delegator.KeyName, valSlashAddr, sharesToUbd.TruncateInt())
 
-	amtSlashDel2 := sdkmath.NewInt(2_500000)
+	amtSlashDel2 := sdkmath.NewInt(1_500000)
 	n.WrappedDelegate(delegator.KeyName, valSlashAddr, amtSlashDel2)
+	n.WaitForNextBlock()
 	n.WrappedUndelegate(delegator.KeyName, valSlashAddr, amtSlashDel2)
 
 	n.WaitForEpochEnd()
