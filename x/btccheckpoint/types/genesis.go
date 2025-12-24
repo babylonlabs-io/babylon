@@ -21,7 +21,7 @@ func DefaultGenesis() *GenesisState {
 func (gs GenesisState) Validate() error {
 	epochsMap, err := validateEpochs(gs.Epochs)
 	if err != nil {
-		return fmt.Errorf("failed to validate SubmissionEntry: %w", err)
+		return fmt.Errorf("failed to validate epochs: %w", err)
 	}
 	if err := validateSubmissions(gs.Submissions, epochsMap); err != nil {
 		return err
