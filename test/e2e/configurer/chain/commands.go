@@ -586,6 +586,16 @@ func (n *NodeConfig) Delegate(fromWallet, validator string, amount string, overa
 	return GetTxHashFromOutput(outBuf.String())
 }
 
+func (n *NodeConfig) UnjailValidator(fromWallet string, overallFlags ...string) (txHash string) {
+	n.LogActionF("unjailing validator from %s", fromWallet)
+	cmd := []string{"babylond", "tx", "slashing", "unjail", fmt.Sprintf("--from=%s", fromWallet)}
+	outBuf, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, append(cmd, overallFlags...))
+
+	require.NoError(n.t, err)
+	n.LogActionF("successfully unjailed validator from %s", fromWallet)
+	return GetTxHashFromOutput(outBuf.String())
+}
+
 // ValidatorConsPubKey gets the consensus pubkey base64 key from a validator node
 func (n *NodeConfig) ValidatorConsPubKey() cryptotypes.PubKey {
 	cmd := []string{"babylond", "comet", "show-validator", "--home=/home/babylon/babylondata"}

@@ -68,3 +68,8 @@ func TestValidatorJailingTestSuite(t *testing.T) {
 func TestCostakingTestSuite(t *testing.T) {
 	suite.Run(t, new(CostakingTestSuite))
 }
+
+// TestDowntimeSlashUnjailStaleActiveBabyTestSuite tests costaking phantom sats handling end-to-end
+func TestDowntimeSlashUnjailStaleActiveBabyTestSuite(t *testing.T) {
+	suite.Run(t, new(DowntimeSlashUnjailStaleActiveBabyTestSuite))
+}
