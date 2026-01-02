@@ -224,6 +224,10 @@ func (h *ProposalHandler) verifyVoteExtension(
 		return nil, fmt.Errorf("failed to unmarshal vote extension: %w", err)
 	}
 
+	if err := ve.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid vote extension: %w", err)
+	}
+
 	_, err := sdk.ValAddressFromBech32(ve.Signer)
 	if err != nil {
 		return nil, fmt.Errorf("invalid signer address in vote extension: %w", err)
@@ -240,7 +244,6 @@ func (h *ProposalHandler) verifyVoteExtension(
 	}
 
 	sig := ve.ToBLSSig()
-
 	if err := h.ckptKeeper.VerifyBLSSig(ctx, sig); err != nil {
 		return nil, fmt.Errorf("invalid BLS signature: %w", err)
 	}

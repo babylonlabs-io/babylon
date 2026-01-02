@@ -63,3 +63,8 @@ func TestBTCStakeExpansionTestSuite(t *testing.T) {
 func TestValidatorJailingTestSuite(t *testing.T) {
 	suite.Run(t, new(ValidatorJailingTestSuite))
 }
+
+// TestCostakingTestSuite tests costaking phantom sats handling end-to-end
+func TestCostakingTestSuite(t *testing.T) {
+	suite.Run(t, new(CostakingTestSuite))
+}
