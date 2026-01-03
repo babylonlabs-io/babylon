@@ -513,7 +513,10 @@ func (h *ProposalHandler) ExtractInjectedCheckpoint(txs [][]byte) (*ckpttypes.Ms
 	if len(msgs) != 1 {
 		return nil, fmt.Errorf("injected tx must have exact one message, got %d", len(msgs))
 	}
-	injectedCkpt := msgs[0].(*ckpttypes.MsgInjectedCheckpoint)
+	injectedCkpt, ok := msgs[0].(*ckpttypes.MsgInjectedCheckpoint)
+	if !ok {
+		return nil, fmt.Errorf("injected tx must contain MsgInjectedCheckpoint, got %T", msgs[0])
+	}
 
 	return injectedCkpt, nil
 }
