@@ -161,11 +161,11 @@ func (h HookEpoching) addBabyForDelegators(ctx context.Context, valAddrStr strin
 }
 
 // removeBabyForDelegators removes baby tokens from all delegators of a newly inactive validator
-func (h HookEpoching) removeBabyForDelegators(ctx context.Context, valInfo types.ValidatorInfo) error {
+func (h HookEpoching) removeBabyForDelegators(ctx context.Context, valAddr sdk.ValAddress) error {
 	// Get validator from staking keeper to get updated shares
-	val, err := h.k.stkK.GetValidator(ctx, valInfo.ValAddress)
+	val, err := h.k.stkK.GetValidator(ctx, valAddr)
 	if err != nil {
-		return fmt.Errorf("failed to get validator %s: %w", valInfo.ValAddress.String(), err)
+		return fmt.Errorf("failed to get validator %s: %w", valAddr.String(), err)
 	}
 	return h.updateCoStkTrackerForDelegators(ctx, val, func(rwdTracker *types.CostakerRewardsTracker, amount math.Int) {
 		rwdTracker.ActiveBaby = rwdTracker.ActiveBaby.Sub(amount)

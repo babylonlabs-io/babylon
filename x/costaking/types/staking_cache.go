@@ -16,16 +16,12 @@ type StakingCache struct {
 	stkInfoByValByDel map[string]map[string]StakeInfo
 	// activeValSet caches the current active validator set map
 	// ValAddr => Tokens
-	activeValSet map[string]ValidatorInfo
+	activeValSet map[string]sdk.ValAddress
 }
 
 type StakeInfo struct {
 	Amount math.LegacyDec
 	Shares math.LegacyDec
-}
-
-type ValidatorInfo struct {
-	ValAddress sdk.ValAddress
 }
 
 var zeroStakeInfo = StakeInfo{
@@ -71,7 +67,7 @@ func (sc *StakingCache) GetStakedInfo(delAddr sdk.AccAddress, valAddr sdk.ValAdd
 }
 
 // GetActiveValidatorSet returns the cached active validator set, fetching it if not present
-func (sc *StakingCache) GetActiveValidatorSet(ctx context.Context, fetchFn func(ctx context.Context) (map[string]ValidatorInfo, error)) (map[string]ValidatorInfo, error) {
+func (sc *StakingCache) GetActiveValidatorSet(ctx context.Context, fetchFn func(ctx context.Context) (map[string]sdk.ValAddress, error)) (map[string]sdk.ValAddress, error) {
 	if sc.activeValSet != nil {
 		return sc.activeValSet, nil
 	}

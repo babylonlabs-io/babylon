@@ -364,10 +364,10 @@ func TestHookStakingSlashedValidator_PostSlashDelegationUnbond(t *testing.T) {
 	val, err := tmocks.CreateValidator(valAddr, preSlashTokens)
 	require.NoError(t, err)
 
-		// 3 times: updateValidatorSet, TokensFromShares (AfterDelegationModified), BeforeValidatorSlashed
-		mockStkK.EXPECT().GetValidator(gomock.Any(), valAddr).Return(val, nil).Times(3)
-		err = k.updateValidatorSet(ctx, []sdk.ValAddress{valAddr})
-		require.NoError(t, err)
+	// 3 times: updateValidatorSet, TokensFromShares (AfterDelegationModified), BeforeValidatorSlashed
+	mockStkK.EXPECT().GetValidator(gomock.Any(), valAddr).Return(val, nil).Times(3)
+	err = k.updateValidatorSet(ctx, []sdk.ValAddress{valAddr})
+	require.NoError(t, err)
 
 	// Now set up for initial delegation
 	mockStkK.EXPECT().GetDelegation(gomock.Any(), delAddr, valAddr).Return(delegation, nil).Times(1)
@@ -700,10 +700,10 @@ func TestHookStakingSlashedValidator_MultipleDeltaShares(t *testing.T) {
 	slashRatio := math.LegacyMustNewDecFromStr("0.1")
 	hooks.BeforeValidatorSlashed(ctx, valAddr, slashRatio)
 
-	isActive, valInfo, err := hooks.isActiveValidator(ctx, valAddr)
+	isActive, activeValAddr, err := hooks.isActiveValidator(ctx, valAddr)
 	require.NoError(t, err)
 	require.True(t, isActive)
-	require.Equal(t, valInfo.ValAddress.String(), valAddr.String())
+	require.Equal(t, activeValAddr.String(), valAddr.String())
 
 	// Slash validator
 	slashedVal := val
