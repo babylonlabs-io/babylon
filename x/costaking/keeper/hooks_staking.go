@@ -125,10 +125,6 @@ func (h HookStaking) BeforeDelegationSharesModified(ctx context.Context, delAddr
 		return nil
 	}
 
-	// NOTE: We do NOT skip jailed validators here because we need to cache the before state
-	// to calculate the delta in AfterDelegationModified, which will decide whether to skip
-	// based on whether the delta is positive (new delegation) or negative (unbonding).
-
 	del, err := h.k.stkK.GetDelegation(ctx, delAddr, valAddr)
 	if err != nil {
 		// probably is not found, but we don't want to stop execution for this

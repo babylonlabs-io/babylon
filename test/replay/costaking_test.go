@@ -2010,8 +2010,6 @@ func TestCostakingSlashingAndUnbondSameEpoch(t *testing.T) {
 	currExpActiveBaby := delegateAmtToSlashVal.Add(delegateAmtToActiveVal)
 	d.CheckCostakerRewards(delStkAcc.Address(), currExpActiveBaby, zeroInt, zeroInt, 1)
 
-	d.JailValidatorForDowntime(valAddr)
-
 	// There is 2 vals and the new added val is in the current epoch valset
 	d.AreValsInActiveSet(2, valAddr)
 	// jails the validator (slash infraction)
