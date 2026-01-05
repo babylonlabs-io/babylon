@@ -93,7 +93,6 @@ func (s SubmissionEntry) Validate() error {
 	}
 	if s.Data == nil {
 		return errors.New("invalid SubmissionEntry: data is nil")
-
 	}
 	return s.Data.Validate()
 }
