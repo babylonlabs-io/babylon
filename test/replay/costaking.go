@@ -210,11 +210,11 @@ func FindValInValidators(validators []stktypes.Validator, valAddr sdk.ValAddress
 	return nil
 }
 
-func (d *BabylonAppDriver) IsValsActiveInCurrValset(expLenValset int, valAddrs ...sdk.ValAddress) epochingtypes.ValidatorSet {
+func (d *BabylonAppDriver) AreValsInActiveSet(expLenValset int, valAddrs ...sdk.ValAddress) epochingtypes.ValidatorSet {
 	return d.CheckValsForCurrValset(expLenValset, true, valAddrs...)
 }
 
-func (d *BabylonAppDriver) IsValsInactiveInCurrValset(expLenValset int, valAddrs ...sdk.ValAddress) epochingtypes.ValidatorSet {
+func (d *BabylonAppDriver) AreValsInactive(expLenValset int, valAddrs ...sdk.ValAddress) epochingtypes.ValidatorSet {
 	return d.CheckValsForCurrValset(expLenValset, false, valAddrs...)
 }
 

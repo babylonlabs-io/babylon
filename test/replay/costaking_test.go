@@ -1119,7 +1119,7 @@ func TestBabyCoStaking(t *testing.T) {
 	val2Addr := sdk.MustValAddressFromBech32(val2.OperatorAddress)
 	val4Addr := sdk.MustValAddressFromBech32(val4.OperatorAddress)
 	val5Addr := sdk.MustValAddressFromBech32(val5.OperatorAddress)
-	d.IsValsActiveInCurrValset(maxVals, val2Addr, val5Addr)
+	d.AreValsInActiveSet(maxVals, val2Addr, val5Addr)
 
 	// new validators should have a costaker tracker created with the self delegation
 	d.CheckCostakerRewards(val2Oper.Address(), newValSelfDelegatedAmt, zeroInt, zeroInt, currentRwdPeriod)
@@ -1166,7 +1166,7 @@ func TestBabyCoStaking(t *testing.T) {
 	d.CheckCostakerRewards(del6.Address(), del6BabyDelegatedAmt, zeroInt, zeroInt, currentRwdPeriod)
 
 	// Check that val5 dropped from the active set and val4 entered
-	valset := d.IsValsActiveInCurrValset(maxVals, val2Addr, val4Addr)
+	valset := d.AreValsInActiveSet(maxVals, val2Addr, val4Addr)
 	require.False(t, isValidatorInValset(valset, sdk.MustValAddressFromBech32(val5.OperatorAddress)), "Validator 5 should not be in the validator set")
 
 	// Check that val5 co-staker tracker is zeroed
@@ -1196,7 +1196,7 @@ func TestBabyCoStaking(t *testing.T) {
 			// Redelegate to a validator that will remain active
 			// redelegate to a validator that will drop active set (due to unbonding) on same epoch that jailing is processed
 			d.TxWrappedBeginRedelegate(del6.SenderInfo, val2.OperatorAddress, val1.OperatorAddress, del6BabyDelegatedAmt)
-			d.IsValsActiveInCurrValset(maxVals, val6Addr) // Check that the val6 is in active set
+			d.AreValsInActiveSet(maxVals, val6Addr) // Check that the val6 is in active set
 			val6, err := stkK.GetValidator(d.Ctx(), val6Addr)
 			require.NoError(t, err)
 			require.True(t, val6.IsBonded(), "Validator 6 should be in Bonded status")
@@ -1211,7 +1211,7 @@ func TestBabyCoStaking(t *testing.T) {
 		if val2.Jailed {
 			jailedHeight = height
 			// val2 is jailed, it is active in current valset, once epoch ends it will leave
-			d.IsValsActiveInCurrValset(maxVals, val2Addr)
+			d.AreValsInActiveSet(maxVals, val2Addr)
 		}
 	}
 
@@ -1293,7 +1293,7 @@ func TestBabyCoStaking(t *testing.T) {
 
 	// check active set stored in epoching module removed the jailed validator
 	// check that jailed validator is still on epoch validator set
-	d.IsValsInactiveInCurrValset(maxVals, val2Addr, val6Addr)
+	d.AreValsInactive(maxVals, val2Addr, val6Addr)
 
 	// check delegation was created
 	del, err := stkK.GetDelegation(d.Ctx(), del2.Address(), val2Addr)
@@ -1335,7 +1335,7 @@ func TestBabyCoStaking(t *testing.T) {
 	d.GenerateNewBlockAssertExecutionSuccess()
 	d.ProgressTillFirstBlockTheNextEpoch()
 
-	d.IsValsInactiveInCurrValset(3, val2Addr)
+	d.AreValsInactive(3, val2Addr)
 
 	// check costk tracker is still zero
 	d.ZeroCostakerRewards(del3.Address())
@@ -1365,7 +1365,7 @@ func TestBabyCoStaking(t *testing.T) {
 	// Wait for an epoch
 	d.ProgressTillFirstBlockTheNextEpoch()
 	// check unjailed validator is back in active set
-	d.IsValsActiveInCurrValset(2, val2Addr)
+	d.AreValsInActiveSet(2, val2Addr)
 
 	// Check the active baby is properly set back for delegations to this validator
 	// NOTE: Consider that the ones that were slashed will be less than the original staking amount
@@ -1760,7 +1760,7 @@ func TestCostakingSlashedSteal(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, stktypes.Bonded, valB.Status, "validator B should be bonded")
 
-	valset := d.IsValsActiveInCurrValset(2, valAAddr, valBAddr)
+	valset := d.AreValsInActiveSet(2, valAAddr, valBAddr)
 
 	// Slash validator B.
 	// This changes the token/share ratio (costaking marks IsSlashed=true) while keeping B in the active set.
@@ -1783,7 +1783,7 @@ func TestCostakingSlashedSteal(t *testing.T) {
 	valAState, err := stkK.GetValidator(d.Ctx(), valAAddr)
 	require.NoError(t, err)
 	expActiveBabyFromA := valAState.TokensFromShares(valADel.Shares).TruncateInt()
-	require.True(t, expActiveBabyFromA.GTE(delAmtValA), "expected A delegation tokens to be at least X")
+	require.Equal(t, expActiveBabyFromA.String(), delAmtValA.String(), "expected A delegation tokens to be at least X")
 
 	// Choose Y small so X >= Y and we get the "silent steal" (non-negative) case.
 	amtValB := sdkmath.NewInt(1_500000)
@@ -1886,7 +1886,7 @@ func TestCostakingSlashingAndUnbondAll(t *testing.T) {
 	valB := FindValInValidators(validators, valBAddr)
 	require.True(t, valB.IsBonded())
 
-	d.IsValsActiveInCurrValset(2, valAAddr, valBAddr)
+	d.AreValsInActiveSet(2, valAAddr, valBAddr)
 
 	// delegates to new val B
 	delegateAmtValB := sdkmath.NewInt(3_000000)
@@ -1900,7 +1900,7 @@ func TestCostakingSlashingAndUnbondAll(t *testing.T) {
 	d.JailValidatorForDowntime(valBAddr)
 
 	// B is still in the active set, will be removed at the end of the epoch
-	d.IsValsActiveInCurrValset(2, valAAddr, valBAddr)
+	d.AreValsInActiveSet(2, valAAddr, valBAddr)
 
 	delBDelegation, err := stkK.GetDelegation(d.Ctx(), delegator.Address(), valBAddr)
 	require.NoError(t, err)
@@ -1977,8 +1977,7 @@ func TestCostakingSlashingAndUnbondSameEpoch(t *testing.T) {
 	d := NewBabylonAppDriverTmpDir(r, t)
 	d.GenerateNewBlockAssertExecutionSuccess()
 
-	// stkK, costkK, epochK, slashK := d.App.StakingKeeper, d.App.CostakingKeeper, d.App.EpochingKeeper, d.App.SlashingKeeper
-	stkK, _, _, slashK := d.App.StakingKeeper, d.App.CostakingKeeper, d.App.EpochingKeeper, d.App.SlashingKeeper
+	stkK, slashK := d.App.StakingKeeper, d.App.SlashingKeeper
 
 	dels := d.CreateNStakerAccounts(2)
 	validatorStkAcc := dels[0]
@@ -2014,11 +2013,11 @@ func TestCostakingSlashingAndUnbondSameEpoch(t *testing.T) {
 	d.JailValidatorForDowntime(valAddr)
 
 	// There is 2 vals and the new added val is in the current epoch valset
-	d.IsValsActiveInCurrValset(2, valAddr)
+	d.AreValsInActiveSet(2, valAddr)
 	// jails the validator (slash infraction)
 	val := d.JailValidatorForDowntime(valAddr)
 	// and continues in the active valset until end of epoch
-	d.IsValsActiveInCurrValset(2, valAddr)
+	d.AreValsInActiveSet(2, valAddr)
 
 	// After slashing, ActiveBaby should be reduced by the slash fraction
 	// Get slash params to calculate expected ActiveBaby
