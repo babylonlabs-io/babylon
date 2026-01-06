@@ -33,6 +33,8 @@ type (
 		fpBbnAddr collections.KeySet[[]byte]
 		// finalityProvidersDeleted key: BIP340PubKey bytes
 		finalityProvidersDeleted collections.KeySet[[]byte]
+		// heightToVersionMap key: HeightToVersionMapKey
+		heightToVersionMap collections.Item[types.HeightToVersionMap]
 
 		btcNet *chaincfg.Params
 		// the address capable of executing a MsgUpdateParams or
@@ -69,7 +71,7 @@ func NewKeeper(
 			"allowed_staking_tx_hashes_key_set",
 			collections.BytesKey,
 		),
-		LargestBtcReorg: collections.NewItem[types.LargestBtcReOrg](
+		LargestBtcReorg: collections.NewItem(
 			sb,
 			types.LargestBtcReorgInBlocks,
 			"largest_btc_reorg",
@@ -86,6 +88,12 @@ func NewKeeper(
 			types.FinalityProvidersDeleted,
 			"deleted_fps",
 			collections.BytesKey,
+		),
+		heightToVersionMap: collections.NewItem(
+			sb,
+			types.HeightToVersionMapKey,
+			"height_to_version_map",
+			codec.CollValue[types.HeightToVersionMap](cdc),
 		),
 		btcNet:    btcNet,
 		authority: authority,
