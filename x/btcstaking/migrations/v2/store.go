@@ -13,7 +13,7 @@ import (
 
 var (
 	// (hex 0x10 = decimal 16) key prefix for height to version map
-	// which colides with FpBbnAddrKey that is prefix decimal 16
+	// which collides with FpBbnAddrKey that is prefix decimal 16
 	OldHeightToVersionMapKey = []byte{0x10}
 )
 
@@ -23,7 +23,8 @@ type Keeper interface {
 }
 
 // MigrateStore performs in-place store migrations.
-// Migration adds the default value for the new FpPortion param
+// Migration moves HeightToVersionMap from the old key (hex 0x10) to the new key (decimal 10)
+// to resolve the key prefix collision with FpBbnAddrKey.
 func MigrateStore(
 	ctx sdk.Context,
 	cdc codec.BinaryCodec,
@@ -41,5 +42,10 @@ func MigrateStore(
 		return fmt.Errorf("failed to unmarshal HeightToVersionMap: %s", err.Error())
 	}
 
-	return k.SetHeightToVersionMap(ctx, &oldHeightToVersionMap)
+	if err := k.SetHeightToVersionMap(ctx, &oldHeightToVersionMap); err != nil {
+		return err
+	}
+	store.Delete(OldHeightToVersionMapKey)
+
+	return nil
 }
