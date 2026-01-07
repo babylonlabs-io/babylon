@@ -38,12 +38,11 @@ func (tm *TestManagerUpgrade) runProposalUpgrade(govMsg *govtypes.MsgSubmitPropo
 			return ErrInvalidUpgradeMsg
 		}
 
-		var updatedGovMsg *govtypes.MsgSubmitProposal
 		if upgradeMsg.Plan.Height <= int64(currentHeight) {
 			// update govMsg giving buffer 10 block to the current height
 			upgradeMsg.Plan.Height = int64(currentHeight + 20)
 			chain.Config.UpgradePropHeight = upgradeMsg.Plan.Height
-			updatedGovMsg, err = updateGovUpgradeMsg(govMsg, upgradeMsg.Plan)
+			updatedGovMsg, err := updateGovUpgradeMsg(govMsg, upgradeMsg.Plan)
 			if err != nil {
 				return err
 			}
