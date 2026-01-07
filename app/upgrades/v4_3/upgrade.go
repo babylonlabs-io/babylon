@@ -158,17 +158,14 @@ func updateBABYStakersRwdTracker(
 
 	// Update the costaker rewards trackers for all accounts
 	for accAddrStr, babyTracked := range accsWithActiveBaby {
-		diff := babyTracked.CurrentActiveBaby.Sub(babyTracked.PreviousActiveBaby)
-		needsCorrection := !diff.IsZero()
 		if err := updateCostakerActiveBabyRewardsTracker(
 			ctx,
 			coStkKeeper,
 			period,
 			rwdTrackers,
 			sdk.MustAccAddressFromBech32(accAddrStr),
-			babyTracked.CurrentActiveBaby,
 			params,
-			needsCorrection,
+			babyTracked,
 		); err != nil {
 			return err
 		}
@@ -242,9 +239,8 @@ func updateCostakerActiveBabyRewardsTracker(
 	endedPeriod uint64,
 	rwdTrackers collections.Map[[]byte, costktypes.CostakerRewardsTracker],
 	stakerAddr sdk.AccAddress,
-	babyAmount math.Int,
 	params costktypes.Params,
-	needsCorrection bool,
+	babyTracked ActiveBabyTracked,
 ) error {
 	addrKey := []byte(stakerAddr)
 
@@ -261,8 +257,9 @@ func updateCostakerActiveBabyRewardsTracker(
 
 	// Update existing tracker (set the ActiveBaby because it was zeroed out before)
 	// Update the StartPeriodCumulativeReward only if the ActiveBaby is changing
-	rt.ActiveBaby = rt.ActiveBaby.Add(babyAmount)
-	if needsCorrection {
+	rt.ActiveBaby = rt.ActiveBaby.Add(babyTracked.CurrentActiveBaby)
+	diff := babyTracked.CurrentActiveBaby.Sub(babyTracked.PreviousActiveBaby)
+	if !diff.IsZero() { // if there is any diff, the period needs to be increased
 		rt.StartPeriodCumulativeReward = endedPeriod
 		if err := coStkKeeper.CalculateCostakerRewardsAndSendToGauge(ctx, stakerAddr, endedPeriod); err != nil {
 			return err
