@@ -131,8 +131,11 @@ func TestUpgradeV43(t *testing.T) {
 	require.Equal(t, currRwdBeforeUpgrade.Period, costkRwdTrackerBeforeUpgrade.StartPeriodCumulativeReward+1)
 	require.Equal(t, currRwdBeforeUpgrade.TotalScore.String(), costkRwdTrackerBeforeUpgrade.TotalScore.String())
 
+	currEpoch := n.QueryCurrentEpoch()
+	firstBlockOfNextEpoch := currEpoch.EpochBoundary + 1
+
 	// execute preUpgradeFunc, submit a proposal, vote, and then process upgrade
-	govMsg, preUpgradeFunc := createGovPropAndPreUpgradeFunc(t, validator.Wallet.WalletSender)
+	govMsg, preUpgradeFunc := createGovPropAndPreUpgradeFunc(t, validator.Wallet.WalletSender, int64(firstBlockOfNextEpoch))
 	tm.Upgrade(govMsg, preUpgradeFunc)
 
 	btcDelsResp := validator.QueryBTCDelegations(bstypes.BTCDelegationStatus_ACTIVE)
@@ -154,12 +157,12 @@ func TestUpgradeV43(t *testing.T) {
 	require.Equal(t, currRwdAfterUpgrade.TotalScore.String(), costkRwdTrackerAfterUpgrade.TotalScore.String())
 }
 
-func createGovPropAndPreUpgradeFunc(t *testing.T, valWallet *tmanager.WalletSender) (*govtypes.MsgSubmitProposal, tmanager.PreUpgradeFunc) {
+func createGovPropAndPreUpgradeFunc(t *testing.T, valWallet *tmanager.WalletSender, upgradeHeight int64) (*govtypes.MsgSubmitProposal, tmanager.PreUpgradeFunc) {
 	upgradeMsg := &upgradetypes.MsgSoftwareUpgrade{
 		Authority: "bbn10d07y265gmmuvt4z0w9aw880jnsr700jduz5f2",
 		Plan: upgradetypes.Plan{
 			Name:   v43.UpgradeName,
-			Height: int64(20),
+			Height: upgradeHeight,
 			Info:   "Upgrade to v4.3",
 		},
 	}

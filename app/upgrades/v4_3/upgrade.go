@@ -20,6 +20,7 @@ import (
 
 	"github.com/babylonlabs-io/babylon/v4/app/keepers"
 	"github.com/babylonlabs-io/babylon/v4/app/upgrades"
+	"github.com/babylonlabs-io/babylon/v4/app/upgrades/epoching"
 	costkkeeper "github.com/babylonlabs-io/babylon/v4/x/costaking/keeper"
 	costktypes "github.com/babylonlabs-io/babylon/v4/x/costaking/types"
 	epochingkeeper "github.com/babylonlabs-io/babylon/v4/x/epoching/keeper"
@@ -42,6 +43,11 @@ func CreateUpgradeHandler(mm *module.Manager, configurator module.Configurator, 
 		migrations, err := mm.RunMigrations(ctx, configurator, fromVM)
 		if err != nil {
 			return nil, err
+		}
+
+		// Validate epoch boundary using epoching keeper
+		if err := epoching.ValidateEpochBoundary(ctx, keepers.EpochingKeeper); err != nil {
+			return nil, fmt.Errorf("epoch boundary validation failed: %w", err)
 		}
 
 		costkStoreKey := keepers.GetKey(costktypes.StoreKey)
