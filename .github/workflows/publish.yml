@@ -20,7 +20,7 @@ permissions:
 
 jobs:
   lint_test:
-    uses: babylonlabs-io/.github/.github/workflows/reusable_go_lint_test.yml@d71e8faea3b6612f80ee621ec2984096b0ab9c9e # v0.14.2
+    uses: babylonlabs-io/.github/.github/workflows/reusable_go_lint_test.yml@847cd8a6ff9c64e401ce922d12532979d9ac5e93 # v0.14.5
     if: ${{ !(github.event_name == 'workflow_dispatch' && inputs['skip-lint-test'] == true) }}
     secrets: inherit
     with:
@@ -35,7 +35,7 @@ jobs:
           (github.event_name == 'workflow_dispatch' && inputs['skip-lint-test'] == true) ||
           needs.lint_test.result == 'success'
         )}}
-    uses: babylonlabs-io/.github/.github/workflows/reusable_docker_pipeline.yml@d71e8faea3b6612f80ee621ec2984096b0ab9c9e # v0.14.2
+    uses: babylonlabs-io/.github/.github/workflows/reusable_docker_pipeline.yml@847cd8a6ff9c64e401ce922d12532979d9ac5e93 # v0.14.5
     needs: ["lint_test"]
     secrets: inherit
     permissions:
