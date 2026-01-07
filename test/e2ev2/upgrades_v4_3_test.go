@@ -134,13 +134,18 @@ func TestUpgradeV43(t *testing.T) {
 	currEpoch := n.QueryCurrentEpoch()
 	firstBlockOfNextEpoch := currEpoch.EpochBoundary + 1
 
+	paramsVersionsBeforeUpgrade := n.QueryBtcStakingParamsVersions()
+
 	// execute preUpgradeFunc, submit a proposal, vote, and then process upgrade
 	govMsg, preUpgradeFunc := createGovPropAndPreUpgradeFunc(t, validator.Wallet.WalletSender, int64(firstBlockOfNextEpoch))
 	tm.Upgrade(govMsg, preUpgradeFunc)
 
+	// post-upgrade state verification
+	paramsVersionsAfterUpgrade := n.QueryBtcStakingParamsVersions()
+	require.Equal(t, paramsVersionsBeforeUpgrade, paramsVersionsAfterUpgrade)
+
 	btcDelsResp := validator.QueryBTCDelegations(bstypes.BTCDelegationStatus_ACTIVE)
 	require.Len(t, btcDelsResp, 1)
-	// post-upgrade state verification
 
 	expScore = costktypes.CalculateScore(costkP.ScoreRatioBtcByBaby, amtHealthyDel, expSat)
 
