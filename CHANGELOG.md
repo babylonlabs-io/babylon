@@ -37,28 +37,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
-<<<<<<< HEAD
-=======
 ### State breaking
 
-- [#1867](https://github.com/babylonlabs-io/babylon/pull/1867) bump wasmd `v0.60.2`
-- [#1883](https://github.com/babylonlabs-io/babylon/pull/1883) Validate staker btc pk is the same with the previous btc del when stake extension
-- [#1902](https://github.com/babylonlabs-io/babylon/pull/1902) fix: sorting of valset by the full address
-- [#1908](https://github.com/babylonlabs-io/babylon/pull/1908) fix: call `AfterRawCheckpointForgotten` in all hooks, instead of early return
 - [#1913](https://github.com/babylonlabs-io/babylon/pull/1913) fix: key collision hex 0x10 (HeightToVersionMapKey) == decimal 16 (FpBbnAddrKey)
 
-### Bug Fixes
-
-- [#1875](https://github.com/babylonlabs-io/babylon/pull/1875) chore: ensure soft-deleted FPs cannot receive new/extended BTC stake, or commit pub rand
-- [#1911](https://github.com/babylonlabs-io/babylon/pull/1911) fix: avoid panic in `ProcessProposal` when injected checkpoint tx contains a wrong message type
-
-### Improvements
-
-- [#1878](https://github.com/babylonlabs-io/babylon/pull/1878) Remove unnecessary []byte allocations in IBC size checks
-- [#1891](https://github.com/babylonlabs-io/babylon/pull/1891) fix: golangci lint misspell and removed unused func
-- [#1901](https://github.com/babylonlabs-io/babylon/pull/1901) chore: update cl
-
->>>>>>> 438312a (fix: key collision `hex 0x10 (HeightToVersionMapKey) == decimal 16 (FpBbnAddrKey)` (#1913))
 ## v4.2.2
 
 ### Improvements
