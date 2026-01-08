@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"cosmossdk.io/core/header"
+	corestore "cosmossdk.io/core/store"
 	"cosmossdk.io/log"
 	"cosmossdk.io/store"
 	storemetrics "cosmossdk.io/store/metrics"
@@ -84,4 +85,24 @@ func BTCStakingKeeperWithStoreKey(
 	}
 
 	return k, ctx
+}
+
+// BTCStakingKeeperWithStoreService returns a keeper, context, codec, and KVStore
+// Useful for migration tests that need direct store access
+func BTCStakingKeeperWithStoreService(
+	t testing.TB,
+	btclcKeeper types.BTCLightClientKeeper,
+	btccKeeper types.BtcCheckpointKeeper,
+	iKeeper types.IncentiveKeeper,
+) (*keeper.Keeper, sdk.Context, codec.BinaryCodec, corestore.KVStore) {
+	storeKey := storetypes.NewKVStoreKey(types.StoreKey)
+	db := dbm.NewMemDB()
+	stateStore := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
+	cdc := appparams.DefaultEncodingConfig().Codec
+
+	k, ctx := BTCStakingKeeperWithStore(t, db, stateStore, storeKey, btclcKeeper, btccKeeper, iKeeper)
+
+	kvStore := runtime.NewKVStoreService(storeKey).OpenKVStore(ctx)
+
+	return k, ctx, cdc, kvStore
 }
