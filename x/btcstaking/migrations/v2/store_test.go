@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
 	keepertest "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
 	"github.com/babylonlabs-io/babylon/v4/x/btcstaking/keeper"
 	v2 "github.com/babylonlabs-io/babylon/v4/x/btcstaking/migrations/v2"
@@ -37,6 +38,16 @@ func TestMigrateStore(t *testing.T) {
 	newMap := btcstakingKeeper.GetHeightToVersionMap(ctx)
 	require.Nil(t, newMap)
 
+	// Populate FpBbnAddrKey that should remain unchanged after migration
+	testFpAddr := datagen.GenRandomAddress()
+	err = btcstakingKeeper.SetFpBbnAddr(ctx, testFpAddr)
+	require.NoError(t, err)
+
+	// Verify FpBbnAddrKey is set before migration
+	hasFpAddr, err := btcstakingKeeper.HasFpRegistered(ctx, testFpAddr)
+	require.NoError(t, err)
+	require.True(t, hasFpAddr)
+
 	// Perform migration
 	err = v2.MigrateStore(ctx, cdc, kvStore, btcstakingKeeper)
 	require.NoError(t, err)
@@ -55,6 +66,11 @@ func TestMigrateStore(t *testing.T) {
 		require.Equal(t, pair.StartHeight, migratedMap.Pairs[i].StartHeight)
 		require.Equal(t, pair.Version, migratedMap.Pairs[i].Version)
 	}
+
+	// Verify FpBbnAddrKey remains unchanged after migration
+	hasFpAddrAfter, err := btcstakingKeeper.HasFpRegistered(ctx, testFpAddr)
+	require.NoError(t, err)
+	require.True(t, hasFpAddrAfter)
 }
 
 func TestMigrateStore_WithMigrator(t *testing.T) {
@@ -69,6 +85,16 @@ func TestMigrateStore_WithMigrator(t *testing.T) {
 	bz := cdc.MustMarshal(heightToVersionMap)
 	err := kvStore.Set(v2.OldHeightToVersionMapKey, bz)
 	require.NoError(t, err)
+
+	// Populate FpBbnAddrKey that should remain unchanged after migration
+	testFpAddr := datagen.GenRandomAddress()
+	err = btcstakingKeeper.SetFpBbnAddr(ctx, testFpAddr)
+	require.NoError(t, err)
+
+	// Verify FpBbnAddrKey is set before migration
+	hasFpAddr, err := btcstakingKeeper.HasFpRegistered(ctx, testFpAddr)
+	require.NoError(t, err)
+	require.True(t, hasFpAddr)
 
 	// Perform migration through Migrator
 	m := keeper.NewMigrator(*btcstakingKeeper)
@@ -86,4 +112,9 @@ func TestMigrateStore_WithMigrator(t *testing.T) {
 	oldBz, err := kvStore.Get(v2.OldHeightToVersionMapKey)
 	require.NoError(t, err)
 	require.Nil(t, oldBz)
+
+	// Verify FpBbnAddrKey remains unchanged after migration
+	hasFpAddrAfter, err := btcstakingKeeper.HasFpRegistered(ctx, testFpAddr)
+	require.NoError(t, err)
+	require.True(t, hasFpAddrAfter)
 }
