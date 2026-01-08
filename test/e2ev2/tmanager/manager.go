@@ -8,6 +8,8 @@ import (
 
 	"github.com/ory/dockertest/v3"
 	"github.com/stretchr/testify/require"
+
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 )
 
 // TestManager manages isolated Docker networks for tests
@@ -28,6 +30,14 @@ type TestManagerIbc struct {
 	*TestManager
 	Hermes *HermesRelayer
 }
+
+// TestManagerUpgrade manages software upgrade, which includes proposal upgrade and fork upgrade
+type TestManagerUpgrade struct {
+	*TestManager
+	ForkHeight int64 // ForkHeight > 0 implies that this is a fork upgrade, otherwise, proposal upgrade
+}
+
+type PreUpgradeFunc func([]*Node)
 
 // NewTestManager creates a new network manager with isolated Docker network
 func NewTestManager(t *testing.T) *TestManager {
@@ -90,6 +100,28 @@ func NewTmWithIbc(t *testing.T) *TestManagerIbc {
 	}
 }
 
+func NewTmWithUpgrade(
+	t *testing.T,
+	forkHeight int64,
+	tag string,
+) *TestManagerUpgrade {
+	tm := NewTestManager(t)
+	bbnCfg := NewChainConfig(tm.TempDir, CHAIN_ID_BABYLON)
+	bbnCfg.IsUpgrade = true
+	// if tag is empty string, use default tag v4.2.2
+	if tag == "" {
+		tag = BabylonContainerTagBeforeUpgrade
+	}
+	bbnCfg.Tag = tag
+	bbnCfg.BootstrapRepository = BabylonContainerNameBeforeUpgrade
+	tm.Chains[CHAIN_ID_BABYLON] = NewChain(tm, bbnCfg)
+
+	return &TestManagerUpgrade{
+		TestManager: tm,
+		ForkHeight:  forkHeight,
+	}
+}
+
 func (tm *TestManager) NetworkID() string {
 	return tm.Network.Network.ID
 }
@@ -117,6 +149,50 @@ func (tm *TestManagerIbc) Start() {
 
 	// creating channels by hermes modifies the acc sequence
 	tm.UpdateWalletsAccSeqNumber()
+}
+
+// Start runs all the nodes and wait for block 1
+func (tm *TestManagerUpgrade) Start() {
+	tm.TestManager.Start()
+
+	// wait for chains to produce at least one block
+	tm.ChainsWaitUntilHeight(1)
+}
+
+func (tm *TestManager) ChainValidator() *ValidatorNode {
+	return tm.Chains[CHAIN_ID_BABYLON].Validators[0]
+}
+
+// Upgrade executes preUpgradeFunc and processes upgrade
+// NOTE: this function must be invoked after Start()
+func (tm *TestManagerUpgrade) Upgrade(govMsg *govtypes.MsgSubmitProposal, preUpgradeFunc PreUpgradeFunc) {
+	var nodes []*Node
+	for _, chain := range tm.Chains {
+		nodes = append(nodes, chain.AllNodes()...)
+	}
+	preUpgradeFunc(nodes)
+
+	// run upgrade either fork or proposal upgrade
+	if tm.ForkHeight > 0 {
+		tm.runForkUpgrade()
+	} else {
+		if err := tm.runProposalUpgrade(govMsg); err != nil {
+			tm.T.Fatalf("failed to run proposal upgrade: %v", err)
+		}
+	}
+
+	// check if the upgrade was applied
+	for _, chain := range tm.Chains {
+		for _, node := range chain.AllNodes() {
+			height, err := node.LatestBlockNumber()
+			if err != nil {
+				tm.T.Fatalf("failed to get latest block height: %v", err)
+			}
+			tm.T.Logf("node %s: latest block height on chain %s: %d", node.Name, chain.ChainID(), height)
+			appliedHeight := node.QueryAppliedPlan(govMsg.Title) // make the title same name as upgrade plan
+			tm.T.Logf("node %s: %s plan applied at height: %d", node.Name, govMsg.Title, appliedHeight)
+		}
+	}
 }
 
 // UpdateWalletsAccSeqNumber iterates over all chains, nodes and wallets

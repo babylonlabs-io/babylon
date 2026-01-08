@@ -28,6 +28,7 @@ import (
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/containers"
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/initialization"
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	tkeeper "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	"github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
@@ -477,7 +478,7 @@ func (n *NodeConfig) BTCStakingUnbondSlashInfo(
 	// submit staking tx to Bitcoin and get inclusion proof
 	currentBtcTipResp, err := n.QueryTip()
 	require.NoError(t, err)
-	currentBtcTip, err := ParseBTCHeaderInfoResponseToInfo(currentBtcTipResp)
+	currentBtcTip, err := tkeeper.ParseBTCHeaderInfoResponseToInfo(currentBtcTipResp)
 	require.NoError(t, err)
 
 	stakingMsgTx := testStakingInfo.StakingTx
@@ -881,7 +882,7 @@ func (n *NodeConfig) SendCovenantSigs(
 		prevDel := prevDelRes.BtcDelegation
 		require.NotNil(t, prevDel)
 		prevParams := n.QueryBTCStakingParamsByVersion(prevDel.ParamsVersion)
-		pDel, err := ParseRespBTCDelToBTCDel(prevDel)
+		pDel, err := tkeeper.ParseRespBTCDelToBTCDel(prevDel)
 		require.NoError(t, err)
 		prevDelStakingInfo, err := pDel.GetStakingInfo(prevParams, btcNet)
 		require.NoError(t, err)
@@ -981,7 +982,7 @@ func (n *NodeConfig) CreateBTCDelegationWithExpansionAndCheck(
 	require.Equal(t, delegation.BtcDelegation.StakerAddr, n.PublicAddress)
 
 	// Step 2: submit covenant signature to activate the BTC delegation
-	originalDel, err := ParseRespBTCDelToBTCDel(pendingDels.Dels[0])
+	originalDel, err := tkeeper.ParseRespBTCDelToBTCDel(pendingDels.Dels[0])
 	require.NoError(t, err)
 	n.SendCovenantSigsAsValAndCheck(r, t, btcNet, covenantSKs, originalDel)
 
