@@ -15,6 +15,7 @@ import (
 	v4 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v4"
 	v41 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v4_1"
 	v42 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v4_2"
+	v43 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v4_3"
 	v4rc3 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v4rc3/testnet"
 )
 
@@ -22,6 +23,7 @@ import (
 // it is also used for e2e testing
 func init() {
 	Upgrades = []upgrades.Upgrade{
+		v43.Upgrade,
 		v42.Upgrade,
 		v41.Upgrade,
 		v4rc3.Upgrade,

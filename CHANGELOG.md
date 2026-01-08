@@ -40,7 +40,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ### State breaking
 
 - [#1913](https://github.com/babylonlabs-io/babylon/pull/1913) fix: key collision hex 0x10 (HeightToVersionMapKey) == decimal 16 (FpBbnAddrKey)
+<<<<<<< HEAD
 - [#1908](https://github.com/babylonlabs-io/babylon/pull/1908) fix: call `AfterRawCheckpointForgotten` in all hooks, instead of early return
+=======
+- [#1906](https://github.com/babylonlabs-io/babylon/pull/1906) fix: baby validator slashing and costaking active baby amounts missmatch
+
+### Bug Fixes
+
+- [#1875](https://github.com/babylonlabs-io/babylon/pull/1875) chore: ensure soft-deleted FPs cannot receive new/extended BTC stake, or commit pub rand
+- [#1911](https://github.com/babylonlabs-io/babylon/pull/1911) fix: avoid panic in `ProcessProposal` when injected checkpoint tx contains a wrong message type
+
+### Improvements
+
+- [#1878](https://github.com/babylonlabs-io/babylon/pull/1878) Remove unnecessary []byte allocations in IBC size checks
+- [#1891](https://github.com/babylonlabs-io/babylon/pull/1891) fix: golangci lint misspell and removed unused func
+- [#1901](https://github.com/babylonlabs-io/babylon/pull/1901) chore: update cl
+>>>>>>> 44dd6fc (fix: costkating baby bond, slash, bond and unbond (#1906))
 
 ## v4.2.2
 

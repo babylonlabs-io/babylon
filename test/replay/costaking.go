@@ -1,17 +1,22 @@
 package replay
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
 	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
+	"github.com/babylonlabs-io/babylon/v4/testutil/coins"
 	abcitypes "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	stktypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
 
 	costktypes "github.com/babylonlabs-io/babylon/v4/x/costaking/types"
+	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 	ictvtypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
 	minttypes "github.com/babylonlabs-io/babylon/v4/x/mint/types"
 )
@@ -33,6 +38,29 @@ func (d *BabylonAppDriver) CheckCostakerRewards(
 	require.Equal(d.t, expActiveSats.String(), del.ActiveSatoshis.String(), "active sats")
 	require.Equal(d.t, expStartPeriod, del.StartPeriodCumulativeReward, "start period cumulative rewards exp %d != %d act", expStartPeriod, del.StartPeriodCumulativeReward)
 	require.Equal(d.t, expTotalScore.String(), del.TotalScore.String(), "total score")
+}
+
+func (d *BabylonAppDriver) CheckCostakerRewardsInPointOnePercentMargin(
+	addr sdk.AccAddress,
+	expActiveBaby, expActiveSats, expTotalScore sdkmath.Int,
+) {
+	costkK := d.App.CostakingKeeper
+
+	del, err := costkK.GetCostakerRewards(d.Ctx(), addr)
+	require.NoError(d.t, err)
+	coins.RequireIntDiffInPointOnePercentMargin(d.t, expActiveBaby, del.ActiveBaby, "active baby")
+	coins.RequireIntDiffInPointOnePercentMargin(d.t, expActiveSats, del.ActiveSatoshis, "active sats")
+	coins.RequireIntDiffInPointOnePercentMargin(d.t, expTotalScore, del.TotalScore, "total score")
+}
+
+func (d *BabylonAppDriver) ZeroCostakerRewards(addr sdk.AccAddress) {
+	costkK := d.App.CostakingKeeper
+
+	del, err := costkK.GetCostakerRewards(d.Ctx(), addr)
+	require.NoError(d.t, err)
+	require.Truef(d.t, del.ActiveBaby.IsZero(), "active baby should be zero %s", del.ActiveBaby.String())
+	require.Truef(d.t, del.ActiveSatoshis.IsZero(), "active sats should be zero %s", del.ActiveSatoshis.String())
+	require.Truef(d.t, del.TotalScore.IsZero(), "active score should be zero %s", del.TotalScore.String())
 }
 
 func (d *BabylonAppDriver) CheckCostakingCurrentRewards(
@@ -158,4 +186,66 @@ func FindEventTypeFPDirectRewards(t *testing.T, evts []abcitypes.Event) sdk.Coin
 
 func FindEventTypeValidatorDirectRewards(t *testing.T, evts []abcitypes.Event) sdk.Coins {
 	return FindEventCoinsT(t, evts, costktypes.EventTypeValidatorDirectRewards, sdk.AttributeKeyAmount, ExtractCoinsFromDecCoins)
+}
+
+func isValidatorInValset(valset []epochingtypes.Validator, valAddr sdk.ValAddress) bool {
+	return FindValInValset(valset, valAddr) != nil
+}
+
+func FindValInValset(valset []epochingtypes.Validator, valAddr sdk.ValAddress) *epochingtypes.Validator {
+	for _, v := range valset {
+		if bytes.Equal(v.GetValAddress().Bytes(), valAddr.Bytes()) {
+			return &v
+		}
+	}
+	return nil
+}
+
+func FindValInValidators(validators []stktypes.Validator, valAddr sdk.ValAddress) *stktypes.Validator {
+	for _, v := range validators {
+		if strings.EqualFold(v.OperatorAddress, valAddr.String()) {
+			return &v
+		}
+	}
+	return nil
+}
+
+func (d *BabylonAppDriver) AreValsInActiveSet(expLenValset int, valAddrs ...sdk.ValAddress) epochingtypes.ValidatorSet {
+	return d.CheckValsForCurrValset(expLenValset, true, valAddrs...)
+}
+
+func (d *BabylonAppDriver) AreValsInactive(expLenValset int, valAddrs ...sdk.ValAddress) epochingtypes.ValidatorSet {
+	return d.CheckValsForCurrValset(expLenValset, false, valAddrs...)
+}
+
+func (d *BabylonAppDriver) CheckValsForCurrValset(expLenValset int, valsInValset bool, valAddrs ...sdk.ValAddress) epochingtypes.ValidatorSet {
+	epochK := d.App.EpochingKeeper
+	epoch := epochK.GetEpoch(d.Ctx())
+	valset := epochK.GetValidatorSet(d.Ctx(), epoch.EpochNumber)
+	require.Lenf(d.t, valset, expLenValset, "expected %d validators in active set", expLenValset)
+
+	for _, valAddr := range valAddrs {
+		val := FindValInValset(valset, valAddr)
+		if valsInValset {
+			require.NotNil(d.t, val)
+		} else {
+			require.Nil(d.t, val)
+		}
+	}
+	return valset
+}
+
+// JailValidatorForDowntime returns the validator if the validator indeed got jailed
+func (d *BabylonAppDriver) JailValidatorForDowntime(val sdk.ValAddress) *stktypes.Validator {
+	stkK := d.App.StakingKeeper
+	for i := 0; i < 1000; i++ { // it should get jailed before that
+		d.GenerateNewBlockAssertExecutionSuccess()
+		val, err := stkK.GetValidator(d.Ctx(), val)
+		require.NoError(d.t, err)
+
+		if val.IsJailed() {
+			return &val
+		}
+	}
+	return nil
 }

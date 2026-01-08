@@ -18,6 +18,7 @@ import (
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/initialization"
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/util"
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	tkeeper "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	btccheckpointtypes "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
 	blc "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
@@ -162,7 +163,7 @@ func (n *NodeConfig) InsertNewEmptyBtcHeader(r *rand.Rand) *blc.BTCHeaderInfo {
 	require.NoError(n.t, err)
 	n.t.Logf("Retrieved current tip of btc headerchain inserting empty header. Height: %d", tipResp.Height)
 
-	tip, err := ParseBTCHeaderInfoResponseToInfo(tipResp)
+	tip, err := tkeeper.ParseBTCHeaderInfoResponseToInfo(tipResp)
 	require.NoError(n.t, err)
 
 	child := datagen.GenRandomValidBTCHeaderInfoWithParent(r, *tip)
@@ -239,7 +240,7 @@ func (n *NodeConfig) FinalizeSealedEpochs(startEpoch uint64, lastEpoch uint64) {
 		require.NoError(n.t, err)
 
 		tx1 := datagen.CreatOpReturnTransaction(r, p1)
-		currentBtcTip, err := ParseBTCHeaderInfoResponseToInfo(currentBtcTipResp)
+		currentBtcTip, err := tkeeper.ParseBTCHeaderInfoResponseToInfo(currentBtcTipResp)
 		require.NoError(n.t, err)
 
 		opReturn1 := datagen.CreateBlockWithTransaction(r, currentBtcTip.Header.ToBlockHeader(), tx1)
@@ -436,26 +437,6 @@ func (n *NodeConfig) WriteFile(fileName, content string) (fullFilePathInContaine
 // FlagChainID returns the flag of the chainID.
 func (n *NodeConfig) FlagChainID() string {
 	return fmt.Sprintf("--chain-id=%s", n.chainId)
-}
-
-// ParseBTCHeaderInfoResponseToInfo turns an BTCHeaderInfoResponse back to BTCHeaderInfo.
-func ParseBTCHeaderInfoResponseToInfo(r *blc.BTCHeaderInfoResponse) (*blc.BTCHeaderInfo, error) {
-	header, err := bbn.NewBTCHeaderBytesFromHex(r.HeaderHex)
-	if err != nil {
-		return nil, err
-	}
-
-	hash, err := bbn.NewBTCHeaderHashBytesFromHex(r.HashHex)
-	if err != nil {
-		return nil, err
-	}
-
-	return &blc.BTCHeaderInfo{
-		Header: &header,
-		Hash:   &hash,
-		Height: r.Height,
-		Work:   &r.Work,
-	}, nil
 }
 
 // Proposal submits a governance proposal from the file inside the container,
