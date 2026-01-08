@@ -20,7 +20,8 @@ func TestBigVoteExtDup(t *testing.T) {
 	bbnCfg.ValidatorCount = 12
 	bbnCfg.NodeCount = 0
 
-	// only updates the image of the bad one
+	// only updates the image of the bad one, the others will run
+	// the image `babylonlabs-io/babylond` which contains the healthy code
 	bbnChain := tmanager.NewChain(tm, bbnCfg)
 	bbnChain.Validators[0].Container.Repository = badBbnImage
 	bbnChain.Validators[1].Container.Repository = badBbnImage
