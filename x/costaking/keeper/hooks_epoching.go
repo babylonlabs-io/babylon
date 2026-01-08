@@ -98,8 +98,8 @@ func (h HookEpoching) AfterEpochEnds(ctx context.Context, epoch uint64) {
 	for _, prevValAddr := range prevValAddrs {
 		if _, found := newValMap[prevValAddr]; !found {
 			// Newly inactive validator - remove baby tokens for all delegators
-			prevVal := prevValMap[prevValAddr]
-			if err := h.removeBabyForDelegators(ctx, prevVal); err != nil {
+			valAddr := sdk.MustValAddressFromBech32(prevValAddr)
+			if err := h.removeBabyForDelegators(ctx, valAddr); err != nil {
 				h.k.Logger(ctx).Error("failed to remove baby tokens for newly inactive validator", "validator", prevValAddr, "error", err)
 				return
 			}
@@ -173,7 +173,8 @@ func (h HookEpoching) removeBabyForDelegators(ctx context.Context, valAddr sdk.V
 }
 
 // buildNewActiveValSetMap builds the new active validator set map
-// from the staking module's last validator powers (for next epoch)
+// from the staking module's last validator powers (for next epoch).
+// The returned map has validator addresses (as strings) as keys.
 func (h HookEpoching) buildNewActiveValSetMap(ctx context.Context) (map[string]struct{}, []sdk.ValAddress, error) {
 	valMap := make(map[string]struct{})
 	valAddrs := make([]sdk.ValAddress, 0)

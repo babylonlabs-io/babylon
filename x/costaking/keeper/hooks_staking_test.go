@@ -700,10 +700,9 @@ func TestHookStakingSlashedValidator_MultipleDeltaShares(t *testing.T) {
 	slashRatio := math.LegacyMustNewDecFromStr("0.1")
 	hooks.BeforeValidatorSlashed(ctx, valAddr, slashRatio)
 
-	isActive, activeValAddr, err := hooks.isActiveValidator(ctx, valAddr)
+	isActive, err := hooks.isActiveValidator(ctx, valAddr)
 	require.NoError(t, err)
 	require.True(t, isActive)
-	require.Equal(t, activeValAddr.String(), valAddr.String())
 
 	// Slash validator
 	slashedVal := val

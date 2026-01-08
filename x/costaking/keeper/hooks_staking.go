@@ -34,7 +34,7 @@ type HookStaking struct {
 func (h HookStaking) AfterDelegationModified(ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) error {
 	defer h.k.stkCache.Delete(delAddr, valAddr)
 	// Check if validator is in the active set
-	active, _, err := h.isActiveValidator(ctx, valAddr)
+	active, err := h.isActiveValidator(ctx, valAddr)
 	if err != nil {
 		return err
 	}
@@ -77,7 +77,7 @@ func (h HookStaking) BeforeDelegationRemoved(ctx context.Context, delAddr sdk.Ac
 	defer h.k.stkCache.Delete(delAddr, valAddr)
 
 	// Check if validator is in the active set
-	active, _, err := h.isActiveValidator(ctx, valAddr)
+	active, err := h.isActiveValidator(ctx, valAddr)
 	if err != nil {
 		return err
 	}
@@ -115,7 +115,7 @@ func (h HookStaking) BeforeDelegationRemoved(ctx context.Context, delAddr sdk.Ac
 // - Caches current delegation amount in temporary storage
 func (h HookStaking) BeforeDelegationSharesModified(ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) error {
 	// Check if validator is in the active set
-	active, _, err := h.isActiveValidator(ctx, valAddr)
+	active, err := h.isActiveValidator(ctx, valAddr)
 	if err != nil {
 		return err
 	}
@@ -145,7 +145,7 @@ func (h HookStaking) BeforeDelegationSharesModified(ctx context.Context, delAddr
 // It reduces the ActiveBaby amount for all delegators by the slash fraction
 func (h HookStaking) BeforeValidatorSlashed(ctx context.Context, valAddr sdk.ValAddress, fraction math.LegacyDec) error {
 	// Check if validator is in the active set
-	active, _, err := h.isActiveValidator(ctx, valAddr)
+	active, err := h.isActiveValidator(ctx, valAddr)
 	if err != nil {
 		return err
 	}
@@ -248,10 +248,10 @@ func (k Keeper) TokensFromShares(ctx context.Context, valAddr sdk.ValAddress, de
 	return delTokens, nil
 }
 
-// buildCurrEpochValSetMap builds the current epoch's validator set map
-// with their original tokens stored in the module state
-func (k Keeper) buildCurrEpochValSetMap(ctx context.Context) (map[string]sdk.ValAddress, error) {
-	valMap := make(map[string]sdk.ValAddress)
+// buildCurrEpochValSetMap builds the current epoch's validator set map.
+// The returned map has validator addresses (as strings) as keys.
+func (k Keeper) buildCurrEpochValSetMap(ctx context.Context) (activeValset map[string]struct{}, err error) {
+	valMap := make(map[string]struct{})
 
 	// During genesis, the epoching store may not be initialized yet.
 	// In this case, we return an empty map and rely on assumeActiveValidatorIfGenesis
@@ -270,27 +270,28 @@ func (k Keeper) buildCurrEpochValSetMap(ctx context.Context) (map[string]sdk.Val
 	// Convert epoching ValidatorSet to map
 	for _, val := range valSet.Validators {
 		valAddr := sdk.ValAddress(val.Addr)
-		valMap[valAddr.String()] = valAddr
+		valMap[valAddr.String()] = struct{}{}
 	}
 
 	return valMap, nil
 }
 
 // assumeActiveValidatorIfGenesis adds the given validator to the active set if block height is genesis height (0)
-// and the validator is not already in the set
-func (k Keeper) assumeActiveValidatorIfGenesis(ctx context.Context, valSet map[string]sdk.ValAddress, valAddr sdk.ValAddress) {
+// and the validator is not already in the set.
+// The valSet map has validator addresses (as strings) as keys.
+func (k Keeper) assumeActiveValidatorIfGenesis(ctx context.Context, valSet map[string]struct{}, valAddr sdk.ValAddress) {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	if sdkCtx.BlockHeader().Height == 0 {
 		// Add validator to active set during genesis
-		valSet[valAddr.String()] = valAddr
+		valSet[valAddr.String()] = struct{}{}
 	}
 }
 
-func (h HookStaking) isActiveValidator(ctx context.Context, valAddr sdk.ValAddress) (bool, sdk.ValAddress, error) {
+func (h HookStaking) isActiveValidator(ctx context.Context, valAddr sdk.ValAddress) (bool, error) {
 	// Check if validator is in the active set
 	valSet, err := h.k.stkCache.GetActiveValidatorSet(ctx, h.k.buildCurrEpochValSetMap)
 	if err != nil {
-		return false, sdk.ValAddress{}, err
+		return false, err
 	}
 
 	// NOTE: co-staking genesis is called before staking genesis.
@@ -298,10 +299,10 @@ func (h HookStaking) isActiveValidator(ctx context.Context, valAddr sdk.ValAddre
 	// Thus, for testing purposes, we assume all validators are active if the set is empty and block height is 0.
 	h.k.assumeActiveValidatorIfGenesis(ctx, valSet, valAddr)
 
-	valInfo, ok := valSet[valAddr.String()]
+	_, ok := valSet[valAddr.String()]
 	if !ok {
 		// Validator not in active set, skip processing
-		return false, sdk.ValAddress{}, nil
+		return false, nil
 	}
-	return true, valInfo, nil
+	return true, nil
 }
