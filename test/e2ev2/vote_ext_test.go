@@ -28,11 +28,11 @@ func TestBigVoteExtDup(t *testing.T) {
 
 	tm.Chains[tmanager.CHAIN_ID_BABYLON] = bbnChain
 
-	// Start all nodes (3 validators) in Docker.
+	// Start all nodes (12 validators) in Docker.
 	tm.Start()
 
 	// Let the chain produce some blocks so multiple proposals / checkpoints happen.
-	const targetHeight = 30
+	const targetHeight = 150
 	tm.ChainsWaitUntilHeight(targetHeight)
 
 }
