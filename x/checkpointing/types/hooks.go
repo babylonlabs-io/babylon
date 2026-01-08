@@ -44,7 +44,9 @@ func (h MultiCheckpointingHooks) AfterRawCheckpointConfirmed(ctx context.Context
 
 func (h MultiCheckpointingHooks) AfterRawCheckpointForgotten(ctx context.Context, ckpt *RawCheckpoint) error {
 	for i := range h {
-		return h[i].AfterRawCheckpointForgotten(ctx, ckpt)
+		if err := h[i].AfterRawCheckpointForgotten(ctx, ckpt); err != nil {
+			return err
+		}
 	}
 	return nil
 }
