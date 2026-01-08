@@ -142,7 +142,18 @@ func (h HookStaking) BeforeDelegationSharesModified(ctx context.Context, delAddr
 }
 
 // BeforeValidatorSlashed implements types.StakingHooks.
-// It reduces the ActiveBaby amount for all delegators by the slash fraction
+// It reduces the ActiveBaby amount for all delegators by the slash fraction.
+//
+// Important: This hook is called from x/staking at the moment the validator is slashed,
+// NOT at the epoch boundary. The flow is:
+//  1. Validator is slashed during the epoch -> this hook reduces ActiveBaby immediately
+//  2. Validator remains in the active set for epoching (even if jailed)
+//  3. At epoch boundary, if the slashed validator leaves the active set,
+//     removeBabyForDelegators in AfterEpochEnds will reduce ActiveBaby again for all delegations
+//
+// This design avoids storing "slash events" that would need to be processed at epoch end.
+// The validator's voting power is kept constant during the epoch per the epoching mechanism,
+// but ActiveBaby is adjusted immediately when slashing occurs.
 func (h HookStaking) BeforeValidatorSlashed(ctx context.Context, valAddr sdk.ValAddress, fraction math.LegacyDec) error {
 	// Check if validator is in the active set
 	active, err := h.isActiveValidator(ctx, valAddr)
