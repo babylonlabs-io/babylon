@@ -34,7 +34,7 @@ repos:
       - id: check-case-conflict          # Case-insensitive filesystem issues
       - id: check-executables-have-shebangs  # Ensure executables have a valid shebang
 
-# For allowing secrets to be committed, add this comment: # gitleaks:allow
+  # For allowing secrets to be committed, add this comment: # gitleaks:allow
   - repo: https://github.com/gitleaks/gitleaks
     rev: v8.21.2
     hooks:
