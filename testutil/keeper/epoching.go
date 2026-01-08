@@ -24,6 +24,40 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// EpochingKeeperWithStore creates an epoching keeper with a shared multistore
+func EpochingKeeperWithStore(
+	t testing.TB,
+	db dbm.DB,
+	stateStore store.CommitMultiStore,
+	storeKey *storetypes.KVStoreKey,
+	bankK types.BankKeeper,
+	stkK types.StakingKeeper,
+) *keeper.Keeper {
+	if storeKey == nil {
+		storeKey = storetypes.NewKVStoreKey(types.StoreKey)
+	}
+
+	stateStore.MountStoreWithDB(storeKey, storetypes.StoreTypeIAVL, db)
+	require.NoError(t, stateStore.LoadLatestVersion())
+
+	registry := codectypes.NewInterfaceRegistry()
+	types.RegisterInterfaces(registry)
+	authtypes.RegisterInterfaces(registry)
+	cryptocodec.RegisterInterfaces(registry)
+	cdc := codec.NewProtoCodec(registry)
+
+	k := keeper.NewKeeper(
+		cdc,
+		runtime.NewKVStoreService(storeKey),
+		bankK,
+		stkK,
+		nil, // stkMsgServer
+		appparams.AccGov.String(),
+	)
+
+	return &k
+}
+
 func EpochingKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
 	storeKey := storetypes.NewKVStoreKey(types.StoreKey)
 	authStoreKey := storetypes.NewKVStoreKey(authtypes.StoreKey)

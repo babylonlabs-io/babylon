@@ -3,6 +3,7 @@ package replay
 import (
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/test-go/testify/require"
 
 	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
@@ -53,4 +54,15 @@ func (d *BabylonAppDriver) TxWrappedBeginRedelegate(delegator *SenderInfo, valSr
 	msg := epochingtypes.NewMsgWrappedBeginRedelegate(msgRedelegate)
 	d.SendTxWithMessagesSuccess(d.t, delegator, DefaultGasLimit, defaultFeeCoin, msg)
 	delegator.IncSeq()
+}
+
+func (d *BabylonAppDriver) StakingUpdateParams(maxValidators uint32) {
+	stkK := d.App.StakingKeeper
+
+	stkParams, err := stkK.GetParams(d.Ctx())
+	require.NoError(d.t, err)
+	stkParams.MaxValidators = maxValidators
+	err = stkK.SetParams(d.Ctx(), stkParams)
+	require.NoError(d.t, err)
+	d.GenerateNewBlockAssertExecutionSuccess()
 }

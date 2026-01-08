@@ -208,7 +208,9 @@ func NewBabylonAppDriver(
 	blsSigner, err := appsigner.InitBlsSigner(chain.Nodes[0].ConfigDir)
 	require.NoError(t, err)
 	require.NotNil(t, blsSigner)
-	signerValAddress := sdk.ValAddress(chain.Nodes[0].PublicAddress)
+
+	valAccAddr := sdk.MustAccAddressFromBech32(chain.Nodes[0].PublicAddress)
+	signerValAddress := sdk.ValAddress(valAccAddr)
 	require.NoError(t, err)
 
 	appOptions := NewAppOptionsWithFlagHome(chain.Nodes[0].ConfigDir)
@@ -1185,6 +1187,13 @@ func (d *BabylonAppDriver) BankSendNative(
 	amt int64,
 ) {
 	d.BankSend(t, d.SenderInfo, from.Address(), sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(amt))))
+}
+
+func (d *BabylonAppDriver) BankSendNativeFromSender(
+	to sdk.AccAddress,
+	amt int64,
+) {
+	d.BankSend(d.t, d.SenderInfo, to, sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(amt))))
 }
 
 func (d *BabylonAppDriver) MintNativeTo(

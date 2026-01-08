@@ -78,3 +78,23 @@ func BTCLightClientKeeperWithCustomParams(
 
 	return &k, ctx, stServ
 }
+
+// ParseBTCHeaderInfoResponseToInfo turns an BTCHeaderInfoResponse back to BTCHeaderInfo.
+func ParseBTCHeaderInfoResponseToInfo(r *btclightclientt.BTCHeaderInfoResponse) (*btclightclientt.BTCHeaderInfo, error) {
+	header, err := bbn.NewBTCHeaderBytesFromHex(r.HeaderHex)
+	if err != nil {
+		return nil, err
+	}
+
+	hash, err := bbn.NewBTCHeaderHashBytesFromHex(r.HashHex)
+	if err != nil {
+		return nil, err
+	}
+
+	return &btclightclientt.BTCHeaderInfo{
+		Header: &header,
+		Hash:   &hash,
+		Height: r.Height,
+		Work:   &r.Work,
+	}, nil
+}
