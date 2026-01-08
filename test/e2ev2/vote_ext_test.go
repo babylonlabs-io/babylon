@@ -6,19 +6,25 @@ import (
 	"github.com/babylonlabs-io/babylon/v4/test/e2ev2/tmanager"
 )
 
-func TestCheckpointingDos_TwoValidators(t *testing.T) {
+const (
+	badBbnImage = "babylonlabs-io/babylond-bad"
+)
+
+func TestBigVoteExtDup(t *testing.T) {
 	t.Parallel()
 
 	tm := tmanager.NewTestManager(t)
 
 	// Single Babylon chain, but with TWO validators instead of the default one.
 	bbnCfg := tmanager.NewChainConfig(tm.TempDir, tmanager.CHAIN_ID_BABYLON)
-	bbnCfg.ValidatorCount = 3
+	bbnCfg.ValidatorCount = 12
 	bbnCfg.NodeCount = 0
 
 	// only updates the image of the bad one
 	bbnChain := tmanager.NewChain(tm, bbnCfg)
-	bbnChain.Validators[0].Container.Repository = "babylonlabs-io/babylond-bad"
+	bbnChain.Validators[0].Container.Repository = badBbnImage
+	bbnChain.Validators[1].Container.Repository = badBbnImage
+	bbnChain.Validators[2].Container.Repository = badBbnImage
 
 	tm.Chains[tmanager.CHAIN_ID_BABYLON] = bbnChain
 

