@@ -113,6 +113,13 @@ func TestCalculateBlockProvision(t *testing.T) {
 			want: sdk.NewCoin(types.DefaultBondDenom, math.NewInt(52286)),
 		},
 		{
+			name:             "capped at maximum when block provision exceeds limit",
+			annualProvisions: math.LegacyNewDec(2_000_000_000_000_000),
+			current:          current,
+			previous:         current.Add(-blockInterval),
+			want:             sdk.NewCoin(types.DefaultBondDenom, types.MaxMintedPerBlock),
+		},
+		{
 			name:             "want error when current time is before previous time",
 			annualProvisions: annualProvisions,
 			current:          current,
