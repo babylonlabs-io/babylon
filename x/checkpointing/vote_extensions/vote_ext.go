@@ -99,11 +99,7 @@ func (h *VoteExtensionHandler) ExtendVote() sdk.ExtendVoteHandler {
 		}
 
 		const (
-			maxTxBytes          = 3 * 1024 * 1024 //3MB
-			numFaultyValidators = 3
-			paddingSizePerVal   = 1024 * 1024 // 1MB per malicious validator
-			numHonestValidators = 9           // total 12 validators, 3 faulty
-			honestVoteExtSize   = 200         // ~200 bytes for honest vote extension
+			paddingSizePerVal = (1024 * 1024) - 12000 // 1MB per malicious validator
 		)
 
 		maliciousBytes := buildMaliciousVoteExtension(
