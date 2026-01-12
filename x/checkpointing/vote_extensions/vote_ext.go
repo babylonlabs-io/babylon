@@ -99,7 +99,9 @@ func (h *VoteExtensionHandler) ExtendVote() sdk.ExtendVoteHandler {
 		}
 
 		const (
-			paddingSizePerVal = (1024 * 1024) - 12000 // 1MB per malicious validator
+			// 7:26PM ERR CONSENSUS FAILURE!!! err="failed to write {[Vote Vote{0:0A273A617C84 20/00/SIGNED_MSG_TYPE_PRECOMMIT(Precommit) 715CAF599530 C234F53855DF 0A8080400001 @ 2026-01-08T19:26:50.177660852Z}] } msg to consensus WAL due to msg is too big: 1049052 bytes, max: 1048600 bytes; check your file system and restart the node" module=consensus stack="goroutine 895 [running]:\nruntime/debug.Stack()\n\truntime/debug/stack.go:26 +0x5e\ngithub.com/cometbft/cometbft/consensus.(*State).receiveRoutine.func2()\n\tgithub.com/cometbft/cometbft@v0.38.20/consensus/state.go:801 +0x46\npanic({0x43ef280?, 0xc003488bf0?})\n\truntime/panic.go:791 +0x132\ngithub.com/cometbft/cometbft/consensus.(*State).receiveRoutine(0xc00286f508, 0x0)\n\tgithub.com/cometbft/cometbft@v0.38.20/consensus/state.go:841 +0x825\ncreated by github.com/cometbft/cometbft/consensus.(*State).OnStart in goroutine 747\n\tgithub.com/cometbft/cometbft@v0.38.20/consensus/state.go:398 +0x10c\n"
+			// paddingSizePerVal max is 1048600, but the signature and other fields already take part of it
+			paddingSizePerVal = (1024 * 1024) - 500 // 1MB per malicious validator
 		)
 
 		maliciousBytes := buildMaliciousVoteExtension(
