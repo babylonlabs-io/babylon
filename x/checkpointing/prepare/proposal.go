@@ -20,7 +20,20 @@ import (
 	ckpttypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
 )
 
-const defaultInjectedTxIndex = 0
+const (
+	defaultInjectedTxIndex = 0
+	// MaxVoteExtensionSize is the maximum allowed size for a vote extension.
+	// Breakdown of legitimate VoteExtension fields (~228 bytes):
+	//   - Signer (bech32 address):       ~67 bytes
+	//   - ValidatorAddress (bech32):     ~67 bytes
+	//   - BlockHash (SHA-256):            34 bytes
+	//   - EpochNum (varint):              ~4 bytes
+	//   - Height (varint):                ~6 bytes
+	//   - BlsSig (BLS12-381 signature):   50 bytes
+	// Setting to 1KB provides ~4x overhead
+	// while preventing memory amplification attacks (100 validators × 1KB = 100KB per block).
+	MaxVoteExtensionSize = 1024 // 1KB
+)
 
 type SigValidationFn func(ctx sdk.Context, extendedVotes *abci.ExtendedCommitInfo, blockHash []byte) []ckpttypes.BlsSig
 
@@ -206,7 +219,7 @@ func (h *ProposalHandler) buildCheckpointFromVoteExtensions(
 	return ckpt, nil
 }
 
-func (h *ProposalHandler) verifyVoteExtension(
+func (h *ProposalHandler) VerifyVoteExtension(
 	ctx sdk.Context,
 	veBytes []byte,
 	expectedBlockHash []byte,
@@ -224,11 +237,30 @@ func (h *ProposalHandler) verifyVoteExtension(
 		return nil, fmt.Errorf("failed to unmarshal vote extension: %w", err)
 	}
 
+	// check overall size and tries to marshal and unmarshal the same structure to check
+	// for hidden fields sent to the vote extension
+	veBytesLen := len(veBytes)
+	if veBytesLen > MaxVoteExtensionSize {
+		return nil, ckpttypes.ErrVoteExt.Wrapf("max size: %d, vote ext size: %d", MaxVoteExtensionSize, veBytesLen)
+	}
+
+	bzVoteExtAfterParse, err := ve.Marshal()
+	if err != nil {
+		return nil, ckpttypes.ErrVoteExt.Wrapf("failed to marshal vote ext seccond time: %s", err.Error())
+	}
+
+	if !bytes.Equal(veBytes, bzVoteExtAfterParse) {
+		return nil, ckpttypes.ErrVoteExt.Wrapf(
+			"malformed vote extension (possible malicious bytes included): original size %d, size after marshal %d",
+			veBytesLen, len(bzVoteExtAfterParse),
+		)
+	}
+
 	if err := ve.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid vote extension: %w", err)
 	}
 
-	_, err := sdk.ValAddressFromBech32(ve.Signer)
+	_, err = sdk.ValAddressFromBech32(ve.Signer)
 	if err != nil {
 		return nil, fmt.Errorf("invalid signer address in vote extension: %w", err)
 	}
@@ -259,7 +291,7 @@ func (h *ProposalHandler) getValidBlsSigs(
 	var validBLSSigs []ckpttypes.BlsSig
 
 	for _, vote := range extendedVotes.Votes {
-		sig, err := h.verifyVoteExtension(ctx, vote.VoteExtension, blockHash)
+		sig, err := h.VerifyVoteExtension(ctx, vote.VoteExtension, blockHash)
 		if err != nil {
 			h.logger.Error("invalid vote extension", "err", err)
 			continue
@@ -278,7 +310,7 @@ func (h *ProposalHandler) getValidBlsSigsAndPruneCommitInfo(
 	var validBLSSigs []ckpttypes.BlsSig
 
 	for i, vote := range extendedVotes.Votes {
-		sig, err := h.verifyVoteExtension(ctx, vote.VoteExtension, blockHash)
+		sig, err := h.VerifyVoteExtension(ctx, vote.VoteExtension, blockHash)
 
 		if err != nil {
 			h.logger.Error("invalid vote extension", "err", err)
