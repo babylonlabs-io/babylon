@@ -12,8 +12,9 @@ import (
 
 const DefaultBondDenom = "ubbn"
 
-// MaxMintedPerBlock defines the maximum amount allowed to mint per block
-// On mainnet currently there is around 189 Baby tokens minted per block.
+// MaxMintedPerBlock defines the maximum amount (in ubbn, i.e. micro-Baby tokens) allowed to mint per block.
+// On mainnet, the current rate is around 189 Baby tokens per block (≈189_000000 ubbn), so this cap of
+// 600_000000 ubbn (600 Baby tokens) is approximately 3.17x the current rate.
 var MaxMintedPerBlock = math.NewInt(600_000000)
 
 // NewMinter returns a new Minter object.
