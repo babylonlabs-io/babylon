@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 	"fmt"
+	"sort"
 
 	"cosmossdk.io/store/prefix"
 	"github.com/cosmos/cosmos-sdk/runtime"
@@ -123,6 +124,14 @@ func (k Keeper) GetVotingPowerTableOrdered(ctx context.Context, height uint64) [
 			VotingPower: sdk.BigEndianToUint64(iter.Value()),
 		})
 	}
+
+	// Ensure ordering by voting power desc, tiebreak by BTC PK hex asc
+	sort.SliceStable(fps, func(i, j int) bool {
+		if fps[i].VotingPower == fps[j].VotingPower {
+			return fps[i].FpPk.MarshalHex() < fps[j].FpPk.MarshalHex()
+		}
+		return fps[i].VotingPower > fps[j].VotingPower
+	})
 
 	return fps
 }
