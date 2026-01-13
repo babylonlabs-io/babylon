@@ -228,6 +228,11 @@ func (h *ProposalHandler) VerifyVoteExtension(
 		return nil, fmt.Errorf("vote extension is empty")
 	}
 
+	veBytesLen := len(veBytes)
+	if veBytesLen > MaxVoteExtensionSize {
+		return nil, ckpttypes.ErrVoteExt.Wrapf("max size: %d, vote ext size: %d", MaxVoteExtensionSize, veBytesLen)
+	}
+
 	var ve ckpttypes.VoteExtension
 	if err := unknownproto.RejectUnknownFieldsStrict(veBytes, &ve, h.interfaceRegistry); err != nil {
 		return nil, fmt.Errorf("vote extension contains unknown or extra bytes: %w", err)
@@ -237,16 +242,11 @@ func (h *ProposalHandler) VerifyVoteExtension(
 		return nil, fmt.Errorf("failed to unmarshal vote extension: %w", err)
 	}
 
-	// check overall size and tries to marshal and unmarshal the same structure to check
-	// for hidden fields sent to the vote extension
-	veBytesLen := len(veBytes)
-	if veBytesLen > MaxVoteExtensionSize {
-		return nil, ckpttypes.ErrVoteExt.Wrapf("max size: %d, vote ext size: %d", MaxVoteExtensionSize, veBytesLen)
-	}
-
+	// attempts to marshal the same structure to check
+	// for hidden fields embedded in the vote extension
 	bzVoteExtAfterParse, err := ve.Marshal()
 	if err != nil {
-		return nil, ckpttypes.ErrVoteExt.Wrapf("failed to marshal vote ext seccond time: %s", err.Error())
+		return nil, ckpttypes.ErrVoteExt.Wrapf("failed to marshal vote ext second time: %s", err.Error())
 	}
 
 	if !bytes.Equal(veBytes, bzVoteExtAfterParse) {
