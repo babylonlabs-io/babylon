@@ -163,7 +163,6 @@ func (c *Chain) InitGenesis() {
 	appStateJSON, err := json.Marshal(appGenState)
 	require.NoError(c.T(), err, "failed to marshal application genesis state")
 	genDoc.AppState = appStateJSON
-	genDoc.Consensus.Params.Block.MaxBytes = 3 * 1024 * 1024
 
 	// write the same genesis to all nodes
 	c.WriteGenesis(genDoc)
