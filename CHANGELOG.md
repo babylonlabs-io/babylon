@@ -62,6 +62,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#1960](https://github.com/babylonlabs-io/babylon/pull/1960) fix: download muslc from s3 in our go releaser workflow
 
 ## v4.2.5
+- [#1923](https://github.com/babylonlabs-io/babylon/pull/1923) fix: add max bytes size for vote extension
 
 ### Improvements
 
