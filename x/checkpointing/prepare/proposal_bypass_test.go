@@ -34,10 +34,8 @@ func setupProposalHandler(t *testing.T, tempApp *app.BabylonApp) *prepare.Propos
 
 func TestDuplicateField_Issue(t *testing.T) {
 	const (
-		maxTxBytes          = 3 * 1024 * 1024 // 3MB
 		numFaultyValidators = 3
 		paddingSizePerVal   = 600 // 600 bytes padding to exceed 1KB limit
-		numHonestValidators = 9   // total 12 validators, 3 faulty
 		honestVoteExtSize   = 200 // ~200 bytes for honest vote extension
 	)
 
