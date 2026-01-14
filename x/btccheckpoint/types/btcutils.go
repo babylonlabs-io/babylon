@@ -175,16 +175,34 @@ func verify(tx *btcutil.Tx, merkleRoot *chainhash.Hash, intermediateNodes []byte
 
 	numSteps := (proofLength / 32) - 1
 
+	// Walk up the Merkle tree from the transaction to the root.
+	// Each iteration processes one level of the tree using an intermediate node (sibling hash).
 	for i := 1; i < numSteps; i++ {
+		// Extract the next 32-byte intermediate node (sibling hash) from the proof.
 		start := i * 32
 		end := i*32 + 32
 		next := proof[start:end:end]
+
+		// Determine if the current node is a left or right child using the index's least significant bit.
+		// idx % 2 == 0: current is left child  → hash as (current || sibling)
+		// idx % 2 == 1: current is right child → hash as (sibling || current)
 		if idx%2 == 1 {
 			current = hashConcat(next, current[:])
 		} else {
 			current = hashConcat(current[:], next)
 		}
+
+		// Move to the parent's index by right-shifting (equivalent to integer division by 2).
+		// This removes the least significant bit and prepares for the next tree level.
+		// Example: idx=5 (binary 101) >>= idx=2 (binary 10) >>= idx=1 (binary 1) >>= idx=0
 		idx >>= 1
+	}
+
+	// Validate that index was within valid range for this proof depth.
+	// After numSteps-1 right-shifts, valid indices (< 2^depth) become 0.
+	// Indices >= 2^depth leave residual bits, indicating an out-of-range index.
+	if idx != 0 {
+		return false
 	}
 
 	return bytes.Equal(current[:], root)
