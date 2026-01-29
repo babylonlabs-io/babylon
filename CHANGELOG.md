@@ -37,6 +37,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+### Improvements
+
+- [#1878](https://github.com/babylonlabs-io/babylon/pull/1878) Remove unnecessary []byte allocations in IBC size checks
+- [#1891](https://github.com/babylonlabs-io/babylon/pull/1891) fix: golangci lint misspell and removed unused func
+- [#1901](https://github.com/babylonlabs-io/babylon/pull/1901) chore: update cl
+
 ### State breaking
 
 - [#1867](https://github.com/babylonlabs-io/babylon/pull/1867) bump wasmd `v0.60.2`
@@ -61,9 +67,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
-- [#1878](https://github.com/babylonlabs-io/babylon/pull/1878) Remove unnecessary []byte allocations in IBC size checks
-- [#1891](https://github.com/babylonlabs-io/babylon/pull/1891) fix: golangci lint misspell and removed unused func
-- [#1901](https://github.com/babylonlabs-io/babylon/pull/1901) chore: update cl
 - [#1922](https://github.com/babylonlabs-io/babylon/pull/1922) chore: add const of `MaxMintedPerBlock`
 
 ## v4.2.2
