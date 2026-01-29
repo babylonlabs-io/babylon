@@ -37,6 +37,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+## v4.2.4
+
+### Improvements
+
+- [GHSA-h598-3g3g-c67c](https://github.com/babylonlabs-io/babylon/security/advisories/GHSA-h598-3g3g-c67c) chore: bump comet-bft to `v0.38.21`
+
 ## v4.2.3
 
 ### Improvements
