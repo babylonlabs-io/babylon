@@ -21,6 +21,25 @@ on:
         default: false
 
 jobs:
+  call-reusable-release:
+    uses: babylonlabs-io/.github/.github/workflows/reusable_github_release.yml@a5bf0dd12c945ee8fb95cd18765f134928de3e32  # v0.16
+    with:
+      tag: ${{ inputs.tag }}
+      description: ${{ inputs.description }}
+      prerelease: ${{ inputs.prerelease }}
+      changelog_path: "https://github.com/babylonlabs-io/babylon/blob/main/CHANGELOG.md"
+      build_command: |
+        # Only use the below command for mainnet
+        make build
+        # Only use the below command for testnet
+        BABYLON_BUILD_OPTIONS="testnet" make build
+      docker_image_table_template: |
+        | Image | Description |
+        |-----------------|----------------|
+        | babylonlabs/babylond:${{ inputs.tag }} | Mainnet image |
+        | babylonlabs/babylond:${{ inputs.tag }}-testnet | Testnet image |
+    secrets: inherit
+
   goreleaser:
     name: Create release with assets
     runs-on: ubuntu-latest
