@@ -51,6 +51,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#1875](https://github.com/babylonlabs-io/babylon/pull/1875) chore: ensure soft-deleted FPs cannot receive new/extended BTC stake, or commit pub rand
 - [#1911](https://github.com/babylonlabs-io/babylon/pull/1911) fix: avoid panic in `ProcessProposal` when injected checkpoint tx contains a wrong message type
 
+## v4.2.4
+
+### Improvements
+
+- [GHSA-h598-3g3g-c67c](https://github.com/babylonlabs-io/babylon/security/advisories/GHSA-h598-3g3g-c67c) chore: bump comet-bft to `v0.38.21`
+
+## v4.2.3
+
 ### Improvements
 
 - [#1878](https://github.com/babylonlabs-io/babylon/pull/1878) Remove unnecessary []byte allocations in IBC size checks
