@@ -853,6 +853,26 @@ func (h *Helper) createBtcStakeExpandMessage(
 	stakingTime uint16,
 	prevDel *types.BTCDelegation,
 ) *types.MsgBtcStakeExpand {
+	return h.createBtcStakeExpandMessageWithFundingValue(
+		r,
+		delSK,
+		fpPK,
+		stakingValue,
+		stakingTime,
+		prevDel,
+		10000000,
+	)
+}
+
+func (h *Helper) createBtcStakeExpandMessageWithFundingValue(
+	r *rand.Rand,
+	delSK *btcec.PrivateKey,
+	fpPK *btcec.PublicKey,
+	stakingValue int64,
+	stakingTime uint16,
+	prevDel *types.BTCDelegation,
+	fundingValue int64,
+) *types.MsgBtcStakeExpand {
 	// Get staking parameters
 	params := h.BTCStakingKeeper.GetParams(h.Ctx)
 
@@ -866,7 +886,7 @@ func (h *Helper) createBtcStakeExpandMessage(
 	}
 
 	// Create funding transaction
-	fundingTx := datagen.GenRandomTxWithOutputValue(r, 10000000)
+	fundingTx := datagen.GenRandomTxWithOutputValue(r, fundingValue)
 
 	// Convert previousStakingTxHash to OutPoint
 	prevDelTxHash := prevDel.MustGetStakingTxHash()
@@ -962,4 +982,24 @@ func (h *Helper) createBtcStakeExpandMessage(
 		PreviousStakingTxHash:         prevDelTxHash.String(),
 		FundingTx:                     fundingTxBz,
 	}
+}
+
+func (h *Helper) CreateBtcStakeExpandMessageWithFundingValue(
+	r *rand.Rand,
+	delSK *btcec.PrivateKey,
+	fpPK *btcec.PublicKey,
+	stakingValue int64,
+	stakingTime uint16,
+	prevDel *types.BTCDelegation,
+	fundingValue int64,
+) *types.MsgBtcStakeExpand {
+	return h.createBtcStakeExpandMessageWithFundingValue(
+		r,
+		delSK,
+		fpPK,
+		stakingValue,
+		stakingTime,
+		prevDel,
+		fundingValue,
+	)
 }
