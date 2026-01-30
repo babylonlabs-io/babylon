@@ -50,6 +50,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 - [#1875](https://github.com/babylonlabs-io/babylon/pull/1875) chore: ensure soft-deleted FPs cannot receive new/extended BTC stake, or commit pub rand
 - [#1911](https://github.com/babylonlabs-io/babylon/pull/1911) fix: avoid panic in `ProcessProposal` when injected checkpoint tx contains a wrong message type
+- [#1923](https://github.com/babylonlabs-io/babylon/pull/1923) fix: add max bytes size for vote extension
 
 ### Improvements
 
