@@ -25,7 +25,7 @@ type ValidatorSet []Validator
 // NewSortedValidatorSet returns a sorted ValidatorSet by validator's address in the ascending order
 func NewSortedValidatorSet(vals []Validator) ValidatorSet {
 	sort.Slice(vals, func(i, j int) bool {
-		return sdk.BigEndianToUint64(vals[i].Addr) < sdk.BigEndianToUint64(vals[j].Addr)
+		return bytes.Compare(vals[i].Addr, vals[j].Addr) < 0
 	})
 	return vals
 }
@@ -73,10 +73,12 @@ func (vs ValidatorSet) binarySearch(targetAddr sdk.ValAddress) int {
 		var mid = lo + (hi-lo)/2
 		midAddr := vs[mid].Addr
 
+		diff := bytes.Compare(midAddr, targetAddr)
+
 		switch {
-		case bytes.Equal(midAddr, targetAddr):
+		case diff == 0:
 			return mid
-		case sdk.BigEndianToUint64(midAddr) > sdk.BigEndianToUint64(targetAddr):
+		case diff > 0:
 			hi = mid - 1
 		default:
 			lo = mid + 1

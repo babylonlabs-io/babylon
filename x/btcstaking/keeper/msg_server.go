@@ -165,6 +165,11 @@ func (ms msgServer) BtcStakeExpand(goCtx context.Context, req *types.MsgBtcStake
 		return nil, status.Errorf(codes.InvalidArgument, "the previous BTC staking transaction FP: %+v is not the same as FP of the stake expansion %+v", prevBtcDel.FpBtcPkList, req.FpBtcPkList)
 	}
 
+	// check that the previous delegation and the new expansion has the same staker btc pk
+	if err := validateStakerBtcPk(parsedMsg, prevBtcDel); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
 	// Ensure the finality provider is not deleted
 	if ms.IsFinalityProviderDeleted(ctx, &req.FpBtcPkList[0]) {
 		return nil, types.ErrFinalityProviderIsDeleted.Wrapf("finality provider pk %s has been deleted", req.FpBtcPkList[0].MarshalHex())
@@ -764,6 +769,20 @@ func validateStakeExpansionAmt(
 	if impliedFee <= 0 {
 		return fmt.Errorf("invalid transaction fee: inputs %d <= outputs %d",
 			totalInputValue, totalOutputValue)
+	}
+
+	return nil
+}
+
+func validateStakerBtcPk(
+	parsedMsg *types.ParsedCreateDelegationMessage,
+	prevBtcDel *types.BTCDelegation,
+) error {
+	// check staker pk is the same
+	oldBtcPk := prevBtcDel.BtcPk.MarshalHex()
+	newBtcPk := parsedMsg.StakerPK.BIP340PubKey.MarshalHex()
+	if oldBtcPk != newBtcPk {
+		return fmt.Errorf("staker pk %s does not match previous staker pk %s", newBtcPk, oldBtcPk)
 	}
 
 	return nil

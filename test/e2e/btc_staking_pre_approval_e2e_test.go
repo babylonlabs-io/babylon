@@ -18,6 +18,7 @@ import (
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer/chain"
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/initialization"
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	tkeeper "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 	ckpttypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
@@ -161,7 +162,7 @@ func (s *BTCStakingPreApprovalTestSuite) Test2SubmitCovenantSignature() {
 	pendingDels := pendingDelsSet[0]
 	s.Len(pendingDels.Dels, 1)
 	pendingDelResp := pendingDels.Dels[0]
-	pendingDel, err := chain.ParseRespBTCDelToBTCDel(pendingDelResp)
+	pendingDel, err := tkeeper.ParseRespBTCDelToBTCDel(pendingDelResp)
 	s.NoError(err)
 	s.Len(pendingDel.CovenantSigs, 0)
 
@@ -265,7 +266,7 @@ func (s *BTCStakingPreApprovalTestSuite) Test3SendStakingTransctionInclusionProo
 	verifiedDelegations := nonValidatorNode.QueryVerifiedDelegations()
 	s.Len(verifiedDelegations, 1)
 
-	btcDel, err := chain.ParseRespBTCDelToBTCDel(verifiedDelegations[0])
+	btcDel, err := tkeeper.ParseRespBTCDelToBTCDel(verifiedDelegations[0])
 	s.NoError(err)
 	s.True(btcDel.HasCovenantQuorums(s.covenantQuorum, 0))
 
@@ -443,7 +444,7 @@ func (s *BTCStakingPreApprovalTestSuite) Test6SubmitStakerUnbonding() {
 	activeDels := activeDelsSet[0]
 	s.Len(activeDels.Dels, 1)
 	activeDelResp := activeDels.Dels[0]
-	activeDel, err := chain.ParseRespBTCDelToBTCDel(activeDelResp)
+	activeDel, err := tkeeper.ParseRespBTCDelToBTCDel(activeDelResp)
 	s.NoError(err)
 	s.NotNil(activeDel.CovenantSigs)
 
@@ -454,7 +455,7 @@ func (s *BTCStakingPreApprovalTestSuite) Test6SubmitStakerUnbonding() {
 
 	currentBtcTipResp, err := nonValidatorNode.QueryTip()
 	s.NoError(err)
-	currentBtcTip, err := chain.ParseBTCHeaderInfoResponseToInfo(currentBtcTipResp)
+	currentBtcTip, err := tkeeper.ParseBTCHeaderInfoResponseToInfo(currentBtcTipResp)
 	s.NoError(err)
 
 	unbondingTx := activeDel.MustGetUnbondingTx()
@@ -497,7 +498,7 @@ func (s *BTCStakingPreApprovalTestSuite) Test6SubmitStakerUnbonding() {
 		return len(unbondedDelsResp) > 0
 	}, time.Minute, time.Second*2)
 
-	unbondDel, err := chain.ParseRespBTCDelToBTCDel(unbondedDelsResp[0])
+	unbondDel, err := tkeeper.ParseRespBTCDelToBTCDel(unbondedDelsResp[0])
 	s.NoError(err)
 	s.Equal(stakingTxHash, unbondDel.MustGetStakingTxHash())
 }
@@ -536,7 +537,7 @@ func (s *BTCStakingPreApprovalTestSuite) BTCStakingUnbondSlashInfo(
 	// submit staking tx to Bitcoin and get inclusion proof
 	currentBtcTipResp, err := node.QueryTip()
 	s.NoError(err)
-	currentBtcTip, err := chain.ParseBTCHeaderInfoResponseToInfo(currentBtcTipResp)
+	currentBtcTip, err := tkeeper.ParseBTCHeaderInfoResponseToInfo(currentBtcTipResp)
 	s.NoError(err)
 
 	stakingMsgTx := testStakingInfo.StakingTx

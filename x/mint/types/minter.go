@@ -12,6 +12,11 @@ import (
 
 const DefaultBondDenom = "ubbn"
 
+// MaxMintedPerBlock defines the maximum amount (in ubbn, i.e. micro-Baby tokens) allowed to mint per block.
+// On mainnet, the current rate is around 189 Baby tokens per block (≈189_000000 ubbn), so this cap of
+// 600_000000 ubbn (600 Baby tokens) is approximately 3.17x the current rate.
+var MaxMintedPerBlock = math.NewInt(600_000000)
+
 // NewMinter returns a new Minter object.
 func NewMinter(inflationRate math.LegacyDec, annualProvisions math.LegacyDec, bondDenom string) Minter {
 	return Minter{
@@ -67,7 +72,11 @@ func (m Minter) CalculateBlockProvision(current time.Time, previous time.Time) (
 	timeElapsed := current.Sub(previous).Nanoseconds()
 	portionOfYear := math.LegacyNewDec(timeElapsed).Quo(math.LegacyNewDec(NanosecondsPerYear))
 	blockProvision := m.AnnualProvisions.Mul(portionOfYear)
-	return sdk.NewCoin(m.BondDenom, blockProvision.TruncateInt()), nil
+
+	blockProvisionInt := blockProvision.TruncateInt()
+	amountToMint := math.MinInt(blockProvisionInt, MaxMintedPerBlock)
+
+	return sdk.NewCoin(m.BondDenom, amountToMint), nil
 }
 
 // YearsSinceGenesis returns the number of years that have passed between

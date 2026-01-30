@@ -14,6 +14,7 @@ import (
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer/chain"
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/initialization"
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	tkeeper "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
 	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 )
 
@@ -110,7 +111,7 @@ func (s *BTCStakeExpansionTestSuite) Test1CreateStakeExpansionDelegation() {
 	s.Equal(stkExpDelegation.BtcDelegation.StatusDesc, bstypes.BTCDelegationStatus_PENDING.String())
 
 	// Step 4: submit covenant signature to verify the BTC expansion delegation
-	stkExpDel, err := chain.ParseRespBTCDelToBTCDel(stkExpDelegation.BtcDelegation)
+	stkExpDel, err := tkeeper.ParseRespBTCDelToBTCDel(stkExpDelegation.BtcDelegation)
 	s.NoError(err)
 	nonValidatorNode.SendCovenantSigsAsValAndCheck(s.r, s.T(), s.net, s.covenantSKs, stkExpDel)
 
@@ -121,7 +122,7 @@ func (s *BTCStakeExpansionTestSuite) Test1CreateStakeExpansionDelegation() {
 
 	activeDelRes := nonValidatorNode.QueryBtcDelegation(prevDelStakingInfo.StakingTx.TxHash().String())
 	s.NotNil(activeDelRes)
-	activeDel, err := chain.ParseRespBTCDelToBTCDel(activeDelRes.BtcDelegation)
+	activeDel, err := tkeeper.ParseRespBTCDelToBTCDel(activeDelRes.BtcDelegation)
 	s.NoError(err)
 
 	// Step 5: submit MsgBTCUndelegate for the original BTC delegation
@@ -146,7 +147,7 @@ func (s *BTCStakeExpansionTestSuite) Test1CreateStakeExpansionDelegation() {
 
 	currentBtcTipResp, err := nonValidatorNode.QueryTip()
 	s.NoError(err)
-	currentBtcTip, err := chain.ParseBTCHeaderInfoResponseToInfo(currentBtcTipResp)
+	currentBtcTip, err := tkeeper.ParseBTCHeaderInfoResponseToInfo(currentBtcTipResp)
 	s.NoError(err)
 
 	blockWithUnbondingTx := datagen.CreateBlockWithTransaction(s.r, currentBtcTip.Header.ToBlockHeader(), stakeExpTxMsg)
@@ -184,7 +185,7 @@ func (s *BTCStakeExpansionTestSuite) Test1CreateStakeExpansionDelegation() {
 		return len(unbondedDelsResp) > 0
 	}, time.Minute, time.Second*2)
 
-	unbondDel, err := chain.ParseRespBTCDelToBTCDel(unbondedDelsResp[0])
+	unbondDel, err := tkeeper.ParseRespBTCDelToBTCDel(unbondedDelsResp[0])
 	s.NoError(err)
 	s.Equal(prevDelStakingTxHash, unbondDel.MustGetStakingTxHash())
 

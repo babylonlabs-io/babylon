@@ -20,6 +20,7 @@ import (
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer/chain"
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer/config"
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	tkeeper "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 	ftypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
@@ -137,7 +138,7 @@ func (s *GovFinalityResume) Test2SubmitCovenantSignature() {
 	pendingDels := pendingDelsSet[0]
 	s.Len(pendingDels.Dels, 1)
 	pendingDelResp := pendingDels.Dels[0]
-	pendingDel, err := chain.ParseRespBTCDelToBTCDel(pendingDelResp)
+	pendingDel, err := tkeeper.ParseRespBTCDelToBTCDel(pendingDelResp)
 	s.NoError(err)
 	s.Len(pendingDel.CovenantSigs, 0)
 

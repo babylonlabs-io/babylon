@@ -208,7 +208,9 @@ func NewBabylonAppDriver(
 	blsSigner, err := appsigner.InitBlsSigner(chain.Nodes[0].ConfigDir)
 	require.NoError(t, err)
 	require.NotNil(t, blsSigner)
-	signerValAddress := sdk.ValAddress(chain.Nodes[0].PublicAddress)
+
+	valAccAddr := sdk.MustAccAddressFromBech32(chain.Nodes[0].PublicAddress)
+	signerValAddress := sdk.ValAddress(valAccAddr)
 	require.NoError(t, err)
 
 	appOptions := NewAppOptionsWithFlagHome(chain.Nodes[0].ConfigDir)
@@ -777,6 +779,66 @@ func (d *BabylonAppDriver) IncludeTxsInBTCAndConfirm(
 	return block, bbnBlock
 }
 
+// BatchUnbondDelegations processes multiple unbondings in a single Babylon block.
+// All unbonding BTC txs are included in the same BTC block, and all MsgBTCUndelegate
+// messages are submitted before generating the Babylon block.
+func (d *BabylonAppDriver) BatchUnbondDelegations(unbondings []*UnbondingInfo) {
+	if len(unbondings) == 0 {
+		return
+	}
+
+	// Collect all unbonding txs
+	var unbondingTxs []*wire.MsgTx
+	for _, ub := range unbondings {
+		unbondingTxs = append(unbondingTxs, ub.UnbondingTx)
+	}
+
+	// Include all unbonding txs in a single BTC block and confirm
+	btcCheckpointParams := d.GetBTCCkptParams(d.t)
+	tip, _ := d.GetBTCLCTip()
+
+	block := datagen.GenRandomBtcdBlockWithTransactions(d.r, unbondingTxs, tip)
+	headers := BlocksWithProofsToHeaderBytes([]*datagen.BlockWithProofs{block})
+
+	confirmationBlocks := datagen.GenNEmptyBlocks(
+		d.r,
+		uint64(btcCheckpointParams.BtcConfirmationDepth),
+		&block.Block.Header,
+	)
+	confirmationHeaders := BlocksWithProofsToHeaderBytes(confirmationBlocks)
+	headers = append(headers, confirmationHeaders...)
+
+	// Insert BTC headers (this creates a Babylon block)
+	d.SendTxWithMsgsFromDriverAccount(d.t, &btclighttypes.MsgInsertHeaders{
+		Signer:  d.GetDriverAccountAddress().String(),
+		Headers: headers,
+	})
+
+	// Now send all MsgBTCUndelegate messages (one per staker)
+	// Each proof index is: 0 = coinbase, 1 = first unbonding tx, 2 = second, etc.
+	for i, ub := range unbondings {
+		stakingTxBz, err := bbn.SerializeBTCTx(ub.StakingTx)
+		require.NoError(d.t, err)
+
+		unbondingTxBytes, err := bbn.SerializeBTCTx(ub.UnbondingTx)
+		require.NoError(d.t, err)
+
+		// Proof index is i+1 because index 0 is the coinbase tx
+		msg := &bstypes.MsgBTCUndelegate{
+			Signer:                        ub.Staker.AddressString(),
+			StakingTxHash:                 ub.StakingTxHash.String(),
+			StakeSpendingTx:               unbondingTxBytes,
+			StakeSpendingTxInclusionProof: bstypes.NewInclusionProofFromSpvProof(block.Proofs[i+1]),
+			FundingTransactions:           [][]byte{stakingTxBz},
+		}
+
+		ub.Staker.SendMessage(msg)
+	}
+
+	// Generate the Babylon block that includes all unbonding messages
+	d.GenerateNewBlockAssertExecutionSuccess()
+}
+
 func (d *BabylonAppDriver) IncludeTxsInBTC(txs []*wire.MsgTx) *datagen.BlockWithProofs {
 	tip, _ := d.GetBTCLCTip()
 
@@ -1125,6 +1187,13 @@ func (d *BabylonAppDriver) BankSendNative(
 	amt int64,
 ) {
 	d.BankSend(t, d.SenderInfo, from.Address(), sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(amt))))
+}
+
+func (d *BabylonAppDriver) BankSendNativeFromSender(
+	to sdk.AccAddress,
+	amt int64,
+) {
+	d.BankSend(d.t, d.SenderInfo, to, sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(amt))))
 }
 
 func (d *BabylonAppDriver) MintNativeTo(

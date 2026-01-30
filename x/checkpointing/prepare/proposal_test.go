@@ -479,6 +479,102 @@ func newTxVerifier(txEnc client.TxEncodingConfig) baseapp.ProposalTxVerifier {
 	return txVerifier{txEncodConfig: txEnc}
 }
 
+func TestProcessProposal_RejectsWhenInjectedTxIsWrongType(t *testing.T) {
+	encCfg := appparams.DefaultEncodingConfig()
+	sdktestdata.RegisterInterfaces(encCfg.InterfaceRegistry)
+	ftypes.RegisterInterfaces(encCfg.InterfaceRegistry)
+	cryptocodec.RegisterInterfaces(encCfg.InterfaceRegistry)
+
+	c := gomock.NewController(t)
+	ek := mocks.NewMockCheckpointingKeeper(c)
+
+	mCfg := mempool.DefaultPriorityNonceMempoolConfig()
+	mCfg.MaxTx = 0
+	mem := mempool.NewPriorityMempool(mCfg)
+
+	ec := epochAndVoteExtensionCtx()
+
+	// Build a valid set of signed vote extensions so PrepareProposal returns a valid proposal.
+	bh := randomBlockHash()
+	validatorAndExtensions, totalPower := generateNValidatorAndVoteExtensions(t, 4, &bh, ec.Epoch.EpochNumber)
+	var signedVoteExtensions []cbftt.ExtendedVoteInfo
+	for i, val := range validatorAndExtensions.Vals {
+		validator := val
+		require.NoError(t, validatorAndExtensions.Extensions[i].Validate())
+		blsSig := validatorAndExtensions.Extensions[i].ToBLSSig()
+
+		ek.EXPECT().
+			GetPubKeyByConsAddr(gomock.Any(), sdk.ConsAddress(validator.ValidatorAddress(t).Bytes())).
+			Return(validator.ProtoPubkey(), nil).
+			AnyTimes()
+		ek.EXPECT().VerifyBLSSig(gomock.Any(), blsSig).Return(nil).AnyTimes()
+		ek.EXPECT().GetBlsPubKey(gomock.Any(), validator.ValidatorAddress(t)).Return(validator.BlsPubKey(), nil).AnyTimes()
+
+		marshaledExtension, err := validatorAndExtensions.Extensions[i].Marshal()
+		require.NoError(t, err)
+		signedExtension := validator.SignVoteExtension(t, marshaledExtension, ec.Ctx.HeaderInfo().Height-1, ec.Ctx.ChainID())
+		signedVoteExtensions = append(signedVoteExtensions, signedExtension)
+	}
+
+	// Common expectations used by PrepareProposal/ProcessProposal logic.
+	ek.EXPECT().GetEpoch(gomock.Any()).Return(ec.Epoch).AnyTimes()
+	ek.EXPECT().GetTotalVotingPower(gomock.Any(), ec.Epoch.EpochNumber).Return(totalPower).AnyTimes()
+	ek.EXPECT().
+		GetValidatorSet(gomock.Any(), ec.Epoch.EpochNumber).
+		Return(et.NewSortedValidatorSet(ToValidatorSet(validatorAndExtensions.Vals))).
+		AnyTimes()
+
+	commitInfo, _, cometInfo := helper.ExtendedCommitToLastCommit(cbftt.ExtendedCommitInfo{Round: 0, Votes: signedVoteExtensions})
+	commitInfoVotes := commitInfo.Votes
+	ec.Ctx = ec.Ctx.WithCometInfo(cometInfo)
+
+	logger := log.NewTestLogger(t)
+	db := dbm.NewMemDB()
+	bApp := baseapp.NewBaseApp(t.Name(), logger, db, encCfg.TxConfig.TxDecoder(), baseapp.SetChainID("chain-test"))
+	h := prepare.NewProposalHandler(log.NewNopLogger(), ek, mem, bApp, encCfg)
+
+	// Create a valid proposal first (baseline).
+	req := requestPrepareProposal(ec.Ctx.HeaderInfo().Height, cbftt.ExtendedCommitInfo{Round: commitInfo.Round, Votes: commitInfoVotes})
+	prop, err := h.PrepareProposal()(ec.Ctx, req)
+	require.NoError(t, err)
+	require.NotNil(t, prop)
+	require.NotEmpty(t, prop.Txs)
+
+	// Sanity: baseline proposal should be accepted.
+	okRes, err := h.ProcessProposal()(ec.Ctx, &abci.RequestProcessProposal{
+		Height:          ec.Ctx.HeaderInfo().Height,
+		Txs:             prop.Txs,
+		ProposerAddress: validatorAndExtensions.Vals[0].Keys.GenesisKey.ValPubkey.Address(),
+	})
+	require.NoError(t, err)
+	require.NotNil(t, okRes)
+	require.True(t, okRes.IsAccepted())
+
+	// Malicious proposer swaps the first tx (injected checkpoint tx slot) with a different
+	// valid decodable tx with exactly 1 message of the wrong type.
+	wrongInjectedTxBytes, err := prepare.EncodeMsgsIntoTxBytes(encCfg.TxConfig, &sdktestdata.TestMsg{})
+	require.NoError(t, err)
+
+	maliciousTxs := make([][]byte, 0, len(prop.Txs))
+	maliciousTxs = append(maliciousTxs, wrongInjectedTxBytes)
+	if len(prop.Txs) > 1 {
+		maliciousTxs = append(maliciousTxs, prop.Txs[1:]...)
+	}
+
+	// This should be rejected cleanly (no panic).
+	var badRes *abci.ResponseProcessProposal
+	require.NotPanics(t, func() {
+		badRes, err = h.ProcessProposal()(ec.Ctx, &abci.RequestProcessProposal{
+			Height:          ec.Ctx.HeaderInfo().Height,
+			Txs:             maliciousTxs,
+			ProposerAddress: validatorAndExtensions.Vals[0].Keys.GenesisKey.ValPubkey.Address(),
+		})
+	})
+	require.NoError(t, err)
+	require.NotNil(t, badRes)
+	require.Equal(t, abci.ResponseProcessProposal_REJECT, badRes.Status)
+}
+
 func TestPrepareProposalAtVoteExtensionHeight(t *testing.T) {
 	var (
 		r               = rand.New(rand.NewSource(time.Now().UnixNano()))
@@ -516,8 +612,10 @@ func TestPrepareProposalAtVoteExtensionHeight(t *testing.T) {
 				var signedVoteExtensions []cbftt.ExtendedVoteInfo
 				for i, val := range validatorAndExtensions.Vals {
 					validator := val
+					require.NoError(t, validatorAndExtensions.Extensions[i].Validate())
+					blsSig := validatorAndExtensions.Extensions[i].ToBLSSig()
 					ek.EXPECT().GetPubKeyByConsAddr(gomock.Any(), sdk.ConsAddress(validator.ValidatorAddress(t).Bytes())).Return(validator.ProtoPubkey(), nil).AnyTimes()
-					ek.EXPECT().VerifyBLSSig(gomock.Any(), validatorAndExtensions.Extensions[i].ToBLSSig()).Return(nil).AnyTimes()
+					ek.EXPECT().VerifyBLSSig(gomock.Any(), blsSig).Return(nil).AnyTimes()
 					ek.EXPECT().GetBlsPubKey(gomock.Any(), validator.ValidatorAddress(t)).Return(validator.BlsPubKey(), nil).AnyTimes()
 					// empty vote extension
 					signedExtension := validator.SignVoteExtension(t, []byte{}, ec.Ctx.HeaderInfo().Height-1, ec.Ctx.ChainID())
@@ -545,12 +643,14 @@ func TestPrepareProposalAtVoteExtensionHeight(t *testing.T) {
 				var signedVoteExtensions []cbftt.ExtendedVoteInfo
 				for i, val := range validatorAndExtensions.Vals {
 					validator := val
+					require.NoError(t, validatorAndExtensions.Extensions[i].Validate())
+					blsSig := validatorAndExtensions.Extensions[i].ToBLSSig()
 					ek.EXPECT().GetPubKeyByConsAddr(gomock.Any(), sdk.ConsAddress(validator.ValidatorAddress(t).Bytes())).Return(validator.ProtoPubkey(), nil).AnyTimes()
 
 					if i < invalidValidBlsSig {
-						ek.EXPECT().VerifyBLSSig(gomock.Any(), validatorAndExtensions.Extensions[i].ToBLSSig()).Return(checkpointingtypes.ErrInvalidBlsSignature).AnyTimes()
+						ek.EXPECT().VerifyBLSSig(gomock.Any(), blsSig).Return(checkpointingtypes.ErrInvalidBlsSignature).AnyTimes()
 					} else {
-						ek.EXPECT().VerifyBLSSig(gomock.Any(), validatorAndExtensions.Extensions[i].ToBLSSig()).Return(nil).AnyTimes()
+						ek.EXPECT().VerifyBLSSig(gomock.Any(), blsSig).Return(nil).AnyTimes()
 					}
 					ek.EXPECT().GetBlsPubKey(gomock.Any(), validator.ValidatorAddress(t)).Return(validator.BlsPubKey(), nil).AnyTimes()
 					marshaledExtension, err := validatorAndExtensions.Extensions[i].Marshal()
@@ -580,12 +680,14 @@ func TestPrepareProposalAtVoteExtensionHeight(t *testing.T) {
 				var signedVoteExtensions []cbftt.ExtendedVoteInfo
 				for i, val := range validatorAndExtensions.Vals {
 					validator := val
+					require.NoError(t, validatorAndExtensions.Extensions[i].Validate())
+					blsSig := validatorAndExtensions.Extensions[i].ToBLSSig()
 					ek.EXPECT().GetPubKeyByConsAddr(gomock.Any(), sdk.ConsAddress(validator.ValidatorAddress(t).Bytes())).Return(validator.ProtoPubkey(), nil).AnyTimes()
 
 					if i < invalidBlsSig {
-						ek.EXPECT().VerifyBLSSig(gomock.Any(), validatorAndExtensions.Extensions[i].ToBLSSig()).Return(checkpointingtypes.ErrInvalidBlsSignature).AnyTimes()
+						ek.EXPECT().VerifyBLSSig(gomock.Any(), blsSig).Return(checkpointingtypes.ErrInvalidBlsSignature).AnyTimes()
 					} else {
-						ek.EXPECT().VerifyBLSSig(gomock.Any(), validatorAndExtensions.Extensions[i].ToBLSSig()).Return(nil).AnyTimes()
+						ek.EXPECT().VerifyBLSSig(gomock.Any(), blsSig).Return(nil).AnyTimes()
 					}
 					ek.EXPECT().GetBlsPubKey(gomock.Any(), validator.ValidatorAddress(t)).Return(validator.BlsPubKey(), nil).AnyTimes()
 					marshaledExtension, err := validatorAndExtensions.Extensions[i].Marshal()
@@ -624,8 +726,10 @@ func TestPrepareProposalAtVoteExtensionHeight(t *testing.T) {
 				var signedVoteExtensions []cbftt.ExtendedVoteInfo
 				for i, val := range allvalidators {
 					validator := val
+					require.NoError(t, allExtensions[i].Validate())
+					blsSig := allExtensions[i].ToBLSSig()
 					ek.EXPECT().GetPubKeyByConsAddr(gomock.Any(), sdk.ConsAddress(validator.ValidatorAddress(t).Bytes())).Return(validator.ProtoPubkey(), nil).AnyTimes()
-					ek.EXPECT().VerifyBLSSig(gomock.Any(), allExtensions[i].ToBLSSig()).Return(nil).AnyTimes()
+					ek.EXPECT().VerifyBLSSig(gomock.Any(), blsSig).Return(nil).AnyTimes()
 					ek.EXPECT().GetBlsPubKey(gomock.Any(), validator.ValidatorAddress(t)).Return(validator.BlsPubKey(), nil).AnyTimes()
 					marshaledExtension, err := allExtensions[i].Marshal()
 					require.NoError(t, err)
@@ -652,8 +756,10 @@ func TestPrepareProposalAtVoteExtensionHeight(t *testing.T) {
 				var signedVoteExtensions []cbftt.ExtendedVoteInfo
 				for i, val := range validatorAndExtensions.Vals {
 					validator := val
+					require.NoError(t, validatorAndExtensions.Extensions[i].Validate())
+					blsSig := validatorAndExtensions.Extensions[i].ToBLSSig()
 					ek.EXPECT().GetPubKeyByConsAddr(gomock.Any(), sdk.ConsAddress(validator.ValidatorAddress(t).Bytes())).Return(validator.ProtoPubkey(), nil).AnyTimes()
-					ek.EXPECT().VerifyBLSSig(gomock.Any(), validatorAndExtensions.Extensions[i].ToBLSSig()).Return(nil).AnyTimes()
+					ek.EXPECT().VerifyBLSSig(gomock.Any(), blsSig).Return(nil).AnyTimes()
 					ek.EXPECT().GetBlsPubKey(gomock.Any(), validator.ValidatorAddress(t)).Return(validator.BlsPubKey(), nil).AnyTimes()
 					marshaledExtension, err := validatorAndExtensions.Extensions[i].Marshal()
 					require.NoError(t, err)
@@ -678,8 +784,10 @@ func TestPrepareProposalAtVoteExtensionHeight(t *testing.T) {
 				var signedVoteExtensions []cbftt.ExtendedVoteInfo
 				for i, val := range validatorAndExtensions.Vals {
 					validator := val
+					require.NoError(t, validatorAndExtensions.Extensions[i].Validate())
+					blsSig := validatorAndExtensions.Extensions[i].ToBLSSig()
 					ek.EXPECT().GetPubKeyByConsAddr(gomock.Any(), sdk.ConsAddress(validator.ValidatorAddress(t).Bytes())).Return(validator.ProtoPubkey(), nil).AnyTimes()
-					ek.EXPECT().VerifyBLSSig(gomock.Any(), validatorAndExtensions.Extensions[i].ToBLSSig()).Return(nil).AnyTimes()
+					ek.EXPECT().VerifyBLSSig(gomock.Any(), blsSig).Return(nil).AnyTimes()
 					ek.EXPECT().GetBlsPubKey(gomock.Any(), validator.ValidatorAddress(t)).Return(validator.BlsPubKey(), nil).AnyTimes()
 					marshaledExtension, err := validatorAndExtensions.Extensions[i].Marshal()
 					require.NoError(t, err)
@@ -706,8 +814,10 @@ func TestPrepareProposalAtVoteExtensionHeight(t *testing.T) {
 				var signedVoteExtensions []cbftt.ExtendedVoteInfo
 				for i, val := range validatorAndExtensions.Vals {
 					validator := val
+					require.NoError(t, validatorAndExtensions.Extensions[i].Validate())
+					blsSig := validatorAndExtensions.Extensions[i].ToBLSSig()
 					ek.EXPECT().GetPubKeyByConsAddr(gomock.Any(), sdk.ConsAddress(validator.ValidatorAddress(t).Bytes())).Return(validator.ProtoPubkey(), nil).AnyTimes()
-					ek.EXPECT().VerifyBLSSig(gomock.Any(), validatorAndExtensions.Extensions[i].ToBLSSig()).Return(nil).AnyTimes()
+					ek.EXPECT().VerifyBLSSig(gomock.Any(), blsSig).Return(nil).AnyTimes()
 					ek.EXPECT().GetBlsPubKey(gomock.Any(), validator.ValidatorAddress(t)).Return(validator.BlsPubKey(), nil).AnyTimes()
 					marshaledExtension, err := validatorAndExtensions.Extensions[i].Marshal()
 					require.NoError(t, err)
@@ -722,10 +832,10 @@ func TestPrepareProposalAtVoteExtensionHeight(t *testing.T) {
 				}
 
 				return &Scenario{
-					TotalPower:   totalPower,
-					ValidatorSet: validatorAndExtensions.Vals,
-					Extensions:   signedVoteExtensions,
-					TxVerifier:   newTxVerifier(encCfg.TxConfig),
+					TotalPower:          totalPower,
+					ValidatorSet:        validatorAndExtensions.Vals,
+					Extensions:          signedVoteExtensions,
+					TxVerifier:          newTxVerifier(encCfg.TxConfig),
 					ExpectedAbsentVotes: 1, // malicious validator's vote extension should be considered absent
 				}
 			},

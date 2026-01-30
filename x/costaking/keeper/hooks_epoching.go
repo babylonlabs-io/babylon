@@ -98,8 +98,8 @@ func (h HookEpoching) AfterEpochEnds(ctx context.Context, epoch uint64) {
 	for _, prevValAddr := range prevValAddrs {
 		if _, found := newValMap[prevValAddr]; !found {
 			// Newly inactive validator - remove baby tokens for all delegators
-			prevVal := prevValMap[prevValAddr]
-			if err := h.removeBabyForDelegators(ctx, prevVal); err != nil {
+			valAddr := sdk.MustValAddressFromBech32(prevValAddr)
+			if err := h.removeBabyForDelegators(ctx, valAddr); err != nil {
 				h.k.Logger(ctx).Error("failed to remove baby tokens for newly inactive validator", "validator", prevValAddr, "error", err)
 				return
 			}
@@ -131,24 +131,8 @@ func (h HookEpoching) updateCoStkTrackerForDelegators(
 	for _, del := range delegations {
 		delAddr := sdk.MustAccAddressFromBech32(del.DelegatorAddress)
 
-		// We should only update the costaker tracker based on the remaining shares
-		remainingShares := del.Shares
-		// In case the validator is jailed/slashed,
-		// check if there are any cached delta shares to consider
-		cachedDeltas := h.k.stkCache.GetDeltaShares(valAddr, delAddr)
-		for _, deltaShares := range cachedDeltas {
-			// Should remove the delta to update properly the costaker tracker
-			// with remaining shares only
-			remainingShares = remainingShares.Sub(deltaShares)
-		}
-
-		if remainingShares.IsZero() {
-			// No shares left to process
-			continue
-		}
-
 		// Get delegation tokens using truncated division to avoid precision loss
-		delTokens := val.TokensFromShares(remainingShares)
+		delTokens := val.TokensFromShares(del.Shares)
 
 		// Update ActiveBaby using the provided update function
 		if err := h.k.costakerModified(ctx, delAddr, func(rwdTracker *types.CostakerRewardsTracker) {
@@ -177,30 +161,20 @@ func (h HookEpoching) addBabyForDelegators(ctx context.Context, valAddrStr strin
 }
 
 // removeBabyForDelegators removes baby tokens from all delegators of a newly inactive validator
-func (h HookEpoching) removeBabyForDelegators(ctx context.Context, valInfo types.ValidatorInfo) error {
+func (h HookEpoching) removeBabyForDelegators(ctx context.Context, valAddr sdk.ValAddress) error {
 	// Get validator from staking keeper to get updated shares
-	val, err := h.k.stkK.GetValidator(ctx, valInfo.ValAddress)
+	val, err := h.k.stkK.GetValidator(ctx, valAddr)
 	if err != nil {
-		return fmt.Errorf("failed to get validator %s: %w", valInfo.ValAddress.String(), err)
-	}
-	if valInfo.IsSlashed {
-		// If the validator has been slashed, we need to restore the original tokens
-		// before removing the baby tokens to avoid miscalculating the token amount
-		val.Tokens = valInfo.OriginalTokens
-		// restore original shares in case validator was slashed
-		val.DelegatorShares = valInfo.OriginalShares
+		return fmt.Errorf("failed to get validator %s: %w", valAddr.String(), err)
 	}
 	return h.updateCoStkTrackerForDelegators(ctx, val, func(rwdTracker *types.CostakerRewardsTracker, amount math.Int) {
 		rwdTracker.ActiveBaby = rwdTracker.ActiveBaby.Sub(amount)
 	})
 }
 
-// BeforeSlashThreshold is called before a certain threshold of validators are slashed
-func (h HookEpoching) BeforeSlashThreshold(ctx context.Context, valSet epochingtypes.ValidatorSet) {
-}
-
 // buildNewActiveValSetMap builds the new active validator set map
-// from the staking module's last validator powers (for next epoch)
+// from the staking module's last validator powers (for next epoch).
+// The returned map has validator addresses (as strings) as keys.
 func (h HookEpoching) buildNewActiveValSetMap(ctx context.Context) (map[string]struct{}, []sdk.ValAddress, error) {
 	valMap := make(map[string]struct{})
 	valAddrs := make([]sdk.ValAddress, 0)
@@ -216,6 +190,10 @@ func (h HookEpoching) buildNewActiveValSetMap(ctx context.Context) (map[string]s
 	}
 
 	return valMap, valAddrs, nil
+}
+
+// BeforeSlashThreshold implements types.EpochingHooks.
+func (h HookEpoching) BeforeSlashThreshold(ctx context.Context, valSet epochingtypes.ValidatorSet) {
 }
 
 // Create new epoching hooks

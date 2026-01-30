@@ -83,7 +83,7 @@ graph TD
 - `AfterBtcDelegationActivated`: Adds satoshis to costaker if the chosen fp was
 in the active set.
 - `AfterBtcDelegationUnbonded`: Removes satoshis from costaker if the chosen fp was active
-in the previous and current babylon block.
+in the previous babylon block.
 - `AfterBbnFpEntersActiveSet`: Iterates over all the BTC delegations made for this fp and
 add satoshi to the costaker structure.
 - `AfterBbnFpRemovedFromActiveSet`: Iterates over all the BTC delegations made for this fp and

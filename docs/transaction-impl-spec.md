@@ -26,7 +26,7 @@ account before propagating a transaction to Bitcoin.
 For the rest of the document, we will refer to those parameters as `global_parameters`.
 
 More details about parameters can be found in the
-[latest testnet docs](https://github.com/babylonlabs-io/networks/tree/main/bbn-test-5/).
+[latest testnet docs](https://github.com/babylonlabs-io/networks/tree/main/bbn-test-6/).
 
 ## Taproot outputs
 

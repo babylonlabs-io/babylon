@@ -40,19 +40,49 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ### State breaking
 
 - [#1855](https://github.com/babylonlabs-io/babylon/pull/1855) Add check for `fundingInputValue <= 0` in stake extension
-- [#1878](https://github.com/babylonlabs-io/babylon/pull/1878) Remove unnecessary []byte allocations in IBC size checks
+- [#1867](https://github.com/babylonlabs-io/babylon/pull/1867) bump wasmd `v0.60.2`
+- [#1883](https://github.com/babylonlabs-io/babylon/pull/1883) Validate staker btc pk is the same with the previous btc del when stake extension
+- [#1902](https://github.com/babylonlabs-io/babylon/pull/1902) fix: sorting of valset by the full address
+- [#1908](https://github.com/babylonlabs-io/babylon/pull/1908) fix: call `AfterRawCheckpointForgotten` in all hooks, instead of early return
+- [#1913](https://github.com/babylonlabs-io/babylon/pull/1913) fix: key collision hex 0x10 (HeightToVersionMapKey) == decimal 16 (FpBbnAddrKey)
+- [#1906](https://github.com/babylonlabs-io/babylon/pull/1906) fix: baby validator slashing and costaking active baby amounts missmatch
 
 ### Bug Fixes
 
 - [#1875](https://github.com/babylonlabs-io/babylon/pull/1875) chore: ensure soft-deleted FPs cannot receive new/extended BTC stake, or commit pub rand
+- [#1911](https://github.com/babylonlabs-io/babylon/pull/1911) fix: avoid panic in `ProcessProposal` when injected checkpoint tx contains a wrong message type
+
+### Improvements
+
+- [#1878](https://github.com/babylonlabs-io/babylon/pull/1878) Remove unnecessary []byte allocations in IBC size checks
+- [#1891](https://github.com/babylonlabs-io/babylon/pull/1891) fix: golangci lint misspell and removed unused func
+- [#1901](https://github.com/babylonlabs-io/babylon/pull/1901) chore: update cl
+- [#1922](https://github.com/babylonlabs-io/babylon/pull/1922) chore: add const of `MaxMintedPerBlock`
+
+## v4.2.2
+
+### Improvements
+
+- [#1903](https://github.com/babylonlabs-io/babylon/pull/1903) chore: bump cometbft to `v0.38.20`
+
+## v4.2.1
+
+### Improvements
+
+- [#1839](https://github.com/babylonlabs-io/babylon/pull/1839) Add query to get the voting power distribution
+
+## v4.2.0
+
+### Bug Fixes
+
+- [GHSA-m6wq-66p2-c8pc](https://github.com/babylonlabs-io/babylon/security/advisories/GHSA-m6wq-66p2-c8pc) fix: nil check of block hash in vote extension
+- [GHSA-4rmq-mc2c-r495](https://github.com/babylonlabs-io/babylon-ghsa-4rmq-mc2c-r495/pull/1) Fix conditional logic in `AfterBtcDelegationUnbonded` hook
 
 ## v4.1.0
 
 ### Improvements
 
 - [#1764](https://github.com/babylonlabs-io/babylon/pull/1764) Add mergify yaml file for automatic backporting
-- [#1839](https://github.com/babylonlabs-io/babylon/pull/1839) Add query to get the voting power distribution
-cache (is only available until that block is finalized)
 
 ### Bug fixes
 

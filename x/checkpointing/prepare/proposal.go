@@ -224,6 +224,10 @@ func (h *ProposalHandler) verifyVoteExtension(
 		return nil, fmt.Errorf("failed to unmarshal vote extension: %w", err)
 	}
 
+	if err := ve.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid vote extension: %w", err)
+	}
+
 	_, err := sdk.ValAddressFromBech32(ve.Signer)
 	if err != nil {
 		return nil, fmt.Errorf("invalid signer address in vote extension: %w", err)
@@ -240,7 +244,6 @@ func (h *ProposalHandler) verifyVoteExtension(
 	}
 
 	sig := ve.ToBLSSig()
-
 	if err := h.ckptKeeper.VerifyBLSSig(ctx, sig); err != nil {
 		return nil, fmt.Errorf("invalid BLS signature: %w", err)
 	}
@@ -510,7 +513,10 @@ func (h *ProposalHandler) ExtractInjectedCheckpoint(txs [][]byte) (*ckpttypes.Ms
 	if len(msgs) != 1 {
 		return nil, fmt.Errorf("injected tx must have exact one message, got %d", len(msgs))
 	}
-	injectedCkpt := msgs[0].(*ckpttypes.MsgInjectedCheckpoint)
+	injectedCkpt, ok := msgs[0].(*ckpttypes.MsgInjectedCheckpoint)
+	if !ok {
+		return nil, fmt.Errorf("injected tx must contain MsgInjectedCheckpoint, got %T", msgs[0])
+	}
 
 	return injectedCkpt, nil
 }

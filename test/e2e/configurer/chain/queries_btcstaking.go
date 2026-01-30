@@ -1,14 +1,13 @@
 package chain
 
 import (
-	"encoding/hex"
 	"fmt"
 	"net/url"
 
-	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/stretchr/testify/require"
 
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/util"
+	tkeeper "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 	ftypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
@@ -233,99 +232,6 @@ func (n *NodeConfig) QueryFinalityProvidersDelegations(fpsBTCPK ...string) []*bs
 	return pendingDelsResp
 }
 
-// ParseRespBTCDelToBTCDel parses an BTC delegation response to BTC Delegation
-func ParseRespBTCDelToBTCDel(resp *bstypes.BTCDelegationResponse) (btcDel *bstypes.BTCDelegation, err error) {
-	stakingTx, err := hex.DecodeString(resp.StakingTxHex)
-	if err != nil {
-		return nil, err
-	}
-
-	delSig, err := bbn.NewBIP340SignatureFromHex(resp.DelegatorSlashSigHex)
-	if err != nil {
-		return nil, err
-	}
-
-	slashingTx, err := bstypes.NewBTCSlashingTxFromHex(resp.SlashingTxHex)
-	if err != nil {
-		return nil, err
-	}
-
-	btcDel = &bstypes.BTCDelegation{
-		StakerAddr:       resp.StakerAddr,
-		BtcPk:            resp.BtcPk,
-		FpBtcPkList:      resp.FpBtcPkList,
-		StartHeight:      resp.StartHeight,
-		StakingTime:      resp.StakingTime,
-		EndHeight:        resp.EndHeight,
-		TotalSat:         resp.TotalSat,
-		StakingTx:        stakingTx,
-		DelegatorSig:     delSig,
-		StakingOutputIdx: resp.StakingOutputIdx,
-		CovenantSigs:     resp.CovenantSigs,
-		UnbondingTime:    resp.UnbondingTime,
-		SlashingTx:       slashingTx,
-	}
-
-	if resp.UndelegationResponse != nil {
-		ud := resp.UndelegationResponse
-		unbondTx, err := hex.DecodeString(ud.UnbondingTxHex)
-		if err != nil {
-			return nil, err
-		}
-
-		slashTx, err := bstypes.NewBTCSlashingTxFromHex(ud.SlashingTxHex)
-		if err != nil {
-			return nil, err
-		}
-
-		delSlashingSig, err := bbn.NewBIP340SignatureFromHex(ud.DelegatorSlashingSigHex)
-		if err != nil {
-			return nil, err
-		}
-
-		btcDel.BtcUndelegation = &bstypes.BTCUndelegation{
-			UnbondingTx:              unbondTx,
-			CovenantUnbondingSigList: ud.CovenantUnbondingSigList,
-			CovenantSlashingSigs:     ud.CovenantSlashingSigs,
-			SlashingTx:               slashTx,
-			DelegatorSlashingSig:     delSlashingSig,
-		}
-
-		if ud.DelegatorUnbondingInfoResponse != nil {
-			var spendStakeTx []byte = make([]byte, 0)
-			if ud.DelegatorUnbondingInfoResponse.SpendStakeTxHex != "" {
-				spendStakeTx, err = hex.DecodeString(ud.DelegatorUnbondingInfoResponse.SpendStakeTxHex)
-				if err != nil {
-					return nil, err
-				}
-			}
-
-			btcDel.BtcUndelegation.DelegatorUnbondingInfo = &bstypes.DelegatorUnbondingInfo{
-				SpendStakeTx: spendStakeTx,
-			}
-		}
-	}
-
-	if resp.StkExp != nil {
-		prevTxHash, err := chainhash.NewHashFromStr(resp.StkExp.PreviousStakingTxHashHex)
-		if err != nil {
-			return nil, err
-		}
-
-		otherFundOutput, err := hex.DecodeString(resp.StkExp.OtherFundingTxOutHex)
-		if err != nil {
-			return nil, err
-		}
-		btcDel.StkExp = &bstypes.StakeExpansion{
-			PreviousStakingTxHash:   prevTxHash.CloneBytes(),
-			OtherFundingTxOut:       otherFundOutput,
-			PreviousStkCovenantSigs: resp.StkExp.PreviousStkCovenantSigs,
-		}
-	}
-
-	return btcDel, nil
-}
-
 // ParseRespsBTCDelToBTCDel parses an BTC delegation response to BTC Delegation
 func ParseRespsBTCDelToBTCDel(resp *bstypes.BTCDelegatorDelegationsResponse) (btcDels *bstypes.BTCDelegatorDelegations, err error) {
 	if resp == nil {
@@ -336,7 +242,7 @@ func ParseRespsBTCDelToBTCDel(resp *bstypes.BTCDelegatorDelegationsResponse) (bt
 	}
 
 	for i, delResp := range resp.Dels {
-		del, err := ParseRespBTCDelToBTCDel(delResp)
+		del, err := tkeeper.ParseRespBTCDelToBTCDel(delResp)
 		if err != nil {
 			return nil, err
 		}

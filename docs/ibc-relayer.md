@@ -71,7 +71,7 @@ babylond query btccheckpoint params
 ```
 
 For RPC and LCD endpoints for different networks, refer to
-the [Babylon Networks Repository](https://github.com/babylonlabs-io/networks/tree/main/bbn-test-5).
+the [Babylon Networks Repository](https://github.com/babylonlabs-io/networks/tree/main/bbn-test-6).
 
 ## Relayer Configuration
 
@@ -131,4 +131,4 @@ For detailed steps on how to submit an IBC client recovery proposal, refer to
 the [IBC Governance Proposals Guide](https://ibc.cosmos.network/main/ibc/proposals.html#steps).
 For more information about submitting governance proposals on Babylon, including
 parameters and requirements, see
-the [Babylon Governance Guide](https://docs.babylonlabs.io/guides/governance/). 
+the [Babylon Governance Guide](https://docs.babylonlabs.io/guides/governance/).

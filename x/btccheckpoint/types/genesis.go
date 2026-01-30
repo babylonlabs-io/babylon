@@ -21,7 +21,7 @@ func DefaultGenesis() *GenesisState {
 func (gs GenesisState) Validate() error {
 	epochsMap, err := validateEpochs(gs.Epochs)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to validate epochs: %w", err)
 	}
 	if err := validateSubmissions(gs.Submissions, epochsMap); err != nil {
 		return err
@@ -86,13 +86,13 @@ func (e EpochEntry) Validate() error {
 
 func (s SubmissionEntry) Validate() error {
 	if s.SubmissionKey == nil {
-		return errors.New("invalid SubmissionEntry. SubmissionKey is nil")
+		return errors.New("invalid SubmissionEntry: submission key is nil")
 	}
 	if err := s.SubmissionKey.Validate(); err != nil {
-		return err
+		return fmt.Errorf("failed to validate submission key: %w", err)	
 	}
 	if s.Data == nil {
-		return errors.New("invalid SubmissionEntry. Data is nil")
+		return errors.New("invalid SubmissionEntry: data is nil")
 	}
 	return s.Data.Validate()
 }
