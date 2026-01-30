@@ -245,6 +245,9 @@ release:
   github:
     owner: babylonlabs-io
     name: babylon
+  # If PRERELEASE env var is set to "true", mark as prerelease
+  # Otherwise auto-detect based on tag suffix (-rc, -beta, etc.)
+  prerelease: '{{ if eq .Env.PRERELEASE "true" }}true{{ else }}auto{{ end }}'
 
 # Docs: https://goreleaser.com/customization/changelog/
 changelog:
