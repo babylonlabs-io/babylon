@@ -35,7 +35,7 @@ jobs:
           (github.event_name == 'workflow_dispatch' && inputs['skip-lint-test'] == true) ||
           needs.lint_test.result == 'success'
         )}}
-    uses: babylonlabs-io/.github/.github/workflows/reusable_docker_pipeline.yml@22ae8ed7a2ea5c80331758914c4e0ea732eea1ad # v0.15.0
+    uses: babylonlabs-io/.github/.github/workflows/reusable_docker_pipeline.yml@d2299e834fcbaca4bf2db043a2939798043d5951 # v0.16.1
     needs: ["lint_test"]
     secrets: inherit
     permissions:
@@ -59,7 +59,7 @@ jobs:
               needs.lint_test.result == 'success'
             )
           ) }}
-    uses: babylonlabs-io/.github/.github/workflows/reusable_docker_pipeline.yml@22ae8ed7a2ea5c80331758914c4e0ea732eea1ad # v0.15.0
+    uses: babylonlabs-io/.github/.github/workflows/reusable_docker_pipeline.yml@d2299e834fcbaca4bf2db043a2939798043d5951 # v0.16.1
     needs: ["lint_test"]
     secrets: inherit
     permissions:
