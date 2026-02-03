@@ -49,7 +49,8 @@ jobs:
           RELEASE_TAG: ${{ inputs.tag }}
           REPO: ${{ github.repository }}
         run: |
-          cat > /tmp/release_notes.md << EOF
+          mkdir -p /tmp/release-notes
+          cat > /tmp/release-notes/notes.md << EOF
           # 🚀 Overview
 
           ${RELEASE_DESCRIPTION}
@@ -93,9 +94,9 @@ jobs:
             -e PRERELEASE \
             -v /var/run/docker.sock:/var/run/docker.sock \
             -v "$(pwd)":/go/src/babylon \
-            -v /tmp/release_notes.md:/tmp/release_notes.md:ro \
+            -v /tmp/release-notes:/tmp/release-notes:ro \
             -w /go/src/babylon \
             ${{ env.GORELEASER_IMAGE }} \
             release \
             --clean \
-            --release-notes=/tmp/release_notes.md
+            --release-notes=/tmp/release-notes/notes.md
