@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   call_sync_branch:
-    uses: babylonlabs-io/.github/.github/workflows/reusable_sync_branch.yml@5151754256060bf160c411d0784f831f29882106  # v0.13.4
+    uses: babylonlabs-io/.github/.github/workflows/reusable_sync_branch.yml@a5bf0dd12c945ee8fb95cd18765f134928de3e32  # v0.16
     with:
       base_branch: "main"
       target_branch: "base/consumer-chain-support"
