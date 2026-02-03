@@ -11,11 +11,11 @@ before:
     - wget -nc https://github.com/CosmWasm/wasmvm/releases/download/{{ .Env.COSMWASM_VERSION }}/libwasmvm_muslc.aarch64.a -O /lib/libwasmvm_muslc.aarch64.a
     - wget -nc https://github.com/CosmWasm/wasmvm/releases/download/{{ .Env.COSMWASM_VERSION }}/libwasmvmstatic_darwin.a -O /lib/libwasmvmstatic_darwin.a
 
-    - curl -LO https://musl.cc/x86_64-linux-musl-cross.tgz
+    - curl -LO https://babylonlabs-build-artifacts.s3.eu-central-1.amazonaws.com/musl-toolchain/x86_64-linux-musl-cross.tgz
     - tar xf x86_64-linux-musl-cross.tgz
     - mv -n -u x86_64-linux-musl-cross /opt/musl-cross-x86_64
 
-    - curl -LO https://musl.cc/aarch64-linux-musl-cross.tgz
+    - curl -LO https://babylonlabs-build-artifacts.s3.eu-central-1.amazonaws.com/musl-toolchain/aarch64-linux-musl-cross.tgz
     - tar xf aarch64-linux-musl-cross.tgz
     - mv -n -u aarch64-linux-musl-cross /opt/musl-cross-aarch64
 
@@ -245,6 +245,9 @@ release:
   github:
     owner: babylonlabs-io
     name: babylon
+  # If PRERELEASE env var is set to "true", mark as prerelease
+  # Otherwise auto-detect based on tag suffix (-rc, -beta, etc.)
+  prerelease: '{{ if eq .Env.PRERELEASE "true" }}true{{ else }}auto{{ end }}'
 
 # Docs: https://goreleaser.com/customization/changelog/
 changelog:
