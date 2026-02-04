@@ -17,6 +17,8 @@ on:
 
 permissions:
   contents: read
+  security-events: write
+  id-token: write
 
 jobs:
   lint_test:
