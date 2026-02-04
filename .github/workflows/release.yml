@@ -21,37 +21,82 @@ on:
         default: false
 
 jobs:
-  call-reusable-release:
-    uses: babylonlabs-io/.github/.github/workflows/reusable_github_release.yml@5151754256060bf160c411d0784f831f29882106  # v0.13.4
-    with:
-      tag: ${{ inputs.tag }}
-      description: ${{ inputs.description }}
-      prerelease: ${{ inputs.prerelease }}
-      changelog_path: "https://github.com/babylonlabs-io/babylon/blob/main/CHANGELOG.md"
-      build_command: |
-        # Only use the below command for mainnet
-        make build
-        # Only use the below command for testnet
-        BABYLON_BUILD_OPTIONS="testnet" make build
-      docker_image_table_template: |
-        | Image | Description |
-        |-----------------|----------------|
-        | babylonlabs/babylond:${{ inputs.tag }} | Mainnet image |
-        | babylonlabs/babylond:${{ inputs.tag }}-testnet | Testnet image |
-    secrets: inherit
-
   goreleaser:
-    name: Create release
-    needs: call-reusable-release
+    name: Create release with assets
     runs-on: ubuntu-latest
+    env:
+      GORELEASER_IMAGE: ghcr.io/goreleaser/goreleaser-cross:v1.27.0
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           ref: ${{ inputs.tag }}
-      - name: Make release
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Get CosmWasm version
+        id: cosmwasm
         run: |
-          make release
+          echo "version=$(go list -m github.com/CosmWasm/wasmvm/v2 | sed 's/.* //')" >> $GITHUB_OUTPUT
+
+      - name: Generate release notes
+        env:
+          RELEASE_DESCRIPTION: ${{ inputs.description }}
+          RELEASE_TAG: ${{ inputs.tag }}
+          REPO: ${{ github.repository }}
+        run: |
+          mkdir -p /tmp/release-notes
+          cat > /tmp/release-notes/notes.md << EOF
+          # 🚀 Overview
+
+          ${RELEASE_DESCRIPTION}
+
+          # 📄 Changelog
+
+          You can view the complete changelog [here](https://github.com/babylonlabs-io/babylon/blob/main/CHANGELOG.md)
+
+          # 🏗️ Binaries
+
+          If you prefer to build from source, use the following commands:
+
+          \`\`\`sh
+          git clone https://github.com/${REPO}.git
+          cd \$(basename ${REPO})
+          git checkout ${RELEASE_TAG}
+          # For mainnet
+          make build
+          # For testnet
+          BABYLON_BUILD_OPTIONS="testnet" make build
+          \`\`\`
+
+          # 🐳 Docker Image
+
+          | Image | Description |
+          |-----------------|----------------|
+          | babylonlabs/babylond:${RELEASE_TAG} | Mainnet image |
+          | babylonlabs/babylond:${RELEASE_TAG}-testnet | Testnet image |
+          EOF
+
+      - name: Run GoReleaser
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COSMWASM_VERSION: ${{ steps.cosmwasm.outputs.version }}
+          PRERELEASE: ${{ inputs.prerelease }}
+        run: |
+          docker run \
+            --rm \
+            -e GITHUB_TOKEN \
+            -e COSMWASM_VERSION \
+            -e PRERELEASE \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -v "$(pwd)":/go/src/babylon \
+            -v /tmp/release-notes:/tmp/release-notes:ro \
+            -w /go/src/babylon \
+            ${{ env.GORELEASER_IMAGE }} \
+            release \
+            --clean \
+            --release-notes=/tmp/release-notes/notes.md
