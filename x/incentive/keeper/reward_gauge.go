@@ -33,11 +33,6 @@ func (k Keeper) withdrawReward(ctx context.Context, sType types.StakeholderType,
 		return nil, err
 	}
 
-	// Fallback to the stakeholder's address if no specific withdrawal address is set
-	if withdrawAddr == nil {
-		withdrawAddr = addr
-	}
-
 	// transfer withdrawable coins from incentive module account to the stakeholder's address
 	if err := k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, withdrawAddr, withdrawableCoins); err != nil {
 		return nil, err
