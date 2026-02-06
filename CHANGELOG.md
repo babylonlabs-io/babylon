@@ -69,6 +69,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ### Improvements
 
 - [#1922](https://github.com/babylonlabs-io/babylon/pull/1922) chore: add const of `MaxMintedPerBlock`
+- [#1925](https://github.com/babylonlabs-io/babylon/pull/1925) chore: bump small dependencies and go to `v1.24.0`
 
 ## v4.2.2
 
