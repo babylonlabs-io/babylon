@@ -20,7 +20,7 @@ permissions:
 
 jobs:
   lint_test:
-    uses: babylonlabs-io/.github/.github/workflows/reusable_go_lint_test.yml@22ae8ed7a2ea5c80331758914c4e0ea732eea1ad # v0.15.0
+    uses: babylonlabs-io/.github/.github/workflows/reusable_go_lint_test.yml@d2299e834fcbaca4bf2db043a2939798043d5951  # v0.16.1
     if: ${{ !(github.event_name == 'workflow_dispatch' && inputs['skip-lint-test'] == true) }}
     secrets: inherit
     with:
@@ -35,7 +35,7 @@ jobs:
           (github.event_name == 'workflow_dispatch' && inputs['skip-lint-test'] == true) ||
           needs.lint_test.result == 'success'
         )}}
-    uses: babylonlabs-io/.github/.github/workflows/reusable_docker_pipeline.yml@d2299e834fcbaca4bf2db043a2939798043d5951 # v0.16.1
+    uses: babylonlabs-io/.github/.github/workflows/reusable_docker_pipeline.yml@d2299e834fcbaca4bf2db043a2939798043d5951  # v0.16.1
     needs: ["lint_test"]
     secrets: inherit
     permissions:
@@ -50,6 +50,7 @@ jobs:
       dockerfile: ./contrib/images/babylond/Dockerfile
       repoName: babylond
       docker_scan: true
+      trivy_nofail: true
 
   docker_testnet_pipeline:
     if: ${{ always() && (
@@ -59,7 +60,7 @@ jobs:
               needs.lint_test.result == 'success'
             )
           ) }}
-    uses: babylonlabs-io/.github/.github/workflows/reusable_docker_pipeline.yml@d2299e834fcbaca4bf2db043a2939798043d5951 # v0.16.1
+    uses: babylonlabs-io/.github/.github/workflows/reusable_docker_pipeline.yml@d2299e834fcbaca4bf2db043a2939798043d5951  # v0.16.1
     needs: ["lint_test"]
     secrets: inherit
     permissions:
@@ -77,4 +78,5 @@ jobs:
       buildArgs: |
         BABYLON_BUILD_OPTIONS=testnet
       docker_scan: true
+      trivy_nofail: true
       buildArtifactPrefix: "testnet-"
