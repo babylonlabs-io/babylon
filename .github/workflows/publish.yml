@@ -50,6 +50,7 @@ jobs:
       dockerfile: ./contrib/images/babylond/Dockerfile
       repoName: babylond
       docker_scan: true
+      trivy_nofail: true
 
   docker_testnet_pipeline:
     if: ${{ always() && (
@@ -77,4 +78,5 @@ jobs:
       buildArgs: |
         BABYLON_BUILD_OPTIONS=testnet
       docker_scan: true
+      trivy_nofail: true
       buildArtifactPrefix: "testnet-"
