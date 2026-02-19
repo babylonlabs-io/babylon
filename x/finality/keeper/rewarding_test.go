@@ -1,15 +1,19 @@
 package keeper_test
 
 import (
+	"context"
+	"fmt"
 	"math/rand"
 	"testing"
 	"time"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
 	keepertest "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
+	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 	"github.com/babylonlabs-io/babylon/v4/x/finality/types"
 )
 
@@ -26,6 +30,8 @@ func FuzzHandleRewarding(f *testing.F) {
 		iKeeper := types.NewMockIncentiveKeeper(ctrl)
 		cKeeper := types.NewMockCheckpointingKeeper(ctrl)
 		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper, nil)
+		bsKeeper.EXPECT().GetFinalityProvider(gomock.Any(), gomock.Any()).
+			Return(nil, fmt.Errorf("not found")).AnyTimes()
 
 		// Activate BTC staking protocol at a random height
 		activatedHeight := datagen.RandomInt(r, 10) + 1
@@ -121,6 +127,8 @@ func TestHandleRewardingWithGapsOfUnfinalizedBlocks(t *testing.T) {
 	iKeeper := types.NewMockIncentiveKeeper(ctrl)
 	cKeeper := types.NewMockCheckpointingKeeper(ctrl)
 	fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper, nil)
+	bsKeeper.EXPECT().GetFinalityProvider(gomock.Any(), gomock.Any()).
+		Return(nil, fmt.Errorf("not found")).AnyTimes()
 
 	fpPK, err := datagen.GenRandomBIP340PubKey(r)
 	require.NoError(t, err)
@@ -179,6 +187,8 @@ func FuzzHandleRewardingLimits(f *testing.F) {
 		iKeeper := types.NewMockIncentiveKeeper(ctrl)
 		cKeeper := types.NewMockCheckpointingKeeper(ctrl)
 		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper, nil)
+		bsKeeper.EXPECT().GetFinalityProvider(gomock.Any(), gomock.Any()).
+			Return(nil, fmt.Errorf("not found")).AnyTimes()
 
 		// Activate BTC staking protocol at a random height
 		activatedHeight := datagen.RandomInt(r, 10) + 1
@@ -249,4 +259,61 @@ func FuzzHandleRewardingLimits(f *testing.F) {
 		require.Equal(t, expectedFinalHeight, finalNextHeight,
 			"next height should be after second batch of finalized blocks")
 	})
+}
+
+func TestRewardBTCStakingRefreshesCommission(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	r := rand.New(rand.NewSource(time.Now().Unix()))
+
+	bsKeeper := types.NewMockBTCStakingKeeper(ctrl)
+	iKeeper := types.NewMockIncentiveKeeper(ctrl)
+	cKeeper := types.NewMockCheckpointingKeeper(ctrl)
+	fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, cKeeper, nil)
+
+	fpPK, err := datagen.GenRandomBIP340PubKey(r)
+	require.NoError(t, err)
+	fKeeper.SetVotingPower(ctx, fpPK.MustMarshal(), 1, 1)
+	fKeeper.SetNextHeightToReward(ctx, 1)
+
+	staleCommission := sdkmath.LegacyNewDecWithPrec(5, 2)
+	updatedCommission := sdkmath.LegacyNewDecWithPrec(10, 2)
+
+	fpAddr := datagen.GenRandomAccount().GetAddress()
+	dc := types.NewVotingPowerDistCache()
+	dc.AddFinalityProviderDistInfo(&types.FinalityProviderDistInfo{
+		BtcPk:          fpPK,
+		Addr:           fpAddr,
+		Commission:     &staleCommission,
+		TotalBondedSat: 1,
+		IsTimestamped:  true,
+	})
+	dc.NumActiveFps = 1
+	fKeeper.SetVotingPowerDistCache(ctx, 1, dc)
+
+	fKeeper.SetBlock(ctx, &types.IndexedBlock{
+		Height:    1,
+		AppHash:   datagen.GenRandomByteArray(r, 32),
+		Finalized: true,
+	})
+
+	bsKeeper.EXPECT().
+		GetFinalityProvider(gomock.Any(), fpPK.MustMarshal()).
+		Return(&bstypes.FinalityProvider{Commission: &updatedCommission}, nil).
+		Times(1)
+
+	var capturedDc *types.VotingPowerDistCache
+	iKeeper.EXPECT().
+		RewardBTCStaking(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+		Do(func(_ context.Context, _ uint64, dc *types.VotingPowerDistCache, _ map[string]struct{}) {
+			capturedDc = dc
+		}).
+		Times(1)
+
+	fKeeper.HandleRewarding(ctx, 1, uint64(10000))
+
+	require.NotNil(t, capturedDc)
+	require.Len(t, capturedDc.FinalityProviders, 1)
+	require.Equal(t, capturedDc.FinalityProviders[0].Commission.String(), updatedCommission.String(), "commission should be refreshed")
 }
