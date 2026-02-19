@@ -78,6 +78,11 @@ func (k Keeper) refreshFPCommissions(ctx context.Context, dc *types.VotingPowerD
 		fp := dc.FinalityProviders[i]
 		currentFP, err := k.BTCStakingKeeper.GetFinalityProvider(ctx, fp.BtcPk.MustMarshal())
 		if err != nil {
+			k.Logger(sdk.UnwrapSDKContext(ctx)).Error(
+				"failed to refresh commission rate for finality provider",
+				"fp_btc_pk", fmt.Sprintf("%x", fp.BtcPk.MustMarshal()),
+				"error", err.Error(),
+			)
 			continue
 		}
 		fp.Commission = currentFP.Commission
