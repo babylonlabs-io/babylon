@@ -39,9 +39,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
+- [#1959](https://github.com/babylonlabs-io/babylon/pull/1959) chore: remove v4 and v3rc4 upgrade testing
 - [#1878](https://github.com/babylonlabs-io/babylon/pull/1878) Remove unnecessary []byte allocations in IBC size checks
 - [#1891](https://github.com/babylonlabs-io/babylon/pull/1891) fix: golangci lint misspell and removed unused func
-- [#1901](https://github.com/babylonlabs-io/babylon/pull/1901) chore: update cl
 
 ### State breaking
 
@@ -58,6 +58,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 - [#1875](https://github.com/babylonlabs-io/babylon/pull/1875) chore: ensure soft-deleted FPs cannot receive new/extended BTC stake, or commit pub rand
 - [#1911](https://github.com/babylonlabs-io/babylon/pull/1911) fix: avoid panic in `ProcessProposal` when injected checkpoint tx contains a wrong message type
+- [#1960](https://github.com/babylonlabs-io/babylon/pull/1960) fix: download muslc from s3 in our go releaser workflow
 
 ## v4.2.5
 
