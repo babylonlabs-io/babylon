@@ -315,6 +315,5 @@ func TestRewardBTCStakingRefreshesCommission(t *testing.T) {
 
 	require.NotNil(t, capturedDc)
 	require.Len(t, capturedDc.FinalityProviders, 1)
-	require.True(t, capturedDc.FinalityProviders[0].Commission.Equal(updatedCommission),
-		"commission should be refreshed from store, got %s", capturedDc.FinalityProviders[0].Commission)
+	require.Equal(t, capturedDc.FinalityProviders[0].Commission.String(), updatedCommission.String(), "commission should be refreshed")
 }
