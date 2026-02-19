@@ -37,6 +37,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+### Improvements
+
+- [#1959](https://github.com/babylonlabs-io/babylon/pull/1959) chore: remove v4 and v3rc4 upgrade testing
+
 ### State breaking
 
 - [#1956](https://github.com/babylonlabs-io/babylon/pull/1956) fix: add sort of fps by pub key in `GetVotingPowerTableOrdered`
