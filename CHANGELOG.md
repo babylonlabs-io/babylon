@@ -48,6 +48,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#1908](https://github.com/babylonlabs-io/babylon/pull/1908) fix: call `AfterRawCheckpointForgotten` in all hooks, instead of early return
 - [#1906](https://github.com/babylonlabs-io/babylon/pull/1906) fix: baby validator slashing and costaking active baby amounts missmatch
 
+### Bug Fixes
+
+- [#1953](https://github.com/babylonlabs-io/babylon/pull/1953) fix: refresh commission of active FPs in voting power distribution cache prior to reward distribution
+
 ## v4.2.2
 
 ### Improvements
