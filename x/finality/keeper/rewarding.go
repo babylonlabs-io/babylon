@@ -57,6 +57,10 @@ func (k Keeper) rewardBTCStaking(ctx context.Context, height uint64) {
 		panic(fmt.Errorf("voting power distribution cache not found at height %d", height))
 	}
 
+	// refresh commission rates from the btcstaking store so that
+	// edits via MsgEditFinalityProvider are reflected in reward distribution
+	k.refreshFPCommissions(ctx, dc)
+
 	// get all the voters for the height
 	voterBTCPKs := k.GetVoters(ctx, height)
 
@@ -65,6 +69,24 @@ func (k Keeper) rewardBTCStaking(ctx context.Context, height uint64) {
 
 	// remove reward distribution cache afterwards
 	k.RemoveVotingPowerDistCache(ctx, height)
+}
+
+// refreshFPCommissions updates the commission of each active finality provider
+// in the distribution cache with the current value from the btcstaking store.
+func (k Keeper) refreshFPCommissions(ctx context.Context, dc *types.VotingPowerDistCache) {
+	for i := uint32(0); i < dc.NumActiveFps; i++ {
+		fp := dc.FinalityProviders[i]
+		currentFP, err := k.BTCStakingKeeper.GetFinalityProvider(ctx, fp.BtcPk.MustMarshal())
+		if err != nil {
+			k.Logger(sdk.UnwrapSDKContext(ctx)).Error(
+				"failed to refresh commission rate for finality provider",
+				"fp_btc_pk", fmt.Sprintf("%x", fp.BtcPk.MustMarshal()),
+				"error", err.Error(),
+			)
+			continue
+		}
+		fp.Commission = currentFP.Commission
+	}
 }
 
 // SetNextHeightToReward sets the next height to reward as the given height
