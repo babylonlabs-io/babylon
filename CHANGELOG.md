@@ -51,7 +51,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Bug Fixes
 
+- [#1960](https://github.com/babylonlabs-io/babylon/pull/1960) fix: download muslc from s3 in our go releaser workflow
 - [#1953](https://github.com/babylonlabs-io/babylon/pull/1953) fix: refresh commission of active FPs in voting power distribution cache prior to reward distribution
+
+## v4.2.5
+
+### Improvements
+
+- [GHSA-h598-3g3g-c67c](https://github.com/babylonlabs-io/babylon/security/advisories/GHSA-h598-3g3g-c67c) chore: bump comet-bft to `v0.38.21`
+
+## v4.2.3
+
+### Improvements
+
+- [#1922](https://github.com/babylonlabs-io/babylon/pull/1922) chore: add const of `MaxMintedPerBlock`
 
 ## v4.2.2
 
