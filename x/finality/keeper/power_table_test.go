@@ -11,6 +11,8 @@ import (
 
 	testutil "github.com/babylonlabs-io/babylon/v4/testutil/btcstaking-helper"
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	keepertest "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	btclctypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
 	"github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 	btcstktypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
@@ -643,6 +645,88 @@ func FuzzVotingPowerTable_ActiveFinalityProviderRotation(f *testing.F) {
 		// 	require.Zero(t, votingPower)
 		// }
 	})
+}
+
+func TestGetVotingPowerTableOrdered_SortsByVotingPower(t *testing.T) {
+	r := rand.New(rand.NewSource(42))
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	bsKeeper := ftypes.NewMockBTCStakingKeeper(ctrl)
+	iKeeper := ftypes.NewMockIncentiveKeeper(ctrl)
+	ckptKeeper := ftypes.NewMockCheckpointingKeeper(ctrl)
+	hooks := ftypes.NewMockFinalityHooks(ctrl)
+
+	fk, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper, ckptKeeper, hooks)
+
+	height := uint64(1)
+	numFps := 10
+	type fpEntry struct {
+		pk    []byte
+		hex   string
+		power uint64
+	}
+
+	entries := make([]fpEntry, 0, numFps)
+	for i := 0; i < numFps; i++ {
+		_, pk, err := datagen.GenRandomBTCKeyPair(r)
+		require.NoError(t, err)
+		bip340 := bbn.NewBIP340PubKeyFromBTCPK(pk)
+		power := uint64(r.Intn(1000000)) + 1
+		entries = append(entries, fpEntry{
+			pk:    bip340.MustMarshal(),
+			hex:   bip340.MarshalHex(),
+			power: power,
+		})
+		fk.SetVotingPower(ctx, bip340.MustMarshal(), height, power)
+	}
+
+	// Also add two FPs with the same voting power to test tiebreak
+	_, pk1, err := datagen.GenRandomBTCKeyPair(r)
+	require.NoError(t, err)
+	_, pk2, err := datagen.GenRandomBTCKeyPair(r)
+	require.NoError(t, err)
+	bip1 := bbn.NewBIP340PubKeyFromBTCPK(pk1)
+	bip2 := bbn.NewBIP340PubKeyFromBTCPK(pk2)
+	tiePower := uint64(500000)
+	fk.SetVotingPower(ctx, bip1.MustMarshal(), height, tiePower)
+	fk.SetVotingPower(ctx, bip2.MustMarshal(), height, tiePower)
+	entries = append(entries,
+		fpEntry{pk: bip1.MustMarshal(), hex: bip1.MarshalHex(), power: tiePower},
+		fpEntry{pk: bip2.MustMarshal(), hex: bip2.MarshalHex(), power: tiePower},
+	)
+
+	result := fk.GetVotingPowerTableOrdered(ctx, height)
+	require.Len(t, result, len(entries))
+
+	// Verify result is sorted: voting power desc, tiebreak by PK hex asc
+	for i := 1; i < len(result); i++ {
+		prev := result[i-1]
+		curr := result[i]
+		if prev.VotingPower == curr.VotingPower {
+			require.Less(t, prev.FpPk.MarshalHex(), curr.FpPk.MarshalHex(),
+				"equal voting power FPs should be sorted by PK hex ascending")
+		} else {
+			require.Greater(t, prev.VotingPower, curr.VotingPower,
+				"FPs should be sorted by voting power descending")
+		}
+	}
+
+	// Verify the store iteration order (by key bytes) differs from the sorted order,
+	// confirming that the explicit sort is necessary
+	storeOrder := fk.GetVotingPowerTable(ctx, height)
+	storeKeys := make([]string, 0, len(storeOrder))
+	for k := range storeOrder {
+		storeKeys = append(storeKeys, k)
+	}
+	sort.Strings(storeKeys)
+
+	sortedKeys := make([]string, 0, len(result))
+	for _, fp := range result {
+		sortedKeys = append(sortedKeys, fp.FpPk.MarshalHex())
+	}
+
+	require.NotEqual(t, storeKeys, sortedKeys, "store key order should differ from voting-power-sorted order (sort is needed)")
 }
 
 // Temporary test functions to debug specific failing seeds
