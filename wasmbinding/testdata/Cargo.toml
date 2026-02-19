@@ -8,4 +8,4 @@ edition = "2021"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-babylon-example = { git = "https://github.com/babylonlabs-io/bindings", tag = "v0.1.0" }
+babylon-example = { git = "https://github.com/babylonlabs-io/bindings", tag = "v0.1.0", default-features = false }
