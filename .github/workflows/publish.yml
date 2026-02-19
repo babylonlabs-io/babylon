@@ -20,7 +20,7 @@ permissions:
 
 jobs:
   lint_test:
-    uses: babylonlabs-io/.github/.github/workflows/reusable_go_lint_test.yml@a5bf0dd12c945ee8fb95cd18765f134928de3e32  # v0.16
+    uses: babylonlabs-io/.github/.github/workflows/reusable_go_lint_test.yml@d2299e834fcbaca4bf2db043a2939798043d5951  # v0.16.1
     if: ${{ !(github.event_name == 'workflow_dispatch' && inputs['skip-lint-test'] == true) }}
     secrets: inherit
     with:
