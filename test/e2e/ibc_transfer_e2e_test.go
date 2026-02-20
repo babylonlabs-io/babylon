@@ -393,7 +393,7 @@ func (s *IBCTransferTestSuite) MultiCoinFee() {
 	s.Require().Contains(outBuf.String(), fmt.Sprintf("only %s denom is allowed", nativeDenom))
 	nA.WaitForNextBlock()
 
-	// Try to send funds to fee_collector
+	// Send funds to fee_collector via IBC (no send restrictions)
 	balanceBeforeAddrA, err := nA.QueryBalances(s.addrA)
 	s.Require().NoError(err)
 
@@ -403,12 +403,11 @@ func (s *IBCTransferTestSuite) MultiCoinFee() {
 
 	_, txResp := nA.QueryTx(txHash)
 	txFeesPaid := txResp.AuthInfo.Fee.Amount
-	// Make sure only fees were deducted from sender
-	// The tx should have failed
+	// Transfer succeeds: both fees and transfer amount are deducted
 	s.Require().Eventually(func() bool {
 		balanceAfterAddrA, err := nA.QueryBalances(s.addrA)
 		s.Require().NoError(err)
-		return balanceAfterAddrA.Equal(balanceBeforeAddrA.Sub(txFeesPaid...))
+		return balanceAfterAddrA.Equal(balanceBeforeAddrA.Sub(txFeesPaid...).Sub(transferCoin))
 	}, 90*time.Second, 2*time.Second)
 }
 
