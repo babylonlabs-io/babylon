@@ -61,6 +61,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#1911](https://github.com/babylonlabs-io/babylon/pull/1911) fix: avoid panic in `ProcessProposal` when injected checkpoint tx contains a wrong message type
 - [#1953](https://github.com/babylonlabs-io/babylon/pull/1953) fix: refresh commission of active FPs in voting power distribution cache prior to reward distribution
 - [#1960](https://github.com/babylonlabs-io/babylon/pull/1960) fix: download muslc from s3 in our go releaser workflow
+- [#1923](https://github.com/babylonlabs-io/babylon/pull/1923) fix: add max bytes size for vote extension
 
 ## v4.2.5
 
