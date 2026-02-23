@@ -37,6 +37,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+### State breaking
+
+- [#1965](https://github.com/babylonlabs-io/babylon/pull/1965) chore: bump CosmWasm/wasmd v0.60.5
+
 ## v4.3.1
 
 ### Bug Fixes
