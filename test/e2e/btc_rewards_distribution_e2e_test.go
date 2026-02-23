@@ -655,7 +655,10 @@ func (s *BtcRewardsDistribution) QueryRewardGauges(n *chain.NodeConfig) (
 	fp1, fp2, del1, del2 *itypes.RewardGaugesResponse,
 ) {
 	n.WaitForNextBlockWithSleep50ms()
-	height := n.LatestBlockNumber()
+	// Use height-1 to ensure we query a fully committed block, since
+	// LatestBlockNumber (from RPC status) can report a height that the
+	// gRPC gateway hasn't finished processing yet.
+	height := n.LatestBlockNumber() - 1
 
 	g := new(errgroup.Group)
 	var (
