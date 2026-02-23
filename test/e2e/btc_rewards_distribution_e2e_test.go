@@ -387,18 +387,18 @@ func (s *BtcRewardsDistribution) CheckRewardsFirstDelegations() {
 		return errFp1 == nil && errFp2 == nil && errDel1 == nil && errDel2 == nil
 	}, time.Minute*3, time.Second*3, "wait to have some rewards available in the gauge")
 
-	// gets the difference in rewards in 4 blocks range
-	fp1DiffRewards, fp2DiffRewards, del1DiffRewards, del2DiffRewards := s.GetRewardDifferences(4)
-
 	// The rewards distributed for the finality providers should be fp1 => 3x, fp2 => 1x
+	fp1Rewards, fp2Rewards, del1Rewards, del2Rewards := s.QueryRewardGauges(n2)
+	s.AddFinalityVoteUntilCurrentHeight()
+
 	coins.RequireCoinsDiffInPointOnePercentMargin(
 		s.T(),
-		fp2DiffRewards.MulInt(sdkmath.NewIntFromUint64(3)),
-		fp1DiffRewards,
+		fp2Rewards.Coins.MulInt(sdkmath.NewIntFromUint64(3)),
+		fp1Rewards.Coins,
 	)
 
 	// The rewards distributed to the delegators should be the same for each delegator
-	coins.RequireCoinsDiffInPointOnePercentMargin(s.T(), del1DiffRewards, del2DiffRewards)
+	coins.RequireCoinsDiffInPointOnePercentMargin(s.T(), del1Rewards.Coins, del2Rewards.Coins)
 
 	CheckWithdrawReward(s.T(), n2, wDel2, s.del2Addr)
 
