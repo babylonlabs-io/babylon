@@ -24,4 +24,4 @@ cp -r github.com/babylonlabs-io/babylon/v4/* ./
 rm -rf github.com
 go mod tidy
 
-# go mod tidy -compat=1.23
+# go mod tidy -compat=1.24
