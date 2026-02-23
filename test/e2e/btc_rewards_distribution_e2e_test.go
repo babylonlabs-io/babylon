@@ -391,14 +391,15 @@ func (s *BtcRewardsDistribution) CheckRewardsFirstDelegations() {
 	fp1Rewards, fp2Rewards, del1Rewards, del2Rewards := s.QueryRewardGauges(n2)
 	s.AddFinalityVoteUntilCurrentHeight()
 
-	coins.RequireCoinsDiffInPointOnePercentMargin(
+	coins.RequireCoinsDiffInMargin(
 		s.T(),
 		fp2Rewards.Coins.MulInt(sdkmath.NewIntFromUint64(3)),
 		fp1Rewards.Coins,
+		10, // 1% margin to account for integer truncation in reward distribution
 	)
 
 	// The rewards distributed to the delegators should be the same for each delegator
-	coins.RequireCoinsDiffInPointOnePercentMargin(s.T(), del1Rewards.Coins, del2Rewards.Coins)
+	coins.RequireCoinsDiffInMargin(s.T(), del1Rewards.Coins, del2Rewards.Coins, 10)
 
 	CheckWithdrawReward(s.T(), n2, wDel2, s.del2Addr)
 
@@ -478,12 +479,12 @@ func (s *BtcRewardsDistribution) LastCheckRewards() {
 	// Check the difference in the finality providers
 	// fp1 should receive ~75% of the rewards received by fp2
 	expectedRwdFp1 := coins.CalculatePercentageOfCoins(fp2DiffRewards, 75)
-	coins.RequireCoinsDiffInPointOnePercentMargin(s.T(), fp1DiffRewards, expectedRwdFp1)
+	coins.RequireCoinsDiffInMargin(s.T(), fp1DiffRewards, expectedRwdFp1, 10)
 
 	// Check the difference in the delegators
 	// the del1 should receive ~40% of the rewards received by del2
 	expectedRwdDel1 := coins.CalculatePercentageOfCoins(del2DiffRewards, 40)
-	coins.RequireCoinsDiffInPointOnePercentMargin(s.T(), del1DiffRewards, expectedRwdDel1)
+	coins.RequireCoinsDiffInMargin(s.T(), del1DiffRewards, expectedRwdDel1, 10)
 
 	fp1DiffRewardsStr := fp1DiffRewards.String()
 	fp2DiffRewardsStr := fp2DiffRewards.String()
