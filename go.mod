@@ -1,13 +1,9 @@
-go 1.23.8
+go 1.24.0
 
 module github.com/babylonlabs-io/babylon/v4
 
 require (
-<<<<<<< HEAD
-	github.com/CosmWasm/wasmd v0.55.1
-=======
 	github.com/CosmWasm/wasmd v0.60.5
->>>>>>> 50d5577 (chore: bump CosmWasm/wasmd `v0.60.5` (#1965))
 	github.com/btcsuite/btcd v0.24.2
 	github.com/cometbft/cometbft v0.38.21
 	github.com/cometbft/cometbft-db v0.15.0
@@ -20,19 +16,11 @@ require (
 	github.com/spf13/cobra v1.10.1
 	github.com/spf13/viper v1.21.0
 	github.com/strangelove-ventures/tokenfactory v0.50.6-wasmvm2
-<<<<<<< HEAD
-	github.com/stretchr/testify v1.10.0
-	github.com/supranational/blst v0.3.14
-	google.golang.org/genproto v0.0.0-20241118233622-e639e219e697 // indirect
-	google.golang.org/grpc v1.74.2
-	google.golang.org/protobuf v1.36.7
-=======
 	github.com/stretchr/testify v1.11.1
 	github.com/supranational/blst v0.3.16-0.20250831170142-f48500c1fdbe
 	google.golang.org/genproto v0.0.0-20250603155806-513f23925822 // indirect
 	google.golang.org/grpc v1.75.0
 	google.golang.org/protobuf v1.36.10
->>>>>>> 50d5577 (chore: bump CosmWasm/wasmd `v0.60.5` (#1965))
 	gopkg.in/yaml.v2 v2.4.0
 )
 
@@ -73,13 +61,8 @@ require (
 	github.com/vulpine-io/io-test v1.0.0
 	go.uber.org/zap v1.27.0
 	golang.org/x/exp v0.0.0-20250305212735-054e65f0b394
-<<<<<<< HEAD
-	golang.org/x/sync v0.16.0
-	google.golang.org/genproto/googleapis/api v0.0.0-20250528174236-200df99c418a
-=======
 	golang.org/x/sync v0.18.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20250707201910-8d1bb00bc6a7
->>>>>>> 50d5577 (chore: bump CosmWasm/wasmd `v0.60.5` (#1965))
 )
 
 require (
@@ -92,15 +75,9 @@ require (
 	github.com/cncf/xds/go v0.0.0-20250501225837-2ac532fd4443 // indirect
 	github.com/envoyproxy/go-control-plane/envoy v1.32.4 // indirect
 	github.com/envoyproxy/protoc-gen-validate v1.2.1 // indirect
-<<<<<<< HEAD
-	github.com/ethereum/go-ethereum v1.15.11 // indirect
-	github.com/go-jose/go-jose/v4 v4.0.5 // indirect
-	github.com/go-viper/mapstructure/v2 v2.2.1 // indirect
-=======
 	github.com/ethereum/go-ethereum v1.16.8 // indirect
 	github.com/go-jose/go-jose/v4 v4.1.1 // indirect
 	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect
->>>>>>> 50d5577 (chore: bump CosmWasm/wasmd `v0.60.5` (#1965))
 	github.com/holiman/uint256 v1.3.2 // indirect
 	github.com/iancoleman/orderedmap v0.3.0 // indirect
 	github.com/mdp/qrterminal/v3 v3.2.1 // indirect
@@ -116,14 +93,6 @@ require (
 )
 
 require (
-<<<<<<< HEAD
-	cloud.google.com/go/auth v0.14.1 // indirect
-	cloud.google.com/go/auth/oauth2adapt v0.2.7 // indirect
-	github.com/bytedance/sonic v1.14.0 // indirect
-	github.com/bytedance/sonic/loader v0.3.0 // indirect
-	github.com/cloudwego/base64x v0.1.5 // indirect
-	github.com/ferranbt/fastssz v0.1.4 // indirect
-=======
 	cloud.google.com/go/auth v0.16.4 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.2.8 // indirect
 	github.com/ProjectZKM/Ziren/crates/go-runtime/zkvm_runtime v0.0.0-20251001021608-1fe7b43fc4d6 // indirect
@@ -131,7 +100,6 @@ require (
 	github.com/bytedance/sonic v1.14.2 // indirect
 	github.com/bytedance/sonic/loader v0.4.0 // indirect
 	github.com/cloudwego/base64x v0.1.6 // indirect
->>>>>>> 50d5577 (chore: bump CosmWasm/wasmd `v0.60.5` (#1965))
 	github.com/gogo/status v1.1.0 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.10 // indirect
 	github.com/onsi/gomega v1.38.0 // indirect
@@ -163,7 +131,7 @@ require (
 	github.com/go-kit/log v0.2.1 // indirect
 	github.com/go-logfmt/logfmt v0.6.0 // indirect
 	github.com/godbus/dbus v0.0.0-20190726142602-4481cbc300e2 // indirect
-	github.com/golang/snappy v0.0.5-0.20231225225746-43d5d4cd4e0e // indirect
+	github.com/golang/snappy v1.0.0 // indirect
 	github.com/google/btree v1.1.3 // indirect
 	github.com/google/orderedcode v0.0.1 // indirect
 	github.com/gorilla/handlers v1.5.2 // indirect
@@ -199,7 +167,7 @@ require (
 	github.com/zondax/hid v0.9.2 // indirect
 	go.etcd.io/bbolt v1.4.0-alpha.1 // indirect
 	golang.org/x/crypto v0.41.0
-	golang.org/x/sys v0.35.0 // indirect
+	golang.org/x/sys v0.36.0 // indirect
 	golang.org/x/term v0.34.0 // indirect
 	golang.org/x/text v0.28.0 // indirect
 	nhooyr.io/websocket v1.8.17 // indirect
