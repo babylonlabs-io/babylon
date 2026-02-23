@@ -54,6 +54,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#1908](https://github.com/babylonlabs-io/babylon/pull/1908) fix: call `AfterRawCheckpointForgotten` in all hooks, instead of early return
 - [#1913](https://github.com/babylonlabs-io/babylon/pull/1913) fix: key collision hex 0x10 (HeightToVersionMapKey) == decimal 16 (FpBbnAddrKey)
 - [#1906](https://github.com/babylonlabs-io/babylon/pull/1906) fix: baby validator slashing and costaking active baby amounts missmatch
+- [#1965](https://github.com/babylonlabs-io/babylon/pull/1965) chore: bump CosmWasm/wasmd v0.60.5
 
 ### Bug Fixes
 
