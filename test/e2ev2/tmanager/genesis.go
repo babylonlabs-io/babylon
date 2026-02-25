@@ -334,8 +334,9 @@ func UpdateGenesisSlashing(gs *slashingtypes.GenesisState) {
 	gs.Params.SignedBlocksWindow = 85
 	gs.Params.MinSignedPerWindow = sdkmath.LegacyMustNewDecFromStr("0.80")
 	gs.Params.SlashFractionDowntime = sdkmath.LegacyMustNewDecFromStr("0.1")
+	gs.Params.DowntimeJailDuration = 10 * time.Second
 }
 
 func UpdateGenesisEpoching(gs *epochingtypes.GenesisState) {
-	gs.Params.EpochInterval = 20
+	gs.Params.EpochInterval = 40
 }
