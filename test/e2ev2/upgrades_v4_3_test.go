@@ -281,9 +281,9 @@ func TestUpgradeV43(t *testing.T) {
 	epochBeforeUpgrade := n.QueryCurrentEpoch()
 	require.EqualValues(t, epochToUnjail.CurrentEpoch, epochBeforeUpgrade.CurrentEpoch, "all the actions should be done in the same epoch")
 
-	firstBlockOfNextEpoch := epochBeforeUpgrade.EpochBoundary + 1
+	secondBlockOfNextEpoch := epochBeforeUpgrade.EpochBoundary + 2
 	govMsg, preUpgradeFunc := createGovPropAndPreUpgradeFunc(
-		t, chainVal.Wallet.WalletSender, int64(firstBlockOfNextEpoch),
+		t, chainVal.Wallet.WalletSender, int64(secondBlockOfNextEpoch),
 	)
 
 	costkRwdTrackerBeforeUpgrade = n.QueryCostkRwdTrckCli(del1.Address)
@@ -315,11 +315,16 @@ func TestUpgradeV43(t *testing.T) {
 	//   BabyVal2 => Active with baby delegation
 	//   Del2 => 2BTC to FP, 5BABY to val2
 	//   Del3 =>  2BTC to FP, 10BABY to healthy val and 2BABY to val2
-	val2 = n.WaitForValidatorBeJailed(val2Addr)
-	require.False(t, val2.Jailed, "val2 should be jailed")
+	val2 = n.QueryValidator(val2Addr)
+	require.False(t, val2.Jailed, "val2 should not be jailed")
 	require.True(t, val2.IsBonded(), "val2 should be bonded")
 
+	// del2: val2 was slashed for downtime, so del2's tokens are less than the original 5BABY
+	del2ToVal2 := n.QueryDelegation(del2.Address, val2Addr)
+	expBabyAmtDel2 = del2ToVal2.Balance.Amount
+	expScoreDel2 = costktypes.CalculateScore(costkP.ScoreRatioBtcByBaby, expBabyAmtDel2, expSat)
 	n.CheckCostaking(del2.Address, expSat, expBabyAmtDel2, expScoreDel2)
+
 	// del3
 	expBabyAmtDel3 := amtHealthyDel.Add(amtDel3UnjailedVal)
 	expScoreDel3 := costktypes.CalculateScore(costkP.ScoreRatioBtcByBaby, expBabyAmtDel3, expSat)

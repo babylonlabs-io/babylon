@@ -82,12 +82,13 @@ func ValidateEpochBoundary(ctx context.Context, epochingKeeper epochingkeeper.Ke
 		return nil
 	}
 
-	if !currentEpoch.IsFirstBlockOfNextEpoch(ctx) {
-		// Calculate next epoch boundary for error message using current epoch interval
-		nextEpochHeight := currentEpoch.FirstBlockHeight + currentEpoch.CurrentEpochInterval
-
-		return fmt.Errorf("upgrade must happen at epoch boundary - current height %d is not first block of next epoch (next epoch boundary at height %d, current epoch interval: %d)",
-			currentHeight, nextEpochHeight, currentEpoch.CurrentEpochInterval)
+	if !currentEpoch.IsSecondBlock(ctx) {
+		return fmt.Errorf(
+			"upgrade must happen at second block of epoch - "+
+				"current height %d, expected %d",
+			currentHeight,
+			currentEpoch.GetSecondBlockHeight(),
+		)
 	}
 
 	sdkCtx.Logger().Info("epoch boundary validation successful",
