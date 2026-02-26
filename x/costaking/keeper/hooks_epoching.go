@@ -101,7 +101,6 @@ func (h HookEpoching) AfterEpochEnds(ctx context.Context, epoch uint64) {
 			valAddr := sdk.MustValAddressFromBech32(prevValAddr)
 			if err := h.removeBabyForDelegators(ctx, valAddr); err != nil {
 				h.k.Logger(ctx).Error("failed to remove baby tokens for newly inactive validator", "validator", prevValAddr, "error", err)
-				return
 			}
 		}
 	}

@@ -26,4 +26,5 @@ var (
 	ErrZeroBlockHeight         = errorsmod.Register(ModuleName, 1220, "block height is zero")
 	ErrNilCkpt                 = errorsmod.Register(ModuleName, 1221, "checkpoint is nil")
 	ErrNilBlsAggrPk            = errorsmod.Register(ModuleName, 1222, "BLS aggregated pub key is nil")
+	ErrVoteExt                 = errorsmod.Register(ModuleName, 1223, "invalid vote extension")
 )

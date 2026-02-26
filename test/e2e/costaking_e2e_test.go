@@ -60,7 +60,7 @@ func (s *CostakingTestSuite) TearDownSuite() {
 
 func (s *CostakingTestSuite) TestFinalityProviderExit() {
 	chainA := s.configurer.GetChainConfig(0)
-	chainA.WaitUntilHeight(1)
+	chainA.WaitUntilHeight(2)
 
 	delegatorNode, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
