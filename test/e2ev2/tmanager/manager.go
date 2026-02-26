@@ -187,15 +187,13 @@ func (tm *TestManagerUpgrade) Upgrade(govMsg *govtypes.MsgSubmitProposal, preUpg
 		}
 	}
 
-	// check if the upgrade was applied
+	// verify the upgrade was applied on every node
 	for _, chain := range tm.Chains {
 		for _, node := range chain.AllNodes() {
-			height, err := node.LatestBlockNumber()
-			if err != nil {
-				tm.T.Fatalf("failed to get latest block height: %v", err)
-			}
-			tm.T.Logf("node %s: latest block height on chain %s: %d", node.Name, chain.ChainID(), height)
-			appliedHeight := node.QueryAppliedPlan(govMsg.Title) // make the title same name as upgrade plan
+			appliedHeight := node.QueryAppliedPlan(govMsg.Title)
+			require.Positive(tm.T, appliedHeight,
+				"node %s on chain %s: upgrade %s was not applied",
+				node.Name, chain.ChainID(), govMsg.Title)
 			tm.T.Logf("node %s: %s plan applied at height: %d", node.Name, govMsg.Title, appliedHeight)
 		}
 	}
