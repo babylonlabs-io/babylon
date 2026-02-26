@@ -25,7 +25,7 @@ import (
 )
 
 const (
-	DummyUpgradeHeight = 11 // Must be at epoch boundary for epochInterval=10
+	DummyUpgradeHeight = 12 // Must be at second block of epoch for epochInterval=10
 )
 
 type UpgradeTestSuite struct {
@@ -58,19 +58,19 @@ func (s *UpgradeTestSuite) TestUpgradeValidation() {
 		expectedErrorContains string
 	}{
 		{
-			name:          "successful upgrade at epoch boundary",
-			upgradeHeight: 11, // First block of epoch 2 when epochInterval=10
+			name:          "successful upgrade at second block of epoch",
+			upgradeHeight: 12, // Second block of epoch 2 when epochInterval=10
 			expectSuccess: true,
 		},
 		{
-			name:                  "failed upgrade at non-epoch boundary",
-			upgradeHeight:         12, // Not first block of epoch
+			name:                  "failed upgrade at first block of epoch",
+			upgradeHeight:         11, // First block of epoch 2, not second
 			expectSuccess:         false,
 			expectedErrorContains: "epoch boundary validation failed",
 		},
 		{
-			name:          "successful upgrade at different epoch boundary",
-			upgradeHeight: 21, // First block of epoch 3 when epochInterval=10
+			name:          "successful upgrade at different epoch second block",
+			upgradeHeight: 22, // Second block of epoch 3 when epochInterval=10
 			expectSuccess: true,
 		},
 	}
@@ -145,16 +145,16 @@ func (s *UpgradeTestSuite) TestUpgradeFailureScenarios() {
 		expectedErrorContains string
 	}{
 		{
-			name:          "upgrade fails at height 2 (edge case)",
-			upgradeHeight: 2,
+			name:          "upgrade fails at height 3 (edge case)",
+			upgradeHeight: 3,
 			setupFailureCondition: func() {
-				// No setup needed - height 2 is not epoch boundary
+				// No setup needed - height 3 is not second block of any epoch
 			},
 			expectedErrorContains: "epoch boundary validation failed",
 		},
 		{
 			name:          "upgrade fails at height 10 (last block of epoch)",
-			upgradeHeight: 10, // Last block of first epoch, not first block of next
+			upgradeHeight: 10, // Last block of first epoch, not second block of next
 			setupFailureCondition: func() {
 				// No setup needed
 			},
@@ -170,7 +170,7 @@ func (s *UpgradeTestSuite) TestUpgradeFailureScenarios() {
 		},
 		{
 			name:          "upgrade fails at very high height",
-			upgradeHeight: 1000, // Not epoch boundary (next valid boundary is 1001)
+			upgradeHeight: 1000, // Not second block of epoch (next valid is 992)
 			setupFailureCondition: func() {
 				// No setup needed
 			},
