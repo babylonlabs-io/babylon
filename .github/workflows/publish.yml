@@ -41,6 +41,8 @@ jobs:
     needs: ["lint_test"]
     secrets: inherit
     permissions:
+      contents: read
+      id-token: write
       # required for all workflows
       security-events: write
       # required to fetch internal or private CodeQL packs
@@ -64,6 +66,8 @@ jobs:
     needs: ["lint_test"]
     secrets: inherit
     permissions:
+      contents: read
+      id-token: write
       # required for all workflows
       security-events: write
       # required to fetch internal or private CodeQL packs
