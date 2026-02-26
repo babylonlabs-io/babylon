@@ -104,16 +104,22 @@ func NewTmWithUpgrade(
 	t *testing.T,
 	forkHeight int64,
 	tag string,
+	cfgOpts ...func(*ChainConfig),
 ) *TestManagerUpgrade {
 	tm := NewTestManager(t)
 	bbnCfg := NewChainConfig(tm.TempDir, CHAIN_ID_BABYLON)
 	bbnCfg.IsUpgrade = true
-	// if tag is empty string, use default tag v4.2.2
+	// if tag is empty string, use default tag v4.2.5
 	if tag == "" {
 		tag = BabylonContainerTagBeforeUpgrade
 	}
 	bbnCfg.Tag = tag
 	bbnCfg.BootstrapRepository = BabylonContainerNameBeforeUpgrade
+
+	for _, opt := range cfgOpts {
+		opt(bbnCfg)
+	}
+
 	tm.Chains[CHAIN_ID_BABYLON] = NewChain(tm, bbnCfg)
 
 	return &TestManagerUpgrade{

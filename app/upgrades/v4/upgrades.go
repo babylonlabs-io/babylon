@@ -50,8 +50,8 @@ func CreateUpgradeHandler(mm *module.Manager, configurator module.Configurator, 
 		sdkCtx := sdk.UnwrapSDKContext(ctx)
 		currentHeight := uint64(sdkCtx.HeaderInfo().Height)
 
-		// Validate epoch boundary using epoching keeper
-		if err := epoching.ValidateEpochBoundary(ctx, keepers.EpochingKeeper); err != nil {
+		// Validate that we are at the second block of the epoch
+		if err := epoching.ValidateSecondBlockOfEpoch(ctx, keepers.EpochingKeeper); err != nil {
 			return nil, fmt.Errorf("epoch boundary validation failed: %w", err)
 		}
 

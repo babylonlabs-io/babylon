@@ -2,6 +2,7 @@ package e2e2
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -24,19 +25,19 @@ var ZeroInt = sdkmath.ZeroInt()
 // v4.2.x and verifies the v4.3 upgrade corrects them.
 //
 // Scenario 1 (unbond/re-delegate from slashed validator):
-//  1. del1 creates two BABY delegations: healthy chain validator and val2
-//  2. val2 gets slashed (jailed by downtime)
-//  3. del1 unbonds from slashed val2
-//  4. del1 delegates again to slashed val2
-//  5. del1 unbonds again from slashed val2
+//  1. del1 creates two BABY delegations: healthy chain validator and val1
+//  2. val1 gets slashed (jailed by downtime)
+//  3. del1 unbonds from slashed val1
+//  4. del1 delegates again to slashed val1
+//  5. del1 unbonds again from slashed val1
 //
 // Result: del1's ActiveBaby lower than expected
 //
 // Scenario 2 (jail/unjail + delegate in same epoch):
-//  1. del2 delegates BABY to val3
-//  2. val3 gets jailed by downtime
-//  3. val3 is unjailed
-//  4. del3 delegates BABY to val3 and healthy chain validator (same epoch)
+//  1. del2 delegates BABY to val2
+//  2. val2 gets jailed by downtime
+//  3. val2 is unjailed
+//  4. del3 delegates BABY to val2 and healthy chain validator (same epoch)
 //
 // Result: del3's ActiveBaby lower than expected
 //
@@ -47,7 +48,10 @@ func TestUpgradeV43(t *testing.T) {
 	// =====================================================================
 	// Chain and wallets setup
 	// =====================================================================
-	tm := tmanager.NewTmWithUpgrade(t, 0, "")
+	tm := tmanager.NewTmWithUpgrade(t, 0, "", func(cfg *tmanager.ChainConfig) {
+		cfg.EpochLength = 40
+		cfg.DowntimeJailDuration = 10 * time.Second
+	})
 	chainVal := tm.ChainValidator()
 	n := tm.Chains[tmanager.CHAIN_ID_BABYLON].Nodes[0]
 
@@ -145,9 +149,9 @@ func TestUpgradeV43(t *testing.T) {
 	n.WaitForEpochEnd()
 
 	val1 := n.QueryValidator(val1Addr)
-	require.True(t, val1.IsBonded(), "val2 should be bonded")
+	require.True(t, val1.IsBonded(), "val1 should be bonded")
 	val2 := n.QueryValidator(val2Addr)
-	require.True(t, val2.IsBonded(), "val3 should be bonded")
+	require.True(t, val2.IsBonded(), "val2 should be bonded")
 
 	// =====================================================================
 	// Delegate BABY to validators
@@ -187,15 +191,15 @@ func TestUpgradeV43(t *testing.T) {
 	n.CheckCostaking(del3.Address, expSat, ZeroInt, ZeroInt)
 
 	// =====================================================================
-	// Wait for val2 and val3 to be jailed by downtime
+	// Wait for val1 and val2 to be jailed by downtime
 	// (both were created in the same epoch and never sign blocks)
 	// =====================================================================
 	n.WaitForEpochEnd()
 
 	val1 = n.QueryValidator(val1Addr)
-	require.False(t, val1.Jailed, "val2 should not be jailed yet")
+	require.False(t, val1.Jailed, "val1 should not be jailed yet")
 	val2 = n.QueryValidator(val2Addr)
-	require.False(t, val2.Jailed, "val3 should not be jailed yet")
+	require.False(t, val2.Jailed, "val2 should not be jailed yet")
 
 	// val1 is jailed after ~85 blocks of missing signatures
 	val1 = n.WaitForValidatorBeJailed(val1Addr)
@@ -206,7 +210,7 @@ func TestUpgradeV43(t *testing.T) {
 	require.True(t, val2.Jailed, "val2 should be jailed")
 
 	// =====================================================================
-	// Scenario 1: unbond, re-delegate, unbond from slashed val2
+	// Scenario 1: unbond, re-delegate, unbond from slashed val1
 	// =====================================================================
 	slashDelegation := n.QueryDelegation(del1.Address, val1Addr)
 	sharesToUbd := val1.TokensFromShares(slashDelegation.Delegation.Shares)
@@ -251,9 +255,9 @@ func TestUpgradeV43(t *testing.T) {
 	// =====================================================================
 	// Scenario 2: wait until next epoch do execute all the actions of scenario 2 bug in a single epoch
 	// =====================================================================
-	// - Unjail Validator 3
-	// - Delegator3 delegates to healthy val
-	// - Delegator3 delegates to val2
+	// - Unjail val2
+	// - del3 delegates to healthy val
+	// - del3 delegates to val2
 	epochToUnjail := n.WaitForEpochEnd()
 
 	n.Unjail(wVal2.KeyName, val2Addr)

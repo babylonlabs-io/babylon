@@ -156,12 +156,12 @@ func UpdateGenModulesState(
 		return fmt.Errorf("failed to update tokenfactory genesis state: %w", err)
 	}
 
-	err = UpdateModuleGenesis(appGenState, slashingtypes.ModuleName, &slashingtypes.GenesisState{}, UpdateGenesisSlashing)
+	err = UpdateModuleGenesis(appGenState, slashingtypes.ModuleName, &slashingtypes.GenesisState{}, UpdateGenesisSlashing(initGen.ChainConfig))
 	if err != nil {
 		return fmt.Errorf("failed to update slashing genesis state: %w", err)
 	}
 
-	err = UpdateModuleGenesis(appGenState, epochingtypes.ModuleName, &epochingtypes.GenesisState{}, UpdateGenesisEpoching)
+	err = UpdateModuleGenesis(appGenState, epochingtypes.ModuleName, &epochingtypes.GenesisState{}, UpdateGenesisEpoching(initGen.ChainConfig.EpochLength))
 	if err != nil {
 		return fmt.Errorf("failed to update epoching genesis state: %w", err)
 	}
@@ -330,13 +330,17 @@ func UpdateGenesisTokenFactory(tokenfactoryGenState *tokenfactorytypes.GenesisSt
 	}
 }
 
-func UpdateGenesisSlashing(gs *slashingtypes.GenesisState) {
-	gs.Params.SignedBlocksWindow = 85
-	gs.Params.MinSignedPerWindow = sdkmath.LegacyMustNewDecFromStr("0.80")
-	gs.Params.SlashFractionDowntime = sdkmath.LegacyMustNewDecFromStr("0.1")
-	gs.Params.DowntimeJailDuration = 10 * time.Second
+func UpdateGenesisSlashing(cfg *ChainConfig) func(gs *slashingtypes.GenesisState) {
+	return func(gs *slashingtypes.GenesisState) {
+		gs.Params.SignedBlocksWindow = cfg.SignedBlocksWindow
+		gs.Params.MinSignedPerWindow = sdkmath.LegacyMustNewDecFromStr(cfg.MinSignedPerWindow)
+		gs.Params.SlashFractionDowntime = sdkmath.LegacyMustNewDecFromStr(cfg.SlashFractionDowntime)
+		gs.Params.DowntimeJailDuration = cfg.DowntimeJailDuration
+	}
 }
 
-func UpdateGenesisEpoching(gs *epochingtypes.GenesisState) {
-	gs.Params.EpochInterval = 40
+func UpdateGenesisEpoching(epochInterval uint64) func(gs *epochingtypes.GenesisState) {
+	return func(gs *epochingtypes.GenesisState) {
+		gs.Params.EpochInterval = epochInterval
+	}
 }

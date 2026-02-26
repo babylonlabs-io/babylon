@@ -37,7 +37,7 @@ type ChainConfig struct {
 	ValidatorCount           int
 	NodeCount                int
 	BlockTime                time.Duration
-	EpochLength              int64
+	EpochLength              uint64
 	VotingPeriod             time.Duration
 	ExpeditedVotingPeriod    time.Duration
 	BTCConfirmationDepth     int
@@ -47,6 +47,12 @@ type ChainConfig struct {
 	UpgradePropHeight        int64                     // height for upgrade plan
 	BootstrapRepository      string                    // repository that will be used before upgrade
 	StartingBtcStakingParams *StartingBtcStakingParams // customizable x/btcstaking params when starting the new chain
+
+	// Slashing parameters
+	SignedBlocksWindow   int64
+	MinSignedPerWindow   string
+	SlashFractionDowntime string
+	DowntimeJailDuration time.Duration
 }
 
 // Chain represents a blockchain with multiple nodes
@@ -72,6 +78,11 @@ func NewChainConfig(tempDir, chainID string) *ChainConfig {
 		ExpeditedVotingPeriod: 6 * time.Second,
 		BTCConfirmationDepth:  6,
 		GasLimit:              300_000_000,
+		// Slashing defaults
+		SignedBlocksWindow:    85,
+		MinSignedPerWindow:    "0.80",
+		SlashFractionDowntime: "0.1",
+		DowntimeJailDuration:  60 * time.Second,
 	}
 }
 
