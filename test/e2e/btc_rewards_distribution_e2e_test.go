@@ -308,6 +308,10 @@ func (s *BtcRewardsDistribution) CommitPublicRandomnessAndSealed() {
 		fmt.Sprintf("--from=%s", wFp2),
 	)
 
+	// wait for FP2's vote to be included in a block before FP1 votes,
+	// since FP1 alone has enough voting power (>2/3) to finalize the block
+	n2.WaitForNextBlock()
+
 	appHash := n1.AddFinalitySignatureToBlock(
 		s.fp1BTCSK,
 		s.fp1.BtcPk,
