@@ -388,17 +388,18 @@ func (s *BtcRewardsDistribution) CheckRewardsFirstDelegations() {
 	}, time.Minute*3, time.Second*3, "wait to have some rewards available in the gauge")
 
 	// The rewards distributed for the finality providers should be fp1 => 3x, fp2 => 1x
-	fp1DiffRewards, fp2DiffRewards, del1DiffRewards, del2DiffRewards := s.QueryRewardGauges(n2)
+	fp1Rewards, fp2Rewards, del1Rewards, del2Rewards := s.QueryRewardGauges(n2)
 	s.AddFinalityVoteUntilCurrentHeight()
 
-	coins.RequireCoinsDiffInPointOnePercentMargin(
+	coins.RequireCoinsDiffInMargin(
 		s.T(),
-		fp2DiffRewards.Coins.MulInt(sdkmath.NewIntFromUint64(3)).Add(sdk.NewCoin("ubbn", sdkmath.NewInt(2))), // truncation rounding
-		fp1DiffRewards.Coins,
+		fp2Rewards.Coins.MulInt(sdkmath.NewIntFromUint64(3)),
+		fp1Rewards.Coins,
+		10, // 1% margin to account for integer truncation in reward distribution
 	)
 
 	// The rewards distributed to the delegators should be the same for each delegator
-	coins.RequireCoinsDiffInPointOnePercentMargin(s.T(), del1DiffRewards.Coins, del2DiffRewards.Coins)
+	coins.RequireCoinsDiffInMargin(s.T(), del1Rewards.Coins, del2Rewards.Coins, 10)
 
 	CheckWithdrawReward(s.T(), n2, wDel2, s.del2Addr)
 
@@ -478,12 +479,12 @@ func (s *BtcRewardsDistribution) LastCheckRewards() {
 	// Check the difference in the finality providers
 	// fp1 should receive ~75% of the rewards received by fp2
 	expectedRwdFp1 := coins.CalculatePercentageOfCoins(fp2DiffRewards, 75)
-	coins.RequireCoinsDiffInPointOnePercentMargin(s.T(), fp1DiffRewards, expectedRwdFp1)
+	coins.RequireCoinsDiffInMargin(s.T(), fp1DiffRewards, expectedRwdFp1, 10)
 
 	// Check the difference in the delegators
 	// the del1 should receive ~40% of the rewards received by del2
 	expectedRwdDel1 := coins.CalculatePercentageOfCoins(del2DiffRewards, 40)
-	coins.RequireCoinsDiffInPointOnePercentMargin(s.T(), del1DiffRewards, expectedRwdDel1)
+	coins.RequireCoinsDiffInMargin(s.T(), del1DiffRewards, expectedRwdDel1, 10)
 
 	fp1DiffRewardsStr := fp1DiffRewards.String()
 	fp2DiffRewardsStr := fp2DiffRewards.String()
@@ -649,14 +650,18 @@ func (s *BtcRewardsDistribution) AddFinalityVote(flagsN1, flagsN2 []string) (app
 }
 
 // QueryRewardGauges returns the rewards available for fp1, fp2, del1, del2
+// all queried at the same block height for consistency
 func (s *BtcRewardsDistribution) QueryRewardGauges(n *chain.NodeConfig) (
 	fp1, fp2, del1, del2 *itypes.RewardGaugesResponse,
 ) {
 	n.WaitForNextBlockWithSleep50ms()
+	// Use height-1 to ensure we query a fully committed block, since
+	// LatestBlockNumber (from RPC status) can report a height that the
+	// gRPC gateway hasn't finished processing yet.
+	height := n.LatestBlockNumber() - 1
 
 	g := new(errgroup.Group)
 	var (
-		err                 error
 		fp1RewardGauges     map[string]*itypes.RewardGaugesResponse
 		fp2RewardGauges     map[string]*itypes.RewardGaugesResponse
 		btcDel1RewardGauges map[string]*itypes.RewardGaugesResponse
@@ -664,28 +669,32 @@ func (s *BtcRewardsDistribution) QueryRewardGauges(n *chain.NodeConfig) (
 	)
 
 	g.Go(func() error {
-		fp1RewardGauges, err = n.QueryRewardGauge(s.fp1.Address())
+		var err error
+		fp1RewardGauges, err = n.QueryRewardGaugeAtHeight(s.fp1.Address(), height)
 		if err != nil {
 			return fmt.Errorf("failed to query rewards for fp1: %w", err)
 		}
 		return nil
 	})
 	g.Go(func() error {
-		fp2RewardGauges, err = n.QueryRewardGauge(s.fp2.Address())
+		var err error
+		fp2RewardGauges, err = n.QueryRewardGaugeAtHeight(s.fp2.Address(), height)
 		if err != nil {
 			return fmt.Errorf("failed to query rewards for fp2: %w", err)
 		}
 		return nil
 	})
 	g.Go(func() error {
-		btcDel1RewardGauges, err = n.QueryRewardGauge(sdk.MustAccAddressFromBech32(s.del1Addr))
+		var err error
+		btcDel1RewardGauges, err = n.QueryRewardGaugeAtHeight(sdk.MustAccAddressFromBech32(s.del1Addr), height)
 		if err != nil {
 			return fmt.Errorf("failed to query rewards for del1: %w", err)
 		}
 		return nil
 	})
 	g.Go(func() error {
-		btcDel2RewardGauges, err = n.QueryRewardGauge(sdk.MustAccAddressFromBech32(s.del2Addr))
+		var err error
+		btcDel2RewardGauges, err = n.QueryRewardGaugeAtHeight(sdk.MustAccAddressFromBech32(s.del2Addr), height)
 		if err != nil {
 			return fmt.Errorf("failed to query rewards for del2: %w", err)
 		}
