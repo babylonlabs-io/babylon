@@ -99,6 +99,33 @@ func ValidateEpochBoundary(ctx context.Context, epochingKeeper epochingkeeper.Ke
 	return nil
 }
 
+// ValidateSecondBlockOfEpoch validates that upgrade happens at the second block of an epoch.
+// This is needed when the upgrade handler depends on state that is only available after the
+// epoching BeginBlocker has run (e.g. GetCurrentValidatorSet requires InitValidatorSet which
+// runs on the first block of the epoch).
+func ValidateSecondBlockOfEpoch(ctx context.Context, epochingKeeper epochingkeeper.Keeper) error {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	currentHeight := uint64(sdkCtx.HeaderInfo().Height)
+
+	currentEpoch := epochingKeeper.GetEpoch(ctx)
+
+	if !currentEpoch.IsSecondBlock(ctx) {
+		return fmt.Errorf(
+			"upgrade must happen at second block of epoch - "+
+				"current height %d, expected %d",
+			currentHeight,
+			currentEpoch.GetSecondBlockHeight(),
+		)
+	}
+
+	sdkCtx.Logger().Info("second block of epoch validation successful",
+		"current_height", currentHeight,
+		"current_epoch", currentEpoch.EpochNumber,
+		"epoch_interval", currentEpoch.CurrentEpochInterval)
+
+	return nil
+}
+
 // ValidateMigrationResults validates the results of the migration using epoching keeper
 func ValidateMigrationResults(ctx context.Context, keepers *keepers.AppKeepers) error {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
