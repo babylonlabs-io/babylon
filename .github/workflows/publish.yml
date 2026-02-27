@@ -3,6 +3,8 @@ name: docker_publish
 on:
   push:
     branches:
+      - 'main'
+      - "release/*"
       - '*'
     tags:
       - '*'
