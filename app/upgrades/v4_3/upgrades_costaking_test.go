@@ -67,18 +67,24 @@ func setupTestKeepers(t *testing.T) (sdk.Context, codec.BinaryCodec, corestore.K
 	err := epochingK.SetParams(ctx, types.DefaultParams())
 	require.NoError(t, err)
 
+	// Initialize epoch 0 at genesis height
+	require.NoError(t, epochingK.InitEpoch(ctx, nil))
+
 	dftBondDenoms := stktypes.DefaultParams()
 	dftBondDenoms.BondDenom = appparams.DefaultBondDenom
 	err = stkKeeper.SetParams(ctx, dftBondDenoms)
 	require.NoError(t, err)
 
+	// Set height to epoch 1 start and increment epoch
+	ctx = ctx.WithBlockHeight(1)
+	epochingK.IncEpoch(ctx)
 	ctx = ctx.WithBlockHeight(10)
 
 	return ctx, cdc, costkStoreService, *costkKeeper, stkKeeper, *epochingK, ctrl
 }
 
 func TestResetCoStakerRwdsTracker_WithPreexistingTrackers(t *testing.T) {
-	ctx, cdc, storeService, costkK, stkK, epochingK, ctrl := setupTestKeepers(t)
+	ctx, cdc, storeService, costkK, stkK, epochK, ctrl := setupTestKeepers(t)
 	defer ctrl.Finish()
 
 	require.NoError(t, costkK.SetParams(ctx, costktypes.DefaultParams()))
@@ -105,30 +111,14 @@ func TestResetCoStakerRwdsTracker_WithPreexistingTrackers(t *testing.T) {
 	err := stkK.SetValidator(ctx, validator)
 	require.NoError(t, err)
 
-	rEpoch := datagen.GenRandomEpoch(r)
-	rEpoch.EpochNumber = 1
-	err = epochingK.InitEpoch(ctx, []*types.Epoch{
-		rEpoch,
-	})
-	require.NoError(t, err)
-
-	err = epochingK.InitGenValidatorSet(ctx, []*types.EpochValidatorSet{
-		&types.EpochValidatorSet{
-			EpochNumber: 1,
-			Validators: []*types.Validator{
-				{
-					Addr:  valAddr,
-					Power: 10,
-				},
-			},
-		},
-	})
-	require.NoError(t, err)
+	power := int64(10)
+	require.NoError(t, stkK.SetLastValidatorPower(ctx, valAddr, power))
 
 	_, err = stkK.Delegate(ctx, stakerAddr, correctAmtBaby, stktypes.Unbonded, validator, false)
 	require.NoError(t, err)
 
-	err = v4_3.ResetCoStakerRwdsTrackerActiveBaby(ctx, cdc, storeService, epochingK, stkK, costkK)
+	epochK.InitValidatorSet(ctx)
+	err = v4_3.ResetCoStakerRwdsTrackerActiveBaby(ctx, cdc, storeService, epochK, stkK, costkK)
 	require.NoError(t, err)
 
 	costkRwd, err := costkK.GetCostakerRewards(ctx, stakerAddr)

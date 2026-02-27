@@ -21,6 +21,7 @@ import (
 	sdkquerytypes "github.com/cosmos/cosmos-sdk/types/query"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
+	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stktypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
@@ -355,6 +356,16 @@ func (n *Node) WrappedCreateValidator(walletName string, addr sdk.AccAddress) {
 	_, tx := wallet.SubmitMsgs(wcvMsg)
 	require.NotNil(n.T(), tx, "Wrapped create validator msg should not be nil")
 	n.T().Logf("new validator created %+v", wcvMsg)
+}
+
+func (n *Node) Unjail(walletName string, valAddr sdk.ValAddress) {
+	wallet := n.Wallet(walletName)
+	require.NotNil(n.T(), wallet, "Wallet %s not found", walletName)
+
+	msg := slashingtypes.NewMsgUnjail(valAddr.String())
+	_, tx := wallet.SubmitMsgs(msg)
+	require.NotNil(n.T(), tx, "Unjail tx should not be nil")
+	n.T().Logf("unjailed validator %s", valAddr.String())
 }
 
 // BuildSingleSigDelegationMsg constructs a original single-sig BTC delegation message

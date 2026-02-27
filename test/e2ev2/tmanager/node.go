@@ -49,6 +49,7 @@ import (
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	blc "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
+	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 )
 
 const (
@@ -622,13 +623,16 @@ func (n *Node) WaitForNextBlocks(numberOfBlocks uint64) {
 	}, fmt.Sprintf("Timed out waiting for block %d. Current height is: %d", latest, blockToWait))
 }
 
-func (n *Node) WaitForEpochEnd() {
-	currEpoch := n.QueryCurrentEpoch().CurrentEpoch
+func (n *Node) WaitForEpochEnd() *epochingtypes.QueryCurrentEpochResponse {
+	currEpoch := n.QueryCurrentEpoch()
+	currEpochNum := currEpoch.CurrentEpoch
 
 	n.WaitForCondition(func() bool {
-		newLatest := n.QueryCurrentEpoch().CurrentEpoch
-		return newLatest > currEpoch
-	}, fmt.Sprintf("Timed out waiting for epoch %d. Current epoch is: %d", currEpoch+1, currEpoch))
+		currEpoch = n.QueryCurrentEpoch()
+		newEpochNum := currEpoch.CurrentEpoch
+		return newEpochNum > currEpochNum
+	}, fmt.Sprintf("Timed out waiting for epoch %d. Current epoch is: %d", currEpochNum+1, currEpochNum))
+	return currEpoch
 }
 
 func (n *Node) WaitForValidatorBeJailed(valAddr sdk.ValAddress) stktypes.Validator {
