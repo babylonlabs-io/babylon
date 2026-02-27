@@ -3,8 +3,7 @@ name: docker_publish
 on:
   push:
     branches:
-      - 'main'
-      - "release/*"
+      - '*'
     tags:
       - '*'
   workflow_dispatch:
