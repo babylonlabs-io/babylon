@@ -66,6 +66,40 @@ func ValidateDelegatePoolEmpty(ctx context.Context, ak types.AccountKeeper, bk t
 	return nil
 }
 
+// ValidateEpochBoundary validates that upgrade happens at epoch boundary using epoching keeper
+func ValidateEpochBoundary(ctx context.Context, epochingKeeper epochingkeeper.Keeper) error {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	currentHeight := uint64(sdkCtx.HeaderInfo().Height)
+
+	// Get current epoch information
+	currentEpoch := epochingKeeper.GetEpoch(ctx)
+
+	// Handle special case: height 1 is always valid as first possible upgrade height
+	if currentHeight == 1 {
+		sdkCtx.Logger().Info("epoch boundary validation successful - height 1",
+			"current_height", currentHeight,
+			"note", "height 1 is always valid epoch boundary")
+		return nil
+	}
+
+	if !currentEpoch.IsSecondBlock(ctx) {
+		return fmt.Errorf(
+			"upgrade must happen at second block of epoch - "+
+				"current height %d, expected %d",
+			currentHeight,
+			currentEpoch.GetSecondBlockHeight(),
+		)
+	}
+
+	sdkCtx.Logger().Info("epoch boundary validation successful",
+		"current_height", currentHeight,
+		"current_epoch", currentEpoch.EpochNumber,
+		"epoch_interval", currentEpoch.CurrentEpochInterval,
+		"is_epoch_boundary", true)
+
+	return nil
+}
+
 // ValidateSecondBlockOfEpoch validates that upgrade happens at the second block of an epoch.
 // This is needed when the upgrade handler depends on state that is only available after the
 // epoching BeginBlocker has run (e.g. GetCurrentValidatorSet requires InitValidatorSet which

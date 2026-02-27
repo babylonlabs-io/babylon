@@ -88,6 +88,13 @@ func (s *UpgradeTestSuite) TestUpgradeValidation() {
 	}
 }
 
+func (s *UpgradeTestSuite) TestUpgradeAtHeight1() {
+	s.SetupTest()
+
+	// Height 1 should always be valid (special case in validation)
+	s.executeSuccessfulUpgrade(1)
+}
+
 func (s *UpgradeTestSuite) TestUpgradeWarningScenarios() {
 	testCases := []struct {
 		name           string
