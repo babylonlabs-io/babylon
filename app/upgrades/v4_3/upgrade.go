@@ -45,8 +45,11 @@ func CreateUpgradeHandler(mm *module.Manager, configurator module.Configurator, 
 			return nil, err
 		}
 
-		// Validate epoch boundary using epoching keeper
-		if err := epoching.ValidateEpochBoundary(ctx, keepers.EpochingKeeper); err != nil {
+		// Validate that we are at the second block of the epoch.
+		// The second block is required because GetCurrentValidatorSet depends
+		// on InitValidatorSet which runs in the epoching BeginBlocker on the
+		// first block of the epoch.
+		if err := epoching.ValidateSecondBlockOfEpoch(ctx, keepers.EpochingKeeper); err != nil {
 			return nil, fmt.Errorf("epoch boundary validation failed: %w", err)
 		}
 
