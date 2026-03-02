@@ -43,6 +43,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#1878](https://github.com/babylonlabs-io/babylon/pull/1878) Remove unnecessary []byte allocations in IBC size checks
 - [#1891](https://github.com/babylonlabs-io/babylon/pull/1891) fix: golangci lint misspell and removed unused func
 - [#1925](https://github.com/babylonlabs-io/babylon/pull/1925) chore: bump small dependencies and go to `v1.24.0`
+- [#1974](https://github.com/babylonlabs-io/babylon/pull/1974) chore: bump dependencies `x/crypto` and `x/sys`
 
 ### State breaking
 
