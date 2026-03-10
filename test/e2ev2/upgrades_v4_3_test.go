@@ -258,7 +258,7 @@ func TestUpgradeV43(t *testing.T) {
 	// - Unjail val2
 	// - del3 delegates to healthy val
 	// - del3 delegates to val2
-	epochToUnjail := n.WaitForEpochEnd()
+	n.WaitForEpochEnd()
 
 	n.Unjail(wVal2.KeyName, val2Addr)
 	val2AfterUnjail := n.QueryValidator(val2Addr)
@@ -278,13 +278,30 @@ func TestUpgradeV43(t *testing.T) {
 	n.CheckCostaking(del3.Address, expSat, ZeroInt, ZeroInt)
 
 	// =====================================================================
+	// Update BTC staking params to create a second params version.
+	// This ensures the HeightToVersionMap has multiple entries and the
+	// migration correctly preserves them across the upgrade.
+	// =====================================================================
+	paramsVersionsBeforeParamsUpdate := n.QueryBtcStakingParamsVersions()
+	require.Len(t, paramsVersionsBeforeParamsUpdate, 1)
+
+	updatedParams := n.QueryBtcStakingParams()
+	updatedParams.BtcActivationHeight = updatedParams.BtcActivationHeight + 1000
+	submitAndPassBtcStakingParamsUpdate(t, chainVal, *updatedParams)
+
+	paramsVersionsAfterParamsUpdate := n.QueryBtcStakingParamsVersions()
+	require.Len(t, paramsVersionsAfterParamsUpdate, 2)
+	require.Equal(t, updatedParams.BtcActivationHeight, paramsVersionsAfterParamsUpdate[1].Params.BtcActivationHeight)
+
+	// =====================================================================
 	// Submit upgrade proposal and execute, verifying the epochs
 	// =====================================================================
-	paramsVersionsBeforeUpgrade := n.QueryBtcStakingParamsVersions()
+	paramsVersionsBeforeUpgrade := paramsVersionsAfterParamsUpdate
 
 	epochBeforeUpgrade := n.QueryCurrentEpoch()
-	require.EqualValues(t, epochToUnjail.CurrentEpoch, epochBeforeUpgrade.CurrentEpoch, "all the actions should be done in the same epoch")
 
+	// The params update governance proposal takes ~12s (voting period) which
+	// may advance the epoch, so recalculate the upgrade height from current state.
 	secondBlockOfNextEpoch := epochBeforeUpgrade.EpochBoundary + 2
 	govMsg, preUpgradeFunc := createGovPropAndPreUpgradeFunc(
 		t, chainVal.Wallet.WalletSender, int64(secondBlockOfNextEpoch),
@@ -301,6 +318,19 @@ func TestUpgradeV43(t *testing.T) {
 	// =====================================================================
 	paramsVersionsAfterUpgrade := n.QueryBtcStakingParamsVersions()
 	require.Equal(t, paramsVersionsBeforeUpgrade, paramsVersionsAfterUpgrade)
+
+	// =====================================================================
+	// Verify HeightToVersionMap is consistent after migration
+	// =====================================================================
+	// Each stored param version should be queryable by its BtcActivationHeight,
+	// confirming the HeightToVersionMap correctly maps heights to versions.
+	for _, sp := range paramsVersionsAfterUpgrade {
+		params, version := n.QueryBtcStakingParamsByBTCHeight(uint32(sp.Params.BtcActivationHeight))
+		require.Equal(t, sp.Version, version,
+			"HeightToVersionMap should map BtcActivationHeight %d to version %d",
+			sp.Params.BtcActivationHeight, sp.Version)
+		require.Equal(t, sp.Params.BtcActivationHeight, params.BtcActivationHeight)
+	}
 
 	btcDelsResp := chainVal.QueryBTCDelegations(bstypes.BTCDelegationStatus_ACTIVE)
 	require.Len(t, btcDelsResp, 3)
@@ -360,4 +390,55 @@ func createGovPropAndPreUpgradeFunc(t *testing.T, valWallet *tmanager.WalletSend
 
 	preUpgradeFunc := func(nodes []*tmanager.Node) {}
 	return govMsg, preUpgradeFunc
+}
+
+func submitAndPassBtcStakingParamsUpdate(
+	t *testing.T,
+	chainVal *tmanager.ValidatorNode,
+	newParams bstypes.Params,
+) {
+	updateMsg := &bstypes.MsgUpdateParams{
+		Authority: appparams.AccGov.String(),
+		Params:    newParams,
+	}
+
+	anyMsg, err := types.NewAnyWithValue(updateMsg)
+	require.NoError(t, err)
+
+	govMsg := &govtypes.MsgSubmitProposal{
+		Messages:       []*types.Any{anyMsg},
+		InitialDeposit: []sdk.Coin{sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(1000000))},
+		Proposer:       chainVal.Wallet.Address.String(),
+		Metadata:       "",
+		Title:          "Update BTC Staking Params",
+		Summary:        "update btc staking params to create new version",
+		Expedited:      false,
+	}
+
+	chainVal.UpdateWalletAccSeqNumber(chainVal.Wallet.KeyName)
+	_, tx := chainVal.Wallet.SubmitMsgs(govMsg)
+	require.NotNil(t, tx, "params update proposal tx should not be nil")
+	chainVal.WaitForNextBlock()
+
+	propsResp := chainVal.QueryProposals()
+	require.NotEmpty(t, propsResp.Proposals)
+
+	proposalID := propsResp.Proposals[len(propsResp.Proposals)-1].Id
+	voteMsg := &govtypes.MsgVote{
+		ProposalId: proposalID,
+		Voter:      chainVal.Wallet.Address.String(),
+		Option:     govtypes.VoteOption_VOTE_OPTION_YES,
+	}
+	_, voteTx := chainVal.Wallet.SubmitMsgs(voteMsg)
+	require.NotNil(t, voteTx, "vote tx should not be nil")
+
+	chainVal.WaitForCondition(func() bool {
+		resp := chainVal.QueryProposals()
+		for _, p := range resp.Proposals {
+			if p.Id == proposalID {
+				return p.Status == govtypes.ProposalStatus_PROPOSAL_STATUS_PASSED
+			}
+		}
+		return false
+	}, "waiting for btc staking params update proposal to pass")
 }

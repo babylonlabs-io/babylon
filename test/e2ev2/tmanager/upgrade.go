@@ -51,8 +51,7 @@ func (tm *TestManagerUpgrade) runProposalUpgrade(govMsg *govtypes.MsgSubmitPropo
 		chain.Config.UpgradePropHeight = upgradeMsg.Plan.Height
 
 		// submit upgrade gov proposal and vote yes
-		// force increase sequence of validator
-		validator.Wallet.WalletSender.IncSeq()
+		validator.UpdateWalletAccSeqNumber(validator.Wallet.KeyName)
 		validator.SubmitProposal(validator.Wallet.KeyName, govMsg)
 		validator.WaitForNextBlock()
 		propsResp := validator.QueryProposals()
