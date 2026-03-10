@@ -26,7 +26,6 @@ type Keeper interface {
 // MigrateStore performs in-place store migrations.
 // Migration moves HeightToVersionMap from the old key (hex 0x10) to the new key (decimal 10)
 // to resolve the key prefix collision with FpBbnAddrKey.
-// If the old key is empty, it rebuilds the map from existing stored params.
 func MigrateStore(
 	ctx sdk.Context,
 	cdc codec.BinaryCodec,
@@ -39,28 +38,31 @@ func MigrateStore(
 	}
 
 	if bz == nil {
-		heightToVersionMap, err := rebuildHeightToVersionMap(ctx, k)
+		rebuiltMap, err := rebuildHeightToVersionMap(k.GetAllParams(ctx))
 		if err != nil {
-			return fmt.Errorf("failed to rebuild HeightToVersionMap from existing params: %s", err.Error())
+			return fmt.Errorf("failed to rebuild HeightToVersionMap from existing params: %w", err)
 		}
-		return k.SetHeightToVersionMap(ctx, heightToVersionMap)
+		return k.SetHeightToVersionMap(ctx, rebuiltMap)
 	}
 
-	var heightToVersionMap types.HeightToVersionMap
-	if err := cdc.Unmarshal(bz, &heightToVersionMap); err != nil {
+	var oldHeightToVersionMap types.HeightToVersionMap
+	err = cdc.Unmarshal(bz, &oldHeightToVersionMap)
+	if err != nil {
 		return fmt.Errorf("failed to unmarshal HeightToVersionMap: %s", err.Error())
+	}
+
+	if err := k.SetHeightToVersionMap(ctx, &oldHeightToVersionMap); err != nil {
+		return err
 	}
 	store.Delete(OldHeightToVersionMapKey)
 
-	return k.SetHeightToVersionMap(ctx, &heightToVersionMap)
+	return nil
 }
 
-// rebuildHeightToVersionMap reconstructs the HeightToVersionMap from all existing
-// stored params. Each param version maps to its BtcActivationHeight.
-func rebuildHeightToVersionMap(ctx context.Context, k Keeper) (*types.HeightToVersionMap, error) {
-	allParams := k.GetAllParams(ctx)
+// rebuildHeightToVersionMap reconstructs the HeightToVersionMap from existing params.
+func rebuildHeightToVersionMap(allParams []*types.Params) (*types.HeightToVersionMap, error) {
 	if len(allParams) == 0 {
-		return nil, fmt.Errorf("no stored params found to rebuild HeightToVersionMap")
+		return nil, fmt.Errorf("no params found to rebuild HeightToVersionMap")
 	}
 
 	heightToVersionMap := types.NewHeightToVersionMap()
