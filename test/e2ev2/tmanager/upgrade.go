@@ -51,15 +51,14 @@ func (tm *TestManagerUpgrade) runProposalUpgrade(govMsg *govtypes.MsgSubmitPropo
 		chain.Config.UpgradePropHeight = upgradeMsg.Plan.Height
 
 		// submit upgrade gov proposal and vote yes
-		// force increase sequence of validator
-		validator.Wallet.WalletSender.IncSeq()
+		validator.UpdateWalletAccSeqNumber(validator.Wallet.KeyName)
 		validator.SubmitProposal(validator.Wallet.KeyName, govMsg)
 		validator.WaitForNextBlock()
 		propsResp := validator.QueryProposals()
 		if len(propsResp.Proposals) == 0 {
 			return ErrNoProposalSubmitted
 		}
-		proposalID := propsResp.Proposals[0].Id
+		proposalID := propsResp.Proposals[len(propsResp.Proposals)-1].Id
 		tm.T.Logf("proposal %d submitted, current status: %d", proposalID, propsResp.Proposals[0].Status)
 		validator.Vote(validator.Wallet.KeyName, proposalID, govtypes.VoteOption_VOTE_OPTION_YES)
 		validator.WaitForNextBlock()
@@ -77,7 +76,7 @@ func (tm *TestManagerUpgrade) runProposalUpgrade(govMsg *govtypes.MsgSubmitPropo
 	// check proposal status
 	validator := tm.ChainValidator()
 	propsResp := validator.QueryProposals()
-	if propsResp.Proposals[0].Status != 3 {
+	if propsResp.Proposals[len(propsResp.Proposals)-1].Status != 3 {
 		return ErrProposalNotPassed
 	}
 
