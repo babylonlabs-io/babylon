@@ -286,7 +286,7 @@ func TestUpgradeV43(t *testing.T) {
 	require.Len(t, paramsVersionsBeforeParamsUpdate, 1)
 
 	updatedParams := n.QueryBtcStakingParams()
-	updatedParams.BtcActivationHeight = updatedParams.BtcActivationHeight + 1000
+	updatedParams.BtcActivationHeight += 1000
 	submitAndPassBtcStakingParamsUpdate(t, chainVal, *updatedParams)
 
 	paramsVersionsAfterParamsUpdate := n.QueryBtcStakingParamsVersions()
