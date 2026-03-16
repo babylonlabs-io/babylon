@@ -17,10 +17,6 @@ const ibcReflectSendWasmPath = "bytecode/ibc_reflect_send.wasm"
 // TestWasmIBCHandler verifies that the wasm IBC module handler is properly
 // wired in the IBC router.
 //
-// Bug context: In app/keepers/keepers.go, `wasmStack` was declared nil and
-// registered in the IBC router without being assigned the actual handler.
-// Any IBC channel open targeting the wasm port caused a nil pointer panic.
-//
 // This test covers two cases:
 //   - Raw port: MsgChannelOpenInit on the bare "wasm" port (no contract)
 //   - Contract port: deploy an IBC contract, then open a channel on its port
@@ -44,7 +40,6 @@ func TestWasmIBCHandler(t *testing.T) {
 		bbn.DefaultWallet().VerifySentTx = false
 		bbn.UpdateWalletAccSeqNumber(sender.KeyName)
 
-		// MsgChannelOpenInit on the bare "wasm" port (no contract bound)
 		msg := channeltypes.NewMsgChannelOpenInit(
 			"wasm",
 			"wasm-ibc-1",
@@ -54,23 +49,17 @@ func TestWasmIBCHandler(t *testing.T) {
 			sender.Addr(),
 		)
 
+		// Channel open on bare "wasm" port should broadcast successfully
+		// but fail in DeliverTx because no contract is bound to that port
 		signedTx := sender.SignMsg(msg)
 		txHash, err := bbn.SubmitTx(signedTx)
-
-		if err != nil {
-			t.Logf("MsgChannelOpenInit to raw wasm port failed at broadcast: %v", err)
-			require.NotContains(t, err.Error(), "nil pointer dereference",
-				"should NOT get nil pointer dereference — wasmStack must be properly assigned")
-		} else {
-			bbn.WaitForNextBlock()
-			txResp := bbn.QueryTxByHash(txHash)
-			t.Logf("DeliverTx result: code=%d log=%s", txResp.TxResponse.Code, txResp.TxResponse.RawLog)
-			require.NotContains(t, txResp.TxResponse.RawLog, "nil pointer dereference",
-				"should NOT get nil pointer dereference — wasmStack must be properly assigned")
-		}
+		require.NoError(t, err)
 
 		bbn.WaitForNextBlock()
-		t.Log("Chain is still producing blocks after raw wasm port channel open attempt")
+		txResp := bbn.QueryTxByHash(txHash)
+		require.NotZero(t, txResp.TxResponse.Code, "channel open on bare wasm port should fail")
+		require.NotContains(t, txResp.TxResponse.RawLog, "nil pointer dereference")
+		t.Logf("Raw wasm port correctly rejected: %s", txResp.TxResponse.RawLog)
 	})
 
 	t.Run("contract_ibc_port", func(t *testing.T) {
@@ -81,7 +70,7 @@ func TestWasmIBCHandler(t *testing.T) {
 		bbn.DefaultWallet().VerifySentTx = false
 		bbn.UpdateWalletAccSeqNumber(sender.KeyName)
 
-		// Store the IBC-capable wasm contract (needs high gas for large bytecode)
+		// Store the IBC-capable wasm contract
 		wasmBytecode := tmanager.LoadWasmBytecode(t, ibcReflectSendWasmPath)
 		storeMsg := &wasmtypes.MsgStoreCode{
 			Sender:       sender.Addr(),
@@ -89,7 +78,7 @@ func TestWasmIBCHandler(t *testing.T) {
 		}
 		storeTx := sender.SignMsgWithGas(10_000_000, storeMsg)
 		storeTxHash, err := bbn.SubmitTx(storeTx)
-		require.NoError(t, err, "store code broadcast should succeed")
+		require.NoError(t, err)
 		bbn.WaitForNextBlock()
 		bbn.RequireTxSuccess(storeTxHash)
 
@@ -107,7 +96,6 @@ func TestWasmIBCHandler(t *testing.T) {
 		}
 		sender.SubmitMsgs(instantiateMsg)
 
-		// Query the contract's IBC port
 		contractAddr := bbn.QueryWasmContractByCodeID(codeID)
 		t.Logf("Instantiated contract at: %s", contractAddr)
 
@@ -116,7 +104,7 @@ func TestWasmIBCHandler(t *testing.T) {
 		t.Logf("Contract IBC port: %s", ibcPortID)
 		require.NotEmpty(t, ibcPortID, "IBC-capable contract should have a port ID")
 
-		// Open an IBC channel on the contract's port
+		// Open an IBC channel on the contract's port — should succeed
 		msg := channeltypes.NewMsgChannelOpenInit(
 			ibcPortID,
 			"ibc-reflect-v1",
@@ -128,34 +116,15 @@ func TestWasmIBCHandler(t *testing.T) {
 
 		signedTx := sender.SignMsg(msg)
 		txHash, err := bbn.SubmitTx(signedTx)
-
-		if err != nil {
-			t.Logf("MsgChannelOpenInit failed at broadcast: %v", err)
-			require.NotContains(t, err.Error(), "nil pointer dereference",
-				"should NOT get nil pointer dereference — wasmStack must be properly assigned")
-		} else {
-			t.Logf("Tx broadcast succeeded (hash: %s), checking DeliverTx result...", txHash)
-			bbn.WaitForNextBlock()
-			txResp := bbn.QueryTxByHash(txHash)
-
-			t.Logf("DeliverTx result: code=%d log=%s", txResp.TxResponse.Code, txResp.TxResponse.RawLog)
-			require.NotContains(t, txResp.TxResponse.RawLog, "nil pointer dereference",
-				"should NOT get nil pointer dereference — wasmStack must be properly assigned")
-
-			if txResp.TxResponse.Code == 0 {
-				t.Log("Channel open init succeeded — wasm IBC handler is working correctly")
-				bbnChannelsAfter := bbn.QueryIBCChannels()
-				require.Greater(t, len(bbnChannelsAfter.Channels), 1,
-					"a new wasm IBC channel should have been created")
-				lastCh := bbnChannelsAfter.Channels[len(bbnChannelsAfter.Channels)-1]
-				t.Logf("New channel created: %s on port %s", lastCh.ChannelId, lastCh.PortId)
-			} else {
-				t.Logf("Channel open returned wasm handler error (code %d) — not a nil panic", txResp.TxResponse.Code)
-			}
-		}
+		require.NoError(t, err)
 
 		bbn.WaitForNextBlock()
-		t.Log("Chain is still producing blocks after contract IBC channel open")
+		txResp := bbn.QueryTxByHash(txHash)
+		require.Zero(t, txResp.TxResponse.Code, "channel open on contract port should succeed: %s", txResp.TxResponse.RawLog)
+
+		bbnChannelsAfter := bbn.QueryIBCChannels()
+		require.Greater(t, len(bbnChannelsAfter.Channels), 1, "a new wasm IBC channel should have been created")
+		lastCh := bbnChannelsAfter.Channels[len(bbnChannelsAfter.Channels)-1]
+		t.Logf("New channel created: %s on port %s", lastCh.ChannelId, lastCh.PortId)
 	})
 }
-
