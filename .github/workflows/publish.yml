@@ -51,6 +51,7 @@ jobs:
       repoName: babylond
       docker_scan: true
       trivy_nofail: true
+      push_to_dockerhub: true
 
   docker_testnet_pipeline:
     if: ${{ always() && (
@@ -79,4 +80,5 @@ jobs:
         BABYLON_BUILD_OPTIONS=testnet
       docker_scan: true
       trivy_nofail: true
+      push_to_dockerhub: true
       buildArtifactPrefix: "testnet-"
