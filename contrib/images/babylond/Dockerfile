@@ -38,7 +38,7 @@ RUN WASMVM_VERSION=$(go list -m github.com/CosmWasm/wasmvm/v2 | cut -d ' ' -f 2)
     -O /lib/libwasmvm_muslc."$(uname -m)".a && \
     # verify checksum
     wget -q https://github.com/CosmWasm/wasmvm/releases/download/"$WASMVM_VERSION"/checksums.txt -O /tmp/checksums.txt && \
-    sha256sum /lib/libwasmvm_muslc."$(uname -m)".a | grep "$(cat /tmp/checksums.txt | grep libwasmvm_muslc."$(uname -m)" | cut -d ' ' -f 1)"
+    grep -F "libwasmvm_muslc.$(uname -m)" /tmp/checksums.txt | (cd /lib && sha256sum -c -)
 
 RUN LEDGER_ENABLED=$LEDGER_ENABLED \
     BABYLON_BUILD_OPTIONS=$BABYLON_BUILD_OPTIONS \
@@ -54,7 +54,8 @@ RUN apk add --no-cache bash=5.2.37-r0 curl=8.14.1-r2 jq=1.7.1-r0
 
 # Label should match your github repo
 ARG VERSION
-LABEL org.opencontainers.image.source="https://github.com/babylonlabs-io/babylond:${VERSION}"
+LABEL org.opencontainers.image.source="https://github.com/babylonlabs-io/babylon"
+LABEL org.opencontainers.image.version="${VERSION}"
 
 # Install Libraries
 # COPY --from=build-env /usr/lib/libgcc_s.so.1 /lib/
