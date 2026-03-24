@@ -43,7 +43,7 @@ jobs:
      publish: false
      dockerfile: ./contrib/images/babylond/Dockerfile
      repoName: babylond
-     trivy_nofail: true
+     trivy_nofail: false
 
 ###############################################################################
 ###                                   E2E                                   ###
