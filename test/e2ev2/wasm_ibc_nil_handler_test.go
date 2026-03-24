@@ -58,7 +58,7 @@ func TestWasmIBCHandler(t *testing.T) {
 		bbn.WaitForNextBlock()
 		txResp := bbn.QueryTxByHash(txHash)
 		require.NotZero(t, txResp.TxResponse.Code, "channel open on bare wasm port should fail")
-		require.NotContains(t, txResp.TxResponse.RawLog, "nil pointer dereference")
+		require.Equal(t, txResp.TxResponse.RawLog, "failed to execute message; message index: 0: channel open init callback failed for port ID: wasm, channel ID: channel-1: contract port id: without prefix: invalid")
 		t.Logf("Raw wasm port correctly rejected: %s", txResp.TxResponse.RawLog)
 	})
 
