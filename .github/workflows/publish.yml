@@ -20,7 +20,7 @@ permissions:
 
 jobs:
   lint_test:
-    uses: babylonlabs-io/.github/.github/workflows/reusable_go_lint_test.yml@0adff9d36a387ebfc921621f2e6b357230f8c08e  # v0.18.1
+    uses: babylonlabs-io/.github/.github/workflows/reusable_go_lint_test.yml@0adff9d36a387ebfc921621f2e6b357230f8c08e # v0.18.1
     if: ${{ !(github.event_name == 'workflow_dispatch' && inputs['skip-lint-test'] == true) }}
     secrets: inherit
     with:
@@ -35,7 +35,7 @@ jobs:
           (github.event_name == 'workflow_dispatch' && inputs['skip-lint-test'] == true) ||
           needs.lint_test.result == 'success'
         )}}
-    uses: babylonlabs-io/.github/.github/workflows/reusable_docker_pipeline.yml@0adff9d36a387ebfc921621f2e6b357230f8c08e  # v0.18.1
+    uses: babylonlabs-io/.github/.github/workflows/reusable_docker_pipeline.yml@0adff9d36a387ebfc921621f2e6b357230f8c08e # v0.18.1
     needs: ["lint_test"]
     secrets: inherit
     permissions:
@@ -47,6 +47,7 @@ jobs:
       packages: read
     with:
       publish: true
+      push_to_dockerhub: true
       dockerfile: ./contrib/images/babylond/Dockerfile
       repoName: babylond
       docker_scan: true
@@ -60,7 +61,7 @@ jobs:
               needs.lint_test.result == 'success'
             )
           ) }}
-    uses: babylonlabs-io/.github/.github/workflows/reusable_docker_pipeline.yml@0adff9d36a387ebfc921621f2e6b357230f8c08e  # v0.18.1
+    uses: babylonlabs-io/.github/.github/workflows/reusable_docker_pipeline.yml@0adff9d36a387ebfc921621f2e6b357230f8c08e # v0.18.1
     needs: ["lint_test"]
     secrets: inherit
     permissions:
@@ -72,6 +73,7 @@ jobs:
       packages: read
     with:
       publish: true
+      push_to_dockerhub: true
       dockerfile: ./contrib/images/babylond/Dockerfile
       repoName: babylond
       imageTag: ${{ github.ref_name }}-testnet  # Append '-testnet' to the tag name

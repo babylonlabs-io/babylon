@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   lint_test:
-    uses: babylonlabs-io/.github/.github/workflows/reusable_go_lint_test.yml@0adff9d36a387ebfc921621f2e6b357230f8c08e  # v0.18.1
+    uses: babylonlabs-io/.github/.github/workflows/reusable_go_lint_test.yml@0adff9d36a387ebfc921621f2e6b357230f8c08e # v0.18.1
     secrets: inherit
     with:
       go-version: '1.23'
@@ -37,7 +37,7 @@ jobs:
       contents: read         # Required by reusable workflow
       id-token: write        # Required for AWS OIDC
       security-events: write # Required for Trivy SARIF uploads
-    uses: babylonlabs-io/.github/.github/workflows/reusable_docker_pipeline.yml@0adff9d36a387ebfc921621f2e6b357230f8c08e  # v0.18.1
+    uses: babylonlabs-io/.github/.github/workflows/reusable_docker_pipeline.yml@0adff9d36a387ebfc921621f2e6b357230f8c08e # v0.18.1
     secrets: inherit
     with:
      publish: false
