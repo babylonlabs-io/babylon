@@ -58,8 +58,9 @@ func (tm *TestManagerUpgrade) runProposalUpgrade(govMsg *govtypes.MsgSubmitPropo
 		if len(propsResp.Proposals) == 0 {
 			return ErrNoProposalSubmitted
 		}
-		proposalID := propsResp.Proposals[len(propsResp.Proposals)-1].Id
-		tm.T.Logf("proposal %d submitted, current status: %d", proposalID, propsResp.Proposals[0].Status)
+		lastProp := propsResp.Proposals[len(propsResp.Proposals)-1]
+		proposalID := lastProp.Id
+		tm.T.Logf("proposal %d submitted, current status: %d", proposalID, lastProp.Status)
 		validator.Vote(validator.Wallet.KeyName, proposalID, govtypes.VoteOption_VOTE_OPTION_YES)
 		validator.WaitForNextBlock()
 		tallyResult := validator.QueryTallyResult(proposalID)

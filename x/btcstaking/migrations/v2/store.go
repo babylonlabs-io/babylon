@@ -34,7 +34,7 @@ func MigrateStore(
 ) error {
 	bz, err := store.Get(OldHeightToVersionMapKey)
 	if err != nil {
-		return fmt.Errorf("failed to get height to version map key using the old prefix hex 0x10: %s", err.Error())
+		return fmt.Errorf("failed to get height to version map key using the old prefix hex 0x10: %w", err)
 	}
 
 	if bz == nil {
@@ -48,7 +48,7 @@ func MigrateStore(
 	var oldHeightToVersionMap types.HeightToVersionMap
 	err = cdc.Unmarshal(bz, &oldHeightToVersionMap)
 	if err != nil {
-		return fmt.Errorf("failed to unmarshal HeightToVersionMap: %s", err.Error())
+		return fmt.Errorf("failed to unmarshal HeightToVersionMap: %w", err)
 	}
 
 	if err := k.SetHeightToVersionMap(ctx, &oldHeightToVersionMap); err != nil {
