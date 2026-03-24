@@ -47,6 +47,7 @@ jobs:
       packages: read
     with:
       publish: true
+      push_to_dockerhub: true
       dockerfile: ./contrib/images/babylond/Dockerfile
       repoName: babylond
       docker_scan: true
@@ -72,6 +73,7 @@ jobs:
       packages: read
     with:
       publish: true
+      push_to_dockerhub: true
       dockerfile: ./contrib/images/babylond/Dockerfile
       repoName: babylond
       imageTag: ${{ github.ref_name }}-testnet  # Append '-testnet' to the tag name
