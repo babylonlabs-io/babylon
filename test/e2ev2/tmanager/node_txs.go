@@ -2,6 +2,8 @@ package tmanager
 
 import (
 	"encoding/hex"
+	"os"
+	"path/filepath"
 	"time"
 
 	"cosmossdk.io/math"
@@ -588,4 +590,13 @@ func (n *Node) CreateBtcDelegation(wallet *WalletSender, fpPK *btcec.PublicKey) 
 	activeBtcDelResp := n.QueryBTCDelegation(stakingTxHash)
 	require.Equal(n.T(), "ACTIVE", activeBtcDelResp.StatusDesc)
 	return activeBtcDelResp
+}
+
+// LoadWasmBytecode reads a wasm file from the given relative path.
+func LoadWasmBytecode(t require.TestingT, relativePath string) []byte {
+	absPath, err := filepath.Abs(relativePath)
+	require.NoError(t, err)
+	bz, err := os.ReadFile(absPath)
+	require.NoError(t, err, "failed to read wasm file at %s", absPath)
+	return bz
 }

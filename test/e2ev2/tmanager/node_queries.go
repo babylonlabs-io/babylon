@@ -20,6 +20,7 @@ import (
 	stktypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/util"
 	btcstktypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
@@ -140,6 +141,54 @@ func (n *Node) QueryIBCChannels() *channeltypes.QueryChannelsResponse {
 	require.NoError(n.T(), err)
 
 	return &resp
+}
+
+// WasmQuery executes a callback with a wasm query client
+func (n *Node) WasmQuery(f func(wasmtypes.QueryClient)) {
+	n.GrpcConn(func(conn *grpc.ClientConn) {
+		qc := wasmtypes.NewQueryClient(conn)
+		f(qc)
+	})
+}
+
+// QueryWasmLatestCodeID returns the highest stored wasm code ID
+func (n *Node) QueryWasmLatestCodeID() uint64 {
+	var codeID uint64
+	n.WasmQuery(func(qc wasmtypes.QueryClient) {
+		resp, err := qc.Codes(context.Background(), &wasmtypes.QueryCodesRequest{})
+		require.NoError(n.T(), err)
+		require.NotEmpty(n.T(), resp.CodeInfos, "no wasm codes found")
+		codeID = resp.CodeInfos[len(resp.CodeInfos)-1].CodeID
+	})
+	return codeID
+}
+
+// QueryWasmContractByCodeID returns the latest contract address for a code ID
+func (n *Node) QueryWasmContractByCodeID(codeID uint64) string {
+	var addr string
+	n.WasmQuery(func(qc wasmtypes.QueryClient) {
+		resp, err := qc.ContractsByCode(context.Background(), &wasmtypes.QueryContractsByCodeRequest{
+			CodeId: codeID,
+		})
+		require.NoError(n.T(), err)
+		require.NotEmpty(n.T(), resp.Contracts, "no contracts found for code ID %d", codeID)
+		addr = resp.Contracts[len(resp.Contracts)-1]
+	})
+	return addr
+}
+
+// QueryWasmContractInfo returns the contract info for a given address
+func (n *Node) QueryWasmContractInfo(contractAddr string) *wasmtypes.ContractInfo {
+	var info *wasmtypes.ContractInfo
+	n.WasmQuery(func(qc wasmtypes.QueryClient) {
+		resp, err := qc.ContractInfo(context.Background(), &wasmtypes.QueryContractInfoRequest{
+			Address: contractAddr,
+		})
+		require.NoError(n.T(), err)
+		ci := resp.ContractInfo
+		info = &ci
+	})
+	return info
 }
 
 // QueryAccountInfo queries the account number and sequence number for a given address from a running node
