@@ -308,11 +308,6 @@ func (s *BtcRewardsDistribution) CommitPublicRandomnessAndSealed() {
 		fmt.Sprintf("--from=%s", wFp2),
 	)
 
-<<<<<<< HEAD
-	// wait for FP2's vote to be included in a block before FP1 votes,
-	// since FP1 alone has enough voting power (>2/3) to finalize the block
-	n2.WaitForNextBlock()
-=======
 	// Wait for FP2's vote to be included before submitting FP1's.
 	// FP1 has 75% of voting power and can finalize alone (>2/3 threshold).
 	// Without this wait, FP1's sig may finalize the block before FP2's is
@@ -326,7 +321,6 @@ func (s *BtcRewardsDistribution) CommitPublicRandomnessAndSealed() {
 		}
 		return false
 	}, time.Minute, time.Millisecond*500, "wait for fp2 vote to be included")
->>>>>>> f0e9b72 (fix: wasm IBC connection (#1981))
 
 	appHash := n1.AddFinalitySignatureToBlock(
 		s.fp1BTCSK,
