@@ -123,15 +123,20 @@ func (ws *WalletSender) ChainID() string {
 	return ws.Node.ChainConfig.ChainID
 }
 
-// SignMsg creates and signs a transaction with the provided messages
+// SignMsg creates and signs a transaction with the provided messages using the default gas limit.
 func (ws *WalletSender) SignMsg(msgs ...sdk.Msg) *sdktx.Tx {
+	return ws.SignMsgWithGas(300000, msgs...)
+}
+
+// SignMsgWithGas creates and signs a transaction with a custom gas limit.
+func (ws *WalletSender) SignMsgWithGas(gasLimit uint64, msgs ...sdk.Msg) *sdktx.Tx {
 	txBuilder := util.EncodingConfig.TxConfig.NewTxBuilder()
 	err := txBuilder.SetMsgs(msgs...)
 	require.NoError(ws.T(), err, "failed to set messages")
 
-	// Set fee and gas
-	txBuilder.SetFeeAmount(sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, math.NewInt(20000))))
-	txBuilder.SetGasLimit(300000)
+	fee := math.NewIntFromUint64(gasLimit / 15) // ~0.067ubbn per gas
+	txBuilder.SetFeeAmount(sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, fee)))
+	txBuilder.SetGasLimit(gasLimit)
 
 	pubKey := ws.PrivKey.PubKey()
 	signerData := authsigning.SignerData{
