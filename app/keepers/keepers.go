@@ -648,7 +648,6 @@ func (ak *AppKeepers) InitKeepers(
 	ak.ICAControllerKeeper = &icaControllerKeeper
 
 	// Create all supported IBC routes
-	var wasmStack porttypes.IBCModule
 	wasmStackIBCHandler := wasm.NewIBCHandler(ak.WasmKeeper, ak.IBCKeeper.ChannelKeeper, ak.IBCKeeper.ChannelKeeper)
 
 	// Create Transfer Stack (from bottom to top of stack)
@@ -711,7 +710,7 @@ func (ak *AppKeepers) InitKeepers(
 	// and the other routes (ICA, wasm, zoneconcierge), then set and seal it
 	ibcRouter := porttypes.NewRouter().
 		AddRoute(ibctransfertypes.ModuleName, transferStack).
-		AddRoute(wasmtypes.ModuleName, wasmStack).
+		AddRoute(wasmtypes.ModuleName, wasmStackIBCHandler).
 		AddRoute(icacontrollertypes.SubModuleName, icaControllerStack).
 		AddRoute(icahosttypes.SubModuleName, icaHostStack)
 
