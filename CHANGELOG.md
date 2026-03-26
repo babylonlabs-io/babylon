@@ -42,18 +42,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#1985](https://github.com/babylonlabs-io/babylon/pull/1985) chore(deps): bump google.golang.org/grpc
   from 1.77.0 to 1.79.3 (security fix for path-based authz bypass)
 - [#1959](https://github.com/babylonlabs-io/babylon/pull/1959) chore: remove v4 and v3rc4 upgrade testing
-<<<<<<< HEAD
-=======
 - [#1878](https://github.com/babylonlabs-io/babylon/pull/1878) Remove unnecessary []byte allocations in IBC size checks
 - [#1891](https://github.com/babylonlabs-io/babylon/pull/1891) fix: golangci lint misspell and removed unused func
 - [#1925](https://github.com/babylonlabs-io/babylon/pull/1925) chore: bump small dependencies and go to `v1.24.0`
 - [#1974](https://github.com/babylonlabs-io/babylon/pull/1974) chore: bump dependencies `x/crypto` and `x/sys`
 - [#1975](https://github.com/babylonlabs-io/babylon/pull/1975) chore: bump dependencies `x/crypto v0.45` and `x/sys`
-- [#1976](https://github.com/babylonlabs-io/babylon/pull/1976) fix(btcstaking): v2 migration `HeightToVersionMap`
->>>>>>> 0a95e51 (fix(btcstaking): v2 migration `HeightToVersionMap`  (#1976))
 
 ### State breaking
 
+- [#1976](https://github.com/babylonlabs-io/babylon/pull/1976) fix(btcstaking): v2 migration `HeightToVersionMap`
 - [#1956](https://github.com/babylonlabs-io/babylon/pull/1956) fix: add sort of fps by pub key in `GetVotingPowerTableOrdered`
 - [#1855](https://github.com/babylonlabs-io/babylon/pull/1855) Add check for `fundingInputValue <= 0` in stake extension
 - [#1913](https://github.com/babylonlabs-io/babylon/pull/1913) fix: key collision hex 0x10 (HeightToVersionMapKey) == decimal 16 (FpBbnAddrKey)
