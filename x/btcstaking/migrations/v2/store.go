@@ -20,6 +20,7 @@ var (
 // Keeper the expected keeper interface to perform the migration
 type Keeper interface {
 	SetHeightToVersionMap(ctx context.Context, p *types.HeightToVersionMap) error
+	GetAllParams(ctx context.Context) []*types.Params
 }
 
 // MigrateStore performs in-place store migrations.
@@ -33,13 +34,21 @@ func MigrateStore(
 ) error {
 	bz, err := store.Get(OldHeightToVersionMapKey)
 	if err != nil {
-		return fmt.Errorf("failed to get height to version map key using the old prefix hex 0x10: %s", err.Error())
+		return fmt.Errorf("failed to get height to version map key using the old prefix hex 0x10: %w", err)
+	}
+
+	if bz == nil {
+		rebuiltMap, err := rebuildHeightToVersionMap(k.GetAllParams(ctx))
+		if err != nil {
+			return fmt.Errorf("failed to rebuild HeightToVersionMap from existing params: %w", err)
+		}
+		return k.SetHeightToVersionMap(ctx, rebuiltMap)
 	}
 
 	var oldHeightToVersionMap types.HeightToVersionMap
 	err = cdc.Unmarshal(bz, &oldHeightToVersionMap)
 	if err != nil {
-		return fmt.Errorf("failed to unmarshal HeightToVersionMap: %s", err.Error())
+		return fmt.Errorf("failed to unmarshal HeightToVersionMap: %w", err)
 	}
 
 	if err := k.SetHeightToVersionMap(ctx, &oldHeightToVersionMap); err != nil {
@@ -48,4 +57,20 @@ func MigrateStore(
 	store.Delete(OldHeightToVersionMapKey)
 
 	return nil
+}
+
+// rebuildHeightToVersionMap reconstructs the HeightToVersionMap from existing params.
+func rebuildHeightToVersionMap(allParams []*types.Params) (*types.HeightToVersionMap, error) {
+	if len(allParams) == 0 {
+		return nil, fmt.Errorf("no params found to rebuild HeightToVersionMap")
+	}
+
+	heightToVersionMap := types.NewHeightToVersionMap()
+	for i, params := range allParams {
+		if err := heightToVersionMap.AddNewPair(uint64(params.BtcActivationHeight), uint32(i)); err != nil {
+			return nil, err
+		}
+	}
+
+	return heightToVersionMap, nil
 }
