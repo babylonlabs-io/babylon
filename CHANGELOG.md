@@ -51,7 +51,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### State breaking
 
-- [#1984](https://github.com/babylonlabs-io/babylon/pull/1984) fix(finality): reject retroactive public randomness commitments in `CommitPubRandList`
+- [#1994](https://github.com/babylonlabs-io/babylon/pull/1994) fix(finality): reject retroactive public randomness commitments in `CommitPubRandList`
 - [#1956](https://github.com/babylonlabs-io/babylon/pull/1956) fix: add sort of fps by pub key in `GetVotingPowerTableOrdered`
 - [#1855](https://github.com/babylonlabs-io/babylon/pull/1855) Add check for `fundingInputValue <= 0` in stake extension
 - [#1867](https://github.com/babylonlabs-io/babylon/pull/1867) bump wasmd `v0.60.2`
@@ -64,7 +64,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Bug Fixes
 
-- [#1984](https://github.com/babylonlabs-io/babylon/pull/1984) fix(finality): enforce `StartHeight > currentBlockHeight` in `CommitPubRandList` to prevent retroactive randomness commitments
+- [#1994](https://github.com/babylonlabs-io/babylon/pull/1994) fix(finality): enforce `StartHeight > currentBlockHeight` in `CommitPubRandList` to prevent retroactive randomness commitments
 - [#1875](https://github.com/babylonlabs-io/babylon/pull/1875) chore: ensure soft-deleted FPs cannot receive new/extended BTC stake, or commit pub rand
 - [#1911](https://github.com/babylonlabs-io/babylon/pull/1911) fix: avoid panic in `ProcessProposal` when injected checkpoint tx contains a wrong message type
 - [#1953](https://github.com/babylonlabs-io/babylon/pull/1953) fix: refresh commission of active FPs in voting power distribution cache prior to reward distribution
