@@ -1267,7 +1267,7 @@ func FuzzBTCDelegationEvents_NoPreApproval(f *testing.F) {
 		babylonHeight += 1
 		h.SetCtxHeight(babylonHeight)
 		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(btcTip)
-		h.CommitPubRandList(r, fpSK, fp, 2, 100, true)
+		h.CommitPubRandList(r, fpSK, fp, babylonHeight+1, 100, true)
 		h.BeginBlocker()
 		require.Equal(t, uint64(stakingValue), h.FinalityKeeper.GetVotingPower(h.Ctx, *fp.BtcPk, babylonHeight))
 
@@ -1398,7 +1398,7 @@ func FuzzBTCDelegationEvents_WithPreApproval(f *testing.F) {
 		babylonHeight += 1
 		h.SetCtxHeight(babylonHeight)
 		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btcTip)
-		h.CommitPubRandList(r, fpSK, fp, 2, 100, true)
+		h.CommitPubRandList(r, fpSK, fp, babylonHeight+1, 100, true)
 		h.BeginBlocker()
 		require.Equal(t, uint64(stakingValue), h.FinalityKeeper.GetVotingPower(h.Ctx, *fp.BtcPk, babylonHeight))
 

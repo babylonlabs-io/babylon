@@ -259,7 +259,7 @@ func (ms msgServer) CommitPubRandList(goCtx context.Context, req *types.MsgCommi
 
 	// check the commit start height is not too far into the future
 	if req.StartHeight >= currentHeight+types.MaxPubRandCommitOffset {
-		return nil, types.ErrInvalidPubRand.Wrapf("start height %d is too far into the future. Current height is %d and max offset is %d", req.StartHeight, ctx.BlockHeader().Height, types.MaxPubRandCommitOffset)
+		return nil, types.ErrInvalidPubRand.Wrapf("start height %d is too far into the future. Current height is %d and max offset is %d", req.StartHeight, currentHeight, types.MaxPubRandCommitOffset)
 	}
 
 	activationHeight, errMod := ms.validateActivationHeight(ctx, req.StartHeight)
