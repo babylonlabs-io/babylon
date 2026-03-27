@@ -86,7 +86,7 @@ func (s *CostakingTestSuite) TestFinalityProviderExit() {
 	// start height must be strictly greater than the current block height
 	curHeight, err := delegatorNode.QueryCurrentHeight()
 	s.NoError(err)
-	commitStartHeight := uint64(curHeight) + 1
+	commitStartHeight := uint64(curHeight) + 2 // +2 to account for block advancement between query and tx inclusion
 	_, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(s.r, fpSk, commitStartHeight, numPubRand)
 	s.NoError(err)
 	delegatorNode.CommitPubRandListFromNode(

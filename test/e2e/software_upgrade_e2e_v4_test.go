@@ -275,7 +275,7 @@ func (s *SoftwareUpgradeV23To4TestSuite) FpCommitPubRandAndVote(n *chain.NodeCon
 	// start height must be strictly greater than the current block height
 	curHeight, err := n.QueryCurrentHeight()
 	s.NoError(err)
-	commitStartHeight := uint64(curHeight) + 1
+	commitStartHeight := uint64(curHeight) + 2 // +2 to account for block advancement between query and tx inclusion
 
 	fp1RandListInfo, fp1CommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(s.r, s.fp1BTCSK, commitStartHeight, numPubRand)
 	s.NoError(err)

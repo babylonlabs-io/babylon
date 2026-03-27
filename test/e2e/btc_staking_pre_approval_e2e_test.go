@@ -308,7 +308,7 @@ func (s *BTCStakingPreApprovalTestSuite) Test4CommitPublicRandomnessAndSubmitFin
 	// start height must be strictly greater than the current block height
 	curHeight, err := n.QueryCurrentHeight()
 	s.NoError(err)
-	commitStartHeight := uint64(curHeight) + 1
+	commitStartHeight := uint64(curHeight) + 2 // +2 to account for block advancement between query and tx inclusion
 
 	randListInfo, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(s.r, s.fptBTCSK, commitStartHeight, numPubRand)
 	s.NoError(err)
