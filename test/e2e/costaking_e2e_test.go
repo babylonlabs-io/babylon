@@ -83,7 +83,10 @@ func (s *CostakingTestSuite) TestFinalityProviderExit() {
 	fp := chain.CreateFpFromNodeAddr(s.T(), s.r, fpSk, delegatorNode)
 
 	numPubRand := uint64(1000)
-	commitStartHeight := uint64(1)
+	// start height must be strictly greater than the current block height
+	curHeight, err := delegatorNode.QueryCurrentHeight()
+	s.NoError(err)
+	commitStartHeight := uint64(curHeight) + 1
 	_, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(s.r, fpSk, commitStartHeight, numPubRand)
 	s.NoError(err)
 	delegatorNode.CommitPubRandListFromNode(

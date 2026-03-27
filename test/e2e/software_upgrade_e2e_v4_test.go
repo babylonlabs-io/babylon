@@ -25,8 +25,7 @@ import (
 )
 
 const (
-	commitStartHeightV23 = uint64(5)
-	govPropFileV4        = "v4_upgrade_temp.json"
+	govPropFileV4 = "v4_upgrade_temp.json"
 )
 
 type SoftwareUpgradeV23To4TestSuite struct {
@@ -273,11 +272,16 @@ func (s *SoftwareUpgradeV23To4TestSuite) SetupVerifiedBtcDelegationsWithBabyStak
 }
 
 func (s *SoftwareUpgradeV23To4TestSuite) FpCommitPubRandAndVote(n *chain.NodeConfig) {
-	fp1RandListInfo, fp1CommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(s.r, s.fp1BTCSK, commitStartHeightV23, numPubRand)
+	// start height must be strictly greater than the current block height
+	curHeight, err := n.QueryCurrentHeight()
+	s.NoError(err)
+	commitStartHeight := uint64(curHeight) + 1
+
+	fp1RandListInfo, fp1CommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(s.r, s.fp1BTCSK, commitStartHeight, numPubRand)
 	s.NoError(err)
 	s.fp1RandListInfo = fp1RandListInfo
 
-	fp2RandListInfo, fp2CommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(s.r, s.fp2BTCSK, commitStartHeightV23, numPubRand)
+	fp2RandListInfo, fp2CommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(s.r, s.fp2BTCSK, commitStartHeight, numPubRand)
 	s.NoError(err)
 	s.fp2RandListInfo = fp2RandListInfo
 
@@ -302,11 +306,11 @@ func (s *SoftwareUpgradeV23To4TestSuite) FpCommitPubRandAndVote(n *chain.NodeCon
 	n.WaitForNextBlocks(2)
 
 	fp1CommitPubRand := n.QueryListPubRandCommit(fp1CommitPubRandList.FpBtcPk)
-	fp1PubRand := fp1CommitPubRand[commitStartHeightV23]
+	fp1PubRand := fp1CommitPubRand[commitStartHeight]
 	s.Require().Equal(fp1PubRand.NumPubRand, numPubRand)
 
 	fp2CommitPubRand := n.QueryListPubRandCommit(fp2CommitPubRandList.FpBtcPk)
-	fp2PubRand := fp2CommitPubRand[commitStartHeightV23]
+	fp2PubRand := fp2CommitPubRand[commitStartHeight]
 	s.Require().Equal(fp2PubRand.NumPubRand, numPubRand)
 
 	finalizedEpoch := n.WaitUntilCurrentEpochIsSealedAndFinalized(1)
@@ -336,7 +340,7 @@ func (s *SoftwareUpgradeV23To4TestSuite) FpCommitPubRandAndVote(n *chain.NodeCon
 	}
 
 	s.finalityBlockHeightVoted = n.WaitFinalityIsActivated()
-	s.finalityIdx = s.finalityBlockHeightVoted - commitStartHeightV23
+	s.finalityIdx = s.finalityBlockHeightVoted - commitStartHeight
 
 	n.WaitForNextBlockWithSleep50ms()
 

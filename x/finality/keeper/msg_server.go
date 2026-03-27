@@ -247,8 +247,18 @@ func (ms msgServer) CommitPubRandList(goCtx context.Context, req *types.MsgCommi
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
+	currentHeight := uint64(ctx.BlockHeader().Height)
+
+	// check the commit start height is not in the past (must be strictly future)
+	if req.StartHeight <= currentHeight {
+		return nil, types.ErrInvalidPubRand.Wrapf(
+			"start height %d must be greater than current block height %d",
+			req.StartHeight, currentHeight,
+		)
+	}
+
 	// check the commit start height is not too far into the future
-	if req.StartHeight >= uint64(ctx.BlockHeader().Height)+types.MaxPubRandCommitOffset {
+	if req.StartHeight >= currentHeight+types.MaxPubRandCommitOffset {
 		return nil, types.ErrInvalidPubRand.Wrapf("start height %d is too far into the future. Current height is %d and max offset is %d", req.StartHeight, ctx.BlockHeader().Height, types.MaxPubRandCommitOffset)
 	}
 

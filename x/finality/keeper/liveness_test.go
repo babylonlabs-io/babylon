@@ -126,8 +126,8 @@ func FuzzHandleLivenessDeterminism(f *testing.F) {
 			fpSK, fpPK, fp := h1.CreateFinalityProvider(r)
 			require.NoError(t, err)
 			h2.AddFinalityProvider(fp)
-			h1.CommitPubRandList(r, fpSK, fp, 1, 1000, true)
-			h2.CommitPubRandList(r, fpSK, fp, 1, 1000, true)
+			h1.CommitPubRandList(r, fpSK, fp, 2, 1000, true)
+			h2.CommitPubRandList(r, fpSK, fp, 2, 1000, true)
 			fps[i] = fp
 
 			// Create delegation for each FP
