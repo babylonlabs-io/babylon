@@ -342,6 +342,22 @@ func (n *Node) QueryBtcStakingParamsVersions() []btcstktypes.StoredParams {
 	return resp.Params
 }
 
+func (n *Node) QueryBtcStakingParamsByBTCHeight(btcHeight uint32) (*btcstktypes.Params, uint32) {
+	var (
+		resp *btcstktypes.QueryParamsByBTCHeightResponse
+		err  error
+	)
+
+	n.BtcStkQuery(func(btcStkClient btcstktypes.QueryClient) {
+		resp, err = btcStkClient.ParamsByBTCHeight(context.Background(), &btcstktypes.QueryParamsByBTCHeightRequest{
+			BtcHeight: btcHeight,
+		})
+		require.NoError(n.T(), err)
+	})
+
+	return &resp.Params, resp.Version
+}
+
 func (n *Node) QueryRawCheckpoints(pagination *query.PageRequest) *checkpointingtypes.QueryRawCheckpointsResponse {
 	var (
 		resp *checkpointingtypes.QueryRawCheckpointsResponse
