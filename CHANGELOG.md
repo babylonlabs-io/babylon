@@ -39,6 +39,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
+- [#1996](https://github.com/babylonlabs-io/babylon/pull/1996) chore(deps): bump github.com/go-jose/go-jose/v4
+  from 4.1.3 to 4.1.4 (security fix)
 - [#1985](https://github.com/babylonlabs-io/babylon/pull/1985) chore(deps): bump google.golang.org/grpc
   from 1.77.0 to 1.79.3 (security fix for path-based authz bypass)
 - [#1959](https://github.com/babylonlabs-io/babylon/pull/1959) chore: remove v4 and v3rc4 upgrade testing
