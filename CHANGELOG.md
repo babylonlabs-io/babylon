@@ -39,6 +39,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
+- [#1998](https://github.com/babylonlabs-io/babylon/pull/1998) chore(deps): bump github.com/hashicorp/go-getter
+  from v1.7.9 to v1.7.10 (kept Go 1.24 compatibility, v1.8.6 requires Go 1.25)
 - [#1999](https://github.com/babylonlabs-io/babylon/pull/1999) chore(deps): bump github.com/cometbft/cometbft
   from v0.38.21 to v0.38.22
 - [#1997](https://github.com/babylonlabs-io/babylon/pull/1997) chore(deps): bump go.opentelemetry.io/otel/sdk
