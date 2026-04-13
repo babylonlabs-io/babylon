@@ -37,6 +37,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+### Improvements
+
+- [#1999](https://github.com/babylonlabs-io/babylon/pull/1999) chore(deps): bump github.com/cometbft/cometbft
+  from v0.38.21 to v0.38.22
+
 ## v4.2.5
 
 ### Improvements
