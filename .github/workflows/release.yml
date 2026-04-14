@@ -31,7 +31,7 @@ jobs:
       GORELEASER_IMAGE: ghcr.io/goreleaser/goreleaser-cross:v1.27.0
       RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
       RELEASE_DESCRIPTION: ${{ inputs.description || format('Release {0}', github.ref_name) }}
-      RELEASE_PRERELEASE: ${{ inputs.prerelease || contains(github.ref_name, '-rc') || contains(github.ref_name, '-alpha') || contains(github.ref_name, '-beta') }}
+      RELEASE_PRERELEASE: ${{ inputs.prerelease || contains(github.ref_name, '-rc') }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
