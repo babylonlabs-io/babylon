@@ -28,13 +28,13 @@ jobs:
       GORELEASER_IMAGE: ghcr.io/goreleaser/goreleaser-cross:v1.27.0
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2 https://github.com/actions/checkout/releases/tag/v6.0.2
         with:
           fetch-depth: 0
           ref: ${{ inputs.tag }}
 
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5 https://github.com/actions/setup-go/releases/tag/v5
         with:
           go-version-file: go.mod
 
