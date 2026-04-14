@@ -4,6 +4,9 @@ permissions:
   contents: write
 
 on:
+  push:
+    tags:
+      - 'v*'
   workflow_dispatch:
     inputs:
       tag:
@@ -26,12 +29,15 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GORELEASER_IMAGE: ghcr.io/goreleaser/goreleaser-cross:v1.27.0
+      RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+      RELEASE_DESCRIPTION: ${{ inputs.description || format('Release {0}', github.ref_name) }}
+      RELEASE_PRERELEASE: ${{ inputs.prerelease || contains(github.ref_name, '-rc') }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          ref: ${{ inputs.tag }}
+          ref: ${{ env.RELEASE_TAG }}
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -45,8 +51,6 @@ jobs:
 
       - name: Generate release notes
         env:
-          RELEASE_DESCRIPTION: ${{ inputs.description }}
-          RELEASE_TAG: ${{ inputs.tag }}
           REPO: ${{ github.repository }}
         run: |
           mkdir -p /tmp/release-notes
@@ -85,7 +89,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COSMWASM_VERSION: ${{ steps.cosmwasm.outputs.version }}
-          PRERELEASE: ${{ inputs.prerelease }}
+          PRERELEASE: ${{ env.RELEASE_PRERELEASE }}
         run: |
           docker run \
             --rm \
