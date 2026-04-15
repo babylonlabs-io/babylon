@@ -37,12 +37,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
-## v4.2.7
-
 ### Improvements
 
-- [#1998](https://github.com/babylonlabs-io/babylon/pull/1998) chore(deps): bump github.com/hashicorp/go-getter
-  from v1.7.9 to v1.7.10 (kept Go 1.24 compatibility, v1.8.6 requires Go 1.25)
+* [#2003](https://github.com/babylonlabs-io/babylon/pull/2003) chore: bump Go to `v1.25.0` to unblock dependabot updates that require Go 1.25 (e.g. `prometheus/client_golang` v1.8.6+, `go.opentelemetry.io/otel/sdk` v1.43.0+)
 - [#1999](https://github.com/babylonlabs-io/babylon/pull/1999) chore(deps): bump github.com/cometbft/cometbft
   from v0.38.21 to v0.38.22
 - [#1997](https://github.com/babylonlabs-io/babylon/pull/1997) chore(deps): bump go.opentelemetry.io/otel/sdk
@@ -80,6 +77,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#1969](https://github.com/babylonlabs-io/babylon/pull/1969) fix: set v4.3 upgrade handler to run at second block of an epoch
 - [#1923](https://github.com/babylonlabs-io/babylon/pull/1923) fix: add max bytes size for vote extension
 - [#1981](https://github.com/babylonlabs-io/babylon/pull/1981) fix: correctly link wasm IBC stack handler
+
+## v4.2.7
+
+- [#1998](https://github.com/babylonlabs-io/babylon/pull/1998) chore(deps): bump github.com/hashicorp/go-getter
+  from v1.7.9 to v1.7.10 (kept Go 1.24 compatibility, v1.8.6 requires Go 1.25)
 
 ## v4.2.5
 
