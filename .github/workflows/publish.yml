@@ -24,8 +24,8 @@ jobs:
     if: ${{ !(github.event_name == 'workflow_dispatch' && inputs['skip-lint-test'] == true) }}
     secrets: inherit
     with:
-      go-version: '1.23'
-      go-lint-version: 'v2.1.0'
+      go-version: '1.25'
+      go-lint-version: 'v2.11.4'
       run-unit-tests: true
       run-integration-tests: false
       run-lint: true

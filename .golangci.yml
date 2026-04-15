@@ -72,6 +72,11 @@ linters:
       - path-except: '_test\.go'
         linters:
           - forbidigo
+      # e2e test harness shells out to docker/make; threading a real
+      # context through is out of scope for test infrastructure.
+      - path: 'test/e2ev2/'
+        linters:
+          - noctx
 
 issues:
   max-same-issues: 0
