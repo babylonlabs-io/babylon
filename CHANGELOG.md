@@ -37,12 +37,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
-## v4.2.7
-
 ### Improvements
 
-- [#1999](https://github.com/babylonlabs-io/babylon/pull/1999) chore(deps): bump github.com/cometbft/cometbft
-  from v0.38.21 to v0.38.22
 - [#1985](https://github.com/babylonlabs-io/babylon/pull/1985) chore(deps): bump google.golang.org/grpc
   from 1.77.0 to 1.79.3 (security fix for path-based authz bypass)
 - [#1959](https://github.com/babylonlabs-io/babylon/pull/1959) chore: remove v4 and v3rc4 upgrade testing
@@ -64,6 +60,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#1969](https://github.com/babylonlabs-io/babylon/pull/1969) fix: set v4.3 upgrade handler to run at second block of an epoch
 - [#1923](https://github.com/babylonlabs-io/babylon/pull/1923) fix: add max bytes size for vote extension
 - [#1981](https://github.com/babylonlabs-io/babylon/pull/1981) fix: correctly link wasm IBC stack handler
+
+## v4.2.7
+
+### Improvements
+
+- [#1999](https://github.com/babylonlabs-io/babylon/pull/1999) chore(deps): bump github.com/cometbft/cometbft
+  from v0.38.21 to v0.38.22
 
 ## v4.2.5
 
