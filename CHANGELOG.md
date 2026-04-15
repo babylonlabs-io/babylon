@@ -39,7 +39,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
-- [#2008](https://github.com/babylonlabs-io/babylon/pull/2008) chore: bump Go to `v1.25.0` to unblock dependabot updates that require Go 1.25 (e.g. `prometheus/client_golang` v1.8.6+, `go.opentelemetry.io/otel/sdk` v1.43.0+)
+- [#2008](https://github.com/babylonlabs-io/babylon/pull/2008) chore: bump Go to `v1.25.0` and upgrade vulnerable dependencies (`hashicorp/go-getter` v1.8.6, `go.opentelemetry.io/otel/sdk` v1.43.0, `aws-sdk-go-v2/aws/protocol/eventstream` v1.7.8, `aws-sdk-go-v2/service/s3` v1.97.3, `ulikunitz/xz` v0.5.15)
 - [#1999](https://github.com/babylonlabs-io/babylon/pull/1999) chore(deps): bump github.com/cometbft/cometbft
   from v0.38.21 to v0.38.22
 - [#1997](https://github.com/babylonlabs-io/babylon/pull/1997) chore(deps): bump go.opentelemetry.io/otel/sdk
