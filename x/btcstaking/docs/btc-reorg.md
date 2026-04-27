@@ -95,6 +95,30 @@ to remove the data from the 3 modules states.
 
 #### 3.3 `MsgBTCUndelegate`
 
+> **Design note.** Ordinary (non stake-expansion) `MsgBTCUndelegate` is
+> **intent-based**: the staker's signed spend of the staking output is enough
+> for Babylon to treat the delegation as `UNBONDED`, and the spending tx's
+> inclusion proof is only checked for Merkle validity against a known BTC
+> header — it is **not** required to be `BtcConfirmationDepth` ("k") deep.
+> This is intentionally different from `MsgCreateBTCDelegation` /
+> `MsgAddBTCDelegationInclusionProof`, which enforce k-depth before granting
+> voting power.
+>
+> A direct consequence of this design is that a BTC reorg smaller than
+> `BtcConfirmationDepth` that removes the unbonding transaction from the
+> canonical chain does **not** restore the delegation. Once Babylon has
+> observed the staker's intent to unbond, the delegation stays `UNBONDED`
+> regardless of whether the unbonding spend remains in BTC's canonical chain.
+> The repair procedure described below therefore only applies to reorgs
+> larger than `BtcConfirmationDepth` that have already halted the chain as
+> described in [Chain Halt](#chain-halt); shallower reorgs that reorg out an
+> accepted undelegation are expected and require no repair.
+>
+> The stake-expansion branch of `MsgBTCUndelegate` is the exception: it
+> activates a new delegation and therefore still enforces the k-depth check
+> on the spending transaction, and the repair steps for that branch match
+> those of [3.1](#31-msgcreatebtcdelegation) / [3.2](#32-msgaddbtcdelegationinclusionproof).
+
 Check if the inclusion proof had a reorg in the BTC blocks, if it is not
 rollbacked, there is nothing to do. If it was rollbacked it is needed
 to remove the existence of this BTC undelegation and affecting 3 modules state

@@ -520,7 +520,28 @@ func getFundingTxTransactions(txs [][]byte) ([]*wire.MsgTx, error) {
 
 // BTCUndelegate adds a signature on the unbonding tx from the BTC delegator
 // this effectively proves that the BTC delegator wants to unbond and Babylon
-// will consider its BTC delegation unbonded
+// will consider its BTC delegation unbonded.
+//
+// By design, ordinary (non stake-expansion) undelegation is intent-based: the
+// staker's signed spend of the staking output is enough for Babylon to treat
+// the delegation as UNBONDED, and the inclusion proof is only required to be
+// verifiable against a known BTC header — it is NOT required to be
+// `BtcConfirmationDepth` ("k") deep. This is intentionally different from
+// MsgCreateBTCDelegation / MsgAddBTCDelegationInclusionProof, which DO enforce
+// k-depth before activating a delegation, because an activation grants voting
+// power while an undelegation only revokes it.
+//
+// A direct consequence of this design is that a BTC reorg which removes the
+// unbonding transaction from the canonical chain does NOT restore the
+// delegation: once Babylon has observed the staker's intent to unbond, the
+// delegation stays UNBONDED regardless of whether the unbonding spend remains
+// in BTC's canonical chain. Only reorgs deeper than `BtcConfirmationDepth`
+// halt the chain (see x/btcstaking/docs/btc-reorg.md); shallower reorgs that
+// reorg out an accepted undelegation are expected and require no repair.
+//
+// The stake-expansion branch below is the exception: it activates a new
+// delegation and therefore routes through AddBTCDelegationInclusionProof,
+// which still enforces the k-depth check on the spending tx.
 func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndelegate) (*types.MsgBTCUndelegateResponse, error) {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), types.MetricsKeyBTCUndelegate)
 
@@ -564,6 +585,8 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 			return nil, types.ErrInvalidBTCUndelegateReq.Wrapf("failed to handle stake expansion inclusion: %s", err)
 		}
 	} else {
+		// Intentionally only a Merkle-inclusion check, NOT a k-depth check:
+		// ordinary undelegation is intent-based (see the BTCUndelegate godoc).
 		proofValid := btcckpttypes.VerifyInclusionProof(
 			btcutil.NewTx(stakeSpendingTx),
 			&btcHeader.MerkleRoot,

@@ -685,6 +685,19 @@ Upon `BTCUndelegate`, a Babylon node will execute as follows:
    storage. Babylon will consider this BTC delegation to be unbonded from now
    on.
 
+Ordinary (non stake-expansion) undelegation is **intent-based**: the staker's
+signed spend of the staking output is enough for Babylon to treat the
+delegation as unbonded. The spending transaction's inclusion proof is only
+checked for Merkle validity against a known BTC header — it is **not**
+required to be `BtcConfirmationDepth` ("k") deep, unlike
+`MsgCreateBTCDelegation` and `MsgAddBTCDelegationInclusionProof`, which do
+enforce k-depth before granting voting power. As a consequence, a BTC reorg
+smaller than `BtcConfirmationDepth` that removes the unbonding transaction
+from the canonical chain does **not** restore the delegation; once the
+staker's intent to unbond has been observed, the delegation stays unbonded.
+See [btc-reorg.md](./docs/btc-reorg.md) for the large-reorg recovery
+procedure.
+
 ### MsgUpdateParams
 
 The `MsgUpdateParams` message is used for updating the module parameters for the
