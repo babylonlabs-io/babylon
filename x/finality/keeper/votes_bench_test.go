@@ -42,7 +42,7 @@ func benchmarkAddFinalitySig(b *testing.B) {
 
 	// commit enough public randomness
 	// TODO: generalise commit public randomness to allow arbitrary benchtime
-	randListInfo, msg, err := datagen.GenRandomMsgCommitPubRandList(r, btcSK, 0, 100000)
+	randListInfo, msg, err := datagen.GenRandomMsgCommitPubRandList(r, btcSK, 1, 100000)
 	require.NoError(b, err)
 	_, err = ms.CommitPubRandList(ctx, msg)
 	require.NoError(b, err)

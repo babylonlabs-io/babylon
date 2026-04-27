@@ -48,7 +48,10 @@ func (n *Node) NewFpWithWallet(wallet *WalletSender) *FinalityProvider {
 
 func (fp *FinalityProvider) CommitPubRand() {
 	numPubRand := uint64(1000)
-	commitStartHeight := uint64(5)
+	// start height must be strictly greater than the current block height
+	curHeight, err := fp.Node.LatestBlockNumber()
+	require.NoError(fp.T(), err)
+	commitStartHeight := uint64(curHeight) + 2 // +2 to account for block advancement between query and tx inclusion
 
 	randListInfo, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(fp.Node.Tm.R, fp.BtcPrivKey, commitStartHeight, numPubRand)
 	require.NoError(fp.T(), err)
