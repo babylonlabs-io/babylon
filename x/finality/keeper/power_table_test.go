@@ -48,7 +48,7 @@ func FuzzVotingPowerTable(f *testing.F) {
 		numFps := numFpsWithVotingPower + datagen.RandomInt(r, 10)
 		for i := uint64(0); i < numFps; i++ {
 			fpSK, _, fp := h.CreateFinalityProvider(r)
-			h.CommitPubRandList(r, fpSK, fp, 1, 100, true)
+			h.CommitPubRandList(r, fpSK, fp, 2, 100, true)
 			fps = append(fps, fp)
 		}
 
@@ -81,7 +81,7 @@ func FuzzVotingPowerTable(f *testing.F) {
 		/*
 			assert the first numFpsWithVotingPower finality providers have voting power
 		*/
-		babylonHeight := datagen.RandomInt(r, 10) + 1
+		babylonHeight := datagen.RandomInt(r, 10) + 2
 		h.SetCtxHeight(babylonHeight)
 		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: 30}).AnyTimes()
 		err := h.BTCStakingKeeper.BeginBlocker(h.Ctx)
@@ -206,7 +206,7 @@ func FuzzRecordVotingPowerDistCache(f *testing.F) {
 		fpsWithVotingPowerMap := map[string]*types.FinalityProvider{}
 		for i := uint64(0); i < numFps; i++ {
 			fpSK, _, fp := h.CreateFinalityProvider(r)
-			h.CommitPubRandList(r, fpSK, fp, 1, 100, true)
+			h.CommitPubRandList(r, fpSK, fp, 2, 100, true)
 			if i < numFpsWithVotingPower {
 				// these finality providers will receive BTC delegations and have voting power
 				fpsWithVotingPowerMap[fp.Addr] = fp
@@ -241,7 +241,7 @@ func FuzzRecordVotingPowerDistCache(f *testing.F) {
 		}
 
 		// record voting power distribution cache
-		babylonHeight := datagen.RandomInt(r, 10) + 1
+		babylonHeight := datagen.RandomInt(r, 10) + 2
 		h.Ctx = datagen.WithCtxHeight(h.Ctx, babylonHeight)
 		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: 30}).AnyTimes()
 		h.BeginBlocker()
@@ -316,11 +316,11 @@ func FuzzVotingPowerTable_ActiveFinalityProviders(f *testing.F) {
 			// zero voting power in the table
 			fpDistInfo := &ftypes.FinalityProviderDistInfo{BtcPk: fp.BtcPk, TotalBondedSat: stakingValue}
 			if r.Intn(10) <= 2 {
-				h.CommitPubRandList(r, fpSK, fp, 1, 100, false)
+				h.CommitPubRandList(r, fpSK, fp, 2, 100, false)
 				noTimestampedFps[fp.BtcPk.MarshalHex()] = true
 				fpDistInfo.IsTimestamped = false
 			} else {
-				h.CommitPubRandList(r, fpSK, fp, 1, 100, true)
+				h.CommitPubRandList(r, fpSK, fp, 2, 100, true)
 				fpDistInfo.IsTimestamped = true
 			}
 
@@ -338,7 +338,7 @@ func FuzzVotingPowerTable_ActiveFinalityProviders(f *testing.F) {
 		}
 
 		// record voting power table
-		babylonHeight := datagen.RandomInt(r, 10) + 1
+		babylonHeight := datagen.RandomInt(r, 10) + 2
 		h.SetCtxHeight(babylonHeight)
 		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: 30}).AnyTimes()
 		h.BeginBlocker()
@@ -412,7 +412,7 @@ func FuzzVotingPowerTable_ActiveFinalityProviderRotation(f *testing.F) {
 			// generate finality provider
 			// generate and insert new finality provider
 			fpSK, fpPK, fp := h.CreateFinalityProvider(r)
-			h.CommitPubRandList(r, fpSK, fp, 1, 100, true)
+			h.CommitPubRandList(r, fpSK, fp, 2, 100, true)
 
 			// create BTC delegation and add covenant signatures to activate it
 			stakingValue := datagen.RandomInt(r, 100000) + 100000
@@ -479,7 +479,7 @@ func FuzzVotingPowerTable_ActiveFinalityProviderRotation(f *testing.F) {
 		h.CheckpointingKeeperForFinality.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(uint64(2)).AnyTimes()
 
 		// record voting power table
-		babylonHeight := datagen.RandomInt(r, 10) + 1
+		babylonHeight := datagen.RandomInt(r, 10) + 2
 		h.Ctx = datagen.WithCtxHeight(h.Ctx, babylonHeight)
 		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: 30})
 		h.BeginBlocker()
@@ -548,7 +548,7 @@ func FuzzVotingPowerTable_ActiveFinalityProviderRotation(f *testing.F) {
 		// 	// generate finality provider
 		// 	// generate and insert new finality provider
 		// 	fpSK, fpPK, fp := h.CreateFinalityProvider(r)
-		// 	h.CommitPubRandList(r, fpSK, fp, 1, 100, true)
+		// 	h.CommitPubRandList(r, fpSK, fp, 2, 100, true)
 
 		// 	// create BTC delegation and add covenant signatures to activate it
 		// 	stakingValue := datagen.RandomInt(r, 100000) + 100000
@@ -759,7 +759,7 @@ func TestVotingPowerTable_ActiveFinalityProviderRotation_Seed0(t *testing.T) {
 	fpsWithMeta := []*FinalityProviderWithMetaCostaker{}
 	for i := uint64(0); i < numFps; i++ {
 		fpSK, fpPK, fp := h.CreateFinalityProvider(r)
-		h.CommitPubRandList(r, fpSK, fp, 1, 100, true)
+		h.CommitPubRandList(r, fpSK, fp, 2, 100, true)
 
 		stakingValue := datagen.RandomInt(r, 100000) + 100000
 		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
@@ -829,7 +829,7 @@ func TestVotingPowerTable_ActiveFinalityProviderRotation_Seed0(t *testing.T) {
 
 	h.CheckpointingKeeperForFinality.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(uint64(2)).AnyTimes()
 
-	babylonHeight := datagen.RandomInt(r, 10) + 1
+	babylonHeight := datagen.RandomInt(r, 10) + 2
 	h.Ctx = datagen.WithCtxHeight(h.Ctx, babylonHeight)
 	h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: 30})
 

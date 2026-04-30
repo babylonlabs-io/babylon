@@ -11,6 +11,7 @@ import (
 	"cosmossdk.io/core/header"
 	sdkmath "cosmossdk.io/math"
 	"github.com/btcsuite/btcd/btcec/v2"
+	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
@@ -62,7 +63,7 @@ func FuzzCommitPubRandList(f *testing.F) {
 
 		// Case 1: fail if the finality provider is not registered
 		bsKeeper.EXPECT().HasFinalityProvider(gomock.Any(), gomock.Eq(fpBTCPKBytes)).Return(false).Times(1)
-		startHeight := datagen.RandomInt(r, 10)
+		startHeight := uint64(1) + datagen.RandomInt(r, 10)
 		numPubRand := uint64(200)
 		_, msg, err := datagen.GenRandomMsgCommitPubRandList(r, btcSK, startHeight, numPubRand)
 		require.NoError(t, err)
@@ -74,7 +75,7 @@ func FuzzCommitPubRandList(f *testing.F) {
 		bsKeeper.EXPECT().IsFinalityProviderDeleted(gomock.Any(), gomock.Any()).Return(false).AnyTimes()
 
 		// Case 2: commit a list of <minPubRand pubrand and it should fail
-		startHeight = datagen.RandomInt(r, 10)
+		startHeight = uint64(1) + datagen.RandomInt(r, 10)
 		numPubRand = datagen.RandomInt(r, int(fKeeper.GetParams(ctx).MinPubRand))
 		_, msg, err = datagen.GenRandomMsgCommitPubRandList(r, btcSK, startHeight, numPubRand)
 		require.NoError(t, err)
@@ -82,7 +83,7 @@ func FuzzCommitPubRandList(f *testing.F) {
 		require.Error(t, err)
 
 		// Case 3: when the finality provider commits pubrand list and it should succeed
-		startHeight = datagen.RandomInt(r, 10)
+		startHeight = uint64(1) + datagen.RandomInt(r, 10)
 		numPubRand = 100 + datagen.RandomInt(r, int(fKeeper.GetParams(ctx).MinPubRand))
 		_, msg, err = datagen.GenRandomMsgCommitPubRandList(r, btcSK, startHeight, numPubRand)
 		require.NoError(t, err)
@@ -126,6 +127,31 @@ func FuzzCommitPubRandList(f *testing.F) {
 		_, err = ms.CommitPubRandList(ctx, msg)
 		require.Error(t, err)
 		require.ErrorContains(t, err, fmt.Sprintf("start height %d is too far into the future", startHeight))
+
+		// Case 8: fail if startHeight is not greater than the current block height (retroactive commitment)
+		// Simulate a chain at a higher block height by setting the CometBFT header
+		futureBlockHeight := int64(500)
+		ctxAtHeight := ctx.WithBlockHeader(cmtproto.Header{Height: futureBlockHeight})
+		// Try to commit randomness for a height at or below the current block height
+		retroStartHeight := uint64(futureBlockHeight) - datagen.RandomInt(r, 10)
+		_, msg, err = datagen.GenRandomMsgCommitPubRandList(r, btcSK, retroStartHeight, numPubRand)
+		require.NoError(t, err)
+		_, err = ms.CommitPubRandList(ctxAtHeight, msg)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "must be greater than current block height")
+
+		// Also verify that startHeight == currentHeight is rejected
+		_, msg, err = datagen.GenRandomMsgCommitPubRandList(r, btcSK, uint64(futureBlockHeight), numPubRand)
+		require.NoError(t, err)
+		_, err = ms.CommitPubRandList(ctxAtHeight, msg)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "must be greater than current block height")
+
+		// Verify startHeight = currentHeight + 1 succeeds
+		_, msg, err = datagen.GenRandomMsgCommitPubRandList(r, btcSK, uint64(futureBlockHeight)+1, numPubRand)
+		require.NoError(t, err)
+		_, err = ms.CommitPubRandList(ctxAtHeight, msg)
+		require.NoError(t, err)
 	})
 }
 
@@ -162,7 +188,7 @@ func FuzzAddFinalitySig(f *testing.F) {
 		cKeeper.EXPECT().GetEpoch(gomock.Any()).Return(&epochingtypes.Epoch{EpochNumber: committedEpochNum}).AnyTimes()
 
 		// commit some public randomness
-		startHeight := uint64(0)
+		startHeight := uint64(1)
 		numPubRand := uint64(200)
 		randListInfo, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(r, btcSK, startHeight, numPubRand)
 		require.NoError(t, err)
@@ -382,7 +408,7 @@ func TestVoteForConflictingHashShouldRetrieveEvidenceAndSlash(t *testing.T) {
 	cKeeper.EXPECT().GetEpoch(gomock.Any()).Return(&epochingtypes.Epoch{EpochNumber: 1}).AnyTimes()
 	cKeeper.EXPECT().GetLastFinalizedEpoch(gomock.Any()).Return(uint64(1)).AnyTimes()
 	// commit some public randomness
-	startHeight := uint64(0)
+	startHeight := uint64(1)
 	numPubRand := uint64(200)
 	randListInfo, msgCommitPubRandList, err :=
 		datagen.GenRandomMsgCommitPubRandList(r, btcSK, startHeight,
@@ -459,7 +485,7 @@ func TestDoNotPanicOnNilProof(t *testing.T) {
 	cKeeper.EXPECT().GetEpoch(gomock.Any()).Return(&epochingtypes.Epoch{EpochNumber: committedEpochNum}).AnyTimes()
 
 	// commit some public randomness
-	startHeight := uint64(0)
+	startHeight := uint64(1)
 	numPubRand := uint64(200)
 	randListInfo, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(r, btcSK, startHeight, numPubRand)
 	require.NoError(t, err)
@@ -503,13 +529,18 @@ func TestVerifyActivationHeight(t *testing.T) {
 	r := rand.New(rand.NewSource(time.Now().Unix()))
 	fKeeper, ctx := keepertest.FinalityKeeper(t, nil, nil, nil, nil)
 	ms := keeper.NewMsgServerImpl(*fKeeper)
-	err := fKeeper.SetParams(ctx, types.DefaultParams())
+	// set a higher activation height so we can test with startHeight > currentBlockHeight
+	// but still below activation height
+	params := types.DefaultParams()
+	params.FinalityActivationHeight = 100
+	err := fKeeper.SetParams(ctx, params)
 	require.NoError(t, err)
 	activationHeight := fKeeper.GetParams(ctx).FinalityActivationHeight
 
 	// checks pub rand commit
 	btcSK, _, err := datagen.GenRandomBTCKeyPair(r)
 	require.NoError(t, err)
+	// startHeight must be > currentBlockHeight (0) but < activationHeight (100)
 	startHeight := activationHeight - 1
 	numPubRand := uint64(200)
 	randListInfo, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(r, btcSK, startHeight, numPubRand)
@@ -568,8 +599,8 @@ func TestBtcDelegationRewards(t *testing.T) {
 	stakingTime := uint16(1000)
 
 	fp1SK, fp1PK, fp1 := h.CreateFinalityProvider(r)
-	// commit some public randomness
-	startHeight := uint64(0)
+	// commit some public randomness (must be > current block height which is 1 in test helper)
+	startHeight := uint64(2)
 	h.FpAddPubRand(r, fp1SK, startHeight)
 
 	_, _, fp1Del1, _ := h.CreateActiveBtcDelegation(r, covenantSKs, fp1PK, stakingValueFp1Del1, stakingTime, btcLightClientTipHeight)
@@ -643,8 +674,8 @@ func TestBtcDelegationRewardsEarlyUnbondingAndExpire(t *testing.T) {
 	stakingTime := uint16(1001)
 
 	fpSK, fpPK, fp := h.CreateFinalityProvider(r)
-	// commit some public randomness
-	startHeight := uint64(0)
+	// commit some public randomness (must be > current block height which is 1 in test helper)
+	startHeight := uint64(2)
 	h.FpAddPubRand(r, fpSK, startHeight)
 	btcLightClientTipHeight := uint32(30)
 
