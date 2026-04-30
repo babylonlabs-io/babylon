@@ -10,5 +10,5 @@ permissions:
 
 jobs:
   changelog_reminder:
-    uses: babylonlabs-io/.github/.github/workflows/reusable_changelog_reminder.yml@5d014a155c08d56a1b5673d049f2b4e7d4427825 # v0.19.0 https://github.com/babylonlabs-io/.github/releases/tag/v0.19.0
+    uses: babylonlabs-io/.github/.github/workflows/reusable_changelog_reminder.yml@98e4de18638b3d0738c9cbf7e7dfc6e34524db54 # v0.19.1 https://github.com/babylonlabs-io/.github/releases/tag/v0.19.1
     secrets: inherit
