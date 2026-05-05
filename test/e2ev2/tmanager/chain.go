@@ -42,6 +42,11 @@ type ChainConfig struct {
 	ExpeditedVotingPeriod time.Duration
 	BTCConfirmationDepth  int
 	GasLimit              int64
+	// Software upgrade fields, only set by NewTmWithUpgrade.
+	IsUpgrade           bool   // bootstrap on the pre-upgrade binary, skip btcstaking genesis customization
+	Tag                 string // pre-upgrade image tag (e.g. v4.2.5-testnet)
+	BootstrapRepository string // pre-upgrade image repository
+	UpgradePropHeight   int64  // height at which the upgrade plan should fire
 }
 
 // Chain represents a blockchain with multiple nodes
@@ -148,7 +153,7 @@ func (c *Chain) InitGenesis() {
 	c.UpdateWalletSequenceAndAccountNumbers(sanitizedAccs)
 
 	// update all other modules
-	err = UpdateGenModulesState(appGenState, *c.InitialGenesis, c.Validators, nil, nil, balancesToAdd)
+	err = UpdateGenModulesState(appGenState, *c.InitialGenesis, c.Validators, nil, nil, balancesToAdd, c.Config.IsUpgrade)
 	require.NoError(c.T(), err, "failed to update gen state for all other modules")
 
 	appStateJSON, err := json.Marshal(appGenState)

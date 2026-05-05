@@ -24,6 +24,7 @@ import (
 
 	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/util"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
 )
 
 const (
@@ -67,7 +68,14 @@ type ValidatorWallet struct {
 // FinalityProvider represents a finality provider actor
 type FinalityProvider struct {
 	*WalletSender
-	BtcPrivKey  *btcec.PrivateKey
+	BtcPrivKey *btcec.PrivateKey
+	// BtcPrivateKey is an alias of BtcPrivKey populated by NewFpWithWallet
+	// for the stake-expansion test helpers backported from main.
+	BtcPrivateKey *btcec.PrivateKey
+	// PublicKey is the BIP340-encoded public key, populated by
+	// NewFpWithWallet for the stake-expansion test helpers backported from
+	// main.
+	PublicKey   *bbn.BIP340PubKey
 	Description string
 	Commission  math.LegacyDec
 }
@@ -129,15 +137,23 @@ func (ws *WalletSender) ChainID() string {
 	return ws.Node.ChainConfig.ChainID
 }
 
-// SignMsg creates and signs a transaction with the provided messages
+// SignMsg creates and signs a transaction with the provided messages using
+// the default gas limit of 300_000.
 func (ws *WalletSender) SignMsg(msgs ...sdk.Msg) *sdktx.Tx {
+	return ws.SignMsgWithGas(300_000, msgs...)
+}
+
+// SignMsgWithGas is like SignMsg but lets the caller pin a custom gas limit,
+// for cases like inserting many BTC headers via MsgInsertHeaders where the
+// per-tx gas grows with BTC light client depth.
+func (ws *WalletSender) SignMsgWithGas(gasLimit uint64, msgs ...sdk.Msg) *sdktx.Tx {
 	txBuilder := util.EncodingConfig.TxConfig.NewTxBuilder()
 	err := txBuilder.SetMsgs(msgs...)
 	require.NoError(ws.T(), err, "failed to set messages")
 
 	// Set fee and gas
 	txBuilder.SetFeeAmount(sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, math.NewInt(20000))))
-	txBuilder.SetGasLimit(300000)
+	txBuilder.SetGasLimit(gasLimit)
 
 	pubKey := ws.PrivKey.PubKey()
 	signerData := authsigning.SignerData{
@@ -207,11 +223,17 @@ func (ws *WalletSender) SignMsg(msgs ...sdk.Msg) *sdktx.Tx {
 // If the wallet is tagged to wait to verify the transaction it waits for one block
 // and checks if the transaction execution was success (code == 0).
 func (ws *WalletSender) SubmitMsgs(msgs ...sdk.Msg) (txHash string, tx *sdktx.Tx) {
-	// Sign and submit the transaction
-	signedTx := ws.SignMsg(msgs...)
+	return ws.SubmitMsgsWithGas(300_000, msgs...)
+}
+
+// SubmitMsgsWithGas is like SubmitMsgs but uses a custom gas limit. Useful for
+// txs whose cost grows with chain state (e.g., MsgInsertHeaders once the BTC
+// light client has many headers).
+func (ws *WalletSender) SubmitMsgsWithGas(gasLimit uint64, msgs ...sdk.Msg) (txHash string, tx *sdktx.Tx) {
+	signedTx := ws.SignMsgWithGas(gasLimit, msgs...)
 
 	txHash, err := ws.Node.SubmitTx(signedTx)
-	require.NoError(ws.T(), err, "Failed to submit IBC transfer transaction")
+	require.NoError(ws.T(), err, "Failed to submit transaction")
 
 	ws.AddTxSent(txHash)
 	if ws.VerifySentTx {

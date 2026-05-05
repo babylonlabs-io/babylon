@@ -20,6 +20,9 @@ const (
 	// Images that do not have specified tag, latest will be used by default.
 	// name of babylon image produced by running `make build-docker`
 	BabylonContainerName = "babylonlabs-io/babylond"
+	// name of babylon image used to bootstrap upgrade tests (pre-upgrade binary)
+	BabylonContainerNameBeforeUpgrade = "babylonlabs/babylond"
+	BabylonContainerTagBeforeUpgrade  = "v4.2.5-testnet"
 
 	HermesRelayerRepository = "informalsystems/hermes"
 	HermesRelayerTag        = "1.13.1"
@@ -72,6 +75,22 @@ func NewContainerBbnNode(containerName string) *Container {
 		Name:       containerName,
 		Repository: BabylonContainerName,
 		Tag:        "latest",
+	}
+}
+
+// NewContainerOldBbnNode constructs a Container pinned to the pre-upgrade
+// Babylon binary (BabylonContainerNameBeforeUpgrade). Used by upgrade tests
+// to bootstrap the chain on the old version before applying the upgrade plan.
+func NewContainerOldBbnNode(containerName, tag string) *Container {
+	cTag := BabylonContainerTagBeforeUpgrade
+	if tag != "" {
+		cTag = tag
+	}
+
+	return &Container{
+		Name:       containerName,
+		Repository: BabylonContainerNameBeforeUpgrade,
+		Tag:        cTag,
 	}
 }
 

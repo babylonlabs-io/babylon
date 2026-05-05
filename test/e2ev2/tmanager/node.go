@@ -107,12 +107,16 @@ func NewNodeWithoutBls(tm *TestManager, name string, cfg *ChainConfig) *Node {
 	require.NoError(tm.T, err)
 
 	cointanerName := fmt.Sprintf("%s-%s-%s", cfg.ChainID, name, tm.NetworkID()[:4])
+	container := NewContainerBbnNode(cointanerName)
+	if cfg.IsUpgrade {
+		container = NewContainerOldBbnNode(cointanerName, cfg.Tag)
+	}
 	n := &Node{
 		Tm:          tm,
 		ChainConfig: cfg,
 		Name:        name,
 		Home:        filepath.Join(cfg.Home, name),
-		Container:   NewContainerBbnNode(cointanerName),
+		Container:   container,
 		Ports:       nPorts,
 		Wallets:     make(map[string]*WalletSender, 0),
 	}
@@ -165,6 +169,22 @@ func (n *Node) HostPort(portID int) string {
 
 func (n *Node) ContainerResource() *dockertest.Resource {
 	return n.Tm.ContainerManager.Resources[n.Container.Name]
+}
+
+// RemoveResource force-removes the underlying docker container and drops it
+// from the ContainerManager registry. Used by upgrade flows to swap binaries
+// at the upgrade height.
+func (n *Node) RemoveResource() error {
+	resource := n.ContainerResource()
+	opts := docker.RemoveContainerOptions{
+		ID:    resource.Container.ID,
+		Force: true,
+	}
+	if err := n.Tm.Pool.Client.RemoveContainer(opts); err != nil {
+		return err
+	}
+	delete(n.Tm.ContainerManager.Resources, n.Container.Name)
+	return nil
 }
 
 func (n *ValidatorNode) CreateValidatorMsg(selfDelegationAmt sdk.Coin) sdk.Msg {
@@ -819,7 +839,12 @@ func (n *Node) InsertNewEmptyBtcHeader(r *rand.Rand) *blc.BTCHeaderInfo {
 	return child
 }
 
-// SendHeaderHex sends a BTC header in hex format to the node
+// SendHeaderHex sends a BTC header in hex format to the node.
+//
+// Uses the chain's per-tx gas ceiling (10M) rather than the wallet's 300K
+// default because MsgInsertHeaders gas grows with BTC light client depth —
+// a single-header insert at depth ~150+ already exceeds the default budget.
+// 10M comfortably covers depth growth for the lifetime of any e2e test.
 func (n *Node) SendHeaderHex(headerHex string) {
 	wallet := n.Wallet("node-key")
 
@@ -831,6 +856,37 @@ func (n *Node) SendHeaderHex(headerHex string) {
 		Headers: []bbn.BTCHeaderBytes{headerBytes},
 	}
 
-	_, tx := wallet.SubmitMsgs(msg)
-	require.NotNil(n.T(), tx, "RegisterConsumerChain transaction should not be nil")
+	_, tx := wallet.SubmitMsgsWithGas(10_000_000, msg)
+	require.NotNil(n.T(), tx, "MsgInsertHeaders tx should not be nil")
+}
+
+// InsertHeader inserts a BTC header to the chain (backported from main for
+// the stake-expansion regression test).
+func (n *Node) InsertHeader(h *bbn.BTCHeaderBytes) {
+	tip, err := n.QueryTip()
+	require.NoError(n.T(), err)
+	n.T().Logf("Retrieved current tip of btc headerchain. Height: %d", tip.Height)
+	n.SendHeaderHex(h.MarshalHex())
+	n.WaitUntilBtcHeight(tip.Height + 1)
+}
+
+// SubmitRefundableTxWithAssertion submits a refundable transaction and
+// asserts that the tx fee is (or isn't) refunded as expected. Backported
+// from main for the stake-expansion regression test.
+func (n *Node) SubmitRefundableTxWithAssertion(
+	f func(),
+	shouldBeRefunded bool,
+	walletName string,
+) {
+	wallet := n.Wallet(walletName)
+	require.NotNil(n.T(), wallet, "Wallet %s should not be nil", walletName)
+
+	submitterBalanceBefore := n.QueryAllBalances(wallet.Address.String())
+	f()
+	submitterBalanceAfter := n.QueryAllBalances(wallet.Address.String())
+	if shouldBeRefunded {
+		require.Equal(n.T(), submitterBalanceBefore, submitterBalanceAfter)
+	} else {
+		require.False(n.T(), submitterBalanceBefore.Equal(submitterBalanceAfter))
+	}
 }

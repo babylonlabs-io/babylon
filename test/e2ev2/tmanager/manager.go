@@ -8,6 +8,8 @@ import (
 
 	"github.com/ory/dockertest/v3"
 	"github.com/stretchr/testify/require"
+
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 )
 
 // TestManager manages isolated Docker networks for tests
@@ -28,6 +30,14 @@ type TestManagerIbc struct {
 	*TestManager
 	Hermes *HermesRelayer
 }
+
+// TestManagerUpgrade manages software upgrade, which includes proposal upgrade and fork upgrade
+type TestManagerUpgrade struct {
+	*TestManager
+	ForkHeight int64 // ForkHeight > 0 implies that this is a fork upgrade, otherwise, proposal upgrade
+}
+
+type PreUpgradeFunc func([]*Node)
 
 // NewTestManager creates a new network manager with isolated Docker network
 func NewTestManager(t *testing.T) *TestManager {
@@ -87,6 +97,77 @@ func NewTmWithIbc(t *testing.T) *TestManagerIbc {
 	return &TestManagerIbc{
 		TestManager: tm,
 		Hermes:      NewHermesRelayer(tm),
+	}
+}
+
+// NewTmWithUpgrade creates a TestManager configured to bootstrap on the
+// pre-upgrade Babylon image. forkHeight > 0 selects fork-upgrade mode;
+// forkHeight == 0 means proposal-upgrade. tag overrides the default
+// pre-upgrade image tag (BabylonContainerTagBeforeUpgrade) when non-empty.
+func NewTmWithUpgrade(
+	t *testing.T,
+	forkHeight int64,
+	tag string,
+	cfgOpts ...func(*ChainConfig),
+) *TestManagerUpgrade {
+	tm := NewTestManager(t)
+	bbnCfg := NewChainConfig(tm.TempDir, CHAIN_ID_BABYLON)
+	bbnCfg.IsUpgrade = true
+	if tag == "" {
+		tag = BabylonContainerTagBeforeUpgrade
+	}
+	bbnCfg.Tag = tag
+	bbnCfg.BootstrapRepository = BabylonContainerNameBeforeUpgrade
+
+	for _, opt := range cfgOpts {
+		opt(bbnCfg)
+	}
+
+	tm.Chains[CHAIN_ID_BABYLON] = NewChain(tm, bbnCfg)
+
+	return &TestManagerUpgrade{
+		TestManager: tm,
+		ForkHeight:  forkHeight,
+	}
+}
+
+// Start runs all the nodes and waits for the chain to produce at least block 1.
+func (tm *TestManagerUpgrade) Start() {
+	tm.TestManager.Start()
+	tm.ChainsWaitUntilHeight(1)
+}
+
+// ChainValidator returns the babylon chain's first validator node.
+func (tm *TestManager) ChainValidator() *ValidatorNode {
+	return tm.Chains[CHAIN_ID_BABYLON].Validators[0]
+}
+
+// Upgrade runs preUpgradeFunc, then executes either a fork or proposal upgrade,
+// then verifies the upgrade plan was applied on every node.
+// NOTE: must be invoked after Start().
+func (tm *TestManagerUpgrade) Upgrade(govMsg *govtypes.MsgSubmitProposal, preUpgradeFunc PreUpgradeFunc) {
+	var nodes []*Node
+	for _, chain := range tm.Chains {
+		nodes = append(nodes, chain.AllNodes()...)
+	}
+	preUpgradeFunc(nodes)
+
+	if tm.ForkHeight > 0 {
+		tm.runForkUpgrade()
+	} else {
+		if err := tm.runProposalUpgrade(govMsg); err != nil {
+			tm.T.Fatalf("failed to run proposal upgrade: %v", err)
+		}
+	}
+
+	for _, chain := range tm.Chains {
+		for _, node := range chain.AllNodes() {
+			appliedHeight := node.QueryAppliedPlan(govMsg.Title)
+			require.Positive(tm.T, appliedHeight,
+				"node %s on chain %s: upgrade %s was not applied",
+				node.Name, chain.ChainID(), govMsg.Title)
+			tm.T.Logf("node %s: %s plan applied at height: %d", node.Name, govMsg.Title, appliedHeight)
+		}
 	}
 }
 

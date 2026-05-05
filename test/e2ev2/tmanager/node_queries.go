@@ -6,14 +6,17 @@ import (
 	"net"
 	"net/url"
 
+	upgradetypes "cosmossdk.io/x/upgrade/types"
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/util"
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	btclighttypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
+	btcstktypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 	ictvtypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdktx "github.com/cosmos/cosmos-sdk/types/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
@@ -74,6 +77,64 @@ func (n *Node) IncentiveQuery(f func(ictvtypes.QueryClient)) {
 		incentiveClient := ictvtypes.NewQueryClient(conn)
 		f(incentiveClient)
 	})
+}
+
+func (n *Node) GovQuery(f func(govtypes.QueryClient)) {
+	n.GrpcConn(func(conn *grpc.ClientConn) {
+		govClient := govtypes.NewQueryClient(conn)
+		f(govClient)
+	})
+}
+
+func (n *Node) UpgradeQuery(f func(upgradetypes.QueryClient)) {
+	n.GrpcConn(func(conn *grpc.ClientConn) {
+		upgradeClient := upgradetypes.NewQueryClient(conn)
+		f(upgradeClient)
+	})
+}
+
+// QueryProposals returns all governance proposals on the chain.
+func (n *Node) QueryProposals() *govtypes.QueryProposalsResponse {
+	var (
+		resp *govtypes.QueryProposalsResponse
+		err  error
+	)
+	n.GovQuery(func(govClient govtypes.QueryClient) {
+		resp, err = govClient.Proposals(context.Background(), &govtypes.QueryProposalsRequest{})
+		require.NoError(n.T(), err)
+	})
+	return resp
+}
+
+// QueryTallyResult returns the current vote tally for the given proposal.
+func (n *Node) QueryTallyResult(propID uint64) *govtypes.TallyResult {
+	var (
+		resp *govtypes.QueryTallyResultResponse
+		err  error
+	)
+	n.GovQuery(func(govClient govtypes.QueryClient) {
+		resp, err = govClient.TallyResult(context.Background(), &govtypes.QueryTallyResultRequest{
+			ProposalId: propID,
+		})
+		require.NoError(n.T(), err)
+	})
+	return resp.Tally
+}
+
+// QueryAppliedPlan returns the height at which the named upgrade plan was
+// applied, or 0 if it has not been applied.
+func (n *Node) QueryAppliedPlan(planName string) int64 {
+	var (
+		resp *upgradetypes.QueryAppliedPlanResponse
+		err  error
+	)
+	n.UpgradeQuery(func(upgradeClient upgradetypes.QueryClient) {
+		resp, err = upgradeClient.AppliedPlan(context.Background(), &upgradetypes.QueryAppliedPlanRequest{
+			Name: planName,
+		})
+		require.NoError(n.T(), err)
+	})
+	return resp.Height
 }
 
 func (n *Node) LatestBlockNumber() (uint64, error) {
@@ -233,4 +294,59 @@ func (n *Node) QueryGetSealedEpochProofCLI(epochNum uint64) string {
 // GetRpcEndpoint returns the RPC endpoint of the node
 func (n *Node) GetRpcEndpoint() string {
 	return "tcp://" + net.JoinHostPort(n.Container.Name, fmt.Sprintf("%d", n.Ports.RPC))
+}
+
+// BtcStkQuery opens a gRPC connection and gives the caller a btcstaking
+// query client. Backported from main for the stake-expansion regression test.
+func (n *Node) BtcStkQuery(f func(btcstktypes.QueryClient)) {
+	n.GrpcConn(func(conn *grpc.ClientConn) {
+		btcStkClient := btcstktypes.NewQueryClient(conn)
+		f(btcStkClient)
+	})
+}
+
+// QueryBtcStakingParams returns the current x/btcstaking params via gRPC.
+// Backported from main for the stake-expansion regression test.
+func (n *Node) QueryBtcStakingParams() *btcstktypes.Params {
+	var (
+		resp *btcstktypes.QueryParamsResponse
+		err  error
+	)
+	n.BtcStkQuery(func(btcStkClient btcstktypes.QueryClient) {
+		resp, err = btcStkClient.Params(context.Background(), &btcstktypes.QueryParamsRequest{})
+		require.NoError(n.T(), err)
+	})
+	return &resp.Params
+}
+
+// QueryFinalityProvider returns the FinalityProvider record by BTC PK
+// (hex-encoded). Backported from main for the stake-expansion regression test.
+func (n *Node) QueryFinalityProvider(btcPkHex string) *btcstktypes.FinalityProviderResponse {
+	var (
+		resp *btcstktypes.QueryFinalityProviderResponse
+		err  error
+	)
+	n.BtcStkQuery(func(btcStkClient btcstktypes.QueryClient) {
+		resp, err = btcStkClient.FinalityProvider(context.Background(), &btcstktypes.QueryFinalityProviderRequest{
+			FpBtcPkHex: btcPkHex,
+		})
+		require.NoError(n.T(), err)
+	})
+	return resp.FinalityProvider
+}
+
+// QueryBTCDelegation returns the BTCDelegation record by staking-tx hash hex.
+// Backported from main for the stake-expansion regression test.
+func (n *Node) QueryBTCDelegation(stakingTxHash string) *btcstktypes.BTCDelegationResponse {
+	var (
+		resp *btcstktypes.QueryBTCDelegationResponse
+		err  error
+	)
+	n.BtcStkQuery(func(btcStkClient btcstktypes.QueryClient) {
+		resp, err = btcStkClient.BTCDelegation(context.Background(), &btcstktypes.QueryBTCDelegationRequest{
+			StakingTxHashHex: stakingTxHash,
+		})
+		require.NoError(n.T(), err)
+	})
+	return resp.BtcDelegation
 }

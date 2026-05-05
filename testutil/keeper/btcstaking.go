@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"encoding/hex"
 	"testing"
 
 	"cosmossdk.io/core/header"
@@ -9,6 +10,7 @@ import (
 	storemetrics "cosmossdk.io/store/metrics"
 	storetypes "cosmossdk.io/store/types"
 	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -18,9 +20,115 @@ import (
 	"github.com/stretchr/testify/require"
 
 	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
+	btclightclientt "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
 	"github.com/babylonlabs-io/babylon/v4/x/btcstaking/keeper"
 	"github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 )
+
+// ParseBTCHeaderInfoResponseToInfo converts a BTCHeaderInfoResponse to its
+// canonical BTCHeaderInfo form. Backported from main for the e2ev2
+// stake-expansion regression test.
+func ParseBTCHeaderInfoResponseToInfo(r *btclightclientt.BTCHeaderInfoResponse) (*btclightclientt.BTCHeaderInfo, error) {
+	header, err := bbn.NewBTCHeaderBytesFromHex(r.HeaderHex)
+	if err != nil {
+		return nil, err
+	}
+	hash, err := bbn.NewBTCHeaderHashBytesFromHex(r.HashHex)
+	if err != nil {
+		return nil, err
+	}
+	return &btclightclientt.BTCHeaderInfo{
+		Header: &header,
+		Hash:   &hash,
+		Height: r.Height,
+		Work:   &r.Work,
+	}, nil
+}
+
+// ParseRespBTCDelToBTCDel parses a BTC delegation response back into a
+// BTCDelegation. Backported from main for the e2ev2 stake-expansion
+// regression test.
+func ParseRespBTCDelToBTCDel(resp *bstypes.BTCDelegationResponse) (btcDel *bstypes.BTCDelegation, err error) {
+	stakingTx, err := hex.DecodeString(resp.StakingTxHex)
+	if err != nil {
+		return nil, err
+	}
+	delSig, err := bbn.NewBIP340SignatureFromHex(resp.DelegatorSlashSigHex)
+	if err != nil {
+		return nil, err
+	}
+	slashingTx, err := bstypes.NewBTCSlashingTxFromHex(resp.SlashingTxHex)
+	if err != nil {
+		return nil, err
+	}
+	btcDel = &bstypes.BTCDelegation{
+		StakerAddr:       resp.StakerAddr,
+		BtcPk:            resp.BtcPk,
+		FpBtcPkList:      resp.FpBtcPkList,
+		StartHeight:      resp.StartHeight,
+		StakingTime:      resp.StakingTime,
+		EndHeight:        resp.EndHeight,
+		TotalSat:         resp.TotalSat,
+		StakingTx:        stakingTx,
+		DelegatorSig:     delSig,
+		StakingOutputIdx: resp.StakingOutputIdx,
+		CovenantSigs:     resp.CovenantSigs,
+		UnbondingTime:    resp.UnbondingTime,
+		SlashingTx:       slashingTx,
+	}
+	if resp.UndelegationResponse != nil {
+		ud := resp.UndelegationResponse
+		unbondTx, err := hex.DecodeString(ud.UnbondingTxHex)
+		if err != nil {
+			return nil, err
+		}
+		slashTx, err := bstypes.NewBTCSlashingTxFromHex(ud.SlashingTxHex)
+		if err != nil {
+			return nil, err
+		}
+		delSlashingSig, err := bbn.NewBIP340SignatureFromHex(ud.DelegatorSlashingSigHex)
+		if err != nil {
+			return nil, err
+		}
+		btcDel.BtcUndelegation = &bstypes.BTCUndelegation{
+			UnbondingTx:              unbondTx,
+			CovenantUnbondingSigList: ud.CovenantUnbondingSigList,
+			CovenantSlashingSigs:     ud.CovenantSlashingSigs,
+			SlashingTx:               slashTx,
+			DelegatorSlashingSig:     delSlashingSig,
+		}
+		if ud.DelegatorUnbondingInfoResponse != nil {
+			var spendStakeTx = make([]byte, 0)
+			if ud.DelegatorUnbondingInfoResponse.SpendStakeTxHex != "" {
+				spendStakeTx, err = hex.DecodeString(ud.DelegatorUnbondingInfoResponse.SpendStakeTxHex)
+				if err != nil {
+					return nil, err
+				}
+			}
+			btcDel.BtcUndelegation.DelegatorUnbondingInfo = &bstypes.DelegatorUnbondingInfo{
+				SpendStakeTx: spendStakeTx,
+			}
+		}
+	}
+	if resp.StkExp != nil {
+		prevTxHash, err := chainhash.NewHashFromStr(resp.StkExp.PreviousStakingTxHashHex)
+		if err != nil {
+			return nil, err
+		}
+		otherFundOutput, err := hex.DecodeString(resp.StkExp.OtherFundingTxOutHex)
+		if err != nil {
+			return nil, err
+		}
+		btcDel.StkExp = &bstypes.StakeExpansion{
+			PreviousStakingTxHash:   prevTxHash.CloneBytes(),
+			OtherFundingTxOut:       otherFundOutput,
+			PreviousStkCovenantSigs: resp.StkExp.PreviousStkCovenantSigs,
+		}
+	}
+	return btcDel, nil
+}
 
 func BTCStakingKeeperWithStore(
 	t testing.TB,

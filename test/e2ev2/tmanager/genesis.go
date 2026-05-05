@@ -96,6 +96,7 @@ func UpdateGenModulesState(
 	btcHeaders []*btclighttypes.BTCHeaderInfo,
 	startingBtcStakingParams *StartingBtcStakingParams,
 	bankBalancesToAdd []banktypes.Balance,
+	isUpgrade bool,
 ) error {
 	err := UpdateModuleGenesis(appGenState, banktypes.ModuleName, &banktypes.GenesisState{}, UpdateGenesisBank(bankBalancesToAdd))
 	if err != nil {
@@ -152,9 +153,14 @@ func UpdateGenModulesState(
 		return fmt.Errorf("failed to update tokenfactory genesis state: %w", err)
 	}
 
-	err = UpdateModuleGenesis(appGenState, btcstktypes.ModuleName, &btcstktypes.GenesisState{}, UpdateGenesisBtcStaking(startingBtcStakingParams))
-	if err != nil {
-		return fmt.Errorf("failed to update btc staking genesis state: %w", err)
+	// In upgrade tests we bootstrap on the pre-upgrade binary and the
+	// btcstaking genesis schema may differ across versions; skip the
+	// customization to keep genesis.json compatible with the old binary.
+	if !isUpgrade {
+		err = UpdateModuleGenesis(appGenState, btcstktypes.ModuleName, &btcstktypes.GenesisState{}, UpdateGenesisBtcStaking(startingBtcStakingParams))
+		if err != nil {
+			return fmt.Errorf("failed to update btc staking genesis state: %w", err)
+		}
 	}
 
 	return nil
