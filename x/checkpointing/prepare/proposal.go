@@ -22,7 +22,7 @@ import (
 
 const defaultInjectedTxIndex = 0
 
-type SigValidationFn func(ctx sdk.Context, extendedVotes *abci.ExtendedCommitInfo, blockHash []byte) []ckpttypes.BlsSig
+type SigValidationFn func(ctx sdk.Context, epoch uint64, extendedVotes *abci.ExtendedCommitInfo, blockHash []byte) []ckpttypes.BlsSig
 
 var (
 	EmptyProposalRes = abci.ResponsePrepareProposal{Txs: [][]byte{}}
@@ -162,6 +162,7 @@ func (h *ProposalHandler) buildCheckpointFromVoteExtensions(
 	)
 	validBLSSigs := sigValidationFn(
 		ctx,
+		epoch,
 		extCommit,
 		prevBlockID,
 	)
@@ -206,8 +207,9 @@ func (h *ProposalHandler) buildCheckpointFromVoteExtensions(
 	return ckpt, nil
 }
 
-func (h *ProposalHandler) verifyVoteExtension(
+func (h *ProposalHandler) VerifyVoteExtension(
 	ctx sdk.Context,
+	expectedEpoch uint64,
 	veBytes []byte,
 	expectedBlockHash []byte,
 ) (*ckpttypes.BlsSig, error) {
@@ -226,6 +228,22 @@ func (h *ProposalHandler) verifyVoteExtension(
 
 	if err := ve.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid vote extension: %w", err)
+	}
+
+	// Reject vote extensions whose claimed EpochNum does not match the epoch
+	// the proposer is building a checkpoint for. Without this check, a
+	// malicious validator can claim an arbitrary epoch in their VE, sign over
+	// GetSignBytes(claimedEpoch, blockHash), pass per-sig VerifyBLSSig (which
+	// uses sig.EpochNum), and pollute the aggregate so the sealed multi-sig
+	// no longer verifies against canonical sign-bytes. The CometBFT-side
+	// VerifyVoteExtension also checks this, but late precommits delivered to
+	// LocalLastCommit after 2/3 quorum bypass it (cometbft#2361), so this
+	// proposer-side check is load-bearing.
+	if ve.EpochNum != expectedEpoch {
+		return nil, fmt.Errorf(
+			"vote extension epoch mismatch: expected %d, got %d",
+			expectedEpoch, ve.EpochNum,
+		)
 	}
 
 	_, err := sdk.ValAddressFromBech32(ve.Signer)
@@ -253,13 +271,14 @@ func (h *ProposalHandler) verifyVoteExtension(
 
 func (h *ProposalHandler) getValidBlsSigs(
 	ctx sdk.Context,
+	epoch uint64,
 	extendedVotes *abci.ExtendedCommitInfo,
 	blockHash []byte,
 ) []ckpttypes.BlsSig {
 	var validBLSSigs []ckpttypes.BlsSig
 
 	for _, vote := range extendedVotes.Votes {
-		sig, err := h.verifyVoteExtension(ctx, vote.VoteExtension, blockHash)
+		sig, err := h.VerifyVoteExtension(ctx, epoch, vote.VoteExtension, blockHash)
 		if err != nil {
 			h.logger.Error("invalid vote extension", "err", err)
 			continue
@@ -272,13 +291,14 @@ func (h *ProposalHandler) getValidBlsSigs(
 
 func (h *ProposalHandler) getValidBlsSigsAndPruneCommitInfo(
 	ctx sdk.Context,
+	epoch uint64,
 	extendedVotes *abci.ExtendedCommitInfo,
 	blockHash []byte,
 ) []ckpttypes.BlsSig {
 	var validBLSSigs []ckpttypes.BlsSig
 
 	for i, vote := range extendedVotes.Votes {
-		sig, err := h.verifyVoteExtension(ctx, vote.VoteExtension, blockHash)
+		sig, err := h.VerifyVoteExtension(ctx, epoch, vote.VoteExtension, blockHash)
 
 		if err != nil {
 			h.logger.Error("invalid vote extension", "err", err)

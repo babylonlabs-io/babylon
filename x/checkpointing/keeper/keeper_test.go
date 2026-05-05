@@ -291,6 +291,84 @@ func FuzzKeeperCheckpointEpoch(f *testing.F) {
 	})
 }
 
+// TestSealCheckpoint_RefusesInvalidAggregate covers the seal-time canonical
+// multi-sig check. SealCheckpoint must accept a checkpoint whose aggregated
+// BLS multi-sig verifies against GetSignBytes(epoch, blockHash) and reject
+// one whose aggregate was polluted by a contribution signed over different
+// bytes (e.g., a wrong-epoch VE that slipped past upstream validation).
+// This is defense-in-depth on top of the proposer-side epoch check in
+// x/checkpointing/prepare.
+func TestSealCheckpoint_RefusesInvalidAggregate(t *testing.T) {
+	r := rand.New(rand.NewSource(1))
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	ek := mocks.NewMockEpochingKeeper(ctrl)
+	ek.EXPECT().GetValidatorSet(gomock.Any(), gomock.Any()).Return(valSet).AnyTimes()
+	ek.EXPECT().GetTotalVotingPower(gomock.Any(), gomock.Any()).Return(int64(20)).AnyTimes()
+	ckptKeeper, ctx, _ := testkeeper.CheckpointingKeeper(t, ek, nil)
+	for i, val := range valSet {
+		err := ckptKeeper.CreateRegistration(ctx, pubkeys[i], val.Addr)
+		require.NoError(t, err)
+	}
+
+	blockHash := types.BlockHash(datagen.GenRandomByteArray(r, types.HashSize))
+	bm := bitmap.New(types.BitmapBits)
+	bm.Set(0, true)
+	bm.Set(1, true)
+
+	aggPK, err := bls12381.AggrPK(blsPubKey1, blsPubKey2)
+	require.NoError(t, err)
+
+	// Positive case: both validators sign over canonical bytes for epoch 1.
+	canonicalBytes := types.GetSignBytes(uint64(1), blockHash)
+	cleanSig1 := bls12381.Sign(blsPrivKey1, canonicalBytes)
+	cleanSig2 := bls12381.Sign(blsPrivKey2, canonicalBytes)
+	cleanAgg, err := bls12381.AggrSig(cleanSig1, cleanSig2)
+	require.NoError(t, err)
+
+	cleanCkpt := &types.RawCheckpointWithMeta{
+		Ckpt: &types.RawCheckpoint{
+			EpochNum:    1,
+			BlockHash:   &blockHash,
+			Bitmap:      bm,
+			BlsMultiSig: &cleanAgg,
+		},
+		Status:    types.Sealed,
+		BlsAggrPk: &aggPK,
+		PowerSum:  20,
+	}
+	require.NoError(t, ckptKeeper.SealCheckpoint(ctx, cleanCkpt))
+
+	// Negative case: validator 2 signs over GetSignBytes(wrongEpoch, blockHash)
+	// instead of GetSignBytes(2, blockHash). The aggregate is polluted —
+	// VerifyRawCheckpoint inside SealCheckpoint must reject it.
+	cleanSig1Epoch2 := bls12381.Sign(blsPrivKey1, types.GetSignBytes(uint64(2), blockHash))
+	pollutedSig2 := bls12381.Sign(blsPrivKey2, types.GetSignBytes(uint64(999), blockHash))
+	pollutedAgg, err := bls12381.AggrSig(cleanSig1Epoch2, pollutedSig2)
+	require.NoError(t, err)
+
+	pollutedCkpt := &types.RawCheckpointWithMeta{
+		Ckpt: &types.RawCheckpoint{
+			EpochNum:    2,
+			BlockHash:   &blockHash,
+			Bitmap:      bm,
+			BlsMultiSig: &pollutedAgg,
+		},
+		Status:    types.Sealed,
+		BlsAggrPk: &aggPK,
+		PowerSum:  20,
+	}
+	err = ckptKeeper.SealCheckpoint(ctx, pollutedCkpt)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "refusing to seal invalid checkpoint")
+	require.ErrorIs(t, err, types.ErrInvalidRawCheckpoint)
+
+	// The polluted checkpoint must not have been persisted.
+	_, err = ckptKeeper.GetRawCheckpoint(ctx, 2)
+	require.Error(t, err)
+}
+
 func TestSetGetConflictingCheckpointReceived(t *testing.T) {
 	k, ctx, _ := testkeeper.CheckpointingKeeper(t, nil, nil)
 
