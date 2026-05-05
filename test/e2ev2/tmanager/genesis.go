@@ -166,8 +166,9 @@ func UpdateGenModulesState(
 		return fmt.Errorf("failed to update epoching genesis state: %w", err)
 	}
 
-	// NOTE: in case of the software upgrade test, we don't want to update
-	// genesis state since it will introduce version incompatibility of genesis.json
+	// In upgrade tests we bootstrap on the pre-upgrade binary and the
+	// btcstaking genesis schema may differ across versions; skip the
+	// customization to keep genesis.json compatible with the old binary.
 	if !isUpgrade {
 		err = UpdateModuleGenesis(appGenState, btcstktypes.ModuleName, &btcstktypes.GenesisState{}, UpdateGenesisBtcStaking(startingBtcStakingParams))
 		if err != nil {

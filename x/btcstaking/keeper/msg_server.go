@@ -544,10 +544,12 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 	spendStakeTxHash := stakeSpendingTx.TxHash()
 
 	stakeExpansionDel := ms.getBTCDelegation(ctx, spendStakeTxHash)
-	isStakeExpansion := stakeExpansionDel != nil && stakeExpansionDel.IsStakeExpansion()
+	shouldActivateStkExp := stakeExpansionDel != nil &&
+		stakeExpansionDel.IsStakeExpansion() &&
+		!stakeExpansionDel.IsUnbondedEarly() // the stk exp can unbond early prior to having the inclusion proof
 
 	// 2. Verify stake spending tx inclusion proof
-	if isStakeExpansion {
+	if shouldActivateStkExp {
 		// Add inclusion proof for stake expansion delegation if stake expansion tx is 'k' deep
 		// If successful, this will set stake expansion delegation as active
 		if err := ms.Keeper.AddBTCDelegationInclusionProof(ctx, stakeExpansionDel, req.StakeSpendingTxInclusionProof); err != nil {
@@ -611,7 +613,7 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 			SpendStakeTx: []byte{},
 		}
 		types.EmitEarlyUnbondedEvent(ctx, btcDel.MustGetStakingTxHash().String(), stakerSpendigTxHeader.Height)
-	case isStakeExpansion:
+	case shouldActivateStkExp:
 		// emit an early unbonded event for the delegation (the one that is being expanded)
 		types.EmitEarlyUnbondedEventByStakeExpansion(
 			ctx,
