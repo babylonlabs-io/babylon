@@ -1,4 +1,4 @@
-package v4_3_test
+package v4_4_test
 
 import (
 	"math/rand"
@@ -12,7 +12,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
-	v4_3 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v4_3"
+	v4_4 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v4_4"
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
 	testutilkeeper "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
@@ -123,7 +123,7 @@ func TestRemediate_RemediatesPoisonedParent(t *testing.T) {
 	require.NoError(t, err)
 	require.Nil(t, pre.BtcUndelegation.DelegatorUnbondingInfo)
 
-	remediated, err := v4_3.RemediatePoisonedStakeExpansions(ctx, k)
+	remediated, err := v4_4.RemediatePoisonedStakeExpansions(ctx, k)
 	require.NoError(t, err)
 	require.Equal(t, []string{parentHash}, remediated)
 
@@ -166,7 +166,7 @@ func TestRemediate_SkipsHealthyDelegations(t *testing.T) {
 	require.NoError(t, k.AddBTCDelegation(ctx, parentC))
 	require.NoError(t, k.AddBTCDelegation(ctx, childC))
 
-	remediated, err := v4_3.RemediatePoisonedStakeExpansions(ctx, k)
+	remediated, err := v4_4.RemediatePoisonedStakeExpansions(ctx, k)
 	require.NoError(t, err)
 	require.Empty(t, remediated)
 
@@ -191,12 +191,12 @@ func TestRemediate_Idempotent(t *testing.T) {
 	require.NoError(t, k.AddBTCDelegation(ctx, parent))
 	require.NoError(t, k.AddBTCDelegation(ctx, child))
 
-	first, err := v4_3.RemediatePoisonedStakeExpansions(ctx, k)
+	first, err := v4_4.RemediatePoisonedStakeExpansions(ctx, k)
 	require.NoError(t, err)
 	require.Len(t, first, 1)
 
 	// Second run sees parent already unbonded and reports nothing.
-	second, err := v4_3.RemediatePoisonedStakeExpansions(ctx, k)
+	second, err := v4_4.RemediatePoisonedStakeExpansions(ctx, k)
 	require.NoError(t, err)
 	require.Empty(t, second)
 }
@@ -219,7 +219,7 @@ func TestRemediate_MultipleVictims(t *testing.T) {
 		parents[i] = parent
 	}
 
-	remediated, err := v4_3.RemediatePoisonedStakeExpansions(ctx, k)
+	remediated, err := v4_4.RemediatePoisonedStakeExpansions(ctx, k)
 	require.NoError(t, err)
 	require.Len(t, remediated, n)
 
@@ -252,7 +252,7 @@ func TestRemediate_SkipsAlreadyUnbondedParent(t *testing.T) {
 	require.NoError(t, k.AddBTCDelegation(ctx, parent))
 	require.NoError(t, k.AddBTCDelegation(ctx, child))
 
-	remediated, err := v4_3.RemediatePoisonedStakeExpansions(ctx, k)
+	remediated, err := v4_4.RemediatePoisonedStakeExpansions(ctx, k)
 	require.NoError(t, err)
 	require.Empty(t, remediated)
 
@@ -291,7 +291,7 @@ func TestRemediate_SkipsExpiredParent(t *testing.T) {
 	require.NoError(t, k.AddBTCDelegation(ctx, parent))
 	require.NoError(t, k.AddBTCDelegation(ctx, child))
 
-	remediated, err := v4_3.RemediatePoisonedStakeExpansions(ctx, k)
+	remediated, err := v4_4.RemediatePoisonedStakeExpansions(ctx, k)
 	require.NoError(t, err)
 	require.Empty(t, remediated, "EXPIRED parent must be skipped — no force-unbond")
 
@@ -320,7 +320,7 @@ func TestRemediate_SkipsChildWithMissingParent(t *testing.T) {
 	poison(child, child.StakingTx)
 	require.NoError(t, k.AddBTCDelegation(ctx, child))
 
-	remediated, err := v4_3.RemediatePoisonedStakeExpansions(ctx, k)
+	remediated, err := v4_4.RemediatePoisonedStakeExpansions(ctx, k)
 	require.NoError(t, err)
 	require.Empty(t, remediated)
 }
@@ -346,7 +346,7 @@ func TestRemediate_DedupesSameParent(t *testing.T) {
 	require.NoError(t, k.AddBTCDelegation(ctx, child1))
 	require.NoError(t, k.AddBTCDelegation(ctx, child2))
 
-	remediated, err := v4_3.RemediatePoisonedStakeExpansions(ctx, k)
+	remediated, err := v4_4.RemediatePoisonedStakeExpansions(ctx, k)
 	require.NoError(t, err)
 	require.Len(t, remediated, 1, "parent must appear exactly once even with two poisoned children")
 
@@ -369,7 +369,7 @@ func TestRemediate_QueuesUnbondedPowerDistEvent(t *testing.T) {
 	require.NoError(t, k.AddBTCDelegation(ctx, parent))
 	require.NoError(t, k.AddBTCDelegation(ctx, child))
 
-	_, err := v4_3.RemediatePoisonedStakeExpansions(ctx, k)
+	_, err := v4_4.RemediatePoisonedStakeExpansions(ctx, k)
 	require.NoError(t, err)
 
 	parentHash := parent.MustGetStakingTxHash().String()
@@ -400,15 +400,15 @@ func unbondedPowerDistEventsFor(ctx sdk.Context, k btcstkkeeper.Keeper, stakingT
 func requireRemediationEvent(t *testing.T, ctx sdk.Context, parentHash, childHash string) {
 	t.Helper()
 	for _, ev := range ctx.EventManager().Events() {
-		if ev.Type != v4_3.EventTypePhantomStakeExpansionRemediated {
+		if ev.Type != v4_4.EventTypePhantomStakeExpansionRemediated {
 			continue
 		}
 		var gotParent, gotChild string
 		for _, a := range ev.Attributes {
 			switch a.Key {
-			case v4_3.AttrParentStakingTxHash:
+			case v4_4.AttrParentStakingTxHash:
 				gotParent = a.Value
-			case v4_3.AttrChildStakingTxHash:
+			case v4_4.AttrChildStakingTxHash:
 				gotChild = a.Value
 			}
 		}

