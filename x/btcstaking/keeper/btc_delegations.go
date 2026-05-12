@@ -265,12 +265,11 @@ func (k Keeper) addCovenantSigsToBTCDelegation(
 // inclusion proof, spending-tx checks). It is intended ONLY for upgrade
 // handlers that need to remediate state by force-unbonding a delegation
 // outside the normal flow — currently the GHSA-4rm2-cj74-f62h remediation in
-// `app/upgrades/v4_3` and `app/upgrades/v4_4`. Do NOT call this from msg
-// handlers, gRPC, or any other user-reachable code path.
+// app/upgrades/v4_3. Do NOT call this from msg handlers, gRPC, or any other
+// user-reachable code path.
 //
-// TODO: remove this exported wrapper once both the v4.3 and v4.4 upgrades have
-// run on every network and neither `app/upgrades/v4_3` nor `app/upgrades/v4_4`
-// is in the active upgrade list anymore.
+// TODO: remove this exported wrapper once the v4.3 upgrade has run on every
+// network and `app/upgrades/v4_3` is no longer in the active upgrade list.
 func (k Keeper) BtcUndelegate(
 	ctx sdk.Context,
 	btcDel *types.BTCDelegation,
@@ -282,9 +281,9 @@ func (k Keeper) BtcUndelegate(
 // IterateBTCDelegations iterates over every BTCDelegation in the store and
 // invokes fn for each. Iteration stops if fn returns an error.
 //
-// TODO: remove this exported iterator once both the v4.3 and v4.4 upgrades
-// have run on every network — its only consumers are the GHSA-4rm2-cj74-f62h
-// remediation in `app/upgrades/v4_3` and `app/upgrades/v4_4`.
+// TODO: remove this exported iterator once the v4.3 upgrade has run on every
+// network — its only consumer is the GHSA-4rm2-cj74-f62h remediation in
+// app/upgrades/v4_3.
 func (k Keeper) IterateBTCDelegations(ctx context.Context, fn func(btcDel *types.BTCDelegation) error) error {
 	store := k.btcDelegationStore(ctx)
 	iter := store.Iterator(nil, nil)

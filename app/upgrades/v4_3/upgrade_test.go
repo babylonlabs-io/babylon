@@ -1,4 +1,4 @@
-package v4_4_test
+package v4_3_test
 
 import (
 	"math/rand"
@@ -12,7 +12,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
-	v4_4 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v4_4"
+	v4_3 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v4_3"
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
 	testutilkeeper "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
@@ -82,14 +82,46 @@ func genDelegation(t *testing.T, r *rand.Rand) *btcstktypes.BTCDelegation {
 	return del
 }
 
-// markStakeExpansionOf turns child into a stake-expansion delegation of parent.
+// markStakeExpansionOf turns child into a stake-expansion delegation of parent
+// and populates PreviousStkCovenantSigs to meet the parent's covenant quorum
+// (default 3-of-5). The handler gates remediation on this quorum being met,
+// because without prev-stake covenant sigs the child cannot have spent the
+// parent on Bitcoin.
 func markStakeExpansionOf(child, parent *btcstktypes.BTCDelegation) {
 	parentHash := parent.MustGetStakingTxHash()
 	child.StkExp = &btcstktypes.StakeExpansion{
 		PreviousStakingTxHash: parentHash[:],
 		// OtherFundingTxOut intentionally left empty — the remediation handler
 		// does not parse it.
+		PreviousStkCovenantSigs: dummyPrevStkCovenantSigs(3),
 	}
+}
+
+// markStakeExpansionOfNoPrevStkQuorum is like markStakeExpansionOf but leaves
+// PreviousStkCovenantSigs empty, modelling a child that never reached
+// prev-stake covenant quorum and therefore cannot have produced a valid
+// spending witness on the parent's UTXO.
+func markStakeExpansionOfNoPrevStkQuorum(child, parent *btcstktypes.BTCDelegation) {
+	parentHash := parent.MustGetStakingTxHash()
+	child.StkExp = &btcstktypes.StakeExpansion{
+		PreviousStakingTxHash: parentHash[:],
+	}
+}
+
+func dummyPrevStkCovenantSigs(n int) []*btcstktypes.SignatureInfo {
+	// The remediation handler only inspects len(PreviousStkCovenantSigs)
+	// against the parent's CovenantQuorum, so the field values just need to
+	// pass proto unmarshal length checks (BIP340 pub key = 32 bytes, sig = 64
+	// bytes). They do not need to be valid signatures.
+	out := make([]*btcstktypes.SignatureInfo, n)
+	for i := 0; i < n; i++ {
+		pk := make(bbn.BIP340PubKey, bbn.BIP340PubKeyLen)
+		sig := make(bbn.BIP340Signature, bbn.BIP340SignatureLen)
+		pk[0] = byte(i + 1)
+		sig[0] = byte(i + 1)
+		out[i] = &btcstktypes.SignatureInfo{Pk: &pk, Sig: &sig}
+	}
+	return out
 }
 
 // poison clears child's inclusion proof and sets DelegatorUnbondingInfo,
@@ -123,7 +155,7 @@ func TestRemediate_RemediatesPoisonedParent(t *testing.T) {
 	require.NoError(t, err)
 	require.Nil(t, pre.BtcUndelegation.DelegatorUnbondingInfo)
 
-	remediated, err := v4_4.RemediatePoisonedStakeExpansions(ctx, k)
+	remediated, err := v4_3.RemediatePoisonedStakeExpansions(ctx, k)
 	require.NoError(t, err)
 	require.Equal(t, []string{parentHash}, remediated)
 
@@ -166,7 +198,7 @@ func TestRemediate_SkipsHealthyDelegations(t *testing.T) {
 	require.NoError(t, k.AddBTCDelegation(ctx, parentC))
 	require.NoError(t, k.AddBTCDelegation(ctx, childC))
 
-	remediated, err := v4_4.RemediatePoisonedStakeExpansions(ctx, k)
+	remediated, err := v4_3.RemediatePoisonedStakeExpansions(ctx, k)
 	require.NoError(t, err)
 	require.Empty(t, remediated)
 
@@ -191,12 +223,12 @@ func TestRemediate_Idempotent(t *testing.T) {
 	require.NoError(t, k.AddBTCDelegation(ctx, parent))
 	require.NoError(t, k.AddBTCDelegation(ctx, child))
 
-	first, err := v4_4.RemediatePoisonedStakeExpansions(ctx, k)
+	first, err := v4_3.RemediatePoisonedStakeExpansions(ctx, k)
 	require.NoError(t, err)
 	require.Len(t, first, 1)
 
 	// Second run sees parent already unbonded and reports nothing.
-	second, err := v4_4.RemediatePoisonedStakeExpansions(ctx, k)
+	second, err := v4_3.RemediatePoisonedStakeExpansions(ctx, k)
 	require.NoError(t, err)
 	require.Empty(t, second)
 }
@@ -219,7 +251,7 @@ func TestRemediate_MultipleVictims(t *testing.T) {
 		parents[i] = parent
 	}
 
-	remediated, err := v4_4.RemediatePoisonedStakeExpansions(ctx, k)
+	remediated, err := v4_3.RemediatePoisonedStakeExpansions(ctx, k)
 	require.NoError(t, err)
 	require.Len(t, remediated, n)
 
@@ -252,7 +284,7 @@ func TestRemediate_SkipsAlreadyUnbondedParent(t *testing.T) {
 	require.NoError(t, k.AddBTCDelegation(ctx, parent))
 	require.NoError(t, k.AddBTCDelegation(ctx, child))
 
-	remediated, err := v4_4.RemediatePoisonedStakeExpansions(ctx, k)
+	remediated, err := v4_3.RemediatePoisonedStakeExpansions(ctx, k)
 	require.NoError(t, err)
 	require.Empty(t, remediated)
 
@@ -291,7 +323,7 @@ func TestRemediate_SkipsExpiredParent(t *testing.T) {
 	require.NoError(t, k.AddBTCDelegation(ctx, parent))
 	require.NoError(t, k.AddBTCDelegation(ctx, child))
 
-	remediated, err := v4_4.RemediatePoisonedStakeExpansions(ctx, k)
+	remediated, err := v4_3.RemediatePoisonedStakeExpansions(ctx, k)
 	require.NoError(t, err)
 	require.Empty(t, remediated, "EXPIRED parent must be skipped — no force-unbond")
 
@@ -320,9 +352,39 @@ func TestRemediate_SkipsChildWithMissingParent(t *testing.T) {
 	poison(child, child.StakingTx)
 	require.NoError(t, k.AddBTCDelegation(ctx, child))
 
-	remediated, err := v4_4.RemediatePoisonedStakeExpansions(ctx, k)
+	remediated, err := v4_3.RemediatePoisonedStakeExpansions(ctx, k)
 	require.NoError(t, err)
 	require.Empty(t, remediated)
+}
+
+// TestRemediate_SkipsChildWithoutPreviousStkCovenantQuorum exercises the
+// defense-in-depth gate: a poisoned-shaped child whose
+// PreviousStkCovenantSigs do NOT meet the parent's covenant quorum cannot
+// have produced a valid spending witness on the parent's UTXO, so the
+// remediation must not force-unbond the parent.
+func TestRemediate_SkipsChildWithoutPreviousStkCovenantQuorum(t *testing.T) {
+	ctx, k, ctrl := setup(t)
+	defer ctrl.Finish()
+
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+
+	parent := genDelegation(t, r)
+	child := genDelegation(t, r)
+	markStakeExpansionOfNoPrevStkQuorum(child, parent)
+	poison(child, child.StakingTx)
+
+	require.NoError(t, k.AddBTCDelegation(ctx, parent))
+	require.NoError(t, k.AddBTCDelegation(ctx, child))
+
+	remediated, err := v4_3.RemediatePoisonedStakeExpansions(ctx, k)
+	require.NoError(t, err)
+	require.Empty(t, remediated,
+		"child without PreviousStkCovenantSigs quorum cannot have spent parent — must skip")
+
+	got, err := k.GetBTCDelegation(ctx, parent.MustGetStakingTxHash().String())
+	require.NoError(t, err)
+	require.Nil(t, got.BtcUndelegation.DelegatorUnbondingInfo,
+		"parent must not be force-unbonded when prev-stake covenant quorum is missing")
 }
 
 func TestRemediate_DedupesSameParent(t *testing.T) {
@@ -346,7 +408,7 @@ func TestRemediate_DedupesSameParent(t *testing.T) {
 	require.NoError(t, k.AddBTCDelegation(ctx, child1))
 	require.NoError(t, k.AddBTCDelegation(ctx, child2))
 
-	remediated, err := v4_4.RemediatePoisonedStakeExpansions(ctx, k)
+	remediated, err := v4_3.RemediatePoisonedStakeExpansions(ctx, k)
 	require.NoError(t, err)
 	require.Len(t, remediated, 1, "parent must appear exactly once even with two poisoned children")
 
@@ -369,7 +431,7 @@ func TestRemediate_QueuesUnbondedPowerDistEvent(t *testing.T) {
 	require.NoError(t, k.AddBTCDelegation(ctx, parent))
 	require.NoError(t, k.AddBTCDelegation(ctx, child))
 
-	_, err := v4_4.RemediatePoisonedStakeExpansions(ctx, k)
+	_, err := v4_3.RemediatePoisonedStakeExpansions(ctx, k)
 	require.NoError(t, err)
 
 	parentHash := parent.MustGetStakingTxHash().String()
@@ -400,15 +462,15 @@ func unbondedPowerDistEventsFor(ctx sdk.Context, k btcstkkeeper.Keeper, stakingT
 func requireRemediationEvent(t *testing.T, ctx sdk.Context, parentHash, childHash string) {
 	t.Helper()
 	for _, ev := range ctx.EventManager().Events() {
-		if ev.Type != v4_4.EventTypePhantomStakeExpansionRemediated {
+		if ev.Type != v4_3.EventTypePhantomStakeExpansionRemediated {
 			continue
 		}
 		var gotParent, gotChild string
 		for _, a := range ev.Attributes {
 			switch a.Key {
-			case v4_4.AttrParentStakingTxHash:
+			case v4_3.AttrParentStakingTxHash:
 				gotParent = a.Value
-			case v4_4.AttrChildStakingTxHash:
+			case v4_3.AttrChildStakingTxHash:
 				gotChild = a.Value
 			}
 		}
