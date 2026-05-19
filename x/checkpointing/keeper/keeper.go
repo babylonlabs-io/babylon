@@ -71,7 +71,7 @@ func (k Keeper) SealCheckpoint(ctx context.Context, ckptWithMeta *types.RawCheck
 	// checkpoint. Catches polluted aggregates that slipped past upstream VE
 	// validation — for example, a wrong-epoch VE that bypassed the
 	// CometBFT-side VerifyVoteExtension via the late-precommit path
-	// (cometbft#2361) and the proposer-side check — as well as any future
+	// and the proposer-side check — as well as any future
 	// regression of those checks. Cost: one BLS pairing per epoch.
 	if err := k.VerifyRawCheckpoint(ctx, ckptWithMeta.Ckpt); err != nil {
 		return fmt.Errorf("refusing to seal invalid checkpoint for epoch %d: %w",

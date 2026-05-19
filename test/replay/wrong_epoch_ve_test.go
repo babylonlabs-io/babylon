@@ -292,8 +292,8 @@ func (md *multiValDriver) generateBlockWithAllValidators(t *testing.T, malicious
 // wrong-epoch vote-extension attack. Four equal-power validators run; three
 // honest validators alone clear the >2/3 quorum, so the fourth (malicious)
 // validator's vote extension can arrive post-quorum and bypass the
-// CometBFT-side VerifyVoteExtension via the late-precommit path
-// (cometbft#2361). The malicious validator's address is chosen as the
+// CometBFT-side VerifyVoteExtension via the late-precommit path.
+// The malicious validator's address is chosen as the
 // lowest of the four so it sorts first in canonical commit-info order and
 // would be processed before the seal loop's >2/3 break — i.e. it gets the
 // best chance of being folded into the BLS aggregate.

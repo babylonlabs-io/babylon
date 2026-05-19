@@ -269,7 +269,7 @@ func (h *ProposalHandler) VerifyVoteExtension(
 	// uses sig.EpochNum), and pollute the aggregate so the sealed multi-sig
 	// no longer verifies against canonical sign-bytes. The CometBFT-side
 	// VerifyVoteExtension also checks this, but late precommits delivered to
-	// LocalLastCommit after 2/3 quorum bypass it (cometbft#2361), so this
+	// LocalLastCommit after 2/3 quorum bypass it, so this
 	// proposer-side check is load-bearing.
 	if ve.EpochNum != expectedEpoch {
 		return nil, fmt.Errorf(
