@@ -1,6 +1,7 @@
 package prepare_test
 
 import (
+	"fmt"
 	"testing"
 
 	"cosmossdk.io/log"
@@ -81,7 +82,7 @@ func TestDuplicateField_Issue(t *testing.T) {
 		err = ve.Validate()
 		require.NoError(t, err, "Faulty validator %d: Validate() should pass", i+1)
 
-		blsSig, err := proposalHandler.VerifyVoteExtension(ctx, maliciousBytes, blockHash)
+		blsSig, err := proposalHandler.VerifyVoteExtension(ctx, 1, maliciousBytes, blockHash)
 		require.Nil(t, blsSig)
 		require.EqualError(t, err, ckpttypes.ErrVoteExt.Wrapf(
 			"malformed vote extension (possible malicious bytes included): original size %d, size after marshal %d",
@@ -134,4 +135,36 @@ func buildMaliciousVoteExtension(
 	buf = protowire.AppendBytes(buf, blsSig)
 
 	return buf
+}
+
+// TestVerifyVoteExtension_RejectsWrongEpoch covers the proposer-side epoch
+// check. A validator constructs a properly signed vote extension over
+// GetSignBytes(claimedEpoch, blockHash) for a claimedEpoch that differs
+// from the epoch the proposer is building a checkpoint for.
+// VerifyVoteExtension must reject it before the per-sig VerifyBLSSig step
+// (which would otherwise verify the sig against the VE's own claimed
+// epoch and pass).
+func TestVerifyVoteExtension_RejectsWrongEpoch(t *testing.T) {
+	const (
+		expectedEpoch = uint64(7)
+		claimedEpoch  = uint64(5)
+	)
+
+	tempApp := app.NewTmpBabylonApp()
+	proposalHandler := setupProposalHandler(t, tempApp)
+	ctx := setupSdkCtx(100)
+
+	// One validator signs a VE over GetSignBytes(claimedEpoch, blockHash). The
+	// signature itself is valid for that epoch — the only issue is that
+	// claimedEpoch != expectedEpoch.
+	val := genNTestValidators(t, 1)[0]
+	bh := ckpttypes.BlockHash(make([]byte, ckpttypes.HashSize))
+	ve := val.VoteExtension(&bh, claimedEpoch)
+	veBytes, err := ve.Marshal()
+	require.NoError(t, err)
+
+	blsSig, err := proposalHandler.VerifyVoteExtension(ctx, expectedEpoch, veBytes, bh)
+	require.Nil(t, blsSig)
+	require.EqualError(t, err,
+		fmt.Sprintf("vote extension epoch mismatch: expected %d, got %d", expectedEpoch, claimedEpoch))
 }

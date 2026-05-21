@@ -123,12 +123,15 @@ func (ws *WalletSender) ChainID() string {
 	return ws.Node.ChainConfig.ChainID
 }
 
-// SignMsg creates and signs a transaction with the provided messages using the default gas limit.
+// SignMsg creates and signs a transaction with the provided messages using
+// the default gas limit of 300_000.
 func (ws *WalletSender) SignMsg(msgs ...sdk.Msg) *sdktx.Tx {
-	return ws.SignMsgWithGas(300000, msgs...)
+	return ws.SignMsgWithGas(300_000, msgs...)
 }
 
-// SignMsgWithGas creates and signs a transaction with a custom gas limit.
+// SignMsgWithGas is like SignMsg but lets the caller pin a custom gas limit,
+// for cases like inserting many BTC headers via MsgInsertHeaders where the
+// per-tx gas grows with BTC light client depth.
 func (ws *WalletSender) SignMsgWithGas(gasLimit uint64, msgs ...sdk.Msg) *sdktx.Tx {
 	txBuilder := util.EncodingConfig.TxConfig.NewTxBuilder()
 	err := txBuilder.SetMsgs(msgs...)
@@ -206,8 +209,14 @@ func (ws *WalletSender) SignMsgWithGas(gasLimit uint64, msgs ...sdk.Msg) *sdktx.
 // If the wallet is tagged to wait to verify the transaction it waits for one block
 // and checks if the transaction execution was success (code == 0).
 func (ws *WalletSender) SubmitMsgs(msgs ...sdk.Msg) (txHash string, tx *sdktx.Tx) {
-	// Sign and submit the transaction
-	signedTx := ws.SignMsg(msgs...)
+	return ws.SubmitMsgsWithGas(300_000, msgs...)
+}
+
+// SubmitMsgsWithGas is like SubmitMsgs but uses a custom gas limit. Useful for
+// txs whose cost grows with chain state (e.g., MsgInsertHeaders once the BTC
+// light client has many headers).
+func (ws *WalletSender) SubmitMsgsWithGas(gasLimit uint64, msgs ...sdk.Msg) (txHash string, tx *sdktx.Tx) {
+	signedTx := ws.SignMsgWithGas(gasLimit, msgs...)
 
 	txHash, err := ws.Node.SubmitTx(signedTx)
 	require.NoErrorf(ws.T(), err, "Failed to submit tx: %+v", msgs)

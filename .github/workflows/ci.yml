@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   lint_test:
-    uses: babylonlabs-io/.github/.github/workflows/reusable_go_lint_test.yml@0adff9d36a387ebfc921621f2e6b357230f8c08e # v0.18.1
+    uses: babylonlabs-io/.github/.github/workflows/reusable_go_lint_test.yml@98e4de18638b3d0738c9cbf7e7dfc6e34524db54 # v0.19.1 https://github.com/babylonlabs-io/.github/releases/tag/v0.19.1
     secrets: inherit
     with:
       go-version: '1.24'
@@ -29,7 +29,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2 https://github.com/actions/checkout/releases/tag/v6.0.2
       - name: Run proto lint
         run: |
           make proto-lint
@@ -39,7 +39,7 @@ jobs:
       contents: read         # Required by reusable workflow
       id-token: write        # Required for AWS OIDC
       security-events: write # Required for Trivy SARIF uploads
-    uses: babylonlabs-io/.github/.github/workflows/reusable_docker_pipeline.yml@0adff9d36a387ebfc921621f2e6b357230f8c08e # v0.18.1
+    uses: babylonlabs-io/.github/.github/workflows/reusable_docker_pipeline.yml@98e4de18638b3d0738c9cbf7e7dfc6e34524db54 # v0.19.1 https://github.com/babylonlabs-io/.github/releases/tag/v0.19.1
     secrets: inherit
     with:
      publish: false
@@ -55,7 +55,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2 https://github.com/actions/checkout/releases/tag/v6.0.2
       - name: Build docker babylond
         run: |
           make -C contrib/images babylond-e2e
@@ -63,7 +63,7 @@ jobs:
         run: |
           docker save -o /tmp/docker-babylond.tar.gz babylonlabs-io/babylond:latest
       - name: Upload babylon artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2 https://github.com/actions/upload-artifact/releases/tag/v4.6.2
         with:
           name: babylond-${{ github.sha }} # so it renovates at every new sha
           path: /tmp/docker-babylond.tar.gz
@@ -72,7 +72,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2 https://github.com/actions/checkout/releases/tag/v6.0.2
       - name: Build docker init-chain
         run: |
           make -C contrib/images e2e-init-chain
@@ -80,7 +80,7 @@ jobs:
         run: |
           docker save -o /tmp/docker-init-chain.tar.gz babylonlabs-io/babylond-e2e-init-chain:latest
       - name: Upload init-chain artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2 https://github.com/actions/upload-artifact/releases/tag/v4.6.2
         with:
           name: init-chain
           path: /tmp/docker-init-chain.tar.gz
@@ -90,9 +90,9 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2 https://github.com/actions/checkout/releases/tag/v6.0.2
       - name: Download babylon artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0 https://github.com/actions/download-artifact/releases/tag/v4.3.0
         with:
           name: babylond-${{ github.sha }}
           path: /tmp
@@ -100,7 +100,7 @@ jobs:
         run: |
           docker load < /tmp/docker-babylond.tar.gz
       - name: Cache Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0 https://github.com/actions/setup-go/releases/tag/v5.6.0
         with:
           go-version: 1.24
       - name: Run e2e TestIBCTranferTestSuite
@@ -112,9 +112,9 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2 https://github.com/actions/checkout/releases/tag/v6.0.2
       - name: Download babylon artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0 https://github.com/actions/download-artifact/releases/tag/v4.3.0
         with:
           name: babylond-${{ github.sha }}
           path: /tmp
@@ -122,7 +122,7 @@ jobs:
         run: |
           docker load < /tmp/docker-babylond.tar.gz
       - name: Cache Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0 https://github.com/actions/setup-go/releases/tag/v5.6.0
         with:
           go-version: 1.24
       - name: Run e2e TestBTCTimestampingTestSuite
@@ -134,9 +134,9 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2 https://github.com/actions/checkout/releases/tag/v6.0.2
       - name: Download babylon artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0 https://github.com/actions/download-artifact/releases/tag/v4.3.0
         with:
           name: babylond-${{ github.sha }}
           path: /tmp
@@ -144,7 +144,7 @@ jobs:
         run: |
           docker load < /tmp/docker-babylond.tar.gz
       - name: Cache Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0 https://github.com/actions/setup-go/releases/tag/v5.6.0
         with:
           go-version: 1.24
       - name: Run e2e TestBTCStakingTestSuite
@@ -156,9 +156,9 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2 https://github.com/actions/checkout/releases/tag/v6.0.2
       - name: Download babylon artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0 https://github.com/actions/download-artifact/releases/tag/v4.3.0
         with:
           name: babylond-${{ github.sha }}
           path: /tmp
@@ -166,7 +166,7 @@ jobs:
         run: |
           docker load < /tmp/docker-babylond.tar.gz
       - name: Cache Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0 https://github.com/actions/setup-go/releases/tag/v5.6.0
         with:
           go-version: 1.24
       - name: Run e2e TestGovResumeFinality
@@ -178,9 +178,9 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2 https://github.com/actions/checkout/releases/tag/v6.0.2
       - name: Download babylon artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0 https://github.com/actions/download-artifact/releases/tag/v4.3.0
         with:
           name: babylond-${{ github.sha }}
           path: /tmp
@@ -188,7 +188,7 @@ jobs:
         run: |
           docker load < /tmp/docker-babylond.tar.gz
       - name: Cache Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0 https://github.com/actions/setup-go/releases/tag/v5.6.0
         with:
           go-version: 1.24
       - name: Run e2e TestBTCRewardsDistribution
@@ -200,9 +200,9 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2 https://github.com/actions/checkout/releases/tag/v6.0.2
       - name: Download babylon artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0 https://github.com/actions/download-artifact/releases/tag/v4.3.0
         with:
           name: babylond-${{ github.sha }}
           path: /tmp
@@ -210,7 +210,7 @@ jobs:
         run: |
           docker load < /tmp/docker-babylond.tar.gz
       - name: Cache Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0 https://github.com/actions/setup-go/releases/tag/v5.6.0
         with:
           go-version: 1.24
       - name: Run e2e TestBTCStakingPreApprovalTestSuite
@@ -222,9 +222,9 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2 https://github.com/actions/checkout/releases/tag/v6.0.2
       - name: Download babylon artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0 https://github.com/actions/download-artifact/releases/tag/v4.3.0
         with:
           name: babylond-${{ github.sha }}
           path: /tmp
@@ -232,7 +232,7 @@ jobs:
         run: |
           docker load < /tmp/docker-babylond.tar.gz
       - name: Cache Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0 https://github.com/actions/setup-go/releases/tag/v5.6.0
         with:
           go-version: 1.24
       - name: Run e2e TestICATestSuite
@@ -244,9 +244,9 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2 https://github.com/actions/checkout/releases/tag/v6.0.2
       - name: Download babylon artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0 https://github.com/actions/download-artifact/releases/tag/v4.3.0
         with:
           name: babylond-${{ github.sha }}
           path: /tmp
@@ -254,7 +254,7 @@ jobs:
         run: |
           docker load < /tmp/docker-babylond.tar.gz
       - name: Cache Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0 https://github.com/actions/setup-go/releases/tag/v5.6.0
         with:
           go-version: 1.24
       - name: Run e2e TestEpochingSpamPreventionTestSuite
@@ -266,9 +266,9 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2 https://github.com/actions/checkout/releases/tag/v6.0.2
       - name: Download babylon artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0 https://github.com/actions/download-artifact/releases/tag/v4.3.0
         with:
           name: babylond-${{ github.sha }}
           path: /tmp
@@ -276,7 +276,7 @@ jobs:
         run: |
           docker load < /tmp/docker-babylond.tar.gz
       - name: Cache Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0 https://github.com/actions/setup-go/releases/tag/v5.6.0
         with:
           go-version: 1.24
       - name: Run e2e TestBTCStakeExpansionTestSuite
@@ -288,9 +288,9 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2 https://github.com/actions/checkout/releases/tag/v6.0.2
       - name: Download babylon artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0 https://github.com/actions/download-artifact/releases/tag/v4.3.0
         with:
           name: babylond-${{ github.sha }}
           path: /tmp
@@ -298,7 +298,7 @@ jobs:
         run: |
           docker load < /tmp/docker-babylond.tar.gz
       - name: Cache Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0 https://github.com/actions/setup-go/releases/tag/v5.6.0
         with:
           go-version: 1.24
       - name: Run e2e TestCostakingTestSuite
@@ -310,9 +310,9 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2 https://github.com/actions/checkout/releases/tag/v6.0.2
       - name: Download babylon artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0 https://github.com/actions/download-artifact/releases/tag/v4.3.0
         with:
           name: babylond-${{ github.sha }}
           path: /tmp
@@ -320,7 +320,7 @@ jobs:
         run: |
           docker load < /tmp/docker-babylond.tar.gz
       - name: Cache Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0 https://github.com/actions/setup-go/releases/tag/v5.6.0
         with:
           go-version: 1.24
       - name: Run e2e TestValidatorJailingTestSuite
@@ -332,9 +332,9 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2 https://github.com/actions/checkout/releases/tag/v6.0.2
       - name: Download babylon artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0 https://github.com/actions/download-artifact/releases/tag/v4.3.0
         with:
           name: babylond-${{ github.sha }}
           path: /tmp
@@ -342,7 +342,7 @@ jobs:
         run: |
           docker load < /tmp/docker-babylond.tar.gz
       - name: Cache Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0 https://github.com/actions/setup-go/releases/tag/v5.6.0
         with:
           go-version: 1.24
       - name: Run e2eV2

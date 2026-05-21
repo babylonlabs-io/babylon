@@ -100,6 +100,10 @@ func NewTmWithIbc(t *testing.T) *TestManagerIbc {
 	}
 }
 
+// NewTmWithUpgrade creates a TestManager configured to bootstrap on the
+// pre-upgrade Babylon image. forkHeight > 0 selects fork-upgrade mode;
+// forkHeight == 0 means proposal-upgrade. tag overrides the default
+// pre-upgrade image tag (BabylonContainerTagBeforeUpgrade) when non-empty.
 func NewTmWithUpgrade(
 	t *testing.T,
 	forkHeight int64,
@@ -109,7 +113,6 @@ func NewTmWithUpgrade(
 	tm := NewTestManager(t)
 	bbnCfg := NewChainConfig(tm.TempDir, CHAIN_ID_BABYLON)
 	bbnCfg.IsUpgrade = true
-	// if tag is empty string, use default tag v4.2.5
 	if tag == "" {
 		tag = BabylonContainerTagBeforeUpgrade
 	}

@@ -20,7 +20,7 @@ const (
 	// Images that do not have specified tag, latest will be used by default.
 	// name of babylon image produced by running `make build-docker`
 	BabylonContainerName = "babylonlabs-io/babylond"
-	// name of babylon image before the upgrade
+	// name of babylon image used to bootstrap upgrade tests (pre-upgrade binary)
 	BabylonContainerNameBeforeUpgrade = "babylonlabs/babylond"
 	BabylonContainerTagBeforeUpgrade  = "v4.2.5-testnet"
 
@@ -78,7 +78,9 @@ func NewContainerBbnNode(containerName string) *Container {
 	}
 }
 
-// NewContainerOldBbnNode create an older binary version of a bbn node which is used before upgrade
+// NewContainerOldBbnNode constructs a Container pinned to the pre-upgrade
+// Babylon binary (BabylonContainerNameBeforeUpgrade). Used by upgrade tests
+// to bootstrap the chain on the old version before applying the upgrade plan.
 func NewContainerOldBbnNode(containerName, tag string) *Container {
 	cTag := BabylonContainerTagBeforeUpgrade
 	if tag != "" {
