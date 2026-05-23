@@ -693,7 +693,7 @@ func (ms msgServer) SelectiveSlashingEvidence(goCtx context.Context, req *types.
 
 	// slashing the provider - this method also checks:
 	// - that the fp first exists and can be found
-	// - that the finality provider isnt already slashed
+	// - that the finality provider isn't already slashed
 	if err := ms.SlashFinalityProvider(ctx, fpBTCPK.MustMarshal()); err != nil {
 		return nil, err
 	}
