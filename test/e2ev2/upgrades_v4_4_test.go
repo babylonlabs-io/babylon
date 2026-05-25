@@ -13,7 +13,7 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 
 	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
-	v43 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v4_3"
+	v44 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v4_4"
 	"github.com/babylonlabs-io/babylon/v4/test/e2ev2/tmanager"
 	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 	costktypes "github.com/babylonlabs-io/babylon/v4/x/costaking/types"
@@ -21,8 +21,8 @@ import (
 
 var ZeroInt = sdkmath.ZeroInt()
 
-// TestUpgradeV43 reproduces two costaking reward tracker bugs from
-// v4.2.x and verifies the v4.3 upgrade corrects them.
+// TestUpgradeV44 reproduces two costaking reward tracker bugs from
+// v4.2.x and verifies the v4.4 upgrade corrects them.
 //
 // Scenario 1 (unbond/re-delegate from slashed validator):
 //  1. del1 creates two BABY delegations: healthy chain validator and val1
@@ -41,8 +41,8 @@ var ZeroInt = sdkmath.ZeroInt()
 //
 // Result: del3's ActiveBaby lower than expected
 //
-// The v4.3 upgrade recalculates all ActiveBaby and scores.
-func TestUpgradeV43(t *testing.T) {
+// The v4.4 upgrade recalculates all ActiveBaby and scores.
+func TestUpgradeV44(t *testing.T) {
 	t.Parallel()
 
 	// =====================================================================
@@ -369,9 +369,9 @@ func createGovPropAndPreUpgradeFunc(t *testing.T, valWallet *tmanager.WalletSend
 	upgradeMsg := &upgradetypes.MsgSoftwareUpgrade{
 		Authority: "bbn10d07y265gmmuvt4z0w9aw880jnsr700jduz5f2",
 		Plan: upgradetypes.Plan{
-			Name:   v43.UpgradeName,
+			Name:   v44.UpgradeName,
 			Height: upgradeHeight,
-			Info:   "Upgrade to v4.3",
+			Info:   "Upgrade to v4.4",
 		},
 	}
 
@@ -383,7 +383,7 @@ func createGovPropAndPreUpgradeFunc(t *testing.T, valWallet *tmanager.WalletSend
 		InitialDeposit: []sdk.Coin{sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(1000000))},
 		Proposer:       valWallet.Address.String(),
 		Metadata:       "",
-		Title:          v43.UpgradeName,
+		Title:          v44.UpgradeName,
 		Summary:        "upgrade",
 		Expedited:      false,
 	}

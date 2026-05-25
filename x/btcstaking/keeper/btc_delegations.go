@@ -259,6 +259,45 @@ func (k Keeper) addCovenantSigsToBTCDelegation(
 	}
 }
 
+// BtcUndelegate is the exported wrapper around btcUndelegate.
+//
+// IMPORTANT: this bypasses all MsgBTCUndelegate validation (staker signature,
+// inclusion proof, spending-tx checks). It is intended ONLY for upgrade
+// handlers that need to remediate state by force-unbonding a delegation
+// outside the normal flow — currently the GHSA-4rm2-cj74-f62h remediation in
+// app/upgrades/v4_3. Do NOT call this from msg handlers, gRPC, or any other
+// user-reachable code path.
+//
+// TODO: remove this exported wrapper once the v4.3 upgrade has run on every
+// network and `app/upgrades/v4_3` is no longer in the active upgrade list.
+func (k Keeper) BtcUndelegate(
+	ctx sdk.Context,
+	btcDel *types.BTCDelegation,
+	u *types.DelegatorUnbondingInfo,
+) {
+	k.btcUndelegate(ctx, btcDel, u)
+}
+
+// IterateBTCDelegations iterates over every BTCDelegation in the store and
+// invokes fn for each. Iteration stops if fn returns an error.
+//
+// TODO: remove this exported iterator once the v4.3 upgrade has run on every
+// network — its only consumer is the GHSA-4rm2-cj74-f62h remediation in
+// app/upgrades/v4_3.
+func (k Keeper) IterateBTCDelegations(ctx context.Context, fn func(btcDel *types.BTCDelegation) error) error {
+	store := k.btcDelegationStore(ctx)
+	iter := store.Iterator(nil, nil)
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		var btcDel types.BTCDelegation
+		k.cdc.MustUnmarshal(iter.Value(), &btcDel)
+		if err := fn(&btcDel); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // btcUndelegate adds the signature of the unbonding tx signed by the staker
 // to the given BTC delegation
 func (k Keeper) btcUndelegate(
