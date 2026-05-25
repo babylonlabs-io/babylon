@@ -66,6 +66,18 @@ func (k Keeper) SealCheckpoint(ctx context.Context, ckptWithMeta *types.RawCheck
 		return fmt.Errorf("the checkpoint is not Sealed")
 	}
 
+	// Defense-in-depth: re-verify the aggregated BLS multi-sig against
+	// canonical sign-bytes (epoch + block hash) before persisting the sealed
+	// checkpoint. Catches polluted aggregates that slipped past upstream VE
+	// validation — for example, a wrong-epoch VE that bypassed the
+	// CometBFT-side VerifyVoteExtension via the late-precommit path
+	// (cometbft#2361) and the proposer-side check — as well as any future
+	// regression of those checks. Cost: one BLS pairing per epoch.
+	if err := k.VerifyRawCheckpoint(ctx, ckptWithMeta.Ckpt); err != nil {
+		return fmt.Errorf("refusing to seal invalid checkpoint for epoch %d: %w",
+			ckptWithMeta.Ckpt.EpochNum, err)
+	}
+
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
 	// if reaching this line, it means ckptWithMeta is updated,

@@ -77,6 +77,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#1969](https://github.com/babylonlabs-io/babylon/pull/1969) fix: set v4.3 upgrade handler to run at second block of an epoch
 - [#1923](https://github.com/babylonlabs-io/babylon/pull/1923) fix: add max bytes size for vote extension
 - [#1981](https://github.com/babylonlabs-io/babylon/pull/1981) fix: correctly link wasm IBC stack handler
+- [GHSA-786p-4f8h-946w](https://github.com/babylonlabs-io/babylon/security/advisories/GHSA-786p-4f8h-946w)
+  fix(checkpointing): reject vote extensions with mismatched epoch number
+  (forward-port to `main`; already shipped on `release/v4.3.x` and `release/v4.4.x`)
+- [GHSA-4rm2-cj74-f62h](https://github.com/babylonlabs-io/babylon/security/advisories/GHSA-4rm2-cj74-f62h)
+  fix(btcstaking): allow unbonding the parent of a stake-expansion child that
+  unbonds before becoming `ACTIVE` (forward-port to `main`)
 
 ## v4.2.7
 
