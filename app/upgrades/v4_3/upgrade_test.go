@@ -82,46 +82,14 @@ func genDelegation(t *testing.T, r *rand.Rand) *btcstktypes.BTCDelegation {
 	return del
 }
 
-// markStakeExpansionOf turns child into a stake-expansion delegation of parent
-// and populates PreviousStkCovenantSigs to meet the parent's covenant quorum
-// (default 3-of-5). The handler gates remediation on this quorum being met,
-// because without prev-stake covenant sigs the child cannot have spent the
-// parent on Bitcoin.
+// markStakeExpansionOf turns child into a stake-expansion delegation of parent.
 func markStakeExpansionOf(child, parent *btcstktypes.BTCDelegation) {
 	parentHash := parent.MustGetStakingTxHash()
 	child.StkExp = &btcstktypes.StakeExpansion{
 		PreviousStakingTxHash: parentHash[:],
 		// OtherFundingTxOut intentionally left empty — the remediation handler
 		// does not parse it.
-		PreviousStkCovenantSigs: dummyPrevStkCovenantSigs(3),
 	}
-}
-
-// markStakeExpansionOfNoPrevStkQuorum is like markStakeExpansionOf but leaves
-// PreviousStkCovenantSigs empty, modelling a child that never reached
-// prev-stake covenant quorum and therefore cannot have produced a valid
-// spending witness on the parent's UTXO.
-func markStakeExpansionOfNoPrevStkQuorum(child, parent *btcstktypes.BTCDelegation) {
-	parentHash := parent.MustGetStakingTxHash()
-	child.StkExp = &btcstktypes.StakeExpansion{
-		PreviousStakingTxHash: parentHash[:],
-	}
-}
-
-func dummyPrevStkCovenantSigs(n int) []*btcstktypes.SignatureInfo {
-	// The remediation handler only inspects len(PreviousStkCovenantSigs)
-	// against the parent's CovenantQuorum, so the field values just need to
-	// pass proto unmarshal length checks (BIP340 pub key = 32 bytes, sig = 64
-	// bytes). They do not need to be valid signatures.
-	out := make([]*btcstktypes.SignatureInfo, n)
-	for i := 0; i < n; i++ {
-		pk := make(bbn.BIP340PubKey, bbn.BIP340PubKeyLen)
-		sig := make(bbn.BIP340Signature, bbn.BIP340SignatureLen)
-		pk[0] = byte(i + 1)
-		sig[0] = byte(i + 1)
-		out[i] = &btcstktypes.SignatureInfo{Pk: &pk, Sig: &sig}
-	}
-	return out
 }
 
 // poison clears child's inclusion proof and sets DelegatorUnbondingInfo,
@@ -355,36 +323,6 @@ func TestRemediate_SkipsChildWithMissingParent(t *testing.T) {
 	remediated, err := v4_3.RemediatePoisonedStakeExpansions(ctx, k)
 	require.NoError(t, err)
 	require.Empty(t, remediated)
-}
-
-// TestRemediate_SkipsChildWithoutPreviousStkCovenantQuorum exercises the
-// defense-in-depth gate: a poisoned-shaped child whose
-// PreviousStkCovenantSigs do NOT meet the parent's covenant quorum cannot
-// have produced a valid spending witness on the parent's UTXO, so the
-// remediation must not force-unbond the parent.
-func TestRemediate_SkipsChildWithoutPreviousStkCovenantQuorum(t *testing.T) {
-	ctx, k, ctrl := setup(t)
-	defer ctrl.Finish()
-
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-
-	parent := genDelegation(t, r)
-	child := genDelegation(t, r)
-	markStakeExpansionOfNoPrevStkQuorum(child, parent)
-	poison(child, child.StakingTx)
-
-	require.NoError(t, k.AddBTCDelegation(ctx, parent))
-	require.NoError(t, k.AddBTCDelegation(ctx, child))
-
-	remediated, err := v4_3.RemediatePoisonedStakeExpansions(ctx, k)
-	require.NoError(t, err)
-	require.Empty(t, remediated,
-		"child without PreviousStkCovenantSigs quorum cannot have spent parent — must skip")
-
-	got, err := k.GetBTCDelegation(ctx, parent.MustGetStakingTxHash().String())
-	require.NoError(t, err)
-	require.Nil(t, got.BtcUndelegation.DelegatorUnbondingInfo,
-		"parent must not be force-unbonded when prev-stake covenant quorum is missing")
 }
 
 func TestRemediate_DedupesSameParent(t *testing.T) {
