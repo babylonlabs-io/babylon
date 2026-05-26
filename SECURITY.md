@@ -67,12 +67,14 @@ During this time:
 
 ## Bug Bounty
 
-Though we don't have an official bug bounty program, we generally offer rewards to security researchers who responsibly
-disclose vulnerabilities to us. Bounties are generally awarded for vulnerabilities classified as **high** or
-**critical** severity. Bounty amounts will be determined during the disclosure process, after the severity has been
-assessed.
-We are setting a bug bounty program at the moment. Rewards will be offered in retrospective, once the program is in
-place.
+Babylon Labs runs an official bug bounty program on Immunefi. Review the program scope, rules, and reward tiers, and
+submit eligible vulnerabilities through the program page:
+
+- [Babylon Labs Bug Bounty on Immunefi](https://immunefi.com/bug-bounty/babylon-labs/information/)
+
+We continue to accept vulnerability reports through the channels listed above (email and GitHub Private Vulnerability
+Reporting). However, **only reports submitted through the Immunefi program are eligible for a bounty.** Reports received
+through other channels will still be reviewed and addressed, but will not qualify for a reward.
 
 > [!WARNING]
 > Targeting our production environments will disqualify you from receiving any bounty.
