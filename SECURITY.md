@@ -67,14 +67,14 @@ During this time:
 
 ## Bug Bounty
 
-Babylon Labs runs an official bug bounty program on Immunefi. Review the program scope, rules, and reward tiers, and
+Babylon Labs runs an official bug bounty program on Immunefi. Please review its scope, rules, and reward tiers, then
 submit eligible vulnerabilities through the program page:
 
 - [Babylon Labs Bug Bounty on Immunefi](https://immunefi.com/bug-bounty/babylon-labs/information/)
 
-We continue to accept vulnerability reports through the channels listed above (email and GitHub Private Vulnerability
-Reporting). However, **only reports submitted through the Immunefi program are eligible for a bounty.** Reports received
-through other channels will still be reviewed and addressed, but will not qualify for a reward.
+We still welcome vulnerability reports through the channels listed above (email and GitHub Private Vulnerability
+Reporting). However, **only reports submitted through the Immunefi program are eligible for a bounty.** Reports
+received through other channels will be reviewed and addressed, but they will not qualify for a reward.
 
 > [!WARNING]
 > Targeting our production environments will disqualify you from receiving any bounty.

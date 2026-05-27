@@ -22,29 +22,29 @@ the Babylon node repository.
 
 ### Contributor eligibility
 
-Anyone can open issues and suggest improvements. Issues are public and require
-no verification, so the community is free to report bugs and propose ideas.
+Anyone is welcome to open issues and suggest improvements. Issues are public
+and require no verification, so the wider community can freely report bugs and
+propose ideas.
 
-Code contributions are different. In the era of AI and LLMs, and to preserve the
-provenance and integrity of the codebase, **only commits signed by a public key
-on Babylon's allowed-signers list are accepted.** This is enforced by the
-required `Authenticate Commits` check, which verifies every commit in a pull
-request. Being able to sign a commit is not enough on its own: the signing key
-must be explicitly allowlisted, and it must be a hardware-backed key.
+Code contributions are held to a higher bar. In an age of AI- and
+LLM-generated code, and to safeguard the provenance and integrity of the
+codebase, **we accept only commits signed by a public key on Babylon's
+allowed-signers list.** The required `Authenticate Commits` check enforces this
+on every commit in a pull request. Signing a commit is not enough on its own:
+the key must be explicitly allowlisted, and it must be hardware-backed.
 
 Before contributing code:
 
 * Your signing key must be on Babylon's allowed-signers list (the org-level
   `BABYLON_ALLOWED_SIGNERS` configuration), which is maintained by the Babylon
-  maintainers. Commits signed by a key that is not on the list fail the check,
-  so reach out to the maintainers to have your key reviewed and added.
-* Sign commits with a FIDO2 hardware-backed SSH key (`sk-ssh-ed25519`, i.e.
-  ED25519-SK). Software SSH keys, GPG, and S/MIME do not satisfy the key-type
-  requirement.
-* Make sure every commit in your pull request is signed by that key.
+  Labs team. Commits signed by a key that is not on the list will fail the check.
+* Sign your commits with a FIDO2 hardware-backed SSH key (`sk-ssh-ed25519`,
+  also known as ED25519-SK). Software SSH keys, GPG, and S/MIME do not meet the
+  key-type requirement.
+* Ensure every commit in your pull request is signed with that key.
 
-> Automated dependency updates (Dependabot) are verified separately via GitHub's
-> GPG signing and are exempt from the hardware-key requirement.
+> Automated dependency updates (Dependabot) are verified separately through
+> GitHub's GPG signing and are exempt from the hardware-key requirement.
 
 ### Pull request rules
 
