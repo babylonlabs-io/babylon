@@ -19,6 +19,12 @@ we encourage you to notify us using one of the methods outlined below.
 
 To privately report a security vulnerability, please choose one of the following options:
 
+> [!IMPORTANT]
+> **Seeking a bounty?** Rewards are awarded only for reports submitted through the
+> [Babylon Labs Immunefi program](https://immunefi.com/bug-bounty/babylon-labs/information/)
+> (see [Bug Bounty](#bug-bounty)). The channels below remain open for confidential
+> disclosure but are **not** bounty-eligible.
+
 ### 1. Email
 
 Send your detailed vulnerability report to `security@babylonlabs.io`.

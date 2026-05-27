@@ -38,9 +38,9 @@ Before contributing code:
 * Your signing key must be on Babylon's allowed-signers list (the org-level
   `BABYLON_ALLOWED_SIGNERS` configuration), which is maintained by the Babylon
   Labs team. Commits signed by a key that is not on the list will fail the check.
-* Sign your commits with a FIDO2 hardware-backed SSH key (`sk-ssh-ed25519`,
-  also known as ED25519-SK). Software SSH keys, GPG, and S/MIME do not meet the
-  key-type requirement.
+* Sign your commits with a FIDO2 hardware-backed SSH key — the
+  `sk-ssh-ed25519@openssh.com` algorithm, generated with
+  `ssh-keygen -t ed25519-sk`.
 * Ensure every commit in your pull request is signed with that key.
 
 > Automated dependency updates (Dependabot) are verified separately through
