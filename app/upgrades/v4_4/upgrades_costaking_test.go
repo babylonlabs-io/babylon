@@ -1,4 +1,4 @@
-package v4_3_test
+package v4_4_test
 
 import (
 	"math/rand"
@@ -21,7 +21,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
-	v4_3 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v4_3"
+	v4_4 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v4_4"
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
 	testutilkeeper "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
 	tkeeper "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
@@ -118,7 +118,7 @@ func TestResetCoStakerRwdsTracker_WithPreexistingTrackers(t *testing.T) {
 	require.NoError(t, err)
 
 	epochK.InitValidatorSet(ctx)
-	err = v4_3.ResetCoStakerRwdsTrackerActiveBaby(ctx, cdc, storeService, epochK, stkK, costkK)
+	err = v4_4.ResetCoStakerRwdsTrackerActiveBaby(ctx, cdc, storeService, epochK, stkK, costkK)
 	require.NoError(t, err)
 
 	costkRwd, err := costkK.GetCostakerRewards(ctx, stakerAddr)

@@ -78,6 +78,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#1923](https://github.com/babylonlabs-io/babylon/pull/1923) fix: add max bytes size for vote extension
 - [#1981](https://github.com/babylonlabs-io/babylon/pull/1981) fix: correctly link wasm IBC stack handler
 
+## v4.3.0
+
+### Bug Fixes
+
+- [GHSA-4rm2-cj74-f62h](https://github.com/babylonlabs-io/babylon/security/advisories/GHSA-4rm2-cj74-f62h) fix: add possibility to unbond parent
+of stake expansion child transaction that unbonds before being `ACTIVE`
+- [GHSA-786p-4f8h-946w](https://github.com/babylonlabs-io/babylon/security/advisories/GHSA-786p-4f8h-946w) fix(checkpointing): reject vote extensions with mismatched epoch number
+
 ## v4.2.7
 
 - [#1998](https://github.com/babylonlabs-io/babylon/pull/1998) chore(deps): bump github.com/hashicorp/go-getter
