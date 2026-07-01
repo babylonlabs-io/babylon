@@ -39,6 +39,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
+- [#2019](https://github.com/babylonlabs-io/babylon/pull/2019) chore(deps): bump github.com/opencontainers/runc from 1.2.8 to 1.3.6
 - [#2017](https://github.com/babylonlabs-io/babylon/pull/2017) chore(deps): bump github.com/shamaton/msgpack/v2 from 2.2.0 to 2.4.1
 - [#2008](https://github.com/babylonlabs-io/babylon/pull/2008) chore: bump Go to `v1.25.0` and upgrade vulnerable dependencies (`hashicorp/go-getter` v1.8.6, `go.opentelemetry.io/otel/sdk` v1.43.0, `aws-sdk-go-v2/aws/protocol/eventstream` v1.7.8, `aws-sdk-go-v2/service/s3` v1.97.3, `ulikunitz/xz` v0.5.15)
 - [#1999](https://github.com/babylonlabs-io/babylon/pull/1999) chore(deps): bump github.com/cometbft/cometbft
