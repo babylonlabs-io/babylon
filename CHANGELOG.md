@@ -37,6 +37,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+## v4.3.1
+
+### Bug Fixes
+
+- [GHSA-692h-272j-rvgc](https://github.com/babylonlabs-io/babylon/security/advisories/GHSA-692h-272j-rvgc) fix(checkpointing): proto-size accounting in checkpoint PrepareProposal repack
+
 ## v4.3.0
 
 ### Bug Fixes
