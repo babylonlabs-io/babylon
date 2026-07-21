@@ -5,7 +5,23 @@ import (
 	"fmt"
 
 	abci "github.com/cometbft/cometbft/abci/types"
+	cmttypes "github.com/cometbft/cometbft/types"
 )
+
+// protoTxSize returns the number of bytes a single tx contributes to the block's
+// protobuf-encoded Data.Txs: len(tx) plus the repeated-field framing (tag byte +
+// length prefix). This is exactly the per-tx quantity CometBFT's Txs.Validate
+// accumulates and enforces against MaxTxBytes, so accounting for it here keeps
+// PrepareProposal's own budget in lockstep with the size CometBFT validates.
+// Accounting by raw len(tx) instead under-counts by the framing and lets a full
+// block over-shoot MaxTxBytes in proto terms, panicking the proposer.
+// An empty tx contributes nothing.
+func protoTxSize(tx []byte) uint64 {
+	if len(tx) == 0 {
+		return 0
+	}
+	return uint64(cmttypes.ComputeProtoSizeForTxs([]cmttypes.Tx{tx}))
+}
 
 // PrepareProposalTxs is used as an intermediary storage for transactions when creating
 // a proposal for `PrepareProposal`.
@@ -38,8 +54,8 @@ func NewPrepareProposalTxs(
 // SetOrReplaceCheckpointTx sets the tx used for checkpoint. If the checkpoint tx already exists,
 // replace it
 func (t *PrepareProposalTxs) SetOrReplaceCheckpointTx(tx []byte) error {
-	oldBytes := uint64(len(t.CheckpointTx))
-	newBytes := uint64(len(tx))
+	oldBytes := protoTxSize(t.CheckpointTx)
+	newBytes := protoTxSize(tx)
 	if err := t.updateUsedBytes(oldBytes, newBytes); err != nil {
 		return err
 	}
@@ -52,7 +68,7 @@ func (t *PrepareProposalTxs) ReplaceOtherTxs(allTxs [][]byte) error {
 	t.OtherTxs = make([][]byte, 0, len(allTxs))
 	bytesToAdd := uint64(0)
 	for _, tx := range allTxs {
-		txSize := uint64(len(tx))
+		txSize := protoTxSize(tx)
 		if t.UsedBytes+bytesToAdd+txSize > t.MaxBytes {
 			break
 		}
