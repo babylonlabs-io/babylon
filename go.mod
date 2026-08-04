@@ -5,9 +5,9 @@ module github.com/babylonlabs-io/babylon/v4
 require (
 	github.com/CosmWasm/wasmd v0.60.5
 	github.com/btcsuite/btcd v0.24.2
-	github.com/cometbft/cometbft v0.38.22
+	github.com/cometbft/cometbft v0.38.23
 	github.com/cometbft/cometbft-db v0.15.0
-	github.com/cosmos/cosmos-sdk v0.53.5
+	github.com/cosmos/cosmos-sdk v0.53.8
 	github.com/cosmos/ibc-go/modules/light-clients/08-wasm/v10 v10.3.0
 	github.com/gorilla/mux v1.8.1
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0
@@ -145,7 +145,7 @@ require (
 	github.com/cosmos/btcutil v1.0.5 // indirect
 	github.com/cosmos/go-bip39 v1.0.0
 	github.com/cosmos/iavl v1.2.4 // indirect
-	github.com/cosmos/ledger-cosmos-go v0.16.0 // indirect
+	github.com/cosmos/ledger-cosmos-go v1.0.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/desertbit/timer v1.0.1 // indirect
 	github.com/dgraph-io/ristretto v0.2.0 // indirect
