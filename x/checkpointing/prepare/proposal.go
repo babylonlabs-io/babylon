@@ -9,6 +9,7 @@ import (
 
 	"cosmossdk.io/log"
 	abci "github.com/cometbft/cometbft/abci/types"
+	cmttypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -20,20 +21,7 @@ import (
 	ckpttypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
 )
 
-const (
-	defaultInjectedTxIndex = 0
-	// MaxVoteExtensionSize is the maximum allowed size for a vote extension.
-	// Breakdown of legitimate VoteExtension fields (~228 bytes):
-	//   - Signer (bech32 address):       ~67 bytes
-	//   - ValidatorAddress (bech32):     ~67 bytes
-	//   - BlockHash (SHA-256):            34 bytes
-	//   - EpochNum (varint):              ~4 bytes
-	//   - Height (varint):                ~6 bytes
-	//   - BlsSig (BLS12-381 signature):   50 bytes
-	// Setting to 1KB provides ~4x overhead
-	// while preventing memory amplification attacks (100 validators × 1KB = 100KB per block).
-	MaxVoteExtensionSize = 1024 // 1KB
-)
+const defaultInjectedTxIndex = 0
 
 type SigValidationFn func(ctx sdk.Context, epoch uint64, extendedVotes *abci.ExtendedCommitInfo, blockHash []byte) []ckpttypes.BlsSig
 
@@ -150,8 +138,25 @@ func (h *ProposalHandler) PrepareProposal() sdk.PrepareProposalHandler {
 			return &EmptyProposalRes, fmt.Errorf("failed to add other txs into the proposal: %w", err)
 		}
 
+		finalTxs := proposalTxs.GetTxsInOrder()
+
+		// Defense in depth: never return a proposal CometBFT will reject. We run the
+		// very same validator it applies to the txs we return (types.Txs.Validate,
+		// called from CreateProposalBlock), which panics the proposer in
+		// createProposalBlock on overflow. Delegating to it, rather than re-deriving
+		// the size rule here, is what stops the two from drifting apart again. The
+		// proto-size accounting in proposalTxs already guarantees the invariant; this
+		// guard drops trailing non-checkpoint txs so a future change that regresses
+		// that accounting still cannot crash the proposer. Validate enforces only the
+		// size limit today; were it ever to gain an unrelated check, the len > 1 bound
+		// still terminates this loop at a checkpoint-only proposal instead of
+		// spinning. The checkpoint tx (index 0) is always kept.
+		for len(finalTxs) > 1 && cmttypes.ToTxs(finalTxs).Validate(req.MaxTxBytes) != nil {
+			finalTxs = finalTxs[:len(finalTxs)-1]
+		}
+
 		return &abci.ResponsePrepareProposal{
-			Txs: proposalTxs.GetTxsInOrder(),
+			Txs: finalTxs,
 		}, nil
 	}
 }
@@ -230,11 +235,6 @@ func (h *ProposalHandler) VerifyVoteExtension(
 		return nil, fmt.Errorf("vote extension is empty")
 	}
 
-	veBytesLen := len(veBytes)
-	if veBytesLen > MaxVoteExtensionSize {
-		return nil, ckpttypes.ErrVoteExt.Wrapf("max size: %d, vote ext size: %d", MaxVoteExtensionSize, veBytesLen)
-	}
-
 	var ve ckpttypes.VoteExtension
 	if err := unknownproto.RejectUnknownFieldsStrict(veBytes, &ve, h.interfaceRegistry); err != nil {
 		return nil, fmt.Errorf("vote extension contains unknown or extra bytes: %w", err)
@@ -242,20 +242,6 @@ func (h *ProposalHandler) VerifyVoteExtension(
 
 	if err := ve.Unmarshal(veBytes); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal vote extension: %w", err)
-	}
-
-	// attempts to marshal the same structure to check
-	// for hidden fields embedded in the vote extension
-	bzVoteExtAfterParse, err := ve.Marshal()
-	if err != nil {
-		return nil, ckpttypes.ErrVoteExt.Wrapf("failed to marshal vote ext second time: %s", err.Error())
-	}
-
-	if !bytes.Equal(veBytes, bzVoteExtAfterParse) {
-		return nil, ckpttypes.ErrVoteExt.Wrapf(
-			"malformed vote extension (possible malicious bytes included): original size %d, size after marshal %d",
-			veBytesLen, len(bzVoteExtAfterParse),
-		)
 	}
 
 	if err := ve.Validate(); err != nil {
@@ -269,7 +255,7 @@ func (h *ProposalHandler) VerifyVoteExtension(
 	// uses sig.EpochNum), and pollute the aggregate so the sealed multi-sig
 	// no longer verifies against canonical sign-bytes. The CometBFT-side
 	// VerifyVoteExtension also checks this, but late precommits delivered to
-	// LocalLastCommit after 2/3 quorum bypass it, so this
+	// LocalLastCommit after 2/3 quorum bypass it (cometbft#2361), so this
 	// proposer-side check is load-bearing.
 	if ve.EpochNum != expectedEpoch {
 		return nil, fmt.Errorf(
@@ -278,7 +264,7 @@ func (h *ProposalHandler) VerifyVoteExtension(
 		)
 	}
 
-	_, err = sdk.ValAddressFromBech32(ve.Signer)
+	_, err := sdk.ValAddressFromBech32(ve.Signer)
 	if err != nil {
 		return nil, fmt.Errorf("invalid signer address in vote extension: %w", err)
 	}
@@ -541,6 +527,7 @@ func (h *ProposalHandler) buildInjectedTxBytes(ckpt *ckpttypes.RawCheckpointWith
 		Ckpt:               ckpt,
 		ExtendedCommitInfo: info,
 	}
+
 	return EncodeMsgsIntoTxBytes(h.txConfig, msg)
 }
 

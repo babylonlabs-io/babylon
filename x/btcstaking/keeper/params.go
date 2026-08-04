@@ -183,26 +183,24 @@ func (k Keeper) SetHeightToVersionMap(ctx context.Context, p *types.HeightToVers
 	if err := p.Validate(); err != nil {
 		return err
 	}
-
-	return k.heightToVersionMap.Set(ctx, *p)
+	store := k.storeService.OpenKVStore(ctx)
+	bz := k.cdc.MustMarshal(p)
+	return store.Set(types.HeightToVersionMapKey, bz)
 }
 
-// GetHeightToVersionMap returns the height to version map which includes the start height
-// in which the parameters are activated and the version number
+// GetParams returns the current x/btccheckpoint module parameters.
 func (k Keeper) GetHeightToVersionMap(ctx context.Context) *types.HeightToVersionMap {
-	exists, err := k.heightToVersionMap.Has(ctx)
-	if err != nil {
-		panic(fmt.Errorf("must get height to version map in Has: %w", err))
-	}
-	if !exists {
-		return nil
-	}
-
-	heightToVersionMap, err := k.heightToVersionMap.Get(ctx)
+	store := k.storeService.OpenKVStore(ctx)
+	bz, err := store.Get(types.HeightToVersionMapKey)
 	if err != nil {
 		panic(err)
 	}
-	return &heightToVersionMap
+	if bz == nil {
+		return nil
+	}
+	var p types.HeightToVersionMap
+	k.cdc.MustUnmarshal(bz, &p)
+	return &p
 }
 
 func (k Keeper) GetParamsForBtcHeight(ctx context.Context, height uint64) (*types.Params, uint32, error) {

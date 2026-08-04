@@ -4,11 +4,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
-	"github.com/btcsuite/btcd/btcec/v2"
-
 	"cosmossdk.io/math"
+	appsigner "github.com/babylonlabs-io/babylon/v4/app/signer"
+	"github.com/btcsuite/btcd/btcec/v2"
 	cmtcfg "github.com/cometbft/cometbft/config"
 	"github.com/cometbft/cometbft/crypto/ed25519"
 	"github.com/cometbft/cometbft/privval"
@@ -22,10 +20,11 @@ import (
 	sdksigning "github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	"github.com/cosmos/go-bip39"
+	"github.com/stretchr/testify/require"
 
 	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
-	appsigner "github.com/babylonlabs-io/babylon/v4/app/signer"
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/util"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
 )
 
 const (
@@ -64,6 +63,21 @@ type ValidatorWallet struct {
 	ConsKey          *appsigner.ConsensusKey
 	ConsensusAddress sdk.ConsAddress
 	ValidatorAddress sdk.ValAddress
+}
+
+// FinalityProvider represents a finality provider actor
+type FinalityProvider struct {
+	*WalletSender
+	BtcPrivKey *btcec.PrivateKey
+	// BtcPrivateKey is an alias of BtcPrivKey populated by NewFpWithWallet
+	// for the stake-expansion test helpers backported from main.
+	BtcPrivateKey *btcec.PrivateKey
+	// PublicKey is the BIP340-encoded public key, populated by
+	// NewFpWithWallet for the stake-expansion test helpers backported from
+	// main.
+	PublicKey   *bbn.BIP340PubKey
+	Description string
+	Commission  math.LegacyDec
 }
 
 // BtcStaker represents a Bitcoin staker actor
@@ -137,8 +151,8 @@ func (ws *WalletSender) SignMsgWithGas(gasLimit uint64, msgs ...sdk.Msg) *sdktx.
 	err := txBuilder.SetMsgs(msgs...)
 	require.NoError(ws.T(), err, "failed to set messages")
 
-	fee := math.NewIntFromUint64(gasLimit / 15) // ~0.067ubbn per gas
-	txBuilder.SetFeeAmount(sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, fee)))
+	// Set fee and gas
+	txBuilder.SetFeeAmount(sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, math.NewInt(20000))))
 	txBuilder.SetGasLimit(gasLimit)
 
 	pubKey := ws.PrivKey.PubKey()
@@ -219,7 +233,7 @@ func (ws *WalletSender) SubmitMsgsWithGas(gasLimit uint64, msgs ...sdk.Msg) (txH
 	signedTx := ws.SignMsgWithGas(gasLimit, msgs...)
 
 	txHash, err := ws.Node.SubmitTx(signedTx)
-	require.NoErrorf(ws.T(), err, "Failed to submit tx: %+v", msgs)
+	require.NoError(ws.T(), err, "Failed to submit transaction")
 
 	ws.AddTxSent(txHash)
 	if ws.VerifySentTx {

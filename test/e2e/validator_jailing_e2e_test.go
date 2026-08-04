@@ -17,7 +17,6 @@ import (
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer"
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer/chain"
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/util"
-	"github.com/babylonlabs-io/babylon/v4/testutil/coins"
 )
 
 type ValidatorJailingTestSuite struct {
@@ -325,9 +324,9 @@ func (s *ValidatorJailingTestSuite) TestValidatorJailingWithExtraDelegation() {
 		s.T().Logf("  - Active baby after jailing: %s", activeBabyAfter.String())
 		s.T().Logf("  - Expected active baby after: %s", expectedBabyAfter.String())
 
-		// Verify expected amount within margin of error 1 ubbn
-		s.T().Logf("Delegator %s active baby after jailing should equal only val1 delegation amount", delegator)
-		coins.RequireIntDiffInPointOnePercentMargin(s.T(), expectedBabyAfter, activeBabyAfter)
+		// Verify exact expected amount
+		s.Require().Equal(expectedBabyAfter, activeBabyAfter,
+			"Delegator %s active baby after jailing should equal only val1 delegation amount", delegator)
 
 		// Additional specific checks based on delegation pattern
 		if hasVal2Delegation && !hasVal1Delegation {

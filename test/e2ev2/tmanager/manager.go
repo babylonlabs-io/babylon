@@ -131,6 +131,46 @@ func NewTmWithUpgrade(
 	}
 }
 
+// Start runs all the nodes and waits for the chain to produce at least block 1.
+func (tm *TestManagerUpgrade) Start() {
+	tm.TestManager.Start()
+	tm.ChainsWaitUntilHeight(1)
+}
+
+// ChainValidator returns the babylon chain's first validator node.
+func (tm *TestManager) ChainValidator() *ValidatorNode {
+	return tm.Chains[CHAIN_ID_BABYLON].Validators[0]
+}
+
+// Upgrade runs preUpgradeFunc, then executes either a fork or proposal upgrade,
+// then verifies the upgrade plan was applied on every node.
+// NOTE: must be invoked after Start().
+func (tm *TestManagerUpgrade) Upgrade(govMsg *govtypes.MsgSubmitProposal, preUpgradeFunc PreUpgradeFunc) {
+	var nodes []*Node
+	for _, chain := range tm.Chains {
+		nodes = append(nodes, chain.AllNodes()...)
+	}
+	preUpgradeFunc(nodes)
+
+	if tm.ForkHeight > 0 {
+		tm.runForkUpgrade()
+	} else {
+		if err := tm.runProposalUpgrade(govMsg); err != nil {
+			tm.T.Fatalf("failed to run proposal upgrade: %v", err)
+		}
+	}
+
+	for _, chain := range tm.Chains {
+		for _, node := range chain.AllNodes() {
+			appliedHeight := node.QueryAppliedPlan(govMsg.Title)
+			require.Positive(tm.T, appliedHeight,
+				"node %s on chain %s: upgrade %s was not applied",
+				node.Name, chain.ChainID(), govMsg.Title)
+			tm.T.Logf("node %s: %s plan applied at height: %d", node.Name, govMsg.Title, appliedHeight)
+		}
+	}
+}
+
 func (tm *TestManager) NetworkID() string {
 	return tm.Network.Network.ID
 }
@@ -158,48 +198,6 @@ func (tm *TestManagerIbc) Start() {
 
 	// creating channels by hermes modifies the acc sequence
 	tm.UpdateWalletsAccSeqNumber()
-}
-
-// Start runs all the nodes and wait for block 1
-func (tm *TestManagerUpgrade) Start() {
-	tm.TestManager.Start()
-
-	// wait for chains to produce at least one block
-	tm.ChainsWaitUntilHeight(1)
-}
-
-func (tm *TestManager) ChainValidator() *ValidatorNode {
-	return tm.Chains[CHAIN_ID_BABYLON].Validators[0]
-}
-
-// Upgrade executes preUpgradeFunc and processes upgrade
-// NOTE: this function must be invoked after Start()
-func (tm *TestManagerUpgrade) Upgrade(govMsg *govtypes.MsgSubmitProposal, preUpgradeFunc PreUpgradeFunc) {
-	var nodes []*Node
-	for _, chain := range tm.Chains {
-		nodes = append(nodes, chain.AllNodes()...)
-	}
-	preUpgradeFunc(nodes)
-
-	// run upgrade either fork or proposal upgrade
-	if tm.ForkHeight > 0 {
-		tm.runForkUpgrade()
-	} else {
-		if err := tm.runProposalUpgrade(govMsg); err != nil {
-			tm.T.Fatalf("failed to run proposal upgrade: %v", err)
-		}
-	}
-
-	// verify the upgrade was applied on every node
-	for _, chain := range tm.Chains {
-		for _, node := range chain.AllNodes() {
-			appliedHeight := node.QueryAppliedPlan(govMsg.Title)
-			require.Positive(tm.T, appliedHeight,
-				"node %s on chain %s: upgrade %s was not applied",
-				node.Name, chain.ChainID(), govMsg.Title)
-			tm.T.Logf("node %s: %s plan applied at height: %d", node.Name, govMsg.Title, appliedHeight)
-		}
-	}
 }
 
 // UpdateWalletsAccSeqNumber iterates over all chains, nodes and wallets

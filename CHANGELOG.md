@@ -37,6 +37,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+## v4.3.1
+
+### Bug Fixes
+
+- [GHSA-692h-272j-rvgc](https://github.com/babylonlabs-io/babylon/security/advisories/GHSA-692h-272j-rvgc) fix(checkpointing): proto-size accounting in checkpoint PrepareProposal repack
+
 ## v4.3.0
 
 ### Bug Fixes
@@ -44,32 +50,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [GHSA-4rm2-cj74-f62h](https://github.com/babylonlabs-io/babylon/security/advisories/GHSA-4rm2-cj74-f62h) fix: add possibility to unbond parent
 of stake expansion child transaction that unbonds before being `ACTIVE`
 - [GHSA-786p-4f8h-946w](https://github.com/babylonlabs-io/babylon/security/advisories/GHSA-786p-4f8h-946w) fix(checkpointing): reject vote extensions with mismatched epoch number
-
-## v4.2.7
-
-### Improvements
-
-- [#1985](https://github.com/babylonlabs-io/babylon/pull/1985) chore(deps): bump google.golang.org/grpc
-  from 1.77.0 to 1.79.3 (security fix for path-based authz bypass)
-- [#1959](https://github.com/babylonlabs-io/babylon/pull/1959) chore: remove v4 and v3rc4 upgrade testing
-
-### State breaking
-
-- [#1976](https://github.com/babylonlabs-io/babylon/pull/1976) fix(btcstaking): v2 migration `HeightToVersionMap`
-- [#1956](https://github.com/babylonlabs-io/babylon/pull/1956) fix: add sort of fps by pub key in `GetVotingPowerTableOrdered`
-- [#1855](https://github.com/babylonlabs-io/babylon/pull/1855) Add check for `fundingInputValue <= 0` in stake extension
-- [#1913](https://github.com/babylonlabs-io/babylon/pull/1913) fix: key collision hex 0x10 (HeightToVersionMapKey) == decimal 16 (FpBbnAddrKey)
-- [#1908](https://github.com/babylonlabs-io/babylon/pull/1908) fix: call `AfterRawCheckpointForgotten` in all hooks, instead of early return
-- [#1906](https://github.com/babylonlabs-io/babylon/pull/1906) fix: baby validator slashing and costaking active baby amounts missmatch
-- [#1965](https://github.com/babylonlabs-io/babylon/pull/1965) chore: bump CosmWasm/wasmd v0.60.5
-
-### Bug Fixes
-
-- [#1960](https://github.com/babylonlabs-io/babylon/pull/1960) fix: download muslc from s3 in our go releaser workflow
-- [#1953](https://github.com/babylonlabs-io/babylon/pull/1953) fix: refresh commission of active FPs in voting power distribution cache prior to reward distribution
-- [#1969](https://github.com/babylonlabs-io/babylon/pull/1969) fix: set v4.3 upgrade handler to run at second block of an epoch
-- [#1923](https://github.com/babylonlabs-io/babylon/pull/1923) fix: add max bytes size for vote extension
-- [#1981](https://github.com/babylonlabs-io/babylon/pull/1981) fix: correctly link wasm IBC stack handler
 
 ## v4.2.7
 

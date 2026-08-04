@@ -8,7 +8,6 @@ import (
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	authcodec "github.com/cosmos/cosmos-sdk/x/auth/codec"
 	stkkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
@@ -31,8 +30,6 @@ func StakingKeeper(
 	require.NoError(t, stateStore.LoadLatestVersion())
 
 	registry := codectypes.NewInterfaceRegistry()
-	stktypes.RegisterInterfaces(registry)
-	cryptocodec.RegisterInterfaces(registry)
 	cdc := codec.NewProtoCodec(registry)
 
 	return stkkeeper.NewKeeper(

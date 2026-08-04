@@ -5,20 +5,16 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/stretchr/testify/require"
-
 	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
-	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	staketypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/gogoproto/proto"
-	ratelimiter "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/types"
 	tokenfactorytypes "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/types"
+	"github.com/stretchr/testify/require"
 
 	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/util"
@@ -27,9 +23,10 @@ import (
 	btclighttypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
 	btcstktypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 	costktypes "github.com/babylonlabs-io/babylon/v4/x/costaking/types"
-	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 	finalitytypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
 	minttypes "github.com/babylonlabs-io/babylon/v4/x/mint/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	ratelimiter "github.com/cosmos/ibc-apps/modules/rate-limiting/v10/types"
 )
 
 const (
@@ -156,16 +153,6 @@ func UpdateGenModulesState(
 		return fmt.Errorf("failed to update tokenfactory genesis state: %w", err)
 	}
 
-	err = UpdateModuleGenesis(appGenState, slashingtypes.ModuleName, &slashingtypes.GenesisState{}, UpdateGenesisSlashing(initGen.ChainConfig))
-	if err != nil {
-		return fmt.Errorf("failed to update slashing genesis state: %w", err)
-	}
-
-	err = UpdateModuleGenesis(appGenState, epochingtypes.ModuleName, &epochingtypes.GenesisState{}, UpdateGenesisEpoching(initGen.ChainConfig.EpochLength))
-	if err != nil {
-		return fmt.Errorf("failed to update epoching genesis state: %w", err)
-	}
-
 	// In upgrade tests we bootstrap on the pre-upgrade binary and the
 	// btcstaking genesis schema may differ across versions; skip the
 	// customization to keep genesis.json compatible with the old binary.
@@ -277,10 +264,8 @@ func UpdateGenesisFinality(finalityGenState *finalitytypes.GenesisState) {
 func UpdateGenesisBtcStaking(p *StartingBtcStakingParams) func(*btcstktypes.GenesisState) {
 	return func(gen *btcstktypes.GenesisState) {
 		if p != nil {
-			if len(p.CovenantCommittee) != 0 && p.CovenantQuorum != 0 {
-				gen.Params[0].CovenantPks = p.CovenantCommittee
-				gen.Params[0].CovenantQuorum = p.CovenantQuorum
-			}
+			gen.Params[0].CovenantPks = p.CovenantCommittee
+			gen.Params[0].CovenantQuorum = p.CovenantQuorum
 		}
 	}
 }
@@ -328,20 +313,5 @@ func UpdateGenesisRateLimit(rateLimiterGenState *ratelimiter.GenesisState) {
 func UpdateGenesisTokenFactory(tokenfactoryGenState *tokenfactorytypes.GenesisState) {
 	tokenfactoryGenState.Params = tokenfactorytypes.Params{
 		DenomCreationFee: sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(10000))),
-	}
-}
-
-func UpdateGenesisSlashing(cfg *ChainConfig) func(gs *slashingtypes.GenesisState) {
-	return func(gs *slashingtypes.GenesisState) {
-		gs.Params.SignedBlocksWindow = cfg.SignedBlocksWindow
-		gs.Params.MinSignedPerWindow = sdkmath.LegacyMustNewDecFromStr(cfg.MinSignedPerWindow)
-		gs.Params.SlashFractionDowntime = sdkmath.LegacyMustNewDecFromStr(cfg.SlashFractionDowntime)
-		gs.Params.DowntimeJailDuration = cfg.DowntimeJailDuration
-	}
-}
-
-func UpdateGenesisEpoching(epochInterval uint64) func(gs *epochingtypes.GenesisState) {
-	return func(gs *epochingtypes.GenesisState) {
-		gs.Params.EpochInterval = epochInterval
 	}
 }

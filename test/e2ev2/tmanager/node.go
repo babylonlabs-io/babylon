@@ -2,7 +2,6 @@ package tmanager
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"math/rand"
@@ -16,14 +15,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ory/dockertest/v3"
-	"github.com/ory/dockertest/v3/docker"
-	"github.com/spf13/viper"
-	"github.com/stretchr/testify/require"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	blc "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
+
+	"encoding/json"
 
 	sdkmath "cosmossdk.io/math"
 	appsigner "github.com/babylonlabs-io/babylon/v4/app/signer"
-	tkeeper "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
 	cmtconfig "github.com/cometbft/cometbft/config"
 	"github.com/cometbft/cometbft/p2p"
 	rpchttp "github.com/cometbft/cometbft/rpc/client/http"
@@ -39,17 +37,17 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	stktypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/ory/dockertest/v3"
+	"github.com/ory/dockertest/v3/docker"
+	"github.com/spf13/viper"
+	"github.com/stretchr/testify/require"
 
 	bbnapp "github.com/babylonlabs-io/babylon/v4/app"
 	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
 	"github.com/babylonlabs-io/babylon/v4/cmd/babylond/cmd"
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/util"
-	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
-	blc "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
 	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
-	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 )
 
 const (
@@ -97,7 +95,7 @@ type ValidatorNode struct {
 func NewNode(tm *TestManager, name string, cfg *ChainConfig) *Node {
 	n := NewNodeWithoutBls(tm, name, cfg)
 	// even regular nodes needs bls keys
-	// to avoid errors in signer.LoadOrGenBlsKey
+	// to avoid erros in signer.LoadOrGenBlsKey
 	_, err := GenBlsKey(n.Home)
 	require.NoError(n.T(), err)
 	return n
@@ -108,12 +106,11 @@ func NewNodeWithoutBls(tm *TestManager, name string, cfg *ChainConfig) *Node {
 	nPorts, err := tm.PortMgr.AllocateNodePorts()
 	require.NoError(tm.T, err)
 
-	containerName := fmt.Sprintf("%s-%s-%s", cfg.ChainID, name, tm.NetworkID()[:4])
-	container := NewContainerBbnNode(containerName)
+	cointanerName := fmt.Sprintf("%s-%s-%s", cfg.ChainID, name, tm.NetworkID()[:4])
+	container := NewContainerBbnNode(cointanerName)
 	if cfg.IsUpgrade {
-		container = NewContainerOldBbnNode(containerName, cfg.Tag)
+		container = NewContainerOldBbnNode(cointanerName, cfg.Tag)
 	}
-
 	n := &Node{
 		Tm:          tm,
 		ChainConfig: cfg,
@@ -387,28 +384,18 @@ func (n *Node) WriteConfigAndGenesis() {
 	config.SetRoot(n.Home)
 	config.Moniker = n.Name
 
-	if n.ChainConfig.BootstrapRepository != "" {
-		n.ensureBootstrapGenesis(config)
-	}
-
 	appGenesis, err := AppGenesisFromConfig(n.Home)
 	require.NoError(n.T(), err)
 
-	if len(appGenesis.AppState) == 0 {
-		tempApp := bbnapp.NewTmpBabylonApp()
-		appState, err := json.MarshalIndent(tempApp.DefaultGenesis(), "", " ")
-		require.NoError(n.T(), err)
-		appGenesis.AppState = appState
-	}
+	// Create a temp app to get the default genesis state
+	tempApp := bbnapp.NewTmpBabylonApp()
+	appState, err := json.MarshalIndent(tempApp.DefaultGenesis(), "", " ")
+	require.NoError(n.T(), err)
 
 	appGenesis.ChainID = n.ChainConfig.ChainID
-	if appGenesis.Consensus == nil {
-		appGenesis.Consensus = &genutiltypes.ConsensusGenesis{
-			Params: cmttypes.DefaultConsensusParams(),
-		}
-	}
-	if appGenesis.Consensus.Params == nil {
-		appGenesis.Consensus.Params = cmttypes.DefaultConsensusParams()
+	appGenesis.AppState = appState
+	appGenesis.Consensus = &genutiltypes.ConsensusGenesis{
+		Params: cmttypes.DefaultConsensusParams(),
 	}
 	appGenesis.Consensus.Params.Block.MaxGas = n.ChainConfig.GasLimit
 	appGenesis.Consensus.Params.ABCI.VoteExtensionsEnableHeight = bbnapp.DefaultVoteExtensionsEnableHeight
@@ -416,56 +403,6 @@ func (n *Node) WriteConfigAndGenesis() {
 	err = genutil.ExportGenesisFile(appGenesis, config.GenesisFile())
 	require.NoError(n.T(), err)
 	cmtconfig.WriteConfigFile(filepath.Join(n.ConfigDirPath(), "config.toml"), config)
-}
-
-func (n *Node) ensureBootstrapGenesis(config *cmtconfig.Config) {
-	genesisFile := config.GenesisFile()
-
-	_, err := os.Stat(genesisFile)
-	if err == nil {
-		return
-	}
-	require.Truef(n.T(), os.IsNotExist(err), "failed to check genesis file before bootstrap: %v", err)
-
-	currentUser, err := user.Current()
-	require.NoError(n.T(), err)
-
-	userSpec := fmt.Sprintf("%s:%s", currentUser.Uid, currentUser.Gid)
-	containerName := fmt.Sprintf("%s-bootstrap-%s", n.Container.Name, n.Name)
-
-	script := fmt.Sprintf(`
-set -euo pipefail
-export BABYLON_HOME=%s
-export BABYLON_BLS_PASSWORD=password
-mkdir -p "$BABYLON_HOME/config"
-rm -f "$BABYLON_HOME/config/genesis.json"
-rm -f "$BABYLON_HOME/config/app.toml"
-rm -f "$BABYLON_HOME/config/config.toml"
-rm -rf "$BABYLON_HOME/data"
-babylond init %s --chain-id %s --home $BABYLON_HOME
-`, BabylonHomePathInContainer, n.Name, n.ChainConfig.ChainID)
-
-	runOpts := &dockertest.RunOptions{
-		Name:       containerName,
-		Repository: n.ChainConfig.BootstrapRepository,
-		Tag:        n.ChainConfig.Tag,
-		NetworkID:  n.Tm.NetworkID(),
-		User:       userSpec,
-		Entrypoint: []string{"sh", "-c", script},
-		Mounts: []string{
-			fmt.Sprintf("%s/:%s", n.Home, BabylonHomePathInContainer),
-		},
-	}
-
-	resource, err := n.Tm.ContainerManager.Pool.RunWithOptions(runOpts, NoRestart)
-	require.NoError(n.T(), err, "failed to run bootstrap container")
-
-	exitCode, err := n.Tm.ContainerManager.Pool.Client.WaitContainer(resource.Container.ID)
-	require.NoError(n.T(), err, "failed waiting for bootstrap container")
-	require.Equal(n.T(), 0, exitCode, "bootstrap container exited with non-zero code")
-
-	err = resource.Close()
-	require.NoError(n.T(), err, "failed to clean up bootstrap container")
 }
 
 func (n *Node) InitConfigWithPeers(persistentPeers []string) {
@@ -530,20 +467,13 @@ func (n *Node) IsChainRunning() bool {
 	return !status.SyncInfo.CatchingUp
 }
 
-// QueryBlock gets block at a specific height
-func (n *Node) QueryBlock(height int64) *cmttypes.Block {
-	resultBlock, err := n.RpcClient.Block(context.Background(), &height)
-	require.NoError(n.T(), err)
-	return resultBlock.Block
-}
-
 func (n *Node) RunNodeResource() *dockertest.Resource {
 	pwd, err := os.Getwd()
 	require.NoError(n.T(), err)
 
 	if !n.Container.ImageExistsLocally() { // builds it locally if it doesn't have
 		// needs to be in the path where the makefile is located '-'
-		err := RunMakeCommand(filepath.Join(pwd, "../../contrib/images"), "babylond-e2e")
+		err := RunMakeCommand(filepath.Join(pwd, "../../"), "build-docker-e2e")
 		require.NoError(n.T(), err)
 	}
 
@@ -581,36 +511,6 @@ func (n *Node) RunNodeResource() *dockertest.Resource {
 	return resource
 }
 
-func (n *Node) WaitFinalityIsActivated() (activatedHeight uint64) {
-	require.Eventually(n.T(), func() bool {
-		activatedHeight = n.QueryActivatedHeight()
-		return activatedHeight > 0
-	}, time.Minute*4, 10*time.Second)
-	n.T().Logf("the activated height is %d", activatedHeight)
-	return activatedHeight
-}
-
-func (n *Node) WaitUntilCurrentEpochIsSealedAndFinalized(startEpoch uint64) (lastFinalizedEpoch uint64) {
-	currentEpoch := n.QueryCurrentEpoch()
-
-	n.WaitForConditionWithPause(func() bool {
-		resp, err := n.QueryRawCheckpointWithErr(currentEpoch.CurrentEpoch)
-		if err != nil {
-			return false
-		}
-		return resp.Status == checkpointingtypes.Sealed
-	}, "failed to wait for epoch to be finalized", time.Second*4)
-	n.FinalizeSealedEpochs(startEpoch, currentEpoch.CurrentEpoch)
-
-	// ensure the committed epoch is finalized
-	require.Eventually(n.T(), func() bool {
-		resp := n.QueryLastCheckpointWithStatusResponse()
-		lastFinalizedEpoch = resp.EpochNum
-		return lastFinalizedEpoch >= currentEpoch.CurrentEpoch
-	}, time.Minute*2, time.Millisecond*200)
-	return lastFinalizedEpoch
-}
-
 func (n *Node) WaitForNextBlock() {
 	n.WaitForNextBlocks(1)
 }
@@ -624,32 +524,6 @@ func (n *Node) WaitForNextBlocks(numberOfBlocks uint64) {
 		require.NoError(n.T(), err)
 		return newLatest > blockToWait
 	}, fmt.Sprintf("Timed out waiting for block %d. Current height is: %d", latest, blockToWait))
-}
-
-func (n *Node) WaitForEpochEnd() *epochingtypes.QueryCurrentEpochResponse {
-	currEpoch := n.QueryCurrentEpoch()
-	currEpochNum := currEpoch.CurrentEpoch
-
-	n.WaitForCondition(func() bool {
-		currEpoch = n.QueryCurrentEpoch()
-		newEpochNum := currEpoch.CurrentEpoch
-		return newEpochNum > currEpochNum
-	}, fmt.Sprintf("Timed out waiting for epoch %d. Current epoch is: %d", currEpochNum+1, currEpochNum))
-	return currEpoch
-}
-
-func (n *Node) WaitForValidatorBeJailed(valAddr sdk.ValAddress) stktypes.Validator {
-	val := n.QueryValidator(valAddr)
-	if val.IsJailed() {
-		n.T().Logf("val %s is already jailed", valAddr.String())
-		return val
-	}
-
-	require.Eventually(n.T(), func() bool {
-		val = n.QueryValidator(valAddr)
-		return val.IsJailed()
-	}, time.Minute*5, 3*time.Second)
-	return val
 }
 
 func (n *Node) WaitUntilBlkHeight(blkHeight uint32) {
@@ -735,6 +609,11 @@ func (n *Node) GetEVMWSAddress() string {
 func (n *Node) IsHealthy() bool {
 	// Implementation will be added later
 	return true
+}
+
+func (n *Node) WaitForHeight(height int64) error {
+	// Implementation will be added later
+	return nil
 }
 
 // QueryGRPCGateway performs a query via the gRPC gateway
@@ -839,12 +718,10 @@ func (n *Node) UpdateWalletsAccSeqNumber() {
 }
 
 // UpdateWalletAccSeqNumber updates one wallet seq and acc number by querying the chain
-func (n *Node) UpdateWalletAccSeqNumber(walletKeyNames ...string) {
-	for _, walletKeyName := range walletKeyNames {
-		w := n.Wallets[walletKeyName]
-		num, seq := n.QueryAccountInfo(w.Addr())
-		w.UpdateAccNumberAndSeq(num, seq)
-	}
+func (n *Node) UpdateWalletAccSeqNumber(walletKeyName string) {
+	w := n.Wallets[walletKeyName]
+	num, seq := n.QueryAccountInfo(w.Addr())
+	w.UpdateAccNumberAndSeq(num, seq)
 }
 
 func NoRestart(config *docker.HostConfig) {
@@ -953,7 +830,7 @@ func (n *Node) InsertNewEmptyBtcHeader(r *rand.Rand) *blc.BTCHeaderInfo {
 	require.NoError(n.T(), err)
 	n.T().Logf("Retrieved current tip of btc headerchain. Height: %d", tipResp.Height)
 
-	tip, err := tkeeper.ParseBTCHeaderInfoResponseToInfo(tipResp)
+	tip, err := ParseBTCHeaderInfoResponseToInfo(tipResp)
 	require.NoError(n.T(), err)
 
 	child := datagen.GenRandomValidBTCHeaderInfoWithParent(r, *tip)
@@ -983,7 +860,8 @@ func (n *Node) SendHeaderHex(headerHex string) {
 	require.NotNil(n.T(), tx, "MsgInsertHeaders tx should not be nil")
 }
 
-// InsertHeader inserts a BTC header to the chain
+// InsertHeader inserts a BTC header to the chain (backported from main for
+// the stake-expansion regression test).
 func (n *Node) InsertHeader(h *bbn.BTCHeaderBytes) {
 	tip, err := n.QueryTip()
 	require.NoError(n.T(), err)
@@ -992,8 +870,9 @@ func (n *Node) InsertHeader(h *bbn.BTCHeaderBytes) {
 	n.WaitUntilBtcHeight(tip.Height + 1)
 }
 
-// SubmitRefundableTxWithAssertion submits a refundable transaction,
-// and asserts that the tx fee is refunded
+// SubmitRefundableTxWithAssertion submits a refundable transaction and
+// asserts that the tx fee is (or isn't) refunded as expected. Backported
+// from main for the stake-expansion regression test.
 func (n *Node) SubmitRefundableTxWithAssertion(
 	f func(),
 	shouldBeRefunded bool,
@@ -1002,13 +881,8 @@ func (n *Node) SubmitRefundableTxWithAssertion(
 	wallet := n.Wallet(walletName)
 	require.NotNil(n.T(), wallet, "Wallet %s should not be nil", walletName)
 
-	// balance before submitting the refundable tx
 	submitterBalanceBefore := n.QueryAllBalances(wallet.Address.String())
-
-	// submit refundable tx
 	f()
-
-	// ensure the tx fee is refunded and the balance is not changed
 	submitterBalanceAfter := n.QueryAllBalances(wallet.Address.String())
 	if shouldBeRefunded {
 		require.Equal(n.T(), submitterBalanceBefore, submitterBalanceAfter)
