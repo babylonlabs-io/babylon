@@ -9,6 +9,7 @@ import (
 
 	"cosmossdk.io/log"
 	abci "github.com/cometbft/cometbft/abci/types"
+	cmttypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -150,8 +151,25 @@ func (h *ProposalHandler) PrepareProposal() sdk.PrepareProposalHandler {
 			return &EmptyProposalRes, fmt.Errorf("failed to add other txs into the proposal: %w", err)
 		}
 
+		finalTxs := proposalTxs.GetTxsInOrder()
+
+		// Defense in depth: never return a proposal CometBFT will reject. We run the
+		// very same validator it applies to the txs we return (types.Txs.Validate,
+		// called from CreateProposalBlock), which panics the proposer in
+		// createProposalBlock on overflow. Delegating to it, rather than re-deriving
+		// the size rule here, is what stops the two from drifting apart again. The
+		// proto-size accounting in proposalTxs already guarantees the invariant; this
+		// guard drops trailing non-checkpoint txs so a future change that regresses
+		// that accounting still cannot crash the proposer. Validate enforces only the
+		// size limit today; were it ever to gain an unrelated check, the len > 1 bound
+		// still terminates this loop at a checkpoint-only proposal instead of
+		// spinning. The checkpoint tx (index 0) is always kept.
+		for len(finalTxs) > 1 && cmttypes.ToTxs(finalTxs).Validate(req.MaxTxBytes) != nil {
+			finalTxs = finalTxs[:len(finalTxs)-1]
+		}
+
 		return &abci.ResponsePrepareProposal{
-			Txs: proposalTxs.GetTxsInOrder(),
+			Txs: finalTxs,
 		}, nil
 	}
 }

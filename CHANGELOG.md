@@ -37,6 +37,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+### Bug Fixes
+
+- [GHSA-692h-272j-rvgc](https://github.com/babylonlabs-io/babylon/security/advisories/GHSA-692h-272j-rvgc) fix(checkpointing): proto-size accounting in checkpoint PrepareProposal repack
+
 ### Improvements
 
 - [#2019](https://github.com/babylonlabs-io/babylon/pull/2019) chore(deps): bump github.com/opencontainers/runc from 1.2.8 to 1.3.6
