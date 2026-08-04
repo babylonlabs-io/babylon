@@ -40,6 +40,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 ### State breaking
 
 - [#1965](https://github.com/babylonlabs-io/babylon/pull/1965) chore: bump CosmWasm/wasmd v0.60.5
+- [#2024](https://github.com/babylonlabs-io/babylon/pull/2024) chore(deps): bump
+  cosmos-sdk to v0.53.8, ship it as an empty v4.4 upgrade
 
 ## v4.3.1
 
