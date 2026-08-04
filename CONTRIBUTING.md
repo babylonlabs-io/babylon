@@ -2,6 +2,7 @@
 
 - [Contributing](#contributing)
   - [Overview](#overview)
+    - [Contributor eligibility](#contributor-eligibility)
     - [Pull request rules](#pull-request-rules)
   - [Development Procedure](#development-procedure)
     - [Testing](#testing)
@@ -18,6 +19,32 @@
 
 This document codifies rules that must be followed when contributing to
 the Babylon node repository.
+
+### Contributor eligibility
+
+Anyone is welcome to open issues and suggest improvements. Issues are public
+and require no verification, so the wider community can freely report bugs and
+propose ideas.
+
+Code contributions are held to a higher bar. In an age of AI- and
+LLM-generated code, and to safeguard the provenance and integrity of the
+codebase, **we accept only commits signed by a public key on Babylon's
+allowed-signers list.** The required `Authenticate Commits` check enforces this
+on every commit in a pull request. Signing a commit is not enough on its own:
+the key must be explicitly allowlisted, and it must be hardware-backed.
+
+Before contributing code:
+
+* Your signing key must be on Babylon's allowed-signers list (the org-level
+  `BABYLON_ALLOWED_SIGNERS` configuration), which is maintained by the Babylon
+  Labs team. Commits signed by a key that is not on the list will fail the check.
+* Sign your commits with a FIDO2 hardware-backed SSH key — the
+  `sk-ssh-ed25519@openssh.com` algorithm, generated with
+  `ssh-keygen -t ed25519-sk`.
+* Ensure every commit in your pull request is signed with that key.
+
+> Automated dependency updates (Dependabot) are verified separately through
+> GitHub's GPG signing and are exempt from the hardware-key requirement.
 
 ### Pull request rules
 
