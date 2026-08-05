@@ -17,6 +17,7 @@ import (
 
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
 	blc "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
+	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 
 	"encoding/json"
 
@@ -524,6 +525,18 @@ func (n *Node) WaitForNextBlocks(numberOfBlocks uint64) {
 		require.NoError(n.T(), err)
 		return newLatest > blockToWait
 	}, fmt.Sprintf("Timed out waiting for block %d. Current height is: %d", latest, blockToWait))
+}
+
+func (n *Node) WaitForEpochEnd() *epochingtypes.QueryCurrentEpochResponse {
+	currEpoch := n.QueryCurrentEpoch()
+	currEpochNum := currEpoch.CurrentEpoch
+
+	n.WaitForCondition(func() bool {
+		currEpoch = n.QueryCurrentEpoch()
+		newEpochNum := currEpoch.CurrentEpoch
+		return newEpochNum > currEpochNum
+	}, fmt.Sprintf("Timed out waiting for epoch %d. Current epoch is: %d", currEpochNum+1, currEpochNum))
+	return currEpoch
 }
 
 func (n *Node) WaitUntilBlkHeight(blkHeight uint32) {

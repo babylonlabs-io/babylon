@@ -16,12 +16,28 @@ import (
 	tokenfactorytypes "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/types"
 	"github.com/stretchr/testify/require"
 
+	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
 	"github.com/babylonlabs-io/babylon/v4/btcstaking"
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
 	tkeeper "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
+	stktypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
+
+// WrappedDelegate submits an epoched delegation from walletName to valAddr.
+func (n *Node) WrappedDelegate(walletName string, valAddr sdk.ValAddress, amt math.Int) {
+	wallet := n.Wallet(walletName)
+	require.NotNil(n.T(), wallet, "Wallet %s not found", walletName)
+
+	amtDelegate := sdk.NewCoin(appparams.DefaultBondDenom, amt)
+	msg := epochingtypes.NewMsgWrappedDelegate(stktypes.NewMsgDelegate(wallet.Address.String(), valAddr.String(), amtDelegate))
+
+	_, tx := wallet.SubmitMsgs(msg)
+	require.NotNil(n.T(), tx, "Delegate tx should not be nil")
+	n.T().Logf("delegation created %+v", msg)
+}
 
 // SendIBCTransfer creates and submits an IBC transfer transaction
 func (n *Node) SendIBCTransfer(wallet *WalletSender, recipient string, token sdk.Coin, channelID string, memo string) string {

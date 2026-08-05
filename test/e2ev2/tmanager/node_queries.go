@@ -11,12 +11,14 @@ import (
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	btclighttypes "github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
 	btcstktypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
+	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 	ictvtypes "github.com/babylonlabs-io/babylon/v4/x/incentive/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdktx "github.com/cosmos/cosmos-sdk/types/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
+	stktypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	channeltypes "github.com/cosmos/ibc-go/v10/modules/core/04-channel/types"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
@@ -91,6 +93,50 @@ func (n *Node) UpgradeQuery(f func(upgradetypes.QueryClient)) {
 		upgradeClient := upgradetypes.NewQueryClient(conn)
 		f(upgradeClient)
 	})
+}
+
+func (n *Node) StakingQuery(f func(stktypes.QueryClient)) {
+	n.GrpcConn(func(conn *grpc.ClientConn) {
+		stkClient := stktypes.NewQueryClient(conn)
+		f(stkClient)
+	})
+}
+
+func (n *Node) EpochingQuery(f func(epochingtypes.QueryClient)) {
+	n.GrpcConn(func(conn *grpc.ClientConn) {
+		epochingClient := epochingtypes.NewQueryClient(conn)
+		f(epochingClient)
+	})
+}
+
+func (n *Node) QueryDelegation(delAddr sdk.AccAddress, valAddr sdk.ValAddress) stktypes.DelegationResponse {
+	var (
+		resp *stktypes.QueryDelegationResponse
+		err  error
+	)
+
+	n.StakingQuery(func(qc stktypes.QueryClient) {
+		resp, err = qc.Delegation(context.Background(), &stktypes.QueryDelegationRequest{
+			DelegatorAddr: delAddr.String(),
+			ValidatorAddr: valAddr.String(),
+		})
+		require.NoError(n.T(), err)
+	})
+
+	return *resp.DelegationResponse
+}
+
+func (n *Node) QueryCurrentEpoch() *epochingtypes.QueryCurrentEpochResponse {
+	var (
+		resp *epochingtypes.QueryCurrentEpochResponse
+		err  error
+	)
+
+	n.EpochingQuery(func(qc epochingtypes.QueryClient) {
+		resp, err = qc.CurrentEpoch(context.Background(), &epochingtypes.QueryCurrentEpochRequest{})
+		require.NoError(n.T(), err)
+	})
+	return resp
 }
 
 // QueryProposals returns all governance proposals on the chain.
