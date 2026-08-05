@@ -96,7 +96,6 @@ func RemediatePoisonedStakeExpansions(
 		skippedParentAlreadyUnbond int
 		skippedParentNotActive     int
 		skippedDuplicateParent     int
-		skippedNoPrevStkQuorum     int
 	)
 
 	if err := bk.IterateBTCDelegations(ctx, func(child *btcstktypes.BTCDelegation) error {
@@ -147,40 +146,6 @@ func RemediatePoisonedStakeExpansions(
 			logger.Debug("found poisoned child but parent already unbonded, skipping",
 				"child_staking_tx_hash", childHashStr,
 				"parent_staking_tx_hash", parentHashStr)
-
-			return nil
-		}
-
-		// Defense-in-depth: only remediate when the child's previous-stake
-		// covenant quorum was collected. Without `PreviousStkCovenantSigs`
-		// satisfying the parent's CovenantQuorum, the child cannot have
-		// produced a valid witness on TxIn[0] (which spends the parent's
-		// staking output via the parent's unbonding-path script), so the
-		// parent's UTXO was never actually spent on Bitcoin and the child's
-		// SpendStakeTx is not a true unbonding proof. Force-unbonding the
-		// parent in that case would remove voting power from a delegation
-		// whose UTXO is still alive on Bitcoin.
-		//
-		// The quorum is resolved from the PARENT's own ParamsVersion: the
-		// covenant committee that signs the parent's unbonding path is the
-		// committee that was active at parent registration (locked into the
-		// staking script), not whatever the chain-current params say.
-		parentParams := bk.GetParamsByVersion(ctx, parent.ParamsVersion)
-		if parentParams == nil {
-			skippedParentMissing++
-			logger.Warn("found poisoned child but parent ParamsVersion is unknown, skipping",
-				"child_staking_tx_hash", childHashStr,
-				"parent_staking_tx_hash", parentHashStr,
-				"parent_params_version", parent.ParamsVersion)
-
-			return nil
-		}
-		if child.StkExp == nil || !child.StkExp.HasCovenantQuorums(parentParams.CovenantQuorum) {
-			skippedNoPrevStkQuorum++
-			logger.Warn("found poisoned child but PreviousStkCovenantSigs do not meet parent quorum, skipping — parent UTXO cannot have been spent",
-				"child_staking_tx_hash", childHashStr,
-				"parent_staking_tx_hash", parentHashStr,
-				"prev_stk_covenant_quorum", parentParams.CovenantQuorum)
 
 			return nil
 		}
@@ -251,7 +216,6 @@ func RemediatePoisonedStakeExpansions(
 		"skipped_parent_already_unbonded", skippedParentAlreadyUnbond,
 		"skipped_parent_not_active", skippedParentNotActive,
 		"skipped_duplicate_parent", skippedDuplicateParent,
-		"skipped_no_prev_stk_quorum", skippedNoPrevStkQuorum,
 	)
 
 	if len(toRemediate) == 0 {

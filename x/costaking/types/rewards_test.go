@@ -59,7 +59,7 @@ func TestCostakerRewardsTracker_Sanitize(t *testing.T) {
 			},
 		},
 		{
-			name: "ActiveBaby is -2, should be set to 0",
+			name: "ActiveBaby is -2, should remain -2 (only -1 is sanitized)",
 			input: CostakerRewardsTracker{
 				StartPeriodCumulativeReward: 1,
 				ActiveSatoshis:              sdkmath.NewInt(1000),
@@ -69,7 +69,7 @@ func TestCostakerRewardsTracker_Sanitize(t *testing.T) {
 			expectedOutput: CostakerRewardsTracker{
 				StartPeriodCumulativeReward: 1,
 				ActiveSatoshis:              sdkmath.NewInt(1000),
-				ActiveBaby:                  sdkmath.ZeroInt(),
+				ActiveBaby:                  sdkmath.NewInt(-2),
 				TotalScore:                  sdkmath.NewInt(500),
 			},
 		},

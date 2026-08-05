@@ -32,27 +32,21 @@ var (
 
 // ChainConfig defines configuration for a blockchain
 type ChainConfig struct {
-	ChainID                  string
-	Home                     string
-	ValidatorCount           int
-	NodeCount                int
-	BlockTime                time.Duration
-	EpochLength              uint64
-	VotingPeriod             time.Duration
-	ExpeditedVotingPeriod    time.Duration
-	BTCConfirmationDepth     int
-	GasLimit                 int64
-	IsUpgrade                bool                      // true when chain is used for upgrade test
-	Tag                      string                    // Tag is only used for upgrade test
-	UpgradePropHeight        int64                     // height for upgrade plan
-	BootstrapRepository      string                    // repository that will be used before upgrade
-	StartingBtcStakingParams *StartingBtcStakingParams // customizable x/btcstaking params when starting the new chain
-
-	// Slashing parameters
-	SignedBlocksWindow   int64
-	MinSignedPerWindow   string
-	SlashFractionDowntime string
-	DowntimeJailDuration time.Duration
+	ChainID               string
+	Home                  string
+	ValidatorCount        int
+	NodeCount             int
+	BlockTime             time.Duration
+	EpochLength           int64
+	VotingPeriod          time.Duration
+	ExpeditedVotingPeriod time.Duration
+	BTCConfirmationDepth  int
+	GasLimit              int64
+	// Software upgrade fields, only set by NewTmWithUpgrade.
+	IsUpgrade           bool   // bootstrap on the pre-upgrade binary, skip btcstaking genesis customization
+	Tag                 string // pre-upgrade image tag (e.g. v4.2.5-testnet)
+	BootstrapRepository string // pre-upgrade image repository
+	UpgradePropHeight   int64  // height at which the upgrade plan should fire
 }
 
 // Chain represents a blockchain with multiple nodes
@@ -78,11 +72,6 @@ func NewChainConfig(tempDir, chainID string) *ChainConfig {
 		ExpeditedVotingPeriod: 6 * time.Second,
 		BTCConfirmationDepth:  6,
 		GasLimit:              300_000_000,
-		// Slashing defaults
-		SignedBlocksWindow:    85,
-		MinSignedPerWindow:    "0.80",
-		SlashFractionDowntime: "0.1",
-		DowntimeJailDuration:  60 * time.Second,
 	}
 }
 
@@ -164,11 +153,7 @@ func (c *Chain) InitGenesis() {
 	c.UpdateWalletSequenceAndAccountNumbers(sanitizedAccs)
 
 	// update all other modules
-	var startingBtcStakingParams *StartingBtcStakingParams
-	if c.Config.StartingBtcStakingParams != nil {
-		startingBtcStakingParams = c.Config.StartingBtcStakingParams
-	}
-	err = UpdateGenModulesState(appGenState, *c.InitialGenesis, c.Validators, nil, startingBtcStakingParams, balancesToAdd, c.Config.IsUpgrade)
+	err = UpdateGenModulesState(appGenState, *c.InitialGenesis, c.Validators, nil, nil, balancesToAdd, c.Config.IsUpgrade)
 	require.NoError(c.T(), err, "failed to update gen state for all other modules")
 
 	appStateJSON, err := json.Marshal(appGenState)

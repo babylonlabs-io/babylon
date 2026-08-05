@@ -1,35 +1,25 @@
 package tmanager
 
 import (
-	"encoding/hex"
-	"os"
-	"path/filepath"
 	"time"
 
 	"cosmossdk.io/math"
-	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
-	txformat "github.com/babylonlabs-io/babylon/v4/btctxformatter"
-	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
-	tkeeper "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
-	bbn "github.com/babylonlabs-io/babylon/v4/types"
-	btccheckpointtypes "github.com/babylonlabs-io/babylon/v4/x/btccheckpoint/types"
-	checkpointingtypes "github.com/babylonlabs-io/babylon/v4/x/checkpointing/types"
-	epochingtypes "github.com/babylonlabs-io/babylon/v4/x/epoching/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/wire"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/bech32"
-	sdkquerytypes "github.com/cosmos/cosmos-sdk/types/query"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
-	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
-	stktypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	transfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	clienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
 	tokenfactorytypes "github.com/strangelove-ventures/tokenfactory/x/tokenfactory/types"
 	"github.com/stretchr/testify/require"
 
+	"github.com/babylonlabs-io/babylon/v4/btcstaking"
+	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
+	tkeeper "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
+	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 )
 
@@ -56,8 +46,8 @@ func (n *Node) SendIBCTransfer(wallet *WalletSender, recipient string, token sdk
 }
 
 // SendCoins sends coins to a recipient address using the node's default wallet
-func (n *Node) SendCoins(receiverAddrStr string, coins sdk.Coins) {
-	recipientAddr, err := sdk.AccAddressFromBech32(receiverAddrStr)
+func (n *Node) SendCoins(recipient string, coins sdk.Coins) {
+	recipientAddr, err := sdk.AccAddressFromBech32(recipient)
 	require.NoError(n.T(), err)
 
 	msg := banktypes.NewMsgSend(n.DefaultWallet().Address, recipientAddr, coins)
@@ -90,9 +80,6 @@ func (n *Node) MintDenom(walletName, amount, denom string) {
 	n.T().Logf("Minted %s %s to %s", amount, denom, wallet.Address.String())
 }
 
-/*
-	x/btcstaking txs
-*/
 // CreateFinalityProvider creates a finality provider on the given chain/consumer using the specified wallet
 func (n *Node) CreateFinalityProvider(walletName string, fp *bstypes.FinalityProvider) {
 	wallet := n.Wallet(walletName)
@@ -117,96 +104,6 @@ func (n *Node) CreateFinalityProvider(walletName string, fp *bstypes.FinalityPro
 	require.NotNil(n.T(), tx, "CreateFinalityProvider transaction should not be nil")
 	n.T().Logf("Created finality provider: %s", fp.BtcPk.MarshalHex())
 }
-
-func (n *Node) FinalizeSealedEpochs(startEpoch uint64, lastEpoch uint64) {
-	n.T().Logf("start finalizing epochs from  %d to %d", startEpoch, lastEpoch)
-	madeProgress := false
-
-	pageLimit := lastEpoch - startEpoch + 1
-	pagination := &sdkquerytypes.PageRequest{
-		Key:   checkpointingtypes.CkptsObjectKey(startEpoch),
-		Limit: pageLimit,
-	}
-
-	resp := n.QueryRawCheckpoints(pagination)
-	require.Equal(n.T(), int(pageLimit), len(resp.RawCheckpoints))
-
-	for _, checkpoint := range resp.RawCheckpoints {
-		require.Equal(n.T(), checkpoint.Status, checkpointingtypes.Sealed)
-
-		currentBtcTipResp, err := n.QueryTip()
-		require.NoError(n.T(), err)
-
-		_, submitterAddr, err := bech32.DecodeAndConvert(n.DefaultWallet().Addr())
-		require.NoError(n.T(), err)
-
-		rawCheckpoint, err := checkpoint.Ckpt.ToRawCheckpoint()
-		require.NoError(n.T(), err)
-
-		btcCheckpoint, err := checkpointingtypes.FromRawCkptToBTCCkpt(rawCheckpoint, submitterAddr)
-		require.NoError(n.T(), err)
-
-		babylonTagBytes, err := hex.DecodeString(BabylonOpReturnTag)
-		require.NoError(n.T(), err)
-
-		p1, p2, err := txformat.EncodeCheckpointData(
-			babylonTagBytes,
-			txformat.CurrentVersion,
-			btcCheckpoint,
-		)
-		require.NoError(n.T(), err)
-
-		tx1 := datagen.CreatOpReturnTransaction(n.Tm.R, p1)
-		currentBtcTip, err := tkeeper.ParseBTCHeaderInfoResponseToInfo(currentBtcTipResp)
-		require.NoError(n.T(), err)
-
-		opReturn1 := datagen.CreateBlockWithTransaction(n.Tm.R, currentBtcTip.Header.ToBlockHeader(), tx1)
-		tx2 := datagen.CreatOpReturnTransaction(n.Tm.R, p2)
-		opReturn2 := datagen.CreateBlockWithTransaction(n.Tm.R, opReturn1.HeaderBytes.ToBlockHeader(), tx2)
-
-		n.SubmitRefundableTxWithAssertion(func() {
-			n.InsertHeader(&opReturn1.HeaderBytes)
-			n.InsertHeader(&opReturn2.HeaderBytes)
-		}, true, n.DefaultWallet().KeyName)
-
-		n.SubmitRefundableTxWithAssertion(func() {
-			n.InsertProofs(opReturn1.SpvProof, opReturn2.SpvProof)
-		}, true, n.DefaultWallet().KeyName)
-
-		n.WaitForCondition(func() bool {
-			ckpt := n.QueryRawCheckpoint(checkpoint.Ckpt.EpochNum)
-			return ckpt.Status == checkpointingtypes.Submitted
-		}, "Checkpoint should be submitted ")
-
-		madeProgress = true
-	}
-
-	if madeProgress {
-		// we made progress in above loop, which means the last header of btc chain is
-		// valid op return header, by finalizing it, we will also finalize all older
-		// checkpoints
-
-		for i := 0; i < BabylonBtcFinalizationPeriod; i++ {
-			n.InsertNewEmptyBtcHeader(n.Tm.R)
-		}
-	}
-}
-
-func (n *Node) InsertProofs(p1 *btccheckpointtypes.BTCSpvProof, p2 *btccheckpointtypes.BTCSpvProof) string {
-	n.T().Log("btccheckpoint sending proofs")
-
-	msg := &btccheckpointtypes.MsgInsertBTCSpvProof{
-		Submitter: n.DefaultWallet().Addr(),
-		Proofs:    []*btccheckpointtypes.BTCSpvProof{p1, p2},
-	}
-
-	txHash, tx := n.DefaultWallet().SubmitMsgs(msg)
-	require.NotNil(n.T(), tx, "Failed to create BTC SPV proofs")
-	n.T().Logf("successfully inserted btc spv proofs, tx hash: %s", txHash)
-	return txHash
-}
-
-// CreateBTCDelegation submits a BTC delegation transaction with a specified wallet
 func (n *Node) CreateBTCDelegation(walletName string, msg *bstypes.MsgCreateBTCDelegation) string {
 	wallet := n.Wallet(walletName)
 	require.NotNil(n.T(), wallet, "Wallet %s not found", walletName)
@@ -217,7 +114,6 @@ func (n *Node) CreateBTCDelegation(walletName string, msg *bstypes.MsgCreateBTCD
 	return txHash
 }
 
-// AddCovenantSigs submits covenant signatures of the covenant committee with a specified wallet
 func (n *Node) AddCovenantSigs(
 	walletName string,
 	covPK *bbn.BIP340PubKey,
@@ -244,7 +140,6 @@ func (n *Node) AddCovenantSigs(
 	n.T().Logf("Covenant signatures added")
 }
 
-// AddBTCDelegationInclusionProof adds btc delegation inclusion proof with a specified wallet
 func (n *Node) AddBTCDelegationInclusionProof(
 	walletName string,
 	stakingTxHash string,
@@ -263,114 +158,6 @@ func (n *Node) AddBTCDelegationInclusionProof(
 	n.T().Logf("BTC delegation inclusion proof added")
 }
 
-// CommitPubRandList commits a finality provider public randomness
-func (n *Node) CommitPubRandList(walletName string, fp *bstypes.FinalityProvider) {
-	wallet := n.Wallet(walletName)
-	require.NotNil(n.T(), wallet, "Wallet %s not found", walletName)
-
-	// Create commission rates
-	commission := bstypes.NewCommissionRates(
-		*fp.Commission,
-		fp.CommissionInfo.MaxRate,
-		fp.CommissionInfo.MaxChangeRate,
-	)
-
-	msg := &bstypes.MsgCreateFinalityProvider{
-		Addr:        wallet.Address.String(),
-		BtcPk:       fp.BtcPk,
-		Pop:         fp.Pop,
-		Commission:  commission,
-		Description: fp.Description,
-	}
-
-	_, tx := wallet.SubmitMsgs(msg)
-	require.NotNil(n.T(), tx, "CreateFinalityProvider transaction should not be nil")
-	n.T().Logf("Created finality provider: %s", fp.BtcPk.MarshalHex())
-}
-
-/*
-	x/gov txs
-*/
-// SubmitProposal submits a governance proposal with a specified wallet
-func (n *Node) SubmitProposal(walletName string, govMsg *govtypes.MsgSubmitProposal) {
-	wallet := n.Wallet(walletName)
-	require.NotNil(n.T(), wallet, "Wallet %s not found", walletName)
-
-	_, tx := wallet.SubmitMsgs(govMsg)
-	require.NotNil(n.T(), tx, "SubmitProposal transaction should not be nil")
-	n.T().Logf("Governance proposal submitted")
-}
-
-func (n *Node) Vote(walletName string, proposalID uint64, voteOption govtypes.VoteOption) {
-	wallet := n.Wallet(walletName)
-	require.NotNil(n.T(), wallet, "Wallet %s not found", walletName)
-
-	govMsg := &govtypes.MsgVote{
-		ProposalId: proposalID,
-		Voter:      wallet.Address.String(),
-		Option:     voteOption,
-		Metadata:   "",
-	}
-	_, tx := wallet.SubmitMsgs(govMsg)
-	require.NotNil(n.T(), tx, "Vote transaction should not be nil")
-	n.T().Logf("Governance vote submitted")
-}
-
-func (n *Node) WrappedDelegate(walletName string, valAddr sdk.ValAddress, amt math.Int) {
-	wallet := n.Wallet(walletName)
-	require.NotNil(n.T(), wallet, "Wallet %s not found", walletName)
-
-	amtDelegate := sdk.NewCoin(appparams.DefaultBondDenom, amt)
-	msg := epochingtypes.NewMsgWrappedDelegate(stktypes.NewMsgDelegate(wallet.Addr(), valAddr.String(), amtDelegate))
-
-	_, tx := wallet.SubmitMsgs(msg)
-	require.NotNil(n.T(), tx, "Delegate tx should not be nil")
-	n.T().Logf("delegation created %+v", msg)
-}
-
-func (n *Node) WrappedUndelegate(walletName string, valAddr sdk.ValAddress, amt math.Int) {
-	wallet := n.Wallet(walletName)
-	require.NotNil(n.T(), wallet, "Wallet %s not found", walletName)
-
-	amtDelegate := sdk.NewCoin(appparams.DefaultBondDenom, amt)
-	msg := epochingtypes.NewMsgWrappedUndelegate(stktypes.NewMsgUndelegate(wallet.Addr(), valAddr.String(), amtDelegate))
-
-	_, tx := wallet.SubmitMsgs(msg)
-	require.NotNil(n.T(), tx, "Undelegate tx should not be nil")
-	n.T().Logf("undelegation created %+v", msg)
-}
-
-func (n *Node) WrappedCreateValidator(walletName string, addr sdk.AccAddress) {
-	wallet := n.Wallet(walletName)
-	require.NotNil(n.T(), wallet, "Wallet %s not found", walletName)
-
-	stkParams := n.QueryStakingParams()
-
-	wcvMsg, err := datagen.BuildMsgWrappedCreateValidator(addr)
-	require.NoError(n.T(), err)
-
-	wcvMsg.MsgCreateValidator.Commission = stktypes.NewCommissionRates(
-		stkParams.MinCommissionRate,
-		stkParams.MinCommissionRate.Add(math.LegacyNewDecWithPrec(1, 2)),
-		math.LegacyNewDecWithPrec(1, 3),
-	)
-
-	_, tx := wallet.SubmitMsgs(wcvMsg)
-	require.NotNil(n.T(), tx, "Wrapped create validator msg should not be nil")
-	n.T().Logf("new validator created %+v", wcvMsg)
-}
-
-func (n *Node) Unjail(walletName string, valAddr sdk.ValAddress) {
-	wallet := n.Wallet(walletName)
-	require.NotNil(n.T(), wallet, "Wallet %s not found", walletName)
-
-	msg := slashingtypes.NewMsgUnjail(valAddr.String())
-	_, tx := wallet.SubmitMsgs(msg)
-	require.NotNil(n.T(), tx, "Unjail tx should not be nil")
-	n.T().Logf("unjailed validator %s", valAddr.String())
-}
-
-// BuildSingleSigDelegationMsg constructs a original single-sig BTC delegation message
 func (n *Node) BuildSingleSigDelegationMsg(
 	wallet *WalletSender,
 	stakerSK *btcec.PrivateKey,
@@ -460,24 +247,35 @@ func (n *Node) BuildSingleSigDelegationMsg(
 }
 
 func (n *Node) CreateBtcDelegation(wallet *WalletSender, fpPK *btcec.PublicKey) *bstypes.BTCDelegationResponse {
-	wallet.VerifySentTx = true
-
-	// single-sig delegation from n to fp
 	stakerSK, _, err := datagen.GenRandomBTCKeyPair(n.Tm.R)
 	require.NoError(n.T(), err)
+
+	resp, _ := n.CreateBtcDelegationWithSK(wallet, stakerSK, fpPK, int64(2*10e8), 1000)
+	return resp
+}
+
+func (n *Node) CreateBtcDelegationWithSK(
+	wallet *WalletSender,
+	stakerSK *btcec.PrivateKey,
+	fpPK *btcec.PublicKey,
+	stakingValue int64,
+	stakingTime uint16,
+) (*bstypes.BTCDelegationResponse, *wire.MsgTx) {
+	wallet.VerifySentTx = true
 
 	msg, stakingInfoBuilt := n.BuildSingleSigDelegationMsg(
 		wallet,
 		stakerSK,
 		fpPK,
-		int64(2*10e8),
-		1000,
+		stakingValue,
+		stakingTime,
 	)
 
 	n.CreateBTCDelegation(wallet.KeyName, msg)
 	n.WaitForNextBlock()
 
-	pendingDelResp := n.QueryBTCDelegation(stakingInfoBuilt.StakingTx.TxHash().String())
+	stakingMsgTxHash := stakingInfoBuilt.StakingTx.TxHash().String()
+	pendingDelResp := n.QueryBTCDelegation(stakingMsgTxHash)
 	require.NotNil(n.T(), pendingDelResp)
 	require.Equal(n.T(), "PENDING", pendingDelResp.StatusDesc)
 
@@ -589,14 +387,276 @@ func (n *Node) CreateBtcDelegation(wallet *WalletSender, fpPK *btcec.PublicKey) 
 
 	activeBtcDelResp := n.QueryBTCDelegation(stakingTxHash)
 	require.Equal(n.T(), "ACTIVE", activeBtcDelResp.StatusDesc)
-	return activeBtcDelResp
+	return activeBtcDelResp, stakingMsgTx
 }
 
-// LoadWasmBytecode reads a wasm file from the given relative path.
-func LoadWasmBytecode(t require.TestingT, relativePath string) []byte {
-	absPath, err := filepath.Abs(relativePath)
-	require.NoError(t, err)
-	bz, err := os.ReadFile(absPath)
-	require.NoError(t, err, "failed to read wasm file at %s", absPath)
-	return bz
+func (n *Node) BuildSingleSigStakeExpansionMsg(
+	wallet *WalletSender,
+	stakerSK *btcec.PrivateKey,
+	fpPK *btcec.PublicKey,
+	parentStkTx *wire.MsgTx,
+	stakingValue int64,
+	stakingTime uint16,
+	fundingValue int64,
+) (*bstypes.MsgBtcStakeExpand, *datagen.TestStakingSlashingInfo, *wire.MsgTx) {
+	params := n.QueryBtcStakingParams()
+	net := &chaincfg.SimNetParams
+
+	covPKs, err := bbn.NewBTCPKsFromBIP340PKs(params.CovenantPks)
+	require.NoError(n.T(), err)
+
+	// Build a funding tx; its first output funds the expansion.
+	parentStkOut := parentStkTx.TxOut[datagen.StakingOutIdx]
+	dummyHash := chainhash.Hash{}
+	for i := range dummyHash {
+		dummyHash[i] = byte(i + 1)
+	}
+	dummyOutPoint := &wire.OutPoint{Hash: dummyHash, Index: 0}
+	fundingTx := datagen.GenFundingTx(n.T(), n.Tm.R, net, dummyOutPoint, fundingValue, parentStkOut)
+	fundingTxHash := fundingTx.TxHash()
+
+	parentStkTxHash := parentStkTx.TxHash()
+	outPoints := []*wire.OutPoint{
+		wire.NewOutPoint(&parentStkTxHash, datagen.StakingOutIdx),
+		wire.NewOutPoint(&fundingTxHash, 0),
+	}
+
+	stakingInfo := datagen.GenBTCStakingSlashingInfoWithInputs(
+		n.Tm.R, n.T(), net,
+		outPoints,
+		stakerSK,
+		[]*btcec.PublicKey{fpPK},
+		covPKs,
+		params.CovenantQuorum,
+		stakingTime,
+		stakingValue,
+		params.SlashingPkScript,
+		params.SlashingRate,
+		uint16(params.UnbondingTimeBlocks),
+	)
+
+	slashingPathSpendInfo, err := stakingInfo.StakingInfo.SlashingPathSpendInfo()
+	require.NoError(n.T(), err)
+	delegatorSig, err := stakingInfo.SlashingTx.Sign(
+		stakingInfo.StakingTx,
+		datagen.StakingOutIdx,
+		slashingPathSpendInfo.GetPkScriptPath(),
+		stakerSK,
+	)
+	require.NoError(n.T(), err)
+
+	serializedStakingTx, err := bbn.SerializeBTCTx(stakingInfo.StakingTx)
+	require.NoError(n.T(), err)
+
+	stkTxHash := stakingInfo.StakingTx.TxHash()
+	unbondingValue := stakingValue - params.UnbondingFeeSat
+	unbondingInfo := datagen.GenBTCUnbondingSlashingInfo(
+		n.Tm.R, n.T(), net,
+		stakerSK,
+		[]*btcec.PublicKey{fpPK},
+		covPKs,
+		params.CovenantQuorum,
+		wire.NewOutPoint(&stkTxHash, datagen.StakingOutIdx),
+		uint16(params.UnbondingTimeBlocks),
+		unbondingValue,
+		params.SlashingPkScript,
+		params.SlashingRate,
+		uint16(params.UnbondingTimeBlocks),
+	)
+
+	unbondingTxBytes, err := bbn.SerializeBTCTx(unbondingInfo.UnbondingTx)
+	require.NoError(n.T(), err)
+	delSlashingTxSig, err := unbondingInfo.GenDelSlashingTxSig(stakerSK)
+	require.NoError(n.T(), err)
+
+	pop, err := datagen.NewPoPBTC(wallet.Address, stakerSK)
+	require.NoError(n.T(), err)
+
+	fundingTxBz, err := bbn.SerializeBTCTx(fundingTx)
+	require.NoError(n.T(), err)
+
+	msg := &bstypes.MsgBtcStakeExpand{
+		StakerAddr:                    wallet.Address.String(),
+		Pop:                           pop,
+		BtcPk:                         bbn.NewBIP340PubKeyFromBTCPK(stakerSK.PubKey()),
+		FpBtcPkList:                   []bbn.BIP340PubKey{*bbn.NewBIP340PubKeyFromBTCPK(fpPK)},
+		StakingTime:                   uint32(stakingTime),
+		StakingValue:                  stakingValue,
+		StakingTx:                     serializedStakingTx,
+		SlashingTx:                    stakingInfo.SlashingTx,
+		DelegatorSlashingSig:          delegatorSig,
+		UnbondingValue:                unbondingValue,
+		UnbondingTime:                 params.UnbondingTimeBlocks,
+		UnbondingTx:                   unbondingTxBytes,
+		UnbondingSlashingTx:           unbondingInfo.SlashingTx,
+		DelegatorUnbondingSlashingSig: delSlashingTxSig,
+		PreviousStakingTxHash:         parentStkTxHash.String(),
+		FundingTx:                     fundingTxBz,
+	}
+	return msg, stakingInfo, fundingTx
+}
+
+func (n *Node) CreateBtcStakeExpansionVerified(
+	wallet *WalletSender,
+	stakerSK *btcec.PrivateKey,
+	fpPK *btcec.PublicKey,
+	parentDel *bstypes.BTCDelegationResponse,
+	parentStkTx *wire.MsgTx,
+	stakingValue int64,
+	stakingTime uint16,
+	fundingValue int64,
+) (childResp *bstypes.BTCDelegationResponse, expansionMsg *bstypes.MsgBtcStakeExpand, fundingTx *wire.MsgTx) {
+	wallet.VerifySentTx = true
+
+	expansionMsg, _, fundingTx = n.BuildSingleSigStakeExpansionMsg(
+		wallet, stakerSK, fpPK, parentStkTx, stakingValue, stakingTime, fundingValue,
+	)
+
+	// submit MsgBtcStakeExpand via the same wallet
+	_, tx := wallet.SubmitMsgs(expansionMsg)
+	require.NotNil(n.T(), tx, "MsgBtcStakeExpand should not be nil")
+
+	expansionStakingTx, err := bbn.NewBTCTxFromBytes(expansionMsg.StakingTx)
+	require.NoError(n.T(), err)
+	expansionStakingTxHash := expansionStakingTx.TxHash().String()
+
+	pendingResp := n.QueryBTCDelegation(expansionStakingTxHash)
+	require.NotNil(n.T(), pendingResp)
+	require.Equal(n.T(), "PENDING", pendingResp.StatusDesc, "child must be PENDING after MsgBtcStakeExpand")
+	require.NotNil(n.T(), pendingResp.StkExp, "child must carry stake-expansion metadata")
+
+	// Generate covenant signatures — slashing, unbonding, unbonding-slashing,
+	// PLUS the stake-expansion-specific signature for the parent's
+	// staking-output unbonding path.
+	pendingDel, err := tkeeper.ParseRespBTCDelToBTCDel(pendingResp)
+	require.NoError(n.T(), err)
+	bsParams := n.QueryBtcStakingParams()
+	fpBTCPKs, err := bbn.NewBTCPKsFromBIP340PKs(pendingDel.FpBtcPkList)
+	require.NoError(n.T(), err)
+	btcCfg := &chaincfg.SimNetParams
+
+	stakingInfo, err := pendingDel.GetStakingInfo(bsParams, btcCfg)
+	require.NoError(n.T(), err)
+	stakingSlashingPathInfo, err := stakingInfo.SlashingPathSpendInfo()
+	require.NoError(n.T(), err)
+
+	covSKs, _, _ := bstypes.DefaultCovenantCommittee()
+
+	covenantSlashingSigs, err := datagen.GenCovenantAdaptorSigs(
+		covSKs, fpBTCPKs, expansionStakingTx,
+		stakingSlashingPathInfo.GetPkScriptPath(),
+		pendingDel.SlashingTx,
+	)
+	require.NoError(n.T(), err)
+
+	unbondingPathInfo, err := stakingInfo.UnbondingPathSpendInfo()
+	require.NoError(n.T(), err)
+	unbondingTx, err := bbn.NewBTCTxFromBytes(pendingDel.BtcUndelegation.UnbondingTx)
+	require.NoError(n.T(), err)
+	covUnbondingSigs, err := datagen.GenCovenantUnbondingSigs(
+		covSKs, expansionStakingTx, pendingDel.StakingOutputIdx,
+		unbondingPathInfo.GetPkScriptPath(),
+		unbondingTx,
+	)
+	require.NoError(n.T(), err)
+
+	unbondingInfo, err := pendingDel.GetUnbondingInfo(bsParams, btcCfg)
+	require.NoError(n.T(), err)
+	unbondingSlashingPathInfo, err := unbondingInfo.SlashingPathSpendInfo()
+	require.NoError(n.T(), err)
+	covenantUnbondingSlashingSigs, err := datagen.GenCovenantAdaptorSigs(
+		covSKs, fpBTCPKs, unbondingTx,
+		unbondingSlashingPathInfo.GetPkScriptPath(),
+		pendingDel.BtcUndelegation.SlashingTx,
+	)
+	require.NoError(n.T(), err)
+
+	// Stake-expansion-specific covenant signature: covenant signs the
+	// expansion tx for the unbonding path on the parent's staking output.
+	prevStkHash, err := chainhash.NewHash(pendingDel.StkExp.PreviousStakingTxHash)
+	require.NoError(n.T(), err)
+	parentStkInfoResp := n.QueryBTCDelegation(prevStkHash.String())
+	parentStkDel, err := tkeeper.ParseRespBTCDelToBTCDel(parentStkInfoResp)
+	require.NoError(n.T(), err)
+	parentStkInfo, err := parentStkDel.GetStakingInfo(bsParams, btcCfg)
+	require.NoError(n.T(), err)
+	parentUnbondingPathInfo, err := parentStkInfo.UnbondingPathSpendInfo()
+	require.NoError(n.T(), err)
+	parentStkRawTx, err := bbn.NewBTCTxFromBytes(parentStkDel.StakingTx)
+	require.NoError(n.T(), err)
+
+	for i := 0; i < int(bsParams.CovenantQuorum); i++ {
+		stkExpSig, err := btcstaking.SignTxForFirstScriptSpendWithTwoInputsFromScript(
+			expansionStakingTx,
+			parentStkRawTx.TxOut[datagen.StakingOutIdx],
+			fundingTx.TxOut[0],
+			covSKs[i],
+			parentUnbondingPathInfo.GetPkScriptPath(),
+		)
+		require.NoError(n.T(), err)
+		stkExpSigBIP := bbn.NewBIP340SignatureFromBTCSig(stkExpSig)
+
+		n.SubmitRefundableTxWithAssertion(func() {
+			n.AddCovenantSigs(
+				wallet.KeyName,
+				covenantSlashingSigs[i].CovPk,
+				expansionStakingTxHash,
+				covenantSlashingSigs[i].AdaptorSigs,
+				bbn.NewBIP340SignatureFromBTCSig(covUnbondingSigs[i]),
+				covenantUnbondingSlashingSigs[i].AdaptorSigs,
+				stkExpSigBIP,
+			)
+		}, true, wallet.KeyName)
+	}
+
+	verifiedResp := n.QueryBTCDelegation(expansionStakingTxHash)
+	require.Equal(n.T(), "VERIFIED", verifiedResp.StatusDesc,
+		"child must be VERIFIED after covenant quorum (no inclusion proof yet)")
+	return verifiedResp, expansionMsg, fundingTx
+}
+
+func (n *Node) SubmitBTCUndelegate(wallet *WalletSender, msg *bstypes.MsgBTCUndelegate) string {
+	wallet.VerifySentTx = true
+	txHash, tx := wallet.SubmitMsgs(msg)
+	require.NotNil(n.T(), tx, "MsgBTCUndelegate should not be nil")
+	return txHash
+}
+
+func (n *Node) SubmitBTCUndelegateExpectFail(wallet *WalletSender, msg *bstypes.MsgBTCUndelegate) string {
+	wallet.VerifySentTx = false
+	signedTx := wallet.SignMsg(msg)
+	txHash, err := n.SubmitTx(signedTx)
+	require.NoError(n.T(), err, "broadcast must succeed; failure is expected at DeliverTx")
+
+	n.WaitForNextBlock()
+	txResp := n.QueryTxByHash(txHash)
+	require.NotZero(n.T(), txResp.TxResponse.Code,
+		"MsgBTCUndelegate must fail at DeliverTx — RawLog=%q", txResp.TxResponse.RawLog)
+	return txResp.TxResponse.RawLog
+}
+
+// SubmitProposal submits a governance proposal with a specified wallet.
+func (n *Node) SubmitProposal(walletName string, govMsg *govtypes.MsgSubmitProposal) {
+	wallet := n.Wallet(walletName)
+	require.NotNil(n.T(), wallet, "Wallet %s not found", walletName)
+
+	_, tx := wallet.SubmitMsgs(govMsg)
+	require.NotNil(n.T(), tx, "SubmitProposal transaction should not be nil")
+	n.T().Logf("Governance proposal submitted")
+}
+
+// Vote casts a vote on the given proposal with the specified wallet.
+func (n *Node) Vote(walletName string, proposalID uint64, voteOption govtypes.VoteOption) {
+	wallet := n.Wallet(walletName)
+	require.NotNil(n.T(), wallet, "Wallet %s not found", walletName)
+
+	govMsg := &govtypes.MsgVote{
+		ProposalId: proposalID,
+		Voter:      wallet.Address.String(),
+		Option:     voteOption,
+		Metadata:   "",
+	}
+	_, tx := wallet.SubmitMsgs(govMsg)
+	require.NotNil(n.T(), tx, "Vote transaction should not be nil")
+	n.T().Logf("Governance vote submitted")
 }

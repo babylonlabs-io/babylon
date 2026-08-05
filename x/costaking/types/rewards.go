@@ -100,11 +100,9 @@ func (crt CostakerRewardsTracker) Validate() error {
 }
 
 func (crt *CostakerRewardsTracker) Sanitize() {
-	// Handle the case where ActiveBaby goes slightly negative due to rounding
-	// when the validator lost its 1:1 ratio between shares and tokens due to
-	// slashing. Multiple operations (slash + delegations + epoch boundary
-	// removal) can accumulate rounding errors beyond -1.
-	if crt.ActiveBaby.IsNegative() {
+	// Handle the case where ActiveBaby is -1 due to rounding when the validator
+	// lost its 1:1 ratio between shares and tokens due to slashing
+	if crt.ActiveBaby.Equal(sdkmath.NewInt(-1)) {
 		crt.ActiveBaby = sdkmath.ZeroInt()
 	}
 }

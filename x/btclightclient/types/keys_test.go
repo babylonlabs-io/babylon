@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
-	"github.com/babylonlabs-io/babylon/v4/testutil/store"
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	"github.com/babylonlabs-io/babylon/v4/x/btclightclient/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -47,14 +46,4 @@ func FuzzHeadersObjectHeightAndWorkKey(f *testing.F) {
 			t.Errorf("Expected headers object height key %s got %s", expectedHeightKey, gotHeightKey)
 		}
 	})
-}
-
-func TestNoKeyCollision(t *testing.T) {
-	keys := map[string]interface{}{
-		"HeadersObjectPrefix": types.HeadersObjectPrefix,
-		"HashToHeightPrefix":  types.HashToHeightPrefix,
-		"ParamsKey":           types.ParamsKey,
-	}
-
-	store.CheckKeyCollisions(t, keys)
 }

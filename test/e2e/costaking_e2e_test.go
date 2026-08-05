@@ -17,7 +17,6 @@ import (
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer"
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer/chain"
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
-	tkeeper "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 )
@@ -60,7 +59,7 @@ func (s *CostakingTestSuite) TearDownSuite() {
 
 func (s *CostakingTestSuite) TestFinalityProviderExit() {
 	chainA := s.configurer.GetChainConfig(0)
-	chainA.WaitUntilHeight(2)
+	chainA.WaitUntilHeight(1)
 
 	delegatorNode, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
@@ -162,7 +161,7 @@ func (s *CostakingTestSuite) TestFinalityProviderExit() {
 	s.Require().Len(pendingSet, 1)
 	pendingResp := pendingSet[0]
 	s.Require().Len(pendingResp.Dels, 1)
-	pendingDel, err := tkeeper.ParseRespBTCDelToBTCDel(pendingResp.Dels[0])
+	pendingDel, err := chain.ParseRespBTCDelToBTCDel(pendingResp.Dels[0])
 	s.Require().NoError(err)
 
 	delegatorNode.SendCovenantSigsAsValAndCheck(s.r, s.T(), s.net, s.covenantSKs, pendingDel)
@@ -205,7 +204,7 @@ func (s *CostakingTestSuite) TestFinalityProviderExit() {
 
 	currentBtcTipResp, err := delegatorNode.QueryTip()
 	s.NoError(err)
-	currentBtcTip, err := tkeeper.ParseBTCHeaderInfoResponseToInfo(currentBtcTipResp)
+	currentBtcTip, err := chain.ParseBTCHeaderInfoResponseToInfo(currentBtcTipResp)
 	s.NoError(err)
 
 	unbondingTx := activeDel.MustGetUnbondingTx()
@@ -239,7 +238,7 @@ func (s *CostakingTestSuite) TestFinalityProviderExit() {
 	s.Require().Eventually(func() bool {
 		unbonded := delegatorNode.QueryUnbondedDelegations()
 		for _, resp := range unbonded {
-			del, err := tkeeper.ParseRespBTCDelToBTCDel(resp)
+			del, err := chain.ParseRespBTCDelToBTCDel(resp)
 			if err != nil {
 				continue
 			}

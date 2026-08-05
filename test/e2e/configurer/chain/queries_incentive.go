@@ -50,20 +50,8 @@ func (n *NodeConfig) QueryIncentiveParamsAtHeight(height uint64) (*incentivetype
 }
 
 func (n *NodeConfig) QueryRewardGauge(sAddr sdk.AccAddress) (map[string]*incentivetypes.RewardGaugesResponse, error) {
-	return n.QueryRewardGaugeAtHeight(sAddr, 0)
-}
-
-func (n *NodeConfig) QueryRewardGaugeAtHeight(sAddr sdk.AccAddress, height uint64) (map[string]*incentivetypes.RewardGaugesResponse, error) {
 	path := fmt.Sprintf("/babylon/incentive/address/%s/reward_gauge", sAddr.String())
-
-	var headers map[string]string
-	if height > 0 {
-		headers = map[string]string{
-			grpctypes.GRPCBlockHeightHeader: strconv.FormatUint(height, 10),
-		}
-	}
-
-	bz, err := n.QueryGRPCGatewayWithHeaders(path, url.Values{}, headers)
+	bz, err := n.QueryGRPCGateway(path, url.Values{})
 	if err != nil {
 		return nil, err
 	}

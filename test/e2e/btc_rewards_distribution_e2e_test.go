@@ -22,7 +22,6 @@ import (
 	"github.com/babylonlabs-io/babylon/v4/test/e2e/configurer/chain"
 	"github.com/babylonlabs-io/babylon/v4/testutil/coins"
 	"github.com/babylonlabs-io/babylon/v4/testutil/datagen"
-	tkeeper "github.com/babylonlabs-io/babylon/v4/testutil/keeper"
 	bbn "github.com/babylonlabs-io/babylon/v4/types"
 	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 	ftypes "github.com/babylonlabs-io/babylon/v4/x/finality/types"
@@ -308,20 +307,6 @@ func (s *BtcRewardsDistribution) CommitPublicRandomnessAndSealed() {
 		fmt.Sprintf("--from=%s", wFp2),
 	)
 
-	// Wait for FP2's vote to be included before submitting FP1's.
-	// FP1 has 75% of voting power and can finalize alone (>2/3 threshold).
-	// Without this wait, FP1's sig may finalize the block before FP2's is
-	// included, causing FP2 to never receive a reward gauge.
-	s.Eventually(func() bool {
-		votes := n2.QueryVotesAtHeight(s.finalityBlockHeightVoted)
-		for _, v := range votes {
-			if v.Equals(s.fp2.BtcPk) {
-				return true
-			}
-		}
-		return false
-	}, time.Minute, time.Millisecond*500, "wait for fp2 vote to be included")
-
 	appHash := n1.AddFinalitySignatureToBlock(
 		s.fp1BTCSK,
 		s.fp1.BtcPk,
@@ -402,18 +387,17 @@ func (s *BtcRewardsDistribution) CheckRewardsFirstDelegations() {
 	}, time.Minute*3, time.Second*3, "wait to have some rewards available in the gauge")
 
 	// The rewards distributed for the finality providers should be fp1 => 3x, fp2 => 1x
-	fp1Rewards, fp2Rewards, del1Rewards, del2Rewards := s.QueryRewardGauges(n2)
+	fp1DiffRewards, fp2DiffRewards, del1DiffRewards, del2DiffRewards := s.QueryRewardGauges(n2)
 	s.AddFinalityVoteUntilCurrentHeight()
 
-	coins.RequireCoinsDiffInMargin(
+	coins.RequireCoinsDiffInPointOnePercentMargin(
 		s.T(),
-		fp2Rewards.Coins.MulInt(sdkmath.NewIntFromUint64(3)),
-		fp1Rewards.Coins,
-		10, // 1% margin to account for integer truncation in reward distribution
+		fp2DiffRewards.Coins.MulInt(sdkmath.NewIntFromUint64(3)).Add(sdk.NewCoin("ubbn", sdkmath.NewInt(2))), // truncation rounding
+		fp1DiffRewards.Coins,
 	)
 
 	// The rewards distributed to the delegators should be the same for each delegator
-	coins.RequireCoinsDiffInMargin(s.T(), del1Rewards.Coins, del2Rewards.Coins, 10)
+	coins.RequireCoinsDiffInPointOnePercentMargin(s.T(), del1DiffRewards.Coins, del2DiffRewards.Coins)
 
 	CheckWithdrawReward(s.T(), n2, wDel2, s.del2Addr)
 
@@ -448,7 +432,7 @@ func (s *BtcRewardsDistribution) ActiveLastDelegation() {
 	}
 
 	s.Equal(len(pendingDels), 1)
-	pendingDel, err := tkeeper.ParseRespBTCDelToBTCDel(pendingDels[0])
+	pendingDel, err := chain.ParseRespBTCDelToBTCDel(pendingDels[0])
 	s.NoError(err)
 
 	n1.SendCovenantSigs(s.r, s.T(), s.net, s.covenantSKs, s.covenantWallets, pendingDel)
@@ -493,12 +477,12 @@ func (s *BtcRewardsDistribution) LastCheckRewards() {
 	// Check the difference in the finality providers
 	// fp1 should receive ~75% of the rewards received by fp2
 	expectedRwdFp1 := coins.CalculatePercentageOfCoins(fp2DiffRewards, 75)
-	coins.RequireCoinsDiffInMargin(s.T(), fp1DiffRewards, expectedRwdFp1, 10)
+	coins.RequireCoinsDiffInPointOnePercentMargin(s.T(), fp1DiffRewards, expectedRwdFp1)
 
 	// Check the difference in the delegators
 	// the del1 should receive ~40% of the rewards received by del2
 	expectedRwdDel1 := coins.CalculatePercentageOfCoins(del2DiffRewards, 40)
-	coins.RequireCoinsDiffInMargin(s.T(), del1DiffRewards, expectedRwdDel1, 10)
+	coins.RequireCoinsDiffInPointOnePercentMargin(s.T(), del1DiffRewards, expectedRwdDel1)
 
 	fp1DiffRewardsStr := fp1DiffRewards.String()
 	fp2DiffRewardsStr := fp2DiffRewards.String()
@@ -664,18 +648,14 @@ func (s *BtcRewardsDistribution) AddFinalityVote(flagsN1, flagsN2 []string) (app
 }
 
 // QueryRewardGauges returns the rewards available for fp1, fp2, del1, del2
-// all queried at the same block height for consistency
 func (s *BtcRewardsDistribution) QueryRewardGauges(n *chain.NodeConfig) (
 	fp1, fp2, del1, del2 *itypes.RewardGaugesResponse,
 ) {
 	n.WaitForNextBlockWithSleep50ms()
-	// Use height-1 to ensure we query a fully committed block, since
-	// LatestBlockNumber (from RPC status) can report a height that the
-	// gRPC gateway hasn't finished processing yet.
-	height := n.LatestBlockNumber() - 1
 
 	g := new(errgroup.Group)
 	var (
+		err                 error
 		fp1RewardGauges     map[string]*itypes.RewardGaugesResponse
 		fp2RewardGauges     map[string]*itypes.RewardGaugesResponse
 		btcDel1RewardGauges map[string]*itypes.RewardGaugesResponse
@@ -683,32 +663,28 @@ func (s *BtcRewardsDistribution) QueryRewardGauges(n *chain.NodeConfig) (
 	)
 
 	g.Go(func() error {
-		var err error
-		fp1RewardGauges, err = n.QueryRewardGaugeAtHeight(s.fp1.Address(), height)
+		fp1RewardGauges, err = n.QueryRewardGauge(s.fp1.Address())
 		if err != nil {
 			return fmt.Errorf("failed to query rewards for fp1: %w", err)
 		}
 		return nil
 	})
 	g.Go(func() error {
-		var err error
-		fp2RewardGauges, err = n.QueryRewardGaugeAtHeight(s.fp2.Address(), height)
+		fp2RewardGauges, err = n.QueryRewardGauge(s.fp2.Address())
 		if err != nil {
 			return fmt.Errorf("failed to query rewards for fp2: %w", err)
 		}
 		return nil
 	})
 	g.Go(func() error {
-		var err error
-		btcDel1RewardGauges, err = n.QueryRewardGaugeAtHeight(sdk.MustAccAddressFromBech32(s.del1Addr), height)
+		btcDel1RewardGauges, err = n.QueryRewardGauge(sdk.MustAccAddressFromBech32(s.del1Addr))
 		if err != nil {
 			return fmt.Errorf("failed to query rewards for del1: %w", err)
 		}
 		return nil
 	})
 	g.Go(func() error {
-		var err error
-		btcDel2RewardGauges, err = n.QueryRewardGaugeAtHeight(sdk.MustAccAddressFromBech32(s.del2Addr), height)
+		btcDel2RewardGauges, err = n.QueryRewardGauge(sdk.MustAccAddressFromBech32(s.del2Addr))
 		if err != nil {
 			return fmt.Errorf("failed to query rewards for del2: %w", err)
 		}
@@ -775,7 +751,7 @@ func (s *BaseBtcRewardsDistribution) CreateCovenantsAndSubmitSignaturesToPendDel
 	s.Require().Equal(len(pendingDelsResp), expDelCount)
 
 	for _, pendingDelResp := range pendingDelsResp {
-		pendingDel, err := tkeeper.ParseRespBTCDelToBTCDel(pendingDelResp)
+		pendingDel, err := chain.ParseRespBTCDelToBTCDel(pendingDelResp)
 		s.NoError(err)
 
 		n.SendCovenantSigs(s.r, s.T(), s.net, s.covenantSKs, s.covenantWallets, pendingDel)
