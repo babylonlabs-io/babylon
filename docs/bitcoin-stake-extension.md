@@ -497,7 +497,7 @@ There are multiple ways to construct and broadcast the `MsgBtcStakeExpand`
   network.
 * **External References**:
   For detailed instructions on broadcasting transactions, refer to the external
-  [Cosmos SDK documentation](https://docs.cosmos.network/main/learn/advanced/transactions#broadcasting-the-transaction).
+  [Cosmos SDK documentation](https://docs.cosmos.network/sdk/latest/node/txs#broadcasting-a-transaction).
 
 > **⚠️ Important**: The extension message undergoes the same covenant
 > verification process as new delegations. Ensure all slashing transactions

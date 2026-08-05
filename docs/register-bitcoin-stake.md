@@ -575,7 +575,7 @@ message to the Babylon network:
 * **External References**:
   For detailed instructions on broadcasting transactions,
   refer to the external
-  [Cosmos SDK documentation](https://docs.cosmos.network/main/learn/advanced/transactions#broadcasting-the-transaction).
+  [Cosmos SDK documentation](https://docs.cosmos.network/sdk/latest/node/txs#broadcasting-a-transaction).
 
 > **⚠️ Important**:
 > * Phase-1 staking transactions using the post-staking registration flow will

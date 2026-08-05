@@ -148,7 +148,7 @@ func GetBtcLightClientUpdatedKey() []byte {
 
 ## Messages
 
-The BTC Checkpoint module primarily handles messages from the vigilante reporter. The message formats are defined in [proto/babylon/btccheckpoint/v1/tx.proto](proto/babylon/btccheckpoint/v1/tx.proto.). The message handlers are defined in [x/btccheckpoint/keeper/msg_server.go](x/btccheckpoint/keeper/msg_server.go). For more information on the SDK messages, refer to the [Cosmos SDK documentation on messages and queries](https://docs.cosmos.network/main/build/building-modules/messages-and-queries)
+The BTC Checkpoint module primarily handles messages from the vigilante reporter. The message formats are defined in [proto/babylon/btccheckpoint/v1/tx.proto](proto/babylon/btccheckpoint/v1/tx.proto.). The message handlers are defined in [x/btccheckpoint/keeper/msg_server.go](x/btccheckpoint/keeper/msg_server.go). For more information on the SDK messages, refer to the [Cosmos SDK documentation on messages and queries](https://docs.cosmos.network/sdk/latest/learn/concepts/transactions#messages)
 
 ### MsgInsertBTCSpvProof
 

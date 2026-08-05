@@ -372,7 +372,7 @@ BTC stakers (aka delegators), and covenant emulators. The message formats are
 defined at
 [proto/babylon/btcstaking/v1/tx.proto](../../proto/babylon/btcstaking/v1/tx.proto).
 The message handlers are defined at
-[x/btcstaking/keeper/msg_server.go](./keeper/msg_server.go). For more information on the SDK messages, refer to the [Cosmos SDK documentation on messages and queries](https://docs.cosmos.network/main/build/building-modules/messages-and-queries)
+[x/btcstaking/keeper/msg_server.go](./keeper/msg_server.go). For more information on the SDK messages, refer to the [Cosmos SDK documentation on messages and queries](https://docs.cosmos.network/sdk/latest/learn/concepts/transactions#messages)
 
 ### MsgCreateFinalityProvider
 

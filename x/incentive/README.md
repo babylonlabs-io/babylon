@@ -29,7 +29,7 @@ based on the voting power of the finality provider, with the remaining rewards
 distributed to BTC delegators according to their voting power share.
 
 > ⚡ The reward distribution is triggered at the beginning of each
-> block during the [BeginBlocker](https://docs.cosmos.network/main/build/building-modules/beginblock-endblock#beginblocker-and-endblocker-1)
+> block during the [BeginBlocker](https://docs.cosmos.network/sdk/latest/learn/concepts/app-go#execution-ordering)
 > phase for finality providers and BTC delegators.
 
 The module is designed to manage the distribution of rewards for both BTC
@@ -87,7 +87,7 @@ or when a change in delegation triggers a withdrawal.
 ### Reward Distribution for BABY Stakers
 
 Upon `BeginBlock`, following the reward distribution for BTC stakers and finality
-providers, the [`x/distribution`](https://docs.cosmos.network/main/build/modules/distribution)
+providers, the [`x/distribution`](https://docs.cosmos.network/sdk/latest/modules/distribution/)
 module will then distribute the rest to native stakers and validators. However,
 note that rewards are not actively “pushed” out to accounts at this time instead,
 they are recorded and remain in the pool until a withdrawal event.
