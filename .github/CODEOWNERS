@@ -3,3 +3,5 @@
 # Primary repo maintainers
 *       @babylonlabs-io/core-dev
 
+# DevOps team owns CI/CD workflows
+/.github/workflows/ @babylonlabs-io/devops
