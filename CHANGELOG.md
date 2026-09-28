@@ -64,6 +64,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### State breaking
 
+- [#2033](https://github.com/babylonlabs-io/babylon/pull/2033) chore(deps): bump wasmd to `v0.60.9` (GHSA-r736-mfj4-4hj5) with the empty v4.5 upgrade mainnet ran, rename the staged costaking upgrade to v4.6
 - [#2024](https://github.com/babylonlabs-io/babylon/pull/2024) chore(deps): bump
   cosmos-sdk to v0.53.8, ship it as an empty v4.4 upgrade
 - [#1956](https://github.com/babylonlabs-io/babylon/pull/1956) fix: add sort of fps by pub key in `GetVotingPowerTableOrdered`
