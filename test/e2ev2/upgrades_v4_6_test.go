@@ -13,7 +13,7 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 
 	appparams "github.com/babylonlabs-io/babylon/v4/app/params"
-	v45 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v4_5"
+	v46 "github.com/babylonlabs-io/babylon/v4/app/upgrades/v4_6"
 	"github.com/babylonlabs-io/babylon/v4/test/e2ev2/tmanager"
 	bstypes "github.com/babylonlabs-io/babylon/v4/x/btcstaking/types"
 	costktypes "github.com/babylonlabs-io/babylon/v4/x/costaking/types"
@@ -21,8 +21,8 @@ import (
 
 var ZeroInt = sdkmath.ZeroInt()
 
-// TestUpgradeV45 reproduces two costaking reward tracker bugs from
-// v4.2.x and verifies the v4.5 upgrade corrects them.
+// TestUpgradeV46 reproduces two costaking reward tracker bugs from
+// v4.2.x and verifies the v4.6 upgrade corrects them.
 //
 // Scenario 1 (unbond/re-delegate from slashed validator):
 //  1. del1 creates two BABY delegations: healthy chain validator and val1
@@ -41,13 +41,13 @@ var ZeroInt = sdkmath.ZeroInt()
 //
 // Result: del3's ActiveBaby lower than expected
 //
-// The v4.5 upgrade recalculates all ActiveBaby and scores.
-func TestUpgradeV45(t *testing.T) {
-	// v4.5 is staged but deliberately not registered in Upgrades yet, so the
+// The v4.6 upgrade recalculates all ActiveBaby and scores.
+func TestUpgradeV46(t *testing.T) {
+	// v4.6 is staged but deliberately not registered in Upgrades yet, so the
 	// v4.4 release ships the cosmos-sdk bump on its own. Without a registered
 	// handler x/upgrade halts the chain at the plan height, so this cannot run
-	// until v4.5 is wired up. Drop this skip in the PR that registers it.
-	t.Skip("v4.5 upgrade is not registered in Upgrades yet")
+	// until v4.6 is wired up. Drop this skip in the PR that registers it.
+	t.Skip("v4.6 upgrade is not registered in Upgrades yet")
 
 	t.Parallel()
 
@@ -310,7 +310,7 @@ func TestUpgradeV45(t *testing.T) {
 	// may advance the epoch, so recalculate the upgrade height from current state.
 	secondBlockOfNextEpoch := epochBeforeUpgrade.EpochBoundary + 2
 	govMsg, preUpgradeFunc := createGovPropAndPreUpgradeFunc(
-		t, chainVal.Wallet.WalletSender, v45.UpgradeName, int64(secondBlockOfNextEpoch),
+		t, chainVal.Wallet.WalletSender, v46.UpgradeName, int64(secondBlockOfNextEpoch),
 	)
 
 	costkRwdTrackerBeforeUpgrade = n.QueryCostkRwdTrckCli(del1.Address)
