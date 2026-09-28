@@ -37,6 +37,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+### Improvements
+
+- [#2034](https://github.com/babylonlabs-io/babylon/pull/2034) chore(deps): bump wasmd to the public `v0.60.9` and wasmvm to `v2.3.5` (backport #2033). Same code as the v4.5.0 hotfix build, so nodes can swap binaries without an upgrade
+
+## v4.5.0
+
+### State breaking
+
+- [GHSA-r736-mfj4-4hj5](https://github.com/babylonlabs-io/babylon/security/advisories/GHSA-r736-mfj4-4hj5) chore(deps): bump CosmWasm/wasmd to the v0.60.9 security hotfix, ship it as an empty v4.5 upgrade
+
 ## v4.4.0
 
 ### State breaking
