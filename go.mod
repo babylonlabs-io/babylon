@@ -3,7 +3,7 @@ go 1.23.8
 module github.com/babylonlabs-io/babylon/v4
 
 require (
-	github.com/CosmWasm/wasmd v0.60.5
+	github.com/CosmWasm/wasmd v0.60.9
 	github.com/btcsuite/btcd v0.24.2
 	github.com/cometbft/cometbft v0.38.23
 	github.com/cometbft/cometbft-db v0.15.0
@@ -39,7 +39,7 @@ require (
 	cosmossdk.io/x/feegrant v0.2.0
 	cosmossdk.io/x/tx v0.14.0
 	cosmossdk.io/x/upgrade v0.2.0
-	github.com/CosmWasm/wasmvm/v2 v2.3.2
+	github.com/CosmWasm/wasmvm/v2 v2.3.5
 	github.com/avast/retry-go/v4 v4.5.1
 	github.com/bits-and-blooms/bitset v1.24.3
 	github.com/boljen/go-bitmap v0.0.0-20151001105940-23cd2fb0ce7d
