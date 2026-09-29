@@ -28,7 +28,13 @@ jobs:
     name: Create release with assets
     runs-on: ubuntu-latest
     env:
-      GORELEASER_IMAGE: ghcr.io/goreleaser/goreleaser-cross:v1.27.0
+      # Go 1.25, pinned by digest. The tag alone is mutable: the v1.27.0 image
+      # was rebuilt on 2026-08-20 with Go >= 1.26, and this branch's
+      # github.com/bytedance/sonic v1.14.2 only builds below Go 1.26
+      # (internal/rt is gated `go1.24 && !go1.26`), so darwin_amd64 failed with
+      # "undefined: GoMapIterator". Bump image and digest together, and only to
+      # a Go the branch is tested with.
+      GORELEASER_IMAGE: ghcr.io/goreleaser/goreleaser-cross:v1.25.9@sha256:130e6870fec3c6a243746f092017e6b85e03a6ed865e155f5d1bce1a855d93f4
       RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
       RELEASE_DESCRIPTION: ${{ inputs.description || format('Release {0}', github.ref_name) }}
       RELEASE_PRERELEASE: ${{ inputs.prerelease || contains(github.ref_name, '-rc') }}
