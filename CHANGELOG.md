@@ -37,12 +37,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
-### Bug Fixes
-
-- [GHSA-692h-272j-rvgc](https://github.com/babylonlabs-io/babylon/security/advisories/GHSA-692h-272j-rvgc) fix(checkpointing): proto-size accounting in checkpoint PrepareProposal repack
-
 ### Improvements
 
+- [#2036](https://github.com/babylonlabs-io/babylon/pull/2036) fix(release): pin goreleaser-cross to Go 1.25 by digest (backport #2035)
 - [#2019](https://github.com/babylonlabs-io/babylon/pull/2019) chore(deps): bump github.com/opencontainers/runc from 1.2.8 to 1.3.6
 - [#2017](https://github.com/babylonlabs-io/babylon/pull/2017) chore(deps): bump github.com/shamaton/msgpack/v2 from 2.2.0 to 2.4.1
 - [#2008](https://github.com/babylonlabs-io/babylon/pull/2008) chore: bump Go to `v1.25.0` and upgrade vulnerable dependencies (`hashicorp/go-getter` v1.8.6, `go.opentelemetry.io/otel/sdk` v1.43.0, `aws-sdk-go-v2/aws/protocol/eventstream` v1.7.8, `aws-sdk-go-v2/service/s3` v1.97.3, `ulikunitz/xz` v0.5.15)
@@ -64,9 +61,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### State breaking
 
-- [#2033](https://github.com/babylonlabs-io/babylon/pull/2033) chore(deps): bump wasmd to `v0.60.9` (GHSA-r736-mfj4-4hj5) with the empty v4.5 upgrade mainnet ran, rename the staged costaking upgrade to v4.6
-- [#2024](https://github.com/babylonlabs-io/babylon/pull/2024) chore(deps): bump
-  cosmos-sdk to v0.53.8, ship it as an empty v4.4 upgrade
 - [#1956](https://github.com/babylonlabs-io/babylon/pull/1956) fix: add sort of fps by pub key in `GetVotingPowerTableOrdered`
 - [#1855](https://github.com/babylonlabs-io/babylon/pull/1855) Add check for `fundingInputValue <= 0` in stake extension
 - [#1867](https://github.com/babylonlabs-io/babylon/pull/1867) bump wasmd `v0.60.2`
@@ -75,7 +69,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#1908](https://github.com/babylonlabs-io/babylon/pull/1908) fix: call `AfterRawCheckpointForgotten` in all hooks, instead of early return
 - [#1913](https://github.com/babylonlabs-io/babylon/pull/1913) fix: key collision hex 0x10 (HeightToVersionMapKey) == decimal 16 (FpBbnAddrKey)
 - [#1906](https://github.com/babylonlabs-io/babylon/pull/1906) fix: baby validator slashing and costaking active baby amounts missmatch
-- [#1965](https://github.com/babylonlabs-io/babylon/pull/1965) chore: bump CosmWasm/wasmd v0.60.5
 
 ### Bug Fixes
 
@@ -86,6 +79,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#1969](https://github.com/babylonlabs-io/babylon/pull/1969) fix: set v4.3 upgrade handler to run at second block of an epoch
 - [#1923](https://github.com/babylonlabs-io/babylon/pull/1923) fix: add max bytes size for vote extension
 - [#1981](https://github.com/babylonlabs-io/babylon/pull/1981) fix: correctly link wasm IBC stack handler
+
+## v4.5.0
+
+### State breaking
+
+- [#2033](https://github.com/babylonlabs-io/babylon/pull/2033) chore(deps): bump wasmd to `v0.60.9` (GHSA-r736-mfj4-4hj5) with the empty v4.5 upgrade handler
+
+## v4.4.0
+
+### State breaking
+
+- [#1965](https://github.com/babylonlabs-io/babylon/pull/1965) chore: bump CosmWasm/wasmd v0.60.5
+- [#2024](https://github.com/babylonlabs-io/babylon/pull/2024) chore(deps): bump cosmos-sdk to v0.53.8, ship it as an empty v4.4 upgrade
+
+## v4.3.1
+
+### Bug Fixes
+
+- [GHSA-692h-272j-rvgc](https://github.com/babylonlabs-io/babylon/security/advisories/GHSA-692h-272j-rvgc) fix(checkpointing): proto-size accounting in checkpoint PrepareProposal repack
 
 ## v4.3.0
 
