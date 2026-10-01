@@ -5,10 +5,16 @@ on:
     branches:
       - main
 
+# Only pull request runs share a group, so a new push to a PR cancels its
+# superseded run. Every other run gets its own group and is never cancelled
+# or replaced, as without a concurrency block.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 permissions:
   contents: read
 
 jobs:
   changelog_reminder:
     uses: babylonlabs-io/.github/.github/workflows/reusable_changelog_reminder.yml@98e4de18638b3d0738c9cbf7e7dfc6e34524db54 # v0.19.1 https://github.com/babylonlabs-io/.github/releases/tag/v0.19.1
-    secrets: inherit

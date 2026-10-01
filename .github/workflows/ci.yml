@@ -14,8 +14,7 @@ permissions:
 
 jobs:
   lint_test:
-    uses: babylonlabs-io/.github/.github/workflows/reusable_go_lint_test.yml@98e4de18638b3d0738c9cbf7e7dfc6e34524db54 # v0.19.1 https://github.com/babylonlabs-io/.github/releases/tag/v0.19.1
-    secrets: inherit
+    uses: babylonlabs-io/.github/.github/workflows/reusable_go_lint_test.yml@902082b8e5c0a1fed7be6980fa6a1b77fc005c06 # v0.23.0
     with:
       go-version: '1.25'
       go-lint-version: 'v2.11.4'
@@ -25,6 +24,7 @@ jobs:
 
   proto_lint:
     runs-on: ubuntu-22.04
+    timeout-minutes: 10
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2 https://github.com/actions/checkout/releases/tag/v6.0.2
@@ -37,8 +37,7 @@ jobs:
       contents: read         # Required by reusable workflow
       id-token: write        # Required for AWS OIDC
       security-events: write # Required for Trivy SARIF uploads
-    uses: babylonlabs-io/.github/.github/workflows/reusable_docker_pipeline.yml@98e4de18638b3d0738c9cbf7e7dfc6e34524db54 # v0.19.1 https://github.com/babylonlabs-io/.github/releases/tag/v0.19.1
-    secrets: inherit
+    uses: babylonlabs-io/.github/.github/workflows/reusable_docker_pipeline.yml@902082b8e5c0a1fed7be6980fa6a1b77fc005c06 # v0.23.0
     with:
      publish: false
      dockerfile: ./contrib/images/babylond/Dockerfile
@@ -51,6 +50,7 @@ jobs:
 
   e2e-docker-build-babylon:
     runs-on: ubuntu-22.04
+    timeout-minutes: 15
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2 https://github.com/actions/checkout/releases/tag/v6.0.2
@@ -68,6 +68,7 @@ jobs:
 
   e2e-docker-build-e2e-init-chain:
     runs-on: ubuntu-22.04
+    timeout-minutes: 10
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2 https://github.com/actions/checkout/releases/tag/v6.0.2
@@ -86,6 +87,7 @@ jobs:
   e2e-run-ibc-transfer:
     needs: [e2e-docker-build-babylon]
     runs-on: ubuntu-22.04
+    timeout-minutes: 30
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2 https://github.com/actions/checkout/releases/tag/v6.0.2
@@ -108,6 +110,7 @@ jobs:
   e2e-run-btc-timestamping:
     needs: [e2e-docker-build-babylon]
     runs-on: ubuntu-22.04
+    timeout-minutes: 30
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2 https://github.com/actions/checkout/releases/tag/v6.0.2
@@ -130,6 +133,7 @@ jobs:
   e2e-run-btc-staking:
     needs: [e2e-docker-build-babylon]
     runs-on: ubuntu-22.04
+    timeout-minutes: 30
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2 https://github.com/actions/checkout/releases/tag/v6.0.2
@@ -152,6 +156,7 @@ jobs:
   e2e-run-gov-resume-finality:
     needs: [e2e-docker-build-babylon]
     runs-on: ubuntu-22.04
+    timeout-minutes: 30
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2 https://github.com/actions/checkout/releases/tag/v6.0.2
@@ -174,6 +179,7 @@ jobs:
   e2e-run-btc-rewards:
     needs: [e2e-docker-build-babylon]
     runs-on: ubuntu-22.04
+    timeout-minutes: 30
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2 https://github.com/actions/checkout/releases/tag/v6.0.2
@@ -196,6 +202,7 @@ jobs:
   e2e-run-btc-staking-pre-approval:
     needs: [e2e-docker-build-babylon]
     runs-on: ubuntu-22.04
+    timeout-minutes: 30
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2 https://github.com/actions/checkout/releases/tag/v6.0.2
@@ -218,6 +225,7 @@ jobs:
   e2e-run-ica:
     needs: [e2e-docker-build-babylon]
     runs-on: ubuntu-22.04
+    timeout-minutes: 30
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2 https://github.com/actions/checkout/releases/tag/v6.0.2
@@ -240,6 +248,7 @@ jobs:
   e2e-run-spam-prevention:
     needs: [e2e-docker-build-babylon]
     runs-on: ubuntu-22.04
+    timeout-minutes: 30
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2 https://github.com/actions/checkout/releases/tag/v6.0.2
@@ -262,6 +271,7 @@ jobs:
   e2e-run-btc-stake-expansion:
     needs: [e2e-docker-build-babylon]
     runs-on: ubuntu-22.04
+    timeout-minutes: 30
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2 https://github.com/actions/checkout/releases/tag/v6.0.2
@@ -284,6 +294,7 @@ jobs:
   e2e-run-costaking:
     needs: [e2e-docker-build-babylon]
     runs-on: ubuntu-22.04
+    timeout-minutes: 30
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2 https://github.com/actions/checkout/releases/tag/v6.0.2
@@ -306,6 +317,7 @@ jobs:
   e2e-run-validator-jailing:
     needs: [e2e-docker-build-babylon]
     runs-on: ubuntu-22.04
+    timeout-minutes: 30
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2 https://github.com/actions/checkout/releases/tag/v6.0.2
@@ -328,6 +340,7 @@ jobs:
   e2e-V2:
     needs: [e2e-docker-build-babylon]
     runs-on: ubuntu-22.04
+    timeout-minutes: 45
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2 https://github.com/actions/checkout/releases/tag/v6.0.2
