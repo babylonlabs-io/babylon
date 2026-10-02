@@ -1,31 +1,46 @@
 # Adapted from https://github.com/marketplace/actions/backporting
 #
-# Usage: 
+# Usage:
 #   - Let's say you want to backport a pull request on a branch named `production`.
 #   - Then label it with `backport production`.
-#   - That's it! When the pull request gets merged, it will be backported to 
-#     the `production` branch. If the pull request cannot be backported, a comment 
+#   - That's it! When the pull request gets merged, it will be backported to
+#     the `production` branch. If the pull request cannot be backported, a comment
 #     explaining why will automatically be posted.
 #
-# Note: multiple backport labels can be added. For example, if a pull request 
-#       has the labels `backport staging` and `backport production` it will be 
+# Note: multiple backport labels can be added. For example, if a pull request
+#       has the labels `backport staging` and `backport production` it will be
 #       backported to both branches: `staging` and `production`.
+#
+# Triggered by `pull_request`, not `pull_request_target` (zizmor
+# dangerous-triggers): this job only reads the event payload, and a PR from a
+# branch of this repository gets the write token it needs either way. A PR
+# from a fork gets a read-only token, so it cannot be backported by this
+# workflow; open the backport from a branch of this repository instead.
 name: Backport
 on:
-  pull_request_target:
+  pull_request:
     types:
       - closed
       - labeled
+
+# Every run gets its own group, so no run is cancelled or replaced, as
+# without a concurrency block: a shared group would let an unrelated label
+# event replace a pending backport run and then skip it.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.run_id }}
+  cancel-in-progress: false
+
+permissions: {}
 
 jobs:
   backport:
     name: Backport
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: write
       pull-requests: write
-    # Only react to merged PRs for security reasons.
-    # See https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request_target.
+    # Only react to merged PRs.
     if: >
       github.event.pull_request.merged
       && (

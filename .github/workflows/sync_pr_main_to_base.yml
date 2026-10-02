@@ -14,4 +14,3 @@ jobs:
       base_branch: "main"
       target_branch: "base/consumer-chain-support"
       reviewers: "SebastianElvis,maurolacy,gusin13"
-    secrets: inherit
