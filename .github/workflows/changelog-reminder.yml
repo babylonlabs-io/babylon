@@ -12,9 +12,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   changelog_reminder:
+    permissions: {contents: read, pull-requests: read}
     uses: babylonlabs-io/.github/.github/workflows/reusable_changelog_reminder.yml@98e4de18638b3d0738c9cbf7e7dfc6e34524db54 # v0.19.1 https://github.com/babylonlabs-io/.github/releases/tag/v0.19.1
