@@ -50,7 +50,7 @@ RUN LEDGER_ENABLED=$LEDGER_ENABLED \
 FROM alpine:3.21 AS run
 # Create a user
 RUN addgroup --gid 1137 -S babylon && adduser --uid 1137 -S babylon -G babylon
-RUN apk add --no-cache bash=5.2.37-r0 curl=8.14.1-r2 jq=1.7.1-r0
+RUN apk add --no-cache bash=5.2.37-r0 curl=8.14.1-r3 jq=1.7.1-r0
 
 # Label should match your github repo
 ARG VERSION

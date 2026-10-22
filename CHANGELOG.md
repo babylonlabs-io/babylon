@@ -72,6 +72,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Bug Fixes
 
+- [#2039](https://github.com/babylonlabs-io/babylon/pull/2039) fix(docker): bump runtime curl pin to 8.14.1-r3
 - [#1875](https://github.com/babylonlabs-io/babylon/pull/1875) chore: ensure soft-deleted FPs cannot receive new/extended BTC stake, or commit pub rand
 - [#1911](https://github.com/babylonlabs-io/babylon/pull/1911) fix: avoid panic in `ProcessProposal` when injected checkpoint tx contains a wrong message type
 - [#1953](https://github.com/babylonlabs-io/babylon/pull/1953) fix: refresh commission of active FPs in voting power distribution cache prior to reward distribution
@@ -79,6 +80,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#1969](https://github.com/babylonlabs-io/babylon/pull/1969) fix: set v4.3 upgrade handler to run at second block of an epoch
 - [#1923](https://github.com/babylonlabs-io/babylon/pull/1923) fix: add max bytes size for vote extension
 - [#1981](https://github.com/babylonlabs-io/babylon/pull/1981) fix: correctly link wasm IBC stack handler
+
+## v4.6.0
+
+### State breaking
+
+- [GHSA-24xq-83wm-x4g5](https://github.com/babylonlabs-io/babylon/security/advisories/GHSA-24xq-83wm-x4g5) fix: skip equivocation evidence for a validator already deleted from staking instead of halting `FinalizeBlock`, and reject pre-signed BTC staking transactions that carry a non-empty input witness so an oversized witness under the weight limit can no longer stall covenant signature submission, both coordinated by the empty v4.6 upgrade handler
 
 ## v4.5.0
 
