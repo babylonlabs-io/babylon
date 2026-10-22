@@ -37,6 +37,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+## v4.6.0
+
+### State breaking
+
+- [GHSA-24xq-83wm-x4g5](https://github.com/babylonlabs-io/babylon/security/advisories/GHSA-24xq-83wm-x4g5) fix: skip equivocation evidence for a validator already deleted from staking instead of halting `FinalizeBlock`, and reject pre-signed BTC staking transactions that carry a non-empty input witness so an oversized witness under the weight limit can no longer stall covenant signature submission, both coordinated by the empty v4.6 upgrade handler
+
 ## v4.5.0
 
 ### State breaking

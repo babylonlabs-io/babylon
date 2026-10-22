@@ -581,6 +581,25 @@ func TestCheckPreSignedTxSanity(t *testing.T) {
 			wantErr:        true,
 			expectedErrMsg: "tx weight must not exceed 400000",
 		},
+		{
+			// A witness large enough to grief covenant signing but still under
+			// the weight limit must be rejected on its own (GHSA/#94734).
+			name: "transaction with witness under the weight limit",
+			genTx: func() *wire.MsgTx {
+				tx := wire.NewMsgTx(2)
+				tx.AddTxIn(wire.NewTxIn(wire.NewOutPoint(&chainhash.Hash{}, 0), nil, nil))
+				tx.AddTxOut(wire.NewTxOut(1000, nil))
+				witness := [140000]byte{}
+				tx.TxIn[0].Witness = [][]byte{witness[:]}
+				return tx
+			},
+			numInputs:      1,
+			numOutputs:     1,
+			minTxVersion:   1,
+			maxTxVersion:   2,
+			wantErr:        true,
+			expectedErrMsg: "pre-signed tx must not have witness",
+		},
 	}
 	for _, tt := range tests {
 		tt := tt

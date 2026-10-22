@@ -266,7 +266,6 @@ func CheckPreSignedTxSanity(
 	txWeight := blockchain.GetTransactionWeight(transaction)
 
 	// Check that the transaction weight does not exceed the maximum standard tx weight
-	// alternative would be to require len(in.Witness) == 0 for all inptus.
 	if txWeight > MaxStandardTxWeight {
 		return fmt.Errorf("tx weight must not exceed %d", MaxStandardTxWeight)
 	}
@@ -280,6 +279,15 @@ func CheckPreSignedTxSanity(
 		// witness
 		if len(in.SignatureScript) != 0 {
 			return fmt.Errorf("pre-signed tx must not have signature script")
+		}
+
+		// The witness must be empty too: pre-signed txs carry their signatures
+		// in the delegation message, not here, and the witness is covered by
+		// neither the txid nor any sighash. Without this a witness that stays
+		// under the weight limit could be inflated to grief covenant signing
+		// while keeping the tx and all its signatures valid.
+		if len(in.Witness) != 0 {
+			return fmt.Errorf("pre-signed tx must not have witness")
 		}
 	}
 

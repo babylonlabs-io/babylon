@@ -598,7 +598,7 @@ func (ak *AppKeepers) InitKeepers(
 	evidenceKeeper := evidencekeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[evidencetypes.StoreKey]),
-		ak.StakingKeeper,
+		evidenceStakingKeeper{ak.StakingKeeper},
 		ak.SlashingKeeper,
 		ak.AccountKeeper.AddressCodec(),
 		runtime.ProvideCometInfoService(),
