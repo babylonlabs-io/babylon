@@ -37,6 +37,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+### Bug Fixes
+
+- [#2040](https://github.com/babylonlabs-io/babylon/pull/2040) fix(docker): bump runtime curl pin to 8.14.1-r3
+
 ### Improvements
 
 - [#2036](https://github.com/babylonlabs-io/babylon/pull/2036) fix(release): pin goreleaser-cross to Go 1.25 by digest (backport #2035)
