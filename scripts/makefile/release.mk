@@ -15,10 +15,9 @@ release-help:
 	@echo ""
 
 # The below is adapted from https://github.com/osmosis-labs/osmosis/blob/main/Makefile
-# Go 1.25, pinned by digest — keep in sync with .github/workflows/release.yml.
-# The tag alone is mutable and a Go >= 1.26 image does not build this branch's
-# github.com/bytedance/sonic v1.14.2 ("undefined: GoMapIterator").
-GORELEASER_IMAGE := ghcr.io/goreleaser/goreleaser-cross:v1.25.9@sha256:130e6870fec3c6a243746f092017e6b85e03a6ed865e155f5d1bce1a855d93f4
+# Go 1.26.10 (crypto/x509 fix), pinned by digest — keep in sync with .github/workflows/release.yml.
+# The tag alone is mutable; sonic >= v1.15.0 is required from Go 1.26 on ("undefined: GoMapIterator").
+GORELEASER_IMAGE := ghcr.io/goreleaser/goreleaser-cross:v1.26.10@sha256:4ddb0de02f2eaac64d2b33e16d1d702d800db6a110154f8768f283858fb26c02
 COSMWASM_VERSION := $(shell go list -m github.com/CosmWasm/wasmvm/v2 | sed 's/.* //')
 
 release-dry-run:

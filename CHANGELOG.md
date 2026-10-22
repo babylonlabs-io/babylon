@@ -39,6 +39,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
+- [#2042](https://github.com/babylonlabs-io/babylon/pull/2042) fix: build with the Go 1.26.10 toolchain for the crypto/x509 CA-distrust fix (CVE-2026-111943, GO-2026-6809); bump sonic to v1.15.0 for Go 1.26 toolchain compatibility
 - [#2036](https://github.com/babylonlabs-io/babylon/pull/2036) fix(release): pin goreleaser-cross to Go 1.25 by digest (backport #2035)
 - [#2019](https://github.com/babylonlabs-io/babylon/pull/2019) chore(deps): bump github.com/opencontainers/runc from 1.2.8 to 1.3.6
 - [#2017](https://github.com/babylonlabs-io/babylon/pull/2017) chore(deps): bump github.com/shamaton/msgpack/v2 from 2.2.0 to 2.4.1
