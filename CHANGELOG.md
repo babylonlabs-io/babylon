@@ -37,6 +37,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+### Bug Fixes
+
+- [#2039](https://github.com/babylonlabs-io/babylon/pull/2039) fix(docker): bump runtime curl pin to 8.14.1-r3
+
 ## v4.6.0
 
 ### State breaking
