@@ -39,6 +39,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Improvements
 
+- [#2043](https://github.com/babylonlabs-io/babylon/pull/2043) chore(deps): bump grpc to v1.83.2, x/net to v0.58.0, x/crypto to v0.55.0, x/text to v0.41.0, x/sys to v0.47.0, klauspost/compress to v1.18.7, moby/sys/user to v0.4.1 and otel to v1.45.0 to clear Trivy advisories while keeping `go 1.25.8`
 - [#2036](https://github.com/babylonlabs-io/babylon/pull/2036) fix(release): pin goreleaser-cross to Go 1.25 by digest (backport #2035)
 - [#2019](https://github.com/babylonlabs-io/babylon/pull/2019) chore(deps): bump github.com/opencontainers/runc from 1.2.8 to 1.3.6
 - [#2017](https://github.com/babylonlabs-io/babylon/pull/2017) chore(deps): bump github.com/shamaton/msgpack/v2 from 2.2.0 to 2.4.1
