@@ -15,7 +15,7 @@ WORKDIR /work
 ARG TARGETARCH
 
 # Download and install Go
-ENV GOLANG_VERSION=1.25.0
+ENV GOLANG_VERSION=1.26.10
 RUN echo "Target arch: ${TARGETARCH}" && \
     echo "Go version: ${GOLANG_VERSION}" && \
     wget -q https://golang.org/dl/go${GOLANG_VERSION}.linux-${TARGETARCH}.tar.gz && \
