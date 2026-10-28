@@ -111,7 +111,7 @@ func (c *Container) ImageExistsLocally() bool {
 }
 
 func ImageExistsLocally(imageName string) bool {
-	cmd := exec.Command("docker", "image", "inspect", imageName)
+	cmd := exec.CommandContext(context.Background(), "docker", "image", "inspect", imageName)
 	return cmd.Run() == nil
 }
 

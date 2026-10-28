@@ -1,6 +1,7 @@
 package tmanager
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"strconv"
@@ -103,7 +104,7 @@ func (pm *PortManager) ReleasePorts(ports []int) {
 
 // isPortAvailable checks if a port is actually available on the system
 func (pm *PortManager) isPortAvailable(port int) bool {
-	ln, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
+	ln, err := (&net.ListenConfig{}).Listen(context.Background(), "tcp", fmt.Sprintf(":%d", port))
 	if err != nil {
 		return false
 	}

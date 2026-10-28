@@ -37,6 +37,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ## Unreleased
 
+## v4.7.0
+
+### State breaking
+
+- [#2044](https://github.com/babylonlabs-io/babylon/pull/2044) feat(upgrade): coordinate Go 1.26.10 security rebuild at v4.7
+
 ### Bug Fixes
 
 - [#2039](https://github.com/babylonlabs-io/babylon/pull/2039) fix(docker): bump runtime curl pin to 8.14.1-r3
