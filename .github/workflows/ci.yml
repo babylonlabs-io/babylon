@@ -16,7 +16,7 @@ jobs:
   lint_test:
     uses: babylonlabs-io/.github/.github/workflows/reusable_go_lint_test.yml@902082b8e5c0a1fed7be6980fa6a1b77fc005c06 # v0.23.0
     with:
-      go-version: '1.25'
+      go-version: '1.26.10'
       go-lint-version: 'v2.11.4'
       run-unit-tests: true
       run-integration-tests: false
@@ -42,7 +42,6 @@ jobs:
      publish: false
      dockerfile: ./contrib/images/babylond/Dockerfile
      repoName: babylond
-     trivy_nofail: true
 
 ###############################################################################
 ###                                   E2E                                   ###
@@ -102,7 +101,7 @@ jobs:
       - name: Cache Go
         uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0 https://github.com/actions/setup-go/releases/tag/v5.6.0
         with:
-          go-version: 1.25
+          go-version: '1.26.10'
       - name: Run e2e TestIBCTranferTestSuite
         run: |
           make test-e2e-cache-ibc-transfer
@@ -125,7 +124,7 @@ jobs:
       - name: Cache Go
         uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0 https://github.com/actions/setup-go/releases/tag/v5.6.0
         with:
-          go-version: 1.25
+          go-version: '1.26.10'
       - name: Run e2e TestBTCTimestampingTestSuite
         run: |
           make test-e2e-cache-btc-timestamping
@@ -148,7 +147,7 @@ jobs:
       - name: Cache Go
         uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0 https://github.com/actions/setup-go/releases/tag/v5.6.0
         with:
-          go-version: 1.25
+          go-version: '1.26.10'
       - name: Run e2e TestBTCStakingTestSuite
         run: |
           make test-e2e-cache-btc-staking
@@ -171,7 +170,7 @@ jobs:
       - name: Cache Go
         uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0 https://github.com/actions/setup-go/releases/tag/v5.6.0
         with:
-          go-version: 1.25
+          go-version: '1.26.10'
       - name: Run e2e TestGovResumeFinality
         run: |
           make test-e2e-gov-resume-finality
@@ -194,7 +193,7 @@ jobs:
       - name: Cache Go
         uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0 https://github.com/actions/setup-go/releases/tag/v5.6.0
         with:
-          go-version: 1.25
+          go-version: '1.26.10'
       - name: Run e2e TestBTCRewardsDistribution
         run: |
           make test-e2e-cache-btc-rewards
@@ -217,7 +216,7 @@ jobs:
       - name: Cache Go
         uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0 https://github.com/actions/setup-go/releases/tag/v5.6.0
         with:
-          go-version: 1.25
+          go-version: '1.26.10'
       - name: Run e2e TestBTCStakingPreApprovalTestSuite
         run: |
           make test-e2e-cache-btc-staking-pre-approval
@@ -240,7 +239,7 @@ jobs:
       - name: Cache Go
         uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0 https://github.com/actions/setup-go/releases/tag/v5.6.0
         with:
-          go-version: 1.25
+          go-version: '1.26.10'
       - name: Run e2e TestICATestSuite
         run: |
           make test-e2e-cache-ica
@@ -263,7 +262,7 @@ jobs:
       - name: Cache Go
         uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0 https://github.com/actions/setup-go/releases/tag/v5.6.0
         with:
-          go-version: 1.25
+          go-version: '1.26.10'
       - name: Run e2e TestEpochingSpamPreventionTestSuite
         run: |
           make test-e2e-cache-epoching-spam-prevention
@@ -286,7 +285,7 @@ jobs:
       - name: Cache Go
         uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0 https://github.com/actions/setup-go/releases/tag/v5.6.0
         with:
-          go-version: 1.25
+          go-version: '1.26.10'
       - name: Run e2e TestBTCStakeExpansionTestSuite
         run: |
           make test-e2e-cache-btc-stake-expansion
@@ -309,7 +308,7 @@ jobs:
       - name: Cache Go
         uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0 https://github.com/actions/setup-go/releases/tag/v5.6.0
         with:
-          go-version: 1.25
+          go-version: '1.26.10'
       - name: Run e2e TestCostakingTestSuite
         run: |
           make test-e2e-cache-costaking
@@ -332,7 +331,7 @@ jobs:
       - name: Cache Go
         uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0 https://github.com/actions/setup-go/releases/tag/v5.6.0
         with:
-          go-version: 1.25
+          go-version: '1.26.10'
       - name: Run e2e TestValidatorJailingTestSuite
         run: |
           make test-e2e-cache-validator-jailing
@@ -355,7 +354,7 @@ jobs:
       - name: Cache Go
         uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0 https://github.com/actions/setup-go/releases/tag/v5.6.0
         with:
-          go-version: 1.25
+          go-version: '1.26.10'
       - name: Run e2eV2
         run: |
           make test-e2ev2

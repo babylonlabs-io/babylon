@@ -61,6 +61,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### State breaking
 
+- [#2044](https://github.com/babylonlabs-io/babylon/pull/2044) feat(upgrade): coordinate Go 1.26.10 security rebuild at v4.7
 - [#1956](https://github.com/babylonlabs-io/babylon/pull/1956) fix: add sort of fps by pub key in `GetVotingPowerTableOrdered`
 - [#1855](https://github.com/babylonlabs-io/babylon/pull/1855) Add check for `fundingInputValue <= 0` in stake extension
 - [#1867](https://github.com/babylonlabs-io/babylon/pull/1867) bump wasmd `v0.60.2`
