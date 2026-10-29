@@ -746,7 +746,7 @@ func NoRestart(config *docker.HostConfig) {
 
 func RunCommand(command string) error {
 	fmt.Printf("Running command %s...\n", command)
-	cmd := exec.Command(command)
+	cmd := exec.CommandContext(context.Background(), command)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
@@ -759,7 +759,7 @@ func RunMakeCommand(path, command string) error {
 	}
 
 	fmt.Printf("Running make in path %s command %s...\n", path, command)
-	cmd := exec.Command(makePath, command)
+	cmd := exec.CommandContext(context.Background(), makePath, command)
 	cmd.Dir = path
 
 	output, err := cmd.CombinedOutput()
