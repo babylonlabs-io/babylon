@@ -1259,12 +1259,22 @@ func TestBabyCoStaking(t *testing.T) {
 	del3BabyDelegatedAmtAfterJailing := sdkmath.NewInt(500000)
 	d.TxWrappedDelegate(del3.SenderInfo, val2.OperatorAddress, del3BabyDelegatedAmtAfterJailing)
 
+	// The first delegation of del3 was slashed. Get the new delegation amount
+	del3Delegation, err := stkK.GetDelegation(d.Ctx(), del3.Address(), val2Addr)
+	require.NoError(d.t, err)
+	del3FirstDelAmtAfterSlashing := val2.TokensFromShares(del3Delegation.Shares).TruncateInt()
+
 	// Totally unbond a delegation
 	// Tokens are already slashed, so for total unbonding need to get the new tokens per shares
 	del4Delegation, err := stkK.GetDelegation(d.Ctx(), del4.Address(), val2Addr)
 	require.NoError(d.t, err)
 	del4TotalUnbondAmt := val2.TokensFromShares(del4Delegation.Shares).TruncateInt()
 	d.TxWrappedUndelegate(del4.SenderInfo, val2.OperatorAddress, del4TotalUnbondAmt)
+
+	// get updated delegation amount for del5 after slashing
+	del5Delegation, err := stkK.GetDelegation(d.Ctx(), del5.Address(), val2Addr)
+	require.NoError(d.t, err)
+	del5TotalAmtAfterSlashing := val2.TokensFromShares(del5Delegation.Shares).TruncateInt()
 
 	// Partially unbond a delegation with many msgs and re-delegate
 	del5BabyUnstakeAmt := sdkmath.NewInt(7)
@@ -1366,22 +1376,19 @@ func TestBabyCoStaking(t *testing.T) {
 	require.NoError(t, err)
 	expSelfDelAmt := val2.TokensFromShares(selfDel.Shares).TruncateInt()
 	require.True(t, expSelfDelAmt.LT(newValSelfDelegatedAmt), "self delegation should be less than original amount due to slashing", expSelfDelAmt.String())
-	// active baby should be less than self delegation amount due to slashing
 	d.CheckCostakerRewards(val2Oper.Address(), expSelfDelAmt, zeroInt, zeroInt, currentRwdPeriod)
 
-	del3Delegation, err := stkK.GetDelegation(d.Ctx(), del3.Address(), val2Addr)
-	require.NoError(t, err)
-	expectedDel3ActiveBaby := val2.TokensFromShares(del3Delegation.Shares).TruncateInt()
-	d.CheckCostakerRewards(del3.Address(), expectedDel3ActiveBaby, zeroInt, zeroInt, currentRwdPeriod)
+	expectedDel3ActiveBaby := del3FirstDelAmtAfterSlashing.Add(del3BabyDelegatedAmtAfterJailing).Add(del3DelegatedAmtAfterJailing)
+	d.CheckCostakerRewardsInPointOnePercentMargin(del3.Address(), expectedDel3ActiveBaby, zeroInt, zeroInt)
 
 	// del4 fully unbonded so tracker should still be zero or one micro, might round up in calcs
 	d.CheckCostakerRewardsInPointOnePercentMargin(del4.Address(), zeroInt, zeroInt, zeroInt)
 
 	// del5 got slashed first and then partially unbonded with 2 msgs
-	del5Delegation, err := stkK.GetDelegation(d.Ctx(), del5.Address(), val2Addr)
-	require.NoError(t, err)
-	expectedDel5ActiveBaby := val2.TokensFromShares(del5Delegation.Shares).TruncateInt()
-	d.CheckCostakerRewards(del5.Address(), expectedDel5ActiveBaby, zeroInt, zeroInt, currentRwdPeriod)
+	// expected active baby is total delegation after slashing minus the unstake amount
+	// There're 2 undelegate msgs of 7 ubbn each, but after the second one, there's a re-delegation for same amount
+	expectedDel5ActiveBaby := del5TotalAmtAfterSlashing.Sub(del5BabyUnstakeAmt)
+	d.CheckCostakerRewardsInPointOnePercentMargin(del5.Address(), expectedDel5ActiveBaby, zeroInt, zeroInt)
 }
 
 func TestCostakingFpRemovalAndBtcUnbondSameBlockClearsActiveSats(t *testing.T) {
