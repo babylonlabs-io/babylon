@@ -61,7 +61,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### State breaking
 
-- [#2044](https://github.com/babylonlabs-io/babylon/pull/2044) feat(upgrade): coordinate Go 1.26.10 security rebuild at v4.7
 - [#1956](https://github.com/babylonlabs-io/babylon/pull/1956) fix: add sort of fps by pub key in `GetVotingPowerTableOrdered`
 - [#1855](https://github.com/babylonlabs-io/babylon/pull/1855) Add check for `fundingInputValue <= 0` in stake extension
 - [#1867](https://github.com/babylonlabs-io/babylon/pull/1867) bump wasmd `v0.60.2`
@@ -73,7 +72,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 
 ### Bug Fixes
 
-- [#2039](https://github.com/babylonlabs-io/babylon/pull/2039) fix(docker): bump runtime curl pin to 8.14.1-r3
 - [#1875](https://github.com/babylonlabs-io/babylon/pull/1875) chore: ensure soft-deleted FPs cannot receive new/extended BTC stake, or commit pub rand
 - [#1911](https://github.com/babylonlabs-io/babylon/pull/1911) fix: avoid panic in `ProcessProposal` when injected checkpoint tx contains a wrong message type
 - [#1953](https://github.com/babylonlabs-io/babylon/pull/1953) fix: refresh commission of active FPs in voting power distribution cache prior to reward distribution
@@ -81,6 +79,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#1969](https://github.com/babylonlabs-io/babylon/pull/1969) fix: set v4.3 upgrade handler to run at second block of an epoch
 - [#1923](https://github.com/babylonlabs-io/babylon/pull/1923) fix: add max bytes size for vote extension
 - [#1981](https://github.com/babylonlabs-io/babylon/pull/1981) fix: correctly link wasm IBC stack handler
+
+## v4.7.0
+
+### State breaking
+
+- [#2044](https://github.com/babylonlabs-io/babylon/pull/2044) feat(upgrade): coordinate Go 1.26.10 security rebuild at v4.7
+
+### Bug Fixes
+
+- [#2039](https://github.com/babylonlabs-io/babylon/pull/2039) fix(docker): bump runtime curl pin to 8.14.1-r3
 
 ## v4.6.0
 
