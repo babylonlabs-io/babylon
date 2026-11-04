@@ -1367,16 +1367,16 @@ func TestBabyCoStaking(t *testing.T) {
 	// check unjailed validator is back in active set
 	d.AreValsInActiveSet(2, val2Addr)
 
-	// Check the active baby is properly set back for delegations to this validator
-	// NOTE: Consider that the ones that were slashed will be less than the original staking amount
+	// Use the current exchange rate: undelegation rounding leaves tokens in the validator.
+	val2, err = stkK.GetValidator(d.Ctx(), val2Addr)
+	require.NoError(t, err)
 
 	// val2 self delegation was slashed
 	selfDel, err := stkK.GetDelegation(d.Ctx(), val2Oper.Address(), val2Addr)
 	require.NoError(t, err)
 	expSelfDelAmt := val2.TokensFromShares(selfDel.Shares).TruncateInt()
 	require.True(t, expSelfDelAmt.LT(newValSelfDelegatedAmt), "self delegation should be less than original amount due to slashing", expSelfDelAmt.String())
-	// active baby should be less than self delegation amount due to slashing
-	d.CheckCostakerRewardsInPointOnePercentMargin(val2Oper.Address(), expSelfDelAmt, zeroInt, zeroInt)
+	d.CheckCostakerRewards(val2Oper.Address(), expSelfDelAmt, zeroInt, zeroInt, currentRwdPeriod)
 
 	expectedDel3ActiveBaby := del3FirstDelAmtAfterSlashing.Add(del3BabyDelegatedAmtAfterJailing).Add(del3DelegatedAmtAfterJailing)
 	d.CheckCostakerRewardsInPointOnePercentMargin(del3.Address(), expectedDel3ActiveBaby, zeroInt, zeroInt)
