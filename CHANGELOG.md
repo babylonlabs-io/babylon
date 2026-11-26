@@ -79,6 +79,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 - [#1969](https://github.com/babylonlabs-io/babylon/pull/1969) fix: set v4.3 upgrade handler to run at second block of an epoch
 - [#1923](https://github.com/babylonlabs-io/babylon/pull/1923) fix: add max bytes size for vote extension
 - [#1981](https://github.com/babylonlabs-io/babylon/pull/1981) fix: correctly link wasm IBC stack handler
+- [#2049](https://github.com/babylonlabs-io/babylon/pull/2049) fix(docker): bump runtime jq pin to 1.8.2-r0
 
 ## v4.7.0
 
